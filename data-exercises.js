@@ -716,10 +716,26 @@ const ExerciseData = (function () {
     return CATEGORIES.find((c) => c.id === id);
   }
 
-  // Rein deutsche Wort-Synonym-Paare fürs Memory-Spiel (kein Englisch)
+  // Rein deutsche Wort-Paare fürs Memory-Spiel (kein Englisch) — mehrere Spielarten
   function getSynonymPairs() {
     return SYNONYME.map(([word, synonym]) => [word, synonym]);
   }
+  function getArtikelPairs() {
+    return ARTIKEL_WORDS.map(([word, article]) => [word, `${article} ${word}`]);
+  }
+  function getPluralPairs() {
+    return PLURAL_WORDS.map(([singular, plural]) => [singular, plural]);
+  }
+  function getRedewendungenPairs() {
+    return REDEWENDUNGEN.map(([phrase, meaning]) => [phrase, meaning]);
+  }
 
-  return { CATEGORIES, getCategory, getSynonymPairs };
+  const MEMORY_GAMES = [
+    { id: "synonyme", label: "Synonyme", icon: "🔁", getPairs: getSynonymPairs },
+    { id: "artikel", label: "Artikel", icon: "🔤", getPairs: getArtikelPairs },
+    { id: "plural", label: "Plural", icon: "🔢", getPairs: getPluralPairs },
+    { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
+  ];
+
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES };
 })();

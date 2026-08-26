@@ -417,9 +417,11 @@
   const memoryArea = document.getElementById("memoryArea");
   let memoryState = null;
   let memoryPairCount = 6; // Leicht: 6 Paare (12 Karten) · Mittel: 8 Paare (16 Karten) — bewusst kompakt, kein Scrollen
+  let memoryGameId = "synonyme";
 
   function newMemoryGame() {
-    const pairs = Core.drawUnique(ExerciseData.getSynonymPairs(), memoryPairCount);
+    const game = ExerciseData.MEMORY_GAMES.find((g) => g.id === memoryGameId);
+    const pairs = Core.drawUnique(game.getPairs(), memoryPairCount);
     let cards = [];
     pairs.forEach((p, i) => {
       cards.push({ id: `${i}-a`, pairId: i, label: p[0] });
@@ -431,12 +433,20 @@
   }
 
   function renderMemory() {
+    const gameBar = `
+      <div class="category-grid" style="margin-bottom:10px;">
+        ${ExerciseData.MEMORY_GAMES.map((g) => `
+          <div class="category-card ${g.id === memoryGameId ? "selected" : ""}" data-game="${g.id}" style="padding:10px 14px;">
+            <div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${g.icon}</span><span>${g.label}</span></div></div>
+          </div>`).join("")}
+      </div>`;
     const sizeBar = `
       <div class="order-toggle" style="margin-bottom:10px;">
         <button type="button" class="order-pill" data-size="6" aria-selected="${memoryPairCount === 6}">Leicht · 6 Paare</button>
         <button type="button" class="order-pill" data-size="8" aria-selected="${memoryPairCount === 8}">Mittel · 8 Paare</button>
       </div>`;
     memoryArea.innerHTML = `
+      ${gameBar}
       ${sizeBar}
       <p class="empty-note">Finde die deutschen Wortpaare mit gleicher Bedeutung.</p>
       <div class="memory-grid" id="memoryGrid">
@@ -461,6 +471,12 @@
     memoryArea.querySelectorAll("[data-size]").forEach((btn) => {
       btn.addEventListener("click", () => {
         memoryPairCount = Number(btn.dataset.size);
+        newMemoryGame();
+      });
+    });
+    memoryArea.querySelectorAll("[data-game]").forEach((card) => {
+      card.addEventListener("click", () => {
+        memoryGameId = card.dataset.game;
         newMemoryGame();
       });
     });
@@ -616,6 +632,7 @@
             <div class="form-error" id="authError"></div>
             <button type="submit" class="btn-submit">${authMode === "signup" ? "Konto erstellen" : "Anmelden"}</button>
           </form>
+          ${Backend.isConfigured ? `<p class="empty-note" style="margin-top:14px;">Funktioniert's nicht? Häufigste Ursachen: (1) E-Mail noch nicht bestätigt — Link im Postfach prüfen, oder in Supabase unter Authentication → Providers → Email „Confirm email" ausschalten. (2) Die Tabellen <code>profiles</code>, <code>friends</code>, <code>challenges</code>, <code>activity</code> fehlen noch — siehe README, Abschnitt „Supabase einrichten".</p>` : ""}
         </div>
       `;
       area.querySelectorAll(".auth-tab").forEach((t) => t.addEventListener("click", () => { authMode = t.dataset.mode; renderAccount(); }));

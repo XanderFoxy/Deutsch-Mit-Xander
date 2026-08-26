@@ -49,20 +49,25 @@ const Backend = (function () {
   /* ================= AUTH ================= */
 
   async function fetchOrCreateProfile(userId, email, name) {
-    const { data, error } = await client.from("profiles").select("*").eq("id", userId).maybeSingle();
-    if (!error && data) {
-      return {
-        name: data.name || name || email,
-        bio: "",
-        points: data.points || 0,
-        badges: data.badges || [],
-        history: [],
-        isPremium: Boolean(data.is_premium),
-        theme: data.theme || "bastelheft",
-      };
+    try {
+      const { data, error } = await client.from("profiles").select("*").eq("id", userId).maybeSingle();
+      if (!error && data) {
+        return {
+          name: data.name || name || email,
+          bio: "",
+          points: data.points || 0,
+          badges: data.badges || [],
+          history: [],
+          isPremium: Boolean(data.is_premium),
+          theme: data.theme || "bastelheft",
+        };
+      }
+      // Noch kein Profil-Eintrag -> anlegen
+      const { error: insertError } = await client.from("profiles").insert({ id: userId, name: name || email, points: 0, badges: [], is_premium: false, theme: "bastelheft" });
+      if (insertError) console.warn("Profil-Tabelle nicht erreichbar (fehlt sie noch in Supabase?):", insertError.message);
+    } catch (e) {
+      console.warn("Profil konnte nicht geladen/angelegt werden — Login funktioniert trotzdem, nur ohne gespeicherte Punkte:", e);
     }
-    // Noch kein Profil-Eintrag -> anlegen
-    await client.from("profiles").insert({ id: userId, name: name || email, points: 0, badges: [], is_premium: false, theme: "bastelheft" });
     return defaultProfile(name || email);
   }
 
