@@ -870,6 +870,59 @@
     <div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("");
 
   /* ============================================================
+     NACHRICHTEN (RSS) — als Leseübung, schwierige Wörter markiert
+     Hinweis: Viele Nachrichtenseiten blockieren das Abrufen von
+     fremden Webseiten aus (CORS). Wir versuchen es über einen
+     öffentlichen Umweg-Dienst; klappt das nicht, gibt's eine klare
+     Meldung mit Link zur Original-Seite statt eines stillen Fehlers.
+     ============================================================ */
+  let newsLoaded = false;
+  async function loadNews() {
+    const area = document.getElementById("newsArea");
+    if (newsLoaded || !area) return;
+    area.innerHTML = `
+      <p class="empty-note">Aktuelle Tagesschau-Meldungen als Leseübung. Lange/schwierige Wörter sind <span class="hard-word-demo">unterstrichen markiert</span> — gut zum Wortschatz-Sammeln.</p>
+      <p class="empty-note" id="newsStatus">⏳ Lade Nachrichten …</p>
+    `;
+    try {
+      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://www.tagesschau.de/xml/rss2/");
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error("Feed nicht erreichbar");
+      const xmlText = await res.text();
+      const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+      const items = [...xml.querySelectorAll("item")].slice(0, 8);
+      if (!items.length) throw new Error("Keine Meldungen gefunden");
+
+      area.innerHTML = `
+        <p class="empty-note">Aktuelle Tagesschau-Meldungen als Leseübung. Lange/schwierige Wörter sind <span class="hard-word-demo">unterstrichen markiert</span> — gut zum Wortschatz-Sammeln.</p>
+        ${items.map((item) => {
+          const title = item.querySelector("title")?.textContent || "";
+          const desc = (item.querySelector("description")?.textContent || "").replace(/<[^>]+>/g, "");
+          const link = item.querySelector("link")?.textContent || "#";
+          return `<div class="material-card">
+            <h3>${markHardWords(title)}</h3>
+            <p>${markHardWords(desc)}</p>
+            <a href="${link}" target="_blank" rel="noopener" class="empty-note" style="display:inline-block; margin-top:6px;">Ganzer Artikel ↗</a>
+          </div>`;
+        }).join("")}
+      `;
+      newsLoaded = true;
+    } catch (e) {
+      document.getElementById("newsStatus").innerHTML =
+        `⚠️ Die Nachrichten konnten gerade nicht geladen werden (die Nachrichtenseite blockiert vermutlich externe Anfragen).<br><br>
+         Lies stattdessen direkt hier: <a href="https://www.tagesschau.de" target="_blank" rel="noopener">tagesschau.de ↗</a>
+         oder bei <a href="https://www.dw.com/de/deutsch-lernen/s-2055" target="_blank" rel="noopener">DW – Nachrichten in einfacher Sprache ↗</a>.`;
+    }
+  }
+
+  // Wörter über 10 Buchstaben grob als "schwierig" markieren (einfache Faustregel, keine echte Analyse)
+  function markHardWords(text) {
+    return text.replace(/[A-Za-zÄÖÜäöüß]{11,}/g, (w) => `<span class="hard-word">${w}</span>`);
+  }
+
+  document.querySelector('#knowledgeSubnav [data-sub="sub-news"]').addEventListener("click", loadNews);
+
+  /* ============================================================
      PROFIL / LOGIN / RANKING / GÄSTEBUCH / PREMIUM
      ============================================================ */
   const loginBtn = document.getElementById("loginBtn");
@@ -949,7 +1002,8 @@
 
     const AVATAR_EMOJIS = ["🦊","🐱","🐶","🐼","🐨","🦁","🐸","🦉","🐧","🦄","🐢","🐝"];
     const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-    const friendCount = (await Backend.getFriends()).length;
+    const myFriends = await Backend.getFriends();
+    const friendCount = myFriends.length;
     const avatarHtml = profile.avatarUrl
       ? `<img src="${profile.avatarUrl}" alt="" class="avatar-photo" />`
       : profile.avatarEmoji
@@ -1011,7 +1065,7 @@
         <div class="gallery-grid" id="galleryGrid">
           ${(profile.gallery || []).map((url) => `
             <div class="gallery-thumb-wrap">
-              <img src="${url}" class="gallery-thumb" alt="" />
+              <img src="${url}" class="gallery-thumb" alt="" data-view-photo="${url}" />
               <button type="button" class="gallery-remove-btn" data-remove-gallery="${url}">✕</button>
             </div>`).join("")}
           ${(profile.gallery || []).length < 6 ? `
@@ -1022,6 +1076,10 @@
         <div class="form-error" id="galleryError"></div>
       </div>
       ${renderTrophyCase(profile)}
+      ${myFriends.length ? `<div class="breakdown-list" style="margin-top:16px;">
+        <p class="eyebrow" style="margin-top:0;">👥 Deine Freunde</p>
+        ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span></button>`).join("")}
+      </div>` : ""}
       ${await renderRecentMembers()}
       ${await renderActivityFeed()}
       ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
@@ -1077,6 +1135,9 @@
     area.querySelectorAll("[data-view-member]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewMember));
     });
+    area.querySelectorAll("[data-view-friend-profile]").forEach((btn) => {
+      btn.addEventListener("click", () => openProfileModal(btn.dataset.viewFriendProfile));
+    });
     area.querySelectorAll("[data-hobby]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const current = new Set(profile.hobbies || []);
@@ -1104,6 +1165,9 @@
         Backend.removeGalleryPhoto(btn.dataset.removeGallery);
         renderAccount();
       });
+    });
+    area.querySelectorAll("[data-view-photo]").forEach((img) => {
+      img.addEventListener("click", () => openLightbox(img.dataset.viewPhoto, "Galerie-Foto"));
     });
   }
 

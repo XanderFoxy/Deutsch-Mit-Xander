@@ -477,7 +477,11 @@ const Backend = (function () {
     }
     const { data } = client.storage.from("avatars").getPublicUrl(path);
     demo.profile.gallery.push(data.publicUrl);
-    await client.from("profiles").update({ gallery: demo.profile.gallery }).eq("id", demo.user.id);
+    const { error: dbError } = await client.from("profiles").update({ gallery: demo.profile.gallery }).eq("id", demo.user.id);
+    if (dbError) {
+      demo.profile.gallery.pop(); // Upload hat geklappt, aber Speichern in der Datenbank nicht -> zurückrollen
+      throw new Error("Foto konnte nicht dauerhaft gespeichert werden — vermutlich fehlt die Spalte „gallery“ in der profiles-Tabelle (siehe README, Abschnitt Supabase einrichten).");
+    }
     return demo.profile.gallery;
   }
 
@@ -494,8 +498,9 @@ const Backend = (function () {
     if (!demo.profile) return;
     demo.profile.hobbies = hobbies;
     if (client && demo.user) {
-      client.from("profiles").update({ hobbies }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Hobbys konnten nicht gespeichert werden:", e));
+      client.from("profiles").update({ hobbies }).eq("id", demo.user.id).then((res) => {
+        if (res.error) console.warn("Hobbys nicht gespeichert (fehlt die Spalte „hobbies“ in profiles?):", res.error.message);
+      });
     }
   }
 
@@ -503,8 +508,9 @@ const Backend = (function () {
     if (!demo.profile) return;
     demo.profile.origin = origin;
     if (client && demo.user) {
-      client.from("profiles").update({ origin }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Herkunft konnte nicht gespeichert werden:", e));
+      client.from("profiles").update({ origin }).eq("id", demo.user.id).then((res) => {
+        if (res.error) console.warn("Herkunft nicht gespeichert (fehlt die Spalte „origin“ in profiles?):", res.error.message);
+      });
     }
   }
 
@@ -581,6 +587,8 @@ const Backend = (function () {
         badges: (names[id] && names[id].badges) || [],
         trophies: (names[id] && names[id].trophies) || [],
         bio: (names[id] && names[id].bio) || "",
+        avatar_url: (names[id] && names[id].avatar_url) || "",
+        avatar_emoji: (names[id] && names[id].avatar_emoji) || "",
         online: names[id] ? isRecentlyActive(names[id].last_active) : false,
       }));
     }
@@ -594,7 +602,10 @@ const Backend = (function () {
           name: (u && u.profile.name) || otherEmail,
           points: (u && u.profile.points) || 0,
           badges: (u && u.profile.badges) || [],
+          trophies: (u && u.profile.trophies) || [],
           bio: (u && u.profile.bio) || "",
+          avatar_url: (u && u.profile.avatarUrl) || "",
+          avatar_emoji: (u && u.profile.avatarEmoji) || "",
         };
       });
   }
