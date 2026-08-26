@@ -58,8 +58,12 @@
   function applyTheme(id) {
     document.documentElement.setAttribute("data-theme", id);
     const profile = Backend.currentProfile();
-    if (profile) profile.theme = id;
-    else sessionTheme = id;
+    if (profile) {
+      profile.theme = id;
+      Backend.saveThemePreference(id);
+    } else {
+      sessionTheme = id;
+    }
   }
 
   function renderDesign() {
@@ -801,4 +805,11 @@
 
   // Beim Start: gespeichertes Theme des eingeloggten Profils anwenden, sonst Standard behalten
   applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
+
+  // Falls Supabase verbunden ist: bestehende Anmeldung (Session) wiederherstellen
+  Backend.restoreSession().then(() => {
+    refreshHeaderAuth();
+    renderAccount();
+    applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
+  });
 })();

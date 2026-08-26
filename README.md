@@ -79,7 +79,8 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
 
    create table profiles (
      id uuid references auth.users primary key,
-     name text, points int default 0
+     name text, points int default 0, badges text[] default '{}',
+     is_premium boolean default false, theme text default 'bastelheft'
    );
 
    create table friends (
@@ -90,6 +91,16 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
    ```
 5. Seite neu laden — die App erkennt die Konfiguration automatisch und
    nutzt ab dann echte Konten statt des Demo-Modus.
+
+**Wichtig — E-Mail-Bestätigung:** Supabase verlangt standardmäßig, dass
+neue Nutzer erst auf einen Bestätigungslink in ihrer E-Mail klicken,
+bevor der Login funktioniert (sonst kommt "Invalid login credentials").
+Das kann für Freunde/Tester verwirrend sein. Zwei Optionen:
+- **So lassen:** Nutzer bekommen nach der Registrierung automatisch den
+  Hinweis "Bitte E-Mail bestätigen" — sie müssen nur den Link anklicken.
+- **Abschalten (schneller zum Testen):** Im Supabase-Dashboard →
+  "Authentication" → "Providers" → "Email" → "Confirm email" auf **aus**
+  stellen. Dann kann man sich sofort nach der Registrierung einloggen.
 
 ## 5. Neue Beispiele/Fragen hinzufügen
 

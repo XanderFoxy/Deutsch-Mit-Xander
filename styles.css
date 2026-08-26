@@ -47,6 +47,7 @@
   --space-7: 48px;
 
   --header-h: 64px;
+  --weather-h: 32px;
 }
 
 * { box-sizing: border-box; }
@@ -161,35 +162,36 @@ button:focus-visible,
 }
 .brand-name span { color: var(--amber-400); }
 
-/* LCD-Anzeige für Uhrzeit + Wetter */
-.deck-display {
-  display: none;
+/* Wetter- & Uhrzeit-Leiste — immer sichtbar, auch auf dem Handy */
+.weather-bar {
+  position: sticky;
+  top: var(--header-h);
+  z-index: 39;
+  display: flex;
   align-items: center;
-  gap: var(--space-3);
-  margin-left: var(--space-2);
-  padding: 6px 14px;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 12px;
   background: var(--plum-700);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: var(--radius-sm);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--teal-400);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
-@media (min-width: 720px) {
-  .deck-display { display: flex; }
+.weather-bar .weather-icon {
+  font-size: 1.05rem;
 }
 
-.deck-display .divider {
-  width: 1px;
-  height: 14px;
-  background: var(--teal-400);
-  opacity: 0.35;
+.weather-dot {
+  opacity: 0.4;
 }
 
-.deck-display .weather-icon {
-  font-size: 0.95rem;
+.weather-city {
+  color: var(--cream-200);
+  opacity: 0.7;
+  font-size: 0.72rem;
 }
 
 .header-spacer { flex: 1; }
@@ -251,7 +253,7 @@ button:focus-visible,
 
 .tape-nav {
   position: sticky;
-  top: var(--header-h);
+  top: calc(var(--header-h) + var(--weather-h));
   z-index: 30;
   display: flex;
   gap: var(--space-2);

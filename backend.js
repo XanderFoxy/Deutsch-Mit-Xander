@@ -48,11 +48,68 @@ const Backend = (function () {
 
   /* ================= AUTH ================= */
 
+  async function fetchOrCreateProfile(userId, email, name) {
+    const { data, error } = await client.from("profiles").select("*").eq("id", userId).maybeSingle();
+    if (!error && data) {
+      return {
+        name: data.name || name || email,
+        bio: "",
+        points: data.points || 0,
+        badges: data.badges || [],
+        history: [],
+        isPremium: Boolean(data.is_premium),
+        theme: data.theme || "bastelheft",
+      };
+    }
+    // Noch kein Profil-Eintrag -> anlegen
+    await client.from("profiles").insert({ id: userId, name: name || email, points: 0, badges: [], is_premium: false, theme: "bastelheft" });
+    return defaultProfile(name || email);
+  }
+
+  async function loadHistory(userId) {
+    try {
+      const { data, error } = await client
+        .from("results")
+        .select("*")
+        .eq("user_id", userId)
+        .order("played_at", { ascending: false })
+        .limit(8);
+      if (!error && data) {
+        return data.map((r) => ({ playedAt: r.played_at, character: r.character, percent: r.percent }));
+      }
+    } catch (e) {
+      console.warn("Verlauf konnte nicht geladen werden:", e);
+    }
+    return [];
+  }
+
+  async function restoreSession() {
+    if (!client) return;
+    try {
+      const { data } = await client.auth.getSession();
+      const session = data && data.session;
+      if (!session) return;
+      const authUser = session.user;
+      const name = (authUser.user_metadata && authUser.user_metadata.name) || authUser.email;
+      demo.user = { id: authUser.id, email: authUser.email, name };
+      demo.profile = await fetchOrCreateProfile(authUser.id, authUser.email, name);
+      demo.profile.history = await loadHistory(authUser.id);
+    } catch (e) {
+      console.warn("Sitzung konnte nicht wiederhergestellt werden:", e);
+    }
+  }
+
   async function signUp(email, password, name) {
     if (client) {
       const { data, error } = await client.auth.signUp({ email, password, options: { data: { name } } });
       if (error) throw error;
-      return data.user;
+      if (!data.session) {
+        // Standardeinstellung bei Supabase: E-Mail-Bestätigung nötig, bevor man sich einloggen kann.
+        throw new Error("Fast fertig! Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir gerade geschickt haben — schau auch im Spam-Ordner. Danach kannst du dich hier anmelden.");
+      }
+      demo.user = { id: data.user.id, email: data.user.email, name };
+      demo.profile = await fetchOrCreateProfile(data.user.id, data.user.email, name);
+      return demo.user;
     }
     if (demo.users[email]) throw new Error("Diese E-Mail ist im Demo-Modus schon registriert.");
     demo.users[email] = { password, profile: defaultProfile(name) };
@@ -64,8 +121,17 @@ const Backend = (function () {
   async function signIn(email, password) {
     if (client) {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      return data.user;
+      if (error) {
+        if (error.message && error.message.toLowerCase().includes("invalid login credentials")) {
+          throw new Error("E-Mail oder Passwort stimmen nicht — oder du hast deine E-Mail noch nicht bestätigt (Link in deinem Postfach prüfen).");
+        }
+        throw error;
+      }
+      const name = (data.user.user_metadata && data.user.user_metadata.name) || data.user.email;
+      demo.user = { id: data.user.id, email: data.user.email, name };
+      demo.profile = await fetchOrCreateProfile(data.user.id, data.user.email, name);
+      demo.profile.history = await loadHistory(data.user.id);
+      return demo.user;
     }
     const record = demo.users[email];
     if (!record || record.password !== password) {
@@ -79,14 +145,13 @@ const Backend = (function () {
   async function signOut() {
     if (client) {
       await client.auth.signOut();
-      return;
     }
     demo.user = null;
     demo.profile = null;
   }
 
   function currentUser() {
-    return demo.user; // im echten Supabase-Modus würde man client.auth.getUser() cachen
+    return demo.user;
   }
 
   function currentProfile() {
@@ -116,6 +181,7 @@ const Backend = (function () {
           character: result.character,
           played_at: result.playedAt,
         });
+        await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id);
       } catch (e) {
         console.warn("Supabase-Speichern fehlgeschlagen, Ergebnis bleibt lokal:", e);
       }
@@ -187,7 +253,12 @@ const Backend = (function () {
   // Demo simuliert die Freischaltung lokal, damit die App vollständig testbar ist.
 
   function unlockPremiumDemo() {
-    if (demo.profile) demo.profile.isPremium = true;
+    if (!demo.profile) return;
+    demo.profile.isPremium = true;
+    if (client && demo.user) {
+      client.from("profiles").update({ is_premium: true }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Premium-Status konnte nicht gespeichert werden:", e));
+    }
   }
 
   function isPremium() {
@@ -330,8 +401,16 @@ const Backend = (function () {
     addActivity(`${demo.profile.name} übt gerade „${categoryTitle}“ …`);
   }
 
+  function saveThemePreference(themeId) {
+    if (client && demo.user) {
+      client.from("profiles").update({ theme: themeId }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Design konnte nicht gespeichert werden:", e));
+    }
+  }
+
   return {
     isConfigured,
+    restoreSession,
     signUp,
     signIn,
     signOut,
@@ -354,5 +433,6 @@ const Backend = (function () {
     addActivity,
     getActivity,
     notifyPracticing,
+    saveThemePreference,
   };
 })();
