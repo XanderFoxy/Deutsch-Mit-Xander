@@ -185,6 +185,14 @@
     playEl.style.display = "none";
     resultsEl.style.display = "none";
 
+    const paused = Quiz.getState();
+    const isPaused = paused && paused.index < paused.questions.length;
+    const resumeBar = isPaused ? `
+      <div class="demo-banner" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <span>⏸ Du hast eine Runde offen (Frage ${paused.index + 1}/${paused.questions.length}).</span>
+        <button type="button" class="btn btn-coffee" id="resumeBtn">▶ Fortsetzen</button>
+      </div>` : "";
+
     const cards = ExerciseData.CATEGORIES.map((cat) => {
       return `
         <div class="category-card" data-cat="${cat.id}">
@@ -204,6 +212,7 @@
     const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories]) : 0;
 
     setupEl.innerHTML = `
+      ${resumeBar}
       <div class="category-grid">${cards}</div>
       <div class="setup-bar">
         <div class="diff-pills">
@@ -260,6 +269,8 @@
       Backend.notifyPracticing(titles);
       renderQuestion();
     });
+    const resumeBtn = document.getElementById("resumeBtn");
+    if (resumeBtn) resumeBtn.addEventListener("click", () => renderQuestion());
   }
 
   let currentSelection = [];
@@ -454,19 +465,20 @@
      ============================================================ */
   const memoryArea = document.getElementById("memoryArea");
   let memoryState = null;
-  let memoryPairCount = 6; // Leicht: 6 Paare (12 Karten) · Mittel: 8 Paare (16 Karten) — bewusst kompakt, kein Scrollen
+  const MEMORY_PAIR_COUNT = 6; // fest — 12 Karten passen ohne Scrollen aufs Handy
   let memoryGameId = "synonyme";
+  let memoryDifficulty = "mittel"; // 'leicht' (Orientierungshilfe) · 'mittel' (normal) · 'schwer' (mischt neu)
 
   function newMemoryGame() {
     const game = ExerciseData.MEMORY_GAMES.find((g) => g.id === memoryGameId);
-    const pairs = Core.drawUnique(game.getPairs(), memoryPairCount);
+    const pairs = Core.drawUnique(game.getPairs(), MEMORY_PAIR_COUNT);
     let cards = [];
     pairs.forEach((p, i) => {
       cards.push({ id: `${i}-a`, pairId: i, label: p[0] });
       cards.push({ id: `${i}-b`, pairId: i, label: p[1] });
     });
     cards = Core.shuffle(cards);
-    memoryState = { cards, flipped: [], matched: new Set(), moves: 0, wrongFlash: [], finished: false };
+    memoryState = { cards, flipped: [], matched: new Set(), seen: new Set(), moves: 0, wrongFlash: [], finished: false };
     renderMemory();
   }
 
@@ -478,15 +490,16 @@
             <div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${g.icon}</span><span>${g.label}</span></div></div>
           </div>`).join("")}
       </div>`;
-    const sizeBar = `
+    const diffBar = `
       <div class="order-toggle" style="margin-bottom:10px;">
-        <button type="button" class="order-pill" data-size="6" aria-selected="${memoryPairCount === 6}">Leicht · 6 Paare</button>
-        <button type="button" class="order-pill" data-size="8" aria-selected="${memoryPairCount === 8}">Mittel · 8 Paare</button>
+        <button type="button" class="order-pill" data-mdiff="leicht" aria-selected="${memoryDifficulty === "leicht"}">Leicht</button>
+        <button type="button" class="order-pill" data-mdiff="mittel" aria-selected="${memoryDifficulty === "mittel"}">Mittel</button>
+        <button type="button" class="order-pill" data-mdiff="schwer" aria-selected="${memoryDifficulty === "schwer"}">Schwer</button>
       </div>`;
     memoryArea.innerHTML = `
       ${gameBar}
-      ${sizeBar}
-      <p class="empty-note">Finde die deutschen Wortpaare mit gleicher Bedeutung.</p>
+      ${diffBar}
+      <p class="empty-note">Finde die deutschen Wortpaare mit gleicher Bedeutung.${memoryDifficulty === "leicht" ? " Schon gesehene Karten haben einen kleinen Punkt." : ""}${memoryDifficulty === "schwer" ? " Achtung: Nach jedem Fehlversuch mischen sich die Karten neu!" : ""}</p>
       <div class="memory-grid" id="memoryGrid">
         ${memoryState.cards.map((c) => {
           const isOpen = memoryState.flipped.includes(c.id) || memoryState.matched.has(c.pairId);
@@ -495,16 +508,11 @@
           if (!isOpen) cls.push("hidden-face");
           if (memoryState.matched.has(c.pairId)) cls.push("matched");
           if (isWrong) cls.push("wrong-flash");
-          const foxSvg = `<span class="fox-crest"><svg viewBox="0 0 40 40" width="26" height="26" aria-hidden="true">
-            <path d="M20 6 L10 2 L13 12 Z" fill="#fff3d0"/><path d="M20 6 L30 2 L27 12 Z" fill="#fff3d0"/>
-            <path d="M20 6 L10 2 L13 12 Z" fill="none" stroke="#6b1414" stroke-width="1"/>
-            <path d="M20 6 L30 2 L27 12 Z" fill="none" stroke="#6b1414" stroke-width="1"/>
-            <path d="M20 9 C11 9 8 16 8 22 C8 30 14 35 20 35 C26 35 32 30 32 22 C32 16 29 9 20 9 Z" fill="#fff3d0" stroke="#6b1414" stroke-width="1"/>
-            <path d="M20 20 L15 30 L25 30 Z" fill="#6b1414"/>
-            <circle cx="15" cy="18" r="2" fill="#3a1a0a"/><circle cx="25" cy="18" r="2" fill="#3a1a0a"/>
-            <circle cx="20" cy="25" r="1.6" fill="#2a1006"/>
-          </svg></span>`;
-          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? `<span>${c.label}</span>` : foxSvg}</button>`;
+          const showHint = memoryDifficulty === "leicht" && !isOpen && memoryState.seen.has(c.id);
+          const face = isOpen
+            ? `<span>${c.label}</span>`
+            : `<span class="fox-crest">🦊</span>${showHint ? '<span class="seen-dot"></span>' : ""}`;
+          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${face}</button>`;
         }).join("")}
       </div>
       <p class="memory-status">Züge: ${memoryState.moves} · Gefunden: ${memoryState.matched.size} / ${memoryState.cards.length / 2}</p>
@@ -515,9 +523,9 @@
     memoryArea.querySelectorAll(".memory-card").forEach((btn) => {
       btn.addEventListener("click", () => handleMemoryFlip(btn.dataset.id));
     });
-    memoryArea.querySelectorAll("[data-size]").forEach((btn) => {
+    memoryArea.querySelectorAll("[data-mdiff]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        memoryPairCount = Number(btn.dataset.size);
+        memoryDifficulty = btn.dataset.mdiff;
         newMemoryGame();
       });
     });
@@ -533,6 +541,7 @@
     if (memoryState.flipped.includes(id)) return;
     if (memoryState.flipped.length === 2) return;
     memoryState.flipped.push(id);
+    memoryState.seen.add(id);
     renderMemory();
     if (memoryState.flipped.length === 2) {
       memoryState.moves += 1;
@@ -567,6 +576,13 @@
         setTimeout(() => {
           memoryState.flipped = [];
           memoryState.wrongFlash = [];
+          if (memoryDifficulty === "schwer") {
+            // Nur die noch nicht gefundenen Karten neu mischen, Position der gefundenen bleibt
+            const openIdx = memoryState.cards.map((c, i) => (memoryState.matched.has(c.pairId) ? null : i)).filter((i) => i !== null);
+            const openCards = openIdx.map((i) => memoryState.cards[i]);
+            const shuffled = Core.shuffle(openCards);
+            openIdx.forEach((i, k) => { memoryState.cards[i] = shuffled[k]; });
+          }
           renderMemory();
         }, 700);
       }

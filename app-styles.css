@@ -382,6 +382,7 @@
 @media (min-width: 560px) { .memory-grid { grid-template-columns: repeat(4, 1fr); } }
 
 .memory-card {
+  position: relative;
   aspect-ratio: 1;
   border-radius: var(--radius-sm);
   background: var(--plum-800);
@@ -405,17 +406,18 @@
   color: transparent;
 }
 .fox-crest {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 68%;
-  height: 68%;
-  margin: 0 auto;
+  font-size: 1.7rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+}
+
+.seen-dot {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 8px; height: 8px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f2d374, #d4af37 60%, #a9821f 100%);
-  border: 2px solid #f2d374;
-  box-shadow: 0 0 0 1.5px #6b1414, inset 0 0 4px rgba(0,0,0,0.35);
-  position: relative;
+  background: var(--teal-400);
+  box-shadow: 0 0 4px var(--teal-400);
 }
 
 @keyframes matchGlow {
