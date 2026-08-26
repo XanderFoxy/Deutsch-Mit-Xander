@@ -32,6 +32,8 @@ const ExerciseData = (function () {
     ["Wochenende","das"],["Sommer","der"],["Sonne","die"],["Wetter","das"],["Regen","der"],
     ["Wolke","die"],["Schnee","der"],["Eis","das"],["Wind","der"],["Kälte","die"],
     ["Frühling","der"],["Herbst","der"],["Winter","der"],["Garten","der"],["Wiese","die"],
+    ["Berg","der"],["Fluss","der"],["Stadt","die"],["Land","das"],["Wald","der"],
+    ["Insel","die"],["Schiff","das"],["Vogel","der"],["Fisch","der"],["Blatt","das"],
   ];
 
   function bankArtikel() {
@@ -64,6 +66,12 @@ const ExerciseData = (function () {
     ["Krankenhaus","Krankenhäuser"],["Arzt","Ärzte"],["Kind","Kinder"],["Lehrer","Lehrer"],["Mädchen","Mädchen"],
     ["Junge","Jungen"],["Frau","Frauen"],["Mann","Männer"],["Jahr","Jahre"],["Monat","Monate"],
     ["Woche","Wochen"],["Wolke","Wolken"],["Garten","Gärten"],["Wiese","Wiesen"],["Freund","Freunde"],
+    ["Ball","Bälle"],["Ei","Eier"],["Vogel","Vögel"],["Fisch","Fische"],["Blatt","Blätter"],
+    ["Berg","Berge"],["See","Seen"],["Fluss","Flüsse"],["Stadt","Städte"],["Land","Länder"],
+    ["Dorf","Dörfer"],["Wald","Wälder"],["Insel","Inseln"],["Stein","Steine"],["Schiff","Schiffe"],
+    ["Koffer","Koffer"],["Regenschirm","Regenschirme"],["Kissen","Kissen"],["Decke","Decken"],["Sofa","Sofas"],
+    ["Teppich","Teppiche"],["Vorhang","Vorhänge"],["Ofen","Öfen"],["Kühlschrank","Kühlschränke"],["Regal","Regale"],
+    ["Vase","Vasen"],["Kerze","Kerzen"],["Socke","Socken"],["Schuh","Schuhe"],["Waschmaschine","Waschmaschinen"],
   ];
 
   function makeDistractors(singular, correct) {
@@ -124,6 +132,26 @@ const ExerciseData = (function () {
     ["Idee","Einfall","Ende","Fehler"],
     ["helfen","unterstützen","schaden","ignorieren"],
     ["verstehen","begreifen","vergessen","fragen"],
+    ["stark","kräftig","schwach","müde"],
+    ["schwach","kraftlos","stark","gesund"],
+    ["traurig","betrübt","fröhlich","wütend"],
+    ["glücklich","froh","unglücklich","müde"],
+    ["wütend","zornig","ruhig","froh"],
+    ["ruhig","gelassen","laut","nervös"],
+    ["langsam","gemächlich","schnell","hektisch"],
+    ["hübsch","attraktiv","hässlich","langweilig"],
+    ["hässlich","unschön","hübsch","elegant"],
+    ["alt","betagt","jung","neu"],
+    ["jung","jugendlich","alt","erwachsen"],
+    ["neu","frisch","alt","gebraucht"],
+    ["sauber","rein","schmutzig","nass"],
+    ["schmutzig","dreckig","sauber","trocken"],
+    ["leicht","einfach","schwer","kompliziert"],
+    ["schwer","schwierig","leicht","einfach"],
+    ["mutig","tapfer","feige","ängstlich"],
+    ["feige","ängstlich","mutig","stark"],
+    ["reich","wohlhabend","arm","bescheiden"],
+    ["arm","bedürftig","reich","wohlhabend"],
   ];
 
   function bankSynonyme() {
@@ -167,6 +195,26 @@ const ExerciseData = (function () {
     ["Sag mir, ___ du einverstanden bist.","ob","Indirekte Frage -> „ob“."],
     ["___ man früh aufsteht, hat man mehr vom Tag.","wenn","Bedingung -> „wenn“."],
     ["Ich zweifle daran, ___ das die beste Lösung ist.","ob","Zweifel -> „ob“."],
+    ["Ich möchte wissen, ___ das Geschäft heute geöffnet hat.","ob","Indirekte Frage -> „ob“."],
+    ["___ du Zeit hast, lass uns telefonieren.","wenn","Bedingung -> „wenn“."],
+    ["Er checkt, ___ die Tür abgeschlossen ist.","ob","Prüfung/Unsicherheit -> „ob“."],
+    ["___ es dunkel wird, gehen wir nach Hause.","wenn","Zeitlicher Bezug -> „wenn“."],
+    ["Ich bin neugierig, ___ das Rezept funktioniert.","ob","Unsicherheit -> „ob“."],
+    ["___ du fertig bist, sag Bescheid.","wenn","Bedingung -> „wenn“."],
+    ["Sie testet, ___ die Batterie noch funktioniert.","ob","Prüfung -> „ob“."],
+    ["___ wir Glück haben, sehen wir das Feuerwerk.","wenn","Bedingung -> „wenn“."],
+    ["Ich erkundige mich, ___ der Kurs noch Plätze hat.","ob","Indirekte Frage -> „ob“."],
+    ["___ er anruft, gib mir Bescheid.","wenn","Bedingung -> „wenn“."],
+    ["Weißt du, ___ der Laden sonntags offen ist?","ob","Indirekte Frage -> „ob“."],
+    ["___ ihr mögt, können wir morgen weitermachen.","wenn","Bedingung -> „wenn“."],
+    ["Ich bin unsicher, ___ ich die Prüfung bestanden habe.","ob","Unsicherheit -> „ob“."],
+    ["___ du willst, helfe ich dir beim Umzug.","wenn","Bedingung -> „wenn“."],
+    ["Er fragt sich, ___ er den Job annehmen soll.","ob","Unsicherheit -> „ob“."],
+    ["___ die Kinder müde sind, schlafen sie schnell ein.","wenn","Bedingung -> „wenn“."],
+    ["Ich prüfe nach, ___ alles bezahlt wurde.","ob","Prüfung -> „ob“."],
+    ["___ man freundlich fragt, hilft man gerne.","wenn","Bedingung -> „wenn“."],
+    ["Sag mir bitte, ___ du noch kommst.","ob","Indirekte Frage -> „ob“."],
+    ["___ es so weitergeht, wird alles gut.","wenn","Bedingung -> „wenn“."],
   ];
 
   function bankWennOb() {
@@ -210,6 +258,26 @@ const ExerciseData = (function () {
     ["Der Zug war pünktlicher ___ sonst.","als","Komparativ -> „als“."],
     ["Er redet so viel ___ ein Papagei.","wie","Gleichheit -> „wie“."],
     ["Die Party war lustiger ___ ich erwartet hatte.","als","Komparativ -> „als“."],
+    ["Sie tanzt eleganter ___ alle anderen.","als","Komparativ -> „als“."],
+    ["Er ist genauso nett ___ sein Bruder.","wie","Gleichheit -> „wie“."],
+    ["Das Wetter wurde schlechter ___ vorhergesagt.","als","Komparativ -> „als“."],
+    ["Iss so viel Gemüse ___ möglich.","wie","Gleichheit -> „wie“."],
+    ["Der Kaffee hier ist stärker ___ zu Hause.","als","Komparativ -> „als“."],
+    ["Sie singt so schön ___ eine Profisängerin.","wie","Gleichheit -> „wie“."],
+    ["Die Miete ist höher ___ letztes Jahr.","als","Komparativ -> „als“."],
+    ["Er fährt so vorsichtig ___ ein Fahrlehrer.","wie","Gleichheit -> „wie“."],
+    ["Das Spiel war spannender ___ erwartet.","als","Komparativ -> „als“."],
+    ["Sie ist so geduldig ___ ihre Mutter.","wie","Gleichheit -> „wie“."],
+    ["Die Aufgabe war komplizierter ___ gedacht.","als","Komparativ -> „als“."],
+    ["Er kocht genauso gern ___ sie.","wie","Gleichheit -> „wie“."],
+    ["Das Hotel war teurer ___ im Internet angegeben.","als","Komparativ -> „als“."],
+    ["Sie läuft so schnell ___ ein Hase.","wie","Gleichheit -> „wie“."],
+    ["Der Test war einfacher ___ die letzten Male.","als","Komparativ -> „als“."],
+    ["Er ist so müde ___ ich.","wie","Gleichheit -> „wie“."],
+    ["Die Schlange war länger ___ gedacht.","als","Komparativ -> „als“."],
+    ["Sie kann genauso gut kochen ___ backen.","wie","Gleichheit -> „wie“."],
+    ["Das Buch war spannender ___ der Film.","als","Komparativ -> „als“."],
+    ["Er ist so groß ___ ein Basketballspieler.","wie","Gleichheit -> „wie“."],
   ];
 
   function bankAlsWie() {
@@ -253,6 +321,26 @@ const ExerciseData = (function () {
     ["Wir ___ diese Gegend sehr gut.","kennen","wissen",0],
     ["Sie ___ nicht genau, wie alt er ist.","kennt","weiß",1],
     ["___ du den Weg zum Bahnhof?","Kennst","Weißt",0],
+    ["Ich ___ die Stadt in- und auswendig.","kenne","weiß",0],
+    ["___ du, wie man das Programm installiert?","Kennst","Weißt",1],
+    ["Sie ___ nicht, dass die Party abgesagt wurde.","kennt","weiß",1],
+    ["___ ihr euch schon lange?","Kennt","Wisst",0],
+    ["Ich ___ nicht genau, wie das funktioniert.","kenne","weiß",1],
+    ["Er ___ jeden im Büro persönlich.","kennt","weiß",0],
+    ["___ du das neue Café in der Stadt?","Kennst","Weißt",0],
+    ["Wir ___ nicht, ob der Zug Verspätung hat.","kennen","wissen",1],
+    ["Sie ___ das Land sehr gut, sie ist dort aufgewachsen.","kennt","weiß",0],
+    ["___ Sie, wie spät der Laden schließt?","Kennen","Wissen",1],
+    ["Ich ___ diese Melodie, aber nicht den Titel.","kenne","weiß",0],
+    ["Er ___ nicht, wer die Nachricht geschickt hat.","kennt","weiß",1],
+    ["___ ihr die Regeln dieses Kartenspiels?","Kennt","Wisst",0],
+    ["Ich ___ nicht, wie viel das kostet.","kenne","weiß",1],
+    ["Sie ___ die Künstlerin persönlich.","kennt","weiß",0],
+    ["___ du, warum der Bus nicht kommt?","Kennst","Weißt",1],
+    ["Wir ___ das Restaurant, es ist wirklich gut.","kennen","wissen",0],
+    ["Er ___ genau, was zu tun ist.","kennt","weiß",1],
+    ["___ Sie diesen Autor?","Kennen","Wissen",0],
+    ["Ich ___ nicht, ob ich morgen Zeit habe.","kenne","weiß",1],
   ];
 
   function bankKennenWissen() {
@@ -299,6 +387,26 @@ const ExerciseData = (function () {
     ["___ ist alles, was ich weiß.","das","Pronomen -> „das“."],
     ["Es ist schade, ___ du nicht kommen kannst.","dass","Konjunktion -> „dass“."],
     ["___ Fahrrad dort gehört mir.","das","Artikel -> „das“."],
+    ["Er sagt, ___ er das Meeting verschiebt.","dass","Konjunktion -> „dass“."],
+    ["___ Café dort macht den besten Kaffee.","das","Artikel -> „das“."],
+    ["Ich bin froh, ___ du da bist.","dass","Konjunktion -> „dass“."],
+    ["___ ist wirklich eine tolle Nachricht.","das","Pronomen -> „das“."],
+    ["Sie glaubt, ___ es morgen regnet.","dass","Konjunktion -> „dass“."],
+    ["___ neue Handy ist ziemlich teuer.","das","Artikel -> „das“."],
+    ["Ich denke, ___ wir früher losfahren sollten.","dass","Konjunktion -> „dass“."],
+    ["___ Mädchen da drüben ist meine Cousine.","das","Artikel -> „das“."],
+    ["Er hofft, ___ die Prüfung nicht so schwer wird.","dass","Konjunktion -> „dass“."],
+    ["___ Bild an der Wand hat mein Opa gemalt.","das","Artikel -> „das“."],
+    ["Ich habe bemerkt, ___ die Tür offen war.","dass","Konjunktion -> „dass“."],
+    ["___ war ein wirklich langer Tag.","das","Pronomen -> „das“."],
+    ["Sie meint, ___ das Projekt gut läuft.","dass","Konjunktion -> „dass“."],
+    ["___ Zimmer dort ist frei.","das","Artikel -> „das“."],
+    ["Ich fürchte, ___ wir den Flug verpassen.","dass","Konjunktion -> „dass“."],
+    ["Ist ___ deine Jacke?","das","Pronomen -> „das“."],
+    ["Er betont, ___ Pünktlichkeit ihm wichtig ist.","dass","Konjunktion -> „dass“."],
+    ["___ Auto hat mein Vater gekauft.","das","Artikel -> „das“."],
+    ["Ich bin überzeugt, ___ das die richtige Entscheidung war.","dass","Konjunktion -> „dass“."],
+    ["___ Baby schläft schon.","das","Artikel -> „das“."],
   ];
 
   function bankDasDass() {
@@ -347,6 +455,26 @@ const ExerciseData = (function () {
     ["Wie ein Elefant im Porzellanladen.","Sehr ungeschickt/tollpatschig.","Sehr stark sein.","Sehr vorsichtig sein."],
     ["Jemandem den Kopf waschen.","Jemanden ausschimpfen.","Jemandem beim Duschen helfen.","Jemanden loben."],
     ["Klar wie Kloßbrühe.","Sarkastisch für „überhaupt nicht klar“.","Sehr klar und einfach.","Sehr lecker."],
+    ["Den Löffel abgeben.","Sterben (salopp).","Das Besteck wegräumen.","Aufgeben beim Essen."],
+    ["Jemandem auf die Nerven gehen.","Jemanden nerven, lästig sein.","Jemandem helfen.","Jemanden trösten."],
+    ["Die Flinte ins Korn werfen.","Vorzeitig aufgeben.","Zur Jagd gehen.","Erfolgreich sein."],
+    ["Ein Dorn im Auge sein.","Jemanden stören oder ärgern.","Verletzt sein.","Etwas bewundern."],
+    ["Mit dem falschen Bein aufgestanden sein.","Schlecht gelaunt in den Tag starten.","Einen Unfall haben.","Zu spät kommen."],
+    ["Etwas auf die lange Bank schieben.","Etwas immer wieder verschieben.","Etwas im Garten verstauen.","Sich ausruhen."],
+    ["Jemandem ins Wort fallen.","Jemanden beim Sprechen unterbrechen.","Jemandem zustimmen.","Jemanden loben."],
+    ["Sich etwas hinter die Ohren schreiben.","Sich etwas gut merken.","Sich verletzen.","Etwas vergessen."],
+    ["Auf dem Holzweg sein.","Sich irren, falsch liegen.","Im Wald spazieren gehen.","Recht haben."],
+    ["Die Kirche im Dorf lassen.","Nicht übertreiben, realistisch bleiben.","Zur Kirche gehen.","Umziehen."],
+    ["Jemandem Löcher in den Bauch fragen.","Jemanden mit vielen Fragen löchern.","Jemanden verletzen.","Jemandem Essen geben."],
+    ["Sich ins Fäustchen lachen.","Heimlich schadenfroh sein.","Weinen.","Laut lachen."],
+    ["Alle Hände voll zu tun haben.","Sehr beschäftigt sein.","Nichts zu tun haben.","Etwas fallen lassen."],
+    ["Unter die Haut gehen.","Emotional sehr berühren.","Eine Spritze bekommen.","Sich tätowieren lassen."],
+    ["Die Katze aus dem Sack lassen.","Ein Geheimnis verraten.","Ein Haustier freilassen.","Einkaufen gehen."],
+    ["Sich am Riemen reißen.","Sich zusammenreißen, diszipliniert sein.","Sich einen Gürtel kaufen.","Sich entspannen."],
+    ["Jemanden im Regen stehen lassen.","Jemanden im Stich lassen.","Jemandem einen Schirm geben.","Mit jemandem spazieren gehen."],
+    ["Da steckt der Teufel im Detail.","Kleinigkeiten machen die eigentliche Schwierigkeit aus.","Etwas ist gruselig.","Etwas ist sehr einfach."],
+    ["Sich in Schale werfen.","Sich besonders fein anziehen.","Etwas zerbrechen.","Kochen gehen."],
+    ["Jemandem die Show stehlen.","Mehr Aufmerksamkeit bekommen als jemand anderes.","Ein Ticket kaufen.","Applaudieren."],
   ];
 
   function bankRedewendungen() {
@@ -395,6 +523,26 @@ const ExerciseData = (function () {
     ["sie ist verheiratet mit einem Mann seit 10 Jahre","sie ist seit 10 Jahren mit einem Mann verheiratet","„seit“ + Dativ, andere Satzstellung."],
     ["ich freue mich auf dich zu sehen","ich freue mich darauf, dich zu sehen","Verb + Präposition braucht ein Pronominaladverb (da(r)-)."],
     ["ich bin fertig meine Arbeit","ich bin fertig mit meiner Arbeit","„fertig sein mit“ + Dativ."],
+    ["ich bin am Warten auf dich","ich warte auf dich","Die „am“-Verlaufsform ist umgangssprachlich; standardsprachlich reicht das Präsens."],
+    ["er hat mir geholfen bei der Arbeit","er hat mir bei der Arbeit geholfen","Satzglieder stehen meist vor dem Partizip am Satzende."],
+    ["das Wetter ist gut für Laufen","das Wetter ist gut zum Laufen","Feste Wendung „gut zum“ + Infinitiv-Nomen."],
+    ["ich habe geschrieben ihm einen Brief","ich habe ihm einen Brief geschrieben","Dativobjekt vor Akkusativobjekt, Partizip ans Satzende."],
+    ["sie ist gut in Mathe als er","sie ist besser in Mathe als er","Vergleich braucht den Komparativ „besser“, nicht „gut“ + „als“."],
+    ["ich möchte, dass du gehst nicht","ich möchte, dass du nicht gehst","Im Nebensatz steht die Verneinung vor dem Verb am Satzende."],
+    ["er hat drei Kinder, die sind alle klug","er hat drei Kinder, die alle klug sind","Im Relativsatz steht das Verb am Ende."],
+    ["ich bin fertig zu essen","ich bin fertig mit dem Essen","Feste Wendung „fertig sein mit“."],
+    ["sie hat Angst zu Hunde","sie hat Angst vor Hunden","Feste Präposition „Angst vor“ + Dativ Plural."],
+    ["wir sind gefahren mit dem Auto nach Berlin","wir sind mit dem Auto nach Berlin gefahren","Das Partizip steht am Satzende."],
+    ["er ist besser als ich in Fußball","er ist besser als ich im Fußball","„in“ + „dem“ verschmilzt vor Substantiven zu „im“."],
+    ["ich bin süchtig von Kaffee","ich bin süchtig nach Kaffee","Feste Präposition „süchtig nach“."],
+    ["sie wartet für den Bus","sie wartet auf den Bus","Feste Präposition „warten auf“."],
+    ["ich denke über dich","ich denke an dich","Feste Präposition „denken an“."],
+    ["er ist stolz von seiner Tochter","er ist stolz auf seine Tochter","Feste Präposition „stolz auf“."],
+    ["ich interessiere mich für Musik seit Jahre","ich interessiere mich seit Jahren für Musik","„seit“ + Dativ Plural; Zeitangabe steht meist früher im Satz."],
+    ["er hat Angst dass er verliert das Spiel","er hat Angst, dass er das Spiel verliert","Im dass-Satz steht das Verb am Ende."],
+    ["wir haben viel Spaß gehabt in dem Urlaub","wir haben im Urlaub viel Spaß gehabt","„in dem“ verschmilzt zu „im“; Zeitangabe steht meist früher."],
+    ["sie kümmert sich um ihre Kinder gut","sie kümmert sich gut um ihre Kinder","Das Adverb steht meist vor der Präpositionalphrase."],
+    ["ich bin gewöhnt an das Wetter hier","ich bin an das Wetter hier gewöhnt","Das Partizip „gewöhnt“ steht am Satzende."],
   ];
 
   function bankHaeufigeFehler() {
@@ -443,6 +591,25 @@ const ExerciseData = (function () {
     ["Welches Getränk ist durch das Reinheitsgebot geregelt?",["Bier","Wein","Schnaps","Kaffee"],[0]],
     ["Wer komponierte die „Ode an die Freude“?",["Ludwig van Beethoven","Johann Sebastian Bach","Wolfgang Amadeus Mozart","Johannes Brahms"],[0]],
     ["Welche Stadt war bis 1990 „Hauptstadt“ der BRD (vor Berlin)?",["Bonn","Frankfurt","Köln","Hamburg"],[0]],
+    ["Welche Stadt ist für ihre Brezeln und das Cannstatter Volksfest bekannt?",["Stuttgart","Hamburg","Leipzig","Kiel"],[0]],
+    ["Wie heißt einer der ältesten und bekanntesten Weihnachtsmärkte Deutschlands?",["Dresdner Striezelmarkt","Kölner Lichtermarkt","Hamburger Winterzauber","Frankfurter Wintertraum"],[0]],
+    ["In welchem Meer liegt die deutsche Insel Helgoland?",["Nordsee","Ostsee","Mittelmeer","Bodensee"],[0]],
+    ["Welche zwei Städte liegen direkt am Rhein?",["Köln","Leipzig","Düsseldorf","Dresden"],[0,2]],
+    ["Welches Bauwerk hat den höchsten Kirchturm der Welt?",["Ulmer Münster","Kölner Dom","Frauenkirche Dresden","Berliner Dom"],[0]],
+    ["Wie nennt man das deutsche Grundgesetz auch?",["Verfassung","Bundesgesetzbuch","Staatsvertrag","Länderordnung"],[0]],
+    ["In welcher Stadt hat das Bundesverfassungsgericht seinen Sitz?",["Karlsruhe","Berlin","Leipzig","München"],[0]],
+    ["Welches Bundesland grenzt an Frankreich und die Schweiz?",["Baden-Württemberg","Bayern","Saarland","Hessen"],[0]],
+    ["Aus welcher Stadt stammt der Automobilhersteller Volkswagen?",["Wolfsburg","München","Stuttgart","Köln"],[0]],
+    ["Welche Stadt gilt als heimliche deutsche Modehauptstadt?",["Düsseldorf","Dortmund","Bremen","Kiel"],[0]],
+    ["Wie viele Sterne zeigt die EU-Flagge, die auch in Deutschland gehisst wird?",["12","15","10","27"],[0]],
+    ["In welchem Jahr wurde der Euro in Deutschland als Bargeld eingeführt?",["2002","1999","2005","1998"],[0]],
+    ["Welcher deutsche Physiker entwickelte die Relativitätstheorie?",["Albert Einstein","Max Planck","Werner Heisenberg","Wilhelm Röntgen"],[0]],
+    ["Wie heißt die bekannte deutsche Zeichentrickserie über einen kleinen Wikingerjungen?",["Wickie","Heidi","Biene Maja","Käpt'n Blaubär"],[0]],
+    ["Welche deutsche Stadt ist besonders für ihren Karneval berühmt?",["Köln","Leipzig","Kiel","Rostock"],[0]],
+    ["Welches deutsche Brettspiel wurde international besonders erfolgreich?",["Die Siedler von Catan","Monopoly","Scrabble","Risiko"],[0]],
+    ["In welchem deutschen Mittelgebirge liegt der Brocken?",["Harz","Schwarzwald","Erzgebirge","Alpen"],[0]],
+    ["Welche Farben zeigt die Flagge der Hansestadt Hamburg überwiegend?",["Rot-Weiß","Blau-Gelb","Grün-Weiß","Schwarz-Gold"],[0]],
+    ["Welcher Bundestrainer holte 2014 den WM-Titel für Deutschland?",["Joachim Löw","Jürgen Klinsmann","Rudi Völler","Berti Vogts"],[0]],
   ];
 
   function bankQuiz() {
@@ -503,5 +670,10 @@ const ExerciseData = (function () {
     return CATEGORIES.find((c) => c.id === id);
   }
 
-  return { CATEGORIES, getCategory };
+  // Rein deutsche Wort-Synonym-Paare fürs Memory-Spiel (kein Englisch)
+  function getSynonymPairs() {
+    return SYNONYME.map(([word, synonym]) => [word, synonym]);
+  }
+
+  return { CATEGORIES, getCategory, getSynonymPairs };
 })();

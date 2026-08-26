@@ -107,6 +107,31 @@ const VocabData = (function () {
     },
   ];
 
+  // Kompass — kleine Auswahl beliebter Redewendungen (Kurzüberblick;
+  // die vollständigen 30 mit Multiple-Choice-Abfrage stecken in der Übungskategorie "Redewendungen")
+  const REDEWENDUNGEN_KURZ = [
+    { phrase: "Da liegt der Hund begraben.", explain: "Das ist der eigentliche Grund für ein Problem.", example: "Ah, da liegt also der Hund begraben!" },
+    { phrase: "Die Daumen drücken.", explain: "Jemandem Glück wünschen.", example: "Ich drück dir die Daumen für die Prüfung." },
+    { phrase: "Ins kalte Wasser springen.", explain: "Etwas Neues ohne viel Vorbereitung wagen.", example: "Beim neuen Job bin ich einfach ins kalte Wasser gesprungen." },
+    { phrase: "Die Nase voll haben.", explain: "Von etwas genervt sein.", example: "Ich hab die Nase voll von dem Regen." },
+    { phrase: "Schwein haben.", explain: "Glück haben.", example: "Da hast du aber Schwein gehabt!" },
+    { phrase: "Kein Blatt vor den Mund nehmen.", explain: "Offen und direkt seine Meinung sagen.", example: "Sie nimmt nie ein Blatt vor den Mund." },
+  ];
+
+  // Kompass — Umgangssprache & Jugendsprache
+  const JUGENDSPRACHE = [
+    { word: "chillen", explain: "sich entspannen, nichts tun", example: "Lass uns heute einfach chillen." },
+    { word: "Digga / Alter", explain: "lockere, freundschaftliche Anrede", example: "Was geht, Digga?" },
+    { word: "Bock haben (auf)", explain: "Lust haben auf etwas", example: "Ich hab keinen Bock auf Hausaufgaben." },
+    { word: "flexen", explain: "mit etwas angeben, protzen", example: "Er flext mit seinem neuen Handy." },
+    { word: "krass", explain: "beeindruckend oder heftig (positiv wie negativ)", example: "Das war echt krass, dieser Film!" },
+    { word: "läuft bei dir", explain: "anerkennende Reaktion auf etwas Gutes", example: "Neuer Job? Läuft bei dir!" },
+    { word: "cringe", explain: "fremdschämen, unangenehm peinlich", example: "Der Auftritt war so cringe." },
+    { word: "Babo", explain: "der Chef, die Anführerin/der Anführer", example: "Sie ist die Babo in der Gruppe." },
+    { word: "auf jeden (Fall)", explain: "klare Zustimmung", example: "Kommst du mit? – Auf jeden!" },
+    { word: "sus", explain: "verdächtig, komisch (aus dem Spiel Among Us)", example: "Der Typ ist voll sus." },
+  ];
+
   const LINKS = [
     { title: "Duden", url: "https://www.duden.de", desc: "Rechtschreibung, Grammatik & Bedeutungen nachschlagen." },
     { title: "DWDS", url: "https://www.dwds.de", desc: "Digitales Wörterbuch der deutschen Sprache." },
@@ -114,5 +139,5 @@ const VocabData = (function () {
     { title: "Deutsche Welle – Deutsch lernen", url: "https://www.dw.com/de/deutsch-lernen/s-2055", desc: "Kostenlose Kurse, Podcasts & Nachrichten in einfacher Sprache." },
   ];
 
-  return { WORDS, PARTIKELN, MATERIALS, LINKS };
+  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS };
 })();

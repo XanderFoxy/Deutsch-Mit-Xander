@@ -355,8 +355,61 @@
   color: var(--cream-50);
 }
 .memory-card.hidden-face { background: linear-gradient(135deg, var(--plum-700), var(--plum-800)); color: transparent; }
-.memory-card.matched { border-color: var(--teal-400); opacity: 0.45; }
+.memory-card.matched {
+  border-color: var(--teal-400);
+  background: color-mix(in srgb, var(--teal-400) 22%, var(--plum-800));
+  color: var(--teal-400);
+  opacity: 0.65;
+}
+.memory-card.wrong-flash {
+  border-color: var(--coral-400);
+  background: color-mix(in srgb, var(--coral-400) 22%, var(--plum-800));
+  color: var(--coral-400);
+}
 .memory-status { margin-top: var(--space-4); font-family: var(--font-mono); font-size: 0.8rem; color: var(--teal-400); }
+
+/* ---------- Kompass (Wegweiser + offene Karten) ---------- */
+.wegweiser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--space-5);
+}
+.wegweiser-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--plum-700);
+  color: var(--cream-50);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.wegweiser-item span { font-size: 1.1rem; }
+
+.kompass-heading {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: 1.05rem;
+  scroll-margin-top: 140px;
+}
+.kompass-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) { .kompass-grid { grid-template-columns: 1fr 1fr; } }
+
+.kompass-card {
+  background: var(--plum-800);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+.kompass-word { font-family: var(--font-display); font-weight: 700; font-size: 0.98rem; }
+.kompass-explain { font-size: 0.85rem; color: var(--cream-200); margin-top: 4px; }
+.kompass-example { font-size: 0.82rem; font-style: italic; margin-top: 6px; color: var(--teal-400); }
 
 /* ---------- Kompass (Akkordeon) ---------- */
 .accordion-item {

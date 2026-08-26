@@ -43,7 +43,7 @@
       <span aria-hidden="true">👤</span><span class="btn-label" id="loginBtnLabel">Anmelden</span>
     </button>
     <a class="btn btn-coffee" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener">
-      <span aria-hidden="true">☕</span><span class="btn-label">Kaffee</span>
+      <span aria-hidden="true">☕</span><span class="btn-label">Unterstützen</span>
     </a>
   </div>
 </header>
@@ -75,11 +75,6 @@
           </div>
         </div>
       </div>
-    </div>
-    <div class="stat-strip">
-      <div class="stat-piece"><div class="n">10</div><div class="l">Kategorien</div></div>
-      <div class="stat-piece"><div class="n">300+</div><div class="l">Vokabeln</div></div>
-      <div class="stat-piece"><div class="n">0€</div><div class="l">Kostenlos</div></div>
     </div>
   </section>
 
@@ -120,6 +115,27 @@
     <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
   </section>
 
+  <!-- IMPRESSUM ==================================================== -->
+  <section class="view" id="view-impressum" data-active="false">
+    <p class="eyebrow">Rechtliches</p>
+    <div class="about-card about-card-compact" style="display:block;">
+      <h2>Impressum</h2>
+      <p class="about-text-short" style="margin-top:10px;">
+        <strong>⚠️ Noch auszufüllen:</strong> Als Betreiber dieser Seite bist du in Deutschland
+        gesetzlich verpflichtet, hier deine Kontaktdaten anzugeben (§ 5 TMG / § 18 MStV).
+      </p>
+      <p class="about-text-short">
+        Angaben gemäß § 5 TMG:<br>
+        [Dein vollständiger Name]<br>
+        [Deine Anschrift: Straße, PLZ, Ort]<br><br>
+        Kontakt:<br>
+        E-Mail: [deine@email.de]<br><br>
+        Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:<br>
+        [Dein Name, Anschrift wie oben]
+      </p>
+    </div>
+  </section>
+
   <!-- PROFIL & RANG =============================================== -->
   <section class="view" id="view-profile" data-active="false">
     <p class="eyebrow">Track 04 — Profil &amp; Rang</p>
@@ -139,7 +155,7 @@
 
 </main>
 
-<footer>Deutsch mit Alex · alle Phasen zusammengeführt</footer>
+<footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a></footer>
 
 <script src="core.js"></script>
 <script src="supabase-config.js"></script>

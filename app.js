@@ -17,6 +17,15 @@
   const initial = window.location.hash?.replace("#", "");
   if (initial && document.getElementById(initial)) activateTab(initial);
 
+  const impressumLink = document.getElementById("impressumLink");
+  if (impressumLink) {
+    impressumLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      activateTab("view-impressum");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
   /* ============ Generische Sub-Navigation ============ */
   function wireSubnav(navId) {
     const nav = document.getElementById(navId);
@@ -41,6 +50,8 @@
     { id: "flickenteppich", name: "Flickenteppich", emoji: "🧵", desc: "Kräftige Patchwork-Farben, dicke verspielte Outlines." },
     { id: "wollknaeuel", name: "Wollknäuel", emoji: "🧶", desc: "Kuschelig-gestrickt, warme Herbstfarben." },
     { id: "papierfalz", name: "Papierfalz", emoji: "🕊️", desc: "Ruhig, gefaltetes Papier, gedeckte Erdtöne." },
+    { id: "nachtflicken", name: "Nachtflicken", emoji: "🦇", desc: "Dunkel & verspielt, Neon-Filzpatches auf tiefem Lila." },
+    { id: "kirmes", name: "Kirmes", emoji: "🎡", desc: "Bunt & fröhlich wie ein deutscher Jahrmarkt." },
   ];
   let sessionTheme = "bastelheft";
 
@@ -119,7 +130,6 @@
     resultsEl.style.display = "none";
 
     const cards = ExerciseData.CATEGORIES.map((cat) => {
-      const poolSize = cat.getBank().length;
       return `
         <div class="category-card" data-cat="${cat.id}">
           <div class="cat-checkbox">${selectedCategories.has(cat.id) ? "✓" : ""}</div>
@@ -131,7 +141,6 @@
               <button type="button" class="cat-collapse-btn" data-collapse="${cat.id}" aria-label="Einklappen">▾</button>
             </div>
             <div class="cat-info-text" id="info-${cat.id}">${cat.info}</div>
-            <div class="cat-pool-note">${poolSize} Beispiele im Pool</div>
           </div>
         </div>`;
     }).join("");
@@ -336,25 +345,32 @@
   const memoryArea = document.getElementById("memoryArea");
   let memoryState = null;
 
+  const MEMORY_PAIR_COUNT = 6; // 12 Karten -> passt ohne Scrollen aufs Handy
+
   function newMemoryGame() {
-    const pairs = Core.drawUnique(VocabData.WORDS, 8);
+    const pairs = Core.drawUnique(ExerciseData.getSynonymPairs(), MEMORY_PAIR_COUNT);
     let cards = [];
     pairs.forEach((p, i) => {
-      cards.push({ id: `${i}-de`, pairId: i, label: p.word });
-      cards.push({ id: `${i}-en`, pairId: i, label: p.en });
+      cards.push({ id: `${i}-a`, pairId: i, label: p[0] });
+      cards.push({ id: `${i}-b`, pairId: i, label: p[1] });
     });
     cards = Core.shuffle(cards);
-    memoryState = { cards, flipped: [], matched: new Set(), moves: 0 };
+    memoryState = { cards, flipped: [], matched: new Set(), moves: 0, wrongFlash: [] };
     renderMemory();
   }
 
   function renderMemory() {
     memoryArea.innerHTML = `
-      <p class="empty-note">Finde die passenden Deutsch-Englisch-Paare.</p>
+      <p class="empty-note">Finde die deutschen Wortpaare mit gleicher Bedeutung.</p>
       <div class="memory-grid" id="memoryGrid">
         ${memoryState.cards.map((c) => {
           const isOpen = memoryState.flipped.includes(c.id) || memoryState.matched.has(c.pairId);
-          return `<button type="button" class="memory-card ${isOpen ? "" : "hidden-face"} ${memoryState.matched.has(c.pairId) ? "matched" : ""}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? c.label : "?"}</button>`;
+          const isWrong = memoryState.wrongFlash.includes(c.id);
+          const cls = ["memory-card"];
+          if (!isOpen) cls.push("hidden-face");
+          if (memoryState.matched.has(c.pairId)) cls.push("matched");
+          if (isWrong) cls.push("wrong-flash");
+          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? c.label : "?"}</button>`;
         }).join("")}
       </div>
       <p class="memory-status">Züge: ${memoryState.moves} · Gefunden: ${memoryState.matched.size} / ${memoryState.cards.length / 2}</p>
@@ -381,10 +397,13 @@
         memoryState.flipped = [];
         renderMemory();
       } else {
+        memoryState.wrongFlash = [a, b];
+        renderMemory();
         setTimeout(() => {
           memoryState.flipped = [];
+          memoryState.wrongFlash = [];
           renderMemory();
-        }, 900);
+        }, 700);
       }
     }
   }
@@ -394,14 +413,32 @@
      KOMPASS
      ============================================================ */
   const kompassArea = document.getElementById("kompassArea");
-  kompassArea.innerHTML = VocabData.PARTIKELN.map((p, i) => `
-    <div class="accordion-item">
-      <button type="button" class="accordion-head" data-acc="${i}">„${p.word}" <span>▾</span></button>
-      <div class="accordion-body" id="acc-${i}"><p>${p.explain}</p><p><em>„${p.example}"</em></p></div>
-    </div>`).join("");
-  kompassArea.querySelectorAll(".accordion-head").forEach((btn) => {
-    btn.addEventListener("click", () => document.getElementById(`acc-${btn.dataset.acc}`).classList.toggle("open"));
-  });
+
+  function kompassCard(title, explain, example) {
+    return `<div class="kompass-card">
+      <div class="kompass-word">„${title}"</div>
+      <div class="kompass-explain">${explain}</div>
+      <div class="kompass-example">„${example}"</div>
+    </div>`;
+  }
+
+  kompassArea.innerHTML = `
+    <div class="wegweiser">
+      <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
+      <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
+      <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
+    </div>
+
+    <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
+    <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
+    <div class="kompass-grid">${VocabData.REDEWENDUNGEN_KURZ.map((r) => kompassCard(r.phrase, r.explain, r.example)).join("")}</div>
+
+    <h3 id="kompass-jugendsprache" class="kompass-heading">🗣️ Umgangssprache &amp; Jugendslang</h3>
+    <div class="kompass-grid">${VocabData.JUGENDSPRACHE.map((j) => kompassCard(j.word, j.explain, j.example)).join("")}</div>
+
+    <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
+    <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example)).join("")}</div>
+  `;
 
   /* ============================================================
      MATERIALIEN & LINKS
@@ -565,6 +602,12 @@
           <div class="premium-item"><span>🎧 Alex' Aussprache-Aufnahmen</span><span class="${isPremium ? "unlock-tag" : "lock-tag"}">${isPremium ? "freigeschaltet" : "gesperrt"}</span></div>
           <div class="premium-item"><span>🗓️ Wöchentliche Bonus-Quizrunde</span><span class="${isPremium ? "unlock-tag" : "lock-tag"}">${isPremium ? "freigeschaltet" : "gesperrt"}</span></div>
         </div>
+        <p class="empty-note" style="margin-top:14px;">
+          ⚠️ Diese drei Punkte sind aktuell nur Platzhalter-Beispiele, noch keine echten Dateien.
+          Um z. B. ein PDF anzubieten: Datei im Repo in einen neuen Ordner <code>/materials/</code> hochladen
+          und hier im Code (<code>app.js</code>, Funktion <code>renderPremium</code>) mit
+          <code>&lt;a href="materials/deine-datei.pdf"&gt;</code> verlinken.
+        </p>
       </div>
     `;
     const demoBtn = document.getElementById("demoUnlock");

@@ -96,8 +96,55 @@
   --logo-emoji: "🕊️"; --logo-shape: 8px; --logo-bg: #7CA6C4;
 }
 
+/* ---------- 5) NACHTFLICKEN — dunkel & verspielt, Neon-Filzpatches ---------- */
+[data-theme="nachtflicken"] {
+  --plum-950: #1B1620;
+  --plum-800: #241E2B;
+  --plum-700: #2E2738;
+  --cream-50: #F5EFE4;
+  --cream-200: #B8AFC2;
+  --amber-400: #E85CA0;
+  --amber-300: #F080B8;
+  --teal-400: #57E0C7;
+  --coral-400: #F2B84B;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 26px rgba(0,0,0,0.5);
+  --card-border: 2px dashed rgba(245,239,228,0.18);
+  --card-shadow-extra: none;
+  --logo-emoji: "🦇"; --logo-shape: 50%; --logo-bg: #E85CA0;
+}
+[data-theme="nachtflicken"] body {
+  background-image: radial-gradient(rgba(245,239,228,0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* ---------- 6) KIRMES — bunt, typisch deutsches Jahrmarkt-Gefühl ---------- */
+[data-theme="kirmes"] {
+  --plum-950: #FFF8E7;
+  --plum-800: #FFFFFF;
+  --plum-700: #FDEFC7;
+  --cream-50: #2B2013;
+  --cream-200: #8A7A54;
+  --amber-400: #F2B705;
+  --amber-300: #F6CB3E;
+  --teal-400: #457B9D;
+  --coral-400: #E63946;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 24px rgba(43,32,19,0.12);
+  --card-border: 2.5px solid #2B2013;
+  --card-shadow-extra: none;
+  --logo-emoji: "🎡"; --logo-shape: 50%; --logo-bg: #E63946;
+}
+
 /* Deko-Details, die pro Theme leicht variieren */
 [data-theme="bastelheft"] .tape-piece { background: rgba(255, 216, 115, 0.85); }
+[data-theme="bastelheft"] .tape-piece { display: block; }
 [data-theme="flickenteppich"] .tape-piece,
 [data-theme="wollknaeuel"] .tape-piece,
-[data-theme="papierfalz"] .tape-piece { display: none; }
+[data-theme="papierfalz"] .tape-piece,
+[data-theme="nachtflicken"] .tape-piece,
+[data-theme="kirmes"] .tape-piece { display: none; }
