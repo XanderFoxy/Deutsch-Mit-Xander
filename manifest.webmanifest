@@ -1,0 +1,25 @@
+{
+  "name": "Deutsch mit Alex",
+  "short_name": "Dt. mit Alex",
+  "description": "Deutsch üben, Vokabeln lernen und Deutschland entdecken — locker und spaßig.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1c1320",
+  "theme_color": "#1c1320",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Deutsch mit Alex</title>
+<meta name="description" content="Deutsch mit Alex — Grammatik üben, Vokabeln lernen und Deutschland entdecken. Locker, spaßig, kostenlos." />
+<meta name="theme-color" content="#1c1320" />
+
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="app-styles.css" />
+
+<!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="2" y="10" width="36" height="20" rx="4" fill="#3a2740" stroke="#f2b84b" stroke-width="1.5"/>
+      <circle class="reel reel-a" cx="13" cy="20" r="6" fill="#1c1320" stroke="#57c7ae" stroke-width="1.5"/>
+      <circle cx="13" cy="20" r="1.6" fill="#57c7ae"/>
+      <circle class="reel reel-b" cx="27" cy="20" r="6" fill="#1c1320" stroke="#57c7ae" stroke-width="1.5"/>
+      <circle cx="27" cy="20" r="1.6" fill="#57c7ae"/>
+      <rect x="17" y="24" width="6" height="3" rx="1" fill="#f2b84b"/>
+    </svg>
+    <span class="brand-name">Deutsch mit <span>Alex</span></span>
+  </div>
+
+  <div class="deck-display" id="deckDisplay">
+    <span id="clockOut">--:--</span>
+    <span class="divider"></span>
+    <span class="weather-icon" id="weatherIcon">⛅</span>
+    <span id="weatherOut">— °C</span>
+  </div>
+
+  <div class="header-spacer"></div>
+
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-icon-only" type="button" id="loginBtn" aria-label="Profil">
+      <span aria-hidden="true">👤</span><span class="btn-label" id="loginBtnLabel">Anmelden</span>
+    </button>
+    <a class="btn btn-coffee" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener">
+      <span aria-hidden="true">☕</span><span class="btn-label">Kaffee</span>
+    </a>
+  </div>
+</header>
+
+<nav class="tape-nav" aria-label="Hauptnavigation">
+  <button class="tape-tab" data-target="view-about" aria-selected="true" type="button"><span class="dot"></span>Über mich</button>
+  <button class="tape-tab" data-target="view-learn" aria-selected="false" type="button"><span class="dot"></span>Lernen</button>
+  <button class="tape-tab" data-target="view-knowledge" aria-selected="false" type="button"><span class="dot"></span>Wissen</button>
+  <button class="tape-tab" data-target="view-profile" aria-selected="false" type="button"><span class="dot"></span>Profil &amp; Rang</button>
+</nav>
+
+<main>
+
+  <!-- ÜBER MICH ================================================= -->
+  <section class="view" id="view-about" data-active="true">
+    <p class="eyebrow">Track 01 — Über mich</p>
+    <div class="about-card">
+      <div class="about-top">
+        <div class="avatar-wrap">
+          <img src="https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" />
+        </div>
+        <div class="about-heading">
+          <h2>Alex</h2>
+          <p class="role">46 Jahre · Musiker · Deutschlehrer aus Leidenschaft</p>
+        </div>
+      </div>
+      <div class="about-text">
+        <p>Hey, schön, dass du hier bist! Ich bin Alex — hauptberuflich mache ich Musik, nebenbei erkläre ich seit Jahren gerne, warum "der Käse" und nicht "die Käse" heißt und wieso "wenn" und "als" nicht dasselbe sind. Diese Seite ist mein Mixtape für alle, die Deutsch spielerisch üben wollen.</p>
+        <p>Übe Grammatik in kurzen Runden, sammle Punkte und Abzeichen, tritt im Tagesranking an, und wenn du Lust hast, schau bei meiner Musik auf YouTube oder TikTok vorbei. Und falls dir die Seite hilft: Ein virtueller Kaffee hält mich beim nächsten Update wach. ☕</p>
+      </div>
+      <div class="about-links">
+        <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener">▶️ YouTube</a>
+        <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener">🎵 TikTok</a>
+        <a class="link-chip disabled" href="#" aria-disabled="true" title="Kommt bald">🎁 Wunschliste (bald)</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- LERNEN ===================================================== -->
+  <section class="view" id="view-learn" data-active="false">
+    <p class="eyebrow">Track 02 — Lernen</p>
+    <div class="subnav" id="learnSubnav">
+      <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
+      <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false">🗂️ Vokabeltrainer</button>
+      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory</button>
+    </div>
+
+    <div class="subview" id="sub-exercises" data-active="true">
+      <div id="exerciseSetup"></div>
+      <div id="exercisePlay" style="display:none;"></div>
+      <div id="exerciseResults" style="display:none;"></div>
+    </div>
+
+    <div class="subview" id="sub-vocab" data-active="false">
+      <div id="vocabArea"></div>
+    </div>
+
+    <div class="subview" id="sub-memory" data-active="false">
+      <div id="memoryArea"></div>
+    </div>
+  </section>
+
+  <!-- WISSEN ====================================================== -->
+  <section class="view" id="view-knowledge" data-active="false">
+    <p class="eyebrow">Track 03 — Wissen</p>
+    <div class="subnav" id="knowledgeSubnav">
+      <button class="subnav-pill" data-sub="sub-kompass" aria-selected="true">🧭 Kompass</button>
+      <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
+      <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
+    </div>
+    <div class="subview" id="sub-kompass" data-active="true"><div id="kompassArea"></div></div>
+    <div class="subview" id="sub-materials" data-active="false"><div id="materialsArea"></div></div>
+    <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
+  </section>
+
+  <!-- PROFIL & RANG =============================================== -->
+  <section class="view" id="view-profile" data-active="false">
+    <p class="eyebrow">Track 04 — Profil &amp; Rang</p>
+    <div class="subnav" id="profileSubnav">
+      <button class="subnav-pill" data-sub="sub-account" aria-selected="true">👤 Profil</button>
+      <button class="subnav-pill" data-sub="sub-ranking" aria-selected="false">🏆 Ranking</button>
+      <button class="subnav-pill" data-sub="sub-guestbook" aria-selected="false">📖 Gästebuch</button>
+      <button class="subnav-pill" data-sub="sub-premium" aria-selected="false">✨ Premium</button>
+    </div>
+    <div class="subview" id="sub-account" data-active="true"><div id="accountArea"></div></div>
+    <div class="subview" id="sub-ranking" data-active="false"><div id="rankingArea"></div></div>
+    <div class="subview" id="sub-guestbook" data-active="false"><div id="guestbookArea"></div></div>
+    <div class="subview" id="sub-premium" data-active="false"><div id="premiumArea"></div></div>
+  </section>
+
+</main>
+
+<footer>Deutsch mit Alex · alle Phasen zusammengeführt</footer>
+
+<script src="core.js"></script>
+<script src="supabase-config.js"></script>
+<script src="data-exercises.js"></script>
+<script src="data-vocab.js"></script>
+<script src="backend.js"></script>
+<script src="quiz.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
