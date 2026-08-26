@@ -103,22 +103,48 @@
     if (hourHand) hourHand.style.transform = `rotate(${h * 30 + m * 0.5}deg)`;
     if (minuteHand) minuteHand.style.transform = `rotate(${m * 6}deg)`;
     if (clockOut) clockOut.textContent = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(now);
-    updateDaytimeSky(berlin.getHours());
+    updateDaytimeSky(berlin.getHours() * 60 + berlin.getMinutes());
   }
-  updateClock();
-  setInterval(updateClock, 15000);
 
-  // Tageszeiten-Himmel: nacht · dämmerung (morgens) · tag · dämmerung (abends)
-  function updateDaytimeSky(hour) {
+  // Tageszeiten-Himmel: verläuft fließend über den ganzen Tag statt harter Umschaltpunkte
+  const SKY_STOPS = [
+    { t: 0,    top: [12,16,36],  bottom: [27,32,68],   text: [207,224,255], dark: 1 },
+    { t: 330,  top: [12,16,36],  bottom: [27,32,68],   text: [207,224,255], dark: 1 },   // 05:30 noch Nacht
+    { t: 420,  top: [247,185,140], bottom: [234,246,255], text: [122,61,22], dark: 0.35 }, // 07:00 Dämmerung
+    { t: 540,  top: [143,197,240], bottom: [234,246,255], text: [12,74,114], dark: 0 },   // 09:00 Tag
+    { t: 1020, top: [143,197,240], bottom: [234,246,255], text: [12,74,114], dark: 0 },   // 17:00 noch Tag
+    { t: 1140, top: [107,74,138],  bottom: [232,135,95], text: [255,243,230], dark: 0.55 }, // 19:00 Abenddämmerung
+    { t: 1290, top: [27,32,68],   bottom: [58,47,90],   text: [207,224,255], dark: 0.9 }, // 21:30 wird Nacht
+    { t: 1439, top: [12,16,36],  bottom: [27,32,68],   text: [207,224,255], dark: 1 },
+  ];
+  function lerp(a, b, f) { return a + (b - a) * f; }
+  function lerpColor(a, b, f) {
+    return [Math.round(lerp(a[0], b[0], f)), Math.round(lerp(a[1], b[1], f)), Math.round(lerp(a[2], b[2], f))];
+  }
+  function updateDaytimeSky(minutes) {
     const bar = document.getElementById("deckDisplay");
     if (!bar) return;
-    let phase;
-    if (hour >= 22 || hour < 6) phase = "night";
-    else if (hour < 8) phase = "dawn";
-    else if (hour < 18) phase = "day";
-    else phase = "dusk";
-    bar.setAttribute("data-daytime", phase);
+    let a = SKY_STOPS[0], b = SKY_STOPS[SKY_STOPS.length - 1];
+    for (let i = 0; i < SKY_STOPS.length - 1; i++) {
+      if (minutes >= SKY_STOPS[i].t && minutes <= SKY_STOPS[i + 1].t) {
+        a = SKY_STOPS[i]; b = SKY_STOPS[i + 1];
+        break;
+      }
+    }
+    const span = b.t - a.t || 1;
+    const f = Core.clamp((minutes - a.t) / span, 0, 1);
+    const top = lerpColor(a.top, b.top, f);
+    const bottom = lerpColor(a.bottom, b.bottom, f);
+    const text = lerpColor(a.text, b.text, f);
+    const dark = lerp(a.dark, b.dark, f);
+    bar.style.background = `linear-gradient(180deg, rgb(${top.join(",")}), rgb(${bottom.join(",")}))`;
+    bar.style.color = `rgb(${text.join(",")})`;
+    const stars = document.getElementById("starsLayer");
+    if (stars) stars.style.opacity = Math.max(0, (dark - 0.6) / 0.4);
   }
+
+  updateClock();
+  setInterval(updateClock, 15000);
 
   /* ============ Feiertage & Geburtstag ============ */
   const GERMAN_HOLIDAYS = {
@@ -159,6 +185,10 @@
     const items = await Backend.getActivity();
     if (items.length) {
       track.textContent = items.map((a) => `• ${a.text}`).join("   ");
+      // Safari/iOS startet die CSS-Animation nach Textänderung sonst nicht neu -> Reflow erzwingen
+      track.style.animation = "none";
+      void track.offsetHeight;
+      track.style.animation = "";
     }
   }
   const tickerToggle = document.getElementById("tickerToggle");
@@ -212,7 +242,9 @@
   let selectedDifficulty = "leicht";
   let orderMode = "mixed"; // 'mixed' | 'sequential'
 
-  function renderSetup() {
+  let selectedChallengeFriendId = "";
+
+  async function renderSetup() {
     setupEl.style.display = "";
     playEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -243,6 +275,17 @@
 
     const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories]) : 0;
 
+    const isLoggedIn = Boolean(Backend.currentUser());
+    const friends = isLoggedIn ? await Backend.getFriends() : [];
+    const challengeBar = friends.length ? `
+      <div class="setup-bar" style="margin-top:10px;">
+        <label for="challengeFriendSelect" style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freund herausfordern</label>
+        <select id="challengeFriendSelect" class="challenge-select">
+          <option value="">Kein Duell — nur für mich üben</option>
+          ${friends.map((f) => `<option value="${f.id}" ${selectedChallengeFriendId === f.id ? "selected" : ""}>${f.name}</option>`).join("")}
+        </select>
+      </div>` : "";
+
     setupEl.innerHTML = `
       ${resumeBar}
       <div class="category-grid">${cards}</div>
@@ -250,8 +293,9 @@
         <div class="diff-pills">
           ${Quiz.DIFFICULTIES.map((d) => `<button type="button" class="diff-pill" data-diff="${d.id}" aria-selected="${d.id === selectedDifficulty}" ${maxAvailable < d.count ? "disabled" : ""}>${d.label} (${d.count})</button>`).join("")}
         </div>
-        <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>Runde starten ▶</button>
+        <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>${selectedChallengeFriendId ? "Duell starten 🎮" : "Runde starten ▶"}</button>
       </div>
+      ${challengeBar}
       ${selectedCategories.size > 1 ? `
         <div class="order-toggle">
           <button type="button" class="order-pill" data-order="mixed" aria-selected="${orderMode === "mixed"}">🔀 Gemischt</button>
@@ -294,10 +338,27 @@
         renderSetup();
       });
     });
+    const challengeSelect = document.getElementById("challengeFriendSelect");
+    if (challengeSelect) {
+      challengeSelect.addEventListener("change", (e) => {
+        selectedChallengeFriendId = e.target.value;
+        renderSetup();
+      });
+    }
     const startBtn = document.getElementById("startBtn");
-    if (startBtn) startBtn.addEventListener("click", () => {
-      Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode);
+    if (startBtn) startBtn.addEventListener("click", async () => {
       const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
+      if (selectedChallengeFriendId) {
+        try {
+          const challengeId = await Backend.createChallenge(selectedChallengeFriendId, [...selectedCategories]);
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId }, orderMode);
+        } catch (err) {
+          alert(err.message || "Duell konnte nicht gestartet werden.");
+          return;
+        }
+      } else {
+        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode);
+      }
       Backend.notifyPracticing(titles);
       renderQuestion();
     });

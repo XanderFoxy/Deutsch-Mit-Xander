@@ -97,7 +97,9 @@
   padding: 2px 6px;
   border-radius: 6px;
 }
+.cat-info-btn { color: #e0483f; font-weight: 700; }
 .cat-info-btn:hover, .cat-collapse-btn:hover { background: rgba(245,239,228,0.08); color: var(--cream-50); }
+.cat-info-btn:hover { color: #ff6a5f; }
 .cat-info-text {
   margin-top: 6px;
   font-size: 0.82rem;
@@ -213,6 +215,18 @@
 }
 
 .order-toggle { display: flex; gap: 8px; margin-top: 12px; }
+
+.challenge-select {
+  margin-top: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: var(--plum-950);
+  color: var(--cream-50);
+  font-size: 0.88rem;
+  font-family: inherit;
+}
 .order-pill {
   padding: 7px 14px;
   border-radius: 999px;

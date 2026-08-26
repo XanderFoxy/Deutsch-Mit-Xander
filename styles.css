@@ -183,39 +183,19 @@ button:focus-visible,
   letter-spacing: 0.01em;
   position: relative;
   overflow: hidden;
-  transition: background 1.2s ease;
+  transition: background 2s ease, color 2s ease;
 }
 
-/* Tageszeiten-Himmel — sanfter Verlauf je nach Uhrzeit in Deutschland */
-.weather-bar[data-daytime="day"] {
-  background: linear-gradient(180deg, #8fc5f0, #eaf6ff);
-  color: #0c4a72;
-}
-.weather-bar[data-daytime="dawn"] {
-  background: linear-gradient(180deg, #f7b98c, #ffe3c2 60%, #cfe6f7);
-  color: #7a3d16;
-}
-.weather-bar[data-daytime="dusk"] {
-  background: linear-gradient(180deg, #6b4a8a, #e8875f 70%, #f7c98c);
-  color: #fff3e6;
-}
-.weather-bar[data-daytime="night"] {
-  background: linear-gradient(180deg, #0c1024, #1b2044);
-  color: #cfe0ff;
-}
-.weather-bar[data-daytime="day"] .weather-dot,
-.weather-bar[data-daytime="dawn"] .weather-dot,
-.weather-bar[data-daytime="dusk"] .weather-dot,
-.weather-bar[data-daytime="night"] .weather-dot { opacity: 0.5; }
+/* Tageszeiten-Himmel — Farbe wird fließend per JS berechnet (siehe app.js) */
+.weather-dot { opacity: 0.5; }
 
 .weather-bar .stars {
   position: absolute;
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 1s ease;
+  transition: opacity 2s ease;
 }
-.weather-bar[data-daytime="night"] .stars { opacity: 1; }
 .weather-bar .star {
   position: absolute;
   width: 2px; height: 2px;
@@ -278,6 +258,7 @@ button:focus-visible,
   flex: 1;
   overflow: hidden;
   white-space: nowrap;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 .ticker-track {
@@ -286,6 +267,9 @@ button:focus-visible,
   font-size: 0.75rem;
   color: var(--teal-400);
   padding-left: 100%;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
   animation: tickerScroll 22s linear infinite;
 }
 @keyframes tickerScroll {
