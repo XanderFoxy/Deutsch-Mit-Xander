@@ -43,7 +43,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", points: 0, badges: [], history: [], isPremium: false, theme: "bastelheft" };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft" };
   }
 
   /* ================= AUTH ================= */
@@ -57,8 +57,10 @@ const Backend = (function () {
           bio: data.bio || "",
           birthday: data.birthday || "",
           avatarUrl: data.avatar_url || "",
+          avatarEmoji: data.avatar_emoji || "",
           points: data.points || 0,
           badges: data.badges || [],
+          trophies: data.trophies || [],
           history: [],
           isPremium: Boolean(data.is_premium),
           theme: data.theme || "bastelheft",
@@ -112,8 +114,18 @@ const Backend = (function () {
       const { data, error } = await client.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirectTo } });
       if (error) throw error;
       if (!data.session) {
-        // Standardeinstellung bei Supabase: E-Mail-Bestätigung nötig, bevor man sich einloggen kann.
-        throw new Error("Fast fertig! Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir gerade geschickt haben — schau auch im Spam-Ordner. Danach kannst du dich hier anmelden.");
+        // Manche Supabase-Projekte liefern die Session verzögert, obwohl "Confirm email"
+        // eigentlich aus ist. Ein direkter Login-Versuch fängt diesen Fall ab, bevor wir
+        // die Nutzerin fälschlich zur E-Mail-Bestätigung schicken.
+        try {
+          const retry = await client.auth.signInWithPassword({ email, password });
+          if (!retry.error && retry.data.session) {
+            demo.user = { id: retry.data.user.id, email: retry.data.user.email, name };
+            demo.profile = await fetchOrCreateProfile(retry.data.user.id, retry.data.user.email, name);
+            return demo.user;
+          }
+        } catch (e) { /* fällt unten durch zur Bestätigungs-Meldung */ }
+        throw new Error("Fast fertig! Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir gerade geschickt haben — schau auch im Spam-Ordner. Kommt gar keine Mail an, ist meist das Supabase-E-Mail-Limit erreicht oder „Confirm email“ steht noch auf an (Dashboard → Authentication → Providers → Email).");
       }
       demo.user = { id: data.user.id, email: data.user.email, name };
       demo.profile = await fetchOrCreateProfile(data.user.id, data.user.email, name);
@@ -352,7 +364,7 @@ const Backend = (function () {
     if (!ids.length) return {};
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,points,badges,bio").in("id", ids);
+        const { data, error } = await client.from("profiles").select("id,name,points,badges,trophies,bio,avatar_url,avatar_emoji,last_active").in("id", ids);
         if (!error && data) return Object.fromEntries(data.map((p) => [p.id, p]));
       } catch (e) {
         console.warn("Profile konnten nicht geladen werden:", e);
@@ -364,8 +376,22 @@ const Backend = (function () {
       name: (demo.users[email] && demo.users[email].profile.name) || email,
       points: (demo.users[email] && demo.users[email].profile.points) || 0,
       badges: (demo.users[email] && demo.users[email].profile.badges) || [],
+      trophies: (demo.users[email] && demo.users[email].profile.trophies) || [],
       bio: (demo.users[email] && demo.users[email].profile.bio) || "",
+      avatar_emoji: (demo.users[email] && demo.users[email].profile.avatarEmoji) || "",
     }]));
+  }
+
+  function isRecentlyActive(lastActive) {
+    if (!lastActive) return false;
+    return Date.now() - new Date(lastActive).getTime() < 90 * 1000;
+  }
+
+  function touchActivity() {
+    if (client && demo.user) {
+      client.from("profiles").update({ last_active: new Date().toISOString() }).eq("id", demo.user.id)
+        .then(() => {}, () => {});
+    }
   }
 
   function saveBio(bio) {
@@ -375,6 +401,17 @@ const Backend = (function () {
       client.from("profiles").update({ bio }).eq("id", demo.user.id)
         .then(() => {}, (e) => console.warn("Profiltext konnte nicht gespeichert werden:", e));
     }
+  }
+
+  function addTrophy(label) {
+    if (!demo.profile) return false;
+    if (demo.profile.trophies.includes(label)) return false;
+    demo.profile.trophies.push(label);
+    if (client && demo.user) {
+      client.from("profiles").update({ trophies: demo.profile.trophies }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Trophäe konnte nicht gespeichert werden:", e));
+    }
+    return true;
   }
 
   function saveBirthday(birthday) {
@@ -390,12 +427,28 @@ const Backend = (function () {
     if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
     const path = `${demo.user.id}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
-    if (uploadError) throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    if (uploadError) {
+      if (uploadError.message && uploadError.message.toLowerCase().includes("bucket not found")) {
+        throw new Error("Der Speicherort für Fotos fehlt noch — in Supabase unter Storage einen Bucket namens „avatars“ (öffentlich) anlegen (siehe README, Abschnitt 4b). Bis dahin kannst du unten ein Emoji als Profilbild wählen.");
+      }
+      throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    }
     const { data } = client.storage.from("avatars").getPublicUrl(path);
     const url = data.publicUrl;
-    await client.from("profiles").update({ avatar_url: url }).eq("id", demo.user.id);
+    await client.from("profiles").update({ avatar_url: url, avatar_emoji: null }).eq("id", demo.user.id);
     demo.profile.avatarUrl = url;
+    demo.profile.avatarEmoji = "";
     return url;
+  }
+
+  function saveAvatarEmoji(emoji) {
+    if (!demo.profile) return;
+    demo.profile.avatarEmoji = emoji;
+    demo.profile.avatarUrl = "";
+    if (client && demo.user) {
+      client.from("profiles").update({ avatar_emoji: emoji, avatar_url: "" }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Emoji-Avatar konnte nicht gespeichert werden:", e));
+    }
   }
 
   async function getRecentMembers() {
@@ -448,7 +501,9 @@ const Backend = (function () {
         name: (names[id] && names[id].name) || id,
         points: (names[id] && names[id].points) || 0,
         badges: (names[id] && names[id].badges) || [],
+        trophies: (names[id] && names[id].trophies) || [],
         bio: (names[id] && names[id].bio) || "",
+        online: names[id] ? isRecentlyActive(names[id].last_active) : false,
       }));
     }
     return demo.friends
@@ -623,5 +678,8 @@ const Backend = (function () {
     saveBirthday,
     uploadAvatar,
     getRecentMembers,
+    saveAvatarEmoji,
+    addTrophy,
+    touchActivity,
   };
 })();

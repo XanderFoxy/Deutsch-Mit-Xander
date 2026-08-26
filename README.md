@@ -79,9 +79,10 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
 
    create table profiles (
      id uuid references auth.users primary key,
-     name text, points int default 0, badges text[] default '{}',
+     name text, points int default 0, badges text[] default '{}', trophies text[] default '{}',
      is_premium boolean default false, theme text default 'bastelheft', bio text default '',
-     birthday text default '', avatar_url text default '', created_at timestamptz default now()
+     birthday text default '', avatar_url text default '', avatar_emoji text default '',
+     last_active timestamptz, created_at timestamptz default now()
    );
 
    create table friends (

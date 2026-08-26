@@ -66,9 +66,14 @@ const Quiz = (function () {
       index: 0,
       answers: [],
       startedAt: Date.now(),
+      questionShownAt: Date.now(),
       meta: meta || null,
     };
     return state;
+  }
+
+  function markShown() {
+    if (state) state.questionShownAt = Date.now();
   }
 
   function currentQuestion() {
@@ -84,12 +89,15 @@ const Quiz = (function () {
     const correctSet = new Set(q.correct);
     const correctSelected = selectedIndices.filter((i) => correctSet.has(i));
     const base = correctSelected.length > 0 ? 1 : 0;
-    const bonus = correctSelected.length > 1 ? correctSelected.length - 1 : 0;
+    const multiBonus = correctSelected.length > 1 ? correctSelected.length - 1 : 0;
+    const elapsedMs = state.questionShownAt ? Date.now() - state.questionShownAt : Infinity;
+    const speedBonus = base > 0 && elapsedMs < 4000 ? 1 : 0;
     const record = {
       categoryId: q.categoryId,
       selected: selectedIndices,
       base,
-      bonus,
+      bonus: multiBonus + speedBonus,
+      speedBonus,
       fullyCorrect: correctSelected.length === q.correct.length && selectedIndices.length === q.correct.length,
     };
     state.answers.push(record);
@@ -167,6 +175,7 @@ const Quiz = (function () {
     DIFFICULTIES,
     poolSizeFor,
     startSession,
+    markShown,
     currentQuestion,
     progress,
     submitAnswer,

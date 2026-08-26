@@ -128,10 +128,8 @@
     const key = `${String(berlin.getMonth() + 1).padStart(2, "0")}-${String(berlin.getDate()).padStart(2, "0")}`;
     const profile = Backend.currentProfile();
     let text = GERMAN_HOLIDAYS[key] || "";
-    if (profile && profile.birthday) {
-      const bday = profile.birthday.replace(/\s/g, "");
-      const todayDDMM = `${String(berlin.getDate()).padStart(2, "0")}.${String(berlin.getMonth() + 1).padStart(2, "0")}.`;
-      if (bday === todayDDMM || bday === todayDDMM.slice(0, -1)) {
+    if (profile && profile.birthday && /^\d{4}-\d{2}-\d{2}$/.test(profile.birthday)) {
+      if (profile.birthday.slice(5) === key) {
         text = `🎂 Alles Gute, ${profile.name.split(" ")[0]}!`;
       }
     }
@@ -225,7 +223,7 @@
           <button type="button" class="order-pill" data-order="mixed" aria-selected="${orderMode === "mixed"}">🔀 Gemischt</button>
           <button type="button" class="order-pill" data-order="sequential" aria-selected="${orderMode === "sequential"}">📶 Nacheinander</button>
         </div>` : ""}
-      ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : ""}
+      ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : '<p class="empty-note">⚡ Tipp: Antworte innerhalb von 4 Sekunden richtig für einen Tempo-Bonus.</p>'}
     `;
 
     setupEl.querySelectorAll(".category-card").forEach((card) => {
@@ -281,6 +279,7 @@
     resultsEl.style.display = "none";
     playEl.style.display = "";
     currentSelection = [];
+    Quiz.markShown();
 
     const q = Quiz.currentQuestion();
     const p = Quiz.progress();
@@ -336,6 +335,9 @@
         }
       }
       document.getElementById("explainBox").classList.add("open");
+      if (record.speedBonus > 0) {
+        document.getElementById("explainBox").insertAdjacentHTML("beforebegin", '<div class="speed-bonus-flash">⚡ Blitzschnell! +1 Tempo-Bonus</div>');
+      }
       setTimeout(() => {
         const hasMore = Quiz.advance();
         if (hasMore) renderQuestion();
@@ -387,6 +389,9 @@
       playedAt: r.playedAt,
     });
 
+    const trophyLabel = `${r.character.name} – ${r.tier.replace("Deutsch-", "")}`;
+    const newTrophy = Backend.addTrophy(trophyLabel);
+
     let challengeNote = "";
     if (r.meta && r.meta.challengeId) {
       Backend.submitChallengeResult(r.meta.challengeId, { percent: r.combinedPercent });
@@ -405,6 +410,7 @@
 
     resultsEl.innerHTML = `
       ${challengeNote}
+      ${newTrophy ? `<div class="demo-banner">🏆 Neue Trophäe freigeschaltet: „${trophyLabel}"! Zu sehen in deiner Profil-Vitrine.</div>` : ""}
       <div class="question-card results-hero">
         <div class="results-percent">${r.basePercent}%${r.bonusPercent ? ` <span class="results-bonus">(+${r.bonusPercent} Bonus)</span>` : ""}</div>
         <div class="results-tier">${r.tier}</div>
@@ -478,7 +484,7 @@
       cards.push({ id: `${i}-b`, pairId: i, label: p[1] });
     });
     cards = Core.shuffle(cards);
-    memoryState = { cards, flipped: [], matched: new Set(), seen: new Set(), moves: 0, wrongFlash: [], finished: false };
+    memoryState = { cards, flipped: [], matched: new Set(), lastSeenId: null, moves: 0, wrongFlash: [], finished: false };
     renderMemory();
   }
 
@@ -508,9 +514,15 @@
           if (!isOpen) cls.push("hidden-face");
           if (memoryState.matched.has(c.pairId)) cls.push("matched");
           if (isWrong) cls.push("wrong-flash");
-          const showHint = memoryDifficulty === "leicht" && !isOpen && memoryState.seen.has(c.id);
+          const showHint = memoryDifficulty === "leicht" && !isOpen && memoryState.lastSeenId === c.id;
+          const corners = isOpen ? `
+            <svg class="corner-flourish tl" viewBox="0 0 20 20"><path d="M2 14 Q2 2 14 2" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="2" cy="14" r="1.4" fill="currentColor"/></svg>
+            <svg class="corner-flourish tr" viewBox="0 0 20 20"><path d="M6 2 Q18 2 18 14" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="14" r="1.4" fill="currentColor"/></svg>
+            <svg class="corner-flourish bl" viewBox="0 0 20 20"><path d="M2 6 Q2 18 14 18" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="14" cy="18" r="1.4" fill="currentColor"/></svg>
+            <svg class="corner-flourish br" viewBox="0 0 20 20"><path d="M18 6 Q18 18 6 18" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="6" cy="18" r="1.4" fill="currentColor"/></svg>
+          ` : "";
           const face = isOpen
-            ? `<span>${c.label}</span>`
+            ? `${corners}<span>${c.label}</span>`
             : `<span class="fox-crest">🦊</span>${showHint ? '<span class="seen-dot"></span>' : ""}`;
           return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${face}</button>`;
         }).join("")}
@@ -541,7 +553,6 @@
     if (memoryState.flipped.includes(id)) return;
     if (memoryState.flipped.length === 2) return;
     memoryState.flipped.push(id);
-    memoryState.seen.add(id);
     renderMemory();
     if (memoryState.flipped.length === 2) {
       memoryState.moves += 1;
@@ -551,6 +562,7 @@
       if (cardA.pairId === cardB.pairId) {
         memoryState.matched.add(cardA.pairId);
         memoryState.flipped = [];
+        memoryState.lastSeenId = null;
         Core.sound.correct();
         renderMemory();
         if (memoryState.matched.size === memoryState.cards.length / 2) {
@@ -576,6 +588,7 @@
         setTimeout(() => {
           memoryState.flipped = [];
           memoryState.wrongFlash = [];
+          memoryState.lastSeenId = b; // zuletzt umgedrehte Karte -> leichte Orientierungshilfe
           if (memoryDifficulty === "schwer") {
             // Nur die noch nicht gefundenen Karten neu mischen, Position der gefundenen bleibt
             const openIdx = memoryState.cards.map((c, i) => (memoryState.matched.has(c.pairId) ? null : i)).filter((i) => i !== null);
@@ -716,6 +729,7 @@
           refreshHeaderAuth();
           renderAccount();
           updateSpecialDayBar();
+          Backend.touchActivity();
         } catch (err) {
           errBox.textContent = err.message || "Das hat leider nicht geklappt.";
         }
@@ -723,10 +737,13 @@
       return;
     }
 
+    const AVATAR_EMOJIS = ["🦊","🐱","🐶","🐼","🐨","🦁","🐸","🦉","🐧","🦄","🐢","🐝"];
     const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
     const avatarHtml = profile.avatarUrl
       ? `<img src="${profile.avatarUrl}" alt="" class="avatar-photo" />`
-      : `<div class="initials-avatar">${initials}</div>`;
+      : profile.avatarEmoji
+        ? `<div class="initials-avatar emoji-avatar">${profile.avatarEmoji}</div>`
+        : `<div class="initials-avatar">${initials}</div>`;
 
     area.innerHTML = `
       ${demoBanner}
@@ -743,6 +760,10 @@
           </div>
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
+        <div class="emoji-picker-row">
+          ${AVATAR_EMOJIS.map((e) => `<button type="button" class="emoji-pick-btn" data-emoji="${e}">${e}</button>`).join("")}
+        </div>
+        <div class="form-error" id="avatarError"></div>
         <div class="badge-row">
           ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
         </div>
@@ -752,13 +773,14 @@
         </div>
         <div class="form-field">
           <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
-          <input type="text" id="birthdayInput" placeholder="TT.MM., z. B. 24.03." value="${profile.birthday || ""}" maxlength="6" />
+          <input type="date" id="birthdayInput" value="${profile.birthday || ""}" />
         </div>
         <div class="quiz-actions" style="justify-content:flex-start;">
           <button type="button" class="btn btn-coffee" id="saveBioBtn">Speichern</button>
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
         </div>
       </div>
+      ${renderTrophyCase(profile)}
       ${await renderRecentMembers()}
       ${await renderActivityFeed()}
       ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
@@ -777,6 +799,12 @@
       document.getElementById("saveBioBtn").textContent = "Gespeichert ✓";
       updateSpecialDayBar();
     });
+    area.querySelectorAll("[data-emoji]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        Backend.saveAvatarEmoji(btn.dataset.emoji);
+        renderAccount();
+      });
+    });
     document.getElementById("avatarInput").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -786,16 +814,26 @@
         await Backend.uploadAvatar(file);
         renderAccount();
       } catch (err) {
-        alert(err.message || "Foto konnte nicht hochgeladen werden.");
+        document.getElementById("avatarError").textContent = err.message || "Foto konnte nicht hochgeladen werden. Wähl unten alternativ ein Emoji als Profilbild.";
         badge.textContent = "📷";
       }
     });
     document.querySelector(".avatar-upload-wrap").addEventListener("click", (e) => {
       if (!Backend.isConfigured) {
         e.preventDefault();
-        alert("Fotos hochladen geht erst, sobald Supabase verbunden ist (siehe README, Abschnitt „Fotos hochladen“).");
+        document.getElementById("avatarError").textContent = "Fotos hochladen geht erst, sobald Supabase verbunden ist — wähl in der Zwischenzeit gern ein Emoji als Profilbild.";
       }
     });
+  }
+
+  function renderTrophyCase(profile) {
+    if (!profile.trophies || !profile.trophies.length) return "";
+    return `<div class="breakdown-list" style="margin-top:16px;">
+      <p class="eyebrow" style="margin-top:0;">🏆 Vitrine</p>
+      <div class="badge-row" style="justify-content:flex-start;">
+        ${profile.trophies.map((t) => `<div class="badge-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}
+      </div>
+    </div>`;
   }
 
   async function renderRecentMembers() {
@@ -863,7 +901,7 @@
         ${friends.length ? friends.map((f) => `
           <div class="friend-block">
             <div class="breakdown-row">
-              <button type="button" class="friend-name-btn" data-view-friend="${f.id}">${f.name} · ${f.points} Pkt.</button>
+              <button type="button" class="friend-name-btn" data-view-friend="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.</button>
               <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
             </div>
             <div class="friend-profile-card" id="friend-profile-${f.id}" style="display:none;">
@@ -871,6 +909,7 @@
               <div class="badge-row" style="justify-content:flex-start;">
                 ${f.badges && f.badges.length ? f.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<span class="empty-note">Noch keine Abzeichen.</span>'}
               </div>
+              ${f.trophies && f.trophies.length ? `<div class="badge-row" style="justify-content:flex-start; margin-top:8px;">${f.trophies.map((t) => `<div class="badge-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}</div>` : ""}
             </div>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
       </div>
@@ -1053,4 +1092,7 @@
     applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
     updateSpecialDayBar();
   });
+
+  // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt
+  setInterval(() => { if (Backend.currentUser()) Backend.touchActivity(); }, 60000);
 })();
