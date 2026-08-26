@@ -558,41 +558,41 @@ const ExerciseData = (function () {
   }
 
   /* ---------------------------------------------------------
-     11) ß ODER SS — richtige Schreibweise erkennen
+     11) ß ODER SS — richtige Schreibweise im Satzkontext
      --------------------------------------------------------- */
   const SS_ESZETT = [
-    ["Strasse","Straße","Nach langem Vokal (hier: a) steht ß, nicht ss."],
-    ["Fuss","Fuß","Nach langem Vokal (hier: u) steht ß."],
-    ["gross","groß","Nach langem Vokal (hier: o) steht ß."],
-    ["Spass","Spaß","Nach langem Vokal (hier: a) steht ß."],
-    ["Gruss","Gruß","Nach langem Vokal (hier: u) steht ß."],
-    ["aussen","außen","Nach einem Diphthong (au) steht ß."],
-    ["heiss","heiß","Nach einem Diphthong (ei) steht ß."],
-    ["weiss","weiß","Nach einem Diphthong (ei) steht ß."],
-    ["Mass","Maß","Nach langem Vokal (hier: a) steht ß."],
-    ["bloss","bloß","Nach langem Vokal (hier: o) steht ß."],
-    ["Fuße","Füße","Nach langem Vokal (hier: ü) steht ß."],
-    ["Grüsse","Grüße","Nach langem Vokal (hier: ü) steht ß."],
-    ["stossen","stoßen","Nach langem Vokal (hier: o) steht ß."],
-    ["schliessen","schließen","Nach langem Vokal (hier: ie) steht ß."],
-    ["draussen","draußen","Nach einem Diphthong (au) steht ß."],
-    ["bißchen","bisschen","Nach kurzem Vokal (hier: i) steht ss — moderne Rechtschreibung."],
-    ["bewußt","bewusst","Nach kurzem Vokal (hier: u) steht ss — moderne Rechtschreibung."],
-    ["Kuß","Kuss","Nach kurzem Vokal (hier: u) steht ss."],
-    ["Fluß","Fluss","Nach kurzem Vokal (hier: u) steht ss."],
-    ["Nuß","Nuss","Nach kurzem Vokal (hier: u) steht ss."],
-    ["Schluß","Schluss","Nach kurzem Vokal (hier: u) steht ss."],
-    ["Prozeß","Prozess","Nach kurzem Vokal (hier: e) steht ss."],
-    ["müßen","müssen","Nach kurzem Vokal (hier: ü) steht ss."],
-    ["wißen","wissen","Nach kurzem Vokal (hier: i) steht ss."],
-    ["vergeßen","vergessen","Nach kurzem Vokal (hier: e) steht ss."],
+    ["Wir laufen die ___ entlang.","Straße","Strasse","Nach langem Vokal (a) steht ß."],
+    ["Er hat einen großen ___.","Fuß","Fuss","Nach langem Vokal (u) steht ß."],
+    ["Das Haus ist sehr ___.","groß","gross","Nach langem Vokal (o) steht ß."],
+    ["Wir hatten viel ___ im Urlaub.","Spaß","Spass","Nach langem Vokal (a) steht ß."],
+    ["Sie schickt einen herzlichen ___.","Gruß","Gruss","Nach langem Vokal (u) steht ß."],
+    ["Von ___ hört man Musik.","außen","aussen","Nach einem Diphthong (au) steht ß."],
+    ["Es ist heute sehr ___.","heiß","heiss","Nach einem Diphthong (ei) steht ß."],
+    ["Der Schnee ist ___.","weiß","weiss","Nach einem Diphthong (ei) steht ß."],
+    ["Ein ___ Bier, bitte!","Maß","Mass","Nach langem Vokal (a) steht ß."],
+    ["Das war ___ Zufall.","bloß","bloss","Nach langem Vokal (o) steht ß."],
+    ["Ich habe kalte ___.","Füße","Fuße","Nach langem Vokal (ü) steht ß."],
+    ["Herzliche ___ aus Berlin!","Grüße","Grüsse","Nach langem Vokal (ü) steht ß."],
+    ["Pass auf, nicht an die Tür zu ___!","stoßen","stossen","Nach langem Vokal (o) steht ß."],
+    ["Kannst du bitte das Fenster ___?","schließen","schliessen","Nach langem Vokal (ie) steht ß."],
+    ["Die Kinder spielen ___ im Garten.","draußen","draussen","Nach einem Diphthong (au) steht ß."],
+    ["Gib mir bitte nur ein ___.","bisschen","bißchen","Nach kurzem Vokal (i) steht ss — moderne Rechtschreibung."],
+    ["Mir ist nicht ganz ___, was er meint.","bewusst","bewußt","Nach kurzem Vokal (u) steht ss — moderne Rechtschreibung."],
+    ["Er gab ihr einen ___ auf die Wange.","Kuss","Kuß","Nach kurzem Vokal (u) steht ss."],
+    ["Der ___ führt mitten durch die Stadt.","Fluss","Fluß","Nach kurzem Vokal (u) steht ss."],
+    ["Ich hätte gern noch eine ___.","Nuss","Nuß","Nach kurzem Vokal (u) steht ss."],
+    ["Damit ist die Diskussion zum ___ gekommen.","Schluss","Schluß","Nach kurzem Vokal (u) steht ss."],
+    ["Der ___ dauerte drei Jahre.","Prozess","Prozeß","Nach kurzem Vokal (e) steht ss."],
+    ["Wir ___ heute noch früh los.","müssen","müßen","Nach kurzem Vokal (ü) steht ss."],
+    ["Wir ___ nicht genau, wann er kommt.","wissen","wißen","Nach kurzem Vokal (i) steht ss."],
+    ["Ich habe das Datum leider ___.","vergessen","vergeßen","Nach kurzem Vokal (e) steht ss."],
   ];
 
   function bankSsEszett() {
-    return Core.shuffle(SS_ESZETT).map(([wrong, correct, explain]) => {
+    return Core.shuffle(SS_ESZETT).map(([sentence, correct, wrong, explain]) => {
       const opts = Core.shuffle([correct, wrong]);
       return {
-        prompt: `Welche Schreibweise ist richtig?`,
+        prompt: sentence,
         options: opts,
         correct: [opts.indexOf(correct)],
         explain,
