@@ -35,6 +35,7 @@
 </head>
 <body>
 
+<div class="sticky-head-group">
 <header class="site-header">
   <div class="brand">
     <div class="brand-mark" id="brandMark" aria-hidden="true"></div>
@@ -69,6 +70,15 @@
   </svg>
   <span id="clockOut" class="visually-hidden">--:--</span>
   <span id="specialDayOut" class="special-day"></span>
+  <div class="stars" id="starsLayer" aria-hidden="true">
+    <span class="star" style="top:15%; left:10%; animation-delay:0s;"></span>
+    <span class="star" style="top:30%; left:25%; animation-delay:0.6s;"></span>
+    <span class="star" style="top:60%; left:15%; animation-delay:1.2s;"></span>
+    <span class="star" style="top:20%; left:70%; animation-delay:0.3s;"></span>
+    <span class="star" style="top:70%; left:80%; animation-delay:1.6s;"></span>
+    <span class="star" style="top:45%; left:90%; animation-delay:0.9s;"></span>
+    <span class="star" style="top:75%; left:45%; animation-delay:2s;"></span>
+  </div>
 </div>
 
 <div class="ticker-bar" id="tickerBar">
@@ -84,6 +94,7 @@
   <button class="tape-tab" data-target="view-knowledge" aria-selected="false" type="button"><span class="dot"></span>Wissen</button>
   <button class="tape-tab" data-target="view-profile" aria-selected="false" type="button"><span class="dot"></span>Profil &amp; Rang</button>
 </nav>
+</div>
 
 <main>
 

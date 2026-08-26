@@ -103,9 +103,22 @@
     if (hourHand) hourHand.style.transform = `rotate(${h * 30 + m * 0.5}deg)`;
     if (minuteHand) minuteHand.style.transform = `rotate(${m * 6}deg)`;
     if (clockOut) clockOut.textContent = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(now);
+    updateDaytimeSky(berlin.getHours());
   }
   updateClock();
   setInterval(updateClock, 15000);
+
+  // Tageszeiten-Himmel: nacht · dämmerung (morgens) · tag · dämmerung (abends)
+  function updateDaytimeSky(hour) {
+    const bar = document.getElementById("deckDisplay");
+    if (!bar) return;
+    let phase;
+    if (hour >= 22 || hour < 6) phase = "night";
+    else if (hour < 8) phase = "dawn";
+    else if (hour < 18) phase = "day";
+    else phase = "dusk";
+    bar.setAttribute("data-daytime", phase);
+  }
 
   /* ============ Feiertage & Geburtstag ============ */
   const GERMAN_HOLIDAYS = {

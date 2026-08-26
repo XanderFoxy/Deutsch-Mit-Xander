@@ -113,13 +113,17 @@ button:focus-visible,
 }
 
 /* =========================================================
-   HEADER — das "Deck"
+   STICKY-KOPFBEREICH — Header + Wetter + Ticker + Navigation
+   laufen als EIN Block zusammen sticky, damit beim Scrollen nie
+   etwas verrutscht oder sich gegenseitig überlappt/quetscht.
    ========================================================= */
-
-.site-header {
+.sticky-head-group {
   position: sticky;
   top: 0;
   z-index: 40;
+}
+
+.site-header {
   height: var(--header-h);
   display: flex;
   align-items: center;
@@ -165,9 +169,6 @@ button:focus-visible,
 
 /* Wetter- & Uhrzeit-Leiste — immer sichtbar, auch auf dem Handy */
 .weather-bar {
-  position: sticky;
-  top: var(--header-h);
-  z-index: 39;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,6 +181,51 @@ button:focus-visible,
   font-size: 0.8rem;
   color: var(--teal-400);
   letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+  transition: background 1.2s ease;
+}
+
+/* Tageszeiten-Himmel — sanfter Verlauf je nach Uhrzeit in Deutschland */
+.weather-bar[data-daytime="day"] {
+  background: linear-gradient(180deg, #8fc5f0, #eaf6ff);
+  color: #0c4a72;
+}
+.weather-bar[data-daytime="dawn"] {
+  background: linear-gradient(180deg, #f7b98c, #ffe3c2 60%, #cfe6f7);
+  color: #7a3d16;
+}
+.weather-bar[data-daytime="dusk"] {
+  background: linear-gradient(180deg, #6b4a8a, #e8875f 70%, #f7c98c);
+  color: #fff3e6;
+}
+.weather-bar[data-daytime="night"] {
+  background: linear-gradient(180deg, #0c1024, #1b2044);
+  color: #cfe0ff;
+}
+.weather-bar[data-daytime="day"] .weather-dot,
+.weather-bar[data-daytime="dawn"] .weather-dot,
+.weather-bar[data-daytime="dusk"] .weather-dot,
+.weather-bar[data-daytime="night"] .weather-dot { opacity: 0.5; }
+
+.weather-bar .stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+.weather-bar[data-daytime="night"] .stars { opacity: 1; }
+.weather-bar .star {
+  position: absolute;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  animation: starTwinkle 3s ease-in-out infinite;
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 1; }
 }
 
 .weather-bar .weather-icon {
@@ -210,9 +256,6 @@ button:focus-visible,
 }
 
 .ticker-bar {
-  position: sticky;
-  top: calc(var(--header-h) + var(--weather-h));
-  z-index: 38;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -323,9 +366,6 @@ button:focus-visible,
    ========================================================= */
 
 .tape-nav {
-  position: sticky;
-  top: calc(var(--header-h) + var(--weather-h) + var(--ticker-h));
-  z-index: 30;
   display: flex;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
