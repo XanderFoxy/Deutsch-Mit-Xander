@@ -74,7 +74,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
    );
 
    create table daily_ranking (
-     name text, points int, date date default current_date
+     name text, points int, date date default current_date, user_id uuid references auth.users
    );
 
    create table profiles (

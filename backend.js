@@ -208,9 +208,9 @@ const Backend = (function () {
         // Tagesranking: bestehenden Eintrag von heute für diese Person aktualisieren oder neu anlegen
         const { data: existingRow } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
         if (existingRow) {
-          await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points) }).eq("name", demo.profile.name).eq("date", todayKey());
+          await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points), user_id: demo.user.id }).eq("name", demo.profile.name).eq("date", todayKey());
         } else {
-          await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey() });
+          await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey(), user_id: demo.user.id });
         }
       } catch (e) {
         console.warn("Supabase-Speichern fehlgeschlagen, Ergebnis bleibt lokal:", e);

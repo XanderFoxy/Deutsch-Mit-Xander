@@ -227,6 +227,30 @@
   font-size: 0.88rem;
   font-family: inherit;
 }
+
+.challenge-friend-list {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 8px;
+}
+.challenge-friend-pill {
+  display: inline-flex; align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  background: var(--plum-700);
+  color: var(--cream-50);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.challenge-friend-pill.selected {
+  background: var(--amber-400);
+  border-color: transparent;
+  color: #241505;
+}
+.challenge-friend-pill.offline {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .order-pill {
   padding: 7px 14px;
   border-radius: 999px;

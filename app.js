@@ -46,14 +46,16 @@
      DESIGN / THEMES — 4 austauschbare Vorlagen
      ============================================================ */
   const THEMES = [
-    { id: "bastelheft", name: "Bastelheft", emoji: "✂️", desc: "Hell, Papier & Washi-Tape, verspielte Candyfarben." },
-    { id: "flickenteppich", name: "Flickenteppich", emoji: "🧵", desc: "Kräftige Patchwork-Farben, dicke verspielte Outlines." },
-    { id: "wollknaeuel", name: "Wollknäuel", emoji: "🧶", desc: "Kuschelig-gestrickt, warme Herbstfarben." },
-    { id: "papierfalz", name: "Papierfalz", emoji: "🕊️", desc: "Ruhig, gefaltetes Papier, gedeckte Erdtöne." },
-    { id: "nachtflicken", name: "Nachtflicken", emoji: "🦇", desc: "Dunkel & verspielt, Neon-Filzpatches auf tiefem Lila." },
-    { id: "kirmes", name: "Kirmes", emoji: "🎡", desc: "Bunt & fröhlich wie ein deutscher Jahrmarkt." },
-    { id: "wiesenblume", name: "Wiesenblume", emoji: "🌼", desc: "Sanft, pastellig, frühlingshaft-verspielt." },
-    { id: "sternennacht", name: "Sternennacht", emoji: "✨", desc: "Dunkelblau mit goldenem Funkeln, verträumt." },
+    { id: "bastelheft", name: "Bastelheft", emoji: "✂️", desc: "Hell, Papier & Washi-Tape, verspielte Candyfarben.", mode: "hell" },
+    { id: "flickenteppich", name: "Flickenteppich", emoji: "🧵", desc: "Kräftige Patchwork-Farben, dicke verspielte Outlines.", mode: "hell" },
+    { id: "wollknaeuel", name: "Wollknäuel", emoji: "🧶", desc: "Kuschelig-gestrickt, warme Herbstfarben.", mode: "hell" },
+    { id: "papierfalz", name: "Papierfalz", emoji: "🕊️", desc: "Ruhig, gefaltetes Papier, gedeckte Erdtöne.", mode: "hell" },
+    { id: "kirmes", name: "Kirmes", emoji: "🎡", desc: "Bunt & fröhlich wie ein deutscher Jahrmarkt.", mode: "hell" },
+    { id: "wiesenblume", name: "Wiesenblume", emoji: "🌼", desc: "Sanft, pastellig, frühlingshaft-verspielt.", mode: "hell" },
+    { id: "ozeanbrise", name: "Ozeanbrise", emoji: "🐚", desc: "Hell, frisch, maritim-verspielt.", mode: "hell" },
+    { id: "nachtflicken", name: "Nachtflicken", emoji: "🦇", desc: "Dunkel & verspielt, Neon-Filzpatches auf tiefem Lila.", mode: "dunkel" },
+    { id: "sternennacht", name: "Sternennacht", emoji: "✨", desc: "Dunkelblau mit goldenem Funkeln, verträumt.", mode: "dunkel" },
+    { id: "mitternachtskarneval", name: "Mitternachtskarneval", emoji: "🎭", desc: "Dunkel, bunt & partytauglich.", mode: "dunkel" },
   ];
   let sessionTheme = "bastelheft";
 
@@ -72,17 +74,23 @@
     const area = document.getElementById("designArea");
     if (!area) return;
     const active = (Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme;
+    const themeCard = (t) => `
+      <div class="category-card ${t.id === active ? "selected" : ""}" data-theme-pick="${t.id}">
+        <div class="cat-checkbox">${t.id === active ? "✓" : ""}</div>
+        <div class="cat-body">
+          <div class="cat-title-row"><span class="cat-icon">${t.emoji}</span><span>${t.name}</span></div>
+          <div class="cat-info-text open">${t.desc}</div>
+        </div>
+      </div>`;
     area.innerHTML = `
       <p class="empty-note">Wähle dein Lieblings-Design — wirkt sofort auf der ganzen Seite.</p>
+      <p class="eyebrow" style="margin-top:16px;">☀️ Helle Designs</p>
       <div class="category-grid">
-        ${THEMES.map((t) => `
-          <div class="category-card ${t.id === active ? "selected" : ""}" data-theme-pick="${t.id}">
-            <div class="cat-checkbox">${t.id === active ? "✓" : ""}</div>
-            <div class="cat-body">
-              <div class="cat-title-row"><span class="cat-icon">${t.emoji}</span><span>${t.name}</span></div>
-              <div class="cat-info-text open">${t.desc}</div>
-            </div>
-          </div>`).join("")}
+        ${THEMES.filter((t) => t.mode === "hell").map(themeCard).join("")}
+      </div>
+      <p class="eyebrow" style="margin-top:20px;">🌙 Dunkle Designs</p>
+      <div class="category-grid">
+        ${THEMES.filter((t) => t.mode === "dunkel").map(themeCard).join("")}
       </div>
     `;
     area.querySelectorAll("[data-theme-pick]").forEach((card) => {
@@ -284,7 +292,7 @@
   let selectedDifficulty = "leicht";
   let orderMode = "mixed"; // 'mixed' | 'sequential'
 
-  let selectedChallengeFriendId = "";
+  let selectedChallengeFriendIds = new Set();
 
   async function renderSetup() {
     setupEl.style.display = "";
@@ -319,13 +327,21 @@
 
     const isLoggedIn = Boolean(Backend.currentUser());
     const friends = isLoggedIn ? await Backend.getFriends() : [];
+    const onlineFriends = friends.filter((f) => f.online);
+    const offlineFriends = friends.filter((f) => !f.online);
     const challengeBar = friends.length ? `
-      <div class="setup-bar" style="margin-top:10px;">
-        <label for="challengeFriendSelect" style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freund herausfordern</label>
-        <select id="challengeFriendSelect" class="challenge-select">
-          <option value="">Kein Duell — nur für mich üben</option>
-          ${friends.map((f) => `<option value="${f.id}" ${selectedChallengeFriendId === f.id ? "selected" : ""}>${f.name}</option>`).join("")}
-        </select>
+      <div class="setup-bar" style="margin-top:10px; flex-direction:column; align-items:stretch;">
+        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
+        <div class="challenge-friend-list">
+          ${onlineFriends.map((f) => `
+            <button type="button" class="challenge-friend-pill ${selectedChallengeFriendIds.has(f.id) ? "selected" : ""}" data-challenge-friend="${f.id}">
+              <span class="online-dot"></span>${f.name}
+            </button>`).join("")}
+          ${offlineFriends.map((f) => `
+            <button type="button" class="challenge-friend-pill offline" data-challenge-friend="${f.id}" disabled title="Gerade nicht online">
+              ${f.name} <span class="empty-note">(offline)</span>
+            </button>`).join("")}
+        </div>
       </div>` : "";
 
     setupEl.innerHTML = `
@@ -335,7 +351,7 @@
         <div class="diff-pills">
           ${Quiz.DIFFICULTIES.map((d) => `<button type="button" class="diff-pill" data-diff="${d.id}" aria-selected="${d.id === selectedDifficulty}" ${maxAvailable < d.count ? "disabled" : ""}>${d.label} (${d.count})</button>`).join("")}
         </div>
-        <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>${selectedChallengeFriendId ? "Duell starten 🎮" : "Runde starten ▶"}</button>
+        <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>${selectedChallengeFriendIds.size ? `Duell starten 🎮 (${selectedChallengeFriendIds.size})` : "Runde starten ▶"}</button>
       </div>
       ${challengeBar}
       ${selectedCategories.size > 1 ? `
@@ -380,20 +396,26 @@
         renderSetup();
       });
     });
-    const challengeSelect = document.getElementById("challengeFriendSelect");
-    if (challengeSelect) {
-      challengeSelect.addEventListener("change", (e) => {
-        selectedChallengeFriendId = e.target.value;
+    setupEl.querySelectorAll("[data-challenge-friend]:not([disabled])").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.challengeFriend;
+        if (selectedChallengeFriendIds.has(id)) selectedChallengeFriendIds.delete(id);
+        else selectedChallengeFriendIds.add(id);
         renderSetup();
       });
-    }
+    });
     const startBtn = document.getElementById("startBtn");
     if (startBtn) startBtn.addEventListener("click", async () => {
       const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
-      if (selectedChallengeFriendId) {
+      if (selectedChallengeFriendIds.size) {
         try {
-          const challengeId = await Backend.createChallenge(selectedChallengeFriendId, [...selectedCategories]);
-          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId }, orderMode);
+          // Bei mehreren Freunden: ein Duell pro Person anlegen, alle mit derselben Auswahl
+          let firstChallengeId = null;
+          for (const fid of selectedChallengeFriendIds) {
+            const cid = await Backend.createChallenge(fid, [...selectedCategories]);
+            if (!firstChallengeId) firstChallengeId = cid;
+          }
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode);
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
           return;
@@ -1108,7 +1130,7 @@
       Backend.saveBio(document.getElementById("bioInput").value.trim());
       Backend.saveBirthday(document.getElementById("birthdayInput").value.trim());
       Backend.saveOrigin(document.getElementById("originSelect").value);
-      document.getElementById("saveBioBtn").textContent = "Gespeichert ✓";
+      document.getElementById("saveBioBtn").textContent = "Gespeichert ✓ (Seite neu laden zum Prüfen)";
       updateSpecialDayBar();
     });
     document.getElementById("emojiToggleLink").addEventListener("click", () => {
@@ -1429,10 +1451,13 @@
       <div class="question-card">
         <h3>🏆 Heutiges Ranking</h3>
         <table class="rank-table">
-          ${rows.length ? rows.map((r, i) => `<tr><td>${i + 1}.</td><td>${r.name}</td><td>${r.points} Pkt.</td></tr>`).join("") : '<tr><td class="empty-note">Noch keine Einträge heute — sei die/der Erste!</td></tr>'}
+          ${rows.length ? rows.map((r, i) => `<tr>${r.user_id ? `<td>${i + 1}.</td><td><button type="button" class="friend-name-btn" data-view-ranked="${r.user_id}">${r.name}</button></td>` : `<td>${i + 1}.</td><td>${r.name}</td>`}<td>${r.points} Pkt.</td></tr>`).join("") : '<tr><td class="empty-note">Noch keine Einträge heute — sei die/der Erste!</td></tr>'}
         </table>
       </div>
     `;
+    area.querySelectorAll("[data-view-ranked]").forEach((btn) => {
+      btn.addEventListener("click", () => openProfileModal(btn.dataset.viewRanked));
+    });
   }
 
   async function renderGuestbook() {

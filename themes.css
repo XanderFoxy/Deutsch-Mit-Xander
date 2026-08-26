@@ -187,10 +187,52 @@
   background-size: 22px 22px;
 }
 
+/* ---------- 9) OZEANBRISE — hell, frisch, maritim-verspielt ---------- */
+[data-theme="ozeanbrise"] {
+  --plum-950: #F0F8F8;
+  --plum-800: #FFFFFF;
+  --plum-700: #E1F1F1;
+  --cream-50: #1D3A3A;
+  --cream-200: #6E938E;
+  --amber-400: #F2B84B;
+  --amber-300: #F6CC78;
+  --teal-400: #3E9E8F;
+  --coral-400: #E86A5C;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(29,58,58,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🐚"; --logo-shape: 50%; --logo-bg: #7FD4C9;
+}
+
+/* ---------- 10) MITTERNACHTSKARNEVAL — dunkel, bunt-verspielt, party-vibe ---------- */
+[data-theme="mitternachtskarneval"] {
+  --plum-950: #1A1030;
+  --plum-800: #261646;
+  --plum-700: #34205E;
+  --cream-50: #FBF0FF;
+  --cream-200: #C4A9E8;
+  --amber-400: #F2C84B;
+  --amber-300: #F6DA80;
+  --teal-400: #4BE0C9;
+  --coral-400: #FF6EA8;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 2px dashed rgba(242,200,75,0.3);
+  --card-shadow-extra: none;
+  --logo-emoji: "🎭"; --logo-shape: 50%; --logo-bg: #FF6EA8;
+}
+
 [data-theme="flickenteppich"] .tape-piece,
 [data-theme="wollknaeuel"] .tape-piece,
 [data-theme="papierfalz"] .tape-piece,
 [data-theme="nachtflicken"] .tape-piece,
 [data-theme="kirmes"] .tape-piece,
 [data-theme="wiesenblume"] .tape-piece,
-[data-theme="sternennacht"] .tape-piece { display: none; }
+[data-theme="sternennacht"] .tape-piece,
+[data-theme="ozeanbrise"] .tape-piece,
+[data-theme="mitternachtskarneval"] .tape-piece { display: none; }
