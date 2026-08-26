@@ -66,6 +66,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background: var(--plum-950);
   background-image:
     radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242, 184, 75, 0.10), transparent 60%),
@@ -234,13 +235,13 @@ button:focus-visible,
   .btn-icon-only .btn-label { display: inline; }
 }
 
-/* Header darf auf sehr schmalen Screens nie den Kaffee-Button abschneiden */
-@media (max-width: 380px) {
-  .site-header { gap: var(--space-2); padding: 0 var(--space-3); }
-  .brand-name { font-size: 0.92rem; }
-  .btn { padding: 8px 12px; font-size: 0.8rem; }
+/* Header darf auf sehr schmalen Screens nie den Support-Button abschneiden */
+@media (max-width: 430px) {
+  .site-header { gap: 6px; padding: 0 var(--space-3); }
+  .brand-name { font-size: 0.86rem; }
+  .btn { padding: 7px 11px; font-size: 0.76rem; }
 }
-@media (max-width: 330px) {
+@media (max-width: 360px) {
   .btn-coffee .btn-label { display: none; }
 }
 

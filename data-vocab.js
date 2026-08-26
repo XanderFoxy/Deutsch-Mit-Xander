@@ -90,6 +90,19 @@ const VocabData = (function () {
   // Materialien — kompakte Grammatik-Referenzkarten
   const MATERIALS = [
     {
+      title: "Peter und der Wolf",
+      body: "Eine klassische Geschichte zum Deutschlernen — auf das Cover tippen, um die ganze Erzählung zu lesen.",
+      type: "story",
+      coverImage: "https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/IMG_1206.jpeg?raw=true",
+      fullImage: "https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/08F0448F-C2C5-44E1-B80D-7BA5E0525FE9.png?raw=true",
+    },
+    {
+      title: "Deutschland-Toolbox",
+      body: "Eine visuelle Übersicht der wichtigsten Alltagsbegriffe — antippen für die Großansicht.",
+      type: "preview",
+      image: "https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9C6B2BCE-2AE7-486A-B0F0-D62D1D3701EA.png?raw=true",
+    },
+    {
       title: "Die 4 Fälle (Kasus)",
       body: "Nominativ (wer/was — Subjekt), Akkusativ (wen/was — direktes Objekt), Dativ (wem — indirektes Objekt), Genitiv (wessen — Besitz). Beispiel: Der Mann (Nom.) gibt der Frau (Dat.) den Blumenstrauß (Akk.) des Nachbarn (Gen.).",
     },

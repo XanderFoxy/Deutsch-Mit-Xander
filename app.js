@@ -189,6 +189,8 @@
     const startBtn = document.getElementById("startBtn");
     if (startBtn) startBtn.addEventListener("click", () => {
       Quiz.startSession([...selectedCategories], selectedDifficulty);
+      const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
+      Backend.notifyPracticing(titles);
       renderQuestion();
     });
   }
@@ -273,6 +275,12 @@
       playedAt: r.playedAt,
     });
 
+    let challengeNote = "";
+    if (r.meta && r.meta.challengeId) {
+      Backend.submitChallengeResult(r.meta.challengeId, { percent: r.combinedPercent });
+      challengeNote = `<div class="demo-banner" style="margin-bottom:16px;">🎮 Duell-Ergebnis eingetragen! Schau bei „Freunde", ob dein Gegner schon fertig ist.</div>`;
+    }
+
     const breakdown = Object.entries(r.byCategory).map(([id, s]) => {
       const cat = ExerciseData.getCategory(id);
       const pct = Math.round((s.correct / s.total) * 100);
@@ -284,6 +292,7 @@
     }).join("");
 
     resultsEl.innerHTML = `
+      ${challengeNote}
       <div class="question-card results-hero">
         <div class="results-percent">${r.basePercent}%${r.bonusPercent ? ` <span class="results-bonus">(+${r.bonusPercent} Bonus)</span>` : ""}</div>
         <div class="results-tier">${r.tier}</div>
@@ -443,8 +452,39 @@
   /* ============================================================
      MATERIALIEN & LINKS
      ============================================================ */
-  document.getElementById("materialsArea").innerHTML = VocabData.MATERIALS.map((m) => `
-    <div class="material-card"><h3>${m.title}</h3><p>${m.body}</p></div>`).join("");
+  function openLightbox(url, alt) {
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("img", { src: url, alt: alt || "" }),
+      Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕")
+    );
+    document.body.appendChild(box);
+  }
+
+  document.getElementById("materialsArea").innerHTML = VocabData.MATERIALS.map((m) => {
+    if (m.type === "story") {
+      return `<div class="material-card material-card-visual">
+        <h3>${m.title}</h3><p>${m.body}</p>
+        <button type="button" class="material-thumb-btn" data-full="${m.fullImage}" data-alt="${m.title}">
+          <img class="material-thumb" src="${m.coverImage}" alt="Cover: ${m.title}" loading="lazy" />
+          <span class="material-thumb-label">▶ Geschichte öffnen</span>
+        </button>
+      </div>`;
+    }
+    if (m.type === "preview") {
+      return `<div class="material-card material-card-visual">
+        <h3>${m.title}</h3><p>${m.body}</p>
+        <button type="button" class="material-thumb-btn" data-full="${m.image}" data-alt="${m.title}">
+          <img class="material-thumb" src="${m.image}" alt="${m.title}" loading="lazy" />
+          <span class="material-thumb-label">🔍 Großansicht</span>
+        </button>
+      </div>`;
+    }
+    return `<div class="material-card"><h3>${m.title}</h3><p>${m.body}</p></div>`;
+  }).join("");
+
+  document.querySelectorAll(".material-thumb-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openLightbox(btn.dataset.full, btn.dataset.alt));
+  });
 
   document.getElementById("linksArea").innerHTML = VocabData.LINKS.map((l) => `
     <div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("");
@@ -528,6 +568,7 @@
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
         </div>
       </div>
+      ${renderActivityFeed()}
       ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">Letzte Ergebnisse</p>
         ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
@@ -540,7 +581,136 @@
     });
   }
 
+  function renderActivityFeed() {
+    const items = Backend.getActivity();
+    if (!items.length) return "";
+    return `<div class="breakdown-list" style="margin-top:16px;">
+      <p class="eyebrow" style="margin-top:0;">🔔 Was gerade passiert</p>
+      ${items.map((a) => `<div class="breakdown-row"><span>${a.text}</span><span class="empty-note">${new Date(a.date).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}</span></div>`).join("")}
+    </div>`;
+  }
+
   loginBtn.addEventListener("click", () => activateTab("view-profile"));
+
+  /* ============================================================
+     FREUNDE
+     ============================================================ */
+  let friendChallengeTarget = null;
+
+  async function renderFriends() {
+    const area = document.getElementById("friendsArea");
+    const user = Backend.currentUser();
+    if (!user) {
+      area.innerHTML = `<p class="empty-note">Melde dich im Reiter „Profil" an, um Freunde zu finden und herauszufordern.</p>`;
+      return;
+    }
+
+    const friends = Backend.getFriends();
+    const incoming = Backend.getIncomingRequests();
+    const { incoming: incomingChallenges, outgoing: outgoingChallenges } = Backend.getMyChallenges();
+
+    area.innerHTML = `
+      <div class="question-card">
+        <h3>🔎 Freunde finden</h3>
+        <div class="vocab-toolbar" style="margin-top:10px;">
+          <input type="text" class="vocab-search" id="friendSearch" placeholder="Name eingeben…" />
+        </div>
+        <div id="friendSearchResults"></div>
+        <p class="empty-note" style="margin-top:8px;">${Backend.isConfigured ? "" : "Demo-Modus: Suche findet nur Konten, die in dieser Sitzung schon registriert wurden."}</p>
+      </div>
+
+      ${incoming.length ? `<div class="question-card" style="margin-top:14px;">
+        <h3>📥 Freundschaftsanfragen</h3>
+        ${incoming.map((r) => `<div class="breakdown-row"><span>${r.name}</span><button type="button" class="btn btn-coffee" data-accept="${r.id}">Annehmen</button></div>`).join("")}
+      </div>` : ""}
+
+      ${incomingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
+        <h3>🎮 Herausforderungen an dich</h3>
+        ${incomingChallenges.map((c) => `<div class="breakdown-row"><span>${c.fromName} · ${c.categories.map((id) => ExerciseData.getCategory(id).icon).join(" ")}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}">Annehmen</button></div>`).join("")}
+      </div>` : ""}
+
+      <div class="question-card" style="margin-top:14px;">
+        <h3>👥 Deine Freunde</h3>
+        ${friends.length ? friends.map((f) => `
+          <div class="breakdown-row">
+            <span>${f.name} · ${f.points} Pkt.</span>
+            <button type="button" class="btn btn-ghost" data-challenge="${f.email}" data-name="${f.name}">🎮 Herausfordern</button>
+          </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
+      </div>
+
+      ${outgoingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
+        <h3>📤 Deine Duelle</h3>
+        ${outgoingChallenges.map((c) => `<div class="breakdown-row"><span>vs. ${c.toName}</span><span class="empty-note">${c.status === "completed" ? (c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden") : "Warte auf Gegner…"}</span></div>`).join("")}
+      </div>` : ""}
+
+      <div id="challengePicker"></div>
+    `;
+
+    let searchTimer = null;
+    document.getElementById("friendSearch").addEventListener("input", (e) => {
+      clearTimeout(searchTimer);
+      const q = e.target.value;
+      searchTimer = setTimeout(async () => {
+        const results = await Backend.searchUsers(q);
+        document.getElementById("friendSearchResults").innerHTML = results.length
+          ? results.map((r) => `<div class="breakdown-row"><span>${r.name}</span><button type="button" class="btn btn-ghost" data-add="${r.email}">+ Freund werden</button></div>`).join("")
+          : (q.trim() ? '<p class="empty-note">Niemand gefunden.</p>' : "");
+        area.querySelectorAll("[data-add]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            try { Backend.sendFriendRequest(btn.dataset.add); btn.textContent = "Angefragt ✓"; btn.disabled = true; }
+            catch (err) { alert(err.message); }
+          });
+        });
+      }, 250);
+    });
+
+    area.querySelectorAll("[data-accept]").forEach((btn) => {
+      btn.addEventListener("click", () => { Backend.acceptFriendRequest(btn.dataset.accept); renderFriends(); });
+    });
+
+    area.querySelectorAll("[data-challenge]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        friendChallengeTarget = { email: btn.dataset.challenge, name: btn.dataset.name };
+        renderChallengePicker();
+      });
+    });
+
+    area.querySelectorAll("[data-accept-challenge]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const categoryIds = btn.dataset.cats.split(",");
+        const challengeId = btn.dataset.acceptChallenge;
+        activateTab("view-learn");
+        document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+        Quiz.startSession(categoryIds, "leicht", { challengeId });
+        renderQuestion();
+      });
+    });
+  }
+
+  function renderChallengePicker() {
+    const box = document.getElementById("challengePicker");
+    if (!friendChallengeTarget) { box.innerHTML = ""; return; }
+    box.innerHTML = `
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🎮 ${friendChallengeTarget.name} herausfordern</h3>
+        <p class="empty-note">Wähle eine Kategorie — ihr spielt beide 10 Fragen, wer mehr Prozent holt, gewinnt.</p>
+        <div class="category-grid" style="margin-top:10px;">
+          ${ExerciseData.CATEGORIES.map((c) => `<div class="category-card" data-pick-cat="${c.id}"><div class="cat-checkbox"></div><div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${c.icon}</span><span>${c.title}</span></div></div></div>`).join("")}
+        </div>
+      </div>
+    `;
+    box.querySelectorAll("[data-pick-cat]").forEach((card) => {
+      card.addEventListener("click", () => {
+        const categoryId = card.dataset.pickCat;
+        const challengeId = Backend.createChallenge(friendChallengeTarget.email, [categoryId]);
+        friendChallengeTarget = null;
+        activateTab("view-learn");
+        document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+        Quiz.startSession([categoryId], "leicht", { challengeId });
+        renderQuestion();
+      });
+    });
+  }
 
   async function renderRanking() {
     const area = document.getElementById("rankingArea");
@@ -624,6 +794,7 @@
       if (pill.dataset.sub === "sub-guestbook") renderGuestbook();
       if (pill.dataset.sub === "sub-premium") renderPremium();
       if (pill.dataset.sub === "sub-account") renderAccount();
+      if (pill.dataset.sub === "sub-friends") renderFriends();
       if (pill.dataset.sub === "sub-design") renderDesign();
     });
   });

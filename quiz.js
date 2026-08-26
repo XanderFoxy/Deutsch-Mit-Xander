@@ -44,7 +44,7 @@ const Quiz = (function () {
     return Core.drawUnique(pool, count);
   }
 
-  function startSession(categoryIds, difficultyId) {
+  function startSession(categoryIds, difficultyId, meta) {
     const diff = DIFFICULTIES.find((d) => d.id === difficultyId);
     const questions = buildQuestions(categoryIds, diff.count);
     state = {
@@ -54,6 +54,7 @@ const Quiz = (function () {
       index: 0,
       answers: [],
       startedAt: Date.now(),
+      meta: meta || null,
     };
     return state;
   }
@@ -140,6 +141,7 @@ const Quiz = (function () {
       badges,
       categories: state.categoryIds,
       playedAt: new Date().toISOString(),
+      meta: state.meta,
     };
   }
 

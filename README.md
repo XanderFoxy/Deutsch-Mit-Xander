@@ -76,6 +76,17 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
    create table daily_ranking (
      name text, points int, date date default current_date
    );
+
+   create table profiles (
+     id uuid references auth.users primary key,
+     name text, points int default 0
+   );
+
+   create table friends (
+     id uuid default gen_random_uuid() primary key,
+     user_a uuid references auth.users, user_b uuid references auth.users,
+     status text default 'pending', requested_by uuid references auth.users
+   );
    ```
 5. Seite neu laden — die App erkennt die Konfiguration automatisch und
    nutzt ab dann echte Konten statt des Demo-Modus.

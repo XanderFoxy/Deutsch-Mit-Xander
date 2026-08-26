@@ -33,6 +33,9 @@ const Backend = (function () {
       { name: "Yui", points: 140, date: todayKey() },
     ],
     users: {}, // demo "Datenbank" für Registrierungen: email -> {password, profile}
+    friends: [], // { id, a, b, status: 'pending'|'accepted', requestedBy }
+    challenges: [], // { id, from, to, categories, fromResult, toResult, status, winner, createdAt }
+    activity: [], // { id, text, date }
   };
 
   function todayKey() {
@@ -191,6 +194,142 @@ const Backend = (function () {
     return Boolean(demo.profile && demo.profile.isPremium);
   }
 
+  /* ================= FREUNDE, DUELLE & AKTIVITÄT =================
+     Hinweis Demo-Modus: Suche/Freunde funktionieren nur innerhalb
+     derselben Browser-Sitzung (z. B. zum Testen: zwei Konten nach-
+     einander in diesem Tab registrieren). Mit Supabase verbunden
+     werden echte, geräteübergreifende Konten gefunden — dafür bitte
+     zusätzlich die Tabellen "profiles" und "friends" aus der README
+     anlegen (Abschnitt Supabase einrichten).
+     ================================================================ */
+
+  function addActivity(text) {
+    demo.activity.unshift({ id: Core.uid(), text, date: new Date().toISOString() });
+    demo.activity = demo.activity.slice(0, 20);
+  }
+
+  function getActivity() {
+    return demo.activity.slice(0, 6);
+  }
+
+  async function searchUsers(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("name").ilike("name", `%${q}%`).limit(10);
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Supabase-Suche nicht verfügbar, durchsuche Demo-Konten:", e);
+      }
+    }
+    const me = demo.user ? demo.user.email : null;
+    return Object.entries(demo.users)
+      .filter(([email, u]) => email !== me && u.profile.name.toLowerCase().includes(q))
+      .map(([email, u]) => ({ email, name: u.profile.name }))
+      .slice(0, 10);
+  }
+
+  function friendPairId(a, b) {
+    return [a, b].sort().join("::");
+  }
+
+  function sendFriendRequest(targetEmail) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    const pair = friendPairId(demo.user.email, targetEmail);
+    if (demo.friends.some((f) => friendPairId(f.a, f.b) === pair)) {
+      throw new Error("Da gibt es schon eine Anfrage oder Freundschaft.");
+    }
+    demo.friends.push({ id: Core.uid(), a: demo.user.email, b: targetEmail, status: "pending", requestedBy: demo.user.email });
+  }
+
+  function getIncomingRequests() {
+    if (!demo.user) return [];
+    return demo.friends
+      .filter((f) => f.status === "pending" && f.requestedBy !== demo.user.email && (f.a === demo.user.email || f.b === demo.user.email))
+      .map((f) => ({ id: f.id, email: f.requestedBy, name: (demo.users[f.requestedBy] && demo.users[f.requestedBy].profile.name) || f.requestedBy }));
+  }
+
+  function acceptFriendRequest(id) {
+    const f = demo.friends.find((x) => x.id === id);
+    if (f) f.status = "accepted";
+  }
+
+  function getFriends() {
+    if (!demo.user) return [];
+    return demo.friends
+      .filter((f) => f.status === "accepted" && (f.a === demo.user.email || f.b === demo.user.email))
+      .map((f) => {
+        const otherEmail = f.a === demo.user.email ? f.b : f.a;
+        const u = demo.users[otherEmail];
+        return { email: otherEmail, name: (u && u.profile.name) || otherEmail, points: (u && u.profile.points) || 0 };
+      });
+  }
+
+  function createChallenge(toEmail, categoryIds) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    const challenge = {
+      id: Core.uid(),
+      from: demo.user.email,
+      to: toEmail,
+      categories: categoryIds,
+      fromResult: null,
+      toResult: null,
+      status: "pending",
+      winner: null,
+      createdAt: new Date().toISOString(),
+    };
+    demo.challenges.push(challenge);
+    const toName = (demo.users[toEmail] && demo.users[toEmail].profile.name) || toEmail;
+    addActivity(`${demo.profile.name} fordert ${toName} zu einem Duell heraus. 🎮`);
+    return challenge.id;
+  }
+
+  function getMyChallenges() {
+    if (!demo.user) return { incoming: [], outgoing: [] };
+    const me = demo.user.email;
+    const withNames = (c) => ({
+      ...c,
+      fromName: (demo.users[c.from] && demo.users[c.from].profile.name) || c.from,
+      toName: (demo.users[c.to] && demo.users[c.to].profile.name) || c.to,
+    });
+    return {
+      incoming: demo.challenges.filter((c) => c.to === me && c.status === "pending" && !c.toResult).map(withNames),
+      outgoing: demo.challenges.filter((c) => c.from === me).map(withNames),
+    };
+  }
+
+  function submitChallengeResult(challengeId, result) {
+    const c = demo.challenges.find((x) => x.id === challengeId);
+    if (!c || !demo.user) return;
+    const isFrom = c.from === demo.user.email;
+    if (isFrom) c.fromResult = result;
+    else c.toResult = result;
+
+    if (c.fromResult && c.toResult) {
+      c.status = "completed";
+      const fromName = (demo.users[c.from] && demo.users[c.from].profile.name) || c.from;
+      const toName = (demo.users[c.to] && demo.users[c.to].profile.name) || c.to;
+      if (c.fromResult.percent === c.toResult.percent) {
+        c.winner = null;
+        addActivity(`${fromName} und ${toName} haben unentschieden gespielt (${c.fromResult.percent}%). 🤝`);
+      } else {
+        const winnerIsFrom = c.fromResult.percent > c.toResult.percent;
+        c.winner = winnerIsFrom ? c.from : c.to;
+        const winnerName = winnerIsFrom ? fromName : toName;
+        const loserName = winnerIsFrom ? toName : fromName;
+        const winnerPct = winnerIsFrom ? c.fromResult.percent : c.toResult.percent;
+        const loserPct = winnerIsFrom ? c.toResult.percent : c.fromResult.percent;
+        addActivity(`${winnerName} hat ${loserName} im Duell geschlagen (${winnerPct}% zu ${loserPct}%). 🏆`);
+      }
+    }
+  }
+
+  function notifyPracticing(categoryTitle) {
+    if (!demo.user) return;
+    addActivity(`${demo.profile.name} übt gerade „${categoryTitle}“ …`);
+  }
+
   return {
     isConfigured,
     signUp,
@@ -204,5 +343,16 @@ const Backend = (function () {
     addGuestbookEntry,
     unlockPremiumDemo,
     isPremium,
+    searchUsers,
+    sendFriendRequest,
+    getIncomingRequests,
+    acceptFriendRequest,
+    getFriends,
+    createChallenge,
+    getMyChallenges,
+    submitChallengeResult,
+    addActivity,
+    getActivity,
+    notifyPracticing,
   };
 })();
