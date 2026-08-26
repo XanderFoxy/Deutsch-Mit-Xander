@@ -119,7 +119,19 @@ Das kann für Freunde/Tester verwirrend sein. Zwei Optionen:
 ## 4b. Fotos hochladen (Profilbild) — einmalig einrichten
 
 1. Supabase-Dashboard → **Storage** → „New bucket" → Name: `avatars` → **Public bucket** anhaken → erstellen.
-2. Fertig — die Seite lädt Fotos jetzt automatisch dorthin hoch, sobald jemand im Profil auf sein Bild tippt.
+2. Im **SQL-Editor** zusätzlich diese Regel ausführen (sonst darf niemand hochladen, nur ansehen):
+   ```sql
+   create policy "Authenticated uploads to avatars"
+   on storage.objects for insert
+   to authenticated
+   with check (bucket_id = 'avatars');
+
+   create policy "Authenticated updates to avatars"
+   on storage.objects for update
+   to authenticated
+   using (bucket_id = 'avatars');
+   ```
+3. Fertig — die Seite lädt Fotos jetzt automatisch dorthin hoch, sobald jemand im Profil auf sein Bild tippt.
 
 ## 5. Neue Beispiele/Fragen hinzufügen
 

@@ -133,7 +133,7 @@ const Backend = (function () {
     }
     if (demo.users[email]) throw new Error("Diese E-Mail ist im Demo-Modus schon registriert.");
     demo.users[email] = { password, profile: defaultProfile(name) };
-    demo.user = { id: Core.uid(), email, name };
+    demo.user = { id: email, email, name };
     demo.profile = demo.users[email].profile;
     return demo.user;
   }
@@ -157,7 +157,7 @@ const Backend = (function () {
     if (!record || record.password !== password) {
       throw new Error("Im Demo-Modus unbekannte Zugangsdaten. Registriere dich zuerst.");
     }
-    demo.user = { id: Core.uid(), email, name: record.profile.name };
+    demo.user = { id: email, email, name: record.profile.name };
     demo.profile = record.profile;
     return demo.user;
   }
@@ -202,12 +202,19 @@ const Backend = (function () {
           played_at: result.playedAt,
         });
         await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id);
+        // Tagesranking: bestehenden Eintrag von heute für diese Person aktualisieren oder neu anlegen
+        const { data: existingRow } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
+        if (existingRow) {
+          await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points) }).eq("name", demo.profile.name).eq("date", todayKey());
+        } else {
+          await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey() });
+        }
       } catch (e) {
         console.warn("Supabase-Speichern fehlgeschlagen, Ergebnis bleibt lokal:", e);
       }
     }
 
-    // Tagesranking aktualisieren (Demo)
+    // Tagesranking aktualisieren (Demo-Fallback)
     const existing = demo.ranking.find((r) => r.name === demo.profile.name && r.date === todayKey());
     if (existing) {
       existing.points = Math.max(existing.points, demo.profile.points);
@@ -454,14 +461,34 @@ const Backend = (function () {
   async function getRecentMembers() {
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("name").order("created_at", { ascending: false }).limit(5);
+        const { data, error } = await client.from("profiles").select("id,name,avatar_url,avatar_emoji,created_at").order("created_at", { ascending: false }).limit(5);
         if (!error && data) return data;
       } catch (e) {
         console.warn("Neue Mitglieder konnten nicht geladen werden:", e);
       }
       return [];
     }
-    return Object.values(demo.users).slice(-5).reverse().map((u) => ({ name: u.profile.name }));
+    return Object.entries(demo.users).slice(-5).reverse().map(([email, u]) => ({
+      id: email, name: u.profile.name, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji, created_at: new Date().toISOString(),
+    }));
+  }
+
+  async function getPublicProfile(id) {
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points").eq("id", id).maybeSingle();
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Profil konnte nicht geladen werden:", e);
+      }
+      return null;
+    }
+    const u = demo.users[id];
+    if (!u) return null;
+    return {
+      id, name: u.profile.name, bio: u.profile.bio, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
+      badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
+    };
   }
 
   async function getIncomingRequests() {
@@ -678,6 +705,7 @@ const Backend = (function () {
     saveBirthday,
     uploadAvatar,
     getRecentMembers,
+    getPublicProfile,
     saveAvatarEmoji,
     addTrophy,
     touchActivity,

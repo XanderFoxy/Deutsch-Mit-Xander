@@ -138,6 +138,27 @@
   }
   updateSpecialDayBar();
 
+  /* ============ Lauftext-Ticker ============ */
+  let tickerVisible = true;
+  async function updateTicker() {
+    const track = document.getElementById("tickerTrack");
+    if (!track) return;
+    const items = await Backend.getActivity();
+    if (items.length) {
+      track.textContent = items.map((a) => `• ${a.text}`).join("   ");
+    }
+  }
+  const tickerToggle = document.getElementById("tickerToggle");
+  if (tickerToggle) {
+    tickerToggle.addEventListener("click", () => {
+      tickerVisible = !tickerVisible;
+      document.getElementById("tickerBar").classList.toggle("ticker-hidden", !tickerVisible);
+      tickerToggle.textContent = tickerVisible ? "👁️" : "🙈";
+    });
+  }
+  updateTicker();
+  setInterval(updateTicker, 20000);
+
   const weatherOut = document.getElementById("weatherOut");
   const weatherIcon = document.getElementById("weatherIcon");
   // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji)
@@ -391,6 +412,15 @@
 
     const trophyLabel = `${r.character.name} – ${r.tier.replace("Deutsch-", "")}`;
     const newTrophy = Backend.addTrophy(trophyLabel);
+    const profileForActivity = Backend.currentProfile();
+    if (profileForActivity) {
+      if (newTrophy) {
+        Backend.addActivity(`${profileForActivity.name} hat den Pokal „${trophyLabel}" geholt! 🏆`);
+      } else if (r.basePercent >= 70) {
+        Backend.addActivity(`${profileForActivity.name} hat gerade ${r.basePercent}% als ${r.character.name} geschafft. ✨`);
+      }
+      updateTicker();
+    }
 
     let challengeNote = "";
     if (r.meta && r.meta.challengeId) {
@@ -801,6 +831,10 @@
     });
     area.querySelectorAll("[data-emoji]").forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (profile.avatarUrl) {
+          const ok = confirm("Du hast schon ein Foto hochgeladen. Möchtest du es wirklich durch dieses Emoji ersetzen?");
+          if (!ok) return;
+        }
         Backend.saveAvatarEmoji(btn.dataset.emoji);
         renderAccount();
       });
@@ -824,6 +858,9 @@
         document.getElementById("avatarError").textContent = "Fotos hochladen geht erst, sobald Supabase verbunden ist — wähl in der Zwischenzeit gern ein Emoji als Profilbild.";
       }
     });
+    area.querySelectorAll("[data-view-member]").forEach((btn) => {
+      btn.addEventListener("click", () => openProfileModal(btn.dataset.viewMember));
+    });
   }
 
   function renderTrophyCase(profile) {
@@ -836,13 +873,62 @@
     </div>`;
   }
 
+  function tinyAvatar(m) {
+    if (m.avatar_url) return `<img src="${m.avatar_url}" class="tiny-avatar" alt="" />`;
+    if (m.avatar_emoji) return `<span class="tiny-avatar tiny-avatar-emoji">${m.avatar_emoji}</span>`;
+    const initials = (m.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    return `<span class="tiny-avatar tiny-avatar-initials">${initials}</span>`;
+  }
+
   async function renderRecentMembers() {
     const members = await Backend.getRecentMembers();
     if (!members.length) return "";
     return `<div class="breakdown-list" style="margin-top:16px;">
       <p class="eyebrow" style="margin-top:0;">🆕 Neu dabei</p>
-      ${members.map((m) => `<div class="breakdown-row"><span>${m.name}</span></div>`).join("")}
+      ${members.map((m) => `
+        <button type="button" class="member-row" data-view-member="${m.id}">
+          ${tinyAvatar(m)}
+          <span class="member-name">${m.name}</span>
+          <span class="member-date">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+        </button>`).join("")}
     </div>`;
+  }
+
+  async function openProfileModal(id) {
+    const p = await Backend.getPublicProfile(id);
+    if (!p) return;
+    const initials = (p.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    const avatarHtml = p.avatar_url
+      ? `<img src="${p.avatar_url}" class="avatar-photo" alt="" />`
+      : p.avatar_emoji
+        ? `<div class="initials-avatar emoji-avatar">${p.avatar_emoji}</div>`
+        : `<div class="initials-avatar">${initials}</div>`;
+    const me = Backend.currentUser();
+    const isMe = me && me.id === p.id;
+
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>` }),
+        Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
+        Core.el("div", { class: "badge-row", style: "justify-content:center;",
+          html: (p.trophies && p.trophies.length ? p.trophies.map((t) => `<div class="badge-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") : "")
+              + (p.badges && p.badges.length ? p.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "") }),
+        Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:16px;" },
+          isMe
+            ? Core.el("span", { class: "empty-note" }, "Das bist du 👋")
+            : Core.el("button", {
+                class: "btn btn-coffee", type: "button", id: "modalAddFriend",
+                onclick: async (e) => {
+                  if (!me) { alert("Melde dich zuerst an, um Freunde hinzuzufügen."); return; }
+                  try { await Backend.sendFriendRequest(p.id); e.target.textContent = "Angefragt ✓"; e.target.disabled = true; }
+                  catch (err) { alert(err.message); }
+                },
+              }, "🤝 Freund werden")
+        )
+      )
+    );
+    document.body.appendChild(box);
   }
 
   async function renderActivityFeed() {
