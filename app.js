@@ -712,7 +712,22 @@
 
   function refreshHeaderAuth() {
     const user = Backend.currentUser();
+    const profile = Backend.currentProfile();
+    const icon = document.getElementById("loginBtnIcon");
     loginBtnLabel.textContent = user ? user.name.split(" ")[0] : "Anmelden";
+    loginBtn.classList.toggle("btn-icon-only", !user);
+    if (user && profile) {
+      if (profile.avatarUrl) {
+        icon.innerHTML = `<img src="${profile.avatarUrl}" class="header-avatar" alt="" />`;
+      } else if (profile.avatarEmoji) {
+        icon.innerHTML = `<span class="header-avatar header-avatar-emoji">${profile.avatarEmoji}</span>`;
+      } else {
+        const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+        icon.innerHTML = `<span class="header-avatar header-avatar-initials">${initials}</span>`;
+      }
+    } else {
+      icon.innerHTML = "👤";
+    }
   }
 
   let authMode = "login";
