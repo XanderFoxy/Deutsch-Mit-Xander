@@ -657,11 +657,13 @@
       return;
     }
 
+    const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
     area.innerHTML = `
       ${demoBanner}
       <div class="question-card">
         <div class="profile-header">
-          <div class="avatar-wrap" style="width:64px;height:64px;"><img src="https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true" alt="" /></div>
+          <div class="initials-avatar">${initials}</div>
           <div>
             <h2>${profile.name}</h2>
             <p class="empty-note">${user.email}${profile.isPremium ? " · ✨ Premium" : ""}</p>
@@ -671,7 +673,12 @@
         <div class="badge-row">
           ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
         </div>
-        <div class="quiz-actions" style="justify-content:flex-start; margin-top:20px;">
+        <div class="form-field" style="margin-top:16px;">
+          <label>Über mich (sichtbar für Freunde)</label>
+          <textarea id="bioInput" class="guestbook-form-textarea" placeholder="Ein paar Worte über dich…" maxlength="200">${profile.bio || ""}</textarea>
+        </div>
+        <div class="quiz-actions" style="justify-content:flex-start;">
+          <button type="button" class="btn btn-coffee" id="saveBioBtn">Speichern</button>
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
         </div>
       </div>
@@ -685,6 +692,10 @@
       await Backend.signOut();
       refreshHeaderAuth();
       renderAccount();
+    });
+    document.getElementById("saveBioBtn").addEventListener("click", () => {
+      Backend.saveBio(document.getElementById("bioInput").value.trim());
+      document.getElementById("saveBioBtn").textContent = "Gespeichert ✓";
     });
   }
 
@@ -742,9 +753,17 @@
       <div class="question-card" style="margin-top:14px;">
         <h3>👥 Deine Freunde</h3>
         ${friends.length ? friends.map((f) => `
-          <div class="breakdown-row">
-            <span>${f.name} · ${f.points} Pkt.</span>
-            <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
+          <div class="friend-block">
+            <div class="breakdown-row">
+              <button type="button" class="friend-name-btn" data-view-friend="${f.id}">${f.name} · ${f.points} Pkt.</button>
+              <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
+            </div>
+            <div class="friend-profile-card" id="friend-profile-${f.id}" style="display:none;">
+              <p class="empty-note">${f.bio ? f.bio : "Noch keine Beschreibung."}</p>
+              <div class="badge-row" style="justify-content:flex-start;">
+                ${f.badges && f.badges.length ? f.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<span class="empty-note">Noch keine Abzeichen.</span>'}
+              </div>
+            </div>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
       </div>
 
@@ -776,6 +795,13 @@
 
     area.querySelectorAll("[data-accept]").forEach((btn) => {
       btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); renderFriends(); });
+    });
+
+    area.querySelectorAll("[data-view-friend]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const card = document.getElementById(`friend-profile-${btn.dataset.viewFriend}`);
+        card.style.display = card.style.display === "none" ? "block" : "none";
+      });
     });
 
     area.querySelectorAll("[data-challenge]").forEach((btn) => {

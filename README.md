@@ -80,7 +80,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
    create table profiles (
      id uuid references auth.users primary key,
      name text, points int default 0, badges text[] default '{}',
-     is_premium boolean default false, theme text default 'bastelheft'
+     is_premium boolean default false, theme text default 'bastelheft', bio text default ''
    );
 
    create table friends (

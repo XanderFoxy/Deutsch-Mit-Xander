@@ -54,7 +54,7 @@ const Backend = (function () {
       if (!error && data) {
         return {
           name: data.name || name || email,
-          bio: "",
+          bio: data.bio || "",
           points: data.points || 0,
           badges: data.badges || [],
           history: [],
@@ -106,7 +106,8 @@ const Backend = (function () {
 
   async function signUp(email, password, name) {
     if (client) {
-      const { data, error } = await client.auth.signUp({ email, password, options: { data: { name } } });
+      const redirectTo = window.location.origin + window.location.pathname;
+      const { data, error } = await client.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirectTo } });
       if (error) throw error;
       if (!data.session) {
         // Standardeinstellung bei Supabase: E-Mail-Bestätigung nötig, bevor man sich einloggen kann.
@@ -349,14 +350,29 @@ const Backend = (function () {
     if (!ids.length) return {};
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,points").in("id", ids);
+        const { data, error } = await client.from("profiles").select("id,name,points,badges,bio").in("id", ids);
         if (!error && data) return Object.fromEntries(data.map((p) => [p.id, p]));
       } catch (e) {
         console.warn("Profile konnten nicht geladen werden:", e);
       }
       return {};
     }
-    return Object.fromEntries(ids.map((email) => [email, { id: email, name: (demo.users[email] && demo.users[email].profile.name) || email, points: (demo.users[email] && demo.users[email].profile.points) || 0 }]));
+    return Object.fromEntries(ids.map((email) => [email, {
+      id: email,
+      name: (demo.users[email] && demo.users[email].profile.name) || email,
+      points: (demo.users[email] && demo.users[email].profile.points) || 0,
+      badges: (demo.users[email] && demo.users[email].profile.badges) || [],
+      bio: (demo.users[email] && demo.users[email].profile.bio) || "",
+    }]));
+  }
+
+  function saveBio(bio) {
+    if (!demo.profile) return;
+    demo.profile.bio = bio;
+    if (client && demo.user) {
+      client.from("profiles").update({ bio }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Profiltext konnte nicht gespeichert werden:", e));
+    }
   }
 
   async function getIncomingRequests() {
@@ -391,14 +407,26 @@ const Backend = (function () {
       if (error || !data) return [];
       const otherIds = data.map((f) => (f.user_a === myId() ? f.user_b : f.user_a));
       const names = await namesFor(otherIds);
-      return otherIds.map((id) => ({ id, name: (names[id] && names[id].name) || id, points: (names[id] && names[id].points) || 0 }));
+      return otherIds.map((id) => ({
+        id,
+        name: (names[id] && names[id].name) || id,
+        points: (names[id] && names[id].points) || 0,
+        badges: (names[id] && names[id].badges) || [],
+        bio: (names[id] && names[id].bio) || "",
+      }));
     }
     return demo.friends
       .filter((f) => f.status === "accepted" && (f.a === demo.user.email || f.b === demo.user.email))
       .map((f) => {
         const otherEmail = f.a === demo.user.email ? f.b : f.a;
         const u = demo.users[otherEmail];
-        return { id: otherEmail, name: (u && u.profile.name) || otherEmail, points: (u && u.profile.points) || 0 };
+        return {
+          id: otherEmail,
+          name: (u && u.profile.name) || otherEmail,
+          points: (u && u.profile.points) || 0,
+          badges: (u && u.profile.badges) || [],
+          bio: (u && u.profile.bio) || "",
+        };
       });
   }
 
@@ -555,5 +583,6 @@ const Backend = (function () {
     getActivity,
     notifyPracticing,
     saveThemePreference,
+    saveBio,
   };
 })();
