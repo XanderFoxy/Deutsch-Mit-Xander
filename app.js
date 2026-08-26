@@ -205,29 +205,41 @@
   setInterval(updateTicker, 20000);
 
   /* ============ Kurze Pop-up-Benachrichtigung bei neuen Anfragen ============ */
-  function showToast(text) {
-    const toast = Core.el("div", { class: "toast-popup" }, text);
+  function showToast(text, onClick) {
+    const toast = Core.el("div", { class: "toast-popup", onclick: onClick || (() => {}) }, text);
+    if (onClick) toast.classList.add("toast-clickable");
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add("toast-visible"), 20);
     setTimeout(() => {
       toast.classList.remove("toast-visible");
       setTimeout(() => toast.remove(), 400);
-    }, 4500);
+    }, 5500);
+  }
+  function goToFriendsInbox() {
+    activateTab("view-profile");
+    document.querySelector('#profileSubnav [data-sub="sub-friends"]').click();
+  }
+  function updateNotifyBadge(count) {
+    const badge = document.getElementById("loginBtnBadge");
+    if (badge) badge.style.display = count > 0 ? "block" : "none";
+    const tabBadge = document.getElementById("friendsTabBadge");
+    if (tabBadge) tabBadge.style.display = count > 0 ? "block" : "none";
   }
   let lastFriendReqCount = 0;
   let lastChallengeReqCount = 0;
   let notifyPrimed = false;
   async function checkNotifications() {
-    if (!Backend.currentUser()) return;
+    if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
     const [requests, challenges] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges()]);
     const challengeCount = challenges.incoming.length;
     if (notifyPrimed) {
-      if (requests.length > lastFriendReqCount) showToast("👥 Neue Freundschaftsanfrage erhalten!");
-      if (challengeCount > lastChallengeReqCount) showToast("🎮 Jemand fordert dich zu einem Duell heraus!");
+      if (requests.length > lastFriendReqCount) showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox);
+      if (challengeCount > lastChallengeReqCount) showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox);
     }
     lastFriendReqCount = requests.length;
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
+    updateNotifyBadge(requests.length + challengeCount);
   }
   checkNotifications();
   setInterval(checkNotifications, 20000);
@@ -1339,7 +1351,7 @@
       searchTimer = setTimeout(async () => {
         const results = await Backend.searchUsers(q);
         document.getElementById("friendSearchResults").innerHTML = results.length
-          ? results.map((r) => `<div class="breakdown-row"><span>${r.name}</span><button type="button" class="btn btn-ghost" data-add="${r.id}">+ Freund werden</button></div>`).join("")
+          ? results.map((r) => `<div class="breakdown-row"><button type="button" class="friend-name-btn" data-view-search-result="${r.id}">${r.name}</button><button type="button" class="btn btn-ghost" data-add="${r.id}">+ Freund werden</button></div>`).join("")
           : (q.trim() ? '<p class="empty-note">Niemand gefunden.</p>' : "");
         area.querySelectorAll("[data-add]").forEach((btn) => {
           btn.addEventListener("click", async () => {
@@ -1347,11 +1359,14 @@
             catch (err) { alert(err.message); }
           });
         });
+        area.querySelectorAll("[data-view-search-result]").forEach((btn) => {
+          btn.addEventListener("click", () => openProfileModal(btn.dataset.viewSearchResult));
+        });
       }, 250);
     });
 
     area.querySelectorAll("[data-accept]").forEach((btn) => {
-      btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); renderFriends(); });
+      btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); checkNotifications(); renderFriends(); });
     });
 
     area.querySelectorAll("[data-view-friend]").forEach((btn) => {
@@ -1372,6 +1387,7 @@
       btn.addEventListener("click", () => {
         const categoryIds = btn.dataset.cats.split(",");
         const challengeId = btn.dataset.acceptChallenge;
+        checkNotifications();
         activateTab("view-learn");
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
         Quiz.startSession(categoryIds, "leicht", { challengeId });

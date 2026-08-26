@@ -551,12 +551,14 @@ const Backend = (function () {
   async function getIncomingRequests() {
     if (!demo.user) return [];
     if (client) {
-      const { data, error } = await client.from("friends").select("*")
-        .eq("status", "pending").neq("requested_by", myId())
-        .or(`user_a.eq.${myId()},user_b.eq.${myId()}`);
-      if (error || !data) return [];
-      const names = await namesFor(data.map((f) => f.requested_by));
-      return data.map((f) => ({ id: f.id, id_other: f.requested_by, name: (names[f.requested_by] && names[f.requested_by].name) || f.requested_by }));
+      // Bewusst einfach gehalten (alle eigenen Freundschafts-Zeilen holen, dann in JS filtern) —
+      // vermeidet Sonderfälle beim Verketten mehrerer Filter direkt in der Datenbankabfrage.
+      const { data, error } = await client.from("friends").select("*").or(`user_a.eq.${myId()},user_b.eq.${myId()}`);
+      if (error) { console.warn("Freundschaftsanfragen konnten nicht geladen werden:", error.message); return []; }
+      if (!data) return [];
+      const pending = data.filter((f) => f.status === "pending" && f.requested_by !== myId());
+      const names = await namesFor(pending.map((f) => f.requested_by));
+      return pending.map((f) => ({ id: f.id, id_other: f.requested_by, name: (names[f.requested_by] && names[f.requested_by].name) || f.requested_by }));
     }
     return demo.friends
       .filter((f) => f.status === "pending" && f.requestedBy !== demo.user.email && (f.a === demo.user.email || f.b === demo.user.email))

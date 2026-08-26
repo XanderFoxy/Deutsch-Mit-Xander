@@ -45,8 +45,9 @@
   <div class="header-spacer"></div>
 
   <div class="header-actions">
-    <button class="btn btn-ghost btn-icon-only" type="button" id="loginBtn" aria-label="Profil">
+    <button class="btn btn-ghost btn-icon-only" type="button" id="loginBtn" aria-label="Profil" style="position:relative;">
       <span aria-hidden="true" id="loginBtnIcon">👤</span><span class="btn-label" id="loginBtnLabel">Anmelden</span>
+      <span id="loginBtnBadge" class="notify-badge" style="display:none;"></span>
     </button>
     <a class="btn btn-coffee" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener">
       <span aria-hidden="true">☕</span><span class="btn-label">Unterstützen</span>
@@ -187,7 +188,7 @@
     <p class="eyebrow">Dein Fortschritt, deine Freunde &amp; dein Style</p>
     <div class="subnav" id="profileSubnav">
       <button class="subnav-pill" data-sub="sub-account" aria-selected="true">👤 Profil</button>
-      <button class="subnav-pill" data-sub="sub-friends" aria-selected="false">👥 Freunde</button>
+      <button class="subnav-pill" data-sub="sub-friends" aria-selected="false" style="position:relative;">👥 Freunde<span id="friendsTabBadge" class="notify-badge" style="display:none;"></span></button>
       <button class="subnav-pill" data-sub="sub-ranking" aria-selected="false">🏆 Ranking</button>
       <button class="subnav-pill" data-sub="sub-guestbook" aria-selected="false">📖 Gästebuch</button>
       <button class="subnav-pill" data-sub="sub-premium" aria-selected="false">✨ Premium</button>
