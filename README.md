@@ -80,7 +80,8 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
    create table profiles (
      id uuid references auth.users primary key,
      name text, points int default 0, badges text[] default '{}',
-     is_premium boolean default false, theme text default 'bastelheft', bio text default ''
+     is_premium boolean default false, theme text default 'bastelheft', bio text default '',
+     birthday text default '', avatar_url text default '', created_at timestamptz default now()
    );
 
    create table friends (
@@ -113,6 +114,11 @@ Das kann für Freunde/Tester verwirrend sein. Zwei Optionen:
 - **Abschalten (schneller zum Testen):** Im Supabase-Dashboard →
   "Authentication" → "Providers" → "Email" → "Confirm email" auf **aus**
   stellen. Dann kann man sich sofort nach der Registrierung einloggen.
+
+## 4b. Fotos hochladen (Profilbild) — einmalig einrichten
+
+1. Supabase-Dashboard → **Storage** → „New bucket" → Name: `avatars` → **Public bucket** anhaken → erstellen.
+2. Fertig — die Seite lädt Fotos jetzt automatisch dorthin hoch, sobald jemand im Profil auf sein Bild tippt.
 
 ## 5. Neue Beispiele/Fragen hinzufügen
 

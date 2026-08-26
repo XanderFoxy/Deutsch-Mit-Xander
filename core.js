@@ -69,5 +69,44 @@ const Core = (function () {
     }).join("");
   }
 
-  return { shuffle, drawUnique, el, speak, clamp, uid, formatStress };
+  // ---------- Soundeffekte (synthetisiert, keine Audiodateien nötig) ----------
+  let audioCtx = null;
+  function getCtx() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+
+  function tone(freq, start, duration, type = "sine", volume = 0.15) {
+    const ctx = getCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, ctx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(ctx.currentTime + start);
+    osc.stop(ctx.currentTime + start + duration);
+  }
+
+  const sound = {
+    correct() { tone(880, 0, 0.12, "sine"); tone(1318, 0.08, 0.18, "sine"); },
+    wrong() { tone(180, 0, 0.22, "sawtooth", 0.12); },
+    fanfare() {
+      [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.1, 0.25, "triangle", 0.14));
+    },
+    okay() {
+      [523, 587].forEach((f, i) => tone(f, i * 0.12, 0.18, "triangle", 0.12));
+    },
+    fail() {
+      // "Sad trombone" — absteigende Töne
+      [400, 360, 320, 260].forEach((f, i) => tone(f, i * 0.18, 0.24, "sawtooth", 0.12));
+    },
+  };
+
+  return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound };
 })();

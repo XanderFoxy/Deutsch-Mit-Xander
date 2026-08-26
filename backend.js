@@ -43,7 +43,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", points: 0, badges: [], history: [], isPremium: false, theme: "bastelheft" };
+    return { name, bio: "", birthday: "", avatarUrl: "", points: 0, badges: [], history: [], isPremium: false, theme: "bastelheft" };
   }
 
   /* ================= AUTH ================= */
@@ -55,6 +55,8 @@ const Backend = (function () {
         return {
           name: data.name || name || email,
           bio: data.bio || "",
+          birthday: data.birthday || "",
+          avatarUrl: data.avatar_url || "",
           points: data.points || 0,
           badges: data.badges || [],
           history: [],
@@ -375,6 +377,40 @@ const Backend = (function () {
     }
   }
 
+  function saveBirthday(birthday) {
+    if (!demo.profile) return;
+    demo.profile.birthday = birthday;
+    if (client && demo.user) {
+      client.from("profiles").update({ birthday }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Geburtstag konnte nicht gespeichert werden:", e));
+    }
+  }
+
+  async function uploadAvatar(file) {
+    if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
+    const path = `${demo.user.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    const { data } = client.storage.from("avatars").getPublicUrl(path);
+    const url = data.publicUrl;
+    await client.from("profiles").update({ avatar_url: url }).eq("id", demo.user.id);
+    demo.profile.avatarUrl = url;
+    return url;
+  }
+
+  async function getRecentMembers() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("name").order("created_at", { ascending: false }).limit(5);
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Neue Mitglieder konnten nicht geladen werden:", e);
+      }
+      return [];
+    }
+    return Object.values(demo.users).slice(-5).reverse().map((u) => ({ name: u.profile.name }));
+  }
+
   async function getIncomingRequests() {
     if (!demo.user) return [];
     if (client) {
@@ -584,5 +620,8 @@ const Backend = (function () {
     notifyPracticing,
     saveThemePreference,
     saveBio,
+    saveBirthday,
+    uploadAvatar,
+    getRecentMembers,
   };
 })();

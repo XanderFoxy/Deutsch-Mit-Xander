@@ -107,6 +107,39 @@
   updateClock();
   setInterval(updateClock, 15000);
 
+  /* ============ Feiertage & Geburtstag ============ */
+  const GERMAN_HOLIDAYS = {
+    "01-01": "🎉 Neujahr",
+    "05-01": "🛠️ Tag der Arbeit",
+    "10-03": "🇩🇪 Tag der Deutschen Einheit",
+    "10-31": "📜 Reformationstag",
+    "12-06": "🎅 Nikolaus",
+    "12-24": "🎄 Heiligabend",
+    "12-25": "🎄 1. Weihnachtstag",
+    "12-26": "🎄 2. Weihnachtstag",
+    "12-31": "🎆 Silvester",
+  };
+
+  function updateSpecialDayBar() {
+    const el = document.getElementById("specialDayOut");
+    if (!el) return;
+    const now = new Date();
+    const berlin = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
+    const key = `${String(berlin.getMonth() + 1).padStart(2, "0")}-${String(berlin.getDate()).padStart(2, "0")}`;
+    const profile = Backend.currentProfile();
+    let text = GERMAN_HOLIDAYS[key] || "";
+    if (profile && profile.birthday) {
+      const bday = profile.birthday.replace(/\s/g, "");
+      const todayDDMM = `${String(berlin.getDate()).padStart(2, "0")}.${String(berlin.getMonth() + 1).padStart(2, "0")}.`;
+      if (bday === todayDDMM || bday === todayDDMM.slice(0, -1)) {
+        text = `🎂 Alles Gute, ${profile.name.split(" ")[0]}!`;
+      }
+    }
+    el.textContent = text;
+    el.style.display = text ? "inline" : "none";
+  }
+  updateSpecialDayBar();
+
   const weatherOut = document.getElementById("weatherOut");
   const weatherIcon = document.getElementById("weatherIcon");
   // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji)
@@ -274,6 +307,7 @@
     function revealAndAdvance(selection) {
       const record = Quiz.submitAnswer(selection);
       const correctSet = new Set(q.correct);
+      record.base > 0 ? Core.sound.correct() : Core.sound.wrong();
       optionBtns.forEach((b) => {
         const idx = Number(b.dataset.idx);
         b.classList.remove("picked");
@@ -327,6 +361,10 @@
     playEl.style.display = "none";
     resultsEl.style.display = "";
     const r = Quiz.computeResults();
+
+    if (r.basePercent >= 70) Core.sound.fanfare();
+    else if (r.basePercent >= 40) Core.sound.okay();
+    else Core.sound.fail();
 
     Backend.saveResult({
       categories: r.categories,
@@ -457,7 +495,16 @@
           if (!isOpen) cls.push("hidden-face");
           if (memoryState.matched.has(c.pairId)) cls.push("matched");
           if (isWrong) cls.push("wrong-flash");
-          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? `<span>${c.label}</span>` : `<span class="fox-crest"></span>`}</button>`;
+          const foxSvg = `<span class="fox-crest"><svg viewBox="0 0 40 40" width="26" height="26" aria-hidden="true">
+            <path d="M20 6 L10 2 L13 12 Z" fill="#fff3d0"/><path d="M20 6 L30 2 L27 12 Z" fill="#fff3d0"/>
+            <path d="M20 6 L10 2 L13 12 Z" fill="none" stroke="#6b1414" stroke-width="1"/>
+            <path d="M20 6 L30 2 L27 12 Z" fill="none" stroke="#6b1414" stroke-width="1"/>
+            <path d="M20 9 C11 9 8 16 8 22 C8 30 14 35 20 35 C26 35 32 30 32 22 C32 16 29 9 20 9 Z" fill="#fff3d0" stroke="#6b1414" stroke-width="1"/>
+            <path d="M20 20 L15 30 L25 30 Z" fill="#6b1414"/>
+            <circle cx="15" cy="18" r="2" fill="#3a1a0a"/><circle cx="25" cy="18" r="2" fill="#3a1a0a"/>
+            <circle cx="20" cy="25" r="1.6" fill="#2a1006"/>
+          </svg></span>`;
+          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? `<span>${c.label}</span>` : foxSvg}</button>`;
         }).join("")}
       </div>
       <p class="memory-status">Züge: ${memoryState.moves} · Gefunden: ${memoryState.matched.size} / ${memoryState.cards.length / 2}</p>
@@ -495,11 +542,13 @@
       if (cardA.pairId === cardB.pairId) {
         memoryState.matched.add(cardA.pairId);
         memoryState.flipped = [];
+        Core.sound.correct();
         renderMemory();
         if (memoryState.matched.size === memoryState.cards.length / 2) {
           memoryState.finished = true;
           const pairs = memoryState.cards.length / 2;
           const score = Math.max(10, Math.round(100 * (pairs / Math.max(memoryState.moves, pairs))));
+          Core.sound.fanfare();
           Backend.saveResult({
             categories: ["memory"],
             points: score,
@@ -513,6 +562,7 @@
         }
       } else {
         memoryState.wrongFlash = [a, b];
+        Core.sound.wrong();
         renderMemory();
         setTimeout(() => {
           memoryState.flipped = [];
@@ -632,7 +682,6 @@
             <div class="form-error" id="authError"></div>
             <button type="submit" class="btn-submit">${authMode === "signup" ? "Konto erstellen" : "Anmelden"}</button>
           </form>
-          ${Backend.isConfigured ? `<p class="empty-note" style="margin-top:14px;">Funktioniert's nicht? Häufigste Ursachen: (1) E-Mail noch nicht bestätigt — Link im Postfach prüfen, oder in Supabase unter Authentication → Providers → Email „Confirm email" ausschalten. (2) Die Tabellen <code>profiles</code>, <code>friends</code>, <code>challenges</code>, <code>activity</code> fehlen noch — siehe README, Abschnitt „Supabase einrichten".</p>` : ""}
         </div>
       `;
       area.querySelectorAll(".auth-tab").forEach((t) => t.addEventListener("click", () => { authMode = t.dataset.mode; renderAccount(); }));
@@ -650,6 +699,7 @@
           }
           refreshHeaderAuth();
           renderAccount();
+          updateSpecialDayBar();
         } catch (err) {
           errBox.textContent = err.message || "Das hat leider nicht geklappt.";
         }
@@ -658,15 +708,22 @@
     }
 
     const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    const avatarHtml = profile.avatarUrl
+      ? `<img src="${profile.avatarUrl}" alt="" class="avatar-photo" />`
+      : `<div class="initials-avatar">${initials}</div>`;
 
     area.innerHTML = `
       ${demoBanner}
       <div class="question-card">
         <div class="profile-header">
-          <div class="initials-avatar">${initials}</div>
-          <div>
+          <label class="avatar-upload-wrap">
+            ${avatarHtml}
+            <span class="avatar-edit-badge">📷</span>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
+          </label>
+          <div class="profile-name-col">
             <h2>${profile.name}</h2>
-            <p class="empty-note">${user.email}${profile.isPremium ? " · ✨ Premium" : ""}</p>
+            ${profile.isPremium ? '<p class="empty-note">✨ Premium</p>' : ""}
           </div>
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
@@ -677,11 +734,16 @@
           <label>Über mich (sichtbar für Freunde)</label>
           <textarea id="bioInput" class="guestbook-form-textarea" placeholder="Ein paar Worte über dich…" maxlength="200">${profile.bio || ""}</textarea>
         </div>
+        <div class="form-field">
+          <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
+          <input type="text" id="birthdayInput" placeholder="TT.MM., z. B. 24.03." value="${profile.birthday || ""}" maxlength="6" />
+        </div>
         <div class="quiz-actions" style="justify-content:flex-start;">
           <button type="button" class="btn btn-coffee" id="saveBioBtn">Speichern</button>
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
         </div>
       </div>
+      ${await renderRecentMembers()}
       ${await renderActivityFeed()}
       ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">Letzte Ergebnisse</p>
@@ -695,8 +757,38 @@
     });
     document.getElementById("saveBioBtn").addEventListener("click", () => {
       Backend.saveBio(document.getElementById("bioInput").value.trim());
+      Backend.saveBirthday(document.getElementById("birthdayInput").value.trim());
       document.getElementById("saveBioBtn").textContent = "Gespeichert ✓";
+      updateSpecialDayBar();
     });
+    document.getElementById("avatarInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const badge = document.querySelector(".avatar-edit-badge");
+      badge.textContent = "⏳";
+      try {
+        await Backend.uploadAvatar(file);
+        renderAccount();
+      } catch (err) {
+        alert(err.message || "Foto konnte nicht hochgeladen werden.");
+        badge.textContent = "📷";
+      }
+    });
+    document.querySelector(".avatar-upload-wrap").addEventListener("click", (e) => {
+      if (!Backend.isConfigured) {
+        e.preventDefault();
+        alert("Fotos hochladen geht erst, sobald Supabase verbunden ist (siehe README, Abschnitt „Fotos hochladen“).");
+      }
+    });
+  }
+
+  async function renderRecentMembers() {
+    const members = await Backend.getRecentMembers();
+    if (!members.length) return "";
+    return `<div class="breakdown-list" style="margin-top:16px;">
+      <p class="eyebrow" style="margin-top:0;">🆕 Neu dabei</p>
+      ${members.map((m) => `<div class="breakdown-row"><span>${m.name}</span></div>`).join("")}
+    </div>`;
   }
 
   async function renderActivityFeed() {
@@ -943,5 +1035,6 @@
     refreshHeaderAuth();
     renderAccount();
     applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
+    updateSpecialDayBar();
   });
 })();

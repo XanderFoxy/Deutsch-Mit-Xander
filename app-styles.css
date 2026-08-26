@@ -417,11 +417,13 @@
   box-shadow: 0 0 0 1.5px #6b1414, inset 0 0 4px rgba(0,0,0,0.35);
   position: relative;
 }
-.fox-crest::before {
-  content: "🦊";
-  font-size: 1.6rem;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+
+@keyframes matchGlow {
+  0% { box-shadow: 0 0 0 0 rgba(87,199,174,0.6); }
+  60% { box-shadow: 0 0 0 10px rgba(87,199,174,0); }
+  100% { box-shadow: 0 0 0 0 rgba(87,199,174,0); }
 }
+.memory-card.matched { animation: matchGlow 0.6s ease-out; }
 .memory-card.matched {
   border-color: var(--teal-400);
   background: color-mix(in srgb, var(--teal-400) 22%, var(--plum-800));
@@ -617,8 +619,10 @@
   font-weight: 700;
 }
 
-.profile-header { display: flex; align-items: center; gap: var(--space-4); }
-.profile-points { margin-left: auto; text-align: right; }
+.profile-header { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.profile-name-col { min-width: 0; flex: 1 1 auto; }
+.profile-name-col h2 { overflow-wrap: break-word; }
+.profile-points { margin-left: auto; text-align: right; flex-shrink: 0; }
 .profile-points .num { font-family: var(--font-display); font-size: 1.8rem; color: var(--amber-300); }
 .demo-banner {
   margin-bottom: var(--space-4);
@@ -654,6 +658,25 @@
   background: linear-gradient(160deg, var(--amber-400), var(--teal-400));
   color: #fff; display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-weight: 800; font-size: 1.2rem;
+}
+.avatar-photo {
+  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+  object-fit: cover;
+}
+.avatar-upload-wrap {
+  position: relative; display: block; flex-shrink: 0; cursor: pointer;
+}
+.avatar-edit-badge {
+  position: absolute; bottom: -2px; right: -2px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--amber-400); display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; border: 2px solid var(--plum-800);
+}
+
+.form-field input[type="text"] {
+  width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
+  border: 1px solid rgba(245,239,228,0.16); background: var(--plum-950); color: var(--cream-50);
+  font-family: inherit; font-size: 0.9rem;
 }
 
 .friend-block { margin-bottom: 4px; }
