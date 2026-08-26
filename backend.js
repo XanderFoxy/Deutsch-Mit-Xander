@@ -266,20 +266,37 @@ const Backend = (function () {
   }
 
   /* ================= FREUNDE, DUELLE & AKTIVITÄT =================
-     Hinweis Demo-Modus: Suche/Freunde funktionieren nur innerhalb
-     derselben Browser-Sitzung (z. B. zum Testen: zwei Konten nach-
-     einander in diesem Tab registrieren). Mit Supabase verbunden
-     werden echte, geräteübergreifende Konten gefunden — dafür bitte
-     zusätzlich die Tabellen "profiles" und "friends" aus der README
-     anlegen (Abschnitt Supabase einrichten).
+     Läuft komplett echt (geräteübergreifend), sobald Supabase verbunden
+     ist — dafür zusätzlich die Tabellen "profiles", "friends",
+     "challenges" und "activity" aus der README anlegen. Ohne Supabase
+     läuft alles im Demo-Modus (nur innerhalb der Browser-Sitzung).
      ================================================================ */
 
-  function addActivity(text) {
-    demo.activity.unshift({ id: Core.uid(), text, date: new Date().toISOString() });
-    demo.activity = demo.activity.slice(0, 20);
+  function myId() {
+    return demo.user ? demo.user.id : null;
   }
 
-  function getActivity() {
+  async function addActivity(text) {
+    demo.activity.unshift({ id: Core.uid(), text, date: new Date().toISOString() });
+    demo.activity = demo.activity.slice(0, 20);
+    if (client) {
+      try {
+        await client.from("activity").insert({ user_id: myId(), text });
+      } catch (e) {
+        console.warn("Aktivität konnte nicht gespeichert werden:", e);
+      }
+    }
+  }
+
+  async function getActivity() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("activity").select("*").order("date", { ascending: false }).limit(6);
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Aktivität konnte nicht geladen werden, zeige lokale Daten:", e);
+      }
+    }
     return demo.activity.slice(0, 6);
   }
 
@@ -288,7 +305,7 @@ const Backend = (function () {
     if (!q) return [];
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("name").ilike("name", `%${q}%`).limit(10);
+        const { data, error } = await client.from("profiles").select("id,name").ilike("name", `%${q}%`).neq("id", myId() || "").limit(10);
         if (!error && data) return data;
       } catch (e) {
         console.warn("Supabase-Suche nicht verfügbar, durchsuche Demo-Konten:", e);
@@ -297,7 +314,7 @@ const Backend = (function () {
     const me = demo.user ? demo.user.email : null;
     return Object.entries(demo.users)
       .filter(([email, u]) => email !== me && u.profile.name.toLowerCase().includes(q))
-      .map(([email, u]) => ({ email, name: u.profile.name }))
+      .map(([email, u]) => ({ id: email, name: u.profile.name }))
       .slice(0, 10);
   }
 
@@ -305,44 +322,98 @@ const Backend = (function () {
     return [a, b].sort().join("::");
   }
 
-  function sendFriendRequest(targetEmail) {
+  async function sendFriendRequest(targetId) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
-    const pair = friendPairId(demo.user.email, targetEmail);
+    if (client) {
+      const { data: existing } = await client
+        .from("friends").select("id")
+        .or(`and(user_a.eq.${myId()},user_b.eq.${targetId}),and(user_a.eq.${targetId},user_b.eq.${myId()})`);
+      if (existing && existing.length) throw new Error("Da gibt es schon eine Anfrage oder Freundschaft.");
+      const { error } = await client.from("friends").insert({ user_a: myId(), user_b: targetId, status: "pending", requested_by: myId() });
+      if (error) throw error;
+      return;
+    }
+    const pair = friendPairId(demo.user.email, targetId);
     if (demo.friends.some((f) => friendPairId(f.a, f.b) === pair)) {
       throw new Error("Da gibt es schon eine Anfrage oder Freundschaft.");
     }
-    demo.friends.push({ id: Core.uid(), a: demo.user.email, b: targetEmail, status: "pending", requestedBy: demo.user.email });
+    demo.friends.push({ id: Core.uid(), a: demo.user.email, b: targetId, status: "pending", requestedBy: demo.user.email });
   }
 
-  function getIncomingRequests() {
+  async function namesFor(ids) {
+    if (!ids.length) return {};
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("id,name,points").in("id", ids);
+        if (!error && data) return Object.fromEntries(data.map((p) => [p.id, p]));
+      } catch (e) {
+        console.warn("Profile konnten nicht geladen werden:", e);
+      }
+      return {};
+    }
+    return Object.fromEntries(ids.map((email) => [email, { id: email, name: (demo.users[email] && demo.users[email].profile.name) || email, points: (demo.users[email] && demo.users[email].profile.points) || 0 }]));
+  }
+
+  async function getIncomingRequests() {
     if (!demo.user) return [];
+    if (client) {
+      const { data, error } = await client.from("friends").select("*")
+        .eq("status", "pending").neq("requested_by", myId())
+        .or(`user_a.eq.${myId()},user_b.eq.${myId()}`);
+      if (error || !data) return [];
+      const names = await namesFor(data.map((f) => f.requested_by));
+      return data.map((f) => ({ id: f.id, id_other: f.requested_by, name: (names[f.requested_by] && names[f.requested_by].name) || f.requested_by }));
+    }
     return demo.friends
       .filter((f) => f.status === "pending" && f.requestedBy !== demo.user.email && (f.a === demo.user.email || f.b === demo.user.email))
-      .map((f) => ({ id: f.id, email: f.requestedBy, name: (demo.users[f.requestedBy] && demo.users[f.requestedBy].profile.name) || f.requestedBy }));
+      .map((f) => ({ id: f.id, id_other: f.requestedBy, name: (demo.users[f.requestedBy] && demo.users[f.requestedBy].profile.name) || f.requestedBy }));
   }
 
-  function acceptFriendRequest(id) {
+  async function acceptFriendRequest(id) {
+    if (client) {
+      await client.from("friends").update({ status: "accepted" }).eq("id", id);
+      return;
+    }
     const f = demo.friends.find((x) => x.id === id);
     if (f) f.status = "accepted";
   }
 
-  function getFriends() {
+  async function getFriends() {
     if (!demo.user) return [];
+    if (client) {
+      const { data, error } = await client.from("friends").select("*")
+        .eq("status", "accepted").or(`user_a.eq.${myId()},user_b.eq.${myId()}`);
+      if (error || !data) return [];
+      const otherIds = data.map((f) => (f.user_a === myId() ? f.user_b : f.user_a));
+      const names = await namesFor(otherIds);
+      return otherIds.map((id) => ({ id, name: (names[id] && names[id].name) || id, points: (names[id] && names[id].points) || 0 }));
+    }
     return demo.friends
       .filter((f) => f.status === "accepted" && (f.a === demo.user.email || f.b === demo.user.email))
       .map((f) => {
         const otherEmail = f.a === demo.user.email ? f.b : f.a;
         const u = demo.users[otherEmail];
-        return { email: otherEmail, name: (u && u.profile.name) || otherEmail, points: (u && u.profile.points) || 0 };
+        return { id: otherEmail, name: (u && u.profile.name) || otherEmail, points: (u && u.profile.points) || 0 };
       });
   }
 
-  function createChallenge(toEmail, categoryIds) {
+  async function createChallenge(toId, categoryIds) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    let challengeId;
+    if (client) {
+      const { data, error } = await client.from("challenges")
+        .insert({ from_user: myId(), to_user: toId, categories: categoryIds, status: "pending" })
+        .select("id").single();
+      if (error) throw error;
+      challengeId = data.id;
+      const names = await namesFor([toId]);
+      await addActivity(`${demo.profile.name} fordert ${(names[toId] && names[toId].name) || "jemanden"} zu einem Duell heraus. 🎮`);
+      return challengeId;
+    }
     const challenge = {
       id: Core.uid(),
       from: demo.user.email,
-      to: toEmail,
+      to: toId,
       categories: categoryIds,
       fromResult: null,
       toResult: null,
@@ -351,13 +422,29 @@ const Backend = (function () {
       createdAt: new Date().toISOString(),
     };
     demo.challenges.push(challenge);
-    const toName = (demo.users[toEmail] && demo.users[toEmail].profile.name) || toEmail;
-    addActivity(`${demo.profile.name} fordert ${toName} zu einem Duell heraus. 🎮`);
+    const toName = (demo.users[toId] && demo.users[toId].profile.name) || toId;
+    await addActivity(`${demo.profile.name} fordert ${toName} zu einem Duell heraus. 🎮`);
     return challenge.id;
   }
 
-  function getMyChallenges() {
+  async function getMyChallenges() {
     if (!demo.user) return { incoming: [], outgoing: [] };
+    if (client) {
+      const { data, error } = await client.from("challenges").select("*").or(`from_user.eq.${myId()},to_user.eq.${myId()}`);
+      if (error || !data) return { incoming: [], outgoing: [] };
+      const ids = [...new Set(data.flatMap((c) => [c.from_user, c.to_user]))];
+      const names = await namesFor(ids);
+      const withNames = (c) => ({
+        id: c.id, from: c.from_user, to: c.to_user, categories: c.categories, status: c.status, winner: c.winner,
+        fromResult: c.from_result, toResult: c.to_result,
+        fromName: (names[c.from_user] && names[c.from_user].name) || c.from_user,
+        toName: (names[c.to_user] && names[c.to_user].name) || c.to_user,
+      });
+      return {
+        incoming: data.filter((c) => c.to_user === myId() && c.status === "pending" && !c.to_result).map(withNames),
+        outgoing: data.filter((c) => c.from_user === myId()).map(withNames),
+      };
+    }
     const me = demo.user.email;
     const withNames = (c) => ({
       ...c,
@@ -370,9 +457,38 @@ const Backend = (function () {
     };
   }
 
-  function submitChallengeResult(challengeId, result) {
+  async function submitChallengeResult(challengeId, result) {
+    if (!demo.user) return;
+    if (client) {
+      const { data: c, error } = await client.from("challenges").select("*").eq("id", challengeId).single();
+      if (error || !c) return;
+      const isFrom = c.from_user === myId();
+      const patch = isFrom ? { from_result: result } : { to_result: result };
+      const fromResult = isFrom ? result : c.from_result;
+      const toResult = isFrom ? c.to_result : result;
+      if (fromResult && toResult) {
+        const names = await namesFor([c.from_user, c.to_user]);
+        const fromName = (names[c.from_user] && names[c.from_user].name) || c.from_user;
+        const toName = (names[c.to_user] && names[c.to_user].name) || c.to_user;
+        if (fromResult.percent === toResult.percent) {
+          patch.status = "completed"; patch.winner = null;
+          await addActivity(`${fromName} und ${toName} haben unentschieden gespielt (${fromResult.percent}%). 🤝`);
+        } else {
+          const winnerIsFrom = fromResult.percent > toResult.percent;
+          patch.status = "completed";
+          patch.winner = winnerIsFrom ? c.from_user : c.to_user;
+          const winnerName = winnerIsFrom ? fromName : toName;
+          const loserName = winnerIsFrom ? toName : fromName;
+          const winnerPct = winnerIsFrom ? fromResult.percent : toResult.percent;
+          const loserPct = winnerIsFrom ? toResult.percent : fromResult.percent;
+          await addActivity(`${winnerName} hat ${loserName} im Duell geschlagen (${winnerPct}% zu ${loserPct}%). 🏆`);
+        }
+      }
+      await client.from("challenges").update(patch).eq("id", challengeId);
+      return;
+    }
     const c = demo.challenges.find((x) => x.id === challengeId);
-    if (!c || !demo.user) return;
+    if (!c) return;
     const isFrom = c.from === demo.user.email;
     if (isFrom) c.fromResult = result;
     else c.toResult = result;
@@ -383,7 +499,7 @@ const Backend = (function () {
       const toName = (demo.users[c.to] && demo.users[c.to].profile.name) || c.to;
       if (c.fromResult.percent === c.toResult.percent) {
         c.winner = null;
-        addActivity(`${fromName} und ${toName} haben unentschieden gespielt (${c.fromResult.percent}%). 🤝`);
+        await addActivity(`${fromName} und ${toName} haben unentschieden gespielt (${c.fromResult.percent}%). 🤝`);
       } else {
         const winnerIsFrom = c.fromResult.percent > c.toResult.percent;
         c.winner = winnerIsFrom ? c.from : c.to;
@@ -391,7 +507,7 @@ const Backend = (function () {
         const loserName = winnerIsFrom ? toName : fromName;
         const winnerPct = winnerIsFrom ? c.fromResult.percent : c.toResult.percent;
         const loserPct = winnerIsFrom ? c.toResult.percent : c.fromResult.percent;
-        addActivity(`${winnerName} hat ${loserName} im Duell geschlagen (${winnerPct}% zu ${loserPct}%). 🏆`);
+        await addActivity(`${winnerName} hat ${loserName} im Duell geschlagen (${winnerPct}% zu ${loserPct}%). 🏆`);
       }
     }
   }

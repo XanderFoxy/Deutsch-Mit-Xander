@@ -57,5 +57,17 @@ const Core = (function () {
     return Math.random().toString(36).slice(2, 10);
   }
 
-  return { shuffle, drawUnique, el, speak, clamp, uid };
+  // Wandelt "HA-ben" in Duden-Stil um: betonte Silbe fett + Punkt darunter.
+  function formatStress(syl) {
+    if (!syl || !syl.includes("-")) return syl || "";
+    const parts = syl.split("-");
+    return parts.map((part, i) => {
+      const isStressed = part === part.toUpperCase() && /[A-ZÄÖÜ]/.test(part);
+      let shown = part.toLowerCase();
+      if (i === 0) shown = shown.charAt(0).toUpperCase() + shown.slice(1);
+      return isStressed ? `<span class="stress-mark">${shown}</span>` : shown;
+    }).join("");
+  }
+
+  return { shuffle, drawUnique, el, speak, clamp, uid, formatStress };
 })();

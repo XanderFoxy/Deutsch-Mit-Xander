@@ -91,25 +91,43 @@
     });
   }
 
-  /* ============ Uhr & Wetter ============ */
+  /* ============ Uhr (analog) & Wetter ============ */
   const clockOut = document.getElementById("clockOut");
+  const hourHand = document.getElementById("clockHour");
+  const minuteHand = document.getElementById("clockMinute");
   function updateClock() {
-    if (!clockOut) return;
-    clockOut.textContent = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(new Date());
+    const now = new Date();
+    const berlin = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
+    const h = berlin.getHours() % 12;
+    const m = berlin.getMinutes();
+    if (hourHand) hourHand.style.transform = `rotate(${h * 30 + m * 0.5}deg)`;
+    if (minuteHand) minuteHand.style.transform = `rotate(${m * 6}deg)`;
+    if (clockOut) clockOut.textContent = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(now);
   }
   updateClock();
   setInterval(updateClock, 15000);
 
   const weatherOut = document.getElementById("weatherOut");
   const weatherIcon = document.getElementById("weatherIcon");
-  const WEATHER_ICONS = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"❄️",80:"🌦️",81:"🌧️",82:"⛈️",95:"⛈️",96:"⛈️",99:"⛈️" };
+  // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji)
+  const WEATHER_ICONS = {
+    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+    45: "🌫️", 48: "🌫️",
+    51: "🌦️", 53: "🌦️", 55: "🌧️", 56: "🌧️", 57: "🌧️",
+    61: "🌧️", 63: "🌧️", 65: "⛈️",
+    66: "🌨️", 67: "🌨️",
+    71: "🌨️", 73: "❄️", 75: "❄️", 77: "🌨️",
+    80: "🌦️", 81: "🌧️", 82: "⛈️",
+    85: "🌨️", 86: "❄️",
+    95: "⛈️", 96: "⛈️", 99: "⛈️",
+  };
   async function updateWeather() {
     if (!weatherOut) return;
     try {
       const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.405&current=temperature_2m,weather_code&timezone=Europe%2FBerlin");
       if (!res.ok) throw new Error("Wetter nicht verfügbar");
       const data = await res.json();
-      weatherOut.textContent = `${Math.round(data.current.temperature_2m)}°C`;
+      weatherOut.textContent = `${Math.round(data.current.temperature_2m)}°`;
       if (weatherIcon) weatherIcon.textContent = WEATHER_ICONS[data.current.weather_code] || "🌡️";
     } catch (e) {
       weatherOut.textContent = "—";
@@ -127,6 +145,7 @@
 
   let selectedCategories = new Set();
   let selectedDifficulty = "leicht";
+  let orderMode = "mixed"; // 'mixed' | 'sequential'
 
   function renderSetup() {
     setupEl.style.display = "";
@@ -159,6 +178,11 @@
         </div>
         <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>Runde starten ▶</button>
       </div>
+      ${selectedCategories.size > 1 ? `
+        <div class="order-toggle">
+          <button type="button" class="order-pill" data-order="mixed" aria-selected="${orderMode === "mixed"}">🔀 Gemischt</button>
+          <button type="button" class="order-pill" data-order="sequential" aria-selected="${orderMode === "sequential"}">📶 Nacheinander</button>
+        </div>` : ""}
       ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : ""}
     `;
 
@@ -190,9 +214,15 @@
         renderSetup();
       });
     });
+    setupEl.querySelectorAll(".order-pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        orderMode = btn.dataset.order;
+        renderSetup();
+      });
+    });
     const startBtn = document.getElementById("startBtn");
     if (startBtn) startBtn.addEventListener("click", () => {
-      Quiz.startSession([...selectedCategories], selectedDifficulty);
+      Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode);
       const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
       Backend.notifyPracticing(titles);
       renderQuestion();
@@ -200,6 +230,7 @@
   }
 
   let currentSelection = [];
+  const AUTO_ADVANCE_DELAY = 900;
 
   function renderQuestion() {
     setupEl.style.display = "none";
@@ -210,58 +241,86 @@
     const q = Quiz.currentQuestion();
     const p = Quiz.progress();
     const isMulti = q.correct.length > 1;
+    const isBlank = q.prompt.includes("___");
+    const cat = ExerciseData.getCategory(q.categoryId);
+
+    const promptHtml = isBlank
+      ? q.prompt.replace("___", '<span class="blank-slot" id="blankSlot">___</span>')
+      : q.prompt;
 
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
       <div class="question-card">
-        <div class="question-meta">${ExerciseData.getCategory(q.categoryId).title} · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
-        <div class="question-prompt">${q.prompt}</div>
+        <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
+        <div class="question-prompt">${promptHtml}</div>
         <div class="option-list">
-          ${q.options.map((opt, i) => `<button type="button" class="option-btn" data-idx="${i}"><span class="opt-mark">${isMulti ? "" : ""}</span><span>${opt}</span></button>`).join("")}
+          ${q.options.map((opt, i) => `<button type="button" class="option-btn" data-idx="${i}"><span>${opt}</span></button>`).join("")}
         </div>
         <div class="question-explain" id="explainBox">${q.explain}</div>
-        <div class="quiz-actions">
-          <button type="button" class="btn btn-ghost" id="checkBtn">Antworten prüfen</button>
-          <button type="button" class="btn btn-coffee" id="nextBtn" style="display:none;">${p.index + 1 === p.total ? "Auswertung ansehen" : "Nächste Frage →"}</button>
+        ${isMulti ? `<div class="quiz-actions"><button type="button" class="btn btn-coffee" id="checkBtn">Fertig ✓</button></div>` : ""}
+        <div class="quiz-actions" style="justify-content:space-between; margin-top:14px;">
+          <button type="button" class="btn btn-ghost" id="pauseBtn">⏸ Kategorien anpassen</button>
         </div>
       </div>
     `;
 
+    document.getElementById("pauseBtn").addEventListener("click", () => {
+      renderSetup();
+    });
+
     const optionBtns = playEl.querySelectorAll(".option-btn");
+    const blankSlot = document.getElementById("blankSlot");
+
+    function revealAndAdvance(selection) {
+      const record = Quiz.submitAnswer(selection);
+      const correctSet = new Set(q.correct);
+      optionBtns.forEach((b) => {
+        const idx = Number(b.dataset.idx);
+        b.classList.remove("picked");
+        if (correctSet.has(idx)) b.classList.add("reveal-correct");
+        else if (selection.includes(idx)) b.classList.add("reveal-wrong");
+        b.disabled = true;
+      });
+      if (blankSlot) {
+        const chosenIdx = selection[0];
+        blankSlot.textContent = q.options[chosenIdx];
+        blankSlot.classList.add(record.base > 0 ? "blank-correct" : "blank-wrong");
+        if (record.base === 0) {
+          const correctWord = q.options[q.correct[0]];
+          blankSlot.insertAdjacentHTML("afterend", ` <span class="blank-correction">(richtig: ${correctWord})</span>`);
+        }
+      }
+      document.getElementById("explainBox").classList.add("open");
+      setTimeout(() => {
+        const hasMore = Quiz.advance();
+        if (hasMore) renderQuestion();
+        else renderResults();
+      }, AUTO_ADVANCE_DELAY);
+    }
+
     optionBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.idx);
         if (isMulti) {
           if (currentSelection.includes(idx)) currentSelection = currentSelection.filter((i) => i !== idx);
           else currentSelection.push(idx);
+          optionBtns.forEach((b) => b.classList.toggle("picked", currentSelection.includes(Number(b.dataset.idx))));
         } else {
-          currentSelection = [idx];
+          optionBtns.forEach((b) => (b.disabled = true));
+          revealAndAdvance([idx]);
         }
-        optionBtns.forEach((b) => b.classList.toggle("picked", currentSelection.includes(Number(b.dataset.idx))));
       });
     });
 
-    document.getElementById("checkBtn").addEventListener("click", () => {
-      if (currentSelection.length === 0) return;
-      const record = Quiz.submitAnswer(currentSelection);
-      const correctSet = new Set(q.correct);
-      optionBtns.forEach((b) => {
-        const idx = Number(b.dataset.idx);
-        b.classList.remove("picked");
-        if (correctSet.has(idx)) b.classList.add("reveal-correct");
-        else if (currentSelection.includes(idx)) b.classList.add("reveal-wrong");
-        b.disabled = true;
+    const checkBtn = document.getElementById("checkBtn");
+    if (checkBtn) {
+      checkBtn.addEventListener("click", () => {
+        if (currentSelection.length === 0) return;
+        checkBtn.disabled = true;
+        optionBtns.forEach((b) => (b.disabled = true));
+        revealAndAdvance(currentSelection);
       });
-      document.getElementById("explainBox").classList.add("open");
-      document.getElementById("checkBtn").style.display = "none";
-      document.getElementById("nextBtn").style.display = "";
-    });
-
-    document.getElementById("nextBtn").addEventListener("click", () => {
-      const hasMore = Quiz.advance();
-      if (hasMore) renderQuestion();
-      else renderResults();
-    });
+    }
   }
 
   function renderResults() {
@@ -338,7 +397,7 @@
           <div class="vocab-card">
             <div>
               <div class="vocab-word">${w.word}</div>
-              <div class="vocab-syl">${w.syl}</div>
+              <div class="vocab-syl">${Core.formatStress(w.syl)}</div>
               <div class="vocab-en">${w.en}</div>
               <div class="vocab-example">„${w.example}"</div>
             </div>
@@ -357,23 +416,28 @@
      ============================================================ */
   const memoryArea = document.getElementById("memoryArea");
   let memoryState = null;
-
-  const MEMORY_PAIR_COUNT = 6; // 12 Karten -> passt ohne Scrollen aufs Handy
+  let memoryPairCount = 6; // Leicht: 6 Paare (12 Karten) · Mittel: 8 Paare (16 Karten) — bewusst kompakt, kein Scrollen
 
   function newMemoryGame() {
-    const pairs = Core.drawUnique(ExerciseData.getSynonymPairs(), MEMORY_PAIR_COUNT);
+    const pairs = Core.drawUnique(ExerciseData.getSynonymPairs(), memoryPairCount);
     let cards = [];
     pairs.forEach((p, i) => {
       cards.push({ id: `${i}-a`, pairId: i, label: p[0] });
       cards.push({ id: `${i}-b`, pairId: i, label: p[1] });
     });
     cards = Core.shuffle(cards);
-    memoryState = { cards, flipped: [], matched: new Set(), moves: 0, wrongFlash: [] };
+    memoryState = { cards, flipped: [], matched: new Set(), moves: 0, wrongFlash: [], finished: false };
     renderMemory();
   }
 
   function renderMemory() {
+    const sizeBar = `
+      <div class="order-toggle" style="margin-bottom:10px;">
+        <button type="button" class="order-pill" data-size="6" aria-selected="${memoryPairCount === 6}">Leicht · 6 Paare</button>
+        <button type="button" class="order-pill" data-size="8" aria-selected="${memoryPairCount === 8}">Mittel · 8 Paare</button>
+      </div>`;
     memoryArea.innerHTML = `
+      ${sizeBar}
       <p class="empty-note">Finde die deutschen Wortpaare mit gleicher Bedeutung.</p>
       <div class="memory-grid" id="memoryGrid">
         ${memoryState.cards.map((c) => {
@@ -383,15 +447,22 @@
           if (!isOpen) cls.push("hidden-face");
           if (memoryState.matched.has(c.pairId)) cls.push("matched");
           if (isWrong) cls.push("wrong-flash");
-          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? c.label : "?"}</button>`;
+          return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${isOpen ? `<span>${c.label}</span>` : `<span class="fox-crest"></span>`}</button>`;
         }).join("")}
       </div>
       <p class="memory-status">Züge: ${memoryState.moves} · Gefunden: ${memoryState.matched.size} / ${memoryState.cards.length / 2}</p>
+      ${memoryState.finished ? '<div class="demo-banner">🦊 Runde geschafft! Punkte wurden deinem Profil gutgeschrieben.</div>' : ""}
       <div class="quiz-actions" style="justify-content:flex-start;"><button type="button" class="btn btn-ghost" id="memoryRestart">🔄 Neu mischen</button></div>
     `;
     document.getElementById("memoryRestart").addEventListener("click", newMemoryGame);
     memoryArea.querySelectorAll(".memory-card").forEach((btn) => {
       btn.addEventListener("click", () => handleMemoryFlip(btn.dataset.id));
+    });
+    memoryArea.querySelectorAll("[data-size]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        memoryPairCount = Number(btn.dataset.size);
+        newMemoryGame();
+      });
     });
   }
 
@@ -409,6 +480,21 @@
         memoryState.matched.add(cardA.pairId);
         memoryState.flipped = [];
         renderMemory();
+        if (memoryState.matched.size === memoryState.cards.length / 2) {
+          memoryState.finished = true;
+          const pairs = memoryState.cards.length / 2;
+          const score = Math.max(10, Math.round(100 * (pairs / Math.max(memoryState.moves, pairs))));
+          Backend.saveResult({
+            categories: ["memory"],
+            points: score,
+            bonus: 0,
+            percent: score,
+            character: "Memory-Meister",
+            badges: [],
+            playedAt: new Date().toISOString(),
+          });
+          renderMemory();
+        }
       } else {
         memoryState.wrongFlash = [a, b];
         renderMemory();
@@ -506,7 +592,7 @@
 
   let authMode = "login";
 
-  function renderAccount() {
+  async function renderAccount() {
     const area = document.getElementById("accountArea");
     const user = Backend.currentUser();
     const profile = Backend.currentProfile();
@@ -572,7 +658,7 @@
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
         </div>
       </div>
-      ${renderActivityFeed()}
+      ${await renderActivityFeed()}
       ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">Letzte Ergebnisse</p>
         ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
@@ -585,8 +671,8 @@
     });
   }
 
-  function renderActivityFeed() {
-    const items = Backend.getActivity();
+  async function renderActivityFeed() {
+    const items = await Backend.getActivity();
     if (!items.length) return "";
     return `<div class="breakdown-list" style="margin-top:16px;">
       <p class="eyebrow" style="margin-top:0;">🔔 Was gerade passiert</p>
@@ -608,10 +694,13 @@
       area.innerHTML = `<p class="empty-note">Melde dich im Reiter „Profil" an, um Freunde zu finden und herauszufordern.</p>`;
       return;
     }
+    area.innerHTML = `<p class="empty-note">Lade …</p>`;
 
-    const friends = Backend.getFriends();
-    const incoming = Backend.getIncomingRequests();
-    const { incoming: incomingChallenges, outgoing: outgoingChallenges } = Backend.getMyChallenges();
+    const [friends, incoming, { incoming: incomingChallenges, outgoing: outgoingChallenges }] = await Promise.all([
+      Backend.getFriends(),
+      Backend.getIncomingRequests(),
+      Backend.getMyChallenges(),
+    ]);
 
     area.innerHTML = `
       <div class="question-card">
@@ -620,7 +709,7 @@
           <input type="text" class="vocab-search" id="friendSearch" placeholder="Name eingeben…" />
         </div>
         <div id="friendSearchResults"></div>
-        <p class="empty-note" style="margin-top:8px;">${Backend.isConfigured ? "" : "Demo-Modus: Suche findet nur Konten, die in dieser Sitzung schon registriert wurden."}</p>
+        <p class="empty-note" style="margin-top:8px;">${Backend.isConfigured ? "Suche findet alle registrierten Nutzer." : "Demo-Modus: Suche findet nur Konten, die in dieser Sitzung schon registriert wurden."}</p>
       </div>
 
       ${incoming.length ? `<div class="question-card" style="margin-top:14px;">
@@ -638,7 +727,7 @@
         ${friends.length ? friends.map((f) => `
           <div class="breakdown-row">
             <span>${f.name} · ${f.points} Pkt.</span>
-            <button type="button" class="btn btn-ghost" data-challenge="${f.email}" data-name="${f.name}">🎮 Herausfordern</button>
+            <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
       </div>
 
@@ -657,11 +746,11 @@
       searchTimer = setTimeout(async () => {
         const results = await Backend.searchUsers(q);
         document.getElementById("friendSearchResults").innerHTML = results.length
-          ? results.map((r) => `<div class="breakdown-row"><span>${r.name}</span><button type="button" class="btn btn-ghost" data-add="${r.email}">+ Freund werden</button></div>`).join("")
+          ? results.map((r) => `<div class="breakdown-row"><span>${r.name}</span><button type="button" class="btn btn-ghost" data-add="${r.id}">+ Freund werden</button></div>`).join("")
           : (q.trim() ? '<p class="empty-note">Niemand gefunden.</p>' : "");
         area.querySelectorAll("[data-add]").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            try { Backend.sendFriendRequest(btn.dataset.add); btn.textContent = "Angefragt ✓"; btn.disabled = true; }
+          btn.addEventListener("click", async () => {
+            try { await Backend.sendFriendRequest(btn.dataset.add); btn.textContent = "Angefragt ✓"; btn.disabled = true; }
             catch (err) { alert(err.message); }
           });
         });
@@ -669,12 +758,12 @@
     });
 
     area.querySelectorAll("[data-accept]").forEach((btn) => {
-      btn.addEventListener("click", () => { Backend.acceptFriendRequest(btn.dataset.accept); renderFriends(); });
+      btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); renderFriends(); });
     });
 
     area.querySelectorAll("[data-challenge]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        friendChallengeTarget = { email: btn.dataset.challenge, name: btn.dataset.name };
+        friendChallengeTarget = { id: btn.dataset.challenge, name: btn.dataset.name };
         renderChallengePicker();
       });
     });
@@ -704,9 +793,9 @@
       </div>
     `;
     box.querySelectorAll("[data-pick-cat]").forEach((card) => {
-      card.addEventListener("click", () => {
+      card.addEventListener("click", async () => {
         const categoryId = card.dataset.pickCat;
-        const challengeId = Backend.createChallenge(friendChallengeTarget.email, [categoryId]);
+        const challengeId = await Backend.createChallenge(friendChallengeTarget.id, [categoryId]);
         friendChallengeTarget = null;
         activateTab("view-learn");
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();

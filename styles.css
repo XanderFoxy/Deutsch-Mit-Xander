@@ -181,18 +181,23 @@ button:focus-visible,
 }
 
 .weather-bar .weather-icon {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
 }
 
 .weather-dot {
   opacity: 0.4;
 }
 
-.weather-city {
-  color: var(--cream-200);
-  opacity: 0.7;
-  font-size: 0.72rem;
+.analog-clock {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
+.clock-face { fill: var(--plum-800); stroke: var(--teal-400); stroke-width: 1.5; opacity: 0.9; }
+.clock-tick { fill: var(--teal-400); opacity: 0.5; }
+.clock-hand { stroke: var(--teal-400); stroke-width: 2; stroke-linecap: round; transform-origin: 20px 20px; }
+.hand-minute { stroke-width: 1.6; opacity: 0.85; }
+.clock-center { fill: var(--coral-400); }
 
 .header-spacer { flex: 1; }
 

@@ -143,6 +143,16 @@ const VocabData = (function () {
     { word: "Babo", explain: "der Chef, die Anführerin/der Anführer", example: "Sie ist die Babo in der Gruppe." },
     { word: "auf jeden (Fall)", explain: "klare Zustimmung", example: "Kommst du mit? – Auf jeden!" },
     { word: "sus", explain: "verdächtig, komisch (aus dem Spiel Among Us)", example: "Der Typ ist voll sus." },
+    { word: "Sigma", explain: "(ironisch) ein unabhängiger, cooler Typ", example: "Er tut so, als wäre er der Sigma der Klasse." },
+    { word: "low-key", explain: "irgendwie, ein bisschen, heimlich", example: "Ich bin low-key genervt davon." },
+    { word: "high-key", explain: "total, ganz offensichtlich", example: "Ich hab high-key keine Lust mehr." },
+    { word: "Aura", explain: "Ausstrahlung/Coolness-Punkte (oft ironisch gezählt)", example: "Das hat ihm richtig Aura gebracht." },
+    { word: "goofy", explain: "albern, tollpatschig auf sympathische Art", example: "Er ist manchmal richtig goofy." },
+    { word: "NPC", explain: "jemand, der sich uninteressant/vorhersehbar verhält", example: "Hör auf, dich wie ein NPC zu verhalten." },
+    { word: "mid", explain: "mittelmäßig, nicht besonders gut", example: "Der Film war ehrlich gesagt mid." },
+    { word: "Rizz", explain: "Charisma, Charme beim Flirten", example: "Er hat einfach Rizz." },
+    { word: "krank (positiv gemeint)", explain: "beeindruckend, verrückt gut", example: "Das Konzert war einfach krank." },
+    { word: "based", explain: "(ironisch) mutig die eigene Meinung vertretend, cool", example: "Ehrliche Antwort, das ist based." },
   ];
 
   const LINKS = [
@@ -150,6 +160,9 @@ const VocabData = (function () {
     { title: "DWDS", url: "https://www.dwds.de", desc: "Digitales Wörterbuch der deutschen Sprache." },
     { title: "Goethe-Institut", url: "https://www.goethe.de", desc: "Offizielle Sprachkurse & Prüfungsvorbereitung." },
     { title: "Deutsche Welle – Deutsch lernen", url: "https://www.dw.com/de/deutsch-lernen/s-2055", desc: "Kostenlose Kurse, Podcasts & Nachrichten in einfacher Sprache." },
+    { title: "Redensarten-Index", url: "https://www.redensarten-index.de", desc: "Nachschlagewerk für deutsche Redewendungen und ihre Bedeutung." },
+    { title: "Reverso Context", url: "https://context.reverso.net/übersetzung/deutsch-englisch/", desc: "Wörter und Redewendungen in echten Beispielsätzen nachschlagen." },
+    { title: "Bundeskampf", url: "https://www.bundeskampf.com", desc: "Augenzwinkerndes Browsergame über die deutschen Bundesländer — mit Gartenzwergen als Sammelobjekt." },
   ];
 
   return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS };

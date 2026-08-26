@@ -558,6 +558,49 @@ const ExerciseData = (function () {
   }
 
   /* ---------------------------------------------------------
+     11) ß ODER SS — richtige Schreibweise erkennen
+     --------------------------------------------------------- */
+  const SS_ESZETT = [
+    ["Strasse","Straße","Nach langem Vokal (hier: a) steht ß, nicht ss."],
+    ["Fuss","Fuß","Nach langem Vokal (hier: u) steht ß."],
+    ["gross","groß","Nach langem Vokal (hier: o) steht ß."],
+    ["Spass","Spaß","Nach langem Vokal (hier: a) steht ß."],
+    ["Gruss","Gruß","Nach langem Vokal (hier: u) steht ß."],
+    ["aussen","außen","Nach einem Diphthong (au) steht ß."],
+    ["heiss","heiß","Nach einem Diphthong (ei) steht ß."],
+    ["weiss","weiß","Nach einem Diphthong (ei) steht ß."],
+    ["Mass","Maß","Nach langem Vokal (hier: a) steht ß."],
+    ["bloss","bloß","Nach langem Vokal (hier: o) steht ß."],
+    ["Fuße","Füße","Nach langem Vokal (hier: ü) steht ß."],
+    ["Grüsse","Grüße","Nach langem Vokal (hier: ü) steht ß."],
+    ["stossen","stoßen","Nach langem Vokal (hier: o) steht ß."],
+    ["schliessen","schließen","Nach langem Vokal (hier: ie) steht ß."],
+    ["draussen","draußen","Nach einem Diphthong (au) steht ß."],
+    ["bißchen","bisschen","Nach kurzem Vokal (hier: i) steht ss — moderne Rechtschreibung."],
+    ["bewußt","bewusst","Nach kurzem Vokal (hier: u) steht ss — moderne Rechtschreibung."],
+    ["Kuß","Kuss","Nach kurzem Vokal (hier: u) steht ss."],
+    ["Fluß","Fluss","Nach kurzem Vokal (hier: u) steht ss."],
+    ["Nuß","Nuss","Nach kurzem Vokal (hier: u) steht ss."],
+    ["Schluß","Schluss","Nach kurzem Vokal (hier: u) steht ss."],
+    ["Prozeß","Prozess","Nach kurzem Vokal (hier: e) steht ss."],
+    ["müßen","müssen","Nach kurzem Vokal (hier: ü) steht ss."],
+    ["wißen","wissen","Nach kurzem Vokal (hier: i) steht ss."],
+    ["vergeßen","vergessen","Nach kurzem Vokal (hier: e) steht ss."],
+  ];
+
+  function bankSsEszett() {
+    return Core.shuffle(SS_ESZETT).map(([wrong, correct, explain]) => {
+      const opts = Core.shuffle([correct, wrong]);
+      return {
+        prompt: `Welche Schreibweise ist richtig?`,
+        options: opts,
+        correct: [opts.indexOf(correct)],
+        explain,
+      };
+    });
+  }
+
+  /* ---------------------------------------------------------
      10) DEUTSCHLAND-QUIZ — Multiple Choice, teils 2 richtige
      --------------------------------------------------------- */
   const DEUTSCHLAND_QUIZ = [
@@ -661,6 +704,9 @@ const ExerciseData = (function () {
     { id: "haeufige-fehler", title: "Häufige Fehler", icon: "⚠️", group: "grammatik",
       info: "Typische Stolperfallen, die auch Muttersprachlern passieren — hier erkennst du die richtige Form.",
       getBank: bankHaeufigeFehler },
+    { id: "ss-eszett", title: "ß oder ss", icon: "🔡", group: "grammatik",
+      info: "Nach einem langen Vokal oder einem Diphthong (au, ei, eu …) steht ß. Nach einem kurzen Vokal steht ss.",
+      getBank: bankSsEszett },
     { id: "quiz", title: "Deutschland-Quiz", icon: "🏆", group: "quiz",
       info: "Allgemeinwissen rund um Deutschland — im Stil von „Wer wird Millionär“. Manche Fragen haben zwei richtige Antworten für Bonuspunkte!",
       getBank: bankQuiz },

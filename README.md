@@ -88,6 +88,18 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      user_a uuid references auth.users, user_b uuid references auth.users,
      status text default 'pending', requested_by uuid references auth.users
    );
+
+   create table challenges (
+     id uuid default gen_random_uuid() primary key,
+     from_user uuid references auth.users, to_user uuid references auth.users,
+     categories text[], from_result jsonb, to_result jsonb,
+     status text default 'pending', winner uuid, created_at timestamptz default now()
+   );
+
+   create table activity (
+     id uuid default gen_random_uuid() primary key,
+     user_id uuid references auth.users, text text, date timestamptz default now()
+   );
    ```
 5. Seite neu laden — die App erkennt die Konfiguration automatisch und
    nutzt ab dann echte Konten statt des Demo-Modus.
