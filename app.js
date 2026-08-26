@@ -33,6 +33,49 @@
   wireSubnav("knowledgeSubnav");
   wireSubnav("profileSubnav");
 
+  /* ============================================================
+     DESIGN / THEMES — 4 austauschbare Vorlagen
+     ============================================================ */
+  const THEMES = [
+    { id: "bastelheft", name: "Bastelheft", emoji: "✂️", desc: "Hell, Papier & Washi-Tape, verspielte Candyfarben." },
+    { id: "flickenteppich", name: "Flickenteppich", emoji: "🧵", desc: "Kräftige Patchwork-Farben, dicke verspielte Outlines." },
+    { id: "wollknaeuel", name: "Wollknäuel", emoji: "🧶", desc: "Kuschelig-gestrickt, warme Herbstfarben." },
+    { id: "papierfalz", name: "Papierfalz", emoji: "🕊️", desc: "Ruhig, gefaltetes Papier, gedeckte Erdtöne." },
+  ];
+  let sessionTheme = "bastelheft";
+
+  function applyTheme(id) {
+    document.documentElement.setAttribute("data-theme", id);
+    const profile = Backend.currentProfile();
+    if (profile) profile.theme = id;
+    else sessionTheme = id;
+  }
+
+  function renderDesign() {
+    const area = document.getElementById("designArea");
+    if (!area) return;
+    const active = (Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme;
+    area.innerHTML = `
+      <p class="empty-note">Wähle dein Lieblings-Design — wirkt sofort auf der ganzen Seite.</p>
+      <div class="category-grid">
+        ${THEMES.map((t) => `
+          <div class="category-card ${t.id === active ? "selected" : ""}" data-theme-pick="${t.id}">
+            <div class="cat-checkbox">${t.id === active ? "✓" : ""}</div>
+            <div class="cat-body">
+              <div class="cat-title-row"><span class="cat-icon">${t.emoji}</span><span>${t.name}</span></div>
+              <div class="cat-info-text open">${t.desc}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    `;
+    area.querySelectorAll("[data-theme-pick]").forEach((card) => {
+      card.addEventListener("click", () => {
+        applyTheme(card.dataset.themePick);
+        renderDesign();
+      });
+    });
+  }
+
   /* ============ Uhr & Wetter ============ */
   const clockOut = document.getElementById("clockOut");
   function updateClock() {
@@ -538,6 +581,10 @@
       if (pill.dataset.sub === "sub-guestbook") renderGuestbook();
       if (pill.dataset.sub === "sub-premium") renderPremium();
       if (pill.dataset.sub === "sub-account") renderAccount();
+      if (pill.dataset.sub === "sub-design") renderDesign();
     });
   });
+
+  // Beim Start: gespeichertes Theme des eingeloggten Profils anwenden, sonst Standard behalten
+  applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
 })();

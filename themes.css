@@ -1,0 +1,103 @@
+/* =========================================================
+   THEMES — 4 austauschbare Design-Vorlagen
+   Aktiviert über [data-theme] auf <html>. Jedes Theme
+   überschreibt nur die Tokens aus styles.css :root — alle
+   Komponenten (Header, Karten, Buttons, Übungen …) passen sich
+   automatisch an, ohne dass ihr eigenes CSS geändert wird.
+   ========================================================= */
+
+/* ---------- 1) BASTELHEFT — hell, Papier, Candyfarben ---------- */
+[data-theme="bastelheft"] {
+  --plum-950: #FDF8F0;
+  --plum-800: #FFFFFF;
+  --plum-700: #F6F1E7;
+  --cream-50: #2E2A25;
+  --cream-200: #7A7364;
+  --amber-400: #FF8A65;
+  --amber-300: #FFA987;
+  --teal-400: #2E7D68;
+  --coral-400: #B84A29;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 26px rgba(46, 42, 37, 0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "✂️"; --logo-shape: 50%; --logo-bg: #FFD873;
+}
+
+/* ---------- 2) FLICKENTEPPICH — kräftig, Quilt-Patches, dicke Outlines ---------- */
+[data-theme="flickenteppich"] {
+  --plum-950: #F6EFE0;
+  --plum-800: #FFFFFF;
+  --plum-700: #F0E6D0;
+  --cream-50: #3A3226;
+  --cream-200: #7A6F5C;
+  --amber-400: #E8A93B;
+  --amber-300: #F0C066;
+  --teal-400: #4FA391;
+  --coral-400: #E2685A;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px;
+  --shadow-deck: 5px 5px 0 rgba(58,50,38,0.9);
+  --card-border: 2.5px solid #3A3226;
+  --card-shadow-extra: none;
+  --logo-emoji: "🧵"; --logo-shape: 30%; --logo-bg: #E2685A;
+}
+[data-theme="flickenteppich"] body {
+  background-image: radial-gradient(rgba(58,50,38,0.08) 1px, transparent 1px);
+  background-size: 15px 15px;
+}
+[data-theme="flickenteppich"] .tab-active,
+[data-theme="flickenteppich"] .tape-tab[aria-selected="true"] { border: 2px solid #3A3226; }
+
+/* ---------- 3) WOLLKNÄUEL — kuschelig, gestrickt, Herbstfarben ---------- */
+[data-theme="wollknaeuel"] {
+  --plum-950: #FBF1DE;
+  --plum-800: #FFFFFF;
+  --plum-700: #F7EAD1;
+  --cream-50: #4A3826;
+  --cream-200: #9C8E75;
+  --amber-400: #D9713C;
+  --amber-300: #E69368;
+  --teal-400: #7A9B5E;
+  --coral-400: #8C5A82;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 8px 0 rgba(74,56,38,0.12);
+  --card-border: 2px solid rgba(74,56,38,0.1);
+  --card-shadow-extra: none;
+  --logo-emoji: "🧶"; --logo-shape: 50%; --logo-bg: #D9713C;
+}
+[data-theme="wollknaeuel"] body {
+  background-image: repeating-radial-gradient(circle at 0 0, rgba(74,56,38,0.05) 0, transparent 9px);
+  background-size: 18px 18px;
+}
+
+/* ---------- 4) PAPIERFALZ — ruhig, gefaltetes Papier, gedeckte Erdtöne ---------- */
+[data-theme="papierfalz"] {
+  --plum-950: #F3EEE2;
+  --plum-800: #FFFDF8;
+  --plum-700: #ECE5D6;
+  --cream-50: #3C3830;
+  --cream-200: #9C9484;
+  --amber-400: #D98C5F;
+  --amber-300: #E3A784;
+  --teal-400: #7FA98C;
+  --coral-400: #2C5470;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 6px;
+  --shadow-deck: 0 4px 0 rgba(60,56,48,0.06), 0 10px 20px rgba(60,56,48,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🕊️"; --logo-shape: 8px; --logo-bg: #7CA6C4;
+}
+
+/* Deko-Details, die pro Theme leicht variieren */
+[data-theme="bastelheft"] .tape-piece { background: rgba(255, 216, 115, 0.85); }
+[data-theme="flickenteppich"] .tape-piece,
+[data-theme="wollknaeuel"] .tape-piece,
+[data-theme="papierfalz"] .tape-piece { display: none; }

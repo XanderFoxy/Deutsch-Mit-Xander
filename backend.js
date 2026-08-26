@@ -40,7 +40,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", points: 0, badges: [], history: [], isPremium: false };
+    return { name, bio: "", points: 0, badges: [], history: [], isPremium: false, theme: "bastelheft" };
   }
 
   /* ================= AUTH ================= */

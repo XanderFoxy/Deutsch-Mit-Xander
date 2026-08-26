@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="bastelheft">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,6 +16,7 @@
 
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="app-styles.css" />
+<link rel="stylesheet" href="themes.css" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -24,14 +25,7 @@
 
 <header class="site-header">
   <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="2" y="10" width="36" height="20" rx="4" fill="#3a2740" stroke="#f2b84b" stroke-width="1.5"/>
-      <circle class="reel reel-a" cx="13" cy="20" r="6" fill="#1c1320" stroke="#57c7ae" stroke-width="1.5"/>
-      <circle cx="13" cy="20" r="1.6" fill="#57c7ae"/>
-      <circle class="reel reel-b" cx="27" cy="20" r="6" fill="#1c1320" stroke="#57c7ae" stroke-width="1.5"/>
-      <circle cx="27" cy="20" r="1.6" fill="#57c7ae"/>
-      <rect x="17" y="24" width="6" height="3" rx="1" fill="#f2b84b"/>
-    </svg>
+    <div class="brand-mark" id="brandMark" aria-hidden="true"></div>
     <span class="brand-name">Deutsch mit <span>Alex</span></span>
   </div>
 
@@ -65,26 +59,27 @@
 
   <!-- ÜBER MICH ================================================= -->
   <section class="view" id="view-about" data-active="true">
-    <p class="eyebrow">Track 01 — Über mich</p>
-    <div class="about-card">
+    <div class="about-card about-card-compact">
       <div class="about-top">
         <div class="avatar-wrap">
+          <div class="tape-piece" aria-hidden="true"></div>
           <img src="https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" />
         </div>
-        <div class="about-heading">
-          <h2>Alex</h2>
-          <p class="role">46 Jahre · Musiker · Deutschlehrer aus Leidenschaft</p>
+        <div class="about-body-col">
+          <h2>Hallo, ich bin Alex!</h2>
+          <p class="role">Musiker &amp; Deutschlehrer, 46</p>
+          <p class="about-text-short">Ich mache dir Deutsch lernen so leicht wie ein gutes Bastelprojekt — Schritt für Schritt, mit Spaß statt Druck.</p>
+          <div class="about-links">
+            <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener">▶️ YouTube</a>
+            <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener">🎵 TikTok</a>
+          </div>
         </div>
       </div>
-      <div class="about-text">
-        <p>Hey, schön, dass du hier bist! Ich bin Alex — hauptberuflich mache ich Musik, nebenbei erkläre ich seit Jahren gerne, warum "der Käse" und nicht "die Käse" heißt und wieso "wenn" und "als" nicht dasselbe sind. Diese Seite ist mein Mixtape für alle, die Deutsch spielerisch üben wollen.</p>
-        <p>Übe Grammatik in kurzen Runden, sammle Punkte und Abzeichen, tritt im Tagesranking an, und wenn du Lust hast, schau bei meiner Musik auf YouTube oder TikTok vorbei. Und falls dir die Seite hilft: Ein virtueller Kaffee hält mich beim nächsten Update wach. ☕</p>
-      </div>
-      <div class="about-links">
-        <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener">▶️ YouTube</a>
-        <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener">🎵 TikTok</a>
-        <a class="link-chip disabled" href="#" aria-disabled="true" title="Kommt bald">🎁 Wunschliste (bald)</a>
-      </div>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-piece"><div class="n">10</div><div class="l">Kategorien</div></div>
+      <div class="stat-piece"><div class="n">300+</div><div class="l">Vokabeln</div></div>
+      <div class="stat-piece"><div class="n">0€</div><div class="l">Kostenlos</div></div>
     </div>
   </section>
 
@@ -133,11 +128,13 @@
       <button class="subnav-pill" data-sub="sub-ranking" aria-selected="false">🏆 Ranking</button>
       <button class="subnav-pill" data-sub="sub-guestbook" aria-selected="false">📖 Gästebuch</button>
       <button class="subnav-pill" data-sub="sub-premium" aria-selected="false">✨ Premium</button>
+      <button class="subnav-pill" data-sub="sub-design" aria-selected="false">🎨 Design</button>
     </div>
     <div class="subview" id="sub-account" data-active="true"><div id="accountArea"></div></div>
     <div class="subview" id="sub-ranking" data-active="false"><div id="rankingArea"></div></div>
     <div class="subview" id="sub-guestbook" data-active="false"><div id="guestbookArea"></div></div>
     <div class="subview" id="sub-premium" data-active="false"><div id="premiumArea"></div></div>
+    <div class="subview" id="sub-design" data-active="false"><div id="designArea"></div></div>
   </section>
 
 </main>
