@@ -52,6 +52,8 @@
     { id: "papierfalz", name: "Papierfalz", emoji: "🕊️", desc: "Ruhig, gefaltetes Papier, gedeckte Erdtöne." },
     { id: "nachtflicken", name: "Nachtflicken", emoji: "🦇", desc: "Dunkel & verspielt, Neon-Filzpatches auf tiefem Lila." },
     { id: "kirmes", name: "Kirmes", emoji: "🎡", desc: "Bunt & fröhlich wie ein deutscher Jahrmarkt." },
+    { id: "wiesenblume", name: "Wiesenblume", emoji: "🌼", desc: "Sanft, pastellig, frühlingshaft-verspielt." },
+    { id: "sternennacht", name: "Sternennacht", emoji: "✨", desc: "Dunkelblau mit goldenem Funkeln, verträumt." },
   ];
   let sessionTheme = "bastelheft";
 
@@ -201,6 +203,34 @@
   }
   updateTicker();
   setInterval(updateTicker, 20000);
+
+  /* ============ Kurze Pop-up-Benachrichtigung bei neuen Anfragen ============ */
+  function showToast(text) {
+    const toast = Core.el("div", { class: "toast-popup" }, text);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("toast-visible"), 20);
+    setTimeout(() => {
+      toast.classList.remove("toast-visible");
+      setTimeout(() => toast.remove(), 400);
+    }, 4500);
+  }
+  let lastFriendReqCount = 0;
+  let lastChallengeReqCount = 0;
+  let notifyPrimed = false;
+  async function checkNotifications() {
+    if (!Backend.currentUser()) return;
+    const [requests, challenges] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges()]);
+    const challengeCount = challenges.incoming.length;
+    if (notifyPrimed) {
+      if (requests.length > lastFriendReqCount) showToast("👥 Neue Freundschaftsanfrage erhalten!");
+      if (challengeCount > lastChallengeReqCount) showToast("🎮 Jemand fordert dich zu einem Duell heraus!");
+    }
+    lastFriendReqCount = requests.length;
+    lastChallengeReqCount = challengeCount;
+    notifyPrimed = true;
+  }
+  checkNotifications();
+  setInterval(checkNotifications, 20000);
 
   const weatherOut = document.getElementById("weatherOut");
   const weatherIcon = document.getElementById("weatherIcon");
@@ -775,6 +805,67 @@
     btn.addEventListener("click", () => openLightbox(btn.dataset.full, btn.dataset.alt));
   });
 
+  renderCommunityTexts();
+
+  async function renderCommunityTexts() {
+    const area = document.getElementById("communityAdd") || (() => {
+      const wrap = Core.el("div", { id: "communityTextsSection", class: "community-section" });
+      document.getElementById("materialsArea").insertAdjacentElement("afterend", wrap);
+      return wrap;
+    })();
+    const box = document.getElementById("communityTextsSection");
+    const texts = await Backend.getApprovedCommunityTexts();
+    const user = Backend.currentUser();
+
+    box.innerHTML = `
+      <p class="eyebrow" style="margin-top:28px;">📚 Community-Texte</p>
+      <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert.</p>
+      ${texts.length ? texts.map((t) => `
+        <div class="material-card">
+          <div class="community-text-head">
+            <span class="level-badge">${t.level}</span>
+            <h3 style="margin:0;">${t.title}</h3>
+          </div>
+          <p style="white-space:pre-wrap;">${t.body}</p>
+          <p class="empty-note" style="margin-top:8px;">✍️ gepostet von ${t.author_name}</p>
+        </div>`).join("") : '<p class="empty-note">Noch keine freigeschalteten Texte — sei die/der Erste!</p>'}
+
+      ${user ? `
+        <div class="material-card" style="margin-top:14px;">
+          <h3>✏️ Eigenen Text einreichen</h3>
+          <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird.</p>
+          <div class="form-field"><label>Titel</label><input type="text" id="ctTitle" maxlength="80" /></div>
+          <div class="form-field">
+            <label>Sprachniveau</label>
+            <select id="ctLevel" class="challenge-select">
+              ${["A1","A2","B1","B2","C1","C2"].map((l) => `<option value="${l}">${l}</option>`).join("")}
+            </select>
+          </div>
+          <div class="form-field"><label>Text</label><textarea id="ctBody" class="guestbook-form-textarea" style="min-height:120px;" maxlength="3000"></textarea></div>
+          <div class="form-error" id="ctError"></div>
+          <button type="button" class="btn-submit" id="ctSubmitBtn">Einreichen</button>
+        </div>` : '<p class="empty-note" style="margin-top:10px;">Melde dich an, um eigene Texte einzureichen.</p>'}
+    `;
+
+    const submitBtn = document.getElementById("ctSubmitBtn");
+    if (submitBtn) {
+      submitBtn.addEventListener("click", async () => {
+        const title = document.getElementById("ctTitle").value.trim();
+        const level = document.getElementById("ctLevel").value;
+        const body = document.getElementById("ctBody").value.trim();
+        const errBox = document.getElementById("ctError");
+        if (!title || !body) { errBox.textContent = "Bitte Titel und Text ausfüllen."; return; }
+        try {
+          await Backend.submitCommunityText({ title, level, body });
+          submitBtn.textContent = "Eingereicht ✓ (wartet auf Freischaltung)";
+          submitBtn.disabled = true;
+        } catch (err) {
+          errBox.textContent = err.message || "Konnte nicht eingereicht werden.";
+        }
+      });
+    }
+  }
+
   document.getElementById("linksArea").innerHTML = VocabData.LINKS.map((l) => `
     <div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("");
 
@@ -858,6 +949,7 @@
 
     const AVATAR_EMOJIS = ["🦊","🐱","🐶","🐼","🐨","🦁","🐸","🦉","🐧","🦄","🐢","🐝"];
     const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    const friendCount = (await Backend.getFriends()).length;
     const avatarHtml = profile.avatarUrl
       ? `<img src="${profile.avatarUrl}" alt="" class="avatar-photo" />`
       : profile.avatarEmoji
@@ -875,11 +967,12 @@
           </label>
           <div class="profile-name-col">
             <h2>${profile.name}</h2>
-            ${profile.isPremium ? '<p class="empty-note">✨ Premium</p>' : ""}
+            <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}</p>
           </div>
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
-        <div class="emoji-picker-row">
+        <button type="button" class="emoji-toggle-link" id="emojiToggleLink">🎭 Kein Foto? Stattdessen Emoji wählen</button>
+        <div class="emoji-picker-row" id="emojiPickerRow" style="display:none;">
           ${AVATAR_EMOJIS.map((e) => `<button type="button" class="emoji-pick-btn" data-emoji="${e}">${e}</button>`).join("")}
         </div>
         <div class="form-error" id="avatarError"></div>
@@ -894,16 +987,45 @@
           <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
           <input type="date" id="birthdayInput" value="${profile.birthday || ""}" />
         </div>
+        <div class="form-field">
+          <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
+          <div class="hobby-chip-row">
+            ${VocabData.HOBBIES.map((h) => `<button type="button" class="hobby-chip ${((profile.hobbies || []).includes(h.noun)) ? "selected" : ""}" data-hobby="${h.noun}">${h.emoji} ${h.article} ${h.noun}</button>`).join("")}
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Woher kommst du?</label>
+          <select id="originSelect" class="challenge-select">
+            <option value="">Nicht angeben</option>
+            ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${profile.origin === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
+          </select>
+        </div>
         <div class="quiz-actions" style="justify-content:flex-start;">
           <button type="button" class="btn btn-coffee" id="saveBioBtn">Speichern</button>
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
         </div>
       </div>
+      <div class="question-card" style="margin-top:16px;">
+        <h3>📷 Galerie</h3>
+        <p class="empty-note">Bis zu 6 Fotos, die Freunde in deinem Profil sehen können.</p>
+        <div class="gallery-grid" id="galleryGrid">
+          ${(profile.gallery || []).map((url) => `
+            <div class="gallery-thumb-wrap">
+              <img src="${url}" class="gallery-thumb" alt="" />
+              <button type="button" class="gallery-remove-btn" data-remove-gallery="${url}">✕</button>
+            </div>`).join("")}
+          ${(profile.gallery || []).length < 6 ? `
+            <label class="gallery-add-btn">
+              +<input type="file" id="galleryInput" accept="image/*" style="display:none;" />
+            </label>` : ""}
+        </div>
+        <div class="form-error" id="galleryError"></div>
+      </div>
       ${renderTrophyCase(profile)}
       ${await renderRecentMembers()}
       ${await renderActivityFeed()}
       ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
-        <p class="eyebrow" style="margin-top:0;">Letzte Ergebnisse</p>
+        <p class="eyebrow" style="margin-top:0;">🎯 Deine letzten Ergebnisse</p>
         ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
       </div>` : ""}
     `;
@@ -915,8 +1037,13 @@
     document.getElementById("saveBioBtn").addEventListener("click", () => {
       Backend.saveBio(document.getElementById("bioInput").value.trim());
       Backend.saveBirthday(document.getElementById("birthdayInput").value.trim());
+      Backend.saveOrigin(document.getElementById("originSelect").value);
       document.getElementById("saveBioBtn").textContent = "Gespeichert ✓";
       updateSpecialDayBar();
+    });
+    document.getElementById("emojiToggleLink").addEventListener("click", () => {
+      const row = document.getElementById("emojiPickerRow");
+      row.style.display = row.style.display === "none" ? "flex" : "none";
     });
     area.querySelectorAll("[data-emoji]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -950,14 +1077,45 @@
     area.querySelectorAll("[data-view-member]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewMember));
     });
+    area.querySelectorAll("[data-hobby]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const current = new Set(profile.hobbies || []);
+        if (current.has(btn.dataset.hobby)) current.delete(btn.dataset.hobby);
+        else current.add(btn.dataset.hobby);
+        Backend.saveHobbies([...current]);
+        renderAccount();
+      });
+    });
+    const galleryInput = document.getElementById("galleryInput");
+    if (galleryInput) {
+      galleryInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          await Backend.uploadGalleryPhoto(file);
+          renderAccount();
+        } catch (err) {
+          document.getElementById("galleryError").textContent = err.message || "Foto konnte nicht hochgeladen werden.";
+        }
+      });
+    }
+    area.querySelectorAll("[data-remove-gallery]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        Backend.removeGalleryPhoto(btn.dataset.removeGallery);
+        renderAccount();
+      });
+    });
   }
 
-  function renderTrophyCase(profile) {
+  function renderTrophyCase(profile, compact) {
     if (!profile.trophies || !profile.trophies.length) return "";
+    const list = compact ? profile.trophies.slice(0, 4) : profile.trophies;
+    const extra = compact && profile.trophies.length > 4 ? profile.trophies.length - 4 : 0;
     return `<div class="breakdown-list" style="margin-top:16px;">
       <p class="eyebrow" style="margin-top:0;">🏆 Vitrine</p>
-      <div class="badge-row" style="justify-content:flex-start;">
-        ${profile.trophies.map((t) => `<div class="badge-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}
+      <div class="trophy-case ${compact ? "trophy-case-compact" : ""}">
+        ${list.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}
+        ${extra ? `<div class="trophy-chip trophy-chip-more">+${extra} mehr</div>` : ""}
       </div>
     </div>`;
   }
@@ -994,26 +1152,39 @@
         : `<div class="initials-avatar">${initials}</div>`;
     const me = Backend.currentUser();
     const isMe = me && me.id === p.id;
+    const alreadyFriends = me && !isMe ? (await Backend.getFriends()).some((f) => f.id === p.id) : false;
+    const trophies = (p.trophies || []).slice(0, 4);
+    const trophyOverflow = (p.trophies || []).length - trophies.length;
 
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>${p.origin ? `<span class="empty-note">${(VocabData.COUNTRIES.find((c) => c.name === p.origin) || {}).flag || "🌍"} ${p.origin}</span>` : ""}` }),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
-        Core.el("div", { class: "badge-row", style: "justify-content:center;",
-          html: (p.trophies && p.trophies.length ? p.trophies.map((t) => `<div class="badge-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") : "")
-              + (p.badges && p.badges.length ? p.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "") }),
+        p.hobbies && p.hobbies.length
+          ? Core.el("div", { class: "trophy-case", style: "justify-content:center; margin-top:8px;",
+              html: p.hobbies.map((h) => {
+                const hobby = VocabData.HOBBIES.find((x) => x.noun === h);
+                return hobby ? `<div class="trophy-chip">${hobby.emoji} ${hobby.article} ${hobby.noun}</div>` : "";
+              }).join("") })
+          : "",
+        Core.el("div", { class: "trophy-case trophy-case-compact", style: "justify-content:center; margin-top:10px;",
+          html: trophies.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")
+              + (trophyOverflow > 0 ? `<div class="trophy-chip trophy-chip-more">+${trophyOverflow} mehr</div>` : "")
+              + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "") }),
         Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:16px;" },
           isMe
             ? Core.el("span", { class: "empty-note" }, "Das bist du 👋")
-            : Core.el("button", {
-                class: "btn btn-coffee", type: "button", id: "modalAddFriend",
-                onclick: async (e) => {
-                  if (!me) { alert("Melde dich zuerst an, um Freunde hinzuzufügen."); return; }
-                  try { await Backend.sendFriendRequest(p.id); e.target.textContent = "Angefragt ✓"; e.target.disabled = true; }
-                  catch (err) { alert(err.message); }
-                },
-              }, "🤝 Freund werden")
+            : alreadyFriends
+              ? Core.el("span", { class: "friend-status-badge" }, "✅ Ihr seid befreundet")
+              : Core.el("button", {
+                  class: "btn btn-coffee", type: "button", id: "modalAddFriend",
+                  onclick: async (e) => {
+                    if (!me) { alert("Melde dich zuerst an, um Freunde hinzuzufügen."); return; }
+                    try { await Backend.sendFriendRequest(p.id); e.target.textContent = "Angefragt ✓"; e.target.disabled = true; }
+                    catch (err) { alert(err.message); }
+                  },
+                }, "🤝 Freund werden")
         )
       )
     );

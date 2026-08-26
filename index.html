@@ -55,8 +55,10 @@
 </header>
 
 <div class="weather-bar" id="deckDisplay">
-  <span class="weather-icon" id="weatherIcon">⛅</span>
-  <span id="weatherOut">—°</span>
+  <span class="weather-readout">
+    <span class="weather-icon" id="weatherIcon">⛅</span>
+    <span id="weatherOut">—°</span>
+  </span>
   <span class="weather-dot">·</span>
   <svg class="analog-clock" id="analogClock" viewBox="0 0 40 40" aria-hidden="true">
     <circle cx="20" cy="20" r="18" class="clock-face" />
@@ -122,7 +124,7 @@
 
   <!-- LERNEN ===================================================== -->
   <section class="view" id="view-learn" data-active="false">
-    <p class="eyebrow">Track 02 — Lernen</p>
+    <p class="eyebrow">Übungen, Vokabeln &amp; Memory — spielerisch Deutsch üben</p>
     <div class="subnav" id="learnSubnav">
       <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
       <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false">🗂️ Vokabeltrainer</button>
@@ -146,7 +148,7 @@
 
   <!-- WISSEN ====================================================== -->
   <section class="view" id="view-knowledge" data-active="false">
-    <p class="eyebrow">Track 03 — Wissen</p>
+    <p class="eyebrow">Kompass, Materialien &amp; weiterführende Links</p>
     <div class="subnav" id="knowledgeSubnav">
       <button class="subnav-pill" data-sub="sub-kompass" aria-selected="true">🧭 Kompass</button>
       <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
@@ -180,7 +182,7 @@
 
   <!-- PROFIL & RANG =============================================== -->
   <section class="view" id="view-profile" data-active="false">
-    <p class="eyebrow">Track 04 — Profil &amp; Rang</p>
+    <p class="eyebrow">Dein Fortschritt, deine Freunde &amp; dein Style</p>
     <div class="subnav" id="profileSubnav">
       <button class="subnav-pill" data-sub="sub-account" aria-selected="true">👤 Profil</button>
       <button class="subnav-pill" data-sub="sub-friends" aria-selected="false">👥 Freunde</button>

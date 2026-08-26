@@ -43,7 +43,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft" };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft" };
   }
 
   /* ================= AUTH ================= */
@@ -58,6 +58,9 @@ const Backend = (function () {
           birthday: data.birthday || "",
           avatarUrl: data.avatar_url || "",
           avatarEmoji: data.avatar_emoji || "",
+          gallery: data.gallery || [],
+          hobbies: data.hobbies || [],
+          origin: data.origin || "",
           points: data.points || 0,
           badges: data.badges || [],
           trophies: data.trophies || [],
@@ -458,6 +461,53 @@ const Backend = (function () {
     }
   }
 
+  const GALLERY_MAX = 6;
+
+  async function uploadGalleryPhoto(file) {
+    if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
+    if (!demo.profile.gallery) demo.profile.gallery = [];
+    if (demo.profile.gallery.length >= GALLERY_MAX) throw new Error(`Maximal ${GALLERY_MAX} Fotos in der Galerie.`);
+    const path = `${demo.user.id}/gallery-${Date.now()}-${file.name}`;
+    const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) {
+      if (uploadError.message && uploadError.message.toLowerCase().includes("bucket not found")) {
+        throw new Error("Der Speicherort für Fotos fehlt noch (siehe README, Abschnitt 4b).");
+      }
+      throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    }
+    const { data } = client.storage.from("avatars").getPublicUrl(path);
+    demo.profile.gallery.push(data.publicUrl);
+    await client.from("profiles").update({ gallery: demo.profile.gallery }).eq("id", demo.user.id);
+    return demo.profile.gallery;
+  }
+
+  function removeGalleryPhoto(url) {
+    if (!demo.profile || !demo.profile.gallery) return;
+    demo.profile.gallery = demo.profile.gallery.filter((u) => u !== url);
+    if (client && demo.user) {
+      client.from("profiles").update({ gallery: demo.profile.gallery }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Galerie konnte nicht aktualisiert werden:", e));
+    }
+  }
+
+  function saveHobbies(hobbies) {
+    if (!demo.profile) return;
+    demo.profile.hobbies = hobbies;
+    if (client && demo.user) {
+      client.from("profiles").update({ hobbies }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Hobbys konnten nicht gespeichert werden:", e));
+    }
+  }
+
+  function saveOrigin(origin) {
+    if (!demo.profile) return;
+    demo.profile.origin = origin;
+    if (client && demo.user) {
+      client.from("profiles").update({ origin }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Herkunft konnte nicht gespeichert werden:", e));
+    }
+  }
+
   async function getRecentMembers() {
     if (client) {
       try {
@@ -476,7 +526,7 @@ const Backend = (function () {
   async function getPublicProfile(id) {
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points").eq("id", id).maybeSingle();
+        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points,origin,hobbies").eq("id", id).maybeSingle();
         if (!error && data) return data;
       } catch (e) {
         console.warn("Profil konnte nicht geladen werden:", e);
@@ -488,6 +538,7 @@ const Backend = (function () {
     return {
       id, name: u.profile.name, bio: u.profile.bio, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
       badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
+      origin: u.profile.origin, hobbies: u.profile.hobbies,
     };
   }
 
@@ -675,6 +726,34 @@ const Backend = (function () {
     }
   }
 
+  /* ================= COMMUNITY-TEXTE (User-Uploads, warten auf Freischaltung) ================= */
+  demo.communityTexts = demo.communityTexts || [];
+
+  async function submitCommunityText({ title, level, body }) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("community_texts").insert({
+        user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending",
+      });
+      if (error) throw new Error("Konnte nicht eingereicht werden: " + error.message);
+      return;
+    }
+    demo.communityTexts.push({ id: Core.uid(), author_name: demo.profile.name, title, level, body, status: "pending", created_at: new Date().toISOString() });
+  }
+
+  async function getApprovedCommunityTexts() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_texts").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(20);
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Community-Texte konnten nicht geladen werden:", e);
+      }
+      return [];
+    }
+    return demo.communityTexts.filter((t) => t.status === "approved");
+  }
+
   return {
     isConfigured,
     restoreSession,
@@ -701,6 +780,12 @@ const Backend = (function () {
     getActivity,
     notifyPracticing,
     saveThemePreference,
+    uploadGalleryPhoto,
+    removeGalleryPhoto,
+    saveHobbies,
+    saveOrigin,
+    submitCommunityText,
+    getApprovedCommunityTexts,
     saveBio,
     saveBirthday,
     uploadAvatar,

@@ -155,6 +155,38 @@ const VocabData = (function () {
     { word: "based", explain: "(ironisch) mutig die eigene Meinung vertretend, cool", example: "Ehrliche Antwort, das ist based." },
   ];
 
+  // Hobbys & Interessen fürs Profil — bewusst mit Artikel gezeigt,
+  // damit man das Genus nebenbei mitlernt (kleiner Lern-Kniff).
+  // Herkunftsländer fürs Profil — Land + Sprache, damit man sieht wer woher kommt
+  const COUNTRIES = [
+    { name: "Deutschland", flag: "🇩🇪" }, { name: "Österreich", flag: "🇦🇹" }, { name: "Schweiz", flag: "🇨🇭" },
+    { name: "Türkei", flag: "🇹🇷" }, { name: "Polen", flag: "🇵🇱" }, { name: "Ukraine", flag: "🇺🇦" },
+    { name: "Russland", flag: "🇷🇺" }, { name: "Syrien", flag: "🇸🇾" }, { name: "Afghanistan", flag: "🇦🇫" },
+    { name: "Italien", flag: "🇮🇹" }, { name: "Spanien", flag: "🇪🇸" }, { name: "Frankreich", flag: "🇫🇷" },
+    { name: "Griechenland", flag: "🇬🇷" }, { name: "Portugal", flag: "🇵🇹" }, { name: "Rumänien", flag: "🇷🇴" },
+    { name: "Vereinigtes Königreich", flag: "🇬🇧" }, { name: "USA", flag: "🇺🇸" }, { name: "Brasilien", flag: "🇧🇷" },
+    { name: "Indien", flag: "🇮🇳" }, { name: "China", flag: "🇨🇳" }, { name: "Japan", flag: "🇯🇵" },
+    { name: "Vietnam", flag: "🇻🇳" }, { name: "Marokko", flag: "🇲🇦" }, { name: "Nigeria", flag: "🇳🇬" },
+    { name: "Sonstiges", flag: "🌍" },
+  ];
+
+  const HOBBIES = [
+    { noun: "Kunst", article: "die", emoji: "🎨" },
+    { noun: "Sport", article: "der", emoji: "⚽" },
+    { noun: "Lesen", article: "das", emoji: "📚" },
+    { noun: "Musik", article: "die", emoji: "🎵" },
+    { noun: "Kochen", article: "das", emoji: "🍳" },
+    { noun: "Reisen", article: "das", emoji: "✈️" },
+    { noun: "Fotografie", article: "die", emoji: "📷" },
+    { noun: "Tanzen", article: "das", emoji: "💃" },
+    { noun: "Natur", article: "die", emoji: "🌳" },
+    { noun: "Gaming", article: "das", emoji: "🎮" },
+    { noun: "Yoga", article: "das", emoji: "🧘" },
+    { noun: "Handarbeit", article: "die", emoji: "🧵" },
+    { noun: "Backen", article: "das", emoji: "🧁" },
+    { noun: "Gartenarbeit", article: "die", emoji: "🌱" },
+  ];
+
   const LINKS = [
     { title: "Duden", url: "https://www.duden.de", desc: "Rechtschreibung, Grammatik & Bedeutungen nachschlagen." },
     { title: "DWDS", url: "https://www.dwds.de", desc: "Digitales Wörterbuch der deutschen Sprache." },
@@ -165,5 +197,5 @@ const VocabData = (function () {
     { title: "Bundeskampf", url: "https://www.bundeskampf.com", desc: "Augenzwinkerndes Browsergame über die deutschen Bundesländer — mit Gartenzwergen als Sammelobjekt." },
   ];
 
-  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS };
+  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES };
 })();

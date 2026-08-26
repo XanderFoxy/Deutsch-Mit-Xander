@@ -334,6 +334,35 @@
 }
 .badge-chip .emoji { font-size: 1.4rem; }
 
+.trophy-case {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.trophy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  background: linear-gradient(135deg, rgba(242,184,75,0.18), rgba(87,199,174,0.1));
+  border: 1px solid rgba(242,184,75,0.3);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--cream-50);
+  white-space: nowrap;
+}
+.trophy-chip .emoji { font-size: 0.85rem; }
+.trophy-chip-more {
+  background: var(--plum-700);
+  color: var(--cream-200);
+  border-style: dashed;
+}
+.trophy-case-compact {
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .breakdown-list { margin-top: var(--space-5); display: flex; flex-direction: column; gap: 8px; }
 .breakdown-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -559,6 +588,18 @@
 .material-card p, .link-card p { color: var(--cream-200); font-size: 0.88rem; margin: 0; }
 .link-card a { color: var(--amber-300); font-weight: 600; }
 
+.community-section { margin-top: 8px; }
+.community-text-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.level-badge {
+  flex-shrink: 0;
+  background: var(--teal-400);
+  color: #0a2620;
+  font-weight: 800;
+  font-size: 0.7rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
 .material-thumb-btn {
   display: block;
   width: 100%;
@@ -713,6 +754,17 @@
   font-size: 0.7rem; border: 2px solid var(--plum-800);
 }
 .emoji-avatar { font-size: 1.8rem; }
+.emoji-toggle-link {
+  display: block;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--teal-400);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+}
 .emoji-picker-row {
   display: flex; flex-wrap: wrap; gap: 6px;
   margin-top: 10px;
@@ -753,9 +805,22 @@
   border-radius: var(--radius-lg);
   padding: 26px 22px;
   max-width: 340px;
+  max-height: 85vh;
+  overflow-y: auto;
   width: 100%;
   position: relative;
   text-align: center;
+}
+.friend-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(87,199,174,0.15);
+  color: var(--teal-400);
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 .profile-modal-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 12px; }
 .profile-modal-header .avatar-photo,
@@ -790,3 +855,27 @@
 .unlock-tag { font-family: var(--font-mono); font-size: 0.7rem; color: var(--teal-400); }
 
 .empty-note { color: var(--cream-200); font-size: 0.88rem; opacity: 0.8; padding: var(--space-3) 0; }
+
+.toast-popup {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 20px);
+  background: var(--plum-800);
+  color: var(--cream-50);
+  border: 1px solid rgba(242,184,75,0.4);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast-popup.toast-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

@@ -143,8 +143,54 @@
 /* Deko-Details, die pro Theme leicht variieren */
 [data-theme="bastelheft"] .tape-piece { background: rgba(255, 216, 115, 0.85); }
 [data-theme="bastelheft"] .tape-piece { display: block; }
+/* ---------- 7) WIESENBLUME — sanft, pastellig, verspielt-frühlingshaft ---------- */
+[data-theme="wiesenblume"] {
+  --plum-950: #F3FAF0;
+  --plum-800: #FFFFFF;
+  --plum-700: #E8F5E0;
+  --cream-50: #2E3A26;
+  --cream-200: #7A8A6F;
+  --amber-400: #F2A6C4;
+  --amber-300: #F7C3D8;
+  --teal-400: #6FBF8F;
+  --coral-400: #E8955C;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(46,58,38,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌼"; --logo-shape: 50%; --logo-bg: #F2A6C4;
+}
+
+/* ---------- 8) STERNENNACHT — dunkelblau, golden funkelnd, verträumt ---------- */
+[data-theme="sternennacht"] {
+  --plum-950: #10132B;
+  --plum-800: #1B2044;
+  --plum-700: #262C5C;
+  --cream-50: #F0EFFF;
+  --cream-200: #A9AEDB;
+  --amber-400: #F2C879;
+  --amber-300: #F6DBA3;
+  --teal-400: #7FD8D0;
+  --coral-400: #E8875F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(242,200,121,0.25);
+  --card-shadow-extra: none;
+  --logo-emoji: "✨"; --logo-shape: 50%; --logo-bg: #F2C879;
+}
+[data-theme="sternennacht"] body {
+  background-image: radial-gradient(rgba(242,200,121,0.15) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
 [data-theme="flickenteppich"] .tape-piece,
 [data-theme="wollknaeuel"] .tape-piece,
 [data-theme="papierfalz"] .tape-piece,
 [data-theme="nachtflicken"] .tape-piece,
-[data-theme="kirmes"] .tape-piece { display: none; }
+[data-theme="kirmes"] .tape-piece,
+[data-theme="wiesenblume"] .tape-piece,
+[data-theme="sternennacht"] .tape-piece { display: none; }
