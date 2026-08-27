@@ -185,6 +185,43 @@ Geht weiterhin auch klassisch: Supabase → **Table Editor** →
 `community_texts` → bei der gewünschten Zeile die Spalte `status` von
 `pending` auf `approved` ändern.
 
+## 4e. Nachrüst-SQL — einmal alles auf den neuesten Stand bringen
+
+Wenn irgendwo Fehler wie „Profil konnte nicht geladen werden" oder
+„Could not find table community_text_likes" auftauchen, fehlen meist einfach
+neue Spalten oder Tabellen, die zu einem späteren Zeitpunkt dazugekommen
+sind. Dieser komplette Block ist **gefahrlos mehrfach ausführbar** (nichts
+wird überschrieben, nur ergänzt) — einfach alles auf einmal in den
+Supabase SQL-Editor einfügen und ausführen:
+
+```sql
+-- Neuere Profil-Spalten nachrüsten
+alter table profiles add column if not exists is_admin boolean default false;
+alter table profiles add column if not exists is_owner boolean default false;
+alter table profiles add column if not exists gifted_categories text[] default '{}';
+
+-- Likes & Kommentare für Community-Texte
+create table if not exists community_text_likes (
+  id uuid default gen_random_uuid() primary key,
+  text_id uuid references community_texts, user_id uuid references auth.users,
+  created_at timestamptz default now()
+);
+create table if not exists community_text_comments (
+  id uuid default gen_random_uuid() primary key,
+  text_id uuid references community_texts, user_id uuid references auth.users,
+  author_name text, body text, created_at timestamptz default now()
+);
+alter table community_text_likes disable row level security;
+alter table community_text_comments disable row level security;
+
+-- Dich selbst als Betreiber markieren (Namen ggf. anpassen)
+update profiles set is_admin = true, is_owner = true where name = 'XanderFox';
+```
+
+Danach einmal die Seite neu laden — dann sollten fremde Profile, Freundeslisten
+mit echten Namen (statt kryptischer IDs), Likes und Kommentare wieder
+funktionieren.
+
 ## 5. Neue Beispiele/Fragen hinzufügen
 
 Jede Kategorie liegt als einfaches Array in `data-exercises.js`. Neue Zeile

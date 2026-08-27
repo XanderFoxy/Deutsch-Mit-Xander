@@ -592,6 +592,241 @@
 }
 
 [data-theme="wellenspiel"] .tape-piece,
+/* ---------- 24) KIRSCHBLÜTE — hell, zartrosa mit fallenden Blütenblättern (animiert) ---------- */
+[data-theme="kirschbluete"] {
+  --plum-950: #FFF3F5;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCE1E7;
+  --cream-50: #4A1E28;
+  --cream-200: #A66F7C;
+  --amber-400: #E88FA3;
+  --amber-300: #F0AEBC;
+  --teal-400: #7FBFA0;
+  --coral-400: #E85F7A;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(74,30,40,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌸"; --logo-shape: 50%; --logo-bg: #E88FA3;
+}
+[data-theme="kirschbluete"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 3px at 15% 10%, #E88FA3, transparent),
+    radial-gradient(2.5px 2.5px at 35% 30%, #F0AEBC, transparent),
+    radial-gradient(3px 3px at 55% 15%, #E88FA3, transparent),
+    radial-gradient(2.5px 2.5px at 75% 35%, #F0AEBC, transparent),
+    radial-gradient(3px 3px at 90% 10%, #E88FA3, transparent),
+    radial-gradient(2.5px 2.5px at 25% 55%, #F0AEBC, transparent),
+    radial-gradient(3px 3px at 65% 60%, #E88FA3, transparent);
+  animation: petalFall 10s linear infinite;
+  opacity: 0.75;
+}
+@keyframes petalFall {
+  0% { background-position: 0 -10%; }
+  100% { background-position: 40px 110%; }
+}
+
+/* ---------- 25) MORGENTAU — hell, frisches Mintgrün ---------- */
+[data-theme="morgentau"] {
+  --plum-950: #F2FAF6;
+  --plum-800: #FFFFFF;
+  --plum-700: #DFF2E7;
+  --cream-50: #133A2A;
+  --cream-200: #5E9179;
+  --amber-400: #4FB88A;
+  --amber-300: #7BCBA7;
+  --teal-400: #3AA0C2;
+  --coral-400: #E8A93D;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(19,58,42,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🍃"; --logo-shape: 50%; --logo-bg: #4FB88A;
+}
+
+/* ---------- 26) SANDDÜNE — hell, warme Wüstentöne ---------- */
+[data-theme="sandduene"] {
+  --plum-950: #FBF3E7;
+  --plum-800: #FFFFFF;
+  --plum-700: #F3E0C4;
+  --cream-50: #4A3419;
+  --cream-200: #A6875E;
+  --amber-400: #D9A24B;
+  --amber-300: #E8C07E;
+  --teal-400: #7A9E8E;
+  --coral-400: #D9713F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(74,52,25,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🏜️"; --logo-shape: 50%; --logo-bg: #D9A24B;
+}
+
+/* ---------- 27) SEIFENBLASE — hell, verspielt mit schwebenden Blasen (animiert) ---------- */
+[data-theme="seifenblase"] {
+  --plum-950: #F0F8FF;
+  --plum-800: #FFFFFF;
+  --plum-700: #DCEEFB;
+  --cream-50: #163A4A;
+  --cream-200: #6494A8;
+  --amber-400: #6FC3E8;
+  --amber-300: #9AD5EE;
+  --teal-400: #8FE0C8;
+  --coral-400: #E88FC3;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+  --shadow-deck: 0 10px 24px rgba(22,58,74,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🫧"; --logo-shape: 50%; --logo-bg: #6FC3E8;
+}
+[data-theme="seifenblase"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(6px 6px at 10% 80%, rgba(111,195,232,0.5), transparent),
+    radial-gradient(4px 4px at 30% 60%, rgba(154,213,238,0.5), transparent),
+    radial-gradient(8px 8px at 50% 90%, rgba(111,195,232,0.4), transparent),
+    radial-gradient(5px 5px at 70% 70%, rgba(143,224,200,0.5), transparent),
+    radial-gradient(6px 6px at 85% 85%, rgba(154,213,238,0.5), transparent);
+  animation: bubbleRise 11s ease-in infinite;
+}
+@keyframes bubbleRise {
+  0% { background-position-y: 0, 0, 0, 0, 0; opacity: 0.8; }
+  100% { background-position-y: -120%, -120%, -120%, -120%, -120%; opacity: 0.3; }
+}
+
+/* ---------- 28) SCHATTENREICH — dunkel, tiefes Anthrazit mit Nebel (animiert) ---------- */
+[data-theme="schattenreich"] {
+  --plum-950: #0E0E12;
+  --plum-800: #17171D;
+  --plum-700: #212129;
+  --cream-50: #EDEDF2;
+  --cream-200: #9494A4;
+  --amber-400: #B8A0E8;
+  --amber-300: #CBB8F0;
+  --teal-400: #7A93C2;
+  --coral-400: #E85F6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.5);
+  --card-border: 1px solid rgba(184,160,232,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌫️"; --logo-shape: 50%; --logo-bg: #B8A0E8;
+}
+[data-theme="schattenreich"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse 60% 40% at 30% 100%, rgba(184,160,232,0.1), transparent),
+              radial-gradient(ellipse 50% 35% at 80% 90%, rgba(122,147,194,0.1), transparent);
+  animation: fogDrift 16s ease-in-out infinite alternate;
+}
+@keyframes fogDrift {
+  0% { transform: translateX(-20px); }
+  100% { transform: translateX(20px); }
+}
+
+/* ---------- 29) BERNSTEINGLUT — dunkel, warmes Kupfer-Braun ---------- */
+[data-theme="bernsteinglut"] {
+  --plum-950: #1A0F0A;
+  --plum-800: #26160E;
+  --plum-700: #362013;
+  --cream-50: #FBEEE0;
+  --cream-200: #C4A184;
+  --amber-400: #E89040;
+  --amber-300: #F0B06F;
+  --teal-400: #4FA88A;
+  --coral-400: #E85F3F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(232,144,64,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🔥"; --logo-shape: 50%; --logo-bg: #E89040;
+}
+
+/* ---------- 30) POLARLICHT — dunkel, mit wandernden Aurora-Streifen (animiert) ---------- */
+[data-theme="polarlicht"] {
+  --plum-950: #0A1420;
+  --plum-800: #12202F;
+  --plum-700: #1A2E42;
+  --cream-50: #E8F5F2;
+  --cream-200: #8FB5C4;
+  --amber-400: #6FE8C4;
+  --amber-300: #9AF0D8;
+  --teal-400: #7A9EE8;
+  --coral-400: #E86FA0;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(111,232,196,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌌"; --logo-shape: 50%; --logo-bg: #6FE8C4;
+}
+[data-theme="polarlicht"] body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: -20%; right: -20%; height: 45vh;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(100deg, transparent 10%, rgba(111,232,196,0.18) 30%, transparent 45%, rgba(122,158,232,0.15) 65%, transparent 85%);
+  filter: blur(18px);
+  animation: auroraWave 13s ease-in-out infinite alternate;
+}
+@keyframes auroraWave {
+  0% { transform: translateX(-10%) scaleY(1); }
+  100% { transform: translateX(10%) scaleY(1.15); }
+}
+
+/* ---------- 31) EULENNACHT — dunkel, tiefblau mit Waldsilhouette ---------- */
+[data-theme="eulennacht"] {
+  --plum-950: #0C1420;
+  --plum-800: #16222E;
+  --plum-700: #202F3E;
+  --cream-50: #E6EEF5;
+  --cream-200: #8FA3B8;
+  --amber-400: #E8C468;
+  --amber-300: #F0D794;
+  --teal-400: #5F9E9E;
+  --coral-400: #E8845F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(232,196,104,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🦉"; --logo-shape: 50%; --logo-bg: #E8C468;
+}
+
 [data-theme="honigwabe"] .tape-piece,
 [data-theme="galaxie"] .tape-piece,
-[data-theme="leuchtkaefer"] .tape-piece { display: none; }
+[data-theme="leuchtkaefer"] .tape-piece,
+[data-theme="kirschbluete"] .tape-piece,
+[data-theme="morgentau"] .tape-piece,
+[data-theme="sandduene"] .tape-piece,
+[data-theme="seifenblase"] .tape-piece,
+[data-theme="schattenreich"] .tape-piece,
+[data-theme="bernsteinglut"] .tape-piece,
+[data-theme="polarlicht"] .tape-piece,
+[data-theme="eulennacht"] .tape-piece { display: none; }

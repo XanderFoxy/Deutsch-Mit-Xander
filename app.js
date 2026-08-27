@@ -69,6 +69,14 @@
     { id: "honigwabe", name: "Honigwabe", emoji: "🍯", desc: "Hell, warmes Gelb-Braun, gemütlich.", mode: "hell", unlock: { type: "points", value: 300 } },
     { id: "galaxie", name: "Galaxie", emoji: "🌌", desc: "Dunkel, tiefviolett mit Sternenstaub.", mode: "dunkel", unlock: { type: "points", value: 2000 } },
     { id: "leuchtkaefer", name: "Leuchtkäfer", emoji: "✨", desc: "Dunkel, mit sanft schwebenden Lichtpunkten — animiert!", mode: "dunkel", unlock: { type: "trophy", match: "Gehirnjogger" } },
+    { id: "kirschbluete", name: "Kirschblüte", emoji: "🌸", desc: "Hell, zartrosa mit fallenden Blütenblättern — animiert!", mode: "hell", unlock: { type: "points", value: 400 } },
+    { id: "morgentau", name: "Morgentau", emoji: "🍃", desc: "Hell, frisches Mintgrün.", mode: "hell" },
+    { id: "sandduene", name: "Sanddüne", emoji: "🏜️", desc: "Hell, warme Wüstentöne.", mode: "hell", unlock: { type: "points", value: 600 } },
+    { id: "seifenblase", name: "Seifenblase", emoji: "🫧", desc: "Hell, verspielt mit schwebenden Blasen — animiert!", mode: "hell", unlock: { type: "points", value: 900 } },
+    { id: "schattenreich", name: "Schattenreich", emoji: "🌫️", desc: "Dunkel, tiefes Anthrazit mit wanderndem Nebel — animiert!", mode: "dunkel", unlock: { type: "points", value: 1200 } },
+    { id: "bernsteinglut", name: "Bernsteinglut", emoji: "🔥", desc: "Dunkel, warmes Kupfer-Braun.", mode: "dunkel" },
+    { id: "polarlicht", name: "Polarlicht", emoji: "🌌", desc: "Dunkel, mit wandernden Aurora-Streifen — animiert!", mode: "dunkel", unlock: { type: "points", value: 1600 } },
+    { id: "eulennacht", name: "Eulennacht", emoji: "🦉", desc: "Dunkel, tiefblau, ruhig.", mode: "dunkel", unlock: { type: "trophy", match: "Wissenschaftler" } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -1002,6 +1010,9 @@
     const myPending = myTexts.filter((t) => t.status !== "approved");
     const likesByText = {};
     await Promise.all(texts.map(async (t) => { likesByText[t.id] = await Backend.getLikesForText(t.id); }));
+    const authorProfiles = {};
+    const uniqueAuthorIds = [...new Set(texts.map((t) => t.user_id).filter(Boolean))];
+    await Promise.all(uniqueAuthorIds.map(async (uid) => { authorProfiles[uid] = await Backend.getPublicProfile(uid); }));
 
     box.innerHTML = `
       ${user ? `
@@ -1033,6 +1044,8 @@
       ${texts.length ? texts.map((t) => {
         const likes = likesByText[t.id] || [];
         const iLiked = user && likes.includes(user.id);
+        const authorP = t.user_id ? authorProfiles[t.user_id] : null;
+        const authorAvatar = authorP ? tinyAvatar({ avatar_url: authorP.avatar_url, avatar_emoji: authorP.avatar_emoji, name: t.author_name }) : "";
         return `
         <div class="material-card">
           <div class="community-text-head">
@@ -1041,7 +1054,7 @@
           </div>
           <p style="white-space:pre-wrap;">${t.body}</p>
           <div class="modal-meta-row" style="margin-top:8px; justify-content:flex-start;">
-            <button type="button" class="friend-name-btn" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>✍️ ${t.author_name}</button>
+            <button type="button" class="friend-name-btn" style="display:inline-flex; align-items:center; gap:6px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>${authorAvatar}${t.author_name}${adminBadge(authorP?.is_admin, authorP?.is_owner)}</button>
             <span class="empty-note">${t.created_at ? new Date(t.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""}</span>
           </div>
           <div class="modal-meta-row" style="margin-top:10px; justify-content:flex-start;">
@@ -1670,7 +1683,7 @@
   async function openProfileModal(id) {
     const p = await Backend.getPublicProfile(id);
     if (!p) {
-      alert("Dieses Profil konnte nicht geladen werden. Das liegt vermutlich an Row Level Security (RLS) in Supabase, die das Lesen fremder Profile blockiert. Bitte im SQL-Editor ausführen:\n\nalter table profiles disable row level security;");
+      alert("Dieses Profil konnte nicht geladen werden. Das liegt entweder an Row Level Security (RLS) in Supabase, oder daran, dass eine kürzlich hinzugekommene Spalte in der Tabelle „profiles\" noch fehlt. Öffne die Browser-Konsole für die genaue Fehlermeldung, und führe sicherheitshalber das komplette Nachrüst-SQL aus dem README (Abschnitt „Nachrüst-SQL\") im Supabase SQL-Editor aus.");
       return;
     }
     const initials = (p.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();

@@ -401,8 +401,9 @@ const Backend = (function () {
     if (!ids.length) return {};
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,points,badges,trophies,bio,avatar_url,avatar_emoji,last_active,is_admin,is_owner").in("id", ids);
+        const { data, error } = await client.from("profiles").select("*").in("id", ids);
         if (!error && data) return Object.fromEntries(data.map((p) => [p.id, p]));
+        if (error) console.warn("Profil-Namen-Abfrage fehlgeschlagen:", error.message);
       } catch (e) {
         console.warn("Profile konnten nicht geladen werden:", e);
       }
@@ -561,8 +562,15 @@ const Backend = (function () {
   async function getPublicProfile(id) {
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points,origin,hobbies,is_admin,is_owner,gallery").eq("id", id).maybeSingle();
-        if (!error && data) return data;
+        const { data, error } = await client.from("profiles").select("*").eq("id", id).maybeSingle();
+        if (!error && data) {
+          return {
+            id: data.id, name: data.name, bio: data.bio, avatar_url: data.avatar_url, avatar_emoji: data.avatar_emoji,
+            badges: data.badges, trophies: data.trophies, points: data.points, origin: data.origin, hobbies: data.hobbies,
+            is_admin: Boolean(data.is_admin), is_owner: Boolean(data.is_owner), gallery: data.gallery || [],
+          };
+        }
+        if (error) console.warn("Profil-Abfrage fehlgeschlagen:", error.message);
       } catch (e) {
         console.warn("Profil konnte nicht geladen werden:", e);
       }
