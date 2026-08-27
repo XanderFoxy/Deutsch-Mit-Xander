@@ -1218,6 +1218,7 @@
         return h ? `<div class="trophy-chip">${h.emoji} ${h.article} ${h.noun}</div>` : "";
       }).join("");
       const originFlag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "🌍" : "";
+      const pendingTexts = Backend.isAdmin() ? await Backend.getPendingCommunityTexts() : [];
       area.innerHTML = `
         ${demoBanner}
         <div class="question-card profile-card-view">
@@ -1252,6 +1253,19 @@
             ${(profile.gallery || []).map((url) => `<div class="gallery-thumb-wrap"><img src="${url}" class="gallery-thumb" alt="" data-view-photo="${url}" /></div>`).join("")}
           </div>
         </div>` : ""}
+        ${Backend.isAdmin() ? `<div class="question-card" style="margin-top:16px; border:2px solid var(--amber-400);">
+          <h3>🛠️ Verwaltung — Eigene Beiträge freischalten</h3>
+          ${pendingTexts.length ? pendingTexts.map((t) => `
+            <div class="material-card" style="margin-top:10px;">
+              <div class="community-text-head"><span class="level-badge">${t.level}</span><h3 style="margin:0;">${t.title}</h3></div>
+              <p style="white-space:pre-wrap;">${t.body}</p>
+              <p class="empty-note" style="margin-top:6px;">✍️ von ${t.author_name}</p>
+              <div class="quiz-actions" style="justify-content:flex-start; margin-top:10px;">
+                <button type="button" class="btn btn-coffee" data-approve-text="${t.id}">✅ Freischalten</button>
+                <button type="button" class="btn btn-ghost" data-reject-text="${t.id}">✕ Ablehnen</button>
+              </div>
+            </div>`).join("") : '<p class="empty-note" style="margin-top:8px;">Nichts wartet gerade auf Freischaltung.</p>'}
+        </div>` : ""}
         ${renderTrophyCase(profile)}
         ${await renderRecentMembers()}
         ${await renderActivityFeed()}
@@ -1268,6 +1282,19 @@
         list.style.display = list.style.display === "none" ? "flex" : "none";
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
+      area.querySelectorAll("[data-approve-text]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          try { await Backend.approveCommunityText(btn.dataset.approveText); renderAccount(); }
+          catch (err) { alert(err.message); }
+        });
+      });
+      area.querySelectorAll("[data-reject-text]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Diesen Text wirklich ablehnen und löschen?")) return;
+          try { await Backend.rejectCommunityText(btn.dataset.rejectText); renderAccount(); }
+          catch (err) { alert(err.message); }
+        });
+      });
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await Backend.signOut();
         refreshHeaderAuth();
@@ -1595,7 +1622,24 @@
                     catch (err) { alert(err.message); }
                   },
                 }, "🤝 Freund werden")
-        )
+        ),
+        (Backend.isAdmin() && !isMe)
+          ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:10px;" },
+              Core.el("button", {
+                class: p.is_admin ? "btn btn-ghost" : "btn btn-coffee", type: "button", id: "modalAdminToggle",
+                onclick: async (e) => {
+                  const makeAdmin = !p.is_admin;
+                  if (!confirm(makeAdmin ? `${p.name} zum Administrator machen?` : `${p.name} die Admin-Rechte entziehen?`)) return;
+                  try {
+                    await Backend.setAdminStatus(p.id, makeAdmin);
+                    p.is_admin = makeAdmin;
+                    e.target.textContent = makeAdmin ? "🛠️ Admin-Rechte entziehen" : "🛠️ Zum Administrator machen";
+                    e.target.className = makeAdmin ? "btn btn-ghost" : "btn btn-coffee";
+                  } catch (err) { alert(err.message); }
+                },
+              }, p.is_admin ? "🛠️ Admin-Rechte entziehen" : "🛠️ Zum Administrator machen")
+            )
+          : ""
       )
     );
     document.body.appendChild(box);

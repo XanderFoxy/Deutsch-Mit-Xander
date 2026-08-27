@@ -43,7 +43,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft" };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false };
   }
 
   /* ================= AUTH ================= */
@@ -67,6 +67,7 @@ const Backend = (function () {
           history: [],
           isPremium: Boolean(data.is_premium),
           theme: data.theme || "bastelheft",
+          isAdmin: Boolean(data.is_admin),
         };
       }
       // Noch kein Profil-Eintrag -> anlegen
@@ -538,7 +539,7 @@ const Backend = (function () {
   async function getPublicProfile(id) {
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points,origin,hobbies").eq("id", id).maybeSingle();
+        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points,origin,hobbies,is_admin").eq("id", id).maybeSingle();
         if (!error && data) return data;
       } catch (e) {
         console.warn("Profil konnte nicht geladen werden:", e);
@@ -550,7 +551,7 @@ const Backend = (function () {
     return {
       id, name: u.profile.name, bio: u.profile.bio, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
       badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
-      origin: u.profile.origin, hobbies: u.profile.hobbies,
+      origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin,
     };
   }
 
@@ -788,6 +789,57 @@ const Backend = (function () {
     return demo.communityTexts.filter((t) => t.author_name === demo.profile.name);
   }
 
+  /* ================= VERWALTUNG (nur für Admin-Konten sichtbar) ================= */
+  function isAdmin() {
+    return Boolean(demo.profile && demo.profile.isAdmin);
+  }
+
+  async function getPendingCommunityTexts() {
+    if (!isAdmin()) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_texts").select("*").eq("status", "pending").order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Ausstehende Texte konnten nicht geladen werden:", e);
+      }
+      return [];
+    }
+    return demo.communityTexts.filter((t) => t.status === "pending");
+  }
+
+  async function approveCommunityText(id) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { error } = await client.from("community_texts").update({ status: "approved" }).eq("id", id);
+      if (error) throw new Error("Konnte nicht freigeschaltet werden: " + error.message);
+      return;
+    }
+    const t = demo.communityTexts.find((x) => x.id === id);
+    if (t) t.status = "approved";
+  }
+
+  async function rejectCommunityText(id) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { error } = await client.from("community_texts").delete().eq("id", id);
+      if (error) throw new Error("Konnte nicht abgelehnt werden: " + error.message);
+      return;
+    }
+    demo.communityTexts = demo.communityTexts.filter((x) => x.id !== id);
+  }
+
+  async function setAdminStatus(targetUserId, value) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { error } = await client.from("profiles").update({ is_admin: value }).eq("id", targetUserId);
+      if (error) throw new Error("Konnte nicht geändert werden: " + error.message);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) u.profile.isAdmin = value;
+  }
+
   return {
     isConfigured,
     restoreSession,
@@ -821,6 +873,11 @@ const Backend = (function () {
     submitCommunityText,
     getApprovedCommunityTexts,
     getMyCommunityTexts,
+    isAdmin,
+    getPendingCommunityTexts,
+    approveCommunityText,
+    rejectCommunityText,
+    setAdminStatus,
     saveBio,
     saveBirthday,
     uploadAvatar,

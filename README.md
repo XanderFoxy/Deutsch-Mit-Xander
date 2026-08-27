@@ -82,7 +82,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      name text, points int default 0, badges text[] default '{}', trophies text[] default '{}',
      is_premium boolean default false, theme text default 'bastelheft', bio text default '',
      birthday text default '', avatar_url text default '', avatar_emoji text default '',
-     gallery text[] default '{}', hobbies text[] default '{}', origin text default '',
+     gallery text[] default '{}', hobbies text[] default '{}', origin text default '', is_admin boolean default false,
      last_active timestamptz, created_at timestamptz default now()
    );
 
@@ -141,13 +141,31 @@ Das kann für Freunde/Tester verwirrend sein. Zwei Optionen:
    ```
 3. Fertig — die Seite lädt Fotos jetzt automatisch dorthin hoch, sobald jemand im Profil auf sein Bild tippt.
 
-## 4c. Community-Texte freischalten
+## 4c. Community-Texte direkt in der App freischalten (Admin)
 
-Nutzer können unter „Wissen → Materialien" eigene Lesetexte einreichen. Die
-landen erstmal als „pending" in der Tabelle `community_texts` und sind noch
-nicht öffentlich sichtbar. Zum Freischalten: Supabase → **Table Editor** →
+Wenn du (oder jemand, dem du Admin-Rechte gibst) im Profil auf "Bearbeiten"
+gehst — nein, das läuft automatisch: Sobald dein Konto als Admin markiert
+ist, siehst du direkt oben im Profil einen Bereich "🛠️ Verwaltung" mit allen
+wartenden Texten samt "✅ Freischalten"/"✕ Ablehnen"-Buttons. Kein
+Supabase-Zugriff mehr nötig für den laufenden Betrieb.
+
+**Einmalig: dich selbst zum ersten Admin machen.** Das muss einmal per SQL
+passieren, da die App niemandem erlauben darf, sich selbst Admin-Rechte zu
+geben. Im SQL-Editor:
+
+```sql
+update profiles set is_admin = true where name = 'XanderFox';
+```
+
+(Namen anpassen, falls dein Profilname anders lautet.) Ab dann kannst du
+über das Profil-Popup jeder anderen Person auch dieser Person Admin-Rechte
+geben oder wieder entziehen — komplett ohne SQL.
+
+## 4d. Community-Texte per SQL freischalten (Alternative)
+
+Geht weiterhin auch klassisch: Supabase → **Table Editor** →
 `community_texts` → bei der gewünschten Zeile die Spalte `status` von
-`pending` auf `approved` ändern. Ab dann erscheint der Text auf der Seite.
+`pending` auf `approved` ändern.
 
 ## 5. Neue Beispiele/Fragen hinzufügen
 
