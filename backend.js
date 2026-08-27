@@ -53,7 +53,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, giftedCategories: [] };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, giftedCategories: [], giftedThemes: [] };
   }
 
   /* ================= AUTH ================= */
@@ -80,6 +80,7 @@ const Backend = (function () {
           isAdmin: Boolean(data.is_admin),
           isOwner: Boolean(data.is_owner),
           giftedCategories: data.gifted_categories || [],
+          giftedThemes: data.gifted_themes || [],
         };
       }
       // Noch kein Profil-Eintrag -> anlegen
@@ -341,6 +342,45 @@ const Backend = (function () {
 
   function myId() {
     return demo.user ? demo.user.id : null;
+  }
+
+  /* ================= PERSÖNLICHE BENACHRICHTIGUNGEN (Geschenke, Likes, Kommentare) ================= */
+  demo.notifications = demo.notifications || [];
+
+  async function addNotification(targetUserId, message) {
+    if (!targetUserId) return;
+    if (client) {
+      try {
+        await client.from("notifications").insert({ user_id: targetUserId, message });
+      } catch (e) {
+        console.warn("Benachrichtigung konnte nicht gespeichert werden:", e);
+      }
+      return;
+    }
+    demo.notifications.push({ id: Core.uid(), user_id: targetUserId, message, read: false, created_at: new Date().toISOString() });
+  }
+
+  async function getUnreadNotifications() {
+    if (!demo.user) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("notifications").select("*").eq("user_id", demo.user.id).eq("read", false).order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Benachrichtigungen konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.notifications.filter((n) => n.user_id === demo.user.id && !n.read);
+  }
+
+  async function markNotificationsRead(ids) {
+    if (!demo.user || !ids.length) return;
+    if (client) {
+      try {
+        await client.from("notifications").update({ read: true }).in("id", ids);
+      } catch (e) { console.warn("Benachrichtigungen konnten nicht als gelesen markiert werden:", e); }
+      return;
+    }
+    demo.notifications.forEach((n) => { if (ids.includes(n.id)) n.read = true; });
   }
 
   async function addActivity(text) {
@@ -832,7 +872,7 @@ const Backend = (function () {
     return demo.textLikes.filter((l) => l.text_id === textId).map((l) => l.user_id);
   }
 
-  async function toggleLikeText(textId, authorId) {
+  async function toggleLikeText(textId, authorId, textTitle) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     const likedBy = await getLikesForText(textId);
     const alreadyLiked = likedBy.includes(demo.user.id);
@@ -849,6 +889,7 @@ const Backend = (function () {
           if (authorProfile) {
             await client.from("profiles").update({ points: (authorProfile.points || 0) + 2 }).eq("id", authorId);
           }
+          await addNotification(authorId, `❤️ ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" geliked!`);
         }
       }
       return !alreadyLiked;
@@ -859,6 +900,7 @@ const Backend = (function () {
       demo.textLikes.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id });
       if (authorId && authorId !== demo.user.id && demo.users[authorId]) {
         demo.users[authorId].profile.points += 2;
+        await addNotification(authorId, `❤️ ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" geliked!`);
       }
     }
     return !alreadyLiked;
@@ -875,7 +917,7 @@ const Backend = (function () {
     return demo.textComments.filter((c) => c.text_id === textId);
   }
 
-  async function addComment(textId, body) {
+  async function addComment(textId, body, authorId, textTitle) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (!body.trim()) throw new Error("Kommentar darf nicht leer sein.");
     if (client) {
@@ -883,9 +925,15 @@ const Backend = (function () {
         text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(),
       });
       if (error) throw new Error(friendlyDbError(error.message));
+      if (authorId && authorId !== demo.user.id) {
+        await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`);
+      }
       return;
     }
     demo.textComments.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(), created_at: new Date().toISOString() });
+    if (authorId && authorId !== demo.user.id) {
+      await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`);
+    }
   }
 
   async function deleteComment(commentId) {
@@ -1026,7 +1074,7 @@ const Backend = (function () {
     delete demo.users[targetUserId];
   }
 
-  async function adminGiftCategoryUnlock(targetUserId, categoryId) {
+  async function adminGiftCategoryUnlock(targetUserId, categoryId, categoryTitle) {
     if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
     if (client) {
       const { data, error: selErr } = await client.from("profiles").select("gifted_categories").eq("id", targetUserId).maybeSingle();
@@ -1035,12 +1083,38 @@ const Backend = (function () {
       if (current.includes(categoryId)) return;
       const { error } = await client.from("profiles").update({ gifted_categories: [...current, categoryId] }).eq("id", targetUserId);
       if (error) throw new Error(friendlyDbError(error.message));
+      await addNotification(targetUserId, `🎁 Du hast die Kategorie „${categoryTitle || categoryId}" geschenkt bekommen — sie ist jetzt freigeschaltet!`);
       return;
     }
     const u = demo.users[targetUserId];
     if (u) {
       u.profile.giftedCategories = u.profile.giftedCategories || [];
-      if (!u.profile.giftedCategories.includes(categoryId)) u.profile.giftedCategories.push(categoryId);
+      if (!u.profile.giftedCategories.includes(categoryId)) {
+        u.profile.giftedCategories.push(categoryId);
+        await addNotification(targetUserId, `🎁 Du hast die Kategorie „${categoryTitle || categoryId}" geschenkt bekommen — sie ist jetzt freigeschaltet!`);
+      }
+    }
+  }
+
+  async function adminGiftThemeUnlock(targetUserId, themeId, themeTitle) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { data, error: selErr } = await client.from("profiles").select("gifted_themes").eq("id", targetUserId).maybeSingle();
+      if (selErr) throw new Error(friendlyDbError(selErr.message));
+      const current = data?.gifted_themes || [];
+      if (current.includes(themeId)) return;
+      const { error } = await client.from("profiles").update({ gifted_themes: [...current, themeId] }).eq("id", targetUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      await addNotification(targetUserId, `🎁 Du hast das Design „${themeTitle || themeId}" geschenkt bekommen — es ist jetzt freigeschaltet!`);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) {
+      u.profile.giftedThemes = u.profile.giftedThemes || [];
+      if (!u.profile.giftedThemes.includes(themeId)) {
+        u.profile.giftedThemes.push(themeId);
+        await addNotification(targetUserId, `🎁 Du hast das Design „${themeTitle || themeId}" geschenkt bekommen — es ist jetzt freigeschaltet!`);
+      }
     }
   }
 
@@ -1101,6 +1175,9 @@ const Backend = (function () {
     adminDeleteGuestbookEntry,
     adminDeleteAccount,
     adminGiftCategoryUnlock,
+    adminGiftThemeUnlock,
+    getUnreadNotifications,
+    markNotificationsRead,
     getLikesForText,
     toggleLikeText,
     getCommentsForText,

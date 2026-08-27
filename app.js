@@ -85,6 +85,15 @@
     { id: "tintenfischtiefe", name: "Tintenfisch-Tiefe", emoji: "🐙", desc: "Dunkel, marineblau-violett.", mode: "dunkel" },
     { id: "lagerfeuer", name: "Lagerfeuer", emoji: "🔥", desc: "Dunkel, mit flackerndem Glutschein — animiert!", mode: "dunkel", unlock: { type: "points", value: 1400 } },
     { id: "mitternachtsgarten", name: "Mitternachtsgarten", emoji: "🌙", desc: "Dunkel, tiefgrün mit Mondlicht.", mode: "dunkel", unlock: { type: "points", value: 1800 } },
+    { id: "papierlaterne", name: "Papierlaterne", emoji: "🏮", desc: "Hell, warmes Reispapier mit sanftem Glühen — animiert!", mode: "hell", unlock: { type: "points", value: 450 } },
+    { id: "pfirsichgarten", name: "Pfirsichgarten", emoji: "🍑", desc: "Hell, sanftes Apricot.", mode: "hell" },
+    { id: "schmetterlingswiese", name: "Schmetterlingswiese", emoji: "🦋", desc: "Hell, mit flatternden Farbtupfern — animiert!", mode: "hell", unlock: { type: "trophy", match: "Logiker" } },
+    { id: "lavendeldunst", name: "Lavendeldunst", emoji: "💜", desc: "Hell, zartlila-grau.", mode: "hell", unlock: { type: "points", value: 700 } },
+    { id: "vulkanasche", name: "Vulkanasche", emoji: "🌋", desc: "Dunkel, mit treibenden Glutfunken — animiert!", mode: "dunkel", unlock: { type: "points", value: 1000 } },
+    { id: "mondstein", name: "Mondstein", emoji: "🌘", desc: "Dunkel, silbrig-blau, ruhig.", mode: "dunkel" },
+    { id: "samtnacht", name: "Samtnacht", emoji: "🥀", desc: "Dunkel, tiefweinrot mit weichem Schimmer — animiert!", mode: "dunkel", unlock: { type: "points", value: 2200 } },
+    { id: "bergsee", name: "Bergsee", emoji: "🏔️", desc: "Dunkel, tiefes Türkis-Blau.", mode: "dunkel", unlock: { type: "trophy", match: "Superheld" } },
+    { id: "kamillenfeld", name: "Kamillenfeld", emoji: "🌼", desc: "Hell, sanftes Creme-Gelb, beruhigend.", mode: "hell", unlock: { type: "points", value: 550 } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -106,7 +115,7 @@
     if (unlock.type === "trophy") return (profile.trophies || []).some((tr) => tr.includes(unlock.match));
     return true;
   }
-  function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile); }
+  function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
 
   function renderDesign() {
     const area = document.getElementById("designArea");
@@ -289,18 +298,27 @@
   let lastFriendReqCount = 0;
   let lastChallengeReqCount = 0;
   let notifyPrimed = false;
+  let toastedNotificationIds = new Set();
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    const [requests, challenges] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges()]);
+    const [requests, challenges, notifications] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications()]);
     const challengeCount = challenges.incoming.length;
     if (notifyPrimed) {
       if (requests.length > lastFriendReqCount) showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox);
       if (challengeCount > lastChallengeReqCount) showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox);
+      notifications.forEach((n) => {
+        if (!toastedNotificationIds.has(n.id)) {
+          toastedNotificationIds.add(n.id);
+          showToast(n.message, () => document.querySelector('[data-target="view-profile"]').click());
+        }
+      });
+    } else {
+      notifications.forEach((n) => toastedNotificationIds.add(n.id));
     }
     lastFriendReqCount = requests.length;
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
-    updateNotifyBadge(requests.length + challengeCount);
+    updateNotifyBadge(requests.length + challengeCount + notifications.length);
   }
   checkNotifications();
   setInterval(checkNotifications, 20000);
@@ -1018,6 +1036,8 @@
     const myPending = myTexts.filter((t) => t.status !== "approved");
     const likesByText = {};
     await Promise.all(texts.map(async (t) => { likesByText[t.id] = await Backend.getLikesForText(t.id); }));
+    const commentCountByText = {};
+    await Promise.all(texts.map(async (t) => { commentCountByText[t.id] = (await Backend.getCommentsForText(t.id)).length; }));
     const authorProfiles = {};
     const uniqueAuthorIds = [...new Set(texts.map((t) => t.user_id).filter(Boolean))];
     await Promise.all(uniqueAuthorIds.map(async (uid) => { authorProfiles[uid] = await Backend.getPublicProfile(uid); }));
@@ -1066,8 +1086,8 @@
             <span class="empty-note">${t.created_at ? new Date(t.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""}</span>
           </div>
           <div class="modal-meta-row" style="margin-top:10px; justify-content:flex-start;">
-            <button type="button" class="btn ${iLiked ? "btn-coffee" : "btn-ghost"}" style="padding:6px 14px; font-size:0.82rem;" data-like-text="${t.id}" data-author-id="${t.user_id || ""}">${iLiked ? "❤️" : "🤍"} ${likes.length}</button>
-            <button type="button" class="emoji-toggle-link" style="margin:0;" data-toggle-comments="${t.id}">💬 Kommentare</button>
+            <button type="button" class="btn ${iLiked ? "btn-coffee" : "btn-ghost"}" style="padding:6px 14px; font-size:0.82rem;" data-like-text="${t.id}" data-author-id="${t.user_id || ""}" data-text-title="${t.title.replace(/"/g, "&quot;")}">${iLiked ? "❤️" : "🤍"} ${likes.length}</button>
+            <button type="button" class="emoji-toggle-link" style="margin:0;" data-toggle-comments="${t.id}" data-author-id="${t.user_id || ""}" data-text-title="${t.title.replace(/"/g, "&quot;")}">💬 ${commentCountByText[t.id] || 0} ${commentCountByText[t.id] === 1 ? "Kommentar" : "Kommentare"}</button>
           </div>
           <div class="community-comments" id="comments-${t.id}" style="display:none; margin-top:10px;"></div>
           ${(user && t.user_id === user.id) ? `<button type="button" class="btn btn-ghost" style="margin-top:8px;" data-delete-own-text="${t.id}">🗑️ Eigenen Beitrag löschen</button>` : ""}
@@ -1090,7 +1110,7 @@
       btn.addEventListener("click", async () => {
         if (!user) { alert("Melde dich zuerst an, um zu liken."); return; }
         btn.disabled = true;
-        try { await Backend.toggleLikeText(btn.dataset.likeText, btn.dataset.authorId || null); renderCommunityTexts(); }
+        try { await Backend.toggleLikeText(btn.dataset.likeText, btn.dataset.authorId || null, btn.dataset.textTitle); renderCommunityTexts(); }
         catch (err) { alert(err.message); btn.disabled = false; }
       });
     });
@@ -1101,7 +1121,7 @@
         wrap.style.display = opening ? "block" : "none";
         if (opening && !wrap.dataset.loaded) {
           wrap.dataset.loaded = "1";
-          await renderCommentsFor(btn.dataset.toggleComments, wrap, user);
+          await renderCommentsFor(btn.dataset.toggleComments, wrap, user, btn.dataset.authorId || null, btn.dataset.textTitle);
         }
       });
     });
@@ -1143,7 +1163,7 @@
     }
   }
 
-  async function renderCommentsFor(textId, wrap, user) {
+  async function renderCommentsFor(textId, wrap, user, authorId, textTitle) {
     const comments = await Backend.getCommentsForText(textId);
     wrap.innerHTML = `
       ${comments.length ? comments.map((c) => `
@@ -1166,7 +1186,7 @@
     wrap.querySelectorAll("[data-delete-comment]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("Kommentar löschen?")) return;
-        try { await Backend.deleteComment(btn.dataset.deleteComment); await renderCommentsFor(textId, wrap, user); }
+        try { await Backend.deleteComment(btn.dataset.deleteComment); await renderCommentsFor(textId, wrap, user, authorId, textTitle); }
         catch (err) { alert(err.message); }
       });
     });
@@ -1175,8 +1195,8 @@
       submitCommentBtn.addEventListener("click", async () => {
         const ta = document.getElementById(`newComment-${textId}`);
         try {
-          await Backend.addComment(textId, ta.value);
-          await renderCommentsFor(textId, wrap, user);
+          await Backend.addComment(textId, ta.value, authorId, textTitle);
+          await renderCommentsFor(textId, wrap, user, authorId, textTitle);
         } catch (err) { alert(err.message); }
       });
     }
@@ -1251,8 +1271,8 @@
     const user = Backend.currentUser();
     const profile = Backend.currentProfile();
     const icon = document.getElementById("loginBtnIconInner");
-    const roleIcon = profile && profile.isOwner ? " 👑" : profile && profile.isAdmin ? " 🛡️" : "";
-    loginBtnLabel.textContent = user ? user.name.split(" ")[0] + roleIcon : "Anmelden";
+    const roleIcon = profile && profile.isOwner ? "👑" : profile && profile.isAdmin ? "🛡️" : "";
+    loginBtnLabel.innerHTML = user ? `${user.name.split(" ")[0]}${roleIcon ? ` <span class="role-icon-small">${roleIcon}</span>` : ""}` : "Anmelden";
     loginBtn.classList.toggle("btn-icon-only", !user);
     if (user && profile) {
       const flag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "" : "";
@@ -1277,6 +1297,7 @@
     const area = document.getElementById("accountArea");
     const user = Backend.currentUser();
     const profile = Backend.currentProfile();
+    const myUnread = user ? await Backend.getUnreadNotifications() : [];
 
     const demoBanner = !Backend.isConfigured
       ? '<div class="demo-banner">🔧 Demo-Modus: Es ist noch kein Supabase-Projekt verbunden (siehe supabase-config.js). Konten &amp; Punkte bleiben nur für diese Sitzung erhalten.</div>'
@@ -1342,6 +1363,12 @@
       const pendingTexts = Backend.isAdmin() ? await Backend.getPendingCommunityTexts() : [];
       area.innerHTML = `
         ${demoBanner}
+        ${myUnread.length ? `
+        <div class="question-card" style="border:2px solid var(--amber-400); margin-bottom:14px;">
+          <h3>🔔 Neu für dich</h3>
+          ${myUnread.map((n) => `<p style="margin:8px 0;">${n.message}</p>`).join("")}
+          <button type="button" class="btn btn-ghost" id="dismissNotificationsBtn" style="margin-top:6px;">Gelesen, ausblenden</button>
+        </div>` : ""}
         <div class="question-card profile-card-view">
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header">
@@ -1403,6 +1430,15 @@
         list.style.display = list.style.display === "none" ? "flex" : "none";
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
+      const dismissBtn = document.getElementById("dismissNotificationsBtn");
+      if (dismissBtn) {
+        dismissBtn.addEventListener("click", async () => {
+          await Backend.markNotificationsRead(myUnread.map((n) => n.id));
+          myUnread.forEach((n) => toastedNotificationIds.add(n.id));
+          checkNotifications();
+          renderAccount();
+        });
+      }
       area.querySelectorAll("[data-approve-text]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           try { await Backend.approveCommunityText(btn.dataset.approveText); renderAccount(); }
@@ -1797,10 +1833,22 @@
                     const choice = prompt(`Welche Kategorie soll ${p.name} geschenkt bekommen?\n\n` + locked.map((c, i) => `${i + 1}. ${c.title}`).join("\n") + "\n\nZahl eingeben:");
                     const idx = parseInt(choice, 10) - 1;
                     if (isNaN(idx) || !locked[idx]) return;
-                    try { await Backend.adminGiftCategoryUnlock(p.id, locked[idx].id); alert(`„${locked[idx].title}" wurde ${p.name} geschenkt.`); }
+                    try { await Backend.adminGiftCategoryUnlock(p.id, locked[idx].id, locked[idx].title); alert(`„${locked[idx].title}" wurde ${p.name} geschenkt und freigeschaltet.`); }
                     catch (err) { alert(err.message); }
                   },
                 }, "🎁 Kategorie schenken"),
+                Core.el("button", {
+                  class: "btn btn-ghost", type: "button", id: "modalGiftThemeBtn",
+                  onclick: async () => {
+                    const locked = THEMES.filter((t) => t.unlock);
+                    if (!locked.length) { alert("Es gibt aktuell keine sperrbaren Designs."); return; }
+                    const choice = prompt(`Welches Design soll ${p.name} geschenkt bekommen?\n\n` + locked.map((t, i) => `${i + 1}. ${t.name}`).join("\n") + "\n\nZahl eingeben:");
+                    const idx = parseInt(choice, 10) - 1;
+                    if (isNaN(idx) || !locked[idx]) return;
+                    try { await Backend.adminGiftThemeUnlock(p.id, locked[idx].id, locked[idx].name); alert(`„${locked[idx].name}" wurde ${p.name} geschenkt und freigeschaltet.`); }
+                    catch (err) { alert(err.message); }
+                  },
+                }, "🎨 Design schenken"),
                 Core.el("button", {
                   class: "btn btn-ghost", type: "button", style: "color:var(--coral-400);",
                   onclick: async () => {

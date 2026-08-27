@@ -1065,6 +1065,246 @@
 [data-theme="konfettiregen"] .tape-piece,
 [data-theme="zitronenlimonade"] .tape-piece,
 [data-theme="sternenstaubneon"] .tape-piece,
+/* ---------- 40) PAPIERLATERNE — hell, warmes Reispapier mit sanftem Glühen (animiert) ---------- */
+[data-theme="papierlaterne"] {
+  --plum-950: #FFF8F0;
+  --plum-800: #FFFFFF;
+  --plum-700: #FBE9D3;
+  --cream-50: #3A2A14;
+  --cream-200: #A68A5E;
+  --amber-400: #E8A03D;
+  --amber-300: #F0BE70;
+  --teal-400: #5FA894;
+  --coral-400: #E86F4F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,42,20,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🏮"; --logo-shape: 50%; --logo-bg: #E8A03D;
+}
+[data-theme="papierlaterne"] .question-card {
+  animation: lanternGlow 5s ease-in-out infinite alternate;
+}
+@keyframes lanternGlow {
+  0% { box-shadow: 0 10px 24px rgba(58,42,20,0.1); }
+  100% { box-shadow: 0 10px 30px rgba(232,160,61,0.22); }
+}
+
+/* ---------- 41) PFIRSICHGARTEN — hell, sanftes Apricot ---------- */
+[data-theme="pfirsichgarten"] {
+  --plum-950: #FFF6F0;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCE5D4;
+  --cream-50: #3A2416;
+  --cream-200: #A6805E;
+  --amber-400: #E89060;
+  --amber-300: #F0B08C;
+  --teal-400: #6FAFA0;
+  --coral-400: #E8705F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,36,22,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🍑"; --logo-shape: 50%; --logo-bg: #E89060;
+}
+
+/* ---------- 42) SCHMETTERLINGSWIESE — hell, mit flatternden Farbtupfern (animiert) ---------- */
+[data-theme="schmetterlingswiese"] {
+  --plum-950: #F6FBEF;
+  --plum-800: #FFFFFF;
+  --plum-700: #E8F2D6;
+  --cream-50: #2A3A14;
+  --cream-200: #8FA666;
+  --amber-400: #C4D95F;
+  --amber-300: #D6E88C;
+  --teal-400: #4FAFA8;
+  --coral-400: #E88F5F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+  --shadow-deck: 0 10px 24px rgba(42,58,20,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🦋"; --logo-shape: 50%; --logo-bg: #C4D95F;
+}
+[data-theme="schmetterlingswiese"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(4px 4px at 15% 20%, #E88F5F, transparent),
+    radial-gradient(3px 3px at 40% 50%, #4FAFA8, transparent),
+    radial-gradient(4px 4px at 65% 25%, #C4D95F, transparent),
+    radial-gradient(3px 3px at 85% 55%, #E88F5F, transparent),
+    radial-gradient(4px 4px at 25% 75%, #4FAFA8, transparent);
+  animation: flutter 6s ease-in-out infinite alternate;
+  opacity: 0.7;
+}
+@keyframes flutter {
+  0% { transform: translate(0,0) rotate(0deg); }
+  100% { transform: translate(10px,-8px) rotate(4deg); }
+}
+
+/* ---------- 43) LAVENDELDUNST — hell, zartlila-grau ---------- */
+[data-theme="lavendeldunst"] {
+  --plum-950: #F8F5FB;
+  --plum-800: #FFFFFF;
+  --plum-700: #EAE0F2;
+  --cream-50: #2E2438;
+  --cream-200: #8E7C9E;
+  --amber-400: #A98FD9;
+  --amber-300: #C4AEE8;
+  --teal-400: #6FB0A8;
+  --coral-400: #E88FA0;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(46,36,56,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "💜"; --logo-shape: 50%; --logo-bg: #A98FD9;
+}
+
+/* ---------- 44) VULKANASCHE — dunkel, mit treibenden Glutfunken (animiert) ---------- */
+[data-theme="vulkanasche"] {
+  --plum-950: #150E0E;
+  --plum-800: #201616;
+  --plum-700: #2E1F1F;
+  --cream-50: #F2E8E6;
+  --cream-200: #B89490;
+  --amber-400: #E85F3F;
+  --amber-300: #F08F6F;
+  --teal-400: #6F8E7A;
+  --coral-400: #E8503F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(232,95,63,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌋"; --logo-shape: 50%; --logo-bg: #E85F3F;
+}
+[data-theme="vulkanasche"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(2px 2px at 20% 90%, #E85F3F, transparent),
+    radial-gradient(1.5px 1.5px at 45% 95%, #F08F6F, transparent),
+    radial-gradient(2px 2px at 65% 85%, #E85F3F, transparent),
+    radial-gradient(1.5px 1.5px at 85% 92%, #F08F6F, transparent);
+  animation: emberRise 5s linear infinite;
+  opacity: 0.8;
+}
+@keyframes emberRise {
+  0% { background-position-y: 0; opacity: 0.8; }
+  100% { background-position-y: -100%; opacity: 0; }
+}
+
+/* ---------- 45) MONDSTEIN — dunkel, silbrig-blau, ruhig ---------- */
+[data-theme="mondstein"] {
+  --plum-950: #10161E;
+  --plum-800: #1A222C;
+  --plum-700: #26303C;
+  --cream-50: #EAF0F5;
+  --cream-200: #94A8B8;
+  --amber-400: #9AC4E0;
+  --amber-300: #BEDCF0;
+  --teal-400: #6FA8A0;
+  --coral-400: #E89A6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(154,196,224,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌘"; --logo-shape: 50%; --logo-bg: #9AC4E0;
+}
+
+/* ---------- 46) SAMTNACHT — dunkel, tiefweinrot mit weichem Schimmer (animiert) ---------- */
+[data-theme="samtnacht"] {
+  --plum-950: #180C10;
+  --plum-800: #241318;
+  --plum-700: #341C24;
+  --cream-50: #F2E6EA;
+  --cream-200: #B8909E;
+  --amber-400: #D97F9A;
+  --amber-300: #E8A0B8;
+  --teal-400: #6F9E94;
+  --coral-400: #E86F80;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(217,127,154,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🥀"; --logo-shape: 50%; --logo-bg: #D97F9A;
+}
+[data-theme="samtnacht"] .question-card {
+  animation: velvetShimmer 6s ease-in-out infinite alternate;
+}
+@keyframes velvetShimmer {
+  0% { box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+  100% { box-shadow: 0 10px 30px rgba(217,127,154,0.18); }
+}
+
+/* ---------- 47) BERGSEE — dunkel, tiefes Türkis-Blau ---------- */
+[data-theme="bergsee"] {
+  --plum-950: #0A1A1C;
+  --plum-800: #14282A;
+  --plum-700: #1E383A;
+  --cream-50: #E6F2F0;
+  --cream-200: #8FB8B4;
+  --amber-400: #E8C468;
+  --amber-300: #F0D794;
+  --teal-400: #4FBFB0;
+  --coral-400: #E88F6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(79,191,176,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🏔️"; --logo-shape: 50%; --logo-bg: #4FBFB0;
+}
+
 [data-theme="tintenfischtiefe"] .tape-piece,
 [data-theme="lagerfeuer"] .tape-piece,
-[data-theme="mitternachtsgarten"] .tape-piece { display: none; }
+[data-theme="mitternachtsgarten"] .tape-piece,
+[data-theme="papierlaterne"] .tape-piece,
+[data-theme="pfirsichgarten"] .tape-piece,
+[data-theme="schmetterlingswiese"] .tape-piece,
+[data-theme="lavendeldunst"] .tape-piece,
+[data-theme="vulkanasche"] .tape-piece,
+/* ---------- 48) KAMILLENFELD — hell, sanftes Creme-Gelb, beruhigend ---------- */
+[data-theme="kamillenfeld"] {
+  --plum-950: #FFFCF2;
+  --plum-800: #FFFFFF;
+  --plum-700: #FBF2D6;
+  --cream-50: #3A3418;
+  --cream-200: #A69C6E;
+  --amber-400: #E8C868;
+  --amber-300: #F0DA94;
+  --teal-400: #7FBFA0;
+  --coral-400: #E8A05F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,52,24,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌼"; --logo-shape: 50%; --logo-bg: #E8C868;
+}
+
+[data-theme="mondstein"] .tape-piece,
+[data-theme="samtnacht"] .tape-piece,
+[data-theme="bergsee"] .tape-piece,
+[data-theme="kamillenfeld"] .tape-piece { display: none; }

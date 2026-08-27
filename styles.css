@@ -335,10 +335,13 @@ button:focus-visible,
 
 .header-avatar {
   width: 22px; height: 22px;
+  min-width: 22px; min-height: 22px;
+  max-width: 22px; max-height: 22px;
   border-radius: 50%;
   object-fit: cover;
   display: inline-block;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 .header-avatar-emoji { font-size: 1.1rem; line-height: 1; }
 .header-avatar-initials {
@@ -347,11 +350,13 @@ button:focus-visible,
   color: #fff; font-weight: 800; font-size: 0.62rem;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.header-avatar-wrap { position: relative; display: inline-flex; align-items: center; }
+.header-avatar-wrap { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; width: 22px; height: 22px; }
+.header-avatar-initials { flex-shrink: 0; }
+.role-icon-small { font-size: 0.68rem; vertical-align: middle; }
 .header-flag {
   position: absolute;
   bottom: -3px; right: -5px;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   line-height: 1;
   filter: drop-shadow(0 0 1px rgba(0,0,0,0.6));
 }
@@ -360,9 +365,9 @@ button:focus-visible,
   align-items: center;
   vertical-align: middle;
   margin-left: 6px;
-  padding: 2px 8px;
+  padding: 1px 7px;
   border-radius: 999px;
-  font-size: 0.6rem;
+  font-size: 0.54rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   background: rgba(87,199,174,0.18);
