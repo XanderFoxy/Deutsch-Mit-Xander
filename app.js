@@ -41,6 +41,9 @@
   wireSubnav("learnSubnav");
   wireSubnav("knowledgeSubnav");
   wireSubnav("profileSubnav");
+  document.querySelector('#learnSubnav [data-sub="sub-exercises"]').addEventListener("click", () => {
+    renderSetup();
+  });
 
   /* ============================================================
      DESIGN / THEMES — 4 austauschbare Vorlagen
@@ -124,12 +127,12 @@
     const active = (profile && profile.theme) || sessionTheme;
     const themeCard = (t) => {
       const unlocked = isThemeUnlocked(t, profile);
-      const conditionText = !t.unlock ? "" : t.unlock.type === "points" ? `🔒 Ab ${t.unlock.value} Punkten` : `🔒 Pokal „${t.unlock.match}" nötig`;
+      const conditionText = !t.unlock ? "" : t.unlock.type === "points" ? `Ab ${t.unlock.value} Punkten` : `Pokal „${t.unlock.match}" nötig`;
       return `
-      <div class="category-card ${t.id === active ? "selected" : ""} ${!unlocked ? "theme-locked" : ""}" data-theme-pick="${unlocked ? t.id : ""}" ${!unlocked ? `data-locked-info="${conditionText}"` : ""}>
+      <div class="category-card ${t.id === active ? "selected" : ""} ${!unlocked ? "theme-locked" : ""}" data-theme-pick="${unlocked ? t.id : ""}" ${!unlocked ? `data-locked-info="🔒 ${conditionText}"` : ""}>
         <div class="cat-checkbox">${t.id === active ? "✓" : unlocked ? "" : "🔒"}</div>
         <div class="cat-body">
-          <div class="cat-title-row"><span class="cat-icon">${unlocked ? t.emoji : "🔒"}</span><span>${t.name}</span></div>
+          <div class="cat-title-row"><span class="cat-icon">${t.emoji}</span><span>${t.name}</span></div>
           <div class="cat-info-text open">${unlocked ? t.desc : conditionText}</div>
         </div>
       </div>`;
@@ -398,12 +401,12 @@
         </div>`;
       }
       if (!unlocked) {
-        const cond = cat.unlock.type === "points" ? `🔒 Ab ${cat.unlock.value} Punkten` : `🔒 Pokal „${cat.unlock.match}" nötig`;
+        const cond = cat.unlock.type === "points" ? `Ab ${cat.unlock.value} Punkten` : `Pokal „${cat.unlock.match}" nötig`;
         return `
-        <div class="category-card theme-locked" data-locked-info="${cond}">
+        <div class="category-card theme-locked" data-locked-info="🔒 ${cond}">
           <div class="cat-checkbox">🔒</div>
           <div class="cat-body">
-            <div class="cat-title-row"><span class="cat-icon">🔒</span><span>${cat.title}</span></div>
+            <div class="cat-title-row"><span class="cat-icon">${cat.icon}</span><span>${cat.title}</span></div>
             <div class="cat-info-text open">${cond} — weiter üben!</div>
           </div>
         </div>`;
@@ -444,7 +447,7 @@
               <span class="online-dot"></span>${f.name}
             </button>`).join("")}
           ${offlineFriends.map((f) => `
-            <button type="button" class="challenge-friend-pill offline" data-challenge-friend="${f.id}" disabled title="Gerade nicht online">
+            <button type="button" class="challenge-friend-pill offline ${selectedChallengeFriendIds.has(f.id) ? "selected" : ""}" data-challenge-friend="${f.id}" title="Spielt die Runde, sobald sie sich wieder einloggen">
               ${f.name} <span class="empty-note">(offline)</span>
             </button>`).join("")}
         </div>
@@ -1056,6 +1059,14 @@
               </select>
             </div>
             <div class="form-field"><label>Text</label><textarea id="ctBody" class="guestbook-form-textarea" style="min-height:120px;" maxlength="3000"></textarea></div>
+            <div class="form-field">
+              <label>Cover-Bild (optional)</label>
+              <input type="file" id="ctCoverInput" accept="image/*" />
+              <div id="ctCoverPreviewWrap" style="display:none; margin-top:8px;">
+                <img id="ctCoverPreview" style="max-width:140px; border-radius:var(--radius-sm);" alt="" />
+                <button type="button" class="emoji-toggle-link" id="ctCoverRemove" style="display:block; margin-top:4px;">Entfernen</button>
+              </div>
+            </div>
             <div class="form-error" id="ctError"></div>
             <button type="button" class="btn-submit" id="ctSubmitBtn">Einreichen</button>
           </div>
@@ -1080,10 +1091,11 @@
             <span class="level-badge">${t.level}</span>
             <h3 style="margin:0;">${t.title}</h3>
           </div>
+          ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
           <p style="white-space:pre-wrap;">${t.body}</p>
           <div class="modal-meta-row" style="margin-top:8px; justify-content:flex-start;">
-            <button type="button" class="friend-name-btn" style="display:inline-flex; align-items:center; gap:6px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>${authorAvatar}${t.author_name}${adminBadge(authorP?.is_admin, authorP?.is_owner)}</button>
-            <span class="empty-note">${t.created_at ? new Date(t.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""}</span>
+            <button type="button" class="friend-name-btn" style="display:inline-flex; align-items:center; gap:6px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>${authorAvatar}${t.author_name}${adminBadge(authorP?.is_admin, authorP?.is_owner, authorP?.is_moderator)}</button>
+            <span class="empty-note">${t.created_at ? new Date(t.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</span>
           </div>
           <div class="modal-meta-row" style="margin-top:10px; justify-content:flex-start;">
             <button type="button" class="btn ${iLiked ? "btn-coffee" : "btn-ghost"}" style="padding:6px 14px; font-size:0.82rem;" data-like-text="${t.id}" data-author-id="${t.user_id || ""}" data-text-title="${t.title.replace(/"/g, "&quot;")}">${iLiked ? "❤️" : "🤍"} ${likes.length}</button>
@@ -1091,7 +1103,7 @@
           </div>
           <div class="community-comments" id="comments-${t.id}" style="display:none; margin-top:10px;"></div>
           ${(user && t.user_id === user.id) ? `<button type="button" class="btn btn-ghost" style="margin-top:8px;" data-delete-own-text="${t.id}">🗑️ Eigenen Beitrag löschen</button>` : ""}
-          ${(Backend.isAdmin() && !(user && t.user_id === user.id)) ? `<button type="button" class="btn btn-ghost" style="margin-top:8px;" data-admin-delete-text="${t.id}">🛠️ Als Admin entfernen</button>` : ""}
+          ${(Backend.canModerate() && !(user && t.user_id === user.id)) ? `<button type="button" class="btn btn-ghost" style="margin-top:8px;" data-admin-delete-text="${t.id}">🛠️ Entfernen</button>` : ""}
         </div>`;
       }).join("") : '<p class="empty-note">Noch keine freigeschalteten Texte — sei die/der Erste!</p>'}
     `;
@@ -1105,6 +1117,9 @@
     }
     box.querySelectorAll("[data-view-author]").forEach((btn) => {
       if (btn.dataset.viewAuthor) btn.addEventListener("click", () => openProfileModal(btn.dataset.viewAuthor));
+    });
+    box.querySelectorAll("[data-modal-view-photo]").forEach((img) => {
+      img.addEventListener("click", () => openLightbox(img.dataset.modalViewPhoto, "Beitragsbild"));
     });
     box.querySelectorAll("[data-like-text]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -1140,6 +1155,30 @@
       });
     });
 
+    let pendingCoverFile = null;
+    const coverInput = document.getElementById("ctCoverInput");
+    if (coverInput) {
+      coverInput.addEventListener("change", () => {
+        const file = coverInput.files[0];
+        if (!file) return;
+        pendingCoverFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById("ctCoverPreview").src = e.target.result;
+          document.getElementById("ctCoverPreviewWrap").style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      });
+      const removeBtn = document.getElementById("ctCoverRemove");
+      if (removeBtn) {
+        removeBtn.addEventListener("click", () => {
+          pendingCoverFile = null;
+          coverInput.value = "";
+          document.getElementById("ctCoverPreviewWrap").style.display = "none";
+        });
+      }
+    }
+
     const submitBtn = document.getElementById("ctSubmitBtn");
     if (submitBtn) {
       submitBtn.addEventListener("click", async () => {
@@ -1152,7 +1191,12 @@
         submitBtn.textContent = "Wird gesendet …";
         submitBtn.disabled = true;
         try {
-          await Backend.submitCommunityText({ title, level, body });
+          let coverUrl = "";
+          if (pendingCoverFile) {
+            submitBtn.textContent = "Bild wird hochgeladen …";
+            coverUrl = await Backend.uploadCommunityTextCover(pendingCoverFile);
+          }
+          await Backend.submitCommunityText({ title, level, body, coverUrl });
           renderCommunityTexts();
         } catch (err) {
           errBox.textContent = err.message || "Konnte nicht eingereicht werden.";
@@ -1171,7 +1215,7 @@
           <button type="button" class="friend-name-btn" data-view-author="${c.user_id || ""}" ${!c.user_id ? "disabled" : ""}>${c.author_name}</button>
           <span class="empty-note" style="margin-left:6px;">${new Date(c.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}</span>
           <p style="margin:2px 0 0;">${c.body}</p>
-          ${(user && (c.user_id === user.id || Backend.isAdmin())) ? `<button type="button" class="emoji-toggle-link" style="margin-top:2px; font-size:0.75rem;" data-delete-comment="${c.id}">🗑️ Löschen</button>` : ""}
+          ${(user && (c.user_id === user.id || Backend.canModerate())) ? `<button type="button" class="emoji-toggle-link" style="margin-top:2px; font-size:0.75rem;" data-delete-comment="${c.id}">🗑️ Löschen</button>` : ""}
         </div>`).join("") : '<p class="empty-note">Noch keine Kommentare.</p>'}
       ${user ? `
         <div class="form-field" style="margin-top:8px;">
@@ -1296,8 +1340,9 @@
   async function renderAccount() {
     const area = document.getElementById("accountArea");
     const user = Backend.currentUser();
-    const profile = Backend.currentProfile();
     const myUnread = user ? await Backend.getUnreadNotifications() : [];
+    if (user && myUnread.length) await Backend.refreshCurrentProfile();
+    const profile = Backend.currentProfile();
 
     const demoBanner = !Backend.isConfigured
       ? '<div class="demo-banner">🔧 Demo-Modus: Es ist noch kein Supabase-Projekt verbunden (siehe supabase-config.js). Konten &amp; Punkte bleiben nur für diese Sitzung erhalten.</div>'
@@ -1360,7 +1405,7 @@
         return h ? `<div class="trophy-chip">${h.emoji} ${h.article} ${h.noun}</div>` : "";
       }).join("");
       const originFlag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "🌍" : "";
-      const pendingTexts = Backend.isAdmin() ? await Backend.getPendingCommunityTexts() : [];
+      const pendingTexts = Backend.canModerate() ? await Backend.getPendingCommunityTexts() : [];
       area.innerHTML = `
         ${demoBanner}
         ${myUnread.length ? `
@@ -1374,7 +1419,7 @@
           <div class="profile-header">
             ${avatarHtml}
             <div class="profile-name-col">
-              <h2 style="margin-bottom:2px;">${profile.name}${adminBadge(profile.isAdmin, profile.isOwner)}</h2>
+              <h2 style="margin-bottom:2px;">${profile.name}${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator)}</h2>
               <div class="modal-meta-row" style="margin-top:0; justify-content:flex-start;">
                 <button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>
                 ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
@@ -1383,7 +1428,7 @@
             </div>
           </div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
-            ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner)}</button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
+            ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
@@ -1401,7 +1446,7 @@
             ${(profile.gallery || []).map((url) => `<div class="gallery-thumb-wrap"><img src="${url}" class="gallery-thumb" alt="" data-view-photo="${url}" /></div>`).join("")}
           </div>
         </div>` : ""}
-        ${Backend.isAdmin() ? `<div class="question-card" style="margin-top:16px; border:2px solid var(--amber-400);">
+        ${Backend.canModerate() ? `<div class="question-card" style="margin-top:16px; border:2px solid var(--amber-400);">
           <h3>🛠️ Verwaltung — Eigene Beiträge freischalten</h3>
           ${pendingTexts.length ? pendingTexts.map((t) => `
             <div class="material-card" style="margin-top:10px;">
@@ -1482,7 +1527,7 @@
             <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
           </label>
           <div class="profile-name-col">
-            <h2>${profile.name}${adminBadge(profile.isAdmin, profile.isOwner)}</h2>
+            <h2>${profile.name}${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator)}</h2>
             <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}</p>
           </div>
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
@@ -1543,7 +1588,7 @@
       ${renderTrophyCase(profile)}
       ${myFriends.length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">👥 Deine Freunde</p>
-        ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner)}</button>`).join("")}
+        ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>`).join("")}
       </div>` : ""}
       ${await renderRecentMembers()}
       ${await renderActivityFeed()}
@@ -1696,6 +1741,19 @@
     });
   }
 
+  function lastSeenText(lastActive, online) {
+    if (online) return "🟢 Gerade online";
+    if (!lastActive) return "";
+    const diffMs = Date.now() - new Date(lastActive).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `Zuletzt online vor ${mins} Min.`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `Zuletzt online vor ${hours} Std.`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `Zuletzt online vor ${days} ${days === 1 ? "Tag" : "Tagen"}`;
+    return `Zuletzt online am ${new Date(lastActive).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
+  }
+
   function tinyAvatar(m) {
     if (m.avatar_url) return `<img src="${m.avatar_url}" class="tiny-avatar" alt="" />`;
     if (m.avatar_emoji) return `<span class="tiny-avatar tiny-avatar-emoji">${m.avatar_emoji}</span>`;
@@ -1704,9 +1762,10 @@
   }
 
   // Admin-Abzeichen — überall dort, wo ein Name/Profil auftaucht, konsistent anzeigbar
-  function adminBadge(isAdminFlag, isOwnerFlag) {
+  function adminBadge(isAdminFlag, isOwnerFlag, isModeratorFlag) {
     if (isOwnerFlag) return '<span class="admin-badge admin-badge-owner" title="Seitenbetreiber">👑 Betreiber</span>';
     if (isAdminFlag) return '<span class="admin-badge" title="Administrator">🛡️ Admin</span>';
+    if (isModeratorFlag) return '<span class="admin-badge admin-badge-mod" title="Moderator">🧹 Mod</span>';
     return "";
   }
 
@@ -1747,8 +1806,9 @@
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${adminBadge(p.is_admin, p.is_owner)}</h2>` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${adminBadge(p.is_admin, p.is_owner, p.is_moderator)}</h2>` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
+        Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
         Core.el("div", { class: "modal-meta-row" },
           Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`),
@@ -1779,7 +1839,7 @@
               html: p.gallery.map((url) => `
                 <div class="gallery-thumb-wrap">
                   <img src="${url}" class="gallery-thumb" alt="" data-modal-view-photo="${url}" />
-                  ${(Backend.isAdmin() && !isMe) ? `<button type="button" class="gallery-remove-btn" data-admin-delete-photo="${url}" title="Als Admin löschen">✕</button>` : ""}
+                  ${(Backend.canModerate() && !isMe) ? `<button type="button" class="gallery-remove-btn" data-admin-delete-photo="${url}" title="Löschen">✕</button>` : ""}
                 </div>`).join("") })
           : "",
         Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:16px;" },
@@ -1796,26 +1856,43 @@
                   },
                 }, "🤝 Freund werden")
         ),
-        (Backend.isAdmin() && !isMe)
-          ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:10px;" },
+        (Backend.isOwner() && !isMe && !p.is_owner)
+          ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:10px; flex-wrap:wrap;" },
               Core.el("button", {
-                class: p.is_admin ? "btn btn-ghost" : "btn btn-coffee", type: "button", id: "modalAdminToggle",
+                class: p.is_admin ? "btn btn-ghost" : "btn btn-coffee", type: "button",
                 onclick: async (e) => {
                   const makeAdmin = !p.is_admin;
                   if (!confirm(makeAdmin ? `${p.name} zum Administrator machen?` : `${p.name} die Admin-Rechte entziehen?`)) return;
                   try {
                     await Backend.setAdminStatus(p.id, makeAdmin);
                     p.is_admin = makeAdmin;
-                    e.target.textContent = makeAdmin ? "🛠️ Admin-Rechte entziehen" : "🛠️ Zum Administrator machen";
+                    e.target.textContent = makeAdmin ? "🛡️ Admin-Rechte entziehen" : "🛡️ Zum Administrator machen";
                     e.target.className = makeAdmin ? "btn btn-ghost" : "btn btn-coffee";
                   } catch (err) { alert(err.message); }
                 },
-              }, p.is_admin ? "🛠️ Admin-Rechte entziehen" : "🛠️ Zum Administrator machen")
+              }, p.is_admin ? "🛡️ Admin-Rechte entziehen" : "🛡️ Zum Administrator machen")
             )
           : "",
-        (Backend.isAdmin() && !isMe)
+        (Backend.isAdmin() && !isMe && !p.is_admin && !p.is_owner)
+          ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:8px; flex-wrap:wrap;" },
+              Core.el("button", {
+                class: p.is_moderator ? "btn btn-ghost" : "btn btn-coffee", type: "button",
+                onclick: async (e) => {
+                  const makeMod = !p.is_moderator;
+                  if (!confirm(makeMod ? `${p.name} zum Moderator machen?` : `${p.name} die Moderator-Rechte entziehen?`)) return;
+                  try {
+                    await Backend.setModeratorStatus(p.id, makeMod);
+                    p.is_moderator = makeMod;
+                    e.target.textContent = makeMod ? "🧹 Moderator-Rechte entziehen" : "🧹 Zum Moderator machen";
+                    e.target.className = makeMod ? "btn btn-ghost" : "btn btn-coffee";
+                  } catch (err) { alert(err.message); }
+                },
+              }, p.is_moderator ? "🧹 Moderator-Rechte entziehen" : "🧹 Zum Moderator machen")
+            )
+          : "",
+        (Backend.canModerate() && !isMe)
           ? Core.el("div", { class: "admin-tools-box" },
-              Core.el("p", { class: "empty-note", style: "margin:0 0 6px; font-weight:700;" }, "🛠️ Weitere Admin-Werkzeuge"),
+              Core.el("p", { class: "empty-note", style: "margin:0 0 6px; font-weight:700;" }, "🧹 Moderationswerkzeuge"),
               Core.el("div", { class: "quiz-actions", style: "justify-content:flex-start; margin-top:0; flex-wrap:wrap;" },
                 Core.el("button", {
                   class: "btn btn-ghost", type: "button",
@@ -1824,7 +1901,9 @@
                     try { await Backend.adminDeleteAvatar(p.id); alert("Profilbild entfernt."); box.remove(); }
                     catch (err) { alert(err.message); }
                   },
-                }, "🖼️ Profilbild entfernen"),
+                }, "🖼️ Profilbild entfernen")
+              ),
+              Backend.isAdmin() ? Core.el("div", { class: "quiz-actions", style: "justify-content:flex-start; margin-top:8px; flex-wrap:wrap;" },
                 Core.el("button", {
                   class: "btn btn-ghost", type: "button", id: "modalGiftCategoryBtn",
                   onclick: async () => {
@@ -1848,17 +1927,22 @@
                     try { await Backend.adminGiftThemeUnlock(p.id, locked[idx].id, locked[idx].name); alert(`„${locked[idx].name}" wurde ${p.name} geschenkt und freigeschaltet.`); }
                     catch (err) { alert(err.message); }
                   },
-                }, "🎨 Design schenken"),
-                Core.el("button", {
-                  class: "btn btn-ghost", type: "button", style: "color:var(--coral-400);",
-                  onclick: async () => {
-                    if (!confirm(`Konto von ${p.name} wirklich unwiderruflich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
-                    if (!confirm("Bist du ganz sicher? Alle Profildaten gehen verloren.")) return;
-                    try { await Backend.adminDeleteAccount(p.id); alert("Profil gelöscht. Hinweis: Der Login-Zugang selbst muss zusätzlich in Supabase unter Authentication -> Users entfernt werden."); box.remove(); }
-                    catch (err) { alert(err.message); }
-                  },
-                }, "🗑️ Konto löschen")
-              )
+                }, "🎨 Design schenken")
+              ) : ""
+            )
+          : "",
+        (Backend.isOwner() && !isMe && !p.is_owner)
+          ? Core.el("div", { class: "admin-tools-box", style: "border-color:rgba(232,72,63,0.4);" },
+              Core.el("p", { class: "empty-note", style: "margin:0 0 6px; font-weight:700;" }, "⚠️ Nur für den Betreiber"),
+              Core.el("button", {
+                class: "btn btn-ghost", type: "button", style: "color:var(--coral-400);",
+                onclick: async () => {
+                  if (!confirm(`Konto von ${p.name} wirklich unwiderruflich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+                  if (!confirm("Bist du ganz sicher? Alle Profildaten gehen verloren.")) return;
+                  try { await Backend.adminDeleteAccount(p.id); alert("Profil gelöscht. Hinweis: Der Login-Zugang selbst muss zusätzlich in Supabase unter Authentication -> Users entfernt werden."); box.remove(); }
+                  catch (err) { alert(err.message); }
+                },
+              }, "🗑️ Konto löschen")
             )
           : ""
       )
@@ -1972,18 +2056,29 @@
         <h3>👥 Deine Freunde</h3>
         ${friends.length ? friends.map((f) => `
           <div class="breakdown-row">
-            <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.${adminBadge(f.is_admin, f.is_owner)}</button>
+            <div>
+              <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>
+              <div class="empty-note" style="font-size:0.72rem; margin-top:2px;">${lastSeenText(f.last_active, f.online)}</div>
+            </div>
             <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
       </div>
 
       ${outgoingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>📤 Deine Duelle</h3>
-        ${outgoingChallenges.map((c) => `<div class="breakdown-row"><span>vs. ${c.toName}</span><span class="empty-note">${c.status === "completed" ? (c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden") : "Warte auf Gegner…"}</span></div>`).join("")}
+        ${outgoingChallenges.map((c) => `<div class="breakdown-row"><span>vs. ${c.toName}</span><span>${c.status === "completed" ? `<span class="empty-note">${c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden"}</span>` : `<span class="empty-note">Warte auf Gegner…</span> <button type="button" class="emoji-toggle-link" style="font-size:0.75rem;" data-cancel-challenge="${c.id}">Zurückrufen</button>`}</span></div>`).join("")}
       </div>` : ""}
 
       <div id="challengePicker"></div>
     `;
+
+    area.querySelectorAll("[data-cancel-challenge]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diese Herausforderung wirklich zurückrufen?")) return;
+        try { await Backend.cancelChallenge(btn.dataset.cancelChallenge); renderFriends(); }
+        catch (err) { alert(err.message); }
+      });
+    });
 
     let searchTimer = null;
     document.getElementById("friendSearch").addEventListener("input", (e) => {
@@ -2091,7 +2186,7 @@
     area.innerHTML = `
       <div class="question-card">
         <h3>📖 Gästebuch</h3>
-        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div>${Backend.isAdmin() ? `<button type="button" class="btn btn-ghost" style="margin-top:6px;" data-admin-delete-gb="${e.id}">🛠️ Als Admin löschen</button>` : ""}</div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
+        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div>${Backend.canModerate() ? `<button type="button" class="btn btn-ghost" style="margin-top:6px;" data-admin-delete-gb="${e.id}">🛠️ Löschen</button>` : ""}</div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
         <form class="guestbook-form" id="guestbookForm">
           ${!user ? '<input type="text" id="gbName" placeholder="Dein Name" required />' : ""}
           <textarea id="gbMessage" placeholder="Hinterlasse eine Nachricht für Alex…" required></textarea>

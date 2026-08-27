@@ -378,6 +378,10 @@ button:focus-visible,
   background: rgba(242,184,75,0.2);
   color: var(--amber-300);
 }
+.admin-badge-mod {
+  background: rgba(143,224,212,0.16);
+  color: var(--cream-200);
+}
 .admin-tools-box {
   margin-top: 14px;
   padding: 12px;

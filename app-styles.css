@@ -253,8 +253,11 @@
   color: #241505;
 }
 .challenge-friend-pill.offline {
-  opacity: 0.5;
-  cursor: not-allowed;
+  opacity: 0.75;
+  cursor: pointer;
+}
+.challenge-friend-pill.offline.selected {
+  opacity: 1;
 }
 .order-pill {
   padding: 7px 14px;
@@ -655,6 +658,14 @@
   text-underline-offset: 2px;
 }
 .community-text-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.community-text-cover {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
 .level-badge {
   flex-shrink: 0;
   background: var(--teal-400);

@@ -53,7 +53,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, giftedCategories: [], giftedThemes: [] };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [] };
   }
 
   /* ================= AUTH ================= */
@@ -79,6 +79,7 @@ const Backend = (function () {
           theme: data.theme || "bastelheft",
           isAdmin: Boolean(data.is_admin),
           isOwner: Boolean(data.is_owner),
+          isModerator: Boolean(data.is_moderator),
           giftedCategories: data.gifted_categories || [],
           giftedThemes: data.gifted_themes || [],
         };
@@ -192,6 +193,20 @@ const Backend = (function () {
   }
 
   function currentProfile() {
+    return demo.profile;
+  }
+
+  // Lädt das eigene Profil frisch aus der Datenbank und ersetzt die lokal
+  // zwischengespeicherten Werte — wichtig nach Geschenken/Freischaltungen,
+  // die von einer anderen Person ausgelöst wurden und sonst erst nach
+  // manuellem Neuladen der Seite sichtbar würden.
+  async function refreshCurrentProfile() {
+    if (!demo.user) return demo.profile;
+    if (client) {
+      const fresh = await fetchOrCreateProfile(demo.user.id, demo.user.email, demo.user.name);
+      const history = demo.profile ? demo.profile.history : [];
+      demo.profile = Object.assign({}, fresh, { history });
+    }
     return demo.profile;
   }
 
@@ -617,7 +632,8 @@ const Backend = (function () {
           return {
             id: data.id, name: data.name, bio: data.bio, avatar_url: data.avatar_url, avatar_emoji: data.avatar_emoji,
             badges: data.badges, trophies: data.trophies, points: data.points, origin: data.origin, hobbies: data.hobbies,
-            is_admin: Boolean(data.is_admin), is_owner: Boolean(data.is_owner), gallery: data.gallery || [],
+            is_admin: Boolean(data.is_admin), is_owner: Boolean(data.is_owner), is_moderator: Boolean(data.is_moderator), gallery: data.gallery || [],
+            last_active: data.last_active, online: isRecentlyActive(data.last_active),
           };
         }
         if (error) console.warn("Profil-Abfrage fehlgeschlagen:", error.message);
@@ -631,7 +647,8 @@ const Backend = (function () {
     return {
       id, name: u.profile.name, bio: u.profile.bio, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
       badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
-      origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin, is_owner: u.profile.isOwner, gallery: u.profile.gallery,
+      origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin, is_owner: u.profile.isOwner,
+      is_moderator: u.profile.isModerator, gallery: u.profile.gallery, last_active: u.profile.lastActive || null, online: false,
     };
   }
 
@@ -681,7 +698,9 @@ const Backend = (function () {
         avatar_emoji: (names[id] && names[id].avatar_emoji) || "",
         is_admin: Boolean(names[id] && names[id].is_admin),
         is_owner: Boolean(names[id] && names[id].is_owner),
+        is_moderator: Boolean(names[id] && names[id].is_moderator),
         online: names[id] ? isRecentlyActive(names[id].last_active) : false,
+        last_active: names[id] ? names[id].last_active : null,
       }));
     }
     return demo.friends
@@ -730,6 +749,16 @@ const Backend = (function () {
     const toName = (demo.users[toId] && demo.users[toId].profile.name) || toId;
     await addActivity(`${demo.profile.name} fordert ${toName} zu einem Duell heraus. 🎮`);
     return challenge.id;
+  }
+
+  async function cancelChallenge(challengeId) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("challenges").delete().eq("id", challengeId).eq("from_user", myId()).eq("status", "pending");
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.challenges = demo.challenges.filter((c) => !(c.id === challengeId && c.from === demo.user.email && c.status === "pending"));
   }
 
   async function getMyChallenges() {
@@ -832,16 +861,30 @@ const Backend = (function () {
   /* ================= COMMUNITY-TEXTE (User-Uploads, warten auf Freischaltung) ================= */
   demo.communityTexts = demo.communityTexts || [];
 
-  async function submitCommunityText({ title, level, body }) {
+  async function uploadCommunityTextCover(file) {
+    if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
+    const path = `${demo.user.id}/cover-${Date.now()}-${file.name}`;
+    const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) {
+      if (uploadError.message && uploadError.message.toLowerCase().includes("bucket not found")) {
+        throw new Error("Der Speicherort für Fotos fehlt noch (siehe README, Abschnitt 4b).");
+      }
+      throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    }
+    const { data } = client.storage.from("avatars").getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function submitCommunityText({ title, level, body, coverUrl }) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (client) {
       const { error } = await client.from("community_texts").insert({
-        user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending",
+        user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending", cover_url: coverUrl || null,
       });
-      if (error) throw new Error("Konnte nicht eingereicht werden: " + error.message);
+      if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
-    demo.communityTexts.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending", created_at: new Date().toISOString() });
+    demo.communityTexts.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, cover_url: coverUrl || null, status: "pending", created_at: new Date().toISOString() });
   }
 
   async function getApprovedCommunityTexts() {
@@ -971,7 +1014,7 @@ const Backend = (function () {
   }
 
   async function getPendingCommunityTexts() {
-    if (!isAdmin()) return [];
+    if (!canModerate()) return [];
     if (client) {
       try {
         const { data, error } = await client.from("community_texts").select("*").eq("status", "pending").order("created_at", { ascending: false });
@@ -985,7 +1028,7 @@ const Backend = (function () {
   }
 
   async function approveCommunityText(id) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
       const { error } = await client.from("community_texts").update({ status: "approved" }).eq("id", id);
       if (error) throw new Error("Konnte nicht freigeschaltet werden: " + error.message);
@@ -996,7 +1039,7 @@ const Backend = (function () {
   }
 
   async function rejectCommunityText(id) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
       const { error } = await client.from("community_texts").delete().eq("id", id);
       if (error) throw new Error("Konnte nicht abgelehnt werden: " + error.message);
@@ -1015,9 +1058,9 @@ const Backend = (function () {
     demo.communityTexts = demo.communityTexts.filter((x) => !(x.id === id && x.user_id === demo.user.id));
   }
 
-  /* ---- Weitere Moderations-Werkzeuge (nur Admin) ---- */
+  /* ---- Weitere Moderations-Werkzeuge (Moderator, Admin, Betreiber) ---- */
   async function adminDeleteCommunityText(id) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
       const { error } = await client.from("community_texts").delete().eq("id", id);
       if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
@@ -1027,7 +1070,7 @@ const Backend = (function () {
   }
 
   async function adminDeleteGalleryPhoto(targetUserId, url) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
       const { data, error: selErr } = await client.from("profiles").select("gallery").eq("id", targetUserId).maybeSingle();
       if (selErr) throw new Error("Konnte nicht geladen werden: " + selErr.message);
@@ -1041,7 +1084,7 @@ const Backend = (function () {
   }
 
   async function adminDeleteAvatar(targetUserId) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
       const { error } = await client.from("profiles").update({ avatar_url: "", avatar_emoji: "" }).eq("id", targetUserId);
       if (error) throw new Error("Konnte nicht entfernt werden: " + error.message);
@@ -1052,7 +1095,7 @@ const Backend = (function () {
   }
 
   async function adminDeleteGuestbookEntry(entryId) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
       const { error } = await client.from("guestbook").delete().eq("id", entryId);
       if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
@@ -1062,7 +1105,7 @@ const Backend = (function () {
   }
 
   async function adminDeleteAccount(targetUserId) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!isOwner()) throw new Error("Nur der Seitenbetreiber kann Konten löschen.");
     if (client) {
       // Hinweis: Löscht das Profil und zugehörige Inhalte. Der Auth-Nutzer selbst
       // kann ohne Service-Role-Key nicht aus der App heraus gelöscht werden —
@@ -1075,7 +1118,7 @@ const Backend = (function () {
   }
 
   async function adminGiftCategoryUnlock(targetUserId, categoryId, categoryTitle) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Kategorien verschenken.");
     if (client) {
       const { data, error: selErr } = await client.from("profiles").select("gifted_categories").eq("id", targetUserId).maybeSingle();
       if (selErr) throw new Error(friendlyDbError(selErr.message));
@@ -1097,7 +1140,7 @@ const Backend = (function () {
   }
 
   async function adminGiftThemeUnlock(targetUserId, themeId, themeTitle) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Designs verschenken.");
     if (client) {
       const { data, error: selErr } = await client.from("profiles").select("gifted_themes").eq("id", targetUserId).maybeSingle();
       if (selErr) throw new Error(friendlyDbError(selErr.message));
@@ -1119,14 +1162,34 @@ const Backend = (function () {
   }
 
   async function setAdminStatus(targetUserId, value) {
-    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (!isOwner()) throw new Error("Nur der Seitenbetreiber kann Administrator-Rechte vergeben.");
     if (client) {
       const { error } = await client.from("profiles").update({ is_admin: value }).eq("id", targetUserId);
-      if (error) throw new Error("Konnte nicht geändert werden: " + error.message);
+      if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
     const u = demo.users[targetUserId];
     if (u) u.profile.isAdmin = value;
+  }
+
+  function isModerator() {
+    return Boolean(demo.profile && demo.profile.isModerator);
+  }
+  // Inhalte moderieren (Texte freischalten, Kommentare/Gästebuch löschen) dürfen
+  // Moderatoren, Admins und der Betreiber gleichermaßen.
+  function canModerate() {
+    return isOwner() || isAdmin() || isModerator();
+  }
+
+  async function setModeratorStatus(targetUserId, value) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Moderator-Rechte vergeben.");
+    if (client) {
+      const { error } = await client.from("profiles").update({ is_moderator: value }).eq("id", targetUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) u.profile.isModerator = value;
   }
 
   return {
@@ -1137,6 +1200,7 @@ const Backend = (function () {
     signOut,
     currentUser,
     currentProfile,
+    refreshCurrentProfile,
     saveResult,
     getRanking,
     getGuestbook,
@@ -1149,6 +1213,7 @@ const Backend = (function () {
     acceptFriendRequest,
     getFriends,
     createChallenge,
+    cancelChallenge,
     getMyChallenges,
     submitChallengeResult,
     addActivity,
@@ -1160,10 +1225,15 @@ const Backend = (function () {
     saveHobbies,
     saveOrigin,
     submitCommunityText,
+    uploadCommunityTextCover,
     getApprovedCommunityTexts,
     getMyCommunityTexts,
     getFullPointsBreakdown,
     isAdmin,
+    isOwner,
+    isModerator,
+    canModerate,
+    setModeratorStatus,
     getPendingCommunityTexts,
     approveCommunityText,
     rejectCommunityText,

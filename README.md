@@ -82,16 +82,17 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      name text, points int default 0, badges text[] default '{}', trophies text[] default '{}',
      is_premium boolean default false, theme text default 'bastelheft', bio text default '',
      birthday text default '', avatar_url text default '', avatar_emoji text default '',
-     gallery text[] default '{}', hobbies text[] default '{}', origin text default '', is_admin boolean default false, is_owner boolean default false, gifted_categories text[] default '{}', gifted_themes text[] default '{}',
+     gallery text[] default '{}', hobbies text[] default '{}', origin text default '', is_admin boolean default false, is_owner boolean default false, is_moderator boolean default false, gifted_categories text[] default '{}', gifted_themes text[] default '{}',
      last_active timestamptz, created_at timestamptz default now()
    );
 
    create table community_texts (
      id uuid default gen_random_uuid() primary key,
      user_id uuid references auth.users, author_name text,
-     title text, level text, body text,
+     title text, level text, body text, cover_url text,
      status text default 'pending', created_at timestamptz default now()
    );
+   alter table community_texts add column if not exists cover_url text;
    create table community_text_likes (
      id uuid default gen_random_uuid() primary key,
      text_id uuid references community_texts, user_id uuid references auth.users,
@@ -200,6 +201,7 @@ alter table profiles add column if not exists is_admin boolean default false;
 alter table profiles add column if not exists is_owner boolean default false;
 alter table profiles add column if not exists gifted_categories text[] default '{}';
 alter table profiles add column if not exists gifted_themes text[] default '{}';
+alter table profiles add column if not exists is_moderator boolean default false;
 
 create table if not exists notifications (
   id uuid default gen_random_uuid() primary key,
