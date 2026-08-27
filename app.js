@@ -77,6 +77,14 @@
     { id: "bernsteinglut", name: "Bernsteinglut", emoji: "🔥", desc: "Dunkel, warmes Kupfer-Braun.", mode: "dunkel" },
     { id: "polarlicht", name: "Polarlicht", emoji: "🌌", desc: "Dunkel, mit wandernden Aurora-Streifen — animiert!", mode: "dunkel", unlock: { type: "points", value: 1600 } },
     { id: "eulennacht", name: "Eulennacht", emoji: "🦉", desc: "Dunkel, tiefblau, ruhig.", mode: "dunkel", unlock: { type: "trophy", match: "Wissenschaftler" } },
+    { id: "regenbogenstrasse", name: "Regenbogenstraße", emoji: "🌈", desc: "Hell, mit wanderndem Farbschimmer — animiert!", mode: "hell", unlock: { type: "points", value: 250 } },
+    { id: "moosgarten", name: "Moosgarten", emoji: "🌿", desc: "Hell, ruhiges Waldgrün.", mode: "hell" },
+    { id: "konfettiregen", name: "Konfettiregen", emoji: "🎉", desc: "Hell, verspielt mit fallendem Konfetti — animiert!", mode: "hell", unlock: { type: "trophy", match: "Abenteurer" } },
+    { id: "zitronenlimonade", name: "Zitronenlimonade", emoji: "🍋", desc: "Hell, frisches Gelb.", mode: "hell", unlock: { type: "points", value: 350 } },
+    { id: "sternenstaubneon", name: "Sternenstaub-Neon", emoji: "💫", desc: "Dunkel, mit pulsierenden Neonpunkten — animiert!", mode: "dunkel", unlock: { type: "points", value: 800 } },
+    { id: "tintenfischtiefe", name: "Tintenfisch-Tiefe", emoji: "🐙", desc: "Dunkel, marineblau-violett.", mode: "dunkel" },
+    { id: "lagerfeuer", name: "Lagerfeuer", emoji: "🔥", desc: "Dunkel, mit flackerndem Glutschein — animiert!", mode: "dunkel", unlock: { type: "points", value: 1400 } },
+    { id: "mitternachtsgarten", name: "Mitternachtsgarten", emoji: "🌙", desc: "Dunkel, tiefgrün mit Mondlicht.", mode: "dunkel", unlock: { type: "points", value: 1800 } },
   ];
   let sessionTheme = "bastelheft";
 

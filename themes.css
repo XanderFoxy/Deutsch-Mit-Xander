@@ -827,6 +827,244 @@
 [data-theme="sandduene"] .tape-piece,
 [data-theme="seifenblase"] .tape-piece,
 [data-theme="schattenreich"] .tape-piece,
+/* ---------- 32) REGENBOGENSTRASSE — hell, bunt mit wanderndem Farbschimmer (animiert) ---------- */
+[data-theme="regenbogenstrasse"] {
+  --plum-950: #FFFBF2;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCEFDC;
+  --cream-50: #3A2A1A;
+  --cream-200: #A68F6E;
+  --amber-400: #E8A93D;
+  --amber-300: #F0C270;
+  --teal-400: #4FB8A8;
+  --coral-400: #E86F6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+  --shadow-deck: 0 10px 24px rgba(58,42,26,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌈"; --logo-shape: 50%; --logo-bg: #E8A93D;
+}
+[data-theme="regenbogenstrasse"] body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: -20%; right: -20%; height: 6px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(90deg, #E86F6F, #E8A93D, #E8E06F, #4FB88A, #4FA8D8, #A86FE8, #E86FC3, #E86F6F);
+  background-size: 300% 100%;
+  animation: rainbowShift 8s linear infinite;
+}
+@keyframes rainbowShift {
+  0% { background-position-x: 0%; }
+  100% { background-position-x: 300%; }
+}
+
+/* ---------- 33) MOOSGARTEN — hell, ruhiges Waldgrün ---------- */
+[data-theme="moosgarten"] {
+  --plum-950: #F3F7EE;
+  --plum-800: #FFFFFF;
+  --plum-700: #E3EDD6;
+  --cream-50: #263A1A;
+  --cream-200: #7E9166;
+  --amber-400: #8FB84F;
+  --amber-300: #ABCB7B;
+  --teal-400: #5F9E8E;
+  --coral-400: #D97F4F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(38,58,26,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌿"; --logo-shape: 50%; --logo-bg: #8FB84F;
+}
+
+/* ---------- 34) KONFETTIREGEN — hell, verspielt mit fallendem Konfetti (animiert) ---------- */
+[data-theme="konfettiregen"] {
+  --plum-950: #FFF5FA;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCE3F0;
+  --cream-50: #3A1A2E;
+  --cream-200: #A6688F;
+  --amber-400: #E85FA0;
+  --amber-300: #F08FC0;
+  --teal-400: #4FB8C4;
+  --coral-400: #E8A93D;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+  --shadow-deck: 0 10px 24px rgba(58,26,46,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🎉"; --logo-shape: 50%; --logo-bg: #E85FA0;
+}
+[data-theme="konfettiregen"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 3px at 10% 10%, #E85FA0, transparent),
+    radial-gradient(3px 3px at 25% 30%, #4FB8C4, transparent),
+    radial-gradient(3px 3px at 40% 15%, #E8A93D, transparent),
+    radial-gradient(3px 3px at 60% 35%, #E85FA0, transparent),
+    radial-gradient(3px 3px at 75% 10%, #4FB8C4, transparent),
+    radial-gradient(3px 3px at 90% 30%, #E8A93D, transparent),
+    radial-gradient(3px 3px at 15% 60%, #4FB8C4, transparent),
+    radial-gradient(3px 3px at 85% 65%, #E85FA0, transparent);
+  animation: confettiFall 7s linear infinite;
+  opacity: 0.8;
+}
+@keyframes confettiFall {
+  0% { background-position-y: -10%; }
+  100% { background-position-y: 110%; }
+}
+
+/* ---------- 35) ZITRONENLIMONADE — hell, frisches Gelb ---------- */
+[data-theme="zitronenlimonade"] {
+  --plum-950: #FFFBEA;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCF0BE;
+  --cream-50: #3A320A;
+  --cream-200: #A69650;
+  --amber-400: #E8C93D;
+  --amber-300: #F0DB78;
+  --teal-400: #6FBFA0;
+  --coral-400: #E8905F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,50,10,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🍋"; --logo-shape: 50%; --logo-bg: #E8C93D;
+}
+
+/* ---------- 36) STERNENSTAUB-NEON — dunkel, mit pulsierenden Neonpunkten (animiert) ---------- */
+[data-theme="sternenstaubneon"] {
+  --plum-950: #0A0A18;
+  --plum-800: #131328;
+  --plum-700: #1D1D3C;
+  --cream-50: #F0F0FF;
+  --cream-200: #9494C4;
+  --amber-400: #E85FE8;
+  --amber-300: #F08FF0;
+  --teal-400: #5FE8E0;
+  --coral-400: #E85F8F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.5);
+  --card-border: 1px solid rgba(232,95,232,0.2);
+  --card-shadow-extra: none;
+  --logo-emoji: "💫"; --logo-shape: 50%; --logo-bg: #E85FE8;
+}
+[data-theme="sternenstaubneon"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(2.5px 2.5px at 10% 15%, #E85FE8, transparent),
+    radial-gradient(2px 2px at 30% 45%, #5FE8E0, transparent),
+    radial-gradient(2.5px 2.5px at 50% 20%, #E85F8F, transparent),
+    radial-gradient(2px 2px at 70% 50%, #E85FE8, transparent),
+    radial-gradient(2.5px 2.5px at 85% 25%, #5FE8E0, transparent),
+    radial-gradient(2px 2px at 20% 75%, #E85F8F, transparent),
+    radial-gradient(2.5px 2.5px at 60% 80%, #E85FE8, transparent);
+  animation: neonPulse 3.5s ease-in-out infinite alternate;
+}
+@keyframes neonPulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* ---------- 37) TINTENFISCH-TIEFE — dunkel, marineblau-violett ---------- */
+[data-theme="tintenfischtiefe"] {
+  --plum-950: #0C1420;
+  --plum-800: #16202E;
+  --plum-700: #202E42;
+  --cream-50: #E6EAF2;
+  --cream-200: #8FA0B8;
+  --amber-400: #7A6FE8;
+  --amber-300: #A69AF0;
+  --teal-400: #4F9EC4;
+  --coral-400: #E85F8F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(122,111,232,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🐙"; --logo-shape: 50%; --logo-bg: #7A6FE8;
+}
+
+/* ---------- 38) LAGERFEUER — dunkel, mit flackerndem Glutschein (animiert) ---------- */
+[data-theme="lagerfeuer"] {
+  --plum-950: #1A0E08;
+  --plum-800: #26150C;
+  --plum-700: #362012;
+  --cream-50: #FBEAD8;
+  --cream-200: #C49B7A;
+  --amber-400: #E8763F;
+  --amber-300: #F0A06F;
+  --teal-400: #5F8E7A;
+  --coral-400: #E8503F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(232,118,63,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🔥"; --logo-shape: 50%; --logo-bg: #E8763F;
+}
+[data-theme="lagerfeuer"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse 70% 50% at 50% 100%, rgba(232,118,63,0.18), transparent);
+  animation: fireFlicker 2.2s ease-in-out infinite alternate;
+}
+@keyframes fireFlicker {
+  0% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.03); }
+  100% { opacity: 0.7; transform: scale(0.98); }
+}
+
+/* ---------- 39) MITTERNACHTSGARTEN — dunkel, tiefgrün mit Mondlicht ---------- */
+[data-theme="mitternachtsgarten"] {
+  --plum-950: #0D1712;
+  --plum-800: #16241C;
+  --plum-700: #203327;
+  --cream-50: #E6F2EA;
+  --cream-200: #8FB89E;
+  --amber-400: #E8D468;
+  --amber-300: #F0E094;
+  --teal-400: #5FA88E;
+  --coral-400: #E88F5F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(232,212,104,0.12);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌙"; --logo-shape: 50%; --logo-bg: #E8D468;
+}
+
 [data-theme="bernsteinglut"] .tape-piece,
 [data-theme="polarlicht"] .tape-piece,
-[data-theme="eulennacht"] .tape-piece { display: none; }
+[data-theme="eulennacht"] .tape-piece,
+[data-theme="regenbogenstrasse"] .tape-piece,
+[data-theme="moosgarten"] .tape-piece,
+[data-theme="konfettiregen"] .tape-piece,
+[data-theme="zitronenlimonade"] .tape-piece,
+[data-theme="sternenstaubneon"] .tape-piece,
+[data-theme="tintenfischtiefe"] .tape-piece,
+[data-theme="lagerfeuer"] .tape-piece,
+[data-theme="mitternachtsgarten"] .tape-piece { display: none; }

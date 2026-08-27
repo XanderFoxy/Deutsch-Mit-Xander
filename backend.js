@@ -19,6 +19,16 @@ const Backend = (function () {
     client = window.supabase.createClient(cfg.url, cfg.anonKey);
   }
 
+  // Verwandelt technische "Tabelle/Spalte fehlt"-Fehler von Supabase in eine
+  // klare, handlungsleitende Meldung statt eines kryptischen Postgres-Textes.
+  function friendlyDbError(rawMessage) {
+    const msg = rawMessage || "";
+    if (/does not exist/i.test(msg) || /Could not find the table/i.test(msg) || /schema cache/i.test(msg)) {
+      return "Diese Funktion braucht noch eine Datenbank-Anpassung, die noch nicht eingerichtet ist. Bitte im Supabase SQL-Editor einmal das komplette Nachrüst-SQL aus dem README (Abschnitt „4e. Nachrüst-SQL\") ausführen — danach funktioniert es. (Technische Meldung: " + msg + ")";
+    }
+    return msg;
+  }
+
   /* ---------------- Demo-Zustand (nur im Speicher) ---------------- */
   const demo = {
     user: null, // { id, email, name }
@@ -829,10 +839,10 @@ const Backend = (function () {
     if (client) {
       if (alreadyLiked) {
         const { error } = await client.from("community_text_likes").delete().eq("text_id", textId).eq("user_id", demo.user.id);
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(friendlyDbError(error.message));
       } else {
         const { error } = await client.from("community_text_likes").insert({ text_id: textId, user_id: demo.user.id });
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(friendlyDbError(error.message));
         // Der Autor/die Autorin bekommt für jeden erhaltenen Like 2 Bonuspunkte
         if (authorId && authorId !== demo.user.id) {
           const { data: authorProfile } = await client.from("profiles").select("points").eq("id", authorId).maybeSingle();
@@ -872,7 +882,7 @@ const Backend = (function () {
       const { error } = await client.from("community_text_comments").insert({
         text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(),
       });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
     demo.textComments.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(), created_at: new Date().toISOString() });
@@ -884,7 +894,7 @@ const Backend = (function () {
       let query = client.from("community_text_comments").delete().eq("id", commentId);
       if (!isMineOrAdmin) query = query.eq("user_id", demo.user ? demo.user.id : "");
       const { error } = await query;
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
     demo.textComments = demo.textComments.filter((c) => !(c.id === commentId && (isMineOrAdmin || c.user_id === (demo.user && demo.user.id))));
@@ -1020,11 +1030,11 @@ const Backend = (function () {
     if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
     if (client) {
       const { data, error: selErr } = await client.from("profiles").select("gifted_categories").eq("id", targetUserId).maybeSingle();
-      if (selErr) throw new Error("Konnte nicht geladen werden: " + selErr.message);
+      if (selErr) throw new Error(friendlyDbError(selErr.message));
       const current = data?.gifted_categories || [];
       if (current.includes(categoryId)) return;
       const { error } = await client.from("profiles").update({ gifted_categories: [...current, categoryId] }).eq("id", targetUserId);
-      if (error) throw new Error("Konnte nicht geschenkt werden: " + error.message);
+      if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
     const u = demo.users[targetUserId];
