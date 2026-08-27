@@ -305,6 +305,7 @@
 .quiz-actions {
   margin-top: var(--space-5);
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
 }
@@ -807,6 +808,12 @@
   font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
 }
 
+.hobby-readout {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--teal-400);
+  margin-bottom: 4px;
+}
 .hobby-chip-row {
   display: flex; flex-wrap: wrap; gap: 8px;
   margin-top: 8px;

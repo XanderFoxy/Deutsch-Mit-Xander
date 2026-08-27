@@ -205,7 +205,11 @@ const Backend = (function () {
           played_at: result.playedAt,
         });
         await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id);
-        // Tagesranking: bestehenden Eintrag von heute für diese Person aktualisieren oder neu anlegen
+      } catch (e) {
+        console.warn("Supabase-Speichern (Ergebnis/Profil) fehlgeschlagen, bleibt lokal:", e);
+      }
+      // Tagesranking separat behandeln, damit ein Problem hier nie Punkte/Ergebnis blockiert
+      try {
         const { data: existingRow } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
         if (existingRow) {
           await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points), user_id: demo.user.id }).eq("name", demo.profile.name).eq("date", todayKey());
@@ -213,7 +217,17 @@ const Backend = (function () {
           await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey(), user_id: demo.user.id });
         }
       } catch (e) {
-        console.warn("Supabase-Speichern fehlgeschlagen, Ergebnis bleibt lokal:", e);
+        // Fällt vermutlich, weil die Spalte "user_id" in daily_ranking noch fehlt -> ohne sie nochmal versuchen
+        try {
+          const { data: existingRow2 } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
+          if (existingRow2) {
+            await client.from("daily_ranking").update({ points: Math.max(existingRow2.points, demo.profile.points) }).eq("name", demo.profile.name).eq("date", todayKey());
+          } else {
+            await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey() });
+          }
+        } catch (e2) {
+          console.warn("Tagesranking konnte nicht gespeichert werden:", e2);
+        }
       }
     }
 
@@ -265,10 +279,10 @@ const Backend = (function () {
   }
 
   async function addGuestbookEntry(name, message) {
-    const entry = { id: Core.uid(), name, message, date: new Date().toISOString() };
+    const entry = { id: Core.uid(), name, message, date: new Date().toISOString(), user_id: demo.user ? demo.user.id : null };
     if (client) {
       try {
-        await client.from("guestbook").insert({ name, message });
+        await client.from("guestbook").insert({ name, message, user_id: demo.user ? demo.user.id : null });
       } catch (e) {
         console.warn("Supabase-Insert fehlgeschlagen, Eintrag bleibt lokal:", e);
       }

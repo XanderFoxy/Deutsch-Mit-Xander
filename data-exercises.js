@@ -604,59 +604,60 @@ const ExerciseData = (function () {
      10) DEUTSCHLAND-QUIZ — Multiple Choice, teils 2 richtige
      --------------------------------------------------------- */
   const DEUTSCHLAND_QUIZ = [
-    ["Wie heißt die Hauptstadt von Deutschland?",["Berlin","Bonn","München","Hamburg"],[0]],
-    ["Wie viele Bundesländer hat Deutschland?",["13","16","20","9"],[1]],
-    ["Wie heißt der bekannteste Fluss, der durch Köln fließt?",["Rhein","Elbe","Donau","Main"],[0]],
-    ["In welchem Jahr fiel die Berliner Mauer?",["1985","1989","1991","1979"],[1]],
-    ["Wie heißt das deutsche Parlament?",["Bundestag","Senat","Reichstag (heute)","Kongress"],[0]],
-    ["Welche Stadt ist bekannt für das Oktoberfest?",["München","Stuttgart","Berlin","Köln"],[0]],
-    ["Wer war der erste Bundeskanzler der BRD?",["Konrad Adenauer","Willy Brandt","Helmut Kohl","Ludwig Erhard"],[0]],
-    ["In welchen Städten steht eine berühmte „Frauenkirche“?",["Dresden","Hamburg","München","Bremen"],[0,2]],
-    ["Wie heißt der höchste Berg Deutschlands?",["Zugspitze","Watzmann","Brocken","Feldberg"],[0]],
-    ["Welches Tier ist das Wappentier Deutschlands?",["Adler","Löwe","Bär","Hirsch"],[0]],
-    ["Wie viele Einwohner hat Deutschland ungefähr?",["60 Millionen","83 Millionen","120 Millionen","40 Millionen"],[1]],
-    ["Welche Farben hat die deutsche Flagge (von oben nach unten)?",["Schwarz-Rot-Gold","Rot-Gold-Schwarz","Gold-Schwarz-Rot","Schwarz-Gold-Rot"],[0]],
-    ["In welcher Stadt steht der berühmte Kölner Dom?",["Köln","Aachen","Bonn","Düsseldorf"],[0]],
-    ["Welches Bundesland ist flächenmäßig das größte?",["Bayern","Nordrhein-Westfalen","Niedersachsen","Hessen"],[0]],
-    ["Welches Bundesland hat die meisten Einwohner?",["Nordrhein-Westfalen","Bayern","Berlin","Sachsen"],[0]],
-    ["Wann wurde Deutschland wiedervereinigt?",["3. Oktober 1990","9. November 1989","17. Juni 1953","23. Mai 1949"],[0]],
-    ["In welchen Städten liegen die zwei größten Flughäfen Deutschlands?",["Frankfurt","Köln","München","Bremen"],[0,2]],
-    ["Woher stammt die Currywurst ursprünglich?",["Berlin","München","Hamburg","Stuttgart"],[0]],
-    ["Wie heißt das berühmte deutsche Märchen-Autorenduo?",["Gebrüder Grimm","Gebrüder Mann","Gebrüder Humboldt","Gebrüder Schlegel"],[0]],
-    ["In welcher Stadt wurde Johann Wolfgang von Goethe geboren?",["Frankfurt am Main","Weimar","Leipzig","Bonn"],[0]],
-    ["In welcher Region liegt der Schwarzwald?",["Baden-Württemberg","Bayern","Sachsen","Hessen"],[0]],
-    ["Wie heißt die deutsche Zentralbank?",["Bundesbank","Sparkasse","Reichsbank","Landesbank"],[0]],
-    ["Was feiert man am 3. Oktober in Deutschland?",["Tag der Deutschen Einheit","Tag der Arbeit","Erntedankfest","Verfassungstag"],[0]],
-    ["Welcher Verein ist deutscher Rekordmeister im Fußball?",["FC Bayern München","Borussia Dortmund","Schalke 04","Werder Bremen"],[0]],
-    ["Welche ist die älteste Universität Deutschlands?",["Universität Heidelberg","LMU München","Uni Berlin","Uni Hamburg"],[0]],
-    ["Wofür steht die Abkürzung TÜV?",["Technischer Überwachungsverein","Technische Union Verkehr","Technischer Umwelt-Verband","Transport- und Verkehrsunion"],[0]],
-    ["In welchem Bundesland liegt Dresden?",["Sachsen","Sachsen-Anhalt","Thüringen","Brandenburg"],[0]],
-    ["Welches Getränk ist durch das Reinheitsgebot geregelt?",["Bier","Wein","Schnaps","Kaffee"],[0]],
-    ["Wer komponierte die „Ode an die Freude“?",["Ludwig van Beethoven","Johann Sebastian Bach","Wolfgang Amadeus Mozart","Johannes Brahms"],[0]],
-    ["Welche Stadt war bis 1990 „Hauptstadt“ der BRD (vor Berlin)?",["Bonn","Frankfurt","Köln","Hamburg"],[0]],
-    ["Welche Stadt ist für ihre Brezeln und das Cannstatter Volksfest bekannt?",["Stuttgart","Hamburg","Leipzig","Kiel"],[0]],
-    ["Wie heißt einer der ältesten und bekanntesten Weihnachtsmärkte Deutschlands?",["Dresdner Striezelmarkt","Kölner Lichtermarkt","Hamburger Winterzauber","Frankfurter Wintertraum"],[0]],
-    ["In welchem Meer liegt die deutsche Insel Helgoland?",["Nordsee","Ostsee","Mittelmeer","Bodensee"],[0]],
-    ["Welche zwei Städte liegen direkt am Rhein?",["Köln","Leipzig","Düsseldorf","Dresden"],[0,2]],
-    ["Welches Bauwerk hat den höchsten Kirchturm der Welt?",["Ulmer Münster","Kölner Dom","Frauenkirche Dresden","Berliner Dom"],[0]],
-    ["Wie nennt man das deutsche Grundgesetz auch?",["Verfassung","Bundesgesetzbuch","Staatsvertrag","Länderordnung"],[0]],
-    ["In welcher Stadt hat das Bundesverfassungsgericht seinen Sitz?",["Karlsruhe","Berlin","Leipzig","München"],[0]],
-    ["Welches Bundesland grenzt an Frankreich und die Schweiz?",["Baden-Württemberg","Bayern","Saarland","Hessen"],[0]],
-    ["Aus welcher Stadt stammt der Automobilhersteller Volkswagen?",["Wolfsburg","München","Stuttgart","Köln"],[0]],
-    ["Welche Stadt gilt als heimliche deutsche Modehauptstadt?",["Düsseldorf","Dortmund","Bremen","Kiel"],[0]],
-    ["Wie viele Sterne zeigt die EU-Flagge, die auch in Deutschland gehisst wird?",["12","15","10","27"],[0]],
-    ["In welchem Jahr wurde der Euro in Deutschland als Bargeld eingeführt?",["2002","1999","2005","1998"],[0]],
-    ["Welcher deutsche Physiker entwickelte die Relativitätstheorie?",["Albert Einstein","Max Planck","Werner Heisenberg","Wilhelm Röntgen"],[0]],
-    ["Wie heißt die bekannte deutsche Zeichentrickserie über einen kleinen Wikingerjungen?",["Wickie","Heidi","Biene Maja","Käpt'n Blaubär"],[0]],
-    ["Welche deutsche Stadt ist besonders für ihren Karneval berühmt?",["Köln","Leipzig","Kiel","Rostock"],[0]],
-    ["Welches deutsche Brettspiel wurde international besonders erfolgreich?",["Die Siedler von Catan","Monopoly","Scrabble","Risiko"],[0]],
-    ["In welchem deutschen Mittelgebirge liegt der Brocken?",["Harz","Schwarzwald","Erzgebirge","Alpen"],[0]],
-    ["Welche Farben zeigt die Flagge der Hansestadt Hamburg überwiegend?",["Rot-Weiß","Blau-Gelb","Grün-Weiß","Schwarz-Gold"],[0]],
-    ["Welcher Bundestrainer holte 2014 den WM-Titel für Deutschland?",["Joachim Löw","Jürgen Klinsmann","Rudi Völler","Berti Vogts"],[0]],
+    ["Wie heißt die Hauptstadt von Deutschland?",["Berlin","Bonn","München","Hamburg"],[0],"Geographie"],
+    ["Wie viele Bundesländer hat Deutschland?",["13","16","20","9"],[1],"Allgemeinwissen"],
+    ["Wie heißt der bekannteste Fluss, der durch Köln fließt?",["Rhein","Elbe","Donau","Main"],[0],"Geographie"],
+    ["In welchem Jahr fiel die Berliner Mauer?",["1985","1989","1991","1979"],[1],"Geschichte & Politik"],
+    ["Wie heißt das deutsche Parlament?",["Bundestag","Senat","Reichstag (heute)","Kongress"],[0],"Allgemeinwissen"],
+    ["Welche Stadt ist bekannt für das Oktoberfest?",["München","Stuttgart","Berlin","Köln"],[0],"Allgemeinwissen"],
+    ["Wer war der erste Bundeskanzler der BRD?",["Konrad Adenauer","Willy Brandt","Helmut Kohl","Ludwig Erhard"],[0],"Allgemeinwissen"],
+    ["In welchen Städten steht eine berühmte „Frauenkirche“?",["Dresden","Hamburg","München","Bremen"],[0,2],"Allgemeinwissen"],
+    ["Wie heißt der höchste Berg Deutschlands?",["Zugspitze","Watzmann","Brocken","Feldberg"],[0],"Geographie"],
+    ["Welches Tier ist das Wappentier Deutschlands?",["Adler","Löwe","Bär","Hirsch"],[0],"Allgemeinwissen"],
+    ["Wie viele Einwohner hat Deutschland ungefähr?",["60 Millionen","83 Millionen","120 Millionen","40 Millionen"],[1],"Allgemeinwissen"],
+    ["Welche Farben hat die deutsche Flagge (von oben nach unten)?",["Schwarz-Rot-Gold","Rot-Gold-Schwarz","Gold-Schwarz-Rot","Schwarz-Gold-Rot"],[0],"Allgemeinwissen"],
+    ["In welcher Stadt steht der berühmte Kölner Dom?",["Köln","Aachen","Bonn","Düsseldorf"],[0],"Allgemeinwissen"],
+    ["Welches Bundesland ist flächenmäßig das größte?",["Bayern","Nordrhein-Westfalen","Niedersachsen","Hessen"],[0],"Geographie"],
+    ["Welches Bundesland hat die meisten Einwohner?",["Nordrhein-Westfalen","Bayern","Berlin","Sachsen"],[0],"Geographie"],
+    ["Wann wurde Deutschland wiedervereinigt?",["3. Oktober 1990","9. November 1989","17. Juni 1953","23. Mai 1949"],[0],"Geschichte & Politik"],
+    ["In welchen Städten liegen die zwei größten Flughäfen Deutschlands?",["Frankfurt","Köln","München","Bremen"],[0,2],"Allgemeinwissen"],
+    ["Woher stammt die Currywurst ursprünglich?",["Berlin","München","Hamburg","Stuttgart"],[0],"Essen & Trinken"],
+    ["Wie heißt das berühmte deutsche Märchen-Autorenduo?",["Gebrüder Grimm","Gebrüder Mann","Gebrüder Humboldt","Gebrüder Schlegel"],[0],"Allgemeinwissen"],
+    ["In welcher Stadt wurde Johann Wolfgang von Goethe geboren?",["Frankfurt am Main","Weimar","Leipzig","Bonn"],[0],"Kultur"],
+    ["In welcher Region liegt der Schwarzwald?",["Baden-Württemberg","Bayern","Sachsen","Hessen"],[0],"Geographie"],
+    ["Wie heißt die deutsche Zentralbank?",["Bundesbank","Sparkasse","Reichsbank","Landesbank"],[0],"Alltag & Wirtschaft"],
+    ["Was feiert man am 3. Oktober in Deutschland?",["Tag der Deutschen Einheit","Tag der Arbeit","Erntedankfest","Verfassungstag"],[0],"Allgemeinwissen"],
+    ["Welcher Verein ist deutscher Rekordmeister im Fußball?",["FC Bayern München","Borussia Dortmund","Schalke 04","Werder Bremen"],[0],"Sport"],
+    ["Welche ist die älteste Universität Deutschlands?",["Universität Heidelberg","LMU München","Uni Berlin","Uni Hamburg"],[0],"Kultur"],
+    ["Wofür steht die Abkürzung TÜV?",["Technischer Überwachungsverein","Technische Union Verkehr","Technischer Umwelt-Verband","Transport- und Verkehrsunion"],[0],"Alltag & Wirtschaft"],
+    ["In welchem Bundesland liegt Dresden?",["Sachsen","Sachsen-Anhalt","Thüringen","Brandenburg"],[0],"Geographie"],
+    ["Welches Getränk ist durch das Reinheitsgebot geregelt?",["Bier","Wein","Schnaps","Kaffee"],[0],"Essen & Trinken"],
+    ["Wer komponierte die „Ode an die Freude“?",["Ludwig van Beethoven","Johann Sebastian Bach","Wolfgang Amadeus Mozart","Johannes Brahms"],[0],"Allgemeinwissen"],
+    ["Welche Stadt war bis 1990 „Hauptstadt“ der BRD (vor Berlin)?",["Bonn","Frankfurt","Köln","Hamburg"],[0],"Geographie"],
+    ["Welche Stadt ist für ihre Brezeln und das Cannstatter Volksfest bekannt?",["Stuttgart","Hamburg","Leipzig","Kiel"],[0],"Essen & Trinken"],
+    ["Wie heißt einer der ältesten und bekanntesten Weihnachtsmärkte Deutschlands?",["Dresdner Striezelmarkt","Kölner Lichtermarkt","Hamburger Winterzauber","Frankfurter Wintertraum"],[0],"Allgemeinwissen"],
+    ["In welchem Meer liegt die deutsche Insel Helgoland?",["Nordsee","Ostsee","Mittelmeer","Bodensee"],[0],"Geographie"],
+    ["Welche zwei Städte liegen direkt am Rhein?",["Köln","Leipzig","Düsseldorf","Dresden"],[0,2],"Allgemeinwissen"],
+    ["Welches Bauwerk hat den höchsten Kirchturm der Welt?",["Ulmer Münster","Kölner Dom","Frauenkirche Dresden","Berliner Dom"],[0],"Allgemeinwissen"],
+    ["Wie nennt man das deutsche Grundgesetz auch?",["Verfassung","Bundesgesetzbuch","Staatsvertrag","Länderordnung"],[0],"Geschichte & Politik"],
+    ["In welcher Stadt hat das Bundesverfassungsgericht seinen Sitz?",["Karlsruhe","Berlin","Leipzig","München"],[0],"Geschichte & Politik"],
+    ["Welches Bundesland grenzt an Frankreich und die Schweiz?",["Baden-Württemberg","Bayern","Saarland","Hessen"],[0],"Geographie"],
+    ["Aus welcher Stadt stammt der Automobilhersteller Volkswagen?",["Wolfsburg","München","Stuttgart","Köln"],[0],"Alltag & Wirtschaft"],
+    ["Welche Stadt gilt als heimliche deutsche Modehauptstadt?",["Düsseldorf","Dortmund","Bremen","Kiel"],[0],"Kultur"],
+    ["Wie viele Sterne zeigt die EU-Flagge, die auch in Deutschland gehisst wird?",["12","15","10","27"],[0],"Alltag & Wirtschaft"],
+    ["In welchem Jahr wurde der Euro in Deutschland als Bargeld eingeführt?",["2002","1999","2005","1998"],[0],"Geschichte & Politik"],
+    ["Welcher deutsche Physiker entwickelte die Relativitätstheorie?",["Albert Einstein","Max Planck","Werner Heisenberg","Wilhelm Röntgen"],[0],"Allgemeinwissen"],
+    ["Wie heißt die bekannte deutsche Zeichentrickserie über einen kleinen Wikingerjungen?",["Wickie","Heidi","Biene Maja","Käpt'n Blaubär"],[0],"Allgemeinwissen"],
+    ["Welche deutsche Stadt ist besonders für ihren Karneval berühmt?",["Köln","Leipzig","Kiel","Rostock"],[0],"Kultur"],
+    ["Welches deutsche Brettspiel wurde international besonders erfolgreich?",["Die Siedler von Catan","Monopoly","Scrabble","Risiko"],[0],"Allgemeinwissen"],
+    ["In welchem deutschen Mittelgebirge liegt der Brocken?",["Harz","Schwarzwald","Erzgebirge","Alpen"],[0],"Geographie"],
+    ["Welche Farben zeigt die Flagge der Hansestadt Hamburg überwiegend?",["Rot-Weiß","Blau-Gelb","Grün-Weiß","Schwarz-Gold"],[0],"Allgemeinwissen"],
+    ["Welcher Bundestrainer holte 2014 den WM-Titel für Deutschland?",["Joachim Löw","Jürgen Klinsmann","Rudi Völler","Berti Vogts"],[0],"Allgemeinwissen"],
   ];
 
-  function bankQuiz() {
-    return Core.shuffle(DEUTSCHLAND_QUIZ).map(([prompt, options, correctIdx]) => {
+  function bankQuiz(topic) {
+    const pool = topic ? DEUTSCHLAND_QUIZ.filter(([, , , t]) => t === topic) : DEUTSCHLAND_QUIZ;
+    return Core.shuffle(pool).map(([prompt, options, correctIdx]) => {
       // Optionen mischen, aber korrekte Indizes mitverschieben
       const withIdx = options.map((o, i) => ({ o, correct: correctIdx.includes(i) }));
       const shuffled = Core.shuffle(withIdx);
@@ -671,6 +672,10 @@ const ExerciseData = (function () {
         multi: correctIdx.length > 1,
       };
     });
+  }
+
+  function getQuizTopics() {
+    return [...new Set(DEUTSCHLAND_QUIZ.map((q) => q[3]))];
   }
 
   /* ---------------------------------------------------------
@@ -737,5 +742,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics };
 })();

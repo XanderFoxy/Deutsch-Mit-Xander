@@ -56,6 +56,10 @@
     { id: "nachtflicken", name: "Nachtflicken", emoji: "🦇", desc: "Dunkel & verspielt, Neon-Filzpatches auf tiefem Lila.", mode: "dunkel" },
     { id: "sternennacht", name: "Sternennacht", emoji: "✨", desc: "Dunkelblau mit goldenem Funkeln, verträumt.", mode: "dunkel" },
     { id: "mitternachtskarneval", name: "Mitternachtskarneval", emoji: "🎭", desc: "Dunkel, bunt & partytauglich.", mode: "dunkel" },
+    { id: "tiefsee", name: "Tiefsee-Atelier", emoji: "🐙", desc: "Dunkles Smaragdgrün, edel-verspielt.", mode: "dunkel" },
+    { id: "vulkanglut", name: "Vulkanglut", emoji: "🌋", desc: "Dunkel & feurig-orange, kraftvoll-verspielt.", mode: "dunkel" },
+    { id: "mondgarten", name: "Mondgarten", emoji: "🌙", desc: "Dunkles Violett, ruhig-verträumt.", mode: "dunkel" },
+    { id: "retroarkade", name: "Retro-Arkade", emoji: "👾", desc: "Dunkel, Neon-Pixel-verspielt.", mode: "dunkel" },
   ];
   let sessionTheme = "bastelheft";
 
@@ -293,6 +297,7 @@
   let orderMode = "mixed"; // 'mixed' | 'sequential'
 
   let selectedChallengeFriendIds = new Set();
+  let selectedQuizTopic = "";
 
   async function renderSetup() {
     setupEl.style.display = "";
@@ -354,6 +359,11 @@
         <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>${selectedChallengeFriendIds.size ? `Duell starten 🎮 (${selectedChallengeFriendIds.size})` : "Runde starten ▶"}</button>
       </div>
       ${challengeBar}
+      ${selectedCategories.has("quiz") ? `
+        <div class="order-toggle" style="flex-wrap:wrap;">
+          <button type="button" class="order-pill quiztopic-pill" data-quiztopic="" aria-selected="${selectedQuizTopic === ""}">🏆 Alle Themen</button>
+          ${ExerciseData.getQuizTopics().map((t) => `<button type="button" class="order-pill quiztopic-pill" data-quiztopic="${t}" aria-selected="${selectedQuizTopic === t}">${t}</button>`).join("")}
+        </div>` : ""}
       ${selectedCategories.size > 1 ? `
         <div class="order-toggle">
           <button type="button" class="order-pill" data-order="mixed" aria-selected="${orderMode === "mixed"}">🔀 Gemischt</button>
@@ -390,9 +400,15 @@
         renderSetup();
       });
     });
-    setupEl.querySelectorAll(".order-pill").forEach((btn) => {
+    setupEl.querySelectorAll(".order-pill:not(.quiztopic-pill)").forEach((btn) => {
       btn.addEventListener("click", () => {
         orderMode = btn.dataset.order;
+        renderSetup();
+      });
+    });
+    setupEl.querySelectorAll(".quiztopic-pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedQuizTopic = btn.dataset.quiztopic;
         renderSetup();
       });
     });
@@ -415,13 +431,13 @@
             const cid = await Backend.createChallenge(fid, [...selectedCategories]);
             if (!firstChallengeId) firstChallengeId = cid;
           }
-          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode);
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, selectedQuizTopic);
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
           return;
         }
       } else {
-        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode);
+        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, selectedQuizTopic);
       }
       Backend.notifyPracticing(titles);
       renderQuestion();
@@ -642,8 +658,10 @@
   const MEMORY_PAIR_COUNT = 6; // fest — 12 Karten passen ohne Scrollen aufs Handy
   let memoryGameId = "synonyme";
   let memoryDifficulty = "mittel"; // 'leicht' (Orientierungshilfe) · 'mittel' (normal) · 'schwer' (mischt neu)
+  let memoryChallengeFriendId = "";
+  let activeMemoryChallengeId = null;
 
-  function newMemoryGame() {
+  async function newMemoryGame() {
     const game = ExerciseData.MEMORY_GAMES.find((g) => g.id === memoryGameId);
     const pairs = Core.drawUnique(game.getPairs(), MEMORY_PAIR_COUNT);
     let cards = [];
@@ -652,11 +670,11 @@
       cards.push({ id: `${i}-b`, pairId: i, label: p[1] });
     });
     cards = Core.shuffle(cards);
-    memoryState = { cards, flipped: [], matched: new Set(), lastSeenId: null, moves: 0, wrongFlash: [], finished: false };
-    renderMemory();
+    memoryState = { cards, flipped: [], matched: new Set(), lastSeenId: null, moves: 0, wrongFlash: [], finished: false, startedAt: Date.now() };
+    await renderMemory();
   }
 
-  function renderMemory() {
+  async function renderMemory() {
     const gameBar = `
       <div class="category-grid" style="margin-bottom:10px;">
         ${ExerciseData.MEMORY_GAMES.map((g) => `
@@ -670,9 +688,23 @@
         <button type="button" class="order-pill" data-mdiff="mittel" aria-selected="${memoryDifficulty === "mittel"}">Mittel</button>
         <button type="button" class="order-pill" data-mdiff="schwer" aria-selected="${memoryDifficulty === "schwer"}">Schwer</button>
       </div>`;
+
+    const isLoggedIn = Boolean(Backend.currentUser());
+    const memFriends = isLoggedIn ? await Backend.getFriends() : [];
+    const challengeBar = memFriends.length && !activeMemoryChallengeId ? `
+      <div class="setup-bar" style="margin-top:0; margin-bottom:10px; flex-direction:column; align-items:stretch;">
+        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🧠 Optional: gegen einen Freund spielen (Gehirnjogger-Duell)</label>
+        <select id="memoryChallengeSelect" class="challenge-select">
+          <option value="">Kein Duell — nur für mich üben</option>
+          ${memFriends.map((f) => `<option value="${f.id}" ${memoryChallengeFriendId === f.id ? "selected" : ""}>${f.name}${f.online ? " 🟢" : ""}</option>`).join("")}
+        </select>
+      </div>` : "";
+
     memoryArea.innerHTML = `
+      ${activeMemoryChallengeId ? '<div class="demo-banner">🎮 Duell-Runde läuft — dein Ergebnis wird nach dieser Runde mit deinem Gegner verglichen.</div>' : ""}
       ${gameBar}
       ${diffBar}
+      ${challengeBar}
       <p class="empty-note">Finde die deutschen Wortpaare mit gleicher Bedeutung.${memoryDifficulty === "leicht" ? " Schon gesehene Karten haben einen kleinen Punkt." : ""}${memoryDifficulty === "schwer" ? " Achtung: Nach jedem Fehlversuch mischen sich die Karten neu!" : ""}</p>
       <div class="memory-grid" id="memoryGrid">
         ${memoryState.cards.map((c) => {
@@ -699,7 +731,7 @@
       ${memoryState.finished ? '<div class="demo-banner">🦊 Runde geschafft! Punkte wurden deinem Profil gutgeschrieben.</div>' : ""}
       <div class="quiz-actions" style="justify-content:flex-start;"><button type="button" class="btn btn-ghost" id="memoryRestart">🔄 Neu mischen</button></div>
     `;
-    document.getElementById("memoryRestart").addEventListener("click", newMemoryGame);
+    document.getElementById("memoryRestart").addEventListener("click", () => { activeMemoryChallengeId = null; newMemoryGame(); });
     memoryArea.querySelectorAll(".memory-card").forEach((btn) => {
       btn.addEventListener("click", () => handleMemoryFlip(btn.dataset.id));
     });
@@ -715,6 +747,21 @@
         newMemoryGame();
       });
     });
+    const memChallengeSelect = document.getElementById("memoryChallengeSelect");
+    if (memChallengeSelect) {
+      memChallengeSelect.addEventListener("change", async (e) => {
+        memoryChallengeFriendId = e.target.value;
+        if (memoryChallengeFriendId) {
+          try {
+            activeMemoryChallengeId = await Backend.createChallenge(memoryChallengeFriendId, ["memory"]);
+          } catch (err) {
+            alert(err.message || "Duell konnte nicht gestartet werden.");
+            memoryChallengeFriendId = "";
+          }
+        }
+        newMemoryGame();
+      });
+    }
   }
 
   function handleMemoryFlip(id) {
@@ -736,17 +783,27 @@
         if (memoryState.matched.size === memoryState.cards.length / 2) {
           memoryState.finished = true;
           const pairs = memoryState.cards.length / 2;
-          const score = Math.max(10, Math.round(100 * (pairs / Math.max(memoryState.moves, pairs))));
+          const seconds = (Date.now() - memoryState.startedAt) / 1000;
+          // Zug- UND Zeit-basierte Wertung: weniger Züge und mehr Tempo = mehr Punkte
+          const moveScore = pairs / Math.max(memoryState.moves, pairs);
+          const timeScore = Core.clamp(1 - (seconds - pairs * 3) / (pairs * 12), 0.4, 1);
+          const score = Math.max(10, Math.round(100 * moveScore * timeScore));
           Core.sound.fanfare();
           Backend.saveResult({
             categories: ["memory"],
             points: score,
             bonus: 0,
             percent: score,
-            character: "Memory-Meister",
+            character: "Gehirnjogger",
             badges: [],
             playedAt: new Date().toISOString(),
           });
+          const memTier = score >= 90 ? "Superhirn" : score >= 70 ? "Scharfsinnig" : score >= 50 ? "Aufmerksam" : "Übungssache";
+          Backend.addTrophy(`Gehirnjogger – ${memTier}`);
+          if (activeMemoryChallengeId) {
+            Backend.submitChallengeResult(activeMemoryChallengeId, { percent: score, moves: memoryState.moves, seconds: Math.round(seconds) });
+            activeMemoryChallengeId = null;
+          }
           renderMemory();
         }
       } else {
@@ -770,6 +827,12 @@
     }
   }
   newMemoryGame();
+
+  document.querySelector('#learnSubnav [data-sub="sub-memory"]').addEventListener("click", () => {
+    activeMemoryChallengeId = null;
+    memoryChallengeFriendId = "";
+    newMemoryGame();
+  });
 
   /* ============================================================
      KOMPASS
@@ -839,21 +902,30 @@
     btn.addEventListener("click", () => openLightbox(btn.dataset.full, btn.dataset.alt));
   });
 
-  renderCommunityTexts();
+  // Deutlich sichtbarer Verweis oben in Materialien auf den eigenen "Eigene Beiträge"-Reiter
+  document.getElementById("materialsArea").insertAdjacentHTML("afterbegin", `
+    <button type="button" class="community-cta-card" id="goToCommunityTab">
+      <span class="community-cta-icon">✍️</span>
+      <span>
+        <strong>Eigene Beiträge hochladen</strong>
+        <span class="empty-note">Lesetexte mit Sprachniveau einreichen — direkt im Reiter „Eigene Beiträge"</span>
+      </span>
+      <span>→</span>
+    </button>
+  `);
+  document.getElementById("goToCommunityTab").addEventListener("click", () => {
+    document.querySelector('#knowledgeSubnav [data-sub="sub-community"]').click();
+  });
 
+  let communityLoaded = false;
   async function renderCommunityTexts() {
-    const area = document.getElementById("communityAdd") || (() => {
-      const wrap = Core.el("div", { id: "communityTextsSection", class: "community-section" });
-      document.getElementById("materialsArea").insertAdjacentElement("afterend", wrap);
-      return wrap;
-    })();
-    const box = document.getElementById("communityTextsSection");
+    const box = document.getElementById("communityStandaloneArea");
+    if (!box) return;
     const texts = await Backend.getApprovedCommunityTexts();
     const user = Backend.currentUser();
 
     box.innerHTML = `
-      <p class="eyebrow" style="margin-top:28px;">📚 Community-Texte</p>
-      <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert.</p>
+      <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert. Bilder können aktuell noch nicht mit eingereicht werden, nur Text.</p>
       ${texts.length ? texts.map((t) => `
         <div class="material-card">
           <div class="community-text-head">
@@ -899,6 +971,9 @@
       });
     }
   }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-community"]').addEventListener("click", () => {
+    if (!communityLoaded) { communityLoaded = true; renderCommunityTexts(); }
+  });
 
   document.getElementById("linksArea").innerHTML = VocabData.LINKS.map((l) => `
     <div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("");
@@ -983,6 +1058,7 @@
   }
 
   let authMode = "login";
+  let profileEditMode = false;
 
   async function renderAccount() {
     const area = document.getElementById("accountArea");
@@ -1044,9 +1120,75 @@
         ? `<div class="initials-avatar emoji-avatar">${profile.avatarEmoji}</div>`
         : `<div class="initials-avatar">${initials}</div>`;
 
+    if (!profileEditMode) {
+      const hobbyReadout = (profile.hobbies || []).map((n) => {
+        const h = VocabData.HOBBIES.find((x) => x.noun === n);
+        return h ? `<div class="trophy-chip">${h.emoji} ${h.article} ${h.noun}</div>` : "";
+      }).join("");
+      const originFlag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "🌍" : "";
+      area.innerHTML = `
+        ${demoBanner}
+        <div class="question-card">
+          <div class="profile-header">
+            ${avatarHtml}
+            <div class="profile-name-col">
+              <h2>${profile.name}</h2>
+              <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}${originFlag ? ` · ${originFlag} ${profile.origin}` : ""}</p>
+            </div>
+            <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
+          </div>
+          <p class="empty-note" style="margin-top:10px;">${profile.bio || "Noch keine Beschreibung — auf „Bearbeiten“ tippen, um dich vorzustellen."}</p>
+          ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
+          <div class="badge-row">
+            ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
+          </div>
+          <div class="quiz-actions" style="justify-content:flex-start;">
+            <button type="button" class="btn btn-coffee" id="editProfileBtn">✏️ Bearbeiten</button>
+            <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
+          </div>
+        </div>
+        ${(profile.gallery || []).length ? `<div class="question-card" style="margin-top:16px;">
+          <h3>📷 Galerie</h3>
+          <div class="gallery-grid">
+            ${(profile.gallery || []).map((url) => `<div class="gallery-thumb-wrap"><img src="${url}" class="gallery-thumb" alt="" data-view-photo="${url}" /></div>`).join("")}
+          </div>
+        </div>` : ""}
+        ${renderTrophyCase(profile)}
+        ${myFriends.length ? `<div class="breakdown-list" style="margin-top:16px;">
+          <p class="eyebrow" style="margin-top:0;">👥 Deine Freunde</p>
+          ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span></button>`).join("")}
+        </div>` : ""}
+        ${await renderRecentMembers()}
+        ${await renderActivityFeed()}
+        ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
+          <p class="eyebrow" style="margin-top:0;">🎯 Deine letzten Ergebnisse</p>
+          ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
+        </div>` : ""}
+      `;
+      document.getElementById("editProfileBtn").addEventListener("click", () => { profileEditMode = true; renderAccount(); });
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await Backend.signOut();
+        refreshHeaderAuth();
+        renderAccount();
+      });
+      area.querySelectorAll("[data-view-photo]").forEach((img) => {
+        img.addEventListener("click", () => openLightbox(img.dataset.viewPhoto, "Galerie-Foto"));
+      });
+      area.querySelectorAll("[data-view-friend-profile]").forEach((btn) => {
+        btn.addEventListener("click", () => openProfileModal(btn.dataset.viewFriendProfile));
+      });
+      area.querySelectorAll("[data-view-member]").forEach((btn) => {
+        btn.addEventListener("click", () => openProfileModal(btn.dataset.viewMember));
+      });
+      return;
+    }
+
     area.innerHTML = `
       ${demoBanner}
       <div class="question-card">
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:0; margin-bottom:12px;">
+          <button type="button" class="btn btn-ghost" id="doneEditBtn">← Fertig, zurück zur Ansicht</button>
+        </div>
         <div class="profile-header">
           <label class="avatar-upload-wrap">
             ${avatarHtml}
@@ -1059,6 +1201,7 @@
           </div>
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
+        <button type="button" class="emoji-toggle-link" id="previewProfileLink">👁️ Vorschau: So sehen andere dein Profil</button>
         <button type="button" class="emoji-toggle-link" id="emojiToggleLink">🎭 Kein Foto? Stattdessen Emoji wählen</button>
         <div class="emoji-picker-row" id="emojiPickerRow" style="display:none;">
           ${AVATAR_EMOJIS.map((e) => `<button type="button" class="emoji-pick-btn" data-emoji="${e}">${e}</button>`).join("")}
@@ -1077,6 +1220,7 @@
         </div>
         <div class="form-field">
           <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
+          ${(profile.hobbies || []).length ? `<p class="hobby-readout">✓ Aktuell ausgewählt: ${(profile.hobbies || []).map((n) => { const h = VocabData.HOBBIES.find((x) => x.noun === n); return h ? `${h.emoji} ${h.article} ${h.noun}` : n; }).join(", ")}</p>` : '<p class="empty-note">Noch nichts ausgewählt — antippen zum Hinzufügen.</p>'}
           <div class="hobby-chip-row">
             ${VocabData.HOBBIES.map((h) => `<button type="button" class="hobby-chip ${((profile.hobbies || []).includes(h.noun)) ? "selected" : ""}" data-hobby="${h.noun}">${h.emoji} ${h.article} ${h.noun}</button>`).join("")}
           </div>
@@ -1127,12 +1271,22 @@
       renderAccount();
     });
     document.getElementById("saveBioBtn").addEventListener("click", () => {
-      Backend.saveBio(document.getElementById("bioInput").value.trim());
+      const bioText = document.getElementById("bioInput").value.trim();
+      Backend.saveBio(bioText);
       Backend.saveBirthday(document.getElementById("birthdayInput").value.trim());
       Backend.saveOrigin(document.getElementById("originSelect").value);
-      document.getElementById("saveBioBtn").textContent = "Gespeichert ✓ (Seite neu laden zum Prüfen)";
+      if (bioText.length >= 10) {
+        const gotTrophy = Backend.addTrophy("Vorstellungsrunde – Mutig auf Deutsch geschrieben");
+        if (gotTrophy) Backend.addActivity(`${profile.name} hat sich in einem deutschen Profiltext vorgestellt. ✍️`);
+      }
+      Backend.addActivity(`${profile.name} hat sein Profil aktualisiert. 📝`);
+      profileEditMode = false;
+      renderAccount();
       updateSpecialDayBar();
+      updateTicker();
     });
+    document.getElementById("doneEditBtn").addEventListener("click", () => { profileEditMode = false; renderAccount(); });
+    document.getElementById("previewProfileLink").addEventListener("click", () => openProfileModal(Backend.currentUser().id));
     document.getElementById("emojiToggleLink").addEventListener("click", () => {
       const row = document.getElementById("emojiPickerRow");
       row.style.display = row.style.display === "none" ? "flex" : "none";
@@ -1154,6 +1308,8 @@
       badge.textContent = "⏳";
       try {
         await Backend.uploadAvatar(file);
+        Backend.addActivity(`${profile.name} hat ein neues Profilbild hochgeladen. 🖼️`);
+        updateTicker();
         renderAccount();
       } catch (err) {
         document.getElementById("avatarError").textContent = err.message || "Foto konnte nicht hochgeladen werden. Wähl unten alternativ ein Emoji als Profilbild.";
@@ -1175,9 +1331,14 @@
     area.querySelectorAll("[data-hobby]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const current = new Set(profile.hobbies || []);
+        const wasEmpty = current.size === 0;
         if (current.has(btn.dataset.hobby)) current.delete(btn.dataset.hobby);
         else current.add(btn.dataset.hobby);
         Backend.saveHobbies([...current]);
+        if (wasEmpty && current.size > 0) {
+          const gotTrophy = Backend.addTrophy("Steckbrief – Hobbys ausgewählt");
+          if (gotTrophy) Backend.addActivity(`${profile.name} hat Hobbys im Profil ausgewählt und dabei Artikel geübt. 🎨`);
+        }
         renderAccount();
       });
     });
@@ -1188,6 +1349,8 @@
         if (!file) return;
         try {
           await Backend.uploadGalleryPhoto(file);
+          Backend.addActivity(`${profile.name} hat ein neues Foto zur Galerie hinzugefügt. 📷`);
+          updateTicker();
           renderAccount();
         } catch (err) {
           document.getElementById("galleryError").textContent = err.message || "Foto konnte nicht hochgeladen werden.";
@@ -1337,24 +1500,15 @@
 
       ${incomingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>🎮 Herausforderungen an dich</h3>
-        ${incomingChallenges.map((c) => `<div class="breakdown-row"><span>${c.fromName} · ${c.categories.map((id) => ExerciseData.getCategory(id).icon).join(" ")}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}">Annehmen</button></div>`).join("")}
+        ${incomingChallenges.map((c) => `<div class="breakdown-row"><span>${c.fromName} · ${c.categories[0] === "memory" ? "🧠 Gehirnjogger" : c.categories.map((id) => ExerciseData.getCategory(id).icon).join(" ")}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}">Annehmen</button></div>`).join("")}
       </div>` : ""}
 
       <div class="question-card" style="margin-top:14px;">
         <h3>👥 Deine Freunde</h3>
         ${friends.length ? friends.map((f) => `
-          <div class="friend-block">
-            <div class="breakdown-row">
-              <button type="button" class="friend-name-btn" data-view-friend="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.</button>
-              <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
-            </div>
-            <div class="friend-profile-card" id="friend-profile-${f.id}" style="display:none;">
-              <p class="empty-note">${f.bio ? f.bio : "Noch keine Beschreibung."}</p>
-              <div class="badge-row" style="justify-content:flex-start;">
-                ${f.badges && f.badges.length ? f.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<span class="empty-note">Noch keine Abzeichen.</span>'}
-              </div>
-              ${f.trophies && f.trophies.length ? `<div class="badge-row" style="justify-content:flex-start; margin-top:8px;">${f.trophies.map((t) => `<div class="badge-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}</div>` : ""}
-            </div>
+          <div class="breakdown-row">
+            <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.</button>
+            <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
       </div>
 
@@ -1391,11 +1545,8 @@
       btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); checkNotifications(); renderFriends(); });
     });
 
-    area.querySelectorAll("[data-view-friend]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const card = document.getElementById(`friend-profile-${btn.dataset.viewFriend}`);
-        card.style.display = card.style.display === "none" ? "block" : "none";
-      });
+    area.querySelectorAll("[data-view-friend-profile]").forEach((btn) => {
+      btn.addEventListener("click", () => openProfileModal(btn.dataset.viewFriendProfile));
     });
 
     area.querySelectorAll("[data-challenge]").forEach((btn) => {
@@ -1410,6 +1561,13 @@
         const categoryIds = btn.dataset.cats.split(",");
         const challengeId = btn.dataset.acceptChallenge;
         checkNotifications();
+        if (categoryIds[0] === "memory") {
+          activateTab("view-learn");
+          document.querySelector('#learnSubnav [data-sub="sub-memory"]').click();
+          activeMemoryChallengeId = challengeId;
+          newMemoryGame();
+          return;
+        }
         activateTab("view-learn");
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
         Quiz.startSession(categoryIds, "leicht", { challengeId });
@@ -1467,7 +1625,7 @@
     area.innerHTML = `
       <div class="question-card">
         <h3>📖 Gästebuch</h3>
-        ${entries.map((e) => `<div class="guestbook-entry"><div class="gb-name">${e.name}</div><p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div></div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
+        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div></div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
         <form class="guestbook-form" id="guestbookForm">
           ${!user ? '<input type="text" id="gbName" placeholder="Dein Name" required />' : ""}
           <textarea id="gbMessage" placeholder="Hinterlasse eine Nachricht für Alex…" required></textarea>
@@ -1482,6 +1640,9 @@
       if (!message) return;
       await Backend.addGuestbookEntry(name, message);
       renderGuestbook();
+    });
+    area.querySelectorAll("[data-view-gb-author]").forEach((btn) => {
+      btn.addEventListener("click", () => openProfileModal(btn.dataset.viewGbAuthor));
     });
   }
 

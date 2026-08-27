@@ -35,13 +35,14 @@ const Quiz = (function () {
     return categoryIds.reduce((sum, id) => sum + ExerciseData.getCategory(id).getBank().length, 0);
   }
 
-  function buildQuestions(categoryIds, count, orderMode) {
+  function buildQuestions(categoryIds, count, orderMode, quizTopic) {
+    const bankFor = (id) => (id === "quiz" && quizTopic ? ExerciseData.getCategory(id).getBank(quizTopic) : ExerciseData.getCategory(id).getBank());
     if (orderMode === "sequential" && categoryIds.length > 1) {
       const per = Math.floor(count / categoryIds.length);
       let remainder = count - per * categoryIds.length;
       let sequence = [];
       categoryIds.forEach((id) => {
-        const bank = ExerciseData.getCategory(id).getBank().map((q) => ({ ...q, categoryId: id }));
+        const bank = bankFor(id).map((q) => ({ ...q, categoryId: id }));
         const take = per + (remainder > 0 ? 1 : 0);
         if (remainder > 0) remainder -= 1;
         sequence = sequence.concat(Core.drawUnique(bank, take));
@@ -50,15 +51,15 @@ const Quiz = (function () {
     }
     let pool = [];
     categoryIds.forEach((id) => {
-      const bank = ExerciseData.getCategory(id).getBank();
+      const bank = bankFor(id);
       bank.forEach((q) => pool.push({ ...q, categoryId: id }));
     });
     return Core.drawUnique(pool, count);
   }
 
-  function startSession(categoryIds, difficultyId, meta, orderMode) {
+  function startSession(categoryIds, difficultyId, meta, orderMode, quizTopic) {
     const diff = DIFFICULTIES.find((d) => d.id === difficultyId);
-    const questions = buildQuestions(categoryIds, diff.count, orderMode);
+    const questions = buildQuestions(categoryIds, diff.count, orderMode, quizTopic);
     state = {
       categoryIds,
       difficulty: diff,

@@ -70,7 +70,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
 
    create table guestbook (
      id uuid default gen_random_uuid() primary key,
-     name text, message text, date timestamptz default now()
+     name text, message text, date timestamptz default now(), user_id uuid references auth.users
    );
 
    create table daily_ranking (

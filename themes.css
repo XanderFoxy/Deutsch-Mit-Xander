@@ -233,6 +233,90 @@
 [data-theme="nachtflicken"] .tape-piece,
 [data-theme="kirmes"] .tape-piece,
 [data-theme="wiesenblume"] .tape-piece,
+/* ---------- 11) TIEFSEE-ATELIER — dunkel-smaragdgrün, edel-verspielt ---------- */
+[data-theme="tiefsee"] {
+  --plum-950: #071A1C;
+  --plum-800: #0F2B2E;
+  --plum-700: #163B3F;
+  --cream-50: #E8FBF5;
+  --cream-200: #8FC2BA;
+  --amber-400: #F2B84B;
+  --amber-300: #F6CC78;
+  --teal-400: #4BE0C0;
+  --coral-400: #FF8A65;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(75,224,192,0.2);
+  --card-shadow-extra: none;
+  --logo-emoji: "🐙"; --logo-shape: 50%; --logo-bg: #4BE0C0;
+}
+
+/* ---------- 12) VULKANGLUT — dunkel, feurig-orange, kraftvoll-verspielt ---------- */
+[data-theme="vulkanglut"] {
+  --plum-950: #1C0E0A;
+  --plum-800: #2B1712;
+  --plum-700: #3D211A;
+  --cream-50: #FFF1E6;
+  --cream-200: #D9A88F;
+  --amber-400: #FF8A3D;
+  --amber-300: #FFAE6E;
+  --teal-400: #4BC9C0;
+  --coral-400: #FF4D4D;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(255,138,61,0.25);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌋"; --logo-shape: 50%; --logo-bg: #FF8A3D;
+}
+
+/* ---------- 13) MONDGARTEN — dunkel-violett, ruhig-verträumt ---------- */
+[data-theme="mondgarten"] {
+  --plum-950: #17122A;
+  --plum-800: #241D3F;
+  --plum-700: #322856;
+  --cream-50: #F3EFFF;
+  --cream-200: #B3A7D9;
+  --amber-400: #F2C879;
+  --amber-300: #F6DBA3;
+  --teal-400: #9FE0C9;
+  --coral-400: #E88FC2;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(159,224,201,0.2);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌙"; --logo-shape: 50%; --logo-bg: #B3A7D9;
+}
+
+/* ---------- 14) RETRO-ARKADE — dunkel, Neon-Pixel-verspielt ---------- */
+[data-theme="retroarkade"] {
+  --plum-950: #0D0D1A;
+  --plum-800: #1A1A2E;
+  --plum-700: #26264A;
+  --cream-50: #F0F0FF;
+  --cream-200: #9494C9;
+  --amber-400: #FFD93D;
+  --amber-300: #FFE785;
+  --teal-400: #3DFFC4;
+  --coral-400: #FF3D7A;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.5);
+  --card-border: 2px solid rgba(61,255,196,0.3);
+  --card-shadow-extra: none;
+  --logo-emoji: "👾"; --logo-shape: 20%; --logo-bg: #3DFFC4;
+}
+
 [data-theme="sternennacht"] .tape-piece,
 [data-theme="ozeanbrise"] .tape-piece,
-[data-theme="mitternachtskarneval"] .tape-piece { display: none; }
+[data-theme="mitternachtskarneval"] .tape-piece,
+[data-theme="tiefsee"] .tape-piece,
+[data-theme="vulkanglut"] .tape-piece,
+[data-theme="mondgarten"] .tape-piece,
+[data-theme="retroarkade"] .tape-piece { display: none; }
