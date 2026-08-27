@@ -1145,6 +1145,14 @@
      als echtes Ziehen). Tempo wird belohnt.
      ============================================================ */
   let wbState = null;
+  let wbSession = null; // { round, total, points, bonus }
+  const WB_TIERS = [
+    { max: 3, title: "Buchstaben-Anfänger:in" }, { max: 6, title: "Wort-Entdecker:in" },
+    { max: 8, title: "Wortbaumeister:in" }, { max: 10, title: "Buchstaben-Rätselkönig:in" },
+  ];
+  function newWordbuildSession() {
+    wbSession = { round: 0, total: 10, points: 0, bonus: 0 };
+  }
   function newWordbuildRound() {
     const entries = Object.entries(ExerciseData.WORD_MEANINGS);
     const [word, clue] = entries[Math.floor(Math.random() * entries.length)];
@@ -1165,14 +1173,33 @@
       wrongFlash: false,
     };
   }
+  function renderWordbuildResults() {
+    const area = document.getElementById("wordbuildArea");
+    const percent = Math.round((wbSession.points / wbSession.total) * 100);
+    const tier = WB_TIERS.find((t) => wbSession.points <= t.max) || WB_TIERS[WB_TIERS.length - 1];
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🔤 WORTBAUSTELLE — RUNDE FERTIG</p>
+        <h2 style="margin:8px 0;">${wbSession.points} / ${wbSession.total} richtig</h2>
+        <p style="font-size:1.1rem; font-weight:700; color:var(--amber-400);">${tier.title}</p>
+        ${wbSession.bonus ? `<p class="empty-note">+ ${wbSession.bonus} Tempo-Bonus</p>` : ""}
+        <button type="button" class="btn btn-coffee" id="wbPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>
+    `;
+    document.getElementById("wbPlayAgainBtn").addEventListener("click", () => {
+      newWordbuildSession(); newWordbuildRound(); renderWordbuild();
+    });
+  }
   function renderWordbuild() {
     const area = document.getElementById("wordbuildArea");
+    if (!wbSession) newWordbuildSession();
     if (!wbState) newWordbuildRound();
+    if (wbSession.round >= wbSession.total) { renderWordbuildResults(); return; }
     const s = wbState;
     const nextEmptyIdx = s.slots.findIndex((v) => v === null);
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">🔤 WORTBAUSTELLE</p>
+        <p class="eyebrow">🔤 WORTBAUSTELLE · RUNDE ${wbSession.round + 1} / ${wbSession.total}</p>
         <h3 style="margin-bottom:10px;">${s.clue}</h3>
         <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
           ${s.slots.map((ch, i) => `
@@ -1203,12 +1230,20 @@
             s.finished = true;
             const seconds = (Date.now() - s.startedAt) / 1000;
             const speedBonus = seconds < 8 ? 1 : 0;
+            wbSession.round += 1;
+            wbSession.points += 1;
+            wbSession.bonus += speedBonus;
             Core.sound.fanfare();
-            Backend.saveResult({
-              categories: ["wortbaustelle"], points: 1, bonus: speedBonus, percent: 100,
-              character: "Wortbaumeister:in", badges: [], playedAt: new Date().toISOString(),
-            });
-            setTimeout(() => { newWordbuildRound(); renderWordbuild(); }, 1100);
+            if (wbSession.round >= wbSession.total) {
+              Backend.saveResult({
+                categories: ["wortbaustelle"], points: wbSession.points, bonus: wbSession.bonus, percent: Math.round((wbSession.points / wbSession.total) * 100),
+                character: (WB_TIERS.find((t) => wbSession.points <= t.max) || WB_TIERS[WB_TIERS.length - 1]).title,
+                badges: [], playedAt: new Date().toISOString(),
+              });
+              setTimeout(() => renderWordbuild(), 900);
+            } else {
+              setTimeout(() => { newWordbuildRound(); renderWordbuild(); }, 900);
+            }
           }
         } else {
           s.wrongFlash = true;
@@ -1222,9 +1257,14 @@
       s.pool.forEach((p) => { p.used = false; });
       renderWordbuild();
     });
-    document.getElementById("wbSkipBtn").addEventListener("click", () => { newWordbuildRound(); renderWordbuild(); });
+    document.getElementById("wbSkipBtn").addEventListener("click", () => {
+      wbSession.round += 1;
+      if (wbSession.round >= wbSession.total) { renderWordbuild(); return; }
+      newWordbuildRound(); renderWordbuild();
+    });
   }
   document.querySelector('#learnSubnav [data-sub="sub-wordbuild"]').addEventListener("click", () => {
+    newWordbuildSession();
     newWordbuildRound();
     renderWordbuild();
   });
@@ -1236,6 +1276,14 @@
      Bonuspunkt für den richtig zugeordneten Artikel.
      ============================================================ */
   let wsState = null;
+  let wsSession = null; // { found, target, bonusHits }
+  const WS_TIERS = [
+    { max: 3, title: "Buchstaben-Entdecker:in" }, { max: 6, title: "Wortfinder:in" },
+    { max: 8, title: "Salat-Detektiv:in" }, { max: 10, title: "Rätselkönig:in" },
+  ];
+  function newWordSearchSession() {
+    wsSession = { found: 0, target: 10, bonusHits: 0 };
+  }
   function buildWordSearch() {
     const size = 9;
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1285,15 +1333,33 @@
     });
     return out;
   }
+  function renderWordSearchResults() {
+    const area = document.getElementById("wordsearchArea");
+    const tier = WS_TIERS.find((t) => wsSession.found <= t.max) || WS_TIERS[WS_TIERS.length - 1];
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🔍 BUCHSTABENSALAT — RUNDE FERTIG</p>
+        <h2 style="margin:8px 0;">${wsSession.found} Wörter gefunden</h2>
+        <p style="font-size:1.1rem; font-weight:700; color:var(--amber-400);">${tier.title}</p>
+        ${wsSession.bonusHits ? `<p class="empty-note">+ ${wsSession.bonusHits} Artikel-Bonus</p>` : ""}
+        <button type="button" class="btn btn-coffee" id="wsPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>
+    `;
+    document.getElementById("wsPlayAgainBtn").addEventListener("click", () => {
+      newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
+    });
+  }
   function renderWordSearch() {
     const area = document.getElementById("wordsearchArea");
+    if (!wsSession) newWordSearchSession();
     if (!wsState) wsState = buildWordSearch();
+    if (wsSession.found >= wsSession.target) { renderWordSearchResults(); return; }
     const s = wsState;
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">🔍 BUCHSTABENSALAT</p>
-        <p class="empty-note" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen (waagerecht oder senkrecht, auch rückwärts). Bonuspunkt, wenn du danach den richtigen Artikel triffst!</p>
-        <div style="display:grid; grid-template-columns: repeat(${s.size}, 1fr); gap:3px; max-width:340px; margin:0 auto 14px;">
+        <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.found} / ${wsSession.target} WÖRTER</p>
+        <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen (waagerecht oder senkrecht, auch rückwärts). Bonuspunkt, wenn du danach den richtigen Artikel triffst!</p>
+        <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, 1fr);">
           ${s.grid.map((row, r) => row.map((ch, c) => {
             const isSelStart = s.selection[0] && s.selection[0][0] === r && s.selection[0][1] === c;
             const isFound = s.words.some((w) => w.found && cellInWord(w, r, c, s.size));
@@ -1310,7 +1376,6 @@
               ${["der", "die", "das"].map((a) => `<button type="button" class="btn btn-ghost" data-article-guess="${a}">${a}</button>`).join("")}
             </div>
           </div>` : ""}
-        ${s.words.every((w) => w.found) ? `<div class="quiz-actions" style="justify-content:center; margin-top:14px;"><button type="button" class="btn btn-coffee" id="wsNewRoundBtn">🔄 Neues Raster</button></div>` : ""}
       </div>
     `;
     area.querySelectorAll(".ws-cell").forEach((btn) => {
@@ -1325,8 +1390,8 @@
           s.selection = [];
           if (match) {
             match.found = true;
+            wsSession.found += 1;
             Core.sound.correct();
-            Backend.saveResult({ categories: ["buchstabensalat"], points: 1, bonus: 0, percent: 100, character: "Wortfinder:in", badges: [], playedAt: new Date().toISOString() });
             s.pendingArticleFor = match;
           } else {
             Core.sound.wrong();
@@ -1338,18 +1403,23 @@
     area.querySelectorAll("[data-article-guess]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const correct = btn.dataset.articleGuess === s.pendingArticleFor.article;
-        if (correct) {
-          Core.sound.fanfare();
-          Backend.saveResult({ categories: ["buchstabensalat"], points: 0, bonus: 1, percent: 100, character: "Wortfinder:in", badges: [], playedAt: new Date().toISOString() });
-        } else {
-          Core.sound.wrong();
-        }
+        if (correct) { Core.sound.fanfare(); wsSession.bonusHits += 1; }
+        else Core.sound.wrong();
         s.pendingArticleFor = null;
+        if (wsSession.found >= wsSession.target) {
+          Backend.saveResult({
+            categories: ["buchstabensalat"], points: wsSession.found, bonus: wsSession.bonusHits,
+            percent: Math.round((wsSession.found / wsSession.target) * 100),
+            character: (WS_TIERS.find((t) => wsSession.found <= t.max) || WS_TIERS[WS_TIERS.length - 1]).title,
+            badges: [], playedAt: new Date().toISOString(),
+          });
+          renderWordSearch();
+          return;
+        }
+        if (s.words.every((w) => w.found)) { wsState = buildWordSearch(); }
         renderWordSearch();
       });
     });
-    const newRoundBtn = document.getElementById("wsNewRoundBtn");
-    if (newRoundBtn) newRoundBtn.addEventListener("click", () => { wsState = buildWordSearch(); renderWordSearch(); });
   }
   function cellInWord(w, r, c, size) {
     for (let i = 0; i < w.word.length; i++) {
@@ -1373,6 +1443,7 @@
     return s.words.find((w) => !w.found && (w.word === letters || w.word === reversed)) || null;
   }
   document.querySelector('#learnSubnav [data-sub="sub-wordsearch"]').addEventListener("click", () => {
+    newWordSearchSession();
     wsState = buildWordSearch();
     renderWordSearch();
   });
@@ -1798,19 +1869,19 @@
   let profileEditDraft = {}; // sammelt Eingaben über Seitenwechsel hinweg, bevor gespeichert wird
   function captureProfileEditDraft() {
     const ids = [
-      "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput",
+      "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput", "extraSportInput",
       "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
       "favQuoteInput", "extraMottoInput", "poemInput", "extraDreamInput", "extraHappyInput",
-      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput",
+      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput",
     ];
     const fieldMap = {
       favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
-      extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal",
+      extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraSportInput: "favSport",
       favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraActorInput: "favActor",
       extraBookInput: "favBook", extraArtistInput: "favArtist",
       favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
-      extraNumberInput: "favNumber", extraTalentInput: "talent",
+      extraNumberInput: "favNumber", extraTalentInput: "talent", extraVacationInput: "favVacation",
     };
     ids.forEach((id) => {
       const el = document.getElementById(id);
@@ -2096,6 +2167,10 @@
               <label>Dein Sprachziel</label>
               <input type="text" id="extraLangGoalInput" maxlength="120" value="${profileEditDraft.langGoal !== undefined ? profileEditDraft.langGoal : (extra.langGoal || "")}" placeholder="z. B. flüssig ein Gespräch führen können" />
             </div>
+            <div class="form-field">
+              <label>Lieblingssport</label>
+              <input type="text" id="extraSportInput" maxlength="60" value="${profileEditDraft.favSport !== undefined ? profileEditDraft.favSport : (extra.favSport || "")}" placeholder="z. B. Fußball" />
+            </div>
           ` : ""}
           ${profileEditPage === 1 ? `
             <div class="form-field">
@@ -2177,6 +2252,10 @@
               <label>Ein Talent oder Hobby, auf das du stolz bist</label>
               <input type="text" id="extraTalentInput" maxlength="80" value="${profileEditDraft.talent !== undefined ? profileEditDraft.talent : (extra.talent || "")}" placeholder="z. B. Gitarre spielen" />
             </div>
+            <div class="form-field">
+              <label>Lieblingsurlaubsart</label>
+              <input type="text" id="extraVacationInput" maxlength="60" value="${profileEditDraft.favVacation !== undefined ? profileEditDraft.favVacation : (extra.favVacation || "")}" placeholder="z. B. Wandern in den Bergen" />
+            </div>
           ` : ""}
         </div>
         <div class="form-error" id="profileSaveError"></div>
@@ -2229,6 +2308,7 @@
           extraMottoInput: "motto", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
+          extraSportInput: "favSport", extraVacationInput: "favVacation",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
           favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
         if (profileEditDraft[field] !== undefined) return profileEditDraft[field];
@@ -2241,6 +2321,7 @@
         visitedCountries: val("extraVisitedInput", extra.visitedCountries),
         whyGerman: val("extraWhyGermanInput", extra.whyGerman),
         langGoal: val("extraLangGoalInput", extra.langGoal),
+        favSport: val("extraSportInput", extra.favSport),
         favActor: val("extraActorInput", extra.favActor),
         favBook: val("extraBookInput", extra.favBook),
         favArtist: val("extraArtistInput", extra.favArtist),
@@ -2252,6 +2333,7 @@
         favSeason: val("extraSeasonSelect", extra.favSeason),
         favNumber: val("extraNumberInput", extra.favNumber),
         talent: val("extraTalentInput", extra.talent),
+        favVacation: val("extraVacationInput", extra.favVacation),
       };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
@@ -2477,6 +2559,7 @@
         ${extra.visitedCountries ? `<div class="breakdown-row"><span>🧳 Schon bereist</span><span>${extra.visitedCountries}</span></div>` : ""}
         ${extra.whyGerman ? `<div class="breakdown-row"><span>💡 Warum Deutsch?</span><span>${extra.whyGerman}</span></div>` : ""}
         ${extra.langGoal ? `<div class="breakdown-row"><span>🎯 Sprachziel</span><span>${extra.langGoal}</span></div>` : ""}
+        ${extra.favSport ? `<div class="breakdown-row"><span>⚽ Lieblingssport</span><span>${extra.favSport}</span></div>` : ""}
       ` },
       { icon: "🎬", label: "Kultur", html: `
         ${favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : ""}
@@ -2501,6 +2584,7 @@
         ${extra.favSeason ? `<div class="breakdown-row"><span>🍂 Lieblingsjahreszeit</span><span>${extra.favSeason}</span></div>` : ""}
         ${extra.favNumber ? `<div class="breakdown-row"><span>🔢 Lieblingszahl</span><span>${extra.favNumber}</span></div>` : ""}
         ${extra.talent ? `<div class="breakdown-row"><span>⭐ Talent/Hobby</span><span>${extra.talent}</span></div>` : ""}
+        ${extra.favVacation ? `<div class="breakdown-row"><span>🏖️ Lieblingsurlaubsart</span><span>${extra.favVacation}</span></div>` : ""}
       ` },
     ];
     const nonEmpty = pages.map((pg) => pg.html.trim().length > 0);
@@ -2791,6 +2875,10 @@
     eule: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="22" rx="12" ry="14" fill="#8B6F47"/><circle cx="14" cy="18" r="6" fill="#F5EFE4"/><circle cx="26" cy="18" r="6" fill="#F5EFE4"/><circle cx="14" cy="18" r="3" fill="#241505"/><circle cx="26" cy="18" r="3" fill="#241505"/><path d="M20 20 L17 25 L23 25 Z" fill="#E8A03D"/><path d="M9 10 L14 14 M31 10 L26 14" stroke="#8B6F47" stroke-width="3" stroke-linecap="round"/></svg>`,
     doktorhut: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 10 L36 17 L20 24 L4 17 Z" fill="#241505"/><path d="M12 20 L12 27 Q20 32 28 27 L28 20" fill="none" stroke="#241505" stroke-width="2"/><circle cx="36" cy="17" r="1.5" fill="#E8A03D"/><path d="M36 17 L36 27" stroke="#E8A03D" stroke-width="1.5"/><circle cx="36" cy="28" r="2" fill="#E8A03D"/></svg>`,
     herzblase: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M6 8 H34 Q36 8 36 10 V24 Q36 26 34 26 H16 L9 32 L10 26 H6 Q4 26 4 24 V10 Q4 8 6 8 Z" fill="#F6CC78"/><path d="M20 20 C16 15 10 17 10 21 C10 25 20 30 20 30 C20 30 30 25 30 21 C30 17 24 15 20 20 Z" fill="#E85F6F"/></svg>`,
+    daumen: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M14 18 L14 34 L9 34 Q6 34 6 31 V21 Q6 18 9 18 Z" fill="#4FA88E"/><path d="M14 18 L18 6 Q19 3 22 4 Q25 5 24 9 L22 16 H31 Q35 16 34 20 L31 32 Q30 34 27 34 H16 V18 Z" fill="#F2B84B"/></svg>`,
+    sonnenblume: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="18" r="6" fill="#8B6F47"/><g fill="#F2B84B"><ellipse cx="20" cy="6" rx="3.5" ry="6"/><ellipse cx="20" cy="30" rx="3.5" ry="6"/><ellipse cx="8" cy="18" rx="6" ry="3.5"/><ellipse cx="32" cy="18" rx="6" ry="3.5"/><ellipse cx="11" cy="9" rx="3.5" ry="6" transform="rotate(-45 11 9)"/><ellipse cx="29" cy="27" rx="3.5" ry="6" transform="rotate(-45 29 27)"/><ellipse cx="29" cy="9" rx="3.5" ry="6" transform="rotate(45 29 9)"/><ellipse cx="11" cy="27" rx="3.5" ry="6" transform="rotate(45 11 27)"/></g><path d="M20 30 L18 38 M20 30 L22 38" stroke="#4FA88E" stroke-width="2" stroke-linecap="round"/></svg>`,
+    rakete: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 4 Q28 12 26 24 L14 24 Q12 12 20 4 Z" fill="#E8825F"/><circle cx="20" cy="16" r="3.5" fill="#F5EFE4"/><path d="M14 22 L8 30 L14 28 Z" fill="#4FA88E"/><path d="M26 22 L32 30 L26 28 Z" fill="#4FA88E"/><path d="M17 24 L15 34 L20 30 L25 34 L23 24 Z" fill="#F2B84B"/></svg>`,
+    blitz: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M22 3 L9 22 H18 L15 37 L32 15 H22 Z" fill="#F2B84B" stroke="#241505" stroke-width="1"/></svg>`,
   };
   function renderStickerRow() {
     const row = document.getElementById("inboxStickerRow");
@@ -2861,6 +2949,24 @@
       </div>
     `;
     renderStickerRow();
+    // Entwurf wiederherstellen, falls beim letzten Mal etwas Angefangenes da war
+    try {
+      const draft = JSON.parse(localStorage.getItem("dma_msg_draft") || "null");
+      if (draft) {
+        if (draft.to) document.getElementById("inboxRecipientSelect").value = draft.to;
+        if (draft.body) document.getElementById("inboxMessageInput").value = draft.body;
+      }
+    } catch (e) {}
+    const draftSave = () => {
+      try {
+        const to = document.getElementById("inboxRecipientSelect").value;
+        const body = document.getElementById("inboxMessageInput").value;
+        if (to || body) localStorage.setItem("dma_msg_draft", JSON.stringify({ to, body }));
+        else localStorage.removeItem("dma_msg_draft");
+      } catch (e) {}
+    };
+    document.getElementById("inboxMessageInput").addEventListener("input", draftSave);
+    document.getElementById("inboxRecipientSelect").addEventListener("change", draftSave);
     let pendingImageUrl = "";
     const imgInput = document.getElementById("inboxImageInput");
     if (imgInput) {
@@ -2892,6 +2998,7 @@
           await Backend.sendPrivateMessage(to, finalBody, pendingImageUrl);
         }
         renderInbox();
+        try { localStorage.removeItem("dma_msg_draft"); } catch (e) {}
       } catch (err) {
         errBox.textContent = "⚠️ " + err.message;
       }

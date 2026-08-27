@@ -252,10 +252,14 @@ create table if not exists private_messages (
   from_user uuid references auth.users,
   to_user uuid references auth.users,
   author_name text, body text, is_system boolean default false,
-  image_url text,
-  deleted_by_sender boolean default false, deleted_by_recipient boolean default false,
   read boolean default false, created_at timestamptz default now()
 );
+-- Einzeln nachgerüstet statt nur in der obigen create-Anweisung: falls die Tabelle schon aus
+-- einer früheren Sitzung existiert, tut "create table if not exists" alleine nichts mehr für
+-- neue Spalten — deshalb hier zusätzlich einzeln, damit es garantiert nachgezogen wird:
+alter table private_messages add column if not exists image_url text;
+alter table private_messages add column if not exists deleted_by_sender boolean default false;
+alter table private_messages add column if not exists deleted_by_recipient boolean default false;
 alter table private_messages disable row level security;
 
 -- Dich selbst als Betreiber markieren (Namen ggf. anpassen)

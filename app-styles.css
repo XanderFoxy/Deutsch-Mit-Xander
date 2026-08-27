@@ -929,6 +929,30 @@
 @keyframes wbPop { 0% { transform: scale(0.7); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
 @keyframes wbShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 .wb-letter-btn { min-width: 42px; font-size: 1.1rem; font-weight: 700; }
+.ws-grid {
+  display: grid;
+  gap: 3px;
+  width: min(94vw, 340px);
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto 14px;
+  /* Absichtlich KEIN flex-wrap/grid-auto-flow: die Zeilenanzahl ist über grid-template-columns fest
+     vorgegeben und bricht nie mitten in einer Reihe um — auf schmalen Bildschirmen schrumpfen stattdessen
+     die einzelnen Zellen mit (über die feste Breite oben), nie die Zeilenstruktur selbst. */
+}
+#wordsearchArea { overflow-x: hidden; max-width: 100%; }
+/* Kompaktere Variante, vorbereitet für eine mögliche spätere Satz-/Redewendungs-Version des
+   Buchstabensalats (mehr, aber kleinere Felder nötig, wenn ganze Wörter statt einzelner
+   Buchstaben hineinsollen). Einfach diese Klasse zusätzlich auf .ws-grid setzen. */
+.ws-grid-compact .ws-cell { font-size: 0.7rem; border-radius: 3px; }
+/* Allgemeine Regel für spätere Satz-/Redewendungs-Inhalte: bricht Zeilen ausschließlich zwischen
+   ganzen Wörtern um (z. B. "Der Junge geht" / "um das Haus"), niemals mitten in einem Wort. */
+.wrap-words {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  white-space: normal;
+}
 .ws-cell {
   aspect-ratio: 1; width: 100%;
   display: flex; align-items: center; justify-content: center;
