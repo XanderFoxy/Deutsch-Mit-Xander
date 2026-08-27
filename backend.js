@@ -418,13 +418,14 @@ const Backend = (function () {
     }
   }
 
-  function saveBio(bio) {
-    if (!demo.profile) return;
+  async function saveBio(bio) {
+    if (!demo.profile) return true;
     demo.profile.bio = bio;
     if (client && demo.user) {
-      client.from("profiles").update({ bio }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Profiltext konnte nicht gespeichert werden:", e));
+      const { data, error } = await client.from("profiles").update({ bio }).eq("id", demo.user.id).select();
+      if (error || !data || !data.length) return false;
     }
+    return true;
   }
 
   function addTrophy(label) {
@@ -438,13 +439,14 @@ const Backend = (function () {
     return true;
   }
 
-  function saveBirthday(birthday) {
-    if (!demo.profile) return;
+  async function saveBirthday(birthday) {
+    if (!demo.profile) return true;
     demo.profile.birthday = birthday;
     if (client && demo.user) {
-      client.from("profiles").update({ birthday }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Geburtstag konnte nicht gespeichert werden:", e));
+      const { data, error } = await client.from("profiles").update({ birthday }).eq("id", demo.user.id).select();
+      if (error || !data || !data.length) return false;
     }
+    return true;
   }
 
   async function uploadAvatar(file) {
@@ -508,24 +510,24 @@ const Backend = (function () {
     }
   }
 
-  function saveHobbies(hobbies) {
-    if (!demo.profile) return;
+  async function saveHobbies(hobbies) {
+    if (!demo.profile) return true;
     demo.profile.hobbies = hobbies;
     if (client && demo.user) {
-      client.from("profiles").update({ hobbies }).eq("id", demo.user.id).then((res) => {
-        if (res.error) console.warn("Hobbys nicht gespeichert (fehlt die Spalte „hobbies“ in profiles?):", res.error.message);
-      });
+      const { data, error } = await client.from("profiles").update({ hobbies }).eq("id", demo.user.id).select();
+      if (error || !data || !data.length) return false;
     }
+    return true;
   }
 
-  function saveOrigin(origin) {
-    if (!demo.profile) return;
+  async function saveOrigin(origin) {
+    if (!demo.profile) return true;
     demo.profile.origin = origin;
     if (client && demo.user) {
-      client.from("profiles").update({ origin }).eq("id", demo.user.id).then((res) => {
-        if (res.error) console.warn("Herkunft nicht gespeichert (fehlt die Spalte „origin“ in profiles?):", res.error.message);
-      });
+      const { data, error } = await client.from("profiles").update({ origin }).eq("id", demo.user.id).select();
+      if (error || !data || !data.length) return false;
     }
+    return true;
   }
 
   async function getRecentMembers() {

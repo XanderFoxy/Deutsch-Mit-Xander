@@ -313,6 +313,11 @@
       </div>` : "";
 
     const cards = ExerciseData.CATEGORIES.map((cat) => {
+      const quizTopicPicker = cat.id === "quiz" && selectedCategories.has("quiz") ? `
+        <div class="quiztopic-row">
+          <button type="button" class="order-pill quiztopic-pill" data-quiztopic="" aria-selected="${selectedQuizTopic === ""}">🏆 Alle Themen</button>
+          ${ExerciseData.getQuizTopics().map((t) => `<button type="button" class="order-pill quiztopic-pill" data-quiztopic="${t}" aria-selected="${selectedQuizTopic === t}">${t}</button>`).join("")}
+        </div>` : "";
       return `
         <div class="category-card" data-cat="${cat.id}">
           <div class="cat-checkbox">${selectedCategories.has(cat.id) ? "✓" : ""}</div>
@@ -324,6 +329,7 @@
               <button type="button" class="cat-collapse-btn" data-collapse="${cat.id}" aria-label="Einklappen">▾</button>
             </div>
             <div class="cat-info-text" id="info-${cat.id}">${cat.info}</div>
+            ${quizTopicPicker}
           </div>
         </div>`;
     }).join("");
@@ -359,11 +365,6 @@
         <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>${selectedChallengeFriendIds.size ? `Duell starten 🎮 (${selectedChallengeFriendIds.size})` : "Runde starten ▶"}</button>
       </div>
       ${challengeBar}
-      ${selectedCategories.has("quiz") ? `
-        <div class="order-toggle" style="flex-wrap:wrap;">
-          <button type="button" class="order-pill quiztopic-pill" data-quiztopic="" aria-selected="${selectedQuizTopic === ""}">🏆 Alle Themen</button>
-          ${ExerciseData.getQuizTopics().map((t) => `<button type="button" class="order-pill quiztopic-pill" data-quiztopic="${t}" aria-selected="${selectedQuizTopic === t}">${t}</button>`).join("")}
-        </div>` : ""}
       ${selectedCategories.size > 1 ? `
         <div class="order-toggle">
           <button type="button" class="order-pill" data-order="mixed" aria-selected="${orderMode === "mixed"}">🔀 Gemischt</button>
@@ -376,7 +377,7 @@
       const id = card.dataset.cat;
       card.classList.toggle("selected", selectedCategories.has(id));
       card.addEventListener("click", (e) => {
-        if (e.target.closest(".cat-info-btn") || e.target.closest(".cat-collapse-btn")) return;
+        if (e.target.closest(".cat-info-btn") || e.target.closest(".cat-collapse-btn") || e.target.closest(".quiztopic-row")) return;
         if (selectedCategories.has(id)) selectedCategories.delete(id);
         else selectedCategories.add(id);
         renderSetup();
@@ -1220,7 +1221,7 @@
         </div>
         <div class="form-field">
           <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
-          ${(profile.hobbies || []).length ? `<p class="hobby-readout">✓ Aktuell ausgewählt: ${(profile.hobbies || []).map((n) => { const h = VocabData.HOBBIES.find((x) => x.noun === n); return h ? `${h.emoji} ${h.article} ${h.noun}` : n; }).join(", ")}</p>` : '<p class="empty-note">Noch nichts ausgewählt — antippen zum Hinzufügen.</p>'}
+          ${(profile.hobbies || []).length ? `<p class="hobby-readout">✓ Ich mag: ${(profile.hobbies || []).map((n) => { const h = VocabData.HOBBIES.find((x) => x.noun === n); return h ? `${h.emoji} ${h.article} ${h.noun}` : n; }).join(", ")}</p>` : '<p class="empty-note">Noch nichts ausgewählt — antippen zum Hinzufügen.</p>'}
           <div class="hobby-chip-row">
             ${VocabData.HOBBIES.map((h) => `<button type="button" class="hobby-chip ${((profile.hobbies || []).includes(h.noun)) ? "selected" : ""}" data-hobby="${h.noun}">${h.emoji} ${h.article} ${h.noun}</button>`).join("")}
           </div>
@@ -1232,6 +1233,7 @@
             ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${profile.origin === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
           </select>
         </div>
+        <div class="form-error" id="profileSaveError"></div>
         <div class="quiz-actions" style="justify-content:flex-start;">
           <button type="button" class="btn btn-coffee" id="saveBioBtn">Speichern</button>
           <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
@@ -1270,11 +1272,23 @@
       refreshHeaderAuth();
       renderAccount();
     });
-    document.getElementById("saveBioBtn").addEventListener("click", () => {
+    document.getElementById("saveBioBtn").addEventListener("click", async () => {
+      const saveBtn = document.getElementById("saveBioBtn");
+      const errBox = document.getElementById("profileSaveError");
+      saveBtn.textContent = "Speichert …";
+      saveBtn.disabled = true;
       const bioText = document.getElementById("bioInput").value.trim();
-      Backend.saveBio(bioText);
-      Backend.saveBirthday(document.getElementById("birthdayInput").value.trim());
-      Backend.saveOrigin(document.getElementById("originSelect").value);
+      const [okBio, okBday, okOrigin] = await Promise.all([
+        Backend.saveBio(bioText),
+        Backend.saveBirthday(document.getElementById("birthdayInput").value.trim()),
+        Backend.saveOrigin(document.getElementById("originSelect").value),
+      ]);
+      if (!okBio || !okBday || !okOrigin) {
+        errBox.textContent = "⚠️ Konnte nicht dauerhaft gespeichert werden — vermutlich blockiert Row Level Security (RLS) das Schreiben in Supabase. Bitte im SQL-Editor ausführen: alter table profiles disable row level security;";
+        saveBtn.textContent = "Speichern";
+        saveBtn.disabled = false;
+        return;
+      }
       if (bioText.length >= 10) {
         const gotTrophy = Backend.addTrophy("Vorstellungsrunde – Mutig auf Deutsch geschrieben");
         if (gotTrophy) Backend.addActivity(`${profile.name} hat sich in einem deutschen Profiltext vorgestellt. ✍️`);
@@ -1329,12 +1343,16 @@
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewFriendProfile));
     });
     area.querySelectorAll("[data-hobby]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const current = new Set(profile.hobbies || []);
         const wasEmpty = current.size === 0;
         if (current.has(btn.dataset.hobby)) current.delete(btn.dataset.hobby);
         else current.add(btn.dataset.hobby);
-        Backend.saveHobbies([...current]);
+        const ok = await Backend.saveHobbies([...current]);
+        if (!ok) {
+          document.getElementById("profileSaveError").textContent = "⚠️ Hobby konnte nicht dauerhaft gespeichert werden — vermutlich blockiert RLS in Supabase das Schreiben.";
+          return;
+        }
         if (wasEmpty && current.size > 0) {
           const gotTrophy = Backend.addTrophy("Steckbrief – Hobbys ausgewählt");
           if (gotTrophy) Backend.addActivity(`${profile.name} hat Hobbys im Profil ausgewählt und dabei Artikel geübt. 🎨`);
@@ -1404,7 +1422,10 @@
 
   async function openProfileModal(id) {
     const p = await Backend.getPublicProfile(id);
-    if (!p) return;
+    if (!p) {
+      alert("Dieses Profil konnte nicht geladen werden. Das liegt vermutlich an Row Level Security (RLS) in Supabase, die das Lesen fremder Profile blockiert. Bitte im SQL-Editor ausführen:\n\nalter table profiles disable row level security;");
+      return;
+    }
     const initials = (p.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
     const avatarHtml = p.avatar_url
       ? `<img src="${p.avatar_url}" class="avatar-photo" alt="" />`

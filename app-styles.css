@@ -107,6 +107,7 @@
   display: none;
 }
 .cat-info-text.open { display: block; }
+.quiztopic-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .cat-pool-note {
   margin-top: 6px;
   font-family: var(--font-mono);
@@ -612,6 +613,24 @@
 .material-card h3, .link-card h3 { font-size: 1rem; margin-bottom: 6px; }
 .material-card p, .link-card p { color: var(--cream-200); font-size: 0.88rem; margin: 0; }
 .link-card a { color: var(--amber-300); font-weight: 600; }
+
+.community-cta-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  margin-bottom: var(--space-4);
+  border: 2px solid var(--amber-400);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(242,184,75,0.16), rgba(87,199,174,0.08));
+  color: var(--cream-50);
+  text-align: left;
+  font-family: inherit;
+}
+.community-cta-card strong { display: block; color: var(--cream-50); font-size: 0.95rem; }
+.community-cta-card .empty-note { padding: 2px 0 0; }
+.community-cta-icon { font-size: 1.6rem; flex-shrink: 0; }
 
 .community-section { margin-top: 8px; }
 
