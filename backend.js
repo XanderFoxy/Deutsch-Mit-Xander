@@ -1166,10 +1166,16 @@ const Backend = (function () {
     if (client) {
       const { error } = await client.from("profiles").update({ is_admin: value }).eq("id", targetUserId);
       if (error) throw new Error(friendlyDbError(error.message));
+      const names = await namesFor([targetUserId]);
+      const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
+      await addActivity(value ? `${targetName} wurde von ${demo.profile.name} zum Administrator ernannt. 🛡️` : `${targetName} ist nicht mehr Administrator. 🛡️`);
       return;
     }
     const u = demo.users[targetUserId];
-    if (u) u.profile.isAdmin = value;
+    if (u) {
+      u.profile.isAdmin = value;
+      await addActivity(value ? `${u.profile.name} wurde von ${demo.profile.name} zum Administrator ernannt. 🛡️` : `${u.profile.name} ist nicht mehr Administrator. 🛡️`);
+    }
   }
 
   function isModerator() {
@@ -1186,10 +1192,16 @@ const Backend = (function () {
     if (client) {
       const { error } = await client.from("profiles").update({ is_moderator: value }).eq("id", targetUserId);
       if (error) throw new Error(friendlyDbError(error.message));
+      const names = await namesFor([targetUserId]);
+      const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
+      await addActivity(value ? `${targetName} wurde von ${demo.profile.name} zum Moderator ernannt. 🧹` : `${targetName} ist nicht mehr Moderator. 🧹`);
       return;
     }
     const u = demo.users[targetUserId];
-    if (u) u.profile.isModerator = value;
+    if (u) {
+      u.profile.isModerator = value;
+      await addActivity(value ? `${u.profile.name} wurde von ${demo.profile.name} zum Moderator ernannt. 🧹` : `${u.profile.name} ist nicht mehr Moderator. 🧹`);
+    }
   }
 
   return {

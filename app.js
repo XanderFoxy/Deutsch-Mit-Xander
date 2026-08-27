@@ -39,6 +39,50 @@
     });
   }
   wireSubnav("learnSubnav");
+
+  /* ============ Geführte Tour für neue Besucher ============ */
+  const TOUR_STEPS = [
+    { emoji: "👋", title: "Willkommen bei Deutsch mit Alex!", text: "Kurze Tour gefällig? Vier Schritte, dann kennst du dich aus. Du kannst jederzeit überspringen." },
+    { emoji: "🧭", title: "Die vier Reiter oben", text: "Über mich, Lernen, Wissen und Profil & Rang — hier wechselst du zwischen den Bereichen der Seite." },
+    { emoji: "🎯", title: "Lernen", text: "Hier übst du Deutsch in vielen Kategorien — wähl eine oder mehrere aus, stell die Schwierigkeit ein und leg los. Punkte gibt's für jede richtige Antwort." },
+    { emoji: "🏆", title: "Profil & Rang", text: "Dein Fortschritt, Freunde, Ranking und dein persönliches Design — manche Designs und Übungskategorien schaltest du dir durchs Üben frei." },
+    { emoji: "✍️", title: "Wissen", text: "Lesetexte anderer Lernender, eigene Beiträge einreichen, liken und kommentieren — schau gern mal vorbei." },
+  ];
+  function startTour() {
+    let step = 0;
+    const box = document.createElement("div");
+    box.className = "lightbox";
+    document.body.appendChild(box);
+    function render() {
+      const s = TOUR_STEPS[step];
+      box.innerHTML = `
+        <div class="profile-modal-card" style="text-align:center;">
+          <div style="font-size:2.4rem; margin-bottom:8px;">${s.emoji}</div>
+          <h2 style="margin-bottom:8px;">${s.title}</h2>
+          <p class="empty-note" style="margin-bottom:18px;">${s.text}</p>
+          <div class="quiz-actions" style="justify-content:center;">
+            ${step < TOUR_STEPS.length - 1 ? `<button type="button" class="btn btn-ghost" id="tourSkip">Überspringen</button><button type="button" class="btn btn-coffee" id="tourNext">Weiter</button>` : `<button type="button" class="btn btn-coffee" id="tourDone">Los geht's! 🚀</button>`}
+          </div>
+        </div>`;
+      const next = document.getElementById("tourNext");
+      if (next) next.addEventListener("click", () => { step++; render(); });
+      const skip = document.getElementById("tourSkip");
+      if (skip) skip.addEventListener("click", finish);
+      const done = document.getElementById("tourDone");
+      if (done) done.addEventListener("click", finish);
+    }
+    function finish() {
+      box.remove();
+      try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {}
+    }
+    render();
+  }
+  let tourSeen = true;
+  try { tourSeen = Boolean(localStorage.getItem("dma_tour_seen")); } catch (e) {}
+  if (!tourSeen) setTimeout(startTour, 600);
+  const tourReplayLink = document.getElementById("tourReplayLink");
+  if (tourReplayLink) tourReplayLink.addEventListener("click", (e) => { e.preventDefault(); startTour(); });
+
   wireSubnav("knowledgeSubnav");
   wireSubnav("profileSubnav");
   document.querySelector('#learnSubnav [data-sub="sub-exercises"]').addEventListener("click", () => {
@@ -97,6 +141,14 @@
     { id: "samtnacht", name: "Samtnacht", emoji: "🥀", desc: "Dunkel, tiefweinrot mit weichem Schimmer — animiert!", mode: "dunkel", unlock: { type: "points", value: 2200 } },
     { id: "bergsee", name: "Bergsee", emoji: "🏔️", desc: "Dunkel, tiefes Türkis-Blau.", mode: "dunkel", unlock: { type: "trophy", match: "Superheld" } },
     { id: "kamillenfeld", name: "Kamillenfeld", emoji: "🌼", desc: "Hell, sanftes Creme-Gelb, beruhigend.", mode: "hell", unlock: { type: "points", value: 550 } },
+    { id: "honigtropfen", name: "Honigtropfen", emoji: "🍯", desc: "Hell, warmes Bernstein-Gold, tropfend — animiert!", mode: "hell", unlock: { type: "points", value: 350 } },
+    { id: "minzblatt", name: "Minzblatt", emoji: "🌱", desc: "Hell, klares Frischgrün.", mode: "hell" },
+    { id: "sonnenuntergang", name: "Sonnenuntergang", emoji: "🌇", desc: "Hell, wandelnder Abendhimmel — animiert!", mode: "hell", unlock: { type: "points", value: 500 } },
+    { id: "marzipan", name: "Marzipan", emoji: "🧁", desc: "Hell, cremiges Rosé-Beige.", mode: "hell", unlock: { type: "trophy", match: "Sprachkünstler" } },
+    { id: "sternenschiff", name: "Sternenschiff", emoji: "🚀", desc: "Dunkel, mit vorbeiziehenden Sternschnuppen — animiert!", mode: "dunkel", unlock: { type: "points", value: 1100 } },
+    { id: "russischrot", name: "Russischrot", emoji: "🍷", desc: "Dunkel, edles Bordeaux.", mode: "dunkel" },
+    { id: "nordlichtfjord", name: "Nordlichtfjord", emoji: "🏞️", desc: "Dunkel, mit driftendem Nebel über Wasser — animiert!", mode: "dunkel", unlock: { type: "points", value: 1300 } },
+    { id: "kupferkessel", name: "Kupferkessel", emoji: "🫖", desc: "Dunkel, warmes Metallic-Kupfer.", mode: "dunkel", unlock: { type: "points", value: 2000 } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -2066,19 +2118,30 @@
 
       ${outgoingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>📤 Deine Duelle</h3>
-        ${outgoingChallenges.map((c) => `<div class="breakdown-row"><span>vs. ${c.toName}</span><span>${c.status === "completed" ? `<span class="empty-note">${c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden"}</span>` : `<span class="empty-note">Warte auf Gegner…</span> <button type="button" class="emoji-toggle-link" style="font-size:0.75rem;" data-cancel-challenge="${c.id}">Zurückrufen</button>`}</span></div>`).join("")}
+        ${outgoingChallenges.map((c) => `<div class="breakdown-row">
+          <span>${c.status !== "completed" ? `<input type="checkbox" class="cancel-challenge-check" data-cancel-id="${c.id}" style="margin-right:8px;" />` : ""}vs. ${c.toName}</span>
+          <span class="empty-note">${c.status === "completed" ? (c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden") : "Warte auf Gegner…"}</span>
+        </div>`).join("")}
+        ${outgoingChallenges.some((c) => c.status !== "completed") ? `<button type="button" class="btn btn-ghost" id="cancelSelectedChallengesBtn" style="margin-top:10px;">Ausgewählte zurückrufen</button>` : ""}
       </div>` : ""}
 
       <div id="challengePicker"></div>
     `;
 
-    area.querySelectorAll("[data-cancel-challenge]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Diese Herausforderung wirklich zurückrufen?")) return;
-        try { await Backend.cancelChallenge(btn.dataset.cancelChallenge); renderFriends(); }
-        catch (err) { alert(err.message); }
+    const cancelSelectedBtn = document.getElementById("cancelSelectedChallengesBtn");
+    if (cancelSelectedBtn) {
+      cancelSelectedBtn.addEventListener("click", async () => {
+        const ids = [...area.querySelectorAll(".cancel-challenge-check:checked")].map((c) => c.dataset.cancelId);
+        if (!ids.length) { alert("Bitte mindestens ein Duell auswählen."); return; }
+        if (!confirm(`${ids.length} ${ids.length === 1 ? "Herausforderung" : "Herausforderungen"} wirklich zurückrufen?`)) return;
+        const scrollY = window.scrollY;
+        for (const id of ids) {
+          try { await Backend.cancelChallenge(id); } catch (err) { console.warn(err); }
+        }
+        await renderFriends();
+        window.scrollTo(0, scrollY);
       });
-    });
+    }
 
     let searchTimer = null;
     document.getElementById("friendSearch").addEventListener("input", (e) => {

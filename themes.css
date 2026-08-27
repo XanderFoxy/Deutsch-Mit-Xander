@@ -1305,6 +1305,230 @@
 }
 
 [data-theme="mondstein"] .tape-piece,
+/* ---------- 49) HONIGTROPFEN — hell, warmes Bernstein-Gold, tropfend (animiert) ---------- */
+[data-theme="honigtropfen"] {
+  --plum-950: #FFF9EC;
+  --plum-800: #FFFFFF;
+  --plum-700: #FBEBC4;
+  --cream-50: #3A2C0A;
+  --cream-200: #A6924E;
+  --amber-400: #E8B03D;
+  --amber-300: #F0C978;
+  --teal-400: #6FA894;
+  --coral-400: #E87F4F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,44,10,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🍯"; --logo-shape: 50%; --logo-bg: #E8B03D;
+}
+[data-theme="honigtropfen"] body::before {
+  content: "";
+  position: fixed;
+  top: -20px; left: 0; right: 0; height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 6px at 15% 0%, #E8B03D, transparent),
+    radial-gradient(3px 6px at 45% 0%, #F0C978, transparent),
+    radial-gradient(3px 6px at 70% 0%, #E8B03D, transparent),
+    radial-gradient(3px 6px at 90% 0%, #F0C978, transparent);
+  animation: honeyDrip 4s linear infinite;
+  opacity: 0.55;
+}
+@keyframes honeyDrip {
+  0% { background-position-y: -5%; }
+  100% { background-position-y: 105%; }
+}
+
+/* ---------- 50) MINZBLATT — hell, klares Frischgrün ---------- */
+[data-theme="minzblatt"] {
+  --plum-950: #F2FBF6;
+  --plum-800: #FFFFFF;
+  --plum-700: #DCF2E4;
+  --cream-50: #10382278;
+  --cream-200: #5E9E7E;
+  --amber-400: #4FC48A;
+  --amber-300: #7FD8AC;
+  --teal-400: #3AA8B0;
+  --coral-400: #E8A05F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(16,56,34,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌱"; --logo-shape: 50%; --logo-bg: #4FC48A;
+}
+
+/* ---------- 51) SONNENUNTERGANG — hell, wandelnder Abendhimmel (animiert) ---------- */
+[data-theme="sonnenuntergang"] {
+  --plum-950: #FFF3E8;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCDCC0;
+  --cream-50: #3A1E0E;
+  --cream-200: #A67A54;
+  --amber-400: #E8823D;
+  --amber-300: #F0A570;
+  --teal-400: #C46F8E;
+  --coral-400: #E85F4F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,30,14,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌇"; --logo-shape: 50%; --logo-bg: #E8823D;
+}
+[data-theme="sonnenuntergang"] .weather-bar {
+  animation: sunsetGlow 10s ease-in-out infinite alternate;
+}
+@keyframes sunsetGlow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(-12deg); }
+}
+
+/* ---------- 52) MARZIPAN — hell, cremiges Rosé-Beige ---------- */
+[data-theme="marzipan"] {
+  --plum-950: #FDF6F2;
+  --plum-800: #FFFFFF;
+  --plum-700: #F5E3D8;
+  --cream-50: #3A2A20;
+  --cream-200: #A68A76;
+  --amber-400: #D9A582;
+  --amber-300: #E8C4AC;
+  --teal-400: #7FAFA0;
+  --coral-400: #E88F7A;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,42,32,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🧁"; --logo-shape: 50%; --logo-bg: #D9A582;
+}
+
+/* ---------- 53) STERNENSCHIFF — dunkel, mit vorbeiziehenden Sternschnuppen (animiert) ---------- */
+[data-theme="sternenschiff"] {
+  --plum-950: #0A0E1A;
+  --plum-800: #131A2C;
+  --plum-700: #1D2740;
+  --cream-50: #E8ECF5;
+  --cream-200: #8E9CB8;
+  --amber-400: #E8C468;
+  --amber-300: #F0D794;
+  --teal-400: #6FA8E8;
+  --coral-400: #E86F9A;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(111,168,232,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🚀"; --logo-shape: 50%; --logo-bg: #6FA8E8;
+}
+[data-theme="sternenschiff"] body::after {
+  content: "";
+  position: fixed;
+  top: 10%; left: -10%;
+  width: 140px; height: 2px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(90deg, transparent, #E8C468, transparent);
+  animation: shootingStar 4.5s linear infinite;
+  opacity: 0.8;
+}
+@keyframes shootingStar {
+  0% { transform: translate(0, 0) rotate(20deg); opacity: 0; }
+  10% { opacity: 1; }
+  60% { transform: translate(120vw, 60vh) rotate(20deg); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* ---------- 54) RUSSISCHROT — dunkel, edles Bordeaux ---------- */
+[data-theme="russischrot"] {
+  --plum-950: #160A0C;
+  --plum-800: #221316;
+  --plum-700: #321C20;
+  --cream-50: #F2E6E8;
+  --cream-200: #B8909A;
+  --amber-400: #D97F8F;
+  --amber-300: #E8A0AC;
+  --teal-400: #6F9E94;
+  --coral-400: #E85F6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(217,127,143,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🍷"; --logo-shape: 50%; --logo-bg: #D97F8F;
+}
+
+/* ---------- 55) NORDLICHTFJORD — dunkel, mit driftendem Nebel über Wasser (animiert) ---------- */
+[data-theme="nordlichtfjord"] {
+  --plum-950: #0A161A;
+  --plum-800: #12242A;
+  --plum-700: #1C343C;
+  --cream-50: #E6F2F0;
+  --cream-200: #8FB4B8;
+  --amber-400: #E8D468;
+  --amber-300: #F0E094;
+  --teal-400: #4FBFC0;
+  --coral-400: #E88F6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(79,191,192,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🏞️"; --logo-shape: 50%; --logo-bg: #4FBFC0;
+}
+[data-theme="nordlichtfjord"] body::before {
+  content: "";
+  position: fixed;
+  bottom: 0; left: -20%; right: -20%; height: 30vh;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(180deg, transparent, rgba(79,191,192,0.1));
+  filter: blur(14px);
+  animation: fjordMist 14s ease-in-out infinite alternate;
+}
+@keyframes fjordMist {
+  0% { transform: translateX(-8%); opacity: 0.6; }
+  100% { transform: translateX(8%); opacity: 0.9; }
+}
+
+/* ---------- 56) KUPFERKESSEL — dunkel, warmes Metallic-Kupfer ---------- */
+[data-theme="kupferkessel"] {
+  --plum-950: #1A130A;
+  --plum-800: #261C12;
+  --plum-700: #36291A;
+  --cream-50: #F2E8DA;
+  --cream-200: #C4A47E;
+  --amber-400: #D97F3F;
+  --amber-300: #E8A570;
+  --teal-400: #6F9E8E;
+  --coral-400: #E8703F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(217,127,63,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🫖"; --logo-shape: 50%; --logo-bg: #D97F3F;
+}
+
 [data-theme="samtnacht"] .tape-piece,
 [data-theme="bergsee"] .tape-piece,
-[data-theme="kamillenfeld"] .tape-piece { display: none; }
+[data-theme="kamillenfeld"] .tape-piece,
+[data-theme="honigtropfen"] .tape-piece,
+[data-theme="minzblatt"] .tape-piece,
+[data-theme="sonnenuntergang"] .tape-piece,
+[data-theme="marzipan"] .tape-piece,
+[data-theme="sternenschiff"] .tape-piece,
+[data-theme="russischrot"] .tape-piece,
+[data-theme="nordlichtfjord"] .tape-piece,
+[data-theme="kupferkessel"] .tape-piece { display: none; }
