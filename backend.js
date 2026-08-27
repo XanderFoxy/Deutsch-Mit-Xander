@@ -391,17 +391,38 @@ const Backend = (function () {
      PRIVATES POSTFACH — Nachrichten zwischen Freunden + automatische
      System-Zusammenfassung nach gespielten Runden.
      --------------------------------------------------------- */
-  async function sendPrivateMessage(toUserId, body) {
+  async function sendPrivateMessage(toUserId, body, imageUrl) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
-    if (!body || !body.trim()) throw new Error("Nachricht darf nicht leer sein.");
+    if (!body || !body.trim()) {
+      if (!imageUrl) throw new Error("Nachricht darf nicht leer sein.");
+    }
     if (client) {
       const { error } = await client.from("private_messages").insert({
-        from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: body.trim(), is_system: false,
+        from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: (body || "").trim(), is_system: false, image_url: imageUrl || null,
       });
       if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
-    demo.privateMessages.push({ id: Core.uid(), from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: body.trim(), is_system: false, read: false, created_at: new Date().toISOString() });
+    demo.privateMessages.push({ id: Core.uid(), from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: (body || "").trim(), is_system: false, image_url: imageUrl || null, read: false, created_at: new Date().toISOString() });
+  }
+
+  async function sendBroadcastMessage(body) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Rundmails verschicken.");
+    if (!body || !body.trim()) throw new Error("Nachricht darf nicht leer sein.");
+    const text = `📢 ${body.trim()}`;
+    if (client) {
+      const { data: allUsers, error } = await client.from("profiles").select("id");
+      if (error) throw new Error(friendlyDbError(error.message));
+      const rows = (allUsers || []).map((u) => ({ from_user: demo.user.id, to_user: u.id, author_name: `📢 ${demo.profile.name} (Team)`, body: text, is_system: false }));
+      if (rows.length) {
+        const { error: insErr } = await client.from("private_messages").insert(rows);
+        if (insErr) throw new Error(friendlyDbError(insErr.message));
+      }
+      return;
+    }
+    Object.keys(demo.users).forEach((uid) => {
+      demo.privateMessages.push({ id: Core.uid(), from_user: demo.user.id, to_user: uid, author_name: `📢 ${demo.profile.name} (Team)`, body: text, is_system: false, read: false, created_at: new Date().toISOString() });
+    });
   }
 
   async function sendSystemMessage(toUserId, body) {
@@ -416,13 +437,38 @@ const Backend = (function () {
   }
 
   async function getMyMessages() {
-    if (!demo.user) return [];
+    if (!demo.user) return { inbox: [], outbox: [] };
     if (client) {
-      const { data, error } = await client.from("private_messages").select("*").eq("to_user", demo.user.id).order("created_at", { ascending: false }).limit(60);
-      if (error || !data) return [];
-      return data;
+      const { data, error } = await client.from("private_messages").select("*")
+        .or(`to_user.eq.${demo.user.id},from_user.eq.${demo.user.id}`)
+        .order("created_at", { ascending: false }).limit(120);
+      if (error || !data) return { inbox: [], outbox: [] };
+      const outboxRaw = data.filter((m) => m.from_user === demo.user.id && !m.deleted_by_sender);
+      const names = await namesFor([...new Set(outboxRaw.map((m) => m.to_user))]);
+      return {
+        inbox: data.filter((m) => m.to_user === demo.user.id && !m.deleted_by_recipient),
+        outbox: outboxRaw.map((m) => ({ ...m, to_user_name: (names[m.to_user] && names[m.to_user].name) || "Freund" })),
+      };
     }
-    return demo.privateMessages.filter((m) => m.to_user === demo.user.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 60);
+    const all = demo.privateMessages.filter((m) => m.to_user === demo.user.id || m.from_user === demo.user.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return {
+      inbox: all.filter((m) => m.to_user === demo.user.id && !m.deleted_by_recipient).slice(0, 120),
+      outbox: all.filter((m) => m.from_user === demo.user.id && !m.deleted_by_sender).map((m) => ({
+        ...m, to_user_name: (demo.users[m.to_user] && demo.users[m.to_user].profile.name) || "Freund",
+      })).slice(0, 120),
+    };
+  }
+
+  async function deletePrivateMessage(id, iAmSender) {
+    if (!demo.user) return;
+    const field = iAmSender ? "deleted_by_sender" : "deleted_by_recipient";
+    if (client) {
+      await client.from("private_messages").update({ [field]: true }).eq("id", id);
+      return;
+    }
+    const m = demo.privateMessages.find((x) => x.id === id);
+    if (m) m[field] = true;
   }
 
   async function getUnreadMessageCount() {
@@ -1365,7 +1411,9 @@ const Backend = (function () {
     adminGiftThemeUnlock,
     getUnreadNotifications,
     sendPrivateMessage,
+    sendBroadcastMessage,
     getMyMessages,
+    deletePrivateMessage,
     getUnreadMessageCount,
     markMessagesRead,
     sendSystemMessage,

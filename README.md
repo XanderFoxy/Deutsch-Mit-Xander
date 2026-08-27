@@ -252,6 +252,8 @@ create table if not exists private_messages (
   from_user uuid references auth.users,
   to_user uuid references auth.users,
   author_name text, body text, is_system boolean default false,
+  image_url text,
+  deleted_by_sender boolean default false, deleted_by_recipient boolean default false,
   read boolean default false, created_at timestamptz default now()
 );
 alter table private_messages disable row level security;

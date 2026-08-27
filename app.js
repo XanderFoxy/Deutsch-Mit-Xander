@@ -1139,6 +1139,245 @@
   });
 
   /* ============================================================
+     WORTBAUSTELLE — Wort vervollständigen: einige Buchstaben sind schon
+     da, die restlichen tippt man in der richtigen Reihenfolge aus einem
+     durcheinandergewürfelten Buchstabenpool an (auf dem Handy zuverlässiger
+     als echtes Ziehen). Tempo wird belohnt.
+     ============================================================ */
+  let wbState = null;
+  function newWordbuildRound() {
+    const entries = Object.entries(ExerciseData.WORD_MEANINGS);
+    const [word, clue] = entries[Math.floor(Math.random() * entries.length)];
+    const upper = word.toUpperCase();
+    const letters = upper.split("");
+    const revealCount = Math.max(2, Math.min(4, Math.floor(letters.length * 0.35)));
+    const revealPositions = new Set();
+    while (revealPositions.size < revealCount && revealPositions.size < letters.length - 1) {
+      revealPositions.add(Math.floor(Math.random() * letters.length));
+    }
+    const pool = Core.shuffle(letters.map((ch, i) => ({ ch, id: Core.uid(), used: revealPositions.has(i) })));
+    wbState = {
+      word: upper, clue, revealPositions,
+      slots: letters.map((ch, i) => (revealPositions.has(i) ? ch : null)),
+      pool,
+      startedAt: Date.now(),
+      finished: false,
+      wrongFlash: false,
+    };
+  }
+  function renderWordbuild() {
+    const area = document.getElementById("wordbuildArea");
+    if (!wbState) newWordbuildRound();
+    const s = wbState;
+    const nextEmptyIdx = s.slots.findIndex((v) => v === null);
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🔤 WORTBAUSTELLE</p>
+        <h3 style="margin-bottom:10px;">${s.clue}</h3>
+        <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
+          ${s.slots.map((ch, i) => `
+            <div class="wb-slot ${ch ? (s.revealPositions.has(i) ? "wb-given" : "wb-filled") : "wb-empty"} ${s.wrongFlash && i === nextEmptyIdx ? "wb-wrong" : ""}"
+                 data-slot-idx="${i}" data-filled="${ch && !s.revealPositions.has(i) ? "1" : "0"}">${ch || ""}</div>
+          `).join("")}
+        </div>
+        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+          ${s.pool.map((p) => `<button type="button" class="btn btn-ghost wb-letter-btn" data-letter-id="${p.id}" ${p.used ? "disabled style=\"opacity:0.25;\"" : ""}>${p.ch}</button>`).join("")}
+        </div>
+        <div class="quiz-actions" style="justify-content:center; margin-top:14px;">
+          <button type="button" class="btn btn-ghost" id="wbResetBtn">↺ Zurücksetzen</button>
+          <button type="button" class="btn btn-ghost" id="wbSkipBtn">Überspringen ▶</button>
+        </div>
+      </div>
+    `;
+    area.querySelectorAll("[data-letter-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        const p = s.pool.find((x) => x.id === btn.dataset.letterId);
+        const idx = s.slots.findIndex((v) => v === null);
+        if (idx === -1) return;
+        if (p.ch === s.word[idx]) {
+          s.slots[idx] = p.ch;
+          p.used = true;
+          s.wrongFlash = false;
+          if (!s.slots.includes(null)) {
+            s.finished = true;
+            const seconds = (Date.now() - s.startedAt) / 1000;
+            const speedBonus = seconds < 8 ? 1 : 0;
+            Core.sound.fanfare();
+            Backend.saveResult({
+              categories: ["wortbaustelle"], points: 1, bonus: speedBonus, percent: 100,
+              character: "Wortbaumeister:in", badges: [], playedAt: new Date().toISOString(),
+            });
+            setTimeout(() => { newWordbuildRound(); renderWordbuild(); }, 1100);
+          }
+        } else {
+          s.wrongFlash = true;
+          Core.sound.wrong();
+        }
+        renderWordbuild();
+      });
+    });
+    document.getElementById("wbResetBtn").addEventListener("click", () => {
+      s.slots = s.slots.map((ch, i) => (s.revealPositions.has(i) ? ch : null));
+      s.pool.forEach((p) => { p.used = false; });
+      renderWordbuild();
+    });
+    document.getElementById("wbSkipBtn").addEventListener("click", () => { newWordbuildRound(); renderWordbuild(); });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-wordbuild"]').addEventListener("click", () => {
+    newWordbuildRound();
+    renderWordbuild();
+  });
+
+  /* ============================================================
+     BUCHSTABENSALAT — mehrere Wörter im Buchstabenraster finden.
+     Start- und Endzelle antippen (waagerecht oder senkrecht, auch
+     rückwärts) statt echtem Ziehen — auf dem Handy zuverlässiger.
+     Bonuspunkt für den richtig zugeordneten Artikel.
+     ============================================================ */
+  let wsState = null;
+  function buildWordSearch() {
+    const size = 9;
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const candidates = Object.entries(WordbuildArtikel()).filter(([w]) => w.length <= size);
+    const chosen = Core.shuffle(candidates).slice(0, 6);
+    const grid = Array.from({ length: size }, () => Array(size).fill(null));
+    const dirs = [[0, 1], [1, 0]];
+    const placed = [];
+    chosen.forEach(([word, article]) => {
+      const upper = word.toUpperCase();
+      let ok = false;
+      for (let attempt = 0; attempt < 60 && !ok; attempt++) {
+        const dir = dirs[Math.floor(Math.random() * dirs.length)];
+        const maxRow = dir[0] === 1 ? size - upper.length : size - 1;
+        const maxCol = dir[1] === 1 ? size - upper.length : size - 1;
+        if (maxRow < 0 || maxCol < 0) continue;
+        const row = Math.floor(Math.random() * (maxRow + 1));
+        const col = Math.floor(Math.random() * (maxCol + 1));
+        let fits = true;
+        for (let i = 0; i < upper.length; i++) {
+          const r = row + dir[0] * i, c = col + dir[1] * i;
+          if (grid[r][c] && grid[r][c] !== upper[i]) { fits = false; break; }
+        }
+        if (!fits) continue;
+        for (let i = 0; i < upper.length; i++) {
+          const r = row + dir[0] * i, c = col + dir[1] * i;
+          grid[r][c] = upper[i];
+        }
+        placed.push({ word: upper, article, row, col, dir, found: false });
+        ok = true;
+      }
+    });
+    for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+      if (!grid[r][c]) grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+    return { size, grid, words: placed, selection: [], startedAt: Date.now(), pendingArticleFor: null };
+  }
+  function WordbuildArtikel() {
+    // Nutzt dieselbe geprüfte Wörterliste wie die Artikel-Übung, damit hier keine
+    // neuen, ungeprüften Inhalte entstehen.
+    const cat = ExerciseData.getCategory("artikel");
+    const out = {};
+    cat.getBank().forEach((q) => {
+      const word = q.prompt.replace("___ ", "").trim();
+      const article = q.options[q.correct[0]];
+      out[word] = article;
+    });
+    return out;
+  }
+  function renderWordSearch() {
+    const area = document.getElementById("wordsearchArea");
+    if (!wsState) wsState = buildWordSearch();
+    const s = wsState;
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🔍 BUCHSTABENSALAT</p>
+        <p class="empty-note" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen (waagerecht oder senkrecht, auch rückwärts). Bonuspunkt, wenn du danach den richtigen Artikel triffst!</p>
+        <div style="display:grid; grid-template-columns: repeat(${s.size}, 1fr); gap:3px; max-width:340px; margin:0 auto 14px;">
+          ${s.grid.map((row, r) => row.map((ch, c) => {
+            const isSelStart = s.selection[0] && s.selection[0][0] === r && s.selection[0][1] === c;
+            const isFound = s.words.some((w) => w.found && cellInWord(w, r, c, s.size));
+            return `<button type="button" class="ws-cell ${isSelStart ? "ws-selected" : ""} ${isFound ? "ws-found" : ""}" data-r="${r}" data-c="${c}">${ch}</button>`;
+          }).join("")).join("")}
+        </div>
+        <div class="trophy-case" style="justify-content:center;">
+          ${s.words.map((w) => `<div class="trophy-chip ${w.found ? "" : "trophy-chip-locked"}">${w.found ? "✅" : "🔎"} ${w.found ? w.word : "?".repeat(w.word.length)}</div>`).join("")}
+        </div>
+        ${s.pendingArticleFor ? `
+          <div class="question-card" style="margin-top:12px; border:2px solid var(--amber-400);">
+            <p style="margin:0 0 8px;">🎁 Bonus: Welcher Artikel gehört zu <strong>${s.pendingArticleFor.word}</strong>?</p>
+            <div style="display:flex; gap:8px; justify-content:center;">
+              ${["der", "die", "das"].map((a) => `<button type="button" class="btn btn-ghost" data-article-guess="${a}">${a}</button>`).join("")}
+            </div>
+          </div>` : ""}
+        ${s.words.every((w) => w.found) ? `<div class="quiz-actions" style="justify-content:center; margin-top:14px;"><button type="button" class="btn btn-coffee" id="wsNewRoundBtn">🔄 Neues Raster</button></div>` : ""}
+      </div>
+    `;
+    area.querySelectorAll(".ws-cell").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (s.pendingArticleFor) return;
+        const r = Number(btn.dataset.r), c = Number(btn.dataset.c);
+        if (s.selection.length === 0) {
+          s.selection = [[r, c]];
+        } else {
+          const [r0, c0] = s.selection[0];
+          const match = matchWordSearchLine(s, r0, c0, r, c);
+          s.selection = [];
+          if (match) {
+            match.found = true;
+            Core.sound.correct();
+            Backend.saveResult({ categories: ["buchstabensalat"], points: 1, bonus: 0, percent: 100, character: "Wortfinder:in", badges: [], playedAt: new Date().toISOString() });
+            s.pendingArticleFor = match;
+          } else {
+            Core.sound.wrong();
+          }
+        }
+        renderWordSearch();
+      });
+    });
+    area.querySelectorAll("[data-article-guess]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const correct = btn.dataset.articleGuess === s.pendingArticleFor.article;
+        if (correct) {
+          Core.sound.fanfare();
+          Backend.saveResult({ categories: ["buchstabensalat"], points: 0, bonus: 1, percent: 100, character: "Wortfinder:in", badges: [], playedAt: new Date().toISOString() });
+        } else {
+          Core.sound.wrong();
+        }
+        s.pendingArticleFor = null;
+        renderWordSearch();
+      });
+    });
+    const newRoundBtn = document.getElementById("wsNewRoundBtn");
+    if (newRoundBtn) newRoundBtn.addEventListener("click", () => { wsState = buildWordSearch(); renderWordSearch(); });
+  }
+  function cellInWord(w, r, c, size) {
+    for (let i = 0; i < w.word.length; i++) {
+      if (w.row + w.dir[0] * i === r && w.col + w.dir[1] * i === c) return true;
+    }
+    return false;
+  }
+  function matchWordSearchLine(s, r0, c0, r1, c1) {
+    if (r0 !== r1 && c0 !== c1) return null; // nur waagerecht/senkrecht erlaubt
+    const dr = Math.sign(r1 - r0), dc = Math.sign(c1 - c0);
+    if (dr === 0 && dc === 0) return null;
+    let letters = "";
+    let r = r0, c = c0;
+    while (true) {
+      letters += s.grid[r][c];
+      if (r === r1 && c === c1) break;
+      r += dr; c += dc;
+      if (letters.length > s.size) return null; // Sicherheitsnetz
+    }
+    const reversed = letters.split("").reverse().join("");
+    return s.words.find((w) => !w.found && (w.word === letters || w.word === reversed)) || null;
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-wordsearch"]').addEventListener("click", () => {
+    wsState = buildWordSearch();
+    renderWordSearch();
+  });
+
+  /* ============================================================
      KOMPASS
      ============================================================ */
   const kompassArea = document.getElementById("kompassArea");
@@ -1559,16 +1798,19 @@
   let profileEditDraft = {}; // sammelt Eingaben über Seitenwechsel hinweg, bevor gespeichert wird
   function captureProfileEditDraft() {
     const ids = [
-      "favCountryInput", "extraDreamDestInput", "extraVisitedInput",
-      "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput",
-      "favQuoteInput", "extraMottoInput", "poemInput",
-      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect",
+      "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput",
+      "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
+      "favQuoteInput", "extraMottoInput", "poemInput", "extraDreamInput", "extraHappyInput",
+      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput",
     ];
     const fieldMap = {
       favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
+      extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal",
       favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraActorInput: "favActor",
-      favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem",
+      extraBookInput: "favBook", extraArtistInput: "favArtist",
+      favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
+      extraNumberInput: "favNumber", extraTalentInput: "talent",
     };
     ids.forEach((id) => {
       const el = document.getElementById(id);
@@ -1623,6 +1865,7 @@
           renderAccount();
           updateSpecialDayBar();
           Backend.touchActivity();
+          notifyAboutAppUpdateIfNeeded();
         } catch (err) {
           errBox.textContent = err.message || "Das hat leider nicht geklappt.";
         }
@@ -1845,6 +2088,14 @@
               <label>Schon bereiste Länder (kommagetrennt)</label>
               <input type="text" id="extraVisitedInput" maxlength="150" value="${profileEditDraft.visitedCountries !== undefined ? profileEditDraft.visitedCountries : (extra.visitedCountries || "")}" placeholder="z. B. Italien, Türkei, Marokko" />
             </div>
+            <div class="form-field">
+              <label>Warum lernst du Deutsch?</label>
+              <input type="text" id="extraWhyGermanInput" maxlength="120" value="${profileEditDraft.whyGerman !== undefined ? profileEditDraft.whyGerman : (extra.whyGerman || "")}" placeholder="z. B. für die Arbeit, wegen der Familie…" />
+            </div>
+            <div class="form-field">
+              <label>Dein Sprachziel</label>
+              <input type="text" id="extraLangGoalInput" maxlength="120" value="${profileEditDraft.langGoal !== undefined ? profileEditDraft.langGoal : (extra.langGoal || "")}" placeholder="z. B. flüssig ein Gespräch führen können" />
+            </div>
           ` : ""}
           ${profileEditPage === 1 ? `
             <div class="form-field">
@@ -1863,6 +2114,14 @@
               <label>Lieblingsschauspieler:in</label>
               <input type="text" id="extraActorInput" maxlength="60" value="${profileEditDraft.favActor !== undefined ? profileEditDraft.favActor : (extra.favActor || "")}" placeholder="z. B. Til Schweiger" />
             </div>
+            <div class="form-field">
+              <label>Lieblingsbuch</label>
+              <input type="text" id="extraBookInput" maxlength="60" value="${profileEditDraft.favBook !== undefined ? profileEditDraft.favBook : (extra.favBook || "")}" placeholder="z. B. Der Vorleser" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingsband oder Künstler:in</label>
+              <input type="text" id="extraArtistInput" maxlength="60" value="${profileEditDraft.favArtist !== undefined ? profileEditDraft.favArtist : (extra.favArtist || "")}" placeholder="z. B. Rammstein" />
+            </div>
           ` : ""}
           ${profileEditPage === 2 ? `
             <div class="form-field">
@@ -1872,6 +2131,14 @@
             <div class="form-field">
               <label>Dein Lebensmotto</label>
               <input type="text" id="extraMottoInput" maxlength="120" value="${profileEditDraft.motto !== undefined ? profileEditDraft.motto : (extra.motto || "")}" placeholder="z. B. Nie aufgeben" />
+            </div>
+            <div class="form-field">
+              <label>Dein größter Traum</label>
+              <input type="text" id="extraDreamInput" maxlength="150" value="${profileEditDraft.bigDream !== undefined ? profileEditDraft.bigDream : (extra.bigDream || "")}" placeholder="z. B. einmal ein Buch schreiben" />
+            </div>
+            <div class="form-field">
+              <label>Was macht dich glücklich?</label>
+              <input type="text" id="extraHappyInput" maxlength="150" value="${profileEditDraft.whatMakesMeHappy !== undefined ? profileEditDraft.whatMakesMeHappy : (extra.whatMakesMeHappy || "")}" placeholder="z. B. Musik, Zeit mit Freunden…" />
             </div>
             <div class="form-field">
               <label>Ein eigenes Gedicht oder ein paar Zeilen auf Deutsch (übe dabei gleich freies Schreiben!)</label>
@@ -1901,6 +2168,14 @@
                 <option value="">Nicht angeben</option>
                 ${["Frühling", "Sommer", "Herbst", "Winter"].map((s) => `<option value="${s}" ${(profileEditDraft.favSeason !== undefined ? profileEditDraft.favSeason : extra.favSeason) === s ? "selected" : ""}>${s}</option>`).join("")}
               </select>
+            </div>
+            <div class="form-field">
+              <label>Lieblingszahl</label>
+              <input type="text" id="extraNumberInput" maxlength="10" value="${profileEditDraft.favNumber !== undefined ? profileEditDraft.favNumber : (extra.favNumber || "")}" placeholder="z. B. 7" />
+            </div>
+            <div class="form-field">
+              <label>Ein Talent oder Hobby, auf das du stolz bist</label>
+              <input type="text" id="extraTalentInput" maxlength="80" value="${profileEditDraft.talent !== undefined ? profileEditDraft.talent : (extra.talent || "")}" placeholder="z. B. Gitarre spielen" />
             </div>
           ` : ""}
         </div>
@@ -1952,6 +2227,8 @@
       const val = (id, fallback) => {
         const field = { extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries", extraActorInput: "favActor",
           extraMottoInput: "motto", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
+          extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
+          extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
           favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
         if (profileEditDraft[field] !== undefined) return profileEditDraft[field];
@@ -1962,11 +2239,19 @@
       const newExtra = {
         dreamDestination: val("extraDreamDestInput", extra.dreamDestination),
         visitedCountries: val("extraVisitedInput", extra.visitedCountries),
+        whyGerman: val("extraWhyGermanInput", extra.whyGerman),
+        langGoal: val("extraLangGoalInput", extra.langGoal),
         favActor: val("extraActorInput", extra.favActor),
+        favBook: val("extraBookInput", extra.favBook),
+        favArtist: val("extraArtistInput", extra.favArtist),
         motto: val("extraMottoInput", extra.motto),
+        bigDream: val("extraDreamInput", extra.bigDream),
+        whatMakesMeHappy: val("extraHappyInput", extra.whatMakesMeHappy),
         favColor: val("extraColorInput", extra.favColor),
         favAnimal: val("extraAnimalInput", extra.favAnimal),
         favSeason: val("extraSeasonSelect", extra.favSeason),
+        favNumber: val("extraNumberInput", extra.favNumber),
+        talent: val("extraTalentInput", extra.talent),
       };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
@@ -2190,15 +2475,21 @@
         ${favCountry ? `<div class="breakdown-row"><span>🌍 Lieblingsland</span><span>${favCountry}</span></div>` : ""}
         ${extra.dreamDestination ? `<div class="breakdown-row"><span>✈️ Traumreiseziel</span><span>${extra.dreamDestination}</span></div>` : ""}
         ${extra.visitedCountries ? `<div class="breakdown-row"><span>🧳 Schon bereist</span><span>${extra.visitedCountries}</span></div>` : ""}
+        ${extra.whyGerman ? `<div class="breakdown-row"><span>💡 Warum Deutsch?</span><span>${extra.whyGerman}</span></div>` : ""}
+        ${extra.langGoal ? `<div class="breakdown-row"><span>🎯 Sprachziel</span><span>${extra.langGoal}</span></div>` : ""}
       ` },
       { icon: "🎬", label: "Kultur", html: `
         ${favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : ""}
         ${favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : ""}
         ${favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : ""}
         ${extra.favActor ? `<div class="breakdown-row"><span>🎭 Lieblingsschauspieler:in</span><span>${extra.favActor}</span></div>` : ""}
+        ${extra.favBook ? `<div class="breakdown-row"><span>📚 Lieblingsbuch</span><span>${extra.favBook}</span></div>` : ""}
+        ${extra.favArtist ? `<div class="breakdown-row"><span>🎤 Lieblingsband/Künstler:in</span><span>${extra.favArtist}</span></div>` : ""}
       ` },
       { icon: "💭", label: "Gedanken", html: `
         ${extra.motto ? `<div class="breakdown-row"><span>🌟 Lebensmotto</span><span>${extra.motto}</span></div>` : ""}
+        ${extra.bigDream ? `<div class="breakdown-row"><span>🌠 Größter Traum</span><span>${extra.bigDream}</span></div>` : ""}
+        ${extra.whatMakesMeHappy ? `<div class="breakdown-row"><span>😊 Macht glücklich</span><span>${extra.whatMakesMeHappy}</span></div>` : ""}
         ${favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : ""}
         ${poem ? `<div class="poem-box"><p style="white-space:pre-wrap; font-style:italic; margin:0;">„${poem}"</p></div>` : ""}
       ` },
@@ -2208,6 +2499,8 @@
         ${extra.favColor ? `<div class="breakdown-row"><span>🎨 Lieblingsfarbe</span><span>${extra.favColor}</span></div>` : ""}
         ${extra.favAnimal ? `<div class="breakdown-row"><span>🐾 Lieblingstier</span><span>${extra.favAnimal}</span></div>` : ""}
         ${extra.favSeason ? `<div class="breakdown-row"><span>🍂 Lieblingsjahreszeit</span><span>${extra.favSeason}</span></div>` : ""}
+        ${extra.favNumber ? `<div class="breakdown-row"><span>🔢 Lieblingszahl</span><span>${extra.favNumber}</span></div>` : ""}
+        ${extra.talent ? `<div class="breakdown-row"><span>⭐ Talent/Hobby</span><span>${extra.talent}</span></div>` : ""}
       ` },
     ];
     const nonEmpty = pages.map((pg) => pg.html.trim().length > 0);
@@ -2491,10 +2784,38 @@
      ============================================================ */
   let friendChallengeTarget = null;
 
+  // Eigene, handgezeichnete SVG-"Sticker" für das Postfach — ein erster kleiner Satz von vier,
+  // lässt sich später leicht um weitere ergänzen (einfach neue Einträge in DMA_STICKERS).
+  const DMA_STICKERS = {
+    fuchs: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 8 L10 4 L13 14 Q9 18 9 24 Q9 33 20 35 Q31 33 31 24 Q31 18 27 14 L30 4 Z" fill="#E8825F"/><path d="M14 15 L12 8 L18 13 Z" fill="#F5C99A"/><path d="M26 15 L28 8 L22 13 Z" fill="#F5C99A"/><circle cx="15" cy="23" r="2" fill="#241505"/><circle cx="25" cy="23" r="2" fill="#241505"/><path d="M17 28 Q20 31 23 28" stroke="#241505" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M20 24 L18 27 L22 27 Z" fill="#241505"/></svg>`,
+    eule: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="22" rx="12" ry="14" fill="#8B6F47"/><circle cx="14" cy="18" r="6" fill="#F5EFE4"/><circle cx="26" cy="18" r="6" fill="#F5EFE4"/><circle cx="14" cy="18" r="3" fill="#241505"/><circle cx="26" cy="18" r="3" fill="#241505"/><path d="M20 20 L17 25 L23 25 Z" fill="#E8A03D"/><path d="M9 10 L14 14 M31 10 L26 14" stroke="#8B6F47" stroke-width="3" stroke-linecap="round"/></svg>`,
+    doktorhut: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 10 L36 17 L20 24 L4 17 Z" fill="#241505"/><path d="M12 20 L12 27 Q20 32 28 27 L28 20" fill="none" stroke="#241505" stroke-width="2"/><circle cx="36" cy="17" r="1.5" fill="#E8A03D"/><path d="M36 17 L36 27" stroke="#E8A03D" stroke-width="1.5"/><circle cx="36" cy="28" r="2" fill="#E8A03D"/></svg>`,
+    herzblase: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M6 8 H34 Q36 8 36 10 V24 Q36 26 34 26 H16 L9 32 L10 26 H6 Q4 26 4 24 V10 Q4 8 6 8 Z" fill="#F6CC78"/><path d="M20 20 C16 15 10 17 10 21 C10 25 20 30 20 30 C20 30 30 25 30 21 C30 17 24 15 20 20 Z" fill="#E85F6F"/></svg>`,
+  };
+  function renderStickerRow() {
+    const row = document.getElementById("inboxStickerRow");
+    if (!row) return;
+    row.innerHTML = Object.entries(DMA_STICKERS).map(([key, svg]) =>
+      `<button type="button" class="hobby-chip sticker-pick-btn" data-sticker="${key}" style="padding:4px 8px;">${svg}</button>`
+    ).join("");
+    let selected = null;
+    row.querySelectorAll("[data-sticker]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.sticker;
+        selected = selected === key ? null : key;
+        row.querySelectorAll("[data-sticker]").forEach((b) => b.classList.toggle("selected", b.dataset.sticker === selected));
+        row.dataset.selectedSticker = selected || "";
+      });
+    });
+  }
+
+  let inboxViewTab = "in"; // "in" oder "out"
   async function renderInbox() {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
     const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
+    const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
+    const list = inboxViewTab === "in" ? messages.inbox : messages.outbox;
     area.innerHTML = `
       <div class="question-card">
         <h3>✉️ Neue Nachricht schreiben</h3>
@@ -2502,39 +2823,101 @@
           <select id="inboxRecipientSelect" class="challenge-select">
             <option value="">Freund auswählen…</option>
             ${friends.map((f) => `<option value="${f.id}">${f.name}</option>`).join("")}
+            ${isAdmin ? `<option value="__broadcast__">📢 Rundmail an ALLE Nutzer</option>` : ""}
           </select>
         </div>
         <div class="form-field">
           <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
         </div>
+        <div class="form-field">
+          <label class="empty-note" style="cursor:pointer;">📷 Bild anhängen (optional) <input type="file" id="inboxImageInput" accept="image/*" style="display:block; margin-top:4px;" /></label>
+          <div id="inboxImagePreviewBox"></div>
+        </div>
+        <div class="form-field">
+          <label class="empty-note">Eigene Sticker anhängen (optional):</label>
+          <div id="inboxStickerRow" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;"></div>
+        </div>
         <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
         <div class="form-error" id="inboxSendError"></div>
       </div>
       <div class="question-card" style="margin-top:14px;">
-        <h3>📬 Dein Postfach</h3>
-        ${messages.length ? messages.map((m) => `
-          <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px; ${!m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
+        <div class="order-toggle" style="margin-bottom:12px;">
+          <button type="button" class="order-pill" id="inboxTabIn" aria-selected="${inboxViewTab === "in"}">📥 Posteingang${messages.inbox.length ? ` (${messages.inbox.length})` : ""}</button>
+          <button type="button" class="order-pill" id="inboxTabOut" aria-selected="${inboxViewTab === "out"}">📤 Postausgang${messages.outbox.length ? ` (${messages.outbox.length})` : ""}</button>
+        </div>
+        ${list.length ? list.map((m) => `
+          <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
             <div style="display:flex; justify-content:space-between; width:100%;">
-              <strong>${m.is_system ? "🔔 System" : (m.author_name || "Unbekannt")}</strong>
+              <strong>${inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"))}</strong>
               <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
             </div>
-            <p style="white-space:pre-wrap; margin:0;">${m.body}</p>
-          </div>`).join("") : '<p class="empty-note">Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast.</p>'}
+            <p style="white-space:pre-wrap; margin:0;">${m.body.replace(/\[sticker:(\w+)\]/, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")}</p>
+            ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
+            <div style="display:flex; gap:8px;">
+              ${inboxViewTab === "in" && !m.is_system && m.from_user ? `<button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-reply-to="${m.from_user}" data-reply-name="${m.author_name}">↩️ Antworten</button>` : ""}
+              <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-delete-msg="${m.id}" data-is-sender="${inboxViewTab === "out"}">🗑️ Löschen</button>
+            </div>
+          </div>`).join("") : `<p class="empty-note">${inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
       </div>
     `;
+    renderStickerRow();
+    let pendingImageUrl = "";
+    const imgInput = document.getElementById("inboxImageInput");
+    if (imgInput) {
+      imgInput.addEventListener("change", async () => {
+        const file = imgInput.files[0];
+        if (!file) return;
+        const previewBox = document.getElementById("inboxImagePreviewBox");
+        previewBox.innerHTML = '<p class="empty-note">Lädt hoch…</p>';
+        try {
+          pendingImageUrl = await Backend.uploadCommunityTextCover(file);
+          previewBox.innerHTML = `<img src="${pendingImageUrl}" style="max-width:120px; border-radius:8px; margin-top:6px;" />`;
+        } catch (err) {
+          previewBox.innerHTML = `<p class="form-error">⚠️ ${err.message}</p>`;
+        }
+      });
+    }
     document.getElementById("inboxSendBtn").addEventListener("click", async () => {
       const to = document.getElementById("inboxRecipientSelect").value;
       const body = document.getElementById("inboxMessageInput").value;
       const errBox = document.getElementById("inboxSendError");
       if (!to) { errBox.textContent = "⚠️ Bitte einen Freund auswählen."; return; }
       try {
-        await Backend.sendPrivateMessage(to, body);
+        const stickerKey = document.getElementById("inboxStickerRow")?.dataset.selectedSticker || "";
+        const finalBody = body + (stickerKey ? ` [sticker:${stickerKey}]` : "");
+        if (to === "__broadcast__") {
+          if (!confirm("Wirklich eine Rundmail an ALLE Nutzer schicken?")) return;
+          await Backend.sendBroadcastMessage(finalBody);
+        } else {
+          await Backend.sendPrivateMessage(to, finalBody, pendingImageUrl);
+        }
         renderInbox();
       } catch (err) {
         errBox.textContent = "⚠️ " + err.message;
       }
     });
-    const unreadIds = messages.filter((m) => !m.read).map((m) => m.id);
+    area.querySelectorAll("[data-reply-to]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const sel = document.getElementById("inboxRecipientSelect");
+        const targetId = btn.dataset.replyTo;
+        if ([...sel.options].some((o) => o.value === targetId)) sel.value = targetId;
+        document.getElementById("inboxMessageInput").focus();
+        document.getElementById("inboxMessageInput").scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+    area.querySelectorAll("[data-modal-view-photo]").forEach((img) => {
+      img.addEventListener("click", () => openGallerySlideshow([img.dataset.modalViewPhoto], 0, "Foto"));
+    });
+    document.getElementById("inboxTabIn").addEventListener("click", () => { inboxViewTab = "in"; renderInbox(); });
+    document.getElementById("inboxTabOut").addEventListener("click", () => { inboxViewTab = "out"; renderInbox(); });
+    area.querySelectorAll("[data-delete-msg]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diese Nachricht wirklich löschen? (Nur bei dir — beim Gegenüber bleibt sie sichtbar.)")) return;
+        await Backend.deletePrivateMessage(btn.dataset.deleteMsg, btn.dataset.isSender === "true");
+        renderInbox();
+      });
+    });
+    const unreadIds = messages.inbox.filter((m) => !m.read).map((m) => m.id);
     if (unreadIds.length) await Backend.markMessagesRead(unreadIds);
   }
 
@@ -2839,7 +3222,26 @@
     renderSetup();
     applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
     updateSpecialDayBar();
+    notifyAboutAppUpdateIfNeeded();
   });
+
+  // Update-Hinweis: sobald eine neue Version live geht, bekommt jeder eingeloggte Nutzer beim
+  // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
+  // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
+  // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
+  const APP_VERSION = "21";
+  const APP_CHANGELOG = {
+    "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
+  };
+  function notifyAboutAppUpdateIfNeeded() {
+    if (!Backend.currentUser()) return;
+    let seenVersion = null;
+    try { seenVersion = localStorage.getItem("dma_seen_version"); } catch (e) {}
+    if (seenVersion === APP_VERSION) return;
+    const note = APP_CHANGELOG[APP_VERSION];
+    if (note) Backend.sendSystemMessage(Backend.currentUser().id, `🆕 Was ist neu (Version ${APP_VERSION}):\n\n${note}`);
+    try { localStorage.setItem("dma_seen_version", APP_VERSION); } catch (e) {}
+  }
 
   // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt
   setInterval(() => { if (Backend.currentUser()) Backend.touchActivity(); }, 60000);

@@ -915,6 +915,32 @@
   display: flex; flex-wrap: wrap; gap: 8px;
   margin-top: 8px;
 }
+.wb-slot {
+  width: 38px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; font-weight: 800;
+  border-radius: 8px;
+  font-family: var(--font-display);
+}
+.wb-given { background: var(--plum-700); color: var(--cream-50); border: 2px solid var(--amber-400); }
+.wb-filled { background: var(--teal-400); color: #072620; border: 2px solid var(--teal-400); animation: wbPop 0.25s ease; }
+.wb-empty { background: transparent; border: 2px dashed rgba(0,0,0,0.2); }
+.wb-wrong { border-color: var(--coral-400) !important; animation: wbShake 0.3s ease; }
+@keyframes wbPop { 0% { transform: scale(0.7); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes wbShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.wb-letter-btn { min-width: 42px; font-size: 1.1rem; font-weight: 700; }
+.ws-cell {
+  aspect-ratio: 1; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem; font-weight: 700;
+  border-radius: 5px; border: 1px solid rgba(0,0,0,0.1);
+  background: var(--plum-800, #fff); cursor: pointer;
+  font-family: var(--font-display);
+}
+.ws-selected { background: var(--amber-400); border-color: var(--amber-400); }
+.ws-found { background: var(--teal-400); color: #072620; }
+.trophy-chip-locked { opacity: 0.5; letter-spacing: 2px; }
+
 .hobby-chip {
   padding: 8px 14px;
   border-radius: 999px;
