@@ -200,8 +200,10 @@ const VocabData = (function () {
   // Sprachen fürs Profil — welche Sprachen jemand spricht oder gerade lernt
   const LANGUAGES = [
     "Deutsch", "Englisch", "Französisch", "Spanisch", "Italienisch", "Portugiesisch",
-    "Türkisch", "Arabisch", "Russisch", "Polnisch", "Niederländisch", "Persisch/Farsi",
+    "Türkisch", "Arabisch", "Hebräisch", "Russisch", "Polnisch", "Niederländisch", "Persisch/Farsi",
     "Kurdisch", "Ukrainisch", "Griechisch", "Chinesisch", "Japanisch", "Koreanisch", "Hindi",
+    "Schwedisch", "Norwegisch", "Dänisch", "Finnisch", "Rumänisch", "Bulgarisch", "Tschechisch",
+    "Serbisch/Kroatisch", "Albanisch", "Vietnamesisch", "Thailändisch", "Suaheli", "Urdu",
   ];
 
   return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES };

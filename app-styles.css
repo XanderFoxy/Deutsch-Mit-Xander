@@ -658,12 +658,12 @@
   text-underline-offset: 2px;
 }
 .community-text-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.community-text-cover {
-  width: 100%;
-  max-height: 220px;
+.community-text-cover-thumb {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
   object-fit: cover;
-  border-radius: var(--radius-sm);
-  margin-bottom: 10px;
+  border-radius: 8px;
   cursor: pointer;
 }
 .level-badge {
@@ -1102,13 +1102,13 @@
 
 .notify-badge {
   position: absolute;
-  top: -3px; right: -3px;
-  width: 12px; height: 12px;
+  top: -4px; right: -4px;
+  width: 13px; height: 13px;
   border-radius: 50%;
   background: #ff4d4d;
-  box-shadow: 0 0 0 2px var(--plum-950), 0 0 6px 1px rgba(255,77,77,0.7);
+  box-shadow: 0 0 0 2px var(--plum-950), 0 0 7px 1px rgba(255,77,77,0.75);
   animation: notifyBlink 1.4s ease-in-out infinite;
-  z-index: 2;
+  z-index: 3;
 }
 @keyframes notifyBlink {
   0%, 100% { opacity: 1; transform: scale(1); }

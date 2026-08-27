@@ -153,6 +153,7 @@
     { id: "korallenriff", name: "Korallenriff", emoji: "🪸", desc: "Dunkel, wärmere Fische über Korallen — animiert!", mode: "dunkel", unlock: { type: "trophy", match: "Abenteurer" } },
     { id: "seerosenteich", name: "Seerosenteich", emoji: "🪷", desc: "Hell, ruhiges Wasser mit Seerosen — animiert!", mode: "hell", unlock: { type: "points", value: 750 } },
     { id: "mandelbluete", name: "Mandelblüte", emoji: "🌰", desc: "Hell, zartweiß-rosa.", mode: "hell" },
+    { id: "spukwald", name: "Spukwald", emoji: "🌲", desc: "Dunkel, knorrige Bäume im Wind mit Gewitter und Regen — animiert!", mode: "dunkel", unlock: { type: "trophy", match: "Gehirnjogger" } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -346,11 +347,25 @@
   }
   // Kurzer, dezenter Benachrichtigungston -- direkt erzeugt, keine Audiodatei noetig.
   // Spielt einmal sofort; falls die Benachrichtigung dann noch nicht bestaetigt wurde, einmal nach 5s erneut. Danach Ruhe.
+  // Web Audio darf laut Browser-Regel nur nach einer echten Nutzer-Interaktion starten,
+  // nicht ungefragt aus einem Timer heraus (sonst bleibt der Ton stumm). Deshalb wird der
+  // Audio-Kontext einmalig beim allerersten Antippen der Seite "entsperrt" und danach wiederverwendet.
+  let sharedAudioCtx = null;
+  function unlockAudioOnce() {
+    if (sharedAudioCtx) return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    sharedAudioCtx = new AudioCtx();
+    if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
+  }
+  document.addEventListener("click", unlockAudioOnce, { once: true });
+  document.addEventListener("touchstart", unlockAudioOnce, { once: true });
+
   function playNotifySound() {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      if (!sharedAudioCtx) return; // Seite wurde noch nicht angetippt -> Browser erlaubt noch keinen Ton
+      const ctx = sharedAudioCtx;
+      if (ctx.state === "suspended") ctx.resume();
       [880, 1108].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -386,19 +401,30 @@
     const [requests, challenges, notifications] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications()]);
     const challengeCount = challenges.incoming.length;
     let hasNew = false;
-    if (notifyPrimed) {
-      if (requests.length > lastFriendReqCount) { showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox); hasNew = true; }
-      if (challengeCount > lastChallengeReqCount) { showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox); hasNew = true; }
-      notifications.forEach((n) => {
-        if (!toastedNotificationIds.has(n.id)) {
-          toastedNotificationIds.add(n.id);
-          showToast(n.message, () => document.querySelector('[data-target="view-profile"]').click());
-          hasNew = true;
-        }
-      });
-    } else {
-      notifications.forEach((n) => toastedNotificationIds.add(n.id));
-    }
+    // Freundschaftsanfragen, Duell-Einladungen und persönliche Benachrichtigungen werden über ihre
+    // eigene ID verfolgt (nicht nur über einen Zähler) — so wird auch das, was schon beim allerersten
+    // Öffnen der Seite bereits wartet, zuverlässig gemeldet, statt beim ersten Check still verschluckt zu werden.
+    requests.forEach((r) => {
+      if (!toastedNotificationIds.has("freq-" + r.id)) {
+        toastedNotificationIds.add("freq-" + r.id);
+        showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox);
+        hasNew = true;
+      }
+    });
+    challenges.incoming.forEach((c) => {
+      if (!toastedNotificationIds.has("chal-" + c.id)) {
+        toastedNotificationIds.add("chal-" + c.id);
+        showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox);
+        hasNew = true;
+      }
+    });
+    notifications.forEach((n) => {
+      if (!toastedNotificationIds.has(n.id)) {
+        toastedNotificationIds.add(n.id);
+        showToast(n.message, () => document.querySelector('[data-target="view-profile"]').click());
+        hasNew = true;
+      }
+    });
     lastFriendReqCount = requests.length;
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
@@ -617,6 +643,8 @@
     });
     const startBtn = document.getElementById("startBtn");
     if (startBtn) startBtn.addEventListener("click", async () => {
+      if (startBtn.disabled) return; // Schutz gegen Doppel-Tap auf Mobilgeräten
+      startBtn.disabled = true;
       const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
       const topicFilters = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
       if (selectedChallengeFriendIds.size) {
@@ -630,6 +658,7 @@
           Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters);
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
+          startBtn.disabled = false;
           return;
         }
       } else {
@@ -1201,10 +1230,10 @@
         return `
         <div class="material-card">
           <div class="community-text-head">
+            ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover-thumb" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
             <span class="level-badge">${t.level}</span>
             <h3 style="margin:0;">${t.title}</h3>
           </div>
-          ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
           <p style="white-space:pre-wrap;">${t.body}</p>
           <div class="modal-meta-row" style="margin-top:8px; justify-content:flex-start;">
             <button type="button" class="friend-name-btn" style="display:inline-flex; align-items:center; gap:6px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>${authorAvatar}${t.author_name}${adminBadge(authorP?.is_admin, authorP?.is_owner, authorP?.is_moderator)}</button>
@@ -1750,7 +1779,7 @@
       saveBtn.textContent = "Speichert …";
       saveBtn.disabled = true;
       const bioText = document.getElementById("bioInput").value.trim();
-      const [okBio, okBday, okOrigin, okExtended] = await Promise.all([
+      const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
         Backend.saveBirthday(document.getElementById("birthdayInput").value.trim()),
         Backend.saveOrigin(document.getElementById("originSelect").value),
@@ -1763,8 +1792,10 @@
           poem: document.getElementById("poemInput").value.trim(),
         }),
       ]);
-      if (!okBio || !okBday || !okOrigin || !okExtended) {
-        errBox.textContent = "⚠️ Konnte nicht dauerhaft gespeichert werden — vermutlich blockiert Row Level Security (RLS) das Schreiben in Supabase. Bitte im SQL-Editor ausführen: alter table profiles disable row level security;";
+      if (!okBio || !okBday || !okOrigin || !extendedResult.ok) {
+        errBox.textContent = !extendedResult.ok
+          ? "⚠️ " + extendedResult.message
+          : "⚠️ Konnte nicht dauerhaft gespeichert werden — vermutlich blockiert Row Level Security (RLS) das Schreiben in Supabase. Bitte im SQL-Editor ausführen: alter table profiles disable row level security;";
         saveBtn.textContent = "Speichern";
         saveBtn.disabled = false;
         return;
@@ -1845,7 +1876,7 @@
         const current = new Set(profile.languages || []);
         if (current.has(btn.dataset.lang)) current.delete(btn.dataset.lang);
         else current.add(btn.dataset.lang);
-        const ok = await Backend.saveExtendedProfile({
+        const result = await Backend.saveExtendedProfile({
           languages: [...current],
           favMovie: profile.favMovie || "",
           favSeries: profile.favSeries || "",
@@ -1853,11 +1884,11 @@
           favFood: profile.favFood || "",
           poem: profile.poem || "",
         });
-        if (!ok) {
-          document.getElementById("profileSaveError").textContent = "⚠️ Sprache konnte nicht dauerhaft gespeichert werden — vermutlich blockiert RLS in Supabase das Schreiben.";
-          return;
+        renderAccount(); // immer neu rendern, damit der Klick sichtbar wird — auch wenn das Speichern fehlschlägt
+        if (!result.ok) {
+          const errBox = document.getElementById("profileSaveError");
+          if (errBox) errBox.textContent = "⚠️ " + result.message;
         }
-        renderAccount();
       });
     });
     const galleryInput = document.getElementById("galleryInput");
@@ -2253,12 +2284,16 @@
         <h3>👥 Deine Freunde</h3>
         ${friends.length ? friends.map((f) => `
           <div class="breakdown-row">
-            <div>
-              <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>
-              <div class="empty-note" style="font-size:0.72rem; margin-top:2px;">${lastSeenText(f.last_active, f.online)}</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" class="friend-bulk-check" data-bulk-friend="${f.id}" data-bulk-name="${f.name}" />
+              <div>
+                <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>
+                <div class="empty-note" style="font-size:0.72rem; margin-top:2px;">${lastSeenText(f.last_active, f.online)}</div>
+              </div>
             </div>
             <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
+        ${friends.length ? `<button type="button" class="btn btn-coffee" id="bulkChallengeBtn" style="margin-top:10px; display:none;">🎮 Ausgewählte herausfordern</button>` : ""}
       </div>
 
       ${outgoingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
@@ -2319,10 +2354,33 @@
 
     area.querySelectorAll("[data-challenge]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        friendChallengeTarget = { id: btn.dataset.challenge, name: btn.dataset.name };
-        renderChallengePicker();
+        selectedChallengeFriendIds.clear();
+        selectedChallengeFriendIds.add(btn.dataset.challenge);
+        activateTab("view-learn");
+        document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
       });
     });
+
+    const bulkChecks = area.querySelectorAll(".friend-bulk-check");
+    const bulkBtn = document.getElementById("bulkChallengeBtn");
+    function refreshBulkBtn() {
+      const checked = [...bulkChecks].filter((c) => c.checked);
+      if (bulkBtn) {
+        bulkBtn.style.display = checked.length ? "inline-flex" : "none";
+        bulkBtn.textContent = `🎮 Ausgewählte herausfordern (${checked.length})`;
+      }
+    }
+    bulkChecks.forEach((c) => c.addEventListener("change", refreshBulkBtn));
+    if (bulkBtn) {
+      bulkBtn.addEventListener("click", () => {
+        const checked = [...bulkChecks].filter((c) => c.checked);
+        if (!checked.length) return;
+        selectedChallengeFriendIds.clear();
+        checked.forEach((c) => selectedChallengeFriendIds.add(c.dataset.bulkFriend));
+        activateTab("view-learn");
+        document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+      });
+    }
 
     area.querySelectorAll("[data-accept-challenge]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -2357,15 +2415,22 @@
         </div>
       </div>
     `;
+    let challengePickInProgress = false;
     box.querySelectorAll("[data-pick-cat]").forEach((card) => {
       card.addEventListener("click", async () => {
+        if (challengePickInProgress) return; // Schutz gegen Doppel-Tap auf Mobilgeräten
+        challengePickInProgress = true;
         const categoryId = card.dataset.pickCat;
-        const challengeId = await Backend.createChallenge(friendChallengeTarget.id, [categoryId]);
-        friendChallengeTarget = null;
-        activateTab("view-learn");
-        document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
-        Quiz.startSession([categoryId], "leicht", { challengeId });
-        renderQuestion();
+        try {
+          const challengeId = await Backend.createChallenge(friendChallengeTarget.id, [categoryId]);
+          friendChallengeTarget = null;
+          activateTab("view-learn");
+          document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+          Quiz.startSession([categoryId], "leicht", { challengeId });
+          renderQuestion();
+        } finally {
+          challengePickInProgress = false;
+        }
       });
     });
   }
@@ -2477,6 +2542,7 @@
   Backend.restoreSession().then(() => {
     refreshHeaderAuth();
     renderAccount();
+    renderSetup();
     applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
     updateSpecialDayBar();
   });

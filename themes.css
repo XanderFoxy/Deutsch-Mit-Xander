@@ -1548,41 +1548,64 @@
   --card-shadow-extra: none;
   --logo-emoji: "🐠"; --logo-shape: 50%; --logo-bg: #4FD4B8;
 }
-/* Fischschwarm — echte SVG-Fischsilhouetten, ziehen quer über den Bildschirm */
+/* Fischschwarm — drei Reihen mit unterschiedlichem Tempo, sanftem Auf-und-Ab-Wippen und
+   wechselnden Richtungen, damit kein Fisch die Bewegung eines anderen exakt kopiert. */
 [data-theme="aquarium"] body::before {
   content: "";
   position: fixed;
-  left: 0; right: 0; top: 22%; height: 26px;
+  left: 0; right: 0; top: 18%; height: 26px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.8;
   background-repeat: repeat-x;
   background-size: 180px 26px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='26' viewBox='0 0 180 26'%3E%3Cg%3E%3Cpath d='M10 13 C10 7 20 4 28 8 L34 3 L30 13 L34 23 L28 18 C20 22 10 19 10 13 Z' fill='%23F2B84B'/%3E%3Ccircle cx='16' cy='10' r='1.2' fill='%23071C2C'/%3E%3Cpath d='M110 15 C110 10 118 7 125 10 L130 6 L127 15 L130 24 L125 20 C118 23 110 20 110 15 Z' fill='%23E8825F'/%3E%3Ccircle cx='115' cy='12' r='1.1' fill='%23071C2C'/%3E%3C/g%3E%3C/svg%3E");
-  animation: aquariumSwimRight 16s linear infinite;
+  animation: aquariumSwimRight 19s ease-in-out infinite, aquariumBobA 5.5s ease-in-out infinite;
 }
-/* Zweite, tiefer liegende Reihe, entgegengesetzte Richtung, andere Fische */
+[data-theme="aquarium"] .weather-bar::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; top: 40%; height: 20px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.65;
+  background-repeat: repeat-x;
+  background-size: 130px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='20' viewBox='0 0 130 20'%3E%3Cpath d='M7 10 C7 5 15 2 21 6 L26 1 L23 10 L26 19 L21 15 C15 18 7 15 7 10 Z' fill='%23F6CC78'/%3E%3C/svg%3E");
+  animation: aquariumSwimLeft 9s ease-in-out infinite, aquariumBobB 4s ease-in-out infinite;
+}
 [data-theme="aquarium"] body::after {
   content: "";
   position: fixed;
-  left: 0; right: 0; top: 62%; height: 22px;
+  left: 0; right: 0; top: 65%; height: 22px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.7;
   background-repeat: repeat-x;
   background-size: 150px 22px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='22' viewBox='0 0 150 22' transform='scale(-1,1)'%3E%3Cpath d='M8 11 C8 6 16 3 22 7 L27 2 L24 11 L27 20 L22 16 C16 19 8 16 8 11 Z' fill='%234FD4B8'/%3E%3Ccircle cx='13' cy='9' r='1' fill='%23071C2C'/%3E%3C/svg%3E");
-  animation: aquariumSwimLeft 12s linear infinite;
+  animation: aquariumSwimRightSlow 13s ease-in-out infinite, aquariumBobC 6.5s ease-in-out infinite;
 }
 @keyframes aquariumSwimRight {
   0% { background-position-x: 0; }
-  100% { background-position-x: 180px; }
-}
-@keyframes aquariumSwimLeft {
-  0% { background-position-x: 150px; }
+  48% { background-position-x: 170px; }
+  52% { background-position-x: 170px; }
   100% { background-position-x: 0; }
 }
-/* Aufsteigende Luftblasen */
+@keyframes aquariumSwimRightSlow {
+  0% { background-position-x: 150px; }
+  50% { background-position-x: 0; }
+  100% { background-position-x: 150px; }
+}
+@keyframes aquariumSwimLeft {
+  0% { background-position-x: 130px; }
+  50% { background-position-x: 0; }
+  100% { background-position-x: 130px; }
+}
+@keyframes aquariumBobA { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@keyframes aquariumBobB { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes aquariumBobC { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+/* Aufsteigende Luftblasen — unterschiedlich groß, als würden sie beim Ausatmen der Fische entstehen */
 [data-theme="aquarium"] .weather-bar::after {
   content: "";
   position: fixed;
@@ -1590,12 +1613,14 @@
   pointer-events: none;
   z-index: 1;
   background-image:
-    radial-gradient(3px 3px at 10% 95%, rgba(230,244,245,0.6), transparent),
-    radial-gradient(2px 2px at 30% 95%, rgba(230,244,245,0.5), transparent),
-    radial-gradient(4px 4px at 55% 95%, rgba(230,244,245,0.6), transparent),
-    radial-gradient(2.5px 2.5px at 75% 95%, rgba(230,244,245,0.5), transparent),
-    radial-gradient(3px 3px at 90% 95%, rgba(230,244,245,0.6), transparent);
-  animation: aquariumBubbles 6s linear infinite;
+    radial-gradient(2px 2px at 8% 95%, rgba(230,244,245,0.55), transparent),
+    radial-gradient(5px 5px at 22% 95%, rgba(230,244,245,0.6), transparent),
+    radial-gradient(3px 3px at 38% 95%, rgba(230,244,245,0.5), transparent),
+    radial-gradient(7px 7px at 55% 95%, rgba(230,244,245,0.55), transparent),
+    radial-gradient(2.5px 2.5px at 68% 95%, rgba(230,244,245,0.5), transparent),
+    radial-gradient(4px 4px at 82% 95%, rgba(230,244,245,0.6), transparent),
+    radial-gradient(2px 2px at 93% 95%, rgba(230,244,245,0.5), transparent);
+  animation: aquariumBubbles 6.5s linear infinite;
 }
 @keyframes aquariumBubbles {
   0% { background-position-y: 0; opacity: 0; }
@@ -1720,6 +1745,96 @@
 [data-theme="nordlichtfjord"] .tape-piece,
 [data-theme="kupferkessel"] .tape-piece,
 [data-theme="aquarium"] .tape-piece,
+/* ---------- 61) SPUKWALD — dunkel, knorrige Bäume im Wind mit Gewitter und Regen (animiert) ---------- */
+[data-theme="spukwald"] {
+  --plum-950: #0A0A0C;
+  --plum-800: #131316;
+  --plum-700: #1D1D22;
+  --cream-50: #E8E8EC;
+  --cream-200: #9494A0;
+  --amber-400: #B8A85F;
+  --amber-300: #D0C088;
+  --teal-400: #5F8E8A;
+  --coral-400: #9F5F5F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.6);
+  --card-border: 1px solid rgba(184,168,95,0.12);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌲"; --logo-shape: 50%; --logo-bg: #3A3A2A;
+}
+/* Blitz — unregelmäßiges Aufflackern im Hintergrund */
+[data-theme="spukwald"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: #fff;
+  opacity: 0;
+  animation: spukBlitz 9s infinite;
+}
+@keyframes spukBlitz {
+  0%, 91%, 94%, 100% { opacity: 0; }
+  92% { opacity: 0.22; }
+  93% { opacity: 0.05; }
+  93.5% { opacity: 0.15; }
+}
+/* Knorrige Bäume links und rechts, wanken leicht im Wind */
+[data-theme="spukwald"] .weather-bar::before {
+  content: "";
+  position: fixed;
+  left: -10px; bottom: 0; width: 70px; height: 45vh;
+  pointer-events: none;
+  z-index: 1;
+  transform-origin: bottom center;
+  opacity: 0.8;
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 70px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='240' viewBox='0 0 70 240'%3E%3Cpath d='M30 240 L30 140 Q18 130 6 112 M30 140 Q42 122 58 104 M30 108 Q20 90 8 72 M30 108 Q40 96 52 80 M30 76 L30 20 Q24 10 14 2 M30 44 Q38 34 50 24' stroke='%230d0d0f' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  animation: spukWind 6s ease-in-out infinite;
+}
+[data-theme="spukwald"] .weather-bar::after {
+  content: "";
+  position: fixed;
+  right: -14px; bottom: 0; width: 80px; height: 52vh;
+  pointer-events: none;
+  z-index: 1;
+  transform-origin: bottom center;
+  opacity: 0.85;
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: 80px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='280' viewBox='0 0 80 280'%3E%3Cpath d='M45 280 L45 160 Q60 148 74 126 M45 160 Q30 140 12 118 M45 122 Q58 106 72 86 M45 122 Q32 108 18 90 M45 84 L45 16 Q52 6 64 -2 M45 50 Q36 38 22 26' stroke='%2308080a' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  animation: spukWind2 7s ease-in-out infinite;
+}
+@keyframes spukWind {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes spukWind2 {
+  0%, 100% { transform: rotate(1.5deg); }
+  50% { transform: rotate(-2deg); }
+}
+/* Regen */
+[data-theme="spukwald"] body::after {
+  content: "";
+  position: fixed;
+  inset: -20px 0 0 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(100deg, transparent 0 6px, rgba(180,190,200,0.5) 6px 7px, transparent 7px 40px);
+  animation: spukRegen 0.6s linear infinite;
+}
+@keyframes spukRegen {
+  0% { background-position-y: 0; }
+  100% { background-position-y: 40px; }
+}
+
 [data-theme="korallenriff"] .tape-piece,
 [data-theme="seerosenteich"] .tape-piece,
-[data-theme="mandelbluete"] .tape-piece { display: none; }
+[data-theme="mandelbluete"] .tape-piece,
+[data-theme="spukwald"] .tape-piece { display: none; }

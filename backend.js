@@ -514,7 +514,7 @@ const Backend = (function () {
   }
 
   async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, poem }) {
-    if (!demo.profile) return true;
+    if (!demo.profile) return { ok: true };
     demo.profile.languages = languages;
     demo.profile.favMovie = favMovie;
     demo.profile.favSeries = favSeries;
@@ -525,9 +525,10 @@ const Backend = (function () {
       const { data, error } = await client.from("profiles").update({
         languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood, poem,
       }).eq("id", demo.user.id).select();
-      if (error || !data || !data.length) return false;
+      if (error) return { ok: false, message: friendlyDbError(error.message) };
+      if (!data || !data.length) return { ok: false, message: "Speichern hat nichts zurückgegeben — evtl. blockiert Row Level Security (RLS) den Schreibzugriff." };
     }
-    return true;
+    return { ok: true };
   }
 
   function addTrophy(label) {
