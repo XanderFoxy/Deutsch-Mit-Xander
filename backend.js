@@ -194,40 +194,30 @@ const Backend = (function () {
 
     if (client) {
       // Erwartete Tabelle: results (user_id, categories, points, bonus, percent, character, played_at)
-      try {
-        await client.from("results").insert({
-          user_id: demo.user.id,
-          categories: result.categories,
-          points: result.points,
-          bonus: result.bonus,
-          percent: result.percent,
-          character: result.character,
-          played_at: result.playedAt,
-        });
-        await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id);
-      } catch (e) {
-        console.warn("Supabase-Speichern (Ergebnis/Profil) fehlgeschlagen, bleibt lokal:", e);
-      }
+      const { error: resultsError } = await client.from("results").insert({
+        user_id: demo.user.id,
+        categories: result.categories,
+        points: result.points,
+        bonus: result.bonus,
+        percent: result.percent,
+        character: result.character,
+        played_at: result.playedAt,
+      });
+      if (resultsError) console.warn("Tabelle results konnte nicht gespeichert werden:", resultsError.message);
+
+      const { error: profileError } = await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id);
+      if (profileError) console.warn("Punkte/Abzeichen im Profil konnten nicht gespeichert werden:", profileError.message);
+
       // Tagesranking separat behandeln, damit ein Problem hier nie Punkte/Ergebnis blockiert
-      try {
-        const { data: existingRow } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
-        if (existingRow) {
-          await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points), user_id: demo.user.id }).eq("name", demo.profile.name).eq("date", todayKey());
-        } else {
-          await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey(), user_id: demo.user.id });
-        }
-      } catch (e) {
-        // Fällt vermutlich, weil die Spalte "user_id" in daily_ranking noch fehlt -> ohne sie nochmal versuchen
-        try {
-          const { data: existingRow2 } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
-          if (existingRow2) {
-            await client.from("daily_ranking").update({ points: Math.max(existingRow2.points, demo.profile.points) }).eq("name", demo.profile.name).eq("date", todayKey());
-          } else {
-            await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey() });
-          }
-        } catch (e2) {
-          console.warn("Tagesranking konnte nicht gespeichert werden:", e2);
-        }
+      const { data: existingRow, error: selectError } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
+      if (selectError) {
+        console.warn("Tagesranking: Zeile konnte nicht gelesen werden:", selectError.message);
+      } else if (existingRow) {
+        const { error: updateError } = await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points), user_id: demo.user.id }).eq("name", demo.profile.name).eq("date", todayKey());
+        if (updateError) console.warn("Tagesranking konnte nicht aktualisiert werden:", updateError.message);
+      } else {
+        const { error: insertError } = await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey(), user_id: demo.user.id });
+        if (insertError) console.warn("Tagesranking konnte nicht angelegt werden:", insertError.message);
       }
     }
 

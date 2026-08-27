@@ -1155,14 +1155,14 @@
       const originFlag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "🌍" : "";
       area.innerHTML = `
         ${demoBanner}
-        <div class="question-card">
+        <div class="question-card profile-card-view">
+          <div class="profile-points"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></div>
           <div class="profile-header">
             ${avatarHtml}
             <div class="profile-name-col">
               <h2>${profile.name}</h2>
               <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}${originFlag ? ` · ${originFlag} ${profile.origin}` : ""}</p>
             </div>
-            <div class="profile-points"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></div>
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
