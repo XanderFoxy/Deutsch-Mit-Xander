@@ -298,6 +298,7 @@
 
   let selectedChallengeFriendIds = new Set();
   let selectedQuizTopic = "";
+  let selectedWortschatzTopic = "";
 
   async function renderSetup() {
     setupEl.style.display = "";
@@ -313,11 +314,20 @@
       </div>` : "";
 
     const cards = ExerciseData.CATEGORIES.map((cat) => {
-      const quizTopicPicker = cat.id === "quiz" && selectedCategories.has("quiz") ? `
+      let topicPicker = "";
+      if (cat.id === "quiz" && selectedCategories.has("quiz")) {
+        topicPicker = `
         <div class="quiztopic-row">
           <button type="button" class="order-pill quiztopic-pill" data-quiztopic="" aria-selected="${selectedQuizTopic === ""}">🏆 Alle Themen</button>
           ${ExerciseData.getQuizTopics().map((t) => `<button type="button" class="order-pill quiztopic-pill" data-quiztopic="${t}" aria-selected="${selectedQuizTopic === t}">${t}</button>`).join("")}
-        </div>` : "";
+        </div>`;
+      } else if (cat.id === "wortschatz" && selectedCategories.has("wortschatz")) {
+        topicPicker = `
+        <div class="quiztopic-row">
+          <button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="" aria-selected="${selectedWortschatzTopic === ""}">🧠 Alle Themen</button>
+          ${ExerciseData.getWortschatzThemen().map((t) => `<button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="${t}" aria-selected="${selectedWortschatzTopic === t}">${t}</button>`).join("")}
+        </div>`;
+      }
       return `
         <div class="category-card" data-cat="${cat.id}">
           <div class="cat-checkbox">${selectedCategories.has(cat.id) ? "✓" : ""}</div>
@@ -329,12 +339,12 @@
               <button type="button" class="cat-collapse-btn" data-collapse="${cat.id}" aria-label="Einklappen">▾</button>
             </div>
             <div class="cat-info-text" id="info-${cat.id}">${cat.info}</div>
-            ${quizTopicPicker}
+            ${topicPicker}
           </div>
         </div>`;
     }).join("");
 
-    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], selectedQuizTopic) : 0;
+    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }) : 0;
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
     if (currentDiffCount > maxAvailable) {
       const fitting = Quiz.DIFFICULTIES.filter((d) => d.count <= maxAvailable).sort((a, b) => b.count - a.count)[0];
@@ -406,7 +416,7 @@
         renderSetup();
       });
     });
-    setupEl.querySelectorAll(".order-pill:not(.quiztopic-pill)").forEach((btn) => {
+    setupEl.querySelectorAll(".order-pill:not(.quiztopic-pill):not(.wortschatztopic-pill)").forEach((btn) => {
       btn.addEventListener("click", () => {
         orderMode = btn.dataset.order;
         renderSetup();
@@ -415,6 +425,12 @@
     setupEl.querySelectorAll(".quiztopic-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedQuizTopic = btn.dataset.quiztopic;
+        renderSetup();
+      });
+    });
+    setupEl.querySelectorAll(".wortschatztopic-pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedWortschatzTopic = btn.dataset.wortschatztopic;
         renderSetup();
       });
     });
@@ -429,6 +445,7 @@
     const startBtn = document.getElementById("startBtn");
     if (startBtn) startBtn.addEventListener("click", async () => {
       const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
+      const topicFilters = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
       if (selectedChallengeFriendIds.size) {
         try {
           // Bei mehreren Freunden: ein Duell pro Person anlegen, alle mit derselben Auswahl
@@ -437,13 +454,13 @@
             const cid = await Backend.createChallenge(fid, [...selectedCategories]);
             if (!firstChallengeId) firstChallengeId = cid;
           }
-          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, selectedQuizTopic);
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters);
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
           return;
         }
       } else {
-        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, selectedQuizTopic);
+        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters);
       }
       Backend.notifyPracticing(titles);
       renderQuestion();

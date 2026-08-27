@@ -31,15 +31,21 @@ const Quiz = (function () {
 
   let state = null;
 
-  function poolSizeFor(categoryIds, quizTopic) {
+  const TOPIC_FILTERABLE = ["quiz", "wortschatz"];
+
+  function poolSizeFor(categoryIds, topicFilters) {
     return categoryIds.reduce((sum, id) => {
-      const bank = id === "quiz" && quizTopic ? ExerciseData.getCategory(id).getBank(quizTopic) : ExerciseData.getCategory(id).getBank();
+      const t = topicFilters && topicFilters[id];
+      const bank = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
       return sum + bank.length;
     }, 0);
   }
 
-  function buildQuestions(categoryIds, count, orderMode, quizTopic) {
-    const bankFor = (id) => (id === "quiz" && quizTopic ? ExerciseData.getCategory(id).getBank(quizTopic) : ExerciseData.getCategory(id).getBank());
+  function buildQuestions(categoryIds, count, orderMode, topicFilters) {
+    const bankFor = (id) => {
+      const t = topicFilters && topicFilters[id];
+      return TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
+    };
     if (orderMode === "sequential" && categoryIds.length > 1) {
       const per = Math.floor(count / categoryIds.length);
       let remainder = count - per * categoryIds.length;
@@ -60,9 +66,9 @@ const Quiz = (function () {
     return Core.drawUnique(pool, count);
   }
 
-  function startSession(categoryIds, difficultyId, meta, orderMode, quizTopic) {
+  function startSession(categoryIds, difficultyId, meta, orderMode, topicFilters) {
     const diff = DIFFICULTIES.find((d) => d.id === difficultyId);
-    const questions = buildQuestions(categoryIds, diff.count, orderMode, quizTopic);
+    const questions = buildQuestions(categoryIds, diff.count, orderMode, topicFilters);
     state = {
       categoryIds,
       difficulty: diff,

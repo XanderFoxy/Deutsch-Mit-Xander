@@ -601,6 +601,287 @@ const ExerciseData = (function () {
   }
 
   /* ---------------------------------------------------------
+     12) NEBENSATZ-KONJUNKTIONEN — weil/dass/obwohl/als/wenn/
+         bevor/nachdem/bis/während
+     --------------------------------------------------------- */
+  const NEBENSATZ = [
+    ["Ich bleibe zu Hause, ___ es regnet.","weil","dass","Weil nennt den Grund."],
+    ["Ich weiß, ___ er heute kommt.","dass","weil","Nach wissen folgt ein dass-Satz."],
+    ["___ er müde war, ging er noch joggen.","Obwohl","Weil","Obwohl drückt einen Gegensatz aus."],
+    ["Er kam ins Zimmer, ___ ich noch schlief.","als","wenn","Als für ein einmaliges Ereignis in der Vergangenheit."],
+    ["Ruf mich bitte an, ___ du ankommst.","wenn","als","Wenn für wiederkehrende oder zukünftige Ereignisse."],
+    ["Warte hier, ___ ich zurückkomme.","bis","bevor","Bis nennt den Zeitpunkt, an dem etwas endet."],
+    ["Zieh die Schuhe aus, ___ du reingehst.","bevor","nachdem","Bevor beschreibt das frühere Ereignis."],
+    ["___ ich das Studium beendet hatte, suchte ich einen Job.","Nachdem","Bevor","Nachdem beschreibt das spätere Ereignis nach dem ersten."],
+    ["Er hörte Musik, ___ er kochte.","während","nachdem","Während beschreibt Gleichzeitigkeit."],
+    ["Ich glaube, ___ das eine gute Idee ist.","dass","weil","Nach glauben folgt ein dass-Satz."],
+    ["Sie kam zu spät, ___ der Bus Verspätung hatte.","weil","dass","Weil nennt den Grund für die Verspätung."],
+    ["___ es kalt war, zogen wir uns warm an.","Weil","Obwohl","Weil nennt den Grund fürs Warmanziehen."],
+    ["Er ging spazieren, ___ es regnete.","obwohl","weil","Obwohl — trotz Regen ging er raus."],
+    ["Ich rufe dich an, ___ ich Zeit habe.","wenn","als","Wenn für einen zukünftigen, wiederholbaren Fall."],
+    ["Damals, ___ ich klein war, wohnten wir in München.","als","wenn","Als für einen einmaligen Zeitabschnitt in der Vergangenheit."],
+    ["Bleib bitte sitzen, ___ der Film zu Ende ist.","bis","bevor","Bis markiert den Endpunkt des Wartens."],
+    ["Räum dein Zimmer auf, ___ du spielen gehst.","bevor","nachdem","Bevor — das Aufräumen kommt zuerst."],
+    ["___ wir gegessen hatten, spielten wir Karten.","Nachdem","Bevor","Nachdem — erst essen, dann Karten spielen."],
+    ["Sie las ein Buch, ___ er fernsah.","während","bevor","Während — beides passiert gleichzeitig."],
+    ["Ich hoffe, ___ das Wetter morgen besser wird.","dass","weil","Nach hoffen folgt ein dass-Satz."],
+    ["Wir mussten zu Hause bleiben, ___ es stark schneite.","weil","obwohl","Weil nennt den Grund."],
+    ["___ das Essen fertig war, deckte sie den Tisch.","Bevor","Nachdem","Bevor — der Tisch wird vor dem Essen gedeckt."],
+    ["Er machte weiter, ___ er sehr müde war.","obwohl","weil","Obwohl — trotz Müdigkeit machte er weiter."],
+    ["Sag mir Bescheid, ___ du fertig bist.","wenn","als","Wenn für einen zukünftigen Zeitpunkt."],
+    ["Ich war noch klein, ___ meine Familie umzog.","als","wenn","Als für ein einmaliges Ereignis in der Vergangenheit."],
+  ];
+
+  function bankNebensatz() {
+    return Core.shuffle(NEBENSATZ).map(([sentence, correct, wrong, explain]) => {
+      const opts = Core.shuffle([correct, wrong]);
+      return {
+        prompt: sentence,
+        options: opts,
+        correct: [opts.indexOf(correct)],
+        explain,
+      };
+    });
+  }
+
+  /* ---------------------------------------------------------
+     13) RELATIVSÄTZE — der/die/das/was/wo
+     --------------------------------------------------------- */
+  const RELATIVSATZ = [
+    ["Das ist der Mann, ___ hier wohnt.","der","die","Maskulin, Nominativ: der Mann, der …"],
+    ["Das ist die Frau, ___ mir geholfen hat.","die","der","Feminin, Nominativ: die Frau, die …"],
+    ["Das ist das Kind, ___ so laut lacht.","das","der","Neutrum, Nominativ: das Kind, das …"],
+    ["Ich mag Städte, ___ viele Parks haben.","die","der","Plural, Nominativ: die Städte, die …"],
+    ["Das ist alles, ___ ich weiß.","was","das","Nach alles steht was."],
+    ["Berlin ist die Stadt, ___ ich geboren wurde.","wo","die","Ortsangabe: wo statt in der."],
+    ["Das Buch, ___ ich lese, ist spannend.","das","die","Neutrum: das Buch, das …"],
+    ["Der Lehrer, ___ Deutsch unterrichtet, heißt Alex.","der","das","Maskulin, Nominativ."],
+    ["Das ist nichts, ___ mich interessiert.","was","das","Nach nichts steht was."],
+    ["Das Restaurant, ___ wir gestern waren, war toll.","wo","das","Ortsangabe: wo statt in dem."],
+    ["Die Kinder, ___ im Garten spielen, sind meine Nichten.","die","das","Plural, Nominativ."],
+    ["Das ist das Beste, ___ mir je passiert ist.","was","das","Nach Superlativen (das Beste) steht was."],
+    ["Kennst du den Film, ___ gerade im Kino läuft?","der","die","Maskulin, Nominativ: der Film, der …"],
+    ["Das ist die Firma, ___ ich arbeite.","bei der","wo","Mit Präposition steht bei der, nicht wo."],
+    ["Das ist der Grund, ___ ich hier bin.","weshalb","was","Weshalb für einen Grund."],
+    ["Die Wohnung, ___ Fenster nach Süden zeigen, ist hell.","deren","die","Possessiv: deren Fenster (die Fenster der Wohnung)."],
+    ["Das ist der Ort, ___ ich meine Kindheit verbracht habe.","wo","was","Ortsangabe: wo."],
+    ["Ich habe einen Freund, ___ in Berlin lebt.","der","die","Maskulin, Nominativ."],
+    ["Das sind die Schuhe, ___ ich gestern gekauft habe.","die","der","Plural, Akkusativ."],
+    ["Das ist das Auto, ___ Motor kaputt ist.","dessen","deren","Possessiv maskulin/neutrum: dessen Motor."],
+    ["Sie ist die Ärztin, ___ mich behandelt hat.","die","der","Feminin, Nominativ."],
+    ["Das ist etwas, ___ ich nicht verstehe.","was","das","Nach etwas steht was."],
+    ["Ich erinnere mich an die Zeit, ___ wir jung waren.","als","wo","Zeitangabe in der Vergangenheit: als."],
+    ["Das ist der Park, ___ wir joggen gehen.","wo","der","Ortsangabe: wo statt in dem."],
+    ["Die Studentin, ___ Arbeit ausgezeichnet wurde, ist sehr stolz.","deren","die","Possessiv feminin: deren Arbeit."],
+  ];
+
+  function bankRelativsatz() {
+    return Core.shuffle(RELATIVSATZ).map(([sentence, correct, wrong, explain]) => {
+      const opts = Core.shuffle([correct, wrong]);
+      return {
+        prompt: sentence,
+        options: opts,
+        correct: [opts.indexOf(correct)],
+        explain,
+      };
+    });
+  }
+
+  /* ---------------------------------------------------------
+     14) ZEITFORMEN — welche Zeitform ist das?
+     --------------------------------------------------------- */
+  const TENSE_NAMES = ["Präsens", "Perfekt", "Präteritum", "Plusquamperfekt", "Futur I"];
+  const ZEITFORMEN = [
+    ["Ich lerne jeden Tag Deutsch.","Präsens"],
+    ["Ich habe gestern Deutsch gelernt.","Perfekt"],
+    ["Ich lernte letztes Jahr Deutsch.","Präteritum"],
+    ["Ich hatte schon Deutsch gelernt, bevor ich nach Deutschland kam.","Plusquamperfekt"],
+    ["Ich werde morgen Deutsch lernen.","Futur I"],
+    ["Wir kochen heute Abend Pasta.","Präsens"],
+    ["Wir haben gestern Abend Pasta gekocht.","Perfekt"],
+    ["Wir kochten früher jeden Sonntag zusammen.","Präteritum"],
+    ["Wir hatten schon gekocht, als die Gäste kamen.","Plusquamperfekt"],
+    ["Wir werden nächste Woche eine Party feiern.","Futur I"],
+    ["Er arbeitet in einem Büro.","Präsens"],
+    ["Er hat zehn Jahre in einem Büro gearbeitet.","Perfekt"],
+    ["Er arbeitete früher als Lehrer.","Präteritum"],
+    ["Er hatte schon gearbeitet, bevor er studierte.","Plusquamperfekt"],
+    ["Er wird nächstes Jahr im Ausland arbeiten.","Futur I"],
+    ["Sie liest ein spannendes Buch.","Präsens"],
+    ["Sie hat das Buch schon gelesen.","Perfekt"],
+    ["Sie las das Buch letzten Sommer.","Präteritum"],
+    ["Sie hatte das Buch schon gelesen, bevor der Film kam.","Plusquamperfekt"],
+    ["Sie wird das neue Buch bald lesen.","Futur I"],
+    ["Die Kinder spielen im Garten.","Präsens"],
+    ["Die Kinder haben im Garten gespielt.","Perfekt"],
+    ["Die Kinder spielten gestern im Garten.","Präteritum"],
+    ["Die Kinder hatten schon gespielt, bevor es zu regnen begann.","Plusquamperfekt"],
+    ["Die Kinder werden morgen im Park spielen.","Futur I"],
+    ["Ich fahre jeden Tag mit dem Fahrrad zur Arbeit.","Präsens"],
+    ["Ich bin gestern mit dem Fahrrad zur Arbeit gefahren.","Perfekt"],
+    ["Ich fuhr früher immer mit dem Auto.","Präteritum"],
+    ["Ich war schon losgefahren, als es zu regnen anfing.","Plusquamperfekt"],
+    ["Ich werde morgen mit dem Zug fahren.","Futur I"],
+    ["Wir besuchen unsere Großeltern am Wochenende.","Präsens"],
+    ["Wir haben unsere Großeltern letztes Wochenende besucht.","Perfekt"],
+    ["Wir besuchten sie früher jeden Monat.","Präteritum"],
+    ["Wir hatten sie schon besucht, bevor wir in den Urlaub fuhren.","Plusquamperfekt"],
+    ["Wir werden sie nächsten Monat wieder besuchen.","Futur I"],
+    ["Die Sonne scheint heute den ganzen Tag.","Präsens"],
+    ["Die Sonne hat gestern den ganzen Tag geschienen.","Perfekt"],
+    ["Die Sonne schien gestern den ganzen Tag.","Präteritum"],
+    ["Die Sonne hatte schon geschienen, bevor die Wolken kamen.","Plusquamperfekt"],
+    ["Die Sonne wird morgen wieder scheinen.","Futur I"],
+  ];
+
+  function bankZeitformen() {
+    return Core.shuffle(ZEITFORMEN).map(([sentence, correctTense]) => {
+      const distractors = Core.shuffle(TENSE_NAMES.filter((t) => t !== correctTense)).slice(0, 2);
+      const opts = Core.shuffle([correctTense, ...distractors]);
+      return {
+        prompt: `„${sentence}“ — Welche Zeitform ist das?`,
+        options: opts,
+        correct: [opts.indexOf(correctTense)],
+        explain: `Das ist ${correctTense}.`,
+      };
+    });
+  }
+
+  const WORTSCHATZ_THEMEN = [
+    ["der Staubsauger","Gerät zum Saubermachen von Böden","Haushalt"],
+    ["die Waschmaschine","Gerät zum Wäschewaschen","Haushalt"],
+    ["der Herd","Gerät zum Kochen","Haushalt"],
+    ["der Kühlschrank","Gerät zum Kühlhalten von Lebensmitteln","Haushalt"],
+    ["die Spülmaschine","Gerät zum Geschirrspülen","Haushalt"],
+    ["der Besen","Werkzeug zum Kehren","Haushalt"],
+    ["das Bügeleisen","Gerät zum Glätten von Kleidung","Haushalt"],
+    ["die Mülltonne","Behälter für Abfall","Haushalt"],
+    ["der Wasserhahn","Vorrichtung zum Ein- und Ausschalten von Wasser","Haushalt"],
+    ["die Steckdose","Anschluss für elektrische Geräte an der Wand","Haushalt"],
+    ["der Teppich","Textiler Bodenbelag","Haushalt"],
+    ["das Regal","Möbelstück zum Aufbewahren von Gegenständen","Haushalt"],
+    ["sich verabreden","einen gemeinsamen Termin ausmachen","Kommunikation & Freunde"],
+    ["plaudern","locker und entspannt miteinander reden","Kommunikation & Freunde"],
+    ["vertrauen","sich auf jemanden verlassen können","Kommunikation & Freunde"],
+    ["jemanden vermissen","traurig sein, weil jemand nicht da ist","Kommunikation & Freunde"],
+    ["sich streiten","unterschiedlicher Meinung sein und darüber reden","Kommunikation & Freunde"],
+    ["sich versöhnen","nach einem Streit wieder Frieden schließen","Kommunikation & Freunde"],
+    ["einladen","jemanden bitten, mitzukommen oder vorbeizukommen","Kommunikation & Freunde"],
+    ["der Kumpel","umgangssprachlich für einen guten Freund","Kommunikation & Freunde"],
+    ["tratschen","über andere Leute reden, oft mit Klatsch","Kommunikation & Freunde"],
+    ["sich verabschieden","Auf Wiedersehen sagen","Kommunikation & Freunde"],
+    ["zuhören","aufmerksam auf das achten, was jemand sagt","Kommunikation & Freunde"],
+    ["necken","jemanden liebevoll aufziehen oder ärgern","Kommunikation & Freunde"],
+    ["die Bewerbung","schriftlicher Antrag für eine Stelle oder einen Studienplatz","Schule & Beruf"],
+    ["das Vorstellungsgespräch","Gespräch, um sich für eine Stelle zu präsentieren","Schule & Beruf"],
+    ["der Lebenslauf","Übersicht über bisherige Ausbildung und Berufserfahrung","Schule & Beruf"],
+    ["die Prüfung","Test, der Wissen oder Können überprüft","Schule & Beruf"],
+    ["das Zeugnis","Dokument mit Noten oder Bewertung","Schule & Beruf"],
+    ["der Kollege","Person, mit der man zusammenarbeitet","Schule & Beruf"],
+    ["die Kündigung","Beendigung eines Arbeits- oder Mietverhältnisses","Schule & Beruf"],
+    ["der Feierabend","das Ende des Arbeitstages","Schule & Beruf"],
+    ["die Ausbildung","praktische und theoretische Berufsvorbereitung","Schule & Beruf"],
+    ["das Gehalt","regelmäßige Bezahlung für Arbeit","Schule & Beruf"],
+    ["die Fortbildung","zusätzliches Lernen, um beruflich besser zu werden","Schule & Beruf"],
+    ["der Chef","die Person, die in einem Betrieb das Sagen hat","Schule & Beruf"],
+    ["die Vorspeise","erster Gang eines Menüs","Essen & Trinken"],
+    ["die Hauptspeise","der wichtigste Teil eines Menüs","Essen & Trinken"],
+    ["die Nachspeise","süßer Abschluss eines Essens","Essen & Trinken"],
+    ["der Kellner","Person, die im Restaurant bedient","Essen & Trinken"],
+    ["die Rechnung","Aufstellung dessen, was man bezahlen muss","Essen & Trinken"],
+    ["bestellen","im Restaurant sagen, was man essen möchte","Essen & Trinken"],
+    ["die Speisekarte","Liste der Gerichte in einem Restaurant","Essen & Trinken"],
+    ["das Trinkgeld","zusätzliches Geld für guten Service","Essen & Trinken"],
+    ["vegetarisch","ohne Fleisch","Essen & Trinken"],
+    ["die Zutat","ein Bestandteil eines Gerichts","Essen & Trinken"],
+    ["der Koffer","Gepäckstück zum Transportieren von Kleidung","Reisen & Urlaub"],
+    ["die Unterkunft","Ort, an dem man während der Reise übernachtet","Reisen & Urlaub"],
+    ["buchen","eine Reise, ein Hotel oder Ticket im Voraus reservieren","Reisen & Urlaub"],
+    ["der Flughafen","Ort, von dem Flugzeuge starten und landen","Reisen & Urlaub"],
+    ["das Gepäck","die Sachen, die man auf Reisen mitnimmt","Reisen & Urlaub"],
+    ["die Sehenswürdigkeit","ein Ort, den man wegen seiner Besonderheit besucht","Reisen & Urlaub"],
+    ["der Reisepass","Ausweisdokument für Auslandsreisen","Reisen & Urlaub"],
+    ["die Grenze","Trennlinie zwischen zwei Ländern","Reisen & Urlaub"],
+    ["einchecken","sich am Flughafen oder Hotel anmelden","Reisen & Urlaub"],
+    ["die Verspätung","wenn etwas später als geplant passiert","Reisen & Urlaub"],
+  ];
+
+  const KONNEKTOREN = [
+    ["Sie spricht sowohl Englisch ___ Französisch.","als auch","oder","Sowohl … als auch verbindet zwei zutreffende Dinge."],
+    ["Er mag nicht nur Fußball, ___ auch Tennis.","sondern","aber","Nicht nur … sondern auch ergänzt eine zweite Sache."],
+    ["Wir gehen entweder ins Kino ___ ins Theater.","oder","und","Entweder … oder nennt zwei Möglichkeiten, von denen nur eine zutrifft."],
+    ["Sie hat weder Zeit ___ Lust.","noch","oder","Weder … noch verneint beide Dinge."],
+    ["Er ist zwar müde, ___ er macht weiter.","aber","und","Zwar … aber drückt einen Gegensatz aus."],
+    ["Einerseits will ich reisen, ___ fehlt mir das Geld.","andererseits","deshalb","Einerseits … andererseits stellt zwei Seiten gegenüber."],
+    ["Das Kleid ist sowohl schön ___ auch praktisch.","als","wie","Nach sowohl folgt als auch."],
+    ["Ich trinke nicht nur Kaffee, ___ auch Tee.","sondern","oder","Sondern auch ergänzt eine weitere Vorliebe."],
+    ["Du kannst entweder anrufen ___ eine Nachricht schreiben.","oder","noch","Entweder … oder — eine der beiden Optionen."],
+    ["Er hat weder angerufen ___ geschrieben.","noch","oder","Weder … noch verneint beide Handlungen."],
+    ["Das Wetter ist zwar schlecht, ___ wir gehen trotzdem raus.","aber","doch","Zwar … aber — trotz des Gegensatzes."],
+    ["Einerseits mag ich die Stadt, ___ ist es mir zu laut.","andererseits","trotzdem","Andererseits zeigt die zweite, gegensätzliche Seite."],
+    ["Sie ist sowohl klug ___ auch fleißig.","als","wie","Nach sowohl folgt als auch."],
+    ["Wir besuchen nicht nur Berlin, ___ auch München.","sondern","oder","Sondern auch ergänzt ein weiteres Reiseziel."],
+    ["Ich nehme entweder den Bus ___ die Bahn.","oder","und","Entweder … oder — eine von zwei Möglichkeiten."],
+    ["Er trinkt weder Kaffee ___ Alkohol.","noch","oder","Weder … noch verneint beide Dinge."],
+    ["Die Wohnung ist zwar klein, ___ gemütlich.","aber","doch","Zwar … aber verbindet einen Nachteil mit einem Vorteil."],
+    ["Einerseits spart er Geld, ___ gönnt er sich ab und zu etwas.","andererseits","deshalb","Andererseits zeigt einen Gegensatz zur ersten Aussage."],
+    ["Sie kann sowohl kochen ___ auch backen.","als","wie","Nach sowohl folgt als auch."],
+    ["Das Auto ist nicht nur schnell, ___ auch sparsam.","sondern","aber","Sondern auch ergänzt eine zweite gute Eigenschaft."],
+  ];
+
+  const JE_DESTO = [
+    ["Je mehr ich übe, ___ besser werde ich.","desto","als","Je … desto verbindet zwei Steigerungen."],
+    ["Je früher wir starten, ___ früher kommen wir an.","desto","so","Nach je folgt desto mit Komparativ."],
+    ["Je länger die Reise dauert, ___ müder werde ich.","desto","als","Desto leitet den zweiten Teil des Vergleichs ein."],
+    ["Je mehr Geld er verdient, ___ mehr gibt er aus.","desto","wie","Je … desto beschreibt zwei parallele Entwicklungen."],
+    ["Je älter man wird, ___ weiser wird man angeblich.","desto","als","Klassische je … desto-Struktur."],
+    ["Je schneller du läufst, ___ schneller bist du fertig.","desto","so","Desto plus Komparativ nach je."],
+    ["Je später es wird, ___ leerer wird die Straße.","desto","als","Je … desto verbindet Zeit und Folge."],
+    ["Je mehr Sprachen man spricht, ___ leichter fällt eine neue.","desto","wie","Je … desto bei Sprachenlernen — ein klassisches Beispiel."],
+    ["Je teurer das Hotel, ___ besser der Service.","desto","als","Zwei Steigerungen werden verbunden."],
+    ["Je weniger er schläft, ___ gereizter wird er.","desto","so","Desto leitet die Folge ein."],
+    ["Je heller das Licht, ___ besser kann man lesen.","desto","als","Je … desto bei zwei zusammenhängenden Eigenschaften."],
+    ["Je mehr Leute kommen, ___ lustiger wird die Party.","desto","wie","Typisches je … desto-Muster."],
+    ["Je kälter es draußen ist, ___ wärmer ziehe ich mich an.","desto","als","Zwei gegenläufige, aber verbundene Steigerungen."],
+    ["Je öfter man etwas übt, ___ besser beherrscht man es.","desto","so","Desto nach dem Nebensatz mit je."],
+    ["Je größer die Stadt, ___ mehr Möglichkeiten gibt es.","desto","als","Klassische Je-desto-Konstruktion."],
+  ];
+
+  function bankWortschatzThemen(topic) {
+    const pool = topic ? WORTSCHATZ_THEMEN.filter(([, , t]) => t === topic) : WORTSCHATZ_THEMEN;
+    return Core.shuffle(pool).map(([word, correctDef, topicName]) => {
+      const sameTopic = WORTSCHATZ_THEMEN.filter(([w, , t]) => t === topicName && w !== word);
+      const distractors = Core.shuffle(sameTopic).slice(0, 2).map((x) => x[1]);
+      const opts = Core.shuffle([correctDef, ...distractors]);
+      return {
+        prompt: `Was bedeutet „${word}“?`,
+        options: opts,
+        correct: [opts.indexOf(correctDef)],
+        explain: `„${word}“ bedeutet: ${correctDef}.`,
+      };
+    });
+  }
+
+  function getWortschatzThemen() {
+    return [...new Set(WORTSCHATZ_THEMEN.map((w) => w[2]))];
+  }
+
+  function bankKonnektoren() {
+    return Core.shuffle(KONNEKTOREN).map(([sentence, correct, wrong, explain]) => {
+      const opts = Core.shuffle([correct, wrong]);
+      return { prompt: sentence, options: opts, correct: [opts.indexOf(correct)], explain };
+    });
+  }
+
+  function bankJeDesto() {
+    return Core.shuffle(JE_DESTO).map(([sentence, correct, wrong, explain]) => {
+      const opts = Core.shuffle([correct, wrong]);
+      return { prompt: sentence, options: opts, correct: [opts.indexOf(correct)], explain };
+    });
+  }
+
+
+  /* ---------------------------------------------------------
      10) DEUTSCHLAND-QUIZ — Multiple Choice, teils 2 richtige
      --------------------------------------------------------- */
   const DEUTSCHLAND_QUIZ = [
@@ -782,6 +1063,24 @@ const ExerciseData = (function () {
     { id: "ss-eszett", title: "ß oder ss", icon: "✒️", group: "grammatik",
       info: "Nach einem langen Vokal oder einem Diphthong (au, ei, eu …) steht ß. Nach einem kurzen Vokal steht ss.",
       getBank: bankSsEszett },
+    { id: "nebensatz", title: "Nebensatz-Konjunktionen", icon: "🔗", group: "logik",
+      info: "Wörter wie weil, dass, obwohl, als, wenn, bevor, nachdem, bis und während leiten Nebensätze ein — je nach Bedeutung (Grund, Gegensatz, Zeit) braucht man ein anderes Wort.",
+      getBank: bankNebensatz },
+    { id: "relativsatz", title: "Relativsätze", icon: "🧷", group: "logik",
+      info: "Relativpronomen (der/die/das/was/wo) verbinden einen Nebensatz mit dem Hauptsatz und beziehen sich auf Genus, Numerus und manchmal den Kasus des Bezugsworts.",
+      getBank: bankRelativsatz },
+    { id: "zeitformen", title: "Zeitformen", icon: "⏳", group: "grammatik",
+      info: "Präsens, Perfekt, Präteritum, Plusquamperfekt und Futur I — anhand von Zeitwörtern und Satzbau erkennst du, welche Zeitform gemeint ist.",
+      getBank: bankZeitformen },
+    { id: "wortschatz", title: "Wortschatz nach Themen", icon: "🧠", group: "wortschatz",
+      info: "Alltagswortschatz zu Haushalt, Freunden, Schule & Beruf, Essen und Reisen — wähl ein Thema oder übe querbeet.",
+      getBank: bankWortschatzThemen },
+    { id: "konnektoren", title: "Zweiteilige Konnektoren", icon: "🪢", group: "logik",
+      info: "sowohl…als auch, nicht nur…sondern auch, entweder…oder, weder…noch, zwar…aber, einerseits…andererseits — Wortpaare, die zusammengehören.",
+      getBank: bankKonnektoren },
+    { id: "jedesto", title: "je…desto / umso", icon: "📈", group: "grammatik",
+      info: "Bei Vergleichen mit steigender Tendenz braucht der zweite Teil desto plus Komparativ, z. B. Je mehr, desto besser.",
+      getBank: bankJeDesto },
     { id: "quiz", title: "Deutschland-Quiz", icon: "🏆", group: "quiz",
       info: "Allgemeinwissen rund um Deutschland — im Stil von „Wer wird Millionär“. Manche Fragen haben zwei richtige Antworten für Bonuspunkte!",
       getBank: bankQuiz },
@@ -812,5 +1111,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen };
 })();
