@@ -315,8 +315,92 @@
 
 [data-theme="sternennacht"] .tape-piece,
 [data-theme="ozeanbrise"] .tape-piece,
+/* ---------- 15) LAVENDELFELD — hell, zartlila, ruhig-verspielt ---------- */
+[data-theme="lavendelfeld"] {
+  --plum-950: #F6F2FA;
+  --plum-800: #FFFFFF;
+  --plum-700: #EDE4F5;
+  --cream-50: #362A47;
+  --cream-200: #8A7A9C;
+  --amber-400: #C9A6E8;
+  --amber-300: #DCC2F2;
+  --teal-400: #6FBFA8;
+  --coral-400: #E88FA3;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(54,42,71,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🪻"; --logo-shape: 50%; --logo-bg: #C9A6E8;
+}
+
+/* ---------- 16) ZITRUSGARTEN — hell, sonnig-frisch, verspielt ---------- */
+[data-theme="zitrusgarten"] {
+  --plum-950: #FFFAEF;
+  --plum-800: #FFFFFF;
+  --plum-700: #FEF0D0;
+  --cream-50: #4A3B10;
+  --cream-200: #A08B4E;
+  --amber-400: #F2A93B;
+  --amber-300: #F6C56E;
+  --teal-400: #6BBF7A;
+  --coral-400: #F0713F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(74,59,16,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🍋"; --logo-shape: 50%; --logo-bg: #F2A93B;
+}
+
+/* ---------- 17) OBSIDIAN-SCHMIEDE — dunkel, metallisch-warm, edel ---------- */
+[data-theme="obsidian"] {
+  --plum-950: #16130F;
+  --plum-800: #211C16;
+  --plum-700: #2D2620;
+  --cream-50: #F5EEE0;
+  --cream-200: #B3A48C;
+  --amber-400: #D9A050;
+  --amber-300: #E8BC7C;
+  --teal-400: #6FAE9E;
+  --coral-400: #C96A4C;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(217,160,80,0.25);
+  --card-shadow-extra: none;
+  --logo-emoji: "⚒️"; --logo-shape: 50%; --logo-bg: #D9A050;
+}
+
+/* ---------- 18) TIEFSEE-NEON — dunkel, elektrisch-verspielt, cyberpunk-artig ---------- */
+[data-theme="tiefseeneon"] {
+  --plum-950: #05080F;
+  --plum-800: #0C1220;
+  --plum-700: #131C31;
+  --cream-50: #E6F7FF;
+  --cream-200: #7FA3C2;
+  --amber-400: #FFB84D;
+  --amber-300: #FFCE7E;
+  --teal-400: #4DE8FF;
+  --coral-400: #FF4DA6;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.5);
+  --card-border: 1px solid rgba(77,232,255,0.3);
+  --card-shadow-extra: none;
+  --logo-emoji: "🐡"; --logo-shape: 50%; --logo-bg: #4DE8FF;
+}
+
 [data-theme="mitternachtskarneval"] .tape-piece,
 [data-theme="tiefsee"] .tape-piece,
 [data-theme="vulkanglut"] .tape-piece,
 [data-theme="mondgarten"] .tape-piece,
-[data-theme="retroarkade"] .tape-piece { display: none; }
+[data-theme="retroarkade"] .tape-piece,
+[data-theme="lavendelfeld"] .tape-piece,
+[data-theme="zitrusgarten"] .tape-piece,
+[data-theme="obsidian"] .tape-piece,
+[data-theme="tiefseeneon"] .tape-piece { display: none; }
