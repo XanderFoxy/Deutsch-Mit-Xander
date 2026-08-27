@@ -984,6 +984,13 @@
 .profile-modal-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 12px; }
 .profile-modal-header .avatar-photo,
 .profile-modal-header .initials-avatar { width: 76px; height: 76px; font-size: 1.6rem; }
+.modal-points-line {
+  text-align: center;
+  font-weight: 800;
+  color: var(--amber-300);
+  font-size: 0.95rem;
+  margin: -6px 0 8px;
+}
 
 .form-field input[type="text"] {
   width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);

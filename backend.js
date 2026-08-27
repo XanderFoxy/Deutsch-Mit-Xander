@@ -184,6 +184,26 @@ const Backend = (function () {
 
   /* ================= PROFIL & PUNKTE ================= */
 
+  async function getFullPointsBreakdown() {
+    if (!demo.user) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("results").select("character,points").eq("user_id", demo.user.id);
+        if (!error && data) {
+          const sums = {};
+          data.forEach((r) => { sums[r.character] = (sums[r.character] || 0) + (r.points || 0); });
+          return Object.entries(sums).sort((a, b) => b[1] - a[1]);
+        }
+      } catch (e) {
+        console.warn("Punkte-Aufschlüsselung konnte nicht geladen werden:", e);
+      }
+      return [];
+    }
+    const sums = {};
+    (demo.profile.history || []).forEach((h) => { sums[h.character] = (sums[h.character] || 0) + (h.points || 0); });
+    return Object.entries(sums).sort((a, b) => b[1] - a[1]);
+  }
+
   async function saveResult(result) {
     // result: { categories:[ids], points, bonus, percent, character, badges:[], playedAt }
     if (!demo.profile) return; // nicht eingeloggt -> Ergebnis wird nur lokal in der Session gezeigt
@@ -759,7 +779,7 @@ const Backend = (function () {
       if (error) throw new Error("Konnte nicht eingereicht werden: " + error.message);
       return;
     }
-    demo.communityTexts.push({ id: Core.uid(), author_name: demo.profile.name, title, level, body, status: "pending", created_at: new Date().toISOString() });
+    demo.communityTexts.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending", created_at: new Date().toISOString() });
   }
 
   async function getApprovedCommunityTexts() {
@@ -873,6 +893,7 @@ const Backend = (function () {
     submitCommunityText,
     getApprovedCommunityTexts,
     getMyCommunityTexts,
+    getFullPointsBreakdown,
     isAdmin,
     getPendingCommunityTexts,
     approveCommunityText,

@@ -991,16 +991,42 @@
     document.querySelector('#knowledgeSubnav [data-sub="sub-community"]').click();
   });
 
-  let communityLoaded = false;
+  let communityLoaded = true; // wird nicht mehr zum Sperren verwendet, nur Kompatibilität
   async function renderCommunityTexts() {
     const box = document.getElementById("communityStandaloneArea");
     if (!box) return;
     const user = Backend.currentUser();
     const texts = await Backend.getApprovedCommunityTexts();
     const myTexts = user ? await Backend.getMyCommunityTexts() : [];
+    const myPending = myTexts.filter((t) => t.status !== "approved");
 
     box.innerHTML = `
-      <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert. Bilder können aktuell noch nicht mit eingereicht werden, nur Text.</p>
+      ${user ? `
+        <div class="material-card">
+          <button type="button" class="emoji-toggle-link" id="ctFormToggle" style="margin:0;">✏️ Eigenen Text einreichen ${myPending.length ? `(du hast ${myPending.length} in Prüfung)` : ""}</button>
+          <div id="ctFormBody" style="display:none; margin-top:12px;">
+            <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird.</p>
+            <div class="form-field"><label>Titel</label><input type="text" id="ctTitle" maxlength="80" /></div>
+            <div class="form-field">
+              <label>Sprachniveau</label>
+              <select id="ctLevel" class="challenge-select">
+                ${["A1","A2","B1","B2","C1","C2"].map((l) => `<option value="${l}">${l}</option>`).join("")}
+              </select>
+            </div>
+            <div class="form-field"><label>Text</label><textarea id="ctBody" class="guestbook-form-textarea" style="min-height:120px;" maxlength="3000"></textarea></div>
+            <div class="form-error" id="ctError"></div>
+            <button type="button" class="btn-submit" id="ctSubmitBtn">Einreichen</button>
+          </div>
+        </div>` : '<p class="empty-note">Melde dich an, um eigene Texte einzureichen.</p>'}
+
+      ${myPending.length ? `
+        <div class="material-card" style="margin-top:14px;">
+          <h3>⏳ Deine Texte in Prüfung</h3>
+          ${myPending.map((t) => `<div class="breakdown-row"><span>${t.title} <span class="level-badge" style="margin-left:4px;">${t.level}</span></span><span>Wartet auf Freischaltung</span></div>`).join("")}
+        </div>` : ""}
+
+      <p class="eyebrow" style="margin-top:20px;">📚 Alle Beiträge</p>
+      <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert.</p>
       ${texts.length ? texts.map((t) => `
         <div class="material-card">
           <div class="community-text-head">
@@ -1008,36 +1034,20 @@
             <h3 style="margin:0;">${t.title}</h3>
           </div>
           <p style="white-space:pre-wrap;">${t.body}</p>
-          <p class="empty-note" style="margin-top:8px;">✍️ gepostet von ${t.author_name}</p>
+          <button type="button" class="friend-name-btn" style="margin-top:8px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>✍️ gepostet von ${t.author_name}</button>
         </div>`).join("") : '<p class="empty-note">Noch keine freigeschalteten Texte — sei die/der Erste!</p>'}
-
-      ${myTexts.length ? `
-        <div class="material-card" style="margin-top:14px;">
-          <h3>📋 Deine eingereichten Texte</h3>
-          ${myTexts.map((t) => `
-            <div class="breakdown-row">
-              <span>${t.title} <span class="level-badge" style="margin-left:4px;">${t.level}</span></span>
-              <span>${t.status === "approved" ? "✅ Veröffentlicht" : "⏳ Wartet auf Freischaltung"}</span>
-            </div>`).join("")}
-        </div>` : ""}
-
-      ${user ? `
-        <div class="material-card" style="margin-top:14px;">
-          <h3>✏️ Eigenen Text einreichen</h3>
-          <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird — du siehst deinen Text danach oben unter „Deine eingereichten Texte".</p>
-          <div class="form-field"><label>Titel</label><input type="text" id="ctTitle" maxlength="80" /></div>
-          <div class="form-field">
-            <label>Sprachniveau</label>
-            <select id="ctLevel" class="challenge-select">
-              ${["A1","A2","B1","B2","C1","C2"].map((l) => `<option value="${l}">${l}</option>`).join("")}
-            </select>
-          </div>
-          <div class="form-field"><label>Text</label><textarea id="ctBody" class="guestbook-form-textarea" style="min-height:120px;" maxlength="3000"></textarea></div>
-          <div class="form-error" id="ctError"></div>
-          <div class="form-success" id="ctSuccess" style="display:none;">✅ Eingereicht! Du findest ihn jetzt oben unter „Deine eingereichten Texte".</div>
-          <button type="button" class="btn-submit" id="ctSubmitBtn">Einreichen</button>
-        </div>` : '<p class="empty-note" style="margin-top:10px;">Melde dich an, um eigene Texte einzureichen.</p>'}
     `;
+
+    const ctFormToggle = document.getElementById("ctFormToggle");
+    if (ctFormToggle) {
+      ctFormToggle.addEventListener("click", () => {
+        const body = document.getElementById("ctFormBody");
+        body.style.display = body.style.display === "none" ? "block" : "none";
+      });
+    }
+    box.querySelectorAll("[data-view-author]").forEach((btn) => {
+      if (btn.dataset.viewAuthor) btn.addEventListener("click", () => openProfileModal(btn.dataset.viewAuthor));
+    });
 
     const submitBtn = document.getElementById("ctSubmitBtn");
     if (submitBtn) {
@@ -1062,7 +1072,7 @@
     }
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-community"]').addEventListener("click", () => {
-    if (!communityLoaded) { communityLoaded = true; renderCommunityTexts(); }
+    renderCommunityTexts();
   });
 
   document.getElementById("linksArea").innerHTML = VocabData.LINKS.map((l) => `
@@ -1584,6 +1594,7 @@
       Core.el("div", { class: "profile-modal-card" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>` }),
+        Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
         Core.el("div", { class: "modal-meta-row" },
           Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`),
@@ -1656,23 +1667,24 @@
     }
   }
 
-  function showPointsBreakdown(profile) {
-    const sums = {};
-    (profile.history || []).forEach((h) => {
-      sums[h.character] = (sums[h.character] || 0) + (h.points || 0);
-    });
-    const rows = Object.entries(sums).sort((a, b) => b[1] - a[1]);
+  async function showPointsBreakdown(profile) {
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("h2", { style: "margin-bottom:10px;" }, `🎯 ${profile.points} Punkte insgesamt`),
-        rows.length
-          ? Core.el("div", { class: "breakdown-list",
-              html: rows.map(([name, pts]) => `<div class="breakdown-row"><span>${name}</span><span>${pts} Pkt.</span></div>`).join("") })
-          : Core.el("p", { class: "empty-note" }, "Noch keine gespielten Runden erfasst — vor dem letzten Neuladen erspielte Punkte werden nicht rückwirkend aufgeschlüsselt.")
+        Core.el("p", { class: "empty-note", id: "breakdownLoading" }, "Lade Aufschlüsselung …")
       )
     );
     document.body.appendChild(box);
+    const rows = await Backend.getFullPointsBreakdown();
+    const loading = document.getElementById("breakdownLoading");
+    if (!loading) return; // Popup wurde inzwischen geschlossen
+    if (!rows.length) {
+      loading.textContent = "Noch keine gespielten Runden erfasst.";
+      return;
+    }
+    const sum = rows.reduce((s, [, pts]) => s + pts, 0);
+    loading.outerHTML = `<div class="breakdown-list">${rows.map(([name, pts]) => `<div class="breakdown-row"><span>${name}</span><span>${pts} Pkt.</span></div>`).join("")}</div>${sum !== profile.points ? `<p class="empty-note" style="margin-top:8px;">Hinweis: ${sum} von ${profile.points} Punkten lassen sich aktuell einzelnen Kategorien zuordnen — der Rest stammt vermutlich aus älteren, vor dieser Funktion gespielten Runden.</p>` : ""}`;
   }
 
   function tinyAvatarNode(f) {
