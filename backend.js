@@ -43,7 +43,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, giftedCategories: [] };
   }
 
   /* ================= AUTH ================= */
@@ -68,6 +68,8 @@ const Backend = (function () {
           isPremium: Boolean(data.is_premium),
           theme: data.theme || "bastelheft",
           isAdmin: Boolean(data.is_admin),
+          isOwner: Boolean(data.is_owner),
+          giftedCategories: data.gifted_categories || [],
         };
       }
       // Noch kein Profil-Eintrag -> anlegen
@@ -399,7 +401,7 @@ const Backend = (function () {
     if (!ids.length) return {};
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,points,badges,trophies,bio,avatar_url,avatar_emoji,last_active").in("id", ids);
+        const { data, error } = await client.from("profiles").select("id,name,points,badges,trophies,bio,avatar_url,avatar_emoji,last_active,is_admin,is_owner").in("id", ids);
         if (!error && data) return Object.fromEntries(data.map((p) => [p.id, p]));
       } catch (e) {
         console.warn("Profile konnten nicht geladen werden:", e);
@@ -559,7 +561,7 @@ const Backend = (function () {
   async function getPublicProfile(id) {
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points,origin,hobbies,is_admin").eq("id", id).maybeSingle();
+        const { data, error } = await client.from("profiles").select("id,name,bio,avatar_url,avatar_emoji,badges,trophies,points,origin,hobbies,is_admin,is_owner,gallery").eq("id", id).maybeSingle();
         if (!error && data) return data;
       } catch (e) {
         console.warn("Profil konnte nicht geladen werden:", e);
@@ -571,7 +573,7 @@ const Backend = (function () {
     return {
       id, name: u.profile.name, bio: u.profile.bio, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
       badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
-      origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin,
+      origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin, is_owner: u.profile.isOwner, gallery: u.profile.gallery,
     };
   }
 
@@ -619,6 +621,8 @@ const Backend = (function () {
         bio: (names[id] && names[id].bio) || "",
         avatar_url: (names[id] && names[id].avatar_url) || "",
         avatar_emoji: (names[id] && names[id].avatar_emoji) || "",
+        is_admin: Boolean(names[id] && names[id].is_admin),
+        is_owner: Boolean(names[id] && names[id].is_owner),
         online: names[id] ? isRecentlyActive(names[id].last_active) : false,
       }));
     }
@@ -795,6 +799,89 @@ const Backend = (function () {
     return demo.communityTexts.filter((t) => t.status === "approved");
   }
 
+  /* ================= LIKES & KOMMENTARE bei Community-Texten ================= */
+  demo.textLikes = demo.textLikes || []; // { id, text_id, user_id }
+  demo.textComments = demo.textComments || []; // { id, text_id, user_id, author_name, body, created_at }
+
+  async function getLikesForText(textId) {
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_text_likes").select("user_id").eq("text_id", textId);
+        if (!error && data) return data.map((r) => r.user_id);
+      } catch (e) { console.warn("Likes konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.textLikes.filter((l) => l.text_id === textId).map((l) => l.user_id);
+  }
+
+  async function toggleLikeText(textId, authorId) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    const likedBy = await getLikesForText(textId);
+    const alreadyLiked = likedBy.includes(demo.user.id);
+    if (client) {
+      if (alreadyLiked) {
+        const { error } = await client.from("community_text_likes").delete().eq("text_id", textId).eq("user_id", demo.user.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await client.from("community_text_likes").insert({ text_id: textId, user_id: demo.user.id });
+        if (error) throw new Error(error.message);
+        // Der Autor/die Autorin bekommt für jeden erhaltenen Like 2 Bonuspunkte
+        if (authorId && authorId !== demo.user.id) {
+          const { data: authorProfile } = await client.from("profiles").select("points").eq("id", authorId).maybeSingle();
+          if (authorProfile) {
+            await client.from("profiles").update({ points: (authorProfile.points || 0) + 2 }).eq("id", authorId);
+          }
+        }
+      }
+      return !alreadyLiked;
+    }
+    if (alreadyLiked) {
+      demo.textLikes = demo.textLikes.filter((l) => !(l.text_id === textId && l.user_id === demo.user.id));
+    } else {
+      demo.textLikes.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id });
+      if (authorId && authorId !== demo.user.id && demo.users[authorId]) {
+        demo.users[authorId].profile.points += 2;
+      }
+    }
+    return !alreadyLiked;
+  }
+
+  async function getCommentsForText(textId) {
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_text_comments").select("*").eq("text_id", textId).order("created_at", { ascending: true });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Kommentare konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.textComments.filter((c) => c.text_id === textId);
+  }
+
+  async function addComment(textId, body) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!body.trim()) throw new Error("Kommentar darf nicht leer sein.");
+    if (client) {
+      const { error } = await client.from("community_text_comments").insert({
+        text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(),
+      });
+      if (error) throw new Error(error.message);
+      return;
+    }
+    demo.textComments.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(), created_at: new Date().toISOString() });
+  }
+
+  async function deleteComment(commentId) {
+    const isMineOrAdmin = isAdmin();
+    if (client) {
+      let query = client.from("community_text_comments").delete().eq("id", commentId);
+      if (!isMineOrAdmin) query = query.eq("user_id", demo.user ? demo.user.id : "");
+      const { error } = await query;
+      if (error) throw new Error(error.message);
+      return;
+    }
+    demo.textComments = demo.textComments.filter((c) => !(c.id === commentId && (isMineOrAdmin || c.user_id === (demo.user && demo.user.id))));
+  }
+
   async function getMyCommunityTexts() {
     if (!demo.user) return [];
     if (client) {
@@ -811,7 +898,10 @@ const Backend = (function () {
 
   /* ================= VERWALTUNG (nur für Admin-Konten sichtbar) ================= */
   function isAdmin() {
-    return Boolean(demo.profile && demo.profile.isAdmin);
+    return Boolean(demo.profile && (demo.profile.isAdmin || demo.profile.isOwner));
+  }
+  function isOwner() {
+    return Boolean(demo.profile && demo.profile.isOwner);
   }
 
   async function getPendingCommunityTexts() {
@@ -847,6 +937,93 @@ const Backend = (function () {
       return;
     }
     demo.communityTexts = demo.communityTexts.filter((x) => x.id !== id);
+  }
+
+  async function deleteMyCommunityText(id) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("community_texts").delete().eq("id", id).eq("user_id", demo.user.id);
+      if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
+      return;
+    }
+    demo.communityTexts = demo.communityTexts.filter((x) => !(x.id === id && x.user_id === demo.user.id));
+  }
+
+  /* ---- Weitere Moderations-Werkzeuge (nur Admin) ---- */
+  async function adminDeleteCommunityText(id) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { error } = await client.from("community_texts").delete().eq("id", id);
+      if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
+      return;
+    }
+    demo.communityTexts = demo.communityTexts.filter((x) => x.id !== id);
+  }
+
+  async function adminDeleteGalleryPhoto(targetUserId, url) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { data, error: selErr } = await client.from("profiles").select("gallery").eq("id", targetUserId).maybeSingle();
+      if (selErr) throw new Error("Konnte nicht geladen werden: " + selErr.message);
+      const newGallery = (data?.gallery || []).filter((u) => u !== url);
+      const { error } = await client.from("profiles").update({ gallery: newGallery }).eq("id", targetUserId);
+      if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) u.profile.gallery = (u.profile.gallery || []).filter((x) => x !== url);
+  }
+
+  async function adminDeleteAvatar(targetUserId) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { error } = await client.from("profiles").update({ avatar_url: "", avatar_emoji: "" }).eq("id", targetUserId);
+      if (error) throw new Error("Konnte nicht entfernt werden: " + error.message);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) { u.profile.avatarUrl = ""; u.profile.avatarEmoji = ""; }
+  }
+
+  async function adminDeleteGuestbookEntry(entryId) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { error } = await client.from("guestbook").delete().eq("id", entryId);
+      if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
+      return;
+    }
+    demo.guestbook = demo.guestbook.filter((x) => x.id !== entryId);
+  }
+
+  async function adminDeleteAccount(targetUserId) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      // Hinweis: Löscht das Profil und zugehörige Inhalte. Der Auth-Nutzer selbst
+      // kann ohne Service-Role-Key nicht aus der App heraus gelöscht werden —
+      // dafür bitte zusätzlich Supabase -> Authentication -> Users -> Löschen nutzen.
+      const { error } = await client.from("profiles").delete().eq("id", targetUserId);
+      if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
+      return;
+    }
+    delete demo.users[targetUserId];
+  }
+
+  async function adminGiftCategoryUnlock(targetUserId, categoryId) {
+    if (!isAdmin()) throw new Error("Keine Admin-Rechte.");
+    if (client) {
+      const { data, error: selErr } = await client.from("profiles").select("gifted_categories").eq("id", targetUserId).maybeSingle();
+      if (selErr) throw new Error("Konnte nicht geladen werden: " + selErr.message);
+      const current = data?.gifted_categories || [];
+      if (current.includes(categoryId)) return;
+      const { error } = await client.from("profiles").update({ gifted_categories: [...current, categoryId] }).eq("id", targetUserId);
+      if (error) throw new Error("Konnte nicht geschenkt werden: " + error.message);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) {
+      u.profile.giftedCategories = u.profile.giftedCategories || [];
+      if (!u.profile.giftedCategories.includes(categoryId)) u.profile.giftedCategories.push(categoryId);
+    }
   }
 
   async function setAdminStatus(targetUserId, value) {
@@ -899,6 +1076,18 @@ const Backend = (function () {
     approveCommunityText,
     rejectCommunityText,
     setAdminStatus,
+    deleteMyCommunityText,
+    adminDeleteCommunityText,
+    adminDeleteGalleryPhoto,
+    adminDeleteAvatar,
+    adminDeleteGuestbookEntry,
+    adminDeleteAccount,
+    adminGiftCategoryUnlock,
+    getLikesForText,
+    toggleLikeText,
+    getCommentsForText,
+    addComment,
+    deleteComment,
     saveBio,
     saveBirthday,
     uploadAvatar,

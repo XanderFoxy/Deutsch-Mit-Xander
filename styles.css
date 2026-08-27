@@ -355,6 +355,37 @@ button:focus-visible,
   line-height: 1;
   filter: drop-shadow(0 0 1px rgba(0,0,0,0.6));
 }
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: rgba(87,199,174,0.18);
+  color: var(--teal-400);
+  white-space: nowrap;
+}
+.admin-badge-owner {
+  background: rgba(242,184,75,0.2);
+  color: var(--amber-300);
+}
+.admin-tools-box {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px dashed rgba(232,72,63,0.4);
+  background: rgba(232,72,63,0.06);
+  text-align: left;
+}
+.comment-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(245,239,228,0.1);
+}
+.comment-row:last-of-type { border-bottom: none; }
 
 /* Header darf auf sehr schmalen Screens nie den Support-Button abschneiden */
 @media (max-width: 430px) {

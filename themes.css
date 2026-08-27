@@ -549,6 +549,49 @@
 
 [data-theme="tiefseeneon"] .tape-piece,
 [data-theme="winterzauber"] .tape-piece,
+/* ---------- 23) LEUCHTKÄFER — dunkel, mit sanft schwebenden Lichtpunkten ---------- */
+[data-theme="leuchtkaefer"] {
+  --plum-950: #0D1A12;
+  --plum-800: #16261C;
+  --plum-700: #1F3427;
+  --cream-50: #EAF7EC;
+  --cream-200: #9FC4A8;
+  --amber-400: #D4E85C;
+  --amber-300: #E2F08C;
+  --teal-400: #6FD9A0;
+  --coral-400: #E8A93D;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(212,232,92,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "✨"; --logo-shape: 50%; --logo-bg: #6FD9A0;
+}
+[data-theme="leuchtkaefer"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 3px at 12% 20%, #D4E85C, transparent),
+    radial-gradient(2px 2px at 28% 60%, #6FD9A0, transparent),
+    radial-gradient(3px 3px at 45% 30%, #E2F08C, transparent),
+    radial-gradient(2px 2px at 62% 75%, #D4E85C, transparent),
+    radial-gradient(3px 3px at 78% 40%, #6FD9A0, transparent),
+    radial-gradient(2px 2px at 90% 65%, #E2F08C, transparent),
+    radial-gradient(2px 2px at 20% 85%, #6FD9A0, transparent);
+  animation: fireflyFloat 9s ease-in-out infinite alternate;
+  opacity: 0.8;
+}
+@keyframes fireflyFloat {
+  0% { transform: translate(0, 0); opacity: 0.5; }
+  50% { transform: translate(8px, -14px); opacity: 0.95; }
+  100% { transform: translate(-6px, 6px); opacity: 0.6; }
+}
+
 [data-theme="wellenspiel"] .tape-piece,
 [data-theme="honigwabe"] .tape-piece,
-[data-theme="galaxie"] .tape-piece { display: none; }
+[data-theme="galaxie"] .tape-piece,
+[data-theme="leuchtkaefer"] .tape-piece { display: none; }

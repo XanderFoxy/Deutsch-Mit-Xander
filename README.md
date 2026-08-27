@@ -82,7 +82,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      name text, points int default 0, badges text[] default '{}', trophies text[] default '{}',
      is_premium boolean default false, theme text default 'bastelheft', bio text default '',
      birthday text default '', avatar_url text default '', avatar_emoji text default '',
-     gallery text[] default '{}', hobbies text[] default '{}', origin text default '', is_admin boolean default false,
+     gallery text[] default '{}', hobbies text[] default '{}', origin text default '', is_admin boolean default false, is_owner boolean default false, gifted_categories text[] default '{}',
      last_active timestamptz, created_at timestamptz default now()
    );
 
@@ -92,6 +92,18 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      title text, level text, body text,
      status text default 'pending', created_at timestamptz default now()
    );
+   create table community_text_likes (
+     id uuid default gen_random_uuid() primary key,
+     text_id uuid references community_texts, user_id uuid references auth.users,
+     created_at timestamptz default now()
+   );
+   create table community_text_comments (
+     id uuid default gen_random_uuid() primary key,
+     text_id uuid references community_texts, user_id uuid references auth.users,
+     author_name text, body text, created_at timestamptz default now()
+   );
+   alter table community_text_likes disable row level security;
+   alter table community_text_comments disable row level security;
 
    create table friends (
      id uuid default gen_random_uuid() primary key,
@@ -149,17 +161,23 @@ ist, siehst du direkt oben im Profil einen Bereich "🛠️ Verwaltung" mit alle
 wartenden Texten samt "✅ Freischalten"/"✕ Ablehnen"-Buttons. Kein
 Supabase-Zugriff mehr nötig für den laufenden Betrieb.
 
-**Einmalig: dich selbst zum ersten Admin machen.** Das muss einmal per SQL
-passieren, da die App niemandem erlauben darf, sich selbst Admin-Rechte zu
-geben. Im SQL-Editor:
+**Einmalig: dich selbst als Betreiber markieren.** Das muss einmal per SQL
+passieren, da die App niemandem erlauben darf, sich selbst diese Rolle zu
+geben. Der Betreiber-Status (👑) ist von normalen Admin-Rechten (🛡️) getrennt
+und wird auf der ganzen Seite mit einer kleinen Krone angezeigt, überall wo
+dein Name auftaucht. Im SQL-Editor:
 
 ```sql
-update profiles set is_admin = true where name = 'XanderFox';
+update profiles set is_admin = true, is_owner = true where name = 'XanderFox';
 ```
 
 (Namen anpassen, falls dein Profilname anders lautet.) Ab dann kannst du
-über das Profil-Popup jeder anderen Person auch dieser Person Admin-Rechte
-geben oder wieder entziehen — komplett ohne SQL.
+über das Profil-Popup jeder anderen Person Admin-Rechte geben oder wieder
+entziehen — komplett ohne SQL. Die Personen, denen du Admin-Rechte gibst,
+bekommen automatisch ein sichtbares 🛡️-Abzeichen neben ihrem Namen (überall
+auf der Seite), damit für alle erkennbar ist, wer Admin ist. Nur du bleibst
+als 👑 Betreiber gekennzeichnet — das kann niemand über die App vergeben,
+auch andere Admins nicht.
 
 ## 4d. Community-Texte per SQL freischalten (Alternative)
 

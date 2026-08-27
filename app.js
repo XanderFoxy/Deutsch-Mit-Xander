@@ -68,6 +68,7 @@
     { id: "wellenspiel", name: "Wellenspiel", emoji: "🌊", desc: "Hell, mit sanft bewegten Wellen — animiert!", mode: "hell", unlock: { type: "trophy", match: "Superheld" } },
     { id: "honigwabe", name: "Honigwabe", emoji: "🍯", desc: "Hell, warmes Gelb-Braun, gemütlich.", mode: "hell", unlock: { type: "points", value: 300 } },
     { id: "galaxie", name: "Galaxie", emoji: "🌌", desc: "Dunkel, tiefviolett mit Sternenstaub.", mode: "dunkel", unlock: { type: "points", value: 2000 } },
+    { id: "leuchtkaefer", name: "Leuchtkäfer", emoji: "✨", desc: "Dunkel, mit sanft schwebenden Lichtpunkten — animiert!", mode: "dunkel", unlock: { type: "trophy", match: "Gehirnjogger" } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -347,7 +348,7 @@
 
     const myProfile = Backend.currentProfile();
     const cards = ExerciseData.CATEGORIES.map((cat) => {
-      const unlocked = isUnlocked(cat.unlock, myProfile);
+      const unlocked = isUnlocked(cat.unlock, myProfile) || (myProfile?.giftedCategories || []).includes(cat.id);
       let topicPicker = "";
       if (cat.id === "quiz" && selectedCategories.has("quiz")) {
         topicPicker = `
@@ -769,7 +770,7 @@
         <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🧠 Optional: gegen einen Freund spielen (Gehirnjogger-Duell)</label>
         <select id="memoryChallengeSelect" class="challenge-select">
           <option value="">Kein Duell — nur für mich üben</option>
-          ${memFriends.map((f) => `<option value="${f.id}" ${memoryChallengeFriendId === f.id ? "selected" : ""}>${f.name}${f.online ? " 🟢" : ""}</option>`).join("")}
+          ${memFriends.map((f) => `<option value="${f.id}" ${memoryChallengeFriendId === f.id ? "selected" : ""}>${f.name}${f.online ? " 🟢" : ""}${f.is_owner ? " 👑" : f.is_admin ? " 🛡️" : ""}</option>`).join("")}
         </select>
       </div>` : "";
 
@@ -999,6 +1000,8 @@
     const texts = await Backend.getApprovedCommunityTexts();
     const myTexts = user ? await Backend.getMyCommunityTexts() : [];
     const myPending = myTexts.filter((t) => t.status !== "approved");
+    const likesByText = {};
+    await Promise.all(texts.map(async (t) => { likesByText[t.id] = await Backend.getLikesForText(t.id); }));
 
     box.innerHTML = `
       ${user ? `
@@ -1027,15 +1030,29 @@
 
       <p class="eyebrow" style="margin-top:20px;">📚 Alle Beiträge</p>
       <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert.</p>
-      ${texts.length ? texts.map((t) => `
+      ${texts.length ? texts.map((t) => {
+        const likes = likesByText[t.id] || [];
+        const iLiked = user && likes.includes(user.id);
+        return `
         <div class="material-card">
           <div class="community-text-head">
             <span class="level-badge">${t.level}</span>
             <h3 style="margin:0;">${t.title}</h3>
           </div>
           <p style="white-space:pre-wrap;">${t.body}</p>
-          <button type="button" class="friend-name-btn" style="margin-top:8px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>✍️ gepostet von ${t.author_name}</button>
-        </div>`).join("") : '<p class="empty-note">Noch keine freigeschalteten Texte — sei die/der Erste!</p>'}
+          <div class="modal-meta-row" style="margin-top:8px; justify-content:flex-start;">
+            <button type="button" class="friend-name-btn" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>✍️ ${t.author_name}</button>
+            <span class="empty-note">${t.created_at ? new Date(t.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : ""}</span>
+          </div>
+          <div class="modal-meta-row" style="margin-top:10px; justify-content:flex-start;">
+            <button type="button" class="btn ${iLiked ? "btn-coffee" : "btn-ghost"}" style="padding:6px 14px; font-size:0.82rem;" data-like-text="${t.id}" data-author-id="${t.user_id || ""}">${iLiked ? "❤️" : "🤍"} ${likes.length}</button>
+            <button type="button" class="emoji-toggle-link" style="margin:0;" data-toggle-comments="${t.id}">💬 Kommentare</button>
+          </div>
+          <div class="community-comments" id="comments-${t.id}" style="display:none; margin-top:10px;"></div>
+          ${(user && t.user_id === user.id) ? `<button type="button" class="btn btn-ghost" style="margin-top:8px;" data-delete-own-text="${t.id}">🗑️ Eigenen Beitrag löschen</button>` : ""}
+          ${(Backend.isAdmin() && !(user && t.user_id === user.id)) ? `<button type="button" class="btn btn-ghost" style="margin-top:8px;" data-admin-delete-text="${t.id}">🛠️ Als Admin entfernen</button>` : ""}
+        </div>`;
+      }).join("") : '<p class="empty-note">Noch keine freigeschalteten Texte — sei die/der Erste!</p>'}
     `;
 
     const ctFormToggle = document.getElementById("ctFormToggle");
@@ -1047,6 +1064,39 @@
     }
     box.querySelectorAll("[data-view-author]").forEach((btn) => {
       if (btn.dataset.viewAuthor) btn.addEventListener("click", () => openProfileModal(btn.dataset.viewAuthor));
+    });
+    box.querySelectorAll("[data-like-text]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!user) { alert("Melde dich zuerst an, um zu liken."); return; }
+        btn.disabled = true;
+        try { await Backend.toggleLikeText(btn.dataset.likeText, btn.dataset.authorId || null); renderCommunityTexts(); }
+        catch (err) { alert(err.message); btn.disabled = false; }
+      });
+    });
+    box.querySelectorAll("[data-toggle-comments]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const wrap = document.getElementById(`comments-${btn.dataset.toggleComments}`);
+        const opening = wrap.style.display === "none";
+        wrap.style.display = opening ? "block" : "none";
+        if (opening && !wrap.dataset.loaded) {
+          wrap.dataset.loaded = "1";
+          await renderCommentsFor(btn.dataset.toggleComments, wrap, user);
+        }
+      });
+    });
+    box.querySelectorAll("[data-delete-own-text]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen Beitrag wirklich löschen?")) return;
+        try { await Backend.deleteMyCommunityText(btn.dataset.deleteOwnText); renderCommunityTexts(); }
+        catch (err) { alert(err.message); }
+      });
+    });
+    box.querySelectorAll("[data-admin-delete-text]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen Beitrag als Admin entfernen?")) return;
+        try { await Backend.adminDeleteCommunityText(btn.dataset.adminDeleteText); renderCommunityTexts(); }
+        catch (err) { alert(err.message); }
+      });
     });
 
     const submitBtn = document.getElementById("ctSubmitBtn");
@@ -1068,6 +1118,45 @@
           submitBtn.textContent = "Einreichen";
           submitBtn.disabled = false;
         }
+      });
+    }
+  }
+
+  async function renderCommentsFor(textId, wrap, user) {
+    const comments = await Backend.getCommentsForText(textId);
+    wrap.innerHTML = `
+      ${comments.length ? comments.map((c) => `
+        <div class="comment-row">
+          <button type="button" class="friend-name-btn" data-view-author="${c.user_id || ""}" ${!c.user_id ? "disabled" : ""}>${c.author_name}</button>
+          <span class="empty-note" style="margin-left:6px;">${new Date(c.created_at).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}</span>
+          <p style="margin:2px 0 0;">${c.body}</p>
+          ${(user && (c.user_id === user.id || Backend.isAdmin())) ? `<button type="button" class="emoji-toggle-link" style="margin-top:2px; font-size:0.75rem;" data-delete-comment="${c.id}">🗑️ Löschen</button>` : ""}
+        </div>`).join("") : '<p class="empty-note">Noch keine Kommentare.</p>'}
+      ${user ? `
+        <div class="form-field" style="margin-top:8px;">
+          <textarea class="guestbook-form-textarea" style="min-height:60px;" id="newComment-${textId}" placeholder="Was denkst du über diesen Text?" maxlength="500"></textarea>
+        </div>
+        <button type="button" class="btn-submit" data-submit-comment="${textId}">Kommentieren</button>
+      ` : '<p class="empty-note">Melde dich an, um zu kommentieren.</p>'}
+    `;
+    wrap.querySelectorAll("[data-view-author]").forEach((btn) => {
+      if (btn.dataset.viewAuthor) btn.addEventListener("click", () => openProfileModal(btn.dataset.viewAuthor));
+    });
+    wrap.querySelectorAll("[data-delete-comment]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Kommentar löschen?")) return;
+        try { await Backend.deleteComment(btn.dataset.deleteComment); await renderCommentsFor(textId, wrap, user); }
+        catch (err) { alert(err.message); }
+      });
+    });
+    const submitCommentBtn = wrap.querySelector("[data-submit-comment]");
+    if (submitCommentBtn) {
+      submitCommentBtn.addEventListener("click", async () => {
+        const ta = document.getElementById(`newComment-${textId}`);
+        try {
+          await Backend.addComment(textId, ta.value);
+          await renderCommentsFor(textId, wrap, user);
+        } catch (err) { alert(err.message); }
       });
     }
   }
@@ -1141,7 +1230,8 @@
     const user = Backend.currentUser();
     const profile = Backend.currentProfile();
     const icon = document.getElementById("loginBtnIconInner");
-    loginBtnLabel.textContent = user ? user.name.split(" ")[0] : "Anmelden";
+    const roleIcon = profile && profile.isOwner ? " 👑" : profile && profile.isAdmin ? " 🛡️" : "";
+    loginBtnLabel.textContent = user ? user.name.split(" ")[0] + roleIcon : "Anmelden";
     loginBtn.classList.toggle("btn-icon-only", !user);
     if (user && profile) {
       const flag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "" : "";
@@ -1236,7 +1326,7 @@
           <div class="profile-header">
             ${avatarHtml}
             <div class="profile-name-col">
-              <h2 style="margin-bottom:2px;">${profile.name}</h2>
+              <h2 style="margin-bottom:2px;">${profile.name}${adminBadge(profile.isAdmin, profile.isOwner)}</h2>
               <div class="modal-meta-row" style="margin-top:0; justify-content:flex-start;">
                 <button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>
                 ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
@@ -1245,7 +1335,7 @@
             </div>
           </div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
-            ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span></button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
+            ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner)}</button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
@@ -1335,7 +1425,7 @@
             <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
           </label>
           <div class="profile-name-col">
-            <h2>${profile.name}</h2>
+            <h2>${profile.name}${adminBadge(profile.isAdmin, profile.isOwner)}</h2>
             <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}</p>
           </div>
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
@@ -1396,7 +1486,7 @@
       ${renderTrophyCase(profile)}
       ${myFriends.length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">👥 Deine Freunde</p>
-        ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span></button>`).join("")}
+        ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner)}</button>`).join("")}
       </div>` : ""}
       ${await renderRecentMembers()}
       ${await renderActivityFeed()}
@@ -1556,6 +1646,13 @@
     return `<span class="tiny-avatar tiny-avatar-initials">${initials}</span>`;
   }
 
+  // Admin-Abzeichen — überall dort, wo ein Name/Profil auftaucht, konsistent anzeigbar
+  function adminBadge(isAdminFlag, isOwnerFlag) {
+    if (isOwnerFlag) return '<span class="admin-badge admin-badge-owner" title="Seitenbetreiber">👑 Betreiber</span>';
+    if (isAdminFlag) return '<span class="admin-badge" title="Administrator">🛡️ Admin</span>';
+    return "";
+  }
+
   async function renderRecentMembers() {
     const members = await Backend.getRecentMembers();
     if (!members.length) return "";
@@ -1593,7 +1690,7 @@
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${adminBadge(p.is_admin, p.is_owner)}</h2>` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
         Core.el("div", { class: "modal-meta-row" },
@@ -1620,6 +1717,14 @@
               + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "") }),
         trophyOverflow > 0 ? Core.el("div", { class: "trophy-more-list", id: "modalTrophyMoreList", style: "display:none;",
           html: (p.trophies || []).slice(4).map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") }) : "",
+        (p.gallery && p.gallery.length)
+          ? Core.el("div", { class: "gallery-grid", id: "modalGalleryGrid", style: "margin-top:12px;",
+              html: p.gallery.map((url) => `
+                <div class="gallery-thumb-wrap">
+                  <img src="${url}" class="gallery-thumb" alt="" data-modal-view-photo="${url}" />
+                  ${(Backend.isAdmin() && !isMe) ? `<button type="button" class="gallery-remove-btn" data-admin-delete-photo="${url}" title="Als Admin löschen">✕</button>` : ""}
+                </div>`).join("") })
+          : "",
         Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:16px;" },
           isMe
             ? Core.el("span", { class: "empty-note" }, "Das bist du 👋")
@@ -1650,10 +1755,59 @@
                 },
               }, p.is_admin ? "🛠️ Admin-Rechte entziehen" : "🛠️ Zum Administrator machen")
             )
+          : "",
+        (Backend.isAdmin() && !isMe)
+          ? Core.el("div", { class: "admin-tools-box" },
+              Core.el("p", { class: "empty-note", style: "margin:0 0 6px; font-weight:700;" }, "🛠️ Weitere Admin-Werkzeuge"),
+              Core.el("div", { class: "quiz-actions", style: "justify-content:flex-start; margin-top:0; flex-wrap:wrap;" },
+                Core.el("button", {
+                  class: "btn btn-ghost", type: "button",
+                  onclick: async () => {
+                    if (!confirm(`Profilbild von ${p.name} entfernen?`)) return;
+                    try { await Backend.adminDeleteAvatar(p.id); alert("Profilbild entfernt."); box.remove(); }
+                    catch (err) { alert(err.message); }
+                  },
+                }, "🖼️ Profilbild entfernen"),
+                Core.el("button", {
+                  class: "btn btn-ghost", type: "button", id: "modalGiftCategoryBtn",
+                  onclick: async () => {
+                    const locked = ExerciseData.CATEGORIES.filter((c) => c.unlock);
+                    if (!locked.length) { alert("Es gibt aktuell keine sperrbaren Kategorien."); return; }
+                    const choice = prompt(`Welche Kategorie soll ${p.name} geschenkt bekommen?\n\n` + locked.map((c, i) => `${i + 1}. ${c.title}`).join("\n") + "\n\nZahl eingeben:");
+                    const idx = parseInt(choice, 10) - 1;
+                    if (isNaN(idx) || !locked[idx]) return;
+                    try { await Backend.adminGiftCategoryUnlock(p.id, locked[idx].id); alert(`„${locked[idx].title}" wurde ${p.name} geschenkt.`); }
+                    catch (err) { alert(err.message); }
+                  },
+                }, "🎁 Kategorie schenken"),
+                Core.el("button", {
+                  class: "btn btn-ghost", type: "button", style: "color:var(--coral-400);",
+                  onclick: async () => {
+                    if (!confirm(`Konto von ${p.name} wirklich unwiderruflich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+                    if (!confirm("Bist du ganz sicher? Alle Profildaten gehen verloren.")) return;
+                    try { await Backend.adminDeleteAccount(p.id); alert("Profil gelöscht. Hinweis: Der Login-Zugang selbst muss zusätzlich in Supabase unter Authentication -> Users entfernt werden."); box.remove(); }
+                    catch (err) { alert(err.message); }
+                  },
+                }, "🗑️ Konto löschen")
+              )
+            )
           : ""
       )
     );
     document.body.appendChild(box);
+    box.querySelectorAll("[data-modal-view-photo]").forEach((img) => {
+      img.addEventListener("click", () => openLightbox(img.dataset.modalViewPhoto, "Foto"));
+    });
+    box.querySelectorAll("[data-admin-delete-photo]").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!confirm("Dieses Foto als Admin löschen?")) return;
+        try {
+          await Backend.adminDeleteGalleryPhoto(p.id, btn.dataset.adminDeletePhoto);
+          btn.closest(".gallery-thumb-wrap").remove();
+        } catch (err) { alert(err.message); }
+      });
+    });
     document.getElementById("modalFriendsToggle").addEventListener("click", () => {
       const list = document.getElementById("modalFriendsList");
       list.style.display = list.style.display === "none" ? "flex" : "none";
@@ -1749,7 +1903,7 @@
         <h3>👥 Deine Freunde</h3>
         ${friends.length ? friends.map((f) => `
           <div class="breakdown-row">
-            <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.</button>
+            <button type="button" class="friend-name-btn" data-view-friend-profile="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name} · ${f.points} Pkt.${adminBadge(f.is_admin, f.is_owner)}</button>
             <button type="button" class="btn btn-ghost" data-challenge="${f.id}" data-name="${f.name}">🎮 Herausfordern</button>
           </div>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
       </div>
@@ -1868,7 +2022,7 @@
     area.innerHTML = `
       <div class="question-card">
         <h3>📖 Gästebuch</h3>
-        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div></div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
+        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div>${Backend.isAdmin() ? `<button type="button" class="btn btn-ghost" style="margin-top:6px;" data-admin-delete-gb="${e.id}">🛠️ Als Admin löschen</button>` : ""}</div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
         <form class="guestbook-form" id="guestbookForm">
           ${!user ? '<input type="text" id="gbName" placeholder="Dein Name" required />' : ""}
           <textarea id="gbMessage" placeholder="Hinterlasse eine Nachricht für Alex…" required></textarea>
@@ -1886,6 +2040,13 @@
     });
     area.querySelectorAll("[data-view-gb-author]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewGbAuthor));
+    });
+    area.querySelectorAll("[data-admin-delete-gb]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen Gästebuch-Eintrag als Admin löschen?")) return;
+        try { await Backend.adminDeleteGuestbookEntry(btn.dataset.adminDeleteGb); renderGuestbook(); }
+        catch (err) { alert(err.message); }
+      });
     });
   }
 
