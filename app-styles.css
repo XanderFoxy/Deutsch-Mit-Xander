@@ -1102,12 +1102,13 @@
 
 .notify-badge {
   position: absolute;
-  top: 2px; right: 2px;
-  width: 10px; height: 10px;
+  top: -3px; right: -3px;
+  width: 12px; height: 12px;
   border-radius: 50%;
   background: #ff4d4d;
-  box-shadow: 0 0 0 2px var(--plum-950);
+  box-shadow: 0 0 0 2px var(--plum-950), 0 0 6px 1px rgba(255,77,77,0.7);
   animation: notifyBlink 1.4s ease-in-out infinite;
+  z-index: 2;
 }
 @keyframes notifyBlink {
   0%, 100% { opacity: 1; transform: scale(1); }

@@ -344,6 +344,29 @@
       setTimeout(() => toast.remove(), 400);
     }, 5500);
   }
+  // Kurzer, dezenter Benachrichtigungston -- direkt erzeugt, keine Audiodatei noetig.
+  // Spielt einmal sofort; falls die Benachrichtigung dann noch nicht bestaetigt wurde, einmal nach 5s erneut. Danach Ruhe.
+  function playNotifySound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      [880, 1108].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = ctx.currentTime + i * 0.09;
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.14, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.4);
+      });
+    } catch (e) { /* Ton ist rein dekorativ -- bei Problemen einfach still bleiben */ }
+  }
+
   function goToFriendsInbox() {
     activateTab("view-profile");
     document.querySelector('#profileSubnav [data-sub="sub-friends"]').click();
@@ -362,13 +385,15 @@
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
     const [requests, challenges, notifications] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications()]);
     const challengeCount = challenges.incoming.length;
+    let hasNew = false;
     if (notifyPrimed) {
-      if (requests.length > lastFriendReqCount) showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox);
-      if (challengeCount > lastChallengeReqCount) showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox);
+      if (requests.length > lastFriendReqCount) { showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox); hasNew = true; }
+      if (challengeCount > lastChallengeReqCount) { showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox); hasNew = true; }
       notifications.forEach((n) => {
         if (!toastedNotificationIds.has(n.id)) {
           toastedNotificationIds.add(n.id);
           showToast(n.message, () => document.querySelector('[data-target="view-profile"]').click());
+          hasNew = true;
         }
       });
     } else {
@@ -377,7 +402,12 @@
     lastFriendReqCount = requests.length;
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
-    updateNotifyBadge(requests.length + challengeCount + notifications.length);
+    const totalCount = requests.length + challengeCount + notifications.length;
+    updateNotifyBadge(totalCount);
+    if (hasNew) {
+      playNotifySound();
+      setTimeout(() => { if (document.getElementById("loginBtnBadge")?.style.display !== "none") playNotifySound(); }, 5000);
+    }
   }
   checkNotifications();
   setInterval(checkNotifications, 20000);
