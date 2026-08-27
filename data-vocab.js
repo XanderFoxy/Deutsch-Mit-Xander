@@ -197,5 +197,12 @@ const VocabData = (function () {
     { title: "Bundeskampf", url: "https://www.bundeskampf.com", desc: "Augenzwinkerndes Browsergame über die deutschen Bundesländer — mit Gartenzwergen als Sammelobjekt." },
   ];
 
-  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES };
+  // Sprachen fürs Profil — welche Sprachen jemand spricht oder gerade lernt
+  const LANGUAGES = [
+    "Deutsch", "Englisch", "Französisch", "Spanisch", "Italienisch", "Portugiesisch",
+    "Türkisch", "Arabisch", "Russisch", "Polnisch", "Niederländisch", "Persisch/Farsi",
+    "Kurdisch", "Ukrainisch", "Griechisch", "Chinesisch", "Japanisch", "Koreanisch", "Hindi",
+  ];
+
+  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES };
 })();

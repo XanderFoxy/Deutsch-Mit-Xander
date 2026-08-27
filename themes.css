@@ -1529,6 +1529,197 @@
 [data-theme="sonnenuntergang"] .tape-piece,
 [data-theme="marzipan"] .tape-piece,
 [data-theme="sternenschiff"] .tape-piece,
+/* ---------- 57) AQUARIUM — dunkel, mit echten schwimmenden SVG-Fischen und Blasen (animiert) ---------- */
+[data-theme="aquarium"] {
+  --plum-950: #071C2C;
+  --plum-800: #0E2C40;
+  --plum-700: #163C54;
+  --cream-50: #E6F4F5;
+  --cream-200: #8FBAC4;
+  --amber-400: #F2B84B;
+  --amber-300: #F6CC78;
+  --teal-400: #4FD4B8;
+  --coral-400: #E8825F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(79,212,184,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🐠"; --logo-shape: 50%; --logo-bg: #4FD4B8;
+}
+/* Fischschwarm — echte SVG-Fischsilhouetten, ziehen quer über den Bildschirm */
+[data-theme="aquarium"] body::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; top: 22%; height: 26px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+  background-repeat: repeat-x;
+  background-size: 180px 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='26' viewBox='0 0 180 26'%3E%3Cg%3E%3Cpath d='M10 13 C10 7 20 4 28 8 L34 3 L30 13 L34 23 L28 18 C20 22 10 19 10 13 Z' fill='%23F2B84B'/%3E%3Ccircle cx='16' cy='10' r='1.2' fill='%23071C2C'/%3E%3Cpath d='M110 15 C110 10 118 7 125 10 L130 6 L127 15 L130 24 L125 20 C118 23 110 20 110 15 Z' fill='%23E8825F'/%3E%3Ccircle cx='115' cy='12' r='1.1' fill='%23071C2C'/%3E%3C/g%3E%3C/svg%3E");
+  animation: aquariumSwimRight 16s linear infinite;
+}
+/* Zweite, tiefer liegende Reihe, entgegengesetzte Richtung, andere Fische */
+[data-theme="aquarium"] body::after {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; top: 62%; height: 22px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.7;
+  background-repeat: repeat-x;
+  background-size: 150px 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='22' viewBox='0 0 150 22' transform='scale(-1,1)'%3E%3Cpath d='M8 11 C8 6 16 3 22 7 L27 2 L24 11 L27 20 L22 16 C16 19 8 16 8 11 Z' fill='%234FD4B8'/%3E%3Ccircle cx='13' cy='9' r='1' fill='%23071C2C'/%3E%3C/svg%3E");
+  animation: aquariumSwimLeft 12s linear infinite;
+}
+@keyframes aquariumSwimRight {
+  0% { background-position-x: 0; }
+  100% { background-position-x: 180px; }
+}
+@keyframes aquariumSwimLeft {
+  0% { background-position-x: 150px; }
+  100% { background-position-x: 0; }
+}
+/* Aufsteigende Luftblasen */
+[data-theme="aquarium"] .weather-bar::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 3px at 10% 95%, rgba(230,244,245,0.6), transparent),
+    radial-gradient(2px 2px at 30% 95%, rgba(230,244,245,0.5), transparent),
+    radial-gradient(4px 4px at 55% 95%, rgba(230,244,245,0.6), transparent),
+    radial-gradient(2.5px 2.5px at 75% 95%, rgba(230,244,245,0.5), transparent),
+    radial-gradient(3px 3px at 90% 95%, rgba(230,244,245,0.6), transparent);
+  animation: aquariumBubbles 6s linear infinite;
+}
+@keyframes aquariumBubbles {
+  0% { background-position-y: 0; opacity: 0; }
+  10% { opacity: 1; }
+  100% { background-position-y: -100vh; opacity: 0; }
+}
+
+/* ---------- 58) KORALLENRIFF — dunkel, wärmere Fische über Korallen (animiert) ---------- */
+[data-theme="korallenriff"] {
+  --plum-950: #14082A;
+  --plum-800: #1F1240;
+  --plum-700: #2C1B56;
+  --cream-50: #F5EAFB;
+  --cream-200: #B49AD0;
+  --amber-400: #E8A03D;
+  --amber-300: #F0C070;
+  --teal-400: #4FC4A8;
+  --coral-400: #E85F6F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(232,95,111,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🪸"; --logo-shape: 50%; --logo-bg: #E85F6F;
+}
+[data-theme="korallenriff"] body::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; top: 30%; height: 24px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+  background-repeat: repeat-x;
+  background-size: 160px 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='24' viewBox='0 0 160 24'%3E%3Cpath d='M12 12 C12 6 22 3 30 7 L36 2 L32 12 L36 22 L30 17 C22 21 12 18 12 12 Z' fill='%23E85F6F'/%3E%3Ccircle cx='18' cy='9' r='1.2' fill='%2314082A'/%3E%3Cpath d='M95 14 C95 9 103 6 110 9 L115 5 L112 14 L115 23 L110 19 C103 22 95 19 95 14 Z' fill='%23F0C070'/%3E%3Ccircle cx='100' cy='11' r='1' fill='%2314082A'/%3E%3C/svg%3E");
+  animation: aquariumSwimRight 14s linear infinite;
+}
+[data-theme="korallenriff"] body::after {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; top: 70%; height: 20px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.7;
+  background-repeat: repeat-x;
+  background-size: 130px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='20' viewBox='0 0 130 20'%3E%3Cpath d='M7 10 C7 6 14 3 19 6 L23 2 L21 10 L23 18 L19 14 C14 17 7 14 7 10 Z' fill='%234FC4A8'/%3E%3C/svg%3E");
+  animation: aquariumSwimLeft 10s linear infinite;
+}
+[data-theme="korallenriff"] .weather-bar::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 3px at 20% 95%, rgba(245,234,251,0.55), transparent),
+    radial-gradient(2.5px 2.5px at 45% 95%, rgba(245,234,251,0.5), transparent),
+    radial-gradient(3.5px 3.5px at 65% 95%, rgba(245,234,251,0.55), transparent),
+    radial-gradient(2px 2px at 85% 95%, rgba(245,234,251,0.5), transparent);
+  animation: aquariumBubbles 7s linear infinite;
+}
+
+/* ---------- 59) SEEROSENTEICH — hell, ruhiges Wasser mit Seerosen (animiert) ---------- */
+[data-theme="seerosenteich"] {
+  --plum-950: #F0F7EE;
+  --plum-800: #FFFFFF;
+  --plum-700: #DCEBD6;
+  --cream-50: #1A3A28;
+  --cream-200: #6E9E7E;
+  --amber-400: #E8C468;
+  --amber-300: #F0D794;
+  --teal-400: #4FA8A0;
+  --coral-400: #E88F9F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+  --shadow-deck: 0 10px 24px rgba(26,58,40,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🪷"; --logo-shape: 50%; --logo-bg: #E88F9F;
+}
+[data-theme="seerosenteich"] body::before {
+  content: "";
+  position: fixed;
+  left: -10%; right: -10%; bottom: 0; height: 60px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+  background-repeat: repeat-x;
+  background-size: 100px 60px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='60' viewBox='0 0 100 60'%3E%3Cellipse cx='30' cy='50' rx='16' ry='6' fill='%234FA8A0'/%3E%3Ccircle cx='30' cy='46' r='3' fill='%23E88F9F'/%3E%3C/svg%3E");
+  animation: pondDrift 18s ease-in-out infinite alternate;
+}
+@keyframes pondDrift {
+  0% { background-position-x: 0; }
+  100% { background-position-x: 40px; }
+}
+
+/* ---------- 60) MANDELBLÜTE — hell, zartweiß-rosa ---------- */
+[data-theme="mandelbluete"] {
+  --plum-950: #FFFAF7;
+  --plum-800: #FFFFFF;
+  --plum-700: #FBE9E2;
+  --cream-50: #3A241C;
+  --cream-200: #A68278;
+  --amber-400: #E8A390;
+  --amber-300: #F0C0B4;
+  --teal-400: #7FAFA0;
+  --coral-400: #E86F5F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,36,28,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌰"; --logo-shape: 50%; --logo-bg: #E8A390;
+}
+
 [data-theme="russischrot"] .tape-piece,
 [data-theme="nordlichtfjord"] .tape-piece,
-[data-theme="kupferkessel"] .tape-piece { display: none; }
+[data-theme="kupferkessel"] .tape-piece,
+[data-theme="aquarium"] .tape-piece,
+[data-theme="korallenriff"] .tape-piece,
+[data-theme="seerosenteich"] .tape-piece,
+[data-theme="mandelbluete"] .tape-piece { display: none; }

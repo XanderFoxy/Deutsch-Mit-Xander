@@ -149,6 +149,10 @@
     { id: "russischrot", name: "Russischrot", emoji: "🍷", desc: "Dunkel, edles Bordeaux.", mode: "dunkel" },
     { id: "nordlichtfjord", name: "Nordlichtfjord", emoji: "🏞️", desc: "Dunkel, mit driftendem Nebel über Wasser — animiert!", mode: "dunkel", unlock: { type: "points", value: 1300 } },
     { id: "kupferkessel", name: "Kupferkessel", emoji: "🫖", desc: "Dunkel, warmes Metallic-Kupfer.", mode: "dunkel", unlock: { type: "points", value: 2000 } },
+    { id: "aquarium", name: "Aquarium", emoji: "🐠", desc: "Dunkel, mit echten schwimmenden Fischen und Luftblasen — animiert!", mode: "dunkel", unlock: { type: "points", value: 650 } },
+    { id: "korallenriff", name: "Korallenriff", emoji: "🪸", desc: "Dunkel, wärmere Fische über Korallen — animiert!", mode: "dunkel", unlock: { type: "trophy", match: "Abenteurer" } },
+    { id: "seerosenteich", name: "Seerosenteich", emoji: "🪷", desc: "Hell, ruhiges Wasser mit Seerosen — animiert!", mode: "hell", unlock: { type: "points", value: 750 } },
+    { id: "mandelbluete", name: "Mandelblüte", emoji: "🌰", desc: "Hell, zartweiß-rosa.", mode: "hell" },
   ];
   let sessionTheme = "bastelheft";
 
@@ -1040,6 +1044,33 @@
     document.body.appendChild(box);
   }
 
+  // Diashow durch eine Bilderliste (z. B. die ganze Galerie) — Vor/Zurück, Wischen, Zähler
+  function openGallerySlideshow(urls, startIndex, alt) {
+    let i = startIndex || 0;
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } });
+    function render() {
+      box.innerHTML = "";
+      box.appendChild(Core.el("img", { src: urls[i], alt: alt || "" }));
+      box.appendChild(Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"));
+      if (urls.length > 1) {
+        box.appendChild(Core.el("button", { class: "lightbox-nav lightbox-prev", type: "button", onclick: (e) => { e.stopPropagation(); i = (i - 1 + urls.length) % urls.length; render(); } }, "‹"));
+        box.appendChild(Core.el("button", { class: "lightbox-nav lightbox-next", type: "button", onclick: (e) => { e.stopPropagation(); i = (i + 1) % urls.length; render(); } }, "›"));
+        box.appendChild(Core.el("div", { class: "lightbox-counter" }, `${i + 1} / ${urls.length}`));
+      }
+    }
+    render();
+    document.body.appendChild(box);
+    let touchStartX = null;
+    box.addEventListener("touchstart", (e) => { touchStartX = e.touches[0].clientX; });
+    box.addEventListener("touchend", (e) => {
+      if (touchStartX === null || urls.length <= 1) return;
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (diff > 50) { i = (i - 1 + urls.length) % urls.length; render(); }
+      else if (diff < -50) { i = (i + 1) % urls.length; render(); }
+      touchStartX = null;
+    });
+  }
+
   document.getElementById("materialsArea").innerHTML = VocabData.MATERIALS.map((m) => {
     if (m.type === "story") {
       return `<div class="material-card material-card-visual">
@@ -1484,6 +1515,7 @@
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
+          ${renderExtendedSteckbrief(profile)}
           <div class="badge-row">
             ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
           </div>
@@ -1554,8 +1586,9 @@
         refreshHeaderAuth();
         renderAccount();
       });
-      area.querySelectorAll("[data-view-photo]").forEach((img) => {
-        img.addEventListener("click", () => openLightbox(img.dataset.viewPhoto, "Galerie-Foto"));
+      area.querySelectorAll("[data-view-photo]").forEach((img, idx, all) => {
+        const urls = [...all].map((el) => el.dataset.viewPhoto);
+        img.addEventListener("click", () => openGallerySlideshow(urls, idx, "Galerie-Foto"));
       });
       area.querySelectorAll("[data-view-friend-profile]").forEach((btn) => {
         btn.addEventListener("click", () => openProfileModal(btn.dataset.viewFriendProfile));
@@ -1615,6 +1648,33 @@
             ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${profile.origin === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
           </select>
         </div>
+        <div class="form-field">
+          <label>Welche Sprachen sprichst oder lernst du?</label>
+          <div class="hobby-chip-row">
+            ${VocabData.LANGUAGES.map((l) => `<button type="button" class="hobby-chip lang-chip ${((profile.languages || []).includes(l)) ? "selected" : ""}" data-lang="${l}">${l}</button>`).join("")}
+          </div>
+        </div>
+        <p class="eyebrow" style="margin-top:18px;">📝 Erweiterter Steckbrief (optional)</p>
+        <div class="form-field">
+          <label>Lieblingsfilm</label>
+          <input type="text" id="favMovieInput" maxlength="60" value="${profile.favMovie || ""}" placeholder="z. B. Das Leben der Anderen" />
+        </div>
+        <div class="form-field">
+          <label>Lieblingsserie</label>
+          <input type="text" id="favSeriesInput" maxlength="60" value="${profile.favSeries || ""}" placeholder="z. B. Dark" />
+        </div>
+        <div class="form-field">
+          <label>Lieblingslied</label>
+          <input type="text" id="favSongInput" maxlength="60" value="${profile.favSong || ""}" placeholder="z. B. 99 Luftballons" />
+        </div>
+        <div class="form-field">
+          <label>Lieblingsessen</label>
+          <input type="text" id="favFoodInput" maxlength="60" value="${profile.favFood || ""}" placeholder="z. B. Käsespätzle" />
+        </div>
+        <div class="form-field">
+          <label>Ein eigenes Gedicht oder ein paar Zeilen auf Deutsch (übe dabei gleich freies Schreiben!)</label>
+          <textarea id="poemInput" class="guestbook-form-textarea" style="min-height:100px;" maxlength="600" placeholder="Schreib ein kurzes Gedicht, einen Gedanken, ein Zitat…">${profile.poem || ""}</textarea>
+        </div>
         <div class="form-error" id="profileSaveError"></div>
         <div class="quiz-actions" style="justify-content:flex-start;">
           <button type="button" class="btn btn-coffee" id="saveBioBtn">Speichern</button>
@@ -1660,12 +1720,20 @@
       saveBtn.textContent = "Speichert …";
       saveBtn.disabled = true;
       const bioText = document.getElementById("bioInput").value.trim();
-      const [okBio, okBday, okOrigin] = await Promise.all([
+      const [okBio, okBday, okOrigin, okExtended] = await Promise.all([
         Backend.saveBio(bioText),
         Backend.saveBirthday(document.getElementById("birthdayInput").value.trim()),
         Backend.saveOrigin(document.getElementById("originSelect").value),
+        Backend.saveExtendedProfile({
+          languages: profile.languages || [],
+          favMovie: document.getElementById("favMovieInput").value.trim(),
+          favSeries: document.getElementById("favSeriesInput").value.trim(),
+          favSong: document.getElementById("favSongInput").value.trim(),
+          favFood: document.getElementById("favFoodInput").value.trim(),
+          poem: document.getElementById("poemInput").value.trim(),
+        }),
       ]);
-      if (!okBio || !okBday || !okOrigin) {
+      if (!okBio || !okBday || !okOrigin || !okExtended) {
         errBox.textContent = "⚠️ Konnte nicht dauerhaft gespeichert werden — vermutlich blockiert Row Level Security (RLS) das Schreiben in Supabase. Bitte im SQL-Editor ausführen: alter table profiles disable row level security;";
         saveBtn.textContent = "Speichern";
         saveBtn.disabled = false;
@@ -1742,6 +1810,26 @@
         renderAccount();
       });
     });
+    area.querySelectorAll("[data-lang]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const current = new Set(profile.languages || []);
+        if (current.has(btn.dataset.lang)) current.delete(btn.dataset.lang);
+        else current.add(btn.dataset.lang);
+        const ok = await Backend.saveExtendedProfile({
+          languages: [...current],
+          favMovie: profile.favMovie || "",
+          favSeries: profile.favSeries || "",
+          favSong: profile.favSong || "",
+          favFood: profile.favFood || "",
+          poem: profile.poem || "",
+        });
+        if (!ok) {
+          document.getElementById("profileSaveError").textContent = "⚠️ Sprache konnte nicht dauerhaft gespeichert werden — vermutlich blockiert RLS in Supabase das Schreiben.";
+          return;
+        }
+        renderAccount();
+      });
+    });
     const galleryInput = document.getElementById("galleryInput");
     if (galleryInput) {
       galleryInput.addEventListener("change", async (e) => {
@@ -1814,6 +1902,31 @@
   }
 
   // Admin-Abzeichen — überall dort, wo ein Name/Profil auftaucht, konsistent anzeigbar
+  function renderExtendedSteckbrief(p) {
+    // p kann entweder das eigene Profil-Objekt (camelCase) oder ein via getPublicProfile
+    // geladenes fremdes Profil (snake_case) sein — beide Formen abdecken.
+    const languages = p.languages || [];
+    const favMovie = p.favMovie || p.fav_movie || "";
+    const favSeries = p.favSeries || p.fav_series || "";
+    const favSong = p.favSong || p.fav_song || "";
+    const favFood = p.favFood || p.fav_food || "";
+    const poem = p.poem || "";
+    const rows = [
+      favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : "",
+      favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : "",
+      favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : "",
+      favFood ? `<div class="breakdown-row"><span>🍽️ Lieblingsessen</span><span>${favFood}</span></div>` : "",
+    ].filter(Boolean).join("");
+    const langsHtml = languages.length ? `<div class="trophy-case" style="margin-top:8px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : "";
+    const poemHtml = poem ? `<div class="poem-box"><p style="white-space:pre-wrap; font-style:italic; margin:0;">„${poem}"</p></div>` : "";
+    if (!rows && !langsHtml && !poemHtml) return "";
+    return `<div class="breakdown-list" style="margin-top:12px;">
+      ${langsHtml}
+      ${rows}
+      ${poemHtml}
+    </div>`;
+  }
+
   function adminBadge(isAdminFlag, isOwnerFlag, isModeratorFlag) {
     if (isOwnerFlag) return '<span class="admin-badge admin-badge-owner" title="Seitenbetreiber">👑 Betreiber</span>';
     if (isAdminFlag) return '<span class="admin-badge" title="Administrator">🛡️ Admin</span>';
@@ -1880,6 +1993,7 @@
                 return hobby ? `<div class="trophy-chip">${hobby.emoji} ${hobby.article} ${hobby.noun}</div>` : "";
               }).join("") })
           : "",
+        Core.el("div", { html: renderExtendedSteckbrief(p) }),
         Core.el("div", { class: "trophy-case trophy-case-compact", id: "modalTrophyCase", style: "justify-content:center; margin-top:10px;",
           html: trophies.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")
               + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "")
@@ -2000,8 +2114,9 @@
       )
     );
     document.body.appendChild(box);
-    box.querySelectorAll("[data-modal-view-photo]").forEach((img) => {
-      img.addEventListener("click", () => openLightbox(img.dataset.modalViewPhoto, "Foto"));
+    box.querySelectorAll("[data-modal-view-photo]").forEach((img, idx, all) => {
+      const urls = [...all].map((el) => el.dataset.modalViewPhoto);
+      img.addEventListener("click", () => openGallerySlideshow(urls, idx, "Foto"));
     });
     box.querySelectorAll("[data-admin-delete-photo]").forEach((btn) => {
       btn.addEventListener("click", async (e) => {

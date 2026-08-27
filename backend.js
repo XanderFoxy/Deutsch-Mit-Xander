@@ -53,7 +53,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [] };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", poem: "" };
   }
 
   /* ================= AUTH ================= */
@@ -82,6 +82,12 @@ const Backend = (function () {
           isModerator: Boolean(data.is_moderator),
           giftedCategories: data.gifted_categories || [],
           giftedThemes: data.gifted_themes || [],
+          languages: data.languages || [],
+          favMovie: data.fav_movie || "",
+          favSeries: data.fav_series || "",
+          favSong: data.fav_song || "",
+          favFood: data.fav_food || "",
+          poem: data.poem || "",
         };
       }
       // Noch kein Profil-Eintrag -> anlegen
@@ -507,6 +513,23 @@ const Backend = (function () {
     return true;
   }
 
+  async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, poem }) {
+    if (!demo.profile) return true;
+    demo.profile.languages = languages;
+    demo.profile.favMovie = favMovie;
+    demo.profile.favSeries = favSeries;
+    demo.profile.favSong = favSong;
+    demo.profile.favFood = favFood;
+    demo.profile.poem = poem;
+    if (client && demo.user) {
+      const { data, error } = await client.from("profiles").update({
+        languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood, poem,
+      }).eq("id", demo.user.id).select();
+      if (error || !data || !data.length) return false;
+    }
+    return true;
+  }
+
   function addTrophy(label) {
     if (!demo.profile) return false;
     if (demo.profile.trophies.includes(label)) return false;
@@ -634,6 +657,8 @@ const Backend = (function () {
             badges: data.badges, trophies: data.trophies, points: data.points, origin: data.origin, hobbies: data.hobbies,
             is_admin: Boolean(data.is_admin), is_owner: Boolean(data.is_owner), is_moderator: Boolean(data.is_moderator), gallery: data.gallery || [],
             last_active: data.last_active, online: isRecentlyActive(data.last_active),
+            languages: data.languages || [], fav_movie: data.fav_movie || "", fav_series: data.fav_series || "",
+            fav_song: data.fav_song || "", fav_food: data.fav_food || "", poem: data.poem || "",
           };
         }
         if (error) console.warn("Profil-Abfrage fehlgeschlagen:", error.message);
@@ -1266,6 +1291,7 @@ const Backend = (function () {
     addComment,
     deleteComment,
     saveBio,
+    saveExtendedProfile,
     saveBirthday,
     uploadAvatar,
     getRecentMembers,

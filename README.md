@@ -83,6 +83,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      is_premium boolean default false, theme text default 'bastelheft', bio text default '',
      birthday text default '', avatar_url text default '', avatar_emoji text default '',
      gallery text[] default '{}', hobbies text[] default '{}', origin text default '', is_admin boolean default false, is_owner boolean default false, is_moderator boolean default false, gifted_categories text[] default '{}', gifted_themes text[] default '{}',
+     languages text[] default '{}', fav_movie text default '', fav_series text default '', fav_song text default '', fav_food text default '', poem text default '',
      last_active timestamptz, created_at timestamptz default now()
    );
 
@@ -202,6 +203,12 @@ alter table profiles add column if not exists is_owner boolean default false;
 alter table profiles add column if not exists gifted_categories text[] default '{}';
 alter table profiles add column if not exists gifted_themes text[] default '{}';
 alter table profiles add column if not exists is_moderator boolean default false;
+alter table profiles add column if not exists languages text[] default '{}';
+alter table profiles add column if not exists fav_movie text default '';
+alter table profiles add column if not exists fav_series text default '';
+alter table profiles add column if not exists fav_song text default '';
+alter table profiles add column if not exists fav_food text default '';
+alter table profiles add column if not exists poem text default '';
 
 create table if not exists notifications (
   id uuid default gen_random_uuid() primary key,
