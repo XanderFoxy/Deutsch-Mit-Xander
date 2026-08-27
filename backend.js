@@ -774,6 +774,20 @@ const Backend = (function () {
     return demo.communityTexts.filter((t) => t.status === "approved");
   }
 
+  async function getMyCommunityTexts() {
+    if (!demo.user) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_texts").select("*").eq("user_id", demo.user.id).order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) {
+        console.warn("Eigene Community-Texte konnten nicht geladen werden:", e);
+      }
+      return [];
+    }
+    return demo.communityTexts.filter((t) => t.author_name === demo.profile.name);
+  }
+
   return {
     isConfigured,
     restoreSession,
@@ -806,6 +820,7 @@ const Backend = (function () {
     saveOrigin,
     submitCommunityText,
     getApprovedCommunityTexts,
+    getMyCommunityTexts,
     saveBio,
     saveBirthday,
     uploadAvatar,

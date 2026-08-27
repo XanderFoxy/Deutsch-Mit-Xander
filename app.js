@@ -66,6 +66,8 @@
     { id: "tiefseeneon", name: "Tiefsee-Neon", emoji: "🐡", desc: "Dunkel, elektrisch-verspielt.", mode: "dunkel", unlock: { type: "trophy", match: "Vorstellungsrunde" } },
     { id: "winterzauber", name: "Winterzauber", emoji: "❄️", desc: "Dunkel, mit fallendem Schnee — animiert!", mode: "dunkel", unlock: { type: "points", value: 1500 } },
     { id: "wellenspiel", name: "Wellenspiel", emoji: "🌊", desc: "Hell, mit sanft bewegten Wellen — animiert!", mode: "hell", unlock: { type: "trophy", match: "Superheld" } },
+    { id: "honigwabe", name: "Honigwabe", emoji: "🍯", desc: "Hell, warmes Gelb-Braun, gemütlich.", mode: "hell", unlock: { type: "points", value: 300 } },
+    { id: "galaxie", name: "Galaxie", emoji: "🌌", desc: "Dunkel, tiefviolett mit Sternenstaub.", mode: "dunkel", unlock: { type: "points", value: 2000 } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -80,13 +82,14 @@
     }
   }
 
-  function isThemeUnlocked(t, profile) {
-    if (!t.unlock) return true;
+  function isUnlocked(unlock, profile) {
+    if (!unlock) return true;
     if (!profile) return false;
-    if (t.unlock.type === "points") return profile.points >= t.unlock.value;
-    if (t.unlock.type === "trophy") return (profile.trophies || []).some((tr) => tr.includes(t.unlock.match));
+    if (unlock.type === "points") return profile.points >= unlock.value;
+    if (unlock.type === "trophy") return (profile.trophies || []).some((tr) => tr.includes(unlock.match));
     return true;
   }
+  function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile); }
 
   function renderDesign() {
     const area = document.getElementById("designArea");
@@ -178,6 +181,12 @@
     bar.style.color = `rgb(${text.join(",")})`;
     const stars = document.getElementById("starsLayer");
     if (stars) stars.style.opacity = Math.max(0, (dark - 0.6) / 0.4);
+
+    // Uhr & Temperaturzahl: stufenlos von Schwarz (hell) zu Weiß (dunkel), passend zur echten Helligkeit
+    const shade = Math.round(lerp(20, 245, dark)); // dunkler Text bei Tag, heller Text bei Nacht
+    const rimShade = Math.round(lerp(30, 255, dark));
+    document.documentElement.style.setProperty("--sky-ink", `rgb(${shade},${shade},${shade})`);
+    document.documentElement.style.setProperty("--sky-ink-soft", `rgba(${rimShade},${rimShade},${rimShade},0.55)`);
   }
 
   updateClock();
@@ -336,7 +345,9 @@
         <button type="button" class="btn btn-coffee" id="resumeBtn">▶ Fortsetzen</button>
       </div>` : "";
 
+    const myProfile = Backend.currentProfile();
     const cards = ExerciseData.CATEGORIES.map((cat) => {
+      const unlocked = isUnlocked(cat.unlock, myProfile);
       let topicPicker = "";
       if (cat.id === "quiz" && selectedCategories.has("quiz")) {
         topicPicker = `
@@ -349,6 +360,17 @@
         <div class="quiztopic-row">
           <button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="" aria-selected="${selectedWortschatzTopic === ""}">🧠 Alle Themen</button>
           ${ExerciseData.getWortschatzThemen().map((t) => `<button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="${t}" aria-selected="${selectedWortschatzTopic === t}">${t}</button>`).join("")}
+        </div>`;
+      }
+      if (!unlocked) {
+        const cond = cat.unlock.type === "points" ? `🔒 Ab ${cat.unlock.value} Punkten` : `🔒 Pokal „${cat.unlock.match}" nötig`;
+        return `
+        <div class="category-card theme-locked" data-locked-info="${cond}">
+          <div class="cat-checkbox">🔒</div>
+          <div class="cat-body">
+            <div class="cat-title-row"><span class="cat-icon">🔒</span><span>${cat.title}</span></div>
+            <div class="cat-info-text open">${cond} — weiter üben!</div>
+          </div>
         </div>`;
       }
       return `
@@ -413,6 +435,10 @@
 
     setupEl.querySelectorAll(".category-card").forEach((card) => {
       const id = card.dataset.cat;
+      if (!id) {
+        card.addEventListener("click", () => alert(card.dataset.lockedInfo || "Diese Kategorie ist noch gesperrt."));
+        return;
+      }
       card.classList.toggle("selected", selectedCategories.has(id));
       card.addEventListener("click", (e) => {
         if (e.target.closest(".cat-info-btn") || e.target.closest(".cat-collapse-btn") || e.target.closest(".quiztopic-row")) return;
@@ -968,7 +994,7 @@
     const box = document.getElementById("communityStandaloneArea");
     if (!box) return;
     const texts = await Backend.getApprovedCommunityTexts();
-    const user = Backend.currentUser();
+    const myTexts = user ? await Backend.getMyCommunityTexts() : [];
 
     box.innerHTML = `
       <p class="empty-note">Lesetexte von anderen Lernenden — mit Sprachniveau markiert. Bilder können aktuell noch nicht mit eingereicht werden, nur Text.</p>
@@ -982,10 +1008,20 @@
           <p class="empty-note" style="margin-top:8px;">✍️ gepostet von ${t.author_name}</p>
         </div>`).join("") : '<p class="empty-note">Noch keine freigeschalteten Texte — sei die/der Erste!</p>'}
 
+      ${myTexts.length ? `
+        <div class="material-card" style="margin-top:14px;">
+          <h3>📋 Deine eingereichten Texte</h3>
+          ${myTexts.map((t) => `
+            <div class="breakdown-row">
+              <span>${t.title} <span class="level-badge" style="margin-left:4px;">${t.level}</span></span>
+              <span>${t.status === "approved" ? "✅ Veröffentlicht" : "⏳ Wartet auf Freischaltung"}</span>
+            </div>`).join("")}
+        </div>` : ""}
+
       ${user ? `
         <div class="material-card" style="margin-top:14px;">
           <h3>✏️ Eigenen Text einreichen</h3>
-          <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird.</p>
+          <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird — du siehst deinen Text danach oben unter „Deine eingereichten Texte".</p>
           <div class="form-field"><label>Titel</label><input type="text" id="ctTitle" maxlength="80" /></div>
           <div class="form-field">
             <label>Sprachniveau</label>
@@ -995,6 +1031,7 @@
           </div>
           <div class="form-field"><label>Text</label><textarea id="ctBody" class="guestbook-form-textarea" style="min-height:120px;" maxlength="3000"></textarea></div>
           <div class="form-error" id="ctError"></div>
+          <div class="form-success" id="ctSuccess" style="display:none;">✅ Eingereicht! Du findest ihn jetzt oben unter „Deine eingereichten Texte".</div>
           <button type="button" class="btn-submit" id="ctSubmitBtn">Einreichen</button>
         </div>` : '<p class="empty-note" style="margin-top:10px;">Melde dich an, um eigene Texte einzureichen.</p>'}
     `;
@@ -1006,13 +1043,17 @@
         const level = document.getElementById("ctLevel").value;
         const body = document.getElementById("ctBody").value.trim();
         const errBox = document.getElementById("ctError");
+        errBox.textContent = "";
         if (!title || !body) { errBox.textContent = "Bitte Titel und Text ausfüllen."; return; }
+        submitBtn.textContent = "Wird gesendet …";
+        submitBtn.disabled = true;
         try {
           await Backend.submitCommunityText({ title, level, body });
-          submitBtn.textContent = "Eingereicht ✓ (wartet auf Freischaltung)";
-          submitBtn.disabled = true;
+          renderCommunityTexts();
         } catch (err) {
           errBox.textContent = err.message || "Konnte nicht eingereicht werden.";
+          submitBtn.textContent = "Einreichen";
+          submitBtn.disabled = false;
         }
       });
     }
@@ -1086,17 +1127,19 @@
   function refreshHeaderAuth() {
     const user = Backend.currentUser();
     const profile = Backend.currentProfile();
-    const icon = document.getElementById("loginBtnIcon");
+    const icon = document.getElementById("loginBtnIconInner");
     loginBtnLabel.textContent = user ? user.name.split(" ")[0] : "Anmelden";
     loginBtn.classList.toggle("btn-icon-only", !user);
     if (user && profile) {
+      const flag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "" : "";
+      const flagHtml = flag ? `<span class="header-flag">${flag}</span>` : "";
       if (profile.avatarUrl) {
-        icon.innerHTML = `<img src="${profile.avatarUrl}" class="header-avatar" alt="" />`;
+        icon.innerHTML = `<img src="${profile.avatarUrl}" class="header-avatar" alt="" />${flagHtml}`;
       } else if (profile.avatarEmoji) {
-        icon.innerHTML = `<span class="header-avatar header-avatar-emoji">${profile.avatarEmoji}</span>`;
+        icon.innerHTML = `<span class="header-avatar header-avatar-emoji">${profile.avatarEmoji}</span>${flagHtml}`;
       } else {
         const initials = profile.name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-        icon.innerHTML = `<span class="header-avatar header-avatar-initials">${initials}</span>`;
+        icon.innerHTML = `<span class="header-avatar header-avatar-initials">${initials}</span>${flagHtml}`;
       }
     } else {
       icon.innerHTML = "👤";
@@ -1175,12 +1218,12 @@
       area.innerHTML = `
         ${demoBanner}
         <div class="question-card profile-card-view">
-          <div class="profile-points"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></div>
+          <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header">
             ${avatarHtml}
             <div class="profile-name-col">
-              <h2>${profile.name}</h2>
-              <div class="modal-meta-row" style="margin-top:2px;">
+              <h2 style="margin-bottom:2px;">${profile.name}</h2>
+              <div class="modal-meta-row" style="margin-top:0; justify-content:flex-start;">
                 <button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>
                 ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
                 ${originFlag ? `<span class="empty-note">${originFlag} ${profile.origin}</span>` : ""}
@@ -1221,6 +1264,7 @@
         const list = document.getElementById("myFriendsList");
         list.style.display = list.style.display === "none" ? "flex" : "none";
       });
+      document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await Backend.signOut();
         refreshHeaderAuth();
@@ -1443,14 +1487,26 @@
   function renderTrophyCase(profile, compact) {
     if (!profile.trophies || !profile.trophies.length) return "";
     const list = compact ? profile.trophies.slice(0, 4) : profile.trophies;
-    const extra = compact && profile.trophies.length > 4 ? profile.trophies.length - 4 : 0;
+    const extra = compact && profile.trophies.length > 4 ? profile.trophies.slice(4) : [];
     return `<div class="breakdown-list" style="margin-top:16px;">
       <p class="eyebrow" style="margin-top:0;">🏆 Vitrine</p>
       <div class="trophy-case ${compact ? "trophy-case-compact" : ""}">
         ${list.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}
-        ${extra ? `<div class="trophy-chip trophy-chip-more">+${extra} mehr</div>` : ""}
+        ${extra.length ? `<button type="button" class="trophy-chip trophy-chip-more" id="trophyMoreBtn">+${extra.length} mehr anzeigen</button>` : ""}
       </div>
+      ${extra.length ? `<div class="trophy-more-list" id="trophyMoreList" style="display:none;">
+        ${extra.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")}
+      </div>` : ""}
     </div>`;
+  }
+  function wireTrophyCaseToggle() {
+    const btn = document.getElementById("trophyMoreBtn");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const list = document.getElementById("trophyMoreList");
+      list.style.display = "flex";
+      btn.style.display = "none";
+    });
   }
 
   function tinyAvatar(m) {
@@ -1517,10 +1573,12 @@
                 return hobby ? `<div class="trophy-chip">${hobby.emoji} ${hobby.article} ${hobby.noun}</div>` : "";
               }).join("") })
           : "",
-        Core.el("div", { class: "trophy-case trophy-case-compact", style: "justify-content:center; margin-top:10px;",
+        Core.el("div", { class: "trophy-case trophy-case-compact", id: "modalTrophyCase", style: "justify-content:center; margin-top:10px;",
           html: trophies.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")
-              + (trophyOverflow > 0 ? `<div class="trophy-chip trophy-chip-more">+${trophyOverflow} mehr</div>` : "")
+              + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "")
               + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "") }),
+        trophyOverflow > 0 ? Core.el("div", { class: "trophy-more-list", id: "modalTrophyMoreList", style: "display:none;",
+          html: (p.trophies || []).slice(4).map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") }) : "",
         Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:16px;" },
           isMe
             ? Core.el("span", { class: "empty-note" }, "Das bist du 👋")
@@ -1542,6 +1600,32 @@
       const list = document.getElementById("modalFriendsList");
       list.style.display = list.style.display === "none" ? "flex" : "none";
     });
+    const trophyMoreBtn = document.getElementById("modalTrophyMoreBtn");
+    if (trophyMoreBtn) {
+      trophyMoreBtn.addEventListener("click", () => {
+        document.getElementById("modalTrophyMoreList").style.display = "flex";
+        trophyMoreBtn.style.display = "none";
+      });
+    }
+  }
+
+  function showPointsBreakdown(profile) {
+    const sums = {};
+    (profile.history || []).forEach((h) => {
+      sums[h.character] = (sums[h.character] || 0) + (h.points || 0);
+    });
+    const rows = Object.entries(sums).sort((a, b) => b[1] - a[1]);
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("h2", { style: "margin-bottom:10px;" }, `🎯 ${profile.points} Punkte insgesamt`),
+        rows.length
+          ? Core.el("div", { class: "breakdown-list",
+              html: rows.map(([name, pts]) => `<div class="breakdown-row"><span>${name}</span><span>${pts} Pkt.</span></div>`).join("") })
+          : Core.el("p", { class: "empty-note" }, "Noch keine gespielten Runden erfasst — vor dem letzten Neuladen erspielte Punkte werden nicht rückwirkend aufgeschlüsselt.")
+      )
+    );
+    document.body.appendChild(box);
   }
 
   function tinyAvatarNode(f) {

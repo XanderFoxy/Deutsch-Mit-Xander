@@ -487,6 +487,53 @@
 [data-theme="lavendelfeld"] .tape-piece,
 [data-theme="zitrusgarten"] .tape-piece,
 [data-theme="obsidian"] .tape-piece,
+/* ---------- 21) HONIGWABE — hell, warmes Gelb-Braun, gemütlich ---------- */
+[data-theme="honigwabe"] {
+  --plum-950: #FFF8EC;
+  --plum-800: #FFFFFF;
+  --plum-700: #FCEBC8;
+  --cream-50: #4A340F;
+  --cream-200: #9C7F4E;
+  --amber-400: #E8A93D;
+  --amber-300: #F0C270;
+  --teal-400: #6FAE7E;
+  --coral-400: #E8763F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(74,52,15,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🍯"; --logo-shape: 50%; --logo-bg: #E8A93D;
+}
+
+/* ---------- 22) GALAXIE — dunkel, tiefviolett mit Sternenstaub ---------- */
+[data-theme="galaxie"] {
+  --plum-950: #100A1C;
+  --plum-800: #1A1230;
+  --plum-700: #241A42;
+  --cream-50: #F2ECFF;
+  --cream-200: #A594D1;
+  --amber-400: #F2C879;
+  --amber-300: #F6DBA3;
+  --teal-400: #7FE0D8;
+  --coral-400: #E86FA8;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(127,224,216,0.2);
+  --card-shadow-extra: none;
+  --logo-emoji: "🌌"; --logo-shape: 50%; --logo-bg: #A594D1;
+}
+[data-theme="galaxie"] body {
+  background-image: radial-gradient(rgba(242,200,121,0.12) 1px, transparent 1px), radial-gradient(rgba(127,224,216,0.1) 1px, transparent 1px);
+  background-size: 26px 26px, 40px 40px;
+  background-position: 0 0, 13px 20px;
+}
+
 [data-theme="tiefseeneon"] .tape-piece,
 [data-theme="winterzauber"] .tape-piece,
-[data-theme="wellenspiel"] .tape-piece { display: none; }
+[data-theme="wellenspiel"] .tape-piece,
+[data-theme="honigwabe"] .tape-piece,
+[data-theme="galaxie"] .tape-piece { display: none; }

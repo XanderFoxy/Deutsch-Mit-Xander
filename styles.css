@@ -212,20 +212,17 @@ button:focus-visible,
   font-size: 1.2rem;
 }
 
-/* Feste, immer lesbare Anzeige — unabhängig von der Himmelsfarbe im Hintergrund */
+/* Uhr & Temperaturzahl: Farbe passt sich stufenlos der echten Himmelshelligkeit an
+   (siehe --sky-ink / --sky-ink-soft, gesetzt in app.js updateDaytimeSky) */
 .weather-readout {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(20, 18, 30, 0.55);
-  backdrop-filter: blur(2px);
 }
 .weather-readout #weatherOut {
-  color: #fff;
+  color: var(--sky-ink, #1a1a1a);
   font-weight: 800;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  transition: color 1.5s ease;
 }
 
 .weather-dot {
@@ -237,9 +234,9 @@ button:focus-visible,
   height: 20px;
   flex-shrink: 0;
 }
-.clock-face { fill: var(--plum-800); stroke: var(--teal-400); stroke-width: 1.5; opacity: 0.9; }
-.clock-tick { fill: var(--teal-400); opacity: 0.5; }
-.clock-hand { stroke: var(--teal-400); stroke-width: 2; stroke-linecap: round; transform-origin: 20px 20px; }
+.clock-face { fill: transparent; stroke: var(--sky-ink, #1a1a1a); stroke-width: 1.5; opacity: 0.85; transition: stroke 1.5s ease; }
+.clock-tick { fill: var(--sky-ink, #1a1a1a); opacity: 0.5; transition: fill 1.5s ease; }
+.clock-hand { stroke: var(--sky-ink, #1a1a1a); stroke-width: 2; stroke-linecap: round; transform-origin: 20px 20px; transition: stroke 1.5s ease; }
 .hand-minute { stroke-width: 1.6; opacity: 0.85; }
 .clock-center { fill: var(--coral-400); }
 
@@ -349,6 +346,14 @@ button:focus-visible,
   background: linear-gradient(160deg, var(--amber-400), var(--teal-400));
   color: #fff; font-weight: 800; font-size: 0.62rem;
   display: inline-flex; align-items: center; justify-content: center;
+}
+.header-avatar-wrap { position: relative; display: inline-flex; align-items: center; }
+.header-flag {
+  position: absolute;
+  bottom: -3px; right: -5px;
+  font-size: 0.72rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.6));
 }
 
 /* Header darf auf sehr schmalen Screens nie den Support-Button abschneiden */

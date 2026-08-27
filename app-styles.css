@@ -392,6 +392,15 @@
   max-width: 100%;
   overflow: hidden;
 }
+.trophy-more-list {
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  align-items: stretch;
+}
+.trophy-more-list .trophy-chip { justify-content: flex-start; }
 
 .breakdown-list { margin-top: var(--space-5); display: flex; flex-direction: column; gap: 8px; }
 .breakdown-row {
@@ -771,7 +780,11 @@
   padding: 6px 10px;
   border-radius: var(--radius-sm);
   background: rgba(242,184,75,0.14);
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
 }
+.profile-points:active { transform: scale(0.96); }
 .profile-points .num { font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--amber-300); }
 .profile-points .empty-note { padding: 0; font-size: 0.68rem; }
 .demo-banner {
@@ -804,13 +817,13 @@
 }
 
 .initials-avatar {
-  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+  width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(160deg, var(--amber-400), var(--teal-400));
   color: #fff; display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-weight: 800; font-size: 1.2rem;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.4rem;
 }
 .avatar-photo {
-  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+  width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0;
   object-fit: cover;
 }
 .avatar-upload-wrap {
@@ -1002,13 +1015,13 @@
   left: 50%;
   bottom: 24px;
   transform: translate(-50%, 20px);
-  background: var(--plum-800);
-  color: var(--cream-50);
-  border: 1px solid rgba(242,184,75,0.4);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  padding: 12px 20px;
+  background: linear-gradient(135deg, var(--amber-400), var(--coral-400));
+  color: #241505;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  padding: 13px 22px;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.85rem;
   z-index: 999;
   opacity: 0;
@@ -1030,4 +1043,9 @@
   border-radius: 50%;
   background: #ff4d4d;
   box-shadow: 0 0 0 2px var(--plum-950);
+  animation: notifyBlink 1.4s ease-in-out infinite;
+}
+@keyframes notifyBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
 }
