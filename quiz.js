@@ -104,6 +104,8 @@ const Quiz = (function () {
     const speedBonus = base > 0 && elapsedMs < 4000 ? 1 : 0;
     const record = {
       categoryId: q.categoryId,
+      prompt: q.prompt,
+      correctText: q.options && q.correct ? q.correct.map((i) => q.options[i]).join(", ") : "",
       selected: selectedIndices,
       base,
       bonus: multiBonus + speedBonus,
@@ -172,6 +174,7 @@ const Quiz = (function () {
       categories: state.categoryIds,
       playedAt: new Date().toISOString(),
       meta: state.meta,
+      answers: state.answers,
     };
   }
 

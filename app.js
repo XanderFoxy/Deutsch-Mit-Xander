@@ -4,6 +4,12 @@
 (function () {
   "use strict";
 
+  // Absicherung: falls dieses Skript aus irgendeinem Grund (z. B. Mehrfach-Einbindung,
+  // doppeltes Laden) zweimal ausgeführt wird, sofort abbrechen. Das verhindert doppelte
+  // Timer/Intervalle, die sonst z. B. Duell-Benachrichtigungen doppelt anzeigen würden.
+  if (window.__dmaAppInitialized) return;
+  window.__dmaAppInitialized = true;
+
   // Früh deklariert (aber erst später zugewiesen), damit Funktionen wie updateNotifyBadge,
   // die schon vor der eigentlichen Zuweisung aufgerufen werden können, nicht abstürzen.
   let loginBtn;
@@ -369,7 +375,17 @@
   document.addEventListener("click", unlockAudioOnce, { once: true });
   document.addEventListener("touchstart", unlockAudioOnce, { once: true });
 
+  // Stummschaltung für Benachrichtigungs-Ton + roten Ring — bleibt dauerhaft im Browser gespeichert,
+  // z. B. wenn gerade viele Anfragen reinkommen und man das nicht ständig hören/sehen möchte.
+  function isNotifyMuted() {
+    try { return localStorage.getItem("dma_notify_muted") === "1"; } catch (e) { return false; }
+  }
+  function setNotifyMuted(muted) {
+    try { localStorage.setItem("dma_notify_muted", muted ? "1" : "0"); } catch (e) {}
+  }
+
   function playNotifySound() {
+    if (isNotifyMuted()) return;
     try {
       if (!sharedAudioCtx) return; // Seite wurde noch nicht angetippt -> Browser erlaubt noch keinen Ton
       const ctx = sharedAudioCtx;
@@ -399,7 +415,7 @@
     if (badge) badge.style.display = count > 0 ? "block" : "none";
     const tabBadge = document.getElementById("friendsTabBadge");
     if (tabBadge) tabBadge.style.display = count > 0 ? "block" : "none";
-    if (loginBtn) loginBtn.classList.toggle("notify-ring", count > 0);
+    if (loginBtn) loginBtn.classList.toggle("notify-ring", count > 0 && !isNotifyMuted());
   }
   let lastFriendReqCount = 0;
   let lastChallengeReqCount = 0;
@@ -407,7 +423,9 @@
   let toastedNotificationIds = new Set();
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    const [requests, challenges, notifications] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications()]);
+    const [requests, challenges, notifications, unreadMsgCount] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getUnreadMessageCount()]);
+    const inboxBadge = document.getElementById("inboxTabBadge");
+    if (inboxBadge) inboxBadge.style.display = unreadMsgCount > 0 ? "block" : "none";
     const challengeCount = challenges.incoming.length;
     let hasNew = false;
     // Freundschaftsanfragen, Duell-Einladungen und persönliche Benachrichtigungen werden über ihre
@@ -812,6 +830,22 @@
       badges: r.badges.map((b) => b.name),
       playedAt: r.playedAt,
     });
+
+    // Automatische Zusammenfassung ins private Postfach — welche Wörter/Sätze gespielt wurden,
+    // richtig/falsch, und (wenn vorhanden) eine kurze Erklärung zur Bedeutung.
+    if (Backend.currentUser() && r.answers && r.answers.length) {
+      const catTitles = [...new Set(r.answers.map((a) => a.categoryId))]
+        .map((id) => ExerciseData.getCategory(id)?.title || id).join(", ");
+      const lines = r.answers.slice(0, 20).map((a) => {
+        const wordMatch = a.prompt.match(/___\s*([A-ZÄÖÜ][a-zäöüß]+)|([A-ZÄÖÜ][a-zäöüß]+)\s*___/);
+        const word = wordMatch ? (wordMatch[1] || wordMatch[2]) : null;
+        const meaning = word && ExerciseData.WORD_MEANINGS && ExerciseData.WORD_MEANINGS[word] ? ` — ${ExerciseData.WORD_MEANINGS[word]}` : "";
+        const mark = a.base > 0 ? "✅" : "❌";
+        return `${mark} ${a.prompt} → ${a.correctText}${meaning}`;
+      }).join("\n");
+      const summary = `📊 Du hast gerade „${catTitles}" gespielt — Ergebnis: ${r.combinedPercent}%.\n\n${lines}${r.answers.length > 20 ? `\n… und ${r.answers.length - 20} weitere.` : ""}`;
+      Backend.sendSystemMessage(Backend.currentUser().id, summary);
+    }
 
     const trophyLabel = `${r.character.name} – ${r.tier.replace("Deutsch-", "")}`;
     const newTrophy = Backend.addTrophy(trophyLabel);
@@ -1521,6 +1555,27 @@
 
   let authMode = "login";
   let profileEditMode = false;
+  let profileEditPage = 0;
+  let profileEditDraft = {}; // sammelt Eingaben über Seitenwechsel hinweg, bevor gespeichert wird
+  function captureProfileEditDraft() {
+    const ids = [
+      "favCountryInput", "extraDreamDestInput", "extraVisitedInput",
+      "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput",
+      "favQuoteInput", "extraMottoInput", "poemInput",
+      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect",
+    ];
+    const fieldMap = {
+      favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
+      favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraActorInput: "favActor",
+      favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem",
+      favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
+    };
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) profileEditDraft[fieldMap[id]] = el.value.trim();
+    });
+  }
+  let profileViewPage = 0;
 
   async function renderAccount() {
     const area = document.getElementById("accountArea");
@@ -1528,6 +1583,7 @@
     const myUnread = user ? await Backend.getUnreadNotifications() : [];
     if (user && myUnread.length) await Backend.refreshCurrentProfile();
     const profile = Backend.currentProfile();
+    const extra = (profile && profile.extraProfileData) || {};
 
     const demoBanner = !Backend.isConfigured
       ? '<div class="demo-banner">🔧 Demo-Modus: Es ist noch kein Supabase-Projekt verbunden (siehe supabase-config.js). Konten &amp; Punkte bleiben nur für diese Sitzung erhalten.</div>'
@@ -1597,7 +1653,10 @@
         <div class="question-card" style="border:2px solid var(--amber-400); margin-bottom:14px;">
           <h3>🔔 Neu für dich</h3>
           ${myUnread.map((n) => `<p style="margin:8px 0;">${n.message}</p>`).join("")}
-          <button type="button" class="btn btn-ghost" id="dismissNotificationsBtn" style="margin-top:6px;">Gelesen, ausblenden</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+            <button type="button" class="btn btn-ghost" id="dismissNotificationsBtn">Gelesen, ausblenden</button>
+            <button type="button" class="btn btn-ghost" id="muteNotifyBtn">${isNotifyMuted() ? "🔔 Ton wieder einschalten" : "🔕 Ton & Blinken stummschalten"}</button>
+          </div>
         </div>` : ""}
         <div class="question-card profile-card-view">
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
@@ -1617,7 +1676,7 @@
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
-          ${renderExtendedSteckbrief(profile)}
+          ${renderExtendedSteckbrief(profile, "own")}
           <div class="badge-row">
             ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
           </div>
@@ -1653,20 +1712,29 @@
           ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
         </div>` : ""}
       `;
-      document.getElementById("editProfileBtn").addEventListener("click", () => { profileEditMode = true; renderAccount(); });
+      document.getElementById("editProfileBtn").addEventListener("click", () => { profileEditMode = true; profileEditDraft = {}; profileEditPage = 0; renderAccount(); });
       const introBtn = document.getElementById("introPromptBtn");
-      if (introBtn) introBtn.addEventListener("click", () => { profileEditMode = true; renderAccount(); });
+      if (introBtn) introBtn.addEventListener("click", () => { profileEditMode = true; profileEditDraft = {}; profileEditPage = 0; renderAccount(); });
       document.getElementById("myFriendsToggle").addEventListener("click", () => {
         const list = document.getElementById("myFriendsList");
         list.style.display = list.style.display === "none" ? "flex" : "none";
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
+      wireSteckbriefPager(area, renderAccount);
       const dismissBtn = document.getElementById("dismissNotificationsBtn");
       if (dismissBtn) {
         dismissBtn.addEventListener("click", async () => {
           await Backend.markNotificationsRead(myUnread.map((n) => n.id));
           myUnread.forEach((n) => toastedNotificationIds.add(n.id));
           checkNotifications();
+          renderAccount();
+        });
+      }
+      const muteBtn = document.getElementById("muteNotifyBtn");
+      if (muteBtn) {
+        muteBtn.addEventListener("click", () => {
+          setNotifyMuted(!isNotifyMuted());
+          if (loginBtn) loginBtn.classList.toggle("notify-ring", !isNotifyMuted() && myUnread.length > 0);
           renderAccount();
         });
       }
@@ -1750,44 +1818,91 @@
             ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${profile.origin === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
           </select>
         </div>
-        <div class="form-field">
-          <label>Welche Sprachen sprichst oder lernst du?</label>
-          <div class="hobby-chip-row">
-            ${VocabData.LANGUAGES.map((l) => `<button type="button" class="hobby-chip lang-chip ${((profile.languages || []).includes(l)) ? "selected" : ""}" data-lang="${l}">${l}</button>`).join("")}
-          </div>
+        <p class="eyebrow" style="margin-top:20px;">📋 Erweiterter Steckbrief — mehrere Seiten</p>
+        <div class="order-toggle" id="profilePageSwitch" style="margin-bottom:14px;">
+          <button type="button" class="order-pill" data-ppage="0" aria-selected="${profileEditPage === 0}">1 · 🌍 Sprachen</button>
+          <button type="button" class="order-pill" data-ppage="1" aria-selected="${profileEditPage === 1}">2 · 🎬 Kultur</button>
+          <button type="button" class="order-pill" data-ppage="2" aria-selected="${profileEditPage === 2}">3 · 💭 Gedanken</button>
+          <button type="button" class="order-pill" data-ppage="3" aria-selected="${profileEditPage === 3}">4 · ✨ Extra</button>
         </div>
-        <p class="eyebrow" style="margin-top:18px;">📝 Erweiterter Steckbrief (optional)</p>
-        <div class="form-field">
-          <label>Lieblingsfilm</label>
-          <input type="text" id="favMovieInput" maxlength="60" value="${profile.favMovie || ""}" placeholder="z. B. Das Leben der Anderen" />
-        </div>
-        <div class="form-field">
-          <label>Lieblingsserie</label>
-          <input type="text" id="favSeriesInput" maxlength="60" value="${profile.favSeries || ""}" placeholder="z. B. Dark" />
-        </div>
-        <div class="form-field">
-          <label>Lieblingslied</label>
-          <input type="text" id="favSongInput" maxlength="60" value="${profile.favSong || ""}" placeholder="z. B. 99 Luftballons" />
-        </div>
-        <div class="form-field">
-          <label>Lieblingsessen</label>
-          <input type="text" id="favFoodInput" maxlength="60" value="${profile.favFood || ""}" placeholder="z. B. Käsespätzle" />
-        </div>
-        <div class="form-field">
-          <label>Lieblingsgetränk</label>
-          <input type="text" id="favDrinkInput" maxlength="60" value="${profile.favDrink || ""}" placeholder="z. B. Apfelschorle" />
-        </div>
-        <div class="form-field">
-          <label>Lieblingsland</label>
-          <input type="text" id="favCountryInput" maxlength="60" value="${profile.favCountry || ""}" placeholder="z. B. Portugal" />
-        </div>
-        <div class="form-field">
-          <label>Lieblingsspruch oder Zitat</label>
-          <input type="text" id="favQuoteInput" maxlength="120" value="${profile.favQuote || ""}" placeholder="z. B. Übung macht den Meister" />
-        </div>
-        <div class="form-field">
-          <label>Ein eigenes Gedicht oder ein paar Zeilen auf Deutsch (übe dabei gleich freies Schreiben!)</label>
-          <textarea id="poemInput" class="guestbook-form-textarea" style="min-height:100px;" maxlength="600" placeholder="Schreib ein kurzes Gedicht, einen Gedanken, ein Zitat…">${profile.poem || ""}</textarea>
+        <div id="profilePageContent">
+          ${profileEditPage === 0 ? `
+            <div class="form-field">
+              <label>Welche Sprachen sprichst oder lernst du?</label>
+              <div class="hobby-chip-row">
+                ${VocabData.LANGUAGES.map((l) => `<button type="button" class="hobby-chip lang-chip ${((profile.languages || []).includes(l)) ? "selected" : ""}" data-lang="${l}">${l}</button>`).join("")}
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Lieblingsland</label>
+              <input type="text" id="favCountryInput" maxlength="60" value="${profileEditDraft.favCountry !== undefined ? profileEditDraft.favCountry : (profile.favCountry || "")}" placeholder="z. B. Portugal" />
+            </div>
+            <div class="form-field">
+              <label>Traumreiseziel</label>
+              <input type="text" id="extraDreamDestInput" maxlength="60" value="${profileEditDraft.dreamDestination !== undefined ? profileEditDraft.dreamDestination : (extra.dreamDestination || "")}" placeholder="z. B. Neuseeland" />
+            </div>
+            <div class="form-field">
+              <label>Schon bereiste Länder (kommagetrennt)</label>
+              <input type="text" id="extraVisitedInput" maxlength="150" value="${profileEditDraft.visitedCountries !== undefined ? profileEditDraft.visitedCountries : (extra.visitedCountries || "")}" placeholder="z. B. Italien, Türkei, Marokko" />
+            </div>
+          ` : ""}
+          ${profileEditPage === 1 ? `
+            <div class="form-field">
+              <label>Lieblingsfilm</label>
+              <input type="text" id="favMovieInput" maxlength="60" value="${profileEditDraft.favMovie !== undefined ? profileEditDraft.favMovie : (profile.favMovie || "")}" placeholder="z. B. Das Leben der Anderen" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingsserie</label>
+              <input type="text" id="favSeriesInput" maxlength="60" value="${profileEditDraft.favSeries !== undefined ? profileEditDraft.favSeries : (profile.favSeries || "")}" placeholder="z. B. Dark" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingslied</label>
+              <input type="text" id="favSongInput" maxlength="60" value="${profileEditDraft.favSong !== undefined ? profileEditDraft.favSong : (profile.favSong || "")}" placeholder="z. B. 99 Luftballons" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingsschauspieler:in</label>
+              <input type="text" id="extraActorInput" maxlength="60" value="${profileEditDraft.favActor !== undefined ? profileEditDraft.favActor : (extra.favActor || "")}" placeholder="z. B. Til Schweiger" />
+            </div>
+          ` : ""}
+          ${profileEditPage === 2 ? `
+            <div class="form-field">
+              <label>Lieblingsspruch oder Zitat</label>
+              <input type="text" id="favQuoteInput" maxlength="120" value="${profileEditDraft.favQuote !== undefined ? profileEditDraft.favQuote : (profile.favQuote || "")}" placeholder="z. B. Übung macht den Meister" />
+            </div>
+            <div class="form-field">
+              <label>Dein Lebensmotto</label>
+              <input type="text" id="extraMottoInput" maxlength="120" value="${profileEditDraft.motto !== undefined ? profileEditDraft.motto : (extra.motto || "")}" placeholder="z. B. Nie aufgeben" />
+            </div>
+            <div class="form-field">
+              <label>Ein eigenes Gedicht oder ein paar Zeilen auf Deutsch (übe dabei gleich freies Schreiben!)</label>
+              <textarea id="poemInput" class="guestbook-form-textarea" style="min-height:100px;" maxlength="600" placeholder="Schreib ein kurzes Gedicht, einen Gedanken, ein Zitat…">${profileEditDraft.poem !== undefined ? profileEditDraft.poem : (profile.poem || "")}</textarea>
+            </div>
+          ` : ""}
+          ${profileEditPage === 3 ? `
+            <div class="form-field">
+              <label>Lieblingsessen</label>
+              <input type="text" id="favFoodInput" maxlength="60" value="${profileEditDraft.favFood !== undefined ? profileEditDraft.favFood : (profile.favFood || "")}" placeholder="z. B. Käsespätzle" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingsgetränk</label>
+              <input type="text" id="favDrinkInput" maxlength="60" value="${profileEditDraft.favDrink !== undefined ? profileEditDraft.favDrink : (profile.favDrink || "")}" placeholder="z. B. Apfelschorle" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingsfarbe</label>
+              <input type="text" id="extraColorInput" maxlength="40" value="${profileEditDraft.favColor !== undefined ? profileEditDraft.favColor : (extra.favColor || "")}" placeholder="z. B. Türkis" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingstier</label>
+              <input type="text" id="extraAnimalInput" maxlength="40" value="${profileEditDraft.favAnimal !== undefined ? profileEditDraft.favAnimal : (extra.favAnimal || "")}" placeholder="z. B. Fuchs" />
+            </div>
+            <div class="form-field">
+              <label>Lieblingsjahreszeit</label>
+              <select id="extraSeasonSelect" class="challenge-select">
+                <option value="">Nicht angeben</option>
+                ${["Frühling", "Sommer", "Herbst", "Winter"].map((s) => `<option value="${s}" ${(profileEditDraft.favSeason !== undefined ? profileEditDraft.favSeason : extra.favSeason) === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+            </div>
+          ` : ""}
         </div>
         <div class="form-error" id="profileSaveError"></div>
         <div class="quiz-actions" style="justify-content:flex-start;">
@@ -1833,21 +1948,41 @@
       const errBox = document.getElementById("profileSaveError");
       saveBtn.textContent = "Speichert …";
       saveBtn.disabled = true;
+      captureProfileEditDraft(); // aktuelle Seite noch mit einsammeln, bevor gespeichert wird
+      const val = (id, fallback) => {
+        const field = { extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries", extraActorInput: "favActor",
+          extraMottoInput: "motto", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
+          favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
+          favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
+        if (profileEditDraft[field] !== undefined) return profileEditDraft[field];
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : (fallback || "");
+      };
       const bioText = document.getElementById("bioInput").value.trim();
+      const newExtra = {
+        dreamDestination: val("extraDreamDestInput", extra.dreamDestination),
+        visitedCountries: val("extraVisitedInput", extra.visitedCountries),
+        favActor: val("extraActorInput", extra.favActor),
+        motto: val("extraMottoInput", extra.motto),
+        favColor: val("extraColorInput", extra.favColor),
+        favAnimal: val("extraAnimalInput", extra.favAnimal),
+        favSeason: val("extraSeasonSelect", extra.favSeason),
+      };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
         Backend.saveBirthday(document.getElementById("birthdayInput").value.trim()),
         Backend.saveOrigin(document.getElementById("originSelect").value),
         Backend.saveExtendedProfile({
           languages: profile.languages || [],
-          favMovie: document.getElementById("favMovieInput").value.trim(),
-          favSeries: document.getElementById("favSeriesInput").value.trim(),
-          favSong: document.getElementById("favSongInput").value.trim(),
-          favFood: document.getElementById("favFoodInput").value.trim(),
-          favDrink: document.getElementById("favDrinkInput").value.trim(),
-          favCountry: document.getElementById("favCountryInput").value.trim(),
-          favQuote: document.getElementById("favQuoteInput").value.trim(),
-          poem: document.getElementById("poemInput").value.trim(),
+          favMovie: val("favMovieInput", profile.favMovie),
+          favSeries: val("favSeriesInput", profile.favSeries),
+          favSong: val("favSongInput", profile.favSong),
+          favFood: val("favFoodInput", profile.favFood),
+          favDrink: val("favDrinkInput", profile.favDrink),
+          favCountry: val("favCountryInput", profile.favCountry),
+          favQuote: val("favQuoteInput", profile.favQuote),
+          poem: val("poemInput", profile.poem),
+          extra: newExtra,
         }),
       ]);
       if (!okBio || !okBday || !okOrigin || !extendedResult.ok) {
@@ -1870,6 +2005,16 @@
     });
     document.getElementById("doneEditBtn").addEventListener("click", () => { profileEditMode = false; renderAccount(); });
     document.getElementById("previewProfileLink").addEventListener("click", () => openProfileModal(Backend.currentUser().id));
+    const pageSwitch = document.getElementById("profilePageSwitch");
+    if (pageSwitch) {
+      pageSwitch.querySelectorAll("[data-ppage]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          captureProfileEditDraft();
+          profileEditPage = Number(btn.dataset.ppage);
+          renderAccount();
+        });
+      });
+    }
     document.getElementById("emojiToggleLink").addEventListener("click", () => {
       const row = document.getElementById("emojiPickerRow");
       row.style.display = row.style.display === "none" ? "flex" : "none";
@@ -1944,6 +2089,7 @@
           favCountry: profile.favCountry || "",
           favQuote: profile.favQuote || "",
           poem: profile.poem || "",
+          extra,
         });
         renderAccount(); // immer neu rendern, damit der Klick sichtbar wird — auch wenn das Speichern fehlschlägt
         if (!result.ok) {
@@ -2024,7 +2170,7 @@
   }
 
   // Admin-Abzeichen — überall dort, wo ein Name/Profil auftaucht, konsistent anzeigbar
-  function renderExtendedSteckbrief(p) {
+  function renderExtendedSteckbrief(p, viewId) {
     // p kann entweder das eigene Profil-Objekt (camelCase) oder ein via getPublicProfile
     // geladenes fremdes Profil (snake_case) sein — beide Formen abdecken.
     const languages = p.languages || [];
@@ -2036,24 +2182,55 @@
     const favCountry = p.favCountry || p.fav_country || "";
     const favQuote = p.favQuote || p.fav_quote || "";
     const poem = p.poem || "";
-    const rows = [
-      favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : "",
-      favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : "",
-      favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : "",
-      favFood ? `<div class="breakdown-row"><span>🍽️ Lieblingsessen</span><span>${favFood}</span></div>` : "",
-      favDrink ? `<div class="breakdown-row"><span>🥤 Lieblingsgetränk</span><span>${favDrink}</span></div>` : "",
-      favCountry ? `<div class="breakdown-row"><span>🌍 Lieblingsland</span><span>${favCountry}</span></div>` : "",
-    ].filter(Boolean).join("");
-    const langsHtml = languages.length ? `<div class="trophy-case" style="margin-top:8px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : "";
-    const quoteHtml = favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : "";
-    const poemHtml = poem ? `<div class="poem-box"><p style="white-space:pre-wrap; font-style:italic; margin:0;">„${poem}"</p></div>` : "";
-    if (!rows && !langsHtml && !poemHtml && !quoteHtml) return "";
+    const extra = p.extraProfileData || p.extra_profile_data || {};
+
+    const pages = [
+      { icon: "🌍", label: "Sprachen", html: `
+        ${languages.length ? `<div class="trophy-case" style="margin-top:4px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : ""}
+        ${favCountry ? `<div class="breakdown-row"><span>🌍 Lieblingsland</span><span>${favCountry}</span></div>` : ""}
+        ${extra.dreamDestination ? `<div class="breakdown-row"><span>✈️ Traumreiseziel</span><span>${extra.dreamDestination}</span></div>` : ""}
+        ${extra.visitedCountries ? `<div class="breakdown-row"><span>🧳 Schon bereist</span><span>${extra.visitedCountries}</span></div>` : ""}
+      ` },
+      { icon: "🎬", label: "Kultur", html: `
+        ${favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : ""}
+        ${favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : ""}
+        ${favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : ""}
+        ${extra.favActor ? `<div class="breakdown-row"><span>🎭 Lieblingsschauspieler:in</span><span>${extra.favActor}</span></div>` : ""}
+      ` },
+      { icon: "💭", label: "Gedanken", html: `
+        ${extra.motto ? `<div class="breakdown-row"><span>🌟 Lebensmotto</span><span>${extra.motto}</span></div>` : ""}
+        ${favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : ""}
+        ${poem ? `<div class="poem-box"><p style="white-space:pre-wrap; font-style:italic; margin:0;">„${poem}"</p></div>` : ""}
+      ` },
+      { icon: "✨", label: "Extra", html: `
+        ${favFood ? `<div class="breakdown-row"><span>🍽️ Lieblingsessen</span><span>${favFood}</span></div>` : ""}
+        ${favDrink ? `<div class="breakdown-row"><span>🥤 Lieblingsgetränk</span><span>${favDrink}</span></div>` : ""}
+        ${extra.favColor ? `<div class="breakdown-row"><span>🎨 Lieblingsfarbe</span><span>${extra.favColor}</span></div>` : ""}
+        ${extra.favAnimal ? `<div class="breakdown-row"><span>🐾 Lieblingstier</span><span>${extra.favAnimal}</span></div>` : ""}
+        ${extra.favSeason ? `<div class="breakdown-row"><span>🍂 Lieblingsjahreszeit</span><span>${extra.favSeason}</span></div>` : ""}
+      ` },
+    ];
+    const nonEmpty = pages.map((pg) => pg.html.trim().length > 0);
+    if (!nonEmpty.some(Boolean)) return "";
+    const activePage = Math.min(profileViewPages[viewId] || 0, pages.length - 1);
     return `<div class="breakdown-list" style="margin-top:12px;">
-      ${langsHtml}
-      ${rows}
-      ${quoteHtml}
-      ${poemHtml}
+      <div class="order-toggle" data-steckbrief-switch="${viewId}" style="margin-bottom:10px;">
+        ${pages.map((pg, i) => `<button type="button" class="order-pill" data-svpage="${i}" aria-selected="${activePage === i}">${i + 1} · ${pg.icon}</button>`).join("")}
+      </div>
+      ${pages[activePage].html.trim() ? pages[activePage].html : '<p class="empty-note">Auf dieser Seite steht noch nichts.</p>'}
     </div>`;
+  }
+  const profileViewPages = {};
+  function wireSteckbriefPager(root, rerenderFn) {
+    root.querySelectorAll("[data-steckbrief-switch]").forEach((switchEl) => {
+      const viewId = switchEl.dataset.steckbriefSwitch;
+      switchEl.querySelectorAll("[data-svpage]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          profileViewPages[viewId] = Number(btn.dataset.svpage);
+          rerenderFn();
+        });
+      });
+    });
   }
 
   function adminBadge(isAdminFlag, isOwnerFlag, isModeratorFlag) {
@@ -2122,7 +2299,7 @@
                 return hobby ? `<div class="trophy-chip">${hobby.emoji} ${hobby.article} ${hobby.noun}</div>` : "";
               }).join("") })
           : "",
-        Core.el("div", { html: renderExtendedSteckbrief(p) }),
+        Core.el("div", { html: renderExtendedSteckbrief(p, "modal-" + p.id) }),
         Core.el("div", { class: "trophy-case trophy-case-compact", id: "modalTrophyCase", style: "justify-content:center; margin-top:10px;",
           html: trophies.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")
               + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "")
@@ -2243,6 +2420,7 @@
       )
     );
     document.body.appendChild(box);
+    wireSteckbriefPager(box, () => { box.remove(); openProfileModal(id); });
     box.querySelectorAll("[data-modal-view-photo]").forEach((img, idx, all) => {
       const urls = [...all].map((el) => el.dataset.modalViewPhoto);
       img.addEventListener("click", () => openGallerySlideshow(urls, idx, "Foto"));
@@ -2312,6 +2490,53 @@
      FREUNDE
      ============================================================ */
   let friendChallengeTarget = null;
+
+  async function renderInbox() {
+    const area = document.getElementById("inboxArea");
+    if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
+    const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
+    area.innerHTML = `
+      <div class="question-card">
+        <h3>✉️ Neue Nachricht schreiben</h3>
+        <div class="form-field">
+          <select id="inboxRecipientSelect" class="challenge-select">
+            <option value="">Freund auswählen…</option>
+            ${friends.map((f) => `<option value="${f.id}">${f.name}</option>`).join("")}
+          </select>
+        </div>
+        <div class="form-field">
+          <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
+        </div>
+        <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
+        <div class="form-error" id="inboxSendError"></div>
+      </div>
+      <div class="question-card" style="margin-top:14px;">
+        <h3>📬 Dein Postfach</h3>
+        ${messages.length ? messages.map((m) => `
+          <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px; ${!m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
+            <div style="display:flex; justify-content:space-between; width:100%;">
+              <strong>${m.is_system ? "🔔 System" : (m.author_name || "Unbekannt")}</strong>
+              <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+            </div>
+            <p style="white-space:pre-wrap; margin:0;">${m.body}</p>
+          </div>`).join("") : '<p class="empty-note">Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast.</p>'}
+      </div>
+    `;
+    document.getElementById("inboxSendBtn").addEventListener("click", async () => {
+      const to = document.getElementById("inboxRecipientSelect").value;
+      const body = document.getElementById("inboxMessageInput").value;
+      const errBox = document.getElementById("inboxSendError");
+      if (!to) { errBox.textContent = "⚠️ Bitte einen Freund auswählen."; return; }
+      try {
+        await Backend.sendPrivateMessage(to, body);
+        renderInbox();
+      } catch (err) {
+        errBox.textContent = "⚠️ " + err.message;
+      }
+    });
+    const unreadIds = messages.filter((m) => !m.read).map((m) => m.id);
+    if (unreadIds.length) await Backend.markMessagesRead(unreadIds);
+  }
 
   async function renderFriends() {
     const area = document.getElementById("friendsArea");
@@ -2600,6 +2825,7 @@
       if (pill.dataset.sub === "sub-account") renderAccount();
       if (pill.dataset.sub === "sub-friends") renderFriends();
       if (pill.dataset.sub === "sub-design") renderDesign();
+      if (pill.dataset.sub === "sub-inbox") renderInbox();
     });
   });
 

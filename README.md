@@ -246,6 +246,16 @@ alter table community_texts add column if not exists cover_url text;
 alter table community_texts add column if not exists extra_data jsonb default '{}';
 alter table community_text_comments add column if not exists extra_data jsonb default '{}';
 
+-- Privates Postfach: Nachrichten zwischen Freunden + automatische System-Zusammenfassungen nach gespielten Runden
+create table if not exists private_messages (
+  id uuid default gen_random_uuid() primary key,
+  from_user uuid references auth.users,
+  to_user uuid references auth.users,
+  author_name text, body text, is_system boolean default false,
+  read boolean default false, created_at timestamptz default now()
+);
+alter table private_messages disable row level security;
+
 -- Dich selbst als Betreiber markieren (Namen ggf. anpassen)
 update profiles set is_admin = true, is_owner = true where name = 'XanderFox';
 ```

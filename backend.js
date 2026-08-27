@@ -372,6 +372,7 @@ const Backend = (function () {
 
   /* ================= PERSÖNLICHE BENACHRICHTIGUNGEN (Geschenke, Likes, Kommentare) ================= */
   demo.notifications = demo.notifications || [];
+  demo.privateMessages = demo.privateMessages || [];
 
   async function addNotification(targetUserId, message) {
     if (!targetUserId) return;
@@ -384,6 +385,63 @@ const Backend = (function () {
       return;
     }
     demo.notifications.push({ id: Core.uid(), user_id: targetUserId, message, read: false, created_at: new Date().toISOString() });
+  }
+
+  /* ---------------------------------------------------------
+     PRIVATES POSTFACH — Nachrichten zwischen Freunden + automatische
+     System-Zusammenfassung nach gespielten Runden.
+     --------------------------------------------------------- */
+  async function sendPrivateMessage(toUserId, body) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!body || !body.trim()) throw new Error("Nachricht darf nicht leer sein.");
+    if (client) {
+      const { error } = await client.from("private_messages").insert({
+        from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: body.trim(), is_system: false,
+      });
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.privateMessages.push({ id: Core.uid(), from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: body.trim(), is_system: false, read: false, created_at: new Date().toISOString() });
+  }
+
+  async function sendSystemMessage(toUserId, body) {
+    if (!toUserId) return;
+    if (client) {
+      try {
+        await client.from("private_messages").insert({ from_user: null, to_user: toUserId, author_name: "System", body, is_system: true });
+      } catch (e) { console.warn("System-Nachricht konnte nicht gespeichert werden:", e); }
+      return;
+    }
+    demo.privateMessages.push({ id: Core.uid(), from_user: null, to_user: toUserId, author_name: "System", body, is_system: true, read: false, created_at: new Date().toISOString() });
+  }
+
+  async function getMyMessages() {
+    if (!demo.user) return [];
+    if (client) {
+      const { data, error } = await client.from("private_messages").select("*").eq("to_user", demo.user.id).order("created_at", { ascending: false }).limit(60);
+      if (error || !data) return [];
+      return data;
+    }
+    return demo.privateMessages.filter((m) => m.to_user === demo.user.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 60);
+  }
+
+  async function getUnreadMessageCount() {
+    if (!demo.user) return 0;
+    if (client) {
+      const { count, error } = await client.from("private_messages").select("id", { count: "exact", head: true }).eq("to_user", demo.user.id).eq("read", false);
+      if (error) return 0;
+      return count || 0;
+    }
+    return demo.privateMessages.filter((m) => m.to_user === demo.user.id && !m.read).length;
+  }
+
+  async function markMessagesRead(ids) {
+    if (!ids || !ids.length) return;
+    if (client) {
+      await client.from("private_messages").update({ read: true }).in("id", ids);
+      return;
+    }
+    demo.privateMessages.forEach((m) => { if (ids.includes(m.id)) m.read = true; });
   }
 
   async function getUnreadNotifications() {
@@ -518,7 +576,7 @@ const Backend = (function () {
     return true;
   }
 
-  async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem }) {
+  async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem, extra }) {
     if (!demo.profile) return { ok: true };
     demo.profile.languages = languages;
     demo.profile.favMovie = favMovie;
@@ -529,10 +587,11 @@ const Backend = (function () {
     demo.profile.favCountry = favCountry;
     demo.profile.favQuote = favQuote;
     demo.profile.poem = poem;
+    demo.profile.extraProfileData = extra || demo.profile.extraProfileData || {};
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({
         languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood,
-        fav_drink: favDrink, fav_country: favCountry, fav_quote: favQuote, poem,
+        fav_drink: favDrink, fav_country: favCountry, fav_quote: favQuote, poem, extra_profile_data: demo.profile.extraProfileData,
       }).eq("id", demo.user.id).select();
       if (error) return { ok: false, message: friendlyDbError(error.message) };
       if (!data || !data.length) return { ok: false, message: "Speichern hat nichts zurückgegeben — evtl. blockiert Row Level Security (RLS) den Schreibzugriff." };
@@ -670,6 +729,7 @@ const Backend = (function () {
             languages: data.languages || [], fav_movie: data.fav_movie || "", fav_series: data.fav_series || "",
             fav_song: data.fav_song || "", fav_food: data.fav_food || "", poem: data.poem || "",
             fav_drink: data.fav_drink || "", fav_country: data.fav_country || "", fav_quote: data.fav_quote || "",
+            extra_profile_data: data.extra_profile_data || {},
           };
         }
         if (error) console.warn("Profil-Abfrage fehlgeschlagen:", error.message);
@@ -688,6 +748,7 @@ const Backend = (function () {
       languages: u.profile.languages || [], fav_movie: u.profile.favMovie || "", fav_series: u.profile.favSeries || "",
       fav_song: u.profile.favSong || "", fav_food: u.profile.favFood || "", poem: u.profile.poem || "",
       fav_drink: u.profile.favDrink || "", fav_country: u.profile.favCountry || "", fav_quote: u.profile.favQuote || "",
+      extra_profile_data: u.profile.extraProfileData || {},
     };
   }
 
@@ -1303,6 +1364,11 @@ const Backend = (function () {
     adminGiftCategoryUnlock,
     adminGiftThemeUnlock,
     getUnreadNotifications,
+    sendPrivateMessage,
+    getMyMessages,
+    getUnreadMessageCount,
+    markMessagesRead,
+    sendSystemMessage,
     markNotificationsRead,
     getLikesForText,
     toggleLikeText,

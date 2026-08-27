@@ -36,6 +36,46 @@ const ExerciseData = (function () {
     ["Insel","die"],["Schiff","das"],["Vogel","der"],["Fisch","der"],["Blatt","das"],
   ];
 
+  // Kurze, einfache Erklärungen zu den Artikel-Wörtern — werden in der Spiel-Zusammenfassung
+  // im Postfach gezeigt, damit man nachvollziehen kann, was ein Wort bedeutet.
+  const WORD_MEANINGS = {
+    "Tisch": "ein Möbelstück zum Essen oder Arbeiten", "Lampe": "spendet Licht in einem Raum", "Fenster": "eine Glasöffnung in der Wand",
+    "Stuhl": "ein Sitzmöbel für eine Person", "Tür": "Öffnung zum Durchgehen, oft mit Griff", "Auto": "ein Fahrzeug mit Motor",
+    "Baum": "eine große Pflanze mit Stamm und Blättern", "Blume": "eine Pflanze mit bunter Blüte", "Haus": "ein Gebäude zum Wohnen",
+    "Hund": "ein beliebtes Haustier, das bellt", "Katze": "ein Haustier, das miaut", "Pferd": "ein großes Tier zum Reiten",
+    "Apfel": "eine runde, oft rote oder grüne Frucht", "Banane": "eine gelbe, längliche Frucht", "Brot": "aus Mehl gebackenes Grundnahrungsmittel",
+    "Käse": "ein Milchprodukt, oft auf Brot", "Milch": "weißes Getränk von der Kuh", "Wasser": "durchsichtige Flüssigkeit zum Trinken",
+    "Wein": "alkoholisches Getränk aus Trauben", "Suppe": "flüssiges, warmes Gericht", "Fleisch": "Nahrung von Tieren",
+    "Zucker": "süße, weiße Kristalle zum Süßen", "Butter": "gelbes Fett aus Milch, zum Streichen", "Salz": "würzt Speisen, weiße Kristalle",
+    "Löffel": "Besteck zum Suppe essen", "Gabel": "Besteck mit Zinken", "Messer": "Besteck zum Schneiden",
+    "Teller": "flaches Geschirr für Essen", "Tasse": "Gefäß für heiße Getränke, mit Henkel", "Glas": "durchsichtiges Trinkgefäß",
+    "Schrank": "Möbelstück zum Aufbewahren von Kleidung", "Kommode": "niedriger Schrank mit Schubladen", "Bett": "Möbelstück zum Schlafen",
+    "Spiegel": "zeigt das eigene Bild", "Uhr": "zeigt die Uhrzeit", "Bild": "ein gemaltes oder gedrucktes Motiv",
+    "Computer": "elektronisches Gerät zum Arbeiten/Spielen", "Tastatur": "zum Tippen am Computer", "Handy": "tragbares Telefon",
+    "Drucker": "druckt Dokumente auf Papier", "Maus": "Steuergerät für den Computer (oder ein kleines Nagetier)", "Kabel": "Leitung für Strom oder Daten",
+    "Rucksack": "Tasche, die man auf dem Rücken trägt", "Tasche": "zum Tragen von Sachen", "Portemonnaie": "kleine Tasche für Geld",
+    "Schlüssel": "öffnet eine Tür oder ein Schloss", "Brille": "Sehhilfe für die Augen", "Buch": "gedruckte Seiten zum Lesen",
+    "Stift": "zum Schreiben oder Malen", "Zeitung": "gedruckte Nachrichten, täglich oder wöchentlich", "Heft": "kleines Buch zum Schreiben",
+    "Bahnhof": "Ort, an dem Züge halten", "Straße": "Weg für Autos und Fahrzeuge", "Zug": "Fahrzeug auf Schienen",
+    "Ampel": "regelt den Verkehr mit rot, gelb, grün", "Fahrrad": "Zweirad, das man tritt", "Bus": "großes Fahrzeug für viele Fahrgäste",
+    "Flugzeug": "fliegt durch die Luft", "Flughafen": "Ort, an dem Flugzeuge starten und landen", "Brücke": "führt über einen Fluss oder ein Tal",
+    "Rathaus": "Gebäude der Stadtverwaltung", "Park": "grüne Fläche zum Spazieren in der Stadt", "Bank": "Sitzmöbel im Freien (oder ein Geldinstitut)",
+    "Museum": "Ort, an dem Kunst oder Geschichte gezeigt wird", "Supermarkt": "großer Laden für Lebensmittel", "Bäckerei": "Laden, der Brot und Brötchen verkauft",
+    "Krankenhaus": "Ort, an dem Kranke behandelt werden", "Arzt": "Person, die Kranke behandelt", "Kind": "ein junger Mensch",
+    "Lehrer": "unterrichtet in der Schule (männlich)", "Lehrerin": "unterrichtet in der Schule (weiblich)", "Mädchen": "ein junges weibliches Kind",
+    "Junge": "ein junger männlicher Mensch", "Frau": "eine erwachsene weibliche Person", "Baby": "ein sehr kleines Kind",
+    "Mann": "eine erwachsene männliche Person", "Familie": "Eltern, Kinder und Verwandte", "Jahr": "zwölf Monate",
+    "Monat": "ein Teil des Jahres, z. B. Januar", "Woche": "sieben Tage", "Wochenende": "Samstag und Sonntag",
+    "Sommer": "die warme Jahreszeit", "Sonne": "leuchtet und wärmt am Tag", "Wetter": "wie es draußen ist (Regen, Sonne …)",
+    "Regen": "Wasser, das vom Himmel fällt", "Wolke": "weiße oder graue Form am Himmel", "Schnee": "weiße, kalte Flocken im Winter",
+    "Eis": "gefrorenes Wasser (oder eine süße Speise)", "Wind": "bewegte Luft", "Kälte": "niedrige Temperatur",
+    "Frühling": "die Jahreszeit nach dem Winter", "Herbst": "die Jahreszeit mit fallenden Blättern", "Winter": "die kalte Jahreszeit",
+    "Garten": "Fläche mit Pflanzen bei einem Haus", "Wiese": "eine Fläche mit Gras", "Berg": "eine hohe Erhebung im Land",
+    "Fluss": "fließendes Gewässer", "Stadt": "großer Ort mit vielen Häusern", "Land": "ein Staat (oder Fläche außerhalb der Stadt)",
+    "Wald": "Fläche mit vielen Bäumen", "Insel": "Land, umgeben von Wasser", "Schiff": "fährt auf dem Wasser",
+    "Vogel": "Tier, das fliegen kann", "Fisch": "Tier, das im Wasser lebt", "Blatt": "Teil einer Pflanze (oder eine Seite Papier)",
+  };
+
   function bankArtikel() {
     return Core.shuffle(ARTIKEL_WORDS).map(([word, correct]) => {
       const opts = ["der", "die", "das"];
@@ -3070,5 +3110,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS };
 })();
