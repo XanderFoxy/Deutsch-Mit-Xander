@@ -1229,8 +1229,8 @@
         const authorAvatar = authorP ? tinyAvatar({ avatar_url: authorP.avatar_url, avatar_emoji: authorP.avatar_emoji, name: t.author_name }) : "";
         return `
         <div class="material-card">
+          ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover-banner" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
           <div class="community-text-head">
-            ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover-thumb" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
             <span class="level-badge">${t.level}</span>
             <h3 style="margin:0;">${t.title}</h3>
           </div>
@@ -1731,6 +1731,18 @@
           <input type="text" id="favFoodInput" maxlength="60" value="${profile.favFood || ""}" placeholder="z. B. Käsespätzle" />
         </div>
         <div class="form-field">
+          <label>Lieblingsgetränk</label>
+          <input type="text" id="favDrinkInput" maxlength="60" value="${profile.favDrink || ""}" placeholder="z. B. Apfelschorle" />
+        </div>
+        <div class="form-field">
+          <label>Lieblingsland</label>
+          <input type="text" id="favCountryInput" maxlength="60" value="${profile.favCountry || ""}" placeholder="z. B. Portugal" />
+        </div>
+        <div class="form-field">
+          <label>Lieblingsspruch oder Zitat</label>
+          <input type="text" id="favQuoteInput" maxlength="120" value="${profile.favQuote || ""}" placeholder="z. B. Übung macht den Meister" />
+        </div>
+        <div class="form-field">
           <label>Ein eigenes Gedicht oder ein paar Zeilen auf Deutsch (übe dabei gleich freies Schreiben!)</label>
           <textarea id="poemInput" class="guestbook-form-textarea" style="min-height:100px;" maxlength="600" placeholder="Schreib ein kurzes Gedicht, einen Gedanken, ein Zitat…">${profile.poem || ""}</textarea>
         </div>
@@ -1789,6 +1801,9 @@
           favSeries: document.getElementById("favSeriesInput").value.trim(),
           favSong: document.getElementById("favSongInput").value.trim(),
           favFood: document.getElementById("favFoodInput").value.trim(),
+          favDrink: document.getElementById("favDrinkInput").value.trim(),
+          favCountry: document.getElementById("favCountryInput").value.trim(),
+          favQuote: document.getElementById("favQuoteInput").value.trim(),
           poem: document.getElementById("poemInput").value.trim(),
         }),
       ]);
@@ -1882,6 +1897,9 @@
           favSeries: profile.favSeries || "",
           favSong: profile.favSong || "",
           favFood: profile.favFood || "",
+          favDrink: profile.favDrink || "",
+          favCountry: profile.favCountry || "",
+          favQuote: profile.favQuote || "",
           poem: profile.poem || "",
         });
         renderAccount(); // immer neu rendern, damit der Klick sichtbar wird — auch wenn das Speichern fehlschlägt
@@ -1971,19 +1989,26 @@
     const favSeries = p.favSeries || p.fav_series || "";
     const favSong = p.favSong || p.fav_song || "";
     const favFood = p.favFood || p.fav_food || "";
+    const favDrink = p.favDrink || p.fav_drink || "";
+    const favCountry = p.favCountry || p.fav_country || "";
+    const favQuote = p.favQuote || p.fav_quote || "";
     const poem = p.poem || "";
     const rows = [
       favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : "",
       favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : "",
       favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : "",
       favFood ? `<div class="breakdown-row"><span>🍽️ Lieblingsessen</span><span>${favFood}</span></div>` : "",
+      favDrink ? `<div class="breakdown-row"><span>🥤 Lieblingsgetränk</span><span>${favDrink}</span></div>` : "",
+      favCountry ? `<div class="breakdown-row"><span>🌍 Lieblingsland</span><span>${favCountry}</span></div>` : "",
     ].filter(Boolean).join("");
     const langsHtml = languages.length ? `<div class="trophy-case" style="margin-top:8px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : "";
+    const quoteHtml = favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : "";
     const poemHtml = poem ? `<div class="poem-box"><p style="white-space:pre-wrap; font-style:italic; margin:0;">„${poem}"</p></div>` : "";
-    if (!rows && !langsHtml && !poemHtml) return "";
+    if (!rows && !langsHtml && !poemHtml && !quoteHtml) return "";
     return `<div class="breakdown-list" style="margin-top:12px;">
       ${langsHtml}
       ${rows}
+      ${quoteHtml}
       ${poemHtml}
     </div>`;
   }

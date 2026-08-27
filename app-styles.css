@@ -658,12 +658,13 @@
   text-underline-offset: 2px;
 }
 .community-text-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.community-text-cover-thumb {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
+.community-text-cover-banner {
+  display: block;
+  width: calc(100% + 32px);
+  margin: -16px -16px 12px -16px;
+  max-height: 200px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   cursor: pointer;
 }
 .level-badge {

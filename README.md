@@ -209,6 +209,9 @@ alter table profiles add column if not exists fav_series text default '';
 alter table profiles add column if not exists fav_song text default '';
 alter table profiles add column if not exists fav_food text default '';
 alter table profiles add column if not exists poem text default '';
+alter table profiles add column if not exists fav_drink text default '';
+alter table profiles add column if not exists fav_country text default '';
+alter table profiles add column if not exists fav_quote text default '';
 -- Vorausschauend ergänzt für spätere Profil-Gestaltung (z. B. ein großes Titelbild-Foto, getrennt vom kleinen Profilbild):
 alter table profiles add column if not exists profile_banner_url text default '';
 

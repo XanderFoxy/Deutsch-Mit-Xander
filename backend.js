@@ -53,7 +53,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", poem: "", profileBannerUrl: "" };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", favDrink: "", favCountry: "", favQuote: "", poem: "", profileBannerUrl: "" };
   }
 
   /* ================= AUTH ================= */
@@ -88,6 +88,9 @@ const Backend = (function () {
           favSong: data.fav_song || "",
           favFood: data.fav_food || "",
           poem: data.poem || "",
+          favDrink: data.fav_drink || "",
+          favCountry: data.fav_country || "",
+          favQuote: data.fav_quote || "",
           profileBannerUrl: data.profile_banner_url || "",
         };
       }
@@ -514,17 +517,21 @@ const Backend = (function () {
     return true;
   }
 
-  async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, poem }) {
+  async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem }) {
     if (!demo.profile) return { ok: true };
     demo.profile.languages = languages;
     demo.profile.favMovie = favMovie;
     demo.profile.favSeries = favSeries;
     demo.profile.favSong = favSong;
     demo.profile.favFood = favFood;
+    demo.profile.favDrink = favDrink;
+    demo.profile.favCountry = favCountry;
+    demo.profile.favQuote = favQuote;
     demo.profile.poem = poem;
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({
-        languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood, poem,
+        languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood,
+        fav_drink: favDrink, fav_country: favCountry, fav_quote: favQuote, poem,
       }).eq("id", demo.user.id).select();
       if (error) return { ok: false, message: friendlyDbError(error.message) };
       if (!data || !data.length) return { ok: false, message: "Speichern hat nichts zurückgegeben — evtl. blockiert Row Level Security (RLS) den Schreibzugriff." };
@@ -661,6 +668,7 @@ const Backend = (function () {
             last_active: data.last_active, online: isRecentlyActive(data.last_active),
             languages: data.languages || [], fav_movie: data.fav_movie || "", fav_series: data.fav_series || "",
             fav_song: data.fav_song || "", fav_food: data.fav_food || "", poem: data.poem || "",
+            fav_drink: data.fav_drink || "", fav_country: data.fav_country || "", fav_quote: data.fav_quote || "",
           };
         }
         if (error) console.warn("Profil-Abfrage fehlgeschlagen:", error.message);
@@ -676,6 +684,9 @@ const Backend = (function () {
       badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
       origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin, is_owner: u.profile.isOwner,
       is_moderator: u.profile.isModerator, gallery: u.profile.gallery, last_active: u.profile.lastActive || null, online: false,
+      languages: u.profile.languages || [], fav_movie: u.profile.favMovie || "", fav_series: u.profile.favSeries || "",
+      fav_song: u.profile.favSong || "", fav_food: u.profile.favFood || "", poem: u.profile.poem || "",
+      fav_drink: u.profile.favDrink || "", fav_country: u.profile.favCountry || "", fav_quote: u.profile.favQuote || "",
     };
   }
 
