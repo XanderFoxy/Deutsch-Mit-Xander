@@ -56,14 +56,16 @@
     { id: "nachtflicken", name: "Nachtflicken", emoji: "🦇", desc: "Dunkel & verspielt, Neon-Filzpatches auf tiefem Lila.", mode: "dunkel" },
     { id: "sternennacht", name: "Sternennacht", emoji: "✨", desc: "Dunkelblau mit goldenem Funkeln, verträumt.", mode: "dunkel" },
     { id: "mitternachtskarneval", name: "Mitternachtskarneval", emoji: "🎭", desc: "Dunkel, bunt & partytauglich.", mode: "dunkel" },
-    { id: "tiefsee", name: "Tiefsee-Atelier", emoji: "🐙", desc: "Dunkles Smaragdgrün, edel-verspielt.", mode: "dunkel" },
-    { id: "vulkanglut", name: "Vulkanglut", emoji: "🌋", desc: "Dunkel & feurig-orange, kraftvoll-verspielt.", mode: "dunkel" },
-    { id: "mondgarten", name: "Mondgarten", emoji: "🌙", desc: "Dunkles Violett, ruhig-verträumt.", mode: "dunkel" },
-    { id: "retroarkade", name: "Retro-Arkade", emoji: "👾", desc: "Dunkel, Neon-Pixel-verspielt.", mode: "dunkel" },
-    { id: "lavendelfeld", name: "Lavendelfeld", emoji: "🪻", desc: "Hell, zartlila, ruhig-verspielt.", mode: "hell" },
-    { id: "zitrusgarten", name: "Zitrusgarten", emoji: "🍋", desc: "Hell, sonnig-frisch, verspielt.", mode: "hell" },
-    { id: "obsidian", name: "Obsidian-Schmiede", emoji: "⚒️", desc: "Dunkel, metallisch-warm, edel.", mode: "dunkel" },
-    { id: "tiefseeneon", name: "Tiefsee-Neon", emoji: "🐡", desc: "Dunkel, elektrisch-verspielt.", mode: "dunkel" },
+    { id: "tiefsee", name: "Tiefsee-Atelier", emoji: "🐙", desc: "Dunkles Smaragdgrün, edel-verspielt.", mode: "dunkel", unlock: { type: "points", value: 100 } },
+    { id: "vulkanglut", name: "Vulkanglut", emoji: "🌋", desc: "Dunkel & feurig-orange, kraftvoll-verspielt.", mode: "dunkel", unlock: { type: "points", value: 250 } },
+    { id: "mondgarten", name: "Mondgarten", emoji: "🌙", desc: "Dunkles Violett, ruhig-verträumt.", mode: "dunkel", unlock: { type: "points", value: 500 } },
+    { id: "retroarkade", name: "Retro-Arkade", emoji: "👾", desc: "Dunkel, Neon-Pixel-verspielt.", mode: "dunkel", unlock: { type: "trophy", match: "Gehirnjogger" } },
+    { id: "lavendelfeld", name: "Lavendelfeld", emoji: "🪻", desc: "Hell, zartlila, ruhig-verspielt.", mode: "hell", unlock: { type: "points", value: 750 } },
+    { id: "zitrusgarten", name: "Zitrusgarten", emoji: "🍋", desc: "Hell, sonnig-frisch, verspielt.", mode: "hell", unlock: { type: "trophy", match: "Steckbrief" } },
+    { id: "obsidian", name: "Obsidian-Schmiede", emoji: "⚒️", desc: "Dunkel, metallisch-warm, edel.", mode: "dunkel", unlock: { type: "points", value: 1000 } },
+    { id: "tiefseeneon", name: "Tiefsee-Neon", emoji: "🐡", desc: "Dunkel, elektrisch-verspielt.", mode: "dunkel", unlock: { type: "trophy", match: "Vorstellungsrunde" } },
+    { id: "winterzauber", name: "Winterzauber", emoji: "❄️", desc: "Dunkel, mit fallendem Schnee — animiert!", mode: "dunkel", unlock: { type: "points", value: 1500 } },
+    { id: "wellenspiel", name: "Wellenspiel", emoji: "🌊", desc: "Hell, mit sanft bewegten Wellen — animiert!", mode: "hell", unlock: { type: "trophy", match: "Superheld" } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -78,20 +80,33 @@
     }
   }
 
+  function isThemeUnlocked(t, profile) {
+    if (!t.unlock) return true;
+    if (!profile) return false;
+    if (t.unlock.type === "points") return profile.points >= t.unlock.value;
+    if (t.unlock.type === "trophy") return (profile.trophies || []).some((tr) => tr.includes(t.unlock.match));
+    return true;
+  }
+
   function renderDesign() {
     const area = document.getElementById("designArea");
     if (!area) return;
-    const active = (Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme;
-    const themeCard = (t) => `
-      <div class="category-card ${t.id === active ? "selected" : ""}" data-theme-pick="${t.id}">
-        <div class="cat-checkbox">${t.id === active ? "✓" : ""}</div>
+    const profile = Backend.currentProfile();
+    const active = (profile && profile.theme) || sessionTheme;
+    const themeCard = (t) => {
+      const unlocked = isThemeUnlocked(t, profile);
+      const conditionText = !t.unlock ? "" : t.unlock.type === "points" ? `🔒 Ab ${t.unlock.value} Punkten` : `🔒 Pokal „${t.unlock.match}" nötig`;
+      return `
+      <div class="category-card ${t.id === active ? "selected" : ""} ${!unlocked ? "theme-locked" : ""}" data-theme-pick="${unlocked ? t.id : ""}" ${!unlocked ? `data-locked-info="${conditionText}"` : ""}>
+        <div class="cat-checkbox">${t.id === active ? "✓" : unlocked ? "" : "🔒"}</div>
         <div class="cat-body">
-          <div class="cat-title-row"><span class="cat-icon">${t.emoji}</span><span>${t.name}</span></div>
-          <div class="cat-info-text open">${t.desc}</div>
+          <div class="cat-title-row"><span class="cat-icon">${unlocked ? t.emoji : "🔒"}</span><span>${t.name}</span></div>
+          <div class="cat-info-text open">${unlocked ? t.desc : conditionText}</div>
         </div>
       </div>`;
+    };
     area.innerHTML = `
-      <p class="empty-note">Wähle dein Lieblings-Design — wirkt sofort auf der ganzen Seite.</p>
+      <p class="empty-note">Wähle dein Lieblings-Design — wirkt sofort auf der ganzen Seite. Gesperrte Designs sind Geschenke fürs Weiterlernen — einfach fleißig üben!</p>
       <p class="eyebrow" style="margin-top:16px;">☀️ Helle Designs</p>
       <div class="category-grid">
         ${THEMES.filter((t) => t.mode === "hell").map(themeCard).join("")}
@@ -102,6 +117,10 @@
       </div>
     `;
     area.querySelectorAll("[data-theme-pick]").forEach((card) => {
+      if (!card.dataset.themePick) {
+        card.addEventListener("click", () => alert(card.dataset.lockedInfo || "Dieses Design ist noch gesperrt."));
+        return;
+      }
       card.addEventListener("click", () => {
         applyTheme(card.dataset.themePick);
         renderDesign();
@@ -1161,8 +1180,15 @@
             ${avatarHtml}
             <div class="profile-name-col">
               <h2>${profile.name}</h2>
-              <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}${originFlag ? ` · ${originFlag} ${profile.origin}` : ""}</p>
+              <div class="modal-meta-row" style="margin-top:2px;">
+                <button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>
+                ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
+                ${originFlag ? `<span class="empty-note">${originFlag} ${profile.origin}</span>` : ""}
+              </div>
             </div>
+          </div>
+          <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
+            ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span></button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
@@ -1181,10 +1207,6 @@
           </div>
         </div>` : ""}
         ${renderTrophyCase(profile)}
-        ${myFriends.length ? `<div class="breakdown-list" style="margin-top:16px;">
-          <p class="eyebrow" style="margin-top:0;">👥 Deine Freunde</p>
-          ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span></button>`).join("")}
-        </div>` : ""}
         ${await renderRecentMembers()}
         ${await renderActivityFeed()}
         ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
@@ -1195,6 +1217,10 @@
       document.getElementById("editProfileBtn").addEventListener("click", () => { profileEditMode = true; renderAccount(); });
       const introBtn = document.getElementById("introPromptBtn");
       if (introBtn) introBtn.addEventListener("click", () => { profileEditMode = true; renderAccount(); });
+      document.getElementById("myFriendsToggle").addEventListener("click", () => {
+        const list = document.getElementById("myFriendsList");
+        list.style.display = list.style.display === "none" ? "flex" : "none";
+      });
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await Backend.signOut();
         refreshHeaderAuth();
@@ -1462,15 +1488,28 @@
         : `<div class="initials-avatar">${initials}</div>`;
     const me = Backend.currentUser();
     const isMe = me && me.id === p.id;
-    const alreadyFriends = me && !isMe ? (await Backend.getFriends()).some((f) => f.id === p.id) : false;
+    const theirFriends = await Backend.getFriends(p.id);
+    const alreadyFriends = me && !isMe ? theirFriends.some((f) => f.id === me.id) : false;
+    const originFlag = p.origin ? (VocabData.COUNTRIES.find((c) => c.name === p.origin) || {}).flag || "🌍" : "";
     const trophies = (p.trophies || []).slice(0, 4);
     const trophyOverflow = (p.trophies || []).length - trophies.length;
 
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>${p.origin ? `<span class="empty-note">${(VocabData.COUNTRIES.find((c) => c.name === p.origin) || {}).flag || "🌍"} ${p.origin}</span>` : ""}` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}</h2>` }),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
+        Core.el("div", { class: "modal-meta-row" },
+          Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`),
+          originFlag ? Core.el("span", { class: "empty-note" }, `${originFlag} ${p.origin}`) : ""
+        ),
+        Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
+          theirFriends.length
+            ? theirFriends.map((f) => Core.el("button", {
+                type: "button", class: "friend-list-row", onclick: () => { box.remove(); openProfileModal(f.id); },
+              }, tinyAvatarNode(f), Core.el("span", { class: "name" }, f.name)))
+            : Core.el("p", { class: "empty-note" }, "Noch keine Freunde.")
+        ),
         p.hobbies && p.hobbies.length
           ? Core.el("div", { class: "trophy-case", style: "justify-content:center; margin-top:8px;",
               html: p.hobbies.map((h) => {
@@ -1499,6 +1538,17 @@
       )
     );
     document.body.appendChild(box);
+    document.getElementById("modalFriendsToggle").addEventListener("click", () => {
+      const list = document.getElementById("modalFriendsList");
+      list.style.display = list.style.display === "none" ? "flex" : "none";
+    });
+  }
+
+  function tinyAvatarNode(f) {
+    if (f.avatar_url) return Core.el("img", { src: f.avatar_url, class: "tiny-avatar", alt: "" });
+    if (f.avatar_emoji) return Core.el("span", { class: "tiny-avatar tiny-avatar-emoji" }, f.avatar_emoji);
+    const initials = (f.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    return Core.el("span", { class: "tiny-avatar tiny-avatar-initials" }, initials);
   }
 
   async function renderActivityFeed() {

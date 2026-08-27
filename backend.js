@@ -580,13 +580,14 @@ const Backend = (function () {
     if (f) f.status = "accepted";
   }
 
-  async function getFriends() {
-    if (!demo.user) return [];
+  async function getFriends(forId) {
+    const targetId = forId || myId();
+    if (!targetId) return [];
     if (client) {
       const { data, error } = await client.from("friends").select("*")
-        .eq("status", "accepted").or(`user_a.eq.${myId()},user_b.eq.${myId()}`);
+        .eq("status", "accepted").or(`user_a.eq.${targetId},user_b.eq.${targetId}`);
       if (error || !data) return [];
-      const otherIds = data.map((f) => (f.user_a === myId() ? f.user_b : f.user_a));
+      const otherIds = data.map((f) => (f.user_a === targetId ? f.user_b : f.user_a));
       const names = await namesFor(otherIds);
       return otherIds.map((id) => ({
         id,
@@ -601,9 +602,9 @@ const Backend = (function () {
       }));
     }
     return demo.friends
-      .filter((f) => f.status === "accepted" && (f.a === demo.user.email || f.b === demo.user.email))
+      .filter((f) => f.status === "accepted" && (f.a === targetId || f.b === targetId))
       .map((f) => {
-        const otherEmail = f.a === demo.user.email ? f.b : f.a;
+        const otherEmail = f.a === targetId ? f.b : f.a;
         const u = demo.users[otherEmail];
         return {
           id: otherEmail,

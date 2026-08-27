@@ -399,8 +399,94 @@
 [data-theme="tiefsee"] .tape-piece,
 [data-theme="vulkanglut"] .tape-piece,
 [data-theme="mondgarten"] .tape-piece,
+/* ---------- 19) WINTERZAUBER — dunkel, mit fallendem Schnee ---------- */
+[data-theme="winterzauber"] {
+  --plum-950: #0B1826;
+  --plum-800: #142234;
+  --plum-700: #1D2F45;
+  --cream-50: #F0F6FA;
+  --cream-200: #9FB3C4;
+  --amber-400: #F2C879;
+  --amber-300: #F6DBA3;
+  --teal-400: #8FE0D4;
+  --coral-400: #E8875F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.4);
+  --card-border: 1px solid rgba(143,224,212,0.2);
+  --card-shadow-extra: none;
+  --logo-emoji: "❄️"; --logo-shape: 50%; --logo-bg: #8FE0D4;
+  --animated-bg: "snow";
+}
+
+/* ---------- 20) WELLENSPIEL — hell, mit sanft bewegtem Wellen-Verlauf ---------- */
+[data-theme="wellenspiel"] {
+  --plum-950: #EAF6F6;
+  --plum-800: #FFFFFF;
+  --plum-700: #D8EEEE;
+  --cream-50: #123B3B;
+  --cream-200: #5E8888;
+  --amber-400: #F2B84B;
+  --amber-300: #F6CC78;
+  --teal-400: #35A695;
+  --coral-400: #E8735C;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(18,59,59,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🌊"; --logo-shape: 50%; --logo-bg: #35A695;
+  --animated-bg: "waves";
+}
+
+/* Animierter Hintergrund: fallender Schnee (Winterzauber) */
+[data-theme="winterzauber"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(2px 2px at 10% 10%, #fff, transparent),
+    radial-gradient(2px 2px at 30% 40%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 55% 15%, #fff, transparent),
+    radial-gradient(2px 2px at 70% 60%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 85% 30%, #fff, transparent),
+    radial-gradient(2px 2px at 15% 75%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 45% 85%, #fff, transparent),
+    radial-gradient(2px 2px at 95% 80%, #fff, transparent);
+  background-size: 100% 100%;
+  animation: snowFall 12s linear infinite;
+  opacity: 0.7;
+}
+@keyframes snowFall {
+  0% { background-position: 0 -10%; }
+  100% { background-position: 0 110%; }
+}
+
+/* Animierter Hintergrund: sanft bewegte Wellen (Wellenspiel) */
+[data-theme="wellenspiel"] body::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 140px;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(100deg, rgba(53,166,149,0.12) 0 40px, transparent 40px 80px);
+  background-size: 200% 100%;
+  animation: waveDrift 8s linear infinite;
+}
+@keyframes waveDrift {
+  0% { background-position-x: 0%; }
+  100% { background-position-x: 200%; }
+}
+
 [data-theme="retroarkade"] .tape-piece,
 [data-theme="lavendelfeld"] .tape-piece,
 [data-theme="zitrusgarten"] .tape-piece,
 [data-theme="obsidian"] .tape-piece,
-[data-theme="tiefseeneon"] .tape-piece { display: none; }
+[data-theme="tiefseeneon"] .tape-piece,
+[data-theme="winterzauber"] .tape-piece,
+[data-theme="wellenspiel"] .tape-piece { display: none; }
