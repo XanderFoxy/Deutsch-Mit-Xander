@@ -53,7 +53,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", favDrink: "", favCountry: "", favQuote: "", poem: "", profileBannerUrl: "" };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", favDrink: "", favCountry: "", favQuote: "", poem: "", profileBannerUrl: "", extraProfileData: {} };
   }
 
   /* ================= AUTH ================= */
@@ -92,6 +92,7 @@ const Backend = (function () {
           favCountry: data.fav_country || "",
           favQuote: data.fav_quote || "",
           profileBannerUrl: data.profile_banner_url || "",
+          extraProfileData: data.extra_profile_data || {},
         };
       }
       // Noch kein Profil-Eintrag -> anlegen
@@ -1007,12 +1008,17 @@ const Backend = (function () {
       });
       if (error) throw new Error(friendlyDbError(error.message));
       if (authorId && authorId !== demo.user.id) {
+        const { data: authorProfile } = await client.from("profiles").select("points").eq("id", authorId).maybeSingle();
+        if (authorProfile) {
+          await client.from("profiles").update({ points: (authorProfile.points || 0) + 1 }).eq("id", authorId);
+        }
         await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`);
       }
       return;
     }
     demo.textComments.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(), created_at: new Date().toISOString() });
     if (authorId && authorId !== demo.user.id) {
+      if (demo.users[authorId]) demo.users[authorId].profile.points += 1;
       await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`);
     }
   }

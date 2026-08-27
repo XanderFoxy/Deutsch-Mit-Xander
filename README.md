@@ -214,6 +214,10 @@ alter table profiles add column if not exists fav_country text default '';
 alter table profiles add column if not exists fav_quote text default '';
 -- Vorausschauend ergänzt für spätere Profil-Gestaltung (z. B. ein großes Titelbild-Foto, getrennt vom kleinen Profilbild):
 alter table profiles add column if not exists profile_banner_url text default '';
+-- Flexibles Zusatzfeld: nimmt künftige kleine Profil-Angaben (weitere "Lieblings-..."-Felder,
+-- kurze Textangaben) auf, OHNE dass dafür noch einmal SQL nötig wird — kommt ein neuer
+-- kleiner Wunsch dazu, wird er einfach hier mit hineingepackt, kein Nachrüsten mehr nötig.
+alter table profiles add column if not exists extra_profile_data jsonb default '{}';
 
 create table if not exists notifications (
   id uuid default gen_random_uuid() primary key,
@@ -238,6 +242,9 @@ alter table community_text_comments disable row level security;
 
 -- Cover-Bild für eingereichte Beiträge (falls die Tabelle schon vor dieser Funktion angelegt wurde)
 alter table community_texts add column if not exists cover_url text;
+-- Dasselbe flexible Prinzip für Beiträge und Kommentare, für zukünftige kleine Ergänzungen:
+alter table community_texts add column if not exists extra_data jsonb default '{}';
+alter table community_text_comments add column if not exists extra_data jsonb default '{}';
 
 -- Dich selbst als Betreiber markieren (Namen ggf. anpassen)
 update profiles set is_admin = true, is_owner = true where name = 'XanderFox';

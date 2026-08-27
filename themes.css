@@ -1560,7 +1560,7 @@
   opacity: 0.85;
   background-repeat: no-repeat;
   background-size: 46px 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='24' viewBox='0 0 46 24' transform='scale(-1,1) translate(-46,0)'%3E%3Cpath d='M6 12 C6 6 16 3 24 7 L30 2 L26 12 L30 22 L24 17 C16 21 6 18 6 12 Z' fill='%23F2B84B'/%3E%3Ccircle cx='12' cy='9' r='1.3' fill='%23071C2C'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23E6F4F5' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='24' viewBox='0 0 46 24'%3E%3Cg transform='scale(-1,1) translate(-46,0)'%3E%3Cpath d='M6 12 C6 6 16 3 24 7 L30 2 L26 12 L30 22 L24 17 C16 21 6 18 6 12 Z' fill='%23F2B84B'/%3E%3Ccircle cx='12' cy='9' r='1.3' fill='%23071C2C'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23E6F4F5' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E");
   animation: fishA 14s linear infinite;
 }
 [data-theme="aquarium"] html::after {
@@ -1584,7 +1584,7 @@
   opacity: 0.8;
   background-repeat: no-repeat;
   background-size: 56px 28px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28' viewBox='0 0 56 28' transform='scale(-1,1) translate(-56,0)'%3E%3Cpath d='M8 14 C8 7 20 3 30 8 L37 2 L32 14 L37 26 L30 20 C20 25 8 21 8 14 Z' fill='%234FD4B8'/%3E%3Ccircle cx='15' cy='11' r='1.4' fill='%23071C2C'/%3E%3Ccircle cx='9' cy='14' r='1.1' fill='%23E6F4F5' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28' viewBox='0 0 56 28'%3E%3Cg transform='scale(-1,1) translate(-56,0)'%3E%3Cpath d='M8 14 C8 7 20 3 30 8 L37 2 L32 14 L37 26 L30 20 C20 25 8 21 8 14 Z' fill='%234FD4B8'/%3E%3Ccircle cx='15' cy='11' r='1.4' fill='%23071C2C'/%3E%3Ccircle cx='9' cy='14' r='1.1' fill='%23E6F4F5' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E");
   animation: fishC 18s linear infinite;
 }
 [data-theme="aquarium"] body::after {
@@ -1608,7 +1608,7 @@
   opacity: 0.65;
   background-repeat: no-repeat;
   background-size: 40px 20px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20' transform='scale(-1,1) translate(-40,0)'%3E%3Cpath d='M5 10 C5 5 13 2 19 6 L25 1 L22 10 L25 19 L19 14 C13 18 5 15 5 10 Z' fill='%23E8825F'/%3E%3Ccircle cx='6' cy='10' r='0.9' fill='%23E6F4F5' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cg transform='scale(-1,1) translate(-40,0)'%3E%3Cpath d='M5 10 C5 5 13 2 19 6 L25 1 L22 10 L25 19 L19 14 C13 18 5 15 5 10 Z' fill='%23E8825F'/%3E%3Ccircle cx='6' cy='10' r='0.9' fill='%23E6F4F5' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E");
   animation: fishE 11s linear infinite;
 }
 @keyframes fishA { 0% { transform: translate(0,0); } 30% { transform: translate(38vw,6px); } 60% { transform: translate(75vw,-4px); } 100% { transform: translate(calc(100vw + 80px),0); } }
@@ -1667,7 +1667,7 @@
   opacity: 0.85;
   background-repeat: no-repeat;
   background-size: 48px 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24' transform='scale(-1,1) translate(-48,0)'%3E%3Cpath d='M6 12 C6 6 17 3 25 7 L31 2 L27 12 L31 22 L25 17 C17 21 6 18 6 12 Z' fill='%23E85F6F'/%3E%3Ccircle cx='13' cy='9' r='1.3' fill='%2314082A'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23F5EAFB' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cg transform='scale(-1,1) translate(-48,0)'%3E%3Cpath d='M6 12 C6 6 17 3 25 7 L31 2 L27 12 L31 22 L25 17 C17 21 6 18 6 12 Z' fill='%23E85F6F'/%3E%3Ccircle cx='13' cy='9' r='1.3' fill='%2314082A'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23F5EAFB' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E");
   animation: fishA 13s linear infinite;
 }
 [data-theme="korallenriff"] html::after {
@@ -1691,7 +1691,7 @@
   opacity: 0.8;
   background-repeat: no-repeat;
   background-size: 52px 26px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='26' viewBox='0 0 52 26' transform='scale(-1,1) translate(-52,0)'%3E%3Cpath d='M7 13 C7 6 18 3 27 8 L34 2 L29 13 L34 24 L27 18 C18 23 7 19 7 13 Z' fill='%234FC4A8'/%3E%3Ccircle cx='14' cy='10' r='1.3' fill='%2314082A'/%3E%3Ccircle cx='8' cy='13' r='1' fill='%23F5EAFB' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='26' viewBox='0 0 52 26'%3E%3Cg transform='scale(-1,1) translate(-52,0)'%3E%3Cpath d='M7 13 C7 6 18 3 27 8 L34 2 L29 13 L34 24 L27 18 C18 23 7 19 7 13 Z' fill='%234FC4A8'/%3E%3Ccircle cx='14' cy='10' r='1.3' fill='%2314082A'/%3E%3Ccircle cx='8' cy='13' r='1' fill='%23F5EAFB' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E");
   animation: fishC 16s linear infinite;
 }
 [data-theme="korallenriff"] body::after {
@@ -1715,7 +1715,7 @@
   opacity: 0.6;
   background-repeat: no-repeat;
   background-size: 34px 17px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='17' viewBox='0 0 34 17' transform='scale(-1,1) translate(-34,0)'%3E%3Cpath d='M4 8 C4 4 11 2 15 5 L19 1 L17 8 L19 16 L15 12 C11 15 4 12 4 8 Z' fill='%23F0C070'/%3E%3Ccircle cx='5' cy='8' r='0.8' fill='%23F5EAFB' opacity='0.8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='17' viewBox='0 0 34 17'%3E%3Cg transform='scale(-1,1) translate(-34,0)'%3E%3Cpath d='M4 8 C4 4 11 2 15 5 L19 1 L17 8 L19 16 L15 12 C11 15 4 12 4 8 Z' fill='%23F0C070'/%3E%3Ccircle cx='5' cy='8' r='0.8' fill='%23F5EAFB' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E");
   animation: fishE 10s linear infinite;
 }
 [data-theme="korallenriff"] .weather-bar::after {
@@ -1836,29 +1836,29 @@
 [data-theme="spukwald"] .weather-bar::before {
   content: "";
   position: fixed;
-  left: -15px; bottom: 0; width: 160px; height: 64vh;
+  left: -10px; bottom: 0; width: 200px; height: 70vh;
   pointer-events: none;
   z-index: 1;
   transform-origin: bottom center;
   opacity: 1;
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 160px 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='340' viewBox='0 0 160 340'%3E%3Cg fill='%230B0D0B' stroke='none'%3E%3Cpath d='M42 340 L38 250 L52 250 L58 340 Z'/%3E%3Cpath d='M39 256 L36 200 L21 168 L11 172 L28 208 L27 250 Z'/%3E%3Cpath d='M52 254 L57 210 L78 178 L86 184 L64 214 L62 252 Z'/%3E%3Cpath d='M45 208 L41 152 L58 122 L64 128 L50 154 L50 204 Z'/%3E%3Cpath d='M46 156 L20 128 L6 130 L18 142 L40 158 Z'/%3E%3Cpath d='M52 158 L74 130 L94 126 L96 134 L78 138 L56 162 Z'/%3E%3Cpath d='M52 128 L48 78 L32 50 L24 54 L38 78 L42 128 Z'/%3E%3Cpath d='M50 80 L60 44 L78 24 L84 30 L66 48 L58 82 Z'/%3E%3Cpath d='M46 52 L44 12 L34 -4 L28 0 L38 16 L38 54 Z'/%3E%3Cpath d='M52 52 L66 20 L82 8 L86 14 L70 24 L58 56 Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 200px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='360' viewBox='0 0 200 360'%3E%3Cg fill='%23070806' stroke='none'%3E%3Cpath d='M55 360 L47 250 L38 246 L42 236 L52 240 L50 200 L44 194 L48 184 L54 188 L58 130 L52 122 L58 112 L64 118 L68 60 L60 48 L68 36 L76 46 L72 250 L82 250 L90 360 Z'/%3E%3Cpath d='M46 244 L20 214 L2 216 L4 206 L18 202 L38 220 L28 178 L8 168 L-4 172 L-2 162 L14 156 L40 178 L44 220 Z'/%3E%3Cpath d='M72 232 L100 198 L124 194 L122 184 L136 178 L138 188 L110 198 L82 224 L96 168 L124 152 L142 154 L140 164 L118 160 L88 190 L78 226 Z'/%3E%3Cpath d='M58 118 L28 88 L6 90 L8 80 L24 76 L48 96 L38 56 L14 44 L-2 48 L0 38 L18 32 L46 52 L54 100 Z'/%3E%3Cpath d='M68 100 L100 68 L128 60 L126 50 L142 44 L144 54 L114 62 L82 92 L110 40 L140 22 L160 26 L158 36 L134 32 L102 62 L74 108 Z'/%3E%3Cpath d='M64 44 L44 8 L26 4 L28 -6 L44 -2 L58 24 L48 -20 L28 -34 L14 -30 L16 -40 L32 -38 L54 -12 L68 34 Z'/%3E%3C/g%3E%3C/svg%3E");
   animation: spukWind 6s ease-in-out infinite;
 }
 [data-theme="spukwald"] .weather-bar::after {
   content: "";
   position: fixed;
-  right: -22px; bottom: 0; width: 190px; height: 72vh;
+  right: -14px; bottom: 0; width: 235px; height: 78vh;
   pointer-events: none;
   z-index: 1;
   transform-origin: bottom center;
   opacity: 1;
   background-repeat: no-repeat;
   background-position: bottom right;
-  background-size: 190px 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='190' height='380' viewBox='0 0 190 380'%3E%3Cg fill='%23090B09' stroke='none'%3E%3Cpath d='M92 380 L86 270 L104 270 L112 380 Z'/%3E%3Cpath d='M88 278 L84 210 L100 168 L110 174 L96 216 L100 276 Z'/%3E%3Cpath d='M104 274 L110 220 L142 182 L152 190 L120 224 L118 272 Z'/%3E%3Cpath d='M95 216 L90 150 L112 112 L120 118 L102 152 L102 212 Z'/%3E%3Cpath d='M97 154 L60 118 L42 120 L56 136 L86 158 Z'/%3E%3Cpath d='M106 158 L136 122 L162 116 L164 126 L140 132 L112 162 Z'/%3E%3Cpath d='M103 116 L98 56 L76 22 L66 28 L84 58 L92 116 Z'/%3E%3Cpath d='M100 60 L114 16 L138 -8 L146 -2 L122 20 L110 62 Z'/%3E%3Cpath d='M95 22 L92 -24 L78 -44 L70 -38 L84 -20 L84 24 Z'/%3E%3Cpath d='M103 22 L122 -16 L144 -30 L150 -22 L128 -8 L112 26 Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 235px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='235' height='400' viewBox='0 0 235 400'%3E%3Cg fill='%23060705' stroke='none'%3E%3Cpath d='M155 400 L145 270 L156 266 L152 254 L140 260 L144 210 L152 204 L148 192 L138 198 L142 130 L150 122 L146 110 L136 116 L140 50 L150 36 L142 22 L132 34 L128 270 L116 270 L106 400 Z'/%3E%3Cpath d='M142 262 L176 224 L200 226 L198 214 L216 208 L218 220 L184 212 L150 244 L164 190 L192 176 L214 178 L212 190 L188 184 L156 212 L146 258 Z'/%3E%3Cpath d='M108 246 L72 208 L46 210 L48 198 L28 190 L26 202 L48 208 L84 236 L60 178 L28 162 L4 166 L6 154 L32 150 L68 172 L100 232 Z'/%3E%3Cpath d='M148 128 L184 92 L212 84 L210 72 L230 66 L232 78 L196 86 L160 120 L178 62 L210 42 L234 46 L232 58 L204 54 L168 86 L138 138 Z'/%3E%3Cpath d='M130 110 L92 74 L64 76 L66 64 L44 56 L42 68 L66 74 L104 104 L76 44 L42 26 L16 30 L18 18 L46 14 L84 38 L120 96 Z'/%3E%3Cpath d='M138 46 L164 6 L188 -4 L186 -16 L204 -22 L206 -10 L180 -4 L152 34 L166 -18 L192 -40 L216 -36 L214 -24 L188 -28 L158 4 L128 52 Z'/%3E%3C/g%3E%3C/svg%3E");
   animation: spukWind2 7s ease-in-out infinite;
 }
 @keyframes spukWind {
@@ -1888,6 +1888,188 @@
 }
 
 [data-theme="korallenriff"] .tape-piece,
+/* ---------- 62) WEIHNACHTSZAUBER — dunkel, mit fallendem Schnee und warmen Lichterketten (animiert) ---------- */
+[data-theme="weihnachtszauber"] {
+  --plum-950: #0A1A16;
+  --plum-800: #122A22;
+  --plum-700: #1C3A30;
+  --cream-50: #EAF5EF;
+  --cream-200: #8FB8A4;
+  --amber-400: #E8C468;
+  --amber-300: #F0D794;
+  --teal-400: #4FA88E;
+  --coral-400: #D94F4F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.45);
+  --card-border: 1px solid rgba(217,79,79,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🎄"; --logo-shape: 50%; --logo-bg: #2F6B4F;
+}
+[data-theme="weihnachtszauber"] body::before {
+  content: "";
+  position: fixed;
+  inset: -20px 0 0 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(3px 3px at 10% 0%, #fff, transparent),
+    radial-gradient(2px 2px at 30% 0%, #fff, transparent),
+    radial-gradient(4px 4px at 55% 0%, #fff, transparent),
+    radial-gradient(2.5px 2.5px at 75% 0%, #fff, transparent),
+    radial-gradient(3px 3px at 90% 0%, #fff, transparent),
+    radial-gradient(2px 2px at 20% 0%, #fff, transparent),
+    radial-gradient(3px 3px at 65% 0%, #fff, transparent);
+  animation: xmasSnow 9s linear infinite;
+  opacity: 0.8;
+}
+@keyframes xmasSnow {
+  0% { background-position-y: -10%; }
+  100% { background-position-y: 110vh; }
+}
+/* Lichterkette am oberen Rand, wechselt sanft die Farbe */
+[data-theme="weihnachtszauber"] .weather-bar::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; top: 0; height: 10px;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    radial-gradient(3px 3px at 6% 6px, #E8C468, transparent),
+    radial-gradient(3px 3px at 18% 6px, #D94F4F, transparent),
+    radial-gradient(3px 3px at 30% 6px, #4FA88E, transparent),
+    radial-gradient(3px 3px at 42% 6px, #E8C468, transparent),
+    radial-gradient(3px 3px at 54% 6px, #D94F4F, transparent),
+    radial-gradient(3px 3px at 66% 6px, #4FA88E, transparent),
+    radial-gradient(3px 3px at 78% 6px, #E8C468, transparent),
+    radial-gradient(3px 3px at 90% 6px, #D94F4F, transparent);
+  animation: xmasLights 2.4s ease-in-out infinite;
+}
+@keyframes xmasLights {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ---------- 63) OSTERWIESE — hell, mit bemalten Ostereiern im Gras (animiert) ---------- */
+[data-theme="osterwiese"] {
+  --plum-950: #F5FBEE;
+  --plum-800: #FFFFFF;
+  --plum-700: #E4F2D0;
+  --cream-50: #223A14;
+  --cream-200: #7E9E5E;
+  --amber-400: #E8C468;
+  --amber-300: #F0D794;
+  --teal-400: #6FB0A8;
+  --coral-400: #E88F9F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+  --shadow-deck: 0 10px 24px rgba(34,58,20,0.08);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🐣"; --logo-shape: 50%; --logo-bg: #F0D794;
+}
+[data-theme="osterwiese"] body::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; bottom: 0; height: 90px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.9;
+  background-repeat: repeat-x;
+  background-size: 120px 90px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='90' viewBox='0 0 120 90'%3E%3Cellipse cx='25' cy='68' rx='14' ry='18' fill='%23E88F9F'/%3E%3Ccircle cx='21' cy='60' r='2' fill='white' opacity='0.7'/%3E%3Ccircle cx='29' cy='68' r='2' fill='white' opacity='0.7'/%3E%3Ccircle cx='23' cy='76' r='2' fill='white' opacity='0.7'/%3E%3Cellipse cx='75' cy='72' rx='13' ry='17' fill='%236FB0A8'/%3E%3Cpath d='M67 66 L83 78 M67 78 L83 66' stroke='white' stroke-width='1.5' opacity='0.7'/%3E%3C/svg%3E");
+  animation: easterBob 5s ease-in-out infinite;
+}
+@keyframes easterBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ---------- 64) HALLOWEENNACHT — dunkel, mit leuchtenden Kürbissen und Fledermäusen (animiert) ---------- */
+[data-theme="halloweennacht"] {
+  --plum-950: #12060A;
+  --plum-800: #1D0D12;
+  --plum-700: #2A151C;
+  --cream-50: #F2E6E0;
+  --cream-200: #B89088;
+  --amber-400: #E8823D;
+  --amber-300: #F0A570;
+  --teal-400: #6FA85F;
+  --coral-400: #9F5FE8;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 30px rgba(0,0,0,0.5);
+  --card-border: 1px solid rgba(232,130,61,0.15);
+  --card-shadow-extra: none;
+  --logo-emoji: "🎃"; --logo-shape: 50%; --logo-bg: #E8823D;
+}
+[data-theme="halloweennacht"] body::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0; bottom: 0; height: 60px;
+  pointer-events: none;
+  z-index: 1;
+  background-repeat: repeat-x;
+  background-size: 140px 60px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='60' viewBox='0 0 140 60'%3E%3Cellipse cx='30' cy='42' rx='20' ry='16' fill='%23E8823D'/%3E%3Cpath d='M30 26 L26 16 M30 26 L34 16' stroke='%232F5A2A' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M22 40 L26 36 L30 40 M34 40 L38 36 L42 40' stroke='%2312060A' stroke-width='2.5' fill='none'/%3E%3Cpath d='M20 48 L24 44 L28 48 L32 44 L36 48 L40 44' stroke='%2312060A' stroke-width='2.5' fill='none'/%3E%3C/svg%3E");
+  animation: pumpkinGlow 3s ease-in-out infinite;
+  opacity: 0.9;
+}
+@keyframes pumpkinGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+[data-theme="halloweennacht"] .weather-bar::before {
+  content: "";
+  position: fixed;
+  top: 8%; left: -40px; width: 26px; height: 14px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.75;
+  background-repeat: no-repeat;
+  background-size: 26px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='14' viewBox='0 0 26 14'%3E%3Cpath d='M13 7 C10 2 4 2 2 6 C6 6 9 8 13 12 C17 8 20 6 24 6 C22 2 16 2 13 7 Z' fill='%23120610'/%3E%3C/svg%3E");
+  animation: fishA 12s linear infinite;
+}
+[data-theme="halloweennacht"] .weather-bar::after {
+  content: "";
+  position: fixed;
+  top: 22%; right: -34px; width: 22px; height: 12px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.65;
+  background-repeat: no-repeat;
+  background-size: 22px 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='12' viewBox='0 0 22 12'%3E%3Cpath d='M11 6 C9 2 3 2 1 5 C5 5 8 7 11 10 C14 7 17 5 21 5 C19 2 13 2 11 6 Z' fill='%23120610'/%3E%3C/svg%3E");
+  animation: fishB 9s linear infinite;
+}
+
+/* ---------- 65) ADVENTSSTUBE — hell, warmes Kerzenlicht und Zimtton ---------- */
+[data-theme="adventsstube"] {
+  --plum-950: #FBF3E8;
+  --plum-800: #FFFFFF;
+  --plum-700: #F3E2C8;
+  --cream-50: #3A2814;
+  --cream-200: #A68858;
+  --amber-400: #D99A3D;
+  --amber-300: #E8BC78;
+  --teal-400: #6F9E8E;
+  --coral-400: #D9603F;
+  --font-display: "Baloo 2", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", sans-serif;
+  --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  --shadow-deck: 0 10px 24px rgba(58,40,20,0.1);
+  --card-border: none;
+  --card-shadow-extra: none;
+  --logo-emoji: "🕯️"; --logo-shape: 50%; --logo-bg: #D99A3D;
+}
+
 [data-theme="seerosenteich"] .tape-piece,
 [data-theme="mandelbluete"] .tape-piece,
-[data-theme="spukwald"] .tape-piece { display: none; }
+[data-theme="spukwald"] .tape-piece,
+[data-theme="weihnachtszauber"] .tape-piece,
+[data-theme="osterwiese"] .tape-piece,
+[data-theme="halloweennacht"] .tape-piece { display: none; }

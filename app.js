@@ -4,6 +4,10 @@
 (function () {
   "use strict";
 
+  // Früh deklariert (aber erst später zugewiesen), damit Funktionen wie updateNotifyBadge,
+  // die schon vor der eigentlichen Zuweisung aufgerufen werden können, nicht abstürzen.
+  let loginBtn;
+
   /* ============ Haupt-Tab-Navigation ============ */
   const tabs = document.querySelectorAll(".tape-tab");
   const views = document.querySelectorAll(".view");
@@ -154,6 +158,10 @@
     { id: "seerosenteich", name: "Seerosenteich", emoji: "🪷", desc: "Hell, ruhiges Wasser mit Seerosen — animiert!", mode: "hell", unlock: { type: "points", value: 750 } },
     { id: "mandelbluete", name: "Mandelblüte", emoji: "🌰", desc: "Hell, zartweiß-rosa.", mode: "hell" },
     { id: "spukwald", name: "Spukwald", emoji: "🌲", desc: "Dunkel, knorrige Bäume im Wind mit Gewitter und Regen — animiert!", mode: "dunkel", unlock: { type: "trophy", match: "Gehirnjogger" } },
+    { id: "weihnachtszauber", name: "Weihnachtszauber", emoji: "🎄", desc: "Dunkel, mit fallendem Schnee und Lichterkette — animiert!", mode: "dunkel", unlock: { type: "points", value: 300 } },
+    { id: "osterwiese", name: "Osterwiese", emoji: "🐣", desc: "Hell, mit bemalten Ostereiern im Gras — animiert!", mode: "hell", unlock: { type: "points", value: 300 } },
+    { id: "halloweennacht", name: "Halloweennacht", emoji: "🎃", desc: "Dunkel, mit leuchtenden Kürbissen und Fledermäusen — animiert!", mode: "dunkel", unlock: { type: "points", value: 600 } },
+    { id: "adventsstube", name: "Adventsstube", emoji: "🕯️", desc: "Hell, warmes Kerzenlicht und Zimtton.", mode: "hell", unlock: { type: "points", value: 200 } },
   ];
   let sessionTheme = "bastelheft";
 
@@ -391,6 +399,7 @@
     if (badge) badge.style.display = count > 0 ? "block" : "none";
     const tabBadge = document.getElementById("friendsTabBadge");
     if (tabBadge) tabBadge.style.display = count > 0 ? "block" : "none";
+    if (loginBtn) loginBtn.classList.toggle("notify-ring", count > 0);
   }
   let lastFriendReqCount = 0;
   let lastChallengeReqCount = 0;
@@ -432,8 +441,23 @@
     updateNotifyBadge(totalCount);
     if (hasNew) {
       playNotifySound();
-      setTimeout(() => { if (document.getElementById("loginBtnBadge")?.style.display !== "none") playNotifySound(); }, 5000);
+      startNotifyReminder();
     }
+  }
+  // Wiederholt den sanften Hinweiston alle 5 Sekunden, solange noch etwas unbestätigt ist — hört
+  // von selbst auf, sobald das Lämpchen verschwindet (z. B. weil im Profil bestätigt wurde).
+  let notifyReminderTimer = null;
+  function startNotifyReminder() {
+    if (notifyReminderTimer) return;
+    notifyReminderTimer = setInterval(() => {
+      const badge = document.getElementById("loginBtnBadge");
+      if (!badge || badge.style.display === "none") {
+        clearInterval(notifyReminderTimer);
+        notifyReminderTimer = null;
+        return;
+      }
+      playNotifySound();
+    }, 5000);
   }
   checkNotifications();
   setInterval(checkNotifications, 20000);
@@ -884,6 +908,7 @@
   let memoryGameId = "synonyme";
   let memoryDifficulty = "mittel"; // 'leicht' (Orientierungshilfe) · 'mittel' (normal) · 'schwer' (mischt neu)
   let memoryChallengeFriendId = "";
+  let selectedMemoryFriendIds = new Set();
   let activeMemoryChallengeId = null;
   let activeMemoryOpponentName = "";
 
@@ -919,11 +944,11 @@
     const memFriends = isLoggedIn ? await Backend.getFriends() : [];
     const challengeBar = memFriends.length && !activeMemoryChallengeId ? `
       <div class="setup-bar" style="margin-top:0; margin-bottom:10px; flex-direction:column; align-items:stretch;">
-        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🧠 Optional: gegen einen Freund spielen (Gehirnjogger-Duell)</label>
-        <select id="memoryChallengeSelect" class="challenge-select">
-          <option value="">Kein Duell — nur für mich üben</option>
-          ${memFriends.map((f) => `<option value="${f.id}" ${memoryChallengeFriendId === f.id ? "selected" : ""}>${f.name}${f.online ? " 🟢" : ""}${f.is_owner ? " 👑" : f.is_admin ? " 🛡️" : ""}</option>`).join("")}
-        </select>
+        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🧠 Optional: Freunde herausfordern (auch mehrere gleichzeitig, auch offline)</label>
+        <div class="challenge-friend-list">
+          ${memFriends.map((f) => `<button type="button" class="challenge-friend-pill ${!f.online ? "offline" : ""} ${selectedMemoryFriendIds.has(f.id) ? "selected" : ""}" data-mem-challenge-friend="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${!f.online ? ' <span class="empty-note">(offline)</span>' : ""}</button>`).join("")}
+        </div>
+        ${selectedMemoryFriendIds.size ? `<button type="button" class="btn btn-coffee" id="memStartChallengeBtn" style="margin-top:8px;">🎮 Duell starten (${selectedMemoryFriendIds.size})</button>` : ""}
       </div>` : "";
 
     memoryArea.innerHTML = `
@@ -973,20 +998,38 @@
         newMemoryGame();
       });
     });
-    const memChallengeSelect = document.getElementById("memoryChallengeSelect");
-    if (memChallengeSelect) {
-      memChallengeSelect.addEventListener("change", async (e) => {
-        memoryChallengeFriendId = e.target.value;
-        activeMemoryOpponentName = e.target.options[e.target.selectedIndex]?.text.replace(" 🟢", "") || "";
-        if (memoryChallengeFriendId) {
-          try {
-            activeMemoryChallengeId = await Backend.createChallenge(memoryChallengeFriendId, ["memory"]);
-          } catch (err) {
-            alert(err.message || "Duell konnte nicht gestartet werden.");
-            memoryChallengeFriendId = "";
+    let memChallengeInProgress = false;
+    memoryArea.querySelectorAll("[data-mem-challenge-friend]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.memChallengeFriend;
+        if (selectedMemoryFriendIds.has(id)) selectedMemoryFriendIds.delete(id);
+        else selectedMemoryFriendIds.add(id);
+        renderMemory();
+      });
+    });
+    const memStartChallengeBtn = document.getElementById("memStartChallengeBtn");
+    if (memStartChallengeBtn) {
+      memStartChallengeBtn.addEventListener("click", async () => {
+        if (memChallengeInProgress || !selectedMemoryFriendIds.size) return;
+        memChallengeInProgress = true;
+        try {
+          let firstId = null;
+          let firstName = "";
+          for (const fid of selectedMemoryFriendIds) {
+            const cid = await Backend.createChallenge(fid, ["memory"]);
+            if (!firstId) {
+              firstId = cid;
+              firstName = memFriends.find((f) => f.id === fid)?.name || "";
+            }
           }
+          activeMemoryChallengeId = firstId;
+          activeMemoryOpponentName = selectedMemoryFriendIds.size > 1 ? `${firstName} +${selectedMemoryFriendIds.size - 1}` : firstName;
+          newMemoryGame();
+        } catch (err) {
+          alert(err.message || "Duell konnte nicht gestartet werden.");
+        } finally {
+          memChallengeInProgress = false;
         }
-        newMemoryGame();
       });
     }
   }
@@ -1450,7 +1493,7 @@
   /* ============================================================
      PROFIL / LOGIN / RANKING / GÄSTEBUCH / PREMIUM
      ============================================================ */
-  const loginBtn = document.getElementById("loginBtn");
+  loginBtn = document.getElementById("loginBtn");
   const loginBtnLabel = document.getElementById("loginBtnLabel");
 
   function refreshHeaderAuth() {

@@ -661,9 +661,10 @@
 .community-text-cover-banner {
   display: block;
   width: calc(100% + 32px);
+  height: 180px;
   margin: -16px -16px 12px -16px;
-  max-height: 200px;
   object-fit: cover;
+  object-position: center center;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   cursor: pointer;
 }
@@ -1114,4 +1115,11 @@
 @keyframes notifyBlink {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.8); }
+}
+.notify-ring {
+  animation: notifyRingPulse 2s ease-in-out infinite;
+}
+@keyframes notifyRingPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,77,0.55), 0 0 0 0 rgba(255,77,77,0); }
+  50% { box-shadow: 0 0 0 2px rgba(255,77,77,0.65), 0 0 14px 4px rgba(255,77,77,0.45); }
 }
