@@ -31,8 +31,11 @@ const Quiz = (function () {
 
   let state = null;
 
-  function poolSizeFor(categoryIds) {
-    return categoryIds.reduce((sum, id) => sum + ExerciseData.getCategory(id).getBank().length, 0);
+  function poolSizeFor(categoryIds, quizTopic) {
+    return categoryIds.reduce((sum, id) => {
+      const bank = id === "quiz" && quizTopic ? ExerciseData.getCategory(id).getBank(quizTopic) : ExerciseData.getCategory(id).getBank();
+      return sum + bank.length;
+    }, 0);
   }
 
   function buildQuestions(categoryIds, count, orderMode, quizTopic) {

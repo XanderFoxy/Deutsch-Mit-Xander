@@ -334,7 +334,12 @@
         </div>`;
     }).join("");
 
-    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories]) : 0;
+    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], selectedQuizTopic) : 0;
+    const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
+    if (currentDiffCount > maxAvailable) {
+      const fitting = Quiz.DIFFICULTIES.filter((d) => d.count <= maxAvailable).sort((a, b) => b.count - a.count)[0];
+      selectedDifficulty = fitting ? fitting.id : "leicht";
+    }
 
     const isLoggedIn = Boolean(Backend.currentUser());
     const friends = isLoggedIn ? await Backend.getFriends() : [];
