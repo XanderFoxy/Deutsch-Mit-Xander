@@ -209,6 +209,8 @@ alter table profiles add column if not exists fav_series text default '';
 alter table profiles add column if not exists fav_song text default '';
 alter table profiles add column if not exists fav_food text default '';
 alter table profiles add column if not exists poem text default '';
+-- Vorausschauend ergänzt für spätere Profil-Gestaltung (z. B. ein großes Titelbild-Foto, getrennt vom kleinen Profilbild):
+alter table profiles add column if not exists profile_banner_url text default '';
 
 create table if not exists notifications (
   id uuid default gen_random_uuid() primary key,
@@ -231,13 +233,18 @@ create table if not exists community_text_comments (
 alter table community_text_likes disable row level security;
 alter table community_text_comments disable row level security;
 
+-- Cover-Bild für eingereichte Beiträge (falls die Tabelle schon vor dieser Funktion angelegt wurde)
+alter table community_texts add column if not exists cover_url text;
+
 -- Dich selbst als Betreiber markieren (Namen ggf. anpassen)
 update profiles set is_admin = true, is_owner = true where name = 'XanderFox';
 ```
 
-Danach einmal die Seite neu laden — dann sollten fremde Profile, Freundeslisten
-mit echten Namen (statt kryptischer IDs), Likes und Kommentare wieder
-funktionieren.
+**Wichtig:** Das ist jetzt die einzige SQL-Stelle, die du brauchst — ab sofort
+gebe ich dir bei jeder neuen Datenbank-Änderung immer diesen **kompletten**
+Block erneut (nie mehr nur eine einzelne Zeile), damit du nie wieder raten
+musst, was du schon hast und was noch fehlt. Einfach immer den ganzen Block
+neu reinkopieren — er überschreibt nichts, ergänzt nur, was fehlt.
 
 ## 5. Neue Beispiele/Fragen hinzufügen
 

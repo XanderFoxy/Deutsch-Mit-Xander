@@ -53,7 +53,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", poem: "" };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", poem: "", profileBannerUrl: "" };
   }
 
   /* ================= AUTH ================= */
@@ -88,6 +88,7 @@ const Backend = (function () {
           favSong: data.fav_song || "",
           favFood: data.fav_food || "",
           poem: data.poem || "",
+          profileBannerUrl: data.profile_banner_url || "",
         };
       }
       // Noch kein Profil-Eintrag -> anlegen

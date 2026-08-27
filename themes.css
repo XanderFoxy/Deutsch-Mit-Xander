@@ -1548,63 +1548,74 @@
   --card-shadow-extra: none;
   --logo-emoji: "🐠"; --logo-shape: 50%; --logo-bg: #4FD4B8;
 }
-/* Fischschwarm — drei Reihen mit unterschiedlichem Tempo, sanftem Auf-und-Ab-Wippen und
-   wechselnden Richtungen, damit kein Fisch die Bewegung eines anderen exakt kopiert. */
+/* Fünf einzelne Fisch-"Sprites" — jeder ein eigenes Element mit eigener Größe, eigenem Tempo,
+   eigener Richtung und eigenem Wippen. Keiner teilt sich eine Animation mit einem anderen,
+   damit wirklich kein Fisch die Bewegung eines anderen kopiert. */
+[data-theme="aquarium"] html::before {
+  content: "";
+  position: fixed;
+  top: 14%; left: -60px; width: 46px; height: 24px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+  background-repeat: no-repeat;
+  background-size: 46px 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='24' viewBox='0 0 46 24'%3E%3Cpath d='M6 12 C6 6 16 3 24 7 L30 2 L26 12 L30 22 L24 17 C16 21 6 18 6 12 Z' fill='%23F2B84B'/%3E%3Ccircle cx='12' cy='9' r='1.3' fill='%23071C2C'/%3E%3C/svg%3E");
+  animation: fishA 14s linear infinite;
+}
+[data-theme="aquarium"] html::after {
+  content: "";
+  position: fixed;
+  top: 27%; right: -50px; width: 38px; height: 20px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.75;
+  background-repeat: no-repeat;
+  background-size: 38px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='20' viewBox='0 0 38 20' transform='scale(-1,1) translate(-38,0)'%3E%3Cpath d='M5 10 C5 5 13 2 19 6 L24 1 L21 10 L24 19 L19 14 C13 18 5 15 5 10 Z' fill='%23E8825F'/%3E%3C/svg%3E");
+  animation: fishB 9.5s linear infinite;
+}
 [data-theme="aquarium"] body::before {
   content: "";
   position: fixed;
-  left: 0; right: 0; top: 18%; height: 26px;
+  top: 44%; left: -70px; width: 56px; height: 28px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.8;
-  background-repeat: repeat-x;
-  background-size: 180px 26px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='26' viewBox='0 0 180 26'%3E%3Cg%3E%3Cpath d='M10 13 C10 7 20 4 28 8 L34 3 L30 13 L34 23 L28 18 C20 22 10 19 10 13 Z' fill='%23F2B84B'/%3E%3Ccircle cx='16' cy='10' r='1.2' fill='%23071C2C'/%3E%3Cpath d='M110 15 C110 10 118 7 125 10 L130 6 L127 15 L130 24 L125 20 C118 23 110 20 110 15 Z' fill='%23E8825F'/%3E%3Ccircle cx='115' cy='12' r='1.1' fill='%23071C2C'/%3E%3C/g%3E%3C/svg%3E");
-  animation: aquariumSwimRight 19s ease-in-out infinite, aquariumBobA 5.5s ease-in-out infinite;
-}
-[data-theme="aquarium"] .weather-bar::before {
-  content: "";
-  position: fixed;
-  left: 0; right: 0; top: 40%; height: 20px;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.65;
-  background-repeat: repeat-x;
-  background-size: 130px 20px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='20' viewBox='0 0 130 20'%3E%3Cpath d='M7 10 C7 5 15 2 21 6 L26 1 L23 10 L26 19 L21 15 C15 18 7 15 7 10 Z' fill='%23F6CC78'/%3E%3C/svg%3E");
-  animation: aquariumSwimLeft 9s ease-in-out infinite, aquariumBobB 4s ease-in-out infinite;
+  background-repeat: no-repeat;
+  background-size: 56px 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='28' viewBox='0 0 56 28'%3E%3Cpath d='M8 14 C8 7 20 3 30 8 L37 2 L32 14 L37 26 L30 20 C20 25 8 21 8 14 Z' fill='%234FD4B8'/%3E%3Ccircle cx='15' cy='11' r='1.4' fill='%23071C2C'/%3E%3C/svg%3E");
+  animation: fishC 18s linear infinite;
 }
 [data-theme="aquarium"] body::after {
   content: "";
   position: fixed;
-  left: 0; right: 0; top: 65%; height: 22px;
+  top: 60%; right: -44px; width: 32px; height: 18px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.7;
-  background-repeat: repeat-x;
-  background-size: 150px 22px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='22' viewBox='0 0 150 22' transform='scale(-1,1)'%3E%3Cpath d='M8 11 C8 6 16 3 22 7 L27 2 L24 11 L27 20 L22 16 C16 19 8 16 8 11 Z' fill='%234FD4B8'/%3E%3Ccircle cx='13' cy='9' r='1' fill='%23071C2C'/%3E%3C/svg%3E");
-  animation: aquariumSwimRightSlow 13s ease-in-out infinite, aquariumBobC 6.5s ease-in-out infinite;
+  background-repeat: no-repeat;
+  background-size: 32px 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='18' viewBox='0 0 32 18' transform='scale(-1,1) translate(-32,0)'%3E%3Cpath d='M4 9 C4 5 11 2 16 5 L20 1 L18 9 L20 17 L16 13 C11 16 4 13 4 9 Z' fill='%23F6CC78'/%3E%3C/svg%3E");
+  animation: fishD 7s linear infinite;
 }
-@keyframes aquariumSwimRight {
-  0% { background-position-x: 0; }
-  48% { background-position-x: 170px; }
-  52% { background-position-x: 170px; }
-  100% { background-position-x: 0; }
+[data-theme="aquarium"] .weather-bar::before {
+  content: "";
+  position: fixed;
+  top: 75%; left: -50px; width: 40px; height: 20px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.65;
+  background-repeat: no-repeat;
+  background-size: 40px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'%3E%3Cpath d='M5 10 C5 5 13 2 19 6 L25 1 L22 10 L25 19 L19 14 C13 18 5 15 5 10 Z' fill='%23E8825F'/%3E%3C/svg%3E");
+  animation: fishE 11s linear infinite;
 }
-@keyframes aquariumSwimRightSlow {
-  0% { background-position-x: 150px; }
-  50% { background-position-x: 0; }
-  100% { background-position-x: 150px; }
-}
-@keyframes aquariumSwimLeft {
-  0% { background-position-x: 130px; }
-  50% { background-position-x: 0; }
-  100% { background-position-x: 130px; }
-}
-@keyframes aquariumBobA { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
-@keyframes aquariumBobB { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-@keyframes aquariumBobC { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@keyframes fishA { 0% { transform: translate(0,0); } 30% { transform: translate(38vw,6px); } 60% { transform: translate(75vw,-4px); } 100% { transform: translate(calc(100vw + 80px),0); } }
+@keyframes fishB { 0% { transform: translate(0,0); } 35% { transform: translate(-42vw,-8px); } 70% { transform: translate(-78vw,5px); } 100% { transform: translate(calc(-100vw - 60px),0); } }
+@keyframes fishC { 0% { transform: translate(0,0); } 25% { transform: translate(30vw,-10px); } 55% { transform: translate(65vw,7px); } 100% { transform: translate(calc(100vw + 90px),-3px); } }
+@keyframes fishD { 0% { transform: translate(0,0); } 40% { transform: translate(-50vw,4px); } 100% { transform: translate(calc(-100vw - 50px),-6px); } }
+@keyframes fishE { 0% { transform: translate(0,0); } 45% { transform: translate(55vw,-6px); } 100% { transform: translate(calc(100vw + 70px),8px); } }
 /* Aufsteigende Luftblasen — unterschiedlich groß, als würden sie beim Ausatmen der Fische entstehen */
 [data-theme="aquarium"] .weather-bar::after {
   content: "";
@@ -1614,12 +1625,12 @@
   z-index: 1;
   background-image:
     radial-gradient(2px 2px at 8% 95%, rgba(230,244,245,0.55), transparent),
-    radial-gradient(5px 5px at 22% 95%, rgba(230,244,245,0.6), transparent),
+    radial-gradient(6px 6px at 22% 95%, rgba(230,244,245,0.6), transparent),
     radial-gradient(3px 3px at 38% 95%, rgba(230,244,245,0.5), transparent),
-    radial-gradient(7px 7px at 55% 95%, rgba(230,244,245,0.55), transparent),
+    radial-gradient(8px 8px at 55% 95%, rgba(230,244,245,0.55), transparent),
     radial-gradient(2.5px 2.5px at 68% 95%, rgba(230,244,245,0.5), transparent),
-    radial-gradient(4px 4px at 82% 95%, rgba(230,244,245,0.6), transparent),
-    radial-gradient(2px 2px at 93% 95%, rgba(230,244,245,0.5), transparent);
+    radial-gradient(4.5px 4.5px at 82% 95%, rgba(230,244,245,0.6), transparent),
+    radial-gradient(1.5px 1.5px at 93% 95%, rgba(230,244,245,0.5), transparent);
   animation: aquariumBubbles 6.5s linear infinite;
 }
 @keyframes aquariumBubbles {
@@ -1647,29 +1658,65 @@
   --card-shadow-extra: none;
   --logo-emoji: "🪸"; --logo-shape: 50%; --logo-bg: #E85F6F;
 }
-[data-theme="korallenriff"] body::before {
+[data-theme="korallenriff"] html::before {
   content: "";
   position: fixed;
-  left: 0; right: 0; top: 30%; height: 24px;
+  top: 18%; left: -60px; width: 48px; height: 24px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.85;
-  background-repeat: repeat-x;
-  background-size: 160px 24px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='24' viewBox='0 0 160 24'%3E%3Cpath d='M12 12 C12 6 22 3 30 7 L36 2 L32 12 L36 22 L30 17 C22 21 12 18 12 12 Z' fill='%23E85F6F'/%3E%3Ccircle cx='18' cy='9' r='1.2' fill='%2314082A'/%3E%3Cpath d='M95 14 C95 9 103 6 110 9 L115 5 L112 14 L115 23 L110 19 C103 22 95 19 95 14 Z' fill='%23F0C070'/%3E%3Ccircle cx='100' cy='11' r='1' fill='%2314082A'/%3E%3C/svg%3E");
-  animation: aquariumSwimRight 14s linear infinite;
+  background-repeat: no-repeat;
+  background-size: 48px 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24' viewBox='0 0 48 24'%3E%3Cpath d='M6 12 C6 6 17 3 25 7 L31 2 L27 12 L31 22 L25 17 C17 21 6 18 6 12 Z' fill='%23E85F6F'/%3E%3Ccircle cx='13' cy='9' r='1.3' fill='%2314082A'/%3E%3C/svg%3E");
+  animation: fishA 13s linear infinite;
+}
+[data-theme="korallenriff"] html::after {
+  content: "";
+  position: fixed;
+  top: 33%; right: -46px; width: 36px; height: 18px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.75;
+  background-repeat: no-repeat;
+  background-size: 36px 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18' viewBox='0 0 36 18' transform='scale(-1,1) translate(-36,0)'%3E%3Cpath d='M5 9 C5 5 12 2 17 5 L22 1 L19 9 L22 17 L17 13 C12 16 5 13 5 9 Z' fill='%23F0C070'/%3E%3C/svg%3E");
+  animation: fishB 8s linear infinite;
+}
+[data-theme="korallenriff"] body::before {
+  content: "";
+  position: fixed;
+  top: 52%; left: -66px; width: 52px; height: 26px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+  background-repeat: no-repeat;
+  background-size: 52px 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='52' height='26' viewBox='0 0 52 26'%3E%3Cpath d='M7 13 C7 6 18 3 27 8 L34 2 L29 13 L34 24 L27 18 C18 23 7 19 7 13 Z' fill='%234FC4A8'/%3E%3Ccircle cx='14' cy='10' r='1.3' fill='%2314082A'/%3E%3C/svg%3E");
+  animation: fishC 16s linear infinite;
 }
 [data-theme="korallenriff"] body::after {
   content: "";
   position: fixed;
-  left: 0; right: 0; top: 70%; height: 20px;
+  top: 68%; right: -40px; width: 30px; height: 16px;
   pointer-events: none;
   z-index: 1;
   opacity: 0.7;
-  background-repeat: repeat-x;
-  background-size: 130px 20px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='130' height='20' viewBox='0 0 130 20'%3E%3Cpath d='M7 10 C7 6 14 3 19 6 L23 2 L21 10 L23 18 L19 14 C14 17 7 14 7 10 Z' fill='%234FC4A8'/%3E%3C/svg%3E");
-  animation: aquariumSwimLeft 10s linear infinite;
+  background-repeat: no-repeat;
+  background-size: 30px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='16' viewBox='0 0 30 16' transform='scale(-1,1) translate(-30,0)'%3E%3Cpath d='M4 8 C4 4 10 2 14 5 L18 1 L16 8 L18 15 L14 11 C10 14 4 12 4 8 Z' fill='%23E85F6F'/%3E%3C/svg%3E");
+  animation: fishD 6.5s linear infinite;
+}
+[data-theme="korallenriff"] .weather-bar::before {
+  content: "";
+  position: fixed;
+  top: 80%; left: -44px; width: 34px; height: 17px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+  background-repeat: no-repeat;
+  background-size: 34px 17px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='17' viewBox='0 0 34 17'%3E%3Cpath d='M4 8 C4 4 11 2 15 5 L19 1 L17 8 L19 16 L15 12 C11 15 4 12 4 8 Z' fill='%23F0C070'/%3E%3C/svg%3E");
+  animation: fishE 10s linear infinite;
 }
 [data-theme="korallenriff"] .weather-bar::after {
   content: "";
@@ -1678,10 +1725,11 @@
   pointer-events: none;
   z-index: 1;
   background-image:
-    radial-gradient(3px 3px at 20% 95%, rgba(245,234,251,0.55), transparent),
-    radial-gradient(2.5px 2.5px at 45% 95%, rgba(245,234,251,0.5), transparent),
-    radial-gradient(3.5px 3.5px at 65% 95%, rgba(245,234,251,0.55), transparent),
-    radial-gradient(2px 2px at 85% 95%, rgba(245,234,251,0.5), transparent);
+    radial-gradient(2px 2px at 12% 95%, rgba(245,234,251,0.55), transparent),
+    radial-gradient(5px 5px at 30% 95%, rgba(245,234,251,0.5), transparent),
+    radial-gradient(3px 3px at 48% 95%, rgba(245,234,251,0.55), transparent),
+    radial-gradient(7px 7px at 65% 95%, rgba(245,234,251,0.5), transparent),
+    radial-gradient(2.5px 2.5px at 85% 95%, rgba(245,234,251,0.5), transparent);
   animation: aquariumBubbles 7s linear infinite;
 }
 
@@ -1764,74 +1812,79 @@
   --card-shadow-extra: none;
   --logo-emoji: "🌲"; --logo-shape: 50%; --logo-bg: #3A3A2A;
 }
-/* Blitz — unregelmäßiges Aufflackern im Hintergrund */
+/* Himmel flackert warm orange-rot auf — wie fernes Wetterleuchten, nicht wie ein reiner weißer Blitz */
 [data-theme="spukwald"] body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  background: #fff;
+  background: radial-gradient(ellipse 90% 50% at 50% -5%, #ff8a3d 0%, #ff5533 35%, transparent 70%);
   opacity: 0;
-  animation: spukBlitz 9s infinite;
+  animation: spukBlitz 8s infinite;
 }
 @keyframes spukBlitz {
-  0%, 91%, 94%, 100% { opacity: 0; }
-  92% { opacity: 0.22; }
-  93% { opacity: 0.05; }
-  93.5% { opacity: 0.15; }
+  0%, 78%, 82%, 88%, 100% { opacity: 0; }
+  79% { opacity: 0.5; }
+  80% { opacity: 0.15; }
+  81% { opacity: 0.35; }
+  89% { opacity: 0.25; }
+  90% { opacity: 0; }
 }
-/* Knorrige Bäume links und rechts, wanken leicht im Wind */
+/* Knorrige, mächtige Bäume links und rechts — deutlich dicker, mit mehr Ästen, die weit ins
+   Bild ragen, und in einem Braunton, der auch im Dunkeln noch klar zu erkennen ist. */
 [data-theme="spukwald"] .weather-bar::before {
   content: "";
   position: fixed;
-  left: -10px; bottom: 0; width: 70px; height: 45vh;
+  left: -20px; bottom: 0; width: 150px; height: 62vh;
   pointer-events: none;
   z-index: 1;
   transform-origin: bottom center;
-  opacity: 0.8;
+  opacity: 0.95;
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 70px 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='240' viewBox='0 0 70 240'%3E%3Cpath d='M30 240 L30 140 Q18 130 6 112 M30 140 Q42 122 58 104 M30 108 Q20 90 8 72 M30 108 Q40 96 52 80 M30 76 L30 20 Q24 10 14 2 M30 44 Q38 34 50 24' stroke='%230d0d0f' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-size: 150px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='320' viewBox='0 0 150 320'%3E%3Cpath d='M60 320 L58 190 Q66 178 40 160 M58 190 Q50 172 22 158 M60 175 Q75 160 105 148 M60 150 Q45 130 15 112 M60 150 Q78 132 112 118 M62 118 L64 30 Q56 18 30 6 M64 85 Q80 68 108 54 M64 55 Q50 40 26 28' stroke='%232B2018' stroke-width='16' fill='none' stroke-linecap='round'/%3E%3Cpath d='M60 320 L58 190 Q66 178 40 160 M58 190 Q50 172 22 158 M60 175 Q75 160 105 148 M60 150 Q45 130 15 112 M60 150 Q78 132 112 118 M62 118 L64 30 Q56 18 30 6 M64 85 Q80 68 108 54 M64 55 Q50 40 26 28' stroke='%233D2E1F' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   animation: spukWind 6s ease-in-out infinite;
 }
 [data-theme="spukwald"] .weather-bar::after {
   content: "";
   position: fixed;
-  right: -14px; bottom: 0; width: 80px; height: 52vh;
+  right: -26px; bottom: 0; width: 175px; height: 70vh;
   pointer-events: none;
   z-index: 1;
   transform-origin: bottom center;
-  opacity: 0.85;
+  opacity: 1;
   background-repeat: no-repeat;
   background-position: bottom right;
-  background-size: 80px 100%;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='280' viewBox='0 0 80 280'%3E%3Cpath d='M45 280 L45 160 Q60 148 74 126 M45 160 Q30 140 12 118 M45 122 Q58 106 72 86 M45 122 Q32 108 18 90 M45 84 L45 16 Q52 6 64 -2 M45 50 Q36 38 22 26' stroke='%2308080a' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-size: 175px 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='175' height='360' viewBox='0 0 175 360'%3E%3Cpath d='M95 360 L92 210 Q108 195 138 178 M92 210 Q75 190 35 168 M95 195 Q112 178 145 160 M95 165 Q70 142 25 118 M95 165 Q118 145 155 128 M98 128 L100 25 Q112 12 145 -5 M100 92 Q80 72 40 52 M100 58 Q118 42 150 26' stroke='%23241A13' stroke-width='19' fill='none' stroke-linecap='round'/%3E%3Cpath d='M95 360 L92 210 Q108 195 138 178 M92 210 Q75 190 35 168 M95 195 Q112 178 145 160 M95 165 Q70 142 25 118 M95 165 Q118 145 155 128 M98 128 L100 25 Q112 12 145 -5 M100 92 Q80 72 40 52 M100 58 Q118 42 150 26' stroke='%23392A1C' stroke-width='8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   animation: spukWind2 7s ease-in-out infinite;
 }
 @keyframes spukWind {
-  0%, 100% { transform: rotate(-1.5deg); }
-  50% { transform: rotate(2deg); }
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1.5deg); }
 }
 @keyframes spukWind2 {
-  0%, 100% { transform: rotate(1.5deg); }
-  50% { transform: rotate(-2deg); }
+  0%, 100% { transform: rotate(1deg); }
+  50% { transform: rotate(-1.5deg); }
 }
-/* Regen */
+/* Regen — echte einzelne, leicht schräg fallende Tropfenstriche statt eines durchgehenden Streifens */
 [data-theme="spukwald"] body::after {
   content: "";
   position: fixed;
-  inset: -20px 0 0 0;
+  inset: -60px 0 0 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.35;
-  background-image: repeating-linear-gradient(100deg, transparent 0 6px, rgba(180,190,200,0.5) 6px 7px, transparent 7px 40px);
-  animation: spukRegen 0.6s linear infinite;
+  opacity: 0.55;
+  background-repeat: repeat;
+  background-size: 70px 130px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='130' viewBox='0 0 70 130'%3E%3Cline x1='9' y1='0' x2='4' y2='26' stroke='rgba(190,205,215,0.55)' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='32' y1='14' x2='27' y2='46' stroke='rgba(190,205,215,0.4)' stroke-width='1.2' stroke-linecap='round'/%3E%3Cline x1='52' y1='4' x2='46' y2='34' stroke='rgba(190,205,215,0.5)' stroke-width='1.5' stroke-linecap='round'/%3E%3Cline x1='17' y1='62' x2='11' y2='96' stroke='rgba(190,205,215,0.4)' stroke-width='1.3' stroke-linecap='round'/%3E%3Cline x1='58' y1='58' x2='52' y2='90' stroke='rgba(190,205,215,0.5)' stroke-width='1.5' stroke-linecap='round'/%3E%3Cline x1='40' y1='80' x2='35' y2='112' stroke='rgba(190,205,215,0.35)' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E");
+  animation: spukRegen 0.35s linear infinite;
 }
 @keyframes spukRegen {
-  0% { background-position-y: 0; }
-  100% { background-position-y: 40px; }
+  0% { background-position: 0 0; }
+  100% { background-position: -12px 130px; }
 }
 
 [data-theme="korallenriff"] .tape-piece,
