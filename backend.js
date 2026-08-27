@@ -87,7 +87,7 @@ const Backend = (function () {
         .order("played_at", { ascending: false })
         .limit(8);
       if (!error && data) {
-        return data.map((r) => ({ playedAt: r.played_at, character: r.character, percent: r.percent }));
+        return data.map((r) => ({ playedAt: r.played_at, character: r.character, percent: r.percent, points: r.points }));
       }
     } catch (e) {
       console.warn("Verlauf konnte nicht geladen werden:", e);

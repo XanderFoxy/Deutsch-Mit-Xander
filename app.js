@@ -732,6 +732,7 @@
   let memoryDifficulty = "mittel"; // 'leicht' (Orientierungshilfe) · 'mittel' (normal) · 'schwer' (mischt neu)
   let memoryChallengeFriendId = "";
   let activeMemoryChallengeId = null;
+  let activeMemoryOpponentName = "";
 
   async function newMemoryGame() {
     const game = ExerciseData.MEMORY_GAMES.find((g) => g.id === memoryGameId);
@@ -773,7 +774,7 @@
       </div>` : "";
 
     memoryArea.innerHTML = `
-      ${activeMemoryChallengeId ? '<div class="demo-banner">🎮 Duell-Runde läuft — dein Ergebnis wird nach dieser Runde mit deinem Gegner verglichen.</div>' : ""}
+      ${activeMemoryChallengeId ? `<div class="demo-banner">🎮 Duell gegen ${activeMemoryOpponentName || "deinen Freund"} läuft — dein Ergebnis wird nach dieser Runde verglichen.</div>` : ""}
       ${gameBar}
       ${diffBar}
       ${challengeBar}
@@ -803,7 +804,7 @@
       ${memoryState.finished ? '<div class="demo-banner">🦊 Runde geschafft! Punkte wurden deinem Profil gutgeschrieben.</div>' : ""}
       <div class="quiz-actions" style="justify-content:flex-start;"><button type="button" class="btn btn-ghost" id="memoryRestart">🔄 Neu mischen</button></div>
     `;
-    document.getElementById("memoryRestart").addEventListener("click", () => { activeMemoryChallengeId = null; newMemoryGame(); });
+    document.getElementById("memoryRestart").addEventListener("click", () => { activeMemoryChallengeId = null; activeMemoryOpponentName = ""; newMemoryGame(); });
     memoryArea.querySelectorAll(".memory-card").forEach((btn) => {
       btn.addEventListener("click", () => handleMemoryFlip(btn.dataset.id));
     });
@@ -823,6 +824,7 @@
     if (memChallengeSelect) {
       memChallengeSelect.addEventListener("change", async (e) => {
         memoryChallengeFriendId = e.target.value;
+        activeMemoryOpponentName = e.target.options[e.target.selectedIndex]?.text.replace(" 🟢", "") || "";
         if (memoryChallengeFriendId) {
           try {
             activeMemoryChallengeId = await Backend.createChallenge(memoryChallengeFriendId, ["memory"]);
@@ -874,7 +876,7 @@
           Backend.addTrophy(`Gehirnjogger – ${memTier}`);
           if (activeMemoryChallengeId) {
             Backend.submitChallengeResult(activeMemoryChallengeId, { percent: score, moves: memoryState.moves, seconds: Math.round(seconds) });
-            activeMemoryChallengeId = null;
+            activeMemoryChallengeId = null; activeMemoryOpponentName = "";
           }
           renderMemory();
         }
@@ -901,7 +903,7 @@
   newMemoryGame();
 
   document.querySelector('#learnSubnav [data-sub="sub-memory"]').addEventListener("click", () => {
-    activeMemoryChallengeId = null;
+    activeMemoryChallengeId = null; activeMemoryOpponentName = "";
     memoryChallengeFriendId = "";
     newMemoryGame();
   });
@@ -993,6 +995,7 @@
   async function renderCommunityTexts() {
     const box = document.getElementById("communityStandaloneArea");
     if (!box) return;
+    const user = Backend.currentUser();
     const texts = await Backend.getApprovedCommunityTexts();
     const myTexts = user ? await Backend.getMyCommunityTexts() : [];
 
@@ -1683,7 +1686,7 @@
 
       ${incomingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>🎮 Herausforderungen an dich</h3>
-        ${incomingChallenges.map((c) => `<div class="breakdown-row"><span>${c.fromName} · ${c.categories[0] === "memory" ? "🧠 Gehirnjogger" : c.categories.map((id) => ExerciseData.getCategory(id).icon).join(" ")}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}">Annehmen</button></div>`).join("")}
+        ${incomingChallenges.map((c) => `<div class="breakdown-row"><span>${c.fromName} · ${c.categories[0] === "memory" ? "🧠 Gehirnjogger" : c.categories.map((id) => ExerciseData.getCategory(id).icon).join(" ")}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`).join("")}
       </div>` : ""}
 
       <div class="question-card" style="margin-top:14px;">
@@ -1748,6 +1751,7 @@
           activateTab("view-learn");
           document.querySelector('#learnSubnav [data-sub="sub-memory"]').click();
           activeMemoryChallengeId = challengeId;
+          activeMemoryOpponentName = btn.dataset.fromName || "";
           newMemoryGame();
           return;
         }

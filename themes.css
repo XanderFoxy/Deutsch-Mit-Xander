@@ -466,27 +466,42 @@
   100% { background-position: 0 110%; }
 }
 
-/* Animierter Hintergrund: sanft bewegte Wellen (Wellenspiel) */
-[data-theme="wellenspiel"] body::before {
+/* Animierter Hintergrund: sanft bewegte, echte Wellenformen (Wellenspiel) */
+[data-theme="wellenspiel"] body::before,
+[data-theme="wellenspiel"] body::after {
   content: "";
   position: fixed;
-  left: 0; right: 0; bottom: 0;
-  height: 140px;
+  left: -10%; right: -10%; bottom: -10px;
+  height: 90px;
   pointer-events: none;
   z-index: 1;
-  background: repeating-linear-gradient(100deg, rgba(53,166,149,0.12) 0 40px, transparent 40px 80px);
-  background-size: 200% 100%;
-  animation: waveDrift 8s linear infinite;
+  background-repeat: repeat-x;
+  background-size: 220px 90px;
 }
-@keyframes waveDrift {
-  0% { background-position-x: 0%; }
-  100% { background-position-x: 200%; }
+[data-theme="wellenspiel"] body::before {
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='90' viewBox='0 0 220 90'%3E%3Cpath d='M0 45 Q 27.5 15 55 45 T 110 45 T 165 45 T 220 45 V90 H0 Z' fill='%2335A695'/%3E%3C/svg%3E");
+  animation: waveDriftBack 14s linear infinite;
+}
+[data-theme="wellenspiel"] body::after {
+  opacity: 0.55;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='90' viewBox='0 0 220 90'%3E%3Cpath d='M0 55 Q 27.5 30 55 55 T 110 55 T 165 55 T 220 55 V90 H0 Z' fill='%2335A695'/%3E%3C/svg%3E");
+  animation: waveDriftFront 8s linear infinite;
+}
+@keyframes waveDriftBack {
+  0% { background-position-x: 0; }
+  100% { background-position-x: -220px; }
+}
+@keyframes waveDriftFront {
+  0% { background-position-x: 0; }
+  100% { background-position-x: 220px; }
 }
 
 [data-theme="retroarkade"] .tape-piece,
 [data-theme="lavendelfeld"] .tape-piece,
 [data-theme="zitrusgarten"] .tape-piece,
-[data-theme="obsidian"] .tape-piece,
+[data-theme="obsidian"] .tape-piece { display: none; }
+
 /* ---------- 21) HONIGWABE — hell, warmes Gelb-Braun, gemütlich ---------- */
 [data-theme="honigwabe"] {
   --plum-950: #FFF8EC;
