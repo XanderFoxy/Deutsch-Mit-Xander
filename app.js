@@ -1162,9 +1162,9 @@
               <h2>${profile.name}</h2>
               <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium ? " · ✨ Premium" : ""}${originFlag ? ` · ${originFlag} ${profile.origin}` : ""}</p>
             </div>
-            <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
+            <div class="profile-points"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></div>
           </div>
-          <p class="empty-note" style="margin-top:10px;">${profile.bio || "Noch keine Beschreibung — auf „Bearbeiten“ tippen, um dich vorzustellen."}</p>
+          ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
           <div class="badge-row">
             ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
@@ -1193,6 +1193,8 @@
         </div>` : ""}
       `;
       document.getElementById("editProfileBtn").addEventListener("click", () => { profileEditMode = true; renderAccount(); });
+      const introBtn = document.getElementById("introPromptBtn");
+      if (introBtn) introBtn.addEventListener("click", () => { profileEditMode = true; renderAccount(); });
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await Backend.signOut();
         refreshHeaderAuth();
