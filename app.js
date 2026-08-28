@@ -210,6 +210,14 @@
     };
     area.innerHTML = `
       <p class="empty-note">Wähle dein Lieblings-Design — wirkt sofort auf der ganzen Seite. Gesperrte Designs sind Geschenke fürs Weiterlernen — einfach fleißig üben!</p>
+      <p class="eyebrow" style="margin-top:16px;">🔤 Schriftart für Überschriften</p>
+      <div class="trophy-case" style="margin-bottom:8px;">
+        ${Object.entries(HEADING_FONT_PRESETS).map(([key, p]) => {
+          const unlocked = (profile?.points || 0) >= p.unlockPoints;
+          const active2 = getHeadingFontKey() === key;
+          return `<button type="button" class="trophy-chip notify-preset-btn ${active2 ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-font-key="${key}" style="font-family:${p.css};" ${!unlocked ? "disabled" : ""}>${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
+        }).join("")}
+      </div>
       <p class="eyebrow" style="margin-top:16px;">☀️ Helle Designs</p>
       <div class="category-grid">
         ${THEMES.filter((t) => t.mode === "hell").map(themeCard).join("")}
@@ -219,6 +227,12 @@
         ${THEMES.filter((t) => t.mode === "dunkel").map(themeCard).join("")}
       </div>
     `;
+    area.querySelectorAll("[data-font-key]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setHeadingFontKey(btn.dataset.fontKey);
+        renderDesign();
+      });
+    });
     area.querySelectorAll("[data-theme-pick]").forEach((card) => {
       if (!card.dataset.themePick) {
         card.addEventListener("click", () => alert(card.dataset.lockedInfo || "Dieses Design ist noch gesperrt."));
@@ -361,6 +375,7 @@
       // Aktuell sichtbare Vokabel-/Steckbrief-Ansichten neu zeichnen, falls offen
       if (document.getElementById("vocabArea")?.innerHTML) renderVocab();
       if (document.getElementById("accountArea")?.innerHTML) renderAccount();
+      renderKompass();
     });
   }
 
@@ -470,27 +485,95 @@
     return word;
   }
 
-  function playNotifySound() {
+  function playNotifySound(soundKeyOverride) {
     if (isNotifyMuted()) return;
     try {
       if (!sharedAudioCtx) return; // Seite wurde noch nicht angetippt -> Browser erlaubt noch keinen Ton
       const ctx = sharedAudioCtx;
       if (ctx.state === "suspended") ctx.resume();
-      [880, 1108].forEach((freq, i) => {
+      const key = soundKeyOverride || getNotifySoundKey();
+      const preset = NOTIFY_SOUND_PRESETS[key] || NOTIFY_SOUND_PRESETS.ding;
+      preset.freqs.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "sine";
+        osc.type = preset.wave;
         osc.frequency.value = freq;
-        const start = ctx.currentTime + i * 0.09;
+        const start = ctx.currentTime + i * preset.gap;
         gain.gain.setValueAtTime(0, start);
         gain.gain.linearRampToValueAtTime(0.14, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + preset.decay);
         osc.connect(gain).connect(ctx.destination);
         osc.start(start);
-        osc.stop(start + 0.4);
+        osc.stop(start + preset.decay + 0.05);
       });
     } catch (e) { /* Ton ist rein dekorativ -- bei Problemen einfach still bleiben */ }
   }
+
+  // Vier wählbare Benachrichtigungstöne — die ersten beiden immer frei, die anderen beiden
+  // schaltet man mit gesammelten Punkten frei (Belohnung fürs Üben).
+  const NOTIFY_SOUND_PRESETS = {
+    ding: { label: "🔔 Ding (Standard)", freqs: [880, 1108], wave: "sine", gap: 0.09, decay: 0.35, unlockPoints: 0 },
+    pop: { label: "🫧 Pop", freqs: [520], wave: "sine", gap: 0, decay: 0.18, unlockPoints: 0 },
+    marimba: { label: "🎼 Marimba", freqs: [660, 880, 990], wave: "triangle", gap: 0.08, decay: 0.3, unlockPoints: 150 },
+    chime: { label: "✨ Glöckchen", freqs: [1200, 1500, 1800], wave: "sine", gap: 0.07, decay: 0.5, unlockPoints: 400 },
+  };
+  function getNotifySoundKey() {
+    try { return localStorage.getItem("dma_notify_sound") || "ding"; } catch (e) { return "ding"; }
+  }
+  function setNotifySoundKey(key) {
+    try { localStorage.setItem("dma_notify_sound", key); } catch (e) {}
+  }
+  // Vier wählbare Ring-/Ticker-Farben — dieselbe Freischalt-Logik wie bei den Tönen.
+  const NOTIFY_COLOR_PRESETS = {
+    coral: { label: "🟠 Koralle (Standard)", hex: "#ff4d4d", unlockPoints: 0 },
+    teal: { label: "🟢 Türkis", hex: "#2fbf9f", unlockPoints: 0 },
+    violet: { label: "🟣 Violett", hex: "#a05fe8", unlockPoints: 150 },
+    gold: { label: "🟡 Gold", hex: "#e8b93d", unlockPoints: 400 },
+  };
+  function getNotifyColorKey() {
+    try { return localStorage.getItem("dma_notify_color") || "coral"; } catch (e) { return "coral"; }
+  }
+  function setNotifyColorKey(key) {
+    try { localStorage.setItem("dma_notify_color", key); } catch (e) {}
+    applyNotifyColor();
+  }
+  function applyNotifyColor() {
+    const preset = NOTIFY_COLOR_PRESETS[getNotifyColorKey()] || NOTIFY_COLOR_PRESETS.coral;
+    document.documentElement.style.setProperty("--notify-color", preset.hex);
+  }
+
+  // Schriftarten-Shop für Überschriften (Logo, Profil-Name, Kategorien …) — überschreibt einfach
+  // dieselbe CSS-Variable, die schon überall für Überschriften genutzt wird.
+  const HEADING_FONT_PRESETS = {
+    standard: { label: "Baloo (Standard)", css: '"Baloo 2", "Segoe UI", sans-serif', unlockPoints: 0 },
+    pacifico: { label: "🖋️ Verspielt", css: '"Pacifico", cursive', unlockPoints: 0 },
+    bebas: { label: "🏛️ Plakativ", css: '"Bebas Neue", sans-serif', unlockPoints: 150 },
+    caveat: { label: "✍️ Handschrift", css: '"Caveat", cursive', unlockPoints: 150 },
+    playfair: { label: "👑 Elegant", css: '"Playfair Display", serif', unlockPoints: 400 },
+  };
+  function getHeadingFontKey() {
+    try { return localStorage.getItem("dma_heading_font") || "standard"; } catch (e) { return "standard"; }
+  }
+  function setHeadingFontKey(key) {
+    try { localStorage.setItem("dma_heading_font", key); } catch (e) {}
+    applyHeadingFont();
+  }
+  function applyHeadingFont() {
+    const preset = HEADING_FONT_PRESETS[getHeadingFontKey()] || HEADING_FONT_PRESETS.standard;
+    document.documentElement.style.setProperty("--font-display", preset.css);
+  }
+
+  function isTickerBlinkOn() {
+    try { return localStorage.getItem("dma_ticker_blink") === "1"; } catch (e) { return false; }
+  }
+  function setTickerBlink(on) {
+    try { localStorage.setItem("dma_ticker_blink", on ? "1" : "0"); } catch (e) {}
+    const wrap = document.querySelector(".ticker-track-wrap");
+    if (wrap) wrap.classList.toggle("ticker-blink", on);
+  }
+  applyNotifyColor();
+  setTickerBlink(isTickerBlinkOn());
+  applyHeadingFont();
 
   function goToFriendsInbox() {
     activateTab("view-profile");
@@ -1371,29 +1454,34 @@
     { max: 8, title: "Salat-Detektiv:in" }, { max: 10, title: "Rätselkönig:in" },
   ];
   function newWordSearchSession() {
-    wsSession = { found: 0, target: 10, bonusHits: 0 };
+    wsSession = { correctCount: 0, wordsAttempted: 0, target: 10 };
   }
   function buildWordSearch() {
-    const size = 9;
+    const size = 11;
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const candidates = Object.entries(WordbuildArtikel()).filter(([w]) => w.length <= size);
-    const chosen = Core.shuffle(candidates).slice(0, 6);
+    const chosen = Core.shuffle(candidates).slice(0, 10);
     const grid = Array.from({ length: size }, () => Array(size).fill(null));
-    const dirs = [[0, 1], [1, 0]];
+    // Alle 4 Grundrichtungen inkl. diagonal — rückwärts wird beim Prüfen der Auswahl mit abgedeckt,
+    // dadurch ergeben sich effektiv alle 8 Richtungen ("kreuz und quer").
+    const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
     const placed = [];
     chosen.forEach(([word, article]) => {
       const upper = word.toUpperCase();
       let ok = false;
-      for (let attempt = 0; attempt < 60 && !ok; attempt++) {
+      for (let attempt = 0; attempt < 150 && !ok; attempt++) {
         const dir = dirs[Math.floor(Math.random() * dirs.length)];
-        const maxRow = dir[0] === 1 ? size - upper.length : size - 1;
-        const maxCol = dir[1] === 1 ? size - upper.length : size - 1;
-        if (maxRow < 0 || maxCol < 0) continue;
-        const row = Math.floor(Math.random() * (maxRow + 1));
-        const col = Math.floor(Math.random() * (maxCol + 1));
+        const rowStart = dir[0] === 1 ? 0 : (dir[0] === -1 ? upper.length - 1 : 0);
+        const rowEnd = dir[0] === 1 ? size - upper.length : (dir[0] === -1 ? size - 1 : size - 1);
+        const colStart = dir[1] === 1 ? 0 : (dir[1] === -1 ? upper.length - 1 : 0);
+        const colEnd = dir[1] === 1 ? size - upper.length : (dir[1] === -1 ? size - 1 : size - 1);
+        if (rowEnd < rowStart || colEnd < colStart) continue;
+        const row = rowStart + Math.floor(Math.random() * (rowEnd - rowStart + 1));
+        const col = colStart + Math.floor(Math.random() * (colEnd - colStart + 1));
         let fits = true;
         for (let i = 0; i < upper.length; i++) {
           const r = row + dir[0] * i, c = col + dir[1] * i;
+          if (r < 0 || r >= size || c < 0 || c >= size) { fits = false; break; }
           if (grid[r][c] && grid[r][c] !== upper[i]) { fits = false; break; }
         }
         if (!fits) continue;
@@ -1401,7 +1489,7 @@
           const r = row + dir[0] * i, c = col + dir[1] * i;
           grid[r][c] = upper[i];
         }
-        placed.push({ word: upper, article, row, col, dir, found: false });
+        placed.push({ word: upper, article, row, col, dir, found: false, articleDone: false });
         ok = true;
       }
     });
@@ -1424,13 +1512,12 @@
   }
   function renderWordSearchResults() {
     const area = document.getElementById("wordsearchArea");
-    const tier = WS_TIERS.find((t) => wsSession.found <= t.max) || WS_TIERS[WS_TIERS.length - 1];
+    const tier = WS_TIERS.find((t) => wsSession.correctCount <= t.max) || WS_TIERS[WS_TIERS.length - 1];
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">🔍 BUCHSTABENSALAT — RUNDE FERTIG</p>
-        <h2 style="margin:8px 0;">${wsSession.found} Wörter gefunden</h2>
+        <h2 style="margin:8px 0;">${wsSession.correctCount} / ${wsSession.target} richtig gelöst</h2>
         <p style="font-size:1.1rem; font-weight:700; color:var(--amber-400);">${tier.title}</p>
-        ${wsSession.bonusHits ? `<p class="empty-note">+ ${wsSession.bonusHits} Artikel-Bonus</p>` : ""}
         <button type="button" class="btn btn-coffee" id="wsPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>
     `;
@@ -1442,12 +1529,12 @@
     const area = document.getElementById("wordsearchArea");
     if (!wsSession) newWordSearchSession();
     if (!wsState) wsState = buildWordSearch();
-    if (wsSession.found >= wsSession.target) { renderWordSearchResults(); return; }
+    if (wsSession.wordsAttempted >= wsSession.target) { renderWordSearchResults(); return; }
     const s = wsState;
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.found} / ${wsSession.target} WÖRTER</p>
-        <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen (waagerecht oder senkrecht, auch rückwärts). Bonuspunkt, wenn du danach den richtigen Artikel triffst!</p>
+        <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.wordsAttempted} / ${wsSession.target} WÖRTER · ${wsSession.correctCount} RICHTIG</p>
+        <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen — waagerecht, senkrecht oder diagonal, in jede Richtung. Danach den richtigen Artikel wählen, um das Wort abzuschließen.</p>
         <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, 1fr);">
           ${s.grid.map((row, r) => row.map((ch, c) => {
             const isSelStart = s.selection[0] && s.selection[0][0] === r && s.selection[0][1] === c;
@@ -1456,11 +1543,11 @@
           }).join("")).join("")}
         </div>
         <div class="trophy-case" style="justify-content:center;">
-          ${s.words.map((w) => `<div class="trophy-chip ${w.found ? "" : "trophy-chip-locked"}">${w.found ? "✅" : "🔎"} ${w.found ? w.word : "?".repeat(w.word.length)}</div>`).join("")}
+          ${s.words.map((w) => `<div class="trophy-chip ${w.articleDone ? "" : "trophy-chip-locked"}">${w.articleDone ? "✅" : (w.found ? "✏️" : "🔎")} ${w.found ? w.word : "?".repeat(w.word.length)}</div>`).join("")}
         </div>
         ${s.pendingArticleFor ? `
           <div class="question-card" style="margin-top:12px; border:2px solid var(--amber-400);">
-            <p style="margin:0 0 8px;">🎁 Bonus: Welcher Artikel gehört zu <strong>${s.pendingArticleFor.word}</strong>?</p>
+            <p style="margin:0 0 8px;">✏️ Welcher Artikel gehört zu <strong>${s.pendingArticleFor.word}</strong>?</p>
             <div style="display:flex; gap:8px; justify-content:center;">
               ${["der", "die", "das"].map((a) => `<button type="button" class="btn btn-ghost" data-article-guess="${a}">${a}</button>`).join("")}
             </div>
@@ -1479,7 +1566,6 @@
           s.selection = [];
           if (match) {
             match.found = true;
-            wsSession.found += 1;
             Core.sound.correct();
             s.pendingArticleFor = match;
           } else {
@@ -1492,23 +1578,21 @@
     area.querySelectorAll("[data-article-guess]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const correct = btn.dataset.articleGuess === s.pendingArticleFor.article;
-        if (correct) { Core.sound.fanfare(); wsSession.bonusHits += 1; }
-        else Core.sound.wrong();
+        wsSession.wordsAttempted += 1;
+        if (correct) { Core.sound.fanfare(); wsSession.correctCount += 1; s.pendingArticleFor.articleDone = true; }
+        else { Core.sound.wrong(); }
         s.pendingArticleFor = null;
-        if (wsSession.found >= wsSession.target) {
+        if (wsSession.wordsAttempted >= wsSession.target) {
           Backend.saveResult({
-            categories: ["buchstabensalat"], points: wsSession.found, bonus: wsSession.bonusHits,
-            percent: Math.round((wsSession.found / wsSession.target) * 100),
-            character: (WS_TIERS.find((t) => wsSession.found <= t.max) || WS_TIERS[WS_TIERS.length - 1]).title,
+            categories: ["buchstabensalat"], points: wsSession.correctCount, bonus: 0,
+            percent: Math.round((wsSession.correctCount / wsSession.target) * 100),
+            character: (WS_TIERS.find((t) => wsSession.correctCount <= t.max) || WS_TIERS[WS_TIERS.length - 1]).title,
             badges: [], playedAt: new Date().toISOString(),
           });
           if (Backend.currentUser()) {
-            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Buchstabensalat" gespielt — ${wsSession.found} Wörter gefunden${wsSession.bonusHits ? ` (+${wsSession.bonusHits} Artikel-Bonus)` : ""}.`);
+            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Buchstabensalat" gespielt — ${wsSession.correctCount} von ${wsSession.target} Wörtern samt Artikel richtig gelöst.`);
           }
-          renderWordSearch();
-          return;
         }
-        if (s.words.every((w) => w.found)) { wsState = buildWordSearch(); }
         renderWordSearch();
       });
     });
@@ -1520,9 +1604,11 @@
     return false;
   }
   function matchWordSearchLine(s, r0, c0, r1, c1) {
-    if (r0 !== r1 && c0 !== c1) return null; // nur waagerecht/senkrecht erlaubt
     const dr = Math.sign(r1 - r0), dc = Math.sign(c1 - c0);
     if (dr === 0 && dc === 0) return null;
+    // Erlaubt: waagerecht, senkrecht UND diagonal (beide Richtungen) — "kreuz und quer".
+    const rowDiff = Math.abs(r1 - r0), colDiff = Math.abs(c1 - c0);
+    if (rowDiff !== 0 && colDiff !== 0 && rowDiff !== colDiff) return null; // keine "krumme" Auswahl
     let letters = "";
     let r = r0, c = c0;
     while (true) {
@@ -1541,35 +1627,172 @@
   });
 
   /* ============================================================
+     KREUZWORTRÄTSEL — handgeprüfte, garantiert stimmige Raster
+     (Buchstaben an jeder Kreuzung Zeile für Zeile nachgerechnet).
+     '#' = keine Eingabe-Zelle (schwarzes Feld).
+     ============================================================ */
+  const CROSSWORDS = [
+    {
+      title: "Rätsel 1",
+      rows: 5, cols: 4,
+      grid: [
+        ["#", "B", "#", "#"],
+        ["H", "A", "U", "S"],
+        ["U", "U", "H", "#"],
+        ["N", "M", "R", "#"],
+        ["D", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "down", row: 0, col: 1, answer: "BAUM", clue: "Eine große Pflanze mit Stamm und Blättern" },
+        { num: 2, dir: "across", row: 1, col: 0, answer: "HAUS", clue: "Ein Gebäude zum Wohnen" },
+        { num: 2, dir: "down", row: 1, col: 0, answer: "HUND", clue: "Ein beliebtes Haustier, das bellt" },
+        { num: 3, dir: "down", row: 1, col: 2, answer: "UHR", clue: "Zeigt die Uhrzeit an" },
+      ],
+    },
+    {
+      title: "Rätsel 2",
+      rows: 4, cols: 4,
+      grid: [
+        ["K", "Ä", "S", "E"],
+        ["#", "#", "A", "I"],
+        ["#", "#", "L", "S"],
+        ["#", "#", "Z", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "KÄSE", clue: "Ein Milchprodukt, oft auf Brot" },
+        { num: 2, dir: "down", row: 0, col: 2, answer: "SALZ", clue: "Würzt Speisen, weiße Kristalle" },
+        { num: 3, dir: "down", row: 0, col: 3, answer: "EIS", clue: "Gefrorenes Wasser (oder eine süße Speise)" },
+      ],
+    },
+  ];
+  let cwState = null;
+  function newCrossword(index) {
+    const puzzle = CROSSWORDS[index % CROSSWORDS.length];
+    cwState = { puzzle, entries: {}, checked: false, startedAt: Date.now() };
+  }
+  function cwCellNumber(puzzle, r, c) {
+    const w = puzzle.words.find((w) => w.row === r && w.col === c);
+    return w ? w.num : null;
+  }
+  function renderCrossword() {
+    const area = document.getElementById("crosswordArea");
+    if (!cwState) newCrossword(0);
+    const { puzzle } = cwState;
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">✏️ KREUZWORTRÄTSEL · ${puzzle.title}</p>
+        <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, 1fr); max-width: ${puzzle.cols * 42}px;">
+          ${puzzle.grid.map((row, r) => row.map((ch, c) => {
+            if (ch === "#") return `<div class="cw-cell cw-block"></div>`;
+            const num = cwCellNumber(puzzle, r, c);
+            const key = `${r}-${c}`;
+            const entered = cwState.entries[key] || "";
+            const isCorrect = cwState.checked && entered.toUpperCase() === ch;
+            const isWrong = cwState.checked && entered && entered.toUpperCase() !== ch;
+            return `<div class="cw-cell ${isCorrect ? "cw-correct" : ""} ${isWrong ? "cw-wrong" : ""}">
+              ${num ? `<span class="cw-num">${num}</span>` : ""}
+              <input type="text" maxlength="1" class="cw-input" data-r="${r}" data-c="${c}" value="${entered}" />
+            </div>`;
+          }).join("")).join("")}
+        </div>
+        <div class="cw-clues">
+          <div>
+            <p class="eyebrow" style="margin-top:12px;">Waagerecht</p>
+            ${puzzle.words.filter((w) => w.dir === "across").map((w) => `<p class="empty-note wrap-words">${w.num}. ${w.clue} (${w.answer.length})</p>`).join("")}
+          </div>
+          <div>
+            <p class="eyebrow" style="margin-top:12px;">Senkrecht</p>
+            ${puzzle.words.filter((w) => w.dir === "down").map((w) => `<p class="empty-note wrap-words">${w.num}. ${w.clue} (${w.answer.length})</p>`).join("")}
+          </div>
+        </div>
+        <div class="quiz-actions" style="justify-content:center; margin-top:14px;">
+          <button type="button" class="btn btn-coffee" id="cwCheckBtn">✓ Prüfen</button>
+          <button type="button" class="btn btn-ghost" id="cwNextBtn">🔄 Nächstes Rätsel</button>
+        </div>
+        <p class="empty-note" id="cwFeedback" style="text-align:center; margin-top:10px;"></p>
+      </div>
+    `;
+    area.querySelectorAll(".cw-input").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        const val = e.target.value.toUpperCase().replace(/[^A-ZÄÖÜ]/g, "");
+        e.target.value = val;
+        cwState.entries[`${input.dataset.r}-${input.dataset.c}`] = val;
+        if (val) {
+          const inputs = [...area.querySelectorAll(".cw-input")];
+          const idx = inputs.indexOf(input);
+          if (idx > -1 && idx < inputs.length - 1) inputs[idx + 1].focus();
+        }
+      });
+    });
+    document.getElementById("cwCheckBtn").addEventListener("click", () => {
+      cwState.checked = true;
+      const allCorrect = puzzle.grid.every((row, r) => row.every((ch, c) => {
+        if (ch === "#") return true;
+        return (cwState.entries[`${r}-${c}`] || "").toUpperCase() === ch;
+      }));
+      const fb = document.getElementById("cwFeedback");
+      if (allCorrect) {
+        Core.sound.fanfare();
+        fb.textContent = "🎉 Alles richtig!";
+        const seconds = (Date.now() - cwState.startedAt) / 1000;
+        Backend.saveResult({
+          categories: ["kreuzwortraetsel"], points: puzzle.words.length, bonus: seconds < 60 ? 1 : 0, percent: 100,
+          character: "Rätsel-Genie", badges: [], playedAt: new Date().toISOString(),
+        });
+        if (Backend.currentUser()) {
+          Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade das Kreuzworträtsel „${puzzle.title}" gelöst — alles richtig!`);
+        }
+      } else {
+        Core.sound.wrong();
+        fb.textContent = "Noch nicht ganz — rote Felder sind falsch, versuch es weiter!";
+      }
+      renderCrossword();
+      document.getElementById("cwFeedback").textContent = fb.textContent;
+    });
+    document.getElementById("cwNextBtn").addEventListener("click", () => {
+      const currentIdx = CROSSWORDS.indexOf(puzzle);
+      newCrossword(currentIdx + 1);
+      renderCrossword();
+    });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-crossword"]').addEventListener("click", () => {
+    if (!cwState) newCrossword(0);
+    renderCrossword();
+  });
+
+  /* ============================================================
      KOMPASS
      ============================================================ */
   const kompassArea = document.getElementById("kompassArea");
 
-  function kompassCard(title, explain, example) {
+  function kompassCard(title, explain, example, syl) {
     return `<div class="kompass-card">
-      <div class="kompass-word">„${title}"</div>
+      <div class="kompass-word">„${(isStressModeOn() && syl) ? stressHtml(syl) : title}"</div>
       <div class="kompass-explain">${explain}</div>
       <div class="kompass-example">„${example}"</div>
     </div>`;
   }
 
-  kompassArea.innerHTML = `
-    <div class="wegweiser">
-      <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
-      <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
-      <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
-    </div>
+  function renderKompass() {
+    kompassArea.innerHTML = `
+      <div class="wegweiser">
+        <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
+        <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
+        <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
+      </div>
 
-    <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
-    <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
-    <div class="kompass-grid">${VocabData.REDEWENDUNGEN_KURZ.map((r) => kompassCard(r.phrase, r.explain, r.example)).join("")}</div>
+      <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
+      <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
+      <div class="kompass-grid">${VocabData.REDEWENDUNGEN_KURZ.map((r) => kompassCard(r.phrase, r.explain, r.example)).join("")}</div>
 
-    <h3 id="kompass-jugendsprache" class="kompass-heading">🗣️ Umgangssprache &amp; Jugendslang</h3>
-    <div class="kompass-grid">${VocabData.JUGENDSPRACHE.map((j) => kompassCard(j.word, j.explain, j.example)).join("")}</div>
+      <h3 id="kompass-jugendsprache" class="kompass-heading">🗣️ Umgangssprache &amp; Jugendslang</h3>
+      <div class="kompass-grid">${VocabData.JUGENDSPRACHE.map((j) => kompassCard(j.word, j.explain, j.example)).join("")}</div>
 
-    <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
-    <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example)).join("")}</div>
-  `;
+      <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
+      <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
+    `;
+  }
+  renderKompass();
 
   /* ============================================================
      MATERIALIEN & LINKS
@@ -2064,6 +2287,31 @@
             <button type="button" class="btn btn-ghost" id="muteNotifyBtn">${isNotifyMuted() ? "🔔 Ton wieder einschalten" : "🔕 Ton & Blinken stummschalten"}</button>
           </div>
         </div>` : ""}
+        ${user ? `
+        <div class="question-card" style="margin-bottom:14px;">
+          <h3>🎨 Benachrichtigungs-Einstellungen</h3>
+          <p class="empty-note" style="margin-bottom:10px;">Töne und Farben ab einer bestimmten Punktzahl freigeschaltet — eine kleine Belohnung fürs Üben.</p>
+          <p style="font-weight:700; margin-bottom:6px;">Ton</p>
+          <div class="trophy-case" style="margin-bottom:14px;">
+            ${Object.entries(NOTIFY_SOUND_PRESETS).map(([key, p]) => {
+              const unlocked = profile.points >= p.unlockPoints;
+              const active = getNotifySoundKey() === key;
+              return `<button type="button" class="trophy-chip notify-preset-btn ${active ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-sound-key="${key}" ${!unlocked ? "disabled" : ""}>${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
+            }).join("")}
+          </div>
+          <p style="font-weight:700; margin-bottom:6px;">Farbe (Lämpchen &amp; Ring)</p>
+          <div class="trophy-case" style="margin-bottom:14px;">
+            ${Object.entries(NOTIFY_COLOR_PRESETS).map(([key, p]) => {
+              const unlocked = profile.points >= p.unlockPoints;
+              const active = getNotifyColorKey() === key;
+              return `<button type="button" class="trophy-chip notify-preset-btn ${active ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-color-key="${key}" ${!unlocked ? "disabled" : ""}>${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
+            }).join("")}
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="tickerBlinkCheck" ${isTickerBlinkOn() ? "checked" : ""} ${profile.points >= 400 ? "" : "disabled"} />
+            <span>Laufband beim Aktualisieren blinken lassen ${profile.points >= 400 ? "" : "🔒 400P"}</span>
+          </label>
+        </div>` : ""}
         <div class="question-card profile-card-view">
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header">
@@ -2143,6 +2391,23 @@
           if (loginBtn) loginBtn.classList.toggle("notify-ring", !isNotifyMuted() && myUnread.length > 0);
           renderAccount();
         });
+      }
+      area.querySelectorAll("[data-sound-key]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          setNotifySoundKey(btn.dataset.soundKey);
+          playNotifySound(btn.dataset.soundKey);
+          renderAccount();
+        });
+      });
+      area.querySelectorAll("[data-color-key]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          setNotifyColorKey(btn.dataset.colorKey);
+          renderAccount();
+        });
+      });
+      const tickerBlinkCheck = document.getElementById("tickerBlinkCheck");
+      if (tickerBlinkCheck) {
+        tickerBlinkCheck.addEventListener("change", () => setTickerBlink(tickerBlinkCheck.checked));
       }
       area.querySelectorAll("[data-approve-text]").forEach((btn) => {
         btn.addEventListener("click", async () => {

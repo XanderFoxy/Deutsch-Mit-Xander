@@ -73,18 +73,18 @@ const VocabData = (function () {
 
   // Kompass — Partikeln & Nuancen
   const PARTIKELN = [
-    { word: "doch", explain: "Widerspruch, Bestätigung oder Nachdruck.", example: "„Kommst du nicht?“ – „Doch, ich komme!“" },
-    { word: "ja", explain: "Betont etwas als bekannt/offensichtlich.", example: "Das ist ja wunderschön hier!" },
-    { word: "denn", explain: "Macht Fragen freundlicher/interessierter.", example: "Wie geht es dir denn?" },
-    { word: "mal", explain: "Macht Aufforderungen beiläufiger, weniger streng.", example: "Komm mal her." },
-    { word: "eben", explain: "Drückt Zustimmung zu einer nicht änderbaren Tatsache aus.", example: "So ist das eben." },
-    { word: "halt", explain: "Ähnlich wie „eben“ — süddeutsch geprägt.", example: "Das ist halt so." },
-    { word: "eigentlich", explain: "Leitet eine Einschränkung oder Themenwechsel ein.", example: "Eigentlich wollte ich früher gehen." },
-    { word: "na ja", explain: "Zögern, leichte Skepsis oder Relativierung.", example: "Na ja, so toll war es auch nicht." },
-    { word: "ach so", explain: "Plötzliches Verstehen.", example: "Ach so, jetzt verstehe ich!" },
-    { word: "tja", explain: "Resignation oder Ratlosigkeit.", example: "Tja, das war's dann wohl." },
-    { word: "ruhig", explain: "Erlaubnis, etwas ohne Bedenken zu tun.", example: "Du kannst ruhig fragen." },
-    { word: "wohl", explain: "Vermutung, Unsicherheit.", example: "Das wird wohl stimmen." },
+    { word: "doch", explain: "Widerspruch, Bestätigung oder Nachdruck.", example: "„Kommst du nicht?“ – „Doch, ich komme!“", syl: "doch" },
+    { word: "ja", explain: "Betont etwas als bekannt/offensichtlich.", example: "Das ist ja wunderschön hier!", syl: "ja" },
+    { word: "denn", explain: "Macht Fragen freundlicher/interessierter.", example: "Wie geht es dir denn?", syl: "denn" },
+    { word: "mal", explain: "Macht Aufforderungen beiläufiger, weniger streng.", example: "Komm mal her.", syl: "mal" },
+    { word: "eben", explain: "Drückt Zustimmung zu einer nicht änderbaren Tatsache aus.", example: "So ist das eben.", syl: "E-ben" },
+    { word: "halt", explain: "Ähnlich wie „eben“ — süddeutsch geprägt.", example: "Das ist halt so.", syl: "halt" },
+    { word: "eigentlich", explain: "Leitet eine Einschränkung oder Themenwechsel ein.", example: "Eigentlich wollte ich früher gehen.", syl: "EI-gent-lich" },
+    { word: "na ja", explain: "Zögern, leichte Skepsis oder Relativierung.", example: "Na ja, so toll war es auch nicht.", syl: "NA ja" },
+    { word: "ach so", explain: "Plötzliches Verstehen.", example: "Ach so, jetzt verstehe ich!", syl: "ACH so" },
+    { word: "tja", explain: "Resignation oder Ratlosigkeit.", example: "Tja, das war's dann wohl.", syl: "tja" },
+    { word: "ruhig", explain: "Erlaubnis, etwas ohne Bedenken zu tun.", example: "Du kannst ruhig fragen.", syl: "RU-hig" },
+    { word: "wohl", explain: "Vermutung, Unsicherheit.", example: "Das wird wohl stimmen.", syl: "wohl" },
   ];
 
   // Materialien — kompakte Grammatik-Referenzkarten
