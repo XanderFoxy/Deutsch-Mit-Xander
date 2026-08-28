@@ -324,6 +324,30 @@ const ExerciseData = (function () {
       },
       sideFacts: [],
     },
+    "08-10": {
+      year: 1995,
+      levels: {
+        A1: "Am 10. August 1995 sagt ein Gericht: Kreuze in bayrischen Schulen sind ein Problem. Das ist der Kruzifix-Beschluss.",
+        A2: "Am 10. August 1995 veröffentlicht das Bundesverfassungsgericht den Kruzifix-Beschluss. Kreuze in bayrischen Klassenzimmern verstoßen gegen die Religionsfreiheit im Grundgesetz.",
+        B1: "Am 10. August 1995 wird der sogenannte Kruzifix-Beschluss des Bundesverfassungsgerichts veröffentlicht. Die verpflichtende Anbringung von Kreuzen in bayrischen Klassenzimmern verstößt demnach gegen die im Grundgesetz garantierte Religionsfreiheit.",
+        B2: "Am 10. August 1995 wird der Kruzifix-Beschluss des Bundesverfassungsgerichts veröffentlicht (gefällt bereits am 16. Mai): Die in der bayrischen Volksschulordnung vorgeschriebenen Kreuze in Klassenzimmern verletzen die negative Religionsfreiheit nicht-christlicher oder konfessionsloser Schüler. Das Urteil löst eine heftige gesellschaftliche Debatte aus.",
+        C1: "Der am 10. August 1995 veröffentlichte Kruzifix-Beschluss des Bundesverfassungsgerichts erklärte die verpflichtende Kreuz-Anbringung in bayrischen Klassenzimmern für verfassungswidrig, da sie die negative Religionsfreiheit andersgläubiger Schüler verletze. Das Urteil zählt zu den gesellschaftlich umstrittensten Entscheidungen des Gerichts.",
+        C2: "Der Kruzifix-Beschluss vom 10. August 1995 löste eine der emotionalsten Verfassungsdebatten der bundesdeutschen Geschichte aus: Während Kritiker eine Verdrängung christlicher Kultur aus dem öffentlichen Raum beklagten, sahen Befürworter darin eine konsequente Anwendung der im Grundgesetz verankerten staatlichen Neutralität in Glaubensfragen.",
+      },
+      sideFacts: [],
+    },
+    "08-17": {
+      year: 1956,
+      levels: {
+        A1: "Am 17. August 1956 verbietet ein Gericht eine Partei in Deutschland. Sie heißt KPD.",
+        A2: "Am 17. August 1956 verbietet das Bundesverfassungsgericht die Kommunistische Partei Deutschlands (KPD). Das Gericht sagt, die Partei verstößt gegen die Verfassung.",
+        B1: "Am 17. August 1956 erklärt das Bundesverfassungsgericht die Kommunistische Partei Deutschlands (KPD) für verfassungswidrig und verbietet sie. Es ist erst das zweite Parteiverbot in der Geschichte der Bundesrepublik.",
+        B2: "Am 17. August 1956 verbietet das Bundesverfassungsgericht nach fast fünfjährigem Verfahren die KPD als verfassungswidrig — sie strebe die Abschaffung der freiheitlich-demokratischen Grundordnung an. Polizei durchsucht noch am selben Tag Parteibüros im ganzen Land.",
+        C1: "Das KPD-Verbot vom 17. August 1956, nach fünfjährigem Verfahren vom Bundesverfassungsgericht verhängt, war erst das zweite Parteiverbot der Bundesrepublik nach der neonazistischen SRP 1952. Es zeigt die hohen rechtlichen Hürden, aber auch die Entschlossenheit des jungen Staates gegenüber Verfassungsfeinden von links wie rechts.",
+        C2: "Das Urteil zum KPD-Verbot vom 17. August 1956 markiert bis heute einen der seltenen Fälle exekutierter wehrhafter Demokratie in der Bundesrepublik und bleibt historisch umstritten — Kritiker sehen darin eine im Kalten Krieg motivierte Kriminalisierung linker Opposition, während Befürworter es als notwendige Verteidigung der freiheitlich-demokratischen Grundordnung werten.",
+      },
+      sideFacts: [],
+    },
     "08-23": {
       year: 1939,
       levels: {
@@ -336,6 +360,18 @@ const ExerciseData = (function () {
       },
       sideFacts: [],
     },
+    "08-28": {
+      year: 1988,
+      levels: {
+        A1: "Am 28. August 1988 gibt es einen Unfall bei einer Flugshow in Ramstein. Viele Menschen sterben.",
+        A2: "Am 28. August 1988 stoßen bei einer Flugshow in Ramstein drei Flugzeuge zusammen. Es ist eines der schlimmsten Unglücke bei einer Flugshow weltweit.",
+        B1: "Am 28. August 1988 kollidieren bei einer Flugschau auf der Air Base Ramstein drei Kunstflugzeuge in der Luft. 70 Menschen sterben — es ist eines der schwersten Flugshow-Unglücke der Geschichte.",
+        B2: "Am 28. August 1988 kollidieren vor rund 300.000 Zuschauern drei Maschinen der italienischen Kunstflugstaffel Frecce Tricolori bei einer Flugschau auf der Air Base Ramstein. 70 Menschen sterben. Das Unglück verändert die Sicherheitsauflagen für Flugschauen in ganz Europa dauerhaft.",
+        C1: "Das Flugtagunglück von Ramstein am 28. August 1988, bei dem drei Maschinen der Frecce Tricolori vor rund 300.000 Zuschauern kollidierten und 70 Menschen ihr Leben verloren, zählt zu den folgenschwersten Katastrophen dieser Art weltweit und führte zu grundlegend verschärften Sicherheitsauflagen für Flugschauen in Deutschland und Europa.",
+        C2: "Die Flugtagkatastrophe von Ramstein am 28. August 1988 markiert einen Wendepunkt in der Geschichte der Flugschau-Sicherheit: Die parlamentarische Aufarbeitung durch einen Untersuchungsausschuss des Bundestages führte zu bis heute geltenden, drastisch verschärften Abstands- und Sicherheitsregeln für Kunstflugvorführungen in ganz Europa.",
+      },
+      sideFacts: [],
+    },
     "09-15": {
       year: 1935,
       levels: {
@@ -345,6 +381,18 @@ const ExerciseData = (function () {
         B2: "Am 15. September 1935 verabschiedet der nur noch formal tagende Reichstag beim Nürnberger Parteitag die Nürnberger Gesetze — das Reichsbürgergesetz und das Blutschutzgesetz. Sie machen die rassistische Diskriminierung jüdischer Menschen erstmals gesetzlich verbindlich.",
         C1: "Die am 15. September 1935 verkündeten Nürnberger Gesetze — Reichsbürgergesetz und Blutschutzgesetz — bildeten die rechtliche Grundlage für die systematische Entrechtung der jüdischen Bevölkerung und gelten als entscheidende Vorstufe auf dem Weg zum Holocaust.",
         C2: "Die Nürnberger Gesetze vom 15. September 1935 übersetzten die nationalsozialistische Rassenideologie erstmals in verbindliches Recht und schufen damit den administrativen Apparat, der die schrittweise Ausgrenzung der jüdischen Bevölkerung aus nahezu allen Lebensbereichen innerhalb weniger Jahre ermöglichte.",
+      },
+      sideFacts: [],
+    },
+    "09-20": {
+      year: 1949,
+      levels: {
+        A1: "Am 20. September 1949 fängt die erste deutsche Regierung an zu arbeiten. Konrad Adenauer ist der Kanzler.",
+        A2: "Am 20. September 1949 werden die ersten Bundesminister vereidigt. Konrad Adenauer ist schon seit fünf Tagen Bundeskanzler.",
+        B1: "Am 20. September 1949 werden die dreizehn Minister der ersten Bundesregierung vereidigt. Bundeskanzler Konrad Adenauer hält direkt danach seine erste Regierungserklärung.",
+        B2: "Am 20. September 1949 vereidigt der Bundestag die dreizehn Minister von Konrad Adenauers erstem Kabinett. Mit der Regierungsbildung tritt auch das alliierte Besatzungsstatut in Kraft — die junge Bundesrepublik ist damit arbeitsfähig, wenn auch noch nicht vollständig souverän.",
+        C1: "Mit der Vereidigung der dreizehn Minister am 20. September 1949 und Adenauers anschließender erster Regierungserklärung nahm die Bundesrepublik Deutschland offiziell ihre Regierungsarbeit auf — nach der Wahl des Bundespräsidenten (12.9.) und des Bundeskanzlers (15.9.) der letzte Baustein der Staatsgründung.",
+        C2: "Die Vereidigung des ersten Kabinetts Adenauer am 20. September 1949, komplettiert durch das zeitgleiche Inkrafttreten des Besatzungsstatuts, markiert den formalen Abschluss der westdeutschen Staatsgründung binnen weniger Wochen — ein bemerkenswertes Tempo angesichts der zähen Verhandlungen um die Kabinettsliste, die diesem Tag vorausgingen.",
       },
       sideFacts: [],
     },
@@ -365,6 +413,20 @@ const ExerciseData = (function () {
     return GERMAN_HISTORY_TODAY[monthDay] || null;
   }
 
+  // Typische "Problemwörter" für Deutschlernende — Wörter, bei denen die Betonung erfahrungsgemäß
+  // besonders oft falsch gesetzt wird (unbetonte Vorsilben, Fremdwörter mit Endbetonung, häufige
+  // Alltagswörter mit nicht offensichtlicher Betonung). Fließen bevorzugt in den Betonungs-Trainer
+  // ein, da sie den größten Lerneffekt haben.
+  const STRESS_PROBLEM_WORDS = {
+    "arbeiten": "AR-bei-ten", "eigentlich": "EI-gent-lich", "verstehen": "ver-STE-hen",
+    "bekommen": "be-KOM-men", "entscheiden": "ent-SCHEI-den", "gefallen": "ge-FAL-len",
+    "erzählen": "er-ZÄH-len", "zerstören": "zer-STÖ-ren", "empfehlen": "emp-FEH-len",
+    "besuchen": "be-SU-chen", "verkaufen": "ver-KAU-fen", "entdecken": "ent-DE-cken",
+    "interessant": "in-te-res-SANT", "Familie": "Fa-MI-lie", "Firma": "FIR-ma",
+    "Musik": "mu-SIK", "Kaffee": "KAF-fee", "Museum": "mu-SE-um", "Universität": "u-ni-ver-si-TÄT",
+    "Elefant": "E-le-FANT", "Student": "Stu-DENT", "Moment": "Mo-MENT", "Computer": "Com-PU-ter",
+    "Telefon": "Te-le-FON", "typisch": "TY-pisch", "wichtig": "WICH-tig", "möglich": "MÖG-lich",
+  };
   const DAILY_TIPS = [
     { text: `Bei „verstehen" wird nicht die Vorsilbe betont, sondern die zweite Silbe: ver<span class="stress">ste</span>hen.`, },
     { text: `Bei „bekommen" liegt die Betonung auf „kom": be<span class="stress">kom</span>men.`, },
@@ -3427,5 +3489,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS };
 })();

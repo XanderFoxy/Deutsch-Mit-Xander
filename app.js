@@ -1961,6 +1961,12 @@
     Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
       if (syl.includes("-")) pool.push({ word, syl, en: ExerciseData.WORD_MEANINGS[word] });
     });
+    // Typische "Problemwörter" für Deutschlernende werden dreifach ins Los-Topf gelegt, damit sie
+    // im Schnitt deutlich häufiger drankommen als der übrige, eher zufällige Wortschatz — genau
+    // die Wörter, bei denen sich Üben am meisten lohnt.
+    Object.entries(ExerciseData.STRESS_PROBLEM_WORDS || {}).forEach(([word, syl]) => {
+      for (let i = 0; i < 3; i++) pool.push({ word, syl, en: "" });
+    });
     return pool;
   }
   // Kurze, pädagogisch begründete Erklärung, WARUM die Betonung so liegt — nur bei Mustern, die
@@ -2023,8 +2029,13 @@
           ${w.syllables.map((s, i) => `<button type="button" class="btn btn-ghost st-syl-btn" data-syl-idx="${i}" style="font-size:1.2rem; font-weight:800; text-transform:lowercase;">${s.toLowerCase()}</button>`).join("")}
         </div>
         <p class="empty-note" id="stFeedback" style="text-align:center;"></p>
+        <div id="stChallengeBar"></div>
       </div>
     `;
+    renderMiniChallengeBar("betonungstrainer", "betonungstrainer").then((html) => {
+      const el = document.getElementById("stChallengeBar");
+      if (el) { el.innerHTML = html; wireMiniChallengeBar(area, "betonungstrainer", renderStressTrainer); }
+    });
     area.querySelectorAll(".st-syl-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.sylIdx);
@@ -6150,7 +6161,11 @@
 
       ${incomingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>🎮 Herausforderungen an dich</h3>
-        ${incomingChallenges.map((c) => `<div class="breakdown-row"><span>${c.fromName} · ${c.categories[0] === "memory" ? "🧠 Gehirnjogger" : c.categories.map((id) => ExerciseData.getCategory(id).icon).join(" ")}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`).join("")}
+        ${incomingChallenges.map((c) => {
+          const specialLabels = { memory: "🧠 Gehirnjogger", wortbaustelle: "🔤 Wortbaustelle", buchstabensalat: "🔍 Buchstabensalat", kreuzwortraetsel: "✏️ Kreuzworträtsel", betonungstrainer: "🎯 Betonungs-Trainer" };
+          const label = specialLabels[c.categories[0]] || c.categories.map((id) => ExerciseData.getCategory(id)?.icon || "❓").join(" ");
+          return `<div class="breakdown-row"><span>${c.fromName} · ${label}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`;
+        }).join("")}
       </div>` : ""}
 
       <div class="question-card" style="margin-top:14px;">
@@ -6263,15 +6278,39 @@
         const categoryIds = btn.dataset.cats.split(",");
         const challengeId = btn.dataset.acceptChallenge;
         checkNotifications();
-        if (categoryIds[0] === "memory") {
-          activateTab("view-learn");
-          document.querySelector('#learnSubnav [data-sub="sub-memory"]').click();
-          activeMemoryChallengeId = challengeId;
-          activeMemoryOpponentName = btn.dataset.fromName || "";
-          newMemoryGame();
+        // Jedes der neueren Spiele braucht seine eigene Weiterleitung — vorher landete eine
+        // angenommene Einladung zu Wortbaustelle/Buchstabensalat/Kreuzworträtsel/Betonungs-
+        // Trainer fälschlich in den klassischen Übungen, weil nur "memory" als Sonderfall
+        // behandelt wurde.
+        const gameRouting = {
+          memory: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-memory"]').click();
+            activeMemoryChallengeId = challengeId;
+            activeMemoryOpponentName = btn.dataset.fromName || "";
+            newMemoryGame();
+          },
+          wortbaustelle: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-wordbuild"]').click();
+            newWordbuildSession(); newWordbuildRound(); renderWordbuild();
+          },
+          buchstabensalat: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-wordsearch"]').click();
+            newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
+          },
+          kreuzwortraetsel: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-crossword"]').click();
+            newCrossword(0); renderCrossword();
+          },
+          betonungstrainer: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]').click();
+            newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer();
+          },
+        };
+        activateTab("view-learn");
+        if (gameRouting[categoryIds[0]]) {
+          gameRouting[categoryIds[0]]();
           return;
         }
-        activateTab("view-learn");
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
         Quiz.startSession(categoryIds, "leicht", { challengeId });
         renderQuestion();
