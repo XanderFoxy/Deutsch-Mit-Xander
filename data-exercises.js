@@ -324,6 +324,30 @@ const ExerciseData = (function () {
       },
       sideFacts: [],
     },
+    "08-23": {
+      year: 1939,
+      levels: {
+        A1: "Am 23. August 1939 unterschreiben Deutschland und die Sowjetunion einen Vertrag. Er heißt Hitler-Stalin-Pakt.",
+        A2: "Am 23. August 1939 unterschreiben Deutschland und die Sowjetunion einen Nichtangriffspakt. Er wird Hitler-Stalin-Pakt genannt.",
+        B1: "In der Nacht zum 24. August 1939 unterschreiben Deutschland und die Sowjetunion den Hitler-Stalin-Pakt — einen Nichtangriffsvertrag. Er ebnet den Weg für den Überfall auf Polen wenige Tage später.",
+        B2: "In der Nacht zum 24. August 1939 unterzeichnen die Außenminister Ribbentrop und Molotow in Moskau den deutsch-sowjetischen Nichtangriffspakt. Ein geheimes Zusatzprotokoll teilt Osteuropa bereits im Voraus in Interessensphären auf — die Grundlage für den Überfall auf Polen neun Tage später.",
+        C1: "Der in der Nacht zum 24. August 1939 unterzeichnete deutsch-sowjetische Nichtangriffspakt sicherte Hitler die sowjetische Neutralität für den bereits beschlossenen Überfall auf Polen. Ein geheimes Zusatzprotokoll regelte die Aufteilung Ost- und Ostmitteleuropas in Einflusssphären.",
+        C2: "Der Hitler-Stalin-Pakt vom 23./24. August 1939, scheinbar ein Friedensvertrag zwischen ideologischen Erzfeinden, entpuppte sich als zynisches machtpolitisches Kalkül: Das geheime Zusatzprotokoll besiegelte die Aufteilung Osteuropas und bedeutete für die baltischen Staaten den Beginn einer Fremdherrschaft, die erst 1989/90 endete.",
+      },
+      sideFacts: [],
+    },
+    "09-15": {
+      year: 1935,
+      levels: {
+        A1: "Am 15. September 1935 macht Deutschland neue, schlimme Gesetze gegen jüdische Menschen.",
+        A2: "Am 15. September 1935 verkündet die NS-Regierung die Nürnberger Gesetze. Sie diskriminieren jüdische Menschen in Deutschland.",
+        B1: "Am 15. September 1935 verkündet der Reichstag in Nürnberg die sogenannten Nürnberger Gesetze. Sie entziehen jüdischen Menschen ihre Bürgerrechte und verbieten Ehen zwischen Juden und Nicht-Juden.",
+        B2: "Am 15. September 1935 verabschiedet der nur noch formal tagende Reichstag beim Nürnberger Parteitag die Nürnberger Gesetze — das Reichsbürgergesetz und das Blutschutzgesetz. Sie machen die rassistische Diskriminierung jüdischer Menschen erstmals gesetzlich verbindlich.",
+        C1: "Die am 15. September 1935 verkündeten Nürnberger Gesetze — Reichsbürgergesetz und Blutschutzgesetz — bildeten die rechtliche Grundlage für die systematische Entrechtung der jüdischen Bevölkerung und gelten als entscheidende Vorstufe auf dem Weg zum Holocaust.",
+        C2: "Die Nürnberger Gesetze vom 15. September 1935 übersetzten die nationalsozialistische Rassenideologie erstmals in verbindliches Recht und schufen damit den administrativen Apparat, der die schrittweise Ausgrenzung der jüdischen Bevölkerung aus nahezu allen Lebensbereichen innerhalb weniger Jahre ermöglichte.",
+      },
+      sideFacts: [],
+    },
     "09-30": {
       year: 1938,
       levels: {

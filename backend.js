@@ -862,6 +862,15 @@ const Backend = (function () {
     const f = demo.friends.find((x) => x.id === id);
     if (f) f.status = "accepted";
   }
+  // Fehlte bisher komplett: eine Anfrage, die man nicht annehmen möchte, blieb für immer als
+  // "pending" stehen und konnte bei jedem Neuladen der Seite erneut eine Benachrichtigung auslösen.
+  async function declineFriendRequest(id) {
+    if (client) {
+      await client.from("friends").delete().eq("id", id);
+      return;
+    }
+    demo.friends = demo.friends.filter((x) => x.id !== id);
+  }
 
   async function getFriends(forId) {
     const targetId = forId || myId();
@@ -1424,6 +1433,7 @@ const Backend = (function () {
     sendFriendRequest,
     getIncomingRequests,
     acceptFriendRequest,
+    declineFriendRequest,
     getFriends,
     createChallenge,
     cancelChallenge,

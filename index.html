@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- WICHTIG: Verhindert, dass der Browser diese HTML-Datei selbst zwischenspeichert. Ohne das
+     konnte eine einmal geladene, alte Version der Seite dauerhaft aus dem Browser-Cache kommen,
+     OHNE dass die neuen ?v=-Nummern der CSS/JS-Dateien je gesehen wurden — das war vermutlich die
+     eigentliche Ursache dafür, dass Aktualisierungen im normalen Tab nicht ankamen, im privaten
+     Fenster (das nie einen alten Cache hat) aber schon. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>Deutsch mit Alex</title>
 <meta name="description" content="Deutsch mit Alex — Grammatik üben, Vokabeln lernen und Deutschland entdecken. Locker, spaßig, kostenlos." />
 <meta name="theme-color" content="#FDF8F0" />
@@ -26,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=60" />
-<link rel="stylesheet" href="app-styles.css?v=60" />
-<link rel="stylesheet" href="themes.css?v=60" />
+<link rel="stylesheet" href="styles.css?v=80" />
+<link rel="stylesheet" href="app-styles.css?v=80" />
+<link rel="stylesheet" href="themes.css?v=80" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -146,6 +154,14 @@
         </div>
       </div>
     </div>
+    <button type="button" class="history-banner" id="historyBannerBtn">
+      <span class="history-banner-icon">📜</span>
+      <span class="history-banner-text">
+        <span class="history-banner-title">Es war einmal in Deutschland …</span>
+        <span class="history-banner-sub" id="historyBannerSub">Heute im Kalender der deutschen Geschichte — jetzt lesen</span>
+      </span>
+      <span class="history-banner-arrow">→</span>
+    </button>
   </section>
 
   <!-- LERNEN ===================================================== -->
@@ -262,12 +278,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=60"></script>
-<script src="supabase-config.js?v=60"></script>
-<script src="data-exercises.js?v=60"></script>
-<script src="data-vocab.js?v=60"></script>
-<script src="backend.js?v=60"></script>
-<script src="quiz.js?v=60"></script>
-<script src="app.js?v=60"></script>
+<script src="core.js?v=80"></script>
+<script src="supabase-config.js?v=80"></script>
+<script src="data-exercises.js?v=80"></script>
+<script src="data-vocab.js?v=80"></script>
+<script src="backend.js?v=80"></script>
+<script src="quiz.js?v=80"></script>
+<script src="app.js?v=80"></script>
 </body>
 </html>

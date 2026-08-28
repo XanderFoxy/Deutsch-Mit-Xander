@@ -191,6 +191,26 @@
   }
   function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
 
+  function getLearningProfile() {
+    try { return JSON.parse(localStorage.getItem("dma_learning_profile") || "{}"); } catch (e) { return {}; }
+  }
+  function setLearningRating(catId, rating) {
+    const profile = getLearningProfile();
+    profile[catId] = rating;
+    try { localStorage.setItem("dma_learning_profile", JSON.stringify(profile)); } catch (e) {}
+  }
+  // Die aus der Selbsteinschätzung am schwächsten bewertete Kategorie — hat Vorrang vor der
+  // automatisch aus dem Spielverhalten erkannten Schwäche, weil die Person das aktiv selbst
+  // angegeben hat.
+  function selfAssessedWeakCategory() {
+    const profile = getLearningProfile();
+    const weakOnes = Object.entries(profile).filter(([, r]) => r === "schwach");
+    if (!weakOnes.length) return null;
+    const dayIdx = dayOfYearIndex(new Date());
+    const [id] = weakOnes[dayIdx % weakOnes.length]; // wechselt fair zwischen mehreren Schwächen
+    const cat = ExerciseData.getCategory(id);
+    return cat ? { id, label: cat.title, kind: "self-assessed" } : null;
+  }
   function renderSettings() {
     const area = document.getElementById("settingsArea");
     if (!area) return;
@@ -198,6 +218,22 @@
     if (!profile) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
     area.innerHTML = `
       <p class="empty-note">Hier stellst du ein, wie dich die Seite beim Lernen unterstützt und wie Benachrichtigungen aussehen und klingen.</p>
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🧭 Dein Lernprofil</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Schätz dich selbst ein — bei „schwach" markierten Bereichen zieht die Tagesaufgabe im Kalender bevorzugt Fragen aus genau diesem Bereich.</p>
+        ${ExerciseData.CATEGORIES.map((cat) => {
+          const current = getLearningProfile()[cat.id] || "";
+          return `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+            <span style="flex:1; min-width:140px;">${cat.title}</span>
+            <div style="display:flex; gap:4px;">
+              ${[["stark", "💪 Stark"], ["mittel", "🙂 Mittel"], ["schwach", "😕 Schwach"]].map(([val, label]) => `
+                <button type="button" class="trophy-chip learning-rate-btn ${current === val ? "selected" : ""}" data-cat="${cat.id}" data-rating="${val}" style="font-size:0.72rem; padding:4px 8px;">${label}</button>
+              `).join("")}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
       <div class="question-card" style="margin-top:14px;">
         <h3>🔤 Betonungsmodus</h3>
         <p class="empty-note" style="margin-bottom:10px;">Zeigt bei allen geprüften Wörtern (Vokabeltrainer, Hobbys, Länder, Sprachen, Artikel-Wortschatz, kleine Wörter) die betonte Silbe unterstrichen an — wie im Duden.</p>
@@ -215,6 +251,10 @@
       <div class="question-card" style="margin-top:14px;">
         <h3>🎨 Benachrichtigungs-Einstellungen</h3>
         <p class="empty-note" style="margin-bottom:10px;">Töne und Farben ab einer bestimmten Punktzahl freigeschaltet — eine kleine Belohnung fürs Üben. Die gewählte Option ist jeweils hervorgehoben.</p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:12px;">
+          <input type="checkbox" id="settingsMuteCheck" ${isNotifyMuted() ? "checked" : ""} />
+          <span>🔕 Ton &amp; Blinken bei Benachrichtigungen stummschalten</span>
+        </label>
         <p style="font-weight:700; margin-bottom:6px;">Ton</p>
         <div class="trophy-case" style="margin-bottom:14px;">
           ${Object.entries(NOTIFY_SOUND_PRESETS).map(([key, p]) => {
@@ -235,8 +275,34 @@
           <input type="checkbox" id="tickerBlinkCheck" ${isTickerBlinkOn() ? "checked" : ""} ${profile.points >= 400 ? "" : "disabled"} />
           <span>Laufband beim Aktualisieren blinken lassen ${profile.points >= 400 ? "" : "🔒 400P"}</span>
         </label>
+        <hr style="border:none; border-top:1px solid rgba(0,0,0,0.08); margin:16px 0;" />
+        <p style="font-weight:700; margin-bottom:4px;">🎯 Pro Art einstellen (optional)</p>
+        <p class="empty-note" style="margin-bottom:10px;">Standardmäßig gilt überall der Ton/die Farbe von oben. Hier kannst du für einzelne Arten gezielt etwas anderes wählen — "Wie Standard" heißt: folgt weiterhin automatisch der Einstellung oben.</p>
+        ${Object.entries(NOTIFY_KINDS).map(([kind, meta]) => {
+          const typeSettings = getNotifyTypeSettings()[kind] || {};
+          return `
+          <div style="margin-bottom:14px;">
+            <p style="font-weight:700; font-size:0.85rem; margin-bottom:6px;">${meta.label}</p>
+            <label class="empty-note" style="display:block; margin-bottom:4px;">Ton</label>
+            <select class="challenge-select notify-kind-sound" data-kind="${kind}" style="margin-bottom:6px;">
+              <option value="">Wie Standard</option>
+              ${Object.entries(NOTIFY_SOUND_PRESETS).map(([key, p]) => `<option value="${key}" ${typeSettings.sound === key ? "selected" : ""} ${profile.points < p.unlockPoints ? "disabled" : ""}>${p.label}${profile.points < p.unlockPoints ? ` 🔒 ${p.unlockPoints}P` : ""}</option>`).join("")}
+            </select>
+            <label class="empty-note" style="display:block; margin-bottom:4px;">Farbe</label>
+            <select class="challenge-select notify-kind-color" data-kind="${kind}">
+              <option value="">Wie Standard</option>
+              ${Object.entries(NOTIFY_COLOR_PRESETS).map(([key, p]) => `<option value="${key}" ${typeSettings.color === key ? "selected" : ""} ${profile.points < p.unlockPoints ? "disabled" : ""}>${p.label}${profile.points < p.unlockPoints ? ` 🔒 ${p.unlockPoints}P` : ""}</option>`).join("")}
+            </select>
+          </div>`;
+        }).join("")}
       </div>
     `;
+    area.querySelectorAll(".learning-rate-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setLearningRating(btn.dataset.cat, btn.dataset.rating);
+        renderSettings();
+      });
+    });
     document.getElementById("settingsStressCheck").addEventListener("change", (e) => {
       setStressMode(e.target.checked);
       if (document.getElementById("vocabArea")?.innerHTML) renderVocab();
@@ -252,6 +318,13 @@
         if (isStressModeOn()) applyStressEverywhere(true); // sofort neu anwenden
       });
     });
+    const muteCheck = document.getElementById("settingsMuteCheck");
+    if (muteCheck) {
+      muteCheck.addEventListener("change", () => {
+        setNotifyMuted(muteCheck.checked);
+        if (loginBtn) loginBtn.classList.toggle("notify-ring", false);
+      });
+    }
     area.querySelectorAll("[data-sound-key]").forEach((btn) => {
       btn.addEventListener("click", () => {
         setNotifySoundKey(btn.dataset.soundKey);
@@ -267,6 +340,12 @@
     });
     const tickerBlinkCheck = document.getElementById("tickerBlinkCheck");
     if (tickerBlinkCheck) tickerBlinkCheck.addEventListener("change", () => setTickerBlink(tickerBlinkCheck.checked));
+    area.querySelectorAll(".notify-kind-sound").forEach((sel) => {
+      sel.addEventListener("change", () => setNotifyTypeSetting(sel.dataset.kind, "sound", sel.value));
+    });
+    area.querySelectorAll(".notify-kind-color").forEach((sel) => {
+      sel.addEventListener("change", () => setNotifyTypeSetting(sel.dataset.kind, "color", sel.value));
+    });
   }
 
   function renderDesign() {
@@ -542,7 +621,9 @@
     return task;
   }
   function pickDailyTaskFresh() {
-    const focus = analyzeFocusCategory();
+    // Selbsteinschätzung hat Vorrang vor der automatisch aus dem Spielverhalten erkannten
+    // Schwäche — die Person hat das aktiv selbst angegeben, das ist die klarste Absicht.
+    const focus = selfAssessedWeakCategory() || analyzeFocusCategory();
     const dayIdx = dayOfYearIndex(new Date());
     // Echte Personalisierung: gibt es einen erkannten Übungs-Schwerpunkt UND liefert dessen
     // Kategorie eine normale Fragen-Bank, wird die Tagesaufgabe direkt daraus gezogen — man übt
@@ -709,7 +790,7 @@
     back.innerHTML = `
       ${specialDayHtml}
       <p class="cal-tip-title">🎯 Tagesaufgabe</p>
-      ${cwCalendarTask.focus ? `<p class="empty-note" style="margin:-4px 0 8px;">${cwCalendarTask.focus.kind === "weak" ? `💪 Bei „${cwCalendarTask.focus.label}" liegt dein Schnitt bei ${cwCalendarTask.focus.percent}% — hier eine Frage, um genau das zu festigen!` : `🔎 Du übst gerade viel „${cwCalendarTask.focus.label}" (${cwCalendarTask.focus.percent}% deiner letzten Runden)${cwCalendarTask.isPersonalized ? " — hier eine passende Frage dazu!" : ""}`}</p>` : ""}
+      ${cwCalendarTask.focus ? `<p class="empty-note" style="margin:-4px 0 8px;">${cwCalendarTask.focus.kind === "self-assessed" ? `🧭 Du hast „${cwCalendarTask.focus.label}" selbst als Schwäche markiert — hier eine Frage, um genau daran zu arbeiten!` : cwCalendarTask.focus.kind === "weak" ? `💪 Bei „${cwCalendarTask.focus.label}" liegt dein Schnitt bei ${cwCalendarTask.focus.percent}% — hier eine Frage, um genau das zu festigen!` : `🔎 Du übst gerade viel „${cwCalendarTask.focus.label}" (${cwCalendarTask.focus.percent}% deiner letzten Runden)${cwCalendarTask.isPersonalized ? " — hier eine passende Frage dazu!" : ""}`}</p>` : ""}
       <p class="cal-tip-text">${questionText}</p>
       <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:6px;" id="calTaskOptions">
         ${cwCalendarTask.options.map((opt, i) => `<button type="button" class="btn btn-ghost" data-task-answer="${i}" style="text-align:left;">${opt}</button>`).join("")}
@@ -838,6 +919,27 @@
     }, 50);
   }
   updateCalendarWidget();
+  // Banner auf der Startseite mit dem heutigen Geschichts-Eintrag füllen (falls vorhanden) und
+  // per Klick direkt zur Geschichte-Sektion springen lassen.
+  (function initHistoryBanner() {
+    const btn = document.getElementById("historyBannerBtn");
+    const sub = document.getElementById("historyBannerSub");
+    if (!btn || !sub) return;
+    const now = new Date();
+    const md = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const entry = ExerciseData.germanHistoryForToday(md);
+    if (entry) {
+      const plain = entry.levels.B1.replace(/<[^>]+>/g, "");
+      sub.textContent = plain.length > 70 ? plain.slice(0, 68) + "…" : plain;
+    }
+    btn.addEventListener("click", () => {
+      document.querySelector('[data-target="view-knowledge"]').click();
+      setTimeout(() => {
+        document.querySelector('[data-sub="sub-kompass"]')?.click();
+        document.getElementById("kompass-geschichte")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    });
+  })();
   setInterval(updateCalendarWidget, 60000);
 
   const STRESS_EXCLUDABLE_SECTIONS = [
@@ -1192,6 +1294,34 @@
     const preset = NOTIFY_COLOR_PRESETS[getNotifyColorKey()] || NOTIFY_COLOR_PRESETS.coral;
     document.documentElement.style.setProperty("--notify-color", preset.hex);
   }
+  // Pro-Art-Einstellungen: Ton/Farbe können für jede Benachrichtigungsart einzeln überschrieben
+  // werden. Ist für eine Art nichts eingestellt, gilt automatisch der globale Standard oben —
+  // so hat man die Freiheit, EINEN Ton/EINE Farbe für alles zu nehmen, ODER gezielt einzelne
+  // Arten individuell einzustellen.
+  const NOTIFY_KINDS = {
+    mail: { label: "✉️ Neue Nachricht" },
+    friendrequest: { label: "👥 Freundschaftsanfrage" },
+    challenge: { label: "🎮 Herausforderung" },
+    other: { label: "🔔 Sonstiges (Freischaltung, Like, Kommentar)" },
+  };
+  function getNotifyTypeSettings() {
+    try { return JSON.parse(localStorage.getItem("dma_notify_type_settings") || "{}"); } catch (e) { return {}; }
+  }
+  function setNotifyTypeSetting(kind, field, value) {
+    const all = getNotifyTypeSettings();
+    if (!all[kind]) all[kind] = {};
+    if (value === "") delete all[kind][field]; else all[kind][field] = value;
+    try { localStorage.setItem("dma_notify_type_settings", JSON.stringify(all)); } catch (e) {}
+  }
+  function resolveNotifySound(kind) {
+    const override = getNotifyTypeSettings()[kind]?.sound;
+    return override || getNotifySoundKey();
+  }
+  function resolveNotifyColorHex(kind) {
+    const override = getNotifyTypeSettings()[kind]?.color;
+    const key = override || getNotifyColorKey();
+    return (NOTIFY_COLOR_PRESETS[key] || NOTIFY_COLOR_PRESETS.coral).hex;
+  }
 
   // Schriftarten-Shop für Überschriften (Logo, Profil-Name, Kategorien …) — überschreibt einfach
   // dieselbe CSS-Variable, die schon überall für Überschriften genutzt wird.
@@ -1230,11 +1360,14 @@
     activateTab("view-profile");
     document.querySelector('#profileSubnav [data-sub="sub-friends"]').click();
   }
-  function updateNotifyBadge(count) {
+  function updateNotifyBadge(count, friendsCount) {
     const badge = document.getElementById("loginBtnBadge");
     if (badge) badge.style.display = count > 0 ? "block" : "none";
+    // Der "Freunde"-Reiter darf NUR auf Freundschaftsanfragen und Herausforderungen reagieren —
+    // vorher nutzte er dieselbe Gesamtzahl wie die Haupt-Pille, wodurch er fälschlich auch bei
+    // einer reinen Nachrichten-Benachrichtigung blinkte, obwohl unter "Freunde" gar nichts war.
     const tabBadge = document.getElementById("friendsTabBadge");
-    if (tabBadge) tabBadge.style.display = count > 0 ? "block" : "none";
+    if (tabBadge) tabBadge.style.display = friendsCount > 0 ? "block" : "none";
     if (loginBtn) loginBtn.classList.toggle("notify-ring", count > 0 && !isNotifyMuted());
   }
   let lastFriendReqCount = 0;
@@ -1249,13 +1382,14 @@
     if (inboxBadge) inboxBadge.style.display = unreadMsgCount > 0 ? "block" : "none";
     const challengeCount = challenges.incoming.length;
     let hasNew = false;
+    let newestKind = null; // welche Art zuletzt neu dazukam -> bestimmt Ton/Farbe dieses Durchlaufs
     // Neue Nachrichten im Postfach sollen genauso wie Freundschaftsanfragen/Duelle/Benachrichtigungen
     // das Profil-Symbol blinken lassen und einen Ton abspielen — vorher landeten sie nur als
     // stiller Punkt auf dem Postfach-Reiter, ohne echte Benachrichtigung auszulösen.
     if (unreadMsgCount > lastUnreadMsgCount && !toastedNotificationIds.has("msgcount-" + unreadMsgCount)) {
       toastedNotificationIds.add("msgcount-" + unreadMsgCount);
       showToast("✉️ Neue Nachricht im Postfach", () => document.querySelector('[data-target="view-profile"]').click());
-      hasNew = true;
+      hasNew = true; newestKind = "mail";
     }
     lastUnreadMsgCount = unreadMsgCount;
     // Freundschaftsanfragen, Duell-Einladungen und persönliche Benachrichtigungen werden über ihre
@@ -1265,30 +1399,31 @@
       if (!toastedNotificationIds.has("freq-" + r.id)) {
         toastedNotificationIds.add("freq-" + r.id);
         showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox);
-        hasNew = true;
+        hasNew = true; newestKind = "friendrequest";
       }
     });
     challenges.incoming.forEach((c) => {
       if (!toastedNotificationIds.has("chal-" + c.id)) {
         toastedNotificationIds.add("chal-" + c.id);
         showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox);
-        hasNew = true;
+        hasNew = true; newestKind = "challenge";
       }
     });
     notifications.forEach((n) => {
       if (!toastedNotificationIds.has(n.id)) {
         toastedNotificationIds.add(n.id);
         showToast(n.message, () => document.querySelector('[data-target="view-profile"]').click());
-        hasNew = true;
+        hasNew = true; newestKind = "other";
       }
     });
     lastFriendReqCount = requests.length;
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
     const totalCount = requests.length + challengeCount + notifications.length + unreadMsgCount;
-    updateNotifyBadge(totalCount);
+    updateNotifyBadge(totalCount, requests.length + challengeCount);
     if (hasNew) {
-      playNotifySound();
+      if (newestKind) document.documentElement.style.setProperty("--notify-color", resolveNotifyColorHex(newestKind));
+      playNotifySound(newestKind ? resolveNotifySound(newestKind) : undefined);
       startNotifyReminder();
     }
   }
@@ -1351,6 +1486,58 @@
   let orderMode = "mixed"; // 'mixed' | 'sequential'
 
   let selectedChallengeFriendIds = new Set();
+  // Wiederverwendbare Einladungs-Leiste für die neueren Spiele (Wortbaustelle, Buchstabensalat,
+  // Kreuzworträtsel, Betonungs-Trainer) — dasselbe Muster wie bei den klassischen Übungen: auch
+  // offline Freunde einladbar (spielen die Runde nach, sobald sie sich einloggen), mehrere
+  // gleichzeitig auswählbar.
+  const miniChallengeSelections = {}; // { gameKey: Set<friendId> }
+  async function renderMiniChallengeBar(gameKey, categoryId) {
+    if (!miniChallengeSelections[gameKey]) miniChallengeSelections[gameKey] = new Set();
+    if (!Backend.currentUser()) return "";
+    const friends = await Backend.getFriends();
+    if (!friends.length) return "";
+    const selected = miniChallengeSelections[gameKey];
+    const onlineFriends = friends.filter((f) => f.online);
+    const offlineFriends = friends.filter((f) => !f.online);
+    return `
+      <div class="setup-bar" style="margin-top:10px; flex-direction:column; align-items:stretch;">
+        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
+        <div class="challenge-friend-list">
+          ${onlineFriends.map((f) => `
+            <button type="button" class="mini-challenge-friend ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}">
+              <span class="online-dot"></span>${f.name}
+            </button>`).join("")}
+          ${offlineFriends.map((f) => `
+            <button type="button" class="mini-challenge-friend offline ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}" title="Spielt die Runde, sobald sie sich wieder einloggen">
+              ${f.name} <span class="empty-note">(offline)</span>
+            </button>`).join("")}
+        </div>
+        ${selected.size ? `<button type="button" class="btn btn-coffee" id="miniChallengeSendBtn" data-mini-game="${gameKey}" data-mini-cat="${categoryId}" style="margin-top:8px;">🎮 ${selected.size} ${selected.size === 1 ? "Person" : "Personen"} herausfordern</button>` : ""}
+      </div>`;
+  }
+  function wireMiniChallengeBar(container, gameKey, onRerender) {
+    container.querySelectorAll(`[data-mini-game="${gameKey}"].mini-challenge-friend`).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const set = miniChallengeSelections[gameKey];
+        const id = btn.dataset.miniFriend;
+        if (set.has(id)) set.delete(id); else set.add(id);
+        onRerender();
+      });
+    });
+    const sendBtn = container.querySelector(`[data-mini-game="${gameKey}"]#miniChallengeSendBtn`);
+    if (sendBtn) {
+      sendBtn.addEventListener("click", async () => {
+        const ids = [...miniChallengeSelections[gameKey]];
+        const catId = sendBtn.dataset.miniCat;
+        sendBtn.disabled = true; sendBtn.textContent = "Sende…";
+        for (const fid of ids) {
+          try { await Backend.createChallenge(fid, [catId]); } catch (e) { console.warn(e); }
+        }
+        miniChallengeSelections[gameKey] = new Set();
+        onRerender();
+      });
+    }
+  }
   let selectedQuizTopic = "";
   let selectedWortschatzTopic = "";
 
@@ -2258,8 +2445,13 @@
           <button type="button" class="btn btn-ghost" id="wbResetBtn">↺ Zurücksetzen</button>
           <button type="button" class="btn btn-ghost" id="wbSkipBtn">Überspringen ▶</button>
         </div>
+        <div id="wbChallengeBar"></div>
       </div>
     `;
+    renderMiniChallengeBar("wortbaustelle", "wortbaustelle").then((html) => {
+      const el = document.getElementById("wbChallengeBar");
+      if (el) { el.innerHTML = html; wireMiniChallengeBar(area, "wortbaustelle", renderWordbuild); }
+    });
     area.querySelectorAll("[data-letter-id]").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (btn.disabled) return;
@@ -2440,8 +2632,13 @@
             <input type="checkbox" id="wsHintToggle" ${isWsHintModeOn() ? "checked" : ""} />
             <span>💡 Anfangsbuchstaben dauerhaft anzeigen</span>
           </label>`}
+        <div id="wsChallengeBar"></div>
       </div>
     `;
+    renderMiniChallengeBar("buchstabensalat", "buchstabensalat").then((html) => {
+      const el = document.getElementById("wsChallengeBar");
+      if (el) { el.innerHTML = html; wireMiniChallengeBar(area, "buchstabensalat", renderWordSearch); }
+    });
     area.querySelectorAll(".ws-cell").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (s.pendingArticleFor) return;
@@ -5948,7 +6145,7 @@
 
       ${incoming.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>📥 Freundschaftsanfragen</h3>
-        ${incoming.map((r) => `<div class="breakdown-row"><span>${r.name}</span><button type="button" class="btn btn-coffee" data-accept="${r.id}">Annehmen</button></div>`).join("")}
+        ${incoming.map((r) => `<div class="breakdown-row"><span>${r.name}</span><div style="display:flex; gap:6px;"><button type="button" class="btn btn-coffee" data-accept="${r.id}">Annehmen</button><button type="button" class="btn btn-ghost" data-decline="${r.id}">Ablehnen</button></div></div>`).join("")}
       </div>` : ""}
 
       ${incomingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
@@ -6022,6 +6219,9 @@
 
     area.querySelectorAll("[data-accept]").forEach((btn) => {
       btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); checkNotifications(); renderFriends(); });
+    });
+    area.querySelectorAll("[data-decline]").forEach((btn) => {
+      btn.addEventListener("click", async () => { await Backend.declineFriendRequest(btn.dataset.decline); checkNotifications(); renderFriends(); });
     });
 
     area.querySelectorAll("[data-view-friend-profile]").forEach((btn) => {

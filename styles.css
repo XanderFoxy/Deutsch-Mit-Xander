@@ -529,6 +529,36 @@ button:focus-visible,
   margin-top: var(--space-2);
 }
 
+/* Auffälliges Banner zur Geschichte-Sektion — bewusst kräftig, damit es nicht in der Seite
+   untergeht (war vorher zu unscheinbar, nur versteckt im "Wissen"-Bereich). */
+.history-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--amber-400), var(--coral-400));
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(184, 74, 41, 0.35);
+  text-align: left;
+  animation: historyBannerPulse 1.6s ease-in-out 3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .history-banner { animation: none; }
+}
+@keyframes historyBannerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+.history-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+.history-banner-text { flex: 1; min-width: 0; }
+.history-banner-title { display: block; font-family: var(--font-display); font-weight: 800; font-size: 1.02rem; color: #fff; }
+.history-banner-sub { display: block; font-size: 0.8rem; color: rgba(255,255,255,0.9); margin-top: 2px; }
+.history-banner-arrow { font-size: 1.4rem; color: #fff; flex-shrink: 0; }
+
 .about-top {
   display: flex;
   align-items: flex-start;
