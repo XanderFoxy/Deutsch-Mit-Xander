@@ -417,10 +417,10 @@
 .breakdown-row > span:first-child { flex-shrink: 0; }
 .breakdown-row > span:last-child { text-align: right; overflow-wrap: break-word; word-break: normal; min-width: 0; }
 .zodiac-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 0.78rem; color: var(--cream-200);
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 0.74rem; color: var(--cream-200);
   background: rgba(0,0,0,0.06);
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
 }
 .zodiac-badge svg { color: var(--amber-400); flex-shrink: 0; }
@@ -976,6 +976,8 @@
   font-family: var(--font-display);
 }
 .ws-selected { background: var(--amber-400); border-color: var(--amber-400); }
+.ws-hint { background: var(--amber-400) !important; animation: wsHintPulse 0.7s ease-in-out infinite; }
+@keyframes wsHintPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(242,184,75,0.7); } 50% { box-shadow: 0 0 0 6px rgba(242,184,75,0); } }
 .ws-found { background: var(--teal-400); color: #072620; }
 .trophy-chip-locked { opacity: 0.5; letter-spacing: 2px; }
 .cw-grid { display: grid; gap: 2px; margin: 0 auto 16px; }
@@ -1112,7 +1114,7 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 4px 6px;
 }
 .modal-friends-list {
   flex-direction: column;
@@ -1247,6 +1249,7 @@
   perspective: 1400px;
   z-index: 501;
 }
+.calendar-modal-page.torn { height: min(520px, 80vh); }
 .cal-face {
   position: absolute; inset: 0;
   border-radius: 12px;
@@ -1261,6 +1264,7 @@
      immer einen hellen Hintergrund, egal ob gerade ein helles oder dunkles Design aktiv ist. */
   color: #241505;
 }
+.cal-back { overflow-y: auto; justify-content: flex-start; }
 .cal-front {
   background: #fff;
   cursor: pointer;

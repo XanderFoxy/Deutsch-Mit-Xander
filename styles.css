@@ -145,7 +145,27 @@ button:focus-visible,
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Auf schmalen Bildschirmen (viele Android-Handys) reicht der Platz sonst nicht für Logo,
+   Namen UND alle Kopfzeilen-Buttons gleichzeitig — hier wird alles kompakter, damit die
+   Kaffeetasse ganz rechts nie verschwindet/abgeschnitten wird. */
+@media (max-width: 400px) {
+  .site-header { gap: var(--space-2); padding: 0 var(--space-3); }
+  .brand-mark { width: 30px; height: 30px; font-size: 14px; }
+  .brand-name { font-size: 0.92rem; }
+  .header-actions { gap: 6px; }
+}
+@media (max-width: 340px) {
+  .brand-name { display: none; } /* bei sehr schmalen Displays: nur noch das Logo-Icon zeigen */
 }
 
 .brand-mark {
@@ -302,6 +322,7 @@ button:focus-visible,
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .btn {

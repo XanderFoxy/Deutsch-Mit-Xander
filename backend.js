@@ -310,6 +310,45 @@ const Backend = (function () {
       .slice(0, 20);
   }
 
+  // Gesamt-Bestenliste — einfach nach Lebenszeit-Punktestand aus den Profilen sortiert.
+  async function getRankingAllTime() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("name,points").order("points", { ascending: false }).limit(20);
+        if (!error && data) return data;
+      } catch (e) { console.warn("Gesamt-Ranking nicht verfügbar:", e); }
+      return [];
+    }
+    return Object.values(demo.users || {}).map((u) => ({ name: u.profile.name, points: u.profile.points }))
+      .concat(demo.profile ? [{ name: demo.profile.name, points: demo.profile.points }] : [])
+      .sort((a, b) => b.points - a.points).slice(0, 20);
+  }
+
+  // Echte Tages-Rangliste — nur die HEUTE tatsächlich verdienten Punkte zählen (nicht der
+  // Lebenszeit-Gesamtstand), damit auch neue Spieler eine faire Chance haben, andere an einem
+  // einzelnen Tag einzuholen.
+  async function getRankingToday() {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    if (client) {
+      try {
+        const { data, error } = await client.from("results").select("user_id,points,bonus").gte("played_at", start.toISOString());
+        if (error || !data) return [];
+        const totals = {};
+        data.forEach((r) => { totals[r.user_id] = (totals[r.user_id] || 0) + Math.round((r.points || 0) + (r.bonus || 0)); });
+        const ids = Object.keys(totals);
+        if (!ids.length) return [];
+        const { data: profiles } = await client.from("profiles").select("id,name").in("id", ids);
+        return ids.map((id) => ({ name: (profiles || []).find((p) => p.id === id)?.name || "?", points: totals[id] }))
+          .sort((a, b) => b.points - a.points).slice(0, 20);
+      } catch (e) { console.warn("Tages-Ranking nicht verfügbar:", e); return []; }
+    }
+    if (!demo.profile) return [];
+    const todaysPoints = (demo.profile.history || [])
+      .filter((h) => new Date(h.playedAt) >= start)
+      .reduce((sum, h) => sum + Math.round((h.points || 0) + (h.bonus || 0)), 0);
+    return todaysPoints > 0 ? [{ name: demo.profile.name, points: todaysPoints }] : [];
+  }
+
   /* ================= GÄSTEBUCH ================= */
 
   async function getGuestbook() {
@@ -1366,6 +1405,8 @@ const Backend = (function () {
     refreshCurrentProfile,
     saveResult,
     getRanking,
+    getRankingAllTime,
+    getRankingToday,
     getGuestbook,
     addGuestbookEntry,
     unlockPremiumDemo,

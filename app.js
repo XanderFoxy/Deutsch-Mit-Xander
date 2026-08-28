@@ -205,6 +205,12 @@
           <input type="checkbox" id="settingsStressCheck" ${isStressModeOn() ? "checked" : ""} />
           <span>Betonung überall anzeigen, wo geprüfte Daten vorliegen</span>
         </label>
+        <p style="font-weight:700; margin:14px 0 6px;">Bereiche ausnehmen (dort keine Betonung zeigen)</p>
+        ${STRESS_EXCLUDABLE_SECTIONS.map((sec) => `
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:4px;">
+            <input type="checkbox" class="stress-exclude-check" data-section-id="${sec.id}" ${getStressExcludedSections().includes(sec.id) ? "checked" : ""} />
+            <span>${sec.label}</span>
+          </label>`).join("")}
       </div>
       <div class="question-card" style="margin-top:14px;">
         <h3>🎨 Benachrichtigungs-Einstellungen</h3>
@@ -236,6 +242,15 @@
       if (document.getElementById("vocabArea")?.innerHTML) renderVocab();
       if (document.getElementById("accountArea")?.innerHTML) renderAccount();
       renderKompass();
+    });
+    area.querySelectorAll(".stress-exclude-check").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const excluded = new Set(getStressExcludedSections());
+        if (cb.checked) excluded.add(cb.dataset.sectionId);
+        else excluded.delete(cb.dataset.sectionId);
+        setStressExcludedSections([...excluded]);
+        if (isStressModeOn()) applyStressEverywhere(true); // sofort neu anwenden
+      });
     });
     area.querySelectorAll("[data-sound-key]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -420,6 +435,17 @@
     if (!z) return "";
     return `<span class="zodiac-badge" title="${z.name}"><svg viewBox="0 0 24 24" width="16" height="16">${z.svg}</svg> ${z.name}</span>`;
   }
+  // Geschlechtssymbol — klassische astronomische Zeichen, optional vom Profil-Inhaber gewählt.
+  const GENDER_SYMBOLS = {
+    maennlich: { label: "männlich", svg: `<circle cx="10" cy="14" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M14.2 9.8 L20 4 M14 4 L20 4 L20 10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    weiblich: { label: "weiblich", svg: `<circle cx="12" cy="9" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 15 L12 22 M8.5 19 L15.5 19" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    divers: { label: "divers", svg: `<circle cx="12" cy="10" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 16 L12 22 M9 19 L15 19 M16.2 5.8 L21 1 M16 1 L21 1 L21 6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+  };
+  function genderBadgeHtml(key) {
+    const g = GENDER_SYMBOLS[key];
+    if (!g) return "";
+    return `<span class="zodiac-badge" title="${g.label}"><svg viewBox="0 0 24 24" width="16" height="16">${g.svg}</svg> ${g.label}</span>`;
+  }
 
   function updateCalendarWidget() {
     const now = new Date();
@@ -427,6 +453,72 @@
     const miniDay = document.getElementById("calMiniDay");
     if (miniMonth) miniMonth.textContent = MONTH_NAMES_SHORT[now.getMonth()];
     if (miniDay) miniDay.textContent = now.getDate();
+  }
+  // Echte Tagesaufgabe fürs Kalenderblatt — nutzt dieselbe geprüfte Wortliste, gibt Bonuspunkte
+  // bei richtiger Antwort (getrennt vom reinen Info-Tipp).
+  // Nutzungsverhalten-Auswertung: welche Kategorie spielt die Person am häufigsten? Grundlage
+  // sind nur ihre eigenen, tatsächlich gespielten Kategorien (profile.history) — keine Vermutung
+  // über die Person, nur eine schlichte Häufigkeitszählung der von ihr selbst gewählten Übungen.
+  function analyzeFocusCategory() {
+    const profile = Backend.currentProfile();
+    if (!profile || !profile.history || profile.history.length < 3) return null;
+    const stats = {}; // { count, totalPercent }
+    profile.history.forEach((h) => {
+      (h.categories || []).forEach((catId) => {
+        if (!stats[catId]) stats[catId] = { count: 0, totalPercent: 0 };
+        stats[catId].count += 1;
+        stats[catId].totalPercent += (h.percent || 0);
+      });
+    });
+    const total = Object.values(stats).reduce((s, v) => s + v.count, 0);
+    if (!total) return null;
+    // Zwei mögliche Schwerpunkte: entweder eine Kategorie, in der die Ergebnisse noch schwächer
+    // sind (echte Unterstützung, wo sie gebraucht wird) — das hat Vorrang, weil es am meisten
+    // hilft — oder, falls die Ergebnisse überall ähnlich gut sind, einfach die meistgespielte
+    // Kategorie (reines Interesse).
+    const weakCandidates = Object.entries(stats)
+      .filter(([, s]) => s.count >= 2)
+      .map(([id, s]) => ({ id, avgPercent: Math.round(s.totalPercent / s.count), count: s.count }))
+      .filter((c) => c.avgPercent < 60)
+      .sort((a, b) => a.avgPercent - b.avgPercent);
+    const labelFor = (id) => {
+      const cat = ExerciseData.getCategory(id);
+      return cat ? cat.title : { wortbaustelle: "Wortbaustelle", buchstabensalat: "Buchstabensalat", kreuzwortraetsel: "Kreuzworträtsel" }[id] || id;
+    };
+    if (weakCandidates.length) {
+      const w = weakCandidates[0];
+      return { id: w.id, label: labelFor(w.id), percent: w.avgPercent, kind: "weak" };
+    }
+    const [topId, topStat] = Object.entries(stats).sort((a, b) => b[1].count - a[1].count)[0];
+    const playPercent = Math.round((topStat.count / total) * 100);
+    if (playPercent < 25) return null; // kein klarer Schwerpunkt erkennbar
+    return { id: topId, label: labelFor(topId), percent: playPercent, kind: "frequent" };
+  }
+  function pickDailyTask() {
+    const focus = analyzeFocusCategory();
+    // Echte Personalisierung: gibt es einen erkannten Übungs-Schwerpunkt UND liefert dessen
+    // Kategorie eine normale Fragen-Bank, wird die Tagesaufgabe direkt daraus gezogen — man übt
+    // dann wirklich genau das, was man ohnehin am meisten spielt.
+    if (focus) {
+      const cat = ExerciseData.getCategory(focus.id);
+      if (cat && typeof cat.getBank === "function") {
+        try {
+          const bank = cat.getBank();
+          if (bank && bank.length) {
+            const q = bank[Math.floor(Math.random() * bank.length)];
+            if (q.options && q.correct && q.correct.length === 1) {
+              return { word: q.prompt.replace("___", "…"), options: q.options, correctIdx: q.correct[0], focus, isPersonalized: true };
+            }
+          }
+        } catch (e) { /* falls eine Kategorie nicht kompatibel ist, einfach auf Standard zurückfallen */ }
+      }
+    }
+    const entries = Object.entries(ExerciseData.WORD_MEANINGS);
+    const [word, meaning] = entries[Math.floor(Math.random() * entries.length)];
+    const wrongPool = entries.filter(([w]) => w !== word).map(([, m]) => m);
+    const wrong = wrongPool[Math.floor(Math.random() * wrongPool.length)];
+    const options = Core.shuffle([meaning, wrong]);
+    return { word, options, correctIdx: options.indexOf(meaning), focus };
   }
   function pickDailyTip() {
     const tips = ExerciseData.DAILY_TIPS;
@@ -437,9 +529,89 @@
     document.getElementById("calModalMonth").textContent = MONTH_NAMES_LONG[now.getMonth()];
     document.getElementById("calModalDay").textContent = now.getDate();
     document.getElementById("calModalWeekday").textContent = WEEKDAY_NAMES[now.getDay()];
-    document.getElementById("calTipText").innerHTML = pickDailyTip().text;
+    cwCalendarTask = pickDailyTask();
+    renderCalendarBack();
     document.getElementById("calendarModalPage").classList.remove("torn");
     document.getElementById("calendarModalOverlay").style.display = "flex";
+  }
+  let cwCalendarTask = null;
+  function renderCalendarBack() {
+    const back = document.querySelector(".cal-back");
+    if (!back) return;
+    const questionText = cwCalendarTask.isPersonalized ? cwCalendarTask.word : `Was bedeutet <strong>„${cwCalendarTask.word}"</strong>?`;
+    back.innerHTML = `
+      <p class="cal-tip-title">🎯 Tagesaufgabe</p>
+      ${cwCalendarTask.focus ? `<p class="empty-note" style="margin:-4px 0 8px;">${cwCalendarTask.focus.kind === "weak" ? `💪 Bei „${cwCalendarTask.focus.label}" liegt dein Schnitt bei ${cwCalendarTask.focus.percent}% — hier eine Frage, um genau das zu festigen!` : `🔎 Du übst gerade viel „${cwCalendarTask.focus.label}" (${cwCalendarTask.focus.percent}% deiner letzten Runden)${cwCalendarTask.isPersonalized ? " — hier eine passende Frage dazu!" : ""}`}</p>` : ""}
+      <p class="cal-tip-text">${questionText}</p>
+      <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:6px;" id="calTaskOptions">
+        ${cwCalendarTask.options.map((opt, i) => `<button type="button" class="btn btn-ghost" data-task-answer="${i}" style="text-align:left;">${opt}</button>`).join("")}
+      </div>
+      <p class="empty-note" id="calTaskFeedback" style="margin-top:8px;"></p>
+      <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
+      <p class="cal-tip-title" style="font-size:0.85rem;">💡 Wusstest du außerdem …</p>
+      <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${pickDailyTip().text}</p>
+      <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
+    `;
+    back.querySelectorAll("[data-task-answer]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.taskAnswer);
+        const fb = document.getElementById("calTaskFeedback");
+        back.querySelectorAll("[data-task-answer]").forEach((b) => { b.disabled = true; });
+        if (idx === cwCalendarTask.correctIdx) {
+          btn.style.background = "#4FA88E"; btn.style.color = "#fff";
+          Core.sound.fanfare();
+          fb.textContent = "🎉 Richtig! Bonuspunkt fürs Lösen der Tagesaufgabe.";
+          claimDailyTaskPoints();
+        } else {
+          btn.style.background = "#E85F6F"; btn.style.color = "#fff";
+          Core.sound.wrong();
+          fb.textContent = "Nicht ganz — aber macht nichts, morgen kommt eine neue Aufgabe!";
+        }
+      });
+    });
+    document.getElementById("calAnotherBtn").addEventListener("click", () => {
+      document.getElementById("calTipText").innerHTML = pickDailyTip().text;
+    });
+  }
+  function claimDailyTaskPoints() {
+    if (!Backend.currentUser()) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    let lastClaim = null;
+    try { lastClaim = localStorage.getItem("dma_calendar_task_claimed"); } catch (e) {}
+    if (lastClaim === todayKey) return;
+    try { localStorage.setItem("dma_calendar_task_claimed", todayKey); } catch (e) {}
+    Backend.saveResult({
+      categories: ["tageskalender"], points: 0, bonus: 2, percent: 100,
+      character: "Tagesaufgabe gelöst", badges: [], playedAt: new Date().toISOString(),
+    });
+  }
+  // Login-Streak: einmal pro Tag eine kleine, zufällige Punkte-Überraschung fürs Vorbeischauen —
+  // muss keine Aufgabe sein, allein das Einloggen wird schon leicht belohnt, wie bei einem
+  // Adventskalender. Ab 7 Tagen am Stück gibt's zusätzlich eine Trophäe.
+  function claimLoginStreak() {
+    if (!Backend.currentUser()) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    let lastLogin = null, streak = 0;
+    try {
+      lastLogin = localStorage.getItem("dma_last_login_day");
+      streak = Number(localStorage.getItem("dma_login_streak") || "0");
+    } catch (e) {}
+    if (lastLogin === todayKey) return; // heute schon verbucht
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    streak = lastLogin === yesterday ? streak + 1 : 1; // Kette gerissen -> von vorn
+    try {
+      localStorage.setItem("dma_last_login_day", todayKey);
+      localStorage.setItem("dma_login_streak", String(streak));
+    } catch (e) {}
+    const bonus = 1 + Math.floor(Math.random() * 3); // jeden Tag 1-3 Punkte, überraschend
+    Backend.saveResult({
+      categories: ["login"], points: bonus, bonus: 0, percent: 100,
+      character: "Tägliches Vorbeischauen", badges: [], playedAt: new Date().toISOString(),
+    });
+    if (streak >= 7) {
+      const gotTrophy = Backend.addTrophy("Heimkehrer:in – Familie · 7 Tage am Stück dabei");
+      if (gotTrophy) Backend.addActivity(`${Backend.currentProfile()?.name || "Jemand"} ist seit 7 Tagen am Stück dabei! 🏡`);
+    }
   }
   const calendarBtn = document.getElementById("calendarPageBtn");
   if (calendarBtn) calendarBtn.addEventListener("click", openCalendarModal);
@@ -469,13 +641,15 @@
       if (hint) hint.insertAdjacentHTML("afterend", '<p class="empty-note" style="margin:-6px 0 10px;">🎉 +1 Punkt fürs heutige Kalenderblatt!</p>');
     }, 50);
   }
-  const calAnotherBtn = document.getElementById("calAnotherBtn");
-  if (calAnotherBtn) calAnotherBtn.addEventListener("click", () => {
-    document.getElementById("calTipText").innerHTML = pickDailyTip().text;
-  });
   updateCalendarWidget();
   setInterval(updateCalendarWidget, 60000);
 
+  const STRESS_EXCLUDABLE_SECTIONS = [
+    { id: "view-about", label: "Über mich" },
+    { id: "view-learn", label: "Lernen" },
+    { id: "view-knowledge", label: "Wissen" },
+    { id: "view-profile", label: "Profil & Rang" },
+  ];
   // Betonungsmodus initial anwenden + Umschalter verdrahten
   setStressMode(isStressModeOn());
   const stressToggleBtn = document.getElementById("stressToggleBtn");
@@ -579,6 +753,8 @@
   function setStressMode(on) {
     try { localStorage.setItem("dma_stress_mode", on ? "1" : "0"); } catch (e) {}
     document.documentElement.classList.toggle("stress-mode-active", on);
+    applyStressEverywhere(on);
+    if (on) startStressObserver();
   }
   // Wandelt "FOTO-gra-FIE" in HTML mit unterstrichener betonter Silbe um.
   function stressHtml(sylString) {
@@ -595,6 +771,161 @@
   function displayWord(word, sylLookup) {
     if (isStressModeOn() && sylLookup && sylLookup[word]) return stressHtml(sylLookup[word]);
     return word;
+  }
+
+  /* ============================================================
+     BETONUNGSMODUS — REGELBASIERTE SILBENTRENNUNG FÜR DIE GANZE SEITE
+     ============================================================
+     Für die handgeprüften Wortlisten (Vokabeltrainer, Hobbys, Länder, Sprachen,
+     Artikel-Wortschatz) wird die Betonung oben über `stressHtml`/`displayWord` exakt gezeigt.
+     Für ALLE ANDEREN Wörter auf der Seite (Überschriften, Aufgabentitel, Fließtext) gibt es
+     keine handgeprüfte Datenbank — stattdessen wendet diese Funktion feste, dokumentierte
+     Betonungsregeln der deutschen Sprache an (nicht geraten, sondern regelbasiert):
+     1. Unbetonte Vorsilben (be-, ge-, er-, ver-, zer-, ent-, emp-, miss-) werden übersprungen,
+        die Betonung liegt auf der Silbe danach.
+     2. Bestimmte typische Fremdwort-Endungen (-tion, -tät, -ie, -ur, -ismus, -ieren, -age,
+        -ant, -ent, -esse) werden meist auf der letzten oder vorletzten Silbe betont.
+     3. Ansonsten gilt die Standard-Regel für deutsche Wörter: die erste (Stamm-)Silbe.
+     Das ist ein Regelwerk, kein Wörterbuch — bei seltenen Ausnahmen kann es abweichen, folgt
+     aber denselben Mustern, die auch im Duden für die überwiegende Mehrheit gelten. */
+  const UNSTRESSED_PREFIXES = ["be", "ge", "er", "ver", "zer", "ent", "emp", "miss"];
+  const STRESSED_END_SUFFIXES = ["tion", "tät", "ur", "ismus", "ieren", "age", "ant", "ent", "esse", "ell", "iv"];
+  function ruleSyllabify(word) {
+    // Bekannte unbetonte Vorsilben werden zuerst fest abgetrennt (das ist zuverlässiger als reine
+    // Lautsilbentrennung, weil be-/ge-/ver-/... im Deutschen immer eine eigene Silbe bilden).
+    const lower = word.toLowerCase();
+    for (const prefix of UNSTRESSED_PREFIXES) {
+      if (lower.startsWith(prefix) && word.length > prefix.length + 2) {
+        const rest = word.slice(prefix.length);
+        return [word.slice(0, prefix.length), ...rawSyllabify(rest)];
+      }
+    }
+    return rawSyllabify(word);
+  }
+  function rawSyllabify(w) {
+    // Grobe, aber praxistaugliche deutsche Silbentrennung: Vokalgruppen (inkl. Diphthonge)
+    // als Silbenkern, ein Konsonant dazwischen geht zur folgenden Silbe, mehrere Konsonanten
+    // werden bis auf den letzten der vorherigen Silbe zugeschlagen.
+    const nucleusPositions = [];
+    let i = 0;
+    while (i < w.length) {
+      const two = w.slice(i, i + 2).toLowerCase();
+      if (["au", "ei", "ey", "eu", "äu", "ie"].includes(two)) { nucleusPositions.push([i, i + 2]); i += 2; continue; }
+      if (/[aeiouyäöü]/i.test(w[i])) { nucleusPositions.push([i, i + 1]); i += 1; continue; }
+      i += 1;
+    }
+    if (nucleusPositions.length <= 1) return [w];
+    const syllables = [];
+    let start = 0;
+    for (let n = 0; n < nucleusPositions.length - 1; n++) {
+      const nucleusEnd = nucleusPositions[n][1];
+      const nextNucleusStart = nucleusPositions[n + 1][0];
+      const consonants = nextNucleusStart - nucleusEnd;
+      let splitAt;
+      if (consonants <= 1) splitAt = nucleusEnd;
+      else splitAt = nucleusEnd + (consonants - 1); // letzter Konsonant geht zur naechsten Silbe
+      syllables.push(w.slice(start, splitAt));
+      start = splitAt;
+    }
+    syllables.push(w.slice(start));
+    return syllables.filter((s) => s.length > 0);
+  }
+  function ruleStressIndex(word, syllables) {
+    const lower = word.toLowerCase();
+    if (syllables.length <= 1) return 0;
+    for (const prefix of UNSTRESSED_PREFIXES) {
+      if (lower.startsWith(prefix) && syllables[0].toLowerCase() === prefix) {
+        return 1; // Silbe nach der unbetonten Vorsilbe (durch ruleSyllabify fest abgetrennt)
+      }
+    }
+    for (const suf of STRESSED_END_SUFFIXES) {
+      if (lower.endsWith(suf)) return syllables.length - 1; // letzte Silbe
+    }
+    return 0; // Standard: erste (Stamm-)Silbe
+  }
+  function ruleMarkWord(word) {
+    // Nur echte Wörter ab 3 Buchstaben behandeln (kurze Wörter/Artikel haben ohnehin nur
+    // eine Silbe und keine sinnvolle "Betonungswahl").
+    if (!/^[A-Za-zÄÖÜäöüß]+$/.test(word) || word.length < 3) return null;
+    const syllables = ruleSyllabify(word);
+    if (syllables.length <= 1) return null;
+    const idx = ruleStressIndex(word, syllables);
+    return syllables.map((s, i) => (i === idx ? `<span class="stress">${s}</span>` : s)).join("");
+  }
+  // Wendet die Betonung auf alle Text-Knoten innerhalb von `root` an (umkehrbar: das
+  // Original bleibt in data-orig gespeichert, damit man beim Ausschalten exakt zurückwechseln
+  // kann, ohne die ganze Seite neu laden zu müssen).
+  const STRESS_SKIP_TAGS = new Set(["SCRIPT", "STYLE", "INPUT", "TEXTAREA", "SELECT", "OPTION", "SVG", "PATH"]);
+  function applyStressToTree(root) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || STRESS_SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+        if (parent.closest(".stress-marked")) return NodeFilter.FILTER_REJECT; // schon behandelt
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach((textNode) => {
+      const text = textNode.nodeValue;
+      const html = text.replace(/[A-Za-zÄÖÜäöüß]{3,}/g, (word) => {
+        const marked = ruleMarkWord(word);
+        return marked || word;
+      });
+      if (html === text) return; // kein einziges markierbares Wort enthalten
+      const span = document.createElement("span");
+      span.className = "stress-marked";
+      span.dataset.orig = text;
+      span.innerHTML = html;
+      textNode.parentNode.replaceChild(span, textNode);
+    });
+  }
+  function removeStressFromTree(root) {
+    if (!root) return;
+    root.querySelectorAll(".stress-marked").forEach((span) => {
+      const text = document.createTextNode(span.dataset.orig);
+      span.parentNode.replaceChild(text, span);
+    });
+  }
+  function getStressExcludedSections() {
+    try { return JSON.parse(localStorage.getItem("dma_stress_excluded") || "[]"); } catch (e) { return []; }
+  }
+  function setStressExcludedSections(ids) {
+    try { localStorage.setItem("dma_stress_excluded", JSON.stringify(ids)); } catch (e) {}
+  }
+  function applyStressEverywhere(on) {
+    const excluded = new Set(getStressExcludedSections());
+    STRESS_EXCLUDABLE_SECTIONS.forEach((sec) => {
+      const el = document.getElementById(sec.id);
+      if (!el) return;
+      if (on && !excluded.has(sec.id)) applyStressToTree(el);
+      else removeStressFromTree(el);
+    });
+  }
+  // Beobachtet neu hinzugefügte Inhalte (z. B. nach Tab-Wechsel oder Neu-Rendern) und markiert
+  // sie automatisch mit, solange der Betonungsmodus an ist — so bleibt wirklich jedes Wort
+  // überall erfasst, auch nach späteren Änderungen am Bildschirm.
+  let stressObserver = null;
+  function startStressObserver() {
+    if (stressObserver) return;
+    const main = document.querySelector("main") || document.body;
+    stressObserver = new MutationObserver((mutations) => {
+      if (!isStressModeOn()) return;
+      const excluded = new Set(getStressExcludedSections());
+      mutations.forEach((m) => {
+        m.addedNodes.forEach((node) => {
+          if (node.nodeType !== 1) return;
+          const section = node.closest ? node.closest(".view") : null;
+          if (section && excluded.has(section.id)) return; // ausgeschlossener Bereich -> nichts markieren
+          applyStressToTree(node);
+        });
+      });
+    });
+    stressObserver.observe(main, { childList: true, subtree: true });
   }
 
   function playNotifySound(soundKeyOverride) {
@@ -1432,7 +1763,7 @@
     { max: 8, title: "Wortbaumeister:in" }, { max: 10, title: "Buchstaben-Rätselkönig:in" },
   ];
   function newWordbuildSession() {
-    wbSession = { round: 0, total: 10, points: 0, bonus: 0 };
+    wbSession = { round: 0, total: 10, points: 0, bonus: 0, playedWords: [] };
   }
   function newWordbuildRound() {
     const entries = Object.entries(ExerciseData.WORD_MEANINGS);
@@ -1514,6 +1845,7 @@
             wbSession.round += 1;
             wbSession.points += 1;
             wbSession.bonus += speedBonus;
+            wbSession.playedWords.push(`${s.word.charAt(0)}${s.word.slice(1).toLowerCase()} — ${s.clue}`);
             Core.sound.fanfare();
             if (wbSession.round >= wbSession.total) {
               Backend.saveResult({
@@ -1522,7 +1854,8 @@
                 badges: [], playedAt: new Date().toISOString(),
               });
               if (Backend.currentUser()) {
-                Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Wortbaustelle" gespielt — Ergebnis: ${wbSession.points} / ${wbSession.total} richtig${wbSession.bonus ? ` (+${wbSession.bonus} Tempo-Bonus)` : ""}.`);
+                const wordList = wbSession.playedWords.map((w) => `• ${w}`).join("\n");
+                Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Wortbaustelle" gespielt — Ergebnis: ${wbSession.points} / ${wbSession.total} richtig${wbSession.bonus ? ` (+${wbSession.bonus} Tempo-Bonus)` : ""}.\n\nDiese Wörter kamen vor:\n${wordList}`);
               }
               setTimeout(() => renderWordbuild(), 900);
             } else {
@@ -1566,7 +1899,7 @@
     { max: 8, title: "Salat-Detektiv:in" }, { max: 10, title: "Rätselkönig:in" },
   ];
   function newWordSearchSession() {
-    wsSession = { correctCount: 0, wordsAttempted: 0, target: 10 };
+    wsSession = { correctCount: 0, wordsAttempted: 0, target: 10, playedWords: [] };
   }
   function buildWordSearch() {
     const size = 11;
@@ -1663,7 +1996,10 @@
             <div style="display:flex; gap:8px; justify-content:center;">
               ${["der", "die", "das"].map((a) => `<button type="button" class="btn btn-ghost" data-article-guess="${a}">${a}</button>`).join("")}
             </div>
-          </div>` : ""}
+          </div>` : `
+          <div class="quiz-actions" style="justify-content:center; margin-top:10px;">
+            <button type="button" class="btn btn-ghost" id="wsHintBtn">💡 Tipp — ersten Buchstaben zeigen</button>
+          </div>`}
       </div>
     `;
     area.querySelectorAll(".ws-cell").forEach((btn) => {
@@ -1687,10 +2023,28 @@
         renderWordSearch();
       });
     });
+    const hintBtn = document.getElementById("wsHintBtn");
+    if (hintBtn) {
+      hintBtn.addEventListener("click", () => {
+        const unfound = s.words.filter((w) => !w.found);
+        if (!unfound.length) return;
+        const target = unfound[Math.floor(Math.random() * unfound.length)];
+        const cell = area.querySelector(`.ws-cell[data-r="${target.row}"][data-c="${target.col}"]`);
+        if (cell) {
+          cell.classList.add("ws-hint");
+          setTimeout(() => cell.classList.remove("ws-hint"), 3500);
+        }
+        hintBtn.disabled = true;
+        setTimeout(() => { hintBtn.disabled = false; }, 3500);
+      });
+    }
     area.querySelectorAll("[data-article-guess]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const correct = btn.dataset.articleGuess === s.pendingArticleFor.article;
         wsSession.wordsAttempted += 1;
+        const word = s.pendingArticleFor.word;
+        const wordCapitalized = word.charAt(0) + word.slice(1).toLowerCase();
+        wsSession.playedWords.push(`${correct ? "✅" : "❌"} ${s.pendingArticleFor.article} ${wordCapitalized}`);
         if (correct) { Core.sound.fanfare(); wsSession.correctCount += 1; s.pendingArticleFor.articleDone = true; }
         else { Core.sound.wrong(); }
         s.pendingArticleFor = null;
@@ -1702,7 +2056,8 @@
             badges: [], playedAt: new Date().toISOString(),
           });
           if (Backend.currentUser()) {
-            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Buchstabensalat" gespielt — ${wsSession.correctCount} von ${wsSession.target} Wörtern samt Artikel richtig gelöst.`);
+            const wordList = wsSession.playedWords.map((w) => `• ${w}`).join("\n");
+            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Buchstabensalat" gespielt — ${wsSession.correctCount} von ${wsSession.target} Wörtern samt Artikel richtig gelöst.\n\nDiese Wörter kamen vor:\n${wordList}`);
           }
         }
         renderWordSearch();
@@ -1931,7 +2286,8 @@
           character: "Rätsel-Genie", badges: [], playedAt: new Date().toISOString(),
         });
         if (Backend.currentUser()) {
-          Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade das Kreuzworträtsel „${puzzle.title}" gelöst — alles richtig! (${puzzle.words.length} Wörter, ${seconds < 60 ? "+1 Tempo-Bonus" : "kein Tempo-Bonus"})`);
+          const wordList = puzzle.words.map((w) => `• ${w.answer} — ${w.clue}`).join("\n");
+          Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade das Kreuzworträtsel „${puzzle.title}" gelöst — alles richtig! (${puzzle.words.length} Wörter, ${seconds < 60 ? "+1 Tempo-Bonus" : "kein Tempo-Bonus"})\n\nDiese Wörter kamen vor:\n${wordList}`);
         }
       } else {
         Core.sound.wrong();
@@ -2378,7 +2734,7 @@
       "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput", "extraSportInput",
       "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
       "favQuoteInput", "extraMottoInput", "poemInput", "extraDreamInput", "extraHappyInput",
-      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput",
+      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelect",
     ];
     const fieldMap = {
       favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
@@ -2443,6 +2799,7 @@
           updateSpecialDayBar();
           Backend.touchActivity();
           notifyAboutAppUpdateIfNeeded();
+          claimLoginStreak();
         } catch (err) {
           errBox.textContent = err.message || "Das hat leider nicht geklappt.";
         }
@@ -2489,6 +2846,7 @@
                 ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
                 ${originFlag ? `<span class="empty-note">${originFlag} ${profile.origin}</span>` : ""}
                 ${zodiacBadgeHtml(profile.birthday)}
+                ${genderBadgeHtml(extra.genderSymbol)}
               </div>
             </div>
           </div>
@@ -2752,6 +3110,15 @@
               </select>
             </div>
             <div class="form-field">
+              <label>Symbol im Profil (optional)</label>
+              <select id="extraGenderSymbolSelect" class="challenge-select">
+                <option value="">Nicht anzeigen</option>
+                <option value="maennlich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "maennlich" ? "selected" : ""}>♂ männlich</option>
+                <option value="weiblich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "weiblich" ? "selected" : ""}>♀ weiblich</option>
+                <option value="divers" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "divers" ? "selected" : ""}>⚥ divers</option>
+              </select>
+            </div>
+            <div class="form-field">
               <label>Lieblingszahl</label>
               <input type="text" id="extraNumberInput" maxlength="10" value="${profileEditDraft.favNumber !== undefined ? profileEditDraft.favNumber : (extra.favNumber || "")}" placeholder="z. B. 7" />
             </div>
@@ -2815,7 +3182,7 @@
           extraMottoInput: "motto", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
-          extraSportInput: "favSport", extraVacationInput: "favVacation",
+          extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelect: "genderSymbol",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
           favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
         if (profileEditDraft[field] !== undefined) return profileEditDraft[field];
@@ -2838,6 +3205,7 @@
         favColor: val("extraColorInput", extra.favColor),
         favAnimal: val("extraAnimalInput", extra.favAnimal),
         favSeason: val("extraSeasonSelect", extra.favSeason),
+        genderSymbol: val("extraGenderSymbolSelect", extra.genderSymbol),
         favNumber: val("extraNumberInput", extra.favNumber),
         talent: val("extraTalentInput", extra.talent),
         favVacation: val("extraVacationInput", extra.favVacation),
@@ -3168,7 +3536,7 @@
         Core.el("div", { class: "modal-meta-row" },
           Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`),
           originFlag ? Core.el("span", { class: "empty-note" }, `${originFlag} ${p.origin}`) : "",
-          Core.el("div", { html: zodiacBadgeHtml(p.birthday) })
+          Core.el("div", { html: zodiacBadgeHtml(p.birthday) + genderBadgeHtml((p.extra_profile_data || {}).genderSymbol) })
         ),
         Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
           theirFriends.length
@@ -3726,18 +4094,25 @@
     });
   }
 
+  let rankingMode = "today"; // "today" oder "alltime"
   async function renderRanking() {
     const area = document.getElementById("rankingArea");
     area.innerHTML = '<p class="empty-note">Lade Ranking…</p>';
-    const rows = await Backend.getRanking();
+    const rows = rankingMode === "today" ? await Backend.getRankingToday() : await Backend.getRankingAllTime();
     area.innerHTML = `
       <div class="question-card">
-        <h3>🏆 Heutiges Ranking</h3>
+        <h3>🏆 Ranking</h3>
+        <div class="order-toggle" style="margin-bottom:12px;">
+          <button type="button" class="order-pill" id="rankTabToday" aria-selected="${rankingMode === "today"}">📅 Heute</button>
+          <button type="button" class="order-pill" id="rankTabAllTime" aria-selected="${rankingMode === "alltime"}">🏆 Gesamt</button>
+        </div>
         <table class="rank-table">
-          ${rows.length ? rows.map((r, i) => `<tr>${r.user_id ? `<td>${i + 1}.</td><td><button type="button" class="friend-name-btn" data-view-ranked="${r.user_id}">${r.name}</button></td>` : `<td>${i + 1}.</td><td>${r.name}</td>`}<td>${r.points} Pkt.</td></tr>`).join("") : '<tr><td class="empty-note">Noch keine Einträge heute — sei die/der Erste!</td></tr>'}
+          ${rows.length ? rows.map((r, i) => `<tr>${r.user_id ? `<td>${i + 1}.</td><td><button type="button" class="friend-name-btn" data-view-ranked="${r.user_id}">${r.name}</button></td>` : `<td>${i + 1}.</td><td>${r.name}</td>`}<td>${r.points} Pkt.</td></tr>`).join("") : `<tr><td class="empty-note">${rankingMode === "today" ? "Noch keine Einträge heute — sei die/der Erste!" : "Noch keine Einträge."}</td></tr>`}
         </table>
       </div>
     `;
+    document.getElementById("rankTabToday").addEventListener("click", () => { rankingMode = "today"; renderRanking(); });
+    document.getElementById("rankTabAllTime").addEventListener("click", () => { rankingMode = "alltime"; renderRanking(); });
     area.querySelectorAll("[data-view-ranked]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewRanked));
     });
