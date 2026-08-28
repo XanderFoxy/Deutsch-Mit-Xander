@@ -953,6 +953,9 @@
   hyphens: none;
   white-space: normal;
 }
+.stress { text-decoration: underline; text-decoration-thickness: 2.5px; text-underline-offset: 3px; font-weight: 800; }
+.stress-toggle-btn { font-size: 0.95rem; font-weight: 800; }
+.stress-toggle-btn.active { background: var(--amber-400); color: #241505; }
 .ws-cell {
   aspect-ratio: 1; width: 100%;
   display: flex; align-items: center; justify-content: center;
@@ -1151,6 +1154,127 @@
 }
 .toast-clickable { cursor: pointer; border-color: var(--amber-400); }
 .toast-clickable:active { transform: translate(-50%, 0) scale(0.97); }
+
+/* ============================================================
+   ABREISSKALENDER — kleines Symbol im Header + große Modal-Ansicht
+   mit echter Umdreh-Animation (wie beim Abreißen einer Kalenderseite)
+   ============================================================ */
+.calendar-page-btn { padding: 6px !important; }
+.cal-page-mini {
+  position: relative;
+  width: 30px; height: 30px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+.cal-page-mini-month {
+  width: 100%;
+  background: var(--coral-400, #E8825F);
+  color: #fff;
+  font-size: 0.42rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.5px;
+  padding: 1px 0;
+}
+.cal-page-mini-day {
+  color: #241505;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  font-family: var(--font-display);
+}
+.cal-page-mini-corner {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 0 8px 8px;
+  border-color: transparent transparent rgba(0,0,0,0.18) transparent;
+}
+
+.calendar-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.cal-close-btn {
+  position: fixed; top: 18px; right: 18px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.9); border: none;
+  font-size: 1.1rem; cursor: pointer; z-index: 502;
+}
+.calendar-modal-page {
+  position: relative;
+  width: min(88vw, 320px);
+  height: min(88vw, 320px);
+  perspective: 1400px;
+  z-index: 501;
+}
+.cal-face {
+  position: absolute; inset: 0;
+  border-radius: 12px;
+  backface-visibility: hidden;
+  transition: transform 0.7s cubic-bezier(0.4,0.1,0.2,1);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+.cal-front {
+  background: #fff;
+  cursor: pointer;
+}
+.cal-back {
+  background: #FBF3E8;
+  transform: rotateY(180deg);
+}
+.calendar-modal-page.torn .cal-front { transform: rotateY(-180deg); }
+.calendar-modal-page.torn .cal-back { transform: rotateY(0deg); }
+.cal-corner-big {
+  position: absolute; bottom: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 0 34px 34px;
+  border-color: transparent transparent rgba(0,0,0,0.15) transparent;
+}
+.cal-month-big {
+  background: var(--coral-400, #E8825F);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: 1rem;
+  padding: 6px 22px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.cal-day-big {
+  font-family: var(--font-display);
+  font-size: 5.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #241505;
+}
+.cal-weekday {
+  font-size: 1rem;
+  color: #8a7050;
+  margin-top: 6px;
+  font-weight: 700;
+}
+.cal-hint {
+  position: absolute; bottom: 14px;
+  font-size: 0.75rem;
+  color: #a89478;
+  margin: 0;
+}
+.cal-tip-title { font-weight: 800; margin: 0 0 10px; font-size: 1rem; }
+.cal-tip-text { font-size: 0.95rem; line-height: 1.5; margin: 0; }
+.cal-tip-text .stress { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 2px; font-weight: 800; }
 
 .notify-badge {
   position: absolute;

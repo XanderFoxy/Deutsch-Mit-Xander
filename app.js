@@ -305,6 +305,65 @@
     "12-31": "🎆 Silvester",
   };
 
+  /* ============================================================
+     ABREISSKALENDER — Mini-Symbol im Header + große Modal-Ansicht
+     mit Umdreh-Animation und Tagestipp (Betonung, Grammatik, Scherz)
+     ============================================================ */
+  const MONTH_NAMES_SHORT = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
+  const MONTH_NAMES_LONG = ["JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI", "JULI", "AUGUST", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DEZEMBER"];
+  const WEEKDAY_NAMES = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+  function updateCalendarWidget() {
+    const now = new Date();
+    const miniMonth = document.getElementById("calMiniMonth");
+    const miniDay = document.getElementById("calMiniDay");
+    if (miniMonth) miniMonth.textContent = MONTH_NAMES_SHORT[now.getMonth()];
+    if (miniDay) miniDay.textContent = now.getDate();
+  }
+  function pickDailyTip() {
+    const tips = ExerciseData.DAILY_TIPS;
+    return tips[Math.floor(Math.random() * tips.length)];
+  }
+  function openCalendarModal() {
+    const now = new Date();
+    document.getElementById("calModalMonth").textContent = MONTH_NAMES_LONG[now.getMonth()];
+    document.getElementById("calModalDay").textContent = now.getDate();
+    document.getElementById("calModalWeekday").textContent = WEEKDAY_NAMES[now.getDay()];
+    document.getElementById("calTipText").innerHTML = pickDailyTip().text;
+    document.getElementById("calendarModalPage").classList.remove("torn");
+    document.getElementById("calendarModalOverlay").style.display = "flex";
+  }
+  const calendarBtn = document.getElementById("calendarPageBtn");
+  if (calendarBtn) calendarBtn.addEventListener("click", openCalendarModal);
+  const calCloseBtn = document.getElementById("calCloseBtn");
+  if (calCloseBtn) calCloseBtn.addEventListener("click", () => { document.getElementById("calendarModalOverlay").style.display = "none"; });
+  const calOverlay = document.getElementById("calendarModalOverlay");
+  if (calOverlay) calOverlay.addEventListener("click", (e) => { if (e.target === calOverlay) calOverlay.style.display = "none"; });
+  const calFrontFace = document.getElementById("calFrontFace");
+  if (calFrontFace) calFrontFace.addEventListener("click", () => {
+    document.getElementById("calendarModalPage").classList.add("torn");
+    Core.sound.correct();
+  });
+  const calAnotherBtn = document.getElementById("calAnotherBtn");
+  if (calAnotherBtn) calAnotherBtn.addEventListener("click", () => {
+    document.getElementById("calTipText").innerHTML = pickDailyTip().text;
+  });
+  updateCalendarWidget();
+  setInterval(updateCalendarWidget, 60000);
+
+  // Betonungsmodus initial anwenden + Umschalter verdrahten
+  setStressMode(isStressModeOn());
+  const stressToggleBtn = document.getElementById("stressToggleBtn");
+  if (stressToggleBtn) {
+    stressToggleBtn.classList.toggle("active", isStressModeOn());
+    stressToggleBtn.addEventListener("click", () => {
+      setStressMode(!isStressModeOn());
+      stressToggleBtn.classList.toggle("active", isStressModeOn());
+      // Aktuell sichtbare Vokabel-/Steckbrief-Ansichten neu zeichnen, falls offen
+      if (document.getElementById("vocabArea")?.innerHTML) renderVocab();
+      if (document.getElementById("accountArea")?.innerHTML) renderAccount();
+    });
+  }
+
   function updateSpecialDayBar() {
     const el = document.getElementById("specialDayOut");
     if (!el) return;
@@ -382,6 +441,33 @@
   }
   function setNotifyMuted(muted) {
     try { localStorage.setItem("dma_notify_muted", muted ? "1" : "0"); } catch (e) {}
+  }
+
+  // Betonungsmodus — sitweiter Umschalter. Zeigt bei allen Wörtern, für die eine geprüfte
+  // Silbentrennung vorliegt (Vokabeltrainer, Hobbys, Länder, Sprachen, Artikel-Wortschatz),
+  // die betonte Silbe unterstrichen an — wie im Duden. Ungeprüfte Wörter bleiben unverändert.
+  function isStressModeOn() {
+    try { return localStorage.getItem("dma_stress_mode") === "1"; } catch (e) { return false; }
+  }
+  function setStressMode(on) {
+    try { localStorage.setItem("dma_stress_mode", on ? "1" : "0"); } catch (e) {}
+    document.documentElement.classList.toggle("stress-mode-active", on);
+  }
+  // Wandelt "FOTO-gra-FIE" in HTML mit unterstrichener betonter Silbe um.
+  function stressHtml(sylString) {
+    if (!sylString) return "";
+    return sylString.split("-").map((part) => {
+      const isStressed = part === part.toUpperCase() && /[A-ZÄÖÜ]/.test(part);
+      const display = isStressed ? part.charAt(0) + part.slice(1).toLowerCase() : part;
+      return isStressed ? `<span class="stress">${display}</span>` : display;
+    }).join("");
+  }
+  // Zeigt ein Wort mit Betonung an, falls der Modus aktiv ist UND eine geprüfte Silbentrennung
+  // vorliegt (sylLookup ist z. B. ExerciseData.WORD_SYL oder VocabData.LANGUAGE_SYL) — sonst
+  // ganz normal den Klartext, nie geraten.
+  function displayWord(word, sylLookup) {
+    if (isStressModeOn() && sylLookup && sylLookup[word]) return stressHtml(sylLookup[word]);
+    return word;
   }
 
   function playNotifySound() {
@@ -919,7 +1005,7 @@
           <div class="vocab-card">
             <div>
               <div class="vocab-word">${w.word}</div>
-              <div class="vocab-syl">${Core.formatStress(w.syl)}</div>
+              ${isStressModeOn() ? `<div class="vocab-syl">${Core.formatStress(w.syl)}</div>` : ""}
               <div class="vocab-en">${w.en}</div>
               <div class="vocab-example">„${w.example}"</div>
             </div>
@@ -1240,6 +1326,9 @@
                 character: (WB_TIERS.find((t) => wbSession.points <= t.max) || WB_TIERS[WB_TIERS.length - 1]).title,
                 badges: [], playedAt: new Date().toISOString(),
               });
+              if (Backend.currentUser()) {
+                Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Wortbaustelle" gespielt — Ergebnis: ${wbSession.points} / ${wbSession.total} richtig${wbSession.bonus ? ` (+${wbSession.bonus} Tempo-Bonus)` : ""}.`);
+              }
               setTimeout(() => renderWordbuild(), 900);
             } else {
               setTimeout(() => { newWordbuildRound(); renderWordbuild(); }, 900);
@@ -1413,6 +1502,9 @@
             character: (WS_TIERS.find((t) => wsSession.found <= t.max) || WS_TIERS[WS_TIERS.length - 1]).title,
             badges: [], playedAt: new Date().toISOString(),
           });
+          if (Backend.currentUser()) {
+            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Buchstabensalat" gespielt — ${wsSession.found} Wörter gefunden${wsSession.bonusHits ? ` (+${wsSession.bonusHits} Artikel-Bonus)` : ""}.`);
+          }
           renderWordSearch();
           return;
         }
@@ -2122,7 +2214,7 @@
           <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
           ${(profile.hobbies || []).length ? `<p class="hobby-readout">✓ Ich mag: ${(profile.hobbies || []).map((n) => { const h = VocabData.HOBBIES.find((x) => x.noun === n); return h ? `${h.emoji} ${h.article} ${h.noun}` : n; }).join(", ")}</p>` : '<p class="empty-note">Noch nichts ausgewählt — antippen zum Hinzufügen.</p>'}
           <div class="hobby-chip-row">
-            ${VocabData.HOBBIES.map((h) => `<button type="button" class="hobby-chip ${((profile.hobbies || []).includes(h.noun)) ? "selected" : ""}" data-hobby="${h.noun}">${h.emoji} ${h.article} ${h.noun}</button>`).join("")}
+            ${VocabData.HOBBIES.map((h) => `<button type="button" class="hobby-chip ${((profile.hobbies || []).includes(h.noun)) ? "selected" : ""}" data-hobby="${h.noun}">${h.emoji} ${h.article} ${isStressModeOn() ? stressHtml(h.syl) : h.noun}</button>`).join("")}
           </div>
         </div>
         <div class="form-field">
@@ -2144,7 +2236,7 @@
             <div class="form-field">
               <label>Welche Sprachen sprichst oder lernst du?</label>
               <div class="hobby-chip-row">
-                ${VocabData.LANGUAGES.map((l) => `<button type="button" class="hobby-chip lang-chip ${((profile.languages || []).includes(l)) ? "selected" : ""}" data-lang="${l}">${l}</button>`).join("")}
+                ${VocabData.LANGUAGES.map((l) => `<button type="button" class="hobby-chip lang-chip ${((profile.languages || []).includes(l)) ? "selected" : ""}" data-lang="${l}">${displayWord(l, VocabData.LANGUAGE_SYL)}</button>`).join("")}
               </div>
             </div>
             <div class="form-field">

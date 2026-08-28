@@ -45,6 +45,14 @@
   <div class="header-spacer"></div>
 
   <div class="header-actions">
+    <button class="btn btn-ghost btn-icon-only calendar-page-btn" type="button" id="calendarPageBtn" aria-label="Tageskalender">
+      <span class="cal-page-mini">
+        <span class="cal-page-mini-month" id="calMiniMonth">—</span>
+        <span class="cal-page-mini-day" id="calMiniDay">–</span>
+        <span class="cal-page-mini-corner"></span>
+      </span>
+    </button>
+    <button class="btn btn-ghost btn-icon-only stress-toggle-btn" type="button" id="stressToggleBtn" aria-label="Betonungsmodus" title="Betonungsmodus — zeigt betonte Silben unterstrichen">Aa̲</button>
     <button class="btn btn-ghost btn-icon-only" type="button" id="loginBtn" aria-label="Profil">
       <span aria-hidden="true" id="loginBtnIcon" class="header-avatar-wrap"><span id="loginBtnIconInner">👤</span></span><span class="btn-label" id="loginBtnLabel">Anmelden</span>
       <span id="loginBtnBadge" class="notify-badge" style="display:none;"></span>
@@ -54,6 +62,24 @@
     </a>
   </div>
 </header>
+
+<div class="calendar-modal-overlay" id="calendarModalOverlay" style="display:none;">
+  <button class="cal-close-btn" id="calCloseBtn" aria-label="Schließen">✕</button>
+  <div class="calendar-modal-page" id="calendarModalPage">
+    <div class="cal-face cal-front" id="calFrontFace">
+      <span class="cal-corner-big"></span>
+      <span class="cal-month-big" id="calModalMonth">AUGUST</span>
+      <span class="cal-day-big" id="calModalDay">28</span>
+      <span class="cal-weekday" id="calModalWeekday">Freitag</span>
+      <p class="cal-hint">👆 Antippen zum Abreißen</p>
+    </div>
+    <div class="cal-face cal-back">
+      <p class="cal-tip-title">💡 Tipp des Tages</p>
+      <p class="cal-tip-text" id="calTipText"></p>
+      <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:14px;">🔄 Noch einen Tipp</button>
+    </div>
+  </div>
+</div>
 
 <div class="weather-bar" id="deckDisplay">
   <span class="weather-readout">

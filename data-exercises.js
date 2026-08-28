@@ -76,6 +76,63 @@ const ExerciseData = (function () {
     "Vogel": "Tier, das fliegen kann", "Fisch": "Tier, das im Wasser lebt", "Blatt": "Teil einer Pflanze (oder eine Seite Papier)",
   };
 
+  // Silbentrennung mit Betonung (Großbuchstaben = betonte Silbe) für dieselben 105 Wörter —
+  // Grundlage für die sitweite Betonungs-Anzeige. Regel: einfache deutsche Wörter betonen die
+  // erste (Stamm-)Silbe; Fremdwörter/Lehnwörter (Fotografie, Museum …) folgen ihrem eigenen Muster.
+  const WORD_SYL = {
+    "Tisch": "Tisch", "Lampe": "LAM-pe", "Fenster": "FENS-ter", "Stuhl": "Stuhl", "Tür": "Tür",
+    "Auto": "AU-to", "Baum": "Baum", "Blume": "BLU-me", "Haus": "Haus", "Hund": "Hund",
+    "Katze": "KAT-ze", "Pferd": "Pferd", "Apfel": "AP-fel", "Banane": "Ba-NA-ne", "Brot": "Brot",
+    "Käse": "KÄ-se", "Milch": "Milch", "Wasser": "WAS-ser", "Wein": "Wein", "Suppe": "SUP-pe",
+    "Fleisch": "Fleisch", "Zucker": "ZU-cker", "Butter": "BUT-ter", "Salz": "Salz", "Löffel": "LÖF-fel",
+    "Gabel": "GA-bel", "Messer": "MES-ser", "Teller": "TEL-ler", "Tasse": "TAS-se", "Glas": "Glas",
+    "Schrank": "Schrank", "Kommode": "Kom-MO-de", "Bett": "Bett", "Spiegel": "SPIE-gel", "Uhr": "Uhr",
+    "Bild": "Bild", "Computer": "Com-PU-ter", "Tastatur": "Tas-ta-TUR", "Handy": "HÄN-dy", "Drucker": "DRU-cker",
+    "Maus": "Maus", "Kabel": "KA-bel", "Rucksack": "RUCK-sack", "Tasche": "TA-sche", "Portemonnaie": "Port-mo-NEE",
+    "Schlüssel": "SCHLÜS-sel", "Brille": "BRIL-le", "Buch": "Buch", "Stift": "Stift", "Zeitung": "ZEI-tung",
+    "Heft": "Heft", "Bahnhof": "BAHN-hof", "Straße": "STRA-ße", "Zug": "Zug", "Ampel": "AM-pel",
+    "Fahrrad": "FAHR-rad", "Bus": "Bus", "Flugzeug": "FLUG-zeug", "Flughafen": "FLUG-ha-fen", "Brücke": "BRÜ-cke",
+    "Rathaus": "RAT-haus", "Park": "Park", "Bank": "Bank", "Museum": "Mu-SE-um", "Supermarkt": "SU-per-markt",
+    "Bäckerei": "Bä-cke-REI", "Krankenhaus": "KRAN-ken-haus", "Arzt": "Arzt", "Kind": "Kind", "Lehrer": "LEH-rer",
+    "Lehrerin": "LEH-re-rin", "Mädchen": "MÄD-chen", "Junge": "JUN-ge", "Frau": "Frau", "Baby": "BE-by",
+    "Mann": "Mann", "Familie": "Fa-MI-lie", "Jahr": "Jahr", "Monat": "MO-nat", "Woche": "WO-che",
+    "Wochenende": "WO-chen-en-de", "Sommer": "SOM-mer", "Sonne": "SON-ne", "Wetter": "WET-ter", "Regen": "RE-gen",
+    "Wolke": "WOL-ke", "Schnee": "Schnee", "Eis": "Eis", "Wind": "Wind", "Kälte": "KÄL-te",
+    "Frühling": "FRÜH-ling", "Herbst": "Herbst", "Winter": "WIN-ter", "Garten": "GAR-ten", "Wiese": "WIE-se",
+    "Berg": "Berg", "Fluss": "Fluss", "Stadt": "Stadt", "Land": "Land", "Wald": "Wald",
+    "Insel": "IN-sel", "Schiff": "Schiff", "Vogel": "VO-gel", "Fisch": "Fisch", "Blatt": "Blatt",
+  };
+
+  // Tagestipps für den Abreißkalender — jeder mit einem sorgfältig geprüften Betonungs-Beispiel
+  // (nicht geraten: nur Wörter, bei denen die Betonung eindeutig und bekannt ist).
+  const DAILY_TIPS = [
+    { text: `Bei „verstehen" wird nicht die Vorsilbe betont, sondern die zweite Silbe: ver<span class="stress">ste</span>hen.`, },
+    { text: `Bei „bekommen" liegt die Betonung auf „kom": be<span class="stress">kom</span>men.`, },
+    { text: `Bei den meisten einfachen deutschen Wörtern liegt die Betonung auf der ersten Silbe: <span class="stress">Gar</span>ten, <span class="stress">Wie</span>se, <span class="stress">Fens</span>ter.`, },
+    { text: `Das Wort „Familie" kommt aus dem Lateinischen und wird auf der zweiten Silbe betont: Fa<span class="stress">mi</span>lie.`, },
+    { text: `Bei „Musik" liegt die Betonung ganz am Ende: Mu<span class="stress">sik</span> — anders als bei den meisten deutschen Wörtern.`, },
+    { text: `Zusammengesetzte Wörter betonen meist den ersten Teil: <span class="stress">Fahr</span>rad, <span class="stress">Bahn</span>hof, <span class="stress">Kran</span>kenhaus.`, },
+    { text: `Grammatik-Tipp: „wegen" steht eigentlich mit Genitiv („wegen des Regens"), im Alltag hört man aber oft auch den Dativ.`, },
+    { text: `Kleiner Scherz: Warum können Skelette so schlecht lügen? Weil man ihnen durch und durch sieht!`, },
+    { text: `Grammatik-Tipp: „seit" beschreibt einen Zeitpunkt in der Vergangenheit bis jetzt („seit zwei Jahren"), „seid" ist eine Form von „sein" („ihr seid").`, },
+    { text: `Bei „Universität" liegt die Betonung auf „tät": Universi<span class="stress">tät</span>.`, },
+    { text: `Bei „Computer" wird die zweite Silbe betont: Com<span class="stress">pu</span>ter.`, },
+    { text: `Grammatik-Tipp: Nach „trotz" kann heute sowohl Genitiv als auch Dativ stehen — „trotz des Wetters" oder „trotz dem Wetter".`, },
+    { text: `Kleiner Scherz: Was macht ein Keks unter einem Baum? Krümel!`, },
+    { text: `Bei „entscheiden" liegt die Betonung nicht auf „ent", sondern auf „schei": ent<span class="stress">schei</span>den.`, },
+    { text: `Grammatik-Tipp: Nach „obwohl" steht immer ein Nebensatz mit dem Verb am Ende: „Ich gehe raus, obwohl es regnet."`, },
+    { text: `Bei „Elefant" liegt die Betonung auf der letzten Silbe: Ele<span class="stress">fant</span>.`, },
+    { text: `Bei „Bibliothek" liegt die Betonung ganz am Ende: Biblio<span class="stress">thek</span>.`, },
+    { text: `Grammatik-Tipp: „das" ist Artikel oder Pronomen, „dass" leitet einen Nebensatz ein — „Ich weiß, dass das Auto rot ist."`, },
+    { text: `Kleiner Scherz: Treffen sich zwei Magneten. Sagt der eine: „Ich finde dich anziehend!"`, },
+    { text: `Bei „Toilette" liegt die Betonung auf „let": Toi<span class="stress">let</span>te — ein Wort aus dem Französischen.`, },
+    { text: `Grammatik-Tipp: Modalverben wie „können", „müssen", „wollen" schicken das Hauptverb als Infinitiv ans Satzende.`, },
+    { text: `Bei „Appetit" liegt die Betonung auf der letzten Silbe: Appe<span class="stress">tit</span>.`, },
+    { text: `Kleiner Scherz: Warum weinen Regenwolken? Weil sie so wolkig sind!`, },
+    { text: `Grammatik-Tipp: „wenn" für wiederholte oder zukünftige Ereignisse, „als" für ein einmaliges Ereignis in der Vergangenheit.`, },
+    { text: `Bei „Restaurant" liegt die Betonung am Ende: Restau<span class="stress">rant</span> — ebenfalls ein französisches Lehnwort.`, },
+  ];
+
   function bankArtikel() {
     return Core.shuffle(ARTIKEL_WORDS).map(([word, correct]) => {
       const opts = ["der", "die", "das"];
@@ -3110,5 +3167,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS };
 })();

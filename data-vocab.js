@@ -159,32 +159,32 @@ const VocabData = (function () {
   // damit man das Genus nebenbei mitlernt (kleiner Lern-Kniff).
   // Herkunftsländer fürs Profil — Land + Sprache, damit man sieht wer woher kommt
   const COUNTRIES = [
-    { name: "Deutschland", flag: "🇩🇪" }, { name: "Österreich", flag: "🇦🇹" }, { name: "Schweiz", flag: "🇨🇭" },
-    { name: "Türkei", flag: "🇹🇷" }, { name: "Polen", flag: "🇵🇱" }, { name: "Ukraine", flag: "🇺🇦" },
-    { name: "Russland", flag: "🇷🇺" }, { name: "Syrien", flag: "🇸🇾" }, { name: "Afghanistan", flag: "🇦🇫" },
-    { name: "Italien", flag: "🇮🇹" }, { name: "Spanien", flag: "🇪🇸" }, { name: "Frankreich", flag: "🇫🇷" },
-    { name: "Griechenland", flag: "🇬🇷" }, { name: "Portugal", flag: "🇵🇹" }, { name: "Rumänien", flag: "🇷🇴" },
-    { name: "Vereinigtes Königreich", flag: "🇬🇧" }, { name: "USA", flag: "🇺🇸" }, { name: "Brasilien", flag: "🇧🇷" },
-    { name: "Indien", flag: "🇮🇳" }, { name: "China", flag: "🇨🇳" }, { name: "Japan", flag: "🇯🇵" },
-    { name: "Vietnam", flag: "🇻🇳" }, { name: "Marokko", flag: "🇲🇦" }, { name: "Nigeria", flag: "🇳🇬" },
-    { name: "Sonstiges", flag: "🌍" },
+    { name: "Deutschland", flag: "🇩🇪", syl: "DEUTSCH-land" }, { name: "Österreich", flag: "🇦🇹", syl: "ÖS-ter-reich" }, { name: "Schweiz", flag: "🇨🇭", syl: "Schweiz" },
+    { name: "Türkei", flag: "🇹🇷", syl: "Tür-KEI" }, { name: "Polen", flag: "🇵🇱", syl: "PO-len" }, { name: "Ukraine", flag: "🇺🇦", syl: "Ukra-I-ne" },
+    { name: "Russland", flag: "🇷🇺", syl: "RUSS-land" }, { name: "Syrien", flag: "🇸🇾", syl: "SY-ri-en" }, { name: "Afghanistan", flag: "🇦🇫", syl: "Af-GHA-ni-stan" },
+    { name: "Italien", flag: "🇮🇹", syl: "I-TA-li-en" }, { name: "Spanien", flag: "🇪🇸", syl: "SPA-ni-en" }, { name: "Frankreich", flag: "🇫🇷", syl: "FRANK-reich" },
+    { name: "Griechenland", flag: "🇬🇷", syl: "GRIE-chen-land" }, { name: "Portugal", flag: "🇵🇹", syl: "POR-tu-gal" }, { name: "Rumänien", flag: "🇷🇴", syl: "Ru-MÄ-ni-en" },
+    { name: "Vereinigtes Königreich", flag: "🇬🇧", syl: "Ver-EI-nig-tes KÖ-nig-reich" }, { name: "USA", flag: "🇺🇸", syl: "U-S-A" }, { name: "Brasilien", flag: "🇧🇷", syl: "Bra-SI-li-en" },
+    { name: "Indien", flag: "🇮🇳", syl: "IN-di-en" }, { name: "China", flag: "🇨🇳", syl: "CHI-na" }, { name: "Japan", flag: "🇯🇵", syl: "JA-pan" },
+    { name: "Vietnam", flag: "🇻🇳", syl: "Viet-NAM" }, { name: "Marokko", flag: "🇲🇦", syl: "Ma-ROK-ko" }, { name: "Nigeria", flag: "🇳🇬", syl: "Ni-GE-ri-a" },
+    { name: "Sonstiges", flag: "🌍", syl: "SON-sti-ges" },
   ];
 
   const HOBBIES = [
-    { noun: "Kunst", article: "die", emoji: "🎨" },
-    { noun: "Sport", article: "der", emoji: "⚽" },
-    { noun: "Lesen", article: "das", emoji: "📚" },
-    { noun: "Musik", article: "die", emoji: "🎵" },
-    { noun: "Kochen", article: "das", emoji: "🍳" },
-    { noun: "Reisen", article: "das", emoji: "✈️" },
-    { noun: "Fotografie", article: "die", emoji: "📷" },
-    { noun: "Tanzen", article: "das", emoji: "💃" },
-    { noun: "Natur", article: "die", emoji: "🌳" },
-    { noun: "Gaming", article: "das", emoji: "🎮" },
-    { noun: "Yoga", article: "das", emoji: "🧘" },
-    { noun: "Handarbeit", article: "die", emoji: "🧵" },
-    { noun: "Backen", article: "das", emoji: "🧁" },
-    { noun: "Gartenarbeit", article: "die", emoji: "🌱" },
+    { noun: "Kunst", article: "die", emoji: "🎨", syl: "Kunst" },
+    { noun: "Sport", article: "der", emoji: "⚽", syl: "Sport" },
+    { noun: "Lesen", article: "das", emoji: "📚", syl: "LE-sen" },
+    { noun: "Musik", article: "die", emoji: "🎵", syl: "Mu-SIK" },
+    { noun: "Kochen", article: "das", emoji: "🍳", syl: "KO-chen" },
+    { noun: "Reisen", article: "das", emoji: "✈️", syl: "REI-sen" },
+    { noun: "Fotografie", article: "die", emoji: "📷", syl: "Foto-gra-FIE" },
+    { noun: "Tanzen", article: "das", emoji: "💃", syl: "TAN-zen" },
+    { noun: "Natur", article: "die", emoji: "🌳", syl: "Na-TUR" },
+    { noun: "Gaming", article: "das", emoji: "🎮", syl: "GEI-ming" },
+    { noun: "Yoga", article: "das", emoji: "🧘", syl: "YO-ga" },
+    { noun: "Handarbeit", article: "die", emoji: "🧵", syl: "HAND-ar-beit" },
+    { noun: "Backen", article: "das", emoji: "🧁", syl: "BA-cken" },
+    { noun: "Gartenarbeit", article: "die", emoji: "🌱", syl: "GAR-ten-ar-beit" },
   ];
 
   const LINKS = [
@@ -205,6 +205,19 @@ const VocabData = (function () {
     "Schwedisch", "Norwegisch", "Dänisch", "Finnisch", "Rumänisch", "Bulgarisch", "Tschechisch",
     "Serbisch/Kroatisch", "Albanisch", "Vietnamesisch", "Thailändisch", "Suaheli", "Urdu",
   ];
+  // Betonung der Sprachnamen (Duden-Muster) — für die Betonungs-Anzeige im ganzen Wortschatz
+  const LANGUAGE_SYL = {
+    "Deutsch": "Deutsch", "Englisch": "ENG-lisch", "Französisch": "Fran-ZÖ-sisch", "Spanisch": "SPA-nisch",
+    "Italienisch": "I-ta-LIE-nisch", "Portugiesisch": "Por-tu-GIE-sisch", "Türkisch": "TÜR-kisch",
+    "Arabisch": "A-RA-bisch", "Hebräisch": "He-BRÄ-isch", "Russisch": "RUS-sisch", "Polnisch": "POL-nisch",
+    "Niederländisch": "NIE-der-län-disch", "Persisch/Farsi": "PER-sisch/FAR-si", "Kurdisch": "KUR-disch",
+    "Ukrainisch": "U-kra-I-nisch", "Griechisch": "GRIE-chisch", "Chinesisch": "Chi-NE-sisch",
+    "Japanisch": "Ja-PA-nisch", "Koreanisch": "Ko-re-A-nisch", "Hindi": "HIN-di", "Schwedisch": "SCHWE-disch",
+    "Norwegisch": "Nor-WE-gisch", "Dänisch": "DÄ-nisch", "Finnisch": "FIN-nisch", "Rumänisch": "Ru-MÄ-nisch",
+    "Bulgarisch": "Bul-GA-risch", "Tschechisch": "TSCHE-chisch", "Serbisch/Kroatisch": "SER-bisch/Kro-A-tisch",
+    "Albanisch": "Al-BA-nisch", "Vietnamesisch": "Viet-na-ME-sisch", "Thailändisch": "Thai-LÄN-disch",
+    "Suaheli": "Sua-HE-li", "Urdu": "Ur-DU",
+  };
 
-  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES };
+  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
 })();
