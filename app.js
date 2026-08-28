@@ -191,6 +191,69 @@
   }
   function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
 
+  function renderSettings() {
+    const area = document.getElementById("settingsArea");
+    if (!area) return;
+    const profile = Backend.currentProfile();
+    if (!profile) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
+    area.innerHTML = `
+      <p class="empty-note">Hier stellst du ein, wie dich die Seite beim Lernen unterstützt und wie Benachrichtigungen aussehen und klingen.</p>
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🔤 Betonungsmodus</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Zeigt bei allen geprüften Wörtern (Vokabeltrainer, Hobbys, Länder, Sprachen, Artikel-Wortschatz, kleine Wörter) die betonte Silbe unterstrichen an — wie im Duden.</p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="settingsStressCheck" ${isStressModeOn() ? "checked" : ""} />
+          <span>Betonung überall anzeigen, wo geprüfte Daten vorliegen</span>
+        </label>
+      </div>
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🎨 Benachrichtigungs-Einstellungen</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Töne und Farben ab einer bestimmten Punktzahl freigeschaltet — eine kleine Belohnung fürs Üben. Die gewählte Option ist jeweils hervorgehoben.</p>
+        <p style="font-weight:700; margin-bottom:6px;">Ton</p>
+        <div class="trophy-case" style="margin-bottom:14px;">
+          ${Object.entries(NOTIFY_SOUND_PRESETS).map(([key, p]) => {
+            const unlocked = profile.points >= p.unlockPoints;
+            const active = getNotifySoundKey() === key;
+            return `<button type="button" class="trophy-chip notify-preset-btn ${active ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-sound-key="${key}" ${!unlocked ? "disabled" : ""}>${active ? "✓ " : ""}${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
+          }).join("")}
+        </div>
+        <p style="font-weight:700; margin-bottom:6px;">Farbe (Lämpchen &amp; Ring)</p>
+        <div class="trophy-case" style="margin-bottom:14px;">
+          ${Object.entries(NOTIFY_COLOR_PRESETS).map(([key, p]) => {
+            const unlocked = profile.points >= p.unlockPoints;
+            const active = getNotifyColorKey() === key;
+            return `<button type="button" class="trophy-chip notify-preset-btn ${active ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-color-key="${key}" ${!unlocked ? "disabled" : ""}>${active ? "✓ " : ""}${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
+          }).join("")}
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="tickerBlinkCheck" ${isTickerBlinkOn() ? "checked" : ""} ${profile.points >= 400 ? "" : "disabled"} />
+          <span>Laufband beim Aktualisieren blinken lassen ${profile.points >= 400 ? "" : "🔒 400P"}</span>
+        </label>
+      </div>
+    `;
+    document.getElementById("settingsStressCheck").addEventListener("change", (e) => {
+      setStressMode(e.target.checked);
+      if (document.getElementById("vocabArea")?.innerHTML) renderVocab();
+      if (document.getElementById("accountArea")?.innerHTML) renderAccount();
+      renderKompass();
+    });
+    area.querySelectorAll("[data-sound-key]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setNotifySoundKey(btn.dataset.soundKey);
+        playNotifySound(btn.dataset.soundKey);
+        renderSettings();
+      });
+    });
+    area.querySelectorAll("[data-color-key]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setNotifyColorKey(btn.dataset.colorKey);
+        renderSettings();
+      });
+    });
+    const tickerBlinkCheck = document.getElementById("tickerBlinkCheck");
+    if (tickerBlinkCheck) tickerBlinkCheck.addEventListener("change", () => setTickerBlink(tickerBlinkCheck.checked));
+  }
+
   function renderDesign() {
     const area = document.getElementById("designArea");
     if (!area) return;
@@ -326,6 +389,38 @@
   const MONTH_NAMES_SHORT = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
   const MONTH_NAMES_LONG = ["JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI", "JULI", "AUGUST", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DEZEMBER"];
   const WEEKDAY_NAMES = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+
+  // Sternzeichen — klassische geschwungene Symbole (Glyphen-Zeichen, nicht ausgemalt/detailliert,
+  // wie im Original üblich), automatisch aus dem Geburtsdatum berechnet.
+  const ZODIAC_SIGNS = [
+    { name: "Steinbock", from: [12, 22], to: [1, 19], svg: `<path d="M4 14 Q4 8 8 8 Q11 8 11 11 Q11 14 8 14 M8 14 L8 20 Q8 23 11 23 Q13 23 13 21 L13 4 Q13 2 15 2 Q17 2 17 5 Q17 7 15 7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Wassermann", from: [1, 20], to: [2, 18], svg: `<path d="M2 8 Q5 5 8 8 Q11 11 14 8 Q17 5 20 8 M2 16 Q5 13 8 16 Q11 19 14 16 Q17 13 20 16" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Fische", from: [2, 19], to: [3, 20], svg: `<path d="M5 3 Q2 8 5 13 Q8 18 5 21 M19 3 Q22 8 19 13 Q16 18 19 21 M5 12 L19 12" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Widder", from: [3, 21], to: [4, 19], svg: `<path d="M6 4 Q2 4 2 8 Q2 11 6 11 Q6 6 12 12 Q18 6 18 11 Q22 11 22 8 Q22 4 18 4 M12 12 L12 22" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Stier", from: [4, 20], to: [5, 20], svg: `<circle cx="12" cy="15" r="7" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M5 6 Q7 2 12 4 Q17 2 19 6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Zwillinge", from: [5, 21], to: [6, 20], svg: `<path d="M6 3 L6 21 M18 3 L18 21 M4 3 L20 3 M4 21 L20 21" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Krebs", from: [6, 21], to: [7, 22], svg: `<path d="M17 6 Q22 6 22 11 Q22 15 17 14 M7 18 Q2 18 2 13 Q2 9 7 10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="17" cy="14" r="1.6" fill="currentColor"/><circle cx="7" cy="10" r="1.6" fill="currentColor"/>` },
+    { name: "Löwe", from: [7, 23], to: [8, 22], svg: `<path d="M4 8 Q4 4 8 4 Q12 4 11 9 Q10 13 14 13 Q19 13 19 18 Q19 22 15 21" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="15" cy="21" r="1.6" fill="currentColor"/>` },
+    { name: "Jungfrau", from: [8, 23], to: [9, 22], svg: `<path d="M3 4 L3 16 Q3 20 7 20 Q10 20 10 16 L10 8 Q10 4 14 4 Q18 4 18 8 L18 18 M14 22 Q18 22 18 18" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>` },
+    { name: "Waage", from: [9, 23], to: [10, 22], svg: `<path d="M3 18 L21 18 M12 3 Q7 3 7 8 Q7 12 12 12 Q17 12 17 8 Q17 3 12 3 M5 14 Q5 18 9 18 M19 14 Q19 18 15 18" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Skorpion", from: [10, 23], to: [11, 21], svg: `<path d="M3 4 L3 18 Q3 21 6 21 M11 4 L11 18 Q11 21 14 21 L19 21 L16 18 M19 21 L16 24" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    { name: "Schütze", from: [11, 22], to: [12, 21], svg: `<path d="M4 20 L20 4 M20 4 L12 4 M20 4 L20 12 M10 14 L4 20" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+  ];
+  function zodiacFor(birthday) {
+    if (!birthday || !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) return null;
+    const [, m, d] = birthday.split("-").map(Number);
+    return ZODIAC_SIGNS.find((z) => {
+      const [fm, fd] = z.from, [tm, td] = z.to;
+      if (fm === tm) return m === fm && d >= fd && d <= td;
+      return (m === fm && d >= fd) || (m === tm && d <= td); // Zeichen über den Jahreswechsel (Steinbock)
+    }) || null;
+  }
+  function zodiacBadgeHtml(birthday) {
+    const z = zodiacFor(birthday);
+    if (!z) return "";
+    return `<span class="zodiac-badge" title="${z.name}"><svg viewBox="0 0 24 24" width="16" height="16">${z.svg}</svg> ${z.name}</span>`;
+  }
+
   function updateCalendarWidget() {
     const now = new Date();
     const miniMonth = document.getElementById("calMiniMonth");
@@ -1651,19 +1746,19 @@
   const CROSSWORDS = [
     {
       title: "Rätsel 1",
-      rows: 5, cols: 4,
+      rows: 6, cols: 4,
       grid: [
-        ["#", "B", "#", "#"],
+        ["#", "#", "#", "#"],
+        ["#", "#", "#", "#"],
         ["H", "A", "U", "S"],
-        ["U", "U", "H", "#"],
-        ["N", "M", "R", "#"],
+        ["U", "#", "H", "#"],
+        ["N", "#", "R", "#"],
         ["D", "#", "#", "#"],
       ],
       words: [
-        { num: 1, dir: "down", row: 0, col: 1, answer: "BAUM", clue: "Eine große Pflanze mit Stamm und Blättern" },
-        { num: 2, dir: "across", row: 1, col: 0, answer: "HAUS", clue: "Ein Gebäude zum Wohnen" },
-        { num: 2, dir: "down", row: 1, col: 0, answer: "HUND", clue: "Ein beliebtes Haustier, das bellt" },
-        { num: 3, dir: "down", row: 1, col: 2, answer: "UHR", clue: "Zeigt die Uhrzeit an" },
+        { num: 1, dir: "across", row: 2, col: 0, answer: "HAUS", clue: "Ein Gebäude zum Wohnen" },
+        { num: 1, dir: "down", row: 2, col: 0, answer: "HUND", clue: "Ein beliebtes Haustier, das bellt" },
+        { num: 2, dir: "down", row: 2, col: 2, answer: "UHR", clue: "Zeigt die Uhrzeit an" },
       ],
     },
     {
@@ -1671,14 +1766,29 @@
       rows: 4, cols: 4,
       grid: [
         ["K", "Ä", "S", "E"],
-        ["#", "#", "A", "I"],
-        ["#", "#", "L", "S"],
+        ["#", "#", "A", "#"],
+        ["#", "#", "L", "#"],
         ["#", "#", "Z", "#"],
       ],
       words: [
         { num: 1, dir: "across", row: 0, col: 0, answer: "KÄSE", clue: "Ein Milchprodukt, oft auf Brot" },
         { num: 2, dir: "down", row: 0, col: 2, answer: "SALZ", clue: "Würzt Speisen, weiße Kristalle" },
-        { num: 3, dir: "down", row: 0, col: 3, answer: "EIS", clue: "Gefrorenes Wasser (oder eine süße Speise)" },
+      ],
+    },
+    {
+      title: "Rätsel 3",
+      rows: 5, cols: 4,
+      grid: [
+        ["B", "R", "O", "T"],
+        ["U", "#", "#", "A"],
+        ["C", "#", "#", "S"],
+        ["H", "#", "#", "S"],
+        ["#", "#", "#", "E"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "BROT", clue: "Aus Mehl gebackenes Grundnahrungsmittel" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "BUCH", clue: "Gedruckte Seiten zum Lesen" },
+        { num: 2, dir: "down", row: 0, col: 3, answer: "TASSE", clue: "Gefäß für heiße Getränke, mit Henkel" },
       ],
     },
   ];
@@ -1691,13 +1801,31 @@
     const w = puzzle.words.find((w) => w.row === r && w.col === c);
     return w ? w.num : null;
   }
+  function cwWordCells(w) {
+    const cells = [];
+    for (let i = 0; i < w.answer.length; i++) cells.push(w.dir === "across" ? [w.row, w.col + i] : [w.row + i, w.col]);
+    return cells;
+  }
+  function cwFindWord(puzzle, r, c, dir) {
+    return puzzle.words.find((w) => w.dir === dir && cwWordCells(w).some(([wr, wc]) => wr === r && wc === c));
+  }
+  function cwNextCell(puzzle, r, c, dir) {
+    const word = cwFindWord(puzzle, r, c, dir);
+    if (!word) return null;
+    const cells = cwWordCells(word);
+    const idx = cells.findIndex(([wr, wc]) => wr === r && wc === c);
+    if (idx === -1 || idx === cells.length - 1) return null;
+    return cells[idx + 1];
+  }
   function renderCrossword() {
     const area = document.getElementById("crosswordArea");
     if (!cwState) newCrossword(0);
     const { puzzle } = cwState;
+    if (!cwState.activeDir) cwState.activeDir = "across";
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">✏️ KREUZWORTRÄTSEL · ${puzzle.title}</p>
+        <p class="empty-note" style="margin-bottom:10px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
         <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, 1fr); max-width: ${puzzle.cols * 42}px;">
           ${puzzle.grid.map((row, r) => row.map((ch, c) => {
             if (ch === "#") return `<div class="cw-cell cw-block"></div>`;
@@ -1708,7 +1836,7 @@
             const isWrong = cwState.checked && entered && entered.toUpperCase() !== ch;
             return `<div class="cw-cell ${isCorrect ? "cw-correct" : ""} ${isWrong ? "cw-wrong" : ""}">
               ${num ? `<span class="cw-num">${num}</span>` : ""}
-              <input type="text" maxlength="1" class="cw-input" data-r="${r}" data-c="${c}" value="${entered}" />
+              <input type="text" inputmode="text" autocomplete="off" autocapitalize="characters" class="cw-input" data-r="${r}" data-c="${c}" value="${entered}" />
             </div>`;
           }).join("")).join("")}
         </div>
@@ -1730,14 +1858,60 @@
       </div>
     `;
     area.querySelectorAll(".cw-input").forEach((input) => {
+      const r = Number(input.dataset.r), c = Number(input.dataset.c);
+      // Beim Antippen die Schreibrichtung festlegen: startet die Zelle ein Runter-Wort, aber
+      // kein Waagerecht-Wort, ist "runter" gemeint. Startet sie ein Waagerecht-Wort, gilt das
+      // (Standard-Konvention bei Kreuzworträtseln). Erneutes Antippen derselben Kreuzungszelle
+      // schaltet um. "click" statt "focus", damit das automatische Weiterspringen beim Tippen
+      // die Richtung nicht versehentlich zurücksetzt.
+      input.addEventListener("click", () => {
+        const hasAcross = !!cwFindWord(puzzle, r, c, "across");
+        const hasDown = !!cwFindWord(puzzle, r, c, "down");
+        const startsAcross = puzzle.words.some((w) => w.dir === "across" && w.row === r && w.col === c);
+        const startsDown = puzzle.words.some((w) => w.dir === "down" && w.row === r && w.col === c);
+        const sameCell = cwState.lastFocusedCell === `${r}-${c}`;
+        if (sameCell && hasAcross && hasDown) {
+          cwState.activeDir = cwState.activeDir === "across" ? "down" : "across";
+        } else if (startsDown && !startsAcross) {
+          cwState.activeDir = "down";
+        } else if (startsAcross) {
+          cwState.activeDir = "across";
+        } else if (!(cwState.activeDir === "across" && hasAcross) && !(cwState.activeDir === "down" && hasDown)) {
+          cwState.activeDir = hasAcross ? "across" : "down";
+        }
+        cwState.lastFocusedCell = `${r}-${c}`;
+      });
+      // Kein maxlength mehr — stattdessen wird beim Tippen immer nur das ZULETZT eingegebene
+      // Zeichen übernommen. Das funktioniert zuverlässig mit jeder Tastatur (auch virtuelle
+      // Handy-Tastaturen), unabhängig davon, ob die Zelle vorher schon einen Buchstaben (durch
+      // das kreuzende Wort) enthielt — man kann an Kreuzungsfeldern also ganz normal weiterschreiben.
       input.addEventListener("input", (e) => {
-        const val = e.target.value.toUpperCase().replace(/[^A-ZÄÖÜ]/g, "");
+        const raw = e.target.value.toUpperCase().replace(/[^A-ZÄÖÜ]/g, "");
+        const val = raw.slice(-1); // nur das zuletzt getippte Zeichen behalten
         e.target.value = val;
-        cwState.entries[`${input.dataset.r}-${input.dataset.c}`] = val;
+        cwState.entries[`${r}-${c}`] = val;
         if (val) {
-          const inputs = [...area.querySelectorAll(".cw-input")];
-          const idx = inputs.indexOf(input);
-          if (idx > -1 && idx < inputs.length - 1) inputs[idx + 1].focus();
+          const next = cwNextCell(puzzle, r, c, cwState.activeDir);
+          if (next) {
+            const [nr, nc] = next;
+            const nextInput = area.querySelector(`.cw-input[data-r="${nr}"][data-c="${nc}"]`);
+            // preventScroll verhindert, dass die Seite bei jedem Buchstaben hin- und herspringt.
+            if (nextInput) nextInput.focus({ preventScroll: true });
+          }
+        }
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && !input.value) {
+          const word = cwFindWord(puzzle, r, c, cwState.activeDir);
+          if (word) {
+            const cells = cwWordCells(word);
+            const idx = cells.findIndex(([wr, wc]) => wr === r && wc === c);
+            if (idx > 0) {
+              const [pr, pc] = cells[idx - 1];
+              const prevInput = area.querySelector(`.cw-input[data-r="${pr}"][data-c="${pc}"]`);
+              if (prevInput) prevInput.focus({ preventScroll: true });
+            }
+          }
         }
       });
     });
@@ -1757,7 +1931,7 @@
           character: "Rätsel-Genie", badges: [], playedAt: new Date().toISOString(),
         });
         if (Backend.currentUser()) {
-          Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade das Kreuzworträtsel „${puzzle.title}" gelöst — alles richtig!`);
+          Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade das Kreuzworträtsel „${puzzle.title}" gelöst — alles richtig! (${puzzle.words.length} Wörter, ${seconds < 60 ? "+1 Tempo-Bonus" : "kein Tempo-Bonus"})`);
         }
       } else {
         Core.sound.wrong();
@@ -2304,31 +2478,6 @@
             <button type="button" class="btn btn-ghost" id="muteNotifyBtn">${isNotifyMuted() ? "🔔 Ton wieder einschalten" : "🔕 Ton & Blinken stummschalten"}</button>
           </div>
         </div>` : ""}
-        ${user ? `
-        <div class="question-card" style="margin-bottom:14px;">
-          <h3>🎨 Benachrichtigungs-Einstellungen</h3>
-          <p class="empty-note" style="margin-bottom:10px;">Töne und Farben ab einer bestimmten Punktzahl freigeschaltet — eine kleine Belohnung fürs Üben.</p>
-          <p style="font-weight:700; margin-bottom:6px;">Ton</p>
-          <div class="trophy-case" style="margin-bottom:14px;">
-            ${Object.entries(NOTIFY_SOUND_PRESETS).map(([key, p]) => {
-              const unlocked = profile.points >= p.unlockPoints;
-              const active = getNotifySoundKey() === key;
-              return `<button type="button" class="trophy-chip notify-preset-btn ${active ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-sound-key="${key}" ${!unlocked ? "disabled" : ""}>${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
-            }).join("")}
-          </div>
-          <p style="font-weight:700; margin-bottom:6px;">Farbe (Lämpchen &amp; Ring)</p>
-          <div class="trophy-case" style="margin-bottom:14px;">
-            ${Object.entries(NOTIFY_COLOR_PRESETS).map(([key, p]) => {
-              const unlocked = profile.points >= p.unlockPoints;
-              const active = getNotifyColorKey() === key;
-              return `<button type="button" class="trophy-chip notify-preset-btn ${active ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-color-key="${key}" ${!unlocked ? "disabled" : ""}>${p.label}${!unlocked ? ` 🔒 ${p.unlockPoints}P` : ""}</button>`;
-            }).join("")}
-          </div>
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-            <input type="checkbox" id="tickerBlinkCheck" ${isTickerBlinkOn() ? "checked" : ""} ${profile.points >= 400 ? "" : "disabled"} />
-            <span>Laufband beim Aktualisieren blinken lassen ${profile.points >= 400 ? "" : "🔒 400P"}</span>
-          </label>
-        </div>` : ""}
         <div class="question-card profile-card-view">
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header">
@@ -2339,6 +2488,7 @@
                 <button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>
                 ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
                 ${originFlag ? `<span class="empty-note">${originFlag} ${profile.origin}</span>` : ""}
+                ${zodiacBadgeHtml(profile.birthday)}
               </div>
             </div>
           </div>
@@ -2408,23 +2558,6 @@
           if (loginBtn) loginBtn.classList.toggle("notify-ring", !isNotifyMuted() && myUnread.length > 0);
           renderAccount();
         });
-      }
-      area.querySelectorAll("[data-sound-key]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          setNotifySoundKey(btn.dataset.soundKey);
-          playNotifySound(btn.dataset.soundKey);
-          renderAccount();
-        });
-      });
-      area.querySelectorAll("[data-color-key]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          setNotifyColorKey(btn.dataset.colorKey);
-          renderAccount();
-        });
-      });
-      const tickerBlinkCheck = document.getElementById("tickerBlinkCheck");
-      if (tickerBlinkCheck) {
-        tickerBlinkCheck.addEventListener("change", () => setTickerBlink(tickerBlinkCheck.checked));
       }
       area.querySelectorAll("[data-approve-text]").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -3034,7 +3167,8 @@
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
         Core.el("div", { class: "modal-meta-row" },
           Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`),
-          originFlag ? Core.el("span", { class: "empty-note" }, `${originFlag} ${p.origin}`) : ""
+          originFlag ? Core.el("span", { class: "empty-note" }, `${originFlag} ${p.origin}`) : "",
+          Core.el("div", { html: zodiacBadgeHtml(p.birthday) })
         ),
         Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
           theirFriends.length
@@ -3689,6 +3823,7 @@
       if (pill.dataset.sub === "sub-account") renderAccount();
       if (pill.dataset.sub === "sub-friends") renderFriends();
       if (pill.dataset.sub === "sub-design") renderDesign();
+      if (pill.dataset.sub === "sub-settings") renderSettings();
       if (pill.dataset.sub === "sub-inbox") renderInbox();
     });
   });

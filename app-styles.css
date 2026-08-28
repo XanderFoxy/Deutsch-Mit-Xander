@@ -407,12 +407,23 @@
 
 .breakdown-list { margin-top: var(--space-5); display: flex; flex-direction: column; gap: 8px; }
 .breakdown-row {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px;
   padding: 10px 14px;
   background: var(--plum-700);
   border-radius: var(--radius-sm);
   font-size: 0.88rem;
 }
+.breakdown-row > span:first-child { flex-shrink: 0; }
+.breakdown-row > span:last-child { text-align: right; overflow-wrap: break-word; word-break: normal; min-width: 0; }
+.zodiac-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.78rem; color: var(--cream-200);
+  background: rgba(0,0,0,0.06);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.zodiac-badge svg { color: var(--amber-400); flex-shrink: 0; }
 .breakdown-bar-wrap {
   flex: 1; margin: 0 12px; height: 6px; background: var(--plum-800); border-radius: 999px; overflow: hidden;
 }
