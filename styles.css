@@ -183,6 +183,13 @@ button:focus-visible,
 .brand-mark::before {
   content: var(--logo-emoji);
 }
+/* Bei manchen Designs verschwimmt das Symbol mit dem Hintergrund seines eigenen kleinen Kreises
+   (z. B. helle Glitzer-/Küken-Symbole auf ähnlich hellem Gelb) — dort bekommt es einen dezenten
+   Schlagschatten, damit es sich abhebt. Bewusst nur bei den betroffenen Designs, nicht überall. */
+[data-theme="sternennacht"] .brand-mark::before,
+[data-theme="osterwiese"] .brand-mark::before {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
 
 .brand-name {
   font-family: var(--font-display);

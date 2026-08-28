@@ -1244,17 +1244,15 @@
 }
 .calendar-modal-page {
   position: relative;
-  width: min(88vw, 320px);
-  height: min(88vw, 320px);
+  width: min(88vw, 340px);
+  height: min(80vh, 460px);
   perspective: 1400px;
   z-index: 501;
 }
-.calendar-modal-page.torn { height: min(520px, 80vh); }
 .cal-face {
   position: absolute; inset: 0;
   border-radius: 12px;
   backface-visibility: hidden;
-  transition: transform 0.7s cubic-bezier(0.4,0.1,0.2,1);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   box-shadow: 0 12px 30px rgba(0,0,0,0.35);
   padding: 20px;
@@ -1268,13 +1266,21 @@
 .cal-front {
   background: #fff;
   cursor: pointer;
+  /* Drehpunkt unten links: so wirkt das Abreißen, als würde man die Ecke mit Daumen und
+     Zeigefinger von unten links greifen und wegziehen, statt die Seite einfach flach umzuklappen. */
+  transform-origin: bottom left;
+  transition: transform 0.85s cubic-bezier(0.5, -0.2, 0.3, 1.3);
 }
 .cal-back {
   background: #FBF3E8;
-  transform: rotateY(180deg);
+  transform-origin: bottom left;
+  transform: rotate3d(1, 1, 0, 150deg);
+  transition: transform 0.85s cubic-bezier(0.5, -0.2, 0.3, 1.3);
 }
-.calendar-modal-page.torn .cal-front { transform: rotateY(-180deg); }
-.calendar-modal-page.torn .cal-back { transform: rotateY(0deg); }
+/* Diagonale Drehachse (x UND y gleichzeitig) statt reiner rotateY — das erzeugt die
+   "von der Ecke weggezogen"-Bewegung aus der richtigen Richtung, nicht nur ein flaches Umklappen. */
+.calendar-modal-page.torn .cal-front { transform: rotate3d(1, 1, 0, -150deg) translate(-6px, 6px); }
+.calendar-modal-page.torn .cal-back { transform: rotate3d(1, 1, 0, 0deg); }
 .cal-corner-big {
   position: absolute; bottom: 0; right: 0;
   width: 0; height: 0;

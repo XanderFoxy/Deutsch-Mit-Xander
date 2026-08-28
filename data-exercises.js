@@ -105,6 +105,242 @@ const ExerciseData = (function () {
 
   // Tagestipps für den Abreißkalender — jeder mit einem sorgfältig geprüften Betonungs-Beispiel
   // (nicht geraten: nur Wörter, bei denen die Betonung eindeutig und bekannt ist).
+  // "Es war einmal in Deutschland" — Datum-für-Datum echte deutsche Geschichte, wie ein
+  // kleines "Auf den Tag genau"-Format. WICHTIG: Nur Einträge, die tatsächlich per Websuche
+  // gegengeprüft sind, landen hier — kein Datum wird geraten oder aus der Erinnerung erfunden.
+  // Das ist bewusst noch keine vollständige 365-Tage-Sammlung, sondern ein wachsender, aber
+  // zuverlässiger Grundstock. Format: "MM-DD".
+  // "Es war einmal in Deutschland" — Datum-für-Datum echte deutsche Geschichte. Jeder Tag hat
+  // GENAU EIN Hauptereignis (das wichtigste), optional weitere "Nebenfakten" darunter. Texte in
+  // 6 Sprachniveaus (A1–C2), damit man direkt beim Lesen üben kann — inhaltlich immer dieselbe,
+  // geprüfte Tatsache, nur unterschiedlich komplex formuliert. Bewusst noch keine 365-Tage-Liste,
+  // sondern ein sorgfältig recherchierter, wachsender Grundstock.
+  const GERMAN_HISTORY_TODAY = {
+    "01-30": {
+      year: 1933,
+      levels: {
+        A1: "Am 30. Januar 1933 wird Adolf Hitler Reichskanzler. Das ist der Beginn einer schweren Zeit für Deutschland.",
+        A2: "Am 30. Januar 1933 ernennt Reichspräsident Hindenburg Adolf Hitler zum Reichskanzler. Damit beginnt die Diktatur der Nationalsozialisten.",
+        B1: "Am 30. Januar 1933 wird Adolf Hitler zum Reichskanzler ernannt. Dieser Tag gilt als der Beginn der nationalsozialistischen Diktatur, die zwölf Jahre dauern und Millionen Menschen das Leben kosten sollte.",
+        B2: "Am 30. Januar 1933 ernennt Reichspräsident Paul von Hindenburg Adolf Hitler zum Reichskanzler. Was als scheinbar legaler Machtwechsel begann, entwickelte sich rasch zur Zerstörung der Demokratie und zur Errichtung einer menschenverachtenden Diktatur.",
+        C1: "Am 30. Januar 1933 wurde Adolf Hitler von Reichspräsident Paul von Hindenburg zum Reichskanzler ernannt — ein Datum, das rückblickend als Zäsur der deutschen und europäischen Geschichte gilt, da es den Beginn der nationalsozialistischen Gewaltherrschaft markierte.",
+        C2: "Die Ernennung Adolf Hitlers zum Reichskanzler am 30. Januar 1933 durch Reichspräsident Hindenburg vollzog sich formal im Rahmen der Weimarer Verfassung und wird gerade deshalb bis heute als mahnendes Beispiel dafür herangezogen, wie fragil demokratische Institutionen gegenüber autoritären Bestrebungen sein können.",
+      },
+      sideFacts: [],
+    },
+    "01-18": {
+      year: 1871,
+      levels: {
+        A1: "Am 18. Januar 1871 wird Deutschland ein Land. Vorher gab es viele kleine Länder.",
+        A2: "Am 18. Januar 1871 wird das Deutsche Kaiserreich gegründet. Viele kleine deutsche Staaten werden jetzt ein Land.",
+        B1: "Am 18. Januar 1871 wird im Schloss von Versailles das Deutsche Kaiserreich ausgerufen. Preußenkönig Wilhelm I. wird der erste deutsche Kaiser.",
+        B2: "Am 18. Januar 1871 wird im Spiegelsaal von Versailles das Deutsche Kaiserreich proklamiert — ausgerechnet im besiegten Frankreich, nach dem gewonnenen Deutsch-Französischen Krieg. Wilhelm I. wird zum ersten deutschen Kaiser.",
+        C1: "Die Proklamation des Deutschen Kaiserreichs am 18. Januar 1871 im Spiegelsaal von Versailles markierte die erste staatliche Einigung Deutschlands unter preußischer Führung — ein Akt, dessen symbolischer Austragungsort im besiegten Frankreich bis heute als bewusste Demütigung gedeutet wird.",
+        C2: "Die im Spiegelsaal von Versailles vollzogene Kaiserproklamation vom 18. Januar 1871 besiegelte die 'kleindeutsche' Reichsgründung unter preußischer Hegemonie und offenbarte zugleich, wie eng nationale Einigung und militärischer Triumph über Frankreich historisch miteinander verflochten waren.",
+      },
+      sideFacts: [],
+    },
+    "01-27": {
+      year: 1945,
+      levels: {
+        A1: "Am 27. Januar 1945 befreien Soldaten das Lager Auschwitz. Dort sind viele Menschen gestorben.",
+        A2: "Am 27. Januar 1945 befreit die Rote Armee das Konzentrationslager Auschwitz. Seitdem ist das der Gedenktag für die Opfer des Nationalsozialismus.",
+        B1: "Am 27. Januar 1945 befreit die sowjetische Rote Armee das Konzentrationslager Auschwitz-Birkenau. Der Tag ist heute der offizielle Gedenktag für die Opfer des Nationalsozialismus.",
+        B2: "Am 27. Januar 1945 erreichen sowjetische Soldaten das Konzentrations- und Vernichtungslager Auschwitz-Birkenau und befreien die wenigen überlebenden Häftlinge. Der Tag erinnert seit 1996 in Deutschland offiziell an alle Opfer des Nationalsozialismus.",
+        C1: "Die Befreiung des Konzentrations- und Vernichtungslagers Auschwitz-Birkenau durch die Rote Armee am 27. Januar 1945 gilt als Symbol für das Ausmaß der nationalsozialistischen Verbrechen. Seit 1996 ist dieses Datum in Deutschland gesetzlich verankerter Gedenktag für alle Opfer des Nationalsozialismus.",
+        C2: "Der 27. Januar 1945, an dem sowjetische Truppen das Vernichtungslager Auschwitz-Birkenau erreichten und die letzten Überlebenden befreiten, wurde 1996 auf Initiative von Bundespräsident Roman Herzog zum nationalen Gedenktag erhoben — ein Akt staatlich institutionalisierter Erinnerungskultur.",
+      },
+      sideFacts: [],
+    },
+    "02-27": {
+      year: 1933,
+      levels: {
+        A1: "Am 27. Februar 1933 brennt der Reichstag in Berlin. Das ist ein wichtiges Gebäude.",
+        A2: "Am 27. Februar 1933 brennt das Reichstagsgebäude in Berlin. Die Nationalsozialisten nutzen das, um Gegner zu verhaften.",
+        B1: "Am 27. Februar 1933 brennt das Reichstagsgebäude in Berlin. Die Nationalsozialisten nutzen den Brand als Vorwand, um politische Gegner zu verhaften und die Demokratie weiter einzuschränken.",
+        B2: "Am 27. Februar 1933 steht das Reichstagsgebäude in Berlin in Flammen. Die NS-Führung nutzt den Brand sofort als Vorwand für die 'Reichstagsbrandverordnung', die zentrale Grundrechte außer Kraft setzt und den Weg zur Diktatur ebnet.",
+        C1: "Der Reichstagsbrand vom 27. Februar 1933 diente der NS-Führung als Vorwand für die noch in derselben Nacht erlassene 'Reichstagsbrandverordnung', mit der zentrale Grundrechte suspendiert wurden — ein entscheidender rechtlicher Schritt auf dem Weg zur Etablierung der Diktatur.",
+        C2: "Die bis heute nicht restlos geklärte Urheberschaft des Reichstagsbrands vom 27. Februar 1933 trat historisch hinter seine politische Instrumentalisierung zurück: Die noch in der Brandnacht erlassene Notverordnung hebelte rechtsstaatliche Grundprinzipien aus und schuf die Grundlage für die systematische Verfolgung politischer Gegner.",
+      },
+      sideFacts: [],
+    },
+    "06-17": {
+      year: 1953,
+      levels: {
+        A1: "Am 17. Juni 1953 protestieren Menschen in der DDR. Sie wollen mehr Freiheit.",
+        A2: "Am 17. Juni 1953 gehen viele Menschen in der DDR auf die Straße. Sie protestieren gegen die Regierung. Sowjetische Panzer stoppen den Protest.",
+        B1: "Am 17. Juni 1953 erheben sich Arbeiter in der ganzen DDR gegen die Regierung. Der Volksaufstand wird noch am selben Tag von sowjetischen Panzern gewaltsam niedergeschlagen.",
+        B2: "Am 17. Juni 1953 weitet sich ein Streik Ost-Berliner Bauarbeiter zu einem landesweiten Volksaufstand in der DDR aus — mit Forderungen nach besseren Arbeitsbedingungen, aber auch nach freien Wahlen. Sowjetische Panzer schlagen den Aufstand noch am selben Tag blutig nieder.",
+        C1: "Der Volksaufstand vom 17. Juni 1953, der aus einem Streik Ost-Berliner Bauarbeiter gegen erhöhte Arbeitsnormen entstand und sich zu landesweiten politischen Protesten ausweitete, wurde durch das Eingreifen sowjetischer Panzerverbände blutig niedergeschlagen. In der Bundesrepublik wurde der Tag lange als Nationalfeiertag begangen.",
+        C2: "Die Eskalation eines zunächst rein arbeitsrechtlich motivierten Streiks Ost-Berliner Bauarbeiter zum landesweiten Volksaufstand am 17. Juni 1953 offenbarte die Fragilität der SED-Herrschaft und wurde erst durch das militärische Eingreifen sowjetischer Streitkräfte beendet — ein Ereignis, das in der westdeutschen Erinnerungskultur bis 1990 als Nationalfeiertag verankert war.",
+      },
+      sideFacts: [],
+    },
+    "07-20": {
+      year: 1944,
+      levels: {
+        A1: "Am 20. Juli 1944 versucht ein Mann, Hitler zu töten. Es klappt nicht.",
+        A2: "Am 20. Juli 1944 versucht Claus von Stauffenberg, Adolf Hitler mit einer Bombe zu töten. Der Plan gelingt nicht.",
+        B1: "Am 20. Juli 1944 verübt Claus Schenk Graf von Stauffenberg ein Bombenattentat auf Adolf Hitler, das misslingt. Es ist eines der bekanntesten Beispiele für Widerstand gegen die NS-Diktatur.",
+        B2: "Am 20. Juli 1944 platziert Claus Schenk Graf von Stauffenberg eine Bombe in Hitlers Hauptquartier — der Anschlag misslingt knapp. Stauffenberg und weitere Verschwörer werden noch in derselben Nacht hingerichtet.",
+        C1: "Das Attentat vom 20. Juli 1944, verübt von Claus Schenk Graf von Stauffenberg im Rahmen der Operation 'Walküre', scheiterte nur knapp am Zufall der Bombenplatzierung. Die anschließende Verhaftungswelle traf hunderte Mitglieder des militärischen und zivilen Widerstands.",
+        C2: "Das gescheiterte Stauffenberg-Attentat vom 20. Juli 1944 gilt trotz seines Misslingens als zentraler Bezugspunkt der deutschen Erinnerungskultur zum Widerstand gegen den Nationalsozialismus, wenngleich seine Rezeption in der Nachkriegszeit lange von Kontroversen über die Motive der beteiligten Militärs geprägt war.",
+      },
+      sideFacts: [],
+    },
+    "09-01": {
+      year: 1939,
+      levels: {
+        A1: "Am 1. September 1939 beginnt ein Krieg. Deutschland greift Polen an.",
+        A2: "Am 1. September 1939 überfällt Deutschland Polen. Das ist der Beginn des Zweiten Weltkriegs.",
+        B1: "Am 1. September 1939 überfällt Deutschland ohne Kriegserklärung Polen. Damit beginnt der Zweite Weltkrieg, der sechs Jahre dauern und Millionen Menschenleben kosten wird.",
+        B2: "Am 1. September 1939 beginnt die deutsche Wehrmacht ohne Kriegserklärung den Angriff auf Polen — mit einem fingierten Grenzzwischenfall als Vorwand. Der Zweite Weltkrieg, der folgenreichste Konflikt der Geschichte, nimmt seinen Anfang.",
+        C1: "Der deutsche Überfall auf Polen am 1. September 1939, eingeleitet durch einen von der SS inszenierten Grenzzwischenfall bei Gleiwitz, markiert den Beginn des Zweiten Weltkriegs. Großbritannien und Frankreich erklärten Deutschland zwei Tage später den Krieg.",
+        C2: "Der am 1. September 1939 unter dem Vorwand eines fingierten Grenzzwischenfalls begonnene Angriff auf Polen setzte den bereits im Hitler-Stalin-Pakt vereinbarten Aufteilungsplan Osteuropas in die Tat um und löste eine Kriegskatastrophe aus, deren Ausmaß alle vorangegangenen europäischen Konflikte übertraf.",
+      },
+      sideFacts: [],
+    },
+    "10-07": {
+      year: 1949,
+      levels: {
+        A1: "Am 7. Oktober 1949 gibt es einen neuen Staat. Er heißt DDR.",
+        A2: "Am 7. Oktober 1949 wird die DDR gegründet. Das ist der zweite deutsche Staat neben der Bundesrepublik.",
+        B1: "Am 7. Oktober 1949 wird die Deutsche Demokratische Republik (DDR) gegründet — der zweite deutsche Staat, wenige Monate nach der Bundesrepublik im Westen.",
+        B2: "Am 7. Oktober 1949 wird im Ostteil Deutschlands die Deutsche Demokratische Republik (DDR) gegründet — als sozialistischer Gegenpart zur wenige Monate zuvor gegründeten Bundesrepublik im Westen. Deutschland ist damit endgültig in zwei Staaten geteilt.",
+        C1: "Mit der Gründung der Deutschen Demokratischen Republik am 7. Oktober 1949 vollzog sich die staatliche Teilung Deutschlands, nachdem im Westen bereits im Mai desselben Jahres die Bundesrepublik entstanden war — eine direkte Folge der sich verschärfenden Systemkonkurrenz des beginnenden Kalten Krieges.",
+        C2: "Die Gründung der DDR am 7. Oktober 1949 komplettierte die staatliche Zweiteilung Deutschlands und verlieh der bereits faktisch bestehenden Blockkonfrontation eine institutionelle Form, die für die folgenden vierzig Jahre die politische Landkarte Europas prägen sollte.",
+      },
+      sideFacts: [],
+    },
+    "10-09": {
+      year: 1989,
+      levels: {
+        A1: "Am 9. Oktober 1989 gehen viele Menschen in Leipzig auf die Straße. Sie wollen Freiheit.",
+        A2: "Am 9. Oktober 1989 demonstrieren rund 70.000 Menschen in Leipzig friedlich für Freiheit. Das ist ein wichtiger Moment der Friedlichen Revolution.",
+        B1: "Am 9. Oktober 1989 demonstrieren in Leipzig rund 70.000 Menschen friedlich gegen die DDR-Regierung. Es ist einer der entscheidenden Momente der Friedlichen Revolution — die Staatsmacht greift nicht ein.",
+        B2: "Am 9. Oktober 1989 versammeln sich in Leipzig rund 70.000 Menschen zur bis dahin größten Montagsdemonstration der DDR. Anders als befürchtet greift die Staatsmacht nicht gewaltsam ein — ein entscheidender Wendepunkt der Friedlichen Revolution.",
+        C1: "Die Leipziger Montagsdemonstration vom 9. Oktober 1989, an der sich etwa 70.000 Menschen beteiligten, gilt als Schlüsselmoment der Friedlichen Revolution: Das Ausbleiben eines befürchteten gewaltsamen Eingreifens der Sicherheitskräfte ermutigte in den folgenden Wochen Zehntausende weitere Demonstranten in der gesamten DDR.",
+        C2: "Dass die Staatsführung am 9. Oktober 1989 in Leipzig trotz massiver Mobilisierung von Sicherheitskräften von einem gewaltsamen Vorgehen gegen die rund 70.000 Demonstranten absah, markierte einen faktischen Kontrollverlust des SED-Regimes und gilt rückblickend als der Moment, ab dem die Friedliche Revolution ihre Unumkehrbarkeit gewann.",
+      },
+      sideFacts: [],
+    },
+    "10-31": {
+      year: 1517,
+      levels: {
+        A1: "Am 31. Oktober 1517 schreibt Martin Luther wichtige Sätze. Das ist der Beginn der Reformation.",
+        A2: "Am 31. Oktober 1517 veröffentlicht Martin Luther seine 95 Thesen. Er kritisiert die katholische Kirche. Das ist der Beginn der Reformation.",
+        B1: "Am 31. Oktober 1517 schlägt Martin Luther der Überlieferung nach seine 95 Thesen an die Kirchentür in Wittenberg. Er kritisiert damit den Ablasshandel der katholischen Kirche — der Beginn der Reformation.",
+        B2: "Am 31. Oktober 1517 soll Martin Luther seine 95 Thesen gegen den Ablasshandel an die Tür der Wittenberger Schlosskirche geschlagen haben — ob dies historisch tatsächlich so geschah, ist unter Historikern umstritten. Fest steht: Die Reformation nahm hier ihren Anfang und spaltete die westliche Christenheit.",
+        C1: "Der überlieferte Thesenanschlag Martin Luthers am 31. Oktober 1517, dessen genauer Ablauf historisch nicht zweifelsfrei belegt ist, gilt symbolisch als Beginn der Reformation. Luthers Kritik am Ablasshandel entfachte eine theologische und politische Bewegung, die die konfessionelle Landkarte Europas nachhaltig veränderte.",
+        C2: "Unabhängig von der historisch umstrittenen Faktizität des Thesenanschlags am 31. Oktober 1517 markiert dieses Datum symbolisch den Auftakt der Reformation, deren theologische Kernanliegen — insbesondere die Kritik am Ablasswesen — eine Kettenreaktion auslösten, die zur dauerhaften konfessionellen Spaltung des Abendlandes führte.",
+      },
+      sideFacts: [],
+    },
+    "05-08": {
+      year: 1945,
+      levels: {
+        A1: "Am 8. Mai 1945 ist der Krieg in Deutschland zu Ende. Viele Menschen sind froh und traurig zugleich.",
+        A2: "Am 8. Mai 1945 kapituliert Deutschland ohne Bedingungen. Der Zweite Weltkrieg endet in Europa nach fast sechs Jahren.",
+        B1: "Am 8. Mai 1945 unterschreibt die deutsche Wehrmacht die bedingungslose Kapitulation. Damit endet der Zweite Weltkrieg in Europa, der Millionen Menschen das Leben gekostet hat.",
+        B2: "Am 8. Mai 1945 kapituliert die deutsche Wehrmacht bedingungslos vor den Alliierten. Nach fast sechs Jahren Krieg und unermesslichem Leid endet damit der Zweite Weltkrieg in Europa — ein Datum, das später auch als 'Tag der Befreiung' bezeichnet wurde.",
+        C1: "Am 8. Mai 1945 unterzeichnete die deutsche Wehrmacht in Berlin-Karlshorst die bedingungslose Kapitulation, womit der Zweite Weltkrieg in Europa nach nahezu sechs Jahren offiziell endete. Für die Opfer der nationalsozialistischen Verfolgung bedeutete dieser Tag zugleich die Befreiung.",
+        C2: "Die bedingungslose Kapitulation der Wehrmacht am 8. Mai 1945 in Berlin-Karlshorst besiegelte das Ende des Zweiten Weltkriegs in Europa — ein Wendepunkt, dessen Deutung zwischen 'Niederlage' und 'Befreiung' lange umstritten war, bis Bundespräsident Richard von Weizsäcker 1985 in einer vielbeachteten Rede beide Perspektiven zusammenführte.",
+      },
+      sideFacts: [],
+    },
+    "05-23": {
+      year: 1949,
+      levels: {
+        A1: "Am 23. Mai 1949 bekommt Deutschland ein neues Gesetz. Es heißt Grundgesetz. Die Bundesrepublik Deutschland beginnt.",
+        A2: "Am 23. Mai 1949 wird das Grundgesetz verkündet. Es ist die neue Verfassung. Damit beginnt die Bundesrepublik Deutschland.",
+        B1: "Am 23. Mai 1949 wird das Grundgesetz feierlich verkündet und tritt am nächsten Tag in Kraft. Dieser Tag gilt als die Geburtsstunde der Bundesrepublik Deutschland.",
+        B2: "Am 23. Mai 1949 verkündet der Parlamentarische Rat unter Konrad Adenauer das Grundgesetz für die Bundesrepublik Deutschland. Es beginnt mit dem Satz 'Die Würde des Menschen ist unantastbar' — eine bewusste Antwort auf die NS-Diktatur.",
+        C1: "Am 23. Mai 1949 wurde das Grundgesetz vom Parlamentarischen Rat unter dem Vorsitz Konrad Adenauers feierlich verkündet und trat einen Tag später in Kraft. Der berühmte erste Satz — 'Die Würde des Menschen ist unantastbar' — war als bewusste Lehre aus der nationalsozialistischen Gewaltherrschaft formuliert.",
+        C2: "Die feierliche Verkündung des Grundgesetzes am 23. Mai 1949 markierte die Gründung der Bundesrepublik Deutschland und war zugleich als bewusster Gegenentwurf zur nationalsozialistischen Diktatur konzipiert, was sich exemplarisch im Eröffnungssatz 'Die Würde des Menschen ist unantastbar' niederschlägt.",
+      },
+      sideFacts: [],
+    },
+    "08-13": {
+      year: 1961,
+      levels: {
+        A1: "Am 13. August 1961 baut die DDR eine Mauer in Berlin. Die Stadt ist jetzt geteilt.",
+        A2: "Am 13. August 1961 beginnt der Bau der Berliner Mauer über Nacht. Berlin und Deutschland werden geteilt.",
+        B1: "Am 13. August 1961 beginnt die DDR über Nacht mit dem Bau der Berliner Mauer. Familien und Freunde werden plötzlich getrennt — für 28 Jahre.",
+        B2: "In der Nacht zum 13. August 1961 beginnt die DDR-Führung überraschend mit dem Bau der Berliner Mauer, um die Flucht in den Westen zu stoppen. Über Nacht werden Familien getrennt, Straßen und U-Bahn-Linien unterbrochen.",
+        C1: "In der Nacht zum 13. August 1961 begann die DDR-Führung mit dem Bau der Berliner Mauer — eine Reaktion auf die massenhafte Flucht von DDR-Bürgern in den Westen. Für 28 Jahre teilte die Mauer nicht nur eine Stadt, sondern symbolisierte die Teilung ganz Europas.",
+        C2: "Der überraschende Mauerbau in der Nacht zum 13. August 1961 war das Ergebnis eines eskalierenden Exodus von DDR-Bürgern in den Westen und wurde von der SED-Führung euphemistisch als 'antifaschistischer Schutzwall' bezeichnet — eine Formulierung, die bis heute als Sinnbild propagandistischer Sprachverdrehung gilt.",
+      },
+      sideFacts: [],
+    },
+    "10-03": {
+      year: 1990,
+      levels: {
+        A1: "Am 3. Oktober 1990 werden Ost- und Westdeutschland wieder ein Land. Das ist der Tag der Deutschen Einheit.",
+        A2: "Am 3. Oktober 1990 tritt die DDR der Bundesrepublik bei. Deutschland ist wieder ein Land. Seitdem feiern die Deutschen an diesem Tag.",
+        B1: "Am 3. Oktober 1990 tritt die DDR offiziell der Bundesrepublik Deutschland bei — nach 41 Jahren Teilung ist Deutschland wieder ein Land. Seitdem ist der 3. Oktober der Nationalfeiertag.",
+        B2: "Am 3. Oktober 1990 vollzieht sich die deutsche Wiedervereinigung: Die DDR tritt der Bundesrepublik bei, knapp ein Jahr nach dem Fall der Berliner Mauer. Der Tag wird seitdem als 'Tag der Deutschen Einheit' gefeiert.",
+        C1: "Mit dem Beitritt der DDR zur Bundesrepublik Deutschland am 3. Oktober 1990 endete die 41-jährige Teilung des Landes — ein Prozess, der nur knapp ein Jahr nach dem Fall der Berliner Mauer im November 1989 in bemerkenswertem Tempo vollzogen wurde.",
+        C2: "Die formale Wiedervereinigung Deutschlands am 3. Oktober 1990, vollzogen über den Beitritt der DDR nach Artikel 23 des damaligen Grundgesetzes, gilt als eines der raschesten und friedlichsten Beispiele staatlicher Transformation der jüngeren europäischen Geschichte.",
+      },
+      sideFacts: [],
+    },
+    "11-09": {
+      year: 1989,
+      levels: {
+        A1: "Am 9. November 1989 fällt die Berliner Mauer. Die Menschen sind sehr glücklich.",
+        A2: "Am 9. November 1989 öffnet die DDR plötzlich die Grenze. Die Berliner Mauer fällt. Tausende Menschen feiern die ganze Nacht.",
+        B1: "Am 9. November 1989 öffnet die DDR überraschend die Grenzen. Die Berliner Mauer fällt, nachdem sie 28 Jahre lang die Stadt geteilt hatte. Es ist einer der glücklichsten Tage der deutschen Geschichte.",
+        B2: "Am 9. November 1989 fällt die Berliner Mauer, nachdem ein SED-Funktionär in einer Pressekonferenz missverständlich sofortige Reiseerleichterungen verkündet. Tausende strömen zu den Grenzübergängen — die friedliche Revolution erreicht ihren Höhepunkt.",
+        C1: "Der Fall der Berliner Mauer am 9. November 1989 geht auf eine folgenreiche Verwechslung zurück: Günter Schabowski verkündete auf einer Pressekonferenz missverständlich sofortige Reisefreiheit. Innerhalb weniger Stunden strömten Zehntausende zu den Grenzübergängen, die schließlich überwältigt öffneten.",
+        C2: "Der Mauerfall am 9. November 1989, ausgelöst durch Günter Schabowskis folgenreiche Fehlinterpretation einer neuen Reiseregelung auf einer live übertragenen Pressekonferenz, markiert einen jener seltenen historischen Momente, in denen ein einzelnes kommunikatives Missverständnis den Lauf der Weltgeschichte beschleunigte.",
+      },
+      sideFacts: [
+        { year: 1918, text: "Am selben Datum ruft Philipp Scheidemann 1918 die erste deutsche Republik aus." },
+        { year: 1923, text: "1923 scheitert an diesem Datum der Hitler-Ludendorff-Putsch in München." },
+        { year: 1938, text: "1938 beginnt in derselben Nacht die Reichspogromnacht — die gewaltsame Zerstörung jüdischer Geschäfte und Synagogen im gesamten Deutschen Reich." },
+      ],
+    },
+    "08-01": {
+      year: 1914,
+      levels: {
+        A1: "Am 1. August 1914 erklärt Deutschland Russland den Krieg. Ein großer Krieg beginnt.",
+        A2: "Am 1. August 1914 erklärt das Deutsche Reich Russland den Krieg. Das ist der Beginn des Ersten Weltkriegs.",
+        B1: "Am 1. August 1914 erklärt das Deutsche Reich Russland den Krieg. Damit beginnt der Erste Weltkrieg, der über vier Jahre dauern und Millionen Menschen das Leben kosten wird.",
+        B2: "Am 1. August 1914 erklärt das Deutsche Reich Russland den Krieg — nur wenige Tage nach der Ermordung des österreichischen Thronfolgers in Sarajevo. Ein Bündnisgeflecht zieht binnen Tagen fast ganz Europa in den Ersten Weltkrieg.",
+        C1: "Die deutsche Kriegserklärung an Russland am 1. August 1914 markiert den Einstieg des Deutschen Reichs in den Ersten Weltkrieg — ausgelöst durch das Bündnissystem, das nach dem Attentat von Sarajevo eine europaweite Kettenreaktion in Gang setzte.",
+        C2: "Die Kriegserklärung des Deutschen Reichs an Russland am 1. August 1914, eingebettet in das komplexe Bündnisgeflecht der europäischen Großmächte, gilt als Schlüsselmoment jenes 'Sommers der Illusionen', in dem beinahe alle beteiligten Regierungen von einem kurzen, überschaubaren Krieg ausgingen.",
+      },
+      sideFacts: [],
+    },
+    "08-31": {
+      year: 1990,
+      levels: {
+        A1: "Am 31. August 1990 unterschreiben Ost- und Westdeutschland einen wichtigen Vertrag. Er heißt Einigungsvertrag.",
+        A2: "Am 31. August 1990 unterschreiben BRD und DDR den Einigungsvertrag. Er regelt, wie Deutschland wieder ein Land wird.",
+        B1: "Am 31. August 1990 unterzeichnen Vertreter von BRD und DDR in Ost-Berlin den Einigungsvertrag. Er legt die rechtlichen Regeln für die Wiedervereinigung am 3. Oktober fest.",
+        B2: "Am 31. August 1990 unterzeichnen der westdeutsche Innenminister Wolfgang Schäuble und der DDR-Staatssekretär Günther Krause in Ost-Berlin den Einigungsvertrag — das juristische Fundament für den Beitritt der DDR zur Bundesrepublik nur fünf Wochen später.",
+        C1: "Der am 31. August 1990 von Wolfgang Schäuble und Günther Krause unterzeichnete Einigungsvertrag regelte detailliert die rechtlichen, wirtschaftlichen und sozialen Bedingungen des DDR-Beitritts und bildete damit die verbindliche Grundlage für die formale Wiedervereinigung am 3. Oktober 1990.",
+        C2: "Der Einigungsvertrag vom 31. August 1990 übersetzte den politischen Willen zur deutschen Einheit in ein komplexes Regelwerk, das Rechtsangleichung, Eigentumsfragen und die Übernahme west­deutscher Institutionen in den neuen Bundesländern verbindlich festlegte — ein bürokratischer Kraftakt von historischem Ausmaß.",
+      },
+      sideFacts: [],
+    },
+    "09-30": {
+      year: 1938,
+      levels: {
+        A1: "Am 30. September 1938 muss die Tschechoslowakei ein Gebiet an Deutschland abgeben. Es heißt Sudetenland.",
+        A2: "Am 30. September 1938 unterschreiben mehrere Länder das Münchner Abkommen. Die Tschechoslowakei muss das Sudetenland an Deutschland abgeben.",
+        B1: "Am 30. September 1938 wird im Münchner Abkommen entschieden: Die Tschechoslowakei muss das Sudetenland an Deutschland abtreten. Die Tschechoslowakei selbst darf dabei nicht mitreden.",
+        B2: "Am 30. September 1938 einigen sich Deutschland, Großbritannien, Frankreich und Italien im Münchner Abkommen darauf, dass die Tschechoslowakei das Sudetenland an Deutschland abtreten muss — ohne dass die Tschechoslowakei selbst am Verhandlungstisch sitzt.",
+        C1: "Das Münchner Abkommen vom 30. September 1938, mit dem Großbritannien und Frankreich die Abtretung des Sudetenlands an Deutschland billigten, gilt als Höhepunkt der westlichen Appeasement-Politik gegenüber Hitler — eine Politik, die den weiteren deutschen Expansionskurs nicht bremste, sondern eher ermutigte.",
+        C2: "Das ohne tschechoslowakische Beteiligung geschlossene Münchner Abkommen vom 30. September 1938 markiert den Kulminationspunkt der Appeasement-Politik: Der britische Premierminister Chamberlain verkündete anschließend 'Frieden für unsere Zeit' — eine Fehleinschätzung, die weniger als ein Jahr später durch den deutschen Überfall auf Polen widerlegt wurde.",
+      },
+      sideFacts: [],
+    },
+  };
+  function germanHistoryForToday(monthDay) {
+    return GERMAN_HISTORY_TODAY[monthDay] || null;
+  }
+
   const DAILY_TIPS = [
     { text: `Bei „verstehen" wird nicht die Vorsilbe betont, sondern die zweite Silbe: ver<span class="stress">ste</span>hen.`, },
     { text: `Bei „bekommen" liegt die Betonung auf „kom": be<span class="stress">kom</span>men.`, },
@@ -3167,5 +3403,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN };
 })();

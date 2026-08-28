@@ -814,7 +814,7 @@ const Backend = (function () {
             languages: data.languages || [], fav_movie: data.fav_movie || "", fav_series: data.fav_series || "",
             fav_song: data.fav_song || "", fav_food: data.fav_food || "", poem: data.poem || "",
             fav_drink: data.fav_drink || "", fav_country: data.fav_country || "", fav_quote: data.fav_quote || "",
-            extra_profile_data: data.extra_profile_data || {},
+            extra_profile_data: data.extra_profile_data || {}, theme: data.theme || "", birthday: data.birthday || "",
           };
         }
         if (error) console.warn("Profil-Abfrage fehlgeschlagen:", error.message);
@@ -833,7 +833,7 @@ const Backend = (function () {
       languages: u.profile.languages || [], fav_movie: u.profile.favMovie || "", fav_series: u.profile.favSeries || "",
       fav_song: u.profile.favSong || "", fav_food: u.profile.favFood || "", poem: u.profile.poem || "",
       fav_drink: u.profile.favDrink || "", fav_country: u.profile.favCountry || "", fav_quote: u.profile.favQuote || "",
-      extra_profile_data: u.profile.extraProfileData || {},
+      extra_profile_data: u.profile.extraProfileData || {}, theme: u.profile.theme || "", birthday: u.profile.birthday || "",
     };
   }
 
@@ -886,6 +886,7 @@ const Backend = (function () {
         is_moderator: Boolean(names[id] && names[id].is_moderator),
         online: names[id] ? isRecentlyActive(names[id].last_active) : false,
         last_active: names[id] ? names[id].last_active : null,
+        birthday: (names[id] && names[id].birthday) || "",
       }));
     }
     return demo.friends
@@ -902,6 +903,7 @@ const Backend = (function () {
           bio: (u && u.profile.bio) || "",
           avatar_url: (u && u.profile.avatarUrl) || "",
           avatar_emoji: (u && u.profile.avatarEmoji) || "",
+          birthday: (u && u.profile.birthday) || "",
         };
       });
   }
@@ -1220,12 +1222,19 @@ const Backend = (function () {
   async function approveCommunityText(id) {
     if (!canModerate()) throw new Error("Keine Moderationsrechte.");
     if (client) {
+      const { data: textRow } = await client.from("community_texts").select("user_id,title").eq("id", id).maybeSingle();
       const { error } = await client.from("community_texts").update({ status: "approved" }).eq("id", id);
       if (error) throw new Error("Konnte nicht freigeschaltet werden: " + error.message);
+      if (textRow && textRow.user_id) {
+        await addNotification(textRow.user_id, `🎉 Dein Beitrag „${textRow.title || ""}" wurde freigeschaltet!`);
+      }
       return;
     }
     const t = demo.communityTexts.find((x) => x.id === id);
-    if (t) t.status = "approved";
+    if (t) {
+      t.status = "approved";
+      if (t.user_id) await addNotification(t.user_id, `🎉 Dein Beitrag „${t.title || ""}" wurde freigeschaltet!`);
+    }
   }
 
   async function rejectCommunityText(id) {

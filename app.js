@@ -494,35 +494,115 @@
     if (playPercent < 25) return null; // kein klarer Schwerpunkt erkennbar
     return { id: topId, label: labelFor(topId), percent: playPercent, kind: "frequent" };
   }
+  function todayDateKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+  function dayOfYearIndex(date) {
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = date - start;
+    return Math.floor(diff / 86400000); // 1 = 1. Januar, bis zu 366
+  }
+  // Großer, kombinierter Fragen-Pool aus ALLEN Übungskategorien (über 2800 Fragen insgesamt) —
+  // so kann jedem Kalendertag im Jahr eine FESTE, unterschiedliche Aufgabe zugeordnet werden,
+  // die sich innerhalb eines Jahres nie wiederholt (statt einer zufälligen Auswahl, die schon
+  // nach wenigen Wochen wieder dieselbe Frage hätte zeigen können).
+  let dailyTaskPoolCache = null;
+  function buildDailyTaskPool() {
+    if (dailyTaskPoolCache) return dailyTaskPoolCache;
+    const pool = [];
+    const seenPrompts = new Set();
+    ExerciseData.CATEGORIES.forEach((cat) => {
+      try {
+        const bank = cat.getBank();
+        bank.forEach((q) => {
+          if (q.options && q.correct && q.correct.length === 1 && q.options.length >= 2 && !seenPrompts.has(q.prompt)) {
+            seenPrompts.add(q.prompt);
+            // "Artikel"-Fragen sind sehr knapp ("___ Regen") und brauchen ohne die sonstige
+            // Übungsoberfläche drumherum eine kurze Erklärung, damit klar ist, was gefragt wird.
+            const promptText = cat.id === "artikel"
+              ? `Welcher Artikel gehört zu „${q.prompt.replace("___ ", "")}"?`
+              : q.prompt.replace("___", "…");
+            pool.push({ word: promptText, options: q.options, correctIdx: q.correct[0] });
+          }
+        });
+      } catch (e) { /* Kategorien, die nicht kompatibel sind, überspringen */ }
+    });
+    dailyTaskPoolCache = pool;
+    return pool;
+  }
   function pickDailyTask() {
+    // Pro Tag genau eine Aufgabe — wird beim ersten Öffnen erzeugt und dann im Browser
+    // gespeichert, damit sie bei erneutem Öffnen exakt dieselbe bleibt (nicht jedes Mal neu).
+    try {
+      const saved = localStorage.getItem("dma_calendar_task_" + todayDateKey());
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    const task = pickDailyTaskFresh();
+    try { localStorage.setItem("dma_calendar_task_" + todayDateKey(), JSON.stringify(task)); } catch (e) {}
+    return task;
+  }
+  function pickDailyTaskFresh() {
     const focus = analyzeFocusCategory();
+    const dayIdx = dayOfYearIndex(new Date());
     // Echte Personalisierung: gibt es einen erkannten Übungs-Schwerpunkt UND liefert dessen
     // Kategorie eine normale Fragen-Bank, wird die Tagesaufgabe direkt daraus gezogen — man übt
-    // dann wirklich genau das, was man ohnehin am meisten spielt.
+    // dann wirklich genau das, was man ohnehin am meisten spielt. Auswahl INNERHALB der
+    // Kategorie ist ebenfalls fest an den Kalendertag gekoppelt, nicht zufällig.
     if (focus) {
       const cat = ExerciseData.getCategory(focus.id);
       if (cat && typeof cat.getBank === "function") {
         try {
-          const bank = cat.getBank();
-          if (bank && bank.length) {
-            const q = bank[Math.floor(Math.random() * bank.length)];
-            if (q.options && q.correct && q.correct.length === 1) {
-              return { word: q.prompt.replace("___", "…"), options: q.options, correctIdx: q.correct[0], focus, isPersonalized: true };
-            }
+          const bank = cat.getBank().filter((q) => q.options && q.correct && q.correct.length === 1);
+          if (bank.length) {
+            const q = bank[dayIdx % bank.length];
+            const promptText = focus.id === "artikel"
+              ? `Welcher Artikel gehört zu „${q.prompt.replace("___ ", "")}"?`
+              : q.prompt.replace("___", "…");
+            return { word: promptText, options: q.options, correctIdx: q.correct[0], focus, isPersonalized: true };
           }
         } catch (e) { /* falls eine Kategorie nicht kompatibel ist, einfach auf Standard zurückfallen */ }
       }
     }
-    const entries = Object.entries(ExerciseData.WORD_MEANINGS);
-    const [word, meaning] = entries[Math.floor(Math.random() * entries.length)];
-    const wrongPool = entries.filter(([w]) => w !== word).map(([, m]) => m);
-    const wrong = wrongPool[Math.floor(Math.random() * wrongPool.length)];
-    const options = Core.shuffle([meaning, wrong]);
-    return { word, options, correctIdx: options.indexOf(meaning), focus };
+    const pool = buildDailyTaskPool();
+    const picked = pool[dayIdx % pool.length];
+    return { ...picked, focus };
+  }
+  // Großer, kombinierter Tipp-Pool — kombiniert alle bereits geprüften Erklärungsquellen der
+  // Seite (feste Info-Tipps, Betonungsregeln aus dem Wortschatz, Redewendungen, Partikeln,
+  // Jugendsprache), damit jeder Kalendertag einen ANDEREN Tipp bekommt statt sich schon nach
+  // wenigen Wochen zu wiederholen. Auswahl ist wie bei der Tagesaufgabe fest an den Kalendertag
+  // gekoppelt, nicht zufällig.
+  let dailyTipPoolCache = null;
+  function buildDailyTipPool() {
+    if (dailyTipPoolCache) return dailyTipPoolCache;
+    const pool = [...ExerciseData.DAILY_TIPS];
+    Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
+      if (syl.includes("-")) pool.push({ text: `Bei „${word}" wird betont: ${stressHtml(syl)}.` });
+    });
+    (VocabData.WORDS || []).forEach((w) => {
+      if (w.syl && w.syl.includes("-")) pool.push({ text: `Bei „${w.word}" wird betont: ${stressHtml(w.syl)}.` });
+    });
+    (ExerciseData.REDEWENDUNGEN || []).forEach(([phrase, meaning]) => {
+      pool.push({ text: `Redewendung „${phrase}" bedeutet: ${meaning}` });
+    });
+    (VocabData.PARTIKELN || []).forEach((p) => {
+      pool.push({ text: `Das kleine Wort „${p.word}": ${p.explain}` });
+    });
+    (VocabData.JUGENDSPRACHE || []).forEach((j) => {
+      pool.push({ text: `Jugendsprache „${j.word}": ${j.explain}` });
+    });
+    dailyTipPoolCache = pool;
+    return pool;
   }
   function pickDailyTip() {
-    const tips = ExerciseData.DAILY_TIPS;
-    return tips[Math.floor(Math.random() * tips.length)];
+    const pool = buildDailyTipPool();
+    const dayIdx = dayOfYearIndex(new Date());
+    return pool[dayIdx % pool.length];
+  }
+  // Für den "Anderen Tipp"-Button — zum Durchblättern, unabhängig vom festen Tagestipp oben.
+  function pickRandomTip() {
+    const pool = buildDailyTipPool();
+    return pool[Math.floor(Math.random() * pool.length)];
   }
   function openCalendarModal() {
     const now = new Date();
@@ -535,11 +615,99 @@
     document.getElementById("calendarModalOverlay").style.display = "flex";
   }
   let cwCalendarTask = null;
+  function isDailyTaskSolvedToday() {
+    try { return localStorage.getItem("dma_calendar_task_attempted") === todayDateKey(); } catch (e) { return false; }
+  }
+  function getDailyTaskAttemptResult() {
+    try { return localStorage.getItem("dma_calendar_task_result"); } catch (e) { return null; }
+  }
+  function markDailyTaskAttempted(wasCorrect) {
+    try {
+      localStorage.setItem("dma_calendar_task_attempted", todayDateKey());
+      localStorage.setItem("dma_calendar_task_result", wasCorrect ? "correct" : "wrong");
+    } catch (e) {}
+  }
+  // Deutsche gesetzliche Feiertage, die bundesweit gelten (bewusst NUR die wirklich in allen 16
+  // Bundesländern geltenden — Landes-spezifische wie Fronleichnam, Reformationstag o.ä. würden je
+  // nach Bundesland unterschiedlich sein und sind hier nicht verlässlich ohne den Wohnort bekannt).
+  // Bewegliche Feiertage (Ostern-abhängig) werden über die Gauß'sche Osterformel korrekt berechnet,
+  // nicht fest für ein einzelnes Jahr eingetragen — funktioniert also für jedes Jahr richtig.
+  function easterSunday(year) {
+    const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+    const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+  }
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  function mmdd(date) {
+    return `${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+  function germanHolidayForToday(date) {
+    const year = date.getFullYear();
+    const easter = easterSunday(year);
+    const fixed = {
+      "01-01": "🎉 Neujahr",
+      "05-01": "🛠️ Tag der Arbeit",
+      "10-03": "🇩🇪 Tag der Deutschen Einheit",
+      "12-25": "🎄 1. Weihnachtsfeiertag",
+      "12-26": "🎄 2. Weihnachtsfeiertag",
+    };
+    const md = mmdd(date);
+    if (fixed[md]) return fixed[md];
+    const movable = [
+      [addDays(easter, -2), "✝️ Karfreitag"],
+      [easter, "🐣 Ostersonntag"],
+      [addDays(easter, 1), "🐣 Ostermontag"],
+      [addDays(easter, 39), "☁️ Christi Himmelfahrt"],
+      [addDays(easter, 49), "🕊️ Pfingstsonntag"],
+      [addDays(easter, 50), "🕊️ Pfingstmontag"],
+    ];
+    const hit = movable.find(([d]) => mmdd(d) === md);
+    return hit ? hit[1] : null;
+  }
+  // Geburtstage von Freunden — nur Freunde (nicht alle Nutzer), aus Datenschutzgründen, und nur
+  // wenn die Person ihr Geburtsdatum im Profil hinterlegt hat.
+  async function friendBirthdaysToday(date) {
+    if (!Backend.currentUser()) return [];
+    try {
+      const friends = await Backend.getFriends();
+      const md = mmdd(date);
+      return friends.filter((f) => f.birthday && f.birthday.slice(5) === md).map((f) => f.name);
+    } catch (e) { return []; }
+  }
   function renderCalendarBack() {
     const back = document.querySelector(".cal-back");
     if (!back) return;
-    const questionText = cwCalendarTask.isPersonalized ? cwCalendarTask.word : `Was bedeutet <strong>„${cwCalendarTask.word}"</strong>?`;
+    const now = new Date();
+    const holiday = germanHolidayForToday(now);
+    const specialDayHtml = holiday ? `<p class="empty-note" id="calSpecialDay" style="margin:-4px 0 10px; font-weight:700;">${holiday}</p>` : `<p class="empty-note" id="calSpecialDay" style="margin:-4px 0 10px; display:none;"></p>`;
+    if (isDailyTaskSolvedToday()) {
+      const wasCorrect = getDailyTaskAttemptResult() === "correct";
+      back.innerHTML = `
+        ${specialDayHtml}
+        <p class="cal-tip-title">${wasCorrect ? "✅ Tagesaufgabe gelöst!" : "📅 Tagesaufgabe schon versucht"}</p>
+        <p class="cal-tip-text">${wasCorrect ? "Du hast deine Aufgabe für heute schon erledigt — komm morgen wieder für eine neue!" : "Du hast es heute schon versucht — kein Problem, morgen kommt eine neue Chance!"}</p>
+        <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
+        <p class="cal-tip-title" style="font-size:0.85rem;">💡 Wusstest du außerdem …</p>
+        <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${pickDailyTip().text}</p>
+        <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
+      `;
+      document.getElementById("calAnotherBtn").addEventListener("click", () => {
+        document.getElementById("calTipText").innerHTML = pickRandomTip().text;
+      });
+      return;
+    }
+    const questionText = cwCalendarTask.word;
     back.innerHTML = `
+      ${specialDayHtml}
       <p class="cal-tip-title">🎯 Tagesaufgabe</p>
       ${cwCalendarTask.focus ? `<p class="empty-note" style="margin:-4px 0 8px;">${cwCalendarTask.focus.kind === "weak" ? `💪 Bei „${cwCalendarTask.focus.label}" liegt dein Schnitt bei ${cwCalendarTask.focus.percent}% — hier eine Frage, um genau das zu festigen!` : `🔎 Du übst gerade viel „${cwCalendarTask.focus.label}" (${cwCalendarTask.focus.percent}% deiner letzten Runden)${cwCalendarTask.isPersonalized ? " — hier eine passende Frage dazu!" : ""}`}</p>` : ""}
       <p class="cal-tip-text">${questionText}</p>
@@ -557,29 +725,45 @@
         const idx = Number(btn.dataset.taskAnswer);
         const fb = document.getElementById("calTaskFeedback");
         back.querySelectorAll("[data-task-answer]").forEach((b) => { b.disabled = true; });
-        if (idx === cwCalendarTask.correctIdx) {
+        const correct = idx === cwCalendarTask.correctIdx;
+        if (correct) {
           btn.style.background = "#4FA88E"; btn.style.color = "#fff";
           Core.sound.fanfare();
           fb.textContent = "🎉 Richtig! Bonuspunkt fürs Lösen der Tagesaufgabe.";
           claimDailyTaskPoints();
+          markDailyTaskAttempted(true);
         } else {
           btn.style.background = "#E85F6F"; btn.style.color = "#fff";
           Core.sound.wrong();
           fb.textContent = "Nicht ganz — aber macht nichts, morgen kommt eine neue Aufgabe!";
+          markDailyTaskAttempted(false);
         }
+        if (Backend.currentUser()) {
+          const questionShort = cwCalendarTask.word;
+          const correctOption = cwCalendarTask.options[cwCalendarTask.correctIdx];
+          Backend.sendSystemMessage(Backend.currentUser().id, `📅 Du hast gerade deine Tagesaufgabe gemacht — ${correct ? "richtig gelöst! 🎉" : "leider nicht ganz getroffen."}\n\n${questionShort}\n→ Richtige Antwort: ${correctOption}`);
+        }
+        setTimeout(() => renderCalendarBack(), 1400);
       });
     });
     document.getElementById("calAnotherBtn").addEventListener("click", () => {
-      document.getElementById("calTipText").innerHTML = pickDailyTip().text;
+      document.getElementById("calTipText").innerHTML = pickRandomTip().text;
+    });
+    // Geburtstage von Freunden asynchron nachladen — ergänzt den Feiertag oben, falls heute
+    // jemand aus der Freundesliste Geburtstag hat (nur Freunde, aus Datenschutzgründen).
+    friendBirthdaysToday(now).then((names) => {
+      if (!names.length) return;
+      const el = document.getElementById("calSpecialDay");
+      if (!el) return;
+      const birthdayLine = `🎂 ${names.join(", ")} hat${names.length === 1 ? "" : "en"} heute Geburtstag!`;
+      el.style.display = "";
+      el.textContent = el.textContent ? `${el.textContent} · ${birthdayLine}` : birthdayLine;
     });
   }
   function claimDailyTaskPoints() {
     if (!Backend.currentUser()) return;
-    const todayKey = new Date().toISOString().slice(0, 10);
-    let lastClaim = null;
-    try { lastClaim = localStorage.getItem("dma_calendar_task_claimed"); } catch (e) {}
-    if (lastClaim === todayKey) return;
-    try { localStorage.setItem("dma_calendar_task_claimed", todayKey); } catch (e) {}
+    if (isDailyTaskSolvedToday()) return;
+    try { localStorage.setItem("dma_calendar_task_claimed", todayDateKey()); } catch (e) {}
     Backend.saveResult({
       categories: ["tageskalender"], points: 0, bonus: 2, percent: 100,
       character: "Tagesaufgabe gelöst", badges: [], playedAt: new Date().toISOString(),
@@ -631,14 +815,26 @@
     let lastClaim = null;
     try { lastClaim = localStorage.getItem("dma_calendar_claimed"); } catch (e) {}
     if (lastClaim === todayKey) return; // heute schon abgerissen — keine doppelten Punkte
-    try { localStorage.setItem("dma_calendar_claimed", todayKey); } catch (e) {}
+    // Kalender-Serie: reißt man an mehreren Tagen HINTEREINANDER ab, steigen die Punkte —
+    // genau wie beim Login-Streak. Reißt man einen Tag aus, fängt die Serie wieder bei vorne an.
+    let streak = 0;
+    try { streak = Number(localStorage.getItem("dma_calendar_streak") || "0"); } catch (e) {}
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    streak = lastClaim === yesterday ? streak + 1 : 1;
+    try {
+      localStorage.setItem("dma_calendar_claimed", todayKey);
+      localStorage.setItem("dma_calendar_streak", String(streak));
+    } catch (e) {}
+    // Punkte wachsen mit der Serie: 1-2 Tage = 1P, 3-6 Tage = 2P, 7-13 Tage = 3P, ab 14 Tage = 5P.
+    const points = streak >= 14 ? 5 : streak >= 7 ? 3 : streak >= 3 ? 2 : 1;
     Backend.saveResult({
-      categories: ["tageskalender"], points: 1, bonus: 0, percent: 100,
+      categories: ["tageskalender"], points, bonus: 0, percent: 100,
       character: "Kalenderblatt abgerissen", badges: [], playedAt: new Date().toISOString(),
     });
     setTimeout(() => {
       const hint = document.querySelector(".cal-back .cal-tip-title");
-      if (hint) hint.insertAdjacentHTML("afterend", '<p class="empty-note" style="margin:-6px 0 10px;">🎉 +1 Punkt fürs heutige Kalenderblatt!</p>');
+      const streakNote = streak > 1 ? ` (${streak}. Tag in Folge!)` : "";
+      if (hint) hint.insertAdjacentHTML("afterend", `<p class="empty-note" style="margin:-6px 0 10px;">🎉 +${points} Punkt${points > 1 ? "e" : ""} fürs heutige Kalenderblatt!${streakNote}</p>`);
     }, 50);
   }
   updateCalendarWidget();
@@ -689,13 +885,22 @@
     const track = document.getElementById("tickerTrack");
     if (!track) return;
     const items = await Backend.getActivity();
-    if (items.length) {
-      track.textContent = items.map((a) => `• ${a.text}`).join("   ");
-      // Safari/iOS startet die CSS-Animation nach Textänderung sonst nicht neu -> Reflow erzwingen
-      track.style.animation = "none";
-      void track.offsetHeight;
-      track.style.animation = "";
-    }
+    const text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
+    // Animation zuerst abschalten, damit scrollWidth die NEUE Textlänge korrekt misst
+    // (nicht noch die alte, gerade laufende Animation beeinflusst die Messung).
+    track.style.animation = "none";
+    if (items.length) track.textContent = text;
+    void track.offsetHeight; // Reflow erzwingen, damit die neue Breite feststeht
+    // Feste Geschwindigkeit statt fester Dauer: läuft der Text nach mehreren Aktionen länger,
+    // wurde die Animation vorher trotzdem in derselben festen Zeit durchgezogen — dadurch wirkte
+    // sie bei viel Text unnatürlich schnell. Jetzt wird die Dauer an die tatsächliche Textbreite
+    // angepasst, damit das Lauftempo (Pixel pro Sekunde) immer gleich bleibt — auch beim allerersten
+    // Anzeigen des Platzhaltertexts, bevor echte Aktivität vorliegt.
+    const textWidth = track.scrollWidth;
+    const pixelsPerSecond = 55; // gleichbleibendes, gut lesbares Lauftempo
+    const duration = Math.max(12, textWidth / pixelsPerSecond);
+    track.style.animation = ""; // Safari/iOS startet die Animation nach Textänderung sonst nicht neu
+    track.style.animationDuration = `${duration}s`; // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
   }
   const tickerToggle = document.getElementById("tickerToggle");
   if (tickerToggle) {
@@ -863,6 +1068,9 @@
         const parent = node.parentElement;
         if (!parent || STRESS_SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
         if (parent.closest(".stress-marked")) return NodeFilter.FILTER_REJECT; // schon behandelt
+        // Bereits handgeprüft markierte Bereiche (Vokabeltrainer-Silben, Sternzeichen/Geschlecht-Badges)
+        // dürfen vom groben, regelbasierten Algorithmus nicht noch einmal angefasst werden.
+        if (parent.closest(".vocab-syl, .zodiac-badge, .stress-mark")) return NodeFilter.FILTER_REJECT;
         if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       },
@@ -1031,6 +1239,7 @@
   }
   let lastFriendReqCount = 0;
   let lastChallengeReqCount = 0;
+  let lastUnreadMsgCount = 0;
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
   async function checkNotifications() {
@@ -1040,6 +1249,15 @@
     if (inboxBadge) inboxBadge.style.display = unreadMsgCount > 0 ? "block" : "none";
     const challengeCount = challenges.incoming.length;
     let hasNew = false;
+    // Neue Nachrichten im Postfach sollen genauso wie Freundschaftsanfragen/Duelle/Benachrichtigungen
+    // das Profil-Symbol blinken lassen und einen Ton abspielen — vorher landeten sie nur als
+    // stiller Punkt auf dem Postfach-Reiter, ohne echte Benachrichtigung auszulösen.
+    if (unreadMsgCount > lastUnreadMsgCount && !toastedNotificationIds.has("msgcount-" + unreadMsgCount)) {
+      toastedNotificationIds.add("msgcount-" + unreadMsgCount);
+      showToast("✉️ Neue Nachricht im Postfach", () => document.querySelector('[data-target="view-profile"]').click());
+      hasNew = true;
+    }
+    lastUnreadMsgCount = unreadMsgCount;
     // Freundschaftsanfragen, Duell-Einladungen und persönliche Benachrichtigungen werden über ihre
     // eigene ID verfolgt (nicht nur über einen Zähler) — so wird auch das, was schon beim allerersten
     // Öffnen der Seite bereits wartet, zuverlässig gemeldet, statt beim ersten Check still verschluckt zu werden.
@@ -1067,7 +1285,7 @@
     lastFriendReqCount = requests.length;
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
-    const totalCount = requests.length + challengeCount + notifications.length;
+    const totalCount = requests.length + challengeCount + notifications.length + unreadMsgCount;
     updateNotifyBadge(totalCount);
     if (hasNew) {
       playNotifySound();
@@ -1546,6 +1764,220 @@
   renderVocab();
 
   /* ============================================================
+     BETONUNGS-TRAINER — Silbe anklicken statt nur lesen. Nutzt
+     ausschließlich handgeprüfte Silbentrennung (VocabData.WORDS +
+     ExerciseData.WORD_SYL), nie den groben, sitweiten Algorithmus.
+     ============================================================ */
+  function stressTrainerWordPool() {
+    const pool = [];
+    VocabData.WORDS.forEach((w) => { if (w.syl && w.syl.includes("-")) pool.push({ word: w.word, syl: w.syl, en: w.en }); });
+    Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
+      if (syl.includes("-")) pool.push({ word, syl, en: ExerciseData.WORD_MEANINGS[word] });
+    });
+    return pool;
+  }
+  // Kurze, pädagogisch begründete Erklärung, WARUM die Betonung so liegt — nur bei Mustern, die
+  // ich wirklich sicher weiß (unbetonte Vorsilben, bekannte Fremdwort-Endungen), sonst schlicht
+  // "typisches deutsches Muster" statt einer erfundenen Begründung.
+  function explainStress(word, syl) {
+    const lower = word.toLowerCase();
+    const prefixes = { "be": "be-", "ge": "ge-", "er": "er-", "ver": "ver-", "zer": "zer-", "ent": "ent-", "emp": "emp-", "miss": "miss-" };
+    for (const [p, label] of Object.entries(prefixes)) {
+      if (lower.startsWith(p) && syl.split("-")[0].toLowerCase() === p) {
+        return `Die Vorsilbe „${label}" wird im Deutschen nie betont — die Betonung springt auf die Silbe danach.`;
+      }
+    }
+    const suffixes = { tion: "-tion", tät: "-tät", ieren: "-ieren", ismus: "-ismus" };
+    for (const [suf, label] of Object.entries(suffixes)) {
+      if (lower.endsWith(suf)) return `Wörter mit der Endung „${label}" (meist aus dem Lateinischen/Französischen) werden auf dieser Endung betont.`;
+    }
+    if (syl.split("-")[0] === syl.split("-")[0].toUpperCase()) {
+      return "Typisches deutsches Muster: Die erste (Stamm-)Silbe trägt die Betonung.";
+    }
+    return "Bei diesem Wort (oft ein Lehnwort) liegt die Betonung nicht auf der ersten Silbe — das kommt bei Fremdwörtern öfter vor.";
+  }
+  let stTrainerSession = null;
+  let stTrainerWord = null;
+  function newStressTrainerSession() {
+    stTrainerSession = { round: 0, total: 10, correct: 0 };
+  }
+  function pickStressTrainerWord() {
+    const pool = stressTrainerWordPool();
+    const entry = pool[Math.floor(Math.random() * pool.length)];
+    const syllables = entry.syl.split("-");
+    const correctIdx = syllables.findIndex((s) => s === s.toUpperCase());
+    stTrainerWord = { ...entry, syllables, correctIdx };
+  }
+  function renderStressTrainerResults() {
+    const area = document.getElementById("stressTrainerArea");
+    const percent = Math.round((stTrainerSession.correct / stTrainerSession.total) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🎯 BETONUNGS-TRAINER — RUNDE FERTIG</p>
+        <h2 style="margin:8px 0;">${stTrainerSession.correct} / ${stTrainerSession.total} richtig (${percent}%)</h2>
+        <button type="button" class="btn btn-coffee" id="stPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>
+    `;
+    document.getElementById("stPlayAgainBtn").addEventListener("click", () => {
+      newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer();
+    });
+  }
+  function renderStressTrainer() {
+    const area = document.getElementById("stressTrainerArea");
+    if (!stTrainerSession) newStressTrainerSession();
+    if (!stTrainerWord) pickStressTrainerWord();
+    if (stTrainerSession.round >= stTrainerSession.total) { renderStressTrainerResults(); return; }
+    const w = stTrainerWord;
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total}</p>
+        <p class="empty-note" style="margin-bottom:12px;">Welche Silbe wird bei diesem Wort betont? Antippen zum Wählen.</p>
+        <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
+          ${w.syllables.map((s, i) => `<button type="button" class="btn btn-ghost st-syl-btn" data-syl-idx="${i}" style="font-size:1.2rem; font-weight:800; text-transform:lowercase;">${s.toLowerCase()}</button>`).join("")}
+        </div>
+        <p class="empty-note" id="stFeedback" style="text-align:center;"></p>
+      </div>
+    `;
+    area.querySelectorAll(".st-syl-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.sylIdx);
+        area.querySelectorAll(".st-syl-btn").forEach((b) => { b.disabled = true; });
+        const fb = document.getElementById("stFeedback");
+        const correct = idx === w.correctIdx;
+        stTrainerSession.round += 1;
+        if (correct) {
+          stTrainerSession.correct += 1;
+          btn.style.background = "#4FA88E"; btn.style.color = "#fff";
+          Core.sound.fanfare();
+        } else {
+          btn.style.background = "#E85F6F"; btn.style.color = "#fff";
+          area.querySelectorAll(".st-syl-btn")[w.correctIdx].style.background = "#4FA88E";
+          area.querySelectorAll(".st-syl-btn")[w.correctIdx].style.color = "#fff";
+          Core.sound.wrong();
+        }
+        fb.innerHTML = `<strong>${w.word}</strong> wird auf <strong>„${w.syllables[w.correctIdx].toLowerCase()}"</strong> betont.<br>${explainStress(w.word, w.syl)}`;
+        setTimeout(() => {
+          if (stTrainerSession.round >= stTrainerSession.total) {
+            Backend.saveResult({
+              categories: ["betonungstrainer"], points: stTrainerSession.correct, bonus: 0,
+              percent: Math.round((stTrainerSession.correct / stTrainerSession.total) * 100),
+              character: "Betonungs-Profi", badges: [], playedAt: new Date().toISOString(),
+            });
+          } else {
+            pickStressTrainerWord();
+          }
+          renderStressTrainer();
+        }, 2200);
+      });
+    });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]').addEventListener("click", () => {
+    newStressTrainerSession();
+    pickStressTrainerWord();
+    renderStressTrainer();
+  });
+
+  /* ============================================================
+     WÖRTERBUCH — alle geprüften Vokabeln der Seite an einem Ort,
+     durchsuchbar, mit Betonung und Bedeutung.
+     ============================================================ */
+  // Regelbasierte Betonung für Wörter ohne handgeprüfte Silbentrennung (aus allen
+  // Übungskategorien gesammelt) — nutzt dieselben Regeln wie der sitweite Algorithmus,
+  // klar getrennt vom handgeprüften Kernwortschatz.
+  function ruleSylString(word) {
+    const syllables = ruleSyllabify(word);
+    if (syllables.length <= 1) return word;
+    const idx = ruleStressIndex(word, syllables);
+    return syllables.map((s, i) => (i === idx ? s.toUpperCase() : s.toLowerCase())).join("-");
+  }
+  // Sammelt einzelne, in Anführungszeichen genannte Wörter aus ALLEN Übungskategorien
+  // (nicht nur Artikel) — so wächst das Wörterbuch mit dem tatsächlichen Inhalt der Seite.
+  function extractExtendedVocabulary() {
+    const found = new Map();
+    ExerciseData.CATEGORIES.forEach((cat) => {
+      try {
+        const bank = cat.getBank();
+        bank.forEach((q) => {
+          const text = `${q.prompt || ""} ${q.explain || ""}`;
+          const matches = text.match(/„([^„“]{2,30})“/g) || [];
+          matches.forEach((m) => {
+            const word = m.slice(1, -1).trim();
+            if (/^[A-ZÄÖÜa-zäöüß]+$/.test(word) && word.length >= 3) {
+              const key = word.toLowerCase();
+              if (!found.has(key)) found.set(key, word);
+            }
+          });
+        });
+      } catch (e) { /* Kategorien, die nicht kompatibel sind, einfach überspringen */ }
+    });
+    return [...found.values()];
+  }
+  // Best-mögliche CEFR-Einstufung (A1–C2) für den handgeprüften Kernwortschatz — eigene
+  // Einschätzung nach gängigen Sprachlern-Frequenzlisten, kein offizielles Zertifikat.
+  const CEFR_A1_WORDS = new Set(["Tisch", "Lampe", "Fenster", "Stuhl", "Tür", "Auto", "Baum", "Blume", "Haus", "Hund", "Katze", "Apfel", "Banane", "Brot", "Käse", "Milch", "Wasser", "Suppe", "Fleisch", "Zucker", "Butter", "Salz", "Löffel", "Gabel", "Messer", "Teller", "Tasse", "Glas", "Bett", "Uhr", "Bild", "Handy", "Buch", "Stift", "Zug", "Bus", "Park", "Kind", "Mädchen", "Junge", "Frau", "Mann", "Baby", "Familie", "Jahr", "Monat", "Woche", "Sommer", "Sonne", "Wetter", "Regen", "Schnee", "Winter", "Garten", "Berg", "Fluss", "Stadt", "Land", "Wald", "Vogel", "Fisch", "sein", "haben", "gehen", "kommen", "machen", "sagen", "sehen", "essen", "trinken", "schlafen", "wohnen", "arbeiten", "spielen", "ja", "mal"]);
+  const CEFR_A2_WORDS = new Set(["Schrank", "Kommode", "Spiegel", "Computer", "Tastatur", "Drucker", "Maus", "Kabel", "Rucksack", "Tasche", "Portemonnaie", "Schlüssel", "Brille", "Zeitung", "Heft", "Bahnhof", "Straße", "Ampel", "Fahrrad", "Flugzeug", "Flughafen", "Brücke", "Rathaus", "Bank", "Museum", "Supermarkt", "Bäckerei", "Krankenhaus", "Arzt", "Lehrer", "Lehrerin", "Wochenende", "Wolke", "Eis", "Wind", "Kälte", "Frühling", "Herbst", "Wiese", "Insel", "Schiff", "Blatt", "können", "müssen", "wollen", "werden", "wissen", "kennen", "verstehen", "bekommen", "denn", "eben", "halt", "eigentlich", "ruhig", "wohl"]);
+  function cefrLevelFor(word) {
+    if (CEFR_A1_WORDS.has(word)) return "A1";
+    if (CEFR_A2_WORDS.has(word)) return "A2";
+    // Fremdwörter/Lehnwörter und abstraktere Begriffe sind erfahrungsgemäß meist B1 oder höher.
+    if (/tion|tät|ismus|ieren|Universität|Bibliothek|Restaurant|Appetit|Toilette/i.test(word)) return "B1";
+    return "B1"; // vorsichtige Standardeinstufung für alles, was nicht eindeutig A1/A2 ist
+  }
+  function buildDictionaryEntries() {
+    const entries = [];
+    VocabData.WORDS.forEach((w) => entries.push({ word: w.word, syl: w.syl, meaning: w.en, example: w.example, level: cefrLevelFor(w.word), verified: true }));
+    Object.entries(ExerciseData.WORD_MEANINGS || {}).forEach(([word, meaning]) => {
+      entries.push({ word, syl: (ExerciseData.WORD_SYL || {})[word] || word, meaning, example: "", level: cefrLevelFor(word), verified: true });
+    });
+    const seen = new Set(entries.map((e) => e.word.toLowerCase()));
+    // Erweiterter Wortschatz aus allen Übungskategorien — regelbasierte Betonung (nicht
+    // handgeprüft), daher ohne CEFR-Einstufung (die würde ich sonst raten müssen).
+    extractExtendedVocabulary().forEach((word) => {
+      const key = word.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      entries.push({ word, syl: ruleSylString(word), meaning: "", example: "", level: null, verified: false });
+    });
+    return entries.sort((a, b) => a.word.localeCompare(b.word, "de"));
+  }
+  let dictLevelFilter = "alle";
+  function renderDictionary(filter = "") {
+    const area = document.getElementById("dictionaryArea");
+    const all = buildDictionaryEntries();
+    const verifiedCount = all.filter((e) => e.verified).length;
+    let list = all.filter((e) => e.word.toLowerCase().includes(filter.toLowerCase()) || (e.meaning || "").toLowerCase().includes(filter.toLowerCase()));
+    if (dictLevelFilter !== "alle") {
+      list = dictLevelFilter === "erweitert" ? list.filter((e) => !e.verified) : list.filter((e) => e.level === dictLevelFilter);
+    }
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.</p>
+      <div class="vocab-toolbar"><input type="text" class="vocab-search" id="dictSearch" placeholder="Wort oder Bedeutung suchen…" value="${filter}" /></div>
+      <div class="trophy-case" style="margin:10px 0;">
+        ${["alle", "A1", "A2", "B1", "erweitert"].map((lvl) => `<button type="button" class="trophy-chip dict-level-btn ${dictLevelFilter === lvl ? "selected" : ""}" data-level="${lvl}">${lvl === "alle" ? "Alle" : lvl === "erweitert" ? "Erweitert (ungeprüft)" : lvl}</button>`).join("")}
+      </div>
+      <div class="vocab-grid">
+        ${list.map((e) => `
+          <div class="vocab-card">
+            <div>
+              <div class="vocab-word">${e.word}${e.level ? ` <span class="empty-note" style="font-size:0.7rem;">${e.level}</span>` : ""}</div>
+              <div class="vocab-syl">${Core.formatStress(e.syl)}</div>
+              <div class="vocab-en">${e.meaning || (e.verified ? "" : "aus dem Übungsinhalt — Bedeutung nicht hinterlegt")}</div>
+              ${e.example ? `<div class="vocab-example">„${e.example}"</div>` : ""}
+            </div>
+            <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
+          </div>`).join("")}
+      </div>
+      ${list.length === 0 ? '<p class="empty-note">Keine Treffer.</p>' : ""}
+    `;
+    document.getElementById("dictSearch").addEventListener("input", (e) => renderDictionary(e.target.value));
+    area.querySelectorAll(".dict-level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { dictLevelFilter = btn.dataset.level; renderDictionary(filter); });
+    });
+    area.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-dictionary"]').addEventListener("click", () => renderDictionary());
+
+  /* ============================================================
      MEMORY
      ============================================================ */
   const memoryArea = document.getElementById("memoryArea");
@@ -1970,6 +2402,12 @@
       newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
     });
   }
+  function isWsHintModeOn() {
+    try { return localStorage.getItem("dma_ws_hint_mode") === "1"; } catch (e) { return false; }
+  }
+  function setWsHintMode(on) {
+    try { localStorage.setItem("dma_ws_hint_mode", on ? "1" : "0"); } catch (e) {}
+  }
   function renderWordSearch() {
     const area = document.getElementById("wordsearchArea");
     if (!wsSession) newWordSearchSession();
@@ -1984,7 +2422,8 @@
           ${s.grid.map((row, r) => row.map((ch, c) => {
             const isSelStart = s.selection[0] && s.selection[0][0] === r && s.selection[0][1] === c;
             const isFound = s.words.some((w) => w.found && cellInWord(w, r, c, s.size));
-            return `<button type="button" class="ws-cell ${isSelStart ? "ws-selected" : ""} ${isFound ? "ws-found" : ""}" data-r="${r}" data-c="${c}">${ch}</button>`;
+            const isHintStart = isWsHintModeOn() && !isFound && s.words.some((w) => !w.found && w.row === r && w.col === c);
+            return `<button type="button" class="ws-cell ${isSelStart ? "ws-selected" : ""} ${isFound ? "ws-found" : ""} ${isHintStart ? "ws-hint" : ""}" data-r="${r}" data-c="${c}">${ch}</button>`;
           }).join("")).join("")}
         </div>
         <div class="trophy-case" style="justify-content:center;">
@@ -1997,9 +2436,10 @@
               ${["der", "die", "das"].map((a) => `<button type="button" class="btn btn-ghost" data-article-guess="${a}">${a}</button>`).join("")}
             </div>
           </div>` : `
-          <div class="quiz-actions" style="justify-content:center; margin-top:10px;">
-            <button type="button" class="btn btn-ghost" id="wsHintBtn">💡 Tipp — ersten Buchstaben zeigen</button>
-          </div>`}
+          <label class="quiz-actions" style="justify-content:center; margin-top:10px; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="wsHintToggle" ${isWsHintModeOn() ? "checked" : ""} />
+            <span>💡 Anfangsbuchstaben dauerhaft anzeigen</span>
+          </label>`}
       </div>
     `;
     area.querySelectorAll(".ws-cell").forEach((btn) => {
@@ -2023,19 +2463,11 @@
         renderWordSearch();
       });
     });
-    const hintBtn = document.getElementById("wsHintBtn");
-    if (hintBtn) {
-      hintBtn.addEventListener("click", () => {
-        const unfound = s.words.filter((w) => !w.found);
-        if (!unfound.length) return;
-        const target = unfound[Math.floor(Math.random() * unfound.length)];
-        const cell = area.querySelector(`.ws-cell[data-r="${target.row}"][data-c="${target.col}"]`);
-        if (cell) {
-          cell.classList.add("ws-hint");
-          setTimeout(() => cell.classList.remove("ws-hint"), 3500);
-        }
-        hintBtn.disabled = true;
-        setTimeout(() => { hintBtn.disabled = false; }, 3500);
+    const hintToggle = document.getElementById("wsHintToggle");
+    if (hintToggle) {
+      hintToggle.addEventListener("change", () => {
+        setWsHintMode(hintToggle.checked);
+        renderWordSearch();
       });
     }
     area.querySelectorAll("[data-article-guess]").forEach((btn) => {
@@ -2101,49 +2533,1557 @@
   const CROSSWORDS = [
     {
       title: "Rätsel 1",
-      rows: 6, cols: 4,
+      rows: 5, cols: 6,
       grid: [
-        ["#", "#", "#", "#"],
-        ["#", "#", "#", "#"],
-        ["H", "A", "U", "S"],
-        ["U", "#", "H", "#"],
-        ["N", "#", "R", "#"],
-        ["D", "#", "#", "#"],
+        ["A", "#", "#", "#", "#", "#"],
+        ["P", "#", "#", "#", "#", "#"],
+        ["F", "A", "H", "R", "E", "N"],
+        ["E", "#", "#", "#", "#", "#"],
+        ["L", "#", "#", "#", "#", "#"],
       ],
       words: [
-        { num: 1, dir: "across", row: 2, col: 0, answer: "HAUS", clue: "Ein Gebäude zum Wohnen" },
-        { num: 1, dir: "down", row: 2, col: 0, answer: "HUND", clue: "Ein beliebtes Haustier, das bellt" },
-        { num: 2, dir: "down", row: 2, col: 2, answer: "UHR", clue: "Zeigt die Uhrzeit an" },
+        { num: 1, dir: "across", row: 2, col: 0, answer: "FAHREN", clue: "sich mit einem Fahrzeug fortbewegen" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "APFEL", clue: "eine runde, oft rote oder grüne Frucht" },
       ],
     },
     {
       title: "Rätsel 2",
-      rows: 4, cols: 4,
+      rows: 5, cols: 4,
       grid: [
-        ["K", "Ä", "S", "E"],
-        ["#", "#", "A", "#"],
-        ["#", "#", "L", "#"],
-        ["#", "#", "Z", "#"],
+        ["H", "E", "F", "T"],
+        ["A", "#", "#", "#"],
+        ["B", "#", "#", "#"],
+        ["E", "#", "#", "#"],
+        ["N", "#", "#", "#"],
       ],
       words: [
-        { num: 1, dir: "across", row: 0, col: 0, answer: "KÄSE", clue: "Ein Milchprodukt, oft auf Brot" },
-        { num: 2, dir: "down", row: 0, col: 2, answer: "SALZ", clue: "Würzt Speisen, weiße Kristalle" },
+        { num: 1, dir: "across", row: 0, col: 0, answer: "HEFT", clue: "kleines Buch zum Schreiben" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "HABEN", clue: "etwas besitzen" },
       ],
     },
     {
       title: "Rätsel 3",
+      rows: 4, cols: 6,
+      grid: [
+        ["H", "#", "#", "#", "#", "#"],
+        ["U", "#", "#", "#", "#", "#"],
+        ["N", "#", "#", "#", "#", "#"],
+        ["D", "E", "N", "K", "E", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "DENKEN", clue: "mit dem Verstand arbeiten, überlegen" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "HUND", clue: "ein beliebtes Haustier, das bellt" },
+      ],
+    },
+    {
+      title: "Rätsel 4",
+      rows: 4, cols: 8,
+      grid: [
+        ["#", "A", "#", "#", "#", "#", "#", "#"],
+        ["T", "R", "O", "T", "Z", "D", "E", "M"],
+        ["#", "Z", "#", "#", "#", "#", "#", "#"],
+        ["#", "T", "#", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "TROTZDEM", clue: "trotz eines Hindernisses, dennoch" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "ARZT", clue: "Person, die Kranke behandelt" },
+      ],
+    },
+    {
+      title: "Rätsel 5",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "M", "#"],
+        ["#", "#", "#", "#", "Ü", "#"],
+        ["#", "#", "#", "#", "S", "#"],
+        ["#", "#", "#", "#", "S", "#"],
+        ["L", "I", "E", "G", "E", "N"],
+        ["#", "#", "#", "#", "N", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "LIEGEN", clue: "sich in waagerechter Lage befinden" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "MÜSSEN", clue: "eine Verpflichtung haben" },
+      ],
+    },
+    {
+      title: "Rätsel 6",
+      rows: 4, cols: 6,
+      grid: [
+        ["#", "B", "#", "#", "#", "#"],
+        ["#", "R", "#", "#", "#", "#"],
+        ["S", "O", "M", "M", "E", "R"],
+        ["#", "T", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "SOMMER", clue: "die warme Jahreszeit" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "BROT", clue: "aus Mehl gebackenes Grundnahrungsmittel" },
+      ],
+    },
+    {
+      title: "Rätsel 7",
+      rows: 8, cols: 3,
+      grid: [
+        ["A", "#", "#"],
+        ["R", "#", "#"],
+        ["B", "U", "S"],
+        ["E", "#", "#"],
+        ["I", "#", "#"],
+        ["T", "#", "#"],
+        ["E", "#", "#"],
+        ["N", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "BUS", clue: "großes Fahrzeug für viele Fahrgäste" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "ARBEITEN", clue: "einer beruflichen Tätigkeit nachgehen" },
+      ],
+    },
+    {
+      title: "Rätsel 8",
       rows: 5, cols: 4,
       grid: [
-        ["B", "R", "O", "T"],
-        ["U", "#", "#", "A"],
-        ["C", "#", "#", "S"],
-        ["H", "#", "#", "S"],
+        ["#", "A", "#", "#"],
+        ["#", "M", "#", "#"],
+        ["#", "P", "#", "#"],
+        ["B", "E", "T", "T"],
+        ["#", "L", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "BETT", clue: "Möbelstück zum Schlafen" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "AMPEL", clue: "regelt den Verkehr mit rot, gelb, grün" },
+      ],
+    },
+    {
+      title: "Rätsel 9",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "L", "#", "#"],
+        ["#", "#", "Ö", "#", "#"],
+        ["#", "#", "F", "#", "#"],
+        ["A", "P", "F", "E", "L"],
+        ["#", "#", "E", "#", "#"],
+        ["#", "#", "L", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "APFEL", clue: "eine runde, oft rote oder grüne Frucht" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "LÖFFEL", clue: "Besteck zum Suppe essen" },
+      ],
+    },
+    {
+      title: "Rätsel 10",
+      rows: 8, cols: 7,
+      grid: [
+        ["F", "A", "M", "I", "L", "I", "E"],
+        ["#", "#", "#", "#", "#", "#", "R"],
+        ["#", "#", "#", "#", "#", "#", "Z"],
+        ["#", "#", "#", "#", "#", "#", "Ä"],
+        ["#", "#", "#", "#", "#", "#", "H"],
+        ["#", "#", "#", "#", "#", "#", "L"],
+        ["#", "#", "#", "#", "#", "#", "E"],
+        ["#", "#", "#", "#", "#", "#", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "FAMILIE", clue: "Eltern, Kinder und Verwandte" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "ERZÄHLEN", clue: "eine Geschichte mündlich wiedergeben" },
+      ],
+    },
+    {
+      title: "Rätsel 11",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "#", "#", "W", "#", "#"],
+        ["#", "#", "#", "E", "#", "#"],
+        ["#", "#", "#", "T", "#", "#"],
+        ["#", "#", "#", "T", "#", "#"],
+        ["#", "#", "#", "E", "#", "#"],
+        ["F", "A", "H", "R", "E", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 5, col: 0, answer: "FAHREN", clue: "sich mit einem Fahrzeug fortbewegen" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "WETTER", clue: "wie es draußen ist (Regen, Sonne …)" },
+      ],
+    },
+    {
+      title: "Rätsel 12",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "G", "#", "#", "#"],
+        ["#", "#", "E", "#", "#", "#"],
+        ["F", "A", "H", "R", "E", "N"],
+        ["#", "#", "E", "#", "#", "#"],
+        ["#", "#", "N", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "FAHREN", clue: "sich mit einem Fahrzeug fortbewegen" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "GEHEN", clue: "sich zu Fuß fortbewegen" },
+      ],
+    },
+    {
+      title: "Rätsel 13",
+      rows: 6, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "N", "#"],
+        ["D", "R", "U", "C", "K", "E", "R"],
+        ["#", "#", "#", "#", "#", "H", "#"],
+        ["#", "#", "#", "#", "#", "M", "#"],
+        ["#", "#", "#", "#", "#", "E", "#"],
+        ["#", "#", "#", "#", "#", "N", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "DRUCKER", clue: "druckt Dokumente auf Papier" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "NEHMEN", clue: "etwas in die Hand oder an sich nehmen" },
+      ],
+    },
+    {
+      title: "Rätsel 14",
+      rows: 4, cols: 5,
+      grid: [
+        ["B", "#", "#", "#", "#"],
+        ["R", "#", "#", "#", "#"],
+        ["O", "#", "#", "#", "#"],
+        ["T", "A", "S", "S", "E"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "TASSE", clue: "Gefäß für heiße Getränke, mit Henkel" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "BROT", clue: "aus Mehl gebackenes Grundnahrungsmittel" },
+      ],
+    },
+    {
+      title: "Rätsel 15",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "#", "B", "#"],
+        ["#", "#", "#", "U", "#"],
+        ["#", "#", "#", "T", "#"],
+        ["K", "Ä", "L", "T", "E"],
+        ["#", "#", "#", "E", "#"],
+        ["#", "#", "#", "R", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "KÄLTE", clue: "niedrige Temperatur" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "BUTTER", clue: "gelbes Fett aus Milch, zum Streichen" },
+      ],
+    },
+    {
+      title: "Rätsel 16",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "W", "#"],
+        ["#", "#", "#", "#", "E", "#"],
+        ["#", "#", "#", "#", "R", "#"],
+        ["#", "#", "#", "#", "D", "#"],
+        ["G", "A", "R", "T", "E", "N"],
+        ["#", "#", "#", "#", "N", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "GARTEN", clue: "Fläche mit Pflanzen bei einem Haus" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "WERDEN", clue: "sich in etwas verändern" },
+      ],
+    },
+    {
+      title: "Rätsel 17",
+      rows: 4, cols: 7,
+      grid: [
+        ["F", "A", "M", "I", "L", "I", "E"],
+        ["#", "R", "#", "#", "#", "#", "#"],
+        ["#", "Z", "#", "#", "#", "#", "#"],
+        ["#", "T", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "FAMILIE", clue: "Eltern, Kinder und Verwandte" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "ARZT", clue: "Person, die Kranke behandelt" },
+      ],
+    },
+    {
+      title: "Rätsel 18",
+      rows: 7, cols: 3,
+      grid: [
+        ["B", "U", "S"],
+        ["#", "#", "T"],
+        ["#", "#", "R"],
+        ["#", "#", "A"],
+        ["#", "#", "S"],
+        ["#", "#", "S"],
+        ["#", "#", "E"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "BUS", clue: "großes Fahrzeug für viele Fahrgäste" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "STRASSE", clue: "Weg für Autos und Fahrzeuge" },
+      ],
+    },
+    {
+      title: "Rätsel 19",
+      rows: 5, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "H", "#"],
+        ["F", "A", "H", "R", "R", "A", "D"],
+        ["#", "#", "#", "#", "#", "N", "#"],
+        ["#", "#", "#", "#", "#", "D", "#"],
+        ["#", "#", "#", "#", "#", "Y", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "FAHRRAD", clue: "Zweirad, das man tritt" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "HANDY", clue: "tragbares Telefon" },
+      ],
+    },
+    {
+      title: "Rätsel 20",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "S", "#"],
+        ["#", "#", "#", "#", "P", "#"],
+        ["#", "#", "#", "#", "I", "#"],
+        ["#", "#", "#", "#", "E", "#"],
+        ["#", "#", "#", "#", "L", "#"],
+        ["M", "E", "S", "S", "E", "R"],
+        ["#", "#", "#", "#", "N", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 5, col: 0, answer: "MESSER", clue: "Besteck zum Schneiden" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "SPIELEN", clue: "sich zum Vergnügen beschäftigen" },
+      ],
+    },
+    {
+      title: "Rätsel 21",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "#", "W", "#", "#", "#"],
+        ["#", "#", "I", "#", "#", "#"],
+        ["M", "A", "C", "H", "E", "N"],
+        ["#", "#", "H", "#", "#", "#"],
+        ["#", "#", "T", "#", "#", "#"],
+        ["#", "#", "I", "#", "#", "#"],
+        ["#", "#", "G", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "MACHEN", clue: "etwas herstellen oder ausführen" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "WICHTIG", clue: "von großer Bedeutung" },
+      ],
+    },
+    {
+      title: "Rätsel 22",
+      rows: 7, cols: 7,
+      grid: [
+        ["R", "A", "T", "H", "A", "U", "S"],
+        ["#", "#", "#", "#", "#", "#", "T"],
+        ["#", "#", "#", "#", "#", "#", "R"],
+        ["#", "#", "#", "#", "#", "#", "A"],
+        ["#", "#", "#", "#", "#", "#", "S"],
+        ["#", "#", "#", "#", "#", "#", "S"],
+        ["#", "#", "#", "#", "#", "#", "E"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "RATHAUS", clue: "Gebäude der Stadtverwaltung" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "STRASSE", clue: "Weg für Autos und Fahrzeuge" },
+      ],
+    },
+    {
+      title: "Rätsel 23",
+      rows: 4, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "K"],
+        ["#", "#", "#", "#", "#", "#", "I"],
+        ["M", "Ä", "D", "C", "H", "E", "N"],
+        ["#", "#", "#", "#", "#", "#", "D"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "MÄDCHEN", clue: "ein junges weibliches Kind" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "KIND", clue: "ein junger Mensch" },
+      ],
+    },
+    {
+      title: "Rätsel 24",
+      rows: 5, cols: 4,
+      grid: [
+        ["K", "I", "N", "D"],
+        ["A", "#", "#", "#"],
+        ["B", "#", "#", "#"],
+        ["E", "#", "#", "#"],
+        ["L", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "KIND", clue: "ein junger Mensch" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "KABEL", clue: "Leitung für Strom oder Daten" },
+      ],
+    },
+    {
+      title: "Rätsel 25",
+      rows: 4, cols: 7,
+      grid: [
+        ["W", "#", "#", "#", "#", "#", "#"],
+        ["I", "#", "#", "#", "#", "#", "#"],
+        ["N", "#", "#", "#", "#", "#", "#"],
+        ["D", "R", "U", "C", "K", "E", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "DRUCKER", clue: "druckt Dokumente auf Papier" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "WIND", clue: "bewegte Luft" },
+      ],
+    },
+    {
+      title: "Rätsel 26",
+      rows: 5, cols: 3,
+      grid: [
+        ["B", "U", "S"],
+        ["#", "#", "A"],
+        ["#", "#", "G"],
+        ["#", "#", "E"],
+        ["#", "#", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "BUS", clue: "großes Fahrzeug für viele Fahrgäste" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "SAGEN", clue: "etwas mündlich mitteilen" },
+      ],
+    },
+    {
+      title: "Rätsel 27",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "B", "#", "#", "#", "#"],
+        ["#", "R", "#", "#", "#", "#"],
+        ["#", "Ü", "#", "#", "#", "#"],
+        ["#", "C", "#", "#", "#", "#"],
+        ["#", "K", "#", "#", "#", "#"],
+        ["H", "E", "R", "B", "S", "T"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 5, col: 0, answer: "HERBST", clue: "die Jahreszeit mit fallenden Blättern" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "BRÜCKE", clue: "führt über einen Fluss oder ein Tal" },
+      ],
+    },
+    {
+      title: "Rätsel 28",
+      rows: 6, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "B", "#"],
+        ["#", "#", "#", "#", "#", "R", "#"],
+        ["#", "#", "#", "#", "#", "I", "#"],
+        ["#", "#", "#", "#", "#", "L", "#"],
+        ["#", "#", "#", "#", "#", "L", "#"],
+        ["M", "Ä", "D", "C", "H", "E", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 5, col: 0, answer: "MÄDCHEN", clue: "ein junges weibliches Kind" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "BRILLE", clue: "Sehhilfe für die Augen" },
+      ],
+    },
+    {
+      title: "Rätsel 29",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "#", "K"],
+        ["#", "#", "#", "#", "#", "Ö"],
+        ["#", "#", "#", "#", "#", "N"],
+        ["W", "I", "S", "S", "E", "N"],
+        ["#", "#", "#", "#", "#", "E"],
+        ["#", "#", "#", "#", "#", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "WISSEN", clue: "eine Information im Gedächtnis haben" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "KÖNNEN", clue: "eine Fähigkeit besitzen" },
+      ],
+    },
+    {
+      title: "Rätsel 30",
+      rows: 6, cols: 7,
+      grid: [
+        ["#", "#", "#", "S", "#", "#", "#"],
+        ["#", "#", "#", "C", "#", "#", "#"],
+        ["#", "#", "#", "H", "#", "#", "#"],
+        ["B", "L", "E", "I", "B", "E", "N"],
+        ["#", "#", "#", "F", "#", "#", "#"],
+        ["#", "#", "#", "F", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "BLEIBEN", clue: "an einem Ort verharren, nicht weggehen" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "SCHIFF", clue: "fährt auf dem Wasser" },
+      ],
+    },
+    {
+      title: "Rätsel 31",
+      rows: 3, cols: 4,
+      grid: [
+        ["#", "#", "U", "#"],
+        ["#", "#", "H", "#"],
+        ["B", "E", "R", "G"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "BERG", clue: "eine hohe Erhebung im Land" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "UHR", clue: "zeigt die Uhrzeit" },
+      ],
+    },
+    {
+      title: "Rätsel 32",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "#", "I"],
+        ["W", "E", "R", "D", "E", "N"],
+        ["#", "#", "#", "#", "#", "S"],
+        ["#", "#", "#", "#", "#", "E"],
+        ["#", "#", "#", "#", "#", "L"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "WERDEN", clue: "sich in etwas verändern" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "INSEL", clue: "Land, umgeben von Wasser" },
+      ],
+    },
+    {
+      title: "Rätsel 33",
+      rows: 6, cols: 4,
+      grid: [
+        ["#", "F", "#", "#"],
+        ["#", "Ü", "#", "#"],
+        ["#", "H", "#", "#"],
+        ["#", "L", "#", "#"],
+        ["B", "E", "T", "T"],
+        ["#", "N", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "BETT", clue: "Möbelstück zum Schlafen" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "FÜHLEN", clue: "eine Empfindung wahrnehmen" },
+      ],
+    },
+    {
+      title: "Rätsel 34",
+      rows: 5, cols: 5,
+      grid: [
+        ["F", "#", "#", "#", "#"],
+        ["I", "#", "#", "#", "#"],
+        ["S", "U", "P", "P", "E"],
+        ["C", "#", "#", "#", "#"],
+        ["H", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "SUPPE", clue: "flüssiges, warmes Gericht" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "FISCH", clue: "Tier, das im Wasser lebt" },
+      ],
+    },
+    {
+      title: "Rätsel 35",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "L", "#", "#", "#", "#"],
+        ["#", "Ö", "#", "#", "#", "#"],
+        ["#", "F", "#", "#", "#", "#"],
+        ["#", "F", "#", "#", "#", "#"],
+        ["N", "E", "H", "M", "E", "N"],
+        ["#", "L", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "NEHMEN", clue: "etwas in die Hand oder an sich nehmen" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "LÖFFEL", clue: "Besteck zum Suppe essen" },
+      ],
+    },
+    {
+      title: "Rätsel 36",
+      rows: 6, cols: 4,
+      grid: [
+        ["#", "#", "#", "S"],
+        ["#", "#", "#", "C"],
+        ["#", "#", "#", "H"],
+        ["W", "E", "I", "N"],
+        ["#", "#", "#", "E"],
         ["#", "#", "#", "E"],
       ],
       words: [
-        { num: 1, dir: "across", row: 0, col: 0, answer: "BROT", clue: "Aus Mehl gebackenes Grundnahrungsmittel" },
-        { num: 1, dir: "down", row: 0, col: 0, answer: "BUCH", clue: "Gedruckte Seiten zum Lesen" },
-        { num: 2, dir: "down", row: 0, col: 3, answer: "TASSE", clue: "Gefäß für heiße Getränke, mit Henkel" },
+        { num: 1, dir: "across", row: 3, col: 0, answer: "WEIN", clue: "alkoholisches Getränk aus Trauben" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "SCHNEE", clue: "weiße, kalte Flocken im Winter" },
+      ],
+    },
+    {
+      title: "Rätsel 37",
+      rows: 4, cols: 4,
+      grid: [
+        ["#", "#", "W", "#"],
+        ["#", "#", "E", "#"],
+        ["#", "#", "I", "#"],
+        ["L", "A", "N", "D"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "LAND", clue: "ein Staat (oder Fläche außerhalb der Stadt)" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "WEIN", clue: "alkoholisches Getränk aus Trauben" },
+      ],
+    },
+    {
+      title: "Rätsel 38",
+      rows: 4, cols: 5,
+      grid: [
+        ["#", "B", "#", "#", "#"],
+        ["L", "A", "M", "P", "E"],
+        ["#", "N", "#", "#", "#"],
+        ["#", "K", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "LAMPE", clue: "spendet Licht in einem Raum" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "BANK", clue: "Sitzmöbel im Freien (oder ein Geldinstitut)" },
+      ],
+    },
+    {
+      title: "Rätsel 39",
+      rows: 8, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "S", "#", "#"],
+        ["#", "#", "#", "#", "P", "#", "#"],
+        ["F", "A", "H", "R", "R", "A", "D"],
+        ["#", "#", "#", "#", "E", "#", "#"],
+        ["#", "#", "#", "#", "C", "#", "#"],
+        ["#", "#", "#", "#", "H", "#", "#"],
+        ["#", "#", "#", "#", "E", "#", "#"],
+        ["#", "#", "#", "#", "N", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "FAHRRAD", clue: "Zweirad, das man tritt" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "SPRECHEN", clue: "mit der Stimme reden" },
+      ],
+    },
+    {
+      title: "Rätsel 40",
+      rows: 5, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "H"],
+        ["#", "#", "#", "#", "#", "#", "A"],
+        ["#", "#", "#", "#", "#", "#", "B"],
+        ["#", "#", "#", "#", "#", "#", "E"],
+        ["S", "P", "I", "E", "L", "E", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "SPIELEN", clue: "sich zum Vergnügen beschäftigen" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "HABEN", clue: "etwas besitzen" },
+      ],
+    },
+    {
+      title: "Rätsel 41",
+      rows: 6, cols: 5,
+      grid: [
+        ["W", "#", "#", "#", "#"],
+        ["E", "#", "#", "#", "#"],
+        ["T", "#", "#", "#", "#"],
+        ["T", "I", "S", "C", "H"],
+        ["E", "#", "#", "#", "#"],
+        ["R", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "TISCH", clue: "ein Möbelstück zum Essen oder Arbeiten" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "WETTER", clue: "wie es draußen ist (Regen, Sonne …)" },
+      ],
+    },
+    {
+      title: "Rätsel 42",
+      rows: 4, cols: 5,
+      grid: [
+        ["#", "#", "H", "#", "#"],
+        ["#", "#", "U", "#", "#"],
+        ["J", "U", "N", "G", "E"],
+        ["#", "#", "D", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "JUNGE", clue: "ein junger männlicher Mensch" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "HUND", clue: "ein beliebtes Haustier, das bellt" },
+      ],
+    },
+    {
+      title: "Rätsel 43",
+      rows: 5, cols: 8,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "A", "#"],
+        ["#", "#", "#", "#", "#", "#", "M", "#"],
+        ["#", "#", "#", "#", "#", "#", "P", "#"],
+        ["B", "E", "G", "I", "N", "N", "E", "N"],
+        ["#", "#", "#", "#", "#", "#", "L", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "BEGINNEN", clue: "mit etwas anfangen" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "AMPEL", clue: "regelt den Verkehr mit rot, gelb, grün" },
+      ],
+    },
+    {
+      title: "Rätsel 44",
+      rows: 5, cols: 4,
+      grid: [
+        ["#", "M", "#", "#"],
+        ["B", "I", "L", "D"],
+        ["#", "L", "#", "#"],
+        ["#", "C", "#", "#"],
+        ["#", "H", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "BILD", clue: "ein gemaltes oder gedrucktes Motiv" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "MILCH", clue: "weißes Getränk von der Kuh" },
+      ],
+    },
+    {
+      title: "Rätsel 45",
+      rows: 4, cols: 7,
+      grid: [
+        ["#", "B", "#", "#", "#", "#", "#"],
+        ["F", "A", "M", "I", "L", "I", "E"],
+        ["#", "B", "#", "#", "#", "#", "#"],
+        ["#", "Y", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "FAMILIE", clue: "Eltern, Kinder und Verwandte" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "BABY", clue: "ein sehr kleines Kind" },
+      ],
+    },
+    {
+      title: "Rätsel 46",
+      rows: 5, cols: 5,
+      grid: [
+        ["#", "#", "#", "#", "G"],
+        ["#", "#", "#", "#", "E"],
+        ["#", "#", "#", "#", "H"],
+        ["B", "L", "U", "M", "E"],
+        ["#", "#", "#", "#", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "BLUME", clue: "eine Pflanze mit bunter Blüte" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "GEHEN", clue: "sich zu Fuß fortbewegen" },
+      ],
+    },
+    {
+      title: "Rätsel 47",
+      rows: 5, cols: 5,
+      grid: [
+        ["#", "#", "K", "#", "#"],
+        ["#", "#", "A", "#", "#"],
+        ["G", "A", "B", "E", "L"],
+        ["#", "#", "E", "#", "#"],
+        ["#", "#", "L", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "GABEL", clue: "Besteck mit Zinken" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "KABEL", clue: "Leitung für Strom oder Daten" },
+      ],
+    },
+    {
+      title: "Rätsel 48",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "K", "#"],
+        ["#", "#", "#", "#", "A", "#"],
+        ["#", "#", "#", "#", "B", "#"],
+        ["M", "A", "C", "H", "E", "N"],
+        ["#", "#", "#", "#", "L", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "MACHEN", clue: "etwas herstellen oder ausführen" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "KABEL", clue: "Leitung für Strom oder Daten" },
+      ],
+    },
+    {
+      title: "Rätsel 49",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "S", "#", "#", "#", "#"],
+        ["#", "T", "#", "#", "#", "#"],
+        ["#", "E", "#", "#", "#", "#"],
+        ["#", "H", "#", "#", "#", "#"],
+        ["N", "E", "H", "M", "E", "N"],
+        ["#", "N", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "NEHMEN", clue: "etwas in die Hand oder an sich nehmen" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "STEHEN", clue: "sich aufrecht auf den Füßen befinden" },
+      ],
+    },
+    {
+      title: "Rätsel 50",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "W", "#", "#", "#"],
+        ["#", "#", "O", "#", "#", "#"],
+        ["H", "E", "L", "F", "E", "N"],
+        ["#", "#", "K", "#", "#", "#"],
+        ["#", "#", "E", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "HELFEN", clue: "jemandem Unterstützung geben" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "WOLKE", clue: "weiße oder graue Form am Himmel" },
+      ],
+    },
+    {
+      title: "Rätsel 51",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "#", "F", "#"],
+        ["#", "#", "#", "I", "#"],
+        ["#", "#", "#", "N", "#"],
+        ["#", "#", "#", "D", "#"],
+        ["G", "A", "B", "E", "L"],
+        ["#", "#", "#", "N", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "GABEL", clue: "Besteck mit Zinken" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "FINDEN", clue: "etwas Gesuchtes entdecken" },
+      ],
+    },
+    {
+      title: "Rätsel 52",
+      rows: 4, cols: 7,
+      grid: [
+        ["#", "J", "#", "#", "#", "#", "#"],
+        ["#", "A", "#", "#", "#", "#", "#"],
+        ["#", "H", "#", "#", "#", "#", "#"],
+        ["D", "R", "U", "C", "K", "E", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "DRUCKER", clue: "druckt Dokumente auf Papier" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "JAHR", clue: "zwölf Monate" },
+      ],
+    },
+    {
+      title: "Rätsel 53",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "A", "#"],
+        ["#", "#", "#", "#", "M", "#"],
+        ["#", "#", "#", "#", "P", "#"],
+        ["K", "A", "U", "F", "E", "N"],
+        ["#", "#", "#", "#", "L", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "KAUFEN", clue: "gegen Geld erwerben" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "AMPEL", clue: "regelt den Verkehr mit rot, gelb, grün" },
+      ],
+    },
+    {
+      title: "Rätsel 54",
+      rows: 6, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "L"],
+        ["#", "#", "#", "#", "#", "#", "Ö"],
+        ["#", "#", "#", "#", "#", "#", "F"],
+        ["#", "#", "#", "#", "#", "#", "F"],
+        ["K", "O", "M", "M", "O", "D", "E"],
+        ["#", "#", "#", "#", "#", "#", "L"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "KOMMODE", clue: "niedriger Schrank mit Schubladen" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "LÖFFEL", clue: "Besteck zum Suppe essen" },
+      ],
+    },
+    {
+      title: "Rätsel 55",
+      rows: 5, cols: 7,
+      grid: [
+        ["#", "#", "#", "I", "#", "#", "#"],
+        ["#", "#", "#", "N", "#", "#", "#"],
+        ["#", "#", "#", "S", "#", "#", "#"],
+        ["#", "#", "#", "E", "#", "#", "#"],
+        ["M", "Ö", "G", "L", "I", "C", "H"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "MÖGLICH", clue: "durchführbar, machbar" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "INSEL", clue: "Land, umgeben von Wasser" },
+      ],
+    },
+    {
+      title: "Rätsel 56",
+      rows: 4, cols: 8,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "#", "G"],
+        ["M", "A", "N", "C", "H", "M", "A", "L"],
+        ["#", "#", "#", "#", "#", "#", "#", "A"],
+        ["#", "#", "#", "#", "#", "#", "#", "S"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "MANCHMAL", clue: "gelegentlich, nicht immer" },
+        { num: 1, dir: "down", row: 0, col: 7, answer: "GLAS", clue: "durchsichtiges Trinkgefäß" },
+      ],
+    },
+    {
+      title: "Rätsel 57",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "#", "#", "W"],
+        ["#", "#", "#", "#", "I"],
+        ["#", "#", "#", "#", "N"],
+        ["#", "#", "#", "#", "T"],
+        ["W", "I", "E", "S", "E"],
+        ["#", "#", "#", "#", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "WIESE", clue: "eine Fläche mit Gras" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "WINTER", clue: "die kalte Jahreszeit" },
+      ],
+    },
+    {
+      title: "Rätsel 58",
+      rows: 8, cols: 6,
+      grid: [
+        ["#", "F", "#", "#", "#", "#"],
+        ["#", "L", "#", "#", "#", "#"],
+        ["#", "U", "#", "#", "#", "#"],
+        ["#", "G", "#", "#", "#", "#"],
+        ["#", "Z", "#", "#", "#", "#"],
+        ["#", "E", "#", "#", "#", "#"],
+        ["Z", "U", "C", "K", "E", "R"],
+        ["#", "G", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 6, col: 0, answer: "ZUCKER", clue: "süße, weiße Kristalle zum Süßen" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "FLUGZEUG", clue: "fliegt durch die Luft" },
+      ],
+    },
+    {
+      title: "Rätsel 59",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "K", "#"],
+        ["#", "#", "#", "#", "A", "#"],
+        ["#", "#", "#", "#", "B", "#"],
+        ["S", "C", "H", "N", "E", "E"],
+        ["#", "#", "#", "#", "L", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "SCHNEE", clue: "weiße, kalte Flocken im Winter" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "KABEL", clue: "Leitung für Strom oder Daten" },
+      ],
+    },
+    {
+      title: "Rätsel 60",
+      rows: 5, cols: 7,
+      grid: [
+        ["#", "#", "S", "#", "#", "#", "#"],
+        ["#", "#", "T", "#", "#", "#", "#"],
+        ["S", "P", "I", "E", "L", "E", "N"],
+        ["#", "#", "F", "#", "#", "#", "#"],
+        ["#", "#", "T", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "SPIELEN", clue: "sich zum Vergnügen beschäftigen" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "STIFT", clue: "zum Schreiben oder Malen" },
+      ],
+    },
+    {
+      title: "Rätsel 61",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "W", "#", "#", "#", "#"],
+        ["#", "O", "#", "#", "#", "#"],
+        ["#", "L", "#", "#", "#", "#"],
+        ["#", "K", "#", "#", "#", "#"],
+        ["W", "E", "R", "D", "E", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "WERDEN", clue: "sich in etwas verändern" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "WOLKE", clue: "weiße oder graue Form am Himmel" },
+      ],
+    },
+    {
+      title: "Rätsel 62",
+      rows: 8, cols: 4,
+      grid: [
+        ["#", "B", "#", "#"],
+        ["#", "R", "#", "#"],
+        ["#", "A", "#", "#"],
+        ["#", "U", "#", "#"],
+        ["#", "C", "#", "#"],
+        ["#", "H", "#", "#"],
+        ["B", "E", "R", "G"],
+        ["#", "N", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 6, col: 0, answer: "BERG", clue: "eine hohe Erhebung im Land" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "BRAUCHEN", clue: "etwas nötig haben" },
+      ],
+    },
+    {
+      title: "Rätsel 63",
+      rows: 3, cols: 8,
+      grid: [
+        ["F", "L", "U", "G", "Z", "E", "U", "G"],
+        ["#", "#", "H", "#", "#", "#", "#", "#"],
+        ["#", "#", "R", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "FLUGZEUG", clue: "fliegt durch die Luft" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "UHR", clue: "zeigt die Uhrzeit" },
+      ],
+    },
+    {
+      title: "Rätsel 64",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "T", "#"],
+        ["#", "#", "#", "#", "A", "#"],
+        ["#", "#", "#", "#", "S", "#"],
+        ["#", "#", "#", "#", "S", "#"],
+        ["L", "E", "H", "R", "E", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "LEHRER", clue: "unterrichtet in der Schule (männlich)" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "TASSE", clue: "Gefäß für heiße Getränke, mit Henkel" },
+      ],
+    },
+    {
+      title: "Rätsel 65",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "#", "J"],
+        ["#", "#", "#", "#", "#", "U"],
+        ["L", "I", "E", "G", "E", "N"],
+        ["#", "#", "#", "#", "#", "G"],
+        ["#", "#", "#", "#", "#", "E"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "LIEGEN", clue: "sich in waagerechter Lage befinden" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "JUNGE", clue: "ein junger männlicher Mensch" },
+      ],
+    },
+    {
+      title: "Rätsel 66",
+      rows: 6, cols: 8,
+      grid: [
+        ["#", "#", "#", "L", "#", "#", "#", "#"],
+        ["#", "#", "#", "Ö", "#", "#", "#", "#"],
+        ["#", "#", "#", "F", "#", "#", "#", "#"],
+        ["#", "#", "#", "F", "#", "#", "#", "#"],
+        ["S", "P", "R", "E", "C", "H", "E", "N"],
+        ["#", "#", "#", "L", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "SPRECHEN", clue: "mit der Stimme reden" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "LÖFFEL", clue: "Besteck zum Suppe essen" },
+      ],
+    },
+    {
+      title: "Rätsel 67",
+      rows: 5, cols: 8,
+      grid: [
+        ["F", "#", "#", "#", "#", "#", "#", "#"],
+        ["I", "#", "#", "#", "#", "#", "#", "#"],
+        ["S", "#", "#", "#", "#", "#", "#", "#"],
+        ["C", "O", "M", "P", "U", "T", "E", "R"],
+        ["H", "#", "#", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "COMPUTER", clue: "elektronisches Gerät zum Arbeiten/Spielen" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "FISCH", clue: "Tier, das im Wasser lebt" },
+      ],
+    },
+    {
+      title: "Rätsel 68",
+      rows: 5, cols: 4,
+      grid: [
+        ["#", "#", "#", "I"],
+        ["#", "#", "#", "M"],
+        ["#", "#", "#", "M"],
+        ["K", "Ä", "S", "E"],
+        ["#", "#", "#", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "KÄSE", clue: "ein Milchprodukt, oft auf Brot" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "IMMER", clue: "zu jeder Zeit, ausnahmslos" },
+      ],
+    },
+    {
+      title: "Rätsel 69",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "#", "#", "S"],
+        ["#", "#", "#", "#", "O"],
+        ["#", "#", "#", "#", "M"],
+        ["#", "#", "#", "#", "M"],
+        ["B", "L", "U", "M", "E"],
+        ["#", "#", "#", "#", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "BLUME", clue: "eine Pflanze mit bunter Blüte" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "SOMMER", clue: "die warme Jahreszeit" },
+      ],
+    },
+    {
+      title: "Rätsel 70",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "S", "#", "#", "#", "#"],
+        ["#", "C", "#", "#", "#", "#"],
+        ["#", "H", "#", "#", "#", "#"],
+        ["#", "N", "#", "#", "#", "#"],
+        ["L", "E", "H", "R", "E", "R"],
+        ["#", "E", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "LEHRER", clue: "unterrichtet in der Schule (männlich)" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "SCHNEE", clue: "weiße, kalte Flocken im Winter" },
+      ],
+    },
+    {
+      title: "Rätsel 71",
+      rows: 6, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "K"],
+        ["#", "#", "#", "#", "#", "#", "A"],
+        ["#", "#", "#", "#", "#", "#", "U"],
+        ["#", "#", "#", "#", "#", "#", "F"],
+        ["#", "#", "#", "#", "#", "#", "E"],
+        ["M", "Ä", "D", "C", "H", "E", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 5, col: 0, answer: "MÄDCHEN", clue: "ein junges weibliches Kind" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "KAUFEN", clue: "gegen Geld erwerben" },
+      ],
+    },
+    {
+      title: "Rätsel 72",
+      rows: 4, cols: 5,
+      grid: [
+        ["#", "#", "#", "#", "B"],
+        ["#", "#", "#", "#", "A"],
+        ["R", "E", "G", "E", "N"],
+        ["#", "#", "#", "#", "K"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "REGEN", clue: "Wasser, das vom Himmel fällt" },
+        { num: 1, dir: "down", row: 0, col: 4, answer: "BANK", clue: "Sitzmöbel im Freien (oder ein Geldinstitut)" },
+      ],
+    },
+    {
+      title: "Rätsel 73",
+      rows: 6, cols: 4,
+      grid: [
+        ["#", "#", "#", "W"],
+        ["#", "#", "#", "I"],
+        ["#", "#", "#", "N"],
+        ["#", "#", "#", "T"],
+        ["K", "Ä", "S", "E"],
+        ["#", "#", "#", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "KÄSE", clue: "ein Milchprodukt, oft auf Brot" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "WINTER", clue: "die kalte Jahreszeit" },
+      ],
+    },
+    {
+      title: "Rätsel 74",
+      rows: 6, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "#", "F"],
+        ["#", "#", "#", "#", "#", "I"],
+        ["#", "#", "#", "#", "#", "N"],
+        ["#", "#", "#", "#", "#", "D"],
+        ["B", "R", "Ü", "C", "K", "E"],
+        ["#", "#", "#", "#", "#", "N"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "BRÜCKE", clue: "führt über einen Fluss oder ein Tal" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "FINDEN", clue: "etwas Gesuchtes entdecken" },
+      ],
+    },
+    {
+      title: "Rätsel 75",
+      rows: 8, cols: 8,
+      grid: [
+        ["#", "A", "#", "#", "#", "#", "#", "#"],
+        ["#", "R", "#", "#", "#", "#", "#", "#"],
+        ["#", "B", "#", "#", "#", "#", "#", "#"],
+        ["L", "E", "H", "R", "E", "R", "I", "N"],
+        ["#", "I", "#", "#", "#", "#", "#", "#"],
+        ["#", "T", "#", "#", "#", "#", "#", "#"],
+        ["#", "E", "#", "#", "#", "#", "#", "#"],
+        ["#", "N", "#", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "LEHRERIN", clue: "unterrichtet in der Schule (weiblich)" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "ARBEITEN", clue: "einer beruflichen Tätigkeit nachgehen" },
+      ],
+    },
+    {
+      title: "Rätsel 76",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "D", "#", "#", "#", "#"],
+        ["L", "E", "H", "R", "E", "R"],
+        ["#", "S", "#", "#", "#", "#"],
+        ["#", "H", "#", "#", "#", "#"],
+        ["#", "A", "#", "#", "#", "#"],
+        ["#", "L", "#", "#", "#", "#"],
+        ["#", "B", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "LEHRER", clue: "unterrichtet in der Schule (männlich)" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "DESHALB", clue: "aus diesem Grund" },
+      ],
+    },
+    {
+      title: "Rätsel 77",
+      rows: 5, cols: 5,
+      grid: [
+        ["K", "Ä", "L", "T", "E"],
+        ["#", "#", "A", "#", "#"],
+        ["#", "#", "M", "#", "#"],
+        ["#", "#", "P", "#", "#"],
+        ["#", "#", "E", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "KÄLTE", clue: "niedrige Temperatur" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "LAMPE", clue: "spendet Licht in einem Raum" },
+      ],
+    },
+    {
+      title: "Rätsel 78",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "#", "D", "#"],
+        ["#", "#", "#", "E", "#"],
+        ["S", "O", "N", "N", "E"],
+        ["#", "#", "#", "K", "#"],
+        ["#", "#", "#", "E", "#"],
+        ["#", "#", "#", "N", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "SONNE", clue: "leuchtet und wärmt am Tag" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "DENKEN", clue: "mit dem Verstand arbeiten, überlegen" },
+      ],
+    },
+    {
+      title: "Rätsel 79",
+      rows: 5, cols: 5,
+      grid: [
+        ["F", "#", "#", "#", "#"],
+        ["I", "#", "#", "#", "#"],
+        ["S", "O", "N", "N", "E"],
+        ["C", "#", "#", "#", "#"],
+        ["H", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "SONNE", clue: "leuchtet und wärmt am Tag" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "FISCH", clue: "Tier, das im Wasser lebt" },
+      ],
+    },
+    {
+      title: "Rätsel 80",
+      rows: 4, cols: 4,
+      grid: [
+        ["#", "#", "J", "#"],
+        ["#", "#", "A", "#"],
+        ["#", "#", "H", "#"],
+        ["B", "E", "R", "G"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "BERG", clue: "eine hohe Erhebung im Land" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "JAHR", clue: "zwölf Monate" },
+      ],
+    },
+    {
+      title: "Rätsel 81",
+      rows: 5, cols: 6,
+      grid: [
+        ["M", "U", "S", "E", "U", "M"],
+        ["I", "#", "#", "#", "#", "#"],
+        ["L", "#", "#", "#", "#", "#"],
+        ["C", "#", "#", "#", "#", "#"],
+        ["H", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "MUSEUM", clue: "Ort, an dem Kunst oder Geschichte gezeigt wird" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "MILCH", clue: "weißes Getränk von der Kuh" },
+      ],
+    },
+    {
+      title: "Rätsel 82",
+      rows: 4, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "#", "J"],
+        ["#", "#", "#", "#", "#", "#", "A"],
+        ["E", "N", "D", "L", "I", "C", "H"],
+        ["#", "#", "#", "#", "#", "#", "R"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "ENDLICH", clue: "nach langem Warten, zum Schluss" },
+        { num: 1, dir: "down", row: 0, col: 6, answer: "JAHR", clue: "zwölf Monate" },
+      ],
+    },
+    {
+      title: "Rätsel 83",
+      rows: 7, cols: 4,
+      grid: [
+        ["#", "D", "#", "#"],
+        ["#", "E", "#", "#"],
+        ["#", "S", "#", "#"],
+        ["#", "H", "#", "#"],
+        ["M", "A", "N", "N"],
+        ["#", "L", "#", "#"],
+        ["#", "B", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "MANN", clue: "eine erwachsene männliche Person" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "DESHALB", clue: "aus diesem Grund" },
+      ],
+    },
+    {
+      title: "Rätsel 84",
+      rows: 8, cols: 5,
+      grid: [
+        ["S", "T", "A", "D", "T"],
+        ["P", "#", "#", "#", "#"],
+        ["R", "#", "#", "#", "#"],
+        ["E", "#", "#", "#", "#"],
+        ["C", "#", "#", "#", "#"],
+        ["H", "#", "#", "#", "#"],
+        ["E", "#", "#", "#", "#"],
+        ["N", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "STADT", clue: "großer Ort mit vielen Häusern" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "SPRECHEN", clue: "mit der Stimme reden" },
+      ],
+    },
+    {
+      title: "Rätsel 85",
+      rows: 4, cols: 6,
+      grid: [
+        ["S", "T", "E", "H", "E", "N"],
+        ["A", "#", "#", "#", "#", "#"],
+        ["L", "#", "#", "#", "#", "#"],
+        ["Z", "#", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "STEHEN", clue: "sich aufrecht auf den Füßen befinden" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "SALZ", clue: "würzt Speisen, weiße Kristalle" },
+      ],
+    },
+    {
+      title: "Rätsel 86",
+      rows: 7, cols: 5,
+      grid: [
+        ["#", "W", "#", "#", "#"],
+        ["#", "I", "#", "#", "#"],
+        ["#", "C", "#", "#", "#"],
+        ["#", "H", "#", "#", "#"],
+        ["S", "T", "A", "D", "T"],
+        ["#", "I", "#", "#", "#"],
+        ["#", "G", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "STADT", clue: "großer Ort mit vielen Häusern" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "WICHTIG", clue: "von großer Bedeutung" },
+      ],
+    },
+    {
+      title: "Rätsel 87",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "#", "#", "S", "#", "#"],
+        ["#", "#", "#", "T", "#", "#"],
+        ["#", "#", "#", "R", "#", "#"],
+        ["#", "#", "#", "A", "#", "#"],
+        ["M", "Ü", "S", "S", "E", "N"],
+        ["#", "#", "#", "S", "#", "#"],
+        ["#", "#", "#", "E", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "MÜSSEN", clue: "eine Verpflichtung haben" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "STRASSE", clue: "Weg für Autos und Fahrzeuge" },
+      ],
+    },
+    {
+      title: "Rätsel 88",
+      rows: 8, cols: 6,
+      grid: [
+        ["#", "R", "#", "#", "#", "#"],
+        ["#", "U", "#", "#", "#", "#"],
+        ["#", "C", "#", "#", "#", "#"],
+        ["#", "K", "#", "#", "#", "#"],
+        ["#", "S", "#", "#", "#", "#"],
+        ["B", "A", "N", "A", "N", "E"],
+        ["#", "C", "#", "#", "#", "#"],
+        ["#", "K", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 5, col: 0, answer: "BANANE", clue: "eine gelbe, längliche Frucht" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "RUCKSACK", clue: "Tasche, die man auf dem Rücken trägt" },
+      ],
+    },
+    {
+      title: "Rätsel 89",
+      rows: 6, cols: 4,
+      grid: [
+        ["#", "#", "T", "#"],
+        ["#", "#", "A", "#"],
+        ["K", "Ä", "S", "E"],
+        ["#", "#", "C", "#"],
+        ["#", "#", "H", "#"],
+        ["#", "#", "E", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 2, col: 0, answer: "KÄSE", clue: "ein Milchprodukt, oft auf Brot" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "TASCHE", clue: "zum Tragen von Sachen" },
+      ],
+    },
+    {
+      title: "Rätsel 90",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "#", "B", "#", "#", "#"],
+        ["#", "#", "A", "#", "#", "#"],
+        ["#", "#", "H", "#", "#", "#"],
+        ["B", "A", "N", "A", "N", "E"],
+        ["#", "#", "H", "#", "#", "#"],
+        ["#", "#", "O", "#", "#", "#"],
+        ["#", "#", "F", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "BANANE", clue: "eine gelbe, längliche Frucht" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "BAHNHOF", clue: "Ort, an dem Züge halten" },
+      ],
+    },
+    {
+      title: "Rätsel 91",
+      rows: 5, cols: 7,
+      grid: [
+        ["#", "#", "#", "F", "#", "#", "#"],
+        ["F", "A", "M", "I", "L", "I", "E"],
+        ["#", "#", "#", "S", "#", "#", "#"],
+        ["#", "#", "#", "C", "#", "#", "#"],
+        ["#", "#", "#", "H", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "FAMILIE", clue: "Eltern, Kinder und Verwandte" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "FISCH", clue: "Tier, das im Wasser lebt" },
+      ],
+    },
+    {
+      title: "Rätsel 92",
+      rows: 7, cols: 5,
+      grid: [
+        ["#", "#", "#", "S", "#"],
+        ["#", "#", "#", "T", "#"],
+        ["#", "#", "#", "R", "#"],
+        ["#", "#", "#", "A", "#"],
+        ["#", "#", "#", "S", "#"],
+        ["#", "#", "#", "S", "#"],
+        ["V", "O", "G", "E", "L"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 6, col: 0, answer: "VOGEL", clue: "Tier, das fliegen kann" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "STRASSE", clue: "Weg für Autos und Fahrzeuge" },
+      ],
+    },
+    {
+      title: "Rätsel 93",
+      rows: 6, cols: 4,
+      grid: [
+        ["B", "A", "U", "M"],
+        ["R", "#", "#", "#"],
+        ["Ü", "#", "#", "#"],
+        ["C", "#", "#", "#"],
+        ["K", "#", "#", "#"],
+        ["E", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "BAUM", clue: "eine große Pflanze mit Stamm und Blättern" },
+        { num: 1, dir: "down", row: 0, col: 0, answer: "BRÜCKE", clue: "führt über einen Fluss oder ein Tal" },
+      ],
+    },
+    {
+      title: "Rätsel 94",
+      rows: 4, cols: 4,
+      grid: [
+        ["#", "P", "#", "#"],
+        ["H", "A", "U", "S"],
+        ["#", "R", "#", "#"],
+        ["#", "K", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "HAUS", clue: "ein Gebäude zum Wohnen" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "PARK", clue: "grüne Fläche zum Spazieren in der Stadt" },
+      ],
+    },
+    {
+      title: "Rätsel 95",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "#", "B", "#", "#", "#"],
+        ["#", "#", "A", "#", "#", "#"],
+        ["#", "#", "H", "#", "#", "#"],
+        ["#", "#", "N", "#", "#", "#"],
+        ["F", "Ü", "H", "L", "E", "N"],
+        ["#", "#", "O", "#", "#", "#"],
+        ["#", "#", "F", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "FÜHLEN", clue: "eine Empfindung wahrnehmen" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "BAHNHOF", clue: "Ort, an dem Züge halten" },
+      ],
+    },
+    {
+      title: "Rätsel 96",
+      rows: 7, cols: 4,
+      grid: [
+        ["#", "#", "Z", "#"],
+        ["#", "#", "E", "#"],
+        ["#", "#", "I", "#"],
+        ["#", "#", "T", "#"],
+        ["H", "A", "U", "S"],
+        ["#", "#", "N", "#"],
+        ["#", "#", "G", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "HAUS", clue: "ein Gebäude zum Wohnen" },
+        { num: 1, dir: "down", row: 0, col: 2, answer: "ZEITUNG", clue: "gedruckte Nachrichten, täglich oder wöchentlich" },
+      ],
+    },
+    {
+      title: "Rätsel 97",
+      rows: 7, cols: 6,
+      grid: [
+        ["#", "#", "#", "#", "#", "W"],
+        ["#", "#", "#", "#", "#", "I"],
+        ["#", "#", "#", "#", "#", "C"],
+        ["#", "#", "#", "#", "#", "H"],
+        ["H", "E", "R", "B", "S", "T"],
+        ["#", "#", "#", "#", "#", "I"],
+        ["#", "#", "#", "#", "#", "G"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "HERBST", clue: "die Jahreszeit mit fallenden Blättern" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "WICHTIG", clue: "von großer Bedeutung" },
+      ],
+    },
+    {
+      title: "Rätsel 98",
+      rows: 5, cols: 5,
+      grid: [
+        ["I", "M", "M", "E", "R"],
+        ["#", "O", "#", "#", "#"],
+        ["#", "N", "#", "#", "#"],
+        ["#", "A", "#", "#", "#"],
+        ["#", "T", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 0, col: 0, answer: "IMMER", clue: "zu jeder Zeit, ausnahmslos" },
+        { num: 1, dir: "down", row: 0, col: 1, answer: "MONAT", clue: "ein Teil des Jahres, z. B. Januar" },
+      ],
+    },
+    {
+      title: "Rätsel 99",
+      rows: 4, cols: 7,
+      grid: [
+        ["#", "#", "#", "#", "#", "W", "#"],
+        ["#", "#", "#", "#", "#", "I", "#"],
+        ["#", "#", "#", "#", "#", "N", "#"],
+        ["K", "O", "M", "M", "O", "D", "E"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 3, col: 0, answer: "KOMMODE", clue: "niedriger Schrank mit Schubladen" },
+        { num: 1, dir: "down", row: 0, col: 5, answer: "WIND", clue: "bewegte Luft" },
+      ],
+    },
+    {
+      title: "Rätsel 100",
+      rows: 6, cols: 5,
+      grid: [
+        ["#", "#", "#", "S", "#"],
+        ["#", "#", "#", "C", "#"],
+        ["#", "#", "#", "H", "#"],
+        ["#", "#", "#", "N", "#"],
+        ["G", "E", "H", "E", "N"],
+        ["#", "#", "#", "E", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 4, col: 0, answer: "GEHEN", clue: "sich zu Fuß fortbewegen" },
+        { num: 1, dir: "down", row: 0, col: 3, answer: "SCHNEE", clue: "weiße, kalte Flocken im Winter" },
       ],
     },
   ];
@@ -2320,13 +4260,39 @@
     </div>`;
   }
 
+  let historyLevel = "B1";
   function renderKompass() {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const todayHistory = ExerciseData.germanHistoryForToday(`${mm}-${dd}`);
     kompassArea.innerHTML = `
       <div class="wegweiser">
+        <a href="#kompass-geschichte" class="wegweiser-item"><span>📜</span>Es war einmal in Deutschland</a>
         <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
         <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
         <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
       </div>
+
+      <h3 id="kompass-geschichte" class="kompass-heading">📜 Es war einmal in Deutschland …</h3>
+      ${todayHistory ? `
+        <div class="question-card" style="margin-bottom:16px;">
+          <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})</p>
+          <div class="trophy-case" style="margin:10px 0;">
+            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
+          </div>
+          <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
+          ${todayHistory.sideFacts && todayHistory.sideFacts.length ? `
+            <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
+            ${todayHistory.sideFacts.map((f) => `<p class="empty-note" style="margin-top:6px;">${f.year}: ${f.text.replace(/^\d{4}\s*/, "")}</p>`).join("")}
+          ` : ""}
+        </div>
+      ` : `
+        <div class="question-card" style="margin-bottom:16px;">
+          <p class="empty-note">Für den heutigen Tag ist noch kein geprüfter Eintrag hinterlegt — diese Sammlung wächst nach und nach, jeder Eintrag wird vorher recherchiert und geprüft.</p>
+        </div>
+      `}
+      <p class="empty-note" style="margin-bottom:16px;">Eine wachsende, sorgfältig geprüfte Sammlung wichtiger Momente der deutschen Geschichte — jeden Tag ein anderer, wenn ein geprüfter Eintrag für das Datum vorliegt.</p>
 
       <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
       <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
@@ -2338,6 +4304,9 @@
       <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
       <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
     `;
+    kompassArea.querySelectorAll(".hist-level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
+    });
   }
   renderKompass();
 
@@ -2735,6 +4704,7 @@
       "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
       "favQuoteInput", "extraMottoInput", "poemInput", "extraDreamInput", "extraHappyInput",
       "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelect",
+      "birthdayInput", "originSelect",
     ];
     const fieldMap = {
       favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
@@ -2744,6 +4714,7 @@
       favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
       extraNumberInput: "favNumber", extraTalentInput: "talent", extraVacationInput: "favVacation",
+      birthdayInput: "birthday", originSelect: "origin",
     };
     ids.forEach((id) => {
       const el = document.getElementById(id);
@@ -2981,7 +4952,7 @@
         </div>
         <div class="form-field">
           <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
-          <input type="date" id="birthdayInput" value="${profile.birthday || ""}" />
+          <input type="date" id="birthdayInput" value="${profileEditDraft.birthday !== undefined ? profileEditDraft.birthday : (profile.birthday || "")}" />
         </div>
         <div class="form-field">
           <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
@@ -2994,7 +4965,7 @@
           <label>Woher kommst du?</label>
           <select id="originSelect" class="challenge-select">
             <option value="">Nicht angeben</option>
-            ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${profile.origin === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
+            ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${(profileEditDraft.origin !== undefined ? profileEditDraft.origin : profile.origin) === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
           </select>
         </div>
         <p class="eyebrow" style="margin-top:20px;">📋 Erweiterter Steckbrief — mehrere Seiten</p>
@@ -3183,6 +5154,7 @@
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
           extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelect: "genderSymbol",
+          birthdayInput: "birthday", originSelect: "origin",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
           favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
         if (profileEditDraft[field] !== undefined) return profileEditDraft[field];
@@ -3212,8 +5184,8 @@
       };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
-        Backend.saveBirthday(document.getElementById("birthdayInput").value.trim()),
-        Backend.saveOrigin(document.getElementById("originSelect").value),
+        Backend.saveBirthday(val("birthdayInput", profile.birthday) || ""),
+        Backend.saveOrigin(val("originSelect", profile.origin) || ""),
         Backend.saveExtendedProfile({
           languages: profile.languages || [],
           favMovie: val("favMovieInput", profile.favMovie),
@@ -3527,8 +5499,9 @@
     const trophyOverflow = (p.trophies || []).length - trophies.length;
 
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
-      Core.el("div", { class: "profile-modal-card" },
+      Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 zeigt ${p.name}s Design`),
         Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${adminBadge(p.is_admin, p.is_owner, p.is_moderator)}</h2>` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
@@ -3774,12 +5747,28 @@
   }
 
   let inboxViewTab = "in"; // "in" oder "out"
+  function getImportantMsgIds() {
+    try { return JSON.parse(localStorage.getItem("dma_important_msgs") || "[]"); } catch (e) { return []; }
+  }
+  function toggleImportantMsg(id) {
+    const ids = new Set(getImportantMsgIds());
+    if (ids.has(id)) ids.delete(id); else ids.add(id);
+    try { localStorage.setItem("dma_important_msgs", JSON.stringify([...ids])); } catch (e) {}
+  }
+  function downloadTextFile(filename, text) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   async function renderInbox() {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
     const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
-    const list = inboxViewTab === "in" ? messages.inbox : messages.outbox;
+    const list = inboxViewTab === "in" ? messages.inbox : inboxViewTab === "out" ? messages.outbox : [...messages.inbox, ...messages.outbox].filter((m) => getImportantMsgIds().includes(m.id));
     area.innerHTML = `
       <div class="question-card">
         <h3>✉️ Neue Nachricht schreiben</h3>
@@ -3808,7 +5797,9 @@
         <div class="order-toggle" style="margin-bottom:12px;">
           <button type="button" class="order-pill" id="inboxTabIn" aria-selected="${inboxViewTab === "in"}">📥 Posteingang${messages.inbox.length ? ` (${messages.inbox.length})` : ""}</button>
           <button type="button" class="order-pill" id="inboxTabOut" aria-selected="${inboxViewTab === "out"}">📤 Postausgang${messages.outbox.length ? ` (${messages.outbox.length})` : ""}</button>
+          <button type="button" class="order-pill" id="inboxTabImportant" aria-selected="${inboxViewTab === "important"}">⭐ Wichtig${getImportantMsgIds().length ? ` (${getImportantMsgIds().length})` : ""}</button>
         </div>
+        ${list.length ? `<button type="button" class="btn btn-ghost" id="inboxDownloadAllBtn" style="margin-bottom:10px;">⬇️ Diese Ansicht als Text herunterladen</button>` : ""}
         ${list.length ? list.map((m) => `
           <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
             <div style="display:flex; justify-content:space-between; width:100%;">
@@ -3817,11 +5808,13 @@
             </div>
             <p style="white-space:pre-wrap; margin:0;">${m.body.replace(/\[sticker:(\w+)\]/, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")}</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
               ${inboxViewTab === "in" && !m.is_system && m.from_user ? `<button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-reply-to="${m.from_user}" data-reply-name="${m.author_name}">↩️ Antworten</button>` : ""}
+              <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-toggle-important="${m.id}">${getImportantMsgIds().includes(m.id) ? "⭐ Wichtig" : "☆ Als wichtig markieren"}</button>
+              <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-download-msg="${m.id}">⬇️ Text</button>
               <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-delete-msg="${m.id}" data-is-sender="${inboxViewTab === "out"}">🗑️ Löschen</button>
             </div>
-          </div>`).join("") : `<p class="empty-note">${inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
+          </div>`).join("") : `<p class="empty-note">${inboxViewTab === "important" ? "Noch keine Nachrichten als wichtig markiert." : inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
       </div>
     `;
     renderStickerRow();
@@ -3893,6 +5886,30 @@
     });
     document.getElementById("inboxTabIn").addEventListener("click", () => { inboxViewTab = "in"; renderInbox(); });
     document.getElementById("inboxTabOut").addEventListener("click", () => { inboxViewTab = "out"; renderInbox(); });
+    document.getElementById("inboxTabImportant").addEventListener("click", () => { inboxViewTab = "important"; renderInbox(); });
+    area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
+      btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(); });
+    });
+    area.querySelectorAll("[data-download-msg]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const msg = list.find((m) => m.id === btn.dataset.downloadMsg);
+        if (!msg) return;
+        const who = inboxViewTab === "out" ? `An: ${msg.to_user_name || "Freund"}` : (msg.is_system ? "System" : (msg.author_name || "Unbekannt"));
+        const when = msg.created_at ? new Date(msg.created_at).toLocaleString("de-DE") : "";
+        downloadTextFile(`nachricht-${msg.id.slice(0, 8)}.txt`, `${who}\n${when}\n\n${msg.body}`);
+      });
+    });
+    const downloadAllBtn = document.getElementById("inboxDownloadAllBtn");
+    if (downloadAllBtn) {
+      downloadAllBtn.addEventListener("click", () => {
+        const combined = list.map((m) => {
+          const who = inboxViewTab === "out" ? `An: ${m.to_user_name || "Freund"}` : (m.is_system ? "System" : (m.author_name || "Unbekannt"));
+          const when = m.created_at ? new Date(m.created_at).toLocaleString("de-DE") : "";
+          return `${who} — ${when}\n${m.body}`;
+        }).join("\n\n---\n\n");
+        downloadTextFile(`postfach-${inboxViewTab}.txt`, combined);
+      });
+    }
     area.querySelectorAll("[data-delete-msg]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("Diese Nachricht wirklich löschen? (Nur bei dir — beim Gegenüber bleibt sie sichtbar.)")) return;
@@ -4208,6 +6225,7 @@
 
   // Falls Supabase verbunden ist: bestehende Anmeldung (Session) wiederherstellen
   Backend.restoreSession().then(() => {
+    claimLoginStreak();
     refreshHeaderAuth();
     renderAccount();
     renderSetup();
