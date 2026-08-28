@@ -1246,6 +1246,9 @@
   padding: 20px;
   box-sizing: border-box;
   text-align: center;
+  /* Fest eingestellte dunkle Schrift, unabhängig vom gerade aktiven Design — der Kalender hat
+     immer einen hellen Hintergrund, egal ob gerade ein helles oder dunkles Design aktiv ist. */
+  color: #241505;
 }
 .cal-front {
   background: #fff;

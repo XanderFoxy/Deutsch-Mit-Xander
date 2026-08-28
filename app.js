@@ -356,7 +356,24 @@
   if (calFrontFace) calFrontFace.addEventListener("click", () => {
     document.getElementById("calendarModalPage").classList.add("torn");
     Core.sound.correct();
+    claimDailyCalendarPoints();
   });
+  function claimDailyCalendarPoints() {
+    if (!Backend.currentUser()) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    let lastClaim = null;
+    try { lastClaim = localStorage.getItem("dma_calendar_claimed"); } catch (e) {}
+    if (lastClaim === todayKey) return; // heute schon abgerissen — keine doppelten Punkte
+    try { localStorage.setItem("dma_calendar_claimed", todayKey); } catch (e) {}
+    Backend.saveResult({
+      categories: ["tageskalender"], points: 1, bonus: 0, percent: 100,
+      character: "Kalenderblatt abgerissen", badges: [], playedAt: new Date().toISOString(),
+    });
+    setTimeout(() => {
+      const hint = document.querySelector(".cal-back .cal-tip-title");
+      if (hint) hint.insertAdjacentHTML("afterend", '<p class="empty-note" style="margin:-6px 0 10px;">🎉 +1 Punkt fürs heutige Kalenderblatt!</p>');
+    }, 50);
+  }
   const calAnotherBtn = document.getElementById("calAnotherBtn");
   if (calAnotherBtn) calAnotherBtn.addEventListener("click", () => {
     document.getElementById("calTipText").innerHTML = pickDailyTip().text;

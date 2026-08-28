@@ -55,6 +55,12 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+body {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
