@@ -637,6 +637,12 @@ button:focus-visible,
   line-height: 1.55;
   margin: 10px 0 0;
 }
+.about-support-note {
+  color: var(--amber-300);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
 
 .about-links {
   display: flex;

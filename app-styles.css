@@ -1534,16 +1534,17 @@
 .cal-front {
   background: #fff;
   cursor: pointer;
-  /* Drehpunkt unten links: die Ecke, an der man beim Umblättern mit Daumen und Zeigefinger
-     greifen würde. */
-  transform-origin: bottom left;
+  /* Drehpunkt oben rechts — dadurch macht die UNTERE LINKE Ecke (diagonal gegenüber) die große,
+     sichtbare Schwungbewegung beim Drehen. Genau dort soll der "Abriss" optisch stattfinden, als
+     würde man das Blatt an der unteren linken Ecke greifen und nach oben rechts wegziehen. */
+  transform-origin: top right;
   transform: rotate3d(1, 1, 0, 0deg);
   backface-visibility: hidden;
   transition: transform 0.9s cubic-bezier(0.45, 0, 0.2, 1);
 }
 .cal-back {
   background: #FBF3E8;
-  transform-origin: bottom left;
+  transform-origin: top right;
   pointer-events: none;
   /* Startet exakt 180° gedreht (unsichtbar, weil Rückseite von uns weg zeigt) -- dreht sich beim
      Umblättern synchron mit der Vorderseite mit, sodass beide zusammen wie EIN echtes,
@@ -1552,7 +1553,7 @@
   backface-visibility: hidden;
   transition: transform 0.9s cubic-bezier(0.45, 0, 0.2, 1);
 }
-/* Echtes Umblättern: beide Seiten drehen sich gemeinsam um dieselbe Achse (untere linke Ecke,
+/* Echtes Umblättern: beide Seiten drehen sich gemeinsam um dieselbe Achse (obere rechte Ecke,
    diagonal) um 180° — wie ein echtes zweiseitiges Kalenderblatt, das man umdreht, um die
    Aufgabe auf der Rückseite zu lesen. Keine Verschiebung, kein Wegfliegen — nur die Drehung. */
 .calendar-modal-page.torn .cal-front {
@@ -1624,9 +1625,9 @@
   50% { box-shadow: 0 0 0 2px var(--notify-color, #ff4d4d), 0 0 14px 4px var(--notify-color, #ff4d4d); }
 }
 /* Ticker mit Blink-Effekt, sobald man die Ticker-Sonderfarbe aktiviert */
-.ticker-blink .ticker-track { animation: tickerColorBlink 1.2s ease-in-out infinite, tickerScroll 22s linear infinite; }
+.ticker-blink .ticker-track { animation: tickerColorBlink var(--ticker-blink-speed, 0.7s) linear infinite, tickerScroll 22s linear infinite; }
 @keyframes tickerColorBlink {
-  0%, 100% { color: var(--notify-color, #ff4d4d); opacity: 1; }
-  50% { color: inherit; opacity: 0.35; }
+  0%, 49.9% { color: var(--notify-color, #ff4d4d); opacity: 1; }
+  50%, 100% { color: inherit; opacity: 0.15; }
 }
 

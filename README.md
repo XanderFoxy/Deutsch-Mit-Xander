@@ -299,3 +299,30 @@ allein nicht möglich und wäre ein separater nächster Schritt.
   Fragen) statt der ursprünglich gewünschten 100 pro Kategorie — jederzeit
   leicht erweiterbar nach dem Muster in Abschnitt 5.
 - **Persistenz:** ohne Supabase-Verbindung nur pro Sitzung (Demo-Modus).
+
+## 8. Nachrüst-SQL — Musik-Player (Playlist & Favoriten)
+
+Für den Musik-Player (Admin-verwaltete Playlist mit Favoriten) fehlen noch zwei
+Tabellen. Einmal im Supabase SQL-Editor ausführen:
+
+```sql
+create table if not exists playlist_songs (
+  id uuid default gen_random_uuid() primary key,
+  title text, url text,
+  added_by uuid references auth.users,
+  owner_id uuid references auth.users, -- leer = gemeinsame Playlist, sonst die eigene Playlist dieser Person
+  recommended_by_name text, -- gesetzt, wenn der Song von einer anderen Person übernommen wurde
+  created_at timestamptz default now()
+);
+alter table playlist_songs disable row level security;
+-- Falls die Tabelle schon vor der Playlist-Funktion angelegt wurde, Spalten nachrüsten:
+alter table playlist_songs add column if not exists owner_id uuid references auth.users;
+alter table playlist_songs add column if not exists recommended_by_name text;
+
+create table if not exists song_favorites (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users, song_id uuid references playlist_songs,
+  created_at timestamptz default now()
+);
+alter table song_favorites disable row level security;
+```

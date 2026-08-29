@@ -145,12 +145,12 @@
         <div class="about-body-col">
           <h2>Hallo, ich bin Alex!</h2>
           <p class="role">Musiker &amp; Deutschlehrer, 46</p>
-          <p class="about-text-short">Ich begleite dich Schritt für Schritt beim Deutschlernen — mit kurzen, kurzweiligen Übungen statt trockenem Frontalunterricht. Unter YouTube und TikTok findest du übrigens auch meine Musik.</p>
+          <p class="about-text-short">Ich begleite dich Schritt für Schritt beim Deutschlernen — mit kurzen, kurzweiligen Übungen statt trockenem Frontalunterricht.</p>
+          <p class="about-support-note">Diese Seite entsteht in meiner Freizeit mit Herzblut. Freu mich immer, wenn's gefällt — muss aber nicht. ☕</p>
           <div class="about-links">
             <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener">▶️ YouTube</a>
             <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener">🎵 TikTok</a>
           </div>
-          <p class="about-text-short" style="margin-top:10px; opacity:0.85;">Diese Seite mache ich in meiner Freizeit und mit Herzblut, damit sie für alle kostenlos bleibt. Wenn sie dir hilft und du magst: Ein virtueller ☕ freut mich riesig und hilft mir, dranzubleiben und noch mehr Inhalte für euch zu bauen — musst du aber natürlich nicht.</p>
         </div>
       </div>
     </div>
@@ -168,12 +168,17 @@
       <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle<span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat</button>
       <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel</button>
+      <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
     </div>
 
     <div class="subview" id="sub-exercises" data-active="true">
       <div id="exerciseSetup"></div>
       <div id="exercisePlay" style="display:none;"></div>
       <div id="exerciseResults" style="display:none;"></div>
+    </div>
+
+    <div class="subview" id="sub-missions" data-active="false">
+      <div id="missionsArea"></div>
     </div>
 
     <div class="subview" id="sub-vocab" data-active="false">
@@ -210,6 +215,7 @@
     <p class="eyebrow">Kompass, Materialien &amp; weiterführende Links</p>
     <div class="subnav" id="knowledgeSubnav">
       <button class="subnav-pill" data-sub="sub-kompass" aria-selected="true">🧭 Kompass<span class="subnav-info-icon" data-info="Dein Überblick: Was du gerade übst, deine Stärken/Schwächen, und „Es war einmal in Deutschland“ — die Geschichte zum heutigen Tag.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-howitworks" aria-selected="false">❓ So funktioniert's</button>
       <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
       <button class="subnav-pill community-tab-highlight" data-sub="sub-community" aria-selected="false">✍️ Eigene Beiträge</button>
       <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
@@ -218,6 +224,7 @@
       <button class="subnav-pill" data-sub="sub-news" aria-selected="false">📰 Nachrichten</button>
     </div>
     <div class="subview" id="sub-kompass" data-active="true"><div id="kompassArea"></div></div>
+    <div class="subview" id="sub-howitworks" data-active="false"><div id="howItWorksArea"></div></div>
     <div class="subview" id="sub-materials" data-active="false"><div id="materialsArea"></div></div>
     <div class="subview" id="sub-community" data-active="false"><div id="communityStandaloneArea"></div></div>
     <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
@@ -225,6 +232,7 @@
     <div class="subview" id="sub-music" data-active="false"><div id="musicArea"></div></div>
     <div class="subview" id="sub-news" data-active="false"><div id="newsArea"></div></div>
   </section>
+
 
   <!-- Versteckter YouTube-Player fürs Musik-Modul -- steuert nur Ton, kein sichtbares Video -->
   <div id="musicYtHost" style="position:fixed; bottom:-200px; left:-200px; width:1px; height:1px; overflow:hidden;"></div>

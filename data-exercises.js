@@ -1167,7 +1167,7 @@ const ExerciseData = (function () {
     ["Lass uns heute Abend etwas ___nehmen, ich habe Lust auf einen Ausflug.", "unter", ["auf", "ein", "zu"], "„unternehmen“ — aktiv etwas tun/planen (feste Wendung mit „etwas“)."],
     ["Kannst du mich bitte im Auto ___nehmen? Ich habe keinen Bus mehr.", "mit", ["ab", "auf", "ein"], "„mitnehmen“ — jemanden zusammen mit sich selbst transportieren."],
     ["Der Arzt sagt, ich soll die Tabletten dreimal täglich ___nehmen.", "ein", ["auf", "ab", "mit"], "„einnehmen“ — etwas in den Körper hineinnehmen (Medizin)."],
-    ["Im Winter ___nehme ich leider immer ein bisschen zu.", "zu", ["ab", "auf", "ein"], "„zunehmen“ — etwas wird mehr (hier: das Körpergewicht)."],
+    ["Im Winter nehme ich leider immer ein bisschen ___.", "zu", ["ab", "auf", "ein"], "„zunehmen“ — etwas wird mehr (hier: das Körpergewicht). Als trennbares Verb im Hauptsatz steht die Vorsilbe am Satzende."],
     ["Ich möchte gerne am Deutschkurs ___nehmen, der nächste Monat beginnt.", "teil", ["ab", "auf", "mit"], "„teilnehmen“ — bei etwas mitmachen, ein Teil davon sein."],
     ["Gib bitte nicht ___! Du schaffst das noch, du bist so kurz vor dem Ziel.", "auf", ["ab", "aus", "über"], "„aufgeben“ — aufhören, aus Frustration nicht mehr weitermachen."],
     ["Ich muss das Paket noch bei der Post ___geben, bevor sie schließt.", "ab", ["auf", "aus", "vor"], "„abgeben“ — etwas von sich weggeben, an jemand anderen übergeben."],
@@ -1175,9 +1175,9 @@ const ExerciseData = (function () {
     ["Ich sollte nicht so viel Geld für Kleidung ___geben.", "aus", ["ab", "über", "vor"], "„ausgeben“ — Geld für etwas verwenden/loswerden."],
     ["Nach langem Streit musste sie schließlich ___geben und ihm zustimmen.", "nach", ["ab", "auf", "aus"], "„nachgeben“ — nach anfänglichem Widerstand doch zustimmen."],
     ["Er gibt ___, krank zu sein, dabei will er nur nicht arbeiten.", "vor", ["ab", "auf", "nach"], "„vorgeben“ — etwas behaupten, das nicht stimmt (vortäuschen)."],
-    ["Bitte nimm deine Jacke ___, bevor du ins Haus kommst — hier ist es warm.", "ab", ["auf", "ein", "mit"], "„abnehmen“ — hier: etwas vom Körper entfernen (Kleidungsstück)."],
+    ["Bitte nimm deine Jacke ___, sobald du ins Haus kommst — hier ist es warm.", "ab", ["auf", "ein", "mit"], "„abnehmen“ — hier: etwas vom Körper entfernen (Kleidungsstück)."],
     ["Die Bank wird den neuen Kunden sicher gerne ___nehmen.", "auf", ["ab", "ein", "über"], "„aufnehmen“ — hier: jemanden akzeptieren/willkommen heißen (als Kunde, Mitglied)."],
-    ["Ich gebe das alte Handy im Laden in Zahlung, dann ___gebe ich weniger für das neue aus.", "aus", ["ab", "nach", "vor"], "„ausgeben“ — Geld für etwas verwenden."],
+    ["Ich gebe das alte Handy im Laden in Zahlung, dann gebe ich weniger für das neue ___.", "aus", ["ab", "nach", "vor"], "„ausgeben“ — Geld für etwas verwenden. Als trennbares Verb im Hauptsatz steht die Vorsilbe am Satzende."],
     ["Die Firma musste den Auftrag ___geben, weil sie zu wenig Personal hatte.", "ab", ["auf", "aus", "über"], "„abgeben“ — eine Aufgabe an jemand anderen weitergeben, sie selbst nicht mehr behalten."],
   ];
   function bankPraefixverben() {
@@ -3993,5 +3993,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES };
 })();

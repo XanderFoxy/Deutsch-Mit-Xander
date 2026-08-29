@@ -85,6 +85,8 @@ const VocabData = (function () {
     { word: "tja", explain: "Resignation oder Ratlosigkeit.", example: "Tja, das war's dann wohl.", syl: "tja" },
     { word: "ruhig", explain: "Erlaubnis, etwas ohne Bedenken zu tun.", example: "Du kannst ruhig fragen.", syl: "RU-hig" },
     { word: "wohl", explain: "Vermutung, Unsicherheit.", example: "Das wird wohl stimmen.", syl: "wohl" },
+    { word: "nah", explain: "Umgangssprachliches, kurzes „Nein“ — eine lockere Reaktion, kein förmliches „Nein, danke“.", example: "„Kommst du mit ins Kino?“ – „Nah, keine Lust heute.“", syl: "nah" },
+    { word: "ja ja", explain: "Als kurze, genervte Reaktion: Zweifel oder Ungeduld — man glaubt der Person gerade nicht wirklich (z. B. wenn jemand ständig verspricht, sich zu bessern, aber es nie tut). Diese leicht abwertende Verwendung ist stark durch den deutschen Kultfilm „Werner – Beinhart!“ aus den 1990ern geprägt und dadurch bis heute Teil der Popkultur — viele jüngere Menschen kennen den Ton, weil ihre Eltern mit dem Film aufgewachsen sind. Vorsicht: „ja ja“ kann je nach Tonfall auch ganz anders gemeint sein — nämlich als warme, wohlwollende Bestätigung (etwa: „Ja ja, mach ich gerne für dich.“). Der Klang entscheidet über die Bedeutung.", example: "„Ich fang morgen wirklich mit dem Sport an!“ – „Ja ja, das kenn ich schon…“", syl: "ja ja" },
   ];
 
   // Materialien — kompakte Grammatik-Referenzkarten

@@ -23,7 +23,10 @@
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
     history.replaceState(null, "", `#${targetId}`);
   }
-  tabs.forEach((t) => t.addEventListener("click", () => activateTab(t.dataset.target)));
+  tabs.forEach((t) => t.addEventListener("click", () => {
+    activateTab(t.dataset.target);
+    if (t.dataset.target === "view-profile") maybeShowFoxIntro();
+  }));
   const initial = window.location.hash?.replace("#", "");
   if (initial && document.getElementById(initial)) activateTab(initial);
 
@@ -87,6 +90,42 @@
     }
     render();
   }
+  // Fuchs-Vorstellungs-Popup — erscheint EINMAL, wenn man ins Profil kommt und die Sammelfiguren
+  // noch nicht kennt. Im Konto gespeichert (nicht localStorage), damit es auf keinem Gerät ein
+  // zweites Mal auftaucht. Zeigt 3 echte Beispiel-Füchse plus eine kurze Update-Zusammenfassung.
+  let foxIntroCheckInProgress = false;
+  async function maybeShowFoxIntro() {
+    if (foxIntroCheckInProgress) return; // verhindert mehrere gleichzeitige Popups bei schnellem Mehrfachklick
+    if (document.querySelector(".lightbox")) return; // ein anderes Popup ist schon offen
+    const profile = Backend.currentProfile();
+    if (!profile) return;
+    if (profile.extraProfileData && profile.extraProfileData.seenFoxIntro) return;
+    foxIntroCheckInProgress = true;
+    try {
+      await Backend.updateExtraProfileField("seenFoxIntro", true);
+    } finally {
+      foxIntroCheckInProgress = false;
+    }
+    const sample = COLLECTIBLE_FIGURES.slice(0, 3);
+    const box = document.createElement("div");
+    box.className = "lightbox";
+    box.innerHTML = `
+      <div class="profile-modal-card" style="text-align:center;">
+        <button type="button" class="lightbox-close" id="foxIntroClose">✕</button>
+        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:12px;">
+          ${sample.map((f) => `<img src="${f.img}" alt="${f.name}" style="width:64px; height:64px; object-fit:contain;" />`).join("")}
+        </div>
+        <h2 style="margin-bottom:8px;">🦊 Die Sammelfüchse sind da!</h2>
+        <p class="empty-note" style="margin-bottom:14px;">Beim Deutschlernen sammelst du nach und nach niedliche Fuchs-Figuren — je mehr Punkte und Erfolge du erspielst, desto mehr schaltest du frei. Du findest sie in deinem Profil und kannst dir sogar eine als Profilbild einstellen.</p>
+        <p class="empty-note" style="font-size:0.78rem; opacity:0.8; margin-bottom:16px;">Außerdem neu im Hintergrund: ein Musik-Player mit eigenen Playlists, eine neue "So funktioniert's"-Erklärung bei Wissen, und ein paar kleinere Verbesserungen.</p>
+        <button type="button" class="btn btn-coffee" id="foxIntroDone">Verstanden! 🦊</button>
+      </div>`;
+    document.body.appendChild(box);
+    const close = () => box.remove();
+    document.getElementById("foxIntroClose").addEventListener("click", close);
+    document.getElementById("foxIntroDone").addEventListener("click", close);
+    box.addEventListener("click", (e) => { if (e.target === box) close(); });
+  }
   let tourSeen = true;
   try { tourSeen = Boolean(localStorage.getItem("dma_tour_seen")); } catch (e) {}
   if (!tourSeen) setTimeout(startTour, 600);
@@ -95,7 +134,7 @@
 
   wireSubnav("knowledgeSubnav");
   wireSubnav("profileSubnav");
-  document.querySelector('#learnSubnav [data-sub="sub-exercises"]').addEventListener("click", () => {
+  document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.addEventListener("click", () => {
     renderSetup();
   });
 
@@ -259,13 +298,15 @@
   }
   function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
 
+  // WICHTIG: im Konto gespeichert (nicht localStorage!), damit die Selbsteinschätzung auf allen
+  // Geräten gleich ankommt, nicht nur auf dem Gerät, wo sie eingetragen wurde.
   function getLearningProfile() {
-    try { return JSON.parse(localStorage.getItem("dma_learning_profile") || "{}"); } catch (e) { return {}; }
+    const profile = Backend.currentProfile();
+    return (profile && profile.extraProfileData && profile.extraProfileData.learningProfile) || {};
   }
-  function setLearningRating(catId, rating) {
-    const profile = getLearningProfile();
-    profile[catId] = rating;
-    try { localStorage.setItem("dma_learning_profile", JSON.stringify(profile)); } catch (e) {}
+  async function setLearningRating(catId, rating) {
+    const updated = { ...getLearningProfile(), [catId]: rating };
+    await Backend.updateExtraProfileField("learningProfile", updated);
   }
   // Die aus der Selbsteinschätzung am schwächsten bewertete Kategorie — hat Vorrang vor der
   // automatisch aus dem Spielverhalten erkannten Schwäche, weil die Person das aktiv selbst
@@ -451,6 +492,10 @@
           <input type="checkbox" id="tickerBlinkCheck" ${isTickerBlinkOn() ? "checked" : ""} ${profile.points >= 400 ? "" : "disabled"} />
           <span>Laufband beim Aktualisieren blinken lassen ${profile.points >= 400 ? "" : "🔒 400P"}</span>
         </label>
+        ${isTickerBlinkOn() ? `
+          <div class="trophy-case" style="margin-top:8px;">
+            ${[["1.4", "🐢 Langsam"], ["0.7", "⚡ Normal"], ["0.35", "🔥 Schnell"]].map(([val, label]) => `<button type="button" class="trophy-chip ticker-speed-btn ${getTickerBlinkSpeed() === val ? "selected" : ""}" data-speed="${val}">${label}</button>`).join("")}
+          </div>` : ""}
         <hr style="border:none; border-top:1px solid rgba(0,0,0,0.08); margin:16px 0;" />
         <p style="font-weight:700; margin-bottom:4px;">🎯 Pro Art einstellen (optional)</p>
         <p class="empty-note" style="margin-bottom:10px;">Standardmäßig gilt überall der Ton/die Farbe von oben. Hier kannst du für einzelne Arten gezielt etwas anderes wählen — "Wie Standard" heißt: folgt weiterhin automatisch der Einstellung oben.</p>
@@ -479,8 +524,8 @@
     `;
     if (Backend.canModerate()) loadAdminUserList();
     area.querySelectorAll(".learning-rate-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        setLearningRating(btn.dataset.cat, btn.dataset.rating);
+      btn.addEventListener("click", async () => {
+        await setLearningRating(btn.dataset.cat, btn.dataset.rating);
         renderSettings();
       });
     });
@@ -526,7 +571,10 @@
       });
     });
     const tickerBlinkCheck = document.getElementById("tickerBlinkCheck");
-    if (tickerBlinkCheck) tickerBlinkCheck.addEventListener("change", () => setTickerBlink(tickerBlinkCheck.checked));
+    if (tickerBlinkCheck) tickerBlinkCheck.addEventListener("change", async () => { await setTickerBlink(tickerBlinkCheck.checked); renderSettings(); });
+    area.querySelectorAll(".ticker-speed-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => { await setTickerBlinkSpeed(btn.dataset.speed); renderSettings(); });
+    });
     area.querySelectorAll(".notify-kind-sound").forEach((sel) => {
       sel.addEventListener("change", () => {
         setNotifyTypeSetting(sel.dataset.kind, "sound", sel.value);
@@ -551,15 +599,19 @@
   // ganz natürlich (nicht als Dauerwerbung) die Möglichkeit zeigt, Danke zu sagen, falls jemand
   // das möchte. Jeder Meilenstein erscheint nur EIN einziges Mal pro Person.
   const POINT_MILESTONES = [50, 200, 500, 1000, 2000, 5000];
+  // WICHTIG: im Konto gespeichert, nicht localStorage — sonst feiert das Popup denselben
+  // Meilenstein immer wieder neu (z. B. nach dem Leeren des Browser-Caches oder auf einem
+  // anderen Gerät), obwohl dabei NIE echte Punkte vergeben werden — nur eine Feier eines
+  // bereits erreichten Standes. Genau das erklärte das verwirrende "500 Punkte, die nirgends
+  // ankommen"-Gefühl: das Popup feuerte erneut, aber es hatte ja noch nie welche vergeben.
   function getShownMilestones() {
-    try { return new Set(JSON.parse(localStorage.getItem("dma_shown_milestones") || "[]")); } catch (e) { return new Set(); }
+    const profile = Backend.currentProfile();
+    return new Set((profile && profile.extraProfileData && profile.extraProfileData.shownMilestones) || []);
   }
-  function markMilestoneShown(key) {
-    try {
-      const shown = getShownMilestones();
-      shown.add(key);
-      localStorage.setItem("dma_shown_milestones", JSON.stringify([...shown]));
-    } catch (e) {}
+  async function markMilestoneShown(key) {
+    const shown = getShownMilestones();
+    shown.add(key);
+    await Backend.updateExtraProfileField("shownMilestones", [...shown]);
   }
   function showSpecialMomentModal(title, message) {
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
@@ -581,28 +633,27 @@
     const profile = Backend.currentProfile();
     const user = Backend.currentUser();
     if (!profile || !user) return;
-    const rewardKey = `dma_daily_rank_reward_${todayDateKey()}`;
-    let alreadyRewarded = false;
-    try { alreadyRewarded = localStorage.getItem(rewardKey) === "1"; } catch (e) {}
-    if (alreadyRewarded) return;
+    const todayKey = todayDateKey();
+    const lastRewardDate = (profile.extraProfileData && profile.extraProfileData.lastDailyRankRewardDate) || null;
+    if (lastRewardDate === todayKey) return;
     const todayRanking = await Backend.getRankingToday();
     if (!todayRanking.length || todayRanking[0].user_id !== user.id) return;
     // Nur belohnen, wenn wirklich mehr als eine Person heute überhaupt mitgemacht hat — sonst
     // ist "Platz 1" nicht wirklich eine Leistung, sondern nur die einzige Person, die heute spielt.
     if (todayRanking.length < 2) return;
-    try { localStorage.setItem(rewardKey, "1"); } catch (e) {}
+    await Backend.updateExtraProfileField("lastDailyRankRewardDate", todayKey);
     saveResultAndCheck({ categories: [], points: 0, bonus: 5, percent: 100, character: "Tagesbester", badges: [], playedAt: new Date().toISOString() });
     Backend.sendSystemMessage(user.id, `🏆 Du bist heute Tagesbeste:r im Ranking! +5 Bonuspunkte als kleines Dankeschön für deinen Einsatz heute — weiter so!`);
     showToast("🏆 Heute Tagesbeste:r! +5 Bonuspunkte");
   }
-  function checkForSpecialMoment(profile) {
+  async function checkForSpecialMoment(profile) {
     if (!profile) return;
     const shown = getShownMilestones();
     // Punkte-Meilensteine
     for (const m of POINT_MILESTONES) {
       const key = `points-${m}`;
       if (profile.points >= m && !shown.has(key)) {
-        markMilestoneShown(key);
+        await markMilestoneShown(key);
         showSpecialMomentModal(
           `Insgesamt schon ${m} Punkte gesammelt!`,
           `Schön, dass du dabeibleibst und so fleißig übst — das ist ein echter Meilenstein! Ich freu mich, dass dir die Seite hilft.`
@@ -613,7 +664,7 @@
     // Erste Trophäe überhaupt (Pokal, also die "großen" Erfolge — siehe trophyKind())
     const hasPokal = (profile.trophies || []).some((t) => trophyKind(t) === "pokal");
     if (hasPokal && !shown.has("first-pokal")) {
-      markMilestoneShown("first-pokal");
+      await markMilestoneShown("first-pokal");
       showSpecialMomentModal(
         "Dein erster großer Pokal!",
         "Das ist eine richtige Meisterleistung — herzlichen Glückwunsch! Solche Momente sind genau der Grund, warum ich diese Seite mit Freude weiterpflege."
@@ -626,7 +677,7 @@
     for (const days of [7, 30, 100]) {
       const key = `streak-${days}`;
       if (streak >= days && !shown.has(key)) {
-        markMilestoneShown(key);
+        await markMilestoneShown(key);
         showSpecialMomentModal(
           `${days} Tage am Stück!`,
           "Diese Beständigkeit ist beeindruckend — genau so lernt man eine Sprache wirklich. Danke, dass du so treu dabei bist!"
@@ -1129,7 +1180,12 @@
     // damit die feste Kartengröße nicht gesprengt wird.
     const md = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const historyEntry = ExerciseData.germanHistoryForToday(md);
-    const historyLinkHtml = historyEntry ? `<button type="button" class="btn btn-ghost" id="calHistoryLinkBtn" style="margin-top:10px; font-size:0.78rem; padding:6px 12px;">📜 Es war einmal in Deutschland … heute vor ${new Date().getFullYear() - historyEntry.year} Jahren</button>` : "";
+    const historyTopic = historyEntry ? (ExerciseData.HISTORY_TITLES || {})[md] : "";
+    const historyLinkHtml = historyEntry ? `
+      <div style="margin-top:10px; text-align:center;">
+        ${historyTopic ? `<p class="empty-note" style="margin-bottom:6px; font-size:0.76rem;">Heute im Fokus: ${historyTopic}</p>` : ""}
+        <button type="button" class="btn btn-ghost" id="calHistoryLinkBtn" style="font-size:0.78rem; padding:6px 12px;">📜 Es war einmal in Deutschland … heute vor ${new Date().getFullYear() - historyEntry.year} Jahren</button>
+      </div>` : "";
     if (isDailyTaskSolvedToday()) {
       const wasCorrect = getDailyTaskAttemptResult() === "correct";
       back.innerHTML = `
@@ -1210,7 +1266,7 @@
     const historyLinkBtn = document.getElementById("calHistoryLinkBtn");
     if (historyLinkBtn) {
       historyLinkBtn.addEventListener("click", () => {
-        document.querySelector('[data-target="view-knowledge"]').click();
+        document.querySelector('[data-target="view-knowledge"]')?.click();
         document.getElementById("calCloseBtn")?.click();
         document.getElementById("calendarModalPage")?.classList.remove("torn");
         setTimeout(() => {
@@ -1367,7 +1423,12 @@
     const pixelsPerSecond = 55; // gleichbleibendes, gut lesbares Lauftempo
     const duration = Math.max(12, textWidth / pixelsPerSecond);
     track.style.animation = ""; // Safari/iOS startet die Animation nach Textänderung sonst nicht neu
-    track.style.animationDuration = `${duration}s`; // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
+    // WICHTIG: animationDuration gilt für ALLE aktiven Animationen zusammen (Blinken UND Scrollen
+    // laufen gleichzeitig) — wird hier nur EIN Wert gesetzt, überschreibt er versehentlich auch die
+    // Blink-Geschwindigkeit mit der Scroll-Dauer. Deshalb beide explizit und in der richtigen
+    // Reihenfolge angeben (passend zur Reihenfolge in der CSS-Regel: erst Blinken, dann Scrollen).
+    const blinkSpeed = typeof getTickerBlinkSpeed === "function" ? getTickerBlinkSpeed() : "0.7";
+    track.style.animationDuration = `${blinkSpeed}s, ${duration}s`; // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
   }
   const tickerToggle = document.getElementById("tickerToggle");
   if (tickerToggle) {
@@ -1746,16 +1807,31 @@
     document.documentElement.style.setProperty("--font-display", preset.css);
   }
 
+  // WICHTIG: im Konto gespeichert, nicht localStorage — sonst genau dasselbe Problem wie beim
+  // Lernprofil: eine auf dem iPhone gesetzte Einstellung würde auf Android nie ankommen.
   function isTickerBlinkOn() {
-    try { return localStorage.getItem("dma_ticker_blink") === "1"; } catch (e) { return false; }
+    const profile = Backend.currentProfile();
+    return Boolean(profile && profile.extraProfileData && profile.extraProfileData.tickerBlink);
   }
-  function setTickerBlink(on) {
-    try { localStorage.setItem("dma_ticker_blink", on ? "1" : "0"); } catch (e) {}
+  function getTickerBlinkSpeed() {
+    const profile = Backend.currentProfile();
+    return (profile && profile.extraProfileData && profile.extraProfileData.tickerBlinkSpeed) || "0.7";
+  }
+  function applyTickerBlinkVisual() {
     const wrap = document.querySelector(".ticker-track-wrap");
-    if (wrap) wrap.classList.toggle("ticker-blink", on);
+    if (wrap) wrap.classList.toggle("ticker-blink", isTickerBlinkOn());
+    document.documentElement.style.setProperty("--ticker-blink-speed", getTickerBlinkSpeed() + "s");
+  }
+  async function setTickerBlink(on) {
+    await Backend.updateExtraProfileField("tickerBlink", on);
+    applyTickerBlinkVisual();
+  }
+  async function setTickerBlinkSpeed(speed) {
+    await Backend.updateExtraProfileField("tickerBlinkSpeed", speed);
+    applyTickerBlinkVisual();
   }
   applyNotifyColor();
-  setTickerBlink(isTickerBlinkOn());
+  applyTickerBlinkVisual();
   applyHeadingFont();
 
   function goToFriendsInbox() {
@@ -2626,7 +2702,7 @@
       });
     });
   }
-  document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]').addEventListener("click", () => {
+  document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]')?.addEventListener("click", () => {
     newStressTrainerSession();
     pickStressTrainerWord();
     renderStressTrainer();
@@ -2985,7 +3061,7 @@
     });
     area.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
   }
-  document.querySelector('#learnSubnav [data-sub="sub-dictionary"]').addEventListener("click", () => renderDictionary());
+  document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.addEventListener("click", () => renderDictionary());
 
   /* ============================================================
      MEMORY
@@ -3219,7 +3295,7 @@
   }
   newMemoryGame();
 
-  document.querySelector('#learnSubnav [data-sub="sub-memory"]').addEventListener("click", () => {
+  document.querySelector('#learnSubnav [data-sub="sub-memory"]')?.addEventListener("click", () => {
     activeMemoryChallengeId = null; activeMemoryOpponentName = "";
     memoryChallengeFriendId = "";
     newMemoryGame();
@@ -3403,7 +3479,7 @@
       newWordbuildRound(); renderWordbuild();
     });
   }
-  document.querySelector('#learnSubnav [data-sub="sub-wordbuild"]').addEventListener("click", () => {
+  document.querySelector('#learnSubnav [data-sub="sub-wordbuild"]')?.addEventListener("click", () => {
     newWordbuildSession();
     newWordbuildRound();
     renderWordbuild();
@@ -3612,7 +3688,7 @@
     const reversed = letters.split("").reverse().join("");
     return s.words.find((w) => !w.found && (w.word === letters || w.word === reversed)) || null;
   }
-  document.querySelector('#learnSubnav [data-sub="sub-wordsearch"]').addEventListener("click", () => {
+  document.querySelector('#learnSubnav [data-sub="sub-wordsearch"]')?.addEventListener("click", () => {
     newWordSearchSession();
     wsState = buildWordSearch();
     renderWordSearch();
@@ -5388,7 +5464,7 @@
       renderCrossword();
     });
   }
-  document.querySelector('#learnSubnav [data-sub="sub-crossword"]').addEventListener("click", () => {
+  document.querySelector('#learnSubnav [data-sub="sub-crossword"]')?.addEventListener("click", () => {
     if (!cwState) { newCrosswordSession(); newCrossword(0); }
     renderCrossword();
   });
@@ -5407,6 +5483,40 @@
   }
 
   let historyLevel = "B1";
+  function renderHowItWorks() {
+    const area = document.getElementById("howItWorksArea");
+    if (!area) return;
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Eine kurze Erklärung, wie die Seite unter der Haube funktioniert — was passiert eigentlich, wenn du Kategorien auswählst und spielst?</p>
+
+      <div class="material-card">
+        <h3>🎯 Was passiert, wenn ich Kategorien auswähle?</h3>
+        <p>Jede Übungskategorie gehört zu einer von vier Gruppen: <strong>Grammatik</strong> (z. B. Artikel, Zeitformen, Nebensatz-Konjunktionen), <strong>Wortschatz</strong> (z. B. Synonyme, Redewendungen, Themenwortschatz), <strong>Logik</strong> (z. B. wenn/ob/falls, als/wie) und <strong>Quiz</strong> (Deutschland-Wissen). Je mehr du innerhalb einer Gruppe spielst, desto mehr "fällst du in dieses Profil" — die Seite erkennt automatisch, worauf du gerade deinen Schwerpunkt legst.</p>
+      </div>
+
+      <div class="material-card">
+        <h3>💪 Wie erkennt die Seite meine Schwächen?</h3>
+        <p>Auf zwei Wegen: Erstens automatisch — wenn deine Trefferquote in einer Kategorie niedriger ist als in anderen, merkt sich die Seite das. Zweitens selbst eingeschätzt — in den Einstellungen kannst du pro Kategorie angeben, ob du dich "stark", "mittel" oder "schwach" fühlst. Diese Selbsteinschätzung hat Vorrang vor der automatischen Erkennung, weil du dich selbst am besten kennst.</p>
+      </div>
+
+      <div class="material-card">
+        <h3>🎯 Was bringt mir das für die Tagesaufgabe?</h3>
+        <p>Deine tägliche Kalenderblatt-Aufgabe wird nicht komplett zufällig gewählt — sie orientiert sich, wo möglich, an genau der Kategorie, die als deine aktuelle Schwäche erkannt wurde (ob selbst eingeschätzt oder automatisch). So übst du automatisch öfter genau das, was dir am meisten bringt, ohne dass du selbst daran denken musst.</p>
+      </div>
+
+      <div class="material-card">
+        <h3>⭐ Wie funktionieren Punkte und Schwierigkeitsgrade?</h3>
+        <p>Für jede richtig gelöste Frage gibt es Punkte, bei manchen Spielen zusätzlich einen kleinen Tempo-Bonus für schnelles, sicheres Antworten. Bei Spielen mit Schwierigkeitsgraden (🟢 Leicht/🟡 Mittel/🔴 Schwer) kannst du frei wählen — es gibt keine Einschränkung, wer welchen Grad spielen darf. Ein höherer Schwierigkeitsgrad bedeutet meist etwas anspruchsvollere Fragen, nicht automatisch mehr Punkte pro Frage.</p>
+      </div>
+
+      <div class="material-card">
+        <h3>🦊 Was hat es mit den Sammelfiguren auf sich?</h3>
+        <p>Beim Spielen sammelst du nach und nach Punkte und Erfolge — damit schaltest du automatisch neue Fuchs-Sammelfiguren frei, die du in deinem Profil sammeln und dir sogar als Profilbild einstellen kannst. Mehr dazu findest du direkt bei den Sammelfiguren in deinem Profil.</p>
+      </div>
+    `;
+  }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-howitworks"]')?.addEventListener("click", renderHowItWorks);
+
   function renderKompass() {
     const now = new Date();
     const mm = String(now.getMonth() + 1).padStart(2, "0");
@@ -5862,7 +5972,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     }
   }
-  document.querySelector('#knowledgeSubnav [data-sub="sub-community"]').addEventListener("click", () => {
+  document.querySelector('#knowledgeSubnav [data-sub="sub-community"]')?.addEventListener("click", () => {
     renderCommunityTexts();
   });
 
@@ -5939,7 +6049,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
   renderLinks();
-  document.querySelector('#knowledgeSubnav [data-sub="sub-links"]').addEventListener("click", () => renderLinks());
+  document.querySelector('#knowledgeSubnav [data-sub="sub-links"]')?.addEventListener("click", () => renderLinks());
 
   // "Schwarmwissen" — freier Austausch von Tipps, Links, Videos, Bildern zwischen
   // Nutzer:innen. Alex bietet die Inhalte an, lernt aber selbst kein Deutsch mehr — wer gerade
@@ -6051,7 +6161,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
   renderTips();
-  document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]').addEventListener("click", () => renderTips());
+  document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]')?.addEventListener("click", () => renderTips());
 
   /* ============================================================
      NACHRICHTEN (RSS) — als Leseübung, schwierige Wörter markiert
@@ -6104,7 +6214,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     return text.replace(/[A-Za-zÄÖÜäöüß]{11,}/g, (w) => `<span class="hard-word">${w}</span>`);
   }
 
-  document.querySelector('#knowledgeSubnav [data-sub="sub-news"]').addEventListener("click", loadNews);
+  document.querySelector('#knowledgeSubnav [data-sub="sub-news"]')?.addEventListener("click", loadNews);
 
   /* ============================================================
      PROFIL / LOGIN / RANKING / GÄSTEBUCH / PREMIUM
@@ -6915,6 +7025,15 @@ An einem Morgen lief ein kleiner Fuchs los…
   let musicCurrentIndex = -1;
   let musicIsPlaying = false;
   let musicShowFavoritesOnly = false;
+  // Von Alex vorgeschlagene Songs — von mir recherchiert und bestätigt (echte, offizielle
+  // YouTube-Videos). Über den "Vorschläge einfügen"-Button im Admin-Bereich mit einem Klick
+  // übernehmbar, statt jeden Link einzeln eintippen zu müssen. Wird laufend um weitere
+  // recherchierte Songs ergänzt.
+  const MUSIC_SUGGESTIONS = [
+    { title: "LOUA — Mit dir wach", url: "https://www.youtube.com/watch?v=GCExgRfrFr4" },
+    { title: "Mark Forster — Übermorgen", url: "https://www.youtube.com/watch?v=1tD41isys1o" },
+    { title: "Matthias Reim — Verdammt, ich lieb dich", url: "https://www.youtube.com/watch?v=x6q0ciiqyG0" },
+  ];
   let ytMusicPlayer = null;
   let ytApiLoading = false;
   let ytApiCallbacks = [];
@@ -6931,9 +7050,27 @@ An einem Morgen lief ein kleiner Fuchs los…
   function musicVisiblePlaylist() {
     return musicShowFavoritesOnly ? musicPlaylist.filter((s) => musicFavIds.includes(s.id)) : musicPlaylist;
   }
+  let musicPlaylistMode = "community"; // "community", "mine" oder "friend"
+  let musicViewingFriendId = null;
+  let musicViewingFriendName = "";
+  let musicMyOwnSongUrls = [];
+  function viewFriendPlaylist(friendId, friendName) {
+    musicPlaylistMode = "friend";
+    musicViewingFriendId = friendId;
+    musicViewingFriendName = friendName;
+    document.querySelector(".lightbox")?.remove(); // Profil-Popup schließen, sonst blockiert es die Musik-Ansicht darunter
+    document.querySelector('[data-target="view-knowledge"]').click();
+    document.querySelector('#knowledgeSubnav [data-sub="sub-music"]')?.click();
+  }
   async function loadMusicPlaylist() {
-    musicPlaylist = await Backend.getPlaylist();
-    musicFavIds = Backend.currentUser() ? await Backend.getMyFavoriteSongIds() : [];
+    const user = Backend.currentUser();
+    const ownerId = musicPlaylistMode === "mine" && user ? user.id : musicPlaylistMode === "friend" ? musicViewingFriendId : null;
+    musicPlaylist = await Backend.getPlaylist(ownerId);
+    musicFavIds = user ? await Backend.getMyFavoriteSongIds() : [];
+    if (musicPlaylistMode === "friend" && user) {
+      const mine = await Backend.getPlaylist(user.id);
+      musicMyOwnSongUrls = mine.map((s) => s.url);
+    }
   }
   function playMusicIndex(playlistIdx) {
     const song = musicPlaylist[playlistIdx];
@@ -7045,22 +7182,32 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!area) return;
     const user = Backend.currentUser();
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
+    const isMine = musicPlaylistMode === "mine";
+    const isFriendView = musicPlaylistMode === "friend";
+    const canManage = isMine ? Boolean(user) : (isFriendView ? false : isAdmin);
+    const ownerIdForActions = isMine && user ? user.id : null;
     const list = musicVisiblePlaylist();
     area.innerHTML = `
-      <p class="empty-note" style="margin-bottom:10px;">Eine gemeinsame Playlist zum Deutschlernen — Songs werden von Alex ausgewählt. Herz antippen, um Favoriten zu markieren.</p>
+      <p class="empty-note" style="margin-bottom:10px;">${isFriendView ? `🎵 ${musicViewingFriendName}s Playlist — hol dir Songs, die dir gefallen, direkt in deine eigene Playlist.` : isMine ? "Deine eigene Playlist — trag deine Lieblingssongs ein, andere können sie über dein Profil entdecken." : "Eine gemeinsame Playlist zum Deutschlernen — Songs werden von Alex ausgewählt."} Herz antippen, um Favoriten zu markieren.</p>
+      <div class="order-toggle" style="margin-bottom:12px; flex-wrap:wrap;">
+        <button type="button" class="order-pill" id="musicCommunityTab" aria-selected="${!isMine && !isFriendView}">🌐 Gemeinsame Playlist</button>
+        <button type="button" class="order-pill" id="musicMineTab" aria-selected="${isMine}">👤 Meine Playlist</button>
+        ${isFriendView ? `<button type="button" class="order-pill" aria-selected="true">🎵 ${musicViewingFriendName}s Playlist</button>` : ""}
+      </div>
       <div class="question-card" style="position:sticky; top:0; z-index:5; margin-bottom:14px;">
         <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px;"></div>
       </div>
-      ${isAdmin ? `
+      ${canManage ? `
         <div class="question-card" style="margin-bottom:14px;">
-          <button type="button" class="emoji-toggle-link" id="musicAddToggle" style="margin:0;">➕ Song zur Playlist hinzufügen</button>
+          <button type="button" class="emoji-toggle-link" id="musicAddToggle" style="margin:0;">➕ Song zur ${isMine ? "eigenen" : "gemeinsamen"} Playlist hinzufügen</button>
           <div id="musicAddFormBody" style="display:none; margin-top:12px;">
             <div class="form-field"><label>Titel</label><input type="text" id="musicTitleInput" maxlength="100" placeholder="z. B. 99 Luftballons — Nena" /></div>
             <div class="form-field"><label>YouTube-Link ODER direkter Audio-Link (z. B. GitHub-Rohlink zu einer MP3)</label><input type="text" id="musicUrlInput" placeholder="https://www.youtube.com/watch?v=… oder https://…mp3" /></div>
             <button type="button" class="btn btn-coffee" id="musicAddSubmitBtn">Hinzufügen</button>
             <p class="form-error" id="musicAddError" style="display:none;"></p>
           </div>
-        </div>` : ""}
+          ${!isMine && MUSIC_SUGGESTIONS.some((s) => !musicPlaylist.some((p) => p.title === s.title)) ? `<button type="button" class="emoji-toggle-link" id="musicSuggestBtn" style="margin-top:10px;">✨ Von dir gewünschte Songs einfügen (${MUSIC_SUGGESTIONS.filter((s) => !musicPlaylist.some((p) => p.title === s.title)).length})</button>` : ""}
+        </div>` : (isMine && !user ? `<p class="empty-note" style="margin-bottom:14px;">Bitte zuerst anmelden, um eine eigene Playlist anzulegen.</p>` : "")}
       <div class="order-toggle" style="margin-bottom:12px;">
         <button type="button" class="order-pill" id="musicAllTab" aria-selected="${!musicShowFavoritesOnly}">🎵 Alle Songs</button>
         <button type="button" class="order-pill" id="musicFavTab" aria-selected="${musicShowFavoritesOnly}">❤️ Favoriten</button>
@@ -7070,17 +7217,24 @@ An einem Morgen lief ein kleiner Fuchs los…
           const idx = musicPlaylist.findIndex((x) => x.id === s.id);
           const isFav = musicFavIds.includes(s.id);
           const isCurrent = idx === musicCurrentIndex;
-          return `<div class="breakdown-row" style="${isCurrent ? "background:rgba(242,184,75,0.15);" : ""}">
-            <button type="button" class="friend-name-btn" data-play-song="${idx}" style="text-align:left;">${isCurrent && musicIsPlaying ? "🔊" : "🎵"} ${s.title}</button>
-            <span style="display:flex; align-items:center; gap:8px;">
-              <button type="button" class="emoji-toggle-link" data-fav-song="${s.id}" style="font-size:1.1rem;">${isFav ? "❤️" : "🤍"}</button>
-              ${isAdmin ? `<button type="button" class="emoji-toggle-link" data-delete-song="${s.id}" style="font-size:0.75rem;">löschen</button>` : ""}
-            </span>
+          const alreadyInMine = isFriendView && user && musicMyOwnSongUrls.includes(s.url);
+          return `<div class="breakdown-row" style="${isCurrent ? "background:rgba(242,184,75,0.15);" : ""} flex-direction:column; align-items:stretch; gap:4px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <button type="button" class="friend-name-btn" data-play-song="${idx}" style="text-align:left;">${isCurrent && musicIsPlaying ? "🔊" : "🎵"} ${s.title}</button>
+              <span style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button type="button" class="emoji-toggle-link" data-fav-song="${s.id}" style="font-size:1.1rem;">${isFav ? "❤️" : "🤍"}</button>
+                ${canManage ? `<button type="button" class="emoji-toggle-link" data-delete-song="${s.id}" style="font-size:0.75rem;">löschen</button>` : ""}
+                ${isFriendView && user ? (alreadyInMine ? `<span class="empty-note" style="font-size:0.75rem;">✓ übernommen</span>` : `<button type="button" class="emoji-toggle-link" data-take-song="${s.id}" style="font-size:0.75rem;">+ übernehmen</button>`) : ""}
+              </span>
+            </div>
+            ${s.recommended_by_name ? `<span class="empty-note" style="font-size:0.72rem;">💡 empfohlen von ${s.recommended_by_name}</span>` : ""}
           </div>`;
-        }).join("") : `<p class="empty-note">${musicShowFavoritesOnly ? "Noch keine Favoriten markiert." : "Noch keine Songs in der Playlist."}</p>`}
+        }).join("") : `<p class="empty-note">${musicShowFavoritesOnly ? "Noch keine Favoriten markiert." : isMine ? "Noch keine eigenen Songs — füg oben welche hinzu!" : "Noch keine Songs in der Playlist."}</p>`}
       </div>
     `;
     renderMusicPlayerBar();
+    document.getElementById("musicCommunityTab")?.addEventListener("click", async () => { musicPlaylistMode = "community"; await loadMusicPlaylist(); renderMusicSection(); });
+    document.getElementById("musicMineTab")?.addEventListener("click", async () => { musicPlaylistMode = "mine"; await loadMusicPlaylist(); renderMusicSection(); });
     document.getElementById("musicAddToggle")?.addEventListener("click", () => {
       const body = document.getElementById("musicAddFormBody");
       body.style.display = body.style.display === "none" ? "block" : "none";
@@ -7090,13 +7244,21 @@ An einem Morgen lief ein kleiner Fuchs los…
       const url = document.getElementById("musicUrlInput").value;
       const errBox = document.getElementById("musicAddError");
       try {
-        await Backend.addPlaylistSong(title, url);
+        await Backend.addPlaylistSong(title, url, ownerIdForActions);
         await loadMusicPlaylist();
         renderMusicSection();
       } catch (err) {
         errBox.textContent = "⚠️ " + err.message;
         errBox.style.display = "block";
       }
+    });
+    document.getElementById("musicSuggestBtn")?.addEventListener("click", async () => {
+      const missing = MUSIC_SUGGESTIONS.filter((s) => !musicPlaylist.some((p) => p.title === s.title));
+      for (const s of missing) {
+        try { await Backend.addPlaylistSong(s.title, s.url, ownerIdForActions); } catch (e) {}
+      }
+      await loadMusicPlaylist();
+      renderMusicSection();
     });
     document.getElementById("musicAllTab")?.addEventListener("click", () => { musicShowFavoritesOnly = false; renderMusicSection(); });
     document.getElementById("musicFavTab")?.addEventListener("click", () => { musicShowFavoritesOnly = true; renderMusicSection(); });
@@ -7114,17 +7276,57 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-delete-song]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("Diesen Song wirklich aus der Playlist entfernen?")) return;
-        await Backend.deletePlaylistSong(btn.dataset.deleteSong);
+        await Backend.deletePlaylistSong(btn.dataset.deleteSong, ownerIdForActions);
         await loadMusicPlaylist();
         renderMusicSection();
       });
     });
+    area.querySelectorAll("[data-take-song]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const song = musicPlaylist.find((s) => s.id === btn.dataset.takeSong);
+        if (!song || !user) return;
+        try {
+          await Backend.addPlaylistSong(song.title, song.url, user.id, musicViewingFriendName);
+          await loadMusicPlaylist();
+          renderMusicSection();
+          showToast(`🎵 „${song.title}“ zu deiner Playlist hinzugefügt!`);
+        } catch (err) {
+          alert("⚠️ " + err.message);
+        }
+      });
+    });
   }
   document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic());
-  document.querySelector('#knowledgeSubnav [data-sub="sub-music"]').addEventListener("click", async () => {
+  document.querySelector('#knowledgeSubnav [data-sub="sub-music"]')?.addEventListener("click", async () => {
     await loadMusicPlaylist();
     renderMusicSection();
   });
+
+  async function renderMissions() {
+    const area = document.getElementById("missionsArea");
+    if (!area) return;
+    const profile = Backend.currentProfile();
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Beim Deutschlernen sammelst du nach und nach Fuchs-Figuren — jede steht für einen Meilenstein auf deinem Weg. Aktuell werden alle Füchse über deinen Gesamtpunktestand freigeschaltet, gestaffelt nach Schwierigkeit — von "schnell erreichbar" bis "richtig selten". Du kannst dabei jederzeit jedes Spiel in jedem Schwierigkeitsgrad spielen, das schränkt niemand ein.</p>
+      <div class="breakdown-list">
+        ${COLLECTIBLE_FIGURES.map((fig) => {
+          const unlocked = profile ? isFigureUnlocked(fig, profile) : false;
+          return `<div class="breakdown-row" style="align-items:center;">
+            <span style="display:flex; align-items:center; gap:10px;">
+              <img src="${fig.img}" alt="${fig.name}" style="width:36px; height:36px; object-fit:contain; ${unlocked ? "" : "filter:grayscale(1) brightness(0) invert(0.65); opacity:0.6;"}" />
+              <span>
+                <strong>${fig.name}</strong><br>
+                <span class="empty-note" style="font-size:0.76rem;">${fig.desc}</span>
+              </span>
+            </span>
+            <span class="empty-note" style="font-size:0.78rem; text-align:right; flex-shrink:0;">${unlocked ? "✅ Erspielt" : fig.unlock.type === "points" ? `ab ${fig.unlock.value} Punkten` : "besonderer Pokal nötig"}</span>
+          </div>`;
+        }).join("")}
+      </div>
+      <p class="empty-note" style="margin-top:14px; font-size:0.78rem;">🔮 Zukunftsmusik: mit der Zeit sollen weitere, abwechslungsreichere Wege dazukommen, Füchse zu verdienen — nicht nur über Punkte, sondern über konkrete kleine Herausforderungen (z. B. mehrere Spiele an einem Tag, hohe Schwierigkeitsgrade meistern). Und vielleicht wechseln die verfügbaren Füchse irgendwann sogar saisonal (z. B. weihnachtliche Figuren) — mit einem eigenen Sammelalbum für alles, was du dir im Laufe der Zeit schon verdient hast.</p>
+    `;
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-missions"]')?.addEventListener("click", renderMissions);
 
   function extractYouTubeId(url) {
     if (!url) return null;
@@ -7350,6 +7552,9 @@ An einem Morgen lief ein kleiner Fuchs los…
                   },
                 }, "🤝 Freund werden")
         ),
+        !isMe ? Core.el("div", { class: "quiz-actions", style: "justify-content:center;" },
+          Core.el("button", { type: "button", class: "btn btn-ghost", onclick: () => viewFriendPlaylist(p.id, p.name) }, "🎵 Playlist ansehen")
+        ) : "",
         (Backend.isOwner() && !isMe && !p.is_owner)
           ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:10px; flex-wrap:wrap;" },
               Core.el("button", {
@@ -8125,7 +8330,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "23";
+  const APP_VERSION = "25";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

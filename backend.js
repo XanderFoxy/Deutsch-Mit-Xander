@@ -605,26 +605,32 @@ const Backend = (function () {
     }
   }
 
-  /* ================= MUSIK-PLAYER (Admin-verwaltete Playlist) =================
+  /* ================= MUSIK-PLAYER (gemeinsame Playlist + eigene Playlists) =================
      Songs werden über die Oberfläche verwaltet, kein Code nötig. Unterstützt sowohl
-     YouTube-Links als auch direkte Audio-Dateien (z. B. ein GitHub-Rohlink zu einer MP3). */
+     YouTube-Links als auch direkte Audio-Dateien (z. B. ein GitHub-Rohlink zu einer MP3).
+     owner_id = null → gemeinsame Community-Playlist (nur Admins verwalten sie).
+     owner_id = eine Nutzer-ID → die eigene Playlist dieser Person (jede/r verwaltet nur die eigene). */
   function isDirectAudioUrl(url) {
     return /\.(mp3|m4a|wav|ogg|aac)(\?.*)?$/i.test(url || "");
   }
-  async function getPlaylist() {
+  async function getPlaylist(ownerId = null) {
     if (client) {
       try {
-        const { data, error } = await client.from("playlist_songs").select("*").order("created_at", { ascending: true });
+        let q = client.from("playlist_songs").select("*").order("created_at", { ascending: true });
+        q = ownerId ? q.eq("owner_id", ownerId) : q.is("owner_id", null);
+        const { data, error } = await q;
         if (!error && data) return data;
       } catch (e) { console.warn("Playlist konnte nicht geladen werden:", e); }
       return [];
     }
-    return demo.playlistSongs;
+    return demo.playlistSongs.filter((s) => (s.owner_id || null) === ownerId);
   }
-  async function addPlaylistSong(title, url) {
-    if (!isAdmin()) throw new Error("Nur Administratoren können Songs zur Playlist hinzufügen.");
+  async function addPlaylistSong(title, url, ownerId = null, recommendedByName = null) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (ownerId === null && !isAdmin()) throw new Error("Nur Administratoren können Songs zur gemeinsamen Playlist hinzufügen.");
+    if (ownerId !== null && ownerId !== demo.user.id) throw new Error("Du kannst nur zu deiner eigenen Playlist hinzufügen.");
     if (!title.trim() || !url.trim()) throw new Error("Titel und Link dürfen nicht leer sein.");
-    const song = { title: title.trim(), url: url.trim(), added_by: demo.user.id, created_at: new Date().toISOString() };
+    const song = { title: title.trim(), url: url.trim(), added_by: demo.user.id, owner_id: ownerId, recommended_by_name: recommendedByName, created_at: new Date().toISOString() };
     if (client) {
       const { data, error } = await client.from("playlist_songs").insert(song).select().single();
       if (error) throw new Error(friendlyDbError(error.message));
@@ -634,8 +640,10 @@ const Backend = (function () {
     demo.playlistSongs.push(song);
     return song;
   }
-  async function deletePlaylistSong(id) {
-    if (!isAdmin()) throw new Error("Nur Administratoren können Songs entfernen.");
+  async function deletePlaylistSong(id, ownerId = null) {
+    // Eigene Playlist: die Person selbst darf löschen. Gemeinsame Playlist: nur Admins.
+    if (ownerId === null && !isAdmin()) throw new Error("Nur Administratoren können Songs aus der gemeinsamen Playlist entfernen.");
+    if (ownerId !== null && (!demo.user || ownerId !== demo.user.id) && !isAdmin()) throw new Error("Du kannst nur Songs aus deiner eigenen Playlist entfernen.");
     if (client) {
       const { error } = await client.from("playlist_songs").delete().eq("id", id);
       if (error) throw new Error(friendlyDbError(error.message));
@@ -769,6 +777,22 @@ const Backend = (function () {
     return true;
   }
 
+  // Leichtgewichtige, gezielte Aktualisierung EINES Feldes in extra_profile_data — für schnelle
+  // Umschalter (Lernprofil-Bewertung, u. ä.), ohne dass man wie bei saveExtendedProfile alle
+  // anderen Profilfelder mitschicken muss. WICHTIG: das ist der einzig richtige Ort für solche
+  // Einstellungen — localStorage ist geräte-lokal und wird NIE zwischen Handy und Rechner
+  // abgeglichen, was genau das Problem war, dass Einstellungen auf einem Gerät gemacht auf einem
+  // anderen Gerät nicht ankamen.
+  async function updateExtraProfileField(key, value) {
+    if (!demo.profile) return { ok: true };
+    demo.profile.extraProfileData = demo.profile.extraProfileData || {};
+    demo.profile.extraProfileData[key] = value;
+    if (client && demo.user) {
+      const { error } = await client.from("profiles").update({ extra_profile_data: demo.profile.extraProfileData }).eq("id", demo.user.id);
+      if (error) return { ok: false, message: friendlyDbError(error.message) };
+    }
+    return { ok: true };
+  }
   async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem, extra }) {
     if (!demo.profile) return { ok: true };
     demo.profile.languages = languages;
@@ -1829,7 +1853,7 @@ const Backend = (function () {
     addComment,
     deleteComment,
     saveBio,
-    saveExtendedProfile,
+    saveExtendedProfile, updateExtraProfileField,
     saveBirthday,
     uploadAvatar,
     saveAvatarFromGallery,
