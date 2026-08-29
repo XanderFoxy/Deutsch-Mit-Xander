@@ -357,11 +357,14 @@ button:focus-visible,
 .btn:active { transform: scale(0.97); }
 
 .btn-coffee {
-  background: linear-gradient(180deg, var(--amber-300), var(--amber-400));
+  /* Bewusst FESTE Farben statt Design-Variablen — bei manchen Designs (z. B. Galaxie) sind die
+     Amber-Töne sehr blass/pastell, wodurch die Tasse kaum noch zu erkennen wäre. So bleibt sie auf
+     jedem Design gleich kräftig orange und gut sichtbar. */
+  background: linear-gradient(180deg, #f0a94e, #dc7f2a);
   color: #241505;
-  box-shadow: 0 4px 14px rgba(242, 184, 75, 0.35);
+  box-shadow: 0 4px 14px rgba(220, 127, 42, 0.4);
 }
-.btn-coffee:hover { box-shadow: 0 6px 18px rgba(242, 184, 75, 0.5); }
+.btn-coffee:hover { box-shadow: 0 6px 18px rgba(220, 127, 42, 0.55); }
 /* Das Tassen-Symbol braucht einen zuverlässigen Kontrast-Ring dahinter — ein reiner Schlagschatten
    reicht auf manchen Geräten/Emoji-Darstellungen nicht aus, um es vom warmen Verlauf abzuheben. */
 .btn-coffee span {

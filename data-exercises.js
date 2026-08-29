@@ -1155,10 +1155,85 @@ const ExerciseData = (function () {
   ];
 
   /* ---------------------------------------------------------
+     SATZPUZZLE — Wortstellung im Satz üben (Verb an Position 2, Verb am Ende im Nebensatz).
+     Jeder Eintrag: [Wort-/Wortgruppen-Bausteine in RICHTIGER Reihenfolge, kurze Erklärung der Regel]
+     --------------------------------------------------------- */
+  /* ---------------------------------------------------------
+     WORTARTEN-SORTIERER (Eimer-Spiel) — Wörter per Antippen der richtigen Kategorie zuordnen.
+     Bewusst nur Adverbien gewählt, die NIE gleichzeitig Adjektive sind (z. B. "vielleicht",
+     "dort") — sonst wäre die Grenze zum Adjektiv im Deutschen zu unklar für ein Lernspiel.
+     --------------------------------------------------------- */
+  const WORTARTEN = [
+    ["laufen", "verb"], ["singen", "verb"], ["schwimmen", "verb"], ["tanzen", "verb"], ["lesen", "verb"],
+    ["schreiben", "verb"], ["kochen", "verb"], ["spielen", "verb"], ["arbeiten", "verb"], ["schlafen", "verb"],
+    ["lachen", "verb"], ["weinen", "verb"], ["springen", "verb"], ["fliegen", "verb"], ["denken", "verb"],
+    ["schön", "adjektiv"], ["traurig", "adjektiv"], ["groß", "adjektiv"], ["klein", "adjektiv"], ["schnell", "adjektiv"],
+    ["langsam", "adjektiv"], ["glücklich", "adjektiv"], ["müde", "adjektiv"], ["stark", "adjektiv"], ["warm", "adjektiv"],
+    ["kalt", "adjektiv"], ["neu", "adjektiv"], ["alt", "adjektiv"], ["wichtig", "adjektiv"], ["hungrig", "adjektiv"],
+    ["Haus", "substantiv"], ["Baum", "substantiv"], ["Auto", "substantiv"], ["Buch", "substantiv"], ["Freundschaft", "substantiv"],
+    ["Glück", "substantiv"], ["Schönheit", "substantiv"], ["Liebe", "substantiv"], ["Wasser", "substantiv"], ["Sonne", "substantiv"],
+    ["Zeit", "substantiv"], ["Straße", "substantiv"], ["Blume", "substantiv"], ["Musik", "substantiv"], ["Freiheit", "substantiv"],
+    ["vielleicht", "adverb"], ["dort", "adverb"], ["heute", "adverb"], ["morgen", "adverb"], ["gestern", "adverb"],
+    ["sehr", "adverb"], ["oft", "adverb"], ["manchmal", "adverb"], ["überall", "adverb"], ["nirgends", "adverb"],
+    ["deshalb", "adverb"], ["trotzdem", "adverb"], ["sofort", "adverb"], ["plötzlich", "adverb"], ["draußen", "adverb"],
+  ];
+
+  const SATZPUZZLE = [
+    [["Gestern", "bin", "ich", "spät", "nach Hause", "gekommen."], "Nach einem vorangestellten Zeitwort (hier: Gestern) steht das Verb trotzdem an Position 2."],
+    [["Ich", "gehe", "heute", "mit meinem Bruder", "ins Kino."], "Normale Wortstellung: Subjekt, dann das Verb an Position 2."],
+    [["Weil", "es", "regnet,", "bleibe", "ich", "zu Hause."], "Im Nebensatz nach „weil“ steht das Verb ganz am Ende."],
+    [["Am Wochenende", "fahren", "wir", "zu unseren Großeltern."], "Auch wenn eine Zeitangabe vorne steht, bleibt das Verb an Position 2."],
+    [["Ich", "weiß", "nicht,", "ob", "er", "heute", "kommt."], "Im Nebensatz nach „ob“ steht das Verb am Ende."],
+    [["Sie", "hat", "mir", "gestern", "ein Buch", "geschenkt."], "Bei zusammengesetzten Zeiten steht der zweite Teil (Partizip) ganz am Ende."],
+    [["Wenn", "du", "Zeit", "hast,", "ruf", "mich", "bitte", "an."], "Im wenn-Nebensatz steht das Verb am Ende, im Hauptsatz danach wieder an Position 2."],
+    [["Er", "lernt", "jeden Tag", "fleißig", "Deutsch."], "Normale Wortstellung mit einer Zeit- und einer Art-Angabe vor dem Objekt."],
+    [["Obwohl", "er", "müde", "war,", "ist", "er", "noch", "spazieren gegangen."], "Nach „obwohl“ steht das Verb am Ende des Nebensatzes."],
+    [["Morgen", "muss", "ich", "früh", "aufstehen."], "Modalverben stehen an Position 2, das Hauptverb wandert ans Ende."],
+    [["Nachdem", "wir", "gegessen", "hatten,", "sind", "wir", "spazieren gegangen."], "Nach „nachdem“ steht das (zusammengesetzte) Verb am Ende des Nebensatzes."],
+    [["Kannst", "du", "mir", "bitte", "helfen?"], "In der Ja/Nein-Frage steht das Verb ganz am Anfang, vor dem Subjekt."],
+    [["Meine Schwester,", "die", "in Berlin", "wohnt,", "besucht", "uns", "bald."], "Im Relativsatz (die … wohnt) steht das Verb am Ende, danach normale Hauptsatz-Stellung."],
+    [["Dass", "du", "pünktlich", "warst,", "freut", "mich", "sehr."], "Ein dass-Satz als Subjekt: Verb am Ende des Nebensatzes, dann Verb an Position 2 im Hauptsatz."],
+    [["Wir", "sollten", "unbedingt", "mal", "wieder", "zusammen", "kochen."], "Modalverb an Position 2, das Hauptverb (kochen) ganz am Ende."],
+    [["Seitdem", "er", "umgezogen", "ist,", "sehen", "wir", "uns", "seltener."], "Nach „seitdem“ steht das Verb am Ende des Nebensatzes."],
+    [["Ich", "habe", "gestern", "einen interessanten Film", "gesehen."], "Zusammengesetzte Zeit: das Partizip (gesehen) steht am Satzende."],
+    [["Da", "er", "krank", "war,", "konnte", "er", "nicht", "zur Arbeit", "kommen."], "„Da“ funktioniert wie „weil“ — Verb am Ende des Nebensatzes."],
+    [["Ich", "frage", "mich,", "warum", "er", "nicht", "angerufen", "hat."], "Indirekte Frage mit „warum“: das Verb steht am Ende."],
+    [["Sobald", "du", "fertig", "bist,", "können", "wir", "losfahren."], "Nach „sobald“ steht das Verb am Ende des Nebensatzes."],
+    [["Er", "hat", "gesagt,", "dass", "er", "später", "kommt."], "Nach „dass“ steht das Verb ganz am Ende."],
+    [["Bevor", "wir", "losfahren,", "müssen", "wir", "noch", "tanken."], "Nach „bevor“ steht das Verb am Ende des Nebensatzes."],
+    [["Während", "sie", "kochte,", "deckte", "er", "den Tisch."], "Nach „während“ steht das Verb am Ende, danach normale Hauptsatz-Stellung."],
+    [["Als", "ich", "klein", "war,", "wohnten", "wir", "in München."], "Nach „als“ (einmaliges Ereignis in der Vergangenheit) steht das Verb am Ende."],
+    [["Ich", "bleibe", "hier,", "bis", "der Regen", "aufhört."], "Nach „bis“ steht das Verb am Ende des Nebensatzes."],
+    [["Er", "übt", "jeden Tag,", "damit", "er", "die Prüfung", "besteht."], "Nach „damit“ steht das Verb am Ende des Nebensatzes."],
+    [["Sie", "hat", "mir", "erklärt,", "wie", "das Gerät", "funktioniert."], "Indirekte Frage mit „wie“: das Verb steht am Ende."],
+    [["Ich", "möchte", "wissen,", "wo", "du", "wohnst."], "Indirekte Frage mit „wo“: das Verb steht am Ende."],
+    [["Er", "fragte", "mich,", "wer", "das", "gesagt", "hat."], "Indirekte Frage mit „wer“: das Verb steht am Ende."],
+    [["Zuerst", "räume", "ich", "auf,", "dann", "gehe", "ich", "einkaufen."], "Beide Hauptsätze: Verb jeweils an Position 2, auch nach vorangestelltem „zuerst“/„dann“."],
+    [["In der Stadt", "gibt", "es", "viele schöne Cafés."], "Vorangestellte Ortsangabe, das Verb bleibt an Position 2."],
+    [["Leider", "konnte", "ich", "gestern", "nicht", "kommen."], "Vorangestelltes „leider“, das Verb bleibt trotzdem an Position 2."],
+    [["Deshalb", "habe", "ich", "mich", "schon", "entschuldigt."], "Vorangestelltes „deshalb“, das Verb bleibt an Position 2."],
+    [["Trotzdem", "hat", "sie", "sich", "sehr", "gefreut."], "„Trotzdem“ als Adverb am Satzanfang — das Verb steht trotzdem an Position 2."],
+    [["Zum Glück", "ist", "nichts", "passiert."], "Vorangestellte Wendung, das Verb bleibt an Position 2."],
+    [["Die Frau,", "die", "dort", "steht,", "ist", "meine Nachbarin."], "Im Relativsatz (die … steht) steht das Verb am Ende, danach normale Hauptsatz-Stellung."],
+    [["Das Buch,", "das", "ich", "gerade", "lese,", "ist", "sehr spannend."], "Im Relativsatz steht das Verb am Ende."],
+    [["Der Mann,", "dem", "ich", "geholfen", "habe,", "hat", "sich", "bedankt."], "Im Relativsatz mit Dativ steht das Verb am Ende."],
+    [["Ich", "kenne", "niemanden,", "der", "das", "kann."], "Im Relativsatz steht das Verb am Ende."],
+    [["Weißt", "du,", "ob", "das Geschäft", "heute", "offen", "hat?"], "Frage mit eingebettetem ob-Satz: dort steht das Verb am Ende."],
+    [["Ich", "glaube", "nicht,", "dass", "er", "kommt."], "Nach „dass“ steht das Verb am Ende des Nebensatzes."],
+    [["Es", "ist", "schade,", "dass", "du", "nicht", "dabei", "warst."], "Nach „dass“ steht das Verb am Ende des Nebensatzes."],
+    [["Man", "sollte", "immer", "ehrlich", "sein."], "Modalverb an Position 2, das Vollverb (sein) ganz am Ende."],
+    [["Wir", "müssen", "jetzt", "schnell", "handeln."], "Modalverb an Position 2, das Vollverb (handeln) ganz am Ende."],
+    [["Ich", "habe", "vergessen,", "meinen Schlüssel", "mitzunehmen."], "Der zu-Infinitiv (mitzunehmen) steht ganz am Ende der Infinitivgruppe."],
+    [["Hast", "du", "das Buch", "schon", "gelesen?"], "In der Ja/Nein-Frage steht das Verb ganz am Anfang."],
+    [["Warum", "hast", "du", "das", "nicht", "früher", "gesagt?"], "In der W-Frage steht das Verb direkt nach dem Fragewort."],
+    [["Ich", "rufe", "dich", "an,", "sobald", "ich", "zu Hause", "bin."], "Hauptsatz mit Verb an Position 2, danach sobald-Nebensatz mit Verb am Ende."],
+    [["Er", "hat", "mir", "erzählt,", "dass", "er", "umzieht."], "Nach „dass“ steht das Verb am Ende des Nebensatzes."],
+    [["Ich", "koche", "gern,", "wenn", "ich", "Zeit", "habe."], "Hauptsatz mit Verb an Position 2, danach wenn-Nebensatz mit Verb am Ende."],
+    [["Bevor", "du", "gehst,", "mach", "bitte", "das Licht", "aus."], "Nach „bevor“ steht das Verb am Ende, im Hauptsatz danach die Imperativform vorne."],
+  ];
+
+  /* ---------------------------------------------------------
      VORSILBEN-WERKSTATT — Präfixverben mit "nehmen" und "geben"
-     Jeder Eintrag: [Satz mit Lücke, richtige Vorsilbe, falsche Optionen, Erklärung DIESER
-     Vorsilbe in DIESEM Kontext — bewusst nicht als universelle Regel formuliert, da dieselbe
-     Vorsilbe bei verschiedenen Verben unterschiedliche Bedeutungen tragen kann.]
      --------------------------------------------------------- */
   const PRAEFIXVERBEN = [
     ["Ich möchte das Konzert ___nehmen, damit ich es später nochmal hören kann.", "auf", ["ab", "über", "mit"], "„aufnehmen“ — hier: etwas festhalten/speichern (Ton, Bild)."],
@@ -1180,6 +1255,41 @@ const ExerciseData = (function () {
     ["Ich gebe das alte Handy im Laden in Zahlung, dann gebe ich weniger für das neue ___.", "aus", ["ab", "nach", "vor"], "„ausgeben“ — Geld für etwas verwenden. Als trennbares Verb im Hauptsatz steht die Vorsilbe am Satzende."],
     ["Die Firma musste den Auftrag ___geben, weil sie zu wenig Personal hatte.", "ab", ["auf", "aus", "über"], "„abgeben“ — eine Aufgabe an jemand anderen weitergeben, sie selbst nicht mehr behalten."],
   ];
+  /* ---------------------------------------------------------
+     VERWECHSELBARE WORTPAARE — Verben, die von außen betrachtet ähnlich wirken (beides landet
+     "im Körper", beides heißt "warm zubereiten" usw.), aber im Deutschen klar unterschieden
+     werden. Genau das Gefühl dafür soll hier trainiert werden.
+     --------------------------------------------------------- */
+  const WORTPAARE = [
+    ["Ich ___ jetzt einen Kaffee.", "trinke", ["esse", "koche", "backe"], "Kaffee ist eine Flüssigkeit — man trinkt Flüssigkeiten, man isst sie nicht."],
+    ["Sie ___ gerade einen Apfel.", "isst", ["trinkt", "kocht", "backt"], "Ein Apfel ist fest — man isst feste Speisen, man trinkt Flüssigkeiten."],
+    ["Wir ___ heute Abend eine Suppe.", "kochen", ["backen", "braten", "trinken"], "Suppe wird in Flüssigkeit gekocht — „backen“ ist für Dinge im Backofen (Kuchen, Brot)."],
+    ["Meine Oma ___ jeden Sonntag einen Kuchen.", "backt", ["kocht", "brät", "grillt"], "Kuchen kommt in den Backofen — dafür sagt man „backen“, nicht „kochen“."],
+    ["Er ___ das Fleisch in der Pfanne.", "brät", ["kocht", "backt", "dünstet"], "In der Pfanne mit Fett zubereiten heißt „braten“, nicht „kochen“ (das wäre in Wasser)."],
+    ["Kannst du mir bitte kurz ___?", "zuhören", ["hören", "sehen", "schauen"], "„Hören“ heißt nur, dass Geräusche ankommen — „zuhören“ heißt, sich aktiv und aufmerksam zu konzentrieren."],
+    ["Ich ___ gerade laute Musik aus der Nachbarwohnung.", "höre", ["zuhöre", "schaue", "sehe"], "Etwas einfach wahrnehmen (ohne aktive Absicht) heißt „hören“, nicht „zuhören“."],
+    ["___ mal, was da hinten passiert!", "Schau", ["Höre", "Zuhöre", "Fühle"], "Für „schauen/gucken“ nutzt man die Augen gezielt — nicht zu verwechseln mit „hören“."],
+    ["Kannst du mir dein Fahrrad kurz ___?", "leihen", ["mieten", "vermieten", "kaufen"], "„Leihen“ ist unter Privatpersonen meist kostenlos und gegenseitig — „mieten“ kostet Geld."],
+    ["Ich möchte für den Urlaub ein Auto ___.", "mieten", ["leihen", "vermieten", "borgen"], "Ein Auto bei einer Firma gegen Geld bekommen heißt „mieten“, nicht „leihen“."],
+    ["Der Vermieter ___ die Wohnung an eine Familie.", "vermietet", ["mietet", "verleiht", "leiht"], "Der Besitzer, der Geld dafür bekommt, „vermietet“ — der Mieter „mietet“."],
+    ["Leg das Buch bitte auf den Tisch.", "Leg", ["Lieg", "Setz", "Sitz"], "„Legen“ ist eine Handlung (etwas irgendwohin bringen) — „liegen“ beschreibt nur den Zustand danach."],
+    ["Das Buch ___ schon auf dem Tisch.", "liegt", ["legt", "steht", "stellt"], "„Liegen“ beschreibt den ruhenden Zustand — „legen“ wäre die Handlung, etwas hinzulegen."],
+    ["___ dich doch einfach auf den Stuhl.", "Setz", ["Sitz", "Steh", "Stell"], "„Setzen“ ist die Handlung (sich hinsetzen) — „sitzen“ beschreibt nur den Zustand danach."],
+    ["Er ___ schon seit einer Stunde auf der Bank.", "sitzt", ["setzt", "steht", "stellt"], "„Sitzen“ beschreibt den Zustand — „setzen“ wäre die Handlung, sich hinzusetzen."],
+    ["___ die Vase bitte auf das Regal.", "Stell", ["Steh", "Leg", "Lieg"], "„Stellen“ ist die Handlung, etwas aufrecht irgendwohin zu bringen."],
+    ["Die Vase ___ schon auf dem Regal.", "steht", ["stellt", "liegt", "legt"], "„Stehen“ beschreibt den ruhenden Zustand von etwas Aufrechtem — „stellen“ wäre die Handlung."],
+    ["Ich ___ das Bild an die Wand.", "hänge", ["hängt", "liege", "stehe"], "„Hängen“ als Handlung (etwas aufhängen) ist regelmäßig konjugiert: ich hänge."],
+    ["Das Bild ___ schon an der Wand.", "hängt", ["hänge", "liegt", "steht"], "„Hängen“ als Zustand (etwas hängt bereits) ist unregelmäßig: es hängt (nicht „es hänge“)."],
+    ["Kannst du mir das Salz ___?", "bringen", ["holen", "nehmen", "leihen"], "„Bringen“ heißt, etwas zu der Person hin zu transportieren, bei der man gerade ist."],
+    ["Ich ___ schnell Brot vom Bäcker.", "hole", ["bringe", "nehme", "leihe"], "„Holen“ heißt, selbst irgendwohin zu gehen und etwas mitzubringen."],
+  ];
+  function bankWortpaare() {
+    return Core.shuffle(WORTPAARE).map(([sentence, correct, wrongs, explain]) => {
+      const opts = Core.shuffle([correct, ...wrongs]);
+      return { prompt: sentence, options: opts, correct: [opts.indexOf(correct)], explain };
+    });
+  }
+
   function bankPraefixverben() {
     return Core.shuffle(PRAEFIXVERBEN).map(([sentence, correct, wrongs, explain]) => {
       const opts = Core.shuffle([correct, ...wrongs]);
@@ -3924,6 +4034,9 @@ const ExerciseData = (function () {
     { id: "praefixverben", title: "Vorsilben-Werkstatt", icon: "🔧", group: "wortschatz",
       info: "Vorsilben wie auf-, ab-, über-, mit- oder ein- verändern die Bedeutung von Verben wie „nehmen“ oder „geben“ systematisch — z. B. übernehmen (etwas geht auf jemand anderen über) oder abnehmen (etwas wird weniger). Nach jeder Antwort erklären wir, was die Vorsilbe in diesem Satz genau bedeutet.",
       getBank: bankPraefixverben, unlock: { type: "points", value: 100 } },
+    { id: "wortpaare", title: "Verwechselbare Wortpaare", icon: "🔀", group: "wortschatz",
+      info: "Manche Verben wirken von außen ähnlich — beides landet „im Körper“ (essen/trinken) oder beides heißt „warm zubereiten“ (kochen/backen) — werden im Deutschen aber klar unterschieden. Genau dieses Gefühl trainierst du hier.",
+      getBank: bankWortpaare, unlock: { type: "points", value: 120 } },
     { id: "als-wie", title: "als / wie", icon: "⚖️", group: "logik",
       info: "„Als“ benutzt man beim Vergleich von Ungleichem (größer als), „wie“ bei Gleichheit (so groß wie).",
       getBank: bankAlsWie },
@@ -3993,5 +4106,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN };
 })();

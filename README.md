@@ -326,3 +326,16 @@ create table if not exists song_favorites (
 );
 alter table song_favorites disable row level security;
 ```
+
+## 9. Nachrüst-SQL — Seiteninhalte ("Über mich" direkt bearbeiten)
+
+Für die Inline-Bearbeitung der "Über mich"-Sektion (als Admin direkt Text/Foto ändern können,
+ohne Code anzufassen) einmal im Supabase SQL-Editor ausführen:
+
+```sql
+create table if not exists site_content (
+  key text primary key,
+  value jsonb
+);
+alter table site_content disable row level security;
+```

@@ -401,6 +401,14 @@ const Backend = (function () {
   // Function + PayPal-Webhook), die is_premium in der Profil-Tabelle setzt. Diese
   // Demo simuliert die Freischaltung lokal, damit die App vollständig testbar ist.
 
+  async function togglePremium(on) {
+    if (!demo.profile) return;
+    demo.profile.isPremium = on;
+    if (client && demo.user) {
+      const { error } = await client.from("profiles").update({ is_premium: on }).eq("id", demo.user.id);
+      if (error) console.warn("Premium-Status konnte nicht gespeichert werden:", error);
+    }
+  }
   function unlockPremiumDemo() {
     if (!demo.profile) return;
     demo.profile.isPremium = true;
@@ -613,6 +621,31 @@ const Backend = (function () {
   function isDirectAudioUrl(url) {
     return /\.(mp3|m4a|wav|ogg|aac)(\?.*)?$/i.test(url || "");
   }
+  /* ================= SEITENINHALTE (admin-editierbar, für alle sichtbar) =================
+     Für Bereiche wie "Über mich" — jeder kann sie lesen, aber nur Admins ändern sie. Fehlt ein
+     Wert (noch keine Tabelle angelegt, oder noch nie geändert), gilt einfach der feste Text aus
+     dem HTML weiter — das Nachrüsten dieser Funktion ist also risikofrei. */
+  async function getSiteContent(key) {
+    if (client) {
+      try {
+        const { data, error } = await client.from("site_content").select("value").eq("key", key).maybeSingle();
+        if (!error && data) return data.value;
+      } catch (e) { console.warn("Seiteninhalt konnte nicht geladen werden:", e); }
+      return null;
+    }
+    return (demo.siteContent && demo.siteContent[key]) || null;
+  }
+  async function setSiteContent(key, value) {
+    if (!isAdmin()) throw new Error("Nur Administratoren können Seiteninhalte ändern.");
+    if (client) {
+      const { error } = await client.from("site_content").upsert({ key, value });
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.siteContent = demo.siteContent || {};
+    demo.siteContent[key] = value;
+  }
+
   async function getPlaylist(ownerId = null) {
     if (client) {
       try {
@@ -804,7 +837,11 @@ const Backend = (function () {
     demo.profile.favCountry = favCountry;
     demo.profile.favQuote = favQuote;
     demo.profile.poem = poem;
-    demo.profile.extraProfileData = extra || demo.profile.extraProfileData || {};
+    // WICHTIG: zusammenführen statt komplett ersetzen — sonst würden Felder, die über den
+    // schlankeren updateExtraProfileField-Weg gespeichert wurden (z. B. Lernprofil-Bewertung,
+    // Laufband-Einstellungen, "schon gesehene" Meilensteine), beim nächsten Abschicken des
+    // normalen Bearbeitungsformulars unabsichtlich wieder gelöscht.
+    demo.profile.extraProfileData = { ...(demo.profile.extraProfileData || {}), ...(extra || {}) };
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({
         languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood,
@@ -1777,7 +1814,7 @@ const Backend = (function () {
     getRankingToday,
     getGuestbook,
     addGuestbookEntry,
-    unlockPremiumDemo,
+    unlockPremiumDemo, togglePremium,
     isPremium,
     searchUsers,
     sendFriendRequest,
@@ -1792,6 +1829,7 @@ const Backend = (function () {
     addActivity,
     getActivity,
     getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl,
+    getSiteContent, setSiteContent,
     notifyPracticing,
     saveThemePreference,
     uploadGalleryPhoto,

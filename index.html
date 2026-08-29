@@ -168,13 +168,28 @@
       <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle<span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat</button>
       <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel</button>
+      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle</button>
+      <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false">🗼 Wackelturm</button>
+      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🪣 Wortarten-Eimer</button>
       <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
+    </div>
+
+    <div class="subview" id="sub-wortarten" data-active="false">
+      <div id="wortartenArea"></div>
+    </div>
+
+    <div class="subview" id="sub-wackelturm" data-active="false">
+      <div id="wackelturmArea"></div>
     </div>
 
     <div class="subview" id="sub-exercises" data-active="true">
       <div id="exerciseSetup"></div>
       <div id="exercisePlay" style="display:none;"></div>
       <div id="exerciseResults" style="display:none;"></div>
+    </div>
+
+    <div class="subview" id="sub-satzpuzzle" data-active="false">
+      <div id="satzpuzzleArea"></div>
     </div>
 
     <div class="subview" id="sub-missions" data-active="false">
@@ -272,6 +287,7 @@
       <button class="subnav-pill" data-sub="sub-ranking" aria-selected="false">🏆 Ranking</button>
       <button class="subnav-pill" data-sub="sub-inbox" aria-selected="false" style="position:relative;">✉️ Postfach<span id="inboxTabBadge" class="notify-badge" style="display:none;"></span></button>
       <button class="subnav-pill" data-sub="sub-guestbook" aria-selected="false">📖 Gästebuch</button>
+      <button class="subnav-pill" data-sub="sub-interview" aria-selected="false">🎤 Interview</button>
       <button class="subnav-pill" data-sub="sub-design" aria-selected="false">🎨 Design</button>
       <button class="subnav-pill" data-sub="sub-settings" aria-selected="false">⚙️ Einstellungen</button>
       <button class="subnav-pill" data-sub="sub-premium" aria-selected="false">✨ Premium</button>
@@ -281,6 +297,7 @@
     <div class="subview" id="sub-inbox" data-active="false"><div id="inboxArea"></div></div>
     <div class="subview" id="sub-ranking" data-active="false"><div id="rankingArea"></div></div>
     <div class="subview" id="sub-guestbook" data-active="false"><div id="guestbookArea"></div></div>
+    <div class="subview" id="sub-interview" data-active="false"><div id="interviewArea"></div></div>
     <div class="subview" id="sub-premium" data-active="false"><div id="premiumArea"></div></div>
     <div class="subview" id="sub-design" data-active="false"><div id="designArea"></div></div>
     <div class="subview" id="sub-settings" data-active="false"><div id="settingsArea"></div></div>

@@ -18,6 +18,81 @@
   const tabs = document.querySelectorAll(".tape-tab");
   const views = document.querySelectorAll(".view");
 
+  // "Über mich" ist admin-editierbar — lädt beim Start eventuelle gespeicherte Anpassungen und
+  // zeigt Admins (nur ihnen) einen dezenten Bearbeiten-Knopf direkt an Ort und Stelle.
+  async function loadAndRenderAboutSection() {
+    const saved = await Backend.getSiteContent("about");
+    if (saved) {
+      const h2 = document.querySelector("#view-about h2");
+      const role = document.querySelector("#view-about .role");
+      const shortText = document.querySelector("#view-about .about-text-short");
+      const supportNote = document.querySelector("#view-about .about-support-note");
+      const img = document.querySelector("#view-about .avatar-wrap img");
+      if (saved.heading && h2) h2.textContent = saved.heading;
+      if (saved.role && role) role.textContent = saved.role;
+      if (saved.shortText && shortText) shortText.textContent = saved.shortText;
+      if (saved.supportNote && supportNote) supportNote.textContent = saved.supportNote;
+      if (saved.photoUrl && img) img.src = saved.photoUrl;
+    }
+    renderAboutEditButton();
+  }
+  function renderAboutEditButton() {
+    const existing = document.getElementById("aboutEditBtn");
+    if (existing) existing.remove();
+    if (!Backend.canModerate || !Backend.canModerate()) return;
+    const card = document.querySelector("#view-about .about-card");
+    if (!card) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "aboutEditBtn";
+    btn.className = "emoji-toggle-link";
+    btn.style.cssText = "display:block; margin-top:12px; font-size:0.78rem;";
+    btn.textContent = "✏️ Nur für dich sichtbar: Über-mich-Text bearbeiten";
+    btn.addEventListener("click", openAboutEditForm);
+    card.appendChild(btn);
+  }
+  function openAboutEditForm() {
+    const h2 = document.querySelector("#view-about h2");
+    const role = document.querySelector("#view-about .role");
+    const shortText = document.querySelector("#view-about .about-text-short");
+    const supportNote = document.querySelector("#view-about .about-support-note");
+    const img = document.querySelector("#view-about .avatar-wrap img");
+    const box = document.createElement("div");
+    box.className = "lightbox";
+    box.innerHTML = `
+      <div class="profile-modal-card" style="text-align:left; max-height:85vh; overflow-y:auto;">
+        <button type="button" class="lightbox-close" id="aboutEditClose">✕</button>
+        <h3 style="margin-bottom:12px;">✏️ Über mich bearbeiten</h3>
+        <p class="empty-note" style="margin-bottom:12px;">Nur der Inhalt ändert sich — Schriftart und Design bleiben genau wie bisher.</p>
+        <div class="form-field"><label>Überschrift</label><input type="text" id="aboutEditHeading" value="${h2 ? h2.textContent : ""}" /></div>
+        <div class="form-field"><label>Rolle/Untertitel</label><input type="text" id="aboutEditRole" value="${role ? role.textContent : ""}" /></div>
+        <div class="form-field"><label>Kurztext</label><textarea id="aboutEditShort" class="guestbook-form-textarea">${shortText ? shortText.textContent : ""}</textarea></div>
+        <div class="form-field"><label>Kurzer Unterstützungs-Hinweis</label><textarea id="aboutEditSupport" class="guestbook-form-textarea">${supportNote ? supportNote.textContent : ""}</textarea></div>
+        <div class="form-field"><label>Foto-Adresse (Bild-Link)</label><input type="text" id="aboutEditPhoto" value="${img ? img.src : ""}" /></div>
+        <button type="button" class="btn btn-coffee" id="aboutEditSave">Speichern</button>
+        <p class="form-error" id="aboutEditError" style="display:none;"></p>
+      </div>`;
+    document.body.appendChild(box);
+    document.getElementById("aboutEditClose").addEventListener("click", () => box.remove());
+    box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
+    document.getElementById("aboutEditSave").addEventListener("click", async () => {
+      const errBox = document.getElementById("aboutEditError");
+      try {
+        await Backend.setSiteContent("about", {
+          heading: document.getElementById("aboutEditHeading").value,
+          role: document.getElementById("aboutEditRole").value,
+          shortText: document.getElementById("aboutEditShort").value,
+          supportNote: document.getElementById("aboutEditSupport").value,
+          photoUrl: document.getElementById("aboutEditPhoto").value,
+        });
+        box.remove();
+        loadAndRenderAboutSection();
+      } catch (err) {
+        errBox.textContent = "⚠️ " + err.message;
+        errBox.style.display = "block";
+      }
+    });
+  }
   function activateTab(targetId) {
     tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.target === targetId)));
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
@@ -26,6 +101,7 @@
   tabs.forEach((t) => t.addEventListener("click", () => {
     activateTab(t.dataset.target);
     if (t.dataset.target === "view-profile") maybeShowFoxIntro();
+    if (t.dataset.target === "view-about") renderAboutEditButton();
   }));
   const initial = window.location.hash?.replace("#", "");
   if (initial && document.getElementById(initial)) activateTab(initial);
@@ -223,6 +299,8 @@
     { id: "tiefsee", name: "Tiefsee-Atelier", emoji: "🐙", desc: "Dunkles Smaragdgrün, edel-verspielt.", mode: "dunkel", unlock: { type: "points", value: 100 } },
     { id: "vulkanglut", name: "Vulkanglut", emoji: "🌋", desc: "Dunkel & feurig-orange, kraftvoll-verspielt.", mode: "dunkel", unlock: { type: "points", value: 250 } },
     { id: "mondgarten", name: "Mondgarten", emoji: "🌙", desc: "Dunkles Violett, ruhig-verträumt.", mode: "dunkel", unlock: { type: "points", value: 500 } },
+    { id: "disconacht", name: "Disco Nacht", emoji: "🪩", desc: "Dunkel mit Laserstrahlen & Discokugel — 80er/90er-Flair.", mode: "dunkel", unlock: { type: "points", value: 350 } },
+    { id: "discokugel", name: "Discokugel", emoji: "🪩", desc: "Helle, verspielte Disco-Optik mit hohem Kontrast.", mode: "hell", unlock: { type: "points", value: 350 } },
     { id: "retroarkade", name: "Retro-Arkade", emoji: "👾", desc: "Dunkel, Neon-Pixel-verspielt.", mode: "dunkel", unlock: { type: "trophy", match: "Gehirnjogger" } },
     { id: "lavendelfeld", name: "Lavendelfeld", emoji: "🪻", desc: "Hell, zartlila, ruhig-verspielt.", mode: "hell", unlock: { type: "points", value: 750 } },
     { id: "zitrusgarten", name: "Zitrusgarten", emoji: "🍋", desc: "Hell, sonnig-frisch, verspielt.", mode: "hell", unlock: { type: "trophy", match: "Steckbrief" } },
@@ -517,11 +595,21 @@
           </div>`;
         }).join("")}
       </div>
+      ${profile.isOwner ? `<div class="question-card" style="margin-top:14px;">
+        <h3>✨ Premium-Status (nur für dich als Betreiber sichtbar)</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Da du aktuell keine echten Premium-Inhalte hinterlegt hast, macht ein aktiver Premium-Status wenig Sinn. Hier kannst du ihn selbst jederzeit ein- und ausschalten, sobald du willst.</p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="premiumSelfToggle" ${Backend.isPremium() ? "checked" : ""} />
+          <span>Premium-Status bei mir aktiv anzeigen</span>
+        </label>
+      </div>` : ""}
       ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
         <h3>👥 Alle registrierten Nutzer</h3>
         <div id="adminUserListArea"><p class="empty-note">Lade Nutzerliste…</p></div>
       </div>` : ""}
     `;
+    const premiumToggle = document.getElementById("premiumSelfToggle");
+    if (premiumToggle) premiumToggle.addEventListener("change", async () => { await Backend.togglePremium(premiumToggle.checked); renderSettings(); });
     if (Backend.canModerate()) loadAdminUserList();
     area.querySelectorAll(".learning-rate-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -1424,11 +1512,18 @@
     const duration = Math.max(12, textWidth / pixelsPerSecond);
     track.style.animation = ""; // Safari/iOS startet die Animation nach Textänderung sonst nicht neu
     // WICHTIG: animationDuration gilt für ALLE aktiven Animationen zusammen (Blinken UND Scrollen
-    // laufen gleichzeitig) — wird hier nur EIN Wert gesetzt, überschreibt er versehentlich auch die
-    // Blink-Geschwindigkeit mit der Scroll-Dauer. Deshalb beide explizit und in der richtigen
-    // Reihenfolge angeben (passend zur Reihenfolge in der CSS-Regel: erst Blinken, dann Scrollen).
-    const blinkSpeed = typeof getTickerBlinkSpeed === "function" ? getTickerBlinkSpeed() : "0.7";
-    track.style.animationDuration = `${blinkSpeed}s, ${duration}s`; // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
+    // laufen gleichzeitig, ABER NUR wenn Blinken eingeschaltet ist) — ist Blinken AUS, läuft nur
+    // EINE Animation (tickerScroll), dann darf hier auch nur EIN Wert stehen. Wird trotzdem ein
+    // zweiter, für das Blinken gedachter Wert mitgeschickt, wendet der Browser diesen fälschlich
+    // auf die einzige aktive Animation an — der Text raste dadurch in Bruchteilen einer Sekunde
+    // über den Bildschirm, statt gemächlich zu scrollen.
+    const blinkOn = typeof isTickerBlinkOn === "function" && isTickerBlinkOn();
+    if (blinkOn) {
+      const blinkSpeed = typeof getTickerBlinkSpeed === "function" ? getTickerBlinkSpeed() : "0.7";
+      track.style.animationDuration = `${blinkSpeed}s, ${duration}s`;
+    } else {
+      track.style.animationDuration = `${duration}s`;
+    } // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
   }
   const tickerToggle = document.getElementById("tickerToggle");
   if (tickerToggle) {
@@ -1727,11 +1822,15 @@
     zap: { label: "⚡ Zap", freqs: [200, 1800], wave: "sawtooth", gap: 0.02, decay: 0.15, unlockPoints: 600 },
     harp: { label: "🎵 Harfe", freqs: [523, 587, 659, 784, 880], wave: "sine", gap: 0.07, decay: 0.4, unlockPoints: 800 },
   };
+  // WICHTIG: alle drei Benachrichtigungs-Einstellungen (Ton, Farbe, Einstellungen pro Art) im
+  // Konto gespeichert, nicht localStorage — sonst würden sie sich beim Gerätewechsel oder nach
+  // dem Leeren des Caches immer wieder zurücksetzen, statt fest mit dem Profil verbunden zu sein.
   function getNotifySoundKey() {
-    try { return localStorage.getItem("dma_notify_sound") || "ding"; } catch (e) { return "ding"; }
+    const profile = Backend.currentProfile();
+    return (profile && profile.extraProfileData && profile.extraProfileData.notifySound) || "ding";
   }
-  function setNotifySoundKey(key) {
-    try { localStorage.setItem("dma_notify_sound", key); } catch (e) {}
+  async function setNotifySoundKey(key) {
+    await Backend.updateExtraProfileField("notifySound", key);
   }
   // Vier wählbare Ring-/Ticker-Farben — dieselbe Freischalt-Logik wie bei den Tönen.
   const NOTIFY_COLOR_PRESETS = {
@@ -1747,10 +1846,11 @@
     silver: { label: "⚪ Silber", hex: "#c4c9d1", unlockPoints: 500 },
   };
   function getNotifyColorKey() {
-    try { return localStorage.getItem("dma_notify_color") || "coral"; } catch (e) { return "coral"; }
+    const profile = Backend.currentProfile();
+    return (profile && profile.extraProfileData && profile.extraProfileData.notifyColor) || "coral";
   }
-  function setNotifyColorKey(key) {
-    try { localStorage.setItem("dma_notify_color", key); } catch (e) {}
+  async function setNotifyColorKey(key) {
+    await Backend.updateExtraProfileField("notifyColor", key);
     applyNotifyColor();
   }
   function applyNotifyColor() {
@@ -1768,13 +1868,14 @@
     other: { label: "🔔 Sonstiges (Freischaltung, Like, Kommentar)" },
   };
   function getNotifyTypeSettings() {
-    try { return JSON.parse(localStorage.getItem("dma_notify_type_settings") || "{}"); } catch (e) { return {}; }
+    const profile = Backend.currentProfile();
+    return (profile && profile.extraProfileData && profile.extraProfileData.notifyTypeSettings) || {};
   }
-  function setNotifyTypeSetting(kind, field, value) {
+  async function setNotifyTypeSetting(kind, field, value) {
     const all = getNotifyTypeSettings();
-    if (!all[kind]) all[kind] = {};
-    if (value === "") delete all[kind][field]; else all[kind][field] = value;
-    try { localStorage.setItem("dma_notify_type_settings", JSON.stringify(all)); } catch (e) {}
+    const updated = { ...all, [kind]: { ...(all[kind] || {}) } };
+    if (value === "") delete updated[kind][field]; else updated[kind][field] = value;
+    await Backend.updateExtraProfileField("notifyTypeSettings", updated);
   }
   function resolveNotifySound(kind) {
     const override = getNotifyTypeSettings()[kind]?.sound;
@@ -1819,8 +1920,19 @@
   }
   function applyTickerBlinkVisual() {
     const wrap = document.querySelector(".ticker-track-wrap");
-    if (wrap) wrap.classList.toggle("ticker-blink", isTickerBlinkOn());
+    const track = document.querySelector(".ticker-track");
+    const blinkOn = isTickerBlinkOn();
+    if (wrap) wrap.classList.toggle("ticker-blink", blinkOn);
     document.documentElement.style.setProperty("--ticker-blink-speed", getTickerBlinkSpeed() + "s");
+    // Beim Umschalten selbst (nicht nur beim nächsten Text-Update) muss die Animationsdauer sofort
+    // neu gesetzt werden — sonst bleibt der alte, zur falschen Anzahl Animationen passende Wert
+    // aktiv, bis zufällig mal wieder neuer Text ankommt.
+    if (track) {
+      const textWidth = track.scrollWidth;
+      const pixelsPerSecond = 55;
+      const scrollDuration = Math.max(12, textWidth / pixelsPerSecond);
+      track.style.animationDuration = blinkOn ? `${getTickerBlinkSpeed()}s, ${scrollDuration}s` : `${scrollDuration}s`;
+    }
   }
   async function setTickerBlink(on) {
     await Backend.updateExtraProfileField("tickerBlink", on);
@@ -1975,6 +2087,7 @@
   }
   checkNotifications();
   setInterval(checkNotifications, 20000);
+  loadAndRenderAboutSection();
 
   const weatherOut = document.getElementById("weatherOut");
   const weatherIcon = document.getElementById("weatherIcon");
@@ -3308,6 +3421,245 @@
      als echtes Ziehen). Tempo wird belohnt.
      ============================================================ */
   let wbState = null;
+  /* ===== Satzpuzzle: Wortstellung im Satz — Wörter in richtiger Reihenfolge antippen ===== */
+  let spSession = null; // { round, total, correct }
+  let spCurrentEntry = null; // [chunks, explanation]
+  let spShuffled = []; // gemischte Reihenfolge der Bausteine
+  let spUsedIdx = []; // welche Indizes (aus spShuffled) schon in der gebauten Reihenfolge stecken
+  function newSatzpuzzleSession() {
+    spSession = { round: 0, total: 10, correct: 0 };
+  }
+  function newSatzpuzzleRound() {
+    const entry = ExerciseData.SATZPUZZLE[Math.floor(Math.random() * ExerciseData.SATZPUZZLE.length)];
+    spCurrentEntry = entry;
+    spShuffled = Core.shuffle(entry[0].map((word, i) => ({ word, correctIdx: i })));
+    spUsedIdx = [];
+  }
+  function renderSatzpuzzleResults() {
+    const area = document.getElementById("satzpuzzleArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🧩 SATZPUZZLE — SITZUNG FERTIG</p>
+        <p style="font-size:2rem; margin:8px 0;">🎉</p>
+        <h2 style="margin:8px 0;">${spSession.correct} / ${spSession.total} Sätze richtig gebaut!</h2>
+        <button type="button" class="btn btn-coffee" id="spPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("spPlayAgainBtn").addEventListener("click", () => {
+      newSatzpuzzleSession(); newSatzpuzzleRound(); renderSatzpuzzle();
+    });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent: Math.round((spSession.correct / spSession.total) * 100), character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+  function renderSatzpuzzle() {
+    const area = document.getElementById("satzpuzzleArea");
+    if (!area) return;
+    if (!spSession) newSatzpuzzleSession();
+    if (spSession.round >= spSession.total) { renderSatzpuzzleResults(); return; }
+    if (!spCurrentEntry) newSatzpuzzleRound();
+    const built = spUsedIdx.map((i) => spShuffled[i].word);
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🧩 SATZPUZZLE · RUNDE ${spSession.round + 1} / ${spSession.total} <span class="subnav-info-icon" data-info="Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Genau das übst du hier.">ⓘ</span></p>
+        <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen.</p>
+        <div class="sp-built-row" style="min-height:44px; display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); margin-bottom:14px;">
+          ${built.length ? built.map((w) => `<span class="trophy-chip">${w}</span>`).join("") : '<span class="empty-note">…</span>'}
+        </div>
+        <div class="sp-choices-row" style="display:flex; flex-wrap:wrap; gap:8px;">
+          ${spShuffled.map((chunk, i) => `<button type="button" class="btn btn-ghost sp-choice-btn" data-idx="${i}" ${spUsedIdx.includes(i) ? "disabled style=\"opacity:0.25;\"" : ""}>${chunk.word}</button>`).join("")}
+        </div>
+        <p class="empty-note" id="spFeedback" style="text-align:center; margin-top:10px;"></p>
+      </div>`;
+    document.querySelector(".sp-choices-row").querySelectorAll("[data-idx]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.idx);
+        if (spUsedIdx.includes(idx)) return;
+        spUsedIdx.push(idx);
+        renderSatzpuzzle();
+        if (spUsedIdx.length === spShuffled.length) checkSatzpuzzle();
+      });
+    });
+  }
+  function checkSatzpuzzle() {
+    const fb = document.getElementById("spFeedback");
+    const correctOrder = spUsedIdx.every((chosenIdx, pos) => spShuffled[chosenIdx].correctIdx === pos);
+    spSession.round += 1;
+    if (correctOrder) {
+      spSession.correct += 1;
+      Core.sound.correct();
+      fb.innerHTML = `<strong style="color:#3E9A6E;">✅ Richtig!</strong> ${spCurrentEntry[1]}`;
+    } else {
+      Core.sound.wrong();
+      const correctSentence = spCurrentEntry[0].join(" ");
+      fb.innerHTML = `<strong style="color:#E85F6F;">Noch nicht ganz.</strong> Richtig wäre: „${correctSentence}“<br>${spCurrentEntry[1]}`;
+    }
+    setTimeout(() => { newSatzpuzzleRound(); renderSatzpuzzle(); }, 2600);
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-satzpuzzle"]')?.addEventListener("click", () => {
+    if (!spSession) newSatzpuzzleSession();
+    if (!spCurrentEntry) newSatzpuzzleRound();
+    renderSatzpuzzle();
+  });
+
+  /* ===== Wackelturm: Jenga-Prinzip — Fragen aus ALLEN Kategorien, Turm wird bei Fehlern
+     instabiler, bis er nach 3 Fehlern einstürzt. Braucht keine eigenen neuen Fragen — zieht
+     einfach zufällig aus allen bereits vorhandenen Übungskategorien. ===== */
+  let wtBlocksRemoved = 0;
+  let wtMistakes = 0;
+  let wtCurrentQuestion = null;
+  const WT_MAX_MISTAKES = 3;
+  const WT_TOTAL_BLOCKS = 18;
+  function pickRandomWackelturmQuestion() {
+    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    const cat = cats[Math.floor(Math.random() * cats.length)];
+    const bank = cat.getBank();
+    return bank[Math.floor(Math.random() * bank.length)];
+  }
+  function newWackelturmGame() {
+    wtBlocksRemoved = 0;
+    wtMistakes = 0;
+    wtCurrentQuestion = pickRandomWackelturmQuestion();
+  }
+  function renderWackelturm() {
+    const area = document.getElementById("wackelturmArea");
+    if (!area) return;
+    if (!wtCurrentQuestion) newWackelturmGame();
+    const tiltDeg = wtMistakes * 5;
+    const remainingBlocks = Math.max(1, WT_TOTAL_BLOCKS - wtBlocksRemoved);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🗼 WACKELTURM · ${wtBlocksRemoved} Blöcke sicher entfernt · ${wtMistakes}/${WT_MAX_MISTAKES} Fehler <span class="subnav-info-icon" data-info="Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast.">ⓘ</span></p>
+        <div class="wt-tower-wrap">
+          <div class="wt-tower" id="wtTower" style="transform: rotate(${tiltDeg}deg);">
+            ${Array.from({ length: remainingBlocks }).map((_, i) => `<div class="wt-block" style="background: hsl(${28 + i * 7}, 58%, 56%);"></div>`).join("")}
+          </div>
+        </div>
+        <p style="font-weight:700; margin:10px 0;">${wtCurrentQuestion.prompt}</p>
+        <div class="quiz-options">
+          ${wtCurrentQuestion.options.map((opt, i) => `<button type="button" class="option-btn wt-opt-btn" data-idx="${i}"><span>${opt}</span></button>`).join("")}
+        </div>
+        <p class="empty-note" id="wtFeedback" style="margin-top:10px; min-height:20px;"></p>
+      </div>`;
+    area.querySelectorAll(".wt-opt-btn").forEach((btn) => {
+      btn.addEventListener("click", () => checkWackelturm(Number(btn.dataset.idx), btn));
+    });
+  }
+  function checkWackelturm(idx, btn) {
+    document.querySelectorAll(".wt-opt-btn").forEach((b) => { b.disabled = true; });
+    const correct = wtCurrentQuestion.correct.includes(idx);
+    const fb = document.getElementById("wtFeedback");
+    if (correct) {
+      wtBlocksRemoved += 1;
+      Core.sound.correct();
+      btn.style.background = "#DFF3E5";
+      fb.textContent = "✅ Sicher entfernt!";
+    } else {
+      wtMistakes += 1;
+      Core.sound.wrong();
+      btn.style.background = "#FBDCDC";
+      fb.textContent = `⚠️ Der Turm wackelt! (${wtMistakes}/${WT_MAX_MISTAKES})`;
+      const tower = document.getElementById("wtTower");
+      if (tower) tower.style.transform = `rotate(${wtMistakes * 5}deg)`;
+    }
+    if (wtMistakes >= WT_MAX_MISTAKES) {
+      setTimeout(renderWackelturmCollapse, 1000);
+      return;
+    }
+    setTimeout(() => { wtCurrentQuestion = pickRandomWackelturmQuestion(); renderWackelturm(); }, 1300);
+  }
+  function renderWackelturmCollapse() {
+    const area = document.getElementById("wackelturmArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p style="font-size:2.5rem;">💥</p>
+        <h2 style="margin:8px 0;">Der Turm ist eingestürzt!</h2>
+        <p class="empty-note">Du hast <strong>${wtBlocksRemoved}</strong> Blöcke sicher entfernt, bevor er umgefallen ist.</p>
+        <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
+      </div>`;
+    document.getElementById("wtRetryBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
+    if (Backend.currentUser() && wtBlocksRemoved > 0) {
+      saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved, bonus: 0, percent: 100, character: "Turmbauer:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-wackelturm"]')?.addEventListener("click", () => {
+    if (!wtCurrentQuestion) newWackelturmGame();
+    renderWackelturm();
+  });
+
+  /* ===== Wortarten-Eimer: Wörter per Antippen der richtigen "Eimer"-Kategorie zuordnen ===== */
+  let waSession = null; // { round, total, correct }
+  let waCurrentWord = null; // [word, category]
+  const WA_BUCKETS = [
+    { key: "verb", label: "🏃 Verb" },
+    { key: "adjektiv", label: "🎨 Adjektiv" },
+    { key: "substantiv", label: "📦 Substantiv" },
+    { key: "adverb", label: "⏰ Adverb" },
+  ];
+  function newWortartenSession() {
+    waSession = { round: 0, total: 15, correct: 0 };
+  }
+  function newWortartenRound() {
+    waCurrentWord = ExerciseData.WORTARTEN[Math.floor(Math.random() * ExerciseData.WORTARTEN.length)];
+  }
+  function renderWortartenResults() {
+    const area = document.getElementById("wortartenArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🪣 WORTARTEN-EIMER — SITZUNG FERTIG</p>
+        <p style="font-size:2rem; margin:8px 0;">🎉</p>
+        <h2 style="margin:8px 0;">${waSession.correct} / ${waSession.total} richtig zugeordnet!</h2>
+        <button type="button" class="btn btn-coffee" id="waPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("waPlayAgainBtn").addEventListener("click", () => {
+      newWortartenSession(); newWortartenRound(); renderWortarten();
+    });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["wortarten"], points: waSession.correct, bonus: 0, percent: Math.round((waSession.correct / waSession.total) * 100), character: "Wortarten-Sortierer:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+  function renderWortarten() {
+    const area = document.getElementById("wortartenArea");
+    if (!area) return;
+    if (!waSession) newWortartenSession();
+    if (waSession.round >= waSession.total) { renderWortartenResults(); return; }
+    if (!waCurrentWord) newWortartenRound();
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🪣 WORTARTEN-EIMER · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen dem richtigen 'Eimer' zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
+        <p style="font-size:1.8rem; font-weight:800; margin:20px 0;">${waCurrentWord[0]}</p>
+        <div class="trophy-case" style="justify-content:center;">
+          ${WA_BUCKETS.map((b) => `<button type="button" class="trophy-chip wa-bucket-btn" data-bucket="${b.key}" style="font-size:0.95rem; padding:10px 16px;">${b.label}</button>`).join("")}
+        </div>
+        <p class="empty-note" id="waFeedback" style="margin-top:14px; min-height:20px;"></p>
+      </div>`;
+    area.querySelectorAll(".wa-bucket-btn").forEach((btn) => {
+      btn.addEventListener("click", () => checkWortarten(btn.dataset.bucket, btn));
+    });
+  }
+  function checkWortarten(chosen, btn) {
+    document.querySelectorAll(".wa-bucket-btn").forEach((b) => { b.disabled = true; });
+    const correct = chosen === waCurrentWord[1];
+    const fb = document.getElementById("waFeedback");
+    waSession.round += 1;
+    if (correct) {
+      waSession.correct += 1;
+      Core.sound.correct();
+      btn.style.background = "#DFF3E5";
+      fb.textContent = "✅ Richtig!";
+    } else {
+      Core.sound.wrong();
+      btn.style.background = "#FBDCDC";
+      const rightLabel = WA_BUCKETS.find((b) => b.key === waCurrentWord[1]).label;
+      fb.textContent = `„${waCurrentWord[0]}“ ist eigentlich: ${rightLabel}`;
+    }
+    setTimeout(() => { newWortartenRound(); renderWortarten(); }, 1800);
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-wortarten"]')?.addEventListener("click", () => {
+    if (!waSession) newWortartenSession();
+    if (!waCurrentWord) newWortartenRound();
+    renderWortarten();
+  });
+
   let wbSession = null; // { round, total, points, bonus }
   const WB_TIERS = [
     { max: 3, title: "Buchstaben-Anfänger:in" }, { max: 6, title: "Wort-Entdecker:in" },
@@ -6358,7 +6710,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const myFriends = await Backend.getFriends();
     const friendCount = myFriends.length;
     const avatarHtml = profile.avatarUrl
-      ? `<img src="${profile.avatarUrl}" alt="" class="avatar-photo" />`
+      ? avatarPhotoHtml(profile.avatarUrl)
       : profile.avatarEmoji
         ? `<div class="initials-avatar emoji-avatar">${profile.avatarEmoji}</div>`
         : `<div class="initials-avatar">${initials}</div>`;
@@ -7009,6 +7361,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     return `Zuletzt online am ${new Date(lastActive).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
   }
 
+  // Erkennt, ob ein Profilbild eine Sammelfigur ist (Pfad beginnt mit "figures/") — dann wird sie
+  // NICHT wie ein normales Foto rund beschnitten, sondern klebt unbeschnitten wie ein Sticker
+  // obendrauf, damit keine Pfoten/Ohren/Schwanz abgeschnitten werden.
+  function isFigureAvatarUrl(url) {
+    return typeof url === "string" && url.startsWith("figures/");
+  }
+  function avatarPhotoHtml(url) {
+    if (!url) return "";
+    if (isFigureAvatarUrl(url)) {
+      return `<div class="avatar-photo avatar-figure-sticker-wrap"><img src="${url}" alt="" class="avatar-figure-sticker" /></div>`;
+    }
+    return `<img src="${url}" alt="" class="avatar-photo" />`;
+  }
   function tinyAvatar(m) {
     if (m.avatar_url) return `<img src="${m.avatar_url}" class="tiny-avatar" alt="" />`;
     if (m.avatar_emoji) return `<span class="tiny-avatar tiny-avatar-emoji">${m.avatar_emoji}</span>`;
@@ -7302,12 +7667,65 @@ An einem Morgen lief ein kleiner Fuchs los…
     renderMusicSection();
   });
 
+  // Zehn persönliche, ein bisschen philosophische Interview-Fragen — bewusst KEINE einfachen
+  // Likes/Dislikes, sondern Fragen mit echtem Nachdenkwert. Frei beantwortbar, keine Pflicht,
+  // ab 150 Punkten freigeschaltet (fühlt sich früh genug erreichbar an).
+  const INTERVIEW_QUESTIONS = [
+    { id: "q1", text: "Was würdest du tun, wenn du wüsstest, dass du dabei nicht scheitern kannst?" },
+    { id: "q2", text: "Welche Eigenschaft schätzt du an anderen Menschen am meisten?" },
+    { id: "q3", text: "Wenn du eine Fähigkeit sofort meistern könntest — welche wäre das?" },
+    { id: "q4", text: "Was war der beste Rat, den du je bekommen hast?" },
+    { id: "q5", text: "Woran erkennst du, dass ein Tag richtig gut war?" },
+    { id: "q6", text: "Was würdest du deinem jüngeren Ich gerne sagen?" },
+    { id: "q7", text: "Welcher Moment hat deine Sicht auf das Leben verändert?" },
+    { id: "q8", text: "Was bedeutet für dich echte Freundschaft?" },
+    { id: "q9", text: "Welchen Ort auf der Welt müsstest du unbedingt noch sehen?" },
+    { id: "q10", text: "Worauf bist du an dir selbst besonders stolz?" },
+  ];
+  async function renderInterview() {
+    const area = document.getElementById("interviewArea");
+    if (!area) return;
+    const profile = Backend.currentProfile();
+    if (!profile) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
+    const unlocked = profile.points >= 150;
+    const answers = (profile.extraProfileData && profile.extraProfileData.interviewAnswers) || {};
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Kein einfaches Likes/Dislikes — sondern ein paar Fragen mit echtem Nachdenkwert. Alles freiwillig, du musst nicht jede Frage beantworten. Deine Antworten sind auf deinem Profil für andere sichtbar.</p>
+      ${!unlocked ? `<p class="empty-note">🔒 Ab 150 Punkten kannst du hier deine Antworten eintragen.</p>` : `
+        <div class="breakdown-list">
+          ${INTERVIEW_QUESTIONS.map((q) => `
+            <div class="question-card" style="margin-bottom:10px;">
+              <p style="font-weight:700; margin-bottom:8px;">${q.text}</p>
+              <textarea class="guestbook-form-textarea" data-interview-q="${q.id}" maxlength="300" placeholder="Deine Antwort (optional)…">${answers[q.id] || ""}</textarea>
+            </div>`).join("")}
+        </div>
+        <button type="button" class="btn btn-coffee" id="interviewSaveBtn">Antworten speichern</button>
+        <p class="empty-note" id="interviewSavedNote" style="display:none; margin-top:8px;">✅ Gespeichert!</p>
+      `}
+    `;
+    document.getElementById("interviewSaveBtn")?.addEventListener("click", async () => {
+      const updated = {};
+      area.querySelectorAll("[data-interview-q]").forEach((ta) => { updated[ta.dataset.interviewQ] = ta.value; });
+      await Backend.updateExtraProfileField("interviewAnswers", updated);
+      const note = document.getElementById("interviewSavedNote");
+      note.style.display = "block";
+      setTimeout(() => { note.style.display = "none"; }, 2500);
+    });
+  }
+  document.querySelector('#profileSubnav [data-sub="sub-interview"]')?.addEventListener("click", renderInterview);
+
   async function renderMissions() {
     const area = document.getElementById("missionsArea");
     if (!area) return;
     const profile = Backend.currentProfile();
     area.innerHTML = `
-      <p class="empty-note" style="margin-bottom:14px;">Beim Deutschlernen sammelst du nach und nach Fuchs-Figuren — jede steht für einen Meilenstein auf deinem Weg. Aktuell werden alle Füchse über deinen Gesamtpunktestand freigeschaltet, gestaffelt nach Schwierigkeit — von "schnell erreichbar" bis "richtig selten". Du kannst dabei jederzeit jedes Spiel in jedem Schwierigkeitsgrad spielen, das schränkt niemand ein.</p>
+      <p class="empty-note" style="margin-bottom:14px;">Hier geht's nicht ums bloße Punktesammeln — sondern darum, fleißig in den Übungskategorien zu spielen und dir dadurch nach und nach Fuchs-Figuren zu verdienen. Jeder Fuchs steht für einen Meilenstein auf deinem Weg. Aktuell ist der Gesamtpunktestand (den du dir durchs Üben erspielst) der Maßstab dafür, gestaffelt nach Schwierigkeit — von "schnell erreichbar" bis "richtig selten". Du kannst dabei jedes Spiel in jedem Schwierigkeitsgrad frei wählen, das schränkt dich nicht ein.</p>
+
+      <div class="material-card">
+        <h3>🎖️ Wie funktionieren Orden und Pokale eigentlich?</h3>
+        <p>Zwei Dinge zusammen bestimmen deinen Titel nach einer Runde: <strong>Welche Kategorien du gespielt hast</strong> bestimmt deinen "Charakter" — spielst du z. B. viel wenn/ob/als-wie/kennen-wissen, giltst du als <strong>🧠 Logiker</strong>; viel Deutschland-Quiz macht dich zum <strong>🔬 Wissenschaftler</strong>; Redewendungen & Synonyme zum <strong>💬 Sprachkünstler</strong>; Artikel/Plural/Fehler zum <strong>✍️ Grammatik-Profi</strong>; eine bunte Mischung macht dich zum <strong>🧭 Abenteurer</strong>; und wer wirklich alle 10 Kategorien spielt, wird zum <strong>🌟 Tausendsassa</strong>. <strong>Wie gut du dabei abschneidest</strong> (deine Trefferquote) bestimmt zusätzlich deine Stufe — von Deutsch-Anfänger über Fortgeschrittener und Lehrmeister bis hin zu Deutsch-Profi und ganz oben Deutsch-Superheld. Charakter + Stufe zusammen ergeben deinen Titel, z. B. "Grammatik-Profi – Superheld". Die beiden höchsten Stufen (Profi und Superheld) zählen als <strong>🏆 Pokal</strong>, alles darunter als <strong>🎖️ Orden</strong>.</p>
+      </div>
+
       <div class="breakdown-list">
         ${COLLECTIBLE_FIGURES.map((fig) => {
           const unlocked = profile ? isFigureUnlocked(fig, profile) : false;
@@ -7323,7 +7741,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>`;
         }).join("")}
       </div>
-      <p class="empty-note" style="margin-top:14px; font-size:0.78rem;">🔮 Zukunftsmusik: mit der Zeit sollen weitere, abwechslungsreichere Wege dazukommen, Füchse zu verdienen — nicht nur über Punkte, sondern über konkrete kleine Herausforderungen (z. B. mehrere Spiele an einem Tag, hohe Schwierigkeitsgrade meistern). Und vielleicht wechseln die verfügbaren Füchse irgendwann sogar saisonal (z. B. weihnachtliche Figuren) — mit einem eigenen Sammelalbum für alles, was du dir im Laufe der Zeit schon verdient hast.</p>
+      <p class="empty-note" style="margin-top:14px; font-size:0.78rem;">🔮 Zukunftsmusik: mit der Zeit sollen weitere, abwechslungsreichere Wege dazukommen, Füchse zu verdienen — nicht nur über Punkte, sondern über konkrete kleine Herausforderungen (z. B. mehrere Spiele an einem Tag, hohe Schwierigkeitsgrade meistern, oder gezielt viel in einer bestimmten Kategorie spielen). Geplant ist auch ein System, das dein Spielverhalten erkennt — spielst du z. B. viel Deutschland-Quiz, giltst du eher als "Wissenschaftler"; spielst du alles quer durch, eher als "Tausendsassa". Solche Spielertypen sollen dann auch die passenden Füchse anziehen. Und vielleicht wechseln die verfügbaren Füchse irgendwann sogar saisonal (z. B. weihnachtliche Figuren) — mit einem eigenen Sammelalbum für alles, was du dir im Laufe der Zeit schon verdient hast.</p>
     `;
   }
   document.querySelector('#learnSubnav [data-sub="sub-missions"]')?.addEventListener("click", renderMissions);
@@ -7467,7 +7885,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
     const initials = (p.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
     const avatarHtml = p.avatar_url
-      ? `<img src="${p.avatar_url}" class="avatar-photo" alt="" />`
+      ? avatarPhotoHtml(p.avatar_url)
       : p.avatar_emoji
         ? `<div class="initials-avatar emoji-avatar">${p.avatar_emoji}</div>`
         : `<div class="initials-avatar">${initials}</div>`;
@@ -7738,20 +8156,36 @@ An einem Morgen lief ein kleiner Fuchs los…
     sonnenblume: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="18" r="6" fill="#8B6F47"/><g fill="#F2B84B"><ellipse cx="20" cy="6" rx="3.5" ry="6"/><ellipse cx="20" cy="30" rx="3.5" ry="6"/><ellipse cx="8" cy="18" rx="6" ry="3.5"/><ellipse cx="32" cy="18" rx="6" ry="3.5"/><ellipse cx="11" cy="9" rx="3.5" ry="6" transform="rotate(-45 11 9)"/><ellipse cx="29" cy="27" rx="3.5" ry="6" transform="rotate(-45 29 27)"/><ellipse cx="29" cy="9" rx="3.5" ry="6" transform="rotate(45 29 9)"/><ellipse cx="11" cy="27" rx="3.5" ry="6" transform="rotate(45 11 27)"/></g><path d="M20 30 L18 38 M20 30 L22 38" stroke="#4FA88E" stroke-width="2" stroke-linecap="round"/></svg>`,
     rakete: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 4 Q28 12 26 24 L14 24 Q12 12 20 4 Z" fill="#E8825F"/><circle cx="20" cy="16" r="3.5" fill="#F5EFE4"/><path d="M14 22 L8 30 L14 28 Z" fill="#4FA88E"/><path d="M26 22 L32 30 L26 28 Z" fill="#4FA88E"/><path d="M17 24 L15 34 L20 30 L25 34 L23 24 Z" fill="#F2B84B"/></svg>`,
     blitz: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M22 3 L9 22 H18 L15 37 L32 15 H22 Z" fill="#F2B84B" stroke="#241505" stroke-width="1"/></svg>`,
+    stern: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 3 L24.5 15 L37 15 L27 23 L31 36 L20 28 L9 36 L13 23 L3 15 L15.5 15 Z" fill="#F2B84B" stroke="#241505" stroke-width="1"/></svg>`,
+    note: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="12" cy="30" r="5" fill="#4FA88E"/><circle cx="28" cy="26" r="5" fill="#4FA88E"/><path d="M17 30 V10 L33 6 V26" stroke="#241505" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+    haken: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="20" r="17" fill="#4FA88E"/><path d="M11 20 L17 27 L29 12" stroke="#F5EFE4" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    buch: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M20 10 Q12 5 5 8 V30 Q12 27 20 32 Q28 27 35 30 V8 Q28 5 20 10 Z" fill="#E8825F"/><path d="M20 10 V32" stroke="#241505" stroke-width="1.5"/></svg>`,
+    kaffee: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M8 16 H28 V27 Q28 33 20 33 Q12 33 12 27 Z" fill="#8B6F47"/><path d="M28 18 Q35 18 35 23 Q35 28 28 27" fill="none" stroke="#8B6F47" stroke-width="2.5"/><path d="M13 10 Q15 13 13 15 M20 10 Q22 13 20 15 M27 10 Q29 13 27 15" stroke="#A594D1" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`,
+    konfetti: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M6 34 L16 12 Q17 9 20 10 Q23 11 22 14 L12 36 Z" fill="#E8825F"/><rect x="24" y="6" width="4" height="4" fill="#F2B84B" transform="rotate(20 26 8)"/><rect x="30" y="16" width="4" height="4" fill="#4FA88E" transform="rotate(-15 32 18)"/><circle cx="32" cy="8" r="2" fill="#E85F6F"/><rect x="10" y="4" width="3.5" height="3.5" fill="#A594D1" transform="rotate(35 12 6)"/></svg>`,
+    ziel: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="20" r="16" fill="#E85F6F"/><circle cx="20" cy="20" r="10.5" fill="#F5EFE4"/><circle cx="20" cy="20" r="5" fill="#E85F6F"/><circle cx="20" cy="20" r="1.8" fill="#F5EFE4"/></svg>`,
+    sprechblase: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="17" rx="16" ry="12" fill="#A594D1"/><path d="M13 27 L9 34 L18 28 Z" fill="#A594D1"/><circle cx="13" cy="17" r="2" fill="#F5EFE4"/><circle cx="20" cy="17" r="2" fill="#F5EFE4"/><circle cx="27" cy="17" r="2" fill="#F5EFE4"/></svg>`,
   };
   function renderStickerRow() {
     const row = document.getElementById("inboxStickerRow");
     if (!row) return;
     row.innerHTML = Object.entries(DMA_STICKERS).map(([key, svg]) =>
-      `<button type="button" class="hobby-chip sticker-pick-btn" data-sticker="${key}" style="padding:4px 8px;">${svg}</button>`
+      `<button type="button" class="hobby-chip sticker-pick-btn" data-sticker="${key}" style="padding:4px 8px;" title="[sticker:${key}] in den Text einfügen">${svg}</button>`
     ).join("");
-    let selected = null;
+    // Klick fügt den Sticker-Platzhalter direkt an der aktuellen Cursor-Position im Textfeld ein
+    // (wie ein normaler Emoji-Einschub) — so können mehrere Sticker an beliebigen Stellen im Text
+    // verteilt werden, statt nur EINEN auswählen zu können, der am Ende angehängt wird.
     row.querySelectorAll("[data-sticker]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const key = btn.dataset.sticker;
-        selected = selected === key ? null : key;
-        row.querySelectorAll("[data-sticker]").forEach((b) => b.classList.toggle("selected", b.dataset.sticker === selected));
-        row.dataset.selectedSticker = selected || "";
+        const textarea = document.getElementById("inboxMessageInput");
+        if (!textarea) return;
+        const token = `[sticker:${btn.dataset.sticker}]`;
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? textarea.value.length;
+        textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
+        const newPos = start + token.length;
+        textarea.focus();
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.dispatchEvent(new Event("input", { bubbles: true })); // löst Entwurf-Speicherung mit aus
       });
     });
   }
@@ -7805,7 +8239,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div id="inboxImagePreviewBox"></div>
         </div>
         <div class="form-field">
-          <label class="empty-note">Eigene Sticker anhängen (optional):</label>
+          <label class="empty-note">Eigene Sticker antippen, um sie an der Cursor-Position in den Text einzufügen (optional):</label>
           <div id="inboxStickerRow" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;"></div>
         </div>
         <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
@@ -7824,7 +8258,7 @@ An einem Morgen lief ein kleiner Fuchs los…
               <strong>${inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"))}</strong>
               <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
             </div>
-            <p style="white-space:pre-wrap; margin:0;">${m.body.replace(/\[sticker:(\w+)\]/, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")}</p>
+            <p style="white-space:pre-wrap; margin:0;">${m.body.replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")}</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               ${inboxViewTab === "in" && !m.is_system && m.from_user ? `<button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-reply-to="${m.from_user}" data-reply-name="${m.author_name}">↩️ Antworten</button>` : ""}
@@ -7912,15 +8346,15 @@ An einem Morgen lief ein kleiner Fuchs los…
       const errBox = document.getElementById("inboxSendError");
       if (!isBroadcast && selectedRecipients.size === 0) { errBox.textContent = "⚠️ Bitte mindestens eine Person auswählen."; return; }
       try {
-        const stickerKey = document.getElementById("inboxStickerRow")?.dataset.selectedSticker || "";
-        const finalBody = body + (stickerKey ? ` [sticker:${stickerKey}]` : "");
+        // Sticker stehen jetzt schon als Platzhalter direkt im Text selbst (mitten drin einfügbar),
+        // deshalb muss hier nichts mehr zusätzlich angehängt werden.
         if (isBroadcast) {
           if (!confirm("Wirklich eine Rundmail an ALLE Nutzer schicken?")) return;
-          await Backend.sendBroadcastMessage(finalBody);
+          await Backend.sendBroadcastMessage(body);
         } else {
           // An alle ausgewählten Personen gleichzeitig verschicken -- dieselbe Nachricht, jeweils
           // als eigene, echte Nachricht an jede Person (nicht nur eine Kopie sichtbar für alle).
-          await Promise.all([...selectedRecipients].map((id) => Backend.sendPrivateMessage(id, finalBody, pendingImageUrl)));
+          await Promise.all([...selectedRecipients].map((id) => Backend.sendPrivateMessage(id, body, pendingImageUrl)));
         }
         renderInbox();
         try { localStorage.removeItem("dma_msg_draft"); } catch (e) {}
@@ -8330,7 +8764,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "25";
+  const APP_VERSION = "26";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

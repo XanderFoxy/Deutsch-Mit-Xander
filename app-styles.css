@@ -1030,6 +1030,22 @@
   width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0;
   object-fit: cover;
 }
+/* Sammelfiguren als Profilbild kleben wie ein Sticker OBEN DRAUF, statt wie ein normales Foto rund
+   beschnitten zu werden — sonst würden Pfoten, Ohren oder der Schwanz einfach abgeschnitten. Der
+   runde Rahmen bleibt als dezenter Hintergrund sichtbar, der Fuchs selbst ragt unbeschnitten
+   darüber hinaus. */
+.avatar-figure-sticker-wrap {
+  background: linear-gradient(135deg, var(--amber-300, #f2b84b), var(--coral-400, #e8825f));
+  display: flex; align-items: center; justify-content: center;
+  overflow: visible;
+  position: relative;
+}
+.avatar-figure-sticker {
+  position: absolute;
+  width: 132%; height: 132%;
+  object-fit: contain;
+  border-radius: 0;
+}
 /* Textumfluss-Kopfbereich fürs eigene Profil: das Profilbild schwebt links, die kleinen Info-
    Angaben (Freunde, Premium, Herkunft, Sternzeichen) fließen als Text um die runde Form herum —
    wie bei einem Bild in einem Magazin-Layout, statt in einer starren Zeile mit großen Lücken
@@ -1631,3 +1647,26 @@
   50%, 100% { color: inherit; opacity: 0.15; }
 }
 
+/* Wackelturm — Jenga-Prinzip: Blöcke werden von unten nach oben gestapelt gezeigt, der ganze
+   Turm kippt bei Fehlern zunehmend zur Seite (per rotate), bis er "einstürzt". */
+.wt-tower-wrap {
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 16px 0;
+  overflow: hidden;
+}
+.wt-tower {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  transform-origin: bottom center;
+  transition: transform 0.5s cubic-bezier(0.36, 0, 0.66, -0.56);
+}
+.wt-block {
+  width: 92px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.2);
+}
