@@ -265,19 +265,19 @@ const Backend = (function () {
       });
       if (resultsError) console.warn("Tabelle results konnte nicht gespeichert werden:", resultsError.message);
 
-      const { error: profileError } = await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id);
-      if (profileError) console.warn("Punkte/Abzeichen im Profil konnten nicht gespeichert werden:", profileError.message);
-
-      // Tagesranking separat behandeln, damit ein Problem hier nie Punkte/Ergebnis blockiert
-      const { data: existingRow, error: selectError } = await client.from("daily_ranking").select("*").eq("name", demo.profile.name).eq("date", todayKey()).maybeSingle();
-      if (selectError) {
-        console.warn("Tagesranking: Zeile konnte nicht gelesen werden:", selectError.message);
-      } else if (existingRow) {
-        const { error: updateError } = await client.from("daily_ranking").update({ points: Math.max(existingRow.points, demo.profile.points), user_id: demo.user.id }).eq("name", demo.profile.name).eq("date", todayKey());
-        if (updateError) console.warn("Tagesranking konnte nicht aktualisiert werden:", updateError.message);
-      } else {
-        const { error: insertError } = await client.from("daily_ranking").insert({ name: demo.profile.name, points: demo.profile.points, date: todayKey(), user_id: demo.user.id });
-        if (insertError) console.warn("Tagesranking konnte nicht angelegt werden:", insertError.message);
+      // KRITISCH: Punkte dürfen nie still verloren gehen. Falls das Speichern beim ersten Versuch
+      // fehlschlägt (z. B. kurzer Netzwerkfehler), wird es einmal automatisch wiederholt. Schlägt
+      // es auch dann fehl, bekommt die Person eine sichtbare Warnung statt eines stillen
+      // Konsolen-Logs — sonst merkt niemand, dass beim nächsten Neuladen Punkte "verschwinden"
+      // könnten, weil der Server noch den alten, niedrigeren Stand hat.
+      let profileError = (await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
+      if (profileError) {
+        await new Promise((r) => setTimeout(r, 800));
+        profileError = (await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
+      }
+      if (profileError) {
+        console.warn("Punkte/Abzeichen im Profil konnten nicht gespeichert werden:", profileError.message);
+        if (typeof window !== "undefined" && window.__dmaPointsSaveFailed) window.__dmaPointsSaveFailed();
       }
     }
 
@@ -314,14 +314,18 @@ const Backend = (function () {
   async function getRankingAllTime() {
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("name,points").order("points", { ascending: false }).limit(20);
-        if (!error && data) return data;
+        const { data, error } = await client.from("profiles").select("id,name,points").order("points", { ascending: false }).limit(20);
+        if (!error && data) return data.map((p) => ({ user_id: p.id, name: p.name, points: p.points }));
       } catch (e) { console.warn("Gesamt-Ranking nicht verfügbar:", e); }
       return [];
     }
-    return Object.values(demo.users || {}).map((u) => ({ name: u.profile.name, points: u.profile.points }))
-      .concat(demo.profile ? [{ name: demo.profile.name, points: demo.profile.points }] : [])
-      .sort((a, b) => b.points - a.points).slice(0, 20);
+    // Dedupe: das eigene Konto kann sowohl in demo.users als auch separat in demo.profile
+    // auftauchen, je nachdem wie es angelegt wurde — ohne Entdopplung erschien man doppelt.
+    const combined = Object.entries(demo.users || {}).map(([email, u]) => ({ user_id: email, name: u.profile.name, points: u.profile.points }))
+      .concat(demo.profile && demo.user ? [{ user_id: demo.user.id, name: demo.profile.name, points: demo.profile.points }] : []);
+    const seen = new Set();
+    const deduped = combined.filter((r) => (seen.has(r.user_id) ? false : (seen.add(r.user_id), true)));
+    return deduped.sort((a, b) => b.points - a.points).slice(0, 20);
   }
 
   // Echte Tages-Rangliste — nur die HEUTE tatsächlich verdienten Punkte zählen (nicht der
@@ -338,7 +342,7 @@ const Backend = (function () {
         const ids = Object.keys(totals);
         if (!ids.length) return [];
         const { data: profiles } = await client.from("profiles").select("id,name").in("id", ids);
-        return ids.map((id) => ({ name: (profiles || []).find((p) => p.id === id)?.name || "?", points: totals[id] }))
+        return ids.map((id) => ({ user_id: id, name: (profiles || []).find((p) => p.id === id)?.name || "?", points: totals[id] }))
           .sort((a, b) => b.points - a.points).slice(0, 20);
       } catch (e) { console.warn("Tages-Ranking nicht verfügbar:", e); return []; }
     }
@@ -346,7 +350,7 @@ const Backend = (function () {
     const todaysPoints = (demo.profile.history || [])
       .filter((h) => new Date(h.playedAt) >= start)
       .reduce((sum, h) => sum + Math.round((h.points || 0) + (h.bonus || 0)), 0);
-    return todaysPoints > 0 ? [{ name: demo.profile.name, points: todaysPoints }] : [];
+    return todaysPoints > 0 ? [{ user_id: demo.user ? demo.user.id : null, name: demo.profile.name, points: todaysPoints }] : [];
   }
 
   /* ================= GÄSTEBUCH ================= */
@@ -473,6 +477,26 @@ const Backend = (function () {
       return;
     }
     demo.privateMessages.push({ id: Core.uid(), from_user: null, to_user: toUserId, author_name: "System", body, is_system: true, read: false, created_at: new Date().toISOString() });
+    return;
+  }
+  // Fehlermeldung von Nutzer:innen — landet automatisch im Postfach des Betreibers, ohne dass
+  // die Person selbst etwas schreiben muss. Nur die Art des Fehlers und der Ort (welches Spiel,
+  // welche Frage gerade angezeigt wurde) werden mitgeschickt.
+  async function reportBug(context, errorType) {
+    let ownerId = null;
+    if (client) {
+      try {
+        const { data } = await client.from("profiles").select("id").eq("is_owner", true).limit(1);
+        if (data && data[0]) ownerId = data[0].id;
+      } catch (e) { console.warn("Betreiber nicht gefunden:", e); }
+    } else {
+      const ownerEmail = Object.keys(demo.users || {}).find((email) => demo.users[email].profile.isOwner) || (demo.profile && demo.profile.isOwner ? demo.user.id : null);
+      ownerId = ownerEmail;
+    }
+    if (!ownerId) return;
+    const reporterName = demo.profile ? demo.profile.name : "Unbekannt";
+    const body = `🐛 FEHLERMELDUNG\n\nVon: ${reporterName}\nOrt: ${context}\nArt: ${errorType}\nZeitpunkt: ${new Date().toLocaleString("de-DE")}`;
+    await sendSystemMessage(ownerId, body);
   }
 
   async function getMyMessages() {
@@ -721,6 +745,19 @@ const Backend = (function () {
     demo.profile.avatarUrl = url;
     demo.profile.avatarEmoji = "";
     return url;
+  }
+
+  // Ein bereits in der Galerie hochgeladenes Foto direkt als Profilbild übernehmen — ohne
+  // erneuten Upload, einfach die schon vorhandene Bild-Adresse speichern.
+  async function saveAvatarFromGallery(url) {
+    if (!demo.profile) return false;
+    demo.profile.avatarUrl = url;
+    demo.profile.avatarEmoji = "";
+    if (client && demo.user) {
+      const { error } = await client.from("profiles").update({ avatar_url: url, avatar_emoji: null }).eq("id", demo.user.id);
+      if (error) return false;
+    }
+    return true;
   }
 
   function saveAvatarEmoji(emoji) {
@@ -1056,6 +1093,162 @@ const Backend = (function () {
 
   /* ================= COMMUNITY-TEXTE (User-Uploads, warten auf Freischaltung) ================= */
   demo.communityTexts = demo.communityTexts || [];
+  demo.userLinks = demo.userLinks || [];
+  demo.communityTips = demo.communityTips || [];
+  // "Von Lernenden für Lernende" — freie Tipp-Beiträge (Text + optionaler Link + optionales
+  // Bild), z. B. "Diese Serie hat mir geholfen" oder "Diese Übungsmethode hat bei mir
+  // funktioniert". Dasselbe Freigabe-Muster wie bei Texten/Links.
+  async function submitCommunityTip({ text, link, imageUrl }) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!text) throw new Error("Bitte einen Tipp-Text schreiben.");
+    if (client) {
+      const { error } = await client.from("community_tips").insert({
+        user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending",
+      });
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.communityTips.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending", created_at: new Date().toISOString() });
+  }
+  async function getApprovedCommunityTips() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_tips").select("*").eq("status", "approved").order("created_at", { ascending: false }).limit(50);
+        if (!error && data) return data;
+      } catch (e) { console.warn("Tipps konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.communityTips.filter((t) => t.status === "approved").sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  async function getMyCommunityTips() {
+    if (!demo.user) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_tips").select("*").eq("user_id", demo.user.id).order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Eigene Tipps konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.communityTips.filter((t) => t.user_id === demo.user.id);
+  }
+  async function getPendingCommunityTips() {
+    if (!canModerate()) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("community_tips").select("*").eq("status", "pending").order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Ausstehende Tipps konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.communityTips.filter((t) => t.status === "pending");
+  }
+  async function approveCommunityTip(id) {
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
+    if (client) {
+      const { data: row } = await client.from("community_tips").select("user_id,text").eq("id", id).maybeSingle();
+      const { error } = await client.from("community_tips").update({ status: "approved" }).eq("id", id);
+      if (error) throw new Error("Konnte nicht freigeschaltet werden: " + error.message);
+      if (row && row.user_id) await addNotification(row.user_id, `💡 Dein Tipp wurde freigeschaltet und ist jetzt für alle sichtbar!`);
+      return;
+    }
+    const t = demo.communityTips.find((x) => x.id === id);
+    if (t) {
+      t.status = "approved";
+      if (t.user_id) await addNotification(t.user_id, `💡 Dein Tipp wurde freigeschaltet und ist jetzt für alle sichtbar!`);
+    }
+  }
+  async function rejectCommunityTip(id) {
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
+    if (client) {
+      const { error } = await client.from("community_tips").delete().eq("id", id);
+      if (error) throw new Error("Konnte nicht abgelehnt werden: " + error.message);
+      return;
+    }
+    demo.communityTips = demo.communityTips.filter((x) => x.id !== id);
+  }
+  async function deleteMyCommunityTip(id) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("community_tips").delete().eq("id", id).eq("user_id", demo.user.id);
+      if (error) throw new Error("Konnte nicht gelöscht werden: " + error.message);
+      return;
+    }
+    demo.communityTips = demo.communityTips.filter((x) => !(x.id === id && x.user_id === demo.user.id));
+  }
+  // Von Nutzer:innen vorgeschlagene Links für "Weiterführende Links" — landet erst als Vorschlag,
+  // wird von Alex geprüft/freigeschaltet, danach bekommt die einreichende Person eine
+  // Benachrichtigung. Dasselbe Muster wie bei den eigenen Text-Beiträgen.
+  async function submitLink({ title, url, desc }) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!title || !url) throw new Error("Bitte Titel und Adresse angeben.");
+    if (client) {
+      const { error } = await client.from("user_links").insert({
+        user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending",
+      });
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.userLinks.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending", created_at: new Date().toISOString() });
+  }
+  async function getApprovedUserLinks() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("user_links").select("*").eq("status", "approved").order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Nutzer-Links konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.userLinks.filter((l) => l.status === "approved");
+  }
+  async function getMyUserLinks() {
+    if (!demo.user) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("user_links").select("*").eq("user_id", demo.user.id).order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Eigene Links konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.userLinks.filter((l) => l.user_id === demo.user.id);
+  }
+  async function getPendingUserLinks() {
+    if (!canModerate()) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("user_links").select("*").eq("status", "pending").order("created_at", { ascending: false });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Ausstehende Links konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.userLinks.filter((l) => l.status === "pending");
+  }
+  async function approveUserLink(id) {
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
+    if (client) {
+      const { data: linkRow } = await client.from("user_links").select("user_id,title").eq("id", id).maybeSingle();
+      const { error } = await client.from("user_links").update({ status: "approved" }).eq("id", id);
+      if (error) throw new Error("Konnte nicht freigeschaltet werden: " + error.message);
+      if (linkRow && linkRow.user_id) {
+        await addNotification(linkRow.user_id, `🔗 Dein vorgeschlagener Link „${linkRow.title || ""}" wurde freigeschaltet!`);
+      }
+      return;
+    }
+    const l = demo.userLinks.find((x) => x.id === id);
+    if (l) {
+      l.status = "approved";
+      if (l.user_id) await addNotification(l.user_id, `🔗 Dein vorgeschlagener Link „${l.title || ""}" wurde freigeschaltet!`);
+    }
+  }
+  async function rejectUserLink(id) {
+    if (!canModerate()) throw new Error("Keine Moderationsrechte.");
+    if (client) {
+      const { error } = await client.from("user_links").delete().eq("id", id);
+      if (error) throw new Error("Konnte nicht abgelehnt werden: " + error.message);
+      return;
+    }
+    demo.userLinks = demo.userLinks.filter((x) => x.id !== id);
+  }
+
 
   async function uploadCommunityTextCover(file) {
     if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
@@ -1081,6 +1274,34 @@ const Backend = (function () {
       return;
     }
     demo.communityTexts.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, cover_url: coverUrl || null, status: "pending", created_at: new Date().toISOString() });
+  }
+  // Nachträgliches Bearbeiten des eigenen Beitrags — Titelbild ändern/ergänzen und/oder eine
+  // weitere Sprachniveau-Fassung zur bestehenden Geschichte hinzufügen (ohne dass man vorher
+  // alle 6 Niveaus auf einmal schreiben muss).
+  async function updateCommunityText(id, { coverUrl, level, body } = {}) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    const updates = {};
+    if (coverUrl !== undefined) updates.cover_url = coverUrl || null;
+    if (level !== undefined) updates.level = level;
+    if (body !== undefined) updates.body = body;
+    if (client) {
+      const { error } = await client.from("community_texts").update(updates).eq("id", id).eq("user_id", demo.user.id);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    const t = demo.communityTexts.find((x) => x.id === id && x.user_id === demo.user.id);
+    if (!t) throw new Error("Beitrag nicht gefunden oder nicht deiner.");
+    Object.assign(t, updates.cover_url !== undefined ? { cover_url: updates.cover_url } : {}, updates.level !== undefined ? { level: updates.level } : {}, updates.body !== undefined ? { body: updates.body } : {});
+  }
+  // Verwandelt JEDE Speicherform (einzelnes Niveau als Klartext, "alle" mit allen 6 als JSON,
+  // oder "multi" mit einer beliebigen Teilmenge als JSON) einheitlich in ein { NIVEAU: Text }
+  // Objekt — so kann man mit demselben Code arbeiten, egal wie der Beitrag ursprünglich
+  // gespeichert wurde.
+  function communityTextLevels(t) {
+    if (t.level === "alle" || t.level === "multi") {
+      try { return JSON.parse(t.body); } catch (e) { return {}; }
+    }
+    return { [t.level]: t.body };
   }
 
   async function getApprovedCommunityTexts() {
@@ -1394,6 +1615,27 @@ const Backend = (function () {
   function canModerate() {
     return isOwner() || isAdmin() || isModerator();
   }
+  // Vollständige Nutzerliste für Admins/Moderatoren — nicht nur die zuletzt aktiven, sondern
+  // wirklich ALLE registrierten Konten, damit man einen echten Überblick hat, wer da ist.
+  async function getAllUsers() {
+    if (!canModerate()) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("id,name,points,is_admin,is_owner,is_moderator,last_active").order("name", { ascending: true });
+        if (error || !data) return [];
+        return data.map((p) => ({
+          id: p.id, name: p.name, points: p.points || 0,
+          is_admin: Boolean(p.is_admin), is_owner: Boolean(p.is_owner), is_moderator: Boolean(p.is_moderator),
+          online: isRecentlyActive(p.last_active), last_active: p.last_active,
+        }));
+      } catch (e) { console.warn("Nutzerliste nicht verfügbar:", e); return []; }
+    }
+    return Object.entries(demo.users || {}).map(([email, u]) => ({
+      id: email, name: u.profile.name, points: u.profile.points || 0,
+      is_admin: Boolean(u.profile.isAdmin), is_owner: Boolean(u.profile.isOwner), is_moderator: Boolean(u.profile.isModerator),
+      online: false, last_active: null,
+    })).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }
 
   async function setModeratorStatus(targetUserId, value) {
     if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Moderator-Rechte vergeben.");
@@ -1448,6 +1690,8 @@ const Backend = (function () {
     saveHobbies,
     saveOrigin,
     submitCommunityText,
+    updateCommunityText,
+    communityTextLevels,
     uploadCommunityTextCover,
     getApprovedCommunityTexts,
     getMyCommunityTexts,
@@ -1456,10 +1700,24 @@ const Backend = (function () {
     isOwner,
     isModerator,
     canModerate,
+    getAllUsers,
     setModeratorStatus,
     getPendingCommunityTexts,
     approveCommunityText,
     rejectCommunityText,
+    submitLink,
+    getApprovedUserLinks,
+    getMyUserLinks,
+    getPendingUserLinks,
+    approveUserLink,
+    rejectUserLink,
+    submitCommunityTip,
+    getApprovedCommunityTips,
+    getMyCommunityTips,
+    getPendingCommunityTips,
+    approveCommunityTip,
+    rejectCommunityTip,
+    deleteMyCommunityTip,
     setAdminStatus,
     deleteMyCommunityText,
     adminDeleteCommunityText,
@@ -1477,6 +1735,7 @@ const Backend = (function () {
     getUnreadMessageCount,
     markMessagesRead,
     sendSystemMessage,
+    reportBug,
     markNotificationsRead,
     getLikesForText,
     toggleLikeText,
@@ -1487,6 +1746,7 @@ const Backend = (function () {
     saveExtendedProfile,
     saveBirthday,
     uploadAvatar,
+    saveAvatarFromGallery,
     getRecentMembers,
     getPublicProfile,
     saveAvatarEmoji,

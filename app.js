@@ -102,6 +102,71 @@
   /* ============================================================
      DESIGN / THEMES — 4 austauschbare Vorlagen
      ============================================================ */
+  // Sammelfiguren-Vitrine — kleine Sticker-Figuren, die man sich durch Übung verdient. Jede
+  // Figur ist thematisch an eine Übungskategorie gekoppelt (passendes Charakter-Kostüm), damit
+  // man wirklich für "diese Art von Wissen" belohnt wird, nicht zufällig.
+  // Welcher Sammelfigur-Charakter zu welcher Übungskategorie passt — wird als kleine "Willkommen,
+  // [Figur]!"-Vorstellung angezeigt, bevor eine Runde in dieser Kategorie beginnt, damit klar ist,
+  // "als was" man gerade übt.
+  const CATEGORY_PERSONA = {
+    artikel: "Professor Schlaufuchs", plural: "Professor Schlaufuchs", synonyme: "Lesefuchs",
+    "wenn-ob": "Professor Schlaufuchs", "als-wie": "Professor Schlaufuchs", "kennen-wissen": "Professor Schlaufuchs",
+    "das-dass": "Professor Schlaufuchs", redewendungen: "Märchenfuchs", "haeufige-fehler": "Kommissar Fehlerfrei",
+    "ss-eszett": "Kommissar Fehlerfrei", nebensatz: "Brückenfuchs", relativsatz: "Brückenfuchs",
+    zeitformen: "Zeitfuchs", wortschatz: "Naturfotograf", konnektoren: "Brückenfuchs",
+    jedesto: "Brückenfuchs", quiz: "Quizfuchs", lueckentext: "Märchenfuchs",
+    wortbaustelle: "Rätselfuchs", buchstabensalat: "Rätselfuchs", kreuzwortraetsel: "Rätselfuchs",
+    betonungstrainer: "Sprachtalent",
+  };
+  function personaForCategory(catId) {
+    return CATEGORY_PERSONA[catId] || "Abenteuer-Fuchs";
+  }
+  const COLLECTIBLE_FIGURES = [
+    { id: "kleiner-lernfuchs", name: "Kleiner Lernfuchs", img: "figures/kleiner-lernfuchs.png", desc: "Für den Anfang — willkommen!", unlock: { type: "points", value: 20 } },
+    { id: "pausenfuchs", name: "Pausenfuchs", img: "figures/pausenfuchs.png", desc: "Gönnt sich eine Verschnaufpause", unlock: { type: "points", value: 40 } },
+    { id: "professor-schlaufuchs", name: "Professor Schlaufuchs", img: "figures/professor-schlaufuchs.png", desc: "Grammatik-Experte", unlock: { type: "points", value: 60 } },
+    { id: "lesefuchs", name: "Lesefuchs", img: "figures/lesefuchs.png", desc: "Liest für sein Leben gern", unlock: { type: "points", value: 75 } },
+    { id: "zeitfuchs", name: "Zeitfuchs", img: "figures/zeitfuchs.png", desc: "Meister der Zeitformen", unlock: { type: "points", value: 90 } },
+    { id: "musikerfuchs", name: "Musikerfuchs", img: "figures/musikerfuchs.png", desc: "Immer mit der Gitarre unterwegs", unlock: { type: "points", value: 100 } },
+    { id: "maerchenfuchs", name: "Märchenfuchs", img: "figures/maerchenfuchs.png", desc: "Kenner von Redewendungen & Geschichten", unlock: { type: "points", value: 120 } },
+    { id: "brueckenfuchs", name: "Brückenfuchs", img: "figures/brueckenfuchs.png", desc: "Verbindet Sätze mit zweiteiligen Konnektoren", unlock: { type: "points", value: 150 } },
+    { id: "kommissar-fehlerfrei", name: "Kommissar Fehlerfrei", img: "figures/kommissar-fehlerfrei.png", desc: "Rechtschreib-Detektiv", unlock: { type: "points", value: 180 } },
+    { id: "raetselfuchs", name: "Rätselfuchs", img: "figures/raetselfuchs.png", desc: "Kreuzworträtsel-Fan", unlock: { type: "points", value: 220 } },
+    { id: "baeckerfuchs", name: "Bäckerfuchs", img: "figures/baeckerfuchs.png", desc: "Frisch aus dem Wortschatz-Ofen", unlock: { type: "points", value: 260 } },
+    { id: "naturfotograf", name: "Naturfotograf", img: "figures/naturfotograf.png", desc: "Hält Wortschatz-Momente fest", unlock: { type: "points", value: 320 } },
+    { id: "quizfuchs", name: "Quizfuchs", img: "figures/quizfuchs.png", desc: "Deutschland-Quiz-Kenner", unlock: { type: "points", value: 380 } },
+    { id: "studierfuchs", name: "Studierfuchs", img: "figures/studierfuchs.png", desc: "Fleißig am Lernen", unlock: { type: "points", value: 440 } },
+    { id: "malerfuchs", name: "Malerfuchs", img: "figures/malerfuchs.png", desc: "Kreativer Kopf", unlock: { type: "points", value: 500 } },
+    { id: "abenteuerfuchs", name: "Abenteuer-Fuchs", img: "figures/abenteuerfuchs.png", desc: "Immer auf Entdeckungstour", unlock: { type: "points", value: 570 } },
+    { id: "schlummerfuchs", name: "Schlummerfuchs", img: "figures/schlummerfuchs.png", desc: "Wohlverdiente Ruhe nach dem Üben", unlock: { type: "points", value: 650 } },
+    { id: "feierfuchs", name: "Feierfuchs", img: "figures/feierfuchs.png", desc: "Feiert jeden Fortschritt", unlock: { type: "points", value: 750 } },
+    { id: "absolventenfuchs", name: "Absolventenfuchs", img: "figures/absolventenfuchs.png", desc: "Großer Meilenstein erreicht", unlock: { type: "points", value: 850 } },
+    { id: "championfuchs", name: "Champion-Fuchs", img: "figures/championfuchs.png", desc: "Die Krönung der Sammlung", unlock: { type: "points", value: 1000 } },
+  ];
+  // Orden (kleine, häufige Verdienste) vs. Pokale (große, seltene Meisterleistungen) — Trennung
+  // anhand bekannter Top-Rang-Namen in der Trophäen-Bezeichnung selbst, ohne die bestehenden
+  // Vergabestellen einzeln umbauen zu müssen.
+  const TOP_TIER_KEYWORDS = ["Deutsch-Profi", "Deutsch-Superheld", "Superhirn", "Champion", "Sprachtalent"];
+  function trophyKind(label) {
+    return TOP_TIER_KEYWORDS.some((k) => label.includes(k)) ? "pokal" : "orden";
+  }
+  function trophyCounts(profile) {
+    const list = profile?.trophies || [];
+    const pokale = list.filter((t) => trophyKind(t) === "pokal").length;
+    const orden = list.length - pokale;
+    return { orden, pokale };
+  }
+  function isFigureUnlocked(fig, profile) {
+    if (!profile) return false;
+    if ((profile.collectedFigures || []).includes(fig.id)) return true;
+    if (isUnlocked(fig.unlock, profile)) return true;
+    // Bonus: Ab 5 Orden gibt es unabhängig vom Punktestand zusätzlich eine Sammelfigur geschenkt
+    // (den "Kleinen Lernfuchs" — als Belohnung fürs regelmäßige Dranbleiben, nicht nur fürs
+    // Punktesammeln).
+    if (fig.id === "kleiner-lernfuchs" && trophyCounts(profile).orden >= 5) return true;
+    return false;
+  }
+
   const THEMES = [
     { id: "bastelheft", name: "Bastelheft", emoji: "✂️", desc: "Hell, Papier & Washi-Tape, verspielte Candyfarben.", mode: "hell" },
     { id: "flickenteppich", name: "Flickenteppich", emoji: "🧵", desc: "Kräftige Patchwork-Farben, dicke verspielte Outlines.", mode: "hell" },
@@ -211,6 +276,110 @@
     const cat = ExerciseData.getCategory(id);
     return cat ? { id, label: cat.title, kind: "self-assessed" } : null;
   }
+  let adminUserSearch = "";
+  // Vollständige Nutzerliste für Admins/Moderatoren — zeigt WIRKLICH alle registrierten Konten,
+  // nicht nur die zuletzt aktiven, mit Suche und (nur für echte Admins) Moderator-Verwaltung.
+  async function loadAdminUserList() {
+    const box = document.getElementById("adminUserListArea");
+    if (!box) return;
+    const allUsers = await Backend.getAllUsers();
+    const isRealAdmin = Backend.currentProfile()?.isAdmin || Backend.currentProfile()?.isOwner;
+    const filtered = adminUserSearch ? allUsers.filter((u) => u.name.toLowerCase().includes(adminUserSearch.toLowerCase())) : allUsers;
+    box.innerHTML = `
+      <p style="font-weight:800; font-size:1.3rem; margin:4px 0 10px;">${allUsers.length} ${allUsers.length === 1 ? "Person" : "Personen"} registriert</p>
+      <input type="text" class="vocab-search" id="adminUserSearchInput" placeholder="Nach Namen suchen…" value="${adminUserSearch}" style="margin-bottom:10px;" />
+      <div style="max-height:340px; overflow-y:auto;">
+        ${filtered.length ? filtered.map((u) => `
+          <div class="breakdown-row">
+            <span style="display:flex; align-items:center; gap:6px;">
+              <span class="online-dot" style="opacity:${u.online ? 1 : 0.25};"></span>
+              ${u.name}${adminBadge(u.is_admin, u.is_owner, u.is_moderator)}
+            </span>
+            <span style="display:flex; align-items:center; gap:8px;">
+              <span class="empty-note">${u.points} P.</span>
+              ${isRealAdmin && !u.is_owner ? `<button type="button" class="btn btn-ghost" style="padding:3px 9px; font-size:0.72rem;" data-toggle-mod="${u.id}" data-currently-mod="${u.is_moderator}">${u.is_moderator ? "Mod entfernen" : "Zu Mod machen"}</button>` : ""}
+              ${isRealAdmin ? `<button type="button" class="btn btn-ghost" style="padding:3px 9px; font-size:0.72rem;" data-gift-to="${u.id}" data-gift-name="${u.name}">🎁 Verschenken</button>` : ""}
+            </span>
+          </div>`).join("") : '<p class="empty-note">Keine Treffer.</p>'}
+      </div>
+    `;
+    document.getElementById("adminUserSearchInput").addEventListener("input", (e) => {
+      adminUserSearch = e.target.value;
+      loadAdminUserList();
+    });
+    box.querySelectorAll("[data-toggle-mod]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const makeMod = btn.dataset.currentlyMod !== "true";
+        try {
+          await Backend.setModeratorStatus(btn.dataset.toggleMod, makeMod);
+          loadAdminUserList();
+        } catch (e) { alert(e.message || "Aktion fehlgeschlagen."); }
+      });
+    });
+    box.querySelectorAll("[data-gift-to]").forEach((btn) => {
+      btn.addEventListener("click", () => openGiftModal(btn.dataset.giftTo, btn.dataset.giftName));
+    });
+  }
+  // Popup für Admins: einer bestimmten Person eine Übungskategorie oder ein Design direkt
+  // schenken/freischalten, ohne dass sie sich das erst erspielen muss.
+  function openGiftModal(targetUserId, targetName) {
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("h3", {}, `🎁 An ${targetName} verschenken`),
+        Core.el("div", { class: "form-field" },
+          Core.el("label", {}, "Was verschenken?"),
+          Core.el("select", { id: "giftTypeSelect", class: "challenge-select" },
+            Core.el("option", { value: "category" }, "Übungskategorie"),
+            Core.el("option", { value: "theme" }, "Design")
+          )
+        ),
+        Core.el("div", { class: "form-field", id: "giftCategoryField" },
+          Core.el("label", {}, "Kategorie"),
+          Core.el("select", { id: "giftCategorySelect", class: "challenge-select" },
+            ...ExerciseData.CATEGORIES.map((c) => Core.el("option", { value: c.id }, `${c.icon} ${c.title}`))
+          )
+        ),
+        Core.el("div", { class: "form-field", id: "giftThemeField", style: "display:none;" },
+          Core.el("label", {}, "Design"),
+          Core.el("select", { id: "giftThemeSelect", class: "challenge-select" },
+            ...THEMES.map((t) => Core.el("option", { value: t.id }, `${t.emoji} ${t.name}`))
+          ),
+          Core.el("button", { type: "button", class: "emoji-toggle-link", id: "giftThemePreviewBtn", style: "margin-top:6px;" }, "👁️ Vorschau ansehen")
+        ),
+        Core.el("p", { class: "form-error", id: "giftError" }),
+        Core.el("button", { type: "button", class: "btn btn-coffee", id: "giftSendBtn", style: "margin-top:8px;" }, "Schenken")
+      )
+    );
+    document.body.appendChild(box);
+    document.getElementById("giftTypeSelect").addEventListener("change", (e) => {
+      document.getElementById("giftCategoryField").style.display = e.target.value === "category" ? "" : "none";
+      document.getElementById("giftThemeField").style.display = e.target.value === "theme" ? "" : "none";
+    });
+    document.getElementById("giftThemePreviewBtn").addEventListener("click", () => {
+      openThemePreviewModal(document.getElementById("giftThemeSelect").value);
+    });
+    document.getElementById("giftSendBtn").addEventListener("click", async () => {
+      const errBox = document.getElementById("giftError");
+      errBox.textContent = "";
+      const type = document.getElementById("giftTypeSelect").value;
+      try {
+        if (type === "category") {
+          const catId = document.getElementById("giftCategorySelect").value;
+          const cat = ExerciseData.getCategory(catId);
+          await Backend.adminGiftCategoryUnlock(targetUserId, catId, cat?.title);
+        } else {
+          const themeId = document.getElementById("giftThemeSelect").value;
+          const theme = THEMES.find((t) => t.id === themeId);
+          await Backend.adminGiftThemeUnlock(targetUserId, themeId, theme?.name);
+        }
+        box.remove();
+        showToast(`🎁 Geschenk an ${targetName} verschickt!`);
+      } catch (e) {
+        errBox.textContent = e.message || "Verschenken fehlgeschlagen.";
+      }
+    });
+  }
   function renderSettings() {
     const area = document.getElementById("settingsArea");
     if (!area) return;
@@ -251,9 +420,13 @@
       <div class="question-card" style="margin-top:14px;">
         <h3>🎨 Benachrichtigungs-Einstellungen</h3>
         <p class="empty-note" style="margin-bottom:10px;">Töne und Farben ab einer bestimmten Punktzahl freigeschaltet — eine kleine Belohnung fürs Üben. Die gewählte Option ist jeweils hervorgehoben.</p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:8px;">
+          <input type="checkbox" id="settingsMuteSoundCheck" ${isNotifyMuted() ? "checked" : ""} />
+          <span>🔇 Nur den Ton stummschalten</span>
+        </label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:12px;">
-          <input type="checkbox" id="settingsMuteCheck" ${isNotifyMuted() ? "checked" : ""} />
-          <span>🔕 Ton &amp; Blinken bei Benachrichtigungen stummschalten</span>
+          <input type="checkbox" id="settingsMuteBlinkCheck" ${isNotifyBlinkMuted() ? "checked" : ""} />
+          <span>🔕 Nur das Blinken/Leuchten stummschalten</span>
         </label>
         <p style="font-weight:700; margin-bottom:6px;">Ton</p>
         <div class="trophy-case" style="margin-bottom:14px;">
@@ -296,7 +469,12 @@
           </div>`;
         }).join("")}
       </div>
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
+        <h3>👥 Alle registrierten Nutzer</h3>
+        <div id="adminUserListArea"><p class="empty-note">Lade Nutzerliste…</p></div>
+      </div>` : ""}
     `;
+    if (Backend.canModerate()) loadAdminUserList();
     area.querySelectorAll(".learning-rate-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         setLearningRating(btn.dataset.cat, btn.dataset.rating);
@@ -318,11 +496,17 @@
         if (isStressModeOn()) applyStressEverywhere(true); // sofort neu anwenden
       });
     });
-    const muteCheck = document.getElementById("settingsMuteCheck");
-    if (muteCheck) {
-      muteCheck.addEventListener("change", () => {
-        setNotifyMuted(muteCheck.checked);
-        if (loginBtn) loginBtn.classList.toggle("notify-ring", false);
+    const muteSoundCheck = document.getElementById("settingsMuteSoundCheck");
+    if (muteSoundCheck) {
+      muteSoundCheck.addEventListener("change", () => {
+        setNotifyMuted(muteSoundCheck.checked);
+      });
+    }
+    const muteBlinkCheck = document.getElementById("settingsMuteBlinkCheck");
+    if (muteBlinkCheck) {
+      muteBlinkCheck.addEventListener("change", () => {
+        setNotifyBlinkMuted(muteBlinkCheck.checked);
+        if (muteBlinkCheck.checked && loginBtn) loginBtn.classList.toggle("notify-ring", false);
       });
     }
     area.querySelectorAll("[data-sound-key]").forEach((btn) => {
@@ -341,13 +525,164 @@
     const tickerBlinkCheck = document.getElementById("tickerBlinkCheck");
     if (tickerBlinkCheck) tickerBlinkCheck.addEventListener("change", () => setTickerBlink(tickerBlinkCheck.checked));
     area.querySelectorAll(".notify-kind-sound").forEach((sel) => {
-      sel.addEventListener("change", () => setNotifyTypeSetting(sel.dataset.kind, "sound", sel.value));
+      sel.addEventListener("change", () => {
+        setNotifyTypeSetting(sel.dataset.kind, "sound", sel.value);
+        if (sel.value) playNotifySound(sel.value); // direkt vorhören, was gerade gewählt wurde
+      });
     });
     area.querySelectorAll(".notify-kind-color").forEach((sel) => {
       sel.addEventListener("change", () => setNotifyTypeSetting(sel.dataset.kind, "color", sel.value));
     });
   }
 
+  // Echte Vorschau eines noch gesperrten Designs — zeigt Beispiel-Elemente (Karte, Button, Text)
+  // in den tatsächlichen Farben des Designs, ohne es wirklich zu aktivieren. So weiß man vorher,
+  // "wofür man spielt", und kann beim Verschenken gezielt das richtige Design aussuchen.
+  // Echte Vollbild-Vorschau: wendet das Design kurz WIRKLICH auf die ganze Seite an (inklusive
+  // aller Animationen wie schwimmender Fische oder funkelnder Sterne), OHNE es zu speichern —
+  // nach 12 Sekunden (oder auf Wunsch früher) springt automatisch das eigene, echte Design zurück.
+  let themeFullPreviewTimer = null;
+  // Echte, seltene Erfolgsmomente teilen — NICHT nach jeder Übung, sondern nur bei wirklich
+  // besonderen Meilensteinen (erste Trophäe, große Punktzahlen, lange Serien). In diesem Moment
+  // erscheint eine warme, persönliche Nachricht, die den Erfolg gemeinsam feiert — und dabei
+  // ganz natürlich (nicht als Dauerwerbung) die Möglichkeit zeigt, Danke zu sagen, falls jemand
+  // das möchte. Jeder Meilenstein erscheint nur EIN einziges Mal pro Person.
+  const POINT_MILESTONES = [50, 200, 500, 1000, 2000, 5000];
+  function getShownMilestones() {
+    try { return new Set(JSON.parse(localStorage.getItem("dma_shown_milestones") || "[]")); } catch (e) { return new Set(); }
+  }
+  function markMilestoneShown(key) {
+    try {
+      const shown = getShownMilestones();
+      shown.add(key);
+      localStorage.setItem("dma_shown_milestones", JSON.stringify([...shown]));
+    } catch (e) {}
+  }
+  function showSpecialMomentModal(title, message) {
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card", style: "text-align:center;" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("p", { style: "font-size:2.2rem; margin:4px 0;" }, "🎉"),
+        Core.el("h3", {}, title),
+        Core.el("p", { class: "empty-note", style: "margin:10px 0 16px;" }, message),
+        Core.el("a", { class: "btn btn-coffee", href: "https://www.paypal.com/paypalme/XanderFox", target: "_blank", rel: "noopener", style: "text-decoration:none;" }, "☕ Danke sagen (freiwillig)"),
+        Core.el("button", { type: "button", class: "btn btn-ghost", style: "margin-top:8px;", onclick: () => box.remove() }, "Weiter geht's")
+      )
+    );
+    document.body.appendChild(box);
+  }
+  // Tages-Ranking-Belohnung: wer heute die Bestleistung erreicht (Platz 1 im Tagesranking), wird
+  // einmal am Tag mit ein paar Bonuspunkten belohnt und bekommt eine Nachricht ins Postfach —
+  // motiviert, ohne dass es sich wie ein Dauerwettbewerb anfühlt (nur EIN Mal pro Tag möglich).
+  async function checkDailyRankingReward() {
+    const profile = Backend.currentProfile();
+    const user = Backend.currentUser();
+    if (!profile || !user) return;
+    const rewardKey = `dma_daily_rank_reward_${todayDateKey()}`;
+    let alreadyRewarded = false;
+    try { alreadyRewarded = localStorage.getItem(rewardKey) === "1"; } catch (e) {}
+    if (alreadyRewarded) return;
+    const todayRanking = await Backend.getRankingToday();
+    if (!todayRanking.length || todayRanking[0].user_id !== user.id) return;
+    // Nur belohnen, wenn wirklich mehr als eine Person heute überhaupt mitgemacht hat — sonst
+    // ist "Platz 1" nicht wirklich eine Leistung, sondern nur die einzige Person, die heute spielt.
+    if (todayRanking.length < 2) return;
+    try { localStorage.setItem(rewardKey, "1"); } catch (e) {}
+    saveResultAndCheck({ categories: [], points: 0, bonus: 5, percent: 100, character: "Tagesbester", badges: [], playedAt: new Date().toISOString() });
+    Backend.sendSystemMessage(user.id, `🏆 Du bist heute Tagesbeste:r im Ranking! +5 Bonuspunkte als kleines Dankeschön für deinen Einsatz heute — weiter so!`);
+    showToast("🏆 Heute Tagesbeste:r! +5 Bonuspunkte");
+  }
+  function checkForSpecialMoment(profile) {
+    if (!profile) return;
+    const shown = getShownMilestones();
+    // Punkte-Meilensteine
+    for (const m of POINT_MILESTONES) {
+      const key = `points-${m}`;
+      if (profile.points >= m && !shown.has(key)) {
+        markMilestoneShown(key);
+        showSpecialMomentModal(
+          `${m} Punkte erreicht!`,
+          `Schön, dass du dabeibleibst und so fleißig übst — das ist ein echter Meilenstein! Ich freu mich, dass dir die Seite hilft.`
+        );
+        return; // nur einen Moment gleichzeitig zeigen, nicht mehrere übereinander
+      }
+    }
+    // Erste Trophäe überhaupt (Pokal, also die "großen" Erfolge — siehe trophyKind())
+    const hasPokal = (profile.trophies || []).some((t) => trophyKind(t) === "pokal");
+    if (hasPokal && !shown.has("first-pokal")) {
+      markMilestoneShown("first-pokal");
+      showSpecialMomentModal(
+        "Dein erster großer Pokal!",
+        "Das ist eine richtige Meisterleistung — herzlichen Glückwunsch! Solche Momente sind genau der Grund, warum ich diese Seite mit Freude weiterpflege."
+      );
+      return;
+    }
+    // Lange Serien (Login-Streak)
+    let streak = 0;
+    try { streak = Number(localStorage.getItem("dma_calendar_streak") || "0"); } catch (e) {}
+    for (const days of [7, 30, 100]) {
+      const key = `streak-${days}`;
+      if (streak >= days && !shown.has(key)) {
+        markMilestoneShown(key);
+        showSpecialMomentModal(
+          `${days} Tage am Stück!`,
+          "Diese Beständigkeit ist beeindruckend — genau so lernt man eine Sprache wirklich. Danke, dass du so treu dabei bist!"
+        );
+        return;
+      }
+    }
+  }
+  // Zentraler Wrapper um Backend.saveResult — ruft danach automatisch die Erfolgsmoment-Prüfung
+  // auf, damit ich das nicht an jeder der (vielen) Vergabestellen einzeln vergessen kann.
+  function saveResultAndCheck(result) {
+    Backend.saveResult(result);
+    checkForSpecialMoment(Backend.currentProfile());
+    checkDailyRankingReward();
+  }
+  function startFullPageThemePreview(themeId) {
+    if (themeFullPreviewTimer) return; // schon eine Vorschau aktiv -> nicht überlappen lassen
+    const profile = Backend.currentProfile();
+    const realTheme = (profile && profile.theme) || sessionTheme;
+    document.documentElement.setAttribute("data-theme", themeId);
+    let secondsLeft = 12;
+    const banner = Core.el("div", { class: "toast-popup toast-visible", id: "themePreviewBanner",
+      style: "bottom:auto; top:16px; z-index:9999; display:flex; align-items:center; gap:10px;" },
+      Core.el("span", { id: "themePreviewCountdown" }, `👁️ Vorschau läuft noch ${secondsLeft}s …`),
+      Core.el("button", { type: "button", class: "btn btn-ghost", style: "padding:4px 10px; font-size:0.78rem;", onclick: () => endFullPageThemePreview(realTheme) }, "Jetzt beenden")
+    );
+    document.body.appendChild(banner);
+    themeFullPreviewTimer = setInterval(() => {
+      secondsLeft -= 1;
+      const el = document.getElementById("themePreviewCountdown");
+      if (el) el.textContent = `👁️ Vorschau läuft noch ${secondsLeft}s …`;
+      if (secondsLeft <= 0) endFullPageThemePreview(realTheme);
+    }, 1000);
+  }
+  function endFullPageThemePreview(realTheme) {
+    if (themeFullPreviewTimer) { clearInterval(themeFullPreviewTimer); themeFullPreviewTimer = null; }
+    document.documentElement.setAttribute("data-theme", realTheme || "bastelheft");
+    document.getElementById("themePreviewBanner")?.remove();
+  }
+  function openThemePreviewModal(themeId) {
+    const theme = THEMES.find((t) => t.id === themeId);
+    if (!theme) return;
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card", "data-theme": themeId },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("p", { class: "eyebrow", style: "text-align:center;" }, `${theme.emoji} ${theme.name}`),
+        Core.el("p", { class: "empty-note", style: "text-align:center; margin-bottom:14px;" }, theme.desc),
+        Core.el("div", { class: "question-card", style: "margin:10px 0;" },
+          Core.el("p", {}, "So sehen deine Übungen mit diesem Design aus."),
+          Core.el("button", { type: "button", class: "btn btn-coffee", style: "margin-top:8px;" }, "Beispiel-Button")
+        ),
+        Core.el("div", { class: "trophy-case", style: "justify-content:center;" },
+          Core.el("div", { class: "trophy-chip" }, "🏆 Beispiel-Pokal")
+        ),
+        Core.el("button", { type: "button", class: "btn btn-coffee", style: "margin-top:14px; width:100%;", onclick: () => { box.remove(); startFullPageThemePreview(themeId); } }, "🔍 12 Sek. auf der ganzen Seite testen (mit Animationen)")
+      )
+    );
+    document.body.appendChild(box);
+  }
   function renderDesign() {
     const area = document.getElementById("designArea");
     if (!area) return;
@@ -363,6 +698,7 @@
           <div class="cat-title-row"><span class="cat-icon">${t.emoji}</span><span>${t.name}</span></div>
           <div class="cat-info-text open">${unlocked ? t.desc : conditionText}</div>
         </div>
+        ${!unlocked ? `<button type="button" class="btn btn-ghost theme-preview-btn" data-preview-theme="${t.id}" style="margin-top:6px; font-size:0.75rem; padding:4px 10px;">👁️ Vorschau ansehen</button>` : ""}
       </div>`;
     };
     area.innerHTML = `
@@ -384,6 +720,9 @@
         ${THEMES.filter((t) => t.mode === "dunkel").map(themeCard).join("")}
       </div>
     `;
+    area.querySelectorAll("[data-preview-theme]").forEach((btn) => {
+      btn.addEventListener("click", () => openThemePreviewModal(btn.dataset.previewTheme));
+    });
     area.querySelectorAll("[data-font-key]").forEach((btn) => {
       btn.addEventListener("click", () => {
         setHeadingFontKey(btn.dataset.fontKey);
@@ -574,7 +913,15 @@
     return { id: topId, label: labelFor(topId), percent: playPercent, kind: "frequent" };
   }
   function todayDateKey() {
-    return new Date().toISOString().slice(0, 10);
+    // WICHTIG: NICHT toISOString() verwenden — das gibt die UTC-Zeit zurück, nicht die lokale
+    // deutsche Zeit. Da Deutschland der UTC-Zeit voraus ist, hätte das für 1-2 Stunden nach
+    // Mitternacht (lokal) noch das GESTRIGE Datum gezeigt — dadurch konnte die Tagesaufgabe nach
+    // erneutem Einloggen fälschlich wieder als "nicht gelöst" erscheinen.
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   }
   function dayOfYearIndex(date) {
     const start = new Date(date.getFullYear(), 0, 0);
@@ -765,11 +1112,21 @@
     } catch (e) { return []; }
   }
   function renderCalendarBack() {
-    const back = document.querySelector(".cal-back");
+    const back = document.querySelector(".cal-back-scroll");
     if (!back) return;
+    // Sicherheitsbegrenzung: manche Aufgaben-/Tipp-Texte können ungewöhnlich lang sein — damit
+    // die Kalenderkarte immer vollständig hineinpasst, wird hier gekürzt statt zu scrollen.
+    const truncate = (s, max) => (s && s.length > max ? s.slice(0, max - 1) + "…" : s);
     const now = new Date();
     const holiday = germanHolidayForToday(now);
     const specialDayHtml = holiday ? `<p class="empty-note" id="calSpecialDay" style="margin:-4px 0 10px; font-weight:700;">${holiday}</p>` : `<p class="empty-note" id="calSpecialDay" style="margin:-4px 0 10px; display:none;"></p>`;
+    // Logische Erweiterung: falls für den heutigen Tag ein Eintrag bei "Es war einmal in
+    // Deutschland" existiert, gibt es hier einen kurzen, unauffälligen Link dahin — es ist ja
+    // genau an diesem Kalendertag passiert. Bewusst kurz gehalten (nur der Titel, gekürzt),
+    // damit die feste Kartengröße nicht gesprengt wird.
+    const md = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const historyEntry = ExerciseData.germanHistoryForToday(md);
+    const historyLinkHtml = historyEntry ? `<button type="button" class="btn btn-ghost" id="calHistoryLinkBtn" style="margin-top:10px; font-size:0.78rem; padding:6px 12px;">📜 Es war einmal in Deutschland … heute vor ${new Date().getFullYear() - historyEntry.year} Jahren</button>` : "";
     if (isDailyTaskSolvedToday()) {
       const wasCorrect = getDailyTaskAttemptResult() === "correct";
       back.innerHTML = `
@@ -778,15 +1135,18 @@
         <p class="cal-tip-text">${wasCorrect ? "Du hast deine Aufgabe für heute schon erledigt — komm morgen wieder für eine neue!" : "Du hast es heute schon versucht — kein Problem, morgen kommt eine neue Chance!"}</p>
         <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
         <p class="cal-tip-title" style="font-size:0.85rem;">💡 Wusstest du außerdem …</p>
-        <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${pickDailyTip().text}</p>
+        <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${truncate(pickDailyTip().text, 220)}</p>
         <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
+        ${historyLinkHtml}
       `;
       document.getElementById("calAnotherBtn").addEventListener("click", () => {
         document.getElementById("calTipText").innerHTML = pickRandomTip().text;
       });
       return;
     }
-    const questionText = cwCalendarTask.word;
+    // Sicherheitsbegrenzung: manche Aufgaben-Texte können ungewöhnlich lang sein — damit die
+    // Kalenderkarte in jedem Fall vollständig hineinpasst, wird hier gekürzt statt zu scrollen.
+    const questionText = truncate(cwCalendarTask.word, 160);
     back.innerHTML = `
       ${specialDayHtml}
       <p class="cal-tip-title">🎯 Tagesaufgabe</p>
@@ -798,8 +1158,9 @@
       <p class="empty-note" id="calTaskFeedback" style="margin-top:8px;"></p>
       <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
       <p class="cal-tip-title" style="font-size:0.85rem;">💡 Wusstest du außerdem …</p>
-      <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${pickDailyTip().text}</p>
+      <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${truncate(pickDailyTip().text, 220)}</p>
       <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
+      ${historyLinkHtml}
     `;
     back.querySelectorAll("[data-task-answer]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -840,12 +1201,22 @@
       el.style.display = "";
       el.textContent = el.textContent ? `${el.textContent} · ${birthdayLine}` : birthdayLine;
     });
+    const historyLinkBtn = document.getElementById("calHistoryLinkBtn");
+    if (historyLinkBtn) {
+      historyLinkBtn.addEventListener("click", () => {
+        document.querySelector('[data-target="view-knowledge"]').click();
+        document.getElementById("calCloseBtn")?.click();
+        setTimeout(() => {
+          document.querySelector('[data-sub="sub-kompass"]')?.click();
+        }, 150);
+      });
+    }
   }
   function claimDailyTaskPoints() {
     if (!Backend.currentUser()) return;
     if (isDailyTaskSolvedToday()) return;
     try { localStorage.setItem("dma_calendar_task_claimed", todayDateKey()); } catch (e) {}
-    Backend.saveResult({
+    saveResultAndCheck({
       categories: ["tageskalender"], points: 0, bonus: 2, percent: 100,
       character: "Tagesaufgabe gelöst", badges: [], playedAt: new Date().toISOString(),
     });
@@ -869,7 +1240,7 @@
       localStorage.setItem("dma_login_streak", String(streak));
     } catch (e) {}
     const bonus = 1 + Math.floor(Math.random() * 3); // jeden Tag 1-3 Punkte, überraschend
-    Backend.saveResult({
+    saveResultAndCheck({
       categories: ["login"], points: bonus, bonus: 0, percent: 100,
       character: "Tägliches Vorbeischauen", badges: [], playedAt: new Date().toISOString(),
     });
@@ -908,7 +1279,7 @@
     } catch (e) {}
     // Punkte wachsen mit der Serie: 1-2 Tage = 1P, 3-6 Tage = 2P, 7-13 Tage = 3P, ab 14 Tage = 5P.
     const points = streak >= 14 ? 5 : streak >= 7 ? 3 : streak >= 3 ? 2 : 1;
-    Backend.saveResult({
+    saveResultAndCheck({
       categories: ["tageskalender"], points, bonus: 0, percent: 100,
       character: "Kalenderblatt abgerissen", badges: [], playedAt: new Date().toISOString(),
     });
@@ -919,27 +1290,6 @@
     }, 50);
   }
   updateCalendarWidget();
-  // Banner auf der Startseite mit dem heutigen Geschichts-Eintrag füllen (falls vorhanden) und
-  // per Klick direkt zur Geschichte-Sektion springen lassen.
-  (function initHistoryBanner() {
-    const btn = document.getElementById("historyBannerBtn");
-    const sub = document.getElementById("historyBannerSub");
-    if (!btn || !sub) return;
-    const now = new Date();
-    const md = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    const entry = ExerciseData.germanHistoryForToday(md);
-    if (entry) {
-      const plain = entry.levels.B1.replace(/<[^>]+>/g, "");
-      sub.textContent = plain.length > 70 ? plain.slice(0, 68) + "…" : plain;
-    }
-    btn.addEventListener("click", () => {
-      document.querySelector('[data-target="view-knowledge"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-sub="sub-kompass"]')?.click();
-        document.getElementById("kompass-geschichte")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 150);
-    });
-  })();
   setInterval(updateCalendarWidget, 60000);
 
   const STRESS_EXCLUDABLE_SECTIONS = [
@@ -1016,6 +1366,16 @@
   setInterval(updateTicker, 20000);
 
   /* ============ Kurze Pop-up-Benachrichtigung bei neuen Anfragen ============ */
+  // Globaler Klick-Handler für die kleinen ℹ️-Symbole bei Reitern mit weniger selbsterklärenden
+  // Namen — zeigt eine kurze Erklärung, statt dass der Klick (wie sonst bei einem Button) auch
+  // gleich den Reiter wechselt.
+  document.addEventListener("click", (e) => {
+    const icon = e.target.closest(".subnav-info-icon");
+    if (!icon) return;
+    e.preventDefault();
+    e.stopPropagation();
+    showToast(`ℹ️ ${icon.dataset.info}`);
+  }, true);
   function showToast(text, onClick) {
     const toast = Core.el("div", { class: "toast-popup", onclick: onClick || (() => {}) }, text);
     if (onClick) toast.classList.add("toast-clickable");
@@ -1026,6 +1386,13 @@
       setTimeout(() => toast.remove(), 400);
     }, 5500);
   }
+  // Sichtbare Warnung, falls das Speichern der Punkte im Hintergrund fehlschlägt (auch nach
+  // Wiederholung) — sonst könnte jemand beim nächsten Neuladen unbemerkt Punkte verlieren, weil
+  // der Server noch den alten, niedrigeren Stand hat. An backend.js über window verfügbar gemacht,
+  // da die Speicherlogik dort in einem eigenen Gültigkeitsbereich liegt.
+  window.__dmaPointsSaveFailed = () => {
+    showToast("⚠️ Deine Punkte konnten gerade nicht gespeichert werden — bitte Internetverbindung prüfen und die Seite nicht schließen, bis es wieder klappt.");
+  };
   // Kurzer, dezenter Benachrichtigungston -- direkt erzeugt, keine Audiodatei noetig.
   // Spielt einmal sofort; falls die Benachrichtigung dann noch nicht bestaetigt wurde, einmal nach 5s erneut. Danach Ruhe.
   // Web Audio darf laut Browser-Regel nur nach einer echten Nutzer-Interaktion starten,
@@ -1049,6 +1416,14 @@
   }
   function setNotifyMuted(muted) {
     try { localStorage.setItem("dma_notify_muted", muted ? "1" : "0"); } catch (e) {}
+  }
+  // Getrennt vom Ton: das Blinken/Leuchten der Profil-Pille kann unabhängig ausgeschaltet werden
+  // (z. B. Ton an, aber kein optisches Blinken — oder umgekehrt).
+  function isNotifyBlinkMuted() {
+    try { return localStorage.getItem("dma_notify_blink_muted") === "1"; } catch (e) { return false; }
+  }
+  function setNotifyBlinkMuted(muted) {
+    try { localStorage.setItem("dma_notify_blink_muted", muted ? "1" : "0"); } catch (e) {}
   }
 
   // Betonungsmodus — sitweiter Umschalter. Zeigt bei allen Wörtern, für die eine geprüfte
@@ -1269,6 +1644,12 @@
     pop: { label: "🫧 Pop", freqs: [520], wave: "sine", gap: 0, decay: 0.18, unlockPoints: 0 },
     marimba: { label: "🎼 Marimba", freqs: [660, 880, 990], wave: "triangle", gap: 0.08, decay: 0.3, unlockPoints: 150 },
     chime: { label: "✨ Glöckchen", freqs: [1200, 1500, 1800], wave: "sine", gap: 0.07, decay: 0.5, unlockPoints: 400 },
+    blip: { label: "🔵 Blip", freqs: [1400], wave: "square", gap: 0, decay: 0.08, unlockPoints: 100 },
+    bell: { label: "🛎️ Glocke", freqs: [660, 990], wave: "sine", gap: 0.15, decay: 0.7, unlockPoints: 250 },
+    xylo: { label: "🎹 Xylophon", freqs: [523, 659, 784, 1047], wave: "triangle", gap: 0.06, decay: 0.25, unlockPoints: 500 },
+    drop: { label: "💧 Tropfen", freqs: [1600, 800], wave: "sine", gap: 0.05, decay: 0.2, unlockPoints: 300 },
+    zap: { label: "⚡ Zap", freqs: [200, 1800], wave: "sawtooth", gap: 0.02, decay: 0.15, unlockPoints: 600 },
+    harp: { label: "🎵 Harfe", freqs: [523, 587, 659, 784, 880], wave: "sine", gap: 0.07, decay: 0.4, unlockPoints: 800 },
   };
   function getNotifySoundKey() {
     try { return localStorage.getItem("dma_notify_sound") || "ding"; } catch (e) { return "ding"; }
@@ -1282,6 +1663,12 @@
     teal: { label: "🟢 Türkis", hex: "#2fbf9f", unlockPoints: 0 },
     violet: { label: "🟣 Violett", hex: "#a05fe8", unlockPoints: 150 },
     gold: { label: "🟡 Gold", hex: "#e8b93d", unlockPoints: 400 },
+    white: { label: "⚪ Weiß", hex: "#ffffff", unlockPoints: 100 },
+    blue: { label: "🔵 Blau", hex: "#3d8be8", unlockPoints: 200 },
+    pink: { label: "🩷 Pink", hex: "#f24fa0", unlockPoints: 300 },
+    lime: { label: "🟢 Limette", hex: "#8de83d", unlockPoints: 350 },
+    red: { label: "🔴 Rot", hex: "#e83d3d", unlockPoints: 250 },
+    silver: { label: "⚪ Silber", hex: "#c4c9d1", unlockPoints: 500 },
   };
   function getNotifyColorKey() {
     try { return localStorage.getItem("dma_notify_color") || "coral"; } catch (e) { return "coral"; }
@@ -1368,27 +1755,45 @@
     // einer reinen Nachrichten-Benachrichtigung blinkte, obwohl unter "Freunde" gar nichts war.
     const tabBadge = document.getElementById("friendsTabBadge");
     if (tabBadge) tabBadge.style.display = friendsCount > 0 ? "block" : "none";
-    if (loginBtn) loginBtn.classList.toggle("notify-ring", count > 0 && !isNotifyMuted());
+    if (loginBtn) loginBtn.classList.toggle("notify-ring", count > 0 && !isNotifyBlinkMuted());
   }
   let lastFriendReqCount = 0;
   let lastChallengeReqCount = 0;
   let lastUnreadMsgCount = 0;
+  let notifyTarget = null; // wohin ein Klick auf die blinkende Profil-Pille als Nächstes springen soll
+  // Scrollt zum Ziel-Element und hebt es kurz farblich hervor, damit klar ist: genau HIER ist das
+  // Neue, das gerade eine Benachrichtigung ausgelöst hat — nicht nur "irgendwo in diesem Bereich".
+  function scrollToAndHighlight(selector) {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const target = el.closest(".breakdown-row") || el;
+    target.classList.add("notify-target-highlight");
+    setTimeout(() => target.classList.remove("notify-target-highlight"), 2600);
+  }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    const [requests, challenges, notifications, unreadMsgCount] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getUnreadMessageCount()]);
+    const [requests, challenges, notifications, myMessages] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getMyMessages()]);
+    const unreadInbox = myMessages.inbox.filter((m) => !m.read);
+    const unreadMsgCount = unreadInbox.length;
     const inboxBadge = document.getElementById("inboxTabBadge");
     if (inboxBadge) inboxBadge.style.display = unreadMsgCount > 0 ? "block" : "none";
     const challengeCount = challenges.incoming.length;
     let hasNew = false;
     let newestKind = null; // welche Art zuletzt neu dazukam -> bestimmt Ton/Farbe dieses Durchlaufs
+    // Merkt sich, WOHIN ein Klick auf die blinkende Profil-Pille genau springen soll — nicht nur
+    // "irgendwo ins Profil", sondern direkt zur betroffenen Zeile (Nachricht, Anfrage, Duell).
     // Neue Nachrichten im Postfach sollen genauso wie Freundschaftsanfragen/Duelle/Benachrichtigungen
     // das Profil-Symbol blinken lassen und einen Ton abspielen — vorher landeten sie nur als
     // stiller Punkt auf dem Postfach-Reiter, ohne echte Benachrichtigung auszulösen.
     if (unreadMsgCount > lastUnreadMsgCount && !toastedNotificationIds.has("msgcount-" + unreadMsgCount)) {
       toastedNotificationIds.add("msgcount-" + unreadMsgCount);
-      showToast("✉️ Neue Nachricht im Postfach", () => document.querySelector('[data-target="view-profile"]').click());
+      const newestMsg = unreadInbox[0];
+      const jumpToMsg = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-inbox"]').click(); setTimeout(() => scrollToAndHighlight(`[data-msg-row="${newestMsg?.id}"]`), 200); };
+      showToast("✉️ Neue Nachricht im Postfach", jumpToMsg);
+      notifyTarget = { kind: "mail", action: jumpToMsg };
       hasNew = true; newestKind = "mail";
     }
     lastUnreadMsgCount = unreadMsgCount;
@@ -1398,21 +1803,27 @@
     requests.forEach((r) => {
       if (!toastedNotificationIds.has("freq-" + r.id)) {
         toastedNotificationIds.add("freq-" + r.id);
-        showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", goToFriendsInbox);
+        const jumpToReq = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); setTimeout(() => scrollToAndHighlight(`[data-accept="${r.id}"]`), 200); };
+        showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", jumpToReq);
+        notifyTarget = { kind: "friendrequest", action: jumpToReq };
         hasNew = true; newestKind = "friendrequest";
       }
     });
     challenges.incoming.forEach((c) => {
       if (!toastedNotificationIds.has("chal-" + c.id)) {
         toastedNotificationIds.add("chal-" + c.id);
-        showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", goToFriendsInbox);
+        const jumpToChal = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); setTimeout(() => scrollToAndHighlight(`[data-accept-challenge="${c.id}"]`), 200); };
+        showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", jumpToChal);
+        notifyTarget = { kind: "challenge", action: jumpToChal };
         hasNew = true; newestKind = "challenge";
       }
     });
     notifications.forEach((n) => {
       if (!toastedNotificationIds.has(n.id)) {
         toastedNotificationIds.add(n.id);
-        showToast(n.message, () => document.querySelector('[data-target="view-profile"]').click());
+        const jumpToOther = () => document.querySelector('[data-target="view-profile"]').click();
+        showToast(n.message, jumpToOther);
+        notifyTarget = { kind: "other", action: jumpToOther };
         hasNew = true; newestKind = "other";
       }
     });
@@ -1420,6 +1831,7 @@
     lastChallengeReqCount = challengeCount;
     notifyPrimed = true;
     const totalCount = requests.length + challengeCount + notifications.length + unreadMsgCount;
+    if (totalCount === 0) notifyTarget = null;
     updateNotifyBadge(totalCount, requests.length + challengeCount);
     if (hasNew) {
       if (newestKind) document.documentElement.style.setProperty("--notify-color", resolveNotifyColorHex(newestKind));
@@ -1491,6 +1903,26 @@
   // offline Freunde einladbar (spielen die Runde nach, sobald sie sich einloggen), mehrere
   // gleichzeitig auswählbar.
   const miniChallengeSelections = {}; // { gameKey: Set<friendId> }
+  // Zwischenspeicher pro Spiel: verhindert, dass bei JEDEM Tastendruck/Klick (der die ganze
+  // Runde neu rendert) die Einladungsleiste erneut vom Server geladen wird — das ließ sie kurz
+  // leer erscheinen und dann nachträglich "reinspringen", was wie ein Layout-Sprung wirkte.
+  // Nur beim ersten Aufruf pro Runde wird wirklich neu geladen, danach wird der Zwischenspeicher
+  // sofort (ohne Verzögerung) wiederverwendet.
+  const miniChallengeBarCache = {};
+  function renderMiniChallengeBarCached(gameKey, categoryId, targetElId, container, onRerender) {
+    const el = document.getElementById(targetElId);
+    if (!el) return;
+    if (miniChallengeBarCache[gameKey]) {
+      el.innerHTML = miniChallengeBarCache[gameKey];
+      wireMiniChallengeBar(container, gameKey, onRerender);
+      return;
+    }
+    renderMiniChallengeBar(gameKey, categoryId).then((html) => {
+      miniChallengeBarCache[gameKey] = html;
+      const freshEl = document.getElementById(targetElId);
+      if (freshEl) { freshEl.innerHTML = html; wireMiniChallengeBar(container, gameKey, onRerender); }
+    });
+  }
   async function renderMiniChallengeBar(gameKey, categoryId) {
     if (!miniChallengeSelections[gameKey]) miniChallengeSelections[gameKey] = new Set();
     if (!Backend.currentUser()) return "";
@@ -1504,11 +1936,11 @@
         <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
         <div class="challenge-friend-list">
           ${onlineFriends.map((f) => `
-            <button type="button" class="mini-challenge-friend ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}">
+            <button type="button" class="challenge-friend-pill ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}">
               <span class="online-dot"></span>${f.name}
             </button>`).join("")}
           ${offlineFriends.map((f) => `
-            <button type="button" class="mini-challenge-friend offline ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}" title="Spielt die Runde, sobald sie sich wieder einloggen">
+            <button type="button" class="challenge-friend-pill offline ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}" title="Spielt die Runde, sobald sie sich wieder einloggen">
               ${f.name} <span class="empty-note">(offline)</span>
             </button>`).join("")}
         </div>
@@ -1516,7 +1948,7 @@
       </div>`;
   }
   function wireMiniChallengeBar(container, gameKey, onRerender) {
-    container.querySelectorAll(`[data-mini-game="${gameKey}"].mini-challenge-friend`).forEach((btn) => {
+    container.querySelectorAll(`[data-mini-game="${gameKey}"].challenge-friend-pill`).forEach((btn) => {
       btn.addEventListener("click", () => {
         const set = miniChallengeSelections[gameKey];
         const id = btn.dataset.miniFriend;
@@ -1724,6 +2156,7 @@
         Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters);
       }
       Backend.notifyPracticing(titles);
+      showToast(`🦊 Willkommen, ${personaForCategory([...selectedCategories][0])}!`);
       renderQuestion();
     });
     const resumeBtn = document.getElementById("resumeBtn");
@@ -1733,6 +2166,32 @@
   let currentSelection = [];
   const AUTO_ADVANCE_DELAY = 900;
 
+  // Wiederverwendbarer "Fehler melden"-Button — kann in jedes Spiel eingebunden werden. Öffnet
+  // eine kleine Auswahl (kein Text nötig), landet automatisch im Postfach des Betreibers.
+  function reportBugButtonHtml() {
+    return `<button type="button" class="bug-report-btn" id="bugReportBtn" title="Fehler melden">🐛</button>`;
+  }
+  function wireBugReportButton(context) {
+    const btn = document.getElementById("bugReportBtn");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+        Core.el("div", { class: "profile-modal-card", style: "max-width:300px;" },
+          Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+          Core.el("h3", {}, "🐛 Fehler melden"),
+          Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
+          ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Sonstiges"].map((label) =>
+            Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left;", onclick: async () => {
+              await Backend.reportBug(context, label);
+              box.remove();
+              showToast("✅ Danke, Alex wurde informiert!");
+            } }, label)
+          )
+        )
+      );
+      document.body.appendChild(box);
+    });
+  }
   function renderQuestion() {
     setupEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -1753,6 +2212,7 @@
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
       <div class="question-card">
+        ${reportBugButtonHtml()}
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
         <div class="question-prompt">${promptHtml}</div>
         <div class="option-list">
@@ -1769,6 +2229,7 @@
     document.getElementById("pauseBtn").addEventListener("click", () => {
       renderSetup();
     });
+    wireBugReportButton(`Übung „${cat.title}" — Frage: „${q.prompt}"`);
 
     const optionBtns = playEl.querySelectorAll(".option-btn");
     const blankSlot = document.getElementById("blankSlot");
@@ -1838,7 +2299,7 @@
     else if (r.basePercent >= 40) Core.sound.okay();
     else Core.sound.fail();
 
-    Backend.saveResult({
+    saveResultAndCheck({
       categories: r.categories,
       points: r.totalBase,
       bonus: r.totalBonus,
@@ -1937,7 +2398,7 @@
             <div>
               <div class="vocab-word">${w.word}</div>
               ${isStressModeOn() ? `<div class="vocab-syl">${Core.formatStress(w.syl)}</div>` : ""}
-              <div class="vocab-en">${w.en}</div>
+              <div class="vocab-en">${w.de || w.en}</div>
               <div class="vocab-example">„${w.example}"</div>
             </div>
             <button type="button" class="speak-btn" data-word="${w.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
@@ -1969,6 +2430,22 @@
     });
     return pool;
   }
+  // Schwierigkeitsstufen: LEICHT = zwei Silben, Betonung liegt (wie meistens im Deutschen) auf der
+  // ersten Silbe — die "offensichtlichen" Fälle. SCHWER = alles, wo die Betonung NICHT auf der
+  // ersten Silbe liegt (z. B. "arbeiten") oder das Wort vier Silben oder mehr hat — genau die
+  // Fälle, bei denen man wirklich überlegen muss. MITTEL = alles dazwischen (Standard, wie bisher).
+  function stressWordDifficulty(entry) {
+    const syllables = entry.syl.split("-");
+    const stressIdx = syllables.findIndex((s) => s === s.toUpperCase());
+    if (syllables.length === 2 && stressIdx === 0) return "leicht";
+    if (stressIdx > 0 || syllables.length >= 4) return "schwer";
+    return "mittel";
+  }
+  function stressTrainerWordPoolForDifficulty(difficulty) {
+    const pool = stressTrainerWordPool();
+    if (difficulty === "alle") return pool;
+    return pool.filter((e) => stressWordDifficulty(e) === difficulty);
+  }
   // Kurze, pädagogisch begründete Erklärung, WARUM die Betonung so liegt — nur bei Mustern, die
   // ich wirklich sicher weiß (unbetonte Vorsilben, bekannte Fremdwort-Endungen), sonst schlicht
   // "typisches deutsches Muster" statt einer erfundenen Begründung.
@@ -1991,12 +2468,20 @@
   }
   let stTrainerSession = null;
   let stTrainerWord = null;
+  let stTrainerDifficulty = "mittel"; // "leicht" | "mittel" | "schwer" | "alle"
   function newStressTrainerSession() {
-    stTrainerSession = { round: 0, total: 10, correct: 0 };
+    stTrainerSession = { round: 0, total: 10, correct: 0, usedWords: new Set() };
   }
   function pickStressTrainerWord() {
-    const pool = stressTrainerWordPool();
-    const entry = pool[Math.floor(Math.random() * pool.length)];
+    let pool = stressTrainerWordPoolForDifficulty(stTrainerDifficulty);
+    if (pool.length < 5) pool = stressTrainerWordPool(); // Sicherheitsnetz, falls eine Stufe zu wenige Wörter hat
+    // Innerhalb einer Runde (10 Wörter) soll sich kein Wort wiederholen — bei nur 3-facher
+    // Gewichtung der Problemwörter konnte es vorher durch Zufall leicht zu Dopplungen kommen.
+    const usedWords = (stTrainerSession && stTrainerSession.usedWords) || new Set();
+    let available = pool.filter((e) => !usedWords.has(e.word));
+    if (available.length === 0) { usedWords.clear(); available = pool; } // Pool erschöpft -> zurücksetzen
+    const entry = available[Math.floor(Math.random() * available.length)];
+    usedWords.add(entry.word);
     const syllables = entry.syl.split("-");
     const correctIdx = syllables.findIndex((s) => s === s.toUpperCase());
     stTrainerWord = { ...entry, syllables, correctIdx };
@@ -2004,13 +2489,20 @@
   function renderStressTrainerResults() {
     const area = document.getElementById("stressTrainerArea");
     const percent = Math.round((stTrainerSession.correct / stTrainerSession.total) * 100);
+    // Rang-Titel, passend zum Betonungs-Trainer — "Sprachtalent" als anerkennender Titel für eine
+    // richtig starke Runde, ähnlich wie "Superhirn" beim Memory oder die Ränge bei den Übungen.
+    const tier = percent >= 90 ? "🌟 Sprachtalent" : percent >= 70 ? "🎯 Betonungs-Profi" : percent >= 50 ? "👂 Gutes Gehör" : "🌱 Übungssache";
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">🎯 BETONUNGS-TRAINER — RUNDE FERTIG</p>
         <h2 style="margin:8px 0;">${stTrainerSession.correct} / ${stTrainerSession.total} richtig (${percent}%)</h2>
+        <p style="font-weight:800; font-size:1.1rem; color:var(--amber-400); margin:4px 0 0;">${tier}</p>
         <button type="button" class="btn btn-coffee" id="stPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>
     `;
+    if (Backend.currentUser() && percent >= 90) {
+      Backend.addTrophy(`Betonungs-Trainer – Sprachtalent`);
+    }
     document.getElementById("stPlayAgainBtn").addEventListener("click", () => {
       newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer();
     });
@@ -2024,6 +2516,9 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total}</p>
+        <div class="trophy-case" style="margin-bottom:10px;">
+          ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
+        </div>
         <p class="empty-note" style="margin-bottom:12px;">Welche Silbe wird bei diesem Wort betont? Antippen zum Wählen.</p>
         <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
           ${w.syllables.map((s, i) => `<button type="button" class="btn btn-ghost st-syl-btn" data-syl-idx="${i}" style="font-size:1.2rem; font-weight:800; text-transform:lowercase;">${s.toLowerCase()}</button>`).join("")}
@@ -2032,9 +2527,15 @@
         <div id="stChallengeBar"></div>
       </div>
     `;
-    renderMiniChallengeBar("betonungstrainer", "betonungstrainer").then((html) => {
-      const el = document.getElementById("stChallengeBar");
-      if (el) { el.innerHTML = html; wireMiniChallengeBar(area, "betonungstrainer", renderStressTrainer); }
+    renderMiniChallengeBarCached("betonungstrainer", "betonungstrainer", "stChallengeBar", area, renderStressTrainer);
+    area.querySelectorAll(".st-diff-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.dataset.diff === stTrainerDifficulty) return;
+        stTrainerDifficulty = btn.dataset.diff;
+        newStressTrainerSession();
+        pickStressTrainerWord();
+        renderStressTrainer();
+      });
     });
     area.querySelectorAll(".st-syl-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -2054,9 +2555,13 @@
           Core.sound.wrong();
         }
         fb.innerHTML = `<strong>${w.word}</strong> wird auf <strong>„${w.syllables[w.correctIdx].toLowerCase()}"</strong> betont.<br>${explainStress(w.word, w.syl)}`;
+        // Nur bei richtiger Antwort: das Wort nochmal per Sprachausgabe vorlesen — aber ERST,
+        // nachdem der Bestätigungston fertig abgespielt ist (kleine Verzögerung), sonst würden
+        // sich Ton und Sprachausgabe hörbar überlappen statt sauber nacheinander zu kommen.
+        if (correct) setTimeout(() => Core.speak(w.word), 500);
         setTimeout(() => {
           if (stTrainerSession.round >= stTrainerSession.total) {
-            Backend.saveResult({
+            saveResultAndCheck({
               categories: ["betonungstrainer"], points: stTrainerSession.correct, bonus: 0,
               percent: Math.round((stTrainerSession.correct / stTrainerSession.total) * 100),
               character: "Betonungs-Profi", badges: [], playedAt: new Date().toISOString(),
@@ -2121,11 +2626,253 @@
     if (/tion|tät|ismus|ieren|Universität|Bibliothek|Restaurant|Appetit|Toilette/i.test(word)) return "B1";
     return "B1"; // vorsichtige Standardeinstufung für alles, was nicht eindeutig A1/A2 ist
   }
+  // Themen-Kategorien für den Wörterbuch-Filter — jedem geprüften Wort fest zugeordnet, damit man
+  // gezielt z. B. nur "Essen & Trinken" oder "Tiere & Natur" üben kann.
+  const WORD_CATEGORIES = {
+    "Bett": "Haushalt & Wohnen",
+    "Fenster": "Haushalt & Wohnen",
+    "Glas": "Haushalt & Wohnen",
+    "Kommode": "Haushalt & Wohnen",
+    "Kommoden": "Haushalt & Wohnen",
+    "Lampe": "Haushalt & Wohnen",
+    "Lampen": "Haushalt & Wohnen",
+    "Schlüssel": "Haushalt & Wohnen",
+    "Schrank": "Haushalt & Wohnen",
+    "Spiegel": "Haushalt & Wohnen",
+    "Stuhl": "Haushalt & Wohnen",
+    "Tisch": "Haushalt & Wohnen",
+    "Tür": "Haushalt & Wohnen",
+    "Teller": "Haushalt & Wohnen",
+    "Tasse": "Haushalt & Wohnen",
+    "Tassen": "Haushalt & Wohnen",
+    "Löffel": "Haushalt & Wohnen",
+    "Messer": "Haushalt & Wohnen",
+    "Gabel": "Haushalt & Wohnen",
+    "Gabeln": "Haushalt & Wohnen",
+    "Kabel": "Haushalt & Wohnen",
+    "Uhr": "Haushalt & Wohnen",
+    "Bild": "Haushalt & Wohnen",
+    "Heft": "Haushalt & Wohnen",
+    "Stift": "Haushalt & Wohnen",
+    "Tastatur": "Haushalt & Wohnen",
+    "Computer": "Haushalt & Wohnen",
+    "Drucker": "Haushalt & Wohnen",
+    "Haus": "Haushalt & Wohnen",
+    "das Haus": "Haushalt & Wohnen",
+    "Rathaus": "Haushalt & Wohnen",
+    "Rathäuser": "Haushalt & Wohnen",
+    "Apfel": "Essen & Trinken",
+    "Banane": "Essen & Trinken",
+    "Bananen": "Essen & Trinken",
+    "Brot": "Essen & Trinken",
+    "Butter": "Essen & Trinken",
+    "Eis": "Essen & Trinken",
+    "Fleisch": "Essen & Trinken",
+    "Fisch": "Essen & Trinken",
+    "Käse": "Essen & Trinken",
+    "Milch": "Essen & Trinken",
+    "Salz": "Essen & Trinken",
+    "Suppe": "Essen & Trinken",
+    "Wasser": "Essen & Trinken",
+    "Wein": "Essen & Trinken",
+    "Zucker": "Essen & Trinken",
+    "Bäckerei": "Essen & Trinken",
+    "Hund": "Tiere & Natur",
+    "Katze": "Tiere & Natur",
+    "Katzen": "Tiere & Natur",
+    "Vogel": "Tiere & Natur",
+    "Pferd": "Tiere & Natur",
+    "Maus": "Tiere & Natur",
+    "Baum": "Tiere & Natur",
+    "Blume": "Tiere & Natur",
+    "Blumen": "Tiere & Natur",
+    "Wald": "Tiere & Natur",
+    "Wiese": "Tiere & Natur",
+    "Wiesen": "Tiere & Natur",
+    "Berg": "Tiere & Natur",
+    "Fluss": "Tiere & Natur",
+    "Insel": "Tiere & Natur",
+    "Inseln": "Tiere & Natur",
+    "Wolke": "Tiere & Natur",
+    "Wolken": "Tiere & Natur",
+    "Wind": "Tiere & Natur",
+    "Regen": "Tiere & Natur",
+    "Schnee": "Tiere & Natur",
+    "Sonne": "Tiere & Natur",
+    "Wetter": "Tiere & Natur",
+    "Frühling": "Tiere & Natur",
+    "Sommer": "Tiere & Natur",
+    "Herbst": "Tiere & Natur",
+    "Winter": "Tiere & Natur",
+    "Garten": "Tiere & Natur",
+    "Kälte": "Tiere & Natur",
+    "Auto": "Verkehr & Reisen",
+    "Autos": "Verkehr & Reisen",
+    "Ampel": "Verkehr & Reisen",
+    "Ampeln": "Verkehr & Reisen",
+    "Bahnhof": "Verkehr & Reisen",
+    "Bahnhöfe": "Verkehr & Reisen",
+    "Brücke": "Verkehr & Reisen",
+    "Brücken": "Verkehr & Reisen",
+    "Flughafen": "Verkehr & Reisen",
+    "Flughäfen": "Verkehr & Reisen",
+    "Flugzeug": "Verkehr & Reisen",
+    "Flugzeuge": "Verkehr & Reisen",
+    "Fahrrad": "Verkehr & Reisen",
+    "Fahrräder": "Verkehr & Reisen",
+    "Schiff": "Verkehr & Reisen",
+    "Straße": "Verkehr & Reisen",
+    "Straßen": "Verkehr & Reisen",
+    "Zug": "Verkehr & Reisen",
+    "Land": "Verkehr & Reisen",
+    "Stadt": "Verkehr & Reisen",
+    "Rucksack": "Verkehr & Reisen",
+    "Rucksäcke": "Verkehr & Reisen",
+    "Supermarkt": "Einkaufen & Alltag",
+    "Supermärkte": "Einkaufen & Alltag",
+    "Tasche": "Einkaufen & Alltag",
+    "Taschen": "Einkaufen & Alltag",
+    "Portemonnaie": "Einkaufen & Alltag",
+    "Handy": "Einkaufen & Alltag",
+    "Handys": "Einkaufen & Alltag",
+    "Zeitung": "Einkaufen & Alltag",
+    "Zeitungen": "Einkaufen & Alltag",
+    "Lehrer": "Schule & Arbeit",
+    "Lehrerin": "Schule & Arbeit",
+    "die Arbeit": "Schule & Arbeit",
+    "arbeiten": "Schule & Arbeit",
+    "Museum": "Schule & Arbeit",
+    "Familie": "Familie & Menschen",
+    "Frau": "Familie & Menschen",
+    "die Frau": "Familie & Menschen",
+    "Mann": "Familie & Menschen",
+    "der Mann": "Familie & Menschen",
+    "Kind": "Familie & Menschen",
+    "das Kind": "Familie & Menschen",
+    "Junge": "Familie & Menschen",
+    "Jungen": "Familie & Menschen",
+    "Mädchen": "Familie & Menschen",
+    "Baby": "Familie & Menschen",
+    "der Freund": "Familie & Menschen",
+    "Arzt": "Familie & Menschen",
+    "Krankenhaus": "Familie & Menschen",
+    "Krankenhäuser": "Familie & Menschen",
+    "Jahr": "Zeit & Kalender",
+    "das Jahr": "Zeit & Kalender",
+    "Monat": "Zeit & Kalender",
+    "Monate": "Zeit & Kalender",
+    "Woche": "Zeit & Kalender",
+    "Wochen": "Zeit & Kalender",
+    "Wochenende": "Zeit & Kalender",
+    "der Tag": "Zeit & Kalender",
+    "die Zeit": "Zeit & Kalender",
+    "Park": "Zeit & Kalender",
+    "Babo": "Jugendsprache",
+    "Aura": "Jugendsprache",
+    "Bock haben (auf)": "Jugendsprache",
+    "Digga / Alter": "Jugendsprache",
+    "Rizz": "Jugendsprache",
+    "Sigma": "Jugendsprache",
+    "based": "Jugendsprache",
+    "chillen": "Jugendsprache",
+    "cringe": "Jugendsprache",
+    "flexen": "Jugendsprache",
+    "goofy": "Jugendsprache",
+    "high-key": "Jugendsprache",
+    "krass": "Jugendsprache",
+    "krank (positiv gemeint)": "Jugendsprache",
+    "läuft bei dir": "Jugendsprache",
+    "low-key": "Jugendsprache",
+    "mid": "Jugendsprache",
+    "sus": "Jugendsprache",
+    "NPC": "Jugendsprache",
+    "ach so": "Kleine Wörter & Partikeln",
+    "auf jeden (Fall)": "Kleine Wörter & Partikeln",
+    "denn": "Kleine Wörter & Partikeln",
+    "deshalb": "Kleine Wörter & Partikeln",
+    "doch": "Kleine Wörter & Partikeln",
+    "eben": "Kleine Wörter & Partikeln",
+    "eigentlich": "Kleine Wörter & Partikeln",
+    "endlich": "Kleine Wörter & Partikeln",
+    "gemeinsam": "Kleine Wörter & Partikeln",
+    "gemütlich": "Kleine Wörter & Partikeln",
+    "halt": "Kleine Wörter & Partikeln",
+    "immer": "Kleine Wörter & Partikeln",
+    "ja": "Kleine Wörter & Partikeln",
+    "mal": "Kleine Wörter & Partikeln",
+    "manchmal": "Kleine Wörter & Partikeln",
+    "möglich": "Kleine Wörter & Partikeln",
+    "natürlich": "Kleine Wörter & Partikeln",
+    "plötzlich": "Kleine Wörter & Partikeln",
+    "ruhig": "Kleine Wörter & Partikeln",
+    "tja": "Kleine Wörter & Partikeln",
+    "trotzdem": "Kleine Wörter & Partikeln",
+    "unbedingt": "Kleine Wörter & Partikeln",
+    "unterwegs": "Kleine Wörter & Partikeln",
+    "vielleicht": "Kleine Wörter & Partikeln",
+    "wichtig": "Kleine Wörter & Partikeln",
+    "wohl": "Kleine Wörter & Partikeln",
+    "na ja": "Kleine Wörter & Partikeln",
+    "beginnen": "Grundverben",
+    "bleiben": "Grundverben",
+    "brauchen": "Grundverben",
+    "denken": "Grundverben",
+    "erzählen": "Grundverben",
+    "fahren": "Grundverben",
+    "finden": "Grundverben",
+    "fühlen": "Grundverben",
+    "geben": "Grundverben",
+    "gehen": "Grundverben",
+    "haben": "Grundverben",
+    "helfen": "Grundverben",
+    "kaufen": "Grundverben",
+    "kommen": "Grundverben",
+    "können": "Grundverben",
+    "liegen": "Grundverben",
+    "machen": "Grundverben",
+    "müssen": "Grundverben",
+    "nehmen": "Grundverben",
+    "sagen": "Grundverben",
+    "sehen": "Grundverben",
+    "sein": "Grundverben",
+    "spielen": "Grundverben",
+    "sprechen": "Grundverben",
+    "stehen": "Grundverben",
+    "verstehen": "Grundverben",
+    "werden": "Grundverben",
+    "wissen": "Grundverben",
+    "wollen": "Grundverben",
+    "die Ausrede": "Abstrakte Begriffe",
+    "die Erfahrung": "Abstrakte Begriffe",
+    "die Frage": "Abstrakte Begriffe",
+    "die Gelegenheit": "Abstrakte Begriffe",
+    "die Hand": "Abstrakte Begriffe",
+    "der Kopf": "Abstrakte Begriffe",
+    "besonders": "Kleine Wörter & Partikeln",
+    "Brillen": "Einkaufen & Alltag",
+    "Brille": "Einkaufen & Alltag",
+    "Buch": "Haushalt & Wohnen",
+    "Bus": "Verkehr & Reisen",
+    "Bank": "Verkehr & Reisen",
+    "Blatt": "Tiere & Natur"
+  };
+  function categoryForWord(word) {
+    return WORD_CATEGORIES[word] || "Sonstiges";
+  }
   function buildDictionaryEntries() {
     const entries = [];
-    VocabData.WORDS.forEach((w) => entries.push({ word: w.word, syl: w.syl, meaning: w.en, example: w.example, level: cefrLevelFor(w.word), verified: true }));
+    VocabData.WORDS.forEach((w) => entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example, level: cefrLevelFor(w.word), verified: true, category: categoryForWord(w.word) }));
     Object.entries(ExerciseData.WORD_MEANINGS || {}).forEach(([word, meaning]) => {
-      entries.push({ word, syl: (ExerciseData.WORD_SYL || {})[word] || word, meaning, example: "", level: cefrLevelFor(word), verified: true });
+      entries.push({ word, syl: (ExerciseData.WORD_SYL || {})[word] || word, meaning, example: "", level: cefrLevelFor(word), verified: true, category: categoryForWord(word) });
+    });
+    const seenSoFar = new Set(entries.map((e) => e.word.toLowerCase()));
+    // Wörter, die zwar eine handgeprüfte Betonung in WORD_SYL haben, aber (noch) keine eigene
+    // deutsche Erklärung — trotzdem als "geprüft" zählen, da die Betonung selbst stimmt.
+    Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
+      const key = word.toLowerCase();
+      if (seenSoFar.has(key)) return;
+      seenSoFar.add(key);
+      entries.push({ word, syl, meaning: "", example: "", level: cefrLevelFor(word), verified: true, category: categoryForWord(word) });
     });
     const seen = new Set(entries.map((e) => e.word.toLowerCase()));
     // Erweiterter Wortschatz aus allen Übungskategorien — regelbasierte Betonung (nicht
@@ -2134,18 +2881,23 @@
       const key = word.toLowerCase();
       if (seen.has(key)) return;
       seen.add(key);
-      entries.push({ word, syl: ruleSylString(word), meaning: "", example: "", level: null, verified: false });
+      entries.push({ word, syl: ruleSylString(word), meaning: "", example: "", level: null, verified: false, category: "Sonstiges" });
     });
     return entries.sort((a, b) => a.word.localeCompare(b.word, "de"));
   }
   let dictLevelFilter = "alle";
+  let dictCategoryFilter = "alle";
   function renderDictionary(filter = "") {
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
     const verifiedCount = all.filter((e) => e.verified).length;
+    const categories = ["alle", ...new Set(all.map((e) => e.category))].sort((a, b) => a === "alle" ? -1 : b === "alle" ? 1 : a.localeCompare(b, "de"));
     let list = all.filter((e) => e.word.toLowerCase().includes(filter.toLowerCase()) || (e.meaning || "").toLowerCase().includes(filter.toLowerCase()));
     if (dictLevelFilter !== "alle") {
       list = dictLevelFilter === "erweitert" ? list.filter((e) => !e.verified) : list.filter((e) => e.level === dictLevelFilter);
+    }
+    if (dictCategoryFilter !== "alle") {
+      list = list.filter((e) => e.category === dictCategoryFilter);
     }
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.</p>
@@ -2153,6 +2905,10 @@
       <div class="trophy-case" style="margin:10px 0;">
         ${["alle", "A1", "A2", "B1", "erweitert"].map((lvl) => `<button type="button" class="trophy-chip dict-level-btn ${dictLevelFilter === lvl ? "selected" : ""}" data-level="${lvl}">${lvl === "alle" ? "Alle" : lvl === "erweitert" ? "Erweitert (ungeprüft)" : lvl}</button>`).join("")}
       </div>
+      <label class="empty-note" style="display:block; margin-bottom:4px;">Themenbereich</label>
+      <select id="dictCategorySelect" class="challenge-select" style="margin-bottom:12px;">
+        ${categories.map((c) => `<option value="${c}" ${dictCategoryFilter === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
+      </select>
       <div class="vocab-grid">
         ${list.map((e) => `
           <div class="vocab-card">
@@ -2170,6 +2926,10 @@
     document.getElementById("dictSearch").addEventListener("input", (e) => renderDictionary(e.target.value));
     area.querySelectorAll(".dict-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { dictLevelFilter = btn.dataset.level; renderDictionary(filter); });
+    });
+    document.getElementById("dictCategorySelect").addEventListener("change", (e) => {
+      dictCategoryFilter = e.target.value;
+      renderDictionary(filter);
     });
     area.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
   }
@@ -2201,7 +2961,32 @@
     await renderMemory();
   }
 
+  // Erspielbare Kartenrückseiten-Designs für Memory — dasselbe Freischalt-Prinzip wie bei den
+  // Sammelfiguren, damit sich das Spielen selbst lohnt, nicht nur die Punktzahl.
+  const MEMORY_CARD_DESIGNS = [
+    { id: "fuchs", name: "Fuchs (Standard)", emoji: "🦊", cls: "", unlock: null },
+    { id: "eule", name: "Eule", emoji: "🦉", cls: "mcback-eule", unlock: { type: "points", value: 150 } },
+    { id: "baer", name: "Bär", emoji: "🐻", cls: "mcback-baer", unlock: { type: "points", value: 350 } },
+    { id: "hase", name: "Hase", emoji: "🐰", cls: "mcback-hase", unlock: { type: "points", value: 600 } },
+    { id: "wolf", name: "Wolf", emoji: "🐺", cls: "mcback-wolf", unlock: { type: "trophy", match: "Superheld" } },
+  ];
+  function getMemoryCardDesign() {
+    try { return localStorage.getItem("dma_memory_card_design") || "fuchs"; } catch (e) { return "fuchs"; }
+  }
+  function setMemoryCardDesign(id) {
+    try { localStorage.setItem("dma_memory_card_design", id); } catch (e) {}
+  }
   async function renderMemory() {
+    const profile = Backend.currentProfile();
+    const activeDesign = getMemoryCardDesign();
+    const designBar = `
+      <p class="eyebrow" style="margin-top:2px;">🎴 Kartenrückseite</p>
+      <div class="trophy-case" style="margin-bottom:10px;">
+        ${MEMORY_CARD_DESIGNS.map((d) => {
+          const unlocked = isUnlocked(d.unlock, profile);
+          return `<button type="button" class="trophy-chip ${activeDesign === d.id ? "selected" : ""} ${!unlocked ? "trophy-chip-locked" : ""}" data-mcard-design="${d.id}" ${!unlocked ? "disabled" : ""}>${d.emoji} ${d.name}${!unlocked ? ` 🔒 ${d.unlock.type === "points" ? d.unlock.value + "P" : "Pokal"}` : ""}</button>`;
+        }).join("")}
+      </div>`;
     const gameBar = `
       <div class="category-grid" style="margin-bottom:10px;">
         ${ExerciseData.MEMORY_GAMES.map((g) => `
@@ -2229,6 +3014,7 @@
 
     memoryArea.innerHTML = `
       ${activeMemoryChallengeId ? `<div class="demo-banner">🎮 Duell gegen ${activeMemoryOpponentName || "deinen Freund"} läuft — dein Ergebnis wird nach dieser Runde verglichen.</div>` : ""}
+      ${designBar}
       ${gameBar}
       ${diffBar}
       ${challengeBar}
@@ -2239,6 +3025,7 @@
           const isWrong = memoryState.wrongFlash.includes(c.id);
           const cls = ["memory-card"];
           if (!isOpen) cls.push("hidden-face");
+          if (!isOpen) { const d = MEMORY_CARD_DESIGNS.find((x) => x.id === activeDesign); if (d && d.cls) cls.push(d.cls); }
           if (memoryState.matched.has(c.pairId)) cls.push("matched");
           if (isWrong) cls.push("wrong-flash");
           const showHint = memoryDifficulty === "leicht" && !isOpen && memoryState.lastSeenId === c.id;
@@ -2250,7 +3037,7 @@
           ` : "";
           const face = isOpen
             ? `${corners}<span>${c.label}</span>`
-            : `<span class="fox-crest">🦊</span>${showHint ? '<span class="seen-dot"></span>' : ""}`;
+            : `<span class="fox-crest">${(MEMORY_CARD_DESIGNS.find((x) => x.id === activeDesign) || {}).emoji || "🦊"}</span>${showHint ? '<span class="seen-dot"></span>' : ""}`;
           return `<button type="button" class="${cls.join(" ")}" data-id="${c.id}" data-pair="${c.pairId}">${face}</button>`;
         }).join("")}
       </div>
@@ -2266,6 +3053,12 @@
       btn.addEventListener("click", () => {
         memoryDifficulty = btn.dataset.mdiff;
         newMemoryGame();
+      });
+    });
+    memoryArea.querySelectorAll("[data-mcard-design]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setMemoryCardDesign(btn.dataset.mcardDesign);
+        renderMemory();
       });
     });
     memoryArea.querySelectorAll("[data-game]").forEach((card) => {
@@ -2335,7 +3128,7 @@
           const timeScore = Core.clamp(1 - (seconds - pairs * 3) / (pairs * 12), 0.4, 1);
           const score = Math.max(10, Math.round(100 * moveScore * timeScore));
           Core.sound.fanfare();
-          Backend.saveResult({
+          saveResultAndCheck({
             categories: ["memory"],
             points: score,
             bonus: 0,
@@ -2395,19 +3188,42 @@
   function newWordbuildSession() {
     wbSession = { round: 0, total: 10, points: 0, bonus: 0, playedWords: [] };
   }
+  let wbDifficulty = "mittel"; // "leicht" | "mittel" | "schwer"
   function newWordbuildRound() {
-    const entries = Object.entries(ExerciseData.WORD_MEANINGS);
-    const [word, clue] = entries[Math.floor(Math.random() * entries.length)];
+    // LEICHT: kurze Wörter, fast alles schon vorgegeben (nur 1-2 Buchstaben fehlen).
+    // MITTEL: normale Wörter, wie bisher (~35% vorgegeben).
+    // SCHWER: entweder lange Wörter mit wenig Vorgabe, oder eine ganze Redewendung/ein ganzer
+    // Satz (wie früher beim Glücksrad) — dabei bleiben Leerzeichen zwischen den Wörtern immer
+    // schon sichtbar, nur echte Buchstaben müssen gefunden werden.
+    let word, clue, isPhrase = false;
+    if (wbDifficulty === "schwer" && Math.random() < 0.4 && ExerciseData.REDEWENDUNGEN?.length) {
+      const entry = ExerciseData.REDEWENDUNGEN[Math.floor(Math.random() * ExerciseData.REDEWENDUNGEN.length)];
+      word = entry[0].replace(/\.$/, "");
+      clue = entry[1];
+      isPhrase = true;
+    } else {
+      const entries = Object.entries(ExerciseData.WORD_MEANINGS).filter(([w]) => {
+        if (wbDifficulty === "leicht") return w.length <= 7;
+        if (wbDifficulty === "schwer") return w.length >= 8;
+        return true;
+      });
+      const pool = entries.length ? entries : Object.entries(ExerciseData.WORD_MEANINGS);
+      [word, clue] = pool[Math.floor(Math.random() * pool.length)];
+    }
     const upper = word.toUpperCase();
     const letters = upper.split("");
-    const revealCount = Math.max(2, Math.min(4, Math.floor(letters.length * 0.35)));
+    const revealFraction = wbDifficulty === "leicht" ? 0.75 : wbDifficulty === "schwer" ? 0.2 : 0.35;
+    const letterIdxs = letters.map((ch, i) => i).filter((i) => letters[i] !== " ");
+    const revealCount = Math.max(isPhrase ? 1 : 2, Math.min(letterIdxs.length - 1, Math.round(letterIdxs.length * revealFraction)));
     const revealPositions = new Set();
-    while (revealPositions.size < revealCount && revealPositions.size < letters.length - 1) {
-      revealPositions.add(Math.floor(Math.random() * letters.length));
+    while (revealPositions.size < revealCount) {
+      revealPositions.add(letterIdxs[Math.floor(Math.random() * letterIdxs.length)]);
     }
-    const pool = Core.shuffle(letters.map((ch, i) => ({ ch, id: Core.uid(), used: revealPositions.has(i) })));
+    // Leerzeichen (bei Redewendungen) sind immer schon "aufgedeckt" -- niemand muss ein Leerzeichen suchen.
+    letters.forEach((ch, i) => { if (ch === " ") revealPositions.add(i); });
+    const pool = Core.shuffle(letterIdxs.filter((i) => !revealPositions.has(i)).map((i) => ({ ch: letters[i], id: Core.uid(), used: false })));
     wbState = {
-      word: upper, clue, revealPositions,
+      word: upper, clue, revealPositions, isPhrase,
       slots: letters.map((ch, i) => (revealPositions.has(i) ? ch : null)),
       pool,
       startedAt: Date.now(),
@@ -2442,12 +3258,26 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🔤 WORTBAUSTELLE · RUNDE ${wbSession.round + 1} / ${wbSession.total}</p>
+        <div class="trophy-case" style="margin-bottom:8px;">
+          ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip wb-diff-btn ${wbDifficulty === key ? "selected" : ""}" data-wb-diff="${key}">${label}</button>`).join("")}
+        </div>
         <h3 style="margin-bottom:10px;">${s.clue}</h3>
-        <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
-          ${s.slots.map((ch, i) => `
-            <div class="wb-slot ${ch ? (s.revealPositions.has(i) ? "wb-given" : "wb-filled") : "wb-empty"} ${s.wrongFlash && i === nextEmptyIdx ? "wb-wrong" : ""}"
-                 data-slot-idx="${i}" data-filled="${ch && !s.revealPositions.has(i) ? "1" : "0"}">${ch || ""}</div>
-          `).join("")}
+        <div class="wb-slot-row" style="flex-wrap:wrap; ${s.slots.length > 8 ? `--wb-slot-w: ${Math.max(26, Math.floor(300 / Math.min(s.slots.length, 12)))}px; --wb-font-size: ${Math.max(0.85, 1.3 - (s.slots.length - 8) * 0.05)}rem;` : ""}">
+          ${(() => {
+            // In Wort-Gruppen aufteilen (an Leerzeichen), damit ein Zeilenumbruch NUR zwischen
+            // Wörtern passieren kann, nie mitten in einem Wort — jede Gruppe bleibt intern
+            // zusammenhängend (nowrap), nur der äußere Container darf umbrechen.
+            const groups = []; let current = [];
+            s.word.split("").forEach((ch, i) => {
+              if (ch === " ") { groups.push(current); current = []; }
+              else current.push(i);
+            });
+            groups.push(current);
+            return groups.map((idxs) => `<div class="wb-word-group">${idxs.map((i) => `
+              <div class="wb-slot ${s.slots[i] ? (s.revealPositions.has(i) ? "wb-given" : "wb-filled") : "wb-empty"} ${s.wrongFlash && i === nextEmptyIdx ? "wb-wrong" : ""}"
+                   data-slot-idx="${i}" data-filled="${s.slots[i] && !s.revealPositions.has(i) ? "1" : "0"}">${s.slots[i] || ""}</div>
+            `).join("")}</div>`).join("");
+          })()}
         </div>
         <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
           ${s.pool.map((p) => `<button type="button" class="btn btn-ghost wb-letter-btn" data-letter-id="${p.id}" ${p.used ? "disabled style=\"opacity:0.25;\"" : ""}>${p.ch}</button>`).join("")}
@@ -2459,9 +3289,15 @@
         <div id="wbChallengeBar"></div>
       </div>
     `;
-    renderMiniChallengeBar("wortbaustelle", "wortbaustelle").then((html) => {
-      const el = document.getElementById("wbChallengeBar");
-      if (el) { el.innerHTML = html; wireMiniChallengeBar(area, "wortbaustelle", renderWordbuild); }
+    renderMiniChallengeBarCached("wortbaustelle", "wortbaustelle", "wbChallengeBar", area, renderWordbuild);
+    area.querySelectorAll(".wb-diff-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.dataset.wbDiff === wbDifficulty) return;
+        wbDifficulty = btn.dataset.wbDiff;
+        newWordbuildSession();
+        newWordbuildRound();
+        renderWordbuild();
+      });
     });
     area.querySelectorAll("[data-letter-id]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -2483,7 +3319,7 @@
             wbSession.playedWords.push(`${s.word.charAt(0)}${s.word.slice(1).toLowerCase()} — ${s.clue}`);
             Core.sound.fanfare();
             if (wbSession.round >= wbSession.total) {
-              Backend.saveResult({
+              saveResultAndCheck({
                 categories: ["wortbaustelle"], points: wbSession.points, bonus: wbSession.bonus, percent: Math.round((wbSession.points / wbSession.total) * 100),
                 character: (WB_TIERS.find((t) => wbSession.points <= t.max) || WB_TIERS[WB_TIERS.length - 1]).title,
                 badges: [], playedAt: new Date().toISOString(),
@@ -2646,10 +3482,7 @@
         <div id="wsChallengeBar"></div>
       </div>
     `;
-    renderMiniChallengeBar("buchstabensalat", "buchstabensalat").then((html) => {
-      const el = document.getElementById("wsChallengeBar");
-      if (el) { el.innerHTML = html; wireMiniChallengeBar(area, "buchstabensalat", renderWordSearch); }
-    });
+    renderMiniChallengeBarCached("buchstabensalat", "buchstabensalat", "wsChallengeBar", area, renderWordSearch);
     area.querySelectorAll(".ws-cell").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (s.pendingArticleFor) return;
@@ -2689,7 +3522,7 @@
         else { Core.sound.wrong(); }
         s.pendingArticleFor = null;
         if (wsSession.wordsAttempted >= wsSession.target) {
-          Backend.saveResult({
+          saveResultAndCheck({
             categories: ["buchstabensalat"], points: wsSession.correctCount, bonus: 0,
             percent: Math.round((wsSession.correctCount / wsSession.target) * 100),
             character: (WS_TIERS.find((t) => wsSession.correctCount <= t.max) || WS_TIERS[WS_TIERS.length - 1]).title,
@@ -2739,6 +3572,22 @@
      '#' = keine Eingabe-Zelle (schwarzes Feld).
      ============================================================ */
   const CROSSWORDS = [
+    {
+      title: "Rätsel im Garten (3 Wörter)",
+      rows: 5, cols: 6,
+      grid: [
+        ["#", "T", "#", "#", "M", "#"],
+        ["G", "A", "R", "T", "E", "N"],
+        ["#", "S", "#", "#", "E", "#"],
+        ["#", "S", "#", "#", "R", "#"],
+        ["#", "E", "#", "#", "#", "#"],
+      ],
+      words: [
+        { num: 1, dir: "across", row: 1, col: 0, answer: "GARTEN", clue: "Fläche bei einem Haus, mit Blumen und Pflanzen" },
+        { num: 2, dir: "down", row: 0, col: 1, answer: "TASSE", clue: "daraus trinkt man Kaffee oder Tee" },
+        { num: 3, dir: "down", row: 0, col: 4, answer: "MEER", clue: "sehr großes, salziges Gewässer" },
+      ],
+    },
     {
       title: "Rätsel 1",
       rows: 5, cols: 6,
@@ -4296,7 +5145,12 @@
     },
   ];
   let cwState = null;
+  let cwSession = null; // { round, total, correctCount, allWordsPlayed } -- mehrere Rätsel pro Sitzung, EINE Sammel-Nachricht am Ende
+  function newCrosswordSession() {
+    cwSession = { round: 0, total: 4, allWordsPlayed: [] };
+  }
   function newCrossword(index) {
+    if (!cwSession) newCrosswordSession();
     const puzzle = CROSSWORDS[index % CROSSWORDS.length];
     cwState = { puzzle, entries: {}, checked: false, startedAt: Date.now() };
   }
@@ -4327,7 +5181,7 @@
     if (!cwState.activeDir) cwState.activeDir = "across";
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">✏️ KREUZWORTRÄTSEL · ${puzzle.title}</p>
+        <p class="eyebrow">✏️ KREUZWORTRÄTSEL · RUNDE ${cwSession.round + 1} / ${cwSession.total} · ${puzzle.title}</p>
         <p class="empty-note" style="margin-bottom:10px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
         <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, 1fr); max-width: ${puzzle.cols * 42}px;">
           ${puzzle.grid.map((row, r) => row.map((ch, c) => {
@@ -4358,8 +5212,10 @@
           <button type="button" class="btn btn-ghost" id="cwNextBtn">🔄 Nächstes Rätsel</button>
         </div>
         <p class="empty-note" id="cwFeedback" style="text-align:center; margin-top:10px;"></p>
+        <div id="cwChallengeBar"></div>
       </div>
     `;
+    renderMiniChallengeBarCached("kreuzwortraetsel", "kreuzwortraetsel", "cwChallengeBar", area, renderCrossword);
     area.querySelectorAll(".cw-input").forEach((input) => {
       const r = Number(input.dataset.r), c = Number(input.dataset.c);
       // Beim Antippen die Schreibrichtung festlegen: startet die Zelle ein Runter-Wort, aber
@@ -4427,15 +5283,24 @@
       const fb = document.getElementById("cwFeedback");
       if (allCorrect) {
         Core.sound.fanfare();
-        fb.textContent = "🎉 Alles richtig!";
         const seconds = (Date.now() - cwState.startedAt) / 1000;
-        Backend.saveResult({
+        cwSession.round += 1;
+        cwSession.allWordsPlayed.push(...puzzle.words.map((w) => `• ${w.answer} — ${w.clue}`));
+        saveResultAndCheck({
           categories: ["kreuzwortraetsel"], points: puzzle.words.length, bonus: seconds < 60 ? 1 : 0, percent: 100,
           character: "Rätsel-Genie", badges: [], playedAt: new Date().toISOString(),
         });
-        if (Backend.currentUser()) {
-          const wordList = puzzle.words.map((w) => `• ${w.answer} — ${w.clue}`).join("\n");
-          Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade das Kreuzworträtsel „${puzzle.title}" gelöst — alles richtig! (${puzzle.words.length} Wörter, ${seconds < 60 ? "+1 Tempo-Bonus" : "kein Tempo-Bonus"})\n\nDiese Wörter kamen vor:\n${wordList}`);
+        if (cwSession.round >= cwSession.total) {
+          fb.textContent = `🎉 Alles richtig! Sitzung fertig (${cwSession.total} Rätsel gelöst).`;
+          if (Backend.currentUser()) {
+            const wordList = cwSession.allWordsPlayed.join("\n");
+            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade ${cwSession.total} Kreuzworträtsel hintereinander gelöst — alles richtig!\n\nDiese Wörter kamen vor:\n${wordList}`);
+          }
+          cwSession = null; // naechster Aufruf startet automatisch eine frische Sitzung
+        } else {
+          fb.textContent = "🎉 Alles richtig! Weiter geht's mit dem nächsten Rätsel …";
+          const nextIdx = CROSSWORDS.indexOf(puzzle) + 1;
+          setTimeout(() => { newCrossword(nextIdx); renderCrossword(); }, 1600);
         }
       } else {
         Core.sound.wrong();
@@ -4451,7 +5316,7 @@
     });
   }
   document.querySelector('#learnSubnav [data-sub="sub-crossword"]').addEventListener("click", () => {
-    if (!cwState) newCrossword(0);
+    if (!cwState) { newCrosswordSession(); newCrossword(0); }
     renderCrossword();
   });
 
@@ -4486,7 +5351,7 @@
       ${todayHistory ? `
         <div class="question-card" style="margin-bottom:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})</p>
-          <div class="trophy-case" style="margin:10px 0;">
+          <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
           </div>
           <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
@@ -4535,7 +5400,11 @@
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } });
     function render() {
       box.innerHTML = "";
-      box.appendChild(Core.el("img", { src: urls[i], alt: alt || "" }));
+      // Derselbe quadratische Ausschnitt wie bei den Miniaturbildern (object-fit: cover) — auch
+      // in der Vergrößerung, damit alle Fotos überall im selben, einheitlichen Format erscheinen.
+      box.appendChild(Core.el("div", { class: "gallery-slideshow-frame" },
+        Core.el("img", { src: urls[i], alt: alt || "" })
+      ));
       box.appendChild(Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"));
       if (urls.length > 1) {
         box.appendChild(Core.el("button", { class: "lightbox-nav lightbox-prev", type: "button", onclick: (e) => { e.stopPropagation(); i = (i - 1 + urls.length) % urls.length; render(); } }, "‹"));
@@ -4598,6 +5467,57 @@
   });
 
   let communityLoaded = true; // wird nicht mehr zum Sperren verwendet, nur Kompatibilität
+  // Popup zum nachträglichen Bearbeiten des eigenen Beitrags: Titelbild ändern/ergänzen und/oder
+  // eine weitere Sprachniveau-Fassung zur bestehenden Geschichte hinzufügen.
+  function openCommunityTextEditModal(textId, texts) {
+    const t = texts.find((x) => x.id === textId);
+    if (!t) return;
+    const levelsObj = Backend.communityTextLevels(t);
+    const availableLevels = Object.keys(levelsObj);
+    const missingLevels = ["A1", "A2", "B1", "B2", "C1", "C2"].filter((l) => !availableLevels.includes(l));
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("h3", {}, "✏️ Beitrag bearbeiten"),
+        Core.el("div", { class: "form-field" },
+          Core.el("label", { class: "empty-note" }, "Titelbild-Adresse (URL, optional)"),
+          Core.el("input", { type: "text", id: "ctEditCoverUrl", class: "guestbook-form-textarea", style: "min-height:auto;", value: t.cover_url || "", placeholder: "https://…" })
+        ),
+        missingLevels.length ? Core.el("div", { class: "form-field" },
+          Core.el("label", { class: "empty-note" }, `Weiteres Niveau ergänzen (bisher: ${availableLevels.join(", ") || "keins"})`),
+          Core.el("select", { id: "ctEditNewLevel", class: "challenge-select" },
+            ...missingLevels.map((l) => Core.el("option", { value: l }, l))
+          ),
+          Core.el("textarea", { id: "ctEditNewLevelText", class: "guestbook-form-textarea", placeholder: "Text für dieses Niveau…", style: "margin-top:6px;" })
+        ) : Core.el("p", { class: "empty-note" }, "Alle sechs Niveaus sind bereits vorhanden."),
+        Core.el("p", { class: "form-error", id: "ctEditError" }),
+        Core.el("button", { type: "button", class: "btn btn-coffee", id: "ctEditSaveBtn", style: "margin-top:10px;" }, "Speichern")
+      )
+    );
+    document.body.appendChild(box);
+    document.getElementById("ctEditSaveBtn").addEventListener("click", async () => {
+      const errBox = document.getElementById("ctEditError");
+      errBox.textContent = "";
+      const newCoverUrl = document.getElementById("ctEditCoverUrl").value.trim();
+      const newLevelSelect = document.getElementById("ctEditNewLevel");
+      const newLevelText = document.getElementById("ctEditNewLevelText");
+      try {
+        const updates = {};
+        if (newCoverUrl !== (t.cover_url || "")) updates.coverUrl = newCoverUrl;
+        if (newLevelSelect && newLevelText && newLevelText.value.trim()) {
+          const merged = { ...levelsObj, [newLevelSelect.value]: newLevelText.value.trim() };
+          updates.level = "multi";
+          updates.body = JSON.stringify(merged);
+        }
+        if (Object.keys(updates).length === 0) { errBox.textContent = "Nichts zum Speichern angegeben."; return; }
+        await Backend.updateCommunityText(textId, updates);
+        box.remove();
+        renderCommunityTexts();
+      } catch (e) {
+        errBox.textContent = e.message || "Speichern fehlgeschlagen.";
+      }
+    });
+  }
   async function renderCommunityTexts() {
     const box = document.getElementById("communityStandaloneArea");
     if (!box) return;
@@ -4624,7 +5544,24 @@
               <label>Sprachniveau</label>
               <select id="ctLevel" class="challenge-select">
                 ${["A1","A2","B1","B2","C1","C2"].map((l) => `<option value="${l}">${l}</option>`).join("")}
+                <option value="alle">Alle Niveaus (ein Text in 6 Fassungen)</option>
               </select>
+            </div>
+            <div class="ct-all-levels-hint" id="ctAllLevelsHint" style="display:none;">
+              <p style="margin:0 0 6px; font-weight:700;">📋 So bereitest du den Text vor:</p>
+              <p class="empty-note" style="margin:0 0 8px;">Schreib deinen Text <strong>sechsmal untereinander</strong> — einmal pro Niveau, in der Reihenfolge A1 → A2 → B1 → B2 → C1 → C2. Zwischen jeder Fassung eine <strong>komplett leere Zeile</strong> (also zweimal Enter). Kein "A1:" oder Ähnliches davorschreiben — nur die sechs reinen Texte, das System erkennt die Reihenfolge automatisch. Den Titel oben nur einmal eintragen, nicht in jeder Fassung wiederholen.</p>
+              <p style="margin:0 0 4px; font-weight:700; font-size:0.85rem;">Beispiel:</p>
+              <pre class="ct-example-box">Ein Fuchs geht in den Wald.
+
+Ein kleiner Fuchs läuft durch den Wald.
+
+An einem Morgen lief ein kleiner Fuchs los…
+
+(hier die B2-Fassung)
+
+(hier die C1-Fassung)
+
+(hier die C2-Fassung)</pre>
             </div>
             <div class="form-field"><label>Text</label><textarea id="ctBody" class="guestbook-form-textarea" style="min-height:120px;" maxlength="3000"></textarea></div>
             <div class="form-field">
@@ -4653,14 +5590,26 @@
         const iLiked = user && likes.includes(user.id);
         const authorP = t.user_id ? authorProfiles[t.user_id] : null;
         const authorAvatar = authorP ? tinyAvatar({ avatar_url: authorP.avatar_url, avatar_emoji: authorP.avatar_emoji, name: t.author_name }) : "";
+        const levelsObj = Backend.communityTextLevels(t);
+        const availableLevels = Object.keys(levelsObj);
+        const isMultiLevel = availableLevels.length > 1;
+        const activeLevel = communityTextLevelChoice[t.id] && levelsObj[communityTextLevelChoice[t.id]] ? communityTextLevelChoice[t.id] : availableLevels[0];
+        const isMine = user && t.user_id === user.id;
         return `
         <div class="material-card">
           ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover-banner" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
           <div class="community-text-head">
-            <span class="level-badge">${t.level}</span>
+            <span class="level-badge">${isMultiLevel ? `${availableLevels.length} Niveaus` : activeLevel}</span>
             <h3 style="margin:0;">${t.title}</h3>
           </div>
-          <p style="white-space:pre-wrap;">${t.body}</p>
+          ${isMultiLevel ? `
+          <p class="empty-note" style="margin:4px 0 6px;">Auch verfügbar in: ${availableLevels.join(", ")}</p>
+          <div class="trophy-case" style="margin:0 0 8px; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
+            ${availableLevels.map((lvl) => `<button type="button" class="trophy-chip community-level-btn ${activeLevel === lvl ? "selected" : ""}" data-ct-id="${t.id}" data-ct-level="${lvl}" style="flex-shrink:0;">${lvl}</button>`).join("")}
+          </div>
+          <p style="white-space:pre-wrap;">${levelsObj[activeLevel] || ""}</p>` : `
+          <p style="white-space:pre-wrap;">${levelsObj[activeLevel] || t.body}</p>`}
+          ${isMine ? `<button type="button" class="btn btn-ghost" style="margin-top:6px; font-size:0.78rem; padding:5px 12px;" data-edit-community-text="${t.id}">✏️ Titelbild ändern / weiteres Niveau ergänzen</button>` : ""}
           <div class="modal-meta-row" style="margin-top:8px; justify-content:flex-start;">
             <button type="button" class="friend-name-btn" style="display:inline-flex; align-items:center; gap:6px;" data-view-author="${t.user_id || ""}" ${!t.user_id ? "disabled" : ""}>${authorAvatar}${t.author_name}${adminBadge(authorP?.is_admin, authorP?.is_owner, authorP?.is_moderator)}</button>
             <span class="empty-note">${t.created_at ? new Date(t.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</span>
@@ -4715,6 +5664,15 @@
         catch (err) { alert(err.message); }
       });
     });
+    box.querySelectorAll(".community-level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        communityTextLevelChoice[btn.dataset.ctId] = btn.dataset.ctLevel;
+        renderCommunityTexts();
+      });
+    });
+    box.querySelectorAll("[data-edit-community-text]").forEach((btn) => {
+      btn.addEventListener("click", () => openCommunityTextEditModal(btn.dataset.editCommunityText, texts));
+    });
     box.querySelectorAll("[data-admin-delete-text]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("Diesen Beitrag als Admin entfernen?")) return;
@@ -4748,14 +5706,32 @@
     }
 
     const submitBtn = document.getElementById("ctSubmitBtn");
+    const levelSelect = document.getElementById("ctLevel");
+    if (levelSelect) {
+      levelSelect.addEventListener("change", () => {
+        document.getElementById("ctAllLevelsHint").style.display = levelSelect.value === "alle" ? "block" : "none";
+      });
+    }
     if (submitBtn) {
       submitBtn.addEventListener("click", async () => {
         const title = document.getElementById("ctTitle").value.trim();
         const level = document.getElementById("ctLevel").value;
-        const body = document.getElementById("ctBody").value.trim();
+        const rawBody = document.getElementById("ctBody").value.trim();
         const errBox = document.getElementById("ctError");
         errBox.textContent = "";
-        if (!title || !body) { errBox.textContent = "Bitte Titel und Text ausfüllen."; return; }
+        if (!title || !rawBody) { errBox.textContent = "Bitte Titel und Text ausfüllen."; return; }
+        let body = rawBody;
+        if (level === "alle") {
+          // Text wird an Leerzeilen in genau 6 Abschnitte zerlegt (A1 bis C2, in dieser
+          // Reihenfolge) und als strukturiertes JSON gespeichert, statt als einfacher Text.
+          const parts = rawBody.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+          if (parts.length !== 6) {
+            errBox.textContent = `Für "Alle Niveaus" werden genau 6 Textabschnitte erwartet (durch Leerzeilen getrennt) — gefunden: ${parts.length}.`;
+            return;
+          }
+          const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+          body = JSON.stringify(Object.fromEntries(levels.map((l, i) => [l, parts[i]])));
+        }
         submitBtn.textContent = "Wird gesendet …";
         submitBtn.disabled = true;
         try {
@@ -4817,8 +5793,192 @@
     renderCommunityTexts();
   });
 
-  document.getElementById("linksArea").innerHTML = VocabData.LINKS.map((l) => `
-    <div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("");
+  async function renderLinks() {
+    const area = document.getElementById("linksArea");
+    if (!area) return;
+    const user = Backend.currentUser();
+    const [userLinks, myLinks, pendingLinks] = await Promise.all([
+      Backend.getApprovedUserLinks(),
+      user ? Backend.getMyUserLinks() : Promise.resolve([]),
+      Backend.canModerate() ? Backend.getPendingUserLinks() : Promise.resolve([]),
+    ]);
+    const myPending = myLinks.filter((l) => l.status === "pending");
+    area.innerHTML = `
+      ${VocabData.LINKS.map((l) => `<div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("")}
+      ${userLinks.map((l) => `<div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc || ""}</p><p class="empty-note">Vorgeschlagen von ${l.author_name || "jemandem"}</p></div>`).join("")}
+      <div class="question-card" style="margin-top:16px;">
+        <button type="button" class="emoji-toggle-link" id="linkFormToggle">➕ Eigenen Link vorschlagen ${myPending.length ? `(du hast ${myPending.length} in Prüfung)` : ""}</button>
+        <div id="linkFormBox" style="display:none; margin-top:10px;">
+          <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird.</p>
+          <div class="form-field"><label>Titel</label><input type="text" id="linkTitleInput" maxlength="80" /></div>
+          <div class="form-field"><label>Adresse (URL)</label><input type="text" id="linkUrlInput" placeholder="https://…" /></div>
+          <div class="form-field"><label>Kurzbeschreibung (optional)</label><input type="text" id="linkDescInput" maxlength="150" /></div>
+          <p class="form-error" id="linkSubmitError"></p>
+          <button type="button" class="btn btn-coffee" id="linkSubmitBtn">Vorschlagen</button>
+        </div>
+        ${myPending.length ? `<div style="margin-top:10px;">${myPending.map((l) => `<div class="breakdown-row"><span>${l.title}</span><span>Wartet auf Freischaltung</span></div>`).join("")}</div>` : ""}
+      </div>
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:16px; border:2px solid var(--amber-400);">
+        <h3>🛠️ Vorgeschlagene Links prüfen (${pendingLinks.length})</h3>
+        ${pendingLinks.length ? pendingLinks.map((l) => `
+          <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px;">
+            <strong>${l.title}</strong>
+            <a href="${l.url}" target="_blank" rel="noopener" class="empty-note">${l.url} ↗</a>
+            ${l.desc ? `<p class="empty-note" style="margin:0;">${l.desc}</p>` : ""}
+            <p class="empty-note" style="margin:0;">von ${l.author_name || "jemandem"}</p>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button type="button" class="btn btn-coffee" style="padding:5px 12px; font-size:0.78rem;" data-approve-link="${l.id}">✅ Freischalten</button>
+              <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-reject-link="${l.id}">✕ Ablehnen</button>
+            </div>
+          </div>`).join("") : '<p class="empty-note">Nichts zu prüfen.</p>'}
+      </div>` : ""}
+    `;
+    const toggleBtn = document.getElementById("linkFormToggle");
+    if (toggleBtn) toggleBtn.addEventListener("click", () => {
+      const box = document.getElementById("linkFormBox");
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    });
+    const submitBtn = document.getElementById("linkSubmitBtn");
+    if (submitBtn) submitBtn.addEventListener("click", async () => {
+      const errBox = document.getElementById("linkSubmitError");
+      errBox.textContent = "";
+      try {
+        await Backend.submitLink({
+          title: document.getElementById("linkTitleInput").value.trim(),
+          url: document.getElementById("linkUrlInput").value.trim(),
+          desc: document.getElementById("linkDescInput").value.trim(),
+        });
+        renderLinks();
+      } catch (e) { errBox.textContent = "⚠️ " + e.message; }
+    });
+    area.querySelectorAll("[data-approve-link]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try { await Backend.approveUserLink(btn.dataset.approveLink); renderLinks(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+    area.querySelectorAll("[data-reject-link]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen Link-Vorschlag ablehnen und löschen?")) return;
+        try { await Backend.rejectUserLink(btn.dataset.rejectLink); renderLinks(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+  }
+  renderLinks();
+  document.querySelector('#knowledgeSubnav [data-sub="sub-links"]').addEventListener("click", () => renderLinks());
+
+  // "Schwarmwissen" — freier Austausch von Tipps, Links, Videos, Bildern zwischen
+  // Nutzer:innen. Alex bietet die Inhalte an, lernt aber selbst kein Deutsch mehr — wer gerade
+  // mittendrin steckt, weiß am besten, was wirklich hilft.
+  async function renderTips() {
+    const area = document.getElementById("tipsArea");
+    if (!area) return;
+    const user = Backend.currentUser();
+    const [tips, myTips, pendingTips] = await Promise.all([
+      Backend.getApprovedCommunityTips(),
+      user ? Backend.getMyCommunityTips() : Promise.resolve([]),
+      Backend.canModerate() ? Backend.getPendingCommunityTips() : Promise.resolve([]),
+    ]);
+    const myPending = myTips.filter((t) => t.status === "pending");
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:12px;">Hier tauscht ihr euch gegenseitig aus — was hat bei dir funktioniert? Eine Serie, ein Video, eine Übungsmethode? Teil es mit den anderen.</p>
+      <div class="question-card">
+        <button type="button" class="emoji-toggle-link" id="tipFormToggle">💡 Eigenen Tipp teilen ${myPending.length ? `(${myPending.length} in Prüfung)` : ""}</button>
+        <div id="tipFormBox" style="display:none; margin-top:10px;">
+          <p class="empty-note">Wird von Alex geprüft, bevor er für alle sichtbar wird.</p>
+          <div class="form-field"><label>Dein Tipp</label><textarea id="tipTextInput" class="guestbook-form-textarea" maxlength="500" placeholder="z. B. „Nicos Weg hat mir beim Hörverstehen total geholfen…“"></textarea></div>
+          <div class="form-field"><label>Link (optional — Video, Artikel, o. Ä.)</label><input type="text" id="tipLinkInput" placeholder="https://…" /></div>
+          <div class="form-field">
+            <label class="empty-note" style="cursor:pointer;">📷 Bild anhängen (optional) <input type="file" id="tipImageInput" accept="image/*" style="display:block; margin-top:4px;" /></label>
+            <div id="tipImagePreviewBox"></div>
+          </div>
+          <p class="form-error" id="tipSubmitError"></p>
+          <button type="button" class="btn btn-coffee" id="tipSubmitBtn">Teilen</button>
+        </div>
+        ${myPending.length ? `<div style="margin-top:10px;">${myPending.map((t) => `<div class="breakdown-row"><span>${t.text.slice(0, 40)}${t.text.length > 40 ? "…" : ""}</span><span>Wartet auf Freischaltung</span></div>`).join("")}</div>` : ""}
+      </div>
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px; border:2px solid var(--amber-400);">
+        <h3>🛠️ Vorgeschlagene Tipps prüfen (${pendingTips.length})</h3>
+        ${pendingTips.length ? pendingTips.map((t) => `
+          <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px;">
+            <p style="margin:0; white-space:pre-wrap;">${t.text}</p>
+            ${t.link ? `<a href="${t.link}" target="_blank" rel="noopener" class="empty-note">${t.link} ↗</a>` : ""}
+            ${t.image_url ? `<img src="${t.image_url}" style="max-width:140px; border-radius:8px;" />` : ""}
+            <p class="empty-note" style="margin:0;">von ${t.author_name || "jemandem"}</p>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button type="button" class="btn btn-coffee" style="padding:5px 12px; font-size:0.78rem;" data-approve-tip="${t.id}">✅ Freischalten</button>
+              <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-reject-tip="${t.id}">✕ Ablehnen</button>
+            </div>
+          </div>`).join("") : '<p class="empty-note">Nichts zu prüfen.</p>'}
+      </div>` : ""}
+      <p class="eyebrow" style="margin-top:20px;">💬 Tipps aus der Gemeinschaft</p>
+      ${tips.length ? tips.map((t) => `
+        <div class="material-card">
+          <p style="white-space:pre-wrap; margin:0 0 8px;">${t.text}</p>
+          ${t.link ? `<a href="${t.link}" target="_blank" rel="noopener" class="empty-note">🔗 ${t.link}</a>` : ""}
+          ${t.image_url ? `<img src="${t.image_url}" style="max-width:100%; border-radius:10px; margin-top:8px; cursor:pointer;" data-modal-view-photo="${t.image_url}" />` : ""}
+          <p class="empty-note" style="margin-top:8px;">von ${t.author_name || "jemandem"}${user && t.user_id === user.id ? ` · <button type="button" class="emoji-toggle-link" style="display:inline; font-size:0.75rem;" data-delete-tip="${t.id}">löschen</button>` : ""}</p>
+        </div>`).join("") : '<p class="empty-note">Noch keine Tipps — sei die/der Erste!</p>'}
+    `;
+    const toggleBtn = document.getElementById("tipFormToggle");
+    if (toggleBtn) toggleBtn.addEventListener("click", () => {
+      const box = document.getElementById("tipFormBox");
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    });
+    let pendingTipImageUrl = "";
+    const imgInput = document.getElementById("tipImageInput");
+    if (imgInput) imgInput.addEventListener("change", async () => {
+      const file = imgInput.files[0];
+      if (!file) return;
+      const previewBox = document.getElementById("tipImagePreviewBox");
+      previewBox.innerHTML = '<p class="empty-note">Lädt hoch…</p>';
+      try {
+        pendingTipImageUrl = await Backend.uploadCommunityTextCover(file);
+        previewBox.innerHTML = `<img src="${pendingTipImageUrl}" style="max-width:120px; border-radius:8px; margin-top:6px;" />`;
+      } catch (err) {
+        previewBox.innerHTML = `<p class="form-error">⚠️ ${err.message}</p>`;
+      }
+    });
+    const submitBtn = document.getElementById("tipSubmitBtn");
+    if (submitBtn) submitBtn.addEventListener("click", async () => {
+      const errBox = document.getElementById("tipSubmitError");
+      errBox.textContent = "";
+      try {
+        await Backend.submitCommunityTip({
+          text: document.getElementById("tipTextInput").value.trim(),
+          link: document.getElementById("tipLinkInput").value.trim(),
+          imageUrl: pendingTipImageUrl,
+        });
+        renderTips();
+      } catch (e) { errBox.textContent = "⚠️ " + e.message; }
+    });
+    area.querySelectorAll("[data-approve-tip]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try { await Backend.approveCommunityTip(btn.dataset.approveTip); renderTips(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+    area.querySelectorAll("[data-reject-tip]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen Tipp ablehnen und löschen?")) return;
+        try { await Backend.rejectCommunityTip(btn.dataset.rejectTip); renderTips(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+    area.querySelectorAll("[data-delete-tip]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen eigenen Tipp löschen?")) return;
+        try { await Backend.deleteMyCommunityTip(btn.dataset.deleteTip); renderTips(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+    area.querySelectorAll("[data-modal-view-photo]").forEach((img) => {
+      img.addEventListener("click", () => openGallerySlideshow([img.dataset.modalViewPhoto], 0, "Bild"));
+    });
+  }
+  renderTips();
+  document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]').addEventListener("click", () => renderTips());
 
   /* ============================================================
      NACHRICHTEN (RSS) — als Leseübung, schwierige Wörter markiert
@@ -4909,19 +6069,21 @@
   function captureProfileEditDraft() {
     const ids = [
       "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput", "extraSportInput",
-      "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
+      "favMovieInput", "favSeriesInput", "favSongInput", "extraMusicLinkInput", "extraActorInput", "extraBookInput", "extraArtistInput",
       "favQuoteInput", "extraMottoInput", "poemInput", "extraDreamInput", "extraHappyInput",
-      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelect",
+      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelectTop",
+      "extraLikesInput", "extraDislikesInput",
       "birthdayInput", "originSelect",
     ];
     const fieldMap = {
       favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
       extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraSportInput: "favSport",
-      favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraActorInput: "favActor",
+      favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraMusicLinkInput: "musicLink", extraActorInput: "favActor",
       extraBookInput: "favBook", extraArtistInput: "favArtist",
       favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
       extraNumberInput: "favNumber", extraTalentInput: "talent", extraVacationInput: "favVacation",
+      extraLikesInput: "likes", extraDislikesInput: "dislikes",
       birthdayInput: "birthday", originSelect: "origin",
     };
     ids.forEach((id) => {
@@ -5016,27 +6178,38 @@
         </div>` : ""}
         <div class="question-card profile-card-view">
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
-          <div class="profile-header">
+          <div class="profile-header-flow">
             ${avatarHtml}
-            <div class="profile-name-col">
-              <h2 style="margin-bottom:2px;">${profile.name}${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator)}</h2>
-              <div class="modal-meta-row" style="margin-top:0; justify-content:flex-start;">
-                <button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>
-                ${profile.isPremium ? '<span class="empty-note">✨ Premium</span>' : ""}
-                ${originFlag ? `<span class="empty-note">${originFlag} ${profile.origin}</span>` : ""}
-                ${zodiacBadgeHtml(profile.birthday)}
-                ${genderBadgeHtml(extra.genderSymbol)}
-              </div>
-            </div>
+            <h2 style="margin:0 0 4px;">${profile.name}${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator)}</h2>
+            <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
+            ${profile.isPremium ? '<span class="flow-badge">✨ Premium</span>' : ""}
+            ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
+            <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
+            ${genderBadgeHtml(extra.genderSymbol) ? `<span class="flow-badge">${genderBadgeHtml(extra.genderSymbol)}</span>` : ""}
           </div>
+          <div style="clear:both;"></div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
             ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
           </div>
           ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
-          ${hobbyReadout ? `<div class="trophy-case" style="margin-top:10px;">${hobbyReadout}</div>` : ""}
+          ${hobbyReadout ? `<p class="eyebrow" style="margin-top:12px;">🎯 Hobbys & Interessen</p><div class="trophy-case" style="margin-top:6px;">${hobbyReadout}</div>` : ""}
           ${renderExtendedSteckbrief(profile, "own")}
           <div class="badge-row">
             ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
+          </div>
+          ${profile.trophies && profile.trophies.length ? `<div class="quiz-actions" style="justify-content:center; gap:18px; margin-top:10px;">
+            <span class="empty-note" style="font-size:0.95rem;">🎖️ ${trophyCounts(profile).orden} Orden</span>
+            <span class="empty-note" style="font-size:0.95rem;">🏆 ${trophyCounts(profile).pokale} Pokale</span>
+          </div>` : ""}
+          <p class="eyebrow" style="margin-top:14px;">🦊 Sammelfiguren</p>
+          <div class="figure-case">
+            ${COLLECTIBLE_FIGURES.map((fig) => {
+              const unlocked = isFigureUnlocked(fig, profile);
+              return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + (fig.unlock.type === "points" ? `ab ${fig.unlock.value} Punkten` : "besonderer Pokal nötig")}">
+                <img src="${fig.img}" alt="${fig.name}" loading="lazy" />
+                ${unlocked ? "" : '<span class="figure-lock-icon">🔒</span>'}
+              </div>`;
+            }).join("")}
           </div>
           <div class="quiz-actions" style="justify-content:flex-start;">
             <button type="button" class="btn btn-coffee" id="editProfileBtn">✏️ Bearbeiten</button>
@@ -5079,6 +6252,7 @@
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
       wireSteckbriefPager(area, renderAccount);
+      wireMusicPlayer(area);
       const dismissBtn = document.getElementById("dismissNotificationsBtn");
       if (dismissBtn) {
         dismissBtn.addEventListener("click", async () => {
@@ -5091,8 +6265,10 @@
       const muteBtn = document.getElementById("muteNotifyBtn");
       if (muteBtn) {
         muteBtn.addEventListener("click", () => {
-          setNotifyMuted(!isNotifyMuted());
-          if (loginBtn) loginBtn.classList.toggle("notify-ring", !isNotifyMuted() && myUnread.length > 0);
+          const newState = !isNotifyMuted();
+          setNotifyMuted(newState);
+          setNotifyBlinkMuted(newState);
+          if (loginBtn) loginBtn.classList.toggle("notify-ring", !newState && myUnread.length > 0);
           renderAccount();
         });
       }
@@ -5146,6 +6322,10 @@
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
         <button type="button" class="emoji-toggle-link" id="previewProfileLink">👁️ Vorschau: So sehen andere dein Profil</button>
+        ${(profile.gallery || []).length ? `<button type="button" class="emoji-toggle-link" id="galleryAvatarToggleLink">🖼️ Foto aus meiner Galerie wählen</button>` : ""}
+        <div class="emoji-picker-row" id="galleryAvatarPickerRow" style="display:none;">
+          ${(profile.gallery || []).map((url) => `<button type="button" class="gallery-avatar-pick-btn" data-gallery-url="${url}" style="background-image:url('${url}');"></button>`).join("")}
+        </div>
         <button type="button" class="emoji-toggle-link" id="emojiToggleLink">🎭 Kein Foto? Stattdessen Emoji wählen</button>
         <div class="emoji-picker-row" id="emojiPickerRow" style="display:none;">
           ${AVATAR_EMOJIS.map((e) => `<button type="button" class="emoji-pick-btn" data-emoji="${e}">${e}</button>`).join("")}
@@ -5161,6 +6341,15 @@
         <div class="form-field">
           <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
           <input type="date" id="birthdayInput" value="${profileEditDraft.birthday !== undefined ? profileEditDraft.birthday : (profile.birthday || "")}" />
+        </div>
+        <div class="form-field">
+          <label>Geschlechtssymbol im Profil (optional)</label>
+          <select id="extraGenderSymbolSelectTop" class="challenge-select">
+            <option value="">Nicht anzeigen</option>
+            <option value="maennlich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "maennlich" ? "selected" : ""}>♂ männlich</option>
+            <option value="weiblich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "weiblich" ? "selected" : ""}>♀ weiblich</option>
+            <option value="divers" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "divers" ? "selected" : ""}>⚥ divers</option>
+          </select>
         </div>
         <div class="form-field">
           <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
@@ -5230,6 +6419,10 @@
               <input type="text" id="favSongInput" maxlength="60" value="${profileEditDraft.favSong !== undefined ? profileEditDraft.favSong : (profile.favSong || "")}" placeholder="z. B. 99 Luftballons" />
             </div>
             <div class="form-field">
+              <label>🎵 Musik-Link (YouTube, optional) — eigene Musik oder ein Lieblingssong zum Anhören</label>
+              <input type="text" id="extraMusicLinkInput" maxlength="200" value="${profileEditDraft.musicLink !== undefined ? profileEditDraft.musicLink : (extra.musicLink || "")}" placeholder="https://www.youtube.com/watch?v=…" />
+            </div>
+            <div class="form-field">
               <label>Lieblingsschauspieler:in</label>
               <input type="text" id="extraActorInput" maxlength="60" value="${profileEditDraft.favActor !== undefined ? profileEditDraft.favActor : (extra.favActor || "")}" placeholder="z. B. Til Schweiger" />
             </div>
@@ -5289,15 +6482,6 @@
               </select>
             </div>
             <div class="form-field">
-              <label>Symbol im Profil (optional)</label>
-              <select id="extraGenderSymbolSelect" class="challenge-select">
-                <option value="">Nicht anzeigen</option>
-                <option value="maennlich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "maennlich" ? "selected" : ""}>♂ männlich</option>
-                <option value="weiblich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "weiblich" ? "selected" : ""}>♀ weiblich</option>
-                <option value="divers" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "divers" ? "selected" : ""}>⚥ divers</option>
-              </select>
-            </div>
-            <div class="form-field">
               <label>Lieblingszahl</label>
               <input type="text" id="extraNumberInput" maxlength="10" value="${profileEditDraft.favNumber !== undefined ? profileEditDraft.favNumber : (extra.favNumber || "")}" placeholder="z. B. 7" />
             </div>
@@ -5308,6 +6492,14 @@
             <div class="form-field">
               <label>Lieblingsurlaubsart</label>
               <input type="text" id="extraVacationInput" maxlength="60" value="${profileEditDraft.favVacation !== undefined ? profileEditDraft.favVacation : (extra.favVacation || "")}" placeholder="z. B. Wandern in den Bergen" />
+            </div>
+            <div class="form-field">
+              <label>👍 Das mag ich</label>
+              <input type="text" id="extraLikesInput" maxlength="150" value="${profileEditDraft.likes !== undefined ? profileEditDraft.likes : (extra.likes || "")}" placeholder="z. B. Sonnenschein, gute Musik, Kaffee" />
+            </div>
+            <div class="form-field">
+              <label>👎 Das mag ich nicht</label>
+              <input type="text" id="extraDislikesInput" maxlength="150" value="${profileEditDraft.dislikes !== undefined ? profileEditDraft.dislikes : (extra.dislikes || "")}" placeholder="z. B. Montagmorgen, Warteschlangen" />
             </div>
           ` : ""}
         </div>
@@ -5361,7 +6553,8 @@
           extraMottoInput: "motto", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
-          extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelect: "genderSymbol",
+          extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelectTop: "genderSymbol",
+          extraLikesInput: "likes", extraDislikesInput: "dislikes", extraMusicLinkInput: "musicLink",
           birthdayInput: "birthday", originSelect: "origin",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
           favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
@@ -5385,10 +6578,13 @@
         favColor: val("extraColorInput", extra.favColor),
         favAnimal: val("extraAnimalInput", extra.favAnimal),
         favSeason: val("extraSeasonSelect", extra.favSeason),
-        genderSymbol: val("extraGenderSymbolSelect", extra.genderSymbol),
+        genderSymbol: val("extraGenderSymbolSelectTop", extra.genderSymbol),
         favNumber: val("extraNumberInput", extra.favNumber),
         talent: val("extraTalentInput", extra.talent),
         favVacation: val("extraVacationInput", extra.favVacation),
+        likes: val("extraLikesInput", extra.likes),
+        dislikes: val("extraDislikesInput", extra.dislikes),
+        musicLink: val("extraMusicLinkInput", extra.musicLink),
       };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
@@ -5451,6 +6647,19 @@
         renderAccount();
       });
     });
+    const galleryAvatarToggle = document.getElementById("galleryAvatarToggleLink");
+    if (galleryAvatarToggle) {
+      galleryAvatarToggle.addEventListener("click", () => {
+        const row = document.getElementById("galleryAvatarPickerRow");
+        row.style.display = row.style.display === "none" ? "flex" : "none";
+      });
+      area.querySelectorAll("[data-gallery-url]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await Backend.saveAvatarFromGallery(btn.dataset.galleryUrl);
+          renderAccount();
+        });
+      });
+    }
     document.getElementById("avatarInput").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -5592,6 +6801,39 @@
   }
 
   // Admin-Abzeichen — überall dort, wo ein Name/Profil auftaucht, konsistent anzeigbar
+  // Erkennt die YouTube-Video-ID aus verschiedenen üblichen Link-Formaten (watch?v=, youtu.be/,
+  // embed/), damit man einfach den Link kopieren kann, den man im Browser sieht.
+  function extractYouTubeId(url) {
+    if (!url) return null;
+    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+    return m ? m[1] : null;
+  }
+  // Kompakter, ausklappbarer YouTube-Mini-Player — startet eingeklappt (nur ein Button
+  // "🎵 Musik abspielen"), öffnet sich erst auf Wunsch, damit nichts automatisch lärmt oder
+  // Platz wegnimmt. Nutzt die normale YouTube-Einbettung (offiziell erlaubt), klein und
+  // kartenförmig statt riesigem Video.
+  function musicPlayerHtml(musicLink, idSuffix) {
+    const videoId = extractYouTubeId(musicLink);
+    if (!videoId) return "";
+    return `
+      <div class="music-player-card">
+        <button type="button" class="btn btn-ghost music-player-toggle" data-music-toggle="${idSuffix}">🎵 Musik abspielen</button>
+        <div class="music-player-frame" id="musicFrame-${idSuffix}" style="display:none;">
+          <iframe width="100%" height="80" src="https://www.youtube.com/embed/${videoId}" title="Musik" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>`;
+  }
+  function wireMusicPlayer(root) {
+    root.querySelectorAll("[data-music-toggle]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const frame = document.getElementById(`musicFrame-${btn.dataset.musicToggle}`);
+        if (!frame) return;
+        const opening = frame.style.display === "none";
+        frame.style.display = opening ? "block" : "none";
+        btn.textContent = opening ? "🎵 Musik verstecken" : "🎵 Musik abspielen";
+      });
+    });
+  }
   function renderExtendedSteckbrief(p, viewId) {
     // p kann entweder das eigene Profil-Objekt (camelCase) oder ein via getPublicProfile
     // geladenes fremdes Profil (snake_case) sein — beide Formen abdecken.
@@ -5608,7 +6850,7 @@
 
     const pages = [
       { icon: "🌍", label: "Sprachen", html: `
-        ${languages.length ? `<div class="trophy-case" style="margin-top:4px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : ""}
+        ${languages.length ? `<p class="eyebrow" style="margin-top:4px;">🗣️ Diese Sprachen spreche ich</p><div class="trophy-case" style="margin-top:6px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : ""}
         ${favCountry ? `<div class="breakdown-row"><span>🌍 Lieblingsland</span><span>${favCountry}</span></div>` : ""}
         ${extra.dreamDestination ? `<div class="breakdown-row"><span>✈️ Traumreiseziel</span><span>${extra.dreamDestination}</span></div>` : ""}
         ${extra.visitedCountries ? `<div class="breakdown-row"><span>🧳 Schon bereist</span><span>${extra.visitedCountries}</span></div>` : ""}
@@ -5620,6 +6862,7 @@
         ${favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : ""}
         ${favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : ""}
         ${favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : ""}
+        ${musicPlayerHtml(extra.musicLink, viewId)}
         ${extra.favActor ? `<div class="breakdown-row"><span>🎭 Lieblingsschauspieler:in</span><span>${extra.favActor}</span></div>` : ""}
         ${extra.favBook ? `<div class="breakdown-row"><span>📚 Lieblingsbuch</span><span>${extra.favBook}</span></div>` : ""}
         ${extra.favArtist ? `<div class="breakdown-row"><span>🎤 Lieblingsband/Künstler:in</span><span>${extra.favArtist}</span></div>` : ""}
@@ -5631,7 +6874,7 @@
         ${favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : ""}
         ${poem ? `<div class="poem-box"><p style="white-space:pre-wrap; font-style:italic; margin:0;">„${poem}"</p></div>` : ""}
       ` },
-      { icon: "✨", label: "Extra", html: `
+      { icon: "🍽️🎨", label: "Vorlieben", html: `
         ${favFood ? `<div class="breakdown-row"><span>🍽️ Lieblingsessen</span><span>${favFood}</span></div>` : ""}
         ${favDrink ? `<div class="breakdown-row"><span>🥤 Lieblingsgetränk</span><span>${favDrink}</span></div>` : ""}
         ${extra.favColor ? `<div class="breakdown-row"><span>🎨 Lieblingsfarbe</span><span>${extra.favColor}</span></div>` : ""}
@@ -5640,6 +6883,10 @@
         ${extra.favNumber ? `<div class="breakdown-row"><span>🔢 Lieblingszahl</span><span>${extra.favNumber}</span></div>` : ""}
         ${extra.talent ? `<div class="breakdown-row"><span>⭐ Talent/Hobby</span><span>${extra.talent}</span></div>` : ""}
         ${extra.favVacation ? `<div class="breakdown-row"><span>🏖️ Lieblingsurlaubsart</span><span>${extra.favVacation}</span></div>` : ""}
+      ` },
+      { icon: "👍👎", label: "Mag ich", html: `
+        ${extra.likes ? `<div class="breakdown-row"><span>👍 Das mag ich</span><span>${extra.likes}</span></div>` : ""}
+        ${extra.dislikes ? `<div class="breakdown-row"><span>👎 Das mag ich nicht</span><span>${extra.dislikes}</span></div>` : ""}
       ` },
     ];
     const nonEmpty = pages.map((pg) => pg.html.trim().length > 0);
@@ -5703,21 +6950,26 @@
     const theirFriends = await Backend.getFriends(p.id);
     const alreadyFriends = me && !isMe ? theirFriends.some((f) => f.id === me.id) : false;
     const originFlag = p.origin ? (VocabData.COUNTRIES.find((c) => c.name === p.origin) || {}).flag || "🌍" : "";
-    const trophies = (p.trophies || []).slice(0, 4);
-    const trophyOverflow = (p.trophies || []).length - trophies.length;
+    // Wichtigste zuerst: echte Pokale (große Meisterleistungen) werden vor den häufigeren Orden
+    // gezeigt, damit die vier sichtbaren Kacheln auch wirklich die beeindruckendsten sind.
+    const sortedTrophies = [...(p.trophies || [])].sort((a, b) => (trophyKind(b) === "pokal") - (trophyKind(a) === "pokal"));
+    const trophies = sortedTrophies.slice(0, 4);
+    const trophyOverflow = sortedTrophies.length - trophies.length;
 
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 zeigt ${p.name}s Design`),
+        Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
         Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${adminBadge(p.is_admin, p.is_owner, p.is_moderator)}</h2>` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
         Core.el("div", { class: "modal-meta-row" },
-          Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`),
-          originFlag ? Core.el("span", { class: "empty-note" }, `${originFlag} ${p.origin}`) : "",
-          Core.el("div", { html: zodiacBadgeHtml(p.birthday) + genderBadgeHtml((p.extra_profile_data || {}).genderSymbol) })
+          Core.el("span", { class: "flow-badge" },
+            Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`)
+          ),
+          originFlag ? Core.el("span", { class: "flow-badge" }, `${originFlag} ${p.origin}`) : "",
+          (zodiacBadgeHtml(p.birthday) + genderBadgeHtml((p.extra_profile_data || {}).genderSymbol)) ? Core.el("span", { class: "flow-badge", html: zodiacBadgeHtml(p.birthday) + genderBadgeHtml((p.extra_profile_data || {}).genderSymbol) }) : ""
         ),
         Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
           theirFriends.length
@@ -5727,7 +6979,10 @@
             : Core.el("p", { class: "empty-note" }, "Noch keine Freunde.")
         ),
         p.hobbies && p.hobbies.length
-          ? Core.el("div", { class: "trophy-case", style: "justify-content:center; margin-top:8px;",
+          ? Core.el("div", { html: '<p class="eyebrow" style="text-align:center; margin-top:10px;">🎯 Hobbys & Interessen</p>' })
+          : "",
+        p.hobbies && p.hobbies.length
+          ? Core.el("div", { class: "trophy-case", style: "justify-content:center; margin-top:6px;",
               html: p.hobbies.map((h) => {
                 const hobby = VocabData.HOBBIES.find((x) => x.noun === h);
                 return hobby ? `<div class="trophy-chip">${hobby.emoji} ${hobby.article} ${hobby.noun}</div>` : "";
@@ -5736,10 +6991,19 @@
         Core.el("div", { html: renderExtendedSteckbrief(p, "modal-" + p.id) }),
         Core.el("div", { class: "trophy-case trophy-case-compact", id: "modalTrophyCase", style: "justify-content:center; margin-top:10px;",
           html: trophies.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")
-              + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "")
-              + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "") }),
+              + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "")
+              + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "") }),
         trophyOverflow > 0 ? Core.el("div", { class: "trophy-more-list", id: "modalTrophyMoreList", style: "display:none;",
-          html: (p.trophies || []).slice(4).map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") }) : "",
+          html: sortedTrophies.slice(4).map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") }) : "",
+        COLLECTIBLE_FIGURES.some((fig) => isFigureUnlocked(fig, p))
+          ? Core.el("div", { html: '<p class="eyebrow" style="text-align:center; margin-top:12px;">🦊 Sammelfiguren</p>' })
+          : "",
+        COLLECTIBLE_FIGURES.some((fig) => isFigureUnlocked(fig, p))
+          ? Core.el("div", { class: "figure-case", style: "justify-content:center;",
+              html: COLLECTIBLE_FIGURES.filter((fig) => isFigureUnlocked(fig, p)).map((fig) =>
+                `<div class="figure-slot" title="${fig.name} — ${fig.desc}"><img src="${fig.img}" alt="${fig.name}" loading="lazy" /></div>`
+              ).join("") })
+          : "",
         (p.gallery && p.gallery.length)
           ? Core.el("div", { class: "gallery-grid", id: "modalGalleryGrid", style: "margin-top:12px;",
               html: p.gallery.map((url) => `
@@ -5855,6 +7119,7 @@
     );
     document.body.appendChild(box);
     wireSteckbriefPager(box, () => { box.remove(); openProfileModal(id); });
+    wireMusicPlayer(box);
     box.querySelectorAll("[data-modal-view-photo]").forEach((img, idx, all) => {
       const urls = [...all].map((el) => el.dataset.modalViewPhoto);
       img.addEventListener("click", () => openGallerySlideshow(urls, idx, "Foto"));
@@ -5918,7 +7183,15 @@
     </div>`;
   }
 
-  loginBtn.addEventListener("click", () => activateTab("view-profile"));
+  loginBtn.addEventListener("click", () => {
+    if (notifyTarget) {
+      const action = notifyTarget.action;
+      notifyTarget = null;
+      action();
+      return;
+    }
+    activateTab("view-profile");
+  });
 
   /* ============================================================
      FREUNDE
@@ -5955,6 +7228,7 @@
   }
 
   let inboxViewTab = "in"; // "in" oder "out"
+  const communityTextLevelChoice = {}; // { textId: "A1" | "A2" | ... } — welches Niveau gerade angezeigt wird, bei Texten mit "Alle Niveaus"
   function getImportantMsgIds() {
     try { return JSON.parse(localStorage.getItem("dma_important_msgs") || "[]"); } catch (e) { return []; }
   }
@@ -5981,11 +7255,11 @@
       <div class="question-card">
         <h3>✉️ Neue Nachricht schreiben</h3>
         <div class="form-field">
-          <select id="inboxRecipientSelect" class="challenge-select">
-            <option value="">Freund auswählen…</option>
-            ${friends.map((f) => `<option value="${f.id}">${f.name}</option>`).join("")}
-            ${isAdmin ? `<option value="__broadcast__">📢 Rundmail an ALLE Nutzer</option>` : ""}
-          </select>
+          <label class="empty-note" style="display:block; margin-bottom:6px;">An wen? (mehrere gleichzeitig möglich)</label>
+          <div class="challenge-friend-list" id="inboxRecipientPills">
+            ${friends.map((f) => `<button type="button" class="challenge-friend-pill" data-recipient-id="${f.id}">${f.name}</button>`).join("")}
+          </div>
+          ${isAdmin ? `<label style="display:flex; align-items:center; gap:6px; margin-top:8px; cursor:pointer;"><input type="checkbox" id="inboxBroadcastCheck" /> <span class="empty-note">📢 Rundmail an ALLE Nutzer (statt einzelner Auswahl)</span></label>` : ""}
         </div>
         <div class="form-field">
           <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
@@ -6009,7 +7283,7 @@
         </div>
         ${list.length ? `<button type="button" class="btn btn-ghost" id="inboxDownloadAllBtn" style="margin-bottom:10px;">⬇️ Diese Ansicht als Text herunterladen</button>` : ""}
         ${list.length ? list.map((m) => `
-          <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
+          <div class="breakdown-row" data-msg-row="${m.id}" style="align-items:flex-start; flex-direction:column; gap:4px; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
             <div style="display:flex; justify-content:space-between; width:100%;">
               <strong>${inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"))}</strong>
               <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
@@ -6026,24 +7300,39 @@
       </div>
     `;
     renderStickerRow();
+    let selectedRecipients = new Set();
     // Entwurf wiederherstellen, falls beim letzten Mal etwas Angefangenes da war
     try {
       const draft = JSON.parse(localStorage.getItem("dma_msg_draft") || "null");
       if (draft) {
-        if (draft.to) document.getElementById("inboxRecipientSelect").value = draft.to;
+        if (Array.isArray(draft.to)) selectedRecipients = new Set(draft.to);
+        else if (draft.to) selectedRecipients = new Set([draft.to]); // alte Entwürfe (nur eine Person) weiterhin lesbar
         if (draft.body) document.getElementById("inboxMessageInput").value = draft.body;
       }
     } catch (e) {}
+    const refreshRecipientPills = () => {
+      area.querySelectorAll("[data-recipient-id]").forEach((btn) => {
+        btn.classList.toggle("selected", selectedRecipients.has(btn.dataset.recipientId));
+      });
+    };
+    refreshRecipientPills();
     const draftSave = () => {
       try {
-        const to = document.getElementById("inboxRecipientSelect").value;
+        const to = [...selectedRecipients];
         const body = document.getElementById("inboxMessageInput").value;
-        if (to || body) localStorage.setItem("dma_msg_draft", JSON.stringify({ to, body }));
+        if (to.length || body) localStorage.setItem("dma_msg_draft", JSON.stringify({ to, body }));
         else localStorage.removeItem("dma_msg_draft");
       } catch (e) {}
     };
+    area.querySelectorAll("[data-recipient-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.recipientId;
+        if (selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
+        refreshRecipientPills();
+        draftSave();
+      });
+    });
     document.getElementById("inboxMessageInput").addEventListener("input", draftSave);
-    document.getElementById("inboxRecipientSelect").addEventListener("change", draftSave);
     let pendingImageUrl = "";
     const imgInput = document.getElementById("inboxImageInput");
     if (imgInput) {
@@ -6061,18 +7350,21 @@
       });
     }
     document.getElementById("inboxSendBtn").addEventListener("click", async () => {
-      const to = document.getElementById("inboxRecipientSelect").value;
+      const broadcastCheck = document.getElementById("inboxBroadcastCheck");
+      const isBroadcast = broadcastCheck && broadcastCheck.checked;
       const body = document.getElementById("inboxMessageInput").value;
       const errBox = document.getElementById("inboxSendError");
-      if (!to) { errBox.textContent = "⚠️ Bitte einen Freund auswählen."; return; }
+      if (!isBroadcast && selectedRecipients.size === 0) { errBox.textContent = "⚠️ Bitte mindestens eine Person auswählen."; return; }
       try {
         const stickerKey = document.getElementById("inboxStickerRow")?.dataset.selectedSticker || "";
         const finalBody = body + (stickerKey ? ` [sticker:${stickerKey}]` : "");
-        if (to === "__broadcast__") {
+        if (isBroadcast) {
           if (!confirm("Wirklich eine Rundmail an ALLE Nutzer schicken?")) return;
           await Backend.sendBroadcastMessage(finalBody);
         } else {
-          await Backend.sendPrivateMessage(to, finalBody, pendingImageUrl);
+          // An alle ausgewählten Personen gleichzeitig verschicken -- dieselbe Nachricht, jeweils
+          // als eigene, echte Nachricht an jede Person (nicht nur eine Kopie sichtbar für alle).
+          await Promise.all([...selectedRecipients].map((id) => Backend.sendPrivateMessage(id, finalBody, pendingImageUrl)));
         }
         renderInbox();
         try { localStorage.removeItem("dma_msg_draft"); } catch (e) {}
@@ -6082,9 +7374,9 @@
     });
     area.querySelectorAll("[data-reply-to]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const sel = document.getElementById("inboxRecipientSelect");
         const targetId = btn.dataset.replyTo;
-        if ([...sel.options].some((o) => o.value === targetId)) sel.value = targetId;
+        const pillBtn = area.querySelector(`[data-recipient-id="${targetId}"]`);
+        if (pillBtn) { selectedRecipients = new Set([targetId]); refreshRecipientPills(); }
         document.getElementById("inboxMessageInput").focus();
         document.getElementById("inboxMessageInput").scrollIntoView({ behavior: "smooth", block: "center" });
       });
@@ -6313,6 +7605,7 @@
         }
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
         Quiz.startSession(categoryIds, "leicht", { challengeId });
+        showToast(`🦊 Willkommen, ${personaForCategory(categoryIds[0])}!`);
         renderQuestion();
       });
     });
@@ -6326,8 +7619,9 @@
         <h3>🎮 ${friendChallengeTarget.name} herausfordern</h3>
         <p class="empty-note">Wähle eine Kategorie — ihr spielt beide 10 Fragen, wer mehr Prozent holt, gewinnt.</p>
         <div class="category-grid" style="margin-top:10px;">
-          ${ExerciseData.CATEGORIES.map((c) => `<div class="category-card" data-pick-cat="${c.id}"><div class="cat-checkbox"></div><div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${c.icon}</span><span>${c.title}</span></div></div></div>`).join("")}
+          ${ExerciseData.CATEGORIES.filter((c) => isUnlocked(c.unlock, Backend.currentProfile())).map((c) => `<div class="category-card" data-pick-cat="${c.id}"><div class="cat-checkbox"></div><div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${c.icon}</span><span>${c.title}</span></div></div></div>`).join("")}
         </div>
+        <p class="empty-note" style="margin-top:8px;">Nur Kategorien, die du selbst schon freigeschaltet hast, kannst du auch für ein Duell auswählen.</p>
       </div>
     `;
     let challengePickInProgress = false;
@@ -6342,6 +7636,7 @@
           activateTab("view-learn");
           document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
           Quiz.startSession([categoryId], "leicht", { challengeId });
+          showToast(`🦊 Willkommen, ${personaForCategory(categoryId)}!`);
           renderQuestion();
         } finally {
           challengePickInProgress = false;
@@ -6477,7 +7772,7 @@
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "21";
+  const APP_VERSION = "22";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
@@ -6487,8 +7782,17 @@
     try { seenVersion = localStorage.getItem("dma_seen_version"); } catch (e) {}
     if (seenVersion === APP_VERSION) return;
     const note = APP_CHANGELOG[APP_VERSION];
-    if (note) Backend.sendSystemMessage(Backend.currentUser().id, `🆕 Was ist neu (Version ${APP_VERSION}):\n\n${note}`);
-    try { localStorage.setItem("dma_seen_version", APP_VERSION); } catch (e) {}
+    if (!note) return;
+    const messageText = `🆕 Was ist neu (Version ${APP_VERSION}):\n\n${note}`;
+    // Zweite Absicherung UNABHÄNGIG von localStorage: falls das Speichern der "gesehen"-Markierung
+    // aus irgendeinem Grund fehlschlägt (z. B. eingeschränkter Browser-Speicher), verhindert diese
+    // zusätzliche Prüfung trotzdem, dass dieselbe Nachricht bei jedem Neuladen erneut verschickt
+    // wird — sie schaut einfach nach, ob genau dieser Text schon im Postfach liegt.
+    Backend.getMyMessages().then((messages) => {
+      const alreadySent = messages.inbox.some((m) => m.body === messageText);
+      if (!alreadySent) Backend.sendSystemMessage(Backend.currentUser().id, messageText);
+      try { localStorage.setItem("dma_seen_version", APP_VERSION); } catch (e) {}
+    });
   }
 
   // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt

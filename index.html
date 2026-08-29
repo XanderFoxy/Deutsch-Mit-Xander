@@ -80,11 +80,11 @@
       <span class="cal-weekday" id="calModalWeekday">Freitag</span>
       <p class="cal-hint">👆 Antippen zum Abreißen</p>
     </div>
-    <div class="cal-face cal-back">
+    <div class="cal-face cal-back" id="calBackFace"><div class="cal-back-scroll">
       <p class="cal-tip-title">💡 Tipp des Tages</p>
       <p class="cal-tip-text" id="calTipText"></p>
       <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:14px;">🔄 Noch einen Tipp</button>
-    </div>
+    </div></div>
   </div>
 </div>
 
@@ -154,14 +154,6 @@
         </div>
       </div>
     </div>
-    <button type="button" class="history-banner" id="historyBannerBtn">
-      <span class="history-banner-icon">📜</span>
-      <span class="history-banner-text">
-        <span class="history-banner-title">Es war einmal in Deutschland …</span>
-        <span class="history-banner-sub" id="historyBannerSub">Heute im Kalender der deutschen Geschichte — jetzt lesen</span>
-      </span>
-      <span class="history-banner-arrow">→</span>
-    </button>
   </section>
 
   <!-- LERNEN ===================================================== -->
@@ -173,7 +165,7 @@
       <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer</button>
       <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
       <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory</button>
-      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle</button>
+      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle<span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat</button>
       <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel</button>
     </div>
@@ -217,16 +209,18 @@
   <section class="view" id="view-knowledge" data-active="false">
     <p class="eyebrow">Kompass, Materialien &amp; weiterführende Links</p>
     <div class="subnav" id="knowledgeSubnav">
-      <button class="subnav-pill" data-sub="sub-kompass" aria-selected="true">🧭 Kompass</button>
+      <button class="subnav-pill" data-sub="sub-kompass" aria-selected="true">🧭 Kompass<span class="subnav-info-icon" data-info="Dein Überblick: Was du gerade übst, deine Stärken/Schwächen, und „Es war einmal in Deutschland“ — die Geschichte zum heutigen Tag.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
       <button class="subnav-pill community-tab-highlight" data-sub="sub-community" aria-selected="false">✍️ Eigene Beiträge</button>
       <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
+      <button class="subnav-pill" data-sub="sub-tips" aria-selected="false">💡 Schwarmwissen<span class="subnav-info-icon" data-info="Tipps, Links und Erfahrungen von anderen Lernenden — was bei ihnen beim Deutschlernen funktioniert hat.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-news" aria-selected="false">📰 Nachrichten</button>
     </div>
     <div class="subview" id="sub-kompass" data-active="true"><div id="kompassArea"></div></div>
     <div class="subview" id="sub-materials" data-active="false"><div id="materialsArea"></div></div>
     <div class="subview" id="sub-community" data-active="false"><div id="communityStandaloneArea"></div></div>
     <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
+    <div class="subview" id="sub-tips" data-active="false"><div id="tipsArea"></div></div>
     <div class="subview" id="sub-news" data-active="false"><div id="newsArea"></div></div>
   </section>
 

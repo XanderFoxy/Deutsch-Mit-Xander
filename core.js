@@ -45,6 +45,12 @@ const Core = (function () {
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "de-DE";
     utter.rate = 0.92;
+    // Viele Geräte (besonders iPhone) bieten mehrere deutsche Stimmen an — eine "Standard"-
+    // Stimme, die oft roboterhaft klingt, und daneben oft bessere "Enhanced"/"Premium"-Stimmen.
+    // Wenn eine davon verfügbar ist, wird sie bevorzugt statt der ersten besten deutschen Stimme.
+    const voices = window.speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith("de"));
+    const preferred = voices.find((v) => /enhanced|premium|natural/i.test(v.name)) || voices[0];
+    if (preferred) utter.voice = preferred;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utter);
   }

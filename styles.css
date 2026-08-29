@@ -235,6 +235,9 @@ button:focus-visible,
   border-radius: 50%;
   background: #fff;
   animation: starTwinkle 3s ease-in-out infinite;
+  /* Scharfer, deutlicher Schatten statt weicher Unschärfe — sonst verschwinden die Sterne auf
+     warmen/gelben Himmelsfarben (z. B. bei Sonnenuntergang) fast komplett im Hintergrund. */
+  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.55);
 }
 @keyframes starTwinkle {
   0%, 100% { opacity: 0.15; }
@@ -251,11 +254,16 @@ button:focus-visible,
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex-shrink: 0;
 }
 .weather-readout #weatherOut {
   color: var(--sky-ink, #1a1a1a);
   font-weight: 800;
   transition: color 1.5s ease;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .weather-dot {
@@ -354,6 +362,19 @@ button:focus-visible,
   box-shadow: 0 4px 14px rgba(242, 184, 75, 0.35);
 }
 .btn-coffee:hover { box-shadow: 0 6px 18px rgba(242, 184, 75, 0.5); }
+/* Das Tassen-Symbol braucht einen zuverlässigen Kontrast-Ring dahinter — ein reiner Schlagschatten
+   reicht auf manchen Geräten/Emoji-Darstellungen nicht aus, um es vom warmen Verlauf abzuheben. */
+.btn-coffee span {
+  position: relative;
+  z-index: 1;
+}
+.btn-coffee.btn-icon-only::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: rgba(36, 21, 5, 0.18);
+}
 
 .btn-ghost {
   background: var(--plum-700);

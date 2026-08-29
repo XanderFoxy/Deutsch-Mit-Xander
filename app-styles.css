@@ -19,6 +19,15 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+/* Kleines, antippbares Info-Symbol bei Reitern mit weniger selbsterklärenden Namen — zeigt auf
+   Antippen eine kurze Erklärung, statt dass man erst raten oder reinklicken muss, um zu
+   verstehen, was sich dahinter verbirgt. Am Handy gibt's ja kein Drüberfahren mit der Maus. */
+.subnav-info-icon {
+  display: inline-block;
+  margin-left: 4px;
+  opacity: 0.65;
+  font-size: 0.8em;
+}
 
 .subnav-pill[aria-selected="true"] {
   background: var(--amber-400);
@@ -176,7 +185,23 @@
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   box-shadow: var(--shadow-deck);
+  position: relative;
 }
+/* Kleiner, unaufdringlicher "Fehler melden"-Button in der Kartenecke — bewusst dezent, damit er
+   nicht vom eigentlichen Inhalt ablenkt, aber jederzeit erreichbar ist. */
+.bug-report-btn {
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.12);
+  font-size: 0.9rem;
+  cursor: pointer;
+  opacity: 0.55;
+  z-index: 2;
+}
+.bug-report-btn:hover, .bug-report-btn:active { opacity: 1; }
 
 .question-meta {
   font-family: var(--font-mono);
@@ -219,7 +244,7 @@
   text-align: center;
 }
 
-.order-toggle { display: flex; gap: 8px; margin-top: 12px; }
+.order-toggle { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
 .challenge-select {
   margin-top: 6px;
@@ -356,6 +381,26 @@
   justify-content: center;
   margin-top: var(--space-4);
 }
+/* Sammelfiguren-Vitrine — bewusst klein gehalten, nimmt kaum Platz ein */
+.figure-case {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.figure-slot {
+  position: relative;
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  background: var(--plum-700);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.figure-slot img { width: 100%; height: 100%; object-fit: contain; }
+.figure-slot.figure-locked img { filter: grayscale(1) brightness(0.5); opacity: 0.5; }
+.figure-lock-icon { position: absolute; font-size: 0.9rem; }
 .badge-chip {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 12px 14px;
@@ -385,6 +430,19 @@
   color: var(--cream-50);
   white-space: nowrap;
 }
+/* Fehlte bisher komplett: ein Klick auf einen auswählbaren Chip (Design, Ton, Farbe, Lernprofil-
+   Einschätzung) speicherte zwar im Hintergrund, sah aber optisch IDENTISCH aus wie vorher — man
+   konnte also nie erkennen, ob der Klick überhaupt etwas bewirkt hat. */
+.trophy-chip.selected {
+  background: var(--amber-400);
+  border-color: var(--amber-400);
+  color: #241505;
+  box-shadow: 0 0 0 2px rgba(242,184,75,0.35);
+}
+/* Die 6 Sprachstufen-Buttons (A1-C2) sollen nie umbrechen, egal wie schmal der Bildschirm ist —
+   stattdessen lieber horizontal scrollbar bleiben, damit "B2"/"C2" nicht in eine neue Zeile
+   rutschen. */
+.hist-level-btn { flex-shrink: 0; padding: 6px 9px; }
 .trophy-chip .emoji { font-size: 0.85rem; }
 .trophy-chip-more {
   background: var(--plum-700);
@@ -501,7 +559,7 @@
   color: var(--cream-50);
   overflow: hidden;
 }
-/* Kartenrückseite: goldene Filigran-Schraffur auf Rot mit Fuchskopf-Wappen */
+/* Kartenrückseite: goldene Filigran-Schraffur auf Rot mit Fuchskopf-Wappen (Standard, kostenlos) */
 .memory-card.hidden-face {
   background:
     repeating-linear-gradient(45deg, rgba(212,175,55,0.35) 0 1.5px, transparent 1.5px 7px),
@@ -510,6 +568,39 @@
   border: 2px solid #d4af37;
   box-shadow: inset 0 0 0 3px #6b1414, inset 0 0 0 4px #d4af37;
   color: transparent;
+}
+/* Weitere, erspielbare Kartenrückseiten-Designs — jeweils eigenes Muster + eigener Wappen-Emoji */
+.memory-card.hidden-face.mcback-eule {
+  background:
+    repeating-linear-gradient(45deg, rgba(200,220,255,0.3) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(200,220,255,0.3) 0 1.5px, transparent 1.5px 7px),
+    radial-gradient(circle at center, #1f3a5c, #14283f);
+  border: 2px solid #a8c5e8;
+  box-shadow: inset 0 0 0 3px #14283f, inset 0 0 0 4px #a8c5e8;
+}
+.memory-card.hidden-face.mcback-baer {
+  background:
+    repeating-linear-gradient(45deg, rgba(230,190,140,0.3) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(230,190,140,0.3) 0 1.5px, transparent 1.5px 7px),
+    radial-gradient(circle at center, #6b4423, #4a2d16);
+  border: 2px solid #e6be8c;
+  box-shadow: inset 0 0 0 3px #4a2d16, inset 0 0 0 4px #e6be8c;
+}
+.memory-card.hidden-face.mcback-hase {
+  background:
+    repeating-linear-gradient(45deg, rgba(210,255,220,0.3) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(210,255,220,0.3) 0 1.5px, transparent 1.5px 7px),
+    radial-gradient(circle at center, #2f6b45, #1f4a2f);
+  border: 2px solid #b0e8c0;
+  box-shadow: inset 0 0 0 3px #1f4a2f, inset 0 0 0 4px #b0e8c0;
+}
+.memory-card.hidden-face.mcback-wolf {
+  background:
+    repeating-linear-gradient(45deg, rgba(220,220,230,0.25) 0 1.5px, transparent 1.5px 7px),
+    repeating-linear-gradient(-45deg, rgba(220,220,230,0.25) 0 1.5px, transparent 1.5px 7px),
+    radial-gradient(circle at center, #3a3a45, #24242c);
+  border: 2px solid #c8c8d8;
+  box-shadow: inset 0 0 0 3px #24242c, inset 0 0 0 4px #c8c8d8;
 }
 .fox-crest {
   position: relative;
@@ -743,6 +834,27 @@
   color: #fff;
   font-size: 1.1rem;
 }
+/* Gleicher quadratischer Ausschnitt wie bei den Miniaturbildern, auch in der Vergrößerung. */
+/* Kurzes farbiges Aufleuchten, wenn man per Benachrichtigungs-Klick direkt zu einer bestimmten
+   Zeile springt — macht sofort sichtbar, was genau neu ist. */
+.notify-target-highlight {
+  animation: notifyTargetPulse 2.6s ease;
+  border-radius: 10px;
+}
+@keyframes notifyTargetPulse {
+  0%, 100% { background: transparent; }
+  15%, 60% { background: rgba(242,184,75,0.35); }
+}
+.gallery-slideshow-frame {
+  width: min(88vw, 480px);
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.gallery-slideshow-frame img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
 .lightbox-nav {
   position: absolute;
   top: 50%;
@@ -788,6 +900,26 @@
 .auth-tab[aria-selected="true"] { background: var(--amber-400); color: #241505; }
 
 .form-field { margin-bottom: var(--space-3); }
+/* Auffällige Erklärungs-Box für das Sechs-Niveau-Textformat, damit die Vorbereitungs-Regeln
+   nicht übersehen werden — bewusst mit Rahmen statt nur als kleiner grauer Hinweistext. */
+.ct-all-levels-hint {
+  background: var(--plum-700);
+  border: 1.5px solid var(--amber-400);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.ct-example-box {
+  background: var(--plum-800);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  white-space: pre-wrap;
+  color: var(--cream-200);
+  margin: 0;
+  line-height: 1.8;
+}
 .form-field label { display: block; font-size: 0.82rem; color: var(--cream-200); margin-bottom: 4px; }
 .form-field input {
   width: 100%;
@@ -885,6 +1017,36 @@
   width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0;
   object-fit: cover;
 }
+/* Textumfluss-Kopfbereich fürs eigene Profil: das Profilbild schwebt links, die kleinen Info-
+   Angaben (Freunde, Premium, Herkunft, Sternzeichen) fließen als Text um die runde Form herum —
+   wie bei einem Bild in einem Magazin-Layout, statt in einer starren Zeile mit großen Lücken
+   auseinanderzufallen, sobald nicht mehr alles nebeneinander passt. */
+.profile-header-flow {
+  overflow: visible;
+}
+.profile-header-flow .avatar-photo,
+.profile-header-flow .initials-avatar {
+  float: left;
+  width: 128px; height: 128px;
+  shape-outside: circle(50%);
+  -webkit-shape-outside: circle(50%);
+  clip-path: circle(50%);
+  margin: 0 14px 8px 0;
+  font-size: 2.3rem;
+}
+.flow-badge {
+  display: inline-block;
+  background: rgba(0,0,0,0.07);
+  border-radius: 999px;
+  padding: 3px 11px;
+  margin: 0 6px 6px 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: inherit;
+  vertical-align: middle;
+}
+.flow-badge .friend-name-btn { font-size: 0.8rem; font-weight: 700; }
+.flow-badge .zodiac-badge, .flow-badge .gender-badge { display: inline; }
 .avatar-upload-wrap {
   position: relative; display: block; flex-shrink: 0; cursor: pointer;
 }
@@ -915,6 +1077,21 @@
   border: 1px solid rgba(0,0,0,0.08); background: var(--plum-700);
   font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
 }
+.gallery-avatar-pick-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 2px solid transparent;
+  background-size: cover; background-position: center;
+  cursor: pointer;
+}
+.gallery-avatar-pick-btn:active { border-color: var(--amber-400); }
+/* Kompakte, ausklappbare Musik-Player-Karte — bleibt eingeklappt (nur ein Button), bis man sie
+   wirklich öffnen will, damit sie im Profil nicht dominiert oder automatisch Platz wegnimmt. */
+.music-player-card { margin: 10px 0; }
+.music-player-frame {
+  margin-top: 8px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
 
 .hobby-readout {
   font-size: 0.85rem;
@@ -927,11 +1104,24 @@
   margin-top: 8px;
 }
 .wb-slot {
-  width: 38px; height: 44px;
+  width: var(--wb-slot-w, 38px); height: 44px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; font-weight: 800;
+  font-size: var(--wb-font-size, 1.3rem); font-weight: 800;
   border-radius: 8px;
   font-family: var(--font-display);
+  flex-shrink: 0;
+}
+/* Container für die Buchstaben-Kästchen eines Worts — bricht NIE mitten im Wort um. Lange
+   Wörter schrumpfen die Kästchen automatisch (via CSS-Variable, in JS gesetzt), erst als
+   letzte Absicherung wird horizontal gescrollt. */
+.wb-slot-row {
+  display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap;
+  margin: 16px auto; max-width: 100%; overflow-x: auto; padding-bottom: 2px;
+}
+/* Eine Wort-Gruppe bleibt intern IMMER zusammen (nowrap) — ein Zeilenumbruch darf nur zwischen
+   zwei Gruppen (also zwischen Wörtern) passieren, nie mitten in einem Wort. */
+.wb-word-group {
+  display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0;
 }
 .wb-given { background: var(--plum-700); color: var(--cream-50); border: 2px solid var(--amber-400); }
 .wb-filled { background: var(--teal-400); color: #072620; border: 2px solid var(--teal-400); animation: wbPop 0.25s ease; }
@@ -1245,9 +1435,10 @@
 .calendar-modal-page {
   position: relative;
   width: min(88vw, 340px);
-  height: min(80vh, 460px);
+  height: min(84vh, 520px);
   perspective: 1400px;
   z-index: 501;
+  overflow: hidden;
 }
 .cal-face {
   position: absolute; inset: 0;
@@ -1262,25 +1453,62 @@
      immer einen hellen Hintergrund, egal ob gerade ein helles oder dunkles Design aktiv ist. */
   color: #241505;
 }
-.cal-back { overflow-y: auto; justify-content: flex-start; }
+.cal-back {
+  /* Dieses äußere Element wird 3D-gedreht — Scrollen/Überlauf NICHT hier, sondern am inneren
+     .cal-back-scroll, weil overflow + 3D-Drehung auf demselben Element in manchen Browsern
+     nicht zuverlässig zusammen funktionieren (Inhalt lief sonst optisch aus der Karte heraus,
+     obwohl die berechnete Höhe korrekt war). */
+  padding: 0 !important;
+}
+.cal-back-scroll {
+  width: 100%; height: 100%;
+  overflow-y: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding: 20px;
+  box-sizing: border-box;
+  min-height: 0;
+  position: relative;
+}
+.cal-back-scroll::after {
+  content: "";
+  position: sticky;
+  bottom: -20px;
+  left: 0; right: 0;
+  height: 24px;
+  margin-top: -24px;
+  background: linear-gradient(to bottom, transparent, #FBF3E8);
+  pointer-events: none;
+  display: block;
+}
 .cal-front {
   background: #fff;
   cursor: pointer;
-  /* Drehpunkt unten links: so wirkt das Abreißen, als würde man die Ecke mit Daumen und
-     Zeigefinger von unten links greifen und wegziehen, statt die Seite einfach flach umzuklappen. */
+  /* Drehpunkt unten links: die Ecke, an der man beim Abreißen mit Daumen und Zeigefinger
+     greifen würde. */
   transform-origin: bottom left;
-  transition: transform 0.85s cubic-bezier(0.5, -0.2, 0.3, 1.3);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease;
 }
 .cal-back {
   background: #FBF3E8;
   transform-origin: bottom left;
-  transform: rotate3d(1, 1, 0, 150deg);
-  transition: transform 0.85s cubic-bezier(0.5, -0.2, 0.3, 1.3);
+  transform: scale(0.94) rotate(-4deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.8s cubic-bezier(0.34, 1.2, 0.4, 1) 0.15s, opacity 0.5s ease 0.2s;
 }
-/* Diagonale Drehachse (x UND y gleichzeitig) statt reiner rotateY — das erzeugt die
-   "von der Ecke weggezogen"-Bewegung aus der richtigen Richtung, nicht nur ein flaches Umklappen. */
-.calendar-modal-page.torn .cal-front { transform: rotate3d(1, 1, 0, -150deg) translate(-6px, 6px); }
-.calendar-modal-page.torn .cal-back { transform: rotate3d(1, 1, 0, 0deg); }
+/* Echtes Abreißen statt bloßem Umklappen: das Blatt wird von der unteren linken Ecke aus nach
+   rechts oben weggezogen — Verschiebung + Drehung + Verblassen zusammen, statt einer reinen
+   3D-Drehung um eine Achse (die sah nur nach einem Dreh-Effekt aus, nicht nach einem Abriss).
+   Die Rückseite kommt dabei leicht vergrößert und gerade nach, wie ein frisches Blatt darunter. */
+.calendar-modal-page.torn .cal-front {
+  transform: translate(85px, -110px) rotate(38deg) scale(0.85);
+  opacity: 0;
+}
+.calendar-modal-page.torn .cal-back {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+  pointer-events: auto;
+}
 .cal-corner-big {
   position: absolute; bottom: 0; right: 0;
   width: 0; height: 0;
