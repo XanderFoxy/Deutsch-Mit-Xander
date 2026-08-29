@@ -339,3 +339,49 @@ create table if not exists site_content (
 );
 alter table site_content disable row level security;
 ```
+
+## 10. Nachrüst-SQL — Fehlermeldungen (Bug-Reports)
+
+Damit Nutzer bei jeder Übung einen Fehler melden können und du sie gesammelt im
+Admin-Bereich siehst, einmal im Supabase SQL-Editor ausführen:
+
+```sql
+create table if not exists bug_reports (
+  id uuid default gen_random_uuid() primary key,
+  reporter_name text, context text, category text, description text,
+  resolved boolean default false, created_at timestamptz default now()
+);
+alter table bug_reports disable row level security;
+```
+
+## 11. Nachrüst-SQL — Sterne-Bewertung im Gästebuch
+
+Damit Besucher optional eine 5-Sterne-Bewertung zu ihrem Gästebuch-Eintrag abgeben können,
+einmal im Supabase SQL-Editor ausführen:
+
+```sql
+alter table guestbook add column if not exists rating integer;
+```
+
+## 12. Nachrüst-SQL — Profil-Besucher & Profil-Spuren
+
+Für "wer hat mein Profil besucht" (nur für Admins/Moderatoren sichtbar) und die Möglichkeit,
+kurze Grüße auf fremden Profilen zu hinterlassen, einmal im Supabase SQL-Editor ausführen:
+
+```sql
+create table if not exists profile_visits (
+  id uuid default gen_random_uuid() primary key,
+  visitor_id uuid references auth.users, visitor_name text,
+  visited_id uuid references auth.users, visited_at timestamptz default now(),
+  unique(visitor_id, visited_id)
+);
+alter table profile_visits disable row level security;
+
+create table if not exists profile_notes (
+  id uuid default gen_random_uuid() primary key,
+  profile_owner_id uuid references auth.users,
+  author_id uuid references auth.users, author_name text,
+  message text, created_at timestamptz default now()
+);
+alter table profile_notes disable row level security;
+```

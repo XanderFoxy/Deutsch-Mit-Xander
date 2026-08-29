@@ -170,8 +170,18 @@
       <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel</button>
       <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle</button>
       <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false">🗼 Wackelturm</button>
-      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🪣 Wortarten-Eimer</button>
+      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🔤 Wortarten-Sortierer</button>
+      <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false">🎯 Wort-Kanone</button>
+      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false">❓ Wer bin ich?</button>
       <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
+    </div>
+
+    <div class="subview" id="sub-werbinich" data-active="false">
+      <div id="werbinichArea"></div>
+    </div>
+
+    <div class="subview" id="sub-kanone" data-active="false">
+      <div id="kanoneArea"></div>
     </div>
 
     <div class="subview" id="sub-wortarten" data-active="false">
@@ -250,7 +260,7 @@
 
 
   <!-- Versteckter YouTube-Player fürs Musik-Modul -- steuert nur Ton, kein sichtbares Video -->
-  <div id="musicYtHost" style="position:fixed; bottom:-200px; left:-200px; width:1px; height:1px; overflow:hidden;"></div>
+  <div class="music-video-square" id="musicVideoSquare"><div id="musicYtHost"></div></div>
   <audio id="musicAudioNative" style="display:none;"></audio>
   <!-- Schwebende Mini-Player-Leiste — sichtbar auf der GANZEN Seite, egal welcher Reiter gerade
        aktiv ist, solange ein Song läuft/pausiert ist. Bewusst außerhalb des Reiter-Systems, damit
@@ -288,6 +298,7 @@
       <button class="subnav-pill" data-sub="sub-inbox" aria-selected="false" style="position:relative;">✉️ Postfach<span id="inboxTabBadge" class="notify-badge" style="display:none;"></span></button>
       <button class="subnav-pill" data-sub="sub-guestbook" aria-selected="false">📖 Gästebuch</button>
       <button class="subnav-pill" data-sub="sub-interview" aria-selected="false">🎤 Interview</button>
+      <button class="subnav-pill" data-sub="sub-album" aria-selected="false">📔 Sticker-Album</button>
       <button class="subnav-pill" data-sub="sub-design" aria-selected="false">🎨 Design</button>
       <button class="subnav-pill" data-sub="sub-settings" aria-selected="false">⚙️ Einstellungen</button>
       <button class="subnav-pill" data-sub="sub-premium" aria-selected="false">✨ Premium</button>
@@ -298,6 +309,7 @@
     <div class="subview" id="sub-ranking" data-active="false"><div id="rankingArea"></div></div>
     <div class="subview" id="sub-guestbook" data-active="false"><div id="guestbookArea"></div></div>
     <div class="subview" id="sub-interview" data-active="false"><div id="interviewArea"></div></div>
+    <div class="subview" id="sub-album" data-active="false"><div id="albumArea"></div></div>
     <div class="subview" id="sub-premium" data-active="false"><div id="premiumArea"></div></div>
     <div class="subview" id="sub-design" data-active="false"><div id="designArea"></div></div>
     <div class="subview" id="sub-settings" data-active="false"><div id="settingsArea"></div></div>

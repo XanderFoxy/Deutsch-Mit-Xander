@@ -324,33 +324,33 @@ const ExerciseData = (function () {
     "ängstlich": "ÄNGST-lich",
     "Ampeln": "AM-peln",
     "Autos": "AU-tos",
-    "Bahnhöfe": "BAHN-hofe",
+    "Bahnhöfe": "BAHN-hö-fe",
     "Bananen": "Ba-NA-nen",
     "Blumen": "BLU-men",
     "Brillen": "BRIL-len",
     "Brücken": "BRÜ-cken",
-    "Fahrräder": "FAHR-rader",
-    "Flughäfen": "FLUG-ha-fen",
-    "Flugzeuge": "FLUG-zeuge",
+    "Fahrräder": "FAHR-rä-der",
+    "Flughäfen": "FLUG-hä-fen",
+    "Flugzeuge": "FLUG-zeu-ge",
     "Gabeln": "GA-beln",
     "Handys": "HAN-dys",
     "Inseln": "IN-seln",
     "Jungen": "JUN-gen",
     "Katzen": "KAT-zen",
     "Kommoden": "Kom-MO-den",
-    "Krankenhäuser": "KRAN-ken-hauser",
+    "Krankenhäuser": "KRAN-ken-häu-ser",
     "Lampen": "LAM-pen",
-    "Monate": "MO-nate",
-    "Rathäuser": "RAT-hauser",
-    "Rucksäcke": "RUCK-sacke",
+    "Monate": "MO-na-te",
+    "Rathäuser": "RAT-häu-ser",
+    "Rucksäcke": "RUCK-sä-cke",
     "Straßen": "STRA-ßen",
-    "Supermärkte": "SU-per-markte",
+    "Supermärkte": "SU-per-märk-te",
     "Taschen": "TA-schen",
     "Tassen": "TAS-sen",
     "Wiesen": "WIE-sen",
     "Wochen": "WO-chen",
     "Wolken": "WOL-ken",
-    "Zeitungen": "ZEI-tungen",
+    "Zeitungen": "ZEI-tun-gen",
     "Tisch": "Tisch", "Lampe": "LAM-pe", "Fenster": "FENS-ter", "Stuhl": "Stuhl", "Tür": "Tür",
     "Auto": "AU-to", "Baum": "Baum", "Blume": "BLU-me", "Haus": "Haus", "Hund": "Hund",
     "Katze": "KAT-ze", "Pferd": "Pferd", "Apfel": "AP-fel", "Banane": "Ba-NA-ne", "Brot": "Brot",
@@ -1208,7 +1208,7 @@ const ExerciseData = (function () {
     [["Sie", "hat", "mir", "erklärt,", "wie", "das Gerät", "funktioniert."], "Indirekte Frage mit „wie“: das Verb steht am Ende."],
     [["Ich", "möchte", "wissen,", "wo", "du", "wohnst."], "Indirekte Frage mit „wo“: das Verb steht am Ende."],
     [["Er", "fragte", "mich,", "wer", "das", "gesagt", "hat."], "Indirekte Frage mit „wer“: das Verb steht am Ende."],
-    [["Zuerst", "räume", "ich", "auf,", "dann", "gehe", "ich", "einkaufen."], "Beide Hauptsätze: Verb jeweils an Position 2, auch nach vorangestelltem „zuerst“/„dann“."],
+    [["Nachdem", "ich", "aufgeräumt", "hatte,", "bin", "ich", "einkaufen", "gegangen."], "Nach „nachdem“ steht das (zusammengesetzte) Verb am Ende — dadurch ist die Reihenfolge der beiden Tätigkeiten eindeutig festgelegt, nicht wie bei zwei gleichrangigen Hauptsätzen vertauschbar."],
     [["In der Stadt", "gibt", "es", "viele schöne Cafés."], "Vorangestellte Ortsangabe, das Verb bleibt an Position 2."],
     [["Leider", "konnte", "ich", "gestern", "nicht", "kommen."], "Vorangestelltes „leider“, das Verb bleibt trotzdem an Position 2."],
     [["Deshalb", "habe", "ich", "mich", "schon", "entschuldigt."], "Vorangestelltes „deshalb“, das Verb bleibt an Position 2."],
@@ -1674,6 +1674,83 @@ const ExerciseData = (function () {
   /* ---------------------------------------------------------
      8) REDEWENDUNGEN — Bedeutung auswählen
      --------------------------------------------------------- */
+  /* ---------------------------------------------------------
+     SINN-TRAINER — testet echtes Sinnverständnis statt Mustererkennung: alle Antwortoptionen
+     sind dieselbe Wortart und grammatisch einwandfrei, aber nur eine ergibt inhaltlich wirklich
+     Sinn. Wer nur "das klingt nach einem deutschen Satz" erkennt, tappt hier in die Falle.
+     --------------------------------------------------------- */
+  /* ---------------------------------------------------------
+     WER BIN ICH? — Emoji-Rätsel: Beruf/Rolle anhand von 2-3 Emojis erraten. Bewusst nur
+     Berufe/Rollen, keine echten Personen (Urheberrecht & Persönlichkeitsrechte).
+     --------------------------------------------------------- */
+  const WER_BIN_ICH = [
+    ["👨‍🍳🍳🥘", "Koch", ["Kellner", "Bäcker", "Gärtner"]],
+    ["👨‍🚒🚒🔥", "Feuerwehrmann", ["Polizist", "Pilot", "Zimmermann"]],
+    ["👮‍♂️🚓🚨", "Polizist", ["Feuerwehrmann", "Richter", "Soldat"]],
+    ["👨‍⚕️🩺💉", "Arzt", ["Zahnarzt", "Apotheker", "Krankenpfleger"]],
+    ["👨‍🏫📚🍎", "Lehrer", ["Schüler", "Bibliothekar", "Professor"]],
+    ["🧑‍🚀🚀🌙", "Astronaut", ["Pilot", "Wissenschaftler", "Ingenieur"]],
+    ["🏴‍☠️⚓🦜", "Pirat", ["Kapitän", "Fischer", "Seemann"]],
+    ["🤴👑🏰", "Prinz", ["König", "Ritter", "Diener"]],
+    ["🕵️‍♂️🔍🧥", "Detektiv", ["Polizist", "Spion", "Anwalt"]],
+    ["👨‍🌾🌾🚜", "Bauer", ["Gärtner", "Förster", "Jäger"]],
+    ["🎨🖌️🖼️", "Maler", ["Fotograf", "Bildhauer", "Designer"]],
+    ["👨‍✈️✈️🧳", "Pilot", ["Astronaut", "Flugbegleiter", "Fluglotse"]],
+    ["🧙‍♂️🪄📖", "Zauberer", ["Lehrer", "Wissenschaftler", "Priester"]],
+    ["👨‍🔬🧪🔬", "Wissenschaftler", ["Arzt", "Lehrer", "Apotheker"]],
+    ["🎤🎵🎧", "Sänger", ["Musiker", "DJ", "Schauspieler"]],
+    ["⚖️👨‍⚖️📜", "Richter", ["Anwalt", "Polizist", "Politiker"]],
+    ["✂️💇‍♀️🪒", "Friseur", ["Kosmetiker", "Schneider", "Masseur"]],
+    ["🐕🦮🏠", "Hundetrainer", ["Tierarzt", "Bauer", "Jäger"]],
+    ["📦🚚📬", "Paketbote", ["Postbote", "Fahrer", "Lagerarbeiter"]],
+    ["🏗️👷‍♂️🧱", "Bauarbeiter", ["Architekt", "Handwerker", "Ingenieur"]],
+  ];
+
+  /* ---------------------------------------------------------
+     DOPPELT GEMOPPELT — Redundante Ausdrücke, bei denen dieselbe Bedeutung unnötig zweimal
+     gesagt wird (Pleonasmen), plus grammatische Übertreibungen wie „einzigste“.
+     --------------------------------------------------------- */
+  const DOPPELT_GEMOPPELT = [
+    ["weißer Schimmel", "Schimmel", ["grauer Schimmel", "brauner Schimmel"], "„Schimmel“ bezeichnet als Pferderasse-Bezeichnung bereits ein weißes Pferd — „weiß“ davor ist doppelt gesagt."],
+    ["runder Kreis", "Kreis", ["großer Kreis", "kleiner Kreis"], "Ein Kreis ist per Definition immer rund — „rund“ davor sagt nichts Neues aus."],
+    ["alter Greis", "Greis", ["müder Greis", "freundlicher Greis"], "„Greis“ bedeutet bereits „alter Mann“ — „alt“ davor ist überflüssig."],
+    ["tote Leiche", "Leiche", ["kalte Leiche", "gefundene Leiche"], "Eine Leiche ist per Definition ein toter Körper — „tot“ davor ist doppelt gesagt."],
+    ["einzigste", "einzige", ["einzelne", "letzte"], "„Einzig“ ist bereits die höchste Steigerungsstufe — eine zusätzliche Steigerung („-ste“) gibt es dafür nicht."],
+    ["das Nonplusultra schlechthin", "das Nonplusultra", ["das Nonplusultra überhaupt", "das wahre Nonplusultra"], "„Nonplusultra“ bedeutet bereits „das Beste, was es gibt“ — „schlechthin“ sagt dasselbe noch einmal."],
+    ["etwas mit einbeziehen", "etwas einbeziehen", ["etwas dazu einbeziehen", "etwas rein einbeziehen"], "„Einbeziehen“ enthält das „ein“ schon selbst — ein zusätzliches „mit“ davor ist überflüssig."],
+    ["seit jeher schon immer", "seit jeher", ["schon seit jeher", "von jeher schon"], "„Seit jeher“ bedeutet bereits „schon immer“ — beide Ausdrücke zusammen sagen zweimal dasselbe."],
+    ["im Nachhinein zurückblickend", "im Nachhinein", ["rückblickend im Nachhinein", "später im Nachhinein"], "„Im Nachhinein“ bedeutet bereits „rückblickend, im Rückblick“ — beides zusammen ist doppelt gesagt."],
+    ["ein kleiner Zwerg", "ein Zwerg", ["ein freundlicher Zwerg", "ein alter Zwerg"], "Ein Zwerg ist per Definition klein — „klein“ davor sagt nichts Neues aus."],
+    ["vorprogrammiert im Voraus", "vorprogrammiert", ["schon vorprogrammiert", "fest vorprogrammiert"], "„Vorprogrammiert“ enthält die Vorab-Bedeutung schon im Wort selbst — „im Voraus“ wiederholt das."],
+    ["ein neuer Neuling", "ein Neuling", ["ein junger Neuling", "ein unerfahrener Neuling"], "„Neuling“ bedeutet bereits „neu dazugekommene Person“ — „neu“ davor ist überflüssig."],
+  ];
+  const SINN_TRAINER = [
+    ["Am Ende wird alles ___.", "gut", ["viereckig", "durstig", "gestrig"], "Bekannte, trostspendende Redewendung — die anderen Wörter sind zwar Adjektive, ergeben hier aber keinen nachvollziehbaren Sinn."],
+    ["Der frühe Vogel fängt den ___.", "Wurm", ["Montag", "Regenschirm", "Applaus"], "Bekanntes Sprichwort — die anderen Wörter passen zwar grammatisch, aber inhaltlich fängt kein Vogel einen Montag."],
+    ["Ich verstehe nur ___.", "Bahnhof", ["Teppich", "Apfelsaft", "Mittwoch"], "Redewendung für „ich verstehe gar nichts“ — die anderen Wörter ergeben in diesem Zusammenhang keinen Sinn."],
+    ["Das ist nicht mein ___.", "Bier", ["Fenster", "Montag", "Teppich"], "Redewendung für „das geht mich nichts an“ — nur „Bier“ ergibt hier den bekannten, sinnvollen Ausdruck."],
+    ["Weil es draußen regnete, blieb sie ___.", "zu Hause", ["auf dem Mond", "unter Wasser", "im Ozean"], "Logische Folge von Regen ist zu Hause bleiben — die anderen Orte ergeben keinen sinnvollen Zusammenhang mit Regen."],
+    ["Er hatte großen Hunger, deshalb aß er einen ___.", "Apfel", ["Bleistift", "Stein", "Teppich"], "Bei Hunger isst man etwas Essbares — die anderen Dinge kann man nicht essen, auch wenn der Satzbau stimmt."],
+    ["Nachdem die Sonne untergegangen war, wurde es ___.", "dunkel", ["quadratisch", "durstig", "montags"], "Logische Folge von Sonnenuntergang ist Dunkelheit — die anderen Adjektive stehen in keinem sinnvollen Zusammenhang damit."],
+    ["Weil das Auto kaputt war, nahm er den ___.", "Bus", ["Regenbogen", "Schatten", "Montag"], "Sinnvolle Alternative zum kaputten Auto ist ein anderes Verkehrsmittel — die anderen Wörter kann man nicht „nehmen“, um irgendwohin zu kommen."],
+    ["Sie öffnete den Kühlschrank, weil sie ___ hatte.", "Hunger", ["Regen", "Mittwoch", "Fenster"], "Man öffnet den Kühlschrank meist wegen Hunger oder Durst — die anderen Wörter ergeben mit „hatte“ hier keinen Sinn."],
+    ["Bevor er schlafen ging, putzte er sich die ___.", "Zähne", ["Wolken", "Ozeane", "Montage"], "Übliche Abendroutine ist Zähneputzen — die anderen Wörter kann man nicht putzen."],
+    ["Weil der Zug Verspätung hatte, kam sie zu ___.", "spät", ["quadratisch", "durstig", "montags"], "Logische Folge von Zugverspätung ist Zuspätkommen — die anderen Adjektive ergeben in diesem Satz keinen Sinn."],
+    ["Er zog seine Jacke an, weil ihm ___ war.", "kalt", ["Dienstag", "viereckig", "hungrig"], "Man zieht eine Jacke an, wenn einem kalt ist — die anderen Wörter passen nicht zum Grund, eine Jacke anzuziehen."],
+    ["Die Blumen brauchen ___, um zu wachsen.", "Wasser", ["Bleistifte", "Zeitungen", "Schuhe"], "Pflanzen brauchen Wasser zum Wachsen — die anderen Dinge helfen einer Pflanze nicht beim Wachstum."],
+    ["Weil sie müde war, ging sie früh ins ___.", "Bett", ["Auto", "Regal", "Fenster"], "Bei Müdigkeit legt man sich ins Bett — die anderen Orte ergeben mit „früh ins... gehen“ bei Müdigkeit keinen Sinn."],
+    ["Er hat einen ___.", "Vogel", ["Teppich", "Montag", "Apfel"], "Redewendung für „er ist verrückt“ — nur „Vogel“ ergibt den bekannten, sinnvollen Ausdruck."],
+    ["Sie hat das Herz auf dem rechten ___.", "Fleck", ["Tisch", "Teppich", "Montag"], "Redewendung für „gutherzig sein“ — nur „Fleck“ ergibt den bekannten, sinnvollen Ausdruck."],
+    ["Ich habe keinen blassen ___.", "Schimmer", ["Apfel", "Montag", "Teppich"], "Redewendung für „ich habe keine Ahnung“ — nur „Schimmer“ ergibt hier Sinn."],
+    ["Weil die Straße vereist war, fuhr er besonders ___.", "vorsichtig", ["quadratisch", "durstig", "montags"], "Bei Glätte fährt man logischerweise vorsichtig — die anderen Adjektive ergeben keinen Zusammenhang mit vereister Straße."],
+    ["Da das Baby weinte, nahm die Mutter es ___.", "auf den Arm", ["auf den Mond", "unter Wasser", "in den Schrank"], "Übliche, sinnvolle Reaktion auf ein weinendes Baby — die anderen Orte ergeben keinen fürsorglichen Sinn."],
+    ["Weil das Brot alt war, war es ganz ___.", "hart", ["viereckig", "durstig", "montags"], "Altes Brot wird hart — die anderen Adjektive beschreiben keine typische Eigenschaft von altem Brot."],
+    ["Wofür sagt man „Entschuldigung“, wenn man jemandem versehentlich weh tut?", "Um zu zeigen, dass es einem leidtut", ["Um sich zu bedanken", "Um Zustimmung auszudrücken", "Um eine Frage zu stellen"], "Eine Entschuldigung dient dazu, echtes Bedauern zu zeigen und die Beziehung wieder in Ordnung zu bringen — nicht bloß als Höflichkeitsfloskel ohne eigentliche Funktion."],
+    ["Wofür sagt man „Gesundheit“, wenn jemand niest?", "Als höflicher, guter Wunsch direkt nach dem Niesen", ["Um sich zu verabschieden", "Um vor einer Prüfung Glück zu wünschen", "Um eine Mahlzeit zu beginnen"], "„Gesundheit“ ist eine feste, situationsgebundene Höflichkeitsformel genau für diesen einen Moment — sie funktioniert nicht als allgemeiner Glückwunsch."],
+    ["Wofür sagt man „Prost“, bevor man gemeinsam trinkt?", "Um gemeinsam auf etwas anzustoßen", ["Um sich zu bedanken", "Um sich zu verabschieden", "Um jemanden zu warnen"], "„Prost“ begleitet den gemeinsamen Trinkmoment als Geste der Verbundenheit — nicht als allgemeiner Ausruf für andere Anlässe."],
+    ["Wofür sagt man „Guten Appetit“ vor dem Essen?", "Um jemandem ein gutes Essen zu wünschen", ["Um sich zu entschuldigen", "Um eine Frage zu stellen", "Um Abschied zu nehmen"], "„Guten Appetit“ ist ein Wunsch speziell für den Beginn einer Mahlzeit — kein allgemeiner Höflichkeitsgruß für jede Situation."],
+    ["Wofür sagt man „Herzlichen Glückwunsch“?", "Um sich mit jemandem über ein schönes Ereignis zu freuen", ["Um sich zu entschuldigen", "Um jemanden zu trösten", "Um eine Bitte zu äußern"], "Ein Glückwunsch drückt echte Mitfreude über ein positives Ereignis aus — nicht bloß eine automatische Floskel ohne eigentlichen Anlass."],
+  ];
   const REDEWENDUNGEN = [
     ["Da liegt der Hund begraben.","Das ist der eigentliche Grund/das Problem.","Der Hund ist gestorben.","Man sollte einen Hund kaufen."],
     ["Ins Gras beißen.","Sterben.","Picknicken gehen.","Vegetarier werden."],
@@ -1777,6 +1854,18 @@ const ExerciseData = (function () {
     ["Den Faden verlieren", "Den roten Faden nicht mehr finden", "Nähen", "Etwas zerreißen"],
   ];
 
+  function bankSinnTrainer() {
+    return Core.shuffle(SINN_TRAINER).map(([sentence, correct, wrongs, explain]) => {
+      const opts = Core.shuffle([correct, ...wrongs]);
+      return { prompt: sentence, options: opts, correct: [opts.indexOf(correct)], explain };
+    });
+  }
+  function bankDoppeltGemoppelt() {
+    return Core.shuffle(DOPPELT_GEMOPPELT).map(([wrong, correct, wrongs, explain]) => {
+      const opts = Core.shuffle([correct, ...wrongs]);
+      return { prompt: `Wie sagt man es richtig, ohne etwas doppelt zu sagen — statt „${wrong}“?`, options: opts, correct: [opts.indexOf(correct)], explain };
+    });
+  }
   function bankRedewendungen() {
     return Core.shuffle(REDEWENDUNGEN).map(([phrase, correct, d1, d2]) => {
       const opts = Core.shuffle([correct, d1, d2]);
@@ -1899,7 +1988,10 @@ const ExerciseData = (function () {
     return Core.shuffle(HAEUFIGE_FEHLER).map(([wrong, correct, explain]) => {
       const opts = Core.shuffle([correct, wrong]);
       return {
-        prompt: `Welche Form ist richtig?`,
+        // Beide Varianten direkt im Fragetext, damit jede Frage wirklich unterschiedlich aussieht
+        // statt 100x denselben generischen Satz zu zeigen — und man schon vorher weiß, worum es
+        // inhaltlich geht.
+        prompt: `Welche Form ist richtig — „${wrong}“ oder „${correct}“?`,
         options: opts,
         correct: [opts.indexOf(correct)],
         explain,
@@ -2016,8 +2108,14 @@ const ExerciseData = (function () {
   function bankSsEszett() {
     return Core.shuffle(SS_ESZETT).map(([sentence, correct, wrong, explain]) => {
       const opts = Core.shuffle([correct, wrong]);
+      // 75 der 100 Einträge hatten bisher nur den generischen Platzhaltersatz "Welche
+      // Schreibweise ist richtig? „___“" gespeichert — dadurch sahen fast alle Fragen in dieser
+      // Kategorie identisch aus. Für genau diesen Platzhalter zeigen wir stattdessen direkt beide
+      // Schreibweisen zur Auswahl, damit jede Frage wirklich unterschiedlich aussieht.
+      const isGenericPlaceholder = sentence.includes("___") && sentence.startsWith("Welche Schreibweise");
+      const prompt = isGenericPlaceholder ? `Welche Schreibweise ist richtig — „${correct}“ oder „${wrong}“?` : sentence;
       return {
-        prompt: sentence,
+        prompt,
         options: opts,
         correct: [opts.indexOf(correct)],
         explain,
@@ -4049,6 +4147,12 @@ const ExerciseData = (function () {
     { id: "redewendungen", title: "Redewendungen", icon: "💬", group: "wortschatz",
       info: "Redewendungen sind feste Ausdrücke, deren Bedeutung man oft nicht wörtlich verstehen darf.",
       getBank: bankRedewendungen },
+    { id: "sinn-trainer", title: "Sinn-Trainer", icon: "🧩", group: "logik",
+      info: "Alle Antwortoptionen sind grammatisch korrekt und dieselbe Wortart — aber nur eine ergibt inhaltlich wirklich Sinn. Trainiert echtes Verständnis statt reiner Mustererkennung.",
+      getBank: bankSinnTrainer, unlock: { type: "points", value: 150 } },
+    { id: "doppelt-gemoppelt", title: "Doppelt gemoppelt", icon: "🔁", group: "logik",
+      info: "Manche Ausdrücke sagen unbewusst dasselbe zweimal (z. B. „weißer Schimmel“ oder „einzigste“) — hier lernst du, diese Redundanzen zu erkennen und zu vermeiden.",
+      getBank: bankDoppeltGemoppelt, unlock: { type: "points", value: 200 } },
     { id: "haeufige-fehler", title: "Häufige Fehler", icon: "🎯", group: "grammatik",
       info: "Typische Stolperfallen, die auch Muttersprachlern passieren — hier erkennst du die richtige Form.",
       getBank: bankHaeufigeFehler },
@@ -4106,5 +4210,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH };
 })();

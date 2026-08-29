@@ -261,6 +261,12 @@
     { id: "championfuchs", name: "Champion-Fuchs", img: "figures/championfuchs.png", desc: "Die Krönung der Sammlung", unlock: { type: "points", value: 1000 } },
     { id: "superfuchs", name: "Superfuchs", img: "figures/superfuchs.png", desc: "Über allen Erwartungen — die absolute Spitze", unlock: { type: "points", value: 1200 } },
   ];
+  // Das Sticker-Album ist von Anfang an auf mehrere KAPITEL ausgelegt — aktuell gibt es nur die
+  // Füchse, aber künftige Sammelserien (z. B. saisonale Figuren zu Weihnachten) lassen sich hier
+  // einfach als weiterer Eintrag ergänzen, ohne die Album-Seite selbst umbauen zu müssen.
+  const COLLECTIBLE_CHAPTERS = [
+    { id: "fuechse", title: "Die Füchse", emoji: "🦊", figures: COLLECTIBLE_FIGURES, active: true },
+  ];
   // Orden (kleine, häufige Verdienste) vs. Pokale (große, seltene Meisterleistungen) — Trennung
   // anhand bekannter Top-Rang-Namen in der Trophäen-Bezeichnung selbst, ohne die bestehenden
   // Vergabestellen einzeln umbauen zu müssen.
@@ -401,6 +407,43 @@
   let adminUserSearch = "";
   // Vollständige Nutzerliste für Admins/Moderatoren — zeigt WIRKLICH alle registrierten Konten,
   // nicht nur die zuletzt aktiven, mit Suche und (nur für echte Admins) Moderator-Verwaltung.
+  const BUG_CATEGORY_ICONS = {
+    "Rechtschreibfehler": "📝", "Spiel reagiert nicht / hängt": "⚙️",
+    "Text abgeschnitten / falscher Zeilenumbruch": "🖼️", "Falsche Antwort markiert": "❌", "Sonstiges": "❓",
+  };
+  async function loadAdminBugReports() {
+    const area = document.getElementById("adminBugReportsArea");
+    if (!area) return;
+    const reports = await Backend.getBugReports();
+    const open = reports.filter((r) => !r.resolved);
+    const resolved = reports.filter((r) => r.resolved);
+    if (!reports.length) { area.innerHTML = '<p class="empty-note">Noch keine Meldungen — gute Nachrichten!</p>'; return; }
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:10px;">${open.length} offen · ${resolved.length} erledigt</p>
+      <div class="breakdown-list">
+        ${open.map((r) => `
+          <div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:4px; background:rgba(232,95,111,0.08); border-radius:8px; padding:8px;">
+            <span style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+              <strong>${BUG_CATEGORY_ICONS[r.category] || "🐛"} ${r.category}</strong>
+              <button type="button" class="emoji-toggle-link" data-resolve-bug="${r.id}" style="font-size:0.72rem;">✓ Erledigt</button>
+            </span>
+            <span class="empty-note" style="font-size:0.78rem;">${r.context}</span>
+            <span class="empty-note" style="font-size:0.7rem; opacity:0.7;">von ${r.reporter_name} · ${new Date(r.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+          </div>`).join("") || '<p class="empty-note">Keine offenen Meldungen. 🎉</p>'}
+      </div>
+      ${resolved.length ? `<button type="button" class="emoji-toggle-link" id="toggleResolvedBugs" style="margin-top:10px;">${resolved.length} erledigte Meldungen anzeigen</button>
+      <div class="breakdown-list" id="resolvedBugsList" style="display:none; opacity:0.6; margin-top:8px;">
+        ${resolved.map((r) => `<div class="breakdown-row"><span>${BUG_CATEGORY_ICONS[r.category] || "🐛"} ${r.category} — ${r.context}</span></div>`).join("")}
+      </div>` : ""}
+    `;
+    area.querySelectorAll("[data-resolve-bug]").forEach((btn) => {
+      btn.addEventListener("click", async () => { await Backend.resolveBugReport(btn.dataset.resolveBug); loadAdminBugReports(); });
+    });
+    document.getElementById("toggleResolvedBugs")?.addEventListener("click", (e) => {
+      const list = document.getElementById("resolvedBugsList");
+      list.style.display = list.style.display === "none" ? "block" : "none";
+    });
+  }
   async function loadAdminUserList() {
     const box = document.getElementById("adminUserListArea");
     if (!box) return;
@@ -595,13 +638,17 @@
           </div>`;
         }).join("")}
       </div>
-      ${profile.isOwner ? `<div class="question-card" style="margin-top:14px;">
-        <h3>✨ Premium-Status (nur für dich als Betreiber sichtbar)</h3>
+      ${(profile.isOwner || Backend.canModerate()) ? `<div class="question-card" style="margin-top:14px;">
+        <h3>✨ Premium-Status (nur für dich sichtbar)</h3>
         <p class="empty-note" style="margin-bottom:10px;">Da du aktuell keine echten Premium-Inhalte hinterlegt hast, macht ein aktiver Premium-Status wenig Sinn. Hier kannst du ihn selbst jederzeit ein- und ausschalten, sobald du willst.</p>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
           <input type="checkbox" id="premiumSelfToggle" ${Backend.isPremium() ? "checked" : ""} />
           <span>Premium-Status bei mir aktiv anzeigen</span>
         </label>
+      </div>` : ""}
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
+        <h3>🐛 Gemeldete Fehler</h3>
+        <div id="adminBugReportsArea"><p class="empty-note">Lade Meldungen…</p></div>
       </div>` : ""}
       ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
         <h3>👥 Alle registrierten Nutzer</h3>
@@ -610,7 +657,7 @@
     `;
     const premiumToggle = document.getElementById("premiumSelfToggle");
     if (premiumToggle) premiumToggle.addEventListener("change", async () => { await Backend.togglePremium(premiumToggle.checked); renderSettings(); });
-    if (Backend.canModerate()) loadAdminUserList();
+    if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); }
     area.querySelectorAll(".learning-rate-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         await setLearningRating(btn.dataset.cat, btn.dataset.rating);
@@ -2140,25 +2187,29 @@
   // leer erscheinen und dann nachträglich "reinspringen", was wie ein Layout-Sprung wirkte.
   // Nur beim ersten Aufruf pro Runde wird wirklich neu geladen, danach wird der Zwischenspeicher
   // sofort (ohne Verzögerung) wiederverwendet.
-  const miniChallengeBarCache = {};
+  const miniChallengeBarCache = {}; // cached: die geladene FREUNDESLISTE (teurer Netzwerk-Teil) —
+  // NICHT das fertige HTML, sonst würde die Auswahl beim erneuten Rendern nie sichtbar, weil
+  // immer der alte, unveränderte Stand aus dem Cache gezeigt würde.
   function renderMiniChallengeBarCached(gameKey, categoryId, targetElId, container, onRerender) {
     const el = document.getElementById(targetElId);
     if (!el) return;
     if (miniChallengeBarCache[gameKey]) {
-      el.innerHTML = miniChallengeBarCache[gameKey];
+      el.innerHTML = buildMiniChallengeBarHtml(gameKey, categoryId, miniChallengeBarCache[gameKey]);
       wireMiniChallengeBar(container, gameKey, onRerender);
       return;
     }
-    renderMiniChallengeBar(gameKey, categoryId).then((html) => {
-      miniChallengeBarCache[gameKey] = html;
+    fetchMiniChallengeFriends(gameKey).then((friends) => {
+      miniChallengeBarCache[gameKey] = friends;
       const freshEl = document.getElementById(targetElId);
-      if (freshEl) { freshEl.innerHTML = html; wireMiniChallengeBar(container, gameKey, onRerender); }
+      if (freshEl) { freshEl.innerHTML = buildMiniChallengeBarHtml(gameKey, categoryId, friends); wireMiniChallengeBar(container, gameKey, onRerender); }
     });
   }
-  async function renderMiniChallengeBar(gameKey, categoryId) {
+  async function fetchMiniChallengeFriends(gameKey) {
     if (!miniChallengeSelections[gameKey]) miniChallengeSelections[gameKey] = new Set();
-    if (!Backend.currentUser()) return "";
-    const friends = await Backend.getFriends();
+    if (!Backend.currentUser()) return [];
+    return await Backend.getFriends();
+  }
+  function buildMiniChallengeBarHtml(gameKey, categoryId, friends) {
     if (!friends.length) return "";
     const selected = miniChallengeSelections[gameKey];
     const onlineFriends = friends.filter((f) => f.online);
@@ -2215,7 +2266,10 @@
     const resumeBar = isPaused ? `
       <div class="demo-banner" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
         <span>⏸ Du hast eine Runde offen (Frage ${paused.index + 1}/${paused.questions.length}).</span>
-        <button type="button" class="btn btn-coffee" id="resumeBtn">▶ Fortsetzen</button>
+        <span style="display:flex; gap:6px;">
+          <button type="button" class="btn btn-coffee" id="resumeBtn">▶ Fortsetzen</button>
+          <button type="button" class="btn btn-ghost" id="discardBtn">✕ Verwerfen</button>
+        </span>
       </div>` : "";
 
     const myProfile = Backend.currentProfile();
@@ -2393,6 +2447,12 @@
     });
     const resumeBtn = document.getElementById("resumeBtn");
     if (resumeBtn) resumeBtn.addEventListener("click", () => renderQuestion());
+    const discardBtn = document.getElementById("discardBtn");
+    if (discardBtn) discardBtn.addEventListener("click", () => {
+      if (!confirm("Offene Runde wirklich verwerfen? Dein bisheriger Fortschritt geht dabei verloren.")) return;
+      Quiz.reset();
+      renderSetup();
+    });
   }
 
   let currentSelection = [];
@@ -3426,11 +3486,16 @@
   let spCurrentEntry = null; // [chunks, explanation]
   let spShuffled = []; // gemischte Reihenfolge der Bausteine
   let spUsedIdx = []; // welche Indizes (aus spShuffled) schon in der gebauten Reihenfolge stecken
+  let spUsedSentences = []; // welche Sätze in DIESER Sitzung schon dran waren — keine Wiederholungen
   function newSatzpuzzleSession() {
     spSession = { round: 0, total: 10, correct: 0 };
+    spUsedSentences = [];
   }
   function newSatzpuzzleRound() {
-    const entry = ExerciseData.SATZPUZZLE[Math.floor(Math.random() * ExerciseData.SATZPUZZLE.length)];
+    let pool = ExerciseData.SATZPUZZLE.filter((e) => !spUsedSentences.includes(e[0].join(" ")));
+    if (pool.length === 0) { spUsedSentences = []; pool = ExerciseData.SATZPUZZLE; } // Vorrat aufgebraucht -> neu beginnen
+    const entry = pool[Math.floor(Math.random() * pool.length)];
+    spUsedSentences.push(entry[0].join(" "));
     spCurrentEntry = entry;
     spShuffled = Core.shuffle(entry[0].map((word, i) => ({ word, correctIdx: i })));
     spUsedIdx = [];
@@ -3451,6 +3516,32 @@
       saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent: Math.round((spSession.correct / spSession.total) * 100), character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
     }
   }
+  // Wiederverwendbare Variante für Spiele außerhalb der Haupt-Übungen (Satzpuzzle, Wackelturm,
+  // Wortarten-Sortierer) — per Ereignis-Delegation, da diese Bereiche sich häufig neu zeichnen und
+  // ein einmaliges Verdrahten sonst nach jedem Rundenwechsel verloren ginge.
+  function miniBugReportBtnHtml(context) {
+    return `<button type="button" class="bug-report-btn" data-mini-bug-context="${context}" title="Fehler melden">🐛</button>`;
+  }
+  document.body.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-mini-bug-context]");
+    if (!btn) return;
+    const context = btn.dataset.miniBugContext;
+    const box = Core.el("div", { class: "lightbox", onclick: (ev) => { if (ev.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card", style: "max-width:300px;" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("h3", {}, "🐛 Fehler melden"),
+        Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
+        ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Sonstiges"].map((label) =>
+          Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left;", onclick: async () => {
+            await Backend.reportBug(context, label);
+            box.remove();
+            showToast("✅ Danke, Alex wurde informiert!");
+          } }, label)
+        )
+      )
+    );
+    document.body.appendChild(box);
+  });
   function renderSatzpuzzle() {
     const area = document.getElementById("satzpuzzleArea");
     if (!area) return;
@@ -3460,6 +3551,7 @@
     const built = spUsedIdx.map((i) => spShuffled[i].word);
     area.innerHTML = `
       <div class="question-card">
+        ${miniBugReportBtnHtml("Satzpuzzle: " + spCurrentEntry[0].join(" "))}
         <p class="eyebrow">🧩 SATZPUZZLE · RUNDE ${spSession.round + 1} / ${spSession.total} <span class="subnav-info-icon" data-info="Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Genau das übst du hier.">ⓘ</span></p>
         <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen.</p>
         <div class="sp-built-row" style="min-height:44px; display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); margin-bottom:14px;">
@@ -3469,7 +3561,9 @@
           ${spShuffled.map((chunk, i) => `<button type="button" class="btn btn-ghost sp-choice-btn" data-idx="${i}" ${spUsedIdx.includes(i) ? "disabled style=\"opacity:0.25;\"" : ""}>${chunk.word}</button>`).join("")}
         </div>
         <p class="empty-note" id="spFeedback" style="text-align:center; margin-top:10px;"></p>
+        <div id="spChallengeBar"></div>
       </div>`;
+    renderMiniChallengeBarCached("satzpuzzle", "satzpuzzle", "spChallengeBar", area, renderSatzpuzzle);
     document.querySelector(".sp-choices-row").querySelectorAll("[data-idx]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.idx);
@@ -3507,10 +3601,23 @@
   let wtBlocksRemoved = 0;
   let wtMistakes = 0;
   let wtCurrentQuestion = null;
+  let wtUsedPrompts = []; // welche Fragen (Text) in DIESER Sitzung schon dran waren
   const WT_MAX_MISTAKES = 3;
   const WT_TOTAL_BLOCKS = 18;
   function pickRandomWackelturmQuestion() {
     const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    // Bis zu 20 Versuche eine noch nicht gestellte Frage zu finden, bevor wir aufgeben und den
+    // Vorrat für diese Sitzung zurücksetzen (falls wirklich alle verfügbaren Fragen schon dran waren).
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const cat = cats[Math.floor(Math.random() * cats.length)];
+      const bank = cat.getBank();
+      const q = bank[Math.floor(Math.random() * bank.length)];
+      if (!wtUsedPrompts.includes(q.prompt)) {
+        wtUsedPrompts.push(q.prompt);
+        return q;
+      }
+    }
+    wtUsedPrompts = []; // Vorrat aufgebraucht -> neu beginnen
     const cat = cats[Math.floor(Math.random() * cats.length)];
     const bank = cat.getBank();
     return bank[Math.floor(Math.random() * bank.length)];
@@ -3518,6 +3625,7 @@
   function newWackelturmGame() {
     wtBlocksRemoved = 0;
     wtMistakes = 0;
+    wtUsedPrompts = [];
     wtCurrentQuestion = pickRandomWackelturmQuestion();
   }
   function renderWackelturm() {
@@ -3528,18 +3636,21 @@
     const remainingBlocks = Math.max(1, WT_TOTAL_BLOCKS - wtBlocksRemoved);
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
+        ${miniBugReportBtnHtml("Wackelturm: " + wtCurrentQuestion.prompt)}
         <p class="eyebrow">🗼 WACKELTURM · ${wtBlocksRemoved} Blöcke sicher entfernt · ${wtMistakes}/${WT_MAX_MISTAKES} Fehler <span class="subnav-info-icon" data-info="Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast.">ⓘ</span></p>
         <div class="wt-tower-wrap">
           <div class="wt-tower" id="wtTower" style="transform: rotate(${tiltDeg}deg);">
             ${Array.from({ length: remainingBlocks }).map((_, i) => `<div class="wt-block" style="background: hsl(${28 + i * 7}, 58%, 56%);"></div>`).join("")}
           </div>
         </div>
-        <p style="font-weight:700; margin:10px 0;">${wtCurrentQuestion.prompt}</p>
+        <p style="font-weight:700; margin:10px 0;">${wtCurrentQuestion.prompt.includes("___") ? wtCurrentQuestion.prompt.replace("___", '<span class="blank-slot">___</span>') : wtCurrentQuestion.prompt}</p>
         <div class="quiz-options">
           ${wtCurrentQuestion.options.map((opt, i) => `<button type="button" class="option-btn wt-opt-btn" data-idx="${i}"><span>${opt}</span></button>`).join("")}
         </div>
         <p class="empty-note" id="wtFeedback" style="margin-top:10px; min-height:20px;"></p>
+        <div id="wtChallengeBar"></div>
       </div>`;
+    renderMiniChallengeBarCached("wackelturm", "wackelturm", "wtChallengeBar", area, renderWackelturm);
     area.querySelectorAll(".wt-opt-btn").forEach((btn) => {
       btn.addEventListener("click", () => checkWackelturm(Number(btn.dataset.idx), btn));
     });
@@ -3548,6 +3659,8 @@
     document.querySelectorAll(".wt-opt-btn").forEach((b) => { b.disabled = true; });
     const correct = wtCurrentQuestion.correct.includes(idx);
     const fb = document.getElementById("wtFeedback");
+    const blankSlot = document.querySelector("#wackelturmArea .blank-slot");
+    if (blankSlot) blankSlot.textContent = wtCurrentQuestion.options[wtCurrentQuestion.correct[0]];
     if (correct) {
       wtBlocksRemoved += 1;
       Core.sound.correct();
@@ -3561,11 +3674,29 @@
       const tower = document.getElementById("wtTower");
       if (tower) tower.style.transform = `rotate(${wtMistakes * 5}deg)`;
     }
+    if (wtBlocksRemoved >= WT_TOTAL_BLOCKS) {
+      setTimeout(renderWackelturmVictory, 1000);
+      return;
+    }
     if (wtMistakes >= WT_MAX_MISTAKES) {
       setTimeout(renderWackelturmCollapse, 1000);
       return;
     }
     setTimeout(() => { wtCurrentQuestion = pickRandomWackelturmQuestion(); renderWackelturm(); }, 1300);
+  }
+  function renderWackelturmVictory() {
+    const area = document.getElementById("wackelturmArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p style="font-size:2.5rem;">🏆</p>
+        <h2 style="margin:8px 0;">Kompletter Turm geschafft!</h2>
+        <p class="empty-note">Alle ${WT_TOTAL_BLOCKS} Blöcke sicher entfernt, ohne dass er umgefallen ist — echt stark!</p>
+        <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
+      </div>`;
+    document.getElementById("wtRetryBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved + 5, bonus: 5, percent: 100, character: "Turmbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+    }
   }
   function renderWackelturmCollapse() {
     const area = document.getElementById("wackelturmArea");
@@ -3586,7 +3717,7 @@
     renderWackelturm();
   });
 
-  /* ===== Wortarten-Eimer: Wörter per Antippen der richtigen "Eimer"-Kategorie zuordnen ===== */
+  /* ===== Wortarten-Sortierer: Wörter per Antippen der richtigen Kategorie zuordnen ===== */
   let waSession = null; // { round, total, correct }
   let waCurrentWord = null; // [word, category]
   const WA_BUCKETS = [
@@ -3595,17 +3726,22 @@
     { key: "substantiv", label: "📦 Substantiv" },
     { key: "adverb", label: "⏰ Adverb" },
   ];
+  let waUsedWords = []; // welche Wörter in DIESER Sitzung schon dran waren
   function newWortartenSession() {
     waSession = { round: 0, total: 15, correct: 0 };
+    waUsedWords = [];
   }
   function newWortartenRound() {
-    waCurrentWord = ExerciseData.WORTARTEN[Math.floor(Math.random() * ExerciseData.WORTARTEN.length)];
+    let pool = ExerciseData.WORTARTEN.filter((w) => !waUsedWords.includes(w[0]));
+    if (pool.length === 0) { waUsedWords = []; pool = ExerciseData.WORTARTEN; }
+    waCurrentWord = pool[Math.floor(Math.random() * pool.length)];
+    waUsedWords.push(waCurrentWord[0]);
   }
   function renderWortartenResults() {
     const area = document.getElementById("wortartenArea");
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🪣 WORTARTEN-EIMER — SITZUNG FERTIG</p>
+        <p class="eyebrow">🔤 WORTARTEN-SORTIERER — SITZUNG FERTIG</p>
         <p style="font-size:2rem; margin:8px 0;">🎉</p>
         <h2 style="margin:8px 0;">${waSession.correct} / ${waSession.total} richtig zugeordnet!</h2>
         <button type="button" class="btn btn-coffee" id="waPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
@@ -3625,13 +3761,16 @@
     if (!waCurrentWord) newWortartenRound();
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🪣 WORTARTEN-EIMER · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen dem richtigen 'Eimer' zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
+        ${miniBugReportBtnHtml("Wortarten-Sortierer: " + waCurrentWord[0])}
+        <p class="eyebrow">🔤 WORTARTEN-SORTIERER · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen der richtigen Kategorie zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
         <p style="font-size:1.8rem; font-weight:800; margin:20px 0;">${waCurrentWord[0]}</p>
         <div class="trophy-case" style="justify-content:center;">
           ${WA_BUCKETS.map((b) => `<button type="button" class="trophy-chip wa-bucket-btn" data-bucket="${b.key}" style="font-size:0.95rem; padding:10px 16px;">${b.label}</button>`).join("")}
         </div>
         <p class="empty-note" id="waFeedback" style="margin-top:14px; min-height:20px;"></p>
+        <div id="waChallengeBar"></div>
       </div>`;
+    renderMiniChallengeBarCached("wortarten", "wortarten", "waChallengeBar", area, renderWortarten);
     area.querySelectorAll(".wa-bucket-btn").forEach((btn) => {
       btn.addEventListener("click", () => checkWortarten(btn.dataset.bucket, btn));
     });
@@ -3658,6 +3797,222 @@
     if (!waSession) newWortartenSession();
     if (!waCurrentWord) newWortartenRound();
     renderWortarten();
+  });
+
+  /* ===== Wort-Kanone: Fragen aus allen Kategorien — falsche Antworten fallen als Ziele herunter
+     und müssen abgeschossen werden, BEVOR sie unten ankommen. Die richtige Antwort darf NICHT
+     getroffen werden — landet sie unten, ist das richtig so. Braucht keine eigenen neuen Fragen. */
+  let knLives = 3;
+  let knScore = 0;
+  let knUsedPrompts = [];
+  let knCurrentQuestion = null;
+  let knActiveWords = [];
+  let knRoundActive = false;
+  function pickRandomKanoneQuestion() {
+    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const cat = cats[Math.floor(Math.random() * cats.length)];
+      const bank = cat.getBank();
+      const q = bank[Math.floor(Math.random() * bank.length)];
+      if (!knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5) {
+        knUsedPrompts.push(q.prompt);
+        return q;
+      }
+    }
+    knUsedPrompts = [];
+    const cat = cats[Math.floor(Math.random() * cats.length)];
+    const bank = cat.getBank();
+    return bank.find((q) => q.options.length >= 2 && q.options.length <= 5) || bank[0];
+  }
+  function newKanoneGame() {
+    knLives = 3;
+    knScore = 0;
+    knUsedPrompts = [];
+    newKanoneRound();
+  }
+  function newKanoneRound() {
+    knCurrentQuestion = pickRandomKanoneQuestion();
+    const correctIdx = knCurrentQuestion.correct[0];
+    knActiveWords = Core.shuffle(knCurrentQuestion.options.map((opt, i) => ({
+      id: `w${i}-${Date.now()}`, text: opt, isCorrect: i === correctIdx, resolved: false,
+    })));
+    knRoundActive = true;
+  }
+  function renderKanone() {
+    const area = document.getElementById("kanoneArea");
+    if (!area) return;
+    if (knLives <= 0) { renderKanoneGameOver(); return; }
+    if (!knRoundActive) newKanoneRound();
+    const n = knActiveWords.length;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
+        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer · ${"❤️".repeat(knLives)} <span class="subnav-info-icon" data-info="Tipp die FALSCHEN Antworten an, bevor sie unten ankommen — die richtige Antwort darfst du NICHT treffen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
+        <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
+        <div class="kn-sky" id="knSky">
+          ${knActiveWords.map((w, i) => `<button type="button" class="kn-word" data-wid="${w.id}" style="left:${(100 / (n + 1)) * (i + 1)}%; animation-duration:${6 + n}s;">${w.text}</button>`).join("")}
+        </div>
+        <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
+        <div id="knChallengeBar"></div>
+      </div>`;
+    renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanone);
+    area.querySelectorAll(".kn-word").forEach((btn) => {
+      btn.addEventListener("click", () => shootKanoneWord(btn.dataset.wid, btn));
+      btn.addEventListener("animationend", () => landKanoneWord(btn.dataset.wid, btn));
+    });
+  }
+  function shootKanoneWord(wid, btn) {
+    const word = knActiveWords.find((w) => w.id === wid);
+    if (!word || word.resolved) return;
+    word.resolved = true;
+    btn.style.pointerEvents = "none";
+    btn.style.animationPlayState = "paused";
+    const fb = document.getElementById("knFeedback");
+    if (word.isCorrect) {
+      knLives -= 1;
+      Core.sound.wrong();
+      btn.style.background = "#FBDCDC";
+      fb.textContent = `⚠️ Das war die richtige Antwort! (${knLives} ❤️ übrig)`;
+    } else {
+      knScore += 1;
+      Core.sound.correct();
+      btn.style.background = "#DFF3E5";
+      fb.textContent = "💥 Getroffen — richtig erkannt!";
+    }
+    btn.classList.add("kn-shot");
+    checkKanoneRoundDone();
+  }
+  function landKanoneWord(wid, btn) {
+    const word = knActiveWords.find((w) => w.id === wid);
+    if (!word || word.resolved) return;
+    word.resolved = true;
+    const fb = document.getElementById("knFeedback");
+    if (word.isCorrect) {
+      fb.textContent = "✅ Richtige Antwort sicher unten angekommen!";
+    } else {
+      knLives -= 1;
+      Core.sound.wrong();
+      fb.textContent = `⚠️ Falsche Antwort durchgekommen! (${knLives} ❤️ übrig)`;
+    }
+    checkKanoneRoundDone();
+  }
+  function checkKanoneRoundDone() {
+    if (!knActiveWords.every((w) => w.resolved)) return;
+    knRoundActive = false;
+    if (knLives <= 0) { setTimeout(renderKanone, 900); return; }
+    setTimeout(() => { newKanoneRound(); renderKanone(); }, 1100);
+  }
+  function renderKanoneGameOver() {
+    const area = document.getElementById("kanoneArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p style="font-size:2.5rem;">🎯</p>
+        <h2 style="margin:8px 0;">Runde beendet!</h2>
+        <p class="empty-note">Du hast <strong>${knScore}</strong> falsche Antworten korrekt abgeschossen.</p>
+        <button type="button" class="btn btn-coffee" id="knRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>`;
+    document.getElementById("knRetryBtn").addEventListener("click", () => { newKanoneGame(); renderKanone(); });
+    if (Backend.currentUser() && knScore > 0) {
+      saveResultAndCheck({ categories: ["wortkanone"], points: knScore, bonus: 0, percent: 100, character: "Wort-Scharfschütze:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-kanone"]')?.addEventListener("click", () => {
+    if (!knCurrentQuestion) newKanoneGame();
+    renderKanone();
+  });
+
+  /* ===== Wer bin ich?: Emoji-Rätsel — Beruf/Rolle anhand von 2-3 Emojis erraten. Entweder frei
+     eintippen (ohne Vorgabe, wie gewünscht) oder auf Wunsch aus 4 Antworten wählen. ===== */
+  let wbiSession = null; // { round, total, correct }
+  let wbiCurrentItem = null;
+  let wbiUsedItems = [];
+  let wbiTypeMode = true; // true = frei eintippen, false = 4 Antworten zur Auswahl
+  function newWerBinIchSession() {
+    wbiSession = { round: 0, total: 10, correct: 0 };
+    wbiUsedItems = [];
+  }
+  function newWerBinIchRound() {
+    let pool = ExerciseData.WER_BIN_ICH.filter((it) => !wbiUsedItems.includes(it[0]));
+    if (pool.length === 0) { wbiUsedItems = []; pool = ExerciseData.WER_BIN_ICH; }
+    wbiCurrentItem = pool[Math.floor(Math.random() * pool.length)];
+    wbiUsedItems.push(wbiCurrentItem[0]);
+  }
+  function renderWerBinIchResults() {
+    const area = document.getElementById("werbinichArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">❓ WER BIN ICH? — SITZUNG FERTIG</p>
+        <p style="font-size:2rem; margin:8px 0;">🎉</p>
+        <h2 style="margin:8px 0;">${wbiSession.correct} / ${wbiSession.total} richtig erraten!</h2>
+        <button type="button" class="btn btn-coffee" id="wbiPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("wbiPlayAgainBtn").addEventListener("click", () => { newWerBinIchSession(); newWerBinIchRound(); renderWerBinIch(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["werbinich"], points: wbiSession.correct, bonus: 0, percent: Math.round((wbiSession.correct / wbiSession.total) * 100), character: "Rätsel-Detektiv:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+  function renderWerBinIch() {
+    const area = document.getElementById("werbinichArea");
+    if (!area) return;
+    if (!wbiSession) newWerBinIchSession();
+    if (wbiSession.round >= wbiSession.total) { renderWerBinIchResults(); return; }
+    if (!wbiCurrentItem) newWerBinIchRound();
+    const [emojis, correct, wrongs] = wbiCurrentItem;
+    const choiceOpts = wbiTypeMode ? [] : Core.shuffle([correct, ...wrongs]);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        ${miniBugReportBtnHtml("Wer bin ich: " + correct)}
+        <p class="eyebrow">❓ WER BIN ICH? · RUNDE ${wbiSession.round + 1} / ${wbiSession.total}</p>
+        <label class="quiz-actions" style="justify-content:center; margin-bottom:10px; gap:8px; cursor:pointer; font-size:0.8rem;">
+          <input type="checkbox" id="wbiModeToggle" ${!wbiTypeMode ? "checked" : ""} />
+          <span>Stattdessen aus 4 Antworten wählen</span>
+        </label>
+        <p style="font-size:2.8rem; margin:16px 0;">${emojis}</p>
+        ${wbiTypeMode ? `
+          <div class="form-field" style="max-width:260px; margin:0 auto;">
+            <input type="text" id="wbiTypeInput" placeholder="Wer oder was ist das?" autocomplete="off" />
+          </div>
+          <button type="button" class="btn btn-coffee" id="wbiSubmitBtn" style="margin-top:10px;">Antworten</button>
+        ` : `
+          <div class="option-list">
+            ${choiceOpts.map((opt, i) => `<button type="button" class="option-btn wbi-choice-btn" data-idx="${i}"><span>${opt}</span></button>`).join("")}
+          </div>
+        `}
+        <p class="empty-note" id="wbiFeedback" style="margin-top:10px; min-height:20px;"></p>
+        <div id="wbiChallengeBar"></div>
+      </div>`;
+    renderMiniChallengeBarCached("werbinich", "werbinich", "wbiChallengeBar", area, renderWerBinIch);
+    document.getElementById("wbiModeToggle")?.addEventListener("change", (e) => { wbiTypeMode = !e.target.checked; renderWerBinIch(); });
+    document.getElementById("wbiSubmitBtn")?.addEventListener("click", () => {
+      const val = document.getElementById("wbiTypeInput").value;
+      checkWerBinIch(val.trim().toLowerCase() === correct.toLowerCase());
+    });
+    document.getElementById("wbiTypeInput")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("wbiSubmitBtn").click();
+    });
+    area.querySelectorAll(".wbi-choice-btn").forEach((btn) => {
+      btn.addEventListener("click", () => checkWerBinIch(choiceOpts[Number(btn.dataset.idx)] === correct));
+    });
+  }
+  function checkWerBinIch(isCorrect) {
+    const [, correct] = wbiCurrentItem;
+    const fb = document.getElementById("wbiFeedback");
+    wbiSession.round += 1;
+    if (isCorrect) {
+      wbiSession.correct += 1;
+      Core.sound.correct();
+      fb.innerHTML = `<strong style="color:#3E9A6E;">✅ Richtig!</strong> Das war „${correct}“.`;
+    } else {
+      Core.sound.wrong();
+      fb.innerHTML = `<strong style="color:#E85F6F;">Nicht ganz.</strong> Richtig wäre: „${correct}“.`;
+    }
+    document.getElementById("wbiSubmitBtn")?.setAttribute("disabled", "true");
+    document.querySelectorAll(".wbi-choice-btn").forEach((b) => { b.disabled = true; });
+    setTimeout(() => { newWerBinIchRound(); renderWerBinIch(); }, 2200);
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-werbinich"]')?.addEventListener("click", () => {
+    if (!wbiCurrentItem) newWerBinIchRound();
+    renderWerBinIch();
   });
 
   let wbSession = null; // { round, total, points, bonus }
@@ -3937,7 +4292,7 @@
       <div class="question-card">
         <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.wordsAttempted} / ${wsSession.target} WÖRTER · ${wsSession.correctCount} RICHTIG</p>
         <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen — waagerecht, senkrecht oder diagonal, in jede Richtung. Danach den richtigen Artikel wählen, um das Wort abzuschließen.</p>
-        <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, 1fr);">
+        <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, minmax(0, 1fr));">
           ${s.grid.map((row, r) => row.map((ch, c) => {
             const isSelStart = s.selection[0] && s.selection[0][0] === r && s.selection[0][1] === c;
             const isFound = s.words.some((w) => w.found && cellInWord(w, r, c, s.size));
@@ -5679,7 +6034,7 @@
       <div class="question-card">
         <p class="eyebrow">✏️ KREUZWORTRÄTSEL · RUNDE ${cwSession.round + 1} / ${cwSession.total} · ${puzzle.title}</p>
         <p class="empty-note" style="margin-bottom:10px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
-        <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, 1fr); max-width: ${puzzle.cols * 42}px;">
+        <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, minmax(0, 1fr)); max-width: min(${puzzle.cols * 42}px, 94vw);">
           ${puzzle.grid.map((row, r) => row.map((ch, c) => {
             if (ch === "#") return `<div class="cw-cell cw-block"></div>`;
             const num = cwCellNumber(puzzle, r, c);
@@ -6585,7 +6940,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       const flag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "" : "";
       const flagHtml = flag ? `<span class="header-flag">${flag}</span>` : "";
       if (profile.avatarUrl) {
-        icon.innerHTML = `<img src="${profile.avatarUrl}" class="header-avatar" alt="" />${flagHtml}`;
+        icon.innerHTML = isFigureAvatarUrl(profile.avatarUrl)
+          ? `<span class="header-avatar-figure-wrap"><img src="${profile.avatarUrl}" class="header-avatar-figure" alt="" /></span>${flagHtml}`
+          : `<img src="${profile.avatarUrl}" class="header-avatar" alt="" />${flagHtml}`;
       } else if (profile.avatarEmoji) {
         icon.innerHTML = `<span class="header-avatar header-avatar-emoji">${profile.avatarEmoji}</span>${flagHtml}`;
       } else {
@@ -6644,6 +7001,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           await Backend.saveAvatarFromGallery(fig.img);
           box.remove();
           renderAccount();
+          refreshHeaderAuth();
           showToast(`🦊 ${fig.name} ist jetzt dein Profilbild!`);
         } }, "🖼️ Als Profilbild verwenden")
       )
@@ -7225,6 +7583,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         btn.addEventListener("click", async () => {
           await Backend.saveAvatarFromGallery(btn.dataset.galleryUrl);
           renderAccount();
+          refreshHeaderAuth();
         });
       });
     }
@@ -7398,6 +7757,17 @@ An einem Morgen lief ein kleiner Fuchs los…
     { title: "LOUA — Mit dir wach", url: "https://www.youtube.com/watch?v=GCExgRfrFr4" },
     { title: "Mark Forster — Übermorgen", url: "https://www.youtube.com/watch?v=1tD41isys1o" },
     { title: "Matthias Reim — Verdammt, ich lieb dich", url: "https://www.youtube.com/watch?v=x6q0ciiqyG0" },
+    { title: "Alexander Veljanov — Mein Weg", url: "https://www.youtube.com/watch?v=9SLAdldR3Bs" },
+    { title: "Nino de Angelo — Flieger", url: "https://www.youtube.com/watch?v=DTYepq8vhFI" },
+    { title: "Rami Hattab — Goldener Handschuh", url: "https://www.youtube.com/watch?v=PyjVTTOJodg" },
+    { title: "FASO — Richtiger Mensch Falscher Moment", url: "https://www.youtube.com/watch?v=OoJ1IeQUm6w" },
+    { title: "Juliane Werding — Haus überm Meer", url: "https://www.youtube.com/watch?v=FthL9EgkfSk" },
+    { title: "Purwien — Leb' wohl", url: "https://www.youtube.com/watch?v=mOqCn3zGPK8" },
+    { title: "Alexa Feser — Mein Name ist", url: "https://www.youtube.com/watch?v=Nw158t1mCRY" },
+    { title: "ela. — Immer Jemand Wach", url: "https://www.youtube.com/watch?v=Ab5VMH5sYng" },
+    { title: "Der Wolf — Oh Shit, Frau Schmidt", url: "https://www.youtube.com/watch?v=RrNBTVoUHLU" },
+    { title: "LEA x LINDA — Signal", url: "https://www.youtube.com/watch?v=a2utR5VcMGI" },
+    { title: "Grossstadtgeflüster — Ich muss gar nix", url: "https://www.youtube.com/watch?v=7inaAem83FY" },
   ];
   let ytMusicPlayer = null;
   let ytApiLoading = false;
@@ -7415,6 +7785,34 @@ An einem Morgen lief ein kleiner Fuchs los…
   function musicVisiblePlaylist() {
     return musicShowFavoritesOnly ? musicPlaylist.filter((s) => musicFavIds.includes(s.id)) : musicPlaylist;
   }
+  // Echte SVG-Bedienelemente statt Emojis — sollen wie physische, plastische Knöpfe auf einem
+  // Panel wirken (per CSS mit Verlauf, Schatten und "gedrückt"-Effekt beim Antippen ergänzt).
+  const PLAYER_ICONS = {
+    play: `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 4 L20 12 L6 20 Z" fill="currentColor"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" width="18" height="18"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg>`,
+    prev: `<svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="2.5" height="16" rx="1" fill="currentColor"/><path d="M20 4 L8 12 L20 20 Z" fill="currentColor"/></svg>`,
+    next: `<svg viewBox="0 0 24 24" width="16" height="16"><rect x="17.5" y="4" width="2.5" height="16" rx="1" fill="currentColor"/><path d="M4 4 L16 12 L4 20 Z" fill="currentColor"/></svg>`,
+  };
+  function formatMusicTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+  // Aktualisiert die digitale Zeitanzeige alle Sekunde — funktioniert für YouTube UND direkte
+  // MP3-Links gleichermaßen, je nachdem was gerade aktiv ist.
+  setInterval(() => {
+    const timeEl = document.getElementById("musicDigitalTime");
+    if (!timeEl) return;
+    let current = NaN, duration = NaN;
+    const audioEl = document.getElementById("musicAudioNative");
+    if (audioEl && audioEl.src && !audioEl.paused) {
+      current = audioEl.currentTime; duration = audioEl.duration;
+    } else if (ytMusicPlayer && typeof ytMusicPlayer.getCurrentTime === "function") {
+      try { current = ytMusicPlayer.getCurrentTime(); duration = ytMusicPlayer.getDuration(); } catch (e) {}
+    }
+    timeEl.textContent = `${formatMusicTime(current)} / ${formatMusicTime(duration)}`;
+  }, 1000);
   let musicPlaylistMode = "community"; // "community", "mine" oder "friend"
   let musicViewingFriendId = null;
   let musicViewingFriendName = "";
@@ -7507,16 +7905,28 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (bar) {
       const song = musicPlaylist[musicCurrentIndex];
       bar.innerHTML = song ? `
-        <button type="button" class="btn btn-ghost" id="musicPrevBtn" aria-label="Vorheriger Song">⏮️</button>
-        <button type="button" class="btn btn-coffee" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? "⏸️" : "▶️"}</button>
-        <button type="button" class="btn btn-ghost" id="musicNextBtn" aria-label="Nächster Song">⏭️</button>
+        <div id="musicVideoSquareSlot" style="flex-shrink:0;"></div>
+        <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
+        <button type="button" class="player-panel-btn" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
+        <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
+        <span id="musicDigitalTime" class="player-digital-time">--:-- / --:--</span>
+        <span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" style="display:flex; align-items:center; gap:1.5px; height:20px; flex-shrink:0;">
+          ${Array.from({ length: 9 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${i * 0.09}s;"></span>`).join("")}
+        </span>
         <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
       ` : `<span class="empty-note">Kein Song ausgewählt — wähl unten einen aus der Liste.</span>`;
+      // Das quadratische Video-Fenster physisch in die gerade sichtbare Leiste verschieben (Musik-
+      // Reiter bevorzugt, sonst die schwebende Leiste) — dieselbe DOM-Node bleibt dabei bestehen,
+      // sodass der YouTube-Player nicht neu geladen werden muss.
+      const videoSquare = document.getElementById("musicVideoSquare");
+      const slot = document.getElementById("musicVideoSquareSlot");
+      if (videoSquare && slot && song) slot.appendChild(videoSquare);
       document.getElementById("musicPrevBtn")?.addEventListener("click", playPrevMusic);
       document.getElementById("musicNextBtn")?.addEventListener("click", playNextMusic);
       document.getElementById("musicPlayPauseBtn")?.addEventListener("click", toggleMusicPlayPause);
     }
     renderMusicFloatingBar();
+    applyPlayerTemplateClass();
   }
   // Schwebende Leiste, sichtbar auf der GANZEN Seite (nicht nur im Musik-Reiter) — erscheint erst,
   // sobald wirklich ein Song ausgewählt wurde, damit sie nicht unnötig Platz wegnimmt, wenn noch
@@ -7529,17 +7939,46 @@ An einem Morgen lief ein kleiner Fuchs los…
     floatBar.style.display = "block";
     floatBar.className = "music-floating-bar";
     floatBar.innerHTML = `
-      <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">⏮️</button>
-      <button type="button" class="mfb-ctrl" id="mfbPlayPause" aria-label="Play/Pause">${musicIsPlaying ? "⏸️" : "▶️"}</button>
+      <div id="musicVideoSquareSlotFloat" style="flex-shrink:0;"></div>
+      <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
+      <button type="button" class="mfb-ctrl" id="mfbPlayPause" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
       <button type="button" class="mfb-title" id="mfbTitle">🎵 ${song.title}</button>
-      <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">⏭️</button>
+      <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
     `;
+    // Nur verschieben, wenn der Musik-Reiter gerade NICHT sichtbar ist (sonst würde es dort weg-
+    // gerissen, während man aktiv hinschaut).
+    const musicTabOpen = document.getElementById("sub-music")?.dataset.active === "true";
+    if (!musicTabOpen) {
+      const videoSquare = document.getElementById("musicVideoSquare");
+      const floatSlot = document.getElementById("musicVideoSquareSlotFloat");
+      if (videoSquare && floatSlot) floatSlot.appendChild(videoSquare);
+    }
     document.getElementById("mfbPrev").addEventListener("click", playPrevMusic);
     document.getElementById("mfbNext").addEventListener("click", playNextMusic);
     document.getElementById("mfbPlayPause").addEventListener("click", toggleMusicPlayPause);
     document.getElementById("mfbTitle").addEventListener("click", () => {
       document.querySelector('[data-target="view-knowledge"]').click();
       document.querySelector('#knowledgeSubnav [data-sub="sub-music"]').click();
+    });
+  }
+  const PLAYER_TEMPLATES = {
+    klassisch: { label: "☕ Klassisch", desc: "Warmes Design, passend zur Seite." },
+    retro: { label: "📻 Retro-Stereo", desc: "Dunkles Panel mit LED-Akzenten, 80er/90er-Flair." },
+    holz: { label: "🪵 Holzoptik", desc: "Warmes Holzpaneel-Design." },
+  };
+  function getPlayerTemplate() {
+    const profile = Backend.currentProfile();
+    return (profile && profile.extraProfileData && profile.extraProfileData.playerTemplate) || "klassisch";
+  }
+  async function setPlayerTemplate(key) {
+    await Backend.updateExtraProfileField("playerTemplate", key);
+    applyPlayerTemplateClass();
+  }
+  function applyPlayerTemplateClass() {
+    const template = getPlayerTemplate();
+    document.querySelectorAll(".music-floating-bar, #musicPlayerBarInner").forEach((el) => {
+      el.classList.remove("player-tpl-klassisch", "player-tpl-retro", "player-tpl-holz");
+      el.classList.add(`player-tpl-${template}`);
     });
   }
   async function renderMusicSection() {
@@ -7559,8 +7998,16 @@ An einem Morgen lief ein kleiner Fuchs los…
         <button type="button" class="order-pill" id="musicMineTab" aria-selected="${isMine}">👤 Meine Playlist</button>
         ${isFriendView ? `<button type="button" class="order-pill" aria-selected="true">🎵 ${musicViewingFriendName}s Playlist</button>` : ""}
       </div>
+      ${!isFriendView ? `
+      <div class="question-card" style="margin-bottom:14px;">
+        <button type="button" class="emoji-toggle-link" id="musicUsersListToggle" style="margin:0;">🎵 Playlisten anderer Mitglieder entdecken</button>
+        <div id="musicUsersListBody" style="display:none; margin-top:10px;"><p class="empty-note">Lade…</p></div>
+      </div>` : ""}
       <div class="question-card" style="position:sticky; top:0; z-index:5; margin-bottom:14px;">
         <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px;"></div>
+        <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+          ${Object.entries(PLAYER_TEMPLATES).map(([key, t]) => `<button type="button" class="order-pill player-tpl-pick" data-tpl="${key}" aria-selected="${getPlayerTemplate() === key}" title="${t.desc}" style="font-size:0.72rem; padding:5px 10px;">${t.label}</button>`).join("")}
+        </div>
       </div>
       ${canManage ? `
         <div class="question-card" style="margin-bottom:14px;">
@@ -7599,6 +8046,24 @@ An einem Morgen lief ein kleiner Fuchs los…
     `;
     renderMusicPlayerBar();
     document.getElementById("musicCommunityTab")?.addEventListener("click", async () => { musicPlaylistMode = "community"; await loadMusicPlaylist(); renderMusicSection(); });
+    document.getElementById("musicUsersListToggle")?.addEventListener("click", async () => {
+      const body = document.getElementById("musicUsersListBody");
+      const opening = body.style.display === "none";
+      body.style.display = opening ? "block" : "none";
+      if (!opening) return;
+      const users = await Backend.getUsersWithPlaylists();
+      const others = users.filter((u) => !Backend.currentUser() || u.id !== Backend.currentUser().id);
+      body.innerHTML = others.length ? `
+        <div class="breakdown-list">
+          ${others.map((u) => `<button type="button" class="breakdown-row friend-name-btn" data-open-user-playlist="${u.id}" data-open-user-name="${u.name}" style="width:100%; text-align:left; cursor:pointer;">${avatarPhotoHtml(u.avatar_url || "")}<span>🎵 ${u.name}s Playlist</span></button>`).join("")}
+        </div>` : `<p class="empty-note">Noch niemand hat eine eigene Playlist angelegt.</p>`;
+      body.querySelectorAll("[data-open-user-playlist]").forEach((btn) => {
+        btn.addEventListener("click", () => viewFriendPlaylist(btn.dataset.openUserPlaylist, btn.dataset.openUserName));
+      });
+    });
+    area.querySelectorAll(".player-tpl-pick").forEach((btn) => {
+      btn.addEventListener("click", async () => { await setPlayerTemplate(btn.dataset.tpl); renderMusicSection(); });
+    });
     document.getElementById("musicMineTab")?.addEventListener("click", async () => { musicPlaylistMode = "mine"; await loadMusicPlaylist(); renderMusicSection(); });
     document.getElementById("musicAddToggle")?.addEventListener("click", () => {
       const body = document.getElementById("musicAddFormBody");
@@ -7682,6 +8147,62 @@ An einem Morgen lief ein kleiner Fuchs los…
     { id: "q9", text: "Welchen Ort auf der Welt müsstest du unbedingt noch sehen?" },
     { id: "q10", text: "Worauf bist du an dir selbst besonders stolz?" },
   ];
+  let albumChapterIdx = 0;
+  let albumPageIdx = 0;
+  const ALBUM_PER_PAGE = 6;
+  function renderAlbum() {
+    const area = document.getElementById("albumArea");
+    if (!area) return;
+    const profile = Backend.currentProfile();
+    const activeChapters = COLLECTIBLE_CHAPTERS.filter((c) => c.active);
+    const chapter = activeChapters[albumChapterIdx];
+    const totalPages = Math.ceil(chapter.figures.length / ALBUM_PER_PAGE);
+    albumPageIdx = Math.min(albumPageIdx, totalPages - 1);
+    const totalUnlocked = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
+    const pageFigures = chapter.figures.slice(albumPageIdx * ALBUM_PER_PAGE, albumPageIdx * ALBUM_PER_PAGE + ALBUM_PER_PAGE);
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Dein Sticker-Album — die Füchse sind erst der Anfang. Künftige Sammelserien (z. B. zu bestimmten Jahreszeiten) bekommen hier später ihr eigenes Kapitel, ohne dass du deine bisherigen Füchse verlierst.</p>
+      <div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <button type="button" class="btn btn-ghost" id="albumPrevChapter" ${albumChapterIdx === 0 ? "disabled" : ""}>⏮ Kapitel</button>
+        <h3 style="margin:0;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlocked}/${chapter.figures.length})</span></h3>
+        <button type="button" class="btn btn-ghost" id="albumNextChapter" ${albumChapterIdx >= activeChapters.length - 1 ? "disabled" : ""}>Kapitel ⏭</button>
+      </div>
+      <div class="album-book">
+        <div class="album-page-face" id="albumPageFace" style="background:#FBF3E8; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.18); padding:18px;">
+          <div class="album-page-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+            ${pageFigures.map((fig) => {
+              const unlocked = profile && isFigureUnlocked(fig, profile);
+              return `<div class="album-slot" style="aspect-ratio:1; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; padding:6px; transform:rotate(${(fig.id.length % 5) - 2}deg);" title="${unlocked ? fig.name : "Noch gesperrt"}">
+                ${unlocked ? `<img src="${fig.img}" alt="${fig.name}" style="width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25));" />` : `<span style="font-size:1.4rem; opacity:0.3;">🔒</span>`}
+              </div>`;
+            }).join("")}
+            ${Array.from({ length: ALBUM_PER_PAGE - pageFigures.length }).map(() => `<div></div>`).join("")}
+          </div>
+        </div>
+      </div>
+      <div class="quiz-actions" style="justify-content:center; margin-top:12px; gap:16px; align-items:center;">
+        <button type="button" class="btn btn-ghost" id="albumPrevPage" ${albumPageIdx === 0 ? "disabled" : ""}>◀ Seite zurück</button>
+        <span class="empty-note">Seite ${albumPageIdx + 1} / ${totalPages}</span>
+        <button type="button" class="btn btn-ghost" id="albumNextPage" ${albumPageIdx >= totalPages - 1 ? "disabled" : ""}>Seite weiter ▶</button>
+      </div>
+      ${activeChapters.length <= 1 ? `<div class="question-card" style="margin-top:16px; text-align:center; opacity:0.6;"><p class="empty-note">📔 Weitere Kapitel folgen, sobald neue Sammelserien starten!</p></div>` : ""}
+    `;
+    document.getElementById("albumPrevChapter")?.addEventListener("click", () => { albumChapterIdx = Math.max(0, albumChapterIdx - 1); albumPageIdx = 0; renderAlbum(); });
+    document.getElementById("albumNextChapter")?.addEventListener("click", () => { albumChapterIdx = Math.min(activeChapters.length - 1, albumChapterIdx + 1); albumPageIdx = 0; renderAlbum(); });
+    document.getElementById("albumPrevPage")?.addEventListener("click", () => turnAlbumPage(-1));
+    document.getElementById("albumNextPage")?.addEventListener("click", () => turnAlbumPage(1));
+  }
+  function turnAlbumPage(direction) {
+    const face = document.getElementById("albumPageFace");
+    if (!face) { albumPageIdx += direction; renderAlbum(); return; }
+    face.classList.add("turning-next");
+    setTimeout(() => {
+      albumPageIdx += direction;
+      renderAlbum();
+    }, 380); // auf halbem Weg der Drehung (wenn die Seite von der Kante aus gesehen wird) den Inhalt wechseln
+  }
+  document.querySelector('#profileSubnav [data-sub="sub-album"]')?.addEventListener("click", () => { albumPageIdx = 0; renderAlbum(); });
+
   async function renderInterview() {
     const area = document.getElementById("interviewArea");
     if (!area) return;
@@ -7813,6 +8334,14 @@ An einem Morgen lief ein kleiner Fuchs los…
       { icon: "💭", label: "Gedanken", html: `
         ${extra.motto ? `<div class="breakdown-row"><span>🌟 Lebensmotto</span><span>${extra.motto}</span></div>` : ""}
         ${extra.secret ? `<div class="poem-box" style="border-left-color:var(--coral-400);"><p style="margin:0;">🤫 ${extra.secret}</p></div>` : ""}
+        ${extra.interviewAnswers && Object.values(extra.interviewAnswers).some((a) => a && a.trim()) ? `
+          <p class="eyebrow" style="margin-top:14px;">🎤 Interview</p>
+          ${INTERVIEW_QUESTIONS.filter((q) => extra.interviewAnswers[q.id] && extra.interviewAnswers[q.id].trim()).map((q) => `
+            <div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+              <strong style="font-size:0.82rem;">${q.text}</strong>
+              <span class="empty-note">${extra.interviewAnswers[q.id]}</span>
+            </div>`).join("")}
+        ` : ""}
         ${extra.bigDream ? `<div class="breakdown-row"><span>🌠 Größter Traum</span><span>${extra.bigDream}</span></div>` : ""}
         ${extra.whatMakesMeHappy ? `<div class="breakdown-row"><span>😊 Macht glücklich</span><span>${extra.whatMakesMeHappy}</span></div>` : ""}
         ${favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : ""}
@@ -7883,6 +8412,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       alert("Dieses Profil konnte nicht geladen werden. Das liegt entweder an Row Level Security (RLS) in Supabase, oder daran, dass eine kürzlich hinzugekommene Spalte in der Tabelle „profiles\" noch fehlt. Öffne die Browser-Konsole für die genaue Fehlermeldung, und führe sicherheitshalber das komplette Nachrüst-SQL aus dem README (Abschnitt „Nachrüst-SQL\") im Supabase SQL-Editor aus.");
       return;
     }
+    Backend.recordProfileVisit(p.id); // nicht blockierend — Popup soll nicht auf das Speichern warten
     const initials = (p.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
     const avatarHtml = p.avatar_url
       ? avatarPhotoHtml(p.avatar_url)
@@ -7893,6 +8423,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     const isMe = me && me.id === p.id;
     const theirFriends = await Backend.getFriends(p.id);
     const alreadyFriends = me && !isMe ? theirFriends.some((f) => f.id === me.id) : false;
+    const profileNotes = await Backend.getProfileNotes(p.id);
+    const profileVisitors = isMe ? await Backend.getProfileVisitors(p.id, Backend.canModerate()) : [];
     const originFlag = p.origin ? (VocabData.COUNTRIES.find((c) => c.name === p.origin) || {}).flag || "🌍" : "";
     // Wichtigste zuerst: echte Pokale (große Meisterleistungen) werden vor den häufigeren Orden
     // gezeigt, damit die vier sichtbaren Kacheln auch wirklich die beeindruckendsten sind.
@@ -7973,6 +8505,23 @@ An einem Morgen lief ein kleiner Fuchs los…
         !isMe ? Core.el("div", { class: "quiz-actions", style: "justify-content:center;" },
           Core.el("button", { type: "button", class: "btn btn-ghost", onclick: () => viewFriendPlaylist(p.id, p.name) }, "🎵 Playlist ansehen")
         ) : "",
+        Core.el("div", {
+          class: "question-card", style: "text-align:left; margin-top:14px;",
+          html: `
+            <p class="eyebrow">👣 SPUREN HINTERLASSEN</p>
+            ${profileNotes.length ? `<div class="breakdown-list" style="margin-bottom:10px;">
+              ${profileNotes.map((n) => `<div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:2px;"><strong style="font-size:0.82rem;">${n.author_name}</strong><span class="empty-note">${n.message}</span></div>`).join("")}
+            </div>` : `<p class="empty-note" style="margin-bottom:10px;">Noch keine Spuren — sei die/der Erste!</p>`}
+            ${!isMe && me ? `
+              <textarea id="profileNoteInput" class="guestbook-form-textarea" maxlength="200" placeholder="Hinterlasse einen Gruß auf ${p.name}s Profil…"></textarea>
+              <button type="button" class="btn btn-ghost" id="profileNoteSubmit" style="margin-top:6px;">Hinterlassen</button>
+            ` : ""}
+            ${isMe && Backend.canModerate() ? `
+              <p class="eyebrow" style="margin-top:14px;">👁️ WER WAR HIER</p>
+              ${profileVisitors.length ? profileVisitors.map((v) => `<div class="breakdown-row"><span>👤 ${v.visitor_name}</span><span class="empty-note" style="font-size:0.72rem;">${new Date(v.visited_at).toLocaleDateString("de-DE")}</span></div>`).join("") : '<p class="empty-note">Noch niemand da gewesen.</p>'}
+            ` : ""}
+          `,
+        }),
         (Backend.isOwner() && !isMe && !p.is_owner)
           ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; margin-top:10px; flex-wrap:wrap;" },
               Core.el("button", {
@@ -8067,6 +8616,13 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.body.appendChild(box);
     wireSteckbriefPager(box, () => { box.remove(); openProfileModal(id); });
     wireMusicPlayer(box);
+    document.getElementById("profileNoteSubmit")?.addEventListener("click", async () => {
+      try {
+        await Backend.addProfileNote(p.id, document.getElementById("profileNoteInput").value);
+        box.remove();
+        openProfileModal(id);
+      } catch (err) { alert(err.message); }
+    });
     box.querySelectorAll("[data-modal-view-photo]").forEach((img, idx, all) => {
       const urls = [...all].map((el) => el.dataset.modalViewPhoto);
       img.addEventListener("click", () => openGallerySlideshow(urls, idx, "Foto"));
@@ -8164,6 +8720,22 @@ An einem Morgen lief ein kleiner Fuchs los…
     konfetti: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M6 34 L16 12 Q17 9 20 10 Q23 11 22 14 L12 36 Z" fill="#E8825F"/><rect x="24" y="6" width="4" height="4" fill="#F2B84B" transform="rotate(20 26 8)"/><rect x="30" y="16" width="4" height="4" fill="#4FA88E" transform="rotate(-15 32 18)"/><circle cx="32" cy="8" r="2" fill="#E85F6F"/><rect x="10" y="4" width="3.5" height="3.5" fill="#A594D1" transform="rotate(35 12 6)"/></svg>`,
     ziel: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="20" r="16" fill="#E85F6F"/><circle cx="20" cy="20" r="10.5" fill="#F5EFE4"/><circle cx="20" cy="20" r="5" fill="#E85F6F"/><circle cx="20" cy="20" r="1.8" fill="#F5EFE4"/></svg>`,
     sprechblase: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="17" rx="16" ry="12" fill="#A594D1"/><path d="M13 27 L9 34 L18 28 Z" fill="#A594D1"/><circle cx="13" cy="17" r="2" fill="#F5EFE4"/><circle cx="20" cy="17" r="2" fill="#F5EFE4"/><circle cx="27" cy="17" r="2" fill="#F5EFE4"/></svg>`,
+    panda: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="21" r="14" fill="#F5EFE4"/><circle cx="9" cy="9" r="5" fill="#241505"/><circle cx="31" cy="9" r="5" fill="#241505"/><ellipse cx="13" cy="20" rx="4" ry="5" fill="#241505"/><ellipse cx="27" cy="20" rx="4" ry="5" fill="#241505"/><circle cx="13" cy="20" r="1.8" fill="#F5EFE4"/><circle cx="27" cy="20" r="1.8" fill="#F5EFE4"/><ellipse cx="20" cy="27" rx="2.5" ry="2" fill="#241505"/><path d="M17 30 Q20 32 23 30" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>`,
+    katze: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M10 10 L14 18 L8 20 Z" fill="#F2B84B"/><path d="M30 10 L26 18 L32 20 Z" fill="#F2B84B"/><circle cx="20" cy="22" r="13" fill="#F2B84B"/><path d="M14 21 Q16 19 18 21" stroke="#241505" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M26 21 Q24 19 22 21" stroke="#241505" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M20 24 L18 27 L22 27 Z" fill="#E8825F"/><path d="M17 29 Q20 31 23 29" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M7 25 H14 M7 28 H14 M26 25 H33 M26 28 H33" stroke="#241505" stroke-width="1" stroke-linecap="round"/></svg>`,
+    frosch: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="24" rx="15" ry="11" fill="#7BC47F"/><circle cx="13" cy="12" r="6" fill="#7BC47F"/><circle cx="27" cy="12" r="6" fill="#7BC47F"/><circle cx="13" cy="12" r="3" fill="#241505"/><circle cx="27" cy="12" r="3" fill="#241505"/><path d="M11 27 Q20 33 29 27" stroke="#241505" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+    biene: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="22" rx="6" ry="10" fill="#F2B84B"/><path d="M15 15 H25 M14 20 H26 M15 25 H25" stroke="#241505" stroke-width="2.5"/><path d="M14 13 Q7 8 5 14 Q9 18 15 15 Z" fill="#F5EFE4" opacity="0.85"/><path d="M26 13 Q33 8 35 14 Q31 18 25 15 Z" fill="#F5EFE4" opacity="0.85"/><circle cx="17" cy="11" r="1.5" fill="#241505"/><circle cx="23" cy="11" r="1.5" fill="#241505"/><path d="M14 9 L11 5 M26 9 L29 5" stroke="#241505" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+    schnecke: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M6 30 Q6 20 16 20 Q24 20 24 27 Q24 32 18 32 Q14 32 14 28 Q14 25 18 25" stroke="#4FA88E" stroke-width="0" fill="#E8825F"/><circle cx="17" cy="26" r="10" fill="#E8825F"/><circle cx="17" cy="26" r="6" fill="#F2B84B"/><circle cx="17" cy="26" r="2.5" fill="#E8825F"/><path d="M8 30 Q3 30 3 25 Q3 22 8 23" stroke="#4FA88E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M8 23 L6 15 M11 22 L11 13" stroke="#4FA88E" stroke-width="2" stroke-linecap="round"/><circle cx="6" cy="14" r="1.8" fill="#4FA88E"/><circle cx="11" cy="12" r="1.8" fill="#4FA88E"/></svg>`,
+    pinguin: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="20" cy="22" rx="11" ry="15" fill="#241505"/><ellipse cx="20" cy="24" rx="6.5" ry="10" fill="#F5EFE4"/><circle cx="17" cy="15" r="1.6" fill="#241505"/><circle cx="23" cy="15" r="1.6" fill="#241505"/><path d="M18 18 L20 20 L22 18 Z" fill="#F2B84B"/><ellipse cx="10" cy="26" rx="3" ry="5" fill="#241505" transform="rotate(-20 10 26)"/><ellipse cx="30" cy="26" rx="3" ry="5" fill="#241505" transform="rotate(20 30 26)"/><path d="M15 36 L17 33 L20 36 L23 33 L25 36" fill="#F2B84B"/></svg>`,
+    igel: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M12 30 Q6 28 8 18 Q10 8 20 8 Q30 8 32 18 Q34 28 28 30 Z" fill="#8B6F47"/><path d="M11 15 L5 10 M14 10 L10 4 M20 8 L19 2 M26 10 L30 4 M29 15 L35 10" stroke="#8B6F47" stroke-width="2" stroke-linecap="round"/><ellipse cx="20" cy="26" rx="10" ry="7" fill="#F5C99A"/><circle cx="16" cy="24" r="1.6" fill="#241505"/><circle cx="24" cy="24" r="1.6" fill="#241505"/><circle cx="20" cy="28" r="1.8" fill="#241505"/></svg>`,
+    marienkaefer: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="21" r="14" fill="#E85F6F"/><path d="M20 7 V35" stroke="#241505" stroke-width="2"/><circle cx="20" cy="10" r="4" fill="#241505"/><circle cx="13" cy="16" r="2.2" fill="#241505"/><circle cx="27" cy="16" r="2.2" fill="#241505"/><circle cx="14" cy="26" r="2.2" fill="#241505"/><circle cx="26" cy="26" r="2.2" fill="#241505"/></svg>`,
+    eichhoernchen: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M28 8 Q40 12 34 26 Q30 34 20 30 Q26 24 24 16 Q30 10 28 8 Z" fill="#E8825F"/><circle cx="14" cy="22" r="10" fill="#E8825F"/><circle cx="8" cy="15" r="3.5" fill="#E8825F"/><circle cx="11" cy="19" r="1.5" fill="#241505"/><ellipse cx="18" cy="25" rx="3" ry="2.2" fill="#F5EFE4"/><circle cx="19" cy="25" r="2" fill="#8B6F47"/></svg>`,
+    faultier: `<svg viewBox="0 0 40 40" width="28" height="28"><circle cx="20" cy="20" r="15" fill="#C9A876"/><ellipse cx="20" cy="22" rx="9" ry="8" fill="#E8D5B0"/><path d="M14 20 Q16 18 18 20" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M22 20 Q24 18 26 20" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M17 26 Q20 27 23 26" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><circle cx="10" cy="10" r="3.5" fill="#C9A876"/><circle cx="30" cy="10" r="3.5" fill="#C9A876"/></svg>`,
+    einhorn: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="18" cy="23" rx="12" ry="11" fill="#F5EFE4"/><path d="M18 12 L22 2 L21 13 Z" fill="#F2B84B"/><path d="M10 12 L5 8 M12 9 L9 3" stroke="#E8A6D0" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="22" r="1.8" fill="#241505"/><ellipse cx="9" cy="25" rx="3" ry="4" fill="#F5EFE4"/><path d="M6 15 Q0 18 4 24 Q7 20 10 18" fill="#A594D1"/><path d="M8 13 Q2 17 6 22" fill="#E8A6D0"/></svg>`,
+    drache: `<svg viewBox="0 0 40 40" width="28" height="28"><ellipse cx="19" cy="23" rx="12" ry="10" fill="#7BC47F"/><path d="M10 15 L4 9 M14 12 L11 5 M19 11 L19 4" stroke="#4FA88E" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="21" r="1.8" fill="#241505"/><path d="M28 24 Q36 22 35 28 Q30 30 27 27" fill="#7BC47F"/><path d="M16 28 Q19 31 22 28" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M10 26 L4 30 L9 30 Z" fill="#F2B84B"/></svg>`,
+    gespenst: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M8 32 V16 Q8 4 20 4 Q32 4 32 16 V32 L27 27 L22 32 L18 27 L13 32 Z" fill="#F5EFE4"/><circle cx="14" cy="16" r="2.2" fill="#241505"/><circle cx="26" cy="16" r="2.2" fill="#241505"/><ellipse cx="20" cy="22" rx="2.5" ry="3" fill="#241505"/></svg>`,
+    roboter: `<svg viewBox="0 0 40 40" width="28" height="28"><rect x="8" y="14" width="24" height="18" rx="4" fill="#A594D1"/><circle cx="20" cy="8" r="3" fill="#8B6F47"/><path d="M20 11 V14" stroke="#8B6F47" stroke-width="2"/><circle cx="15" cy="22" r="3" fill="#F5EFE4"/><circle cx="25" cy="22" r="3" fill="#F5EFE4"/><circle cx="15" cy="22" r="1.3" fill="#241505"/><circle cx="25" cy="22" r="1.3" fill="#241505"/><rect x="14" y="27" width="12" height="2.5" rx="1.3" fill="#F5EFE4"/><rect x="2" y="18" width="5" height="3" rx="1.5" fill="#A594D1"/><rect x="33" y="18" width="5" height="3" rx="1.5" fill="#A594D1"/></svg>`,
+    wolke: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M10 24 Q4 24 4 19 Q4 14 10 15 Q10 8 18 8 Q25 8 26 14 Q34 13 34 21 Q34 27 27 27 H11 Q10 27 10 24 Z" fill="#F5EFE4"/><circle cx="15" cy="19" r="1.6" fill="#241505"/><circle cx="24" cy="19" r="1.6" fill="#241505"/><path d="M15 23 Q19 26 24 23" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>`,
+    kaktus: `<svg viewBox="0 0 40 40" width="28" height="28"><rect x="16" y="14" width="8" height="20" rx="4" fill="#7BC47F"/><path d="M16 20 Q8 20 8 26 Q8 30 12 30 H16" fill="#7BC47F"/><path d="M24 17 Q32 17 32 23 Q32 27 28 27 H24" fill="#7BC47F"/><circle cx="18" cy="21" r="1.6" fill="#241505"/><circle cx="22" cy="21" r="1.6" fill="#241505"/><path d="M18 25 Q20 27 22 25" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><ellipse cx="20" cy="35" rx="9" ry="3" fill="#8B6F47"/></svg>`,
   };
   function renderStickerRow() {
     const row = document.getElementById("inboxStickerRow");
@@ -8171,23 +8743,36 @@ An einem Morgen lief ein kleiner Fuchs los…
     row.innerHTML = Object.entries(DMA_STICKERS).map(([key, svg]) =>
       `<button type="button" class="hobby-chip sticker-pick-btn" data-sticker="${key}" style="padding:4px 8px;" title="[sticker:${key}] in den Text einfügen">${svg}</button>`
     ).join("");
+    // Zusätzlich: verdiente Fuchs-Sammelfiguren als kleinere Sticker anbietbar — nur die, die man
+    // sich bereits erspielt hat, nicht die gesperrten.
+    const foxRow = document.getElementById("inboxFoxStickerRow");
+    if (foxRow) {
+      const profile = Backend.currentProfile();
+      const unlocked = profile ? COLLECTIBLE_FIGURES.filter((fig) => isFigureUnlocked(fig, profile)) : [];
+      foxRow.innerHTML = unlocked.map((fig) =>
+        `<button type="button" class="hobby-chip fox-sticker-pick-btn" data-fox="${fig.id}" style="padding:2px 4px;" title="${fig.name} in den Text einfügen"><img src="${fig.img}" alt="${fig.name}" style="width:22px; height:22px; object-fit:contain; vertical-align:middle;" /></button>`
+      ).join("");
+      foxRow.querySelectorAll("[data-fox]").forEach((btn) => {
+        btn.addEventListener("click", () => insertMessageToken(`[fox:${btn.dataset.fox}]`));
+      });
+    }
     // Klick fügt den Sticker-Platzhalter direkt an der aktuellen Cursor-Position im Textfeld ein
     // (wie ein normaler Emoji-Einschub) — so können mehrere Sticker an beliebigen Stellen im Text
     // verteilt werden, statt nur EINEN auswählen zu können, der am Ende angehängt wird.
     row.querySelectorAll("[data-sticker]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const textarea = document.getElementById("inboxMessageInput");
-        if (!textarea) return;
-        const token = `[sticker:${btn.dataset.sticker}]`;
-        const start = textarea.selectionStart ?? textarea.value.length;
-        const end = textarea.selectionEnd ?? textarea.value.length;
-        textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
-        const newPos = start + token.length;
-        textarea.focus();
-        textarea.setSelectionRange(newPos, newPos);
-        textarea.dispatchEvent(new Event("input", { bubbles: true })); // löst Entwurf-Speicherung mit aus
-      });
+      btn.addEventListener("click", () => insertMessageToken(`[sticker:${btn.dataset.sticker}]`));
     });
+  }
+  function insertMessageToken(token) {
+    const textarea = document.getElementById("inboxMessageInput");
+    if (!textarea) return;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
+    const newPos = start + token.length;
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.dispatchEvent(new Event("input", { bubbles: true })); // löst Entwurf-Speicherung mit aus
   }
 
   let inboxViewTab = "in"; // "in" oder "out"
@@ -8241,6 +8826,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <div class="form-field">
           <label class="empty-note">Eigene Sticker antippen, um sie an der Cursor-Position in den Text einzufügen (optional):</label>
           <div id="inboxStickerRow" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;"></div>
+          <div id="inboxFoxStickerRow" style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;"></div>
         </div>
         <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
         <div class="form-error" id="inboxSendError"></div>
@@ -8258,7 +8844,10 @@ An einem Morgen lief ein kleiner Fuchs los…
               <strong>${inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"))}</strong>
               <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
             </div>
-            <p style="white-space:pre-wrap; margin:0;">${m.body.replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")}</p>
+            <p style="white-space:pre-wrap; margin:0;">${m.body
+              .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
+              .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:24px; height:24px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
+            }</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               ${inboxViewTab === "in" && !m.is_system && m.from_user ? `<button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-reply-to="${m.from_user}" data-reply-name="${m.author_name}">↩️ Antworten</button>` : ""}
@@ -8664,24 +9253,37 @@ An einem Morgen lief ein kleiner Fuchs los…
   async function renderGuestbook() {
     const area = document.getElementById("guestbookArea");
     const entries = await Backend.getGuestbook();
+    const avg = await Backend.getAverageRating();
     const user = Backend.currentUser();
+    let selectedRating = 0;
     area.innerHTML = `
       <div class="question-card">
-        <h3>📖 Gästebuch</h3>
-        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div>${Backend.canModerate() ? `<button type="button" class="btn btn-ghost" style="margin-top:6px;" data-admin-delete-gb="${e.id}">🛠️ Löschen</button>` : ""}</div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
+        <h3>📖 Gästebuch &amp; Bewertungen</h3>
+        ${avg ? `<p class="empty-note" style="margin-bottom:12px;">${"⭐".repeat(Math.round(avg.average))} ${avg.average.toFixed(1)} / 5 — basierend auf ${avg.count} Bewertung${avg.count === 1 ? "" : "en"}</p>` : ""}
+        ${entries.map((e) => `<div class="guestbook-entry">${e.user_id ? `<button type="button" class="friend-name-btn gb-name" data-view-gb-author="${e.user_id}">${e.name}</button>` : `<div class="gb-name">${e.name}</div>`}${e.rating ? `<div style="color:var(--amber-400); font-size:0.9rem;">${"⭐".repeat(e.rating)}</div>` : ""}<p>${e.message}</p><div class="gb-date">${new Date(e.date).toLocaleString("de-DE")}</div>${Backend.canModerate() ? `<button type="button" class="btn btn-ghost" style="margin-top:6px;" data-admin-delete-gb="${e.id}">🛠️ Löschen</button>` : ""}</div>`).join("") || '<p class="empty-note">Noch keine Einträge.</p>'}
         <form class="guestbook-form" id="guestbookForm">
           ${!user ? '<input type="text" id="gbName" placeholder="Dein Name" required />' : ""}
+          <label class="empty-note" style="display:block; margin-bottom:4px;">Bewertung (optional)</label>
+          <div id="gbStarPicker" style="display:flex; gap:4px; margin-bottom:10px; font-size:1.4rem;">
+            ${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="gb-star-btn" data-star="${n}" style="background:none; border:none; cursor:pointer; opacity:0.35;">⭐</button>`).join("")}
+          </div>
           <textarea id="gbMessage" placeholder="Hinterlasse eine Nachricht für Alex…" required></textarea>
           <button type="submit" class="btn-submit">Eintragen</button>
         </form>
       </div>
     `;
+    area.querySelectorAll(".gb-star-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedRating = Number(btn.dataset.star);
+        area.querySelectorAll(".gb-star-btn").forEach((b) => { b.style.opacity = Number(b.dataset.star) <= selectedRating ? "1" : "0.35"; });
+      });
+    });
     document.getElementById("guestbookForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = user ? Backend.currentProfile().name : document.getElementById("gbName").value.trim();
       const message = document.getElementById("gbMessage").value.trim();
       if (!message) return;
-      await Backend.addGuestbookEntry(name, message);
+      await Backend.addGuestbookEntry(name, message, selectedRating || null);
       renderGuestbook();
     });
     area.querySelectorAll("[data-view-gb-author]").forEach((btn) => {
@@ -8764,7 +9366,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "26";
+  const APP_VERSION = "36";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

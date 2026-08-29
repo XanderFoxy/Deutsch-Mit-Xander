@@ -403,6 +403,13 @@ button:focus-visible,
   flex-shrink: 0;
 }
 .header-avatar-emoji { font-size: 1.1rem; line-height: 1; }
+.header-avatar-figure-wrap {
+  width: 22px; height: 22px; min-width: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  position: relative; overflow: visible;
+  vertical-align: middle;
+}
+.header-avatar-figure { position: absolute; width: 150%; height: 150%; object-fit: contain; }
 .header-avatar-initials {
   width: 22px; height: 22px; border-radius: 50%;
   background: linear-gradient(160deg, var(--amber-400), var(--teal-400));

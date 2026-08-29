@@ -383,17 +383,23 @@ const Backend = (function () {
     return demo.guestbook.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   }
 
-  async function addGuestbookEntry(name, message) {
-    const entry = { id: Core.uid(), name, message, date: new Date().toISOString(), user_id: demo.user ? demo.user.id : null };
+  async function addGuestbookEntry(name, message, rating = null) {
+    const entry = { id: Core.uid(), name, message, rating, date: new Date().toISOString(), user_id: demo.user ? demo.user.id : null };
     if (client) {
       try {
-        await client.from("guestbook").insert({ name, message, user_id: demo.user ? demo.user.id : null });
+        await client.from("guestbook").insert({ name, message, rating, user_id: demo.user ? demo.user.id : null });
       } catch (e) {
         console.warn("Supabase-Insert fehlgeschlagen, Eintrag bleibt lokal:", e);
       }
     }
     demo.guestbook.unshift(entry);
     return entry;
+  }
+  async function getAverageRating() {
+    const entries = await getGuestbook();
+    const rated = entries.filter((e) => e.rating);
+    if (!rated.length) return null;
+    return { average: rated.reduce((sum, e) => sum + e.rating, 0) / rated.length, count: rated.length };
   }
 
   /* ================= PREMIUM (bezahlbarer Zusatzinhalt) ================= */
@@ -508,6 +514,18 @@ const Backend = (function () {
   // die Person selbst etwas schreiben muss. Nur die Art des Fehlers und der Ort (welches Spiel,
   // welche Frage gerade angezeigt wurde) werden mitgeschickt.
   async function reportBug(context, errorType) {
+    const reporterName = demo.profile ? demo.profile.name : "Unbekannt";
+    // Zusätzlich zur Nachricht (unten) in eine eigene, übersichtliche Sammelstelle schreiben, die
+    // der Admin gebündelt einsehen kann, statt zwischen allen anderen Postfach-Nachrichten suchen
+    // zu müssen.
+    const record = { reporter_name: reporterName, context, category: errorType, resolved: false, created_at: new Date().toISOString() };
+    if (client) {
+      client.from("bug_reports").insert(record).then(() => {}, (e) => console.warn("Bug-Report konnte nicht gespeichert werden:", e));
+    } else {
+      demo.bugReports = demo.bugReports || [];
+      record.id = Core.uid();
+      demo.bugReports.push(record);
+    }
     let ownerId = null;
     if (client) {
       try {
@@ -519,7 +537,6 @@ const Backend = (function () {
       ownerId = ownerEmail;
     }
     if (!ownerId) return;
-    const reporterName = demo.profile ? demo.profile.name : "Unbekannt";
     const body = `🐛 FEHLERMELDUNG\n\nVon: ${reporterName}\nOrt: ${context}\nArt: ${errorType}\nZeitpunkt: ${new Date().toLocaleString("de-DE")}`;
     await sendSystemMessage(ownerId, body);
   }
@@ -625,6 +642,77 @@ const Backend = (function () {
      Für Bereiche wie "Über mich" — jeder kann sie lesen, aber nur Admins ändern sie. Fehlt ein
      Wert (noch keine Tabelle angelegt, oder noch nie geändert), gilt einfach der feste Text aus
      dem HTML weiter — das Nachrüsten dieser Funktion ist also risikofrei. */
+  /* ================= FEHLERMELDUNGEN (Bug-Reports) =================
+     Ergänzt die bestehende reportBug()-Funktion (die weiterhin eine Nachricht ins Postfach
+     schickt) um eine zusätzliche, übersichtliche Sammelstelle für den Admin-Bereich — sonst
+     gehen Meldungen im normalen Postfach zwischen allen anderen Nachrichten unter. */
+  /* ================= PROFIL-BESUCHER & PROFIL-SPUREN =================
+     Wer war da? Nur für Admins/Moderatoren sichtbar (auf dem eigenen Profil), da normale
+     Mitglieder das laut Wunsch nicht sehen sollen. "Spuren" sind kurze Grüße, die JEDER auf
+     einem fremden Profil hinterlassen kann — unabhängig von der Besucher-Anzeige. */
+  async function recordProfileVisit(profileOwnerId) {
+    if (!demo.user || demo.user.id === profileOwnerId) return; // sich selbst nicht mitzählen
+    const row = { visitor_id: demo.user.id, visitor_name: demo.profile.name, visited_id: profileOwnerId, visited_at: new Date().toISOString() };
+    if (client) {
+      try { await client.from("profile_visits").upsert(row, { onConflict: "visitor_id,visited_id" }); }
+      catch (e) { console.warn("Profilbesuch konnte nicht gespeichert werden:", e); }
+      return;
+    }
+    demo.profileVisits = demo.profileVisits || [];
+    const existing = demo.profileVisits.find((v) => v.visitor_id === row.visitor_id && v.visited_id === row.visited_id);
+    if (existing) existing.visited_at = row.visited_at; else demo.profileVisits.push(row);
+  }
+  async function getProfileVisitors(profileOwnerId, requesterIsAdmin) {
+    if (!requesterIsAdmin) return [];
+    if (client) {
+      const { data, error } = await client.from("profile_visits").select("*").eq("visited_id", profileOwnerId).order("visited_at", { ascending: false }).limit(20);
+      if (!error && data) return data;
+      return [];
+    }
+    return (demo.profileVisits || []).filter((v) => v.visited_id === profileOwnerId).sort((a, b) => new Date(b.visited_at) - new Date(a.visited_at));
+  }
+  async function addProfileNote(profileOwnerId, message) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!message.trim()) throw new Error("Nachricht darf nicht leer sein.");
+    const note = { profile_owner_id: profileOwnerId, author_id: demo.user.id, author_name: demo.profile.name, message: message.trim(), created_at: new Date().toISOString() };
+    if (client) {
+      const { error } = await client.from("profile_notes").insert(note);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.profileNotes = demo.profileNotes || [];
+    note.id = Core.uid();
+    demo.profileNotes.push(note);
+  }
+  async function getProfileNotes(profileOwnerId) {
+    if (client) {
+      const { data, error } = await client.from("profile_notes").select("*").eq("profile_owner_id", profileOwnerId).order("created_at", { ascending: false }).limit(30);
+      if (!error && data) return data;
+      return [];
+    }
+    return (demo.profileNotes || []).filter((n) => n.profile_owner_id === profileOwnerId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  async function getBugReports() {
+    if (!isAdmin()) return [];
+    if (client) {
+      const { data, error } = await client.from("bug_reports").select("*").order("created_at", { ascending: false });
+      if (!error && data) return data;
+      return [];
+    }
+    return [...(demo.bugReports || [])].reverse();
+  }
+  async function resolveBugReport(id) {
+    if (!isAdmin()) throw new Error("Nur Administratoren können das.");
+    if (client) {
+      const { error } = await client.from("bug_reports").update({ resolved: true }).eq("id", id);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    const r = (demo.bugReports || []).find((x) => x.id === id);
+    if (r) r.resolved = true;
+  }
+
   async function getSiteContent(key) {
     if (client) {
       try {
@@ -657,6 +745,26 @@ const Backend = (function () {
       return [];
     }
     return demo.playlistSongs.filter((s) => (s.owner_id || null) === ownerId);
+  }
+  // Liste aller Personen, die schon mindestens einen Song in ihrer EIGENEN Playlist haben — für
+  // die Übersicht "Playlisten der anderen", damit man mit einem Klick direkt zur Playlist einer
+  // bestimmten Person springen kann, ohne erst über deren Profil suchen zu müssen.
+  async function getUsersWithPlaylists() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("playlist_songs").select("owner_id").not("owner_id", "is", null);
+        if (error || !data) return [];
+        const ownerIds = [...new Set(data.map((r) => r.owner_id))];
+        if (!ownerIds.length) return [];
+        const { data: profiles } = await client.from("profiles").select("id, name, avatar_url").in("id", ownerIds);
+        return profiles || [];
+      } catch (e) { console.warn("Playlisten-Übersicht konnte nicht geladen werden:", e); return []; }
+    }
+    const ownerIds = [...new Set(demo.playlistSongs.filter((s) => s.owner_id).map((s) => s.owner_id))];
+    return ownerIds.map((id) => {
+      const entry = demo.users && demo.users[id]; // im Demo-Modus ist die Nutzer-ID die E-Mail selbst
+      return entry ? { id, name: entry.profile.name, avatar_url: entry.profile.avatarUrl } : { id, name: "Unbekannt", avatar_url: null };
+    });
   }
   async function addPlaylistSong(title, url, ownerId = null, recommendedByName = null) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
@@ -1813,7 +1921,7 @@ const Backend = (function () {
     getRankingAllTime,
     getRankingToday,
     getGuestbook,
-    addGuestbookEntry,
+    addGuestbookEntry, getAverageRating,
     unlockPremiumDemo, togglePremium,
     isPremium,
     searchUsers,
@@ -1828,8 +1936,10 @@ const Backend = (function () {
     submitChallengeResult,
     addActivity,
     getActivity,
-    getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl,
+    getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl, getUsersWithPlaylists,
     getSiteContent, setSiteContent,
+    recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes,
+    getBugReports, resolveBugReport,
     notifyPracticing,
     saveThemePreference,
     uploadGalleryPhoto,

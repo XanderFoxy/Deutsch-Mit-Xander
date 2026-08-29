@@ -1035,7 +1035,9 @@
    runde Rahmen bleibt als dezenter Hintergrund sichtbar, der Fuchs selbst ragt unbeschnitten
    darüber hinaus. */
 .avatar-figure-sticker-wrap {
-  background: linear-gradient(135deg, var(--amber-300, #f2b84b), var(--coral-400, #e8825f));
+  /* KEIN eigener Hintergrund — die Sammelfigur soll einfach nur unbeschnitten an der Stelle
+     liegen, wo sonst das Profilfoto wäre, ohne einen zusätzlichen Farbklecks dahinter. */
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
   overflow: visible;
   position: relative;
@@ -1169,6 +1171,7 @@
   /* Absichtlich KEIN flex-wrap/grid-auto-flow: die Zeilenanzahl ist über grid-template-columns fest
      vorgegeben und bricht nie mitten in einer Reihe um — auf schmalen Bildschirmen schrumpfen stattdessen
      die einzelnen Zellen mit (über die feste Breite oben), nie die Zeilenstruktur selbst. */
+  overflow: hidden;
 }
 #wordsearchArea { overflow-x: hidden; max-width: 100%; }
 /* Kompaktere Variante, vorbereitet für eine mögliche spätere Satz-/Redewendungs-Version des
@@ -1187,12 +1190,14 @@
 .stress-toggle-btn { font-size: 0.95rem; font-weight: 800; }
 .stress-toggle-btn.active { background: var(--amber-400); color: #241505; }
 .ws-cell {
-  aspect-ratio: 1; width: 100%;
+  aspect-ratio: 1; width: 100%; min-width: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.95rem; font-weight: 700;
   border-radius: 5px; border: 1px solid rgba(0,0,0,0.1);
   background: var(--plum-800, #fff); cursor: pointer;
   font-family: var(--font-display);
+  padding: 0;
+  box-sizing: border-box;
 }
 .ws-selected { background: var(--amber-400); border-color: var(--amber-400); }
 .ws-hint { background: var(--amber-400) !important; animation: wsHintPulse 0.7s ease-in-out infinite; }
@@ -1203,6 +1208,7 @@
 .cw-cell {
   position: relative;
   aspect-ratio: 1;
+  min-width: 0;
   border: 1px solid rgba(0,0,0,0.15);
   background: #fff;
 }
@@ -1342,6 +1348,13 @@
   overflow-y: auto;
 }
 .profile-modal-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 12px; }
+.profile-modal-header h2 {
+  /* Bewusst eine feste, kräftige Farbe statt nur geerbtem Text — der Name muss auf JEDEM Design
+     klar lesbar bleiben, unabhängig von Kontrast-Eigenheiten einzelner Farbschemata. */
+  color: var(--cream-50);
+  opacity: 1;
+  font-weight: 800;
+}
 .profile-modal-header .avatar-photo,
 .profile-modal-header .initials-avatar { width: 76px; height: 76px; font-size: 1.6rem; }
 .modal-points-line {
@@ -1412,12 +1425,55 @@
   padding: 0;
 }
 .music-floating-bar button.mfb-ctrl {
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 1.3rem;
+  background: linear-gradient(160deg, #4a3a63, #2a1d40);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--cream-50, #f5efe4);
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 0;
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.music-floating-bar button.mfb-ctrl:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 rgba(0,0,0,0.35), inset 0 1px 3px rgba(0,0,0,0.4);
+}
+/* Dieselbe plastische Knopf-Optik auch in der Player-Leiste im Musik-Reiter selbst. */
+.player-panel-btn {
+  background: linear-gradient(160deg, #f0a94e, #dc7f2a);
+  border: 1px solid rgba(0,0,0,0.15);
+  color: #241505;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 0 rgba(150,80,20,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.player-panel-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(150,80,20,0.5), inset 0 1px 4px rgba(0,0,0,0.3);
+}
+.player-panel-btn.ghost-btn {
+  background: linear-gradient(160deg, #e8e0d0, #c9bfa8);
+  color: #241505;
+  width: 34px; height: 34px;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.player-panel-btn.ghost-btn:active { box-shadow: 0 0 0 rgba(0,0,0,0.2), inset 0 1px 3px rgba(0,0,0,0.25); }
+.player-digital-time {
+  font-family: "Courier New", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--teal-400, #4fa88e);
+  background: rgba(0,0,0,0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 .toast-popup {
@@ -1650,23 +1706,164 @@
 /* Wackelturm — Jenga-Prinzip: Blöcke werden von unten nach oben gestapelt gezeigt, der ganze
    Turm kippt bei Fehlern zunehmend zur Seite (per rotate), bis er "einstürzt". */
 .wt-tower-wrap {
-  height: 220px;
+  height: 300px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   margin: 16px 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .wt-tower {
   display: flex;
   flex-direction: column-reverse;
-  gap: 3px;
+  gap: 2px;
   transform-origin: bottom center;
   transition: transform 0.5s cubic-bezier(0.36, 0, 0.66, -0.56);
 }
 .wt-block {
   width: 92px;
-  height: 16px;
+  height: 13px;
   border-radius: 4px;
   box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.2);
+}
+/* Musik-Player: YouTube-Video erscheint in einem festen, QUADRATISCHEN Ausschnitt — wie ein
+   Cover-Bild, nicht wie ein klassischer 16:9-Videoplayer mit schwarzen Balken. Das Video wird
+   dafür überdimensioniert und zentriert, sodass es die quadratische Fläche komplett füllt
+   (dasselbe Prinzip wie object-fit: cover bei Bildern, nur manuell für ein iframe nachgebaut). */
+.music-video-square {
+  width: 52px; height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  background: #1a1a1a;
+}
+.music-video-square #musicYtHost {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 178%; height: 100%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.music-video-square iframe {
+  width: 100% !important; height: 100% !important;
+  border: none;
+}
+/* Größere Variante direkt im Musik-Reiter, für eine bessere, deutlichere "Cover"-Ansicht */
+#musicPlayerBarInner .music-video-square {
+  width: 64px; height: 64px;
+}
+
+/* Sticker-Album — echtes Buch-Umblättern: die Seite dreht sich um die linke Kante (wie ein
+   aufgeschlagenes Buch), Vorder- und Rückseite bleiben unsichtbar, wenn sie von einem wegzeigen. */
+.album-book {
+  position: relative;
+  min-height: 340px;
+  perspective: 1600px;
+}
+.album-page-face {
+  position: relative;
+  backface-visibility: hidden;
+  transform-origin: left center;
+  transition: transform 0.7s cubic-bezier(0.45, 0, 0.2, 1);
+}
+.album-page-face.turning-next { transform: rotateY(-150deg); }
+
+/* ===== Player-Vorlagen — mehrere wählbare Optiken ===== */
+#musicPlayerBarInner.player-tpl-retro {
+  background: linear-gradient(180deg, #1a1226, #0d0815);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: inset 0 0 0 1px rgba(242,184,75,0.15), 0 4px 14px rgba(0,0,0,0.4);
+}
+#musicPlayerBarInner.player-tpl-retro .player-digital-time {
+  color: #ff6b3d;
+  background: #1a0f08;
+  box-shadow: inset 0 0 4px rgba(255,107,61,0.5);
+  border: 1px solid rgba(255,107,61,0.25);
+}
+#musicPlayerBarInner.player-tpl-retro > span:last-child { color: #f5efe4; }
+.music-floating-bar.player-tpl-retro {
+  background: linear-gradient(180deg, #1a1226, #0d0815) !important;
+  box-shadow: inset 0 1px 0 rgba(242,184,75,0.15), 0 -6px 20px rgba(0,0,0,0.4);
+}
+
+#musicPlayerBarInner.player-tpl-holz {
+  background: repeating-linear-gradient(90deg, #8B6F47, #8B6F47 3px, #7a5f3d 3px, #7a5f3d 6px);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.25);
+}
+#musicPlayerBarInner.player-tpl-holz .player-digital-time {
+  background: rgba(0,0,0,0.35);
+  color: #F2C879;
+}
+#musicPlayerBarInner.player-tpl-holz > span:last-child { color: #F5EFE4; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+.music-floating-bar.player-tpl-holz {
+  background: repeating-linear-gradient(90deg, #8B6F47, #8B6F47 3px, #7a5f3d 3px, #7a5f3d 6px) !important;
+}
+
+/* Wort-Kanone — Wörter fallen von oben nach unten, per Antippen "abschießen". */
+.kn-sky {
+  position: relative;
+  height: 260px;
+  background: linear-gradient(180deg, #cfe8f5 0%, #eaf6ec 85%, #7bc47f 100%);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.kn-sky::after {
+  /* Kanonen-Silhouette am unteren Rand, rein dekorativ */
+  content: "🎯";
+  position: absolute;
+  bottom: 4px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.4rem;
+  opacity: 0.5;
+}
+.kn-word {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: linear-gradient(160deg, #f0a94e, #dc7f2a);
+  color: #241505;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(150,80,20,0.4);
+  animation-name: knFallDown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  white-space: nowrap;
+  z-index: 2;
+}
+@keyframes knFallDown {
+  from { top: 0; }
+  to { top: calc(100% - 40px); }
+}
+.kn-word.kn-shot {
+  animation-play-state: paused !important;
+  opacity: 0.5;
+  transform: translateX(-50%) scale(0.7) rotate(15deg);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Wellenform-Anzeige — dekorative, animierte Balken, die beim Abspielen pulsieren (echte
+   Audio-Analyse ist über die YouTube-Programmierschnittstelle nicht zugänglich, das hier ist
+   eine überzeugende, rein optische Annäherung). */
+.waveform-bar {
+  width: 2.5px;
+  height: 5px;
+  background: var(--coral-400, #e8825f);
+  border-radius: 1px;
+}
+.waveform-playing .waveform-bar {
+  animation: waveformPulse 0.9s ease-in-out infinite;
+}
+@keyframes waveformPulse {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
 }
