@@ -161,7 +161,7 @@
     <p class="eyebrow">Übungen, Vokabeln &amp; Memory — spielerisch Deutsch üben</p>
     <div class="subnav" id="learnSubnav">
       <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
-      <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
+      <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false" style="display:none;">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
       <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer</button>
       <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
       <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory</button>
@@ -214,6 +214,7 @@
       <button class="subnav-pill community-tab-highlight" data-sub="sub-community" aria-selected="false">✍️ Eigene Beiträge</button>
       <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
       <button class="subnav-pill" data-sub="sub-tips" aria-selected="false">💡 Schwarmwissen<span class="subnav-info-icon" data-info="Tipps, Links und Erfahrungen von anderen Lernenden — was bei ihnen beim Deutschlernen funktioniert hat.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-music" aria-selected="false">🎵 Musik</button>
       <button class="subnav-pill" data-sub="sub-news" aria-selected="false">📰 Nachrichten</button>
     </div>
     <div class="subview" id="sub-kompass" data-active="true"><div id="kompassArea"></div></div>
@@ -221,8 +222,17 @@
     <div class="subview" id="sub-community" data-active="false"><div id="communityStandaloneArea"></div></div>
     <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
     <div class="subview" id="sub-tips" data-active="false"><div id="tipsArea"></div></div>
+    <div class="subview" id="sub-music" data-active="false"><div id="musicArea"></div></div>
     <div class="subview" id="sub-news" data-active="false"><div id="newsArea"></div></div>
   </section>
+
+  <!-- Versteckter YouTube-Player fürs Musik-Modul -- steuert nur Ton, kein sichtbares Video -->
+  <div id="musicYtHost" style="position:fixed; bottom:-200px; left:-200px; width:1px; height:1px; overflow:hidden;"></div>
+  <audio id="musicAudioNative" style="display:none;"></audio>
+  <!-- Schwebende Mini-Player-Leiste — sichtbar auf der GANZEN Seite, egal welcher Reiter gerade
+       aktiv ist, solange ein Song läuft/pausiert ist. Bewusst außerhalb des Reiter-Systems, damit
+       sie beim Wechseln nicht verschwindet. -->
+  <div id="musicFloatingBar" style="display:none;"></div>
 
   <!-- IMPRESSUM ==================================================== -->
   <section class="view" id="view-impressum" data-active="false">

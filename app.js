@@ -123,6 +123,7 @@
   }
   const COLLECTIBLE_FIGURES = [
     { id: "kleiner-lernfuchs", name: "Kleiner Lernfuchs", img: "figures/kleiner-lernfuchs.png", desc: "Für den Anfang — willkommen!", unlock: { type: "points", value: 20 } },
+    { id: "fitnessfuchs", name: "Fitnessfuchs", img: "figures/fitnessfuchs.png", desc: "Bleibt auch beim Lernen fit und in Bewegung", unlock: { type: "points", value: 30 } },
     { id: "pausenfuchs", name: "Pausenfuchs", img: "figures/pausenfuchs.png", desc: "Gönnt sich eine Verschnaufpause", unlock: { type: "points", value: 40 } },
     { id: "professor-schlaufuchs", name: "Professor Schlaufuchs", img: "figures/professor-schlaufuchs.png", desc: "Grammatik-Experte", unlock: { type: "points", value: 60 } },
     { id: "lesefuchs", name: "Lesefuchs", img: "figures/lesefuchs.png", desc: "Liest für sein Leben gern", unlock: { type: "points", value: 75 } },
@@ -131,17 +132,19 @@
     { id: "maerchenfuchs", name: "Märchenfuchs", img: "figures/maerchenfuchs.png", desc: "Kenner von Redewendungen & Geschichten", unlock: { type: "points", value: 120 } },
     { id: "brueckenfuchs", name: "Brückenfuchs", img: "figures/brueckenfuchs.png", desc: "Verbindet Sätze mit zweiteiligen Konnektoren", unlock: { type: "points", value: 150 } },
     { id: "kommissar-fehlerfrei", name: "Kommissar Fehlerfrei", img: "figures/kommissar-fehlerfrei.png", desc: "Rechtschreib-Detektiv", unlock: { type: "points", value: 180 } },
+    { id: "sprachenfuchs", name: "Sprachenfuchs", img: "figures/sprachenfuchs.png", desc: "Zuhause in vielen Sprachen der Welt", unlock: { type: "points", value: 200 } },
     { id: "raetselfuchs", name: "Rätselfuchs", img: "figures/raetselfuchs.png", desc: "Kreuzworträtsel-Fan", unlock: { type: "points", value: 220 } },
     { id: "baeckerfuchs", name: "Bäckerfuchs", img: "figures/baeckerfuchs.png", desc: "Frisch aus dem Wortschatz-Ofen", unlock: { type: "points", value: 260 } },
     { id: "naturfotograf", name: "Naturfotograf", img: "figures/naturfotograf.png", desc: "Hält Wortschatz-Momente fest", unlock: { type: "points", value: 320 } },
-    { id: "quizfuchs", name: "Quizfuchs", img: "figures/quizfuchs.png", desc: "Deutschland-Quiz-Kenner", unlock: { type: "points", value: 380 } },
     { id: "studierfuchs", name: "Studierfuchs", img: "figures/studierfuchs.png", desc: "Fleißig am Lernen", unlock: { type: "points", value: 440 } },
     { id: "malerfuchs", name: "Malerfuchs", img: "figures/malerfuchs.png", desc: "Kreativer Kopf", unlock: { type: "points", value: 500 } },
     { id: "abenteuerfuchs", name: "Abenteuer-Fuchs", img: "figures/abenteuerfuchs.png", desc: "Immer auf Entdeckungstour", unlock: { type: "points", value: 570 } },
     { id: "schlummerfuchs", name: "Schlummerfuchs", img: "figures/schlummerfuchs.png", desc: "Wohlverdiente Ruhe nach dem Üben", unlock: { type: "points", value: 650 } },
+    { id: "starfuchs", name: "Starfuchs", img: "figures/starfuchs.png", desc: "Steht im Rampenlicht — auf dem Weg nach ganz oben", unlock: { type: "points", value: 700 } },
     { id: "feierfuchs", name: "Feierfuchs", img: "figures/feierfuchs.png", desc: "Feiert jeden Fortschritt", unlock: { type: "points", value: 750 } },
     { id: "absolventenfuchs", name: "Absolventenfuchs", img: "figures/absolventenfuchs.png", desc: "Großer Meilenstein erreicht", unlock: { type: "points", value: 850 } },
     { id: "championfuchs", name: "Champion-Fuchs", img: "figures/championfuchs.png", desc: "Die Krönung der Sammlung", unlock: { type: "points", value: 1000 } },
+    { id: "superfuchs", name: "Superfuchs", img: "figures/superfuchs.png", desc: "Über allen Erwartungen — die absolute Spitze", unlock: { type: "points", value: 1200 } },
   ];
   // Orden (kleine, häufige Verdienste) vs. Pokale (große, seltene Meisterleistungen) — Trennung
   // anhand bekannter Top-Rang-Namen in der Trophäen-Bezeichnung selbst, ohne die bestehenden
@@ -601,7 +604,7 @@
       if (profile.points >= m && !shown.has(key)) {
         markMilestoneShown(key);
         showSpecialMomentModal(
-          `${m} Punkte erreicht!`,
+          `Insgesamt schon ${m} Punkte gesammelt!`,
           `Schön, dass du dabeibleibst und so fleißig übst — das ist ein echter Meilenstein! Ich freu mich, dass dir die Seite hilft.`
         );
         return; // nur einen Moment gleichzeitig zeigen, nicht mehrere übereinander
@@ -1185,7 +1188,10 @@
           const correctOption = cwCalendarTask.options[cwCalendarTask.correctIdx];
           Backend.sendSystemMessage(Backend.currentUser().id, `📅 Du hast gerade deine Tagesaufgabe gemacht — ${correct ? "richtig gelöst! 🎉" : "leider nicht ganz getroffen."}\n\n${questionShort}\n→ Richtige Antwort: ${correctOption}`);
         }
-        setTimeout(() => renderCalendarBack(), 1400);
+        setTimeout(() => {
+          renderCalendarBack();
+          document.getElementById("calendarModalPage")?.classList.remove("torn");
+        }, 1400);
       });
     });
     document.getElementById("calAnotherBtn").addEventListener("click", () => {
@@ -1206,9 +1212,18 @@
       historyLinkBtn.addEventListener("click", () => {
         document.querySelector('[data-target="view-knowledge"]').click();
         document.getElementById("calCloseBtn")?.click();
+        document.getElementById("calendarModalPage")?.classList.remove("torn");
         setTimeout(() => {
           document.querySelector('[data-sub="sub-kompass"]')?.click();
         }, 150);
+      });
+    }
+    // Einfacher Klick auf die Rückseite (aber nicht auf Buttons/Links darauf) klappt das Blatt
+    // wieder zurück zur Vorderseite — wie beim echten Umblättern.
+    if (back) {
+      back.addEventListener("click", (e) => {
+        if (e.target.closest("button, a")) return; // interaktive Elemente nicht mit-schließen
+        document.getElementById("calendarModalPage")?.classList.remove("torn");
       });
     }
   }
@@ -1771,6 +1786,19 @@
     target.classList.add("notify-target-highlight");
     setTimeout(() => target.classList.remove("notify-target-highlight"), 2600);
   }
+  // Wartet darauf, dass das Sprungziel im DOM erscheint (statt nur EINMAL nach einer festen,
+  // kurzen Verzögerung zu suchen) — auf einer echten Seite mit echter Netzwerk-Latenz kann das
+  // Laden der Liste länger als die alte feste Wartezeit dauern, wodurch der Sprung sonst still
+  // fehlschlägt und man nur oben im Bereich landet statt direkt bei der Nachricht/dem Kommentar.
+  function scrollToAndHighlightWhenReady(selector, maxAttempts = 20) {
+    let attempts = 0;
+    const tryNow = () => {
+      attempts += 1;
+      if (document.querySelector(selector)) { scrollToAndHighlight(selector); return; }
+      if (attempts < maxAttempts) setTimeout(tryNow, 150);
+    };
+    tryNow();
+  }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
   async function checkNotifications() {
@@ -1791,7 +1819,7 @@
     if (unreadMsgCount > lastUnreadMsgCount && !toastedNotificationIds.has("msgcount-" + unreadMsgCount)) {
       toastedNotificationIds.add("msgcount-" + unreadMsgCount);
       const newestMsg = unreadInbox[0];
-      const jumpToMsg = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-inbox"]').click(); setTimeout(() => scrollToAndHighlight(`[data-msg-row="${newestMsg?.id}"]`), 200); };
+      const jumpToMsg = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-inbox"]').click(); scrollToAndHighlightWhenReady(`[data-msg-row="${newestMsg?.id}"]`); };
       showToast("✉️ Neue Nachricht im Postfach", jumpToMsg);
       notifyTarget = { kind: "mail", action: jumpToMsg };
       hasNew = true; newestKind = "mail";
@@ -1803,7 +1831,7 @@
     requests.forEach((r) => {
       if (!toastedNotificationIds.has("freq-" + r.id)) {
         toastedNotificationIds.add("freq-" + r.id);
-        const jumpToReq = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); setTimeout(() => scrollToAndHighlight(`[data-accept="${r.id}"]`), 200); };
+        const jumpToReq = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); scrollToAndHighlightWhenReady(`[data-accept="${r.id}"]`); };
         showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", jumpToReq);
         notifyTarget = { kind: "friendrequest", action: jumpToReq };
         hasNew = true; newestKind = "friendrequest";
@@ -1812,7 +1840,7 @@
     challenges.incoming.forEach((c) => {
       if (!toastedNotificationIds.has("chal-" + c.id)) {
         toastedNotificationIds.add("chal-" + c.id);
-        const jumpToChal = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); setTimeout(() => scrollToAndHighlight(`[data-accept-challenge="${c.id}"]`), 200); };
+        const jumpToChal = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); scrollToAndHighlightWhenReady(`[data-accept-challenge="${c.id}"]`); };
         showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", jumpToChal);
         notifyTarget = { kind: "challenge", action: jumpToChal };
         hasNew = true; newestKind = "challenge";
@@ -1821,8 +1849,23 @@
     notifications.forEach((n) => {
       if (!toastedNotificationIds.has(n.id)) {
         toastedNotificationIds.add(n.id);
-        const jumpToOther = () => document.querySelector('[data-target="view-profile"]').click();
-        showToast(n.message, jumpToOther);
+        // Versteckte Zielreferenz aus der Nachricht herauslösen (falls vorhanden) — steuert, wohin
+        // ein Klick genau springt (z. B. direkt zum kommentierten/gelikten Beitrag im Schwarmwissen
+        // statt nur allgemein ins Profil).
+        const targetMatch = n.message.match(/\[\[target:(\w+):([\w-]+)\]\]/);
+        const cleanMessage = n.message.replace(/\[\[target:[\w-]+:[\w-]+\]\]/, "");
+        const jumpToOther = targetMatch
+          ? () => {
+              const [, view, textId] = targetMatch;
+              const subTarget = view === "community" ? "sub-community" : "sub-tips";
+              document.querySelector('[data-target="view-knowledge"]').click();
+              setTimeout(() => {
+                document.querySelector(`#knowledgeSubnav [data-sub="${subTarget}"]`)?.click();
+                scrollToAndHighlightWhenReady(`[data-text-id="${textId}"]`);
+              }, 150);
+            }
+          : () => document.querySelector('[data-target="view-profile"]').click();
+        showToast(cleanMessage, jumpToOther);
         notifyTarget = { kind: "other", action: jumpToOther };
         hasNew = true; newestKind = "other";
       }
@@ -2416,17 +2459,24 @@
      ausschließlich handgeprüfte Silbentrennung (VocabData.WORDS +
      ExerciseData.WORD_SYL), nie den groben, sitweiten Algorithmus.
      ============================================================ */
+  // Entfernt einen vorangestellten Artikel (der/die/das) aus der Silbentrennung — in den
+  // Grunddaten steht er bewusst mit drin (fürs Wörterbuch nützlich), aber im Betonungs-Trainer
+  // darf er nicht als eigene Silben-Pille auftauchen, da sich die Betonung nur auf das Wort
+  // selbst bezieht, nicht auf den Artikel davor.
+  function stripArticleFromSyl(syl) {
+    return syl.replace(/^(der|die|das)\s+/, "");
+  }
   function stressTrainerWordPool() {
     const pool = [];
-    VocabData.WORDS.forEach((w) => { if (w.syl && w.syl.includes("-")) pool.push({ word: w.word, syl: w.syl, en: w.en }); });
+    VocabData.WORDS.forEach((w) => { if (w.syl && w.syl.includes("-")) pool.push({ word: w.word, syl: stripArticleFromSyl(w.syl), en: w.en }); });
     Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
-      if (syl.includes("-")) pool.push({ word, syl, en: ExerciseData.WORD_MEANINGS[word] });
+      if (syl.includes("-")) pool.push({ word, syl: stripArticleFromSyl(syl), en: ExerciseData.WORD_MEANINGS[word] });
     });
     // Typische "Problemwörter" für Deutschlernende werden dreifach ins Los-Topf gelegt, damit sie
     // im Schnitt deutlich häufiger drankommen als der übrige, eher zufällige Wortschatz — genau
     // die Wörter, bei denen sich Üben am meisten lohnt.
     Object.entries(ExerciseData.STRESS_PROBLEM_WORDS || {}).forEach(([word, syl]) => {
-      for (let i = 0; i < 3; i++) pool.push({ word, syl, en: "" });
+      for (let i = 0; i < 3; i++) pool.push({ word, syl: stripArticleFromSyl(syl), en: "" });
     });
     return pool;
   }
@@ -2515,7 +2565,7 @@
     const w = stTrainerWord;
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total}</p>
+        <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total} <span class="subnav-info-icon" data-info="Ein paar zuverlässige Faustregeln zur deutschen Wortbetonung: Verben auf „-ieren&quot; werden IMMER auf dem „ie&quot; betont (stu-DIE-ren, te-le-fo-NIE-ren). Die Vorsilben be-, ge-, ver-, ent-, er-, zer-, emp- sind NIE betont — die Betonung liegt auf der Silbe danach (be-KOM-men, ver-STE-hen). Trennbare Vorsilben wie auf-, an-, aus-, ein-, mit-, vor-, zu- werden dagegen SELBST betont (AUF-stehen, MIT-nehmen). Bei den meisten anderen deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Fremdwörter folgen oft ihrem eigenen, aus der Ursprungssprache übernommenen Muster.">ⓘ</span></p>
         <div class="trophy-case" style="margin-bottom:10px;">
           ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
         </div>
@@ -2555,10 +2605,12 @@
           Core.sound.wrong();
         }
         fb.innerHTML = `<strong>${w.word}</strong> wird auf <strong>„${w.syllables[w.correctIdx].toLowerCase()}"</strong> betont.<br>${explainStress(w.word, w.syl)}`;
-        // Nur bei richtiger Antwort: das Wort nochmal per Sprachausgabe vorlesen — aber ERST,
-        // nachdem der Bestätigungston fertig abgespielt ist (kleine Verzögerung), sonst würden
-        // sich Ton und Sprachausgabe hörbar überlappen statt sauber nacheinander zu kommen.
-        if (correct) setTimeout(() => Core.speak(w.word), 500);
+        // Das Wort wird IMMER nochmal per Sprachausgabe vorgelesen — egal ob richtig oder
+        // falsch geantwortet wurde, damit man die richtige Aussprache in jedem Fall hört und
+        // daraus lernt. Nur eine kurze Verzögerung (nicht 500ms+), da manche Geräte (v. a. iOS)
+        // Sprachausgabe nach zu langer Verzögerung nicht mehr als direkte Reaktion auf den
+        // Tastendruck werten und sie dann stillschweigend unterdrücken.
+        setTimeout(() => Core.speak(w.word), 150);
         setTimeout(() => {
           if (stTrainerSession.round >= stTrainerSession.total) {
             saveResultAndCheck({
@@ -5174,8 +5226,24 @@
     if (idx === -1 || idx === cells.length - 1) return null;
     return cells[idx + 1];
   }
+  function renderCrosswordResults() {
+    const area = document.getElementById("crosswordArea");
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">✏️ KREUZWORTRÄTSEL — SITZUNG FERTIG</p>
+        <p style="font-size:2rem; margin:8px 0;">🎉</p>
+        <h2 style="margin:8px 0;">Alle Rätsel gelöst!</h2>
+        <p class="empty-note">Eine Zusammenfassung wartet in deinem Postfach.</p>
+        <button type="button" class="btn btn-coffee" id="cwPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>
+    `;
+    document.getElementById("cwPlayAgainBtn").addEventListener("click", () => {
+      newCrosswordSession(); newCrossword(0); renderCrossword();
+    });
+  }
   function renderCrossword() {
     const area = document.getElementById("crosswordArea");
+    if (!cwSession) { renderCrosswordResults(); return; }
     if (!cwState) newCrossword(0);
     const { puzzle } = cwState;
     if (!cwState.activeDir) cwState.activeDir = "across";
@@ -5296,7 +5364,11 @@
             const wordList = cwSession.allWordsPlayed.join("\n");
             Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade ${cwSession.total} Kreuzworträtsel hintereinander gelöst — alles richtig!\n\nDiese Wörter kamen vor:\n${wordList}`);
           }
-          cwSession = null; // naechster Aufruf startet automatisch eine frische Sitzung
+          // WICHTIG: cwSession erst NACH der Verzögerung auf null setzen, nicht sofort — sonst
+          // würde der direkt folgende renderCrossword()-Aufruf unten schon vorzeitig zur
+          // Abschluss-Anzeige springen, statt erst kurz die grün markierte, gelöste letzte
+          // Runde zu zeigen.
+          setTimeout(() => { cwSession = null; renderCrossword(); }, 1600);
         } else {
           fb.textContent = "🎉 Alles richtig! Weiter geht's mit dem nächsten Rätsel …";
           const nextIdx = CROSSWORDS.indexOf(puzzle) + 1;
@@ -5307,7 +5379,8 @@
         fb.textContent = "Noch nicht ganz — rote Felder sind falsch, versuch es weiter!";
       }
       renderCrossword();
-      document.getElementById("cwFeedback").textContent = fb.textContent;
+      const freshFb = document.getElementById("cwFeedback");
+      if (freshFb) freshFb.textContent = fb.textContent;
     });
     document.getElementById("cwNextBtn").addEventListener("click", () => {
       const currentIdx = CROSSWORDS.indexOf(puzzle);
@@ -5596,7 +5669,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         const activeLevel = communityTextLevelChoice[t.id] && levelsObj[communityTextLevelChoice[t.id]] ? communityTextLevelChoice[t.id] : availableLevels[0];
         const isMine = user && t.user_id === user.id;
         return `
-        <div class="material-card">
+        <div class="material-card" data-text-id="${t.id}">
           ${t.cover_url ? `<img src="${t.cover_url}" class="community-text-cover-banner" alt="" data-modal-view-photo="${t.cover_url}" />` : ""}
           <div class="community-text-head">
             <span class="level-badge">${isMultiLevel ? `${availableLevels.length} Niveaus` : activeLevel}</span>
@@ -5914,7 +5987,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>` : ""}
       <p class="eyebrow" style="margin-top:20px;">💬 Tipps aus der Gemeinschaft</p>
       ${tips.length ? tips.map((t) => `
-        <div class="material-card">
+        <div class="material-card" data-text-id="${t.id}">
           <p style="white-space:pre-wrap; margin:0 0 8px;">${t.text}</p>
           ${t.link ? `<a href="${t.link}" target="_blank" rel="noopener" class="empty-note">🔗 ${t.link}</a>` : ""}
           ${t.image_url ? `<img src="${t.image_url}" style="max-width:100%; border-radius:10px; margin-top:8px; cursor:pointer;" data-modal-view-photo="${t.image_url}" />` : ""}
@@ -6070,7 +6143,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const ids = [
       "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput", "extraSportInput",
       "favMovieInput", "favSeriesInput", "favSongInput", "extraMusicLinkInput", "extraActorInput", "extraBookInput", "extraArtistInput",
-      "favQuoteInput", "extraMottoInput", "poemInput", "extraDreamInput", "extraHappyInput",
+      "favQuoteInput", "extraMottoInput", "extraSecretInput", "poemInput", "extraDreamInput", "extraHappyInput",
       "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelectTop",
       "extraLikesInput", "extraDislikesInput",
       "birthdayInput", "originSelect",
@@ -6080,7 +6153,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraSportInput: "favSport",
       favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraMusicLinkInput: "musicLink", extraActorInput: "favActor",
       extraBookInput: "favBook", extraArtistInput: "favArtist",
-      favQuoteInput: "favQuote", extraMottoInput: "motto", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
+      favQuoteInput: "favQuote", extraMottoInput: "motto", extraSecretInput: "secret", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
       extraNumberInput: "favNumber", extraTalentInput: "talent", extraVacationInput: "favVacation",
       extraLikesInput: "likes", extraDislikesInput: "dislikes",
@@ -6093,6 +6166,28 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
   let profileViewPage = 0;
 
+  // Große Detailansicht für eine bereits freigeschaltete Sammelfigur — Name, Bild groß, und
+  // Beschreibung, warum/wofür man sie bekommen hat.
+  function openFigureDetailModal(figId) {
+    const fig = COLLECTIBLE_FIGURES.find((f) => f.id === figId);
+    if (!fig) return;
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card", style: "text-align:center;" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("img", { src: fig.img, alt: fig.name, style: "width:160px; height:160px; object-fit:contain; margin:6px auto;" }),
+        Core.el("h3", {}, fig.name),
+        Core.el("p", { class: "empty-note" }, fig.desc),
+        Core.el("button", { type: "button", class: "btn btn-coffee", style: "margin-top:12px;", onclick: async () => {
+          if (!confirm(`Möchtest du "${fig.name}" als dein Profilbild verwenden?`)) return;
+          await Backend.saveAvatarFromGallery(fig.img);
+          box.remove();
+          renderAccount();
+          showToast(`🦊 ${fig.name} ist jetzt dein Profilbild!`);
+        } }, "🖼️ Als Profilbild verwenden")
+      )
+    );
+    document.body.appendChild(box);
+  }
   async function renderAccount() {
     const area = document.getElementById("accountArea");
     const user = Backend.currentUser();
@@ -6170,7 +6265,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${myUnread.length ? `
         <div class="question-card" style="border:2px solid var(--amber-400); margin-bottom:14px;">
           <h3>🔔 Neu für dich</h3>
-          ${myUnread.map((n) => `<p style="margin:8px 0;">${n.message}</p>`).join("")}
+          ${myUnread.map((n) => `<p style="margin:8px 0;">${n.message.replace(/\[\[target:[\w-]+:[\w-]+\]\]/, "")}</p>`).join("")}
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
             <button type="button" class="btn btn-ghost" id="dismissNotificationsBtn">Gelesen, ausblenden</button>
             <button type="button" class="btn btn-ghost" id="muteNotifyBtn">${isNotifyMuted() ? "🔔 Ton wieder einschalten" : "🔕 Ton & Blinken stummschalten"}</button>
@@ -6180,7 +6275,8 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header-flow">
             ${avatarHtml}
-            <h2 style="margin:0 0 4px;">${profile.name}${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator)}</h2>
+            <h2 style="margin:0 0 2px;">${profile.name}</h2>
+            ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator)}</p>` : ""}
             <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
             ${profile.isPremium ? '<span class="flow-badge">✨ Premium</span>' : ""}
             ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
@@ -6201,11 +6297,11 @@ An einem Morgen lief ein kleiner Fuchs los…
             <span class="empty-note" style="font-size:0.95rem;">🎖️ ${trophyCounts(profile).orden} Orden</span>
             <span class="empty-note" style="font-size:0.95rem;">🏆 ${trophyCounts(profile).pokale} Pokale</span>
           </div>` : ""}
-          <p class="eyebrow" style="margin-top:14px;">🦊 Sammelfiguren</p>
+          <p class="eyebrow" style="margin-top:14px;">🦊 Sammelfiguren <span class="subnav-info-icon" data-info="Diese Fuchs-Figuren sind Sammelobjekte, die man sich beim Deutschlernen erspielt — je mehr Punkte du sammelst (oder bestimmte Pokale erreichst), desto mehr Figuren schaltest du frei. Auf eine bereits freigeschaltete Figur tippen zeigt dir mehr dazu.">ⓘ</span></p>
           <div class="figure-case">
             ${COLLECTIBLE_FIGURES.map((fig) => {
               const unlocked = isFigureUnlocked(fig, profile);
-              return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + (fig.unlock.type === "points" ? `ab ${fig.unlock.value} Punkten` : "besonderer Pokal nötig")}">
+              return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" ${unlocked ? `data-figure-detail="${fig.id}"` : ""} title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + (fig.unlock.type === "points" ? `ab ${fig.unlock.value} Punkten` : "besonderer Pokal nötig")}">
                 <img src="${fig.img}" alt="${fig.name}" loading="lazy" />
                 ${unlocked ? "" : '<span class="figure-lock-icon">🔒</span>'}
               </div>`;
@@ -6253,6 +6349,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
       wireSteckbriefPager(area, renderAccount);
       wireMusicPlayer(area);
+      area.querySelectorAll("[data-figure-detail]").forEach((el) => {
+        el.addEventListener("click", () => openFigureDetailModal(el.dataset.figureDetail));
+      });
       const dismissBtn = document.getElementById("dismissNotificationsBtn");
       if (dismissBtn) {
         dismissBtn.addEventListener("click", async () => {
@@ -6367,10 +6466,10 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         <p class="eyebrow" style="margin-top:20px;">📋 Erweiterter Steckbrief — mehrere Seiten</p>
         <div class="order-toggle" id="profilePageSwitch" style="margin-bottom:14px;">
-          <button type="button" class="order-pill" data-ppage="0" aria-selected="${profileEditPage === 0}">1 · 🌍 Sprachen</button>
-          <button type="button" class="order-pill" data-ppage="1" aria-selected="${profileEditPage === 1}">2 · 🎬 Kultur</button>
-          <button type="button" class="order-pill" data-ppage="2" aria-selected="${profileEditPage === 2}">3 · 💭 Gedanken</button>
-          <button type="button" class="order-pill" data-ppage="3" aria-selected="${profileEditPage === 3}">4 · ✨ Extra</button>
+          <button type="button" class="order-pill" data-ppage="0" aria-selected="${profileEditPage === 0}">🌍 Sprachen</button>
+          <button type="button" class="order-pill" data-ppage="1" aria-selected="${profileEditPage === 1}">🎬 Kultur</button>
+          <button type="button" class="order-pill" data-ppage="2" aria-selected="${profileEditPage === 2}">💭 Gedanken</button>
+          <button type="button" class="order-pill" data-ppage="3" aria-selected="${profileEditPage === 3}">✨ Extra</button>
         </div>
         <div id="profilePageContent">
           ${profileEditPage === 0 ? `
@@ -6443,6 +6542,12 @@ An einem Morgen lief ein kleiner Fuchs los…
             <div class="form-field">
               <label>Dein Lebensmotto</label>
               <input type="text" id="extraMottoInput" maxlength="120" value="${profileEditDraft.motto !== undefined ? profileEditDraft.motto : (extra.motto || "")}" placeholder="z. B. Nie aufgeben" />
+            </div>
+            <div class="form-field">
+              <label>🤫 Ein Geheimnis mit der Community teilen</label>
+              ${profile.points >= 300 ? `
+                <input type="text" id="extraSecretInput" maxlength="300" value="${profileEditDraft.secret !== undefined ? profileEditDraft.secret : (extra.secret || "")}" placeholder="Etwas, das andere über dich noch nicht wissen…" />
+              ` : `<p class="empty-note">🔒 Ab 300 Punkten kannst du hier ein Geheimnis mit der Community teilen.</p>`}
             </div>
             <div class="form-field">
               <label>Dein größter Traum</label>
@@ -6550,7 +6655,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       captureProfileEditDraft(); // aktuelle Seite noch mit einsammeln, bevor gespeichert wird
       const val = (id, fallback) => {
         const field = { extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries", extraActorInput: "favActor",
-          extraMottoInput: "motto", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
+          extraMottoInput: "motto", extraSecretInput: "secret", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
           extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelectTop: "genderSymbol",
@@ -6585,6 +6690,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         likes: val("extraLikesInput", extra.likes),
         dislikes: val("extraDislikesInput", extra.dislikes),
         musicLink: val("extraMusicLinkInput", extra.musicLink),
+        secret: profile.points >= 300 ? val("extraSecretInput", extra.secret) : (extra.secret || ""),
       };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
         Backend.saveBio(bioText),
@@ -6803,6 +6909,223 @@ An einem Morgen lief ein kleiner Fuchs los…
   // Admin-Abzeichen — überall dort, wo ein Name/Profil auftaucht, konsistent anzeigbar
   // Erkennt die YouTube-Video-ID aus verschiedenen üblichen Link-Formaten (watch?v=, youtu.be/,
   // embed/), damit man einfach den Link kopieren kann, den man im Browser sieht.
+  /* ===== Musik-Player: Admin-verwaltete Playlist mit Transportsteuerung & Favoriten ===== */
+  let musicPlaylist = [];
+  let musicFavIds = [];
+  let musicCurrentIndex = -1;
+  let musicIsPlaying = false;
+  let musicShowFavoritesOnly = false;
+  let ytMusicPlayer = null;
+  let ytApiLoading = false;
+  let ytApiCallbacks = [];
+  function loadYouTubeIframeApi(callback) {
+    if (window.YT && window.YT.Player) { callback(); return; }
+    ytApiCallbacks.push(callback);
+    if (ytApiLoading) return;
+    ytApiLoading = true;
+    window.onYouTubeIframeAPIReady = () => { ytApiCallbacks.forEach((cb) => cb()); ytApiCallbacks = []; };
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+  }
+  function musicVisiblePlaylist() {
+    return musicShowFavoritesOnly ? musicPlaylist.filter((s) => musicFavIds.includes(s.id)) : musicPlaylist;
+  }
+  async function loadMusicPlaylist() {
+    musicPlaylist = await Backend.getPlaylist();
+    musicFavIds = Backend.currentUser() ? await Backend.getMyFavoriteSongIds() : [];
+  }
+  function playMusicIndex(playlistIdx) {
+    const song = musicPlaylist[playlistIdx];
+    if (!song) return;
+    musicCurrentIndex = playlistIdx;
+    const audioEl = document.getElementById("musicAudioNative");
+    if (Backend.isDirectAudioUrl(song.url)) {
+      if (ytMusicPlayer && ytMusicPlayer.stopVideo) { try { ytMusicPlayer.stopVideo(); } catch (e) {} }
+      audioEl.src = song.url;
+      audioEl.play().catch(() => {});
+      musicIsPlaying = true;
+      renderMusicPlayerBar();
+    } else {
+      audioEl.pause();
+      const videoId = extractYouTubeId(song.url);
+      if (!videoId) return;
+      loadYouTubeIframeApi(() => {
+        if (!ytMusicPlayer) {
+          ytMusicPlayer = new YT.Player("musicYtHost", {
+            height: "1", width: "1", videoId,
+            events: {
+              onReady: (e) => { e.target.playVideo(); musicIsPlaying = true; renderMusicPlayerBar(); },
+              onStateChange: (e) => {
+                if (window.YT && e.data === YT.PlayerState.ENDED) playNextMusic();
+                if (window.YT && e.data === YT.PlayerState.PLAYING) { musicIsPlaying = true; renderMusicPlayerBar(); }
+                if (window.YT && e.data === YT.PlayerState.PAUSED) { musicIsPlaying = false; renderMusicPlayerBar(); }
+              },
+            },
+          });
+        } else {
+          ytMusicPlayer.loadVideoById(videoId);
+          musicIsPlaying = true;
+        }
+        renderMusicPlayerBar();
+      });
+    }
+    renderMusicSection();
+  }
+  function toggleMusicPlayPause() {
+    const song = musicPlaylist[musicCurrentIndex];
+    if (!song) return;
+    const audioEl = document.getElementById("musicAudioNative");
+    if (Backend.isDirectAudioUrl(song.url)) {
+      if (musicIsPlaying) audioEl.pause(); else audioEl.play().catch(() => {});
+    } else if (ytMusicPlayer) {
+      if (musicIsPlaying) ytMusicPlayer.pauseVideo(); else ytMusicPlayer.playVideo();
+    }
+    musicIsPlaying = !musicIsPlaying;
+    renderMusicPlayerBar();
+  }
+  function playNextMusic() {
+    const list = musicVisiblePlaylist();
+    if (!list.length) return;
+    const curSong = musicPlaylist[musicCurrentIndex];
+    const curVisIdx = curSong ? list.findIndex((s) => s.id === curSong.id) : -1;
+    const nextSong = list[(curVisIdx + 1) % list.length];
+    playMusicIndex(musicPlaylist.findIndex((s) => s.id === nextSong.id));
+  }
+  function playPrevMusic() {
+    const list = musicVisiblePlaylist();
+    if (!list.length) return;
+    const curSong = musicPlaylist[musicCurrentIndex];
+    const curVisIdx = curSong ? list.findIndex((s) => s.id === curSong.id) : -1;
+    const prevSong = list[(curVisIdx - 1 + list.length) % list.length];
+    playMusicIndex(musicPlaylist.findIndex((s) => s.id === prevSong.id));
+  }
+  function renderMusicPlayerBar() {
+    const bar = document.getElementById("musicPlayerBarInner");
+    if (bar) {
+      const song = musicPlaylist[musicCurrentIndex];
+      bar.innerHTML = song ? `
+        <button type="button" class="btn btn-ghost" id="musicPrevBtn" aria-label="Vorheriger Song">⏮️</button>
+        <button type="button" class="btn btn-coffee" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? "⏸️" : "▶️"}</button>
+        <button type="button" class="btn btn-ghost" id="musicNextBtn" aria-label="Nächster Song">⏭️</button>
+        <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
+      ` : `<span class="empty-note">Kein Song ausgewählt — wähl unten einen aus der Liste.</span>`;
+      document.getElementById("musicPrevBtn")?.addEventListener("click", playPrevMusic);
+      document.getElementById("musicNextBtn")?.addEventListener("click", playNextMusic);
+      document.getElementById("musicPlayPauseBtn")?.addEventListener("click", toggleMusicPlayPause);
+    }
+    renderMusicFloatingBar();
+  }
+  // Schwebende Leiste, sichtbar auf der GANZEN Seite (nicht nur im Musik-Reiter) — erscheint erst,
+  // sobald wirklich ein Song ausgewählt wurde, damit sie nicht unnötig Platz wegnimmt, wenn noch
+  // niemand Musik gestartet hat.
+  function renderMusicFloatingBar() {
+    const floatBar = document.getElementById("musicFloatingBar");
+    if (!floatBar) return;
+    const song = musicPlaylist[musicCurrentIndex];
+    if (!song) { floatBar.style.display = "none"; floatBar.innerHTML = ""; return; }
+    floatBar.style.display = "block";
+    floatBar.className = "music-floating-bar";
+    floatBar.innerHTML = `
+      <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">⏮️</button>
+      <button type="button" class="mfb-ctrl" id="mfbPlayPause" aria-label="Play/Pause">${musicIsPlaying ? "⏸️" : "▶️"}</button>
+      <button type="button" class="mfb-title" id="mfbTitle">🎵 ${song.title}</button>
+      <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">⏭️</button>
+    `;
+    document.getElementById("mfbPrev").addEventListener("click", playPrevMusic);
+    document.getElementById("mfbNext").addEventListener("click", playNextMusic);
+    document.getElementById("mfbPlayPause").addEventListener("click", toggleMusicPlayPause);
+    document.getElementById("mfbTitle").addEventListener("click", () => {
+      document.querySelector('[data-target="view-knowledge"]').click();
+      document.querySelector('#knowledgeSubnav [data-sub="sub-music"]').click();
+    });
+  }
+  async function renderMusicSection() {
+    const area = document.getElementById("musicArea");
+    if (!area) return;
+    const user = Backend.currentUser();
+    const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
+    const list = musicVisiblePlaylist();
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:10px;">Eine gemeinsame Playlist zum Deutschlernen — Songs werden von Alex ausgewählt. Herz antippen, um Favoriten zu markieren.</p>
+      <div class="question-card" style="position:sticky; top:0; z-index:5; margin-bottom:14px;">
+        <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px;"></div>
+      </div>
+      ${isAdmin ? `
+        <div class="question-card" style="margin-bottom:14px;">
+          <button type="button" class="emoji-toggle-link" id="musicAddToggle" style="margin:0;">➕ Song zur Playlist hinzufügen</button>
+          <div id="musicAddFormBody" style="display:none; margin-top:12px;">
+            <div class="form-field"><label>Titel</label><input type="text" id="musicTitleInput" maxlength="100" placeholder="z. B. 99 Luftballons — Nena" /></div>
+            <div class="form-field"><label>YouTube-Link ODER direkter Audio-Link (z. B. GitHub-Rohlink zu einer MP3)</label><input type="text" id="musicUrlInput" placeholder="https://www.youtube.com/watch?v=… oder https://…mp3" /></div>
+            <button type="button" class="btn btn-coffee" id="musicAddSubmitBtn">Hinzufügen</button>
+            <p class="form-error" id="musicAddError" style="display:none;"></p>
+          </div>
+        </div>` : ""}
+      <div class="order-toggle" style="margin-bottom:12px;">
+        <button type="button" class="order-pill" id="musicAllTab" aria-selected="${!musicShowFavoritesOnly}">🎵 Alle Songs</button>
+        <button type="button" class="order-pill" id="musicFavTab" aria-selected="${musicShowFavoritesOnly}">❤️ Favoriten</button>
+      </div>
+      <div class="breakdown-list">
+        ${list.length ? list.map((s) => {
+          const idx = musicPlaylist.findIndex((x) => x.id === s.id);
+          const isFav = musicFavIds.includes(s.id);
+          const isCurrent = idx === musicCurrentIndex;
+          return `<div class="breakdown-row" style="${isCurrent ? "background:rgba(242,184,75,0.15);" : ""}">
+            <button type="button" class="friend-name-btn" data-play-song="${idx}" style="text-align:left;">${isCurrent && musicIsPlaying ? "🔊" : "🎵"} ${s.title}</button>
+            <span style="display:flex; align-items:center; gap:8px;">
+              <button type="button" class="emoji-toggle-link" data-fav-song="${s.id}" style="font-size:1.1rem;">${isFav ? "❤️" : "🤍"}</button>
+              ${isAdmin ? `<button type="button" class="emoji-toggle-link" data-delete-song="${s.id}" style="font-size:0.75rem;">löschen</button>` : ""}
+            </span>
+          </div>`;
+        }).join("") : `<p class="empty-note">${musicShowFavoritesOnly ? "Noch keine Favoriten markiert." : "Noch keine Songs in der Playlist."}</p>`}
+      </div>
+    `;
+    renderMusicPlayerBar();
+    document.getElementById("musicAddToggle")?.addEventListener("click", () => {
+      const body = document.getElementById("musicAddFormBody");
+      body.style.display = body.style.display === "none" ? "block" : "none";
+    });
+    document.getElementById("musicAddSubmitBtn")?.addEventListener("click", async () => {
+      const title = document.getElementById("musicTitleInput").value;
+      const url = document.getElementById("musicUrlInput").value;
+      const errBox = document.getElementById("musicAddError");
+      try {
+        await Backend.addPlaylistSong(title, url);
+        await loadMusicPlaylist();
+        renderMusicSection();
+      } catch (err) {
+        errBox.textContent = "⚠️ " + err.message;
+        errBox.style.display = "block";
+      }
+    });
+    document.getElementById("musicAllTab")?.addEventListener("click", () => { musicShowFavoritesOnly = false; renderMusicSection(); });
+    document.getElementById("musicFavTab")?.addEventListener("click", () => { musicShowFavoritesOnly = true; renderMusicSection(); });
+    area.querySelectorAll("[data-play-song]").forEach((btn) => {
+      btn.addEventListener("click", () => playMusicIndex(Number(btn.dataset.playSong)));
+    });
+    area.querySelectorAll("[data-fav-song]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!user) { alert("Bitte zuerst anmelden, um Favoriten zu markieren."); return; }
+        await Backend.toggleFavoriteSong(btn.dataset.favSong);
+        musicFavIds = await Backend.getMyFavoriteSongIds();
+        renderMusicSection();
+      });
+    });
+    area.querySelectorAll("[data-delete-song]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diesen Song wirklich aus der Playlist entfernen?")) return;
+        await Backend.deletePlaylistSong(btn.dataset.deleteSong);
+        await loadMusicPlaylist();
+        renderMusicSection();
+      });
+    });
+  }
+  document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic());
+  document.querySelector('#knowledgeSubnav [data-sub="sub-music"]').addEventListener("click", async () => {
+    await loadMusicPlaylist();
+    renderMusicSection();
+  });
+
   function extractYouTubeId(url) {
     if (!url) return null;
     const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
@@ -6869,6 +7192,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       ` },
       { icon: "💭", label: "Gedanken", html: `
         ${extra.motto ? `<div class="breakdown-row"><span>🌟 Lebensmotto</span><span>${extra.motto}</span></div>` : ""}
+        ${extra.secret ? `<div class="poem-box" style="border-left-color:var(--coral-400);"><p style="margin:0;">🤫 ${extra.secret}</p></div>` : ""}
         ${extra.bigDream ? `<div class="breakdown-row"><span>🌠 Größter Traum</span><span>${extra.bigDream}</span></div>` : ""}
         ${extra.whatMakesMeHappy ? `<div class="breakdown-row"><span>😊 Macht glücklich</span><span>${extra.whatMakesMeHappy}</span></div>` : ""}
         ${favQuote ? `<div class="poem-box" style="border-left-color:var(--teal-400);"><p style="margin:0;">💬 „${favQuote}"</p></div>` : ""}
@@ -6894,7 +7218,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const activePage = Math.min(profileViewPages[viewId] || 0, pages.length - 1);
     return `<div class="breakdown-list" style="margin-top:12px;">
       <div class="order-toggle" data-steckbrief-switch="${viewId}" style="margin-bottom:10px;">
-        ${pages.map((pg, i) => `<button type="button" class="order-pill" data-svpage="${i}" aria-selected="${activePage === i}">${i + 1} · ${pg.icon}</button>`).join("")}
+        ${pages.map((pg, i) => `<button type="button" class="order-pill" data-svpage="${i}" aria-selected="${activePage === i}">${pg.icon} ${pg.label}</button>`).join("")}
       </div>
       ${pages[activePage].html.trim() ? pages[activePage].html : '<p class="empty-note">Auf dieser Seite steht noch nichts.</p>'}
     </div>`;
@@ -7255,11 +7579,18 @@ An einem Morgen lief ein kleiner Fuchs los…
       <div class="question-card">
         <h3>✉️ Neue Nachricht schreiben</h3>
         <div class="form-field">
-          <label class="empty-note" style="display:block; margin-bottom:6px;">An wen? (mehrere gleichzeitig möglich)</label>
-          <div class="challenge-friend-list" id="inboxRecipientPills">
-            ${friends.map((f) => `<button type="button" class="challenge-friend-pill" data-recipient-id="${f.id}">${f.name}</button>`).join("")}
+          <label class="empty-note" style="display:block; margin-bottom:8px;">An wen?</label>
+          <div class="order-toggle" id="inboxRecipientMode" style="margin-bottom:10px;">
+            <button type="button" class="order-pill" data-recipient-mode="select" aria-selected="true">👤 Bestimmte Personen</button>
+            ${isAdmin ? `<button type="button" class="order-pill" data-recipient-mode="broadcast" aria-selected="false">📢 Rundmail an alle</button>` : ""}
           </div>
-          ${isAdmin ? `<label style="display:flex; align-items:center; gap:6px; margin-top:8px; cursor:pointer;"><input type="checkbox" id="inboxBroadcastCheck" /> <span class="empty-note">📢 Rundmail an ALLE Nutzer (statt einzelner Auswahl)</span></label>` : ""}
+          <div id="inboxRecipientListWrap">
+            <input type="text" class="vocab-search" id="inboxRecipientSearch" placeholder="Freund suchen…" style="margin-bottom:8px;" />
+            <div id="inboxRecipientList" style="max-height:220px; overflow-y:auto; border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:4px;">
+              ${friends.map((f) => `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${f.id}" /> <span>${f.name}</span></label>`).join("") || '<p class="empty-note" style="padding:8px;">Noch keine Freunde — oben nach Namen suchen.</p>'}
+            </div>
+          </div>
+          <p class="empty-note" id="inboxBroadcastNote" style="display:none; margin-top:6px;">📢 Diese Nachricht geht an <strong>alle</strong> Nutzer der Seite — keine einzelne Auswahl nötig.</p>
         </div>
         <div class="form-field">
           <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
@@ -7301,6 +7632,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     `;
     renderStickerRow();
     let selectedRecipients = new Set();
+    let recipientMode = "select"; // "select" | "broadcast"
     // Entwurf wiederherstellen, falls beim letzten Mal etwas Angefangenes da war
     try {
       const draft = JSON.parse(localStorage.getItem("dma_msg_draft") || "null");
@@ -7310,12 +7642,12 @@ An einem Morgen lief ein kleiner Fuchs los…
         if (draft.body) document.getElementById("inboxMessageInput").value = draft.body;
       }
     } catch (e) {}
-    const refreshRecipientPills = () => {
-      area.querySelectorAll("[data-recipient-id]").forEach((btn) => {
-        btn.classList.toggle("selected", selectedRecipients.has(btn.dataset.recipientId));
+    const refreshRecipientChecks = () => {
+      area.querySelectorAll("[data-recipient-id]").forEach((cb) => {
+        cb.checked = selectedRecipients.has(cb.dataset.recipientId);
       });
     };
-    refreshRecipientPills();
+    refreshRecipientChecks();
     const draftSave = () => {
       try {
         const to = [...selectedRecipients];
@@ -7324,12 +7656,32 @@ An einem Morgen lief ein kleiner Fuchs los…
         else localStorage.removeItem("dma_msg_draft");
       } catch (e) {}
     };
-    area.querySelectorAll("[data-recipient-id]").forEach((btn) => {
+    // Klares Entweder-Oder: entweder bestimmte Personen auswählen ODER eine Rundmail an alle —
+    // beim Wechsel wird die Personen-Liste ein-/ausgeblendet, damit nie unklar ist, welcher Modus
+    // gerade aktiv ist.
+    document.querySelectorAll("#inboxRecipientMode [data-recipient-mode]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const id = btn.dataset.recipientId;
-        if (selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
-        refreshRecipientPills();
+        recipientMode = btn.dataset.recipientMode;
+        document.querySelectorAll("#inboxRecipientMode [data-recipient-mode]").forEach((b) => {
+          b.setAttribute("aria-selected", String(b === btn));
+        });
+        document.getElementById("inboxRecipientListWrap").style.display = recipientMode === "select" ? "" : "none";
+        document.getElementById("inboxBroadcastNote").style.display = recipientMode === "broadcast" ? "" : "none";
+      });
+    });
+    area.querySelectorAll("[data-recipient-id]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const id = cb.dataset.recipientId;
+        if (cb.checked) selectedRecipients.add(id); else selectedRecipients.delete(id);
         draftSave();
+      });
+    });
+    const recipientSearch = document.getElementById("inboxRecipientSearch");
+    if (recipientSearch) recipientSearch.addEventListener("input", () => {
+      const q = recipientSearch.value.trim().toLowerCase();
+      area.querySelectorAll(".checkbox-list-row").forEach((row) => {
+        const name = row.querySelector("span").textContent.toLowerCase();
+        row.style.display = name.includes(q) ? "" : "none";
       });
     });
     document.getElementById("inboxMessageInput").addEventListener("input", draftSave);
@@ -7350,8 +7702,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     }
     document.getElementById("inboxSendBtn").addEventListener("click", async () => {
-      const broadcastCheck = document.getElementById("inboxBroadcastCheck");
-      const isBroadcast = broadcastCheck && broadcastCheck.checked;
+      const isBroadcast = recipientMode === "broadcast";
       const body = document.getElementById("inboxMessageInput").value;
       const errBox = document.getElementById("inboxSendError");
       if (!isBroadcast && selectedRecipients.size === 0) { errBox.textContent = "⚠️ Bitte mindestens eine Person auswählen."; return; }
@@ -7375,8 +7726,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-reply-to]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const targetId = btn.dataset.replyTo;
-        const pillBtn = area.querySelector(`[data-recipient-id="${targetId}"]`);
-        if (pillBtn) { selectedRecipients = new Set([targetId]); refreshRecipientPills(); }
+        const checkbox = area.querySelector(`[data-recipient-id="${targetId}"]`);
+        if (checkbox) { selectedRecipients = new Set([targetId]); refreshRecipientChecks(); }
         document.getElementById("inboxMessageInput").focus();
         document.getElementById("inboxMessageInput").scrollIntoView({ behavior: "smooth", block: "center" });
       });
@@ -7645,7 +7996,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
 
-  let rankingMode = "today"; // "today" oder "alltime"
+  let rankingMode = "alltime"; // "today" oder "alltime" -- Gesamt als Grundeinstellung, da das die
+  // Zahl ist, die man normalerweise erwartet, wenn man "das Ranking" ansieht — "Heute" ist als
+  // zweite Option für alle da, die gezielt sehen wollen, wer heute besonders aktiv war.
   async function renderRanking() {
     const area = document.getElementById("rankingArea");
     area.innerHTML = '<p class="empty-note">Lade Ranking…</p>';
@@ -7772,7 +8125,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "22";
+  const APP_VERSION = "23";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

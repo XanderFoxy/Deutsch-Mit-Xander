@@ -46,6 +46,8 @@ const Backend = (function () {
     friends: [], // { id, a, b, status: 'pending'|'accepted', requestedBy }
     challenges: [], // { id, from, to, categories, fromResult, toResult, status, winner, createdAt }
     activity: [], // { id, text, date }
+    playlistSongs: [], // { id, title, url, added_by, created_at }
+    songFavorites: [], // { user_id, song_id }
   };
 
   function todayKey() {
@@ -227,10 +229,13 @@ const Backend = (function () {
     if (!demo.user) return [];
     if (client) {
       try {
-        const { data, error } = await client.from("results").select("character,points").eq("user_id", demo.user.id);
+        const { data, error } = await client.from("results").select("character,points,bonus").eq("user_id", demo.user.id);
         if (!error && data) {
           const sums = {};
-          data.forEach((r) => { sums[r.character] = (sums[r.character] || 0) + (r.points || 0); });
+          // WICHTIG: bonus mitzählen, nicht nur points — sonst fehlen Tempo-Boni, Tagesaufgaben-
+          // Punkte und Ranking-Belohnungen in der Aufschlüsselung, obwohl sie im Gesamtstand
+          // längst mitgezählt wurden. Das war der Grund, warum sich die Summe nie ausging.
+          data.forEach((r) => { sums[r.character] = (sums[r.character] || 0) + Math.round((r.points || 0) + (r.bonus || 0)); });
           return Object.entries(sums).sort((a, b) => b[1] - a[1]);
         }
       } catch (e) {
@@ -239,14 +244,14 @@ const Backend = (function () {
       return [];
     }
     const sums = {};
-    (demo.profile.history || []).forEach((h) => { sums[h.character] = (sums[h.character] || 0) + (h.points || 0); });
+    (demo.profile.history || []).forEach((h) => { sums[h.character] = (sums[h.character] || 0) + Math.round((h.points || 0) + (h.bonus || 0)); });
     return Object.entries(sums).sort((a, b) => b[1] - a[1]);
   }
 
   async function saveResult(result) {
     // result: { categories:[ids], points, bonus, percent, character, badges:[], playedAt }
     if (!demo.profile) return; // nicht eingeloggt -> Ergebnis wird nur lokal in der Session gezeigt
-    demo.profile.points += Math.round(result.points + result.bonus);
+    const earned = Math.round(result.points + result.bonus);
     demo.profile.history.unshift(result);
     result.badges.forEach((b) => {
       if (!demo.profile.badges.includes(b)) demo.profile.badges.push(b);
@@ -265,20 +270,27 @@ const Backend = (function () {
       });
       if (resultsError) console.warn("Tabelle results konnte nicht gespeichert werden:", resultsError.message);
 
-      // KRITISCH: Punkte dürfen nie still verloren gehen. Falls das Speichern beim ersten Versuch
-      // fehlschlägt (z. B. kurzer Netzwerkfehler), wird es einmal automatisch wiederholt. Schlägt
-      // es auch dann fehl, bekommt die Person eine sichtbare Warnung statt eines stillen
-      // Konsolen-Logs — sonst merkt niemand, dass beim nächsten Neuladen Punkte "verschwinden"
-      // könnten, weil der Server noch den alten, niedrigeren Stand hat.
-      let profileError = (await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
+      // KRITISCH — echte Wettlaufbedingung behoben: Punkte NIE aus dem lokalen (möglicherweise
+      // veralteten) Stand hochrechnen, sondern immer direkt vorher den WIRKLICH aktuellen
+      // Serverstand abholen und ERST DANN draufaddieren. Sonst könnte ein zweites Gerät (z. B.
+      // Handy + Tablet gleichzeitig offen) mit einem älteren lokalen Stand den neueren Stand des
+      // anderen Geräts überschreiben — Punkte gehen dabei komplett und unbemerkt verloren.
+      const { data: freshRow } = await client.from("profiles").select("points").eq("id", demo.user.id).maybeSingle();
+      const serverPoints = freshRow ? (freshRow.points || 0) : demo.profile.points;
+      const newTotal = serverPoints + earned;
+      demo.profile.points = newTotal;
+
+      let profileError = (await client.from("profiles").update({ points: newTotal, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
       if (profileError) {
         await new Promise((r) => setTimeout(r, 800));
-        profileError = (await client.from("profiles").update({ points: demo.profile.points, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
+        profileError = (await client.from("profiles").update({ points: newTotal, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
       }
       if (profileError) {
         console.warn("Punkte/Abzeichen im Profil konnten nicht gespeichert werden:", profileError.message);
         if (typeof window !== "undefined" && window.__dmaPointsSaveFailed) window.__dmaPointsSaveFailed();
       }
+    } else {
+      demo.profile.points += earned;
     }
 
     // Tagesranking aktualisieren (Demo-Fallback)
@@ -417,17 +429,22 @@ const Backend = (function () {
   demo.notifications = demo.notifications || [];
   demo.privateMessages = demo.privateMessages || [];
 
-  async function addNotification(targetUserId, message) {
+  // targetRef (optional): { view: "community"|"tips", textId: "..." } — wird als versteckte
+  // Kennung ans Ende der Nachricht angehängt (wie bei den Sticker-Kürzeln), damit ein Klick auf
+  // die Benachrichtigung direkt zum betroffenen Beitrag springen kann, statt nur allgemein zum
+  // Profil. Braucht dadurch keine Datenbank-Änderung.
+  async function addNotification(targetUserId, message, targetRef) {
     if (!targetUserId) return;
+    const finalMessage = targetRef ? `${message}[[target:${targetRef.view}:${targetRef.textId}]]` : message;
     if (client) {
       try {
-        await client.from("notifications").insert({ user_id: targetUserId, message });
+        await client.from("notifications").insert({ user_id: targetUserId, message: finalMessage });
       } catch (e) {
         console.warn("Benachrichtigung konnte nicht gespeichert werden:", e);
       }
       return;
     }
-    demo.notifications.push({ id: Core.uid(), user_id: targetUserId, message, read: false, created_at: new Date().toISOString() });
+    demo.notifications.push({ id: Core.uid(), user_id: targetUserId, message: finalMessage, read: false, created_at: new Date().toISOString() });
   }
 
   /* ---------------------------------------------------------
@@ -586,6 +603,73 @@ const Backend = (function () {
         console.warn("Aktivität konnte nicht gespeichert werden:", e);
       }
     }
+  }
+
+  /* ================= MUSIK-PLAYER (Admin-verwaltete Playlist) =================
+     Songs werden über die Oberfläche verwaltet, kein Code nötig. Unterstützt sowohl
+     YouTube-Links als auch direkte Audio-Dateien (z. B. ein GitHub-Rohlink zu einer MP3). */
+  function isDirectAudioUrl(url) {
+    return /\.(mp3|m4a|wav|ogg|aac)(\?.*)?$/i.test(url || "");
+  }
+  async function getPlaylist() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("playlist_songs").select("*").order("created_at", { ascending: true });
+        if (!error && data) return data;
+      } catch (e) { console.warn("Playlist konnte nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.playlistSongs;
+  }
+  async function addPlaylistSong(title, url) {
+    if (!isAdmin()) throw new Error("Nur Administratoren können Songs zur Playlist hinzufügen.");
+    if (!title.trim() || !url.trim()) throw new Error("Titel und Link dürfen nicht leer sein.");
+    const song = { title: title.trim(), url: url.trim(), added_by: demo.user.id, created_at: new Date().toISOString() };
+    if (client) {
+      const { data, error } = await client.from("playlist_songs").insert(song).select().single();
+      if (error) throw new Error(friendlyDbError(error.message));
+      return data;
+    }
+    song.id = Core.uid();
+    demo.playlistSongs.push(song);
+    return song;
+  }
+  async function deletePlaylistSong(id) {
+    if (!isAdmin()) throw new Error("Nur Administratoren können Songs entfernen.");
+    if (client) {
+      const { error } = await client.from("playlist_songs").delete().eq("id", id);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.playlistSongs = demo.playlistSongs.filter((s) => s.id !== id);
+  }
+  async function toggleFavoriteSong(songId) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { data: existing } = await client.from("song_favorites").select("id").eq("user_id", demo.user.id).eq("song_id", songId).maybeSingle();
+      if (existing) {
+        await client.from("song_favorites").delete().eq("id", existing.id);
+        return false;
+      }
+      const { error } = await client.from("song_favorites").insert({ user_id: demo.user.id, song_id: songId });
+      if (error) throw new Error(friendlyDbError(error.message));
+      return true;
+    }
+    const idx = demo.songFavorites.findIndex((f) => f.user_id === demo.user.id && f.song_id === songId);
+    if (idx >= 0) { demo.songFavorites.splice(idx, 1); return false; }
+    demo.songFavorites.push({ user_id: demo.user.id, song_id: songId });
+    return true;
+  }
+  async function getMyFavoriteSongIds() {
+    if (!demo.user) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("song_favorites").select("song_id").eq("user_id", demo.user.id);
+        if (!error && data) return data.map((f) => f.song_id);
+      } catch (e) { console.warn("Favoriten konnten nicht geladen werden:", e); }
+      return [];
+    }
+    return demo.songFavorites.filter((f) => f.user_id === demo.user.id).map((f) => f.song_id);
   }
 
   async function getActivity() {
@@ -1349,7 +1433,7 @@ const Backend = (function () {
           if (authorProfile) {
             await client.from("profiles").update({ points: (authorProfile.points || 0) + 2 }).eq("id", authorId);
           }
-          await addNotification(authorId, `❤️ ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" geliked!`);
+          await addNotification(authorId, `❤️ ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" geliked!`, { view: "community", textId });
         }
       }
       return !alreadyLiked;
@@ -1360,7 +1444,7 @@ const Backend = (function () {
       demo.textLikes.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id });
       if (authorId && authorId !== demo.user.id && demo.users[authorId]) {
         demo.users[authorId].profile.points += 2;
-        await addNotification(authorId, `❤️ ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" geliked!`);
+        await addNotification(authorId, `❤️ ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" geliked!`, { view: "community", textId });
       }
     }
     return !alreadyLiked;
@@ -1390,14 +1474,14 @@ const Backend = (function () {
         if (authorProfile) {
           await client.from("profiles").update({ points: (authorProfile.points || 0) + 1 }).eq("id", authorId);
         }
-        await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`);
+        await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`, { view: "community", textId });
       }
       return;
     }
     demo.textComments.push({ id: Core.uid(), text_id: textId, user_id: demo.user.id, author_name: demo.profile.name, body: body.trim(), created_at: new Date().toISOString() });
     if (authorId && authorId !== demo.user.id) {
       if (demo.users[authorId]) demo.users[authorId].profile.points += 1;
-      await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`);
+      await addNotification(authorId, `💬 ${demo.profile.name} hat deinen Beitrag „${textTitle || ""}" kommentiert.`, { view: "community", textId });
     }
   }
 
@@ -1683,6 +1767,7 @@ const Backend = (function () {
     submitChallengeResult,
     addActivity,
     getActivity,
+    getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl,
     notifyPracticing,
     saveThemePreference,
     uploadGalleryPhoto,
@@ -1728,6 +1813,7 @@ const Backend = (function () {
     adminGiftCategoryUnlock,
     adminGiftThemeUnlock,
     getUnreadNotifications,
+    addNotification,
     sendPrivateMessage,
     sendBroadcastMessage,
     getMyMessages,
