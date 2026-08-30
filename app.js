@@ -140,8 +140,21 @@
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
     history.replaceState(null, "", `#${targetId}`);
   }
+  // Der jeweils standardmäßig aktive Unterreiter eines Bereichs (z. B. "Kompass" bei "Wissen")
+  // wird beim allerersten Seitenaufbau gerendert, BEVOR jemand eingeloggt ist — Admin-Symbole wie
+  // das Banner-Bearbeiten-Icon fehlten dadurch, bis man den Unterreiter irgendwann mal EXPLIZIT
+  // selbst anklickte. Beim allerersten Wechsel zu einem Hauptreiter pro Sitzung wird der aktive
+  // Unterreiter jetzt einmal automatisch "nachgeklickt", damit er mit den echten, aktuellen
+  // Berechtigungen neu rendert.
+  const tabsFreshlyRendered = new Set();
   tabs.forEach((t) => t.addEventListener("click", () => {
     activateTab(t.dataset.target);
+    if (!tabsFreshlyRendered.has(t.dataset.target)) {
+      tabsFreshlyRendered.add(t.dataset.target);
+      const view = document.getElementById(t.dataset.target);
+      const activePill = view?.querySelector(".subnav-pill[aria-selected=\"true\"]");
+      if (activePill) activePill.click();
+    }
     if (t.dataset.target === "view-profile") maybeShowFoxIntro();
     if (t.dataset.target === "view-about") renderAboutEditButton();
     // Beim Verlassen des "Wissen"-Hauptbereichs das Video-Vorschaufenster (falls gerade ein Song
@@ -149,6 +162,9 @@
     if (t.dataset.target !== "view-knowledge" && typeof relocateMusicVideoSquare === "function") {
       relocateMusicVideoSquare();
     }
+    // Gleiches gilt für die Sichtbarkeit der schwebenden Leiste selbst — sie muss beim Verlassen
+    // des Musik-Unterreiters wieder erscheinen, beim Wechsel dorthin wieder verschwinden.
+    if (typeof renderMusicFloatingBar === "function") renderMusicFloatingBar();
   }));
   const initial = window.location.hash?.replace("#", "");
   if (initial && document.getElementById(initial)) activateTab(initial);
@@ -171,6 +187,11 @@
         nav.querySelectorAll(".subnav-pill").forEach((p) => p.setAttribute("aria-selected", String(p === pill)));
         const parent = nav.parentElement;
         parent.querySelectorAll(".subview").forEach((v) => (v.dataset.active = String(v.id === pill.dataset.sub)));
+        // Bei JEDEM Unterreiter-Wechsel (nicht nur beim Song-Wechsel selbst) neu prüfen, ob die
+        // schwebende Player-Leiste sichtbar sein soll — sie muss verschwinden, sobald man in den
+        // Musik-Unterreiter wechselt (der schon seine eigene Leiste hat), und wieder erscheinen,
+        // sobald man ihn verlässt.
+        if (typeof renderMusicFloatingBar === "function") renderMusicFloatingBar();
         // Sobald man an einem Ziel-Unterreiter tatsächlich ANKOMMT — egal auf welchem Weg dorthin
         // (Profil-Pille, Toast-Blase, oder einfach direkt den Reiter selbst angetippt) — gilt die
         // zugehörige Benachrichtigung als erledigt: Farbe/Sound/Lämpchen UND der kleine Punkt am
@@ -339,28 +360,28 @@
   });
   const COLLECTIBLE_FIGURES = [
     { id: "kleiner-lernfuchs", name: "Kleiner Lernfuchs", img: "figures/kleiner-lernfuchs.png", desc: "Für den Anfang — willkommen!", unlock: { type: "points", value: 20 } },
-    { id: "fitnessfuchs", name: "Fitnessfuchs", img: "figures/fitnessfuchs.png", desc: "Bleibt auch beim Lernen fit und in Bewegung — liebt die actionreichen Spiele", unlock: { type: "category_points", categories: ["wackelturm", "wortkanone"], value: 15 } },
-    { id: "pausenfuchs", name: "Pausenfuchs", img: "figures/pausenfuchs.png", desc: "Gönnt sich eine Verschnaufpause — kommt regelmäßig wieder, statt alles auf einmal zu lernen", unlock: { type: "login_streak", value: 3 } },
-    { id: "professor-schlaufuchs", name: "Professor Schlaufuchs", img: "figures/professor-schlaufuchs.png", desc: "Grammatik-Experte", unlock: { type: "character_points", character: "Professor Schlaufuchs", value: 50 } },
-    { id: "lesefuchs", name: "Lesefuchs", img: "figures/lesefuchs.png", desc: "Liest für sein Leben gern — kennt sich mit Synonymen bestens aus", unlock: { type: "character_points", character: "Lesefuchs", value: 60 } },
-    { id: "zeitfuchs", name: "Zeitfuchs", img: "figures/zeitfuchs.png", desc: "Meister der Zeitformen", unlock: { type: "character_points", character: "Zeitfuchs", value: 70 } },
-    { id: "musikerfuchs", name: "Musikerfuchs", img: "figures/musikerfuchs.png", desc: "Immer mit der Gitarre unterwegs — hat schon einen eigenen Song zur Playlist beigesteuert", unlock: { type: "songs_added", value: 1 } },
-    { id: "maerchenfuchs", name: "Märchenfuchs", img: "figures/maerchenfuchs.png", desc: "Kenner von Redewendungen & Geschichten", unlock: { type: "character_points", character: "Märchenfuchs", value: 90 } },
-    { id: "brueckenfuchs", name: "Brückenfuchs", img: "figures/brueckenfuchs.png", desc: "Verbindet Sätze mit zweiteiligen Konnektoren", unlock: { type: "character_points", character: "Brückenfuchs", value: 110 } },
-    { id: "kommissar-fehlerfrei", name: "Kommissar Fehlerfrei", img: "figures/kommissar-fehlerfrei.png", desc: "Rechtschreib-Detektiv", unlock: { type: "character_points", character: "Kommissar Fehlerfrei", value: 130 } },
-    { id: "sprachenfuchs", name: "Sprachenfuchs", img: "figures/sprachenfuchs.png", desc: "Zuhause in vielen Sprachen der Welt", unlock: { type: "profile_field", field: "languages" } },
-    { id: "raetselfuchs", name: "Rätselfuchs", img: "figures/raetselfuchs.png", desc: "Kreuzworträtsel-Fan", unlock: { type: "character_points", character: "Rätselfuchs", value: 160 } },
-    { id: "baeckerfuchs", name: "Bäckerfuchs", img: "figures/baeckerfuchs.png", desc: "Frisch aus dem Wortschatz-Ofen", unlock: { type: "points", value: 260 } },
-    { id: "naturfotograf", name: "Naturfotograf", img: "figures/naturfotograf.png", desc: "Hält Wortschatz-Momente fest", unlock: { type: "character_points", character: "Naturfotograf", value: 220 } },
-    { id: "studierfuchs", name: "Studierfuchs", img: "figures/studierfuchs.png", desc: "Fleißig am Lernen — hat schon viele Runden gespielt, nicht nur eine große", unlock: { type: "games_played", value: 15 } },
+    { id: "fitnessfuchs", name: "Fitnessfuchs", img: "figures/fitnessfuchs.png", desc: "Bleibt auch beim Lernen fit und in Bewegung — liebt die actionreichen Spiele UND ist schon öfter dabei gewesen", unlock: { type: "combo", parts: [{ type: "category_points", categories: ["wackelturm", "wortkanone"], value: 15 }, { type: "games_played", value: 5 }] } },
+    { id: "pausenfuchs", name: "Pausenfuchs", img: "figures/pausenfuchs.png", desc: "Gönnt sich eine Verschnaufpause — kommt regelmäßig wieder UND hat sich schon ins Gästebuch eingetragen", unlock: { type: "combo", parts: [{ type: "login_streak", value: 3 }, { type: "guestbook_entry", value: 1 }] } },
+    { id: "professor-schlaufuchs", name: "Professor Schlaufuchs", img: "figures/professor-schlaufuchs.png", desc: "Grammatik-Experte, der auch schon sein Profil vorgestellt hat", unlock: { type: "combo", parts: [{ type: "character_points", character: "Professor Schlaufuchs", value: 50 }, { type: "profile_field", field: "bio" }] } },
+    { id: "lesefuchs", name: "Lesefuchs", img: "figures/lesefuchs.png", desc: "Liest für sein Leben gern — kennt sich mit Synonymen bestens aus UND hat „Es war einmal in Deutschland“ gelesen", unlock: { type: "combo", parts: [{ type: "character_points", character: "Lesefuchs", value: 60 }, { type: "visited_section", section: "es-war-einmal" }] } },
+    { id: "zeitfuchs", name: "Zeitfuchs", img: "figures/zeitfuchs.png", desc: "Meister der Zeitformen, der auch schon mehrere Übungsarten kennengelernt hat", unlock: { type: "combo", parts: [{ type: "character_points", character: "Zeitfuchs", value: 70 }, { type: "categories_tried", value: 5 }] } },
+    { id: "musikerfuchs", name: "Musikerfuchs", img: "figures/musikerfuchs.png", desc: "Immer mit der Gitarre unterwegs — hat schon einen eigenen Song zur Playlist beigesteuert UND fleißig geübt", unlock: { type: "combo", parts: [{ type: "songs_added", value: 1 }, { type: "points", value: 100 }] } },
+    { id: "maerchenfuchs", name: "Märchenfuchs", img: "figures/maerchenfuchs.png", desc: "Kenner von Redewendungen & Geschichten — natürlich hat er „Es war einmal in Deutschland“ gelesen", unlock: { type: "combo", parts: [{ type: "character_points", character: "Märchenfuchs", value: 90 }, { type: "visited_section", section: "es-war-einmal" }] } },
+    { id: "brueckenfuchs", name: "Brückenfuchs", img: "figures/brueckenfuchs.png", desc: "Verbindet Sätze mit zweiteiligen Konnektoren UND hat schon viele Runden gespielt", unlock: { type: "combo", parts: [{ type: "character_points", character: "Brückenfuchs", value: 110 }, { type: "games_played", value: 10 }] } },
+    { id: "kommissar-fehlerfrei", name: "Kommissar Fehlerfrei", img: "figures/kommissar-fehlerfrei.png", desc: "Rechtschreib-Detektiv mit eigenem Steckbrief", unlock: { type: "combo", parts: [{ type: "character_points", character: "Kommissar Fehlerfrei", value: 130 }, { type: "profile_field", field: "bio" }] } },
+    { id: "sprachenfuchs", name: "Sprachenfuchs", img: "figures/sprachenfuchs.png", desc: "Zuhause in vielen Sprachen der Welt — und schon fleißig am Punkte sammeln", unlock: { type: "combo", parts: [{ type: "profile_field", field: "languages" }, { type: "points", value: 150 }] } },
+    { id: "raetselfuchs", name: "Rätselfuchs", img: "figures/raetselfuchs.png", desc: "Kreuzworträtsel-Fan, der auch sonst gerne verschiedene Rätsel-Spiele ausprobiert", unlock: { type: "combo", parts: [{ type: "character_points", character: "Rätselfuchs", value: 160 }, { type: "categories_tried", value: 6 }] } },
+    { id: "baeckerfuchs", name: "Bäckerfuchs", img: "figures/baeckerfuchs.png", desc: "Frisch aus dem Wortschatz-Ofen — kennt sich mit Vokabeln bestens aus", unlock: { type: "combo", parts: [{ type: "points", value: 260 }, { type: "category_points", categories: ["wortschatz"], value: 20 }] } },
+    { id: "naturfotograf", name: "Naturfotograf", img: "figures/naturfotograf.png", desc: "Hält Wortschatz-Momente fest — und auch ein eigenes Foto im Profil", unlock: { type: "combo", parts: [{ type: "character_points", character: "Naturfotograf", value: 220 }, { type: "profile_field", field: "gallery" }] } },
+    { id: "studierfuchs", name: "Studierfuchs", img: "figures/studierfuchs.png", desc: "Fleißig am Lernen — hat schon viele Runden gespielt UND ordentlich Punkte gesammelt", unlock: { type: "combo", parts: [{ type: "games_played", value: 15 }, { type: "points", value: 300 }] } },
     { id: "malerfuchs", name: "Malerfuchs", img: "figures/malerfuchs.png", desc: "Kreativer Kopf — hat sein Profil mit einem eigenen Zitat oder Gedicht persönlich gestaltet UND schon in der Wortbaustelle geübt", unlock: { type: "combo", parts: [{ type: "profile_field", field: "poem" }, { type: "category_points", categories: ["wortbaustelle"], value: 10 }] } },
     { id: "abenteuerfuchs", name: "Abenteuer-Fuchs", img: "figures/abenteuerfuchs.png", desc: "Immer auf Entdeckungstour — hat „Es war einmal in Deutschland“ gelesen UND schon viele verschiedene Übungsarten ausprobiert", unlock: { type: "combo", parts: [{ type: "visited_section", section: "es-war-einmal" }, { type: "categories_tried", value: 8 }] } },
-    { id: "schlummerfuchs", name: "Schlummerfuchs", img: "figures/schlummerfuchs.png", desc: "Wohlverdiente Ruhe nach dem Üben — entspannt am liebsten beim Memory", unlock: { type: "category_points", categories: ["memory"], value: 40 } },
-    { id: "starfuchs", name: "Starfuchs", img: "figures/starfuchs.png", desc: "Steht im Rampenlicht — auf dem Weg nach ganz oben", unlock: { type: "points", value: 700 } },
-    { id: "feierfuchs", name: "Feierfuchs", img: "figures/feierfuchs.png", desc: "Feiert jeden Fortschritt — hat schon eine ganze Reihe Trophäen gesammelt", unlock: { type: "trophy_count", value: 8 } },
-    { id: "absolventenfuchs", name: "Absolventenfuchs", img: "figures/absolventenfuchs.png", desc: "Großer Meilenstein erreicht", unlock: { type: "points", value: 850 } },
-    { id: "championfuchs", name: "Champion-Fuchs", img: "figures/championfuchs.png", desc: "Die Krönung der Sammlung", unlock: { type: "points", value: 1000 } },
-    { id: "superfuchs", name: "Superfuchs", img: "figures/superfuchs.png", desc: "Über allen Erwartungen — die absolute Spitze", unlock: { type: "points", value: 1200 } },
+    { id: "schlummerfuchs", name: "Schlummerfuchs", img: "figures/schlummerfuchs.png", desc: "Wohlverdiente Ruhe nach dem Üben — entspannt am liebsten beim Memory, kommt dafür auch regelmäßig wieder", unlock: { type: "combo", parts: [{ type: "category_points", categories: ["memory"], value: 40 }, { type: "login_streak", value: 2 }] } },
+    { id: "starfuchs", name: "Starfuchs", img: "figures/starfuchs.png", desc: "Steht im Rampenlicht — auf dem Weg nach ganz oben, mit einer stattlichen Trophäensammlung", unlock: { type: "combo", parts: [{ type: "points", value: 700 }, { type: "trophy_count", value: 4 }] } },
+    { id: "feierfuchs", name: "Feierfuchs", img: "figures/feierfuchs.png", desc: "Feiert jeden Fortschritt — hat schon eine ganze Reihe Trophäen UND ordentlich Punkte gesammelt", unlock: { type: "combo", parts: [{ type: "trophy_count", value: 8 }, { type: "points", value: 500 }] } },
+    { id: "absolventenfuchs", name: "Absolventenfuchs", img: "figures/absolventenfuchs.png", desc: "Großer Meilenstein erreicht — nachdem wirklich viele verschiedene Übungsarten ausprobiert wurden", unlock: { type: "combo", parts: [{ type: "points", value: 850 }, { type: "categories_tried", value: 10 }] } },
+    { id: "championfuchs", name: "Champion-Fuchs", img: "figures/championfuchs.png", desc: "Die Krönung der Sammlung — mit beeindruckender Trophäensammlung", unlock: { type: "combo", parts: [{ type: "points", value: 1000 }, { type: "trophy_count", value: 10 }] } },
+    { id: "superfuchs", name: "Superfuchs", img: "figures/superfuchs.png", desc: "Über allen Erwartungen — die absolute Spitze in jeder Hinsicht", unlock: { type: "combo", parts: [{ type: "points", value: 1200 }, { type: "trophy_count", value: 12 }, { type: "categories_tried", value: 12 }] } },
   ];
   // Das Sticker-Album ist von Anfang an auf mehrere KAPITEL ausgelegt — aktuell gibt es nur die
   // Füchse, aber künftige Sammelserien (z. B. saisonale Figuren zu Weihnachten) lassen sich hier
@@ -523,6 +544,9 @@
     // Mindestens einen eigenen Song zur Playlist hinzugefügt — im extraProfileData mitgezählt
     // (siehe addPlaylistSong), da eine Live-Datenbankabfrage hier zu aufwendig wäre.
     if (unlock.type === "songs_added") return ((profile.extraProfileData && profile.extraProfileData.songsAddedCount) || 0) >= unlock.value;
+    // Mindestens einen eigenen Gästebuch-Eintrag hinterlassen — echte Interaktivität, nicht nur
+    // Punkte sammeln (siehe addGuestbookEntry, das guestbookEntriesCount hochzählt).
+    if (unlock.type === "guestbook_entry") return ((profile.extraProfileData && profile.extraProfileData.guestbookEntriesCount) || 0) >= unlock.value;
     // Wie "character_points", aber über die KATEGORIE-ID statt den Charakter-Namen geprüft — für
     // Spiele mit eigenem Charakter-Namen (z. B. Wackelturm = "Turmbaumeister:in"). Erlaubt auch
     // mehrere Kategorien gleichzeitig (z. B. mehrere "aktive" Spiele zusammen für Fitnessfuchs).
@@ -559,6 +583,7 @@
     if (unlock.type === "trophy_count") return `${unlock.value} Trophäen sammeln`;
     if (unlock.type === "games_played") return `${unlock.value} Runden spielen`;
     if (unlock.type === "songs_added") return "einen Song zur Playlist hinzufügen";
+    if (unlock.type === "guestbook_entry") return "einen Gästebuch-Eintrag hinterlassen";
     if (unlock.type === "category_points") return `${unlock.value} Pkt. in bestimmten Spielen`;
     if (unlock.type === "visited_section") return `„Es war einmal in Deutschland" lesen`;
     if (unlock.type === "combo") return `Kombination: ${(unlock.parts || []).map((p) => unlockShortText(p)).join(" + ")}`;
@@ -590,10 +615,14 @@
   // technischen Einstellungen versteckt.
   async function shareReferralLink() {
     const user = Backend.currentUser();
+    const profile = Backend.currentProfile();
     const shareText = "Ich lerne gerade Deutsch mit dieser tollen Seite — schau doch auch mal vorbei! Über meinen Link bekommen wir beide 25 Bonuspunkte 🦊";
-    // Personalisierter Empfehlungs-Link mit der eigenen ID — löst beim Registrieren automatisch
-    // den 25-Punkte-Bonus für beide Seiten aus (siehe applyReferralBonus).
-    const shareUrl = window.location.origin + window.location.pathname + (user ? `?ref=${user.id}` : "");
+    // Personalisierter Empfehlungs-Link: die ID bleibt die technisch verlässliche Grundlage (löst
+    // beim Registrieren automatisch den 25-Punkte-Bonus aus, siehe applyReferralBonus) — zusätzlich
+    // steht der Name lesbar mit in der Adresse, statt nur kryptischer Zeichen. Der Name ist rein
+    // kosmetisch: sollte später jemand mit demselben Namen registriert sein, bleibt der Link über
+    // die ID trotzdem eindeutig einer bestimmten Person zugeordnet.
+    const shareUrl = window.location.origin + window.location.pathname + (user ? `?ref=${user.id}&refname=${encodeURIComponent(profile?.name || "")}` : "");
     Backend.recordSiteShare();
     if (navigator.share) {
       try { await navigator.share({ title: "Deutsch mit Alex", text: shareText, url: shareUrl }); }
@@ -2065,6 +2094,24 @@
   }
   updateTicker();
   setInterval(updateTicker, 20000);
+  // Begrüßungsnachricht, wenn jemand über einen Empfehlungs-Link landet — zeigt, wer die Person
+  // eingeladen hat. Der Name kommt zur schnellen Anzeige direkt aus dem Link (refname), wird aber
+  // sicherheitshalber mit dem tatsächlich aktuellen Profilnamen abgeglichen, sobald der geladen
+  // ist (falls die Person ihren Namen zwischenzeitlich geändert hat).
+  (function showReferralWelcomeIfPresent() {
+    const params = new URLSearchParams(window.location.search);
+    const refId = params.get("ref");
+    const refNameFromLink = params.get("refname");
+    if (!refId) return;
+    const showBanner = (name) => {
+      if (!name) return;
+      showToast(`👋 Du wurdest von ${name} empfohlen — willkommen!`);
+    };
+    if (refNameFromLink) showBanner(decodeURIComponent(refNameFromLink));
+    Backend.getPublicProfile(refId).then((p) => {
+      if (p && p.name && p.name !== refNameFromLink) showBanner(p.name);
+    }).catch(() => {});
+  })();
 
   /* ============ Kurze Pop-up-Benachrichtigung bei neuen Anfragen ============ */
   // Globaler Klick-Handler für die kleinen ℹ️-Symbole bei Reitern mit weniger selbsterklärenden
@@ -3006,7 +3053,7 @@
       : q.prompt;
 
     playEl.innerHTML = `
-      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
+      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${((p.index + 1) / p.total) * 100}%"></div></div>
       <div class="question-card">
         ${reportBugButtonHtml()}
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
@@ -4354,6 +4401,10 @@
      getroffen werden — landet sie unten, ist das richtig so. Braucht keine eigenen neuen Fragen. */
   let knLives = 3;
   let knScore = 0;
+  // Verhindert, dass der Fehler-Sound und die Punktevergabe erneut auslösen, nur weil man zu
+  // einem anderen Spiel wechselt und zurückkommt, während die Runde bereits vorbei ist — vorher
+  // rief jedes erneute Rendern des Abschluss-Bildschirms beides nochmal auf.
+  let knGameOverFinalized = false;
   let knUsedPrompts = [];
   let knCurrentQuestion = null;
   let knActiveWords = [];
@@ -4379,6 +4430,13 @@
     knLives = 3;
     knScore = 0;
     knUsedPrompts = [];
+    // Markierung zurücksetzen: Sound und Punktevergabe beim Abschluss-Bildschirm dürfen für DIESE
+    // neue Runde wieder einmal auslösen.
+    knGameOverFinalized = false;
+    // Verbrannter Rasen gehört zur alten Runde — bei einer neuen Runde ist die kleine Spielwelt
+    // wieder "heil".
+    const grass = document.getElementById("knBurntGrass");
+    if (grass) grass.innerHTML = "";
     newKanoneRound();
   }
   function newKanoneRound() {
@@ -4423,12 +4481,35 @@
         <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer · ${heartsLivesHtml(knLives, 3)} <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
+          <div class="kn-scenery" aria-hidden="true">
+            <span class="kn-scenery-item" style="left:4%; font-size:2.6rem;">🌳</span>
+            <span class="kn-scenery-item" style="left:16%; font-size:1.1rem;">🍄</span>
+            <span class="kn-scenery-item" style="left:26%; font-size:1.8rem;">🏡</span>
+            <span class="kn-scenery-item" style="left:40%; font-size:1.3rem;">🪵</span>
+            <span class="kn-scenery-item" style="left:52%; font-size:1.1rem;">🍄</span>
+            <span class="kn-scenery-item" style="left:64%; font-size:1.3rem;">🪵</span>
+            <span class="kn-scenery-item" style="left:76%; font-size:2.3rem;">🌳</span>
+            <span class="kn-scenery-item" style="left:90%; font-size:1.1rem;">🍄</span>
+          </div>
+          <div class="kn-burnt-grass" id="knBurntGrass"></div>
           ${activeWord ? `<button type="button" class="kn-word" data-wid="${activeWord.id}" style="left:${activeWord.xPercent}%; animation-duration:4.5s;">${activeWord.text}</button>` : ""}
-          <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 40" style="left:50%;">
-            <rect x="24" y="18" width="12" height="20" rx="3" fill="#5c4429" />
-            <g id="knCannonBarrel" style="transform-origin:30px 20px;">
-              <rect x="24" y="0" width="12" height="22" rx="3" fill="#3a3a3a" />
-              <circle cx="30" cy="4" r="7" fill="#2a2a2a" />
+          <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 44" style="left:50%;">
+            <!-- Fester Lafetten-Sockel (Räder + Stütze) — bleibt bewusst UNBEWEGT, damit klar
+                 sichtbar ist: nur der Kanonenkörper selbst dreht sich, nicht die ganze Kanone. -->
+            <circle cx="18" cy="38" r="5" fill="#2a1f12" stroke="#4a3419" stroke-width="1.5" />
+            <circle cx="42" cy="38" r="5" fill="#2a1f12" stroke="#4a3419" stroke-width="1.5" />
+            <rect x="14" y="30" width="32" height="8" rx="2" fill="#5c4429" />
+            <rect x="26" y="24" width="8" height="10" fill="#4a3419" />
+            <!-- Der GESAMTE Kanonenkörper (Verbindungsstück + Rohr mit Verjüngung + Zündschnur)
+                 dreht sich als EIN starrer Körper um den Drehzapfen — kein "gummiartiges"
+                 Verbiegen nur am oberen Ende mehr. -->
+            <g id="knCannonBarrel" style="transform-origin:30px 27px;">
+              <circle cx="30" cy="27" r="4" fill="#3a3a3a" />
+              <path d="M25 27 L26 4 Q26 1 30 1 Q34 1 34 4 L35 27 Z" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="0.5" />
+              <ellipse cx="30" cy="3" rx="4.2" ry="2.2" fill="#1f1f1f" />
+              <!-- Zündschnur -->
+              <path d="M30 3 Q33 -1 31 -4" fill="none" stroke="#8a6a3a" stroke-width="1.3" stroke-linecap="round" />
+              <circle cx="31" cy="-4.5" r="1.6" fill="#e8825f" />
             </g>
           </svg>
         </div>
@@ -4485,6 +4566,7 @@
     const btnRect = btn.getBoundingClientRect();
     const ball = document.createElement("span");
     ball.className = "kn-cannonball";
+    ball.textContent = "☄️";
     ball.style.left = `${cannonRect.left - skyRect.left + cannonRect.width / 2}px`;
     ball.style.top = `${cannonRect.top - skyRect.top}px`;
     sky.appendChild(ball);
@@ -4535,7 +4617,7 @@
     const btnRect = btn.getBoundingClientRect();
     const fx = document.createElement("span");
     fx.className = "kn-explosion-fx";
-    fx.textContent = "🔥";
+    fx.textContent = "💥";
     fx.style.left = `${btnRect.left - skyRect.left + btnRect.width / 2}px`;
     fx.style.top = `${btnRect.top - skyRect.top + btnRect.height / 2}px`;
     sky.appendChild(fx);
@@ -4560,8 +4642,26 @@
       knLives -= 1;
       Core.sound.zonk();
       fb.textContent = `⚠️ Falsche Antwort durchgekommen! (${knLives} ❤️ übrig)`;
+      burnKanoneGrass();
     }
     checkKanoneRoundDone();
+  }
+  // Jede durchgekommene falsche Antwort "verbrennt" ein weiteres Stück Rasen — mehrere
+  // Flammen-Embleme mit unterschiedlicher Transparenz und teils gespiegelter Ausrichtung, damit es
+  // nicht wie eine einzelne, identisch wiederholte Kachel wirkt, sondern wie echtes, wachsendes
+  // Feuer. Bildlich: schlechtes Deutsch "verbrennt" nach und nach die kleine Spielwelt.
+  function burnKanoneGrass() {
+    const grass = document.getElementById("knBurntGrass");
+    if (!grass) return;
+    const flameCount = 2 + Math.floor(Math.random() * 2); // 2–3 neue Flammen pro Treffer
+    for (let i = 0; i < flameCount; i++) {
+      const flame = document.createElement("span");
+      flame.className = "kn-burnt-grass-flame";
+      flame.textContent = "🔥";
+      flame.style.opacity = (0.55 + Math.random() * 0.45).toFixed(2);
+      flame.style.transform = `scale(${(0.8 + Math.random() * 0.5).toFixed(2)}) ${Math.random() < 0.5 ? "scaleX(-1)" : ""}`;
+      grass.appendChild(flame);
+    }
   }
   function checkKanoneRoundDone() {
     if (!knActiveWords.every((w) => w.resolved)) {
@@ -4659,7 +4759,17 @@
     }).join("");
   }
   function renderKanoneGameOver() {
-    Core.sound.fail();
+    // Nur beim ERSTEN Anzeigen dieser beendeten Runde Sound abspielen und Punkte vergeben — nicht
+    // erneut, nur weil man zu einem anderen Spiel wechselt und zurückkommt (das Panel "schließt"
+    // sich dadurch bewusst nicht wirklich, man sieht einfach weiterhin den Abschluss-Bildschirm,
+    // bis man aktiv "Neue Runde" antippt).
+    if (!knGameOverFinalized) {
+      knGameOverFinalized = true;
+      Core.sound.fail();
+      if (Backend.currentUser() && knScore > 0) {
+        saveResultAndCheck({ categories: ["wortkanone"], points: knScore, bonus: 0, percent: 100, character: "Wort-Scharfschütze:in", badges: [], playedAt: new Date().toISOString() });
+      }
+    }
     const area = document.getElementById("kanoneArea");
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
@@ -4669,9 +4779,6 @@
         <button type="button" class="btn btn-coffee" id="knRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>`;
     document.getElementById("knRetryBtn").addEventListener("click", () => { newKanoneGame(); renderKanone(); });
-    if (Backend.currentUser() && knScore > 0) {
-      saveResultAndCheck({ categories: ["wortkanone"], points: knScore, bonus: 0, percent: 100, character: "Wort-Scharfschütze:in", badges: [], playedAt: new Date().toISOString() });
-    }
   }
   document.querySelector('#learnSubnav [data-sub="sub-kanone"]')?.addEventListener("click", () => {
     // Häkchen dauerhaft aus dem Profil laden (nicht nur für diese Sitzung merken) — bleibt so
@@ -8008,7 +8115,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             await Backend.signIn(email, password);
           }
           refreshHeaderAuth();
-          renderAccount();
+          await renderAccount();
           updateSpecialDayBar();
           Backend.touchActivity();
           notifyAboutAppUpdateIfNeeded();
@@ -8059,13 +8166,13 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
             <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
             ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
+            ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           </div>
           ${showcaseSongStripHtml(profile)}
           <div style="clear:both;"></div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
             ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
           </div>
-          ${profile.bio ? `<p class="empty-note" style="margin-top:10px;">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn" style="margin-top:8px;">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           ${hobbyReadout ? `<p class="eyebrow" style="margin-top:12px;">🎯 Hobbys & Interessen</p><div class="trophy-case" style="margin-top:6px;">${hobbyReadout}</div>` : ""}
           ${renderExtendedSteckbrief(profile, "own")}
           <div class="badge-row">
@@ -8981,6 +9088,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     musicCurrentIndex = 0;
     playMusicIndex(0);
   }
+  // Leichte Aktualisierung NUR für Play/Pause-Icon und Wellenform-Animation — im Gegensatz zu
+  // renderMusicPlayerBar() baut das NICHT die komplette Leiste per innerHTML neu auf. Wichtig für
+  // die YouTube-Zustandswechsel (onStateChange), die oft mehrfach hintereinander feuern (z. B.
+  // durch Zwischenpufferung) — ein voller Neu-Aufbau bei jedem Wechsel ließ dabei sowohl die
+  // Zeitanzeige (sprang kurz auf "--:--" zurück) als auch das Cover-Bild (wurde neu geladen)
+  // sichtbar flackern.
+  function updateMusicPlayPauseIconOnly() {
+    const btn = document.getElementById("musicPlayPauseBtn");
+    if (btn) btn.innerHTML = musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play;
+    const waveform = document.querySelector("#musicPlayerBarInner .kn-waveform");
+    if (waveform) waveform.classList.toggle("waveform-playing", musicIsPlaying);
+  }
   function playMusicIndex(playlistIdx) {
     const song = musicPlaylist[playlistIdx];
     if (!song) return;
@@ -9008,8 +9127,8 @@ An einem Morgen lief ein kleiner Fuchs los…
               onReady: (e) => { e.target.playVideo(); musicIsPlaying = true; renderMusicPlayerBar(); },
               onStateChange: (e) => {
                 if (window.YT && e.data === YT.PlayerState.ENDED) playNextMusic();
-                if (window.YT && e.data === YT.PlayerState.PLAYING) { musicIsPlaying = true; renderMusicPlayerBar(); }
-                if (window.YT && e.data === YT.PlayerState.PAUSED) { musicIsPlaying = false; renderMusicPlayerBar(); }
+                if (window.YT && e.data === YT.PlayerState.PLAYING) { musicIsPlaying = true; updateMusicPlayPauseIconOnly(); }
+                if (window.YT && e.data === YT.PlayerState.PAUSED) { musicIsPlaying = false; updateMusicPlayPauseIconOnly(); }
               },
             },
           });
@@ -9117,6 +9236,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!floatBar) return;
     const song = musicPlaylist[musicCurrentIndex];
     if (!song) { floatBar.style.display = "none"; floatBar.innerHTML = ""; return; }
+    const knowledgeViewOpen = document.getElementById("view-knowledge")?.dataset.active === "true";
+    const musicTabOpen = knowledgeViewOpen && document.getElementById("sub-music")?.dataset.active === "true";
+    // WICHTIG: Solange man bereits im Musik-Reiter ist, gibt es dort schon eine eigene Player-
+    // Leiste — die schwebende Leiste blieb bisher IMMER sichtbar und überlagerte sich dann mit
+    // dieser, mit zwei UNABHÄNGIGEN Play/Pause-Knöpfen an (fast) derselben Bildschirmstelle. Ein
+    // einzelner Klick konnte dadurch beide gleichzeitig treffen und den Zustand zweimal
+    // hintereinander umschalten — genau das "startet und stoppt sofort wieder"-Verhalten.
+    if (musicTabOpen) { floatBar.style.display = "none"; floatBar.innerHTML = ""; return; }
     floatBar.style.display = "flex";
     floatBar.className = "music-floating-bar";
     floatBar.innerHTML = `
@@ -9126,9 +9253,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       <button type="button" class="mfb-title" id="mfbTitle">🎵 ${song.title}</button>
       <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
     `;
-    const knowledgeViewOpen = document.getElementById("view-knowledge")?.dataset.active === "true";
-    const musicTabOpen = knowledgeViewOpen && document.getElementById("sub-music")?.dataset.active === "true";
-    if (!musicTabOpen) relocateMusicVideoSquare();
+    relocateMusicVideoSquare();
     document.getElementById("mfbPrev").addEventListener("click", playPrevMusic);
     document.getElementById("mfbNext").addEventListener("click", playNextMusic);
     document.getElementById("mfbPlayPause").addEventListener("click", toggleMusicPlayPause);
@@ -9143,6 +9268,10 @@ An einem Morgen lief ein kleiner Fuchs los…
     holz: { label: "🪵 Holzoptik", desc: "Warmes Holzpaneel-Design." },
     chrom: { label: "🪩 Chrom & Glas", desc: "Kühles, modernes High-End-Gerät mit glänzenden Metallflächen." },
     roehrenradio: { label: "📟 Röhrenradio", desc: "Nostalgisches Bakelit-Design, wie ein altes Röhrenradio." },
+    flowerpower: { label: "🌼 Flowerpower", desc: "Bunte Blüten in verschiedenen Größen, wie mit Stickern beklebt." },
+    wolken: { label: "☁️ Über den Wolken", desc: "Blau-weißer Himmelverlauf mit angedeuteter Wolkenstruktur." },
+    halloween: { label: "🎃 Halloween", desc: "Kürbisse in verschiedenen Größen vor dunklem Nachthimmel." },
+    ozean: { label: "🐠 Ozean", desc: "Dunkles Unterwasser-Design mit Fischen und aufsteigenden Blasen." },
   };
   function getPlayerTemplate() {
     const profile = Backend.currentProfile();
@@ -9502,13 +9631,38 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
   let albumChapterIdx = 0;
   let albumPageIdx = 0;
-  const ALBUM_PER_PAGE = 6;
+  let albumOnCoverPage = true; // jedes Kapitel startet mit einem eigenen Deckblatt, wie bei einem echten Buch
+  const ALBUM_PER_PAGE = 12;
   function renderAlbum() {
     const area = document.getElementById("albumArea");
     if (!area) return;
     const profile = Backend.currentProfile();
     const activeChapters = COLLECTIBLE_CHAPTERS.filter((c) => c.active);
     const chapter = activeChapters[albumChapterIdx];
+    // Deckblatt: eigene Titelseite pro Kapitel, wie bei einem echten Buch — erst ein Tipp
+    // darauf öffnet die eigentlichen Sticker-Seiten. Wichtig für später, sobald mehrere
+    // Sammelserien (z. B. eine Kroko-Serie) als eigene Kapitel dazukommen.
+    if (albumOnCoverPage) {
+      const totalUnlockedInChapter = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
+      area.innerHTML = `
+        <div class="album-book">
+          <button type="button" class="album-page-face album-cover-face" id="albumCoverFace" style="background:linear-gradient(160deg, var(--coral-400), var(--amber-400)); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:30px 18px; text-align:center; width:100%; border:none; cursor:pointer;">
+            <p style="font-size:3.2rem; margin:0 0 8px;">${chapter.emoji}</p>
+            <h2 style="margin:0 0 6px; color:#fff;">${chapter.title}</h2>
+            <p class="empty-note" style="color:rgba(255,255,255,0.85);">${totalUnlockedInChapter}/${chapter.figures.length} gesammelt</p>
+            <p class="empty-note" style="color:rgba(255,255,255,0.7); margin-top:14px;">📖 Antippen zum Aufschlagen</p>
+          </button>
+        </div>
+        ${activeChapters.length > 1 ? `<div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-top:10px;">
+          <button type="button" class="btn btn-ghost" id="albumPrevChapter" ${albumChapterIdx === 0 ? "disabled" : ""}>⏮ Kapitel</button>
+          <button type="button" class="btn btn-ghost" id="albumNextChapter" ${albumChapterIdx >= activeChapters.length - 1 ? "disabled" : ""}>Kapitel ⏭</button>
+        </div>` : ""}
+      `;
+      document.getElementById("albumCoverFace")?.addEventListener("click", () => { albumOnCoverPage = false; albumPageIdx = 0; renderAlbum(); });
+      document.getElementById("albumPrevChapter")?.addEventListener("click", () => { albumChapterIdx = Math.max(0, albumChapterIdx - 1); albumOnCoverPage = true; renderAlbum(); });
+      document.getElementById("albumNextChapter")?.addEventListener("click", () => { albumChapterIdx = Math.min(activeChapters.length - 1, albumChapterIdx + 1); albumOnCoverPage = true; renderAlbum(); });
+      return;
+    }
     const totalPages = Math.ceil(chapter.figures.length / ALBUM_PER_PAGE);
     albumPageIdx = Math.min(albumPageIdx, totalPages - 1);
     const totalUnlocked = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
@@ -9522,7 +9676,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>
       <div class="album-book">
         <div class="album-page-face" id="albumPageFace" style="background:#FBF3E8; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.18); padding:18px;">
-          <div class="album-page-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+          <div class="album-page-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">
             ${pageFigures.map((fig) => {
               const unlocked = profile && isFigureUnlocked(fig, profile);
               return `<div class="album-slot" style="aspect-ratio:1; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; padding:6px; transform:rotate(${(fig.id.length % 5) - 2}deg);" title="${unlocked ? fig.name : "Noch gesperrt"}">
@@ -9554,7 +9708,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       renderAlbum();
     }, 380); // auf halbem Weg der Drehung (wenn die Seite von der Kante aus gesehen wird) den Inhalt wechseln
   }
-  document.querySelector('#profileSubnav [data-sub="sub-album"]')?.addEventListener("click", () => { albumPageIdx = 0; renderAlbum(); });
+  document.querySelector('#profileSubnav [data-sub="sub-album"]')?.addEventListener("click", () => { albumPageIdx = 0; albumOnCoverPage = true; renderAlbum(); });
 
   // Kompakte Interview-Vorschau direkt im Profil — zeigt die ersten beantworteten Fragen (oder
   // eine Einladung, welche zu beantworten), mit Knopf zum vollständigen Bereich.
@@ -9688,7 +9842,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <p style="margin-top:8px;">Du hast bisher <strong>${have} von ${fig.unlock.value} Punkten</strong> in diesem Bereich — noch <strong>${missing} Punkte</strong>!</p>
         <p class="empty-note" style="margin-top:8px;">Schau in „Übungen" nach Kategorien, die zu diesem Thema passen.</p>`;
     } else if (fig.unlock.type === "profile_field") {
-      const fieldLabels = { languages: "Sprachen, die du sprichst", poem: "dein eigenes Zitat oder Gedicht" };
+      const fieldLabels = { languages: "Sprachen, die du sprichst", poem: "dein eigenes Zitat oder Gedicht", bio: "eine kurze Selbstbeschreibung", gallery: "ein eigenes Foto" };
       bodyHtml = `
         <p>Dieser Fuchs wartet darauf, dass du <strong>${fieldLabels[fig.unlock.field] || "dieses Profil-Feld"}</strong> in deinem Profil einträgst.</p>
         <p class="empty-note" style="margin-top:8px;">Zu finden unter Profil & Rang → Profil bearbeiten.</p>`;
@@ -9974,18 +10128,18 @@ An einem Morgen lief ein kleiner Fuchs los…
           : "",
         Core.el("div", { html: renderExtendedSteckbrief(p, "modal-" + p.id) }),
         Core.el("div", { class: "trophy-case trophy-case-compact", id: "modalTrophyCase", style: "justify-content:center; margin-top:10px;",
-          html: trophies.map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("")
+          html: trophies.map((t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">🏆</span><span>${t}</span></button>`).join("")
               + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "")
               + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "") }),
         trophyOverflow > 0 ? Core.el("div", { class: "trophy-more-list", id: "modalTrophyMoreList", style: "display:none;",
-          html: sortedTrophies.slice(4).map((t) => `<div class="trophy-chip"><span class="emoji">🏆</span><span>${t}</span></div>`).join("") }) : "",
+          html: sortedTrophies.slice(4).map((t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">🏆</span><span>${t}</span></button>`).join("") }) : "",
         COLLECTIBLE_FIGURES.some((fig) => isFigureUnlocked(fig, p))
           ? Core.el("div", { html: '<p class="eyebrow" style="text-align:center; margin-top:12px;">🦊 Sammelfiguren</p>' })
           : "",
         COLLECTIBLE_FIGURES.some((fig) => isFigureUnlocked(fig, p))
           ? Core.el("div", { class: "figure-case", style: "justify-content:center;",
               html: COLLECTIBLE_FIGURES.filter((fig) => isFigureUnlocked(fig, p)).map((fig) =>
-                `<div class="figure-slot" title="${fig.name} — ${fig.desc}"><img src="${fig.img}" alt="${fig.name}" loading="lazy" /></div>`
+                `<div class="figure-slot" data-figure-detail="${fig.id}" title="${fig.name} — ${fig.desc}"><img src="${fig.img}" alt="${fig.name}" loading="lazy" /></div>`
               ).join("") })
           : "",
         Core.el("div", { html: renderInterviewPreview(p, isMe) }),
@@ -10136,6 +10290,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     wireSteckbriefPager(box, () => openProfileModal(id, box));
     wireMusicPlayer(box);
     wireProfileTransportStrip(box, p);
+    box.querySelectorAll("[data-figure-detail]").forEach((el) => {
+      el.addEventListener("click", () => openFigureDetailModal(el.dataset.figureDetail));
+    });
     box.querySelectorAll("[data-sympathy-level]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
@@ -10920,10 +11077,15 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>
     `;
     wireSiteBannerUploads(area);
-    document.getElementById("rankTabToday").addEventListener("click", () => { rankingMode = "today"; renderRanking(); });
-    document.getElementById("rankTabAllTime").addEventListener("click", () => { rankingMode = "alltime"; renderRanking(); });
+    // Scroll-Position bewusst erhalten: der geklickte Tab-Button verschwindet beim Neu-Rendern
+    // kurz aus dem DOM (innerHTML wird komplett ersetzt) und verliert dabei seinen Fokus — das
+    // ließ den Browser automatisch ganz an den Seitenanfang zurückspringen, statt an der Stelle
+    // zu bleiben, an der man gerade war. renderRanking() ist async — erst NACH dem fertigen
+    // Neu-Aufbau wiederherstellen, sonst kommt die Wiederherstellung zu früh.
+    document.getElementById("rankTabToday").addEventListener("click", async () => { const y = window.scrollY; rankingMode = "today"; await renderRanking(); window.scrollTo(0, y); });
+    document.getElementById("rankTabAllTime").addEventListener("click", async () => { const y = window.scrollY; rankingMode = "alltime"; await renderRanking(); window.scrollTo(0, y); });
     area.querySelectorAll("[data-fox-period]").forEach((btn) => {
-      btn.addEventListener("click", () => { foxPeriodMode = btn.dataset.foxPeriod; renderRanking(); });
+      btn.addEventListener("click", async () => { const y = window.scrollY; foxPeriodMode = btn.dataset.foxPeriod; await renderRanking(); window.scrollTo(0, y); });
     });
     area.querySelectorAll("[data-view-ranked]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewRanked));
@@ -11056,7 +11218,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "104";
+  const APP_VERSION = "105";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

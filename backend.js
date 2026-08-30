@@ -410,6 +410,12 @@ const Backend = (function () {
       }
     }
     demo.guestbook.unshift(entry);
+    // Eigener Zähler in extraProfileData (statt einer Live-Datenbankabfrage) — für die
+    // Kombinations-Missionen der Sammelfiguren, nach demselben Muster wie songsAddedCount.
+    if (demo.user && demo.profile) {
+      const current = (demo.profile.extraProfileData && demo.profile.extraProfileData.guestbookEntriesCount) || 0;
+      await updateExtraProfileField("guestbookEntriesCount", current + 1);
+    }
     return entry;
   }
   async function getAverageRating() {

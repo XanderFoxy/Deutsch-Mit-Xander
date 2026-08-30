@@ -173,6 +173,44 @@
   overflow: hidden;
   margin-bottom: var(--space-5);
 }
+/* Punkte-verschenken-Regler: der Standard-Browser-Regler zentriert den Ziehknopf immer entlang
+   der Leiste, wodurch sein Mittelpunkt bei 0% NIE ganz am linken und bei 100% NIE ganz am
+   rechten Rand ankommt (Standardverhalten, aber unschön) — hier bewusst eigenes, kompaktes
+   Styling, damit der Knopf sichtbar bis an beide Ränder reicht. */
+#pointsGiftSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber-400), var(--teal-400));
+  outline: none;
+}
+#pointsGiftSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cream-50, #fff);
+  border: 2px solid var(--teal-500, #2f8f7d);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+#pointsGiftSlider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cream-50, #fff);
+  border: 2px solid var(--teal-500, #2f8f7d);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+#pointsGiftSlider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
 .quiz-progress-bar {
   height: 100%;
   background: linear-gradient(90deg, var(--amber-400), var(--teal-400));
@@ -220,6 +258,21 @@
 }
 
 .cat-tag { color: var(--coral-400); font-weight: 700; }
+/* Kleine Kategorie-Kennzeichnung direkt an den Extra-Spielen außerhalb der Übungsliste — damit
+   auch dort auf einen Blick klar ist, zu welchem Themenbereich ein Spiel gehört, ohne dass es
+   dafür eine große, eigene Übersichts-Kachel bräuchte wie bei den normalen Übungen. */
+.subnav-cat-tag {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(0,0,0,0.12);
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
 
 .blank-slot {
   display: inline-block;
@@ -1158,6 +1211,13 @@
 .profile-header-flow h2 {
   overflow-wrap: break-word;
 }
+/* Die Profil-Beschreibung liegt jetzt strukturell IM selben fließenden Bereich wie Bild, Name
+   und Badges (statt als komplett separater Absatz weit darunter) — wirkt dadurch als ein
+   zusammenhängender Fließtext-Block, nicht als zwei getrennte Abschnitte. */
+.profile-bio-flow-text {
+  flex-basis: 100%;
+  margin-top: 6px;
+}
 /* WICHTIG: Sammelfiguren als Profilbild dürfen NICHT auf einen Kreis zugeschnitten werden — sonst
    würden genau die Ohren/Pfoten/der Schwanz abgeschnitten, die eigentlich unbeschnitten über den
    Rahmen hinausragen sollen. Diese gezielte Ausnahme hebt den clip-path für sie wieder auf. */
@@ -1599,6 +1659,22 @@
   border-radius: 4px;
   flex-shrink: 0;
 }
+/* Auf schmalen Bildschirmen war die Zeitanzeige (~109px bei voller Größe) allein schon breiter
+   als der Platz, der nach den drei fest bleibenden Knöpfen (Vor/Play/Zurück) übrig blieb — der
+   Rest der Leiste (Zeitanzeige, Titel, Aufklapp-Pfeil) lief dadurch sichtbar über den gestalteten
+   Leisten-Hintergrund hinaus, obwohl die Wellenform per Media Query schon ausgeblendet wurde. Statt
+   die Zeit ebenfalls komplett zu verstecken, wird sie zuerst kompakter (kleinere Schrift, weniger
+   Innenabstand) — reicht das immer noch nicht, verschwindet sie erst bei sehr schmalen Breiten.*/
+@media (max-width: 420px) {
+  .player-digital-time { font-size: 0.62rem; padding: 2px 4px; letter-spacing: 0.02em; }
+  /* Auch der Abstand zwischen den Leisten-Elementen (6 Elemente × 8px Lücke = 40px) und der
+     Innenabstand der Leiste selbst tragen zum Überlauf bei — beides wird auf schmalen Bildschirmen
+     etwas enger, damit der Aufklapp-Pfeil ganz rechts wieder vollständig innerhalb der Leiste liegt. */
+  #musicPlayerBarInner { gap: 4px !important; padding: 8px !important; }
+  /* Der Aufklapp-Pfeil erbt von der allgemeinen Link-Klasse einen für Text-Links gedachten
+     margin-top — braucht er als kompakter Knopf innerhalb der schmalen Leiste nicht. */
+  #musicPlayerBarInner #musicExpandToggle { margin-top: 0; }
+}
 .toast-popup {
   position: fixed;
   left: 50%;
@@ -1747,6 +1823,15 @@
   transform: rotate3d(1, 1, 0, -180deg);
   backface-visibility: hidden;
   transition: transform 0.9s cubic-bezier(0.45, 0, 0.2, 1);
+}
+/* Android Chrome erkennt Taps auf Elementen innerhalb einer aktiven 3D-Drehung (backface-
+   visibility:hidden) manchmal unzuverlässig, wenn touch-action nicht explizit gesetzt ist — ohne
+   das kann der Browser den Tipp fälschlich als Beginn einer Doppeltipp-Zoom-Geste werten, statt
+   ihn sofort als Klick durchzureichen. iOS/Safari ist davon in der Regel nicht betroffen, daher
+   fiel es dort nicht auf. */
+.cal-back button, .cal-back a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 /* Echtes Umblättern: beide Seiten drehen sich gemeinsam um dieselbe Achse (obere rechte Ecke,
    diagonal) um 180° — wie ein echtes zweiseitiges Kalenderblatt, das man umdreht, um die
@@ -2015,6 +2100,134 @@
   color: #2e1c10 !important;
   box-shadow: 0 3px 0 #1f1108, inset 0 2px 0 rgba(255,255,255,0.35) !important;
 }
+/* Flowerpower: bunte Blüten in verschiedenen Größen und Farben, wie mit Stickern beklebt — als
+   mehrere überlagerte, radiale Farbflecken angedeutet, absichtlich nur im Hintergrund, nicht über
+   den Bedienelementen selbst. */
+#musicPlayerBarInner.player-tpl-flowerpower {
+  background:
+    radial-gradient(circle at 12% 20%, #f2b6d4 0%, #f2b6d4 7%, transparent 8%),
+    radial-gradient(circle at 85% 15%, #f7d94c 0%, #f7d94c 9%, transparent 10%),
+    radial-gradient(circle at 25% 80%, #a8d8b9 0%, #a8d8b9 6%, transparent 7%),
+    radial-gradient(circle at 70% 75%, #f2986a 0%, #f2986a 8%, transparent 9%),
+    radial-gradient(circle at 95% 55%, #c9a8e0 0%, #c9a8e0 6%, transparent 7%),
+    radial-gradient(circle at 45% 40%, #f7e9c4 0%, #f7e9c4 5%, transparent 6%),
+    linear-gradient(135deg, #eef7e0, #dcefc8);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  max-width: 100%;
+  overflow: hidden;
+}
+#musicPlayerBarInner.player-tpl-flowerpower .player-digital-time { background: rgba(255,255,255,0.6); color: #5a7a3a; }
+#musicPlayerBarInner.player-tpl-flowerpower > span:last-child { color: #3a4a2a; }
+.music-floating-bar.player-tpl-flowerpower {
+  background:
+    radial-gradient(circle at 12% 20%, #f2b6d4 0%, #f2b6d4 7%, transparent 8%),
+    radial-gradient(circle at 85% 15%, #f7d94c 0%, #f7d94c 9%, transparent 10%),
+    radial-gradient(circle at 25% 80%, #a8d8b9 0%, #a8d8b9 6%, transparent 7%),
+    radial-gradient(circle at 70% 75%, #f2986a 0%, #f2986a 8%, transparent 9%),
+    linear-gradient(135deg, #eef7e0, #dcefc8) !important;
+}
+.player-tpl-flowerpower .player-panel-btn, .player-tpl-flowerpower .mfb-ctrl {
+  background: radial-gradient(circle at 35% 30%, #fff, #f2d9e6 80%) !important;
+  border: 2px solid #e0a0c0 !important;
+  color: #7a4a5a !important;
+}
+/* Über den Wolken: derselbe blau-weiße Himmelverlauf wie im Wetter-Widget, mit langen, waagerecht
+   durchgehenden, weichen Kurven, die eine Wolkenstruktur andeuten. */
+#musicPlayerBarInner.player-tpl-wolken {
+  background:
+    radial-gradient(ellipse 60px 14px at 15% 25%, rgba(255,255,255,0.85), transparent 70%),
+    radial-gradient(ellipse 90px 18px at 55% 15%, rgba(255,255,255,0.75), transparent 70%),
+    radial-gradient(ellipse 70px 16px at 85% 35%, rgba(255,255,255,0.8), transparent 70%),
+    radial-gradient(ellipse 100px 20px at 30% 70%, rgba(255,255,255,0.6), transparent 70%),
+    radial-gradient(ellipse 80px 16px at 75% 80%, rgba(255,255,255,0.65), transparent 70%),
+    linear-gradient(180deg, #7ab8e8, #bfe0f5 60%, #e8f4fb);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  max-width: 100%;
+  overflow: hidden;
+}
+#musicPlayerBarInner.player-tpl-wolken .player-digital-time { background: rgba(255,255,255,0.55); color: #2a5a7a; }
+#musicPlayerBarInner.player-tpl-wolken > span:last-child { color: #1a3a5a; text-shadow: 0 1px 1px rgba(255,255,255,0.5); }
+.music-floating-bar.player-tpl-wolken {
+  background:
+    radial-gradient(ellipse 60px 14px at 15% 25%, rgba(255,255,255,0.85), transparent 70%),
+    radial-gradient(ellipse 90px 18px at 55% 15%, rgba(255,255,255,0.75), transparent 70%),
+    radial-gradient(ellipse 70px 16px at 85% 35%, rgba(255,255,255,0.8), transparent 70%),
+    linear-gradient(180deg, #7ab8e8, #bfe0f5 60%, #e8f4fb) !important;
+}
+.player-tpl-wolken .player-panel-btn, .player-tpl-wolken .mfb-ctrl {
+  background: radial-gradient(circle at 35% 30%, #fff, #d8ecf7 80%) !important;
+  border: 2px solid #8ec4e8 !important;
+  color: #2a5a7a !important;
+}
+/* Halloween: Kürbisse in verschiedenen Größen vor dunklem Nachthimmel — als runde, orangene
+   Flecken mit angedeutetem grünem Stiel-Punkt, unterschiedlich groß platziert. */
+#musicPlayerBarInner.player-tpl-halloween {
+  background:
+    radial-gradient(circle at 15% 70%, #1a0f2e 0%, transparent 3%),
+    radial-gradient(circle at 18% 68%, #e8722e 8%, transparent 9%),
+    radial-gradient(circle at 82% 75%, #e0631f 11%, transparent 12%),
+    radial-gradient(circle at 50% 20%, #f2c94c 0%, #f2c94c 2%, transparent 3%),
+    radial-gradient(circle at 88% 25%, #f2c94c 0%, #f2c94c 1.5%, transparent 2.5%),
+    linear-gradient(180deg, #241a3a, #3a2550 70%, #4a2f5a);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  max-width: 100%;
+  overflow: hidden;
+}
+#musicPlayerBarInner.player-tpl-halloween .player-digital-time { background: rgba(0,0,0,0.4); color: #f2a04c; }
+#musicPlayerBarInner.player-tpl-halloween > span:last-child { color: #f0d8a8; }
+.music-floating-bar.player-tpl-halloween {
+  background:
+    radial-gradient(circle at 18% 68%, #e8722e 8%, transparent 9%),
+    radial-gradient(circle at 82% 75%, #e0631f 11%, transparent 12%),
+    linear-gradient(180deg, #241a3a, #3a2550 70%, #4a2f5a) !important;
+}
+.player-tpl-halloween .player-panel-btn, .player-tpl-halloween .mfb-ctrl {
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 30%, #f2954c, #d9601a 80%) !important;
+  border: 2px solid #5a3010 !important;
+  color: #3a1a08 !important;
+}
+/* Ozean: dunkles Unterwasser-Design mit Fischen und Blasen — die Blasen steigen animiert langsam
+   nach oben, ähnlich dem Aquarium-Profil-Design. */
+#musicPlayerBarInner.player-tpl-ozean {
+  background: linear-gradient(180deg, #0d3a4a, #0a2838 60%, #071a24);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,0,0,0.3);
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+#musicPlayerBarInner.player-tpl-ozean::before, #musicPlayerBarInner.player-tpl-ozean::after {
+  content: "🐠";
+  position: absolute;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  animation: oceanFishSwim 9s linear infinite;
+}
+#musicPlayerBarInner.player-tpl-ozean::before { top: 12%; animation-delay: 0s; }
+#musicPlayerBarInner.player-tpl-ozean::after { top: 65%; font-size: 0.6rem; animation-delay: 4s; transform: scaleX(-1); opacity: 0.5; }
+@keyframes oceanFishSwim {
+  0% { left: -10%; }
+  100% { left: 110%; }
+}
+#musicPlayerBarInner.player-tpl-ozean .player-digital-time { background: rgba(0,0,0,0.35); color: #6fd4e8; }
+#musicPlayerBarInner.player-tpl-ozean > span:last-child { color: #b8e8f0; }
+.music-floating-bar.player-tpl-ozean {
+  background: linear-gradient(180deg, #0d3a4a, #0a2838 60%, #071a24) !important;
+}
+.player-tpl-ozean .player-panel-btn, .player-tpl-ozean .mfb-ctrl {
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 30%, #4fc4d9, #1a7a8f 80%) !important;
+  border: 2px solid #0a2838 !important;
+  color: #e8f8fb !important;
+}
 /* Retro-Stereo-Knöpfe: gebürstetes Metall statt flacher Neon-Fläche — feine, sich wiederholende
    Streifen in abwechselnden Grautönen simulieren die Bürstenstruktur echter Metallknöpfe, dazu
    ein glänzendes Licht-Highlight oben. */
@@ -2055,6 +2268,41 @@
   overflow: hidden;
   margin-bottom: 10px;
 }
+/* Kulisse aus Emojis am unteren Rand — Haus, Zaun-artige Baumstämme, Bäume, Pilze. Bewusst
+   grafisch größer skaliert als normale Emoji-Textgröße, damit es wie eine echte kleine Szenerie
+   wirkt, statt wie einzelne Textzeichen. Liegt HINTER den fallenden Wörtern und der Kanone. */
+.kn-scenery {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 46px;
+  z-index: 1;
+  pointer-events: none;
+}
+.kn-scenery-item {
+  position: absolute;
+  bottom: -6px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
+}
+/* Brennender Rasen: wächst mit jeder falschen Antwort, die durchkommt — mehrere Flammen-Embleme
+   mit unterschiedlicher Transparenz und gespiegelter Ausrichtung nebeneinander, damit es nicht
+   wie eine einzelne, identisch wiederholte Kachel wirkt. Bewusst über der Kulisse (höherer
+   z-index), da verbrannte Erde die Szenerie darunter "verdeckt". */
+.kn-burnt-grass {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 30px;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.kn-burnt-grass-flame {
+  font-size: 1.4rem;
+  line-height: 1;
+  margin: 0 -4px;
+}
 /* Echte SVG-Kanone statt des alten statischen 🔫-Emojis — das Rohr dreht sich (siehe
    aimKanoneAt) zur angetippten Stelle, bevor die Kugel losfliegt. */
 .kn-cannon-svg {
@@ -2070,13 +2318,11 @@
 }
 .kn-cannonball {
   position: absolute;
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #2a2a2a;
+  font-size: 1.1rem;
+  line-height: 1;
   transform: translate(-50%, -50%);
   transition: transform 0.2s linear;
   z-index: 4;
-  box-shadow: 0 0 3px rgba(0,0,0,0.5);
 }
 .kn-explosion-fx {
   position: absolute;
