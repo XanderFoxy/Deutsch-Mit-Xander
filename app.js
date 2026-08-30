@@ -66,6 +66,8 @@
     const shortText = document.querySelector("#view-about .about-text-short");
     const supportNote = document.querySelector("#view-about .about-support-note");
     const img = document.querySelector("#view-about .avatar-wrap img");
+    const profile = Backend.currentProfile();
+    const gallery = (profile && profile.gallery) || [];
     const box = document.createElement("div");
     box.className = "lightbox";
     box.innerHTML = `
@@ -77,13 +79,44 @@
         <div class="form-field"><label>Rolle/Untertitel</label><input type="text" id="aboutEditRole" value="${role ? role.textContent : ""}" /></div>
         <div class="form-field"><label>Kurztext</label><textarea id="aboutEditShort" class="guestbook-form-textarea">${shortText ? shortText.textContent : ""}</textarea></div>
         <div class="form-field"><label>Kurzer Unterstützungs-Hinweis</label><textarea id="aboutEditSupport" class="guestbook-form-textarea">${supportNote ? supportNote.textContent : ""}</textarea></div>
-        <div class="form-field"><label>Foto-Adresse (Bild-Link)</label><input type="text" id="aboutEditPhoto" value="${img ? img.src : ""}" /></div>
-        <button type="button" class="btn btn-coffee" id="aboutEditSave">Speichern</button>
+        <p class="eyebrow" style="margin-top:14px;">📷 Foto — drei Möglichkeiten</p>
+        <div class="form-field"><label>1) Bild-Adresse (Link)</label><input type="text" id="aboutEditPhoto" value="${img ? img.src : ""}" placeholder="https://…" /></div>
+        <div class="form-field"><label>2) Datei hochladen</label><input type="file" id="aboutEditPhotoUpload" accept="image/*" /></div>
+        ${gallery.length ? `
+        <div class="form-field">
+          <label>3) Aus deiner Galerie wählen</label>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+            ${gallery.map((url) => `<img src="${url}" data-gallery-pick="${url}" style="width:56px; height:56px; object-fit:cover; border-radius:8px; cursor:pointer; border:2px solid transparent;" />`).join("")}
+          </div>
+        </div>` : ""}
+        <p class="empty-note" id="aboutPhotoPreviewNote" style="margin-top:6px;"></p>
+        <button type="button" class="btn btn-coffee" id="aboutEditSave" style="margin-top:10px;">Speichern</button>
         <p class="form-error" id="aboutEditError" style="display:none;"></p>
       </div>`;
     document.body.appendChild(box);
     document.getElementById("aboutEditClose").addEventListener("click", () => box.remove());
     box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
+    box.querySelectorAll("[data-gallery-pick]").forEach((thumb) => {
+      thumb.addEventListener("click", () => {
+        document.getElementById("aboutEditPhoto").value = thumb.dataset.galleryPick;
+        box.querySelectorAll("[data-gallery-pick]").forEach((t) => { t.style.borderColor = "transparent"; });
+        thumb.style.borderColor = "var(--amber-400, #f2b84b)";
+        document.getElementById("aboutPhotoPreviewNote").textContent = "✅ Galeriebild ausgewählt.";
+      });
+    });
+    document.getElementById("aboutEditPhotoUpload").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const note = document.getElementById("aboutPhotoPreviewNote");
+      note.textContent = "Lädt hoch…";
+      try {
+        const url = await Backend.uploadSiteImage("about_photo_" + Date.now(), file);
+        document.getElementById("aboutEditPhoto").value = url;
+        note.textContent = "✅ Hochgeladen und übernommen.";
+      } catch (err) {
+        note.textContent = "⚠️ " + err.message;
+      }
+    });
     document.getElementById("aboutEditSave").addEventListener("click", async () => {
       const errBox = document.getElementById("aboutEditError");
       try {
@@ -320,8 +353,8 @@
     { id: "baeckerfuchs", name: "Bäckerfuchs", img: "figures/baeckerfuchs.png", desc: "Frisch aus dem Wortschatz-Ofen", unlock: { type: "points", value: 260 } },
     { id: "naturfotograf", name: "Naturfotograf", img: "figures/naturfotograf.png", desc: "Hält Wortschatz-Momente fest", unlock: { type: "character_points", character: "Naturfotograf", value: 220 } },
     { id: "studierfuchs", name: "Studierfuchs", img: "figures/studierfuchs.png", desc: "Fleißig am Lernen — hat schon viele Runden gespielt, nicht nur eine große", unlock: { type: "games_played", value: 15 } },
-    { id: "malerfuchs", name: "Malerfuchs", img: "figures/malerfuchs.png", desc: "Kreativer Kopf — hat sein Profil mit einem eigenen Zitat oder Gedicht persönlich gestaltet", unlock: { type: "profile_field", field: "poem" } },
-    { id: "abenteuerfuchs", name: "Abenteuer-Fuchs", img: "figures/abenteuerfuchs.png", desc: "Immer auf Entdeckungstour — hat schon viele verschiedene Übungsarten ausprobiert", unlock: { type: "categories_tried", value: 8 } },
+    { id: "malerfuchs", name: "Malerfuchs", img: "figures/malerfuchs.png", desc: "Kreativer Kopf — hat sein Profil mit einem eigenen Zitat oder Gedicht persönlich gestaltet UND schon in der Wortbaustelle geübt", unlock: { type: "combo", parts: [{ type: "profile_field", field: "poem" }, { type: "category_points", categories: ["wortbaustelle"], value: 10 }] } },
+    { id: "abenteuerfuchs", name: "Abenteuer-Fuchs", img: "figures/abenteuerfuchs.png", desc: "Immer auf Entdeckungstour — hat „Es war einmal in Deutschland“ gelesen UND schon viele verschiedene Übungsarten ausprobiert", unlock: { type: "combo", parts: [{ type: "visited_section", section: "es-war-einmal" }, { type: "categories_tried", value: 8 }] } },
     { id: "schlummerfuchs", name: "Schlummerfuchs", img: "figures/schlummerfuchs.png", desc: "Wohlverdiente Ruhe nach dem Üben — entspannt am liebsten beim Memory", unlock: { type: "category_points", categories: ["memory"], value: 40 } },
     { id: "starfuchs", name: "Starfuchs", img: "figures/starfuchs.png", desc: "Steht im Rampenlicht — auf dem Weg nach ganz oben", unlock: { type: "points", value: 700 } },
     { id: "feierfuchs", name: "Feierfuchs", img: "figures/feierfuchs.png", desc: "Feiert jeden Fortschritt — hat schon eine ganze Reihe Trophäen gesammelt", unlock: { type: "trophy_count", value: 8 } },
@@ -499,6 +532,18 @@
         .reduce((s, h) => s + Math.round((h.points || 0) + (h.bonus || 0)), 0);
       return sum >= unlock.value;
     }
+    // Besuch einer bestimmten Sektion (z. B. "Es war einmal in Deutschland") — wird automatisch
+    // erkannt, sobald die Person dort einmal war, kein extra Knopf zum "Ich hab's gelesen" nötig.
+    if (unlock.type === "visited_section") {
+      const visited = (profile.extraProfileData && profile.extraProfileData.visitedSections) || [];
+      return visited.includes(unlock.section);
+    }
+    // Kombinations-Mission: MEHRERE unabhängige Teilbedingungen müssen ALLE gleichzeitig erfüllt
+    // sein — z. B. "spiele eine schwere Abenteuer-Runde UND ein Memory-Spiel UND fülle dein Profil
+    // aus". Motiviert, verschiedene Ecken der Seite zu erkunden, statt nur stur Punkte zu farmen.
+    if (unlock.type === "combo") {
+      return (unlock.parts || []).every((part) => isUnlocked(part, profile));
+    }
     return true;
   }
   // Kurzer, klarer Erklärungstext für die jeweilige Freischaltbedingung — direkt auf der Kachel
@@ -515,15 +560,70 @@
     if (unlock.type === "games_played") return `${unlock.value} Runden spielen`;
     if (unlock.type === "songs_added") return "einen Song zur Playlist hinzufügen";
     if (unlock.type === "category_points") return `${unlock.value} Pkt. in bestimmten Spielen`;
+    if (unlock.type === "visited_section") return `„Es war einmal in Deutschland" lesen`;
+    if (unlock.type === "combo") return `Kombination: ${(unlock.parts || []).map((p) => unlockShortText(p)).join(" + ")}`;
     return "";
   }
   // Zentrale Liste aller bekannten Freigabe-Schalter — bei jedem neuen, noch zu prüfenden Feature
   // kommt hier ein weiterer Eintrag dazu. So hat die Admin-Oberfläche IMMER eine vollständige
   // Übersicht, auch wenn ein Schalter noch nie umgelegt wurde.
+  // Vorlagen-Texte für die Punkte-Vergabe im Postfach — spart dem Betreiber das wiederholte
+  // Eintippen bei häufigen Anlässen, bleibt danach trotzdem frei editierbar.
+  const POINTS_REASON_TEMPLATES = [
+    { label: "🪲 Bug gemeldet & geholfen", text: "Danke für deine Mithilfe, Bugs zu finden und zu fixen — das bringt die ganze Seite weiter!" },
+    { label: "⏳ Entschädigung für Wartezeit", text: "Als kleine Entschädigung für die Wartezeit durch ein technisches Problem auf der Seite." },
+    { label: "🎂 Geburtstag", text: "Alles Gute zum Geburtstag! 🎉" },
+    { label: "📣 Jemanden geworben", text: "Danke, dass du die Seite weiterempfohlen hast!" },
+    { label: "💬 Aktiv in der Community", text: "Für deine tolle, aktive Mitwirkung in der Community!" },
+    { label: "📈 Im Ranking aufgestiegen", text: "Glückwunsch zum Aufstieg im Ranking — weiter so!" },
+  ];
   const KNOWN_FEATURE_FLAGS = [
     { key: "demo_test_schalter", label: "🧪 Test-Schalter (Beispiel)", desc: "Dient nur zum Ausprobieren des Freigabe-Systems selbst — hat keine echte Funktion." },
     { key: "wortkanone_redesign", label: "🎯 Wort-Kanone (Neugestaltung)", desc: "Sequentielles Fallen, echte SVG-Kanone mit Zielrichtung, Explosions-Effekte, Rot/Grün-Landefeedback. Bis zur Freigabe sehen andere eine 'Wird gerade verbessert'-Meldung statt des Spiels." },
   ];
+  // Kleiner Freigabe-Schalter DIREKT AM ORT des jeweiligen Features (statt nur zentral in den
+  // Einstellungen) — nur für Betreiber/Admins sichtbar. So kann man ein Feature genau dort
+  // freigeben, wo man es gerade testet, ohne erst umständlich in die Einstellungen zu wechseln.
+  // Die zentrale Liste in den Einstellungen bleibt zusätzlich bestehen, für den Gesamtüberblick.
+  // Zentrale Empfehlungs-Link-Funktion — von mehreren Stellen aus aufrufbar (Einstellungen UND
+  // Freunde-Bereich), damit der Link unmissverständlich leicht auffindbar ist, nicht nur in den
+  // technischen Einstellungen versteckt.
+  async function shareReferralLink() {
+    const user = Backend.currentUser();
+    const shareText = "Ich lerne gerade Deutsch mit dieser tollen Seite — schau doch auch mal vorbei! Über meinen Link bekommen wir beide 25 Bonuspunkte 🦊";
+    // Personalisierter Empfehlungs-Link mit der eigenen ID — löst beim Registrieren automatisch
+    // den 25-Punkte-Bonus für beide Seiten aus (siehe applyReferralBonus).
+    const shareUrl = window.location.origin + window.location.pathname + (user ? `?ref=${user.id}` : "");
+    Backend.recordSiteShare();
+    if (navigator.share) {
+      try { await navigator.share({ title: "Deutsch mit Alex", text: shareText, url: shareUrl }); }
+      catch (e) { /* Person hat den Teilen-Dialog einfach abgebrochen -- kein Fehler */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        showToast("🔗 Link in die Zwischenablage kopiert — jetzt irgendwo einfügen und verschicken!");
+      } catch (e) {
+        alert(`${shareText}\n${shareUrl}`);
+      }
+    }
+  }
+  function inlineFeatureFlagToggleHtml(flagKey) {
+    if (!Backend.canModerate || !Backend.canModerate()) return "";
+    const on = Backend.getRawFeatureFlag(flagKey);
+    return `<label class="empty-note" style="display:flex; align-items:center; gap:6px; margin:8px 0; padding:8px; border:1px dashed var(--teal-400,#5ba8a0); border-radius:8px; cursor:pointer;">
+      <input type="checkbox" class="inline-feature-flag-toggle" data-flag-key="${flagKey}" ${on ? "checked" : ""} />
+      <span>🚦 ${on ? "Für alle freigegeben" : "Nur für dich sichtbar"} — hier direkt umschalten</span>
+    </label>`;
+  }
+  function wireInlineFeatureFlagToggles(root, onToggled) {
+    root.querySelectorAll(".inline-feature-flag-toggle").forEach((toggle) => {
+      toggle.addEventListener("change", async () => {
+        await Backend.setFeatureFlag(toggle.dataset.flagKey, toggle.checked);
+        showToast(toggle.checked ? "🚦 Feature für alle freigegeben!" : "🚦 Feature wieder zurückgenommen — nur noch für dich sichtbar.");
+        if (onToggled) onToggled();
+      });
+    });
+  }
   function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
 
   // WICHTIG: im Konto gespeichert (nicht localStorage!), damit die Selbsteinschätzung auf allen
@@ -601,13 +701,32 @@
       list.style.display = list.style.display === "none" ? "block" : "none";
     });
   }
+  async function loadCustomSympathyList() {
+    const wrap = document.getElementById("customSympathyList");
+    if (!wrap) return;
+    const all = await Backend.getAllSympathyLevels();
+    const custom = all.filter((l) => l.key.startsWith("custom_"));
+    wrap.innerHTML = custom.length ? custom.map((l) => `
+      <div class="breakdown-row">
+        <span><svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:6px;"><path d="M12 21 C12 21 3 14.5 3 8.5 C3 5.5 5.5 3 8.5 3 C10 3 11.3 3.7 12 4.8 C12.7 3.7 14 3 15.5 3 C18.5 3 21 5.5 21 8.5 C21 14.5 12 21 12 21 Z" fill="${l.color}"/></svg>${l.label}</span>
+        <button type="button" class="emoji-toggle-link" data-remove-sympathy-level="${l.key}" style="font-size:0.75rem;">entfernen</button>
+      </div>`).join("") : '<p class="empty-note">Noch keine eigenen Stufen angelegt.</p>';
+    wrap.querySelectorAll("[data-remove-sympathy-level]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await Backend.removeCustomSympathyLevel(btn.dataset.removeSympathyLevel);
+        loadCustomSympathyList();
+      });
+    });
+  }
   async function loadAdminUserList() {
     const box = document.getElementById("adminUserListArea");
     if (!box) return;
     const allUsers = await Backend.getAllUsers();
+    const loadError = Backend.getLastUserListError();
     const isRealAdmin = Backend.currentProfile()?.isAdmin || Backend.currentProfile()?.isOwner;
     const filtered = adminUserSearch ? allUsers.filter((u) => u.name.toLowerCase().includes(adminUserSearch.toLowerCase())) : allUsers;
     box.innerHTML = `
+      ${loadError ? `<div class="demo-banner" style="margin-bottom:10px;">⚠️ Nutzerliste konnte nicht geladen werden — das ist NICHT "0 registrierte Personen", sondern ein Ladefehler: ${loadError}. Meist fehlt eine kürzlich hinzugekommene Spalte in der Tabelle „profiles" — führe sicherheitshalber das komplette Nachrüst-SQL aus dem README im Supabase SQL-Editor aus.</div>` : ""}
       <p style="font-weight:800; font-size:1.3rem; margin:4px 0 10px;">${allUsers.length} ${allUsers.length === 1 ? "Person" : "Personen"} registriert</p>
       <input type="text" class="vocab-search" id="adminUserSearchInput" placeholder="Nach Namen suchen…" value="${adminUserSearch}" style="margin-bottom:10px;" />
       <div style="max-height:340px; overflow-y:auto;">
@@ -760,7 +879,7 @@
         <h3>⚖️ Sprachniveau — für faire Fortschritts-Geschwindigkeit</h3>
         <p class="empty-note" style="margin-bottom:10px;">Beeinflusst NICHT deinen frei wählbaren Schwierigkeitsgrad — nur wie schnell Punkte, Missionen und Level voranschreiten. So haben Anfänger:innen die gleichen Fortschritts-Chancen wie Muttersprachler:innen, für die die Aufgaben leichter sind.</p>
         <div style="display:flex; flex-wrap:wrap; gap:6px;">
-          ${[["anfaenger", "🌱 Anfänger:in"], ["fortgeschritten", "📈 Fortgeschritten"], ["profi", "🎯 Profi"], ["muttersprache", "🏆 Muttersprache"]].map(([val, label]) => `
+          ${[["anfaenger", "🌱 Anfänger:in"], ["fortgeschritten", "📈 Fortgeschritten"], ["profi", "🎯 Profi"], ["muttersprache", "🌟 Muttersprachler:in"]].map(([val, label]) => `
             <button type="button" class="trophy-chip proficiency-level-btn ${getProficiencyLevel() === val ? "selected" : ""}" data-level="${val}">${label}</button>
           `).join("")}
         </div>
@@ -853,8 +972,8 @@
       </div>
       <div class="question-card" style="margin-top:14px; border:2px solid var(--amber-400);">
         <h3>🦊 Freund:innen empfehlen</h3>
-        <p class="empty-note" style="margin-bottom:10px;">Kennst du andere Leute, die von Deutschübungen profitieren könnten? Teil die Seite mit ihnen — du tust ihnen was Gutes <strong>und</strong> hast damit die Chance, "Fuchs des Tages" zu werden. Das bringt echte Bonuspunkte, mit denen du im Ranking steigst und dir Neues freischaltest!</p>
-        <button type="button" class="btn btn-coffee" id="shareSiteBtn">🔗 Seite jetzt teilen</button>
+        <p class="empty-note" style="margin-bottom:10px;">Kennst du andere Leute, die von Deutschübungen profitieren könnten? Teil deinen persönlichen Link mit ihnen — meldet sich jemand darüber neu an, bekommt ihr <strong>beide automatisch 25 Bonuspunkte</strong>. Zusätzlich hast du damit die Chance, "Fuchs des Tages" zu werden!</p>
+        <button type="button" class="btn btn-coffee" id="shareSiteBtn">🔗 Meinen Empfehlungs-Link teilen</button>
       </div>
       ${(profile.isOwner || Backend.canModerate()) ? `<div class="question-card" style="margin-top:14px; border:2px solid var(--teal-400);">
         <h3>🚦 Freigabe-Schalter für neue Features</h3>
@@ -881,6 +1000,16 @@
         </label>
       </div>` : ""}
       ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
+        <h3>💛 Eigene Sympathie-Stufen</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Zusätzlich zu den vier eingebauten Stufen kannst du eigene anlegen — bleibt bewusst freundschaftlich statt romantisch/intim ausgerichtet.</p>
+        <div id="customSympathyList"><p class="empty-note">Lade…</p></div>
+        <div class="form-field" style="margin-top:10px;"><label>Bezeichnung</label><input type="text" id="newSympathyLabel" placeholder="z. B. Ich lerne gerne zusammen mit dir" maxlength="80" /></div>
+        <div class="form-field"><label>Herzfarbe</label><input type="color" id="newSympathyColor" value="#c9a875" style="width:60px; height:36px; padding:2px;" /></div>
+        <div class="form-field"><label>Beschreibung (optional)</label><input type="text" id="newSympathyDesc" placeholder="Kurze Erklärung, wann diese Stufe passt" maxlength="150" /></div>
+        <button type="button" class="btn btn-ghost" id="addSympathyLevelBtn">+ Stufe hinzufügen</button>
+        <p class="form-error" id="sympathyLevelError" style="display:none;"></p>
+      </div>` : ""}
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
         <h3>🪲 Gemeldete Fehler</h3>
         <div id="adminBugReportsArea"><p class="empty-note">Lade Meldungen…</p></div>
       </div>` : ""}
@@ -889,6 +1018,23 @@
         <div id="adminUserListArea"><p class="empty-note">Lade Nutzerliste…</p></div>
       </div>` : ""}
     `;
+    if (Backend.canModerate()) loadCustomSympathyList();
+    document.getElementById("addSympathyLevelBtn")?.addEventListener("click", async () => {
+      const errBox = document.getElementById("sympathyLevelError");
+      const label = document.getElementById("newSympathyLabel").value.trim();
+      if (!label) { errBox.textContent = "⚠️ Bitte eine Bezeichnung eingeben."; errBox.style.display = "block"; return; }
+      try {
+        await Backend.addCustomSympathyLevel(label, document.getElementById("newSympathyColor").value, document.getElementById("newSympathyDesc").value);
+        document.getElementById("newSympathyLabel").value = "";
+        document.getElementById("newSympathyDesc").value = "";
+        errBox.style.display = "none";
+        showToast("💛 Neue Stufe angelegt!");
+        loadCustomSympathyList();
+      } catch (err) {
+        errBox.textContent = "⚠️ " + err.message;
+        errBox.style.display = "block";
+      }
+    });
     const premiumToggle = document.getElementById("premiumSelfToggle");
     if (premiumToggle) premiumToggle.addEventListener("change", async () => { await Backend.togglePremium(premiumToggle.checked); renderSettings(); });
     area.querySelectorAll(".feature-flag-toggle").forEach((toggle) => {
@@ -900,24 +1046,7 @@
     const premiumBadgeHideToggle = document.getElementById("premiumBadgeHideToggle");
     if (premiumBadgeHideToggle) premiumBadgeHideToggle.addEventListener("change", async () => { await Backend.updateExtraProfileField("hidePremiumBadge", premiumBadgeHideToggle.checked); });
     const shareSiteBtn = document.getElementById("shareSiteBtn");
-    if (shareSiteBtn) {
-      shareSiteBtn.addEventListener("click", async () => {
-        const shareText = "Ich lerne gerade Deutsch mit dieser tollen Seite — schau doch auch mal vorbei! 🦊";
-        const shareUrl = window.location.origin + window.location.pathname;
-        Backend.recordSiteShare();
-        if (navigator.share) {
-          try { await navigator.share({ title: "Deutsch mit Alex", text: shareText, url: shareUrl }); }
-          catch (e) { /* Person hat den Teilen-Dialog einfach abgebrochen -- kein Fehler */ }
-        } else {
-          try {
-            await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-            showToast("🔗 Link in die Zwischenablage kopiert — jetzt irgendwo einfügen und verschicken!");
-          } catch (e) {
-            alert(`${shareText}\n${shareUrl}`);
-          }
-        }
-      });
-    }
+    if (shareSiteBtn) shareSiteBtn.addEventListener("click", shareReferralLink);
     if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); }
     area.querySelectorAll(".proficiency-level-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -1096,12 +1225,12 @@
   // wie schnell Punkte/Missionen/Level voranschreiten — damit ein:e Anfänger:in genauso gute
   // Fortschritts-Chancen hat wie ein:e Muttersprachler:in, für die die Inhalte trivial leicht sind.
   const PROFICIENCY_MULTIPLIERS = { anfaenger: 1.3, fortgeschritten: 1.0, profi: 0.8, muttersprache: 0.6 };
-  const PROFICIENCY_BADGE = { anfaenger: "🌱 Anfänger:in", fortgeschritten: "📈 Fortgeschritten", profi: "🎯 Profi", muttersprache: "🏆 Muttersprache" };
+  const PROFICIENCY_BADGE = { anfaenger: "🌱 Anfänger:in", fortgeschritten: "📈 Fortgeschritten", profi: "🎯 Profi", muttersprache: "🌟 Muttersprachler:in" };
   function getProficiencyLevel() {
     const profile = Backend.currentProfile();
     return (profile && profile.extraProfileData && profile.extraProfileData.proficiencyLevel) || "fortgeschritten";
   }
-  function saveResultAndCheck(result) {
+  async function saveResultAndCheck(result) {
     const factor = PROFICIENCY_MULTIPLIERS[getProficiencyLevel()] || 1.0;
     const adjusted = { ...result, points: Math.round((result.points || 0) * factor), bonus: Math.round((result.bonus || 0) * factor) };
     const profileBefore = Backend.currentProfile();
@@ -1114,8 +1243,11 @@
       // Meilenstein-Popup (checkForSpecialMoment, direkt danach) optisch überlappt.
       newlyUnlocked.forEach((fig, i) => setTimeout(() => showFoxUnlockCelebration(fig), 400 + i * 600));
     }
-    checkForSpecialMoment(Backend.currentProfile());
-    checkDailyRankingReward();
+    await checkForSpecialMoment(Backend.currentProfile());
+    await checkDailyRankingReward();
+    // ECHTES Warten statt eines geratenen Timeouts — sonst kommt Sound & Leuchten der Profil-Pille
+    // bei einem Meilenstein bis zu 20 Sekunden verzögert (Hintergrund-Timer), statt sofort.
+    checkNotifications();
   }
   // Kleines Glückwunsch-Popup mit dem Bild und dem genauen Namen des neu freigeschalteten Fuchses
   // — statt dass die Freischaltung einfach lautlos im Hintergrund passiert.
@@ -1361,6 +1493,17 @@
     if (!z) return "";
     return `<span class="zodiac-badge" title="${z.name}"><svg viewBox="0 0 24 24" width="16" height="16">${z.svg}</svg> ${z.name}</span>`;
   }
+  // Aktuelles Alter aus dem Geburtsdatum berechnen — berücksichtigt korrekt, ob der Geburtstag
+  // dieses Jahr schon war oder noch bevorsteht (nicht einfach nur Jahreszahlen subtrahieren).
+  function calculateAge(birthday) {
+    if (!birthday || !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) return null;
+    const birth = new Date(birthday);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const hasHadBirthdayThisYear = (today.getMonth() > birth.getMonth()) || (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
+    if (!hasHadBirthdayThisYear) age -= 1;
+    return age >= 0 && age < 130 ? age : null;
+  }
   // Geschlechtssymbol — klassische astronomische Zeichen, optional vom Profil-Inhaber gewählt.
   const GENDER_SYMBOLS = {
     maennlich: { label: "männlich", svg: `<circle cx="10" cy="14" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M14.2 9.8 L20 4 M14 4 L20 4 L20 10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
@@ -1371,6 +1514,14 @@
     const g = GENDER_SYMBOLS[key];
     if (!g) return "";
     return `<span class="zodiac-badge" title="${g.label}"><svg viewBox="0 0 24 24" width="16" height="16">${g.svg}</svg> ${g.label}</span>`;
+  }
+  // Kompakte Variante — nur das reine Symbol, ohne Hintergrund-Pille und Text-Label. Passend für
+  // die Überschriftenzeile direkt neben Name und Alter (wie bei Profilen sonst üblich:
+  // "Name, Alter ♂"), statt als eigene, große Badge weiter unten zu stehen.
+  function genderSymbolCompact(key) {
+    const g = GENDER_SYMBOLS[key];
+    if (!g) return "";
+    return `<svg viewBox="0 0 24 24" width="20" height="20" style="vertical-align:middle;" title="${g.label}">${g.svg}</svg>`;
   }
 
   function updateCalendarWidget() {
@@ -2309,6 +2460,10 @@
     const blinkOn = isTickerBlinkOn();
     if (wrap) wrap.classList.toggle("ticker-blink", blinkOn);
     document.documentElement.style.setProperty("--ticker-blink-speed", getTickerBlinkSpeed() + "s");
+    // Eigene, stabile Farbe für den Ticker — bewusst über die Grundfarbe (nicht die dynamische,
+    // pro Nachrichtenart wechselnde --notify-color), damit ankommende Postfach-Nachrichten in
+    // einer anderen Farbe den Ticker nicht ungewollt mitfärben.
+    document.documentElement.style.setProperty("--ticker-blink-color", (NOTIFY_COLOR_PRESETS[getNotifyColorKey()] || NOTIFY_COLOR_PRESETS.coral).hex);
     // Beim Umschalten selbst (nicht nur beim nächsten Text-Update) muss die Animationsdauer sofort
     // neu gesetzt werden — sonst bleibt der alte, zur falschen Anzahl Animationen passende Wert
     // aktiv, bis zufällig mal wieder neuer Text ankommt.
@@ -2672,21 +2827,23 @@
 
     const isLoggedIn = Boolean(Backend.currentUser());
     const friends = isLoggedIn ? await Backend.getFriends() : [];
+    const bestFriendIds = Backend.getBestFriendIds();
+    // Bei vielen Freunden würde eine einzige, ungeordnete Blase aus Namen schnell unübersichtlich
+    // — deshalb drei klare Gruppen, jede Person erscheint nur in der jeweils höchstpriorisierten:
+    // 1) online, 2) beste Freunde (offline), 3) alle anderen, alphabetisch sortiert.
     const onlineFriends = friends.filter((f) => f.online);
-    const offlineFriends = friends.filter((f) => !f.online);
+    const bestFriendsOffline = friends.filter((f) => !f.online && bestFriendIds.includes(f.id));
+    const otherFriends = friends.filter((f) => !f.online && !bestFriendIds.includes(f.id)).sort((a, b) => a.name.localeCompare(b.name, "de"));
+    const challengePillHtml = (f) => `
+      <button type="button" class="challenge-friend-pill ${!f.online ? "offline" : ""} ${selectedChallengeFriendIds.has(f.id) ? "selected" : ""}" data-challenge-friend="${f.id}" ${!f.online ? 'title="Spielt die Runde, sobald sie sich wieder einloggen"' : ""}>
+        ${f.online ? '<span class="online-dot"></span>' : ""}${bestFriendIds.includes(f.id) ? "⭐ " : ""}${f.name}${!f.online ? ' <span class="empty-note">(offline)</span>' : ""}
+      </button>`;
     const challengeBar = friends.length ? `
       <div class="setup-bar" style="margin-top:10px; flex-direction:column; align-items:stretch;">
         <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
-        <div class="challenge-friend-list">
-          ${onlineFriends.map((f) => `
-            <button type="button" class="challenge-friend-pill ${selectedChallengeFriendIds.has(f.id) ? "selected" : ""}" data-challenge-friend="${f.id}">
-              <span class="online-dot"></span>${f.name}
-            </button>`).join("")}
-          ${offlineFriends.map((f) => `
-            <button type="button" class="challenge-friend-pill offline ${selectedChallengeFriendIds.has(f.id) ? "selected" : ""}" data-challenge-friend="${f.id}" title="Spielt die Runde, sobald sie sich wieder einloggen">
-              ${f.name} <span class="empty-note">(offline)</span>
-            </button>`).join("")}
-        </div>
+        ${onlineFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">🟢 Online</p><div class="challenge-friend-list">${onlineFriends.map(challengePillHtml).join("")}</div>` : ""}
+        ${bestFriendsOffline.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">⭐ Beste Freunde</p><div class="challenge-friend-list">${bestFriendsOffline.map(challengePillHtml).join("")}</div>` : ""}
+        ${otherFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">A–Z</p><div class="challenge-friend-list">${otherFriends.map(challengePillHtml).join("")}</div>` : ""}
       </div>` : "";
 
     setupEl.innerHTML = `
@@ -2819,8 +2976,8 @@
           Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
           Core.el("h3", {}, "🪲 Fehler melden"),
           Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
-          ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Sonstiges"].map((label) =>
-            Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left;", onclick: async () => {
+          ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
+            Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left; white-space:normal; overflow-wrap:break-word;", onclick: async () => {
               await Backend.reportBug(context, label);
               box.remove();
               showToast("✅ Danke, Alex wurde informiert!");
@@ -2940,8 +3097,12 @@
   function svgStar(fillPercent, size) {
     const clamped = Math.max(0, Math.min(100, fillPercent));
     const uid = `star${Math.random().toString(36).slice(2, 9)}`;
+    // Füllung von UNTEN nach OBEN (wie eine Flüssigkeit, die ins Glas gegossen wird), nicht
+    // seitlich — die Höhe des sichtbaren Ausschnitts wächst mit der Prozentzahl, verankert am
+    // unteren Rand.
+    const filledHeight = 24 * clamped / 100;
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="overflow:visible;">
-      <defs><clipPath id="${uid}"><rect x="0" y="0" width="${24 * clamped / 100}" height="24" /></clipPath></defs>
+      <defs><clipPath id="${uid}"><rect x="0" y="${24 - filledHeight}" width="24" height="${filledHeight}" /></clipPath></defs>
       <path d="${STAR_SVG_PATH}" fill="rgba(0,0,0,0.15)" />
       <path d="${STAR_SVG_PATH}" fill="#f2b84b" clip-path="url(#${uid})" />
     </svg>`;
@@ -2953,10 +3114,15 @@
     return percent < 90 ? 0 : Math.round(((percent - 90) / 10) * 100);
   }
   function starRatingArcHtml(percent) {
+    // WICHTIG: die visuelle Reihenfolge (links → Mitte → rechts) muss der Füllreihenfolge
+    // entsprechen (1. → 2. → 3. Stern) — sonst wirkt es verwirrend, wenn der optisch mittlere,
+    // große Stern eigentlich der DRITTE (letzte) ist, während der rechte kleine Stern schon der
+    // zweite war. Jetzt: klein (1., links) → groß (2., Mitte) → klein (3., rechts) — genau in
+    // Lesereihenfolge, wie man es aus anderen Bewertungs-Apps kennt (immer links nach rechts).
     return `<div class="results-star-arc">
       <span class="results-star">${svgStar(starFillFor(percent, 1), 34)}</span>
-      <span class="results-star results-star-lift">${svgStar(starFillFor(percent, 3), 52)}</span>
-      <span class="results-star">${svgStar(starFillFor(percent, 2), 34)}</span>
+      <span class="results-star results-star-lift">${svgStar(starFillFor(percent, 2), 52)}</span>
+      <span class="results-star">${svgStar(starFillFor(percent, 3), 34)}</span>
     </div>`;
   }
   function renderResults() {
@@ -3914,8 +4080,8 @@
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("h3", {}, "🪲 Fehler melden"),
         Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
-        ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Sonstiges"].map((label) =>
-          Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left;", onclick: async () => {
+        ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
+          Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left; white-space:normal; overflow-wrap:break-word;", onclick: async () => {
             await Backend.reportBug(context, label);
             box.remove();
             showToast("✅ Danke, Alex wurde informiert!");
@@ -4220,6 +4386,11 @@
     const correctIdx = knCurrentQuestion.correct[0];
     knActiveWords = Core.shuffle(knCurrentQuestion.options.map((opt, i) => ({
       id: `w${i}-${Date.now()}`, text: opt, isCorrect: i === correctIdx, resolved: false,
+      // Feste, zufällige horizontale Startposition pro Wort (25–75%, damit genug Rand bleibt) —
+      // einmalig hier festgelegt, nicht bei jedem Rendering neu gewürfelt, sonst würde das Wort
+      // beim Fallen seitlich "springen". Das gibt der Kanone auch endlich einen echten Grund,
+      // sich seitlich auszurichten, statt immer nur geradeaus zu zeigen.
+      xPercent: 25 + Math.random() * 50,
     })));
     knRoundActive = true;
   }
@@ -4237,10 +4408,13 @@
     // erledigt ist (abgeschossen oder gelandet). Kein Überlappen mehr, wie bei einem echten
     // Arcade-Spiel, bei dem man sich vorher entscheiden kann, ob man abwartet oder abschießt.
     const activeWord = knActiveWords.find((w) => !w.resolved);
-    // Auto-Land: wenn NUR NOCH die richtige Antwort übrig ist (alle falschen schon abgeschossen)
-    // und die Option aktiv ist, direkt als "sicher gelandet" werten, statt auf die Animation zu
-    // warten — macht das Spiel spürbar schneller für alle, die durchklicken wollen.
-    if (activeWord && knAutoLandLast && activeWord.isCorrect && knActiveWords.filter((w) => !w.resolved).length === 1) {
+    // Auto-Land: sobald ALLE noch übrigen falschen Antworten schon abgeschossen sind (egal ob
+    // dann noch 1 oder mehrere richtige Wörter übrig bleiben), landen die verbleibenden richtigen
+    // sofort zügig, statt einzeln auf die normale Fallzeit zu warten — "das Gute hat gewonnen,
+    // sobald nichts Falsches mehr übrig ist".
+    const remainingUnresolved = knActiveWords.filter((w) => !w.resolved);
+    const noWrongLeft = remainingUnresolved.every((w) => w.isCorrect);
+    if (activeWord && knAutoLandLast && activeWord.isCorrect && noWrongLeft) {
       setTimeout(() => landKanoneWord(activeWord.id, null), 50);
     }
     area.innerHTML = `
@@ -4249,7 +4423,7 @@
         <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer · ${heartsLivesHtml(knLives, 3)} <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
-          ${activeWord ? `<button type="button" class="kn-word" data-wid="${activeWord.id}" style="left:50%; animation-duration:4.5s;">${activeWord.text}</button>` : ""}
+          ${activeWord ? `<button type="button" class="kn-word" data-wid="${activeWord.id}" style="left:${activeWord.xPercent}%; animation-duration:4.5s;">${activeWord.text}</button>` : ""}
           <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 40" style="left:50%;">
             <rect x="24" y="18" width="12" height="20" rx="3" fill="#5c4429" />
             <g id="knCannonBarrel" style="transform-origin:30px 20px;">
@@ -4263,14 +4437,26 @@
           <span>⏩ Letzte richtige Antwort automatisch landen lassen (schneller weiterspielen)</span>
         </label>
         <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
+        <button type="button" class="emoji-toggle-link" id="knRestartLink" style="font-size:0.75rem;">🔄 Runde neu starten (Punkte bleiben erhalten)</button>
+        ${inlineFeatureFlagToggleHtml("wortkanone_redesign")}
         <div id="knChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanone);
+    wireInlineFeatureFlagToggles(area, renderKanone);
     area.querySelectorAll(".kn-word").forEach((btn) => {
       btn.addEventListener("click", (e) => shootKanoneWord(btn.dataset.wid, btn, e));
       btn.addEventListener("animationend", () => landKanoneWord(btn.dataset.wid, btn));
     });
-    document.getElementById("knAutoLandToggle")?.addEventListener("change", (e) => { knAutoLandLast = e.target.checked; });
+    document.getElementById("knAutoLandToggle")?.addEventListener("change", (e) => {
+      knAutoLandLast = e.target.checked;
+      Backend.updateExtraProfileField("knAutoLandPref", knAutoLandLast);
+    });
+    document.getElementById("knRestartLink")?.addEventListener("click", () => {
+      // Nur die aktuelle, evtl. feststeckende Runde neu aufbauen — Punktestand und Leben bleiben
+      // unangetastet, das ist bewusst kein "alles auf null zurücksetzen".
+      newKanoneRound();
+      renderKanone();
+    });
   }
   // Kanonenrohr dreht sich zur angetippten Stelle, bevor die Kugel "abgefeuert" wird — macht die
   // Kanone lebendig statt nur ein statisches Deko-Element zu sein.
@@ -4293,6 +4479,7 @@
     const sky = document.getElementById("knSky");
     const cannon = document.getElementById("knCannon");
     if (!sky || !cannon || !btn) { onImpact(); return; }
+    Core.sound.whistle(0.22); // Pfeifgeräusch, exakt synchron zur 220ms-Flugzeit der Kugel unten
     const skyRect = sky.getBoundingClientRect();
     const cannonRect = cannon.getBoundingClientRect();
     const btnRect = btn.getBoundingClientRect();
@@ -4318,9 +4505,14 @@
     const fb = document.getElementById("knFeedback");
     fireKanoneBall(btn, () => {
       if (word.isCorrect) {
+        // Versehentlich die richtige Antwort getroffen: ERST Explosion+Feuer (wie beim echten
+        // Treffer), DANN erst — leicht verzögert — der zweisilbige Fehler-Sound. So merkt man
+        // sofort "getroffen", und kurz danach "das war aber falsch".
         knLives -= 1;
-        Core.sound.wrong();
+        Core.sound.explosion();
+        spawnKanoneExplosion(btn);
         btn.classList.add("kn-word-wrong-hit");
+        setTimeout(() => Core.sound.zonk(), 320);
         fb.textContent = `⚠️ Das war die richtige Antwort! (${knLives} ❤️ übrig)`;
       } else {
         knScore += 1;
@@ -4347,7 +4539,7 @@
     fx.style.left = `${btnRect.left - skyRect.left + btnRect.width / 2}px`;
     fx.style.top = `${btnRect.top - skyRect.top + btnRect.height / 2}px`;
     sky.appendChild(fx);
-    setTimeout(() => fx.remove(), 600);
+    setTimeout(() => fx.remove(), 700);
   }
   function landKanoneWord(wid, btn) {
     const word = knActiveWords.find((w) => w.id === wid);
@@ -4361,17 +4553,26 @@
       Core.sound.correct();
       fb.textContent = "✅ Richtige Antwort sicher unten angekommen!";
     } else {
-      // Falsche Antwort durchgekommen, ohne abgeschossen zu werden — rot markiert plus deutlicher
-      // Fehler-Sound.
+      // Falsche Antwort durchgekommen, ohne abgeschossen zu werden — rot markiert plus einem
+      // deutlich "böseren", intensiveren Fehler-Sound (zweisilbiger Buzzer statt einfachem Ton) —
+      // das ist schließlich der schlimmste Fall im Spiel, ein Herzverlust.
       if (btn) btn.classList.add("kn-word-landed-bad");
       knLives -= 1;
-      Core.sound.wrong();
+      Core.sound.zonk();
       fb.textContent = `⚠️ Falsche Antwort durchgekommen! (${knLives} ❤️ übrig)`;
     }
     checkKanoneRoundDone();
   }
   function checkKanoneRoundDone() {
-    if (!knActiveWords.every((w) => w.resolved)) return;
+    if (!knActiveWords.every((w) => w.resolved)) {
+      // Runde noch nicht komplett — das NÄCHSTE Wort muss erscheinen (bei nur einem gleichzeitig
+      // sichtbaren Wort passiert das sonst nie von selbst, das Spiel würde hier für immer hängen
+      // bleiben). Kurze Pause, damit die Auflösungs-Animation des gerade geschossenen Worts noch
+      // zu sehen ist, bevor das nächste reinfällt.
+      if (knLives > 0) setTimeout(renderKanone, 600);
+      else setTimeout(renderKanone, 900);
+      return;
+    }
     knRoundActive = false;
     if (knLives <= 0) { setTimeout(renderKanone, 900); return; }
     setTimeout(() => { newKanoneRound(); renderKanone(); }, 1100);
@@ -4394,9 +4595,11 @@
           ${knActiveWords.map((w, i) => `<button type="button" class="kn-word kn-word-old" data-wid="${w.id}" style="left:${(100 / (n + 1)) * (i + 1)}%; animation-duration:${7 + n}s; animation-delay:${i * 0.9}s;">${w.text}</button>`).join("")}
         </div>
         <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
+        ${inlineFeatureFlagToggleHtml("wortkanone_redesign")}
         <div id="knChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanoneOld);
+    wireInlineFeatureFlagToggles(area, renderKanone);
     area.querySelectorAll(".kn-word-old").forEach((btn) => {
       btn.addEventListener("click", () => shootKanoneWordOld(btn.dataset.wid, btn));
       btn.addEventListener("animationend", () => landKanoneWordOld(btn.dataset.wid, btn));
@@ -4471,6 +4674,11 @@
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-kanone"]')?.addEventListener("click", () => {
+    // Häkchen dauerhaft aus dem Profil laden (nicht nur für diese Sitzung merken) — bleibt so
+    // erhalten, auch nach einem Neuladen der Seite oder erneutem Login.
+    const profile = Backend.currentProfile();
+    const saved = profile?.extraProfileData?.knAutoLandPref;
+    if (saved !== undefined) knAutoLandLast = saved;
     if (!knCurrentQuestion) newKanoneGame();
     renderKanone();
   });
@@ -6820,8 +7028,14 @@
 
       <div class="material-card">
         <h3>✍️ Wie kann ich selbst etwas beitragen?</h3>
-        <p>Du kannst eigene Lesetexte einreichen, Links vorschlagen und Schwarmwissen-Tipps teilen — alles wird von Alex geprüft, bevor es öffentlich sichtbar wird. Für bestätigte Beiträge gibt's teilweise sogar Bonuspunkte.</p>
+        <p>Du kannst eigene Lesetexte einreichen und Links vorschlagen — alles wird von Alex geprüft, bevor es öffentlich sichtbar wird. Für bestätigte Beiträge gibt's teilweise sogar Bonuspunkte.</p>
         <button type="button" class="btn btn-ghost" data-help-jump="sub-community" style="margin-top:8px;">✍️ Eigene Beiträge findest du hier</button>
+      </div>
+
+      <div class="material-card">
+        <h3>💡 Was ist das Schwarmwissen?</h3>
+        <p>Hier trägt die ganze Community wertvolle Tipps zusammen — von Lernenden für Lernende: was beim Deutschlernen bei anderen funktioniert hat, hilfreiche Links, kleine Tricks für schwierige Themen. Teil gerne selbst etwas, das dir geholfen hat, oder stöber durch das, was andere schon gesammelt haben.</p>
+        <button type="button" class="btn btn-ghost" data-help-jump="sub-tips" style="margin-top:8px;">💡 Zum Schwarmwissen springen</button>
       </div>
     `;
     // Zuordnung: welcher Unterreiter gehört zu welchem Hauptreiter — nötig, damit der Sprung-Link
@@ -6871,6 +7085,15 @@
   </svg>`;
   async function renderKompass() {
     const bannerUrl = await Backend.getSiteImage("wissen_banner");
+    // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
+    // gelesen — kein extra "Ich hab's gelesen"-Knopf nötig, für Missionen, die das voraussetzen.
+    const visitedProfile = Backend.currentProfile();
+    if (visitedProfile) {
+      const visited = (visitedProfile.extraProfileData && visitedProfile.extraProfileData.visitedSections) || [];
+      if (!visited.includes("es-war-einmal")) {
+        await Backend.updateExtraProfileField("visitedSections", [...visited, "es-war-einmal"]);
+      }
+    }
     const now = new Date();
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
@@ -7407,6 +7630,84 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
   renderLinks();
   document.querySelector('#knowledgeSubnav [data-sub="sub-links"]')?.addEventListener("click", () => renderLinks());
+  // Vorstellungsrunde: geführtes Formular mit hilfreichen Platzhaltern, damit niemand vor einem
+  // leeren Feld sitzt — plus eine kompakte Kartenübersicht aller Vorstellungen (mit dem jeweils
+  // eigenen Design, aber bewusst NICHT das volle Profil-Panel), damit sich die Community
+  // gegenseitig kennenlernen kann.
+  async function renderIntroRound() {
+    const area = document.getElementById("introRoundArea");
+    if (!area) return;
+    const user = Backend.currentUser();
+    const profile = Backend.currentProfile();
+    const mine = (profile && profile.extraProfileData && profile.extraProfileData.introduction) || {};
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Lernt euch gegenseitig kennen! Stell dich kurz vor — auf Deutsch, das ist gleich noch eine gute Übung. Alle Felder sind freiwillig.</p>
+      ${user ? `
+      <div class="question-card" style="margin-bottom:16px;">
+        <h3>✍️ Deine Vorstellung</h3>
+        <div class="form-field">
+          <label>Über dich (Name, Alter, Herkunft …)</label>
+          <textarea id="introAbout" class="guestbook-form-textarea" maxlength="300" placeholder="Sprich ein bisschen über dich selbst — wo du herkommst, wie du heißt, wie alt du bist …">${mine.about || ""}</textarea>
+        </div>
+        <div class="form-field">
+          <label>Was möchtest du hier machen?</label>
+          <textarea id="introGoal" class="guestbook-form-textarea" maxlength="200" placeholder="z. B. Ich möchte mein Deutsch aktiv trainieren, oder: Ich möchte neue Freunde finden, mit denen ich Deutsch sprechen kann.">${mine.goal || ""}</textarea>
+        </div>
+        <div class="form-field">
+          <label>Wie hast du von dieser Seite gehört?</label>
+          <textarea id="introSource" class="guestbook-form-textarea" maxlength="150" placeholder="z. B. durch Clubhouse, durch HelloTalk, durch meine Freundschaft mit Alex …">${mine.source || ""}</textarea>
+        </div>
+        <div class="form-field">
+          <label>Deine Stadt/Region (optional)</label>
+          <textarea id="introCity" class="guestbook-form-textarea" maxlength="200" placeholder="Wofür ist deine Stadt bekannt? Was magst du dort besonders?">${mine.city || ""}</textarea>
+        </div>
+        <button type="button" class="btn btn-coffee" id="introSaveBtn">Vorstellung speichern</button>
+        <p class="empty-note" id="introSavedNote" style="display:none; margin-top:8px;">✅ Gespeichert — jetzt für alle sichtbar!</p>
+      </div>` : `<p class="empty-note" style="margin-bottom:16px;">Melde dich an, um dich selbst vorzustellen.</p>`}
+      <p class="eyebrow">👋 Wer ist schon dabei?</p>
+      <div class="vocab-toolbar" style="margin-bottom:10px;">
+        <input type="text" class="vocab-search" id="introSearchInput" placeholder="Nach Namen suchen…" />
+      </div>
+      <div id="introCardsArea"><p class="empty-note">Lade Vorstellungen…</p></div>
+    `;
+    document.getElementById("introSaveBtn")?.addEventListener("click", async () => {
+      await Backend.saveIntroduction({
+        about: document.getElementById("introAbout").value,
+        goal: document.getElementById("introGoal").value,
+        source: document.getElementById("introSource").value,
+        city: document.getElementById("introCity").value,
+      });
+      const note = document.getElementById("introSavedNote");
+      note.style.display = "block";
+      setTimeout(() => { note.style.display = "none"; }, 2500);
+      loadIntroCards();
+    });
+    document.getElementById("introSearchInput")?.addEventListener("input", (e) => loadIntroCards(e.target.value));
+    loadIntroCards();
+  }
+  async function loadIntroCards(searchQuery = "") {
+    const wrap = document.getElementById("introCardsArea");
+    if (!wrap) return;
+    let list = await Backend.getAllIntroductions();
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
+    wrap.innerHTML = list.length ? `<div class="intro-card-grid">
+      ${list.map((p) => `
+        <div class="intro-card" data-theme="${p.theme || "bastelheft"}">
+          <div class="intro-card-header">
+            ${p.avatarUrl ? `<img src="${p.avatarUrl}" class="intro-card-avatar" />` : `<span class="intro-card-avatar intro-card-avatar-placeholder">🦊</span>`}
+            <strong>${p.name}</strong>
+          </div>
+          ${p.introduction.about ? `<p class="intro-card-text">${p.introduction.about}</p>` : ""}
+          ${p.introduction.city ? `<p class="intro-card-text">📍 ${p.introduction.city}</p>` : ""}
+          ${p.introduction.goal ? `<p class="intro-card-text intro-card-goal">🎯 ${p.introduction.goal}</p>` : ""}
+          ${p.introduction.source ? `<p class="intro-card-text intro-card-source">💡 ${p.introduction.source}</p>` : ""}
+        </div>`).join("")}
+    </div>` : `<p class="empty-note">${searchQuery ? "Niemand mit diesem Namen gefunden." : "Noch niemand hat sich vorgestellt — sei die/der Erste!"}</p>`;
+  }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-intro"]')?.addEventListener("click", renderIntroRound);
 
   // "Schwarmwissen" — freier Austausch von Tipps, Links, Videos, Bildern zwischen
   // Nutzer:innen. Alex bietet die Inhalte an, lernt aber selbst kein Deutsch mehr — wer gerade
@@ -7701,7 +8002,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         try {
           if (authMode === "signup") {
             const name = document.getElementById("authName").value.trim();
-            await Backend.signUp(email, password, name);
+            const refId = new URLSearchParams(window.location.search).get("ref");
+            await Backend.signUp(email, password, name, refId);
           } else {
             await Backend.signIn(email, password);
           }
@@ -7750,14 +8052,13 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header-flow">
             ${avatarHtml}
-            <h2 style="margin:0 60px 2px 0;">${profile.name}</h2>
+            <h2 style="margin:0 60px 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
             ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
             <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
             ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
             ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
             <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
-            ${genderBadgeHtml(extra.genderSymbol) ? `<span class="flow-badge">${genderBadgeHtml(extra.genderSymbol)}</span>` : ""}
-            <span class="flow-badge">${PROFICIENCY_BADGE[getProficiencyLevel()]}</span>
+            ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
           </div>
           ${showcaseSongStripHtml(profile)}
           <div style="clear:both;"></div>
@@ -7824,6 +8125,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       document.getElementById("myFriendsToggle").addEventListener("click", () => {
         const list = document.getElementById("myFriendsList");
         list.style.display = list.style.display === "none" ? "flex" : "none";
+      });
+      document.getElementById("proficiencyPromptBadge")?.addEventListener("click", () => {
+        document.querySelector('[data-target="view-profile"]')?.click();
+        setTimeout(() => { document.querySelector('#profileSubnav [data-sub="sub-settings"]')?.click(); }, 150);
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
       wireTrophyCaseToggle();
@@ -8485,6 +8790,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     { title: "Der Wolf — Oh Shit, Frau Schmidt", url: "https://www.youtube.com/watch?v=RrNBTVoUHLU" },
     { title: "LEA x LINDA — Signal", url: "https://www.youtube.com/watch?v=a2utR5VcMGI" },
     { title: "Grossstadtgeflüster — Ich muss gar nix", url: "https://www.youtube.com/watch?v=7inaAem83FY" },
+    { title: "Vanessa Mai — 747", url: "https://www.youtube.com/watch?v=GVHXuKkcYGo" },
+    { title: "Xander Fox — Du", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/Du.mp3" },
+    { title: "Xander Fox — Nah (2011)", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/Nah%20(2011).mp3" },
+    { title: "Xander Fox — Nur Mit Mir", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/Nur%20Mit%20Mir%20(Demo%201)-3.mp3" },
+    { title: "Xander Fox — A Lovers Fairytale", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/One%20Day%20In%20Rome%20-%20A%20Lovers%20Fairytale.mp3" },
+    { title: "Xander Fox — Ein Leben Lang", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/One%20Day%20In%20Rome%20-%20Ein%20Leben%20Lang.mp3" },
+    { title: "Xander Fox — Mein Stiller Schmerz", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/promised-eden_mein-stiller-schmerz.mp3" },
+    { title: "Second Decay — I Hate Berlin", url: "https://www.youtube.com/watch?v=5fWv1wmsVgs" },
   ];
   let ytMusicPlayer = null;
   let ytApiLoading = false;
@@ -8686,7 +8999,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       loadYouTubeIframeApi(() => {
         if (!ytMusicPlayer) {
           ytMusicPlayer = new YT.Player("musicYtHost", {
-            height: "1", width: "1", videoId,
+            // WICHTIG: eine vernünftige Ausgangsgröße hier, NICHT 1×1 Pixel — ein winzig
+            // initialisierter YouTube-Player lädt/spielt oft unzuverlässig, selbst wenn CSS ihn
+            // später sichtbar vergrößert. Die eigentliche kleine Vorschau-Darstellung übernimmt
+            // ausschließlich das umgebende CSS (.music-video-square).
+            height: "200", width: "200", videoId,
             events: {
               onReady: (e) => { e.target.playVideo(); musicIsPlaying = true; renderMusicPlayerBar(); },
               onStateChange: (e) => {
@@ -8743,6 +9060,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       const videoSquareRescue = document.getElementById("musicVideoSquare");
       if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
       const song = musicPlaylist[musicCurrentIndex];
+      // Der Aufklapp-Knopf erscheint nur, wenn es überhaupt etwas zum Anzeigen gibt — ein
+      // YouTube-Video (dann zeigt das Fenster das Video) oder ein hochgeladenes Cover-Bild. Bei
+      // einem reinen Audio-Link (z. B. direkte MP3-Datei) ohne Cover gibt es nichts zu zeigen,
+      // also bleibt der Knopf dann ganz weg statt sinnlos ins Leere zu klappen.
+      const hasVisualContent = song && (Boolean(song.cover_url) || !Backend.isDirectAudioUrl(song.url));
       bar.innerHTML = song ? `
         <div id="musicVideoSquareSlot" style="flex-shrink:0; ${musicCoverCollapsed ? "display:none;" : ""}"></div>
         <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
@@ -8753,7 +9075,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           ${Array.from({ length: 9 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${i * 0.09}s;"></span>`).join("")}
         </span>
         <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
-        <button type="button" class="emoji-toggle-link" id="musicExpandToggle" style="font-size:0.68rem; flex-shrink:0;" title="${musicCoverCollapsed ? "Cover wieder einblenden" : "Nur Titel anzeigen, Cover ausblenden"}">${musicCoverCollapsed ? "▸" : "▾"}</button>
+        ${hasVisualContent ? `<button type="button" class="emoji-toggle-link" id="musicExpandToggle" style="font-size:0.68rem; flex-shrink:0;" title="${musicCoverCollapsed ? "Cover wieder einblenden" : "Nur Titel anzeigen, Cover ausblenden"}">${musicCoverCollapsed ? "▸" : "▾"}</button>` : ""}
       ` : `<span class="empty-note">Kein Song ausgewählt — wähl unten einen aus der Liste.</span>`;
       // Das quadratische Video-Fenster physisch in die gerade sichtbare Leiste verschieben (Musik-
       // Reiter bevorzugt, sonst die schwebende Leiste) — dieselbe DOM-Node bleibt dabei bestehen,
@@ -8819,6 +9141,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     klassisch: { label: "☕ Klassisch", desc: "Warmes Design, passend zur Seite." },
     retro: { label: "📻 Retro-Stereo", desc: "Dunkles Panel mit LED-Akzenten, 80er/90er-Flair." },
     holz: { label: "🪵 Holzoptik", desc: "Warmes Holzpaneel-Design." },
+    chrom: { label: "🪩 Chrom & Glas", desc: "Kühles, modernes High-End-Gerät mit glänzenden Metallflächen." },
+    roehrenradio: { label: "📟 Röhrenradio", desc: "Nostalgisches Bakelit-Design, wie ein altes Röhrenradio." },
   };
   function getPlayerTemplate() {
     const profile = Backend.currentProfile();
@@ -8831,7 +9155,9 @@ An einem Morgen lief ein kleiner Fuchs los…
   function applyPlayerTemplateClass() {
     const template = getPlayerTemplate();
     document.querySelectorAll(".music-floating-bar, #musicPlayerBarInner").forEach((el) => {
-      el.classList.remove("player-tpl-klassisch", "player-tpl-retro", "player-tpl-holz");
+      // Generisch ALLE player-tpl-*-Klassen entfernen (nicht nur eine feste Liste) — sonst würde
+      // beim Hinzufügen künftiger Vorlagen die vorherige Klasse beim Wechseln hängen bleiben.
+      [...el.classList].forEach((c) => { if (c.startsWith("player-tpl-")) el.classList.remove(c); });
       el.classList.add(`player-tpl-${template}`);
     });
   }
@@ -9078,6 +9404,46 @@ An einem Morgen lief ein kleiner Fuchs los…
     { id: "q38", cat: "quer", text: "Was würdest du tun, wenn niemand dich beurteilen könnte?" },
     { id: "q39", cat: "kreativ", text: "Erfinde eine neue Feiertagstradition — was wird gefeiert und wie?" },
     { id: "q40", cat: "persoenlich", text: "Was ist deine liebste Art, einen freien Tag zu verbringen?" },
+    { id: "q41", cat: "philosophisch", text: "Was bedeutet für dich echtes Glück?" },
+    { id: "q42", cat: "philosophisch", text: "Kann man aus jedem Fehler etwas lernen — oder gibt es Ausnahmen?" },
+    { id: "q43", cat: "philosophisch", text: "Was zählt für dich mehr: die Absicht oder das Ergebnis einer Handlung?" },
+    { id: "q44", cat: "philosophisch", text: "Verändert sich der Mensch wirklich, oder bleibt der Kern immer gleich?" },
+    { id: "q45", cat: "philosophisch", text: "Was würdest du als deine Lebensphilosophie in einem Satz beschreiben?" },
+    { id: "q46", cat: "philosophisch", text: "Ist völlige Ehrlichkeit immer die beste Wahl?" },
+    { id: "q47", cat: "abenteuer", text: "Welches Abenteuer bereust du, nie gewagt zu haben?" },
+    { id: "q48", cat: "abenteuer", text: "Berge oder Meer — und warum genau das?" },
+    { id: "q49", cat: "abenteuer", text: "Wenn du für ein Jahr in ein anderes Land ziehen müsstest — welches wäre es?" },
+    { id: "q50", cat: "abenteuer", text: "Was ist das Mutigste, das du je gemacht hast?" },
+    { id: "q51", cat: "abenteuer", text: "Ein One-Way-Ticket irgendwohin — wohin würde es dich ziehen?" },
+    { id: "q52", cat: "abenteuer", text: "Welche verrückte Idee würdest du gerne mal ausprobieren?" },
+    { id: "q53", cat: "mindset", text: "Was hilft dir, wenn du dich überfordert fühlst?" },
+    { id: "q54", cat: "mindset", text: "Woran merkst du, dass du auf dem richtigen Weg bist?" },
+    { id: "q55", cat: "mindset", text: "Was würdest du gerne schneller loslassen können?" },
+    { id: "q56", cat: "mindset", text: "Wie definierst du für dich persönlich Erfolg?" },
+    { id: "q57", cat: "mindset", text: "Was gibt dir an einem schlechten Tag wieder Energie?" },
+    { id: "q58", cat: "quer", text: "Welchen Ratschlag hörst du oft, findest ihn aber falsch?" },
+    { id: "q59", cat: "quer", text: "Was tust du anders als die meisten Leute in deinem Umfeld?" },
+    { id: "q60", cat: "quer", text: "Welche Gewohnheit anderer verstehst du überhaupt nicht?" },
+    { id: "q61", cat: "quer", text: "Wärst du lieber unauffällig richtig oder laut falsch?" },
+    { id: "q62", cat: "quer", text: "Was ist eine unpopuläre Meinung, die du trotzdem vertrittst?" },
+    { id: "q63", cat: "kreativ", text: "Wenn du einen Song schreiben würdest — welches Thema hätte er?" },
+    { id: "q64", cat: "kreativ", text: "Erfinde ein Gericht — wie heißt es und was ist drin?" },
+    { id: "q65", cat: "kreativ", text: "Wenn deine Woche eine Farbe wäre — welche, und warum?" },
+    { id: "q66", cat: "kreativ", text: "Du entwirfst eine neue Insel — wie sieht sie aus?" },
+    { id: "q67", cat: "kreativ", text: "Erfinde einen Beruf, den es noch nicht gibt." },
+    { id: "q68", cat: "gesellschaft", text: "Was wünschst du dir für die nächste Generation?" },
+    { id: "q69", cat: "gesellschaft", text: "Welche Erfindung hat die Welt am meisten verändert?" },
+    { id: "q70", cat: "gesellschaft", text: "Was können Menschen aus unterschiedlichen Kulturen voneinander lernen?" },
+    { id: "q71", cat: "gesellschaft", text: "Was macht deiner Meinung nach eine gute Gemeinschaft aus?" },
+    { id: "q72", cat: "gesellschaft", text: "Welches gesellschaftliche Thema beschäftigt dich gerade am meisten?" },
+    { id: "q73", cat: "persoenlich", text: "Was war ein Moment, in dem du wirklich stolz auf dich warst?" },
+    { id: "q74", cat: "persoenlich", text: "Wer hat dich am meisten geprägt, und wie?" },
+    { id: "q75", cat: "persoenlich", text: "Was schätzt du an dir selbst, das andere vielleicht nicht sofort sehen?" },
+    { id: "q76", cat: "persoenlich", text: "Welche Kleinigkeit macht dich zuverlässig glücklich?" },
+    { id: "q77", cat: "persoenlich", text: "Was würdest du gerne öfter tun, wenn du mehr Zeit hättest?" },
+    { id: "q78", cat: "persoenlich", text: "Welches Talent hast du, das die wenigsten kennen?" },
+    { id: "q79", cat: "persoenlich", text: "Was macht für dich ein gutes Gespräch aus?" },
+    { id: "q80", cat: "persoenlich", text: "Wenn du einen Tag noch einmal erleben könntest — welchen?" },
   ];
   // Kategorie -> Profil-Titel, sobald sie den größten Anteil der beantworteten Fragen ausmacht.
   const INTERVIEW_TYPE_LABELS = {
@@ -9192,7 +9558,7 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   // Kompakte Interview-Vorschau direkt im Profil — zeigt die ersten beantworteten Fragen (oder
   // eine Einladung, welche zu beantworten), mit Knopf zum vollständigen Bereich.
-  function renderInterviewPreview(profile) {
+  function renderInterviewPreview(profile, isOwnProfile = true) {
     const answers = (profile.extraProfileData && profile.extraProfileData.interviewAnswers) || {};
     const answered = INTERVIEW_QUESTIONS.filter((q) => answers[q.id] && answers[q.id].trim());
     const unlocked = profile.points >= 150;
@@ -9205,8 +9571,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         <div class="question-card" style="margin-bottom:8px;">
           <p style="font-weight:700; font-size:0.86rem; margin-bottom:4px;">${q.text}</p>
           <p class="empty-note" style="font-size:0.84rem;">${answers[q.id].slice(0, 120)}${answers[q.id].length > 120 ? "…" : ""}</p>
-        </div>`).join("") : `<p class="empty-note">Noch keine Antworten — zeig etwas mehr von dir!</p>`}
-      <button type="button" class="btn btn-ghost" id="openFullInterviewBtn">🎤 ${answered.length ? "Interview bearbeiten" : "Jetzt beantworten"}</button>
+        </div>`).join("") : `<p class="empty-note">${isOwnProfile ? "Noch keine Antworten — zeig etwas mehr von dir!" : "Noch keine Antworten hinterlegt."}</p>`}
+      ${isOwnProfile ? `<button type="button" class="btn btn-ghost" id="openFullInterviewBtn">🎤 ${answered.length ? "Interview bearbeiten" : "Jetzt beantworten"}</button>` : ""}
     </div>`;
   }
   async function renderInterview() {
@@ -9219,14 +9585,20 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Kein einfaches Likes/Dislikes — sondern ein paar Fragen mit echtem Nachdenkwert. Alles freiwillig, du musst nicht jede Frage beantworten. Deine Antworten sind auf deinem Profil für andere sichtbar.</p>
       ${!unlocked ? `<p class="empty-note">🔒 Ab 150 Punkten kannst du hier deine Antworten eintragen.</p>` : `
-        <div class="breakdown-list">
-          ${INTERVIEW_QUESTIONS.map((q) => `
-            <div class="question-card" style="margin-bottom:10px;">
-              <p style="font-weight:700; margin-bottom:8px;">${q.text}</p>
-              <textarea class="guestbook-form-textarea" data-interview-q="${q.id}" maxlength="300" placeholder="Deine Antwort (optional)…">${answers[q.id] || ""}</textarea>
-            </div>`).join("")}
-        </div>
-        <button type="button" class="btn btn-coffee" id="interviewSaveBtn">Antworten speichern</button>
+        ${Object.entries(INTERVIEW_TYPE_LABELS).map(([catKey, catInfo]) => {
+          const questionsInCat = INTERVIEW_QUESTIONS.filter((q) => q.cat === catKey);
+          if (!questionsInCat.length) return "";
+          return `
+            <p class="eyebrow" style="margin-top:18px;">${catInfo.emoji} ${catInfo.label.replace(/:in|:r/gi, "")}</p>
+            <div class="breakdown-list">
+              ${questionsInCat.map((q) => `
+                <div class="question-card" style="margin-bottom:10px;">
+                  <p style="font-weight:700; margin-bottom:8px;">${q.text}</p>
+                  <textarea class="guestbook-form-textarea" data-interview-q="${q.id}" maxlength="300" placeholder="Deine Antwort (optional)…">${answers[q.id] || ""}</textarea>
+                </div>`).join("")}
+            </div>`;
+        }).join("")}
+        <button type="button" class="btn btn-coffee" id="interviewSaveBtn" style="margin-top:10px;">Antworten speichern</button>
         <p class="empty-note" id="interviewSavedNote" style="display:none; margin-top:8px;">✅ Gespeichert!</p>
       `}
     `;
@@ -9358,6 +9730,18 @@ An einem Morgen lief ein kleiner Fuchs los…
       bodyHtml = `
         <p>Dieser Fuchs will speziell mit diesem Spiel verdient werden — Punkte aus anderen Spielen zählen hier nicht mit.</p>
         <p style="margin-top:8px;">Du hast bisher <strong>${have} von ${fig.unlock.value} Punkten</strong> dort — noch <strong>${missing}</strong>!</p>`;
+    } else if (fig.unlock.type === "combo") {
+      // Kombinations-Mission: jede Teilbedingung einzeln mit ihrem eigenen Status auflisten, statt
+      // nur einer pauschalen Ja/Nein-Antwort — so sieht man genau, was noch fehlt und was schon
+      // erledigt ist.
+      bodyHtml = `
+        <p>Diese Mission ist eine <strong>Kombination</strong> — alle Teile müssen erfüllt sein:</p>
+        <div class="breakdown-list" style="margin-top:8px;">
+          ${(fig.unlock.parts || []).map((part) => {
+            const partDone = isUnlocked(part, profile);
+            return `<div class="breakdown-row"><span>${partDone ? "✅" : "⏳"} ${unlockShortText(part)}</span></div>`;
+          }).join("")}
+        </div>`;
     } else {
       bodyHtml = `<p>Für diesen Fuchs brauchst du einen besonderen Pokal: <strong>${fig.unlock.match}</strong>.</p>`;
     }
@@ -9426,10 +9810,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       { icon: "🌍", label: "Sprachen", html: `
         ${languages.length ? `<p class="eyebrow" style="margin-top:4px;">🗣️ Diese Sprachen spreche ich</p><div class="trophy-case" style="margin-top:6px;">${languages.map((l) => `<div class="trophy-chip">🗣️ ${l}</div>`).join("")}</div>` : ""}
         ${favCountry ? `<div class="breakdown-row"><span>🌍 Lieblingsland</span><span>${favCountry}</span></div>` : ""}
-        ${extra.dreamDestination ? `<div class="breakdown-row"><span>✈️ Traumreiseziel</span><span>${extra.dreamDestination}</span></div>` : ""}
-        ${extra.visitedCountries ? `<div class="breakdown-row"><span>🧳 Schon bereist</span><span>${extra.visitedCountries}</span></div>` : ""}
-        ${extra.whyGerman ? `<div class="breakdown-row"><span>💡 Warum Deutsch?</span><span>${extra.whyGerman}</span></div>` : ""}
-        ${extra.langGoal ? `<div class="breakdown-row"><span>🎯 Sprachziel</span><span>${extra.langGoal}</span></div>` : ""}
+        ${extra.dreamDestination ? `<div class="breakdown-row breakdown-row-stacked"><span>✈️ Traumreiseziel</span><span>${extra.dreamDestination}</span></div>` : ""}
+        ${extra.visitedCountries ? `<div class="breakdown-row breakdown-row-stacked"><span>🧳 Schon bereist</span><span>${extra.visitedCountries}</span></div>` : ""}
+        ${extra.whyGerman ? `<div class="breakdown-row breakdown-row-stacked"><span>💡 Warum Deutsch?</span><span>${extra.whyGerman}</span></div>` : ""}
+        ${extra.langGoal ? `<div class="breakdown-row breakdown-row-stacked"><span>🎯 Sprachziel</span><span>${extra.langGoal}</span></div>` : ""}
         ${extra.favSport ? `<div class="breakdown-row"><span>⚽ Lieblingssport</span><span>${extra.favSport}</span></div>` : ""}
       ` },
       { icon: "🎬", label: "Kultur", html: `
@@ -9544,13 +9928,22 @@ An einem Morgen lief ein kleiner Fuchs los…
     const sortedTrophies = [...(p.trophies || [])].sort((a, b) => (trophyKind(b) === "pokal") - (trophyKind(a) === "pokal"));
     const trophies = sortedTrophies.slice(0, 4);
     const trophyOverflow = sortedTrophies.length - trophies.length;
+    const mySympathyLevel = (!isMe && me) ? await Backend.getMySympathyFor(p.id) : null;
+    const allSympathyLevels = (!isMe && me) ? await Backend.getAllSympathyLevels() : [];
 
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
+        (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
+        !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
+          <p class="empty-note" style="text-align:center; margin-bottom:4px;">Wie gerne magst du ${p.name}? <span class="subnav-info-icon" data-info="Ganz privat — nur du siehst deine Auswahl. Wählt ihr euch beide gegenseitig, bekommt ihr automatisch Nachricht, dass es ein Match ist.">ⓘ</span></p>
+          <div style="display:flex; justify-content:center; gap:8px;">
+            ${allSympathyLevels.map((lvl) => `<button type="button" class="sympathy-heart-btn" data-sympathy-level="${lvl.key}" title="${lvl.label}" style="background:none; border:none; cursor:pointer; font-size:1.4rem; opacity:${mySympathyLevel === lvl.key ? "1" : "0.3"}; filter:${mySympathyLevel === lvl.key ? "none" : "grayscale(0.6)"};"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 21 C12 21 3 14.5 3 8.5 C3 5.5 5.5 3 8.5 3 C10 3 11.3 3.7 12 4.8 C12.7 3.7 14 3 15.5 3 C18.5 3 21 5.5 21 8.5 C21 14.5 12 21 12 21 Z" fill="${lvl.color}"/></svg></button>`).join("")}
+          </div>
+        ` }) : "",
         Core.el("div", { html: showcaseSongStripHtml(p), style: "margin: 6px 0;" }),
         Core.el("div", { html: await profileTransportStripHtml(p) }),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
@@ -9560,7 +9953,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`)
           ),
           originFlag ? Core.el("span", { class: "flow-badge" }, `${originFlag} ${p.origin}`) : "",
-          (zodiacBadgeHtml(p.birthday) + genderBadgeHtml((p.extra_profile_data || {}).genderSymbol)) ? Core.el("span", { class: "flow-badge", html: zodiacBadgeHtml(p.birthday) + genderBadgeHtml((p.extra_profile_data || {}).genderSymbol) }) : ""
+          zodiacBadgeHtml(p.birthday) ? Core.el("span", { class: "flow-badge", html: zodiacBadgeHtml(p.birthday) }) : ""
         ),
         Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
           theirFriends.length
@@ -9595,6 +9988,7 @@ An einem Morgen lief ein kleiner Fuchs los…
                 `<div class="figure-slot" title="${fig.name} — ${fig.desc}"><img src="${fig.img}" alt="${fig.name}" loading="lazy" /></div>`
               ).join("") })
           : "",
+        Core.el("div", { html: renderInterviewPreview(p, isMe) }),
         (p.gallery && p.gallery.length)
           ? Core.el("div", { class: "gallery-grid", id: "modalGalleryGrid", style: "margin-top:12px;",
               html: p.gallery.map((url) => `
@@ -9742,6 +10136,15 @@ An einem Morgen lief ein kleiner Fuchs los…
     wireSteckbriefPager(box, () => openProfileModal(id, box));
     wireMusicPlayer(box);
     wireProfileTransportStrip(box, p);
+    box.querySelectorAll("[data-sympathy-level]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await Backend.setSympathyLevel(p.id, btn.dataset.sympathyLevel);
+          showToast("💛 Gespeichert — ganz privat, nur du siehst deine Auswahl.");
+          openProfileModal(id, box);
+        } catch (err) { alert(err.message || "Konnte nicht gespeichert werden."); }
+      });
+    });
     document.getElementById("profileNoteSubmit")?.addEventListener("click", async () => {
       try {
         await Backend.addProfileNote(p.id, document.getElementById("profileNoteInput").value);
@@ -9955,6 +10358,11 @@ An einem Morgen lief ein kleiner Fuchs los…
             <strong id="pointsGiftValueLabel" style="color:var(--amber-500,#c98a1f);">0 Punkte</strong>
           </label>
           <input type="range" id="pointsGiftSlider" min="0" max="500" step="50" value="0" style="width:100%; margin-top:6px;" />
+          <label class="empty-note" style="display:block; margin-top:8px;">Grund (füllt die Nachricht automatisch aus, danach noch anpassbar):</label>
+          <select id="pointsReasonSelect" style="width:100%; margin-top:4px; padding:8px; border-radius:8px; border:1px solid var(--border-color,#ddd);">
+            <option value="">— eigenen Text schreiben —</option>
+            ${POINTS_REASON_TEMPLATES.map((r) => `<option value="${r.text.replace(/"/g, "&quot;")}">${r.label}</option>`).join("")}
+          </select>
           <p class="empty-note" style="font-size:0.74rem; margin-top:4px;">In 50er-Schritten bis maximal 500 — z. B. als Entschädigung oder Belohnung. Die Person bekommt automatisch eine erklärende Nachricht dazu.</p>
         </div>` : ""}
         <div class="form-field">
@@ -10073,6 +10481,9 @@ An einem Morgen lief ein kleiner Fuchs los…
         document.getElementById("pointsGiftValueLabel").textContent = `${pointsSlider.value} Punkte`;
       });
     }
+    document.getElementById("pointsReasonSelect")?.addEventListener("change", (e) => {
+      if (e.target.value) document.getElementById("inboxMessageInput").value = e.target.value;
+    });
     document.getElementById("inboxSendBtn").addEventListener("click", async () => {
       const isBroadcast = recipientMode === "broadcast";
       const body = document.getElementById("inboxMessageInput").value;
@@ -10166,7 +10577,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     ]);
 
     area.innerHTML = `
-      <div class="question-card">
+      <div class="question-card" style="border:2px solid var(--amber-400);">
+        <h3>🔗 Freund:innen einladen</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Teil deinen persönlichen Link — meldet sich jemand darüber an, bekommt ihr <strong>beide 25 Bonuspunkte</strong>.</p>
+        <button type="button" class="btn btn-coffee" id="friendsShareBtn">🔗 Meinen Empfehlungs-Link teilen</button>
+      </div>
+      <div class="question-card" style="margin-top:14px;">
         <h3>🔎 Freunde finden</h3>
         <div class="vocab-toolbar" style="margin-top:10px;">
           <input type="text" class="vocab-search" id="friendSearch" placeholder="Name eingeben…" />
@@ -10244,6 +10660,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     }
 
+    document.getElementById("friendsShareBtn")?.addEventListener("click", shareReferralLink);
     let searchTimer = null;
     document.getElementById("friendSearch").addEventListener("input", (e) => {
       clearTimeout(searchTimer);
@@ -10395,7 +10812,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
 
-  let rankingMode = "alltime"; // "today" oder "alltime" -- Gesamt als Grundeinstellung, da das die
+  let rankingMode = "alltime";
+  let foxPeriodMode = "tag"; // Tab-Auswahl: Fuchs des Tages/der Woche/des Monats/des Jahres // "today" oder "alltime" -- Gesamt als Grundeinstellung, da das die
   // Zahl ist, die man normalerweise erwartet, wenn man "das Ranking" ansieht — "Heute" ist als
   // zweite Option für alle da, die gezielt sehen wollen, wer heute besonders aktiv war.
   // Wiederverwendbare Design-Banner-Grafik: zeigt das vom Betreiber hochgeladene Bild, oder — falls
@@ -10443,32 +10861,43 @@ An einem Morgen lief ein kleiner Fuchs los…
     const area = document.getElementById("rankingArea");
     area.innerHTML = '<p class="empty-note">Lade Ranking…</p>';
     const rows = rankingMode === "today" ? await Backend.getRankingToday() : await Backend.getRankingAllTime();
-    const fox = await Backend.getFoxOfTheDayShowcase();
+    const foxPeriodFns = { tag: () => Backend.getFoxOfTheDayShowcase(), woche: () => Backend.getFoxOfWeekShowcase(), monat: () => Backend.getFoxOfMonthShowcase(), jahr: () => Backend.getFoxOfYearShowcase() };
+    const fox = await foxPeriodFns[foxPeriodMode]();
     const hallOfFame = await Backend.getFoxOfDayHallOfFame();
     const hofBannerUrl = await Backend.getSiteImage("hall_of_fame_banner");
+    const periodTexts = { tag: { title: "Fuchs des Tages", suffix: "heute", report: "Mitarbeit heute" }, woche: { title: "Fuchs der Woche", suffix: "diese Woche", report: "Mitarbeit diese Woche" }, monat: { title: "Fuchs des Monats", suffix: "diesen Monat", report: "Mitarbeit diesen Monat" }, jahr: { title: "Fuchs des Jahres", suffix: "dieses Jahr", report: "Mitarbeit dieses Jahr" } };
+    const pt = periodTexts[foxPeriodMode];
     area.innerHTML = `
+      <div class="order-toggle" style="margin-bottom:10px;">
+        <button type="button" class="order-pill fox-period-pill" data-fox-period="tag" aria-selected="${foxPeriodMode === "tag"}">📅 Tag</button>
+        <button type="button" class="order-pill fox-period-pill" data-fox-period="woche" aria-selected="${foxPeriodMode === "woche"}">🗓️ Woche</button>
+        <button type="button" class="order-pill fox-period-pill" data-fox-period="monat" aria-selected="${foxPeriodMode === "monat"}">📆 Monat</button>
+        <button type="button" class="order-pill fox-period-pill" data-fox-period="jahr" aria-selected="${foxPeriodMode === "jahr"}">🗓️ Jahr</button>
+      </div>
       ${fox ? `
       <div class="question-card fox-of-day-showcase">
         <svg class="fox-bg-flourish" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
           <path d="M100 40 C70 40 50 65 45 95 C42 115 50 135 65 148 L60 170 L80 158 C87 161 93 162 100 162 C107 162 113 161 120 158 L140 170 L135 148 C150 135 158 115 155 95 C150 65 130 40 100 40 Z M70 55 L55 25 L80 48 Z M130 55 L145 25 L120 48 Z" fill="currentColor"/>
         </svg>
-        <p class="eyebrow" style="margin-top:0;">🦊 Fuchs des Tages</p>
-        <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px;">
-          ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url) : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
+        <p class="eyebrow" style="margin-top:0;">🦊 ${pt.title}</p>
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px; margin-top:14px;">
+          <div style="width:56px; height:56px; flex-shrink:0; position:relative;">
+            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url) : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
+          </div>
           <div>
             <h3 style="margin:0;">${fox.name}</h3>
-            <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte heute</p>
+            <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}</p>
           </div>
         </div>
         <div class="fox-of-day-report-card">
-          <p style="font-weight:700; margin:0 0 6px;">📋 Mitarbeit heute:</p>
+          <p style="font-weight:700; margin:0 0 6px;">📋 ${pt.report}:</p>
           <ul style="margin:0; padding-left:18px;">
             ${fox.reportCard.map((line) => `<li>${line}</li>`).join("")}
           </ul>
           ${fox.profile?.languages?.length ? `<p class="empty-note" style="margin-top:8px;">🗣️ Spricht: ${fox.profile.languages.join(", ")}</p>` : ""}
           ${fox.profile?.origin ? `<p class="empty-note" style="margin-top:4px;">🌍 Kommt aus: ${fox.profile.origin}</p>` : ""}
         </div>
-      </div>` : ""}
+      </div>` : `<p class="empty-note">Noch keine Aktivität in diesem Zeitraum — sei die/der Erste!</p>`}
       ${hallOfFame.length ? `
       <div class="question-card" style="margin-top:14px; padding:0; overflow:hidden;">
         ${siteBannerHtml("hall_of_fame_banner", hofBannerUrl, HALL_OF_FAME_PLACEHOLDER_SVG, "Hall of Fame")}
@@ -10493,6 +10922,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     wireSiteBannerUploads(area);
     document.getElementById("rankTabToday").addEventListener("click", () => { rankingMode = "today"; renderRanking(); });
     document.getElementById("rankTabAllTime").addEventListener("click", () => { rankingMode = "alltime"; renderRanking(); });
+    area.querySelectorAll("[data-fox-period]").forEach((btn) => {
+      btn.addEventListener("click", () => { foxPeriodMode = btn.dataset.foxPeriod; renderRanking(); });
+    });
     area.querySelectorAll("[data-view-ranked]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewRanked));
     });
@@ -10624,7 +11056,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "102";
+  const APP_VERSION = "104";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

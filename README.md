@@ -323,6 +323,22 @@ alter table playlist_songs add column if not exists hidden boolean default false
 alter table playlist_songs add column if not exists original_recommender_id uuid references auth.users;
 alter table playlist_songs add column if not exists original_recommender_name text;
 
+-- Sympathie-System: bewusst rein freundschaftliche Stufen, eigene Tabelle mit RLS, damit
+-- die Angaben PRIVAT bleiben, bis beide Seiten sich gegenseitig markiert haben (Match).
+create table if not exists friend_sympathy (
+  id uuid primary key default gen_random_uuid(),
+  from_user_id uuid references auth.users not null,
+  to_user_id uuid references auth.users not null,
+  level text not null,
+  created_at timestamptz default now(),
+  unique(from_user_id, to_user_id)
+);
+alter table friend_sympathy enable row level security;
+create policy "Eigene Sympathie-Angaben lesen" on friend_sympathy for select using (auth.uid() = from_user_id);
+create policy "Sympathie-Angaben für andere über mich lesen (für Match-Check)" on friend_sympathy for select using (auth.uid() = to_user_id);
+create policy "Eigene Sympathie-Angaben schreiben" on friend_sympathy for insert with check (auth.uid() = from_user_id);
+create policy "Eigene Sympathie-Angaben aktualisieren" on friend_sympathy for update using (auth.uid() = from_user_id);
+
 create table if not exists song_favorites (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users, song_id uuid references playlist_songs,

@@ -539,6 +539,25 @@
 .breakdown-row > span:last-child, .breakdown-row > *:last-child {
   flex-shrink: 0; text-align: right; overflow-wrap: break-word; word-break: normal; min-width: 0;
 }
+/* Für Zeilen mit potenziell LANGEM Freitext-Wert (z. B. mehrere aufgezählte Reiseziele) — hier
+   ist es umgekehrt: das Label links bleibt kurz und fest, der Wert rechts braucht die Freiheit,
+   normal umzubrechen, statt in eine feste, schmale Spalte gequetscht zu werden (was sonst zu
+   einem Umbruch mitten im Wort, fast Buchstabe für Buchstabe, führen kann). Label und Wert stehen
+   deshalb gestapelt untereinander statt nebeneinander. */
+.breakdown-row-stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+.breakdown-row-stacked > span:first-child {
+  flex: none;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.breakdown-row-stacked > span:last-child {
+  flex: none;
+  text-align: left;
+  white-space: normal;
+}
 .zodiac-badge {
   display: inline-flex; align-items: center; gap: 3px;
   font-size: 0.74rem; color: var(--cream-200);
@@ -1103,27 +1122,48 @@
 }
 .avatar-figure-sticker {
   position: absolute;
-  width: 150%; height: 150%;
+  width: 100%; height: 100%;
   max-width: none; max-height: none;
   object-fit: contain;
   border-radius: 0;
 }
-/* Textumfluss-Kopfbereich fürs eigene Profil: das Profilbild schwebt links, die kleinen Info-
-   Angaben (Freunde, Premium, Herkunft, Sternzeichen) fließen als Text um die runde Form herum —
-   wie bei einem Bild in einem Magazin-Layout, statt in einer starren Zeile mit großen Lücken
-   auseinanderzufallen, sobald nicht mehr alles nebeneinander passt. */
+/* Textumfluss-Kopfbereich fürs eigene Profil: das Profilbild sitzt links, die kleinen Info-
+   Angaben (Freunde, Premium, Herkunft, Sternzeichen) direkt daneben in einer eigenen Spalte, die
+   bei Bedarf normal umbricht. Bewusst über Flexbox statt float+shape-outside gelöst — Letzteres
+   verhielt sich in Tests unzuverlässig (Text landete teils komplett unter statt neben dem Bild). */
 .profile-header-flow {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 4px 14px;
   overflow: visible;
 }
 .profile-header-flow .avatar-photo,
 .profile-header-flow .initials-avatar {
-  float: left;
-  width: 128px; height: 128px;
-  shape-outside: circle(50%);
-  -webkit-shape-outside: circle(50%);
+  flex-shrink: 0;
+  /* Skaliert mit der Bildschirmbreite statt fest 128px — auf schmalen Bildschirmen (z. B. viele
+     Android-Geräte um 320–360px) blieb sonst nicht genug Platz für den Text daneben übrig, der
+     dann ungewollt unter statt neben das Bild rutschte. */
+  width: clamp(84px, 26vw, 128px); height: clamp(84px, 26vw, 128px);
   clip-path: circle(50%);
-  margin: 0 14px 8px 0;
   font-size: 2.3rem;
+}
+/* Alle Text-Elemente rechts vom Bild (Name, Badges) müssen bei Bedarf schrumpfen/umbrechen
+   dürfen können — das ist es, was vorher fehlte und wieder zum Überlaufen über den Kartenrand
+   geführt hatte. min-width:0 erlaubt echtes Schrumpfen unter die natürliche Inhaltsbreite. */
+.profile-header-flow > *:not(.avatar-photo):not(.initials-avatar):not(.avatar-figure-sticker-wrap) {
+  min-width: 0;
+  max-width: 100%;
+}
+.profile-header-flow h2 {
+  overflow-wrap: break-word;
+}
+/* WICHTIG: Sammelfiguren als Profilbild dürfen NICHT auf einen Kreis zugeschnitten werden — sonst
+   würden genau die Ohren/Pfoten/der Schwanz abgeschnitten, die eigentlich unbeschnitten über den
+   Rahmen hinausragen sollen. Diese gezielte Ausnahme hebt den clip-path für sie wieder auf. */
+.profile-header-flow .avatar-figure-sticker-wrap {
+  clip-path: none;
+  flex-shrink: 0;
 }
 .flow-badge {
   display: inline-block;
@@ -1368,7 +1408,7 @@
 }
 .tiny-avatar-figure-sticker {
   position: absolute;
-  width: 150%; height: 150%;
+  width: 100%; height: 100%;
   max-width: none; max-height: none;
   object-fit: contain;
   top: 50%; left: 50%;
@@ -1779,10 +1819,14 @@
   0%, 100% { box-shadow: 0 0 0 0 var(--notify-color, #ff4d4d); }
   50% { box-shadow: 0 0 0 2px var(--notify-color, #ff4d4d), 0 0 14px 4px var(--notify-color, #ff4d4d); }
 }
-/* Ticker mit Blink-Effekt, sobald man die Ticker-Sonderfarbe aktiviert */
+/* Ticker mit Blink-Effekt, sobald man die Ticker-Sonderfarbe aktiviert — nutzt bewusst eine
+   EIGENE Variable (--ticker-blink-color), nicht die geteilte --notify-color: letztere wechselt
+   dynamisch mit jeder ankommenden Benachrichtigungsart (z. B. Postfach-Mail in Lila), was sonst
+   ungewollt auch den Ticker-Text einfärben würde, obwohl der Ticker eine eigene, stabile Farbe
+   haben soll. */
 .ticker-blink .ticker-track { animation: tickerColorBlink var(--ticker-blink-speed, 0.7s) linear infinite, tickerScroll 22s linear infinite; }
 @keyframes tickerColorBlink {
-  0%, 49.9% { color: var(--notify-color, #ff4d4d); opacity: 1; }
+  0%, 49.9% { color: var(--ticker-blink-color, #ff4d4d); opacity: 1; }
   50%, 100% { color: inherit; opacity: 0.15; }
 }
 
@@ -1884,7 +1928,10 @@
 }
 
 #musicPlayerBarInner.player-tpl-holz {
-  background: repeating-linear-gradient(90deg, #8B6F47, #8B6F47 3px, #7a5f3d 3px, #7a5f3d 6px);
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, transparent 2px, transparent 5px, rgba(0,0,0,0.04) 6px, transparent 9px, transparent 15px, rgba(0,0,0,0.05) 16px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, transparent 1px, transparent 7px, rgba(255,255,255,0.03) 8px, transparent 12px),
+    linear-gradient(90deg, #8B6F47, #7a5f3d);
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.25);
@@ -1897,7 +1944,10 @@
 }
 #musicPlayerBarInner.player-tpl-holz > span:last-child { color: #F5EFE4; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
 .music-floating-bar.player-tpl-holz {
-  background: repeating-linear-gradient(90deg, #8B6F47, #8B6F47 3px, #7a5f3d 3px, #7a5f3d 6px) !important;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, transparent 2px, transparent 5px, rgba(0,0,0,0.04) 6px, transparent 9px, transparent 15px, rgba(0,0,0,0.05) 16px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, transparent 1px, transparent 7px, rgba(255,255,255,0.03) 8px, transparent 12px),
+    linear-gradient(90deg, #8B6F47, #7a5f3d) !important;
 }
 /* Holzoptik-Knöpfe: runde, warme Holzmaserung statt der Standard-Amber-Farbe — deutlich anders
    als Klassisch. */
@@ -1906,12 +1956,64 @@
    oben für echtes Volumen statt flacher Farbe. */
 .player-tpl-holz .player-panel-btn, .player-tpl-holz .mfb-ctrl {
   background:
-    repeating-linear-gradient(95deg, rgba(0,0,0,0.08) 0px, transparent 1.5px, transparent 4px, rgba(0,0,0,0.05) 5px, transparent 7px),
-    repeating-linear-gradient(88deg, rgba(255,255,255,0.06) 0px, transparent 2px, transparent 6px),
+    repeating-linear-gradient(5deg, rgba(0,0,0,0.08) 0px, transparent 1.5px, transparent 4px, rgba(0,0,0,0.05) 5px, transparent 7px),
+    repeating-linear-gradient(-2deg, rgba(255,255,255,0.06) 0px, transparent 2px, transparent 6px),
     radial-gradient(circle at 35% 30%, #b8926a, #8f6a45 75%) !important;
   border: 2px solid #4a3419 !important;
   color: #2c1c0d !important;
   box-shadow: 0 3px 0 #3a2810, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 4px rgba(0,0,0,0.2) !important;
+}
+/* Chrom & Glas: kühle, moderne High-End-Optik — glänzende, fast weiße Metallfläche mit starkem
+   Glanzlicht, wie gebürstetes Aluminium unter hellem Studiolicht. */
+#musicPlayerBarInner.player-tpl-chrom {
+  background: linear-gradient(160deg, #e8ecf0 0%, #c5cdd4 45%, #dde3e8 55%, #b0b8c0 100%);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.5);
+  max-width: 100%;
+  overflow: hidden;
+}
+#musicPlayerBarInner.player-tpl-chrom .player-digital-time {
+  background: rgba(20,25,30,0.85);
+  color: #7ee6e6;
+}
+#musicPlayerBarInner.player-tpl-chrom > span:last-child { color: #1a2530; text-shadow: 0 1px 0 rgba(255,255,255,0.6); }
+.music-floating-bar.player-tpl-chrom {
+  background: linear-gradient(160deg, #e8ecf0 0%, #c5cdd4 45%, #dde3e8 55%, #b0b8c0 100%) !important;
+}
+.player-tpl-chrom .player-panel-btn, .player-tpl-chrom .mfb-ctrl {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.9) 0%, transparent 30%),
+    radial-gradient(circle at 40% 30%, #f5f7f9, #a8b2ba 80%) !important;
+  border: 1px solid #8a949c !important;
+  color: #232a30 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+}
+/* Röhrenradio: warmes, nostalgisches Bakelit-Design — dunkles Kunststoffbraun mit rundlichen,
+   gewölbten Knöpfen wie bei einem alten 1950er-Jahre-Röhrenradio. */
+#musicPlayerBarInner.player-tpl-roehrenradio {
+  background: radial-gradient(ellipse at 50% 30%, #6b4a3a 0%, #4a3226 70%, #3a2519 100%);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 0 20px rgba(0,0,0,0.4);
+  max-width: 100%;
+  overflow: hidden;
+}
+#musicPlayerBarInner.player-tpl-roehrenradio .player-digital-time {
+  background: rgba(0,0,0,0.4);
+  color: #e8c078;
+  font-family: var(--font-mono);
+}
+#musicPlayerBarInner.player-tpl-roehrenradio > span:last-child { color: #f0dcc4; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.music-floating-bar.player-tpl-roehrenradio {
+  background: radial-gradient(ellipse at 50% 30%, #6b4a3a 0%, #4a3226 70%, #3a2519 100%) !important;
+}
+.player-tpl-roehrenradio .player-panel-btn, .player-tpl-roehrenradio .mfb-ctrl {
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 30%, #d4a86a, #8a6238 75%) !important;
+  border: 2px solid #2e1c10 !important;
+  color: #2e1c10 !important;
+  box-shadow: 0 3px 0 #1f1108, inset 0 2px 0 rgba(255,255,255,0.35) !important;
 }
 /* Retro-Stereo-Knöpfe: gebürstetes Metall statt flacher Neon-Fläche — feine, sich wiederholende
    Streifen in abwechselnden Grautönen simulieren die Bürstenstruktur echter Metallknöpfe, dazu
@@ -1981,13 +2083,23 @@
   transform: translate(-50%, -50%);
   font-size: 1.8rem;
   pointer-events: none;
-  animation: knExplosionPop 0.5s ease-out forwards;
+  animation: knExplosionPop 0.65s steps(1) forwards;
   z-index: 5;
 }
+/* Echtes Flackern/Zittern UND eine durchgehende Drehung während des Flackerns — nicht nur ein
+   leichtes Wackeln, sondern eine spürbare Rotation, die sich über die ganze Animation dreht,
+   während die Transparenz gleichzeitig mehrfach hin und her springt. */
 @keyframes knExplosionPop {
-  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-  30% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+  0%   { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0; }
+  8%   { transform: translate(-52%, -49%) scale(1.4) rotate(45deg); opacity: 1; }
+  16%  { transform: translate(-49%, -51%) scale(1.2) rotate(95deg); opacity: 0.3; }
+  24%  { transform: translate(-51%, -50%) scale(1.5) rotate(150deg); opacity: 1; }
+  32%  { transform: translate(-50%, -48%) scale(1.3) rotate(190deg); opacity: 0.25; }
+  40%  { transform: translate(-49%, -50%) scale(1.5) rotate(240deg); opacity: 1; }
+  48%  { transform: translate(-51%, -51%) scale(1.35) rotate(290deg); opacity: 0.3; }
+  56%  { transform: translate(-50%, -49%) scale(1.5) rotate(330deg); opacity: 0.9; }
+  64%  { transform: translate(-50%, -50%) scale(1.4) rotate(380deg); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) scale(1.6) rotate(420deg); opacity: 0; }
 }
 .kn-word {
   position: absolute;
@@ -2244,4 +2356,46 @@
   font-weight: 700;
   opacity: 0.8;
   flex-shrink: 0;
+}
+
+/* Vorstellungsrunde: kompakte Karten mit dem jeweils eigenen Design der Person, aber bewusst
+   klein und ohne alle Profil-Details — nur ein kurzer, einladender Überblick. */
+.intro-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.intro-card {
+  background: var(--card-bg, #fff);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.intro-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.intro-card-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.intro-card-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.06);
+  font-size: 1.1rem;
+}
+.intro-card-text {
+  font-size: 0.85rem;
+  margin: 4px 0;
+  line-height: 1.4;
+}
+.intro-card-goal, .intro-card-source {
+  opacity: 0.85;
+  font-size: 0.8rem;
 }

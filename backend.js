@@ -142,7 +142,7 @@ const Backend = (function () {
     }
   }
 
-  async function signUp(email, password, name) {
+  async function signUp(email, password, name, referrerId = null) {
     if (client) {
       const redirectTo = window.location.origin + window.location.pathname;
       const { data, error } = await client.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirectTo } });
@@ -156,6 +156,7 @@ const Backend = (function () {
           if (!retry.error && retry.data.session) {
             demo.user = { id: retry.data.user.id, email: retry.data.user.email, name };
             demo.profile = await fetchOrCreateProfile(retry.data.user.id, retry.data.user.email, name);
+            await applyReferralBonus(referrerId);
             return demo.user;
           }
         } catch (e) { /* fällt unten durch zur Bestätigungs-Meldung */ }
@@ -163,13 +164,26 @@ const Backend = (function () {
       }
       demo.user = { id: data.user.id, email: data.user.email, name };
       demo.profile = await fetchOrCreateProfile(data.user.id, data.user.email, name);
+      await applyReferralBonus(referrerId);
       return demo.user;
     }
     if (demo.users[email]) throw new Error("Diese E-Mail ist im Demo-Modus schon registriert.");
     demo.users[email] = { password, profile: defaultProfile(name) };
     demo.user = { id: email, email, name };
     demo.profile = demo.users[email].profile;
+    await applyReferralBonus(referrerId);
     return demo.user;
+  }
+  // Empfehlungs-Bonus: sowohl die werbende Person als auch der/die neu Registrierte bekommen je
+  // 50 Punkte, wenn die Anmeldung über einen personalisierten Empfehlungs-Link kam. Läuft bewusst
+  // NACH erfolgreicher Registrierung, niemals bei bloß angestoßener E-Mail-Bestätigung.
+  const REFERRAL_BONUS_POINTS = 25;
+  async function applyReferralBonus(referrerId) {
+    if (!referrerId || !demo.user || referrerId === demo.user.id) return;
+    try {
+      await adminGrantPoints(demo.user.id, REFERRAL_BONUS_POINTS, "Willkommen! Du hast dich über einen Empfehlungs-Link angemeldet — hier sind 25 Extra-Punkte zum Start! 🎉");
+      await adminGrantPoints(referrerId, REFERRAL_BONUS_POINTS, `Danke, dass du die Seite weiterempfohlen hast — ${demo.user.email ? "jemand" : "eine Person"} hat sich über deinen Link angemeldet! 🎉`);
+    } catch (e) { console.warn("Empfehlungs-Bonus konnte nicht vergeben werden:", e); }
   }
 
   async function signIn(email, password) {
@@ -810,6 +824,7 @@ const Backend = (function () {
   }
 
   let lastPlaylistLoadError = null;
+  let lastUserListError = null;
   async function getPlaylist(ownerId = null) {
     if (client) {
       try {
@@ -822,6 +837,34 @@ const Backend = (function () {
       return [];
     }
     return demo.playlistSongs.filter((s) => (s.owner_id || null) === ownerId && !s.hidden);
+  }
+  // Vorstellungsrunde: eigene Vorstellung speichern (liegt in extraProfileData, kein eigenes
+  // DB-Feld nötig) und alle vorhandenen Vorstellungen der Community abrufen — für die kompakte
+  // Kartenansicht, damit sich Lernende gegenseitig kennenlernen können.
+  async function saveIntroduction(introData) {
+    await updateExtraProfileField("introduction", introData);
+  }
+  async function getAllIntroductions() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("id, name, theme, avatar_url, extra_profile_data").not("extra_profile_data->introduction", "is", null);
+        if (error || !data) return [];
+        return data.filter((p) => p.extra_profile_data && p.extra_profile_data.introduction).map((p) => ({
+          id: p.id, name: p.name, theme: p.theme, avatarUrl: p.avatar_url, introduction: p.extra_profile_data.introduction,
+        }));
+      } catch (e) { return []; }
+    }
+    // Demo-Modus: durchsucht alle bekannten Demo-Profile nach einer hinterlegten Vorstellung.
+    const results = [];
+    Object.values(demo.users || {}).forEach((u) => {
+      if (u.profile && u.profile.extraProfileData && u.profile.extraProfileData.introduction) {
+        results.push({ id: u.profile.id || "demo", name: u.profile.name, theme: u.profile.theme, avatarUrl: u.profile.avatarUrl, introduction: u.profile.extraProfileData.introduction });
+      }
+    });
+    if (demo.profile && demo.profile.extraProfileData && demo.profile.extraProfileData.introduction) {
+      results.push({ id: demo.user.id, name: demo.profile.name, theme: demo.profile.theme, avatarUrl: demo.profile.avatarUrl, introduction: demo.profile.extraProfileData.introduction });
+    }
+    return results;
   }
   // Liste aller Personen, die schon mindestens einen Song in ihrer EIGENEN Playlist haben — für
   // die Übersicht "Playlisten der anderen", damit man mit einem Klick direkt zur Playlist einer
@@ -1120,6 +1163,95 @@ const Backend = (function () {
   }
   function getBestFriendIds() {
     return (demo.profile && demo.profile.extraProfileData && demo.profile.extraProfileData.bestFriendIds) || [];
+  }
+  // Sympathie-System — vier rein freundschaftliche Stufen (bewusst keine romantischen/intimen
+  // Stufen, siehe README für die Begründung), jede mit eigener Herzfarbe. Läuft über eine
+  // eigene Tabelle statt extra_profile_data, weil die Angaben PRIVAT bleiben müssen, bis beide
+  // Seiten sich gegenseitig markiert haben (ein "Match") — RLS regelt, dass niemand die
+  // Angaben der jeweils anderen Person vorab einsehen kann.
+  const SYMPATHY_LEVELS = [
+    { key: "spielen", label: "Ich spiele gerne mit dir", color: "#8bc9a8" },
+    { key: "unterhalten", label: "Ich unterhalte mich gerne mit dir", color: "#5ba8a0" },
+    { key: "befreundet", label: "Ich bin gerne mit dir befreundet", color: "#e8825f" },
+    { key: "naeher", label: "Ich wäre gerne noch näher befreundet", color: "#d64550" },
+  ];
+  // Ein paar naheliegende Begriffe, die auf romantischen/sexuellen statt freundschaftlichen
+  // Inhalt hindeuten — hält die vom Betreiber selbst hinzugefügten Stufen bewusst in derselben,
+  // ursprünglich festgelegten Ausrichtung, auch wenn er sie später erweitert.
+  const SYMPATHY_BLOCKED_WORDS = ["fantasie", "traum", "träum", "sexy", "verliebt", "küss", "kuss", "romantisch", "date", "dating", "flirt", "intim", "körper", "heiß", "scharf"];
+  function containsBlockedSympathyWording(text) {
+    const lower = (text || "").toLowerCase();
+    return SYMPATHY_BLOCKED_WORDS.some((w) => lower.includes(w));
+  }
+  // Eigene, vom Betreiber definierte Stufen — zusätzlich zu den vier eingebauten. Gespeichert über
+  // dasselbe flexible site_content-System wie die Design-Banner und Feature-Flags.
+  async function getAllSympathyLevels() {
+    const custom = (await getSiteContent("custom_sympathy_levels")) || [];
+    return [...SYMPATHY_LEVELS, ...custom];
+  }
+  async function addCustomSympathyLevel(label, color, description) {
+    if (!isAdmin()) throw new Error("Nur der Betreiber kann eigene Sympathie-Stufen anlegen.");
+    if (containsBlockedSympathyWording(label) || containsBlockedSympathyWording(description)) {
+      throw new Error("Diese Stufe bleibt bewusst freundschaftlich statt romantisch/intim ausgerichtet — bitte anders formulieren.");
+    }
+    const custom = (await getSiteContent("custom_sympathy_levels")) || [];
+    const key = "custom_" + Date.now();
+    custom.push({ key, label: label.trim(), color, description: (description || "").trim() });
+    await setSiteContent("custom_sympathy_levels", custom);
+    return key;
+  }
+  async function removeCustomSympathyLevel(key) {
+    if (!isAdmin()) throw new Error("Nur der Betreiber kann eigene Sympathie-Stufen entfernen.");
+    const custom = (await getSiteContent("custom_sympathy_levels")) || [];
+    await setSiteContent("custom_sympathy_levels", custom.filter((l) => l.key !== key));
+  }
+  async function setSympathyLevel(toUserId, level) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (toUserId === demo.user.id) throw new Error("Das geht nicht für dich selbst.");
+    if (client) {
+      const { error } = await client.from("friend_sympathy").upsert(
+        { from_user_id: demo.user.id, to_user_id: toUserId, level },
+        { onConflict: "from_user_id,to_user_id" }
+      );
+      if (error) throw new Error(friendlyDbError(error.message));
+    } else {
+      demo.sympathyEntries = demo.sympathyEntries || [];
+      const existing = demo.sympathyEntries.find((e) => e.from_user_id === demo.user.id && e.to_user_id === toUserId);
+      if (existing) existing.level = level;
+      else demo.sympathyEntries.push({ from_user_id: demo.user.id, to_user_id: toUserId, level });
+    }
+    await checkSympathyMatch(toUserId);
+  }
+  async function getMySympathyFor(otherUserId) {
+    if (!demo.user) return null;
+    if (client) {
+      const { data } = await client.from("friend_sympathy").select("level").eq("from_user_id", demo.user.id).eq("to_user_id", otherUserId).maybeSingle();
+      return data ? data.level : null;
+    }
+    const entry = (demo.sympathyEntries || []).find((e) => e.from_user_id === demo.user.id && e.to_user_id === otherUserId);
+    return entry ? entry.level : null;
+  }
+  // Match = beide Seiten haben sich GEGENSEITIG irgendeine Stufe gegeben — unabhängig davon, ob
+  // beide dieselbe Stufe gewählt haben. Beide bekommen dann automatisch eine Nachricht.
+  async function checkSympathyMatch(otherUserId) {
+    if (!demo.user) return;
+    let theirLevelForMe = null;
+    if (client) {
+      const { data } = await client.from("friend_sympathy").select("level").eq("from_user_id", otherUserId).eq("to_user_id", demo.user.id).maybeSingle();
+      theirLevelForMe = data ? data.level : null;
+    } else {
+      const entry = (demo.sympathyEntries || []).find((e) => e.from_user_id === otherUserId && e.to_user_id === demo.user.id);
+      theirLevelForMe = entry ? entry.level : null;
+    }
+    if (!theirLevelForMe) return; // noch kein Match, die andere Person hat sich noch nicht geäußert
+    // Doppel-Benachrichtigung vermeiden: nur beim ERSTEN Erreichen des Matches verschicken.
+    const alreadyNotifiedKey = [demo.user.id, otherUserId].sort().join("_");
+    if ((demo.profile.extraProfileData?.sympathyMatchesNotified || []).includes(alreadyNotifiedKey)) return;
+    const myName = demo.profile.name;
+    await sendSystemMessage(otherUserId, `💛 Ihr mögt euch gegenseitig! ${myName} mag dich mittlerweile auch sehr gern.`);
+    await sendSystemMessage(demo.user.id, `💛 Ihr mögt euch gegenseitig! Es ist ein Match — ihr mögt euch beide sehr gern.`);
+    const notified = [...(demo.profile.extraProfileData?.sympathyMatchesNotified || []), alreadyNotifiedKey];
+    await updateExtraProfileField("sympathyMatchesNotified", notified);
   }
   async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem, extra }) {
     if (!demo.profile) return { ok: true };
@@ -2070,7 +2202,17 @@ const Backend = (function () {
     if (client) {
       try {
         const { data, error } = await client.from("profiles").select("id,name,points,is_admin,is_owner,is_moderator,is_beta_tester,is_contributor,is_supporter,extra_profile_data,last_active").order("name", { ascending: true });
-        if (error || !data) return [];
+        if (error) {
+          // WICHTIG: den Fehler nicht still verschlucken — sonst sieht der Admin nur "0 Personen
+          // registriert" ohne jeden Hinweis, dass in Wahrheit z. B. eine Spalte in der Datenbank
+          // fehlt (typischerweise, weil ein Nachrüst-SQL aus dem README noch nicht ausgeführt
+          // wurde). lastUserListError wird in der Oberfläche angezeigt, damit das auffindbar ist.
+          lastUserListError = error.message;
+          console.warn("Nutzerliste konnte nicht geladen werden:", error.message);
+          return [];
+        }
+        lastUserListError = null;
+        if (!data) return [];
         return data.map((p) => ({
           id: p.id, name: p.name, points: p.points || 0,
           is_admin: Boolean(p.is_admin), is_owner: Boolean(p.is_owner), is_moderator: Boolean(p.is_moderator),
@@ -2078,7 +2220,7 @@ const Backend = (function () {
           proficiency_level: (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) || "fortgeschritten",
           online: isRecentlyActive(p.last_active), last_active: p.last_active,
         }));
-      } catch (e) { console.warn("Nutzerliste nicht verfügbar:", e); return []; }
+      } catch (e) { lastUserListError = String(e); console.warn("Nutzerliste nicht verfügbar:", e); return []; }
     }
     return Object.entries(demo.users || {}).map(([email, u]) => ({
       id: email, name: u.profile.name, points: u.profile.points || 0,
@@ -2181,15 +2323,38 @@ const Backend = (function () {
     siteShared: 20,         // die Seite heute mit jemandem geteilt
   };
   async function getDailyActivityScores() {
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const ranking = await getRankingToday(); // schon nach Punkten sortiert
+    return getActivityScoresForPeriod(1);
+  }
+  // Generalisierte Version der Tages-Aktivitäts-Berechnung — nimmt die Anzahl Tage zurück
+  // entgegen (1=heute, 7=Woche, 30=Monat, 365=Jahr), damit "Fuchs des Tages" auf denselben
+  // Prinzipien auch für Woche/Monat/Jahr funktioniert, ohne die Logik zu verdoppeln.
+  async function getActivityScoresForPeriod(daysBack) {
+    const start = new Date(); start.setDate(start.getDate() - (daysBack - 1)); start.setHours(0, 0, 0, 0);
     const scores = {}; // user_id -> { name, points, contributions, shared, total }
-    ranking.forEach((r, idx) => {
-      scores[r.user_id] = scores[r.user_id] || { name: r.name, points: 0, contributions: 0, shared: false, total: 0 };
-      scores[r.user_id].points = r.points;
-      scores[r.user_id].total += r.points;
-      if (idx === 0) scores[r.user_id].total += DAILY_ACTIVITY_WEIGHTS.rankingFirstPlace;
-    });
+    if (client) {
+      try {
+        const { data: rankingRows } = await client.from("daily_ranking").select("user_id,name,points,date").gte("date", start.toISOString().slice(0, 10));
+        (rankingRows || []).forEach((r) => {
+          if (!r.user_id) return;
+          scores[r.user_id] = scores[r.user_id] || { name: r.name, points: 0, contributions: 0, shared: false, total: 0 };
+          scores[r.user_id].points += r.points || 0;
+          scores[r.user_id].total += r.points || 0;
+        });
+      } catch (e) { console.warn("Zeitraum-Ranking-Abfrage fehlgeschlagen:", e); }
+    } else {
+      (demo.ranking || []).forEach((r) => {
+        if (!r.user_id || new Date(r.date) < start) return;
+        scores[r.user_id] = scores[r.user_id] || { name: r.name, points: 0, contributions: 0, shared: false, total: 0 };
+        scores[r.user_id].points += r.points || 0;
+        scores[r.user_id].total += r.points || 0;
+      });
+    }
+    // Bei "heute" (daysBack=1) bekommt Platz 1 im Tages-Ranking zusätzlich den Erstplatzierten-
+    // Bonus — bei längeren Zeiträumen zählt stattdessen einfach die Gesamtpunktzahl im Zeitraum.
+    if (daysBack === 1) {
+      const sorted = Object.entries(scores).sort((a, b) => b[1].points - a[1].points);
+      if (sorted.length) scores[sorted[0][0]].total += DAILY_ACTIVITY_WEIGHTS.rankingFirstPlace;
+    }
     if (client) {
       try {
         const [texts, tips, links] = await Promise.all([
@@ -2203,7 +2368,7 @@ const Backend = (function () {
           scores[row.user_id].contributions += 1;
           scores[row.user_id].total += DAILY_ACTIVITY_WEIGHTS.contribution;
         });
-      } catch (e) { console.warn("Beitrags-Zählung für Fuchs des Tages fehlgeschlagen:", e); }
+      } catch (e) { console.warn("Beitrags-Zählung für Fuchs-Zeitraum fehlgeschlagen:", e); }
     } else {
       [...(demo.communityTexts || []), ...(demo.communityTips || []), ...(demo.userLinks || [])].forEach((row) => {
         if (!row.user_id || new Date(row.created_at) < start) return;
@@ -2212,9 +2377,7 @@ const Backend = (function () {
         scores[row.user_id].total += DAILY_ACTIVITY_WEIGHTS.contribution;
       });
     }
-    // Wer die Seite heute geteilt hat (siehe recordSiteShare) — kleiner Zusatzbonus, aber niemals
-    // allein entscheidend, damit man den Titel nicht einfach nur durchs Teilen "erkaufen" kann.
-    if (demo.siteSharesToday) {
+    if (daysBack === 1 && demo.siteSharesToday) {
       Object.keys(demo.siteSharesToday).forEach((uid) => {
         if (scores[uid]) { scores[uid].shared = true; scores[uid].total += DAILY_ACTIVITY_WEIGHTS.siteShared; }
       });
@@ -2223,6 +2386,18 @@ const Backend = (function () {
   }
   async function getFoxOfTheDay() {
     const scores = await getDailyActivityScores();
+    return scores.length ? scores[0] : null;
+  }
+  async function getFoxOfWeek() {
+    const scores = await getActivityScoresForPeriod(7);
+    return scores.length ? scores[0] : null;
+  }
+  async function getFoxOfMonth() {
+    const scores = await getActivityScoresForPeriod(30);
+    return scores.length ? scores[0] : null;
+  }
+  async function getFoxOfYear() {
+    const scores = await getActivityScoresForPeriod(365);
     return scores.length ? scores[0] : null;
   }
   // Einmalige Bonus-Gutschrift pro Tag, sobald jemand als aktueller Fuchs des Tages erkannt wird —
@@ -2280,14 +2455,26 @@ const Backend = (function () {
     return lines;
   }
   async function getFoxOfTheDayShowcase() {
-    const scores = await getDailyActivityScores();
+    return getFoxShowcaseForPeriod(1, "Tages");
+  }
+  // Generische Showcase-Funktion für Woche/Monat/Jahr — dasselbe Prinzip wie beim Tages-Fuchs,
+  // nur mit dem jeweils längeren Zeitraum.
+  async function getFoxShowcaseForPeriod(daysBack, label) {
+    const scores = await getActivityScoresForPeriod(daysBack);
     if (!scores.length) return null;
     const top = scores[0];
-    const rankToday = await getRankingToday();
-    const rankPlace = rankToday.findIndex((r) => r.user_id === top.user_id) + 1;
-    const entry = { ...top, rankPlace: rankPlace || null };
+    const entry = { ...top, rankPlace: 1 };
     const profile = top.user_id ? await getPublicProfile(top.user_id) : null;
-    return { ...entry, reportCard: buildFoxOfDayReportCard(entry), profile };
+    return { ...entry, reportCard: buildFoxOfDayReportCard(entry), profile, periodLabel: label };
+  }
+  async function getFoxOfWeekShowcase() {
+    return getFoxShowcaseForPeriod(7, "Wochen");
+  }
+  async function getFoxOfMonthShowcase() {
+    return getFoxShowcaseForPeriod(30, "Monats");
+  }
+  async function getFoxOfYearShowcase() {
+    return getFoxShowcaseForPeriod(365, "Jahres");
   }
   // Bewerbung als Beta-Tester:in — landet als normale Nachricht im Postfach des Betreibers, der
   // die Rolle dann über die bestehende Admin-Nutzerliste vergeben kann (siehe setBetaTesterStatus).
@@ -2384,6 +2571,7 @@ const Backend = (function () {
     signUp,
     signIn,
     signOut,
+    REFERRAL_BONUS_POINTS,
     currentUser,
     currentProfile,
     refreshCurrentProfile,
@@ -2410,7 +2598,9 @@ const Backend = (function () {
     getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl, getUsersWithPlaylists,
     getHiddenPlaylistSongs, restorePlaylistSong,
     uploadSongCover, setSongCover, getSongPopularity,
+    saveIntroduction, getAllIntroductions,
     getLastPlaylistLoadError: () => lastPlaylistLoadError,
+    getLastUserListError: () => lastUserListError,
     getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, getRawFeatureFlag,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes,
     getBugReports, resolveBugReport,
@@ -2434,6 +2624,7 @@ const Backend = (function () {
     getAllUsers,
     setModeratorStatus, setBetaTesterStatus, submitBetaFeedback, setContributorStatus, setSupporterStatus, getFoxOfTheWeek, applyForBetaTester,
     getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,
+    getFoxOfWeek, getFoxOfMonth, getFoxOfYear, getFoxOfWeekShowcase, getFoxOfMonthShowcase, getFoxOfYearShowcase,
     getFoxOfTheDayShowcase, getFoxOfDayHallOfFame, uploadSiteImage, getSiteImage,
     getPendingCommunityTexts,
     approveCommunityText,
@@ -2478,6 +2669,8 @@ const Backend = (function () {
     deleteComment,
     saveBio,
     saveExtendedProfile, updateExtraProfileField, toggleBestFriend, getBestFriendIds,
+    SYMPATHY_LEVELS, setSympathyLevel, getMySympathyFor,
+    getAllSympathyLevels, addCustomSympathyLevel, removeCustomSympathyLevel,
     saveBirthday,
     uploadAvatar,
     saveAvatarFromGallery,

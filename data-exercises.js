@@ -823,6 +823,42 @@ const ExerciseData = (function () {
       },
       sideFacts: [],
     },
+    "03-18": {
+      year: 1848,
+      levels: {
+        A1: "Am 18. März 1848 gibt es in Berlin Kämpfe auf der Straße. Die Menschen wollen mehr Freiheit. Das nennt man die Märzrevolution.",
+        A2: "Am 18. März 1848 bauen viele Menschen in Berlin Barrikaden. Sie kämpfen gegen das Militär, weil sie mehr Freiheit und Mitbestimmung wollen.",
+        B1: "Am 18. März 1848 eskaliert eine Versammlung vor dem Berliner Schloss zu blutigen Straßenkämpfen. Hunderte Menschen sterben, bis der König das Militär zurückzieht und den Forderungen nach mehr Freiheit nachgibt.",
+        B2: "Am 18. März 1848 fordern Demonstrierende vor dem Berliner Schloss mehr politische Freiheit — nach ungeklärten Schüssen errichten sie in kurzer Zeit Barrikaden in der ganzen Innenstadt, und es kommt zu erbitterten Kämpfen mit dem preußischen Militär, die weit über 200 Todesopfer fordern.",
+        C1: "Die Berliner Märzrevolution vom 18./19. März 1848, ausgelöst durch zwei Schüsse während einer Demonstration vor dem Schloss, zwang König Friedrich Wilhelm IV. zunächst zu weitreichenden Zugeständnissen — ein kurzer Sieg der bürgerlichen Freiheitsbewegung, der jedoch ab 1849 größtenteils wieder rückgängig gemacht wurde.",
+        C2: "Als Teil der europäischen Revolutionswelle von 1848/49 markieren die Berliner Barrikadenkämpfe vom 18. März den gewaltsamen Höhepunkt einer langen revolutionären Entwicklung: Die Uneinigkeit der revolutionären Kräfte ermöglichte es der Krone letztlich, die im Frühjahr erzwungenen liberalen Zugeständnisse binnen eines Jahres weitgehend zurückzunehmen.",
+      },
+      sideFacts: [],
+    },
+    "04-23": {
+      year: 1516,
+      levels: {
+        A1: "Am 23. April 1516 gibt es eine neue Regel für Bier in Bayern. Bier darf nur aus Wasser, Malz und Hopfen sein. Das heißt Reinheitsgebot.",
+        A2: "Am 23. April 1516 erlassen die bayerischen Herzöge das Reinheitsgebot. Bier darf danach nur noch aus Wasser, Gerstenmalz und Hopfen bestehen.",
+        B1: "Am 23. April 1516 wird in Bayern das Reinheitsgebot erlassen: Bier darf nur noch aus Wasser, Gerstenmalz und Hopfen gebraut werden. Es gilt bis heute als eine der ältesten noch gültigen Lebensmittelvorschriften der Welt.",
+        B2: "Am 23. April 1516 erlassen die bayerischen Herzöge Wilhelm IV. und Ludwig X. auf dem Landständetag in Ingolstadt das Reinheitsgebot — eine Vorschrift, die bayerisches Bier fortan auf die Zutaten Wasser, Gerstenmalz und Hopfen beschränkt.",
+        C1: "Das am 23. April 1516 in Ingolstadt erlassene bayerische Reinheitsgebot gilt heute als eine der ältesten noch angewendeten Lebensmittelvorschriften weltweit — ursprünglich vor allem als Verbraucherschutz gegen minderwertige Braumethoden gedacht, wurde es erst im 20. Jahrhundert zum nationalen Qualitätssymbol stilisiert.",
+        C2: "Auch wenn frühere, regional begrenzte Vorläuferregelungen zu Bierzutaten bereits seit dem 14. Jahrhundert belegt sind, gilt das am 23. April 1516 erlassene bayerische Reinheitsgebot als entscheidender Wendepunkt: Erstmals wurde eine solche Vorschrift für das gesamte Herzogtum Bayern verbindlich, lange bevor sie im 20. Jahrhundert zum viel zitierten Aushängeschild deutscher Braukultur wurde.",
+      },
+      sideFacts: [],
+    },
+    "08-06": {
+      year: 1806,
+      levels: {
+        A1: "Am 6. August 1806 endet das Heilige Römische Reich. Kaiser Franz II. gibt seine Krone ab.",
+        A2: "Am 6. August 1806 legt Kaiser Franz II. seine Krone nieder. Damit endet das Heilige Römische Reich nach fast 1000 Jahren.",
+        B1: "Am 6. August 1806 dankt Kaiser Franz II. ab, weil Napoleon großen Druck auf ihn ausübt. Damit endet das Heilige Römische Reich Deutscher Nation nach fast 1000 Jahren Geschichte.",
+        B2: "Am 6. August 1806 legt Kaiser Franz II. unter dem Druck Napoleons die Kaiserkrone nieder, nachdem sich 16 süd- und westdeutsche Fürstentümer im Rheinbund mit Napoleon verbündet und aus dem Reich ausgetreten waren — das Heilige Römische Reich endet damit nach fast 1000 Jahren.",
+        C1: "Die Abdankung Kaiser Franz II. am 6. August 1806, ausgelöst durch die Gründung des napoleontreuen Rheinbunds, markiert das Ende des fast tausendjährigen Heiligen Römischen Reiches — ein Reich, dessen lockere, föderale Struktur den zentralistischen Machtansprüchen Napoleons letztlich nicht mehr standhalten konnte.",
+        C2: "Mit der Niederlegung der Kaiserkrone am 6. August 1806 zog Franz II. die Konsequenz aus einer Entwicklung, die sich bereits durch die Koalitionskriege und den Reichsdeputationshauptschluss von 1803 abgezeichnet hatte: Das Heilige Römische Reich, dessen komplexe föderale Struktur schon länger brüchig geworden war, endete nicht mit einem dramatischen Umsturz, sondern faktisch mit einem einzigen Federstrich.",
+      },
+      sideFacts: [],
+    },
   };
   function germanHistoryForToday(monthDay) {
     return GERMAN_HISTORY_TODAY[monthDay] || null;
@@ -1376,8 +1412,8 @@ const ExerciseData = (function () {
     ["Er ___ schon seit einer Stunde auf der Bank.", "sitzt", ["setzt", "steht", "stellt"], "„Sitzen“ beschreibt den Zustand — „setzen“ wäre die Handlung, sich hinzusetzen."],
     ["___ die Vase bitte auf das Regal.", "Stell", ["Steh", "Leg", "Lieg"], "„Stellen“ ist die Handlung, etwas aufrecht irgendwohin zu bringen."],
     ["Die Vase ___ schon auf dem Regal.", "steht", ["stellt", "liegt", "legt"], "„Stehen“ beschreibt den ruhenden Zustand von etwas Aufrechtem — „stellen“ wäre die Handlung."],
-    ["Ich ___ das Bild an die Wand.", "hänge", ["hängt", "liege", "stehe"], "„Hängen“ als Handlung (etwas aufhängen) ist regelmäßig konjugiert: ich hänge."],
-    ["Das Bild ___ schon an der Wand.", "hängt", ["hänge", "liegt", "steht"], "„Hängen“ als Zustand (etwas hängt bereits) ist unregelmäßig: es hängt (nicht „es hänge“)."],
+    ["Ich ___ das Bild an die Wand.", "hänge", ["hängt", "liege", "stehe"], "„Ich hänge“ ist hier die richtige 1.-Person-Form von „hängen“ (etwas aufhängen) — als Handlung regelmäßig konjugiert: hängen – hängte – gehängt."],
+    ["Das Bild ___ schon an der Wand.", "hängt", ["hänge", "liegt", "steht"], "Hier ist „hängen“ ein Zustand (etwas hängt bereits) — 3. Person Singular: es hängt. Dieses „hängen“ ist unregelmäßig (hängen – hing – gehangen); der Unterschied zeigt sich vor allem im Präteritum und Partizip, nicht in der Gegenwart."],
     ["Kannst du mir das Salz ___?", "bringen", ["holen", "nehmen", "leihen"], "„Bringen“ heißt, etwas zu der Person hin zu transportieren, bei der man gerade ist."],
     ["Ich ___ schnell Brot vom Bäcker.", "hole", ["bringe", "nehme", "leihe"], "„Holen“ heißt, selbst irgendwohin zu gehen und etwas mitzubringen."],
   ];
@@ -2389,7 +2425,7 @@ const ExerciseData = (function () {
     ["Er machte weiter, ___ er sehr müde war.","obwohl","weil","Obwohl — trotz Müdigkeit machte er weiter."],
     ["Sag mir Bescheid, ___ du fertig bist.","wenn","als","Wenn für einen zukünftigen Zeitpunkt."],
     ["Ich war noch klein, ___ meine Familie umzog.","als","wenn","Als für ein einmaliges Ereignis in der Vergangenheit."],
-    ["Wir blieben zu Hause, ___ es stürmte.", "weil", "dass", "weil nennt den Grund."],
+    ["Wir blieben zu Hause, ___ es stürmte.", "weil", "dass", "Weil nennt den Grund."],
     ["Ich hoffe, ___ alles gut geht.", "dass", "weil", "Nach hoffen folgt ein dass-Satz."],
     ["___ es schwierig war, schaffte sie es.", "Obwohl", "Weil", "Obwohl drückt einen Gegensatz aus."],
     ["___ ich die Nachricht las, war ich erleichtert.", "als", "wenn", "als für ein einmaliges Ereignis."],

@@ -184,7 +184,11 @@ button:focus-visible,
   transform: rotate(-6deg);
 }
 .brand-mark::before {
-  content: var(--logo-emoji);
+  /* Bewusst FEST auf den Fuchs statt der pro Design wechselnden --logo-emoji-Variable: das
+     Marken-Logo im Header soll immer eindeutig für die Seite selbst stehen (Fuchs-Maskottchen),
+     nicht bei jedem Design-Wechsel zu einem thematisch unpassenden Symbol wie einer Schere oder
+     einem Wollknäuel springen — das war verwirrend, weil es nichts mit Deutschlernen zu tun hat. */
+  content: "🦊";
 }
 /* Bei manchen Designs verschwimmt das Symbol mit dem Hintergrund seines eigenen kleinen Kreises
    (z. B. helle Glitzer-/Küken-Symbole auf ähnlich hellem Gelb) — dort bekommt es einen dezenten

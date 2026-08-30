@@ -98,6 +98,28 @@ const Core = (function () {
     osc.start(ctx.currentTime + start);
     osc.stop(ctx.currentTime + start + duration);
   }
+  // Weißes Rauschen, gefiltert und mit Lautstärke-Hüllkurve — klingt deutlich authentischer nach
+  // einem echten Explosions-/Knall-Geräusch als reine Sinus-/Sägezahn-Töne allein.
+  function noiseBurst(start, duration, volume = 0.2, filterFreq = 800) {
+    const ctx = getCtx();
+    if (!ctx) return;
+    const bufferSize = ctx.sampleRate * duration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(filterFreq, ctx.currentTime + start);
+    filter.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + start + duration);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(volume, ctx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(ctx.currentTime + start);
+    noise.stop(ctx.currentTime + start + duration);
+  }
 
   const sound = {
     correct() { tone(880, 0, 0.12, "sine"); tone(1318, 0.08, 0.18, "sine"); },
@@ -113,10 +135,35 @@ const Core = (function () {
       [400, 360, 320, 260].forEach((f, i) => tone(f, i * 0.18, 0.24, "sawtooth", 0.12));
     },
     explosion() {
-      // Kurzer, tiefer Knall mit schnellem Abfall — klingt nach einer kleinen Explosion
-      tone(90, 0, 0.28, "sawtooth", 0.22);
-      tone(60, 0.02, 0.22, "square", 0.16);
-      tone(180, 0, 0.08, "square", 0.1);
+      // Echter Knall: gefiltertes Rauschen für den initialen "Wumms", darunter tiefe, abfallende
+      // Töne fürs Nachrumpeln — klingt deutlich authentischer als reine Sinus-/Sägezahn-Töne.
+      noiseBurst(0, 0.22, 0.28, 1400);
+      tone(90, 0, 0.28, "sawtooth", 0.2);
+      tone(55, 0.02, 0.32, "square", 0.16);
+      tone(180, 0, 0.06, "square", 0.08);
+    },
+    zonk() {
+      // Zweisilbiger "Falsch!"-Buzzer, wie bei Quizshows ("eh-EH") — zwei kurze, tiefe Töne mit
+      // fallender Tonhöhe innerhalb jeder Silbe, deutlich vom normalen wrong()-Ton unterscheidbar.
+      tone(220, 0, 0.14, "square", 0.16); tone(160, 0.05, 0.14, "square", 0.14);
+      tone(200, 0.28, 0.16, "square", 0.18); tone(130, 0.34, 0.18, "square", 0.16);
+    },
+    whistle(duration = 0.22) {
+      // Kurzes, absteigendes Pfeifen — wie ein Geschoss im Anflug, kurz bevor es einschlägt.
+      // Frequenz sinkt exponentiell während der gesamten Flugdauer, synchron zur Kugel-Animation.
+      const ctx = getCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + duration);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + duration * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration);
     },
   };
 

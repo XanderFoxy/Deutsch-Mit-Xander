@@ -27,16 +27,17 @@
 <meta name="twitter:image" content="https://xanderfoxy.github.io/Deutsch-Mit-Xander/social-preview.png" />
 
 <link rel="manifest" href="manifest.webmanifest" />
-<link rel="icon" href="icons/icon-192.png" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%8A%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=102" />
-<link rel="stylesheet" href="app-styles.css?v=102" />
-<link rel="stylesheet" href="themes.css?v=102" />
+<link rel="stylesheet" href="styles.css?v=104" />
+<link rel="stylesheet" href="app-styles.css?v=104" />
+<link rel="stylesheet" href="themes.css?v=104" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -243,6 +244,7 @@
       <button class="subnav-pill" data-sub="sub-howitworks" aria-selected="false">❓ So funktioniert's</button>
       <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
       <button class="subnav-pill community-tab-highlight" data-sub="sub-community" aria-selected="false">✍️ Eigene Beiträge</button>
+      <button class="subnav-pill" data-sub="sub-intro" aria-selected="false">🎤 Vorstellungsrunde<span class="subnav-info-icon" data-info="Stell dich der Community kurz vor — wer du bist, warum du hier bist. Auch andere können sich hier vorstellen, damit ihr euch gegenseitig kennenlernt.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
       <button class="subnav-pill" data-sub="sub-tips" aria-selected="false">💡 Schwarmwissen<span class="subnav-info-icon" data-info="Tipps, Links und Erfahrungen von anderen Lernenden — was bei ihnen beim Deutschlernen funktioniert hat.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-music" aria-selected="false">🎵 Musik</button>
@@ -252,6 +254,7 @@
     <div class="subview" id="sub-howitworks" data-active="false"><div id="howItWorksArea"></div></div>
     <div class="subview" id="sub-materials" data-active="false"><div id="materialsArea"></div></div>
     <div class="subview" id="sub-community" data-active="false"><div id="communityStandaloneArea"></div></div>
+    <div class="subview" id="sub-intro" data-active="false"><div id="introRoundArea"></div></div>
     <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
     <div class="subview" id="sub-tips" data-active="false"><div id="tipsArea"></div></div>
     <div class="subview" id="sub-music" data-active="false"><div id="musicArea"></div></div>
@@ -322,12 +325,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=102"></script>
-<script src="supabase-config.js?v=102"></script>
-<script src="data-exercises.js?v=102"></script>
-<script src="data-vocab.js?v=102"></script>
-<script src="backend.js?v=102"></script>
-<script src="quiz.js?v=102"></script>
-<script src="app.js?v=102"></script>
+<script src="core.js?v=104"></script>
+<script src="supabase-config.js?v=104"></script>
+<script src="data-exercises.js?v=104"></script>
+<script src="data-vocab.js?v=104"></script>
+<script src="backend.js?v=104"></script>
+<script src="quiz.js?v=104"></script>
+<script src="app.js?v=104"></script>
 </body>
 </html>
