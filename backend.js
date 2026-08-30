@@ -82,6 +82,9 @@ const Backend = (function () {
           isAdmin: Boolean(data.is_admin),
           isOwner: Boolean(data.is_owner),
           isModerator: Boolean(data.is_moderator),
+          isBetaTester: Boolean(data.is_beta_tester),
+          isContributor: Boolean(data.is_contributor),
+          isSupporter: Boolean(data.is_supporter),
           giftedCategories: data.gifted_categories || [],
           giftedThemes: data.gifted_themes || [],
           languages: data.languages || [],
@@ -480,6 +483,25 @@ const Backend = (function () {
     demo.privateMessages.push({ id: Core.uid(), from_user: demo.user.id, to_user: toUserId, author_name: demo.profile.name, body: (body || "").trim(), is_system: false, image_url: imageUrl || null, read: false, created_at: new Date().toISOString() });
   }
 
+  // Admin schickt gestaffelt Punkte per Postfach — z. B. als Entschädigung oder Belohnung.
+  // Erhöht die Punktzahl der Zielperson direkt in der profiles-Tabelle UND schickt gleichzeitig
+  // eine erklärende System-Nachricht, damit klar ist, wofür.
+  async function adminGrantPoints(toUserId, amount, reason) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Ungültige Punktzahl.");
+    if (client) {
+      const { data: target, error: fetchErr } = await client.from("profiles").select("points").eq("id", toUserId).maybeSingle();
+      if (fetchErr || !target) throw new Error(friendlyDbError(fetchErr?.message || "Profil nicht gefunden."));
+      const { error } = await client.from("profiles").update({ points: (target.points || 0) + amount }).eq("id", toUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+    } else {
+      demo.allProfiles = demo.allProfiles || [];
+      const target = demo.allProfiles.find((p) => p.id === toUserId) || demo.profile;
+      if (target) target.points = (target.points || 0) + amount;
+    }
+    const messageText = `🎁 Du hast ${amount} Punkte geschenkt bekommen!${reason ? `\n\nGrund: ${reason}` : ""}`;
+    await sendSystemMessage(toUserId, messageText);
+  }
   async function sendBroadcastMessage(body) {
     if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Rundmails verschicken.");
     if (!body || !body.trim()) throw new Error("Nachricht darf nicht leer sein.");
@@ -515,10 +537,11 @@ const Backend = (function () {
   // welche Frage gerade angezeigt wurde) werden mitgeschickt.
   async function reportBug(context, errorType) {
     const reporterName = demo.profile ? demo.profile.name : "Unbekannt";
+    const reporterId = demo.user ? demo.user.id : null;
     // Zusätzlich zur Nachricht (unten) in eine eigene, übersichtliche Sammelstelle schreiben, die
     // der Admin gebündelt einsehen kann, statt zwischen allen anderen Postfach-Nachrichten suchen
     // zu müssen.
-    const record = { reporter_name: reporterName, context, category: errorType, resolved: false, created_at: new Date().toISOString() };
+    const record = { reporter_name: reporterName, reporter_id: reporterId, context, category: errorType, resolved: false, created_at: new Date().toISOString() };
     if (client) {
       client.from("bug_reports").insert(record).then(() => {}, (e) => console.warn("Bug-Report konnte nicht gespeichert werden:", e));
     } else {
@@ -537,7 +560,7 @@ const Backend = (function () {
       ownerId = ownerEmail;
     }
     if (!ownerId) return;
-    const body = `🐛 FEHLERMELDUNG\n\nVon: ${reporterName}\nOrt: ${context}\nArt: ${errorType}\nZeitpunkt: ${new Date().toLocaleString("de-DE")}`;
+    const body = `🪲 FEHLERMELDUNG\n\nVon: ${reporterName}\nOrt: ${context}\nArt: ${errorType}\nZeitpunkt: ${new Date().toLocaleString("de-DE")}`;
     await sendSystemMessage(ownerId, body);
   }
 
@@ -702,15 +725,31 @@ const Backend = (function () {
     }
     return [...(demo.bugReports || [])].reverse();
   }
+  // Sobald ein Admin einen Fehler als erledigt/verifiziert markiert, bekommt die meldende Person
+  // automatisch 10 Punkte gutgeschrieben — als kleiner Dank fürs Mithelfen. Passiert nur einmal
+  // (steuert über das "resolved"-Flag), auch wenn versehentlich mehrfach geklickt wird.
   async function resolveBugReport(id) {
     if (!isAdmin()) throw new Error("Nur Administratoren können das.");
     if (client) {
+      const { data: report, error: fetchErr } = await client.from("bug_reports").select("resolved,reporter_id").eq("id", id).maybeSingle();
+      if (fetchErr) throw new Error(friendlyDbError(fetchErr.message));
+      const alreadyResolved = report && report.resolved;
       const { error } = await client.from("bug_reports").update({ resolved: true }).eq("id", id);
       if (error) throw new Error(friendlyDbError(error.message));
+      if (!alreadyResolved && report && report.reporter_id) {
+        try { await adminGrantPoints(report.reporter_id, 10, "Danke fürs Melden eines Fehlers — bestätigt und behoben!"); }
+        catch (e) { console.warn("Belohnung für Bug-Melder konnte nicht vergeben werden:", e); }
+      }
       return;
     }
     const r = (demo.bugReports || []).find((x) => x.id === id);
-    if (r) r.resolved = true;
+    if (r && !r.resolved) {
+      r.resolved = true;
+      if (r.reporter_id) {
+        try { await adminGrantPoints(r.reporter_id, 10, "Danke fürs Melden eines Fehlers — bestätigt und behoben!"); }
+        catch (e) { console.warn("Belohnung für Bug-Melder konnte nicht vergeben werden:", e); }
+      }
+    }
   }
 
   async function getSiteContent(key) {
@@ -734,17 +773,55 @@ const Backend = (function () {
     demo.siteContent[key] = value;
   }
 
+  // ============ FREIGABE-SCHALTER FÜR NEUE FEATURES ============
+  // Neue, noch nicht ganz fertig geprüfte Funktionen werden hinter einem benannten Schalter
+  // versteckt — für ALLE Besucher unsichtbar/inaktiv, außer für dich als Betreiber (du siehst und
+  // kannst sie live testen, bevor irgendjemand sonst sie zu Gesicht bekommt). Sobald du zufrieden
+  // bist, schaltest du den betreffenden Namen frei — ab dem Moment sehen es alle. Reißt du die
+  // Freigabe zurück, verschwindet es für alle wieder augenblicklich, so als wäre nichts gewesen.
+  // Genutzt wird dafür dieselbe generische site_content-Tabelle, unter dem festen Schlüssel
+  // "feature_flags" — ein einziges JSON-Objekt mit allen bekannten Schaltern.
+  let featureFlagsCache = null;
+  async function getFeatureFlags() {
+    if (featureFlagsCache) return featureFlagsCache;
+    const stored = await getSiteContent("feature_flags");
+    featureFlagsCache = stored || {};
+    return featureFlagsCache;
+  }
+  async function setFeatureFlag(key, enabled) {
+    const flags = await getFeatureFlags();
+    flags[key] = enabled;
+    featureFlagsCache = flags;
+    await setSiteContent("feature_flags", flags);
+  }
+  // Prüft, ob ein Feature gerade sichtbar sein soll: für dich als Betreiber IMMER ja (damit du in
+  // echt durchklicken/durchspielen kannst, bevor es live geht) — für alle anderen nur, wenn du es
+  // bereits ausdrücklich freigeschaltet hast.
+  function isFeatureOn(key) {
+    if (isOwner()) return true;
+    if (demo.profile && demo.profile.isBetaTester) return true;
+    return Boolean(featureFlagsCache && featureFlagsCache[key]);
+  }
+  // Für die Admin-Oberfläche selbst: der ECHTE, rohe Schalter-Zustand, OHNE die
+  // "Betreiber sieht immer alles"-Sonderregel — sonst würde der Umschalter fälschlich immer
+  // als "an" erscheinen, egal ob er für alle anderen wirklich schon freigegeben ist.
+  function getRawFeatureFlag(key) {
+    return Boolean(featureFlagsCache && featureFlagsCache[key]);
+  }
+
+  let lastPlaylistLoadError = null;
   async function getPlaylist(ownerId = null) {
     if (client) {
       try {
         let q = client.from("playlist_songs").select("*").order("created_at", { ascending: true });
         q = ownerId ? q.eq("owner_id", ownerId) : q.is("owner_id", null);
         const { data, error } = await q;
-        if (!error && data) return data;
-      } catch (e) { console.warn("Playlist konnte nicht geladen werden:", e); }
+        if (!error && data) return data.filter((s) => !s.hidden);
+        if (error) { console.warn("Playlist-Ladefehler (Tabelle/Spalte fehlt evtl. noch — siehe README-SQL):", error.message); lastPlaylistLoadError = error.message; }
+      } catch (e) { console.warn("Playlist konnte nicht geladen werden:", e); lastPlaylistLoadError = String(e); }
       return [];
     }
-    return demo.playlistSongs.filter((s) => (s.owner_id || null) === ownerId);
+    return demo.playlistSongs.filter((s) => (s.owner_id || null) === ownerId && !s.hidden);
   }
   // Liste aller Personen, die schon mindestens einen Song in ihrer EIGENEN Playlist haben — für
   // die Übersicht "Playlisten der anderen", damit man mit einem Klick direkt zur Playlist einer
@@ -766,31 +843,129 @@ const Backend = (function () {
       return entry ? { id, name: entry.profile.name, avatar_url: entry.profile.avatarUrl } : { id, name: "Unbekannt", avatar_url: null };
     });
   }
-  async function addPlaylistSong(title, url, ownerId = null, recommendedByName = null) {
+  async function addPlaylistSong(title, url, ownerId = null, recommendedByName = null, coverUrl = null, originalRecommenderId = null, originalRecommenderName = null) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (ownerId === null && !isAdmin()) throw new Error("Nur Administratoren können Songs zur gemeinsamen Playlist hinzufügen.");
     if (ownerId !== null && ownerId !== demo.user.id) throw new Error("Du kannst nur zu deiner eigenen Playlist hinzufügen.");
     if (!title.trim() || !url.trim()) throw new Error("Titel und Link dürfen nicht leer sein.");
-    const song = { title: title.trim(), url: url.trim(), added_by: demo.user.id, owner_id: ownerId, recommended_by_name: recommendedByName, created_at: new Date().toISOString() };
+    const song = {
+      title: title.trim(), url: url.trim(), added_by: demo.user.id, owner_id: ownerId,
+      recommended_by_name: recommendedByName, cover_url: coverUrl || null,
+      // Verfolgt die URSPRÜNGLICHE Quelle über beliebig lange Übernahme-Ketten hinweg — wichtig
+      // für die Beliebtheits-Zählung: wenn A's Song von B übernommen wird und dann von C aus B's
+      // Playlist übernommen wird, soll die Beliebtheit trotzdem korrekt bei A landen, nicht bei B.
+      original_recommender_id: originalRecommenderId, original_recommender_name: originalRecommenderName,
+      created_at: new Date().toISOString(),
+    };
+    // Zähler für den Musikerfuchs — nur bei der EIGENEN Playlist, nicht bei Beiträgen zur
+    // gemeinsamen (die zählen als Admin-Kuration, nicht als persönlicher Musikbeitrag).
+    if (ownerId === demo.user.id) {
+      const extra = demo.profile.extraProfileData || {};
+      extra.songsAddedCount = (extra.songsAddedCount || 0) + 1;
+      demo.profile.extraProfileData = extra;
+      updateExtraProfileField("songsAddedCount", extra.songsAddedCount);
+    }
+    let savedSong;
     if (client) {
       const { data, error } = await client.from("playlist_songs").insert(song).select().single();
       if (error) throw new Error(friendlyDbError(error.message));
-      return data;
+      savedSong = data;
+    } else {
+      song.id = Core.uid();
+      demo.playlistSongs.push(song);
+      savedSong = song;
     }
-    song.id = Core.uid();
-    demo.playlistSongs.push(song);
-    return song;
+    // Automatische kleine Belohnung für die URSPRÜNGLICHE empfehlende Person, sobald ihr Song von
+    // jemand anderem übernommen wird — die Beliebtheit eines Songs (siehe getSongPopularity) macht
+    // sich so auch in echten Punkten bemerkbar, nicht nur als Anzeige.
+    if (originalRecommenderId && originalRecommenderId !== demo.user.id) {
+      try { await adminGrantPoints(originalRecommenderId, 5, `Dein empfohlener Song „${title.trim()}" wurde von jemandem übernommen — macht ihn beliebter! 🎵`); }
+      catch (e) { console.warn("Beliebtheits-Bonus konnte nicht vergeben werden:", e); }
+    }
+    return savedSong;
   }
+  // Zählt, wie oft ein Song (verfolgt über die ursprünglich empfehlende Person + Titel) in andere
+  // Playlists übernommen wurde — die "Beliebtheit" eines Songs.
+  async function getSongPopularity(originalRecommenderId, title) {
+    if (!originalRecommenderId) return 0;
+    if (client) {
+      try {
+        const { count, error } = await client.from("playlist_songs").select("id", { count: "exact", head: true })
+          .eq("original_recommender_id", originalRecommenderId).eq("title", title);
+        if (!error) return count || 0;
+        return 0;
+      } catch (e) { return 0; }
+    }
+    return (demo.playlistSongs || []).filter((s) => s.original_recommender_id === originalRecommenderId && s.title === title).length;
+  }
+  // Cover-Bild für einen Song hochladen — Alternative zum YouTube-Video als "Cover-Ansicht" im
+  // aufgeklappten Player-Fenster (siehe renderMusicPlayer/setSongCover).
+  async function uploadSongCover(file) {
+    if (!client || !demo.user) throw new Error("Bilder hochladen geht nur mit verbundenem Supabase.");
+    const path = `${demo.user.id}/song-cover-${Date.now()}-${file.name}`;
+    const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    const { data } = client.storage.from("avatars").getPublicUrl(path);
+    return data.publicUrl;
+  }
+  async function setSongCover(songId, coverUrl) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("playlist_songs").update({ cover_url: coverUrl }).eq("id", songId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    const song = (demo.playlistSongs || []).find((s) => s.id === songId);
+    if (song) song.cover_url = coverUrl;
+  }
+  // Bei der GEMEINSAMEN Playlist wird nichts mehr wirklich gelöscht — nur versteckt (soft
+  // delete), damit mühsam zusammengetragene Musik nie komplett verloren geht und jederzeit
+  // wiederhergestellt werden kann. Bei der EIGENEN Playlist bleibt es echtes Löschen, da dort
+  // jede Person selbst über ihre eigene, kleinere Auswahl entscheidet.
   async function deletePlaylistSong(id, ownerId = null) {
     // Eigene Playlist: die Person selbst darf löschen. Gemeinsame Playlist: nur Admins.
     if (ownerId === null && !isAdmin()) throw new Error("Nur Administratoren können Songs aus der gemeinsamen Playlist entfernen.");
     if (ownerId !== null && (!demo.user || ownerId !== demo.user.id) && !isAdmin()) throw new Error("Du kannst nur Songs aus deiner eigenen Playlist entfernen.");
+    if (ownerId === null) {
+      // Gemeinsame Playlist: nur verstecken, nicht zerstören.
+      if (client) {
+        const { error } = await client.from("playlist_songs").update({ hidden: true }).eq("id", id);
+        if (error) throw new Error(friendlyDbError(error.message));
+        return;
+      }
+      const song = (demo.playlistSongs || []).find((s) => s.id === id);
+      if (song) song.hidden = true;
+      return;
+    }
     if (client) {
       const { error } = await client.from("playlist_songs").delete().eq("id", id);
       if (error) throw new Error(friendlyDbError(error.message));
       return;
     }
     demo.playlistSongs = demo.playlistSongs.filter((s) => s.id !== id);
+  }
+  // Versteckte (nicht gelöschte) Songs aus der gemeinsamen Playlist wieder anzeigen —
+  // Papierkorb-Ansicht für Admins.
+  async function getHiddenPlaylistSongs() {
+    if (!isAdmin()) return [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("playlist_songs").select("*").is("owner_id", null).eq("hidden", true).order("created_at", { ascending: false });
+        if (!error && data) return data;
+        return [];
+      } catch (e) { return []; }
+    }
+    return (demo.playlistSongs || []).filter((s) => !s.owner_id && s.hidden);
+  }
+  async function restorePlaylistSong(id) {
+    if (!isAdmin()) throw new Error("Nur Administratoren können Songs wiederherstellen.");
+    if (client) {
+      const { error } = await client.from("playlist_songs").update({ hidden: false }).eq("id", id);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    const song = (demo.playlistSongs || []).find((s) => s.id === id);
+    if (song) song.hidden = false;
   }
   async function toggleFavoriteSong(songId) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
@@ -933,6 +1108,18 @@ const Backend = (function () {
       if (error) return { ok: false, message: friendlyDbError(error.message) };
     }
     return { ok: true };
+  }
+  // "Beste Freunde" markieren — nutzt dasselbe flexible extra_profile_data-Feld statt einer
+  // eigenen Tabelle, damit dafür kein zusätzliches Nachrüst-SQL nötig ist.
+  async function toggleBestFriend(friendId) {
+    if (!demo.profile) return { ok: true };
+    const current = (demo.profile.extraProfileData && demo.profile.extraProfileData.bestFriendIds) || [];
+    const isBest = current.includes(friendId);
+    const updated = isBest ? current.filter((id) => id !== friendId) : [...current, friendId];
+    return updateExtraProfileField("bestFriendIds", updated);
+  }
+  function getBestFriendIds() {
+    return (demo.profile && demo.profile.extraProfileData && demo.profile.extraProfileData.bestFriendIds) || [];
   }
   async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem, extra }) {
     if (!demo.profile) return { ok: true };
@@ -1100,6 +1287,7 @@ const Backend = (function () {
             id: data.id, name: data.name, bio: data.bio, avatar_url: data.avatar_url, avatar_emoji: data.avatar_emoji,
             badges: data.badges, trophies: data.trophies, points: data.points, origin: data.origin, hobbies: data.hobbies,
             is_admin: Boolean(data.is_admin), is_owner: Boolean(data.is_owner), is_moderator: Boolean(data.is_moderator), gallery: data.gallery || [],
+            is_beta_tester: Boolean(data.is_beta_tester), is_contributor: Boolean(data.is_contributor), is_supporter: Boolean(data.is_supporter),
             last_active: data.last_active, online: isRecentlyActive(data.last_active),
             languages: data.languages || [], fav_movie: data.fav_movie || "", fav_series: data.fav_series || "",
             fav_song: data.fav_song || "", fav_food: data.fav_food || "", poem: data.poem || "",
@@ -1120,6 +1308,7 @@ const Backend = (function () {
       badges: u.profile.badges, trophies: u.profile.trophies, points: u.profile.points,
       origin: u.profile.origin, hobbies: u.profile.hobbies, is_admin: u.profile.isAdmin, is_owner: u.profile.isOwner,
       is_moderator: u.profile.isModerator, gallery: u.profile.gallery, last_active: u.profile.lastActive || null, online: false,
+      is_beta_tester: u.profile.isBetaTester, is_contributor: u.profile.isContributor, is_supporter: u.profile.isSupporter,
       languages: u.profile.languages || [], fav_movie: u.profile.favMovie || "", fav_series: u.profile.favSeries || "",
       fav_song: u.profile.favSong || "", fav_food: u.profile.favFood || "", poem: u.profile.poem || "",
       fav_drink: u.profile.favDrink || "", fav_country: u.profile.favCountry || "", fav_quote: u.profile.favQuote || "",
@@ -1359,9 +1548,11 @@ const Backend = (function () {
         user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending",
       });
       if (error) throw new Error(friendlyDbError(error.message));
+      addActivity(`${demo.profile.name} hat einen Schwarmwissen-Tipp geteilt. 💡`);
       return;
     }
     demo.communityTips.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending", created_at: new Date().toISOString() });
+    addActivity(`${demo.profile.name} hat einen Schwarmwissen-Tipp geteilt. 💡`);
   }
   async function getApprovedCommunityTips() {
     if (client) {
@@ -1439,9 +1630,11 @@ const Backend = (function () {
         user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending",
       });
       if (error) throw new Error(friendlyDbError(error.message));
+      addActivity(`${demo.profile.name} hat einen Link vorgeschlagen: „${title}". 🔗`);
       return;
     }
     demo.userLinks.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending", created_at: new Date().toISOString() });
+    addActivity(`${demo.profile.name} hat einen Link vorgeschlagen: „${title}". 🔗`);
   }
   async function getApprovedUserLinks() {
     if (client) {
@@ -1524,9 +1717,11 @@ const Backend = (function () {
         user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending", cover_url: coverUrl || null,
       });
       if (error) throw new Error(friendlyDbError(error.message));
+      addActivity(`${demo.profile.name} hat einen eigenen Beitrag eingereicht: „${title}". ✍️`);
       return;
     }
     demo.communityTexts.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, cover_url: coverUrl || null, status: "pending", created_at: new Date().toISOString() });
+    addActivity(`${demo.profile.name} hat einen eigenen Beitrag eingereicht: „${title}". ✍️`);
   }
   // Nachträgliches Bearbeiten des eigenen Beitrags — Titelbild ändern/ergänzen und/oder eine
   // weitere Sprachniveau-Fassung zur bestehenden Geschichte hinzufügen (ohne dass man vorher
@@ -1874,11 +2069,13 @@ const Backend = (function () {
     if (!canModerate()) return [];
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name,points,is_admin,is_owner,is_moderator,last_active").order("name", { ascending: true });
+        const { data, error } = await client.from("profiles").select("id,name,points,is_admin,is_owner,is_moderator,is_beta_tester,is_contributor,is_supporter,extra_profile_data,last_active").order("name", { ascending: true });
         if (error || !data) return [];
         return data.map((p) => ({
           id: p.id, name: p.name, points: p.points || 0,
           is_admin: Boolean(p.is_admin), is_owner: Boolean(p.is_owner), is_moderator: Boolean(p.is_moderator),
+          is_beta_tester: Boolean(p.is_beta_tester), is_contributor: Boolean(p.is_contributor), is_supporter: Boolean(p.is_supporter),
+          proficiency_level: (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) || "fortgeschritten",
           online: isRecentlyActive(p.last_active), last_active: p.last_active,
         }));
       } catch (e) { console.warn("Nutzerliste nicht verfügbar:", e); return []; }
@@ -1886,6 +2083,8 @@ const Backend = (function () {
     return Object.entries(demo.users || {}).map(([email, u]) => ({
       id: email, name: u.profile.name, points: u.profile.points || 0,
       is_admin: Boolean(u.profile.isAdmin), is_owner: Boolean(u.profile.isOwner), is_moderator: Boolean(u.profile.isModerator),
+      is_beta_tester: Boolean(u.profile.isBetaTester), is_contributor: Boolean(u.profile.isContributor), is_supporter: Boolean(u.profile.isSupporter),
+      proficiency_level: (u.profile.extraProfileData && u.profile.extraProfileData.proficiencyLevel) || "fortgeschritten",
       online: false, last_active: null,
     })).sort((a, b) => a.name.localeCompare(b.name, "de"));
   }
@@ -1905,6 +2104,278 @@ const Backend = (function () {
       u.profile.isModerator = value;
       await addActivity(value ? `${u.profile.name} wurde von ${demo.profile.name} zum Moderator ernannt. 🧹` : `${u.profile.name} ist nicht mehr Moderator. 🧹`);
     }
+  }
+  // Beta-Tester:in — eigene, kleinere Rolle ohne Moderationsrechte, aber mit Zugriff auf noch
+  // nicht öffentlich freigegebene Features (siehe isFeatureOn) plus dem kleinen Extra, dass eigene
+  // Beiträge sofort für sie selbst sichtbar sind, auch vor der Freischaltung durch den Betreiber
+  // (Vorwarnung: nur für SIE SELBST, nicht für die Öffentlichkeit — siehe communityTextLevels-
+  // Anzeige-Logik).
+  async function setBetaTesterStatus(targetUserId, value) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können diese Rolle vergeben.");
+    if (client) {
+      const { error } = await client.from("profiles").update({ is_beta_tester: value }).eq("id", targetUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      const names = await namesFor([targetUserId]);
+      const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
+      if (value) await sendSystemMessage(targetUserId, "🧪 Du bist jetzt Beta-Tester:in! Du kannst neue, noch nicht öffentliche Funktionen als Erste:r ausprobieren — schau regelmäßig in den Einstellungen vorbei.");
+      await addActivity(value ? `${targetName} ist jetzt Beta-Tester:in! 🧪` : `${targetName} ist nicht mehr Beta-Tester:in.`);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) {
+      u.profile.isBetaTester = value;
+      if (value) await sendSystemMessage(targetUserId, "🧪 Du bist jetzt Beta-Tester:in! Du kannst neue, noch nicht öffentliche Funktionen als Erste:r ausprobieren — schau regelmäßig in den Einstellungen vorbei.");
+      await addActivity(value ? `${u.profile.name} ist jetzt Beta-Tester:in! 🧪` : `${u.profile.name} ist nicht mehr Beta-Tester:in.`);
+    }
+  }
+  // Mitgestalter:in — für Menschen, die die Seite aktiv mit aufbauen (regelmäßig eigene Beiträge,
+  // Links, Schwarmwissen einreichen), OHNE dass es sich wie eine Herabstufung gegenüber Admin/Mod
+  // anfühlt — bewusst als "gemeinsam etwas schaffen", nicht als Hierarchiestufe formuliert.
+  async function setContributorStatus(targetUserId, value) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können diese Rolle vergeben.");
+    if (client) {
+      const { error } = await client.from("profiles").update({ is_contributor: value }).eq("id", targetUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      const names = await namesFor([targetUserId]);
+      const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
+      if (value) await sendSystemMessage(targetUserId, "🛠️ Du bist jetzt offiziell Mitgestalter:in! Danke, dass du die Seite mit aufbaust — das sieht jetzt auch jeder an deinem Profil.");
+      await addActivity(value ? `${targetName} ist jetzt Mitgestalter:in! 🛠️` : `${targetName} ist nicht mehr Mitgestalter:in.`);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) {
+      u.profile.isContributor = value;
+      if (value) await sendSystemMessage(targetUserId, "🛠️ Du bist jetzt offiziell Mitgestalter:in! Danke, dass du die Seite mit aufbaust — das sieht jetzt auch jeder an deinem Profil.");
+      await addActivity(value ? `${u.profile.name} ist jetzt Mitgestalter:in! 🛠️` : `${u.profile.name} ist nicht mehr Mitgestalter:in.`);
+    }
+  }
+  // Unterstützer:in — für Menschen, die die Seite finanziell unterstützt haben (z. B. per PayPal-
+  // Spende). WICHTIG, ehrlich: es gibt keine automatische Erkennung von PayPal-Spenden, da die
+  // Seite keinen eigenen Server hat, der PayPal-Benachrichtigungen empfangen könnte — das muss der
+  // Betreiber nach jeder Spende manuell hier vergeben.
+  async function setSupporterStatus(targetUserId, value) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können diese Rolle vergeben.");
+    if (client) {
+      const { error } = await client.from("profiles").update({ is_supporter: value }).eq("id", targetUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      const names = await namesFor([targetUserId]);
+      const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
+      if (value) await sendSystemMessage(targetUserId, "💛 Ganz herzlichen Dank für deine Unterstützung! Du trägst jetzt offiziell das Unterstützer-Abzeichen in deinem Profil.");
+      await addActivity(value ? `${targetName} ist jetzt Unterstützer:in — danke für die Unterstützung! 💛` : `${targetName} ist nicht mehr als Unterstützer:in markiert.`);
+      return;
+    }
+    const u = demo.users[targetUserId];
+    if (u) {
+      u.profile.isSupporter = value;
+      if (value) await sendSystemMessage(targetUserId, "💛 Ganz herzlichen Dank für deine Unterstützung! Du trägst jetzt offiziell das Unterstützer-Abzeichen in deinem Profil.");
+      await addActivity(value ? `${u.profile.name} ist jetzt Unterstützer:in — danke für die Unterstützung! 💛` : `${u.profile.name} ist nicht mehr als Unterstützer:in markiert.`);
+    }
+  }
+  // "Fuchs des Tages" — zusammengesetzter Aktivitäts-Wert, nicht nur die reinen Spiel-Punkte:
+  // gewichtet mehrere Arten von Fleiß/Beitrag zu einem Gesamtwert zusammen. Wer heute den
+  // höchsten Wert hat, gilt als "Fuchs des Tages". Da die Seite keinen eigenen Server für exakte
+  // Mitternachts-Krönung hat, wird das bei jedem Aufruf LIVE für den aktuellen Tag neu berechnet.
+  const DAILY_ACTIVITY_WEIGHTS = {
+    rankingFirstPlace: 100, // heute Platz 1 im Punkte-Ranking
+    contribution: 50,       // pro eingereichtem Beitrag heute (Text/Tipp/Link)
+    siteShared: 20,         // die Seite heute mit jemandem geteilt
+  };
+  async function getDailyActivityScores() {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const ranking = await getRankingToday(); // schon nach Punkten sortiert
+    const scores = {}; // user_id -> { name, points, contributions, shared, total }
+    ranking.forEach((r, idx) => {
+      scores[r.user_id] = scores[r.user_id] || { name: r.name, points: 0, contributions: 0, shared: false, total: 0 };
+      scores[r.user_id].points = r.points;
+      scores[r.user_id].total += r.points;
+      if (idx === 0) scores[r.user_id].total += DAILY_ACTIVITY_WEIGHTS.rankingFirstPlace;
+    });
+    if (client) {
+      try {
+        const [texts, tips, links] = await Promise.all([
+          client.from("community_texts").select("user_id,author_name").gte("created_at", start.toISOString()),
+          client.from("community_tips").select("user_id,author_name").gte("created_at", start.toISOString()),
+          client.from("user_links").select("user_id,author_name").gte("created_at", start.toISOString()),
+        ]);
+        [...(texts.data || []), ...(tips.data || []), ...(links.data || [])].forEach((row) => {
+          if (!row.user_id) return;
+          scores[row.user_id] = scores[row.user_id] || { name: row.author_name, points: 0, contributions: 0, shared: false, total: 0 };
+          scores[row.user_id].contributions += 1;
+          scores[row.user_id].total += DAILY_ACTIVITY_WEIGHTS.contribution;
+        });
+      } catch (e) { console.warn("Beitrags-Zählung für Fuchs des Tages fehlgeschlagen:", e); }
+    } else {
+      [...(demo.communityTexts || []), ...(demo.communityTips || []), ...(demo.userLinks || [])].forEach((row) => {
+        if (!row.user_id || new Date(row.created_at) < start) return;
+        scores[row.user_id] = scores[row.user_id] || { name: row.author_name, points: 0, contributions: 0, shared: false, total: 0 };
+        scores[row.user_id].contributions += 1;
+        scores[row.user_id].total += DAILY_ACTIVITY_WEIGHTS.contribution;
+      });
+    }
+    // Wer die Seite heute geteilt hat (siehe recordSiteShare) — kleiner Zusatzbonus, aber niemals
+    // allein entscheidend, damit man den Titel nicht einfach nur durchs Teilen "erkaufen" kann.
+    if (demo.siteSharesToday) {
+      Object.keys(demo.siteSharesToday).forEach((uid) => {
+        if (scores[uid]) { scores[uid].shared = true; scores[uid].total += DAILY_ACTIVITY_WEIGHTS.siteShared; }
+      });
+    }
+    return Object.entries(scores).map(([user_id, s]) => ({ user_id, ...s })).sort((a, b) => b.total - a.total);
+  }
+  async function getFoxOfTheDay() {
+    const scores = await getDailyActivityScores();
+    return scores.length ? scores[0] : null;
+  }
+  // Einmalige Bonus-Gutschrift pro Tag, sobald jemand als aktueller Fuchs des Tages erkannt wird —
+  // steuert über ein Datum im Profil, damit niemand mehrfach am selben Tag belohnt wird, egal wie
+  // oft die Seite neu geladen wird.
+  async function claimFoxOfDayBonusIfEligible() {
+    if (!demo.user || !demo.profile) return null;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const already = demo.profile.extraProfileData && demo.profile.extraProfileData.foxOfDayClaimedDate === todayKey;
+    if (already) return null;
+    const fox = await getFoxOfTheDay();
+    if (!fox || fox.user_id !== demo.user.id) return null;
+    await updateExtraProfileField("foxOfDayClaimedDate", todayKey);
+    const bonus = 30;
+    demo.profile.points = (demo.profile.points || 0) + bonus;
+    if (client) {
+      await client.from("profiles").update({ points: demo.profile.points }).eq("id", demo.user.id);
+    }
+    await sendSystemMessage(demo.user.id, `🦊 Herzlichen Glückwunsch — du bist heute "Fuchs des Tages"! Für deinen besonderen Fleiß gibt's ${bonus} Bonuspunkte obendrauf. 🎉`);
+    await addActivity(`${demo.profile.name} ist heute Fuchs des Tages! 🦊🎉`);
+    await addToFoxOfDayHallOfFame({ name: demo.profile.name, total: fox.total });
+    return { bonus };
+  }
+  // Die Seite mit jemandem teilen — zählt in die Tages-Aktivität mit ein (siehe oben), aber nie
+  // alleine entscheidend fürs Gewinnen.
+  async function recordSiteShare() {
+    if (!demo.user) return;
+    demo.siteSharesToday = demo.siteSharesToday || {};
+    demo.siteSharesToday[demo.user.id] = true;
+  }
+  // Generisches System für hochladbare Design-Grafiken an bestimmten Stellen der Seite (z. B.
+  // Hall-of-Fame-Banner, Wissen-Header) — im echten Speicher verankert (site_content-Tabelle,
+  // kein localStorage), bleibt bei jedem künftigen Update unberührt, da AUSSCHLIESSLICH der
+  // Betreiber sie über diese Funktion ändert.
+  async function uploadSiteImage(key, file) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Design-Grafiken ändern.");
+    if (!client) throw new Error("Bilder hochladen geht nur mit verbundenem Supabase.");
+    const path = `site-images/${key}-${Date.now()}-${file.name}`;
+    const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    const { data } = client.storage.from("avatars").getPublicUrl(path);
+    await setSiteContent(`site_image_${key}`, data.publicUrl);
+    return data.publicUrl;
+  }
+  async function getSiteImage(key) {
+    return await getSiteContent(`site_image_${key}`);
+  }
+  // nur "hat die meisten Punkte", sondern konkret benannt (geteilt, Beiträge eingereicht, Platz 1).
+  function buildFoxOfDayReportCard(entry) {
+    const lines = [];
+    if (entry.rankPlace === 1) lines.push("Sie/Er steht heute auf Platz 1 im Ranking — fleißig Deutsch geübt!");
+    if (entry.contributions > 0) lines.push(`Hat heute ${entry.contributions} eigene Beiträge zur Seite beigesteuert.`);
+    if (entry.shared) lines.push("Hat die Seite heute mit Freund:innen geteilt und ihnen damit etwas Gutes getan.");
+    if (!lines.length) lines.push("War heute einfach besonders aktiv unterwegs.");
+    return lines;
+  }
+  async function getFoxOfTheDayShowcase() {
+    const scores = await getDailyActivityScores();
+    if (!scores.length) return null;
+    const top = scores[0];
+    const rankToday = await getRankingToday();
+    const rankPlace = rankToday.findIndex((r) => r.user_id === top.user_id) + 1;
+    const entry = { ...top, rankPlace: rankPlace || null };
+    const profile = top.user_id ? await getPublicProfile(top.user_id) : null;
+    return { ...entry, reportCard: buildFoxOfDayReportCard(entry), profile };
+  }
+  // Bewerbung als Beta-Tester:in — landet als normale Nachricht im Postfach des Betreibers, der
+  // die Rolle dann über die bestehende Admin-Nutzerliste vergeben kann (siehe setBetaTesterStatus).
+  async function applyForBetaTester() {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    let ownerId = null;
+    if (client) {
+      try {
+        const { data } = await client.from("profiles").select("id").eq("is_owner", true).limit(1);
+        if (data && data[0]) ownerId = data[0].id;
+      } catch (e) {}
+    } else {
+      const ownerEmail = Object.keys(demo.users || {}).find((email) => demo.users[email].profile.isOwner);
+      ownerId = ownerEmail || null; // im Demo-Modus ist die E-Mail selbst die ID
+    }
+    if (!ownerId) return;
+    await sendPrivateMessage(ownerId, `🧪 ${demo.profile.name} möchte gerne Beta-Tester:in werden — schau in der Nutzerliste unter Einstellungen vorbei, um die Rolle zu vergeben.`, null);
+  }
+  // Hall of Fame: kurzer, wachsender Verlauf vergangener Krönungen — genutzt wird dieselbe
+  // generische site_content-Tabelle (kein neues SQL nötig), gedeckelt auf die letzten 30 Einträge.
+  // Interner Systemschreibzugriff OHNE Admin-Prüfung — für automatische Vorgänge wie die
+  // Hall-of-Fame-Eintragung, die JEDE Person auslösen kann (nicht nur Admins), im Unterschied zum
+  // öffentlichen setSiteContent (das bewusst nur Admins erlaubt, absichtlich Seiteninhalte zu
+  // ändern).
+  async function setSiteContentInternal(key, value) {
+    if (client) {
+      const { error } = await client.from("site_content").upsert({ key, value });
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.siteContent = demo.siteContent || {};
+    demo.siteContent[key] = value;
+  }
+  async function addToFoxOfDayHallOfFame(entry) {
+    const stored = (await getSiteContent("fox_of_day_hall_of_fame")) || [];
+    stored.unshift({ name: entry.name, date: new Date().toISOString().slice(0, 10), total: entry.total });
+    await setSiteContentInternal("fox_of_day_hall_of_fame", stored.slice(0, 30));
+  }
+  async function getFoxOfDayHallOfFame() {
+    return (await getSiteContent("fox_of_day_hall_of_fame")) || [];
+  }
+  // und Dankes-Nachricht. Bewusst kein Muss/Zwang — eine Anerkennung fürs Unterstützen, nicht ein
+  // "Punkte kaufen"-System (kein automatischer PayPal-Abgleich, siehe setSupporterStatus).
+  async function grantDonationPoints(targetUserId, euroAmount) {
+    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können das.");
+    const points = Math.round(euroAmount * 10);
+    await setSupporterStatus(targetUserId, true);
+    await adminGrantPoints(targetUserId, points, `Vielen Dank für deine Spende von ${euroAmount} € — als kleine Anerkennung gibt's ${points} Bonuspunkte obendrauf! 💛`);
+  }
+  // "Fuchs der Woche" — dasselbe Prinzip wie "Fuchs des Tages", nur über 7 Tage summiert (reine
+  // Spielpunkte als Basis; wer über die Woche konstant aktiv war, gewinnt).
+  async function getFoxOfTheWeek() {
+    const start = new Date(); start.setDate(start.getDate() - 7);
+    if (client) {
+      try {
+        const { data, error } = await client.from("results").select("user_id,points,bonus").gte("played_at", start.toISOString());
+        if (error || !data || !data.length) return null;
+        const totals = {};
+        data.forEach((r) => { totals[r.user_id] = (totals[r.user_id] || 0) + Math.round((r.points || 0) + (r.bonus || 0)); });
+        const topId = Object.entries(totals).sort((a, b) => b[1] - a[1])[0]?.[0];
+        if (!topId) return null;
+        const { data: p } = await client.from("profiles").select("id,name").eq("id", topId).maybeSingle();
+        return p ? { id: p.id, name: p.name, points: totals[topId] } : null;
+      } catch (e) { console.warn("Fuchs der Woche nicht verfügbar:", e); return null; }
+    }
+    if (!demo.profile) return null;
+    const weekPoints = (demo.profile.history || []).filter((h) => new Date(h.playedAt) >= start)
+      .reduce((sum, h) => sum + Math.round((h.points || 0) + (h.bonus || 0)), 0);
+    return weekPoints > 0 ? { id: demo.user ? demo.user.id : null, name: demo.profile.name, points: weekPoints } : null;
+  }
+  // Kleines Feedback-Formular fürs Beta-Testen — landet als normale Nachricht im Postfach des
+  // Betreibers, damit keine eigene Tabelle+SQL-Nachtrag nötig ist.
+  async function submitBetaFeedback({ featureLabel, consistent, issues, comment }) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    let ownerId = null;
+    if (client) {
+      try {
+        const { data } = await client.from("profiles").select("id").eq("is_owner", true).limit(1);
+        if (data && data[0]) ownerId = data[0].id;
+      } catch (e) {}
+    } else {
+      const ownerEmail = Object.keys(demo.users || {}).find((email) => demo.users[email].profile.isOwner);
+      ownerId = ownerEmail || null; // im Demo-Modus ist die E-Mail selbst die ID
+    }
+    if (!ownerId) return;
+    const issueText = issues.length ? `\nGefundene Probleme: ${issues.join(", ")}` : "";
+    const text = `🧪 Beta-Feedback zu „${featureLabel}" von ${demo.profile.name}:\n${consistent ? "✅ War stimmig/konsistent" : "⚠️ War NICHT stimmig"}${issueText}${comment ? `\n\nKommentar: ${comment}` : ""}`;
+    await sendPrivateMessage(ownerId, text, null);
   }
 
   return {
@@ -1937,7 +2408,10 @@ const Backend = (function () {
     addActivity,
     getActivity,
     getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl, getUsersWithPlaylists,
-    getSiteContent, setSiteContent,
+    getHiddenPlaylistSongs, restorePlaylistSong,
+    uploadSongCover, setSongCover, getSongPopularity,
+    getLastPlaylistLoadError: () => lastPlaylistLoadError,
+    getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, getRawFeatureFlag,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes,
     getBugReports, resolveBugReport,
     notifyPracticing,
@@ -1958,7 +2432,9 @@ const Backend = (function () {
     isModerator,
     canModerate,
     getAllUsers,
-    setModeratorStatus,
+    setModeratorStatus, setBetaTesterStatus, submitBetaFeedback, setContributorStatus, setSupporterStatus, getFoxOfTheWeek, applyForBetaTester,
+    getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,
+    getFoxOfTheDayShowcase, getFoxOfDayHallOfFame, uploadSiteImage, getSiteImage,
     getPendingCommunityTexts,
     approveCommunityText,
     rejectCommunityText,
@@ -1992,7 +2468,7 @@ const Backend = (function () {
     deletePrivateMessage,
     getUnreadMessageCount,
     markMessagesRead,
-    sendSystemMessage,
+    sendSystemMessage, adminGrantPoints,
     reportBug,
     markNotificationsRead,
     getLikesForText,
@@ -2001,7 +2477,7 @@ const Backend = (function () {
     addComment,
     deleteComment,
     saveBio,
-    saveExtendedProfile, updateExtraProfileField,
+    saveExtendedProfile, updateExtraProfileField, toggleBestFriend, getBestFriendIds,
     saveBirthday,
     uploadAvatar,
     saveAvatarFromGallery,

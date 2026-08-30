@@ -318,6 +318,10 @@ alter table playlist_songs disable row level security;
 -- Falls die Tabelle schon vor der Playlist-Funktion angelegt wurde, Spalten nachrüsten:
 alter table playlist_songs add column if not exists owner_id uuid references auth.users;
 alter table playlist_songs add column if not exists recommended_by_name text;
+alter table playlist_songs add column if not exists cover_url text;
+alter table playlist_songs add column if not exists hidden boolean default false;
+alter table playlist_songs add column if not exists original_recommender_id uuid references auth.users;
+alter table playlist_songs add column if not exists original_recommender_name text;
 
 create table if not exists song_favorites (
   id uuid default gen_random_uuid() primary key,
@@ -352,6 +356,7 @@ create table if not exists bug_reports (
   resolved boolean default false, created_at timestamptz default now()
 );
 alter table bug_reports disable row level security;
+alter table bug_reports add column if not exists reporter_id uuid references auth.users;
 ```
 
 ## 11. Nachrüst-SQL — Sterne-Bewertung im Gästebuch
@@ -384,4 +389,30 @@ create table if not exists profile_notes (
   message text, created_at timestamptz default now()
 );
 alter table profile_notes disable row level security;
+```
+
+## 13. Nachrüst-SQL — Links vorschlagen & Schwarmwissen teilen
+
+Diese zwei Tabellen fehlten bisher komplett im Nachrüst-SQL, obwohl die Funktionen (Links
+vorschlagen unter "Weiterführende Links", Tipps teilen unter "Schwarmwissen") im Code schon
+länger fertig sind. Einmal im Supabase SQL-Editor ausführen:
+
+```sql
+create table if not exists user_links (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users, author_name text,
+  title text, url text, "desc" text,
+  status text default 'pending', -- 'pending', 'approved'
+  created_at timestamptz default now()
+);
+alter table user_links disable row level security;
+
+create table if not exists community_tips (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users, author_name text,
+  text text, link text, image_url text,
+  status text default 'pending',
+  created_at timestamptz default now()
+);
+alter table community_tips disable row level security;
 ```

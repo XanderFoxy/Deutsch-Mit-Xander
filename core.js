@@ -112,6 +112,12 @@ const Core = (function () {
       // "Sad trombone" — absteigende Töne
       [400, 360, 320, 260].forEach((f, i) => tone(f, i * 0.18, 0.24, "sawtooth", 0.12));
     },
+    explosion() {
+      // Kurzer, tiefer Knall mit schnellem Abfall — klingt nach einer kleinen Explosion
+      tone(90, 0, 0.28, "sawtooth", 0.22);
+      tone(60, 0.02, 0.22, "square", 0.16);
+      tone(180, 0, 0.08, "square", 0.1);
+    },
   };
 
   return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound };
