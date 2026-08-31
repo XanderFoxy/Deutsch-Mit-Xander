@@ -214,6 +214,18 @@ alter table profiles add column if not exists fav_country text default '';
 alter table profiles add column if not exists fav_quote text default '';
 -- Vorausschauend ergänzt für spätere Profil-Gestaltung (z. B. ein großes Titelbild-Foto, getrennt vom kleinen Profilbild):
 alter table profiles add column if not exists profile_banner_url text default '';
+-- Beta-Tester/Mitgestalter:innen/Unterstützer:innen-Rollen sowie dauerhaft freigeschaltete
+-- Sammelfiguren (verhindert, dass eine Figur bei einer kurzzeitig fehlschlagenden Neuberechnung
+-- der Freischalt-Bedingung erneut als "neu freigeschaltet" gemeldet wird):
+alter table profiles add column if not exists is_beta_tester boolean default false;
+alter table profiles add column if not exists is_contributor boolean default false;
+alter table profiles add column if not exists is_supporter boolean default false;
+alter table profiles add column if not exists collected_figures text[] default '{}';
+-- Eindeutiger Constraint für daily_ranking — nötig, damit ein Tages-Gesamtstand pro Person und
+-- Tag zuverlässig aktualisiert (statt dupliziert) werden kann, ohne die "Fuchs des Tages/der
+-- Woche/..."-Berechnung durch mehrere Zeilen pro Tag zu verfälschen.
+alter table daily_ranking add column if not exists user_id uuid references auth.users;
+create unique index if not exists daily_ranking_user_date_idx on daily_ranking (user_id, date);
 -- Flexibles Zusatzfeld: nimmt künftige kleine Profil-Angaben (weitere "Lieblings-..."-Felder,
 -- kurze Textangaben) auf, OHNE dass dafür noch einmal SQL nötig wird — kommt ein neuer
 -- kleiner Wunsch dazu, wird er einfach hier mit hineingepackt, kein Nachrüsten mehr nötig.

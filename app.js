@@ -241,7 +241,11 @@
         // Bei JEDEM Unterreiter-Wechsel (nicht nur beim Song-Wechsel selbst) neu prüfen, ob die
         // schwebende Player-Leiste sichtbar sein soll — sie muss verschwinden, sobald man in den
         // Musik-Unterreiter wechselt (der schon seine eigene Leiste hat), und wieder erscheinen,
-        // sobald man ihn verlässt.
+        // sobald man ihn verlässt. Hebt außerdem eine eventuelle "nur aus dem Profil gehört"-
+        // Unterdrückung auf, genau wie beim Haupt-Tab-Wechsel — sonst blieb die Leiste bei einer
+        // Navigation zwischen einzelnen Spielen/Unterreitern (statt über die Haupt-Tabs) für
+        // immer unsichtbar, obwohl man den Ausgangspunkt (Profil) längst verlassen hatte.
+        if (typeof revealMusicFloatingBarOnNavigation === "function") revealMusicFloatingBarOnNavigation();
         if (typeof renderMusicFloatingBar === "function") renderMusicFloatingBar();
         // Sobald man an einem Ziel-Unterreiter tatsächlich ANKOMMT — egal auf welchem Weg dorthin
         // (Profil-Pille, Toast-Blase, oder einfach direkt den Reiter selbst angetippt) — gilt die
@@ -790,6 +794,26 @@
       </div>
     </div>`;
   }
+  // Gemeinsame Anzeige-Funktion für Beta-Tester-Vorschläge/Suchergebnisse — verwendet sowohl beim
+  // ersten Öffnen (Vorschlagsliste) als auch beim Tippen im Suchfeld (gefilterte Ergebnisse).
+  function renderBetaInviteResults(list, results, input) {
+    results.innerHTML = list.length ? list.map((u) => `
+      <button type="button" class="breakdown-row beta-invite-pick" data-beta-invite-userid="${u.id}" data-beta-invite-username="${u.name}" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; font:inherit; color:inherit;">
+        <span>${u.is_beta_tester ? "🧪 " : ""}${u.name}</span>
+        <span class="empty-note">${u.is_beta_tester ? "schon Beta-Tester:in" : "einladen →"}</span>
+      </button>`).join("") : `<p class="empty-note">Niemanden gefunden.</p>`;
+    results.querySelectorAll("[data-beta-invite-userid]").forEach((row) => {
+      row.addEventListener("click", async () => {
+        try {
+          await Backend.setBetaTesterStatus(row.dataset.betaInviteUserid, true);
+          await Backend.sendSystemMessage(row.dataset.betaInviteUserid, "🧪 Du wurdest als Beta-Tester:in eingeladen! Du siehst jetzt neue Funktionen, bevor sie für alle freigegeben werden — probier sie gern aus und gib Rückmeldung.");
+          showToast(`🧪 ${row.dataset.betaInviteUsername} als Beta-Tester:in eingeladen!`);
+          row.querySelector(".empty-note").textContent = "✅ eingeladen";
+          row.disabled = true;
+        } catch (e) { alert(e.message || "Konnte nicht eingeladen werden."); }
+      });
+    });
+  }
   function wireInlineFeatureFlagToggles(root, onToggled) {
     root.querySelectorAll(".inline-feature-flag-toggle").forEach((toggle) => {
       toggle.addEventListener("change", async () => {
@@ -799,9 +823,22 @@
       });
     });
     root.querySelectorAll(".beta-invite-toggle").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const body = btn.closest(".beta-invite-box").querySelector(".beta-invite-search-body");
-        body.style.display = body.style.display === "none" ? "block" : "none";
+      btn.addEventListener("click", async () => {
+        const box = btn.closest(".beta-invite-box");
+        const body = box.querySelector(".beta-invite-search-body");
+        const opening = body.style.display === "none";
+        body.style.display = opening ? "block" : "none";
+        // Beim ERSTEN Öffnen sofort ein paar sinnvolle Vorschläge zeigen (die aktivsten
+        // Mitglieder), statt eines komplett leeren Feldes, das man erst mit einer Suche befüllen
+        // muss — die Suche filtert diese Vorschlagsliste dann bei Bedarf weiter ein.
+        if (opening && !box.dataset.betaSuggestLoaded) {
+          box.dataset.betaSuggestLoaded = "1";
+          const results = box.querySelector(".beta-invite-results");
+          results.innerHTML = `<p class="empty-note">Lade Vorschläge…</p>`;
+          const all = await Backend.getAllUsers();
+          const suggested = [...all].sort((a, b) => new Date(b.last_active || 0) - new Date(a.last_active || 0)).slice(0, 8);
+          renderBetaInviteResults(suggested, results, box.querySelector(".beta-invite-search-input"));
+        }
       });
     });
     root.querySelectorAll(".beta-invite-search-input").forEach((input) => {
@@ -810,25 +847,17 @@
         clearTimeout(searchTimer);
         searchTimer = setTimeout(async () => {
           const term = input.value.trim();
-          const results = input.parentElement.querySelector(".beta-invite-results");
-          if (!term) { results.innerHTML = ""; return; }
+          const box = input.closest(".beta-invite-box");
+          const results = box.querySelector(".beta-invite-results");
+          if (!term) {
+            // Leeres Suchfeld -> zurück zu den ursprünglichen Vorschlägen statt eines leeren Feldes.
+            const all = await Backend.getAllUsers();
+            const suggested = [...all].sort((a, b) => new Date(b.last_active || 0) - new Date(a.last_active || 0)).slice(0, 8);
+            renderBetaInviteResults(suggested, results, input);
+            return;
+          }
           const found = await Backend.searchUsers(term);
-          results.innerHTML = found.length ? found.slice(0, 6).map((u) => `
-            <button type="button" class="breakdown-row beta-invite-pick" data-beta-invite-userid="${u.id}" data-beta-invite-username="${u.name}" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; font:inherit; color:inherit;">
-              <span>${u.is_beta_tester ? "🧪 " : ""}${u.name}</span>
-              <span class="empty-note">${u.is_beta_tester ? "schon Beta-Tester:in" : "einladen →"}</span>
-            </button>`).join("") : `<p class="empty-note">Niemanden gefunden.</p>`;
-          results.querySelectorAll("[data-beta-invite-userid]").forEach((row) => {
-            row.addEventListener("click", async () => {
-              try {
-                await Backend.setBetaTesterStatus(row.dataset.betaInviteUserid, true);
-                await Backend.sendSystemMessage(row.dataset.betaInviteUserid, "🧪 Du wurdest als Beta-Tester:in eingeladen! Du siehst jetzt neue Funktionen, bevor sie für alle freigegeben werden — probier sie gern aus und gib Rückmeldung.");
-                showToast(`🧪 ${row.dataset.betaInviteUsername} als Beta-Tester:in eingeladen!`);
-                input.value = "";
-                input.parentElement.querySelector(".beta-invite-results").innerHTML = "";
-              } catch (e) { alert(e.message || "Konnte nicht eingeladen werden."); }
-            });
-          });
+          renderBetaInviteResults(found.slice(0, 8), results, input);
         }, 300);
       });
     });
@@ -967,13 +996,13 @@
       <input type="text" class="vocab-search" id="adminUserSearchInput" placeholder="Nach Namen suchen…" value="${adminUserSearch}" style="margin-bottom:10px;" />
       <div style="max-height:340px; overflow-y:auto;">
         ${filtered.length ? filtered.map((u) => `
-          <div class="breakdown-row">
-            <span style="display:flex; align-items:center; gap:6px;">
-              <span class="online-dot" style="opacity:${u.online ? 1 : 0.25};"></span>
-              ${u.name}${adminBadge(u.is_admin, u.is_owner, u.is_moderator, u.is_beta_tester, u.is_contributor, u.is_supporter)}
+          <div class="breakdown-row" style="flex-direction:column; align-items:stretch; gap:6px;">
+            <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span class="online-dot" style="opacity:${u.online ? 1 : 0.25}; flex-shrink:0;"></span>
+              <span style="min-width:0; overflow-wrap:break-word;">${u.name}${adminBadge(u.is_admin, u.is_owner, u.is_moderator, u.is_beta_tester, u.is_contributor, u.is_supporter)}</span>
+              <span class="empty-note" style="margin-left:auto;">${u.points} P.</span>
             </span>
-            <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <span class="empty-note">${u.points} P.</span>
+            <span style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               ${isRealAdmin && !u.is_owner ? `<button type="button" class="btn btn-ghost" style="padding:3px 9px; font-size:0.72rem;" data-toggle-mod="${u.id}" data-currently-mod="${u.is_moderator}">${u.is_moderator ? "Mod entfernen" : "Zu Mod machen"}</button>` : ""}
               ${isRealAdmin && !u.is_owner ? `<button type="button" class="btn btn-ghost" style="padding:3px 9px; font-size:0.72rem;" data-toggle-contributor="${u.id}" data-currently-contributor="${u.is_contributor}">${u.is_contributor ? "🛠️ Mitgestalter entfernen" : "🛠️ Zu Mitgestalter:in machen"}</button>` : ""}
               ${isRealAdmin && !u.is_owner ? `<button type="button" class="btn btn-ghost" style="padding:3px 9px; font-size:0.72rem;" data-toggle-supporter="${u.id}" data-currently-supporter="${u.is_supporter}">${u.is_supporter ? "💛 Unterstützer entfernen" : "💛 Zu Unterstützer:in machen"}</button>` : ""}
@@ -3068,11 +3097,15 @@
   let orderMode = "mixed"; // 'mixed' | 'sequential'
 
   let selectedChallengeFriendIds = new Set();
+  let challengePickerExpanded = false;
+  let challengePickerSearch = "";
   // Wiederverwendbare Einladungs-Leiste für die neueren Spiele (Wortbaustelle, Buchstabensalat,
   // Kreuzworträtsel, Betonungs-Trainer) — dasselbe Muster wie bei den klassischen Übungen: auch
   // offline Freunde einladbar (spielen die Runde nach, sobald sie sich einloggen), mehrere
   // gleichzeitig auswählbar.
   const miniChallengeSelections = {}; // { gameKey: Set<friendId> }
+  const miniChallengeExpanded = {}; // { gameKey: bool } -- aufgeklappt oder eingeklappt
+  const miniChallengeSearch = {}; // { gameKey: string } -- Suchtext zum Filtern
   // Zwischenspeicher pro Spiel: verhindert, dass bei JEDEM Tastendruck/Klick (der die ganze
   // Runde neu rendert) die Einladungsleiste erneut vom Server geladen wird — das ließ sie kurz
   // leer erscheinen und dann nachträglich "reinspringen", was wie ein Layout-Sprung wirkte.
@@ -3103,25 +3136,44 @@
   function buildMiniChallengeBarHtml(gameKey, categoryId, friends) {
     if (!friends.length) return "";
     const selected = miniChallengeSelections[gameKey];
-    const onlineFriends = friends.filter((f) => f.online);
-    const offlineFriends = friends.filter((f) => !f.online);
+    const expanded = miniChallengeExpanded[gameKey];
+    const search = miniChallengeSearch[gameKey] || "";
+    const selectedFriendObjs = friends.filter((f) => selected.has(f.id));
+    // Aufklappbar statt einer immer sichtbaren, potenziell sehr langen Liste — gleiches Muster
+    // wie bei Memory und den Haupt-Übungen: standardmäßig eingeklappt, mit Suchfeld zum Filtern,
+    // ausgewählte Personen bleiben als Chips sichtbar.
+    const filteredFriends = search ? friends.filter((f) => f.name.toLowerCase().includes(search.toLowerCase())) : friends;
+    const onlineFriends = filteredFriends.filter((f) => f.online);
+    const offlineFriends = filteredFriends.filter((f) => !f.online);
+    const pillHtml = (f) => `
+      <button type="button" class="challenge-friend-pill ${!f.online ? "offline" : ""} ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}" ${!f.online ? 'title="Spielt die Runde, sobald sie sich wieder einloggen"' : ""}>
+        ${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${!f.online ? ' <span class="empty-note">(offline)</span>' : ""}
+      </button>`;
     return `
       <div class="setup-bar" style="margin-top:10px; flex-direction:column; align-items:stretch;">
-        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
-        <div class="challenge-friend-list">
-          ${onlineFriends.map((f) => `
-            <button type="button" class="challenge-friend-pill ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}">
-              <span class="online-dot"></span>${f.name}
-            </button>`).join("")}
-          ${offlineFriends.map((f) => `
-            <button type="button" class="challenge-friend-pill offline ${selected.has(f.id) ? "selected" : ""}" data-mini-game="${gameKey}" data-mini-friend="${f.id}" title="Spielt die Runde, sobald sie sich wieder einloggen">
-              ${f.name} <span class="empty-note">(offline)</span>
-            </button>`).join("")}
-        </div>
+        <button type="button" class="emoji-toggle-link" data-mini-toggle="${gameKey}" style="text-align:left; font-size:0.82rem; font-weight:700; color:var(--cream-200);">
+          🎮 Optional: Freunde herausfordern ${selectedFriendObjs.length ? `(${selectedFriendObjs.length} ausgewählt)` : ""} ${expanded ? "▾" : "▸"}
+        </button>
+        ${selectedFriendObjs.length ? `<div class="challenge-friend-list" style="margin-top:6px;">
+          ${selectedFriendObjs.map((f) => `<button type="button" class="challenge-friend-pill selected" data-mini-game="${gameKey}" data-mini-friend="${f.id}">${f.name} ✕</button>`).join("")}
+        </div>` : ""}
+        ${expanded ? `
+          <input type="text" class="vocab-search" data-mini-search="${gameKey}" placeholder="Nach Namen suchen…" value="${search}" style="margin-top:8px;" />
+          <div class="challenge-friend-list" style="margin-top:6px; max-height:180px; overflow-y:auto;">
+            ${[...onlineFriends, ...offlineFriends].length ? [...onlineFriends, ...offlineFriends].map(pillHtml).join("") : '<p class="empty-note">Niemanden gefunden.</p>'}
+          </div>` : ""}
         ${selected.size ? `<button type="button" class="btn btn-coffee" id="miniChallengeSendBtn" data-mini-game="${gameKey}" data-mini-cat="${categoryId}" style="margin-top:8px;">🎮 ${selected.size} ${selected.size === 1 ? "Person" : "Personen"} herausfordern</button>` : ""}
       </div>`;
   }
   function wireMiniChallengeBar(container, gameKey, onRerender) {
+    container.querySelector(`[data-mini-toggle="${gameKey}"]`)?.addEventListener("click", () => {
+      miniChallengeExpanded[gameKey] = !miniChallengeExpanded[gameKey];
+      onRerender();
+    });
+    container.querySelector(`[data-mini-search="${gameKey}"]`)?.addEventListener("input", (e) => {
+      miniChallengeSearch[gameKey] = e.target.value;
+      onRerender();
+    });
     container.querySelectorAll(`[data-mini-game="${gameKey}"].challenge-friend-pill`).forEach((btn) => {
       btn.addEventListener("click", () => {
         const set = miniChallengeSelections[gameKey];
@@ -3234,14 +3286,29 @@
     const OTHER_FRIENDS_PREVIEW = 8;
     const otherFriendsPreview = otherFriends.slice(0, OTHER_FRIENDS_PREVIEW);
     const otherFriendsRest = otherFriends.slice(OTHER_FRIENDS_PREVIEW);
+    const selectedFriendObjs = friends.filter((f) => selectedChallengeFriendIds.has(f.id));
+    // Gesamte Auswahl standardmäßig eingeklappt, mit Suchfeld — bei sehr vielen Freunden (auch
+    // "nur" die Online-Gruppe allein) war die Liste vorher immer komplett sichtbar und nahm viel
+    // Platz ein, selbst wenn man gar keine Herausforderung starten wollte.
+    const challengeFilterActive = challengePickerSearch.trim().length > 0;
+    const filterMatch = (f) => !challengeFilterActive || f.name.toLowerCase().includes(challengePickerSearch.toLowerCase());
     const challengeBar = friends.length ? `
       <div class="setup-bar" style="margin-top:10px; flex-direction:column; align-items:stretch;">
-        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
-        ${onlineFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">🟢 Online</p><div class="challenge-friend-list">${onlineFriends.map(challengePillHtml).join("")}</div>` : ""}
-        ${bestFriendsOffline.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">⭐ Beste Freunde</p><div class="challenge-friend-list">${bestFriendsOffline.map(challengePillHtml).join("")}</div>` : ""}
-        ${otherFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">A–Z</p><div class="challenge-friend-list">${otherFriendsPreview.map(challengePillHtml).join("")}</div>
-          ${otherFriendsRest.length ? `<button type="button" class="emoji-toggle-link" id="challengeOthersMoreBtn" style="font-size:0.72rem; margin-top:4px;">+${otherFriendsRest.length} weitere anzeigen</button>
-            <div class="challenge-friend-list" id="challengeOthersMoreList" style="display:none; margin-top:4px;">${otherFriendsRest.map(challengePillHtml).join("")}</div>` : ""}` : ""}
+        <button type="button" class="emoji-toggle-link" id="challengePickerToggle" style="text-align:left; font-size:0.82rem; font-weight:700; color:var(--cream-200);">
+          🎮 Optional: Freunde herausfordern ${selectedFriendObjs.length ? `(${selectedFriendObjs.length} ausgewählt)` : ""} ${challengePickerExpanded ? "▾" : "▸"}
+        </button>
+        ${selectedFriendObjs.length ? `<div class="challenge-friend-list" style="margin-top:6px;">
+          ${selectedFriendObjs.map((f) => `<button type="button" class="challenge-friend-pill selected" data-challenge-friend="${f.id}">${f.name} ✕</button>`).join("")}
+        </div>` : ""}
+        ${challengePickerExpanded ? `
+          <input type="text" class="vocab-search" id="challengePickerSearchInput" placeholder="Nach Namen suchen…" value="${challengePickerSearch}" style="margin-top:8px;" />
+          ${challengeFilterActive ? `<div class="challenge-friend-list" style="margin-top:6px;">${friends.filter(filterMatch).map(challengePillHtml).join("") || '<p class="empty-note">Niemanden gefunden.</p>'}</div>` : `
+            ${onlineFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">🟢 Online</p><div class="challenge-friend-list">${onlineFriends.map(challengePillHtml).join("")}</div>` : ""}
+            ${bestFriendsOffline.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">⭐ Beste Freunde</p><div class="challenge-friend-list">${bestFriendsOffline.map(challengePillHtml).join("")}</div>` : ""}
+            ${otherFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">A–Z</p><div class="challenge-friend-list">${otherFriendsPreview.map(challengePillHtml).join("")}</div>
+              ${otherFriendsRest.length ? `<button type="button" class="emoji-toggle-link" id="challengeOthersMoreBtn" style="font-size:0.72rem; margin-top:4px;">+${otherFriendsRest.length} weitere anzeigen</button>
+                <div class="challenge-friend-list" id="challengeOthersMoreList" style="display:none; margin-top:4px;">${otherFriendsRest.map(challengePillHtml).join("")}</div>` : ""}` : ""}
+          `}` : ""}
       </div>` : "";
 
     setupEl.innerHTML = `
@@ -3311,6 +3378,14 @@
         selectedWortschatzTopic = btn.dataset.wortschatztopic;
         renderSetup();
       });
+    });
+    document.getElementById("challengePickerToggle")?.addEventListener("click", () => {
+      challengePickerExpanded = !challengePickerExpanded;
+      renderSetup();
+    });
+    document.getElementById("challengePickerSearchInput")?.addEventListener("input", (e) => {
+      challengePickerSearch = e.target.value;
+      renderSetup();
     });
     setupEl.querySelectorAll("[data-challenge-friend]:not([disabled])").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -3761,6 +3836,7 @@
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">🎯 BETONUNGS-TRAINER — RUNDE FERTIG</p>
         <h2 style="margin:8px 0;">${stTrainerSession.correct} / ${stTrainerSession.total} richtig (${percent}%)</h2>
+        ${starRatingArcHtml(percent)}
         <p style="font-weight:800; font-size:1.1rem; color:var(--amber-400); margin:4px 0 0;">${tier}</p>
         <button type="button" class="btn btn-coffee" id="stPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>
@@ -4212,6 +4288,8 @@
   let memoryDifficulty = "mittel"; // 'leicht' (Orientierungshilfe) · 'mittel' (normal) · 'schwer' (mischt neu)
   let memoryChallengeFriendId = "";
   let selectedMemoryFriendIds = new Set();
+  let memoryChallengeExpanded = false;
+  let memoryChallengeSearch = "";
   let activeMemoryChallengeId = null;
   let activeMemoryOpponentName = "";
 
@@ -4271,12 +4349,27 @@
 
     const isLoggedIn = Boolean(Backend.currentUser());
     const memFriends = isLoggedIn ? await Backend.getFriends() : [];
+    // Aufklappbar statt einer immer sichtbaren, potenziell sehr langen Liste — bei vielen
+    // Freunden musste man vorher endlos scrollen, nur um überhaupt zum Spielfeld zu kommen.
+    // Standardmäßig eingeklappt, mit Suchfeld zum gezielten Filtern statt Scrollen. Ausgewählte
+    // Freunde bleiben als kompakte Chips sichtbar, auch wenn die Liste selbst zu ist.
+    const filteredMemFriends = memoryChallengeSearch
+      ? memFriends.filter((f) => f.name.toLowerCase().includes(memoryChallengeSearch.toLowerCase()))
+      : memFriends;
+    const selectedFriendObjs = memFriends.filter((f) => selectedMemoryFriendIds.has(f.id));
     const challengeBar = memFriends.length && !activeMemoryChallengeId ? `
       <div class="setup-bar" style="margin-top:0; margin-bottom:10px; flex-direction:column; align-items:stretch;">
-        <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🧠 Optional: Freunde herausfordern (auch mehrere gleichzeitig, auch offline)</label>
-        <div class="challenge-friend-list">
-          ${memFriends.map((f) => `<button type="button" class="challenge-friend-pill ${!f.online ? "offline" : ""} ${selectedMemoryFriendIds.has(f.id) ? "selected" : ""}" data-mem-challenge-friend="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${!f.online ? ' <span class="empty-note">(offline)</span>' : ""}</button>`).join("")}
-        </div>
+        <button type="button" class="emoji-toggle-link" id="memChallengeToggle" style="text-align:left; font-size:0.82rem; font-weight:700; color:var(--cream-200);">
+          🧠 Optional: Freunde herausfordern ${selectedFriendObjs.length ? `(${selectedFriendObjs.length} ausgewählt)` : ""} ${memoryChallengeExpanded ? "▾" : "▸"}
+        </button>
+        ${selectedFriendObjs.length ? `<div class="challenge-friend-list" style="margin-top:6px;">
+          ${selectedFriendObjs.map((f) => `<button type="button" class="challenge-friend-pill selected" data-mem-challenge-friend="${f.id}">${f.name} ✕</button>`).join("")}
+        </div>` : ""}
+        ${memoryChallengeExpanded ? `
+          <input type="text" class="vocab-search" id="memChallengeSearchInput" placeholder="Nach Namen suchen…" value="${memoryChallengeSearch}" style="margin-top:8px;" />
+          <div class="challenge-friend-list" style="margin-top:6px; max-height:180px; overflow-y:auto;">
+            ${filteredMemFriends.length ? filteredMemFriends.map((f) => `<button type="button" class="challenge-friend-pill ${!f.online ? "offline" : ""} ${selectedMemoryFriendIds.has(f.id) ? "selected" : ""}" data-mem-challenge-friend="${f.id}">${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${!f.online ? ' <span class="empty-note">(offline)</span>' : ""}</button>`).join("") : '<p class="empty-note">Niemanden gefunden.</p>'}
+          </div>` : ""}
         ${selectedMemoryFriendIds.size ? `<button type="button" class="btn btn-coffee" id="memStartChallengeBtn" style="margin-top:8px;">🎮 Duell starten (${selectedMemoryFriendIds.size})</button>` : ""}
       </div>` : "";
 
@@ -4314,6 +4407,7 @@
         <p style="font-size:2rem; margin:4px 0;">🎉</p>
         <h3 style="margin:4px 0;">Runde geschafft!</h3>
         <p class="empty-note">Alle ${memoryState.cards.length / 2} Paare in <strong>${memoryState.moves}</strong> Zügen gefunden — Zeit: <strong>${memoryState.finishSeconds}s</strong>.</p>
+        ${starRatingArcHtml(memoryState.finishScore || 0)}
         <p style="font-weight:700; margin-top:6px;">🧠 ${memoryState.finishTier}</p>
         <button type="button" class="btn btn-coffee" id="memoryPlayAgainBtn" style="margin-top:10px;">🔄 Neue Runde</button>
       </div>` : ""}
@@ -4343,6 +4437,14 @@
       });
     });
     let memChallengeInProgress = false;
+    document.getElementById("memChallengeToggle")?.addEventListener("click", () => {
+      memoryChallengeExpanded = !memoryChallengeExpanded;
+      renderMemory();
+    });
+    document.getElementById("memChallengeSearchInput")?.addEventListener("input", (e) => {
+      memoryChallengeSearch = e.target.value;
+      renderMemory();
+    });
     memoryArea.querySelectorAll("[data-mem-challenge-friend]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.memChallengeFriend;
@@ -4417,6 +4519,7 @@
           // Für die Endauswertung merken — Zeit und Züge sollen sichtbar sein, nicht nur intern
           // in die Punkte einfließen.
           memoryState.finishSeconds = Math.round(seconds);
+          memoryState.finishScore = score;
           memoryState.finishTier = memTier;
           if (activeMemoryChallengeId) {
             Backend.submitChallengeResult(activeMemoryChallengeId, { percent: score, moves: memoryState.moves, seconds: Math.round(seconds) });
@@ -4485,11 +4588,13 @@
   }
   function renderSatzpuzzleResults() {
     const area = document.getElementById("satzpuzzleArea");
+    const percent = spSession.total > 0 ? Math.round((spSession.correct / spSession.total) * 100) : 0;
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">🧩 SATZPUZZLE — SITZUNG FERTIG</p>
         <p style="font-size:2rem; margin:8px 0;">🎉</p>
         <h2 style="margin:8px 0;">${spSession.correct} / ${spSession.total} Sätze richtig gebaut!</h2>
+        ${starRatingArcHtml(percent)}
         <button type="button" class="btn btn-coffee" id="spPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
       </div>`;
     document.getElementById("spPlayAgainBtn").addEventListener("click", () => {
@@ -4498,7 +4603,7 @@
     if (!spResultsFinalized) {
       spResultsFinalized = true;
       if (Backend.currentUser()) {
-        saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent: Math.round((spSession.correct / spSession.total) * 100), character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+        saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent, character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
       }
     }
   }
@@ -4733,6 +4838,7 @@
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">🏆</p>
         <h2 style="margin:8px 0;">Kompletter Turm geschafft!</h2>
+        ${starRatingArcHtml(100)}
         <p class="empty-note">Alle ${WT_TOTAL_BLOCKS} Blöcke sicher entfernt, ohne dass er umgefallen ist — echt stark!</p>
         <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
       </div>`;
@@ -4753,10 +4859,13 @@
   function renderWackelturmCollapse() {
     Core.sound.fail();
     const area = document.getElementById("wackelturmArea");
+    // "Genauigkeit" hier: wie viele der 18 Blöcke wurden sicher entfernt, bevor der Turm fiel.
+    const accuracy = Math.round((wtBlocksRemoved / WT_TOTAL_BLOCKS) * 100);
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">💥</p>
         <h2 style="margin:8px 0;">Der Turm ist eingestürzt!</h2>
+        ${starRatingArcHtml(accuracy)}
         <p class="empty-note">Du hast <strong>${wtBlocksRemoved}</strong> Blöcke sicher entfernt, bevor er umgefallen ist.</p>
         <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
       </div>`;
@@ -4924,7 +5033,11 @@
   let bbIntroShown = false;
   const BB_BUBBLE_LIFETIME = 7.5; // Sekunden, bis eine Blase von selbst zerplatzt — deutlich mehr Zeit zum Lesen und Nachdenken (war vorher mit 3.2s viel zu knapp).
   function pickRandomBubbleQuestion() {
-    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    // WICHTIG: die "Deutschland-Quiz"-Kategorie (allgemeines Sachwissen wie Geschichte, Kultur,
+    // Fußball-Weltmeisterschaften …) bewusst ausgeschlossen — Wortblasen soll sich rein auf
+    // Sprache konzentrieren, ohne zusätzlich noch Allgemeinwissen abzuverlangen. Das wäre für
+    // Deutschlernende eine unfaire Doppelbelastung.
+    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     for (let attempt = 0; attempt < 25; attempt++) {
       const cat = cats[Math.floor(Math.random() * cats.length)];
       const bank = cat.getBank();
@@ -5436,7 +5549,8 @@
   });
 
   function pickRandomKanoneQuestion() {
-    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    // Gleicher Ausschluss wie bei Wortblasen — keine Allgemeinwissens-Fragen bei der Wort-Kanone.
+    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     for (let attempt = 0; attempt < 25; attempt++) {
       const cat = cats[Math.floor(Math.random() * cats.length)];
       const bank = cat.getBank();
@@ -6009,6 +6123,7 @@
   /* ===== Wer bin ich?: Emoji-Rätsel — Beruf/Rolle anhand von 2-3 Emojis erraten. Entweder frei
      eintippen (ohne Vorgabe, wie gewünscht) oder auf Wunsch aus 4 Antworten wählen. ===== */
   let wbiSession = null; // { round, total, correct }
+  let wbiResultsFinalized = false;
   let wbiCurrentItem = null;
   let wbiUsedItems = [];
   let wbiTypeMode = false; // Standard: 4 Antworten zur Auswahl (freies Tippen ist zu schwer als Standard) — true = frei eintippen
@@ -6024,16 +6139,24 @@
   }
   function renderWerBinIchResults() {
     const area = document.getElementById("werbinichArea");
+    const percent = wbiSession.total > 0 ? Math.round((wbiSession.correct / wbiSession.total) * 100) : 0;
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">❓ WER BIN ICH? — SITZUNG FERTIG</p>
         <p style="font-size:2rem; margin:8px 0;">🎉</p>
         <h2 style="margin:8px 0;">${wbiSession.correct} / ${wbiSession.total} richtig erraten!</h2>
+        ${starRatingArcHtml(percent)}
         <button type="button" class="btn btn-coffee" id="wbiPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
       </div>`;
-    document.getElementById("wbiPlayAgainBtn").addEventListener("click", () => { newWerBinIchSession(); newWerBinIchRound(); renderWerBinIch(); });
-    if (Backend.currentUser()) {
-      saveResultAndCheck({ categories: ["werbinich"], points: wbiSession.correct, bonus: 0, percent: Math.round((wbiSession.correct / wbiSession.total) * 100), character: "Rätsel-Detektiv:in", badges: [], playedAt: new Date().toISOString() });
+    document.getElementById("wbiPlayAgainBtn").addEventListener("click", () => { wbiResultsFinalized = false; newWerBinIchSession(); newWerBinIchRound(); renderWerBinIch(); });
+    // WICHTIG: Einmal-Absicherung ergänzt — vorher fehlte sie hier komplett, sodass ein Wechsel zu
+    // einem anderen Spiel und zurück (was diese Funktion erneut aufruft) die Punkte jedes Mal
+    // erneut vergab.
+    if (!wbiResultsFinalized) {
+      wbiResultsFinalized = true;
+      if (Backend.currentUser()) {
+        saveResultAndCheck({ categories: ["werbinich"], points: wbiSession.correct, bonus: 0, percent, character: "Rätsel-Detektiv:in", badges: [], playedAt: new Date().toISOString() });
+      }
     }
   }
   function renderWerBinIch() {
@@ -6355,10 +6478,12 @@
   function renderWordSearchResults() {
     const area = document.getElementById("wordsearchArea");
     const tier = WS_TIERS.find((t) => wsSession.correctCount <= t.max) || WS_TIERS[WS_TIERS.length - 1];
+    const percent = wsSession.target > 0 ? Math.round((wsSession.correctCount / wsSession.target) * 100) : 0;
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">🔍 BUCHSTABENSALAT — RUNDE FERTIG</p>
         <h2 style="margin:8px 0;">${wsSession.correctCount} / ${wsSession.target} richtig gelöst</h2>
+        ${starRatingArcHtml(percent)}
         <p style="font-size:1.1rem; font-weight:700; color:var(--amber-400);">${tier.title}</p>
         <button type="button" class="btn btn-coffee" id="wsPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>
@@ -8112,6 +8237,7 @@
         <p class="eyebrow">✏️ KREUZWORTRÄTSEL — SITZUNG FERTIG</p>
         <p style="font-size:2rem; margin:8px 0;">🎉</p>
         <h2 style="margin:8px 0;">Alle Rätsel gelöst!</h2>
+        ${starRatingArcHtml(100)}
         <p class="empty-note">Eine Zusammenfassung wartet in deinem Postfach.</p>
         <button type="button" class="btn btn-coffee" id="cwPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
       </div>
@@ -9288,7 +9414,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   function captureProfileEditDraft() {
     const ids = [
       "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput", "extraSportInput",
-      "favMovieInput", "favSeriesInput", "favSongInput", "extraMusicLinkInput", "extraActorInput", "extraBookInput", "extraArtistInput",
+      "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
       "favQuoteInput", "extraMottoInput", "extraSecretInput", "poemInput", "extraDreamInput", "extraHappyInput",
       "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelectTop",
       "extraLikesInput", "extraDislikesInput",
@@ -9297,7 +9423,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const fieldMap = {
       favCountryInput: "favCountry", extraDreamDestInput: "dreamDestination", extraVisitedInput: "visitedCountries",
       extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraSportInput: "favSport",
-      favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraMusicLinkInput: "musicLink", extraActorInput: "favActor",
+      favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", extraActorInput: "favActor",
       extraBookInput: "favBook", extraArtistInput: "favArtist",
       favQuoteInput: "favQuote", extraMottoInput: "motto", extraSecretInput: "secret", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
@@ -9438,7 +9564,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div class="profile-header-flow">
             ${avatarHtml}
             <div class="profile-header-stack">
-              <h2 style="margin:0 0 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}${myFoxBedBadge}</h2>
+              <h2 style="margin:0 0 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
               ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
               <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
               <span class="profile-header-stack-row">
@@ -9450,6 +9576,7 @@ An einem Morgen lief ein kleiner Fuchs los…
               ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
             </div>
           </div>
+          ${myFoxBedBadge ? `<div class="fox-period-badge-stack">${myFoxBedBadge}</div>` : ""}
           ${showcaseSongStripHtml(profile)}
           ${myTransportStrip}
           <div style="clear:both;"></div>
@@ -9695,10 +9822,6 @@ An einem Morgen lief ein kleiner Fuchs los…
               <input type="text" id="favSongInput" maxlength="60" value="${profileEditDraft.favSong !== undefined ? profileEditDraft.favSong : (profile.favSong || "")}" placeholder="z. B. 99 Luftballons" />
             </div>
             <div class="form-field">
-              <label>🎵 Musik-Link (YouTube, optional) — eigene Musik oder ein Lieblingssong zum Anhören</label>
-              <input type="text" id="extraMusicLinkInput" maxlength="200" value="${profileEditDraft.musicLink !== undefined ? profileEditDraft.musicLink : (extra.musicLink || "")}" placeholder="https://www.youtube.com/watch?v=…" />
-            </div>
-            <div class="form-field">
               <label>Lieblingsschauspieler:in</label>
               <input type="text" id="extraActorInput" maxlength="60" value="${profileEditDraft.favActor !== undefined ? profileEditDraft.favActor : (extra.favActor || "")}" placeholder="z. B. Til Schweiger" />
             </div>
@@ -9838,7 +9961,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
           extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelectTop: "genderSymbol",
-          extraLikesInput: "likes", extraDislikesInput: "dislikes", extraMusicLinkInput: "musicLink",
+          extraLikesInput: "likes", extraDislikesInput: "dislikes",
           birthdayInput: "birthday", originSelect: "origin",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
           favDrinkInput: "favDrink", favCountryInput: "favCountry", favQuoteInput: "favQuote", poemInput: "poem" }[id];
@@ -9868,7 +9991,10 @@ An einem Morgen lief ein kleiner Fuchs los…
         favVacation: val("extraVacationInput", extra.favVacation),
         likes: val("extraLikesInput", extra.likes),
         dislikes: val("extraDislikesInput", extra.dislikes),
-        musicLink: val("extraMusicLinkInput", extra.musicLink),
+        // musicLink wird nicht mehr als eigenes Feld angezeigt (siehe Kultur-Bereich) — der Wert
+        // bleibt aber im Hintergrund erhalten, damit ein bereits gesetzter Link beim nächsten
+        // Speichern nicht verloren geht.
+        musicLink: extra.musicLink || "",
         secret: profile.points >= 300 ? val("extraSecretInput", extra.secret) : (extra.secret || ""),
       };
       const [okBio, okBday, okOrigin, extendedResult] = await Promise.all([
@@ -10274,6 +10400,13 @@ An einem Morgen lief ein kleiner Fuchs los…
   async function loadMusicPlaylist() {
     const user = Backend.currentUser();
     const ownerId = musicPlaylistMode === "mine" && user ? user.id : musicPlaylistMode === "friend" ? musicViewingFriendId : null;
+    // WICHTIG: den GERADE SPIELENDEN Song merken, BEVOR die Liste ausgetauscht wird — sonst blieb
+    // musicCurrentIndex auf seiner alten Zahl stehen, während musicPlaylist komplett durch eine
+    // andere Ansicht (z. B. "Meine Playlist" statt "Gemeinsame Playlist") ersetzt wurde. Das
+    // ließ den Player scheinbar "einen Titel weiterspringen" — er zeigte plötzlich den Song, der
+    // zufällig an derselben Indexposition der NEUEN Liste steht, obwohl real noch der alte Song
+    // lief.
+    const currentlyPlayingSong = musicPlaylist[musicCurrentIndex];
     musicPlaylist = await Backend.getPlaylist(ownerId);
     // Die gemeinsame Playlist soll von Anfang an schon bestückt sein — niemand soll erst wissen
     // müssen, dass es einen extra Knopf zum Befüllen gibt. Ist sie beim allerersten Öffnen noch
@@ -10284,6 +10417,20 @@ An einem Morgen lief ein kleiner Fuchs los…
         try { await Backend.addPlaylistSong(s.title, s.url, null); } catch (e) { console.warn("Automatische Erstbefüllung fehlgeschlagen:", e); }
       }
       musicPlaylist = await Backend.getPlaylist(null);
+    }
+    // Den gerade spielenden Song in der neuen Liste wiederfinden (per ID, nicht Index) und
+    // musicCurrentIndex korrekt darauf ausrichten — läuft er in der neuen Ansicht gar nicht mit
+    // (z. B. ein Song aus der gemeinsamen Playlist, während man zu "Meine Playlist" wechselt),
+    // wird er der Liste unsichtbar vorangestellt, damit der Index gültig bleibt und die
+    // Wiedergabe ungestört weiterläuft, statt zu springen.
+    if (currentlyPlayingSong) {
+      const foundIdx = musicPlaylist.findIndex((s) => s.id === currentlyPlayingSong.id);
+      if (foundIdx !== -1) {
+        musicCurrentIndex = foundIdx;
+      } else {
+        musicPlaylist = [currentlyPlayingSong, ...musicPlaylist];
+        musicCurrentIndex = 0;
+      }
     }
     musicFavIds = user ? await Backend.getMyFavoriteSongIds() : [];
     if (musicPlaylistMode === "friend" && user) {
@@ -11204,9 +11351,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     const rightFigures = pageFigures.slice(half);
     const renderSlot = (fig) => {
       const unlocked = profile && isFigureUnlocked(fig, profile);
-      return `<div class="album-slot" style="aspect-ratio:1; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; padding:6px; transform:rotate(${(fig.id.length % 5) - 2}deg);" title="${unlocked ? fig.name : "Noch gesperrt"}">
+      // Freigeschaltete Figuren jetzt antippbar — zeigt Details zu genau diesem Fuchs (wie schon
+      // an anderen Stellen der Seite über openFigureDetailModal). Gesperrte bleiben absichtlich
+      // nicht anklickbar, um nichts vorab zu verraten.
+      const tag = unlocked ? "button" : "div";
+      const extraAttrs = unlocked ? `type="button" data-figure-detail="${fig.id}" style="cursor:pointer; border:none; background:none;"` : "";
+      return `<${tag} class="album-slot" ${extraAttrs} style="aspect-ratio:1; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; padding:6px; transform:rotate(${(fig.id.length % 5) - 2}deg);" title="${unlocked ? fig.name : "Noch gesperrt"}">
         ${unlocked ? `<img src="${fig.img}" alt="${fig.name}" style="width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25));" />` : `<span style="font-size:1.4rem; opacity:0.3;">🔒</span>`}
-      </div>`;
+      </${tag}>`;
     };
     const renderEmptySlots = (figures) => Array.from({ length: half - figures.length }).map(() => `<div></div>`).join("");
     area.innerHTML = `
@@ -11242,6 +11394,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("albumNextChapter")?.addEventListener("click", () => { albumChapterIdx = Math.min(activeChapters.length - 1, albumChapterIdx + 1); albumPageIdx = 0; renderAlbum(); });
     document.getElementById("albumPrevPage")?.addEventListener("click", () => turnAlbumPage(-1));
     document.getElementById("albumNextPage")?.addEventListener("click", () => turnAlbumPage(1));
+    area.querySelectorAll("[data-figure-detail]").forEach((el) => {
+      el.addEventListener("click", () => openFigureDetailModal(el.dataset.figureDetail));
+    });
   }
   function turnAlbumPage(direction) {
     const face = document.getElementById("albumPageFace");
@@ -11528,7 +11683,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : ""}
         ${favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : ""}
         ${favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : ""}
-        ${musicPlayerHtml(extra.musicLink, viewId)}
         ${extra.favActor ? `<div class="breakdown-row"><span>🎭 Lieblingsschauspieler:in</span><span>${extra.favActor}</span></div>` : ""}
         ${extra.favBook ? `<div class="breakdown-row"><span>📚 Lieblingsbuch</span><span>${extra.favBook}</span></div>` : ""}
         ${extra.favArtist ? `<div class="breakdown-row"><span>🎤 Lieblingsband/Künstler:in</span><span>${extra.favArtist}</span></div>` : ""}
@@ -11623,15 +11777,18 @@ An einem Morgen lief ein kleiner Fuchs los…
       Backend.getFoxOfMonth ? Backend.getFoxOfMonth().catch(() => null) : null,
       Backend.getFoxOfYear ? Backend.getFoxOfYear().catch(() => null) : null,
     ]);
+    // Englische Bezeichnung NUR an dieser Stelle (wo die Auszeichnungen selbst vergeben/gezeigt
+    // werden), wie ausdrücklich gewünscht.
     const labels = [];
-    if (day && day.user_id === userId) labels.push("Fuchs des Tages");
-    if (week && week.user_id === userId) labels.push("Fuchs der Woche");
-    if (month && month.user_id === userId) labels.push("Fuchs des Monats");
-    if (year && year.user_id === userId) labels.push("Fuchs des Jahres");
+    if (day && day.user_id === userId) labels.push("Fox of the Day");
+    if (week && week.user_id === userId) labels.push("Fox of the Week");
+    if (month && month.user_id === userId) labels.push("Fox of the Month");
+    if (year && year.user_id === userId) labels.push("Fox of the Year");
     if (!labels.length) return "";
-    // Schlankes Abzeichen im selben Stil wie die Admin-/Rollen-Badges (kleines Emoji + Text) —
-    // keine eigene, aufwendige Grafik mehr, die viel schwerer wirkte als der Rest der Zeile.
-    return `<span class="admin-badge fox-period-badge" title="${labels.join(" · ")}">🦊 ${labels.join(" · ")}</span>`;
+    // Jedes Badge einzeln, UNTEREINANDER gestapelt (statt mit "·" zu einer einzigen, oft viel zu
+    // breiten Zeile zusammengefügt) — bei mehreren gleichzeitigen Auszeichnungen lief die lange
+    // Zeile bisher über den Rand hinaus und wurde von der Punkteanzeige verdeckt.
+    return labels.map((label) => `<span class="admin-badge fox-period-badge" style="display:block; width:fit-content; margin-bottom:4px;">🦊 ${label}</span>`).join("");
   }
   async function openProfileModal(id, existingBox) {
     const p = await Backend.getPublicProfile(id);
@@ -11666,7 +11823,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}${foxBedBadge}</h2>` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>${foxBedBadge ? `<div class="fox-period-badge-stack">${foxBedBadge}</div>` : ""}` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
         !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
@@ -12139,16 +12296,16 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${Backend.canModerate() ? `
         <div class="form-field question-card" style="border:2px solid var(--amber-400); padding:12px;">
           <label class="empty-note" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>🎁 Punkte mitschicken (optional)</span>
+            <span>🎁 Punkte mitschicken (optional) — auch Korrekturen als negativer Wert</span>
             <strong id="pointsGiftValueLabel" style="color:var(--amber-500,#c98a1f);">0 Punkte</strong>
           </label>
-          <input type="range" id="pointsGiftSlider" min="0" max="500" step="50" value="0" style="width:100%; margin-top:6px;" />
+          <input type="range" id="pointsGiftSlider" min="-500" max="500" step="10" value="0" style="width:100%; margin-top:6px;" />
           <label class="empty-note" style="display:block; margin-top:8px;">Grund (füllt die Nachricht automatisch aus, danach noch anpassbar):</label>
           <select id="pointsReasonSelect" style="width:100%; margin-top:4px; padding:8px; border-radius:8px; border:1px solid var(--border-color,#ddd);">
             <option value="">— eigenen Text schreiben —</option>
             ${POINTS_REASON_TEMPLATES.map((r) => `<option value="${r.text.replace(/"/g, "&quot;")}">${r.label}</option>`).join("")}
           </select>
-          <p class="empty-note" style="font-size:0.74rem; margin-top:4px;">In 50er-Schritten bis maximal 500 — z. B. als Entschädigung oder Belohnung. Die Person bekommt automatisch eine erklärende Nachricht dazu.</p>
+          <p class="empty-note" style="font-size:0.74rem; margin-top:4px;">In 10er-Schritten von −500 bis 500 — z. B. als Entschädigung, Belohnung, oder um versehentlich vergebene Punkte wieder zu korrigieren. Die Person bekommt automatisch eine erklärende Nachricht dazu. Vor dem Versenden erscheint zur Sicherheit noch eine Bestätigung.</p>
         </div>` : ""}
         <div class="form-field">
           <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
@@ -12292,9 +12449,18 @@ An einem Morgen lief ein kleiner Fuchs los…
           // An alle ausgewählten Personen gleichzeitig verschicken -- dieselbe Nachricht, jeweils
           // als eigene, echte Nachricht an jede Person (nicht nur eine Kopie sichtbar für alle).
           await Promise.all([...selectedRecipients].map((id) => Backend.sendPrivateMessage(id, body, pendingImageUrl)));
-          if (giftPoints > 0) {
+          if (giftPoints !== 0) {
+            // Sicherheitsabfrage vor jeder Punkteänderung — ein Regler kann auf einem Touch-
+            // Bildschirm leicht unbeabsichtigt verschoben werden (z. B. beim Scrollen), und ohne
+            // diese Bestätigung würde eine solche versehentliche Berührung sofort echte Punkte an
+            // reale Konten verschicken, ohne dass es dem Absender auffällt.
+            const verb = giftPoints > 0 ? "verschenken" : "abziehen (korrigieren)";
+            if (!confirm(`Wirklich ${Math.abs(giftPoints)} Punkte bei ${selectedRecipients.size} Person(en) ${verb}?`)) {
+              renderInbox();
+              return;
+            }
             await Promise.all([...selectedRecipients].map((id) => Backend.adminGrantPoints(id, giftPoints, body)));
-            showToast(`🎁 ${giftPoints} Punkte an ${selectedRecipients.size} Person(en) verschenkt!`);
+            showToast(giftPoints > 0 ? `🎁 ${giftPoints} Punkte an ${selectedRecipients.size} Person(en) verschenkt!` : `⚖️ ${Math.abs(giftPoints)} Punkte bei ${selectedRecipients.size} Person(en) korrigiert.`);
           }
         }
         renderInbox();
@@ -12936,7 +13102,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "110";
+  const APP_VERSION = "111";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

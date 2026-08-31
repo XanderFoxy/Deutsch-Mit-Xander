@@ -258,21 +258,25 @@
 }
 
 .cat-tag { color: var(--coral-400); font-weight: 700; }
-/* Kleine Kategorie-Kennzeichnung direkt an den Extra-Spielen außerhalb der Übungsliste — damit
-   auch dort auf einen Blick klar ist, zu welchem Themenbereich ein Spiel gehört, ohne dass es
-   dafür eine große, eigene Übersichts-Kachel bräuchte wie bei den normalen Übungen. */
+/* Kleine Kategorie-Kennzeichnung direkt an den Extra-Spielen außerhalb der Übungsliste — jetzt
+   ein reiner Farbpunkt (wie die persona-led bei den normalen Übungen), KEIN ausgeschriebener
+   Name mehr. Der Name steht nur noch im title-Attribut (Tooltip), damit auf einen Blick klar
+   ist, zu welchem Themenbereich ein Spiel gehört, ohne die Bezeichnung selbst auszuschreiben. */
 .subnav-cat-tag {
   display: inline-block;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  background: rgba(0,0,0,0.12);
-  padding: 1px 6px;
-  border-radius: 999px;
-  margin-left: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-left: 5px;
   vertical-align: middle;
+  background: #9a9a9a;
 }
+.subnav-cat-tag[data-persona="Logiker"] { background: #5b8def; }
+.subnav-cat-tag[data-persona="Wissenschaftler"] { background: #3ec6c6; }
+.subnav-cat-tag[data-persona="Sprachkünstler"] { background: #a875d8; }
+.subnav-cat-tag[data-persona="Grammatik-Profi"] { background: #e85f6f; }
+.subnav-cat-tag[data-persona="Abenteurer"] { background: #f2b84b; }
+.subnav-cat-tag[data-persona="Tausendsassa"] { background: #e8d34b; }
 
 .blank-slot {
   display: inline-block;
@@ -1494,7 +1498,10 @@
   background: var(--plum-700); border: none; border-radius: var(--radius-sm);
   margin-bottom: 6px; text-align: left;
 }
-.friend-list-row .name { font-weight: 700; font-size: 0.86rem; }
+/* min-width:0 erlaubt dem Namen, bei Platzmangel wirklich zu schrumpfen/umzubrechen — ohne das
+   wurde er in eine viel zu schmale Spalte gezwungen, was einzelne Buchstaben untereinander statt
+   normalen Fließtext ergab, sobald rechts (z. B. ein Admin-Badge) Platz beanspruchte. */
+.friend-list-row .name { font-weight: 700; font-size: 0.86rem; min-width: 0; overflow-wrap: break-word; flex-shrink: 1; }
 
 .online-dot {
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
@@ -1709,13 +1716,17 @@
   box-shadow: 0 2px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .player-panel-btn.ghost-btn:active { box-shadow: 0 0 0 rgba(0,0,0,0.2), inset 0 1px 3px rgba(0,0,0,0.25); }
-/* Kompaktere, filigranere Leiste auf schmalen Bildschirmen — Wellenform tritt ganz zurück (rein
-   dekorativ), damit die WICHTIGEN Bedienelemente (Play/Pause, Titel, Song-Liste aufklappen)
-   garantiert in einer Zeile Platz haben, statt dass der letzte Knopf in die nächste Zeile rutscht. */
-@media (max-width: 420px) {
-  #musicPlayerBarInner .kn-waveform { display: none; }
+/* Kompaktere, filigranere Leiste auf sehr schmalen Bildschirmen — die Wellenform tritt erst bei
+   wirklich wenig Platz zurück (rein dekorativ), NICHT schon bei jeder typischen Handy-Breite:
+   die Grenze liegt jetzt bei 340px statt 420px, und die Bedienelemente sind zusätzlich etwas
+   kleiner, damit die Wellenform bei den meisten gängigen Bildschirmen (360–393px) tatsächlich
+   sichtbar bleibt, statt praktisch immer zu verschwinden. */
+@media (max-width: 480px) {
   #musicPlayerBarInner .player-panel-btn,
-  #musicPlayerBarInner .player-panel-btn.ghost-btn { width: 27px; height: 27px; }
+  #musicPlayerBarInner .player-panel-btn.ghost-btn { width: 25px; height: 25px; }
+}
+@media (max-width: 340px) {
+  #musicPlayerBarInner .kn-waveform { display: none; }
 }
 .player-digital-time {
   font-family: "Courier New", monospace;
@@ -2896,6 +2907,14 @@
   background: linear-gradient(160deg, #E8825F, #C85A2E) !important;
   color: #FFFFFF !important;
 }
+/* Container für mehrere gleichzeitige Fuchs-Auszeichnungen (Tag/Woche/Monat/Jahr) — jedes Badge
+   steht auf einer eigenen Zeile, statt sich zu einer einzigen, oft zu breiten Zeile mit "·"
+   zusammenzufügen, die über den Kartenrand hinauslief. Eigener Abschnitt, GETRENNT vom
+   Fließtext-Bereich um das Profilbild (der sich sonst nicht mehr auf den ursprünglichen
+   Inhalt — Herkunft, Sternzeichen usw. — beschränkte). */
+.fox-period-badge-stack {
+  margin: 8px 0 0;
+}
 
 /* Vokabelmeister: Buchstaben-Auswahlraster */
 .vm-letter-grid {
@@ -3086,7 +3105,7 @@
 #musicPlayerBarInner #musicVideoSquareSlot {
   flex-shrink: 0;
 }
-@media (max-width: 420px) {
+@media (max-width: 340px) {
   #musicPlayerBarInner .kn-waveform { display: none !important; }
   #musicPlayerBarInner #musicDigitalTime { display: none; }
 }

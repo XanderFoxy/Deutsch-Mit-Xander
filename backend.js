@@ -333,7 +333,21 @@ const Backend = (function () {
       demo.profile.points += earned;
     }
 
-    // Tagesranking aktualisieren (Demo-Fallback)
+    // WICHTIG: die echte daily_ranking-Tabelle in der Datenbank wurde bisher NIRGENDS
+    // tatsächlich beschrieben (nur gelesen) — nur das lokale, In-Memory demo.ranking-Array wurde
+    // aktualisiert. Das bedeutet, echte Spielpunkte flossen nie in die "Fuchs des Tages/der
+    // Woche/..."-Berechnung ein, die genau diese Tabelle ausliest — nur eingereichte Beiträge und
+    // das Teilen der Seite zählten dort tatsächlich. Das erklärt, warum jemand mit sehr vielen
+    // Spielpunkten trotzdem nie Fuchs des Tages wurde.
+    if (client && demo.user) {
+      try {
+        const today = todayKey();
+        const { data: existingRow } = await client.from("daily_ranking").select("points").eq("user_id", demo.user.id).eq("date", today).maybeSingle();
+        const newDailyTotal = (existingRow ? existingRow.points || 0 : 0) + earned;
+        await client.from("daily_ranking").upsert({ user_id: demo.user.id, name: demo.profile.name, points: newDailyTotal, date: today }, { onConflict: "user_id,date" });
+      } catch (e) { console.warn("Tagesranking konnte nicht aktualisiert werden:", e); }
+    }
+    // Tagesranking aktualisieren (Demo-Fallback, ohne verbundenes Supabase)
     const existing = demo.ranking.find((r) => r.name === demo.profile.name && r.date === todayKey());
     if (existing) {
       existing.points = Math.max(existing.points, demo.profile.points);
@@ -528,21 +542,26 @@ const Backend = (function () {
 
   // Admin schickt gestaffelt Punkte per Postfach — z. B. als Entschädigung oder Belohnung.
   // Erhöht die Punktzahl der Zielperson direkt in der profiles-Tabelle UND schickt gleichzeitig
-  // eine erklärende System-Nachricht, damit klar ist, wofür.
+  // eine erklärende System-Nachricht, damit klar ist, wofür. Negative Beträge sind jetzt bewusst
+  // erlaubt (Korrektur), damit versehentlich vergebene Punkte auch wieder rückgängig gemacht
+  // werden können — mit floor bei 0, damit das Punktekonto nie negativ wird.
   async function adminGrantPoints(toUserId, amount, reason) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
-    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Ungültige Punktzahl.");
+    if (!Number.isFinite(amount) || amount === 0) throw new Error("Ungültige Punktzahl.");
     if (client) {
       const { data: target, error: fetchErr } = await client.from("profiles").select("points").eq("id", toUserId).maybeSingle();
       if (fetchErr || !target) throw new Error(friendlyDbError(fetchErr?.message || "Profil nicht gefunden."));
-      const { error } = await client.from("profiles").update({ points: (target.points || 0) + amount }).eq("id", toUserId);
+      const newPoints = Math.max(0, (target.points || 0) + amount);
+      const { error } = await client.from("profiles").update({ points: newPoints }).eq("id", toUserId);
       if (error) throw new Error(friendlyDbError(error.message));
     } else {
       demo.allProfiles = demo.allProfiles || [];
       const target = demo.allProfiles.find((p) => p.id === toUserId) || demo.profile;
-      if (target) target.points = (target.points || 0) + amount;
+      if (target) target.points = Math.max(0, (target.points || 0) + amount);
     }
-    const messageText = `🎁 Du hast ${amount} Punkte geschenkt bekommen!${reason ? `\n\nGrund: ${reason}` : ""}`;
+    const messageText = amount > 0
+      ? `🎁 Du hast ${amount} Punkte geschenkt bekommen!${reason ? `\n\nGrund: ${reason}` : ""}`
+      : `⚖️ ${Math.abs(amount)} Punkte wurden korrigiert/zurückgenommen.${reason ? `\n\nGrund: ${reason}` : ""}`;
     await sendSystemMessage(toUserId, messageText);
   }
   async function sendBroadcastMessage(body) {
@@ -779,31 +798,21 @@ const Backend = (function () {
     }
     return [...(demo.bugReports || [])].reverse();
   }
-  // Sobald ein Admin einen Fehler als erledigt/verifiziert markiert, bekommt die meldende Person
-  // automatisch 10 Punkte gutgeschrieben — als kleiner Dank fürs Mithelfen. Passiert nur einmal
-  // (steuert über das "resolved"-Flag), auch wenn versehentlich mehrfach geklickt wird.
+  // WICHTIG: früher wurde hier automatisch eine Belohnung vergeben, sobald ein Admin einen
+  // Fehler als erledigt markierte — das ist jetzt bewusst ENTFERNT. Punkte sollen niemals
+  // automatisch verschickt werden, sondern nur, wenn ein Admin das im Postfach bewusst und
+  // einzeln entscheidet (inklusive eigener Bestätigungsabfrage dort) — sonst könnte die Funktion
+  // missbraucht werden, und es wäre unfair gegenüber allen, die ihre Punkte durch echtes Spielen
+  // verdienen.
   async function resolveBugReport(id) {
     if (!isAdmin()) throw new Error("Nur Administratoren können das.");
     if (client) {
-      const { data: report, error: fetchErr } = await client.from("bug_reports").select("resolved,reporter_id").eq("id", id).maybeSingle();
-      if (fetchErr) throw new Error(friendlyDbError(fetchErr.message));
-      const alreadyResolved = report && report.resolved;
       const { error } = await client.from("bug_reports").update({ resolved: true }).eq("id", id);
       if (error) throw new Error(friendlyDbError(error.message));
-      if (!alreadyResolved && report && report.reporter_id) {
-        try { await adminGrantPoints(report.reporter_id, 10, "Danke fürs Melden eines Fehlers — bestätigt und behoben!"); }
-        catch (e) { console.warn("Belohnung für Bug-Melder konnte nicht vergeben werden:", e); }
-      }
       return;
     }
     const r = (demo.bugReports || []).find((x) => x.id === id);
-    if (r && !r.resolved) {
-      r.resolved = true;
-      if (r.reporter_id) {
-        try { await adminGrantPoints(r.reporter_id, 10, "Danke fürs Melden eines Fehlers — bestätigt und behoben!"); }
-        catch (e) { console.warn("Belohnung für Bug-Melder konnte nicht vergeben werden:", e); }
-      }
-    }
+    if (r) r.resolved = true;
   }
 
   async function getSiteContent(key) {

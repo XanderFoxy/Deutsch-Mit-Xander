@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=110" />
-<link rel="stylesheet" href="app-styles.css?v=110" />
-<link rel="stylesheet" href="themes.css?v=110" />
+<link rel="stylesheet" href="styles.css?v=111" />
+<link rel="stylesheet" href="app-styles.css?v=111" />
+<link rel="stylesheet" href="themes.css?v=111" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -162,20 +162,20 @@
     <div class="subnav" id="learnSubnav">
       <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
       <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false" style="display:none;">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
-      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer <span class="subnav-cat-tag">Sprachkünstler</span></button>
+      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
-      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory <span class="subnav-cat-tag">Sprachkünstler</span></button>
-      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle <span class="subnav-cat-tag">Sprachkünstler</span><span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
-      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat <span class="subnav-cat-tag">Sprachkünstler</span></button>
-      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel <span class="subnav-cat-tag">Sprachkünstler</span></button>
-      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle <span class="subnav-cat-tag">Grammatik-Profi</span></button>
-      <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false">🗼 Wackelturm <span class="subnav-cat-tag">Gemischt</span></button>
-      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🔤 Wort-Typ <span class="subnav-cat-tag">Grammatik-Profi</span></button>
-      <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false">🎯 Wort-Kanone <span class="subnav-cat-tag">Gemischt</span></button>
-      <button class="subnav-pill" data-sub="sub-bubbles" aria-selected="false">🫧 Wortblasen <span class="subnav-cat-tag">Gemischt</span></button>
-      <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false">🔤 Vokabelmeister <span class="subnav-cat-tag">Sprachkünstler</span></button>
-      <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false">🚂 Korrektour <span class="subnav-cat-tag">Grammatik-Profi</span></button>
-      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false">❓ Wer bin ich? <span class="subnav-cat-tag">Logiker</span></button>
+      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span><span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false">🗼 Wackelturm <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🔤 Wort-Typ <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false">🎯 Wort-Kanone <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-bubbles" aria-selected="false">🫧 Wortblasen <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false">🔤 Vokabelmeister <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false">🚂 Korrektour <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false">❓ Wer bin ich? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
       <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
     </div>
 
@@ -339,12 +339,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=110"></script>
-<script src="supabase-config.js?v=110"></script>
-<script src="data-exercises.js?v=110"></script>
-<script src="data-vocab.js?v=110"></script>
-<script src="backend.js?v=110"></script>
-<script src="quiz.js?v=110"></script>
-<script src="app.js?v=110"></script>
+<script src="core.js?v=111"></script>
+<script src="supabase-config.js?v=111"></script>
+<script src="data-exercises.js?v=111"></script>
+<script src="data-vocab.js?v=111"></script>
+<script src="backend.js?v=111"></script>
+<script src="quiz.js?v=111"></script>
+<script src="app.js?v=111"></script>
 </body>
 </html>
