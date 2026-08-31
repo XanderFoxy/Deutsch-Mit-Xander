@@ -1124,6 +1124,14 @@
           `).join("")}
         </div>
       </div>
+      ${!profile.isBetaTester ? `<div class="question-card" style="margin-top:14px;">
+        <h3>🧪 Beta-Tester:in werden</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Als Beta-Tester:in siehst du neue Funktionen und Spiele, bevor sie für alle freigegeben werden — probier sie als Erste:r aus und gib Rückmeldung.</p>
+        <button type="button" class="btn btn-ghost" id="settingsApplyBetaBtn">🧪 Jetzt bewerben</button>
+      </div>` : `<div class="question-card" style="margin-top:14px;">
+        <h3>🧪 Du bist Beta-Tester:in!</h3>
+        <p class="empty-note">Du siehst neue Funktionen bereits, bevor sie für alle freigegeben werden.</p>
+      </div>`}
       <div class="question-card" style="margin-top:14px;">
         <h3>🧭 Dein Lernprofil</h3>
         <p class="empty-note" style="margin-bottom:10px;">Schätz dich selbst ein — bei „schwach" markierten Bereichen zieht die Tagesaufgabe im Kalender bevorzugt Fragen aus genau diesem Bereich.</p>
@@ -1330,6 +1338,10 @@
         renderSettings();
       });
     });
+    document.getElementById("settingsApplyBetaBtn")?.addEventListener("click", async () => {
+      await Backend.applyForBetaTester();
+      showToast("🧪 Anfrage verschickt — der Betreiber schaut sich das an!");
+    });
     area.querySelectorAll(".learning-rate-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         await setLearningRating(btn.dataset.cat, btn.dataset.rating);
@@ -1510,7 +1522,13 @@
     const adjusted = { ...result, points: Math.round((result.points || 0) * factor), bonus: Math.round((result.bonus || 0) * factor) };
     const profileBefore = Backend.currentProfile();
     const unlockedBefore = profileBefore ? new Set(COLLECTIBLE_FIGURES.filter((f) => isFigureUnlocked(f, profileBefore)).map((f) => f.id)) : new Set();
-    Backend.saveResult(adjusted);
+    // WICHTIG: auf den vollständigen Abschluss von saveResult() warten, BEVOR das Profil danach
+    // gelesen wird — saveResult() aktualisiert die Punkte erst NACH einer asynchronen
+    // Datenbankabfrage (um Wettlaufbedingungen bei mehreren gleichzeitig offenen Geräten zu
+    // vermeiden). Ohne await konnte profileAfter hier gelesen werden, bevor die Punkte wirklich
+    // aktualisiert waren — was die Freischalt-Prüfung mit noch veralteten Daten laufen ließ und
+    // zu den gemeldeten, fälschlich wiederholten "neu freigeschaltet"-Meldungen führen konnte.
+    await Backend.saveResult(adjusted);
     const profileAfter = Backend.currentProfile();
     if (profileAfter) {
       const newlyUnlocked = COLLECTIBLE_FIGURES.filter((f) => !unlockedBefore.has(f.id) && isFigureUnlocked(f, profileAfter));
@@ -3406,7 +3424,7 @@
     const displayOption = (opt) => capitalizeIfSentenceStart(opt, q.prompt);
 
     playEl.innerHTML = `
-      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${((p.index + 1) / p.total) * 100}%"></div></div>
+      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
       <div class="question-card">
         ${reportBugButtonHtml()}
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
@@ -4911,7 +4929,7 @@
       const cat = cats[Math.floor(Math.random() * cats.length)];
       const bank = cat.getBank();
       const q = bank[Math.floor(Math.random() * bank.length)];
-      if (!bbUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) {
+      if (!bbUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 13)) {
         bbUsedPrompts.push(q.prompt);
         return q;
       }
@@ -4932,14 +4950,17 @@
     const correctIdx = bbCurrentQuestion.correct[0];
     // Positionen in einem Raster mit kleinen zufälligen Abweichungen, damit sich Blasen nicht
     // überlappen — anders als bei den fallenden Wörtern gibt es hier keine Bewegung, nur Wachsen.
+    // Positionen mit GARANTIERTEM Mindestabstand, damit sich Blasen niemals überlappen können —
+    // deutlich weiter auseinander als vorher, und die zufällige Abweichung ist klein genug, dass
+    // sie den garantierten Abstand nicht wieder auffressen kann.
     const positions = [
-      { left: 22, top: 28 }, { left: 68, top: 22 }, { left: 45, top: 55 },
-      { left: 15, top: 72 }, { left: 78, top: 68 },
+      { left: 18, top: 22 }, { left: 78, top: 20 }, { left: 48, top: 50 },
+      { left: 14, top: 76 }, { left: 82, top: 76 },
     ];
     bbActiveBubbles = bbCurrentQuestion.options.map((opt, i) => ({
       id: `bb${i}-${Date.now()}`, text: capitalizeIfSentenceStart(opt, bbCurrentQuestion.prompt), isCorrect: i === correctIdx, resolved: false,
-      left: Math.max(10, Math.min(85, positions[i % positions.length].left + (Math.random() * 8 - 4))),
-      top: Math.max(15, Math.min(80, positions[i % positions.length].top + (Math.random() * 8 - 4))),
+      left: Math.max(10, Math.min(88, positions[i % positions.length].left + (Math.random() * 4 - 2))),
+      top: Math.max(15, Math.min(82, positions[i % positions.length].top + (Math.random() * 4 - 2))),
       spawnedAt: Date.now(),
     }));
     bbRoundActive = true;
@@ -5286,23 +5307,42 @@
     // Schriftart unterschiedlich dargestellt (manchmal nach links, manchmal nach rechts fahrend),
     // ein selbst gezeichnetes SVG zeigt garantiert immer in dieselbe Richtung (nach links, in
     // Fahrtrichtung der Bewegung).
-    const locomotiveSvg = `<svg viewBox="0 0 60 42" width="52" height="36" class="kt-locomotive-svg">
-      <rect x="30" y="6" width="22" height="18" rx="3" fill="#e85f6f"/>
-      <rect x="8" y="14" width="24" height="16" rx="2" fill="#4a3a5a"/>
-      <rect x="12" y="17" width="7" height="7" rx="1" fill="#bfe3f0"/>
-      <rect x="21" y="17" width="7" height="7" rx="1" fill="#bfe3f0"/>
-      <rect x="2" y="2" width="5" height="10" rx="1.5" fill="#4a3a5a"/>
-      <circle cx="16" cy="34" r="6" fill="#241505"/><circle cx="16" cy="34" r="2.4" fill="#e8a03d"/>
-      <circle cx="30" cy="34" r="6" fill="#241505"/><circle cx="30" cy="34" r="2.4" fill="#e8a03d"/>
-      <circle cx="44" cy="34" r="6" fill="#241505"/><circle cx="44" cy="34" r="2.4" fill="#e8a03d"/>
-      <rect x="8" y="28" width="42" height="4" fill="#241505"/>
+    // Speichenrad als eigene, wiederverwendbare Funktion — mit sichtbaren Speichen (statt eines
+    // einzelnen Punkts in der Mitte, was wie ein Autoreifen aussah) und einer eigenen CSS-Klasse
+    // für die Dreh-Animation, damit man beim Fahren wirklich sieht, wie sich die Speichen drehen.
+    const wheelSvg = (cx, cy, r) => `
+      <g class="kt-wheel" style="transform-origin:${cx}px ${cy}px;">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="#241505"/>
+        <circle cx="${cx}" cy="${cy}" r="${r * 0.62}" fill="none" stroke="#8a6a3a" stroke-width="1.4"/>
+        <line x1="${cx - r * 0.72}" y1="${cy}" x2="${cx + r * 0.72}" y2="${cy}" stroke="#e8a03d" stroke-width="1.6"/>
+        <line x1="${cx}" y1="${cy - r * 0.72}" x2="${cx}" y2="${cy + r * 0.72}" stroke="#e8a03d" stroke-width="1.6"/>
+        <line x1="${cx - r * 0.5}" y1="${cy - r * 0.5}" x2="${cx + r * 0.5}" y2="${cy + r * 0.5}" stroke="#e8a03d" stroke-width="1.4"/>
+        <line x1="${cx - r * 0.5}" y1="${cy + r * 0.5}" x2="${cx + r * 0.5}" y2="${cy - r * 0.5}" stroke="#e8a03d" stroke-width="1.4"/>
+        <circle cx="${cx}" cy="${cy}" r="${r * 0.18}" fill="#e8a03d"/>
+      </g>`;
+    // Deutlich größer und detailreicher als vorher — richtiger Kessel (zylindrisch), Schornstein,
+    // Führerhaus mit Fenstern, Puffer vorne, und jetzt echte Speichenräder statt schlichter
+    // Kreise, die eher wie Autoreifen wirkten.
+    const locomotiveSvg = `<svg viewBox="0 0 84 58" width="76" height="52" class="kt-locomotive-svg">
+      <rect x="4" y="6" width="4" height="14" rx="1" fill="#4a3a5a"/>
+      <ellipse cx="6" cy="4" rx="4" ry="2.5" fill="#8a7a9a"/>
+      <rect x="10" y="14" width="36" height="20" rx="10" fill="#c9432f"/>
+      <rect x="10" y="20" width="36" height="4" fill="#a8321f"/>
+      <rect x="44" y="8" width="30" height="26" rx="4" fill="#5a4a72"/>
+      <rect x="49" y="12" width="9" height="9" rx="1.5" fill="#bfe3f0"/>
+      <rect x="60" y="12" width="9" height="9" rx="1.5" fill="#bfe3f0"/>
+      <rect x="70" y="34" width="6" height="8" fill="#3a2f4a"/>
+      <rect x="2" y="34" width="80" height="6" fill="#241505"/>
+      ${wheelSvg(20, 47, 9)}
+      ${wheelSvg(42, 47, 9)}
+      ${wheelSvg(62, 47, 9)}
     </svg>`;
     const wagonSvg = (word) => `<span class="kt-wagon">
-      <svg viewBox="0 0 70 42" class="kt-wagon-svg" aria-hidden="true">
-        <rect x="2" y="4" width="66" height="24" rx="4" fill="#f0a94e" stroke="#96521a" stroke-width="1.5"/>
-        <circle cx="16" cy="34" r="6" fill="#241505"/><circle cx="16" cy="34" r="2.2" fill="#e8a03d"/>
-        <circle cx="54" cy="34" r="6" fill="#241505"/><circle cx="54" cy="34" r="2.2" fill="#e8a03d"/>
-        <rect x="8" y="26" width="54" height="4" fill="#241505"/>
+      <svg viewBox="0 0 84 50" class="kt-wagon-svg" aria-hidden="true">
+        <rect x="2" y="4" width="80" height="28" rx="5" fill="#f0a94e" stroke="#96521a" stroke-width="1.5"/>
+        <rect x="2" y="26" width="80" height="6" fill="#241505"/>
+        ${wheelSvg(19, 41, 8)}
+        ${wheelSvg(65, 41, 8)}
       </svg>
       <span class="kt-wagon-text">${word}</span>
     </span>`;
@@ -5495,7 +5535,9 @@
     const visibleWords = knActiveWords.filter((w) => !w.resolved);
     const now = Date.now();
     visibleWords.forEach((w, i) => { if (!w.spawnedAt) w.spawnedAt = now - i * 60; });
-    const FALL_DURATION = 4.5;
+    // Deutlich langsamer als vorher (war 4.5s) — bei einem kleinen Spielfeld soll genug Zeit zum
+    // Lesen und Nachdenken bleiben, statt einer reinen Reflex-Reaktion.
+    const FALL_DURATION = 9;
     // Auto-Land bezieht sich weiterhin auf das VORDERSTE (am längsten fallende) Wort.
     const activeWord = visibleWords[0];
     // Auto-Land: sobald ALLE noch übrigen falschen Antworten schon abgeschossen sind (egal ob
@@ -10821,7 +10863,17 @@ An einem Morgen lief ein kleiner Fuchs los…
               <span style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                 <button type="button" class="emoji-toggle-link" data-fav-song="${s.id}" style="font-size:1.1rem;">${isFav ? "❤️" : "🤍"}</button>
                 ${isMine ? `<label class="emoji-toggle-link" style="font-size:1rem; cursor:pointer;" title="Eigenes Cover-Bild hochladen"><input type="file" accept="image/*" data-cover-upload="${s.id}" style="display:none;" />🖼️</label>` : ""}
-                ${canManage ? `<button type="button" class="emoji-toggle-link" data-delete-song="${s.id}" style="font-size:0.75rem;">${isMine ? "löschen" : "aus Playlist entfernen"}</button>` : ""}
+                ${canManage ? (() => {
+                  // Klar unterscheiden: ein SELBST hinzugefügter Song wird "gelöscht", ein von
+                  // jemand anderem ÜBERNOMMENER Song wird "zurückgegeben" — die ursprünglich
+                  // empfehlende Person behält dabei ihre Punkte, nur die eigene Übernahme wird
+                  // rückgängig gemacht (verringert automatisch die Beliebtheits-Zählung, die live
+                  // aus der Playlist-Datenbank gezählt wird).
+                  const isTakenFromSomeoneElse = isMine && s.original_recommender_id && s.original_recommender_id !== user?.id;
+                  const label = !isMine ? "aus Playlist entfernen" : isTakenFromSomeoneElse ? "↩️ zurückgeben" : "löschen";
+                  const title = isTakenFromSomeoneElse ? "Aus deiner Liste entfernen — die ursprünglich empfehlende Person behält ihre Punkte, nur deine Übernahme wird rückgängig gemacht" : "";
+                  return `<button type="button" class="emoji-toggle-link" data-delete-song="${s.id}" style="font-size:0.75rem;" title="${title}">${label}</button>`;
+                })() : ""}
                 ${isMine ? `<button type="button" class="emoji-toggle-link" data-set-showcase="${s.id}" data-showcase-title="${s.title}" data-showcase-url="${s.url}" title="Im Profil als Lieblingssong zeigen" style="font-size:1.1rem;">${(Backend.currentProfile()?.extraProfileData?.showcaseSongUrl === s.url) ? "🌟" : "☆"}</button>` : ""}
                 ${isFriendView && user ? (alreadyInMine ? `<span class="empty-note" style="font-size:0.75rem;">✓ übernommen</span>` : `<button type="button" class="emoji-toggle-link" data-take-song="${s.id}" style="font-size:0.75rem;">+ übernehmen</button>`) : ""}
               </span>
@@ -12884,7 +12936,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "109";
+  const APP_VERSION = "110";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

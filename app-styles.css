@@ -2570,9 +2570,20 @@
   transform: translate(-50%, -50%) scale(0.85);
   background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95), rgba(159,217,237,0.5) 55%, rgba(120,190,220,0.35) 85%);
   border: 1.5px solid rgba(255,255,255,0.75);
-  border-radius: 999px;
-  padding: 10px 16px;
+  border-radius: 50%;
+  /* WICHTIG: feste, GLEICHE Breite und Höhe statt variablem padding — sonst wurde die Blase bei
+     längeren Wörtern breiter als hoch (oval/pillenförmig statt einer echten Seifenblase). Text
+     wird stattdessen zentriert und bricht bei Bedarf um, bleibt aber innerhalb des festen Kreises. */
+  width: 92px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px;
   font-weight: 700;
+  font-size: 0.86rem;
+  line-height: 1.05;
   color: #1a4a5a;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.12), inset 0 3px 6px rgba(255,255,255,0.7), inset -3px -3px 8px rgba(100,180,210,0.25);
@@ -2593,9 +2604,13 @@
   pointer-events: none;
 }
 @keyframes bbGrowAndPop {
-  0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 0.85; }
-  70%  { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+  /* Steigt sanft nach oben und dreht sich dabei leicht — wie eine echte Seifenblase, die
+     schwebend aufsteigt, statt nur auf der Stelle zu wachsen. Die vertikale Bewegung bleibt
+     bewusst moderat, damit die Blase nicht zu weit aus ihrer ursprünglichen Position wandert. */
+  0%   { transform: translate(-50%, -50%) scale(0.7) rotate(0deg); opacity: 0.85; }
+  40%  { transform: translate(calc(-50% + 4px), calc(-50% - 14px)) scale(0.95) rotate(-4deg); opacity: 1; }
+  70%  { transform: translate(calc(-50% - 3px), calc(-50% - 26px)) scale(1.08) rotate(3deg); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% - 42px)) scale(1.5) rotate(-2deg); opacity: 0; }
 }
 .bb-bubble-pop-good {
   animation: none !important;
@@ -2722,9 +2737,10 @@
   overflow: hidden;
   border-radius: var(--radius-sm);
   background:
-    /* Ferne, dezente Berg-Silhouetten hinter den Schienen — zwei überlappende Bergketten in
-       gedämpften Blautönen, wie eine typische "Landschaft am Horizont"-Ansicht. */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpolygon points='0,100 0,55 60,20 120,50 180,15 260,48 320,25 400,50 400,100' fill='%23a9c9dd' opacity='0.55'/%3E%3Cpolygon points='0,100 0,72 80,42 160,68 230,38 300,65 400,40 400,100' fill='%237fa8c4' opacity='0.5'/%3E%3C/svg%3E") bottom / 100% auto no-repeat,
+    /* Sonne, ein paar Wolken, und dahinter wellige, GRÜNE Almen-Hügel mit ein paar kleinen
+       Tannen — statt spitzer, blauer Berg-Silhouetten. Zwei überlappende Hügel-Lagen für Tiefe,
+       wellig statt spitz zulaufend. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cellipse cx='340' cy='18' rx='17' ry='12' fill='%23ffd873' opacity='0.9'/%3E%3Cellipse cx='70' cy='16' rx='22' ry='8' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='95' cy='12' rx='16' ry='7' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='220' cy='24' rx='18' ry='7' fill='%23ffffff' opacity='0.65'/%3E%3Cpath d='M0,100 L0,58 Q40,38 80,50 Q130,66 180,42 Q230,22 280,46 Q330,64 400,44 L400,100 Z' fill='%237fb87a' opacity='0.6'/%3E%3Cpath d='M0,100 L0,75 Q50,58 100,70 Q150,84 210,64 Q260,48 320,68 Q360,80 400,66 L400,100 Z' fill='%235a9c5a' opacity='0.65'/%3E%3Cpath d='M55,52 L60,38 L65,52 Z M58,52 L58,44' fill='%232f6b3a' stroke='%232f6b3a' stroke-width='1.5'/%3E%3Cpath d='M175,45 L181,29 L187,45 Z' fill='%232f6b3a'/%3E%3Cpath d='M300,70 L305,58 L310,70 Z' fill='%23276030'/%3E%3Cpath d='M325,72 L329,62 L333,72 Z' fill='%23276030'/%3E%3C/svg%3E") bottom / 100% auto no-repeat,
     linear-gradient(180deg, #cfe8f5, #eef8fb);
   margin: 10px 0;
 }
@@ -2735,22 +2751,27 @@
   position: absolute;
   left: 0; right: 0;
   top: 68%;
-  height: 22px;
-  background-image: repeating-linear-gradient(90deg, rgba(90,65,45,0.4), rgba(90,65,45,0.4) 4px, transparent 4px, transparent 20px);
+  height: 26px;
+  /* Schwellen jetzt LEICHT SCHRÄG (75° statt starrer 90°) — bei genau 90° zwischen zwei parallelen
+     Linien sah es wie eine hochgeklappte Leiter aus (senkrechte Sprossen zwischen Längsstangen),
+     statt wie perspektivisch von der Seite gesehene Eisenbahnschwellen. Breiter und holzfarbener
+     für mehr Tiefenwirkung. */
+  background-image: repeating-linear-gradient(75deg, rgba(101,71,42,0.6), rgba(101,71,42,0.6) 6px, transparent 6px, transparent 22px);
   background-position: center;
-  background-size: 100% 16px;
+  background-size: 100% 20px;
   background-repeat: repeat-x;
 }
 .kt-rails::before, .kt-rails::after {
   content: "";
   position: absolute;
   left: 0; right: 0;
-  height: 3px;
-  background: rgba(120,90,60,0.55);
+  height: 3.5px;
+  background: linear-gradient(180deg, #c9c2b8, #8f8a80 45%, #6b665e);
   border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset;
 }
-.kt-rails::before { top: 0; }
-.kt-rails::after { top: 19px; }
+.kt-rails::before { top: 2px; }
+.kt-rails::after { top: 21px; }
 .kt-train {
   position: absolute;
   display: flex;
@@ -2783,28 +2804,45 @@
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
 }
 .kt-locomotive { flex-shrink: 0; }
+/* Speichenräder drehen sich sichtbar, statt still zu stehen wie bei Autoreifen — läuft
+   unabhängig von der Fahrgeschwindigkeit einfach kontinuierlich, wirkt aber zusammen mit der
+   Zugbewegung überzeugend "rollend". */
+.kt-wheel {
+  animation: ktWheelSpin 0.9s linear infinite;
+}
+@keyframes ktWheelSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
 .kt-wagon {
   position: relative;
   display: inline-block;
-  width: 58px;
+  /* Größer als vorher (war 58px), damit die Wörter besser lesbar sind — wie gewünscht "der Zug
+     kann sowieso größer sein, damit die Wörter besser zu lesen sind". */
+  width: 78px;
   flex-shrink: 0;
 }
 .kt-wagon-svg {
   display: block;
-  width: 58px;
-  height: 35px;
+  width: 78px;
+  height: 46px;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
 }
 .kt-wagon-text {
   position: absolute;
-  left: 0; right: 0; top: 3px;
+  left: 0; right: 0; top: 4px;
   text-align: center;
   color: #241505;
   font-weight: 800;
-  font-size: 0.62rem;
-  line-height: 1.15;
-  padding: 0 4px;
+  /* Schriftgröße passt sich innerhalb einer Spanne an die Wortlänge an, UND overflow:hidden
+     verhindert zusätzlich, dass ein besonders langes Wort sichtbar aus dem Waggon "ausbricht" —
+     es bleibt innerhalb der Waggon-Fläche, auch wenn die Schrift dafür etwas kleiner wird. */
+  font-size: clamp(0.5rem, 4.2vw, 0.72rem);
+  line-height: 1.1;
+  padding: 0 5px;
   overflow-wrap: break-word;
+  overflow: hidden;
+  max-height: 26px;
 }
 .kt-signal-row {
   display: flex;
