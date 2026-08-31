@@ -31,17 +31,26 @@
   // zeigt Admins (nur ihnen) einen dezenten Bearbeiten-Knopf direkt an Ort und Stelle.
   async function loadAndRenderAboutSection() {
     const saved = await Backend.getSiteContent("about");
+    const img = document.querySelector("#view-about .avatar-wrap img");
+    // Das URSPRÜNGLICHE, fest im HTML stehende Bild EINMALIG sichern, bevor es je überschrieben
+    // wird — sonst gibt es später keine Möglichkeit mehr, "auf Original zurücksetzen" zu wählen,
+    // weil das ursprüngliche src schon lange durch das gespeicherte ersetzt wurde.
+    if (img && !img.dataset.originalSrc) img.dataset.originalSrc = img.src;
     if (saved) {
       const h2 = document.querySelector("#view-about h2");
       const role = document.querySelector("#view-about .role");
       const shortText = document.querySelector("#view-about .about-text-short");
       const supportNote = document.querySelector("#view-about .about-support-note");
-      const img = document.querySelector("#view-about .avatar-wrap img");
       if (saved.heading && h2) h2.textContent = saved.heading;
       if (saved.role && role) role.textContent = saved.role;
       if (saved.shortText && shortText) shortText.textContent = saved.shortText;
       if (saved.supportNote && supportNote) supportNote.textContent = saved.supportNote;
-      if (saved.photoUrl && img) img.src = saved.photoUrl;
+      // photoUrl === "" (bewusst leer gespeichert, z. B. über "Auf Original zurücksetzen") stellt
+      // das gesicherte Original-Bild wieder her, statt es einfach unverändert zu lassen.
+      if (img) {
+        if (saved.photoUrl) img.src = saved.photoUrl;
+        else if (saved.photoUrl === "") img.src = img.dataset.originalSrc;
+      }
     }
     renderAboutEditButton();
   }
@@ -82,6 +91,7 @@
         <p class="eyebrow" style="margin-top:14px;">📷 Foto — drei Möglichkeiten</p>
         <div class="form-field"><label>1) Bild-Adresse (Link)</label><input type="text" id="aboutEditPhoto" value="${img ? img.src : ""}" placeholder="https://…" /></div>
         <div class="form-field"><label>2) Datei hochladen</label><input type="file" id="aboutEditPhotoUpload" accept="image/*" /></div>
+        <button type="button" class="emoji-toggle-link" id="aboutPhotoResetBtn" style="font-size:0.76rem; margin-top:2px;">↩️ Auf Original-Bild zurücksetzen</button>
         ${gallery.length ? `
         <div class="form-field">
           <label>3) Aus deiner Galerie wählen</label>
@@ -103,6 +113,10 @@
         thumb.style.borderColor = "var(--amber-400, #f2b84b)";
         document.getElementById("aboutPhotoPreviewNote").textContent = "✅ Galeriebild ausgewählt.";
       });
+    });
+    document.getElementById("aboutPhotoResetBtn").addEventListener("click", () => {
+      document.getElementById("aboutEditPhoto").value = "";
+      document.getElementById("aboutPhotoPreviewNote").textContent = "↩️ Wird beim Speichern auf das ursprüngliche Original-Bild zurückgesetzt.";
     });
     document.getElementById("aboutEditPhotoUpload").addEventListener("change", async (e) => {
       const file = e.target.files[0];
@@ -404,8 +418,17 @@
   // Orden (kleine, häufige Verdienste) vs. Pokale (große, seltene Meisterleistungen) — Trennung
   // anhand bekannter Top-Rang-Namen in der Trophäen-Bezeichnung selbst, ohne die bestehenden
   // Vergabestellen einzeln umbauen zu müssen.
-  const TOP_TIER_KEYWORDS = ["Deutsch-Profi", "Deutsch-Superheld", "Superhirn", "Champion", "Sprachtalent"];
+  // WICHTIG: die beiden höchsten STUFEN heißen im echten Titel nur "Profi"/"Superheld" (OHNE
+  // "Deutsch-"-Präfix, das nur in der Erklärtext-Prosa stand) — z. B. "Grammatik-Profi –
+  // Superheld". Die Suche nach "Deutsch-Profi"/"Deutsch-Superheld" traf deshalb praktisch nie zu,
+  // weshalb fast alles fälschlich als Orden statt Pokal zählte. Jetzt wird gezielt der STUFEN-Teil
+  // nach dem " – "-Trennzeichen geprüft (nicht einfach "Profi" irgendwo im Titel — das träfe sonst
+  // auch den CHARAKTER-Teil wie "Grammatik-Profi" selbst, unabhängig von der echten Stufe).
+  const TOP_TIER_STAGE_NAMES = ["Profi", "Superheld"];
+  const TOP_TIER_KEYWORDS = ["Superhirn", "Champion", "Sprachtalent"];
   function trophyKind(label) {
+    const stage = label.includes(" – ") ? label.split(" – ").slice(-1)[0] : "";
+    if (TOP_TIER_STAGE_NAMES.some((s) => stage === s)) return "pokal";
     return TOP_TIER_KEYWORDS.some((k) => label.includes(k)) ? "pokal" : "orden";
   }
   function trophyCounts(profile) {
@@ -662,6 +685,7 @@
     { key: "wortblasen_neu", label: "🫧 Wortblasen (neues Spiel)", desc: "Mehrere Wort-Sprechblasen erscheinen gleichzeitig und zerplatzen — die richtige muss rechtzeitig getroffen werden. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "vokabelmeister_neu", label: "🔤 Vokabelmeister (neues Spiel)", desc: "Buchstabe wählen, dann 60 Sekunden Zeit für möglichst viele passende Wörter. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "korrektour_neu", label: "🚂 Korrektour (neues Spiel)", desc: "Satz-Zug fährt im Bogen durchs Bild — per Ampel-Signal entscheiden, ob der Satz richtig ist. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
+    { key: "musikplayer_update", label: "🎵 Musikplayer-Update", desc: "Wellenform-Anzeige, Schnellliste (☰), MP3-Symbol im Video-Bereich. Bis zur Freigabe sehen andere Nutzer:innen den Player ohne diese neuen Elemente (die eigentlichen Stabilitäts-Fixes — Song hängt sich nicht mehr auf, Layout-Wechsel startet Song nicht neu — gelten unabhängig davon bereits für alle, da das reine Fehlerbehebungen waren)." },
   ];
   // Kleiner Freigabe-Schalter DIREKT AM ORT des jeweiligen Features (statt nur zentral in den
   // Einstellungen) — nur für Betreiber/Admins sichtbar. So kann man ein Feature genau dort
@@ -1341,9 +1365,12 @@
     const profileAfter = Backend.currentProfile();
     if (profileAfter) {
       const newlyUnlocked = COLLECTIBLE_FIGURES.filter((f) => !unlockedBefore.has(f.id) && isFigureUnlocked(f, profileAfter));
-      // Leicht verzögert zeigen, damit sich das Fuchs-Popup nicht mit einem eventuellen
-      // Meilenstein-Popup (checkForSpecialMoment, direkt danach) optisch überlappt.
-      newlyUnlocked.forEach((fig, i) => setTimeout(() => showFoxUnlockCelebration(fig), 400 + i * 600));
+      // Sequenziell nacheinander zeigen — das NÄCHSTE Popup erscheint erst, nachdem das vorherige
+      // wirklich geschlossen wurde, nicht nach einem festen Timer. Bei mehreren gleichzeitig
+      // freigeschalteten Füchsen konnten sich die Popups bisher sonst überlappend stapeln (wenn
+      // man zum Lesen länger als 600ms brauchte), wodurch "Weiter"/"Super!" scheinbar nichts tat
+      // — man sah nur weiterhin ein (aber ein ANDERES, schon darunterliegendes) Popup.
+      showFoxUnlockCelebrationQueue(newlyUnlocked, 400);
       // Zusätzlich auch als Postfach-Nachricht — bei mehreren gleichzeitig freigeschalteten
       // Füchsen (z. B. drei auf einmal in einer Runde) als EINE zusammengefasste Nachricht, nicht
       // drei einzelne.
@@ -1361,7 +1388,20 @@
   }
   // Kleines Glückwunsch-Popup mit dem Bild und dem genauen Namen des neu freigeschalteten Fuchses
   // — statt dass die Freischaltung einfach lautlos im Hintergrund passiert.
-  function showFoxUnlockCelebration(fig) {
+  // Zeigt mehrere Fuchs-Freischalt-Popups NACHEINANDER — das nächste startet erst, wenn das
+  // aktuelle wirklich geschlossen wurde (Knopf ODER Klick daneben), nicht nach einem festen Timer.
+  function showFoxUnlockCelebrationQueue(figures, initialDelay) {
+    if (!figures.length) return;
+    let i = 0;
+    const showNext = () => {
+      if (i >= figures.length) return;
+      const fig = figures[i];
+      i += 1;
+      showFoxUnlockCelebration(fig, showNext);
+    };
+    setTimeout(showNext, initialDelay || 0);
+  }
+  function showFoxUnlockCelebration(fig, onClosed) {
     Core.sound.fanfare();
     const box = document.createElement("div");
     box.className = "lightbox";
@@ -1374,8 +1414,9 @@
         <button type="button" class="btn btn-coffee" style="margin-top:14px;" id="foxCelebrationCloseBtn">Super!</button>
       </div>`;
     document.body.appendChild(box);
-    document.getElementById("foxCelebrationCloseBtn").addEventListener("click", () => box.remove());
-    box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
+    const close = () => { box.remove(); if (onClosed) onClosed(); };
+    document.getElementById("foxCelebrationCloseBtn").addEventListener("click", close);
+    box.addEventListener("click", (e) => { if (e.target === box) close(); });
   }
   function startFullPageThemePreview(themeId) {
     if (themeFullPreviewTimer) return; // schon eine Vorschau aktiv -> nicht überlappen lassen
@@ -2157,6 +2198,14 @@
     try {
       const items = await Backend.getActivity();
       const text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
+      // WICHTIG: Ist der Text UNVERÄNDERT gegenüber dem letzten Durchlauf, die laufende Animation
+      // gar nicht erst anfassen — sonst würde sie bei jedem der vielen Auslöser (alle 20 Sekunden
+      // per Intervall, plus mehrere weitere Ereignisse im Code) komplett neu gestartet, selbst
+      // wenn es gar nichts Neues gibt. Der Text lief dadurch nie vollständig durch, sondern begann
+      // ständig von vorn — genau das erzeugte den "rasenden", gehetzten Eindruck, nicht die
+      // eigentliche Scroll-Geschwindigkeit selbst (die korrekt bei ~55px/s lag).
+      if (text === track.dataset.lastTickerText) return;
+      track.dataset.lastTickerText = text;
       // Animation zuerst abschalten, damit scrollWidth die NEUE Textlänge korrekt misst
       // (nicht noch die alte, gerade laufende Animation beeinflusst die Messung).
       track.style.animation = "none";
@@ -2238,15 +2287,22 @@
     showToast(`ℹ️ ${icon.dataset.info}`);
   }, true);
   function showToast(text, onClick) {
-    const wrappedClick = onClick ? () => { stopNotifyReminder(); onClick(); } : (() => {});
+    // Antippt man den Toast selbst, soll er SOFORT verschwinden — unabhängig davon, ob zusätzlich
+    // eine eigene Aktion (onClick) ausgeführt wird. Bisher tat ein Klick bei reinen Info-Bubbles
+    // (kein onClick übergeben) gar nichts, man musste die vollen ~5,5 Sekunden abwarten.
+    const dismiss = () => {
+      toast.classList.remove("toast-visible");
+      setTimeout(() => toast.remove(), 400);
+    };
+    const wrappedClick = () => {
+      if (onClick) { stopNotifyReminder(); onClick(); }
+      dismiss();
+    };
     const toast = Core.el("div", { class: "toast-popup", onclick: wrappedClick }, text);
     if (onClick) toast.classList.add("toast-clickable");
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add("toast-visible"), 20);
-    setTimeout(() => {
-      toast.classList.remove("toast-visible");
-      setTimeout(() => toast.remove(), 400);
-    }, 5500);
+    setTimeout(dismiss, 5500);
   }
   // Sichtbare Warnung, falls das Speichern der Punkte im Hintergrund fehlschlägt (auch nach
   // Wiederholung) — sonst könnte jemand beim nächsten Neuladen unbemerkt Punkte verlieren, weil
@@ -4693,7 +4749,7 @@
   let bbRoundActive = false;
   let bbGameOverFinalized = false;
   let bbIntroShown = false;
-  const BB_BUBBLE_LIFETIME = 3.2; // Sekunden, bis eine Blase von selbst zerplatzt
+  const BB_BUBBLE_LIFETIME = 7.5; // Sekunden, bis eine Blase von selbst zerplatzt — deutlich mehr Zeit zum Lesen und Nachdenken (war vorher mit 3.2s viel zu knapp).
   function pickRandomBubbleQuestion() {
     const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     for (let attempt = 0; attempt < 25; attempt++) {
@@ -4740,7 +4796,7 @@
     const fb = document.getElementById("bbFeedback");
     if (bubble.isCorrect) {
       bbScore += 1;
-      Core.sound.explosion();
+      Core.sound.bubblePop();
       if (fb) fb.textContent = wasCorrectClick ? "💥 Richtig getroffen!" : "⏳ Zeit abgelaufen — die richtige Antwort ist zerplatzt!";
       if (!wasCorrectClick) { bbLives -= 1; bbMistakes += 1; }
     } else {
@@ -4750,8 +4806,10 @@
         bbMistakes += 1;
         Core.sound.wrong();
         if (fb) fb.textContent = `⚠️ Das war falsch! (${bbLives} ❤️ übrig)`;
+      } else {
+        // Falsche Blase zerplatzt von selbst -> keine Strafe, aber trotzdem das Pop-Geräusch
+        Core.sound.bubblePop();
       }
-      // Falsche Blase zerplatzt von selbst -> keine Strafe, das war ja richtig so
     }
     checkBubbleRoundDone();
   }
@@ -4883,8 +4941,15 @@
         if (Backend.currentUser()) {
           saveResultAndCheck({ categories: ["vokabelmeister"], points: vmFoundWords.filter((w) => w.confirmed).length * 2, bonus: 0, percent: 100, character: "Wortschatz-Sammler:in", badges: [], playedAt: new Date().toISOString() });
         }
+        renderVokabelmeister();
+        return;
       }
-      renderVokabelmeister();
+      // WICHTIG: NICHT das gesamte renderVokabelmeister() (also innerHTML) jede Sekunde neu
+      // aufrufen — das hat bisher das Eingabefeld mitsamt Fokus und bereits getipptem Text jede
+      // Sekunde zerstört, sodass man praktisch nie ein Wort fertigtippen konnte. Nur die
+      // Zeitanzeige selbst per textContent aktualisieren, alles andere bleibt unberührt.
+      const timerEl = document.getElementById("vmTimerDisplay");
+      if (timerEl) timerEl.textContent = `⏱️ ${vmTimeLeft}s`;
     }, 1000);
     renderVokabelmeister();
   }
@@ -4934,7 +4999,7 @@
     const dictSize = vmWordCountForLetter(vmLetter);
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">🔤 VOKABELMEISTER · Buchstabe ${vmLetter} · ⏱️ ${vmTimeLeft}s</p>
+        <p class="eyebrow">🔤 VOKABELMEISTER · Buchstabe ${vmLetter} · <span id="vmTimerDisplay">⏱️ ${vmTimeLeft}s</span></p>
         ${dictSize < 3 ? `<p class="empty-note" style="font-size:0.74rem;">💡 Bei „${vmLetter}" ist unsere Bibliothek noch klein — auch echte, richtige Wörter werden dann eventuell nicht bestätigt erkannt. Trotzdem eine gute Herausforderung!</p>` : ""}
         <input type="text" id="vmWordInput" class="vocab-search" placeholder="Wort mit ${vmLetter} eingeben und Enter drücken…" autocomplete="off" style="margin-top:8px;" />
         <div class="breakdown-list" style="margin-top:10px;">
@@ -4985,6 +5050,12 @@
   function ktBuildContentPool() {
     const pool = [];
     (ExerciseData.HAEUFIGE_FEHLER || []).forEach(([wrong, correct, explain]) => {
+      // Nur echte, mehrteilige Sätze/Wendungen aufnehmen — ein paar Einträge in der Quelle sind
+      // nur EIN einzelnes Wort (z. B. "einzigste" -> "einzige"). Als Satz-Zug mit nur einem
+      // einzigen Waggon dargestellt, sagte die Rückmeldung dann unsinnig "der SATZ war
+      // fehlerhaft", obwohl es gar kein Satz war. Für Korrektour bewusst nur Einträge mit
+      // mindestens zwei Wörtern auf BEIDEN Seiten verwenden.
+      if (!wrong.includes(" ") || !correct.includes(" ")) return;
       pool.push({ correctSentence: correct, wrongSentence: wrong, explain });
     });
     (ExerciseData.SS_ESZETT || []).forEach(([prompt, correct, wrong, explain]) => {
@@ -5042,14 +5113,39 @@
     }
     if (!ktCurrentSentence) { newKorrektourRound(); return; }
     const words = ktCurrentSentence.text.split(" ");
+    // Echtes SVG statt Emoji für die Lokomotive — ein Emoji wie 🚂 wird je nach Plattform/
+    // Schriftart unterschiedlich dargestellt (manchmal nach links, manchmal nach rechts fahrend),
+    // ein selbst gezeichnetes SVG zeigt garantiert immer in dieselbe Richtung (nach links, in
+    // Fahrtrichtung der Bewegung).
+    const locomotiveSvg = `<svg viewBox="0 0 60 42" width="52" height="36" class="kt-locomotive-svg">
+      <rect x="30" y="6" width="22" height="18" rx="3" fill="#e85f6f"/>
+      <rect x="8" y="14" width="24" height="16" rx="2" fill="#4a3a5a"/>
+      <rect x="12" y="17" width="7" height="7" rx="1" fill="#bfe3f0"/>
+      <rect x="21" y="17" width="7" height="7" rx="1" fill="#bfe3f0"/>
+      <rect x="2" y="2" width="5" height="10" rx="1.5" fill="#4a3a5a"/>
+      <circle cx="16" cy="34" r="6" fill="#241505"/><circle cx="16" cy="34" r="2.4" fill="#e8a03d"/>
+      <circle cx="30" cy="34" r="6" fill="#241505"/><circle cx="30" cy="34" r="2.4" fill="#e8a03d"/>
+      <circle cx="44" cy="34" r="6" fill="#241505"/><circle cx="44" cy="34" r="2.4" fill="#e8a03d"/>
+      <rect x="8" y="28" width="42" height="4" fill="#241505"/>
+    </svg>`;
+    const wagonSvg = (word) => `<span class="kt-wagon">
+      <svg viewBox="0 0 70 42" class="kt-wagon-svg" aria-hidden="true">
+        <rect x="2" y="4" width="66" height="24" rx="4" fill="#f0a94e" stroke="#96521a" stroke-width="1.5"/>
+        <circle cx="16" cy="34" r="6" fill="#241505"/><circle cx="16" cy="34" r="2.2" fill="#e8a03d"/>
+        <circle cx="54" cy="34" r="6" fill="#241505"/><circle cx="54" cy="34" r="2.2" fill="#e8a03d"/>
+        <rect x="8" y="26" width="54" height="4" fill="#241505"/>
+      </svg>
+      <span class="kt-wagon-text">${word}</span>
+    </span>`;
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Korrektour: " + ktCurrentSentence.text)}
         <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer · ${heartsLivesHtml(ktLives, 3)}</p>
         <div class="kt-track" id="ktTrack">
+          <div class="kt-rails"></div>
           <div class="kt-train" id="ktTrain">
-            <span class="kt-locomotive">🚂</span>
-            ${words.map((w) => `<span class="kt-wagon">${w}</span>`).join("")}
+            <span class="kt-locomotive">${locomotiveSvg}</span>
+            ${words.map(wagonSvg).join("")}
           </div>
         </div>
         <div class="kt-signal-row">
@@ -5060,23 +5156,10 @@
       </div>`;
     document.getElementById("ktGreenBtn").addEventListener("click", () => ktResolveSignal(true));
     document.getElementById("ktRedBtn").addEventListener("click", () => ktResolveSignal(false));
-    // Fährt der Zug komplett durchs Bild, ohne dass man reagiert hat, zählt das als verpasst —
-    // wie eine falsche Einschätzung, damit Zögern nicht einfach folgenlos bleibt.
-    const TRAIN_DURATION = 6500;
-    if (ktRoundTimer) clearTimeout(ktRoundTimer);
-    ktRoundTimer = setTimeout(() => {
-      if (ktAnswered) return;
-      ktAnswered = true;
-      ktLives -= 1;
-      ktMistakes += 1;
-      Core.sound.wrong();
-      const fb = document.getElementById("ktFeedback");
-      if (fb) fb.textContent = `⏳ Zu spät — der Satz war ${ktIsCorrectSentence ? "korrekt" : "fehlerhaft"}. ${ktCurrentSentence.explain}`;
-      setTimeout(() => {
-        if (ktLives <= 0) { renderKorrektourGameOver(); return; }
-        newKorrektourRound();
-      }, 2200);
-    }, TRAIN_DURATION);
+    // KEIN automatisches "zu spät" mehr — der Zug fährt einmal durchs Bild, aber die Entscheidung
+    // bleibt jederzeit möglich, auch nachdem er schon komplett verschwunden ist. Eine Zeitstrafe
+    // ergab keinen Sinn, solange der Satz noch gar nicht vollständig zu lesen war, und bestrafte
+    // dann Zögern doppelt unfair. Die Signal-Knöpfe bleiben also einfach aktiv, bis geklickt wird.
   }
   function renderKorrektourGameOver() {
     const area = document.getElementById("korrektourArea");
@@ -5230,9 +5313,9 @@
           <div class="kn-clouds" id="knClouds" aria-hidden="true"></div>
           <div class="kn-scenery" aria-hidden="true">
             <span class="kn-scenery-item" style="left:2%; font-size:1rem;">🌸</span>
-            <span class="kn-scenery-item" style="left:8%; font-size:3.4rem;">🌳</span>
-            <span class="kn-scenery-item" style="left:22%; font-size:1rem;">🍄</span>
-            <span class="kn-scenery-item" style="left:30%; font-size:3.8rem;">🏡</span>
+            <span class="kn-scenery-item" style="left:6%; font-size:3.8rem;">🏡</span>
+            <span class="kn-scenery-item" style="left:20%; font-size:3.4rem;">🌳</span>
+            <span class="kn-scenery-item" style="left:34%; font-size:1rem;">🍄</span>
             <span class="kn-scenery-item" style="left:48%; font-size:0.9rem;">🌼</span>
             <span class="kn-scenery-item" style="left:55%; font-size:1rem;">🍄</span>
             <span class="kn-scenery-item" style="left:68%; font-size:3.2rem;">🌳</span>
@@ -5254,18 +5337,21 @@
             <circle cx="42" cy="38" r="5" fill="#2a1f12" stroke="#4a3419" stroke-width="1.5" />
             <rect x="14" y="30" width="32" height="8" rx="2" fill="#5c4429" />
             <rect x="26" y="24" width="8" height="10" fill="#4a3419" />
-            <!-- Der GESAMTE Kanonenkörper (Verbindungsstück + Rohr mit Verjüngung + Zündschnur)
-                 dreht sich als EIN starrer Körper um den Drehzapfen — kein "gummiartiges"
-                 Verbiegen nur am oberen Ende mehr. Deutlich dickeres Rohr mit richtigem "Bauch"
-                 unten an der Basis (statt einer dünnen, gleichmäßigen Form, die wie ein
-                 Fahrradgestell wirkte) — verjüngt sich erst weiter oben zur Mündung. -->
+            <!-- Der GESAMTE Kanonenkörper (Verbindungsstück + Rohr + Zündschnur) dreht sich als
+                 EIN starrer Körper um den Drehzapfen. Neu gezeichnet: kürzeres, gleichmäßig
+                 dickes Rohr mit klar RUNDER, OFFENER Mündung (dunkler Ring am Ende) und zwei
+                 Verstärkungsringen — eindeutig als klassische Kanone erkennbar, statt eines
+                 langen, spitz zulaufenden Rohrs. -->
             <g id="knCannonBarrel" style="transform-origin:30px 27px;">
               <circle cx="30" cy="27" r="5" fill="#3a3a3a" />
-              <path d="M21 30 C18 24 19 10 25 5 Q26 2 30 2 Q34 2 35 5 C41 10 42 24 39 30 Z" fill="#3a3a3a" stroke="#242424" stroke-width="0.6" />
-              <ellipse cx="30" cy="3.5" rx="5" ry="2.4" fill="#1f1f1f" />
+              <rect x="23" y="9" width="14" height="20" rx="3" fill="#3a3a3a" stroke="#242424" stroke-width="0.6" />
+              <rect x="21.5" y="14" width="17" height="3" rx="1.2" fill="#242424" />
+              <rect x="21.5" y="21" width="17" height="3" rx="1.2" fill="#242424" />
+              <ellipse cx="30" cy="9" rx="7" ry="3" fill="#3a3a3a" stroke="#242424" stroke-width="0.6" />
+              <ellipse cx="30" cy="9" rx="4.3" ry="1.9" fill="#0d0d0d" />
               <!-- Zündschnur -->
-              <path d="M30 3 Q33 -1 31 -4" fill="none" stroke="#8a6a3a" stroke-width="1.3" stroke-linecap="round" />
-              <circle cx="31" cy="-4.5" r="1.6" fill="#e8825f" />
+              <path d="M30 6 Q33 2 31 -1" fill="none" stroke="#8a6a3a" stroke-width="1.3" stroke-linecap="round" />
+              <circle cx="31" cy="-1.5" r="1.6" fill="#e8825f" />
             </g>
           </svg>
         </div>
@@ -8958,6 +9044,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (user && myUnread.length) await Backend.refreshCurrentProfile();
     const profile = Backend.currentProfile();
     const extra = (profile && profile.extraProfileData) || {};
+    const myFoxBedBadge = profile ? await foxOfPeriodBadgeHtml(Backend.currentUser()?.id) : "";
+    // WICHTIG: profile (Backend.currentProfile()) hat KEIN eigenes "id"-Feld (anders als das
+    // fremde Profil-Objekt aus getPublicProfile) — deshalb hier ein passendes Objekt für die
+    // Transport-Leisten-Funktion zusammenbauen, die das Feld erwartet.
+    const myTransportStrip = (profile && user) ? await profileTransportStripHtml({ id: user.id, extraProfileData: extra }) : "";
 
     const demoBanner = !Backend.isConfigured
       ? '<div class="demo-banner">🔧 Demo-Modus: Es ist noch kein Supabase-Projekt verbunden (siehe supabase-config.js). Konten &amp; Punkte bleiben nur für diese Sitzung erhalten.</div>'
@@ -9045,6 +9136,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div class="profile-header-flow">
             ${avatarHtml}
             <h2 style="margin:0 60px 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
+            ${myFoxBedBadge}
             ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
             <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
             ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
@@ -9054,6 +9146,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           </div>
           ${showcaseSongStripHtml(profile)}
+          ${myTransportStrip}
           <div style="clear:both;"></div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
             ${myFriends.length ? myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>`).join("") : '<p class="empty-note">Noch keine Freunde — oben nach Namen suchen.</p>'}
@@ -9064,8 +9157,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
           </div>
           ${profile.trophies && profile.trophies.length ? `<div class="quiz-actions" style="justify-content:center; gap:18px; margin-top:10px;">
-            <span class="empty-note" style="font-size:0.95rem;">🎖️ ${trophyCounts(profile).orden} Orden</span>
-            <span class="empty-note" style="font-size:0.95rem;">🏆 ${trophyCounts(profile).pokale} Pokale</span>
+            <button type="button" class="empty-note trophy-summary-link" id="trophySummaryJump" style="font-size:0.95rem; background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;">🎖️ ${trophyCounts(profile).orden} Orden · 🏆 ${trophyCounts(profile).pokale} Pokale</button>
           </div>` : ""}
           <p class="eyebrow" style="margin-top:14px;">🦊 Sammelfiguren <span class="subnav-info-icon" data-info="Diese Fuchs-Figuren sind Sammelobjekte, die man sich beim Deutschlernen erspielt — je mehr Punkte du sammelst (oder bestimmte Pokale erreichst), desto mehr Figuren schaltest du frei. Auf eine bereits freigeschaltete Figur tippen zeigt dir mehr dazu.">ⓘ</span></p>
           <div class="figure-case">
@@ -9129,7 +9221,14 @@ An einem Morgen lief ein kleiner Fuchs los…
         setTimeout(() => { document.querySelector('#profileSubnav [data-sub="sub-settings"]')?.click(); }, 150);
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
+      if (myTransportStrip) wireProfileTransportStrip(area, { id: user.id, extraProfileData: extra });
       wireTrophyCaseToggle();
+      document.getElementById("trophySummaryJump")?.addEventListener("click", () => {
+        // Klick auf die "X Orden · Y Pokale"-Kurzfassung springt zur vollständigen Vitrine weiter
+        // unten und klappt sie direkt komplett auf, statt nur unklickbarer Text zu sein.
+        document.getElementById("trophyMoreBtn")?.click();
+        document.getElementById("trophyCaseAnchor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
       wireSteckbriefPager(area, renderAccount);
       wireMusicPlayer(area);
       area.querySelectorAll("[data-figure-detail]").forEach((el) => {
@@ -9658,7 +9757,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const list = compact ? profile.trophies.slice(0, 4) : profile.trophies;
     const extra = compact && profile.trophies.length > 4 ? profile.trophies.slice(4) : [];
     const chip = (t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">🏆</span><span>${t}</span></button>`;
-    return `<div class="breakdown-list" style="margin-top:16px;">
+    return `<div class="breakdown-list" style="margin-top:16px;" id="trophyCaseAnchor">
       <p class="eyebrow" style="margin-top:0;">🏆 Vitrine <span class="empty-note" style="font-weight:400;">— antippen für Details</span></p>
       <div class="trophy-case ${compact ? "trophy-case-compact" : ""}">
         ${list.map(chip).join("")}
@@ -9769,10 +9868,14 @@ An einem Morgen lief ein kleiner Fuchs los…
   // embed/), damit man einfach den Link kopieren kann, den man im Browser sieht.
   /* ===== Musik-Player: Admin-verwaltete Playlist mit Transportsteuerung & Favoriten ===== */
   let musicPlaylist = [];
-  let musicCoverCollapsed = false; // Einklapp-Zustand: Cover-Fenster ausblenden, nur Titel bleibt sichtbar, Ton läuft weiter
+  let musicCoverCollapsed = true; // Einklapp-Zustand: Cover-Fenster startet standardmäßig eingeklappt (nur Titel sichtbar), lässt sich bei Bedarf aufklappen — Ton läuft so oder so weiter.
   // Kompakte, aufklappbare Schnellliste DIREKT im Player selbst (nur Titel, antippen startet
   // sofort) — getrennt von der vollständigen Verwaltungsliste weiter unten mit all ihren Knöpfen.
   let musicQuickListOpen = false;
+  // Wiederhol-/Zufallsmodus: "off" (einmal durch, dann Stopp am Ende), "one" (aktueller Song
+  // wiederholt sich endlos), "all" (Playlist beginnt nach dem letzten Song wieder von vorn).
+  let musicRepeatMode = "off";
+  let musicShuffleOn = false;
   let musicFavIds = [];
   let musicCurrentIndex = -1;
   let musicIsPlaying = false;
@@ -9808,6 +9911,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   let ytMusicPlayer = null;
   let ytApiLoading = false;
   let ytApiCallbacks = [];
+  // Verhindert die Race-Condition, die dazu führte, dass beim schnellen Songwechsel immer wieder
+  // das ERSTE, ursprünglich geladene Video gespielt wurde: onReady feuert asynchron und wusste
+  // bisher nicht, ob der Nutzer zwischenzeitlich schon einen ANDEREN Song angefordert hatte.
+  let ytPlayerIsReady = false;
+  let ytDesiredVideoId = null;
   function loadYouTubeIframeApi(callback) {
     if (window.YT && window.YT.Player) { callback(); return; }
     ytApiCallbacks.push(callback);
@@ -10025,6 +10133,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       audioEl.pause();
       const videoId = extractYouTubeId(song.url);
       if (!videoId) return;
+      // Immer die zuletzt tatsächlich GEWÜNSCHTE Video-ID merken — das ist die "Quelle der
+      // Wahrheit", unabhängig davon, wie viele Klicks währenddessen noch dazwischenkommen.
+      ytDesiredVideoId = videoId;
       loadYouTubeIframeApi(() => {
         if (!ytMusicPlayer) {
           ytMusicPlayer = new YT.Player("musicYtHost", {
@@ -10035,9 +10146,22 @@ An einem Morgen lief ein kleiner Fuchs los…
             height: "200", width: "200", videoId,
             playerVars: { origin: window.location.origin },
             events: {
-              onReady: (e) => { e.target.playVideo(); musicIsPlaying = true; updateMusicPlayPauseIconOnly(); },
+              // WICHTIG: NICHT einfach die videoId abspielen, mit der der Player ursprünglich
+              // erstellt wurde — onReady feuert asynchron, und bis dahin kann der Nutzer längst
+              // einen ANDEREN Song angefordert haben. Stattdessen immer die zuletzt gewünschte
+              // Video-ID laden (das behebt den "immer wieder nur der erste Song"-Fehler).
+              onReady: (e) => {
+                ytPlayerIsReady = true;
+                if (ytDesiredVideoId && ytDesiredVideoId !== videoId) {
+                  e.target.loadVideoById(ytDesiredVideoId);
+                } else {
+                  e.target.playVideo();
+                }
+                musicIsPlaying = true;
+                updateMusicPlayPauseIconOnly();
+              },
               onStateChange: (e) => {
-                if (window.YT && e.data === YT.PlayerState.ENDED) playNextMusic();
+                if (window.YT && e.data === YT.PlayerState.ENDED) playNextMusic(true);
                 if (window.YT && e.data === YT.PlayerState.PLAYING) { musicIsPlaying = true; updateMusicPlayPauseIconOnly(); }
                 if (window.YT && e.data === YT.PlayerState.PAUSED) { musicIsPlaying = false; updateMusicPlayPauseIconOnly(); }
               },
@@ -10051,9 +10175,14 @@ An einem Morgen lief ein kleiner Fuchs los…
               },
             },
           });
-        } else {
+        } else if (ytPlayerIsReady) {
           ytMusicPlayer.loadVideoById(videoId);
           musicIsPlaying = true;
+        } else {
+          // Der Player existiert zwar schon, ist aber noch nicht bereit (onReady vom vorherigen
+          // Song steht noch aus) — loadVideoById() JETZT aufzurufen würde ins Leere laufen. Die
+          // ytDesiredVideoId ist oben schon aktualisiert; sobald onReady feuert, lädt es
+          // automatisch die zuletzt gewünschte ID nach.
         }
         // Auch hier KEIN direkter renderMusicPlayerBar()-Aufruf mehr — aus demselben Grund wie
         // beim MP3-Zweig oben: renderMusicSection() (unten) baut den Bereich neu auf und ruft
@@ -10074,11 +10203,37 @@ An einem Morgen lief ein kleiner Fuchs los…
     musicIsPlaying = !musicIsPlaying;
     renderMusicPlayerBar();
   }
-  function playNextMusic() {
+  // isAutoAdvance: true nur beim automatischen Songende (YouTube ENDED / Audio "ended"-Event) —
+  // NICHT beim manuellen "Weiter"-Klick, der immer zum nächsten Song springen soll, unabhängig
+  // vom Wiederhol-Modus.
+  function playNextMusic(isAutoAdvance) {
     const list = musicVisiblePlaylist();
     if (!list.length) return;
+    if (isAutoAdvance && musicRepeatMode === "one") {
+      // Denselben Song einfach von vorn starten, statt zum nächsten zu springen.
+      playMusicIndex(musicCurrentIndex);
+      return;
+    }
     const curSong = musicPlaylist[musicCurrentIndex];
     const curVisIdx = curSong ? list.findIndex((s) => s.id === curSong.id) : -1;
+    if (musicShuffleOn) {
+      // Zufälliger anderer Song aus der sichtbaren Liste (nicht derselbe, außer es gibt nur einen).
+      const candidates = list.filter((_, i) => i !== curVisIdx);
+      const pick = (candidates.length ? candidates : list)[Math.floor(Math.random() * (candidates.length || list.length))];
+      playMusicIndex(musicPlaylist.findIndex((s) => s.id === pick.id));
+      return;
+    }
+    const atEnd = curVisIdx === list.length - 1;
+    if (isAutoAdvance && atEnd && musicRepeatMode === "off") {
+      // Playlist ist einmal durch, kein Wiederhol-Modus aktiv — sauber stoppen statt endlos von
+      // vorn zu beginnen.
+      const audioEl = document.getElementById("musicAudioNative");
+      if (audioEl) audioEl.pause();
+      if (ytMusicPlayer && ytMusicPlayer.pauseVideo) { try { ytMusicPlayer.pauseVideo(); } catch (e) {} }
+      musicIsPlaying = false;
+      renderMusicPlayerBar();
+      return;
+    }
     const nextSong = list[(curVisIdx + 1) % list.length];
     playMusicIndex(musicPlaylist.findIndex((s) => s.id === nextSong.id));
   }
@@ -10104,18 +10259,24 @@ An einem Morgen lief ein kleiner Fuchs los…
       // zeigen jetzt ein animiertes Musik-Symbol statt einer leeren Fläche, damit dort nie mehr
       // "nichts" zu sehen ist.
       const hasVisualContent = Boolean(song);
+      const playerUpdateOn = Backend.isFeatureOn("musikplayer_update");
       bar.innerHTML = song ? `
         <div id="musicVideoSquareSlot" style="flex-shrink:0; ${musicCoverCollapsed ? "display:none;" : ""}"></div>
         <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
         <button type="button" class="player-panel-btn" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
         <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
         <span id="musicDigitalTime" class="player-digital-time">--:-- / --:--</span>
-        <span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" aria-hidden="true">
-          ${Array.from({ length: 4 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.13).toFixed(2)}s;"></span>`).join("")}
-        </span>
+        ${playerUpdateOn ? `<span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" aria-hidden="true">
+          ${Array.from({ length: 12 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.09).toFixed(2)}s; height:${8 + (i % 5) * 3}px;"></span>`).join("")}
+        </span>` : ""}
         <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
-        <button type="button" class="emoji-toggle-link" id="musicQuickListToggle" style="font-size:0.75rem; flex-shrink:0;" title="Song-Liste ein-/ausblenden">☰</button>
+        ${playerUpdateOn ? `<button type="button" class="emoji-toggle-link" id="musicQuickListToggle" style="font-size:0.75rem; flex-shrink:0;" title="Song-Liste ein-/ausblenden">☰</button>` : ""}
         ${hasVisualContent ? `<button type="button" class="emoji-toggle-link" id="musicExpandToggle" style="font-size:0.68rem; flex-shrink:0;" title="${musicCoverCollapsed ? "Cover wieder einblenden" : "Nur Titel anzeigen, Cover ausblenden"}">${musicCoverCollapsed ? "▸" : "▾"}</button>` : ""}
+        ${playerUpdateOn ? `<div class="player-mode-row">
+          <button type="button" class="player-mode-btn ${musicShuffleOn ? "active" : ""}" id="musicShuffleBtn" title="Zufallsmodus">🔀</button>
+          <button type="button" class="player-mode-btn ${musicRepeatMode === "one" ? "active" : ""}" id="musicRepeatOneBtn" title="Diesen Song wiederholen">🔂</button>
+          <button type="button" class="player-mode-btn ${musicRepeatMode === "all" ? "active" : ""}" id="musicRepeatAllBtn" title="Playlist wiederholen">🔁</button>
+        </div>` : ""}
       ` : `<span class="empty-note">Kein Song ausgewählt — wähl unten einen aus der Liste.</span>`;
       // Das quadratische Video-Fenster physisch in die gerade sichtbare Leiste verschieben (Musik-
       // Reiter bevorzugt, sonst die schwebende Leiste) — dieselbe DOM-Node bleibt dabei bestehen,
@@ -10139,7 +10300,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           coverLayer.src = song.cover_url;
           coverLayer.style.display = "";
           if (mp3Icon) mp3Icon.style.display = "none";
-        } else if (Backend.isDirectAudioUrl(song.url)) {
+        } else if (Backend.isDirectAudioUrl(song.url) && Backend.isFeatureOn("musikplayer_update")) {
           // MP3 (oder ähnliche direkte Audiodatei) ohne eigenes Cover — statt einer leeren
           // Fläche ein animiertes Musik-Symbol zeigen, damit dort immer etwas zu sehen ist.
           if (coverLayer) coverLayer.style.display = "none";
@@ -10157,12 +10318,24 @@ An einem Morgen lief ein kleiner Fuchs los…
         }
       }
       document.getElementById("musicPrevBtn")?.addEventListener("click", playPrevMusic);
-      document.getElementById("musicNextBtn")?.addEventListener("click", playNextMusic);
+      document.getElementById("musicNextBtn")?.addEventListener("click", () => playNextMusic(false));
       document.getElementById("musicPlayPauseBtn")?.addEventListener("click", toggleMusicPlayPause);
       document.getElementById("musicExpandToggle")?.addEventListener("click", () => { musicCoverCollapsed = !musicCoverCollapsed; renderMusicPlayerBar(); });
       document.getElementById("musicQuickListToggle")?.addEventListener("click", () => {
         musicQuickListOpen = !musicQuickListOpen;
         renderMusicQuickList();
+      });
+      document.getElementById("musicShuffleBtn")?.addEventListener("click", () => {
+        musicShuffleOn = !musicShuffleOn;
+        renderMusicPlayerBar();
+      });
+      document.getElementById("musicRepeatOneBtn")?.addEventListener("click", () => {
+        musicRepeatMode = musicRepeatMode === "one" ? "off" : "one";
+        renderMusicPlayerBar();
+      });
+      document.getElementById("musicRepeatAllBtn")?.addEventListener("click", () => {
+        musicRepeatMode = musicRepeatMode === "all" ? "off" : "all";
+        renderMusicPlayerBar();
       });
       renderMusicQuickList();
     }
@@ -10175,6 +10348,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   function renderMusicQuickList() {
     const list = document.getElementById("musicQuickList");
     if (!list) return;
+    if (!Backend.isFeatureOn("musikplayer_update")) { list.style.display = "none"; return; }
     list.style.display = musicQuickListOpen ? "block" : "none";
     if (!musicQuickListOpen) return;
     const visible = musicVisiblePlaylist();
@@ -10193,6 +10367,14 @@ An einem Morgen lief ein kleiner Fuchs los…
   function renderMusicFloatingBar() {
     const floatBar = document.getElementById("musicFloatingBar");
     if (!floatBar) return;
+    // WICHTIG: Das echte Video-/iframe-Element VOR jedem möglichen innerHTML-Setzen unten "in
+    // Sicherheit" bringen (falls es gerade in floatBar liegt) — sonst würde es bei jedem der
+    // folgenden innerHTML-Aufrufe (auch bei "" beim Verstecken) mitgelöscht und beim nächsten Mal
+    // komplett neu erstellt. Ein iframe, das im DOM neu erstellt statt nur verschoben wird, lädt
+    // sich dabei neu — das war die eigentliche Ursache des "Einfrieren und Kreiseln"-Verhaltens
+    // bei jeder Seitennavigation, während gerade ein Song lief.
+    const videoSquareRescue = document.getElementById("musicVideoSquare");
+    if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
     const song = musicPlaylist[musicCurrentIndex];
     if (!song) { floatBar.style.display = "none"; floatBar.innerHTML = ""; return; }
     const knowledgeViewOpen = document.getElementById("view-knowledge")?.dataset.active === "true";
@@ -10203,8 +10385,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     // einzelner Klick konnte dadurch beide gleichzeitig treffen und den Zustand zweimal
     // hintereinander umschalten — genau das "startet und stoppt sofort wieder"-Verhalten.
     if (musicTabOpen) { floatBar.style.display = "none"; floatBar.innerHTML = ""; return; }
+    // Wenn die Leiste bereits für GENAU DIESEN Song aufgebaut ist, NICHT erneut floatBar.innerHTML
+    // setzen — nur die wirklich dynamischen Teile (Play/Pause-Icon, Titel) aktualisieren.
+    if (floatBar.dataset.builtForSongId === String(song.id) && floatBar.style.display === "flex") {
+      const playPauseBtn = document.getElementById("mfbPlayPause");
+      if (playPauseBtn) playPauseBtn.innerHTML = musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play;
+      const titleBtn = document.getElementById("mfbTitle");
+      if (titleBtn) titleBtn.textContent = `🎵 ${song.title}`;
+      return;
+    }
     floatBar.style.display = "flex";
     floatBar.className = "music-floating-bar";
+    floatBar.dataset.builtForSongId = String(song.id);
     floatBar.innerHTML = `
       <div id="musicVideoSquareSlotFloat" style="flex-shrink:0;"></div>
       <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
@@ -10213,8 +10405,14 @@ An einem Morgen lief ein kleiner Fuchs los…
       <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
     `;
     relocateMusicVideoSquare();
+    // WICHTIG: className wurde oben komplett neu gesetzt (überschreibt auch eine eventuell schon
+    // vorhandene player-tpl-*-Klasse) — die Design-Vorlage muss deshalb hier erneut angewendet
+    // werden, sonst erscheint die schwebende Leiste beim Tab-Wechsel kurz im Standard-Design,
+    // während die In-Page-Leiste weiterhin das richtige Design zeigt (genau das beschriebene
+    // "wechselt beim Tab-Wechsel das Design"-Problem).
+    applyPlayerTemplateClass();
     document.getElementById("mfbPrev").addEventListener("click", playPrevMusic);
-    document.getElementById("mfbNext").addEventListener("click", playNextMusic);
+    document.getElementById("mfbNext").addEventListener("click", () => playNextMusic(false));
     document.getElementById("mfbPlayPause").addEventListener("click", toggleMusicPlayPause);
     document.getElementById("mfbTitle").addEventListener("click", () => {
       document.querySelector('[data-target="view-knowledge"]').click();
@@ -10285,7 +10483,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         <div id="musicUsersListBody" style="display:none; margin-top:10px;"><p class="empty-note">Lade…</p></div>
       </div>` : ""}
       <div class="question-card" style="position:sticky; top:0; z-index:5; margin-bottom:14px;">
-        <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px;"></div>
+        ${inlineFeatureFlagToggleHtml("musikplayer_update")}
+        <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"></div>
         <div class="glass-quick-list" id="musicQuickList" style="display:${musicQuickListOpen ? "block" : "none"};"></div>
         <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
           ${Object.entries(PLAYER_TEMPLATES).map(([key, t]) => `<button type="button" class="order-pill player-tpl-pick" data-tpl="${key}" aria-selected="${getPlayerTemplate() === key}" title="${t.desc}" style="font-size:0.78rem; padding:9px 12px; min-height:38px;">${t.label}</button>`).join("")}
@@ -10348,8 +10547,17 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     });
     area.querySelectorAll(".player-tpl-pick").forEach((btn) => {
-      btn.addEventListener("click", async () => { await setPlayerTemplate(btn.dataset.tpl); renderMusicSection(); });
+      btn.addEventListener("click", async () => {
+        // WICHTIG: NICHT renderMusicSection() (kompletter Neuaufbau) nach einem reinen Layout-
+        // Wechsel aufrufen — das ist für einen simplen visuellen Wechsel unnötig schwergewichtig
+        // und riskiert genau die Art Nebenwirkung, die zuvor schon einmal einen laufenden Song
+        // stören konnte. Nur die Template-Klasse anwenden und die aktive Markierung der Knöpfe
+        // selbst aktualisieren reicht hier komplett aus.
+        await setPlayerTemplate(btn.dataset.tpl);
+        area.querySelectorAll(".player-tpl-pick").forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+      });
     });
+    wireInlineFeatureFlagToggles(area, renderMusicSection);
     document.getElementById("musicMineTab")?.addEventListener("click", async () => { musicPlaylistMode = "mine"; await loadMusicPlaylist(); renderMusicSection(); });
     document.getElementById("musicAddToggle")?.addEventListener("click", () => {
       const body = document.getElementById("musicAddFormBody");
@@ -10452,7 +10660,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     });
   }
-  document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic());
+  document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic(true));
   document.querySelector('#knowledgeSubnav [data-sub="sub-music"]')?.addEventListener("click", async () => {
     await loadMusicPlaylist();
     renderMusicSection();
@@ -11030,6 +11238,45 @@ An einem Morgen lief ein kleiner Fuchs los…
     </div>`;
   }
 
+  // "Fuchs des Tages/der Woche/..."-Bett-Abzeichen: erscheint im Profil, sobald die Person GERADE
+  // eine dieser Auszeichnungen hält — ein kleines, gemütliches Bett mit Patches in Fuchs-
+  // Fellfarben (Orange-/Rostton-Flicken wie ein Patchwork), aus dem ein winziger Fuchskopf
+  // herausschaut, als würde er dort gerade schlummern.
+  async function foxOfPeriodBadgeHtml(userId) {
+    if (!userId) return "";
+    const [day, week, month, year] = await Promise.all([
+      Backend.getFoxOfTheDay().catch(() => null),
+      Backend.getFoxOfWeek ? Backend.getFoxOfWeek().catch(() => null) : Backend.getFoxOfTheWeek().catch(() => null),
+      Backend.getFoxOfMonth ? Backend.getFoxOfMonth().catch(() => null) : null,
+      Backend.getFoxOfYear ? Backend.getFoxOfYear().catch(() => null) : null,
+    ]);
+    const labels = [];
+    if (day && day.user_id === userId) labels.push("Fuchs des Tages");
+    if (week && week.user_id === userId) labels.push("Fuchs der Woche");
+    if (month && month.user_id === userId) labels.push("Fuchs des Monats");
+    if (year && year.user_id === userId) labels.push("Fuchs des Jahres");
+    if (!labels.length) return "";
+    return `<div class="fox-bed-badge" title="${labels.join(" · ")}">
+      <svg viewBox="0 0 60 36" width="52" height="31">
+        <rect x="2" y="20" width="56" height="6" rx="2" fill="#8B6F47"/>
+        <rect x="4" y="26" width="4" height="8" fill="#6b5233"/>
+        <rect x="52" y="26" width="4" height="8" fill="#6b5233"/>
+        <rect x="5" y="10" width="50" height="12" rx="4" fill="#E8825F"/>
+        <rect x="8" y="12" width="9" height="8" rx="2" fill="#DC7F2A"/>
+        <rect x="19" y="12" width="9" height="8" rx="2" fill="#F2B84B"/>
+        <rect x="30" y="12" width="9" height="8" rx="2" fill="#E85F6F"/>
+        <rect x="41" y="12" width="9" height="8" rx="2" fill="#DC7F2A"/>
+        <g transform="translate(30 8)">
+          <path d="M0 0 L-5 -6 L-3 1 Q0 -2 3 1 L5 -6 Z" fill="#E8825F"/>
+          <path d="M-3 -3 L-4 -6 L-1 -4 Z" fill="#F5C99A"/>
+          <path d="M3 -3 L4 -6 L1 -4 Z" fill="#F5C99A"/>
+          <circle cx="-2" cy="0" r="0.9" fill="#241505"/>
+          <circle cx="2" cy="0" r="0.9" fill="#241505"/>
+        </g>
+      </svg>
+      <span class="empty-note fox-bed-badge-label">${labels[0]}${labels.length > 1 ? ` +${labels.length - 1}` : ""}</span>
+    </div>`;
+  }
   async function openProfileModal(id, existingBox) {
     const p = await Backend.getPublicProfile(id);
     if (!p) {
@@ -11057,12 +11304,13 @@ An einem Morgen lief ein kleiner Fuchs los…
     const trophyOverflow = sortedTrophies.length - trophies.length;
     const mySympathyLevel = (!isMe && me) ? await Backend.getMySympathyFor(p.id) : null;
     const allSympathyLevels = (!isMe && me) ? await Backend.getAllSympathyLevels() : [];
+    const foxBedBadge = await foxOfPeriodBadgeHtml(p.id);
 
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>${foxBedBadge}` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
         !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
@@ -12278,7 +12526,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "107";
+  const APP_VERSION = "108";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

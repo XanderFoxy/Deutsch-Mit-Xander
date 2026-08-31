@@ -148,6 +148,13 @@ const Core = (function () {
       tone(220, 0, 0.14, "square", 0.16); tone(160, 0.05, 0.14, "square", 0.14);
       tone(200, 0.28, 0.16, "square", 0.18); tone(130, 0.34, 0.18, "square", 0.16);
     },
+    bubblePop() {
+      // Kurzes, helles "Blubb" wie eine echte Seifenblase — bewusst deutlich anders als
+      // explosion() (dumpfer Knall): ein kurzer, hoher Ton, der schnell in der Tonhöhe absackt
+      // und leise ausklingt, statt eines lauten, tiefen "Wumms".
+      tone(1100, 0, 0.05, "sine", 0.1);
+      tone(700, 0.03, 0.08, "sine", 0.09);
+    },
     whistle(duration = 0.22) {
       // Kurzes, absteigendes Pfeifen — wie ein Geschoss im Anflug, kurz bevor es einschlägt.
       // Frequenz sinkt exponentiell während der gesamten Flugdauer, synchron zur Kugel-Animation.
