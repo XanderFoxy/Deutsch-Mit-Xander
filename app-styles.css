@@ -624,7 +624,7 @@
 }
 .zodiac-badge {
   display: inline-flex; align-items: center; gap: 3px;
-  font-size: 0.74rem; color: var(--cream-200);
+  font-size: 0.74rem; color: inherit;
   background: rgba(0,0,0,0.06);
   padding: 2px 7px;
   border-radius: 999px;
@@ -1201,6 +1201,31 @@
   flex-wrap: wrap;
   gap: 4px 14px;
   overflow: visible;
+  /* WICHTIG: Platz für die absolut positionierte Punkteanzeige (oben rechts, siehe
+     .profile-points) auf dem GESAMTEN Fließtext-Bereich reservieren, nicht nur auf der ersten
+     Namens-Zeile (wie es der frühere margin-right nur auf dem <h2> tat) — sonst konnten spätere
+     Zeilen (z. B. bei langem Namen + Alter) trotzdem noch mit der Punkteanzeige überlappen.
+     padding statt margin, damit der reservierte Platz zum Element selbst gehört und beim
+     Zeilenumbruch korrekt mitgerechnet wird. */
+  padding-right: 68px;
+  box-sizing: border-box;
+}
+/* Name, Badges usw. rechts vom Bild jetzt bündig UNTEREINANDER gestapelt, statt als Fließtext
+   nebeneinander zu laufen — Name, dann Betreiber-/Rollen-Badge, dann Freunde, dann
+   Herkunft+Sternzeichen zusammen auf einer Zeile, jeweils klar erkennbar getrennt. */
+.profile-header-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+}
+.profile-header-stack-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .profile-header-flow .avatar-photo,
 .profile-header-flow .initials-avatar {
@@ -1616,6 +1641,16 @@
   max-width: 100vw;
   overflow: hidden;
 }
+/* Sanftes "Auftauchen" der schwebenden Leiste, wenn sie beim Tab-Wechsel erstmals sichtbar wird
+   (statt aus dem Profil-Streifen einfach nur hörbar zu spielen) — von unten leicht heraufgleiten
+   und einblenden, statt abrupt an ihrer Endposition zu erscheinen. */
+@keyframes musicFloatingBarRise {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.music-floating-bar-reveal {
+  animation: musicFloatingBarRise 0.35s ease-out;
+}
 .music-floating-bar > * { flex-shrink: 0; min-width: 0; }
 .music-floating-bar .mfb-title {
   flex: 1;
@@ -1657,7 +1692,7 @@
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  width: 32px; height: 32px;
+  width: 30px; height: 30px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 3px 0 rgba(150,80,20,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
@@ -1670,10 +1705,18 @@
 .player-panel-btn.ghost-btn {
   background: linear-gradient(160deg, #e8e0d0, #c9bfa8);
   color: #241505;
-  width: 34px; height: 34px;
+  width: 30px; height: 30px;
   box-shadow: 0 2px 0 rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .player-panel-btn.ghost-btn:active { box-shadow: 0 0 0 rgba(0,0,0,0.2), inset 0 1px 3px rgba(0,0,0,0.25); }
+/* Kompaktere, filigranere Leiste auf schmalen Bildschirmen — Wellenform tritt ganz zurück (rein
+   dekorativ), damit die WICHTIGEN Bedienelemente (Play/Pause, Titel, Song-Liste aufklappen)
+   garantiert in einer Zeile Platz haben, statt dass der letzte Knopf in die nächste Zeile rutscht. */
+@media (max-width: 420px) {
+  #musicPlayerBarInner .kn-waveform { display: none; }
+  #musicPlayerBarInner .player-panel-btn,
+  #musicPlayerBarInner .player-panel-btn.ghost-btn { width: 27px; height: 27px; }
+}
 .player-digital-time {
   font-family: "Courier New", monospace;
   font-size: 0.72rem;
@@ -1991,6 +2034,15 @@
 .music-video-square iframe {
   width: 100% !important; height: 100% !important;
   border: none;
+  /* WICHTIG: Berührungen sollen beim Scrollen/Wischen über den kleinen Video-Ausschnitt einfach
+     "durchgereicht" werden, statt vom eingebetteten YouTube-Player abgefangen zu werden — sonst
+     zeigt das native mobile Video-Element (auch bei controls:0) manchmal trotzdem eigene, hier
+     unerwünschte Bedienelemente (Vollbild-/Vergrößerungssymbole) beim Antippen. Die eigenen
+     Bedienelemente der Seite liegen ohnehin AUSSERHALB dieses Bereichs, direktes Antippen des
+     Video-Ausschnitts selbst wird also nicht gebraucht.
+     Erneut explizit auf dem iframe selbst gesetzt (nicht nur auf dem Elternelement), da manche
+     mobile Browser einem eingebetteten <iframe> mit Video-Inhalt eigene Touch-Priorität geben. */
+  pointer-events: none;
 }
 /* Größere Variante direkt im Musik-Reiter, für eine bessere, deutlichere "Cover"-Ansicht */
 #musicPlayerBarInner .music-video-square {
@@ -2038,6 +2090,35 @@
   transition: transform 0.7s cubic-bezier(0.45, 0, 0.2, 1);
 }
 .album-page-face.turning-next { transform: rotateY(-150deg); }
+/* Aufgeschlagenes Buch mit ZWEI Seiten nebeneinander (statt einer einzelnen, zentrierten Fläche)
+   — mit einem sichtbaren "Buchrücken" (Mittelfalz) und einem sanften Schatten dort hinein, genau
+   wie bei einem echten aufgeschlagenen Album. */
+.album-book-open {
+  display: flex;
+  align-items: stretch;
+  transform-origin: left center;
+  transition: transform 0.7s cubic-bezier(0.45, 0, 0.2, 1);
+}
+.album-book-open.turning-next { transform: rotateY(-150deg); }
+.album-page-left, .album-page-right {
+  flex: 1;
+  min-width: 0;
+  background: #FBF3E8;
+  padding: 16px 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+.album-page-left { border-radius: 14px 0 0 14px; }
+.album-page-right { border-radius: 0 14px 14px 0; }
+.album-spine {
+  width: 14px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0.12), rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.12));
+}
+.album-page-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
 
 /* ===== Player-Vorlagen — mehrere wählbare Optiken ===== */
 #musicPlayerBarInner.player-tpl-retro {
@@ -2640,21 +2721,36 @@
   height: 130px;
   overflow: hidden;
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, #cfe8f5, #eef8fb);
+  background:
+    /* Ferne, dezente Berg-Silhouetten hinter den Schienen — zwei überlappende Bergketten in
+       gedämpften Blautönen, wie eine typische "Landschaft am Horizont"-Ansicht. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cpolygon points='0,100 0,55 60,20 120,50 180,15 260,48 320,25 400,50 400,100' fill='%23a9c9dd' opacity='0.55'/%3E%3Cpolygon points='0,100 0,72 80,42 160,68 230,38 300,65 400,40 400,100' fill='%237fa8c4' opacity='0.5'/%3E%3C/svg%3E") bottom / 100% auto no-repeat,
+    linear-gradient(180deg, #cfe8f5, #eef8fb);
   margin: 10px 0;
 }
-/* Schienen als dezenter, statischer "Untergrund" über den ganzen Track-Bereich verteilt — der
-   Zug fährt sichtbar AUF ihnen, ohne dass die Schienen selbst mit ihm mitwandern müssen (das
-   wäre bei der gebogenen Route technisch viel aufwendiger für kaum sichtbaren Zusatznutzen). */
+/* Schienen als klare, einfache Linien genau auf der Höhe, auf der der Zug fährt (siehe .kt-train
+   top:60%) — zwei parallele Gleis-Linien mit Schwellen dazwischen, statt eines schräg
+   schraffierten Musters über den ganzen Bereich verteilt. */
 .kt-rails {
   position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(100deg, transparent, transparent 22px, rgba(80,60,40,0.35) 22px, rgba(80,60,40,0.35) 26px),
-    linear-gradient(180deg, transparent 55%, rgba(120,90,60,0.5) 55%, rgba(120,90,60,0.5) 58%, transparent 58%),
-    linear-gradient(180deg, transparent 62%, rgba(120,90,60,0.5) 62%, rgba(120,90,60,0.5) 65%, transparent 65%);
-  opacity: 0.5;
+  left: 0; right: 0;
+  top: 68%;
+  height: 22px;
+  background-image: repeating-linear-gradient(90deg, rgba(90,65,45,0.4), rgba(90,65,45,0.4) 4px, transparent 4px, transparent 20px);
+  background-position: center;
+  background-size: 100% 16px;
+  background-repeat: repeat-x;
 }
+.kt-rails::before, .kt-rails::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  background: rgba(120,90,60,0.55);
+  border-radius: 2px;
+}
+.kt-rails::before { top: 0; }
+.kt-rails::after { top: 19px; }
 .kt-train {
   position: absolute;
   display: flex;
@@ -2662,17 +2758,25 @@
   gap: 2px;
   white-space: nowrap;
   z-index: 1;
-  animation-name: ktTrainArc;
+  /* Feste Höhe genau auf den Schienen (siehe .kt-rails) — einfache, gerade Fahrt von rechts nach
+     links, statt einer gebogenen Route quer durchs Bild. */
+  top: 60%;
+  animation-name: ktTrainStraight;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
-  animation-duration: 6.5s;
+  /* Länger als vorher (war 6.5s bei einer kürzeren Strecke bis -60%) — jetzt geht die Strecke bis
+     -220%, damit auch lange Züge komplett verschwinden (siehe @keyframes). Dauer proportional
+     verlängert, damit die gefühlte Geschwindigkeit gleich bleibt, statt plötzlich viel schneller
+     zu wirken. */
+  animation-duration: 12.8s;
 }
-@keyframes ktTrainArc {
-  0%   { left: 105%; top: 5%; }
-  30%  { left: 65%; top: 55%; }
-  55%  { left: 30%; top: 70%; }
-  80%  { left: -10%; top: 40%; }
-  100% { left: -60%; top: 5%; }
+@keyframes ktTrainStraight {
+  0%   { left: 105%; }
+  /* WICHTIG: -60% reichte für lange Züge (viele Waggons bei langen Sätzen) nicht aus, um den
+     LETZTEN Waggon wirklich komplett aus dem sichtbaren Bereich zu bewegen — der rechte Rand
+     blieb bei besonders langen Zügen noch sichtbar. Deutlich weiter nach links, damit auch der
+     längstmögliche Zug garantiert komplett verschwindet. */
+  100% { left: -220%; }
 }
 .kt-locomotive-svg {
   display: block;
@@ -2722,19 +2826,6 @@
 .kt-signal-red { background: linear-gradient(160deg, #e88a8a, #d95a5a); }
 .kt-signal:disabled { opacity: 0.5; cursor: default; }
 
-/* "Fuchs des Tages/der Woche/..."-Bett-Abzeichen — kleines, gemütliches Bett-Symbol im Profil. */
-.fox-bed-badge {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  margin: 4px 0;
-}
-.fox-bed-badge-label {
-  font-size: 0.66rem;
-  font-weight: 700;
-}
-
 /* Wiederhol-/Zufallsmodus-Knöpfe — eigene, schmale Zeile unter der Hauptleiste (per width:100% im
    flex-wrap-Container erzwungen), damit die Hauptleiste selbst kompakt und schmal bleibt. */
 .player-mode-row {
@@ -2756,6 +2847,16 @@
 .player-mode-btn.active {
   opacity: 1;
   background: rgba(242,184,75,0.25);
+}
+
+/* Fuchs des Tages/der Woche/... — bewusst fuchsrot/orange statt der neutralen Admin-Badge-Farbe,
+   damit es sich klar abhebt und sofort als "Fuchs"-Auszeichnung erkennbar ist. Weiße Schrift für
+   den besten Kontrast auf dem kräftigen Orange-Rot (Gold/Gelb wäre auf diesem Untergrund
+   schwerer lesbar gewesen). Gleiche Größe wie die anderen admin-badge-Abzeichen (geerbt), nur die
+   Farbe wird hier überschrieben. */
+.fox-period-badge {
+  background: linear-gradient(160deg, #E8825F, #C85A2E) !important;
+  color: #FFFFFF !important;
 }
 
 /* Vokabelmeister: Buchstaben-Auswahlraster */
@@ -2949,8 +3050,6 @@
 }
 @media (max-width: 420px) {
   #musicPlayerBarInner .kn-waveform { display: none !important; }
-}
-@media (max-width: 340px) {
   #musicPlayerBarInner #musicDigitalTime { display: none; }
 }
 

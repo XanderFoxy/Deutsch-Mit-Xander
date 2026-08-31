@@ -91,7 +91,7 @@
         <p class="eyebrow" style="margin-top:14px;">📷 Foto — drei Möglichkeiten</p>
         <div class="form-field"><label>1) Bild-Adresse (Link)</label><input type="text" id="aboutEditPhoto" value="${img ? img.src : ""}" placeholder="https://…" /></div>
         <div class="form-field"><label>2) Datei hochladen</label><input type="file" id="aboutEditPhotoUpload" accept="image/*" /></div>
-        <button type="button" class="emoji-toggle-link" id="aboutPhotoResetBtn" style="font-size:0.76rem; margin-top:2px;">↩️ Auf Original-Bild zurücksetzen</button>
+        <button type="button" class="emoji-toggle-link" id="aboutPhotoResetBtn" style="font-size:0.76rem; margin-top:2px;">↩️ Vorheriges Foto wiederherstellen</button>
         ${gallery.length ? `
         <div class="form-field">
           <label>3) Aus deiner Galerie wählen</label>
@@ -114,9 +114,22 @@
         document.getElementById("aboutPhotoPreviewNote").textContent = "✅ Galeriebild ausgewählt.";
       });
     });
-    document.getElementById("aboutPhotoResetBtn").addEventListener("click", () => {
-      document.getElementById("aboutEditPhoto").value = "";
-      document.getElementById("aboutPhotoPreviewNote").textContent = "↩️ Wird beim Speichern auf das ursprüngliche Original-Bild zurückgesetzt.";
+    document.getElementById("aboutPhotoResetBtn").addEventListener("click", async () => {
+      // WICHTIG: "zurücksetzen" bedeutet für die meisten Nutzer:innen "zurück zu MEINEM eigenen,
+      // vorher selbst gesetzten Foto" — NICHT zwingend zurück zum allerersten, im HTML fest
+      // kodierten Standardbild der Seite. Beide Fälle jetzt getrennt anbieten, damit ein eigenes,
+      // wertvolles Foto nie mehr versehentlich durch das Standardbild ersetzt und überschrieben
+      // werden kann, ohne dass es einen Weg zurück gibt.
+      const history = (await Backend.getSiteContent("about_photo_history")) || [];
+      const currentVal = document.getElementById("aboutEditPhoto").value;
+      const previous = history.find((url) => url && url !== currentVal);
+      if (previous) {
+        document.getElementById("aboutEditPhoto").value = previous;
+        document.getElementById("aboutPhotoPreviewNote").textContent = "↩️ Dein vorheriges, selbst gesetztes Foto ausgewählt — erst nach „Speichern“ wirklich übernommen.";
+      } else {
+        document.getElementById("aboutEditPhoto").value = "";
+        document.getElementById("aboutPhotoPreviewNote").textContent = "↩️ Kein vorheriges eigenes Foto gefunden — wird beim Speichern auf das Standard-Bild der Seite zurückgesetzt.";
+      }
     });
     document.getElementById("aboutEditPhotoUpload").addEventListener("change", async (e) => {
       const file = e.target.files[0];
@@ -134,12 +147,23 @@
     document.getElementById("aboutEditSave").addEventListener("click", async () => {
       const errBox = document.getElementById("aboutEditError");
       try {
+        // VOR dem Überschreiben: den BISHERIGEN Foto-Link sichern, damit er über den
+        // "Zurücksetzen"-Knopf jederzeit wieder auffindbar ist — ein eigenes, selbst gesetztes
+        // Foto darf beim nächsten Wechsel nie mehr spurlos verloren gehen.
+        const oldContent = await Backend.getSiteContent("about");
+        const oldPhotoUrl = oldContent && oldContent.photoUrl;
+        const newPhotoUrl = document.getElementById("aboutEditPhoto").value;
+        if (oldPhotoUrl && oldPhotoUrl !== newPhotoUrl) {
+          const history = (await Backend.getSiteContent("about_photo_history")) || [];
+          const updatedHistory = [oldPhotoUrl, ...history.filter((u) => u !== oldPhotoUrl)].slice(0, 5);
+          await Backend.setSiteContent("about_photo_history", updatedHistory);
+        }
         await Backend.setSiteContent("about", {
           heading: document.getElementById("aboutEditHeading").value,
           role: document.getElementById("aboutEditRole").value,
           shortText: document.getElementById("aboutEditShort").value,
           supportNote: document.getElementById("aboutEditSupport").value,
-          photoUrl: document.getElementById("aboutEditPhoto").value,
+          photoUrl: newPhotoUrl,
         });
         box.remove();
         loadAndRenderAboutSection();
@@ -187,7 +211,10 @@
       relocateMusicVideoSquare();
     }
     // Gleiches gilt für die Sichtbarkeit der schwebenden Leiste selbst — sie muss beim Verlassen
-    // des Musik-Unterreiters wieder erscheinen, beim Wechsel dorthin wieder verschwinden.
+    // des Musik-Unterreiters wieder erscheinen, beim Wechsel dorthin wieder verschwinden. Ein
+    // Tab-Wechsel hebt außerdem eine eventuelle "nur aus dem Profil gehört"-Unterdrückung auf und
+    // lässt die Leiste dabei sanft erscheinen, statt abrupt aufzupoppen.
+    if (typeof revealMusicFloatingBarOnNavigation === "function") revealMusicFloatingBarOnNavigation();
     if (typeof renderMusicFloatingBar === "function") renderMusicFloatingBar();
   }));
   const initial = window.location.hash?.replace("#", "");
@@ -320,6 +347,18 @@
   if (tourReplayLink) tourReplayLink.addEventListener("click", (e) => { e.preventDefault(); startTour(); });
 
   wireSubnav("knowledgeSubnav");
+  // Eigenes Favicon anwenden, falls ein:e Admin/Betreiber:in eines hochgeladen hat — für ALLE
+  // Nutzer:innen, nicht nur in den Einstellungen selbst.
+  function applyCustomFavicon(url) {
+    const link = document.getElementById("mainFavicon");
+    if (!link) return;
+    if (url) {
+      link.href = url;
+    } else {
+      link.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%8A%3C/text%3E%3C/svg%3E";
+    }
+  }
+  Backend.getSiteContent("custom_favicon_url").then((url) => { if (url) applyCustomFavicon(url); }).catch(() => {});
   wireSubnav("profileSubnav");
   document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.addEventListener("click", () => {
     renderSetup();
@@ -446,6 +485,25 @@
     // Punktesammeln).
     if (fig.id === "kleiner-lernfuchs" && trophyCounts(profile).orden >= 5) return true;
     return false;
+  }
+  // Eine einzelne Fuchs-Sammelfigur-Kachel — zentral an EINER Stelle gebaut und an allen
+  // Anzeige-Orten (Vitrine, Sticker-Album-Vorschau, Missionen, Detail-Ansicht) verwendet, statt
+  // mehrfach dieselbe Logik zu duplizieren. Vorher hatten mehrere dieser Stellen KEINE
+  // Fortschritts-Füllanzeige, nur die zentrale Vitrine — dort blieb eine gesperrte Figur auch bei
+  // z. B. 90% Fortschritt komplett grau/ungefüllt.
+  function figureTileHtml(fig, profile, size) {
+    const unlocked = isFigureUnlocked(fig, profile);
+    const progress = unlocked ? 1 : unlockProgressFraction(fig.unlock, profile);
+    // Mindestens eine kleine, sichtbare Abdeckung bleibt, solange die Figur NICHT freigeschaltet
+    // ist — auch bei (fast) 100% berechnetem Fortschritt, damit eine gesperrte Figur nie komplett
+    // unverdeckt/freigeschaltet aussieht, nur mit dem Schloss-Symbol darüber (widersprüchlich).
+    const missingPercent = unlocked ? 0 : Math.max(4, Math.round((1 - progress) * 100));
+    const sizeStyle = size ? `width:${size}px; height:${size}px; object-fit:contain;` : "";
+    return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" ${unlocked ? `data-figure-detail="${fig.id}"` : ""} title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + unlockShortText(fig.unlock) + (progress > 0 ? ` (${Math.round(progress * 100)}% geschafft)` : "")}">
+      <img src="${fig.img}" alt="${fig.name}" loading="lazy" style="${sizeStyle}" />
+      ${!unlocked ? `<div class="figure-fill-mask" style="height:${missingPercent}%;"></div>` : ""}
+      ${unlocked ? "" : '<span class="figure-lock-icon">🔒</span>'}
+    </div>`;
   }
 
   const THEMES = [
@@ -723,7 +781,14 @@
     return `<label class="empty-note" style="display:flex; align-items:center; gap:6px; margin:8px 0; padding:8px; border:1px dashed var(--teal-400,#5ba8a0); border-radius:8px; cursor:pointer;">
       <input type="checkbox" class="inline-feature-flag-toggle" data-flag-key="${flagKey}" ${on ? "checked" : ""} />
       <span>🚦 <strong>Update-Freigabe:</strong> ${on ? "Für alle Nutzer:innen live" : "Nur für dich als Test sichtbar"} — hier umschalten, um dieses Update in die Welt zu bringen (oder wieder zurückzuziehen)</span>
-    </label>`;
+    </label>
+    <div class="beta-invite-box" data-beta-invite-flag="${flagKey}" style="margin:4px 0 8px; padding:8px; border:1px dashed rgba(242,184,75,0.5); border-radius:8px;">
+      <button type="button" class="emoji-toggle-link beta-invite-toggle" style="font-size:0.78rem;">🧪 Beta-Tester:in für dieses Update einladen</button>
+      <div class="beta-invite-search-body" style="display:none; margin-top:8px;">
+        <input type="text" class="beta-invite-search-input" placeholder="Name suchen…" style="width:100%; padding:8px; border-radius:6px; border:1px solid rgba(0,0,0,0.15);" />
+        <div class="beta-invite-results" style="margin-top:6px;"></div>
+      </div>
+    </div>`;
   }
   function wireInlineFeatureFlagToggles(root, onToggled) {
     root.querySelectorAll(".inline-feature-flag-toggle").forEach((toggle) => {
@@ -731,6 +796,40 @@
         await Backend.setFeatureFlag(toggle.dataset.flagKey, toggle.checked);
         showToast(toggle.checked ? "🚦 Update ist jetzt für alle live!" : "🚦 Update zurückgezogen — wieder nur für dich sichtbar, alle anderen sehen die alte Version.");
         if (onToggled) onToggled();
+      });
+    });
+    root.querySelectorAll(".beta-invite-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const body = btn.closest(".beta-invite-box").querySelector(".beta-invite-search-body");
+        body.style.display = body.style.display === "none" ? "block" : "none";
+      });
+    });
+    root.querySelectorAll(".beta-invite-search-input").forEach((input) => {
+      let searchTimer = null;
+      input.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(async () => {
+          const term = input.value.trim();
+          const results = input.parentElement.querySelector(".beta-invite-results");
+          if (!term) { results.innerHTML = ""; return; }
+          const found = await Backend.searchUsers(term);
+          results.innerHTML = found.length ? found.slice(0, 6).map((u) => `
+            <button type="button" class="breakdown-row beta-invite-pick" data-beta-invite-userid="${u.id}" data-beta-invite-username="${u.name}" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; font:inherit; color:inherit;">
+              <span>${u.is_beta_tester ? "🧪 " : ""}${u.name}</span>
+              <span class="empty-note">${u.is_beta_tester ? "schon Beta-Tester:in" : "einladen →"}</span>
+            </button>`).join("") : `<p class="empty-note">Niemanden gefunden.</p>`;
+          results.querySelectorAll("[data-beta-invite-userid]").forEach((row) => {
+            row.addEventListener("click", async () => {
+              try {
+                await Backend.setBetaTesterStatus(row.dataset.betaInviteUserid, true);
+                await Backend.sendSystemMessage(row.dataset.betaInviteUserid, "🧪 Du wurdest als Beta-Tester:in eingeladen! Du siehst jetzt neue Funktionen, bevor sie für alle freigegeben werden — probier sie gern aus und gib Rückmeldung.");
+                showToast(`🧪 ${row.dataset.betaInviteUsername} als Beta-Tester:in eingeladen!`);
+                input.value = "";
+                input.parentElement.querySelector(".beta-invite-results").innerHTML = "";
+              } catch (e) { alert(e.message || "Konnte nicht eingeladen werden."); }
+            });
+          });
+        }, 300);
       });
     });
   }
@@ -751,6 +850,17 @@
     return false;
   }
   function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
+  // Zentrale, wiederverwendbare Großschreibungs-Korrektur für ANGEZEIGTE Antwortoptionen: steht
+  // die Lücke im Fragetext ganz am Satzanfang, muss das eingesetzte Wort dort großgeschrieben
+  // werden (normale deutsche Rechtschreibung) — unabhängig davon, wie es in der Datenbank
+  // gespeichert ist. Rein für die ANZEIGE, die interne Prüfung bleibt unverändert über den Index.
+  // An JEDER Stelle einsetzbar, die ein Wort als Antwortoption zu einem Lückentext-prompt zeigt
+  // (Standard-Quiz, Wort-Kanone, Wortblasen, Wackelturm, …), statt einer lokal duplizierten Kopie.
+  function capitalizeIfSentenceStart(text, prompt) {
+    if (!text || !prompt) return text;
+    const startsWithBlank = prompt.trim().startsWith("___");
+    return startsWithBlank ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+  }
 
   // WICHTIG: im Konto gespeichert (nicht localStorage!), damit die Selbsteinschätzung auf allen
   // Geräten gleich ankommt, nicht nur auf dem Gerät, wo sie eingetragen wurde.
@@ -896,6 +1006,10 @@
         const makeBeta = btn.dataset.currentlyBeta !== "true";
         try {
           await Backend.setBetaTesterStatus(btn.dataset.toggleBeta, makeBeta);
+          // WICHTIG: die Person selbst bekommt eine Nachricht — sonst merkt sie unter Umständen
+          // gar nicht, dass sie jetzt Zugriff auf gerade getestete, noch nicht freigegebene
+          // Funktionen hat.
+          if (makeBeta) await Backend.sendSystemMessage(btn.dataset.toggleBeta, "🧪 Du wurdest als Beta-Tester:in eingeladen! Du siehst jetzt neue Funktionen, bevor sie für alle freigegeben werden — probier sie gern aus und gib Rückmeldung.");
           loadAdminUserList();
         } catch (e) { alert(e.message || "Aktion fehlgeschlagen."); }
       });
@@ -1143,7 +1257,42 @@
         <h3>👥 Alle registrierten Nutzer</h3>
         <div id="adminUserListArea"><p class="empty-note">Lade Nutzerliste…</p></div>
       </div>` : ""}
+      ${profile.isOwner || Backend.isAdmin() ? `<div class="question-card" style="margin-top:14px;">
+        <h3>🦊 Browser-Symbol (Favicon)</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Das kleine Symbol oben in der Browser-Adresszeile/im Tab. Eigenes Bild hochladen, um das Standard-Fuchs-Symbol zu ersetzen.</p>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img id="currentFaviconPreview" src="" alt="" style="width:40px; height:40px; border-radius:8px; object-fit:cover; background:var(--plum-700);" />
+          <label class="btn btn-ghost" style="cursor:pointer;">📷 Neues Symbol hochladen<input type="file" accept="image/*" id="faviconUploadInput" style="display:none;" /></label>
+          <button type="button" class="btn btn-ghost" id="faviconResetBtn" title="Zurück zum Standard-Fuchs">↩️ Zurücksetzen</button>
+        </div>
+        <p class="empty-note" id="faviconUploadNote" style="margin-top:8px;"></p>
+      </div>` : ""}
     `;
+    if (profile.isOwner || Backend.isAdmin()) {
+      Backend.getSiteContent("custom_favicon_url").then((url) => {
+        const img = document.getElementById("currentFaviconPreview");
+        if (img) img.src = url || document.getElementById("mainFavicon")?.href || "";
+      });
+      document.getElementById("faviconUploadInput")?.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const note = document.getElementById("faviconUploadNote");
+        note.textContent = "Lädt hoch…";
+        try {
+          const url = await Backend.uploadSiteImage("custom_favicon", file);
+          await Backend.setSiteContent("custom_favicon_url", url);
+          applyCustomFavicon(url);
+          document.getElementById("currentFaviconPreview").src = url;
+          note.textContent = "✅ Neues Symbol übernommen!";
+        } catch (err) { note.textContent = "⚠️ " + err.message; }
+      });
+      document.getElementById("faviconResetBtn")?.addEventListener("click", async () => {
+        await Backend.setSiteContent("custom_favicon_url", "");
+        applyCustomFavicon("");
+        document.getElementById("currentFaviconPreview").src = document.getElementById("mainFavicon")?.href || "";
+        document.getElementById("faviconUploadNote").textContent = "↩️ Auf Standard-Fuchs zurückgesetzt.";
+      });
+    }
     if (Backend.canModerate()) loadCustomSympathyList();
     document.getElementById("addSympathyLevelBtn")?.addEventListener("click", async () => {
       const errBox = document.getElementById("sympathyLevelError");
@@ -1365,6 +1514,11 @@
     const profileAfter = Backend.currentProfile();
     if (profileAfter) {
       const newlyUnlocked = COLLECTIBLE_FIGURES.filter((f) => !unlockedBefore.has(f.id) && isFigureUnlocked(f, profileAfter));
+      // Dauerhaft merken, DASS diese Figuren jetzt freigeschaltet sind — sonst könnte dieselbe
+      // Figur bei einem späteren Aufruf erneut als "neu" gemeldet werden, falls die Live-Prüfung
+      // der Bedingung aus irgendeinem Grund (z. B. Timing bei noch nicht vollständig geladenen
+      // Verlaufsdaten) kurzzeitig wieder "nicht erfüllt" ergibt.
+      newlyUnlocked.forEach((f) => Backend.addCollectedFigure(f.id));
       // Sequenziell nacheinander zeigen — das NÄCHSTE Popup erscheint erst, nachdem das vorherige
       // wirklich geschlossen wurde, nicht nach einem festen Timer. Bei mehreren gleichzeitig
       // freigeschalteten Füchsen konnten sich die Popups bisher sonst überlappend stapeln (wenn
@@ -1657,9 +1811,11 @@
   }
   // Geschlechtssymbol — klassische astronomische Zeichen, optional vom Profil-Inhaber gewählt.
   const GENDER_SYMBOLS = {
-    maennlich: { label: "männlich", svg: `<circle cx="10" cy="14" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M14.2 9.8 L20 4 M14 4 L20 4 L20 10" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
-    weiblich: { label: "weiblich", svg: `<circle cx="12" cy="9" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 15 L12 22 M8.5 19 L15.5 19" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
-    divers: { label: "divers", svg: `<circle cx="12" cy="10" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 16 L12 22 M9 19 L15 19 M16.2 5.8 L21 1 M16 1 L21 1 L21 6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    // Bewusst feste, klassische Farben statt currentColor (geerbte Textfarbe) — blau für
+    // männlich, rosa für weiblich, wie ausdrücklich gewünscht.
+    maennlich: { label: "männlich", color: "#4A90D9", svg: `<circle cx="10" cy="14" r="6" stroke="#4A90D9" stroke-width="1.6" fill="none"/><path d="M14.2 9.8 L20 4 M14 4 L20 4 L20 10" stroke="#4A90D9" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    weiblich: { label: "weiblich", color: "#E85A9C", svg: `<circle cx="12" cy="9" r="6" stroke="#E85A9C" stroke-width="1.6" fill="none"/><path d="M12 15 L12 22 M8.5 19 L15.5 19" stroke="#E85A9C" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
+    divers: { label: "divers", color: "#B084CC", svg: `<circle cx="12" cy="10" r="6" stroke="#B084CC" stroke-width="1.6" fill="none"/><path d="M12 16 L12 22 M9 19 L15 19 M16.2 5.8 L21 1 M16 1 L21 1 L21 6" stroke="#B084CC" stroke-width="1.6" fill="none" stroke-linecap="round"/>` },
   };
   function genderBadgeHtml(key) {
     const g = GENDER_SYMBOLS[key];
@@ -1979,7 +2135,7 @@
       ${cwCalendarTask.focus ? `<p class="empty-note" style="margin:-4px 0 8px;">${cwCalendarTask.focus.kind === "self-assessed" ? `🧭 Du hast „${cwCalendarTask.focus.label}" selbst als Schwäche markiert — hier eine Frage, um genau daran zu arbeiten!` : cwCalendarTask.focus.kind === "weak" ? `💪 Bei „${cwCalendarTask.focus.label}" liegt dein Schnitt bei ${cwCalendarTask.focus.percent}% — hier eine Frage, um genau das zu festigen!` : `🔎 Du übst gerade viel „${cwCalendarTask.focus.label}" (${cwCalendarTask.focus.percent}% deiner letzten Runden)${cwCalendarTask.isPersonalized ? " — hier eine passende Frage dazu!" : ""}`}</p>` : ""}
       <p class="cal-tip-text">${questionText}</p>
       <div style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:6px;" id="calTaskOptions">
-        ${cwCalendarTask.options.map((opt, i) => `<button type="button" class="btn btn-ghost" data-task-answer="${i}" style="text-align:left;">${opt}</button>`).join("")}
+        ${cwCalendarTask.options.map((opt, i) => `<button type="button" class="btn btn-ghost" data-task-answer="${i}" style="text-align:left;">${capitalizeIfSentenceStart(opt, cwCalendarTask.word)}</button>`).join("")}
       </div>
       <p class="empty-note" id="calTaskFeedback" style="margin-top:8px;"></p>
       <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
@@ -3247,8 +3403,7 @@
     // Steht die Lücke ganz am Satzanfang, muss das eingesetzte Wort dort großgeschrieben werden
     // (normale deutsche Rechtschreibung) — unabhängig davon, wie es in der Datenbank gespeichert
     // ist. Rein für die ANZEIGE, die interne Prüfung bleibt unverändert über den Index.
-    const promptStartsWithBlank = q.prompt.trim().startsWith("___");
-    const displayOption = (opt) => promptStartsWithBlank && opt ? opt.charAt(0).toUpperCase() + opt.slice(1) : opt;
+    const displayOption = (opt) => capitalizeIfSentenceStart(opt, q.prompt);
 
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${((p.index + 1) / p.total) * 100}%"></div></div>
@@ -4515,7 +4670,7 @@
         </div>
         <p style="font-weight:700; margin:10px 0;">${wtCurrentQuestion.prompt.includes("___") ? wtCurrentQuestion.prompt.replace("___", '<span class="blank-slot">___</span>') : wtCurrentQuestion.prompt}</p>
         <div class="quiz-options">
-          ${wtCurrentQuestion.options.map((opt, i) => `<button type="button" class="option-btn wt-opt-btn" data-idx="${i}"><span>${opt}</span></button>`).join("")}
+          ${wtCurrentQuestion.options.map((opt, i) => `<button type="button" class="option-btn wt-opt-btn" data-idx="${i}"><span>${capitalizeIfSentenceStart(opt, wtCurrentQuestion.prompt)}</span></button>`).join("")}
         </div>
         <p class="empty-note" id="wtFeedback" style="margin-top:10px; min-height:20px;"></p>
         <div id="wtChallengeBar"></div>
@@ -4782,7 +4937,7 @@
       { left: 15, top: 72 }, { left: 78, top: 68 },
     ];
     bbActiveBubbles = bbCurrentQuestion.options.map((opt, i) => ({
-      id: `bb${i}-${Date.now()}`, text: opt, isCorrect: i === correctIdx, resolved: false,
+      id: `bb${i}-${Date.now()}`, text: capitalizeIfSentenceStart(opt, bbCurrentQuestion.prompt), isCorrect: i === correctIdx, resolved: false,
       left: Math.max(10, Math.min(85, positions[i % positions.length].left + (Math.random() * 8 - 4))),
       top: Math.max(15, Math.min(80, positions[i % positions.length].top + (Math.random() * 8 - 4))),
       spawnedAt: Date.now(),
@@ -4814,6 +4969,17 @@
     checkBubbleRoundDone();
   }
   function checkBubbleRoundDone() {
+    // Ist die richtige Blase bereits erfolgreich geplatzt (angetippt, nicht durch Zeitablauf),
+    // macht es keinen Sinn mehr, auf die übrigen falschen Blasen zu warten (die noch bis zu
+    // mehrere Sekunden weiter schweben könnten) — die Aufgabe ist ja schon bewiesen gelöst. Ohne
+    // diese Prüfung wirkte es, als würde dieselbe Frage nochmal erscheinen, während man in
+    // Wahrheit nur auf die restlichen, noch nicht aufgelösten Blasen wartete.
+    const correctBubble = bbActiveBubbles.find((b) => b.isCorrect);
+    if (correctBubble && correctBubble.resolved) {
+      if (bbLives <= 0) { setTimeout(renderBubbleGameOver, 900); return; }
+      setTimeout(() => { newBubbleRound(); renderBubbleGame(); }, 900);
+      return;
+    }
     if (!bbActiveBubbles.every((b) => b.resolved)) { renderBubbleGame(); return; }
     if (bbLives <= 0) { setTimeout(renderBubbleGameOver, 900); return; }
     setTimeout(() => { newBubbleRound(); renderBubbleGame(); }, 900);
@@ -4840,7 +5006,8 @@
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Wortblasen: " + bbCurrentQuestion.prompt)}
-        <p class="eyebrow">🫧 WORTBLASEN · ${bbScore} Treffer · ${heartsLivesHtml(bbLives, 3)}</p>
+        <p class="eyebrow">🫧 WORTBLASEN · ${bbScore} Treffer</p>
+        <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(bbLives, 3)}</p>
         <p style="font-weight:700; margin:8px 0 12px;">${bbCurrentQuestion.prompt}</p>
         <div class="bb-pool" id="bbPool">
           ${bbActiveBubbles.map((b) => `<button type="button" class="bb-bubble" data-bid="${b.id}" style="left:${b.left}%; top:${b.top}%; animation-duration:${BB_BUBBLE_LIFETIME}s;">${b.text}</button>`).join("")}
@@ -4877,6 +5044,7 @@
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">🫧</p>
         <h2 style="margin:8px 0;">Runde beendet!</h2>
+        ${starRatingArcHtml(accuracy)}
         <p class="empty-note">Du hast <strong>${bbScore}</strong> richtige Blasen getroffen${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
         <p style="font-weight:700; margin-top:8px;">${rating}</p>
         <button type="button" class="btn btn-coffee" id="bbRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
@@ -5041,6 +5209,7 @@
      fallender oder zerplatzender Elemente wie bei den anderen Spielen. ===== */
   let ktScore = 0;
   let ktLives = 3;
+  let ktGameOverFinalized = false;
   let ktMistakes = 0;
   let ktCurrentSentence = null;
   let ktIsCorrectSentence = false;
@@ -5108,7 +5277,7 @@
           <button type="button" class="btn btn-coffee" id="ktStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
       wireInlineFeatureFlagToggles(area, renderKorrektour);
-      document.getElementById("ktStartIntroBtn").addEventListener("click", () => { ktIntroShown = true; ktScore = 0; ktLives = 3; ktMistakes = 0; newKorrektourRound(); });
+      document.getElementById("ktStartIntroBtn").addEventListener("click", () => { ktIntroShown = true; ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
       return;
     }
     if (!ktCurrentSentence) { newKorrektourRound(); return; }
@@ -5140,7 +5309,8 @@
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Korrektour: " + ktCurrentSentence.text)}
-        <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer · ${heartsLivesHtml(ktLives, 3)}</p>
+        <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer</p>
+        <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(ktLives, 3)}</p>
         <div class="kt-track" id="ktTrack">
           <div class="kt-rails"></div>
           <div class="kt-train" id="ktTrain">
@@ -5156,10 +5326,37 @@
       </div>`;
     document.getElementById("ktGreenBtn").addEventListener("click", () => ktResolveSignal(true));
     document.getElementById("ktRedBtn").addEventListener("click", () => ktResolveSignal(false));
-    // KEIN automatisches "zu spät" mehr — der Zug fährt einmal durchs Bild, aber die Entscheidung
-    // bleibt jederzeit möglich, auch nachdem er schon komplett verschwunden ist. Eine Zeitstrafe
-    // ergab keinen Sinn, solange der Satz noch gar nicht vollständig zu lesen war, und bestrafte
-    // dann Zögern doppelt unfair. Die Signal-Knöpfe bleiben also einfach aktiv, bis geklickt wird.
+    // Kein Zeitdruck mehr WÄHREND der Zug noch (auch nur teilweise) sichtbar ist — man darf sich
+    // die ganze Durchfahrt Zeit lassen. Aber sobald der LETZTE Waggon wirklich komplett aus dem
+    // sichtbaren Bereich verschwunden ist, zählt eine noch fehlende Entscheidung als verpasst.
+    // Über die tatsächliche Position gemessen (nicht über eine geschätzte, feste Zeit), da
+    // unterschiedlich lange Sätze unterschiedlich lange Züge ergeben, die unterschiedlich lange
+    // brauchen, bis sie komplett durch sind.
+    const track = document.getElementById("ktTrack");
+    const train = document.getElementById("ktTrain");
+    if (track && train) {
+      const checkFullyOffscreen = () => {
+        if (ktAnswered) return;
+        const trackRect = track.getBoundingClientRect();
+        const trainRect = train.getBoundingClientRect();
+        if (trainRect.right < trackRect.left) {
+          // Letzter Waggon (rechter Rand des Zugs) ist komplett links aus dem Bild raus.
+          ktAnswered = true;
+          ktLives -= 1;
+          ktMistakes += 1;
+          Core.sound.wrong();
+          const fb = document.getElementById("ktFeedback");
+          if (fb) fb.textContent = `⏳ Der Zug ist schon durch — der Satz war ${ktIsCorrectSentence ? "korrekt" : "fehlerhaft"}. ${ktCurrentSentence.explain}`;
+          setTimeout(() => {
+            if (ktLives <= 0) { renderKorrektourGameOver(); return; }
+            newKorrektourRound();
+          }, 2200);
+          return;
+        }
+        requestAnimationFrame(checkFullyOffscreen);
+      };
+      requestAnimationFrame(checkFullyOffscreen);
+    }
   }
   function renderKorrektourGameOver() {
     const area = document.getElementById("korrektourArea");
@@ -5175,13 +5372,23 @@
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">🚂</p>
         <h2 style="margin:8px 0;">Runde beendet!</h2>
+        ${starRatingArcHtml(accuracy)}
         <p class="empty-note">Du hast <strong>${ktScore}</strong> Sätze richtig eingeschätzt${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
         <p style="font-weight:700; margin-top:8px;">${rating}</p>
         <button type="button" class="btn btn-coffee" id="ktRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>`;
-    document.getElementById("ktRetryBtn").addEventListener("click", () => { ktScore = 0; ktLives = 3; ktMistakes = 0; newKorrektourRound(); });
-    if (Backend.currentUser() && ktScore > 0) {
-      saveResultAndCheck({ categories: ["korrektour"], points: ktScore, bonus: 0, percent: 100, character: "Fahrdienstleiter:in", badges: [], playedAt: new Date().toISOString() });
+    document.getElementById("ktRetryBtn").addEventListener("click", () => { ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
+    // WICHTIG: Punkte/Freischaltungen nur beim ERSTEN Anzeigen dieser beendeten Runde vergeben —
+    // sonst würde ein Wechsel zu einem anderen Spiel und zurück (der renderKorrektourGameOver()
+    // erneut aufruft, ohne dass eine neue Runde gestartet wurde) dieselben Punkte und
+    // Sammelfiguren-Freischaltungen fälschlich ein zweites Mal auslösen — genau das gemeldete
+    // "denselben Fuchs zweimal bekommen"-Verhalten. Kanone und Wortblasen hatten diese
+    // Absicherung schon, hier fehlte sie bisher.
+    if (!ktGameOverFinalized) {
+      ktGameOverFinalized = true;
+      if (Backend.currentUser() && ktScore > 0) {
+        saveResultAndCheck({ categories: ["korrektour"], points: ktScore, bonus: 0, percent: 100, character: "Fahrdienstleiter:in", badges: [], playedAt: new Date().toISOString() });
+      }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-korrektour"]')?.addEventListener("click", () => {
@@ -5226,7 +5433,7 @@
     // enger geclusterter Mittelpunkt (35–65%) mit kleinen individuellen Abweichungen pro Wort.
     const clusterCenter = 35 + Math.random() * 30;
     knActiveWords = Core.shuffle(knCurrentQuestion.options.map((opt, i) => ({
-      id: `w${i}-${Date.now()}`, text: opt, isCorrect: i === correctIdx, resolved: false,
+      id: `w${i}-${Date.now()}`, text: capitalizeIfSentenceStart(opt, knCurrentQuestion.prompt), isCorrect: i === correctIdx, resolved: false,
       xPercent: Math.max(15, Math.min(85, clusterCenter + (i - (knCurrentQuestion.options.length - 1) / 2) * 24 + (Math.random() * 6 - 3))),
       spawnedAt: null,
     })));
@@ -5306,7 +5513,8 @@
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
-        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer · ${heartsLivesHtml(knLives, 3)} <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
+        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
+        <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
           <span class="kn-sun" aria-hidden="true">☀️</span>
@@ -5610,7 +5818,10 @@
     const correctSafelyLanded = correctWord && correctWord.resolved && !correctWord.wasWronglyShot;
     if (correctSafelyLanded) {
       knRoundActive = false;
-      if (knLives <= 0) { setTimeout(renderKanone, 900); return; }
+      // WICHTIG: renderKanoneGameOver() aufrufen, NICHT nur renderKanone() — sonst blieb das
+      // Spiel bei aufgebrauchten Leben einfach in der letzten Szene stehen, ohne dass jemals eine
+      // Endauswertung erschien (genau das gemeldete "am Ende gibt es keine Auswertung").
+      if (knLives <= 0) { setTimeout(renderKanoneGameOver, 900); return; }
       setTimeout(() => { newKanoneRound(); renderKanone(); }, 900);
       return;
     }
@@ -5620,11 +5831,11 @@
       // bleiben). Kurze Pause, damit die Auflösungs-Animation des gerade geschossenen Worts noch
       // zu sehen ist, bevor das nächste reinfällt.
       if (knLives > 0) setTimeout(renderKanone, 600);
-      else setTimeout(renderKanone, 900);
+      else setTimeout(renderKanoneGameOver, 900);
       return;
     }
     knRoundActive = false;
-    if (knLives <= 0) { setTimeout(renderKanone, 900); return; }
+    if (knLives <= 0) { setTimeout(renderKanoneGameOver, 900); return; }
     setTimeout(() => { newKanoneRound(); renderKanone(); }, 1100);
   }
   // ===== Alte, bisher live laufende Wort-Kanone-Version — bleibt für alle Nutzer unverändert
@@ -5639,7 +5850,8 @@
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
-        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer · ${heartsLivesHtml(knLives, 3)} <span class="subnav-info-icon" data-info="Tipp die FALSCHEN Antworten an, bevor sie unten ankommen — die richtige Antwort darfst du NICHT treffen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
+        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHEN Antworten an, bevor sie unten ankommen — die richtige Antwort darfst du NICHT treffen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
+        <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky kn-sky-old" id="knSky">
           ${knActiveWords.map((w, i) => `<button type="button" class="kn-word kn-word-old" data-wid="${w.id}" style="left:${(100 / (n + 1)) * (i + 1)}%; animation-duration:${7 + n}s; animation-delay:${i * 0.9}s;">${w.text}</button>`).join("")}
@@ -5735,6 +5947,7 @@
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">🎯</p>
         <h2 style="margin:8px 0;">Runde beendet!</h2>
+        ${starRatingArcHtml(accuracy)}
         <p class="empty-note">Du hast <strong>${knScore}</strong> falsche Antworten korrekt abgeschossen${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
         <p style="font-weight:700; margin-top:8px;">${rating}</p>
         <button type="button" class="btn btn-coffee" id="knRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
@@ -8162,7 +8375,7 @@
     <text x="200" y="90" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="sans-serif">Wissen &amp; Kompass</text>
   </svg>`;
   async function renderKompass() {
-    const bannerUrl = await Backend.getSiteImage("wissen_banner");
+    const bannerUrl = await Backend.getEffectiveBannerUrl("wissen_banner");
     // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
     // gelesen — kein extra "Ich hab's gelesen"-Knopf nötig, für Missionen, die das voraussetzen.
     const visitedProfile = Backend.currentProfile();
@@ -8724,6 +8937,21 @@ An einem Morgen lief ein kleiner Fuchs los…
       <div class="question-card" style="margin-bottom:16px;">
         <h3>✍️ Deine Vorstellung</h3>
         <div class="form-field">
+          <label>Dein Bild für die Vorstellungskarte (optional)</label>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+            <div id="introPhotoPreview" style="width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--plum-700); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              ${mine.photoUrl ? `<img src="${mine.photoUrl}" style="width:100%; height:100%; object-fit:cover;" />` : (mine.stickerKey && DMA_STICKERS[mine.stickerKey]) ? DMA_STICKERS[mine.stickerKey] : "🦊"}
+            </div>
+            <input type="hidden" id="introPhotoUrl" value="${mine.photoUrl || ""}" />
+            <input type="hidden" id="introStickerKey" value="${mine.stickerKey || ""}" />
+            <label class="btn btn-ghost" style="cursor:pointer; font-size:0.78rem;">📷 Foto hochladen<input type="file" accept="image/*" id="introPhotoUpload" style="display:none;" /></label>
+            <button type="button" class="btn btn-ghost" id="introUseProfilePicBtn" style="font-size:0.78rem;">👤 Profilbild übernehmen</button>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            ${Object.keys(DMA_STICKERS).map((key) => `<button type="button" class="intro-sticker-pick" data-intro-sticker="${key}" style="background:none; border:1px solid rgba(0,0,0,0.1); border-radius:8px; padding:4px; cursor:pointer;">${DMA_STICKERS[key]}</button>`).join("")}
+          </div>
+        </div>
+        <div class="form-field">
           <label>Über dich (Name, Alter, Herkunft …)</label>
           <textarea id="introAbout" class="guestbook-form-textarea" maxlength="300" placeholder="Sprich ein bisschen über dich selbst — wo du herkommst, wie du heißt, wie alt du bist …">${mine.about || ""}</textarea>
         </div>
@@ -8748,12 +8976,38 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>
       <div id="introCardsArea"><p class="empty-note">Lade Vorstellungen…</p></div>
     `;
+    document.getElementById("introPhotoUpload")?.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const url = await Backend.uploadStandalonePhoto(file);
+        document.getElementById("introPhotoUrl").value = url;
+        document.getElementById("introStickerKey").value = "";
+        document.getElementById("introPhotoPreview").innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" />`;
+      } catch (err) { alert(err.message || "Hochladen fehlgeschlagen."); }
+    });
+    document.getElementById("introUseProfilePicBtn")?.addEventListener("click", () => {
+      const currentAvatar = profile.avatarUrl;
+      if (!currentAvatar) { alert("Du hast noch kein eigenes Profilbild hinterlegt."); return; }
+      document.getElementById("introPhotoUrl").value = currentAvatar;
+      document.getElementById("introStickerKey").value = "";
+      document.getElementById("introPhotoPreview").innerHTML = `<img src="${currentAvatar}" style="width:100%; height:100%; object-fit:cover;" />`;
+    });
+    document.querySelectorAll("[data-intro-sticker]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.getElementById("introStickerKey").value = btn.dataset.introSticker;
+        document.getElementById("introPhotoUrl").value = "";
+        document.getElementById("introPhotoPreview").innerHTML = DMA_STICKERS[btn.dataset.introSticker];
+      });
+    });
     document.getElementById("introSaveBtn")?.addEventListener("click", async () => {
       await Backend.saveIntroduction({
         about: document.getElementById("introAbout").value,
         goal: document.getElementById("introGoal").value,
         source: document.getElementById("introSource").value,
         city: document.getElementById("introCity").value,
+        photoUrl: document.getElementById("introPhotoUrl").value,
+        stickerKey: document.getElementById("introStickerKey").value,
       });
       const note = document.getElementById("introSavedNote");
       note.style.display = "block";
@@ -8775,7 +9029,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       ${list.map((p) => `
         <div class="intro-card" data-theme="${p.theme || "bastelheft"}">
           <div class="intro-card-header">
-            ${p.avatarUrl ? `<img src="${p.avatarUrl}" class="intro-card-avatar" />` : `<span class="intro-card-avatar intro-card-avatar-placeholder">🦊</span>`}
+            ${p.introduction.photoUrl ? `<img src="${p.introduction.photoUrl}" class="intro-card-avatar" />`
+              : (p.introduction.stickerKey && DMA_STICKERS[p.introduction.stickerKey]) ? `<span class="intro-card-avatar intro-card-avatar-placeholder">${DMA_STICKERS[p.introduction.stickerKey]}</span>`
+              : p.avatarUrl ? `<img src="${p.avatarUrl}" class="intro-card-avatar" />` : `<span class="intro-card-avatar intro-card-avatar-placeholder">🦊</span>`}
             <strong>${p.name}</strong>
           </div>
           ${p.introduction.about ? `<p class="intro-card-text">${p.introduction.about}</p>` : ""}
@@ -9091,6 +9347,10 @@ An einem Morgen lief ein kleiner Fuchs los…
             await Backend.signIn(email, password);
           }
           refreshHeaderAuth();
+          // WICHTIG: das persönlich gewählte Design des Profils sofort anwenden — vorher blieb
+          // nach dem Einloggen zunächst das vorherige (Session-)Design stehen, bis man die Seite
+          // manuell neu geladen hat.
+          applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
           await renderAccount();
           updateSpecialDayBar();
           Backend.touchActivity();
@@ -9135,15 +9395,18 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
           <div class="profile-header-flow">
             ${avatarHtml}
-            <h2 style="margin:0 60px 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
-            ${myFoxBedBadge}
-            ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
-            <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
-            ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
-            ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
-            <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
-            ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
-            ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
+            <div class="profile-header-stack">
+              <h2 style="margin:0 0 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}${myFoxBedBadge}</h2>
+              ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
+              <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
+              <span class="profile-header-stack-row">
+                ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
+                <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
+              </span>
+              ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
+              ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
+              ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
+            </div>
           </div>
           ${showcaseSongStripHtml(profile)}
           ${myTransportStrip}
@@ -9157,23 +9420,11 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
           </div>
           ${profile.trophies && profile.trophies.length ? `<div class="quiz-actions" style="justify-content:center; gap:18px; margin-top:10px;">
-            <button type="button" class="empty-note trophy-summary-link" id="trophySummaryJump" style="font-size:0.95rem; background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;">🎖️ ${trophyCounts(profile).orden} Orden · 🏆 ${trophyCounts(profile).pokale} Pokale</button>
+            <button type="button" class="empty-note trophy-summary-link" id="trophySummaryJump" style="font-size:0.95rem; background:none; border:none; cursor:pointer; padding:0;">🎖️ ${trophyCounts(profile).orden} Orden · 🏆 ${trophyCounts(profile).pokale} Pokale</button>
           </div>` : ""}
           <p class="eyebrow" style="margin-top:14px;">🦊 Sammelfiguren <span class="subnav-info-icon" data-info="Diese Fuchs-Figuren sind Sammelobjekte, die man sich beim Deutschlernen erspielt — je mehr Punkte du sammelst (oder bestimmte Pokale erreichst), desto mehr Figuren schaltest du frei. Auf eine bereits freigeschaltete Figur tippen zeigt dir mehr dazu.">ⓘ</span></p>
           <div class="figure-case">
-            ${COLLECTIBLE_FIGURES.map((fig) => {
-              const unlocked = isFigureUnlocked(fig, profile);
-              const progress = unlocked ? 1 : unlockProgressFraction(fig.unlock, profile);
-              // Bei gesperrten Figuren: der Fuchs "füllt sich" von unten nach oben, proportional
-              // zum Fortschritt — eine graue Abdeckung von oben zeigt genau, wie viel noch fehlt,
-              // statt dass eine gesperrte Figur einfach komplett gleich (nur mit Schloss) aussieht.
-              const missingPercent = Math.round((1 - progress) * 100);
-              return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" ${unlocked ? `data-figure-detail="${fig.id}"` : ""} title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + unlockShortText(fig.unlock) + (progress > 0 ? ` (${Math.round(progress * 100)}% geschafft)` : "")}">
-                <img src="${fig.img}" alt="${fig.name}" loading="lazy" />
-                ${!unlocked && missingPercent > 0 && missingPercent < 100 ? `<div class="figure-fill-mask" style="height:${missingPercent}%;"></div>` : ""}
-                ${unlocked ? "" : '<span class="figure-lock-icon">🔒</span>'}
-              </div>`;
-            }).join("")}
+            ${COLLECTIBLE_FIGURES.map((fig) => figureTileHtml(fig, profile)).join("")}
           </div>
           <div class="quiz-actions" style="justify-content:flex-start;">
             <button type="button" class="btn btn-coffee" id="editProfileBtn">✏️ Bearbeiten</button>
@@ -9221,7 +9472,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         setTimeout(() => { document.querySelector('#profileSubnav [data-sub="sub-settings"]')?.click(); }, 150);
       });
       document.getElementById("pointsBreakdownBtn").addEventListener("click", () => showPointsBreakdown(profile));
-      if (myTransportStrip) wireProfileTransportStrip(area, { id: user.id, extraProfileData: extra });
+      if (myTransportStrip) wireProfileTransportStrip(area, { id: user.id, name: profile.name, extraProfileData: extra });
       wireTrophyCaseToggle();
       document.getElementById("trophySummaryJump")?.addEventListener("click", () => {
         // Klick auf die "X Orden · Y Pokale"-Kurzfassung springt zur vollständigen Vitrine weiter
@@ -9756,7 +10007,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!profile.trophies || !profile.trophies.length) return "";
     const list = compact ? profile.trophies.slice(0, 4) : profile.trophies;
     const extra = compact && profile.trophies.length > 4 ? profile.trophies.slice(4) : [];
-    const chip = (t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">🏆</span><span>${t}</span></button>`;
+    // WICHTIG: Symbol muss zur tatsächlichen Einordnung passen (🎖️ Orden vs. 🏆 Pokal) — vorher
+    // zeigte JEDER Eintrag immer 🏆, egal was trophyKind() ergab. Das widersprach sichtbar der
+    // "X Orden · Y Pokale"-Zusammenfassung weiter oben, die schon korrekt unterschied, und
+    // erweckte den falschen Eindruck, es gäbe viel mehr Pokale als Orden.
+    const chip = (t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">${trophyKind(t) === "pokal" ? "🏆" : "🎖️"}</span><span>${t}</span></button>`;
     return `<div class="breakdown-list" style="margin-top:16px;" id="trophyCaseAnchor">
       <p class="eyebrow" style="margin-top:0;">🏆 Vitrine <span class="empty-note" style="font-weight:400;">— antippen für Details</span></p>
       <div class="trophy-case ${compact ? "trophy-case-compact" : ""}">
@@ -9878,6 +10133,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   let musicShuffleOn = false;
   let musicFavIds = [];
   let musicCurrentIndex = -1;
+  // Spielt man einen Song NUR aus dem Profil-Streifen heraus (ohne den Tab zu wechseln), soll der
+  // Ton einfach hörbar laufen, OHNE dass die schwebende Player-Leiste sofort/ruckartig erscheint.
+  // Erst beim tatsächlichen Wechsel des Tabs/der Seite "geht sie auf" — mit einer sanften
+  // Erscheinungs-Animation statt eines abrupten Sprungs.
+  let musicFloatingBarSuppressed = false;
   let musicIsPlaying = false;
   let musicShowFavoritesOnly = false;
   // Von Alex vorgeschlagene Songs — von mir recherchiert und bestätigt (echte, offizielle
@@ -10091,6 +10351,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     showToast("🎵 Spielt jetzt in deinem Player weiter!");
   });
   function playStandaloneSong(song) {
+    // Aus dem Profil-Streifen gestartet — Ton läuft, aber die schwebende Leiste bleibt vorerst
+    // unterdrückt (siehe musicFloatingBarSuppressed), bis tatsächlich der Tab gewechselt wird.
+    musicFloatingBarSuppressed = true;
     musicPlaylist = [song];
     musicCurrentIndex = 0;
     playMusicIndex(0);
@@ -10144,7 +10407,23 @@ An einem Morgen lief ein kleiner Fuchs los…
             // später sichtbar vergrößert. Die eigentliche kleine Vorschau-Darstellung übernimmt
             // ausschließlich das umgebende CSS (.music-video-square).
             height: "200", width: "200", videoId,
-            playerVars: { origin: window.location.origin },
+            playerVars: {
+              origin: window.location.origin,
+              // WICHTIG: Wir haben eigene Bedienelemente (Play/Pause, Weiter/Zurück usw.) — die
+              // NATIVEN YouTube-Bedienelemente (Vollbild-Knopf, "Video-Info"-Overlay, verwandte
+              // Videos am Ende) sollen deshalb komplett verschwinden, statt als zusätzliche,
+              // schwebende Symbole über dem kleinen Video-Ausschnitt zu liegen.
+              controls: 0,
+              fs: 0,
+              modestbranding: 1,
+              rel: 0,
+              iv_load_policy: 3,
+              disablekb: 1,
+              // WICHTIG speziell für Mobilgeräte (iOS/Android): OHNE playsinline:1 versucht das
+              // Video beim Start automatisch ins NATIVE Vollbild zu springen bzw. schlägt das als
+              // Overlay vor — genau das ungewollte "Vergrößern-Vorschlag beim neuen Lied".
+              playsinline: 1,
+            },
             events: {
               // WICHTIG: NICHT einfach die videoId abspielen, mit der der Player ursprünglich
               // erstellt wurde — onReady feuert asynchron, und bis dahin kann der Nutzer längst
@@ -10267,7 +10546,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
         <span id="musicDigitalTime" class="player-digital-time">--:-- / --:--</span>
         ${playerUpdateOn ? `<span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" aria-hidden="true">
-          ${Array.from({ length: 12 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.09).toFixed(2)}s; height:${8 + (i % 5) * 3}px;"></span>`).join("")}
+          ${Array.from({ length: 7 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.09).toFixed(2)}s; height:${8 + (i % 5) * 3}px;"></span>`).join("")}
         </span>` : ""}
         <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
         ${playerUpdateOn ? `<button type="button" class="emoji-toggle-link" id="musicQuickListToggle" style="font-size:0.75rem; flex-shrink:0;" title="Song-Liste ein-/ausblenden">☰</button>` : ""}
@@ -10418,6 +10697,29 @@ An einem Morgen lief ein kleiner Fuchs los…
       document.querySelector('[data-target="view-knowledge"]').click();
       document.querySelector('#knowledgeSubnav [data-sub="sub-music"]').click();
     });
+    // Der Inhalt ist jetzt fertig aufgebaut — solange nur aus dem Profil-Streifen heraus gehört
+    // wird (noch kein Tab-Wechsel seitdem), bleibt die Leiste trotzdem unsichtbar. Der Ton läuft
+    // unabhängig davon ganz normal weiter; erst beim tatsächlichen Tab-Wechsel wird sie sichtbar
+    // gemacht (siehe revealMusicFloatingBarOnNavigation), mit einer sanften Erscheinungs-
+    // Animation statt eines abrupten Sprungs.
+    if (musicFloatingBarSuppressed) {
+      floatBar.style.display = "none";
+    }
+  }
+  // Macht die schwebende Leiste sichtbar, FALLS sie gerade wegen "nur im Profil gehört"
+  // unterdrückt war — mit einer sanften Einblend-Animation statt eines ruckartigen Sprungs. Wird
+  // beim tatsächlichen Wechsel des Haupt-Tabs aufgerufen (nicht beim bloßen Starten eines Songs).
+  function revealMusicFloatingBarOnNavigation() {
+    if (!musicFloatingBarSuppressed) return;
+    musicFloatingBarSuppressed = false;
+    renderMusicFloatingBar();
+    const floatBar = document.getElementById("musicFloatingBar");
+    if (floatBar && floatBar.style.display === "flex") {
+      floatBar.classList.remove("music-floating-bar-reveal");
+      // Reflow erzwingen, damit die Animation bei jedem Aufruf neu von vorn abspielt.
+      void floatBar.offsetWidth;
+      floatBar.classList.add("music-floating-bar-reveal");
+    }
   }
   const PLAYER_TEMPLATES = {
     klassisch: { label: "☕ Klassisch", desc: "Warmes Design, passend zur Seite." },
@@ -10484,7 +10786,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>` : ""}
       <div class="question-card" style="position:sticky; top:0; z-index:5; margin-bottom:14px;">
         ${inlineFeatureFlagToggleHtml("musikplayer_update")}
-        <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"></div>
+        <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;"></div>
         <div class="glass-quick-list" id="musicQuickList" style="display:${musicQuickListOpen ? "block" : "none"};"></div>
         <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
           ${Object.entries(PLAYER_TEMPLATES).map(([key, t]) => `<button type="button" class="order-pill player-tpl-pick" data-tpl="${key}" aria-selected="${getPlayerTemplate() === key}" title="${t.desc}" style="font-size:0.78rem; padding:9px 12px; min-height:38px;">${t.label}</button>`).join("")}
@@ -10799,13 +11101,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     return `<div class="breakdown-list" style="margin-top:16px;">
       <p class="eyebrow" style="margin-top:0;">📔 Sticker-Album <span class="empty-note" style="font-weight:400;">(${unlockedCount}/${COLLECTIBLE_FIGURES.length})</span></p>
       <div class="figure-case" style="margin-bottom:8px;">
-        ${previewFigs.map((fig) => {
-          const unlocked = isFigureUnlocked(fig, profile);
-          return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}">
-            <img src="${fig.img}" alt="${fig.name}" loading="lazy" style="${unlocked ? "" : "filter:grayscale(1) brightness(0) invert(0.65); opacity:0.6;"}" />
-            ${unlocked ? "" : '<span class="figure-lock-icon">🔒</span>'}
-          </div>`;
-        }).join("")}
+        ${previewFigs.map((fig) => figureTileHtml(fig, profile)).join("")}
       </div>
       <button type="button" class="btn btn-ghost" id="openFullAlbumBtn">📔 Ganzes Album ansehen</button>
     </div>`;
@@ -10848,6 +11144,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     albumPageIdx = Math.min(albumPageIdx, totalPages - 1);
     const totalUnlocked = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
     const pageFigures = chapter.figures.slice(albumPageIdx * ALBUM_PER_PAGE, albumPageIdx * ALBUM_PER_PAGE + ALBUM_PER_PAGE);
+    // Wie ein echtes, AUFGESCHLAGENES Buch: die Sticker dieses Blatts auf eine linke und eine
+    // rechte Seite aufgeteilt, statt als einzelne, zentrierte Fläche — mit einer sichtbaren
+    // "Buchrücken"-Trennlinie und leichtem Schatten in der Mitte dazwischen.
+    const half = Math.ceil(ALBUM_PER_PAGE / 2);
+    const leftFigures = pageFigures.slice(0, half);
+    const rightFigures = pageFigures.slice(half);
+    const renderSlot = (fig) => {
+      const unlocked = profile && isFigureUnlocked(fig, profile);
+      return `<div class="album-slot" style="aspect-ratio:1; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; padding:6px; transform:rotate(${(fig.id.length % 5) - 2}deg);" title="${unlocked ? fig.name : "Noch gesperrt"}">
+        ${unlocked ? `<img src="${fig.img}" alt="${fig.name}" style="width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25));" />` : `<span style="font-size:1.4rem; opacity:0.3;">🔒</span>`}
+      </div>`;
+    };
+    const renderEmptySlots = (figures) => Array.from({ length: half - figures.length }).map(() => `<div></div>`).join("");
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Dein Sticker-Album — die Füchse sind erst der Anfang. Künftige Sammelserien (z. B. zu bestimmten Jahreszeiten) bekommen hier später ihr eigenes Kapitel, ohne dass du deine bisherigen Füchse verlierst.</p>
       <div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -10855,16 +11164,18 @@ An einem Morgen lief ein kleiner Fuchs los…
         <h3 style="margin:0;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlocked}/${chapter.figures.length})</span></h3>
         <button type="button" class="btn btn-ghost" id="albumNextChapter" ${albumChapterIdx >= activeChapters.length - 1 ? "disabled" : ""}>Kapitel ⏭</button>
       </div>
-      <div class="album-book">
-        <div class="album-page-face" id="albumPageFace" style="background:#FBF3E8; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.18); padding:18px;">
-          <div class="album-page-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;">
-            ${pageFigures.map((fig) => {
-              const unlocked = profile && isFigureUnlocked(fig, profile);
-              return `<div class="album-slot" style="aspect-ratio:1; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; padding:6px; transform:rotate(${(fig.id.length % 5) - 2}deg);" title="${unlocked ? fig.name : "Noch gesperrt"}">
-                ${unlocked ? `<img src="${fig.img}" alt="${fig.name}" style="width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25));" />` : `<span style="font-size:1.4rem; opacity:0.3;">🔒</span>`}
-              </div>`;
-            }).join("")}
-            ${Array.from({ length: ALBUM_PER_PAGE - pageFigures.length }).map(() => `<div></div>`).join("")}
+      <div class="album-book album-book-open" id="albumPageFace">
+        <div class="album-page-face album-page-left">
+          <div class="album-page-grid">
+            ${leftFigures.map(renderSlot).join("")}
+            ${renderEmptySlots(leftFigures)}
+          </div>
+        </div>
+        <div class="album-spine" aria-hidden="true"></div>
+        <div class="album-page-face album-page-right">
+          <div class="album-page-grid">
+            ${rightFigures.map(renderSlot).join("")}
+            ${renderEmptySlots(rightFigures)}
           </div>
         </div>
       </div>
@@ -10940,8 +11251,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("interviewSaveBtn")?.addEventListener("click", async () => {
       const updated = {};
       area.querySelectorAll("[data-interview-q]").forEach((ta) => { updated[ta.dataset.interviewQ] = ta.value; });
-      await Backend.updateExtraProfileField("interviewAnswers", updated);
       const note = document.getElementById("interviewSavedNote");
+      // WICHTIG: das Ergebnis TATSÄCHLICH prüfen — vorher wurde bei einem fehlgeschlagenen
+      // Speichervorgang (z. B. Netzwerkfehler) trotzdem "✅ Gespeichert!" angezeigt, obwohl die
+      // Antworten in Wahrheit gar nicht in der Datenbank ankamen und beim nächsten Laden wieder
+      // weg waren.
+      const result = await Backend.updateExtraProfileField("interviewAnswers", updated);
+      if (result && result.ok === false) {
+        note.textContent = "⚠️ " + (result.message || "Konnte nicht gespeichert werden.");
+        note.style.display = "block";
+        return;
+      }
+      note.textContent = "✅ Gespeichert!";
       note.style.display = "block";
       setTimeout(() => { note.style.display = "none"; }, 2500);
     });
@@ -10962,7 +11283,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const area = document.getElementById("missionsArea");
     if (!area) return;
     const profile = Backend.currentProfile();
-    const missionsBannerUrl = await Backend.getSiteImage("missions_banner");
+    const missionsBannerUrl = await Backend.getEffectiveBannerUrl("missions_banner");
     area.innerHTML = `
       <div style="margin:-4px -4px 14px; border-radius:var(--radius-md); overflow:hidden;">${siteBannerHtml("missions_banner", missionsBannerUrl, MISSIONS_PLACEHOLDER_SVG, "Missionen")}</div>
       <p class="empty-note" style="margin-bottom:14px;">Hier geht's nicht ums bloße Punktesammeln — sondern darum, fleißig in den Übungskategorien zu spielen und dir dadurch nach und nach Fuchs-Figuren zu verdienen. Jeder Fuchs steht für einen Meilenstein auf deinem Weg. Aktuell ist der Gesamtpunktestand (den du dir durchs Üben erspielst) der Maßstab dafür, gestaffelt nach Schwierigkeit — von "schnell erreichbar" bis "richtig selten". Du kannst dabei jedes Spiel in jedem Schwierigkeitsgrad frei wählen, das schränkt dich nicht ein.</p>
@@ -11256,26 +11577,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (month && month.user_id === userId) labels.push("Fuchs des Monats");
     if (year && year.user_id === userId) labels.push("Fuchs des Jahres");
     if (!labels.length) return "";
-    return `<div class="fox-bed-badge" title="${labels.join(" · ")}">
-      <svg viewBox="0 0 60 36" width="52" height="31">
-        <rect x="2" y="20" width="56" height="6" rx="2" fill="#8B6F47"/>
-        <rect x="4" y="26" width="4" height="8" fill="#6b5233"/>
-        <rect x="52" y="26" width="4" height="8" fill="#6b5233"/>
-        <rect x="5" y="10" width="50" height="12" rx="4" fill="#E8825F"/>
-        <rect x="8" y="12" width="9" height="8" rx="2" fill="#DC7F2A"/>
-        <rect x="19" y="12" width="9" height="8" rx="2" fill="#F2B84B"/>
-        <rect x="30" y="12" width="9" height="8" rx="2" fill="#E85F6F"/>
-        <rect x="41" y="12" width="9" height="8" rx="2" fill="#DC7F2A"/>
-        <g transform="translate(30 8)">
-          <path d="M0 0 L-5 -6 L-3 1 Q0 -2 3 1 L5 -6 Z" fill="#E8825F"/>
-          <path d="M-3 -3 L-4 -6 L-1 -4 Z" fill="#F5C99A"/>
-          <path d="M3 -3 L4 -6 L1 -4 Z" fill="#F5C99A"/>
-          <circle cx="-2" cy="0" r="0.9" fill="#241505"/>
-          <circle cx="2" cy="0" r="0.9" fill="#241505"/>
-        </g>
-      </svg>
-      <span class="empty-note fox-bed-badge-label">${labels[0]}${labels.length > 1 ? ` +${labels.length - 1}` : ""}</span>
-    </div>`;
+    // Schlankes Abzeichen im selben Stil wie die Admin-/Rollen-Badges (kleines Emoji + Text) —
+    // keine eigene, aufwendige Grafik mehr, die viel schwerer wirkte als der Rest der Zeile.
+    return `<span class="admin-badge fox-period-badge" title="${labels.join(" · ")}">🦊 ${labels.join(" · ")}</span>`;
   }
   async function openProfileModal(id, existingBox) {
     const p = await Backend.getPublicProfile(id);
@@ -11310,7 +11614,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>${foxBedBadge}` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}${foxBedBadge}</h2>` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
         !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
@@ -11823,10 +12127,15 @@ An einem Morgen lief ein kleiner Fuchs los…
               <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
             </div>
             <p style="white-space:pre-wrap; margin:0;">${m.body
+              .replace(/^\[BETA_REQUEST\]\s*/, "")
               .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
               .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:72px; height:72px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
             }</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
+            ${inboxViewTab === "in" && m.body.startsWith("[BETA_REQUEST]") && m.from_user && Backend.canModerate && Backend.canModerate() ? `
+            <div style="display:flex; gap:8px; margin-top:2px;">
+              <button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem;" data-approve-beta="${m.from_user}" data-approve-beta-name="${m.author_name || "Diese Person"}">🧪 Als Beta-Tester:in bestätigen</button>
+            </div>` : ""}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               ${inboxViewTab === "in" && !m.is_system && m.from_user ? `<button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-reply-to="${m.from_user}" data-reply-name="${m.author_name}">↩️ Antworten</button>` : ""}
               <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-toggle-important="${m.id}">${getImportantMsgIds().includes(m.id) ? "⭐ Wichtig" : "☆ Als wichtig markieren"}</button>
@@ -11959,6 +12268,16 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("inboxTabImportant").addEventListener("click", () => { inboxViewTab = "important"; renderInbox(); });
     area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
       btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(); });
+    });
+    area.querySelectorAll("[data-approve-beta]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        try {
+          await Backend.setBetaTesterStatus(btn.dataset.approveBeta, true);
+          await Backend.sendSystemMessage(btn.dataset.approveBeta, "🧪 Du wurdest als Beta-Tester:in bestätigt! Du siehst jetzt neue Funktionen, bevor sie für alle freigegeben werden — probier sie gern aus und gib Rückmeldung.");
+          showToast(`🧪 ${btn.dataset.approveBetaName} ist jetzt Beta-Tester:in!`);
+          renderInbox();
+        } catch (e) { alert(e.message || "Konnte nicht bestätigt werden."); }
+      });
     });
     area.querySelectorAll("[data-download-msg]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -12268,10 +12587,14 @@ An einem Morgen lief ein kleiner Fuchs los…
   // ordentlich aussieht, statt eine hässliche Lücke zu hinterlassen. Admins sehen zusätzlich einen
   // dezenten Hochladen-Knopf direkt auf dem Banner.
   function siteBannerHtml(key, currentUrl, placeholderSvg, altText) {
+    // Der Vorschlags-Knopf ist jetzt für ALLE eingeloggten Nutzer:innen sichtbar (mehr
+    // Mitgestaltungs-/Community-Gefühl) — nicht mehr nur für Admins. Wer kein Admin ist, schlägt
+    // damit nur ein Bild vor (siehe proposeSiteBanner), das erst nach Bestätigung live geht.
+    const canPropose = Boolean(Backend.currentUser && Backend.currentUser());
     return `
       <div class="site-banner" data-banner-key="${key}">
         ${currentUrl ? `<img src="${currentUrl}" alt="${altText}" class="site-banner-img" />` : placeholderSvg}
-        ${Backend.canModerate() ? `<label class="site-banner-upload-btn" title="Eigene Grafik hochladen">📷<input type="file" accept="image/*" class="site-banner-upload-input" data-banner-key-input="${key}" style="display:none;" /></label>` : ""}
+        ${canPropose ? `<label class="site-banner-upload-btn" title="${Backend.canModerate() ? "Eigene Grafik hochladen" : "Eigene Grafik vorschlagen (muss erst von einem Admin bestätigt werden)"}">📷<input type="file" accept="image/*" class="site-banner-upload-input" data-banner-key-input="${key}" style="display:none;" /></label>` : ""}
       </div>`;
   }
   function wireSiteBannerUploads(root) {
@@ -12281,17 +12604,52 @@ An einem Morgen lief ein kleiner Fuchs los…
         if (!file) return;
         try {
           const url = await Backend.uploadSiteImage(input.dataset.bannerKeyInput, file);
-          showToast("🖼️ Grafik hochgeladen!");
-          // Bild direkt im DOM austauschen statt eine bestimmte Render-Funktion neu aufzurufen —
-          // funktioniert so unabhängig davon, an welcher Stelle der Banner gerade sitzt.
-          const banner = input.closest(".site-banner");
-          if (banner) {
-            const uploadBtnHtml = banner.querySelector(".site-banner-upload-btn").outerHTML;
-            banner.innerHTML = `<img src="${url}" alt="" class="site-banner-img" />${uploadBtnHtml}`;
-          }
-          wireSiteBannerUploads(root);
+          showBannerProposeDialog(input.dataset.bannerKeyInput, url, root, input);
         } catch (e) { alert(e.message || "Upload fehlgeschlagen."); }
       });
+    });
+  }
+  // Kleines Bestätigungs-Popup NACH dem Hochladen: standardmäßig gilt das Bild nur individuell
+  // für die eigene Ansicht — nur mit ausdrücklich angehakter Option geht es (zusätzlich) als
+  // Vorschlag an die Community, den Admins erst noch bestätigen müssen.
+  function showBannerProposeDialog(key, url, root, inputEl) {
+    const isAdmin = Backend.canModerate && Backend.canModerate();
+    const box = document.createElement("div");
+    box.className = "lightbox";
+    box.innerHTML = `
+      <div class="profile-modal-card" style="text-align:center;">
+        <img src="${url}" alt="" style="width:100%; max-height:160px; object-fit:cover; border-radius:10px; margin-bottom:10px;" />
+        <label style="display:flex; align-items:center; gap:8px; text-align:left; margin-bottom:14px;">
+          <input type="checkbox" id="bannerProposeCommunityCheck" />
+          <span class="empty-note">${isAdmin ? "Auch sofort für die GANZE Community live setzen (sonst nur für dich persönlich)" : "Auch als Vorschlag für die GANZE Community einreichen — ein:e Admin muss das erst bestätigen (sonst gilt es nur für dich persönlich)"}</span>
+        </label>
+        <button type="button" class="btn btn-coffee" id="bannerProposeConfirmBtn">Übernehmen</button>
+        <button type="button" class="btn btn-ghost" id="bannerProposeCancelBtn" style="margin-top:6px;">Abbrechen</button>
+      </div>`;
+    document.body.appendChild(box);
+    box.addEventListener("click", (e) => { if (e.target === box) box.remove(); });
+    document.getElementById("bannerProposeCancelBtn").addEventListener("click", () => box.remove());
+    document.getElementById("bannerProposeConfirmBtn").addEventListener("click", async () => {
+      const alsoForCommunity = document.getElementById("bannerProposeCommunityCheck").checked;
+      try {
+        const result = await Backend.proposeSiteBanner(key, url, alsoForCommunity);
+        box.remove();
+        if (result.needsApproval) {
+          showToast("📩 Für dich sofort übernommen — Vorschlag für die Community wurde zusätzlich an die Admins gesendet.");
+        } else if (alsoForCommunity) {
+          showToast("🖼️ Für die ganze Community live gesetzt!");
+        } else {
+          showToast("🖼️ Für dich persönlich übernommen — andere sehen weiterhin das bisherige Bild.");
+        }
+        // Bild direkt im DOM austauschen statt eine bestimmte Render-Funktion neu aufzurufen —
+        // funktioniert so unabhängig davon, an welcher Stelle der Banner gerade sitzt.
+        const banner = inputEl.closest(".site-banner");
+        if (banner) {
+          const uploadBtnHtml = banner.querySelector(".site-banner-upload-btn").outerHTML;
+          banner.innerHTML = `<img src="${url}" alt="" class="site-banner-img" />${uploadBtnHtml}`;
+        }
+        wireSiteBannerUploads(root);
+      } catch (e) { alert(e.message || "Konnte nicht übernommen werden."); }
     });
   }
   const HALL_OF_FAME_PLACEHOLDER_SVG = `<svg class="site-banner-svg" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice">
@@ -12311,7 +12669,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const foxPeriodFns = { tag: () => Backend.getFoxOfTheDayShowcase(), woche: () => Backend.getFoxOfWeekShowcase(), monat: () => Backend.getFoxOfMonthShowcase(), jahr: () => Backend.getFoxOfYearShowcase() };
     const fox = await foxPeriodFns[foxPeriodMode]();
     const hallOfFame = await Backend.getFoxOfDayHallOfFame();
-    const hofBannerUrl = await Backend.getSiteImage("hall_of_fame_banner");
+    const hofBannerUrl = await Backend.getEffectiveBannerUrl("hall_of_fame_banner");
     const periodTexts = { tag: { title: "Fuchs des Tages", suffix: "heute", report: "Mitarbeit heute" }, woche: { title: "Fuchs der Woche", suffix: "diese Woche", report: "Mitarbeit diese Woche" }, monat: { title: "Fuchs des Monats", suffix: "diesen Monat", report: "Mitarbeit diesen Monat" }, jahr: { title: "Fuchs des Jahres", suffix: "dieses Jahr", report: "Mitarbeit dieses Jahr" } };
     const pt = periodTexts[foxPeriodMode];
     area.innerHTML = `
@@ -12332,7 +12690,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url).replace('class="avatar-photo"', 'class="avatar-photo" style="width:100%; height:100%; object-fit:cover;"') : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
           </div>
           <div>
-            <h3 style="margin:0;">${fox.name}</h3>
+            <button type="button" class="friend-name-btn" data-view-ranked="${fox.user_id}" style="font-size:1.05rem; font-weight:800;">${fox.name}</button>
             <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}</p>
           </div>
         </div>
@@ -12526,7 +12884,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "108";
+  const APP_VERSION = "109";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

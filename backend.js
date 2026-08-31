@@ -73,7 +73,7 @@ const Backend = (function () {
   }
 
   function defaultProfile(name) {
-    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", favDrink: "", favCountry: "", favQuote: "", poem: "", profileBannerUrl: "", extraProfileData: {} };
+    return { name, bio: "", birthday: "", avatarUrl: "", avatarEmoji: "", gallery: [], hobbies: [], origin: "", points: 0, badges: [], trophies: [], history: [], isPremium: false, theme: "bastelheft", isAdmin: false, isOwner: false, isModerator: false, giftedCategories: [], giftedThemes: [], collectedFigures: [], languages: [], favMovie: "", favSeries: "", favSong: "", favFood: "", favDrink: "", favCountry: "", favQuote: "", poem: "", profileBannerUrl: "", extraProfileData: {} };
   }
 
   /* ================= AUTH ================= */
@@ -105,6 +105,11 @@ const Backend = (function () {
           isSupporter: Boolean(data.is_supporter),
           giftedCategories: data.gifted_categories || [],
           giftedThemes: data.gifted_themes || [],
+          // Dauerhaft gespeicherte Liste bereits freigeschalteter Sammelfiguren — WICHTIG, damit
+          // eine Figur nicht erneut als "neu freigeschaltet" gemeldet wird, wenn die Live-Prüfung
+          // der Freischalt-Bedingung (z. B. wegen noch nicht vollständig geladener Verlaufsdaten)
+          // kurzzeitig fälschlich "nicht erfüllt" ergibt.
+          collectedFigures: data.collected_figures || [],
           languages: data.languages || [],
           favMovie: data.fav_movie || "",
           favSeries: data.fav_series || "",
@@ -1091,7 +1096,7 @@ const Backend = (function () {
     if (!q) return [];
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("id,name").ilike("name", `%${q}%`).neq("id", myId() || "").limit(10);
+        const { data, error } = await client.from("profiles").select("id,name,is_beta_tester").ilike("name", `%${q}%`).neq("id", myId() || "").limit(10);
         if (!error && data) return data;
       } catch (e) {
         console.warn("Supabase-Suche nicht verfügbar, durchsuche Demo-Konten:", e);
@@ -1100,7 +1105,7 @@ const Backend = (function () {
     const me = demo.user ? demo.user.email : null;
     return Object.entries(demo.users)
       .filter(([email, u]) => email !== me && u.profile.name.toLowerCase().includes(q))
-      .map(([email, u]) => ({ id: email, name: u.profile.name }))
+      .map(([email, u]) => ({ id: email, name: u.profile.name, is_beta_tester: Boolean(u.profile.isBetaTester) }))
       .slice(0, 10);
   }
 
@@ -1336,6 +1341,22 @@ const Backend = (function () {
     }
     return true;
   }
+  // Sichert eine neu freigeschaltete Sammelfigur DAUERHAFT — wichtig, damit sie beim nächsten Mal
+  // sofort als "schon freigeschaltet" erkannt wird, auch wenn die Live-Neuberechnung der
+  // Freischalt-Bedingung (z. B. wegen noch nicht vollständig geladener Verlaufsdaten) kurzzeitig
+  // fälschlich "nicht erfüllt" ergeben sollte. Verhindert, dass dieselbe Figur mehrfach als "neu
+  // freigeschaltet" gemeldet wird.
+  function addCollectedFigure(figureId) {
+    if (!demo.profile) return false;
+    demo.profile.collectedFigures = demo.profile.collectedFigures || [];
+    if (demo.profile.collectedFigures.includes(figureId)) return false;
+    demo.profile.collectedFigures.push(figureId);
+    if (client && demo.user) {
+      client.from("profiles").update({ collected_figures: demo.profile.collectedFigures }).eq("id", demo.user.id)
+        .then(() => {}, (e) => console.warn("Sammelfigur konnte nicht dauerhaft gespeichert werden:", e));
+    }
+    return true;
+  }
 
   async function saveBirthday(birthday) {
     if (!demo.profile) return true;
@@ -1442,6 +1463,22 @@ const Backend = (function () {
       throw new Error("Foto konnte nicht dauerhaft gespeichert werden — vermutlich fehlt die Spalte „gallery“ in der profiles-Tabelle (siehe README, Abschnitt Supabase einrichten).");
     }
     return demo.profile.gallery;
+  }
+  // Einfacher Foto-Upload OHNE Nebeneffekte (landet nicht in der Galerie, wird nirgends
+  // automatisch verknüpft) — nur Hochladen und die fertige URL zurückgeben. Für Fälle wie das
+  // Vorstellungsrunden-Bild, wo ein eigenes, unabhängiges Bild gebraucht wird.
+  async function uploadStandalonePhoto(file) {
+    if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
+    const path = `${demo.user.id}/standalone-${Date.now()}-${file.name}`;
+    const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) {
+      if (uploadError.message && uploadError.message.toLowerCase().includes("bucket not found")) {
+        throw new Error("Der Speicherort für Fotos fehlt noch (siehe README, Abschnitt 4b).");
+      }
+      throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+    }
+    const { data } = client.storage.from("avatars").getPublicUrl(path);
+    return data.publicUrl;
   }
 
   function removeGalleryPhoto(url) {
@@ -2273,6 +2310,57 @@ const Backend = (function () {
   function canModerate() {
     return isOwner() || isAdmin() || isModerator();
   }
+  // Nicht-Admins können jetzt auch ein neues Bild für einen Seiten-Banner vorschlagen (für mehr
+  // Community-Gefühl, jede:r kann die Seite mitgestalten) — es wird aber NICHT sofort live
+  // geschaltet, sondern als Vorschlag gespeichert und per Nachricht an alle Admins/Betreiber:innen
+  // gemeldet, die ihn erst bestätigen müssen.
+  // Ein vorgeschlagenes Bild gilt STANDARDMÄSSIG nur individuell für die vorschlagende Person
+  // selbst (keine Genehmigung nötig, sofort wirksam) — nur wenn zusätzlich ausdrücklich "auch für
+  // die Community vorschlagen" gewählt wurde, geht es zusätzlich in die Admin-Warteschlange, die
+  // dann für ALLE gelten würde.
+  async function proposeSiteBanner(key, url, alsoForCommunity) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    // Immer sofort als persönliche, individuelle Variante speichern — betrifft nur das eigene
+    // Profil, niemand sonst sieht diese Änderung.
+    const personal = (demo.profile.extraProfileData && demo.profile.extraProfileData.personalBanners) || {};
+    await updateExtraProfileField("personalBanners", { ...personal, [key]: url });
+    if (!alsoForCommunity) return { needsApproval: false, personalOnly: true };
+    if (canModerate()) { await setSiteContentInternal("site_image_" + key, url); return { needsApproval: false, personalOnly: false }; }
+    const proposals = (await getSiteContent("banner_proposals")) || [];
+    const filtered = proposals.filter((p) => p.key !== key || p.proposerId !== demo.user.id);
+    filtered.unshift({ key, url, proposerId: demo.user.id, proposerName: demo.profile?.name || "Jemand", createdAt: new Date().toISOString() });
+    await setSiteContentInternal("banner_proposals", filtered.slice(0, 30));
+    // Alle Admins/Betreiber:innen benachrichtigen, damit sie es bestätigen können.
+    if (client) {
+      const { data } = await client.from("profiles").select("id").or("is_admin.eq.true,is_owner.eq.true");
+      if (data) {
+        for (const admin of data) {
+          await sendSystemMessage(admin.id, `🖼️ ${demo.profile?.name || "Jemand"} hat ein neues Bild für den Bereich "${key}" für die GESAMTE Community vorgeschlagen — in den Einstellungen bestätigen oder ablehnen.`);
+        }
+      }
+    }
+    return { needsApproval: true, personalOnly: false };
+  }
+  // Liefert das für DIESE Person tatsächlich anzuzeigende Banner-Bild: persönlicher Override,
+  // falls vorhanden, sonst das für alle sichtbare Community-Bild.
+  async function getEffectiveBannerUrl(key) {
+    const personal = demo.profile && demo.profile.extraProfileData && demo.profile.extraProfileData.personalBanners && demo.profile.extraProfileData.personalBanners[key];
+    if (personal) return personal;
+    return getSiteImage(key);
+  }
+  async function getBannerProposals() {
+    if (!canModerate()) return [];
+    return (await getSiteContent("banner_proposals")) || [];
+  }
+  async function resolveBannerProposal(key, proposerId, accept) {
+    if (!canModerate()) throw new Error("Nur Administrator:innen können Vorschläge bestätigen.");
+    const proposals = (await getSiteContent("banner_proposals")) || [];
+    const match = proposals.find((p) => p.key === key && p.proposerId === proposerId);
+    const remaining = proposals.filter((p) => !(p.key === key && p.proposerId === proposerId));
+    await setSiteContentInternal("banner_proposals", remaining);
+    if (accept && match) await setSiteContentInternal("site_image_" + key, match.url);
+    if (match) await sendSystemMessage(proposerId, accept ? `✅ Dein Bild-Vorschlag für "${key}" wurde übernommen!` : `Dein Bild-Vorschlag für "${key}" wurde leider nicht übernommen.`);
+  }
   // Vollständige Nutzerliste für Admins/Moderatoren — nicht nur die zuletzt aktiven, sondern
   // wirklich ALLE registrierten Konten, damit man einen echten Überblick hat, wer da ist.
   async function getAllUsers() {
@@ -2511,13 +2599,16 @@ const Backend = (function () {
   // kein localStorage), bleibt bei jedem künftigen Update unberührt, da AUSSCHLIESSLICH der
   // Betreiber sie über diese Funktion ändert.
   async function uploadSiteImage(key, file) {
-    if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Design-Grafiken ändern.");
+    // WICHTIG: das reine Hochladen selbst ist jetzt für alle eingeloggten Nutzer:innen erlaubt
+    // (nicht mehr nur Admins) — das Livestellen bleibt aber weiterhin admin-geschützt, siehe
+    // proposeSiteBanner(). Ohne Login trotzdem blockiert, damit niemand anonym Dateien ablegt.
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (!client) throw new Error("Bilder hochladen geht nur mit verbundenem Supabase.");
     const path = `site-images/${key}-${Date.now()}-${file.name}`;
     const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
     if (uploadError) throw new Error("Upload fehlgeschlagen: " + uploadError.message);
     const { data } = client.storage.from("avatars").getPublicUrl(path);
-    await setSiteContent(`site_image_${key}`, data.publicUrl);
+    if (isAdmin()) await setSiteContent(`site_image_${key}`, data.publicUrl);
     return data.publicUrl;
   }
   async function getSiteImage(key) {
@@ -2569,7 +2660,10 @@ const Backend = (function () {
       ownerId = ownerEmail || null; // im Demo-Modus ist die E-Mail selbst die ID
     }
     if (!ownerId) return;
-    await sendPrivateMessage(ownerId, `🧪 ${demo.profile.name} möchte gerne Beta-Tester:in werden — schau in der Nutzerliste unter Einstellungen vorbei, um die Rolle zu vergeben.`, null);
+    // Der Marker "[BETA_REQUEST]" am Anfang wird beim Anzeigen im Postfach erkannt, um dort
+    // direkt einen Genehmigen-Knopf einzublenden — from_user der Nachricht ist automatisch die
+    // ID der anfragenden Person selbst, kein zusätzliches Datenbankfeld nötig.
+    await sendPrivateMessage(ownerId, `[BETA_REQUEST] 🧪 ${demo.profile.name} möchte gerne Beta-Tester:in werden.`, null);
   }
   // Hall of Fame: kurzer, wachsender Verlauf vergangener Krönungen — genutzt wird dieselbe
   // generische site_content-Tabelle (kein neues SQL nötig), gedeckelt auf die letzten 30 Einträge.
@@ -2684,7 +2778,7 @@ const Backend = (function () {
     getBugReports, resolveBugReport,
     notifyPracticing,
     saveThemePreference,
-    uploadGalleryPhoto,
+    uploadGalleryPhoto, uploadStandalonePhoto,
     removeGalleryPhoto,
     saveHobbies,
     saveOrigin,
@@ -2704,6 +2798,7 @@ const Backend = (function () {
     getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,
     getFoxOfWeek, getFoxOfMonth, getFoxOfYear, getFoxOfWeekShowcase, getFoxOfMonthShowcase, getFoxOfYearShowcase,
     getFoxOfTheDayShowcase, getFoxOfDayHallOfFame, uploadSiteImage, getSiteImage,
+    proposeSiteBanner, getBannerProposals, resolveBannerProposal, getEffectiveBannerUrl,
     getPendingCommunityTexts,
     approveCommunityText,
     rejectCommunityText,
@@ -2757,6 +2852,7 @@ const Backend = (function () {
     getPublicProfile,
     saveAvatarEmoji,
     addTrophy,
+    addCollectedFigure,
     touchActivity,
   };
 })();
