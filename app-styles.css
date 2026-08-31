@@ -498,6 +498,17 @@
   flex-shrink: 0;
 }
 .figure-slot img { width: 100%; height: 100%; object-fit: contain; overflow: hidden; }
+/* Gesperrte Figur "füllt sich" von unten nach oben mit dem Fortschritt — eine graue,
+   halbtransparente Abdeckung von OBEN her, deren Höhe dem noch fehlenden Anteil entspricht.
+   Zeigt auf einen Blick, wie nah man an der Freischaltung ist, statt nur "gesperrt/entsperrt". */
+.figure-fill-mask {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  background: linear-gradient(to bottom, rgba(60,50,70,0.75), rgba(60,50,70,0.35));
+  transition: height 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
 /* Falls ein Bild nicht lädt: Alt-Text NICHT als sprengenden Text anzeigen, sondern die Kachel
    einfach leer/dezent lassen, statt die Nachbarkacheln zu überlappen. */
 .figure-slot img::before {
@@ -510,7 +521,7 @@
 .figure-slot.figure-locked img { filter: grayscale(1) brightness(0) invert(0.65); opacity: 0.75; }
 .figure-slot.figure-locked { cursor: default; }
 .figure-slot[data-figure-detail] { cursor: pointer; }
-.figure-lock-icon { position: absolute; font-size: 0.9rem; }
+.figure-lock-icon { position: absolute; font-size: 0.9rem; z-index: 2; }
 .badge-chip {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 12px 14px;
@@ -953,7 +964,7 @@
   justify-content: center;
   padding: 24px;
 }
-.lightbox img {
+.lightbox img:not(.avatar-photo):not(.avatar-figure-sticker) {
   max-width: 100%;
   max-height: 88vh;
   border-radius: var(--radius-md);
@@ -1196,9 +1207,12 @@
   flex-shrink: 0;
   /* Skaliert mit der Bildschirmbreite statt fest 128px — auf schmalen Bildschirmen (z. B. viele
      Android-Geräte um 320–360px) blieb sonst nicht genug Platz für den Text daneben übrig, der
-     dann ungewollt unter statt neben das Bild rutschte. */
-  width: clamp(84px, 26vw, 128px); height: clamp(84px, 26vw, 128px);
-  clip-path: circle(50%);
+     dann ungewollt unter statt neben das Bild rutschte. Kleiner als vorher (war 84–128px), damit
+     bei längeren Namen zuverlässig genug Platz für den Text auf derselben Zeile bleibt. */
+  width: clamp(64px, 20vw, 104px); height: clamp(64px, 20vw, 104px);
+  /* clip-path:circle() entfernt — border-radius:50% (schon auf .avatar-photo selbst gesetzt) ist
+     auf Android-Browsern deutlich zuverlässiger unterstützt. Mit beiden gleichzeitig gesetzt kam
+     es bei normalen (nicht Sammelfigur-)Profilbildern zu eckiger Darstellung statt rund. */
   font-size: 2.3rem;
 }
 /* Alle Text-Elemente rechts vom Bild (Name, Badges) müssen bei Bedarf schrumpfen/umbrechen
@@ -1210,6 +1224,12 @@
 }
 .profile-header-flow h2 {
   overflow-wrap: break-word;
+}
+/* Bei sehr schmalen Bildschirmen reichte der Name knapp nicht neben das (schon verkleinerte) Bild
+   — eine kleine, zusätzliche Schriftgrößen-Reduzierung genau hier schließt die letzte Lücke,
+   ohne das Bild selbst noch weiter verkleinern zu müssen. */
+@media (max-width: 400px) {
+  .profile-header-flow h2 { font-size: 1.25rem; margin-right: 8px !important; }
 }
 /* Die Profil-Beschreibung liegt jetzt strukturell IM selben fließenden Bereich wie Bild, Name
    und Badges (statt als komplett separater Absatz weit darunter) — wirkt dadurch als ein
@@ -1224,6 +1244,11 @@
 .profile-header-flow .avatar-figure-sticker-wrap {
   clip-path: none;
   flex-shrink: 0;
+  /* Fehlte hier bisher komplett (anders als bei normalen Fotos/Initialen) — ohne eigene, feste
+     Größe verhielt sich der Sticker-Wrapper im Flexbox-Umfluss unvorhersehbar, wodurch der Name
+     bei einer Sammelfigur als Profilbild unter statt neben das Bild rutschte. Dieselbe skalierende
+     Größe wie bei normalen Profilbildern (siehe dort für den Grund der kleineren Maße). */
+  width: clamp(64px, 20vw, 104px); height: clamp(64px, 20vw, 104px);
 }
 .flow-badge {
   display: inline-block;
@@ -1632,7 +1657,7 @@
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  width: 40px; height: 40px;
+  width: 32px; height: 32px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 3px 0 rgba(150,80,20,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
@@ -1785,6 +1810,12 @@
 .cal-back-scroll {
   width: 100%; height: 100%;
   overflow-y: auto;
+  /* Scrollen innerhalb eines 3D-gedrehten, backface-visibility:hidden-Elements ist auf manchen
+     Android-Browsern unzuverlässig, ohne dass der Browser explizit weiß, dass senkrechtes
+     Wischen hier erlaubt sein soll — ohne das könnte ein Wisch-Versuch als Geste für "die ganze
+     Seite scrollen" interpretiert werden, statt innerhalb der Karte zu scrollen. */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   padding: 20px;
   box-sizing: border-box;
@@ -1975,6 +2006,23 @@
   object-fit: cover;
   z-index: 1;
 }
+/* MP3 (oder ähnliche direkte Audiodatei) ohne eigenes Cover — animiertes Musik-Symbol statt
+   einer leeren Fläche, damit im Video-Bereich immer etwas zu sehen ist. */
+.music-mp3-icon {
+  position: absolute;
+  inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  background: linear-gradient(160deg, #6a5acd, #483d8b);
+  z-index: 1;
+}
+.music-mp3-icon-playing {
+  animation: musicMp3Pulse 1.2s ease-in-out infinite;
+}
+@keyframes musicMp3Pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
 
 /* Sticker-Album — echtes Buch-Umblättern: die Seite dreht sich um die linke Kante (wie ein
    aufgeschlagenes Buch), Vorder- und Rückseite bleiben unsichtbar, wenn sie von einem wegzeigen. */
@@ -2103,15 +2151,19 @@
 /* Flowerpower: bunte Blüten in verschiedenen Größen und Farben, wie mit Stickern beklebt — als
    mehrere überlagerte, radiale Farbflecken angedeutet, absichtlich nur im Hintergrund, nicht über
    den Bedienelementen selbst. */
+/* Flowerpower: ECHTE Blumenformen als kleine SVG-Grafiken (nicht nur farbige Kreise) — vier
+   unterschiedliche Formen, Größen und Farben, als mehrere Hintergrundbilder übereinandergelegt.
+   Jede Blume hat mehrere Blütenblätter um ein eigenfarbenes Zentrum. */
 #musicPlayerBarInner.player-tpl-flowerpower {
-  background:
-    radial-gradient(circle at 12% 20%, #f2b6d4 0%, #f2b6d4 7%, transparent 8%),
-    radial-gradient(circle at 85% 15%, #f7d94c 0%, #f7d94c 9%, transparent 10%),
-    radial-gradient(circle at 25% 80%, #a8d8b9 0%, #a8d8b9 6%, transparent 7%),
-    radial-gradient(circle at 70% 75%, #f2986a 0%, #f2986a 8%, transparent 9%),
-    radial-gradient(circle at 95% 55%, #c9a8e0 0%, #c9a8e0 6%, transparent 7%),
-    radial-gradient(circle at 45% 40%, #f7e9c4 0%, #f7e9c4 5%, transparent 6%),
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg fill='%23f2b6d4'%3E%3Cellipse cx='20' cy='9' rx='6' ry='9'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(72 20 20)'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(144 20 20)'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(216 20 20)'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(288 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='5' fill='%23f7d94c'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg fill='%23c9a8e0'%3E%3Cellipse cx='20' cy='11' rx='5' ry='8' transform='rotate(0 20 20)'/%3E%3Cellipse cx='20' cy='11' rx='5' ry='8' transform='rotate(60 20 20)'/%3E%3Cellipse cx='20' cy='11' rx='5' ry='8' transform='rotate(120 20 20)'/%3E%3Cellipse cx='20' cy='11' rx='5' ry='8' transform='rotate(180 20 20)'/%3E%3Cellipse cx='20' cy='11' rx='5' ry='8' transform='rotate(240 20 20)'/%3E%3Cellipse cx='20' cy='11' rx='5' ry='8' transform='rotate(300 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='4' fill='%23fff'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg fill='%23f2986a'%3E%3Cpolygon points='20,2 24,16 20,20 16,16'/%3E%3Cpolygon points='20,2 24,16 20,20 16,16' transform='rotate(90 20 20)'/%3E%3Cpolygon points='20,2 24,16 20,20 16,16' transform='rotate(180 20 20)'/%3E%3Cpolygon points='20,2 24,16 20,20 16,16' transform='rotate(270 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='4' fill='%23e85a3a'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg fill='%23f7e9c4'%3E%3Cellipse cx='20' cy='12' rx='4' ry='7'/%3E%3Cellipse cx='20' cy='12' rx='4' ry='7' transform='rotate(51 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4' ry='7' transform='rotate(102 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4' ry='7' transform='rotate(153 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4' ry='7' transform='rotate(204 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4' ry='7' transform='rotate(255 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4' ry='7' transform='rotate(306 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='3.5' fill='%23a8d8b9'/%3E%3C/svg%3E"),
     linear-gradient(135deg, #eef7e0, #dcefc8);
+  background-repeat: no-repeat;
+  background-position: 2% 15%, 82% 10%, 22% 78%, 68% 70%;
+  background-size: 34px 34px, 26px 26px, 30px 30px, 22px 22px;
   border-radius: 14px;
   padding: 10px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.15);
@@ -2121,12 +2173,12 @@
 #musicPlayerBarInner.player-tpl-flowerpower .player-digital-time { background: rgba(255,255,255,0.6); color: #5a7a3a; }
 #musicPlayerBarInner.player-tpl-flowerpower > span:last-child { color: #3a4a2a; }
 .music-floating-bar.player-tpl-flowerpower {
-  background:
-    radial-gradient(circle at 12% 20%, #f2b6d4 0%, #f2b6d4 7%, transparent 8%),
-    radial-gradient(circle at 85% 15%, #f7d94c 0%, #f7d94c 9%, transparent 10%),
-    radial-gradient(circle at 25% 80%, #a8d8b9 0%, #a8d8b9 6%, transparent 7%),
-    radial-gradient(circle at 70% 75%, #f2986a 0%, #f2986a 8%, transparent 9%),
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg fill='%23f2b6d4'%3E%3Cellipse cx='20' cy='9' rx='6' ry='9'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(72 20 20)'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(144 20 20)'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(216 20 20)'/%3E%3Cellipse cx='20' cy='9' rx='6' ry='9' transform='rotate(288 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='5' fill='%23f7d94c'/%3E%3C/svg%3E"),
     linear-gradient(135deg, #eef7e0, #dcefc8) !important;
+  background-repeat: no-repeat !important;
+  background-position: 4% 20% !important;
+  background-size: 28px 28px !important;
 }
 .player-tpl-flowerpower .player-panel-btn, .player-tpl-flowerpower .mfb-ctrl {
   background: radial-gradient(circle at 35% 30%, #fff, #f2d9e6 80%) !important;
@@ -2209,13 +2261,20 @@
   position: absolute;
   font-size: 0.8rem;
   opacity: 0.7;
-  animation: oceanFishSwim 9s linear infinite;
 }
-#musicPlayerBarInner.player-tpl-ozean::before { top: 12%; animation-delay: 0s; }
-#musicPlayerBarInner.player-tpl-ozean::after { top: 65%; font-size: 0.6rem; animation-delay: 4s; transform: scaleX(-1); opacity: 0.5; }
-@keyframes oceanFishSwim {
+/* Der obere Fisch (Standard-Emoji, unverändert) guckt von Natur aus nach LINKS — schwimmt darum
+   auch nach links (rechts nach links über den Bildschirm). Der untere ist gespiegelt (guckt nach
+   rechts) und schwimmt entsprechend nach rechts — beide Male läuft die Schwimmrichtung jetzt mit
+   der Blickrichtung mit, statt dagegen. */
+#musicPlayerBarInner.player-tpl-ozean::before { top: 12%; animation: oceanFishSwimLeft 9s linear infinite; animation-delay: 0s; }
+#musicPlayerBarInner.player-tpl-ozean::after { top: 65%; font-size: 0.6rem; animation: oceanFishSwimRight 9s linear infinite; animation-delay: 4s; transform: scaleX(-1); opacity: 0.5; }
+@keyframes oceanFishSwimRight {
   0% { left: -10%; }
   100% { left: 110%; }
+}
+@keyframes oceanFishSwimLeft {
+  0% { left: 110%; }
+  100% { left: -10%; }
 }
 #musicPlayerBarInner.player-tpl-ozean .player-digital-time { background: rgba(0,0,0,0.35); color: #6fd4e8; }
 #musicPlayerBarInner.player-tpl-ozean > span:last-child { color: #b8e8f0; }
@@ -2268,19 +2327,61 @@
   overflow: hidden;
   margin-bottom: 10px;
 }
-/* Kulisse aus Emojis am unteren Rand — Haus, Zaun-artige Baumstämme, Bäume, Pilze. Bewusst
-   grafisch größer skaliert als normale Emoji-Textgröße, damit es wie eine echte kleine Szenerie
-   wirkt, statt wie einzelne Textzeichen. Liegt HINTER den fallenden Wörtern und der Kanone. */
+/* Kulisse aus Emojis am unteren Rand — Haus und Bäume deutlich größer (das Größte in der
+   Szenerie), Pilze und Blumen bewusst klein. Container höher als vorher, damit die großen
+   Elemente nicht am Rand abgeschnitten werden — alle stehen mit ihrer Basis auf derselben
+   Boden-Linie, statt nur mit dem "Kopf" oben herauszuschauen. */
+/* Sonne oben im Himmel — Flackern (schnell, wie die Flammen) und Drehung (sehr langsam, sanft)
+   bewusst als ZWEI unabhängige Animationen, sonst wäre eine schnelle Drehung nicht mehr "sanft". */
+.kn-sun {
+  position: absolute;
+  top: 6%; right: 8%;
+  font-size: 1.8rem;
+  z-index: 1;
+  animation: knSunShine 3s ease-in-out infinite, knSunRotate 24s linear infinite;
+}
+@keyframes knSunShine {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+@keyframes knSunRotate {
+  from { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.08); }
+  to { transform: rotate(360deg) scale(1); }
+}
+/* Wolken-Mechanik: mit jedem Fehler ziehen mehr/dichtere Wolken langsam übers Bild — bewusst mit
+   HÖHEREM z-index als die fallenden Wörter (z-index:2), damit sie sich wirklich zeitweise VOR
+   die Wörter schieben und das Lesen erschweren, statt nur dekorativ im Hintergrund zu schweben. */
+.kn-clouds {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+.kn-cloud {
+  position: absolute;
+  right: -15%;
+  animation-name: knCloudDrift;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1));
+}
+@keyframes knCloudDrift {
+  from { right: -15%; }
+  to { right: 115%; }
+}
 .kn-scenery {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 46px;
+  height: 72px;
   z-index: 1;
   pointer-events: none;
+  overflow: visible;
 }
 .kn-scenery-item {
   position: absolute;
-  bottom: -6px;
+  bottom: 0;
   line-height: 1;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
 }
@@ -2291,17 +2392,43 @@
 .kn-burnt-grass {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 30px;
+  height: 34px;
   z-index: 2;
   pointer-events: none;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
+  overflow: visible;
 }
+/* Dauerhafte, rötliche Verbrennungs-Färbung genau an der Einschlagsstelle einer falsch
+   durchgekommenen Antwort — bewusst nur ein lokaler Fleck, nicht der ganze Boden. */
+.kn-scorch-mark {
+  position: absolute;
+  bottom: 0;
+  width: 34px; height: 14px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(90,30,15,0.55) 0%, rgba(90,30,15,0.25) 60%, transparent 90%);
+  border-radius: 50%;
+}
+/* Echtes Flackern statt statischer Werte: Größe, Transparenz UND eine leichte seitliche
+   Verschiebung verändern sich laufend während der Animation — jede Flamme bekommt über
+   animation-duration/-delay (siehe JS) ihr eigenes, leicht abweichendes Tempo, damit mehrere
+   Flammen nebeneinander nicht synchron und damit unnatürlich wirken. */
 .kn-burnt-grass-flame {
-  font-size: 1.4rem;
+  position: absolute;
+  bottom: 0;
+  font-size: 1.3rem;
   line-height: 1;
-  margin: 0 -4px;
+  transform: translateX(-50%);
+  animation-name: knFlameFlicker;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  --flame-base-scale: 1;
+  --flame-mirror: 1;
+}
+@keyframes knFlameFlicker {
+  0%   { opacity: 0.65; transform: translateX(-50%) translateX(0) scale(var(--flame-base-scale)) scaleX(var(--flame-mirror)); }
+  25%  { opacity: 1;    transform: translateX(-50%) translateX(1.5px) scale(calc(var(--flame-base-scale) * 1.12)) scaleX(var(--flame-mirror)); }
+  50%  { opacity: 0.75; transform: translateX(-50%) translateX(-1px) scale(calc(var(--flame-base-scale) * 0.92)) scaleX(var(--flame-mirror)); }
+  75%  { opacity: 0.95; transform: translateX(-50%) translateX(1px) scale(calc(var(--flame-base-scale) * 1.05)) scaleX(var(--flame-mirror)); }
+  100% { opacity: 0.65; transform: translateX(-50%) translateX(0) scale(var(--flame-base-scale)) scaleX(var(--flame-mirror)); }
 }
 /* Echte SVG-Kanone statt des alten statischen 🔫-Emojis — das Rohr dreht sich (siehe
    aimKanoneAt) zur angetippten Stelle, bevor die Kugel losfliegt. */
@@ -2347,6 +2474,50 @@
   64%  { transform: translate(-50%, -50%) scale(1.4) rotate(380deg); opacity: 0.4; }
   100% { transform: translate(-50%, -50%) scale(1.6) rotate(420deg); opacity: 0; }
 }
+/* Wortblasen: mehrere Sprechblasen erscheinen gleichzeitig an festen Positionen, wachsen über
+   ihre Lebenszeit hinweg leicht an und "zerplatzen" (schrumpfen + verblassen) am Ende von selbst,
+   wenn sie nicht rechtzeitig angetippt wurden. */
+.bb-pool {
+  position: relative;
+  height: 220px;
+  background: linear-gradient(180deg, #d4ecf5, #eef8fb);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.bb-bubble {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.85);
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9), rgba(159,217,237,0.85) 70%);
+  border: 2px solid rgba(255,255,255,0.8);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  color: #1a4a5a;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12), inset 0 2px 4px rgba(255,255,255,0.6);
+  animation-name: bbGrowAndPop;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes bbGrowAndPop {
+  0%   { transform: translate(-50%, -50%) scale(0.7); opacity: 0.85; }
+  70%  { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+.bb-bubble-pop-good {
+  animation: none !important;
+  transform: translate(-50%, -50%) scale(1.6) !important;
+  opacity: 0 !important;
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+  background: radial-gradient(circle, #7fd99a, #4fa868) !important;
+}
+.bb-bubble-pop-bad {
+  animation: none !important;
+  transform: translate(-50%, -50%) scale(0.4) !important;
+  opacity: 0 !important;
+  transition: transform 0.2s ease-in, opacity 0.2s ease-in;
+  background: radial-gradient(circle, #e88a8a, #d95a5a) !important;
+}
 .kn-word {
   position: absolute;
   top: 0;
@@ -2370,9 +2541,29 @@
   white-space: nowrap;
   z-index: 2;
 }
+/* Bonus-Sprechblase (Herz auffüllen) hebt sich bewusst farblich von normalen Wörtern ab — pink/rot
+   statt orange, damit sofort klar ist: das ist etwas anderes, kein normales Antwort-Wort. */
+.kn-word-bonus {
+  background: linear-gradient(160deg, #f28ab0, #e8547f) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(232,84,127,0.5) !important;
+}
+/* Bonus-Münze: bewusst kleiner als normale Wörter/das Herz — passend zur schnelleren Fallzeit
+   eine echte Herausforderung, kein leichter Fang. */
+.kn-word-coin {
+  background: linear-gradient(160deg, #f7d94c, #e0a82a) !important;
+  color: #4a3410 !important;
+  padding: 4px 8px !important;
+  font-size: 0.68rem !important;
+  box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(224,168,42,0.6) !important;
+}
 @keyframes knFallDown {
-  from { top: 0; }
-  to { top: calc(100% - 40px); }
+  0%   { top: 0; transform: translateX(-50%) translateX(0); }
+  20%  { transform: translateX(-50%) translateX(6px); }
+  40%  { transform: translateX(-50%) translateX(-5px); }
+  60%  { transform: translateX(-50%) translateX(5px); }
+  80%  { transform: translateX(-50%) translateX(-4px); }
+  100% { top: calc(100% - 40px); transform: translateX(-50%) translateX(0); }
 }
 /* Alte, weiterhin für alle Nutzer live laufende Wort-Kanone-Optik — bleibt unverändert erhalten,
    bis "wortkanone_redesign" freigegeben wird (siehe renderKanoneOld). */
@@ -2418,7 +2609,129 @@
 
 /* Wellenform-Anzeige — dekorative, animierte Balken, die beim Abspielen pulsieren (echte
    Audio-Analyse ist über die YouTube-Programmierschnittstelle nicht zugänglich, das hier ist
-   eine überzeugende, rein optische Annäherung). */
+   eine überzeugende, rein optische Annäherung). Direkt bei der Zeitanzeige platziert. */
+.kn-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+  flex-shrink: 0;
+}
+/* Kompakte Schnellliste direkt im Player — "Glas"-Panel-Optik (halbtransparent, leicht
+   verschwommener Hintergrund), nur Titel, zum schnellen Direkt-Wechsel ohne erst zur
+   vollständigen Verwaltungsliste scrollen zu müssen. */
+/* Korrektour: Satz-Zug fährt im Bogen von rechts oben durchs Bild und wieder hinaus. Simuliert
+   über mehrere Zwischen-Keyframes mit prozentualer Position (left/top), statt eines starren
+   offset-path — bleibt dadurch bei jeder Container-Größe zuverlässig proportional. */
+.kt-track {
+  position: relative;
+  height: 130px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #cfe8f5, #eef8fb);
+  margin: 10px 0;
+}
+.kt-train {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  animation-name: ktTrainArc;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-duration: 6.5s;
+}
+@keyframes ktTrainArc {
+  0%   { left: 105%; top: 5%; }
+  30%  { left: 65%; top: 55%; }
+  55%  { left: 30%; top: 70%; }
+  80%  { left: -10%; top: 40%; }
+  100% { left: -60%; top: 5%; }
+}
+.kt-locomotive {
+  font-size: 1.8rem;
+  transform: scaleX(-1); /* zeigt "vorwärts" in Fahrtrichtung (nach links) */
+}
+.kt-wagon {
+  background: linear-gradient(160deg, #f0a94e, #dc7f2a);
+  color: #241505;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  box-shadow: 0 3px 0 rgba(150,80,20,0.4);
+}
+.kt-signal-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.kt-signal {
+  flex: 1;
+  max-width: 160px;
+  padding: 12px 0;
+  border-radius: 10px;
+  border: none;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #fff;
+}
+.kt-signal-green { background: linear-gradient(160deg, #6fc98a, #3e9a6e); }
+.kt-signal-red { background: linear-gradient(160deg, #e88a8a, #d95a5a); }
+.kt-signal:disabled { opacity: 0.5; cursor: default; }
+
+/* Vokabelmeister: Buchstaben-Auswahlraster */
+.vm-letter-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+.vm-letter-btn {
+  padding: 10px 0;
+  border-radius: 8px;
+  border: none;
+  background: var(--plum-700, #4a3a5a);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.vm-letter-btn:active { transform: scale(0.94); }
+
+.glass-quick-list {
+  margin-top: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.5);
+  padding: 4px;
+}
+.glass-quick-list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+}
+.glass-quick-list-item:hover {
+  background: rgba(255,255,255,0.4);
+}
+.glass-quick-list-item.active {
+  background: rgba(242,184,75,0.35);
+  font-weight: 800;
+}
 .waveform-bar {
   width: 2.5px;
   height: 5px;

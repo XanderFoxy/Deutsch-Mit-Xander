@@ -1395,9 +1395,9 @@ const ExerciseData = (function () {
      werden. Genau das Gefühl dafür soll hier trainiert werden.
      --------------------------------------------------------- */
   const WORTPAARE = [
-    ["Ich ___ jetzt einen Kaffee.", "trinke", ["esse", "koche", "backe"], "Kaffee ist eine Flüssigkeit — man trinkt Flüssigkeiten, man isst sie nicht."],
+    ["Ich ___ jetzt einen Kaffee.", "trinke", ["esse", "lese", "backe"], "Kaffee ist eine Flüssigkeit — man trinkt Flüssigkeiten, man isst sie nicht."],
     ["Sie ___ gerade einen Apfel.", "isst", ["trinkt", "kocht", "backt"], "Ein Apfel ist fest — man isst feste Speisen, man trinkt Flüssigkeiten."],
-    ["Wir ___ heute Abend eine Suppe.", "kochen", ["backen", "braten", "trinken"], "Suppe wird in Flüssigkeit gekocht — „backen“ ist für Dinge im Backofen (Kuchen, Brot)."],
+    ["Wir ___ heute Abend eine Suppe.", "kochen", ["backen", "braten", "lesen"], "Suppe wird in Flüssigkeit gekocht — „backen“ ist für Dinge im Backofen (Kuchen, Brot)."],
     ["Meine Oma ___ jeden Sonntag einen Kuchen.", "backt", ["kocht", "brät", "grillt"], "Kuchen kommt in den Backofen — dafür sagt man „backen“, nicht „kochen“."],
     ["Er ___ das Fleisch in der Pfanne.", "brät", ["kocht", "backt", "dünstet"], "In der Pfanne mit Fett zubereiten heißt „braten“, nicht „kochen“ (das wäre in Wasser)."],
     ["Kannst du mir bitte kurz ___?", "zuhören", ["hören", "sehen", "schauen"], "„Hören“ heißt nur, dass Geräusche ankommen — „zuhören“ heißt, sich aktiv und aufmerksam zu konzentrieren."],
@@ -1650,23 +1650,23 @@ const ExerciseData = (function () {
     ["Sie ___ genau, was zu tun ist.", "kennt", "weiß", 1],
     ["Wir ___ nicht, wann er kommt.", "kennen", "wissen", 1],
     ["Weißt du, wie spät es ist?", "kenne", "weiß", 1],
-    ["Ich ___ das schon lange.", "kenne", "weiß", 1],
+    ["Ich ___ nicht mehr, wie ich das erfahren habe.", "kenne", "weiß", 1],
     ["Sie ___ viel über Geschichte.", "kennt", "weiß", 1],
     ["Er ___ nicht, wo sie wohnt.", "kennt", "weiß", 1],
-    ["Wir ___ den Grund nicht.", "kennen", "wissen", 1],
-    ["Sie ___ die Lösung sofort.", "kennt", "weiß", 1],
+    ["Wir ___ nicht, warum das passiert ist.", "kennen", "wissen", 1],
+    ["Sie ___ sofort, wie man das löst.", "kennt", "weiß", 1],
     ["Er ___ alles über Autos.", "kennt", "weiß", 1],
     ["Wir ___ nicht, was passiert ist.", "kennen", "wissen", 1],
     ["Ich ___ den Termin auswendig.", "kenne", "weiß", 1],
     ["Sie ___ nicht weiter.", "kennt", "weiß", 1],
-    ["Er ___ die Wahrheit.", "kennt", "weiß", 1],
+    ["Er ___, dass sie nicht gelogen hat.", "kennt", "weiß", 1],
     ["Wir ___ nicht, wer das war.", "kennen", "wissen", 1],
-    ["Ich ___ die Regel genau.", "kenne", "weiß", 1],
+    ["Ich ___ genau, wie die Regel lautet.", "kenne", "weiß", 1],
     ["Sie ___ viel über Kunst.", "kennt", "weiß", 1],
     ["Er ___ nicht, warum sie fehlt.", "kennt", "weiß", 1],
-    ["Wir ___ das Ergebnis schon.", "kennen", "wissen", 1],
+    ["Wir ___, dass das Ergebnis schon feststeht.", "kennen", "wissen", 1],
     ["Ich ___ nicht, wie das geht.", "kenne", "weiß", 1],
-    ["Sie ___ die Fakten genau.", "kennt", "weiß", 1],
+    ["Sie ___ genau, wie die Fakten liegen.", "kennt", "weiß", 1],
     ["Er ___ nicht, was er sagen soll.", "kennt", "weiß", 1],
     ["Wir ___ viel über Politik.", "kennen", "wissen", 1],
     ["Ich ___ nicht, wie spät es ist.", "kenne", "weiß", 1],
@@ -4483,5 +4483,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT };
 })();

@@ -157,6 +157,16 @@
     }
     if (t.dataset.target === "view-profile") maybeShowFoxIntro();
     if (t.dataset.target === "view-about") renderAboutEditButton();
+    // Missionen zeigen den Freischalt-Fortschritt der Sammelfiguren — der ändert sich potenziell
+    // bei JEDER gespielten Runde, nicht nur einmalig beim Login. Ist "Missionen" gerade der aktive
+    // Unterreiter, wird bei jedem Rückkehr zu "Lernen" neu gerendert, damit frisch verdiente Füchse
+    // sofort als freigeschaltet erscheinen, statt erst nach einem erneuten, expliziten Klick.
+    if (t.dataset.target === "view-learn") {
+      const missionsPill = document.querySelector('#learnSubnav [data-sub="sub-missions"]');
+      if (missionsPill && missionsPill.getAttribute("aria-selected") === "true" && typeof renderMissions === "function") {
+        renderMissions();
+      }
+    }
     // Beim Verlassen des "Wissen"-Hauptbereichs das Video-Vorschaufenster (falls gerade ein Song
     // läuft) sofort in die schwebende Leiste holen — nicht erst beim nächsten Play/Pause-Klick.
     if (t.dataset.target !== "view-knowledge" && typeof relocateMusicVideoSquare === "function") {
@@ -310,27 +320,29 @@
   // Welcher Sammelfigur-Charakter zu welcher Übungskategorie passt — wird als kleine "Willkommen,
   // [Figur]!"-Vorstellung angezeigt, bevor eine Runde in dieser Kategorie beginnt, damit klar ist,
   // "als was" man gerade übt.
+  // WICHTIG: Das sind die "Charakter"-Titel, die auch nach jeder Runde den Titel bestimmen
+  // (siehe Trophäen-Erklärung: "spielst du viel wenn/ob/als-wie, giltst du als Logiker" usw.) —
+  // bewusst NICHT die Fuchs-Sammelfiguren-Namen (die gehören zu den Missionen, ein komplett
+  // eigenes System). Vorher stand hier fälschlich überall ein Fuchs-Name.
   const CATEGORY_PERSONA = {
-    artikel: "Professor Schlaufuchs", plural: "Professor Schlaufuchs", synonyme: "Lesefuchs",
-    "wenn-ob": "Professor Schlaufuchs", "als-wie": "Professor Schlaufuchs", "kennen-wissen": "Professor Schlaufuchs",
-    "das-dass": "Professor Schlaufuchs", redewendungen: "Märchenfuchs", "haeufige-fehler": "Kommissar Fehlerfrei",
-    "ss-eszett": "Kommissar Fehlerfrei", nebensatz: "Brückenfuchs", relativsatz: "Brückenfuchs",
-    zeitformen: "Zeitfuchs", wortschatz: "Naturfotograf", konnektoren: "Brückenfuchs",
-    jedesto: "Brückenfuchs", quiz: "Quizfuchs", lueckentext: "Märchenfuchs",
-    wortbaustelle: "Rätselfuchs", buchstabensalat: "Rätselfuchs", kreuzwortraetsel: "Rätselfuchs",
-    betonungstrainer: "Sprachtalent",
+    artikel: "Grammatik-Profi", plural: "Grammatik-Profi", synonyme: "Sprachkünstler",
+    "wenn-ob": "Logiker", "als-wie": "Logiker", "kennen-wissen": "Logiker",
+    "das-dass": "Grammatik-Profi", redewendungen: "Sprachkünstler", "haeufige-fehler": "Grammatik-Profi",
+    "ss-eszett": "Grammatik-Profi", nebensatz: "Grammatik-Profi", relativsatz: "Grammatik-Profi",
+    zeitformen: "Grammatik-Profi", wortschatz: "Sprachkünstler", konnektoren: "Grammatik-Profi",
+    jedesto: "Grammatik-Profi", quiz: "Wissenschaftler", lueckentext: "Sprachkünstler",
+    wortbaustelle: "Sprachkünstler", buchstabensalat: "Sprachkünstler", kreuzwortraetsel: "Sprachkünstler",
+    betonungstrainer: "Sprachkünstler",
   };
   function personaForCategory(catId) {
-    return CATEGORY_PERSONA[catId] || "Abenteuer-Fuchs";
+    return CATEGORY_PERSONA[catId] || "Abenteurer";
   }
   // Farbcode je Charakter-Typ für die kleine LED-Anzeige an jeder Übungskategorie — zeigt auf
   // einen Blick, welchem Fuchs-Charakter (und damit welcher Missions-Punktzahl) diese Übung
   // zugutekommt. Hilft beim Verstehen von Missionen wie "50 Punkte bei Zeitfuchs-Aufgaben".
   const PERSONA_LED_COLOR = {
-    "Professor Schlaufuchs": "#5b8def", "Lesefuchs": "#4fa88e", "Märchenfuchs": "#a875d8",
-    "Kommissar Fehlerfrei": "#e85f6f", "Brückenfuchs": "#f2b84b", "Zeitfuchs": "#3ec6c6",
-    "Naturfotograf": "#6a9c3f", "Quizfuchs": "#e8d34b", "Rätselfuchs": "#e885c4",
-    "Sprachtalent": "#8d7ae8", "Abenteuer-Fuchs": "#9a9a9a",
+    "Logiker": "#5b8def", "Wissenschaftler": "#3ec6c6", "Sprachkünstler": "#a875d8",
+    "Grammatik-Profi": "#e85f6f", "Abenteurer": "#f2b84b", "Tausendsassa": "#e8d34b",
   };
   function personaLedHtml(catId) {
     const persona = personaForCategory(catId);
@@ -346,13 +358,13 @@
     box.innerHTML = `
       <div class="profile-modal-card" style="text-align:left;">
         <button type="button" class="lightbox-close" id="ledInfoClose">✕</button>
-        <p style="text-align:center; margin:6px 0 12px;">💡 Die LED zeigt, welchem Fuchs-Charakter diese Übung zugutekommt.</p>
+        <p style="text-align:center; margin:6px 0 12px;">💡 Die LED zeigt, welchem Charakter-Typ diese Übung zugutekommt — bestimmt deinen Titel nach einer Runde (z. B. „Grammatik-Profi – Superheld").</p>
         <p style="text-align:center; font-weight:700; margin-bottom:10px;"><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${PERSONA_LED_COLOR[persona] || "#9a9a9a"}; vertical-align:middle; margin-right:6px;"></span>Diese Übung: ${persona}</p>
         <p class="eyebrow">Alle Farben auf einen Blick:</p>
         <div class="breakdown-list">
           ${Object.entries(PERSONA_LED_COLOR).map(([name, color]) => `<div class="breakdown-row"><span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${color}; vertical-align:middle; margin-right:6px;"></span>${name}</span></div>`).join("")}
         </div>
-        <p class="empty-note" style="margin-top:10px;">Hilfreich für Missionen: manche Füchse verlangen z. B. "Punkte speziell bei Zeitfuchs-Aufgaben" — die LED zeigt dir sofort, welche Übungen dafür zählen.</p>
+        <p class="empty-note" style="margin-top:10px;">Die Fuchs-Sammelfiguren sind ein eigenes System für Missionen — nutzen teils Punkte aus bestimmten Kategorien, aber unabhängig von diesem Charakter-Titel hier.</p>
       </div>`;
     document.body.appendChild(box);
     document.getElementById("ledInfoClose").addEventListener("click", () => box.remove());
@@ -570,6 +582,48 @@
     }
     return true;
   }
+  // Wie WEIT eine (noch gesperrte) Freischalt-Bedingung schon erfüllt ist, als Bruchteil von 0
+  // bis 1 — für die "Sticker füllt sich langsam" -Anzeige. Bei numerischen Bedingungen (Punkte,
+  // Anzahl gespielter Runden usw.) echter Fortschritt; bei reinen Ja/Nein-Bedingungen (z. B. ein
+  // bestimmtes Profilfeld ausgefüllt) nur 0 oder 1, da es dort keine Zwischenstufe gibt. Bei
+  // Kombinationen der DURCHSCHNITT aller Teile, damit auch teilweise erledigte Kombis sichtbar
+  // vorankommen.
+  function unlockProgressFraction(unlock, profile) {
+    if (!unlock || !profile) return isUnlocked(unlock, profile) ? 1 : 0;
+    const ratio = (current, needed) => needed > 0 ? Math.max(0, Math.min(1, current / needed)) : 1;
+    if (unlock.type === "points") return ratio(profile.points, unlock.value);
+    if (unlock.type === "character_points") {
+      const sum = (profile.history || []).filter((h) => h.character === unlock.character)
+        .reduce((s, h) => s + Math.round((h.points || 0) + (h.bonus || 0)), 0);
+      return ratio(sum, unlock.value);
+    }
+    if (unlock.type === "categories_tried") {
+      const distinct = new Set();
+      (profile.history || []).forEach((h) => (h.categories || []).forEach((c) => distinct.add(c)));
+      return ratio(distinct.size, unlock.value);
+    }
+    if (unlock.type === "login_streak") {
+      const streak = (profile.extraProfileData && profile.extraProfileData.calendarStreak) || 0;
+      return ratio(streak, unlock.value);
+    }
+    if (unlock.type === "trophy_count") return ratio((profile.trophies || []).length, unlock.value);
+    if (unlock.type === "games_played") return ratio((profile.history || []).length, unlock.value);
+    if (unlock.type === "songs_added") return ratio((profile.extraProfileData && profile.extraProfileData.songsAddedCount) || 0, unlock.value);
+    if (unlock.type === "guestbook_entry") return ratio((profile.extraProfileData && profile.extraProfileData.guestbookEntriesCount) || 0, unlock.value);
+    if (unlock.type === "category_points") {
+      const cats = Array.isArray(unlock.categories) ? unlock.categories : [unlock.categories];
+      const sum = (profile.history || []).filter((h) => (h.categories || []).some((c) => cats.includes(c)))
+        .reduce((s, h) => s + Math.round((h.points || 0) + (h.bonus || 0)), 0);
+      return ratio(sum, unlock.value);
+    }
+    if (unlock.type === "combo") {
+      const parts = unlock.parts || [];
+      if (!parts.length) return isUnlocked(unlock, profile) ? 1 : 0;
+      return parts.reduce((sum, part) => sum + unlockProgressFraction(part, profile), 0) / parts.length;
+    }
+    // Reine Ja/Nein-Bedingungen (profile_field, trophy, visited_section) — kein Zwischenstand.
+    return isUnlocked(unlock, profile) ? 1 : 0;
+  }
   // Kurzer, klarer Erklärungstext für die jeweilige Freischaltbedingung — direkt auf der Kachel
   // sichtbar, nicht erst nach dem Antippen. Zweiter, ausführlicherer Text fürs Detail-Popup.
   function unlockShortText(unlock) {
@@ -605,6 +659,9 @@
   const KNOWN_FEATURE_FLAGS = [
     { key: "demo_test_schalter", label: "🧪 Test-Schalter (Beispiel)", desc: "Dient nur zum Ausprobieren des Freigabe-Systems selbst — hat keine echte Funktion." },
     { key: "wortkanone_redesign", label: "🎯 Wort-Kanone (Neugestaltung)", desc: "Sequentielles Fallen, echte SVG-Kanone mit Zielrichtung, Explosions-Effekte, Rot/Grün-Landefeedback. Bis zur Freigabe sehen andere eine 'Wird gerade verbessert'-Meldung statt des Spiels." },
+    { key: "wortblasen_neu", label: "🫧 Wortblasen (neues Spiel)", desc: "Mehrere Wort-Sprechblasen erscheinen gleichzeitig und zerplatzen — die richtige muss rechtzeitig getroffen werden. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
+    { key: "vokabelmeister_neu", label: "🔤 Vokabelmeister (neues Spiel)", desc: "Buchstabe wählen, dann 60 Sekunden Zeit für möglichst viele passende Wörter. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
+    { key: "korrektour_neu", label: "🚂 Korrektour (neues Spiel)", desc: "Satz-Zug fährt im Bogen durchs Bild — per Ampel-Signal entscheiden, ob der Satz richtig ist. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
   ];
   // Kleiner Freigabe-Schalter DIREKT AM ORT des jeweiligen Features (statt nur zentral in den
   // Einstellungen) — nur für Betreiber/Admins sichtbar. So kann man ein Feature genau dort
@@ -641,17 +698,33 @@
     const on = Backend.getRawFeatureFlag(flagKey);
     return `<label class="empty-note" style="display:flex; align-items:center; gap:6px; margin:8px 0; padding:8px; border:1px dashed var(--teal-400,#5ba8a0); border-radius:8px; cursor:pointer;">
       <input type="checkbox" class="inline-feature-flag-toggle" data-flag-key="${flagKey}" ${on ? "checked" : ""} />
-      <span>🚦 ${on ? "Für alle freigegeben" : "Nur für dich sichtbar"} — hier direkt umschalten</span>
+      <span>🚦 <strong>Update-Freigabe:</strong> ${on ? "Für alle Nutzer:innen live" : "Nur für dich als Test sichtbar"} — hier umschalten, um dieses Update in die Welt zu bringen (oder wieder zurückzuziehen)</span>
     </label>`;
   }
   function wireInlineFeatureFlagToggles(root, onToggled) {
     root.querySelectorAll(".inline-feature-flag-toggle").forEach((toggle) => {
       toggle.addEventListener("change", async () => {
         await Backend.setFeatureFlag(toggle.dataset.flagKey, toggle.checked);
-        showToast(toggle.checked ? "🚦 Feature für alle freigegeben!" : "🚦 Feature wieder zurückgenommen — nur noch für dich sichtbar.");
+        showToast(toggle.checked ? "🚦 Update ist jetzt für alle live!" : "🚦 Update zurückgezogen — wieder nur für dich sichtbar, alle anderen sehen die alte Version.");
         if (onToggled) onToggled();
       });
     });
+  }
+  // Für komplett NEUE Spiele (kein "alter Zustand", zu dem man zurückfallen könnte): bis zur
+  // Freigabe sehen normale Nutzer:innen nur eine "Kommt bald"-Meldung, während Betreiber:innen
+  // das Spiel bereits normal spielen UND per Knopf freigeben können. Gibt true zurück, wenn der
+  // Aufrufer normal weiterrendern soll (Feature an, ODER man ist selbst Betreiber:in).
+  function renderComingSoonGate(area, flagKey, gameName, gameIcon) {
+    const isOn = Backend.isFeatureOn(flagKey);
+    const canSeeAnyway = Backend.canModerate && Backend.canModerate();
+    if (isOn || canSeeAnyway) return true;
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p style="font-size:2.5rem;">${gameIcon}</p>
+        <h2 style="margin:8px 0;">${gameName}</h2>
+        <p class="empty-note">Dieses Spiel wird gerade fertig vorbereitet — kommt bald!</p>
+      </div>`;
+    return false;
   }
   function isThemeUnlocked(t, profile) { return isUnlocked(t.unlock, profile) || (profile?.giftedThemes || []).includes(t.id); }
 
@@ -1271,6 +1344,14 @@
       // Leicht verzögert zeigen, damit sich das Fuchs-Popup nicht mit einem eventuellen
       // Meilenstein-Popup (checkForSpecialMoment, direkt danach) optisch überlappt.
       newlyUnlocked.forEach((fig, i) => setTimeout(() => showFoxUnlockCelebration(fig), 400 + i * 600));
+      // Zusätzlich auch als Postfach-Nachricht — bei mehreren gleichzeitig freigeschalteten
+      // Füchsen (z. B. drei auf einmal in einer Runde) als EINE zusammengefasste Nachricht, nicht
+      // drei einzelne.
+      if (newlyUnlocked.length === 1) {
+        Backend.sendSystemMessage(Backend.currentUser().id, `🦊 Neuer Fuchs freigeschaltet: „${newlyUnlocked[0].name}"! ${newlyUnlocked[0].desc}`);
+      } else if (newlyUnlocked.length > 1) {
+        Backend.sendSystemMessage(Backend.currentUser().id, `🦊 Gleich ${newlyUnlocked.length} neue Füchse auf einmal freigeschaltet: ${newlyUnlocked.map((f) => `„${f.name}"`).join(", ")}!`);
+      }
     }
     await checkForSpecialMoment(Backend.currentProfile());
     await checkDailyRankingReward();
@@ -1914,9 +1995,13 @@
         document.querySelector('[data-target="view-knowledge"]')?.click();
         document.getElementById("calCloseBtn")?.click();
         document.getElementById("calendarModalPage")?.classList.remove("torn");
+        // Deutlich längere Verzögerung als vorher (war 150ms) — der Hauptreiter-Wechsel löst
+        // beim allerersten Besuch selbst einen automatischen Klick auf seinen STANDARD-
+        // Unterreiter aus (siehe tabsFreshlyRendered), der diesen gezielten Klick auf "Kompass"
+        // sonst überschrieb, sodass man im falschen Unterreiter landete.
         setTimeout(() => {
           document.querySelector('[data-sub="sub-kompass"]')?.click();
-        }, 150);
+        }, 400);
       });
     }
     // Einfacher Klick auf die Rückseite (aber nicht auf Buttons/Links darauf) klappt das Blatt
@@ -1967,7 +2052,15 @@
   const calCloseBtn = document.getElementById("calCloseBtn");
   if (calCloseBtn) calCloseBtn.addEventListener("click", () => { document.getElementById("calendarModalOverlay").style.display = "none"; });
   const calOverlay = document.getElementById("calendarModalOverlay");
-  if (calOverlay) calOverlay.addEventListener("click", (e) => { if (e.target === calOverlay) calOverlay.style.display = "none"; });
+  if (calOverlay) calOverlay.addEventListener("click", (e) => {
+    // Statt eines exakten "e.target === calOverlay"-Abgleichs (der bei der 3D-gedrehten Karte
+    // zerbrechlich sein kann, da verschachtelte, transformierte Elemente den tatsächlichen
+    // Klick-Treffer verschieben können) wird jetzt geprüft, ob der Klick TATSÄCHLICH außerhalb
+    // der Karte selbst liegt — das schließt zuverlässig, egal welches konkrete Element getroffen
+    // wurde, statt nur bei einem exakten Treffer auf den Hintergrund selbst.
+    const page = document.getElementById("calendarModalPage");
+    if (page && !page.contains(e.target)) calOverlay.style.display = "none";
+  });
   const calFrontFace = document.getElementById("calFrontFace");
   if (calFrontFace) calFrontFace.addEventListener("click", () => {
     document.getElementById("calendarModalPage").classList.add("torn");
@@ -2051,38 +2144,49 @@
 
   /* ============ Lauftext-Ticker ============ */
   let tickerVisible = true;
+  let tickerUpdateInFlight = false;
   async function updateTicker() {
     const track = document.getElementById("tickerTrack");
     if (!track) return;
-    const items = await Backend.getActivity();
-    const text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
-    // Animation zuerst abschalten, damit scrollWidth die NEUE Textlänge korrekt misst
-    // (nicht noch die alte, gerade laufende Animation beeinflusst die Messung).
-    track.style.animation = "none";
-    if (items.length) track.textContent = text;
-    void track.offsetHeight; // Reflow erzwingen, damit die neue Breite feststeht
-    // Feste Geschwindigkeit statt fester Dauer: läuft der Text nach mehreren Aktionen länger,
-    // wurde die Animation vorher trotzdem in derselben festen Zeit durchgezogen — dadurch wirkte
-    // sie bei viel Text unnatürlich schnell. Jetzt wird die Dauer an die tatsächliche Textbreite
-    // angepasst, damit das Lauftempo (Pixel pro Sekunde) immer gleich bleibt — auch beim allerersten
-    // Anzeigen des Platzhaltertexts, bevor echte Aktivität vorliegt.
-    const textWidth = track.scrollWidth;
-    const pixelsPerSecond = 55; // gleichbleibendes, gut lesbares Lauftempo
-    const duration = Math.max(12, textWidth / pixelsPerSecond);
-    track.style.animation = ""; // Safari/iOS startet die Animation nach Textänderung sonst nicht neu
-    // WICHTIG: animationDuration gilt für ALLE aktiven Animationen zusammen (Blinken UND Scrollen
-    // laufen gleichzeitig, ABER NUR wenn Blinken eingeschaltet ist) — ist Blinken AUS, läuft nur
-    // EINE Animation (tickerScroll), dann darf hier auch nur EIN Wert stehen. Wird trotzdem ein
-    // zweiter, für das Blinken gedachter Wert mitgeschickt, wendet der Browser diesen fälschlich
-    // auf die einzige aktive Animation an — der Text raste dadurch in Bruchteilen einer Sekunde
-    // über den Bildschirm, statt gemächlich zu scrollen.
-    const blinkOn = typeof isTickerBlinkOn === "function" && isTickerBlinkOn();
-    if (blinkOn) {
-      const blinkSpeed = typeof getTickerBlinkSpeed === "function" ? getTickerBlinkSpeed() : "0.7";
-      track.style.animationDuration = `${blinkSpeed}s, ${duration}s`;
-    } else {
-      track.style.animationDuration = `${duration}s`;
-    } // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
+    // Absicherung: läuft gerade schon eine Aktualisierung (z. B. weil auf einer stark besuchten
+    // Seite mehrere Auslöser fast gleichzeitig feuern), wird ein zweiter, sich überlappender
+    // Durchlauf übersprungen — zwei gleichzeitige Durchläufe könnten sich sonst gegenseitig die
+    // Animation zurücksetzen, was sich als plötzliches "Rasen" äußern könnte.
+    if (tickerUpdateInFlight) return;
+    tickerUpdateInFlight = true;
+    try {
+      const items = await Backend.getActivity();
+      const text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
+      // Animation zuerst abschalten, damit scrollWidth die NEUE Textlänge korrekt misst
+      // (nicht noch die alte, gerade laufende Animation beeinflusst die Messung).
+      track.style.animation = "none";
+      if (items.length) track.textContent = text;
+      void track.offsetHeight; // Reflow erzwingen, damit die neue Breite feststeht
+      // Feste Geschwindigkeit statt fester Dauer: läuft der Text nach mehreren Aktionen länger,
+      // wurde die Animation vorher trotzdem in derselben festen Zeit durchgezogen — dadurch wirkte
+      // sie bei viel Text unnatürlich schnell. Jetzt wird die Dauer an die tatsächliche Textbreite
+      // angepasst, damit das Lauftempo (Pixel pro Sekunde) immer gleich bleibt — auch beim allerersten
+      // Anzeigen des Platzhaltertexts, bevor echte Aktivität vorliegt.
+      const textWidth = track.scrollWidth;
+      const pixelsPerSecond = 55; // gleichbleibendes, gut lesbares Lauftempo
+      const duration = Math.max(12, textWidth / pixelsPerSecond);
+      track.style.animation = ""; // Safari/iOS startet die Animation nach Textänderung sonst nicht neu
+      // WICHTIG: animationDuration gilt für ALLE aktiven Animationen zusammen (Blinken UND Scrollen
+      // laufen gleichzeitig, ABER NUR wenn Blinken eingeschaltet ist) — ist Blinken AUS, läuft nur
+      // EINE Animation (tickerScroll), dann darf hier auch nur EIN Wert stehen. Wird trotzdem ein
+      // zweiter, für das Blinken gedachter Wert mitgeschickt, wendet der Browser diesen fälschlich
+      // auf die einzige aktive Animation an — der Text raste dadurch in Bruchteilen einer Sekunde
+      // über den Bildschirm, statt gemächlich zu scrollen.
+      const blinkOn = typeof isTickerBlinkOn === "function" && isTickerBlinkOn();
+      if (blinkOn) {
+        const blinkSpeed = typeof getTickerBlinkSpeed === "function" ? getTickerBlinkSpeed() : "0.7";
+        track.style.animationDuration = `${blinkSpeed}s, ${duration}s`;
+      } else {
+        track.style.animationDuration = `${duration}s`;
+      } // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
+    } finally {
+      tickerUpdateInFlight = false;
+    }
   }
   const tickerToggle = document.getElementById("tickerToggle");
   if (tickerToggle) {
@@ -2111,6 +2215,15 @@
     Backend.getPublicProfile(refId).then((p) => {
       if (p && p.name && p.name !== refNameFromLink) showBanner(p.name);
     }).catch(() => {});
+    // WICHTIG: den Empfehlungs-Parameter aus der URL entfernen, sobald die Begrüßung einmal
+    // gezeigt wurde — sonst bleibt "?ref=..." dauerhaft in der Adresse stehen, und JEDES weitere
+    // Neuladen der Seite (auch Tage später, auch nach dem Einloggen) würde die Begrüßung erneut
+    // auslösen, statt nur einmalig beim ersten Besuch über den Link zu erscheinen.
+    params.delete("ref");
+    params.delete("refname");
+    const newSearch = params.toString();
+    const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "") + window.location.hash;
+    history.replaceState(null, "", newUrl);
   })();
 
   /* ============ Kurze Pop-up-Benachrichtigung bei neuen Anfragen ============ */
@@ -2885,12 +2998,20 @@
       <button type="button" class="challenge-friend-pill ${!f.online ? "offline" : ""} ${selectedChallengeFriendIds.has(f.id) ? "selected" : ""}" data-challenge-friend="${f.id}" ${!f.online ? 'title="Spielt die Runde, sobald sie sich wieder einloggen"' : ""}>
         ${f.online ? '<span class="online-dot"></span>' : ""}${bestFriendIds.includes(f.id) ? "⭐ " : ""}${f.name}${!f.online ? ' <span class="empty-note">(offline)</span>' : ""}
       </button>`;
+    // Bei vielen Freunden (potenziell hunderte) wäre eine komplett ausgeklappte A-Z-Liste völlig
+    // unübersichtlich — deshalb standardmäßig nur die ersten paar, mit einem "mehr anzeigen"-
+    // Knopf für den Rest, statt einer endlosen Bubble-Wand.
+    const OTHER_FRIENDS_PREVIEW = 8;
+    const otherFriendsPreview = otherFriends.slice(0, OTHER_FRIENDS_PREVIEW);
+    const otherFriendsRest = otherFriends.slice(OTHER_FRIENDS_PREVIEW);
     const challengeBar = friends.length ? `
       <div class="setup-bar" style="margin-top:10px; flex-direction:column; align-items:stretch;">
         <label style="font-size:0.82rem; font-weight:700; color:var(--cream-200);">🎮 Optional: Freunde herausfordern (auch mehrere gleichzeitig)</label>
         ${onlineFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">🟢 Online</p><div class="challenge-friend-list">${onlineFriends.map(challengePillHtml).join("")}</div>` : ""}
         ${bestFriendsOffline.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">⭐ Beste Freunde</p><div class="challenge-friend-list">${bestFriendsOffline.map(challengePillHtml).join("")}</div>` : ""}
-        ${otherFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">A–Z</p><div class="challenge-friend-list">${otherFriends.map(challengePillHtml).join("")}</div>` : ""}
+        ${otherFriends.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">A–Z</p><div class="challenge-friend-list">${otherFriendsPreview.map(challengePillHtml).join("")}</div>
+          ${otherFriendsRest.length ? `<button type="button" class="emoji-toggle-link" id="challengeOthersMoreBtn" style="font-size:0.72rem; margin-top:4px;">+${otherFriendsRest.length} weitere anzeigen</button>
+            <div class="challenge-friend-list" id="challengeOthersMoreList" style="display:none; margin-top:4px;">${otherFriendsRest.map(challengePillHtml).join("")}</div>` : ""}` : ""}
       </div>` : "";
 
     setupEl.innerHTML = `
@@ -2968,6 +3089,22 @@
         else selectedChallengeFriendIds.add(id);
         renderSetup();
       });
+    });
+    document.getElementById("challengeOthersMoreBtn")?.addEventListener("click", () => {
+      const list = document.getElementById("challengeOthersMoreList");
+      const btn = document.getElementById("challengeOthersMoreBtn");
+      const opening = list.style.display === "none";
+      list.style.display = opening ? "flex" : "none";
+      if (opening) {
+        list.querySelectorAll("[data-challenge-friend]:not([disabled])").forEach((b) => {
+          b.addEventListener("click", () => {
+            const id = b.dataset.challengeFriend;
+            if (selectedChallengeFriendIds.has(id)) selectedChallengeFriendIds.delete(id);
+            else selectedChallengeFriendIds.add(id);
+            renderSetup();
+          });
+        });
+      }
     });
     const startBtn = document.getElementById("startBtn");
     if (startBtn) startBtn.addEventListener("click", async () => {
@@ -3051,6 +3188,11 @@
     const promptHtml = isBlank
       ? q.prompt.replace("___", '<span class="blank-slot" id="blankSlot">___</span>')
       : q.prompt;
+    // Steht die Lücke ganz am Satzanfang, muss das eingesetzte Wort dort großgeschrieben werden
+    // (normale deutsche Rechtschreibung) — unabhängig davon, wie es in der Datenbank gespeichert
+    // ist. Rein für die ANZEIGE, die interne Prüfung bleibt unverändert über den Index.
+    const promptStartsWithBlank = q.prompt.trim().startsWith("___");
+    const displayOption = (opt) => promptStartsWithBlank && opt ? opt.charAt(0).toUpperCase() + opt.slice(1) : opt;
 
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${((p.index + 1) / p.total) * 100}%"></div></div>
@@ -3059,7 +3201,7 @@
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
         <div class="question-prompt">${promptHtml}</div>
         <div class="option-list">
-          ${q.options.map((opt, i) => `<button type="button" class="option-btn" data-idx="${i}"><span>${opt}</span></button>`).join("")}
+          ${q.options.map((opt, i) => `<button type="button" class="option-btn" data-idx="${i}"><span>${displayOption(opt)}</span></button>`).join("")}
         </div>
         <div class="question-explain" id="explainBox">${q.explain}</div>
         ${isMulti ? `<div class="quiz-actions"><button type="button" class="btn btn-coffee" id="checkBtn">Fertig ✓</button></div>` : ""}
@@ -3939,10 +4081,17 @@
         }).join("")}
       </div>
       <p class="memory-status">Züge: ${memoryState.moves} · Gefunden: ${memoryState.matched.size} / ${memoryState.cards.length / 2}</p>
-      ${memoryState.finished ? '<div class="demo-banner">🦊 Runde geschafft! Punkte wurden deinem Profil gutgeschrieben.</div>' : ""}
+      ${memoryState.finished ? `<div class="question-card" style="text-align:center; margin-top:10px;">
+        <p style="font-size:2rem; margin:4px 0;">🎉</p>
+        <h3 style="margin:4px 0;">Runde geschafft!</h3>
+        <p class="empty-note">Alle ${memoryState.cards.length / 2} Paare in <strong>${memoryState.moves}</strong> Zügen gefunden — Zeit: <strong>${memoryState.finishSeconds}s</strong>.</p>
+        <p style="font-weight:700; margin-top:6px;">🧠 ${memoryState.finishTier}</p>
+        <button type="button" class="btn btn-coffee" id="memoryPlayAgainBtn" style="margin-top:10px;">🔄 Neue Runde</button>
+      </div>` : ""}
       <div class="quiz-actions" style="justify-content:flex-start;"><button type="button" class="btn btn-ghost" id="memoryRestart">🔄 Neu mischen</button></div>
     `;
     document.getElementById("memoryRestart").addEventListener("click", () => { activeMemoryChallengeId = null; activeMemoryOpponentName = ""; newMemoryGame(); });
+    document.getElementById("memoryPlayAgainBtn")?.addEventListener("click", () => { activeMemoryChallengeId = null; activeMemoryOpponentName = ""; newMemoryGame(); });
     memoryArea.querySelectorAll(".memory-card").forEach((btn) => {
       btn.addEventListener("click", () => handleMemoryFlip(btn.dataset.id));
     });
@@ -4036,6 +4185,10 @@
           });
           const memTier = score >= 90 ? "Superhirn" : score >= 70 ? "Scharfsinnig" : score >= 50 ? "Aufmerksam" : "Übungssache";
           Backend.addTrophy(`Gehirnjogger – ${memTier}`);
+          // Für die Endauswertung merken — Zeit und Züge sollen sichtbar sein, nicht nur intern
+          // in die Punkte einfließen.
+          memoryState.finishSeconds = Math.round(seconds);
+          memoryState.finishTier = memTier;
           if (activeMemoryChallengeId) {
             Backend.submitChallengeResult(activeMemoryChallengeId, { percent: score, moves: memoryState.moves, seconds: Math.round(seconds) });
             activeMemoryChallengeId = null; activeMemoryOpponentName = "";
@@ -4079,6 +4232,10 @@
   let wbState = null;
   /* ===== Satzpuzzle: Wortstellung im Satz — Wörter in richtiger Reihenfolge antippen ===== */
   let spSession = null; // { round, total, correct }
+  // Verhindert erneute Punktevergabe, nur weil man zu einem anderen Spiel wechselt und
+  // zurückkommt, während die Ergebnis-Anzeige schon steht — dasselbe Muster wie bei
+  // Wort-Kanone/Wackelturm.
+  let spResultsFinalized = false;
   let spCurrentEntry = null; // [chunks, explanation]
   let spShuffled = []; // gemischte Reihenfolge der Bausteine
   let spUsedIdx = []; // welche Indizes (aus spShuffled) schon in der gebauten Reihenfolge stecken
@@ -4086,6 +4243,7 @@
   function newSatzpuzzleSession() {
     spSession = { round: 0, total: 10, correct: 0 };
     spUsedSentences = [];
+    spResultsFinalized = false;
   }
   function newSatzpuzzleRound() {
     let pool = ExerciseData.SATZPUZZLE.filter((e) => !spUsedSentences.includes(e[0].join(" ")));
@@ -4108,12 +4266,15 @@
     document.getElementById("spPlayAgainBtn").addEventListener("click", () => {
       newSatzpuzzleSession(); newSatzpuzzleRound(); renderSatzpuzzle();
     });
-    if (Backend.currentUser()) {
-      saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent: Math.round((spSession.correct / spSession.total) * 100), character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+    if (!spResultsFinalized) {
+      spResultsFinalized = true;
+      if (Backend.currentUser()) {
+        saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent: Math.round((spSession.correct / spSession.total) * 100), character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+      }
     }
   }
   // Wiederverwendbare Variante für Spiele außerhalb der Haupt-Übungen (Satzpuzzle, Wackelturm,
-  // Wortarten-Sortierer) — per Ereignis-Delegation, da diese Bereiche sich häufig neu zeichnen und
+  // Wort-Typ) — per Ereignis-Delegation, da diese Bereiche sich häufig neu zeichnen und
   // ein einmaliges Verdrahten sonst nach jedem Rundenwechsel verloren ginge.
   function miniBugReportBtnHtml(context) {
     return `<button type="button" class="bug-report-btn" data-mini-bug-context="${context}" title="Fehler melden">🪲</button>`;
@@ -4149,9 +4310,9 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Satzpuzzle: " + spCurrentEntry[0].join(" "))}
         <p class="eyebrow">🧩 SATZPUZZLE · RUNDE ${spSession.round + 1} / ${spSession.total} <span class="subnav-info-icon" data-info="Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Genau das übst du hier.">ⓘ</span></p>
-        <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen.</p>
+        <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen. Ein gebautes Wort nochmal antippen macht es (und alles Spätere) rückgängig.</p>
         <div class="sp-built-row" style="min-height:44px; display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); margin-bottom:14px;">
-          ${built.length ? built.map((w) => `<span class="trophy-chip">${w}</span>`).join("") : '<span class="empty-note">…</span>'}
+          ${built.length ? built.map((w, pos) => `<button type="button" class="trophy-chip sp-built-word" data-built-pos="${pos}" title="Antippen zum Rückgängigmachen">${w}</button>`).join("") : '<span class="empty-note">…</span>'}
         </div>
         <div class="sp-choices-row" style="display:flex; flex-wrap:wrap; gap:8px;">
           ${spShuffled.map((chunk, i) => `<button type="button" class="btn btn-ghost sp-choice-btn" data-idx="${i}" ${spUsedIdx.includes(i) ? "disabled style=\"opacity:0.25;\"" : ""}>${chunk.word}</button>`).join("")}
@@ -4169,10 +4330,29 @@
         if (spUsedIdx.length === spShuffled.length) checkSatzpuzzle();
       });
     });
+    // Rückgängig: ein bereits gebautes Wort antippen entfernt dieses UND alle danach gebauten
+    // Wörter — man kann also gezielt zu einer früheren Stelle zurück, falls man sich vertippt hat,
+    // statt komplett von vorn anfangen zu müssen.
+    area.querySelectorAll(".sp-built-word").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const pos = Number(btn.dataset.builtPos);
+        spUsedIdx = spUsedIdx.slice(0, pos);
+        renderSatzpuzzle();
+      });
+    });
   }
   function checkSatzpuzzle() {
     const fb = document.getElementById("spFeedback");
-    const correctOrder = spUsedIdx.every((chosenIdx, pos) => spShuffled[chosenIdx].correctIdx === pos);
+    const chosenOrder = spUsedIdx.map((chosenIdx) => spShuffled[chosenIdx].correctIdx);
+    // Neben der primären, vorgegebenen Reihenfolge können optional weitere, ebenso grammatisch
+    // korrekte Anordnungen hinterlegt sein (drittes Array-Element, Liste von Index-Reihenfolgen) —
+    // manche deutschen Sätze lassen sich auf mehr als eine richtige Art bauen (z. B. Haupt- und
+    // Nebensatz vertauscht), und wer eine davon korrekt konstruiert, soll dafür nicht bestraft
+    // werden, nur weil es nicht GENAU die eine im Datensatz hinterlegte Version ist.
+    const primaryOrder = spCurrentEntry[0].map((_, i) => i);
+    const alternativeOrders = spCurrentEntry[2] || [];
+    const allValidOrders = [primaryOrder, ...alternativeOrders];
+    const correctOrder = allValidOrders.some((order) => order.every((idx, pos) => idx === chosenOrder[pos]));
     spSession.round += 1;
     if (correctOrder) {
       spSession.correct += 1;
@@ -4197,6 +4377,14 @@
   let wtBlocksRemoved = 0;
   let wtMistakes = 0;
   let wtCurrentQuestion = null;
+  // Verhindert erneutes Feiern/Punktevergeben, nur weil man zu einem anderen Spiel wechselt und
+  // zurückkommt, während der Turm schon geschafft ist — und sorgt dafür, dass danach automatisch
+  // wieder ein bereiter, leerer Turm gezeigt wird, statt die letzte Frage/Feier zu wiederholen.
+  let wtGameOverFinalized = false;
+  let wtReadyForNewRound = false;
+  // Startbildschirm mit Spielbeschreibung erscheint nur beim ALLERERSTEN Betreten dieser Sitzung
+  // — danach direkt weiterspielen, ohne die Erklärung jedes Mal erneut zu zeigen.
+  let wtIntroShown = false;
   let wtUsedPrompts = []; // welche Fragen (Text) in DIESER Sitzung schon dran waren
   const WT_MAX_MISTAKES = 3;
   const WT_TOTAL_BLOCKS = 18;
@@ -4222,11 +4410,41 @@
     wtBlocksRemoved = 0;
     wtMistakes = 0;
     wtUsedPrompts = [];
+    wtGameOverFinalized = false;
+    wtReadyForNewRound = false;
     wtCurrentQuestion = pickRandomWackelturmQuestion();
   }
   function renderWackelturm() {
     const area = document.getElementById("wackelturmArea");
     if (!area) return;
+    // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
+    // statt sofort mitten im Spiel zu landen, ohne zu wissen, worum es geht.
+    if (!wtIntroShown) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">🗼</p>
+          <h2 style="margin:8px 0;">Wackelturm</h2>
+          <p class="empty-note">Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast. Schaffst du alle Blöcke, ohne dass er umfällt?</p>
+          <button type="button" class="btn btn-coffee" id="wtStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      document.getElementById("wtStartIntroBtn").addEventListener("click", () => { wtIntroShown = true; renderWackelturm(); });
+      return;
+    }
+    // Nach einer geschafften Runde zeigt sich (nach kurzer Zeit automatisch) ein bereiter,
+    // leerer Turm statt der letzten Frage — genau wie beim allerersten Einstieg, aber OHNE dass
+    // dabei schon eine neue Runde/ein neues Spiel gezählt wird. Erst der aktive Klick auf "Neuer
+    // Turm" startet wirklich etwas Neues.
+    if (wtReadyForNewRound) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">🗼</p>
+          <h2 style="margin:8px 0;">Bereit für einen neuen Turm?</h2>
+          <p class="empty-note">Der letzte Turm ist geschafft — starte jederzeit eine neue Runde.</p>
+          <button type="button" class="btn btn-coffee" id="wtStartBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
+        </div>`;
+      document.getElementById("wtStartBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
+      return;
+    }
     if (!wtCurrentQuestion) newWackelturmGame();
     const tiltDeg = wtMistakes * 5;
     const remainingBlocks = Math.max(1, WT_TOTAL_BLOCKS - wtBlocksRemoved);
@@ -4290,9 +4508,18 @@
         <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
       </div>`;
     document.getElementById("wtRetryBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
-    if (Backend.currentUser()) {
-      saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved + 5, bonus: 5, percent: 100, character: "Turmbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+    // Nur beim ERSTEN Anzeigen dieser geschafften Runde Punkte vergeben — nicht erneut, nur weil
+    // man zu einem anderen Spiel wechselt und zurückkommt (vorher kam dabei die letzte Frage UND
+    // die Feier nochmal, inklusive doppelter Punktevergabe).
+    if (!wtGameOverFinalized) {
+      wtGameOverFinalized = true;
+      if (Backend.currentUser()) {
+        saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved + 5, bonus: 5, percent: 100, character: "Turmbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+      }
     }
+    // Nach kurzer Zeit automatisch zum bereiten, leeren Turm wechseln — wie gewünscht, damit man
+    // beim Zurückkommen nicht wieder die alte Feier sieht, sondern einen frischen Ausgangspunkt.
+    setTimeout(() => { wtReadyForNewRound = true; if (document.getElementById("wackelturmArea")) renderWackelturm(); }, 3200);
   }
   function renderWackelturmCollapse() {
     Core.sound.fail();
@@ -4305,8 +4532,14 @@
         <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
       </div>`;
     document.getElementById("wtRetryBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
-    if (Backend.currentUser() && wtBlocksRemoved > 0) {
-      saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved, bonus: 0, percent: 100, character: "Turmbauer:in", badges: [], playedAt: new Date().toISOString() });
+    // Dieselbe Einmal-Absicherung wie bei renderWackelturmVictory() — vorher fehlte sie hier, was
+    // beim Zurückkommen von einem anderen Spiel zu erneuter (doppelter) Punktevergabe UND
+    // fälschlich erneut gemeldeten "neu freigeschalteten" Füchsen führte, obwohl man sie schon hatte.
+    if (!wtGameOverFinalized) {
+      wtGameOverFinalized = true;
+      if (Backend.currentUser() && wtBlocksRemoved > 0) {
+        saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved, bonus: 0, percent: 100, character: "Turmbauer:in", badges: [], playedAt: new Date().toISOString() });
+      }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wackelturm"]')?.addEventListener("click", () => {
@@ -4314,7 +4547,7 @@
     renderWackelturm();
   });
 
-  /* ===== Wortarten-Sortierer: Wörter per Antippen der richtigen Kategorie zuordnen ===== */
+  /* ===== Wort-Typ: Wörter per Antippen der richtigen Kategorie zuordnen ===== */
   let waSession = null; // { round, total, correct }
   let waCurrentWord = null; // [word, category]
   const WA_BUCKETS = [
@@ -4338,7 +4571,7 @@
     const area = document.getElementById("wortartenArea");
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🔤 WORTARTEN-SORTIERER — SITZUNG FERTIG</p>
+        <p class="eyebrow">🔤 WORT-TYP — SITZUNG FERTIG</p>
         <p style="font-size:2rem; margin:8px 0;">🎉</p>
         <h2 style="margin:8px 0;">${waSession.correct} / ${waSession.total} richtig zugeordnet!</h2>
         <button type="button" class="btn btn-coffee" id="waPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
@@ -4347,7 +4580,7 @@
       newWortartenSession(); newWortartenRound(); renderWortarten();
     });
     if (Backend.currentUser()) {
-      saveResultAndCheck({ categories: ["wortarten"], points: waSession.correct, bonus: 0, percent: Math.round((waSession.correct / waSession.total) * 100), character: "Wortarten-Sortierer:in", badges: [], playedAt: new Date().toISOString() });
+      saveResultAndCheck({ categories: ["wortarten"], points: waSession.correct, bonus: 0, percent: Math.round((waSession.correct / waSession.total) * 100), character: "Wort-Typ:in", badges: [], playedAt: new Date().toISOString() });
     }
   }
   function renderWortarten() {
@@ -4358,8 +4591,8 @@
     if (!waCurrentWord) newWortartenRound();
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
-        ${miniBugReportBtnHtml("Wortarten-Sortierer: " + waCurrentWord[0])}
-        <p class="eyebrow">🔤 WORTARTEN-SORTIERER · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen der richtigen Kategorie zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
+        ${miniBugReportBtnHtml("Wort-Typ: " + waCurrentWord[0])}
+        <p class="eyebrow">🔤 WORT-TYP · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen der richtigen Kategorie zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
         <p style="font-size:1.8rem; font-weight:800; margin:20px 0;">${waCurrentWord[0]}</p>
         <div class="trophy-case" style="justify-content:center;">
           ${WA_BUCKETS.map((b) => `<button type="button" class="trophy-chip wa-bucket-btn" data-bucket="${b.key}" style="font-size:0.95rem; padding:10px 16px;">${b.label}</button>`).join("")}
@@ -4400,23 +4633,485 @@
      und müssen abgeschossen werden, BEVOR sie unten ankommen. Die richtige Antwort darf NICHT
      getroffen werden — landet sie unten, ist das richtig so. Braucht keine eigenen neuen Fragen. */
   let knLives = 3;
+  // Wolken-Mechanik: mit jedem Fehler (weniger Leben) ziehen mehr/dichtere Wolken langsam übers
+  // Bild und schieben sich zeitweise VOR die fallenden Wörter — echte zusätzliche Schwierigkeit,
+  // nicht nur mehr Tempo. Bei vollen Leben ist der Himmel noch klar.
+  let knCloudTimer = null;
+  // Startet den wiederkehrenden Wolken-Spawn — läuft nur EINMAL (nicht bei jedem Rendern erneut
+  // gestartet, sonst würden sich mehrere Intervalle überlagern und immer schneller spawnen).
+  function startKanoneCloudTimer() {
+    if (knCloudTimer) return;
+    knCloudTimer = setInterval(() => {
+      const container = document.getElementById("knClouds");
+      // Sobald der Spielbereich verschwunden ist (Reiter verlassen, Runde vorbei), Timer sauber
+      // stoppen statt für immer im Hintergrund weiterzulaufen.
+      if (!container) { clearInterval(knCloudTimer); knCloudTimer = null; return; }
+      const mistakes = 3 - knLives;
+      // Bei vollen Leben (keine Fehler) noch klarer Himmel, kaum Wolken — mit jedem Fehler
+      // ziehen mehr und dichtere Wolken auf, echte zusätzliche Schwierigkeit statt nur Tempo.
+      const spawnChance = 0.15 + mistakes * 0.25;
+      if (Math.random() > spawnChance) return;
+      const cloud = document.createElement("span");
+      cloud.className = "kn-cloud";
+      cloud.textContent = "☁️";
+      cloud.style.top = `${10 + Math.random() * 55}%`;
+      cloud.style.fontSize = `${1.4 + mistakes * 0.5 + Math.random() * 0.6}rem`;
+      cloud.style.opacity = `${0.55 + mistakes * 0.12}`;
+      const duration = 9 - mistakes * 1.2; // mit mehr Fehlern ziehen Wolken auch etwas schneller
+      cloud.style.animationDuration = `${duration}s`;
+      container.appendChild(cloud);
+      setTimeout(() => cloud.remove(), duration * 1000);
+    }, 1800);
+  }
+  // Startbildschirm mit Spielbeschreibung erscheint nur beim ALLERERSTEN Betreten dieser Sitzung
+  // — bisher legte das Spiel sofort beim Reinklicken los, ohne dass klar war, worum es geht.
+  let knIntroShown = false;
   let knScore = 0;
   // Verhindert, dass der Fehler-Sound und die Punktevergabe erneut auslösen, nur weil man zu
   // einem anderen Spiel wechselt und zurückkommt, während die Runde bereits vorbei ist — vorher
   // rief jedes erneute Rendern des Abschluss-Bildschirms beides nochmal auf.
   let knGameOverFinalized = false;
+  // Fehler-Zähler für die Bewertung am Rundenende — sowohl versehentlich getroffene richtige
+  // Antworten als auch durchgekommene falsche Antworten zählen als Fehler.
+  let knMistakes = 0;
   let knUsedPrompts = [];
   let knCurrentQuestion = null;
   let knActiveWords = [];
   let knRoundActive = false;
   let knAutoLandLast = false; // Häkchen-Option: letztes übrig bleibendes Wort automatisch landen lassen
+  /* ===== Wortblasen: mehrere Wort-Sprechblasen erscheinen gleichzeitig, wachsen kurz und
+     "zerplatzen" dann von selbst — bevor das passiert, muss die RICHTIGE Antwort angetippt
+     werden. Anders als bei der Wort-Kanone (fallende Wörter, falsche abschießen) hier: Blasen,
+     die richtige muss man TREFFEN, bevor die Zeit abläuft. Eigener Charakter durch den
+     Zeitdruck-über-Zerplatzen statt Fallen. ===== */
+  let bbLives = 3;
+  let bbScore = 0;
+  let bbMistakes = 0;
+  let bbUsedPrompts = [];
+  let bbCurrentQuestion = null;
+  let bbActiveBubbles = [];
+  let bbRoundActive = false;
+  let bbGameOverFinalized = false;
+  let bbIntroShown = false;
+  const BB_BUBBLE_LIFETIME = 3.2; // Sekunden, bis eine Blase von selbst zerplatzt
+  function pickRandomBubbleQuestion() {
+    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const cat = cats[Math.floor(Math.random() * cats.length)];
+      const bank = cat.getBank();
+      const q = bank[Math.floor(Math.random() * bank.length)];
+      if (!bbUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) {
+        bbUsedPrompts.push(q.prompt);
+        return q;
+      }
+    }
+    bbUsedPrompts = [];
+    return pickRandomBubbleQuestion();
+  }
+  function newBubbleGame() {
+    bbLives = 3;
+    bbScore = 0;
+    bbMistakes = 0;
+    bbUsedPrompts = [];
+    bbGameOverFinalized = false;
+    newBubbleRound();
+  }
+  function newBubbleRound() {
+    bbCurrentQuestion = pickRandomBubbleQuestion();
+    const correctIdx = bbCurrentQuestion.correct[0];
+    // Positionen in einem Raster mit kleinen zufälligen Abweichungen, damit sich Blasen nicht
+    // überlappen — anders als bei den fallenden Wörtern gibt es hier keine Bewegung, nur Wachsen.
+    const positions = [
+      { left: 22, top: 28 }, { left: 68, top: 22 }, { left: 45, top: 55 },
+      { left: 15, top: 72 }, { left: 78, top: 68 },
+    ];
+    bbActiveBubbles = bbCurrentQuestion.options.map((opt, i) => ({
+      id: `bb${i}-${Date.now()}`, text: opt, isCorrect: i === correctIdx, resolved: false,
+      left: Math.max(10, Math.min(85, positions[i % positions.length].left + (Math.random() * 8 - 4))),
+      top: Math.max(15, Math.min(80, positions[i % positions.length].top + (Math.random() * 8 - 4))),
+      spawnedAt: Date.now(),
+    }));
+    bbRoundActive = true;
+  }
+  function resolveBubble(bid, wasCorrectClick) {
+    const bubble = bbActiveBubbles.find((b) => b.id === bid);
+    if (!bubble || bubble.resolved) return;
+    bubble.resolved = true;
+    const fb = document.getElementById("bbFeedback");
+    if (bubble.isCorrect) {
+      bbScore += 1;
+      Core.sound.explosion();
+      if (fb) fb.textContent = wasCorrectClick ? "💥 Richtig getroffen!" : "⏳ Zeit abgelaufen — die richtige Antwort ist zerplatzt!";
+      if (!wasCorrectClick) { bbLives -= 1; bbMistakes += 1; }
+    } else {
+      if (wasCorrectClick) {
+        // Falsche Blase angetippt
+        bbLives -= 1;
+        bbMistakes += 1;
+        Core.sound.wrong();
+        if (fb) fb.textContent = `⚠️ Das war falsch! (${bbLives} ❤️ übrig)`;
+      }
+      // Falsche Blase zerplatzt von selbst -> keine Strafe, das war ja richtig so
+    }
+    checkBubbleRoundDone();
+  }
+  function checkBubbleRoundDone() {
+    if (!bbActiveBubbles.every((b) => b.resolved)) { renderBubbleGame(); return; }
+    if (bbLives <= 0) { setTimeout(renderBubbleGameOver, 900); return; }
+    setTimeout(() => { newBubbleRound(); renderBubbleGame(); }, 900);
+  }
+  function renderBubbleGame() {
+    const area = document.getElementById("bubblesArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "wortblasen_neu", "Wortblasen", "🫧")) return;
+    if (!bbIntroShown) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">🫧</p>
+          <h2 style="margin:8px 0;">Wortblasen</h2>
+          ${inlineFeatureFlagToggleHtml("wortblasen_neu")}
+          <p class="empty-note">Mehrere Wort-Blasen erscheinen gleichzeitig — tipp die RICHTIGE Antwort an, bevor sie von selbst zerplatzt! Tippst du eine falsche Blase an, oder zerplatzt die richtige ungetroffen, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
+          <button type="button" class="btn btn-coffee" id="bbStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      wireInlineFeatureFlagToggles(area, renderBubbleGame);
+      document.getElementById("bbStartIntroBtn").addEventListener("click", () => { bbIntroShown = true; newBubbleGame(); renderBubbleGame(); });
+      return;
+    }
+    if (bbLives <= 0) { renderBubbleGameOver(); return; }
+    if (!bbRoundActive) newBubbleGame();
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wortblasen: " + bbCurrentQuestion.prompt)}
+        <p class="eyebrow">🫧 WORTBLASEN · ${bbScore} Treffer · ${heartsLivesHtml(bbLives, 3)}</p>
+        <p style="font-weight:700; margin:8px 0 12px;">${bbCurrentQuestion.prompt}</p>
+        <div class="bb-pool" id="bbPool">
+          ${bbActiveBubbles.map((b) => `<button type="button" class="bb-bubble" data-bid="${b.id}" style="left:${b.left}%; top:${b.top}%; animation-duration:${BB_BUBBLE_LIFETIME}s;">${b.text}</button>`).join("")}
+        </div>
+        <p class="empty-note" id="bbFeedback" style="text-align:center; min-height:20px; margin-top:8px;"></p>
+      </div>`;
+    area.querySelectorAll(".bb-bubble").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const b = bbActiveBubbles.find((x) => x.id === btn.dataset.bid);
+        if (!b || b.resolved) return;
+        btn.style.pointerEvents = "none";
+        btn.style.animationPlayState = "paused";
+        btn.classList.add(b.isCorrect ? "bb-bubble-pop-good" : "bb-bubble-pop-bad");
+        resolveBubble(b.id, true);
+      });
+      btn.addEventListener("animationend", () => {
+        const b = bbActiveBubbles.find((x) => x.id === btn.dataset.bid);
+        if (!b || b.resolved) return;
+        resolveBubble(b.id, false);
+      });
+    });
+  }
+  function renderBubbleGameOver() {
+    const area = document.getElementById("bubblesArea");
+    const totalAttempts = bbScore + bbMistakes;
+    const accuracy = totalAttempts > 0 ? Math.round((bbScore / totalAttempts) * 100) : 0;
+    let rating;
+    if (bbScore === 0) rating = "🌱 Erster Versuch — nächstes Mal klappt's besser!";
+    else if (accuracy >= 90) rating = "🎯 Blasenjäger:in! Fast alles getroffen.";
+    else if (accuracy >= 70) rating = "💪 Richtig stark — sehr gute Trefferquote!";
+    else if (accuracy >= 50) rating = "👍 Solide Runde — schon über die Hälfte getroffen.";
+    else rating = "🌱 Übung macht den Meister — weiter dran bleiben!";
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p style="font-size:2.5rem;">🫧</p>
+        <h2 style="margin:8px 0;">Runde beendet!</h2>
+        <p class="empty-note">Du hast <strong>${bbScore}</strong> richtige Blasen getroffen${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
+        <p style="font-weight:700; margin-top:8px;">${rating}</p>
+        <button type="button" class="btn btn-coffee" id="bbRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>`;
+    document.getElementById("bbRetryBtn").addEventListener("click", () => { newBubbleGame(); renderBubbleGame(); });
+    if (!bbGameOverFinalized) {
+      bbGameOverFinalized = true;
+      if (Backend.currentUser() && bbScore > 0) {
+        saveResultAndCheck({ categories: ["wortblasen"], points: bbScore, bonus: 0, percent: 100, character: "Blasenjäger:in", badges: [], playedAt: new Date().toISOString() });
+      }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-bubbles"]')?.addEventListener("click", () => {
+    renderBubbleGame();
+  });
+
+  /* ===== Vokabelmeister: Buchstabe wählen (selbst oder zufällig), dann Zeitdruck — so viele
+     Wörter wie möglich mit diesem Anfangsbuchstaben eingeben. Prüft gegen eine kombinierte
+     Wortliste aus mehreren Quellen der Seite (Vokabeln, Artikel-Nomen, Hobbys, Länder, Sprachen).
+     Bei seltenen Buchstaben (X, Y, Q) ist die Bibliothek ehrlich begrenzt — wird im Spiel selbst
+     angezeigt, damit niemand denkt, ein echtes Wort wäre einfach "falsch". ===== */
+  let vmLetter = null;
+  let vmTimeLeft = 60;
+  let vmTimerId = null;
+  let vmFoundWords = [];
+  let vmRunning = false;
+  let vmFinished = false;
+  function vmBuildDictionary() {
+    const words = new Set();
+    // Wörter mit Artikel-Präfix ("der Apfel") müssen für den Buchstaben-Abgleich bereinigt
+    // werden — sonst würde "der Apfel" fälschlich unter "D" statt "A" gezählt.
+    const stripArticle = (w) => w.replace(/^(der|die|das)\s+/i, "");
+    (VocabData.WORDS || []).forEach((w) => words.add(stripArticle(w.word).toLowerCase()));
+    (VocabData.HOBBIES || []).forEach((h) => words.add(h.noun.toLowerCase()));
+    (VocabData.COUNTRIES || []).forEach((c) => { if (c.name) words.add(c.name.toLowerCase()); if (typeof c === "string") words.add(c.toLowerCase()); });
+    (VocabData.LANGUAGES || []).forEach((l) => { if (typeof l === "string") words.add(l.toLowerCase()); if (l && l.name) words.add(l.name.toLowerCase()); });
+    (VocabData.MATERIALS || []).forEach((m) => { if (typeof m === "string") words.add(m.toLowerCase()); if (m && m.name) words.add(m.name.toLowerCase()); });
+    Object.keys(WordbuildArtikel()).forEach((w) => words.add(w.toLowerCase()));
+    return words;
+  }
+  function vmWordCountForLetter(letter) {
+    const dict = vmBuildDictionary();
+    let count = 0;
+    dict.forEach((w) => { if (w[0].toUpperCase() === letter) count += 1; });
+    return count;
+  }
+  function newVokabelmeisterRound(letter) {
+    vmLetter = letter;
+    vmTimeLeft = 60;
+    vmFoundWords = [];
+    vmRunning = true;
+    vmFinished = false;
+    if (vmTimerId) clearInterval(vmTimerId);
+    vmTimerId = setInterval(() => {
+      vmTimeLeft -= 1;
+      if (vmTimeLeft <= 0) {
+        clearInterval(vmTimerId);
+        vmTimerId = null;
+        vmRunning = false;
+        vmFinished = true;
+        Core.sound.fanfare();
+        if (Backend.currentUser()) {
+          saveResultAndCheck({ categories: ["vokabelmeister"], points: vmFoundWords.filter((w) => w.confirmed).length * 2, bonus: 0, percent: 100, character: "Wortschatz-Sammler:in", badges: [], playedAt: new Date().toISOString() });
+        }
+      }
+      renderVokabelmeister();
+    }, 1000);
+    renderVokabelmeister();
+  }
+  function renderVokabelmeister() {
+    const area = document.getElementById("vokabelmeisterArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "vokabelmeister_neu", "Vokabelmeister", "🔤")) return;
+    if (!vmLetter) {
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">🔤</p>
+          <h2 style="margin:8px 0;">Vokabelmeister</h2>
+          ${inlineFeatureFlagToggleHtml("vokabelmeister_neu")}
+          <p class="empty-note">Wähl einen Buchstaben (oder lass das Los entscheiden) — dann hast du 60 Sekunden Zeit, so viele deutsche Wörter wie möglich einzugeben, die mit diesem Buchstaben beginnen.</p>
+          <button type="button" class="btn btn-coffee" id="vmRandomLetterBtn" style="margin:10px 0;">🎲 Zufälliger Buchstabe</button>
+          <div class="vm-letter-grid">
+            ${alphabet.split("").map((l) => `<button type="button" class="vm-letter-btn" data-vm-letter="${l}">${l}</button>`).join("")}
+          </div>
+        </div>`;
+      wireInlineFeatureFlagToggles(area, renderVokabelmeister);
+      document.getElementById("vmRandomLetterBtn").addEventListener("click", () => {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        newVokabelmeisterRound(alphabet[Math.floor(Math.random() * alphabet.length)]);
+      });
+      area.querySelectorAll("[data-vm-letter]").forEach((btn) => {
+        btn.addEventListener("click", () => newVokabelmeisterRound(btn.dataset.vmLetter));
+      });
+      return;
+    }
+    if (vmFinished) {
+      const confirmedCount = vmFoundWords.filter((w) => w.confirmed).length;
+      const unconfirmedCount = vmFoundWords.length - confirmedCount;
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">⏰</p>
+          <h2 style="margin:8px 0;">Zeit um!</h2>
+          <p class="empty-note">Buchstabe <strong>${vmLetter}</strong>: <strong>${confirmedCount}</strong> bestätigte Wörter gefunden${unconfirmedCount ? ` (+${unconfirmedCount} nicht in der Bibliothek erkannt, zählen nicht als Punkte, waren aber vielleicht trotzdem richtig)` : ""}.</p>
+          <div class="breakdown-list" style="margin-top:10px; text-align:left;">
+            ${vmFoundWords.map((w) => `<div class="breakdown-row"><span>${w.confirmed ? "✅" : "❔"} ${w.text}</span></div>`).join("")}
+          </div>
+          <button type="button" class="btn btn-coffee" id="vmNewRoundBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+        </div>`;
+      document.getElementById("vmNewRoundBtn").addEventListener("click", () => { vmLetter = null; renderVokabelmeister(); });
+      return;
+    }
+    const dictSize = vmWordCountForLetter(vmLetter);
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🔤 VOKABELMEISTER · Buchstabe ${vmLetter} · ⏱️ ${vmTimeLeft}s</p>
+        ${dictSize < 3 ? `<p class="empty-note" style="font-size:0.74rem;">💡 Bei „${vmLetter}" ist unsere Bibliothek noch klein — auch echte, richtige Wörter werden dann eventuell nicht bestätigt erkannt. Trotzdem eine gute Herausforderung!</p>` : ""}
+        <input type="text" id="vmWordInput" class="vocab-search" placeholder="Wort mit ${vmLetter} eingeben und Enter drücken…" autocomplete="off" style="margin-top:8px;" />
+        <div class="breakdown-list" style="margin-top:10px;">
+          ${vmFoundWords.length ? vmFoundWords.map((w) => `<div class="breakdown-row"><span>${w.confirmed ? "✅" : "❔"} ${w.text}</span></div>`).join("") : '<p class="empty-note">Noch kein Wort eingegeben.</p>'}
+        </div>
+      </div>`;
+    const input = document.getElementById("vmWordInput");
+    input.focus();
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const raw = input.value.trim();
+      if (!raw) return;
+      if (raw[0].toUpperCase() !== vmLetter) {
+        showToast(`⚠️ Muss mit „${vmLetter}" beginnen.`);
+        input.value = "";
+        return;
+      }
+      if (vmFoundWords.some((w) => w.text.toLowerCase() === raw.toLowerCase())) {
+        showToast("⚠️ Hattest du schon.");
+        input.value = "";
+        return;
+      }
+      const dict = vmBuildDictionary();
+      const confirmed = dict.has(raw.toLowerCase());
+      vmFoundWords.unshift({ text: raw, confirmed });
+      if (confirmed) Core.sound.correct();
+      input.value = "";
+      renderVokabelmeister();
+    });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-vokabelmeister"]')?.addEventListener("click", () => {
+    renderVokabelmeister();
+  });
+
+  /* ===== Korrektour: Wörter fahren als Zug (Waggons, Lok voran) im Bogen von rechts oben durchs
+     Bild und wieder hinaus — bevor der Zug ganz verschwunden ist, muss per Ampel-Signal
+     entschieden werden, ob der Satz grammatikalisch richtig ist (Grün) oder einen typischen
+     Fehler enthält (Rot). Eigener Charakter durch das kurze Zeitfenster beim Vorbeifahren, statt
+     fallender oder zerplatzender Elemente wie bei den anderen Spielen. ===== */
+  let ktScore = 0;
+  let ktLives = 3;
+  let ktMistakes = 0;
+  let ktCurrentSentence = null;
+  let ktIsCorrectSentence = false;
+  let ktAnswered = false;
+  let ktIntroShown = false;
+  let ktRoundTimer = null;
+  function ktBuildContentPool() {
+    const pool = [];
+    (ExerciseData.HAEUFIGE_FEHLER || []).forEach(([wrong, correct, explain]) => {
+      pool.push({ correctSentence: correct, wrongSentence: wrong, explain });
+    });
+    (ExerciseData.SS_ESZETT || []).forEach(([prompt, correct, wrong, explain]) => {
+      if (!prompt.includes("___")) return;
+      pool.push({ correctSentence: prompt.replace("___", correct), wrongSentence: prompt.replace("___", wrong), explain });
+    });
+    return pool;
+  }
+  function newKorrektourRound() {
+    const pool = ktBuildContentPool();
+    const entry = pool[Math.floor(Math.random() * pool.length)];
+    ktIsCorrectSentence = Math.random() < 0.5;
+    ktCurrentSentence = ktIsCorrectSentence ? entry.correctSentence : entry.wrongSentence;
+    ktCurrentSentence = { text: ktCurrentSentence, explain: entry.explain };
+    ktAnswered = false;
+    renderKorrektour();
+  }
+  function ktResolveSignal(saidCorrect) {
+    if (ktAnswered) return;
+    ktAnswered = true;
+    if (ktRoundTimer) { clearTimeout(ktRoundTimer); ktRoundTimer = null; }
+    const fb = document.getElementById("ktFeedback");
+    const wasRight = saidCorrect === ktIsCorrectSentence;
+    if (wasRight) {
+      ktScore += 1;
+      Core.sound.correct();
+      if (fb) fb.textContent = `✅ Richtig! Der Satz war ${ktIsCorrectSentence ? "korrekt" : "fehlerhaft"}. ${ktCurrentSentence.explain}`;
+    } else {
+      ktLives -= 1;
+      ktMistakes += 1;
+      Core.sound.wrong();
+      if (fb) fb.textContent = `⚠️ Leider nicht — der Satz war ${ktIsCorrectSentence ? "korrekt" : "fehlerhaft"}. ${ktCurrentSentence.explain}`;
+    }
+    setTimeout(() => {
+      if (ktLives <= 0) { renderKorrektourGameOver(); return; }
+      newKorrektourRound();
+    }, 2200);
+  }
+  function renderKorrektour() {
+    const area = document.getElementById("korrektourArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "korrektour_neu", "Korrektour", "🚂")) return;
+    if (!ktIntroShown) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">🚂</p>
+          <h2 style="margin:8px 0;">Korrektour</h2>
+          ${inlineFeatureFlagToggleHtml("korrektour_neu")}
+          <p class="empty-note">Ein Satz-Zug fährt im Bogen durchs Bild und wieder hinaus — du hast nur dieses kurze Zeitfenster, um zu entscheiden: Ist der Satz grammatikalisch RICHTIG (🟢 Grün) oder enthält er einen typischen Fehler (🔴 Rot)? Nach 3 Fehlern ist die Runde vorbei.</p>
+          <button type="button" class="btn btn-coffee" id="ktStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      wireInlineFeatureFlagToggles(area, renderKorrektour);
+      document.getElementById("ktStartIntroBtn").addEventListener("click", () => { ktIntroShown = true; ktScore = 0; ktLives = 3; ktMistakes = 0; newKorrektourRound(); });
+      return;
+    }
+    if (!ktCurrentSentence) { newKorrektourRound(); return; }
+    const words = ktCurrentSentence.text.split(" ");
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Korrektour: " + ktCurrentSentence.text)}
+        <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer · ${heartsLivesHtml(ktLives, 3)}</p>
+        <div class="kt-track" id="ktTrack">
+          <div class="kt-train" id="ktTrain">
+            <span class="kt-locomotive">🚂</span>
+            ${words.map((w) => `<span class="kt-wagon">${w}</span>`).join("")}
+          </div>
+        </div>
+        <div class="kt-signal-row">
+          <button type="button" class="kt-signal kt-signal-green" id="ktGreenBtn" ${ktAnswered ? "disabled" : ""}>🟢 Richtig</button>
+          <button type="button" class="kt-signal kt-signal-red" id="ktRedBtn" ${ktAnswered ? "disabled" : ""}>🔴 Fehler drin</button>
+        </div>
+        <p class="empty-note" id="ktFeedback" style="text-align:center; min-height:36px; margin-top:8px;"></p>
+      </div>`;
+    document.getElementById("ktGreenBtn").addEventListener("click", () => ktResolveSignal(true));
+    document.getElementById("ktRedBtn").addEventListener("click", () => ktResolveSignal(false));
+    // Fährt der Zug komplett durchs Bild, ohne dass man reagiert hat, zählt das als verpasst —
+    // wie eine falsche Einschätzung, damit Zögern nicht einfach folgenlos bleibt.
+    const TRAIN_DURATION = 6500;
+    if (ktRoundTimer) clearTimeout(ktRoundTimer);
+    ktRoundTimer = setTimeout(() => {
+      if (ktAnswered) return;
+      ktAnswered = true;
+      ktLives -= 1;
+      ktMistakes += 1;
+      Core.sound.wrong();
+      const fb = document.getElementById("ktFeedback");
+      if (fb) fb.textContent = `⏳ Zu spät — der Satz war ${ktIsCorrectSentence ? "korrekt" : "fehlerhaft"}. ${ktCurrentSentence.explain}`;
+      setTimeout(() => {
+        if (ktLives <= 0) { renderKorrektourGameOver(); return; }
+        newKorrektourRound();
+      }, 2200);
+    }, TRAIN_DURATION);
+  }
+  function renderKorrektourGameOver() {
+    const area = document.getElementById("korrektourArea");
+    const totalAttempts = ktScore + ktMistakes;
+    const accuracy = totalAttempts > 0 ? Math.round((ktScore / totalAttempts) * 100) : 0;
+    let rating;
+    if (ktScore === 0) rating = "🌱 Erster Versuch — nächstes Mal klappt's besser!";
+    else if (accuracy >= 90) rating = "🚦 Fahrdienstleiter:in! Fast alles richtig erkannt.";
+    else if (accuracy >= 70) rating = "💪 Richtig stark — sehr gutes Gespür für Grammatik!";
+    else if (accuracy >= 50) rating = "👍 Solide Runde — schon über die Hälfte richtig.";
+    else rating = "🌱 Übung macht den Meister — weiter dran bleiben!";
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p style="font-size:2.5rem;">🚂</p>
+        <h2 style="margin:8px 0;">Runde beendet!</h2>
+        <p class="empty-note">Du hast <strong>${ktScore}</strong> Sätze richtig eingeschätzt${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
+        <p style="font-weight:700; margin-top:8px;">${rating}</p>
+        <button type="button" class="btn btn-coffee" id="ktRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>`;
+    document.getElementById("ktRetryBtn").addEventListener("click", () => { ktScore = 0; ktLives = 3; ktMistakes = 0; newKorrektourRound(); });
+    if (Backend.currentUser() && ktScore > 0) {
+      saveResultAndCheck({ categories: ["korrektour"], points: ktScore, bonus: 0, percent: 100, character: "Fahrdienstleiter:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-korrektour"]')?.addEventListener("click", () => {
+    renderKorrektour();
+  });
+
   function pickRandomKanoneQuestion() {
     const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     for (let attempt = 0; attempt < 25; attempt++) {
       const cat = cats[Math.floor(Math.random() * cats.length)];
       const bank = cat.getBank();
       const q = bank[Math.floor(Math.random() * bank.length)];
-      if (!knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5) {
+      if (!knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) {
         knUsedPrompts.push(q.prompt);
         return q;
       }
@@ -4424,11 +5119,12 @@
     knUsedPrompts = [];
     const cat = cats[Math.floor(Math.random() * cats.length)];
     const bank = cat.getBank();
-    return bank.find((q) => q.options.length >= 2 && q.options.length <= 5) || bank[0];
+    return bank.find((q) => q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) || bank[0];
   }
   function newKanoneGame() {
     knLives = 3;
     knScore = 0;
+    knMistakes = 0;
     knUsedPrompts = [];
     // Markierung zurücksetzen: Sound und Punktevergabe beim Abschluss-Bildschirm dürfen für DIESE
     // neue Runde wieder einmal auslösen.
@@ -4442,14 +5138,36 @@
   function newKanoneRound() {
     knCurrentQuestion = pickRandomKanoneQuestion();
     const correctIdx = knCurrentQuestion.correct[0];
+    // Positionen NÄHER beieinander statt komplett zufällig über die ganze Breite verteilt — wie
+    // Blätter, die in etwa derselben Gegend herunterfallen, nicht kilometerweit auseinander. Ein
+    // enger geclusterter Mittelpunkt (35–65%) mit kleinen individuellen Abweichungen pro Wort.
+    const clusterCenter = 35 + Math.random() * 30;
     knActiveWords = Core.shuffle(knCurrentQuestion.options.map((opt, i) => ({
       id: `w${i}-${Date.now()}`, text: opt, isCorrect: i === correctIdx, resolved: false,
-      // Feste, zufällige horizontale Startposition pro Wort (25–75%, damit genug Rand bleibt) —
-      // einmalig hier festgelegt, nicht bei jedem Rendering neu gewürfelt, sonst würde das Wort
-      // beim Fallen seitlich "springen". Das gibt der Kanone auch endlich einen echten Grund,
-      // sich seitlich auszurichten, statt immer nur geradeaus zu zeigen.
-      xPercent: 25 + Math.random() * 50,
+      xPercent: Math.max(15, Math.min(85, clusterCenter + (i - (knCurrentQuestion.options.length - 1) / 2) * 24 + (Math.random() * 6 - 3))),
+      spawnedAt: null,
     })));
+    // Gelegentlich (nicht bei jeder Runde) eine zusätzliche Bonus-Sprechblase mit ❤️+1 — schießt
+    // man sie ab, gibt es ein Herz zurück (bis zum Maximum von 3). Damit lohnt sich langes
+    // Durchhalten zusätzlich, nicht nur reines Punktesammeln. Nur wenn noch nicht alle 3 Herzen da
+    // sind, sonst wäre sie wirkungslos.
+    if (knLives < 3 && Math.random() < 0.25) {
+      knActiveWords.push({
+        id: `bonus-${Date.now()}`, text: "❤️+1", isCorrect: false, isBonus: true, resolved: false,
+        xPercent: Math.max(15, Math.min(85, clusterCenter + (Math.random() * 20 - 10))),
+        spawnedAt: null,
+      });
+    }
+    // Zusätzliche Bonus-Punkte-Münze — anders als das Herz bewusst NICHT leicht zu kriegen: fällt
+    // deutlich SCHNELLER als normale Wörter und ist kleiner, also eine echte Herausforderung, kein
+    // Selbstläufer. Belohnt gutes Timing/Zielen mit extra Punkten obendrauf.
+    if (Math.random() < 0.3) {
+      knActiveWords.push({
+        id: `coin-${Date.now()}`, text: "🪙+3", isCorrect: false, isBonus: true, isCoinBonus: true, resolved: false,
+        xPercent: Math.max(15, Math.min(85, clusterCenter + (Math.random() * 30 - 15))),
+        spawnedAt: null,
+      });
+    }
     knRoundActive = true;
   }
   function renderKanone() {
@@ -4460,20 +5178,47 @@
     // schon. Alle anderen spielen ganz normal weiter die bisherige, bereits fertige Version — KEIN
     // Hinweis, kein Unterbrechen, sie merken nichts vom Update, bis es wirklich freigegeben wird.
     if (!Backend.isFeatureOn("wortkanone_redesign")) { renderKanoneOld(); return; }
+    // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
+    // statt dass sofort ohne Erklärung losgeschossen wird.
+    if (!knIntroShown) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p style="font-size:2.5rem;">🎯</p>
+          <h2 style="margin:8px 0;">Wort-Kanone</h2>
+          <p class="empty-note">Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
+          <button type="button" class="btn btn-coffee" id="knStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      document.getElementById("knStartIntroBtn").addEventListener("click", () => { knIntroShown = true; renderKanone(); });
+      return;
+    }
     if (knLives <= 0) { renderKanoneGameOver(); return; }
     if (!knRoundActive) newKanoneRound();
-    // Genau EIN Wort ist gleichzeitig aktiv/sichtbar — das nächste erscheint erst, wenn dieses
-    // erledigt ist (abgeschossen oder gelandet). Kein Überlappen mehr, wie bei einem echten
-    // Arcade-Spiel, bei dem man sich vorher entscheiden kann, ob man abwartet oder abschießt.
-    const activeWord = knActiveWords.find((w) => !w.resolved);
+    // Statt NUR einem einzelnen Wort sind jetzt bis zu 3 gleichzeitig sichtbar — näher beieinander
+    // positioniert (siehe newKanoneRound), wie mehrere Blätter, die etwa zur gleichen Zeit fallen.
+    // Jedes bekommt beim ERSTEN Erscheinen einen Zeitstempel; bei jedem Neu-Rendern wird darüber
+    // ein passender NEGATIVER animation-delay berechnet, damit die Fallbewegung nahtlos weiterläuft
+    // statt bei jedem Rendern von neuem oben zu beginnen.
+    // ALLE Wörter dieser Frage erscheinen von Anfang an gemeinsam (nicht nur 3 mit den restlichen
+    // nachrückend) — nur mit einem SEHR kurzen Start-Versatz (max. 60ms pro Wort), damit man sie
+    // wirklich gemeinsam am Himmel sieht und sofort auf alle gleichzeitig reagieren muss/kann,
+    // statt dass eines lange vor den anderen erscheint.
+    const visibleWords = knActiveWords.filter((w) => !w.resolved);
+    const now = Date.now();
+    visibleWords.forEach((w, i) => { if (!w.spawnedAt) w.spawnedAt = now - i * 60; });
+    const FALL_DURATION = 4.5;
+    // Auto-Land bezieht sich weiterhin auf das VORDERSTE (am längsten fallende) Wort.
+    const activeWord = visibleWords[0];
     // Auto-Land: sobald ALLE noch übrigen falschen Antworten schon abgeschossen sind (egal ob
     // dann noch 1 oder mehrere richtige Wörter übrig bleiben), landen die verbleibenden richtigen
     // sofort zügig, statt einzeln auf die normale Fallzeit zu warten — "das Gute hat gewonnen,
-    // sobald nichts Falsches mehr übrig ist".
+    // sobald nichts Falsches mehr übrig ist". Sucht das richtige Wort direkt (nicht nur das
+    // vorderste sichtbare), da jetzt alle Wörter gleichzeitig erscheinen und die Reihenfolge
+    // nicht mehr garantiert die richtige Antwort an erster Stelle zeigt.
     const remainingUnresolved = knActiveWords.filter((w) => !w.resolved);
     const noWrongLeft = remainingUnresolved.every((w) => w.isCorrect);
-    if (activeWord && knAutoLandLast && activeWord.isCorrect && noWrongLeft) {
-      setTimeout(() => landKanoneWord(activeWord.id, null), 50);
+    const correctStillFalling = remainingUnresolved.find((w) => w.isCorrect);
+    if (correctStillFalling && knAutoLandLast && noWrongLeft) {
+      setTimeout(() => landKanoneWord(correctStillFalling.id, null), 30);
     }
     area.innerHTML = `
       <div class="question-card">
@@ -4481,18 +5226,27 @@
         <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer · ${heartsLivesHtml(knLives, 3)} <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
+          <span class="kn-sun" aria-hidden="true">☀️</span>
+          <div class="kn-clouds" id="knClouds" aria-hidden="true"></div>
           <div class="kn-scenery" aria-hidden="true">
-            <span class="kn-scenery-item" style="left:4%; font-size:2.6rem;">🌳</span>
-            <span class="kn-scenery-item" style="left:16%; font-size:1.1rem;">🍄</span>
-            <span class="kn-scenery-item" style="left:26%; font-size:1.8rem;">🏡</span>
-            <span class="kn-scenery-item" style="left:40%; font-size:1.3rem;">🪵</span>
-            <span class="kn-scenery-item" style="left:52%; font-size:1.1rem;">🍄</span>
-            <span class="kn-scenery-item" style="left:64%; font-size:1.3rem;">🪵</span>
-            <span class="kn-scenery-item" style="left:76%; font-size:2.3rem;">🌳</span>
-            <span class="kn-scenery-item" style="left:90%; font-size:1.1rem;">🍄</span>
+            <span class="kn-scenery-item" style="left:2%; font-size:1rem;">🌸</span>
+            <span class="kn-scenery-item" style="left:8%; font-size:3.4rem;">🌳</span>
+            <span class="kn-scenery-item" style="left:22%; font-size:1rem;">🍄</span>
+            <span class="kn-scenery-item" style="left:30%; font-size:3.8rem;">🏡</span>
+            <span class="kn-scenery-item" style="left:48%; font-size:0.9rem;">🌼</span>
+            <span class="kn-scenery-item" style="left:55%; font-size:1rem;">🍄</span>
+            <span class="kn-scenery-item" style="left:68%; font-size:3.2rem;">🌳</span>
+            <span class="kn-scenery-item" style="left:84%; font-size:1rem;">🍄</span>
+            <span class="kn-scenery-item" style="left:92%; font-size:0.9rem;">🌸</span>
           </div>
           <div class="kn-burnt-grass" id="knBurntGrass"></div>
-          ${activeWord ? `<button type="button" class="kn-word" data-wid="${activeWord.id}" style="left:${activeWord.xPercent}%; animation-duration:4.5s;">${activeWord.text}</button>` : ""}
+          ${visibleWords.map((w) => {
+            const elapsed = (now - w.spawnedAt) / 1000;
+            // Die Punkte-Münze fällt bewusst deutlich schneller (halbe Zeit) und kleiner als
+            // normale Wörter/das Herz — echte Herausforderung statt leichter Beute.
+            const duration = w.isCoinBonus ? FALL_DURATION / 2 : FALL_DURATION;
+            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; animation-duration:${duration}s; animation-delay:-${elapsed.toFixed(2)}s;">${w.text}</button>`;
+          }).join("")}
           <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 44" style="left:50%;">
             <!-- Fester Lafetten-Sockel (Räder + Stütze) — bleibt bewusst UNBEWEGT, damit klar
                  sichtbar ist: nur der Kanonenkörper selbst dreht sich, nicht die ganze Kanone. -->
@@ -4502,11 +5256,13 @@
             <rect x="26" y="24" width="8" height="10" fill="#4a3419" />
             <!-- Der GESAMTE Kanonenkörper (Verbindungsstück + Rohr mit Verjüngung + Zündschnur)
                  dreht sich als EIN starrer Körper um den Drehzapfen — kein "gummiartiges"
-                 Verbiegen nur am oberen Ende mehr. -->
+                 Verbiegen nur am oberen Ende mehr. Deutlich dickeres Rohr mit richtigem "Bauch"
+                 unten an der Basis (statt einer dünnen, gleichmäßigen Form, die wie ein
+                 Fahrradgestell wirkte) — verjüngt sich erst weiter oben zur Mündung. -->
             <g id="knCannonBarrel" style="transform-origin:30px 27px;">
-              <circle cx="30" cy="27" r="4" fill="#3a3a3a" />
-              <path d="M25 27 L26 4 Q26 1 30 1 Q34 1 34 4 L35 27 Z" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="0.5" />
-              <ellipse cx="30" cy="3" rx="4.2" ry="2.2" fill="#1f1f1f" />
+              <circle cx="30" cy="27" r="5" fill="#3a3a3a" />
+              <path d="M21 30 C18 24 19 10 25 5 Q26 2 30 2 Q34 2 35 5 C41 10 42 24 39 30 Z" fill="#3a3a3a" stroke="#242424" stroke-width="0.6" />
+              <ellipse cx="30" cy="3.5" rx="5" ry="2.4" fill="#1f1f1f" />
               <!-- Zündschnur -->
               <path d="M30 3 Q33 -1 31 -4" fill="none" stroke="#8a6a3a" stroke-width="1.3" stroke-linecap="round" />
               <circle cx="31" cy="-4.5" r="1.6" fill="#e8825f" />
@@ -4524,10 +5280,51 @@
       </div>`;
     renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanone);
     wireInlineFeatureFlagToggles(area, renderKanone);
+    startKanoneCloudTimer();
     area.querySelectorAll(".kn-word").forEach((btn) => {
       btn.addEventListener("click", (e) => shootKanoneWord(btn.dataset.wid, btn, e));
       btn.addEventListener("animationend", () => landKanoneWord(btn.dataset.wid, btn));
     });
+    // Frei-Schuss aus Spaß: tippt man auf eine LEERE Stelle im Himmel (nicht auf ein Wort oder
+    // eine Bonus-Münze), zielt die Kanone trotzdem dorthin und feuert eine Kugel mit kleiner
+    // Explosion ab — rein kosmetisch, ohne jede Auswirkung auf Punkte oder Leben.
+    const sky = document.getElementById("knSky");
+    if (sky) {
+      sky.addEventListener("click", (e) => {
+        if (e.target !== sky) return; // Wort/Münze/Kanone selbst haben eigene Handler, hier nicht doppelt feuern
+        const fakeTarget = { getBoundingClientRect: () => ({ left: e.clientX, top: e.clientY, width: 1, height: 1 }) };
+        aimKanoneAt(fakeTarget);
+        Core.sound.whistle(0.22);
+        const skyRect = sky.getBoundingClientRect();
+        const cannon = document.getElementById("knCannon");
+        const cannonRect = cannon.getBoundingClientRect();
+        const ball = document.createElement("span");
+        ball.className = "kn-cannonball";
+        ball.textContent = "☄️";
+        const startX = cannonRect.left - skyRect.left + cannonRect.width / 2;
+        const startY = cannonRect.top - skyRect.top;
+        ball.style.left = `${startX}px`;
+        ball.style.top = `${startY}px`;
+        sky.appendChild(ball);
+        const targetX = e.clientX - skyRect.left;
+        const targetY = e.clientY - skyRect.top;
+        const dx = targetX - startX, dy = targetY - startY;
+        const flightAngleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 45;
+        requestAnimationFrame(() => {
+          ball.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotate(${flightAngleDeg}deg)`;
+        });
+        setTimeout(() => {
+          ball.remove();
+          const fx = document.createElement("span");
+          fx.className = "kn-explosion-fx";
+          fx.textContent = "💥";
+          fx.style.left = `${targetX}px`;
+          fx.style.top = `${targetY}px`;
+          sky.appendChild(fx);
+          setTimeout(() => fx.remove(), 650);
+        }, 220);
+      });
+    }
     document.getElementById("knAutoLandToggle")?.addEventListener("change", (e) => {
       knAutoLandLast = e.target.checked;
       Backend.updateExtraProfileField("knAutoLandPref", knAutoLandLast);
@@ -4572,8 +5369,17 @@
     sky.appendChild(ball);
     const targetX = btnRect.left - skyRect.left + btnRect.width / 2;
     const targetY = btnRect.top - skyRect.top + btnRect.height / 2;
+    const startX = cannonRect.left - skyRect.left + cannonRect.width / 2;
+    const startY = cannonRect.top - skyRect.top;
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    // Das ☄️-Symbol zeigt von Natur aus mit dem "Kopf" nach oben rechts und dem Schweif nach
+    // unten links (ca. -45°). Damit der Schweif immer sichtbar aus Richtung der Kanone kommt (wo
+    // die Kugel ja tatsächlich herkommt), statt einfach fest seitlich zu hängen, wird die Drehung
+    // an die TATSÄCHLICHE Flugrichtung angepasst — die Kugel "zeigt" dorthin, wo sie hinfliegt.
+    const flightAngleDeg = (Math.atan2(dy, dx) * 180) / Math.PI + 45;
     requestAnimationFrame(() => {
-      ball.style.transform = `translate(${targetX - (cannonRect.left - skyRect.left + cannonRect.width / 2)}px, ${targetY - (cannonRect.top - skyRect.top)}px)`;
+      ball.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotate(${flightAngleDeg}deg)`;
     });
     setTimeout(() => { ball.remove(); onImpact(); }, 220);
   }
@@ -4586,11 +5392,35 @@
     aimKanoneAt(btn);
     const fb = document.getElementById("knFeedback");
     fireKanoneBall(btn, () => {
+      if (word.isBonus) {
+        if (word.isCoinBonus) {
+          // Punkte-Münze getroffen: extra Punkte statt Herz — eigener, "reicherer" Sound zur
+          // Unterscheidung vom Herz-Bonus.
+          knScore += 3;
+          Core.sound.correct();
+          spawnKanoneExplosion(btn);
+          btn.classList.add("kn-word-dissolve");
+          fb.textContent = "🪙 +3 Bonus-Punkte!";
+          checkKanoneRoundDone();
+          return;
+        }
+        // Bonus-Sprechblase getroffen: Herz zurück (bis maximal 3), eigener, positiver Sound und
+        // Rückmeldung — zählt NICHT als Treffer/Fehlschuss bei der eigentlichen Aufgabe.
+        knLives = Math.min(3, knLives + 1);
+        Core.sound.correct();
+        spawnKanoneExplosion(btn);
+        btn.classList.add("kn-word-dissolve");
+        fb.textContent = `❤️ Herz aufgefüllt! (${knLives} ❤️)`;
+        checkKanoneRoundDone();
+        return;
+      }
       if (word.isCorrect) {
         // Versehentlich die richtige Antwort getroffen: ERST Explosion+Feuer (wie beim echten
         // Treffer), DANN erst — leicht verzögert — der zweisilbige Fehler-Sound. So merkt man
         // sofort "getroffen", und kurz danach "das war aber falsch".
+        word.wasWronglyShot = true;
         knLives -= 1;
+        knMistakes += 1;
         Core.sound.explosion();
         spawnKanoneExplosion(btn);
         btn.classList.add("kn-word-wrong-hit");
@@ -4628,6 +5458,14 @@
     if (!word || word.resolved) return;
     word.resolved = true;
     const fb = document.getElementById("knFeedback");
+    if (word.isBonus) {
+      // Bonus-Sprechblase/Münze einfach ungenutzt durchgelassen — keine Strafe, sie war
+      // schließlich freiwillig, kein Fehler, nur eine verpasste Chance.
+      if (btn) btn.style.opacity = "0.4";
+      fb.textContent = word.isCoinBonus ? "🪙 Münze verpasst — kein Problem, war nur freiwillig." : "❤️ Bonus verpasst — kein Problem, war nur freiwillig.";
+      checkKanoneRoundDone();
+      return;
+    }
     if (word.isCorrect) {
       // Richtige Antwort unten angekommen, ohne getroffen zu werden — genau richtig gemacht,
       // wird grün markiert als positive Rückmeldung.
@@ -4640,30 +5478,56 @@
       // das ist schließlich der schlimmste Fall im Spiel, ein Herzverlust.
       if (btn) btn.classList.add("kn-word-landed-bad");
       knLives -= 1;
+      knMistakes += 1;
       Core.sound.zonk();
       fb.textContent = `⚠️ Falsche Antwort durchgekommen! (${knLives} ❤️ übrig)`;
-      burnKanoneGrass();
+      burnKanoneGrass(word.xPercent);
     }
     checkKanoneRoundDone();
   }
-  // Jede durchgekommene falsche Antwort "verbrennt" ein weiteres Stück Rasen — mehrere
-  // Flammen-Embleme mit unterschiedlicher Transparenz und teils gespiegelter Ausrichtung, damit es
-  // nicht wie eine einzelne, identisch wiederholte Kachel wirkt, sondern wie echtes, wachsendes
-  // Feuer. Bildlich: schlechtes Deutsch "verbrennt" nach und nach die kleine Spielwelt.
-  function burnKanoneGrass() {
+  // Jede durchgekommene falsche Antwort "verbrennt" die Stelle, an der sie gelandet ist — 3–4
+  // Flammen um genau diese X-Position herum, jede mit eigener, KONTINUIERLICHER Flacker-Animation
+  // (Größe, Transparenz, leichte seitliche Verschiebung — nicht nur einmalig zufällig, sondern
+  // laufend), dazu eine dauerhafte, rötliche Verbrennungs-Färbung genau an dieser Stelle im Boden.
+  function burnKanoneGrass(xPercent) {
     const grass = document.getElementById("knBurntGrass");
     if (!grass) return;
-    const flameCount = 2 + Math.floor(Math.random() * 2); // 2–3 neue Flammen pro Treffer
+    const centerX = typeof xPercent === "number" ? xPercent : 50;
+    // Verbrannte Boden-Färbung genau an der Einschlagsstelle — bleibt dauerhaft liegen.
+    const scorch = document.createElement("span");
+    scorch.className = "kn-scorch-mark";
+    scorch.style.left = `${centerX}%`;
+    grass.appendChild(scorch);
+    const flameCount = 3 + Math.floor(Math.random() * 2); // 3–4 Flammen um die Einschlagsstelle
     for (let i = 0; i < flameCount; i++) {
       const flame = document.createElement("span");
       flame.className = "kn-burnt-grass-flame";
       flame.textContent = "🔥";
-      flame.style.opacity = (0.55 + Math.random() * 0.45).toFixed(2);
-      flame.style.transform = `scale(${(0.8 + Math.random() * 0.5).toFixed(2)}) ${Math.random() < 0.5 ? "scaleX(-1)" : ""}`;
+      // Mehrere Flammen NEBENEINANDER um die X-Position der Einschlagsstelle verteilt, nicht
+      // exakt übereinander — jede mit eigener, zufälliger Verzögerung/Dauer, damit sie NICHT
+      // synchron flackern (das würde künstlich wirken).
+      const offset = (i - (flameCount - 1) / 2) * (5 + Math.random() * 3);
+      flame.style.left = `${centerX + offset}%`;
+      flame.style.setProperty("--flame-base-scale", (0.85 + Math.random() * 0.4).toFixed(2));
+      flame.style.animationDuration = `${(0.5 + Math.random() * 0.4).toFixed(2)}s`;
+      flame.style.animationDelay = `-${(Math.random() * 0.5).toFixed(2)}s`;
+      if (Math.random() < 0.5) flame.style.setProperty("--flame-mirror", "-1");
       grass.appendChild(flame);
     }
   }
   function checkKanoneRoundDone() {
+    // Ist die richtige Antwort bereits SICHER gelandet (durchgekommen, nicht versehentlich
+    // abgeschossen), macht es keinen Sinn mehr, noch auf die übrigen falschen Antworten zu
+    // warten — die Aufgabe ist ja schon bewiesen gelöst. Die Runde endet dann sofort, statt
+    // sinnlos weiterzulaufen.
+    const correctWord = knActiveWords.find((w) => w.isCorrect);
+    const correctSafelyLanded = correctWord && correctWord.resolved && !correctWord.wasWronglyShot;
+    if (correctSafelyLanded) {
+      knRoundActive = false;
+      if (knLives <= 0) { setTimeout(renderKanone, 900); return; }
+      setTimeout(() => { newKanoneRound(); renderKanone(); }, 900);
+      return;
+    }
     if (!knActiveWords.every((w) => w.resolved)) {
       // Runde noch nicht komplett — das NÄCHSTE Wort muss erscheinen (bei nur einem gleichzeitig
       // sichtbaren Wort passiert das sonst nie von selbst, das Spiel würde hier für immer hängen
@@ -4771,11 +5635,22 @@
       }
     }
     const area = document.getElementById("kanoneArea");
+    // Echte Bewertung statt nur der reinen Trefferzahl — Genauigkeit aus Treffern vs. Fehlern
+    // berechnet, mit einer passenden Einstufung von "Übung macht den Meister" bis "Scharfschütze".
+    const totalAttempts = knScore + knMistakes;
+    const accuracy = totalAttempts > 0 ? Math.round((knScore / totalAttempts) * 100) : 0;
+    let rating;
+    if (knScore === 0) rating = "🌱 Erster Versuch — nächstes Mal klappt's besser!";
+    else if (accuracy >= 90) rating = "🎯 Scharfschütze:in! Fast alles getroffen.";
+    else if (accuracy >= 70) rating = "💪 Richtig stark — sehr gute Trefferquote!";
+    else if (accuracy >= 50) rating = "👍 Solide Runde — schon über die Hälfte getroffen.";
+    else rating = "🌱 Übung macht den Meister — weiter dran bleiben!";
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">🎯</p>
         <h2 style="margin:8px 0;">Runde beendet!</h2>
-        <p class="empty-note">Du hast <strong>${knScore}</strong> falsche Antworten korrekt abgeschossen.</p>
+        <p class="empty-note">Du hast <strong>${knScore}</strong> falsche Antworten korrekt abgeschossen${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
+        <p style="font-weight:700; margin-top:8px;">${rating}</p>
         <button type="button" class="btn btn-coffee" id="knRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>`;
     document.getElementById("knRetryBtn").addEventListener("click", () => { newKanoneGame(); renderKanone(); });
@@ -4966,7 +5841,7 @@
           ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip wb-diff-btn ${wbDifficulty === key ? "selected" : ""}" data-wb-diff="${key}">${label}</button>`).join("")}
         </div>
         <h3 style="margin-bottom:10px;">${s.clue}</h3>
-        <div class="wb-slot-row" style="flex-wrap:wrap; ${s.slots.length > 8 ? `--wb-slot-w: ${Math.max(26, Math.floor(300 / Math.min(s.slots.length, 12)))}px; --wb-font-size: ${Math.max(0.85, 1.3 - (s.slots.length - 8) * 0.05)}rem;` : ""}">
+        <div class="wb-slot-row" id="wbSlotRow" style="flex-wrap:wrap; ${s.slots.length > 6 ? `--wb-slot-w: ${Math.max(24, Math.floor(260 / Math.min(s.slots.length, 12)))}px; --wb-font-size: ${Math.max(0.8, 1.3 - (s.slots.length - 6) * 0.06)}rem;` : ""}">
           ${(() => {
             // In Wort-Gruppen aufteilen (an Leerzeichen), damit ein Zeilenumbruch NUR zwischen
             // Wörtern passieren kann, nie mitten in einem Wort — jede Gruppe bleibt intern
@@ -4994,6 +5869,12 @@
       </div>
     `;
     renderMiniChallengeBarCached("wortbaustelle", "wortbaustelle", "wbChallengeBar", area, renderWordbuild);
+    // Bei einem Wort, das breiter als der verfügbare Platz ist, würde "justify-content:center" den
+    // Anfang (z. B. den ersten Buchstaben) standardmäßig außerhalb des sichtbaren Bereichs
+    // zentrieren, ohne dass ersichtlich ist, dass man nach links scrollen könnte — sieht dann wie
+    // ein abgeschnittenes, verändertes Wort aus. Explizit auf den Anfang zurücksetzen.
+    const slotRow = document.getElementById("wbSlotRow");
+    if (slotRow) slotRow.scrollLeft = 0;
     area.querySelectorAll(".wb-diff-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (btn.dataset.wbDiff === wbDifficulty) return;
@@ -6852,7 +7733,11 @@
   let cwState = null;
   let cwSession = null; // { round, total, correctCount, allWordsPlayed } -- mehrere Rätsel pro Sitzung, EINE Sammel-Nachricht am Ende
   function newCrosswordSession() {
-    cwSession = { round: 0, total: 4, allWordsPlayed: [] };
+    // Zufälliger Startpunkt statt immer index 0 — sonst begann JEDE neue Sitzung garantiert mit
+    // demselben allerersten Rätsel im Pool, egal wie groß der Pool tatsächlich ist. Die folgenden
+    // Runden zählen von hier aus normal weiter (currentIdx + 1), sodass man innerhalb einer
+    // Sitzung trotzdem verschiedene, nicht wiederholte Rätsel bekommt.
+    cwSession = { round: 0, total: 4, allWordsPlayed: [], startIdx: Math.floor(Math.random() * CROSSWORDS.length) };
   }
   function newCrossword(index) {
     if (!cwSession) newCrosswordSession();
@@ -6891,13 +7776,13 @@
       </div>
     `;
     document.getElementById("cwPlayAgainBtn").addEventListener("click", () => {
-      newCrosswordSession(); newCrossword(0); renderCrossword();
+      newCrosswordSession(); newCrossword(cwSession.startIdx); renderCrossword();
     });
   }
   function renderCrossword() {
     const area = document.getElementById("crosswordArea");
     if (!cwSession) { renderCrosswordResults(); return; }
-    if (!cwState) newCrossword(0);
+    if (!cwState) newCrossword(cwSession.startIdx);
     const { puzzle } = cwState;
     if (!cwState.activeDir) cwState.activeDir = "across";
     area.innerHTML = `
@@ -7042,7 +7927,7 @@
     });
   }
   document.querySelector('#learnSubnav [data-sub="sub-crossword"]')?.addEventListener("click", () => {
-    if (!cwState) { newCrosswordSession(); newCrossword(0); }
+    if (!cwState) { newCrosswordSession(); newCrossword(cwSession.startIdx); }
     renderCrossword();
   });
 
@@ -8186,8 +9071,14 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div class="figure-case">
             ${COLLECTIBLE_FIGURES.map((fig) => {
               const unlocked = isFigureUnlocked(fig, profile);
-              return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" ${unlocked ? `data-figure-detail="${fig.id}"` : ""} title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + unlockShortText(fig.unlock)}">
+              const progress = unlocked ? 1 : unlockProgressFraction(fig.unlock, profile);
+              // Bei gesperrten Figuren: der Fuchs "füllt sich" von unten nach oben, proportional
+              // zum Fortschritt — eine graue Abdeckung von oben zeigt genau, wie viel noch fehlt,
+              // statt dass eine gesperrte Figur einfach komplett gleich (nur mit Schloss) aussieht.
+              const missingPercent = Math.round((1 - progress) * 100);
+              return `<div class="figure-slot ${unlocked ? "" : "figure-locked"}" ${unlocked ? `data-figure-detail="${fig.id}"` : ""} title="${unlocked ? fig.name + " — " + fig.desc : "Gesperrt — " + unlockShortText(fig.unlock) + (progress > 0 ? ` (${Math.round(progress * 100)}% geschafft)` : "")}">
                 <img src="${fig.img}" alt="${fig.name}" loading="lazy" />
+                ${!unlocked && missingPercent > 0 && missingPercent < 100 ? `<div class="figure-fill-mask" style="height:${missingPercent}%;"></div>` : ""}
                 ${unlocked ? "" : '<span class="figure-lock-icon">🔒</span>'}
               </div>`;
             }).join("")}
@@ -8314,6 +9205,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         <button type="button" class="emoji-toggle-link" id="previewProfileLink">👁️ Vorschau: So sehen andere dein Profil</button>
         ${showcaseSongStripHtml(profile)}
+        ${(extra.previousAvatarUrl || extra.previousAvatarEmoji) ? `<button type="button" class="emoji-toggle-link" id="restoreAvatarLink">↩️ Voriges Profilbild wiederherstellen</button>` : ""}
         ${(profile.gallery || []).length ? `<button type="button" class="emoji-toggle-link" id="galleryAvatarToggleLink">🖼️ Foto aus meiner Galerie wählen</button>` : ""}
         <div class="emoji-picker-row" id="galleryAvatarPickerRow" style="display:none;">
           ${(profile.gallery || []).map((url) => `<button type="button" class="gallery-avatar-pick-btn" data-gallery-url="${url}" style="background-image:url('${url}');"></button>`).join("")}
@@ -8662,6 +9554,10 @@ An einem Morgen lief ein kleiner Fuchs los…
         });
       });
     }
+    document.getElementById("restoreAvatarLink")?.addEventListener("click", async () => {
+      const ok = await Backend.restorePreviousAvatar();
+      if (ok) renderAccount();
+    });
     document.getElementById("avatarInput").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -8874,6 +9770,9 @@ An einem Morgen lief ein kleiner Fuchs los…
   /* ===== Musik-Player: Admin-verwaltete Playlist mit Transportsteuerung & Favoriten ===== */
   let musicPlaylist = [];
   let musicCoverCollapsed = false; // Einklapp-Zustand: Cover-Fenster ausblenden, nur Titel bleibt sichtbar, Ton läuft weiter
+  // Kompakte, aufklappbare Schnellliste DIREKT im Player selbst (nur Titel, antippen startet
+  // sofort) — getrennt von der vollständigen Verwaltungsliste weiter unten mit all ihren Knöpfen.
+  let musicQuickListOpen = false;
   let musicFavIds = [];
   let musicCurrentIndex = -1;
   let musicIsPlaying = false;
@@ -8898,12 +9797,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     { title: "LEA x LINDA — Signal", url: "https://www.youtube.com/watch?v=a2utR5VcMGI" },
     { title: "Grossstadtgeflüster — Ich muss gar nix", url: "https://www.youtube.com/watch?v=7inaAem83FY" },
     { title: "Vanessa Mai — 747", url: "https://www.youtube.com/watch?v=GVHXuKkcYGo" },
-    { title: "Xander Fox — Du", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/Du.mp3" },
-    { title: "Xander Fox — Nah (2011)", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/Nah%20(2011).mp3" },
-    { title: "Xander Fox — Nur Mit Mir", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/Nur%20Mit%20Mir%20(Demo%201)-3.mp3" },
-    { title: "Xander Fox — A Lovers Fairytale", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/One%20Day%20In%20Rome%20-%20A%20Lovers%20Fairytale.mp3" },
-    { title: "Xander Fox — Ein Leben Lang", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/One%20Day%20In%20Rome%20-%20Ein%20Leben%20Lang.mp3" },
-    { title: "Xander Fox — Mein Stiller Schmerz", url: "https://raw.githubusercontent.com/XanderFoxy/Deutsch-Mit-Xander/main/music/promised-eden_mein-stiller-schmerz.mp3" },
+    { title: "Xander Fox — Du", url: "music/Du.mp3" },
+    { title: "Xander Fox — Nah (2011)", url: "music/Nah%20(2011).mp3" },
+    { title: "Xander Fox — Nur Mit Mir", url: "music/Nur%20Mit%20Mir%20(Demo%201)-3.mp3" },
+    { title: "Xander Fox — A Lovers Fairytale", url: "music/One%20Day%20In%20Rome%20-%20A%20Lovers%20Fairytale.mp3" },
+    { title: "Xander Fox — Ein Leben Lang", url: "music/One%20Day%20In%20Rome%20-%20Ein%20Leben%20Lang.mp3" },
+    { title: "Xander Fox — Mein Stiller Schmerz", url: "music/promised-eden_mein-stiller-schmerz.mp3" },
     { title: "Second Decay — I Hate Berlin", url: "https://www.youtube.com/watch?v=5fWv1wmsVgs" },
   ];
   let ytMusicPlayer = null;
@@ -9104,13 +10003,24 @@ An einem Morgen lief ein kleiner Fuchs los…
     const song = musicPlaylist[playlistIdx];
     if (!song) return;
     musicCurrentIndex = playlistIdx;
+    // Zuletzt gespielten Song merken (Titel + Adresse, nicht nur der Index — der Index kann sich
+    // je nach Playlist-Reihenfolge ändern), damit der Player beim nächsten Öffnen automatisch
+    // wieder damit vorgeladen ist, statt leer zu starten.
+    if (Backend.currentUser()) {
+      Backend.updateExtraProfileField("lastPlayedSong", { title: song.title, url: song.url });
+    }
     const audioEl = document.getElementById("musicAudioNative");
     if (Backend.isDirectAudioUrl(song.url)) {
       if (ytMusicPlayer && ytMusicPlayer.stopVideo) { try { ytMusicPlayer.stopVideo(); } catch (e) {} }
       audioEl.src = song.url;
       audioEl.play().catch(() => {});
       musicIsPlaying = true;
-      renderMusicPlayerBar();
+      // WICHTIG: KEIN renderMusicPlayerBar() hier direkt aufrufen — renderMusicSection() weiter
+      // unten baut den gesamten Bereich per area.innerHTML neu auf UND ruft danach selbst
+      // renderMusicPlayerBar() auf. Ein früherer, direkter Aufruf hier würde das Video-/Cover-
+      // Element in den (kurz danach überschriebenen) Bereich zurückverschieben, wo es dann beim
+      // area.innerHTML-Neuaufbau spurlos verschwindet — genau das ließ MP3-Symbol/Cover nie
+      // erscheinen.
     } else {
       audioEl.pause();
       const videoId = extractYouTubeId(song.url);
@@ -9123,12 +10033,21 @@ An einem Morgen lief ein kleiner Fuchs los…
             // später sichtbar vergrößert. Die eigentliche kleine Vorschau-Darstellung übernimmt
             // ausschließlich das umgebende CSS (.music-video-square).
             height: "200", width: "200", videoId,
+            playerVars: { origin: window.location.origin },
             events: {
-              onReady: (e) => { e.target.playVideo(); musicIsPlaying = true; renderMusicPlayerBar(); },
+              onReady: (e) => { e.target.playVideo(); musicIsPlaying = true; updateMusicPlayPauseIconOnly(); },
               onStateChange: (e) => {
                 if (window.YT && e.data === YT.PlayerState.ENDED) playNextMusic();
                 if (window.YT && e.data === YT.PlayerState.PLAYING) { musicIsPlaying = true; updateMusicPlayPauseIconOnly(); }
                 if (window.YT && e.data === YT.PlayerState.PAUSED) { musicIsPlaying = false; updateMusicPlayPauseIconOnly(); }
+              },
+              // WICHTIG: bisher wurden YouTube-Fehler (Video nicht verfügbar, Einbetten vom
+              // Rechteinhaber gesperrt, ungültige ID …) gar nicht abgefangen — es passierte
+              // einfach nichts sichtbar, ohne jeden Hinweis, was schiefging. Jetzt zeigt eine
+              // klare Meldung, WARUM es nicht abspielt, statt stiller Funkstille.
+              onError: (e) => {
+                const reasons = { 2: "Die Video-ID ist ungültig.", 5: "Das Video kann in diesem Player nicht abgespielt werden.", 100: "Dieses Video wurde entfernt oder ist privat.", 101: "Der/die Ersteller:in hat das Einbetten dieses Videos gesperrt.", 150: "Der/die Ersteller:in hat das Einbetten dieses Videos gesperrt." };
+                showToast(`⚠️ YouTube-Video kann nicht abgespielt werden: ${reasons[e.data] || "Unbekannter Fehler (Code " + e.data + ")"}`);
               },
             },
           });
@@ -9136,7 +10055,9 @@ An einem Morgen lief ein kleiner Fuchs los…
           ytMusicPlayer.loadVideoById(videoId);
           musicIsPlaying = true;
         }
-        renderMusicPlayerBar();
+        // Auch hier KEIN direkter renderMusicPlayerBar()-Aufruf mehr — aus demselben Grund wie
+        // beim MP3-Zweig oben: renderMusicSection() (unten) baut den Bereich neu auf und ruft
+        // danach selbst renderMusicPlayerBar() korrekt auf.
       });
     }
     renderMusicSection();
@@ -9179,21 +10100,21 @@ An einem Morgen lief ein kleiner Fuchs los…
       const videoSquareRescue = document.getElementById("musicVideoSquare");
       if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
       const song = musicPlaylist[musicCurrentIndex];
-      // Der Aufklapp-Knopf erscheint nur, wenn es überhaupt etwas zum Anzeigen gibt — ein
-      // YouTube-Video (dann zeigt das Fenster das Video) oder ein hochgeladenes Cover-Bild. Bei
-      // einem reinen Audio-Link (z. B. direkte MP3-Datei) ohne Cover gibt es nichts zu zeigen,
-      // also bleibt der Knopf dann ganz weg statt sinnlos ins Leere zu klappen.
-      const hasVisualContent = song && (Boolean(song.cover_url) || !Backend.isDirectAudioUrl(song.url));
+      // Der Aufklapp-Knopf erscheint bei JEDEM Song — auch reine MP3-Links ohne eigenes Cover
+      // zeigen jetzt ein animiertes Musik-Symbol statt einer leeren Fläche, damit dort nie mehr
+      // "nichts" zu sehen ist.
+      const hasVisualContent = Boolean(song);
       bar.innerHTML = song ? `
         <div id="musicVideoSquareSlot" style="flex-shrink:0; ${musicCoverCollapsed ? "display:none;" : ""}"></div>
         <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
         <button type="button" class="player-panel-btn" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
         <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
         <span id="musicDigitalTime" class="player-digital-time">--:-- / --:--</span>
-        <span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" style="display:flex; align-items:center; gap:1.5px; height:20px; flex-shrink:0;">
-          ${Array.from({ length: 9 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${i * 0.09}s;"></span>`).join("")}
+        <span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" aria-hidden="true">
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.13).toFixed(2)}s;"></span>`).join("")}
         </span>
         <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
+        <button type="button" class="emoji-toggle-link" id="musicQuickListToggle" style="font-size:0.75rem; flex-shrink:0;" title="Song-Liste ein-/ausblenden">☰</button>
         ${hasVisualContent ? `<button type="button" class="emoji-toggle-link" id="musicExpandToggle" style="font-size:0.68rem; flex-shrink:0;" title="${musicCoverCollapsed ? "Cover wieder einblenden" : "Nur Titel anzeigen, Cover ausblenden"}">${musicCoverCollapsed ? "▸" : "▾"}</button>` : ""}
       ` : `<span class="empty-note">Kein Song ausgewählt — wähl unten einen aus der Liste.</span>`;
       // Das quadratische Video-Fenster physisch in die gerade sichtbare Leiste verschieben (Musik-
@@ -9208,6 +10129,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         slot.appendChild(videoSquare);
         videoSquare.style.display = "";
         let coverLayer = videoSquare.querySelector(".music-cover-layer");
+        let mp3Icon = videoSquare.querySelector(".music-mp3-icon");
         if (song.cover_url) {
           if (!coverLayer) {
             coverLayer = document.createElement("img");
@@ -9216,17 +10138,54 @@ An einem Morgen lief ein kleiner Fuchs los…
           }
           coverLayer.src = song.cover_url;
           coverLayer.style.display = "";
-        } else if (coverLayer) {
-          coverLayer.style.display = "none";
+          if (mp3Icon) mp3Icon.style.display = "none";
+        } else if (Backend.isDirectAudioUrl(song.url)) {
+          // MP3 (oder ähnliche direkte Audiodatei) ohne eigenes Cover — statt einer leeren
+          // Fläche ein animiertes Musik-Symbol zeigen, damit dort immer etwas zu sehen ist.
+          if (coverLayer) coverLayer.style.display = "none";
+          if (!mp3Icon) {
+            mp3Icon = document.createElement("span");
+            mp3Icon.className = "music-mp3-icon";
+            mp3Icon.textContent = "🎵";
+            videoSquare.appendChild(mp3Icon);
+          }
+          mp3Icon.style.display = "";
+          mp3Icon.classList.toggle("music-mp3-icon-playing", musicIsPlaying);
+        } else {
+          if (coverLayer) coverLayer.style.display = "none";
+          if (mp3Icon) mp3Icon.style.display = "none";
         }
       }
       document.getElementById("musicPrevBtn")?.addEventListener("click", playPrevMusic);
       document.getElementById("musicNextBtn")?.addEventListener("click", playNextMusic);
       document.getElementById("musicPlayPauseBtn")?.addEventListener("click", toggleMusicPlayPause);
       document.getElementById("musicExpandToggle")?.addEventListener("click", () => { musicCoverCollapsed = !musicCoverCollapsed; renderMusicPlayerBar(); });
+      document.getElementById("musicQuickListToggle")?.addEventListener("click", () => {
+        musicQuickListOpen = !musicQuickListOpen;
+        renderMusicQuickList();
+      });
+      renderMusicQuickList();
     }
     renderMusicFloatingBar();
     applyPlayerTemplateClass();
+  }
+  // Kompakte Schnellliste DIREKT im Player — nur Titel, antippen startet sofort. Getrennt von
+  // der vollständigen Verwaltungsliste weiter unten (die hat Löschen/Cover/Favorit-Knöpfe usw.,
+  // was hier bewusst weggelassen wird, um es schnell und übersichtlich zu halten).
+  function renderMusicQuickList() {
+    const list = document.getElementById("musicQuickList");
+    if (!list) return;
+    list.style.display = musicQuickListOpen ? "block" : "none";
+    if (!musicQuickListOpen) return;
+    const visible = musicVisiblePlaylist();
+    list.innerHTML = visible.length ? visible.map((s) => {
+      const idx = musicPlaylist.findIndex((x) => x.id === s.id);
+      const isCurrent = idx === musicCurrentIndex;
+      return `<button type="button" class="glass-quick-list-item ${isCurrent ? "active" : ""}" data-quick-play="${idx}">${isCurrent && musicIsPlaying ? "🔊" : "🎵"} ${s.title}</button>`;
+    }).join("") : `<p class="empty-note" style="padding:8px;">Noch keine Songs in der Liste.</p>`;
+    list.querySelectorAll("[data-quick-play]").forEach((btn) => {
+      btn.addEventListener("click", () => playMusicIndex(Number(btn.dataset.quickPlay)));
+    });
   }
   // Schwebende Leiste, sichtbar auf der GANZEN Seite (nicht nur im Musik-Reiter) — erscheint erst,
   // sobald wirklich ein Song ausgewählt wurde, damit sie nicht unnötig Platz wegnimmt, wenn noch
@@ -9293,6 +10252,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   async function renderMusicSection() {
     const area = document.getElementById("musicArea");
     if (!area) return;
+    // Dieselbe Absicherung wie in renderMusicPlayerBar(): das echte Video-/Cover-Element muss VOR
+    // dem Neusetzen von area.innerHTML "in Sicherheit" gebracht werden — sonst würde es beim
+    // Überschreiben mitgelöscht, falls es zu diesem Zeitpunkt gerade innerhalb von area liegt.
+    const videoSquareRescue = document.getElementById("musicVideoSquare");
+    if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
     const user = Backend.currentUser();
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
     const isMine = musicPlaylistMode === "mine";
@@ -9300,6 +10264,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     const canManage = isMine ? Boolean(user) : (isFriendView ? false : isAdmin);
     const ownerIdForActions = isMine && user ? user.id : null;
     const list = musicVisiblePlaylist();
+    // Player OHNE Klick vorladen: bevorzugt den zuletzt gespielten Song (falls er noch in DIESER
+    // Playlist existiert), sonst den ersten Song der Liste — NUR den Index setzen, NICHT
+    // tatsächlich abspielen, damit man beim Öffnen nicht ungefragt Musik hört.
+    if (musicCurrentIndex === -1 && list.length) {
+      const lastPlayed = Backend.currentProfile()?.extraProfileData?.lastPlayedSong;
+      const matchIdx = lastPlayed ? list.findIndex((s) => s.url === lastPlayed.url) : -1;
+      musicCurrentIndex = matchIdx >= 0 ? matchIdx : 0;
+    }
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">${isFriendView ? `🎵 ${musicViewingFriendName}s Playlist — hol dir Songs, die dir gefallen, direkt in deine eigene Playlist.` : isMine ? "Deine eigene Playlist — trag deine Lieblingssongs ein, andere können sie über dein Profil entdecken." : "Eine gemeinsame Playlist zum Deutschlernen — Songs werden von Alex ausgewählt."} Herz antippen, um Favoriten zu markieren.</p>
       <div class="order-toggle" style="margin-bottom:12px; flex-wrap:wrap;">
@@ -9314,6 +10286,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>` : ""}
       <div class="question-card" style="position:sticky; top:0; z-index:5; margin-bottom:14px;">
         <div id="musicPlayerBarInner" style="display:flex; align-items:center; gap:8px;"></div>
+        <div class="glass-quick-list" id="musicQuickList" style="display:${musicQuickListOpen ? "block" : "none"};"></div>
         <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
           ${Object.entries(PLAYER_TEMPLATES).map(([key, t]) => `<button type="button" class="order-pill player-tpl-pick" data-tpl="${key}" aria-selected="${getPlayerTemplate() === key}" title="${t.desc}" style="font-size:0.78rem; padding:9px 12px; min-height:38px;">${t.label}</button>`).join("")}
         </div>
@@ -10127,12 +11100,14 @@ An einem Morgen lief ein kleiner Fuchs los…
               }).join("") })
           : "",
         Core.el("div", { html: renderExtendedSteckbrief(p, "modal-" + p.id) }),
-        Core.el("div", { class: "trophy-case trophy-case-compact", id: "modalTrophyCase", style: "justify-content:center; margin-top:10px;",
-          html: trophies.map((t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">🏆</span><span>${t}</span></button>`).join("")
-              + (p.badges && p.badges.length ? p.badges.slice(0, 3).map((b) => `<div class="trophy-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : "")
-              + (trophyOverflow > 0 ? `<button type="button" class="trophy-chip trophy-chip-more" id="modalTrophyMoreBtn">+${trophyOverflow} mehr anzeigen</button>` : "") }),
-        trophyOverflow > 0 ? Core.el("div", { class: "trophy-more-list", id: "modalTrophyMoreList", style: "display:none;",
-          html: sortedTrophies.slice(4).map((t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">🏆</span><span>${t}</span></button>`).join("") }) : "",
+        // WICHTIG: nutzt jetzt dieselbe renderTrophyCase()-Funktion wie das eigene Profil, statt
+        // einer eigenen, abweichenden Inline-Struktur — vorher fehlte im fremden Profil sowohl die
+        // "Vitrine"-Überschrift als auch die kompakte "X Orden / Y Pokale"-Zusammenfassung, die im
+        // eigenen Profil sichtbar ist. Jetzt an beiden Stellen konsistent.
+        trophies.length ? Core.el("div", { class: "quiz-actions", style: "justify-content:center; gap:18px; margin-top:10px;",
+          html: `<span class="empty-note" style="font-size:0.95rem;">🎖️ ${trophyCounts({ trophies }).orden} Orden</span>
+                 <span class="empty-note" style="font-size:0.95rem;">🏆 ${trophyCounts({ trophies }).pokale} Pokale</span>` }) : "",
+        Core.el("div", { html: renderTrophyCase({ trophies }, true) }),
         COLLECTIBLE_FIGURES.some((fig) => isFigureUnlocked(fig, p))
           ? Core.el("div", { html: '<p class="eyebrow" style="text-align:center; margin-top:12px;">🦊 Sammelfiguren</p>' })
           : "",
@@ -10173,7 +11148,13 @@ An einem Morgen lief ein kleiner Fuchs los…
           html: `
             <p class="eyebrow">👣 SPUREN HINTERLASSEN</p>
             ${profileNotes.length ? `<div class="breakdown-list" style="margin-bottom:10px;">
-              ${profileNotes.map((n) => `<div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:2px;"><strong style="font-size:0.82rem;">${n.author_name}</strong><span class="empty-note">${n.message}</span></div>`).join("")}
+              ${profileNotes.map((n) => `<div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:2px;">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                  <strong style="font-size:0.82rem;">${n.author_name}</strong>
+                  ${me && n.author_id === me.id ? `<button type="button" class="emoji-toggle-link" data-delete-note="${n.id}" style="font-size:0.68rem; color:var(--coral-400,#e85a5a);">🗑️ Löschen</button>` : ""}
+                </div>
+                <span class="empty-note">${n.message}</span>
+              </div>`).join("")}
             </div>` : `<p class="empty-note" style="margin-bottom:10px;">Noch keine Spuren — sei die/der Erste!</p>`}
             ${!isMe && me ? `
               <textarea id="profileNoteInput" class="guestbook-form-textarea" maxlength="200" placeholder="Hinterlasse einen Gruß auf ${p.name}s Profil…"></textarea>
@@ -10290,14 +11271,24 @@ An einem Morgen lief ein kleiner Fuchs los…
     wireSteckbriefPager(box, () => openProfileModal(id, box));
     wireMusicPlayer(box);
     wireProfileTransportStrip(box, p);
+    wireTrophyCaseToggle(box);
     box.querySelectorAll("[data-figure-detail]").forEach((el) => {
       el.addEventListener("click", () => openFigureDetailModal(el.dataset.figureDetail));
     });
     box.querySelectorAll("[data-sympathy-level]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         try {
-          await Backend.setSympathyLevel(p.id, btn.dataset.sympathyLevel);
-          showToast("💛 Gespeichert — ganz privat, nur du siehst deine Auswahl.");
+          // Antippt man das Herz, das schon aktiv ist (volle Deckkraft), wird die Angabe
+          // komplett zurückgenommen, statt sie erneut auf denselben Wert zu setzen — so kann
+          // man eine einmal vergebene Sympathie-Stufe auch wieder entfernen.
+          const alreadyActive = btn.style.opacity === "1";
+          if (alreadyActive) {
+            await Backend.removeSympathyLevel(p.id);
+            showToast("💛 Zurückgenommen — keine Angabe mehr gespeichert.");
+          } else {
+            await Backend.setSympathyLevel(p.id, btn.dataset.sympathyLevel);
+            showToast("💛 Gespeichert — ganz privat, nur du siehst deine Auswahl.");
+          }
           openProfileModal(id, box);
         } catch (err) { alert(err.message || "Konnte nicht gespeichert werden."); }
       });
@@ -10307,6 +11298,15 @@ An einem Morgen lief ein kleiner Fuchs los…
         await Backend.addProfileNote(p.id, document.getElementById("profileNoteInput").value);
         openProfileModal(id, box);
       } catch (err) { alert(err.message); }
+    });
+    box.querySelectorAll("[data-delete-note]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Diese eigene Spur wirklich löschen?")) return;
+        try {
+          await Backend.deleteMyProfileNote(btn.dataset.deleteNote);
+          openProfileModal(id, box);
+        } catch (err) { alert(err.message); }
+      });
     });
     box.querySelectorAll("[data-modal-view-photo]").forEach((img, idx, all) => {
       const urls = [...all].map((el) => el.dataset.modalViewPhoto);
@@ -10428,6 +11428,30 @@ An einem Morgen lief ein kleiner Fuchs los…
     wolke: `<svg viewBox="0 0 40 40" width="28" height="28"><path d="M10 24 Q4 24 4 19 Q4 14 10 15 Q10 8 18 8 Q25 8 26 14 Q34 13 34 21 Q34 27 27 27 H11 Q10 27 10 24 Z" fill="#F5EFE4"/><circle cx="15" cy="19" r="1.6" fill="#241505"/><circle cx="24" cy="19" r="1.6" fill="#241505"/><path d="M15 23 Q19 26 24 23" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>`,
     kaktus: `<svg viewBox="0 0 40 40" width="28" height="28"><rect x="16" y="14" width="8" height="20" rx="4" fill="#7BC47F"/><path d="M16 20 Q8 20 8 26 Q8 30 12 30 H16" fill="#7BC47F"/><path d="M24 17 Q32 17 32 23 Q32 27 28 27 H24" fill="#7BC47F"/><circle cx="18" cy="21" r="1.6" fill="#241505"/><circle cx="22" cy="21" r="1.6" fill="#241505"/><path d="M18 25 Q20 27 22 25" stroke="#241505" stroke-width="1.3" fill="none" stroke-linecap="round"/><ellipse cx="20" cy="35" rx="9" ry="3" fill="#8B6F47"/></svg>`,
   };
+  // Zuordnung: normales Tastatur-Emoji -> hauseigener SVG-Sticker-Schlüssel. Nur bei Emojis mit
+  // einer echten, eindeutigen Entsprechung — kein SVG-Sticker wird für ein Emoji "erzwungen", das
+  // nicht wirklich passt.
+  const EMOJI_TO_STICKER = {
+    "🦊": "fuchs", "🦉": "eule", "🎓": "doktorhut", "💌": "herzblase", "👍": "daumen",
+    "🌻": "sonnenblume", "🚀": "rakete", "⚡": "blitz", "⭐": "stern", "🎵": "note",
+    "✅": "haken", "✔️": "haken", "📖": "buch", "📚": "buch", "☕": "kaffee",
+    "🎉": "konfetti", "🎯": "ziel", "💬": "sprechblase", "🐼": "panda", "🐱": "katze",
+    "🐸": "frosch", "🐝": "biene", "🐌": "schnecke", "🐧": "pinguin", "🦔": "igel",
+    "🐞": "marienkaefer", "🐿️": "eichhoernchen", "🦥": "faultier", "🦄": "einhorn",
+    "🐉": "drache", "🐲": "drache", "👻": "gespenst", "🤖": "roboter", "☁️": "wolke", "🌵": "kaktus",
+  };
+  // Ersetzt native Tastatur-Emojis im Text automatisch durch den passenden hauseigenen Sticker
+  // (als [sticker:xyz]-Platzhalter, genau wie beim manuellen Antippen eines Stickers) — wird vor
+  // dem Speichern/Senden aufgerufen, nicht während des Tippens (sonst würde der Cursor ständig
+  // springen).
+  function replaceNativeEmojisWithStickers(text) {
+    if (!text) return text;
+    let result = text;
+    Object.entries(EMOJI_TO_STICKER).forEach(([emoji, key]) => {
+      result = result.split(emoji).join(`[sticker:${key}]`);
+    });
+    return result;
+  }
   function renderStickerRow() {
     const row = document.getElementById("inboxStickerRow");
     if (!row) return;
@@ -10552,7 +11576,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             </div>
             <p style="white-space:pre-wrap; margin:0;">${m.body
               .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
-              .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:44px; height:44px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
+              .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:72px; height:72px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
             }</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -10643,7 +11667,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
     document.getElementById("inboxSendBtn").addEventListener("click", async () => {
       const isBroadcast = recipientMode === "broadcast";
-      const body = document.getElementById("inboxMessageInput").value;
+      // Native Tastatur-Emojis (z. B. 🦉, 👍) automatisch durch den passenden hauseigenen
+      // Sticker ersetzen, bevor die Nachricht überhaupt verschickt wird.
+      const body = replaceNativeEmojisWithStickers(document.getElementById("inboxMessageInput").value);
       const giftPoints = pointsSlider ? Number(pointsSlider.value) : 0;
       const errBox = document.getElementById("inboxSendError");
       if (!isBroadcast && selectedRecipients.size === 0) { errBox.textContent = "⚠️ Bitte mindestens eine Person auswählen."; return; }
@@ -10734,18 +11760,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     ]);
 
     area.innerHTML = `
-      <div class="question-card" style="border:2px solid var(--amber-400);">
-        <h3>🔗 Freund:innen einladen</h3>
-        <p class="empty-note" style="margin-bottom:10px;">Teil deinen persönlichen Link — meldet sich jemand darüber an, bekommt ihr <strong>beide 25 Bonuspunkte</strong>.</p>
-        <button type="button" class="btn btn-coffee" id="friendsShareBtn">🔗 Meinen Empfehlungs-Link teilen</button>
-      </div>
-      <div class="question-card" style="margin-top:14px;">
+      <div class="question-card">
         <h3>🔎 Freunde finden</h3>
         <div class="vocab-toolbar" style="margin-top:10px;">
           <input type="text" class="vocab-search" id="friendSearch" placeholder="Name eingeben…" />
         </div>
         <div id="friendSearchResults"></div>
         <p class="empty-note" style="margin-top:8px;">${Backend.isConfigured ? "Suche findet alle registrierten Nutzer." : "Demo-Modus: Suche findet nur Konten, die in dieser Sitzung schon registriert wurden."}</p>
+      </div>
+      <div class="question-card" style="margin-top:14px; border:2px solid var(--amber-400);">
+        <h3>🔗 Freund:innen einladen</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Teil deinen persönlichen Link — meldet sich jemand darüber an, bekommt ihr <strong>beide 25 Bonuspunkte</strong>.</p>
+        <button type="button" class="btn btn-coffee" id="friendsShareBtn">🔗 Meinen Empfehlungs-Link teilen</button>
       </div>
 
       ${incoming.length ? `<div class="question-card" style="margin-top:14px;">
@@ -10847,7 +11873,20 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
 
     area.querySelectorAll(".friend-filter-pill").forEach((btn) => {
-      btn.addEventListener("click", () => { friendFilterMode = btn.dataset.filter; renderFriends(); });
+      btn.addEventListener("click", async () => {
+        // WICHTIG: renderFriends() ist asynchron (wartet auf Backend.getFriends()) — die
+        // "Nachher"-Messung MUSS deshalb auf das echte Fertigrendern warten (await), sonst
+        // trifft sie noch den alten Inhalt, und der Ausgleich läuft komplett ins Leere. Das war
+        // die eigentliche Ursache des Sprungs, nicht die Positions-Berechnung selbst.
+        const beforeTop = area.getBoundingClientRect().top;
+        friendFilterMode = btn.dataset.filter;
+        await renderFriends();
+        const newArea = document.getElementById("friendsArea");
+        if (newArea) {
+          const afterTop = newArea.getBoundingClientRect().top;
+          window.scrollBy(0, afterTop - beforeTop);
+        }
+      });
     });
     area.querySelectorAll("[data-toggle-best]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -10914,8 +11953,11 @@ An einem Morgen lief ein kleiner Fuchs los…
             newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
           },
           kreuzwortraetsel: () => {
+            // Der Klick löst den Reiter-Wechsel-Handler aus, der bereits newCrosswordSession()
+            // (mit zufälligem Startpunkt) und newCrossword() korrekt aufruft — ein zusätzlicher,
+            // direkter newCrossword(0)-Aufruf hier würde das sofort wieder mit dem allerersten
+            // Rätsel überschreiben.
             document.querySelector('#learnSubnav [data-sub="sub-crossword"]').click();
-            newCrossword(0); renderCrossword();
           },
           betonungstrainer: () => {
             document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]').click();
@@ -11038,8 +12080,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         </svg>
         <p class="eyebrow" style="margin-top:0;">🦊 ${pt.title}</p>
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px; margin-top:14px;">
-          <div style="width:56px; height:56px; flex-shrink:0; position:relative;">
-            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url) : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
+          <div style="width:56px; height:56px; flex-shrink:0; position:relative; overflow:hidden; border-radius:50%;">
+            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url).replace('class="avatar-photo"', 'class="avatar-photo" style="width:100%; height:100%; object-fit:cover;"') : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
           </div>
           <div>
             <h3 style="margin:0;">${fox.name}</h3>
@@ -11082,10 +12124,28 @@ An einem Morgen lief ein kleiner Fuchs los…
     // ließ den Browser automatisch ganz an den Seitenanfang zurückspringen, statt an der Stelle
     // zu bleiben, an der man gerade war. renderRanking() ist async — erst NACH dem fertigen
     // Neu-Aufbau wiederherstellen, sonst kommt die Wiederherstellung zu früh.
-    document.getElementById("rankTabToday").addEventListener("click", async () => { const y = window.scrollY; rankingMode = "today"; await renderRanking(); window.scrollTo(0, y); });
-    document.getElementById("rankTabAllTime").addEventListener("click", async () => { const y = window.scrollY; rankingMode = "alltime"; await renderRanking(); window.scrollTo(0, y); });
+    // Statt der ABSOLUTEN Fenster-Scroll-Position wird der Abstand zur Oberkante des Ranking-
+    // Bereichs selbst gemerkt — bei unterschiedlich viel Inhalt zwischen "Heute"/"Gesamt" bzw.
+    // den Fuchs-Zeiträumen ändert sich sonst die Seitenhöhe OBERHALB der Liste, wodurch dieselbe
+    // Pixel-Position nach dem Neu-Rendern eine andere Stelle zeigte — spürbar auch nach der ersten
+    // Korrektur noch. Relativ zum Bereich selbst bleibt der Blick zuverlässig an derselben Stelle.
+    // Robustere Methode (dieselbe wie jetzt bei den Freunde-Filtern): einfach die VIEWPORT-
+    // relative Position vorher/nachher direkt vergleichen und um die Differenz zurückschieben —
+    // ohne window.scrollY zu verwenden, das der Browser bei einer kürzer werdenden Seite
+    // bereits automatisch verändert haben könnte, bevor man ihn ausliest.
+    function rememberScrollOffset() {
+      return area.getBoundingClientRect().top;
+    }
+    function restoreScrollOffset(beforeTop) {
+      const newArea = document.getElementById("rankingArea");
+      if (!newArea) return;
+      const afterTop = newArea.getBoundingClientRect().top;
+      window.scrollBy(0, afterTop - beforeTop);
+    }
+    document.getElementById("rankTabToday").addEventListener("click", async () => { const off = rememberScrollOffset(); rankingMode = "today"; await renderRanking(); restoreScrollOffset(off); });
+    document.getElementById("rankTabAllTime").addEventListener("click", async () => { const off = rememberScrollOffset(); rankingMode = "alltime"; await renderRanking(); restoreScrollOffset(off); });
     area.querySelectorAll("[data-fox-period]").forEach((btn) => {
-      btn.addEventListener("click", async () => { const y = window.scrollY; foxPeriodMode = btn.dataset.foxPeriod; await renderRanking(); window.scrollTo(0, y); });
+      btn.addEventListener("click", async () => { const off = rememberScrollOffset(); foxPeriodMode = btn.dataset.foxPeriod; await renderRanking(); restoreScrollOffset(off); });
     });
     area.querySelectorAll("[data-view-ranked]").forEach((btn) => {
       btn.addEventListener("click", () => openProfileModal(btn.dataset.viewRanked));
@@ -11218,7 +12278,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "105";
+  const APP_VERSION = "107";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

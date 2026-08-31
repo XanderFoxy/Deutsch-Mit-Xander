@@ -164,11 +164,22 @@ button:focus-visible,
   .brand-name { font-size: 0.92rem; }
   .header-actions { gap: 6px; }
 }
+/* Ab hier reicht selbst die kleinere Schrift nicht mehr sicher aus, ohne dass der Name mit "…"
+   abgeschnitten wird — bewusster Notfall-Ausweg: zweizeilig statt abgeschnitten, damit der
+   vollständige Name IMMER lesbar bleibt, auch auf sehr schmalen Android-Bildschirmen. */
 @media (max-width: 340px) {
-  .brand-name { font-size: 0.74rem; max-width: 92px; }
+  .brand-name {
+    font-size: 0.72rem;
+    max-width: 78px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.15;
+    word-break: break-word;
+  }
 }
 @media (max-width: 300px) {
-  .brand-name { font-size: 0.64rem; max-width: 70px; }
+  .brand-name { font-size: 0.64rem; max-width: 66px; }
 }
 
 .brand-mark {

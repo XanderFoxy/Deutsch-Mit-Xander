@@ -35,9 +35,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=105" />
-<link rel="stylesheet" href="app-styles.css?v=105" />
-<link rel="stylesheet" href="themes.css?v=105" />
+<link rel="stylesheet" href="styles.css?v=107" />
+<link rel="stylesheet" href="app-styles.css?v=107" />
+<link rel="stylesheet" href="themes.css?v=107" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -149,8 +149,8 @@
           <p class="about-text-short">Ich begleite dich Schritt für Schritt beim Deutschlernen — mit kurzen, kurzweiligen Übungen statt trockenem Frontalunterricht.</p>
           <p class="about-support-note">Diese Seite entsteht in meiner Freizeit mit Herzblut. Freu mich immer, wenn's gefällt — muss aber nicht. ☕</p>
           <div class="about-links">
-            <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener">▶️ YouTube</a>
-            <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener">🎵 TikTok</a>
+            <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-3px; margin-right:2px;"><rect x="1" y="4" width="22" height="16" rx="5" fill="#FF0000"/><path d="M10 8.5 L16.5 12 L10 15.5 Z" fill="#fff"/></svg> YouTube</a>
+            <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-3px; margin-right:2px;"><path d="M16.5 3c.4 2 1.8 3.4 3.8 3.7v2.9c-1.4 0-2.7-.4-3.8-1.2v6.2c0 3.1-2.5 5.4-5.5 5.4S5.5 17.7 5.5 14.6c0-3 2.5-5.4 5.5-5.4.4 0 .7 0 1 .1v3c-.3-.1-.6-.2-1-.2-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.6-1.1 2.6-2.5V3Z" fill="#000"/></svg> TikTok</a>
           </div>
         </div>
       </div>
@@ -163,17 +163,20 @@
     <div class="subnav" id="learnSubnav">
       <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
       <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false" style="display:none;">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
-      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer <span class="subnav-cat-tag">Aussprache</span></button>
+      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer <span class="subnav-cat-tag">Sprachkünstler</span></button>
       <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
-      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory <span class="subnav-cat-tag">Wortschatz</span></button>
-      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle <span class="subnav-cat-tag">Wortschatz</span><span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
-      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat <span class="subnav-cat-tag">Wortschatz</span></button>
-      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel <span class="subnav-cat-tag">Wortschatz</span></button>
-      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle <span class="subnav-cat-tag">Grammatik</span></button>
+      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory <span class="subnav-cat-tag">Sprachkünstler</span></button>
+      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle <span class="subnav-cat-tag">Sprachkünstler</span><span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat <span class="subnav-cat-tag">Sprachkünstler</span></button>
+      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel <span class="subnav-cat-tag">Sprachkünstler</span></button>
+      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle <span class="subnav-cat-tag">Grammatik-Profi</span></button>
       <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false">🗼 Wackelturm <span class="subnav-cat-tag">Gemischt</span></button>
-      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🔤 Wortarten-Sortierer <span class="subnav-cat-tag">Grammatik</span></button>
+      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🔤 Wort-Typ <span class="subnav-cat-tag">Grammatik-Profi</span></button>
       <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false">🎯 Wort-Kanone <span class="subnav-cat-tag">Gemischt</span></button>
-      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false">❓ Wer bin ich? <span class="subnav-cat-tag">Logik</span></button>
+      <button class="subnav-pill" data-sub="sub-bubbles" aria-selected="false">🫧 Wortblasen <span class="subnav-cat-tag">Gemischt</span></button>
+      <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false">🔤 Vokabelmeister <span class="subnav-cat-tag">Sprachkünstler</span></button>
+      <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false">🚂 Korrektour <span class="subnav-cat-tag">Grammatik-Profi</span></button>
+      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false">❓ Wer bin ich? <span class="subnav-cat-tag">Logiker</span></button>
       <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
     </div>
 
@@ -183,6 +186,18 @@
 
     <div class="subview" id="sub-kanone" data-active="false">
       <div id="kanoneArea"></div>
+    </div>
+
+    <div class="subview" id="sub-bubbles" data-active="false">
+      <div id="bubblesArea"></div>
+    </div>
+
+    <div class="subview" id="sub-vokabelmeister" data-active="false">
+      <div id="vokabelmeisterArea"></div>
+    </div>
+
+    <div class="subview" id="sub-korrektour" data-active="false">
+      <div id="korrektourArea"></div>
     </div>
 
     <div class="subview" id="sub-wortarten" data-active="false">
@@ -244,7 +259,7 @@
       <button class="subnav-pill" data-sub="sub-howitworks" aria-selected="false">❓ So funktioniert's</button>
       <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
       <button class="subnav-pill community-tab-highlight" data-sub="sub-community" aria-selected="false">✍️ Eigene Beiträge</button>
-      <button class="subnav-pill" data-sub="sub-intro" aria-selected="false">🎤 Vorstellungsrunde<span class="subnav-info-icon" data-info="Stell dich der Community kurz vor — wer du bist, warum du hier bist. Auch andere können sich hier vorstellen, damit ihr euch gegenseitig kennenlernt.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-intro" aria-selected="false">👋 Vorstellungsrunde<span class="subnav-info-icon" data-info="Stell dich der Community kurz vor — wer du bist, warum du hier bist. Auch andere können sich hier vorstellen, damit ihr euch gegenseitig kennenlernt.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
       <button class="subnav-pill" data-sub="sub-tips" aria-selected="false">💡 Schwarmwissen<span class="subnav-info-icon" data-info="Tipps, Links und Erfahrungen von anderen Lernenden — was bei ihnen beim Deutschlernen funktioniert hat.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-music" aria-selected="false">🎵 Musik</button>
@@ -325,12 +340,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=105"></script>
-<script src="supabase-config.js?v=105"></script>
-<script src="data-exercises.js?v=105"></script>
-<script src="data-vocab.js?v=105"></script>
-<script src="backend.js?v=105"></script>
-<script src="quiz.js?v=105"></script>
-<script src="app.js?v=105"></script>
+<script src="core.js?v=107"></script>
+<script src="supabase-config.js?v=107"></script>
+<script src="data-exercises.js?v=107"></script>
+<script src="data-vocab.js?v=107"></script>
+<script src="backend.js?v=107"></script>
+<script src="quiz.js?v=107"></script>
+<script src="app.js?v=107"></script>
 </body>
 </html>

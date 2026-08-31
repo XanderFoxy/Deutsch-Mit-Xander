@@ -23,10 +23,28 @@ const Backend = (function () {
   // klare, handlungsleitende Meldung statt eines kryptischen Postgres-Textes.
   function friendlyDbError(rawMessage) {
     const msg = rawMessage || "";
-    if (/does not exist/i.test(msg) || /Could not find the table/i.test(msg) || /schema cache/i.test(msg)) {
+    if (/does not exist/i.test(msg) || /Could not find the table/i.test(msg) || /schema cache/i.test(msg) || /column .* does not exist/i.test(msg)) {
       return "Diese Funktion braucht noch eine Datenbank-Anpassung, die noch nicht eingerichtet ist. Bitte im Supabase SQL-Editor einmal das komplette Nachrüst-SQL aus dem README (Abschnitt „4e. Nachrüst-SQL\") ausführen — danach funktioniert es. (Technische Meldung: " + msg + ")";
     }
-    return msg;
+    // WICHTIG: Rohe Postgres-/Supabase-Fehlermeldungen enthalten oft technische SQL-Details
+    // (Spalten-, Tabellen- oder Regel-Namen) — für alle weiteren, häufigen Fehlertypen gibt es
+    // hier jetzt ebenfalls eine verständliche Übersetzung, statt die rohe Meldung ungefiltert
+    // durchzureichen. Ganz am Ende steht als sicheres Auffangnetz eine allgemeine, freundliche
+    // Nachricht, damit NIE wieder unübersetzte Datenbank-Technik sichtbar wird.
+    if (/permission denied|row-level security|RLS/i.test(msg)) {
+      return "Dafür fehlt gerade die Berechtigung in der Datenbank — meist hilft es, das Nachrüst-SQL aus dem README noch einmal komplett auszuführen. (Technische Meldung: " + msg + ")";
+    }
+    if (/duplicate key|unique constraint/i.test(msg)) {
+      return "Das gibt es in dieser Form schon — bitte einmal neu laden und nochmal versuchen.";
+    }
+    if (/foreign key/i.test(msg)) {
+      return "Der zugehörige Eintrag scheint nicht (mehr) zu existieren. Bitte einmal neu laden und nochmal versuchen.";
+    }
+    if (/network|fetch failed|Failed to fetch/i.test(msg)) {
+      return "Verbindung zum Server ist gerade nicht möglich — bitte die Internetverbindung prüfen und nochmal versuchen.";
+    }
+    if (!msg) return "Das hat leider nicht geklappt — bitte nochmal versuchen.";
+    return "Das hat leider nicht geklappt. Falls das öfter passiert, sag gerne Bescheid, was genau du gemacht hast. (Technische Meldung: " + msg + ")";
   }
 
   /* ---------------- Demo-Zustand (nur im Speicher) ---------------- */
@@ -727,6 +745,17 @@ const Backend = (function () {
     note.id = Core.uid();
     demo.profileNotes.push(note);
   }
+  // Eigene, selbst geschriebene Spuren wieder löschen können — bewusst NUR der eigene Eintrag
+  // (author_id muss übereinstimmen), unabhängig davon, auf wessen Profil er steht.
+  async function deleteMyProfileNote(noteId) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("profile_notes").delete().eq("id", noteId).eq("author_id", demo.user.id);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.profileNotes = (demo.profileNotes || []).filter((n) => !(n.id === noteId && n.author_id === demo.user.id));
+  }
   async function getProfileNotes(profileOwnerId) {
     if (client) {
       const { data, error } = await client.from("profile_notes").select("*").eq("profile_owner_id", profileOwnerId).order("created_at", { ascending: false }).limit(30);
@@ -1228,6 +1257,17 @@ const Backend = (function () {
     }
     await checkSympathyMatch(toUserId);
   }
+  // Eine bereits vergebene Sympathie-Angabe komplett zurücknehmen — nicht nur zu einer anderen
+  // Stufe wechseln, sondern ganz entfernen (zurück zu "keine Angabe").
+  async function removeSympathyLevel(toUserId) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("friend_sympathy").delete().eq("from_user_id", demo.user.id).eq("to_user_id", toUserId);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.sympathyEntries = (demo.sympathyEntries || []).filter((e) => !(e.from_user_id === demo.user.id && e.to_user_id === toUserId));
+  }
   async function getMySympathyFor(otherUserId) {
     if (!demo.user) return null;
     if (client) {
@@ -1307,8 +1347,38 @@ const Backend = (function () {
     return true;
   }
 
+  // Sichert das GERADE AKTUELLE Profilbild (egal ob Foto oder Emoji), BEVOR es geändert wird —
+  // damit man sich, falls man sich nach dem Speichern doch wieder umentscheidet, mit einem Klick
+  // zurück zum vorherigen Bild holen kann, statt es komplett zu verlieren. Nur EIN Schritt zurück,
+  // keine volle Historie — genau wie gewünscht.
+  async function backupCurrentAvatarBeforeChange() {
+    if (!demo.profile) return;
+    if (!demo.profile.avatarUrl && !demo.profile.avatarEmoji) return; // nichts zu sichern
+    await updateExtraProfileField("previousAvatarUrl", demo.profile.avatarUrl || "");
+    await updateExtraProfileField("previousAvatarEmoji", demo.profile.avatarEmoji || "");
+  }
+  async function restorePreviousAvatar() {
+    if (!demo.profile) return false;
+    const extra = demo.profile.extraProfileData || {};
+    const prevUrl = extra.previousAvatarUrl || "";
+    const prevEmoji = extra.previousAvatarEmoji || "";
+    if (!prevUrl && !prevEmoji) return false;
+    // Das aktuelle Bild wird selbst zum neuen "vorherigen" — so kann man auch mehrfach
+    // hin- und herwechseln, ohne dass etwas verloren geht.
+    const currentUrl = demo.profile.avatarUrl || "";
+    const currentEmoji = demo.profile.avatarEmoji || "";
+    demo.profile.avatarUrl = prevUrl;
+    demo.profile.avatarEmoji = prevEmoji;
+    if (client && demo.user) {
+      await client.from("profiles").update({ avatar_url: prevUrl, avatar_emoji: prevEmoji || null }).eq("id", demo.user.id);
+    }
+    await updateExtraProfileField("previousAvatarUrl", currentUrl);
+    await updateExtraProfileField("previousAvatarEmoji", currentEmoji);
+    return true;
+  }
   async function uploadAvatar(file) {
     if (!client || !demo.user) throw new Error("Fotos hochladen geht nur mit verbundenem Supabase.");
+    await backupCurrentAvatarBeforeChange();
     const path = `${demo.user.id}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
     if (uploadError) {
@@ -1329,6 +1399,7 @@ const Backend = (function () {
   // erneuten Upload, einfach die schon vorhandene Bild-Adresse speichern.
   async function saveAvatarFromGallery(url) {
     if (!demo.profile) return false;
+    await backupCurrentAvatarBeforeChange();
     demo.profile.avatarUrl = url;
     demo.profile.avatarEmoji = "";
     if (client && demo.user) {
@@ -1338,8 +1409,9 @@ const Backend = (function () {
     return true;
   }
 
-  function saveAvatarEmoji(emoji) {
+  async function saveAvatarEmoji(emoji) {
     if (!demo.profile) return;
+    await backupCurrentAvatarBeforeChange();
     demo.profile.avatarEmoji = emoji;
     demo.profile.avatarUrl = "";
     if (client && demo.user) {
@@ -2608,7 +2680,7 @@ const Backend = (function () {
     getLastPlaylistLoadError: () => lastPlaylistLoadError,
     getLastUserListError: () => lastUserListError,
     getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, getRawFeatureFlag,
-    recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes,
+    recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
     getBugReports, resolveBugReport,
     notifyPracticing,
     saveThemePreference,
@@ -2675,10 +2747,11 @@ const Backend = (function () {
     deleteComment,
     saveBio,
     saveExtendedProfile, updateExtraProfileField, toggleBestFriend, getBestFriendIds,
-    SYMPATHY_LEVELS, setSympathyLevel, getMySympathyFor,
+    SYMPATHY_LEVELS, setSympathyLevel, removeSympathyLevel, getMySympathyFor,
     getAllSympathyLevels, addCustomSympathyLevel, removeCustomSympathyLevel,
     saveBirthday,
     uploadAvatar,
+    restorePreviousAvatar,
     saveAvatarFromGallery,
     getRecentMembers,
     getPublicProfile,
