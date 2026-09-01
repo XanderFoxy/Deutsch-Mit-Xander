@@ -597,13 +597,35 @@ const Backend = (function () {
   // Fehlermeldung von Nutzer:innen — landet automatisch im Postfach des Betreibers, ohne dass
   // die Person selbst etwas schreiben muss. Nur die Art des Fehlers und der Ort (welches Spiel,
   // welche Frage gerade angezeigt wurde) werden mitgeschickt.
-  async function reportBug(context, errorType) {
+  // Beta-Tester:in probiert gerade ein noch nicht freigegebenes Feature aus — alle Admins/
+  // Betreiber:innen/Moderator:innen bekommen eine Nachricht mit einem anklickbaren Sprung-Link
+  // (siehe data-jump-to im Frontend), damit sie live mittesten können, statt es erst zufällig
+  // später zu bemerken.
+  async function notifyAdminsBetaTesting(testerName, featureName, subTarget) {
+    let adminIds = [];
+    if (client) {
+      try {
+        const { data } = await client.from("profiles").select("id").or("is_owner.eq.true,is_admin.eq.true,is_moderator.eq.true");
+        adminIds = (data || []).map((p) => p.id);
+      } catch (e) { console.warn("Admin-Liste für Beta-Benachrichtigung nicht gefunden:", e); return; }
+    } else {
+      adminIds = Object.keys(demo.users || {}).filter((email) => {
+        const u = demo.users[email];
+        return u.profile.isOwner || u.profile.isAdmin || u.profile.isModerator;
+      });
+    }
+    if (!adminIds.length) return;
+    const body = `🧪 ${testerName} testet gerade „${featureName}"!${subTarget ? `\n\n[BETA_JUMP:${subTarget}]` : ""}`;
+    await Promise.all(adminIds.map((id) => sendSystemMessage(id, body)));
+  }
+  async function reportBug(context, errorType, detail) {
     const reporterName = demo.profile ? demo.profile.name : "Unbekannt";
     const reporterId = demo.user ? demo.user.id : null;
     // Zusätzlich zur Nachricht (unten) in eine eigene, übersichtliche Sammelstelle schreiben, die
     // der Admin gebündelt einsehen kann, statt zwischen allen anderen Postfach-Nachrichten suchen
-    // zu müssen.
-    const record = { reporter_name: reporterName, reporter_id: reporterId, context, category: errorType, resolved: false, created_at: new Date().toISOString() };
+    // zu müssen. "detail" ist eine optionale, frei formulierte Beschreibung — hilft beim
+    // Verstehen, wenn die feste Kategorie allein nicht reicht, um den Fehler nachzuvollziehen.
+    const record = { reporter_name: reporterName, reporter_id: reporterId, context, category: errorType, description: detail || "", resolved: false, created_at: new Date().toISOString() };
     if (client) {
       client.from("bug_reports").insert(record).then(() => {}, (e) => console.warn("Bug-Report konnte nicht gespeichert werden:", e));
     } else {
@@ -622,7 +644,7 @@ const Backend = (function () {
       ownerId = ownerEmail;
     }
     if (!ownerId) return;
-    const body = `🪲 FEHLERMELDUNG\n\nVon: ${reporterName}\nOrt: ${context}\nArt: ${errorType}\nZeitpunkt: ${new Date().toLocaleString("de-DE")}`;
+    const body = `🪲 FEHLERMELDUNG\n\nVon: ${reporterName}\nOrt: ${context}\nArt: ${errorType}${detail ? `\nBeschreibung: ${detail}` : ""}\nZeitpunkt: ${new Date().toLocaleString("de-DE")}`;
     await sendSystemMessage(ownerId, body);
   }
 
@@ -940,6 +962,14 @@ const Backend = (function () {
     if (ownerId === null && !isAdmin()) throw new Error("Nur Administratoren können Songs zur gemeinsamen Playlist hinzufügen.");
     if (ownerId !== null && ownerId !== demo.user.id) throw new Error("Du kannst nur zu deiner eigenen Playlist hinzufügen.");
     if (!title.trim() || !url.trim()) throw new Error("Titel und Link dürfen nicht leer sein.");
+    // Sich selbst als "ursprüngliche Empfehlung" für einen Song eintragen, den man sich gerade
+    // selbst hinzufügt, ergibt keinen Sinn — würde nur einen künstlich aufgeblähten
+    // Beliebtheits-Zähler erzeugen (siehe getSongPopularity). Zusätzliche Absicherung hier im
+    // Backend, falls das Frontend diese Prüfung mal nicht macht.
+    if (originalRecommenderId && originalRecommenderId === demo.user.id) {
+      originalRecommenderId = null;
+      originalRecommenderName = null;
+    }
     const song = {
       title: title.trim(), url: url.trim(), added_by: demo.user.id, owner_id: ownerId,
       recommended_by_name: recommendedByName, cover_url: coverUrl || null,
@@ -2843,6 +2873,7 @@ const Backend = (function () {
     markMessagesRead,
     sendSystemMessage, adminGrantPoints,
     reportBug,
+    notifyAdminsBetaTesting,
     markNotificationsRead,
     getLikesForText,
     toggleLikeText,

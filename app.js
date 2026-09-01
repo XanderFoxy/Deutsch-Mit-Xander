@@ -260,6 +260,14 @@
           const friendsBadge = document.getElementById("friendsTabBadge");
           if (friendsBadge) friendsBadge.style.display = "none";
         }
+        // WICHTIG: bei so vielen Spielen im Menü ist der ausgewählte Bereich nach dem Klick oft
+        // weit unterhalb des Menüs selbst und damit außerhalb des sichtbaren Bildschirms — man
+        // musste bisher jedes Mal manuell dorthin scrollen. Jetzt springt die Ansicht automatisch
+        // zum Anfang des aktiven Spielbereichs, sanft statt abrupt.
+        const activeView = parent.querySelector(`.subview[id="${pill.dataset.sub}"]`);
+        if (activeView) {
+          requestAnimationFrame(() => activeView.scrollIntoView({ behavior: "smooth", block: "start" }));
+        }
       });
     });
   }
@@ -450,6 +458,8 @@
     { id: "feierfuchs", name: "Feierfuchs", img: "figures/feierfuchs.png", desc: "Feiert jeden Fortschritt — hat schon eine ganze Reihe Trophäen UND ordentlich Punkte gesammelt", unlock: { type: "combo", parts: [{ type: "trophy_count", value: 8 }, { type: "points", value: 500 }] } },
     { id: "absolventenfuchs", name: "Absolventenfuchs", img: "figures/absolventenfuchs.png", desc: "Großer Meilenstein erreicht — nachdem wirklich viele verschiedene Übungsarten ausprobiert wurden", unlock: { type: "combo", parts: [{ type: "points", value: 850 }, { type: "categories_tried", value: 10 }] } },
     { id: "championfuchs", name: "Champion-Fuchs", img: "figures/championfuchs.png", desc: "Die Krönung der Sammlung — mit beeindruckender Trophäensammlung", unlock: { type: "combo", parts: [{ type: "points", value: 1000 }, { type: "trophy_count", value: 10 }] } },
+    { id: "steckbrieffuchs", name: "Steckbrief-Fuchs", img: "figures/professor-schlaufuchs.png", desc: "Hat sich richtig vorgestellt — mindestens 5 der wichtigsten Profil-Angaben ausgefüllt (Über mich, Geburtstag, Herkunft, Sprache, Lieblingssache …)", unlock: { type: "profile_fields_count", value: 5 } },
+    { id: "gemeinschaftsfuchs", name: "Gemeinschaftsfuchs", img: "figures/pausenfuchs.png", desc: "Mittendrin statt nur dabei — hat mindestens 3 Freundschaften geschlossen UND einen Gästebuch-Eintrag hinterlassen", unlock: { type: "combo", parts: [{ type: "friends_count", value: 3 }, { type: "guestbook_entry", value: 1 }] } },
     { id: "superfuchs", name: "Superfuchs", img: "figures/superfuchs.png", desc: "Über allen Erwartungen — die absolute Spitze in jeder Hinsicht", unlock: { type: "combo", parts: [{ type: "points", value: 1200 }, { type: "trophy_count", value: 12 }, { type: "categories_tried", value: 12 }] } },
   ];
   // Das Sticker-Album ist von Anfang an auf mehrere KAPITEL ausgelegt — aktuell gibt es nur die
@@ -659,6 +669,24 @@
       const visited = (profile.extraProfileData && profile.extraProfileData.visitedSections) || [];
       return visited.includes(unlock.section);
     }
+    // Mindestens X der wichtigsten Profil-Felder gleichzeitig ausgefüllt (Bio, Geburtstag,
+    // Herkunft, mindestens eine Sprache, Lieblingsfilm/-serie/-song, ein eigenes Foto) — belohnt
+    // ein wirklich VOLLSTÄNDIGES Profil, nicht nur ein einzelnes Feld wie bei profile_field.
+    if (unlock.type === "profile_fields_count") {
+      const extra = profile.extraProfileData || {};
+      const filled = [
+        profile.bio, profile.birthday, profile.origin,
+        Array.isArray(profile.languages) && profile.languages.length > 0,
+        profile.favMovie, profile.favSeries, profile.favSong,
+        Array.isArray(extra.gallery) && extra.gallery.length > 0,
+      ].filter(Boolean).length;
+      return filled >= unlock.value;
+    }
+    // Community-Aktivität: eine bestimmte Anzahl an Freundschaften — belohnt echtes Vernetzen mit
+    // anderen, nicht nur alleiniges Punktesammeln.
+    if (unlock.type === "friends_count") {
+      return ((profile.extraProfileData && profile.extraProfileData.friendsCountCache) || 0) >= unlock.value;
+    }
     // Kombinations-Mission: MEHRERE unabhängige Teilbedingungen müssen ALLE gleichzeitig erfüllt
     // sein — z. B. "spiele eine schwere Abenteuer-Runde UND ein Memory-Spiel UND fülle dein Profil
     // aus". Motiviert, verschiedene Ecken der Seite zu erkunden, statt nur stur Punkte zu farmen.
@@ -866,10 +894,29 @@
   // Freigabe sehen normale Nutzer:innen nur eine "Kommt bald"-Meldung, während Betreiber:innen
   // das Spiel bereits normal spielen UND per Knopf freigeben können. Gibt true zurück, wenn der
   // Aufrufer normal weiterrendern soll (Feature an, ODER man ist selbst Betreiber:in).
+  const betaTestingNotifiedThisSession = new Set(); // verhindert, dass dieselbe Benachrichtigung
+  // bei jedem erneuten Rendern der Seite (z. B. bei jedem Klick) wiederholt verschickt wird.
+  // Sobald ein Beta-Tester (nicht Admin/Moderator selbst) ein Feature sieht, das für alle anderen
+  // noch gesperrt ist, bekommen alle Admins/Betreiber:innen einmalig eine Nachricht mit einem
+  // anklickbaren Link, der direkt zu genau diesem Bereich springt — damit man mittesten kann,
+  // während die Beta-Person es gerade ausprobiert, statt es erst viel später zufällig zu bemerken.
+  async function notifyAdminsIfBetaTesting(flagKey, featureName, subTarget) {
+    const profile = Backend.currentProfile();
+    if (!profile || !profile.isBetaTester || (Backend.canModerate && Backend.canModerate())) return;
+    if (Backend.getRawFeatureFlag(flagKey)) return; // schon für alle freigegeben, keine Beta-Situation mehr
+    if (betaTestingNotifiedThisSession.has(flagKey)) return;
+    betaTestingNotifiedThisSession.add(flagKey);
+    try {
+      await Backend.notifyAdminsBetaTesting(profile.name, featureName, subTarget);
+    } catch (e) { console.warn("Beta-Test-Benachrichtigung an Admins fehlgeschlagen:", e); }
+  }
   function renderComingSoonGate(area, flagKey, gameName, gameIcon) {
     const isOn = Backend.isFeatureOn(flagKey);
     const canSeeAnyway = Backend.canModerate && Backend.canModerate();
-    if (isOn || canSeeAnyway) return true;
+    if (isOn || canSeeAnyway) {
+      if (isOn) notifyAdminsIfBetaTesting(flagKey, gameName);
+      return true;
+    }
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p style="font-size:2.5rem;">${gameIcon}</p>
@@ -1460,6 +1507,23 @@
     const shown = getShownMilestones();
     shown.add(key);
     await Backend.updateExtraProfileField("shownMilestones", [...shown]);
+  }
+  // Dasselbe Prinzip für die einmaligen Spiel-Einstiegsbildschirme (Wackelturm, Wort-Kanone,
+  // Wortblasen, Korrektour): der Anzeige-Status war bisher NUR eine flüchtige Javascript-
+  // Variable, die bei jedem Seiten-Neuladen (z. B. wenn die Handy-App/der Browser den Tab neu
+  // lädt, nachdem man ihn eine Weile verlassen hatte) wieder auf "nicht gesehen" zurückfiel — man
+  // landete dann jedes Mal erneut beim Einstiegsbildschirm, obwohl man gerade erst eine Runde
+  // gespielt und die Bewertung weggeklickt hatte. Jetzt zusätzlich im Profil gespeichert.
+  function hasSeenGameIntro(key) {
+    const profile = Backend.currentProfile();
+    return ((profile && profile.extraProfileData && profile.extraProfileData.seenGameIntros) || []).includes(key);
+  }
+  async function markGameIntroSeen(key) {
+    const profile = Backend.currentProfile();
+    const seen = new Set((profile && profile.extraProfileData && profile.extraProfileData.seenGameIntros) || []);
+    if (seen.has(key)) return;
+    seen.add(key);
+    await Backend.updateExtraProfileField("seenGameIntros", [...seen]);
   }
   function showSpecialMomentModal(title, message) {
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
@@ -3456,26 +3520,32 @@
   function reportBugButtonHtml() {
     return `<button type="button" class="bug-report-btn" id="bugReportBtn" title="Fehler melden">🪲</button>`;
   }
+  // Gemeinsamer Fehlermelde-Dialog für beide Bug-Report-Knöpfe (den großen und den kleinen
+  // "Mini"-Knopf in den Spielen) — mit einem optionalen Freitextfeld, damit man den Fehler bei
+  // Bedarf genauer beschreiben kann, statt sich auf die feste Kategorie beschränken zu müssen.
+  function openBugReportDialog(context) {
+    const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
+      Core.el("div", { class: "profile-modal-card", style: "max-width:300px;" },
+        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
+        Core.el("h3", {}, "🪲 Fehler melden"),
+        Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
+        Core.el("textarea", { id: "bugDetailInput", class: "guestbook-form-textarea", placeholder: "Beschreibung (optional) — hilft, den Fehler genauer zu verstehen …", maxlength: "300", style: "margin-bottom:10px;" }),
+        ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
+          Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left; white-space:normal; overflow-wrap:break-word;", onclick: async () => {
+            const detail = document.getElementById("bugDetailInput")?.value.trim() || "";
+            await Backend.reportBug(context, label, detail);
+            box.remove();
+            showToast("✅ Danke, Alex wurde informiert!");
+          } }, label)
+        )
+      )
+    );
+    document.body.appendChild(box);
+  }
   function wireBugReportButton(context) {
     const btn = document.getElementById("bugReportBtn");
     if (!btn) return;
-    btn.addEventListener("click", () => {
-      const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
-        Core.el("div", { class: "profile-modal-card", style: "max-width:300px;" },
-          Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-          Core.el("h3", {}, "🪲 Fehler melden"),
-          Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
-          ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
-            Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left; white-space:normal; overflow-wrap:break-word;", onclick: async () => {
-              await Backend.reportBug(context, label);
-              box.remove();
-              showToast("✅ Danke, Alex wurde informiert!");
-            } }, label)
-          )
-        )
-      );
-      document.body.appendChild(box);
-    });
+    btn.addEventListener("click", () => openBugReportDialog(context));
   }
   function renderQuestion() {
     setupEl.style.display = "none";
@@ -4564,6 +4634,7 @@
   let wbState = null;
   /* ===== Satzpuzzle: Wortstellung im Satz — Wörter in richtiger Reihenfolge antippen ===== */
   let spSession = null; // { round, total, correct }
+  let spIntroShown = false;
   // Verhindert erneute Punktevergabe, nur weil man zu einem anderen Spiel wechselt und
   // zurückkommt, während die Ergebnis-Anzeige schon steht — dasselbe Muster wie bei
   // Wort-Kanone/Wackelturm.
@@ -4572,9 +4643,11 @@
   let spShuffled = []; // gemischte Reihenfolge der Bausteine
   let spUsedIdx = []; // welche Indizes (aus spShuffled) schon in der gebauten Reihenfolge stecken
   let spUsedSentences = []; // welche Sätze in DIESER Sitzung schon dran waren — keine Wiederholungen
+  let spMistakesThisSession = []; // { correctSentence, explain } — für die Postfach-Zusammenfassung am Ende
   function newSatzpuzzleSession() {
     spSession = { round: 0, total: 10, correct: 0 };
     spUsedSentences = [];
+    spMistakesThisSession = [];
     spResultsFinalized = false;
   }
   function newSatzpuzzleRound() {
@@ -4604,6 +4677,14 @@
       spResultsFinalized = true;
       if (Backend.currentUser()) {
         saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent, character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+        // Wer während der Runde Fehler gemacht hat, bekommt die richtigen Sätze zusätzlich als
+        // Zusammenfassung ins Postfach — die kurze Einblendung im Spiel selbst (2,6s) reicht oft
+        // nicht, um sich alles zu merken; so kann man in Ruhe nachlesen, was man beim nächsten
+        // Mal besser machen könnte.
+        if (spMistakesThisSession.length) {
+          const summary = spMistakesThisSession.map((m, i) => `${i + 1}. „${m.correctSentence}“\n${m.explain}`).join("\n\n");
+          Backend.sendSystemMessage(Backend.currentUser().id, `🧩 Deine Satzpuzzle-Runde: ${spSession.correct}/${spSession.total} richtig. Hier die korrekten Sätze zu deinen ${spMistakesThisSession.length} ${spMistakesThisSession.length === 1 ? "Fehler" : "Fehlern"}, zum Nachlesen:\n\n${summary}`);
+        }
       }
     }
   }
@@ -4616,26 +4697,36 @@
   document.body.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-mini-bug-context]");
     if (!btn) return;
-    const context = btn.dataset.miniBugContext;
-    const box = Core.el("div", { class: "lightbox", onclick: (ev) => { if (ev.target === box) box.remove(); } },
-      Core.el("div", { class: "profile-modal-card", style: "max-width:300px;" },
-        Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("h3", {}, "🪲 Fehler melden"),
-        Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
-        ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
-          Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left; white-space:normal; overflow-wrap:break-word;", onclick: async () => {
-            await Backend.reportBug(context, label);
-            box.remove();
-            showToast("✅ Danke, Alex wurde informiert!");
-          } }, label)
-        )
-      )
-    );
-    document.body.appendChild(box);
+    openBugReportDialog(btn.dataset.miniBugContext);
   });
   function renderSatzpuzzle() {
     const area = document.getElementById("satzpuzzleArea");
     if (!area) return;
+    if (!spIntroShown && !hasSeenGameIntro("satzpuzzle")) {
+      // "SATZPUZZLE" als Reihe kleiner, bunter Puzzleteile (mit angedeuteten Verbindungsnoppen an
+      // den Seiten) statt Emoji + Text — passend zum Zusammensetz-Thema des Spiels.
+      const SP_TITLE_LETTERS = ["S", "A", "T", "Z", "P", "U", "Z", "Z", "L", "E"];
+      const SP_TITLE_COLORS = ["#E85F6F", "#F2B84B", "#5BA8A0", "#A875D8", "#4A90D9", "#E8825F", "#7FB87A", "#E8D34B", "#B084CC", "#5BA8A0"];
+      const pieceW = 36;
+      const titleSvg = `<svg viewBox="0 0 ${pieceW * SP_TITLE_LETTERS.length + 10} 56" style="width:100%; max-width:400px; height:auto;">
+        ${SP_TITLE_LETTERS.map((letter, i) => {
+          const x = 5 + i * pieceW;
+          return `<g>
+            <rect x="${x}" y="8" width="${pieceW - 4}" height="40" rx="6" fill="${SP_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.3"/>
+            <circle cx="${x + pieceW - 4}" cy="28" r="5" fill="${SP_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.3"/>
+            <text x="${x + (pieceW - 4) / 2}" y="34" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF" stroke="#241505" stroke-width="0.5">${letter}</text>
+          </g>`;
+        }).join("")}
+      </svg>`;
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <div style="display:flex; justify-content:center; overflow-x:auto;">${titleSvg}</div>
+          <p class="empty-note">Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen.</p>
+          <button type="button" class="btn btn-coffee" id="spStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      document.getElementById("spStartIntroBtn").addEventListener("click", () => { spIntroShown = true; markGameIntroSeen("satzpuzzle"); renderSatzpuzzle(); });
+      return;
+    }
     if (!spSession) newSatzpuzzleSession();
     if (spSession.round >= spSession.total) { renderSatzpuzzleResults(); return; }
     if (!spCurrentEntry) newSatzpuzzleRound();
@@ -4696,6 +4787,7 @@
       Core.sound.wrong();
       const correctSentence = spCurrentEntry[0].join(" ");
       fb.innerHTML = `<strong style="color:#E85F6F;">Noch nicht ganz.</strong> Richtig wäre: „${correctSentence}“<br>${spCurrentEntry[1]}`;
+      spMistakesThisSession.push({ correctSentence, explain: spCurrentEntry[1] });
     }
     setTimeout(() => { newSatzpuzzleRound(); renderSatzpuzzle(); }, 2600);
   }
@@ -4753,15 +4845,36 @@
     if (!area) return;
     // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
     // statt sofort mitten im Spiel zu landen, ohne zu wissen, worum es geht.
-    if (!wtIntroShown) {
+    if (!wtIntroShown && !hasSeenGameIntro("wackelturm")) {
+      // Statt Emoji + Text: das Wort "WACKELTURM" als wackelig gestapelte Blöcke — jeder Block
+      // trägt einen Buchstaben und ist leicht zufällig seitlich versetzt, wie ein echter,
+      // instabiler Turm aus einzelnen Klötzen.
+      const WT_TITLE_LETTERS = ["W", "A", "C", "K", "E", "L", "T", "U", "R", "M"];
+      const WT_TITLE_COLORS = ["#E85F6F", "#F2B84B", "#5BA8A0", "#A875D8", "#4A90D9", "#E8825F", "#7FB87A", "#E8D34B", "#B084CC", "#5BA8A0"];
+      const blockH = 30;
+      const blockW = 58;
+      const rows = 2;
+      const perRow = Math.ceil(WT_TITLE_LETTERS.length / rows);
+      const titleSvg = `<svg viewBox="0 0 ${blockW * perRow + 30} ${blockH * rows + 20}" style="width:100%; max-width:340px; height:auto;">
+        ${WT_TITLE_LETTERS.map((letter, i) => {
+          const row = rows - 1 - Math.floor(i / perRow);
+          const colInRow = i % perRow;
+          const jitter = ((i * 7) % 11) - 5;
+          const x = 15 + colInRow * blockW + jitter;
+          const y = 10 + row * blockH;
+          return `<g>
+            <rect x="${x}" y="${y}" width="${blockW - 6}" height="${blockH - 5}" rx="4" fill="${WT_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.5"/>
+            <text x="${x + (blockW - 6) / 2}" y="${y + (blockH - 5) / 2 + 6}" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF" stroke="#241505" stroke-width="0.5">${letter}</text>
+          </g>`;
+        }).join("")}
+      </svg>`;
       area.innerHTML = `
         <div class="question-card" style="text-align:center;">
-          <p style="font-size:2.5rem;">🗼</p>
-          <h2 style="margin:8px 0;">Wackelturm</h2>
+          <div style="display:flex; justify-content:center;">${titleSvg}</div>
           <p class="empty-note">Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast. Schaffst du alle Blöcke, ohne dass er umfällt?</p>
           <button type="button" class="btn btn-coffee" id="wtStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
-      document.getElementById("wtStartIntroBtn").addEventListener("click", () => { wtIntroShown = true; renderWackelturm(); });
+      document.getElementById("wtStartIntroBtn").addEventListener("click", () => { wtIntroShown = true; markGameIntroSeen("wackelturm"); renderWackelturm(); });
       return;
     }
     // Nach einer geschafften Runde zeigt sich (nach kurzer Zeit automatisch) ein bereiter,
@@ -5063,17 +5176,18 @@
     const correctIdx = bbCurrentQuestion.correct[0];
     // Positionen in einem Raster mit kleinen zufälligen Abweichungen, damit sich Blasen nicht
     // überlappen — anders als bei den fallenden Wörtern gibt es hier keine Bewegung, nur Wachsen.
-    // Positionen mit GARANTIERTEM Mindestabstand, damit sich Blasen niemals überlappen können —
-    // deutlich weiter auseinander als vorher, und die zufällige Abweichung ist klein genug, dass
-    // sie den garantierten Abstand nicht wieder auffressen kann.
-    const positions = [
-      { left: 18, top: 22 }, { left: 78, top: 20 }, { left: 48, top: 50 },
-      { left: 14, top: 76 }, { left: 82, top: 76 },
-    ];
+    // Positionen mit GARANTIERTEM Mindestabstand in der Breite (X-Verteilung bleibt bestehen,
+    // damit sich Blasen niemals seitlich überlappen). WICHTIG: die Höhe (Y) ist jetzt bewusst kein
+    // fester Startpunkt mehr — jede Blase startet unten, VERSTECKT unterhalb des sichtbaren
+    // Spielfelds, und steigt über ihre gesamte Lebensdauer nach oben auf, bis sie oben aus dem
+    // Bild verschwindet (siehe @keyframes bbGrowAndPop). Vorher wuchsen die Blasen nur leicht an
+    // einer schon sichtbaren Position im oberen Drittel — das war NICHT das gewünschte "von unten
+    // aufsteigen bis sie verschwinden".
+    const xPositions = [18, 78, 48, 14, 82];
     bbActiveBubbles = bbCurrentQuestion.options.map((opt, i) => ({
       id: `bb${i}-${Date.now()}`, text: capitalizeIfSentenceStart(opt, bbCurrentQuestion.prompt), isCorrect: i === correctIdx, resolved: false,
-      left: Math.max(10, Math.min(88, positions[i % positions.length].left + (Math.random() * 4 - 2))),
-      top: Math.max(15, Math.min(82, positions[i % positions.length].top + (Math.random() * 4 - 2))),
+      left: Math.max(10, Math.min(88, xPositions[i % xPositions.length] + (Math.random() * 4 - 2))),
+      top: 108, // unterhalb des sichtbaren Bereichs — der eigentliche Aufstieg passiert per Animation
       spawnedAt: Date.now(),
     }));
     bbRoundActive = true;
@@ -5122,17 +5236,34 @@
     const area = document.getElementById("bubblesArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "wortblasen_neu", "Wortblasen", "🫧")) return;
-    if (!bbIntroShown) {
+    if (!bbIntroShown && !hasSeenGameIntro("wortblasen")) {
+      // Statt Emoji + Text: das Wort "WORTBLASEN" als Reihe kleiner, runder Seifenblasen mit
+      // Glanzlicht — jede Blase trägt einen Buchstaben, passend zum Blasen-Thema des Spiels.
+      const BB_TITLE_LETTERS = ["W", "O", "R", "T", "B", "L", "A", "S", "E", "N"];
+      const BB_TITLE_COLORS = ["#5BA8A0", "#4A90D9", "#7FC4D4", "#3EC6C6", "#5BA8A0", "#4A90D9", "#7FC4D4", "#3EC6C6", "#5BA8A0", "#4A90D9"];
+      const bubbleR = 19;
+      const bubbleGap = 4;
+      const step = bubbleR * 2 + bubbleGap;
+      const titleSvg = `<svg viewBox="0 0 ${step * BB_TITLE_LETTERS.length + 10} ${bubbleR * 2 + 16}" style="width:100%; max-width:400px; height:auto;">
+        ${BB_TITLE_LETTERS.map((letter, i) => {
+          const cx = 10 + bubbleR + i * step;
+          const cy = bubbleR + 8;
+          return `<g>
+            <circle cx="${cx}" cy="${cy}" r="${bubbleR}" fill="${BB_TITLE_COLORS[i]}" fill-opacity="0.75" stroke="#FFFFFF" stroke-width="1.5"/>
+            <ellipse cx="${cx - 6}" cy="${cy - 7}" rx="5" ry="3" fill="#FFFFFF" fill-opacity="0.8"/>
+            <text x="${cx}" y="${cy + 6}" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF">${letter}</text>
+          </g>`;
+        }).join("")}
+      </svg>`;
       area.innerHTML = `
         <div class="question-card" style="text-align:center;">
-          <p style="font-size:2.5rem;">🫧</p>
-          <h2 style="margin:8px 0;">Wortblasen</h2>
+          <div style="display:flex; justify-content:center;">${titleSvg}</div>
           ${inlineFeatureFlagToggleHtml("wortblasen_neu")}
           <p class="empty-note">Mehrere Wort-Blasen erscheinen gleichzeitig — tipp die RICHTIGE Antwort an, bevor sie von selbst zerplatzt! Tippst du eine falsche Blase an, oder zerplatzt die richtige ungetroffen, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
           <button type="button" class="btn btn-coffee" id="bbStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
       wireInlineFeatureFlagToggles(area, renderBubbleGame);
-      document.getElementById("bbStartIntroBtn").addEventListener("click", () => { bbIntroShown = true; newBubbleGame(); renderBubbleGame(); });
+      document.getElementById("bbStartIntroBtn").addEventListener("click", () => { bbIntroShown = true; markGameIntroSeen("wortblasen"); newBubbleGame(); renderBubbleGame(); });
       return;
     }
     if (bbLives <= 0) { renderBubbleGameOver(); return; }
@@ -5346,6 +5477,9 @@
   let ktGameOverFinalized = false;
   let ktMistakes = 0;
   let ktCurrentSentence = null;
+  let ktLastEntryId = null; // verhindert, dass unmittelbar hintereinander derselbe Satz (nur mit
+  // korrekter oder fehlerhafter Variante) erneut gezogen wird — bei einem kleineren Pool war es
+  // sonst spürbar häufig, dass genau der gerade falsch beantwortete Satz sofort nochmal kam.
   let ktIsCorrectSentence = false;
   let ktAnswered = false;
   let ktIntroShown = false;
@@ -5369,7 +5503,12 @@
   }
   function newKorrektourRound() {
     const pool = ktBuildContentPool();
-    const entry = pool[Math.floor(Math.random() * pool.length)];
+    // Bei mehr als einem Eintrag im Pool: den zuletzt gezeigten Satz beim Ziehen ausschließen,
+    // damit er nicht direkt nochmal (mit vertauschter richtig/falsch-Variante) drankommt — genau
+    // das gemeldete "derselbe Satz kommt gleich nochmal"-Verhalten.
+    const candidates = pool.length > 1 ? pool.filter((e) => e.correctSentence !== ktLastEntryId) : pool;
+    const entry = candidates[Math.floor(Math.random() * candidates.length)];
+    ktLastEntryId = entry.correctSentence;
     ktIsCorrectSentence = Math.random() < 0.5;
     ktCurrentSentence = ktIsCorrectSentence ? entry.correctSentence : entry.wrongSentence;
     ktCurrentSentence = { text: ktCurrentSentence, explain: entry.explain };
@@ -5401,17 +5540,37 @@
     const area = document.getElementById("korrektourArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "korrektour_neu", "Korrektour", "🚂")) return;
-    if (!ktIntroShown) {
+    if (!ktIntroShown && !hasSeenGameIntro("korrektour")) {
+      // Statt eines schlichten Text-Titels: ein kleiner, bunter Zug, bei dem jeder Waggon einen
+      // Buchstaben von "KORREKTOUR" trägt — dem Kunstwort aus "Korrektur" + "Tour" (mit dem
+      // zusätzlichen O vor dem U, das erst das Wortspiel ergibt) — passend zum Zug-Thema des
+      // Spiels, kindlich-verspielt mit leichter Neigung pro Waggon statt einer starren Reihe. Der
+      // T-Waggon (das eingefügte Kunstwort-T) bekommt bewusst die Signalfarbe aus dem ursprünglich
+      // farblich hervorgehobenen Text-Titel, damit der Wortwitz weiterhin auffällt.
+      const KT_TITLE_LETTERS = ["K", "O", "R", "R", "E", "K", "T", "O", "U", "R"];
+      const KT_TITLE_COLORS = ["#5BA8A0", "#F2B84B", "#A875D8", "#4A90D9", "#7FB87A", "#B084CC", "#E85F6F", "#F2B84B", "#5BA8A0", "#A875D8"];
+      const wagonW = 38;
+      const titleSvg = `<svg viewBox="0 0 ${wagonW * KT_TITLE_LETTERS.length + 20} 70" style="width:100%; max-width:400px; height:auto;">
+        ${KT_TITLE_LETTERS.map((letter, i) => {
+          const x = 10 + i * wagonW;
+          const rot = (i % 2 === 0 ? -1 : 1) * (4 + (i * 3) % 5);
+          return `<g transform="translate(${x + wagonW / 2},35) rotate(${rot}) translate(${-wagonW / 2},-35)">
+            <rect x="2" y="14" width="${wagonW - 6}" height="34" rx="6" fill="${KT_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.5"/>
+            <circle cx="9" cy="52" r="5" fill="#241505"/>
+            <circle cx="${wagonW - 11}" cy="52" r="5" fill="#241505"/>
+            <text x="${(wagonW - 6) / 2 + 2}" y="37" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF" stroke="#241505" stroke-width="0.6">${letter}</text>
+          </g>`;
+        }).join("")}
+      </svg>`;
       area.innerHTML = `
         <div class="question-card" style="text-align:center;">
-          <p style="font-size:2.5rem;">🚂</p>
-          <h2 style="margin:8px 0;">Korrektour</h2>
+          <div style="display:flex; justify-content:center;">${titleSvg}</div>
           ${inlineFeatureFlagToggleHtml("korrektour_neu")}
-          <p class="empty-note">Ein Satz-Zug fährt im Bogen durchs Bild und wieder hinaus — du hast nur dieses kurze Zeitfenster, um zu entscheiden: Ist der Satz grammatikalisch RICHTIG (🟢 Grün) oder enthält er einen typischen Fehler (🔴 Rot)? Nach 3 Fehlern ist die Runde vorbei.</p>
+          <p class="empty-note">Ein Satz-Zug fährt am unteren Bildrand vorbei — du hast nur dieses kurze Zeitfenster, um zu entscheiden: Ist der Satz grammatikalisch RICHTIG (🟢 Grün) oder enthält er einen typischen Fehler (🔴 Rot)? Nach 3 Fehlern ist die Runde vorbei.</p>
           <button type="button" class="btn btn-coffee" id="ktStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
       wireInlineFeatureFlagToggles(area, renderKorrektour);
-      document.getElementById("ktStartIntroBtn").addEventListener("click", () => { ktIntroShown = true; ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
+      document.getElementById("ktStartIntroBtn").addEventListener("click", () => { ktIntroShown = true; markGameIntroSeen("korrektour"); ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
       return;
     }
     if (!ktCurrentSentence) { newKorrektourRound(); return; }
@@ -5582,33 +5741,48 @@
   function newKanoneRound() {
     knCurrentQuestion = pickRandomKanoneQuestion();
     const correctIdx = knCurrentQuestion.correct[0];
-    // Positionen NÄHER beieinander statt komplett zufällig über die ganze Breite verteilt — wie
-    // Blätter, die in etwa derselben Gegend herunterfallen, nicht kilometerweit auseinander. Ein
-    // enger geclusterter Mittelpunkt (35–65%) mit kleinen individuellen Abweichungen pro Wort.
-    const clusterCenter = 35 + Math.random() * 30;
+    // WICHTIG: die Positionen werden jetzt mit GARANTIERTEM Mindestabstand berechnet, statt in
+    // einem engen, zufälligen Cluster (35–65% Breite) — bei bis zu 5 Antwortoptionen PLUS zwei
+    // möglichen Bonus-Elementen (Herz, Münze) gleichzeitig führte der enge Cluster praktisch
+    // garantiert zu Überlappungen, besonders bei längeren Wörtern. Jetzt werden alle Elemente
+    // (inklusive Bonus) VORAB gemeinsam geplant und über die volle Breite (10–90%) verteilt.
+    const wantsHeartBonus = knLives < 3 && Math.random() < 0.25;
+    const wantsCoinBonus = Math.random() < 0.3;
+    const totalSlots = knCurrentQuestion.options.length + (wantsHeartBonus ? 1 : 0) + (wantsCoinBonus ? 1 : 0);
+    const slotWidth = 80 / totalSlots;
+    const slotOrder = Core.shuffle(Array.from({ length: totalSlots }, (_, i) => i));
+    let slotIdx = 0;
+    const nextSlotX = () => {
+      const base = 10 + slotOrder[slotIdx] * slotWidth + slotWidth / 2;
+      slotIdx += 1;
+      // Kleine, absichtlich BEGRENZTE Abweichung (max. 1/3 der Slot-Breite) — genug für eine
+      // natürliche, nicht perfekt-mechanische Verteilung, aber nie genug, um in den Nachbar-Slot
+      // hineinzuragen und dort zu überlappen.
+      return Math.max(8, Math.min(92, base + (Math.random() * slotWidth * 0.6 - slotWidth * 0.3)));
+    };
     knActiveWords = Core.shuffle(knCurrentQuestion.options.map((opt, i) => ({
       id: `w${i}-${Date.now()}`, text: capitalizeIfSentenceStart(opt, knCurrentQuestion.prompt), isCorrect: i === correctIdx, resolved: false,
-      xPercent: Math.max(15, Math.min(85, clusterCenter + (i - (knCurrentQuestion.options.length - 1) / 2) * 24 + (Math.random() * 6 - 3))),
+      xPercent: nextSlotX(),
       spawnedAt: null,
     })));
     // Gelegentlich (nicht bei jeder Runde) eine zusätzliche Bonus-Sprechblase mit ❤️+1 — schießt
     // man sie ab, gibt es ein Herz zurück (bis zum Maximum von 3). Damit lohnt sich langes
     // Durchhalten zusätzlich, nicht nur reines Punktesammeln. Nur wenn noch nicht alle 3 Herzen da
     // sind, sonst wäre sie wirkungslos.
-    if (knLives < 3 && Math.random() < 0.25) {
+    if (wantsHeartBonus) {
       knActiveWords.push({
         id: `bonus-${Date.now()}`, text: "❤️+1", isCorrect: false, isBonus: true, resolved: false,
-        xPercent: Math.max(15, Math.min(85, clusterCenter + (Math.random() * 20 - 10))),
+        xPercent: nextSlotX(),
         spawnedAt: null,
       });
     }
     // Zusätzliche Bonus-Punkte-Münze — anders als das Herz bewusst NICHT leicht zu kriegen: fällt
     // deutlich SCHNELLER als normale Wörter und ist kleiner, also eine echte Herausforderung, kein
     // Selbstläufer. Belohnt gutes Timing/Zielen mit extra Punkten obendrauf.
-    if (Math.random() < 0.3) {
+    if (wantsCoinBonus) {
       knActiveWords.push({
         id: `coin-${Date.now()}`, text: "🪙+3", isCorrect: false, isBonus: true, isCoinBonus: true, resolved: false,
-        xPercent: Math.max(15, Math.min(85, clusterCenter + (Math.random() * 30 - 15))),
+        xPercent: nextSlotX(),
         spawnedAt: null,
       });
     }
@@ -5624,15 +5798,31 @@
     if (!Backend.isFeatureOn("wortkanone_redesign")) { renderKanoneOld(); return; }
     // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
     // statt dass sofort ohne Erklärung losgeschossen wird.
-    if (!knIntroShown) {
+    if (!knIntroShown && !hasSeenGameIntro("wortkanone")) {
+      // Statt Emoji + Text: das Wort "WORTKANONE" als Reihe kleiner Zielscheiben, passend zum
+      // Zielscheiben-Thema der Wort-Kanone — jede Zielscheibe trägt einen Buchstaben mittig.
+      const KN_TITLE_LETTERS = ["W", "O", "R", "T", "K", "A", "N", "O", "N", "E"];
+      const targetR = 18;
+      const step = targetR * 2 + 4;
+      const titleSvg = `<svg viewBox="0 0 ${step * KN_TITLE_LETTERS.length + 8} ${targetR * 2 + 10}" style="width:100%; max-width:400px; height:auto;">
+        ${KN_TITLE_LETTERS.map((letter, i) => {
+          const cx = 8 + targetR + i * step;
+          const cy = targetR + 5;
+          return `<g>
+            <circle cx="${cx}" cy="${cy}" r="${targetR}" fill="#E85F6F"/>
+            <circle cx="${cx}" cy="${cy}" r="${targetR * 0.68}" fill="#FFFFFF"/>
+            <circle cx="${cx}" cy="${cy}" r="${targetR * 0.36}" fill="#E85F6F"/>
+            <text x="${cx}" y="${cy + 6}" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="17" font-weight="800" fill="#FFFFFF" stroke="#7A1F2B" stroke-width="0.5">${letter}</text>
+          </g>`;
+        }).join("")}
+      </svg>`;
       area.innerHTML = `
         <div class="question-card" style="text-align:center;">
-          <p style="font-size:2.5rem;">🎯</p>
-          <h2 style="margin:8px 0;">Wort-Kanone</h2>
+          <div style="display:flex; justify-content:center;">${titleSvg}</div>
           <p class="empty-note">Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
           <button type="button" class="btn btn-coffee" id="knStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
-      document.getElementById("knStartIntroBtn").addEventListener("click", () => { knIntroShown = true; renderKanone(); });
+      document.getElementById("knStartIntroBtn").addEventListener("click", () => { knIntroShown = true; markGameIntroSeen("wortkanone"); renderKanone(); });
       return;
     }
     if (knLives <= 0) { renderKanoneGameOver(); return; }
@@ -5680,8 +5870,6 @@
             <span class="kn-scenery-item" style="left:6%; font-size:3.8rem;">🏡</span>
             <span class="kn-scenery-item" style="left:20%; font-size:3.4rem;">🌳</span>
             <span class="kn-scenery-item" style="left:34%; font-size:1rem;">🍄</span>
-            <span class="kn-scenery-item" style="left:48%; font-size:0.9rem;">🌼</span>
-            <span class="kn-scenery-item" style="left:55%; font-size:1rem;">🍄</span>
             <span class="kn-scenery-item" style="left:68%; font-size:3.2rem;">🌳</span>
             <span class="kn-scenery-item" style="left:84%; font-size:1rem;">🍄</span>
             <span class="kn-scenery-item" style="left:92%; font-size:0.9rem;">🌸</span>
@@ -5713,9 +5901,6 @@
               <rect x="21.5" y="21" width="17" height="3" rx="1.2" fill="#242424" />
               <ellipse cx="30" cy="9" rx="7" ry="3" fill="#3a3a3a" stroke="#242424" stroke-width="0.6" />
               <ellipse cx="30" cy="9" rx="4.3" ry="1.9" fill="#0d0d0d" />
-              <!-- Zündschnur -->
-              <path d="M30 6 Q33 2 31 -1" fill="none" stroke="#8a6a3a" stroke-width="1.3" stroke-linecap="round" />
-              <circle cx="31" cy="-1.5" r="1.6" fill="#e8825f" />
             </g>
           </svg>
         </div>
@@ -8197,6 +8382,7 @@
     },
   ];
   let cwState = null;
+  let cwIntroShown = false;
   let cwSession = null; // { round, total, correctCount, allWordsPlayed } -- mehrere Rätsel pro Sitzung, EINE Sammel-Nachricht am Ende
   function newCrosswordSession() {
     // Zufälliger Startpunkt statt immer index 0 — sonst begann JEDE neue Sitzung garantiert mit
@@ -8248,6 +8434,33 @@
   }
   function renderCrossword() {
     const area = document.getElementById("crosswordArea");
+    if (!cwIntroShown && !hasSeenGameIntro("kreuzwortraetsel")) {
+      // "KREUZWORTRÄTSEL" als kleines, echtes Kreuzworträtsel-Gitter (schwarz umrandete, weiße
+      // Kästchen) statt Emoji + Text — zwei Zeilen, da das Wort für eine einzelne Reihe zu lang ist.
+      const CW_TITLE_LETTERS = ["K", "R", "E", "U", "Z", "W", "O", "R", "T", "R", "Ä", "T", "S", "E", "L"];
+      const cellSize = 26;
+      const perRow = 8;
+      const titleSvg = `<svg viewBox="0 0 ${cellSize * perRow + 4} ${cellSize * 2 + 4}" style="width:100%; max-width:320px; height:auto;">
+        ${CW_TITLE_LETTERS.map((letter, i) => {
+          const row = Math.floor(i / perRow);
+          const col = i % perRow;
+          const x = 2 + col * cellSize;
+          const y = 2 + row * cellSize;
+          return `<g>
+            <rect x="${x}" y="${y}" width="${cellSize - 2}" height="${cellSize - 2}" fill="#FFFFFF" stroke="#241505" stroke-width="1.3"/>
+            <text x="${x + (cellSize - 2) / 2}" y="${y + (cellSize - 2) / 2 + 6}" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-weight="800" fill="#241505">${letter}</text>
+          </g>`;
+        }).join("")}
+      </svg>`;
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <div style="display:flex; justify-content:center;">${titleSvg}</div>
+          <p class="empty-note" style="margin-top:12px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
+          <button type="button" class="btn btn-coffee" id="cwStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      document.getElementById("cwStartIntroBtn").addEventListener("click", () => { cwIntroShown = true; markGameIntroSeen("kreuzwortraetsel"); if (!cwSession) newCrosswordSession(); renderCrossword(); });
+      return;
+    }
     if (!cwSession) { renderCrosswordResults(); return; }
     if (!cwState) newCrossword(cwSession.startIdx);
     const { puzzle } = cwState;
@@ -8412,6 +8625,84 @@
   }
 
   let historyLevel = "B1";
+  let dichterLevel = "B1";
+  let schneeLevel = "B1";
+  // WICHTIG: beide Rubriken sind bewusst als ausstehende Updates vorbereitet — nur die
+  // Infrastruktur (Struktur, Niveau-Umschalter A1–C2, Beispieleinträge) steht schon, aber SICHTBAR
+  // wird das für normale Nutzer:innen erst, wenn die Feature-Flags unten explizit freigegeben
+  // werden. Bis dahin nur für Betreiber:in/Admins/eingeladene Beta-Tester:innen sichtbar (siehe
+  // renderComingSoonGate).
+  const DICHTER_ENTRIES = [
+    {
+      id: "goethe",
+      name: "Johann Wolfgang von Goethe",
+      years: "1749–1832",
+      img: "",
+      levels: {
+        A1: "Goethe war ein berühmter deutscher Dichter. Er hat viele Gedichte und Bücher geschrieben. Sein bekanntestes Buch heißt „Faust“.",
+        A2: "Johann Wolfgang von Goethe war ein sehr berühmter deutscher Dichter und Schriftsteller. Er lebte vor über 200 Jahren. Sein wichtigstes Werk heißt „Faust“ und wird noch heute in Theatern gespielt.",
+        B1: "Goethe gilt als einer der bedeutendsten deutschen Dichter überhaupt. Neben Gedichten schrieb er Romane, Theaterstücke und war auch als Naturwissenschaftler tätig. Sein Hauptwerk „Faust“ beschäftigt sich mit dem Streben des Menschen nach Wissen und Erfüllung.",
+        B2: "Johann Wolfgang von Goethe (1749–1832) war nicht nur Dichter, sondern auch Staatsmann, Naturforscher und Universalgelehrter. Sein Werk „Faust“, an dem er über 60 Jahre arbeitete, gilt als eines der wichtigsten Werke der deutschen Literaturgeschichte.",
+        C1: "Goethe zählt zu den einflussreichsten Persönlichkeiten der deutschen Kulturgeschichte — als Dichter der Weimarer Klassik prägte er mit Werken wie „Faust“ und „Die Leiden des jungen Werthers“ die europäische Literatur nachhaltig und wirkte zugleich als Naturwissenschaftler und Staatsminister.",
+        C2: "Als Zentralgestalt der Weimarer Klassik verkörpert Goethe wie kaum eine andere Figur das Ideal des Universalgelehrten: sein literarisches Schaffen, allen voran das lebenslange Ringen um „Faust“, verschmilzt mit naturwissenschaftlichen Studien und staatsmännischem Wirken zu einem einzigartigen kulturellen Vermächtnis.",
+      },
+    },
+  ];
+  const SCHNEE_ENTRIES = [
+    {
+      id: "faxgeraet",
+      name: "Das Faxgerät im Büroalltag",
+      img: "",
+      levels: {
+        A1: "Früher hatten viele Büros ein Faxgerät. Man hat damit Papiere an andere Orte geschickt. Heute nutzen die meisten Menschen E-Mails.",
+        A2: "Früher war das Faxgerät in fast jedem Büro zu finden. Damit konnte man Dokumente über die Telefonleitung an andere Orte senden. Heute wird das Faxgerät kaum noch benutzt, weil E-Mails viel schneller sind.",
+        B1: "Das Faxgerät war jahrzehntelang ein fester Bestandteil des deutschen Büroalltags. Über die Telefonleitung wurden Dokumente sofort an andere Orte übertragen. Mit der Verbreitung von E-Mail und digitalen Dokumenten ist das Fax heute weitgehend aus dem Alltag verschwunden.",
+        B2: "Über Jahrzehnte hinweg galt das Faxgerät als unverzichtbares Kommunikationsmittel in deutschen Büros und Behörden. Es ermöglichte die sofortige Übertragung von Dokumenten über die Telefonleitung. Erst mit der zunehmenden Digitalisierung wurde es fast vollständig durch E-Mail und elektronische Dokumente abgelöst.",
+        C1: "Kaum ein Gerät verkörpert den Wandel der deutschen Bürokommunikation so deutlich wie das Faxgerät: einst als effizientes, sofortiges Übertragungsmittel geschätzt, wurde es mit dem Siegeszug digitaler Kommunikation binnen weniger Jahre nahezu vollständig verdrängt — mancherorts hält sich der „Faxzwang“ in Behörden bis heute hartnäckig.",
+        C2: "Das Faxgerät steht exemplarisch für jene technischen Übergangsphänomene, die eine Ära prägten und binnen kürzester Zeit durch überlegene digitale Alternativen obsolet wurden — ein Umstand, den insbesondere die fortdauernde behördliche Anhänglichkeit an das Fax in Deutschland auf bemerkenswerte Weise konterkariert.",
+      },
+    },
+  ];
+  function renderLevelSwitcherEntries(area, entries, levelVar, setLevelVar, iconEmoji, subheading) {
+    const level = levelVar();
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">${subheading}</p>
+      ${entries.map((entry) => `
+        <div class="question-card" style="margin-bottom:16px;">
+          <p class="eyebrow">${iconEmoji} ${entry.name}${entry.years ? ` <span style="font-weight:400;">(${entry.years})</span>` : ""}</p>
+          <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
+            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip level-switch-btn" data-entry-id="${entry.id}" data-level="${lvl}" style="${lvl === level ? "background:var(--amber-400); color:#241505;" : ""}">${lvl}</button>`).join("")}
+          </div>
+          <p style="margin-top:8px;">${entry.levels[level]}</p>
+        </div>`).join("")}
+    `;
+    area.querySelectorAll(".level-switch-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setLevelVar(btn.dataset.level);
+        renderLevelSwitcherEntries(area, entries, levelVar, setLevelVar, iconEmoji, subheading);
+      });
+    });
+  }
+  function renderDichterUndDenker() {
+    const area = document.getElementById("dichterArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "dichter_und_denker", "Dichter & Denker", "✒️")) return;
+    renderLevelSwitcherEntries(area, DICHTER_ENTRIES, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
+      "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
+    area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("dichter_und_denker"));
+    wireInlineFeatureFlagToggles(area, renderDichterUndDenker);
+  }
+  function renderSchneeVonGestern() {
+    const area = document.getElementById("schneeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "schnee_von_gestern", "Schnee von gestern", "❄️")) return;
+    renderLevelSwitcherEntries(area, SCHNEE_ENTRIES, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
+      "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
+    area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("schnee_von_gestern"));
+    wireInlineFeatureFlagToggles(area, renderSchneeVonGestern);
+  }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-dichter"]')?.addEventListener("click", renderDichterUndDenker);
+  document.querySelector('#knowledgeSubnav [data-sub="sub-schnee"]')?.addEventListener("click", renderSchneeVonGestern);
   function renderHowItWorks() {
     const area = document.getElementById("howItWorksArea");
     if (!area) return;
@@ -9561,7 +9852,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>` : ""}
         <div class="question-card profile-card-view">
           <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
-          <div class="profile-header-flow">
+          ${myFoxBedBadge ? `<div class="fox-period-badge-stack">${myFoxBedBadge}</div>` : ""}
+          <div class="profile-header-flow${myFoxBedBadge ? " has-fox-badges" : ""}">
             ${avatarHtml}
             <div class="profile-header-stack">
               <h2 style="margin:0 0 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
@@ -9576,7 +9868,6 @@ An einem Morgen lief ein kleiner Fuchs los…
               ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
             </div>
           </div>
-          ${myFoxBedBadge ? `<div class="fox-period-badge-stack">${myFoxBedBadge}</div>` : ""}
           ${showcaseSongStripHtml(profile)}
           ${myTransportStrip}
           <div style="clear:both;"></div>
@@ -9745,8 +10036,8 @@ An einem Morgen lief ein kleiner Fuchs los…
           <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
           <input type="date" id="birthdayInput" value="${profileEditDraft.birthday !== undefined ? profileEditDraft.birthday : (profile.birthday || "")}" />
         </div>
-        <div class="form-field">
-          <label>Geschlechtssymbol im Profil (optional)</label>
+        <div class="form-field" style="border:1.5px solid var(--amber-400); border-radius:10px; padding:10px 12px;">
+          <label style="font-weight:700;">⚧️ Geschlechtssymbol im Profil (optional)</label>
           <select id="extraGenderSymbolSelectTop" class="challenge-select">
             <option value="">Nicht anzeigen</option>
             <option value="maennlich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "maennlich" ? "selected" : ""}>♂ männlich</option>
@@ -10173,22 +10464,31 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   function renderTrophyCase(profile, compact) {
     if (!profile.trophies || !profile.trophies.length) return "";
-    const list = compact ? profile.trophies.slice(0, 4) : profile.trophies;
-    const extra = compact && profile.trophies.length > 4 ? profile.trophies.slice(4) : [];
-    // WICHTIG: Symbol muss zur tatsächlichen Einordnung passen (🎖️ Orden vs. 🏆 Pokal) — vorher
-    // zeigte JEDER Eintrag immer 🏆, egal was trophyKind() ergab. Das widersprach sichtbar der
-    // "X Orden · Y Pokale"-Zusammenfassung weiter oben, die schon korrekt unterschied, und
-    // erweckte den falschen Eindruck, es gäbe viel mehr Pokale als Orden.
+    // WICHTIG: nach CHARAKTER gruppiert statt einer flachen Liste — vorher standen z. B.
+    // "Wissenschaftler – Lehrmeister" (Orden) und "Wissenschaftler – Profi" (Pokal) weit
+    // auseinander in der Liste, obwohl es derselbe Charakter ist, nur eine höhere erreichte Stufe.
+    // So wird auf einen Blick klar: Orden und Pokal sind keine grundsätzlich verschiedenen
+    // Auszeichnungsarten, sondern die STUFEN innerhalb desselben Charakters — die zwei höchsten
+    // Stufen zählen einfach als besonders wertvoller Pokal statt als Orden.
+    const byCharacter = {};
+    profile.trophies.forEach((t) => {
+      const character = t.split(" – ")[0] || t;
+      if (!byCharacter[character]) byCharacter[character] = [];
+      byCharacter[character].push(t);
+    });
+    const characters = Object.keys(byCharacter);
+    const visibleCharacters = compact ? characters.slice(0, 3) : characters;
+    const extraCharacters = compact && characters.length > 3 ? characters.slice(3) : [];
     const chip = (t) => `<button type="button" class="trophy-chip trophy-chip-clickable" data-trophy-label="${t.replace(/"/g, "&quot;")}"><span class="emoji">${trophyKind(t) === "pokal" ? "🏆" : "🎖️"}</span><span>${t}</span></button>`;
+    const groupHtml = (charList) => charList.map((character) => `
+      <div class="trophy-char-group">
+        <div class="trophy-case ${compact ? "trophy-case-compact" : ""}">${byCharacter[character].map(chip).join("")}</div>
+      </div>`).join("");
     return `<div class="breakdown-list" style="margin-top:16px;" id="trophyCaseAnchor">
-      <p class="eyebrow" style="margin-top:0;">🏆 Vitrine <span class="empty-note" style="font-weight:400;">— antippen für Details</span></p>
-      <div class="trophy-case ${compact ? "trophy-case-compact" : ""}">
-        ${list.map(chip).join("")}
-        ${extra.length ? `<button type="button" class="trophy-chip trophy-chip-more" id="trophyMoreBtn">+${extra.length} mehr anzeigen</button>` : ""}
-      </div>
-      ${extra.length ? `<div class="trophy-more-list" id="trophyMoreList" style="display:none;">
-        ${extra.map(chip).join("")}
-      </div>` : ""}
+      <p class="eyebrow" style="margin-top:0;">🏆 Vitrine <span class="empty-note" style="font-weight:400;">— nach Charakter gruppiert, antippen für Details</span></p>
+      ${groupHtml(visibleCharacters)}
+      ${extraCharacters.length ? `<button type="button" class="trophy-chip trophy-chip-more" id="trophyMoreBtn">+${extraCharacters.length} weitere Charaktere anzeigen</button>
+        <div id="trophyMoreList" style="display:none;">${groupHtml(extraCharacters)}</div>` : ""}
     </div>`;
   }
   // Charakter-Beschreibungen für die Trophäen-Detail-Erklärung — dieselbe Zuordnung wie in der
@@ -10239,8 +10539,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   function wireTrophyCaseToggle(root) {
     (root || document).querySelectorAll(".trophy-chip-more").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const list = btn.closest(".trophy-case")?.nextElementSibling;
-        if (list && list.classList.contains("trophy-more-list")) list.style.display = "flex";
+        // Robuster über die feste, eindeutige ID statt closest/nextElementSibling-Suche — die
+        // Struktur gruppiert die Trophäen jetzt nach Charakter, daher steht die "mehr"-Liste
+        // nicht mehr zwingend als direktes Geschwisterelement des Knopfes.
+        const list = document.getElementById("trophyMoreList");
+        if (list) list.style.display = "block";
         btn.style.display = "none";
       });
     });
@@ -10352,6 +10655,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     window.onYouTubeIframeAPIReady = () => { ytApiCallbacks.forEach((cb) => cb()); ytApiCallbacks = []; };
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
+    // WICHTIG: bisher gab es KEINE Rückmeldung, wenn dieses Skript aus irgendeinem Grund nicht
+    // laden konnte (Netzwerkproblem, Werbeblocker, der youtube.com blockiert, o. Ä.) — die Musik
+    // spielte dann einfach nie, ohne jeden Hinweis, warum. Jetzt eine klare Fehlermeldung, statt
+    // stiller Funkstille.
+    tag.onerror = () => {
+      ytApiLoading = false;
+      showToast("⚠️ YouTube konnte nicht geladen werden — prüf deine Internetverbindung oder einen Werbeblocker.");
+    };
     document.head.appendChild(tag);
   }
   function musicVisiblePlaylist() {
@@ -10503,6 +10814,13 @@ An einem Morgen lief ein kleiner Fuchs los…
         if (action === "playpause") { profileStripPlaying = !profileStripPlaying; }
         if (action === "addmine") {
           if (!Backend.currentUser()) { alert("Bitte zuerst anmelden."); return; }
+          // Sich selbst einen eigenen Song "empfehlen" ergibt keinen Sinn — das erzeugte bisher
+          // einen unnötigen Zweit-Eintrag in der eigenen Playlist, der die Beliebtheits-Zählung
+          // künstlich (und dauerhaft, auch nach dem Löschen des Original-Songs) nach oben trieb.
+          if (strip.dataset.stripOwner === Backend.currentUser().id) {
+            showToast("Das ist schon dein eigener Song — kein Grund, ihn dir selbst zu empfehlen.");
+            return;
+          }
           try {
             // Kette weiterreichen: wenn der Song selbst schon eine ursprüngliche Quelle hat (er
             // wurde selbst schon mal übernommen), bleibt DIESE die Beliebtheits-Quelle — nicht
@@ -10527,6 +10845,10 @@ An einem Morgen lief ein kleiner Fuchs los…
   function showcaseSongStripHtml(p) {
     const extra = p.extraProfileData || p.extra_profile_data || {};
     if (!extra.showcaseSongUrl) return "";
+    // Solange der Musik-Player selbst noch gesperrt ist (siehe renderMusicSection), macht ein
+    // anklickbarer Schaufenster-Song im Profil auch keinen Sinn — er würde nur zu einem noch
+    // fehlerhaften Player führen.
+    if (!Backend.isFeatureOn("musik_player")) return "";
     return `
       <button type="button" class="showcase-song-strip" data-showcase-play-url="${extra.showcaseSongUrl}" data-showcase-play-title="${extra.showcaseSongTitle || "Lieblingssong"}">
         <span class="showcase-song-play-icon">${PLAYER_ICONS.play}</span>
@@ -10835,6 +11157,9 @@ An einem Morgen lief ein kleiner Fuchs los…
   function renderMusicFloatingBar() {
     const floatBar = document.getElementById("musicFloatingBar");
     if (!floatBar) return;
+    // Solange der Musik-Player gesperrt ist, soll auch die schwebende Leiste gar nicht erst
+    // auftauchen können — konsistent mit dem gesperrten Musik-Bereich selbst.
+    if (!Backend.isFeatureOn("musik_player")) { floatBar.style.display = "none"; return; }
     // WICHTIG: Das echte Video-/iframe-Element VOR jedem möglichen innerHTML-Setzen unten "in
     // Sicherheit" bringen (falls es gerade in floatBar liegt) — sonst würde es bei jedem der
     // folgenden innerHTML-Aufrufe (auch bei "" beim Verstecken) mitgelöscht und beim nächsten Mal
@@ -10941,6 +11266,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   async function renderMusicSection() {
     const area = document.getElementById("musicArea");
     if (!area) return;
+    // WICHTIG: der Musik-Player läuft noch nicht zuverlässig (Wiedergabe stoppt beim Navigieren) —
+    // deshalb bewusst hinter einer Freigabe-Sperre versteckt, bis das behoben ist. Nur der/die
+    // Betreiber:in bzw. eingeladene Beta-Tester:innen sehen den Bereich vorab, alle anderen sehen
+    // "kommt bald", damit niemand auf ein noch fehlerhaftes Feature stößt.
+    if (!renderComingSoonGate(area, "musik_player", "Musik", "🎵")) return;
     // Dieselbe Absicherung wie in renderMusicPlayerBar(): das echte Video-/Cover-Element muss VOR
     // dem Neusetzen von area.innerHTML "in Sicherheit" gebracht werden — sonst würde es beim
     // Überschreiben mitgelöscht, falls es zu diesem Zeitpunkt gerade innerhalb von area liegt.
@@ -11160,6 +11490,10 @@ An einem Morgen lief ein kleiner Fuchs los…
         }
       });
     });
+    // Freigabe-Schalter erst GANZ AM ENDE einfügen, nachdem der komplette Bereich fertig
+    // aufgebaut ist — vorher hätte der spätere innerHTML-Aufbau ihn sofort wieder überschrieben.
+    area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("musik_player"));
+    wireInlineFeatureFlagToggles(area, renderMusicSection);
   }
   document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic(true));
   document.querySelector('#knowledgeSubnav [data-sub="sub-music"]')?.addEventListener("click", async () => {
@@ -11362,21 +11696,20 @@ An einem Morgen lief ein kleiner Fuchs los…
     };
     const renderEmptySlots = (figures) => Array.from({ length: half - figures.length }).map(() => `<div></div>`).join("");
     area.innerHTML = `
-      <p class="empty-note" style="margin-bottom:14px;">Dein Sticker-Album — die Füchse sind erst der Anfang. Künftige Sammelserien (z. B. zu bestimmten Jahreszeiten) bekommen hier später ihr eigenes Kapitel, ohne dass du deine bisherigen Füchse verlierst.</p>
       <div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
         <button type="button" class="btn btn-ghost" id="albumPrevChapter" ${albumChapterIdx === 0 ? "disabled" : ""}>⏮ Kapitel</button>
         <h3 style="margin:0;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlocked}/${chapter.figures.length})</span></h3>
         <button type="button" class="btn btn-ghost" id="albumNextChapter" ${albumChapterIdx >= activeChapters.length - 1 ? "disabled" : ""}>Kapitel ⏭</button>
       </div>
       <div class="album-book album-book-open" id="albumPageFace">
-        <div class="album-page-face album-page-left">
+        <div class="album-page-face album-page-left" id="albumPageLeftClick" style="cursor:pointer;" title="Zurückblättern">
           <div class="album-page-grid">
             ${leftFigures.map(renderSlot).join("")}
             ${renderEmptySlots(leftFigures)}
           </div>
         </div>
         <div class="album-spine" aria-hidden="true"></div>
-        <div class="album-page-face album-page-right">
+        <div class="album-page-face album-page-right" id="albumPageRightClick" style="cursor:${albumPageIdx < totalPages - 1 ? "pointer" : "default"};" title="Weiterblättern">
           <div class="album-page-grid">
             ${rightFigures.map(renderSlot).join("")}
             ${renderEmptySlots(rightFigures)}
@@ -11388,17 +11721,41 @@ An einem Morgen lief ein kleiner Fuchs los…
         <span class="empty-note">Seite ${albumPageIdx + 1} / ${totalPages}</span>
         <button type="button" class="btn btn-ghost" id="albumNextPage" ${albumPageIdx >= totalPages - 1 ? "disabled" : ""}>Seite weiter ▶</button>
       </div>
+      <!-- Erklärung bewusst UNTER dem Buch statt darüber — sie soll nicht mehr das ganze Album
+           nach unten schieben, sobald man das Deckblatt öffnet. Die Kapitel-Überschrift darf
+           dagegen oben bleiben, das war ausdrücklich in Ordnung. -->
+      <p class="empty-note" style="margin-top:14px;">Dein Sticker-Album — die Füchse sind erst der Anfang. Künftige Sammelserien (z. B. zu bestimmten Jahreszeiten) bekommen hier später ihr eigenes Kapitel, ohne dass du deine bisherigen Füchse verlierst.</p>
       ${activeChapters.length <= 1 ? `<div class="question-card" style="margin-top:16px; text-align:center; opacity:0.6;"><p class="empty-note">📔 Weitere Kapitel folgen, sobald neue Sammelserien starten!</p></div>` : ""}
     `;
     document.getElementById("albumPrevChapter")?.addEventListener("click", () => { albumChapterIdx = Math.max(0, albumChapterIdx - 1); albumPageIdx = 0; renderAlbum(); });
     document.getElementById("albumNextChapter")?.addEventListener("click", () => { albumChapterIdx = Math.min(activeChapters.length - 1, albumChapterIdx + 1); albumPageIdx = 0; renderAlbum(); });
     document.getElementById("albumPrevPage")?.addEventListener("click", () => turnAlbumPage(-1));
     document.getElementById("albumNextPage")?.addEventListener("click", () => turnAlbumPage(1));
+    // Seiten selbst antippbar zum Blättern (links = zurück, rechts = weiter), wie bei einem
+    // echten Buch — nicht nur über die separaten Knöpfe darunter. Ein Klick auf eine einzelne
+    // Sammelfigur (die ihre eigene Detailansicht öffnet) löst das Blättern dabei NICHT zusätzlich
+    // aus, sonst würde sich beides gegenseitig stören.
+    document.getElementById("albumPageLeftClick")?.addEventListener("click", (e) => {
+      if (e.target.closest("[data-figure-detail]")) return;
+      turnAlbumPage(-1);
+    });
+    document.getElementById("albumPageRightClick")?.addEventListener("click", (e) => {
+      if (e.target.closest("[data-figure-detail]")) return;
+      if (albumPageIdx < totalPages - 1) turnAlbumPage(1);
+    });
     area.querySelectorAll("[data-figure-detail]").forEach((el) => {
       el.addEventListener("click", () => openFigureDetailModal(el.dataset.figureDetail));
     });
   }
   function turnAlbumPage(direction) {
+    // Von der allerersten Seite aus nach LINKS blättern führt zurück zum Deckblatt, genau wie bei
+    // einem echten Buch — vorher stand hier nur ein deaktivierter Knopf, ohne dass man tatsächlich
+    // zum Cover zurückkommen konnte.
+    if (direction < 0 && albumPageIdx === 0) {
+      albumOnCoverPage = true;
+      renderAlbum();
+      return;
+    }
     const face = document.getElementById("albumPageFace");
     if (!face) { albumPageIdx += direction; renderAlbum(); return; }
     face.classList.add("turning-next");
@@ -11769,13 +12126,26 @@ An einem Morgen lief ein kleiner Fuchs los…
   // eine dieser Auszeichnungen hält — ein kleines, gemütliches Bett mit Patches in Fuchs-
   // Fellfarben (Orange-/Rostton-Flicken wie ein Patchwork), aus dem ein winziger Fuchskopf
   // herausschaut, als würde er dort gerade schlummern.
+  // Ungefähres Startdatum der Seite — wird gebraucht, um zu entscheiden, ob ein "Fuchs des
+  // Monats/Jahres" überhaupt schon sinnvoll ermittelt werden kann (siehe foxOfPeriodBadgeHtml).
+  // Lieber ein paar Tage zu früh angesetzt als zu spät, damit die Auszeichnung nicht künstlich
+  // länger als nötig verzögert wird.
+  const SITE_LAUNCH_DATE = new Date("2026-08-25T00:00:00Z");
   async function foxOfPeriodBadgeHtml(userId) {
     if (!userId) return "";
+    // Monat/Jahr werden NUR abgefragt, wenn seit dem Start der Seite auch wirklich schon ein
+    // VOLLER Monat bzw. ein volles Jahr vergangen ist — vorher gäbe es dafür noch gar keine
+    // sinnvolle Datengrundlage, und die Auszeichnung würde auf Basis eines unvollständigen
+    // Zeitraums vergeben, was unfair wäre. Tag und Woche sind davon nicht betroffen, die können
+    // von Anfang an sinnvoll ermittelt werden.
+    const daysSinceLaunch = (Date.now() - SITE_LAUNCH_DATE.getTime()) / (1000 * 60 * 60 * 24);
+    const monthReady = daysSinceLaunch >= 30;
+    const yearReady = daysSinceLaunch >= 365;
     const [day, week, month, year] = await Promise.all([
       Backend.getFoxOfTheDay().catch(() => null),
       Backend.getFoxOfWeek ? Backend.getFoxOfWeek().catch(() => null) : Backend.getFoxOfTheWeek().catch(() => null),
-      Backend.getFoxOfMonth ? Backend.getFoxOfMonth().catch(() => null) : null,
-      Backend.getFoxOfYear ? Backend.getFoxOfYear().catch(() => null) : null,
+      monthReady && Backend.getFoxOfMonth ? Backend.getFoxOfMonth().catch(() => null) : Promise.resolve(null),
+      yearReady && Backend.getFoxOfYear ? Backend.getFoxOfYear().catch(() => null) : Promise.resolve(null),
     ]);
     // Englische Bezeichnung NUR an dieser Stelle (wo die Auszeichnungen selbst vergeben/gezeigt
     // werden), wie ausdrücklich gewünscht.
@@ -12337,10 +12707,15 @@ An einem Morgen lief ein kleiner Fuchs los…
             </div>
             <p style="white-space:pre-wrap; margin:0;">${m.body
               .replace(/^\[BETA_REQUEST\]\s*/, "")
+              .replace(/\n?\[BETA_JUMP:[\w-]+\]/, "")
               .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
               .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:72px; height:72px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
             }</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
+            ${(() => {
+              const jumpMatch = m.body.match(/\[BETA_JUMP:([\w-]+)\]/);
+              return jumpMatch ? `<button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem; margin-top:2px;" data-jump-to="${jumpMatch[1]}">🧪 Direkt hinspringen und mittesten</button>` : "";
+            })()}
             ${inboxViewTab === "in" && m.body.startsWith("[BETA_REQUEST]") && m.from_user && Backend.canModerate && Backend.canModerate() ? `
             <div style="display:flex; gap:8px; margin-top:2px;">
               <button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem;" data-approve-beta="${m.from_user}" data-approve-beta-name="${m.author_name || "Diese Person"}">🧪 Als Beta-Tester:in bestätigen</button>
@@ -12486,6 +12861,22 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("inboxTabImportant").addEventListener("click", () => { inboxViewTab = "important"; renderInbox(); });
     area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
       btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(); });
+    });
+    area.querySelectorAll("[data-jump-to]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const subId = btn.dataset.jumpTo;
+        // Den passenden Unterreiter-Knopf irgendwo im Menü finden (er weiß selbst, zu welchem
+        // Hauptbereich er gehört) — dort zuerst auf den Hauptreiter, dann auf den Unterreiter
+        // klicken, damit man direkt bei genau dem Beta-Feature landet, das gerade getestet wird.
+        const subPill = document.querySelector(`.subnav-pill[data-sub="${subId}"]`);
+        if (!subPill) { showToast("⚠️ Dieser Bereich wurde nicht gefunden — evtl. inzwischen umbenannt."); return; }
+        const navId = subPill.closest("[id$='Subnav']")?.id;
+        const mainTabTarget = navId === "learnSubnav" ? "view-learn" : navId === "knowledgeSubnav" ? "view-knowledge" : navId === "profileSubnav" ? "view-profile" : null;
+        if (mainTabTarget) {
+          document.querySelector(`[data-target="${mainTabTarget}"]`)?.click();
+        }
+        setTimeout(() => subPill.click(), 150);
+      });
     });
     area.querySelectorAll("[data-approve-beta]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -12651,7 +13042,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
 
     area.querySelectorAll("[data-accept]").forEach((btn) => {
-      btn.addEventListener("click", async () => { await Backend.acceptFriendRequest(btn.dataset.accept); checkNotifications(); renderFriends(); });
+      btn.addEventListener("click", async () => {
+        await Backend.acceptFriendRequest(btn.dataset.accept);
+        // Gecachte Freundeszahl aktualisieren — für die "friends_count"-Freischalt-Bedingung bei
+        // Sammelfiguren, die synchron geprüft wird und daher keine eigene Datenbankabfrage machen
+        // kann. Wird hier nachgezogen, sobald sich die Freundesliste tatsächlich ändert.
+        try {
+          const friends = await Backend.getFriends();
+          await Backend.updateExtraProfileField("friendsCountCache", friends.length);
+        } catch (e) { console.warn("Freundeszahl-Cache konnte nicht aktualisiert werden:", e); }
+        checkNotifications();
+        renderFriends();
+      });
     });
     area.querySelectorAll("[data-decline]").forEach((btn) => {
       btn.addEventListener("click", async () => { await Backend.declineFriendRequest(btn.dataset.decline); checkNotifications(); renderFriends(); });
@@ -12882,15 +13284,33 @@ An einem Morgen lief ein kleiner Fuchs los…
   </svg>`;
   async function renderRanking() {
     const area = document.getElementById("rankingArea");
-    area.innerHTML = '<p class="empty-note">Lade Ranking…</p>';
+    // WICHTIG: kein "Lade Ranking…"-Zwischenschritt mehr, der area.innerHTML sofort auf einen viel
+    // kürzeren Platzhalter setzt — das ließ die Seite bei jedem Tab-Wechsel kurz nach oben
+    // springen (weniger Inhalt = weniger Höhe), bevor der eigentliche Inhalt nachgeladen war und
+    // die Seite wieder zurücksprang. Nur beim ALLERERSTEN Laden (Bereich noch komplett leer)
+    // zeigen wir kurz einen Ladehinweis — bei jedem weiteren Tab-Wechsel bleibt der bisherige
+    // Inhalt einfach stehen, bis die neuen Daten fertig sind, und wird dann in einem Schritt
+    // ausgetauscht.
+    if (!area.dataset.rankingLoadedOnce) area.innerHTML = '<p class="empty-note">Lade Ranking…</p>';
     const rows = rankingMode === "today" ? await Backend.getRankingToday() : await Backend.getRankingAllTime();
     const foxPeriodFns = { tag: () => Backend.getFoxOfTheDayShowcase(), woche: () => Backend.getFoxOfWeekShowcase(), monat: () => Backend.getFoxOfMonthShowcase(), jahr: () => Backend.getFoxOfYearShowcase() };
     const fox = await foxPeriodFns[foxPeriodMode]();
     const hallOfFame = await Backend.getFoxOfDayHallOfFame();
     const hofBannerUrl = await Backend.getEffectiveBannerUrl("hall_of_fame_banner");
+    area.dataset.rankingLoadedOnce = "1";
     const periodTexts = { tag: { title: "Fuchs des Tages", suffix: "heute", report: "Mitarbeit heute" }, woche: { title: "Fuchs der Woche", suffix: "diese Woche", report: "Mitarbeit diese Woche" }, monat: { title: "Fuchs des Monats", suffix: "diesen Monat", report: "Mitarbeit diesen Monat" }, jahr: { title: "Fuchs des Jahres", suffix: "dieses Jahr", report: "Mitarbeit dieses Jahr" } };
     const pt = periodTexts[foxPeriodMode];
     area.innerHTML = `
+      <div class="question-card" style="margin-bottom:14px;">
+        <h3 style="margin-top:0;">🏆 Ranking</h3>
+        <div class="order-toggle" style="margin-bottom:12px;">
+          <button type="button" class="order-pill" id="rankTabToday" aria-selected="${rankingMode === "today"}">📅 Heute</button>
+          <button type="button" class="order-pill" id="rankTabAllTime" aria-selected="${rankingMode === "alltime"}">🏆 Gesamt</button>
+        </div>
+        <table class="rank-table">
+          ${rows.length ? rows.map((r, i) => `<tr>${r.user_id ? `<td>${i + 1}.</td><td><button type="button" class="friend-name-btn" data-view-ranked="${r.user_id}">${r.name}</button></td>` : `<td>${i + 1}.</td><td>${r.name}</td>`}<td>${r.points} Pkt.</td></tr>`).join("") : `<tr><td class="empty-note">${rankingMode === "today" ? "Noch keine Einträge heute — sei die/der Erste!" : "Noch keine Einträge."}</td></tr>`}
+        </table>
+      </div>
       <div class="order-toggle" style="margin-bottom:10px;">
         <button type="button" class="order-pill fox-period-pill" data-fox-period="tag" aria-selected="${foxPeriodMode === "tag"}">📅 Tag</button>
         <button type="button" class="order-pill fox-period-pill" data-fox-period="woche" aria-selected="${foxPeriodMode === "woche"}">🗓️ Woche</button>
@@ -12931,16 +13351,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         </div>
       </div>` : ""}
-      <div class="question-card" style="margin-top:14px;">
-        <h3>🏆 Ranking</h3>
-        <div class="order-toggle" style="margin-bottom:12px;">
-          <button type="button" class="order-pill" id="rankTabToday" aria-selected="${rankingMode === "today"}">📅 Heute</button>
-          <button type="button" class="order-pill" id="rankTabAllTime" aria-selected="${rankingMode === "alltime"}">🏆 Gesamt</button>
-        </div>
-        <table class="rank-table">
-          ${rows.length ? rows.map((r, i) => `<tr>${r.user_id ? `<td>${i + 1}.</td><td><button type="button" class="friend-name-btn" data-view-ranked="${r.user_id}">${r.name}</button></td>` : `<td>${i + 1}.</td><td>${r.name}</td>`}<td>${r.points} Pkt.</td></tr>`).join("") : `<tr><td class="empty-note">${rankingMode === "today" ? "Noch keine Einträge heute — sei die/der Erste!" : "Noch keine Einträge."}</td></tr>`}
-        </table>
-      </div>
     `;
     wireSiteBannerUploads(area);
     // Scroll-Position bewusst erhalten: der geklickte Tab-Button verschwindet beim Neu-Rendern
@@ -13102,7 +13512,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "111";
+  const APP_VERSION = "112";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

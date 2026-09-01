@@ -542,6 +542,15 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+/* Kleiner Abstand zwischen den Charakter-Gruppen (z. B. Wissenschaftler, Logiker …) — macht
+   optisch klar, dass jede Gruppe alle bisher erreichten STUFEN desselben Charakters bündelt,
+   statt dass Orden und Pokal wie zwei völlig getrennte, gleichrangige Listen wirken. */
+.trophy-char-group {
+  margin-bottom: 8px;
+}
+.trophy-char-group:last-child {
+  margin-bottom: 0;
+}
 .trophy-chip {
   display: inline-flex;
   align-items: center;
@@ -1205,31 +1214,28 @@
   flex-wrap: wrap;
   gap: 4px 14px;
   overflow: visible;
-  /* WICHTIG: Platz für die absolut positionierte Punkteanzeige (oben rechts, siehe
-     .profile-points) auf dem GESAMTEN Fließtext-Bereich reservieren, nicht nur auf der ersten
-     Namens-Zeile (wie es der frühere margin-right nur auf dem <h2> tat) — sonst konnten spätere
-     Zeilen (z. B. bei langem Namen + Alter) trotzdem noch mit der Punkteanzeige überlappen.
-     padding statt margin, damit der reservierte Platz zum Element selbst gehört und beim
-     Zeilenumbruch korrekt mitgerechnet wird. */
-  padding-right: 68px;
-  box-sizing: border-box;
 }
-/* Name, Badges usw. rechts vom Bild jetzt bündig UNTEREINANDER gestapelt, statt als Fließtext
-   nebeneinander zu laufen — Name, dann Betreiber-/Rollen-Badge, dann Freunde, dann
-   Herkunft+Sternzeichen zusammen auf einer Zeile, jeweils klar erkennbar getrennt. */
+/* Wenn Fuchs-Auszeichnungen (Tag/Woche) angezeigt werden, schweben sie rechts unter der
+   Punkteanzeige (siehe .fox-period-badge-stack) und reichen bis zur Höhe des allerersten Badges
+   (Freunde) hinunter. NUR dieses erste Badge braucht deshalb etwas mehr rechten Randabstand,
+   damit es nicht sichtbar mit der Fuchs-Badge-Zeile überlappt — alle späteren Zeilen (Herkunft,
+   Sternzeichen, Sprachniveau …) liegen ohnehin schon darunter und brauchen den Abstand nicht. */
+.profile-header-flow.has-fox-badges .profile-header-stack > .flow-badge:first-of-type {
+  margin-right: 100px;
+}
+/* Name, Badges usw. rechts vom Bild als echter FLIESSTEXT nebeneinander (statt jedes einzelne
+   Badge auf einer eigenen, vollen Zeile) — Name und Bio bleiben trotzdem auf eigenen Zeilen, da
+   sie echte Block-Elemente (h2/p) sind, aber die Badges (Betreiber, Freunde, Herkunft,
+   Sternzeichen, Sprachniveau) laufen kompakt nebeneinander und brechen nur bei Platzmangel um.
+   WICHTIG: kein flex-direction:column mehr — das zwang vorher JEDES direkte Kind (auch die
+   einzelnen Badges) auf eine eigene Zeile, unabhängig von ihrem eigenen display:inline-block. */
 .profile-header-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
   min-width: 0;
   max-width: 100%;
   flex: 1;
 }
 .profile-header-stack-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  display: inline;
 }
 .profile-header-flow .avatar-photo,
 .profile-header-flow .initials-avatar {
@@ -1238,7 +1244,7 @@
      Android-Geräte um 320–360px) blieb sonst nicht genug Platz für den Text daneben übrig, der
      dann ungewollt unter statt neben das Bild rutschte. Kleiner als vorher (war 84–128px), damit
      bei längeren Namen zuverlässig genug Platz für den Text auf derselben Zeile bleibt. */
-  width: clamp(64px, 20vw, 104px); height: clamp(64px, 20vw, 104px);
+  width: clamp(56px, 15vw, 76px); height: clamp(56px, 15vw, 76px);
   /* clip-path:circle() entfernt — border-radius:50% (schon auf .avatar-photo selbst gesetzt) ist
      auf Android-Browsern deutlich zuverlässiger unterstützt. Mit beiden gleichzeitig gesetzt kam
      es bei normalen (nicht Sammelfigur-)Profilbildern zu eckiger Darstellung statt rund. */
@@ -1253,6 +1259,13 @@
 }
 .profile-header-flow h2 {
   overflow-wrap: break-word;
+  /* WICHTIG: das padding für die absolut positionierte Punkteanzeige (oben rechts) gehört NUR auf
+     den Namen (erste Zeile, wo sie visuell danebenliegt) — vorher lag es auf dem GESAMTEN
+     Fließtext-Bereich, was jeder späteren Zeile (Freunde, Herkunft, Sternzeichen …) unnötig
+     Breite wegnahm und den ohnehin schon schmalen Text-Bereich neben dem Bild auf nur rund 130px
+     zusammenquetschte — zu wenig, damit die Badges wirklich nebeneinander fließen konnten. */
+  padding-right: 68px;
+  box-sizing: border-box;
 }
 /* Bei sehr schmalen Bildschirmen reichte der Name knapp nicht neben das (schon verkleinerte) Bild
    — eine kleine, zusätzliche Schriftgrößen-Reduzierung genau hier schließt die letzte Lücke,
@@ -1277,18 +1290,24 @@
      Größe verhielt sich der Sticker-Wrapper im Flexbox-Umfluss unvorhersehbar, wodurch der Name
      bei einer Sammelfigur als Profilbild unter statt neben das Bild rutschte. Dieselbe skalierende
      Größe wie bei normalen Profilbildern (siehe dort für den Grund der kleineren Maße). */
-  width: clamp(64px, 20vw, 104px); height: clamp(64px, 20vw, 104px);
+  width: clamp(56px, 15vw, 76px); height: clamp(56px, 15vw, 76px);
 }
 .flow-badge {
   display: inline-block;
   background: rgba(0,0,0,0.07);
   border-radius: 999px;
-  padding: 3px 11px;
-  margin: 0 6px 6px 0;
-  font-size: 0.8rem;
+  padding: 2px 9px;
+  margin: 0 5px 5px 0;
+  font-size: 0.74rem;
   line-height: 1.5;
   color: inherit;
   vertical-align: middle;
+  /* WICHTIG: verhindert, dass der Inhalt EINES Badges (z. B. "🇩🇪 Deutschland" oder
+     "♒ Wassermann") an der Leerstelle zwischen Symbol und Text umbricht, wenn der verfügbare
+     Platz knapp wird — auf Android trat das deutlich häufiger auf als auf anderen Plattformen.
+     Das Badge als Ganzes darf weiterhin in eine neue Zeile umbrechen (siehe display:inline-block
+     am Fließtext-Container), nur der Inhalt innerhalb eines einzelnen Badges bleibt zusammen. */
+  white-space: nowrap;
 }
 .flow-badge .friend-name-btn { font-size: 0.8rem; font-weight: 700; }
 .flow-badge .zodiac-badge, .flow-badge .gender-badge { display: inline; }
@@ -2130,6 +2149,14 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
+/* Bei sehr schmalen Bildschirmen reichte der Platz nicht für 3 Spalten pro Buchseite — das letzte
+   Symbol in jeder Reihe wurde sichtbar am Rand abgeschnitten. Zwei Spalten statt drei geben jedem
+   Symbol wieder genug Platz, auch wenn das Album dadurch etwas mehr in die Höhe wächst. */
+@media (max-width: 420px) {
+  .album-page-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
 /* ===== Player-Vorlagen — mehrere wählbare Optiken ===== */
 #musicPlayerBarInner.player-tpl-retro {
@@ -2615,13 +2642,17 @@
   pointer-events: none;
 }
 @keyframes bbGrowAndPop {
-  /* Steigt sanft nach oben und dreht sich dabei leicht — wie eine echte Seifenblase, die
-     schwebend aufsteigt, statt nur auf der Stelle zu wachsen. Die vertikale Bewegung bleibt
-     bewusst moderat, damit die Blase nicht zu weit aus ihrer ursprünglichen Position wandert. */
-  0%   { transform: translate(-50%, -50%) scale(0.7) rotate(0deg); opacity: 0.85; }
-  40%  { transform: translate(calc(-50% + 4px), calc(-50% - 14px)) scale(0.95) rotate(-4deg); opacity: 1; }
-  70%  { transform: translate(calc(-50% - 3px), calc(-50% - 26px)) scale(1.08) rotate(3deg); opacity: 1; }
-  100% { transform: translate(-50%, calc(-50% - 42px)) scale(1.5) rotate(-2deg); opacity: 0; }
+  /* Startet UNTEN, versteckt unterhalb des sichtbaren Spielfelds (siehe top:108% in der
+     Positionierung), und steigt über die gesamte Lebensdauer nach oben auf, bis sie oben
+     komplett aus dem Bild verschwunden ist — mit einer leichten seitlichen Schlängel-Bewegung
+     und Drehung dabei, wie eine echte, schwebend aufsteigende Seifenblase. calc() mit vh-Einheiten
+     sorgt dafür, dass die Strecke unabhängig von der tatsächlichen Bildschirmhöhe immer über den
+     gesamten sichtbaren Bereich hinausreicht. */
+  0%   { transform: translate(-50%, -50%) scale(0.7) rotate(0deg); opacity: 0; }
+  8%   { opacity: 0.9; }
+  40%  { transform: translate(calc(-50% + 6px), calc(-50% - 45vh)) scale(0.95) rotate(-4deg); opacity: 1; }
+  70%  { transform: translate(calc(-50% - 5px), calc(-50% - 85vh)) scale(1.08) rotate(4deg); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% - 130vh)) scale(1.3) rotate(-3deg); opacity: 0; }
 }
 .bb-bubble-pop-good {
   animation: none !important;
@@ -2904,16 +2935,31 @@
    schwerer lesbar gewesen). Gleiche Größe wie die anderen admin-badge-Abzeichen (geerbt), nur die
    Farbe wird hier überschrieben. */
 .fox-period-badge {
-  background: linear-gradient(160deg, #E8825F, #C85A2E) !important;
-  color: #FFFFFF !important;
+  background: linear-gradient(160deg, #D9362E, #A8241E) !important;
+  color: #F2C94C !important;
 }
-/* Container für mehrere gleichzeitige Fuchs-Auszeichnungen (Tag/Woche/Monat/Jahr) — jedes Badge
+/* Container für mehrere gleichzeitige Fuchs-Auszeichnungen (Tag/Woche) — direkt UNTER der
+   Punkteanzeige positioniert (wie ausdrücklich gewünscht: es ist ja auch eine Art Leistung, die
+   man erreicht hat, genau wie die Punktzahl selbst) statt weiter unten im Profil. Jedes Badge
    steht auf einer eigenen Zeile, statt sich zu einer einzigen, oft zu breiten Zeile mit "·"
-   zusammenzufügen, die über den Kartenrand hinauslief. Eigener Abschnitt, GETRENNT vom
-   Fließtext-Bereich um das Profilbild (der sich sonst nicht mehr auf den ursprünglichen
-   Inhalt — Herkunft, Sternzeichen usw. — beschränkte). */
+   zusammenzufügen, die über den Kartenrand hinauslief. */
 .fox-period-badge-stack {
-  margin: 8px 0 0;
+  position: absolute;
+  top: calc(var(--space-5) + 46px);
+  right: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 130px;
+}
+.fox-period-badge-stack .fox-period-badge {
+  /* Exakt dieselbe Größe wie das Betreiber-/Admin-Badge (.admin-badge in styles.css:
+     font-size:0.54rem; padding:1px 7px;) — vorher war dieses Badge tatsächlich etwas größer
+     (0.62rem statt 0.54rem), keine optische Täuschung. */
+  font-size: 0.54rem;
+  padding: 1px 7px;
+  margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 /* Vokabelmeister: Buchstaben-Auswahlraster */
