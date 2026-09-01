@@ -178,6 +178,10 @@
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
     history.replaceState(null, "", `#${targetId}`);
   }
+  // Verhindert, dass der programmatisch simulierte Unterreiter-Klick beim erstmaligen Öffnen
+  // eines Hauptreiters (siehe activePill.click() unten) denselben automatischen Scroll auslöst
+  // wie ein echter, bewusster Klick auf einen Unterreiter-Knopf (siehe wireSubnav).
+  let suppressNextSubnavScroll = false;
   // Der jeweils standardmäßig aktive Unterreiter eines Bereichs (z. B. "Kompass" bei "Wissen")
   // wird beim allerersten Seitenaufbau gerendert, BEVOR jemand eingeloggt ist — Admin-Symbole wie
   // das Banner-Bearbeiten-Icon fehlten dadurch, bis man den Unterreiter irgendwann mal EXPLIZIT
@@ -191,7 +195,7 @@
       tabsFreshlyRendered.add(t.dataset.target);
       const view = document.getElementById(t.dataset.target);
       const activePill = view?.querySelector(".subnav-pill[aria-selected=\"true\"]");
-      if (activePill) activePill.click();
+      if (activePill) { suppressNextSubnavScroll = true; activePill.click(); }
     }
     if (t.dataset.target === "view-profile") maybeShowFoxIntro();
     if (t.dataset.target === "view-about") renderAboutEditButton();
@@ -260,14 +264,22 @@
           const friendsBadge = document.getElementById("friendsTabBadge");
           if (friendsBadge) friendsBadge.style.display = "none";
         }
-        // WICHTIG: bei so vielen Spielen im Menü ist der ausgewählte Bereich nach dem Klick oft
-        // weit unterhalb des Menüs selbst und damit außerhalb des sichtbaren Bildschirms — man
-        // musste bisher jedes Mal manuell dorthin scrollen. Jetzt springt die Ansicht automatisch
-        // zum Anfang des aktiven Spielbereichs, sanft statt abrupt.
-        const activeView = parent.querySelector(`.subview[id="${pill.dataset.sub}"]`);
-        if (activeView) {
-          requestAnimationFrame(() => activeView.scrollIntoView({ behavior: "smooth", block: "start" }));
+        // WICHTIG: bei so vielen Spielen im Menü ist der ausgewählte Bereich nach einem ECHTEN,
+        // bewussten Klick auf einen Unterreiter-Knopf oft weit unterhalb des Menüs selbst und
+        // damit außerhalb des sichtbaren Bildschirms — dafür springt die Ansicht automatisch zum
+        // Anfang des aktiven Bereichs. ABER: derselbe Klick-Handler wird auch programmatisch
+        // ausgelöst, um Admin-Symbole beim allerersten Öffnen eines Hauptreiters nachzuziehen
+        // (siehe activePill.click() weiter oben) — DORT darf kein Sprung passieren, sonst landet
+        // man scheinbar zufällig irgendwo auf der Seite, nur weil man den Hauptreiter (nicht
+        // irgendeinen Unterreiter-Knopf) angetippt hat. suppressNextSubnavScroll unterscheidet
+        // beide Fälle.
+        if (!suppressNextSubnavScroll) {
+          const activeView = parent.querySelector(`.subview[id="${pill.dataset.sub}"]`);
+          if (activeView) {
+            requestAnimationFrame(() => activeView.scrollIntoView({ behavior: "smooth", block: "start" }));
+          }
         }
+        suppressNextSubnavScroll = false;
       });
     });
   }
@@ -1344,7 +1356,7 @@
       ${profile.isOwner || Backend.isAdmin() ? `<div class="question-card" style="margin-top:14px;">
         <h3>🦊 Browser-Symbol (Favicon)</h3>
         <p class="empty-note" style="margin-bottom:10px;">Das kleine Symbol oben in der Browser-Adresszeile/im Tab. Eigenes Bild hochladen, um das Standard-Fuchs-Symbol zu ersetzen.</p>
-        <div style="display:flex; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
           <img id="currentFaviconPreview" src="" alt="" style="width:40px; height:40px; border-radius:8px; object-fit:cover; background:var(--plum-700);" />
           <label class="btn btn-ghost" style="cursor:pointer;">📷 Neues Symbol hochladen<input type="file" accept="image/*" id="faviconUploadInput" style="display:none;" /></label>
           <button type="button" class="btn btn-ghost" id="faviconResetBtn" title="Zurück zum Standard-Fuchs">↩️ Zurücksetzen</button>
@@ -1479,6 +1491,41 @@
     area.querySelectorAll(".notify-kind-color").forEach((sel) => {
       sel.addEventListener("change", () => setNotifyTypeSetting(sel.dataset.kind, "color", sel.value));
     });
+    // Bug-Report-Übersicht — nur für Admins/Betreiber:in sichtbar. Das Backend (getBugReports/
+    // resolveBugReport) gab es schon, aber bisher KEINE Oberfläche dafür — Fehlermeldungen kamen
+    // nur unstrukturiert als Postfach-Nachrichten an. Jetzt gebündelt: Ort/Spiel, Art, Beschreibung
+    // und Zeitpunkt auf einen Blick, mit einem Erledigt-Knopf pro Meldung.
+    if (Backend.canModerate()) {
+      const bugBox = document.createElement("div");
+      bugBox.className = "question-card";
+      bugBox.style.marginTop = "14px";
+      bugBox.innerHTML = `<h3>🪲 Gemeldete Fehler</h3><p class="empty-note" id="bugReportsLoadingNote">Lädt…</p>`;
+      area.appendChild(bugBox);
+      Backend.getBugReports().then((reports) => {
+        const open = reports.filter((r) => !r.resolved);
+        const resolvedCount = reports.length - open.length;
+        bugBox.innerHTML = `
+          <h3>🪲 Gemeldete Fehler ${open.length ? `(${open.length} offen)` : ""}</h3>
+          ${!open.length ? `<p class="empty-note">Keine offenen Meldungen${resolvedCount ? ` — ${resolvedCount} bereits erledigt` : ""}. 🎉</p>` : `
+          <div class="breakdown-list">
+            ${open.map((r) => `
+              <div class="question-card" style="margin-bottom:10px; background:rgba(232,72,63,0.06);">
+                <p style="font-weight:700; margin:0 0 4px;">📍 ${r.context || "Unbekannter Ort"}</p>
+                <p class="empty-note" style="margin:0 0 2px;">Art: ${r.category || "—"}</p>
+                ${r.detail || r.description ? `<p class="empty-note" style="margin:0 0 2px;">Beschreibung: ${r.detail || r.description}</p>` : ""}
+                <p class="empty-note" style="margin:0 0 8px;">Von ${r.reporter_name || "Unbekannt"} · ${new Date(r.created_at).toLocaleString("de-DE")}</p>
+                <button type="button" class="btn btn-ghost" data-resolve-bug="${r.id}">✅ Erledigt</button>
+              </div>`).join("")}
+          </div>`}
+        `;
+        bugBox.querySelectorAll("[data-resolve-bug]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            await Backend.resolveBugReport(btn.dataset.resolveBug);
+            renderSettings();
+          });
+        });
+      }).catch((e) => { bugBox.innerHTML = `<h3>🪲 Gemeldete Fehler</h3><p class="empty-note">Konnte nicht geladen werden.</p>`; console.warn(e); });
+    }
   }
 
   // Echte Vorschau eines noch gesperrten Designs — zeigt Beispiel-Elemente (Karte, Button, Text)
@@ -2225,11 +2272,11 @@
         ${birthdayHtml}
         <p class="cal-tip-title">${wasCorrect ? "✅ Tagesaufgabe gelöst!" : "📅 Tagesaufgabe schon versucht"}</p>
         <p class="cal-tip-text">${wasCorrect ? "Du hast deine Aufgabe für heute schon erledigt — komm morgen wieder für eine neue!" : "Du hast es heute schon versucht — kein Problem, morgen kommt eine neue Chance!"}</p>
+        ${historyLinkHtml}
         <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
         <p class="cal-tip-title" style="font-size:0.85rem;">💡 Wusstest du außerdem …</p>
         <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${truncate(pickDailyTip().text, 220)}</p>
         <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
-        ${historyLinkHtml}
       `;
       document.getElementById("calAnotherBtn").addEventListener("click", () => {
         document.getElementById("calTipText").innerHTML = pickRandomTip().text;
@@ -2249,11 +2296,11 @@
         ${cwCalendarTask.options.map((opt, i) => `<button type="button" class="btn btn-ghost" data-task-answer="${i}" style="text-align:left;">${capitalizeIfSentenceStart(opt, cwCalendarTask.word)}</button>`).join("")}
       </div>
       <p class="empty-note" id="calTaskFeedback" style="margin-top:8px;"></p>
+      ${historyLinkHtml}
       <hr style="width:100%; border:none; border-top:1px solid rgba(0,0,0,0.1); margin:14px 0;" />
       <p class="cal-tip-title" style="font-size:0.85rem;">💡 Wusstest du außerdem …</p>
       <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${truncate(pickDailyTip().text, 220)}</p>
       <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
-      ${historyLinkHtml}
     `;
     back.querySelectorAll("[data-task-answer]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -2312,11 +2359,14 @@
         }, 400);
       });
     }
-    // Einfacher Klick auf die Rückseite (aber nicht auf Buttons/Links darauf) klappt das Blatt
-    // wieder zurück zur Vorderseite — wie beim echten Umblättern.
+    // Klick auf die Rückseite (aber nicht auf Buttons/Links darauf, die interaktiv bleiben
+    // müssen) schließt jetzt das GESAMTE Kalenderblatt — nicht nur ein Zurückklappen zur
+    // Vorderseite. Wie ausdrücklich gewünscht: irgendwo innerhalb der Karte tippen, wo kein Text-
+    // Link ist, soll genauso zuverlässig schließen wie ein Klick außerhalb der Karte.
     if (back) {
       back.addEventListener("click", (e) => {
         if (e.target.closest("button, a")) return; // interaktive Elemente nicht mit-schließen
+        document.getElementById("calendarModalOverlay").style.display = "none";
         document.getElementById("calendarModalPage")?.classList.remove("torn");
       });
     }
@@ -2486,20 +2536,21 @@
       const textWidth = track.scrollWidth;
       const pixelsPerSecond = 55; // gleichbleibendes, gut lesbares Lauftempo
       const duration = Math.max(12, textWidth / pixelsPerSecond);
-      track.style.animation = ""; // Safari/iOS startet die Animation nach Textänderung sonst nicht neu
-      // WICHTIG: animationDuration gilt für ALLE aktiven Animationen zusammen (Blinken UND Scrollen
-      // laufen gleichzeitig, ABER NUR wenn Blinken eingeschaltet ist) — ist Blinken AUS, läuft nur
-      // EINE Animation (tickerScroll), dann darf hier auch nur EIN Wert stehen. Wird trotzdem ein
-      // zweiter, für das Blinken gedachter Wert mitgeschickt, wendet der Browser diesen fälschlich
-      // auf die einzige aktive Animation an — der Text raste dadurch in Bruchteilen einer Sekunde
-      // über den Bildschirm, statt gemächlich zu scrollen.
+      // WICHTIG — behebt den "erst langsam, dann nach ein paar Sekunden plötzlich extrem schnell"-
+      // Bug: das komplette animation-Shorthand (Name UND korrekte Dauer zusammen) wird jetzt in
+      // EINEM einzigen Schritt gesetzt, statt erst "animation:''" (was die Animation mit der
+      // FESTEN CSS-Standarddauer von 38s bzw. 22s sofort startete) und die korrekte, berechnete
+      // Dauer erst im nächsten Schritt nachzutragen. Dieser kurze Zwischenzustand mit falscher
+      // Dauer ließ den Browser bei manchen Geräten/Timings die "verstrichene Animationszeit"
+      // beibehalten und auf die neue, oft viel kürzere Dauer umrechnen — das zeigte sich als
+      // plötzlicher Geschwindigkeitssprung, statt eines sauberen Neustarts bei 0.
       const blinkOn = typeof isTickerBlinkOn === "function" && isTickerBlinkOn();
       if (blinkOn) {
         const blinkSpeed = typeof getTickerBlinkSpeed === "function" ? getTickerBlinkSpeed() : "0.7";
-        track.style.animationDuration = `${blinkSpeed}s, ${duration}s`;
+        track.style.animation = `tickerColorBlink ${blinkSpeed}s linear infinite, tickerScroll ${duration}s linear infinite`;
       } else {
-        track.style.animationDuration = `${duration}s`;
-      } // MUSS nach dem Zurücksetzen von "animation" gesetzt werden, sonst wird sie mit zurückgesetzt
+        track.style.animation = `tickerScroll ${duration}s linear infinite`;
+      }
     } finally {
       tickerUpdateInFlight = false;
     }
@@ -2518,11 +2569,19 @@
   // eingeladen hat. Der Name kommt zur schnellen Anzeige direkt aus dem Link (refname), wird aber
   // sicherheitshalber mit dem tatsächlich aktuellen Profilnamen abgeglichen, sobald der geladen
   // ist (falls die Person ihren Namen zwischenzeitlich geändert hat).
+  // WICHTIG — behebt einen Bug, durch den der Empfehlungs-Bonus nie ausgelöst wurde: dieser
+  // gemerkte Wert bleibt für den Rest der Sitzung erhalten, auch NACHDEM der ref-Parameter unten
+  // aus der sichtbaren URL entfernt wird. Der Signup-Handler liest bisher erst beim tatsächlichen
+  // Absenden des Formulars aus window.location.search — das ist oft viele Sekunden (oder Minuten)
+  // nach dem Laden der Seite, also lange NACHDEM die URL hier schon bereinigt wurde. Ohne dieses
+  // Zwischenspeichern kam beim Signup also praktisch immer ein leerer ref-Wert an.
+  window.__pendingReferralId = null;
   (function showReferralWelcomeIfPresent() {
     const params = new URLSearchParams(window.location.search);
     const refId = params.get("ref");
     const refNameFromLink = params.get("refname");
     if (!refId) return;
+    window.__pendingReferralId = refId;
     const showBanner = (name) => {
       if (!name) return;
       showToast(`👋 Du wurdest von ${name} empfohlen — willkommen!`);
@@ -3378,13 +3437,13 @@
     setupEl.innerHTML = `
       ${resumeBar}
       <div class="category-grid">${cards}</div>
+      ${challengeBar}
       <div class="setup-bar">
         <div class="diff-pills">
           ${Quiz.DIFFICULTIES.map((d) => `<button type="button" class="diff-pill" data-diff="${d.id}" aria-selected="${d.id === selectedDifficulty}" ${maxAvailable < d.count ? "disabled" : ""}>${d.label} (${d.count})</button>`).join("")}
         </div>
         <button type="button" class="btn-start" id="startBtn" ${selectedCategories.size === 0 ? "disabled" : ""}>${selectedChallengeFriendIds.size ? `Duell starten 🎮 (${selectedChallengeFriendIds.size})` : "Runde starten ▶"}</button>
       </div>
-      ${challengeBar}
       ${selectedCategories.size > 1 ? `
         <div class="order-toggle">
           <button type="button" class="order-pill" data-order="mixed" aria-selected="${orderMode === "mixed"}">🔀 Gemischt</button>
@@ -3927,6 +3986,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total} <span class="subnav-info-icon" data-info="Ein paar zuverlässige Faustregeln zur deutschen Wortbetonung: Verben auf „-ieren&quot; werden IMMER auf dem „ie&quot; betont (stu-DIE-ren, te-le-fo-NIE-ren). Die Vorsilben be-, ge-, ver-, ent-, er-, zer-, emp- sind NIE betont — die Betonung liegt auf der Silbe danach (be-KOM-men, ver-STE-hen). Trennbare Vorsilben wie auf-, an-, aus-, ein-, mit-, vor-, zu- werden dagegen SELBST betont (AUF-stehen, MIT-nehmen). Bei den meisten anderen deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Fremdwörter folgen oft ihrem eigenen, aus der Ursprungssprache übernommenen Muster.">ⓘ</span></p>
+        <div id="stChallengeBar"></div>
         <div class="trophy-case" style="margin-bottom:10px;">
           ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
         </div>
@@ -3935,7 +3995,6 @@
           ${w.syllables.map((s, i) => `<button type="button" class="btn btn-ghost st-syl-btn" data-syl-idx="${i}" style="font-size:1.2rem; font-weight:800; text-transform:lowercase;">${s.toLowerCase()}</button>`).join("")}
         </div>
         <p class="empty-note" id="stFeedback" style="text-align:center;"></p>
-        <div id="stChallengeBar"></div>
       </div>
     `;
     renderMiniChallengeBarCached("betonungstrainer", "betonungstrainer", "stChallengeBar", area, renderStressTrainer);
@@ -4735,6 +4794,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Satzpuzzle: " + spCurrentEntry[0].join(" "))}
         <p class="eyebrow">🧩 SATZPUZZLE · RUNDE ${spSession.round + 1} / ${spSession.total} <span class="subnav-info-icon" data-info="Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Genau das übst du hier.">ⓘ</span></p>
+        <div id="spChallengeBar"></div>
         <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen. Ein gebautes Wort nochmal antippen macht es (und alles Spätere) rückgängig.</p>
         <div class="sp-built-row" style="min-height:44px; display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); margin-bottom:14px;">
           ${built.length ? built.map((w, pos) => `<button type="button" class="trophy-chip sp-built-word" data-built-pos="${pos}" title="Antippen zum Rückgängigmachen">${w}</button>`).join("") : '<span class="empty-note">…</span>'}
@@ -4743,7 +4803,6 @@
           ${spShuffled.map((chunk, i) => `<button type="button" class="btn btn-ghost sp-choice-btn" data-idx="${i}" ${spUsedIdx.includes(i) ? "disabled style=\"opacity:0.25;\"" : ""}>${chunk.word}</button>`).join("")}
         </div>
         <p class="empty-note" id="spFeedback" style="text-align:center; margin-top:10px;"></p>
-        <div id="spChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("satzpuzzle", "satzpuzzle", "spChallengeBar", area, renderSatzpuzzle);
     document.querySelector(".sp-choices-row").querySelectorAll("[data-idx]").forEach((btn) => {
@@ -4899,6 +4958,7 @@
       <div class="question-card" style="text-align:center;">
         ${miniBugReportBtnHtml("Wackelturm: " + wtCurrentQuestion.prompt)}
         <p class="eyebrow">🗼 WACKELTURM · ${wtBlocksRemoved} Blöcke sicher entfernt · ${wtMistakes}/${WT_MAX_MISTAKES} Fehler <span class="subnav-info-icon" data-info="Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast.">ⓘ</span></p>
+        <div id="wtChallengeBar"></div>
         <div class="wt-tower-wrap">
           <div class="wt-tower" id="wtTower" style="transform: rotate(${tiltDeg}deg);">
             ${Array.from({ length: remainingBlocks }).map((_, i) => `<div class="wt-block" style="background: hsl(${28 + i * 7}, 58%, 56%);"></div>`).join("")}
@@ -4909,7 +4969,6 @@
           ${wtCurrentQuestion.options.map((opt, i) => `<button type="button" class="option-btn wt-opt-btn" data-idx="${i}"><span>${capitalizeIfSentenceStart(opt, wtCurrentQuestion.prompt)}</span></button>`).join("")}
         </div>
         <p class="empty-note" id="wtFeedback" style="margin-top:10px; min-height:20px;"></p>
-        <div id="wtChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("wackelturm", "wackelturm", "wtChallengeBar", area, renderWackelturm);
     area.querySelectorAll(".wt-opt-btn").forEach((btn) => {
@@ -5044,12 +5103,12 @@
       <div class="question-card" style="text-align:center;">
         ${miniBugReportBtnHtml("Wort-Typ: " + waCurrentWord[0])}
         <p class="eyebrow">🔤 WORT-TYP · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen der richtigen Kategorie zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
+        <div id="waChallengeBar"></div>
         <p style="font-size:1.8rem; font-weight:800; margin:20px 0;">${waCurrentWord[0]}</p>
         <div class="trophy-case" style="justify-content:center;">
           ${WA_BUCKETS.map((b) => `<button type="button" class="trophy-chip wa-bucket-btn" data-bucket="${b.key}" style="font-size:0.95rem; padding:10px 16px;">${b.label}</button>`).join("")}
         </div>
         <p class="empty-note" id="waFeedback" style="margin-top:14px; min-height:20px;"></p>
-        <div id="waChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("wortarten", "wortarten", "waChallengeBar", area, renderWortarten);
     area.querySelectorAll(".wa-bucket-btn").forEach((btn) => {
@@ -5084,6 +5143,10 @@
      und müssen abgeschossen werden, BEVOR sie unten ankommen. Die richtige Antwort darf NICHT
      getroffen werden — landet sie unten, ist das richtig so. Braucht keine eigenen neuen Fragen. */
   let knLives = 3;
+  let knPaused = false;
+  let knPausedAt = null; // Zeitpunkt, an dem pausiert wurde — beim Fortsetzen wird die
+  // verstrichene Pausendauer auf jedes spawnedAt draufgerechnet, damit die Fallbewegung nahtlos
+  // an derselben Stelle weiterläuft, statt beim Fortsetzen plötzlich zu springen.
   // Wolken-Mechanik: mit jedem Fehler (weniger Leben) ziehen mehr/dichtere Wolken langsam übers
   // Bild und schieben sich zeitweise VOR die fallenden Wörter — echte zusätzliche Schwierigkeit,
   // nicht nur mehr Tempo. Bei vollen Leben ist der Himmel noch klar.
@@ -5136,6 +5199,9 @@
      die richtige muss man TREFFEN, bevor die Zeit abläuft. Eigener Charakter durch den
      Zeitdruck-über-Zerplatzen statt Fallen. ===== */
   let bbLives = 3;
+  let bbPaused = false;
+  let bbPausedAt = null; // wie bei der Wort-Kanone: verstrichene Pausendauer wird beim Fortsetzen
+  // auf jedes spawnedAt draufgerechnet, damit der Aufstieg nahtlos weiterläuft.
   let bbScore = 0;
   let bbMistakes = 0;
   let bbUsedPrompts = [];
@@ -5144,7 +5210,9 @@
   let bbRoundActive = false;
   let bbGameOverFinalized = false;
   let bbIntroShown = false;
-  const BB_BUBBLE_LIFETIME = 7.5; // Sekunden, bis eine Blase von selbst zerplatzt — deutlich mehr Zeit zum Lesen und Nachdenken (war vorher mit 3.2s viel zu knapp).
+  const BB_BUBBLE_LIFETIME = 5.5; // Sekunden, bis eine Blase von selbst zerplatzt — kürzer als die
+  // vorherigen 7.5s, damit man bei einer unbeantworteten Blase nicht so lange auf die
+  // Fehler-Erkennung warten muss, aber immer noch genug Zeit zum Lesen und Nachdenken.
   function pickRandomBubbleQuestion() {
     // WICHTIG: die "Deutschland-Quiz"-Kategorie (allgemeines Sachwissen wie Geschichte, Kultur,
     // Fußball-Weltmeisterschaften …) bewusst ausgeschlossen — Wortblasen soll sich rein auf
@@ -5271,14 +5339,33 @@
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Wortblasen: " + bbCurrentQuestion.prompt)}
-        <p class="eyebrow">🫧 WORTBLASEN · ${bbScore} Treffer</p>
+        <p class="eyebrow">🫧 WORTBLASEN · ${bbScore} Treffer
+          <button type="button" class="btn btn-ghost" id="bbPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${bbPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
+        </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(bbLives, 3)}</p>
         <p style="font-weight:700; margin:8px 0 12px;">${bbCurrentQuestion.prompt}</p>
         <div class="bb-pool" id="bbPool">
-          ${bbActiveBubbles.map((b) => `<button type="button" class="bb-bubble" data-bid="${b.id}" style="left:${b.left}%; top:${b.top}%; animation-duration:${BB_BUBBLE_LIFETIME}s;">${b.text}</button>`).join("")}
+          ${bbActiveBubbles.map((b) => {
+            const elapsed = ((Date.now() - b.spawnedAt) / 1000).toFixed(2);
+            return `<button type="button" class="bb-bubble" data-bid="${b.id}" style="left:${b.left}%; top:${b.top}%; animation-duration:${BB_BUBBLE_LIFETIME}s; animation-delay:-${elapsed}s; animation-play-state:${bbPaused ? "paused" : "running"};" ${bbPaused ? "disabled" : ""}>${b.text}</button>`;
+          }).join("")}
         </div>
         <p class="empty-note" id="bbFeedback" style="text-align:center; min-height:20px; margin-top:8px;"></p>
       </div>`;
+    document.getElementById("bbPauseBtn")?.addEventListener("click", () => {
+      if (bbPaused) {
+        // Wie bei der Wort-Kanone: verstrichene Pausendauer auf jedes spawnedAt draufrechnen,
+        // damit der Aufstieg nahtlos an derselben Stelle weiterläuft statt zu springen.
+        const pausedDuration = Date.now() - bbPausedAt;
+        bbActiveBubbles.forEach((b) => { if (b.spawnedAt) b.spawnedAt += pausedDuration; });
+        bbPaused = false;
+        bbPausedAt = null;
+      } else {
+        bbPaused = true;
+        bbPausedAt = Date.now();
+      }
+      renderBubbleGame();
+    });
     area.querySelectorAll(".bb-bubble").forEach((btn) => {
       btn.addEventListener("click", () => {
         const b = bbActiveBubbles.find((x) => x.id === btn.dataset.bid);
@@ -5286,6 +5373,7 @@
         btn.style.pointerEvents = "none";
         btn.style.animationPlayState = "paused";
         btn.classList.add(b.isCorrect ? "bb-bubble-pop-good" : "bb-bubble-pop-bad");
+        spawnBubbleSplashParticles(btn, b.isCorrect);
         resolveBubble(b.id, true);
       });
       btn.addEventListener("animationend", () => {
@@ -5294,6 +5382,34 @@
         resolveBubble(b.id, false);
       });
     });
+  }
+  // Echtes "Platzen" statt nur Aufblähen/Verblassen: erzeugt 7 kleine, tropfenförmige Partikel
+  // an der Position der Blase, die in verschiedene Richtungen auseinanderspritzen und dabei
+  // verblassen — wie bei einer echten, zerplatzenden Seifenblase, statt eines reinen
+  // Skalierungs-Effekts.
+  function spawnBubbleSplashParticles(bubbleEl, isGood) {
+    const rect = bubbleEl.getBoundingClientRect();
+    const parent = bubbleEl.closest(".bb-pool") || bubbleEl.parentElement;
+    const parentRect = parent.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2 - parentRect.left;
+    const cy = rect.top + rect.height / 2 - parentRect.top;
+    const color = isGood ? "#7fd99a" : "#e88a8a";
+    const count = 7;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 22 + Math.random() * 18;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      const drop = document.createElement("span");
+      drop.className = "bb-splash-drop";
+      drop.style.left = `${cx}px`;
+      drop.style.top = `${cy}px`;
+      drop.style.background = color;
+      drop.style.setProperty("--dx", `${dx}px`);
+      drop.style.setProperty("--dy", `${dy}px`);
+      parent.appendChild(drop);
+      drop.addEventListener("animationend", () => drop.remove());
+    }
   }
   function renderBubbleGameOver() {
     const area = document.getElementById("bubblesArea");
@@ -5474,6 +5590,7 @@
      fallender oder zerplatzender Elemente wie bei den anderen Spielen. ===== */
   let ktScore = 0;
   let ktLives = 3;
+  let ktPaused = false;
   let ktGameOverFinalized = false;
   let ktMistakes = 0;
   let ktCurrentSentence = null;
@@ -5621,23 +5738,34 @@
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Korrektour: " + ktCurrentSentence.text)}
-        <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer</p>
+        <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer
+          <button type="button" class="btn btn-ghost" id="ktPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${ktPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
+        </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(ktLives, 3)}</p>
         <div class="kt-track" id="ktTrack">
           <div class="kt-rails"></div>
-          <div class="kt-train" id="ktTrain">
+          <div class="kt-train" id="ktTrain" style="animation-play-state:${ktPaused ? "paused" : "running"};">
             <span class="kt-locomotive">${locomotiveSvg}</span>
             ${words.map(wagonSvg).join("")}
           </div>
         </div>
         <div class="kt-signal-row">
-          <button type="button" class="kt-signal kt-signal-green" id="ktGreenBtn" ${ktAnswered ? "disabled" : ""}>🟢 Richtig</button>
-          <button type="button" class="kt-signal kt-signal-red" id="ktRedBtn" ${ktAnswered ? "disabled" : ""}>🔴 Fehler drin</button>
+          <button type="button" class="kt-signal kt-signal-green" id="ktGreenBtn" ${ktAnswered || ktPaused ? "disabled" : ""}>🟢 Richtig</button>
+          <button type="button" class="kt-signal kt-signal-red" id="ktRedBtn" ${ktAnswered || ktPaused ? "disabled" : ""}>🔴 Fehler drin</button>
         </div>
         <p class="empty-note" id="ktFeedback" style="text-align:center; min-height:36px; margin-top:8px;"></p>
       </div>`;
     document.getElementById("ktGreenBtn").addEventListener("click", () => ktResolveSignal(true));
     document.getElementById("ktRedBtn").addEventListener("click", () => ktResolveSignal(false));
+    document.getElementById("ktPauseBtn")?.addEventListener("click", () => {
+      // Anders als bei Wortblasen/Wort-Kanone braucht es hier KEIN Zeitstempel-Nachrechnen — der
+      // Zug ist nur EIN einzelnes Element mit einer normalen CSS-Animation (kein spawnedAt-System
+      // für mehrere unabhängige Elemente). animation-play-state:paused friert die tatsächliche
+      // Position ein, und die ohnehin schon positionsbasierte (nicht zeitbasierte)
+      // "komplett durch"-Prüfung unten erkennt das automatisch korrekt mit.
+      ktPaused = !ktPaused;
+      renderKorrektour();
+    });
     // Kein Zeitdruck mehr WÄHREND der Zug noch (auch nur teilweise) sichtbar ist — man darf sich
     // die ganze Durchfahrt Zeit lassen. Aber sobald der LETZTE Waggon wirklich komplett aus dem
     // sichtbaren Bereich verschwunden ist, zählt eine noch fehlende Entscheidung als verpasst.
@@ -5853,14 +5981,17 @@
     const remainingUnresolved = knActiveWords.filter((w) => !w.resolved);
     const noWrongLeft = remainingUnresolved.every((w) => w.isCorrect);
     const correctStillFalling = remainingUnresolved.find((w) => w.isCorrect);
-    if (correctStillFalling && knAutoLandLast && noWrongLeft) {
+    if (!knPaused && correctStillFalling && knAutoLandLast && noWrongLeft) {
       setTimeout(() => landKanoneWord(correctStillFalling.id, null), 30);
     }
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
-        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
+        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span>
+          <button type="button" class="btn btn-ghost" id="knPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${knPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
+        </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
+        <div id="knChallengeBar"></div>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
           <span class="kn-sun" aria-hidden="true">☀️</span>
@@ -5880,7 +6011,7 @@
             // Die Punkte-Münze fällt bewusst deutlich schneller (halbe Zeit) und kleiner als
             // normale Wörter/das Herz — echte Herausforderung statt leichter Beute.
             const duration = w.isCoinBonus ? FALL_DURATION / 2 : FALL_DURATION;
-            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; animation-duration:${duration}s; animation-delay:-${elapsed.toFixed(2)}s;">${w.text}</button>`;
+            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; animation-duration:${duration}s; animation-delay:-${elapsed.toFixed(2)}s; animation-play-state:${knPaused ? "paused" : "running"};" ${knPaused ? "disabled" : ""}>${w.text}</button>`;
           }).join("")}
           <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 44" style="left:50%;">
             <!-- Fester Lafetten-Sockel (Räder + Stütze) — bleibt bewusst UNBEWEGT, damit klar
@@ -5911,11 +6042,26 @@
         <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
         <button type="button" class="emoji-toggle-link" id="knRestartLink" style="font-size:0.75rem;">🔄 Runde neu starten (Punkte bleiben erhalten)</button>
         ${inlineFeatureFlagToggleHtml("wortkanone_redesign")}
-        <div id="knChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanone);
     wireInlineFeatureFlagToggles(area, renderKanone);
     startKanoneCloudTimer();
+    document.getElementById("knPauseBtn")?.addEventListener("click", () => {
+      if (knPaused) {
+        // Fortsetzen: die verstrichene Pausendauer auf JEDEN spawnedAt-Zeitstempel addieren, damit
+        // die Fallposition nahtlos an derselben Stelle weiterläuft, statt beim Fortsetzen
+        // plötzlich nach unten zu springen (was passieren würde, wenn spawnedAt unverändert
+        // bliebe, während die reale Zeit während der Pause ja trotzdem weiterlief).
+        const pausedDuration = Date.now() - knPausedAt;
+        knActiveWords.forEach((w) => { if (w.spawnedAt) w.spawnedAt += pausedDuration; });
+        knPaused = false;
+        knPausedAt = null;
+      } else {
+        knPaused = true;
+        knPausedAt = Date.now();
+      }
+      renderKanone();
+    });
     area.querySelectorAll(".kn-word").forEach((btn) => {
       btn.addEventListener("click", (e) => shootKanoneWord(btn.dataset.wid, btn, e));
       btn.addEventListener("animationend", () => landKanoneWord(btn.dataset.wid, btn));
@@ -6193,13 +6339,13 @@
         ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
         <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHEN Antworten an, bevor sie unten ankommen — die richtige Antwort darfst du NICHT treffen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
+        <div id="knChallengeBar"></div>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky kn-sky-old" id="knSky">
           ${knActiveWords.map((w, i) => `<button type="button" class="kn-word kn-word-old" data-wid="${w.id}" style="left:${(100 / (n + 1)) * (i + 1)}%; animation-duration:${7 + n}s; animation-delay:${i * 0.9}s;">${w.text}</button>`).join("")}
         </div>
         <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
         ${inlineFeatureFlagToggleHtml("wortkanone_redesign")}
-        <div id="knChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanoneOld);
     wireInlineFeatureFlagToggles(area, renderKanone);
@@ -6356,6 +6502,7 @@
       <div class="question-card" style="text-align:center;">
         ${miniBugReportBtnHtml("Wer bin ich: " + correct)}
         <p class="eyebrow">❓ WER BIN ICH? · RUNDE ${wbiSession.round + 1} / ${wbiSession.total}</p>
+        <div id="wbiChallengeBar"></div>
         <label class="quiz-actions" style="justify-content:center; margin-bottom:10px; gap:8px; cursor:pointer; font-size:0.8rem;">
           <input type="checkbox" id="wbiModeToggle" ${wbiTypeMode ? "checked" : ""} />
           <span>Stattdessen selbst eintippen (schwieriger)</span>
@@ -6372,7 +6519,6 @@
           </div>
         `}
         <p class="empty-note" id="wbiFeedback" style="margin-top:10px; min-height:20px;"></p>
-        <div id="wbiChallengeBar"></div>
       </div>`;
     renderMiniChallengeBarCached("werbinich", "werbinich", "wbiChallengeBar", area, renderWerBinIch);
     document.getElementById("wbiModeToggle")?.addEventListener("change", (e) => { wbiTypeMode = e.target.checked; renderWerBinIch(); });
@@ -6486,6 +6632,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🔤 WORTBAUSTELLE · RUNDE ${wbSession.round + 1} / ${wbSession.total}</p>
+        <div id="wbChallengeBar"></div>
         <div class="trophy-case" style="margin-bottom:8px;">
           ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip wb-diff-btn ${wbDifficulty === key ? "selected" : ""}" data-wb-diff="${key}">${label}</button>`).join("")}
         </div>
@@ -6514,7 +6661,6 @@
           <button type="button" class="btn btn-ghost" id="wbResetBtn">↺ Zurücksetzen</button>
           <button type="button" class="btn btn-ghost" id="wbSkipBtn">Überspringen ▶</button>
         </div>
-        <div id="wbChallengeBar"></div>
       </div>
     `;
     renderMiniChallengeBarCached("wortbaustelle", "wortbaustelle", "wbChallengeBar", area, renderWordbuild);
@@ -6693,6 +6839,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.wordsAttempted} / ${wsSession.target} WÖRTER · ${wsSession.correctCount} RICHTIG</p>
+        <div id="wsChallengeBar"></div>
         <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen — waagerecht, senkrecht oder diagonal, in jede Richtung. Danach den richtigen Artikel wählen, um das Wort abzuschließen.</p>
         <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, minmax(0, 1fr));">
           ${s.grid.map((row, r) => row.map((ch, c) => {
@@ -6716,7 +6863,6 @@
             <input type="checkbox" id="wsHintToggle" ${isWsHintModeOn() ? "checked" : ""} />
             <span>💡 Anfangsbuchstaben dauerhaft anzeigen</span>
           </label>`}
-        <div id="wsChallengeBar"></div>
       </div>
     `;
     renderMiniChallengeBarCached("buchstabensalat", "buchstabensalat", "wsChallengeBar", area, renderWordSearch);
@@ -8468,6 +8614,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">✏️ KREUZWORTRÄTSEL · RUNDE ${cwSession.round + 1} / ${cwSession.total} · ${puzzle.title}</p>
+        <div id="cwChallengeBar"></div>
         <p class="empty-note" style="margin-bottom:10px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
         <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, minmax(0, 1fr)); max-width: min(${puzzle.cols * 42}px, 94vw);">
           ${puzzle.grid.map((row, r) => row.map((ch, c) => {
@@ -8498,7 +8645,6 @@
           <button type="button" class="btn btn-ghost" id="cwNextBtn">🔄 Nächstes Rätsel</button>
         </div>
         <p class="empty-note" id="cwFeedback" style="text-align:center; margin-top:10px;"></p>
-        <div id="cwChallengeBar"></div>
       </div>
     `;
     renderMiniChallengeBarCached("kreuzwortraetsel", "kreuzwortraetsel", "cwChallengeBar", area, renderCrossword);
@@ -8624,20 +8770,60 @@
     </div>`;
   }
 
-  let historyLevel = "B1";
-  let dichterLevel = "B1";
-  let schneeLevel = "B1";
+  // WICHTIG: alle drei starten mit null statt einem festen "B1" — das signalisiert "noch nicht
+  // festgelegt", sodass applyDefaultCefrLevel() (siehe unten) beim allerersten Rendern jedes
+  // Bereichs automatisch das im Profil hinterlegte Sprachniveau übernehmen kann. Sobald man
+  // manuell umschaltet, steht hier ein echter Wert, der dann nicht mehr überschrieben wird.
+  let historyLevel = null;
+  let dichterLevel = null;
+  let schneeLevel = null;
+  const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  // Setzt das Niveau eines Bereichs beim allerersten Aufruf auf das im Profil hinterlegte
+  // Sprachniveau (falls eins gesetzt ist), sonst auf "B1" als neutrale Mitte — genau wie
+  // ausdrücklich gewünscht: Inhalte sollen automatisch im eigenen Niveau starten, statt jedes Mal
+  // manuell umschalten zu müssen. Gibt das zu verwendende Niveau zurück.
+  function applyDefaultCefrLevel(currentValue, setter) {
+    if (currentValue) return currentValue;
+    const profileLevel = Backend.currentProfile()?.extraProfileData?.cefrLevel;
+    const level = profileLevel && CEFR_LEVELS.includes(profileLevel) ? profileLevel : "B1";
+    setter(level);
+    return level;
+  }
+  // Wenn ein Inhalt nicht ALLE sechs Niveaus abdeckt: das nächstgelegene tatsächlich vorhandene
+  // Niveau finden (z. B. C1 gewünscht, aber nur bis B2 vorhanden → B2 verwenden), statt einfach
+  // nichts anzuzeigen oder auf einen falschen Standardwert zu springen.
+  function nearestAvailableCefrLevel(entry, wantedLevel) {
+    if (entry.levels[wantedLevel]) return wantedLevel;
+    const wantedIdx = CEFR_LEVELS.indexOf(wantedLevel);
+    const available = CEFR_LEVELS.filter((lvl) => entry.levels[lvl]);
+    if (!available.length) return wantedLevel;
+    available.sort((a, b) => Math.abs(CEFR_LEVELS.indexOf(a) - wantedIdx) - Math.abs(CEFR_LEVELS.indexOf(b) - wantedIdx));
+    return available[0];
+  }
+  let kompassDichterOpenId = null; // welche Kachel gerade aufgeklappt ist (null = Kachel-Ansicht)
+  let kompassSchneeOpenId = null;
   // WICHTIG: beide Rubriken sind bewusst als ausstehende Updates vorbereitet — nur die
   // Infrastruktur (Struktur, Niveau-Umschalter A1–C2, Beispieleinträge) steht schon, aber SICHTBAR
   // wird das für normale Nutzer:innen erst, wenn die Feature-Flags unten explizit freigegeben
   // werden. Bis dahin nur für Betreiber:in/Admins/eingeladene Beta-Tester:innen sichtbar (siehe
   // renderComingSoonGate).
+  // Kleine, handgezeichnete SVG-Portrait-Kachel statt eines echten Fotos — es gibt hier keinen
+  // Internetzugriff, um echte, rechtefreie Fotos zu laden. Jede Person/jedes Thema bekommt eine
+  // eigene, thematisch passende, stilisierte Illustration statt eines generischen Platzhalters.
+  function portraitSvg(initials, bgFrom, bgTo, symbol) {
+    return `<svg viewBox="0 0 120 120" style="width:100%; height:100%; display:block;">
+      <defs><linearGradient id="pg-${initials}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${bgFrom}"/><stop offset="100%" stop-color="${bgTo}"/>
+      </linearGradient></defs>
+      <rect width="120" height="120" fill="url(#pg-${initials})"/>
+      <text x="60" y="46" text-anchor="middle" font-size="34" font-family="sans-serif">${symbol}</text>
+      <text x="60" y="92" text-anchor="middle" font-family="Georgia, serif" font-size="30" font-weight="700" fill="#FFFFFF" opacity="0.9">${initials}</text>
+    </svg>`;
+  }
   const DICHTER_ENTRIES = [
     {
-      id: "goethe",
-      name: "Johann Wolfgang von Goethe",
-      years: "1749–1832",
-      img: "",
+      id: "goethe", name: "Johann Wolfgang von Goethe", years: "1749–1832",
+      img: portraitSvg("JG", "#5BA8A0", "#3EC6C6", "✒️"),
       levels: {
         A1: "Goethe war ein berühmter deutscher Dichter. Er hat viele Gedichte und Bücher geschrieben. Sein bekanntestes Buch heißt „Faust“.",
         A2: "Johann Wolfgang von Goethe war ein sehr berühmter deutscher Dichter und Schriftsteller. Er lebte vor über 200 Jahren. Sein wichtigstes Werk heißt „Faust“ und wird noch heute in Theatern gespielt.",
@@ -8647,12 +8833,47 @@
         C2: "Als Zentralgestalt der Weimarer Klassik verkörpert Goethe wie kaum eine andere Figur das Ideal des Universalgelehrten: sein literarisches Schaffen, allen voran das lebenslange Ringen um „Faust“, verschmilzt mit naturwissenschaftlichen Studien und staatsmännischem Wirken zu einem einzigartigen kulturellen Vermächtnis.",
       },
     },
+    {
+      id: "schiller", name: "Friedrich Schiller", years: "1759–1805",
+      img: portraitSvg("FS", "#A875D8", "#B084CC", "🎭"),
+      levels: {
+        A1: "Schiller war ein deutscher Dichter. Er hat Theaterstücke geschrieben. Ein bekanntes Stück heißt „Wilhelm Tell“.",
+        A2: "Friedrich Schiller war ein wichtiger deutscher Dichter und Freund von Goethe. Er schrieb viele Theaterstücke, zum Beispiel „Wilhelm Tell“. Seine Werke handeln oft von Freiheit.",
+        B1: "Schiller war einer der bedeutendsten deutschen Dramatiker. Zusammen mit Goethe prägte er die Weimarer Klassik. In seinen Theaterstücken wie „Wilhelm Tell“ oder „Die Räuber“ geht es oft um Freiheit und Gerechtigkeit.",
+        B2: "Friedrich Schiller (1759–1805) gilt neben Goethe als der bedeutendste deutsche Dramatiker der Klassik. Seine Werke, darunter „Die Räuber“ und „Wilhelm Tell“, beschäftigen sich intensiv mit Freiheit, Moral und dem Widerstand gegen Unterdrückung.",
+        C1: "Schillers dramatisches Werk, geprägt vom Ideal der Freiheit und moralischen Selbstbestimmung, machte ihn zu einer der zentralen Figuren der Weimarer Klassik — seine enge Zusammenarbeit mit Goethe gilt bis heute als einer der fruchtbarsten literarischen Dialoge der deutschen Geschichte.",
+        C2: "Als Verfechter des Idealismus und der ästhetischen Erziehung des Menschen entwarf Schiller in seinen Dramen und philosophischen Schriften ein Menschenbild, das Freiheit und Sittlichkeit untrennbar miteinander verband — ein Vermächtnis, das die deutsche Geistesgeschichte nachhaltig prägte.",
+      },
+    },
+    {
+      id: "einstein", name: "Albert Einstein", years: "1879–1955",
+      img: portraitSvg("AE", "#4A90D9", "#7FC4D4", "🧠"),
+      levels: {
+        A1: "Einstein war ein berühmter deutscher Wissenschaftler. Er hat die Relativitätstheorie entdeckt. Er hat den Nobelpreis gewonnen.",
+        A2: "Albert Einstein war ein deutscher Physiker. Er ist sehr berühmt für seine Relativitätstheorie. Später ist er in die USA ausgewandert.",
+        B1: "Albert Einstein zählt zu den bedeutendsten Physikern der Geschichte. Mit seiner Relativitätstheorie veränderte er das Verständnis von Raum und Zeit. 1921 erhielt er den Nobelpreis für Physik.",
+        B2: "Albert Einstein (1879–1955), geboren in Ulm, revolutionierte mit der Relativitätstheorie das physikalische Weltbild grundlegend. Wegen seiner jüdischen Herkunft musste er 1933 vor den Nationalsozialisten in die USA fliehen.",
+        C1: "Einsteins Relativitätstheorie stellte die klassische, newtonsche Physik grundlegend infrage und legte den Grundstein für die moderne theoretische Physik — sein Schicksal als Emigrant vor dem NS-Regime macht ihn zugleich zu einer zentralen Figur deutscher Geschichte des 20. Jahrhunderts.",
+        C2: "Die von Einstein begründete Relativitätstheorie markiert einen der fundamentalsten Paradigmenwechsel der Naturwissenschaften und verschmilzt in seiner Biografie mit der Tragik der Emigration — eine Verbindung wissenschaftlichen Genies mit dem dunkelsten Kapitel deutscher Geschichte.",
+      },
+    },
+    {
+      id: "bach", name: "Johann Sebastian Bach", years: "1685–1750",
+      img: portraitSvg("JB", "#E8825F", "#F2B84B", "🎼"),
+      levels: {
+        A1: "Bach war ein berühmter deutscher Musiker. Er hat viele Musikstücke geschrieben. Seine Musik ist heute noch bekannt.",
+        A2: "Johann Sebastian Bach war ein deutscher Komponist. Er hat sehr viel Musik geschrieben, vor allem Kirchenmusik. Seine Musik wird bis heute gespielt.",
+        B1: "Johann Sebastian Bach gilt als einer der bedeutendsten Komponisten der Musikgeschichte. Er schrieb hunderte Werke, besonders Kirchenmusik und Orgelstücke. Sein Werk beeinflusste die gesamte westliche Musik.",
+        B2: "Johann Sebastian Bach (1685–1750) prägte mit seinem umfangreichen Werk — von Kantaten über Orgelmusik bis zu den Brandenburgischen Konzerten — die Musikgeschichte nachhaltig und gilt als Höhepunkt der Barockmusik.",
+        C1: "Bachs kontrapunktische Meisterschaft und sein enormes kompositorisches Schaffen, das nahezu alle Gattungen seiner Zeit umfasst, machen ihn zu einer Schlüsselfigur der Musikgeschichte, deren Einfluss von Mozart bis in die heutige Kompositionslehre reicht.",
+        C2: "In der Verschmelzung kontrapunktischer Komplexität mit tiefer geistlicher Ausdruckskraft erreicht Bachs Œuvre eine kompositorische Vollendung, die die Barockmusik zu ihrem Höhepunkt führte und als fundamentaler Bezugspunkt der abendländischen Musiktradition bis heute fortwirkt.",
+      },
+    },
   ];
   const SCHNEE_ENTRIES = [
     {
-      id: "faxgeraet",
-      name: "Das Faxgerät im Büroalltag",
-      img: "",
+      id: "faxgeraet", name: "Das Faxgerät im Büroalltag",
+      img: portraitSvg("📠", "#7FB87A", "#5BA8A0", "📠"),
       levels: {
         A1: "Früher hatten viele Büros ein Faxgerät. Man hat damit Papiere an andere Orte geschickt. Heute nutzen die meisten Menschen E-Mails.",
         A2: "Früher war das Faxgerät in fast jedem Büro zu finden. Damit konnte man Dokumente über die Telefonleitung an andere Orte senden. Heute wird das Faxgerät kaum noch benutzt, weil E-Mails viel schneller sind.",
@@ -8662,24 +8883,95 @@
         C2: "Das Faxgerät steht exemplarisch für jene technischen Übergangsphänomene, die eine Ära prägten und binnen kürzester Zeit durch überlegene digitale Alternativen obsolet wurden — ein Umstand, den insbesondere die fortdauernde behördliche Anhänglichkeit an das Fax in Deutschland auf bemerkenswerte Weise konterkariert.",
       },
     },
+    {
+      id: "schreibmaschine", name: "Die Schreibmaschine",
+      img: portraitSvg("⌨️", "#E85F6F", "#E8825F", "⌨️"),
+      levels: {
+        A1: "Früher haben Menschen mit einer Schreibmaschine geschrieben. Es gab keine Computer. Heute schreibt man meistens am Computer.",
+        A2: "Vor dem Computer war die Schreibmaschine das wichtigste Gerät zum Schreiben von Briefen und Texten. Man musste jeden Buchstaben mit einer Taste anschlagen. Heute wird sie fast nicht mehr benutzt.",
+        B1: "Die Schreibmaschine war jahrzehntelang unverzichtbar in Büros, Redaktionen und Haushalten. Texte wurden mechanisch Buchstabe für Buchstabe getippt, Fehler waren mühsam zu korrigieren. Der Computer hat sie fast vollständig verdrängt.",
+        B2: "Bis in die 1980er-Jahre war die Schreibmaschine das zentrale Schreibgerät in deutschen Büros und Privathaushalten. Anders als am Computer ließen sich Tippfehler nur mühsam korrigieren, was eine ganz andere Schreibdisziplin erforderte. Mit dem PC verschwand sie fast vollständig.",
+        C1: "Die Schreibmaschine prägte über ein Jahrhundert lang die Schreibkultur — ihre mechanischen Grenzen erzwangen eine Sorgfalt und Disziplin beim Formulieren, die mit der beliebigen Korrigierbarkeit digitaler Texte weitgehend verloren gegangen ist.",
+        C2: "Als Verkörperung einer analogen Schreibkultur, deren mechanische Unerbittlichkeit zu einer eigenen Form gedanklicher Disziplin zwang, steht die Schreibmaschine sinnbildlich für einen Verlust an Langsamkeit und Sorgfalt, den die digitale Beliebigkeit des Textverarbeitungszeitalters mit sich brachte.",
+      },
+    },
+    {
+      id: "telefonzelle", name: "Die Telefonzelle",
+      img: portraitSvg("☎️", "#F2B84B", "#E8D34B", "☎️"),
+      levels: {
+        A1: "Früher gab es viele Telefonzellen auf der Straße. Man konnte dort mit Münzen telefonieren. Heute gibt es fast keine mehr, weil alle ein Handy haben.",
+        A2: "Telefonzellen standen früher an vielen Straßenecken in Deutschland. Mit Münzen oder einer Telefonkarte konnte man von dort aus telefonieren. Seit fast jeder ein Handy hat, sind sie fast verschwunden.",
+        B1: "Die gelbe Telefonzelle gehörte jahrzehntelang zum typischen deutschen Straßenbild. Wer unterwegs telefonieren wollte, musste dort mit Münzen oder Telefonkarte bezahlen. Mit der Verbreitung von Mobiltelefonen wurden die meisten abgebaut.",
+        B2: "Die Telefonzelle war bis in die 1990er-Jahre ein unverzichtbarer Bestandteil der öffentlichen Infrastruktur in Deutschland. Sie ermöglichte unterwegs Erreichbarkeit, lange bevor Mobiltelefone erschwinglich wurden. Heute erinnern nur noch vereinzelte, oft umfunktionierte Zellen an diese Zeit.",
+        C1: "Die einst allgegenwärtige Telefonzelle steht sinnbildlich für eine Ära, in der Erreichbarkeit an feste Orte gebunden war — ihr fast vollständiges Verschwinden binnen weniger Jahrzehnte veranschaulicht, wie radikal die mobile Kommunikation den öffentlichen Raum verändert hat.",
+        C2: "Als Relikt einer ortsgebundenen Kommunikationskultur markiert die Telefonzelle den Übergang zu einer Gesellschaft permanenter Erreichbarkeit — ihr Verschwinden aus dem Stadtbild dokumentiert eindrücklich die Geschwindigkeit technologischen und sozialen Wandels der letzten Jahrzehnte.",
+      },
+    },
+    {
+      id: "musikkassette", name: "Die Musikkassette",
+      img: portraitSvg("📼", "#B084CC", "#A875D8", "📼"),
+      levels: {
+        A1: "Früher haben Menschen Musik auf Kassetten gehört. Man konnte Lieder selbst aufnehmen. Heute streamt man Musik über das Handy.",
+        A2: "Die Musikkassette war früher sehr beliebt, um Musik zu hören und aufzunehmen. Viele Menschen haben sich eigene Mixtapes gemacht. Heute wird Musik meistens gestreamt.",
+        B1: "Die Musikkassette prägte jahrzehntelang das Musikhören in Deutschland. Man konnte Lieder vom Radio aufnehmen oder eigene Zusammenstellungen, sogenannte Mixtapes, erstellen. Heute hat Streaming diese Technik fast vollständig abgelöst.",
+        B2: "Von den 1970er- bis in die 1990er-Jahre war die Musikkassette das dominierende Format für privaten Musikgenuss in Deutschland. Besonders beliebt war das persönliche Zusammenstellen von Mixtapes für Freunde. Digitales Streaming hat sie heute fast völlig verdrängt.",
+        C1: "Die Musikkassette ermöglichte erstmals einer breiten Öffentlichkeit, Musik selbst zusammenzustellen und weiterzugeben — die Kultur des selbstgemachten Mixtapes gilt vielen als eine persönlichere, verlorene Vorstufe heutiger digitaler Playlists.",
+        C2: "Als demokratisierendes Medium eröffnete die Musikkassette erstmals eine partizipative Aneignung von Musikkultur durch selbst kuratierte Mixtapes — ein Stück analoger Handwerklichkeit und persönlicher Widmung, das im algorithmisch generierten Playlist-Zeitalter kaum eine Entsprechung findet.",
+      },
+    },
   ];
-  function renderLevelSwitcherEntries(area, entries, levelVar, setLevelVar, iconEmoji, subheading) {
-    const level = levelVar();
+  // Zeigt zuerst eine kleine Kachel-Galerie (Bild, Name, Jahre/Kurztitel) — antippen öffnet die
+  // ausführliche Detail-Ansicht mit Niveau-Umschalter für genau diesen einen Eintrag.
+  function renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading) {
+    const openId = openIdVar();
+    if (openId) {
+      const entry = entries.find((e) => e.id === openId);
+      if (entry) { renderEntryDetail(area, entries, entry, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading); return; }
+    }
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">${subheading}</p>
-      ${entries.map((entry) => `
-        <div class="question-card" style="margin-bottom:16px;">
-          <p class="eyebrow">${iconEmoji} ${entry.name}${entry.years ? ` <span style="font-weight:400;">(${entry.years})</span>` : ""}</p>
-          <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
-            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip level-switch-btn" data-entry-id="${entry.id}" data-level="${lvl}" style="${lvl === level ? "background:var(--amber-400); color:#241505;" : ""}">${lvl}</button>`).join("")}
-          </div>
-          <p style="margin-top:8px;">${entry.levels[level]}</p>
-        </div>`).join("")}
+      <div class="kompass-tile-grid">
+        ${entries.map((entry) => `
+          <button type="button" class="kompass-tile" data-tile-id="${entry.id}">
+            <div class="kompass-tile-img">${entry.img}</div>
+            <span class="kompass-tile-name">${entry.name}</span>
+            ${entry.years ? `<span class="kompass-tile-years">${entry.years}</span>` : ""}
+          </button>`).join("")}
+      </div>
     `;
+    area.querySelectorAll("[data-tile-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setOpenIdVar(btn.dataset.tileId);
+        renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
+      });
+    });
+  }
+  function renderEntryDetail(area, entries, entry, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading) {
+    const level = levelVar();
+    area.innerHTML = `
+      <button type="button" class="btn btn-ghost" id="tileBackBtn" style="margin-bottom:12px;">◀ Zurück zur Übersicht</button>
+      <div class="question-card">
+        <div style="display:flex; gap:14px; align-items:center; margin-bottom:10px;">
+          <div style="width:64px; height:64px; flex-shrink:0; border-radius:var(--radius-sm); overflow:hidden;">${entry.img}</div>
+          <div>
+            <p class="eyebrow" style="margin:0;">${iconEmoji} ${entry.name}</p>
+            ${entry.years ? `<p class="empty-note" style="margin:2px 0 0;">${entry.years}</p>` : ""}
+          </div>
+        </div>
+        <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip level-switch-btn" data-level="${lvl}" style="${lvl === level ? "background:var(--amber-400); color:#241505;" : ""}">${lvl}</button>`).join("")}
+        </div>
+        <p style="margin-top:8px;">${entry.levels[level]}</p>
+      </div>
+    `;
+    document.getElementById("tileBackBtn").addEventListener("click", () => {
+      setOpenIdVar(null);
+      renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
+    });
     area.querySelectorAll(".level-switch-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         setLevelVar(btn.dataset.level);
-        renderLevelSwitcherEntries(area, entries, levelVar, setLevelVar, iconEmoji, subheading);
+        renderEntryDetail(area, entries, entry, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
       });
     });
   }
@@ -8687,7 +8979,8 @@
     const area = document.getElementById("dichterArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "dichter_und_denker", "Dichter & Denker", "✒️")) return;
-    renderLevelSwitcherEntries(area, DICHTER_ENTRIES, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
+    dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; });
+    renderTileGallery(area, DICHTER_ENTRIES, () => kompassDichterOpenId, (v) => { kompassDichterOpenId = v; }, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
       "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
     area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("dichter_und_denker"));
     wireInlineFeatureFlagToggles(area, renderDichterUndDenker);
@@ -8696,7 +8989,8 @@
     const area = document.getElementById("schneeArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "schnee_von_gestern", "Schnee von gestern", "❄️")) return;
-    renderLevelSwitcherEntries(area, SCHNEE_ENTRIES, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
+    schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; });
+    renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
     area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("schnee_von_gestern"));
     wireInlineFeatureFlagToggles(area, renderSchneeVonGestern);
@@ -8833,6 +9127,46 @@
     <text x="200" y="55" text-anchor="middle" font-size="30" font-family="sans-serif">🧭</text>
     <text x="200" y="90" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="sans-serif">Wissen &amp; Kompass</text>
   </svg>`;
+  // Kachel-Übersicht aller Spiele — ersetzt die frühere lange Liste einzelner Knöpfe direkt im
+  // Hauptmenü. Jede Kachel simuliert beim Antippen einen Klick auf den zugehörigen, jetzt
+  // unsichtbaren Original-Knopf (siehe index.html) — das behält alle dort schon registrierten
+  // Klick-Listener bei, ohne dass jeder einzeln umgebaut werden musste.
+  const GAMES_OVERVIEW_LIST = [
+    { sub: "sub-memory", emoji: "🧩", name: "Memory", persona: "Sprachkünstler" },
+    { sub: "sub-wordbuild", emoji: "🔤", name: "Wortbaustelle", persona: "Sprachkünstler" },
+    { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
+    { sub: "sub-crossword", emoji: "✏️", name: "Kreuzworträtsel", persona: "Sprachkünstler" },
+    { sub: "sub-satzpuzzle", emoji: "🧩", name: "Satzpuzzle", persona: "Grammatik-Profi" },
+    { sub: "sub-wackelturm", emoji: "🗼", name: "Wackelturm", persona: "Gemischt" },
+    { sub: "sub-wortarten", emoji: "🔤", name: "Wort-Typ", persona: "Grammatik-Profi" },
+    { sub: "sub-kanone", emoji: "🎯", name: "Wort-Kanone", persona: "Gemischt" },
+    { sub: "sub-bubbles", emoji: "🫧", name: "Wortblasen", persona: "Gemischt" },
+    { sub: "sub-vokabelmeister", emoji: "🔤", name: "Vokabelmeister", persona: "Sprachkünstler" },
+    { sub: "sub-korrektour", emoji: "🚂", name: "KorrekTour", persona: "Grammatik-Profi" },
+    { sub: "sub-werbinich", emoji: "❓", name: "Wer bin ich?", persona: "Logiker" },
+    { sub: "sub-stresstrainer", emoji: "🎯", name: "Betonungs-Trainer", persona: "Sprachkünstler" },
+  ];
+  function renderGamesOverview() {
+    const area = document.getElementById("gamesOverviewArea");
+    if (!area) return;
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>
+      <div class="kompass-tile-grid">
+        ${GAMES_OVERVIEW_LIST.map((g) => `
+          <button type="button" class="kompass-tile" data-game-sub="${g.sub}">
+            <div class="kompass-tile-img" style="display:flex; align-items:center; justify-content:center; font-size:2.4rem; background:rgba(0,0,0,0.06);">${g.emoji}</div>
+            <span class="kompass-tile-name">${g.name}</span>
+            <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}" style="margin-top:4px;"></span>
+          </button>`).join("")}
+      </div>
+    `;
+    area.querySelectorAll("[data-game-sub]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelector(`#learnSubnav [data-sub="${btn.dataset.gameSub}"]`)?.click();
+      });
+    });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-games"]')?.addEventListener("click", renderGamesOverview);
   async function renderKompass() {
     const bannerUrl = await Backend.getEffectiveBannerUrl("wissen_banner");
     // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
@@ -8855,9 +9189,12 @@
         <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
         <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
         <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
+        <a href="#kompass-dichter" class="wegweiser-item"><span>✒️</span>Dichter &amp; Denker</a>
+        <a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>
       </div>
 
       <h3 id="kompass-geschichte" class="kompass-heading">📜 Es war einmal in Deutschland …</h3>
+      ${todayHistory ? (() => { historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }); return ""; })() : ""}
       ${todayHistory ? `
         <div class="question-card" style="margin-bottom:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})</p>
@@ -8888,11 +9225,17 @@
 
       <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
       <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
+      <h3 id="kompass-dichter" class="kompass-heading">✒️ Dichter &amp; Denker</h3>
+      <div id="dichterArea"></div>
+      <h3 id="kompass-schnee" class="kompass-heading">❄️ Schnee von gestern</h3>
+      <div id="schneeArea"></div>
     `;
     kompassArea.querySelectorAll(".hist-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
     });
     wireSiteBannerUploads(kompassArea);
+    renderDichterUndDenker();
+    renderSchneeVonGestern();
   }
   renderKompass();
 
@@ -9397,7 +9740,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <h3>✍️ Deine Vorstellung</h3>
         <div class="form-field">
           <label>Dein Bild für die Vorstellungskarte (optional)</label>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px; flex-wrap:wrap;">
             <div id="introPhotoPreview" style="width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--plum-700); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
               ${mine.photoUrl ? `<img src="${mine.photoUrl}" style="width:100%; height:100%; object-fit:cover;" />` : (mine.stickerKey && DMA_STICKERS[mine.stickerKey]) ? DMA_STICKERS[mine.stickerKey] : "🦊"}
             </div>
@@ -9707,7 +10050,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       "favCountryInput", "extraDreamDestInput", "extraVisitedInput", "extraWhyGermanInput", "extraLangGoalInput", "extraSportInput",
       "favMovieInput", "favSeriesInput", "favSongInput", "extraActorInput", "extraBookInput", "extraArtistInput",
       "favQuoteInput", "extraMottoInput", "extraSecretInput", "poemInput", "extraDreamInput", "extraHappyInput",
-      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelectTop",
+      "favFoodInput", "favDrinkInput", "extraColorInput", "extraAnimalInput", "extraSeasonSelect", "extraNumberInput", "extraTalentInput", "extraVacationInput", "extraGenderSymbolSelectTop", "extraCefrLevelSelect", "showcaseSongLinkInput",
       "extraLikesInput", "extraDislikesInput",
       "birthdayInput", "originSelect",
     ];
@@ -9718,7 +10061,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       extraBookInput: "favBook", extraArtistInput: "favArtist",
       favQuoteInput: "favQuote", extraMottoInput: "motto", extraSecretInput: "secret", poemInput: "poem", extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy",
       favFoodInput: "favFood", favDrinkInput: "favDrink", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
-      extraNumberInput: "favNumber", extraTalentInput: "talent", extraVacationInput: "favVacation",
+      extraNumberInput: "favNumber", extraTalentInput: "talent", extraVacationInput: "favVacation", extraCefrLevelSelect: "cefrLevel", showcaseSongLinkInput: "showcaseSongUrl",
       extraLikesInput: "likes", extraDislikesInput: "dislikes",
       birthdayInput: "birthday", originSelect: "origin",
     };
@@ -9726,6 +10069,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       const el = document.getElementById(id);
       if (el) profileEditDraft[fieldMap[id]] = el.value.trim();
     });
+    // Checkbox statt Text-/Select-Feld — braucht .checked statt .value, und die gespeicherte
+    // Bedeutung ist umgekehrt (Checkbox = "Alter ANZEIGEN", Feld = "Alter VERSTECKEN").
+    const showAgeEl = document.getElementById("showAgeCheckbox");
+    if (showAgeEl) profileEditDraft.hideAge = !showAgeEl.checked;
   }
   let profileViewPage = 0;
 
@@ -9800,7 +10147,11 @@ An einem Morgen lief ein kleiner Fuchs los…
         try {
           if (authMode === "signup") {
             const name = document.getElementById("authName").value.trim();
-            const refId = new URLSearchParams(window.location.search).get("ref");
+            // Erst den evtl. zwischengespeicherten Wert verwenden (siehe
+            // showReferralWelcomeIfPresent — der ref-Parameter ist zu diesem späten Zeitpunkt oft
+            // schon aus der sichtbaren URL entfernt), nur falls der nicht existiert direkt aus der
+            // aktuellen URL nachschauen.
+            const refId = window.__pendingReferralId || new URLSearchParams(window.location.search).get("ref");
             await Backend.signUp(email, password, name, refId);
           } else {
             await Backend.signIn(email, password);
@@ -9856,7 +10207,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div class="profile-header-flow${myFoxBedBadge ? " has-fox-badges" : ""}">
             ${avatarHtml}
             <div class="profile-header-stack">
-              <h2 style="margin:0 0 2px 0;">${profile.name}${calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
+              <h2 style="margin:0 0 2px 0;">${profile.name}${!extra.hideAge && calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
               ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
               <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
               <span class="profile-header-stack-row">
@@ -10033,16 +10384,35 @@ An einem Morgen lief ein kleiner Fuchs los…
           <textarea id="bioInput" class="guestbook-form-textarea" placeholder="Ein paar Worte über dich…" maxlength="200">${profile.bio || ""}</textarea>
         </div>
         <div class="form-field">
-          <label>Geburtstag (optional — erscheint dann oben in der Leiste)</label>
+          <label>Geburtstag (optional — bestimmt z. B. dein Sternzeichen)</label>
           <input type="date" id="birthdayInput" value="${profileEditDraft.birthday !== undefined ? profileEditDraft.birthday : (profile.birthday || "")}" />
+          <label class="empty-note" style="display:flex; align-items:center; gap:6px; margin-top:8px; cursor:pointer;">
+            <input type="checkbox" id="showAgeCheckbox" ${(profileEditDraft.hideAge !== undefined ? !profileEditDraft.hideAge : !extra.hideAge) ? "checked" : ""} />
+            <span>Alter oben in der Leiste anzeigen (Geburtstag bleibt für dein Sternzeichen trotzdem gespeichert, auch wenn du das hier ausschaltest)</span>
+          </label>
         </div>
         <div class="form-field" style="border:1.5px solid var(--amber-400); border-radius:10px; padding:10px 12px;">
           <label style="font-weight:700;">⚧️ Geschlechtssymbol im Profil (optional)</label>
-          <select id="extraGenderSymbolSelectTop" class="challenge-select">
-            <option value="">Nicht anzeigen</option>
-            <option value="maennlich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "maennlich" ? "selected" : ""}>♂ männlich</option>
-            <option value="weiblich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "weiblich" ? "selected" : ""}>♀ weiblich</option>
-            <option value="divers" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "divers" ? "selected" : ""}>⚥ divers</option>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <select id="extraGenderSymbolSelectTop" class="challenge-select" style="flex:1;">
+              <option value="">Nicht anzeigen</option>
+              <option value="maennlich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "maennlich" ? "selected" : ""}>♂ männlich</option>
+              <option value="weiblich" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "weiblich" ? "selected" : ""}>♀ weiblich</option>
+              <option value="divers" ${(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol) === "divers" ? "selected" : ""}>⚥ divers</option>
+            </select>
+            <!-- Live-Vorschau, GENAU dieselbe Darstellung wie im echten Profil (dieselbe
+                 genderSymbolCompact()-Funktion) — vorher sah man das gewählte Symbol erst nach
+                 dem Speichern und erneuten Öffnen der Profilansicht, nicht schon hier beim
+                 Auswählen selbst. -->
+            <span id="genderSymbolPreview" style="flex-shrink:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.06); border-radius:8px;">${genderSymbolCompact(profileEditDraft.genderSymbol !== undefined ? profileEditDraft.genderSymbol : extra.genderSymbol)}</span>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Sprachniveau nach GER (A1–C2, optional)</label>
+          <p class="empty-note" style="margin:0 0 6px;">Bestimmt, in welchem Niveau Inhalte wie „Es war einmal in Deutschland“, „Dichter & Denker“ oder deine eigenen Beiträge automatisch angezeigt werden — statt jedes Mal manuell umschalten zu müssen.</p>
+          <select id="extraCefrLevelSelect" class="challenge-select">
+            <option value="">Nicht festgelegt</option>
+            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<option value="${lvl}" ${(profileEditDraft.cefrLevel !== undefined ? profileEditDraft.cefrLevel : extra.cefrLevel) === lvl ? "selected" : ""}>${lvl}</option>`).join("")}
           </select>
         </div>
         <div class="form-field">
@@ -10111,6 +10481,12 @@ An einem Morgen lief ein kleiner Fuchs los…
             <div class="form-field">
               <label>Lieblingslied</label>
               <input type="text" id="favSongInput" maxlength="60" value="${profileEditDraft.favSong !== undefined ? profileEditDraft.favSong : (profile.favSong || "")}" placeholder="z. B. 99 Luftballons" />
+            </div>
+            <div class="form-field" style="border:1.5px solid var(--teal-400); border-radius:10px; padding:10px 12px;">
+              <label style="font-weight:700;">🌟 Song im Profil-Player zeigen (optional)</label>
+              <p class="empty-note" style="margin:0 0 8px;">Anders als „Lieblingslied" oben (nur Text): dieser Song ist direkt abspielbar im kleinen Player-Streifen auf deinem Profil — z. B. das deutsche Lied, das du gerade übst, statt deines allgemeinen Favoriten. Aus deiner Playlist heraus mit dem ⭐-Knopf auswählbar (siehe Musik-Bereich), oder hier direkt ein YouTube-Link einfügen:</p>
+              <input type="text" id="showcaseSongLinkInput" maxlength="200" value="${profileEditDraft.showcaseSongUrl !== undefined ? profileEditDraft.showcaseSongUrl : (extra.showcaseSongUrl || "")}" placeholder="https://www.youtube.com/watch?v=…" />
+              ${extra.showcaseSongUrl ? `<button type="button" class="emoji-toggle-link" id="showcaseSongClearBtn" style="margin-top:6px; font-size:0.78rem;">✕ Song aus Profil entfernen</button>` : ""}
             </div>
             <div class="form-field">
               <label>Lieblingsschauspieler:in</label>
@@ -10251,7 +10627,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           extraMottoInput: "motto", extraSecretInput: "secret", extraColorInput: "favColor", extraAnimalInput: "favAnimal", extraSeasonSelect: "favSeason",
           extraWhyGermanInput: "whyGerman", extraLangGoalInput: "langGoal", extraBookInput: "favBook", extraArtistInput: "favArtist",
           extraDreamInput: "bigDream", extraHappyInput: "whatMakesMeHappy", extraNumberInput: "favNumber", extraTalentInput: "talent",
-          extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelectTop: "genderSymbol",
+          extraSportInput: "favSport", extraVacationInput: "favVacation", extraGenderSymbolSelectTop: "genderSymbol", extraCefrLevelSelect: "cefrLevel", showcaseSongLinkInput: "showcaseSongUrl",
           extraLikesInput: "likes", extraDislikesInput: "dislikes",
           birthdayInput: "birthday", originSelect: "origin",
           favMovieInput: "favMovie", favSeriesInput: "favSeries", favSongInput: "favSong", favFoodInput: "favFood",
@@ -10277,6 +10653,24 @@ An einem Morgen lief ein kleiner Fuchs los…
         favAnimal: val("extraAnimalInput", extra.favAnimal),
         favSeason: val("extraSeasonSelect", extra.favSeason),
         genderSymbol: val("extraGenderSymbolSelectTop", extra.genderSymbol),
+        cefrLevel: val("extraCefrLevelSelect", extra.cefrLevel),
+        // Checkbox statt Text-/Select-Feld — captureProfileEditDraft() (oben schon aufgerufen)
+        // hat profileEditDraft.hideAge bereits aus der Checkbox befüllt.
+        hideAge: profileEditDraft.hideAge !== undefined ? profileEditDraft.hideAge : (extra.hideAge || false),
+        // Direkt eingegebener YouTube-Link fürs Profil (Alternative zum Auswählen aus der
+        // Playlist mit dem ⭐-Knopf) — nur validieren/übernehmen, wenn sich das Feld tatsächlich
+        // geändert hat, sonst bleibt eine über die Playlist gesetzte Auswahl unberührt.
+        showcaseSongUrl: (() => {
+          const raw = val("showcaseSongLinkInput", extra.showcaseSongUrl);
+          if (!raw.trim()) return "";
+          return extractYouTubeId(raw) ? raw.trim() : (extra.showcaseSongUrl || "");
+        })(),
+        showcaseSongTitle: (() => {
+          const raw = val("showcaseSongLinkInput", extra.showcaseSongUrl);
+          if (!raw.trim()) return "";
+          if (raw.trim() === (extra.showcaseSongUrl || "")) return extra.showcaseSongTitle || "";
+          return extractYouTubeId(raw) ? "Mein Song" : (extra.showcaseSongTitle || "");
+        })(),
         favNumber: val("extraNumberInput", extra.favNumber),
         talent: val("extraTalentInput", extra.talent),
         favVacation: val("extraVacationInput", extra.favVacation),
@@ -10335,6 +10729,20 @@ An einem Morgen lief ein kleiner Fuchs los…
         });
       });
     }
+    // Live-Vorschau direkt neben der Auswahl aktualisieren, sobald man ein anderes Symbol wählt —
+    // ohne die ganze Seite neu aufzubauen, damit man sofort sieht, wie es im echten Profil
+    // aussehen würde, statt erst nach dem Speichern.
+    document.getElementById("extraGenderSymbolSelectTop")?.addEventListener("change", (e) => {
+      const preview = document.getElementById("genderSymbolPreview");
+      if (preview) preview.innerHTML = genderSymbolCompact(e.target.value);
+    });
+    document.getElementById("showcaseSongClearBtn")?.addEventListener("click", async () => {
+      await Backend.updateExtraProfileField("showcaseSongUrl", "");
+      await Backend.updateExtraProfileField("showcaseSongTitle", "");
+      profileEditDraft.showcaseSongUrl = "";
+      profileEditDraft.showcaseSongTitle = "";
+      renderAccount();
+    });
     document.getElementById("emojiToggleLink").addEventListener("click", () => {
       const row = document.getElementById("emojiPickerRow");
       row.style.display = row.style.display === "none" ? "flex" : "none";
@@ -10675,6 +11083,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     pause: `<svg viewBox="0 0 24 24" width="18" height="18"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg>`,
     prev: `<svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="2.5" height="16" rx="1" fill="currentColor"/><path d="M20 4 L8 12 L20 20 Z" fill="currentColor"/></svg>`,
     next: `<svg viewBox="0 0 24 24" width="16" height="16"><rect x="17.5" y="4" width="2.5" height="16" rx="1" fill="currentColor"/><path d="M4 4 L16 12 L4 20 Z" fill="currentColor"/></svg>`,
+    // Vorher einfache Emojis (🔀🔂🔁) — jetzt echte SVGs, konsistent mit den anderen
+    // Bedienelementen. Zwei gebogene Pfeile für Shuffle (kreuzende Wege), ein Pfeil-Kreis mit
+    // "1"/ohne Zahl für Wiederholen-Einzeln/Alle.
+    shuffle: `<svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 6h3l9 12h4M16 6h4v4M4 18h3l3-4M16 18h4v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 6l-2.5-2M20 6l-2.5 2M20 18l-2.5-2M20 18l-2.5 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+    repeatOne: `<svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 8a5 5 0 0 1 5-5h6M20 16a5 5 0 0 1-5 5H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 1l3 2-3 2M12 23l-3-2 3-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="800" fill="currentColor">1</text></svg>`,
+    repeatAll: `<svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 8a5 5 0 0 1 5-5h6M20 16a5 5 0 0 1-5 5H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 1l3 2-3 2M12 23l-3-2 3-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    list: `<svg viewBox="0 0 24 24" width="15" height="15"><line x1="4" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+    collapse: `<svg viewBox="0 0 24 24" width="13" height="13"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    expand: `<svg viewBox="0 0 24 24" width="13" height="13"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    // Kleines, sich bewegendes Mini-Equalizer-Symbol statt des Lautsprecher-Emojis (🔊) für "spielt
+    // gerade" in Song-Listeneinträgen — konsistent mit dem Rest der SVG-Bedienelemente.
+    playingMini: `<svg viewBox="0 0 16 16" width="13" height="13" style="vertical-align:-2px;"><rect x="1" y="6" width="3" height="8" rx="1" fill="currentColor"><animate attributeName="height" values="8;3;8" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="6;10;6" dur="0.8s" repeatCount="indefinite"/></rect><rect x="6.5" y="2" width="3" height="12" rx="1" fill="currentColor"><animate attributeName="height" values="12;5;12" dur="0.7s" repeatCount="indefinite"/><animate attributeName="y" values="2;8;2" dur="0.7s" repeatCount="indefinite"/></rect><rect x="12" y="8" width="3" height="6" rx="1" fill="currentColor"><animate attributeName="height" values="6;12;6" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y" values="8;2;8" dur="0.9s" repeatCount="indefinite"/></rect></svg>`,
+    noteMini: `<svg viewBox="0 0 16 16" width="13" height="13" style="vertical-align:-2px;"><circle cx="4" cy="12" r="2.5" fill="currentColor"/><rect x="6" y="2" width="1.5" height="10.5" fill="currentColor"/><path d="M7.5 2 L13 3.5 V6 L7.5 4.5 Z" fill="currentColor"/></svg>`,
   };
   function formatMusicTime(seconds) {
     if (!Number.isFinite(seconds) || seconds < 0) return "--:--";
@@ -10892,6 +11313,16 @@ An einem Morgen lief ein kleiner Fuchs los…
       Backend.updateExtraProfileField("lastPlayedSong", { title: song.title, url: song.url });
     }
     const audioEl = document.getElementById("musicAudioNative");
+    // Spotify-Songs: eigenes Embed-Widget übernimmt die Wiedergabe komplett selbst (siehe
+    // renderMusicPlayerBar) — hier nur sicherstellen, dass eine evtl. noch laufende YouTube-/
+    // MP3-Wiedergabe vom vorherigen Song gestoppt wird, dann direkt zur UI-Aktualisierung springen.
+    if (Backend.isSpotifyUrl(song.url)) {
+      if (audioEl) audioEl.pause();
+      if (ytMusicPlayer && ytMusicPlayer.stopVideo) { try { ytMusicPlayer.stopVideo(); } catch (e) {} }
+      musicIsPlaying = false;
+      renderMusicSection();
+      return;
+    }
     if (Backend.isDirectAudioUrl(song.url)) {
       if (ytMusicPlayer && ytMusicPlayer.stopVideo) { try { ytMusicPlayer.stopVideo(); } catch (e) {} }
       audioEl.src = song.url;
@@ -10985,6 +11416,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     const song = musicPlaylist[musicCurrentIndex];
     if (!song) return;
     const audioEl = document.getElementById("musicAudioNative");
+    // WICHTIG — behebt den Bug "man kann gar kein Lied mehr abspielen": bisher ging dieser Knopf
+    // davon aus, dass der Song schon einmal über playMusicIndex() (also durch einen Klick in der
+    // Liste) geladen wurde. Öffnete man die Musik-Seite aber neu und tippte DIREKT auf diesen
+    // großen Play-Knopf (ohne vorher einen Song in der Liste anzutippen), war weder ytMusicPlayer
+    // initialisiert noch audioEl.src gesetzt — der Knopf tat dann buchstäblich nichts, wechselte
+    // aber trotzdem sein eigenes Icon zu "Pause", was fälschlich den Eindruck erweckte, es würde
+    // spielen. Jetzt: fehlt die tatsächliche Quelle noch, wird der Song zuerst richtig geladen.
+    const needsFirstLoad = Backend.isDirectAudioUrl(song.url) ? !audioEl.src || !audioEl.src.includes(encodeURI(song.url.split("/").pop() || song.url)) : !ytMusicPlayer;
+    if (needsFirstLoad) {
+      playMusicIndex(musicCurrentIndex);
+      return;
+    }
     if (Backend.isDirectAudioUrl(song.url)) {
       if (musicIsPlaying) audioEl.pause(); else audioEl.play().catch(() => {});
     } else if (ytMusicPlayer) {
@@ -11050,23 +11493,57 @@ An einem Morgen lief ein kleiner Fuchs los…
       // "nichts" zu sehen ist.
       const hasVisualContent = Boolean(song);
       const playerUpdateOn = Backend.isFeatureOn("musikplayer_update");
+      // Spotify-Songs bekommen ein eigenes, natives Einbettungs-Widget statt der normalen
+      // Player-Leiste — Spotify bietet ohne Premium-Konto samt OAuth (Web Playback SDK) keine
+      // programmatische Steuerung über eigene Play/Pause/Vor/Zurück-Knöpfe, wie es bei YouTube
+      // über die Iframe-API möglich ist. Das native Embed bringt eigene, vollständige
+      // Bedienelemente mit — ehrlicher und zuverlässiger, als zu versuchen, Spotify mit unseren
+      // eigenen Knöpfen fernzusteuern, was technisch ohne diesen Premium-Zugang nicht geht.
+      const spotifyInfo = song ? Backend.extractSpotifyEmbed(song.url) : null;
+      if (song && spotifyInfo) {
+        bar.innerHTML = `
+          <div class="music-player-v2">
+            <div class="music-player-title-block" style="margin-bottom:8px;">
+              <span class="music-player-title">${song.title}</span>
+              <span class="empty-note" style="font-size:0.7rem;">🎧 Spotify — eigene Bedienelemente unten im Fenster</span>
+            </div>
+            <iframe src="https://open.spotify.com/embed/${spotifyInfo.type}/${spotifyInfo.id}" width="100%" height="152" frameborder="0" allow="autoplay; encrypted-media; clipboard-write; fullscreen; picture-in-picture" loading="lazy" style="border-radius:12px;"></iframe>
+            <div class="music-player-row-controls" style="margin-top:8px;">
+              <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
+              <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
+            </div>
+          </div>`;
+        document.getElementById("musicPrevBtn")?.addEventListener("click", playPrevMusic);
+        document.getElementById("musicNextBtn")?.addEventListener("click", () => playNextMusic(false));
+        return;
+      }
       bar.innerHTML = song ? `
-        <div id="musicVideoSquareSlot" style="flex-shrink:0; ${musicCoverCollapsed ? "display:none;" : ""}"></div>
-        <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
-        <button type="button" class="player-panel-btn" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
-        <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
-        <span id="musicDigitalTime" class="player-digital-time">--:-- / --:--</span>
-        ${playerUpdateOn ? `<span class="kn-waveform ${musicIsPlaying ? "waveform-playing" : ""}" aria-hidden="true">
-          ${Array.from({ length: 7 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.09).toFixed(2)}s; height:${8 + (i % 5) * 3}px;"></span>`).join("")}
-        </span>` : ""}
-        <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;">🎵 ${song.title}</span>
-        ${playerUpdateOn ? `<button type="button" class="emoji-toggle-link" id="musicQuickListToggle" style="font-size:0.75rem; flex-shrink:0;" title="Song-Liste ein-/ausblenden">☰</button>` : ""}
-        ${hasVisualContent ? `<button type="button" class="emoji-toggle-link" id="musicExpandToggle" style="font-size:0.68rem; flex-shrink:0;" title="${musicCoverCollapsed ? "Cover wieder einblenden" : "Nur Titel anzeigen, Cover ausblenden"}">${musicCoverCollapsed ? "▸" : "▾"}</button>` : ""}
-        ${playerUpdateOn ? `<div class="player-mode-row">
-          <button type="button" class="player-mode-btn ${musicShuffleOn ? "active" : ""}" id="musicShuffleBtn" title="Zufallsmodus">🔀</button>
-          <button type="button" class="player-mode-btn ${musicRepeatMode === "one" ? "active" : ""}" id="musicRepeatOneBtn" title="Diesen Song wiederholen">🔂</button>
-          <button type="button" class="player-mode-btn ${musicRepeatMode === "all" ? "active" : ""}" id="musicRepeatAllBtn" title="Playlist wiederholen">🔁</button>
-        </div>` : ""}
+        <div class="music-player-v2">
+          <div class="music-player-row-top">
+            <div id="musicVideoSquareSlot" class="music-player-cover-slot" style="${musicCoverCollapsed ? "display:none;" : ""}"></div>
+            <div class="music-player-title-block">
+              <span class="music-player-title">${song.title}</span>
+              <span id="musicDigitalTime" class="player-digital-time">--:-- / --:--</span>
+            </div>
+            ${hasVisualContent ? `<button type="button" class="player-panel-btn ghost-btn music-player-collapse-btn" id="musicExpandToggle" title="${musicCoverCollapsed ? "Cover wieder einblenden" : "Nur Titel anzeigen, Cover ausblenden"}">${musicCoverCollapsed ? PLAYER_ICONS.expand : PLAYER_ICONS.collapse}</button>` : ""}
+          </div>
+          ${playerUpdateOn ? `<span class="kn-waveform music-player-waveform ${musicIsPlaying ? "waveform-playing" : ""}" aria-hidden="true">
+            ${Array.from({ length: 24 }).map((_, i) => `<span class="waveform-bar" style="animation-delay:${(i * 0.045).toFixed(2)}s; height:${6 + (i % 6) * 3}px;"></span>`).join("")}
+          </span>` : ""}
+          <div class="music-player-row-controls">
+            ${playerUpdateOn ? `
+              <button type="button" class="player-mode-btn ${musicShuffleOn ? "active" : ""}" id="musicShuffleBtn" title="Zufallsmodus">${PLAYER_ICONS.shuffle}</button>
+              <button type="button" class="player-mode-btn ${musicRepeatMode === "one" ? "active" : ""}" id="musicRepeatOneBtn" title="Diesen Song wiederholen">${PLAYER_ICONS.repeatOne}</button>
+            ` : `<span class="music-player-controls-spacer"></span>`}
+            <button type="button" class="player-panel-btn ghost-btn" id="musicPrevBtn" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
+            <button type="button" class="player-panel-btn music-player-play-main" id="musicPlayPauseBtn" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
+            <button type="button" class="player-panel-btn ghost-btn" id="musicNextBtn" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
+            ${playerUpdateOn ? `
+              <button type="button" class="player-mode-btn ${musicRepeatMode === "all" ? "active" : ""}" id="musicRepeatAllBtn" title="Playlist wiederholen">${PLAYER_ICONS.repeatAll}</button>
+              <button type="button" class="player-mode-btn" id="musicQuickListToggle" title="Song-Liste ein-/ausblenden">${PLAYER_ICONS.list}</button>
+            ` : `<span class="music-player-controls-spacer"></span>`}
+          </div>
+        </div>
       ` : `<span class="empty-note">Kein Song ausgewählt — wähl unten einen aus der Liste.</span>`;
       // Das quadratische Video-Fenster physisch in die gerade sichtbare Leiste verschieben (Musik-
       // Reiter bevorzugt, sonst die schwebende Leiste) — dieselbe DOM-Node bleibt dabei bestehen,
@@ -11090,9 +11567,14 @@ An einem Morgen lief ein kleiner Fuchs los…
           coverLayer.src = song.cover_url;
           coverLayer.style.display = "";
           if (mp3Icon) mp3Icon.style.display = "none";
-        } else if (Backend.isDirectAudioUrl(song.url) && Backend.isFeatureOn("musikplayer_update")) {
-          // MP3 (oder ähnliche direkte Audiodatei) ohne eigenes Cover — statt einer leeren
-          // Fläche ein animiertes Musik-Symbol zeigen, damit dort immer etwas zu sehen ist.
+        } else if (Backend.isDirectAudioUrl(song.url)) {
+          // WICHTIG — behebt den "grauen YouTube-Rest-Würfel"-Bug: das MP3-Symbol muss IMMER
+          // gezeigt werden, wenn der aktuelle Song eine direkte Audiodatei ohne Cover ist —
+          // unabhängig vom musikplayer_update-Feature-Flag (das war vorher nur fürs neue Layout
+          // gedacht, hat aber ungewollt auch diese Verdeckungs-Logik mit ausgeschaltet). War das
+          // Flag aus, fiel dieser Fall in den else-Zweig unten, der davon ausgeht, es handle sich
+          // um ein aktives YouTube-Video — das alte, gestoppte YouTube-Bild blieb dann sichtbar,
+          // obwohl in Wirklichkeit ein MP3 lief.
           if (coverLayer) coverLayer.style.display = "none";
           if (!mp3Icon) {
             mp3Icon = document.createElement("span");
@@ -11145,7 +11627,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     list.innerHTML = visible.length ? visible.map((s) => {
       const idx = musicPlaylist.findIndex((x) => x.id === s.id);
       const isCurrent = idx === musicCurrentIndex;
-      return `<button type="button" class="glass-quick-list-item ${isCurrent ? "active" : ""}" data-quick-play="${idx}">${isCurrent && musicIsPlaying ? "🔊" : "🎵"} ${s.title}</button>`;
+      return `<button type="button" class="glass-quick-list-item ${isCurrent ? "active" : ""}" data-quick-play="${idx}">${isCurrent && musicIsPlaying ? PLAYER_ICONS.playingMini : PLAYER_ICONS.noteMini} ${s.title}</button>`;
     }).join("") : `<p class="empty-note" style="padding:8px;">Noch keine Songs in der Liste.</p>`;
     list.querySelectorAll("[data-quick-play]").forEach((btn) => {
       btn.addEventListener("click", () => playMusicIndex(Number(btn.dataset.quickPlay)));
@@ -11316,7 +11798,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="emoji-toggle-link" id="musicAddToggle" style="margin:0;">➕ Song zur ${isMine ? "eigenen" : "gemeinsamen"} Playlist hinzufügen</button>
           <div id="musicAddFormBody" style="display:none; margin-top:12px;">
             <div class="form-field"><label>Titel</label><input type="text" id="musicTitleInput" maxlength="100" placeholder="z. B. 99 Luftballons — Nena" /></div>
-            <div class="form-field"><label>YouTube-Link ODER direkter Audio-Link (z. B. GitHub-Rohlink zu einer MP3)</label><input type="text" id="musicUrlInput" placeholder="https://www.youtube.com/watch?v=… oder https://…mp3" /></div>
+            <div class="form-field"><label>YouTube-, Spotify- ODER direkter Audio-Link (z. B. GitHub-Rohlink zu einer MP3)</label><input type="text" id="musicUrlInput" placeholder="https://www.youtube.com/watch?v=… oder https://open.spotify.com/track/… oder https://…mp3" /></div>
             <button type="button" class="btn btn-coffee" id="musicAddSubmitBtn">Hinzufügen</button>
             <p class="form-error" id="musicAddError" style="display:none;"></p>
           </div>
@@ -11336,7 +11818,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           const alreadyInMine = isFriendView && user && musicMyOwnSongUrls.includes(s.url);
           return `<div class="breakdown-row" style="${isCurrent ? "background:rgba(242,184,75,0.15);" : ""} flex-direction:column; align-items:stretch; gap:4px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-              <button type="button" class="friend-name-btn" data-play-song="${idx}" style="text-align:left;">${isCurrent && musicIsPlaying ? "🔊" : "🎵"} ${s.title}</button>
+              <button type="button" class="friend-name-btn" data-play-song="${idx}" style="text-align:left;">${isCurrent && musicIsPlaying ? PLAYER_ICONS.playingMini : PLAYER_ICONS.noteMini} ${s.title}</button>
               <span style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                 <button type="button" class="emoji-toggle-link" data-fav-song="${s.id}" style="font-size:1.1rem;">${isFav ? "❤️" : "🤍"}</button>
                 ${isMine ? `<label class="emoji-toggle-link" style="font-size:1rem; cursor:pointer;" title="Eigenes Cover-Bild hochladen"><input type="file" accept="image/*" data-cover-upload="${s.id}" style="display:none;" />🖼️</label>` : ""}
@@ -11652,21 +12134,27 @@ An einem Morgen lief ein kleiner Fuchs los…
     // Deckblatt: eigene Titelseite pro Kapitel, wie bei einem echten Buch — erst ein Tipp
     // darauf öffnet die eigentlichen Sticker-Seiten. Wichtig für später, sobald mehrere
     // Sammelserien (z. B. eine Kroko-Serie) als eigene Kapitel dazukommen.
+    // Persistente Überschriften-Zeile — sieht auf Cover UND aufgeschlagenen Seiten IDENTISCH aus
+    // (Titel mittig, Kapitel-Knöpfe links/rechts davon), damit der Übergang zwischen beiden
+    // keinen Bildsprung erzeugt. Auf dem Cover sind die Kapitel-Knöpfe nur unsichtbar (nicht
+    // entfernt!), damit der reservierte Platz gleich bleibt — erst auf den aufgeschlagenen Seiten
+    // werden sie sichtbar/aktiv.
+    const totalUnlockedInChapter = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
+    const headerRow = `
+      <div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <button type="button" class="btn btn-ghost" id="albumPrevChapter" style="${albumOnCoverPage ? "visibility:hidden;" : ""}" ${albumChapterIdx === 0 || activeChapters.length <= 1 ? "disabled" : ""}>⏮ Kapitel</button>
+        <h3 style="margin:0; text-align:center;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlockedInChapter}/${chapter.figures.length})</span></h3>
+        <button type="button" class="btn btn-ghost" id="albumNextChapter" style="${albumOnCoverPage ? "visibility:hidden;" : ""}" ${albumChapterIdx >= activeChapters.length - 1 || activeChapters.length <= 1 ? "disabled" : ""}>Kapitel ⏭</button>
+      </div>`;
     if (albumOnCoverPage) {
-      const totalUnlockedInChapter = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
       area.innerHTML = `
+        ${headerRow}
         <div class="album-book">
-          <button type="button" class="album-page-face album-cover-face" id="albumCoverFace" style="background:linear-gradient(160deg, var(--coral-400), var(--amber-400)); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:30px 18px; text-align:center; width:100%; border:none; cursor:pointer;">
+          <button type="button" class="album-page-face album-cover-face" id="albumCoverFace" style="background:linear-gradient(160deg, var(--coral-400), var(--amber-400)); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:30px 18px; text-align:center; width:100%; border:none; cursor:pointer; aspect-ratio:1; box-sizing:border-box;">
             <p style="font-size:3.2rem; margin:0 0 8px;">${chapter.emoji}</p>
-            <h2 style="margin:0 0 6px; color:#fff;">${chapter.title}</h2>
-            <p class="empty-note" style="color:rgba(255,255,255,0.85);">${totalUnlockedInChapter}/${chapter.figures.length} gesammelt</p>
             <p class="empty-note" style="color:rgba(255,255,255,0.7); margin-top:14px;">📖 Antippen zum Aufschlagen</p>
           </button>
         </div>
-        ${activeChapters.length > 1 ? `<div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-top:10px;">
-          <button type="button" class="btn btn-ghost" id="albumPrevChapter" ${albumChapterIdx === 0 ? "disabled" : ""}>⏮ Kapitel</button>
-          <button type="button" class="btn btn-ghost" id="albumNextChapter" ${albumChapterIdx >= activeChapters.length - 1 ? "disabled" : ""}>Kapitel ⏭</button>
-        </div>` : ""}
       `;
       document.getElementById("albumCoverFace")?.addEventListener("click", () => { albumOnCoverPage = false; albumPageIdx = 0; renderAlbum(); });
       document.getElementById("albumPrevChapter")?.addEventListener("click", () => { albumChapterIdx = Math.max(0, albumChapterIdx - 1); albumOnCoverPage = true; renderAlbum(); });
@@ -11696,12 +12184,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     };
     const renderEmptySlots = (figures) => Array.from({ length: half - figures.length }).map(() => `<div></div>`).join("");
     area.innerHTML = `
-      <div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <button type="button" class="btn btn-ghost" id="albumPrevChapter" ${albumChapterIdx === 0 ? "disabled" : ""}>⏮ Kapitel</button>
-        <h3 style="margin:0;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlocked}/${chapter.figures.length})</span></h3>
-        <button type="button" class="btn btn-ghost" id="albumNextChapter" ${albumChapterIdx >= activeChapters.length - 1 ? "disabled" : ""}>Kapitel ⏭</button>
-      </div>
-      <div class="album-book album-book-open" id="albumPageFace">
+      ${headerRow}
+      <div class="album-book album-book-open" id="albumPageFace" style="aspect-ratio:1;">
         <div class="album-page-face album-page-left" id="albumPageLeftClick" style="cursor:pointer;" title="Zurückblättern">
           <div class="album-page-grid">
             ${leftFigures.map(renderSlot).join("")}
@@ -11756,9 +12240,13 @@ An einem Morgen lief ein kleiner Fuchs los…
       renderAlbum();
       return;
     }
-    const face = document.getElementById("albumPageFace");
-    if (!face) { albumPageIdx += direction; renderAlbum(); return; }
-    face.classList.add("turning-next");
+    // WICHTIG: die Dreh-Animation liegt jetzt NUR auf der rechten Seite (siehe CSS
+    // .album-page-right.turning-next) — sie dreht sich um ihre linke Kante, die genau am
+    // Buchrücken (der Mitte) liegt, statt dass (wie vorher) das gesamte Buch um seinen äußeren
+    // linken Rand kippt.
+    const rightPage = document.getElementById("albumPageRightClick");
+    if (!rightPage) { albumPageIdx += direction; renderAlbum(); return; }
+    rightPage.classList.add("turning-next");
     setTimeout(() => {
       albumPageIdx += direction;
       renderAlbum();
@@ -12158,7 +12646,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     // Jedes Badge einzeln, UNTEREINANDER gestapelt (statt mit "·" zu einer einzigen, oft viel zu
     // breiten Zeile zusammengefügt) — bei mehreren gleichzeitigen Auszeichnungen lief die lange
     // Zeile bisher über den Rand hinaus und wurde von der Punkteanzeige verdeckt.
-    return labels.map((label) => `<span class="admin-badge fox-period-badge" style="display:block; width:fit-content; margin-bottom:4px;">🦊 ${label}</span>`).join("");
+    return labels.map((label) => `<span class="admin-badge fox-period-badge" style="display:block; width:fit-content; margin-bottom:4px;"><span class="fox-period-badge-emoji">🦊</span> <span class="fox-period-badge-text">${label}</span></span>`).join("");
   }
   async function openProfileModal(id, existingBox) {
     const p = await Backend.getPublicProfile(id);
@@ -12193,7 +12681,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>${foxBedBadge ? `<div class="fox-period-badge-stack">${foxBedBadge}</div>` : ""}` }),
+        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${!(p.extra_profile_data || {}).hideAge && calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>${foxBedBadge ? `<div class="fox-period-badge-stack">${foxBedBadge}</div>` : ""}` }),
         Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
         (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
         !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
@@ -12622,6 +13110,15 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
 
   let inboxViewTab = "in"; // "in" oder "out"
+  // Welche Nachrichten gerade AUFGEKLAPPT sind — beim Betreten des Postfachs (siehe
+  // enterInboxTab) neu befüllt mit genau den Nachrichten, die zu diesem Zeitpunkt ungelesen
+  // waren. Alle anderen (auch früher schon gelesene) starten kompakt/zugeklappt, damit die
+  // Übersicht nicht durch lauter aufgeklappten Alt-Text unübersichtlich wird — nur echte, neue
+  // Nachrichten fallen sofort auf. Bleibt über renderInbox()-Aufrufe INNERHALB des Postfachs
+  // (z. B. nach dem Löschen einer Nachricht) erhalten — nur ein erneutes BETRETEN setzt sie
+  // zurück.
+  let inboxExpandedIds = new Set();
+  let inboxEverEntered = false;
   const communityTextLevelChoice = {}; // { textId: "A1" | "A2" | ... } — welches Niveau gerade angezeigt wird, bei Texten mit "Alle Niveaus"
   function getImportantMsgIds() {
     const profile = Backend.currentProfile();
@@ -12640,10 +13137,17 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  async function renderInbox() {
+  async function renderInbox(isEntering) {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
     const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
+    // Beim BETRETEN des Postfachs (nicht bei jedem internen renderInbox()-Aufruf, z. B. nach dem
+    // Löschen einer Nachricht) den aufgeklappt-Zustand neu setzen: nur die gerade noch
+    // ungelesenen Nachrichten starten offen, alles andere kompakt — genau wie gewünscht.
+    if (isEntering || !inboxEverEntered) {
+      inboxEverEntered = true;
+      inboxExpandedIds = new Set(messages.inbox.filter((m) => !m.read).map((m) => m.id));
+    }
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
     const list = inboxViewTab === "in" ? messages.inbox : inboxViewTab === "out" ? messages.outbox : [...messages.inbox, ...messages.outbox].filter((m) => getImportantMsgIds().includes(m.id));
     area.innerHTML = `
@@ -12658,6 +13162,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div id="inboxRecipientListWrap">
             <input type="text" class="vocab-search" id="inboxRecipientSearch" placeholder="Freund suchen…" style="margin-bottom:8px;" />
             <div id="inboxRecipientList" style="max-height:220px; overflow-y:auto; border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:4px;">
+              ${Backend.canModerate() ? `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${Backend.currentUser()?.id}" /> <span>🔧 Ich selbst (für Punkte-Korrekturen am eigenen Konto)</span></label>` : ""}
               ${friends.map((f) => `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${f.id}" /> <span>${f.name}</span></label>`).join("") || '<p class="empty-note" style="padding:8px;">Noch keine Freunde — oben nach Namen suchen.</p>'}
             </div>
           </div>
@@ -12699,12 +13204,30 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="order-pill" id="inboxTabImportant" aria-selected="${inboxViewTab === "important"}">⭐ Wichtig${getImportantMsgIds().length ? ` (${getImportantMsgIds().length})` : ""}</button>
         </div>
         ${list.length ? `<button type="button" class="btn btn-ghost" id="inboxDownloadAllBtn" style="margin-bottom:10px;">⬇️ Diese Ansicht als Text herunterladen</button>` : ""}
-        ${list.length ? list.map((m) => `
-          <div class="breakdown-row" data-msg-row="${m.id}" style="align-items:flex-start; flex-direction:column; gap:4px; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
+        ${list.length ? list.map((m) => {
+          const isExpanded = inboxExpandedIds.has(m.id);
+          const senderLabel = inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"));
+          const timeLabel = m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+          if (!isExpanded) {
+            // Kompakte Zeile: nur Absender, Zeit und ein kurzer Textausschnitt — antippen klappt
+            // sie auf. Macht die Übersicht deutlich kürzer, wenn viele Nachrichten schon gelesen
+            // sind, statt dass man sich durch lauter ausgeklappte Alt-Nachrichten scrollen muss.
+            const preview = m.body.replace(/^\[BETA_REQUEST\]\s*/, "").replace(/\[BETA_JUMP:[\w-]+\]/, "").replace(/\[sticker:\w+\]/g, "🏷️").replace(/\[fox:[\w-]+\]/g, "🦊").trim();
+            return `
+          <button type="button" class="breakdown-row inbox-row-compact" data-msg-expand="${m.id}" style="width:100%; text-align:left; align-items:flex-start; flex-direction:column; gap:2px; cursor:pointer; background:none; border:none; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
             <div style="display:flex; justify-content:space-between; width:100%;">
-              <strong>${inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"))}</strong>
-              <span class="empty-note">${m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+              <strong>${senderLabel}</strong>
+              <span class="empty-note">${timeLabel}</span>
             </div>
+            <p class="empty-note" style="margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;">${preview}</p>
+          </button>`;
+          }
+          return `
+          <div class="breakdown-row" data-msg-row="${m.id}" style="align-items:flex-start; flex-direction:column; gap:4px; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
+            <button type="button" data-msg-collapse="${m.id}" style="display:flex; justify-content:space-between; width:100%; background:none; border:none; cursor:pointer; padding:0;">
+              <strong>${senderLabel}</strong>
+              <span class="empty-note">${timeLabel} 🔽</span>
+            </button>
             <p style="white-space:pre-wrap; margin:0;">${m.body
               .replace(/^\[BETA_REQUEST\]\s*/, "")
               .replace(/\n?\[BETA_JUMP:[\w-]+\]/, "")
@@ -12726,7 +13249,8 @@ An einem Morgen lief ein kleiner Fuchs los…
               <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-download-msg="${m.id}">⬇️ Text</button>
               <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-delete-msg="${m.id}" data-is-sender="${inboxViewTab === "out"}">🗑️ Löschen</button>
             </div>
-          </div>`).join("") : `<p class="empty-note">${inboxViewTab === "important" ? "Noch keine Nachrichten als wichtig markiert." : inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
+          </div>`;
+        }).join("") : `<p class="empty-note">${inboxViewTab === "important" ? "Noch keine Nachrichten als wichtig markiert." : inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
       </div>
     `;
     renderStickerRow();
@@ -12859,6 +13383,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("inboxTabIn").addEventListener("click", () => { inboxViewTab = "in"; renderInbox(); });
     document.getElementById("inboxTabOut").addEventListener("click", () => { inboxViewTab = "out"; renderInbox(); });
     document.getElementById("inboxTabImportant").addEventListener("click", () => { inboxViewTab = "important"; renderInbox(); });
+    area.querySelectorAll("[data-msg-expand]").forEach((btn) => {
+      btn.addEventListener("click", () => { inboxExpandedIds.add(btn.dataset.msgExpand); renderInbox(); });
+    });
+    area.querySelectorAll("[data-msg-collapse]").forEach((btn) => {
+      btn.addEventListener("click", () => { inboxExpandedIds.delete(btn.dataset.msgCollapse); renderInbox(); });
+    });
     area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
       btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(); });
     });
@@ -13489,7 +14019,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (pill.dataset.sub === "sub-friends") renderFriends();
       if (pill.dataset.sub === "sub-design") renderDesign();
       if (pill.dataset.sub === "sub-settings") renderSettings();
-      if (pill.dataset.sub === "sub-inbox") renderInbox();
+      if (pill.dataset.sub === "sub-inbox") renderInbox(true);
     });
   });
 
@@ -13512,7 +14042,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "112";
+  const APP_VERSION = "113";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

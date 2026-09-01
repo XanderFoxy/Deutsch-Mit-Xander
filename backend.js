@@ -198,14 +198,32 @@ const Backend = (function () {
     return demo.user;
   }
   // Empfehlungs-Bonus: sowohl die werbende Person als auch der/die neu Registrierte bekommen je
-  // 50 Punkte, wenn die Anmeldung über einen personalisierten Empfehlungs-Link kam. Läuft bewusst
+  // 25 Punkte, wenn die Anmeldung über einen personalisierten Empfehlungs-Link kam. Läuft bewusst
   // NACH erfolgreicher Registrierung, niemals bei bloß angestoßener E-Mail-Bestätigung.
   const REFERRAL_BONUS_POINTS = 25;
+  // WICHTIG: adminGrantPoints() erhöht nur die reine Gesamtpunktzahl (profiles.points) — OHNE
+  // einen zugehörigen "results"-Eintrag taucht der Bonus in der Punkte-Aufschlüsselung
+  // (getFullPointsBreakdown, liest NUR aus "results") nirgends als eigene, benannte Kategorie auf.
+  // Diese Funktion trägt zusätzlich einen sichtbaren "🔗 Freunde werben"-Eintrag nach — für eine
+  // BELIEBIGE userId (nicht nur den gerade eingeloggten Nutzer), da bei einer Empfehlung ja auch
+  // die werbende Person (die in dieser Sitzung gar nicht eingeloggt ist) einen Eintrag braucht.
+  async function insertReferralBreakdownEntry(userId, points) {
+    const entry = { user_id: userId, categories: ["referral"], points: 0, bonus: points, percent: 100, character: "🔗 Freunde werben", played_at: new Date().toISOString() };
+    if (client) {
+      try { await client.from("results").insert(entry); }
+      catch (e) { console.warn("Empfehlungs-Eintrag für Punkte-Aufschlüsselung konnte nicht gespeichert werden:", e); }
+    } else {
+      const targetProfile = userId === demo.user?.id ? demo.profile : (demo.allProfiles || []).find((p) => p.id === userId);
+      if (targetProfile) { targetProfile.history = targetProfile.history || []; targetProfile.history.unshift(entry); }
+    }
+  }
   async function applyReferralBonus(referrerId) {
     if (!referrerId || !demo.user || referrerId === demo.user.id) return;
     try {
       await adminGrantPoints(demo.user.id, REFERRAL_BONUS_POINTS, "Willkommen! Du hast dich über einen Empfehlungs-Link angemeldet — hier sind 25 Extra-Punkte zum Start! 🎉");
       await adminGrantPoints(referrerId, REFERRAL_BONUS_POINTS, `Danke, dass du die Seite weiterempfohlen hast — ${demo.user.email ? "jemand" : "eine Person"} hat sich über deinen Link angemeldet! 🎉`);
+      await insertReferralBreakdownEntry(demo.user.id, REFERRAL_BONUS_POINTS);
+      await insertReferralBreakdownEntry(referrerId, REFERRAL_BONUS_POINTS);
     } catch (e) { console.warn("Empfehlungs-Bonus konnte nicht vergeben werden:", e); }
   }
 
@@ -556,8 +574,16 @@ const Backend = (function () {
       if (error) throw new Error(friendlyDbError(error.message));
     } else {
       demo.allProfiles = demo.allProfiles || [];
-      const target = demo.allProfiles.find((p) => p.id === toUserId) || demo.profile;
-      if (target) target.points = Math.max(0, (target.points || 0) + amount);
+      // WICHTIG: wenn man sich selbst Punkte gibt/abzieht (Owner/Admin korrigiert das eigene
+      // Konto), MUSS das echte, gerade angezeigte demo.profile-Objekt aktualisiert werden — sonst
+      // wurde bisher eine separate, u. U. veraltete Kopie in demo.allProfiles verändert, während
+      // die Anzeige (die direkt von demo.profile liest) unverändert blieb.
+      if (toUserId === demo.user.id) {
+        demo.profile.points = Math.max(0, (demo.profile.points || 0) + amount);
+      } else {
+        const target = demo.allProfiles.find((p) => p.id === toUserId);
+        if (target) target.points = Math.max(0, (target.points || 0) + amount);
+      }
     }
     const messageText = amount > 0
       ? `🎁 Du hast ${amount} Punkte geschenkt bekommen!${reason ? `\n\nGrund: ${reason}` : ""}`
@@ -744,6 +770,18 @@ const Backend = (function () {
      owner_id = eine Nutzer-ID → die eigene Playlist dieser Person (jede/r verwaltet nur die eigene). */
   function isDirectAudioUrl(url) {
     return /\.(mp3|m4a|wav|ogg|aac)(\?.*)?$/i.test(url || "");
+  }
+  // Spotify-Link erkennen — als Alternative zu YouTube nutzbar. Erkennt Songs, Alben und
+  // Playlists (open.spotify.com/track|album|playlist/<id> oder spotify:track:<id> usw.).
+  function isSpotifyUrl(url) {
+    return /open\.spotify\.com\/(track|album|playlist)\/|^spotify:(track|album|playlist):/i.test(url || "");
+  }
+  function extractSpotifyEmbed(url) {
+    if (!url) return null;
+    let match = url.match(/open\.spotify\.com\/(track|album|playlist)\/([a-zA-Z0-9]+)/i);
+    if (!match) match = url.match(/^spotify:(track|album|playlist):([a-zA-Z0-9]+)/i);
+    if (!match) return null;
+    return { type: match[1], id: match[2] };
   }
   /* ================= SEITENINHALTE (admin-editierbar, für alle sichtbar) =================
      Für Bereiche wie "Über mich" — jeder kann sie lesen, aber nur Admins ändern sie. Fehlt ein
@@ -2806,7 +2844,7 @@ const Backend = (function () {
     submitChallengeResult,
     addActivity,
     getActivity,
-    getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl, getUsersWithPlaylists,
+    getPlaylist, addPlaylistSong, deletePlaylistSong, toggleFavoriteSong, getMyFavoriteSongIds, isDirectAudioUrl, isSpotifyUrl, extractSpotifyEmbed, getUsersWithPlaylists,
     getHiddenPlaylistSongs, restorePlaylistSong,
     uploadSongCover, setSongCover, getSongPopularity,
     saveIntroduction, getAllIntroductions,

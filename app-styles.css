@@ -13,12 +13,32 @@
 .subnav-pill {
   padding: 8px 16px;
   border-radius: 999px;
-  background: var(--plum-800);
+  /* WICHTIG: color-mix() statt hartkodierter Hex-Werte — --plum-800 hat trotz des Namens in
+     manchen Designs (z. B. "bastelheft") einen HELLEN Wert (für Kartenhintergründe gedacht), kein
+     dunkles Lila. Hartkodierte dunkle Verlaufsfarben sahen dort falsch/silbrig aus. color-mix()
+     hellt/dunkelt relativ zur tatsächlichen, aktiven Themenfarbe ab — funktioniert also in jedem
+     Design korrekt, egal welchen Wert --plum-800 gerade hat. */
+  background: linear-gradient(160deg, color-mix(in srgb, var(--plum-800), white 18%), var(--plum-800) 55%, color-mix(in srgb, var(--plum-800), black 18%));
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 1.5px 0 rgba(255,255,255,0.12), inset 0 -1.5px 2px rgba(0,0,0,0.2);
   border: 1px solid rgba(245, 239, 228, 0.1);
   color: var(--cream-200);
   font-size: 0.85rem;
   font-weight: 600;
+  position: relative;
+  overflow: hidden;
 }
+.subnav-pill::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: 8%;
+  width: 40%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.22), rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.subnav-pill > * { position: relative; z-index: 1; }
 /* Kleines, antippbares Info-Symbol bei Reitern mit weniger selbsterklärenden Namen — zeigt auf
    Antippen eine kurze Erklärung, statt dass man erst raten oder reinklicken muss, um zu
    verstehen, was sich dahinter verbirgt. Am Handy gibt's ja kein Drüberfahren mit der Maus. */
@@ -30,9 +50,13 @@
 }
 
 .subnav-pill[aria-selected="true"] {
-  background: var(--amber-400);
+  background: linear-gradient(160deg, #FFDD8F, var(--amber-400) 55%, #D99B2E);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -1.5px 2px rgba(0,0,0,0.15);
   color: #241505;
   border-color: transparent;
+}
+.subnav-pill[aria-selected="true"]::before {
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.6), rgba(255,255,255,0) 70%);
 }
 
 .subview { display: none; }
@@ -1134,14 +1158,29 @@
   line-height: 1.1;
   padding: 6px 10px;
   border-radius: var(--radius-sm);
-  background: rgba(242,184,75,0.14);
+  /* Derselbe "Aufkleber"-Look wie bei den Admin-/Fox-Badges — Verlauf simuliert eine gewölbte
+     Oberfläche, mehrschichtiger Schatten gibt Tiefe, Glanzlicht oben ahmt eine Lichtreflexion nach. */
+  background: linear-gradient(160deg, rgba(242,184,75,0.32), rgba(242,184,75,0.1) 60%, rgba(242,184,75,0.2));
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18), inset 0 1.5px 0 rgba(255,255,255,0.4), inset 0 -1.5px 2px rgba(0,0,0,0.08);
   border: none;
   font-family: inherit;
   cursor: pointer;
+  overflow: hidden;
+}
+.profile-points::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: 10%;
+  width: 50%;
+  height: 55%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.6), rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 .profile-points:active { transform: scale(0.96); }
-.profile-points .num { font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--amber-300); }
-.profile-points .empty-note { padding: 0; font-size: 0.68rem; }
+.profile-points .num { font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--amber-300); position: relative; z-index: 1; }
+.profile-points .empty-note { padding: 0; font-size: 0.68rem; position: relative; z-index: 1; }
 .demo-banner {
   margin-bottom: var(--space-4);
   padding: 10px 14px;
@@ -1176,10 +1215,24 @@
   background: linear-gradient(160deg, var(--amber-400), var(--teal-400));
   color: #fff; display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-weight: 800; font-size: 1.4rem;
+  /* Derselbe "Wassertropfen"-Glanzeffekt wie beim echten Foto (.avatar-photo) — auch hier, wenn
+     nur die Initialen angezeigt werden (kein hochgeladenes Profilbild). */
+  box-shadow:
+    inset 8px 8px 16px -6px rgba(255,255,255,0.5),
+    inset -6px -6px 14px -4px rgba(0,0,0,0.25),
+    0 2px 5px rgba(0,0,0,0.2);
 }
 .avatar-photo {
   width: 76px; height: 76px; border-radius: 50%; flex-shrink: 0;
   object-fit: cover;
+  /* "Durch einen Wassertropfen gesehen"-Optik: box-shadow (funktioniert auf <img>, anders als
+     ::before/::after, die auf "replaced elements" wie <img> nicht zuverlässig greifen) simuliert
+     ein Glanzlicht oben links (heller, weicher innerer Schein) und einen sanften Schatten unten
+     rechts (Tiefe/Wölbung) — wie bei einer gewölbten, glasartigen Oberfläche über dem Foto. */
+  box-shadow:
+    inset 8px 8px 16px -6px rgba(255,255,255,0.65),
+    inset -6px -6px 14px -4px rgba(0,0,0,0.28),
+    0 2px 5px rgba(0,0,0,0.2);
 }
 /* Sammelfiguren als Profilbild kleben wie ein Sticker OBEN DRAUF, statt wie ein normales Foto rund
    beschnitten zu werden — sonst würden Pfoten, Ohren oder der Schwanz einfach abgeschnitten. Der
@@ -1209,10 +1262,9 @@
    bei Bedarf normal umbricht. Bewusst über Flexbox statt float+shape-outside gelöst — Letzteres
    verhielt sich in Tests unzuverlässig (Text landete teils komplett unter statt neben dem Bild). */
 .profile-header-flow {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 4px 14px;
+  /* KEIN flex mehr — für echtes Umfließen einer Kreisform (shape-outside) muss das Bild floaten,
+     das funktioniert nur im normalen Text-/Blockfluss, nicht innerhalb eines Flex-Containers. */
+  display: block;
   overflow: visible;
 }
 /* Wenn Fuchs-Auszeichnungen (Tag/Woche) angezeigt werden, schweben sie rechts unter der
@@ -1223,31 +1275,39 @@
 .profile-header-flow.has-fox-badges .profile-header-stack > .flow-badge:first-of-type {
   margin-right: 100px;
 }
-/* Name, Badges usw. rechts vom Bild als echter FLIESSTEXT nebeneinander (statt jedes einzelne
-   Badge auf einer eigenen, vollen Zeile) — Name und Bio bleiben trotzdem auf eigenen Zeilen, da
-   sie echte Block-Elemente (h2/p) sind, aber die Badges (Betreiber, Freunde, Herkunft,
-   Sternzeichen, Sprachniveau) laufen kompakt nebeneinander und brechen nur bei Platzmangel um.
-   WICHTIG: kein flex-direction:column mehr — das zwang vorher JEDES direkte Kind (auch die
-   einzelnen Badges) auf eine eigene Zeile, unabhängig von ihrem eigenen display:inline-block. */
+/* Name, Badges usw. fließen jetzt ECHT um die runde Form des Profilbilds herum (siehe
+   shape-outside unten am Bild selbst) — nicht mehr nur eine gerade Spalte rechts daneben. Name
+   und Bio bleiben eigene Zeilen (h2/p, echte Block-Elemente), die Badges (Betreiber, Freunde,
+   Herkunft, Sternzeichen, Sprachniveau) laufen als normaler Text-Fluss weiter und ziehen sich
+   automatisch enger zusammen, je näher sie am Bild vorbeilaufen, und werden erst nach dessen
+   unterem Rand wieder ganz breit. */
 .profile-header-stack {
   min-width: 0;
   max-width: 100%;
-  flex: 1;
 }
 .profile-header-stack-row {
   display: inline;
 }
 .profile-header-flow .avatar-photo,
 .profile-header-flow .initials-avatar {
-  flex-shrink: 0;
+  /* float + shape-outside statt eines Flex-Items daneben — das lässt den nachfolgenden Text
+     tatsächlich die Rundung des Bildes nachzeichnen (enger oben/unten an den Polen des Kreises,
+     weiter in der Mitte), genau wie bei einem klassischen Zeitschriften-Layout mit rundem Foto,
+     statt einer geraden Blocksatz-Kante daneben. */
+  float: left;
+  shape-outside: circle(50%);
+  shape-margin: 10px;
+  margin: 0 6px 6px 0;
   /* Skaliert mit der Bildschirmbreite statt fest 128px — auf schmalen Bildschirmen (z. B. viele
      Android-Geräte um 320–360px) blieb sonst nicht genug Platz für den Text daneben übrig, der
      dann ungewollt unter statt neben das Bild rutschte. Kleiner als vorher (war 84–128px), damit
-     bei längeren Namen zuverlässig genug Platz für den Text auf derselben Zeile bleibt. */
-  width: clamp(56px, 15vw, 76px); height: clamp(56px, 15vw, 76px);
-  /* clip-path:circle() entfernt — border-radius:50% (schon auf .avatar-photo selbst gesetzt) ist
+     bei längeren Namen zuverlässig genug Platz für den Text auf derselben Zeile bleibt. Etwas
+     größer als zuvor (war 56–76px), da jetzt auch Platz für den Fließtext IN der Rundung selbst
+     gebraucht wird, nicht nur daneben.
+     clip-path:circle() entfernt — border-radius:50% (schon auf .avatar-photo selbst gesetzt) ist
      auf Android-Browsern deutlich zuverlässiger unterstützt. Mit beiden gleichzeitig gesetzt kam
      es bei normalen (nicht Sammelfigur-)Profilbildern zu eckiger Darstellung statt rund. */
+  width: clamp(72px, 22vw, 100px); height: clamp(72px, 22vw, 100px);
   font-size: 2.3rem;
 }
 /* Alle Text-Elemente rechts vom Bild (Name, Badges) müssen bei Bedarf schrumpfen/umbrechen
@@ -1263,21 +1323,36 @@
      den Namen (erste Zeile, wo sie visuell danebenliegt) — vorher lag es auf dem GESAMTEN
      Fließtext-Bereich, was jeder späteren Zeile (Freunde, Herkunft, Sternzeichen …) unnötig
      Breite wegnahm und den ohnehin schon schmalen Text-Bereich neben dem Bild auf nur rund 130px
-     zusammenquetschte — zu wenig, damit die Badges wirklich nebeneinander fließen konnten. */
+     zusammenquetschte — zu wenig, damit die Badges wirklich nebeneinander fließen konnten.
+     Etwas kleinere Schrift, damit Alter direkt danach auf dieselbe Zeile passt statt darunter zu
+     rutschen, wie ausdrücklich gewünscht. */
   padding-right: 68px;
   box-sizing: border-box;
+  font-size: 1.05rem;
 }
 /* Bei sehr schmalen Bildschirmen reichte der Name knapp nicht neben das (schon verkleinerte) Bild
    — eine kleine, zusätzliche Schriftgrößen-Reduzierung genau hier schließt die letzte Lücke,
    ohne das Bild selbst noch weiter verkleinern zu müssen. */
 @media (max-width: 400px) {
-  .profile-header-flow h2 { font-size: 1.25rem; margin-right: 8px !important; }
+  .profile-header-flow h2 { font-size: 1.05rem; margin-right: 8px !important; }
 }
 /* Die Profil-Beschreibung liegt jetzt strukturell IM selben fließenden Bereich wie Bild, Name
    und Badges (statt als komplett separater Absatz weit darunter) — wirkt dadurch als ein
-   zusammenhängender Fließtext-Block, nicht als zwei getrennte Abschnitte. */
+   zusammenhängender Fließtext-Block, nicht als zwei getrennte Abschnitte. WICHTIG: clear:both
+   sorgt dafür, dass die Beschreibung erst UNTERHALB des gefloateten Profilbilds beginnt, statt
+   (wie flex-basis:100% es früher tat, das seit dem Umstieg von flex auf float wirkungslos war)
+   weiterhin von dessen Rundung beeinflusst zu werden — das ließ die Zeilen zuvor unnatürlich
+   gedrängt und nach rechts verschoben wirken. */
 .profile-bio-flow-text {
-  flex-basis: 100%;
+  clear: both;
+  margin-top: 6px;
+}
+/* Derselbe clear:both auch für den "Noch keine Beschreibung"-Knopf (wird angezeigt statt der
+   Bio, solange noch keine geschrieben wurde) — sonst würde nur DIESER Fall weiterhin vom
+   gefloateten Profilbild beeinflusst und gedrängt wirken. */
+#introPromptBtn {
+  clear: both;
+  display: block;
   margin-top: 6px;
 }
 /* WICHTIG: Sammelfiguren als Profilbild dürfen NICHT auf einen Kreis zugeschnitten werden — sonst
@@ -1743,6 +1818,11 @@
 @media (max-width: 480px) {
   #musicPlayerBarInner .player-panel-btn,
   #musicPlayerBarInner .player-panel-btn.ghost-btn { width: 25px; height: 25px; }
+  /* Der zentrale Play/Pause-Knopf bleibt bewusst größer als die restlichen Bedienelemente — auch
+     auf schmalen Bildschirmen, wo die anderen Knöpfe kompakter werden. Ohne diese Ausnahme hätte
+     die obige, spezifischere Regel (ID-Selektor) ihn auf dieselbe kleine Größe wie Vor/Zurück
+     verkleinert, obwohl er als Hauptaktion optisch hervorstechen soll. */
+  #musicPlayerBarInner .player-panel-btn.music-player-play-main { width: 34px; height: 34px; }
 }
 @media (max-width: 340px) {
   #musicPlayerBarInner .kn-waveform { display: none; }
@@ -1757,21 +1837,55 @@
   border-radius: 4px;
   flex-shrink: 0;
 }
-/* Auf schmalen Bildschirmen war die Zeitanzeige (~109px bei voller Größe) allein schon breiter
-   als der Platz, der nach den drei fest bleibenden Knöpfen (Vor/Play/Zurück) übrig blieb — der
-   Rest der Leiste (Zeitanzeige, Titel, Aufklapp-Pfeil) lief dadurch sichtbar über den gestalteten
-   Leisten-Hintergrund hinaus, obwohl die Wellenform per Media Query schon ausgeblendet wurde. Statt
-   die Zeit ebenfalls komplett zu verstecken, wird sie zuerst kompakter (kleinere Schrift, weniger
-   Innenabstand) — reicht das immer noch nicht, verschwindet sie erst bei sehr schmalen Breiten.*/
-@media (max-width: 420px) {
-  .player-digital-time { font-size: 0.62rem; padding: 2px 4px; letter-spacing: 0.02em; }
-  /* Auch der Abstand zwischen den Leisten-Elementen (6 Elemente × 8px Lücke = 40px) und der
-     Innenabstand der Leiste selbst tragen zum Überlauf bei — beides wird auf schmalen Bildschirmen
-     etwas enger, damit der Aufklapp-Pfeil ganz rechts wieder vollständig innerhalb der Leiste liegt. */
-  #musicPlayerBarInner { gap: 4px !important; padding: 8px !important; }
-  /* Der Aufklapp-Pfeil erbt von der allgemeinen Link-Klasse einen für Text-Links gedachten
-     margin-top — braucht er als kompakter Knopf innerhalb der schmalen Leiste nicht. */
-  #musicPlayerBarInner #musicExpandToggle { margin-top: 0; }
+/* Player-Leiste komplett neu strukturiert: statt ALLER Elemente (Cover, Knöpfe, Zeit, Wellenform,
+   Titel) in einer einzigen flex-wrap-Reihe (die den Titel bei wenig Platz irgendwo umbrechen
+   ließ, "außerhalb" des gestalteten Rahmens wirkend) jetzt drei klare, gestapelte Zeilen: oben
+   Cover+Titel+Zeit (die wichtigste Information — was läuft gerade — bleibt IMMER an derselben,
+   vorhersagbaren Stelle), darunter die Wellenform über die volle Breite, darunter die Bedien-
+   elemente zentriert. Kein Umbrechen mehr nötig, da jede Zeile für sich schon zur verfügbaren
+   Breite passt. */
+.music-player-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.music-player-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.music-player-cover-slot { flex-shrink: 0; }
+.music-player-title-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.music-player-title {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.music-player-title-block .player-digital-time { align-self: flex-start; }
+.music-player-collapse-btn { width: 22px; height: 22px; }
+.music-player-waveform {
+  width: 100%;
+  justify-content: center;
+}
+.music-player-row-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.music-player-play-main { width: 38px; height: 38px; }
+.music-player-controls-spacer { width: 22px; }
+@media (max-width: 340px) {
+  .music-player-waveform { display: none; }
 }
 .toast-popup {
   position: fixed;
@@ -2126,10 +2240,19 @@
 .album-book-open {
   display: flex;
   align-items: stretch;
+  perspective: 1600px;
+}
+/* WICHTIG: NICHT mehr das gesamte .album-book-open dreht sich um seinen LINKEN Außenrand (das sah
+   aus, als würde das komplette Buch dort aufklappen) — nur noch die RECHTE Seite dreht sich um
+   IHREN linken Rand, der ja genau in der Buchmitte (am Buchrücken) liegt. So blättert wie bei
+   einem echten Buch nur die rechte Seite von der Mitte aus nach links um und legt sich auf die
+   linke Seite, statt dass beide Seiten gemeinsam am äußeren Rand aufklappen. */
+.album-page-right {
   transform-origin: left center;
   transition: transform 0.7s cubic-bezier(0.45, 0, 0.2, 1);
+  backface-visibility: hidden;
 }
-.album-book-open.turning-next { transform: rotateY(-150deg); }
+.album-page-right.turning-next { transform: rotateY(-170deg); }
 .album-page-left, .album-page-right {
   flex: 1;
   min-width: 0;
@@ -2626,7 +2749,12 @@
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.12), inset 0 3px 6px rgba(255,255,255,0.7), inset -3px -3px 8px rgba(100,180,210,0.25);
   animation-name: bbGrowAndPop;
-  animation-timing-function: ease-in;
+  /* WICHTIG: NICHT mehr ease-in (das beschleunigt konstant zum Ende hin — fühlte sich an, als
+     würde die Blase an einer Schnur nach oben gezogen). Eine sanfte, custom Kurve mit leichtem
+     Auftrieb-Charakter: schnell genug am Anfang, um wie ein natürlicher Aufstieg zu wirken, dann
+     spürbar ruhiger werdend zur Mitte hin — wie eine echte Seifenblase, die von der Luft getragen
+     wird, statt gleichmäßig gezogen zu werden. */
+  animation-timing-function: cubic-bezier(0.25, 0.65, 0.35, 1);
   animation-fill-mode: forwards;
   overflow: visible;
 }
@@ -2667,6 +2795,23 @@
   opacity: 0 !important;
   transition: transform 0.2s ease-in, opacity 0.2s ease-in;
   background: radial-gradient(circle, #e88a8a, #d95a5a) !important;
+}
+/* Kleine, tropfenförmige Splitter-Partikel für ein echtes "Platzen" statt nur eines
+   Skalierungs-Effekts — spritzen von der Blasen-Mitte aus in verschiedene Richtungen auseinander
+   (Ziel-Versatz über --dx/--dy pro Partikel individuell gesetzt) und verblassen dabei. */
+.bb-splash-drop {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50% 50% 50% 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+  pointer-events: none;
+  animation: bbSplashFly 0.45s ease-out forwards;
+  z-index: 3;
+}
+@keyframes bbSplashFly {
+  0% { transform: translate(-50%, -50%) rotate(45deg) scale(1); opacity: 0.95; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(45deg) scale(0.3); opacity: 0; }
 }
 .kn-word {
   position: absolute;
@@ -2930,13 +3075,39 @@
 }
 
 /* Fuchs des Tages/der Woche/... — bewusst fuchsrot/orange statt der neutralen Admin-Badge-Farbe,
-   damit es sich klar abhebt und sofort als "Fuchs"-Auszeichnung erkennbar ist. Weiße Schrift für
-   den besten Kontrast auf dem kräftigen Orange-Rot (Gold/Gelb wäre auf diesem Untergrund
-   schwerer lesbar gewesen). Gleiche Größe wie die anderen admin-badge-Abzeichen (geerbt), nur die
-   Farbe wird hier überschrieben. */
+   damit es sich klar abhebt und sofort als "Fuchs"-Auszeichnung erkennbar ist. Goldene Schrift mit
+   dünner weißer Kontrastkante (mehrere eng versetzte text-shadow-Kopien simulieren eine echte
+   Textkontur, da CSS text-stroke browserübergreifend noch unzuverlässig ist) — hebt die Schrift
+   zusätzlich vom kräftigen Rot ab. Gleiche Größe wie die anderen admin-badge-Abzeichen (geerbt),
+   nur die Farbe wird hier überschrieben. */
 .fox-period-badge {
-  background: linear-gradient(160deg, #D9362E, #A8241E) !important;
+  background: linear-gradient(160deg, #E8483F, #A8241E 55%, #8A1B16) !important;
   color: #F2C94C !important;
+  /* Kräftigere, dunklere Grundfarbe als die normalen Admin-Badges — deshalb hier ein deutlich
+     stärkeres Glanzlicht und ein sichtbarerer Schatten, sonst ging die Plastizität im satten Rot
+     unter, statt wie gewünscht gut erkennbar hervorzutreten. */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.35), inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -2px 3px rgba(0,0,0,0.3) !important;
+}
+.fox-period-badge::before {
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%) !important;
+}
+.fox-period-badge-text {
+  text-shadow:
+    -0.6px -0.6px 0 rgba(255,255,255,0.85),
+    0.6px -0.6px 0 rgba(255,255,255,0.85),
+    -0.6px 0.6px 0 rgba(255,255,255,0.85),
+    0.6px 0.6px 0 rgba(255,255,255,0.85);
+}
+/* Das Fuchs-Emoji bekommt einen SCHARFEN (nicht weich ausfließenden) schwarzen Schlagschatten
+   statt eines weichen drop-shadow-Weichzeichners — mehrere text-shadow-Kopien mit 0 Weichzeichnung
+   in verschiedene Richtungen ergeben eine klare, deutliche Kontrastkante, die das Emoji auf dem
+   Rot besser erkennbar macht, statt nur unscharf zu "verschwimmen". */
+.fox-period-badge-emoji {
+  text-shadow:
+    -0.8px -0.8px 0 #000,
+    0.8px -0.8px 0 #000,
+    -0.8px 0.8px 0 #000,
+    0.8px 0.8px 0 #000;
 }
 /* Container für mehrere gleichzeitige Fuchs-Auszeichnungen (Tag/Woche) — direkt UNTER der
    Punkteanzeige positioniert (wie ausdrücklich gewünscht: es ist ja auch eine Art Leistung, die

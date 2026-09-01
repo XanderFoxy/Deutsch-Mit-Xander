@@ -150,10 +150,15 @@ button:focus-visible,
 }
 
 .brand-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cream-50);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.brand-name span { color: var(--amber-400); }
 
 /* Auf schmalen Bildschirmen (viele Android-Handys) reicht der Platz sonst nicht für Logo,
    Namen UND alle Kopfzeilen-Buttons gleichzeitig — hier wird alles kompakter, damit die
@@ -216,15 +221,6 @@ button:focus-visible,
 [data-theme="osterwiese"] .brand-mark::before {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
-
-.brand-name {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--cream-50);
-  white-space: nowrap;
-}
-.brand-name span { color: var(--amber-400); }
 
 /* Wetter- & Uhrzeit-Leiste — immer sichtbar, auch auf dem Handy */
 .weather-bar {
@@ -453,26 +449,45 @@ button:focus-visible,
   line-height: 1;
   filter: drop-shadow(0 0 1px rgba(0,0,0,0.6));
 }
+/* "Aufkleber"-Look (wie die durchsichtigen, leicht gewölbten Puffy-Sticker aus den 80ern) —
+   Verlauf simuliert eine gewölbte, glänzende Oberfläche, mehrschichtiger Schatten gibt Tiefe,
+   und das ::before-Glanzlicht oben ahmt eine Lichtreflexion nach, wie bei einem Wassertropfen.
+   Funktioniert für alle drei Farbvarianten (normal/owner/mod), da nur die Grundfarbe wechselt,
+   nicht die Verlauf-/Schatten-Struktur selbst. */
 .admin-badge {
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
   margin-left: 6px;
-  padding: 1px 7px;
+  padding: 1px 8px;
   border-radius: 999px;
   font-size: 0.54rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  background: rgba(87,199,174,0.18);
+  background: linear-gradient(160deg, rgba(87,199,174,0.42), rgba(87,199,174,0.16) 55%, rgba(87,199,174,0.28));
   color: var(--teal-400);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1.5px 3px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1.5px 2px rgba(0,0,0,0.12);
+}
+.admin-badge::before {
+  content: "";
+  position: absolute;
+  top: -35%;
+  left: 8%;
+  width: 55%;
+  height: 65%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.75), rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 .admin-badge-owner {
-  background: rgba(242,184,75,0.2);
+  background: linear-gradient(160deg, rgba(242,184,75,0.55), rgba(242,184,75,0.2) 55%, rgba(242,184,75,0.35));
   color: var(--amber-300);
 }
 .admin-badge-mod {
-  background: rgba(143,224,212,0.16);
+  background: linear-gradient(160deg, rgba(143,224,212,0.5), rgba(143,224,212,0.16) 55%, rgba(143,224,212,0.3));
   color: var(--cream-200);
 }
 .admin-tools-box {
@@ -691,16 +706,21 @@ button:focus-visible,
 .link-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
+  gap: 5px;
+  /* Etwas kompakteres Padding und kleinere Schrift als vorher — bei schmalen Android-Bildschirmen
+     passten beide Chips (YouTube + TikTok) zusammen mit dem Zwischenraum oft nur hauchdünn NICHT
+     nebeneinander (z. B. 202px benötigt bei nur 196px verfügbarem Platz), wodurch TikTok in eine
+     zweite Zeile darunter fiel statt daneben zu stehen. */
+  padding: 6px 10px;
   border-radius: 999px;
   background: var(--plum-700);
   border: 1px solid rgba(0,0,0,0.06);
   color: var(--cream-50);
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   text-decoration: none;
   transition: transform 0.15s ease;
+  white-space: nowrap;
 }
 .link-chip:hover { transform: translateY(-1px); }
 .link-chip.disabled { opacity: 0.45; pointer-events: none; }

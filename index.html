@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=112" />
-<link rel="stylesheet" href="app-styles.css?v=112" />
-<link rel="stylesheet" href="themes.css?v=112" />
+<link rel="stylesheet" href="styles.css?v=113" />
+<link rel="stylesheet" href="app-styles.css?v=113" />
+<link rel="stylesheet" href="themes.css?v=113" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -162,21 +162,34 @@
     <div class="subnav" id="learnSubnav">
       <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
       <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false" style="display:none;">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
-      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false">🎯 Betonungs-Trainer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
-      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false">🧩 Memory <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
-      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false">🔤 Wortbaustelle <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span><span class="subnav-info-icon" data-info="Ein fehlendes Wort Buchstabe für Buchstabe zusammensetzen — wie ein Baustein-Puzzle.">ⓘ</span></button>
-      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false">🔍 Buchstabensalat <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
-      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false">✏️ Kreuzworträtsel <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
-      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false">🧩 Satzpuzzle <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
-      <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false">🗼 Wackelturm <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
-      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false">🔤 Wort-Typ <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
-      <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false">🎯 Wort-Kanone <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
-      <button class="subnav-pill" data-sub="sub-bubbles" aria-selected="false">🫧 Wortblasen <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
-      <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false">🔤 Vokabelmeister <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
-      <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false">🚂 Korrektour <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
-      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false">❓ Wer bin ich? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-games" aria-selected="false">🎮 Spiele</button>
       <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
+      <!-- Die einzelnen Spiel-Knöpfe stehen bewusst weiterhin HIER im DOM (nur unsichtbar) statt
+           komplett entfernt zu werden — mehrere Spiele haben eigene, direkte Klick-Listener genau
+           auf diese Knöpfe registriert (nicht nur die allgemeine Subnav-Logik). Die neue
+           Spiele-Übersicht (siehe gamesOverviewArea) simuliert bei Bedarf einen Klick auf den
+           passenden dieser versteckten Knöpfe, statt jeden einzelnen Listener umzubauen. -->
+      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false" style="display:none;">🎯 Betonungs-Trainer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false" style="display:none;">🧩 Memory <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false" style="display:none;">🔤 Wortbaustelle <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false" style="display:none;">🔍 Buchstabensalat <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false" style="display:none;">✏️ Kreuzworträtsel <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false" style="display:none;">🧩 Satzpuzzle <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false" style="display:none;">🗼 Wackelturm <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false" style="display:none;">🔤 Wort-Typ <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false" style="display:none;">🎯 Wort-Kanone <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-bubbles" aria-selected="false" style="display:none;">🫧 Wortblasen <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false" style="display:none;">🔤 Vokabelmeister <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false" style="display:none;">🚂 Korrektour <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false" style="display:none;">❓ Wer bin ich? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+    </div>
+
+    <div class="subview" id="sub-games" data-active="false">
+      <!-- Alle einzelnen Spiele waren bisher als eigene Punkte im Hauptmenü aufgelistet — bei so
+           vielen Spielen wurde das Menü selbst unübersichtlich lang. Jetzt gebündelt: dieser
+           Bereich zeigt eine Kachel-Übersicht, von der aus man das gewünschte Spiel antippt. -->
+      <div id="gamesOverviewArea"></div>
     </div>
 
     <div class="subview" id="sub-werbinich" data-active="false">
@@ -263,8 +276,6 @@
       <button class="subnav-pill" data-sub="sub-tips" aria-selected="false">💡 Schwarmwissen<span class="subnav-info-icon" data-info="Tipps, Links und Erfahrungen von anderen Lernenden — was bei ihnen beim Deutschlernen funktioniert hat.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-music" aria-selected="false">🎵 Musik</button>
       <button class="subnav-pill" data-sub="sub-news" aria-selected="false">📰 Nachrichten</button>
-      <button class="subnav-pill" data-sub="sub-dichter" aria-selected="false">✒️ Dichter &amp; Denker</button>
-      <button class="subnav-pill" data-sub="sub-schnee" aria-selected="false">❄️ Schnee von gestern</button>
     </div>
     <div class="subview" id="sub-kompass" data-active="true"><div id="kompassArea"></div></div>
     <div class="subview" id="sub-howitworks" data-active="false"><div id="howItWorksArea"></div></div>
@@ -275,8 +286,6 @@
     <div class="subview" id="sub-tips" data-active="false"><div id="tipsArea"></div></div>
     <div class="subview" id="sub-music" data-active="false"><div id="musicArea"></div></div>
     <div class="subview" id="sub-news" data-active="false"><div id="newsArea"></div></div>
-    <div class="subview" id="sub-dichter" data-active="false"><div id="dichterArea"></div></div>
-    <div class="subview" id="sub-schnee" data-active="false"><div id="schneeArea"></div></div>
   </section>
 
 
@@ -343,12 +352,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=112"></script>
-<script src="supabase-config.js?v=112"></script>
-<script src="data-exercises.js?v=112"></script>
-<script src="data-vocab.js?v=112"></script>
-<script src="backend.js?v=112"></script>
-<script src="quiz.js?v=112"></script>
-<script src="app.js?v=112"></script>
+<script src="core.js?v=113"></script>
+<script src="supabase-config.js?v=113"></script>
+<script src="data-exercises.js?v=113"></script>
+<script src="data-vocab.js?v=113"></script>
+<script src="backend.js?v=113"></script>
+<script src="quiz.js?v=113"></script>
+<script src="app.js?v=113"></script>
 </body>
 </html>
