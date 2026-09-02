@@ -4452,6 +4452,134 @@
   }
   let dictLevelFilter = "alle";
   let dictCategoryFilter = "alle";
+  // ============================================================================
+  // ERSTE SCHRITTE — Brücken-Baukasten für absolute Anfänger:innen. Zeigt statt
+  // einer festen englischen Übersetzung automatisch die Muttersprache passend zum
+  // im Profil hinterlegten Herkunftsland (Backend.currentProfile().origin) — mit
+  // Englisch als Rückfall, wenn kein Land gesetzt ist oder keine Übersetzung für
+  // die ermittelte Sprache vorliegt.
+  const ORIGIN_TO_LANG = {
+    "Ägypten": "ar", "Saudi-Arabien": "ar", "Vereinigte Arabische Emirate": "ar", "Irak": "ar",
+    "Syrien": "ar", "Jordanien": "ar", "Marokko": "ar", "Tunesien": "ar", "Algerien": "ar", "Libanon": "ar",
+    "Palästina": "ar", "Sudan": "ar", "Libyen": "ar", "Jemen": "ar", "Katar": "ar", "Kuwait": "ar", "Bahrain": "ar", "Oman": "ar",
+    "Türkei": "tr",
+    "Russland": "ru", "Weißrussland": "ru", "Kasachstan": "ru", "Kirgisistan": "ru", "Usbekistan": "ru",
+    "Tadschikistan": "ru", "Turkmenistan": "ru", "Aserbaidschan": "ru", "Armenien": "ru", "Georgien": "ru", "Moldau": "ru",
+    "Ukraine": "uk",
+    "Iran": "fa", "Afghanistan": "fa",
+    "Spanien": "es", "Mexiko": "es", "Argentinien": "es", "Kolumbien": "es", "Chile": "es", "Peru": "es", "Venezuela": "es",
+    "Ecuador": "es", "Bolivien": "es", "Uruguay": "es", "Paraguay": "es", "Kuba": "es", "Dominikanische Republik": "es",
+    "Guatemala": "es", "Honduras": "es", "El Salvador": "es", "Nicaragua": "es", "Costa Rica": "es", "Panama": "es",
+    "Frankreich": "fr", "Belgien": "fr", "Schweiz": "fr", "Senegal": "fr", "Elfenbeinküste": "fr", "Kamerun": "fr",
+    "Mali": "fr", "Niger": "fr", "Tschad": "fr", "Guinea": "fr", "Haiti": "fr", "Luxemburg": "fr",
+    "Polen": "pl",
+    "USA": "en", "Vereinigte Staaten": "en", "Großbritannien": "en", "Vereinigtes Königreich": "en",
+    "Irland": "en", "Australien": "en", "Neuseeland": "en", "Indien": "en", "Nigeria": "en", "Kanada": "en",
+    "Südafrika": "en", "Kenia": "en", "Ghana": "en", "Pakistan": "en", "Philippinen": "en",
+  };
+  function firstStepsLangFor(profile) {
+    const origin = profile?.origin;
+    return (origin && ORIGIN_TO_LANG[origin]) || "en";
+  }
+  function firstStepsTranslate(entry, lang) {
+    return entry.translations[lang] || entry.translations.en;
+  }
+  let firstStepsLangOverride = null; // manuell gewählte Sprache, überschreibt firstStepsLangFor() solange gesetzt
+  function renderFirstSteps() {
+    const area = document.getElementById("firstStepsArea");
+    if (!area) return;
+    const profile = Backend.currentProfile();
+    const langNames = { en: "Englisch", ar: "Arabisch", tr: "Türkisch", ru: "Russisch", uk: "Ukrainisch", fa: "Persisch/Farsi", es: "Spanisch", fr: "Französisch", pl: "Polnisch" };
+    const lang = firstStepsLangOverride || firstStepsLangFor(profile);
+    const rtl = lang === "ar" || lang === "fa";
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:14px;">Ein Baukasten für den allerersten Kontakt mit Deutsch — auch ohne ein einziges bereits bekanntes deutsches Wort. Erst eine kleine Kernliste an Bausteinen lernen, dann selbst Sätze daraus zusammensetzen.</p>
+      <div class="question-card" style="margin-bottom:16px;">
+        <p class="eyebrow" style="margin-top:0;">🌍 Übersetzung gerade in: ${langNames[lang]}${lang === "en" && !profile?.origin && !firstStepsLangOverride ? " (Standard — leg dein Herkunftsland im Profil fest, oder wähl unten manuell)" : ""}</p>
+        <select id="firstStepsLangSelect" class="challenge-select" style="margin-top:6px;">
+          <option value="">Automatisch (aus Herkunftsland)</option>
+          ${Object.entries(langNames).map(([code, name]) => `<option value="${code}" ${firstStepsLangOverride === code ? "selected" : ""}>${name}</option>`).join("")}
+        </select>
+      </div>
+
+      <p class="eyebrow">1. Bausteine lernen</p>
+      <div class="breakdown-list" style="margin-bottom:20px;">
+        ${ExerciseData.FIRST_STEPS_VOCAB.map((v) => `
+          <div class="breakdown-row">
+            <span style="font-weight:700;">${v.de}</span>
+            <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+          </div>`).join("")}
+      </div>
+
+      <p class="eyebrow">2. Sätze aus den Bausteinen zusammensetzen</p>
+      <div class="breakdown-list" style="margin-bottom:20px;">
+        ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
+          <div class="question-card" style="margin-bottom:8px;">
+            <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
+            <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
+          </div>`).join("")}
+      </div>
+
+      <p class="eyebrow">3. Building Bridges 🌉 — das Kern-Werkzeug</p>
+      <div class="question-card" style="margin-bottom:16px;">
+        <p class="empty-note" style="margin:0;">Der eigentliche Trick: ein <strong>konjugiertes Verb hier</strong> + ... + <strong>ein Infinitiv aus der Liste darunter ans Ende</strong>. Diese feste Reihenfolge sorgt automatisch für eine grammatikalisch richtige Wortstellung — man kann so kaum etwas falsch bauen.</p>
+      </div>
+      <div class="breakdown-list" style="margin-bottom:16px;">
+        ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => `
+          <div class="question-card" style="margin-bottom:8px;">
+            <p class="eyebrow" style="margin-top:0;">${verb.meaningDe}</p>
+            ${verb.forms.map((f) => `
+              <div class="breakdown-row" style="background:transparent; padding:4px 0;">
+                <span style="font-weight:700;">${f.de}</span>
+                <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(f, lang)}</span>
+              </div>`).join("")}
+          </div>`).join("")}
+      </div>
+
+      <p class="eyebrow">4. Infinitive zum Einsetzen (ans Ende anhängen)</p>
+      <div class="breakdown-list" style="margin-bottom:20px;">
+        ${ExerciseData.FIRST_STEPS_INFINITIVES.map((v) => `
+          <div class="breakdown-row">
+            <span style="font-weight:700;">${v.de}</span>
+            <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+          </div>`).join("")}
+      </div>
+
+      <p class="eyebrow">5. So sieht die Kombination in echten Sätzen aus</p>
+      <div class="breakdown-list" style="margin-bottom:20px;">
+        ${ExerciseData.FIRST_STEPS_COMBOS.map((s) => `
+          <div class="question-card" style="margin-bottom:8px;">
+            <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
+            <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
+          </div>`).join("")}
+      </div>
+
+      <p class="eyebrow">Warum wirkt „du" manchmal seltsam?</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.du_forms[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.du_forms.en}</p>
+      </div>
+      <p class="eyebrow">Warum wird aus der/die/das im Plural immer „die"?</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.plural_article[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.plural_article.en}</p>
+      </div>
+      <p class="eyebrow">Warum "zerfällt" ein Verb manchmal (z. B. ankommen)?</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.separable_verbs[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.separable_verbs.en}</p>
+      </div>
+      <p class="eyebrow">Warum steht das Verb bei "weil/dass/ob" plötzlich ganz am Ende?</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.verb_at_end[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.verb_at_end.en}</p>
+      </div>
+      <p class="eyebrow">Warum werden so viele Wörter großgeschrieben?</p>
+      <div class="question-card">
+        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.noun_capitalization[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.noun_capitalization.en}</p>
+      </div>
+    `;
+    document.getElementById("firstStepsLangSelect").addEventListener("change", (e) => {
+      firstStepsLangOverride = e.target.value || null;
+      renderFirstSteps();
+    });
+  }
   function renderDictionary(filter = "") {
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
@@ -4498,6 +4626,7 @@
     });
     area.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
   }
+  document.querySelector('#learnSubnav [data-sub="sub-erste-schritte"]')?.addEventListener("click", () => renderFirstSteps());
   document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.addEventListener("click", () => renderDictionary());
 
   /* ============================================================
@@ -14539,7 +14668,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "114";
+  const APP_VERSION = "115";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

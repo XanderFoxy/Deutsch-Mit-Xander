@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=114" />
-<link rel="stylesheet" href="app-styles.css?v=114" />
-<link rel="stylesheet" href="themes.css?v=114" />
+<link rel="stylesheet" href="styles.css?v=115" />
+<link rel="stylesheet" href="app-styles.css?v=115" />
+<link rel="stylesheet" href="themes.css?v=115" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -160,6 +160,7 @@
   <section class="view" id="view-learn" data-active="false">
     <p class="eyebrow">Übungen, Vokabeln &amp; Memory — spielerisch Deutsch üben</p>
     <div class="subnav" id="learnSubnav">
+      <button class="subnav-pill" data-sub="sub-erste-schritte" aria-selected="false">🌉 Erste Schritte</button>
       <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
       <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false" style="display:none;">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
       <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
@@ -218,6 +219,10 @@
 
     <div class="subview" id="sub-wackelturm" data-active="false">
       <div id="wackelturmArea"></div>
+    </div>
+
+    <div class="subview" id="sub-erste-schritte" data-active="false">
+      <div id="firstStepsArea"></div>
     </div>
 
     <div class="subview" id="sub-exercises" data-active="true">
@@ -352,12 +357,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=114"></script>
-<script src="supabase-config.js?v=114"></script>
-<script src="data-exercises.js?v=114"></script>
-<script src="data-vocab.js?v=114"></script>
-<script src="backend.js?v=114"></script>
-<script src="quiz.js?v=114"></script>
-<script src="app.js?v=114"></script>
+<script src="core.js?v=115"></script>
+<script src="supabase-config.js?v=115"></script>
+<script src="data-exercises.js?v=115"></script>
+<script src="data-vocab.js?v=115"></script>
+<script src="backend.js?v=115"></script>
+<script src="quiz.js?v=115"></script>
+<script src="app.js?v=115"></script>
 </body>
 </html>

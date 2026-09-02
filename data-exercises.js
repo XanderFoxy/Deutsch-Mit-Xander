@@ -4577,5 +4577,399 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT };
+  // ============================================================================
+  // ERSTE SCHRITTE — Brücken-Baukasten für absolute Anfänger:innen (kein einziges
+  // deutsches Wort nötig, um hier zu starten). Konzept: eine kleine Kernliste an
+  // Bausteinen lernen, dann daraus selbst Sätze zusammensetzen ("Spiegel-Übersetzung").
+  // WICHTIG — jeder Eintrag wurde bewusst KORRIGIERT gegenüber holprigen,
+  // wortwörtlichen Übersetzungsmustern (z. B. "even if" → "selbst wenn"/"auch wenn"
+  // statt des unnatürlichen "sogar wenn"; "to like" → "mögen" statt "gerne haben";
+  // "great" → "toll/großartig" statt des falschen Freundes "groß"). translations
+  // enthält mehrere Sprachen, damit statt eines festen Englisch immer die tatsächliche
+  // Muttersprache angezeigt werden kann; "en" bleibt der Rückfall, wenn für die
+  // gewählte Sprache (noch) keine Übersetzung vorliegt.
+  const FIRST_STEPS_VOCAB = [
+    { de: "ich", translations: { en: "I", ar: "أنا", tr: "ben", ru: "я", es: "yo", fr: "je", pl: "ja", uk: "я", fa: "من" } },
+    { de: "ich bin", translations: { en: "I am", ar: "أنا (فعل الكينونة)", tr: "ben ...-im", ru: "я есть", es: "yo soy/estoy", fr: "je suis", pl: "ja jestem", uk: "я є", fa: "من هستم" } },
+    { de: "mit dir", translations: { en: "with you", ar: "معك", tr: "seninle", ru: "с тобой", es: "contigo", fr: "avec toi", pl: "z tobą", uk: "з тобою", fa: "با تو" } },
+    { de: "mit ihm / mit ihr", translations: { en: "with him / with her", ar: "معه / معها", tr: "onunla (erkek/kadın)", ru: "с ним / с ней", es: "con él / con ella", fr: "avec lui / avec elle", pl: "z nim / z nią", uk: "з ним / з нею", fa: "با او (مرد) / با او (زن)" } },
+    { de: "mit uns", translations: { en: "with us", ar: "معنا", tr: "bizimle", ru: "с нами", es: "con nosotros", fr: "avec nous", pl: "z nami", uk: "з нами", fa: "با ما" } },
+    { de: "für dich", translations: { en: "for you", ar: "من أجلك", tr: "senin için", ru: "для тебя", es: "para ti", fr: "pour toi", pl: "dla ciebie", uk: "для тебе", fa: "برای تو" } },
+    { de: "ohne ihn", translations: { en: "without him", ar: "بدونه", tr: "onsuz (erkek)", ru: "без него", es: "sin él", fr: "sans lui", pl: "bez niego", uk: "без нього", fa: "بدون او (مرد)" } },
+    { de: "ohne sie (Mehrzahl)", translations: { en: "without them", ar: "بدونهم", tr: "onlarsız", ru: "без них", es: "sin ellos", fr: "sans eux", pl: "bez nich", uk: "без них", fa: "بدون آن‌ها" } },
+    { de: "immer", translations: { en: "always", ar: "دائماً", tr: "her zaman", ru: "всегда", es: "siempre", fr: "toujours", pl: "zawsze", uk: "завжди", fa: "همیشه" } },
+    { de: "das", translations: { en: "this", ar: "هذا", tr: "bu", ru: "это", es: "esto", fr: "ceci", pl: "to", uk: "це", fa: "این" } },
+    { de: "ist", translations: { en: "is", ar: "هو/هي (فعل)", tr: "-dir", ru: "есть/является", es: "es/está", fr: "est", pl: "jest", uk: "є", fa: "است" } },
+    { de: "manchmal", translations: { en: "sometimes", ar: "أحياناً", tr: "bazen", ru: "иногда", es: "a veces", fr: "parfois", pl: "czasami", uk: "іноді", fa: "گاهی اوقات" } },
+    { de: "heute", translations: { en: "today", ar: "اليوم", tr: "bugün", ru: "сегодня", es: "hoy", fr: "aujourd'hui", pl: "dzisiaj", uk: "сьогодні", fa: "امروز" } },
+    { de: "von", translations: { en: "from", ar: "من", tr: "-den", ru: "из/от", es: "de", fr: "de", pl: "z/od", uk: "з/від", fa: "از" } },
+    { de: "selbst wenn / auch wenn", translations: { en: "even if", ar: "حتى لو", tr: "eğer olsa bile", ru: "даже если", es: "incluso si", fr: "même si", pl: "nawet jeśli", uk: "навіть якщо", fa: "حتی اگر" } },
+    { de: "danach", translations: { en: "afterwards", ar: "بعد ذلك", tr: "daha sonra", ru: "потом", es: "después", fr: "après", pl: "potem", uk: "потім", fa: "بعد از آن" } },
+    { de: "schlechter", translations: { en: "worse", ar: "أسوأ", tr: "daha kötü", ru: "хуже", es: "peor", fr: "pire", pl: "gorzej", uk: "гірше", fa: "بدتر" } },
+    { de: "wo", translations: { en: "where", ar: "أين", tr: "nerede", ru: "где", es: "dónde", fr: "où", pl: "gdzie", uk: "де", fa: "کجا" } },
+    { de: "alles", translations: { en: "everything", ar: "كل شيء", tr: "her şey", ru: "всё", es: "todo", fr: "tout", pl: "wszystko", uk: "все", fa: "همه چیز" } },
+    { de: "irgendwo", translations: { en: "somewhere", ar: "في مكان ما", tr: "bir yerde", ru: "где-то", es: "en algún lugar", fr: "quelque part", pl: "gdzieś", uk: "десь", fa: "جایی" } },
+    { de: "mögen", translations: { en: "to like", ar: "أن يحب/يفضل", tr: "hoşlanmak", ru: "нравиться", es: "gustar", fr: "aimer bien", pl: "lubić", uk: "подобатися", fa: "دوست داشتن (پسندیدن)" } },
+    { de: "lieben", translations: { en: "to love", ar: "أن يحب (بشدة)", tr: "sevmek (aşk)", ru: "любить", es: "amar", fr: "aimer (d'amour)", pl: "kochać", uk: "любити", fa: "عاشق بودن" } },
+    { de: "toll / großartig", translations: { en: "great", ar: "رائع", tr: "harika", ru: "отлично", es: "genial", fr: "génial", pl: "świetny", uk: "чудово", fa: "عالی" } },
+    // Zweiter Batch — weitere Bausteine aus den durchgesehenen Buchseiten, ebenfalls
+    // korrigiert (u. a. konsequent "woher" statt der inkonsistenten "von wo"; "Ihr/Ihre"
+    // korrekt großgeschrieben bei der Sie-Form; Genus bei "Vorname"/"Nachname" richtiggestellt).
+    { de: "das Zuhause", translations: { en: "home", ar: "المنزل", tr: "ev (yuva)", ru: "дом (жильё)", es: "el hogar", fr: "le chez-soi", pl: "dom (rodzinny)", uk: "домівка", fa: "خانه" } },
+    { de: "schon", translations: { en: "already", ar: "بالفعل", tr: "zaten", ru: "уже", es: "ya", fr: "déjà", pl: "już", uk: "вже", fa: "قبلاً" } },
+    { de: "Guten Morgen", translations: { en: "good morning", ar: "صباح الخير", tr: "günaydın", ru: "доброе утро", es: "buenos días", fr: "bonjour (matin)", pl: "dzień dobry (rano)", uk: "доброго ранку", fa: "صبح بخیر" } },
+    { de: "Wie geht es dir?", translations: { en: "how are you", ar: "كيف حالك؟", tr: "nasılsın?", ru: "как дела?", es: "¿cómo estás?", fr: "comment ça va ?", pl: "jak się masz?", uk: "як справи?", fa: "حالت چطوره؟" } },
+    { de: "Woher kommst du?", translations: { en: "where are you from", ar: "من أين أنت؟", tr: "nerelisin?", ru: "откуда ты?", es: "¿de dónde eres?", fr: "d'où viens-tu ?", pl: "skąd jesteś?", uk: "звідки ти?", fa: "اهل کجایی؟" } },
+    { de: "Wie heißt du?", translations: { en: "what is your name", ar: "ما اسمك؟", tr: "adın ne?", ru: "как тебя зовут?", es: "¿cómo te llamas?", fr: "comment tu t'appelles ?", pl: "jak masz na imię?", uk: "як тебе звати?", fa: "اسمت چیه؟" } },
+    { de: "Wie alt bist du?", translations: { en: "how old are you", ar: "كم عمرك؟", tr: "kaç yaşındasın?", ru: "сколько тебе лет?", es: "¿cuántos años tienes?", fr: "quel âge as-tu ?", pl: "ile masz lat?", uk: "скільки тобі років?", fa: "چند سالته؟" } },
+    { de: "dein / deine (informell) — Ihr / Ihre (formell)", translations: { en: "your", ar: "-ك (لك) / حضرتك", tr: "senin / sizin (resmi)", ru: "твой / Ваш (вежл.)", es: "tu / su (formal)", fr: "ton/ta / votre (formel)", pl: "twój / Pana/Pani", uk: "твій / Ваш (ввічл.)", fa: "مال تو / مال شما (رسمی)" } },
+    { de: "die Geschwister", translations: { en: "siblings", ar: "الإخوة والأخوات", tr: "kardeşler", ru: "братья и сёстры", es: "los hermanos", fr: "les frères et sœurs", pl: "rodzeństwo", uk: "брати і сестри", fa: "خواهر و برادرها" } },
+    { de: "sehr", translations: { en: "very", ar: "جداً", tr: "çok", ru: "очень", es: "muy", fr: "très", pl: "bardzo", uk: "дуже", fa: "خیلی" } },
+    { de: "schwierig", translations: { en: "difficult", ar: "صعب", tr: "zor", ru: "трудный", es: "difícil", fr: "difficile", pl: "trudny", uk: "важкий", fa: "سخت" } },
+    { de: "weil", translations: { en: "because", ar: "لأن", tr: "çünkü", ru: "потому что", es: "porque", fr: "parce que", pl: "ponieważ", uk: "тому що", fa: "چون" } },
+    { de: "beide", translations: { en: "both", ar: "كلاهما", tr: "ikisi de", ru: "оба", es: "ambos", fr: "les deux", pl: "oboje", uk: "обидва", fa: "هر دو" } },
+    { de: "das Buch", translations: { en: "book", ar: "الكتاب", tr: "kitap", ru: "книга", es: "el libro", fr: "le livre", pl: "książka", uk: "книга", fa: "کتاب" } },
+    { de: "genug", translations: { en: "enough", ar: "كافٍ", tr: "yeterli", ru: "достаточно", es: "suficiente", fr: "assez", pl: "wystarczająco", uk: "достатньо", fa: "کافی" } },
+    { de: "das Hotel", translations: { en: "hotel", ar: "الفندق", tr: "otel", ru: "отель", es: "el hotel", fr: "l'hôtel", pl: "hotel", uk: "готель", fa: "هتل" } },
+    { de: "die Woche", translations: { en: "week", ar: "الأسبوع", tr: "hafta", ru: "неделя", es: "la semana", fr: "la semaine", pl: "tydzień", uk: "тиждень", fa: "هفته" } },
+    { de: "die Nummer", translations: { en: "number", ar: "الرقم", tr: "numara", ru: "номер", es: "el número", fr: "le numéro", pl: "numer", uk: "номер", fa: "شماره" } },
+    { de: "Deutsch (die Sprache)", translations: { en: "German (the language)", ar: "الألمانية (اللغة)", tr: "Almanca", ru: "немецкий (язык)", es: "el alemán (idioma)", fr: "l'allemand (langue)", pl: "niemiecki (język)", uk: "німецька (мова)", fa: "زبان آلمانی" } },
+    { de: "die Großmutter / der Großvater", translations: { en: "grandmother / grandfather", ar: "الجدة / الجد", tr: "büyükanne / büyükbaba", ru: "бабушка / дедушка", es: "la abuela / el abuelo", fr: "la grand-mère / le grand-père", pl: "babcia / dziadek", uk: "бабуся / дідусь", fa: "مادربزرگ / پدربزرگ" } },
+    { de: "die Minute", translations: { en: "minute", ar: "الدقيقة", tr: "dakika", ru: "минута", es: "el minuto", fr: "la minute", pl: "minuta", uk: "хвилина", fa: "دقیقه" } },
+    { de: "wieder", translations: { en: "again", ar: "مرة أخرى", tr: "tekrar", ru: "снова", es: "otra vez", fr: "encore", pl: "znowu", uk: "знову", fa: "دوباره" } },
+    { de: "die Erlaubnis", translations: { en: "permission", ar: "الإذن", tr: "izin", ru: "разрешение", es: "el permiso", fr: "la permission", pl: "pozwolenie", uk: "дозвіл", fa: "اجازه" } },
+    { de: "Schön, dich kennenzulernen", translations: { en: "nice to meet you", ar: "سعيد بلقائك (تعارف أول مرة)", tr: "tanıştığıma memnun oldum", ru: "приятно познакомиться", es: "encantado de conocerte", fr: "enchanté de te rencontrer", pl: "miło cię poznać", uk: "приємно познайомитися", fa: "از آشناییت خوشوقتم" } },
+    { de: "der Vorname", translations: { en: "first name", ar: "الاسم الأول", tr: "ad", ru: "имя", es: "el nombre", fr: "le prénom", pl: "imię", uk: "ім'я", fa: "نام کوچک" } },
+    { de: "der Nachname", translations: { en: "last name", ar: "اسم العائلة", tr: "soyad", ru: "фамилия", es: "el apellido", fr: "le nom de famille", pl: "nazwisko", uk: "прізвище", fa: "نام خانوادگی" } },
+    { de: "die Tür", translations: { en: "door", ar: "الباب", tr: "kapı", ru: "дверь", es: "la puerta", fr: "la porte", pl: "drzwi", uk: "двері", fa: "در" } },
+    { de: "der Preis", translations: { en: "price", ar: "السعر", tr: "fiyat", ru: "цена", es: "el precio", fr: "le prix", pl: "cena", uk: "ціна", fa: "قیمت" } },
+    { de: "die Größe", translations: { en: "size", ar: "الحجم", tr: "boyut", ru: "размер", es: "el tamaño", fr: "la taille", pl: "rozmiar", uk: "розмір", fa: "اندازه" } },
+    { de: "klein", translations: { en: "small", ar: "صغير", tr: "küçük", ru: "маленький", es: "pequeño", fr: "petit", pl: "mały", uk: "малий", fa: "کوچک" } },
+    { de: "obwohl", translations: { en: "even though", ar: "رغم أن", tr: "her ne kadar ... olsa da", ru: "хотя", es: "aunque", fr: "bien que", pl: "chociaż", uk: "хоча", fa: "اگرچه" } },
+    { de: "der Bruder", translations: { en: "brother", ar: "الأخ", tr: "erkek kardeş", ru: "брат", es: "el hermano", fr: "le frère", pl: "brat", uk: "брат", fa: "برادر" } },
+    { de: "zusammen", translations: { en: "together", ar: "معاً", tr: "birlikte", ru: "вместе", es: "juntos", fr: "ensemble", pl: "razem", uk: "разом", fa: "با هم" } },
+    { de: "natürlich", translations: { en: "of course", ar: "بالطبع", tr: "elbette", ru: "конечно", es: "por supuesto", fr: "bien sûr", pl: "oczywiście", uk: "звичайно", fa: "البته" } },
+    { de: "der Himmel", translations: { en: "sky", ar: "السماء", tr: "gökyüzü", ru: "небо", es: "el cielo", fr: "le ciel", pl: "niebo", uk: "небо", fa: "آسمان" } },
+    { de: "Es tut mir leid", translations: { en: "I'm sorry", ar: "أنا آسف", tr: "üzgünüm", ru: "мне жаль", es: "lo siento", fr: "je suis désolé", pl: "przepraszam", uk: "мені шкода", fa: "متاسفم" } },
+    { de: "folgen", translations: { en: "to follow (a person)", ar: "أن يتبع (شخصاً)", tr: "takip etmek (birini)", ru: "следовать (за кем-то)", es: "seguir (a alguien)", fr: "suivre (quelqu'un)", pl: "podążać za (kimś)", uk: "слідувати (за кимось)", fa: "دنبال کردن (کسی)" } },
+    { de: "groß (Gegenteil von klein)", translations: { en: "big", ar: "كبير", tr: "büyük", ru: "большой", es: "grande", fr: "grand", pl: "duży", uk: "великий", fa: "بزرگ" } },
+    { de: "neu", translations: { en: "new", ar: "جديد", tr: "yeni", ru: "новый", es: "nuevo", fr: "nouveau", pl: "nowy", uk: "новий", fa: "جدید" } },
+    { de: "niemals", translations: { en: "never", ar: "أبداً", tr: "asla", ru: "никогда", es: "nunca", fr: "jamais", pl: "nigdy", uk: "ніколи", fa: "هرگز" } },
+    // Dritter Batch: Wochentage, Jahreszeiten, Farben, Zahlen, Himmelsrichtungen — bewusst
+    // mit "Weiß" statt des falsch geschriebenen "Weiss" aus dem Buchvorbild.
+    { de: "Montag / Dienstag / Mittwoch", translations: { en: "Monday / Tuesday / Wednesday", ar: "الإثنين / الثلاثاء / الأربعاء", tr: "Pazartesi / Salı / Çarşamba", ru: "понедельник / вторник / среда", es: "lunes / martes / miércoles", fr: "lundi / mardi / mercredi", pl: "poniedziałek / wtorek / środa", uk: "понеділок / вівторок / середа", fa: "دوشنبه / سه‌شنبه / چهارشنبه" } },
+    { de: "Donnerstag / Freitag / Samstag / Sonntag", translations: { en: "Thursday / Friday / Saturday / Sunday", ar: "الخميس / الجمعة / السبت / الأحد", tr: "Perşembe / Cuma / Cumartesi / Pazar", ru: "четверг / пятница / суббота / воскресенье", es: "jueves / viernes / sábado / domingo", fr: "jeudi / vendredi / samedi / dimanche", pl: "czwartek / piątek / sobota / niedziela", uk: "четвер / п'ятниця / субота / неділя", fa: "پنج‌شنبه / جمعه / شنبه / یکشنبه" } },
+    { de: "der Frühling / der Sommer", translations: { en: "spring / summer", ar: "الربيع / الصيف", tr: "ilkbahar / yaz", ru: "весна / лето", es: "la primavera / el verano", fr: "le printemps / l'été", pl: "wiosna / lato", uk: "весна / літо", fa: "بهار / تابستان" } },
+    { de: "der Herbst / der Winter", translations: { en: "autumn / winter", ar: "الخريف / الشتاء", tr: "sonbahar / kış", ru: "осень / зима", es: "el otoño / el invierno", fr: "l'automne / l'hiver", pl: "jesień / zima", uk: "осінь / зима", fa: "پاییز / زمستان" } },
+    { de: "schwarz / weiß", translations: { en: "black / white", ar: "أسود / أبيض", tr: "siyah / beyaz", ru: "чёрный / белый", es: "negro / blanco", fr: "noir / blanc", pl: "czarny / biały", uk: "чорний / білий", fa: "سیاه / سفید" } },
+    { de: "rot / blau / gelb", translations: { en: "red / blue / yellow", ar: "أحمر / أزرق / أصفر", tr: "kırmızı / mavi / sarı", ru: "красный / синий / жёлтый", es: "rojo / azul / amarillo", fr: "rouge / bleu / jaune", pl: "czerwony / niebieski / żółty", uk: "червоний / синій / жовтий", fa: "قرمز / آبی / زرد" } },
+    { de: "grün / grau / braun", translations: { en: "green / gray / brown", ar: "أخضر / رمادي / بني", tr: "yeşil / gri / kahverengi", ru: "зелёный / серый / коричневый", es: "verde / gris / marrón", fr: "vert / gris / marron", pl: "zielony / szary / brązowy", uk: "зелений / сірий / коричневий", fa: "سبز / خاکستری / قهوه‌ای" } },
+    { de: "eins / zwei / drei", translations: { en: "one / two / three", ar: "واحد / اثنان / ثلاثة", tr: "bir / iki / üç", ru: "один / два / три", es: "uno / dos / tres", fr: "un / deux / trois", pl: "jeden / dwa / trzy", uk: "один / два / три", fa: "یک / دو / سه" } },
+    { de: "vier / fünf / sechs", translations: { en: "four / five / six", ar: "أربعة / خمسة / ستة", tr: "dört / beş / altı", ru: "четыре / пять / шесть", es: "cuatro / cinco / seis", fr: "quatre / cinq / six", pl: "cztery / pięć / sześć", uk: "чотири / п'ять / шість", fa: "چهار / پنج / شش" } },
+    { de: "sieben / acht / neun / zehn", translations: { en: "seven / eight / nine / ten", ar: "سبعة / ثمانية / تسعة / عشرة", tr: "yedi / sekiz / dokuz / on", ru: "семь / восемь / девять / десять", es: "siete / ocho / nueve / diez", fr: "sept / huit / neuf / dix", pl: "siedem / osiem / dziewięć / dziesięć", uk: "сім / вісім / дев'ять / десять", fa: "هفت / هشت / نه / ده" } },
+    { de: "Norden / Süden", translations: { en: "north / south", ar: "الشمال / الجنوب", tr: "kuzey / güney", ru: "север / юг", es: "el norte / el sur", fr: "le nord / le sud", pl: "północ / południe", uk: "північ / південь", fa: "شمال / جنوب" } },
+    { de: "Osten / Westen", translations: { en: "east / west", ar: "الشرق / الغرب", tr: "doğu / batı", ru: "восток / запад", es: "el este / el oeste", fr: "l'est / l'ouest", pl: "wschód / zachód", uk: "схід / захід", fa: "شرق / غرب" } },
+    // Vierter Batch: weitere Adjektive, Substantive und kleine Wörter aus den
+    // durchgesehenen Buchseiten (Vorname/Nachname-Bereich, Größe/Preis-Bereich, u. a.).
+    { de: "bitte", translations: { en: "please", ar: "من فضلك", tr: "lütfen", ru: "пожалуйста", es: "por favor", fr: "s'il te plaît", pl: "proszę", uk: "будь ласка", fa: "لطفاً" } },
+    { de: "schön", translations: { en: "beautiful", ar: "جميل", tr: "güzel", ru: "красивый", es: "hermoso", fr: "beau", pl: "piękny", uk: "гарний", fa: "زیبا" } },
+    { de: "echt / wirklich", translations: { en: "real / really", ar: "حقيقي / فعلاً", tr: "gerçek / gerçekten", ru: "настоящий / действительно", es: "real / de verdad", fr: "réel / vraiment", pl: "prawdziwy / naprawdę", uk: "справжній / справді", fa: "واقعی / واقعاً" } },
+    { de: "willkommen", translations: { en: "welcome", ar: "أهلاً وسهلاً", tr: "hoş geldiniz", ru: "добро пожаловать", es: "bienvenido", fr: "bienvenue", pl: "witamy", uk: "ласкаво просимо", fa: "خوش آمدید" } },
+    { de: "das Jahr / die Jahre", translations: { en: "year / years", ar: "السنة / السنوات", tr: "yıl / yıllar", ru: "год / годы", es: "el año / los años", fr: "l'année / les années", pl: "rok / lata", uk: "рік / роки", fa: "سال / سال‌ها" } },
+    { de: "oben / unten", translations: { en: "up / down", ar: "فوق / تحت", tr: "yukarı / aşağı", ru: "вверх / вниз", es: "arriba / abajo", fr: "en haut / en bas", pl: "w górę / w dół", uk: "вгору / вниз", fa: "بالا / پایین" } },
+    { de: "das Geschenk", translations: { en: "gift", ar: "الهدية", tr: "hediye", ru: "подарок", es: "el regalo", fr: "le cadeau", pl: "prezent", uk: "подарунок", fa: "هدیه" } },
+    { de: "das Museum", translations: { en: "museum", ar: "المتحف", tr: "müze", ru: "музей", es: "el museo", fr: "le musée", pl: "muzeum", uk: "музей", fa: "موزه" } },
+    { de: "die Wohnung", translations: { en: "apartment", ar: "الشقة", tr: "daire", ru: "квартира", es: "el apartamento", fr: "l'appartement", pl: "mieszkanie", uk: "квартира", fa: "آپارتمان" } },
+    { de: "der Bahnhof", translations: { en: "train station", ar: "محطة القطار", tr: "tren istasyonu", ru: "вокзал", es: "la estación de tren", fr: "la gare", pl: "dworzec", uk: "вокзал", fa: "ایستگاه قطار" } },
+    { de: "der Ausflug", translations: { en: "trip / outing", ar: "الرحلة", tr: "gezi", ru: "поездка", es: "la excursión", fr: "l'excursion", pl: "wycieczka", uk: "поїздка", fa: "گردش" } },
+    { de: "der Lehrer / die Lehrerin", translations: { en: "teacher (m/f)", ar: "المعلم / المعلمة", tr: "öğretmen", ru: "учитель / учительница", es: "el profesor / la profesora", fr: "le professeur / la professeure", pl: "nauczyciel / nauczycielka", uk: "вчитель / вчителька", fa: "معلم" } },
+    { de: "die Klasse", translations: { en: "class", ar: "الصف", tr: "sınıf", ru: "класс", es: "la clase", fr: "la classe", pl: "klasa", uk: "клас", fa: "کلاس" } },
+    { de: "der Zug / die Bahn", translations: { en: "train", ar: "القطار", tr: "tren", ru: "поезд", es: "el tren", fr: "le train", pl: "pociąg", uk: "потяг", fa: "قطار" } },
+    // Fünfter Batch: Fragewörter (bisher komplett gefehlt) und grundlegende Adjektive.
+    { de: "wer", translations: { en: "who", ar: "من", tr: "kim", ru: "кто", es: "quién", fr: "qui", pl: "kto", uk: "хто", fa: "چه کسی" } },
+    { de: "was", translations: { en: "what", ar: "ماذا", tr: "ne", ru: "что", es: "qué", fr: "quoi", pl: "co", uk: "що", fa: "چی" } },
+    { de: "wann", translations: { en: "when", ar: "متى", tr: "ne zaman", ru: "когда", es: "cuándo", fr: "quand", pl: "kiedy", uk: "коли", fa: "کی" } },
+    { de: "warum", translations: { en: "why", ar: "لماذا", tr: "neden", ru: "почему", es: "por qué", fr: "pourquoi", pl: "dlaczego", uk: "чому", fa: "چرا" } },
+    { de: "wie", translations: { en: "how", ar: "كيف", tr: "nasıl", ru: "как", es: "cómo", fr: "comment", pl: "jak", uk: "як", fa: "چطور" } },
+    { de: "welcher / welche / welches", translations: { en: "which", ar: "أي", tr: "hangi", ru: "который", es: "cuál", fr: "quel/quelle", pl: "który", uk: "який", fa: "کدام" } },
+    { de: "einfach", translations: { en: "easy / simple", ar: "سهل", tr: "kolay", ru: "простой", es: "fácil", fr: "facile", pl: "łatwy", uk: "простий", fa: "ساده" } },
+    { de: "wichtig", translations: { en: "important", ar: "مهم", tr: "önemli", ru: "важный", es: "importante", fr: "important", pl: "ważny", uk: "важливий", fa: "مهم" } },
+    { de: "richtig", translations: { en: "correct / right", ar: "صحيح", tr: "doğru", ru: "правильный", es: "correcto", fr: "correct", pl: "poprawny", uk: "правильний", fa: "درست" } },
+    { de: "falsch", translations: { en: "wrong / false", ar: "خاطئ", tr: "yanlış", ru: "неправильный", es: "incorrecto", fr: "faux", pl: "niepoprawny", uk: "неправильний", fa: "غلط" } },
+    { de: "schnell", translations: { en: "fast", ar: "سريع", tr: "hızlı", ru: "быстрый", es: "rápido", fr: "rapide", pl: "szybki", uk: "швидкий", fa: "سریع" } },
+    { de: "langsam", translations: { en: "slow", ar: "بطيء", tr: "yavaş", ru: "медленный", es: "lento", fr: "lent", pl: "wolny", uk: "повільний", fa: "آهسته" } },
+    { de: "möglich", translations: { en: "possible", ar: "ممكن", tr: "mümkün", ru: "возможный", es: "posible", fr: "possible", pl: "możliwy", uk: "можливий", fa: "ممکن" } },
+    { de: "der Ort / die Stelle", translations: { en: "place", ar: "المكان", tr: "yer", ru: "место", es: "el lugar", fr: "l'endroit", pl: "miejsce", uk: "місце", fa: "مکان" } },
+    // Sechster Batch: Familie, Essen und Alltagsgegenstände.
+    { de: "die Mutter / der Vater", translations: { en: "mother / father", ar: "الأم / الأب", tr: "anne / baba", ru: "мать / отец", es: "la madre / el padre", fr: "la mère / le père", pl: "matka / ojciec", uk: "мати / батько", fa: "مادر / پدر" } },
+    { de: "der Sohn / die Tochter", translations: { en: "son / daughter", ar: "الابن / الابنة", tr: "oğul / kız", ru: "сын / дочь", es: "el hijo / la hija", fr: "le fils / la fille", pl: "syn / córka", uk: "син / донька", fa: "پسر / دختر" } },
+    { de: "die Schwester", translations: { en: "sister", ar: "الأخت", tr: "kız kardeş", ru: "сестра", es: "la hermana", fr: "la sœur", pl: "siostra", uk: "сестра", fa: "خواهر" } },
+    { de: "der Freund / die Freundin", translations: { en: "friend (m/f)", ar: "الصديق / الصديقة", tr: "arkadaş", ru: "друг / подруга", es: "el amigo / la amiga", fr: "l'ami / l'amie", pl: "przyjaciel / przyjaciółka", uk: "друг / подруга", fa: "دوست" } },
+    { de: "das Kind", translations: { en: "child", ar: "الطفل", tr: "çocuk", ru: "ребёнок", es: "el niño / la niña", fr: "l'enfant", pl: "dziecko", uk: "дитина", fa: "بچه" } },
+    { de: "das Brot", translations: { en: "bread", ar: "الخبز", tr: "ekmek", ru: "хлеб", es: "el pan", fr: "le pain", pl: "chleb", uk: "хліб", fa: "نان" } },
+    { de: "der Apfel", translations: { en: "apple", ar: "التفاحة", tr: "elma", ru: "яблоко", es: "la manzana", fr: "la pomme", pl: "jabłko", uk: "яблуко", fa: "سیب" } },
+    { de: "der Kaffee / der Tee", translations: { en: "coffee / tea", ar: "القهوة / الشاي", tr: "kahve / çay", ru: "кофе / чай", es: "el café / el té", fr: "le café / le thé", pl: "kawa / herbata", uk: "кава / чай", fa: "قهوه / چای" } },
+    { de: "die Milch", translations: { en: "milk", ar: "الحليب", tr: "süt", ru: "молоко", es: "la leche", fr: "le lait", pl: "mleko", uk: "молоко", fa: "شیر" } },
+    { de: "das Frühstück / das Mittagessen / das Abendessen", translations: { en: "breakfast / lunch / dinner", ar: "الإفطار / الغداء / العشاء", tr: "kahvaltı / öğle yemeği / akşam yemeği", ru: "завтрак / обед / ужин", es: "el desayuno / el almuerzo / la cena", fr: "le petit-déjeuner / le déjeuner / le dîner", pl: "śniadanie / obiad / kolacja", uk: "сніданок / обід / вечеря", fa: "صبحانه / ناهار / شام" } },
+    { de: "das Handy / das Telefon", translations: { en: "cell phone / phone", ar: "الجوال / الهاتف", tr: "cep telefonu / telefon", ru: "мобильный / телефон", es: "el móvil / el teléfono", fr: "le portable / le téléphone", pl: "komórka / telefon", uk: "мобільний / телефон", fa: "موبایل / تلفن" } },
+    { de: "der Schlüssel", translations: { en: "key", ar: "المفتاح", tr: "anahtar", ru: "ключ", es: "la llave", fr: "la clé", pl: "klucz", uk: "ключ", fa: "کلید" } },
+    { de: "das Geld", translations: { en: "money", ar: "المال", tr: "para", ru: "деньги", es: "el dinero", fr: "l'argent", pl: "pieniądze", uk: "гроші", fa: "پول" } },
+    // Siebter Batch: Zeitausdrücke und häufige Adverbien.
+    { de: "jetzt", translations: { en: "now", ar: "الآن", tr: "şimdi", ru: "сейчас", es: "ahora", fr: "maintenant", pl: "teraz", uk: "зараз", fa: "الان" } },
+    { de: "morgen", translations: { en: "tomorrow", ar: "غداً", tr: "yarın", ru: "завтра", es: "mañana", fr: "demain", pl: "jutro", uk: "завтра", fa: "فردا" } },
+    { de: "später", translations: { en: "later", ar: "لاحقاً", tr: "daha sonra", ru: "позже", es: "más tarde", fr: "plus tard", pl: "później", uk: "пізніше", fa: "بعداً" } },
+    { de: "oft", translations: { en: "often", ar: "غالباً", tr: "sık sık", ru: "часто", es: "a menudo", fr: "souvent", pl: "często", uk: "часто", fa: "اغلب" } },
+    { de: "selten", translations: { en: "rarely", ar: "نادراً", tr: "nadiren", ru: "редко", es: "raramente", fr: "rarement", pl: "rzadko", uk: "рідко", fa: "به‌ندرت" } },
+    { de: "die Stunde", translations: { en: "hour", ar: "الساعة (مدة)", tr: "saat (süre)", ru: "час", es: "la hora", fr: "l'heure", pl: "godzina", uk: "година", fa: "ساعت (مدت)" } },
+    { de: "der Moment / der Augenblick", translations: { en: "moment", ar: "اللحظة", tr: "an", ru: "момент", es: "el momento", fr: "le moment", pl: "chwila", uk: "мить", fa: "لحظه" } },
+    { de: "gerade", translations: { en: "right now / just", ar: "الآن تماماً", tr: "tam şimdi", ru: "прямо сейчас", es: "justo ahora", fr: "juste maintenant", pl: "właśnie teraz", uk: "саме зараз", fa: "همین الان" } },
+    // Achter Batch: Wetter, Kleidung, Alltagsaktivitäten.
+    { de: "das Wetter", translations: { en: "weather", ar: "الطقس", tr: "hava durumu", ru: "погода", es: "el clima", fr: "le temps (météo)", pl: "pogoda", uk: "погода", fa: "آب و هوا" } },
+    { de: "die Sonne / der Regen", translations: { en: "sun / rain", ar: "الشمس / المطر", tr: "güneş / yağmur", ru: "солнце / дождь", es: "el sol / la lluvia", fr: "le soleil / la pluie", pl: "słońce / deszcz", uk: "сонце / дощ", fa: "خورشید / باران" } },
+    { de: "kalt / warm", translations: { en: "cold / warm", ar: "بارد / دافئ", tr: "soğuk / ılık", ru: "холодный / тёплый", es: "frío / cálido", fr: "froid / chaud", pl: "zimny / ciepły", uk: "холодний / теплий", fa: "سرد / گرم" } },
+    { de: "die Kleidung", translations: { en: "clothes", ar: "الملابس", tr: "kıyafet", ru: "одежда", es: "la ropa", fr: "les vêtements", pl: "ubranie", uk: "одяг", fa: "لباس" } },
+    { de: "die Schuhe", translations: { en: "shoes", ar: "الأحذية", tr: "ayakkabılar", ru: "обувь", es: "los zapatos", fr: "les chaussures", pl: "buty", uk: "взуття", fa: "کفش" } },
+    { de: "einkaufen", translations: { en: "to go shopping", ar: "التسوق", tr: "alışveriş yapmak", ru: "делать покупки", es: "ir de compras", fr: "faire les courses", pl: "robić zakupy", uk: "робити покупки", fa: "خرید کردن" } },
+    { de: "duschen", translations: { en: "to shower", ar: "الاستحمام", tr: "duş almak", ru: "принимать душ", es: "ducharse", fr: "se doucher", pl: "brać prysznic", uk: "приймати душ", fa: "دوش گرفتن" } },
+    { de: "aufwachen", translations: { en: "to wake up", ar: "الاستيقاظ", tr: "uyanmak", ru: "просыпаться", es: "despertarse", fr: "se réveiller", pl: "budzić się", uk: "прокидатися", fa: "بیدار شدن" } },
+    { de: "der Job / die Arbeit", translations: { en: "job / work", ar: "الوظيفة / العمل", tr: "iş / çalışma", ru: "работа", es: "el trabajo / el empleo", fr: "le travail / l'emploi", pl: "praca", uk: "робота", fa: "شغل / کار" } },
+    { de: "das Wochenende", translations: { en: "weekend", ar: "عطلة نهاية الأسبوع", tr: "hafta sonu", ru: "выходные", es: "el fin de semana", fr: "le week-end", pl: "weekend", uk: "вихідні", fa: "آخر هفته" } },
+    // Neunter Batch: erweiterte Zahlen, wichtige Orte, essenzielle Alltags-/Notfallphrasen.
+    { de: "elf / zwölf / zwanzig", translations: { en: "eleven / twelve / twenty", ar: "أحد عشر / اثنا عشر / عشرون", tr: "on bir / on iki / yirmi", ru: "одиннадцать / двенадцать / двадцать", es: "once / doce / veinte", fr: "onze / douze / vingt", pl: "jedenaście / dwanaście / dwadzieścia", uk: "одинадцять / дванадцять / двадцять", fa: "یازده / دوازده / بیست" } },
+    { de: "dreißig / vierzig / fünfzig", translations: { en: "thirty / forty / fifty", ar: "ثلاثون / أربعون / خمسون", tr: "otuz / kırk / elli", ru: "тридцать / сорок / пятьдесят", es: "treinta / cuarenta / cincuenta", fr: "trente / quarante / cinquante", pl: "trzydzieści / czterdzieści / pięćdziesiąt", uk: "тридцять / сорок / п'ятдесят", fa: "سی / چهل / پنجاه" } },
+    { de: "hundert / tausend", translations: { en: "hundred / thousand", ar: "مئة / ألف", tr: "yüz / bin", ru: "сто / тысяча", es: "cien / mil", fr: "cent / mille", pl: "sto / tysiąc", uk: "сто / тисяча", fa: "صد / هزار" } },
+    { de: "das Krankenhaus", translations: { en: "hospital", ar: "المستشفى", tr: "hastane", ru: "больница", es: "el hospital", fr: "l'hôpital", pl: "szpital", uk: "лікарня", fa: "بیمارستان" } },
+    { de: "die Apotheke", translations: { en: "pharmacy", ar: "الصيدلية", tr: "eczane", ru: "аптека", es: "la farmacia", fr: "la pharmacie", pl: "apteka", uk: "аптека", fa: "داروخانه" } },
+    { de: "der Supermarkt", translations: { en: "supermarket", ar: "السوبر ماركت", tr: "süpermarket", ru: "супермаркет", es: "el supermercado", fr: "le supermarché", pl: "supermarket", uk: "супермаркет", fa: "سوپرمارکت" } },
+    { de: "die Polizei", translations: { en: "police", ar: "الشرطة", tr: "polis", ru: "полиция", es: "la policía", fr: "la police", pl: "policja", uk: "поліція", fa: "پلیس" } },
+    { de: "Hilfe!", translations: { en: "Help!", ar: "النجدة!", tr: "İmdat!", ru: "Помогите!", es: "¡Ayuda!", fr: "Au secours !", pl: "Pomocy!", uk: "Допоможіть!", fa: "کمک!" } },
+    { de: "Ich verstehe nicht.", translations: { en: "I don't understand.", ar: "لا أفهم.", tr: "Anlamıyorum.", ru: "Я не понимаю.", es: "No entiendo.", fr: "Je ne comprends pas.", pl: "Nie rozumiem.", uk: "Я не розумію.", fa: "من نمی‌فهمم." } },
+    { de: "Sprechen Sie Englisch?", translations: { en: "Do you speak English?", ar: "هل تتحدث الإنجليزية؟", tr: "İngilizce konuşuyor musunuz?", ru: "Вы говорите по-английски?", es: "¿Habla usted inglés?", fr: "Parlez-vous anglais ?", pl: "Czy mówi Pan/Pani po angielsku?", uk: "Ви розмовляєте англійською?", fa: "انگلیسی صحبت می‌کنید؟" } },
+  ];
+  // Sätze, die AUSSCHLIESSLICH aus obiger Liste zusammengesetzt sind — genau das
+  // "Baukasten"-Prinzip: sobald man die Bausteine kennt, kann man diese Sätze
+  // selbst zusammensetzen, statt sie separat auswendig zu lernen.
+  const FIRST_STEPS_SENTENCES = [
+    { de: "Das ist für dich.", translations: { en: "This is for you.", ar: "هذا من أجلك.", tr: "Bu senin için.", ru: "Это для тебя.", es: "Esto es para ti.", fr: "C'est pour toi.", pl: "To jest dla ciebie.", uk: "Це для тебе.", fa: "این برای توست." } },
+    { de: "Ich bin von Deutschland.", translations: { en: "I am from Germany.", ar: "أنا من ألمانيا.", tr: "Ben Almanya'danım.", ru: "Я из Германии.", es: "Soy de Alemania.", fr: "Je suis d'Allemagne.", pl: "Jestem z Niemiec.", uk: "Я з Німеччини.", fa: "من اهل آلمان هستم." } },
+    { de: "Ich bin mit dir.", translations: { en: "I am with you.", ar: "أنا معك.", tr: "Ben seninle.", ru: "Я с тобой.", es: "Estoy contigo.", fr: "Je suis avec toi.", pl: "Jestem z tobą.", uk: "Я з тобою.", fa: "من با تو هستم." } },
+    { de: "Ich bin immer mit ihr.", translations: { en: "I am always with her.", ar: "أنا دائماً معها.", tr: "Ben her zaman onunla.", ru: "Я всегда с ней.", es: "Siempre estoy con ella.", fr: "Je suis toujours avec elle.", pl: "Zawsze jestem z nią.", uk: "Я завжди з нею.", fa: "من همیشه با او هستم." } },
+    { de: "Selbst wenn ich jetzt gehe.", translations: { en: "Even if I go now.", ar: "حتى لو ذهبت الآن.", tr: "Şimdi gitsem bile.", ru: "Даже если я пойду сейчас.", es: "Incluso si me voy ahora.", fr: "Même si je pars maintenant.", pl: "Nawet jeśli teraz pójdę.", uk: "Навіть якщо я піду зараз.", fa: "حتی اگر همین الان بروم." } },
+    { de: "Wo ist alles?", translations: { en: "Where is everything?", ar: "أين كل شيء؟", tr: "Her şey nerede?", ru: "Где всё?", es: "¿Dónde está todo?", fr: "Où est tout ?", pl: "Gdzie jest wszystko?", uk: "Де все?", fa: "همه چیز کجاست؟" } },
+    { de: "Ich mag den Kuchen.", translations: { en: "I like the cake.", ar: "أنا أحب الكيك.", tr: "Pastayı seviyorum.", ru: "Мне нравится торт.", es: "Me gusta el pastel.", fr: "J'aime le gâteau.", pl: "Lubię to ciasto.", uk: "Мені подобається торт.", fa: "من این کیک را دوست دارم." } },
+    { de: "Das ist eine tolle Person.", translations: { en: "That is a great person.", ar: "هذا شخص رائع.", tr: "Bu harika bir insan.", ru: "Это отличный человек.", es: "Esa es una persona genial.", fr: "C'est une personne géniale.", pl: "To wspaniała osoba.", uk: "Це чудова людина.", fa: "او آدم فوق‌العاده‌ای است." } },
+    // Zweiter Batch — korrigierte Fassungen von Buchbeispielen mit echten Fehlern
+    // (u. a. fehlendes Subjekt, falsche Wortstellung im Nebensatz, "ob" statt "wenn").
+    { de: "Ich bin schon im Auto mit deinem Sohn.", translations: { en: "I am already in the car with your son.", ar: "أنا بالفعل في السيارة مع ابنك.", tr: "Zaten oğlunla arabadayım.", ru: "Я уже в машине с твоим сыном.", es: "Ya estoy en el coche con tu hijo.", fr: "Je suis déjà dans la voiture avec ton fils.", pl: "Jestem już w samochodzie z twoim synem.", uk: "Я вже в машині з твоїм сином.", fa: "من الان توی ماشینم با پسرت." } },
+    { de: "Ich liebe das Hotel, weil ich den Strand sehen möchte.", translations: { en: "I love this hotel because I want to see the beach.", ar: "أحب هذا الفندق لأنني أريد رؤية الشاطئ.", tr: "Bu oteli seviyorum çünkü sahili görmek istiyorum.", ru: "Мне нравится этот отель, потому что я хочу видеть пляж.", es: "Me encanta este hotel porque quiero ver la playa.", fr: "J'adore cet hôtel parce que je veux voir la plage.", pl: "Uwielbiam ten hotel, ponieważ chcę widzieć plażę.", uk: "Мені подобається цей готель, бо я хочу бачити пляж.", fa: "من عاشق این هتلم چون می‌خواهم ساحل را ببینم." } },
+    { de: "Ich will wissen, ob sie hier sind, weil ich nach draußen gehen möchte.", translations: { en: "I want to know if they are here, because I want to go outside.", ar: "أريد أن أعرف إن كانوا هنا، لأنني أريد الخروج.", tr: "Burada olup olmadıklarını bilmek istiyorum, çünkü dışarı çıkmak istiyorum.", ru: "Я хочу знать, здесь ли они, потому что хочу выйти на улицу.", es: "Quiero saber si están aquí, porque quiero salir afuera.", fr: "Je veux savoir s'ils sont là, parce que je veux sortir.", pl: "Chcę wiedzieć, czy oni tu są, ponieważ chcę wyjść na zewnątrz.", uk: "Я хочу знати, чи вони тут, бо хочу вийти надвір.", fa: "می‌خواهم بدانم آن‌ها اینجا هستند یا نه، چون می‌خواهم بیرون بروم." } },
+    { de: "Ich muss die Tür für meine Schwester öffnen.", translations: { en: "I need to open the door for my sister.", ar: "يجب أن أفتح الباب لأختي.", tr: "Kız kardeşim için kapıyı açmam gerekiyor.", ru: "Мне нужно открыть дверь для сестры.", es: "Necesito abrir la puerta para mi hermana.", fr: "Je dois ouvrir la porte pour ma sœur.", pl: "Muszę otworzyć drzwi dla mojej siostry.", uk: "Мені потрібно відчинити двері для сестри.", fa: "باید در را برای خواهرم باز کنم." } },
+    { de: "Schön, dich kennenzulernen. Wie heißt du?", translations: { en: "Nice to meet you. What is your name?", ar: "سعيد بلقائك. ما اسمك؟", tr: "Tanıştığıma memnun oldum. Adın ne?", ru: "Приятно познакомиться. Как тебя зовут?", es: "Encantado de conocerte. ¿Cómo te llamas?", fr: "Enchanté de te rencontrer. Comment tu t'appelles ?", pl: "Miło cię poznać. Jak masz na imię?", uk: "Приємно познайомитися. Як тебе звати?", fa: "از آشناییت خوشوقتم. اسمت چیه؟" } },
+    { de: "Das gehört hier nicht hin, ich muss das nochmal prüfen.", translations: { en: "This doesn't belong here, I need to check again.", ar: "هذا لا ينتمي هنا، يجب أن أتحقق مرة أخرى.", tr: "Bu buraya ait değil, tekrar kontrol etmem gerekiyor.", ru: "Это не должно быть здесь, мне нужно проверить ещё раз.", es: "Esto no pertenece aquí, necesito revisar de nuevo.", fr: "Ça n'a pas sa place ici, je dois vérifier à nouveau.", pl: "To tu nie pasuje, muszę jeszcze raz sprawdzić.", uk: "Це тут не місце, мені треба перевірити ще раз.", fa: "این اینجا جایش نیست، باید دوباره بررسی کنم." } },
+    { de: "Auf jeden Fall kann ich zum Theater kommen und mit dir und deiner Schwester zusammensitzen.", translations: { en: "Of course I can come to the theater and sit together with you and your sister.", ar: "بالطبع أستطيع القدوم إلى المسرح والجلوس معك ومع أختك.", tr: "Elbette tiyatroya gelebilirim ve seninle ve kız kardeşinle birlikte oturabilirim.", ru: "Конечно, я могу прийти в театр и сидеть вместе с тобой и твоей сестрой.", es: "Por supuesto que puedo ir al teatro y sentarme junto a ti y tu hermana.", fr: "Bien sûr, je peux venir au théâtre et m'asseoir avec toi et ta sœur.", pl: "Oczywiście mogę przyjść do teatru i usiąść razem z tobą i twoją siostrą.", uk: "Звичайно, я можу прийти в театр і сісти разом з тобою і твоєю сестрою.", fa: "البته می‌توانم به تئاتر بیایم و کنار تو و خواهرت بنشینم." } },
+  ];
+  // Hinweise, die je nach Muttersprache erklären, WARUM eine deutsche Struktur so
+  // ist, wie sie ist — dieselbe deutsche Regel kann aus verschiedenen Blickwinkeln
+  // unterschiedlich überraschend wirken, deshalb pro Sprache eine eigene, passende
+  // Erklärung statt einer einzigen, nur für Englisch gedachten Anmerkung.
+  // ============================================================================
+  // "BUILDING BRIDGES" — das eigentliche Herzstück: sechs Kernverben, komplett
+  // durchkonjugiert. Der Trick: man kombiniert IMMER [konjugiertes Kernverb] +
+  // ... + [ein Infinitiv aus FIRST_STEPS_INFINITIVES] ans Satzende — dieses feste
+  // Muster führt automatisch zu einer grammatikalisch korrekten Wortstellung,
+  // ohne dass man die volle deutsche Grammatik schon kennen muss. Bewusst
+  // KORRIGIERT gegenüber der Buchvorlage: "mögen" bleibt konsequent von "lieben"
+  // getrennt (I like ≠ I love — im Original ständig vermischt), jede Person
+  // korrekt konjugiert (auch "she likes", nicht "she like"), keine falsch
+  // groß-/kleingeschriebenen Wörter.
+  const FIRST_STEPS_CORE_VERBS = [
+    {
+      id: "want", meaningDe: "möchten / wollen",
+      forms: [
+        { de: "ich möchte", translations: { en: "I want / I would like", ar: "أنا أريد", tr: "ben istiyorum", ru: "я хочу", es: "yo quiero", fr: "je veux", pl: "ja chcę", uk: "я хочу", fa: "من می‌خواهم" } },
+        { de: "du möchtest", translations: { en: "you want (informal)", ar: "أنت تريد", tr: "sen istiyorsun", ru: "ты хочешь", es: "tú quieres", fr: "tu veux", pl: "ty chcesz", uk: "ти хочеш", fa: "تو می‌خواهی" } },
+        { de: "er/sie/es möchte", translations: { en: "he/she/it wants", ar: "هو/هي يريد", tr: "o istiyor", ru: "он/она хочет", es: "él/ella quiere", fr: "il/elle veut", pl: "on/ona chce", uk: "він/вона хоче", fa: "او می‌خواهد" } },
+        { de: "wir möchten", translations: { en: "we want", ar: "نحن نريد", tr: "biz istiyoruz", ru: "мы хотим", es: "nosotros queremos", fr: "nous voulons", pl: "my chcemy", uk: "ми хочемо", fa: "ما می‌خواهیم" } },
+        { de: "ihr möchtet", translations: { en: "you all want", ar: "أنتم تريدون", tr: "siz istiyorsunuz", ru: "вы хотите", es: "vosotros queréis", fr: "vous voulez", pl: "wy chcecie", uk: "ви хочете", fa: "شما می‌خواهید" } },
+        { de: "sie/Sie möchten", translations: { en: "they want / you want (formal)", ar: "هم يريدون / حضرتك تريد", tr: "onlar istiyor / siz istiyorsunuz (resmi)", ru: "они хотят / Вы хотите (вежл.)", es: "ellos quieren / usted quiere", fr: "ils veulent / vous voulez (formel)", pl: "oni chcą / Pan/Pani chce", uk: "вони хочуть / Ви хочете (ввічл.)", fa: "آن‌ها می‌خواهند / شما می‌خواهید (رسمی)" } },
+      ],
+    },
+    {
+      id: "need", meaningDe: "brauchen / müssen",
+      forms: [
+        { de: "ich brauche", translations: { en: "I need", ar: "أنا أحتاج", tr: "ben ihtiyacım var", ru: "мне нужно", es: "yo necesito", fr: "j'ai besoin de", pl: "ja potrzebuję", uk: "мені потрібно", fa: "من نیاز دارم" } },
+        { de: "du brauchst", translations: { en: "you need (informal)", ar: "أنت تحتاج", tr: "senin ihtiyacın var", ru: "тебе нужно", es: "tú necesitas", fr: "tu as besoin de", pl: "ty potrzebujesz", uk: "тобі потрібно", fa: "تو نیاز داری" } },
+        { de: "er/sie/es braucht", translations: { en: "he/she/it needs", ar: "هو/هي يحتاج", tr: "onun ihtiyacı var", ru: "ему/ей нужно", es: "él/ella necesita", fr: "il/elle a besoin de", pl: "on/ona potrzebuje", uk: "йому/їй потрібно", fa: "او نیاز دارد" } },
+        { de: "wir brauchen", translations: { en: "we need", ar: "نحن نحتاج", tr: "bizim ihtiyacımız var", ru: "нам нужно", es: "nosotros necesitamos", fr: "nous avons besoin de", pl: "my potrzebujemy", uk: "нам потрібно", fa: "ما نیاز داریم" } },
+        { de: "ihr braucht", translations: { en: "you all need", ar: "أنتم تحتاجون", tr: "sizin ihtiyacınız var", ru: "вам нужно", es: "vosotros necesitáis", fr: "vous avez besoin de", pl: "wy potrzebujecie", uk: "вам потрібно", fa: "شما نیاز دارید" } },
+        { de: "sie/Sie brauchen", translations: { en: "they need / you need (formal)", ar: "هم يحتاجون / حضرتك تحتاج", tr: "onların ihtiyacı var / sizin ihtiyacınız var (resmi)", ru: "им нужно / Вам нужно (вежл.)", es: "ellos necesitan / usted necesita", fr: "ils ont besoin de / vous avez besoin de (formel)", pl: "oni potrzebują / Pan/Pani potrzebuje", uk: "їм потрібно / Вам потрібно (ввічл.)", fa: "آن‌ها نیاز دارند / شما نیاز دارید (رسمی)" } },
+      ],
+    },
+    {
+      id: "can", meaningDe: "können",
+      forms: [
+        { de: "ich kann", translations: { en: "I can", ar: "أنا أستطيع", tr: "ben yapabilirim", ru: "я могу", es: "yo puedo", fr: "je peux", pl: "ja mogę", uk: "я можу", fa: "من می‌توانم" } },
+        { de: "du kannst", translations: { en: "you can (informal)", ar: "أنت تستطيع", tr: "sen yapabilirsin", ru: "ты можешь", es: "tú puedes", fr: "tu peux", pl: "ty możesz", uk: "ти можеш", fa: "تو می‌توانی" } },
+        { de: "er/sie/es kann", translations: { en: "he/she/it can", ar: "هو/هي يستطيع", tr: "o yapabilir", ru: "он/она может", es: "él/ella puede", fr: "il/elle peut", pl: "on/ona może", uk: "він/вона може", fa: "او می‌تواند" } },
+        { de: "wir können", translations: { en: "we can", ar: "نحن نستطيع", tr: "biz yapabiliriz", ru: "мы можем", es: "nosotros podemos", fr: "nous pouvons", pl: "my możemy", uk: "ми можемо", fa: "ما می‌توانیم" } },
+        { de: "ihr könnt", translations: { en: "you all can", ar: "أنتم تستطيعون", tr: "siz yapabilirsiniz", ru: "вы можете", es: "vosotros podéis", fr: "vous pouvez", pl: "wy możecie", uk: "ви можете", fa: "شما می‌توانید" } },
+        { de: "sie/Sie können", translations: { en: "they can / you can (formal)", ar: "هم يستطيعون / حضرتك تستطيع", tr: "onlar yapabilir / siz yapabilirsiniz (resmi)", ru: "они могут / Вы можете (вежл.)", es: "ellos pueden / usted puede", fr: "ils peuvent / vous pouvez (formel)", pl: "oni mogą / Pan/Pani może", uk: "вони можуть / Ви можете (ввічл.)", fa: "آن‌ها می‌توانند / شما می‌توانید (رسمی)" } },
+      ],
+    },
+    {
+      id: "like", meaningDe: "mögen — NICHT „lieben“ (das ist stärker, siehe Hinweis unten)",
+      forms: [
+        { de: "ich mag", translations: { en: "I like", ar: "أنا أحب (أفضّل)", tr: "ben seviyorum (hoşlanıyorum)", ru: "мне нравится", es: "a mí me gusta", fr: "j'aime bien", pl: "ja lubię", uk: "мені подобається", fa: "من دوست دارم (می‌پسندم)" } },
+        { de: "du magst", translations: { en: "you like (informal)", ar: "أنت تحب", tr: "sen seviyorsun", ru: "тебе нравится", es: "a ti te gusta", fr: "tu aimes bien", pl: "ty lubisz", uk: "тобі подобається", fa: "تو دوست داری" } },
+        { de: "er/sie/es mag", translations: { en: "he/she/it likes", ar: "هو/هي يحب", tr: "o seviyor", ru: "ему/ей нравится", es: "a él/ella le gusta", fr: "il/elle aime bien", pl: "on/ona lubi", uk: "йому/їй подобається", fa: "او دوست دارد" } },
+        { de: "wir mögen", translations: { en: "we like", ar: "نحن نحب", tr: "biz seviyoruz", ru: "нам нравится", es: "a nosotros nos gusta", fr: "nous aimons bien", pl: "my lubimy", uk: "нам подобається", fa: "ما دوست داریم" } },
+        { de: "ihr mögt", translations: { en: "you all like", ar: "أنتم تحبون", tr: "siz seviyorsunuz", ru: "вам нравится", es: "a vosotros os gusta", fr: "vous aimez bien", pl: "wy lubicie", uk: "вам подобається", fa: "شما دوست دارید" } },
+        { de: "sie/Sie mögen", translations: { en: "they like / you like (formal)", ar: "هم يحبون / حضرتك تحب", tr: "onlar seviyor / siz seviyorsunuz (resmi)", ru: "им нравится / Вам нравится (вежл.)", es: "a ellos les gusta / a usted le gusta", fr: "ils aiment bien / vous aimez bien (formel)", pl: "oni lubią / Pan/Pani lubi", uk: "їм подобається / Вам подобається (ввічл.)", fa: "آن‌ها دوست دارند / شما دوست دارید (رسمی)" } },
+      ],
+    },
+    {
+      id: "go", meaningDe: "gehen",
+      forms: [
+        { de: "ich gehe", translations: { en: "I go", ar: "أنا أذهب", tr: "ben gidiyorum", ru: "я иду", es: "yo voy", fr: "je vais", pl: "ja idę", uk: "я йду", fa: "من می‌روم" } },
+        { de: "du gehst", translations: { en: "you go (informal)", ar: "أنت تذهب", tr: "sen gidiyorsun", ru: "ты идёшь", es: "tú vas", fr: "tu vas", pl: "ty idziesz", uk: "ти йдеш", fa: "تو می‌روی" } },
+        { de: "er/sie/es geht", translations: { en: "he/she/it goes", ar: "هو/هي يذهب", tr: "o gidiyor", ru: "он/она идёт", es: "él/ella va", fr: "il/elle va", pl: "on/ona idzie", uk: "він/вона йде", fa: "او می‌رود" } },
+        { de: "wir gehen", translations: { en: "we go", ar: "نحن نذهب", tr: "biz gidiyoruz", ru: "мы идём", es: "nosotros vamos", fr: "nous allons", pl: "my idziemy", uk: "ми йдемо", fa: "ما می‌رویم" } },
+        { de: "ihr geht", translations: { en: "you all go", ar: "أنتم تذهبون", tr: "siz gidiyorsunuz", ru: "вы идёте", es: "vosotros vais", fr: "vous allez", pl: "wy idziecie", uk: "ви йдете", fa: "شما می‌روید" } },
+        { de: "sie/Sie gehen", translations: { en: "they go / you go (formal)", ar: "هم يذهبون / حضرتك تذهب", tr: "onlar gidiyor / siz gidiyorsunuz (resmi)", ru: "они идут / Вы идёте (вежл.)", es: "ellos van / usted va", fr: "ils vont / vous allez (formel)", pl: "oni idą / Pan/Pani idzie", uk: "вони йдуть / Ви йдете (ввічл.)", fa: "آن‌ها می‌روند / شما می‌روید (رسمی)" } },
+      ],
+    },
+    {
+      id: "have", meaningDe: "haben (auch für „muss“/„habe zu“ verwendbar)",
+      forms: [
+        { de: "ich habe", translations: { en: "I have", ar: "أنا عندي", tr: "benim var", ru: "у меня есть", es: "yo tengo", fr: "j'ai", pl: "ja mam", uk: "я маю", fa: "من دارم" } },
+        { de: "du hast", translations: { en: "you have (informal)", ar: "أنت عندك", tr: "senin var", ru: "у тебя есть", es: "tú tienes", fr: "tu as", pl: "ty masz", uk: "ти маєш", fa: "تو داری" } },
+        { de: "er/sie/es hat", translations: { en: "he/she/it has", ar: "هو/هي عنده", tr: "onun var", ru: "у него/неё есть", es: "él/ella tiene", fr: "il/elle a", pl: "on/ona ma", uk: "він/вона має", fa: "او دارد" } },
+        { de: "wir haben", translations: { en: "we have", ar: "نحن عندنا", tr: "bizim var", ru: "у нас есть", es: "nosotros tenemos", fr: "nous avons", pl: "my mamy", uk: "ми маємо", fa: "ما داریم" } },
+        { de: "ihr habt", translations: { en: "you all have", ar: "أنتم عندكم", tr: "sizin var", ru: "у вас есть", es: "vosotros tenéis", fr: "vous avez", pl: "wy macie", uk: "ви маєте", fa: "شما دارید" } },
+        { de: "sie/Sie haben", translations: { en: "they have / you have (formal)", ar: "هم عندهم / حضرتك عندك", tr: "onların var / sizin var (resmi)", ru: "у них есть / у Вас есть (вежл.)", es: "ellos tienen / usted tiene", fr: "ils ont / vous avez (formel)", pl: "oni mają / Pan/Pani ma", uk: "вони мають / Ви маєте (ввічл.)", fa: "آن‌ها دارند / شما دارید (رسمی)" } },
+      ],
+    },
+  ];
+  // Reine Infinitive zum Einsetzen — bewusst OHNE "zu" davor (das Muster fügt es an der
+  // richtigen Stelle automatisch hinzu) und mit korrigierter Bedeutung gegenüber dem
+  // Original (z. B. "schauen" für "to look" statt fälschlich "sehen").
+  const FIRST_STEPS_INFINITIVES = [
+    { de: "gehen", translations: { en: "to go", ar: "الذهاب", tr: "gitmek", ru: "идти", es: "ir", fr: "aller", pl: "iść", uk: "йти", fa: "رفتن" } },
+    { de: "sehen", translations: { en: "to see", ar: "الرؤية", tr: "görmek", ru: "видеть", es: "ver", fr: "voir", pl: "widzieć", uk: "бачити", fa: "دیدن" } },
+    { de: "schauen", translations: { en: "to look", ar: "النظر", tr: "bakmak", ru: "смотреть", es: "mirar", fr: "regarder", pl: "patrzeć", uk: "дивитися", fa: "نگاه کردن" } },
+    { de: "essen", translations: { en: "to eat", ar: "الأكل", tr: "yemek yemek", ru: "есть", es: "comer", fr: "manger", pl: "jeść", uk: "їсти", fa: "خوردن" } },
+    { de: "trinken", translations: { en: "to drink", ar: "الشرب", tr: "içmek", ru: "пить", es: "beber", fr: "boire", pl: "pić", uk: "пити", fa: "نوشیدن" } },
+    { de: "sprechen", translations: { en: "to speak", ar: "التحدث", tr: "konuşmak", ru: "говорить", es: "hablar", fr: "parler", pl: "mówić", uk: "говорити", fa: "صحبت کردن" } },
+    { de: "verstehen", translations: { en: "to understand", ar: "الفهم", tr: "anlamak", ru: "понимать", es: "entender", fr: "comprendre", pl: "rozumieć", uk: "розуміти", fa: "فهمیدن" } },
+    { de: "lernen", translations: { en: "to learn", ar: "التعلم", tr: "öğrenmek", ru: "учить", es: "aprender", fr: "apprendre", pl: "uczyć się", uk: "вчити", fa: "یاد گرفتن" } },
+    { de: "arbeiten", translations: { en: "to work", ar: "العمل", tr: "çalışmak", ru: "работать", es: "trabajar", fr: "travailler", pl: "pracować", uk: "працювати", fa: "کار کردن" } },
+    { de: "schlafen", translations: { en: "to sleep", ar: "النوم", tr: "uyumak", ru: "спать", es: "dormir", fr: "dormir", pl: "spać", uk: "спати", fa: "خوابیدن" } },
+    { de: "helfen", translations: { en: "to help", ar: "المساعدة", tr: "yardım etmek", ru: "помогать", es: "ayudar", fr: "aider", pl: "pomagać", uk: "допомагати", fa: "کمک کردن" } },
+    { de: "kaufen", translations: { en: "to buy", ar: "الشراء", tr: "satın almak", ru: "покупать", es: "comprar", fr: "acheter", pl: "kupować", uk: "купувати", fa: "خریدن" } },
+    { de: "bezahlen", translations: { en: "to pay", ar: "الدفع", tr: "ödemek", ru: "платить", es: "pagar", fr: "payer", pl: "płacić", uk: "платити", fa: "پرداختن" } },
+    { de: "kommen", translations: { en: "to come", ar: "القدوم", tr: "gelmek", ru: "приходить", es: "venir", fr: "venir", pl: "przychodzić", uk: "приходити", fa: "آمدن" } },
+    { de: "bleiben", translations: { en: "to stay", ar: "البقاء", tr: "kalmak", ru: "оставаться", es: "quedarse", fr: "rester", pl: "zostać", uk: "залишатися", fa: "ماندن" } },
+    { de: "wissen", translations: { en: "to know", ar: "المعرفة", tr: "bilmek", ru: "знать", es: "saber", fr: "savoir", pl: "wiedzieć", uk: "знати", fa: "دانستن" } },
+    { de: "fragen", translations: { en: "to ask", ar: "السؤال", tr: "sormak", ru: "спрашивать", es: "preguntar", fr: "demander", pl: "pytać", uk: "питати", fa: "پرسیدن" } },
+    { de: "anrufen", translations: { en: "to call (phone)", ar: "الاتصال", tr: "aramak", ru: "звонить", es: "llamar", fr: "appeler", pl: "dzwonić", uk: "телефонувати", fa: "تماس گرفتن" } },
+    { de: "schreiben", translations: { en: "to write", ar: "الكتابة", tr: "yazmak", ru: "писать", es: "escribir", fr: "écrire", pl: "pisać", uk: "писати", fa: "نوشتن" } },
+    { de: "lesen", translations: { en: "to read", ar: "القراءة", tr: "okumak", ru: "читать", es: "leer", fr: "lire", pl: "czytać", uk: "читати", fa: "خواندن" } },
+    { de: "denken", translations: { en: "to think", ar: "التفكير", tr: "düşünmek", ru: "думать", es: "pensar", fr: "penser", pl: "myśleć", uk: "думати", fa: "فکر کردن" } },
+    { de: "geben", translations: { en: "to give", ar: "الإعطاء", tr: "vermek", ru: "давать", es: "dar", fr: "donner", pl: "dawać", uk: "давати", fa: "دادن" } },
+    { de: "nehmen", translations: { en: "to take", ar: "الأخذ", tr: "almak", ru: "брать", es: "tomar", fr: "prendre", pl: "brać", uk: "брати", fa: "گرفتن" } },
+    { de: "machen", translations: { en: "to do / to make", ar: "الفعل / الصنع", tr: "yapmak", ru: "делать", es: "hacer", fr: "faire", pl: "robić", uk: "робити", fa: "انجام دادن" } },
+    { de: "finden", translations: { en: "to find", ar: "الإيجاد", tr: "bulmak", ru: "находить", es: "encontrar", fr: "trouver", pl: "znajdować", uk: "знаходити", fa: "پیدا کردن" } },
+    { de: "besuchen", translations: { en: "to visit", ar: "الزيارة", tr: "ziyaret etmek", ru: "посещать", es: "visitar", fr: "visiter", pl: "odwiedzać", uk: "відвідувати", fa: "ملاقات کردن" } },
+    { de: "beginnen", translations: { en: "to begin", ar: "البدء", tr: "başlamak", ru: "начинать", es: "empezar", fr: "commencer", pl: "zaczynać", uk: "починати", fa: "شروع کردن" } },
+    { de: "spielen", translations: { en: "to play", ar: "اللعب", tr: "oynamak", ru: "играть", es: "jugar", fr: "jouer", pl: "grać", uk: "грати", fa: "بازی کردن" } },
+    { de: "reisen", translations: { en: "to travel", ar: "السفر", tr: "seyahat etmek", ru: "путешествовать", es: "viajar", fr: "voyager", pl: "podróżować", uk: "подорожувати", fa: "سفر کردن" } },
+  ];
+  // Beispiel-Kombinationen: [konjugiertes Kernverb] + Ergänzung + [Infinitiv am Ende]
+  // — genau dieses Muster können Lernende jetzt selbst mit beliebigen anderen
+  // Infinitiven aus der Liste oben nachbauen.
+  const FIRST_STEPS_COMBOS = [
+    { de: "Ich möchte Deutsch lernen.", translations: { en: "I want to learn German.", ar: "أريد أن أتعلم الألمانية.", tr: "Almanca öğrenmek istiyorum.", ru: "Я хочу учить немецкий.", es: "Quiero aprender alemán.", fr: "Je veux apprendre l'allemand.", pl: "Chcę uczyć się niemieckiego.", uk: "Я хочу вчити німецьку.", fa: "من می‌خواهم آلمانی یاد بگیرم." } },
+    { de: "Ich brauche jetzt Wasser.", translations: { en: "I need water now.", ar: "أحتاج ماءً الآن.", tr: "Şimdi suya ihtiyacım var.", ru: "Мне нужна вода сейчас.", es: "Necesito agua ahora.", fr: "J'ai besoin d'eau maintenant.", pl: "Potrzebuję teraz wody.", uk: "Мені потрібна вода зараз.", fa: "من الان به آب نیاز دارم." } },
+    { de: "Ich kann das nicht verstehen.", translations: { en: "I can't understand that.", ar: "لا أستطيع فهم ذلك.", tr: "Bunu anlayamıyorum.", ru: "Я не могу это понять.", es: "No puedo entender eso.", fr: "Je ne peux pas comprendre cela.", pl: "Nie mogę tego zrozumieć.", uk: "Я не можу цього зрозуміти.", fa: "من نمی‌توانم این را بفهمم." } },
+    { de: "Ich mag hier essen.", translations: { en: "I like to eat here.", ar: "أحب الأكل هنا.", tr: "Burada yemeyi seviyorum.", ru: "Мне нравится есть здесь.", es: "Me gusta comer aquí.", fr: "J'aime bien manger ici.", pl: "Lubię tu jeść.", uk: "Мені подобається їсти тут.", fa: "من دوست دارم اینجا غذا بخورم." } },
+    { de: "Wir gehen jetzt arbeiten.", translations: { en: "We are going to work now.", ar: "نحن ذاهبون للعمل الآن.", tr: "Şimdi çalışmaya gidiyoruz.", ru: "Мы идём работать сейчас.", es: "Ahora vamos a trabajar.", fr: "Nous allons travailler maintenant.", pl: "Idziemy teraz pracować.", uk: "Ми йдемо працювати зараз.", fa: "ما الان می‌رویم سر کار." } },
+    { de: "Sie hat Zeit zu sprechen.", translations: { en: "She has time to talk.", ar: "لديها وقت للتحدث.", tr: "Konuşmaya vakti var.", ru: "У неё есть время поговорить.", es: "Ella tiene tiempo para hablar.", fr: "Elle a le temps de parler.", pl: "Ona ma czas, żeby porozmawiać.", uk: "Вона має час поговорити.", fa: "او وقت دارد صحبت کند." } },
+    { de: "Ich möchte zum Bahnhof gehen.", translations: { en: "I want to go to the train station.", ar: "أريد الذهاب إلى محطة القطار.", tr: "Tren istasyonuna gitmek istiyorum.", ru: "Я хочу пойти на вокзал.", es: "Quiero ir a la estación de tren.", fr: "Je veux aller à la gare.", pl: "Chcę iść na dworzec.", uk: "Я хочу піти на вокзал.", fa: "می‌خواهم به ایستگاه قطار بروم." } },
+    { de: "Wir können das Museum heute sehen.", translations: { en: "We can see the museum today.", ar: "نستطيع رؤية المتحف اليوم.", tr: "Bugün müzeyi görebiliriz.", ru: "Мы можем увидеть музей сегодня.", es: "Podemos ver el museo hoy.", fr: "Nous pouvons voir le musée aujourd'hui.", pl: "Możemy zobaczyć muzeum dzisiaj.", uk: "Ми можемо побачити музей сьогодні.", fa: "امروز می‌توانیم موزه را ببینیم." } },
+    { de: "Ich habe ein Geschenk für dich.", translations: { en: "I have a gift for you.", ar: "لدي هدية لك.", tr: "Senin için bir hediyem var.", ru: "У меня есть подарок для тебя.", es: "Tengo un regalo para ti.", fr: "J'ai un cadeau pour toi.", pl: "Mam dla ciebie prezent.", uk: "У мене є подарунок для тебе.", fa: "من برایت هدیه دارم." } },
+    { de: "Ich möchte einen Kaffee trinken.", translations: { en: "I want to drink a coffee.", ar: "أريد أن أشرب قهوة.", tr: "Bir kahve içmek istiyorum.", ru: "Я хочу выпить кофе.", es: "Quiero tomar un café.", fr: "Je veux boire un café.", pl: "Chcę wypić kawę.", uk: "Я хочу випити каву.", fa: "می‌خواهم قهوه بنوشم." } },
+    { de: "Wir können zusammen Brot kaufen.", translations: { en: "We can buy bread together.", ar: "نستطيع شراء الخبز معاً.", tr: "Birlikte ekmek alabiliriz.", ru: "Мы можем купить хлеб вместе.", es: "Podemos comprar pan juntos.", fr: "Nous pouvons acheter du pain ensemble.", pl: "Możemy razem kupić chleb.", uk: "Ми можемо разом купити хліб.", fa: "می‌توانیم با هم نان بخریم." } },
+    { de: "Mein Kind mag Äpfel essen.", translations: { en: "My child likes to eat apples.", ar: "طفلي يحب أكل التفاح.", tr: "Çocuğum elma yemeyi seviyor.", ru: "Мой ребёнок любит есть яблоки.", es: "A mi hijo le gusta comer manzanas.", fr: "Mon enfant aime manger des pommes.", pl: "Moje dziecko lubi jeść jabłka.", uk: "Моя дитина любить їсти яблука.", fa: "بچه‌ام دوست دارد سیب بخورد." } },
+    // Fragen mit demselben Baukasten: das konjugierte Kernverb wandert einfach an den
+    // Satzanfang, der Infinitiv bleibt am Ende — dieselbe feste Struktur, jetzt als Frage.
+    { de: "Möchtest du etwas trinken?", translations: { en: "Would you like to drink something?", ar: "هل تريد أن تشرب شيئاً؟", tr: "Bir şey içmek ister misin?", ru: "Хочешь что-нибудь выпить?", es: "¿Quieres beber algo?", fr: "Veux-tu boire quelque chose ?", pl: "Chcesz się czegoś napić?", uk: "Хочеш щось випити?", fa: "می‌خواهی چیزی بنوشی؟" } },
+    { de: "Kannst du mir helfen?", translations: { en: "Can you help me?", ar: "هل تستطيع مساعدتي؟", tr: "Bana yardım edebilir misin?", ru: "Можешь мне помочь?", es: "¿Puedes ayudarme?", fr: "Peux-tu m'aider ?", pl: "Możesz mi pomóc?", uk: "Можеш мені допомогти?", fa: "می‌توانی به من کمک کنی؟" } },
+    { de: "Brauchst du jetzt Geld?", translations: { en: "Do you need money now?", ar: "هل تحتاج مالاً الآن؟", tr: "Şimdi paraya ihtiyacın var mı?", ru: "Тебе нужны деньги сейчас?", es: "¿Necesitas dinero ahora?", fr: "As-tu besoin d'argent maintenant ?", pl: "Potrzebujesz teraz pieniędzy?", uk: "Тобі потрібні гроші зараз?", fa: "الان به پول نیاز داری؟" } },
+    { de: "Magst du hier arbeiten?", translations: { en: "Do you like working here?", ar: "هل تحب العمل هنا؟", tr: "Burada çalışmayı seviyor musun?", ru: "Тебе нравится работать здесь?", es: "¿Te gusta trabajar aquí?", fr: "Aimes-tu travailler ici ?", pl: "Lubisz tu pracować?", uk: "Тобі подобається тут працювати?", fa: "دوست داری اینجا کار کنی؟" } },
+    { de: "Geht ihr heute Abend aus?", translations: { en: "Are you all going out tonight?", ar: "هل ستخرجون هذا المساء؟", tr: "Bu akşam dışarı çıkıyor musunuz?", ru: "Вы идёте куда-нибудь сегодня вечером?", es: "¿Salís esta noche?", fr: "Sortez-vous ce soir ?", pl: "Wychodzicie dziś wieczorem?", uk: "Ви йдете кудись сьогодні ввечері?", fa: "امشب بیرون می‌روید؟" } },
+    { de: "Haben Sie einen Moment Zeit?", translations: { en: "Do you have a moment (formal)?", ar: "هل لديك لحظة من الوقت؟ (رسمي)", tr: "Bir dakikanız var mı? (resmi)", ru: "У Вас есть минутка? (вежл.)", es: "¿Tiene usted un momento?", fr: "Avez-vous un moment (formel) ?", pl: "Ma Pan/Pani chwilę czasu?", uk: "У Вас є хвилинка? (ввічл.)", fa: "شما وقت دارید؟ (رسمی)" } },
+    { de: "Ich möchte am Wochenende einkaufen gehen.", translations: { en: "I want to go shopping on the weekend.", ar: "أريد الذهاب للتسوق في عطلة نهاية الأسبوع.", tr: "Hafta sonu alışverişe gitmek istiyorum.", ru: "Я хочу пойти за покупками на выходных.", es: "Quiero ir de compras el fin de semana.", fr: "Je veux faire les courses le week-end.", pl: "Chcę iść na zakupy w weekend.", uk: "Я хочу піти по покупки на вихідних.", fa: "می‌خواهم آخر هفته بروم خرید." } },
+    { de: "Sie muss früh aufwachen, weil sie arbeiten muss.", translations: { en: "She has to wake up early because she needs to work.", ar: "يجب أن تستيقظ باكراً لأنها تحتاج إلى العمل.", tr: "Erken uyanması gerekiyor çünkü çalışması gerekiyor.", ru: "Ей нужно рано просыпаться, потому что ей нужно работать.", es: "Tiene que despertarse temprano porque necesita trabajar.", fr: "Elle doit se réveiller tôt parce qu'elle doit travailler.", pl: "Musi wcześnie się budzić, ponieważ musi pracować.", uk: "Їй треба рано прокидатися, бо їй треба працювати.", fa: "او باید زود بیدار شود چون باید کار کند." } },
+  ];
+
+
+  const FIRST_STEPS_CULTURE_NOTES = {
+    du_forms: {
+      en: "English has just one word for \"you\" — German has several (du, dich, dir, ihr, sie, Sie), depending on the sentence's grammatical role and how formal you're being.",
+      ar: "في العربية تتغيّر صيغة المخاطب حسب الجنس والعدد؛ في الألمانية تتغيّر بدلاً من ذلك حسب موقع الكلمة في الجملة (فاعل/مفعول به) وحسب درجة الرسمية — فكرة مختلفة، وليست أصعب.",
+      tr: "Türkçede \"sen/siz\" ayrımı nezaket içindir; Almancada ayrıca cümledeki dilbilgisel rolüne göre de (özne/nesne) farklı biçimler vardır (du, dich, dir, ihr, sie, Sie).",
+      ru: "В русском «ты/вы» меняется только по вежливости; в немецком форма ещё и меняется в зависимости от грамматической роли в предложении (du, dich, dir, ihr, sie, Sie).",
+      es: "En español \"tú/usted\" cambia solo por formalidad; en alemán además cambia según el rol gramatical en la frase (du, dich, dir, ihr, sie, Sie).",
+      fr: "En français, \"tu/vous\" varie seulement selon la politesse ; en allemand, la forme change aussi selon le rôle grammatical dans la phrase (du, dich, dir, ihr, sie, Sie).",
+      pl: "W polskim \"ty/pan/pani\" zmienia się tylko według grzeczności; w niemieckim forma zmienia się dodatkowo według roli gramatycznej w zdaniu (du, dich, dir, ihr, sie, Sie).",
+      uk: "В українській «ти/ви» змінюється лише за ввічливістю; у німецькій форма ще й змінюється залежно від граматичної ролі в реченні (du, dich, dir, ihr, sie, Sie).",
+      fa: "در فارسی «تو/شما» فقط بر اساس ادب تغییر می‌کند؛ در آلمانی شکل کلمه بر اساس نقش دستوری در جمله هم تغییر می‌کند (du, dich, dir, ihr, sie, Sie).",
+    },
+    plural_article: {
+      en: "German has three genders in the singular (der/die/das) — but in the plural, all of them simply become \"die\", no matter the original gender.",
+      ar: "الألمانية لها ثلاث صيغ للمفرد حسب الجنس النحوي (der/die/das) — لكن في الجمع تتحول كل الكلمات إلى \"die\" بغض النظر عن جنسها الأصلي، وهذا يبسّط الأمر لاحقاً.",
+      tr: "Almancada tekilde üç \"cinsiyet\" makalesi vardır (der/die/das) — ama çoğulda bunların hepsi, orijinal cinsiyetten bağımsız olarak sadece \"die\" olur.",
+      ru: "В немецком в единственном числе три рода (der/die/das) — но во множественном числе все они становятся просто «die», независимо от исходного рода.",
+      es: "El alemán tiene tres géneros en singular (der/die/das) — pero en plural, todos se convierten simplemente en \"die\", sin importar el género original.",
+      fr: "L'allemand a trois genres au singulier (der/die/das) — mais au pluriel, ils deviennent tous simplement \"die\", quel que soit le genre d'origine.",
+      pl: "Niemiecki ma trzy rodzaje w liczbie pojedynczej (der/die/das) — ale w liczbie mnogiej wszystkie stają się po prostu \"die\", niezależnie od pierwotnego rodzaju.",
+      uk: "У німецькій мові є три роди в однині (der/die/das) — але у множині всі вони стають просто «die», незалежно від початкового роду.",
+      fa: "آلمانی سه جنس دستوری در مفرد دارد (der/die/das) — اما در جمع، همه آن‌ها بدون توجه به جنس اصلی، فقط «die» می‌شوند.",
+    },
+    separable_verbs: {
+      en: "Verbs like \"ankommen\" (to arrive) split apart in the sentence: the prefix \"an-\" jumps to the very end. \"Ich komme um acht an\" literally reads \"I come at eight [arrive]\" — the meaning only completes at the last word. This isn't a random quirk — German consistently pushes the \"new information\" to sentence-final position.",
+      ar: "أفعال مثل \"ankommen\" (يصل) تنقسم داخل الجملة: البادئة \"an-\" تقفز إلى آخر الجملة تماماً. \"Ich komme um acht an\" تُقرأ حرفياً \"أنا آتي في الثامنة [أصل]\" — يكتمل المعنى فقط عند آخر كلمة. هذا ليس أمراً عشوائياً — الألمانية تضع دائماً \"المعلومة الجديدة\" في نهاية الجملة.",
+      tr: "\"Ankommen\" (varmak) gibi fiiller cümle içinde ikiye ayrılır: \"an-\" öneki cümlenin en sonuna atlar. \"Ich komme um acht an\" tam anlamıyla \"Sekizde geliyorum [varıyorum]\" şeklinde okunur — anlam ancak son kelimeyle tamamlanır. Bu rastgele bir tuhaflık değil — Almanca \"yeni bilgiyi\" tutarlı biçimde cümle sonuna yerleştirir.",
+      ru: "Такие глаголы, как «ankommen» (прибывать), разделяются в предложении: приставка «an-» перемещается в самый конец. «Ich komme um acht an» дословно читается как «Я прихожу в восемь [прибываю]» — смысл завершается только на последнем слове. Это не случайность — немецкий язык последовательно помещает «новую информацию» в конец предложения.",
+      es: "Verbos como \"ankommen\" (llegar) se dividen en la frase: el prefijo \"an-\" salta hasta el final. \"Ich komme um acht an\" se lee literalmente \"Vengo a las ocho [llego]\" — el significado solo se completa en la última palabra. No es una rareza aleatoria — el alemán coloca sistemáticamente la \"información nueva\" al final de la frase.",
+      fr: "Des verbes comme \"ankommen\" (arriver) se séparent dans la phrase : le préfixe \"an-\" saute tout à la fin. \"Ich komme um acht an\" se lit littéralement \"Je viens à huit heures [j'arrive]\" — le sens ne se complète qu'au dernier mot. Ce n'est pas une bizarrerie aléatoire — l'allemand place systématiquement la \"nouvelle information\" en fin de phrase.",
+      pl: "Czasowniki takie jak \"ankommen\" (przybyć) rozdzielają się w zdaniu: przedrostek \"an-\" przeskakuje na sam koniec. \"Ich komme um acht an\" dosłownie brzmi \"Przychodzę o ósmej [przybywam]\" — znaczenie dopełnia się dopiero na ostatnim słowie. To nie przypadkowa dziwność — niemiecki konsekwentnie umieszcza \"nową informację\" na końcu zdania.",
+      uk: "Дієслова на кшталт «ankommen» (прибувати) розділяються в реченні: префікс «an-» перестрибує в самий кінець. «Ich komme um acht an» буквально читається як «Я приходжу о восьмій [прибуваю]» — значення завершується лише на останньому слові. Це не випадкова дивність — німецька послідовно ставить «нову інформацію» в кінець речення.",
+      fa: "افعالی مثل «ankommen» (رسیدن) در جمله از هم جدا می‌شوند: پیشوند «an-» به انتهای جمله می‌پرد. «Ich komme um acht an» به معنای واقعی کلمه یعنی «من ساعت هشت می‌آیم [می‌رسم]» — معنا فقط با آخرین کلمه کامل می‌شود. این یک عجیب‌وغریب بودن تصادفی نیست — آلمانی به طور مداوم «اطلاعات جدید» را در انتهای جمله قرار می‌دهد.",
+    },
+    verb_at_end: {
+      en: "In a clause starting with \"weil\" (because), \"dass\" (that), or \"ob\" (whether), the conjugated verb moves all the way to the end: \"weil ich Deutsch lerne\" (because I German learn). It feels backwards in English, but it's completely predictable once you know the rule — and it's the exact same rule behind the \"Building Bridges\" pattern in this section.",
+      ar: "في جملة تبدأ بـ \"weil\" (لأن) أو \"dass\" (أنّ) أو \"ob\" (هل/إذا)، ينتقل الفعل المصرَّف إلى آخر الجملة تماماً: \"weil ich Deutsch lerne\" (لأنني ألمانية أتعلّم). يبدو الأمر معكوساً بالمقارنة مع العربية، لكنه متوقَّع تماماً بمجرد معرفة القاعدة — وهي نفس القاعدة وراء نمط \"بناء الجسور\" في هذا القسم.",
+      tr: "\"Weil\" (çünkü), \"dass\" (ki) veya \"ob\" (olup olmadığı) ile başlayan bir cümlede, çekimli fiil cümlenin en sonuna gider: \"weil ich Deutsch lerne\" (çünkü ben Almanca öğreniyorum). Türkçeye göre tersmiş gibi hissettirir, ama kuralı bir kez öğrendiğinizde tamamen tahmin edilebilir hale gelir — ve bu, bu bölümdeki \"Köprü Kurma\" düzeninin arkasındaki aynı kuraldır.",
+      ru: "В придаточном предложении, начинающемся с «weil» (потому что), «dass» (что) или «ob» (ли), спрягаемый глагол уходит в самый конец: «weil ich Deutsch lerne» (потому что я немецкий учу). Это кажется перевёрнутым, но это полностью предсказуемо, как только вы знаете правило — и это то же самое правило, что лежит в основе схемы «Building Bridges» в этом разделе.",
+      es: "En una oración que empieza con \"weil\" (porque), \"dass\" (que) u \"ob\" (si), el verbo conjugado se desplaza hasta el final: \"weil ich Deutsch lerne\" (porque yo alemán aprendo). Parece invertido, pero es totalmente predecible una vez que conoces la regla — y es exactamente la misma regla detrás del patrón \"Building Bridges\" de esta sección.",
+      fr: "Dans une proposition commençant par \"weil\" (parce que), \"dass\" (que) ou \"ob\" (si), le verbe conjugué se déplace tout à la fin : \"weil ich Deutsch lerne\" (parce que j'allemand apprends). Cela semble inversé, mais c'est totalement prévisible une fois la règle connue — et c'est exactement la même règle derrière le schéma \"Building Bridges\" de cette section.",
+      pl: "W zdaniu zaczynającym się od \"weil\" (ponieważ), \"dass\" (że) lub \"ob\" (czy), odmieniony czasownik przesuwa się na sam koniec: \"weil ich Deutsch lerne\" (ponieważ ja niemiecki uczę się). Wydaje się to odwrócone, ale jest całkowicie przewidywalne, gdy już znasz zasadę — i jest to dokładnie ta sama zasada, która stoi za wzorem \"Building Bridges\" w tej sekcji.",
+      uk: "У реченні, що починається з «weil» (тому що), «dass» (що) або «ob» (чи), відмінюване дієслово переходить у самий кінець: «weil ich Deutsch lerne» (тому що я німецьку вчу). Це здається перевернутим, але це повністю передбачувано, щойно ви знаєте правило — і це те саме правило, що лежить в основі схеми «Building Bridges» у цьому розділі.",
+      fa: "در جمله‌ای که با «weil» (چون)، «dass» (که) یا «ob» (آیا) شروع می‌شود، فعل صرف‌شده به انتهای جمله می‌رود: «weil ich Deutsch lerne» (چون من آلمانی یاد می‌گیرم). این برعکس به نظر می‌رسد، اما وقتی قانون را بدانید کاملاً قابل پیش‌بینی است — و این دقیقاً همان قانونی است که پشت الگوی «Building Bridges» در این بخش قرار دارد.",
+    },
+    noun_capitalization: {
+      en: "German capitalizes EVERY noun, not just names — \"das Haus\" (the house), \"die Liebe\" (love), \"das Essen\" (food/eating). This isn't decoration: capitalization instantly tells you \"this word is a thing\", which actually makes long sentences easier to scan once you're used to it.",
+      ar: "الألمانية تكتب بحرف كبير كل اسم، وليس فقط أسماء الأعلام — \"das Haus\" (البيت)، \"die Liebe\" (الحب)، \"das Essen\" (الطعام/الأكل). هذا ليس مجرد زخرفة: الحرف الكبير يخبرك فوراً \"هذه الكلمة شيء (اسم)\"، وهو ما يسهّل فعلياً قراءة الجمل الطويلة بمجرد أن تعتاد عليه.",
+      tr: "Almanca sadece özel isimleri değil, HER ismi büyük harfle yazar — \"das Haus\" (ev), \"die Liebe\" (aşk), \"das Essen\" (yemek). Bu bir süsleme değildir: büyük harf size anında \"bu kelime bir isimdir\" der, bu da alıştıktan sonra uzun cümleleri taramayı gerçekten kolaylaştırır.",
+      ru: "В немецком с большой буквы пишется КАЖДОЕ существительное, а не только имена — «das Haus» (дом), «die Liebe» (любовь), «das Essen» (еда). Это не украшение: заглавная буква сразу говорит вам «это слово — предмет», что на самом деле облегчает чтение длинных предложений, когда вы привыкнете.",
+      es: "El alemán escribe con mayúscula CADA sustantivo, no solo los nombres propios — \"das Haus\" (la casa), \"die Liebe\" (el amor), \"das Essen\" (la comida). No es decoración: la mayúscula te dice al instante \"esta palabra es una cosa\", lo que facilita leer frases largas una vez que te acostumbras.",
+      fr: "L'allemand met une majuscule à CHAQUE nom commun, pas seulement aux noms propres — \"das Haus\" (la maison), \"die Liebe\" (l'amour), \"das Essen\" (la nourriture). Ce n'est pas décoratif : la majuscule indique immédiatement \"ce mot est une chose\", ce qui facilite en fait la lecture des phrases longues une fois qu'on y est habitué.",
+      pl: "Niemiecki pisze wielką literą KAŻDY rzeczownik, nie tylko nazwy własne — \"das Haus\" (dom), \"die Liebe\" (miłość), \"das Essen\" (jedzenie). To nie ozdoba: wielka litera od razu mówi \"to słowo jest rzeczą\", co ułatwia czytanie długich zdań, gdy się już przyzwyczaisz.",
+      uk: "У німецькій з великої літери пишеться КОЖЕН іменник, а не лише власні назви — «das Haus» (будинок), «die Liebe» (любов), «das Essen» (їжа). Це не прикраса: велика літера одразу каже вам «це слово — предмет», що насправді полегшує читання довгих речень, коли звикнеш.",
+      fa: "آلمانی هر اسمی را با حرف بزرگ می‌نویسد، نه فقط اسم‌های خاص — «das Haus» (خانه)، «die Liebe» (عشق)، «das Essen» (غذا). این تزئین نیست: حرف بزرگ فوراً به شما می‌گوید «این کلمه یک چیز است»، که وقتی به آن عادت کنید، خواندن جملات طولانی را واقعاً آسان‌تر می‌کند.",
+    },
+  };
+
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS };
 })();
