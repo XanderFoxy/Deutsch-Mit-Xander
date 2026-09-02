@@ -366,11 +366,16 @@ const Backend = (function () {
       } catch (e) { console.warn("Tagesranking konnte nicht aktualisiert werden:", e); }
     }
     // Tagesranking aktualisieren (Demo-Fallback, ohne verbundenes Supabase)
+    // WICHTIG — behebt einen echten Bug: dieser Fallback-Eintrag hatte bisher KEIN user_id-Feld,
+    // obwohl getActivityScoresForPeriod() (siehe "Fuchs des Tages/Woche/…"-Berechnung) genau
+    // dieses Feld zwingend braucht (Einträge ohne user_id werden dort automatisch übersprungen).
+    // Im Demo-Fallback ohne echte Supabase-Verbindung floss dadurch NIE echte Spielaktivität in
+    // die Fuchs-Auswertung ein — nur eingereichte Beiträge/geteilte Links zählten dort.
     const existing = demo.ranking.find((r) => r.name === demo.profile.name && r.date === todayKey());
     if (existing) {
       existing.points = Math.max(existing.points, demo.profile.points);
     } else {
-      demo.ranking.push({ name: demo.profile.name, points: demo.profile.points, date: todayKey() });
+      demo.ranking.push({ user_id: demo.user?.id, name: demo.profile.name, points: demo.profile.points, date: todayKey() });
     }
   }
 
@@ -925,11 +930,31 @@ const Backend = (function () {
     if (demo.profile && demo.profile.isBetaTester) return true;
     return Boolean(featureFlagsCache && featureFlagsCache[key]);
   }
+  // WICHTIG — Variante mit umgekehrtem Standardwert: für Spiele, die schon lange live und in
+  // Benutzung sind (nicht die neueren "Kommt bald"-Features), soll das bloße Fehlen eines
+  // Datenbank-Eintrags NICHT bedeuten "für alle unsichtbar" — sonst würden diese Spiele beim
+  // ersten Einsatz dieses Schalters sofort für alle bestehenden Nutzer verschwinden, nur weil der
+  // Flag-Wert noch nie explizit gesetzt wurde. Erst ein AUSDRÜCKLICHES "false" (der Admin hat den
+  // Schalter aktiv umgelegt) sperrt das Spiel — bis dahin bleibt es wie gewohnt sichtbar.
+  function isFeatureOnDefaultTrue(key) {
+    if (isOwner()) return true;
+    if (demo.profile && demo.profile.isBetaTester) return true;
+    if (!featureFlagsCache || featureFlagsCache[key] === undefined) return true;
+    return Boolean(featureFlagsCache[key]);
+  }
   // Für die Admin-Oberfläche selbst: der ECHTE, rohe Schalter-Zustand, OHNE die
   // "Betreiber sieht immer alles"-Sonderregel — sonst würde der Umschalter fälschlich immer
   // als "an" erscheinen, egal ob er für alle anderen wirklich schon freigegeben ist.
   function getRawFeatureFlag(key) {
     return Boolean(featureFlagsCache && featureFlagsCache[key]);
+  }
+  // WICHTIG — echter Rohwert OHNE Boolean()-Normalisierung: getRawFeatureFlag() oben macht sowohl
+  // "nie gesetzt" (undefined) als auch "explizit ausgeschaltet" (false) zu demselben false — für
+  // "default true"-Spiele (siehe isFeatureOnDefaultTrue) muss die Admin-Oberfläche diese beiden
+  // Fälle aber unterscheiden können (nie gesetzt → Schalter zeigt "an", da das Spiel ja trotzdem
+  // sichtbar ist; explizit false → Schalter zeigt "aus").
+  function getRawFeatureFlagValue(key) {
+    return featureFlagsCache ? featureFlagsCache[key] : undefined;
   }
 
   let lastPlaylistLoadError = null;
@@ -2850,7 +2875,7 @@ const Backend = (function () {
     saveIntroduction, getAllIntroductions,
     getLastPlaylistLoadError: () => lastPlaylistLoadError,
     getLastUserListError: () => lastUserListError,
-    getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, getRawFeatureFlag,
+    getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, getRawFeatureFlag, getRawFeatureFlagValue,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
     getBugReports, resolveBugReport,
     notifyPracticing,

@@ -25,15 +25,21 @@
   font-size: 0.85rem;
   font-weight: 600;
   position: relative;
-  overflow: hidden;
 }
 .subnav-pill::before {
   content: "";
   position: absolute;
-  top: -60%;
+  /* WICHTIG — behebt einen Bug: vorher ragte dieses Element bei top:-60% über den oberen Rand der
+     Pille hinaus, weshalb overflow:hidden auf der Pille selbst nötig war, um den Überstand
+     unsichtbar zu machen. Das schnitt aber ungewollt auch den Benachrichtigungs-Punkt
+     (#friendsTabBadge, der bewusst leicht über die Ecke hinausragt: top:-4px; right:-4px) und den
+     Profil-Glüh-Ring ab, die ja sichtbar über den Rand hinausragen SOLLEN. Jetzt liegt das
+     Glanzlicht komplett innerhalb der Pille (0% bis 40% der Höhe — genau der Bereich, der vorher
+     ohnehin allein sichtbar war), sodass overflow:hidden gar nicht mehr gebraucht wird. */
+  top: 0%;
   left: 8%;
   width: 40%;
-  height: 100%;
+  height: 40%;
   background: radial-gradient(ellipse at center, rgba(255,255,255,0.22), rgba(255,255,255,0) 70%);
   border-radius: 50%;
   pointer-events: none;
@@ -629,6 +635,14 @@
   background: var(--plum-700);
   border-radius: var(--radius-sm);
   font-size: 0.88rem;
+}
+/* Deutlichere Trennkante zwischen einzelnen Postfach-Nachrichten in der Kompaktansicht — der
+   bloße Zeilenabstand allein (8px, siehe .breakdown-list) reichte nicht als klar erkennbare
+   Grenze zwischen einer Nachricht und der nächsten, gerade wenn viele davon direkt
+   untereinanderstehen. Eine dezente untere Trennlinie macht jede einzelne Nachricht als
+   eigenständigen Block erkennbar, ohne so kräftig wie ein eigener Kartenrahmen zu wirken. */
+.inbox-row-compact {
+  border-bottom: 1px solid rgba(0,0,0,0.12) !important;
 }
 /* WICHTIG: das linke Element (meist ein längerer Beschreibungstext) muss schrumpfen/umbrechen
    dürfen — sonst drängt es das rechte Element (Uhrzeit, Häkchen, Punktestand) aus seiner festen
@@ -1249,6 +1263,16 @@
      Dokumentfluss (z. B. der Name direkt darunter) trotz overflow:visible optisch über den
      überstehenden Teil des Stickers geraten, obwohl technisch nichts "beschnitten" wird. */
   z-index: 5;
+  /* WICHTIG — behebt einen echten Bug: dieser Wrapper trägt zusätzlich die Klasse "avatar-photo"
+     (für Größe/Positionierung) und erbte dadurch ungewollt deren border-radius:50% UND den
+     Wassertropfen-box-shadow. Da dieser Schatten ein INNERER (inset) Schatten ist, zeichnete er
+     sich exakt entlang des kreisrunden border-radius — sichtbar wie ein zweiter, unsichtbarer
+     Kreis, der über den Fuchs-Sticker gelegt war und ihn optisch "einsperrte"/beschnitt, obwohl
+     technisch nichts abgeschnitten wurde (overflow:visible blieb korrekt). Der Wassertropfen-
+     Effekt ist für echte Fotos gedacht, nicht für Sammelfiguren-Sticker — hier beides explizit aus.
+  */
+  border-radius: 0;
+  box-shadow: none;
 }
 .avatar-figure-sticker {
   position: absolute;
@@ -1284,6 +1308,19 @@
 .profile-header-stack {
   min-width: 0;
   max-width: 100%;
+}
+/* Name als "Überschrift" bewusst enger an die Karte herangezogen (kein unnötiger Leerraum
+   darüber) und nicht zusätzlich eingerückt — beginnt so hoch und so weit links wie möglich, direkt
+   neben dem oberen Rand des Profilbilds, statt spürbar tiefer zu starten. */
+.profile-header-name {
+  margin-top: -4px !important;
+}
+/* Alles, was NACH dem Profilbild (nach dessen unterem Rand) kommt, bricht bewusst aus dem
+   Fließtext-Umlauf aus — nur EIN Element soll dort direkt unter dem Bild stehen (das
+   Sprachniveau), nicht mehr eine ganze Spalte weiterer Badges. */
+.profile-header-below-photo {
+  clear: both;
+  margin-top: 4px;
 }
 .profile-header-stack-row {
   display: inline;
@@ -2248,24 +2285,44 @@
    einem echten Buch nur die rechte Seite von der Mitte aus nach links um und legt sich auf die
    linke Seite, statt dass beide Seiten gemeinsam am äußeren Rand aufklappen. */
 .album-page-right {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   transform-origin: left center;
   transition: transform 0.7s cubic-bezier(0.45, 0, 0.2, 1);
   backface-visibility: hidden;
 }
 .album-page-right.turning-next { transform: rotateY(-170deg); }
-.album-page-left, .album-page-right {
+/* WICHTIG — behebt den gemeldeten Bug: bisher gab es hinter der sich drehenden rechten Seite
+   nichts — während der Drehung war der Bereich kurz leer, bevor der neue Inhalt eingesetzt wurde.
+   Dieser Wrapper hält die "wirklich nächste Seite" (album-page-right-behind) permanent im
+   Hintergrund bereit, sodass man beim Umblättern sofort die kommende Seite durchscheinen sieht,
+   statt einer leeren Fläche. */
+.album-page-right-wrap {
+  position: relative;
   flex: 1;
   min-width: 0;
+}
+.album-page-right-behind {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.album-page-left, .album-page-right, .album-page-right-behind {
   background: #FBF3E8;
   padding: 16px 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.18);
 }
-.album-page-left { border-radius: 14px 0 0 14px; }
-.album-page-right { border-radius: 0 14px 14px 0; }
+.album-page-left { border-radius: 14px 0 0 14px; flex: 1; min-width: 0; }
+.album-page-right, .album-page-right-behind { border-radius: 0 14px 14px 0; }
+/* Vorher 14px breit — wirkte wie eine echte Lücke zwischen den Seiten, als seien sie aus dem Buch
+   herausgerissen, statt wie eine gebundene Mittelfalz. Deutlich schmaler und mit einem Schatten
+   statt einer flächigen Farbe, damit die beiden Seiten optisch dicht aneinanderstoßen, aber die
+   Mitte trotzdem als leichte Vertiefung erkennbar bleibt. */
 .album-spine {
-  width: 14px;
+  width: 3px;
   flex-shrink: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,0.12), rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.12));
+  background: linear-gradient(90deg, rgba(0,0,0,0.18), rgba(0,0,0,0.32) 50%, rgba(0,0,0,0.18));
 }
 .album-page-grid {
   display: grid;
@@ -2771,16 +2828,20 @@
 }
 @keyframes bbGrowAndPop {
   /* Startet UNTEN, versteckt unterhalb des sichtbaren Spielfelds (siehe top:108% in der
-     Positionierung), und steigt über die gesamte Lebensdauer nach oben auf, bis sie oben
-     komplett aus dem Bild verschwunden ist — mit einer leichten seitlichen Schlängel-Bewegung
-     und Drehung dabei, wie eine echte, schwebend aufsteigende Seifenblase. calc() mit vh-Einheiten
-     sorgt dafür, dass die Strecke unabhängig von der tatsächlichen Bildschirmhöhe immer über den
-     gesamten sichtbaren Bereich hinausreicht. */
+     Positionierung), und steigt nach oben auf. WICHTIG — behebt einen echten Bug: vorher ging die
+     Strecke bis zu -130vh (also z. B. 1000px+ auf einem normalen Handy-Bildschirm), obwohl das
+     eigentliche Spielfeld (.bb-pool) nur 220px hoch ist. Die Blase war dadurch schon nach einem
+     Bruchteil der Animation (rund 20–25%) optisch komplett aus dem sichtbaren Bereich verschwunden
+     — aber "animationend" (das über resolveBubble() erst den Fehler auslöst) feuerte trotzdem erst
+     am Ende der vollen, viel zu langen restlichen Strecke. Jetzt endet die Bewegung bei knapp 300px
+     — genau der Distanz, die nötig ist, damit die Blase (Durchmesser 92px) den 220px hohen,
+     sichtbaren Pool-Bereich vollständig verlassen hat. Der Fehler kommt dadurch jetzt spürbar
+     direkt nach dem Verschwinden, nicht erst "wenn sie 2 m drüber sind". */
   0%   { transform: translate(-50%, -50%) scale(0.7) rotate(0deg); opacity: 0; }
   8%   { opacity: 0.9; }
-  40%  { transform: translate(calc(-50% + 6px), calc(-50% - 45vh)) scale(0.95) rotate(-4deg); opacity: 1; }
-  70%  { transform: translate(calc(-50% - 5px), calc(-50% - 85vh)) scale(1.08) rotate(4deg); opacity: 1; }
-  100% { transform: translate(-50%, calc(-50% - 130vh)) scale(1.3) rotate(-3deg); opacity: 0; }
+  40%  { transform: translate(calc(-50% + 6px), calc(-50% - 105px)) scale(0.95) rotate(-4deg); opacity: 1; }
+  70%  { transform: translate(calc(-50% - 5px), calc(-50% - 195px)) scale(1.08) rotate(4deg); opacity: 1; }
+  100% { transform: translate(-50%, calc(-50% - 300px)) scale(1.3) rotate(-3deg); opacity: 0; }
 }
 .bb-bubble-pop-good {
   animation: none !important;
@@ -2812,6 +2873,89 @@
 @keyframes bbSplashFly {
   0% { transform: translate(-50%, -50%) rotate(45deg) scale(1); opacity: 0.95; }
   100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(45deg) scale(0.3); opacity: 0; }
+}
+/* Kompass-Kacheln (Dichter & Denker, Schnee von gestern) — bewusst klein und kompakt, drei pro
+   Reihe, statt einer großen, hohen Liste. auto-fill mit einer festen minmax-Untergrenze sorgt
+   dafür, dass es bei sehr schmalen Bildschirmen automatisch auf 2 Spalten zurückfällt, statt
+   Kacheln zu quetschen — bei den meisten Handy-Breiten (360–430px) ergeben sich mit 96px
+   Mindestbreite zuverlässig drei Spalten. */
+/* Spiele-Übersicht: bewusst als flexible Pillen-Liste (nicht als Kachel-Raster wie bei den
+   Kompass-Kacheln oben) — Emoji und Name nebeneinander in einer schmalen, breiten Zeile, so wie
+   es die Spiele-Buttons vorher schon aussahen, bevor sie versehentlich das Kachel-Design mit
+   übernahmen. */
+.games-pill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.games-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--plum-800), white 18%), var(--plum-800) 55%, color-mix(in srgb, var(--plum-800), black 18%));
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  border: 1px solid rgba(245, 239, 228, 0.1);
+  border-radius: 999px;
+  color: var(--cream-200);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.games-pill-emoji {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.games-pill-name {
+  flex: 1;
+}
+/* Kompass-Kacheln (Dichter & Denker, Schnee von gestern) — bewusst klein und kompakt, MINDESTENS
+   drei pro Reihe, auch auf sehr schmalen Bildschirmen (320px). Fest auf 3 Spalten statt
+   auto-fill/minmax: bei auto-fill fiel die dritte Kachel bei 320px in eine neue Zeile, da selbst
+   eine kleine Mindestbreite (96px × 3 + Zwischenräume) knapp nicht mehr in den Container passte.
+   Mit fest 3 Spalten (1fr) skaliert jede Kachel stattdessen einfach mit, wird auf breiteren
+   Bildschirmen größer, statt dass eine vierte Spalte hinzukommt — genau wie gewünscht. */
+.kompass-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.kompass-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--plum-700);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: center;
+}
+.kompass-tile-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.04);
+}
+.kompass-tile-img svg, .kompass-tile-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.kompass-tile-name {
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.kompass-tile-years {
+  font-size: 0.66rem;
+  opacity: 0.7;
 }
 .kn-word {
   position: absolute;
@@ -2926,8 +3070,15 @@
   background:
     /* Sonne, ein paar Wolken, und dahinter wellige, GRÜNE Almen-Hügel mit ein paar kleinen
        Tannen — statt spitzer, blauer Berg-Silhouetten. Zwei überlappende Hügel-Lagen für Tiefe,
-       wellig statt spitz zulaufend. */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100' preserveAspectRatio='none'%3E%3Cellipse cx='340' cy='18' rx='17' ry='12' fill='%23ffd873' opacity='0.9'/%3E%3Cellipse cx='70' cy='16' rx='22' ry='8' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='95' cy='12' rx='16' ry='7' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='220' cy='24' rx='18' ry='7' fill='%23ffffff' opacity='0.65'/%3E%3Cpath d='M0,100 L0,58 Q40,38 80,50 Q130,66 180,42 Q230,22 280,46 Q330,64 400,44 L400,100 Z' fill='%237fb87a' opacity='0.6'/%3E%3Cpath d='M0,100 L0,75 Q50,58 100,70 Q150,84 210,64 Q260,48 320,68 Q360,80 400,66 L400,100 Z' fill='%235a9c5a' opacity='0.65'/%3E%3Cpath d='M55,52 L60,38 L65,52 Z M58,52 L58,44' fill='%232f6b3a' stroke='%232f6b3a' stroke-width='1.5'/%3E%3Cpath d='M175,45 L181,29 L187,45 Z' fill='%232f6b3a'/%3E%3Cpath d='M300,70 L305,58 L310,70 Z' fill='%23276030'/%3E%3Cpath d='M325,72 L329,62 L333,72 Z' fill='%23276030'/%3E%3C/svg%3E") bottom / 100% auto no-repeat,
+       wellig statt spitz zulaufend.
+       WICHTIG: preserveAspectRatio="none" entfernt (vorher stand es hier) — das ließ das SVG bei
+       jedem Seitenverhältnis, das vom viewBox (400×100 = 4:1) abweicht, nicht-proportional
+       strecken. Auf schmaleren Android-Bildschirmen (Container z. B. eher 2,7:1 statt 4:1) wurde
+       dadurch die Sonne (eigentlich eine Ellipse) sichtbar oval nach oben gequetscht. Mit
+       preserveAspectRatio auf seinem Standardwert bleibt das SVG immer proportional — kombiniert
+       mit background-size:cover füllt es weiterhin den ganzen Bereich, schneidet bei Bedarf nur
+       seitlich etwas vom Hintergrundbild ab, statt es zu verzerren. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100'%3E%3Cellipse cx='340' cy='18' rx='17' ry='12' fill='%23ffd873' opacity='0.9'/%3E%3Cellipse cx='70' cy='16' rx='22' ry='8' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='95' cy='12' rx='16' ry='7' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='220' cy='24' rx='18' ry='7' fill='%23ffffff' opacity='0.65'/%3E%3Cpath d='M0,100 L0,58 Q40,38 80,50 Q130,66 180,42 Q230,22 280,46 Q330,64 400,44 L400,100 Z' fill='%237fb87a' opacity='0.6'/%3E%3Cpath d='M0,100 L0,75 Q50,58 100,70 Q150,84 210,64 Q260,48 320,68 Q360,80 400,66 L400,100 Z' fill='%235a9c5a' opacity='0.65'/%3E%3Cpath d='M55,52 L60,38 L65,52 Z M58,52 L58,44' fill='%232f6b3a' stroke='%232f6b3a' stroke-width='1.5'/%3E%3Cpath d='M175,45 L181,29 L187,45 Z' fill='%232f6b3a'/%3E%3Cpath d='M300,70 L305,58 L310,70 Z' fill='%23276030'/%3E%3Cpath d='M325,72 L329,62 L333,72 Z' fill='%23276030'/%3E%3C/svg%3E") bottom / cover no-repeat,
     linear-gradient(180deg, #cfe8f5, #eef8fb);
   margin: 10px 0;
 }
@@ -3083,13 +3234,20 @@
 .fox-period-badge {
   background: linear-gradient(160deg, #E8483F, #A8241E 55%, #8A1B16) !important;
   color: #F2C94C !important;
-  /* Kräftigere, dunklere Grundfarbe als die normalen Admin-Badges — deshalb hier ein deutlich
-     stärkeres Glanzlicht und ein sichtbarerer Schatten, sonst ging die Plastizität im satten Rot
-     unter, statt wie gewünscht gut erkennbar hervorzutreten. */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.35), inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -2px 3px rgba(0,0,0,0.3) !important;
+  /* WICHTIG — wie gewünscht: die weiße Umrandung/das Glanzlicht um das GESAMTE Badge herum wurde
+     entfernt (kein weißer inset-Schimmer mehr, kein ::before-Glanzfleck mehr, siehe unten) — nur
+     die weiße Kontur auf der Schrift selbst (.fox-period-badge-text) bleibt bestehen, ebenso wie
+     die schwarze Kontur auf dem Fuchs-Emoji. Ein normaler, dunkler Außenschatten für etwas Tiefe
+     bleibt erhalten, da das kein "weißer Rand"-Effekt ist.
+     Kräftigere, dunklere Grundfarbe als die normalen Admin-Badges. */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.35) !important;
 }
+/* .fox-period-badge erbt von .admin-badge auch dessen ::before-Glanzlicht (weißer radialer
+   Fleck) — das reine Entfernen der eigenen background-Überschreibung hätte diesen geerbten
+   Glanzfleck nur schwächer, aber nicht verschwinden lassen. display:none deaktiviert ihn hier
+   komplett, wie gewünscht. */
 .fox-period-badge::before {
-  background: radial-gradient(ellipse at center, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%) !important;
+  display: none !important;
 }
 .fox-period-badge-text {
   text-shadow:
@@ -3149,8 +3307,20 @@
   font-weight: 800;
   font-size: 1rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .vm-letter-btn:active { transform: scale(0.94); }
+/* Jeder Buchstabe ist eine eigens gezeichnete Strichform (siehe VM_LETTER_STROKES/vmLetterSvg in
+   app.js) — kein Text mit Systemschrift. Dicke, runde Strichenden wie mit einem Filzstift. */
+.vm-letter-svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .glass-quick-list {
   margin-top: 10px;

@@ -713,8 +713,13 @@ button:focus-visible,
      zweite Zeile darunter fiel statt daneben zu stehen. */
   padding: 6px 10px;
   border-radius: 999px;
-  background: var(--plum-700);
+  /* Derselbe leichte 3D-Glanzeffekt wie bei den anderen Pillen/Badges in der App (Glanzlicht oben,
+     dezenter Tiefen-Verlauf) — vorher eine flache, einfarbige Fläche. */
+  background: linear-gradient(160deg, color-mix(in srgb, var(--plum-700), white 15%), var(--plum-700) 55%, color-mix(in srgb, var(--plum-700), black 15%));
+  position: relative;
+  overflow: hidden;
   border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18);
   color: var(--cream-50);
   font-weight: 700;
   font-size: 0.72rem;
@@ -722,6 +727,18 @@ button:focus-visible,
   transition: transform 0.15s ease;
   white-space: nowrap;
 }
+.link-chip::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 8%;
+  width: 35%;
+  height: 90%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.35), rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.link-chip > * { position: relative; z-index: 1; }
 .link-chip:hover { transform: translateY(-1px); }
 .link-chip.disabled { opacity: 0.45; pointer-events: none; }
 

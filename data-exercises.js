@@ -387,6 +387,82 @@ const ExerciseData = (function () {
   // geprüfte Tatsache, nur unterschiedlich komplex formuliert. Bewusst noch keine 365-Tage-Liste,
   // sondern ein sorgfältig recherchierter, wachsender Grundstock.
   const GERMAN_HISTORY_TODAY = {
+    "01-22": {
+      year: 1963,
+      levels: {
+        A1: "Am 22. Januar 1963 unterschreiben Deutschland und Frankreich einen Vertrag über Freundschaft. Er heißt Élysée-Vertrag. Vorher waren die beiden Länder oft im Krieg gegeneinander.",
+        A2: "Am 22. Januar 1963 unterzeichnen Bundeskanzler Konrad Adenauer und der französische Präsident Charles de Gaulle den Élysée-Vertrag. Damit werden Deutschland und Frankreich nach vielen Kriegen offiziell enge Freunde.",
+        B1: "Am 22. Januar 1963 unterzeichnen Bundeskanzler Konrad Adenauer und Frankreichs Präsident Charles de Gaulle im Pariser Élysée-Palast den Vertrag über die deutsch-französische Zusammenarbeit — kurz Élysée-Vertrag. Nur 18 Jahre nach dem Zweiten Weltkrieg beenden die einstigen „Erbfeinde“ damit offiziell ihre jahrhundertealte Rivalität.",
+        B2: "Am 22. Januar 1963 unterzeichnen Bundeskanzler Konrad Adenauer und Staatspräsident Charles de Gaulle im Élysée-Palast den nach diesem Ort benannten deutsch-französischen Freundschaftsvertrag. Nur 18 Jahre nach Kriegsende regelt der Vertrag regelmäßige Konsultationen in Außen-, Verteidigungs- und Jugendpolitik und gilt bis heute als Grundstein der engen deutsch-französischen Partnerschaft.",
+        C1: "Der am 22. Januar 1963 von Konrad Adenauer und Charles de Gaulle unterzeichnete Élysée-Vertrag markiert den institutionellen Kern der deutsch-französischen Aussöhnung nach dem Zweiten Weltkrieg — er verpflichtete beide Regierungen zu regelmäßigen Konsultationen auf allen politischen Ebenen und legte damit den Grundstein für Institutionen wie das Deutsch-Französische Jugendwerk und den Sender Arte.",
+        C2: "Der Élysée-Vertrag vom 22. Januar 1963 vollzog binnen nur 18 Jahren nach Kriegsende eine bemerkenswerte Transformation der deutsch-französischen Beziehungen von jahrhundertealter „Erbfeindschaft“ zu institutionalisierter Partnerschaft — ein Vertragswerk, dessen Konsultationsmechanismen und daraus erwachsene Institutionen bis heute als struktureller Prototyp europäischer Aussöhnungspolitik gelten.",
+      },
+      sideFacts: [],
+    },
+    "06-24": {
+      year: 1948,
+      levels: {
+        A1: "Am 24. Juni 1948 sperrt die Sowjetunion alle Straßen und Wege nach West-Berlin. West-Berlin bekommt jetzt keine Lebensmittel mehr mit dem Auto oder dem Zug. Das nennt man die Berlin-Blockade.",
+        A2: "Am 24. Juni 1948 sperrt die Sowjetunion alle Zufahrtswege nach West-Berlin — das ist der Beginn der Berlin-Blockade. Die West-Alliierten reagieren mit der „Luftbrücke“: Sie versorgen die Stadt fortan mit Flugzeugen.",
+        B1: "Am 24. Juni 1948 sperren sowjetische Truppen alle Straßen-, Schienen- und Wasserwege nach West-Berlin — die Berlin-Blockade beginnt. Als Antwort darauf richten die Westalliierten die „Berliner Luftbrücke“ ein und versorgen die Stadt fast ein Jahr lang aus der Luft mit Lebensmitteln und Kohle.",
+        B2: "Am 24. Juni 1948 riegelt die Sowjetunion als Reaktion auf die wenige Tage zuvor eingeführte D-Mark alle Land- und Wasserwege nach West-Berlin ab — die Berlin-Blockade, einer der ersten Höhepunkte des Kalten Krieges, beginnt. Die Westalliierten antworten mit der „Berliner Luftbrücke“, über die bis zum Ende der Blockade fast ein Jahr später Millionen Tonnen Lebensmittel und Kohle in die Stadt geflogen werden.",
+        C1: "Die am 24. Juni 1948 verhängte sowjetische Blockade aller Land- und Wasserzugänge nach West-Berlin — eine unmittelbare Reaktion auf die westliche Währungsreform — markiert einen der ersten großen Machtproben des beginnenden Kalten Krieges. Die von den Westalliierten daraufhin organisierte „Berliner Luftbrücke“ versorgte die eingeschlossene Stadt fast ein Jahr lang aus der Luft und wurde zum Symbol westlicher Entschlossenheit, die junge West-Berliner Bevölkerung nicht der sowjetischen Einflussnahme zu überlassen.",
+        C2: "Die sowjetische Blockade West-Berlins ab dem 24. Juni 1948, als direkte Reaktion auf die wenige Tage zuvor vollzogene westliche Währungsreform verhängt, zwang die Westalliierten zu einer logistisch beispiellosen Antwort: der „Berliner Luftbrücke“, die binnen weniger Monate von einer improvisierten Versorgungsmaßnahme zu einem der wirkmächtigsten Sinnbilder transatlantischer Solidarität im Kalten Krieg avancierte und zugleich die endgültige Verfestigung der deutschen Teilung in zwei gegensätzliche Machtsphären vorwegnahm.",
+      },
+      sideFacts: [
+        { year: 1948, text: "Nur zwei Tage später, am 26. Juni 1948, landet die erste Versorgungsmaschine der neu eingerichteten Berliner Luftbrücke in Tempelhof — der Beginn der „Rosinenbomber“-Flüge." },
+      ],
+    },
+    "12-07": {
+      year: 1970,
+      levels: {
+        A1: "Am 7. Dezember 1970 kniet Bundeskanzler Willy Brandt in Warschau vor einem Denkmal nieder. Das Denkmal erinnert an den jüdischen Aufstand im Warschauer Ghetto. Brandt bittet damit um Vergebung für die Verbrechen der Nazis.",
+        A2: "Am 7. Dezember 1970 kniet Bundeskanzler Willy Brandt spontan vor dem Denkmal für den Aufstand im Warschauer Ghetto nieder. Diese Geste wird als „Kniefall von Warschau“ berühmt und steht für die Bitte um Vergebung für die Verbrechen des Nationalsozialismus.",
+        B1: "Am 7. Dezember 1970 legt Bundeskanzler Willy Brandt bei seinem Besuch in Warschau einen Kranz am Denkmal für den Aufstand im Warschauer Ghetto nieder und kniet dabei spontan und unerwartet auf dem nassen Boden. Der „Kniefall von Warschau“ wird zu einem der bekanntesten Bilder der bundesdeutschen Geschichte und einem Symbol der Versöhnung mit Polen.",
+        B2: "Am 7. Dezember 1970 kniet Bundeskanzler Willy Brandt bei der Kranzniederlegung am Ehrenmal für die Helden des Warschauer Ghettos spontan und für alle Anwesenden überraschend nieder. Der „Kniefall von Warschau“, am selben Tag wie die Unterzeichnung des Warschauer Vertrags, wird zum Symbol von Brandts Entspannungspolitik gegenüber dem Osten — in Deutschland zunächst höchst umstritten, international jedoch als eindrucksvolle Geste der Demut gewürdigt.",
+        C1: "Willy Brandts spontaner Kniefall vor dem Ehrenmal für die Helden des Warschauer Ghettos am 7. Dezember 1970, am Tag der Unterzeichnung des Warschauer Vertrags, gilt als eine der symbolträchtigsten Gesten der bundesdeutschen Nachkriegsgeschichte. Während eine Umfrage kurz danach eine gespaltene deutsche Öffentlichkeit zeigte, wurde die Geste international als eindrucksvolles Zeichen der Übernahme moralischer Verantwortung gewürdigt und trug wesentlich zu Brandts Friedensnobelpreis 1971 bei.",
+        C2: "Der Kniefall Willy Brandts vor dem Ehrenmal des Warschauer Ghettoaufstands am 7. Dezember 1970 — zeitgleich mit der Unterzeichnung des Warschauer Vertrags im Rahmen seiner Neuen Ostpolitik — verdichtete eine wortlose Geste zu einem international rezipierten Symbol deutscher Vergangenheitsbewältigung, dessen anfänglich gespaltene innenpolitische Resonanz (annähernd hälftige Ablehnung in zeitgenössischen Umfragen) den Kontrast zur späteren, nahezu kanonischen Deutung als Akt moralischer Verantwortungsübernahme besonders deutlich hervortreten lässt.",
+      },
+      sideFacts: [],
+    },
+    "06-20": {
+      year: 1948,
+      levels: {
+        A1: "Am 20. Juni 1948 bekommt Westdeutschland neues Geld: die D-Mark. Das alte Geld heißt Reichsmark und war fast nichts mehr wert.",
+        A2: "Am 20. Juni 1948 wird in Westdeutschland die alte Reichsmark abgeschafft. Alle bekommen die neue Deutsche Mark (D-Mark). Über Nacht sind die Geschäfte wieder voll mit Waren.",
+        B1: "Am 20. Juni 1948 tritt in den drei westlichen Besatzungszonen die Währungsreform in Kraft: Die wertlos gewordene Reichsmark wird durch die neue Deutsche Mark ersetzt. Jeder Bürger erhält zunächst 40 D-Mark „Kopfgeld“ — über Nacht sind die Geschäfte wieder voll.",
+        B2: "Am 20. Juni 1948 tritt in den drei westlichen Besatzungszonen die Währungsreform in Kraft: Die durch Krieg und Mangelwirtschaft praktisch wertlos gewordene Reichsmark wird durch die neue Deutsche Mark ersetzt. Über Nacht füllen sich die bis dahin leeren Schaufenster mit Waren — der Beginn dessen, was später als „Wirtschaftswunder“ bezeichnet wird.",
+        C1: "Die Währungsreform vom 20. Juni 1948 in den drei westlichen Besatzungszonen, mit der die entwertete Reichsmark durch die neu eingeführte Deutsche Mark abgelöst wurde, gilt als eine der folgenreichsten wirtschaftspolitischen Weichenstellungen der deutschen Nachkriegsgeschichte — sie schuf die monetäre Grundlage für die soziale Marktwirtschaft und beschleunigte zugleich die faktische Teilung Deutschlands, da die Sowjetische Besatzungszone kurz darauf mit einer eigenen Währungsreform reagierte.",
+        C2: "Die am 20. Juni 1948 in Kraft getretene westdeutsche Währungsreform, die der entwerteten Reichsmark mit der neu geschaffenen Deutschen Mark ein stabiles Zahlungsmittel entgegensetzte, markiert eine doppelte Zäsur: ökonomisch legte sie das Fundament für das folgende „Wirtschaftswunder“, politisch nahm sie durch die parallele Reaktion der sowjetischen Besatzungsmacht die faktische Teilung Deutschlands in zwei Wirtschafts- und bald auch Staatsgebilde vorweg.",
+      },
+      sideFacts: [],
+    },
+    "09-02": {
+      year: 1870,
+      levels: {
+        A1: "Am 2. September 1870 gewinnt Preußen eine wichtige Schlacht bei Sedan in Frankreich. Später wird dieser Tag im Deutschen Kaiserreich als Feiertag gefeiert.",
+        A2: "Am 2. September 1870 besiegt Preußen die französische Armee in der Schlacht bei Sedan. Von 1871 bis 1918 ist der „Sedantag“ danach jedes Jahr ein großer Feiertag im Deutschen Kaiserreich.",
+        B1: "Am 2. September 1870 gewinnt Preußen im Deutsch-Französischen Krieg die entscheidende Schlacht bei Sedan — sogar Kaiser Napoleon III. gerät dabei in Gefangenschaft. Von 1871 bis 1918 wird der „Sedantag“ danach jährlich als einer der wichtigsten Feiertage im neuen Deutschen Kaiserreich begangen.",
+        B2: "Am 2. September 1870 erringt Preußen im Deutsch-Französischen Krieg bei Sedan einen entscheidenden Sieg, bei dem sogar der französische Kaiser Napoleon III. in Kriegsgefangenschaft gerät. Dieser Sieg ebnete den Weg zur Reichsgründung wenige Monate später, weshalb der „Sedantag“ von 1871 bis 1918 als einer der populärsten nationalen Feiertage im Kaiserreich gefeiert wurde.",
+        C1: "Die Schlacht bei Sedan am 2. September 1870, bei der die preußischen Truppen die französische Armee entscheidend schlugen und Kaiser Napoleon III. gefangen nahmen, gilt als militärischer Wendepunkt des Deutsch-Französischen Krieges. Der daraus hervorgegangene „Sedantag“ entwickelte sich im Kaiserreich zu einem der emotional aufgeladensten nationalen Gedenktage, ehe er nach 1918 mit dem Ende der Monarchie wieder verschwand.",
+        C2: "Der militärische Triumph bei Sedan am 2. September 1870, der mit der Gefangennahme Napoleons III. die Niederlage Frankreichs im entscheidenden Feldzug des Deutsch-Französischen Krieges besiegelte, wurde retrospektiv zum Gründungsmythos des wenige Monate später proklamierten Kaiserreichs stilisiert — der bis 1918 begangene „Sedantag“ veranschaulicht dabei eindrücklich, wie militärischer Erfolg zur identitätsstiftenden nationalen Erzählung verdichtet werden kann.",
+      },
+      sideFacts: [],
+    },
+    "09-03": {
+      year: 1939,
+      levels: {
+        A1: "Am 3. September 1939 erklären Großbritannien und Frankreich Deutschland den Krieg. Zwei Tage vorher hat Deutschland Polen angegriffen. Das ist der Beginn des Zweiten Weltkriegs in Europa.",
+        A2: "Am 3. September 1939 erklären Großbritannien und Frankreich dem nationalsozialistischen Deutschland den Krieg, nachdem Hitler den deutschen Überfall auf Polen vom 1. September nicht zurücknimmt. Damit beginnt der Zweite Weltkrieg in Europa.",
+        B1: "Am 3. September 1939 erklären Großbritannien und Frankreich Deutschland den Krieg, weil Hitler trotz eines Ultimatums seine Truppen nicht aus Polen zurückzieht. Aus dem zwei Tage zuvor begonnenen deutschen Überfall auf Polen wird damit ein europäischer Krieg.",
+        B2: "Am 3. September 1939 erklären Großbritannien und Frankreich dem nationalsozialistischen Deutschland den Krieg, nachdem Adolf Hitler ein letztes Ultimatum zum Rückzug aus dem zwei Tage zuvor überfallenen Polen verstreichen lässt. Aus dem zunächst regional begrenzten Überfall wird damit endgültig ein europäischer Krieg.",
+        C1: "Die Kriegserklärungen Großbritanniens und Frankreichs an das nationalsozialistische Deutschland am 3. September 1939, ausgelöst durch den zwei Tage zuvor begonnenen Überfall auf Polen, markieren völkerrechtlich den Beginn des Zweiten Weltkriegs in Europa — trotz eines Vermittlungsversuchs des italienischen Diktators Mussolini, den Hitler unbeantwortet ließ.",
+        C2: "Mit den nahezu zeitgleichen Kriegserklärungen Großbritanniens und Frankreichs am 3. September 1939 verwandelte sich der zunächst regional begrenzte deutsche Überfall auf Polen binnen weniger Tage in einen gesamteuropäischen Konflikt — ein Ausgangspunkt, dessen Tragweite die anfängliche, oft als „Sitzkrieg“ beschriebene militärische Zurückhaltung an der Westfront zunächst kaum erahnen ließ.",
+      },
+      sideFacts: [
+        { year: 1944, text: "1944 wird Anne Frank an diesem Tag mit einem der letzten Deportationszüge vom Durchgangslager Westerbork ins Vernichtungslager Auschwitz-Birkenau gebracht." },
+      ],
+    },
     "01-30": {
       year: 1933,
       levels: {
@@ -862,6 +938,14 @@ const ExerciseData = (function () {
   };
   function germanHistoryForToday(monthDay) {
     return GERMAN_HISTORY_TODAY[monthDay] || null;
+  }
+  // Archiv-Funktion: alle bereits vorhandenen Einträge chronologisch (nach Tag im Jahr) sortiert,
+  // damit man nicht nur den heutigen Tag sieht, sondern auch vergangene (oder kommende) Einträge
+  // durchstöbern kann.
+  function getAllHistoryEntries() {
+    return Object.entries(GERMAN_HISTORY_TODAY)
+      .map(([monthDay, entry]) => ({ monthDay, ...entry, title: HISTORY_TITLES[monthDay] || "" }))
+      .sort((a, b) => a.monthDay.localeCompare(b.monthDay));
   }
 
   // Typische "Problemwörter" für Deutschlernende — Wörter, bei denen die Betonung erfahrungsgemäß
@@ -3357,105 +3441,105 @@ const ExerciseData = (function () {
   ];
 
   const JE_DESTO = [
-    ["Je mehr ich übe, ___ besser werde ich.", "desto", "als", "Je … desto verbindet zwei Steigerungen."],
+    ["Je mehr ich übe, ___ besser werde ich.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen — beide Wörter sind hier gleichbedeutend."],
     ["Je früher wir starten, ___ früher kommen wir an.", "umso", "so", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
     ["Je länger die Reise dauert, ___ müder werde ich.", "desto", "als", "Desto leitet den zweiten Teil des Vergleichs ein."],
     ["Je mehr Geld er verdient, ___ mehr gibt er aus.", "umso", "wie", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je älter man wird, ___ weiser wird man angeblich.", "desto", "als", "Klassische je … desto-Struktur."],
+    ["Je älter man wird, ___ weiser wird man angeblich.", "desto", "als", "Klassische je … desto/umso-Struktur — beide Wörter sind hier gleichbedeutend."],
     ["Je schneller du läufst, ___ schneller bist du fertig.", "umso", "so", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je später es wird, ___ leerer wird die Straße.", "desto", "als", "Je … desto verbindet Zeit und Folge."],
+    ["Je später es wird, ___ leerer wird die Straße.", "desto", "als", "Je … desto/umso verbindet Zeit und Folge — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr Sprachen man spricht, ___ leichter fällt eine neue.", "umso", "wie", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
     ["Je teurer das Hotel, ___ besser der Service.", "desto", "als", "Zwei Steigerungen werden verbunden."],
     ["Je weniger er schläft, ___ gereizter wird er.", "umso", "so", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je heller das Licht, ___ besser kann man lesen.", "desto", "als", "Je … desto bei zwei zusammenhängenden Eigenschaften."],
+    ["Je heller das Licht, ___ besser kann man lesen.", "desto", "als", "Je … desto/umso bei zwei zusammenhängenden Eigenschaften — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr Leute kommen, ___ lustiger wird die Party.", "umso", "wie", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je kälter es draußen ist, ___ wärmer ziehe ich mich an.", "desto", "als", "Zwei gegenläufige, aber verbundene Steigerungen."],
+    ["Je kälter es draußen ist, ___ wärmer ziehe ich mich an.", "desto", "als", "Zwei gegenläufige, aber verbundene Steigerungen — desto und umso sind hier gleichbedeutend."],
     ["Je öfter man etwas übt, ___ besser beherrscht man es.", "umso", "so", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je größer die Stadt, ___ mehr Möglichkeiten gibt es.", "desto", "als", "Klassische Je-desto-Konstruktion."],
+    ["Je größer die Stadt, ___ mehr Möglichkeiten gibt es.", "desto", "als", "Klassische Je-desto/umso-Konstruktion — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr man liest, ___ größer wird der Wortschatz.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je länger man wartet, ___ ungeduldiger wird man.", "desto", "so", "Je … desto verbindet zwei parallele Steigerungen."],
+    ["Je länger man wartet, ___ ungeduldiger wird man.", "desto", "so", "Je … desto/umso verbindet zwei parallele Steigerungen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr man plant, ___ weniger geht schief.", "umso", "wie", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je schwerer die Aufgabe, ___ stolzer ist man danach.", "desto", "als", "Je … desto verbindet zwei parallele Steigerungen."],
+    ["Je schwerer die Aufgabe, ___ stolzer ist man danach.", "desto", "als", "Je … desto/umso verbindet zwei parallele Steigerungen — beide Wörter sind hier gleichbedeutend."],
     ["Je höher der Berg, ___ schöner die Aussicht.", "umso", "so", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je kleiner das Zimmer, ___ schneller ist es aufgeräumt.", "desto", "wie", "Je … desto verbindet zwei parallele Steigerungen."],
+    ["Je kleiner das Zimmer, ___ schneller ist es aufgeräumt.", "desto", "wie", "Je … desto/umso verbindet zwei parallele Steigerungen — beide Wörter sind hier gleichbedeutend."],
     ["Je größer das Team, ___ mehr Ideen entstehen.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je früher man aufsteht, ___ mehr Zeit hat man am Morgen.", "desto", "so", "Je … desto verbindet zwei parallele Steigerungen."],
+    ["Je früher man aufsteht, ___ mehr Zeit hat man am Morgen.", "desto", "so", "Je … desto/umso verbindet zwei parallele Steigerungen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr man trainiert, ___ fitter wird man.", "umso", "wie", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je ruhiger die Umgebung, ___ besser kann man sich konzentrieren.", "desto", "als", "Je … desto verbindet zwei parallele Steigerungen."],
+    ["Je ruhiger die Umgebung, ___ besser kann man sich konzentrieren.", "desto", "als", "Je … desto/umso verbindet zwei parallele Steigerungen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr ich lache, ___ glücklicher fühle ich mich.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je näher wir dem Sommer kommen, ___ wärmer wird es.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je näher wir dem Sommer kommen, ___ wärmer wird es.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je schwieriger die Frage ist, ___ länger denke ich nach.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Bücher ich lese, ___ größer wird mein Wortschatz.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Bücher ich lese, ___ größer wird mein Wortschatz.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je besser ich Deutsch spreche, ___ selbstbewusster werde ich.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Zeit ich mit Freunden verbringe, ___ glücklicher bin ich.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Zeit ich mit Freunden verbringe, ___ glücklicher bin ich.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je weniger ich esse, ___ schneller werde ich hungrig.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Wasser ich trinke, ___ besser fühle ich mich.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Wasser ich trinke, ___ besser fühle ich mich.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je länger ich schlafe, ___ ausgeruhter bin ich am Morgen.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Verantwortung er übernimmt, ___ mehr Respekt bekommt er.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Verantwortung er übernimmt, ___ mehr Respekt bekommt er.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr sie übt, ___ sicherer wird ihr Klavierspiel.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je teurer die Miete wird, ___ weniger können wir sparen.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je teurer die Miete wird, ___ weniger können wir sparen.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr Menschen wir einladen, ___ lauter wird die Feier.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je dunkler es wird, ___ müder werde ich.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je dunkler es wird, ___ müder werde ich.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr wir planen, ___ weniger Überraschungen erleben wir.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je weiter wir fahren, ___ schöner wird die Landschaft.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je weiter wir fahren, ___ schöner wird die Landschaft.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr er trainiert, ___ stärker wird er.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr sie reist, ___ offener wird ihr Blick auf die Welt.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr sie reist, ___ offener wird ihr Blick auf die Welt.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je ruhiger der Abend ist, ___ besser kann ich abschalten.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Aufgaben ich erledige, ___ zufriedener bin ich am Abend.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Aufgaben ich erledige, ___ zufriedener bin ich am Abend.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je höher wir steigen, ___ dünner wird die Luft.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Geduld man hat, ___ leichter fällt einem das Warten.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Geduld man hat, ___ leichter fällt einem das Warten.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je größer das Problem ist, ___ kreativer muss die Lösung sein.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr wir zusammenarbeiten, ___ schneller wird das Projekt fertig.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr wir zusammenarbeiten, ___ schneller wird das Projekt fertig.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je intensiver die Sonne scheint, ___ schneller wird man braun.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Erfahrung man sammelt, ___ souveräner wirkt man.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Erfahrung man sammelt, ___ souveräner wirkt man.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je früher man plant, ___ entspannter läuft alles ab.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man reflektiert, ___ besser versteht man sich selbst.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man reflektiert, ___ besser versteht man sich selbst.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je stärker der Wind weht, ___ höher schlagen die Wellen.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr wir reden, ___ besser verstehen wir uns.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr wir reden, ___ besser verstehen wir uns.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je kleiner das Team ist, ___ enger arbeitet man zusammen.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Vertrauen man schenkt, ___ mehr Vertrauen bekommt man zurück.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Vertrauen man schenkt, ___ mehr Vertrauen bekommt man zurück.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je weiter der Weg ist, ___ mehr Pausen brauchen wir.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man reist, ___ mehr Sprachen lernt man nebenbei.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man reist, ___ mehr Sprachen lernt man nebenbei.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je dichter der Verkehr ist, ___ länger dauert die Fahrt.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man liest, ___ reicher wird die Fantasie.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man liest, ___ reicher wird die Fantasie.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je größer die Herausforderung ist, ___ stolzer ist man am Ende.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je weniger Ablenkung es gibt, ___ konzentrierter kann ich arbeiten.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je weniger Ablenkung es gibt, ___ konzentrierter kann ich arbeiten.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr wir streiten, ___ schlechter wird die Stimmung.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je kälter das Wasser ist, ___ erfrischender ist das Bad.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je kälter das Wasser ist, ___ erfrischender ist das Bad.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr man übt, ___ selbstverständlicher wird eine Fähigkeit.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je höher die Erwartungen sind, ___ größer ist oft die Enttäuschung.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je höher die Erwartungen sind, ___ größer ist oft die Enttäuschung.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr Menschen mitmachen, ___ größer wird die Wirkung.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man spart, ___ schneller erreicht man das Ziel.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man spart, ___ schneller erreicht man das Ziel.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je stärker das Feuer brennt, ___ heller wird es im Raum.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man loslässt, ___ leichter fühlt man sich.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man loslässt, ___ leichter fühlt man sich.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je weiter man vorausdenkt, ___ weniger Probleme entstehen später.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr wir uns kennen, ___ enger wird unsere Freundschaft.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr wir uns kennen, ___ enger wird unsere Freundschaft.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je dunkler die Wolken sind, ___ wahrscheinlicher wird Regen.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Mühe man sich gibt, ___ besser wird das Ergebnis.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Mühe man sich gibt, ___ besser wird das Ergebnis.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je ruhiger man bleibt, ___ klarer kann man denken.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man wartet, ___ ungeduldiger wird man meistens.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man wartet, ___ ungeduldiger wird man meistens.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je höher der Berg ist, ___ anstrengender wird der Aufstieg.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Fehler man macht, ___ mehr lernt man dabei.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Fehler man macht, ___ mehr lernt man dabei.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je größer die Stadt ist, ___ anonymer fühlt man sich manchmal.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man lächelt, ___ freundlicher wirkt man auf andere.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man lächelt, ___ freundlicher wirkt man auf andere.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je intensiver man trainiert, ___ schneller sieht man Fortschritte.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man teilt, ___ reicher fühlt man sich innerlich.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man teilt, ___ reicher fühlt man sich innerlich.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je weiter die Reise geht, ___ müder werden die Reisenden.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Sonne es gibt, ___ besser wachsen die Pflanzen.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Sonne es gibt, ___ besser wachsen die Pflanzen.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je kürzer die Tage werden, ___ früher wird es dunkel.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Menschen kommen, ___ enger wird es im Saal.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Menschen kommen, ___ enger wird es im Saal.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je langsamer man spricht, ___ leichter versteht man einen.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man hilft, ___ zufriedener fühlt man sich selbst.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man hilft, ___ zufriedener fühlt man sich selbst.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je größer der Erfolg ist, ___ mehr Neider gibt es manchmal.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man plant, ___ weniger spontan bleibt der Tag.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man plant, ___ weniger spontan bleibt der Tag.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je höher das Fieber steigt, ___ schwächer fühlt man sich.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr wir zusammen lachen, ___ stärker wird unsere Verbindung.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr wir zusammen lachen, ___ stärker wird unsere Verbindung.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je weniger man sich beschwert, ___ angenehmer wird das Zusammenleben.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Erfahrung ein Lehrer hat, ___ besser erklärt er oft.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Erfahrung ein Lehrer hat, ___ besser erklärt er oft.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je dichter der Nebel ist, ___ schwerer sieht man die Straße.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr man vergisst, ___ öfter muss man nachfragen.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr man vergisst, ___ öfter muss man nachfragen.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je größer das Vertrauen ist, ___ offener spricht man miteinander.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
-    ["Je mehr Pausen man macht, ___ produktiver wird man langfristig.", "desto", "als", "Je … desto verbindet zwei Steigerungen, die sich gegenseitig beeinflussen."],
+    ["Je mehr Pausen man macht, ___ produktiver wird man langfristig.", "desto", "als", "Je … desto/umso verbindet zwei Steigerungen, die sich gegenseitig beeinflussen — beide Wörter sind hier gleichbedeutend."],
     ["Je mehr man vergibt, ___ leichter wird das Herz.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
   ];
 
@@ -3485,10 +3569,19 @@ const ExerciseData = (function () {
     });
   }
 
+  // WICHTIG — behebt eine inhaltliche Inkonsistenz: vorher gab es pro Satz nur EINE "richtige"
+  // Antwort (entweder "desto" oder "umso") gegen einen Distraktor wie "als"/"so"/"wie" — aber
+  // "desto" und "umso" sind sprachlich echt gleichbedeutend und in JEDEM dieser Sätze beide
+  // korrekt (siehe auch die info-Beschreibung der Kategorie). Ein Distraktor wie "als" war zudem
+  // ohnehin sofort als falsch erkennbar, da er grammatikalisch gar nicht in die Lücke passen
+  // würde — keine echte Verwechslungsgefahr. Jetzt zeigt jede Frage alle drei Wörter: "desto" UND
+  // "umso" zählen beide als richtig, nur das dritte (ursprünglich als Distraktor hinterlegte) Wort
+  // ist die tatsächlich falsche Option.
   function bankJeDesto() {
-    return Core.shuffle(JE_DESTO).map(([sentence, correct, wrong, explain]) => {
-      const opts = Core.shuffle([correct, wrong]);
-      return { prompt: sentence, options: opts, correct: [opts.indexOf(correct)], explain };
+    return Core.shuffle(JE_DESTO).map(([sentence, , wrongWord, explain]) => {
+      const opts = Core.shuffle(["desto", "umso", wrongWord]);
+      const correctIdxs = opts.map((o, i) => (o === "desto" || o === "umso" ? i : -1)).filter((i) => i !== -1);
+      return { prompt: sentence, options: opts, correct: correctIdxs, explain };
     });
   }
 
@@ -4325,15 +4418,16 @@ const ExerciseData = (function () {
   // Deutschland-Quiz-Fragen aus "Es war einmal in Deutschland" zu erzeugen.
   const HISTORY_TITLES = {
     "01-18": "die Gründung des Deutschen Kaiserreichs", "01-27": "die Befreiung von Auschwitz",
-    "01-30": "die Ernennung Hitlers zum Reichskanzler", "02-27": "der Reichstagsbrand",
+    "01-22": "die Unterzeichnung des Élysée-Vertrags", "01-30": "die Ernennung Hitlers zum Reichskanzler", "02-27": "der Reichstagsbrand",
     "05-08": "das Ende des Zweiten Weltkriegs in Europa", "05-23": "das Inkrafttreten des Grundgesetzes",
-    "06-17": "der Volksaufstand in der DDR", "07-20": "das Attentat auf Hitler",
+    "06-17": "der Volksaufstand in der DDR", "06-20": "die Währungsreform und Einführung der D-Mark", "06-24": "der Beginn der Berlin-Blockade und Luftbrücke", "07-20": "das Attentat auf Hitler",
     "08-01": "der Beginn des Ersten Weltkriegs", "08-03": "die erste E-Mail in Deutschland",
     "08-10": "der Kruzifix-Beschluss", "08-13": "der Bau der Berliner Mauer",
     "08-14": "die erste Bundestagswahl", "08-17": "das Verbot der KPD",
     "08-23": "der Hitler-Stalin-Pakt", "08-25": "die Einführung des Farbfernsehens",
     "08-28": "das Flugtag-Unglück von Ramstein", "08-29": "die Weltumrundung des Luftschiffs „Graf Zeppelin“", "08-31": "die Unterzeichnung des Einigungsvertrags",
-    "09-01": "der Beginn des Zweiten Weltkriegs", "09-04": "die erste Leipziger Montagsdemonstration",
+    "09-01": "der Beginn des Zweiten Weltkriegs", "09-02": "der Sedantag im Deutschen Kaiserreich",
+    "09-03": "die Kriegserklärungen an Deutschland 1939", "09-04": "die erste Leipziger Montagsdemonstration",
     "09-05": "der Beginn des Deutschen Herbstes", "09-07": "die erste Sitzung des Bundestags",
     "09-09": "Ernst Reuters berühmte Rede in Berlin", "09-15": "die Nürnberger Gesetze",
     "09-18": "der UN-Beitritt von BRD und DDR", "09-19": "die Gründung des Neuen Forums",
@@ -4341,6 +4435,7 @@ const ExerciseData = (function () {
     "09-30": "das Münchner Abkommen", "10-03": "der Tag der Deutschen Einheit",
     "10-07": "die Gründung der DDR", "10-09": "die große Leipziger Montagsdemonstration",
     "10-31": "der Beginn der Reformation", "11-09": "der Fall der Berliner Mauer",
+    "12-07": "der Kniefall von Warschau",
   };
   // Erzeugt automatisch eine "in welchem Jahr war …?"-Frage aus jedem Geschichte-Eintrag — so
   // bleibt "Es war einmal in Deutschland" nicht nur zum Lesen, sondern taucht auch interaktiv
@@ -4447,7 +4542,7 @@ const ExerciseData = (function () {
       info: "sowohl…als auch, nicht nur…sondern auch, entweder…oder, weder…noch, zwar…aber, einerseits…andererseits — Wortpaare, die zusammengehören.",
       getBank: bankKonnektoren, unlock: { type: "points", value: 130 } },
     { id: "jedesto", title: "je…desto / umso", icon: "📈", group: "grammatik",
-      info: "Bei Vergleichen mit steigender Tendenz braucht der zweite Teil desto plus Komparativ, z. B. Je mehr, desto besser.",
+      info: "Bei Vergleichen mit steigender Tendenz braucht der zweite Teil desto oder umso plus Komparativ, z. B. Je mehr, desto besser / Je mehr, umso besser. Beide Wörter sind hier gleichbedeutend und beliebig austauschbar — es gibt keinen Bedeutungsunterschied, nur zwei gleichwertige Varianten.",
       getBank: bankJeDesto, unlock: { type: "points", value: 180 } },
     { id: "quiz", title: "Deutschland-Quiz", icon: "🏆", group: "quiz",
       info: "Allgemeinwissen rund um Deutschland — im Stil von „Wer wird Millionär“. Manche Fragen haben zwei richtige Antworten für Bonuspunkte!",
@@ -4482,5 +4577,5 @@ const ExerciseData = (function () {
     { id: "redewendungen", label: "Redewendungen", icon: "💬", getPairs: getRedewendungenPairs },
   ];
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT };
 })();

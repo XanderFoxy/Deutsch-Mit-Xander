@@ -819,9 +819,15 @@
       }
     }
   }
-  function inlineFeatureFlagToggleHtml(flagKey) {
+  function inlineFeatureFlagToggleHtml(flagKey, defaultTrue) {
     if (!Backend.canModerate || !Backend.canModerate()) return "";
-    const on = Backend.getRawFeatureFlag(flagKey);
+    // WICHTIG — bei "default true"-Flags (siehe Backend.isFeatureOnDefaultTrue, für längst
+    // etablierte Spiele wie Satzpuzzle/Wackelturm) bedeutet ein noch nie gesetzter Rohwert, dass
+    // das Spiel TROTZDEM schon für alle sichtbar ist — anders als bei ganz neuen "Kommt
+    // bald"-Features, wo derselbe Rohzustand "nur für dich" bedeutet. Ohne diese Unterscheidung
+    // hätte die Checkbox hier fälschlich "aus" angezeigt, obwohl das Spiel längst live ist.
+    const raw = Backend.getRawFeatureFlagValue(flagKey);
+    const on = defaultTrue ? (raw === false ? false : true) : Boolean(raw);
     return `<label class="empty-note" style="display:flex; align-items:center; gap:6px; margin:8px 0; padding:8px; border:1px dashed var(--teal-400,#5ba8a0); border-radius:8px; cursor:pointer;">
       <input type="checkbox" class="inline-feature-flag-toggle" data-flag-key="${flagKey}" ${on ? "checked" : ""} />
       <span>🚦 <strong>Update-Freigabe:</strong> ${on ? "Für alle Nutzer:innen live" : "Nur für dich als Test sichtbar"} — hier umschalten, um dieses Update in die Welt zu bringen (oder wieder zurückzuziehen)</span>
@@ -922,9 +928,27 @@
       await Backend.notifyAdminsBetaTesting(profile.name, featureName, subTarget);
     } catch (e) { console.warn("Beta-Test-Benachrichtigung an Admins fehlgeschlagen:", e); }
   }
-  function renderComingSoonGate(area, flagKey, gameName, gameIcon) {
-    const isOn = Backend.isFeatureOn(flagKey);
+  function renderComingSoonGate(area, flagKey, gameName, gameIcon, defaultTrue) {
+    const isOn = defaultTrue ? Backend.isFeatureOnDefaultTrue(flagKey) : Backend.isFeatureOn(flagKey);
     const canSeeAnyway = Backend.canModerate && Backend.canModerate();
+    // WICHTIG — zentraler Ansatz statt 8+ einzelner Umbauten: der Freischalt-Schalter wird hier,
+    // an EINER Stelle für alle Spiele, als eigenes Geschwister-Element direkt VOR dem Spielbereich
+    // eingefügt (nicht innerhalb von area selbst, da dessen innerHTML ja beim Spielen laufend neu
+    // gesetzt wird — ein dort eingefügter Schalter würde bei jedem Re-Render wieder verschwinden).
+    // Läuft nur für Moderator:innen/Admins (inlineFeatureFlagToggleHtml liefert sonst "").
+    let toggleHost = document.getElementById(area.id + "-toggle-host");
+    const toggleHtml = inlineFeatureFlagToggleHtml(flagKey, defaultTrue);
+    if (toggleHtml) {
+      if (!toggleHost) {
+        toggleHost = document.createElement("div");
+        toggleHost.id = area.id + "-toggle-host";
+        area.parentNode.insertBefore(toggleHost, area);
+      }
+      toggleHost.innerHTML = toggleHtml;
+      wireInlineFeatureFlagToggles(toggleHost, () => renderComingSoonGate(area, flagKey, gameName, gameIcon, defaultTrue) || true);
+    } else if (toggleHost) {
+      toggleHost.remove();
+    }
     if (isOn || canSeeAnyway) {
       if (isOn) notifyAdminsIfBetaTesting(flagKey, gameName);
       return true;
@@ -1009,6 +1033,7 @@
               <button type="button" class="emoji-toggle-link" data-resolve-bug="${r.id}" style="font-size:0.72rem;">✓ Erledigt</button>
             </span>
             <span class="empty-note" style="font-size:0.78rem;">${r.context}</span>
+            ${r.description ? `<span class="empty-note" style="font-size:0.76rem;">📝 ${r.description}</span>` : ""}
             <span class="empty-note" style="font-size:0.7rem; opacity:0.7;">von ${r.reporter_name} · ${new Date(r.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
           </div>`).join("") || '<p class="empty-note">Keine offenen Meldungen. 🎉</p>'}
       </div>
@@ -1491,41 +1516,13 @@
     area.querySelectorAll(".notify-kind-color").forEach((sel) => {
       sel.addEventListener("change", () => setNotifyTypeSetting(sel.dataset.kind, "color", sel.value));
     });
-    // Bug-Report-Übersicht — nur für Admins/Betreiber:in sichtbar. Das Backend (getBugReports/
-    // resolveBugReport) gab es schon, aber bisher KEINE Oberfläche dafür — Fehlermeldungen kamen
-    // nur unstrukturiert als Postfach-Nachrichten an. Jetzt gebündelt: Ort/Spiel, Art, Beschreibung
-    // und Zeitpunkt auf einen Blick, mit einem Erledigt-Knopf pro Meldung.
-    if (Backend.canModerate()) {
-      const bugBox = document.createElement("div");
-      bugBox.className = "question-card";
-      bugBox.style.marginTop = "14px";
-      bugBox.innerHTML = `<h3>🪲 Gemeldete Fehler</h3><p class="empty-note" id="bugReportsLoadingNote">Lädt…</p>`;
-      area.appendChild(bugBox);
-      Backend.getBugReports().then((reports) => {
-        const open = reports.filter((r) => !r.resolved);
-        const resolvedCount = reports.length - open.length;
-        bugBox.innerHTML = `
-          <h3>🪲 Gemeldete Fehler ${open.length ? `(${open.length} offen)` : ""}</h3>
-          ${!open.length ? `<p class="empty-note">Keine offenen Meldungen${resolvedCount ? ` — ${resolvedCount} bereits erledigt` : ""}. 🎉</p>` : `
-          <div class="breakdown-list">
-            ${open.map((r) => `
-              <div class="question-card" style="margin-bottom:10px; background:rgba(232,72,63,0.06);">
-                <p style="font-weight:700; margin:0 0 4px;">📍 ${r.context || "Unbekannter Ort"}</p>
-                <p class="empty-note" style="margin:0 0 2px;">Art: ${r.category || "—"}</p>
-                ${r.detail || r.description ? `<p class="empty-note" style="margin:0 0 2px;">Beschreibung: ${r.detail || r.description}</p>` : ""}
-                <p class="empty-note" style="margin:0 0 8px;">Von ${r.reporter_name || "Unbekannt"} · ${new Date(r.created_at).toLocaleString("de-DE")}</p>
-                <button type="button" class="btn btn-ghost" data-resolve-bug="${r.id}">✅ Erledigt</button>
-              </div>`).join("")}
-          </div>`}
-        `;
-        bugBox.querySelectorAll("[data-resolve-bug]").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            await Backend.resolveBugReport(btn.dataset.resolveBug);
-            renderSettings();
-          });
-        });
-      }).catch((e) => { bugBox.innerHTML = `<h3>🪲 Gemeldete Fehler</h3><p class="empty-note">Konnte nicht geladen werden.</p>`; console.warn(e); });
-    }
+    // WICHTIG — behebt einen echten Doppel-Anzeige-Bug: hier stand früher eine ZWEITE, komplett
+    // eigenständige "🪲 Gemeldete Fehler"-Box (mit eigenem getBugReports()-Aufruf), zusätzlich zur
+    // bereits bestehenden, funktional ausgereifteren Version weiter oben in dieser Datei
+    // (loadAdminBugReports() → #adminBugReportsArea, mit Häufigkeits-Auswertung nach Kategorie
+    // und ausklappbaren erledigten Meldungen). Beide liefen parallel und zeigten dieselben
+    // Meldungen doppelt an. Das einzige Feld, das nur diese zweite Version zeigte (die freie
+    // Beschreibung), wurde in die verbleibende Version übernommen — siehe dort.
   }
 
   // Echte Vorschau eines noch gesperrten Designs — zeigt Beispiel-Elemente (Karte, Button, Text)
@@ -3124,7 +3121,15 @@
         // statt nur allgemein ins Profil).
         const targetMatch = n.message.match(/\[\[target:(\w+):([\w-]+)\]\]/);
         const cleanMessage = n.message.replace(/\[\[target:[\w-]+:[\w-]+\]\]/, "");
-        const jumpToOther = targetMatch
+        // WICHTIG — behebt einen echten Bug: bisher markierte NUR ein separater, versteckter
+        // "Alle als gelesen"-Knopf im Profil (dismissNotificationsBtn) Benachrichtigungen als
+        // gelesen. Klickte man stattdessen auf das blinkende Profilbild selbst (der naheliegendste
+        // Weg), sprang man zwar zum Ziel, aber die Benachrichtigung blieb in der Datenbank
+        // weiterhin "ungelesen" — sie kam bei jedem erneuten Check wieder, das Blinken hörte nie
+        // auf, egal wie oft man draufklickte. Jetzt markiert schon der Klick selbst sie als
+        // gelesen, bevor zum Ziel gesprungen wird.
+        const markReadAndJump = (jumpFn) => () => { Backend.markNotificationsRead([n.id]); jumpFn(); };
+        const jumpToOther = markReadAndJump(targetMatch
           ? () => {
               const [, view, textId] = targetMatch;
               const subTarget = view === "community" ? "sub-community" : "sub-tips";
@@ -3134,7 +3139,7 @@
                 scrollToAndHighlightWhenReady(`[data-text-id="${textId}"]`);
               }, 150);
             }
-          : () => document.querySelector('[data-target="view-profile"]').click();
+          : () => document.querySelector('[data-target="view-profile"]').click());
         showToast(cleanMessage, jumpToOther);
         notifyTarget = { kind: "other", action: jumpToOther };
         hasNew = true; newestKind = "other";
@@ -3973,12 +3978,15 @@
     if (Backend.currentUser() && percent >= 90) {
       Backend.addTrophy(`Betonungs-Trainer – Sprachtalent`);
     }
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
     document.getElementById("stPlayAgainBtn").addEventListener("click", () => {
       newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer();
     });
   }
   function renderStressTrainer() {
     const area = document.getElementById("stressTrainerArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "betonungstrainer_aktiv", "Betonungs-Trainer", "🎯", true)) return;
     if (!stTrainerSession) newStressTrainerSession();
     if (!stTrainerWord) pickStressTrainerWord();
     if (stTrainerSession.round >= stTrainerSession.total) { renderStressTrainerResults(); return; }
@@ -4094,6 +4102,18 @@
   function cefrLevelFor(word) {
     if (CEFR_A1_WORDS.has(word)) return "A1";
     if (CEFR_A2_WORDS.has(word)) return "A2";
+    // WICHTIG — logische Verknüpfung mit den Themenbereichen: bestimmte Kategorien deuten fürs
+    // Deutsche verlässlich auf ein höheres Niveau hin, unabhängig vom einzelnen Wort selbst.
+    // Umgangssprache setzt voraus, dass man die "neutrale" Standardform schon kennt, um die
+    // informelle Abweichung davon einzuordnen — typischerweise erst ab B2 sinnvoll vermittelbar.
+    // Trennbare Verben sind grammatikalisch anspruchsvoller (Wortstellung, Satzklammer) als
+    // einfache Verben, daher B1/B2 statt der sonstigen B1-Standardeinstufung.
+    const category = WORD_CATEGORIES[word];
+    if (category === "Umgangssprache") return "B2";
+    if (category === "Getrennte Verben") return "B1";
+    // Abstrakte Begriffe (Argumentation, Konsequenz, Vermutung u. Ä.) und lange Fremdwörter mit
+    // philosophischem/wissenschaftlichem Klang sind erfahrungsgemäß meist erst ab C1 aktiv nutzbar.
+    if (/losigkeit|heit$|ung$|nis$|samkeit/i.test(word) && word.length > 12) return "C1";
     // Fremdwörter/Lehnwörter und abstraktere Begriffe sind erfahrungsgemäß meist B1 oder höher.
     if (/tion|tät|ismus|ieren|Universität|Bibliothek|Restaurant|Appetit|Toilette/i.test(word)) return "B1";
     return "B1"; // vorsichtige Standardeinstufung für alles, was nicht eindeutig A1/A2 ist
@@ -4326,7 +4346,80 @@
     "Buch": "Haushalt & Wohnen",
     "Bus": "Verkehr & Reisen",
     "Bank": "Verkehr & Reisen",
-    "Blatt": "Tiere & Natur"
+    "Blatt": "Tiere & Natur",
+    // WICHTIG — zwei neue Themenbereiche wie gewünscht: "Getrennte Verben" (trennbare Verben wie
+    // ankommen, abgeben, annehmen — das Präfix trennt sich im Hauptsatz vom Verbstamm und wandert
+    // ans Satzende, z. B. "Ich komme um acht an") und "Umgangssprache" (lockere, informelle
+    // Alltagswörter). Nur Wörter, die bereits echte, geprüfte Einträge im Wörterbuch haben,
+    // werden hier einsortiert — diese Zuordnung fügt keine neuen Vokabeln hinzu, sie kategorisiert
+    // nur vorhandene.
+    "ankommen": "Getrennte Verben", "annehmen": "Getrennte Verben", "aufstehen": "Getrennte Verben",
+    "mitkommen": "Getrennte Verben", "anrufen": "Getrennte Verben", "aufmachen": "Getrennte Verben",
+    "anfangen": "Getrennte Verben", "aufhören": "Getrennte Verben", "einladen": "Getrennte Verben",
+    "vorbereiten": "Getrennte Verben", "abholen": "Getrennte Verben", "anziehen": "Getrennte Verben",
+    "einschlafen": "Getrennte Verben", "fernsehen": "Getrennte Verben", "kennenlernen": "Getrennte Verben",
+    "teilnehmen": "Getrennte Verben", "zuhören": "Getrennte Verben", "nachdenken": "Getrennte Verben",
+    "vorstellen": "Getrennte Verben", "umziehen": "Getrennte Verben",
+    // WICHTIG — wie versprochen: Fortsetzung der Wörterbuch-Prüfung für Wörter aus den
+    // Übungseinheiten (extractExtendedVocabulary), die bisher pauschal als "Sonstiges"
+    // einsortiert waren. Dieser Batch sind alles bestätigt echte trennbare Verben.
+    "abfahren": "Getrennte Verben", "abfallen": "Getrennte Verben", "abgeben": "Getrennte Verben",
+    "abnehmen": "Getrennte Verben", "abräumen": "Getrennte Verben", "absagen": "Getrennte Verben",
+    "abschließen": "Getrennte Verben", "abwarten": "Getrennte Verben", "anbieten": "Getrennte Verben",
+    "anhalten": "Getrennte Verben", "anhören": "Getrennte Verben", "anmachen": "Getrennte Verben",
+    "anmelden": "Getrennte Verben", "anpacken": "Getrennte Verben", "anprobieren": "Getrennte Verben",
+    "ansehen": "Getrennte Verben", "ansetzen": "Getrennte Verben", "ansprechen": "Getrennte Verben",
+    "ansteigen": "Getrennte Verben", "aufgeben": "Getrennte Verben", "aufgehen": "Getrennte Verben",
+    "aufnehmen": "Getrennte Verben", "aufpassen": "Getrennte Verben", "aufprallen": "Getrennte Verben",
+    "aufräumen": "Getrennte Verben", "aufschreiben": "Getrennte Verben", "aufwachen": "Getrennte Verben",
+    "ausdrücken": "Getrennte Verben", "ausgeben": "Getrennte Verben", "ausgehen": "Getrennte Verben",
+    "auskommen": "Getrennte Verben", "ausleihen": "Getrennte Verben", "ausmachen": "Getrennte Verben",
+    "auspacken": "Getrennte Verben", "ausruhen": "Getrennte Verben", "ausräumen": "Getrennte Verben",
+    "ausschalten": "Getrennte Verben", "ausschreiben": "Getrennte Verben", "aussehen": "Getrennte Verben",
+    "aussetzen": "Getrennte Verben", "aussteigen": "Getrennte Verben", "ausziehen": "Getrennte Verben",
+    "durchführen": "Getrennte Verben", "durchhalten": "Getrennte Verben", "durchziehen": "Getrennte Verben",
+    "einchecken": "Getrennte Verben", "einfallen": "Getrennte Verben", "einnehmen": "Getrennte Verben",
+    "einpacken": "Getrennte Verben", "einsteigen": "Getrennte Verben", "einziehen": "Getrennte Verben",
+    // Zweiter Batch der Fortsetzung: Grundverben, Adjektive/Eigenschaften und Substantive aus
+    // demselben Übungsinhalt-Wortschatz, sorgfältig nach Wortart eingeordnet.
+    "bauen": "Grundverben", "beantworten": "Grundverben", "beeindrucken": "Grundverben",
+    "beenden": "Grundverben", "befinden": "Grundverben", "begegnen": "Grundverben",
+    "begreifen": "Grundverben", "begründen": "Grundverben", "begrüßen": "Grundverben",
+    "behalten": "Grundverben", "behandeln": "Grundverben", "beibringen": "Grundverben",
+    "beleuchten": "Grundverben", "bemerken": "Grundverben", "beobachten": "Grundverben",
+    "beruhigen": "Grundverben", "beschäftigen": "Grundverben", "beschließen": "Grundverben",
+    "beschreiben": "Grundverben", "beschützen": "Grundverben", "besitzen": "Grundverben",
+    "besprechen": "Grundverben", "bestätigen": "Grundverben", "bestehen": "Grundverben",
+    "bestellen": "Grundverben", "bestimmen": "Grundverben", "besuchen": "Grundverben",
+    "betrachten": "Grundverben", "betreten": "Grundverben", "bewegen": "Grundverben",
+    "beweisen": "Grundverben", "bewundern": "Grundverben", "bezahlen": "Grundverben",
+    "bezeichnen": "Grundverben", "bieten": "Grundverben", "binden": "Grundverben",
+    "bitten": "Grundverben", "blitzen": "Grundverben", "brechen": "Grundverben",
+    "brennen": "Grundverben", "buchen": "Grundverben",
+    "bedeutend": "Abstrakte Begriffe", "beliebt": "Abstrakte Begriffe", "bequem": "Abstrakte Begriffe",
+    "bereit": "Abstrakte Begriffe", "berühmt": "Abstrakte Begriffe", "besetzt": "Abstrakte Begriffe",
+    "betrunken": "Abstrakte Begriffe", "billig": "Abstrakte Begriffe", "dankbar": "Abstrakte Begriffe",
+    "Berge": "Tiere & Natur", "Bäume": "Tiere & Natur", "Blätter": "Tiere & Natur",
+    "Betten": "Haushalt & Wohnen", "Bücher": "Haushalt & Wohnen",
+    "Brote": "Essen & Trinken",
+    "damals": "Kleine Wörter & Partikeln", "danach": "Kleine Wörter & Partikeln",
+    // Dritter Batch: Substantive mit Artikel aus demselben Übungsinhalt-Wortschatz.
+    "das Kleid": "Haushalt & Wohnen", "das Licht": "Haushalt & Wohnen", "das Wohnzimmer": "Haushalt & Wohnen",
+    "das Zelt": "Haushalt & Wohnen", "das Zimmer": "Haushalt & Wohnen", "der Anzug": "Haushalt & Wohnen",
+    "das Kapitel": "Schule & Arbeit", "das Studium": "Schule & Arbeit", "das Programm": "Schule & Arbeit",
+    "das Projekt": "Schule & Arbeit", "das Zeugnis": "Schule & Arbeit", "der Arbeitgeber": "Schule & Arbeit",
+    "der Arbeitnehmer": "Schule & Arbeit", "der Beruf": "Schule & Arbeit",
+    "das Lenkrad": "Verkehr & Reisen", "der Ausflug": "Verkehr & Reisen", "der Bahnhof": "Verkehr & Reisen",
+    "der Berufsverkehr": "Verkehr & Reisen",
+    "das Steak": "Essen & Trinken", "das Salz": "Essen & Trinken",
+    "das Pferd": "Tiere & Natur", "der Baum": "Tiere & Natur", "der Berg": "Tiere & Natur",
+    "das Interesse": "Abstrakte Begriffe", "das Mitleid": "Abstrakte Begriffe", "das Schicksal": "Abstrakte Begriffe",
+    "das Wunder": "Abstrakte Begriffe", "der Ärger": "Abstrakte Begriffe",
+    "das Mitglied": "Familie & Menschen", "der Ausländer": "Familie & Menschen", "der Autor": "Familie & Menschen",
+    "der Quatsch": "Umgangssprache", "doof": "Umgangssprache",
+    "der Job": "Umgangssprache", "total": "Umgangssprache", "der Kumpel": "Umgangssprache",
+    "cool": "Umgangssprache", "der Typ": "Umgangssprache", "echt": "Umgangssprache",
+    "kapieren": "Umgangssprache", "abhauen": "Umgangssprache"
   };
   function categoryForWord(word) {
     return WORD_CATEGORIES[word] || "Sonstiges";
@@ -4375,7 +4468,7 @@
       <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.</p>
       <div class="vocab-toolbar"><input type="text" class="vocab-search" id="dictSearch" placeholder="Wort oder Bedeutung suchen…" value="${filter}" /></div>
       <div class="trophy-case" style="margin:10px 0;">
-        ${["alle", "A1", "A2", "B1", "erweitert"].map((lvl) => `<button type="button" class="trophy-chip dict-level-btn ${dictLevelFilter === lvl ? "selected" : ""}" data-level="${lvl}">${lvl === "alle" ? "Alle" : lvl === "erweitert" ? "Erweitert (ungeprüft)" : lvl}</button>`).join("")}
+        ${["alle", "A1", "A2", "B1", "B2", "C1", "C2", "erweitert"].map((lvl) => `<button type="button" class="trophy-chip dict-level-btn ${dictLevelFilter === lvl ? "selected" : ""}" data-level="${lvl}">${lvl === "alle" ? "Alle" : lvl === "erweitert" ? "Erweitert (ungeprüft)" : lvl}</button>`).join("")}
       </div>
       <label class="empty-note" style="display:block; margin-bottom:4px;">Themenbereich</label>
       <select id="dictCategorySelect" class="challenge-select" style="margin-bottom:12px;">
@@ -4421,6 +4514,14 @@
   let memoryChallengeSearch = "";
   let activeMemoryChallengeId = null;
   let activeMemoryOpponentName = "";
+  // Generische Variante für alle anderen Spiele (Wort-Kanone, Wortblasen, Wackelturm, usw.), die
+  // über eine Herausforderung gestartet werden — behebt einen echten Bug: bisher wurde beim
+  // Annehmen einer Herausforderung NIRGENDS außer bei den normalen Übungen und Memory tatsächlich
+  // Backend.submitChallengeResult() aufgerufen. Die Herausforderung blieb dadurch für immer als
+  // "eingehend" markiert, egal ob das Spiel gespielt wurde — die blinkende Erinnerung verschwand
+  // nie, und der/die Herausforderer:in sah nie ein Ergebnis. Wird beim Annehmen gesetzt (siehe
+  // gameRouting) und beim jeweiligen Spielende ausgewertet.
+  let activeGameChallengeId = null;
 
   async function newMemoryGame() {
     const game = ExerciseData.MEMORY_GAMES.find((g) => g.id === memoryGameId);
@@ -4736,6 +4837,9 @@
       spResultsFinalized = true;
       if (Backend.currentUser()) {
         saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent, character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+        // WICHTIG — behebt den echten Bug: eine über eine Herausforderung gestartete Runde wurde
+        // bisher nie ans Backend zurückgemeldet, siehe activeGameChallengeId (gameRouting).
+        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
         // Wer während der Runde Fehler gemacht hat, bekommt die richtigen Sätze zusätzlich als
         // Zusammenfassung ins Postfach — die kurze Einblendung im Spiel selbst (2,6s) reicht oft
         // nicht, um sich alles zu merken; so kann man in Ruhe nachlesen, was man beim nächsten
@@ -4761,6 +4865,7 @@
   function renderSatzpuzzle() {
     const area = document.getElementById("satzpuzzleArea");
     if (!area) return;
+    if (!renderComingSoonGate(area, "satzpuzzle_aktiv", "Satzpuzzle", "🧩", true)) return;
     if (!spIntroShown && !hasSeenGameIntro("satzpuzzle")) {
       // "SATZPUZZLE" als Reihe kleiner, bunter Puzzleteile (mit angedeuteten Verbindungsnoppen an
       // den Seiten) statt Emoji + Text — passend zum Zusammensetz-Thema des Spiels.
@@ -4902,6 +5007,7 @@
   function renderWackelturm() {
     const area = document.getElementById("wackelturmArea");
     if (!area) return;
+    if (!renderComingSoonGate(area, "wackelturm_aktiv", "Wackelturm", "🗼", true)) return;
     // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
     // statt sofort mitten im Spiel zu landen, ohne zu wissen, worum es geht.
     if (!wtIntroShown && !hasSeenGameIntro("wackelturm")) {
@@ -5022,6 +5128,7 @@
       wtGameOverFinalized = true;
       if (Backend.currentUser()) {
         saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved + 5, bonus: 5, percent: 100, character: "Turmbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; }
       }
     }
     // Nach kurzer Zeit automatisch zum bereiten, leeren Turm wechseln — wie gewünscht, damit man
@@ -5050,6 +5157,7 @@
       if (Backend.currentUser() && wtBlocksRemoved > 0) {
         saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved, bonus: 0, percent: 100, character: "Turmbauer:in", badges: [], playedAt: new Date().toISOString() });
       }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: accuracy }); activeGameChallengeId = null; }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wackelturm"]')?.addEventListener("click", () => {
@@ -5090,12 +5198,15 @@
       newWortartenSession(); newWortartenRound(); renderWortarten();
     });
     if (Backend.currentUser()) {
-      saveResultAndCheck({ categories: ["wortarten"], points: waSession.correct, bonus: 0, percent: Math.round((waSession.correct / waSession.total) * 100), character: "Wort-Typ:in", badges: [], playedAt: new Date().toISOString() });
+      const percent = Math.round((waSession.correct / waSession.total) * 100);
+      saveResultAndCheck({ categories: ["wortarten"], points: waSession.correct, bonus: 0, percent, character: "Wort-Typ:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
     }
   }
   function renderWortarten() {
     const area = document.getElementById("wortartenArea");
     if (!area) return;
+    if (!renderComingSoonGate(area, "wortarten_aktiv", "Wort-Typ", "🔤", true)) return;
     if (!waSession) newWortartenSession();
     if (waSession.round >= waSession.total) { renderWortartenResults(); return; }
     if (!waCurrentWord) newWortartenRound();
@@ -5305,8 +5416,11 @@
     if (!area) return;
     if (!renderComingSoonGate(area, "wortblasen_neu", "Wortblasen", "🫧")) return;
     if (!bbIntroShown && !hasSeenGameIntro("wortblasen")) {
-      // Statt Emoji + Text: das Wort "WORTBLASEN" als Reihe kleiner, runder Seifenblasen mit
-      // Glanzlicht — jede Blase trägt einen Buchstaben, passend zum Blasen-Thema des Spiels.
+      // WICHTIG — behebt einen echten Verstoß gegen die Vorgabe "keine Bubbles mit normalen
+      // Schriftzeichen drin": vorher waren die Buchstaben hier <text>-Elemente mit Comic-Sans-
+      // Schriftart innerhalb der Blasen — genau das Muster, das ausdrücklich vermieden werden
+      // sollte. Jetzt zeichnet handDrawnLetterGroup() (dieselben handgebauten Strichformen wie bei
+      // Vokabelmeister) die Buchstaben direkt als Linien in jede Blase hinein.
       const BB_TITLE_LETTERS = ["W", "O", "R", "T", "B", "L", "A", "S", "E", "N"];
       const BB_TITLE_COLORS = ["#5BA8A0", "#4A90D9", "#7FC4D4", "#3EC6C6", "#5BA8A0", "#4A90D9", "#7FC4D4", "#3EC6C6", "#5BA8A0", "#4A90D9"];
       const bubbleR = 19;
@@ -5319,14 +5433,13 @@
           return `<g>
             <circle cx="${cx}" cy="${cy}" r="${bubbleR}" fill="${BB_TITLE_COLORS[i]}" fill-opacity="0.75" stroke="#FFFFFF" stroke-width="1.5"/>
             <ellipse cx="${cx - 6}" cy="${cy - 7}" rx="5" ry="3" fill="#FFFFFF" fill-opacity="0.8"/>
-            <text x="${cx}" y="${cy + 6}" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF">${letter}</text>
+            ${handDrawnLetterGroup(letter, cx, cy + 1, 22, "#FFFFFF", 2.6)}
           </g>`;
         }).join("")}
       </svg>`;
       area.innerHTML = `
         <div class="question-card" style="text-align:center;">
           <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          ${inlineFeatureFlagToggleHtml("wortblasen_neu")}
           <p class="empty-note">Mehrere Wort-Blasen erscheinen gleichzeitig — tipp die RICHTIGE Antwort an, bevor sie von selbst zerplatzt! Tippst du eine falsche Blase an, oder zerplatzt die richtige ungetroffen, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
           <button type="button" class="btn btn-coffee" id="bbStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
@@ -5442,6 +5555,61 @@
     renderBubbleGame();
   });
 
+  /* WICHTIG — wie gewünscht: jeder Buchstabe unten ist eine eigens gestaltete SVG-Strichform, kein
+     <text> mit einer System-Schriftart. Jeder Buchstabe ist als Satz einfacher Striche/Bögen auf
+     einem 24×32-Raster von Hand definiert (gerade Linien als "L", Bögen als quadratische Bezier
+     "Q") — dicke, runde Strichenden wie mit einem Filzstift gezeichnet, passend zu einem
+     verspielten Wort-Lernspiel statt einer nüchternen Schrift. */
+  const VM_LETTER_STROKES = {
+    A: ["M2,30 L10,2 L18,30", "M5,19 L15,19"],
+    B: ["M4,2 L4,30", "M4,2 Q17,2 17,9 Q17,16 4,16", "M4,16 Q18,16 18,23 Q18,30 4,30"],
+    C: ["M20,7 Q12,-1 5,7 Q0,16 5,25 Q12,33 20,26"],
+    D: ["M4,2 L4,30", "M4,2 Q20,2 20,16 Q20,30 4,30"],
+    E: ["M18,2 L4,2 L4,30 L18,30", "M4,16 L15,16"],
+    F: ["M18,2 L4,2 L4,30", "M4,16 L15,16"],
+    G: ["M20,7 Q12,-1 5,7 Q0,16 5,25 Q12,33 20,26 L20,17 L13,17"],
+    H: ["M4,2 L4,30", "M20,2 L20,30", "M4,16 L20,16"],
+    I: ["M12,2 L12,30", "M5,2 L19,2", "M5,30 L19,30"],
+    J: ["M18,2 L18,23 Q18,31 10,31 Q4,31 4,25"],
+    K: ["M4,2 L4,30", "M19,2 L4,17", "M9,13 L19,30"],
+    L: ["M5,2 L5,30 L19,30"],
+    M: ["M3,30 L3,2 L12,18 L21,2 L21,30"],
+    N: ["M4,30 L4,2 L20,30 L20,2"],
+    O: ["M12,2 Q22,2 22,16 Q22,30 12,30 Q2,30 2,16 Q2,2 12,2"],
+    P: ["M4,30 L4,2", "M4,2 Q19,2 19,10.5 Q19,19 4,19"],
+    Q: ["M12,2 Q22,2 22,16 Q22,30 12,30 Q2,30 2,16 Q2,2 12,2", "M14,22 L22,32"],
+    R: ["M4,30 L4,2", "M4,2 Q19,2 19,10.5 Q19,19 4,19", "M10,19 L20,30"],
+    S: ["M19,7 Q13,-2 6,4 Q0,10 12,16 Q24,22 17,28 Q10,34 4,25"],
+    T: ["M3,2 L21,2", "M12,2 L12,30"],
+    U: ["M4,2 L4,21 Q4,30 12,30 Q20,30 20,21 L20,2"],
+    V: ["M3,2 L12,30 L21,2"],
+    W: ["M2,2 L7,30 L12,10 L17,30 L22,2"],
+    X: ["M4,2 L20,30", "M20,2 L4,30"],
+    Y: ["M3,2 L12,17 L21,2", "M12,17 L12,30"],
+    Z: ["M4,2 L20,2 L4,30 L20,30"],
+  };
+  function vmLetterSvg(letter) {
+    const strokes = VM_LETTER_STROKES[letter.toUpperCase()];
+    if (!strokes) return letter; // Absicherung für unerwartete Zeichen — kommt im A–Z-Alphabet nicht vor
+    return `<svg viewBox="0 0 24 32" width="22" height="30" class="vm-letter-svg" aria-label="${letter}">
+      ${strokes.map((d) => `<path d="${d}" />`).join("")}
+    </svg>`;
+  }
+  // Wiederverwendbare Variante derselben handgezeichneten Strichbuchstaben, aber als <g>-Gruppe
+  // zur Einbettung INNERHALB eines größeren SVGs (z. B. in eine Sprechblase oder eine
+  // Zielscheibe) — mit eigener Position, Größe und Farbe, statt eines separaten <svg>-Elements.
+  // Nutzt dasselbe VM_LETTER_STROKES-Rasterformat (24×32) wie Vokabelmeister, damit auch hier
+  // echte, selbst gestaltete Buchstabenformen statt Systemschrift-Text verwendet werden.
+  function handDrawnLetterGroup(letter, cx, cy, size, color, strokeWidth) {
+    const strokes = VM_LETTER_STROKES[letter.toUpperCase()];
+    if (!strokes) return "";
+    const scale = size / 32;
+    const tx = cx - (24 * scale) / 2;
+    const ty = cy - (32 * scale) / 2;
+    return `<g transform="translate(${tx},${ty}) scale(${scale})" fill="none" stroke="${color}" stroke-width="${strokeWidth / scale}" stroke-linecap="round" stroke-linejoin="round">
+      ${strokes.map((d) => `<path d="${d}" />`).join("")}
+    </g>`;
+  }
   /* ===== Vokabelmeister: Buchstabe wählen (selbst oder zufällig), dann Zeitdruck — so viele
      Wörter wie möglich mit diesem Anfangsbuchstaben eingeben. Prüft gegen eine kombinierte
      Wortliste aus mehreren Quellen der Seite (Vokabeln, Artikel-Nomen, Hobbys, Länder, Sprachen).
@@ -5512,11 +5680,10 @@
         <div class="question-card" style="text-align:center;">
           <p style="font-size:2.5rem;">🔤</p>
           <h2 style="margin:8px 0;">Vokabelmeister</h2>
-          ${inlineFeatureFlagToggleHtml("vokabelmeister_neu")}
           <p class="empty-note">Wähl einen Buchstaben (oder lass das Los entscheiden) — dann hast du 60 Sekunden Zeit, so viele deutsche Wörter wie möglich einzugeben, die mit diesem Buchstaben beginnen.</p>
           <button type="button" class="btn btn-coffee" id="vmRandomLetterBtn" style="margin:10px 0;">🎲 Zufälliger Buchstabe</button>
           <div class="vm-letter-grid">
-            ${alphabet.split("").map((l) => `<button type="button" class="vm-letter-btn" data-vm-letter="${l}">${l}</button>`).join("")}
+            ${alphabet.split("").map((l) => `<button type="button" class="vm-letter-btn" data-vm-letter="${l}">${vmLetterSvg(l)}</button>`).join("")}
           </div>
         </div>`;
       wireInlineFeatureFlagToggles(area, renderVokabelmeister);
@@ -5682,7 +5849,6 @@
       area.innerHTML = `
         <div class="question-card" style="text-align:center;">
           <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          ${inlineFeatureFlagToggleHtml("korrektour_neu")}
           <p class="empty-note">Ein Satz-Zug fährt am unteren Bildrand vorbei — du hast nur dieses kurze Zeitfenster, um zu entscheiden: Ist der Satz grammatikalisch RICHTIG (🟢 Grün) oder enthält er einen typischen Fehler (🔴 Rot)? Nach 3 Fehlern ist die Runde vorbei.</p>
           <button type="button" class="btn btn-coffee" id="ktStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
         </div>`;
@@ -5712,23 +5878,42 @@
     // Deutlich größer und detailreicher als vorher — richtiger Kessel (zylindrisch), Schornstein,
     // Führerhaus mit Fenstern, Puffer vorne, und jetzt echte Speichenräder statt schlichter
     // Kreise, die eher wie Autoreifen wirkten.
+    // WICHTIG — deutlich überarbeiteter Look: vorher nur ein einzelner, dünner Aufbau vorne ohne
+    // erkennbaren Schornstein. Jetzt zwei echte Schornsteine (ein großer, ein kleiner) auf dem Bug,
+    // ein Führerhaus-Fenster mit Sprossen, ein Kessel-Highlight für Rundung, und ein rotes
+    // Stoßfänger-Detail vorne — insgesamt näher an einer klassischen Dampflokomotive.
     const locomotiveSvg = `<svg viewBox="0 0 84 58" width="76" height="52" class="kt-locomotive-svg">
-      <rect x="4" y="6" width="4" height="14" rx="1" fill="#4a3a5a"/>
-      <ellipse cx="6" cy="4" rx="4" ry="2.5" fill="#8a7a9a"/>
-      <rect x="10" y="14" width="36" height="20" rx="10" fill="#c9432f"/>
-      <rect x="10" y="20" width="36" height="4" fill="#a8321f"/>
+      <rect x="2" y="4" width="6" height="16" rx="1.5" fill="#3a2f4a"/>
+      <ellipse cx="5" cy="3" rx="5" ry="2.5" fill="#8a7a9a"/>
+      <rect x="12" y="8" width="4" height="12" rx="1" fill="#4a3a5a"/>
+      <ellipse cx="14" cy="7" rx="3" ry="1.8" fill="#8a7a9a"/>
+      <rect x="16" y="14" width="30" height="20" rx="10" fill="#c9432f"/>
+      <rect x="16" y="14" width="30" height="7" rx="6" fill="#e0594a" opacity="0.7"/>
+      <rect x="16" y="20" width="30" height="4" fill="#a8321f"/>
       <rect x="44" y="8" width="30" height="26" rx="4" fill="#5a4a72"/>
       <rect x="49" y="12" width="9" height="9" rx="1.5" fill="#bfe3f0"/>
+      <line x1="53.5" y1="12" x2="53.5" y2="21" stroke="#5a4a72" stroke-width="1"/>
       <rect x="60" y="12" width="9" height="9" rx="1.5" fill="#bfe3f0"/>
+      <line x1="64.5" y1="12" x2="64.5" y2="21" stroke="#5a4a72" stroke-width="1"/>
       <rect x="70" y="34" width="6" height="8" fill="#3a2f4a"/>
+      <rect x="8" y="30" width="8" height="4" rx="1" fill="#c9432f"/>
       <rect x="2" y="34" width="80" height="6" fill="#241505"/>
       ${wheelSvg(20, 47, 9)}
       ${wheelSvg(42, 47, 9)}
       ${wheelSvg(62, 47, 9)}
     </svg>`;
+    // Wagen ebenfalls mit mehr Details: sichtbare Holzlatten-Struktur, ein Metallrahmen-Streifen
+    // unten, und Nietenpunkte an den Ecken statt einer reinen Flat-Color-Fläche.
     const wagonSvg = (word) => `<span class="kt-wagon">
       <svg viewBox="0 0 84 50" class="kt-wagon-svg" aria-hidden="true">
         <rect x="2" y="4" width="80" height="28" rx="5" fill="#f0a94e" stroke="#96521a" stroke-width="1.5"/>
+        <line x1="2" y1="12" x2="82" y2="12" stroke="#c98730" stroke-width="1" opacity="0.6"/>
+        <line x1="2" y1="20" x2="82" y2="20" stroke="#c98730" stroke-width="1" opacity="0.6"/>
+        <rect x="2" y="22" width="80" height="4" fill="#96521a" opacity="0.5"/>
+        <circle cx="7" cy="8" r="1.4" fill="#96521a"/>
+        <circle cx="77" cy="8" r="1.4" fill="#96521a"/>
+        <circle cx="7" cy="28" r="1.4" fill="#96521a"/>
+        <circle cx="77" cy="28" r="1.4" fill="#96521a"/>
         <rect x="2" y="26" width="80" height="6" fill="#241505"/>
         ${wheelSvg(19, 41, 8)}
         ${wheelSvg(65, 41, 8)}
@@ -5743,7 +5928,6 @@
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(ktLives, 3)}</p>
         <div class="kt-track" id="ktTrack">
-          <div class="kt-rails"></div>
           <div class="kt-train" id="ktTrain" style="animation-play-state:${ktPaused ? "paused" : "running"};">
             <span class="kt-locomotive">${locomotiveSvg}</span>
             ${words.map(wagonSvg).join("")}
@@ -5940,7 +6124,7 @@
             <circle cx="${cx}" cy="${cy}" r="${targetR}" fill="#E85F6F"/>
             <circle cx="${cx}" cy="${cy}" r="${targetR * 0.68}" fill="#FFFFFF"/>
             <circle cx="${cx}" cy="${cy}" r="${targetR * 0.36}" fill="#E85F6F"/>
-            <text x="${cx}" y="${cy + 6}" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="17" font-weight="800" fill="#FFFFFF" stroke="#7A1F2B" stroke-width="0.5">${letter}</text>
+            ${handDrawnLetterGroup(letter, cx, cy + 1, 20, "#FFFFFF", 2.4)}
           </g>`;
         }).join("")}
       </svg>`;
@@ -5981,8 +6165,15 @@
     const remainingUnresolved = knActiveWords.filter((w) => !w.resolved);
     const noWrongLeft = remainingUnresolved.every((w) => w.isCorrect);
     const correctStillFalling = remainingUnresolved.find((w) => w.isCorrect);
-    if (!knPaused && correctStillFalling && knAutoLandLast && noWrongLeft) {
-      setTimeout(() => landKanoneWord(correctStillFalling.id, null), 30);
+    // WICHTIG — behebt den gemeldeten Bug: die letzte übrig bleibende (richtige) Blase "fliegt
+    // selbstständig herunter, aber nicht zügiger". Vorher wurde das Wort zwar sofort als korrekt
+    // GEWERTET (landKanoneWord), aber das sichtbare Element behielt seine normale, langsame
+    // Fall-Animation (FALL_DURATION Sekunden) bei — man musste optisch trotzdem die volle Zeit
+    // abwarten, bis es unten ankam. Jetzt wird das Element zusätzlich als "schnell landend"
+    // markiert, was unten in der Render-Logik eine deutlich kürzere animation-duration auslöst.
+    if (!knPaused && correctStillFalling && knAutoLandLast && noWrongLeft && !correctStillFalling.autoLanding) {
+      correctStillFalling.autoLanding = true;
+      setTimeout(() => landKanoneWord(correctStillFalling.id, null), 450);
     }
     area.innerHTML = `
       <div class="question-card">
@@ -6010,8 +6201,22 @@
             const elapsed = (now - w.spawnedAt) / 1000;
             // Die Punkte-Münze fällt bewusst deutlich schneller (halbe Zeit) und kleiner als
             // normale Wörter/das Herz — echte Herausforderung statt leichter Beute.
-            const duration = w.isCoinBonus ? FALL_DURATION / 2 : FALL_DURATION;
-            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; animation-duration:${duration}s; animation-delay:-${elapsed.toFixed(2)}s; animation-play-state:${knPaused ? "paused" : "running"};" ${knPaused ? "disabled" : ""}>${w.text}</button>`;
+            let duration = w.isCoinBonus ? FALL_DURATION / 2 : FALL_DURATION;
+            let effectiveElapsed = elapsed;
+            // WICHTIG: bei automatisch landenden Wörtern werden Dauer UND verstrichene Zeit im
+            // GLEICHEN Verhältnis verkürzt (hier 1/5) — nicht nur die Dauer allein. Der negative
+            // animation-delay bezieht sich relativ auf die Gesamtdauer; würde nur die Dauer
+            // verkürzt, wäre der alte (große) Delay-Wert plötzlich größer als die neue Dauer, und
+            // das Element würde sofort ans Animationsende TELEPORTIEREN, statt sichtbar von seiner
+            // aktuellen Position aus schnell weiterzufallen. Mit beiden gleich skaliert bleibt die
+            // relative Position exakt erhalten (z. B. 6 von 9 Sekunden = 66% → 1.2 von 1.8
+            // Sekunden = weiterhin 66%), nur läuft der Rest jetzt 5× schneller ab.
+            if (w.autoLanding) {
+              const SPEED_UP = 5;
+              duration = duration / SPEED_UP;
+              effectiveElapsed = elapsed / SPEED_UP;
+            }
+            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; animation-duration:${duration}s; animation-delay:-${effectiveElapsed.toFixed(2)}s; animation-play-state:${knPaused ? "paused" : "running"};" ${knPaused ? "disabled" : ""}>${w.text}</button>`;
           }).join("")}
           <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 44" style="left:50%;">
             <!-- Fester Lafetten-Sockel (Räder + Stütze) — bleibt bewusst UNBEWEGT, damit klar
@@ -6331,6 +6536,37 @@
   function renderKanoneOld() {
     const area = document.getElementById("kanoneArea");
     if (!area) return;
+    // WICHTIG — behebt den gemeldeten Bug: diese ältere Version (die die meisten Nutzer sehen, da
+    // das Redesign nur für Betreiber/Beta-Tester:innen aktiv ist) hatte bisher GAR KEIN Intro —
+    // sie startete sofort mit dem Spielfeld. Nutzt dieselbe hasSeenGameIntro()-Prüfung wie die
+    // neue Version, damit auch hier zuerst kurz erklärt wird, wie das Spiel funktioniert.
+    if (!knIntroShown && !hasSeenGameIntro("wortkanone")) {
+      // Dieselbe SVG-Zielscheiben-Titel-Logik wie im Redesign (keine Systemschrift, keine Emojis) —
+      // konsistent, egal welche der beiden Versionen man gerade sieht.
+      const KN_OLD_TITLE_LETTERS = ["W", "O", "R", "T", "K", "A", "N", "O", "N", "E"];
+      const targetROld = 16;
+      const stepOld = targetROld * 2 + 3;
+      const titleSvgOld = `<svg viewBox="0 0 ${stepOld * KN_OLD_TITLE_LETTERS.length + 6} ${targetROld * 2 + 8}" style="width:100%; max-width:380px; height:auto;">
+        ${KN_OLD_TITLE_LETTERS.map((letter, i) => {
+          const cx = 6 + targetROld + i * stepOld;
+          const cy = targetROld + 4;
+          return `<g>
+            <circle cx="${cx}" cy="${cy}" r="${targetROld}" fill="#E85F6F"/>
+            <circle cx="${cx}" cy="${cy}" r="${targetROld * 0.68}" fill="#FFFFFF"/>
+            <circle cx="${cx}" cy="${cy}" r="${targetROld * 0.36}" fill="#E85F6F"/>
+            ${handDrawnLetterGroup(letter, cx, cy + 1, 17, "#FFFFFF", 2.2)}
+          </g>`;
+        }).join("")}
+      </svg>`;
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <div style="display:flex; justify-content:center;">${titleSvgOld}</div>
+          <p class="empty-note" style="margin-top:10px;">Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
+          <button type="button" class="btn btn-coffee" id="knOldStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
+        </div>`;
+      document.getElementById("knOldStartIntroBtn").addEventListener("click", () => { knIntroShown = true; markGameIntroSeen("wortkanone"); renderKanoneOld(); });
+      return;
+    }
     if (knLives <= 0) { renderKanoneGameOver(); return; }
     if (!knRoundActive) newKanoneRound();
     const n = knActiveWords.length;
@@ -6408,6 +6644,12 @@
     }).join("");
   }
   function renderKanoneGameOver() {
+    // Echte Bewertung statt nur der reinen Trefferzahl — Genauigkeit aus Treffern vs. Fehlern
+    // berechnet, mit einer passenden Einstufung von "Übung macht den Meister" bis "Scharfschütze".
+    // WICHTIG: diese Berechnung steht jetzt VOR dem einmaligen Abschluss-Block unten, damit der
+    // Genauigkeitswert auch für die Herausforderungs-Meldung (submitChallengeResult) verfügbar ist.
+    const totalAttempts = knScore + knMistakes;
+    const accuracy = totalAttempts > 0 ? Math.round((knScore / totalAttempts) * 100) : 0;
     // Nur beim ERSTEN Anzeigen dieser beendeten Runde Sound abspielen und Punkte vergeben — nicht
     // erneut, nur weil man zu einem anderen Spiel wechselt und zurückkommt (das Panel "schließt"
     // sich dadurch bewusst nicht wirklich, man sieht einfach weiterhin den Abschluss-Bildschirm,
@@ -6418,12 +6660,18 @@
       if (Backend.currentUser() && knScore > 0) {
         saveResultAndCheck({ categories: ["wortkanone"], points: knScore, bonus: 0, percent: 100, character: "Wort-Scharfschütze:in", badges: [], playedAt: new Date().toISOString() });
       }
+      // WICHTIG — behebt den gemeldeten Bug: bisher wurde eine über eine Herausforderung
+      // gestartete Wort-Kanone-Runde NIE ans Backend zurückgemeldet. Die Herausforderung blieb
+      // dadurch für immer als "eingehend" markiert (die Erinnerung/das farbige Blinken verschwand
+      // nie, egal wie oft man "annahm" und spielte), und der/die Herausforderer:in sah nie ein
+      // Ergebnis. activeGameChallengeId wird beim Annehmen gesetzt (siehe gameRouting) und hier,
+      // sobald die Runde tatsächlich zu Ende ist, ausgewertet und wieder zurückgesetzt.
+      if (activeGameChallengeId) {
+        Backend.submitChallengeResult(activeGameChallengeId, { percent: accuracy });
+        activeGameChallengeId = null;
+      }
     }
     const area = document.getElementById("kanoneArea");
-    // Echte Bewertung statt nur der reinen Trefferzahl — Genauigkeit aus Treffern vs. Fehlern
-    // berechnet, mit einer passenden Einstufung von "Übung macht den Meister" bis "Scharfschütze".
-    const totalAttempts = knScore + knMistakes;
-    const accuracy = totalAttempts > 0 ? Math.round((knScore / totalAttempts) * 100) : 0;
     let rating;
     if (knScore === 0) rating = "🌱 Erster Versuch — nächstes Mal klappt's besser!";
     else if (accuracy >= 90) rating = "🎯 Scharfschütze:in! Fast alles getroffen.";
@@ -6487,12 +6735,14 @@
       wbiResultsFinalized = true;
       if (Backend.currentUser()) {
         saveResultAndCheck({ categories: ["werbinich"], points: wbiSession.correct, bonus: 0, percent, character: "Rätsel-Detektiv:in", badges: [], playedAt: new Date().toISOString() });
+        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
       }
     }
   }
   function renderWerBinIch() {
     const area = document.getElementById("werbinichArea");
     if (!area) return;
+    if (!renderComingSoonGate(area, "werbinich_aktiv", "Wer bin ich?", "❓", true)) return;
     if (!wbiSession) newWerBinIchSession();
     if (wbiSession.round >= wbiSession.total) { renderWerBinIchResults(); return; }
     if (!wbiCurrentItem) newWerBinIchRound();
@@ -6618,12 +6868,17 @@
         <button type="button" class="btn btn-coffee" id="wbPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>
     `;
+    // WICHTIG — behebt den echten Bug: eine über eine Herausforderung gestartete Runde wurde
+    // bisher nie ans Backend zurückgemeldet, siehe activeGameChallengeId (gameRouting).
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
     document.getElementById("wbPlayAgainBtn").addEventListener("click", () => {
       newWordbuildSession(); newWordbuildRound(); renderWordbuild();
     });
   }
   function renderWordbuild() {
     const area = document.getElementById("wordbuildArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "wortbaustelle_aktiv", "Wortbaustelle", "🔤", true)) return;
     if (!wbSession) newWordbuildSession();
     if (!wbState) newWordbuildRound();
     if (wbSession.round >= wbSession.total) { renderWordbuildResults(); return; }
@@ -6819,6 +7074,7 @@
         <button type="button" class="btn btn-coffee" id="wsPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
       </div>
     `;
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
     document.getElementById("wsPlayAgainBtn").addEventListener("click", () => {
       newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
     });
@@ -6832,6 +7088,8 @@
   }
   function renderWordSearch() {
     const area = document.getElementById("wordsearchArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "buchstabensalat_aktiv", "Buchstabensalat", "🔍", true)) return;
     if (!wsSession) newWordSearchSession();
     if (!wsState) wsState = buildWordSearch();
     if (wsSession.wordsAttempted >= wsSession.target) { renderWordSearchResults(); return; }
@@ -8574,12 +8832,15 @@
         <button type="button" class="btn btn-coffee" id="cwPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
       </div>
     `;
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; }
     document.getElementById("cwPlayAgainBtn").addEventListener("click", () => {
       newCrosswordSession(); newCrossword(cwSession.startIdx); renderCrossword();
     });
   }
   function renderCrossword() {
     const area = document.getElementById("crosswordArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "kreuzwortraetsel_aktiv", "Kreuzworträtsel", "✏️", true)) return;
     if (!cwIntroShown && !hasSeenGameIntro("kreuzwortraetsel")) {
       // "KREUZWORTRÄTSEL" als kleines, echtes Kreuzworträtsel-Gitter (schwarz umrandete, weiße
       // Kästchen) statt Emoji + Text — zwei Zeilen, da das Wort für eine einzelne Reihe zu lang ist.
@@ -8775,6 +9036,11 @@
   // Bereichs automatisch das im Profil hinterlegte Sprachniveau übernehmen kann. Sobald man
   // manuell umschaltet, steht hier ein echter Wert, der dann nicht mehr überschrieben wird.
   let historyLevel = null;
+  // Archiv-Zustand: ob der Bereich aufgeklappt ist, aktueller Suchtext, und welcher Eintrag (falls
+  // einer aus der Liste angetippt wurde) gerade im Detail angezeigt wird.
+  let historyArchiveOpen = false;
+  let historyArchiveSearch = "";
+  let historyArchiveDate = null;
   let dichterLevel = null;
   let schneeLevel = null;
   const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -8801,6 +9067,7 @@
     return available[0];
   }
   let kompassDichterOpenId = null; // welche Kachel gerade aufgeklappt ist (null = Kachel-Ansicht)
+  let kompassTileScrollY = 0; // Scrollposition beim Öffnen einer Kachel, für die Wiederherstellung beim Zurückkehren
   let kompassSchneeOpenId = null;
   // WICHTIG: beide Rubriken sind bewusst als ausstehende Updates vorbereitet — nur die
   // Infrastruktur (Struktur, Niveau-Umschalter A1–C2, Beispieleinträge) steht schon, aber SICHTBAR
@@ -8941,6 +9208,13 @@
     `;
     area.querySelectorAll("[data-tile-id]").forEach((btn) => {
       btn.addEventListener("click", () => {
+        // WICHTIG — behebt den gemeldeten Bug: beim Öffnen einer Kachel wird die Detail-Ansicht
+        // eingesetzt, die deutlich kürzer ist als die volle Kachel-Galerie darüber/darunter. War
+        // man vorher weit unten gescrollt (z. B. bei einer Kachel spät in der Liste), lag diese
+        // Scroll-Position danach außerhalb des jetzt viel kürzeren Dokuments — der Browser springt
+        // dann von selbst nach oben. Beim Zurückkehren zur Galerie (siehe "Zurück"-Knopf unten)
+        // wird dieselbe Position wiederhergestellt, statt oben zu landen.
+        kompassTileScrollY = window.scrollY;
         setOpenIdVar(btn.dataset.tileId);
         renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
       });
@@ -8949,7 +9223,7 @@
   function renderEntryDetail(area, entries, entry, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading) {
     const level = levelVar();
     area.innerHTML = `
-      <button type="button" class="btn btn-ghost" id="tileBackBtn" style="margin-bottom:12px;">◀ Zurück zur Übersicht</button>
+      <button type="button" class="btn btn-ghost tile-back-btn" style="margin-bottom:12px;">◀ Zurück zur Übersicht</button>
       <div class="question-card">
         <div style="display:flex; gap:14px; align-items:center; margin-bottom:10px;">
           <div style="width:64px; height:64px; flex-shrink:0; border-radius:var(--radius-sm); overflow:hidden;">${entry.img}</div>
@@ -8964,9 +9238,20 @@
         <p style="margin-top:8px;">${entry.levels[level]}</p>
       </div>
     `;
-    document.getElementById("tileBackBtn").addEventListener("click", () => {
+    // WICHTIG — behebt einen echten Bug: bei zwei gleichzeitig auf derselben Seite gerenderten
+    // Bereichen (Dichter&Denker UND Schnee von gestern, beide jetzt im Kompass integriert) gab
+    // es zwei Elemente mit derselben globalen ID "tileBackBtn" — document.getElementById fand
+    // dabei immer nur das ERSTE, sodass der "Zurück"-Knopf im zweiten Bereich nie funktionierte.
+    // area.querySelector() sucht jetzt gezielt nur innerhalb des eigenen, aufrufenden Bereichs.
+    area.querySelector(".tile-back-btn").addEventListener("click", () => {
       setOpenIdVar(null);
       renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
+      // WICHTIG — ein einzelnes requestAnimationFrame reichte nicht zuverlässig aus (rund 2%
+      // Restabweichung gemessen): der Browser hatte das neue, wieder hohe Layout offenbar nicht
+      // in jedem Fall schon vollständig fertig, wenn der erste Frame lief. Ein zweites,
+      // verschachteltes rAF wartet einen kompletten weiteren Frame ab, in dem das Layout
+      // garantiert final steht, bevor die Position gesetzt wird.
+      requestAnimationFrame(() => { requestAnimationFrame(() => { window.scrollTo({ top: kompassTileScrollY, behavior: "instant" }); }); });
     });
     area.querySelectorAll(".level-switch-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -8982,8 +9267,6 @@
     dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; });
     renderTileGallery(area, DICHTER_ENTRIES, () => kompassDichterOpenId, (v) => { kompassDichterOpenId = v; }, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
       "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
-    area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("dichter_und_denker"));
-    wireInlineFeatureFlagToggles(area, renderDichterUndDenker);
   }
   function renderSchneeVonGestern() {
     const area = document.getElementById("schneeArea");
@@ -8992,8 +9275,6 @@
     schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; });
     renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
-    area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("schnee_von_gestern"));
-    wireInlineFeatureFlagToggles(area, renderSchneeVonGestern);
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-dichter"]')?.addEventListener("click", renderDichterUndDenker);
   document.querySelector('#knowledgeSubnav [data-sub="sub-schnee"]')?.addEventListener("click", renderSchneeVonGestern);
@@ -9131,32 +9412,76 @@
   // Hauptmenü. Jede Kachel simuliert beim Antippen einen Klick auf den zugehörigen, jetzt
   // unsichtbaren Original-Knopf (siehe index.html) — das behält alle dort schon registrierten
   // Klick-Listener bei, ohne dass jeder einzeln umgebaut werden musste.
+  // Alphabetisch nach Name sortiert (vorher zufällig/nach Bauzeit geordnet — wirkte durcheinander,
+  // z. B. stand der Betonungs-Trainer ganz unten statt einsortiert).
+  // WICHTIG — behebt einen echten Bug: die Kacheln für noch nicht freigegebene, neue Spiele
+  // (flagKey gesetzt) erschienen hier bisher UNBEDINGT für alle — auch wenn das Spiel selbst beim
+  // Antippen nur "kommt bald" zeigte, verriet schon der sichtbare Name in der Liste, dass es
+  // existiert. Ältere, längst etablierte Spiele (kein flagKey) bleiben immer sichtbar; neue,
+  // ausdrücklich noch nicht freigegebene Spiele werden weiter unten in renderGamesOverview()
+  // komplett aus der Liste gefiltert, bis der Flag aktiv angeschaltet ist (oder man
+  // Beta-Tester:in/Admin ist).
   const GAMES_OVERVIEW_LIST = [
-    { sub: "sub-memory", emoji: "🧩", name: "Memory", persona: "Sprachkünstler" },
-    { sub: "sub-wordbuild", emoji: "🔤", name: "Wortbaustelle", persona: "Sprachkünstler" },
-    { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
-    { sub: "sub-crossword", emoji: "✏️", name: "Kreuzworträtsel", persona: "Sprachkünstler" },
-    { sub: "sub-satzpuzzle", emoji: "🧩", name: "Satzpuzzle", persona: "Grammatik-Profi" },
-    { sub: "sub-wackelturm", emoji: "🗼", name: "Wackelturm", persona: "Gemischt" },
-    { sub: "sub-wortarten", emoji: "🔤", name: "Wort-Typ", persona: "Grammatik-Profi" },
-    { sub: "sub-kanone", emoji: "🎯", name: "Wort-Kanone", persona: "Gemischt" },
-    { sub: "sub-bubbles", emoji: "🫧", name: "Wortblasen", persona: "Gemischt" },
-    { sub: "sub-vokabelmeister", emoji: "🔤", name: "Vokabelmeister", persona: "Sprachkünstler" },
-    { sub: "sub-korrektour", emoji: "🚂", name: "KorrekTour", persona: "Grammatik-Profi" },
-    { sub: "sub-werbinich", emoji: "❓", name: "Wer bin ich?", persona: "Logiker" },
     { sub: "sub-stresstrainer", emoji: "🎯", name: "Betonungs-Trainer", persona: "Sprachkünstler" },
+    { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
+    { sub: "sub-korrektour", emoji: "🚂", name: "KorrekTour", persona: "Grammatik-Profi", flagKey: "korrektour_neu" },
+    { sub: "sub-crossword", emoji: "✏️", name: "Kreuzworträtsel", persona: "Sprachkünstler" },
+    { sub: "sub-memory", emoji: "🧩", name: "Memory", persona: "Sprachkünstler" },
+    { sub: "sub-satzpuzzle", emoji: "🧩", name: "Satzpuzzle", persona: "Grammatik-Profi" },
+    { sub: "sub-vokabelmeister", emoji: "🔤", name: "Vokabelmeister", persona: "Sprachkünstler", flagKey: "vokabelmeister_neu" },
+    { sub: "sub-wackelturm", emoji: "🗼", name: "Wackelturm", persona: "Gemischt" },
+    { sub: "sub-werbinich", emoji: "❓", name: "Wer bin ich?", persona: "Logiker" },
+    { sub: "sub-wordbuild", emoji: "🔤", name: "Wortbaustelle", persona: "Sprachkünstler" },
+    { sub: "sub-bubbles", emoji: "🫧", name: "Wortblasen", persona: "Gemischt", flagKey: "wortblasen_neu" },
+    { sub: "sub-kanone", emoji: "🎯", name: "Wort-Kanone", persona: "Gemischt", flagKey: "wortkanone_redesign" },
+    { sub: "sub-wortarten", emoji: "🔤", name: "Wort-Typ", persona: "Grammatik-Profi" },
   ];
+  // WICHTIG — wie gewünscht: eigens gestaltete SVG-Symbole statt normaler Emoji für jedes Spiel
+  // in der Übersicht. Jedes Symbol ist eine kleine, selbst gezeichnete Szene aus einfachen
+  // geometrischen Formen (Kreise, Rechtecke, Pfade) statt eines Systemschrift-Emojis — passend
+  // zum jeweiligen Spielthema.
+  function gameIconSvg(key) {
+    const icons = {
+      stresstrainer: `<circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
+      wordsearch: `<circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14.8 14.8L20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`,
+      korrektour: `<rect x="3" y="9" width="14" height="8" rx="2" fill="currentColor"/><rect x="6" y="4" width="5" height="6" rx="1" fill="currentColor"/><circle cx="7" cy="19" r="1.8" fill="currentColor"/><circle cx="14" cy="19" r="1.8" fill="currentColor"/><path d="M17 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+      crossword: `<rect x="3" y="3" width="6" height="6" fill="currentColor"/><rect x="10" y="3" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="10" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="10" y="10" width="6" height="6" fill="currentColor"/>`,
+      memory: `<rect x="2" y="4" width="8" height="11" rx="1.5" fill="currentColor"/><rect x="12" y="6" width="8" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 9v5M13.5 11.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+      satzpuzzle: `<path d="M4 4h6v2.5a1.5 1.5 0 0 0 3 0V4h6v6h-2.5a1.5 1.5 0 0 0 0 3H19v6h-6v-2.5a1.5 1.5 0 0 0-3 0V19H4v-6h2.5a1.5 1.5 0 0 0 0-3H4Z" fill="currentColor"/>`,
+      vokabelmeister: `<rect x="4" y="3" width="14" height="17" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+      wackelturm: `<rect x="5" y="15" width="12" height="4" rx="1" fill="currentColor"/><rect x="6.5" y="9.5" width="9" height="4" rx="1" fill="currentColor" opacity="0.7"/><rect x="8" y="4" width="6" height="4" rx="1" fill="currentColor" opacity="0.45"/>`,
+      werbinich: `<circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.3 8.8c0-1.7 1.3-2.8 2.9-2.8s2.7 1 2.7 2.4c0 1.6-1.6 1.9-2.4 3.2-.3.5-.4 1-.4 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="11" cy="16" r="1" fill="currentColor"/>`,
+      wordbuild: `<rect x="3" y="13" width="6" height="6" rx="1" fill="currentColor"/><rect x="10" y="13" width="6" height="6" rx="1" fill="currentColor" opacity="0.65"/><rect x="6.5" y="6" width="6" height="6" rx="1" fill="currentColor" opacity="0.85"/>`,
+      bubbles: `<circle cx="8" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="6" cy="7" rx="1.4" ry="0.9" fill="currentColor"/>`,
+      kanone: `<circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/>`,
+      wortarten: `<rect x="3" y="4" width="7" height="7" rx="1.5" fill="currentColor"/><circle cx="16" cy="7.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 19l4-8 4 8M5.4 16.5h5.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+    };
+    return `<svg viewBox="0 0 22 22" width="26" height="26" aria-hidden="true">${icons[key] || ""}</svg>`;
+  }
   function renderGamesOverview() {
     const area = document.getElementById("gamesOverviewArea");
     if (!area) return;
+    // Nur Spiele ohne eigenen flagKey (längst etablierte Spiele) oder mit einem AKTIV
+    // freigeschalteten Flag anzeigen — noch nicht freigegebene, neue Spiele sollen für normale
+    // Nutzer:innen nicht mal als Menüpunkt sichtbar sein, nicht nur beim Antippen gesperrt.
+    // WICHTIG: canModerate() zusätzlich zu isFeatureOn() geprüft — sonst wäre die Liste
+    // inkonsistent mit renderComingSoonGate() selbst (das ja auch Admins/Moderator:innen immer
+    // durchlässt, nicht nur Owner/Beta-Tester:innen wie isFeatureOn() allein).
+    const canSeeGatedGames = Backend.canModerate && Backend.canModerate();
+    const visibleGames = GAMES_OVERVIEW_LIST.filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames);
+    // WICHTIG — behebt einen echten Bug: vorher wurden hier dieselben .kompass-tile-Klassen wie
+    // bei Dichter & Denker/Schnee von gestern verwendet — als das Kachel-Design für JENE Bereiche
+    // gebaut wurde, verwandelten sich diese Spiele-Buttons ungewollt gleich mit in Kacheln, obwohl
+    // sie wie vorher als Pillen (schmale, breite Reihen mit Emoji+Name nebeneinander) aussehen
+    // sollten. Jetzt eigene Klassen, unabhängig vom Kompass-Kachel-Design.
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>
-      <div class="kompass-tile-grid">
-        ${GAMES_OVERVIEW_LIST.map((g) => `
-          <button type="button" class="kompass-tile" data-game-sub="${g.sub}">
-            <div class="kompass-tile-img" style="display:flex; align-items:center; justify-content:center; font-size:2.4rem; background:rgba(0,0,0,0.06);">${g.emoji}</div>
-            <span class="kompass-tile-name">${g.name}</span>
-            <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}" style="margin-top:4px;"></span>
+      <div class="games-pill-list">
+        ${visibleGames.map((g) => `
+          <button type="button" class="games-pill" data-game-sub="${g.sub}">
+            <span class="games-pill-emoji">${gameIconSvg(g.sub.replace("sub-", ""))}</span>
+            <span class="games-pill-name">${g.name}</span>
+            <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}"></span>
           </button>`).join("")}
       </div>
     `;
@@ -9182,6 +9507,16 @@
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
     const todayHistory = ExerciseData.germanHistoryForToday(`${mm}-${dd}`);
+    // WICHTIG — genau wie bei den neuen Spielen: diese beiden Bereiche sind noch in Arbeit und
+    // sollen für normale Nutzer:innen komplett unsichtbar bleiben (kein Wegweiser-Link, keine
+    // Überschrift, kein Bereich) — nicht nur beim Öffnen gesperrt sein, siehe
+    // renderComingSoonGate() innerhalb von renderDichterUndDenker()/renderSchneeVonGestern().
+    // WICHTIG: canModerate() zusätzlich geprüft — konsistent mit renderGamesOverview() (siehe
+    // dortiger Kommentar) und mit renderComingSoonGate() selbst, das Admins/Moderator:innen immer
+    // durchlässt, nicht nur Owner/Beta-Tester:innen wie isFeatureOn() allein.
+    const canSeeGatedSections = Backend.canModerate && Backend.canModerate();
+    const dichterVisible = Backend.isFeatureOn("dichter_und_denker") || canSeeGatedSections;
+    const schneeVisible = Backend.isFeatureOn("schnee_von_gestern") || canSeeGatedSections;
     kompassArea.innerHTML = `
       <div style="margin:-4px -4px 14px; border-radius:var(--radius-md); overflow:hidden;">${siteBannerHtml("wissen_banner", bannerUrl, WISSEN_PLACEHOLDER_SVG, "Wissen")}</div>
       <div class="wegweiser">
@@ -9189,8 +9524,8 @@
         <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
         <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
         <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
-        <a href="#kompass-dichter" class="wegweiser-item"><span>✒️</span>Dichter &amp; Denker</a>
-        <a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>
+        ${dichterVisible ? `<a href="#kompass-dichter" class="wegweiser-item"><span>✒️</span>Dichter &amp; Denker</a>` : ""}
+        ${schneeVisible ? `<a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>` : ""}
       </div>
 
       <h3 id="kompass-geschichte" class="kompass-heading">📜 Es war einmal in Deutschland …</h3>
@@ -9214,7 +9549,40 @@
           ${todaysBirthdayGreeting(`${mm}-${dd}`) ? `<p style="margin-top:12px; font-weight:700;">🎂 Heute ist dein Geburtstag — alles Gute, ${todaysBirthdayGreeting(`${mm}-${dd}`)}!</p>` : ""}
         </div>
       `}
-      <p class="empty-note" style="margin-bottom:16px;">Eine wachsende, sorgfältig geprüfte Sammlung wichtiger Momente der deutschen Geschichte — jeden Tag ein anderer, wenn ein geprüfter Eintrag für das Datum vorliegt.</p>
+      <p class="empty-note" style="margin-bottom:10px;">Eine wachsende, sorgfältig geprüfte Sammlung wichtiger Momente der deutschen Geschichte — jeden Tag ein anderer, wenn ein geprüfter Eintrag für das Datum vorliegt.</p>
+      <button type="button" class="btn btn-ghost" id="historyArchiveToggle" style="margin-bottom:16px;">${historyArchiveOpen ? "▲ Archiv schließen" : "📚 Archiv — alle bisherigen Tage ansehen"}</button>
+      ${historyArchiveOpen ? `
+        <div class="question-card" style="margin-bottom:16px;">
+          <div class="vocab-toolbar" style="margin-bottom:10px;"><input type="text" class="vocab-search" id="historyArchiveSearch" placeholder="Nach Titel oder Jahr suchen…" value="${historyArchiveSearch}" /></div>
+          <div class="breakdown-list">
+            ${ExerciseData.getAllHistoryEntries()
+              .filter((e) => !historyArchiveSearch || e.title.toLowerCase().includes(historyArchiveSearch.toLowerCase()) || String(e.year).includes(historyArchiveSearch))
+              .map((e) => {
+                const [mm2, dd2] = e.monthDay.split("-");
+                return `<button type="button" class="breakdown-row breakdown-row-stacked" data-archive-date="${e.monthDay}" style="width:100%; text-align:left; cursor:pointer;"><span>${dd2}.${mm2}. — ${e.title}</span><span class="empty-note">${e.year}</span></button>`;
+              }).join("")}
+          </div>
+          ${ExerciseData.getAllHistoryEntries().length === 0 ? `<p class="empty-note">Noch keine Einträge im Archiv.</p>` : ""}
+        </div>
+      ` : ""}
+      ${historyArchiveDate ? (() => {
+        const entry = ExerciseData.getAllHistoryEntries().find((e) => e.monthDay === historyArchiveDate);
+        if (!entry) return "";
+        const [mm3, dd3] = entry.monthDay.split("-");
+        return `
+          <div class="question-card" style="margin-bottom:16px; border:1.5px solid var(--teal-400);">
+            <p class="eyebrow">📚 Aus dem Archiv: ${dd3}.${mm3}. — vor ${new Date().getFullYear() - entry.year} Jahren (${entry.year})</p>
+            <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
+              ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-archive-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
+            </div>
+            <p style="margin-top:8px;">${entry.levels[historyLevel]}</p>
+            ${entry.sideFacts && entry.sideFacts.length ? `
+              <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
+              ${entry.sideFacts.map((f) => `<p class="empty-note" style="margin-top:6px;">${f.year}: ${f.text.replace(/^\d{4}\s*/, "")}</p>`).join("")}
+            ` : ""}
+            <button type="button" class="btn btn-ghost" id="historyArchiveCloseEntry" style="margin-top:10px;">✕ Schließen</button>
+          </div>`;
+      })() : ""}
 
       <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
       <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
@@ -9225,12 +9593,34 @@
 
       <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
       <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
-      <h3 id="kompass-dichter" class="kompass-heading">✒️ Dichter &amp; Denker</h3>
-      <div id="dichterArea"></div>
-      <h3 id="kompass-schnee" class="kompass-heading">❄️ Schnee von gestern</h3>
-      <div id="schneeArea"></div>
+      ${dichterVisible ? `<h3 id="kompass-dichter" class="kompass-heading">✒️ Dichter &amp; Denker</h3>
+      <div id="dichterArea"></div>` : ""}
+      ${schneeVisible ? `<h3 id="kompass-schnee" class="kompass-heading">❄️ Schnee von gestern</h3>
+      <div id="schneeArea"></div>` : ""}
     `;
     kompassArea.querySelectorAll(".hist-level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
+    });
+    document.getElementById("historyArchiveToggle")?.addEventListener("click", () => {
+      historyArchiveOpen = !historyArchiveOpen;
+      renderKompass();
+    });
+    document.getElementById("historyArchiveSearch")?.addEventListener("input", (e) => {
+      historyArchiveSearch = e.target.value;
+      renderKompass();
+    });
+    kompassArea.querySelectorAll("[data-archive-date]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        historyArchiveDate = btn.dataset.archiveDate;
+        renderKompass();
+        scrollToAndHighlightWhenReady(`[data-archive-date="${historyArchiveDate}"]`);
+      });
+    });
+    document.getElementById("historyArchiveCloseEntry")?.addEventListener("click", () => {
+      historyArchiveDate = null;
+      renderKompass();
+    });
+    kompassArea.querySelectorAll(".hist-archive-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
     });
     wireSiteBannerUploads(kompassArea);
@@ -9785,7 +10175,10 @@ An einem Morgen lief ein kleiner Fuchs los…
         const url = await Backend.uploadStandalonePhoto(file);
         document.getElementById("introPhotoUrl").value = url;
         document.getElementById("introStickerKey").value = "";
-        document.getElementById("introPhotoPreview").innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover;" />`;
+        // WICHTIG — behebt den gemeldeten Bug: dieser <img>-Tag hatte bisher keine
+        // class="avatar-photo", weshalb der Wassertropfen-Glanzeffekt (box-shadow, siehe
+        // .avatar-photo) hier nie ankam, obwohl er im Haupt-Profilbild schon korrekt griff.
+        document.getElementById("introPhotoPreview").innerHTML = `<img src="${url}" class="avatar-photo" style="width:100%; height:100%; object-fit:cover;" />`;
       } catch (err) { alert(err.message || "Hochladen fehlgeschlagen."); }
     });
     document.getElementById("introUseProfilePicBtn")?.addEventListener("click", () => {
@@ -9793,7 +10186,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (!currentAvatar) { alert("Du hast noch kein eigenes Profilbild hinterlegt."); return; }
       document.getElementById("introPhotoUrl").value = currentAvatar;
       document.getElementById("introStickerKey").value = "";
-      document.getElementById("introPhotoPreview").innerHTML = `<img src="${currentAvatar}" style="width:100%; height:100%; object-fit:cover;" />`;
+      document.getElementById("introPhotoPreview").innerHTML = `<img src="${currentAvatar}" class="avatar-photo" style="width:100%; height:100%; object-fit:cover;" />`;
     });
     document.querySelectorAll("[data-intro-sticker]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -10207,17 +10600,20 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div class="profile-header-flow${myFoxBedBadge ? " has-fox-badges" : ""}">
             ${avatarHtml}
             <div class="profile-header-stack">
-              <h2 style="margin:0 0 2px 0;">${profile.name}${!extra.hideAge && calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
+              <h2 style="margin:0 0 2px 0;" class="profile-header-name">${profile.name}${!extra.hideAge && calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
               ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
               <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
               <span class="profile-header-stack-row">
                 ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
                 <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
               </span>
-              ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
-              ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
-              ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
             </div>
+          </div>
+          <div style="clear:both;"></div>
+          <div class="profile-header-below-photo">
+            ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
+            ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
+            ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           </div>
           ${showcaseSongStripHtml(profile)}
           ${myTransportStrip}
@@ -10484,9 +10880,12 @@ An einem Morgen lief ein kleiner Fuchs los…
             </div>
             <div class="form-field" style="border:1.5px solid var(--teal-400); border-radius:10px; padding:10px 12px;">
               <label style="font-weight:700;">🌟 Song im Profil-Player zeigen (optional)</label>
-              <p class="empty-note" style="margin:0 0 8px;">Anders als „Lieblingslied" oben (nur Text): dieser Song ist direkt abspielbar im kleinen Player-Streifen auf deinem Profil — z. B. das deutsche Lied, das du gerade übst, statt deines allgemeinen Favoriten. Aus deiner Playlist heraus mit dem ⭐-Knopf auswählbar (siehe Musik-Bereich), oder hier direkt ein YouTube-Link einfügen:</p>
-              <input type="text" id="showcaseSongLinkInput" maxlength="200" value="${profileEditDraft.showcaseSongUrl !== undefined ? profileEditDraft.showcaseSongUrl : (extra.showcaseSongUrl || "")}" placeholder="https://www.youtube.com/watch?v=…" />
-              ${extra.showcaseSongUrl ? `<button type="button" class="emoji-toggle-link" id="showcaseSongClearBtn" style="margin-top:6px; font-size:0.78rem;">✕ Song aus Profil entfernen</button>` : ""}
+              <p class="empty-note" style="margin:0 0 8px;">Anders als „Lieblingslied" oben (nur Text): dieser Song ist direkt abspielbar im kleinen Player-Streifen auf deinem Profil — z. B. das deutsche Lied, das du gerade übst, statt deines allgemeinen Favoriten.</p>
+              <select id="showcaseSongSelect" class="challenge-select">
+                <option value="">Keinen Song zeigen</option>
+                ${(await Backend.getPlaylist(Backend.currentUser()?.id)).map((s) => `<option value="${s.url}" data-song-title="${s.title}" ${(profileEditDraft.showcaseSongUrl !== undefined ? profileEditDraft.showcaseSongUrl : extra.showcaseSongUrl) === s.url ? "selected" : ""}>${s.title}</option>`).join("")}
+              </select>
+              <p class="empty-note" style="margin:6px 0 0;">${(await Backend.getPlaylist(Backend.currentUser()?.id)).length === 0 ? "Deine Playlist ist noch leer — füge zuerst Songs im Musik-Bereich hinzu." : "Nur Songs aus deiner eigenen Playlist wählbar — läuft dann direkt im selben Player weiter, kein eigener zweiter Player."}</p>
             </div>
             <div class="form-field">
               <label>Lieblingsschauspieler:in</label>
@@ -10573,6 +10972,11 @@ An einem Morgen lief ein kleiner Fuchs los…
               <label>👎 Das mag ich nicht</label>
               <input type="text" id="extraDislikesInput" maxlength="150" value="${profileEditDraft.dislikes !== undefined ? profileEditDraft.dislikes : (extra.dislikes || "")}" placeholder="z. B. Montagmorgen, Warteschlangen" />
             </div>
+            <div class="form-field">
+              <label>🎤 Interview</label>
+              <p class="empty-note" style="margin:0 0 8px;">Ausführlichere Fragen zum Kennenlernen — separat vom restlichen Profil, in einem eigenen Bereich.</p>
+              <button type="button" class="btn btn-ghost" id="openFullInterviewBtn">🎤 Interview beantworten/bearbeiten</button>
+            </div>
           ` : ""}
         </div>
         <div class="form-error" id="profileSaveError"></div>
@@ -10599,7 +11003,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>
       ${renderTrophyCase(profile)}
       ${renderAlbumPreview(profile)}
-      ${renderInterviewPreview(profile)}
+      ${!profileEditMode ? renderInterviewPreview(profile) : ""}
       ${myFriends.length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">👥 Deine Freunde</p>
         ${myFriends.map((f) => `<button type="button" class="friend-list-row" data-view-friend-profile="${f.id}">${tinyAvatar(f)}<span class="name">${f.name}</span>${adminBadge(f.is_admin, f.is_owner, f.is_moderator)}</button>`).join("")}
@@ -10657,19 +11061,17 @@ An einem Morgen lief ein kleiner Fuchs los…
         // Checkbox statt Text-/Select-Feld — captureProfileEditDraft() (oben schon aufgerufen)
         // hat profileEditDraft.hideAge bereits aus der Checkbox befüllt.
         hideAge: profileEditDraft.hideAge !== undefined ? profileEditDraft.hideAge : (extra.hideAge || false),
-        // Direkt eingegebener YouTube-Link fürs Profil (Alternative zum Auswählen aus der
-        // Playlist mit dem ⭐-Knopf) — nur validieren/übernehmen, wenn sich das Feld tatsächlich
-        // geändert hat, sonst bleibt eine über die Playlist gesetzte Auswahl unberührt.
+        // WICHTIG — wie gewünscht: nur noch Auswahl aus der eigenen Playlist, kein freies
+        // Text-/Link-Feld mehr (das führte beim Abspielen zu einem eigenen, von der echten
+        // Playlist losgelösten zweiten Player, siehe playStandaloneSong-Fix weiter unten).
         showcaseSongUrl: (() => {
-          const raw = val("showcaseSongLinkInput", extra.showcaseSongUrl);
-          if (!raw.trim()) return "";
-          return extractYouTubeId(raw) ? raw.trim() : (extra.showcaseSongUrl || "");
+          const select = document.getElementById("showcaseSongSelect");
+          return select ? select.value : (extra.showcaseSongUrl || "");
         })(),
         showcaseSongTitle: (() => {
-          const raw = val("showcaseSongLinkInput", extra.showcaseSongUrl);
-          if (!raw.trim()) return "";
-          if (raw.trim() === (extra.showcaseSongUrl || "")) return extra.showcaseSongTitle || "";
-          return extractYouTubeId(raw) ? "Mein Song" : (extra.showcaseSongTitle || "");
+          const select = document.getElementById("showcaseSongSelect");
+          if (!select || !select.value) return "";
+          return select.options[select.selectedIndex]?.dataset.songTitle || "";
         })(),
         favNumber: val("extraNumberInput", extra.favNumber),
         talent: val("extraTalentInput", extra.talent),
@@ -10735,13 +11137,6 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("extraGenderSymbolSelectTop")?.addEventListener("change", (e) => {
       const preview = document.getElementById("genderSymbolPreview");
       if (preview) preview.innerHTML = genderSymbolCompact(e.target.value);
-    });
-    document.getElementById("showcaseSongClearBtn")?.addEventListener("click", async () => {
-      await Backend.updateExtraProfileField("showcaseSongUrl", "");
-      await Backend.updateExtraProfileField("showcaseSongTitle", "");
-      profileEditDraft.showcaseSongUrl = "";
-      profileEditDraft.showcaseSongTitle = "";
-      renderAccount();
     });
     document.getElementById("emojiToggleLink").addEventListener("click", () => {
       const row = document.getElementById("emojiPickerRow");
@@ -11283,8 +11678,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     showToast("🎵 Spielt jetzt in deinem Player weiter!");
   });
   function playStandaloneSong(song) {
-    // Aus dem Profil-Streifen gestartet — Ton läuft, aber die schwebende Leiste bleibt vorerst
-    // unterdrückt (siehe musicFloatingBarSuppressed), bis tatsächlich der Tab gewechselt wird.
+    // WICHTIG — behebt den gemeldeten "zweiter Player"-Bug: da der Showcase-Song jetzt nur noch
+    // aus der eigenen Playlist wählbar ist (kein freier Link mehr), muss er in dieser Playlist
+    // bereits enthalten sein. Statt die komplette, echte Playlist mit einer Ein-Song-Liste zu
+    // ÜBERSCHREIBEN, wird jetzt einfach an die passende Stelle INNERHALB der bestehenden Playlist
+    // gesprungen — Vor/Zurück und die restliche Liste bleiben dadurch intakt, echt derselbe
+    // Player, statt eines isolierten zweiten.
+    const existingIdx = musicPlaylist.findIndex((s) => s.url === song.url);
+    if (existingIdx !== -1) {
+      musicFloatingBarSuppressed = true;
+      playMusicIndex(existingIdx);
+      return;
+    }
+    // Absicherung für ältere, noch nicht bereinigte Profile mit einem freien Link von vorher.
     musicFloatingBarSuppressed = true;
     musicPlaylist = [song];
     musicCurrentIndex = 0;
@@ -11972,10 +12378,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         }
       });
     });
-    // Freigabe-Schalter erst GANZ AM ENDE einfügen, nachdem der komplette Bereich fertig
-    // aufgebaut ist — vorher hätte der spätere innerHTML-Aufbau ihn sofort wieder überschrieben.
-    area.insertAdjacentHTML("afterbegin", inlineFeatureFlagToggleHtml("musik_player"));
-    wireInlineFeatureFlagToggles(area, renderMusicSection);
+    // Freigabe-Schalter wird zentral von renderComingSoonGate() (ganz oben in dieser Funktion)
+    // als Geschwister-Element vor dem Bereich eingefügt — kein separater Aufruf mehr nötig.
   }
   document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic(true));
   document.querySelector('#knowledgeSubnav [data-sub="sub-music"]')?.addEventListener("click", async () => {
@@ -12141,10 +12545,10 @@ An einem Morgen lief ein kleiner Fuchs los…
     // werden sie sichtbar/aktiv.
     const totalUnlockedInChapter = chapter.figures.filter((f) => profile && isFigureUnlocked(f, profile)).length;
     const headerRow = `
-      <div class="quiz-actions" style="justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <button type="button" class="btn btn-ghost" id="albumPrevChapter" style="${albumOnCoverPage ? "visibility:hidden;" : ""}" ${albumChapterIdx === 0 || activeChapters.length <= 1 ? "disabled" : ""}>⏮ Kapitel</button>
-        <h3 style="margin:0; text-align:center;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlockedInChapter}/${chapter.figures.length})</span></h3>
-        <button type="button" class="btn btn-ghost" id="albumNextChapter" style="${albumOnCoverPage ? "visibility:hidden;" : ""}" ${albumChapterIdx >= activeChapters.length - 1 || activeChapters.length <= 1 ? "disabled" : ""}>Kapitel ⏭</button>
+      <div class="quiz-actions album-header-row" style="justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:nowrap; gap:4px;">
+        <button type="button" class="btn btn-ghost" id="albumPrevChapter" aria-label="Vorheriges Kapitel" style="flex-shrink:0; padding:8px 10px; ${albumOnCoverPage ? "visibility:hidden;" : ""}" ${albumChapterIdx === 0 || activeChapters.length <= 1 ? "disabled" : ""}>⏮</button>
+        <h3 style="margin:0; text-align:center; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">${chapter.emoji} ${chapter.title} <span class="empty-note" style="font-weight:400; font-size:0.8rem;">(${totalUnlockedInChapter}/${chapter.figures.length})</span></h3>
+        <button type="button" class="btn btn-ghost" id="albumNextChapter" aria-label="Nächstes Kapitel" style="flex-shrink:0; padding:8px 10px; ${albumOnCoverPage ? "visibility:hidden;" : ""}" ${albumChapterIdx >= activeChapters.length - 1 || activeChapters.length <= 1 ? "disabled" : ""}>⏭</button>
       </div>`;
     if (albumOnCoverPage) {
       area.innerHTML = `
@@ -12183,6 +12587,13 @@ An einem Morgen lief ein kleiner Fuchs los…
       </${tag}>`;
     };
     const renderEmptySlots = (figures) => Array.from({ length: half - figures.length }).map(() => `<div></div>`).join("");
+    // WICHTIG — behebt den gemeldeten Bug: bisher gab es hinter der sich drehenden rechten Seite
+    // KEINE zweite Ebene — während der 380ms-Drehanimation war der Bereich dahinter kurz leer,
+    // bevor renderAlbum() danach den neuen Inhalt einsetzte. Statt der leeren Fläche liegt jetzt
+    // schon die tatsächlich kommende Seite (die nächsten Figuren) sichtbar dahinter, wie bei einem
+    // echten Buch, bei dem man beim Umblättern schon die nächste Seite durchscheinen sieht.
+    const nextPageFigures = chapter.figures.slice((albumPageIdx + 1) * ALBUM_PER_PAGE, (albumPageIdx + 1) * ALBUM_PER_PAGE + ALBUM_PER_PAGE);
+    const nextLeftFigures = nextPageFigures.slice(0, half);
     area.innerHTML = `
       ${headerRow}
       <div class="album-book album-book-open" id="albumPageFace" style="aspect-ratio:1;">
@@ -12193,10 +12604,18 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
         </div>
         <div class="album-spine" aria-hidden="true"></div>
-        <div class="album-page-face album-page-right" id="albumPageRightClick" style="cursor:${albumPageIdx < totalPages - 1 ? "pointer" : "default"};" title="Weiterblättern">
-          <div class="album-page-grid">
-            ${rightFigures.map(renderSlot).join("")}
-            ${renderEmptySlots(rightFigures)}
+        <div class="album-page-right-wrap">
+          <div class="album-page-face album-page-right-behind">
+            <div class="album-page-grid">
+              ${nextLeftFigures.map(renderSlot).join("")}
+              ${renderEmptySlots(nextLeftFigures)}
+            </div>
+          </div>
+          <div class="album-page-face album-page-right" id="albumPageRightClick" style="cursor:${albumPageIdx < totalPages - 1 ? "pointer" : "default"};" title="Weiterblättern">
+            <div class="album-page-grid">
+              ${rightFigures.map(renderSlot).join("")}
+              ${renderEmptySlots(rightFigures)}
+            </div>
           </div>
         </div>
       </div>
@@ -12260,7 +12679,17 @@ An einem Morgen lief ein kleiner Fuchs los…
     const answers = (profile.extraProfileData && profile.extraProfileData.interviewAnswers) || {};
     const answered = INTERVIEW_QUESTIONS.filter((q) => answers[q.id] && answers[q.id].trim());
     const unlocked = profile.points >= 150;
-    if (!unlocked) return "";
+    // WICHTIG — die 150-Punkte-Freischaltung bleibt bewusst bestehen (Teil des Spielsystems,
+    // korreliert mit den Sammelfiguren-Aufgaben). Der eigentliche gemeldete Bug war nicht die
+    // Sperre selbst, sondern dass der GESAMTE Bereich bei fehlender Freischaltung komplett
+    // verschwand (return "") — das Interview war dadurch unauffindbar, man wusste nicht mal, dass
+    // es existiert. Jetzt bleibt es sichtbar, mit klarem Hinweis, was zum Freischalten fehlt.
+    if (!unlocked) {
+      return `<div class="breakdown-list" style="margin-top:16px;">
+        <p class="eyebrow" style="margin-top:0;">🎤 Interview</p>
+        <p class="empty-note">🔒 Ab 150 Punkten kannst du hier ausführlichere Fragen zum Kennenlernen beantworten — noch ${150 - profile.points} Punkte.</p>
+      </div>`;
+    }
     const type = computeInterviewType(answers);
     return `<div class="breakdown-list" style="margin-top:16px;">
       <p class="eyebrow" style="margin-top:0;">🎤 Interview <span class="empty-note" style="font-weight:400;">(${answered.length}/${INTERVIEW_QUESTIONS.length} beantwortet)</span></p>
@@ -12278,11 +12707,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!area) return;
     const profile = Backend.currentProfile();
     if (!profile) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
-    const unlocked = profile.points >= 150;
     const answers = (profile.extraProfileData && profile.extraProfileData.interviewAnswers) || {};
+    const unlocked = profile.points >= 150;
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Kein einfaches Likes/Dislikes — sondern ein paar Fragen mit echtem Nachdenkwert. Alles freiwillig, du musst nicht jede Frage beantworten. Deine Antworten sind auf deinem Profil für andere sichtbar.</p>
-      ${!unlocked ? `<p class="empty-note">🔒 Ab 150 Punkten kannst du hier deine Antworten eintragen.</p>` : `
+      ${!unlocked ? `<p class="empty-note">🔒 Ab 150 Punkten kannst du hier deine Antworten eintragen — noch ${150 - profile.points} Punkte, spiel einfach weiter!</p>` : `
         ${Object.entries(INTERVIEW_TYPE_LABELS).map(([catKey, catInfo]) => {
           const questionsInCat = INTERVIEW_QUESTIONS.filter((q) => q.cat === catKey);
           if (!questionsInCat.length) return "";
@@ -12528,20 +12957,22 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${favMovie ? `<div class="breakdown-row"><span>🎬 Lieblingsfilm</span><span>${favMovie}</span></div>` : ""}
         ${favSeries ? `<div class="breakdown-row"><span>📺 Lieblingsserie</span><span>${favSeries}</span></div>` : ""}
         ${favSong ? `<div class="breakdown-row"><span>🎵 Lieblingslied</span><span>${favSong}</span></div>` : ""}
-        ${extra.favActor ? `<div class="breakdown-row"><span>🎭 Lieblingsschauspieler:in</span><span>${extra.favActor}</span></div>` : ""}
-        ${extra.favBook ? `<div class="breakdown-row"><span>📚 Lieblingsbuch</span><span>${extra.favBook}</span></div>` : ""}
-        ${extra.favArtist ? `<div class="breakdown-row"><span>🎤 Lieblingsband/Künstler:in</span><span>${extra.favArtist}</span></div>` : ""}
+        ${extra.favActor ? `<div class="breakdown-row breakdown-row-stacked"><span>🎭 Lieblingsschauspieler:in</span><span>${extra.favActor}</span></div>` : ""}
+        ${extra.favBook ? `<div class="breakdown-row breakdown-row-stacked"><span>📚 Lieblingsbuch</span><span>${extra.favBook}</span></div>` : ""}
+        ${extra.favArtist ? `<div class="breakdown-row breakdown-row-stacked"><span>🎤 Lieblingsband/Künstler:in</span><span>${extra.favArtist}</span></div>` : ""}
       ` },
       { icon: "💭", label: "Gedanken", html: `
         ${extra.motto ? `<div class="breakdown-row"><span>🌟 Lebensmotto</span><span>${extra.motto}</span></div>` : ""}
         ${extra.secret ? `<div class="poem-box" style="border-left-color:var(--coral-400);"><p style="margin:0;">🤫 ${extra.secret}</p></div>` : ""}
         ${extra.interviewAnswers && Object.values(extra.interviewAnswers).some((a) => a && a.trim()) ? `
           <p class="eyebrow" style="margin-top:14px;">🎤 Interview</p>
-          ${INTERVIEW_QUESTIONS.filter((q) => extra.interviewAnswers[q.id] && extra.interviewAnswers[q.id].trim()).map((q) => `
-            <div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
-              <strong style="font-size:0.82rem;">${q.text}</strong>
-              <span class="empty-note">${extra.interviewAnswers[q.id]}</span>
-            </div>`).join("")}
+          <div class="breakdown-list">
+            ${INTERVIEW_QUESTIONS.filter((q) => extra.interviewAnswers[q.id] && extra.interviewAnswers[q.id].trim()).map((q) => `
+              <div class="question-card" style="margin-bottom:8px;">
+                <p style="font-weight:700; font-size:0.82rem; margin:0 0 4px;">${q.text}</p>
+                <p class="empty-note" style="margin:0; white-space:pre-wrap;">${extra.interviewAnswers[q.id]}</p>
+              </div>`).join("")}
+          </div>
         ` : ""}
         ${extra.bigDream ? `<div class="breakdown-row"><span>🌠 Größter Traum</span><span>${extra.bigDream}</span></div>` : ""}
         ${extra.whatMakesMeHappy ? `<div class="breakdown-row"><span>😊 Macht glücklich</span><span>${extra.whatMakesMeHappy}</span></div>` : ""}
@@ -13137,6 +13568,15 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  // WICHTIG — behebt den gemeldeten Bug: echte, vom Nutzer selbst getippte Emojis (nicht die
+  // [sticker:xxx]/[fox:xxx]-Platzhalter, die schon eigene Größen haben) erbten bisher die
+  // native, teils sehr große System-Emoji-Darstellung und ließen kurze Nachrichten unnötig viele
+  // Zeilen beanspruchen. \p{Extended_Pictographic} erkennt Emoji-Zeichen im Text (ohne die
+  // Platzhalter-Syntax zu berühren, die nur eckige Klammern und Buchstaben enthält) und wickelt
+  // sie in ein <span> mit relativ kleinerer Schriftgröße — der umgebende Text bleibt unverändert.
+  function shrinkInlineEmojis(text) {
+    return text.replace(/\p{Extended_Pictographic}/gu, (e) => `<span style="font-size:0.8em;">${e}</span>`);
+  }
   async function renderInbox(isEntering) {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
@@ -13212,7 +13652,14 @@ An einem Morgen lief ein kleiner Fuchs los…
             // Kompakte Zeile: nur Absender, Zeit und ein kurzer Textausschnitt — antippen klappt
             // sie auf. Macht die Übersicht deutlich kürzer, wenn viele Nachrichten schon gelesen
             // sind, statt dass man sich durch lauter ausgeklappte Alt-Nachrichten scrollen muss.
-            const preview = m.body.replace(/^\[BETA_REQUEST\]\s*/, "").replace(/\[BETA_JUMP:[\w-]+\]/, "").replace(/\[sticker:\w+\]/g, "🏷️").replace(/\[fox:[\w-]+\]/g, "🦊").trim();
+            const preview = m.body.replace(/^\[BETA_REQUEST\]\s*/, "").replace(/\[BETA_JUMP:[\w-]+\]/, "")
+              // WICHTIG — vorher wurde JEDER Sticker/jedes Fox-Bild durch dasselbe generische
+              // 🏷️-Symbol ersetzt, das in der Vorschau winzig und nichtssagend wirkte. Jetzt
+              // erscheint der tatsächliche, kleine SVG-Sticker bzw. ein kleines Fox-Vorschaubild,
+              // damit man auch in der Kompaktansicht direkt erkennt, was in der Nachricht steckt.
+              .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle; width:24px; height:24px; overflow:hidden;">${DMA_STICKERS[key]}</span>` : "🏷️")
+              .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="" style="width:24px; height:24px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : "🦊"; })
+              .trim();
             return `
           <button type="button" class="breakdown-row inbox-row-compact" data-msg-expand="${m.id}" style="width:100%; text-align:left; align-items:flex-start; flex-direction:column; gap:2px; cursor:pointer; background:none; border:none; ${inboxViewTab === "in" && !m.read ? "border-left:3px solid var(--amber-400); padding-left:10px;" : ""}">
             <div style="display:flex; justify-content:space-between; width:100%;">
@@ -13228,11 +13675,11 @@ An einem Morgen lief ein kleiner Fuchs los…
               <strong>${senderLabel}</strong>
               <span class="empty-note">${timeLabel} 🔽</span>
             </button>
-            <p style="white-space:pre-wrap; margin:0;">${m.body
+            <p style="white-space:pre-wrap; margin:0;">${shrinkInlineEmojis(m.body
               .replace(/^\[BETA_REQUEST\]\s*/, "")
-              .replace(/\n?\[BETA_JUMP:[\w-]+\]/, "")
+              .replace(/\n?\[BETA_JUMP:[\w-]+\]/, ""))
               .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
-              .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:72px; height:72px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
+              .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:44px; height:44px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
             }</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
             ${(() => {
@@ -13388,6 +13835,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
     area.querySelectorAll("[data-msg-collapse]").forEach((btn) => {
       btn.addEventListener("click", () => { inboxExpandedIds.delete(btn.dataset.msgCollapse); renderInbox(); });
+    });
+    // Wie gewünscht: ein Klick IRGENDWO innerhalb einer aufgeklappten Nachricht soll sie wieder
+    // schließen — nicht nur auf den kleinen Kopfbereich oben. Klicks auf interaktive Elemente
+    // (Antworten, Löschen, Bild vergrößern, Sprung-Knopf usw.) lösen das Zuklappen NICHT aus,
+    // sonst könnte man diese Aktionen nie mehr auslösen, ohne die Nachricht versehentlich zu
+    // schließen. Der Kopfbereich selbst hat schon einen eigenen data-msg-collapse-Handler (oben) —
+    // dieser hier fängt zusätzlich Klicks auf den restlichen Fließtext-Bereich der Nachricht ab.
+    area.querySelectorAll("[data-msg-row]").forEach((row) => {
+      row.addEventListener("click", (e) => {
+        if (e.target.closest("button, a, img, input")) return;
+        inboxExpandedIds.delete(row.dataset.msgRow);
+        renderInbox();
+      });
     });
     area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
       btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(); });
@@ -13663,10 +14123,12 @@ An einem Morgen lief ein kleiner Fuchs los…
           },
           wortbaustelle: () => {
             document.querySelector('#learnSubnav [data-sub="sub-wordbuild"]').click();
+            activeGameChallengeId = challengeId;
             newWordbuildSession(); newWordbuildRound(); renderWordbuild();
           },
           buchstabensalat: () => {
             document.querySelector('#learnSubnav [data-sub="sub-wordsearch"]').click();
+            activeGameChallengeId = challengeId;
             newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
           },
           kreuzwortraetsel: () => {
@@ -13675,10 +14137,45 @@ An einem Morgen lief ein kleiner Fuchs los…
             // direkter newCrossword(0)-Aufruf hier würde das sofort wieder mit dem allerersten
             // Rätsel überschreiben.
             document.querySelector('#learnSubnav [data-sub="sub-crossword"]').click();
+            activeGameChallengeId = challengeId;
           },
           betonungstrainer: () => {
             document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]').click();
+            activeGameChallengeId = challengeId;
             newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer();
+          },
+          // WICHTIG — behebt einen echten Bug: diese 5 Spiele hatten bisher KEINE eigene Route
+          // hier, obwohl man über die "Freunde herausfordern"-Mini-Leiste (siehe
+          // renderMiniChallengeBarCached) durchaus zu genau diesen Spielen herausgefordert werden
+          // konnte. Beim Annehmen fiel der Code auf den Standard-Fall (Quiz.startSession) zurück —
+          // das funktioniert aber nur für normale ExerciseData.CATEGORIES-Kategorien, nicht für
+          // diese eigenständigen Spiele. Ergebnis: man landete nur in der allgemeinen
+          // Übungsübersicht, ohne dass tatsächlich eine Runde startete — genau das gemeldete
+          // Verhalten ("ich sehe das Spiel nicht geöffnet, die Runde kann nicht starten").
+          satzpuzzle: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-satzpuzzle"]').click();
+            activeGameChallengeId = challengeId;
+            newSatzpuzzleSession(); newSatzpuzzleRound(); renderSatzpuzzle();
+          },
+          wackelturm: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-wackelturm"]').click();
+            activeGameChallengeId = challengeId;
+            newWackelturmGame(); renderWackelturm();
+          },
+          wortarten: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-wortarten"]').click();
+            activeGameChallengeId = challengeId;
+            newWortartenSession(); newWortartenRound(); renderWortarten();
+          },
+          wortkanone: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-kanone"]').click();
+            activeGameChallengeId = challengeId;
+            newKanoneGame(); renderKanone();
+          },
+          werbinich: () => {
+            document.querySelector('#learnSubnav [data-sub="sub-werbinich"]').click();
+            activeGameChallengeId = challengeId;
+            newWerBinIchRound(); renderWerBinIch();
           },
         };
         activateTab("view-learn");
@@ -14042,7 +14539,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "113";
+  const APP_VERSION = "114";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
