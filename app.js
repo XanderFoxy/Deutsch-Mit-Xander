@@ -4507,37 +4507,27 @@
         </select>
       </div>
 
-      ${ExerciseData.FIRST_STEPS_CHAPTERS.map((chapter, chapterIdx) => `
-        <p class="eyebrow">Kapitel ${chapter.title}</p>
-        <div class="breakdown-list" style="margin-bottom:${chapterIdx === 1 ? "8px" : "20px"};">
-          ${chapter.vocabKeys.map((key) => {
-            const v = firstStepsVocabByKey(key);
-            if (!v) return "";
-            return `<div class="breakdown-row">
-              <span style="font-weight:700;">${v.de}</span>
-              <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
-            </div>`;
-          }).join("")}
-        </div>
-        ${chapterIdx === 1 ? `
-          <p class="eyebrow" style="font-weight:400; font-size:0.85rem;">Erste Sätze aus Kapitel 1+2 zusammengesetzt:</p>
-          <div class="breakdown-list" style="margin-bottom:20px;">
-            ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
-              <div class="question-card" style="margin-bottom:8px;">
-                <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
-                <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
-              </div>`).join("")}
-          </div>` : ""}
-      `).join("")}
+      <p class="eyebrow">Kapitel ${ExerciseData.FIRST_STEPS_CHAPTERS[0].title}</p>
+      <div class="breakdown-list" style="margin-bottom:20px;">
+        ${ExerciseData.FIRST_STEPS_CHAPTERS[0].vocabKeys.map((key) => {
+          const v = firstStepsVocabByKey(key);
+          if (!v) return "";
+          const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
+          return `<div class="breakdown-row">
+            <span style="font-weight:700;">${syl ? stressHtml(syl) : v.de}</span>
+            <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+          </div>`;
+        }).join("")}
+      </div>
 
-      <p class="eyebrow">Building Bridges 🌉 — das Kern-Werkzeug</p>
+      <p class="eyebrow">Building Bridges 🌉 — das Kern-Werkzeug (schon jetzt nutzbar!)</p>
       <div class="question-card" style="margin-bottom:16px;">
-        <p class="empty-note" style="margin:0;">Jetzt, wo die Bausteine aus allen Kapiteln bekannt sind: ein <strong>konjugiertes Verb hier</strong> + ... + <strong>ein Infinitiv aus der Liste darunter ans Ende</strong>. Diese feste Reihenfolge sorgt automatisch für eine grammatikalisch richtige Wortstellung — man kann so kaum etwas falsch bauen.</p>
+        <p class="empty-note" style="margin:0;">Mit nur diesen sechs Verben lassen sich ab sofort eigene Sätze bauen: ein <strong>konjugiertes Verb hier</strong> + ... + <strong>ein Infinitiv aus der Liste darunter ans Ende</strong>. Diese feste Reihenfolge sorgt automatisch für eine grammatikalisch richtige Wortstellung — man kann so kaum etwas falsch bauen.</p>
       </div>
       <div class="breakdown-list" style="margin-bottom:16px;">
         ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => `
           <div class="question-card" style="margin-bottom:8px;">
-            <p class="eyebrow" style="margin-top:0;">${verb.meaningDe}</p>
+            <p class="eyebrow" style="margin-top:0;">${ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe] ? stressHtml(ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe]) : verb.meaningDe}</p>
             ${verb.forms.map((f) => `
               <div class="breakdown-row" style="background:transparent; padding:4px 0;">
                 <span style="font-weight:700;">${f.de}</span>
@@ -4563,6 +4553,30 @@
             <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
           </div>`).join("")}
       </div>
+
+      <p class="eyebrow" style="font-weight:400; font-size:0.85rem;">Erste Sätze aus Kapitel 1 zusammengesetzt:</p>
+      <div class="breakdown-list" style="margin-bottom:20px;">
+        ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
+          <div class="question-card" style="margin-bottom:8px;">
+            <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
+            <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
+          </div>`).join("")}
+      </div>
+
+      ${ExerciseData.FIRST_STEPS_CHAPTERS.slice(1).map((chapter) => `
+        <p class="eyebrow">Kapitel ${chapter.title}</p>
+        <div class="breakdown-list" style="margin-bottom:20px;">
+          ${chapter.vocabKeys.map((key) => {
+            const v = firstStepsVocabByKey(key);
+            if (!v) return "";
+            const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
+            return `<div class="breakdown-row">
+              <span style="font-weight:700;">${syl ? stressHtml(syl) : v.de}</span>
+              <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+            </div>`;
+          }).join("")}
+        </div>
+      `).join("")}
 
       <p class="eyebrow">Warum wirkt „du" manchmal seltsam?</p>
       <div class="question-card" style="margin-bottom:20px;">
@@ -14679,7 +14693,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "116";
+  const APP_VERSION = "117";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

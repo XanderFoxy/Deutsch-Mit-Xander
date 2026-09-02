@@ -4895,6 +4895,104 @@ const ExerciseData = (function () {
   // aufeinander aufbauenden Gruppen gelernt (wie einzelne Buchseiten), nicht als eine
   // einzige lange Liste. Jedes Kapitel verweist nur auf die "de"-Schlüssel aus
   // FIRST_STEPS_VOCAB — keine doppelten Daten, nur die Reihenfolge/Gruppierung.
+  // Silbentrennung + Betonung (GROSS = betonte Silbe) für die Aussprache-Anzeige — dasselbe
+  // Format wie das bestehende stressHtml()/WORD_SYL-System der App. Bewusst als eigenes,
+  // separates Lookup (Wort → Silbenstring) statt jedes Vokabel-Objekt umzubauen: sicherer beim
+  // schrittweisen Ausbau, und wird von der UI nur nachgeschlagen, wenn vorhanden.
+  const FIRST_STEPS_SYLLABLES = {
+    "ich": "ich", "ich bin": "ich BIN", "mit dir": "mit DIR", "mit ihm / mit ihr": "mit IHM / mit IHR",
+    "mit uns": "mit UNS", "für dich": "für DICH", "ohne ihn": "OH-ne ihn", "ohne sie (Mehrzahl)": "OH-ne sie",
+    "immer": "IM-mer", "das": "das", "ist": "ist", "manchmal": "MANCH-mal", "heute": "HEU-te", "von": "von",
+    "vielleicht": "viel-LEICHT", "selbst wenn / auch wenn": "selbst WENN / auch WENN", "danach": "da-NACH",
+    "schlechter": "SCHLECH-ter", "wo": "wo", "alles": "AL-les", "irgendwo": "IR-gend-wo", "fast": "fast",
+    "mögen": "MÖ-gen", "lieben": "LIE-ben", "toll / großartig": "toll / GROSS-ar-tig",
+    "möchten / wollen": "MÖCH-ten", "brauchen / müssen": "BRAU-chen", "können": "KÖN-nen",
+    "mögen — NICHT „lieben“ (das ist stärker, siehe Hinweis unten)": "MÖ-gen", "gehen": "GE-hen",
+    "haben (auch für „muss“/„habe zu“ verwendbar)": "HA-ben",
+    // Kapitel 2
+    "das Zuhause": "das Zu-HAU-se", "schon": "schon", "Guten Morgen": "GU-ten MOR-gen",
+    "Wie geht es dir?": "wie GEHT es dir", "Woher kommst du?": "wo-HER kommst du", "Wie heißt du?": "wie HEISST du",
+    "Wie alt bist du?": "wie ALT bist du", "dein / deine (informell) — Ihr / Ihre (formell)": "dein / DEI-ne — Ihr / IH-re",
+    "die Geschwister": "die Ge-SCHWIS-ter", "sehr": "sehr", "schwierig": "SCHWIE-rig", "weil": "weil",
+    "beide": "BEI-de", "das Buch": "das Buch", "genug": "ge-NUG", "das Hotel": "das Ho-TEL", "die Woche": "die WO-che",
+    "die Nummer": "die NUM-mer", "Deutsch (die Sprache)": "Deutsch", "die Großmutter / der Großvater": "die GROSS-mut-ter / der GROSS-va-ter",
+    "die Minute": "die Mi-NU-te", "wieder": "WIE-der", "die Erlaubnis": "die Er-LAUB-nis",
+    "Schön, dich kennenzulernen": "schön, dich KEN-nen-zu-ler-nen", "der Vorname": "der VOR-na-me", "der Nachname": "der NACH-na-me",
+    "die Tür": "die Tür", "der Preis": "der Preis", "die Größe": "die GRÖ-ße", "klein": "klein", "obwohl": "ob-WOHL",
+    "der Bruder": "der BRU-der", "zusammen": "zu-SAM-men", "natürlich": "na-TÜR-lich", "der Himmel": "der HIM-mel",
+    "Es tut mir leid": "es TUT mir leid", "folgen": "FOL-gen", "groß (Gegenteil von klein)": "groß", "neu": "neu", "niemals": "NIE-mals",
+    // Kapitel 3
+    "Montag / Dienstag / Mittwoch": "MON-tag / DIENS-tag / MITT-woch",
+    "Donnerstag / Freitag / Samstag / Sonntag": "DON-ners-tag / FREI-tag / SAMS-tag / SONN-tag",
+    "der Frühling / der Sommer": "der FRÜH-ling / der SOM-mer", "der Herbst / der Winter": "der Herbst / der WIN-ter",
+    "schwarz / weiß": "schwarz / weiß", "rot / blau / gelb": "rot / blau / gelb", "grün / grau / braun": "grün / grau / braun",
+    "eins / zwei / drei": "eins / zwei / drei", "vier / fünf / sechs": "vier / fünf / sechs",
+    "sieben / acht / neun / zehn": "SIE-ben / acht / neun / zehn", "Norden / Süden": "NOR-den / SÜ-den", "Osten / Westen": "OS-ten / WES-ten",
+    // Kapitel 4
+    "bitte": "BIT-te", "schön": "schön", "echt / wirklich": "echt / WIRK-lich", "willkommen": "will-KOM-men",
+    "das Jahr / die Jahre": "das Jahr / die JAH-re", "oben / unten": "O-ben / UN-ten", "das Geschenk": "das Ge-SCHENK",
+    "das Museum": "das Mu-SE-um", "die Wohnung": "die WOH-nung", "der Bahnhof": "der BAHN-hof", "der Ausflug": "der AUS-flug",
+    "der Lehrer / die Lehrerin": "der LEH-rer / die LEH-re-rin", "die Klasse": "die KLAS-se", "der Zug / die Bahn": "der Zug / die Bahn",
+    // Kapitel 5
+    "wer": "wer", "was": "was", "wann": "wann", "warum": "wa-RUM", "wie": "wie", "welcher / welche / welches": "WEL-cher",
+    "einfach": "EIN-fach", "wichtig": "WICH-tig", "richtig": "RICH-tig", "falsch": "falsch", "schnell": "schnell",
+    "langsam": "LANG-sam", "möglich": "MÖG-lich", "der Ort / die Stelle": "der Ort / die STEL-le",
+    // Kapitel 6
+    "die Mutter / der Vater": "die MUT-ter / der VA-ter", "der Sohn / die Tochter": "der Sohn / die TOCH-ter",
+    "die Schwester": "die SCHWES-ter", "der Freund / die Freundin": "der Freund / die FREUN-din", "das Kind": "das Kind",
+    "das Brot": "das Brot", "der Apfel": "der AP-fel", "der Kaffee / der Tee": "der Kaf-FEE / der Tee", "die Milch": "die Milch",
+    "das Frühstück / das Mittagessen / das Abendessen": "das FRÜH-stück / das MIT-tag-es-sen / das A-bend-es-sen",
+    "das Handy / das Telefon": "das HAN-dy / das Te-le-FON", "der Schlüssel": "der SCHLÜS-sel", "das Geld": "das Geld",
+    // Kapitel 7
+    "jetzt": "jetzt", "morgen": "MOR-gen", "später": "SPÄ-ter", "oft": "oft", "selten": "SEL-ten",
+    "die Stunde": "die STUN-de", "der Moment / der Augenblick": "der Mo-MENT / der AU-gen-blick", "gerade": "ge-RA-de",
+    "das Wetter": "das WET-ter", "die Sonne / der Regen": "die SON-ne / der RE-gen", "kalt / warm": "kalt / warm",
+    "die Kleidung": "die KLEI-dung", "die Schuhe": "die SCHU-he", "einkaufen": "EIN-kau-fen", "duschen": "DU-schen",
+    "aufwachen": "AUF-wa-chen", "der Job / die Arbeit": "der Job / die AR-beit", "das Wochenende": "das WO-chen-en-de",
+    // Kapitel 8
+    "elf / zwölf / zwanzig": "elf / zwölf / ZWAN-zig", "dreißig / vierzig / fünfzig": "DREI-ßig / VIER-zig / FÜNF-zig",
+    "hundert / tausend": "HUN-dert / TAU-send", "das Krankenhaus": "das KRAN-ken-haus", "die Apotheke": "die A-po-THE-ke",
+    "der Supermarkt": "der SU-per-markt", "die Polizei": "die Po-li-ZEI", "Hilfe!": "HIL-fe",
+    "Ich verstehe nicht.": "ich ver-STE-he nicht", "Sprechen Sie Englisch?": "SPRE-chen Sie ENG-lisch",
+    // Kapitel 9
+    "der Freund / die Freunde": "der Freund / die FREUN-de", "die Arbeit / der Beruf": "die AR-beit / der Be-RUF",
+    "das Büro": "das Bü-RO", "die Straße": "die STRA-ße", "die Stadt": "die Stadt", "das Land": "das Land",
+    "die Sprache": "die SPRA-che", "die Frage / die Antwort": "die FRA-ge / die ANT-wort", "das Problem": "das Pro-BLEM",
+    "die Idee": "die I-DEE", "der Grund": "der Grund", "die Zeit": "die Zeit", "gut / schlecht": "gut / schlecht",
+    "alt / jung": "alt / jung", "voll / leer": "voll / leer", "teuer / billig": "TEU-er / BIL-lig",
+    "laut / leise": "laut / LEI-se", "müde": "MÜ-de", "glücklich / traurig": "GLÜCK-lich / TRAU-rig", "hier / dort": "hier / dort",
+    // Kapitel 10
+    "der Kopf": "der Kopf", "die Hand": "die Hand", "das Auge / die Augen": "das AU-ge / die AU-gen", "das Herz": "das Herz",
+    "der Fuß / die Füße": "der Fuß / die FÜ-ße", "unter": "UN-ter", "über": "Ü-ber", "neben": "NE-ben", "durch": "durch",
+    "zeigen": "ZEI-gen", "öffnen / schließen": "ÖFF-nen / SCHLIE-ßen", "anfangen / aufhören": "AN-fan-gen / AUF-hö-ren",
+    "der Tisch / der Stuhl": "der Tisch / der Stuhl", "das Bett": "das Bett", "das Fenster": "das FENS-ter",
+    "der Arzt / die Ärztin": "der Arzt / die ÄRZ-tin", "der Koch / die Köchin": "der Koch / die KÖ-chin",
+    "der Fahrer / die Fahrerin": "der FAH-rer / die FAH-re-rin", "der Verkäufer / die Verkäuferin": "der Ver-KÄU-fer / die Ver-KÄU-fe-rin",
+    "sauber / schmutzig": "SAU-ber / SCHMUT-zig", "nass / trocken": "nass / TRO-cken", "hell / dunkel": "hell / DUN-kel", "stark / schwach": "stark / schwach",
+    // Kapitel 11
+    "der Cousin / die Cousine": "der Cou-SIN / die Cou-SI-ne", "der Papa": "PA-pa", "versuchen": "ver-SU-chen", "mieten": "MIE-ten",
+    "bringen": "BRIN-gen", "vorziehen": "VOR-zie-hen", "wählen": "WÄH-len", "hinlegen": "HIN-le-gen", "unterrichten": "UN-ter-rich-ten",
+    "weniger": "WE-ni-ger", "der Monat": "der MO-nat", "während": "WÄH-rend", "wünschen": "WÜN-schen", "bekommen": "be-KOM-men",
+    "vergessen": "ver-GES-sen", "jeder / jede / jedes": "JE-der", "fühlen": "FÜH-len", "nächste(r/s)": "NÄCHS-te", "die Person": "die Per-SON",
+    "vor / hinter": "vor / HIN-ter", "das Restaurant": "das Res-tau-RANT", "die Toilette": "die Toi-LET-te",
+    "Auf Wiedersehen": "auf WIE-der-se-hen", "einschließlich": "ein-SCHLIESS-lich", "halten": "HAL-ten", "prüfen": "PRÜ-fen", "viel / viele": "viel / VIE-le",
+    // Kapitel 12
+    "in": "in", "das Auto": "das Au-TO", "noch": "noch", "aber": "A-ber", "weit / weg": "weit / weg", "ähnlich": "ÄHN-lich",
+    "anderer / andere / anderes": "AN-de-rer", "die Seite": "die SEI-te", "bis": "bis", "gestern": "GES-tern", "seit": "seit",
+    "der Tag": "der Tag", "vorher": "VOR-her", "leicht": "leicht", "nahe / nah": "NA-he / nah", "warten": "WAR-ten",
+    "verkaufen": "ver-KAU-fen", "gebrauchen": "ge-BRAU-chen", "entscheiden": "ent-SCHEI-den", "zwischen": "ZWI-schen", "fertig": "FER-tig",
+    "bald": "bald", "niemand / irgendjemand": "NIE-mand / IR-gend-je-mand", "gegen": "GE-gen", "treffen": "TREF-fen", "jemand": "JE-mand",
+    "um": "um", "als": "als", "nichts": "nichts", "aussehen wie": "AUS-se-hen wie", "fortsetzen / weitermachen": "FORT-set-zen / WEI-ter-ma-chen",
+    "darum / deshalb": "da-RUM / DES-halb", "vorbereiten": "VOR-be-rei-ten", "die Nacht": "die Nacht", "das Licht": "das Licht",
+    "draußen": "DRAU-ßen", "die Familie / die Eltern": "die Fa-MI-lie / die EL-tern", "sein (Verb)": "sein",
+    "wegnehmen / entfernen": "WEG-neh-men / ent-FER-nen", "heben": "HE-ben", "gehören": "ge-HÖ-ren", "also": "AL-so",
+    // Kapitel 13
+    "Wieviel(e)": "wie-VIEL", "nehmen": "NEH-men", "mit mir": "mit MIR", "anstatt": "an-STATT", "nur": "nur", "oder": "O-der",
+    "waren": "WA-ren", "ohne mich": "OH-ne mich", "kalt": "kalt", "drinnen": "DRIN-nen", "heiß / warm": "heiß / warm", "fahren": "FAH-ren",
+    "geschehen": "ge-SCHE-hen", "befehlen": "be-FEH-len", "Verzeihung": "Ver-ZEI-hung", "die Frau": "die Frau",
+    "enden / beenden": "EN-den / be-EN-den", "rauchen": "RAU-chen",
+  };
+
   const FIRST_STEPS_CHAPTERS = [
     { title: "1 — Ich, du, wir", vocabKeys: ["ich", "ich bin", "mit dir", "mit ihm / mit ihr", "mit uns", "für dich", "ohne ihn", "ohne sie (Mehrzahl)", "immer", "das", "ist", "manchmal", "heute", "von", "vielleicht", "selbst wenn / auch wenn", "danach", "schlechter", "wo", "alles", "irgendwo", "fast", "mögen", "lieben", "toll / großartig"] },
     { title: "2 — Sich vorstellen", vocabKeys: ["das Zuhause", "schon", "Guten Morgen", "Wie geht es dir?", "Woher kommst du?", "Wie heißt du?", "Wie alt bist du?", "dein / deine (informell) — Ihr / Ihre (formell)", "die Geschwister", "sehr", "schwierig", "weil", "beide", "das Buch", "genug", "das Hotel", "die Woche", "die Nummer", "Deutsch (die Sprache)", "die Großmutter / der Großvater", "die Minute", "wieder", "die Erlaubnis", "Schön, dich kennenzulernen", "der Vorname", "der Nachname", "die Tür", "der Preis", "die Größe", "klein", "obwohl", "der Bruder", "zusammen", "natürlich", "der Himmel", "Es tut mir leid", "folgen", "groß (Gegenteil von klein)", "neu", "niemals"] },
@@ -4923,8 +5021,8 @@ const ExerciseData = (function () {
     { de: "Das ist eine tolle Person.", translations: { en: "That is a great person.", ar: "هذا شخص رائع.", tr: "Bu harika bir insan.", ru: "Это отличный человек.", es: "Esa es una persona genial.", fr: "C'est une personne géniale.", pl: "To wspaniała osoba.", uk: "Це чудова людина.", fa: "او آدم فوق‌العاده‌ای است." } },
     // Zweiter Batch — korrigierte Fassungen von Buchbeispielen mit echten Fehlern
     // (u. a. fehlendes Subjekt, falsche Wortstellung im Nebensatz, "ob" statt "wenn").
-    { de: "Ich bin schon im Auto mit deinem Sohn.", translations: { en: "I am already in the car with your son.", ar: "أنا بالفعل في السيارة مع ابنك.", tr: "Zaten oğlunla arabadayım.", ru: "Я уже в машине с твоим сыном.", es: "Ya estoy en el coche con tu hijo.", fr: "Je suis déjà dans la voiture avec ton fils.", pl: "Jestem już w samochodzie z twoim synem.", uk: "Я вже в машині з твоїм сином.", fa: "من الان توی ماشینم با پسرت." } },
-    { de: "Ich liebe das Hotel, weil ich den Strand sehen möchte.", translations: { en: "I love this hotel because I want to see the beach.", ar: "أحب هذا الفندق لأنني أريد رؤية الشاطئ.", tr: "Bu oteli seviyorum çünkü sahili görmek istiyorum.", ru: "Мне нравится этот отель, потому что я хочу видеть пляж.", es: "Me encanta este hotel porque quiero ver la playa.", fr: "J'adore cet hôtel parce que je veux voir la plage.", pl: "Uwielbiam ten hotel, ponieważ chcę widzieć plażę.", uk: "Мені подобається цей готель, бо я хочу бачити пляж.", fa: "من عاشق این هتلم چون می‌خواهم ساحل را ببینم." } },
+    { de: "Ich bin schon mit deinem Sohn im Auto.", translations: { en: "I am already in the car with your son.", ar: "أنا بالفعل في السيارة مع ابنك.", tr: "Zaten oğlunla arabadayım.", ru: "Я уже в машине с твоим сыном.", es: "Ya estoy en el coche con tu hijo.", fr: "Je suis déjà dans la voiture avec ton fils.", pl: "Jestem już w samochodzie z twoim synem.", uk: "Я вже в машині з твоїм сином.", fa: "من الان توی ماشینم با پسرت." } },
+    { de: "Ich mag das Hotel, weil ich den Strand sehen möchte.", translations: { en: "I like this hotel because I want to see the beach.", ar: "يعجبني هذا الفندق لأنني أريد رؤية الشاطئ.", tr: "Bu oteli beğeniyorum çünkü sahili görmek istiyorum.", ru: "Мне нравится этот отель, потому что я хочу видеть пляж.", es: "Me gusta este hotel porque quiero ver la playa.", fr: "J'aime bien cet hôtel parce que je veux voir la plage.", pl: "Podoba mi się ten hotel, ponieważ chcę widzieć plażę.", uk: "Мені подобається цей готель, бо я хочу бачити пляж.", fa: "این هتل را دوست دارم چون می‌خواهم ساحل را ببینم." } },
     { de: "Ich will wissen, ob sie hier sind, weil ich nach draußen gehen möchte.", translations: { en: "I want to know if they are here, because I want to go outside.", ar: "أريد أن أعرف إن كانوا هنا، لأنني أريد الخروج.", tr: "Burada olup olmadıklarını bilmek istiyorum, çünkü dışarı çıkmak istiyorum.", ru: "Я хочу знать, здесь ли они, потому что хочу выйти на улицу.", es: "Quiero saber si están aquí, porque quiero salir afuera.", fr: "Je veux savoir s'ils sont là, parce que je veux sortir.", pl: "Chcę wiedzieć, czy oni tu są, ponieważ chcę wyjść na zewnątrz.", uk: "Я хочу знати, чи вони тут, бо хочу вийти надвір.", fa: "می‌خواهم بدانم آن‌ها اینجا هستند یا نه، چون می‌خواهم بیرون بروم." } },
     { de: "Ich muss die Tür für meine Schwester öffnen.", translations: { en: "I need to open the door for my sister.", ar: "يجب أن أفتح الباب لأختي.", tr: "Kız kardeşim için kapıyı açmam gerekiyor.", ru: "Мне нужно открыть дверь для сестры.", es: "Necesito abrir la puerta para mi hermana.", fr: "Je dois ouvrir la porte pour ma sœur.", pl: "Muszę otworzyć drzwi dla mojej siostry.", uk: "Мені потрібно відчинити двері для сестри.", fa: "باید در را برای خواهرم باز کنم." } },
     { de: "Schön, dich kennenzulernen. Wie heißt du?", translations: { en: "Nice to meet you. What is your name?", ar: "سعيد بلقائك. ما اسمك؟", tr: "Tanıştığıma memnun oldum. Adın ne?", ru: "Приятно познакомиться. Как тебя зовут?", es: "Encantado de conocerte. ¿Cómo te llamas?", fr: "Enchanté de te rencontrer. Comment tu t'appelles ?", pl: "Miło cię poznać. Jak masz na imię?", uk: "Приємно познайомитися. Як тебе звати?", fa: "از آشناییت خوشوقتم. اسمت چیه؟" } },
@@ -5058,7 +5156,7 @@ const ExerciseData = (function () {
     { de: "Wir gehen jetzt arbeiten.", translations: { en: "We are going to work now.", ar: "نحن ذاهبون للعمل الآن.", tr: "Şimdi çalışmaya gidiyoruz.", ru: "Мы идём работать сейчас.", es: "Ahora vamos a trabajar.", fr: "Nous allons travailler maintenant.", pl: "Idziemy teraz pracować.", uk: "Ми йдемо працювати зараз.", fa: "ما الان می‌رویم سر کار." } },
     { de: "Sie hat Zeit zu sprechen.", translations: { en: "She has time to talk.", ar: "لديها وقت للتحدث.", tr: "Konuşmaya vakti var.", ru: "У неё есть время поговорить.", es: "Ella tiene tiempo para hablar.", fr: "Elle a le temps de parler.", pl: "Ona ma czas, żeby porozmawiać.", uk: "Вона має час поговорити.", fa: "او وقت دارد صحبت کند." } },
     { de: "Ich möchte zum Bahnhof gehen.", translations: { en: "I want to go to the train station.", ar: "أريد الذهاب إلى محطة القطار.", tr: "Tren istasyonuna gitmek istiyorum.", ru: "Я хочу пойти на вокзал.", es: "Quiero ir a la estación de tren.", fr: "Je veux aller à la gare.", pl: "Chcę iść na dworzec.", uk: "Я хочу піти на вокзал.", fa: "می‌خواهم به ایستگاه قطار بروم." } },
-    { de: "Wir können das Museum heute sehen.", translations: { en: "We can see the museum today.", ar: "نستطيع رؤية المتحف اليوم.", tr: "Bugün müzeyi görebiliriz.", ru: "Мы можем увидеть музей сегодня.", es: "Podemos ver el museo hoy.", fr: "Nous pouvons voir le musée aujourd'hui.", pl: "Możemy zobaczyć muzeum dzisiaj.", uk: "Ми можемо побачити музей сьогодні.", fa: "امروز می‌توانیم موزه را ببینیم." } },
+    { de: "Wir können das Museum heute besuchen.", translations: { en: "We can visit the museum today.", ar: "نستطيع زيارة المتحف اليوم.", tr: "Bugün müzeyi ziyaret edebiliriz.", ru: "Мы можем посетить музей сегодня.", es: "Podemos visitar el museo hoy.", fr: "Nous pouvons visiter le musée aujourd'hui.", pl: "Możemy odwiedzić muzeum dzisiaj.", uk: "Ми можемо відвідати музей сьогодні.", fa: "امروز می‌توانیم از موزه بازدید کنیم." } },
     { de: "Ich habe ein Geschenk für dich.", translations: { en: "I have a gift for you.", ar: "لدي هدية لك.", tr: "Senin için bir hediyem var.", ru: "У меня есть подарок для тебя.", es: "Tengo un regalo para ti.", fr: "J'ai un cadeau pour toi.", pl: "Mam dla ciebie prezent.", uk: "У мене є подарунок для тебе.", fa: "من برایت هدیه دارم." } },
     { de: "Ich möchte einen Kaffee trinken.", translations: { en: "I want to drink a coffee.", ar: "أريد أن أشرب قهوة.", tr: "Bir kahve içmek istiyorum.", ru: "Я хочу выпить кофе.", es: "Quiero tomar un café.", fr: "Je veux boire un café.", pl: "Chcę wypić kawę.", uk: "Я хочу випити каву.", fa: "می‌خواهم قهوه بنوشم." } },
     { de: "Wir können zusammen Brot kaufen.", translations: { en: "We can buy bread together.", ar: "نستطيع شراء الخبز معاً.", tr: "Birlikte ekmek alabiliriz.", ru: "Мы можем купить хлеб вместе.", es: "Podemos comprar pan juntos.", fr: "Nous pouvons acheter du pain ensemble.", pl: "Możemy razem kupić chleb.", uk: "Ми можемо разом купити хліб.", fa: "می‌توانیم با هم نان بخریم." } },
@@ -5157,5 +5255,5 @@ const ExerciseData = (function () {
     },
   };
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES };
 })();
