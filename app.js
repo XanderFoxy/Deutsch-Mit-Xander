@@ -287,8 +287,9 @@
 
   /* ============ Geführte Tour für neue Besucher ============ */
   const TOUR_STEPS = [
-    { emoji: "👋", title: "Willkommen bei Deutsch mit Alex!", text: "Kurze Tour gefällig? Vier Schritte, dann kennst du dich aus. Du kannst jederzeit überspringen." },
+    { emoji: "👋", title: "Willkommen bei Deutsch mit Alex!", text: "Kurze Tour gefällig? Fünf Schritte, dann kennst du dich aus. Du kannst jederzeit überspringen." },
     { emoji: "🧭", title: "Die vier Reiter oben", text: "Über mich, Lernen, Wissen und Profil & Rang — hier wechselst du zwischen den Bereichen der Seite." },
+    { emoji: "🌉", title: "Noch nie ein deutsches Wort gesprochen?", text: "Dann starte unter „Lernen“ mit „Erste Schritte“ — ein Baukasten mit wenigen Grundbausteinen, aus denen du selbst Sätze zusammensetzt. Übersetzt automatisch in deine Sprache." },
     { emoji: "🎯", title: "Lernen", text: "Hier übst du Deutsch in vielen Kategorien — wähl eine oder mehrere aus, stell die Schwierigkeit ein und leg los. Punkte gibt's für jede richtige Antwort." },
     { emoji: "🏆", title: "Profil & Rang", text: "Dein Fortschritt, Freunde, Ranking und dein persönliches Design — manche Designs und Übungskategorien schaltest du dir durchs Üben frei." },
     { emoji: "✍️", title: "Wissen", text: "Lesetexte anderer Lernender, eigene Beiträge einreichen, liken und kommentieren — schau gern mal vorbei." },
@@ -4473,7 +4474,8 @@
     "Frankreich": "fr", "Belgien": "fr", "Schweiz": "fr", "Senegal": "fr", "Elfenbeinküste": "fr", "Kamerun": "fr",
     "Mali": "fr", "Niger": "fr", "Tschad": "fr", "Guinea": "fr", "Haiti": "fr", "Luxemburg": "fr",
     "Polen": "pl",
-    "USA": "en", "Vereinigte Staaten": "en", "Großbritannien": "en", "Vereinigtes Königreich": "en",
+    "Portugal": "pt", "Brasilien": "pt", "Angola": "pt", "Mosambik": "pt", "Guinea-Bissau": "pt", "Kap Verde": "pt",
+    "USA": "en", "Vereinigtes Königreich": "en",
     "Irland": "en", "Australien": "en", "Neuseeland": "en", "Indien": "en", "Nigeria": "en", "Kanada": "en",
     "Südafrika": "en", "Kenia": "en", "Ghana": "en", "Pakistan": "en", "Philippinen": "en",
   };
@@ -4485,15 +4487,18 @@
     return entry.translations[lang] || entry.translations.en;
   }
   let firstStepsLangOverride = null; // manuell gewählte Sprache, überschreibt firstStepsLangFor() solange gesetzt
+  function firstStepsVocabByKey(key) {
+    return ExerciseData.FIRST_STEPS_VOCAB.find((v) => v.de === key);
+  }
   function renderFirstSteps() {
     const area = document.getElementById("firstStepsArea");
     if (!area) return;
     const profile = Backend.currentProfile();
-    const langNames = { en: "Englisch", ar: "Arabisch", tr: "Türkisch", ru: "Russisch", uk: "Ukrainisch", fa: "Persisch/Farsi", es: "Spanisch", fr: "Französisch", pl: "Polnisch" };
+    const langNames = { en: "Englisch", ar: "Arabisch", tr: "Türkisch", ru: "Russisch", uk: "Ukrainisch", fa: "Persisch/Farsi", es: "Spanisch", pt: "Portugiesisch", fr: "Französisch", pl: "Polnisch" };
     const lang = firstStepsLangOverride || firstStepsLangFor(profile);
     const rtl = lang === "ar" || lang === "fa";
     area.innerHTML = `
-      <p class="empty-note" style="margin-bottom:14px;">Ein Baukasten für den allerersten Kontakt mit Deutsch — auch ohne ein einziges bereits bekanntes deutsches Wort. Erst eine kleine Kernliste an Bausteinen lernen, dann selbst Sätze daraus zusammensetzen.</p>
+      <p class="empty-note" style="margin-bottom:14px;">Ein Baukasten für den allerersten Kontakt mit Deutsch — auch ohne ein einziges bereits bekanntes deutsches Wort. Kapitel für Kapitel, wie im Buch: erst ein paar Bausteine lernen, direkt danach damit Sätze bauen — bevor es zum nächsten Kapitel geht.</p>
       <div class="question-card" style="margin-bottom:16px;">
         <p class="eyebrow" style="margin-top:0;">🌍 Übersetzung gerade in: ${langNames[lang]}${lang === "en" && !profile?.origin && !firstStepsLangOverride ? " (Standard — leg dein Herkunftsland im Profil fest, oder wähl unten manuell)" : ""}</p>
         <select id="firstStepsLangSelect" class="challenge-select" style="margin-top:6px;">
@@ -4502,27 +4507,32 @@
         </select>
       </div>
 
-      <p class="eyebrow">1. Bausteine lernen</p>
-      <div class="breakdown-list" style="margin-bottom:20px;">
-        ${ExerciseData.FIRST_STEPS_VOCAB.map((v) => `
-          <div class="breakdown-row">
-            <span style="font-weight:700;">${v.de}</span>
-            <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
-          </div>`).join("")}
-      </div>
+      ${ExerciseData.FIRST_STEPS_CHAPTERS.map((chapter, chapterIdx) => `
+        <p class="eyebrow">Kapitel ${chapter.title}</p>
+        <div class="breakdown-list" style="margin-bottom:${chapterIdx === 1 ? "8px" : "20px"};">
+          ${chapter.vocabKeys.map((key) => {
+            const v = firstStepsVocabByKey(key);
+            if (!v) return "";
+            return `<div class="breakdown-row">
+              <span style="font-weight:700;">${v.de}</span>
+              <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+            </div>`;
+          }).join("")}
+        </div>
+        ${chapterIdx === 1 ? `
+          <p class="eyebrow" style="font-weight:400; font-size:0.85rem;">Erste Sätze aus Kapitel 1+2 zusammengesetzt:</p>
+          <div class="breakdown-list" style="margin-bottom:20px;">
+            ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
+              <div class="question-card" style="margin-bottom:8px;">
+                <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
+                <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
+              </div>`).join("")}
+          </div>` : ""}
+      `).join("")}
 
-      <p class="eyebrow">2. Sätze aus den Bausteinen zusammensetzen</p>
-      <div class="breakdown-list" style="margin-bottom:20px;">
-        ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
-          <div class="question-card" style="margin-bottom:8px;">
-            <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
-            <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
-          </div>`).join("")}
-      </div>
-
-      <p class="eyebrow">3. Building Bridges 🌉 — das Kern-Werkzeug</p>
+      <p class="eyebrow">Building Bridges 🌉 — das Kern-Werkzeug</p>
       <div class="question-card" style="margin-bottom:16px;">
-        <p class="empty-note" style="margin:0;">Der eigentliche Trick: ein <strong>konjugiertes Verb hier</strong> + ... + <strong>ein Infinitiv aus der Liste darunter ans Ende</strong>. Diese feste Reihenfolge sorgt automatisch für eine grammatikalisch richtige Wortstellung — man kann so kaum etwas falsch bauen.</p>
+        <p class="empty-note" style="margin:0;">Jetzt, wo die Bausteine aus allen Kapiteln bekannt sind: ein <strong>konjugiertes Verb hier</strong> + ... + <strong>ein Infinitiv aus der Liste darunter ans Ende</strong>. Diese feste Reihenfolge sorgt automatisch für eine grammatikalisch richtige Wortstellung — man kann so kaum etwas falsch bauen.</p>
       </div>
       <div class="breakdown-list" style="margin-bottom:16px;">
         ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => `
@@ -4536,7 +4546,7 @@
           </div>`).join("")}
       </div>
 
-      <p class="eyebrow">4. Infinitive zum Einsetzen (ans Ende anhängen)</p>
+      <p class="eyebrow">Infinitive zum Einsetzen (ans Ende anhängen)</p>
       <div class="breakdown-list" style="margin-bottom:20px;">
         ${ExerciseData.FIRST_STEPS_INFINITIVES.map((v) => `
           <div class="breakdown-row">
@@ -4545,7 +4555,7 @@
           </div>`).join("")}
       </div>
 
-      <p class="eyebrow">5. So sieht die Kombination in echten Sätzen aus</p>
+      <p class="eyebrow">So sieht die Kombination in echten Sätzen aus</p>
       <div class="breakdown-list" style="margin-bottom:20px;">
         ${ExerciseData.FIRST_STEPS_COMBOS.map((s) => `
           <div class="question-card" style="margin-bottom:8px;">
@@ -10949,6 +10959,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         <div class="form-field">
           <label>Woher kommst du?</label>
+          <p class="empty-note" style="margin:0 0 6px;">Wird u. a. genutzt, um „Erste Schritte“ automatisch in deine Sprache zu übersetzen.</p>
           <select id="originSelect" class="challenge-select">
             <option value="">Nicht angeben</option>
             ${VocabData.COUNTRIES.map((c) => `<option value="${c.name}" ${(profileEditDraft.origin !== undefined ? profileEditDraft.origin : profile.origin) === c.name ? "selected" : ""}>${c.flag} ${c.name}</option>`).join("")}
@@ -14668,7 +14679,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "115";
+  const APP_VERSION = "116";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

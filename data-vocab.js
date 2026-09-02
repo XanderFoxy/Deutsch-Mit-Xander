@@ -1662,7 +1662,8 @@ const VocabData = (function () {
     { name: "Ukraine", flag: "🇺🇦", syl: "Ukra-I-ne" }, { name: "Ungarn", flag: "🇭🇺", syl: "UN-garn" }, { name: "Uruguay", flag: "🇺🇾", syl: "U-ru-guay" },
     { name: "USA", flag: "🇺🇸", syl: "U-S-A" }, { name: "Usbekistan", flag: "🇺🇿", syl: "Us-BE-ki-stan" }, { name: "Vanuatu", flag: "🇻🇺", syl: "Va-nu-A-tu" },
     { name: "Vatikanstadt", flag: "🇻🇦", syl: "Va-ti-KAN-stadt" }, { name: "Venezuela", flag: "🇻🇪", syl: "Ve-ne-tzu-E-la" }, { name: "Vereinigte Arabische Emirate", flag: "🇦🇪", syl: "Ver-EI-nig-te A-RA-bi-sche E-mi-RA-te" },
-    { name: "Vereinigtes Königreich", flag: "🇬🇧", syl: "Ver-EI-nig-tes KÖ-nig-reich" }, { name: "Vietnam", flag: "🇻🇳", syl: "Viet-NAM" }, { name: "Zentralafrikanische Republik", flag: "🇨🇫", syl: "Zen-tral-a-fri-KA-ni-sche Re-pu-BLIK" },
+    { name: "Vereinigtes Königreich", flag: "🇬🇧", syl: "Ver-EI-nig-tes KÖ-nig-reich" }, { name: "Vietnam", flag: "🇻🇳", syl: "Viet-NAM" }, { name: "Weißrussland", flag: "🇧🇾", syl: "WEISS-russ-land" },
+    { name: "Zentralafrikanische Republik", flag: "🇨🇫", syl: "Zen-tral-a-fri-KA-ni-sche Re-pu-BLIK" },
     { name: "Zypern", flag: "🇨🇾", syl: "TZY-pern" },
     { name: "Sonstiges", flag: "🌍", syl: "SON-sti-ges" },
   ];
