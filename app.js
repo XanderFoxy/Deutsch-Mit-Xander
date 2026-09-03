@@ -4643,6 +4643,14 @@
         <p id="trennbarPreview" style="font-weight:800; font-size:1.05rem; margin:14px 0 0;"></p>
       </div>
 
+      <p class="eyebrow">🔊 Homophone — gleich klingen, anders schreiben</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p class="empty-note" style="margin:0 0 10px;">Manche deutschen Wörter klingen beim Sprechen völlig gleich, werden aber unterschiedlich geschrieben und bedeuten etwas ganz anderes — das nennt man <strong>Homophone</strong>. Ordne die Bedeutung der richtigen Schreibweise zu.</p>
+        <p id="homophoneQuestion" style="font-weight:700; margin:0 0 10px;"></p>
+        <div id="homophoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+        <p id="homophoneFeedback" class="empty-note" style="margin:10px 0 0; min-height:1.2em;"></p>
+      </div>
+
       ${ExerciseData.FIRST_STEPS_CHAPTERS.slice(1).map((chapter) => `
         <p class="eyebrow">Kapitel ${chapter.title}</p>
         <div class="breakdown-list" style="margin-bottom:20px;">
@@ -4771,6 +4779,62 @@
     document.getElementById("trennbarPerson")?.addEventListener("change", updateTrennbarPreview);
     trennbarVerbSelect?.addEventListener("change", updateTrennbarPreview);
     updateTrennbarPreview();
+
+    // Homophone-Übung: Wortpaare, die gleich ausgesprochen werden, aber unterschiedlich
+    // geschrieben werden und Verschiedenes bedeuten. Pro Runde wird eine Bedeutung gezeigt, und
+    // man muss die passende Schreibweise antippen.
+    const HOMOPHONE_PAIRE = [
+      { a: "mehr", aBedeutung: "eine größere Menge, zusätzlich", b: "Meer", bBedeutung: "das große, salzige Gewässer" },
+      { a: "Wal", aBedeutung: "das riesige Meerestier", b: "Wahl", bBedeutung: "wenn man zwischen Optionen entscheidet oder abstimmt" },
+      { a: "Waise", aBedeutung: "ein Kind ohne Eltern", b: "Weise", bBedeutung: "die Art und Weise, wie man etwas tut" },
+      { a: "Saite", aBedeutung: "der gespannte Draht/Faden an einer Gitarre", b: "Seite", bBedeutung: "eine Blattseite in einem Buch" },
+      { a: "malen", aBedeutung: "ein Bild mit Farbe machen", b: "mahlen", bBedeutung: "Korn zu Mehl zerkleinern" },
+      { a: "Sohn", aBedeutung: "das männliche Kind einer Familie", b: "schon", bBedeutung: "bereits, zu einem früheren Zeitpunkt" },
+      { a: "Rat", aBedeutung: "ein Vorschlag oder eine Empfehlung", b: "Rad", bBedeutung: "der runde Teil an einem Fahrzeug" },
+      { a: "Lehre", aBedeutung: "eine Ausbildung oder eine wichtige Erkenntnis", b: "Leere", bBedeutung: "wenn nichts in etwas drin ist" },
+      { a: "Ähre", aBedeutung: "der obere Teil einer Getreidepflanze mit den Körnern", b: "Ehre", bBedeutung: "großer Respekt für jemanden" },
+      { a: "wieder", aBedeutung: "noch einmal, erneut", b: "wider", bBedeutung: "gegen etwas (z. B. „wider Willen“)" },
+      { a: "seid", aBedeutung: "ihr seid — Form von „sein“", b: "seit", bBedeutung: "ab einem bestimmten Zeitpunkt" },
+      { a: "Stiel", aBedeutung: "der Griff eines Werkzeugs oder Stängel einer Pflanze", b: "Stil", bBedeutung: "die persönliche Art, wie etwas gemacht wird" },
+      { a: "Mine", aBedeutung: "der Stift in einem Kugelschreiber, oder ein Sprengkörper", b: "Miene", bBedeutung: "der Gesichtsausdruck einer Person" },
+      { a: "Lerche", aBedeutung: "ein kleiner Singvogel", b: "Lärche", bBedeutung: "ein Nadelbaum" },
+      { a: "Grad", aBedeutung: "die Einheit für Temperatur oder Winkel", b: "Grat", bBedeutung: "die scharfe Kante eines Berges" },
+      { a: "Bad", aBedeutung: "der Raum zum Waschen, oder das Baden selbst", b: "bat", bBedeutung: "hat gebeten (von „bitten“)" },
+      { a: "Tod", aBedeutung: "das Ende des Lebens", b: "tot", bBedeutung: "nicht mehr lebendig" },
+      { a: "Rind", aBedeutung: "das Nutztier, von dem Rindfleisch kommt", b: "rinnt", bBedeutung: "fließt langsam (von „rinnen“)" },
+      { a: "Feld", aBedeutung: "eine landwirtschaftliche Fläche", b: "fällt", bBedeutung: "stürzt nach unten (von „fallen“)" },
+      { a: "Ries", aBedeutung: "eine große Menge Papier (500 Blatt)", b: "Reis", bBedeutung: "das kleine, weiße Getreidekorn" },
+    ];
+    let homophoneCurrentIdx = -1, homophoneCurrentSide = "a";
+    function newHomophoneRound() {
+      let idx;
+      do { idx = Math.floor(Math.random() * HOMOPHONE_PAIRE.length); } while (idx === homophoneCurrentIdx && HOMOPHONE_PAIRE.length > 1);
+      homophoneCurrentIdx = idx;
+      homophoneCurrentSide = Math.random() < 0.5 ? "a" : "b";
+      const pair = HOMOPHONE_PAIRE[idx];
+      const bedeutung = homophoneCurrentSide === "a" ? pair.aBedeutung : pair.bBedeutung;
+      document.getElementById("homophoneQuestion").textContent = `„${bedeutung}" — welches Wort ist das?`;
+      const options = Math.random() < 0.5 ? [pair.a, pair.b] : [pair.b, pair.a];
+      const optionsEl = document.getElementById("homophoneOptions");
+      optionsEl.innerHTML = options.map((w) => `<button type="button" class="btn btn-secondary homophone-opt" data-word="${w}" style="flex:1;">${w}</button>`).join("");
+      document.getElementById("homophoneFeedback").textContent = "";
+      optionsEl.querySelectorAll(".homophone-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const chosen = btn.dataset.word;
+          const correct = homophoneCurrentSide === "a" ? pair.a : pair.b;
+          const feedbackEl = document.getElementById("homophoneFeedback");
+          if (chosen === correct) {
+            feedbackEl.textContent = "✅ Richtig!";
+            feedbackEl.style.color = "var(--teal-400)";
+          } else {
+            feedbackEl.textContent = `❌ Nicht ganz — richtig wäre „${correct}".`;
+            feedbackEl.style.color = "var(--red-400, #c0392b)";
+          }
+          setTimeout(newHomophoneRound, 1400);
+        });
+      });
+    }
+    newHomophoneRound();
   }
   function renderDictionary(filter = "") {
     const area = document.getElementById("dictionaryArea");
@@ -15042,7 +15106,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "121";
+  const APP_VERSION = "122";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
