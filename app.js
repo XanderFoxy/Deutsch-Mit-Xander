@@ -3469,6 +3469,13 @@
 
     setupEl.innerHTML = `
       ${resumeBar}
+      <p class="eyebrow">🔊 Homophone — gleich klingen, anders schreiben</p>
+      <div class="question-card" style="margin-bottom:16px;">
+        <p class="empty-note" style="margin:0 0 10px;">Manche deutschen Wörter klingen beim Sprechen völlig gleich, werden aber unterschiedlich geschrieben und bedeuten etwas ganz anderes — das nennt man <strong>Homophone</strong>. Ordne die Bedeutung der richtigen Schreibweise zu.</p>
+        <p id="homophoneQuestion" style="font-weight:700; margin:0 0 10px;"></p>
+        <div id="homophoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+        <p id="homophoneFeedback" class="empty-note" style="margin:10px 0 0; min-height:1.2em;"></p>
+      </div>
       <div class="category-grid">${cards}</div>
       ${challengeBar}
       <div class="setup-bar">
@@ -3602,6 +3609,65 @@
       Quiz.reset();
       renderSetup();
     });
+
+    // Homophone-Übung: Wortpaare, die gleich ausgesprochen werden, aber unterschiedlich
+    // geschrieben werden und Verschiedenes bedeuten. Pro Runde wird eine Bedeutung gezeigt, und
+    // man muss die passende Schreibweise antippen. Bewusst hier bei den Übungen statt bei
+    // "Erste Schritte" — dort liegt der Fokus jetzt auf dem Satz-Baukasten.
+    const HOMOPHONE_PAIRE = [
+      { a: "mehr", aBedeutung: "eine größere Menge, zusätzlich", b: "Meer", bBedeutung: "das große, salzige Gewässer" },
+      { a: "Wal", aBedeutung: "das riesige Meerestier", b: "Wahl", bBedeutung: "wenn man zwischen Optionen entscheidet oder abstimmt" },
+      { a: "Waise", aBedeutung: "ein Kind ohne Eltern", b: "Weise", bBedeutung: "die Art und Weise, wie man etwas tut" },
+      { a: "Saite", aBedeutung: "der gespannte Draht/Faden an einer Gitarre", b: "Seite", bBedeutung: "eine Blattseite in einem Buch" },
+      { a: "malen", aBedeutung: "ein Bild mit Farbe machen", b: "mahlen", bBedeutung: "Korn zu Mehl zerkleinern" },
+      { a: "Sohn", aBedeutung: "das männliche Kind einer Familie", b: "schon", bBedeutung: "bereits, zu einem früheren Zeitpunkt" },
+      { a: "Rat", aBedeutung: "ein Vorschlag oder eine Empfehlung", b: "Rad", bBedeutung: "der runde Teil an einem Fahrzeug" },
+      { a: "Lehre", aBedeutung: "eine Ausbildung oder eine wichtige Erkenntnis", b: "Leere", bBedeutung: "wenn nichts in etwas drin ist" },
+      { a: "Ähre", aBedeutung: "der obere Teil einer Getreidepflanze mit den Körnern", b: "Ehre", bBedeutung: "großer Respekt für jemanden" },
+      { a: "wieder", aBedeutung: "noch einmal, erneut", b: "wider", bBedeutung: "gegen etwas (z. B. „wider Willen“)" },
+      { a: "seid", aBedeutung: "ihr seid — Form von „sein“", b: "seit", bBedeutung: "ab einem bestimmten Zeitpunkt" },
+      { a: "Stiel", aBedeutung: "der Griff eines Werkzeugs oder Stängel einer Pflanze", b: "Stil", bBedeutung: "die persönliche Art, wie etwas gemacht wird" },
+      { a: "Mine", aBedeutung: "der Stift in einem Kugelschreiber, oder ein Sprengkörper", b: "Miene", bBedeutung: "der Gesichtsausdruck einer Person" },
+      { a: "Lerche", aBedeutung: "ein kleiner Singvogel", b: "Lärche", bBedeutung: "ein Nadelbaum" },
+      { a: "Grad", aBedeutung: "die Einheit für Temperatur oder Winkel", b: "Grat", bBedeutung: "die scharfe Kante eines Berges" },
+      { a: "Bad", aBedeutung: "der Raum zum Waschen, oder das Baden selbst", b: "bat", bBedeutung: "hat gebeten (von „bitten“)" },
+      { a: "Tod", aBedeutung: "das Ende des Lebens", b: "tot", bBedeutung: "nicht mehr lebendig" },
+      { a: "Rind", aBedeutung: "das Nutztier, von dem Rindfleisch kommt", b: "rinnt", bBedeutung: "fließt langsam (von „rinnen“)" },
+      { a: "Feld", aBedeutung: "eine landwirtschaftliche Fläche", b: "fällt", bBedeutung: "stürzt nach unten (von „fallen“)" },
+      { a: "Ries", aBedeutung: "eine große Menge Papier (500 Blatt)", b: "Reis", bBedeutung: "das kleine, weiße Getreidekorn" },
+    ];
+    let homophoneCurrentIdx = -1, homophoneCurrentSide = "a";
+    function newHomophoneRound() {
+      const qEl = document.getElementById("homophoneQuestion");
+      if (!qEl) return;
+      let idx;
+      do { idx = Math.floor(Math.random() * HOMOPHONE_PAIRE.length); } while (idx === homophoneCurrentIdx && HOMOPHONE_PAIRE.length > 1);
+      homophoneCurrentIdx = idx;
+      homophoneCurrentSide = Math.random() < 0.5 ? "a" : "b";
+      const pair = HOMOPHONE_PAIRE[idx];
+      const bedeutung = homophoneCurrentSide === "a" ? pair.aBedeutung : pair.bBedeutung;
+      qEl.textContent = `„${bedeutung}" — welches Wort ist das?`;
+      const options = Math.random() < 0.5 ? [pair.a, pair.b] : [pair.b, pair.a];
+      const optionsEl = document.getElementById("homophoneOptions");
+      optionsEl.innerHTML = options.map((w) => `<button type="button" class="btn btn-secondary homophone-opt" data-word="${w}" style="flex:1;">${w}</button>`).join("");
+      document.getElementById("homophoneFeedback").textContent = "";
+      optionsEl.querySelectorAll(".homophone-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const chosen = btn.dataset.word;
+          const correct = homophoneCurrentSide === "a" ? pair.a : pair.b;
+          const feedbackEl = document.getElementById("homophoneFeedback");
+          if (chosen === correct) {
+            feedbackEl.textContent = "✅ Richtig!";
+            feedbackEl.style.color = "var(--teal-400)";
+          } else {
+            feedbackEl.textContent = `❌ Nicht ganz — richtig wäre „${correct}".`;
+            feedbackEl.style.color = "var(--red-400, #c0392b)";
+          }
+          setTimeout(newHomophoneRound, 1400);
+        });
+      });
+    }
+    newHomophoneRound();
   }
 
   let currentSelection = [];
@@ -4539,62 +4605,6 @@
       </div>
       <p class="empty-note" style="margin-bottom:14px;">💡 Bei mehrsilbigen Wörtern ist eine Silbe <strong>unterstrichen</strong> hervorgehoben — das zeigt nur, wo beim Sprechen die Betonung liegt. Geschrieben wird das Wort ganz normal, die Hervorhebung dient nur der Aussprache und ist keine eigene Schreibregel.</p>
 
-      <p class="eyebrow">Kapitel ${ExerciseData.FIRST_STEPS_CHAPTERS[0].title}</p>
-      <div class="breakdown-list" style="margin-bottom:20px;">
-        ${ExerciseData.FIRST_STEPS_CHAPTERS[0].vocabKeys.map((key) => {
-          const v = firstStepsVocabByKey(key);
-          if (!v) return "";
-          const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
-          return `<div class="breakdown-row">
-            <span style="font-weight:700;">${syl ? stressHtmlKeepCase(syl, v.de) : v.de}</span>
-            <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
-          </div>`;
-        }).join("")}
-      </div>
-
-      <p class="eyebrow">Building Bridges 🌉 — das Kern-Werkzeug (schon jetzt nutzbar!)</p>
-      <div class="question-card" style="margin-bottom:16px;">
-        <p class="empty-note" style="margin:0;">Mit nur diesen sechs Verben lassen sich ab sofort eigene Sätze bauen: ein <strong>konjugiertes Verb hier</strong> + ... + <strong>ein Infinitiv aus der Liste darunter ans Ende</strong>. Diese feste Reihenfolge sorgt automatisch für eine grammatikalisch richtige Wortstellung — man kann so kaum etwas falsch bauen.</p>
-      </div>
-      <div class="breakdown-list" style="margin-bottom:16px;">
-        ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => `
-          <div class="question-card" style="margin-bottom:8px;">
-            <p class="eyebrow" style="margin-top:0;">${ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe] ? stressHtmlKeepCase(ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe], verb.meaningDe) : verb.meaningDe}</p>
-            ${verb.forms.map((f) => `
-              <div class="breakdown-row" style="background:transparent; padding:4px 0;">
-                <span style="font-weight:700;">${f.de}</span>
-                <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(f, lang)}</span>
-              </div>`).join("")}
-          </div>`).join("")}
-      </div>
-
-      <p class="eyebrow">Infinitive zum Einsetzen (ans Ende anhängen)</p>
-      <div class="breakdown-list" style="margin-bottom:20px;">
-        ${ExerciseData.FIRST_STEPS_INFINITIVES.map((v) => `
-          <div class="breakdown-row">
-            <span style="font-weight:700;">${v.de}</span>
-            <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
-          </div>`).join("")}
-      </div>
-
-      <p class="eyebrow">So sieht die Kombination in echten Sätzen aus</p>
-      <div class="breakdown-list" style="margin-bottom:20px;">
-        ${ExerciseData.FIRST_STEPS_COMBOS.map((s) => `
-          <div class="question-card" style="margin-bottom:8px;">
-            <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
-            <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
-          </div>`).join("")}
-      </div>
-
-      <p class="eyebrow" style="font-weight:400; font-size:0.85rem;">Erste Sätze aus Kapitel 1 zusammengesetzt:</p>
-      <div class="breakdown-list" style="margin-bottom:20px;">
-        ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
-          <div class="question-card" style="margin-bottom:8px;">
-            <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
-            <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
-          </div>`).join("")}
-      </div>
-
       <p class="eyebrow">🧩 Satz-Baukasten — selbst ausprobieren</p>
       <div class="question-card" style="margin-bottom:20px;">
         <p class="empty-note" style="margin:0 0 10px;">Wähl links eine Verb-Form und rechts einen Infinitiv — der Satz baut sich automatisch zusammen. Manche Kombinationen klingen im Deutschen ungewöhnlich; ein Hinweis darunter sagt dir, wenn das der Fall ist.</p>
@@ -4643,18 +4653,13 @@
         <p id="trennbarPreview" style="font-weight:800; font-size:1.05rem; margin:14px 0 0;"></p>
       </div>
 
-      <p class="eyebrow">🔊 Homophone — gleich klingen, anders schreiben</p>
-      <div class="question-card" style="margin-bottom:20px;">
-        <p class="empty-note" style="margin:0 0 10px;">Manche deutschen Wörter klingen beim Sprechen völlig gleich, werden aber unterschiedlich geschrieben und bedeuten etwas ganz anderes — das nennt man <strong>Homophone</strong>. Ordne die Bedeutung der richtigen Schreibweise zu.</p>
-        <p id="homophoneQuestion" style="font-weight:700; margin:0 0 10px;"></p>
-        <div id="homophoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
-        <p id="homophoneFeedback" class="empty-note" style="margin:10px 0 0; min-height:1.2em;"></p>
-      </div>
+      <details style="margin-bottom:20px;">
+        <summary style="cursor:pointer; font-weight:700; color:var(--teal-400); padding:8px 0;">📖 Kompletter Wortschatz-Grundkurs (alle 13 Kapitel) — zum Nachschlagen aufklappen</summary>
+        <p class="empty-note" style="margin:8px 0 16px;">Der vollständige, buchbasierte Grundwortschatz bleibt hier erhalten — für alle, die zusätzlich einzelne Wörter nachschlagen möchten. Der Fokus zum Sätzebauen liegt aber oben in den drei Baukästen.</p>
 
-      ${ExerciseData.FIRST_STEPS_CHAPTERS.slice(1).map((chapter) => `
-        <p class="eyebrow">Kapitel ${chapter.title}</p>
+        <p class="eyebrow">Kapitel ${ExerciseData.FIRST_STEPS_CHAPTERS[0].title}</p>
         <div class="breakdown-list" style="margin-bottom:20px;">
-          ${chapter.vocabKeys.map((key) => {
+          ${ExerciseData.FIRST_STEPS_CHAPTERS[0].vocabKeys.map((key) => {
             const v = firstStepsVocabByKey(key);
             if (!v) return "";
             const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
@@ -4664,28 +4669,83 @@
             </div>`;
           }).join("")}
         </div>
-      `).join("")}
 
-      <p class="eyebrow">Warum wirkt „du" manchmal seltsam?</p>
-      <div class="question-card" style="margin-bottom:20px;">
-        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.du_forms[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.du_forms.en}</p>
-      </div>
-      <p class="eyebrow">Warum wird aus der/die/das im Plural immer „die"?</p>
-      <div class="question-card" style="margin-bottom:20px;">
-        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.plural_article[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.plural_article.en}</p>
-      </div>
-      <p class="eyebrow">Warum "zerfällt" ein Verb manchmal (z. B. ankommen)?</p>
-      <div class="question-card" style="margin-bottom:20px;">
-        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.separable_verbs[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.separable_verbs.en}</p>
-      </div>
-      <p class="eyebrow">Warum steht das Verb bei "weil/dass/ob" plötzlich ganz am Ende?</p>
-      <div class="question-card" style="margin-bottom:20px;">
-        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.verb_at_end[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.verb_at_end.en}</p>
-      </div>
-      <p class="eyebrow">Warum werden so viele Wörter großgeschrieben?</p>
-      <div class="question-card">
-        <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.noun_capitalization[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.noun_capitalization.en}</p>
-      </div>
+        <p class="eyebrow">Building Bridges 🌉 — das Kern-Werkzeug</p>
+        <div class="breakdown-list" style="margin-bottom:16px;">
+          ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => `
+            <div class="question-card" style="margin-bottom:8px;">
+              <p class="eyebrow" style="margin-top:0;">${ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe] ? stressHtmlKeepCase(ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe], verb.meaningDe) : verb.meaningDe}</p>
+              ${verb.forms.map((f) => `
+                <div class="breakdown-row" style="background:transparent; padding:4px 0;">
+                  <span style="font-weight:700;">${f.de}</span>
+                  <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(f, lang)}</span>
+                </div>`).join("")}
+            </div>`).join("")}
+        </div>
+
+        <p class="eyebrow">Infinitive zum Einsetzen (ans Ende anhängen)</p>
+        <div class="breakdown-list" style="margin-bottom:20px;">
+          ${ExerciseData.FIRST_STEPS_INFINITIVES.map((v) => `
+            <div class="breakdown-row">
+              <span style="font-weight:700;">${v.de}</span>
+              <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+            </div>`).join("")}
+        </div>
+
+        <p class="eyebrow">So sieht die Kombination in echten Sätzen aus</p>
+        <div class="breakdown-list" style="margin-bottom:20px;">
+          ${ExerciseData.FIRST_STEPS_COMBOS.map((s) => `
+            <div class="question-card" style="margin-bottom:8px;">
+              <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
+              <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
+            </div>`).join("")}
+        </div>
+
+        <p class="eyebrow" style="font-weight:400; font-size:0.85rem;">Erste Sätze aus Kapitel 1 zusammengesetzt:</p>
+        <div class="breakdown-list" style="margin-bottom:20px;">
+          ${ExerciseData.FIRST_STEPS_SENTENCES.map((s) => `
+            <div class="question-card" style="margin-bottom:8px;">
+              <p style="font-weight:700; margin:0 0 4px;">${s.de}</p>
+              <p class="empty-note" style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(s, lang)}</p>
+            </div>`).join("")}
+        </div>
+
+        ${ExerciseData.FIRST_STEPS_CHAPTERS.slice(1).map((chapter) => `
+          <p class="eyebrow">Kapitel ${chapter.title}</p>
+          <div class="breakdown-list" style="margin-bottom:20px;">
+            ${chapter.vocabKeys.map((key) => {
+              const v = firstStepsVocabByKey(key);
+              if (!v) return "";
+              const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
+              return `<div class="breakdown-row">
+                <span style="font-weight:700;">${syl ? stressHtmlKeepCase(syl, v.de) : v.de}</span>
+                <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
+              </div>`;
+            }).join("")}
+          </div>
+        `).join("")}
+
+        <p class="eyebrow">Warum wirkt „du" manchmal seltsam?</p>
+        <div class="question-card" style="margin-bottom:20px;">
+          <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.du_forms[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.du_forms.en}</p>
+        </div>
+        <p class="eyebrow">Warum wird aus der/die/das im Plural immer „die"?</p>
+        <div class="question-card" style="margin-bottom:20px;">
+          <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.plural_article[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.plural_article.en}</p>
+        </div>
+        <p class="eyebrow">Warum "zerfällt" ein Verb manchmal (z. B. ankommen)?</p>
+        <div class="question-card" style="margin-bottom:20px;">
+          <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.separable_verbs[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.separable_verbs.en}</p>
+        </div>
+        <p class="eyebrow">Warum steht das Verb bei "weil/dass/ob" plötzlich ganz am Ende?</p>
+        <div class="question-card" style="margin-bottom:20px;">
+          <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.verb_at_end[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.verb_at_end.en}</p>
+        </div>
+        <p class="eyebrow">Warum werden so viele Wörter großgeschrieben?</p>
+        <div class="question-card">
+          <p style="margin:0;" dir="${rtl ? "rtl" : "ltr"}">${ExerciseData.FIRST_STEPS_CULTURE_NOTES.noun_capitalization[lang] || ExerciseData.FIRST_STEPS_CULTURE_NOTES.noun_capitalization.en}</p>
+        </div>
+      </details>
     `;
     document.getElementById("firstStepsLangSelect").addEventListener("change", (e) => {
       firstStepsLangOverride = e.target.value || null;
@@ -4779,62 +4839,6 @@
     document.getElementById("trennbarPerson")?.addEventListener("change", updateTrennbarPreview);
     trennbarVerbSelect?.addEventListener("change", updateTrennbarPreview);
     updateTrennbarPreview();
-
-    // Homophone-Übung: Wortpaare, die gleich ausgesprochen werden, aber unterschiedlich
-    // geschrieben werden und Verschiedenes bedeuten. Pro Runde wird eine Bedeutung gezeigt, und
-    // man muss die passende Schreibweise antippen.
-    const HOMOPHONE_PAIRE = [
-      { a: "mehr", aBedeutung: "eine größere Menge, zusätzlich", b: "Meer", bBedeutung: "das große, salzige Gewässer" },
-      { a: "Wal", aBedeutung: "das riesige Meerestier", b: "Wahl", bBedeutung: "wenn man zwischen Optionen entscheidet oder abstimmt" },
-      { a: "Waise", aBedeutung: "ein Kind ohne Eltern", b: "Weise", bBedeutung: "die Art und Weise, wie man etwas tut" },
-      { a: "Saite", aBedeutung: "der gespannte Draht/Faden an einer Gitarre", b: "Seite", bBedeutung: "eine Blattseite in einem Buch" },
-      { a: "malen", aBedeutung: "ein Bild mit Farbe machen", b: "mahlen", bBedeutung: "Korn zu Mehl zerkleinern" },
-      { a: "Sohn", aBedeutung: "das männliche Kind einer Familie", b: "schon", bBedeutung: "bereits, zu einem früheren Zeitpunkt" },
-      { a: "Rat", aBedeutung: "ein Vorschlag oder eine Empfehlung", b: "Rad", bBedeutung: "der runde Teil an einem Fahrzeug" },
-      { a: "Lehre", aBedeutung: "eine Ausbildung oder eine wichtige Erkenntnis", b: "Leere", bBedeutung: "wenn nichts in etwas drin ist" },
-      { a: "Ähre", aBedeutung: "der obere Teil einer Getreidepflanze mit den Körnern", b: "Ehre", bBedeutung: "großer Respekt für jemanden" },
-      { a: "wieder", aBedeutung: "noch einmal, erneut", b: "wider", bBedeutung: "gegen etwas (z. B. „wider Willen“)" },
-      { a: "seid", aBedeutung: "ihr seid — Form von „sein“", b: "seit", bBedeutung: "ab einem bestimmten Zeitpunkt" },
-      { a: "Stiel", aBedeutung: "der Griff eines Werkzeugs oder Stängel einer Pflanze", b: "Stil", bBedeutung: "die persönliche Art, wie etwas gemacht wird" },
-      { a: "Mine", aBedeutung: "der Stift in einem Kugelschreiber, oder ein Sprengkörper", b: "Miene", bBedeutung: "der Gesichtsausdruck einer Person" },
-      { a: "Lerche", aBedeutung: "ein kleiner Singvogel", b: "Lärche", bBedeutung: "ein Nadelbaum" },
-      { a: "Grad", aBedeutung: "die Einheit für Temperatur oder Winkel", b: "Grat", bBedeutung: "die scharfe Kante eines Berges" },
-      { a: "Bad", aBedeutung: "der Raum zum Waschen, oder das Baden selbst", b: "bat", bBedeutung: "hat gebeten (von „bitten“)" },
-      { a: "Tod", aBedeutung: "das Ende des Lebens", b: "tot", bBedeutung: "nicht mehr lebendig" },
-      { a: "Rind", aBedeutung: "das Nutztier, von dem Rindfleisch kommt", b: "rinnt", bBedeutung: "fließt langsam (von „rinnen“)" },
-      { a: "Feld", aBedeutung: "eine landwirtschaftliche Fläche", b: "fällt", bBedeutung: "stürzt nach unten (von „fallen“)" },
-      { a: "Ries", aBedeutung: "eine große Menge Papier (500 Blatt)", b: "Reis", bBedeutung: "das kleine, weiße Getreidekorn" },
-    ];
-    let homophoneCurrentIdx = -1, homophoneCurrentSide = "a";
-    function newHomophoneRound() {
-      let idx;
-      do { idx = Math.floor(Math.random() * HOMOPHONE_PAIRE.length); } while (idx === homophoneCurrentIdx && HOMOPHONE_PAIRE.length > 1);
-      homophoneCurrentIdx = idx;
-      homophoneCurrentSide = Math.random() < 0.5 ? "a" : "b";
-      const pair = HOMOPHONE_PAIRE[idx];
-      const bedeutung = homophoneCurrentSide === "a" ? pair.aBedeutung : pair.bBedeutung;
-      document.getElementById("homophoneQuestion").textContent = `„${bedeutung}" — welches Wort ist das?`;
-      const options = Math.random() < 0.5 ? [pair.a, pair.b] : [pair.b, pair.a];
-      const optionsEl = document.getElementById("homophoneOptions");
-      optionsEl.innerHTML = options.map((w) => `<button type="button" class="btn btn-secondary homophone-opt" data-word="${w}" style="flex:1;">${w}</button>`).join("");
-      document.getElementById("homophoneFeedback").textContent = "";
-      optionsEl.querySelectorAll(".homophone-opt").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const chosen = btn.dataset.word;
-          const correct = homophoneCurrentSide === "a" ? pair.a : pair.b;
-          const feedbackEl = document.getElementById("homophoneFeedback");
-          if (chosen === correct) {
-            feedbackEl.textContent = "✅ Richtig!";
-            feedbackEl.style.color = "var(--teal-400)";
-          } else {
-            feedbackEl.textContent = `❌ Nicht ganz — richtig wäre „${correct}".`;
-            feedbackEl.style.color = "var(--red-400, #c0392b)";
-          }
-          setTimeout(newHomophoneRound, 1400);
-        });
-      });
-    }
-    newHomophoneRound();
   }
   function renderDictionary(filter = "") {
     const area = document.getElementById("dictionaryArea");
@@ -11181,7 +11185,6 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
             ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
           </div>
-          ${showcaseSongStripHtml(profile)}
           ${myTransportStrip}
           <div style="clear:both;"></div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
@@ -11327,7 +11330,6 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
         <button type="button" class="emoji-toggle-link" id="previewProfileLink">👁️ Vorschau: So sehen andere dein Profil</button>
-        ${showcaseSongStripHtml(profile)}
         ${(extra.previousAvatarUrl || extra.previousAvatarEmoji) ? `<button type="button" class="emoji-toggle-link" id="restoreAvatarLink">↩️ Voriges Profilbild wiederherstellen</button>` : ""}
         ${(profile.gallery || []).length ? `<button type="button" class="emoji-toggle-link" id="galleryAvatarToggleLink">🖼️ Foto aus meiner Galerie wählen</button>` : ""}
         <div class="emoji-picker-row" id="galleryAvatarPickerRow" style="display:none;">
@@ -13688,7 +13690,6 @@ An einem Morgen lief ein kleiner Fuchs los…
             ${allSympathyLevels.map((lvl) => `<button type="button" class="sympathy-heart-btn" data-sympathy-level="${lvl.key}" title="${lvl.label}" style="background:none; border:none; cursor:pointer; font-size:1.4rem; opacity:${mySympathyLevel === lvl.key ? "1" : "0.3"}; filter:${mySympathyLevel === lvl.key ? "none" : "grayscale(0.6)"};"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 21 C12 21 3 14.5 3 8.5 C3 5.5 5.5 3 8.5 3 C10 3 11.3 3.7 12 4.8 C12.7 3.7 14 3 15.5 3 C18.5 3 21 5.5 21 8.5 C21 14.5 12 21 12 21 Z" fill="${lvl.color}"/></svg></button>`).join("")}
           </div>
         ` }) : "",
-        Core.el("div", { html: showcaseSongStripHtml(p), style: "margin: 6px 0;" }),
         Core.el("div", { html: await profileTransportStripHtml(p) }),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
         Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
@@ -15106,7 +15107,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "122";
+  const APP_VERSION = "123";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
