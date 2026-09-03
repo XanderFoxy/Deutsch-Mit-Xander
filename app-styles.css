@@ -3643,3 +3643,9 @@
   opacity: 0.85;
   font-size: 0.8rem;
 }
+/* Aufklappbare Übersetzung (Geschichte, Dichter & Denker, Schnee von gestern) — entfernt die
+   nativen Standard-Aufklapp-Dreiecke des Browsers (list-style allein reicht dafür nicht bei
+   <summary>, da diese über eine eigene ::marker/::-webkit-details-marker-Pseudoklasse kommen),
+   damit nur das eigene 🌍-Symbol als Aufklapp-Hinweis sichtbar bleibt. */
+details summary::-webkit-details-marker { display: none; }
+details summary::marker { content: ""; }

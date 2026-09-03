@@ -2700,6 +2700,25 @@
       return isStressed ? `<span class="stress">${display}</span>` : display;
     }).join("");
   }
+  // WICHTIG — behebt einen echten, gemeldeten Bug: stressHtml() (oben) schreibt bei einer
+  // betonten Silbe IMMER deren ersten Buchstaben groß (z. B. "IM-mer" → "Immer") — das ist bei
+  // Wörtern, die im Deutschen klein geschrieben werden (z. B. "immer", "schön"), missverständlich:
+  // es sah aus, als müsste man das Wort großschreiben, obwohl das nur die Betonung markiert. Diese
+  // Variante übernimmt stattdessen konsequent die tatsächliche Groß-/Kleinschreibung aus dem
+  // echten Wort (originalWord) an jeder Buchstabenposition — die Betonung wird ausschließlich über
+  // die Unterstreichung (siehe .stress im CSS) gezeigt, nie über zusätzliche Großschreibung.
+  function stressHtmlKeepCase(sylString, originalWord) {
+    if (!sylString) return "";
+    const flatSyllables = sylString.split("-");
+    let pos = 0;
+    return flatSyllables.map((part) => {
+      const isStressed = part === part.toUpperCase() && /[A-ZÄÖÜ]/.test(part);
+      const len = part.length;
+      const real = (originalWord || "").slice(pos, pos + len) || part.toLowerCase();
+      pos += len;
+      return isStressed ? `<span class="stress">${real}</span>` : real;
+    }).join("");
+  }
   // Zeigt ein Wort mit Betonung an, falls der Modus aktiv ist UND eine geprüfte Silbentrennung
   // vorliegt (sylLookup ist z. B. ExerciseData.WORD_SYL oder VocabData.LANGUAGE_SYL) — sonst
   // ganz normal den Klartext, nie geraten.
@@ -4518,6 +4537,7 @@
           ${Object.entries(langNames).map(([code, name]) => `<option value="${code}" ${firstStepsLangOverride === code ? "selected" : ""}>${name}</option>`).join("")}
         </select>
       </div>
+      <p class="empty-note" style="margin-bottom:14px;">💡 Bei mehrsilbigen Wörtern ist eine Silbe <strong>unterstrichen</strong> hervorgehoben — das zeigt nur, wo beim Sprechen die Betonung liegt. Geschrieben wird das Wort ganz normal, die Hervorhebung dient nur der Aussprache und ist keine eigene Schreibregel.</p>
 
       <p class="eyebrow">Kapitel ${ExerciseData.FIRST_STEPS_CHAPTERS[0].title}</p>
       <div class="breakdown-list" style="margin-bottom:20px;">
@@ -4526,7 +4546,7 @@
           if (!v) return "";
           const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
           return `<div class="breakdown-row">
-            <span style="font-weight:700;">${syl ? stressHtml(syl) : v.de}</span>
+            <span style="font-weight:700;">${syl ? stressHtmlKeepCase(syl, v.de) : v.de}</span>
             <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
           </div>`;
         }).join("")}
@@ -4539,7 +4559,7 @@
       <div class="breakdown-list" style="margin-bottom:16px;">
         ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => `
           <div class="question-card" style="margin-bottom:8px;">
-            <p class="eyebrow" style="margin-top:0;">${ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe] ? stressHtml(ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe]) : verb.meaningDe}</p>
+            <p class="eyebrow" style="margin-top:0;">${ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe] ? stressHtmlKeepCase(ExerciseData.FIRST_STEPS_SYLLABLES[verb.meaningDe], verb.meaningDe) : verb.meaningDe}</p>
             ${verb.forms.map((f) => `
               <div class="breakdown-row" style="background:transparent; padding:4px 0;">
                 <span style="font-weight:700;">${f.de}</span>
@@ -4583,7 +4603,7 @@
             if (!v) return "";
             const syl = ExerciseData.FIRST_STEPS_SYLLABLES[key];
             return `<div class="breakdown-row">
-              <span style="font-weight:700;">${syl ? stressHtml(syl) : v.de}</span>
+              <span style="font-weight:700;">${syl ? stressHtmlKeepCase(syl, v.de) : v.de}</span>
               <span dir="${rtl ? "rtl" : "ltr"}">${firstStepsTranslate(v, lang)}</span>
             </div>`;
           }).join("")}
@@ -9342,6 +9362,17 @@
         C1: "Schillers dramatisches Werk, geprägt vom Ideal der Freiheit und moralischen Selbstbestimmung, machte ihn zu einer der zentralen Figuren der Weimarer Klassik — seine enge Zusammenarbeit mit Goethe gilt bis heute als einer der fruchtbarsten literarischen Dialoge der deutschen Geschichte.",
         C2: "Als Verfechter des Idealismus und der ästhetischen Erziehung des Menschen entwarf Schiller in seinen Dramen und philosophischen Schriften ein Menschenbild, das Freiheit und Sittlichkeit untrennbar miteinander verband — ein Vermächtnis, das die deutsche Geistesgeschichte nachhaltig prägte.",
       },
+      translationsA1: {
+        en: "Schiller was a German poet. He wrote plays. A famous play is called 'William Tell'.",
+        ar: "كان شيلر شاعراً ألمانياً. كتب مسرحيات. من مسرحياته الشهيرة «فيلهلم تل».",
+        tr: "Schiller Alman bir şairdi. Tiyatro oyunları yazdı. Ünlü bir oyunu 'Wilhelm Tell' adını taşır.",
+        ru: "Шиллер был немецким поэтом. Он писал пьесы. Известная пьеса называется «Вильгельм Телль».",
+        es: "Schiller fue un poeta alemán. Escribió obras de teatro. Una obra famosa se llama 'Guillermo Tell'.",
+        fr: "Schiller était un poète allemand. Il a écrit des pièces de théâtre. Une pièce célèbre s'appelle « Guillaume Tell ».",
+        pl: "Schiller był niemieckim poetą. Pisał sztuki teatralne. Znana sztuka nazywa się „Wilhelm Tell”.",
+        uk: "Шиллер був німецьким поетом. Він писав п'єси. Відома п'єса називається «Вільгельм Телль».",
+        fa: "شیلر شاعر آلمانی بود. او نمایشنامه می‌نوشت. یک نمایشنامه معروف «ویلهلم تل» نام دارد.",
+      },
     },
     {
       id: "einstein", name: "Albert Einstein", years: "1879–1955",
@@ -9354,6 +9385,17 @@
         C1: "Einsteins Relativitätstheorie stellte die klassische, newtonsche Physik grundlegend infrage und legte den Grundstein für die moderne theoretische Physik — sein Schicksal als Emigrant vor dem NS-Regime macht ihn zugleich zu einer zentralen Figur deutscher Geschichte des 20. Jahrhunderts.",
         C2: "Die von Einstein begründete Relativitätstheorie markiert einen der fundamentalsten Paradigmenwechsel der Naturwissenschaften und verschmilzt in seiner Biografie mit der Tragik der Emigration — eine Verbindung wissenschaftlichen Genies mit dem dunkelsten Kapitel deutscher Geschichte.",
       },
+      translationsA1: {
+        en: "Einstein was a famous German scientist. He discovered the theory of relativity. He won the Nobel Prize.",
+        ar: "كان آينشتاين عالماً ألمانياً مشهوراً. اكتشف نظرية النسبية. فاز بجائزة نوبل.",
+        tr: "Einstein ünlü bir Alman bilim insanıydı. Görelilik teorisini keşfetti. Nobel Ödülü'nü kazandı.",
+        ru: "Эйнштейн был знаменитым немецким учёным. Он открыл теорию относительности. Он получил Нобелевскую премию.",
+        es: "Einstein fue un famoso científico alemán. Descubrió la teoría de la relatividad. Ganó el Premio Nobel.",
+        fr: "Einstein était un célèbre scientifique allemand. Il a découvert la théorie de la relativité. Il a gagné le prix Nobel.",
+        pl: "Einstein był słynnym niemieckim naukowcem. Odkrył teorię względności. Zdobył Nagrodę Nobla.",
+        uk: "Ейнштейн був відомим німецьким науковцем. Він відкрив теорію відносності. Він отримав Нобелівську премію.",
+        fa: "اینشتین دانشمند معروف آلمانی بود. او نظریه نسبیت را کشف کرد. او جایزه نوبل را برد.",
+      },
     },
     {
       id: "bach", name: "Johann Sebastian Bach", years: "1685–1750",
@@ -9365,6 +9407,17 @@
         B2: "Johann Sebastian Bach (1685–1750) prägte mit seinem umfangreichen Werk — von Kantaten über Orgelmusik bis zu den Brandenburgischen Konzerten — die Musikgeschichte nachhaltig und gilt als Höhepunkt der Barockmusik.",
         C1: "Bachs kontrapunktische Meisterschaft und sein enormes kompositorisches Schaffen, das nahezu alle Gattungen seiner Zeit umfasst, machen ihn zu einer Schlüsselfigur der Musikgeschichte, deren Einfluss von Mozart bis in die heutige Kompositionslehre reicht.",
         C2: "In der Verschmelzung kontrapunktischer Komplexität mit tiefer geistlicher Ausdruckskraft erreicht Bachs Œuvre eine kompositorische Vollendung, die die Barockmusik zu ihrem Höhepunkt führte und als fundamentaler Bezugspunkt der abendländischen Musiktradition bis heute fortwirkt.",
+      },
+      translationsA1: {
+        en: "Bach was a famous German musician. He wrote many pieces of music. His music is still known today.",
+        ar: "كان باخ موسيقياً ألمانياً مشهوراً. كتب الكثير من المقطوعات الموسيقية. موسيقاه معروفة حتى اليوم.",
+        tr: "Bach ünlü bir Alman müzisyendi. Birçok müzik eseri yazdı. Müziği bugün hâlâ tanınıyor.",
+        ru: "Бах был знаменитым немецким музыкантом. Он написал много музыкальных произведений. Его музыка известна и сегодня.",
+        es: "Bach fue un famoso músico alemán. Escribió muchas piezas musicales. Su música todavía es conocida hoy.",
+        fr: "Bach était un célèbre musicien allemand. Il a écrit de nombreuses œuvres musicales. Sa musique est encore connue aujourd'hui.",
+        pl: "Bach był słynnym niemieckim muzykiem. Napisał wiele utworów muzycznych. Jego muzyka jest znana do dziś.",
+        uk: "Бах був відомим німецьким музикантом. Він написав багато музичних творів. Його музика відома й сьогодні.",
+        fa: "باخ موسیقی‌دان معروف آلمانی بود. او آثار موسیقی زیادی نوشت. موسیقی او هنوز هم شناخته شده است.",
       },
     },
   ];
@@ -9380,6 +9433,17 @@
         C1: "Kaum ein Gerät verkörpert den Wandel der deutschen Bürokommunikation so deutlich wie das Faxgerät: einst als effizientes, sofortiges Übertragungsmittel geschätzt, wurde es mit dem Siegeszug digitaler Kommunikation binnen weniger Jahre nahezu vollständig verdrängt — mancherorts hält sich der „Faxzwang“ in Behörden bis heute hartnäckig.",
         C2: "Das Faxgerät steht exemplarisch für jene technischen Übergangsphänomene, die eine Ära prägten und binnen kürzester Zeit durch überlegene digitale Alternativen obsolet wurden — ein Umstand, den insbesondere die fortdauernde behördliche Anhänglichkeit an das Fax in Deutschland auf bemerkenswerte Weise konterkariert.",
       },
+      translationsA1: {
+        en: "In the past, many offices had a fax machine. It was used to send papers to other places. Today most people use email.",
+        ar: "في السابق، كان لدى الكثير من المكاتب جهاز فاكس. كان يُستخدم لإرسال الأوراق إلى أماكن أخرى. اليوم يستخدم معظم الناس البريد الإلكتروني.",
+        tr: "Eskiden birçok ofiste faks makinesi vardı. Bununla kağıtlar başka yerlere gönderilirdi. Bugün çoğu insan e-posta kullanıyor.",
+        ru: "Раньше во многих офисах был факс. С его помощью отправляли документы в другие места. Сегодня большинство людей пользуются электронной почтой.",
+        es: "Antes muchas oficinas tenían un fax. Se usaba para enviar papeles a otros lugares. Hoy la mayoría de la gente usa el correo electrónico.",
+        fr: "Autrefois, de nombreux bureaux avaient un fax. On l'utilisait pour envoyer des documents ailleurs. Aujourd'hui, la plupart des gens utilisent le courrier électronique.",
+        pl: "Dawniej wiele biur miało faks. Używano go do wysyłania papierów w inne miejsca. Dziś większość ludzi korzysta z e-maila.",
+        uk: "Раніше в багатьох офісах був факс. Його використовували, щоб надсилати папери в інші місця. Сьогодні більшість людей користуються електронною поштою.",
+        fa: "قبلاً بسیاری از دفاتر دستگاه فکس داشتند. با آن کاغذها به جاهای دیگر فرستاده می‌شد. امروزه بیشتر مردم از ایمیل استفاده می‌کنند.",
+      },
     },
     {
       id: "schreibmaschine", name: "Die Schreibmaschine",
@@ -9391,6 +9455,17 @@
         B2: "Bis in die 1980er-Jahre war die Schreibmaschine das zentrale Schreibgerät in deutschen Büros und Privathaushalten. Anders als am Computer ließen sich Tippfehler nur mühsam korrigieren, was eine ganz andere Schreibdisziplin erforderte. Mit dem PC verschwand sie fast vollständig.",
         C1: "Die Schreibmaschine prägte über ein Jahrhundert lang die Schreibkultur — ihre mechanischen Grenzen erzwangen eine Sorgfalt und Disziplin beim Formulieren, die mit der beliebigen Korrigierbarkeit digitaler Texte weitgehend verloren gegangen ist.",
         C2: "Als Verkörperung einer analogen Schreibkultur, deren mechanische Unerbittlichkeit zu einer eigenen Form gedanklicher Disziplin zwang, steht die Schreibmaschine sinnbildlich für einen Verlust an Langsamkeit und Sorgfalt, den die digitale Beliebigkeit des Textverarbeitungszeitalters mit sich brachte.",
+      },
+      translationsA1: {
+        en: "In the past, people wrote with a typewriter. There were no computers. Today people mostly write on a computer.",
+        ar: "في السابق كان الناس يكتبون بالآلة الكاتبة. لم يكن هناك حواسيب. اليوم يكتب معظم الناس على الحاسوب.",
+        tr: "Eskiden insanlar daktilo ile yazardı. Bilgisayar yoktu. Bugün insanlar genellikle bilgisayarda yazıyor.",
+        ru: "Раньше люди печатали на печатной машинке. Компьютеров не было. Сегодня большинство пишет на компьютере.",
+        es: "Antes la gente escribía con una máquina de escribir. No había computadoras. Hoy la mayoría escribe en la computadora.",
+        fr: "Autrefois, les gens écrivaient avec une machine à écrire. Il n'y avait pas d'ordinateurs. Aujourd'hui, on écrit surtout à l'ordinateur.",
+        pl: "Dawniej ludzie pisali na maszynie do pisania. Nie było komputerów. Dziś większość pisze na komputerze.",
+        uk: "Раніше люди писали на друкарській машинці. Комп'ютерів не було. Сьогодні більшість пише на комп'ютері.",
+        fa: "قبلاً مردم با ماشین تحریر می‌نوشتند. کامپیوتر وجود نداشت. امروزه بیشتر مردم با کامپیوتر می‌نویسند.",
       },
     },
     {
@@ -9404,6 +9479,17 @@
         C1: "Die einst allgegenwärtige Telefonzelle steht sinnbildlich für eine Ära, in der Erreichbarkeit an feste Orte gebunden war — ihr fast vollständiges Verschwinden binnen weniger Jahrzehnte veranschaulicht, wie radikal die mobile Kommunikation den öffentlichen Raum verändert hat.",
         C2: "Als Relikt einer ortsgebundenen Kommunikationskultur markiert die Telefonzelle den Übergang zu einer Gesellschaft permanenter Erreichbarkeit — ihr Verschwinden aus dem Stadtbild dokumentiert eindrücklich die Geschwindigkeit technologischen und sozialen Wandels der letzten Jahrzehnte.",
       },
+      translationsA1: {
+        en: "In the past, there were many phone booths on the street. You could call from there with coins. Today there are almost none left, because everyone has a cell phone.",
+        ar: "في السابق كانت هناك أكشاك هاتف كثيرة في الشارع. كان يمكن الاتصال منها بالعملات المعدنية. اليوم لم يبق منها شيء تقريباً لأن الجميع لديه هاتف محمول.",
+        tr: "Eskiden sokakta birçok telefon kulübesi vardı. Oradan madeni parayla arama yapılabilirdi. Bugün herkeste cep telefonu olduğu için neredeyse hiç kalmadı.",
+        ru: "Раньше на улицах было много телефонных будок. Оттуда можно было звонить с помощью монет. Сегодня их почти не осталось, потому что у всех есть мобильный телефон.",
+        es: "Antes había muchas cabinas telefónicas en la calle. Se podía llamar desde allí con monedas. Hoy casi no quedan porque todos tienen un móvil.",
+        fr: "Autrefois, il y avait beaucoup de cabines téléphoniques dans la rue. On pouvait y téléphoner avec des pièces. Aujourd'hui il n'en reste presque plus, car tout le monde a un portable.",
+        pl: "Dawniej na ulicach było wiele budek telefonicznych. Można było stamtąd dzwonić za monety. Dziś prawie ich nie ma, bo każdy ma telefon komórkowy.",
+        uk: "Раніше на вулицях було багато телефонних будок. Звідти можна було телефонувати за монети. Сьогодні їх майже не залишилося, бо в усіх є мобільний телефон.",
+        fa: "قبلاً باجه‌های تلفن زیادی در خیابان بود. می‌شد از آنجا با سکه تماس گرفت. امروزه تقریباً هیچ‌کدام باقی نمانده، چون همه موبایل دارند.",
+      },
     },
     {
       id: "musikkassette", name: "Die Musikkassette",
@@ -9415,6 +9501,17 @@
         B2: "Von den 1970er- bis in die 1990er-Jahre war die Musikkassette das dominierende Format für privaten Musikgenuss in Deutschland. Besonders beliebt war das persönliche Zusammenstellen von Mixtapes für Freunde. Digitales Streaming hat sie heute fast völlig verdrängt.",
         C1: "Die Musikkassette ermöglichte erstmals einer breiten Öffentlichkeit, Musik selbst zusammenzustellen und weiterzugeben — die Kultur des selbstgemachten Mixtapes gilt vielen als eine persönlichere, verlorene Vorstufe heutiger digitaler Playlists.",
         C2: "Als demokratisierendes Medium eröffnete die Musikkassette erstmals eine partizipative Aneignung von Musikkultur durch selbst kuratierte Mixtapes — ein Stück analoger Handwerklichkeit und persönlicher Widmung, das im algorithmisch generierten Playlist-Zeitalter kaum eine Entsprechung findet.",
+      },
+      translationsA1: {
+        en: "In the past, people listened to music on cassettes. You could record songs yourself. Today people stream music on their phone.",
+        ar: "في السابق كان الناس يستمعون إلى الموسيقى على الأشرطة. كان يمكن تسجيل الأغاني بنفسك. اليوم يستمع الناس إلى الموسيقى عبر الهاتف.",
+        tr: "Eskiden insanlar müziği kasetlerde dinlerdi. Şarkıları kendin kaydedebilirdin. Bugün insanlar müziği telefondan dinliyor.",
+        ru: "Раньше люди слушали музыку на кассетах. Можно было самому записывать песни. Сегодня музыку слушают через телефон.",
+        es: "Antes la gente escuchaba música en casetes. Podías grabar canciones tú mismo. Hoy la gente escucha música por streaming en el móvil.",
+        fr: "Autrefois, les gens écoutaient de la musique sur des cassettes. On pouvait enregistrer des chansons soi-même. Aujourd'hui, on écoute la musique en streaming sur le téléphone.",
+        pl: "Dawniej ludzie słuchali muzyki na kasetach. Można było samemu nagrywać piosenki. Dziś muzykę słucha się przez telefon.",
+        uk: "Раніше люди слухали музику на касетах. Можна було самому записувати пісні. Сьогодні музику слухають через телефон.",
+        fa: "قبلاً مردم موسیقی را با نوار کاست گوش می‌دادند. می‌شد خودت آهنگ‌ها را ضبط کنی. امروزه مردم موسیقی را از طریق موبایل پخش می‌کنند.",
       },
     },
   ];
@@ -9482,10 +9579,20 @@
         <p style="margin-top:8px;">${entry.levels[level]}</p>
         ${entry.translationsA1 ? (() => {
           const tileLang = firstStepsLangFor(Backend.currentProfile());
-          const t = entry.translationsA1[tileLang];
+          // WICHTIG — behebt eine echte Lücke: die translationsA1-Übersetzungen wurden ursprünglich
+          // nur für die ersten 9 Sprachen gebaut, bevor Italienisch/Hindi/Chinesisch/Hebräisch
+          // dazukamen — ohne Fallback erschien für diese 4 Sprachen gar keine Übersetzung. Englisch
+          // als Rückfalloption sorgt dafür, dass immer etwas Sinnvolles angezeigt wird.
+          const t = entry.translationsA1[tileLang] || entry.translationsA1.en;
           if (!t) return "";
           const tileRtl = tileLang === "ar" || tileLang === "fa" || tileLang === "he";
-          return `<p class="empty-note" style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${tileRtl ? "rtl" : "ltr"}">🌍 ${t}</p>`;
+          // WICHTIG — wie ausdrücklich gewünscht: die Übersetzung steht nicht mehr fest sichtbar
+          // da, sondern klappt erst nach einem gezielten Klick auf den kleinen 🌍-Knopf auf — ein
+          // natives <details>-Element übernimmt das Auf-/Zuklappen ganz ohne eigene JS-Logik.
+          return `<details style="margin-top:8px;">
+            <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700; list-style:none;">🌍 Übersetzung anzeigen</summary>
+            <p class="empty-note" style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${tileRtl ? "rtl" : "ltr"}">${t}</p>
+          </details>`;
         })() : ""}
       </div>
     `;
@@ -9790,10 +9897,13 @@
           <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
           ${todayHistory.translationsA1 ? (() => {
             const histLang = firstStepsLangFor(Backend.currentProfile());
-            const t = todayHistory.translationsA1[histLang];
+            const t = todayHistory.translationsA1[histLang] || todayHistory.translationsA1.en;
             if (!t) return "";
             const histRtl = histLang === "ar" || histLang === "fa" || histLang === "he";
-            return `<p class="empty-note" style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${histRtl ? "rtl" : "ltr"}">🌍 ${t}</p>`;
+            return `<details style="margin-top:8px;">
+              <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700; list-style:none;">🌍 Übersetzung anzeigen</summary>
+              <p class="empty-note" style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${histRtl ? "rtl" : "ltr"}">${t}</p>
+            </details>`;
           })() : ""}
           ${todayHistory.sideFacts && todayHistory.sideFacts.length ? `
             <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
@@ -14796,7 +14906,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "119";
+  const APP_VERSION = "120";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
