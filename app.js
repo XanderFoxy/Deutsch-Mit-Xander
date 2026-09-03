@@ -4595,6 +4595,54 @@
           </div>`).join("")}
       </div>
 
+      <p class="eyebrow">🧩 Satz-Baukasten — selbst ausprobieren</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p class="empty-note" style="margin:0 0 10px;">Wähl links eine Verb-Form und rechts einen Infinitiv — der Satz baut sich automatisch zusammen. Manche Kombinationen klingen im Deutschen ungewöhnlich; ein Hinweis darunter sagt dir, wenn das der Fall ist.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <select id="satzbaukastenVerb" class="challenge-select" style="flex:1; min-width:140px;">
+            ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => verb.forms.map((f) => `<option value="${f.de}" data-verbid="${verb.id}">${f.de}</option>`).join("")).join("")}
+          </select>
+          <select id="satzbaukastenInf" class="challenge-select" style="flex:1; min-width:140px;">
+            ${ExerciseData.FIRST_STEPS_INFINITIVES.map((v) => `<option value="${v.de}">${v.de}</option>`).join("")}
+          </select>
+        </div>
+        <p id="satzbaukastenPreview" style="font-weight:800; font-size:1.05rem; margin:14px 0 4px;"></p>
+        <p id="satzbaukastenHint" class="empty-note" style="margin:0;"></p>
+      </div>
+
+      <p class="eyebrow">🔗 Nebensatz-Baukasten — Hauptsatz + Verbindungswort</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p class="empty-note" style="margin:0 0 10px;">Ein Nebensatz braucht ein Verbindungswort — und danach wandert das Verb ans Satzende. Probier verschiedene Verbindungswörter mit derselben Ergänzung aus: das Verb (<span style="color:#c0392b; font-weight:700;">rot markiert</span>) steht in jedem Fall ganz hinten.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+          <select id="nebensatzHaupt" class="challenge-select" style="flex:1; min-width:160px;"></select>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <select id="nebensatzVerbinder" class="challenge-select" style="flex:1; min-width:100px;">
+            <option value="weil">weil</option>
+            <option value="obwohl">obwohl</option>
+            <option value="wenn">wenn</option>
+            <option value="dass">dass</option>
+          </select>
+          <select id="nebensatzErgaenzung" class="challenge-select" style="flex:1; min-width:160px;"></select>
+        </div>
+        <p id="nebensatzPreview" style="font-weight:800; font-size:1.05rem; margin:14px 0 0;"></p>
+      </div>
+
+      <p class="eyebrow">✂️ Trennbare Verben — Präfix und Verb gehören zusammen</p>
+      <div class="question-card" style="margin-bottom:20px;">
+        <p class="empty-note" style="margin:0 0 10px;">Manche Verben trennen sich im Satz: der Grundteil bleibt vorne, das kleine Vorsilben-Wort wandert ans Satzende. Beide Teile sind hier in <span style="color:#2f6b3a; font-weight:700;">derselben Farbe</span> markiert, damit klar bleibt: sie gehören zusammen — auch wenn sie im Satz weit auseinanderstehen.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <select id="trennbarPerson" class="challenge-select" style="flex:1; min-width:100px;">
+            <option value="ich">ich</option>
+            <option value="du">du</option>
+            <option value="er/sie/es">er/sie/es</option>
+            <option value="wir">wir</option>
+          </select>
+          <select id="trennbarVerb" class="challenge-select" style="flex:1; min-width:160px;"></select>
+        </div>
+        <p id="trennbarPreview" style="font-weight:800; font-size:1.05rem; margin:14px 0 0;"></p>
+      </div>
+
       ${ExerciseData.FIRST_STEPS_CHAPTERS.slice(1).map((chapter) => `
         <p class="eyebrow">Kapitel ${chapter.title}</p>
         <div class="breakdown-list" style="margin-bottom:20px;">
@@ -4635,6 +4683,94 @@
       firstStepsLangOverride = e.target.value || null;
       renderFirstSteps();
     });
+    // WICHTIG — der Satz-Baukasten: eine kleine, handkuratierte Liste an Verb+Infinitiv-Kombinationen,
+    // die im Deutschen inhaltlich ungewöhnlich klingen (z. B. "ich brauche schlafen" statt "ich muss
+    // schlafen") — nicht erschöpfend, sondern ein erster, pragmatischer Baustein dieser Idee, der bei
+    // den offensichtlichsten Fällen einen Hinweis gibt, statt stillschweigend jede Kombination als
+    // "richtig" durchgehen zu lassen.
+    const SATZBAUKASTEN_UNGEWOEHNLICH = {
+      need: ["schlafen", "sehen", "schauen", "denken"],
+      like: ["bezahlen"],
+      // "gehen + Infinitiv" funktioniert im Deutschen nur bei einer kleinen Gruppe von
+      // "Tätigkeit aufsuchen"-Ausdrücken (schlafen gehen, arbeiten gehen) — bei den meisten
+      // anderen Infinitiven aus der Liste klingt die Kombination unpassend.
+      go: ["sehen", "schauen", "verstehen", "lernen", "wissen", "denken", "geben", "nehmen", "machen", "finden", "besuchen", "beginnen", "schreiben", "lesen", "bezahlen", "fragen", "helfen"],
+    };
+    function updateSatzbaukastenPreview() {
+      const verbSelect = document.getElementById("satzbaukastenVerb");
+      const infSelect = document.getElementById("satzbaukastenInf");
+      if (!verbSelect || !infSelect) return;
+      const verbForm = verbSelect.value;
+      const verbId = verbSelect.selectedOptions[0]?.dataset.verbid;
+      const inf = infSelect.value;
+      document.getElementById("satzbaukastenPreview").textContent = `${verbForm} ... ${inf}.`;
+      const unusual = (SATZBAUKASTEN_UNGEWOEHNLICH[verbId] || []).includes(inf);
+      const hintEl = document.getElementById("satzbaukastenHint");
+      hintEl.textContent = unusual
+        ? "🤔 Diese Kombination klingt im Deutschen eher ungewöhnlich."
+        : "✅ Das klingt nach einer ganz normalen deutschen Kombination.";
+      hintEl.style.color = unusual ? "var(--red-400, #c0392b)" : "var(--teal-400)";
+    }
+    document.getElementById("satzbaukastenVerb")?.addEventListener("change", updateSatzbaukastenPreview);
+    document.getElementById("satzbaukastenInf")?.addEventListener("change", updateSatzbaukastenPreview);
+    updateSatzbaukastenPreview();
+
+    // Nebensatz-Baukasten: Hauptsatz-Optionen und passende Nebensatz-Ergänzungen (das Verb steht
+    // hier bewusst schon an letzter Stelle in jeder Ergänzung, wie es im deutschen Nebensatz nach
+    // einem Verbindungswort sein muss — genau das soll farblich hervorgehoben sichtbar werden).
+    const NEBENSATZ_HAUPTSAETZE = ["Ich bleibe zu Hause", "Wir gehen nicht raus", "Sie ist müde", "Ich rufe dich an"];
+    const NEBENSATZ_ERGAENZUNGEN = [
+      { text: "es regnet", verb: "regnet" },
+      { text: "ich krank bin", verb: "bin" },
+      { text: "das Wetter schlecht ist", verb: "ist" },
+      { text: "sie arbeiten muss", verb: "muss" },
+      { text: "wir Zeit haben", verb: "haben" },
+    ];
+    const hauptSelect = document.getElementById("nebensatzHaupt");
+    const ergSelect = document.getElementById("nebensatzErgaenzung");
+    if (hauptSelect) hauptSelect.innerHTML = NEBENSATZ_HAUPTSAETZE.map((h) => `<option value="${h}">${h}</option>`).join("");
+    if (ergSelect) ergSelect.innerHTML = NEBENSATZ_ERGAENZUNGEN.map((e) => `<option value="${e.text}" data-verb="${e.verb}">${e.text}</option>`).join("");
+    function updateNebensatzPreview() {
+      const haupt = document.getElementById("nebensatzHaupt")?.value;
+      const verbinder = document.getElementById("nebensatzVerbinder")?.value;
+      const ergOption = ergSelect?.selectedOptions[0];
+      if (!haupt || !verbinder || !ergOption) return;
+      const ergText = ergOption.value;
+      const verb = ergOption.dataset.verb;
+      // Das Ergänzungs-Verb farblich hervorheben, egal an welcher Stelle im Text es steht.
+      const highlighted = ergText.replace(verb, `<span style="color:#c0392b; font-weight:700;">${verb}</span>`);
+      document.getElementById("nebensatzPreview").innerHTML = `${haupt}, ${verbinder} ${highlighted}.`;
+    }
+    document.getElementById("nebensatzHaupt")?.addEventListener("change", updateNebensatzPreview);
+    document.getElementById("nebensatzVerbinder")?.addEventListener("change", updateNebensatzPreview);
+    document.getElementById("nebensatzErgaenzung")?.addEventListener("change", updateNebensatzPreview);
+    updateNebensatzPreview();
+
+    // Trennbare Verben: Grundform-Konjugation (ohne Präfix) je Person + das Präfix, das ans
+    // Satzende wandert. Beide Teile bekommen dieselbe Farbe, damit ihre Zusammengehörigkeit auch
+    // über die Distanz im Satz hinweg sichtbar bleibt.
+    const TRENNBARE_VERBEN = [
+      { name: "ankommen", prefix: "an", forms: { "ich": "komme", "du": "kommst", "er/sie/es": "kommt", "wir": "kommen" }, rest: "am Bahnhof" },
+      { name: "abgeben", prefix: "ab", forms: { "ich": "gebe", "du": "gibst", "er/sie/es": "gibt", "wir": "geben" }, rest: "das Buch" },
+      { name: "anrufen", prefix: "an", forms: { "ich": "rufe", "du": "rufst", "er/sie/es": "ruft", "wir": "rufen" }, rest: "meine Mutter" },
+      { name: "aufwachen", prefix: "auf", forms: { "ich": "wache", "du": "wachst", "er/sie/es": "wacht", "wir": "wachen" }, rest: "früh" },
+      { name: "einkaufen", prefix: "ein", forms: { "ich": "kaufe", "du": "kaufst", "er/sie/es": "kauft", "wir": "kaufen" }, rest: "am Wochenende" },
+      { name: "anfangen", prefix: "an", forms: { "ich": "fange", "du": "fängst", "er/sie/es": "fängt", "wir": "fangen" }, rest: "jetzt" },
+    ];
+    const trennbarVerbSelect = document.getElementById("trennbarVerb");
+    if (trennbarVerbSelect) trennbarVerbSelect.innerHTML = TRENNBARE_VERBEN.map((v) => `<option value="${v.name}">${v.name}</option>`).join("");
+    function updateTrennbarPreview() {
+      const person = document.getElementById("trennbarPerson")?.value;
+      const verbName = trennbarVerbSelect?.value;
+      const verb = TRENNBARE_VERBEN.find((v) => v.name === verbName);
+      if (!person || !verb) return;
+      const stamm = verb.forms[person];
+      const highlight = (t) => `<span style="color:#2f6b3a; font-weight:700;">${t}</span>`;
+      document.getElementById("trennbarPreview").innerHTML = `${person} ${highlight(stamm)} ${verb.rest} ${highlight(verb.prefix)}.`;
+    }
+    document.getElementById("trennbarPerson")?.addEventListener("change", updateTrennbarPreview);
+    trennbarVerbSelect?.addEventListener("change", updateTrennbarPreview);
+    updateTrennbarPreview();
   }
   function renderDictionary(filter = "") {
     const area = document.getElementById("dictionaryArea");
@@ -14906,7 +15042,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "120";
+  const APP_VERSION = "121";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
