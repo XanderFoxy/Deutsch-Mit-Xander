@@ -2909,6 +2909,29 @@
       });
     } catch (e) { /* Ton ist rein dekorativ -- bei Problemen einfach still bleiben */ }
   }
+  // Kurzer, abfallender "falsch"-Ton für den Satz-Baukasten und ähnliche Übungen — bewusst
+  // unabhängig von playNotifySound()/der Benachrichtigungston-Wahl, da er ja etwas ganz anderes
+  // signalisiert (ungültige Kombination, nicht eine neue Nachricht). Nutzt dasselbe, schon
+  // vorhandene Web-Audio-Muster wie playNotifySound().
+  function playErrorTone() {
+    if (isNotifyMuted()) return;
+    try {
+      if (!sharedAudioCtx) return;
+      const ctx = sharedAudioCtx;
+      if (ctx.state === "suspended") ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      const start = ctx.currentTime;
+      osc.frequency.setValueAtTime(220, start);
+      osc.frequency.exponentialRampToValueAtTime(110, start + 0.18);
+      gain.gain.setValueAtTime(0.1, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.22);
+    } catch (e) { /* Ton ist rein dekorativ -- bei Problemen einfach still bleiben */ }
+  }
 
   // Vier wählbare Benachrichtigungstöne — die ersten beiden immer frei, die anderen beiden
   // schaltet man mit gesammelten Punkten frei (Belohnung fürs Üben).
@@ -4763,8 +4786,12 @@
       // "Tätigkeit aufsuchen"-Ausdrücken (schlafen gehen, arbeiten gehen) — bei den meisten
       // anderen Infinitiven aus der Liste klingt die Kombination unpassend.
       go: ["sehen", "schauen", "verstehen", "lernen", "wissen", "denken", "geben", "nehmen", "machen", "finden", "besuchen", "beginnen", "schreiben", "lesen", "bezahlen", "fragen", "helfen"],
+      // "haben zu + Infinitiv" (die Bedeutung von "müssen", siehe Erklärtext beim Kernverb) klingt
+      // im Alltag nur bei pflichtartigen Tätigkeiten natürlich — bei entspannten Freizeit-Verben
+      // wirkt die formelle "haben zu"-Konstruktion unpassend.
+      have: ["spielen", "essen", "trinken", "reisen"],
     };
-    function updateSatzbaukastenPreview() {
+    function updateSatzbaukastenPreview(playSound) {
       const verbSelect = document.getElementById("satzbaukastenVerb");
       const infSelect = document.getElementById("satzbaukastenInf");
       if (!verbSelect || !infSelect) return;
@@ -4778,10 +4805,17 @@
         ? "🤔 Diese Kombination klingt im Deutschen eher ungewöhnlich."
         : "✅ Das klingt nach einer ganz normalen deutschen Kombination.";
       hintEl.style.color = unusual ? "var(--red-400, #c0392b)" : "var(--teal-400)";
+      // WICHTIG — wie gewünscht: bei einer ungewöhnlichen Kombination werden BEIDE Auswahlfelder
+      // rot umrandet (nicht nur der Hinweistext) und ein kurzer Fehler-Ton spielt — aber nur bei
+      // einer echten Nutzer-Änderung, nicht schon beim ersten, automatischen Laden der Seite.
+      const errorBorder = unusual ? "2px solid #c0392b" : "";
+      verbSelect.style.border = errorBorder;
+      infSelect.style.border = errorBorder;
+      if (unusual && playSound) playErrorTone();
     }
-    document.getElementById("satzbaukastenVerb")?.addEventListener("change", updateSatzbaukastenPreview);
-    document.getElementById("satzbaukastenInf")?.addEventListener("change", updateSatzbaukastenPreview);
-    updateSatzbaukastenPreview();
+    document.getElementById("satzbaukastenVerb")?.addEventListener("change", () => updateSatzbaukastenPreview(true));
+    document.getElementById("satzbaukastenInf")?.addEventListener("change", () => updateSatzbaukastenPreview(true));
+    updateSatzbaukastenPreview(false);
 
     // Nebensatz-Baukasten: Hauptsatz-Optionen und passende Nebensatz-Ergänzungen (das Verb steht
     // hier bewusst schon an letzter Stelle in jeder Ergänzung, wie es im deutschen Nebensatz nach
@@ -4798,7 +4832,14 @@
     const ergSelect = document.getElementById("nebensatzErgaenzung");
     if (hauptSelect) hauptSelect.innerHTML = NEBENSATZ_HAUPTSAETZE.map((h) => `<option value="${h}">${h}</option>`).join("");
     if (ergSelect) ergSelect.innerHTML = NEBENSATZ_ERGAENZUNGEN.map((e) => `<option value="${e.text}" data-verb="${e.verb}">${e.text}</option>`).join("");
-    function updateNebensatzPreview() {
+    // Handkuratierte Liste an Hauptsatz+Ergänzung-Paaren, die zwar grammatikalisch fehlerfrei
+    // sind, inhaltlich aber keinen rechten Sinn ergeben (z. B. "Sie ist müde, weil sie arbeiten
+    // muss" — als konkretes Beispiel gemeldet).
+    const NEBENSATZ_UNPASSEND = new Set([
+      "Sie ist müde|es regnet", "Sie ist müde|sie arbeiten muss", "Sie ist müde|wir Zeit haben",
+      "Ich bleibe zu Hause|wir Zeit haben", "Wir gehen nicht raus|wir Zeit haben",
+    ]);
+    function updateNebensatzPreview(playSound) {
       const haupt = document.getElementById("nebensatzHaupt")?.value;
       const verbinder = document.getElementById("nebensatzVerbinder")?.value;
       const ergOption = ergSelect?.selectedOptions[0];
@@ -4808,11 +4849,16 @@
       // Das Ergänzungs-Verb farblich hervorheben, egal an welcher Stelle im Text es steht.
       const highlighted = ergText.replace(verb, `<span style="color:#c0392b; font-weight:700;">${verb}</span>`);
       document.getElementById("nebensatzPreview").innerHTML = `${haupt}, ${verbinder} ${highlighted}.`;
+      const unpassend = NEBENSATZ_UNPASSEND.has(`${haupt}|${ergText}`);
+      const errorBorder = unpassend ? "2px solid #c0392b" : "";
+      document.getElementById("nebensatzHaupt").style.border = errorBorder;
+      document.getElementById("nebensatzErgaenzung").style.border = errorBorder;
+      if (unpassend && playSound) playErrorTone();
     }
-    document.getElementById("nebensatzHaupt")?.addEventListener("change", updateNebensatzPreview);
-    document.getElementById("nebensatzVerbinder")?.addEventListener("change", updateNebensatzPreview);
-    document.getElementById("nebensatzErgaenzung")?.addEventListener("change", updateNebensatzPreview);
-    updateNebensatzPreview();
+    document.getElementById("nebensatzHaupt")?.addEventListener("change", () => updateNebensatzPreview(true));
+    document.getElementById("nebensatzVerbinder")?.addEventListener("change", () => updateNebensatzPreview(true));
+    document.getElementById("nebensatzErgaenzung")?.addEventListener("change", () => updateNebensatzPreview(true));
+    updateNebensatzPreview(false);
 
     // Trennbare Verben: Grundform-Konjugation (ohne Präfix) je Person + das Präfix, das ans
     // Satzende wandert. Beide Teile bekommen dieselbe Farbe, damit ihre Zusammengehörigkeit auch
@@ -15107,7 +15153,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "123";
+  const APP_VERSION = "124";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
