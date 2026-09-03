@@ -1242,11 +1242,16 @@
   /* "Durch einen Wassertropfen gesehen"-Optik: box-shadow (funktioniert auf <img>, anders als
      ::before/::after, die auf "replaced elements" wie <img> nicht zuverlässig greifen) simuliert
      ein Glanzlicht oben links (heller, weicher innerer Schein) und einen sanften Schatten unten
-     rechts (Tiefe/Wölbung) — wie bei einer gewölbten, glasartigen Oberfläche über dem Foto. */
+     rechts (Tiefe/Wölbung) — wie bei einer gewölbten, glasartigen Oberfläche über dem Foto.
+     WICHTIG — deutlich verstärkt: die vorherigen Werte waren auf den meisten Fotos (besonders
+     dunkleren) kaum wahrnehmbar. Größerer Streuradius, höhere Deckkraft und ein zusätzlicher,
+     scharf abgegrenzter äußerer Rand machen die gewölbte Glas-Optik jetzt auch bei dunklem
+     Hintergrund klar erkennbar, statt nur ein kaum sichtbarer Hauch zu sein. */
   box-shadow:
-    inset 8px 8px 16px -6px rgba(255,255,255,0.65),
-    inset -6px -6px 14px -4px rgba(0,0,0,0.28),
-    0 2px 5px rgba(0,0,0,0.2);
+    inset 10px 10px 20px -4px rgba(255,255,255,0.85),
+    inset -8px -8px 18px -3px rgba(0,0,0,0.5),
+    inset 0 0 0 1.5px rgba(255,255,255,0.4),
+    0 3px 8px rgba(0,0,0,0.35);
 }
 /* Sammelfiguren als Profilbild kleben wie ein Sticker OBEN DRAUF, statt wie ein normales Foto rund
    beschnitten zu werden — sonst würden Pfoten, Ohren oder der Schwanz einfach abgeschnitten. Der
@@ -1395,14 +1400,18 @@
 /* WICHTIG: Sammelfiguren als Profilbild dürfen NICHT auf einen Kreis zugeschnitten werden — sonst
    würden genau die Ohren/Pfoten/der Schwanz abgeschnitten, die eigentlich unbeschnitten über den
    Rahmen hinausragen sollen. Diese gezielte Ausnahme hebt den clip-path für sie wieder auf. */
+/* WICHTIG — behebt den gemeldeten Bug: der Sticker sollte GENAUSO wie ein echtes Foto vom
+   Fließtext umflossen werden (float + shape-outside), bekam das bisher aber nicht — nur
+   position:relative, kein float. Dadurch floss der Name/die Badges nicht um den Sticker herum,
+   sondern landete teils komplett getrennt davon. Jetzt exakt dasselbe Umfluss-Verhalten UND
+   dieselbe Größe wie bei einem echten Profilfoto, damit es hier keine Ausnahme mehr gibt. */
 .profile-header-flow .avatar-figure-sticker-wrap {
   clip-path: none;
-  flex-shrink: 0;
-  /* Fehlte hier bisher komplett (anders als bei normalen Fotos/Initialen) — ohne eigene, feste
-     Größe verhielt sich der Sticker-Wrapper im Flexbox-Umfluss unvorhersehbar, wodurch der Name
-     bei einer Sammelfigur als Profilbild unter statt neben das Bild rutschte. Dieselbe skalierende
-     Größe wie bei normalen Profilbildern (siehe dort für den Grund der kleineren Maße). */
-  width: clamp(56px, 15vw, 76px); height: clamp(56px, 15vw, 76px);
+  float: left;
+  shape-outside: circle(50%);
+  shape-margin: 10px;
+  margin: 0 6px 6px 0;
+  width: clamp(88px, 26vw, 118px); height: clamp(88px, 26vw, 118px);
 }
 .flow-badge {
   display: inline-block;
@@ -3080,16 +3089,44 @@
     /* Sonne, ein paar Wolken, und dahinter wellige, GRÜNE Almen-Hügel mit ein paar kleinen
        Tannen — statt spitzer, blauer Berg-Silhouetten. Zwei überlappende Hügel-Lagen für Tiefe,
        wellig statt spitz zulaufend.
-       WICHTIG: preserveAspectRatio="none" entfernt (vorher stand es hier) — das ließ das SVG bei
-       jedem Seitenverhältnis, das vom viewBox (400×100 = 4:1) abweicht, nicht-proportional
-       strecken. Auf schmaleren Android-Bildschirmen (Container z. B. eher 2,7:1 statt 4:1) wurde
-       dadurch die Sonne (eigentlich eine Ellipse) sichtbar oval nach oben gequetscht. Mit
-       preserveAspectRatio auf seinem Standardwert bleibt das SVG immer proportional — kombiniert
-       mit background-size:cover füllt es weiterhin den ganzen Bereich, schneidet bei Bedarf nur
-       seitlich etwas vom Hintergrundbild ab, statt es zu verzerren. */
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100'%3E%3Cellipse cx='340' cy='18' rx='17' ry='12' fill='%23ffd873' opacity='0.9'/%3E%3Cellipse cx='70' cy='16' rx='22' ry='8' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='95' cy='12' rx='16' ry='7' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='220' cy='24' rx='18' ry='7' fill='%23ffffff' opacity='0.65'/%3E%3Cpath d='M0,100 L0,58 Q40,38 80,50 Q130,66 180,42 Q230,22 280,46 Q330,64 400,44 L400,100 Z' fill='%237fb87a' opacity='0.6'/%3E%3Cpath d='M0,100 L0,75 Q50,58 100,70 Q150,84 210,64 Q260,48 320,68 Q360,80 400,66 L400,100 Z' fill='%235a9c5a' opacity='0.65'/%3E%3Cpath d='M55,52 L60,38 L65,52 Z M58,52 L58,44' fill='%232f6b3a' stroke='%232f6b3a' stroke-width='1.5'/%3E%3Cpath d='M175,45 L181,29 L187,45 Z' fill='%232f6b3a'/%3E%3Cpath d='M300,70 L305,58 L310,70 Z' fill='%23276030'/%3E%3Cpath d='M325,72 L329,62 L333,72 Z' fill='%23276030'/%3E%3C/svg%3E") bottom / cover no-repeat,
+       WICHTIG — behebt einen echten Bug: die Sonne stand bisher bei x=340 (ganz am rechten Rand
+       des 400 breiten viewBox) und wurde durch background-size:cover auf schmaleren Containern
+       zuverlässig komplett weggeschnitten — sie war dadurch faktisch unsichtbar. Jetzt bei
+       x=250, deutlich näher zur Mitte, wo sie auch bei stärkerem seitlichen Zuschnitt sichtbar
+       bleibt. Zusätzlich jetzt ein kleines Haus und mehr Bäume für mehr Landschaftsdetails,
+       ohne vom Spielgeschehen (Zug/Satz-Waggons) abzulenken, da alles im Hintergrund bleibt. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 100'%3E%3Cellipse cx='250' cy='16' rx='17' ry='12' fill='%23ffd873' opacity='0.9'/%3E%3Cellipse cx='70' cy='16' rx='22' ry='8' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='95' cy='12' rx='16' ry='7' fill='%23ffffff' opacity='0.75'/%3E%3Cellipse cx='330' cy='24' rx='18' ry='7' fill='%23ffffff' opacity='0.65'/%3E%3Cpath d='M0,100 L0,58 Q40,38 80,50 Q130,66 180,42 Q230,22 280,46 Q330,64 400,44 L400,100 Z' fill='%237fb87a' opacity='0.6'/%3E%3Cpath d='M0,100 L0,75 Q50,58 100,70 Q150,84 210,64 Q260,48 320,68 Q360,80 400,66 L400,100 Z' fill='%235a9c5a' opacity='0.65'/%3E%3Crect x='138' y='48' width='24' height='18' fill='%23c9915a'/%3E%3Cpath d='M135,48 L150,36 L165,48 Z' fill='%23a8321f'/%3E%3Crect x='146' y='56' width='8' height='10' fill='%235a3a1a'/%3E%3Cpath d='M55,52 L60,38 L65,52 Z M58,52 L58,44' fill='%232f6b3a' stroke='%232f6b3a' stroke-width='1.5'/%3E%3Cpath d='M175,45 L181,29 L187,45 Z' fill='%232f6b3a'/%3E%3Cpath d='M300,70 L305,58 L310,70 Z' fill='%23276030'/%3E%3Cpath d='M325,72 L329,62 L333,72 Z' fill='%23276030'/%3E%3Cpath d='M370,74 L374,64 L378,74 Z' fill='%23276030'/%3E%3C/svg%3E") bottom / cover no-repeat,
     linear-gradient(180deg, #cfe8f5, #eef8fb);
   margin: 10px 0;
+}
+/* Kleine, fliegende Vögel am Horizont — ein einfaches "V"-Symbol, das per CSS-Animation
+   gemächlich von rechts nach links über den Himmel zieht UND dabei die Flügel-"V"-Form leicht
+   auf- und zuklappt (durch Skalieren der Flügel-Spitzen), damit es wie ein echtes Flügelschlagen
+   wirkt statt einer starren Silhouette, die nur über den Bildschirm gleitet. Zwei Vögel mit
+   unterschiedlicher Verzögerung/Höhe, damit es nicht wie ein einzelnes, sich wiederholendes
+   Muster wirkt. Rein dekorativ (pointer-events:none), lenkt nicht vom Spiel ab. */
+.kt-bird {
+  position: absolute;
+  top: 14%;
+  right: -8%;
+  font-size: 0.85rem;
+  color: rgba(60,50,40,0.55);
+  pointer-events: none;
+  animation: ktBirdFly 14s linear infinite;
+}
+.kt-bird-2 {
+  top: 26%;
+  font-size: 0.65rem;
+  animation-delay: -6s;
+  animation-duration: 17s;
+}
+@keyframes ktBirdFly {
+  0% { transform: translateX(0) scaleY(1); }
+  10% { transform: translateX(-40px) scaleY(0.5); }
+  20% { transform: translateX(-80px) scaleY(1); }
+  30% { transform: translateX(-120px) scaleY(0.5); }
+  40% { transform: translateX(-160px) scaleY(1); }
+  100% { transform: translateX(-480px) scaleY(1); }
 }
 /* Schienen als klare, einfache Linien genau auf der Höhe, auf der der Zug fährt (siehe .kt-train
    top:60%) — zwei parallele Gleis-Linien mit Schwellen dazwischen, statt eines schräg
@@ -3164,15 +3201,15 @@
 .kt-wagon {
   position: relative;
   display: inline-block;
-  /* Größer als vorher (war 58px), damit die Wörter besser lesbar sind — wie gewünscht "der Zug
-     kann sowieso größer sein, damit die Wörter besser zu lesen sind". */
-  width: 78px;
+  /* Insgesamt nochmal etwas größer (war 78px), passend zur ebenfalls leicht vergrößerten
+     Lokomotive — wie gewünscht "etwas größer, aber nicht viel größer". */
+  width: 86px;
   flex-shrink: 0;
 }
 .kt-wagon-svg {
   display: block;
-  width: 78px;
-  height: 46px;
+  width: 86px;
+  height: 51px;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));
 }
 .kt-wagon-text {
@@ -3273,12 +3310,10 @@
   border-radius: 50%;
   pointer-events: none;
 }
+/* WICHTIG — die weiße Kontur um den gelben Schriftzug (Fox of the Day/Week/Month/Year) wurde
+   ausdrücklich als störend gemeldet und hier komplett entfernt — der Text bleibt ohne
+   zusätzlichen Rand, nur die eigene Textfarbe (siehe .fox-period-badge) bleibt bestehen. */
 .fox-period-badge-text {
-  text-shadow:
-    -0.6px -0.6px 0 rgba(255,255,255,0.85),
-    0.6px -0.6px 0 rgba(255,255,255,0.85),
-    -0.6px 0.6px 0 rgba(255,255,255,0.85),
-    0.6px 0.6px 0 rgba(255,255,255,0.85);
 }
 /* Das Fuchs-Emoji bekommt einen SCHARFEN (nicht weich ausfließenden) schwarzen Schlagschatten
    statt eines weichen drop-shadow-Weichzeichners — mehrere text-shadow-Kopien mit 0 Weichzeichnung

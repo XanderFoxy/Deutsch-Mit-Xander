@@ -4484,8 +4484,12 @@
     "Polen": "pl",
     "Portugal": "pt", "Brasilien": "pt", "Angola": "pt", "Mosambik": "pt", "Guinea-Bissau": "pt", "Kap Verde": "pt",
     "USA": "en", "Vereinigtes Königreich": "en",
-    "Irland": "en", "Australien": "en", "Neuseeland": "en", "Indien": "en", "Nigeria": "en", "Kanada": "en",
+    "Irland": "en", "Australien": "en", "Neuseeland": "en", "Nigeria": "en", "Kanada": "en",
     "Südafrika": "en", "Kenia": "en", "Ghana": "en", "Pakistan": "en", "Philippinen": "en",
+    "Italien": "it", "San Marino": "it", "Vatikanstadt": "it",
+    "Indien": "hi",
+    "China": "zh", "Taiwan": "zh", "Singapur": "zh",
+    "Israel": "he",
   };
   function firstStepsLangFor(profile) {
     const origin = profile?.origin;
@@ -4502,9 +4506,9 @@
     const area = document.getElementById("firstStepsArea");
     if (!area) return;
     const profile = Backend.currentProfile();
-    const langNames = { en: "Englisch", ar: "Arabisch", tr: "Türkisch", ru: "Russisch", uk: "Ukrainisch", fa: "Persisch/Farsi", es: "Spanisch", pt: "Portugiesisch", fr: "Französisch", pl: "Polnisch" };
+    const langNames = { en: "Englisch", ar: "Arabisch", tr: "Türkisch", ru: "Russisch", uk: "Ukrainisch", fa: "Persisch/Farsi", es: "Spanisch", pt: "Portugiesisch", fr: "Französisch", pl: "Polnisch", it: "Italienisch", hi: "Hindi", zh: "Chinesisch", he: "Hebräisch" };
     const lang = firstStepsLangOverride || firstStepsLangFor(profile);
-    const rtl = lang === "ar" || lang === "fa";
+    const rtl = lang === "ar" || lang === "fa" || lang === "he";
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Ein Baukasten für den allerersten Kontakt mit Deutsch — auch ohne ein einziges bereits bekanntes deutsches Wort. Kapitel für Kapitel, wie im Buch: erst ein paar Bausteine lernen, direkt danach damit Sätze bauen — bevor es zum nächsten Kapitel geht.</p>
       <div class="question-card" style="margin-bottom:16px;">
@@ -6082,7 +6086,7 @@
     // erkennbaren Schornstein. Jetzt zwei echte Schornsteine (ein großer, ein kleiner) auf dem Bug,
     // ein Führerhaus-Fenster mit Sprossen, ein Kessel-Highlight für Rundung, und ein rotes
     // Stoßfänger-Detail vorne — insgesamt näher an einer klassischen Dampflokomotive.
-    const locomotiveSvg = `<svg viewBox="0 0 84 58" width="76" height="52" class="kt-locomotive-svg">
+    const locomotiveSvg = `<svg viewBox="0 0 84 58" width="86" height="59" class="kt-locomotive-svg">
       <rect x="16" y="14" width="30" height="20" rx="10" fill="#c9432f"/>
       <rect x="16" y="14" width="30" height="7" rx="6" fill="#e0594a" opacity="0.7"/>
       <rect x="16" y="20" width="30" height="4" fill="#a8321f"/>
@@ -6142,6 +6146,8 @@
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(ktLives, 3)}</p>
         <div class="kt-track" id="ktTrack">
+          <span class="kt-bird" aria-hidden="true">˅</span>
+          <span class="kt-bird kt-bird-2" aria-hidden="true">˅</span>
           <div class="kt-train" id="ktTrain" style="animation-play-state:${ktPaused ? "paused" : "running"};">
             <span class="kt-locomotive">${locomotiveSvg}</span>
             ${words.map(wagonSvg).join("")}
@@ -9313,6 +9319,17 @@
         C1: "Goethe zählt zu den einflussreichsten Persönlichkeiten der deutschen Kulturgeschichte — als Dichter der Weimarer Klassik prägte er mit Werken wie „Faust“ und „Die Leiden des jungen Werthers“ die europäische Literatur nachhaltig und wirkte zugleich als Naturwissenschaftler und Staatsminister.",
         C2: "Als Zentralgestalt der Weimarer Klassik verkörpert Goethe wie kaum eine andere Figur das Ideal des Universalgelehrten: sein literarisches Schaffen, allen voran das lebenslange Ringen um „Faust“, verschmilzt mit naturwissenschaftlichen Studien und staatsmännischem Wirken zu einem einzigartigen kulturellen Vermächtnis.",
       },
+      translationsA1: {
+        en: "Goethe was a famous German poet. He wrote many poems and books. His best-known book is called 'Faust'.",
+        ar: "كان غوته شاعراً ألمانياً مشهوراً. كتب الكثير من القصائد والكتب. أشهر كتبه اسمه «فاوست».",
+        tr: "Goethe ünlü bir Alman şairdi. Birçok şiir ve kitap yazdı. En ünlü kitabı 'Faust' adını taşır.",
+        ru: "Гёте был знаменитым немецким поэтом. Он написал много стихов и книг. Его самая известная книга называется «Фауст».",
+        es: "Goethe fue un famoso poeta alemán. Escribió muchos poemas y libros. Su libro más conocido se llama 'Fausto'.",
+        fr: "Goethe était un célèbre poète allemand. Il a écrit de nombreux poèmes et livres. Son livre le plus connu s'appelle « Faust ».",
+        pl: "Goethe był słynnym niemieckim poetą. Napisał wiele wierszy i książek. Jego najsłynniejsza książka nazywa się „Faust”.",
+        uk: "Гете був відомим німецьким поетом. Він написав багато віршів і книг. Його найвідоміша книга називається «Фауст».",
+        fa: "گوته شاعر معروف آلمانی بود. او شعرها و کتاب‌های زیادی نوشت. معروف‌ترین کتابش «فاوست» نام دارد.",
+      },
     },
     {
       id: "schiller", name: "Friedrich Schiller", years: "1759–1805",
@@ -9431,6 +9448,19 @@
         kompassTileScrollY = window.scrollY;
         setOpenIdVar(btn.dataset.tileId);
         renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
+        // WICHTIG — behebt einen weiteren echten Bug: bisher blieb der Browser einfach an der
+        // Stelle, an der man sich gerade befand, als das Detail-Fenster einblendete — je nach
+        // vorheriger Scroll-Position landete der Inhalt dadurch mal zu weit oben, mal zu weit
+        // unten (teils sogar abgeschnitten) im sichtbaren Bereich. Jetzt scrollt das geöffnete
+        // Detail-Fenster IMMER zuverlässig an dieselbe, gut lesbare Position (knapp unterhalb des
+        // Bildschirmrands) — unabhängig davon, wo man vorher in der Kachel-Galerie gescrollt hatte.
+        requestAnimationFrame(() => { requestAnimationFrame(() => {
+          const detailCard = area.querySelector(".question-card");
+          if (detailCard) {
+            const rect = detailCard.getBoundingClientRect();
+            window.scrollTo({ top: window.scrollY + rect.top - 70, behavior: "instant" });
+          }
+        }); });
       });
     });
   }
@@ -9450,6 +9480,13 @@
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip level-switch-btn" data-level="${lvl}" style="${lvl === level ? "background:var(--amber-400); color:#241505;" : ""}">${lvl}</button>`).join("")}
         </div>
         <p style="margin-top:8px;">${entry.levels[level]}</p>
+        ${entry.translationsA1 ? (() => {
+          const tileLang = firstStepsLangFor(Backend.currentProfile());
+          const t = entry.translationsA1[tileLang];
+          if (!t) return "";
+          const tileRtl = tileLang === "ar" || tileLang === "fa" || tileLang === "he";
+          return `<p class="empty-note" style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${tileRtl ? "rtl" : "ltr"}">🌍 ${t}</p>`;
+        })() : ""}
       </div>
     `;
     // WICHTIG — behebt einen echten Bug: bei zwei gleichzeitig auf derselben Seite gerenderten
@@ -9755,7 +9792,7 @@
             const histLang = firstStepsLangFor(Backend.currentProfile());
             const t = todayHistory.translationsA1[histLang];
             if (!t) return "";
-            const histRtl = histLang === "ar" || histLang === "fa";
+            const histRtl = histLang === "ar" || histLang === "fa" || histLang === "he";
             return `<p class="empty-note" style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${histRtl ? "rtl" : "ltr"}">🌍 ${t}</p>`;
           })() : ""}
           ${todayHistory.sideFacts && todayHistory.sideFacts.length ? `
@@ -14759,7 +14796,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "118";
+  const APP_VERSION = "119";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
