@@ -1344,7 +1344,7 @@
      clip-path:circle() entfernt — border-radius:50% (schon auf .avatar-photo selbst gesetzt) ist
      auf Android-Browsern deutlich zuverlässiger unterstützt. Mit beiden gleichzeitig gesetzt kam
      es bei normalen (nicht Sammelfigur-)Profilbildern zu eckiger Darstellung statt rund. */
-  width: clamp(72px, 22vw, 100px); height: clamp(72px, 22vw, 100px);
+  width: clamp(88px, 26vw, 118px); height: clamp(88px, 26vw, 118px);
   font-size: 2.3rem;
 }
 /* Alle Text-Elemente rechts vom Bild (Name, Badges) müssen bei Bedarf schrumpfen/umbrechen
@@ -1408,10 +1408,10 @@
   display: inline-block;
   background: rgba(0,0,0,0.07);
   border-radius: 999px;
-  padding: 2px 9px;
-  margin: 0 5px 5px 0;
+  padding: 1px 9px;
+  margin: 0 5px 3px 0;
   font-size: 0.74rem;
-  line-height: 1.5;
+  line-height: 1.4;
   color: inherit;
   vertical-align: middle;
   /* WICHTIG: verhindert, dass der Inhalt EINES Badges (z. B. "🇩🇪 Deutschland" oder
@@ -2806,12 +2806,14 @@
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.12), inset 0 3px 6px rgba(255,255,255,0.7), inset -3px -3px 8px rgba(100,180,210,0.25);
   animation-name: bbGrowAndPop;
-  /* WICHTIG: NICHT mehr ease-in (das beschleunigt konstant zum Ende hin — fühlte sich an, als
-     würde die Blase an einer Schnur nach oben gezogen). Eine sanfte, custom Kurve mit leichtem
-     Auftrieb-Charakter: schnell genug am Anfang, um wie ein natürlicher Aufstieg zu wirken, dann
-     spürbar ruhiger werdend zur Mitte hin — wie eine echte Seifenblase, die von der Luft getragen
-     wird, statt gleichmäßig gezogen zu werden. */
-  animation-timing-function: cubic-bezier(0.25, 0.65, 0.35, 1);
+  /* WICHTIG — behebt einen echten Bug: eine einzelne, starke Easing-Kurve über nur wenige,
+     ungleichmäßig verteilte Keyframes hinweg führte dazu, dass jedes Segment für sich am Ende
+     abbremste und am nächsten Segment-Anfang wieder beschleunigte — das fühlte sich wie ein
+     kurzes Stehenbleiben auf halber Strecke an. linear + viele, gleichmäßig verteilte Keyframes
+     (siehe unten) erzeugen stattdessen eine durchgängig fließende Aufwärtsbewegung ohne Ruckeln;
+     das "gemütliche", leicht schwankende Gefühl kommt jetzt allein aus der Keyframe-Kurve selbst
+     (wie ein herabfallendes Blatt, nur andersherum), nicht mehr aus der Timing-Funktion. */
+  animation-timing-function: linear;
   animation-fill-mode: forwards;
   overflow: visible;
 }
@@ -2827,21 +2829,27 @@
   pointer-events: none;
 }
 @keyframes bbGrowAndPop {
-  /* Startet UNTEN, versteckt unterhalb des sichtbaren Spielfelds (siehe top:108% in der
-     Positionierung), und steigt nach oben auf. WICHTIG — behebt einen echten Bug: vorher ging die
-     Strecke bis zu -130vh (also z. B. 1000px+ auf einem normalen Handy-Bildschirm), obwohl das
-     eigentliche Spielfeld (.bb-pool) nur 220px hoch ist. Die Blase war dadurch schon nach einem
-     Bruchteil der Animation (rund 20–25%) optisch komplett aus dem sichtbaren Bereich verschwunden
-     — aber "animationend" (das über resolveBubble() erst den Fehler auslöst) feuerte trotzdem erst
-     am Ende der vollen, viel zu langen restlichen Strecke. Jetzt endet die Bewegung bei knapp 300px
-     — genau der Distanz, die nötig ist, damit die Blase (Durchmesser 92px) den 220px hohen,
-     sichtbaren Pool-Bereich vollständig verlassen hat. Der Fehler kommt dadurch jetzt spürbar
-     direkt nach dem Verschwinden, nicht erst "wenn sie 2 m drüber sind". */
+  /* Startet UNTEN, versteckt unterhalb des sichtbaren Spielfelds, und steigt gemächlich nach
+     oben auf — mit vielen, gleichmäßig verteilten Zwischenschritten (statt nur 3-4 großer
+     Sprünge) für eine durchgängig sanfte, leicht "tänzelnde" Bewegung: seitliches Schaukeln, das
+     die Richtung mehrfach sanft wechselt (wie ein Blatt im Wind), und eine leichte Drehung, die
+     ebenfalls hin- und herschwingt statt einseitig weiterzudrehen — Wörter bleiben dabei immer
+     lesbar (max. ±6 Grad), es dreht sich nie komplett herum. Endet bei -300px, der Distanz, die
+     nötig ist, damit die Blase (92px) den 220px hohen, sichtbaren Pool-Bereich vollständig
+     verlassen hat.
+  */
   0%   { transform: translate(-50%, -50%) scale(0.7) rotate(0deg); opacity: 0; }
-  8%   { opacity: 0.9; }
-  40%  { transform: translate(calc(-50% + 6px), calc(-50% - 105px)) scale(0.95) rotate(-4deg); opacity: 1; }
-  70%  { transform: translate(calc(-50% - 5px), calc(-50% - 195px)) scale(1.08) rotate(4deg); opacity: 1; }
-  100% { transform: translate(-50%, calc(-50% - 300px)) scale(1.3) rotate(-3deg); opacity: 0; }
+  6%   { opacity: 0.9; }
+  15%  { transform: translate(calc(-50% + 5px), calc(-50% - 28px)) scale(0.8) rotate(3deg); }
+  25%  { transform: translate(calc(-50% - 4px), calc(-50% - 55px)) scale(0.85) rotate(-4deg); }
+  35%  { transform: translate(calc(-50% + 6px), calc(-50% - 85px)) scale(0.92) rotate(5deg); }
+  45%  { transform: translate(calc(-50% - 5px), calc(-50% - 115px)) scale(0.98) rotate(-3deg); }
+  55%  { transform: translate(calc(-50% + 4px), calc(-50% - 148px)) scale(1.04) rotate(4deg); }
+  65%  { transform: translate(calc(-50% - 6px), calc(-50% - 182px)) scale(1.1) rotate(-5deg); }
+  75%  { transform: translate(calc(-50% + 5px), calc(-50% - 218px)) scale(1.16) rotate(3deg); }
+  85%  { transform: translate(calc(-50% - 4px), calc(-50% - 255px)) scale(1.22) rotate(-4deg); opacity: 1; }
+  95%  { transform: translate(calc(-50% + 3px), calc(-50% - 285px)) scale(1.28) rotate(2deg); opacity: 0.4; }
+  100% { transform: translate(-50%, calc(-50% - 300px)) scale(1.3) rotate(0deg); opacity: 0; }
 }
 .bb-bubble-pop-good {
   animation: none !important;
@@ -2884,31 +2892,32 @@
    es die Spiele-Buttons vorher schon aussahen, bevor sie versehentlich das Kachel-Design mit
    übernahmen. */
 .games-pill-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 .games-pill {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 4px;
+  padding: 10px 6px;
   background: linear-gradient(160deg, color-mix(in srgb, var(--plum-800), white 18%), var(--plum-800) 55%, color-mix(in srgb, var(--plum-800), black 18%));
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   border: 1px solid rgba(245, 239, 228, 0.1);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   color: var(--cream-200);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
 }
 .games-pill-emoji {
   font-size: 1.3rem;
   flex-shrink: 0;
 }
 .games-pill-name {
-  flex: 1;
+  line-height: 1.2;
 }
 /* Kompass-Kacheln (Dichter & Denker, Schnee von gestern) — bewusst klein und kompakt, MINDESTENS
    drei pro Reihe, auch auf sehr schmalen Bildschirmen (320px). Fest auf 3 Spalten statt
@@ -3170,7 +3179,13 @@
   position: absolute;
   left: 0; right: 0; top: 4px;
   text-align: center;
-  color: #241505;
+  color: #fff;
+  /* Dunkler Textschatten in alle Richtungen statt nur normalem drop-shadow — hält die weiße
+     Schrift auf JEDER der bunten Waggon-Farben (auch hellen wie Gelb) zuverlässig lesbar, da
+     der Kontrast so nicht mehr von einer einzelnen Grundfarbe abhängt. */
+  text-shadow:
+    -1px -1px 0 rgba(0,0,0,0.55), 1px -1px 0 rgba(0,0,0,0.55),
+    -1px 1px 0 rgba(0,0,0,0.55), 1px 1px 0 rgba(0,0,0,0.55);
   font-weight: 800;
   /* Schriftgröße passt sich innerhalb einer Spanne an die Wortlänge an, UND overflow:hidden
      verhindert zusätzlich, dass ein besonders langes Wort sichtbar aus dem Waggon "ausbricht" —
@@ -3243,11 +3258,20 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.35) !important;
 }
 /* .fox-period-badge erbt von .admin-badge auch dessen ::before-Glanzlicht (weißer radialer
-   Fleck) — das reine Entfernen der eigenen background-Überschreibung hätte diesen geerbten
-   Glanzfleck nur schwächer, aber nicht verschwinden lassen. display:none deaktiviert ihn hier
-   komplett, wie gewünscht. */
+   Fleck) — das war früher als voller Rand um das GESAMTE Badge sichtbar, was ausdrücklich nicht
+   gewünscht war. Jetzt ein eigenes, dezentes Glanzlicht nur oben links (wie bei den anderen
+   3D-Glanz-Elementen der App, z. B. den YouTube/TikTok-Chips) — sorgt für denselben Tiefeneffekt
+   wie bei den übrigen Badges, ohne einen Rand um das gesamte Element zu bilden. */
 .fox-period-badge::before {
-  display: none !important;
+  content: "";
+  position: absolute;
+  top: -40%;
+  left: 6%;
+  width: 32%;
+  height: 80%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.4), rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 .fox-period-badge-text {
   text-shadow:

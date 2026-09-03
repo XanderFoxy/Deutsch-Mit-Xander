@@ -197,7 +197,15 @@
       const activePill = view?.querySelector(".subnav-pill[aria-selected=\"true\"]");
       if (activePill) { suppressNextSubnavScroll = true; activePill.click(); }
     }
-    if (t.dataset.target === "view-profile") maybeShowFoxIntro();
+    if (t.dataset.target === "view-profile") {
+      // WICHTIG — behebt einen echten, weitreichenden Bug: der obige "einmalig pro Sitzung
+      // nachklicken"-Mechanismus rendert das Profil nur beim ALLERERSTEN Besuch dieses Tabs neu.
+      // Bei jedem weiteren Rückkehr blieb der Inhalt seither komplett statisch — Änderungen wie
+      // Herkunftsland, Sternzeichen, neu verdiente Punkte oder Abzeichen erschienen erst nach
+      // einem Seiten-Neuladen. Explizit bei JEDEM Besuch neu rendern behebt das zuverlässig.
+      if (typeof renderAccount === "function" && !profileEditMode) renderAccount();
+      maybeShowFoxIntro();
+    }
     if (t.dataset.target === "view-about") renderAboutEditButton();
     // Missionen zeigen den Freischalt-Fortschritt der Sammelfiguren — der ändert sich potenziell
     // bei JEDER gespielten Runde, nicht nur einmalig beim Login. Ist "Missionen" gerade der aktive
@@ -5645,6 +5653,11 @@
       btn.addEventListener("animationend", () => {
         const b = bbActiveBubbles.find((x) => x.id === btn.dataset.bid);
         if (!b || b.resolved) return;
+        // WICHTIG — behebt einen echten Bug: bisher gab es nur beim aktiven Antippen einen echten
+        // "Platz"-Effekt (spawnBubbleSplashParticles); zerplatzte eine Blase stattdessen von
+        // selbst durch Zeitablauf (kein Klick, nur animationend), verschwand sie einfach nur
+        // ohne jeden visuellen Effekt. Jetzt platzt sie auch in diesem Fall sichtbar.
+        spawnBubbleSplashParticles(btn, b.isCorrect);
         resolveBubble(b.id, false);
       });
     });
@@ -5761,6 +5774,40 @@
     const ty = cy - (32 * scale) / 2;
     return `<g transform="translate(${tx},${ty}) scale(${scale})" fill="none" stroke="${color}" stroke-width="${strokeWidth / scale}" stroke-linecap="round" stroke-linejoin="round">
       ${strokes.map((d) => `<path d="${d}" />`).join("")}
+    </g>`;
+  }
+  // "Bubble-Letter"-Variante speziell für KORREKTOUR — dieselben Buchstaben-Skelette wie
+  // handDrawnLetterGroup(), aber als dicke, gefüllte, "aufgeblasene" Formen statt dünner Striche:
+  // wie Graffiti-Blockbuchstaben oder "Russisch Brot"-Gebäck — mit sichtbarer Dicke/Volumen, einem
+  // Farbverlauf für die Rundung, einem dunklen Outline-Stroke für die Kontur, und einem hellen
+  // Glanzlicht-Strich obendrauf für den glänzenden, ballonartigen Eindruck. Ein eigener,
+  // unverwechselbarer Stil nur für dieses eine Spiel, wie gewünscht.
+  let bubbleLetterGradientCounter = 0;
+  function bubbleLetterSvg(letter, cx, cy, size, colorTop, colorBottom) {
+    const strokes = VM_LETTER_STROKES[letter.toUpperCase()];
+    if (!strokes) return "";
+    const scale = size / 32;
+    const tx = cx - (24 * scale) / 2;
+    const ty = cy - (32 * scale) / 2;
+    const gid = `bblGrad${bubbleLetterGradientCounter++}`;
+    const thickPx = 15; // dicke, "aufgeblasene" Strichbreite in Bildschirm-Pixeln
+    const thinPx = 4; // schmales, oben aufliegendes Glanzlicht
+    return `<g transform="translate(${tx},${ty}) scale(${scale})">
+      <defs>
+        <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${colorTop}"/>
+          <stop offset="100%" stop-color="${colorBottom}"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="#2a1a10" stroke-width="${(thickPx + 4) / scale}" stroke-linecap="round" stroke-linejoin="round">
+        ${strokes.map((d) => `<path d="${d}" />`).join("")}
+      </g>
+      <g fill="none" stroke="url(#${gid})" stroke-width="${thickPx / scale}" stroke-linecap="round" stroke-linejoin="round">
+        ${strokes.map((d) => `<path d="${d}" />`).join("")}
+      </g>
+      <g fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="${thinPx / scale}" stroke-linecap="round" stroke-linejoin="round" transform="translate(${-2.4 / scale},${-2.4 / scale})">
+        ${strokes.map((d) => `<path d="${d}" />`).join("")}
+      </g>
     </g>`;
   }
   /* ===== Vokabelmeister: Buchstabe wählen (selbst oder zufällig), dann Zeitdruck — so viele
@@ -5995,7 +6042,7 @@
             <rect x="2" y="14" width="${wagonW - 6}" height="34" rx="6" fill="${KT_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.5"/>
             <circle cx="9" cy="52" r="5" fill="#241505"/>
             <circle cx="${wagonW - 11}" cy="52" r="5" fill="#241505"/>
-            <text x="${(wagonW - 6) / 2 + 2}" y="37" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="20" font-weight="800" fill="#FFFFFF" stroke="#241505" stroke-width="0.6">${letter}</text>
+            ${bubbleLetterSvg(letter, (wagonW - 6) / 2 + 2, 32, 26, "#FFFFFF", "#D8E8EA")}
           </g>`;
         }).join("")}
       </svg>`;
@@ -6036,13 +6083,13 @@
     // ein Führerhaus-Fenster mit Sprossen, ein Kessel-Highlight für Rundung, und ein rotes
     // Stoßfänger-Detail vorne — insgesamt näher an einer klassischen Dampflokomotive.
     const locomotiveSvg = `<svg viewBox="0 0 84 58" width="76" height="52" class="kt-locomotive-svg">
-      <rect x="2" y="4" width="6" height="16" rx="1.5" fill="#3a2f4a"/>
-      <ellipse cx="5" cy="3" rx="5" ry="2.5" fill="#8a7a9a"/>
-      <rect x="12" y="8" width="4" height="12" rx="1" fill="#4a3a5a"/>
-      <ellipse cx="14" cy="7" rx="3" ry="1.8" fill="#8a7a9a"/>
       <rect x="16" y="14" width="30" height="20" rx="10" fill="#c9432f"/>
       <rect x="16" y="14" width="30" height="7" rx="6" fill="#e0594a" opacity="0.7"/>
       <rect x="16" y="20" width="30" height="4" fill="#a8321f"/>
+      <rect x="21" y="4" width="6" height="16" rx="1.5" fill="#3a2f4a"/>
+      <ellipse cx="24" cy="3" rx="5" ry="2.5" fill="#8a7a9a"/>
+      <rect x="31" y="8" width="4" height="12" rx="1" fill="#4a3a5a"/>
+      <ellipse cx="33" cy="7" rx="3" ry="1.8" fill="#8a7a9a"/>
       <rect x="44" y="8" width="30" height="26" rx="4" fill="#5a4a72"/>
       <rect x="49" y="12" width="9" height="9" rx="1.5" fill="#bfe3f0"/>
       <line x1="53.5" y1="12" x2="53.5" y2="21" stroke="#5a4a72" stroke-width="1"/>
@@ -6057,22 +6104,36 @@
     </svg>`;
     // Wagen ebenfalls mit mehr Details: sichtbare Holzlatten-Struktur, ein Metallrahmen-Streifen
     // unten, und Nietenpunkte an den Ecken statt einer reinen Flat-Color-Fläche.
-    const wagonSvg = (word) => `<span class="kt-wagon">
+    // Bunte Waggons statt einer einzigen Holzfarbe — jeder Waggon bekommt der Reihe nach eine
+    // andere, kräftige Farbe aus dieser festen Palette (statt zufällig, damit es beim Neu-Rendern
+    // nicht bei jedem Bild "flackert"). Die Randfarbe wird für jeden Ton passend mitgeführt.
+    const WAGON_COLORS = [
+      { fill: "#f0a94e", stroke: "#96521a" }, // Holzorange (Original)
+      { fill: "#4f9dd6", stroke: "#215a86" }, // Blau
+      { fill: "#5fb87a", stroke: "#276b3e" }, // Grün
+      { fill: "#d64f7a", stroke: "#8a1f42" }, // Pink/Rot
+      { fill: "#9d6fd6", stroke: "#5a2e8a" }, // Lila
+      { fill: "#e0b23c", stroke: "#8a6a10" }, // Gelb
+    ];
+    const wagonSvg = (word, idx) => {
+      const c = WAGON_COLORS[idx % WAGON_COLORS.length];
+      return `<span class="kt-wagon">
       <svg viewBox="0 0 84 50" class="kt-wagon-svg" aria-hidden="true">
-        <rect x="2" y="4" width="80" height="28" rx="5" fill="#f0a94e" stroke="#96521a" stroke-width="1.5"/>
-        <line x1="2" y1="12" x2="82" y2="12" stroke="#c98730" stroke-width="1" opacity="0.6"/>
-        <line x1="2" y1="20" x2="82" y2="20" stroke="#c98730" stroke-width="1" opacity="0.6"/>
-        <rect x="2" y="22" width="80" height="4" fill="#96521a" opacity="0.5"/>
-        <circle cx="7" cy="8" r="1.4" fill="#96521a"/>
-        <circle cx="77" cy="8" r="1.4" fill="#96521a"/>
-        <circle cx="7" cy="28" r="1.4" fill="#96521a"/>
-        <circle cx="77" cy="28" r="1.4" fill="#96521a"/>
+        <rect x="2" y="4" width="80" height="28" rx="5" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5"/>
+        <line x1="2" y1="12" x2="82" y2="12" stroke="${c.stroke}" stroke-width="1" opacity="0.6"/>
+        <line x1="2" y1="20" x2="82" y2="20" stroke="${c.stroke}" stroke-width="1" opacity="0.6"/>
+        <rect x="2" y="22" width="80" height="4" fill="${c.stroke}" opacity="0.5"/>
+        <circle cx="7" cy="8" r="1.4" fill="${c.stroke}"/>
+        <circle cx="77" cy="8" r="1.4" fill="${c.stroke}"/>
+        <circle cx="7" cy="28" r="1.4" fill="${c.stroke}"/>
+        <circle cx="77" cy="28" r="1.4" fill="${c.stroke}"/>
         <rect x="2" y="26" width="80" height="6" fill="#241505"/>
         ${wheelSvg(19, 41, 8)}
         ${wheelSvg(65, 41, 8)}
       </svg>
       <span class="kt-wagon-text">${word}</span>
     </span>`;
+    };
     area.innerHTML = `
       <div class="question-card">
         ${miniBugReportBtnHtml("Korrektour: " + ktCurrentSentence.text)}
@@ -9690,6 +9751,13 @@
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
           </div>
           <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
+          ${todayHistory.translationsA1 ? (() => {
+            const histLang = firstStepsLangFor(Backend.currentProfile());
+            const t = todayHistory.translationsA1[histLang];
+            if (!t) return "";
+            const histRtl = histLang === "ar" || histLang === "fa";
+            return `<p class="empty-note" style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${histRtl ? "rtl" : "ltr"}">🌍 ${t}</p>`;
+          })() : ""}
           ${todayHistory.sideFacts && todayHistory.sideFacts.length ? `
             <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
             ${todayHistory.sideFacts.map((f) => `<p class="empty-note" style="margin-top:6px;">${f.year}: ${f.text.replace(/^\d{4}\s*/, "")}</p>`).join("")}
@@ -10756,10 +10824,8 @@ An einem Morgen lief ein kleiner Fuchs los…
               <h2 style="margin:0 0 2px 0;" class="profile-header-name">${profile.name}${!extra.hideAge && calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
               ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
               <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
-              <span class="profile-header-stack-row">
-                ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
-                <span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>
-              </span>
+              ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
+              ${zodiacBadgeHtml(profile.birthday) ? `<span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>` : ""}
             </div>
           </div>
           <div style="clear:both;"></div>
@@ -14693,7 +14759,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "117";
+  const APP_VERSION = "118";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
