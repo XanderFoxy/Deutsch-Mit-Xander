@@ -1344,6 +1344,7 @@
 .profile-header-stack-row {
   display: inline;
 }
+.profile-header-flow .avatar-photo-wrap,
 .profile-header-flow .avatar-photo,
 .profile-header-flow .initials-avatar {
   /* float + shape-outside statt eines Flex-Items daneben — das lässt den nachfolgenden Text
@@ -1369,7 +1370,18 @@
 /* Alle Text-Elemente rechts vom Bild (Name, Badges) müssen bei Bedarf schrumpfen/umbrechen
    dürfen können — das ist es, was vorher fehlte und wieder zum Überlaufen über den Kartenrand
    geführt hatte. min-width:0 erlaubt echtes Schrumpfen unter die natürliche Inhaltsbreite. */
-.profile-header-flow > *:not(.avatar-photo):not(.initials-avatar):not(.avatar-figure-sticker-wrap) {
+
+/* WICHTIG — der Glaseffekt hat das Foto in einen Wrapper gesetzt. Damit der
+   Textumlauf weiter funktioniert, floatet jetzt der WRAPPER; das Bild darin
+   füllt ihn nur noch aus und floatet selbst nicht mehr. Ohne diese Zeile wäre
+   der schöne Umlauf um die Rundung verloren gegangen. */
+.profile-header-flow .avatar-photo-wrap .avatar-photo {
+  float: none;
+  shape-outside: none;
+  margin: 0;
+  width: 100%; height: 100%;
+}
+.profile-header-flow > *:not(.avatar-photo-wrap):not(.avatar-photo):not(.initials-avatar):not(.avatar-figure-sticker-wrap) {
   min-width: 0;
   max-width: 100%;
 }
@@ -3773,11 +3785,14 @@ details summary::marker { content: ""; }
   100% { opacity: 1; transform: translateY(0) rotate(0); }
 }
 .sb-planke { animation: sbPlankeLegen 320ms ease-out backwards; }
-@keyframes sbFuchsLauf {
-  0% { transform: translateX(-46px); }
-  100% { transform: translateX(46px); }
-}
-.sb-fuchs { animation: sbFuchsLauf 2600ms ease-in-out infinite alternate; }
+/* Die Position des Fuchses steckt in seinem eigenen transform (er steht genau
+   dort, wo die Brücke aufhört). Eine zusätzliche transform-Animation würde diese
+   Position überschreiben — deshalb wird hier NICHT animiert, sondern weich
+   überblendet, wenn eine Planke dazukommt. */
+.sb-fuchs { transition: transform 520ms cubic-bezier(0.34, 1.2, 0.64, 1); }
+/* Trägt die Brücke nicht ganz, macht ein leicht gedämpfter Ton sichtbar,
+   dass es knapp nicht gereicht hat. */
+.sb-fuchs-wartet { opacity: 0.9; }
 .wsm-bedeutung {
   text-align: center;
   margin: 12px 0 0;
@@ -3795,13 +3810,9 @@ details summary::marker { content: ""; }
    Jetzt: Cover, Titel, und rechts die drei Knöpfe als geschlossener Block,
    mit dem Play/Pause-Knopf sichtbar größer als die beiden Nachbarn.
    ============================================================ */
-.mfb-steuerung {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  margin-left: auto;
-}
+/* Die Bedienknöpfe stehen wieder in gewohnter Reihenfolge und LINKSBÜNDIG:
+   zurück, play/pause, dann der Titel, dann weiter. Kein Abdrängen nach rechts. */
+.music-floating-bar { justify-content: flex-start; }
 .mfb-ctrl-haupt {
   width: 42px; height: 42px;
   border-radius: 50%;
@@ -3817,7 +3828,7 @@ details summary::marker { content: ""; }
   background: var(--teal-400, #5BA8A0);
   box-shadow: 0 0 0 3px rgba(91, 168, 160, 0.28), 0 2px 5px rgba(0, 0, 0, 0.22);
 }
-.mfb-title { text-align: left; flex: 1 1 auto; min-width: 0; }
+.mfb-title { text-align: left; flex: 1 1 auto; min-width: 0; margin: 0 4px; }
 
 /* Blickdichte Ebene über dem eingebetteten YouTube-Fenster — verhindert, dass
    dessen eigene Vollbild-Symbole und Schwebemenüs durchscheinen. */
@@ -3844,8 +3855,11 @@ details summary::marker { content: ""; }
   position: relative;
   display: inline-block;
   width: 76px; height: 76px;
+  /* Passt sich einem kleineren Rahmen an (z. B. „Fuchs der Woche", 56px),
+     statt ihn zu sprengen. */
   flex-shrink: 0;
   border-radius: 50%;
+  overflow: hidden;
 }
 .avatar-photo-wrap .avatar-photo { display: block; width: 100%; height: 100%; }
 .avatar-glas {
@@ -3874,3 +3888,87 @@ details summary::marker { content: ""; }
 .intro-sticker-pick { padding: 6px !important; line-height: 0; }
 .intro-sticker-pick svg { width: 40px !important; height: 40px !important; }
 .emoji-pick-btn { font-size: 1.25rem !important; padding: 6px 8px !important; }
+
+/* ============================================================
+   ARTIKEL-GARTEN
+   ============================================================ */
+.ag-samen {
+  text-align: center;
+  font-family: var(--font-display, inherit);
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 14px 0 2px;
+}
+.ag-beet-knoepfe { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+.ag-beet-btn {
+  padding: 14px 6px;
+  border-radius: 10px;
+  border: 2px solid var(--beet, #888);
+  background: color-mix(in srgb, var(--beet, #888) 14%, transparent);
+  color: inherit;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: transform 120ms ease, background 200ms ease;
+}
+/* Rückfallwert für Browser ohne color-mix — dann einfach ein heller Grund. */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .ag-beet-btn { background: rgba(255, 255, 255, 0.45); }
+}
+.ag-beet-btn:active { transform: translateY(2px); }
+.ag-treffer { background: var(--beet, #4FA88E) !important; color: #fff !important; }
+.ag-daneben { background: rgba(226, 168, 168, 0.75) !important; border-color: #C08080 !important; }
+.ag-feedback { margin-top: 14px; min-height: 2.4em; text-align: center; }
+@keyframes agBlumeWachsen {
+  0% { opacity: 0; transform: translateY(6px) scale(0.5); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ag-blume { animation: agBlumeWachsen 420ms ease-out backwards; transform-origin: center bottom; }
+
+/* ============================================================
+   KATZENZIMMER
+   ============================================================ */
+.kz-satz { text-align: center; font-size: 1.05rem; font-weight: 600; margin: 14px 0 2px; }
+.kz-luecke {
+  display: inline-block;
+  min-width: 3.4em;
+  text-align: center;
+  border-bottom: 3px dashed var(--teal-400, #5BA8A0);
+  color: var(--teal-400, #5BA8A0);
+  font-weight: 800;
+}
+.kz-luecke-gefuellt { border-bottom-style: solid; }
+.kz-optionen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.kz-option {
+  padding: 13px 10px;
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  background: linear-gradient(180deg, #FFFDF8 0%, #EDE3D2 100%);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.13);
+  font-weight: 800;
+  cursor: pointer;
+  color: #33291E;
+  transition: transform 120ms ease;
+}
+.kz-option:active { transform: translateY(2px); box-shadow: none; }
+.kz-treffer { background: linear-gradient(180deg, #CFEBD6 0%, #8CC79B 100%) !important; border-color: #6BA57B !important; }
+.kz-daneben { background: linear-gradient(180deg, #F6D8D8 0%, #E2A8A8 100%) !important; border-color: #C08080 !important; }
+.kz-feedback { margin-top: 14px; min-height: 2.6em; }
+.kz-katze { transition: transform 420ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+/* Das eingebettete YouTube-Fenster wird vollständig unsichtbar gemacht — der Ton
+   läuft unverändert weiter. Damit können YouTubes eigene Symbole (Vollbild,
+   Diagonalpfeile, Schwebemenü) gar nicht mehr durchscheinen, egal was der
+   mobile Player von sich aus einblendet. */
+.music-video-square #musicYtHost, .music-video-square iframe { opacity: 0 !important; }
+.music-yt-deckel { z-index: 3; }
+
+/* Überschrift über dem Musik-Streifen im Profil */
+.strip-ueberschrift {
+  margin: 10px 0 4px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.72;
+}

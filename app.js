@@ -2462,11 +2462,11 @@
         // sonst überschrieb, sodass man im falschen Unterreiter landete.
         setTimeout(() => {
           document.querySelector('[data-sub="sub-kompass"]')?.click();
-          // Nach dem Reiterwechsel zusätzlich gezielt zur Sektion scrollen — vorher
-          // landete man nur oben im Kompass und musste selbst suchen.
-          setTimeout(() => {
-            document.getElementById("kompass-geschichte")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 250);
+          // WICHTIG: Der Kompass wird ASYNCHRON aufgebaut (er lädt zuerst sein Banner).
+          // Eine feste Wartezeit ging deshalb regelmäßig ins Leere — man landete oben
+          // im Kompass statt bei der Sektion. Jetzt wird gewartet, bis die Überschrift
+          // wirklich im Dokument steht, und dann erst gesprungen (und kurz hervorgehoben).
+          scrollToAndHighlightWhenReady("#kompass-geschichte", 40);
         }, 400);
       });
     }
@@ -2531,8 +2531,18 @@
     if (page && !page.contains(e.target)) calOverlay.style.display = "none";
   });
   const calFrontFace = document.getElementById("calFrontFace");
-  if (calFrontFace) calFrontFace.addEventListener("click", () => {
-    document.getElementById("calendarModalPage").classList.add("torn");
+  if (calFrontFace) calFrontFace.addEventListener("click", (e) => {
+    const page = document.getElementById("calendarModalPage");
+    // Ist das Blatt schon abgerissen, ist die Vorderseite nur noch Fläche — ein
+    // weiterer Klick darauf soll den Kalender dann einfach schließen, wie überall
+    // sonst auch. Buttons und Links bleiben davon ausgenommen.
+    if (page && page.classList.contains("torn")) {
+      if (!e.target.closest("button, a")) {
+        document.getElementById("calendarModalOverlay").style.display = "none";
+      }
+      return;
+    }
+    page.classList.add("torn");
     Core.sound.correct();
     claimDailyCalendarPoints();
   });
@@ -9796,6 +9806,75 @@
   }
   const DICHTER_ENTRIES = [
     {
+      id: "humboldt", name: "Alexander von Humboldt", years: "1769–1859",
+      img: portraitSvg("AH", "#4FA88E", "#7FB87A", "🧭"),
+      levels: {
+        A1: "Alexander von Humboldt war ein deutscher Forscher. Er ist weit gereist, bis nach Südamerika. Er hat Pflanzen, Tiere und Berge untersucht.",
+        A2: "Alexander von Humboldt war ein deutscher Naturforscher. Er reiste fünf Jahre lang durch Südamerika und erforschte Pflanzen, Vulkane und das Klima. Viele Orte auf der Welt tragen heute seinen Namen.",
+        B1: "Alexander von Humboldt bereiste zwischen 1799 und 1804 Süd- und Mittelamerika und maß dort alles, was sich messen ließ. Aus seinen Beobachtungen entstand die Idee, dass Klima, Pflanzen und Tiere ein zusammenhängendes Ganzes bilden.",
+        B2: "Alexander von Humboldt (1769–1859) verband auf seiner fünfjährigen Amerikareise exakte Messung mit anschaulicher Beschreibung — und begründete damit ein Naturverständnis, das die Erde als ein einziges, verbundenes System begreift. Sein Hauptwerk „Kosmos“ wollte dieses Ganze für alle lesbar machen.",
+        C1: "Humboldts Leistung liegt weniger in einer einzelnen Entdeckung als in einer Denkweise: Indem er Temperatur, Höhe, Vegetation und menschliche Nutzung gemeinsam betrachtete, formulierte er lange vor der modernen Ökologie den Gedanken globaler Wechselwirkungen — einschließlich einer frühen Warnung vor menschengemachter Abholzung.",
+        C2: "In Humboldts Werk verschränken sich aufklärerischer Messeifer und romantische Naturempfindung zu einer Wissenschaftsauffassung, die das Erhabene nicht gegen die Zahl ausspielt, sondern beides als Zugang zu derselben Wirklichkeit versteht — eine Haltung, deren Aktualität sich daran zeigt, dass die heutige Klimaforschung im Kern seine Fragestellung fortführt.",
+      },
+      translationsA1: {
+        en: "Alexander von Humboldt was a German explorer. He travelled far, all the way to South America. He studied plants, animals and mountains.",
+        ar: "كان ألكسندر فون هومبولت مستكشفًا ألمانيًا. سافر بعيدًا حتى أمريكا الجنوبية. درس النباتات والحيوانات والجبال.",
+        tr: "Alexander von Humboldt Alman bir kâşifti. Güney Amerika'ya kadar uzaklara gitti. Bitkileri, hayvanları ve dağları inceledi.",
+        ru: "Александр фон Гумбольдт был немецким исследователем. Он путешествовал далеко, вплоть до Южной Америки. Он изучал растения, животных и горы.",
+        es: "Alexander von Humboldt fue un explorador alemán. Viajó muy lejos, hasta Sudamérica. Estudió plantas, animales y montañas.",
+        fr: "Alexander von Humboldt était un explorateur allemand. Il a voyagé loin, jusqu'en Amérique du Sud. Il a étudié les plantes, les animaux et les montagnes.",
+        pl: "Alexander von Humboldt był niemieckim badaczem. Podróżował daleko, aż do Ameryki Południowej. Badał rośliny, zwierzęta i góry.",
+        uk: "Александр фон Гумбольдт був німецьким дослідником. Він подорожував далеко, аж до Південної Америки. Він вивчав рослини, тварин і гори.",
+        fa: "الکساندر فون هومبولت کاشفی آلمانی بود. او تا آمریکای جنوبی سفر کرد. او گیاهان، جانوران و کوه‌ها را بررسی کرد.",
+      },
+    },
+    {
+      id: "kollwitz", name: "Käthe Kollwitz", years: "1867–1945",
+      img: portraitSvg("KK", "#8A7A93", "#B79FC4", "🖤"),
+      levels: {
+        A1: "Käthe Kollwitz war eine deutsche Künstlerin. Sie hat Bilder von armen Menschen gemacht. Ihre Bilder sind oft traurig und sehr stark.",
+        A2: "Käthe Kollwitz war eine deutsche Künstlerin. Sie zeichnete vor allem arme Familien, hungrige Kinder und trauernde Mütter. Sie wollte zeigen, wie es den Menschen wirklich ging.",
+        B1: "Käthe Kollwitz zeichnete und formte, was andere lieber nicht sahen: Armut, Hunger, Krieg und Trauer. Nach dem Tod ihres Sohnes im Ersten Weltkrieg wurde ihre Kunst zu einer der klarsten Anklagen gegen den Krieg.",
+        B2: "Käthe Kollwitz (1867–1945) war die erste Frau, die in die Preußische Akademie der Künste aufgenommen wurde — und wurde 1933 wieder ausgeschlossen. In Grafik und Plastik gab sie den Übersehenen ein Gesicht; ihre Skulptur der trauernden Eltern steht bis heute auf einem Soldatenfriedhof in Belgien.",
+        C1: "Kollwitz' Werk widersteht der Versuchung, Leid zu ästhetisieren: Ihre Figuren sind weder Heldinnen noch Symbole, sondern bleiben in ihrer körperlichen Erschöpfung konkret — eine künstlerische Entscheidung, die ihre Anklage gegen Krieg und Armut über hundert Jahre hinweg wirksam hält.",
+        C2: "Dass Käthe Kollwitz' Bildsprache bis heute unmittelbar trifft, verdankt sie einer Reduktion, die jede Verklärung verweigert: Wo andere das Opfer erhöhen, zeigt sie den gebeugten Rücken — und macht damit sichtbar, dass Trauer keine Bedeutung braucht, um berechtigt zu sein. Ihre Pietà in der Neuen Wache verpflichtet den Staat noch immer auf diesen Blick.",
+      },
+      translationsA1: {
+        en: "Käthe Kollwitz was a German artist. She made pictures of poor people. Her pictures are often sad and very powerful.",
+        ar: "كانت كاته كولفيتس فنانة ألمانية. رسمت صورًا للفقراء. لوحاتها حزينة غالبًا وقوية جدًا.",
+        tr: "Käthe Kollwitz Alman bir sanatçıydı. Yoksul insanların resimlerini yaptı. Resimleri çoğu zaman hüzünlü ve çok güçlüdür.",
+        ru: "Кете Кольвиц была немецкой художницей. Она создавала изображения бедных людей. Её работы часто печальны и очень сильны.",
+        es: "Käthe Kollwitz fue una artista alemana. Hizo retratos de personas pobres. Sus imágenes son a menudo tristes y muy fuertes.",
+        fr: "Käthe Kollwitz était une artiste allemande. Elle a représenté des gens pauvres. Ses images sont souvent tristes et très puissantes.",
+        pl: "Käthe Kollwitz była niemiecką artystką. Tworzyła obrazy biednych ludzi. Jej prace są często smutne i bardzo mocne.",
+        uk: "Кете Кольвіц була німецькою художницею. Вона створювала зображення бідних людей. Її роботи часто сумні й дуже сильні.",
+        fa: "کته کلویتس هنرمندی آلمانی بود. او تصویرهایی از مردم فقیر می‌کشید. تصویرهای او اغلب غمگین و بسیار پرقدرت‌اند.",
+      },
+    },
+    {
+      id: "dietrich", name: "Marlene Dietrich", years: "1901–1992",
+      img: portraitSvg("MD", "#C9A15F", "#E8A03D", "🎬"),
+      levels: {
+        A1: "Marlene Dietrich war eine berühmte Schauspielerin aus Berlin. Sie hat in vielen Filmen gespielt und auch gesungen. Später lebte sie in Amerika.",
+        A2: "Marlene Dietrich war eine deutsche Schauspielerin und Sängerin. In den 1930er-Jahren wurde sie in Hollywood berühmt. Sie weigerte sich, für die Nationalsozialisten zu arbeiten.",
+        B1: "Marlene Dietrich wurde 1930 mit dem Film „Der blaue Engel“ weltberühmt und ging kurz darauf nach Hollywood. Als die Nationalsozialisten sie zurückholen wollten, lehnte sie ab und sang stattdessen vor amerikanischen Soldaten.",
+        B2: "Marlene Dietrich (1901–1992) verkörperte eine Selbstbestimmtheit, die für ihre Zeit ungewöhnlich war — im Anzug wie im Abendkleid. Ihre Weigerung, für das NS-Regime aufzutreten, und ihre Auftritte vor alliierten Truppen machten sie in Deutschland lange zur umstrittenen Figur.",
+        C1: "Dietrichs Karriere zeigt, wie sehr öffentliche Erinnerung von politischer Haltung abhängt: Dieselbe Entscheidung, die sie international als Antifaschistin auszeichnete, brachte ihr in der Bundesrepublik jahrzehntelang den Vorwurf des Vaterlandsverrats ein — eine Zuschreibung, die sich erst spät umkehrte.",
+        C2: "In der Figur Marlene Dietrich verschränken sich Selbstinszenierung und moralische Konsequenz auf eine Weise, die beides voneinander unterscheidbar hält: Die künstlich hergestellte Leinwandpersona blieb Werkzeug, nicht Wesen — und gerade deshalb konnte die Person dahinter eine politische Entscheidung treffen, die dem eigenen Marktwert im Heimatland dauerhaft schadete.",
+      },
+      translationsA1: {
+        en: "Marlene Dietrich was a famous actress from Berlin. She appeared in many films and also sang. Later she lived in America.",
+        ar: "كانت مارلين ديتريش ممثلة مشهورة من برلين. مثّلت في أفلام كثيرة وغنّت أيضًا. عاشت لاحقًا في أمريكا.",
+        tr: "Marlene Dietrich Berlinli ünlü bir oyuncuydu. Birçok filmde oynadı ve şarkı da söyledi. Sonradan Amerika'da yaşadı.",
+        ru: "Марлен Дитрих была знаменитой актрисой из Берлина. Она снялась во многих фильмах и пела. Позже она жила в Америке.",
+        es: "Marlene Dietrich fue una actriz famosa de Berlín. Actuó en muchas películas y también cantó. Más tarde vivió en América.",
+        fr: "Marlene Dietrich était une actrice célèbre de Berlin. Elle a joué dans de nombreux films et chantait aussi. Plus tard, elle a vécu en Amérique.",
+        pl: "Marlene Dietrich była słynną aktorką z Berlina. Zagrała w wielu filmach, a także śpiewała. Później mieszkała w Ameryce.",
+        uk: "Марлен Дітріх була відомою акторкою з Берліна. Вона знялася в багатьох фільмах і також співала. Пізніше жила в Америці.",
+        fa: "مارلنه دیتریش بازیگر مشهوری از برلین بود. او در فیلم‌های زیادی بازی کرد و آواز هم می‌خواند. بعدها در آمریکا زندگی کرد.",
+      },
+    },
+    {
       id: "goethe", name: "Johann Wolfgang von Goethe", years: "1749–1832",
       img: portraitSvg("JG", "#5BA8A0", "#3EC6C6", "✒️"),
       levels: {
@@ -9889,6 +9968,75 @@
     },
   ];
   const SCHNEE_ENTRIES = [
+    {
+      id: "videorekorder", name: "Der Videorekorder und die Kassette",
+      img: portraitSvg("📼", "#7A6A93", "#5BA8A0", "📼"),
+      levels: {
+        A1: "Früher hat man Filme auf Kassetten gesehen. Das Gerät dafür hieß Videorekorder. Man musste die Kassette am Ende zurückspulen.",
+        A2: "Früher lief das Fernsehen nicht auf Abruf. Wer einen Film sehen wollte, lieh sich eine Videokassette aus und legte sie in den Videorekorder. Am Ende musste man zurückspulen — sonst gab es Ärger in der Videothek.",
+        B1: "Bis in die 2000er-Jahre stand in vielen deutschen Wohnzimmern ein Videorekorder. Man nahm Sendungen auf, um sie später zu sehen, und lieh Filme in der Videothek aus. Die Bitte „Bitte zurückspulen“ auf dem Aufkleber kennt heute kaum noch jemand.",
+        B2: "Der Videorekorder verschob erstmals die Macht über den Sendeplan vom Programm zum Publikum: Wer aufnahm, konnte selbst entscheiden, wann er zuschaut. Zusammen mit der Videothek an der Ecke prägte er das Freizeitverhalten einer ganzen Generation — bis DVD und später das Streaming beides überflüssig machten.",
+        C1: "Rückblickend markiert der Videorekorder den Beginn jener Entkopplung von Inhalt und Sendezeit, die heute selbstverständlich ist. Bemerkenswert ist weniger die Technik als das damit verbundene Ritual: das Aufnehmen als bewusste Auswahl, das Zurückspulen als kleine soziale Pflicht gegenüber dem nächsten Ausleiher.",
+        C2: "Der Videorekorder ist ein Musterbeispiel dafür, dass Medientechnik nicht nur Inhalte transportiert, sondern Umgangsformen erzeugt: Die Endlichkeit des Bandes, die begrenzte Ausleihfrist und die geteilte Kassette schufen eine Kultur der Rücksicht, die im unbegrenzten Zugriff des Streamings ersatzlos verschwunden ist.",
+      },
+      translationsA1: {
+        en: "People used to watch films on cassettes. The device for this was called a video recorder. You had to rewind the cassette at the end.",
+        ar: "في الماضي كان الناس يشاهدون الأفلام على أشرطة. الجهاز لذلك كان اسمه مسجّل الفيديو. وكان عليك إعادة الشريط إلى البداية في النهاية.",
+        tr: "Eskiden filmler kasetten izlenirdi. Bunun cihazına video kaydedici deniyordu. Sonunda kaseti geri sarmak gerekiyordu.",
+        ru: "Раньше фильмы смотрели на кассетах. Устройство для этого называлось видеомагнитофон. В конце кассету нужно было перемотать назад.",
+        es: "Antes se veían películas en casetes. El aparato para eso se llamaba vídeo. Al final había que rebobinar la cinta.",
+        fr: "Autrefois, on regardait les films sur cassettes. L'appareil s'appelait un magnétoscope. À la fin, il fallait rembobiner la cassette.",
+        pl: "Kiedyś filmy oglądało się z kaset. Urządzenie do tego nazywało się magnetowid. Na koniec trzeba było przewinąć kasetę.",
+        uk: "Раніше фільми дивилися на касетах. Пристрій для цього називався відеомагнітофон. Наприкінці касету треба було перемотати.",
+        fa: "قدیم‌ها فیلم‌ها را روی نوار کاست می‌دیدند. دستگاه آن ویدئو نام داشت. در پایان باید نوار را به عقب برمی‌گرداندی.",
+      },
+    },
+    {
+      id: "telefonbuch", name: "Das Telefonbuch im Flur",
+      img: portraitSvg("📒", "#C97B5A", "#E8A03D", "📒"),
+      levels: {
+        A1: "Früher gab es in jedem Haus ein dickes Telefonbuch. Darin standen die Nummern von allen Leuten in der Stadt. Man musste den Namen suchen.",
+        A2: "Früher bekam jeder Haushalt einmal im Jahr ein dickes Telefonbuch. Darin standen Name, Adresse und Telefonnummer fast aller Menschen im Ort. Heute sucht man einfach im Internet.",
+        B1: "Bis in die 2000er-Jahre lag in fast jedem deutschen Flur ein Telefonbuch. Wer eine Nummer brauchte, blätterte alphabetisch — und fand nebenbei die Adressen von Nachbarn, Ärzten und Handwerkern gleich mit.",
+        B2: "Das jährlich verteilte Telefonbuch war ein öffentliches Verzeichnis, in dem man standardmäßig stand, sofern man nicht ausdrücklich widersprach. Was heute als Datenschutzproblem gälte, war jahrzehntelang selbstverständlich — und machte die Nachbarschaft im Wortsinn nachschlagbar.",
+        C1: "Das Telefonbuch dokumentiert einen erstaunlichen Wandel im Umgang mit persönlichen Daten: Die flächendeckende Veröffentlichung von Name, Adresse und Rufnummer galt als Dienstleistung, nicht als Eingriff. Erst die Möglichkeit maschineller Auswertung ließ dieselbe Information plötzlich als schutzbedürftig erscheinen.",
+        C2: "Am Telefonbuch lässt sich ablesen, dass Privatheit keine feste Größe ist, sondern von der jeweiligen technischen Zugriffsmöglichkeit abhängt: Dieselben Angaben, die gebunden im Flur harmlos wirkten, wurden in dem Moment brisant, in dem sie sich in Sekunden durchsuchen, verknüpfen und dauerhaft speichern ließen.",
+      },
+      translationsA1: {
+        en: "Every house used to have a thick phone book. It listed the numbers of everyone in town. You had to look up the name.",
+        ar: "في الماضي كان في كل بيت دليل هاتف سميك. كانت فيه أرقام كل الناس في المدينة. كان عليك البحث عن الاسم.",
+        tr: "Eskiden her evde kalın bir telefon rehberi vardı. İçinde şehirdeki herkesin numarası yazılıydı. İsmi aramak gerekiyordu.",
+        ru: "Раньше в каждом доме была толстая телефонная книга. В ней были номера всех людей в городе. Нужно было искать по имени.",
+        es: "Antes cada casa tenía una guía telefónica gruesa. En ella estaban los números de toda la gente de la ciudad. Había que buscar el nombre.",
+        fr: "Autrefois, chaque maison avait un gros annuaire. On y trouvait les numéros de tous les habitants de la ville. Il fallait chercher le nom.",
+        pl: "Kiedyś w każdym domu była gruba książka telefoniczna. Były w niej numery wszystkich ludzi w mieście. Trzeba było szukać nazwiska.",
+        uk: "Раніше в кожному домі була товста телефонна книга. У ній були номери всіх людей у місті. Треба було шукати прізвище.",
+        fa: "قدیم‌ها در هر خانه یک دفترچه تلفن کلفت بود. شماره همه مردم شهر در آن بود. باید نام را پیدا می‌کردی.",
+      },
+    },
+    {
+      id: "overheadprojektor", name: "Der Overheadprojektor im Klassenzimmer",
+      img: portraitSvg("🔦", "#5BA8A0", "#7FB87A", "🔦"),
+      levels: {
+        A1: "Früher gab es in der Schule keine Bildschirme. Der Lehrer schrieb auf eine durchsichtige Folie. Eine Lampe zeigte alles groß an der Wand.",
+        A2: "Früher stand in fast jedem Klassenzimmer ein Overheadprojektor. Der Lehrer legte eine durchsichtige Folie darauf und schrieb mit einem Spezialstift. So konnten alle mitlesen, ohne dass er sich zur Tafel umdrehen musste.",
+        B1: "Der Overheadprojektor gehörte jahrzehntelang zum deutschen Klassenzimmer. Auf durchsichtige Folien geschrieben, erschien die Schrift groß an der Wand — und der summende Lüfter gehörte für viele genauso zum Unterricht wie der Geruch der Folienstifte.",
+        B2: "Mit dem Overheadprojektor konnten Lehrkräfte erstmals frontal schreiben, ohne der Klasse den Rücken zuzuwenden — eine kleine, aber wirksame Veränderung der Unterrichtssituation. Vorbereitete Foliensätze waren zudem die ersten wiederverwendbaren Unterrichtsmaterialien im heutigen Sinn.",
+        C1: "Die Ablösung des Overheadprojektors durch digitale Präsentationen veränderte nicht nur das Medium, sondern die Dramaturgie des Unterrichts: Die handgeschriebene Folie entstand im Moment und ließ sich unterbrechen, während die fertige Präsentation einen vorab festgelegten Ablauf mitbringt.",
+        C2: "Im Rückblick erscheint der Overheadprojektor als letzte Stufe einer Unterrichtskultur, in der das Sichtbare noch vor den Augen der Lernenden entstand. Der Wechsel zur vorproduzierten Folie verlagerte die didaktische Entscheidung aus dem Klassenzimmer in die Vorbereitung — mit Gewinnen an Klarheit und Verlusten an Beweglichkeit.",
+      },
+      translationsA1: {
+        en: "There used to be no screens at school. The teacher wrote on a transparent sheet. A lamp showed everything large on the wall.",
+        ar: "في الماضي لم تكن هناك شاشات في المدرسة. كان المعلم يكتب على ورقة شفافة. ومصباح يعرض كل شيء كبيرًا على الحائط.",
+        tr: "Eskiden okulda ekran yoktu. Öğretmen saydam bir folyoya yazardı. Bir lamba her şeyi duvarda büyük gösterirdi.",
+        ru: "Раньше в школе не было экранов. Учитель писал на прозрачной плёнке. Лампа показывала всё крупно на стене.",
+        es: "Antes no había pantallas en la escuela. El profesor escribía en una lámina transparente. Una lámpara lo mostraba todo grande en la pared.",
+        fr: "Autrefois, il n'y avait pas d'écrans à l'école. Le professeur écrivait sur un film transparent. Une lampe affichait tout en grand sur le mur.",
+        pl: "Kiedyś w szkole nie było ekranów. Nauczyciel pisał na przezroczystej folii. Lampa pokazywała wszystko duże na ścianie.",
+        uk: "Раніше в школі не було екранів. Учитель писав на прозорій плівці. Лампа показувала все великим на стіні.",
+        fa: "قدیم‌ها در مدرسه صفحه‌نمایش نبود. معلم روی یک ورق شفاف می‌نوشت. یک چراغ همه‌چیز را بزرگ روی دیوار نشان می‌داد.",
+      },
+    },
     {
       id: "faxgeraet", name: "Das Faxgerät im Büroalltag",
       img: portraitSvg("📠", "#7FB87A", "#5BA8A0", "📠"),
@@ -10488,16 +10636,38 @@
           return `<rect x="${x}" y="${y}" width="6.5" height="3.4" rx="1.2" fill="#8A6A4F" class="sb-planke" style="animation-delay:${i * 40}ms"/>`;
         }).join("")}
       </g>
-      ${geschafft ? `
-        <g class="sb-fuchs">
-          <ellipse cx="100" cy="60" rx="9" ry="6" fill="#E8825F"/>
-          <circle cx="108" cy="56" r="4.6" fill="#F09A72"/>
-          <path d="M105 52 l1.5 -4 l2.6 2.6 Z" fill="#E8825F"/>
-          <path d="M110 52 l2.6 -3.4 l1 4 Z" fill="#E8825F"/>
-          <circle cx="109.6" cy="56" r="0.9" fill="#3A2A20"/>
-          <path d="M91 60 q-8 -2 -6 -8 q4 3 7 4 Z" fill="#F5B195"/>
-          <path d="M96 65 l0 4 M103 65 l0 4" stroke="#C96A48" stroke-width="1.6" stroke-linecap="round"/>
-        </g>` : ""}
+      ${geschafft || anteil > 0 ? (() => {
+        // Der Fuchs läuft nur so weit, wie die Brücke trägt. Fehlen Planken,
+        // bleibt er am Abbruch stehen und schaut in die Lücke — „fast geschafft"
+        // soll man sehen, nicht nur lesen.
+        const fx = 52 + 96 * Math.min(anteil, 1) - (geschafft ? 0 : 10);
+        const fy = 64 + Math.sin(Math.min(anteil, 1) * Math.PI) * (8 - 6 * anteil) - 9;
+        return `
+        <g class="sb-fuchs ${geschafft ? "sb-fuchs-laeuft" : "sb-fuchs-wartet"}" style="transform: translate(${fx - 100}px, ${fy - 51}px);">
+          <!-- Schwanz mit heller Spitze -->
+          <path d="M92 54 q-11 -1 -12 -8 q-1 -6 5 -7 q-2 6 3 8 q4 2 6 4 Z" fill="#D9714E"/>
+          <path d="M80 46 q-1 -6 5 -7 q-2 4 0 6 Z" fill="#F7DCC9"/>
+          <!-- Hinterlauf -->
+          <path d="M95 56 l-1 6 q0 2 2 2 l3 0 q1 -2 -1 -3 l0 -5 Z" fill="#C9603F"/>
+          <!-- Körper -->
+          <ellipse cx="100" cy="52" rx="10" ry="6.4" fill="#E8825F"/>
+          <path d="M92 54 q8 4 17 0 q-3 4 -9 4 q-5 0 -8 -4 Z" fill="#F7DCC9"/>
+          <!-- Vorderlauf -->
+          <path d="M105 56 l0 6 q0 2 2 2 l3 0 q1 -2 -1 -3 l0 -5 Z" fill="#C9603F"/>
+          <!-- Kopf -->
+          <circle cx="109" cy="46" r="5.2" fill="#F09A72"/>
+          <path d="M104.6 42.4 l0.8 -4.6 l3.4 2.8 Z" fill="#E8825F"/>
+          <path d="M110 41.6 l3 -3.8 l1 4.4 Z" fill="#E8825F"/>
+          <path d="M105.6 42.8 l0.5 -2.6 l1.9 1.6 Z" fill="#F7C6B0"/>
+          <path d="M110.4 42.2 l1.7 -2.2 l0.6 2.5 Z" fill="#F7C6B0"/>
+          <!-- Gesicht -->
+          <path d="M107 47.5 q3 2.6 6 0.4 q-1 3 -3.4 3 q-2.2 0 -2.6 -3.4 Z" fill="#FAE7DA"/>
+          <circle cx="108" cy="45.4" r="0.85" fill="#3A2A20"/>
+          <circle cx="111.4" cy="45.2" r="0.85" fill="#3A2A20"/>
+          <circle cx="112.6" cy="47.6" r="0.9" fill="#3A2A20"/>
+          ${geschafft ? "" : `<path d="M108.4 49.6 q1.6 -1 3 0" stroke="#3A2A20" stroke-width="0.7" fill="none" stroke-linecap="round"/>`}
+        </g>`;
+      })() : ""}
       <!-- Nebel in der Schlucht -->
       <ellipse cx="100" cy="112" rx="52" ry="8" fill="#ffffff" opacity="0.5"/>
     </svg>`;
@@ -10584,10 +10754,344 @@
     renderSatzbruecke();
   });
 
+  /* ============================================================
+     ARTIKEL-GARTEN — der, die, das als drei Beete
+     ------------------------------------------------------------
+     Drei Beete, ein Samenkorn mit einem Wort darauf. Wer richtig
+     einpflanzt, sieht die Blume wachsen — und am Ende, welches Beet am
+     vollsten ist. Die Wörter kommen aus derselben geprüften Artikel-Bank
+     wie die normale Übung, es gibt also keinen zweiten Datenbestand, der
+     auseinanderlaufen könnte.
+     ============================================================ */
+  const AG_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
+  const AG_BEETE = [
+    { key: "der", label: "der", farbe: "#5B8DEF", blume: "#7BA7F5" },
+    { key: "die", label: "die", farbe: "#E8608A", blume: "#F58CAE" },
+    { key: "das", label: "das", farbe: "#4FA88E", blume: "#7FC9B3" },
+  ];
+  let agSession = null;
+  let agLevel = null;
+  let agSchwierigkeit = "leicht";
+  let agAktuell = null;
+  let agZustand = "warten";
+
+  function agPool() {
+    const bank = ExerciseData.getCategory("artikel").getBank() || [];
+    // Auf das gewählte Niveau eingrenzen — Artikel-Fragen tragen ihr Niveau
+    // entweder selbst oder erben es aus der Kategorie (siehe Quiz.questionLevel).
+    const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const grenze = stufen.indexOf(agLevel);
+    for (let spielraum = 0; spielraum < stufen.length; spielraum++) {
+      const treffer = bank.filter((q) => stufen.indexOf(Quiz.questionLevel(q, "artikel")) <= grenze + spielraum);
+      if (treffer.length >= 12) return treffer;
+    }
+    return bank;
+  }
+  function neueAgSession() {
+    agLevel = applyDefaultCefrLevel(agLevel, (v) => { agLevel = v; });
+    agSession = { runde: 0, gesamt: AG_RUNDEN[agSchwierigkeit] || 10, richtig: 0, beete: { der: 0, die: 0, das: 0 }, gespielt: [] };
+    agAktuell = null;
+  }
+  function neueAgRunde() {
+    const pool = agPool().filter((q) => !agSession.gespielt.includes(q.prompt));
+    const quelle = pool.length ? pool : agPool();
+    const q = quelle[Math.floor(Math.random() * quelle.length)];
+    agSession.gespielt.push(q.prompt);
+    agAktuell = {
+      wort: q.prompt.replace(/^_+\s*/, ""),
+      loesung: q.options[q.correct[0]],
+      erklaerung: q.explain || "",
+    };
+    agZustand = "warten";
+  }
+  // Der Garten. Jedes Beet zeigt so viele Blumen, wie dort richtig gepflanzt
+  // wurde — der Fortschritt ist damit auf einen Blick sichtbar.
+  function agGartenSvg() {
+    const beetBreite = 60;
+    return `
+    <svg viewBox="0 0 200 118" width="100%" style="max-width:340px; display:block; margin:0 auto;" aria-hidden="true">
+      <defs>
+        <linearGradient id="agHimmel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#CDE7F0"/><stop offset="100%" stop-color="#F5EEDC"/>
+        </linearGradient>
+        <linearGradient id="agErde" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7A5A3C"/><stop offset="100%" stop-color="#4E3826"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="200" height="118" fill="url(#agHimmel)"/>
+      <circle cx="176" cy="20" r="12" fill="#F6CC78"/>
+      <path d="M0 72 Q40 64 80 70 Q130 77 200 68 L200 118 L0 118 Z" fill="#8FBF86" opacity="0.55"/>
+      ${AG_BEETE.map((beet, i) => {
+        const x = 8 + i * 64;
+        const anzahl = agSession ? agSession.beete[beet.key] : 0;
+        const blumen = Math.min(anzahl, 6);
+        return `
+          <g>
+            <rect x="${x}" y="80" width="${beetBreite}" height="26" rx="5" fill="url(#agErde)"/>
+            <rect x="${x}" y="78" width="${beetBreite}" height="5" rx="2.5" fill="${beet.farbe}"/>
+            ${Array.from({ length: blumen }).map((_, k) => {
+              const bx = x + 9 + (k % 3) * 20;
+              const by = 78 - (k < 3 ? 0 : 12);
+              return `
+                <g class="ag-blume" style="animation-delay:${k * 70}ms">
+                  <path d="M${bx} ${by} L${bx} ${by - 12}" stroke="#3F7D4E" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M${bx} ${by - 6} q-5 -3 -6 -7 q5 0 6 4" fill="#4E9660"/>
+                  <circle cx="${bx}" cy="${by - 15}" r="4.2" fill="${beet.blume}"/>
+                  <circle cx="${bx}" cy="${by - 15}" r="1.8" fill="#F6CC78"/>
+                </g>`;
+            }).join("")}
+            <text x="${x + beetBreite / 2}" y="97" text-anchor="middle" font-size="11" font-weight="800" fill="#FFF7E9">${beet.label}</text>
+            <text x="${x + beetBreite / 2}" y="104.5" text-anchor="middle" font-size="6.5" fill="#E4D6BE">${anzahl}</text>
+          </g>`;
+      }).join("")}
+    </svg>`;
+  }
+  function renderArtikelgarten() {
+    const area = document.getElementById("artikelgartenArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "artikelgarten_neu", "Artikel-Garten", "🌷")) return;
+    if (!agSession) neueAgSession();
+    if (agSession.runde >= agSession.gesamt) { renderArtikelgartenErgebnis(); return; }
+    if (!agAktuell) neueAgRunde();
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Artikel-Garten: " + agAktuell.wort)}
+        <p class="eyebrow">🌷 ARTIKEL-GARTEN · RUNDE ${agSession.runde + 1} / ${agSession.gesamt} <span class="subnav-info-icon" data-info="Jedes deutsche Substantiv gehört zu genau einem der drei Beete. Pflanze das Wort ins richtige — bei jedem Treffer wächst dort eine Blume.">ⓘ</span></p>
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip ag-level-btn ${agLevel === lvl ? "selected" : ""}" data-ag-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        ${agGartenSvg()}
+        <p class="ag-samen">${agAktuell.wort}</p>
+        <div class="ag-beet-knoepfe">
+          ${AG_BEETE.map((b) => `<button type="button" class="ag-beet-btn" data-ag-beet="${b.key}" style="--beet:${b.farbe};">${b.label}</button>`).join("")}
+        </div>
+        <p class="empty-note ag-feedback" id="agFeedback">In welches Beet gehört dieses Wort?</p>
+        <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">Runden: ${Object.entries(AG_RUNDEN).map(([k, v]) => `<button type="button" class="wsm-diff-btn ${agSchwierigkeit === k ? "aktiv" : ""}" data-ag-diff="${k}">${k} (${v})</button>`).join(" ")}</p>
+      </div>`;
+    area.querySelectorAll(".ag-level-btn").forEach((b) => b.addEventListener("click", () => {
+      agLevel = b.dataset.agLevel; neueAgSession(); neueAgRunde(); renderArtikelgarten();
+    }));
+    area.querySelectorAll("[data-ag-diff]").forEach((b) => b.addEventListener("click", () => {
+      agSchwierigkeit = b.dataset.agDiff; neueAgSession(); neueAgRunde(); renderArtikelgarten();
+    }));
+    area.querySelectorAll(".ag-beet-btn").forEach((b) => b.addEventListener("click", () => pruefeArtikelgarten(b)));
+  }
+  function pruefeArtikelgarten(btn) {
+    if (agZustand !== "warten") return;
+    const gewaehlt = btn.dataset.agBeet;
+    const richtig = gewaehlt === agAktuell.loesung;
+    agSession.runde += 1;
+    agZustand = richtig ? "richtig" : "falsch";
+    document.querySelectorAll(".ag-beet-btn").forEach((b) => { b.disabled = true; });
+    const fb = document.getElementById("agFeedback");
+    if (richtig) {
+      agSession.richtig += 1;
+      agSession.beete[gewaehlt] += 1;
+      Core.sound.correct();
+      btn.classList.add("ag-treffer");
+      fb.innerHTML = `✅ <strong>${agAktuell.loesung} ${agAktuell.wort}</strong> — eingepflanzt.`;
+    } else {
+      Core.sound.wrong();
+      btn.classList.add("ag-daneben");
+      document.querySelectorAll(".ag-beet-btn").forEach((b) => { if (b.dataset.agBeet === agAktuell.loesung) b.classList.add("ag-treffer"); });
+      fb.innerHTML = `❌ ${agAktuell.erklaerung || `Richtig ist <strong>${agAktuell.loesung} ${agAktuell.wort}</strong>.`}`;
+    }
+    setTimeout(() => { neueAgRunde(); renderArtikelgarten(); }, richtig ? 1400 : 2300);
+  }
+  function renderArtikelgartenErgebnis() {
+    const area = document.getElementById("artikelgartenArea");
+    const prozent = Math.round((agSession.richtig / agSession.gesamt) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🌷 ARTIKEL-GARTEN — ERNTEZEIT</p>
+        ${agGartenSvg()}
+        <h2 style="margin:10px 0;">${agSession.richtig} / ${agSession.gesamt} Blumen gepflanzt</h2>
+        <p class="empty-note">der: ${agSession.beete.der} · die: ${agSession.beete.die} · das: ${agSession.beete.das}</p>
+        <p class="empty-note" style="margin-top:8px;">${prozent >= 80 ? "Der Garten steht in voller Blüte." : prozent >= 50 ? "Ein paar Lücken im Beet — aber es wächst." : "Artikel lernt man am besten zusammen mit dem Wort, nie einzeln."}</p>
+        <button type="button" class="btn btn-coffee" id="agNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("agNochmalBtn").addEventListener("click", () => { neueAgSession(); neueAgRunde(); renderArtikelgarten(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["artikel"], points: agSession.richtig, bonus: 0, percent: prozent, character: "Gärtner:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-artikelgarten"]')?.addEventListener("click", () => {
+    if (!agSession) neueAgSession();
+    if (!agAktuell) neueAgRunde();
+    renderArtikelgarten();
+  });
+
+  /* ============================================================
+     KATZENZIMMER — Präpositionen sehen statt übersetzen
+     ------------------------------------------------------------
+     Ein gezeichnetes Zimmer mit Tisch, Stuhl, Korb und Regal. Die Katze
+     sitzt jede Runde woanders — das BILD ist die Aufgabe. Dadurch wird
+     die Präposition direkt mit der räumlichen Vorstellung verknüpft,
+     statt über eine Übersetzung zu laufen. Ab B1 kommt zusätzlich der
+     Unterschied wo/wohin (Dativ/Akkusativ) dazu.
+     ============================================================ */
+  const KZ_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
+  const KZ_ORTE = [
+    { key: "auf", x: 100, y: 62, satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„auf“ — sie berührt die Tischplatte von oben. Ort → Dativ: auf dem Tisch." },
+    { key: "unter", x: 100, y: 96, satz: "Die Katze liegt ___ dem Tisch.", erkl: "„unter“ — sie ist tiefer als der Tisch. Ort → Dativ: unter dem Tisch." },
+    { key: "neben", x: 148, y: 96, satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„neben“ — sie ist seitlich davon, nicht darunter." },
+    { key: "hinter", x: 62, y: 74, satz: "Die Katze versteckt sich ___ dem Stuhl.", erkl: "„hinter“ — der Stuhl steht zwischen dir und der Katze." },
+    { key: "vor", x: 100, y: 108, satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„vor“ — sie ist näher bei dir als der Tisch." },
+    { key: "in", x: 168, y: 100, satz: "Die Katze schläft ___ dem Korb.", erkl: "„in“ — sie ist von etwas umschlossen." },
+    { key: "zwischen", x: 124, y: 96, satz: "Die Katze sitzt ___ dem Tisch und dem Korb.", erkl: "„zwischen“ — links und rechts von ihr steht je ein Ding." },
+  ];
+  let kzSession = null;
+  let kzLevel = null;
+  let kzSchwierigkeit = "leicht";
+  let kzAktuell = null;
+  let kzZustand = "warten";
+
+  function neueKzSession() {
+    kzLevel = applyDefaultCefrLevel(kzLevel, (v) => { kzLevel = v; });
+    kzSession = { runde: 0, gesamt: KZ_RUNDEN[kzSchwierigkeit] || 10, richtig: 0 };
+    kzAktuell = null;
+  }
+  function neueKzRunde() {
+    // Auf A1/A2 nur die vier anschaulichsten Präpositionen — „zwischen“ und
+    // „hinter“ setzen räumliches Vokabular voraus, das dort noch fehlt.
+    const einfach = ["auf", "unter", "neben", "in"];
+    const erlaubt = (kzLevel === "A1" || kzLevel === "A2") ? KZ_ORTE.filter((o) => einfach.includes(o.key)) : KZ_ORTE;
+    const ort = erlaubt[Math.floor(Math.random() * erlaubt.length)];
+    const andere = erlaubt.filter((o) => o.key !== ort.key).map((o) => o.key);
+    kzAktuell = { ort, optionen: Core.shuffle([ort.key, ...Core.shuffle(andere).slice(0, 3)]) };
+    kzZustand = "warten";
+  }
+  function kzZimmerSvg(ort, zeigen) {
+    const k = ort;
+    return `
+    <svg viewBox="0 0 200 130" width="100%" style="max-width:340px; display:block; margin:0 auto;" aria-hidden="true">
+      <defs>
+        <linearGradient id="kzWand" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F3E4CE"/><stop offset="100%" stop-color="#E4D2B6"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="200" height="112" fill="url(#kzWand)"/>
+      <rect x="0" y="112" width="200" height="18" fill="#B08A5F"/>
+      <path d="M0 112 L200 112" stroke="#8A6A45" stroke-width="1.5"/>
+      <!-- Fenster -->
+      <rect x="14" y="14" width="34" height="28" rx="3" fill="#BFE0EA" stroke="#9A7B54" stroke-width="2.5"/>
+      <path d="M31 14 L31 42 M14 28 L48 28" stroke="#9A7B54" stroke-width="1.6"/>
+      <!-- Regal -->
+      <rect x="150" y="26" width="40" height="4" rx="1.5" fill="#9A7B54"/>
+      <rect x="156" y="14" width="6" height="12" rx="1" fill="#C97B5A"/>
+      <rect x="164" y="17" width="6" height="9" rx="1" fill="#6FA88E"/>
+      <rect x="172" y="12" width="6" height="14" rx="1" fill="#E0B24C"/>
+      <!-- Stuhl -->
+      <rect x="48" y="66" width="26" height="4" rx="1.5" fill="#A8794F"/>
+      <rect x="48" y="42" width="4" height="26" rx="1.5" fill="#A8794F"/>
+      <rect x="70" y="42" width="4" height="26" rx="1.5" fill="#A8794F"/>
+      <rect x="50" y="70" width="3" height="24" fill="#8A6238"/>
+      <rect x="69" y="70" width="3" height="24" fill="#8A6238"/>
+      <!-- Tisch -->
+      <rect x="76" y="68" width="66" height="6" rx="2.5" fill="#B98A5C"/>
+      <rect x="80" y="74" width="4" height="30" fill="#96683F"/>
+      <rect x="134" y="74" width="4" height="30" fill="#96683F"/>
+      <!-- Korb -->
+      <path d="M156 92 L182 92 L178 108 L160 108 Z" fill="#C9A15F"/>
+      <path d="M156 92 L182 92" stroke="#A07F45" stroke-width="2.5"/>
+      <!-- Katze -->
+      <g class="kz-katze" style="transform: translate(${k.x - 100}px, ${k.y - 90}px);">
+        <ellipse cx="100" cy="92" rx="11" ry="7.5" fill="#6E6A66"/>
+        <circle cx="109" cy="86" r="6" fill="#7C7874"/>
+        <path d="M105 81 l1 -5 l3.4 3.2 Z" fill="#6E6A66"/>
+        <path d="M111 80.6 l3.4 -4 l1 5 Z" fill="#6E6A66"/>
+        <circle cx="107.4" cy="86" r="1.1" fill="#2C2A28"/>
+        <circle cx="111.4" cy="86" r="1.1" fill="#2C2A28"/>
+        <path d="M109.4 88.4 l-1.2 1.4 h2.4 Z" fill="#D98B96"/>
+        <path d="M89 90 q-9 -3 -7 -10 q4 4 8 5 Z" fill="#6E6A66"/>
+        <path d="M95 98.6 l0 4 M104 98.6 l0 4" stroke="#5C5854" stroke-width="1.8" stroke-linecap="round"/>
+      </g>
+      ${zeigen ? `<text x="100" y="12" text-anchor="middle" font-size="10" font-weight="800" fill="#8A5A3B">${k.key}</text>` : ""}
+    </svg>`;
+  }
+  function renderKatzenzimmer() {
+    const area = document.getElementById("katzenzimmerArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "katzenzimmer_neu", "Katzenzimmer", "🐈")) return;
+    if (!kzSession) neueKzSession();
+    if (kzSession.runde >= kzSession.gesamt) { renderKatzenzimmerErgebnis(); return; }
+    if (!kzAktuell) neueKzRunde();
+    const satzOffen = kzAktuell.ort.satz.replace("___", `<span class="kz-luecke">${kzZustand === "warten" ? "?" : kzAktuell.ort.key}</span>`);
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Katzenzimmer: " + kzAktuell.ort.key)}
+        <p class="eyebrow">🐈 KATZENZIMMER · RUNDE ${kzSession.runde + 1} / ${kzSession.gesamt} <span class="subnav-info-icon" data-info="Schau, WO die Katze sitzt, und wähle die Präposition, die genau das beschreibt. Das Bild ist die Aufgabe — nicht die Übersetzung.">ⓘ</span></p>
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip kz-level-btn ${kzLevel === lvl ? "selected" : ""}" data-kz-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        ${kzZimmerSvg(kzAktuell.ort, kzZustand !== "warten")}
+        <p class="kz-satz">${satzOffen}</p>
+        <div class="kz-optionen">
+          ${kzAktuell.optionen.map((o) => `<button type="button" class="kz-option" data-kz-opt="${o}">${o}</button>`).join("")}
+        </div>
+        <p class="empty-note kz-feedback" id="kzFeedback">Wo sitzt die Katze?</p>
+        <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">Runden: ${Object.entries(KZ_RUNDEN).map(([k, v]) => `<button type="button" class="wsm-diff-btn ${kzSchwierigkeit === k ? "aktiv" : ""}" data-kz-diff="${k}">${k} (${v})</button>`).join(" ")}</p>
+      </div>`;
+    area.querySelectorAll(".kz-level-btn").forEach((b) => b.addEventListener("click", () => {
+      kzLevel = b.dataset.kzLevel; neueKzSession(); neueKzRunde(); renderKatzenzimmer();
+    }));
+    area.querySelectorAll("[data-kz-diff]").forEach((b) => b.addEventListener("click", () => {
+      kzSchwierigkeit = b.dataset.kzDiff; neueKzSession(); neueKzRunde(); renderKatzenzimmer();
+    }));
+    area.querySelectorAll(".kz-option").forEach((b) => b.addEventListener("click", () => pruefeKatzenzimmer(b)));
+  }
+  function pruefeKatzenzimmer(btn) {
+    if (kzZustand !== "warten") return;
+    const richtig = btn.dataset.kzOpt === kzAktuell.ort.key;
+    kzSession.runde += 1;
+    kzZustand = richtig ? "richtig" : "falsch";
+    document.querySelectorAll(".kz-option").forEach((b) => { b.disabled = true; });
+    const fb = document.getElementById("kzFeedback");
+    if (richtig) {
+      kzSession.richtig += 1;
+      Core.sound.correct();
+      btn.classList.add("kz-treffer");
+      fb.innerHTML = `✅ ${kzAktuell.ort.erkl}`;
+    } else {
+      Core.sound.wrong();
+      btn.classList.add("kz-daneben");
+      document.querySelectorAll(".kz-option").forEach((b) => { if (b.dataset.kzOpt === kzAktuell.ort.key) b.classList.add("kz-treffer"); });
+      fb.innerHTML = `❌ ${kzAktuell.ort.erkl}`;
+    }
+    const luecke = document.querySelector(".kz-luecke");
+    if (luecke) { luecke.textContent = kzAktuell.ort.key; luecke.classList.add("kz-luecke-gefuellt"); }
+    setTimeout(() => { neueKzRunde(); renderKatzenzimmer(); }, richtig ? 1800 : 2600);
+  }
+  function renderKatzenzimmerErgebnis() {
+    const area = document.getElementById("katzenzimmerArea");
+    const prozent = Math.round((kzSession.richtig / kzSession.gesamt) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🐈 KATZENZIMMER — RUNDE FERTIG</p>
+        <p style="font-size:2rem; margin:8px 0;">${prozent >= 80 ? "🏆" : prozent >= 50 ? "🐈" : "🧶"}</p>
+        <h2 style="margin:8px 0;">${kzSession.richtig} / ${kzSession.gesamt} richtig</h2>
+        <p class="empty-note">${prozent >= 80 ? "Du siehst den Raum wie ein Muttersprachler." : "Präpositionen sitzen erst, wenn man sie sieht statt übersetzt — dranbleiben."}</p>
+        <button type="button" class="btn btn-coffee" id="kzNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("kzNochmalBtn").addEventListener("click", () => { neueKzSession(); neueKzRunde(); renderKatzenzimmer(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["katzenzimmer"], points: kzSession.richtig, bonus: 0, percent: prozent, character: "Raumkenner:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-katzenzimmer"]')?.addEventListener("click", () => {
+    if (!kzSession) neueKzSession();
+    if (!kzAktuell) neueKzRunde();
+    renderKatzenzimmer();
+  });
+
   const GAMES_OVERVIEW_LIST = [
+    { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
     { sub: "sub-stresstrainer", emoji: "🎯", name: "Betonungs-Trainer", persona: "Sprachkünstler" },
     { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
     { sub: "sub-korrektour", emoji: "🚂", name: "KorrekTour", persona: "Grammatik-Profi", flagKey: "korrektour_neu" },
+    { sub: "sub-katzenzimmer", emoji: "🐈", name: "Katzenzimmer", persona: "Logiker", flagKey: "katzenzimmer_neu" },
     { sub: "sub-crossword", emoji: "✏️", name: "Kreuzworträtsel", persona: "Sprachkünstler" },
     { sub: "sub-memory", emoji: "🧩", name: "Memory", persona: "Sprachkünstler" },
     { sub: "sub-satzpuzzle", emoji: "🧩", name: "Satzpuzzle", persona: "Grammatik-Profi" },
@@ -10621,6 +11125,8 @@
       kanone: `<circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/>`,
       satzbruecke: `<path d="M2 14h4v6H2zM16 14h4v6h-4z" fill="currentColor"/><path d="M4 14C4 9 18 9 18 14" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M6 13.2h1.6M9 12.4h1.6M12 12.4h1.6M15 13.2h1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
       wortschmiede: `<path d="M4 15h12l-1.6 2.6H5.6z" fill="currentColor"/><rect x="8" y="17.6" width="4" height="3" fill="currentColor"/><rect x="7" y="12" width="8" height="2.4" rx="1" fill="currentColor" opacity="0.6"/><rect x="13" y="4" width="7" height="2.6" rx="1" fill="currentColor" transform="rotate(28 16.5 5.3)"/><rect x="11.4" y="2.6" width="4" height="5" rx="1.2" fill="currentColor" transform="rotate(28 13.4 5.1)"/>`,
+      artikelgarten: `<rect x="2" y="15" width="20" height="5" rx="2" fill="currentColor" opacity="0.5"/><path d="M7 15V9M12 15V7M17 15v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="7" cy="7.5" r="2.6" fill="currentColor"/><circle cx="12" cy="5.5" r="2.6" fill="currentColor"/><circle cx="17" cy="8" r="2.6" fill="currentColor"/>`,
+      katzenzimmer: `<rect x="2" y="4" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 16h20" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="19" rx="5" ry="2.6" fill="currentColor"/><circle cx="15.6" cy="16.6" r="2.4" fill="currentColor"/><path d="M14 14.6l.6-2 1.4 1.4Z" fill="currentColor"/><path d="M16.4 14l1.4-1.6.4 2Z" fill="currentColor"/>`,
       wortarten: `<rect x="3" y="4" width="7" height="7" rx="1.5" fill="currentColor"/><circle cx="16" cy="7.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 19l4-8 4 8M5.4 16.5h5.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
     };
     return `<svg viewBox="0 0 22 22" width="26" height="26" aria-hidden="true">${icons[key] || ""}</svg>`;
@@ -10635,7 +11141,12 @@
     // inkonsistent mit renderComingSoonGate() selbst (das ja auch Admins/Moderator:innen immer
     // durchlässt, nicht nur Owner/Beta-Tester:innen wie isFeatureOn() allein).
     const canSeeGatedGames = Backend.canModerate && Backend.canModerate();
-    const visibleGames = GAMES_OVERVIEW_LIST.filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames);
+    const visibleGames = GAMES_OVERVIEW_LIST
+      .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames)
+      // Verlässlich alphabetisch sortieren (mit deutschen Umlauten korrekt einsortiert),
+      // statt sich auf die Reihenfolge im Quelltext zu verlassen — die geriet beim
+      // Nachtragen neuer Spiele immer wieder durcheinander.
+      .sort((a, b) => a.name.localeCompare(b.name, "de"));
     // WICHTIG — behebt einen echten Bug: vorher wurden hier dieselben .kompass-tile-Klassen wie
     // bei Dichter & Denker/Schnee von gestern verwendet — als das Kachel-Design für JENE Bereiche
     // gebaut wurde, verwandelten sich diese Spiele-Buttons ungewollt gleich mit in Kacheln, obwohl
@@ -11397,7 +11908,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         // WICHTIG — behebt den gemeldeten Bug: dieser <img>-Tag hatte bisher keine
         // class="avatar-photo", weshalb der Wassertropfen-Glanzeffekt (box-shadow, siehe
         // .avatar-photo) hier nie ankam, obwohl er im Haupt-Profilbild schon korrekt griff.
-        document.getElementById("introPhotoPreview").innerHTML = `<img src="${url}" class="avatar-photo" style="width:100%; height:100%; object-fit:cover;" />`;
+        document.getElementById("introPhotoPreview").innerHTML = `<span class="avatar-photo-wrap" style="width:100%; height:100%;"><img src="${url}" class="avatar-photo" style="width:100%; height:100%; object-fit:cover;" /><span class="avatar-glas" aria-hidden="true"></span></span>`;
       } catch (err) { alert(err.message || "Hochladen fehlgeschlagen."); }
     });
     document.getElementById("introUseProfilePicBtn")?.addEventListener("click", () => {
@@ -11405,7 +11916,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (!currentAvatar) { alert("Du hast noch kein eigenes Profilbild hinterlegt."); return; }
       document.getElementById("introPhotoUrl").value = currentAvatar;
       document.getElementById("introStickerKey").value = "";
-      document.getElementById("introPhotoPreview").innerHTML = `<img src="${currentAvatar}" class="avatar-photo" style="width:100%; height:100%; object-fit:cover;" />`;
+      document.getElementById("introPhotoPreview").innerHTML = `<span class="avatar-photo-wrap" style="width:100%; height:100%;"><img src="${currentAvatar}" class="avatar-photo" style="width:100%; height:100%; object-fit:cover;" /><span class="avatar-glas" aria-hidden="true"></span></span>`;
     });
     document.querySelectorAll("[data-intro-sticker]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -12829,7 +13340,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     const song = list[profileStripIndex];
     const originalId = song.original_recommender_id || profileId;
     const popularity = await Backend.getSongPopularity(originalId, song.title);
+    // Überschrift über dem Streifen — sagt auf einen Blick, was da abgespielt wird.
+    // Steht bewusst außerhalb des Streifens selbst, damit sie im Fließtext um das
+    // Profilbild mitläuft und nicht mit den Bedienknöpfen um Platz konkurriert.
+    const istLieblingssong = extra.showcaseSongUrl && song.url === extra.showcaseSongUrl;
     return `
+      <p class="strip-ueberschrift">${istLieblingssong ? "🎵 Mein deutsches Lieblingslied" : "🎵 Aus meiner Playlist"}</p>
       <div class="profile-transport-strip" data-strip-owner="${profileId}">
         <button type="button" class="strip-btn" data-strip-action="prev">${STRIP_ICONS.prev}</button>
         <button type="button" class="strip-btn" data-strip-action="playpause">${profileStripPlaying ? STRIP_ICONS.pause : STRIP_ICONS.play}</button>
@@ -13081,7 +13597,26 @@ An einem Morgen lief ein kleiner Fuchs los…
       let ytState = -1;
       try { ytState = ytMusicPlayer.getPlayerState ? ytMusicPlayer.getPlayerState() : -1; } catch (e) {}
       const laeuft = window.YT && ytState === YT.PlayerState.PLAYING;
-      if (laeuft) ytMusicPlayer.pauseVideo(); else ytMusicPlayer.playVideo();
+      if (laeuft) {
+        try { ytMusicPlayer.pauseVideo(); } catch (e) {}
+        // WICHTIG — behebt „während der Werbung lässt sich nicht pausieren": Läuft
+        // gerade eine YouTube-Werbung, ignoriert der Player pauseVideo() schlicht.
+        // Läuft er kurz darauf immer noch, wird stattdessen stumm geschaltet — für
+        // die hörende Person ist das dasselbe Ergebnis, und beim nächsten Antippen
+        // wird die Stummschaltung wieder aufgehoben.
+        setTimeout(() => {
+          try {
+            if (ytMusicPlayer.getPlayerState && ytMusicPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+              ytMusicPlayer.mute();
+              musicIsPlaying = false;
+              updateMusicPlayPauseIconOnly();
+            }
+          } catch (e) {}
+        }, 400);
+      } else {
+        try { if (ytMusicPlayer.isMuted && ytMusicPlayer.isMuted()) ytMusicPlayer.unMute(); } catch (e) {}
+        ytMusicPlayer.playVideo();
+      }
     }
     updateMusicPlayPauseIconOnly();
   }
@@ -13344,12 +13879,10 @@ An einem Morgen lief ein kleiner Fuchs los…
     floatBar.dataset.builtForSongId = String(song.id);
     floatBar.innerHTML = `
       <div id="musicVideoSquareSlotFloat" style="flex-shrink:0;"></div>
+      <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
+      <button type="button" class="mfb-ctrl mfb-ctrl-haupt ${musicIsPlaying ? "mfb-laeuft" : ""}" id="mfbPlayPause" aria-label="${musicIsPlaying ? "Pause" : "Abspielen"}" aria-pressed="${musicIsPlaying}">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
       <button type="button" class="mfb-title" id="mfbTitle">${song.title}</button>
-      <div class="mfb-steuerung">
-        <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
-        <button type="button" class="mfb-ctrl mfb-ctrl-haupt ${musicIsPlaying ? "mfb-laeuft" : ""}" id="mfbPlayPause" aria-label="${musicIsPlaying ? "Pause" : "Abspielen"}" aria-pressed="${musicIsPlaying}">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
-        <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
-      </div>
+      <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
     `;
     relocateMusicVideoSquare();
     // WICHTIG: className wurde oben komplett neu gesetzt (überschreibt auch eine eventuell schon
