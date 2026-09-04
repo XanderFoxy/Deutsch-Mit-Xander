@@ -6092,5 +6092,37 @@ const ExerciseData = (function () {
     },
   };
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES };
+  // ============================================================
+  // Nachtrag aus data-history-extra.js zusammenführen
+  // ------------------------------------------------------------
+  // Neue Kalendertage für „Es war einmal in Deutschland" stehen in einer
+  // eigenen Datei, damit diese große Datei beim Nachliefern nicht jedes Mal
+  // angefasst werden muss. Vorhandene Tage werden NICHT überschrieben — nur
+  // fehlende ergänzt. So kann nichts von der geprüften Bestandssammlung
+  // verloren gehen, falls ein Nachtrag einen Schlüssel doppelt enthält.
+  // ============================================================
+  if (typeof window !== "undefined" && window.HISTORY_EXTRA) {
+    Object.entries(window.HISTORY_EXTRA).forEach(([key, entry]) => {
+      if (!GERMAN_HISTORY_TODAY[key]) GERMAN_HISTORY_TODAY[key] = entry;
+    });
+  }
+  if (typeof window !== "undefined" && window.HISTORY_EXTRA_TITLES) {
+    Object.entries(window.HISTORY_EXTRA_TITLES).forEach(([key, title]) => {
+      if (!HISTORY_TITLES[key]) HISTORY_TITLES[key] = title;
+    });
+  }
+  // Zeitstempel der letzten Datenaktualisierung — wird in der Sektion angezeigt,
+  // damit auf einen Blick sichtbar ist, wann zuletzt Inhalte dazugekommen sind.
+  function historyStand() {
+    return (typeof window !== "undefined" && window.HISTORY_STAND) || null;
+  }
+  // Schlüssel, die noch auf Freigabe durch den Betreiber warten.
+  function historyPending() {
+    return (typeof window !== "undefined" && window.HISTORY_NEU) || [];
+  }
+  function historyDayCount() {
+    return Object.keys(GERMAN_HISTORY_TODAY).length;
+  }
+
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount };
 })();

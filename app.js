@@ -2362,6 +2362,11 @@
         // sonst überschrieb, sodass man im falschen Unterreiter landete.
         setTimeout(() => {
           document.querySelector('[data-sub="sub-kompass"]')?.click();
+          // Nach dem Reiterwechsel zusätzlich gezielt zur Sektion scrollen — vorher
+          // landete man nur oben im Kompass und musste selbst suchen.
+          setTimeout(() => {
+            document.getElementById("kompass-geschichte")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 250);
         }, 400);
       });
     }
@@ -10185,6 +10190,17 @@
       </div>
 
       <h3 id="kompass-geschichte" class="kompass-heading">📜 Es war einmal in Deutschland …</h3>
+      ${(() => {
+        // Sichtbarer Stand der Sammlung — zeigt auf einen Blick, wann zuletzt neue
+        // Tage dazugekommen sind und wie voll das Jahr inzwischen ist.
+        const stand = ExerciseData.historyStand ? ExerciseData.historyStand() : null;
+        const anzahl = ExerciseData.historyDayCount ? ExerciseData.historyDayCount() : 0;
+        if (!stand && !anzahl) return "";
+        const standText = stand
+          ? (() => { const d = new Date(stand); return isNaN(d) ? stand : `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} Uhr`; })()
+          : null;
+        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 365 Tagen gefüllt</p>`;
+      })()}
       ${todayHistory ? (() => { historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }); return ""; })() : ""}
       ${todayHistory ? `
         <div class="question-card" style="margin-bottom:16px;">
