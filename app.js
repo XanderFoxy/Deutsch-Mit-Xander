@@ -1591,6 +1591,42 @@
     );
     document.body.appendChild(box);
   }
+  // ============================================================
+  // Inhalts-Aktualisierung: Nachricht ins Postfach
+  // ------------------------------------------------------------
+  // Immer wenn eine neue Inhaltslieferung eingespielt wurde (erkennbar am
+  // Zeitstempel HISTORY_STAND), bekommt die Person EINMALIG eine Nachricht ins
+  // Postfach. Beim allerersten Besuch wird der Zeitstempel nur stillschweigend
+  // gemerkt — sonst würde jede neue Person sofort eine „Update"-Nachricht über
+  // Inhalte bekommen, die für sie gar nicht neu sind.
+  // Betreiber:innen/Moderator:innen bekommen zusätzlich den Hinweis auf die
+  // noch ausstehende Freigabe.
+  // ============================================================
+  async function checkContentUpdate() {
+    const profile = Backend.currentProfile();
+    const user = Backend.currentUser();
+    if (!profile || !user) return;
+    const stand = (ExerciseData.historyStand && ExerciseData.historyStand()) || null;
+    if (!stand) return;
+    const gesehen = (profile.extraProfileData && profile.extraProfileData.contentStandSeen) || null;
+    if (gesehen === stand) return;
+    await Backend.updateExtraProfileField("contentStandSeen", stand);
+    if (!gesehen) return; // erster Besuch — nur merken, nicht melden
+    const neu = (ExerciseData.historyPending && ExerciseData.historyPending()) || [];
+    const batchKey = (typeof window !== "undefined" && window.HISTORY_BATCH) || null;
+    const schonFrei = !batchKey || Backend.isFeatureOn(batchKey);
+    const darfFreigeben = Boolean(Backend.canModerate && Backend.canModerate());
+    const gesamt = (ExerciseData.historyDayCount && ExerciseData.historyDayCount()) || 0;
+    let text;
+    if (darfFreigeben && neu.length && !schonFrei) {
+      text = `📦 Neue Inhalte sind eingespielt: ${neu.length} neue Tage bei „Es war einmal in Deutschland" (jetzt ${gesamt} von 365). Sie sind noch NICHT freigegeben — du siehst sie mit rotem Punkt im Archiv und kannst sie dort mit dem Freigabe-Schalter für alle sichtbar machen.`;
+    } else if (neu.length) {
+      text = `📦 Es gibt neue Inhalte bei „Es war einmal in Deutschland" — die Sammlung umfasst jetzt ${gesamt} von 365 Tagen. Schau im Kompass vorbei!`;
+    } else {
+      return;
+    }
+    try { await Backend.sendSystemMessage(user.id, text); } catch (e) { console.warn("Update-Nachricht fehlgeschlagen:", e); }
+  }
   // Tages-Ranking-Belohnung: wer heute die Bestleistung erreicht (Platz 1 im Tagesranking), wird
   // einmal am Tag mit ein paar Bonuspunkten belohnt und bekommt eine Nachricht ins Postfach —
   // motiviert, ohne dass es sich wie ein Dauerwettbewerb anfühlt (nur EIN Mal pro Tag möglich).
@@ -1699,6 +1735,7 @@
       }
     }
     await checkForSpecialMoment(Backend.currentProfile());
+    await checkContentUpdate();
     await checkDailyRankingReward();
     // ECHTES Warten statt eines geratenen Timeouts — sonst kommt Sound & Leuchten der Profil-Pille
     // bei einem Meilenstein bis zu 20 Sekunden verzögert (Hintergrund-Timer), statt sofort.
@@ -4238,7 +4275,35 @@
   // Einschätzung nach gängigen Sprachlern-Frequenzlisten, kein offizielles Zertifikat.
   const CEFR_A1_WORDS = new Set(["Tisch", "Lampe", "Fenster", "Stuhl", "Tür", "Auto", "Baum", "Blume", "Haus", "Hund", "Katze", "Apfel", "Banane", "Brot", "Käse", "Milch", "Wasser", "Suppe", "Fleisch", "Zucker", "Butter", "Salz", "Löffel", "Gabel", "Messer", "Teller", "Tasse", "Glas", "Bett", "Uhr", "Bild", "Handy", "Buch", "Stift", "Zug", "Bus", "Park", "Kind", "Mädchen", "Junge", "Frau", "Mann", "Baby", "Familie", "Jahr", "Monat", "Woche", "Sommer", "Sonne", "Wetter", "Regen", "Schnee", "Winter", "Garten", "Berg", "Fluss", "Stadt", "Land", "Wald", "Vogel", "Fisch", "sein", "haben", "gehen", "kommen", "machen", "sagen", "sehen", "essen", "trinken", "schlafen", "wohnen", "arbeiten", "spielen", "ja", "mal"]);
   const CEFR_A2_WORDS = new Set(["Schrank", "Kommode", "Spiegel", "Computer", "Tastatur", "Drucker", "Maus", "Kabel", "Rucksack", "Tasche", "Portemonnaie", "Schlüssel", "Brille", "Zeitung", "Heft", "Bahnhof", "Straße", "Ampel", "Fahrrad", "Flugzeug", "Flughafen", "Brücke", "Rathaus", "Bank", "Museum", "Supermarkt", "Bäckerei", "Krankenhaus", "Arzt", "Lehrer", "Lehrerin", "Wochenende", "Wolke", "Eis", "Wind", "Kälte", "Frühling", "Herbst", "Wiese", "Insel", "Schiff", "Blatt", "können", "müssen", "wollen", "werden", "wissen", "kennen", "verstehen", "bekommen", "denn", "eben", "halt", "eigentlich", "ruhig", "wohl"]);
+  // ============================================================
+  // Nachgelieferter Wortschatz (data-vocab-extra.js)
+  // ------------------------------------------------------------
+  // Diese Einträge bringen Niveau UND Thema ausdrücklich mit. Wo ein Wort dort
+  // steht, gilt diese Angabe — die sonst nötige Schätzung entfällt. Dadurch
+  // lassen sich gezielt C1- und C2-Wörter ergänzen, die eine Faustregel niemals
+  // zuverlässig erkennen könnte.
+  // ============================================================
+  let vocabExtraMapCache = null;
+  function vocabExtraMap() {
+    if (vocabExtraMapCache) return vocabExtraMapCache;
+    const m = Object.create(null);
+    ((typeof window !== "undefined" && window.VOCAB_EXTRA) || []).forEach((w) => {
+      if (!w || !w.word) return;
+      m[w.word] = w;
+      // Auch ohne Artikel auffindbar machen ("die These" → "These"), weil die
+      // übrigen Wortlisten der App Substantive teils ohne Artikel führen.
+      const ohneArtikel = w.word.replace(/^(der|die|das)\s+/i, "");
+      if (ohneArtikel !== w.word && !m[ohneArtikel]) m[ohneArtikel] = w;
+    });
+    vocabExtraMapCache = m;
+    return m;
+  }
+  function vocabExtraFor(word) {
+    return vocabExtraMap()[word] || null;
+  }
   function cefrLevelFor(word) {
+    const ausNachtrag = vocabExtraFor(word);
+    if (ausNachtrag && ausNachtrag.level) return ausNachtrag.level;
     if (CEFR_A1_WORDS.has(word)) return "A1";
     if (CEFR_A2_WORDS.has(word)) return "A2";
     // WICHTIG — logische Verknüpfung mit den Themenbereichen: bestimmte Kategorien deuten fürs
@@ -4561,14 +4626,35 @@
     "kapieren": "Umgangssprache", "abhauen": "Umgangssprache"
   };
   function categoryForWord(word) {
+    const ausNachtrag = vocabExtraFor(word);
+    if (ausNachtrag && ausNachtrag.theme) return ausNachtrag.theme;
     return WORD_CATEGORIES[word] || "Sonstiges";
   }
   function buildDictionaryEntries() {
     const entries = [];
+    // Zuerst der nachgelieferte Wortschatz — dadurch gewinnt bei gleichem Stichwort
+    // immer die ausdrücklich gepflegte Fassung mit Niveau, Thema und Beispielsatz.
+    ((typeof window !== "undefined" && window.VOCAB_EXTRA) || []).forEach((w) => {
+      entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example || "", level: w.level || cefrLevelFor(w.word), verified: true, category: w.theme || categoryForWord(w.word) });
+    });
     VocabData.WORDS.forEach((w) => entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example, level: cefrLevelFor(w.word), verified: true, category: categoryForWord(w.word) }));
     Object.entries(ExerciseData.WORD_MEANINGS || {}).forEach(([word, meaning]) => {
       entries.push({ word, syl: (ExerciseData.WORD_SYL || {})[word] || word, meaning, example: "", level: cefrLevelFor(word), verified: true, category: categoryForWord(word) });
     });
+    // Doppelte Stichwörter entfernen — der zuerst eingetragene gewinnt, also der
+    // nachgelieferte Wortschatz mit ausdrücklichem Niveau und Thema. Ohne diesen
+    // Schritt stünde dasselbe Wort zweimal im Wörterbuch, einmal mit geschätzter
+    // und einmal mit gepflegter Einstufung.
+    const gesehen = new Set();
+    const entriesEindeutig = [];
+    entries.forEach((e) => {
+      const key = e.word.toLowerCase();
+      if (gesehen.has(key)) return;
+      gesehen.add(key);
+      entriesEindeutig.push(e);
+    });
+    entries.length = 0;
+    entriesEindeutig.forEach((e) => entries.push(e));
     const seenSoFar = new Set(entries.map((e) => e.word.toLowerCase()));
     // Wörter, die zwar eine handgeprüfte Betonung in WORD_SYL haben, aber (noch) keine eigene
     // deutsche Erklärung — trotzdem als "geprüft" zählen, da die Betonung selbst stimmt.
@@ -10167,7 +10253,23 @@
     const now = new Date();
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
-    const todayHistory = ExerciseData.germanHistoryForToday(`${mm}-${dd}`);
+    // ============================================================
+    // Freigabe neuer Kalendertage
+    // ------------------------------------------------------------
+    // Frisch gelieferte Tage stehen in HISTORY_NEU und sind zunächst NUR für
+    // Betreiber:innen/Moderator:innen sichtbar. Erst wenn der Freigabe-Schalter
+    // für das Paket umgelegt wurde, sehen sie auch alle anderen. So kann jede
+    // Lieferung erst geprüft und dann bewusst „in die Welt gebracht" werden.
+    // ============================================================
+    const histBatchKey = (typeof window !== "undefined" && window.HISTORY_BATCH) || null;
+    const histNeuKeys = (ExerciseData.historyPending && ExerciseData.historyPending()) || [];
+    const histBatchFreigegeben = !histBatchKey || Backend.isFeatureOn(histBatchKey);
+    const histDarfNeuesSehen = Boolean(Backend.canModerate && Backend.canModerate());
+    const histIstNeu = (key) => histNeuKeys.indexOf(key) !== -1;
+    // Ein noch nicht freigegebener Tag gilt für normale Nutzer:innen als nicht vorhanden.
+    const histSichtbar = (key) => !histIstNeu(key) || histBatchFreigegeben || histDarfNeuesSehen;
+    const todayHistory = histSichtbar(`${mm}-${dd}`) ? ExerciseData.germanHistoryForToday(`${mm}-${dd}`) : null;
+    const todayHistoryIstNeu = histIstNeu(`${mm}-${dd}`) && !histBatchFreigegeben;
     // WICHTIG — genau wie bei den neuen Spielen: diese beiden Bereiche sind noch in Arbeit und
     // sollen für normale Nutzer:innen komplett unsichtbar bleiben (kein Wegweiser-Link, keine
     // Überschrift, kein Bereich) — nicht nur beim Öffnen gesperrt sein, siehe
@@ -10199,12 +10301,16 @@
         const standText = stand
           ? (() => { const d = new Date(stand); return isNaN(d) ? stand : `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} Uhr`; })()
           : null;
-        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 365 Tagen gefüllt</p>`;
+        const neuText = histNeuKeys.length && !histBatchFreigegeben && histDarfNeuesSehen
+          ? ` · <strong style="color:var(--coral-400,#E8825F);">${histNeuKeys.length} neu</strong>`
+          : "";
+        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 365 Tagen gefüllt${neuText}</p>`;
       })()}
+      ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
       ${todayHistory ? (() => { historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }); return ""; })() : ""}
       ${todayHistory ? `
         <div class="question-card" style="margin-bottom:16px;">
-          <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})</p>
+          <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>
           <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
           </div>
@@ -10244,10 +10350,12 @@
           <div class="vocab-toolbar" style="margin-bottom:10px;"><input type="text" class="vocab-search" id="historyArchiveSearch" placeholder="Nach Titel oder Jahr suchen…" value="${historyArchiveSearch}" /></div>
           <div class="breakdown-list">
             ${ExerciseData.getAllHistoryEntries()
+              .filter((e) => histSichtbar(e.monthDay))
               .filter((e) => !historyArchiveSearch || e.title.toLowerCase().includes(historyArchiveSearch.toLowerCase()) || String(e.year).includes(historyArchiveSearch))
               .map((e) => {
                 const [mm2, dd2] = e.monthDay.split("-");
-                return `<button type="button" class="breakdown-row breakdown-row-stacked" data-archive-date="${e.monthDay}" style="width:100%; text-align:left; cursor:pointer;"><span>${dd2}.${mm2}. — ${e.title}</span><span class="empty-note">${e.year}</span></button>`;
+                const neu = histIstNeu(e.monthDay) && !histBatchFreigegeben;
+                return `<button type="button" class="breakdown-row breakdown-row-stacked" data-archive-date="${e.monthDay}" style="width:100%; text-align:left; cursor:pointer;"><span>${neu ? "🔴 " : ""}${dd2}.${mm2}. — ${e.title}</span><span class="empty-note">${e.year}</span></button>`;
               }).join("")}
           </div>
           ${ExerciseData.getAllHistoryEntries().length === 0 ? `<p class="empty-note">Noch keine Einträge im Archiv.</p>` : ""}
@@ -10289,6 +10397,9 @@
     kompassArea.querySelectorAll(".hist-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
     });
+    // Freigabe-Schalter für neu gelieferte Kalendertage aktivieren (nur für Moderator:innen
+    // überhaupt im HTML vorhanden — sonst findet der Aufruf schlicht nichts).
+    wireInlineFeatureFlagToggles(kompassArea, () => { renderKompass(); return true; });
     document.getElementById("historyArchiveToggle")?.addEventListener("click", () => {
       historyArchiveOpen = !historyArchiveOpen;
       renderKompass();
