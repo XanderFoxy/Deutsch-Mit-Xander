@@ -6111,6 +6111,30 @@ const ExerciseData = (function () {
       if (!HISTORY_TITLES[key]) HISTORY_TITLES[key] = title;
     });
   }
+  // ============================================================
+  // Nachgelieferte Übungsfragen mit ausdrücklichem Sprachniveau
+  // ------------------------------------------------------------
+  // Die Fragen aus data-exercises-extra.js tragen ein Feld `level` (A1–C2).
+  // Dadurch kann die Übungs-Engine wirklich nach Niveau filtern, statt es nur
+  // aus der Kategorie und der Satzlänge zu schätzen. Sie werden hier an die
+  // bestehenden Fragenbänke angehängt — vorhandene Fragen bleiben unberührt.
+  // ============================================================
+  if (typeof window !== "undefined") {
+    CATEGORIES.forEach((cat) => {
+      const original = cat.getBank;
+      cat.getBank = function (...args) {
+        const bank = original.apply(this, args) || [];
+        const extra = (window.EXERCISE_EXTRA && window.EXERCISE_EXTRA[cat.id]) || [];
+        if (!extra.length) return bank;
+        // Themen-gefilterte Kategorien (Quiz, Wortschatz): nur Zusatzfragen mit
+        // passendem Thema anhängen, sonst tauchten sie in jedem Thema auf.
+        const thema = args[0];
+        const passend = extra.filter((q) => !thema || q.topic === thema);
+        const vorhanden = new Set(bank.map((q) => q.prompt));
+        return bank.concat(passend.filter((q) => !vorhanden.has(q.prompt)));
+      };
+    });
+  }
   // Zeitstempel der letzten Datenaktualisierung — wird in der Sektion angezeigt,
   // damit auf einen Blick sichtbar ist, wann zuletzt Inhalte dazugekommen sind.
   function historyStand() {

@@ -33,18 +33,84 @@ const Quiz = (function () {
 
   const TOPIC_FILTERABLE = ["quiz", "wortschatz"];
 
-  function poolSizeFor(categoryIds, topicFilters) {
+  /* =========================================================
+     SPRACHNIVEAU DER FRAGEN
+     ---------------------------------------------------------
+     Der Schwierigkeitsgrad (Leicht/Mittel/Schwer) bestimmt AUSSCHLIESSLICH
+     die Anzahl der Fragen — daran ändert sich nichts. Wie anspruchsvoll die
+     Fragen sprachlich sind, entscheidet dagegen das Sprachniveau, das
+     standardmäßig aus dem Profil kommt.
+
+     Woher das Niveau einer Frage stammt, in dieser Reihenfolge:
+       1. q.level, wenn die Frage es ausdrücklich mitbringt (neue Inhalte)
+       2. das Grundniveau ihrer Kategorie (Tabelle unten)
+       3. ein Zuschlag, wenn die Frage sprachlich deutlich länger ist als
+          in ihrer Kategorie üblich — lange Sätze sind schwerer, auch wenn
+          die Grammatik dieselbe ist.
+     ========================================================= */
+  const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const KATEGORIE_GRUNDNIVEAU = {
+    artikel: "A1",
+    plural: "A1",
+    wortschatz: "A2",
+    wortpaare: "A2",
+    zeitformen: "B1",
+    nebensatz: "B1",
+    synonyme: "B1",
+    lueckentext: "B1",
+    quiz: "B1",
+    praefixverben: "B2",
+    relativsatz: "B2",
+    redewendungen: "B2",
+    konnektoren: "B2",
+    jedesto: "C1",
+  };
+  function levelIndex(level) {
+    const i = LEVELS.indexOf(level);
+    return i === -1 ? 2 : i; // unbekannt → B1 als neutrale Mitte
+  }
+  function questionLevel(q, categoryId) {
+    if (q && q.level && LEVELS.includes(q.level)) return q.level;
+    let idx = levelIndex(KATEGORIE_GRUNDNIVEAU[categoryId] || "B1");
+    // Längenzuschlag: sehr lange Aufgabenstellungen sind auch bei gleicher
+    // Grammatik anspruchsvoller — mehr zu lesen, mehr im Kopf zu behalten.
+    const text = `${(q && q.prompt) || ""}`;
+    const woerter = text.split(/\s+/).filter(Boolean).length;
+    if (woerter >= 16) idx += 1;
+    if (woerter >= 26) idx += 1;
+    return LEVELS[Math.min(idx, LEVELS.length - 1)];
+  }
+  // Passende Fragen für ein gewünschtes Niveau: alles, was das Niveau NICHT
+  // übersteigt — wer auf B2 lernt, darf auch leichtere Fragen bekommen, aber
+  // keine, die deutlich darüber liegen. Bleiben zu wenige übrig, wird der
+  // Bereich schrittweise geöffnet, damit eine Runde nie an zu wenig Material
+  // scheitert (lieber eine etwas zu schwere Frage als eine leere Runde).
+  function filterByLevel(bank, categoryId, wantedLevel, mindestens) {
+    if (!wantedLevel || !LEVELS.includes(wantedLevel)) return bank;
+    const wantedIdx = levelIndex(wantedLevel);
+    for (let spielraum = 0; spielraum < LEVELS.length; spielraum++) {
+      const treffer = bank.filter((q) => levelIndex(questionLevel(q, categoryId)) <= wantedIdx + spielraum);
+      if (treffer.length >= (mindestens || 1)) return treffer;
+    }
+    return bank;
+  }
+
+  function poolSizeFor(categoryIds, topicFilters, level) {
     return categoryIds.reduce((sum, id) => {
       const t = topicFilters && topicFilters[id];
       const bank = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
-      return sum + bank.length;
+      return sum + filterByLevel(bank, id, level, 1).length;
     }, 0);
   }
 
-  function buildQuestions(categoryIds, count, orderMode, topicFilters) {
+  function buildQuestions(categoryIds, count, orderMode, topicFilters, level) {
     const bankFor = (id) => {
       const t = topicFilters && topicFilters[id];
-      return TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
+      const roh = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
+      // Wie viele Fragen aus dieser Kategorie mindestens gebraucht werden — danach
+      // richtet sich, wie weit der Niveau-Bereich notfalls geöffnet werden muss.
+      const mindestens = Math.max(1, Math.ceil(count / Math.max(1, categoryIds.length)));
+      return filterByLevel(roh, id, level, mindestens);
     };
     if (orderMode === "sequential" && categoryIds.length > 1) {
       const per = Math.floor(count / categoryIds.length);
@@ -66,11 +132,12 @@ const Quiz = (function () {
     return Core.drawUnique(pool, count);
   }
 
-  function startSession(categoryIds, difficultyId, meta, orderMode, topicFilters) {
+  function startSession(categoryIds, difficultyId, meta, orderMode, topicFilters, level) {
     const diff = DIFFICULTIES.find((d) => d.id === difficultyId);
-    const questions = buildQuestions(categoryIds, diff.count, orderMode, topicFilters);
+    const questions = buildQuestions(categoryIds, diff.count, orderMode, topicFilters, level);
     state = {
       categoryIds,
+      level: level || null,
       difficulty: diff,
       questions,
       index: 0,
@@ -186,6 +253,8 @@ const Quiz = (function () {
     CHARACTERS,
     TIERS,
     DIFFICULTIES,
+    LEVELS,
+    questionLevel,
     poolSizeFor,
     startSession,
     markShown,

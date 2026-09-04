@@ -1902,7 +1902,11 @@
   gap: 8px;
   min-width: 0;
 }
-.music-player-cover-slot { flex-shrink: 0; }
+.music-player-cover-slot { flex-shrink: 0; width: 52px; height: 52px; }
+/* Platzhalter in der schwebenden Leiste — braucht eine echte Größe, weil das
+   Video-/Cover-Fenster seit dem Player-Fix nur noch optisch darüber gelegt und
+   nicht mehr hineingehängt wird. Ohne Größe wäre der Platzhalter 0x0 groß. */
+#musicVideoSquareSlotFloat { flex-shrink: 0; width: 52px; height: 52px; }
 .music-player-title-block {
   flex: 1;
   min-width: 0;

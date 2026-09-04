@@ -17,12 +17,75 @@
   // Bewegt das gemeinsame Video-Vorschaufenster physisch dorthin, wo es gerade sichtbar sein soll
   // (Musik-Reiter bevorzugt, sonst schwebende Leiste) — an zentraler Stelle, damit sowohl der
   // Haupt-Tab-Wechsel als auch renderMusicFloatingBar() dieselbe Logik nutzen.
-  function relocateMusicVideoSquare() {
-    const videoSquare = document.getElementById("musicVideoSquare");
-    if (!videoSquare) return;
-    const floatSlot = document.getElementById("musicVideoSquareSlotFloat");
-    if (floatSlot) { floatSlot.appendChild(videoSquare); videoSquare.style.display = ""; }
+  // ============================================================
+  // Video-/Cover-Fenster des Musikplayers — wird NIE mehr im DOM verschoben
+  // ------------------------------------------------------------
+  // Das war die eigentliche Ursache dafür, dass die Wiedergabe beim Wechsel
+  // zwischen den Reitern abbrach: Ein <iframe> lädt sich in allen gängigen
+  // Browsern KOMPLETT NEU, sobald es im DOM an eine andere Stelle gehängt wird
+  // — auch dann, wenn es dieselbe Node bleibt und nur „verschoben" wird. Genau
+  // das passierte bei jedem Reiterwechsel, und mit dem Neuladen begann der Song
+  // wieder von vorn bzw. blieb stehen.
+  //
+  // Neue Lösung: Das Fenster bleibt dauerhaft ein direktes Kind von <body> und
+  // wird nur noch OPTISCH über den gerade sichtbaren Platzhalter gelegt
+  // (position: fixed + Koordinaten des Platzhalters). Der Player wird dadurch
+  // nie wieder angefasst und läuft ununterbrochen weiter.
+  // ============================================================
+  function musicVideoSlotInView() {
+    // Reihenfolge zählt: der Platzhalter im Musik-Reiter hat Vorrang vor dem in
+    // der schwebenden Leiste — ist man gerade im Musik-Reiter, gehört das Bild dorthin.
+    const kandidaten = [
+      document.getElementById("musicVideoSquareSlot"),
+      document.getElementById("musicVideoSquareSlotFloat"),
+    ];
+    for (const slot of kandidaten) {
+      if (!slot || slot.offsetParent === null) continue;
+      const r = slot.getBoundingClientRect();
+      if (r.width > 1 && r.height > 1) return r;
+    }
+    return null;
   }
+  let musicVideoSquareZuletzt = "";
+  function syncMusicVideoSquare() {
+    const q = document.getElementById("musicVideoSquare");
+    if (!q) return;
+    // Dauerhafter Platz direkt unter <body> — einmal hin, danach nie wieder umhängen.
+    if (q.parentNode !== document.body) document.body.appendChild(q);
+    const r = musicVideoSlotInView();
+    if (!r) {
+      if (musicVideoSquareZuletzt !== "aus") { q.style.display = "none"; musicVideoSquareZuletzt = "aus"; }
+      return;
+    }
+    const l = Math.round(r.left), t = Math.round(r.top), w = Math.round(r.width), h = Math.round(r.height);
+    const signatur = `${l}|${t}|${w}|${h}`;
+    // Nur schreiben, wenn sich wirklich etwas geändert hat — sonst würde der
+    // regelmäßige Abgleich unnötig Layout-Arbeit im Browser auslösen.
+    if (signatur === musicVideoSquareZuletzt) return;
+    musicVideoSquareZuletzt = signatur;
+    q.style.display = "";
+    q.style.position = "fixed";
+    q.style.left = `${l}px`;
+    q.style.top = `${t}px`;
+    q.style.width = `${w}px`;
+    q.style.height = `${h}px`;
+    q.style.zIndex = "60";
+  }
+  // Regelmäßiger Abgleich — deckt alle Fälle ab, in denen sich das Layout ändert,
+  // ohne dass an jeder einzelnen Render-Stelle daran gedacht werden muss.
+  setInterval(syncMusicVideoSquare, 250);
+  // Beim Scrollen, Drehen und Größenändern mitwandern — sonst würde das Fenster
+  // an seiner alten Bildschirmstelle „kleben", während der Platzhalter wegscrollt.
+  let musicSyncAngefordert = false;
+  function musicVideoSquareNachziehen() {
+    if (musicSyncAngefordert) return;
+    musicSyncAngefordert = true;
+    requestAnimationFrame(() => { musicSyncAngefordert = false; syncMusicVideoSquare(); });
+  }
+  window.addEventListener("scroll", musicVideoSquareNachziehen, { passive: true });
+  window.addEventListener("resize", musicVideoSquareNachziehen);
+  window.addEventListener("orientationchange", musicVideoSquareNachziehen);
+  function relocateMusicVideoSquare() { syncMusicVideoSquare(); }
   /* ============ Haupt-Tab-Navigation ============ */
   const tabs = document.querySelectorAll(".tape-tab");
   const views = document.querySelectorAll(".view");
@@ -3315,6 +3378,12 @@
 
   let selectedCategories = new Set();
   let selectedDifficulty = "leicht";
+  // Sprachniveau für die Übungsrunden. null bedeutet „noch nicht festgelegt" —
+  // beim ersten Rendern wird dann automatisch das im Profil hinterlegte Niveau
+  // übernommen (siehe applyDefaultCefrLevel). Der Schwierigkeitsgrad bleibt
+  // davon völlig unberührt: er bestimmt weiterhin ausschließlich die ANZAHL
+  // der Fragen, nicht deren sprachlichen Anspruch.
+  let selectedExerciseLevel = null;
   let orderMode = "mixed"; // 'mixed' | 'sequential'
 
   let selectedChallengeFriendIds = new Set();
@@ -3481,7 +3550,10 @@
         </div>`;
     }).join("");
 
-    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }) : 0;
+    // Sprachniveau: beim ersten Aufbau aus dem Profil übernehmen, danach das,
+    // was zuletzt hier eingestellt wurde.
+    selectedExerciseLevel = applyDefaultCefrLevel(selectedExerciseLevel, (v) => { selectedExerciseLevel = v; });
+    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel) : 0;
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
     if (currentDiffCount > maxAvailable) {
       const fitting = Quiz.DIFFICULTIES.filter((d) => d.count <= maxAvailable).sort((a, b) => b.count - a.count)[0];
@@ -3545,6 +3617,13 @@
       </div>
       <div class="category-grid">${cards}</div>
       ${challengeBar}
+      <div class="question-card" style="margin-bottom:12px;">
+        <p class="eyebrow" style="margin-bottom:6px;">⚖️ Sprachniveau der Fragen</p>
+        <div class="trophy-case" style="flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px; margin:0;">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip exercise-level-btn ${selectedExerciseLevel === lvl ? "selected" : ""}" data-ex-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        <p class="empty-note" style="margin-top:8px; font-size:0.72rem;">Voreingestellt auf dein Profil-Niveau. Der Schwierigkeitsgrad darunter ändert nur die <strong>Anzahl</strong> der Fragen — wie schwer die Sprache ist, entscheidest du hier.</p>
+      </div>
       <div class="setup-bar">
         <div class="diff-pills">
           ${Quiz.DIFFICULTIES.map((d) => `<button type="button" class="diff-pill" data-diff="${d.id}" aria-selected="${d.id === selectedDifficulty}" ${maxAvailable < d.count ? "disabled" : ""}>${d.label} (${d.count})</button>`).join("")}
@@ -3588,6 +3667,13 @@
     setupEl.querySelectorAll(".diff-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedDifficulty = btn.dataset.diff;
+        renderSetup();
+      });
+    });
+    // Niveau-Schalter für die Übungsrunden
+    setupEl.querySelectorAll(".exercise-level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedExerciseLevel = btn.dataset.exLevel;
         renderSetup();
       });
     });
@@ -3655,14 +3741,14 @@
             const cid = await Backend.createChallenge(fid, [...selectedCategories]);
             if (!firstChallengeId) firstChallengeId = cid;
           }
-          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters);
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters, selectedExerciseLevel);
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
           startBtn.disabled = false;
           return;
         }
       } else {
-        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters);
+        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters, selectedExerciseLevel);
       }
       Backend.notifyPracticing(titles);
       showToast(`🦊 Willkommen, ${personaForCategory([...selectedCategories][0])}!`);
@@ -12630,13 +12716,23 @@ An einem Morgen lief ein kleiner Fuchs los…
       playMusicIndex(musicCurrentIndex);
       return;
     }
+    // WICHTIG — behebt „Pause hält nicht an": Bisher wurde musicIsPlaying einfach
+    // umgeschaltet, ganz gleich, was das Abspielgerät tatsächlich tat. Lief die
+    // Wiedergabe in Wirklichkeit noch (oder wurde play() vom Browser abgelehnt),
+    // zeigte der Knopf etwas anderes an als der tatsächliche Zustand — und der
+    // nächste Klick tat dann scheinbar das Falsche. Jetzt wird IMMER der echte
+    // Zustand gefragt, und der Merker kommt aus den Ereignissen des Players
+    // (siehe die play/pause-Listener weiter unten), nicht aus einer Vermutung.
     if (Backend.isDirectAudioUrl(song.url)) {
-      if (musicIsPlaying) audioEl.pause(); else audioEl.play().catch(() => {});
+      if (!audioEl.paused) audioEl.pause();
+      else audioEl.play().catch(() => { musicIsPlaying = false; updateMusicPlayPauseIconOnly(); });
     } else if (ytMusicPlayer) {
-      if (musicIsPlaying) ytMusicPlayer.pauseVideo(); else ytMusicPlayer.playVideo();
+      let ytState = -1;
+      try { ytState = ytMusicPlayer.getPlayerState ? ytMusicPlayer.getPlayerState() : -1; } catch (e) {}
+      const laeuft = window.YT && ytState === YT.PlayerState.PLAYING;
+      if (laeuft) ytMusicPlayer.pauseVideo(); else ytMusicPlayer.playVideo();
     }
-    musicIsPlaying = !musicIsPlaying;
-    renderMusicPlayerBar();
+    updateMusicPlayPauseIconOnly();
   }
   // isAutoAdvance: true nur beim automatischen Songende (YouTube ENDED / Audio "ended"-Event) —
   // NICHT beim manuellen "Weiter"-Klick, der immer zum nächsten Song springen soll, unabhängig
@@ -12688,7 +12784,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       // sonst würde es beim Überschreiben mitgelöscht, da es zu diesem Zeitpunkt physisch
       // innerhalb von bar liegt.
       const videoSquareRescue = document.getElementById("musicVideoSquare");
-      if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
+      if (videoSquareRescue && videoSquareRescue.parentNode !== document.body) document.body.appendChild(videoSquareRescue); // nur umhängen, wenn es NICHT schon direkt unter <body> liegt — jedes Umhängen lädt das iframe neu
       const song = musicPlaylist[musicCurrentIndex];
       // Der Aufklapp-Knopf erscheint bei JEDEM Song — auch reine MP3-Links ohne eigenes Cover
       // zeigen jetzt ein animiertes Musik-Symbol statt einer leeren Fläche, damit dort nie mehr
@@ -12756,8 +12852,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       const videoSquare = document.getElementById("musicVideoSquare");
       const slot = document.getElementById("musicVideoSquareSlot");
       if (videoSquare && slot && song) {
-        slot.appendChild(videoSquare);
-        videoSquare.style.display = "";
+        // NICHT mehr ins Slot-Element hängen (das lud das iframe jedes Mal neu und
+        // brach die Wiedergabe ab) — das Fenster bleibt unter <body> und wird nur
+        // optisch über den Platzhalter gelegt.
+        syncMusicVideoSquare();
         let coverLayer = videoSquare.querySelector(".music-cover-layer");
         let mp3Icon = videoSquare.querySelector(".music-mp3-icon");
         if (song.cover_url) {
@@ -12851,7 +12949,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     // sich dabei neu — das war die eigentliche Ursache des "Einfrieren und Kreiseln"-Verhaltens
     // bei jeder Seitennavigation, während gerade ein Song lief.
     const videoSquareRescue = document.getElementById("musicVideoSquare");
-    if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
+    if (videoSquareRescue && videoSquareRescue.parentNode !== document.body) document.body.appendChild(videoSquareRescue); // nur umhängen, wenn es NICHT schon direkt unter <body> liegt — jedes Umhängen lädt das iframe neu
     const song = musicPlaylist[musicCurrentIndex];
     if (!song) { floatBar.style.display = "none"; floatBar.innerHTML = ""; return; }
     const knowledgeViewOpen = document.getElementById("view-knowledge")?.dataset.active === "true";
@@ -12959,7 +13057,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     // dem Neusetzen von area.innerHTML "in Sicherheit" gebracht werden — sonst würde es beim
     // Überschreiben mitgelöscht, falls es zu diesem Zeitpunkt gerade innerhalb von area liegt.
     const videoSquareRescue = document.getElementById("musicVideoSquare");
-    if (videoSquareRescue) document.body.appendChild(videoSquareRescue);
+    if (videoSquareRescue && videoSquareRescue.parentNode !== document.body) document.body.appendChild(videoSquareRescue); // nur umhängen, wenn es NICHT schon direkt unter <body> liegt — jedes Umhängen lädt das iframe neu
     const user = Backend.currentUser();
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
     const isMine = musicPlaylistMode === "mine";
@@ -13178,6 +13276,29 @@ An einem Morgen lief ein kleiner Fuchs los…
     // als Geschwister-Element vor dem Bereich eingefügt — kein separater Aufruf mehr nötig.
   }
   document.getElementById("musicAudioNative")?.addEventListener("ended", () => playNextMusic(true));
+  // ============================================================
+  // Der Merker musicIsPlaying folgt jetzt dem TATSÄCHLICHEN Zustand
+  // ------------------------------------------------------------
+  // Ohne diese beiden Zuhörer wusste die Oberfläche nie, ob wirklich abgespielt
+  // wird: Wenn der Browser die Wiedergabe von sich aus anhielt (Anruf, andere
+  // App, Kopfhörer ab, Autoplay-Sperre), blieb der Knopf auf „Pause" stehen,
+  // obwohl längst nichts mehr lief — und der nächste Klick tat das Gegenteil
+  // von dem, was man erwartete. Genau das fühlte sich „buggy" an.
+  // ============================================================
+  (() => {
+    const audioEl = document.getElementById("musicAudioNative");
+    if (!audioEl) return;
+    const uebernehmen = (laeuft) => {
+      if (musicIsPlaying === laeuft) return;
+      musicIsPlaying = laeuft;
+      if (typeof updateMusicPlayPauseIconOnly === "function") updateMusicPlayPauseIconOnly();
+      if (typeof renderMusicFloatingBar === "function") renderMusicFloatingBar();
+    };
+    audioEl.addEventListener("play", () => uebernehmen(true));
+    audioEl.addEventListener("playing", () => uebernehmen(true));
+    audioEl.addEventListener("pause", () => uebernehmen(false));
+    audioEl.addEventListener("ended", () => uebernehmen(false));
+  })();
   document.querySelector('#knowledgeSubnav [data-sub="sub-music"]')?.addEventListener("click", async () => {
     await loadMusicPlaylist();
     renderMusicSection();
