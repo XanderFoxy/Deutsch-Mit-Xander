@@ -1676,7 +1676,7 @@
     await Backend.updateExtraProfileField("contentStandSeen", stand);
     if (!gesehen) return; // erster Besuch — nur merken, nicht melden
     const neu = (ExerciseData.historyPending && ExerciseData.historyPending()) || [];
-    const batchKey = (typeof window !== "undefined" && window.HISTORY_BATCH) || null;
+    const batchKey = (ExerciseData.historyBatchKey && ExerciseData.historyBatchKey()) || null;
     const schonFrei = !batchKey || Backend.isFeatureOn(batchKey);
     const darfFreigeben = Boolean(Backend.canModerate && Backend.canModerate());
     const gesamt = (ExerciseData.historyDayCount && ExerciseData.historyDayCount()) || 0;
@@ -3606,15 +3606,6 @@
 
     setupEl.innerHTML = `
       ${resumeBar}
-      <div class="category-grid">
-        <div class="category-card" id="homophoneGameCard">
-          <div class="cat-checkbox">🔊</div>
-          <div class="cat-body">
-            <div class="cat-title-row"><span class="cat-icon">🔊</span><span>Homophone — gleich klingen, anders schreiben</span></div>
-            <div class="cat-info-text open">Wörter, die gleich klingen, aber unterschiedlich geschrieben werden und etwas anderes bedeuten — antippen zum Starten.</div>
-          </div>
-        </div>
-      </div>
       <div class="category-grid">${cards}</div>
       ${challengeBar}
       <div class="question-card" style="margin-bottom:12px;">
@@ -3638,7 +3629,7 @@
       ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : '<p class="empty-note">⚡ Tipp: Antworte innerhalb von 4 Sekunden richtig für einen Tempo-Bonus.</p>'}
     `;
 
-    setupEl.querySelectorAll(".category-card:not(#homophoneGameCard)").forEach((card) => {
+    setupEl.querySelectorAll(".category-card").forEach((card) => {
       const id = card.dataset.cat;
       if (!id) {
         card.addEventListener("click", () => alert(card.dataset.lockedInfo || "Diese Kategorie ist noch gesperrt."));
@@ -3762,78 +3753,73 @@
       Quiz.reset();
       renderSetup();
     });
-    document.getElementById("homophoneGameCard")?.addEventListener("click", () => renderHomophoneGame());
   }
 
-  // Homophone-Übung: Wortpaare, die gleich ausgesprochen werden, aber unterschiedlich geschrieben
-  // werden und Verschiedenes bedeuten. Eine eigene Ansicht wie bei jeder anderen Übung — man
-  // gelangt erst nach Antippen der Kachel hinein, das Spiel steht nicht von selbst offen da.
-  const HOMOPHONE_PAIRE = [
-    { a: "mehr", aBedeutung: "eine größere Menge, zusätzlich", b: "Meer", bBedeutung: "das große, salzige Gewässer" },
-    { a: "Wal", aBedeutung: "das riesige Meerestier", b: "Wahl", bBedeutung: "wenn man zwischen Optionen entscheidet oder abstimmt" },
-    { a: "Waise", aBedeutung: "ein Kind ohne Eltern", b: "Weise", bBedeutung: "die Art und Weise, wie man etwas tut" },
-    { a: "Saite", aBedeutung: "der gespannte Draht/Faden an einer Gitarre", b: "Seite", bBedeutung: "eine Blattseite in einem Buch" },
-    { a: "malen", aBedeutung: "ein Bild mit Farbe machen", b: "mahlen", bBedeutung: "Korn zu Mehl zerkleinern" },
-    { a: "Lied", aBedeutung: "ein gesungenes Musikstück", b: "Lid", bBedeutung: "die Haut, die man über das Auge schließen kann" },
-    { a: "Rat", aBedeutung: "ein Vorschlag oder eine Empfehlung", b: "Rad", bBedeutung: "der runde Teil an einem Fahrzeug" },
-    { a: "Lehre", aBedeutung: "eine Ausbildung oder eine wichtige Erkenntnis", b: "Leere", bBedeutung: "wenn nichts in etwas drin ist" },
-    { a: "Ähre", aBedeutung: "der obere Teil einer Getreidepflanze mit den Körnern", b: "Ehre", bBedeutung: "großer Respekt für jemanden" },
-    { a: "wieder", aBedeutung: "noch einmal, erneut", b: "wider", bBedeutung: "gegen etwas (z. B. „wider Willen“)" },
-    { a: "seid", aBedeutung: "ihr seid — Form von „sein“", b: "seit", bBedeutung: "ab einem bestimmten Zeitpunkt" },
-    { a: "Stiel", aBedeutung: "der Griff eines Werkzeugs oder Stängel einer Pflanze", b: "Stil", bBedeutung: "die persönliche Art, wie etwas gemacht wird" },
-    { a: "Mine", aBedeutung: "der Stift in einem Kugelschreiber, oder ein Sprengkörper", b: "Miene", bBedeutung: "der Gesichtsausdruck einer Person" },
-    { a: "Lerche", aBedeutung: "ein kleiner Singvogel", b: "Lärche", bBedeutung: "ein Nadelbaum" },
-    { a: "Grad", aBedeutung: "die Einheit für Temperatur oder Winkel", b: "Grat", bBedeutung: "die scharfe Kante eines Berges" },
-    { a: "Bad", aBedeutung: "der Raum zum Waschen, oder das Baden selbst", b: "bat", bBedeutung: "hat gebeten (von „bitten“)" },
-    { a: "Tod", aBedeutung: "das Ende des Lebens", b: "tot", bBedeutung: "nicht mehr lebendig" },
-    { a: "Rind", aBedeutung: "das Nutztier, von dem Rindfleisch kommt", b: "rinnt", bBedeutung: "fließt langsam (von „rinnen“)" },
-    { a: "Feld", aBedeutung: "eine landwirtschaftliche Fläche", b: "fällt", bBedeutung: "stürzt nach unten (von „fallen“)" },
-    { a: "Ries", aBedeutung: "eine große Menge Papier (500 Blatt)", b: "Reis", bBedeutung: "das kleine, weiße Getreidekorn" },
-  ];
-  let homophoneCurrentIdx = -1, homophoneCurrentSide = "a";
-  function renderHomophoneGame() {
-    const area = document.getElementById("exerciseSetup");
+  // Hinweis: Die frühere Sonder-Ansicht für Homophone gibt es nicht mehr. Homophone
+  // sind jetzt eine ganz normale Übungskategorie (siehe data-exercises.js) und laufen
+  // damit im selben Kartendesign, mit derselben Farbcodierung, demselben
+  // Ergebnis-Bildschirm, Punkten und Anrechnung auf die Sammelfüchse wie alle anderen.
+
+  /* ============================================================
+     GRAMMATIK — kurze Übersicht nach Sprachniveau
+     ------------------------------------------------------------
+     Eigener Unterreiter unter „Lernen". Startet automatisch auf dem im
+     Profil eingestellten Sprachniveau, lässt sich aber frei umschalten.
+     Jedes Thema ist eingeklappt und öffnet sich beim Antippen — so bleibt
+     die Übersicht auch auf dem Handy überschaubar. Wo es eine passende
+     Übung gibt, führt ein Knopf direkt dorthin.
+     ============================================================ */
+  let grammatikLevel = null;
+  let grammatikOffen = null; // Index des gerade geöffneten Themas
+  function renderGrammatik() {
+    const area = document.getElementById("grammatikArea");
     if (!area) return;
+    grammatikLevel = applyDefaultCefrLevel(grammatikLevel, (v) => { grammatikLevel = v; });
+    const alle = ExerciseData.GRAMMATIK || {};
+    const themen = alle[grammatikLevel] || [];
     area.innerHTML = `
-      <button type="button" class="btn btn-ghost" id="homophoneBackBtn" style="margin-bottom:10px;">← Zurück zu den Übungen</button>
-      <p class="eyebrow">🔊 Homophone — gleich klingen, anders schreiben</p>
-      <div class="question-card" style="margin-bottom:16px;">
-        <p class="empty-note" style="margin:0 0 10px;">Manche deutschen Wörter klingen beim Sprechen völlig gleich, werden aber unterschiedlich geschrieben und bedeuten etwas ganz anderes — das nennt man <strong>Homophone</strong>. Ordne die Bedeutung der richtigen Schreibweise zu.</p>
-        <p id="homophoneQuestion" style="font-weight:700; margin:0 0 10px;"></p>
-        <div id="homophoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
-        <p id="homophoneFeedback" class="empty-note" style="margin:10px 0 0; min-height:1.2em;"></p>
+      <p class="empty-note" style="margin-bottom:10px;">Die wichtigsten Grammatikthemen deines Niveaus — jeweils in zwei Sätzen erklärt, mit Beispielen. Antippen zum Aufklappen.</p>
+      <div class="question-card" style="margin-bottom:14px;">
+        <p class="eyebrow" style="margin-bottom:6px;">⚖️ Sprachniveau</p>
+        <div class="trophy-case" style="flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px; margin:0;">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip grammatik-level-btn ${grammatikLevel === lvl ? "selected" : ""}" data-gr-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        <p class="empty-note" style="margin-top:8px; font-size:0.72rem;">Voreingestellt auf dein Profil-Niveau.</p>
       </div>
+      ${themen.length ? themen.map((t, i) => `
+        <div class="question-card" style="margin-bottom:10px;">
+          <button type="button" class="grammatik-toggle" data-gr-idx="${i}" style="width:100%; text-align:left; background:none; border:none; padding:0; cursor:pointer; font:inherit; color:inherit; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.1rem;">${grammatikOffen === i ? "▾" : "▸"}</span>
+            <strong style="flex:1;">${t.titel}</strong>
+          </button>
+          ${grammatikOffen === i ? `
+            <p style="margin:10px 0 8px;">${t.kurz}</p>
+            <div class="breakdown-list" style="margin-bottom:8px;">
+              ${t.beispiele.map((b) => `<div class="breakdown-row" style="justify-content:flex-start;"><span>${b}</span></div>`).join("")}
+            </div>
+            ${t.tipp ? `<p class="empty-note" style="margin:0 0 8px;">💡 ${t.tipp}</p>` : ""}
+            ${t.uebung && ExerciseData.getCategory(t.uebung) ? `<button type="button" class="btn btn-ghost grammatik-uebung-btn" data-gr-cat="${t.uebung}" style="margin:0;">▶ Dazu üben: ${ExerciseData.getCategory(t.uebung).title}</button>` : ""}
+          ` : ""}
+        </div>
+      `).join("") : `<p class="empty-note">Für dieses Niveau sind noch keine Themen hinterlegt.</p>`}
     `;
-    document.getElementById("homophoneBackBtn").addEventListener("click", () => document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.click());
-    newHomophoneRound();
-  }
-  function newHomophoneRound() {
-    const qEl = document.getElementById("homophoneQuestion");
-    if (!qEl) return;
-    let idx;
-    do { idx = Math.floor(Math.random() * HOMOPHONE_PAIRE.length); } while (idx === homophoneCurrentIdx && HOMOPHONE_PAIRE.length > 1);
-    homophoneCurrentIdx = idx;
-    homophoneCurrentSide = Math.random() < 0.5 ? "a" : "b";
-    const pair = HOMOPHONE_PAIRE[idx];
-    const bedeutung = homophoneCurrentSide === "a" ? pair.aBedeutung : pair.bBedeutung;
-    qEl.textContent = `„${bedeutung}" — welches Wort ist das?`;
-    const options = Math.random() < 0.5 ? [pair.a, pair.b] : [pair.b, pair.a];
-    const optionsEl = document.getElementById("homophoneOptions");
-    optionsEl.innerHTML = options.map((w) => `<button type="button" class="btn btn-secondary homophone-opt" data-word="${w}" style="flex:1;">${w}</button>`).join("");
-    document.getElementById("homophoneFeedback").textContent = "";
-    optionsEl.querySelectorAll(".homophone-opt").forEach((btn) => {
+    area.querySelectorAll(".grammatik-level-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { grammatikLevel = btn.dataset.grLevel; grammatikOffen = null; renderGrammatik(); });
+    });
+    area.querySelectorAll(".grammatik-toggle").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const chosen = btn.dataset.word;
-        const correct = homophoneCurrentSide === "a" ? pair.a : pair.b;
-        const feedbackEl = document.getElementById("homophoneFeedback");
-        if (chosen === correct) {
-          feedbackEl.textContent = "✅ Richtig!";
-          feedbackEl.style.color = "var(--teal-400)";
-        } else {
-          feedbackEl.textContent = `❌ Nicht ganz — richtig wäre „${correct}".`;
-          feedbackEl.style.color = "var(--red-400, #c0392b)";
-        }
-        setTimeout(newHomophoneRound, 1400);
+        const idx = Number(btn.dataset.grIdx);
+        grammatikOffen = grammatikOffen === idx ? null : idx;
+        renderGrammatik();
+      });
+    });
+    // Direkt in die passende Übung springen — mit genau dieser Kategorie vorausgewählt,
+    // damit man vom Erklärtext ohne Umweg ins Üben kommt.
+    area.querySelectorAll(".grammatik-uebung-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedCategories.clear();
+        selectedCategories.add(btn.dataset.grCat);
+        document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.click();
       });
     });
   }
@@ -4373,7 +4359,7 @@
   function vocabExtraMap() {
     if (vocabExtraMapCache) return vocabExtraMapCache;
     const m = Object.create(null);
-    ((typeof window !== "undefined" && window.VOCAB_EXTRA) || []).forEach((w) => {
+    (VocabData.WORDS || []).filter((w) => w && (w.level || w.theme)).forEach((w) => {
       if (!w || !w.word) return;
       m[w.word] = w;
       // Auch ohne Artikel auffindbar machen ("die These" → "These"), weil die
@@ -4720,7 +4706,7 @@
     const entries = [];
     // Zuerst der nachgelieferte Wortschatz — dadurch gewinnt bei gleichem Stichwort
     // immer die ausdrücklich gepflegte Fassung mit Niveau, Thema und Beispielsatz.
-    ((typeof window !== "undefined" && window.VOCAB_EXTRA) || []).forEach((w) => {
+    (VocabData.WORDS || []).filter((w) => w.level || w.theme).forEach((w) => {
       entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example || "", level: w.level || cefrLevelFor(w.word), verified: true, category: w.theme || categoryForWord(w.word) });
     });
     VocabData.WORDS.forEach((w) => entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example, level: cefrLevelFor(w.word), verified: true, category: categoryForWord(w.word) }));
@@ -5158,6 +5144,7 @@
     area.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
   }
   document.querySelector('#learnSubnav [data-sub="sub-erste-schritte"]')?.addEventListener("click", () => renderFirstSteps());
+  document.querySelector('#learnSubnav [data-sub="sub-grammatik"]')?.addEventListener("click", () => renderGrammatik());
   document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.addEventListener("click", () => renderDictionary());
 
   /* ============================================================
@@ -10347,7 +10334,7 @@
     // für das Paket umgelegt wurde, sehen sie auch alle anderen. So kann jede
     // Lieferung erst geprüft und dann bewusst „in die Welt gebracht" werden.
     // ============================================================
-    const histBatchKey = (typeof window !== "undefined" && window.HISTORY_BATCH) || null;
+    const histBatchKey = (ExerciseData.historyBatchKey && ExerciseData.historyBatchKey()) || null;
     const histNeuKeys = (ExerciseData.historyPending && ExerciseData.historyPending()) || [];
     const histBatchFreigegeben = !histBatchKey || Backend.isFeatureOn(histBatchKey);
     const histDarfNeuesSehen = Boolean(Backend.canModerate && Backend.canModerate());
