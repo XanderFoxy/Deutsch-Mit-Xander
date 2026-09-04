@@ -3972,3 +3972,38 @@ details summary::marker { content: ""; }
   text-transform: uppercase;
   opacity: 0.72;
 }
+
+/* ============================================================
+   Lernraum Italienisch — durchgehend sichtbares Band
+   ------------------------------------------------------------
+   Solange der private Italienisch-Raum aktiv ist, soll das nie in
+   Vergessenheit geraten. Das Band liegt fest am oberen Rand und
+   trägt die italienischen Farben.
+   ============================================================ */
+.lernraum-band {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  color: #14361F;
+  background: linear-gradient(90deg, #2E8B57 0%, #F6F2E8 50%, #C8402F 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.lernraum-band button {
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  color: #14361F;
+}
+/* Der Seiteninhalt rutscht um die Bandhöhe nach unten, damit nichts verdeckt wird. */
+body.lernraum-it { padding-top: 30px; }

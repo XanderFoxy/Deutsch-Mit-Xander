@@ -107,7 +107,7 @@ const Quiz = (function () {
   function poolSizeFor(categoryIds, topicFilters, level) {
     return categoryIds.reduce((sum, id) => {
       const t = topicFilters && topicFilters[id];
-      const bank = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
+      const bank = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.activeGetCategory(id).getBank(t) : ExerciseData.activeGetCategory(id).getBank();
       return sum + filterByLevel(bank, id, level, 1).length;
     }, 0);
   }
@@ -115,7 +115,7 @@ const Quiz = (function () {
   function buildQuestions(categoryIds, count, orderMode, topicFilters, level) {
     const bankFor = (id) => {
       const t = topicFilters && topicFilters[id];
-      const roh = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.getCategory(id).getBank(t) : ExerciseData.getCategory(id).getBank();
+      const roh = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.activeGetCategory(id).getBank(t) : ExerciseData.activeGetCategory(id).getBank();
       // Wie viele Fragen aus dieser Kategorie mindestens gebraucht werden — danach
       // richtet sich, wie weit der Niveau-Bereich notfalls geöffnet werden muss.
       const mindestens = Math.max(1, Math.ceil(count / Math.max(1, categoryIds.length)));
@@ -216,7 +216,7 @@ const Quiz = (function () {
 
     const groupCounts = {};
     state.categoryIds.forEach((id) => {
-      const g = ExerciseData.getCategory(id).group;
+      const g = ExerciseData.activeGetCategory(id).group;
       groupCounts[g] = (groupCounts[g] || 0) + 1;
     });
     const distinctGroups = Object.keys(groupCounts).length;

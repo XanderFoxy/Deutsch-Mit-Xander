@@ -1065,7 +1065,7 @@
     if (!weakOnes.length) return null;
     const dayIdx = dayOfYearIndex(new Date());
     const [id] = weakOnes[dayIdx % weakOnes.length]; // wechselt fair zwischen mehreren Schwächen
-    const cat = ExerciseData.getCategory(id);
+    const cat = ExerciseData.activeGetCategory(id);
     return cat ? { id, label: cat.title, kind: "self-assessed" } : null;
   }
   let adminUserSearch = "";
@@ -1250,7 +1250,7 @@
         Core.el("div", { class: "form-field", id: "giftCategoryField" },
           Core.el("label", {}, "Kategorie"),
           Core.el("select", { id: "giftCategorySelect", class: "challenge-select" },
-            ...ExerciseData.CATEGORIES.map((c) => Core.el("option", { value: c.id }, `${c.icon} ${c.title}`))
+            ...ExerciseData.activeCategories().map((c) => Core.el("option", { value: c.id }, `${c.icon} ${c.title}`))
           )
         ),
         Core.el("div", { class: "form-field", id: "giftThemeField", style: "display:none;" },
@@ -1279,7 +1279,7 @@
       try {
         if (type === "category") {
           const catId = document.getElementById("giftCategorySelect").value;
-          const cat = ExerciseData.getCategory(catId);
+          const cat = ExerciseData.activeGetCategory(catId);
           await Backend.adminGiftCategoryUnlock(targetUserId, catId, cat?.title);
         } else {
           const themeId = document.getElementById("giftThemeSelect").value;
@@ -1293,13 +1293,65 @@
       }
     });
   }
+  /* ============================================================
+     Lernraum wechseln (Deutsch ⇄ Italienisch)
+     ------------------------------------------------------------
+     Betrifft ausschließlich das eigene Konto. Der gewählte Raum wird im
+     Profil gemerkt, damit er beim nächsten Öffnen wieder da ist. Nach dem
+     Wechsel wird die Oberfläche neu aufgebaut, weil Kategorien, Grammatik,
+     Wörterbuch und Kompass jetzt aus einer anderen Quelle kommen.
+     ============================================================ */
+  function wechsleLernraum(raum, merken) {
+    if (!ExerciseData.setLernraum) return;
+    ExerciseData.setLernraum(raum);
+    document.body.classList.toggle("lernraum-it", raum === "it");
+    zeigeLernraumBanner();
+    if (merken && Backend.currentUser()) {
+      Backend.updateExtraProfileField("lernraum", raum);
+      showToast(raum === "it" ? "🇮🇹 Italienisch-Raum aktiv — nur für dich, ohne Wertung." : "🇩🇪 Zurück im Deutsch-Raum.");
+    }
+    // Ausgewählte Kategorien gehören zum anderen Raum und wären jetzt ungültig.
+    if (typeof selectedCategories !== "undefined") selectedCategories.clear();
+    if (typeof renderSetup === "function") renderSetup();
+    if (typeof renderSettings === "function") renderSettings();
+    if (typeof renderGrammatik === "function") renderGrammatik();
+    if (typeof renderDictionary === "function") renderDictionary();
+    if (typeof renderKompass === "function") renderKompass();
+    if (typeof renderGamesOverview === "function") renderGamesOverview();
+  }
+  // Ein durchgehend sichtbares Band, solange der Italienisch-Raum aktiv ist —
+  // damit nie Zweifel besteht, in welchem Raum man sich gerade befindet.
+  function zeigeLernraumBanner() {
+    const aktiv = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it";
+    let band = document.getElementById("lernraumBand");
+    if (!aktiv) { if (band) band.remove(); return; }
+    if (!band) {
+      band = document.createElement("div");
+      band.id = "lernraumBand";
+      band.className = "lernraum-band";
+      band.innerHTML = `<span>🇮🇹 <strong>Lernraum Italienisch</strong> — privat, ohne Wertung</span><button type="button" id="lernraumZurueckBtn">Zurück zu Deutsch</button>`;
+      document.body.appendChild(band);
+      band.querySelector("#lernraumZurueckBtn").addEventListener("click", () => wechsleLernraum("de", true));
+    }
+  }
   function renderSettings() {
     const area = document.getElementById("settingsArea");
     if (!area) return;
     const profile = Backend.currentProfile();
     if (!profile) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
+    const istBetreiber = Boolean(Backend.isOwner && Backend.isOwner());
+    const imItalienischraum = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it";
     area.innerHTML = `
       <p class="empty-note">Hier stellst du ein, wie dich die Seite beim Lernen unterstützt und wie Benachrichtigungen aussehen und klingen.</p>
+      ${istBetreiber ? `
+      <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
+        <h3>🇮🇹 Lernraum Italienisch — nur für dich</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Schaltet die ganze Seite auf Italienisch-Lernen um: eigene Grammatik, eigener Wortschatz, eigene Übungen und „C'era una volta in Italia" statt „Es war einmal in Deutschland". <strong>Für alle anderen ändert sich nichts</strong>, und nichts davon zählt in deine Punkte, Ranglisten oder Sammelfiguren.</p>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="trophy-chip lernraum-btn ${!imItalienischraum ? "selected" : ""}" data-lernraum="de">🇩🇪 Deutsch</button>
+          <button type="button" class="trophy-chip lernraum-btn ${imItalienischraum ? "selected" : ""}" data-lernraum="it">🇮🇹 Italiano</button>
+        </div>
+      </div>` : ""}
       <div class="question-card" style="margin-top:14px; border:2px solid var(--teal-400);">
         <h3>⚖️ Sprachniveau — für faire Fortschritts-Geschwindigkeit</h3>
         <p class="empty-note" style="margin-bottom:10px;">Beeinflusst NICHT deinen frei wählbaren Schwierigkeitsgrad — nur wie schnell Punkte, Missionen und Level voranschreiten. So haben Anfänger:innen die gleichen Fortschritts-Chancen wie Muttersprachler:innen, für die die Aufgaben leichter sind.</p>
@@ -1320,7 +1372,7 @@
       <div class="question-card" style="margin-top:14px;">
         <h3>🧭 Dein Lernprofil</h3>
         <p class="empty-note" style="margin-bottom:10px;">Schätz dich selbst ein — bei „schwach" markierten Bereichen zieht die Tagesaufgabe im Kalender bevorzugt Fragen aus genau diesem Bereich.</p>
-        ${ExerciseData.CATEGORIES.map((cat) => {
+        ${ExerciseData.activeCategories().map((cat) => {
           const current = getLearningProfile()[cat.id] || "";
           return `
           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
@@ -1516,6 +1568,9 @@
     const shareSiteBtn = document.getElementById("shareSiteBtn");
     if (shareSiteBtn) shareSiteBtn.addEventListener("click", shareReferralLink);
     if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); }
+    area.querySelectorAll(".lernraum-btn").forEach((btn) => {
+      btn.addEventListener("click", () => wechsleLernraum(btn.dataset.lernraum, true));
+    });
     area.querySelectorAll(".proficiency-level-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         await Backend.updateExtraProfileField("proficiencyLevel", btn.dataset.level);
@@ -1763,6 +1818,13 @@
     return (profile && profile.extraProfileData && profile.extraProfileData.proficiencyLevel) || "fortgeschritten";
   }
   async function saveResultAndCheck(result) {
+    // WICHTIG — der private Italienisch-Raum bleibt vollständig außerhalb der
+    // Wertung: keine Punkte, keine Ranglisten, keine Sammelfiguren, keine
+    // Aktivitätsmeldungen. Er ist ein Übungsraum, kein Teil des Spielstands.
+    if (ExerciseData.getLernraum && ExerciseData.getLernraum() === "it") {
+      showToast("🇮🇹 Italienisch-Raum — dieses Ergebnis wird nicht gewertet.");
+      return;
+    }
     const factor = PROFICIENCY_MULTIPLIERS[getProficiencyLevel()] || 1.0;
     const adjusted = { ...result, points: Math.round((result.points || 0) * factor), bonus: Math.round((result.bonus || 0) * factor) };
     const profileBefore = Backend.currentProfile();
@@ -1796,6 +1858,12 @@
       } else if (newlyUnlocked.length > 1) {
         Backend.sendSystemMessage(Backend.currentUser().id, `🦊 Gleich ${newlyUnlocked.length} neue Füchse auf einmal freigeschaltet: ${newlyUnlocked.map((f) => `„${f.name}"`).join(", ")}!`);
       }
+    }
+    // Gemerkten Lernraum wiederherstellen — ausschließlich für den Betreiber.
+    // Für alle anderen bleibt es beim Deutsch-Raum, ganz gleich, was im Profil steht.
+    if (Backend.isOwner && Backend.isOwner()) {
+      const gemerkt = Backend.currentProfile()?.extraProfileData?.lernraum;
+      if (gemerkt === "it") wechsleLernraum("it", false);
     }
     await checkForSpecialMoment(Backend.currentProfile());
     await checkContentUpdate();
@@ -2130,7 +2198,7 @@
       .filter((c) => c.avgPercent < 60)
       .sort((a, b) => a.avgPercent - b.avgPercent);
     const labelFor = (id) => {
-      const cat = ExerciseData.getCategory(id);
+      const cat = ExerciseData.activeGetCategory(id);
       return cat ? cat.title : { wortbaustelle: "Wortbaustelle", buchstabensalat: "Buchstabensalat", kreuzwortraetsel: "Kreuzworträtsel" }[id] || id;
     };
     if (weakCandidates.length) {
@@ -2167,7 +2235,7 @@
     if (dailyTaskPoolCache) return dailyTaskPoolCache;
     const pool = [];
     const seenPrompts = new Set();
-    ExerciseData.CATEGORIES.forEach((cat) => {
+    ExerciseData.activeCategories().forEach((cat) => {
       try {
         const bank = cat.getBank();
         bank.forEach((q) => {
@@ -2207,7 +2275,7 @@
     // dann wirklich genau das, was man ohnehin am meisten spielt. Auswahl INNERHALB der
     // Kategorie ist ebenfalls fest an den Kalendertag gekoppelt, nicht zufällig.
     if (focus) {
-      const cat = ExerciseData.getCategory(focus.id);
+      const cat = ExerciseData.activeGetCategory(focus.id);
       if (cat && typeof cat.getBank === "function") {
         try {
           const bank = cat.getBank().filter((q) => q.options && q.correct && q.correct.length === 1);
@@ -3516,7 +3584,7 @@
       </div>` : "";
 
     const myProfile = Backend.currentProfile();
-    const cards = ExerciseData.CATEGORIES.map((cat) => {
+    const cards = ExerciseData.activeCategories().map((cat) => {
       const unlocked = isUnlocked(cat.unlock, myProfile) || (myProfile?.giftedCategories || []).includes(cat.id);
       let topicPicker = "";
       if (cat.id === "quiz" && selectedCategories.has("quiz")) {
@@ -3732,7 +3800,7 @@
     if (startBtn) startBtn.addEventListener("click", async () => {
       if (startBtn.disabled) return; // Schutz gegen Doppel-Tap auf Mobilgeräten
       startBtn.disabled = true;
-      const titles = [...selectedCategories].map((id) => ExerciseData.getCategory(id).title).join(", ");
+      const titles = [...selectedCategories].map((id) => ExerciseData.activeGetCategory(id).title).join(", ");
       const topicFilters = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
       if (selectedChallengeFriendIds.size) {
         try {
@@ -3785,7 +3853,7 @@
     const area = document.getElementById("grammatikArea");
     if (!area) return;
     grammatikLevel = applyDefaultCefrLevel(grammatikLevel, (v) => { grammatikLevel = v; });
-    const alle = ExerciseData.GRAMMATIK || {};
+    const alle = ExerciseData.activeGrammatik() || {};
     const themen = alle[grammatikLevel] || [];
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">Die wichtigsten Grammatikthemen deines Niveaus — jeweils in zwei Sätzen erklärt, mit Beispielen. Antippen zum Aufklappen.</p>
@@ -3808,7 +3876,7 @@
               ${t.beispiele.map((b) => `<div class="breakdown-row" style="justify-content:flex-start;"><span>${b}</span></div>`).join("")}
             </div>
             ${t.tipp ? `<p class="empty-note" style="margin:0 0 8px;">💡 ${t.tipp}</p>` : ""}
-            ${t.uebung && ExerciseData.getCategory(t.uebung) ? `<button type="button" class="btn btn-ghost grammatik-uebung-btn" data-gr-cat="${t.uebung}" style="margin:0;">▶ Dazu üben: ${ExerciseData.getCategory(t.uebung).title}</button>` : ""}
+            ${t.uebung && ExerciseData.activeGetCategory(t.uebung) ? `<button type="button" class="btn btn-ghost grammatik-uebung-btn" data-gr-cat="${t.uebung}" style="margin:0;">▶ Dazu üben: ${ExerciseData.activeGetCategory(t.uebung).title}</button>` : ""}
           ` : ""}
         </div>
       `).join("") : `<p class="empty-note">Für dieses Niveau sind noch keine Themen hinterlegt.</p>`}
@@ -3885,7 +3953,7 @@
     const p = Quiz.progress();
     const isMulti = q.correct.length > 1;
     const isBlank = q.prompt.includes("___");
-    const cat = ExerciseData.getCategory(q.categoryId);
+    const cat = ExerciseData.activeGetCategory(q.categoryId);
 
     const promptHtml = isBlank
       ? q.prompt.replace("___", '<span class="blank-slot" id="blankSlot">___</span>')
@@ -4038,7 +4106,7 @@
     // richtig/falsch, und (wenn vorhanden) eine kurze Erklärung zur Bedeutung.
     if (Backend.currentUser() && r.answers && r.answers.length) {
       const catTitles = [...new Set(r.answers.map((a) => a.categoryId))]
-        .map((id) => ExerciseData.getCategory(id)?.title || id).join(", ");
+        .map((id) => ExerciseData.activeGetCategory(id)?.title || id).join(", ");
       const lines = r.answers.slice(0, 20).map((a) => {
         const wordMatch = a.prompt.match(/___\s*([A-ZÄÖÜ][a-zäöüß]+)|([A-ZÄÖÜ][a-zäöüß]+)\s*___/);
         const word = wordMatch ? (wordMatch[1] || wordMatch[2]) : null;
@@ -4069,7 +4137,7 @@
     }
 
     const breakdown = Object.entries(r.byCategory).map(([id, s]) => {
-      const cat = ExerciseData.getCategory(id);
+      const cat = ExerciseData.activeGetCategory(id);
       const pct = Math.round((s.correct / s.total) * 100);
       return `<div class="breakdown-row">
         <span>${cat.icon} ${cat.title}</span>
@@ -4340,7 +4408,7 @@
   // (nicht nur Artikel) — so wächst das Wörterbuch mit dem tatsächlichen Inhalt der Seite.
   function extractExtendedVocabulary() {
     const found = new Map();
-    ExerciseData.CATEGORIES.forEach((cat) => {
+    ExerciseData.activeCategories().forEach((cat) => {
       try {
         const bank = cat.getBank();
         bank.forEach((q) => {
@@ -4719,6 +4787,13 @@
   }
   function buildDictionaryEntries() {
     const entries = [];
+    // Italienisch-Raum: eigener Wortschatz, komplett getrennt vom deutschen.
+    if (ExerciseData.getLernraum && ExerciseData.getLernraum() === "it") {
+      (ExerciseData.IT_WOERTER || []).forEach((w) => {
+        entries.push({ word: w.word, syl: w.syl, meaning: w.de, example: w.example, level: w.level, verified: true, category: w.theme });
+      });
+      return entries;
+    }
     // Zuerst der nachgelieferte Wortschatz — dadurch gewinnt bei gleichem Stichwort
     // immer die ausdrücklich gepflegte Fassung mit Niveau, Thema und Beispielsatz.
     (VocabData.WORDS || []).filter((w) => w.level || w.theme).forEach((w) => {
@@ -5641,7 +5716,7 @@
   const WT_MAX_MISTAKES = 3;
   const WT_TOTAL_BLOCKS = 18;
   function pickRandomWackelturmQuestion() {
-    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    const cats = ExerciseData.activeCategories().filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     // Bis zu 20 Versuche eine noch nicht gestellte Frage zu finden, bevor wir aufgeben und den
     // Vorrat für diese Sitzung zurücksetzen (falls wirklich alle verfügbaren Fragen schon dran waren).
     for (let attempt = 0; attempt < 20; attempt++) {
@@ -5991,7 +6066,7 @@
     // Fußball-Weltmeisterschaften …) bewusst ausgeschlossen — Wortblasen soll sich rein auf
     // Sprache konzentrieren, ohne zusätzlich noch Allgemeinwissen abzuverlangen. Das wäre für
     // Deutschlernende eine unfaire Doppelbelastung.
-    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    const cats = ExerciseData.activeCategories().filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     for (let attempt = 0; attempt < 25; attempt++) {
       const cat = cats[Math.floor(Math.random() * cats.length)];
       const bank = cat.getBank();
@@ -6738,7 +6813,7 @@
 
   function pickRandomKanoneQuestion() {
     // Gleicher Ausschluss wie bei Wortblasen — keine Allgemeinwissens-Fragen bei der Wort-Kanone.
-    const cats = ExerciseData.CATEGORIES.filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    const cats = ExerciseData.activeCategories().filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
     for (let attempt = 0; attempt < 25; attempt++) {
       const cat = cats[Math.floor(Math.random() * cats.length)];
       const bank = cat.getBank();
@@ -7769,7 +7844,7 @@
   function WordbuildArtikel() {
     // Nutzt dieselbe geprüfte Wörterliste wie die Artikel-Übung, damit hier keine
     // neuen, ungeprüften Inhalte entstehen.
-    const cat = ExerciseData.getCategory("artikel");
+    const cat = ExerciseData.activeGetCategory("artikel");
     const out = {};
     cat.getBank().forEach((q) => {
       const word = q.prompt.replace("___ ", "").trim();
@@ -10776,7 +10851,7 @@
   let agZustand = "warten";
 
   function agPool() {
-    const bank = ExerciseData.getCategory("artikel").getBank() || [];
+    const bank = ExerciseData.activeGetCategory("artikel").getBank() || [];
     // Auf das gewählte Niveau eingrenzen — Artikel-Fragen tragen ihr Niveau
     // entweder selbst oder erben es aus der Kategorie (siehe Quiz.questionLevel).
     const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -11199,7 +11274,7 @@
     const histIstNeu = (key) => histNeuKeys.indexOf(key) !== -1;
     // Ein noch nicht freigegebener Tag gilt für normale Nutzer:innen als nicht vorhanden.
     const histSichtbar = (key) => !histIstNeu(key) || histBatchFreigegeben || histDarfNeuesSehen;
-    const todayHistory = histSichtbar(`${mm}-${dd}`) ? ExerciseData.germanHistoryForToday(`${mm}-${dd}`) : null;
+    const todayHistory = histSichtbar(`${mm}-${dd}`) ? ExerciseData.activeHistoryForToday(`${mm}-${dd}`) : null;
     const todayHistoryIstNeu = histIstNeu(`${mm}-${dd}`) && !histBatchFreigegeben;
     // WICHTIG — genau wie bei den neuen Spielen: diese beiden Bereiche sind noch in Arbeit und
     // sollen für normale Nutzer:innen komplett unsichtbar bleiben (kein Wegweiser-Link, keine
@@ -11222,7 +11297,7 @@
         ${schneeVisible ? `<a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>` : ""}
       </div>
 
-      <h3 id="kompass-geschichte" class="kompass-heading">📜 Es war einmal in Deutschland …</h3>
+      <h3 id="kompass-geschichte" class="kompass-heading">${ExerciseData.activeHistoryTitle ? ExerciseData.activeHistoryTitle() : "📜 Es war einmal in Deutschland …"}</h3>
       ${(() => {
         // Sichtbarer Stand der Sammlung — zeigt auf einen Blick, wann zuletzt neue
         // Tage dazugekommen sind und wie voll das Jahr inzwischen ist.
@@ -11280,7 +11355,7 @@
         <div class="question-card" style="margin-bottom:16px;">
           <div class="vocab-toolbar" style="margin-bottom:10px;"><input type="text" class="vocab-search" id="historyArchiveSearch" placeholder="Nach Titel oder Jahr suchen…" value="${historyArchiveSearch}" /></div>
           <div class="breakdown-list">
-            ${ExerciseData.getAllHistoryEntries()
+            ${ExerciseData.activeHistoryEntries()
               .filter((e) => histSichtbar(e.monthDay))
               .filter((e) => !historyArchiveSearch || e.title.toLowerCase().includes(historyArchiveSearch.toLowerCase()) || String(e.year).includes(historyArchiveSearch))
               .map((e) => {
@@ -11289,11 +11364,11 @@
                 return `<button type="button" class="breakdown-row breakdown-row-stacked" data-archive-date="${e.monthDay}" style="width:100%; text-align:left; cursor:pointer;"><span>${neu ? "🔴 " : ""}${dd2}.${mm2}. — ${e.title}</span><span class="empty-note">${e.year}</span></button>`;
               }).join("")}
           </div>
-          ${ExerciseData.getAllHistoryEntries().length === 0 ? `<p class="empty-note">Noch keine Einträge im Archiv.</p>` : ""}
+          ${ExerciseData.activeHistoryEntries().length === 0 ? `<p class="empty-note">Noch keine Einträge im Archiv.</p>` : ""}
         </div>
       ` : ""}
       ${historyArchiveDate ? (() => {
-        const entry = ExerciseData.getAllHistoryEntries().find((e) => e.monthDay === historyArchiveDate);
+        const entry = ExerciseData.activeHistoryEntries().find((e) => e.monthDay === historyArchiveDate);
         if (!entry) return "";
         const [mm3, dd3] = entry.monthDay.split("-");
         return `
@@ -15088,7 +15163,7 @@ An einem Morgen lief ein kleiner Fuchs los…
                 Core.el("button", {
                   class: "btn btn-ghost", type: "button", id: "modalGiftCategoryBtn",
                   onclick: async () => {
-                    const locked = ExerciseData.CATEGORIES.filter((c) => c.unlock);
+                    const locked = ExerciseData.activeCategories().filter((c) => c.unlock);
                     if (!locked.length) { alert("Es gibt aktuell keine sperrbaren Kategorien."); return; }
                     const choice = prompt(`Welche Kategorie soll ${p.name} geschenkt bekommen?\n\n` + locked.map((c, i) => `${i + 1}. ${c.title}`).join("\n") + "\n\nZahl eingeben:");
                     const idx = parseInt(choice, 10) - 1;
@@ -15804,7 +15879,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <h3>🎮 Herausforderungen an dich</h3>
         ${incomingChallenges.map((c) => {
           const specialLabels = { memory: "🧠 Gehirnjogger", wortbaustelle: "🔤 Wortbaustelle", buchstabensalat: "🔍 Buchstabensalat", kreuzwortraetsel: "✏️ Kreuzworträtsel", betonungstrainer: "🎯 Betonungs-Trainer" };
-          const label = specialLabels[c.categories[0]] || c.categories.map((id) => ExerciseData.getCategory(id)?.icon || "❓").join(" ");
+          const label = specialLabels[c.categories[0]] || c.categories.map((id) => ExerciseData.activeGetCategory(id)?.icon || "❓").join(" ");
           return `<div class="breakdown-row"><span>${c.fromName} · ${label}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`;
         }).join("")}
       </div>` : ""}
@@ -16054,7 +16129,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <h3>🎮 ${friendChallengeTarget.name} herausfordern</h3>
         <p class="empty-note">Wähle eine Kategorie — ihr spielt beide 10 Fragen, wer mehr Prozent holt, gewinnt.</p>
         <div class="category-grid" style="margin-top:10px;">
-          ${ExerciseData.CATEGORIES.filter((c) => isUnlocked(c.unlock, Backend.currentProfile())).map((c) => `<div class="category-card" data-pick-cat="${c.id}"><div class="cat-checkbox"></div><div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${c.icon}</span><span>${c.title}</span></div></div></div>`).join("")}
+          ${ExerciseData.activeCategories().filter((c) => isUnlocked(c.unlock, Backend.currentProfile())).map((c) => `<div class="category-card" data-pick-cat="${c.id}"><div class="cat-checkbox"></div><div class="cat-body"><div class="cat-title-row"><span class="cat-icon">${c.icon}</span><span>${c.title}</span></div></div></div>`).join("")}
         </div>
         <p class="empty-note" style="margin-top:8px;">Nur Kategorien, die du selbst schon freigeschaltet hast, kannst du auch für ein Duell auswählen.</p>
       </div>
