@@ -4650,13 +4650,20 @@
         <p class="empty-note" style="margin:0 0 10px;">Wähl links eine Verb-Form und rechts einen Infinitiv — der Satz baut sich automatisch zusammen. Manche Kombinationen klingen im Deutschen ungewöhnlich; ein Hinweis darunter sagt dir, wenn das der Fall ist.</p>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <select id="satzbaukastenVerb" class="challenge-select" style="flex:1; min-width:140px;">
-            ${ExerciseData.FIRST_STEPS_CORE_VERBS.map((verb) => verb.forms.map((f) => `<option value="${f.de}" data-verbid="${verb.id}">${f.de}</option>`).join("")).join("")}
+            <optgroup label="🎁 HABEN — etwas wollen/brauchen/mögen">
+              ${["want", "need", "like", "have"].map((id) => ExerciseData.FIRST_STEPS_CORE_VERBS.find((v) => v.id === id)).map((verb) => verb.forms.map((f) => `<option value="${f.de}" data-verbid="${verb.id}">${f.de}</option>`).join("")).join("")}
+            </optgroup>
+            <optgroup label="🎯 MACHEN — eine Tätigkeit ausüben (Fähigkeit/Weg)">
+              ${["can", "go"].map((id) => ExerciseData.FIRST_STEPS_CORE_VERBS.find((v) => v.id === id)).map((verb) => verb.forms.map((f) => `<option value="${f.de}" data-verbid="${verb.id}">${f.de}</option>`).join("")).join("")}
+            </optgroup>
           </select>
           <select id="satzbaukastenInf" class="challenge-select" style="flex:1; min-width:140px;">
             ${ExerciseData.FIRST_STEPS_INFINITIVES.map((v) => `<option value="${v.de}">${v.de}</option>`).join("")}
           </select>
         </div>
         <p id="satzbaukastenPreview" style="font-weight:800; font-size:1.05rem; margin:14px 0 4px;"></p>
+        <p id="satzbaukastenQuestion" style="font-weight:700; font-size:0.95rem; color:var(--teal-400); margin:0 0 4px;"></p>
+        <p id="satzbaukastenQuestionNote" class="empty-note" style="margin:0 0 8px; font-size:0.78rem;"></p>
         <p id="satzbaukastenHint" class="empty-note" style="margin:0;"></p>
       </div>
 
@@ -4816,6 +4823,30 @@
       const verbId = verbSelect.selectedOptions[0]?.dataset.verbid;
       const inf = infSelect.value;
       document.getElementById("satzbaukastenPreview").textContent = `${verbForm} ... ${inf}.`;
+      // WICHTIG — Auto-Frage wie beschrieben: unter jeder Aussage steht automatisch die passende
+      // Frageform (Verb-Erst-Stellung). Bei "ich" wird bewusst auf die "du"-Form umgeschaltet, da
+      // man sich selbst normalerweise nicht fragt ("Möchte ich...?" klingt unbeholfen) — mit einem
+      // kurzen Hinweis, warum die Person dabei automatisch gewechselt wurde.
+      const spaceIdx = verbForm.indexOf(" ");
+      let qPronoun = verbForm.slice(0, spaceIdx);
+      let qVerb = verbForm.slice(spaceIdx + 1);
+      const noteEl = document.getElementById("satzbaukastenQuestionNote");
+      if (qPronoun === "ich") {
+        const verbObj = ExerciseData.FIRST_STEPS_CORE_VERBS.find((v) => v.id === verbId);
+        const duForm = verbObj?.forms.find((f) => f.de.startsWith("du "));
+        if (duForm) {
+          const duSpaceIdx = duForm.de.indexOf(" ");
+          qPronoun = duForm.de.slice(0, duSpaceIdx);
+          qVerb = duForm.de.slice(duSpaceIdx + 1);
+          noteEl.textContent = "💡 Man fragt sich selbst normalerweise nicht — hier automatisch auf die du-Form umgestellt.";
+        } else {
+          noteEl.textContent = "";
+        }
+      } else {
+        noteEl.textContent = "";
+      }
+      const qVerbCap = qVerb.charAt(0).toUpperCase() + qVerb.slice(1);
+      document.getElementById("satzbaukastenQuestion").textContent = `❓ ${qVerbCap} ${qPronoun} ... ${inf}?`;
       const unusual = (SATZBAUKASTEN_UNGEWOEHNLICH[verbId] || []).includes(inf);
       const hintEl = document.getElementById("satzbaukastenHint");
       hintEl.textContent = unusual
@@ -10164,7 +10195,13 @@
           <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
           ${todayHistory.translationsA1 ? (() => {
             const histLang = firstStepsLangFor(Backend.currentProfile());
-            const t = todayHistory.translationsA1[histLang] || todayHistory.translationsA1.en;
+            // WICHTIG — sucht zuerst nach einer Übersetzung, die genau zur gerade gewählten
+            // Niveaustufe passt (translationsByLevel.B1 usw., sprachlich an das jeweilige Niveau
+            // angepasst), und fällt nur zurück auf die einfache A1-Übersetzung, wenn für diese
+            // Stufe noch keine eigene existiert — so wächst das Angebot schrittweise, ohne dass
+            // vorhandene A1-Übersetzungen verloren gehen oder umbenannt werden müssen.
+            const levelSpecific = todayHistory.translationsByLevel?.[historyLevel];
+            const t = (levelSpecific && (levelSpecific[histLang] || levelSpecific.en)) || todayHistory.translationsA1[histLang] || todayHistory.translationsA1.en;
             if (!t) return "";
             const histRtl = histLang === "ar" || histLang === "fa" || histLang === "he";
             return `<details style="margin-top:8px;">
@@ -14261,6 +14298,10 @@ An einem Morgen lief ein kleiner Fuchs los…
           <div id="inboxImagePreviewBox"></div>
         </div>
         <div class="form-field">
+          <label class="empty-note" style="cursor:pointer;">📎 Datei anhängen — MP3 oder PDF (optional) <input type="file" id="inboxFileInput" accept=".mp3,.pdf,audio/mpeg,application/pdf" style="display:block; margin-top:4px;" /></label>
+          <div id="inboxFilePreviewBox"></div>
+        </div>
+        <div class="form-field">
           <label class="empty-note">Eigene Sticker antippen, um sie an der Cursor-Position in den Text einzufügen (optional):</label>
           <div id="inboxStickerRow" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;"></div>
           <div id="inboxFoxStickerRow" style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;"></div>
@@ -14399,6 +14440,35 @@ An einem Morgen lief ein kleiner Fuchs los…
         }
       });
     }
+    // WICHTIG — wie gewünscht: neben dem Bild-Anhang jetzt auch ein Datei-Anhang für MP3/PDF im
+    // Postfach. Nutzt dieselbe, tatsächlich dateityp-unabhängige Upload-Funktion wie beim Bild
+    // (uploadCommunityTextCover() prüft den Dateityp nicht, sie lädt jede Datei in denselben
+    // Speicherort hoch) — die Datei-URL wird beim Senden als Link an den Nachrichtentext
+    // angehängt, da sendPrivateMessage() nur einen Bild-Parameter kennt, aber keinen separaten
+    // Datei-Parameter.
+    let pendingFileUrl = "", pendingFileName = "";
+    const fileInput = document.getElementById("inboxFileInput");
+    if (fileInput) {
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const previewBox = document.getElementById("inboxFilePreviewBox");
+        const isValidType = file.type === "audio/mpeg" || file.type === "application/pdf" || /\.(mp3|pdf)$/i.test(file.name);
+        if (!isValidType) {
+          previewBox.innerHTML = '<p class="form-error">⚠️ Nur MP3- oder PDF-Dateien sind erlaubt.</p>';
+          fileInput.value = "";
+          return;
+        }
+        previewBox.innerHTML = '<p class="empty-note">Lädt hoch…</p>';
+        try {
+          pendingFileUrl = await Backend.uploadCommunityTextCover(file);
+          pendingFileName = file.name;
+          previewBox.innerHTML = `<p class="empty-note">📎 ${pendingFileName} bereit zum Versenden</p>`;
+        } catch (err) {
+          previewBox.innerHTML = `<p class="form-error">⚠️ ${err.message}</p>`;
+        }
+      });
+    }
     const pointsSlider = document.getElementById("pointsGiftSlider");
     if (pointsSlider) {
       pointsSlider.addEventListener("input", () => {
@@ -14412,7 +14482,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       const isBroadcast = recipientMode === "broadcast";
       // Native Tastatur-Emojis (z. B. 🦉, 👍) automatisch durch den passenden hauseigenen
       // Sticker ersetzen, bevor die Nachricht überhaupt verschickt wird.
-      const body = replaceNativeEmojisWithStickers(document.getElementById("inboxMessageInput").value);
+      let body = replaceNativeEmojisWithStickers(document.getElementById("inboxMessageInput").value);
+      if (pendingFileUrl) body += `\n\n📎 ${pendingFileName}: ${pendingFileUrl}`;
       const giftPoints = pointsSlider ? Number(pointsSlider.value) : 0;
       const errBox = document.getElementById("inboxSendError");
       if (!isBroadcast && selectedRecipients.size === 0) { errBox.textContent = "⚠️ Bitte mindestens eine Person auswählen."; return; }
@@ -15170,7 +15241,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "125";
+  const APP_VERSION = "127";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };

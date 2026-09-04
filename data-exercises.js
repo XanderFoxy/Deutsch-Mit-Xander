@@ -500,6 +500,33 @@ const ExerciseData = (function () {
         uk: "29 січня 1886 року Карл Бенц отримав патент на свій автомобіль. Це перший справжній автомобіль у світі.",
         fa: "در ۲۹ ژانویه ۱۸۸۶، کارل بنز برای خودروی خود ثبت اختراع گرفت. این اولین خودروی واقعی در جهان است.",
       },
+      translationsByLevel: {
+        A2: {
+          en: "On January 29, 1886, German engineer Carl Benz receives the patent for his 'vehicle powered by a gas engine'. It is considered the first real automobile in the world.",
+          ar: "في 29 يناير 1886، حصل المهندس الألماني كارل بنز على براءة اختراع لـ«مركبته العاملة بمحرك الغاز». تُعد أول سيارة حقيقية في العالم.",
+          es: "El 29 de enero de 1886, el ingeniero alemán Carl Benz recibe la patente de su «vehículo propulsado por motor de gas». Se considera el primer automóvil real del mundo.",
+        },
+        B1: {
+          en: "On January 29, 1886, Carl Benz applies for a patent for his three-wheeled 'vehicle powered by a gas engine'. The so-called Benz Patent-Motorwagen is regarded as the birth of the automobile.",
+          ar: "في 29 يناير 1886، تقدّم كارل بنز بطلب براءة اختراع لـ«مركبته الثلاثية العجلات العاملة بمحرك الغاز». وتُعد هذه السيارة، المعروفة باسم عربة بنز ذات البراءة، لحظة ميلاد السيارة.",
+          es: "El 29 de enero de 1886, Carl Benz solicita una patente para su «vehículo de tres ruedas propulsado por motor de gas». El llamado Benz Patent-Motorwagen se considera el nacimiento del automóvil.",
+        },
+        B2: {
+          en: "On January 29, 1886, the Imperial Patent Office grants Carl Benz patent no. 37435 for his three-wheeled 'vehicle powered by a gas engine'. The Benz Patent-Motorwagen is still regarded today as the first automobile designed for series production.",
+          ar: "في 29 يناير 1886، منح مكتب البراءات الإمبراطوري كارل بنز براءة الاختراع رقم 37435 لمركبته الثلاثية العجلات العاملة بمحرك الغاز. ولا تزال عربة بنز ذات البراءة تُعد حتى اليوم أول سيارة صُممت للإنتاج بالجملة.",
+          es: "El 29 de enero de 1886, la Oficina Imperial de Patentes concede a Carl Benz la patente n.º 37435 para su «vehículo de tres ruedas propulsado por motor de gas». El Benz Patent-Motorwagen se considera hoy en día el primer automóvil concebido para producción en serie.",
+        },
+        C1: {
+          en: "The patent granted for Carl Benz's 'vehicle powered by a gas engine' on January 29, 1886, marks the historic birth of the automobile — a three-wheeled vehicle with a purpose-built combustion engine that heralded the transition from horse-drawn carriage to motorized mobility.",
+          ar: "تمثل براءة الاختراع الممنوحة لمركبة كارل بنز العاملة بمحرك الغاز في 29 يناير 1886 اللحظة التاريخية لميلاد السيارة — مركبة ثلاثية العجلات ذات محرك احتراق داخلي مصمم خصيصاً، أذنت بالانتقال من عربة الخيول إلى التنقل بالمحركات.",
+          es: "La patente concedida al «vehículo propulsado por motor de gas» de Carl Benz el 29 de enero de 1886 marca el nacimiento histórico del automóvil — un vehículo de tres ruedas con un motor de combustión diseñado a medida que anunció la transición del carruaje tirado por caballos a la movilidad motorizada.",
+        },
+        C2: {
+          en: "The patenting of Carl Benz's motor car on January 29, 1886, is commonly regarded as the official birth of the automobile, even though the path to mass mobility would still require decades of technical refinement and entrepreneurial daring — not least through Bertha Benz's legendary first long-distance drive.",
+          ar: "تُعد براءة اختراع عربة كارل بنز الآلية في 29 يناير 1886 عموماً اللحظة الرسمية لميلاد السيارة، رغم أن الطريق نحو التنقل الجماهيري كان لا يزال يتطلب عقوداً من التطوير التقني والجرأة الريادية — ولا سيما عبر رحلة برتا بنز الأسطورية الأولى لمسافات طويلة.",
+          es: "La patente del automóvil de Carl Benz el 29 de enero de 1886 se considera comúnmente el nacimiento oficial del automóvil, aunque el camino hacia la movilidad masiva todavía requeriría décadas de perfeccionamiento técnico y audacia empresarial — sobre todo gracias al legendario primer viaje de larga distancia de Bertha Benz.",
+        },
+      },
       sideFacts: [
         { year: 1888, text: "1888 fährt Bertha Benz, die Frau von Carl Benz, ohne sein Wissen die erste Langstreckenfahrt mit dem Automobil — rund 100 km von Mannheim nach Pforzheim." },
       ],
@@ -524,6 +551,33 @@ const ExerciseData = (function () {
         pl: "8 listopada 1895 roku Wilhelm Röntgen odkrył promienie rentgenowskie. Dzięki nim można zobaczyć wnętrze ciała.",
         uk: "8 листопада 1895 року Вільгельм Рентген відкрив рентгенівські промені. За їх допомогою можна побачити нутрощі тіла.",
         fa: "در ۸ نوامبر ۱۸۹۵، ویلهلم رونتگن اشعه ایکس را کشف کرد. با آن می‌توان داخل بدن را دید.",
+      },
+      translationsByLevel: {
+        A2: {
+          en: "On November 8, 1895, German physicist Wilhelm Conrad Röntgen discovers a new type of ray. For the first time, they allow you to see bones inside the body without surgery.",
+          ar: "في 8 نوفمبر 1895، اكتشف الفيزيائي الألماني فيلهلم كونراد رونتغن نوعاً جديداً من الأشعة. تتيح هذه الأشعة لأول مرة رؤية العظام داخل الجسم دون إجراء جراحة.",
+          es: "El 8 de noviembre de 1895, el físico alemán Wilhelm Conrad Röntgen descubre un nuevo tipo de rayos. Por primera vez permiten ver los huesos dentro del cuerpo sin necesidad de operar.",
+        },
+        B1: {
+          en: "On November 8, 1895, Wilhelm Conrad Röntgen discovers a previously unknown type of radiation in his laboratory in Würzburg, which he calls 'X-rays'. For the first time, it allows a look inside the human body without opening it.",
+          ar: "في 8 نوفمبر 1895، اكتشف فيلهلم كونراد رونتغن في مختبره بمدينة فورتسبورغ نوعاً غير معروف حتى ذلك الحين من الإشعاع، أطلق عليه اسم «الأشعة السينية». وأتاح ذلك لأول مرة النظر إلى داخل جسم الإنسان دون فتحه.",
+          es: "El 8 de noviembre de 1895, Wilhelm Conrad Röntgen descubre en su laboratorio de Wurzburgo un tipo de radiación hasta entonces desconocido, al que llama «rayos X». Por primera vez, esto permite mirar dentro del cuerpo humano sin necesidad de abrirlo.",
+        },
+        B2: {
+          en: "On November 8, 1895, Würzburg physics professor Wilhelm Conrad Röntgen discovers a novel, penetrating radiation while experimenting with cathode ray tubes. Within a few weeks, he takes the first X-ray image of a human hand — the beginning of medical radiology.",
+          ar: "في 8 نوفمبر 1895، اكتشف أستاذ الفيزياء في فورتسبورغ فيلهلم كونراد رونتغن، أثناء تجاربه على أنابيب أشعة الكاثود، إشعاعاً جديداً نافذاً. وخلال أسابيع قليلة، التقط أول صورة بالأشعة السينية ليد إنسان — بداية علم الأشعة الطبي.",
+          es: "El 8 de noviembre de 1895, el profesor de física de Wurzburgo Wilhelm Conrad Röntgen descubre, mientras experimenta con tubos de rayos catódicos, una radiación novedosa y penetrante. En pocas semanas, toma la primera radiografía de una mano humana — el comienzo de la radiología médica.",
+        },
+        C1: {
+          en: "Wilhelm Conrad Röntgen's discovery of a previously unknown, penetrating radiation on November 8, 1895, rapidly revolutionized medical diagnostics and earned him the first Nobel Prize in Physics in history in 1901 — Röntgen deliberately chose not to patent his discovery.",
+          ar: "أحدث اكتشاف فيلهلم كونراد رونتغن لإشعاع نافذ لم يكن معروفاً من قبل، في 8 نوفمبر 1895، ثورة سريعة في التشخيص الطبي، وحصل بفضله عام 1901 على أول جائزة نوبل في الفيزياء في التاريخ — وقد اختار رونتغن عمداً عدم تسجيل براءة اختراع لاكتشافه.",
+          es: "El descubrimiento de Wilhelm Conrad Röntgen de una radiación penetrante hasta entonces desconocida, el 8 de noviembre de 1895, revolucionó rápidamente el diagnóstico médico y le valió en 1901 el primer Premio Nobel de Física de la historia — Röntgen decidió deliberadamente no patentar su descubrimiento.",
+        },
+        C2: {
+          en: "Wilhelm Conrad Röntgen's chance discovery of the radiation named after him on November 8, 1895, ranks among those rare scientific breakthroughs whose practical medical benefit became apparent almost immediately — his deliberate renunciation of a patent is still regarded today as an early example of science oriented toward the common good.",
+          ar: "يُعد الاكتشاف العرضي لفيلهلم كونراد رونتغن للإشعاع الذي حمل اسمه لاحقاً، في 8 نوفمبر 1895، واحداً من تلك الاختراقات العلمية النادرة التي اتضحت فائدتها الطبية العملية على الفور تقريباً — ولا يزال تخليه المتعمد عن تسجيل براءة اختراع يُعد حتى اليوم مثالاً مبكراً على توجه العلم نحو المصلحة العامة.",
+          es: "El descubrimiento fortuito de Wilhelm Conrad Röntgen de la radiación que lleva su nombre, el 8 de noviembre de 1895, se cuenta entre esos escasos avances científicos cuya utilidad médica práctica se hizo evidente casi de inmediato — su renuncia deliberada a patentarlo sigue considerándose hoy un ejemplo temprano de ciencia orientada al bien común.",
+        },
       },
       sideFacts: [
         { year: 1901, text: "1901 erhält Wilhelm Röntgen für seine Entdeckung als erster Mensch überhaupt den neu geschaffenen Nobelpreis für Physik." },
@@ -550,6 +604,33 @@ const ExerciseData = (function () {
         uk: "22 січня 1963 року Німеччина та Франція підписали договір про дружбу. Він називається Єлисейським договором. До цього обидві країни часто воювали одна проти одної.",
         fa: "در ۲۲ ژانویه ۱۹۶۳، آلمان و فرانسه پیمان دوستی امضا کردند. نامش پیمان الیزه است. قبل از آن، این دو کشور اغلب با یکدیگر در جنگ بودند.",
       },
+      translationsByLevel: {
+        A2: {
+          en: "On January 22, 1963, Chancellor Konrad Adenauer and French President Charles de Gaulle sign the Élysée Treaty. This officially makes Germany and France close friends after many wars.",
+          ar: "في 22 يناير 1963، وقّع المستشار كونراد أديناور والرئيس الفرنسي شارل ديغول معاهدة الإليزيه. بهذا أصبحت ألمانيا وفرنسا صديقتين مقربتين رسمياً بعد حروب كثيرة.",
+          es: "El 22 de enero de 1963, el canciller Konrad Adenauer y el presidente francés Charles de Gaulle firman el Tratado del Elíseo. Así, Alemania y Francia se convierten oficialmente en amigos cercanos tras muchas guerras.",
+        },
+        B1: {
+          en: "On January 22, 1963, Chancellor Konrad Adenauer and France's President Charles de Gaulle sign the treaty on Franco-German cooperation — the Élysée Treaty — at the Élysée Palace in Paris. Only 18 years after the Second World War, the former 'hereditary enemies' officially end their centuries-old rivalry.",
+          ar: "في 22 يناير 1963، وقّع المستشار كونراد أديناور والرئيس الفرنسي شارل ديغول في قصر الإليزيه بباريس معاهدة التعاون الألماني الفرنسي — معاهدة الإليزيه. وبعد 18 عاماً فقط من الحرب العالمية الثانية، أنهى «العدوان اللدودان» السابقان رسمياً تنافسهما الذي دام قروناً.",
+          es: "El 22 de enero de 1963, el canciller Konrad Adenauer y el presidente francés Charles de Gaulle firman en el Palacio del Elíseo, en París, el tratado sobre cooperación franco-alemana — el Tratado del Elíseo. Apenas 18 años después de la Segunda Guerra Mundial, los antiguos «enemigos hereditarios» ponen fin oficialmente a su rivalidad centenaria.",
+        },
+        B2: {
+          en: "On January 22, 1963, Chancellor Konrad Adenauer and President Charles de Gaulle sign the Franco-German friendship treaty, named after the Élysée Palace where it was signed. Just 18 years after the war's end, the treaty establishes regular consultations on foreign, defense, and youth policy, and is still considered the cornerstone of the close Franco-German partnership today.",
+          ar: "في 22 يناير 1963، وقّع المستشار كونراد أديناور والرئيس شارل ديغول في قصر الإليزيه معاهدة الصداقة الألمانية الفرنسية، المسمّاة على اسم القصر الذي وُقّعت فيه. وبعد 18 عاماً فقط من نهاية الحرب، نظّمت المعاهدة مشاورات منتظمة في السياسة الخارجية والدفاعية وسياسة الشباب، ولا تزال حتى اليوم تُعد حجر الأساس للشراكة الألمانية الفرنسية الوثيقة.",
+          es: "El 22 de enero de 1963, el canciller Konrad Adenauer y el presidente Charles de Gaulle firman en el Palacio del Elíseo el tratado de amistad franco-alemán, llamado así por el lugar de la firma. Apenas 18 años después del fin de la guerra, el tratado establece consultas periódicas en política exterior, de defensa y juvenil, y hasta hoy se considera la piedra angular de la estrecha asociación franco-alemana.",
+        },
+        C1: {
+          en: "The Élysée Treaty, signed by Konrad Adenauer and Charles de Gaulle on January 22, 1963, marks the institutional core of Franco-German reconciliation after the Second World War — it obliged both governments to regular consultations at all political levels, laying the foundation for institutions such as the Franco-German Youth Office and the television channel Arte.",
+          ar: "تمثل معاهدة الإليزيه، التي وقّعها كونراد أديناور وشارل ديغول في 22 يناير 1963، النواة المؤسسية للمصالحة الألمانية الفرنسية بعد الحرب العالمية الثانية — إذ ألزمت الحكومتين بمشاورات منتظمة على جميع المستويات السياسية، ما أرسى الأساس لمؤسسات مثل المكتب الألماني الفرنسي للشباب وقناة آرتي التلفزيونية.",
+          es: "El Tratado del Elíseo, firmado por Konrad Adenauer y Charles de Gaulle el 22 de enero de 1963, marca el núcleo institucional de la reconciliación franco-alemana tras la Segunda Guerra Mundial — obligó a ambos gobiernos a consultas periódicas en todos los niveles políticos, sentando así las bases de instituciones como la Oficina Franco-Alemana para la Juventud y el canal de televisión Arte.",
+        },
+        C2: {
+          en: "Within just 18 years of the war's end, the Élysée Treaty of January 22, 1963, accomplished a remarkable transformation of Franco-German relations from centuries-old 'hereditary enmity' to institutionalized partnership — a treaty whose consultation mechanisms and resulting institutions are still regarded today as a structural prototype for European reconciliation policy.",
+          ar: "في غضون 18 عاماً فقط من نهاية الحرب، حققت معاهدة الإليزيه الموقّعة في 22 يناير 1963 تحولاً لافتاً في العلاقات الألمانية الفرنسية، من «عداوة موروثة» استمرت قروناً إلى شراكة مؤسسية — معاهدة لا تزال آليات التشاور فيها والمؤسسات المنبثقة عنها تُعد حتى اليوم نموذجاً بنيوياً لسياسة المصالحة الأوروبية.",
+          es: "En apenas 18 años tras el fin de la guerra, el Tratado del Elíseo del 22 de enero de 1963 logró una notable transformación de las relaciones franco-alemanas, de una «enemistad hereditaria» centenaria a una asociación institucionalizada — un tratado cuyos mecanismos de consulta y las instituciones surgidas de él siguen considerándose hoy un prototipo estructural de la política de reconciliación europea.",
+        },
+      },
       sideFacts: [],
     },
     "06-24": {
@@ -572,6 +653,33 @@ const ExerciseData = (function () {
         pl: "24 czerwca 1948 roku Związek Radziecki zablokował wszystkie drogi do Berlina Zachodniego. Berlin Zachodni nie mógł już otrzymywać żywności samochodem ani pociągiem. Nazywa się to blokadą Berlina.",
         uk: "24 червня 1948 року Радянський Союз перекрив усі дороги до Західного Берліна. Західний Берлін більше не міг отримувати продукти автомобілем чи потягом. Це називається Берлінською блокадою.",
         fa: "در ۲۴ ژوئن ۱۹۴۸، اتحاد جماهیر شوروی همه جاده‌ها به برلین غربی را مسدود کرد. برلین غربی دیگر نمی‌توانست با ماشین یا قطار غذا دریافت کند. این را محاصره برلین می‌نامند.",
+      },
+      translationsByLevel: {
+        A2: {
+          en: "On June 24, 1948, the Soviet Union blocks all access routes to West Berlin — this is the start of the Berlin Blockade. The Western Allies respond with the 'airlift': from now on they supply the city by plane.",
+          ar: "في 24 يونيو 1948، أغلق الاتحاد السوفيتي جميع طرق الوصول إلى برلين الغربية — وهذه بداية حصار برلين. ردّ الحلفاء الغربيون بـ«الجسر الجوي»: أصبحوا يمدّون المدينة بالطائرات.",
+          es: "El 24 de junio de 1948, la Unión Soviética bloquea todas las vías de acceso a Berlín Occidental — es el comienzo del Bloqueo de Berlín. Los aliados occidentales responden con el «puente aéreo»: a partir de entonces abastecen la ciudad con aviones.",
+        },
+        B1: {
+          en: "On June 24, 1948, Soviet troops block all road, rail, and water routes to West Berlin — the Berlin Blockade begins. In response, the Western Allies set up the 'Berlin Airlift' and supply the city from the air with food and coal for almost a year.",
+          ar: "في 24 يونيو 1948، أغلقت القوات السوفيتية جميع الطرق البرية والسكك الحديدية والممرات المائية إلى برلين الغربية — ويبدأ حصار برلين. ورداً على ذلك، أنشأ الحلفاء الغربيون «الجسر الجوي لبرلين» وأمدّوا المدينة جواً بالطعام والفحم لما يقارب عاماً كاملاً.",
+          es: "El 24 de junio de 1948, las tropas soviéticas bloquean todas las vías terrestres, ferroviarias y fluviales hacia Berlín Occidental — comienza el Bloqueo de Berlín. En respuesta, los aliados occidentales organizan el «puente aéreo de Berlín» y abastecen la ciudad desde el aire con alimentos y carbón durante casi un año.",
+        },
+        B2: {
+          en: "On June 24, 1948, in reaction to the D-Mark introduced a few days earlier, the Soviet Union seals off all land and water routes to West Berlin — the Berlin Blockade, one of the first major flashpoints of the Cold War, begins. The Western Allies respond with the 'Berlin Airlift', flying millions of tons of food and coal into the city until the blockade ends almost a year later.",
+          ar: "في 24 يونيو 1948، ورداً على مارك ألماني الغربي الذي أُدخل قبل أيام قليلة، أغلق الاتحاد السوفيتي جميع الطرق البرية والمائية إلى برلين الغربية — ويبدأ حصار برلين، أحد أولى نقاط الاشتعال الكبرى في الحرب الباردة. ردّ الحلفاء الغربيون بـ«الجسر الجوي لبرلين»، الذي نُقل عبره ملايين الأطنان من الطعام والفحم إلى المدينة حتى انتهاء الحصار بعد نحو عام.",
+          es: "El 24 de junio de 1948, en reacción al marco alemán occidental introducido días antes, la Unión Soviética cierra todas las vías terrestres y fluviales hacia Berlín Occidental — comienza el Bloqueo de Berlín, uno de los primeros grandes puntos álgidos de la Guerra Fría. Los aliados occidentales responden con el «puente aéreo de Berlín», por el que se transportan millones de toneladas de alimentos y carbón a la ciudad hasta que el bloqueo termina casi un año después.",
+        },
+        C1: {
+          en: "The Soviet blockade of all land and water access to West Berlin imposed on June 24, 1948 — a direct response to the Western currency reform — marks one of the first major tests of strength of the emerging Cold War. The 'Berlin Airlift' organized by the Western Allies in response supplied the encircled city from the air for almost a year and became a symbol of Western determination not to cede the young West Berlin population to Soviet influence.",
+          ar: "يمثل الحصار السوفيتي المفروض في 24 يونيو 1948 على جميع منافذ الوصول البرية والمائية إلى برلين الغربية — رداً مباشراً على الإصلاح النقدي الغربي — إحدى أولى الاختبارات الكبرى للقوة في الحرب الباردة الناشئة. ووفّر «الجسر الجوي لبرلين»، الذي نظّمه الحلفاء الغربيون رداً على ذلك، إمداد المدينة المحاصرة جواً لما يقارب عاماً كاملاً، وأصبح رمزاً للتصميم الغربي على عدم ترك سكان برلين الغربية الشباب فريسة للنفوذ السوفيتي.",
+          es: "El bloqueo soviético de todos los accesos terrestres y fluviales a Berlín Occidental, impuesto el 24 de junio de 1948 — una respuesta directa a la reforma monetaria occidental —, marca una de las primeras grandes pruebas de fuerza de la incipiente Guerra Fría. El «puente aéreo de Berlín», organizado en respuesta por los aliados occidentales, abasteció desde el aire a la ciudad cercada durante casi un año y se convirtió en un símbolo de la determinación occidental de no ceder a la joven población de Berlín Occidental a la influencia soviética.",
+        },
+        C2: {
+          en: "The Soviet blockade of West Berlin from June 24, 1948 — imposed as a direct response to the Western currency reform carried out just days earlier — forced the Western Allies into a logistically unprecedented response: the 'Berlin Airlift', which within months evolved from an improvised relief measure into one of the most powerful symbols of transatlantic solidarity in the Cold War, while simultaneously foreshadowing the definitive entrenchment of the German division into two opposing spheres of power.",
+          ar: "أجبر الحصار السوفيتي لبرلين الغربية، المفروض اعتباراً من 24 يونيو 1948 — رداً مباشراً على الإصلاح النقدي الغربي الذي جرى قبل أيام قليلة فقط — الحلفاءَ الغربيين على استجابة غير مسبوقة لوجستياً: «الجسر الجوي لبرلين»، الذي تحوّل خلال أشهر من إجراء إغاثة مرتجل إلى واحد من أقوى رموز التضامن عبر الأطلسي في الحرب الباردة، بينما استبق في الوقت ذاته الترسّخ النهائي للانقسام الألماني إلى منطقتي نفوذ متعارضتين.",
+          es: "El bloqueo soviético de Berlín Occidental a partir del 24 de junio de 1948 — impuesto como respuesta directa a la reforma monetaria occidental llevada a cabo apenas días antes — obligó a los aliados occidentales a una respuesta logísticamente sin precedentes: el «puente aéreo de Berlín», que en cuestión de meses pasó de ser una medida de auxilio improvisada a convertirse en uno de los símbolos más poderosos de la solidaridad transatlántica en la Guerra Fría, anticipando a la vez la consolidación definitiva de la división alemana en dos esferas de poder opuestas.",
+        },
       },
       sideFacts: [
         { year: 1948, text: "Nur zwei Tage später, am 26. Juni 1948, landet die erste Versorgungsmaschine der neu eingerichteten Berliner Luftbrücke in Tempelhof — der Beginn der „Rosinenbomber“-Flüge." },
@@ -670,6 +778,40 @@ const ExerciseData = (function () {
         pl: "3 września 1939 roku Wielka Brytania i Francja wypowiedziały wojnę Niemcom. Dwa dni wcześniej Niemcy najechały na Polskę. To początek II wojny światowej w Europie.",
         uk: "3 вересня 1939 року Велика Британія та Франція оголосили війну Німеччині. Двома днями раніше Німеччина напала на Польщу. Це початок Другої світової війни в Європі.",
         fa: "در ۳ سپتامبر ۱۹۳۹، بریتانیا و فرانسه به آلمان اعلان جنگ دادند. دو روز قبل از آن، آلمان به لهستان حمله کرده بود. این آغاز جنگ جهانی دوم در اروپا است.",
+      },
+      // WICHTIG — Konzeptnachweis für pro-Niveau-Übersetzungen: hier für alle 6 CEFR-Stufen in
+      // Englisch, Arabisch und Spanisch ausgebaut, mit an das jeweilige Niveau angepasster
+      // sprachlicher Komplexität (nicht nur eine wörtliche Übersetzung des A1-Textes). Für die
+      // übrigen Sprachen und alle anderen Einträge bleibt vorerst nur die A1-Übersetzung
+      // (translationsA1, oben) als Fallback bestehen — das vollständige Ausrollen auf alle
+      // Sprachen und alle ~59 Einträge ist ein großes, mehrteiliges Vorhaben für viele weitere
+      // Arbeitsschritte.
+      translationsByLevel: {
+        A2: {
+          en: "On September 3, 1939, Great Britain and France declare war on National Socialist Germany, after Hitler does not withdraw from the German invasion of Poland that began on September 1. This marks the beginning of the Second World War in Europe.",
+          ar: "في 3 سبتمبر 1939، أعلنت بريطانيا وفرنسا الحرب على ألمانيا النازية، بعد أن رفض هتلر التراجع عن غزو بولندا الذي بدأ في 1 سبتمبر. بهذا تبدأ الحرب العالمية الثانية في أوروبا.",
+          es: "El 3 de septiembre de 1939, Gran Bretaña y Francia declaran la guerra a la Alemania nacionalsocialista, después de que Hitler no se retira de la invasión alemana de Polonia del 1 de septiembre. Así comienza la Segunda Guerra Mundial en Europa.",
+        },
+        B1: {
+          en: "On September 3, 1939, Great Britain and France declare war on Germany because Hitler, despite an ultimatum, does not withdraw his troops from Poland. The German invasion of Poland, which began two days earlier, thus becomes a European war.",
+          ar: "في 3 سبتمبر 1939، أعلنت بريطانيا وفرنسا الحرب على ألمانيا لأن هتلر، رغم إنذار نهائي، لم يسحب قواته من بولندا. وهكذا يتحول الغزو الألماني لبولندا، الذي بدأ قبل يومين، إلى حرب أوروبية.",
+          es: "El 3 de septiembre de 1939, Gran Bretaña y Francia declaran la guerra a Alemania porque Hitler, a pesar de un ultimátum, no retira sus tropas de Polonia. Así, la invasión alemana de Polonia, iniciada dos días antes, se convierte en una guerra europea.",
+        },
+        B2: {
+          en: "On September 3, 1939, Great Britain and France declare war on National Socialist Germany after Adolf Hitler lets a final ultimatum to withdraw from Poland, invaded two days earlier, expire. What was initially a regionally limited invasion thus finally becomes a European war.",
+          ar: "في 3 سبتمبر 1939، أعلنت بريطانيا وفرنسا الحرب على ألمانيا النازية بعد أن ترك أدولف هتلر إنذاراً أخيراً للانسحاب من بولندا، التي غزتها قبل يومين، ينقضي دون رد. وهكذا يتحول الغزو الذي كان في البداية محدود النطاق إلى حرب أوروبية شاملة.",
+          es: "El 3 de septiembre de 1939, Gran Bretaña y Francia declaran la guerra a la Alemania nacionalsocialista después de que Adolf Hitler deja expirar un último ultimátum para retirarse de Polonia, invadida dos días antes. Así, la invasión inicialmente limitada a una región se convierte definitivamente en una guerra europea.",
+        },
+        C1: {
+          en: "The declarations of war by Great Britain and France against National Socialist Germany on September 3, 1939, triggered by the invasion of Poland that had begun two days earlier, mark under international law the beginning of the Second World War in Europe — despite a mediation attempt by the Italian dictator Mussolini, which Hitler left unanswered.",
+          ar: "تمثل إعلانات الحرب البريطانية والفرنسية على ألمانيا النازية في 3 سبتمبر 1939، التي أثارها الغزو الألماني لبولندا قبل يومين، بداية الحرب العالمية الثانية في أوروبا من الناحية القانونية الدولية — رغم محاولة وساطة من الديكتاتور الإيطالي موسوليني، التي تركها هتلر دون رد.",
+          es: "Las declaraciones de guerra de Gran Bretaña y Francia contra la Alemania nacionalsocialista el 3 de septiembre de 1939, provocadas por la invasión de Polonia iniciada dos días antes, marcan bajo el derecho internacional el comienzo de la Segunda Guerra Mundial en Europa — a pesar de un intento de mediación del dictador italiano Mussolini, que Hitler dejó sin respuesta.",
+        },
+        C2: {
+          en: "With the almost simultaneous declarations of war by Great Britain and France on September 3, 1939, the initially regionally limited German invasion of Poland transformed within days into a pan-European conflict — a starting point whose full scope the initial military restraint on the Western Front, often described as the 'Phoney War', could hardly foreshadow.",
+          ar: "مع إعلانات الحرب شبه المتزامنة من بريطانيا وفرنسا في 3 سبتمبر 1939، تحول الغزو الألماني لبولندا، الذي كان في البداية محدود النطاق إقليمياً، خلال أيام قليلة إلى صراع أوروبي شامل — نقطة انطلاق لم يكن التحفظ العسكري الأولي على الجبهة الغربية، الذي وُصف غالباً بـ«الحرب الزائفة»، لينذر بمداها الكامل.",
+          es: "Con las declaraciones de guerra casi simultáneas de Gran Bretaña y Francia el 3 de septiembre de 1939, la invasión alemana de Polonia, inicialmente limitada a una región, se transformó en pocos días en un conflicto paneuropeo — un punto de partida cuyo alcance apenas podía presagiar la reticencia militar inicial en el frente occidental, a menudo descrita como la «guerra de broma».",
+        },
       },
       sideFacts: [
         { year: 1944, text: "1944 wird Anne Frank an diesem Tag mit einem der letzten Deportationszüge vom Durchgangslager Westerbork ins Vernichtungslager Auschwitz-Birkenau gebracht." },
@@ -995,6 +1137,33 @@ const ExerciseData = (function () {
         uk: "3 жовтня 1990 року Східна і Західна Німеччина знову стали єдиною країною. Це День німецької єдності.",
         fa: "در ۳ اکتبر ۱۹۹۰، آلمان شرقی و غربی دوباره یک کشور شدند. این روز وحدت آلمان است.",
       },
+      translationsByLevel: {
+        A2: {
+          en: "On October 3, 1990, the GDR joins the Federal Republic. Germany is one country again. Since then, Germans have celebrated on this day.",
+          ar: "في 3 أكتوبر 1990، انضمت جمهورية ألمانيا الديمقراطية إلى جمهورية ألمانيا الاتحادية. ألمانيا دولة واحدة مرة أخرى. منذ ذلك الحين يحتفل الألمان في هذا اليوم.",
+          es: "El 3 de octubre de 1990, la RDA se incorpora a la República Federal. Alemania vuelve a ser un solo país. Desde entonces, los alemanes celebran este día.",
+        },
+        B1: {
+          en: "On October 3, 1990, the GDR officially joins the Federal Republic of Germany — after 41 years of division, Germany is one country again. Since then, October 3 has been the national holiday.",
+          ar: "في 3 أكتوبر 1990، انضمت جمهورية ألمانيا الديمقراطية رسمياً إلى جمهورية ألمانيا الاتحادية — وبعد 41 عاماً من الانقسام، أصبحت ألمانيا دولة واحدة مرة أخرى. منذ ذلك الحين، يُعد 3 أكتوبر العيد الوطني.",
+          es: "El 3 de octubre de 1990, la RDA se incorpora oficialmente a la República Federal de Alemania — tras 41 años de división, Alemania vuelve a ser un solo país. Desde entonces, el 3 de octubre es la fiesta nacional.",
+        },
+        B2: {
+          en: "On October 3, 1990, German reunification takes place: the GDR joins the Federal Republic, barely a year after the fall of the Berlin Wall. The day has since been celebrated as the 'Day of German Unity'.",
+          ar: "في 3 أكتوبر 1990، تحققت إعادة توحيد ألمانيا: انضمت جمهورية ألمانيا الديمقراطية إلى جمهورية ألمانيا الاتحادية، بعد أقل من عام على سقوط جدار برلين. ومنذ ذلك الحين يُحتفل بهذا اليوم بوصفه «يوم الوحدة الألمانية».",
+          es: "El 3 de octubre de 1990 se produce la reunificación alemana: la RDA se incorpora a la República Federal, apenas un año después de la caída del Muro de Berlín. Desde entonces, el día se celebra como el «Día de la Unidad Alemana».",
+        },
+        C1: {
+          en: "With the accession of the GDR to the Federal Republic of Germany on October 3, 1990, the country's 41-year division ended — a process completed at a remarkable pace, barely a year after the fall of the Berlin Wall in November 1989.",
+          ar: "بانضمام جمهورية ألمانيا الديمقراطية إلى جمهورية ألمانيا الاتحادية في 3 أكتوبر 1990، انتهى انقسام البلاد الذي دام 41 عاماً — وهي عملية أُنجزت بوتيرة لافتة، بعد أقل من عام على سقوط جدار برلين في نوفمبر 1989.",
+          es: "Con la incorporación de la RDA a la República Federal de Alemania el 3 de octubre de 1990, terminó la división del país que había durado 41 años — un proceso llevado a cabo a un ritmo notable, apenas un año después de la caída del Muro de Berlín en noviembre de 1989.",
+        },
+        C2: {
+          en: "The formal reunification of Germany on October 3, 1990, achieved through the GDR's accession under Article 23 of the then Basic Law, is considered one of the swiftest and most peaceful examples of state transformation in recent European history.",
+          ar: "تُعد إعادة التوحيد الرسمية لألمانيا في 3 أكتوبر 1990، التي تحققت عبر انضمام جمهورية ألمانيا الديمقراطية بموجب المادة 23 من القانون الأساسي آنذاك، واحدة من أسرع وأكثر الأمثلة سلمية لتحول الدول في تاريخ أوروبا الحديث.",
+          es: "La reunificación formal de Alemania el 3 de octubre de 1990, lograda mediante la incorporación de la RDA conforme al artículo 23 de la entonces Ley Fundamental, se considera uno de los ejemplos más rápidos y pacíficos de transformación estatal en la historia europea reciente.",
+        },
+      },
       sideFacts: [],
     },
     "11-09": {
@@ -1017,6 +1186,33 @@ const ExerciseData = (function () {
         pl: "9 listopada 1989 roku upadł Mur Berliński. Ludzie są bardzo szczęśliwi.",
         uk: "9 листопада 1989 року впала Берлінська стіна. Люди дуже щасливі.",
         fa: "در ۹ نوامبر ۱۹۸۹، دیوار برلین فروریخت. مردم بسیار خوشحال هستند.",
+      },
+      translationsByLevel: {
+        A2: {
+          en: "On November 9, 1989, the GDR suddenly opens the border. The Berlin Wall falls. Thousands of people celebrate all night.",
+          ar: "في 9 نوفمبر 1989، فتحت جمهورية ألمانيا الديمقراطية الحدود فجأة. سقط جدار برلين. احتفل آلاف الناس طوال الليل.",
+          es: "El 9 de noviembre de 1989, la RDA abre repentinamente la frontera. Cae el Muro de Berlín. Miles de personas celebran toda la noche.",
+        },
+        B1: {
+          en: "On November 9, 1989, the GDR unexpectedly opens the borders. The Berlin Wall falls after having divided the city for 28 years. It is one of the happiest days in German history.",
+          ar: "في 9 نوفمبر 1989، فتحت جمهورية ألمانيا الديمقراطية الحدود بشكل مفاجئ. سقط جدار برلين بعد أن قسم المدينة لمدة 28 عاماً. إنه أحد أسعد الأيام في التاريخ الألماني.",
+          es: "El 9 de noviembre de 1989, la RDA abre sorpresivamente las fronteras. Cae el Muro de Berlín, tras haber dividido la ciudad durante 28 años. Es uno de los días más felices de la historia alemana.",
+        },
+        B2: {
+          en: "On November 9, 1989, the Berlin Wall falls after an SED official misleadingly announces immediate travel relaxations at a press conference. Thousands stream to the border crossings — the peaceful revolution reaches its climax.",
+          ar: "في 9 نوفمبر 1989، سقط جدار برلين بعد أن أعلن مسؤول من حزب الوحدة الاشتراكية، بشكل مضلل في مؤتمر صحفي، عن تسهيلات فورية للسفر. تدفق الآلاف نحو معابر الحدود — وبلغت الثورة السلمية ذروتها.",
+          es: "El 9 de noviembre de 1989, cae el Muro de Berlín después de que un funcionario del SED anuncia de forma confusa, en una rueda de prensa, facilidades inmediatas para viajar. Miles de personas se dirigen a los puestos fronterizos — la revolución pacífica alcanza su punto culminante.",
+        },
+        C1: {
+          en: "The fall of the Berlin Wall on November 9, 1989, traces back to a consequential mix-up: Günter Schabowski misleadingly announced immediate freedom of travel at a press conference. Within hours, tens of thousands streamed to the border crossings, which eventually opened, overwhelmed.",
+          ar: "يعود سقوط جدار برلين في 9 نوفمبر 1989 إلى التباس بالغ الأثر: أعلن غونتر شابوفسكي، بشكل مضلل في مؤتمر صحفي، عن حرية سفر فورية. وخلال ساعات قليلة، تدفق عشرات الآلاف نحو معابر الحدود، التي فُتحت في النهاية تحت وطأة الحشود.",
+          es: "La caída del Muro de Berlín el 9 de noviembre de 1989 se remonta a una confusión de gran trascendencia: Günter Schabowski anunció de forma engañosa, en una rueda de prensa, libertad de viaje inmediata. En cuestión de horas, decenas de miles de personas se dirigieron a los puestos fronterizos, que finalmente abrieron desbordados.",
+        },
+        C2: {
+          en: "The fall of the Wall on November 9, 1989, triggered by Günter Schabowski's consequential misinterpretation of a new travel regulation at a live-broadcast press conference, marks one of those rare historical moments in which a single communicative misunderstanding accelerated the course of world history.",
+          ar: "يمثل سقوط الجدار في 9 نوفمبر 1989، الذي أطلقه سوء تفسير غونتر شابوفسكي البالغ الأثر للائحة سفر جديدة في مؤتمر صحفي بُث مباشرة، واحدة من تلك اللحظات التاريخية النادرة التي عجّل فيها سوء فهم تواصلي واحد مسار تاريخ العالم.",
+          es: "La caída del Muro el 9 de noviembre de 1989, desencadenada por la trascendental interpretación errónea de Günter Schabowski sobre una nueva normativa de viaje en una rueda de prensa retransmitida en directo, marca uno de esos raros momentos históricos en que un solo malentendido comunicativo aceleró el curso de la historia mundial.",
+        },
       },
       sideFacts: [
         { year: 1918, text: "Am selben Datum ruft Philipp Scheidemann 1918 die erste deutsche Republik aus." },
