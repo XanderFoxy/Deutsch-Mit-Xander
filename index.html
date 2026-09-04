@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=131" />
-<link rel="stylesheet" href="app-styles.css?v=131" />
-<link rel="stylesheet" href="themes.css?v=131" />
+<link rel="stylesheet" href="styles.css?v=132" />
+<link rel="stylesheet" href="app-styles.css?v=132" />
+<link rel="stylesheet" href="themes.css?v=132" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -172,6 +172,8 @@
            auf diese Knöpfe registriert (nicht nur die allgemeine Subnav-Logik). Die neue
            Spiele-Übersicht (siehe gamesOverviewArea) simuliert bei Bedarf einen Klick auf den
            passenden dieser versteckten Knöpfe, statt jeden einzelnen Listener umzubauen. -->
+      <button class="subnav-pill" data-sub="sub-wortschmiede" aria-selected="false" style="display:none;">🔨 Wortschmiede <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-satzbruecke" aria-selected="false" style="display:none;">🌉 Satzbrücke <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
       <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false" style="display:none;">🎯 Betonungs-Trainer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-memory" aria-selected="false" style="display:none;">🧩 Memory <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false" style="display:none;">🔤 Wortbaustelle <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
@@ -246,6 +248,14 @@
 
     <div class="subview" id="sub-stresstrainer" data-active="false">
       <div id="stressTrainerArea"></div>
+    </div>
+
+    <div class="subview" id="sub-wortschmiede" data-active="false">
+      <div id="wortschmiedeArea"></div>
+    </div>
+
+    <div class="subview" id="sub-satzbruecke" data-active="false">
+      <div id="satzbrueckeArea"></div>
     </div>
 
     <div class="subview" id="sub-grammatik" data-active="false">
@@ -362,12 +372,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=131"></script>
-<script src="supabase-config.js?v=131"></script>
-<script src="data-exercises.js?v=131"></script>
-<script src="data-vocab.js?v=131"></script>
-<script src="backend.js?v=131"></script>
-<script src="quiz.js?v=131"></script>
-<script src="app.js?v=131"></script>
+<script src="core.js?v=132"></script>
+<script src="supabase-config.js?v=132"></script>
+<script src="data-exercises.js?v=132"></script>
+<script src="data-vocab.js?v=132"></script>
+<script src="backend.js?v=132"></script>
+<script src="quiz.js?v=132"></script>
+<script src="app.js?v=132"></script>
 </body>
 </html>

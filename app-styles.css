@@ -3653,3 +3653,122 @@
    damit nur das eigene 🌍-Symbol als Aufklapp-Hinweis sichtbar bleibt. */
 details summary::-webkit-details-marker { display: none; }
 details summary::marker { content: ""; }
+
+/* ============================================================
+   WORTSCHMIEDE — Amboss, Rohlinge, Funken
+   ============================================================ */
+.wsm-level-zeile { margin-bottom: 10px; }
+.wsm-chips { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; margin: 0 0 10px; }
+.wsm-teil1 {
+  text-align: center;
+  font-family: var(--font-display, inherit);
+  font-size: 1.45rem;
+  font-weight: 800;
+  margin: 14px 0 4px;
+  letter-spacing: 0.5px;
+}
+.wsm-plus { color: var(--coral-400, #E8825F); margin: 0 8px; font-weight: 700; }
+.wsm-luecke {
+  display: inline-block;
+  min-width: 2.4em;
+  border-bottom: 3px dashed var(--coral-400, #E8825F);
+  color: var(--coral-400, #E8825F);
+}
+.wsm-rohlinge { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.wsm-rohling {
+  padding: 14px 10px;
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  /* Wie ein Metallrohling: kühler Verlauf, leichte Kante */
+  background: linear-gradient(180deg, #F4F1EA 0%, #DED8CC 100%);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 120ms ease, background 200ms ease;
+  color: #2E2620;
+}
+.wsm-rohling:active { transform: translateY(2px); box-shadow: 0 0 0 rgba(0, 0, 0, 0.14); }
+.wsm-rohling:disabled { cursor: default; }
+.wsm-treffer {
+  background: linear-gradient(180deg, #FFE0B2 0%, #F2913B 100%) !important;
+  border-color: #D2743B !important;
+  color: #3A2410 !important;
+}
+.wsm-daneben { background: linear-gradient(180deg, #F6D8D8 0%, #E2A8A8 100%) !important; border-color: #C08080 !important; }
+.wsm-feedback { margin-top: 14px; min-height: 2.4em; text-align: center; }
+.wsm-diff-btn {
+  background: none; border: none; padding: 2px 6px; cursor: pointer;
+  font: inherit; color: inherit; opacity: 0.55; border-radius: 6px;
+}
+.wsm-diff-btn.aktiv { opacity: 1; font-weight: 800; background: rgba(232, 130, 95, 0.16); }
+@keyframes wsmHammerSchlag {
+  0% { transform: rotate(-38deg); }
+  35% { transform: rotate(6deg); }
+  55% { transform: rotate(-4deg); }
+  100% { transform: rotate(-38deg); }
+}
+.wsm-hammer { transform: rotate(-38deg); }
+.wsm-hammer-schlag { animation: wsmHammerSchlag 620ms ease-out; }
+@keyframes wsmFunkeFlug {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-14px, -26px) scale(0.2); opacity: 0; }
+}
+.wsm-funken circle { animation: wsmFunkeFlug 700ms ease-out forwards; }
+
+/* ============================================================
+   SATZBRÜCKE — Schlucht, Planken, Fuchs
+   ============================================================ */
+.sb-satz { margin: 14px 0 4px; }
+.sb-haelfte {
+  margin: 0 0 6px;
+  font-size: 1.02rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.sb-haelfte-b { padding-left: 18px; opacity: 0.9; }
+.sb-luecke {
+  display: inline-block;
+  min-width: 3.2em;
+  margin-left: 6px;
+  text-align: center;
+  border-bottom: 3px dashed var(--teal-400, #5BA8A0);
+  color: var(--teal-400, #5BA8A0);
+  font-weight: 800;
+}
+.sb-luecke-gefuellt { border-bottom-style: solid; }
+.sb-optionen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.sb-option {
+  padding: 13px 10px;
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  /* Wie eine Holzplanke */
+  background: linear-gradient(180deg, #E3C9A6 0%, #C79F70 100%);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  font-weight: 800;
+  cursor: pointer;
+  color: #3A2A18;
+  transition: transform 120ms ease;
+}
+.sb-option:active { transform: translateY(2px); box-shadow: 0 0 0 rgba(0, 0, 0, 0.16); }
+.sb-treffer { background: linear-gradient(180deg, #CFEBD6 0%, #8CC79B 100%) !important; border-color: #6BA57B !important; }
+.sb-daneben { background: linear-gradient(180deg, #F6D8D8 0%, #E2A8A8 100%) !important; border-color: #C08080 !important; }
+.sb-feedback { margin-top: 14px; min-height: 2.6em; }
+@keyframes sbPlankeLegen {
+  0% { opacity: 0; transform: translateY(-8px) rotate(-8deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0); }
+}
+.sb-planke { animation: sbPlankeLegen 320ms ease-out backwards; }
+@keyframes sbFuchsLauf {
+  0% { transform: translateX(-46px); }
+  100% { transform: translateX(46px); }
+}
+.sb-fuchs { animation: sbFuchsLauf 2600ms ease-in-out infinite alternate; }
+.wsm-bedeutung {
+  text-align: center;
+  margin: 12px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  font-style: italic;
+  opacity: 0.85;
+}

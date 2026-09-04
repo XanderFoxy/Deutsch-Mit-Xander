@@ -6183,6 +6183,92 @@ const ExerciseData = (function () {
   };
 
   /* ---------------------------------------------------------
+     WORTSCHMIEDE — zusammengesetzte Wörter schmieden
+     ---------------------------------------------------------
+     Deutsch baut aus zwei Wörtern ein neues: Haus + Tür = Haustür. Das
+     letzte Wort bestimmt Geschlecht und Bedeutung, das erste beschreibt
+     genauer. Genau das übt dieses Spiel — und nebenbei den Artikel.
+
+     Aufbau: [erstes Wort, zweites Wort, ganzes Wort mit Artikel,
+              Bedeutung, [drei falsche zweite Wörter], Niveau]
+     Wichtig: Die falschen Möglichkeiten ergeben BEWUSST ebenfalls
+     existierende deutsche Wörter — nur nicht das gesuchte. So entsteht
+     nie eine unsinnige Wortkombination als Antwortmöglichkeit.
+     --------------------------------------------------------- */
+  const WORTSCHMIEDE = [
+    ["Haus", "Tür", "die Haustür", "die Tür, durch die man ins Haus kommt", ["Dach", "Berg", "Schuh"], "A1"],
+    ["Apfel", "Saft", "der Apfelsaft", "Saft, der aus Äpfeln gepresst wird", ["Baum", "Kuchen", "Schale"], "A1"],
+    ["Kinder", "Garten", "der Kindergarten", "der Ort, an dem kleine Kinder betreut werden", ["Zimmer", "Buch", "Wagen"], "A1"],
+    ["Hand", "Schuh", "der Handschuh", "das Kleidungsstück für die Hand", ["Tuch", "Tasche", "Buch"], "A1"],
+    ["Sonnen", "Brille", "die Sonnenbrille", "die Brille, die vor hellem Licht schützt", ["Schein", "Blume", "Untergang"], "A2"],
+    ["Bahn", "Hof", "der Bahnhof", "der Ort, an dem die Züge halten", ["Steig", "Karte", "Gleis"], "A2"],
+    ["Wasser", "Hahn", "der Wasserhahn", "das Ventil, aus dem das Wasser kommt", ["Glas", "Fall", "Flasche"], "A2"],
+    ["Feuer", "Wehr", "die Feuerwehr", "die Leute, die Brände löschen", ["Zeug", "Werk", "Stelle"], "A2"],
+    ["Fahr", "Rad", "das Fahrrad", "das Fahrzeug mit zwei Rädern und Pedalen", ["Plan", "Schein", "Zeug"], "A1"],
+    ["Zahn", "Bürste", "die Zahnbürste", "das Gerät zum Zähneputzen", ["Arzt", "Pasta", "Schmerz"], "A2"],
+    ["Gepäck", "Stück", "das Gepäckstück", "ein einzelner Koffer oder eine einzelne Tasche auf Reisen", ["Wagen", "Netz", "Ablage"], "B1"],
+    ["Arbeits", "Platz", "der Arbeitsplatz", "die Stelle, an der jemand arbeitet", ["Zeit", "Tag", "Vertrag"], "B1"],
+    ["Wörter", "Buch", "das Wörterbuch", "das Buch, in dem Wörter erklärt werden", ["Liste", "Menge", "Wahl"], "A2"],
+    ["Kranken", "Haus", "das Krankenhaus", "das Gebäude, in dem Ärzte kranke Menschen behandeln", ["Wagen", "Kasse", "Schwester"], "A2"],
+    ["Regen", "Schirm", "der Regenschirm", "das Ding, das man bei Regen aufspannt", ["Bogen", "Wurm", "Wolke"], "A1"],
+    ["Bücher", "Regal", "das Bücherregal", "das Möbelstück, in dem Bücher stehen", ["Wurm", "Ei", "Stapel"], "A2"],
+    ["Winter", "Reifen", "der Winterreifen", "der Autoreifen für Schnee und Kälte", ["Mantel", "Schlaf", "Sport"], "B1"],
+    ["Mit", "Bringsel", "das Mitbringsel", "das kleine Geschenk, das man von einer Reise mitbringt", ["Fahrer", "Glied", "Bewohner"], "B2"],
+    ["Fern", "Weh", "das Fernweh", "die Sehnsucht danach, in die Ferne zu reisen", ["Seher", "Glas", "Bedienung"], "B2"],
+    ["Schadens", "Freude", "die Schadenfreude", "die Freude darüber, dass einem anderen etwas misslingt", ["Ersatz", "Fall", "Meldung"], "B2"],
+    ["Rat", "Haus", "das Rathaus", "das Gebäude der Stadtverwaltung", ["Geber", "Schlag", "Suche"], "A2"],
+    ["Brief", "Kasten", "der Briefkasten", "der Kasten, in den die Post eingeworfen wird", ["Marke", "Träger", "Umschlag"], "A2"],
+    ["Geburts", "Tag", "der Geburtstag", "der Tag, an dem jemand geboren wurde", ["Ort", "Urkunde", "Jahr"], "A1"],
+    ["Lebens", "Lauf", "der Lebenslauf", "die schriftliche Übersicht über Ausbildung und Beruf", ["Mittel", "Zeichen", "Freude"], "B1"],
+    ["Ohren", "Sessel", "der Ohrensessel", "der gepolsterte Sessel mit hohen Seitenteilen", ["Schmalz", "Ring", "Wurm"], "C1"],
+    ["Augen", "Blick", "der Augenblick", "ein sehr kurzer Moment", ["Braue", "Arzt", "Höhe"], "B1"],
+    ["Hand", "Werk", "das Handwerk", "der Beruf, in dem man mit den Händen etwas herstellt", ["Tasche", "Fläche", "Gelenk"], "B1"],
+    ["Nach", "Speise", "die Nachspeise", "der süße Gang am Ende des Essens", ["Bar", "Richt", "Mittag"], "B1"],
+    ["Vor", "Freude", "die Vorfreude", "die Freude auf etwas, das erst noch kommt", ["Sicht", "Bild", "Wand"], "B2"],
+    ["Zeit", "Geist", "der Zeitgeist", "die Denkweise, die eine Epoche prägt", ["Punkt", "Raum", "Druck"], "C1"],
+    ["Sprach", "Gefühl", "das Sprachgefühl", "das sichere Gespür dafür, was sprachlich passt", ["Kurs", "Rohr", "Schule"], "C1"],
+    ["Wahr", "Nehmung", "die Wahrnehmung", "das, was jemand mit den Sinnen aufnimmt und deutet", ["Heit", "Zeichen", "Sager"], "C1"],
+    ["Rück", "Sicht", "die Rücksicht", "das Verhalten, das die Bedürfnisse anderer beachtet", ["Fahrt", "Halt", "Stand"], "B2"],
+    ["Un", "Fug", "der Unfug", "Unsinn, dummes Verhalten", ["Ruhe", "Fall", "Kraut"], "B2"],
+    ["Frei", "Zeit", "die Freizeit", "die Zeit, in der man nicht arbeiten muss", ["Heit", "Bad", "Raum"], "A2"],
+    ["Hoch", "Zeit", "die Hochzeit", "das Fest, bei dem zwei Menschen heiraten", ["Haus", "Schule", "Punkt"], "A2"],
+  ];
+
+  /* ---------------------------------------------------------
+     SATZBRÜCKE — den richtigen Verbinder finden
+     ---------------------------------------------------------
+     Zwei Satzhälften stehen auf zwei Felsen. Nur das passende
+     Verbindungswort trägt die Brücke. Geübt wird damit genau das,
+     was viele Lernende am längsten begleitet: welcher Konnektor
+     welchen Zusammenhang ausdrückt.
+
+     Aufbau: [erste Hälfte, zweite Hälfte, richtiger Verbinder,
+              [drei falsche Verbinder], Erklärung, Niveau]
+     --------------------------------------------------------- */
+  const SATZBRUECKE = [
+    ["Ich bleibe heute zu Hause", "es regnet den ganzen Tag", "weil", ["obwohl", "damit", "bevor"], "„weil“ nennt den Grund für etwas.", "A2"],
+    ["Ich rufe dich an", "ich zu Hause bin", "wenn", ["als", "obwohl", "damit"], "„wenn“ steht für Wiederholtes und für die Zukunft.", "A2"],
+    ["Er ging zur Arbeit", "er sich krank fühlte", "obwohl", ["weil", "sodass", "bevor"], "„obwohl“ nennt einen Gegensatz zur Erwartung.", "B1"],
+    ["Wir müssen uns beeilen", "wir den Zug noch bekommen", "damit", ["weil", "obwohl", "seitdem"], "„damit“ nennt die Absicht.", "B1"],
+    ["Ich putze mir die Zähne", "ich ins Bett gehe", "bevor", ["nachdem", "während", "obwohl"], "„bevor“ ordnet zeitlich: erst das eine, dann das andere.", "A2"],
+    ["Er kochte das Abendessen", "sie die Kinder ins Bett brachte", "während", ["bevor", "nachdem", "damit"], "„während“ zeigt: beides passiert gleichzeitig.", "B1"],
+    ["Sie war völlig erschöpft", "sie sofort einschlief", "sodass", ["weil", "obwohl", "bevor"], "„sodass“ nennt die Folge.", "B1"],
+    ["Wir wohnen hier", "wir vor drei Jahren umgezogen sind", "seitdem", ["bevor", "damit", "obwohl"], "„seitdem“ nennt den Zeitpunkt, ab dem etwas gilt.", "B1"],
+    ["Ich weiß noch nicht", "ich morgen kommen kann", "ob", ["wenn", "als", "dass"], "Bei einer offenen Ja-/Nein-Frage steht „ob“.", "A2"],
+    ["Es freut mich sehr", "du an mich gedacht hast", "dass", ["ob", "wenn", "als"], "„dass“ leitet einen Aussage-Nebensatz ein.", "A2"],
+    ["Er lernte weiter", "alle anderen längst schliefen", "während", ["bevor", "weil", "damit"], "Hier stellt „während“ zwei Dinge gegenüber.", "B2"],
+    ["Der Antrag gilt als angenommen", "niemand widerspricht", "sofern", ["obwohl", "nachdem", "damit"], "„sofern“ nennt eine Bedingung — häufig in Amtstexten.", "C1"],
+    ["Die Reise lohnt sich", "sie recht teuer ist", "obgleich", ["sofern", "sodass", "indem"], "„obgleich“ ist die gehobene Form von „obwohl“.", "C1"],
+    ["Man verbessert sein Deutsch", "man täglich ein wenig liest", "indem", ["obwohl", "bevor", "sofern"], "„indem“ nennt die Art und Weise, wie etwas geschieht.", "B2"],
+    ["Sie sagte nichts", "sie alles genau verstanden hatte", "obwohl", ["damit", "sobald", "bevor"], "„obwohl“ zeigt den Widerspruch zur Erwartung.", "B1"],
+    ["Ich melde mich bei dir", "ich Genaueres weiß", "sobald", ["bevor", "obwohl", "damit"], "„sobald“ heißt: unmittelbar nachdem etwas eintritt.", "B1"],
+    ["Er wirkte gelassen", "die Lage durchaus ernst war", "obwohl", ["weil", "sodass", "indem"], "„obwohl“ stellt Verhalten und Lage einander gegenüber.", "B2"],
+    ["Das Konzert wurde verschoben", "der Sänger erkrankt war", "weil", ["obwohl", "damit", "bevor"], "„weil“ nennt den Grund.", "A2"],
+    ["Nimm einen Schirm mit", "es später regnen sollte", "falls", ["obwohl", "seitdem", "damit"], "„falls“ nennt eine mögliche Bedingung.", "B1"],
+    ["Die Entscheidung fiel schwer", "die Folgen kaum abzuschätzen waren", "zumal", ["sobald", "indem", "sofern"], "„zumal“ liefert einen zusätzlichen, verstärkenden Grund.", "C1"],
+  ];
+
+  /* ---------------------------------------------------------
      KATEGORIEN-REGISTER
      --------------------------------------------------------- */
   const CATEGORIES = [
@@ -7052,5 +7138,5 @@ const ExerciseData = (function () {
   function historyPending() { return HISTORY_NEU; }
   function historyDayCount() { return Object.keys(GERMAN_HISTORY_TODAY).length; }
 
-  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK };
+  return { CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE };
 })();

@@ -10241,6 +10241,344 @@
   // ausdrücklich noch nicht freigegebene Spiele werden weiter unten in renderGamesOverview()
   // komplett aus der Liste gefiltert, bis der Flag aktiv angeschaltet ist (oder man
   // Beta-Tester:in/Admin ist).
+  /* ============================================================
+     WORTSCHMIEDE — zusammengesetzte Wörter schmieden
+     ------------------------------------------------------------
+     Eigene, handgezeichnete SVG-Szene: Amboss, Esse, Hammer und Funken.
+     Das erste Wortteil liegt glühend auf dem Amboss, unten liegen vier
+     Rohlinge — nur einer ergibt ein echtes deutsches Wort. Bei einem
+     Treffer schlägt der Hammer zu, Funken sprühen, und das fertige Wort
+     erscheint mit seinem Artikel.
+
+     Niveau kommt aus dem Profil (wie überall), der Schwierigkeitsgrad
+     bestimmt allein die Anzahl der Runden.
+     ============================================================ */
+  const WSM_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
+  let wsmSession = null;
+  let wsmLevel = null;
+  let wsmSchwierigkeit = "leicht";
+  let wsmAktuell = null;
+  let wsmZustand = "warten"; // warten | richtig | falsch
+
+  function wsmPool() {
+    const alle = ExerciseData.WORTSCHMIEDE || [];
+    const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const grenze = stufen.indexOf(wsmLevel);
+    // Alles bis einschließlich des gewählten Niveaus — bleibt zu wenig übrig,
+    // wird schrittweise geöffnet, damit nie eine leere Runde entsteht.
+    for (let spielraum = 0; spielraum < stufen.length; spielraum++) {
+      const treffer = alle.filter((w) => stufen.indexOf(w[5]) <= grenze + spielraum);
+      if (treffer.length >= 6) return treffer;
+    }
+    return alle;
+  }
+  function neueWsmSession() {
+    wsmLevel = applyDefaultCefrLevel(wsmLevel, (v) => { wsmLevel = v; });
+    const gesamt = Math.min(WSM_RUNDEN[wsmSchwierigkeit] || 10, wsmPool().length);
+    wsmSession = { runde: 0, gesamt, richtig: 0, gespielt: [] };
+    wsmAktuell = null;
+  }
+  function neueWsmRunde() {
+    const pool = wsmPool().filter((w) => !wsmSession.gespielt.includes(w[2]));
+    const auswahl = (pool.length ? pool : wsmPool())[Math.floor(Math.random() * (pool.length || wsmPool().length))];
+    wsmSession.gespielt.push(auswahl[2]);
+    const optionen = Core.shuffle([auswahl[1], ...auswahl[4]]);
+    wsmAktuell = { teil1: auswahl[0], teil2: auswahl[1], wort: auswahl[2], bedeutung: auswahl[3], optionen, level: auswahl[5] };
+    wsmZustand = "warten";
+  }
+  // Die Schmiede-Szene. Bewusst aus einfachen Formen gebaut statt als Bilddatei —
+  // dadurch passt sie sich jedem Design-Theme an (currentColor) und bleibt scharf.
+  function wsmSchmiedeSvg(zustand) {
+    const funken = zustand === "richtig";
+    return `
+    <svg viewBox="0 0 200 130" width="100%" style="max-width:320px; display:block; margin:0 auto;" aria-hidden="true">
+      <defs>
+        <linearGradient id="wsmGlut" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#FFD79A"/><stop offset="55%" stop-color="#F2913B"/><stop offset="100%" stop-color="#D2431E"/>
+        </linearGradient>
+        <linearGradient id="wsmEisen" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6E7278"/><stop offset="100%" stop-color="#3A3D42"/>
+        </linearGradient>
+      </defs>
+      <!-- Esse im Hintergrund -->
+      <path d="M8 96 L8 52 Q8 44 16 44 L44 44 Q52 44 52 52 L52 96 Z" fill="#59453A"/>
+      <path d="M14 96 L14 60 L46 60 L46 96 Z" fill="#2E2320"/>
+      <path d="M20 92 Q24 78 30 88 Q34 74 40 92 Z" fill="url(#wsmGlut)"/>
+      <rect x="4" y="40" width="52" height="7" rx="3" fill="#3E2F27"/>
+      <path d="M26 40 Q24 30 30 26 Q28 34 34 32 Q32 38 30 40 Z" fill="#F2913B" opacity="0.75"/>
+      <!-- Amboss -->
+      <path d="M96 74 L164 74 L158 84 L102 84 Z" fill="url(#wsmEisen)"/>
+      <path d="M164 74 Q180 76 176 82 L158 84 Z" fill="url(#wsmEisen)"/>
+      <rect x="118" y="84" width="22" height="16" fill="#4A4E54"/>
+      <path d="M104 100 L154 100 L160 114 L98 114 Z" fill="#5A4034"/>
+      <!-- Werkstück auf dem Amboss -->
+      <rect x="112" y="66" width="36" height="8" rx="3" fill="url(#wsmGlut)"/>
+      <!-- Hammer, schlägt bei einem Treffer zu -->
+      <g class="wsm-hammer ${funken ? "wsm-hammer-schlag" : ""}" style="transform-origin:150px 40px;">
+        <rect x="146" y="34" width="42" height="10" rx="3" fill="#8A6A4F"/>
+        <rect x="132" y="26" width="22" height="26" rx="4" fill="#4A4E54"/>
+        <rect x="136" y="30" width="6" height="18" rx="2" fill="#6E7278"/>
+      </g>
+      ${funken ? `
+        <g class="wsm-funken">
+          ${[0, 1, 2, 3, 4, 5, 6].map((i) => {
+            const x = 118 + i * 6, y = 66 - (i % 3) * 5;
+            return `<circle cx="${x}" cy="${y}" r="${1.6 + (i % 3) * 0.5}" fill="#FFD79A" style="animation-delay:${i * 60}ms"/>`;
+          }).join("")}
+        </g>` : ""}
+      <!-- Boden -->
+      <rect x="0" y="114" width="200" height="16" fill="#C9B79A" opacity="0.5"/>
+    </svg>`;
+  }
+  function renderWortschmiede() {
+    const area = document.getElementById("wortschmiedeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "wortschmiede_neu", "Wortschmiede", "🔨")) return;
+    if (!wsmSession) neueWsmSession();
+    if (wsmSession.runde >= wsmSession.gesamt) { renderWortschmiedeErgebnis(); return; }
+    if (!wsmAktuell) neueWsmRunde();
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wortschmiede: " + wsmAktuell.wort)}
+        <p class="eyebrow">🔨 WORTSCHMIEDE · RUNDE ${wsmSession.runde + 1} / ${wsmSession.gesamt} <span class="subnav-info-icon" data-info="Deutsch baut aus zwei Wörtern ein neues. Das letzte Wort bestimmt Artikel und Bedeutung, das erste beschreibt genauer. Alle vier Rohlinge ergeben ein echtes deutsches Wort — gesucht ist aber genau das eine, das zur angegebenen Bedeutung passt.">ⓘ</span></p>
+        <div class="wsm-level-zeile">
+          <div class="trophy-case wsm-chips">
+            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip wsm-level-btn ${wsmLevel === lvl ? "selected" : ""}" data-wsm-level="${lvl}">${lvl}</button>`).join("")}
+          </div>
+        </div>
+        ${wsmSchmiedeSvg(wsmZustand)}
+        <p class="wsm-bedeutung">Gesucht: ${wsmAktuell.bedeutung}</p>
+        <p class="wsm-teil1">${wsmAktuell.teil1}<span class="wsm-plus">+</span><span class="wsm-luecke">?</span></p>
+        <div class="wsm-rohlinge">
+          ${wsmAktuell.optionen.map((o) => `<button type="button" class="wsm-rohling" data-wsm-opt="${o}">${o}</button>`).join("")}
+        </div>
+        <p class="empty-note wsm-feedback" id="wsmFeedback">${wsmZustand === "warten" ? "Alle vier ergeben ein echtes Wort — welches passt zur Bedeutung?" : ""}</p>
+        <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">Runden: ${Object.entries(WSM_RUNDEN).map(([k, v]) => `<button type="button" class="wsm-diff-btn ${wsmSchwierigkeit === k ? "aktiv" : ""}" data-wsm-diff="${k}">${k} (${v})</button>`).join(" ")}</p>
+      </div>`;
+    area.querySelectorAll(".wsm-level-btn").forEach((b) => b.addEventListener("click", () => {
+      wsmLevel = b.dataset.wsmLevel; neueWsmSession(); neueWsmRunde(); renderWortschmiede();
+    }));
+    area.querySelectorAll(".wsm-diff-btn").forEach((b) => b.addEventListener("click", () => {
+      wsmSchwierigkeit = b.dataset.wsmDiff; neueWsmSession(); neueWsmRunde(); renderWortschmiede();
+    }));
+    area.querySelectorAll(".wsm-rohling").forEach((b) => b.addEventListener("click", () => pruefeWortschmiede(b)));
+  }
+  function pruefeWortschmiede(btn) {
+    if (wsmZustand !== "warten") return;
+    const gewaehlt = btn.dataset.wsmOpt;
+    const richtig = gewaehlt === wsmAktuell.teil2;
+    wsmSession.runde += 1;
+    document.querySelectorAll(".wsm-rohling").forEach((b) => { b.disabled = true; });
+    const fb = document.getElementById("wsmFeedback");
+    if (richtig) {
+      wsmSession.richtig += 1;
+      wsmZustand = "richtig";
+      Core.sound.correct();
+      btn.classList.add("wsm-treffer");
+      fb.innerHTML = `✅ <strong>${wsmAktuell.wort}</strong> — ${wsmAktuell.bedeutung}`;
+    } else {
+      wsmZustand = "falsch";
+      Core.sound.wrong();
+      btn.classList.add("wsm-daneben");
+      document.querySelectorAll(".wsm-rohling").forEach((b) => { if (b.dataset.wsmOpt === wsmAktuell.teil2) b.classList.add("wsm-treffer"); });
+      fb.innerHTML = `❌ Richtig wäre <strong>${wsmAktuell.wort}</strong> — ${wsmAktuell.bedeutung}`;
+    }
+    setTimeout(() => { neueWsmRunde(); renderWortschmiede(); }, richtig ? 1600 : 2400);
+  }
+  function renderWortschmiedeErgebnis() {
+    const area = document.getElementById("wortschmiedeArea");
+    const prozent = Math.round((wsmSession.richtig / wsmSession.gesamt) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🔨 WORTSCHMIEDE — FERTIG GESCHMIEDET</p>
+        <p style="font-size:2rem; margin:8px 0;">${prozent >= 80 ? "🏆" : prozent >= 50 ? "🔥" : "🔨"}</p>
+        <h2 style="margin:8px 0;">${wsmSession.richtig} / ${wsmSession.gesamt} Wörter geschmiedet</h2>
+        <p class="empty-note">${prozent >= 80 ? "Meisterschmied:in — das saß." : prozent >= 50 ? "Solide Arbeit. Der nächste Schwung wird besser." : "Zusammengesetzte Wörter brauchen Übung — das letzte Wort trägt die Bedeutung."}</p>
+        <button type="button" class="btn btn-coffee" id="wsmNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("wsmNochmalBtn").addEventListener("click", () => { neueWsmSession(); neueWsmRunde(); renderWortschmiede(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["wortschmiede"], points: wsmSession.richtig, bonus: 0, percent: prozent, character: "Wortschmied:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-wortschmiede"]')?.addEventListener("click", () => {
+    if (!wsmSession) neueWsmSession();
+    if (!wsmAktuell) neueWsmRunde();
+    renderWortschmiede();
+  });
+
+  /* ============================================================
+     SATZBRÜCKE — den tragenden Verbinder finden
+     ------------------------------------------------------------
+     Zwei Satzhälften stehen auf zwei Felsen über einer Schlucht. Nur das
+     passende Verbindungswort trägt. Jede richtige Antwort legt eine
+     Planke; am Ende läuft der Fuchs hinüber.
+
+     Auch hier: Niveau aus dem Profil, Schwierigkeitsgrad = Rundenzahl.
+     ============================================================ */
+  const SB_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
+  let sbSession = null;
+  let sbLevel = null;
+  let sbSchwierigkeit = "leicht";
+  let sbAktuell = null;
+  let sbZustand = "warten";
+
+  function sbPool() {
+    const alle = ExerciseData.SATZBRUECKE || [];
+    const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const grenze = stufen.indexOf(sbLevel);
+    for (let spielraum = 0; spielraum < stufen.length; spielraum++) {
+      const treffer = alle.filter((z) => stufen.indexOf(z[5]) <= grenze + spielraum);
+      if (treffer.length >= 5) return treffer;
+    }
+    return alle;
+  }
+  function neueSbSession() {
+    sbLevel = applyDefaultCefrLevel(sbLevel, (v) => { sbLevel = v; });
+    const gesamt = Math.min(SB_RUNDEN[sbSchwierigkeit] || 10, sbPool().length);
+    sbSession = { runde: 0, gesamt, richtig: 0, gespielt: [], planken: 0 };
+    sbAktuell = null;
+  }
+  function neueSbRunde() {
+    const pool = sbPool().filter((z) => !sbSession.gespielt.includes(z[0]));
+    const wahl = (pool.length ? pool : sbPool())[Math.floor(Math.random() * (pool.length || sbPool().length))];
+    sbSession.gespielt.push(wahl[0]);
+    sbAktuell = { a: wahl[0], b: wahl[1], loesung: wahl[2], optionen: Core.shuffle([wahl[2], ...wahl[3]]), erklaerung: wahl[4] };
+    sbZustand = "warten";
+  }
+  // Schlucht mit zwei Felsen. Die Planken wachsen mit jeder richtigen Antwort —
+  // sichtbarer Fortschritt statt nur einer Zahl.
+  function sbBrueckeSvg(planken, gesamt, geschafft) {
+    const anteil = Math.max(0, Math.min(1, planken / Math.max(1, gesamt)));
+    const brueckeBreite = 96 * anteil;
+    return `
+    <svg viewBox="0 0 200 120" width="100%" style="max-width:340px; display:block; margin:0 auto;" aria-hidden="true">
+      <defs>
+        <linearGradient id="sbHimmel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#BFE3E0"/><stop offset="100%" stop-color="#F3E7D2"/>
+        </linearGradient>
+        <linearGradient id="sbFels" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9C8163"/><stop offset="100%" stop-color="#5E4A38"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="200" height="120" fill="url(#sbHimmel)"/>
+      <!-- ferne Berge -->
+      <path d="M0 66 L28 40 L48 60 L70 34 L96 66 Z" fill="#A9C4BE" opacity="0.55"/>
+      <path d="M104 66 L130 42 L150 62 L172 38 L200 66 Z" fill="#A9C4BE" opacity="0.4"/>
+      <!-- linker Felsen -->
+      <path d="M0 62 L50 62 L54 74 L48 118 L0 118 Z" fill="url(#sbFels)"/>
+      <path d="M0 62 L50 62 L46 68 L0 68 Z" fill="#7FA88C"/>
+      <!-- rechter Felsen -->
+      <path d="M150 62 L200 62 L200 118 L152 118 L146 74 Z" fill="url(#sbFels)"/>
+      <path d="M150 62 L200 62 L200 68 L154 68 Z" fill="#7FA88C"/>
+      <!-- Seile -->
+      <path d="M50 62 Q100 ${74 - 8 * anteil} 150 62" stroke="#6B5136" stroke-width="1.6" fill="none" opacity="${0.3 + 0.5 * anteil}"/>
+      <path d="M50 68 Q100 ${82 - 8 * anteil} 150 68" stroke="#6B5136" stroke-width="1.2" fill="none" opacity="${0.25 + 0.4 * anteil}"/>
+      <!-- Planken: wachsen von links -->
+      <g>
+        ${Array.from({ length: Math.round(brueckeBreite / 8) }).map((_, i) => {
+          const x = 52 + i * 8;
+          const y = 64 + Math.sin((x - 50) / 96 * Math.PI) * (8 - 6 * anteil);
+          return `<rect x="${x}" y="${y}" width="6.5" height="3.4" rx="1.2" fill="#8A6A4F" class="sb-planke" style="animation-delay:${i * 40}ms"/>`;
+        }).join("")}
+      </g>
+      ${geschafft ? `
+        <g class="sb-fuchs">
+          <ellipse cx="100" cy="60" rx="9" ry="6" fill="#E8825F"/>
+          <circle cx="108" cy="56" r="4.6" fill="#F09A72"/>
+          <path d="M105 52 l1.5 -4 l2.6 2.6 Z" fill="#E8825F"/>
+          <path d="M110 52 l2.6 -3.4 l1 4 Z" fill="#E8825F"/>
+          <circle cx="109.6" cy="56" r="0.9" fill="#3A2A20"/>
+          <path d="M91 60 q-8 -2 -6 -8 q4 3 7 4 Z" fill="#F5B195"/>
+          <path d="M96 65 l0 4 M103 65 l0 4" stroke="#C96A48" stroke-width="1.6" stroke-linecap="round"/>
+        </g>` : ""}
+      <!-- Nebel in der Schlucht -->
+      <ellipse cx="100" cy="112" rx="52" ry="8" fill="#ffffff" opacity="0.5"/>
+    </svg>`;
+  }
+  function renderSatzbruecke() {
+    const area = document.getElementById("satzbrueckeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "satzbruecke_neu", "Satzbrücke", "🌉")) return;
+    if (!sbSession) neueSbSession();
+    if (sbSession.runde >= sbSession.gesamt) { renderSatzbrueckeErgebnis(); return; }
+    if (!sbAktuell) neueSbRunde();
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Satzbrücke: " + sbAktuell.a)}
+        <p class="eyebrow">🌉 SATZBRÜCKE · RUNDE ${sbSession.runde + 1} / ${sbSession.gesamt} <span class="subnav-info-icon" data-info="Zwei Satzhälften, eine Schlucht dazwischen. Nur das passende Verbindungswort trägt die Brücke. Jede richtige Antwort legt eine Planke.">ⓘ</span></p>
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip sb-level-btn ${sbLevel === lvl ? "selected" : ""}" data-sb-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        ${sbBrueckeSvg(sbSession.planken, sbSession.gesamt, false)}
+        <div class="sb-satz">
+          <p class="sb-haelfte">${sbAktuell.a}<span class="sb-luecke">?</span></p>
+          <p class="sb-haelfte sb-haelfte-b">${sbAktuell.b}.</p>
+        </div>
+        <div class="sb-optionen">
+          ${sbAktuell.optionen.map((o) => `<button type="button" class="sb-option" data-sb-opt="${o}">${o}</button>`).join("")}
+        </div>
+        <p class="empty-note sb-feedback" id="sbFeedback">Welches Wort verbindet die beiden Hälften?</p>
+        <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">Runden: ${Object.entries(SB_RUNDEN).map(([k, v]) => `<button type="button" class="wsm-diff-btn ${sbSchwierigkeit === k ? "aktiv" : ""}" data-sb-diff="${k}">${k} (${v})</button>`).join(" ")}</p>
+      </div>`;
+    area.querySelectorAll(".sb-level-btn").forEach((b) => b.addEventListener("click", () => {
+      sbLevel = b.dataset.sbLevel; neueSbSession(); neueSbRunde(); renderSatzbruecke();
+    }));
+    area.querySelectorAll("[data-sb-diff]").forEach((b) => b.addEventListener("click", () => {
+      sbSchwierigkeit = b.dataset.sbDiff; neueSbSession(); neueSbRunde(); renderSatzbruecke();
+    }));
+    area.querySelectorAll(".sb-option").forEach((b) => b.addEventListener("click", () => pruefeSatzbruecke(b)));
+  }
+  function pruefeSatzbruecke(btn) {
+    if (sbZustand !== "warten") return;
+    const gewaehlt = btn.dataset.sbOpt;
+    const richtig = gewaehlt === sbAktuell.loesung;
+    sbSession.runde += 1;
+    sbZustand = richtig ? "richtig" : "falsch";
+    document.querySelectorAll(".sb-option").forEach((b) => { b.disabled = true; });
+    const fb = document.getElementById("sbFeedback");
+    if (richtig) {
+      sbSession.richtig += 1;
+      sbSession.planken += 1;
+      Core.sound.correct();
+      btn.classList.add("sb-treffer");
+      fb.innerHTML = `✅ ${sbAktuell.erklaerung}`;
+    } else {
+      Core.sound.wrong();
+      btn.classList.add("sb-daneben");
+      document.querySelectorAll(".sb-option").forEach((b) => { if (b.dataset.sbOpt === sbAktuell.loesung) b.classList.add("sb-treffer"); });
+      fb.innerHTML = `❌ Es trägt nur „${sbAktuell.loesung}“ — ${sbAktuell.erklaerung}`;
+    }
+    // Die Lücke im Satz sichtbar füllen, damit man den fertigen Satz einmal ganz liest.
+    const luecke = document.querySelector(".sb-luecke");
+    if (luecke) { luecke.textContent = ` ${sbAktuell.loesung} `; luecke.classList.add("sb-luecke-gefuellt"); }
+    setTimeout(() => { neueSbRunde(); renderSatzbruecke(); }, richtig ? 1900 : 2700);
+  }
+  function renderSatzbrueckeErgebnis() {
+    const area = document.getElementById("satzbrueckeArea");
+    const prozent = Math.round((sbSession.richtig / sbSession.gesamt) * 100);
+    const geschafft = prozent >= 60;
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🌉 SATZBRÜCKE — ${geschafft ? "BRÜCKE STEHT" : "NOCH LÜCKEN IM WEG"}</p>
+        ${sbBrueckeSvg(sbSession.richtig, sbSession.gesamt, geschafft)}
+        <h2 style="margin:10px 0;">${sbSession.richtig} / ${sbSession.gesamt} Planken gelegt</h2>
+        <p class="empty-note">${geschafft ? "Der Fuchs kommt trockenen Fußes hinüber." : "Noch fehlen ein paar Planken — Verbinder brauchen Zeit, sie tragen den ganzen Satz."}</p>
+        <button type="button" class="btn btn-coffee" id="sbNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
+      </div>`;
+    document.getElementById("sbNochmalBtn").addEventListener("click", () => { neueSbSession(); neueSbRunde(); renderSatzbruecke(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["satzbruecke"], points: sbSession.richtig, bonus: 0, percent: prozent, character: "Brückenbauer:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-satzbruecke"]')?.addEventListener("click", () => {
+    if (!sbSession) neueSbSession();
+    if (!sbAktuell) neueSbRunde();
+    renderSatzbruecke();
+  });
+
   const GAMES_OVERVIEW_LIST = [
     { sub: "sub-stresstrainer", emoji: "🎯", name: "Betonungs-Trainer", persona: "Sprachkünstler" },
     { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
@@ -10249,7 +10587,9 @@
     { sub: "sub-memory", emoji: "🧩", name: "Memory", persona: "Sprachkünstler" },
     { sub: "sub-satzpuzzle", emoji: "🧩", name: "Satzpuzzle", persona: "Grammatik-Profi" },
     { sub: "sub-vokabelmeister", emoji: "🔤", name: "Vokabelmeister", persona: "Sprachkünstler", flagKey: "vokabelmeister_neu" },
+    { sub: "sub-satzbruecke", emoji: "🌉", name: "Satzbrücke", persona: "Logiker", flagKey: "satzbruecke_neu" },
     { sub: "sub-wackelturm", emoji: "🗼", name: "Wackelturm", persona: "Gemischt" },
+    { sub: "sub-wortschmiede", emoji: "🔨", name: "Wortschmiede", persona: "Sprachkünstler", flagKey: "wortschmiede_neu" },
     { sub: "sub-werbinich", emoji: "❓", name: "Wer bin ich?", persona: "Logiker" },
     { sub: "sub-wordbuild", emoji: "🔤", name: "Wortbaustelle", persona: "Sprachkünstler" },
     { sub: "sub-bubbles", emoji: "🫧", name: "Wortblasen", persona: "Gemischt", flagKey: "wortblasen_neu" },
@@ -10274,6 +10614,8 @@
       wordbuild: `<rect x="3" y="13" width="6" height="6" rx="1" fill="currentColor"/><rect x="10" y="13" width="6" height="6" rx="1" fill="currentColor" opacity="0.65"/><rect x="6.5" y="6" width="6" height="6" rx="1" fill="currentColor" opacity="0.85"/>`,
       bubbles: `<circle cx="8" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="6" cy="7" rx="1.4" ry="0.9" fill="currentColor"/>`,
       kanone: `<circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/>`,
+      satzbruecke: `<path d="M2 14h4v6H2zM16 14h4v6h-4z" fill="currentColor"/><path d="M4 14C4 9 18 9 18 14" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M6 13.2h1.6M9 12.4h1.6M12 12.4h1.6M15 13.2h1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
+      wortschmiede: `<path d="M4 15h12l-1.6 2.6H5.6z" fill="currentColor"/><rect x="8" y="17.6" width="4" height="3" fill="currentColor"/><rect x="7" y="12" width="8" height="2.4" rx="1" fill="currentColor" opacity="0.6"/><rect x="13" y="4" width="7" height="2.6" rx="1" fill="currentColor" transform="rotate(28 16.5 5.3)"/><rect x="11.4" y="2.6" width="4" height="5" rx="1.2" fill="currentColor" transform="rotate(28 13.4 5.1)"/>`,
       wortarten: `<rect x="3" y="4" width="7" height="7" rx="1.5" fill="currentColor"/><circle cx="16" cy="7.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 19l4-8 4 8M5.4 16.5h5.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
     };
     return `<svg viewBox="0 0 22 22" width="26" height="26" aria-hidden="true">${icons[key] || ""}</svg>`;
