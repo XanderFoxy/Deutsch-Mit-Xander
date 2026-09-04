@@ -3492,12 +3492,14 @@
 
     setupEl.innerHTML = `
       ${resumeBar}
-      <p class="eyebrow">🔊 Homophone — gleich klingen, anders schreiben</p>
-      <div class="question-card" style="margin-bottom:16px;">
-        <p class="empty-note" style="margin:0 0 10px;">Manche deutschen Wörter klingen beim Sprechen völlig gleich, werden aber unterschiedlich geschrieben und bedeuten etwas ganz anderes — das nennt man <strong>Homophone</strong>. Ordne die Bedeutung der richtigen Schreibweise zu.</p>
-        <p id="homophoneQuestion" style="font-weight:700; margin:0 0 10px;"></p>
-        <div id="homophoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
-        <p id="homophoneFeedback" class="empty-note" style="margin:10px 0 0; min-height:1.2em;"></p>
+      <div class="category-grid">
+        <div class="category-card" id="homophoneGameCard">
+          <div class="cat-checkbox">🔊</div>
+          <div class="cat-body">
+            <div class="cat-title-row"><span class="cat-icon">🔊</span><span>Homophone — gleich klingen, anders schreiben</span></div>
+            <div class="cat-info-text open">Wörter, die gleich klingen, aber unterschiedlich geschrieben werden und etwas anderes bedeuten — antippen zum Starten.</div>
+          </div>
+        </div>
       </div>
       <div class="category-grid">${cards}</div>
       ${challengeBar}
@@ -3515,7 +3517,7 @@
       ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : '<p class="empty-note">⚡ Tipp: Antworte innerhalb von 4 Sekunden richtig für einen Tempo-Bonus.</p>'}
     `;
 
-    setupEl.querySelectorAll(".category-card").forEach((card) => {
+    setupEl.querySelectorAll(".category-card:not(#homophoneGameCard)").forEach((card) => {
       const id = card.dataset.cat;
       if (!id) {
         card.addEventListener("click", () => alert(card.dataset.lockedInfo || "Diese Kategorie ist noch gesperrt."));
@@ -3632,65 +3634,80 @@
       Quiz.reset();
       renderSetup();
     });
+    document.getElementById("homophoneGameCard")?.addEventListener("click", () => renderHomophoneGame());
+  }
 
-    // Homophone-Übung: Wortpaare, die gleich ausgesprochen werden, aber unterschiedlich
-    // geschrieben werden und Verschiedenes bedeuten. Pro Runde wird eine Bedeutung gezeigt, und
-    // man muss die passende Schreibweise antippen. Bewusst hier bei den Übungen statt bei
-    // "Erste Schritte" — dort liegt der Fokus jetzt auf dem Satz-Baukasten.
-    const HOMOPHONE_PAIRE = [
-      { a: "mehr", aBedeutung: "eine größere Menge, zusätzlich", b: "Meer", bBedeutung: "das große, salzige Gewässer" },
-      { a: "Wal", aBedeutung: "das riesige Meerestier", b: "Wahl", bBedeutung: "wenn man zwischen Optionen entscheidet oder abstimmt" },
-      { a: "Waise", aBedeutung: "ein Kind ohne Eltern", b: "Weise", bBedeutung: "die Art und Weise, wie man etwas tut" },
-      { a: "Saite", aBedeutung: "der gespannte Draht/Faden an einer Gitarre", b: "Seite", bBedeutung: "eine Blattseite in einem Buch" },
-      { a: "malen", aBedeutung: "ein Bild mit Farbe machen", b: "mahlen", bBedeutung: "Korn zu Mehl zerkleinern" },
-      { a: "Sohn", aBedeutung: "das männliche Kind einer Familie", b: "schon", bBedeutung: "bereits, zu einem früheren Zeitpunkt" },
-      { a: "Rat", aBedeutung: "ein Vorschlag oder eine Empfehlung", b: "Rad", bBedeutung: "der runde Teil an einem Fahrzeug" },
-      { a: "Lehre", aBedeutung: "eine Ausbildung oder eine wichtige Erkenntnis", b: "Leere", bBedeutung: "wenn nichts in etwas drin ist" },
-      { a: "Ähre", aBedeutung: "der obere Teil einer Getreidepflanze mit den Körnern", b: "Ehre", bBedeutung: "großer Respekt für jemanden" },
-      { a: "wieder", aBedeutung: "noch einmal, erneut", b: "wider", bBedeutung: "gegen etwas (z. B. „wider Willen“)" },
-      { a: "seid", aBedeutung: "ihr seid — Form von „sein“", b: "seit", bBedeutung: "ab einem bestimmten Zeitpunkt" },
-      { a: "Stiel", aBedeutung: "der Griff eines Werkzeugs oder Stängel einer Pflanze", b: "Stil", bBedeutung: "die persönliche Art, wie etwas gemacht wird" },
-      { a: "Mine", aBedeutung: "der Stift in einem Kugelschreiber, oder ein Sprengkörper", b: "Miene", bBedeutung: "der Gesichtsausdruck einer Person" },
-      { a: "Lerche", aBedeutung: "ein kleiner Singvogel", b: "Lärche", bBedeutung: "ein Nadelbaum" },
-      { a: "Grad", aBedeutung: "die Einheit für Temperatur oder Winkel", b: "Grat", bBedeutung: "die scharfe Kante eines Berges" },
-      { a: "Bad", aBedeutung: "der Raum zum Waschen, oder das Baden selbst", b: "bat", bBedeutung: "hat gebeten (von „bitten“)" },
-      { a: "Tod", aBedeutung: "das Ende des Lebens", b: "tot", bBedeutung: "nicht mehr lebendig" },
-      { a: "Rind", aBedeutung: "das Nutztier, von dem Rindfleisch kommt", b: "rinnt", bBedeutung: "fließt langsam (von „rinnen“)" },
-      { a: "Feld", aBedeutung: "eine landwirtschaftliche Fläche", b: "fällt", bBedeutung: "stürzt nach unten (von „fallen“)" },
-      { a: "Ries", aBedeutung: "eine große Menge Papier (500 Blatt)", b: "Reis", bBedeutung: "das kleine, weiße Getreidekorn" },
-    ];
-    let homophoneCurrentIdx = -1, homophoneCurrentSide = "a";
-    function newHomophoneRound() {
-      const qEl = document.getElementById("homophoneQuestion");
-      if (!qEl) return;
-      let idx;
-      do { idx = Math.floor(Math.random() * HOMOPHONE_PAIRE.length); } while (idx === homophoneCurrentIdx && HOMOPHONE_PAIRE.length > 1);
-      homophoneCurrentIdx = idx;
-      homophoneCurrentSide = Math.random() < 0.5 ? "a" : "b";
-      const pair = HOMOPHONE_PAIRE[idx];
-      const bedeutung = homophoneCurrentSide === "a" ? pair.aBedeutung : pair.bBedeutung;
-      qEl.textContent = `„${bedeutung}" — welches Wort ist das?`;
-      const options = Math.random() < 0.5 ? [pair.a, pair.b] : [pair.b, pair.a];
-      const optionsEl = document.getElementById("homophoneOptions");
-      optionsEl.innerHTML = options.map((w) => `<button type="button" class="btn btn-secondary homophone-opt" data-word="${w}" style="flex:1;">${w}</button>`).join("");
-      document.getElementById("homophoneFeedback").textContent = "";
-      optionsEl.querySelectorAll(".homophone-opt").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const chosen = btn.dataset.word;
-          const correct = homophoneCurrentSide === "a" ? pair.a : pair.b;
-          const feedbackEl = document.getElementById("homophoneFeedback");
-          if (chosen === correct) {
-            feedbackEl.textContent = "✅ Richtig!";
-            feedbackEl.style.color = "var(--teal-400)";
-          } else {
-            feedbackEl.textContent = `❌ Nicht ganz — richtig wäre „${correct}".`;
-            feedbackEl.style.color = "var(--red-400, #c0392b)";
-          }
-          setTimeout(newHomophoneRound, 1400);
-        });
-      });
-    }
+  // Homophone-Übung: Wortpaare, die gleich ausgesprochen werden, aber unterschiedlich geschrieben
+  // werden und Verschiedenes bedeuten. Eine eigene Ansicht wie bei jeder anderen Übung — man
+  // gelangt erst nach Antippen der Kachel hinein, das Spiel steht nicht von selbst offen da.
+  const HOMOPHONE_PAIRE = [
+    { a: "mehr", aBedeutung: "eine größere Menge, zusätzlich", b: "Meer", bBedeutung: "das große, salzige Gewässer" },
+    { a: "Wal", aBedeutung: "das riesige Meerestier", b: "Wahl", bBedeutung: "wenn man zwischen Optionen entscheidet oder abstimmt" },
+    { a: "Waise", aBedeutung: "ein Kind ohne Eltern", b: "Weise", bBedeutung: "die Art und Weise, wie man etwas tut" },
+    { a: "Saite", aBedeutung: "der gespannte Draht/Faden an einer Gitarre", b: "Seite", bBedeutung: "eine Blattseite in einem Buch" },
+    { a: "malen", aBedeutung: "ein Bild mit Farbe machen", b: "mahlen", bBedeutung: "Korn zu Mehl zerkleinern" },
+    { a: "Lied", aBedeutung: "ein gesungenes Musikstück", b: "Lid", bBedeutung: "die Haut, die man über das Auge schließen kann" },
+    { a: "Rat", aBedeutung: "ein Vorschlag oder eine Empfehlung", b: "Rad", bBedeutung: "der runde Teil an einem Fahrzeug" },
+    { a: "Lehre", aBedeutung: "eine Ausbildung oder eine wichtige Erkenntnis", b: "Leere", bBedeutung: "wenn nichts in etwas drin ist" },
+    { a: "Ähre", aBedeutung: "der obere Teil einer Getreidepflanze mit den Körnern", b: "Ehre", bBedeutung: "großer Respekt für jemanden" },
+    { a: "wieder", aBedeutung: "noch einmal, erneut", b: "wider", bBedeutung: "gegen etwas (z. B. „wider Willen“)" },
+    { a: "seid", aBedeutung: "ihr seid — Form von „sein“", b: "seit", bBedeutung: "ab einem bestimmten Zeitpunkt" },
+    { a: "Stiel", aBedeutung: "der Griff eines Werkzeugs oder Stängel einer Pflanze", b: "Stil", bBedeutung: "die persönliche Art, wie etwas gemacht wird" },
+    { a: "Mine", aBedeutung: "der Stift in einem Kugelschreiber, oder ein Sprengkörper", b: "Miene", bBedeutung: "der Gesichtsausdruck einer Person" },
+    { a: "Lerche", aBedeutung: "ein kleiner Singvogel", b: "Lärche", bBedeutung: "ein Nadelbaum" },
+    { a: "Grad", aBedeutung: "die Einheit für Temperatur oder Winkel", b: "Grat", bBedeutung: "die scharfe Kante eines Berges" },
+    { a: "Bad", aBedeutung: "der Raum zum Waschen, oder das Baden selbst", b: "bat", bBedeutung: "hat gebeten (von „bitten“)" },
+    { a: "Tod", aBedeutung: "das Ende des Lebens", b: "tot", bBedeutung: "nicht mehr lebendig" },
+    { a: "Rind", aBedeutung: "das Nutztier, von dem Rindfleisch kommt", b: "rinnt", bBedeutung: "fließt langsam (von „rinnen“)" },
+    { a: "Feld", aBedeutung: "eine landwirtschaftliche Fläche", b: "fällt", bBedeutung: "stürzt nach unten (von „fallen“)" },
+    { a: "Ries", aBedeutung: "eine große Menge Papier (500 Blatt)", b: "Reis", bBedeutung: "das kleine, weiße Getreidekorn" },
+  ];
+  let homophoneCurrentIdx = -1, homophoneCurrentSide = "a";
+  function renderHomophoneGame() {
+    const area = document.getElementById("exerciseSetup");
+    if (!area) return;
+    area.innerHTML = `
+      <button type="button" class="btn btn-ghost" id="homophoneBackBtn" style="margin-bottom:10px;">← Zurück zu den Übungen</button>
+      <p class="eyebrow">🔊 Homophone — gleich klingen, anders schreiben</p>
+      <div class="question-card" style="margin-bottom:16px;">
+        <p class="empty-note" style="margin:0 0 10px;">Manche deutschen Wörter klingen beim Sprechen völlig gleich, werden aber unterschiedlich geschrieben und bedeuten etwas ganz anderes — das nennt man <strong>Homophone</strong>. Ordne die Bedeutung der richtigen Schreibweise zu.</p>
+        <p id="homophoneQuestion" style="font-weight:700; margin:0 0 10px;"></p>
+        <div id="homophoneOptions" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+        <p id="homophoneFeedback" class="empty-note" style="margin:10px 0 0; min-height:1.2em;"></p>
+      </div>
+    `;
+    document.getElementById("homophoneBackBtn").addEventListener("click", () => document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.click());
     newHomophoneRound();
+  }
+  function newHomophoneRound() {
+    const qEl = document.getElementById("homophoneQuestion");
+    if (!qEl) return;
+    let idx;
+    do { idx = Math.floor(Math.random() * HOMOPHONE_PAIRE.length); } while (idx === homophoneCurrentIdx && HOMOPHONE_PAIRE.length > 1);
+    homophoneCurrentIdx = idx;
+    homophoneCurrentSide = Math.random() < 0.5 ? "a" : "b";
+    const pair = HOMOPHONE_PAIRE[idx];
+    const bedeutung = homophoneCurrentSide === "a" ? pair.aBedeutung : pair.bBedeutung;
+    qEl.textContent = `„${bedeutung}" — welches Wort ist das?`;
+    const options = Math.random() < 0.5 ? [pair.a, pair.b] : [pair.b, pair.a];
+    const optionsEl = document.getElementById("homophoneOptions");
+    optionsEl.innerHTML = options.map((w) => `<button type="button" class="btn btn-secondary homophone-opt" data-word="${w}" style="flex:1;">${w}</button>`).join("");
+    document.getElementById("homophoneFeedback").textContent = "";
+    optionsEl.querySelectorAll(".homophone-opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chosen = btn.dataset.word;
+        const correct = homophoneCurrentSide === "a" ? pair.a : pair.b;
+        const feedbackEl = document.getElementById("homophoneFeedback");
+        if (chosen === correct) {
+          feedbackEl.textContent = "✅ Richtig!";
+          feedbackEl.style.color = "var(--teal-400)";
+        } else {
+          feedbackEl.textContent = `❌ Nicht ganz — richtig wäre „${correct}".`;
+          feedbackEl.style.color = "var(--red-400, #c0392b)";
+        }
+        setTimeout(newHomophoneRound, 1400);
+      });
+    });
   }
 
   let currentSelection = [];
@@ -15153,7 +15170,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "124";
+  const APP_VERSION = "125";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
   };
