@@ -3817,9 +3817,14 @@
     // damit man vom Erklärtext ohne Umweg ins Üben kommt.
     area.querySelectorAll(".grammatik-uebung-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
+        const catId = btn.dataset.grCat;
         selectedCategories.clear();
-        selectedCategories.add(btn.dataset.grCat);
+        selectedCategories.add(catId);
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.click();
+        // Nicht nur irgendwo oben in den Übungen landen: gezielt zu genau dieser
+        // Kategorie scrollen und sie kurz hervorheben, damit sofort sichtbar ist,
+        // WELCHE Übung ausgewählt wurde.
+        scrollToAndHighlightWhenReady(`.category-card[data-cat="${catId}"]`);
       });
     });
   }
@@ -12587,7 +12592,13 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (isFigureAvatarUrl(url)) {
       return `<div class="avatar-photo avatar-figure-sticker-wrap"><img src="${url}" alt="" class="avatar-figure-sticker" /></div>`;
     }
-    return `<img src="${url}" alt="" class="avatar-photo" />`;
+    // WICHTIG — behebt den nie funktionierenden „Bullaugen"-Effekt: Der Glanz war
+    // bisher als inset-box-shadow direkt auf dem <img> gesetzt. Bei einem Bild (einem
+    // sogenannten „replaced element") malen mehrere Browser — allen voran Safari auf
+    // dem iPhone — den Bildinhalt ÜBER diesen inneren Schatten. Dadurch war der Effekt
+    // auf genau den Geräten unsichtbar, auf denen er am ehesten auffallen sollte.
+    // Jetzt liegt der Glanz als eigene Ebene ÜBER dem Foto — das funktioniert überall.
+    return `<span class="avatar-photo-wrap"><img src="${url}" alt="" class="avatar-photo" /><span class="avatar-glas" aria-hidden="true"></span></span>`;
   }
   function tinyAvatar(m) {
     if (m.avatar_url) {
@@ -12916,6 +12927,17 @@ An einem Morgen lief ein kleiner Fuchs los…
   function updateMusicPlayPauseIconOnly() {
     const btn = document.getElementById("musicPlayPauseBtn");
     if (btn) btn.innerHTML = musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play;
+    // WICHTIG — behebt „man sieht nicht, ob gerade Pause oder Wiedergabe ist": Die
+    // schwebende Leiste am unteren Bildschirmrand hat einen EIGENEN Play/Pause-Knopf.
+    // Der wurde bisher hier nicht mitaktualisiert, sondern nur beim vollständigen
+    // Neuaufbau der Leiste — beim reinen Umschalten blieb sein Symbol deshalb stehen.
+    const floatBtn = document.getElementById("mfbPlayPause");
+    if (floatBtn) {
+      floatBtn.innerHTML = musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play;
+      floatBtn.classList.toggle("mfb-laeuft", musicIsPlaying);
+      floatBtn.setAttribute("aria-pressed", String(musicIsPlaying));
+      floatBtn.setAttribute("aria-label", musicIsPlaying ? "Pause" : "Abspielen");
+    }
     const waveform = document.querySelector("#musicPlayerBarInner .kn-waveform");
     if (waveform) waveform.classList.toggle("waveform-playing", musicIsPlaying);
   }
@@ -13214,8 +13236,27 @@ An einem Morgen lief ein kleiner Fuchs los…
           mp3Icon.style.display = "";
           mp3Icon.classList.toggle("music-mp3-icon-playing", musicIsPlaying);
         } else {
+          // YouTube-Song OHNE eigenes Cover. Bisher blieb hier das nackte YouTube-Bild
+          // sichtbar — und damit auch dessen eigene Bedienelemente (Vollbild-Pfeile,
+          // schwebendes Menü), die sich auf Mobilgeräten selbst mit controls:0 immer
+          // wieder einblenden. Jetzt liegt IMMER eine blickdichte Ebene darüber: der
+          // Ton läuft unverändert weiter, zu sehen ist nur noch unser eigenes Symbol.
           if (coverLayer) coverLayer.style.display = "none";
+          let ytDeckel = videoSquare.querySelector(".music-yt-deckel");
+          if (!ytDeckel) {
+            ytDeckel = document.createElement("span");
+            ytDeckel.className = "music-yt-deckel";
+            ytDeckel.innerHTML = `<svg viewBox="0 0 24 24" width="60%" height="60%" aria-hidden="true"><path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="2.6" fill="currentColor"/><circle cx="17" cy="16" r="2.6" fill="currentColor"/></svg>`;
+            videoSquare.appendChild(ytDeckel);
+          }
+          ytDeckel.style.display = "";
+          ytDeckel.classList.toggle("music-mp3-icon-playing", musicIsPlaying);
           if (mp3Icon) mp3Icon.style.display = "none";
+        }
+        // Bei Cover- oder MP3-Songs den Deckel wieder ausblenden, sonst bliebe er kleben.
+        if (song.cover_url || Backend.isDirectAudioUrl(song.url)) {
+          const alterDeckel = videoSquare.querySelector(".music-yt-deckel");
+          if (alterDeckel) alterDeckel.style.display = "none";
         }
       }
       document.getElementById("musicPrevBtn")?.addEventListener("click", playPrevMusic);
@@ -13295,7 +13336,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       const playPauseBtn = document.getElementById("mfbPlayPause");
       if (playPauseBtn) playPauseBtn.innerHTML = musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play;
       const titleBtn = document.getElementById("mfbTitle");
-      if (titleBtn) titleBtn.textContent = `🎵 ${song.title}`;
+      if (titleBtn) titleBtn.textContent = song.title;
       return;
     }
     floatBar.style.display = "flex";
@@ -13303,10 +13344,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     floatBar.dataset.builtForSongId = String(song.id);
     floatBar.innerHTML = `
       <div id="musicVideoSquareSlotFloat" style="flex-shrink:0;"></div>
-      <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
-      <button type="button" class="mfb-ctrl" id="mfbPlayPause" aria-label="Play/Pause">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
-      <button type="button" class="mfb-title" id="mfbTitle">🎵 ${song.title}</button>
-      <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
+      <button type="button" class="mfb-title" id="mfbTitle">${song.title}</button>
+      <div class="mfb-steuerung">
+        <button type="button" class="mfb-ctrl" id="mfbPrev" aria-label="Vorheriger Song">${PLAYER_ICONS.prev}</button>
+        <button type="button" class="mfb-ctrl mfb-ctrl-haupt ${musicIsPlaying ? "mfb-laeuft" : ""}" id="mfbPlayPause" aria-label="${musicIsPlaying ? "Pause" : "Abspielen"}" aria-pressed="${musicIsPlaying}">${musicIsPlaying ? PLAYER_ICONS.pause : PLAYER_ICONS.play}</button>
+        <button type="button" class="mfb-ctrl" id="mfbNext" aria-label="Nächster Song">${PLAYER_ICONS.next}</button>
+      </div>
     `;
     relocateMusicVideoSquare();
     // WICHTIG: className wurde oben komplett neu gesetzt (überschreibt auch eine eventuell schon

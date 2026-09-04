@@ -642,7 +642,21 @@
    untereinanderstehen. Eine dezente untere Trennlinie macht jede einzelne Nachricht als
    eigenständigen Block erkennbar, ohne so kräftig wie ein eigener Kartenrahmen zu wirken. */
 .inbox-row-compact {
-  border-bottom: 1px solid rgba(0,0,0,0.12) !important;
+  /* Deutlich erkennbarer eigener Rahmen statt nur einer dünnen Trennlinie — man
+     soll auf einen Blick sehen, wo eine Nachricht anfängt und aufhört, und wohin
+     man tippen muss. Zwei Rahmen übereinander (dunkel außen, hell innen) sorgen
+     dafür, dass die Kante in HELLEN wie in DUNKLEN Designs sichtbar bleibt:
+     auf hellem Grund trägt der dunkle Rand, auf dunklem der helle. */
+  border: 1.5px solid rgba(0, 0, 0, 0.18) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 2px 5px rgba(0, 0, 0, 0.09);
+  margin-bottom: 10px;
+  padding: 12px 14px !important;
+  transition: transform 110ms ease, box-shadow 160ms ease;
+}
+.inbox-row-compact:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 /* WICHTIG: das linke Element (meist ein längerer Beschreibungstext) muss schrumpfen/umbrechen
    dürfen — sonst drängt es das rechte Element (Uhrzeit, Häkchen, Punktestand) aus seiner festen
@@ -3772,3 +3786,91 @@ details summary::marker { content: ""; }
   font-style: italic;
   opacity: 0.85;
 }
+
+/* ============================================================
+   Schwebende Player-Leiste — logische Anordnung
+   ------------------------------------------------------------
+   Vorher stand der Titel MITTEN zwischen den Bedienknöpfen (zurück,
+   play, TITEL, weiter) — dadurch war nicht erkennbar, was zusammengehört.
+   Jetzt: Cover, Titel, und rechts die drei Knöpfe als geschlossener Block,
+   mit dem Play/Pause-Knopf sichtbar größer als die beiden Nachbarn.
+   ============================================================ */
+.mfb-steuerung {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.mfb-ctrl-haupt {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--coral-400, #E8825F);
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+/* Läuft gerade: der Knopf wechselt sichtbar die Farbe, nicht nur das Symbol —
+   damit man den Zustand auch dann erkennt, wenn man das kleine Symbol nicht
+   genau ansieht. */
+.mfb-ctrl-haupt.mfb-laeuft {
+  background: var(--teal-400, #5BA8A0);
+  box-shadow: 0 0 0 3px rgba(91, 168, 160, 0.28), 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+.mfb-title { text-align: left; flex: 1 1 auto; min-width: 0; }
+
+/* Blickdichte Ebene über dem eingebetteten YouTube-Fenster — verhindert, dass
+   dessen eigene Vollbild-Symbole und Schwebemenüs durchscheinen. */
+.music-yt-deckel {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(150deg, #4A4038 0%, #2A241F 100%);
+  color: #F2C99B;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Profilfoto — „Bullaugen"-Glas als eigene Ebene
+   ------------------------------------------------------------
+   Der Glanz liegt jetzt als eigenes Element ÜBER dem Bild statt als
+   inset-Schatten IM Bild. Grund: Safari (iPhone) malt den Bildinhalt über
+   innere Schatten eines <img> — der Effekt war dort nie zu sehen.
+   Gilt für JEDES Foto, also auch für ein wiederhergestelltes voriges Bild
+   und für Fotos aus der Galerie. Sammelfiguren-Sticker bekommen ihn
+   bewusst NICHT (die sollen flach aufgeklebt wirken).
+   ============================================================ */
+.avatar-photo-wrap {
+  position: relative;
+  display: inline-block;
+  width: 76px; height: 76px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.avatar-photo-wrap .avatar-photo { display: block; width: 100%; height: 100%; }
+.avatar-glas {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    /* Glanzlicht oben links, wie auf gewölbtem Glas */
+    radial-gradient(58% 44% at 32% 24%, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.30) 42%, rgba(255,255,255,0) 70%),
+    /* Abschattung unten rechts — erzeugt die Wölbung */
+    radial-gradient(85% 72% at 72% 84%, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 62%);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255,255,255,0.45),
+    inset -5px -7px 15px -6px rgba(0,0,0,0.42);
+}
+/* In der Galerie-Auswahl und überall sonst, wo dasselbe Wrapper-Element in einer
+   anderen Größe steht, erbt die Glasebene die Größe automatisch (inset:0). */
+
+/* ============================================================
+   Sticker-Auswahl — Figuren größer, Emojis kleiner
+   ------------------------------------------------------------
+   Man soll in der Vorschau sofort erkennen, WELCHEN Fuchs man verschickt.
+   Die gezeichneten Figuren sind das Eigentliche, die Emojis nur Beiwerk —
+   also bekommen die Figuren mehr Platz und die Emojis etwas weniger.
+   ============================================================ */
+.intro-sticker-pick { padding: 6px !important; line-height: 0; }
+.intro-sticker-pick svg { width: 40px !important; height: 40px !important; }
+.emoji-pick-btn { font-size: 1.25rem !important; padding: 6px 8px !important; }
