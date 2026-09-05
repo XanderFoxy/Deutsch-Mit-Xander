@@ -1461,6 +1461,24 @@
 .avatar-upload-wrap {
   position: relative; display: block; flex-shrink: 0; cursor: pointer;
 }
+/* Im Bearbeiten-Modus sitzt das Profilbild in einem anklickbaren Label. Damit der Text
+   auch dort um die Rundung fließt, muss dieses Label floaten — nicht das Bild darin. */
+.profile-header-flow .avatar-upload-wrap {
+  float: left;
+  shape-outside: circle(50%);
+  shape-margin: 10px;
+  margin: 0 6px 6px 0;
+  width: clamp(88px, 26vw, 118px);
+  height: clamp(88px, 26vw, 118px);
+}
+.profile-header-flow .avatar-upload-wrap .avatar-photo,
+.profile-header-flow .avatar-upload-wrap .initials-avatar,
+.profile-header-flow .avatar-upload-wrap .avatar-photo-wrap {
+  float: none;
+  shape-outside: none;
+  margin: 0;
+  width: 100%; height: 100%;
+}
 .avatar-edit-badge {
   position: absolute; bottom: -2px; right: -2px;
   width: 22px; height: 22px; border-radius: 50%;
@@ -1745,6 +1763,21 @@
   gap: 6px;
   max-height: 240px;
   overflow-y: auto;
+}
+/* Der Fließtext-Kopf (Bild links, Name/Abzeichen fließen um die Rundung) gilt jetzt auch in
+   fremden Profilen. Die Karte selbst zentriert sonst allen Text — hier muss er links stehen,
+   sonst zerfällt der Umfluss in unruhige, zentrierte Fetzen. */
+.profile-modal-card .profile-header-flow,
+.profile-modal-card .profile-header-below-photo,
+.profile-modal-card .profile-bio-flow-text,
+.profile-modal-card .strip-ueberschrift {
+  text-align: left;
+}
+.profile-modal-card .profile-header-flow h2 {
+  color: var(--cream-50);
+  opacity: 1;
+  font-weight: 800;
+  padding-right: 0;
 }
 .profile-modal-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 12px; }
 .profile-modal-header h2 {
@@ -3793,6 +3826,30 @@ details summary::marker { content: ""; }
 /* Trägt die Brücke nicht ganz, macht ein leicht gedämpfter Ton sichtbar,
    dass es knapp nicht gereicht hat. */
 .sb-fuchs-wartet { opacity: 0.9; }
+/* Am Ende einer Runde: die Planken legen sich zuerst, DANN geht der Fuchs die
+   Strecke wirklich ab — vom linken Felsen bis dorthin, wo die Brücke aufhört.
+   Trägt sie ganz, steht er am Ende drüben; fehlt ein Stück, bleibt er an der
+   Lücke stehen. Ein leichtes Auf und Ab macht die Schritte sichtbar. */
+.sb-fuchs-ueberquert {
+  transition: none;
+  transform: translate(var(--sb-start-x), var(--sb-start-y));
+  animation: sbFuchsUeberquert 2200ms cubic-bezier(0.45, 0, 0.55, 1) forwards,
+             sbFuchsSchritte 320ms ease-in-out 0ms 7;
+}
+@keyframes sbFuchsUeberquert {
+  from { transform: translate(var(--sb-start-x), var(--sb-start-y)); }
+  to   { transform: translate(var(--sb-ziel-x), var(--sb-ziel-y)); }
+}
+@keyframes sbFuchsSchritte {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -1.2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-fuchs-ueberquert {
+    animation: none;
+    transform: translate(var(--sb-ziel-x), var(--sb-ziel-y));
+  }
+}
 .wsm-bedeutung {
   text-align: center;
   margin: 12px 0 0;

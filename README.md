@@ -155,6 +155,35 @@ Das kann für Freunde/Tester verwirrend sein. Zwei Optionen:
    ```
 3. Fertig — die Seite lädt Fotos jetzt automatisch dorthin hoch, sobald jemand im Profil auf sein Bild tippt.
 
+### Dateien am Profil (PDF, MP3) — einmalig freischalten
+
+Seit dem Update kann man am Profil nicht nur Fotos, sondern auch **PDF- und
+MP3-Dateien** ablegen, und beim Auswählen **mehrere Dateien auf einmal**.
+Die Liste selbst wird in `profiles.extra_profile_data` gespeichert — dafür ist
+**keine neue Spalte** nötig. Nur der Speicher-Bucket muss die neuen Dateitypen
+erlauben. Im **SQL-Editor** ausführen:
+
+```sql
+-- Erlaubte Dateitypen und Maximalgröße (15 MB) für den avatars-Bucket setzen.
+-- Ohne diese Zeile lehnt Supabase PDF- und MP3-Uploads mit einem "mime type"-Fehler ab.
+update storage.buckets
+set allowed_mime_types = array[
+      'image/png','image/jpeg','image/jpg','image/gif','image/webp','image/svg+xml',
+      'application/pdf','audio/mpeg','audio/mp3'
+    ],
+    file_size_limit = 15728640
+where id = 'avatars';
+
+-- Löschen der eigenen Dateien erlauben (nötig für den ✕-Knopf in der Dateiliste).
+create policy "Authenticated deletes from avatars"
+on storage.objects for delete
+to authenticated
+using (bucket_id = 'avatars');
+```
+
+Wenn `allowed_mime_types` vorher `null` war (also alles erlaubt), kann man die
+erste Anweisung auch weglassen — dann funktionieren PDF und MP3 sofort.
+
 ## 4c. Community-Texte direkt in der App freischalten (Admin)
 
 Wenn du (oder jemand, dem du Admin-Rechte gibst) im Profil auf "Bearbeiten"

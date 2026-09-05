@@ -1583,6 +1583,56 @@ const Backend = (function () {
     return data.publicUrl;
   }
 
+  // Beliebige Datei am Profil ablegen (PDF, MP3, Bild …). Die Liste liegt in
+  // extra_profile_data.files — dadurch braucht es KEINE neue Spalte in der Datenbank.
+  const PROFILE_FILES_MAX = 20;
+  const PROFILE_FILE_MAX_BYTES = 15 * 1024 * 1024;
+  async function uploadProfileFiles(fileList) {
+    if (!client || !demo.user) throw new Error("Dateien hochladen geht nur mit verbundenem Supabase.");
+    const dateien = [...(fileList || [])];
+    if (!dateien.length) return [];
+    demo.profile.extraProfileData = demo.profile.extraProfileData || {};
+    const bisher = Array.isArray(demo.profile.extraProfileData.files) ? demo.profile.extraProfileData.files : [];
+    if (bisher.length + dateien.length > PROFILE_FILES_MAX) {
+      throw new Error(`Maximal ${PROFILE_FILES_MAX} Dateien am Profil — bitte zuerst eine löschen.`);
+    }
+    const neu = [];
+    for (const file of dateien) {
+      if (file.size > PROFILE_FILE_MAX_BYTES) {
+        throw new Error(`„${file.name}" ist zu groß (maximal 15 MB pro Datei).`);
+      }
+      const sauber = String(file.name || "datei").replace(/[^A-Za-z0-9._-]/g, "_");
+      const path = `${demo.user.id}/files-${Date.now()}-${sauber}`;
+      const { error: uploadError } = await client.storage.from("avatars").upload(path, file, { upsert: true });
+      if (uploadError) {
+        if (uploadError.message && uploadError.message.toLowerCase().includes("bucket not found")) {
+          throw new Error("Der Speicherort für Dateien fehlt noch (siehe README, Abschnitt 4b).");
+        }
+        if (uploadError.message && uploadError.message.toLowerCase().includes("mime")) {
+          throw new Error("Dieser Dateityp ist im Speicher noch nicht erlaubt — siehe README, Abschnitt „Dateien am Profil\".");
+        }
+        throw new Error("Upload fehlgeschlagen: " + uploadError.message);
+      }
+      const { data } = client.storage.from("avatars").getPublicUrl(path);
+      neu.push({ url: data.publicUrl, name: file.name, type: file.type || "", size: file.size, added: new Date().toISOString() });
+    }
+    const alle = bisher.concat(neu);
+    const erg = await updateExtraProfileField("files", alle);
+    if (erg && erg.ok === false) throw new Error("Dateien konnten nicht gespeichert werden.");
+    return neu;
+  }
+  async function removeProfileFile(url) {
+    if (!demo.profile) return [];
+    const bisher = Array.isArray(demo.profile.extraProfileData?.files) ? demo.profile.extraProfileData.files : [];
+    const rest = bisher.filter((f) => f.url !== url);
+    await updateExtraProfileField("files", rest);
+    return rest;
+  }
+  function getProfileFiles(p) {
+    const extra = (p && (p.extraProfileData || p.extra_profile_data)) || {};
+    return Array.isArray(extra.files) ? extra.files : [];
+  }
+
   function removeGalleryPhoto(url) {
     if (!demo.profile || !demo.profile.gallery) return;
     demo.profile.gallery = demo.profile.gallery.filter((u) => u !== url);
@@ -2465,6 +2515,32 @@ const Backend = (function () {
   }
   // Vollständige Nutzerliste für Admins/Moderatoren — nicht nur die zuletzt aktiven, sondern
   // wirklich ALLE registrierten Konten, damit man einen echten Überblick hat, wer da ist.
+  // Öffentliche Mitgliederliste — für ALLE sichtbar, nicht nur für die Betreiberin/den
+  // Betreiber. Enthält bewusst nur das, was ohnehin in jedem Profil steht: Name, Bild,
+  // Punkte, Beitrittsdatum und ob jemand gerade online ist. Keine E-Mail-Adressen, keine
+  // Rollen-Verwaltung — das bleibt der Admin-Liste (getAllUsers) vorbehalten.
+  async function getAllMembers() {
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles")
+          .select("id,name,avatar_url,avatar_emoji,points,created_at,last_active,is_admin,is_owner,is_moderator")
+          .order("name", { ascending: true });
+        if (error) { console.warn("Mitgliederliste nicht abrufbar:", error.message); return []; }
+        return (data || []).map((p) => ({
+          id: p.id, name: p.name, avatar_url: p.avatar_url, avatar_emoji: p.avatar_emoji,
+          points: p.points || 0, created_at: p.created_at, last_active: p.last_active,
+          online: isRecentlyActive(p.last_active),
+          is_admin: Boolean(p.is_admin), is_owner: Boolean(p.is_owner), is_moderator: Boolean(p.is_moderator),
+        }));
+      } catch (e) { console.warn("Mitgliederliste nicht verfügbar:", e); return []; }
+    }
+    return Object.entries(demo.users || {}).map(([email, u]) => ({
+      id: email, name: u.profile.name, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
+      points: u.profile.points || 0, created_at: null, last_active: null, online: false,
+      is_admin: Boolean(u.profile.isAdmin), is_owner: Boolean(u.profile.isOwner), is_moderator: Boolean(u.profile.isModerator),
+    })).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }
+
   async function getAllUsers() {
     if (!canModerate()) return [];
     if (client) {
@@ -2589,6 +2665,7 @@ const Backend = (function () {
     rankingFirstPlace: 100, // heute Platz 1 im Punkte-Ranking
     contribution: 50,       // pro eingereichtem Beitrag heute (Text/Tipp/Link)
     siteShared: 20,         // die Seite heute mit jemandem geteilt
+    dabeiGewesen: 5,        // heute überhaupt auf der Seite gewesen
   };
   async function getDailyActivityScores() {
     return getActivityScoresForPeriod(1);
@@ -2650,23 +2727,46 @@ const Backend = (function () {
         if (scores[uid]) { scores[uid].shared = true; scores[uid].total += DAILY_ACTIVITY_WEIGHTS.siteShared; }
       });
     }
+    // Wer im Zeitraum überhaupt da war, kommt mit einem kleinen Grundwert auf die Liste.
+    // Damit ist der Titel auch an einem ruhigen Tag besetzt — und sobald jemand wirklich
+    // übt oder etwas beiträgt, zieht dieser Wert sofort daran vorbei.
+    if (client) {
+      try {
+        const { data: aktive } = await client.from("profiles").select("id,name,last_active").gte("last_active", start.toISOString());
+        (aktive || []).forEach((p) => {
+          if (!p.id) return;
+          scores[p.id] = scores[p.id] || { name: p.name, points: 0, contributions: 0, shared: false, total: 0 };
+          scores[p.id].dabei = true;
+          scores[p.id].total += DAILY_ACTIVITY_WEIGHTS.dabeiGewesen;
+        });
+      } catch (e) { console.warn("Anwesenheit für Fuchs-Zeitraum nicht abrufbar:", e); }
+    }
     return Object.entries(scores).map(([user_id, s]) => ({ user_id, ...s })).sort((a, b) => b.total - a.total);
   }
+  // Der Titel darf nie leer sein. Reihenfolge: echte Mitarbeit im Zeitraum → wer heute
+  // überhaupt da war → als letzte Rückfallebene die vorderste Person der Gesamtrangliste,
+  // ausdrücklich als vorläufig gekennzeichnet, bis heute jemand tatsächlich etwas tut.
+  async function foxMitRueckfall(scores) {
+    if (scores.length) return scores[0];
+    try {
+      const gesamt = await getRankingAllTime();
+      if (gesamt.length) {
+        return { user_id: gesamt[0].user_id, name: gesamt[0].name, points: 0, contributions: 0, shared: false, total: 0, vorlaeufig: true };
+      }
+    } catch (e) { console.warn("Rückfall auf Gesamtrangliste fehlgeschlagen:", e); }
+    return null;
+  }
   async function getFoxOfTheDay() {
-    const scores = await getDailyActivityScores();
-    return scores.length ? scores[0] : null;
+    return foxMitRueckfall(await getDailyActivityScores());
   }
   async function getFoxOfWeek() {
-    const scores = await getActivityScoresForPeriod(7);
-    return scores.length ? scores[0] : null;
+    return foxMitRueckfall(await getActivityScoresForPeriod(7));
   }
   async function getFoxOfMonth() {
-    const scores = await getActivityScoresForPeriod(30);
-    return scores.length ? scores[0] : null;
+    return foxMitRueckfall(await getActivityScoresForPeriod(30));
   }
   async function getFoxOfYear() {
-    const scores = await getActivityScoresForPeriod(365);
-    return scores.length ? scores[0] : null;
+    return foxMitRueckfall(await getActivityScoresForPeriod(365));
   }
   // Einmalige Bonus-Gutschrift pro Tag, sobald jemand als aktueller Fuchs des Tages erkannt wird —
   // steuert über ein Datum im Profil, damit niemand mehrfach am selben Tag belohnt wird, egal wie
@@ -2678,6 +2778,9 @@ const Backend = (function () {
     if (already) return null;
     const fox = await getFoxOfTheDay();
     if (!fox || fox.user_id !== demo.user.id) return null;
+    // Wer den Titel nur vorläufig hält (heute war noch niemand aktiv), bekommt dafür
+    // keinen Bonus — der gehört zu echter Mitarbeit an diesem Tag.
+    if (fox.vorlaeufig || !fox.total) return null;
     await updateExtraProfileField("foxOfDayClaimedDate", todayKey);
     const bonus = 30;
     demo.profile.points = (demo.profile.points || 0) + bonus;
@@ -2722,6 +2825,8 @@ const Backend = (function () {
     if (entry.rankPlace === 1) lines.push("Sie/Er steht heute auf Platz 1 im Ranking — fleißig Deutsch geübt!");
     if (entry.contributions > 0) lines.push(`Hat heute ${entry.contributions} eigene Beiträge zur Seite beigesteuert.`);
     if (entry.shared) lines.push("Hat die Seite heute mit Freund:innen geteilt und ihnen damit etwas Gutes getan.");
+    if (entry.dabei && !lines.length) lines.push("War heute schon auf der Seite — und hält den Titel, bis jemand mehr schafft.");
+    if (entry.vorlaeufig) lines.push("Hält den Titel vorläufig als vorderste Person der Gesamtrangliste — wer heute übt, etwas beiträgt oder jemanden einlädt, übernimmt ihn sofort.");
     if (!lines.length) lines.push("War heute einfach besonders aktiv unterwegs.");
     return lines;
   }
@@ -2732,8 +2837,10 @@ const Backend = (function () {
   // nur mit dem jeweils längeren Zeitraum.
   async function getFoxShowcaseForPeriod(daysBack, label) {
     const scores = await getActivityScoresForPeriod(daysBack);
-    if (!scores.length) return null;
-    const top = scores[0];
+    // Der Platz bleibt nie leer: notfalls hält ihn die vorderste Person der Gesamtrangliste,
+    // sichtbar als vorläufig, bis in diesem Zeitraum wirklich jemand aktiv wird.
+    const top = await foxMitRueckfall(scores);
+    if (!top) return null;
     const entry = { ...top, rankPlace: 1 };
     const profile = top.user_id ? await getPublicProfile(top.user_id) : null;
     return { ...entry, reportCard: buildFoxOfDayReportCard(entry), profile, periodLabel: label };
@@ -2896,6 +3003,10 @@ const Backend = (function () {
     isModerator,
     canModerate,
     getAllUsers,
+    getAllMembers,
+    uploadProfileFiles,
+    removeProfileFile,
+    getProfileFiles,
     setModeratorStatus, setBetaTesterStatus, submitBetaFeedback, setContributorStatus, setSupporterStatus, getFoxOfTheWeek, applyForBetaTester,
     getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,
     getFoxOfWeek, getFoxOfMonth, getFoxOfYear, getFoxOfWeekShowcase, getFoxOfMonthShowcase, getFoxOfYearShowcase,

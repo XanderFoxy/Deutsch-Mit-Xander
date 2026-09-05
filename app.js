@@ -460,6 +460,32 @@
     renderSetup();
   });
 
+  const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  // Setzt das Niveau eines Bereichs beim allerersten Aufruf auf das im Profil hinterlegte
+  // Sprachniveau (falls eins gesetzt ist), sonst auf "B1" als neutrale Mitte — genau wie
+  // ausdrücklich gewünscht: Inhalte sollen automatisch im eigenen Niveau starten, statt jedes Mal
+  // manuell umschalten zu müssen. Gibt das zu verwendende Niveau zurück.
+  // Merkt sich je Bereich, welches Niveau ZULETZT AUTOMATISCH gesetzt wurde. Nur wenn
+  // der aktuelle Wert noch genau dieser automatische Wert ist, wird er dem Profil
+  // nachgeführt. Sobald jemand im Bereich selbst umschaltet, bleibt diese Wahl stehen.
+  // Damit greift das Profil-Niveau auch dann noch, wenn ein Bereich schon gerendert
+  // wurde, BEVOR das Profil vom Server da war (vorher blieb es für immer bei „B1").
+  const autoCefrLevel = Object.create(null);
+  function profileCefrLevel() {
+    const lvl = Backend.currentProfile()?.extraProfileData?.cefrLevel;
+    return lvl && CEFR_LEVELS.includes(lvl) ? lvl : null;
+  }
+  function applyDefaultCefrLevel(currentValue, setter, key) {
+    const ausProfil = profileCefrLevel();
+    const merker = key || "allgemein";
+    const eigeneWahl = currentValue && currentValue !== autoCefrLevel[merker];
+    if (eigeneWahl) return currentValue;
+    const level = ausProfil || currentValue || "B1";
+    autoCefrLevel[merker] = level;
+    if (level !== currentValue) setter(level);
+    return level;
+  }
+
   /* ============================================================
      DESIGN / THEMES — 4 austauschbare Vorlagen
      ============================================================ */
@@ -2529,12 +2555,12 @@
         // Unterreiter aus (siehe tabsFreshlyRendered), der diesen gezielten Klick auf "Kompass"
         // sonst überschrieb, sodass man im falschen Unterreiter landete.
         setTimeout(() => {
-          document.querySelector('[data-sub="sub-kompass"]')?.click();
+          // Sprung mit Unterdrückung des allgemeinen Bereichs-Sprungs (siehe jumpToSubnavTarget).
+          jumpToSubnavTarget('[data-sub="sub-kompass"]', "#kompass-geschichte", 40);
           // WICHTIG: Der Kompass wird ASYNCHRON aufgebaut (er lädt zuerst sein Banner).
           // Eine feste Wartezeit ging deshalb regelmäßig ins Leere — man landete oben
           // im Kompass statt bei der Sektion. Jetzt wird gewartet, bis die Überschrift
           // wirklich im Dokument steht, und dann erst gesprungen (und kurz hervorgehoben).
-          scrollToAndHighlightWhenReady("#kompass-geschichte", 40);
         }, 400);
       });
     }
@@ -3300,6 +3326,22 @@
     };
     tryNow();
   }
+  // Sprung von irgendwo auf der Seite zu einer GENAU BENANNTEN Stelle in einem anderen
+  // Unterreiter. Wichtig ist die Reihenfolge: der Unterreiter-Wechsel springt von sich aus
+  // an den ANFANG des Bereichs (siehe wireSubnav). Genau das hat bisher jeden gezielten
+  // Sprung wieder aufgehoben — man landete auf der allgemeinen Übersicht statt bei der
+  // gemeinten Übung. Deshalb wird dieser allgemeine Sprung hier ausdrücklich unterdrückt
+  // und danach das echte Ziel angesteuert und hervorgehoben.
+  function jumpToSubnavTarget(pillSelector, zielSelector, versuche = 40) {
+    const pill = document.querySelector(pillSelector);
+    if (pill) {
+      suppressNextSubnavScroll = true;
+      pill.click();
+    }
+    // Zusätzlich beim nächsten Bildaufbau noch einmal absichern: Falls doch ein anderer
+    // Automatismus dazwischenfunkt, gewinnt am Ende trotzdem das gemeinte Ziel.
+    requestAnimationFrame(() => scrollToAndHighlightWhenReady(zielSelector, versuche));
+  }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
   async function checkNotifications() {
@@ -3320,7 +3362,7 @@
     if (unreadMsgCount > lastUnreadMsgCount && !toastedNotificationIds.has("msgcount-" + unreadMsgCount)) {
       toastedNotificationIds.add("msgcount-" + unreadMsgCount);
       const newestMsg = unreadInbox[0];
-      const jumpToMsg = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-inbox"]').click(); scrollToAndHighlightWhenReady(`[data-msg-row="${newestMsg?.id}"]`); };
+      const jumpToMsg = () => { activateTab("view-profile"); jumpToSubnavTarget('[data-sub="sub-inbox"]', `[data-msg-row="${newestMsg?.id}"]`); };
       showToast("✉️ Neue Nachricht im Postfach", jumpToMsg);
       notifyTarget = { kind: "mail", action: jumpToMsg };
       hasNew = true; newestKind = "mail";
@@ -3332,7 +3374,7 @@
     requests.forEach((r) => {
       if (!toastedNotificationIds.has("freq-" + r.id)) {
         toastedNotificationIds.add("freq-" + r.id);
-        const jumpToReq = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); scrollToAndHighlightWhenReady(`[data-accept="${r.id}"]`); };
+        const jumpToReq = () => { activateTab("view-profile"); jumpToSubnavTarget('[data-sub="sub-friends"]', `[data-accept="${r.id}"]`); };
         showToast("👥 Neue Freundschaftsanfrage — antippen zum Annehmen", jumpToReq);
         notifyTarget = { kind: "friendrequest", action: jumpToReq };
         hasNew = true; newestKind = "friendrequest";
@@ -3341,7 +3383,7 @@
     challenges.incoming.forEach((c) => {
       if (!toastedNotificationIds.has("chal-" + c.id)) {
         toastedNotificationIds.add("chal-" + c.id);
-        const jumpToChal = () => { activateTab("view-profile"); document.querySelector('[data-sub="sub-friends"]').click(); scrollToAndHighlightWhenReady(`[data-accept-challenge="${c.id}"]`); };
+        const jumpToChal = () => { activateTab("view-profile"); jumpToSubnavTarget('[data-sub="sub-friends"]', `[data-accept-challenge="${c.id}"]`); };
         showToast("🎮 Neue Duell-Herausforderung — antippen zum Annehmen", jumpToChal);
         notifyTarget = { kind: "challenge", action: jumpToChal };
         hasNew = true; newestKind = "challenge";
@@ -3455,6 +3497,10 @@
   const resultsEl = document.getElementById("exerciseResults");
 
   let selectedCategories = new Set();
+  // Wenn man aus der Grammatik heraus zu einer Übung springt, steht hier deren Kategorie.
+  // Der Übungsbereich zeigt dann oben ausdrücklich an, WELCHE Übung gemeint ist, damit der
+  // Sprung auf den ersten Blick erkennbar ist und nicht wie ein Zufallstreffer wirkt.
+  let uebungFokusKategorie = null;
   let selectedDifficulty = "leicht";
   // Sprachniveau für die Übungsrunden. null bedeutet „noch nicht festgelegt" —
   // beim ersten Rendern wird dann automatisch das im Profil hinterlegte Niveau
@@ -3630,7 +3676,7 @@
 
     // Sprachniveau: beim ersten Aufbau aus dem Profil übernehmen, danach das,
     // was zuletzt hier eingestellt wurde.
-    selectedExerciseLevel = applyDefaultCefrLevel(selectedExerciseLevel, (v) => { selectedExerciseLevel = v; });
+    selectedExerciseLevel = applyDefaultCefrLevel(selectedExerciseLevel, (v) => { selectedExerciseLevel = v; }, "uebungen");
     const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel) : 0;
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
     if (currentDiffCount > maxAvailable) {
@@ -3682,7 +3728,17 @@
           `}` : ""}
       </div>` : "";
 
+    // Kam man gerade aus der Grammatik hierher, steht ganz oben, WELCHE Übung gemeint ist —
+    // sonst sieht der Sprung aus wie ein zufälliger Landeplatz irgendwo in den Übungen.
+    const fokusKat = uebungFokusKategorie ? ExerciseData.activeGetCategory(uebungFokusKategorie) : null;
+    const fokusBar = fokusKat ? `
+      <div class="demo-banner" id="uebungFokusHinweis" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <span>🎯 Aus der Grammatik: <strong>${fokusKat.icon} ${fokusKat.title}</strong> ist ausgewählt — direkt darunter startklar.</span>
+        <button type="button" class="btn btn-ghost" id="uebungFokusWeg" style="margin:0;">✕</button>
+      </div>` : "";
+
     setupEl.innerHTML = `
+      ${fokusBar}
       ${resumeBar}
       <div class="category-grid">${cards}</div>
       ${challengeBar}
@@ -3707,6 +3763,7 @@
       ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : '<p class="empty-note">⚡ Tipp: Antworte innerhalb von 4 Sekunden richtig für einen Tempo-Bonus.</p>'}
     `;
 
+    document.getElementById("uebungFokusWeg")?.addEventListener("click", () => { uebungFokusKategorie = null; renderSetup(); });
     setupEl.querySelectorAll(".category-card").forEach((card) => {
       const id = card.dataset.cat;
       if (!id) {
@@ -3852,7 +3909,7 @@
   function renderGrammatik() {
     const area = document.getElementById("grammatikArea");
     if (!area) return;
-    grammatikLevel = applyDefaultCefrLevel(grammatikLevel, (v) => { grammatikLevel = v; });
+    grammatikLevel = applyDefaultCefrLevel(grammatikLevel, (v) => { grammatikLevel = v; }, "grammatik");
     const alle = ExerciseData.activeGrammatik() || {};
     const themen = alle[grammatikLevel] || [];
     area.innerHTML = `
@@ -3898,11 +3955,11 @@
         const catId = btn.dataset.grCat;
         selectedCategories.clear();
         selectedCategories.add(catId);
-        document.querySelector('#learnSubnav [data-sub="sub-exercises"]')?.click();
+        uebungFokusKategorie = catId;
         // Nicht nur irgendwo oben in den Übungen landen: gezielt zu genau dieser
         // Kategorie scrollen und sie kurz hervorheben, damit sofort sichtbar ist,
         // WELCHE Übung ausgewählt wurde.
-        scrollToAndHighlightWhenReady(`.category-card[data-cat="${catId}"]`);
+        jumpToSubnavTarget('#learnSubnav [data-sub="sub-exercises"]', `.category-card[data-cat="${catId}"]`);
       });
     });
   }
@@ -4785,7 +4842,58 @@
     if (ausNachtrag && ausNachtrag.theme) return ausNachtrag.theme;
     return WORD_CATEGORIES[word] || "Sonstiges";
   }
+  // Vergleichsschlüssel für Wörterbuch-Einträge: ohne Artikel, klein geschrieben.
+  // „das Buch", „Buch" und „buch" sind damit ein und derselbe Eintrag.
+  // Wichtig: Nomen und gleich geschriebene Nicht-Nomen bleiben getrennt. „der Arm"
+  // und „arm", „der Morgen" und „morgen" sind verschiedene Wörter und stehen weiter
+  // beide im Wörterbuch — nur „das Buch" und „Buch" fallen zusammen.
+  function dictKey(wort) {
+    const roh = String(wort || "").replace(/^(der|die|das)\s+/i, "").trim();
+    const istNomen = /^[A-ZÄÖÜ]/.test(roh) ? "N:" : "w:";
+    return istNomen + roh.toLowerCase();
+  }
+  // Mögliche Singularformen zu einer Pluralform. Rein regelbasiert und bewusst
+  // großzügig: der Treffer zählt nur, wenn die Form tatsächlich schon im
+  // Wörterbuch steht — falsche Kandidaten laufen also einfach ins Leere.
+  function singularKandidaten(wort) {
+    const voll = dictKey(wort);
+    const praefix = voll.slice(0, 2);
+    if (praefix !== "N:") return []; // nur Nomen haben deutsche Pluralformen dieser Art
+    const k = voll.slice(2);
+    if (k.length < 4) return [];
+    const roh = [];
+    ["nen", "en", "er", "se", "e", "n", "s"].forEach((endung) => {
+      if (k.endsWith(endung) && k.length - endung.length >= 3) roh.push(k.slice(0, k.length - endung.length));
+    });
+    roh.push(k);
+    const aus = new Set();
+    roh.forEach((form) => {
+      aus.add(form);
+      // Umlaut zurücknehmen: „Kühlschränke" → „kühlschrank", „Bäume" → „baum".
+      // Nur der LETZTE Umlaut wird zurückgenommen, damit „Kühl…" erhalten bleibt.
+      const idx = Math.max(form.lastIndexOf("ä"), form.lastIndexOf("ö"), form.lastIndexOf("ü"));
+      if (idx >= 0) {
+        const zurueck = { "ä": "a", "ö": "o", "ü": "u" }[form[idx]];
+        aus.add(form.slice(0, idx) + zurueck + form.slice(idx + 1));
+      }
+    });
+    aus.delete(k);
+    return [...aus].map((form) => "N:" + form);
+  }
+  // Der Aufbau der Wörterbuch-Liste geht über mehrere tausend Einträge und wird von
+  // mehreren Stellen aufgerufen (Wörterbuch, Vokabelmeister, Prüfung der Eingaben).
+  // Deshalb wird das Ergebnis gemerkt und nur neu berechnet, wenn der Lernraum wechselt.
+  let dictCache = null;
+  let dictCacheRaum = null;
   function buildDictionaryEntries() {
+    const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
+    if (dictCache && dictCacheRaum === raum) return dictCache;
+    const entries = buildDictionaryEntriesUncached();
+    dictCache = entries;
+    dictCacheRaum = raum;
+    return entries;
+  }
+  function buildDictionaryEntriesUncached() {
     const entries = [];
     // Italienisch-Raum: eigener Wortschatz, komplett getrennt vom deutschen.
     if (ExerciseData.getLernraum && ExerciseData.getLernraum() === "it") {
@@ -4796,43 +4904,50 @@
     }
     // Zuerst der nachgelieferte Wortschatz — dadurch gewinnt bei gleichem Stichwort
     // immer die ausdrücklich gepflegte Fassung mit Niveau, Thema und Beispielsatz.
-    (VocabData.WORDS || []).filter((w) => w.level || w.theme).forEach((w) => {
+    // Ein Wort darf nur EINMAL im Wörterbuch stehen. Deshalb wird nicht nach dem
+    // vollen Stichwort verglichen, sondern nach der Grundform ohne Artikel: sonst
+    // stünde „das Buch" (gepflegter Eintrag) neben „Buch" (aus einem Übungstext).
+    // Zusätzlich werden reine Pluralformen erkannt und verworfen, wenn der Singular
+    // bereits im Wörterbuch steht („Kühlschränke" → „der Kühlschrank").
+    const gesehen = new Set();
+    function belegen(wort) {
+      const k = dictKey(wort);
+      if (gesehen.has(k)) return false;
+      gesehen.add(k);
+      return true;
+    }
+    function schonDa(wort) {
+      if (gesehen.has(dictKey(wort))) return true;
+      return singularKandidaten(wort).some((k) => gesehen.has(k));
+    }
+    // 1. Gepflegter Wortschatz mit ausdrücklichem Niveau und Thema — hat immer Vorrang.
+    (VocabData.WORDS || []).forEach((w) => {
+      if (!w || !w.word || !belegen(w.word)) return;
       entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example || "", level: w.level || cefrLevelFor(w.word), verified: true, category: w.theme || categoryForWord(w.word) });
     });
-    VocabData.WORDS.forEach((w) => entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example, level: cefrLevelFor(w.word), verified: true, category: categoryForWord(w.word) }));
+    // 2. Wörter aus den Übungstexten mit eigener Erklärung.
     Object.entries(ExerciseData.WORD_MEANINGS || {}).forEach(([word, meaning]) => {
+      if (schonDa(word)) return;
+      belegen(word);
       entries.push({ word, syl: (ExerciseData.WORD_SYL || {})[word] || word, meaning, example: "", level: cefrLevelFor(word), verified: true, category: categoryForWord(word) });
     });
-    // Doppelte Stichwörter entfernen — der zuerst eingetragene gewinnt, also der
-    // nachgelieferte Wortschatz mit ausdrücklichem Niveau und Thema. Ohne diesen
-    // Schritt stünde dasselbe Wort zweimal im Wörterbuch, einmal mit geschätzter
-    // und einmal mit gepflegter Einstufung.
-    const gesehen = new Set();
-    const entriesEindeutig = [];
-    entries.forEach((e) => {
-      const key = e.word.toLowerCase();
-      if (gesehen.has(key)) return;
-      gesehen.add(key);
-      entriesEindeutig.push(e);
-    });
-    entries.length = 0;
-    entriesEindeutig.forEach((e) => entries.push(e));
-    const seenSoFar = new Set(entries.map((e) => e.word.toLowerCase()));
-    // Wörter, die zwar eine handgeprüfte Betonung in WORD_SYL haben, aber (noch) keine eigene
-    // deutsche Erklärung — trotzdem als "geprüft" zählen, da die Betonung selbst stimmt.
+    // 3. Wörter, die zwar eine handgeprüfte Betonung in WORD_SYL haben, aber (noch) keine
+    // eigene deutsche Erklärung — trotzdem als „geprüft" zählen, die Betonung selbst stimmt.
     Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
-      const key = word.toLowerCase();
-      if (seenSoFar.has(key)) return;
-      seenSoFar.add(key);
+      if (schonDa(word)) return;
+      belegen(word);
       entries.push({ word, syl, meaning: "", example: "", level: cefrLevelFor(word), verified: true, category: categoryForWord(word) });
     });
-    const seen = new Set(entries.map((e) => e.word.toLowerCase()));
-    // Erweiterter Wortschatz aus allen Übungskategorien — regelbasierte Betonung (nicht
-    // handgeprüft), daher ohne CEFR-Einstufung (die würde ich sonst raten müssen).
+    // 4. Erweiterter Wortschatz aus allen Übungskategorien — regelbasierte Betonung
+    // (nicht handgeprüft), daher ohne feste CEFR-Einstufung. Diese Wörter stammen aus
+    // Zitaten in Aufgabentexten und stehen dort oft am Satzanfang, sind also groß
+    // geschrieben, ohne Nomen zu sein („Bringen", „Gestern"). Deshalb wird hier
+    // zusätzlich die klein geschriebene Fassung geprüft.
     extractExtendedVocabulary().forEach((word) => {
-      const key = word.toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
+      const roh = String(word).replace(/^(der|die|das)\s+/i, "").trim().toLowerCase();
+      if (gesehen.has("w:" + roh) || gesehen.has("N:" + roh)) return;
+      if (schonDa(word)) return;
+      belegen(word);
       entries.push({ word, syl: ruleSylString(word), meaning: "", example: "", level: null, verified: false, category: "Sonstiges" });
     });
     return entries.sort((a, b) => a.word.localeCompare(b.word, "de"));
@@ -6402,7 +6517,10 @@
     // Wörter mit Artikel-Präfix ("der Apfel") müssen für den Buchstaben-Abgleich bereinigt
     // werden — sonst würde "der Apfel" fälschlich unter "D" statt "A" gezählt.
     const stripArticle = (w) => w.replace(/^(der|die|das)\s+/i, "");
-    (VocabData.WORDS || []).forEach((w) => words.add(stripArticle(w.word).toLowerCase()));
+    // EINE Quelle für alles: genau die Einträge, die auch im Wörterbuch stehen — samt der
+    // Wörter aus den Übungstexten. Damit gilt ausnahmslos: was im Wörterbuch steht, zählt
+    // hier als richtig, und was hier zählt, findet man auch im Wörterbuch wieder.
+    buildDictionaryEntries().forEach((e) => words.add(stripArticle(e.word).toLowerCase()));
     (VocabData.HOBBIES || []).forEach((h) => words.add(h.noun.toLowerCase()));
     (VocabData.COUNTRIES || []).forEach((c) => { if (c.name) words.add(c.name.toLowerCase()); if (typeof c === "string") words.add(c.toLowerCase()); });
     (VocabData.LANGUAGES || []).forEach((l) => { if (typeof l === "string") words.add(l.toLowerCase()); if (l && l.name) words.add(l.name.toLowerCase()); });
@@ -9835,18 +9953,6 @@
   let historyArchiveDate = null;
   let dichterLevel = null;
   let schneeLevel = null;
-  const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-  // Setzt das Niveau eines Bereichs beim allerersten Aufruf auf das im Profil hinterlegte
-  // Sprachniveau (falls eins gesetzt ist), sonst auf "B1" als neutrale Mitte — genau wie
-  // ausdrücklich gewünscht: Inhalte sollen automatisch im eigenen Niveau starten, statt jedes Mal
-  // manuell umschalten zu müssen. Gibt das zu verwendende Niveau zurück.
-  function applyDefaultCefrLevel(currentValue, setter) {
-    if (currentValue) return currentValue;
-    const profileLevel = Backend.currentProfile()?.extraProfileData?.cefrLevel;
-    const level = profileLevel && CEFR_LEVELS.includes(profileLevel) ? profileLevel : "B1";
-    setter(level);
-    return level;
-  }
   // Wenn ein Inhalt nicht ALLE sechs Niveaus abdeckt: das nächstgelegene tatsächlich vorhandene
   // Niveau finden (z. B. C1 gewünscht, aber nur bis B2 vorhanden → B2 verwenden), statt einfach
   // nichts anzuzeigen oder auf einen falschen Standardwert zu springen.
@@ -10312,7 +10418,7 @@
     const area = document.getElementById("dichterArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "dichter_und_denker", "Dichter & Denker", "✒️")) return;
-    dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; });
+    dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; }, "dichter");
     renderTileGallery(area, DICHTER_ENTRIES, () => kompassDichterOpenId, (v) => { kompassDichterOpenId = v; }, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
       "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
   }
@@ -10320,7 +10426,7 @@
     const area = document.getElementById("schneeArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "schnee_von_gestern", "Schnee von gestern", "❄️")) return;
-    schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; });
+    schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; }, "schnee");
     renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
   }
@@ -10501,7 +10607,7 @@
     return alle;
   }
   function neueWsmSession() {
-    wsmLevel = applyDefaultCefrLevel(wsmLevel, (v) => { wsmLevel = v; });
+    wsmLevel = applyDefaultCefrLevel(wsmLevel, (v) => { wsmLevel = v; }, "wortschmiede");
     const gesamt = Math.min(WSM_RUNDEN[wsmSchwierigkeit] || 10, wsmPool().length);
     wsmSession = { runde: 0, gesamt, richtig: 0, gespielt: [] };
     wsmAktuell = null;
@@ -10663,7 +10769,7 @@
     return alle;
   }
   function neueSbSession() {
-    sbLevel = applyDefaultCefrLevel(sbLevel, (v) => { sbLevel = v; });
+    sbLevel = applyDefaultCefrLevel(sbLevel, (v) => { sbLevel = v; }, "satzbruecke");
     const gesamt = Math.min(SB_RUNDEN[sbSchwierigkeit] || 10, sbPool().length);
     sbSession = { runde: 0, gesamt, richtig: 0, gespielt: [], planken: 0 };
     sbAktuell = null;
@@ -10677,7 +10783,9 @@
   }
   // Schlucht mit zwei Felsen. Die Planken wachsen mit jeder richtigen Antwort —
   // sichtbarer Fortschritt statt nur einer Zahl.
-  function sbBrueckeSvg(planken, gesamt, geschafft) {
+  // ueberquerung = true: die Brücke wird erst fertig gebaut, DANN läuft der Fuchs
+  // wirklich von einem Felsen zum anderen (statt nur am Brückenende zu stehen).
+  function sbBrueckeSvg(planken, gesamt, geschafft, ueberquerung) {
     const anteil = Math.max(0, Math.min(1, planken / Math.max(1, gesamt)));
     const brueckeBreite = 96 * anteil;
     return `
@@ -10717,8 +10825,17 @@
         // soll man sehen, nicht nur lesen.
         const fx = 52 + 96 * Math.min(anteil, 1) - (geschafft ? 0 : 10);
         const fy = 64 + Math.sin(Math.min(anteil, 1) * Math.PI) * (8 - 6 * anteil) - 9;
+        // Am Ende einer Runde läuft er die Strecke tatsächlich ab: Startpunkt ist der
+        // linke Felsen, Ziel der Punkt, bis zu dem die Brücke trägt. Die Planken legen
+        // sich zuerst (je 40 ms versetzt), erst danach setzt der Lauf ein.
+        const startX = 52 - 100;
+        const startY = 64 - 9 - 51;
+        const plankenDauer = Math.round(brueckeBreite / 8) * 40 + 320;
+        const laufStil = ueberquerung
+          ? `--sb-start-x:${startX}px; --sb-start-y:${startY}px; --sb-ziel-x:${fx - 100}px; --sb-ziel-y:${fy - 51}px; animation-delay:${plankenDauer}ms;`
+          : `transform: translate(${fx - 100}px, ${fy - 51}px);`;
         return `
-        <g class="sb-fuchs ${geschafft ? "sb-fuchs-laeuft" : "sb-fuchs-wartet"}" style="transform: translate(${fx - 100}px, ${fy - 51}px);">
+        <g class="sb-fuchs ${ueberquerung ? "sb-fuchs-ueberquert" : (geschafft ? "sb-fuchs-laeuft" : "sb-fuchs-wartet")}" style="${laufStil}">
           <!-- Schwanz mit heller Spitze -->
           <path d="M92 54 q-11 -1 -12 -8 q-1 -6 5 -7 q-2 6 3 8 q4 2 6 4 Z" fill="#D9714E"/>
           <path d="M80 46 q-1 -6 5 -7 q-2 4 0 6 Z" fill="#F7DCC9"/>
@@ -10812,12 +10929,21 @@
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">🌉 SATZBRÜCKE — ${geschafft ? "BRÜCKE STEHT" : "NOCH LÜCKEN IM WEG"}</p>
-        ${sbBrueckeSvg(sbSession.richtig, sbSession.gesamt, geschafft)}
+        ${sbBrueckeSvg(sbSession.richtig, sbSession.gesamt, geschafft, true)}
         <h2 style="margin:10px 0;">${sbSession.richtig} / ${sbSession.gesamt} Planken gelegt</h2>
-        <p class="empty-note">${geschafft ? "Der Fuchs kommt trockenen Fußes hinüber." : "Noch fehlen ein paar Planken — Verbinder brauchen Zeit, sie tragen den ganzen Satz."}</p>
+        <p class="empty-note">${geschafft ? "Die Brücke steht — schau zu, wie der Fuchs hinübergeht." : "Noch fehlen ein paar Planken — der Fuchs bleibt an der Lücke stehen. Verbinder brauchen Zeit, sie tragen den ganzen Satz."}</p>
         <button type="button" class="btn btn-coffee" id="sbNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
       </div>`;
     document.getElementById("sbNochmalBtn").addEventListener("click", () => { neueSbSession(); neueSbRunde(); renderSatzbruecke(); });
+    // Ton erst, wenn der Fuchs wirklich angekommen (oder an der Lücke stehen geblieben) ist —
+    // vorher lief der Ton, während die Brücke noch gebaut wurde.
+    const anteilFertig = Math.max(0, Math.min(1, sbSession.richtig / Math.max(1, sbSession.gesamt)));
+    const laufDauer = Math.round(96 * anteilFertig / 8) * 40 + 320 + 2200;
+    setTimeout(() => {
+      if (!document.getElementById("satzbrueckeArea")) return;
+      if (geschafft) Core.sound.fanfare(); // Triumph, wenn er drüben ankommt
+      else Core.sound.fail();              // gedämpftes „knapp nicht" an der Lücke
+    }, laufDauer);
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["satzbruecke"], points: sbSession.richtig, bonus: 0, percent: prozent, character: "Brückenbauer:in", badges: [], playedAt: new Date().toISOString() });
       if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
@@ -10863,7 +10989,7 @@
     return bank;
   }
   function neueAgSession() {
-    agLevel = applyDefaultCefrLevel(agLevel, (v) => { agLevel = v; });
+    agLevel = applyDefaultCefrLevel(agLevel, (v) => { agLevel = v; }, "artikelgarten");
     agSession = { runde: 0, gesamt: AG_RUNDEN[agSchwierigkeit] || 10, richtig: 0, beete: { der: 0, die: 0, das: 0 }, gespielt: [] };
     agAktuell = null;
   }
@@ -11008,13 +11134,16 @@
      ============================================================ */
   const KZ_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
   const KZ_ORTE = [
-    { key: "auf", x: 100, y: 62, satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„auf“ — sie berührt die Tischplatte von oben. Ort → Dativ: auf dem Tisch." },
-    { key: "unter", x: 100, y: 96, satz: "Die Katze liegt ___ dem Tisch.", erkl: "„unter“ — sie ist tiefer als der Tisch. Ort → Dativ: unter dem Tisch." },
-    { key: "neben", x: 148, y: 96, satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„neben“ — sie ist seitlich davon, nicht darunter." },
-    { key: "hinter", x: 62, y: 74, satz: "Die Katze versteckt sich ___ dem Stuhl.", erkl: "„hinter“ — der Stuhl steht zwischen dir und der Katze." },
-    { key: "vor", x: 100, y: 108, satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„vor“ — sie ist näher bei dir als der Tisch." },
-    { key: "in", x: 168, y: 100, satz: "Die Katze schläft ___ dem Korb.", erkl: "„in“ — sie ist von etwas umschlossen." },
-    { key: "zwischen", x: 124, y: 96, satz: "Die Katze sitzt ___ dem Tisch und dem Korb.", erkl: "„zwischen“ — links und rechts von ihr steht je ein Ding." },
+    // haltung bestimmt, WIE die Katze gezeichnet wird — sitzen, liegen oder stehen.
+    // Das ist bewusst getrennt: eine liegende Katze steht nicht auf ihren Beinen,
+    // eine sitzende sitzt wirklich auf ihrem Hinterteil und stützt sich vorn ab.
+    { key: "auf", x: 110, y: 48, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„auf“ — sie berührt die Tischplatte von oben. Ort → Dativ: auf dem Tisch." },
+    { key: "unter", x: 108, y: 95, haltung: "liegen", satz: "Die Katze liegt ___ dem Tisch.", erkl: "„unter“ — sie ist tiefer als der Tisch. Ort → Dativ: unter dem Tisch." },
+    { key: "neben", x: 30, y: 94, haltung: "stehen", satz: "Die Katze steht ___ dem Stuhl.", erkl: "„neben“ — sie ist seitlich davon, nicht darunter und nicht dahinter." },
+    { key: "hinter", x: 47, y: 92, haltung: "stehen", hinten: true, satz: "Die Katze versteckt sich ___ dem Stuhl.", erkl: "„hinter“ — der Stuhl steht zwischen dir und der Katze." },
+    { key: "vor", x: 104, y: 106, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„vor“ — sie ist näher bei dir als der Tisch." },
+    { key: "in", x: 170, y: 84, haltung: "liegen", imKorb: true, skala: 0.7, satz: "Die Katze schläft ___ dem Korb.", erkl: "„in“ — sie ist von etwas umschlossen." },
+    { key: "zwischen", x: 150, y: 93, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch und dem Korb.", erkl: "„zwischen“ — links und rechts von ihr steht je ein Ding." },
   ];
   let kzSession = null;
   let kzLevel = null;
@@ -11023,7 +11152,7 @@
   let kzZustand = "warten";
 
   function neueKzSession() {
-    kzLevel = applyDefaultCefrLevel(kzLevel, (v) => { kzLevel = v; });
+    kzLevel = applyDefaultCefrLevel(kzLevel, (v) => { kzLevel = v; }, "kettenzauber");
     kzSession = { runde: 0, gesamt: KZ_RUNDEN[kzSchwierigkeit] || 10, richtig: 0 };
     kzAktuell = null;
   }
@@ -11039,6 +11168,10 @@
   }
   function kzZimmerSvg(ort, zeigen) {
     const k = ort;
+    // Die Katze wird je nach Ort an einer anderen Stelle in die Zeichnung eingesetzt:
+    // hinter dem Stuhl liegt sie WIRKLICH dahinter (also vor dem Stuhl gezeichnet),
+    // im Korb steckt sie hinter der Korbwand — sonst sähe „hinter" aus wie „neben".
+    const katze = `<g class="kz-katze" style="transform: translate(${k.x - 100}px, ${k.y - 90}px);"><g transform="translate(100 98) scale(${k.skala || 1}) translate(-100 -98)">${kzKatzeSvg(k.haltung || "sitzen")}</g></g>`;
     return `
     <svg viewBox="0 0 200 130" width="100%" style="max-width:340px; display:block; margin:0 auto;" aria-hidden="true">
       <defs>
@@ -11057,33 +11190,105 @@
       <rect x="156" y="14" width="6" height="12" rx="1" fill="#C97B5A"/>
       <rect x="164" y="17" width="6" height="9" rx="1" fill="#6FA88E"/>
       <rect x="172" y="12" width="6" height="14" rx="1" fill="#E0B24C"/>
-      <!-- Stuhl -->
-      <rect x="48" y="66" width="26" height="4" rx="1.5" fill="#A8794F"/>
-      <rect x="48" y="42" width="4" height="26" rx="1.5" fill="#A8794F"/>
-      <rect x="70" y="42" width="4" height="26" rx="1.5" fill="#A8794F"/>
-      <rect x="50" y="70" width="3" height="24" fill="#8A6238"/>
-      <rect x="69" y="70" width="3" height="24" fill="#8A6238"/>
-      <!-- Tisch -->
-      <rect x="76" y="68" width="66" height="6" rx="2.5" fill="#B98A5C"/>
-      <rect x="80" y="74" width="4" height="30" fill="#96683F"/>
-      <rect x="134" y="74" width="4" height="30" fill="#96683F"/>
-      <!-- Korb -->
-      <path d="M156 92 L182 92 L178 108 L160 108 Z" fill="#C9A15F"/>
-      <path d="M156 92 L182 92" stroke="#A07F45" stroke-width="2.5"/>
-      <!-- Katze -->
-      <g class="kz-katze" style="transform: translate(${k.x - 100}px, ${k.y - 90}px);">
-        <ellipse cx="100" cy="92" rx="11" ry="7.5" fill="#6E6A66"/>
-        <circle cx="109" cy="86" r="6" fill="#7C7874"/>
-        <path d="M105 81 l1 -5 l3.4 3.2 Z" fill="#6E6A66"/>
-        <path d="M111 80.6 l3.4 -4 l1 5 Z" fill="#6E6A66"/>
-        <circle cx="107.4" cy="86" r="1.1" fill="#2C2A28"/>
-        <circle cx="111.4" cy="86" r="1.1" fill="#2C2A28"/>
-        <path d="M109.4 88.4 l-1.2 1.4 h2.4 Z" fill="#D98B96"/>
-        <path d="M89 90 q-9 -3 -7 -10 q4 4 8 5 Z" fill="#6E6A66"/>
-        <path d="M95 98.6 l0 4 M104 98.6 l0 4" stroke="#5C5854" stroke-width="1.8" stroke-linecap="round"/>
-      </g>
+      ${k.hinten ? katze : ""}
+      <!-- Stuhl: Sitzfläche, Rückenlehne mit zwei Sprossen, vier Beine (zwei davon
+           versetzt dahinter) — dadurch ist auf einen Blick ein Stuhl erkennbar. -->
+      <rect x="30" y="76" width="34" height="5" rx="2" fill="#C79A67"/>
+      <rect x="30" y="81" width="34" height="2.5" fill="#9A6E43"/>
+      <rect x="31" y="44" width="4.5" height="34" rx="2" fill="#A8794F"/>
+      <rect x="58" y="44" width="4.5" height="34" rx="2" fill="#A8794F"/>
+      <rect x="31" y="47" width="31.5" height="4" rx="2" fill="#B98A5C"/>
+      <rect x="31" y="58" width="31.5" height="4" rx="2" fill="#B98A5C"/>
+      <rect x="37" y="83" width="3" height="28" rx="1.2" fill="#8A6238"/>
+      <rect x="55" y="83" width="3" height="28" rx="1.2" fill="#8A6238"/>
+      <rect x="32" y="83" width="2.6" height="23" rx="1.2" fill="#75522F"/>
+      <rect x="60" y="83" width="2.6" height="23" rx="1.2" fill="#75522F"/>
+      <!-- Tisch: dicke Platte mit sichtbarer Kante und Zarge darunter, vier Beine.
+           Vorher standen nur zwei dünne Striche da — als Tisch kaum zu erkennen. -->
+      <rect x="74" y="66" width="72" height="6" rx="2.5" fill="#C79A67"/>
+      <rect x="74" y="72" width="72" height="3" fill="#9A6E43"/>
+      <rect x="80" y="75" width="60" height="4" rx="1.5" fill="#AE7F52"/>
+      <rect x="82" y="79" width="5" height="32" rx="2" fill="#96683F"/>
+      <rect x="133" y="79" width="5" height="32" rx="2" fill="#96683F"/>
+      <rect x="90" y="79" width="4" height="25" rx="2" fill="#7E552F"/>
+      <rect x="126" y="79" width="4" height="25" rx="2" fill="#7E552F"/>
+      <ellipse cx="110" cy="111" rx="34" ry="3" fill="#8A6A45" opacity="0.3"/>
+      ${k.imKorb ? katze : ""}
+      <!-- Korb mit Flechtmuster -->
+      <path d="M158 94 L190 94 L186 110 L162 110 Z" fill="#C9A15F"/>
+      <path d="M159.5 99 H188 M161 104 H186" stroke="#A07F45" stroke-width="1.1"/>
+      <path d="M157 92 L191 92 L190 95 L158 95 Z" fill="#B08D4E"/>
+      ${!k.hinten && !k.imKorb ? katze : ""}
       ${zeigen ? `<text x="100" y="12" text-anchor="middle" font-size="10" font-weight="800" fill="#8A5A3B">${k.key}</text>` : ""}
     </svg>`;
+  }
+  // Die Katze in drei getrennten Haltungen. Sie werden bewusst NICHT ineinander
+  // gerechnet: wer liegt, liegt wirklich (Beine untergeschlagen, Körper flach am
+  // Boden), wer sitzt, sitzt auf dem Hinterteil und stützt sich vorn ab, und wer
+  // steht, steht auf allen vieren. Anker ist in allen drei Fällen derselbe Punkt
+  // (100 / 90), damit die Platzierung im Zimmer unverändert bleibt.
+  function kzKatzeSvg(haltung) {
+    const FELL = "#8C837B", FELL_HELL = "#A79D94", BAUCH = "#E7DFD6";
+    const OHR = "#E2A6AE", AUGE = "#2C2A28", NASE = "#E08B96";
+    // Kopf ist für alle Haltungen gleich aufgebaut — nur an anderer Stelle.
+    const kopf = (cx, cy, neigung) => `
+      <g transform="translate(${cx} ${cy}) rotate(${neigung})">
+        <path d="M-6.6 -4 l-1 -6.4 l5.4 3.6 Z" fill="${FELL}"/>
+        <path d="M6.6 -4 l1 -6.4 l-5.4 3.6 Z" fill="${FELL}"/>
+        <path d="M-5.4 -4.4 l-0.6 -3.8 l3.4 2.2 Z" fill="${OHR}"/>
+        <path d="M5.4 -4.4 l0.6 -3.8 l-3.4 2.2 Z" fill="${OHR}"/>
+        <ellipse cx="0" cy="0" rx="7.4" ry="6.6" fill="${FELL_HELL}"/>
+        <ellipse cx="0" cy="2.4" rx="4.4" ry="3.4" fill="${BAUCH}"/>
+        <circle cx="-2.7" cy="-0.6" r="1.7" fill="${AUGE}"/>
+        <circle cx="2.7" cy="-0.6" r="1.7" fill="${AUGE}"/>
+        <circle cx="-2.2" cy="-1.2" r="0.6" fill="#ffffff"/>
+        <circle cx="3.2" cy="-1.2" r="0.6" fill="#ffffff"/>
+        <path d="M0 1.6 l-1.3 1.5 h2.6 Z" fill="${NASE}"/>
+        <path d="M0 3.1 q-1.6 1.7 -2.9 0.5 M0 3.1 q1.6 1.7 2.9 0.5" stroke="#5C5854" stroke-width="0.6" fill="none" stroke-linecap="round"/>
+        <path d="M-4.6 1.4 H-9.4 M-4.6 3 H-9 M4.6 1.4 H9.4 M4.6 3 H9" stroke="#6B6560" stroke-width="0.55" stroke-linecap="round" opacity="0.85"/>
+      </g>`;
+    if (haltung === "liegen") {
+      // Flach am Boden, Beine untergeschlagen (nur die Pfoten schauen vorn heraus),
+      // Schwanz lang ausgestreckt, Augen zu Schlitzen — sie ruht.
+      return `
+        <path d="M84 99 q-11 3 -13 -2 q-1 -3 3 -3 q4 2 10 2 Z" fill="${FELL}"/>
+        <ellipse cx="100" cy="99" rx="15" ry="5.6" fill="${FELL}"/>
+        <ellipse cx="100" cy="101" rx="13" ry="3.4" fill="${FELL_HELL}"/>
+        <ellipse cx="107" cy="103.4" rx="3.4" ry="1.6" fill="${BAUCH}"/>
+        <ellipse cx="112" cy="103.4" rx="3.2" ry="1.5" fill="${BAUCH}"/>
+        ${kopf(112, 95.5, 6)}
+        <path d="M108.6 94.6 q1.6 1 3.2 0 M114.6 94.6 q1.6 1 3.2 0" stroke="${AUGE}" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+        <ellipse cx="100" cy="105" rx="17" ry="2.2" fill="#6B5136" opacity="0.22"/>`;
+    }
+    if (haltung === "stehen") {
+      // Auf allen vieren, Rücken waagerecht, Schwanz aufgestellt.
+      return `
+        <path d="M87 92 q-10 -2 -10 -9 q0 -4 3.6 -3.6 q-1 5 3 6.6 q2.4 1 3.4 2.4 Z" fill="${FELL}"/>
+        <ellipse cx="98" cy="92" rx="12.4" ry="6.2" fill="${FELL}"/>
+        <path d="M87 94 q11 4.6 22 0 q-4 4.6 -11 4.6 q-7 0 -11 -4.6 Z" fill="${BAUCH}"/>
+        <rect x="89.4" y="97" width="3" height="8.4" rx="1.5" fill="${FELL}"/>
+        <rect x="94.4" y="97.6" width="2.8" height="7.8" rx="1.4" fill="#7A726B"/>
+        <rect x="103" y="97" width="3" height="8.4" rx="1.5" fill="${FELL}"/>
+        <rect x="107.6" y="97.6" width="2.8" height="7.8" rx="1.4" fill="#7A726B"/>
+        <ellipse cx="90.9" cy="105.6" rx="2.1" ry="1.1" fill="${BAUCH}"/>
+        <ellipse cx="104.5" cy="105.6" rx="2.1" ry="1.1" fill="${BAUCH}"/>
+        ${kopf(111, 86, 0)}
+        <ellipse cx="99" cy="107" rx="15" ry="2" fill="#6B5136" opacity="0.2"/>`;
+    }
+    // sitzen: Hinterteil breit am Boden, Brust aufgerichtet, Vorderbeine gerade,
+    // Schwanz vorn um die Pfoten gelegt.
+    return `
+      <path d="M92 104 q-11 2 -12 -3 q-1 -4 3 -3.4 q3 3 9 3 Z" fill="${FELL}"/>
+      <ellipse cx="98" cy="99" rx="10.6" ry="7.4" fill="${FELL}"/>
+      <path d="M100 88 q7 3 7.6 11 q0.4 5 -3.6 6 l-6 0 q-3 -1 -2.6 -6 q0.6 -8 4.6 -11 Z" fill="${FELL_HELL}"/>
+      <path d="M101 92 q4.4 3.4 4.6 9.4 q0.2 3 -2.2 3.6 l-3.4 0 q-2 -0.6 -1.8 -3.6 q0.4 -6 2.8 -9.4 Z" fill="${BAUCH}"/>
+      <rect x="99" y="99" width="3" height="7" rx="1.5" fill="${FELL_HELL}"/>
+      <rect x="103.6" y="99" width="3" height="7" rx="1.5" fill="${FELL_HELL}"/>
+      <ellipse cx="100.5" cy="106.2" rx="2.1" ry="1.2" fill="${BAUCH}"/>
+      <ellipse cx="105.1" cy="106.2" rx="2.1" ry="1.2" fill="${BAUCH}"/>
+      <path d="M96 106.6 q7 -3.6 14 0.4 q-7 2.2 -14 -0.4 Z" fill="${FELL}"/>
+      ${kopf(104, 86, 0)}
+      <ellipse cx="101" cy="108" rx="13" ry="2" fill="#6B5136" opacity="0.2"/>`;
   }
   function renderKatzenzimmer() {
     const area = document.getElementById("katzenzimmerArea");
@@ -11313,7 +11518,7 @@
         return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 365 Tagen gefüllt${neuText}</p>`;
       })()}
       ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
-      ${todayHistory ? (() => { historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }); return ""; })() : ""}
+      ${todayHistory ? (() => { historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }, "geschichte"); return ""; })() : ""}
       ${todayHistory ? `
         <div class="question-card" style="margin-bottom:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>
@@ -12414,6 +12619,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
           <div style="clear:both;"></div>
           <div class="profile-header-below-photo">
+            <span class="flow-badge">🎨 Design: ${(THEMES.find((t) => t.id === (profile.theme || "bastelheft")) || {}).name || "Bastelheft"}</span>
             ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
             ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
             ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
@@ -12440,6 +12646,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             <button type="button" class="btn btn-ghost" id="logoutBtn">Abmelden</button>
           </div>
         </div>
+        ${profilDateienAnsichtHtml(profile) ? `<div class="question-card" style="margin-top:16px;">${profilDateienAnsichtHtml(profile)}</div>` : ""}
         ${(profile.gallery || []).length ? `<div class="question-card" style="margin-top:16px;">
           <h3>📷 Galerie</h3>
           <div class="gallery-grid">
@@ -12474,7 +12681,13 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (introBtn) introBtn.addEventListener("click", () => { profileEditMode = true; profileEditDraft = {}; profileEditPage = 0; renderAccount(); });
       document.getElementById("myFriendsToggle").addEventListener("click", () => {
         const list = document.getElementById("myFriendsList");
-        list.style.display = list.style.display === "none" ? "flex" : "none";
+        const oeffnen = list.style.display === "none";
+        list.style.display = oeffnen ? "flex" : "none";
+        // Die Freundesliste klappt weit unterhalb des Profilbilds auf und lag damit regelmäßig
+        // unter dem unteren Bildschirmrand — man sah nach dem Antippen scheinbar gar nichts.
+        // Jetzt springt die Ansicht direkt zur Liste und hebt sie kurz hervor, sodass sofort
+        // erkennbar ist, dass sich etwas geöffnet hat.
+        if (oeffnen) requestAnimationFrame(() => scrollToAndHighlight("#myFriendsList"));
       });
       document.getElementById("proficiencyPromptBadge")?.addEventListener("click", () => {
         document.querySelector('[data-target="view-profile"]')?.click();
@@ -12550,18 +12763,25 @@ An einem Morgen lief ein kleiner Fuchs los…
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:0; margin-bottom:12px;">
           <button type="button" class="btn btn-ghost" id="doneEditBtn">← Fertig, zurück zur Ansicht</button>
         </div>
-        <div class="profile-header">
+        <!-- Auch im Bearbeiten-Modus derselbe Fließtext-Kopf wie in der Ansicht: das Bild
+             links, die Angaben laufen um seine Rundung herum. So sieht man schon beim
+             Bearbeiten genau das, was später auch alle anderen sehen. -->
+        <div class="profile-header-flow">
           <label class="avatar-upload-wrap">
             ${avatarHtml}
             <span class="avatar-edit-badge">📷</span>
             <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
           </label>
-          <div class="profile-name-col">
-            <h2>${profile.name}${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</h2>
-            <p class="empty-note">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}${profile.isPremium && !(extra.hidePremiumBadge) ? " · ✨ Premium" : ""}</p>
+          <div class="profile-header-stack">
+            <h2 class="profile-header-name" style="margin:0 0 2px 0;">${profile.name}</h2>
+            ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
+            <span class="flow-badge">🎯 ${profile.points} Punkte</span>
+            <span class="flow-badge">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</span>
+            ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
+            <span class="flow-badge">🎨 ${(THEMES.find((t) => t.id === (profile.theme || "bastelheft")) || {}).name || "Bastelheft"}</span>
           </div>
-          <div class="profile-points"><div class="num">${profile.points}</div><div class="empty-note">Punkte</div></div>
         </div>
+        <div style="clear:both;"></div>
         <button type="button" class="emoji-toggle-link" id="previewProfileLink">👁️ Vorschau: So sehen andere dein Profil</button>
         ${(extra.previousAvatarUrl || extra.previousAvatarEmoji) ? `<button type="button" class="emoji-toggle-link" id="restoreAvatarLink">↩️ Voriges Profilbild wiederherstellen</button>` : ""}
         ${(profile.gallery || []).length ? `<button type="button" class="emoji-toggle-link" id="galleryAvatarToggleLink">🖼️ Foto aus meiner Galerie wählen</button>` : ""}
@@ -12798,10 +13018,27 @@ An einem Morgen lief ein kleiner Fuchs los…
             </div>`).join("")}
           ${(profile.gallery || []).length < 6 ? `
             <label class="gallery-add-btn">
-              +<input type="file" id="galleryInput" accept="image/*" style="display:none;" />
+              +<input type="file" id="galleryInput" accept="image/*" multiple style="display:none;" />
             </label>` : ""}
         </div>
+        <p class="empty-note" style="margin-top:4px; font-size:0.72rem;">Mehrere Fotos auf einmal auswählen ist möglich.</p>
         <div class="form-error" id="galleryError"></div>
+      </div>
+      <div class="question-card" style="margin-top:12px;">
+        <p class="eyebrow" style="margin-top:0;">📎 Dateien am Profil</p>
+        <p class="empty-note" style="margin:0 0 8px;">PDF, MP3, Bilder — auch mehrere auf einmal. Maximal 15 MB pro Datei, bis zu 20 Dateien.</p>
+        <div class="breakdown-list" id="profilDateienListe">
+          ${Backend.getProfileFiles(profile).map((f) => `
+            <div class="breakdown-row">
+              <a href="${f.url}" target="_blank" rel="noopener">${dateiSymbol(f)} ${f.name}</a>
+              <span class="empty-note">${Math.round((f.size || 0) / 1024)} KB</span>
+              <button type="button" class="gallery-remove-btn" data-remove-file="${f.url}" style="position:static;">✕</button>
+            </div>`).join("") || '<p class="empty-note">Noch keine Dateien.</p>'}
+        </div>
+        <label class="btn btn-ghost" style="cursor:pointer; margin-top:8px; display:inline-block;">📎 Dateien hochladen
+          <input type="file" id="profilDateienInput" accept=".pdf,.mp3,application/pdf,audio/mpeg,image/*" multiple style="display:none;" />
+        </label>
+        <div class="form-error" id="profilDateienFehler"></div>
       </div>
       ${renderTrophyCase(profile)}
       ${renderAlbumPreview(profile)}
@@ -13044,18 +13281,51 @@ An einem Morgen lief ein kleiner Fuchs los…
     const galleryInput = document.getElementById("galleryInput");
     if (galleryInput) {
       galleryInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-          await Backend.uploadGalleryPhoto(file);
-          Backend.addActivity(`${profile.name} hat ein neues Foto zur Galerie hinzugefügt. 📷`);
+        // Mehrfachauswahl: alle gewählten Fotos nacheinander hochladen, damit man nicht
+        // für jedes einzelne Bild erneut den Auswahldialog öffnen muss.
+        const dateien = [...e.target.files];
+        if (!dateien.length) return;
+        const fehlerFeld = document.getElementById("galleryError");
+        let hochgeladen = 0;
+        for (const file of dateien) {
+          try {
+            await Backend.uploadGalleryPhoto(file);
+            hochgeladen += 1;
+          } catch (err) {
+            if (fehlerFeld) fehlerFeld.textContent = err.message || "Foto konnte nicht hochgeladen werden.";
+            break;
+          }
+        }
+        if (hochgeladen) {
+          Backend.addActivity(`${profile.name} hat ${hochgeladen === 1 ? "ein neues Foto" : hochgeladen + " neue Fotos"} zur Galerie hinzugefügt. 📷`);
           updateTicker();
           renderAccount();
-        } catch (err) {
-          document.getElementById("galleryError").textContent = err.message || "Foto konnte nicht hochgeladen werden.";
         }
       });
     }
+    const dateienInput = document.getElementById("profilDateienInput");
+    if (dateienInput) {
+      dateienInput.addEventListener("change", async (e) => {
+        const fehlerFeld = document.getElementById("profilDateienFehler");
+        if (fehlerFeld) fehlerFeld.textContent = "";
+        try {
+          const neu = await Backend.uploadProfileFiles(e.target.files);
+          if (neu.length) {
+            Backend.addActivity(`${profile.name} hat ${neu.length === 1 ? "eine Datei" : neu.length + " Dateien"} zum Profil hinzugefügt. 📎`);
+            updateTicker();
+            renderAccount();
+          }
+        } catch (err) {
+          if (fehlerFeld) fehlerFeld.textContent = err.message || "Datei konnte nicht hochgeladen werden.";
+        }
+      });
+    }
+    area.querySelectorAll("[data-remove-file]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await Backend.removeProfileFile(btn.dataset.removeFile);
+        renderAccount();
+      });
+    });
     area.querySelectorAll("[data-remove-gallery]").forEach((btn) => {
       btn.addEventListener("click", () => {
         Backend.removeGalleryPhoto(btn.dataset.removeGallery);
@@ -13399,10 +13669,15 @@ An einem Morgen lief ein kleiner Fuchs los…
   let profileStripPlaylist = [];
   let profileStripIndex = 0;
   let profileStripPlaying = false;
-  async function profileTransportStripHtml(p) {
+  // Liefert Überschrift und Bedienstreifen GETRENNT. Wichtig: die Überschrift ist eine feste
+  // Zeile im Profil und wird beim Weiterschalten nur im Text aktualisiert, nie neu eingefügt.
+  // Vorher steckten beide in einem einzigen HTML-Stück, das beim Umschalten an die Stelle des
+  // Streifens gesetzt wurde — dadurch kam bei JEDEM Klick auf Play eine weitere Überschrift
+  // dazu, und im Profil standen am Ende beliebig viele davon untereinander.
+  async function profileTransportStripTeile(p) {
     const profileId = p.id;
     const list = await Backend.getPlaylist(profileId);
-    if (!list.length) return "";
+    if (!list.length) return null;
     // Lieblingssong (falls markiert) steht bewusst an erster Stelle, damit er direkt vorgestellt
     // wird, statt in der Liste irgendwo unterzugehen.
     const extra = p.extraProfileData || p.extra_profile_data || {};
@@ -13419,8 +13694,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     // Steht bewusst außerhalb des Streifens selbst, damit sie im Fließtext um das
     // Profilbild mitläuft und nicht mit den Bedienknöpfen um Platz konkurriert.
     const istLieblingssong = extra.showcaseSongUrl && song.url === extra.showcaseSongUrl;
-    return `
-      <p class="strip-ueberschrift">${istLieblingssong ? "🎵 Mein deutsches Lieblingslied" : "🎵 Aus meiner Playlist"}</p>
+    return {
+      ueberschrift: istLieblingssong ? "🎵 Mein deutsches Lieblingslied" : "🎵 Aus meiner Playlist",
+      streifen: `
       <div class="profile-transport-strip" data-strip-owner="${profileId}">
         <button type="button" class="strip-btn" data-strip-action="prev">${STRIP_ICONS.prev}</button>
         <button type="button" class="strip-btn" data-strip-action="playpause">${profileStripPlaying ? STRIP_ICONS.pause : STRIP_ICONS.play}</button>
@@ -13428,7 +13704,15 @@ An einem Morgen lief ein kleiner Fuchs los…
         <span class="strip-title">${song.title}</span>
         ${popularity > 0 ? `<span class="strip-popularity" title="So oft wurde dieser Song schon übernommen">${STRIP_ICONS.popularity}${popularity}</span>` : ""}
         <button type="button" class="strip-btn" data-strip-action="addmine" title="Zu meiner Playlist hinzufügen">${STRIP_ICONS.plus}</button>
-      </div>`;
+      </div>`,
+    };
+  }
+  // Erstaufbau: feste Überschriftszeile plus Streifen. Die Überschrift bekommt eine eigene
+  // Kennung, damit sie später gezielt nur im Text aktualisiert werden kann.
+  async function profileTransportStripHtml(p) {
+    const teile = await profileTransportStripTeile(p);
+    if (!teile) return "";
+    return `<p class="strip-ueberschrift" data-strip-ueberschrift="1">${teile.ueberschrift}</p>${teile.streifen}`;
   }
   function wireProfileTransportStrip(root, profileObj) {
     const strip = root.querySelector(".profile-transport-strip");
@@ -13465,8 +13749,13 @@ An einem Morgen lief ein kleiner Fuchs los…
           const nowSong = profileStripPlaylist[profileStripIndex];
           playStandaloneSong({ id: "strip-" + Date.now(), title: nowSong.title, url: nowSong.url });
         }
-        const newStrip = await profileTransportStripHtml(profileObj);
-        strip.outerHTML = newStrip;
+        // NUR den Streifen ersetzen. Die Überschrift darüber ist eine feste Zeile und wird
+        // ausschließlich im Text nachgeführt — sonst käme bei jedem Klick eine weitere dazu.
+        const teile = await profileTransportStripTeile(profileObj);
+        if (!teile) return;
+        const ueberschrift = root.querySelector("[data-strip-ueberschrift]");
+        if (ueberschrift) ueberschrift.textContent = teile.ueberschrift;
+        strip.outerHTML = teile.streifen;
         wireProfileTransportStrip(root, profileObj);
       });
     });
@@ -14924,6 +15213,77 @@ An einem Morgen lief ein kleiner Fuchs los…
     return "";
   }
 
+  // Öffentliche Mitgliederliste im Ranking-Bereich: wer ist überhaupt angemeldet, wer ist
+  // gerade online. Für ALLE sichtbar, nicht nur für die Betreiberin/den Betreiber.
+  let mitgliederSuche = "";
+  let mitgliederNurOnline = false;
+  async function renderMitgliederListe() {
+    const box = document.getElementById("mitgliederListe");
+    if (!box) return;
+    const alle = await Backend.getAllMembers();
+    if (!document.getElementById("mitgliederListe")) return; // Ansicht wurde inzwischen verlassen
+    const online = alle.filter((m) => m.online).length;
+    const suche = mitgliederSuche.toLowerCase();
+    let liste = alle.filter((m) => (m.name || "").toLowerCase().includes(suche));
+    if (mitgliederNurOnline) liste = liste.filter((m) => m.online);
+    // Online zuerst, danach alphabetisch — so sieht man sofort, wer gerade da ist.
+    liste.sort((a, b) => (b.online - a.online) || (a.name || "").localeCompare(b.name || "", "de"));
+    box.innerHTML = `
+      <p class="empty-note" style="margin:0 0 8px;">${alle.length} ${alle.length === 1 ? "Person ist" : "Personen sind"} angemeldet · ${online} gerade online</p>
+      <div class="vocab-toolbar"><input type="text" class="vocab-search" id="mitgliederSuche" placeholder="Namen suchen…" value="${mitgliederSuche.replace(/"/g, "&quot;")}" /></div>
+      <div class="trophy-case" style="margin:8px 0;">
+        <button type="button" class="trophy-chip ${mitgliederNurOnline ? "" : "selected"}" data-mitglieder-filter="alle">Alle</button>
+        <button type="button" class="trophy-chip ${mitgliederNurOnline ? "selected" : ""}" data-mitglieder-filter="online">🟢 Nur online</button>
+      </div>
+      <div class="modal-friends-list" style="display:flex; max-height:340px;">
+        ${liste.length ? liste.map((m) => `
+          <button type="button" class="friend-list-row" data-view-member="${m.id}">
+            ${tinyAvatar(m)}
+            <span class="name">${m.name}${m.online ? ' <span class="mitglied-online" title="gerade online">🟢</span>' : ""}</span>
+            ${adminBadge(m.is_admin, m.is_owner, m.is_moderator)}
+            <span class="empty-note" style="margin-left:auto; font-size:0.7rem;">${m.points} Pkt.</span>
+          </button>`).join("") : '<p class="empty-note">Niemand gefunden.</p>'}
+      </div>`;
+    const feld = document.getElementById("mitgliederSuche");
+    if (feld) {
+      feld.addEventListener("input", (e) => {
+        mitgliederSuche = e.target.value;
+        renderMitgliederListe().then(() => document.getElementById("mitgliederSuche")?.focus());
+      });
+    }
+    box.querySelectorAll("[data-mitglieder-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => { mitgliederNurOnline = btn.dataset.mitgliederFilter === "online"; renderMitgliederListe(); });
+    });
+    box.querySelectorAll("[data-view-member]").forEach((btn) => {
+      btn.addEventListener("click", () => openProfileModal(btn.dataset.viewMember));
+    });
+  }
+  // Kleines Symbol passend zum Dateityp — damit man in der Liste sofort sieht, was es ist.
+  function dateiSymbol(f) {
+    const name = String(f?.name || "").toLowerCase();
+    const typ = String(f?.type || "").toLowerCase();
+    if (typ.includes("pdf") || name.endsWith(".pdf")) return "📄";
+    if (typ.startsWith("audio") || name.endsWith(".mp3")) return "🎵";
+    if (typ.startsWith("image")) return "🖼️";
+    return "📎";
+  }
+  // Dateien am Profil, so wie andere sie sehen — PDFs und Bilder als Link, MP3s direkt
+  // abspielbar, damit man eine Sprachaufnahme nicht erst herunterladen muss.
+  function profilDateienAnsichtHtml(p) {
+    const dateien = Backend.getProfileFiles(p);
+    if (!dateien.length) return "";
+    return `
+      <p class="eyebrow" style="margin-top:12px;">📎 Dateien</p>
+      <div class="breakdown-list">
+        ${dateien.map((f) => {
+          const istAudio = String(f.type || "").startsWith("audio") || String(f.name || "").toLowerCase().endsWith(".mp3");
+          return `<div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+            <a href="${f.url}" target="_blank" rel="noopener">${dateiSymbol(f)} ${f.name}</a>
+            ${istAudio ? `<audio controls preload="none" src="${f.url}" style="width:100%; max-width:280px;"></audio>` : ""}
+          </div>`;
+        }).join("")}
+      </div>`;
+  }
   async function renderRecentMembers() {
     const members = await Backend.getRecentMembers();
     if (!members.length) return "";
@@ -15009,9 +15369,23 @@ An einem Morgen lief ein kleiner Fuchs los…
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        Core.el("div", { class: "profile-modal-header", html: `${avatarHtml}<h2>${p.name}${!(p.extra_profile_data || {}).hideAge && calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</h2>${foxBedBadge ? `<div class="fox-period-badge-stack">${foxBedBadge}</div>` : ""}` }),
-        Core.el("p", { class: "modal-points-line" }, `🎯 ${p.points || 0} Punkte`),
-        (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
+        // Fremde Profile bekommen jetzt denselben Fließtext-Kopf wie das eigene Profil: Name,
+        // Abzeichen, Freunde, Herkunft und Sternzeichen laufen um die Rundung des Profilbilds
+        // herum, statt darunter in einer Mittelspalte zu stehen.
+        Core.el("div", { class: "profile-header-flow" + (foxBedBadge ? " has-fox-badges" : ""), html: `
+          ${avatarHtml}
+          ${foxBedBadge ? `<div class="fox-period-badge-stack">${foxBedBadge}</div>` : ""}
+          <div class="profile-header-stack">
+            <h2 class="profile-header-name" style="margin:0 0 2px 0;">${p.name}${!(p.extra_profile_data || {}).hideAge && calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}</h2>
+            ${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter) ? `<p style="margin:0 0 6px;">${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</p>` : ""}
+            <span class="flow-badge">🎯 ${p.points || 0} Punkte</span>
+            <span class="flow-badge"><button type="button" class="friend-name-btn" id="modalFriendsToggle">👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}</button></span>
+            ${originFlag ? `<span class="flow-badge">${originFlag} ${p.origin}</span>` : ""}
+            ${zodiacBadgeHtml(p.birthday) ? `<span class="flow-badge">${zodiacBadgeHtml(p.birthday)}</span>` : ""}
+          </div>
+        ` }),
+        Core.el("div", { style: "clear:both;" }),
+        (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note profile-header-below-photo", style: "margin-top:0;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
         !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
           <p class="empty-note" style="text-align:center; margin-bottom:4px;">Wie gerne magst du ${p.name}? <span class="subnav-info-icon" data-info="Ganz privat — nur du siehst deine Auswahl. Wählt ihr euch beide gegenseitig, bekommt ihr automatisch Nachricht, dass es ein Match ist.">ⓘ</span></p>
           <div style="display:flex; justify-content:center; gap:8px;">
@@ -15019,15 +15393,10 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
         ` }) : "",
         Core.el("div", { html: await profileTransportStripHtml(p) }),
+        Core.el("div", { style: "clear:both;" }),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
-        Core.el("p", { class: "empty-note" }, p.bio || "Noch keine Beschreibung."),
-        Core.el("div", { class: "modal-meta-row" },
-          Core.el("span", { class: "flow-badge" },
-            Core.el("button", { type: "button", class: "friend-name-btn", id: "modalFriendsToggle" }, `👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}`)
-          ),
-          originFlag ? Core.el("span", { class: "flow-badge" }, `${originFlag} ${p.origin}`) : "",
-          zodiacBadgeHtml(p.birthday) ? Core.el("span", { class: "flow-badge", html: zodiacBadgeHtml(p.birthday) }) : ""
-        ),
+        Core.el("p", { class: "empty-note profile-bio-flow-text" }, p.bio || "Noch keine Beschreibung."),
+        Core.el("div", { html: profilDateienAnsichtHtml(p) }),
         Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
           theirFriends.length
             ? theirFriends.map((f) => Core.el("button", {
@@ -15270,7 +15639,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
     document.getElementById("modalFriendsToggle").addEventListener("click", () => {
       const list = document.getElementById("modalFriendsList");
-      list.style.display = list.style.display === "none" ? "flex" : "none";
+      const oeffnen = list.style.display === "none";
+      list.style.display = oeffnen ? "flex" : "none";
+      // Genau wie im eigenen Profil: die Liste öffnet sich oft außerhalb des sichtbaren
+      // Bereichs — daher direkt hinspringen und kurz hervorheben.
+      if (oeffnen) requestAnimationFrame(() => { list.scrollIntoView({ behavior: "smooth", block: "center" }); list.classList.add("notify-target-highlight"); setTimeout(() => list.classList.remove("notify-target-highlight"), 2600); });
     });
     const trophyMoreBtn = document.getElementById("modalTrophyMoreBtn");
     if (trophyMoreBtn) {
@@ -16286,7 +16659,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
           <div>
             <button type="button" class="friend-name-btn" data-view-ranked="${fox.user_id}" style="font-size:1.05rem; font-weight:800;">${fox.name}</button>
-            <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}</p>
+            <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}${fox.vorlaeufig ? " — hält den Titel, bis heute jemand aktiv wird" : ""}</p>
           </div>
         </div>
         <div class="fox-of-day-report-card">
@@ -16298,6 +16671,10 @@ An einem Morgen lief ein kleiner Fuchs los…
           ${fox.profile?.origin ? `<p class="empty-note" style="margin-top:4px;">🌍 Kommt aus: ${fox.profile.origin}</p>` : ""}
         </div>
       </div>` : `<p class="empty-note">Noch keine Aktivität in diesem Zeitraum — sei die/der Erste!</p>`}
+      <div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow" style="margin-top:0;">👥 Alle Mitglieder <span class="subnav-info-icon" data-info="Alle, die sich hier je angemeldet haben — mit grünem Punkt, wenn jemand gerade online ist. Auf einen Namen tippen öffnet das Profil.">ⓘ</span></p>
+        <div id="mitgliederListe"><p class="empty-note">Wird geladen …</p></div>
+      </div>
       ${hallOfFame.length ? `
       <div class="question-card" style="margin-top:14px; padding:0; overflow:hidden;">
         ${siteBannerHtml("hall_of_fame_banner", hofBannerUrl, HALL_OF_FAME_PLACEHOLDER_SVG, "Hall of Fame")}
@@ -16310,6 +16687,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>` : ""}
     `;
     wireSiteBannerUploads(area);
+    renderMitgliederListe();
     // Scroll-Position bewusst erhalten: der geklickte Tab-Button verschwindet beim Neu-Rendern
     // kurz aus dem DOM (innerHTML wird komplett ersetzt) und verliert dabei seinen Fokus — das
     // ließ den Browser automatisch ganz an den Seitenanfang zurückspringen, statt an der Stelle
@@ -16469,9 +16847,21 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "127";
+  const APP_VERSION = "139";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
+    "139": [
+      "📖 Das Wörterbuch ist jetzt richtig groß: über 6000 Stichwörter, für jedes Niveau von A1 bis C2 rund 1000 Stück — jeweils mit Betonung, deutscher Erklärung, Übersetzung und Beispielsatz. Du kannst nach Niveau UND nach 25 Themenbereichen filtern.",
+      "🧭 Dein Sprachniveau aus dem Profil gilt jetzt überall: Übungen, Grammatik, „Es war einmal in Deutschland\", „Dichter und Denker\" und „Schnee von gestern\" starten automatisch in deinem Niveau. Umschalten kannst du natürlich weiterhin jederzeit.",
+      "📚 Neue Grammatik-Sektion unter „Lernen\" — die wichtigsten Themen deines Niveaus, kurz erklärt, mit Beispielen. Von dort springst du mit einem Tipp direkt in die passende Übung, die dann auch wirklich im Blick steht.",
+      "🌉 „Erste Schritte\" — ein Baukasten für den allerersten Kontakt mit Deutsch, übersetzt automatisch in deine Sprache.",
+      "🗓️ „Es war einmal in Deutschland\": für jeden Tag des Jahres ein Ereignis, in allen sechs Niveaus, dazu Übersetzungen in neun Sprachen.",
+      "🦊 „Fuchs des Tages\" steht jetzt immer fest — und wechselt sofort, sobald jemand anders mehr geschafft hat. Auch Woche, Monat und Jahr.",
+      "👥 Neu im Ranking: eine Übersicht aller Mitglieder mit grünem Punkt für alle, die gerade online sind.",
+      "🎵 Der Musikplayer im Profil hat keine sich verdoppelnde Überschrift mehr, und die Playlist anderer kannst du direkt im Profilstreifen durchhören und übernehmen.",
+      "🖼️ Das Profil sieht in der Ansicht, im Bearbeiten-Modus und bei anderen jetzt gleich aus: Bild links, Angaben fließen um die Rundung herum. Dein gewähltes Design steht mit dabei.",
+      "🎮 Spiele und Übungen: mehr Aufgaben in jeder Kategorie, sauber nach Niveau getrennt — A1 fühlt sich nach A1 an und C2 nach C2.",
+    ].join("\n\n"),
   };
   function notifyAboutAppUpdateIfNeeded() {
     if (!Backend.currentUser()) return;
@@ -16494,4 +16884,16 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt
   setInterval(() => { if (Backend.currentUser()) Backend.touchActivity(); }, 60000);
+
+  // Prüf-Zugang nur auf dem Testrechner: erlaubt es, Wörterbuch und Aufgabenbestand
+  // automatisch durchzuzählen, ohne die Seite dafür umbauen zu müssen. Im Netz
+  // (jede echte Domain) wird dieser Block nie ausgeführt.
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    window.DMA_PRUEFUNG = {
+      woerterbuch: () => buildDictionaryEntries(),
+      kategorien: () => ExerciseData.activeCategories().map((c) => ({ id: c.id, name: c.title, anzahl: (() => { try { return c.getBank().length; } catch (e) { return -1; } })() })),
+      katzenzimmer: (key) => kzZimmerSvg(KZ_ORTE.find((o) => o.key === key) || KZ_ORTE[0], true),
+      satzbruecke: (planken, gesamt, geschafft) => sbBrueckeSvg(planken, gesamt, geschafft, true),
+    };
+  }
 })();

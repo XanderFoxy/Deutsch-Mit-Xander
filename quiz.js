@@ -78,8 +78,47 @@ const Quiz = (function () {
     const i = LEVELS.indexOf(level);
     return i === -1 ? 2 : i; // unbekannt → B1 als neutrale Mitte
   }
+  /* Wortschatz-Messung: Das Niveau einer Aufgabe hängt nicht nur an ihrer Grammatik,
+     sondern auch daran, WELCHE WÖRTER darin vorkommen. Dafür wird das Wörterbuch
+     (VocabData.WORDS, jedes Wort mit festem Niveau) als Maßstab genommen.
+     Bewusst NICHT das schwerste einzelne Wort — ein seltener Ausreißer würde sonst
+     jede Aufgabe nach C2 schieben. Gemessen wird das Niveau, auf dem neun von zehn
+     erkannten Wörtern abgedeckt sind. */
+  let wortNiveauKarteCache = null;
+  function wortNiveauKarte() {
+    if (wortNiveauKarteCache) return wortNiveauKarteCache;
+    const karte = new Map();
+    const quelle = (typeof VocabData !== "undefined" && VocabData.WORDS) || [];
+    quelle.forEach((w) => {
+      if (!w || !w.word || !w.level) return;
+      const idx = LEVELS.indexOf(w.level);
+      if (idx < 0) return;
+      const grund = w.word.replace(/^(der|die|das)\s+/i, "").toLowerCase();
+      const bisher = karte.get(grund);
+      // Das NIEDRIGSTE hinterlegte Niveau gilt — ein Wort ist ab dem Zeitpunkt bekannt,
+      // an dem man es zum ersten Mal lernt.
+      if (bisher === undefined || idx < bisher) karte.set(grund, idx);
+    });
+    wortNiveauKarteCache = karte;
+    return karte;
+  }
+  function wortschatzNiveauIndex(text) {
+    const karte = wortNiveauKarte();
+    if (!karte.size) return null;
+    const woerter = String(text || "").toLowerCase().match(/[a-zäöüß]{3,}/g) || [];
+    const stufen = [];
+    woerter.forEach((w) => {
+      const idx = karte.get(w);
+      if (idx !== undefined) stufen.push(idx);
+    });
+    // Unter fünf erkannten Wörtern ist die Messung zu wackelig, um darauf zu bauen.
+    if (stufen.length < 5) return null;
+    stufen.sort((a, b) => a - b);
+    return stufen[Math.min(stufen.length - 1, Math.floor(stufen.length * 0.9))];
+  }
   function questionLevel(q, categoryId) {
     if (q && q.level && LEVELS.includes(q.level)) return q.level;
+    if (q && q.__niveau) return q.__niveau; // schon einmal berechnet
     let idx = levelIndex(KATEGORIE_GRUNDNIVEAU[categoryId] || "B1");
     // Längenzuschlag: sehr lange Aufgabenstellungen sind auch bei gleicher
     // Grammatik anspruchsvoller — mehr zu lesen, mehr im Kopf zu behalten.
@@ -87,7 +126,15 @@ const Quiz = (function () {
     const woerter = text.split(/\s+/).filter(Boolean).length;
     if (woerter >= 16) idx += 1;
     if (woerter >= 26) idx += 1;
-    return LEVELS[Math.min(idx, LEVELS.length - 1)];
+    // Wortschatz-Messung darf das Niveau anheben, aber nie senken: eine A1-Kategorie
+    // mit gehobenem Wortschatz ist eben doch keine A1-Aufgabe mehr.
+    const ausWortschatz = wortschatzNiveauIndex(text);
+    if (ausWortschatz !== null && ausWortschatz > idx) idx = ausWortschatz;
+    const ergebnis = LEVELS[Math.min(idx, LEVELS.length - 1)];
+    if (q && typeof q === "object") {
+      try { Object.defineProperty(q, "__niveau", { value: ergebnis, enumerable: false, configurable: true }); } catch (e) { /* eingefrorene Objekte einfach überspringen */ }
+    }
+    return ergebnis;
   }
   // Passende Fragen für ein gewünschtes Niveau: alles, was das Niveau NICHT
   // übersteigt — wer auf B2 lernt, darf auch leichtere Fragen bekommen, aber
