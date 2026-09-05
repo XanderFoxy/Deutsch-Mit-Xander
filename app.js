@@ -1344,6 +1344,8 @@
     if (typeof renderDictionary === "function") renderDictionary();
     if (typeof renderKompass === "function") renderKompass();
     if (typeof renderGamesOverview === "function") renderGamesOverview();
+    if (typeof renderItSatzbaukasten === "function") renderItSatzbaukasten();
+    dictCache = null; // Wörterbuch gehört jetzt zum anderen Raum
   }
   // Ein durchgehend sichtbares Band, solange der Italienisch-Raum aktiv ist —
   // damit nie Zweifel besteht, in welchem Raum man sich gerade befindet.
@@ -3341,6 +3343,17 @@
     // Zusätzlich beim nächsten Bildaufbau noch einmal absichern: Falls doch ein anderer
     // Automatismus dazwischenfunkt, gewinnt am Ende trotzdem das gemeinte Ziel.
     requestAnimationFrame(() => scrollToAndHighlightWhenReady(zielSelector, versuche));
+    // Manche Bereiche (z. B. der Kompass) bauen sich nach dem ersten Sprung noch einmal
+    // neu auf, weil sie ihr Banner nachladen — dabei ginge die Sprungposition verloren.
+    // Deshalb wird kurz danach zweimal nachgefasst, aber nur, wenn das Ziel dann nicht
+    // ohnehin schon sichtbar im Bild steht.
+    [500, 1300].forEach((ms) => setTimeout(() => {
+      const ziel = document.querySelector(zielSelector);
+      if (!ziel) return;
+      const kasten = ziel.getBoundingClientRect();
+      const sichtbar = kasten.top >= 0 && kasten.bottom <= (window.innerHeight || 0);
+      if (!sichtbar) ziel.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, ms));
   }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
@@ -4885,6 +4898,17 @@
   // Deshalb wird das Ergebnis gemerkt und nur neu berechnet, wenn der Lernraum wechselt.
   let dictCache = null;
   let dictCacheRaum = null;
+  // Ein Hobby so anzeigen, wie es zum aktuellen Lernraum passt: im Italienisch-Raum
+  // mit italienischem Artikel und Wort, darunter klein das deutsche Wort. Genau so
+  // gewöhnt man sich die Artikel an, ohne den eigenen Eintrag zu verlieren.
+  function hobbyBeschriftung(noun) {
+    const h = VocabData.HOBBIES.find((x) => x.noun === noun);
+    if (!h) return noun;
+    const it = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it" ? (VocabData.HOBBIES_IT || {})[noun] : null;
+    if (!it) return `${h.emoji} ${h.article} ${h.noun}`;
+    return `${h.emoji} ${it.article}${it.article.endsWith("'") ? "" : " "}${it.noun} <span class="empty-note" style="font-size:0.68rem;">(${h.article} ${h.noun})</span>`;
+  }
+
   function buildDictionaryEntries() {
     const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
     if (dictCache && dictCacheRaum === raum) return dictCache;
@@ -5011,7 +5035,7 @@
           ${Object.entries(langNames).map(([code, name]) => `<option value="${code}" ${firstStepsLangOverride === code ? "selected" : ""}>${name}</option>`).join("")}
         </select>
       </div>
-      <p class="empty-note" style="margin-bottom:14px;">💡 Bei mehrsilbigen Wörtern ist eine Silbe <strong>unterstrichen</strong> hervorgehoben — das zeigt nur, wo beim Sprechen die Betonung liegt. Geschrieben wird das Wort ganz normal, die Hervorhebung dient nur der Aussprache und ist keine eigene Schreibregel.</p>
+      <p class="empty-note" style="margin-bottom:14px;">💡 Die betonte Silbe steht <strong>fett</strong>, und unter ihrem Vokal steht ein Zeichen wie im Duden: ein <strong>Strich</strong> heißt lang gesprochen (T<span class="stress-vokal stress-lang">a</span>g, B<span class="stress-vokal stress-lang">a</span>hn), ein <strong>Punkt</strong> heißt kurz (B<span class="stress-vokal stress-kurz">a</span>nk). Ein kleiner offener Kreis heißt: die Silbe ist betont, aber die Schreibung verrät die Länge nicht eindeutig. Geschrieben wird das Wort ganz normal — die Zeichen gelten nur der Aussprache.</p>
 
       <p class="eyebrow">🧩 Satz-Baukasten — selbst ausprobieren</p>
       <div class="question-card" style="margin-bottom:20px;">
@@ -5315,7 +5339,7 @@
       list = list.filter((e) => e.category === dictCategoryFilter);
     }
     area.innerHTML = `
-      <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.</p>
+      <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.<br>Betonung wie im Duden: <strong>fett</strong> = betonte Silbe, <span class="stress-vokal stress-lang">Strich</span> darunter = langer Vokal, <span class="stress-vokal stress-kurz">Punkt</span> = kurzer Vokal, kleiner offener Kreis = betont, Länge aus der Schreibung nicht eindeutig.</p>
       <div class="vocab-toolbar"><input type="text" class="vocab-search" id="dictSearch" placeholder="Wort oder Bedeutung suchen…" value="${filter}" /></div>
       <div class="trophy-case" style="margin:10px 0;">
         ${["alle", "A1", "A2", "B1", "B2", "C1", "C2", "erweitert"].map((lvl) => `<button type="button" class="trophy-chip dict-level-btn ${dictLevelFilter === lvl ? "selected" : ""}" data-level="${lvl}">${lvl === "alle" ? "Alle" : lvl === "erweitert" ? "Erweitert (ungeprüft)" : lvl}</button>`).join("")}
@@ -5351,6 +5375,170 @@
   document.querySelector('#learnSubnav [data-sub="sub-erste-schritte"]')?.addEventListener("click", () => renderFirstSteps());
   document.querySelector('#learnSubnav [data-sub="sub-grammatik"]')?.addEventListener("click", () => renderGrammatik());
   document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.addEventListener("click", () => renderDictionary());
+
+  /* ============================================================
+     IL COSTRUTTORE DI FRASI — Satzbaukasten Italienisch
+     ------------------------------------------------------------
+     Man wählt Subjekt, Verb, Ergänzung und (optional) eine Zeitangabe;
+     der Satz baut sich sofort zusammen. Neben JEDEM Baustein steht seine
+     deutsche Bedeutung, und unter dem fertigen Satz die ganze Übersetzung
+     — dadurch sieht man die Satzstruktur, statt sie erraten zu müssen.
+     Zwei Zeiten: Präsens und passato prossimo (mit richtigem Hilfsverb
+     und, wo nötig, angeglichenem Partizip).
+     ============================================================ */
+  let sbkSubjekt = "1sg";
+  let sbkVerb = "lavorare";
+  let sbkErgaenzung = null;
+  let sbkZeitangabe = "";
+  let sbkZeitform = "presente";
+  const SBK_FORM_INDEX = { "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 };
+
+  function sbkSubjektObj() { return ExerciseData.IT_SUBJEKTE.find((s) => s.id === sbkSubjekt) || ExerciseData.IT_SUBJEKTE[0]; }
+  function sbkVerbObj() { return ExerciseData.IT_VERBEN.find((v) => v.id === sbkVerb) || ExerciseData.IT_VERBEN[0]; }
+  // Passende Ergänzungen: nur solche, deren Thema auch beim gewählten Verb steht.
+  function sbkPassendeErgaenzungen() {
+    const themen = sbkVerbObj().themen || [];
+    return ExerciseData.IT_ERGAENZUNGEN.filter((e) => (e.themen || []).some((t) => themen.includes(t)));
+  }
+  // Partizip mit Angleichung: Verben mit „essere" gleichen das Partizip an das
+  // Subjekt an (sono andato / sono andata / siamo andati). Wo das Geschlecht
+  // offen ist (io, tu, noi, voi, loro), werden beide Formen mit Schrägstrich
+  // gezeigt — genau so steht es auch in Grammatiken.
+  function sbkPartizip(verb, subjekt) {
+    if (verb.hilfsverb === "avere") return verb.partizip;
+    const stamm = verb.partizip;
+    if (subjekt.id === "3sgm") return stamm + "o";
+    if (subjekt.id === "3sgf") return stamm + "a";
+    if (subjekt.zahl === "sg") return stamm + "o/" + stamm + "a";
+    return stamm + "i/" + stamm + "e";
+  }
+  function sbkHilfsverbForm(verb, subjekt) {
+    const idx = SBK_FORM_INDEX[subjekt.id];
+    const avere = ["ho", "hai", "ha", "abbiamo", "avete", "hanno"];
+    const essere = ["sono", "sei", "è", "siamo", "siete", "sono"];
+    return (verb.hilfsverb === "essere" ? essere : avere)[idx];
+  }
+  // Deutsche Entsprechung des Verbs in der gewählten Person — bewusst schlicht
+  // gehalten, sie dient dem Verständnis, nicht als Stilvorlage.
+  const SBK_DE_ENDUNG = { "1sg": "e", "2sg": "st", "3sgm": "t", "3sgf": "t", "1pl": "en", "2pl": "t", "3pl": "en" };
+  function sbkDeutschesVerb(verb, subjekt, zeitform) {
+    const grund = String(verb.de).split(",")[0].trim();
+    const stamm = grund.replace(/e?n$/, "");
+    if (verb.id === "essere") return { "1sg": "bin", "2sg": "bist", "3sgm": "ist", "3sgf": "ist", "1pl": "sind", "2pl": "seid", "3pl": "sind" }[subjekt.id];
+    if (verb.id === "avere") return { "1sg": "habe", "2sg": "hast", "3sgm": "hat", "3sgf": "hat", "1pl": "haben", "2pl": "habt", "3pl": "haben" }[subjekt.id];
+    if (zeitform === "passato") return "habe/bin … " + grund.replace(/en$/, "t");
+    return stamm + (SBK_DE_ENDUNG[subjekt.id] || "");
+  }
+  function sbkSatz() {
+    const subj = sbkSubjektObj();
+    const verb = sbkVerbObj();
+    const erg = sbkPassendeErgaenzungen().find((e) => e.it === sbkErgaenzung) || null;
+    const zeit = ExerciseData.IT_ZEITANGABEN.find((z) => z.it === sbkZeitangabe) || ExerciseData.IT_ZEITANGABEN[0];
+    const verbform = sbkZeitform === "passato"
+      ? `${sbkHilfsverbForm(verb, subj)} ${sbkPartizip(verb, subj)}`
+      : verb.formen[SBK_FORM_INDEX[subj.id]];
+    const teile = [subj.it, verbform];
+    if (erg) teile.push(erg.it);
+    if (zeit && zeit.it) teile.push(zeit.it);
+    const satz = teile.join(" ");
+    const deTeile = [subj.de, sbkDeutschesVerb(verb, subj, sbkZeitform)];
+    if (erg) deTeile.push(erg.de);
+    if (zeit && zeit.de) deTeile.push(zeit.de);
+    return {
+      it: satz.charAt(0).toUpperCase() + satz.slice(1) + ".",
+      de: (() => { const t = deTeile.join(" ").replace(/\s+/g, " ").trim(); return t.charAt(0).toUpperCase() + t.slice(1) + "."; })(),
+      verbform, erg, zeit, verb, subj,
+    };
+  }
+  function renderItSatzbaukasten() {
+    const area = document.getElementById("satzbaukastenItArea");
+    if (!area) return;
+    if (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it") {
+      area.innerHTML = '<p class="empty-note">Der Satzbaukasten gehört zum Italienisch-Raum. Schalt in den Einstellungen auf 🇮🇹 Italiano um.</p>';
+      return;
+    }
+    const ergaenzungen = sbkPassendeErgaenzungen();
+    if (sbkErgaenzung && !ergaenzungen.some((e) => e.it === sbkErgaenzung)) sbkErgaenzung = null;
+    const satz = sbkSatz();
+    const zeitangaben = ExerciseData.IT_ZEITANGABEN.filter((z) => !(z.nurVergangenheit && sbkZeitform !== "passato"));
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:12px;">🧱 <strong>Il costruttore di frasi</strong> — bau dir deinen eigenen Satz. Neben jedem Baustein steht, was er auf Deutsch heißt; unter dem Satz siehst du die ganze Übersetzung.</p>
+
+      <div class="question-card" style="margin-bottom:14px;">
+        <p class="baustein-satz">${satz.it}</p>
+        <p class="baustein-satz-de">${satz.de}</p>
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:6px;">
+          <button type="button" class="btn btn-ghost" id="sbkVorlesen">🔊 Vorlesen</button>
+          <button type="button" class="btn btn-ghost" id="sbkZufall">🎲 Zufallssatz</button>
+        </div>
+      </div>
+
+      <p class="eyebrow">⏳ Zeit</p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sbk-zeitform="presente" aria-selected="${sbkZeitform === "presente"}">presente<span class="baustein-de">Gegenwart</span></button>
+        <button type="button" class="baustein" data-sbk-zeitform="passato" aria-selected="${sbkZeitform === "passato"}">passato prossimo<span class="baustein-de">Vergangenheit</span></button>
+      </div>
+
+      <p class="eyebrow">👤 Chi? — Wer?</p>
+      <div class="baustein-reihe">
+        ${ExerciseData.IT_SUBJEKTE.map((s) => `<button type="button" class="baustein" data-sbk-subjekt="${s.id}" aria-selected="${sbkSubjekt === s.id}">${s.it}<span class="baustein-de">${s.de}</span></button>`).join("")}
+      </div>
+
+      <p class="eyebrow">🔤 Che cosa fa? — Was tut sie oder er?</p>
+      <div class="baustein-reihe">
+        ${ExerciseData.IT_VERBEN.map((v) => `<button type="button" class="baustein" data-sbk-verb="${v.id}" aria-selected="${sbkVerb === v.id}">${sbkZeitform === "passato" ? sbkHilfsverbForm(v, sbkSubjektObj()) + " " + sbkPartizip(v, sbkSubjektObj()) : v.formen[SBK_FORM_INDEX[sbkSubjekt]]}<span class="baustein-de">${v.inf} — ${v.de}</span></button>`).join("")}
+      </div>
+
+      <p class="eyebrow">🧩 Che altro? — Was noch?</p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sbk-erg="" aria-selected="${!sbkErgaenzung}">— nichts —<span class="baustein-de">ohne Ergänzung</span></button>
+        ${ergaenzungen.map((e) => `<button type="button" class="baustein" data-sbk-erg="${e.it.replace(/"/g, "&quot;")}" aria-selected="${sbkErgaenzung === e.it}">${e.it}<span class="baustein-de">${e.de}</span></button>`).join("")}
+      </div>
+
+      <p class="eyebrow">🕒 Quando? — Wann?</p>
+      <div class="baustein-reihe">
+        ${zeitangaben.map((z) => `<button type="button" class="baustein" data-sbk-zeit="${z.it}" aria-selected="${sbkZeitangabe === z.it}">${z.it || "— nichts —"}<span class="baustein-de">${z.de || "ohne Zeitangabe"}</span></button>`).join("")}
+      </div>
+
+      <div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow" style="margin-top:0;">💡 Was hier gerade passiert</p>
+        <p class="empty-note" style="margin:0;">
+          Das Verb <strong>${satz.verb.inf}</strong> (${satz.verb.de}) bildet das passato prossimo mit
+          <strong>${satz.verb.hilfsverb}</strong>.
+          ${satz.verb.hilfsverb === "essere"
+            ? "Bei <strong>essere</strong> richtet sich das Partizip nach dem Subjekt — deshalb steht dort je nach Person eine andere Endung."
+            : "Bei <strong>avere</strong> bleibt das Partizip unverändert, egal wer handelt."}
+          Das Personalpronomen (${satz.subj.it}) darf man im Italienischen übrigens weglassen — die Verbendung sagt schon, wer gemeint ist.
+        </p>
+      </div>
+    `;
+    area.querySelectorAll("[data-sbk-zeitform]").forEach((b) => b.addEventListener("click", () => { sbkZeitform = b.dataset.sbkZeitform; renderItSatzbaukasten(); }));
+    area.querySelectorAll("[data-sbk-subjekt]").forEach((b) => b.addEventListener("click", () => { sbkSubjekt = b.dataset.sbkSubjekt; renderItSatzbaukasten(); }));
+    area.querySelectorAll("[data-sbk-verb]").forEach((b) => b.addEventListener("click", () => { sbkVerb = b.dataset.sbkVerb; renderItSatzbaukasten(); }));
+    area.querySelectorAll("[data-sbk-erg]").forEach((b) => b.addEventListener("click", () => { sbkErgaenzung = b.dataset.sbkErg || null; renderItSatzbaukasten(); }));
+    area.querySelectorAll("[data-sbk-zeit]").forEach((b) => b.addEventListener("click", () => { sbkZeitangabe = b.dataset.sbkZeit; renderItSatzbaukasten(); }));
+    document.getElementById("sbkVorlesen")?.addEventListener("click", () => {
+      if (!("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(satz.it);
+      u.lang = "it-IT";
+      u.rate = 0.92;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    });
+    document.getElementById("sbkZufall")?.addEventListener("click", () => {
+      const zufall = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      sbkZeitform = Math.random() < 0.5 ? "presente" : "passato";
+      sbkSubjekt = zufall(ExerciseData.IT_SUBJEKTE).id;
+      sbkVerb = zufall(ExerciseData.IT_VERBEN).id;
+      const moeglich = sbkPassendeErgaenzungen();
+      sbkErgaenzung = moeglich.length ? zufall(moeglich).it : null;
+      const zeiten = ExerciseData.IT_ZEITANGABEN.filter((z) => !(z.nurVergangenheit && sbkZeitform !== "passato"));
+      sbkZeitangabe = zufall(zeiten).it;
+      renderItSatzbaukasten();
+    });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-satzbaukasten-it"]')?.addEventListener("click", () => renderItSatzbaukasten());
+
 
   /* ============================================================
      MEMORY
@@ -10965,7 +11153,16 @@
      auseinanderlaufen könnte.
      ============================================================ */
   const AG_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
-  const AG_BEETE = [
+  // Im Italienisch-Raum wird derselbe Garten mit den italienischen Artikeln bepflanzt.
+  // Das Spiel bleibt dasselbe, nur die Beete und die Fragenquelle wechseln mit.
+  function agImItalienischraum() { return ExerciseData.getLernraum && ExerciseData.getLernraum() === "it"; }
+  const AG_BEETE_IT = [
+    { key: "il", label: "il", farbe: "#5B8DEF", blume: "#7BA7F5" },
+    { key: "lo", label: "lo", farbe: "#E8608A", blume: "#F58CAE" },
+    { key: "la", label: "la", farbe: "#4FA88E", blume: "#7FC9B3" },
+  ];
+  function agBeete() { return agImItalienischraum() ? AG_BEETE_IT : AG_BEETE_DE; }
+  const AG_BEETE_DE = [
     { key: "der", label: "der", farbe: "#5B8DEF", blume: "#7BA7F5" },
     { key: "die", label: "die", farbe: "#E8608A", blume: "#F58CAE" },
     { key: "das", label: "das", farbe: "#4FA88E", blume: "#7FC9B3" },
@@ -10977,20 +11174,28 @@
   let agZustand = "warten";
 
   function agPool() {
-    const bank = ExerciseData.activeGetCategory("artikel").getBank() || [];
+    const katId = agImItalienischraum() ? "it-artikel" : "artikel";
+    const kat = ExerciseData.activeGetCategory(katId);
+    const bank = (kat && kat.getBank()) || [];
+    // Nur Aufgaben, deren Lösung wirklich einer der drei Artikel dieses Raums ist —
+    // im italienischen Bestand kommen auch „l'“, „un“ oder „gli“ als Lösung vor,
+    // und die passen zu keinem der drei Beete.
+    const erlaubt = agBeete().map((b) => b.key);
+    const passend = bank.filter((q) => erlaubt.includes(q.options[q.correct[0]]));
     // Auf das gewählte Niveau eingrenzen — Artikel-Fragen tragen ihr Niveau
     // entweder selbst oder erben es aus der Kategorie (siehe Quiz.questionLevel).
     const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
     const grenze = stufen.indexOf(agLevel);
     for (let spielraum = 0; spielraum < stufen.length; spielraum++) {
-      const treffer = bank.filter((q) => stufen.indexOf(Quiz.questionLevel(q, "artikel")) <= grenze + spielraum);
+      const treffer = passend.filter((q) => stufen.indexOf(Quiz.questionLevel(q, katId)) <= grenze + spielraum);
       if (treffer.length >= 12) return treffer;
     }
-    return bank;
+    return passend.length ? passend : bank;
   }
   function neueAgSession() {
     agLevel = applyDefaultCefrLevel(agLevel, (v) => { agLevel = v; }, "artikelgarten");
-    agSession = { runde: 0, gesamt: AG_RUNDEN[agSchwierigkeit] || 10, richtig: 0, beete: { der: 0, die: 0, das: 0 }, gespielt: [] };
+    const leereBeete = {}; agBeete().forEach((b) => { leereBeete[b.key] = 0; });
+    agSession = { runde: 0, gesamt: AG_RUNDEN[agSchwierigkeit] || 10, richtig: 0, beete: leereBeete, gespielt: [] };
     agAktuell = null;
   }
   function neueAgRunde() {
@@ -11022,7 +11227,7 @@
       <rect x="0" y="0" width="200" height="118" fill="url(#agHimmel)"/>
       <circle cx="176" cy="20" r="12" fill="#F6CC78"/>
       <path d="M0 72 Q40 64 80 70 Q130 77 200 68 L200 118 L0 118 Z" fill="#8FBF86" opacity="0.55"/>
-      ${AG_BEETE.map((beet, i) => {
+      ${agBeete().map((beet, i) => {
         const x = 8 + i * 64;
         const anzahl = agSession ? agSession.beete[beet.key] : 0;
         const blumen = Math.min(anzahl, 6);
@@ -11064,7 +11269,7 @@
         ${agGartenSvg()}
         <p class="ag-samen">${agAktuell.wort}</p>
         <div class="ag-beet-knoepfe">
-          ${AG_BEETE.map((b) => `<button type="button" class="ag-beet-btn" data-ag-beet="${b.key}" style="--beet:${b.farbe};">${b.label}</button>`).join("")}
+          ${agBeete().map((b) => `<button type="button" class="ag-beet-btn" data-ag-beet="${b.key}" style="--beet:${b.farbe};">${b.label}</button>`).join("")}
         </div>
         <p class="empty-note ag-feedback" id="agFeedback">In welches Beet gehört dieses Wort?</p>
         <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">Runden: ${Object.entries(AG_RUNDEN).map(([k, v]) => `<button type="button" class="wsm-diff-btn ${agSchwierigkeit === k ? "aktiv" : ""}" data-ag-diff="${k}">${k} (${v})</button>`).join(" ")}</p>
@@ -11145,6 +11350,26 @@
     { key: "in", x: 170, y: 84, haltung: "liegen", imKorb: true, skala: 0.7, satz: "Die Katze schläft ___ dem Korb.", erkl: "„in“ — sie ist von etwas umschlossen." },
     { key: "zwischen", x: 150, y: 93, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch und dem Korb.", erkl: "„zwischen“ — links und rechts von ihr steht je ein Ding." },
   ];
+  // Dasselbe Zimmer auf Italienisch: gleiche Bilder, gleiche Orte — nur die
+  // Präposition und der Satz wechseln. So übt man im Italienisch-Raum genau
+  // dieselbe räumliche Vorstellung mit den italienischen Wörtern.
+  const KZ_ORTE_IT = {
+    auf: { key: "sul", satz: "Il gatto è ___ tavolo.", erkl: "„su“ + „il“ verschmelzen zu „sul“ — die Katze berührt die Tischplatte von oben." },
+    unter: { key: "sotto", satz: "Il gatto sta ___ il tavolo.", erkl: "„sotto“ heißt unter — die Katze liegt tiefer als der Tisch." },
+    neben: { key: "accanto", satz: "Il gatto è ___ alla sedia.", erkl: "„accanto a“ heißt neben; mit „la sedia“ wird daraus „accanto alla sedia“." },
+    hinter: { key: "dietro", satz: "Il gatto si nasconde ___ la sedia.", erkl: "„dietro“ heißt hinter — der Stuhl steht zwischen dir und der Katze." },
+    vor: { key: "davanti", satz: "Il gatto è ___ al tavolo.", erkl: "„davanti a“ heißt vor; mit „il tavolo“ wird daraus „davanti al tavolo“." },
+    in: { key: "nel", satz: "Il gatto dorme ___ cesto.", erkl: "„in“ + „il“ verschmelzen zu „nel“ — die Katze ist vom Korb umschlossen." },
+    zwischen: { key: "tra", satz: "Il gatto è ___ il tavolo e il cesto.", erkl: "„tra“ (oder „fra“) heißt zwischen — links und rechts steht je ein Ding." },
+  };
+  function kzImItalienischraum() { return ExerciseData.getLernraum && ExerciseData.getLernraum() === "it"; }
+  // Liefert einen Ort in der Fassung des aktuellen Raums: Bildposition und Haltung
+  // bleiben gleich, Satz und Lösungswort wechseln mit der Sprache.
+  function kzOrtFuerRaum(ort) {
+    if (!kzImItalienischraum()) return ort;
+    const it = KZ_ORTE_IT[ort.key];
+    return it ? { ...ort, key: it.key, satz: it.satz, erkl: it.erkl } : ort;
+  }
   let kzSession = null;
   let kzLevel = null;
   let kzSchwierigkeit = "leicht";
@@ -11161,8 +11386,8 @@
     // „hinter“ setzen räumliches Vokabular voraus, das dort noch fehlt.
     const einfach = ["auf", "unter", "neben", "in"];
     const erlaubt = (kzLevel === "A1" || kzLevel === "A2") ? KZ_ORTE.filter((o) => einfach.includes(o.key)) : KZ_ORTE;
-    const ort = erlaubt[Math.floor(Math.random() * erlaubt.length)];
-    const andere = erlaubt.filter((o) => o.key !== ort.key).map((o) => o.key);
+    const ort = kzOrtFuerRaum(erlaubt[Math.floor(Math.random() * erlaubt.length)]);
+    const andere = erlaubt.map(kzOrtFuerRaum).filter((o) => o.key !== ort.key).map((o) => o.key);
     kzAktuell = { ort, optionen: Core.shuffle([ort.key, ...Core.shuffle(andere).slice(0, 3)]) };
     kzZustand = "warten";
   }
@@ -12587,10 +12812,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         : `<div class="initials-avatar">${initials}</div>`;
 
     if (!profileEditMode) {
-      const hobbyReadout = (profile.hobbies || []).map((n) => {
-        const h = VocabData.HOBBIES.find((x) => x.noun === n);
-        return h ? `<div class="trophy-chip">${h.emoji} ${h.article} ${h.noun}</div>` : "";
-      }).join("");
+      const hobbyReadout = (profile.hobbies || []).map((n) => `<div class="trophy-chip">${hobbyBeschriftung(n)}</div>`).join("");
       const originFlag = profile.origin ? (VocabData.COUNTRIES.find((c) => c.name === profile.origin) || {}).flag || "🌍" : "";
       const pendingTexts = Backend.canModerate() ? await Backend.getPendingCommunityTexts() : [];
       area.innerHTML = `
@@ -12834,7 +13056,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         <div class="form-field">
           <label>Hobbys &amp; Interessen (übe dabei gleich Artikel mit!)</label>
-          ${(profile.hobbies || []).length ? `<p class="hobby-readout">✓ Ich mag: ${(profile.hobbies || []).map((n) => { const h = VocabData.HOBBIES.find((x) => x.noun === n); return h ? `${h.emoji} ${h.article} ${h.noun}` : n; }).join(", ")}</p>` : '<p class="empty-note">Noch nichts ausgewählt — antippen zum Hinzufügen.</p>'}
+          ${(profile.hobbies || []).length ? `<p class="hobby-readout">✓ Ich mag: ${(profile.hobbies || []).map((n) => hobbyBeschriftung(n)).join(", ")}</p>` : '<p class="empty-note">Noch nichts ausgewählt — antippen zum Hinzufügen.</p>'}
           <div class="hobby-chip-row">
             ${VocabData.HOBBIES.map((h) => `<button type="button" class="hobby-chip ${((profile.hobbies || []).includes(h.noun)) ? "selected" : ""}" data-hobby="${h.noun}">${h.emoji} ${h.article} ${isStressModeOn() ? stressHtml(h.syl) : h.noun}</button>`).join("")}
           </div>
@@ -15409,10 +15631,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           : "",
         p.hobbies && p.hobbies.length
           ? Core.el("div", { class: "trophy-case", style: "justify-content:center; margin-top:6px;",
-              html: p.hobbies.map((h) => {
-                const hobby = VocabData.HOBBIES.find((x) => x.noun === h);
-                return hobby ? `<div class="trophy-chip">${hobby.emoji} ${hobby.article} ${hobby.noun}</div>` : "";
-              }).join("") })
+              html: p.hobbies.map((h) => `<div class="trophy-chip">${hobbyBeschriftung(h)}</div>`).join("") })
           : "",
         Core.el("div", { html: renderExtendedSteckbrief(p, "modal-" + p.id) }),
         // WICHTIG: nutzt jetzt dieselbe renderTrophyCase()-Funktion wie das eigene Profil, statt
@@ -16847,10 +17066,10 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "139";
+  const APP_VERSION = "140";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
-    "139": [
+    "140": [
       "📖 Das Wörterbuch ist jetzt richtig groß: über 6000 Stichwörter, für jedes Niveau von A1 bis C2 rund 1000 Stück — jeweils mit Betonung, deutscher Erklärung, Übersetzung und Beispielsatz. Du kannst nach Niveau UND nach 25 Themenbereichen filtern.",
       "🧭 Dein Sprachniveau aus dem Profil gilt jetzt überall: Übungen, Grammatik, „Es war einmal in Deutschland\", „Dichter und Denker\" und „Schnee von gestern\" starten automatisch in deinem Niveau. Umschalten kannst du natürlich weiterhin jederzeit.",
       "📚 Neue Grammatik-Sektion unter „Lernen\" — die wichtigsten Themen deines Niveaus, kurz erklärt, mit Beispielen. Von dort springst du mit einem Tipp direkt in die passende Übung, die dann auch wirklich im Blick steht.",
@@ -16860,7 +17079,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       "👥 Neu im Ranking: eine Übersicht aller Mitglieder mit grünem Punkt für alle, die gerade online sind.",
       "🎵 Der Musikplayer im Profil hat keine sich verdoppelnde Überschrift mehr, und die Playlist anderer kannst du direkt im Profilstreifen durchhören und übernehmen.",
       "🖼️ Das Profil sieht in der Ansicht, im Bearbeiten-Modus und bei anderen jetzt gleich aus: Bild links, Angaben fließen um die Rundung herum. Dein gewähltes Design steht mit dabei.",
-      "🎮 Spiele und Übungen: mehr Aufgaben in jeder Kategorie, sauber nach Niveau getrennt — A1 fühlt sich nach A1 an und C2 nach C2.",
+      "🎮 Übungen: jede der 23 Kategorien hat jetzt 100 Aufgaben auf JEDEM Niveau von A1 bis C2 — rund 11.700 neue Aufgaben. Und eine C2-Runde besteht jetzt wirklich aus C2-Aufgaben, statt überwiegend aus leichteren.",
+      "🇮🇹 Der Italienisch-Raum ist ausgebaut: neun Kategorien mit je 100 Aufgaben pro Niveau, über 600 Wörter im italienischen Wörterbuch, ein Satzbaukasten, in dem neben jedem Baustein die deutsche Bedeutung steht, und Artikel-Garten, Katzenzimmer und Memory auf Italienisch.",
+      "🗣️ Die Betonung wird jetzt wie im Duden angezeigt: ein Strich unter dem Vokal heißt lang, ein Punkt heißt kurz. Wo die Schreibung die Länge nicht eindeutig hergibt, steht nur die Betonung — geraten wird nichts.",
+      "🐈 Katzenzimmer und Satzbrücke sind neu gezeichnet: Tisch und Stuhl sind klar zu erkennen, die Katze steht, sitzt oder liegt wirklich, und der Fuchs läuft am Ende über die fertige Brücke.",
+      "📎 Am Profil kann man jetzt mehrere Dateien auf einmal ablegen — auch PDF und MP3, und MP3 lässt sich direkt anhören.",
     ].join("\n\n"),
   };
   function notifyAboutAppUpdateIfNeeded() {

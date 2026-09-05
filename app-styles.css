@@ -725,17 +725,43 @@
 }
 .vocab-word { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; }
 .vocab-syl { font-family: var(--font-mono); font-size: 0.75rem; color: var(--teal-400); letter-spacing: 0.02em; }
-.stress-mark { font-weight: 800; position: relative; }
-.stress-mark::after {
+/* Betonung wie im Duden: die betonte Silbe steht fett, und unter ihrem Vokal
+   steht ein PUNKT (kurz gesprochen) oder ein STRICH (lang gesprochen). Vorher
+   bekam die ganze Silbe einen Punkt, ohne Aussage über die Länge. */
+.stress-mark { font-weight: 800; }
+.stress-vokal { position: relative; }
+.stress-vokal::after {
   content: "";
   position: absolute;
-  left: 50%;
   bottom: -4px;
+  background: var(--coral-400);
+}
+.stress-vokal.stress-kurz::after {
+  left: 50%;
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--coral-400);
   transform: translateX(-50%);
+}
+.stress-vokal.stress-lang::after {
+  left: 4%;
+  right: 4%;
+  height: 2px;
+  border-radius: 1px;
+}
+/* Dritter Fall, bewusst eigen gekennzeichnet: die Silbe ist betont, aber die
+   Schreibung sagt nichts Eindeutiges über die Vokallänge („Buch" lang,
+   „Geschichte" kurz — beide mit ch). Dann wird nur die Betonung angezeigt,
+   in gedämpfter Farbe, statt eine Länge zu behaupten, die geraten wäre. */
+.stress-vokal.stress-offen::after {
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: transparent;
+  border: 1px solid var(--coral-400);
+  opacity: 0.75;
 }
 .vocab-en { color: var(--cream-200); font-size: 0.85rem; margin-top: 2px; }
 .vocab-example { color: var(--cream-200); font-size: 0.8rem; margin-top: 4px; font-style: italic; }
@@ -4064,3 +4090,34 @@ details summary::marker { content: ""; }
 }
 /* Der Seiteninhalt rutscht um die Bandhöhe nach unten, damit nichts verdeckt wird. */
 body.lernraum-it { padding-top: 30px; }
+/* Der Satzbaukasten gehört zum Italienisch-Raum und taucht im Deutsch-Raum gar
+   nicht erst im Menü auf. */
+.nur-italienisch { display: none; }
+body.lernraum-it .nur-italienisch { display: inline-flex; }
+/* Bausteine des Satzbaukastens: die deutsche Bedeutung steht klein unter dem
+   italienischen Wort, damit beim Auswählen sofort klar ist, was man baut. */
+.baustein-reihe { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+.baustein {
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  line-height: 1.25;
+}
+.baustein[aria-selected="true"] {
+  border-color: var(--amber-400);
+  background: rgba(242,184,75,0.16);
+  font-weight: 700;
+}
+.baustein .baustein-de { display: block; font-size: 0.68rem; opacity: 0.75; font-weight: 400; }
+.baustein-satz {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 4px 0 2px;
+  line-height: 1.4;
+}
+.baustein-satz-de { font-size: 0.86rem; opacity: 0.8; margin: 0 0 6px; font-style: italic; }

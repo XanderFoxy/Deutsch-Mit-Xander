@@ -6319,5 +6319,29 @@ const VocabData = (function () {
     "Yoruba": "YO-ru-ba", "Haussa": "HAU-ssa", "Wolof": "WO-lof",
   };
 
-  return { WORDS, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
+  /* ============================================================
+     Hobbys auf Italienisch
+     ------------------------------------------------------------
+     Im Italienisch-Raum werden dieselben Hobbys mit italienischem
+     Artikel und Wort angezeigt. Der Artikel steht bewusst dabei —
+     genau daran gewöhnt man sich beim Lesen am schnellsten.
+     ============================================================ */
+  const HOBBIES_IT = {
+    "Kunst": { article: "l'", noun: "arte", syl: "AR-te" },
+    "Sport": { article: "lo", noun: "sport", syl: "sport" },
+    "Lesen": { article: "la", noun: "lettura", syl: "let-TU-ra" },
+    "Musik": { article: "la", noun: "musica", syl: "MU-si-ca" },
+    "Kochen": { article: "la", noun: "cucina", syl: "cu-CI-na" },
+    "Reisen": { article: "i", noun: "viaggi", syl: "VIAG-gi" },
+    "Fotografie": { article: "la", noun: "fotografia", syl: "fo-to-gra-FI-a" },
+    "Tanzen": { article: "la", noun: "danza", syl: "DAN-za" },
+    "Natur": { article: "la", noun: "natura", syl: "na-TU-ra" },
+    "Gaming": { article: "i", noun: "videogiochi", syl: "vi-de-o-GIO-chi" },
+    "Yoga": { article: "lo", noun: "yoga", syl: "YO-ga" },
+    "Handarbeit": { article: "il", noun: "lavoro a maglia", syl: "la-VO-ro a MA-glia" },
+    "Backen": { article: "la", noun: "pasticceria", syl: "pa-stic-ce-RI-a" },
+    "Gartenarbeit": { article: "il", noun: "giardinaggio", syl: "giar-di-NAG-gio" },
+  };
+
+  return { WORDS, HOBBIES_IT, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
 })();

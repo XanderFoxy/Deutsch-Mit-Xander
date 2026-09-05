@@ -141,21 +141,45 @@ const Quiz = (function () {
   // keine, die deutlich darüber liegen. Bleiben zu wenige übrig, wird der
   // Bereich schrittweise geöffnet, damit eine Runde nie an zu wenig Material
   // scheitert (lieber eine etwas zu schwere Frage als eine leere Runde).
+  /* Ein C2-Durchgang soll sich auch nach C2 anfühlen. Vorher galt schlicht
+     „alles bis einschließlich des gewählten Niveaus" — dadurch bestand eine
+     C2-Runde überwiegend aus A1- und B1-Fragen, weil es davon am meisten gibt.
+     Jetzt wird das gewählte Niveau ZUERST genommen und erst dann, wenn zu wenig
+     zusammenkommt, schrittweise nach unten (und zuletzt nach oben) geöffnet.
+     Eine Runde scheitert also weiterhin nie an zu wenig Material, fühlt sich
+     aber auf jedem Niveau anders an. */
   function filterByLevel(bank, categoryId, wantedLevel, mindestens) {
     if (!wantedLevel || !LEVELS.includes(wantedLevel)) return bank;
     const wantedIdx = levelIndex(wantedLevel);
-    for (let spielraum = 0; spielraum < LEVELS.length; spielraum++) {
-      const treffer = bank.filter((q) => levelIndex(questionLevel(q, categoryId)) <= wantedIdx + spielraum);
-      if (treffer.length >= (mindestens || 1)) return treffer;
+    const nachStufe = new Map();
+    bank.forEach((q) => {
+      const idx = levelIndex(questionLevel(q, categoryId));
+      if (!nachStufe.has(idx)) nachStufe.set(idx, []);
+      nachStufe.get(idx).push(q);
+    });
+    const ziel = Math.max(1, mindestens || 1);
+    const treffer = [...(nachStufe.get(wantedIdx) || [])];
+    if (treffer.length >= ziel) return treffer;
+    // Erst nach unten öffnen (leichter ist zumutbar), dann nach oben.
+    for (let d = 1; d < LEVELS.length; d++) {
+      if (wantedIdx - d >= 0) treffer.push(...(nachStufe.get(wantedIdx - d) || []));
+      if (treffer.length >= ziel) return treffer;
     }
-    return bank;
+    for (let d = 1; d < LEVELS.length; d++) {
+      if (wantedIdx + d < LEVELS.length) treffer.push(...(nachStufe.get(wantedIdx + d) || []));
+      if (treffer.length >= ziel) return treffer;
+    }
+    return treffer.length ? treffer : bank;
   }
 
   function poolSizeFor(categoryIds, topicFilters, level) {
     return categoryIds.reduce((sum, id) => {
       const t = topicFilters && topicFilters[id];
       const bank = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.activeGetCategory(id).getBank(t) : ExerciseData.activeGetCategory(id).getBank();
-      return sum + filterByLevel(bank, id, level, 1).length;
+      // Wie viele Fragen für eine Runde überhaupt zur Verfügung stehen — also
+      // inklusive der Nachbarstufen, die bei Bedarf geöffnet werden. Sonst würde
+      // die Schwierigkeitsauswahl Stufen sperren, die in Wahrheit spielbar sind.
+      return sum + filterByLevel(bank, id, level, Number.MAX_SAFE_INTEGER).length;
     }, 0);
   }
 

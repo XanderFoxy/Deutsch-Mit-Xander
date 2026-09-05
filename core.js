@@ -64,14 +64,92 @@ const Core = (function () {
   }
 
   // Wandelt "HA-ben" in Duden-Stil um: betonte Silbe fett + Punkt darunter.
+  /* ============================================================
+     BETONUNG — Kennzeichnung wie im Duden
+     ------------------------------------------------------------
+     Der Duden markiert nicht die ganze Silbe, sondern den betonten
+     VOKAL, und unterscheidet dabei die Länge:
+       · Punkt darunter  = kurzer Vokal (Bạnk, Lọch)
+       ‗ Strich darunter = langer Vokal  (Ta̲g, Wie̲se)
+     Die Länge wird nicht geraten, sondern nach den deutschen
+     Schreibregeln am ganzen Wort abgelesen: Dehnungs-h, Doppelvokal,
+     „ie", Diphthong und die Zahl der folgenden Konsonanten.
+     ============================================================ */
+  const VOKALE = "aeiouäöüy";
+  const DIPHTHONGE = ["ei", "ai", "au", "eu", "äu", "ey", "ay"];
+  const LANGE_PAARE = ["ie", "aa", "ee", "oo"];
+  // Häufige kurze Wörter, die trotz nur eines Konsonanten kurz gesprochen werden —
+  // die allgemeine Regel würde sie sonst fälschlich als lang markieren.
+  const KURZE_AUSNAHMEN = new Set(["das", "was", "es", "in", "an", "um", "am", "im", "hat", "bis", "man", "von", "vom", "zum", "ab", "ob", "bin", "hin", "des", "un", "hin", "dran", "drin", "dass", "bis", "mit"]);
+  // Ergebnis: { von, bis, lang } — lang ist true (lang), false (kurz) oder null.
+  // null heißt ausdrücklich: die SCHREIBUNG gibt die Länge nicht eindeutig her.
+  // Dann wird die Betonung angezeigt, aber keine Länge behauptet — lieber ehrlich
+  // als geraten. Eindeutig sind: Dehnungs-h, Doppelvokal, „ie", Diphthong und ß
+  // (lang) sowie Doppelkonsonant, ck, tz und ein zweifach geschlossener Silbenauslaut
+  // (kurz).
+  function betonterVokal(wort, start, laenge) {
+    const silbe = wort.slice(start, start + laenge);
+    let i = 0;
+    while (i < silbe.length && !VOKALE.includes(silbe[i])) i += 1;
+    if (i >= silbe.length) return null;
+    let ende = i + 1;
+    let lang = null;
+    const paar = silbe.slice(i, i + 2);
+    if (DIPHTHONGE.includes(paar)) { ende = i + 2; lang = true; }
+    else if (LANGE_PAARE.includes(paar)) { ende = i + 2; lang = true; }
+    if (lang === null) {
+      // Alles, was im GANZEN Wort nach dem Vokal folgt — die Silbengrenze läuft
+      // mitten durch Doppelkonsonanten („Löf-fel"), deshalb reicht die Silbe allein nicht.
+      const rest = wort.slice(start + ende);
+      let k = 0;
+      while (k < rest.length && !VOKALE.includes(rest[k])) k += 1;
+      const cluster = rest.slice(0, k);
+      const imSilbenrest = silbe.slice(ende); // Konsonanten, die noch zur betonten Silbe gehören
+      if (rest[0] === "h") lang = true;                                         // Dehnungs-h: Bahn, Uhr
+      else if (cluster.startsWith("ß")) lang = true;                            // Straße, Fuß
+      else if (/^(ck|tz|dt)/.test(cluster)) lang = false;                       // Zucker, Katze
+      else if (cluster.length >= 2 && cluster[0] === cluster[1]) lang = false;  // Doppelkonsonant: Löffel
+      else if (imSilbenrest.length === 0 && cluster.length <= 1) lang = true;   // offene Silbe: Ta-ge
+      else if (/(sch|ch|ph|th)/.test(cluster)) lang = null;                     // Buch vs. Geschichte — nicht ablesbar
+      else if (imSilbenrest.length >= 2) lang = false;                          // geschlossene Silbe: Bank, Angst
+      else if (cluster.length === 1 && start + ende + 1 >= wort.length) lang = true; // Zug, Tag
+      else lang = null;
+      if (KURZE_AUSNAHMEN.has(wort)) lang = false;
+    }
+    return { von: i, bis: ende, lang };
+  }
   function formatStress(syl) {
-    if (!syl || !syl.includes("-")) return syl || "";
+    if (!syl) return "";
+    // Mehrteilige Angaben („das ZIEL") Wort für Wort behandeln.
+    if (syl.includes(" ")) return syl.split(" ").map(formatStress).join(" ");
     const parts = syl.split("-");
+    // Betonte Silbe finden. Achtung: die ERSTE Silbe ist bei Nomen ohnehin groß
+    // geschrieben — ein einzelner Großbuchstabe („Ü-ber-LIE-fe-rung") ist deshalb
+    // kein Betonungszeichen, solange es eine echte Großbuchstaben-Silbe gibt.
+    const kandidaten = [];
+    parts.forEach((p, i) => { if (p === p.toUpperCase() && /[A-ZÄÖÜ]/.test(p)) kandidaten.push(i); });
+    let betontIdx = -1;
+    if (kandidaten.length === 1) betontIdx = kandidaten[0];
+    else if (kandidaten.length > 1) {
+      const mehrbuchstabig = kandidaten.filter((i) => parts[i].length > 1);
+      betontIdx = mehrbuchstabig.length ? mehrbuchstabig[0] : kandidaten[0];
+    }
+    if (betontIdx < 0) return syl;
+    const klein = parts.map((p) => p.toLowerCase());
+    const wort = klein.join("");
+    const versatz = betontIdx > 0 ? klein.slice(0, betontIdx).join("").length : 0;
+    const marke = betonterVokal(wort, versatz, klein[betontIdx].length);
     return parts.map((part, i) => {
-      const isStressed = part === part.toUpperCase() && /[A-ZÄÖÜ]/.test(part);
       let shown = part.toLowerCase();
       if (i === 0) shown = shown.charAt(0).toUpperCase() + shown.slice(1);
-      return isStressed ? `<span class="stress-mark">${shown}</span>` : shown;
+      if (i !== betontIdx) return shown;
+      if (!marke) return `<span class="stress-mark">${shown}</span>`;
+      const vorne = shown.slice(0, marke.von);
+      const kern = shown.slice(marke.von, marke.bis);
+      const hinten = shown.slice(marke.bis);
+      const art = marke.lang === true ? "stress-lang" : marke.lang === false ? "stress-kurz" : "stress-offen";
+      const titel = marke.lang === true ? "betont, langer Vokal" : marke.lang === false ? "betont, kurzer Vokal" : "betont — die Vokallänge lässt sich der Schreibung nicht eindeutig entnehmen";
+      return `<span class="stress-mark">${vorne}<span class="stress-vokal ${art}" title="${titel}">${kern}</span>${hinten}</span>`;
     }).join("");
   }
 
