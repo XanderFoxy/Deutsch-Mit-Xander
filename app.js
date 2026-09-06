@@ -18489,8 +18489,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "147";
+  const APP_VERSION = "148";
   const APP_CHANGELOG = {
+    "148": [
+      "🇮🇹 Alle 5333 italienischen Übungssätze haben jetzt eine deutsche Übersetzung. Mit dem Schalter „🇩🇪 Übersetzung einblenden“ siehst du bei jeder Lückenaufgabe, was der Satz heißt — bei allen neun Kategorien und auf allen Niveaus von A1 bis C2.",
+    ],
     "147": [
       "🛟 Wichtige Reparatur: Wenn dein Profil beim Laden nicht durchkam (Funkloch, kurzer Aussetzer beim Server), zeigte die Seite bisher ein leeres Profil — Grunddesign, keine Trophäen, keine Einstellungen — und hat diesen leeren Stand beim nächsten Speichern über deinen echten geschrieben. Genau so gingen Design, Füchse und Einstellungen verloren. Das kann jetzt nicht mehr passieren: Die Seite versucht dreimal zu laden, und wenn es dann immer noch nicht klappt, wird ABSICHTLICH nichts gespeichert und ein rotes Band oben sagt dir Bescheid.",
       "🔁 Deine Einstellungen werden beim Speichern jetzt mit dem Serverstand zusammengeführt statt ersetzt. Damit kann ein zweites Gerät nichts mehr löschen, was du am ersten eingestellt hast — und Trophäen, Abzeichen und Sammelfiguren gehen dabei nie verloren.",
