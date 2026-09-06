@@ -893,6 +893,10 @@
     { key: "wortblasen_neu", label: "🫧 Wortblasen (neues Spiel)", desc: "Mehrere Wort-Sprechblasen erscheinen gleichzeitig und zerplatzen — die richtige muss rechtzeitig getroffen werden. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "vokabelmeister_neu", label: "🔤 Vokabelmeister (neues Spiel)", desc: "Buchstabe wählen, dann 60 Sekunden Zeit für möglichst viele passende Wörter. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "korrektour_neu", label: "🚂 Korrektour (neues Spiel)", desc: "Satz-Zug fährt im Bogen durchs Bild — per Ampel-Signal entscheiden, ob der Satz richtig ist. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
+    { key: "blitzrunde_neu", label: "⚡ Blitzrunde (neues Spiel)", desc: "90 Sekunden, so viele richtige Antworten wie möglich, mit wachsendem Multiplikator bei fehlerfreier Serie. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
+    { key: "wortangler_neu", label: "🎣 Wortangler (neues Spiel)", desc: "Aus einem Teich voller Wörter nur die fangen, die zur Regel passen — ein bestimmter Artikel oder ein Themenbereich. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
+    { key: "wortleiter_neu", label: "🧗 Wortleiter (neues Spiel)", desc: "Von A1 nach C2 klettern: drei Aufgaben je Stufe, zwei Fehler beenden den Aufstieg. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
+    { key: "silbenturm_neu", label: "🧱 Silbenturm (neues Spiel)", desc: "Ein Wort aus seinen Silben wieder aufbauen und danach die betonte Silbe bestimmen. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "musikplayer_update", label: "🎵 Musikplayer-Update", desc: "Wellenform-Anzeige, Schnellliste (☰), MP3-Symbol im Video-Bereich. Bis zur Freigabe sehen andere Nutzer:innen den Player ohne diese neuen Elemente (die eigentlichen Stabilitäts-Fixes — Song hängt sich nicht mehr auf, Layout-Wechsel startet Song nicht neu — gelten unabhängig davon bereits für alle, da das reine Fehlerbehebungen waren)." },
   ];
   // Kleiner Freigabe-Schalter DIREKT AM ORT des jeweiligen Features (statt nur zentral in den
@@ -4020,6 +4024,47 @@
     if (!btn) return;
     btn.addEventListener("click", () => openBugReportDialog(context));
   }
+  /* Übersetzungs-Schalter für den Italienisch-Raum: blendet zu jedem Beispielsatz die
+     deutsche Bedeutung ein — den vollständigen Satz MIT eingesetzter Lösung, dazu die
+     Antwortmöglichkeiten. Ohne das muss man raten, worum es im Satz überhaupt geht.
+     Die Einstellung bleibt gespeichert, damit man sie nicht bei jeder Frage neu setzt. */
+  let uebersetzungAnzeigen = (() => {
+    try { return localStorage.getItem("dma_uebersetzung") === "1"; } catch (e) { return false; }
+  })();
+  function uebersetzungsSchalterHtml(q) {
+    const imItalienischraum = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it";
+    if (!imItalienischraum) return "";
+    const hatText = Boolean(q.uebersetzung);
+    return `
+      <button type="button" class="emoji-toggle-link" id="uebersetzungSchalter" style="margin-top:8px;">
+        ${uebersetzungAnzeigen ? "🇩🇪 Übersetzung ausblenden" : "🇩🇪 Übersetzung einblenden"}
+      </button>
+      ${uebersetzungAnzeigen ? `
+        <div class="question-explain" style="border-left:3px solid var(--teal-400);">
+          ${hatText ? `<p style="margin:0 0 6px;"><strong>${q.uebersetzung}</strong></p>` : '<p class="empty-note" style="margin:0 0 6px;">Für diesen Satz ist noch keine Übersetzung hinterlegt.</p>'}
+          <p class="empty-note" style="margin:0;">Antwortmöglichkeiten: ${q.options.map((o) => `${o}${IT_WORT_DE[o.toLowerCase()] ? ` (${IT_WORT_DE[o.toLowerCase()]})` : ""}`).join(" · ")}</p>
+        </div>` : ""}`;
+  }
+  // Kleine Nachschlagetabelle für die häufigsten Antwortwörter im Italienisch-Raum —
+  // Artikel, Präpositionen und Verbformen, die als Antwortmöglichkeit auftauchen.
+  const IT_WORT_DE = {
+    il: "der/die/das", lo: "der/die/das", la: "der/die/das", "l'": "der/die/das", i: "die (Mehrzahl)", gli: "die (Mehrzahl)", le: "die (Mehrzahl)",
+    un: "ein", uno: "ein", una: "eine", "un'": "eine",
+    di: "von", a: "zu, nach", da: "von, bei", in: "in", con: "mit", su: "auf", per: "für", tra: "zwischen", fra: "zwischen",
+    del: "vom", della: "von der", dello: "von dem", dei: "von den", degli: "von den", delle: "von den",
+    al: "zum", alla: "zur", allo: "zum", ai: "zu den", agli: "zu den", alle: "zu den",
+    nel: "im", nella: "in der", nello: "im", nei: "in den", negli: "in den", nelle: "in den",
+    sul: "auf dem", sulla: "auf der", sullo: "auf dem", sui: "auf den", sugli: "auf den", sulle: "auf den",
+    dal: "vom", dalla: "von der", dallo: "vom", dai: "von den", dagli: "von den", dalle: "von den",
+    "è": "ist", sono: "bin/sind", sei: "bist", siamo: "sind", siete: "seid",
+    ho: "habe", hai: "hast", ha: "hat", abbiamo: "haben", avete: "habt", hanno: "haben",
+    "c'è": "es gibt", "ci sono": "es gibt (Mehrzahl)",
+    molto: "sehr, viel", poco: "wenig", troppo: "zu viel", "più": "mehr", meno: "weniger",
+    "già": "schon", ancora: "noch", mai: "nie", sempre: "immer", spesso: "oft",
+    "perché": "warum, weil", quando: "wann", dove: "wo", come: "wie", chi: "wer", "che cosa": "was",
+    e: "und", ma: "aber", o: "oder", anche: "auch", non: "nicht",
+  };
+
   function renderQuestion() {
     setupEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -4050,6 +4095,7 @@
         <div class="option-list">
           ${q.options.map((opt, i) => `<button type="button" class="option-btn" data-idx="${i}"><span>${displayOption(opt)}</span></button>`).join("")}
         </div>
+        ${uebersetzungsSchalterHtml(q)}
         <div class="question-explain" id="explainBox">${q.explain}</div>
         ${isMulti ? `<div class="quiz-actions"><button type="button" class="btn btn-coffee" id="checkBtn">Fertig ✓</button></div>` : ""}
         <div class="quiz-actions" style="justify-content:space-between; margin-top:14px;">
@@ -4060,6 +4106,11 @@
 
     document.getElementById("pauseBtn").addEventListener("click", () => {
       renderSetup();
+    });
+    document.getElementById("uebersetzungSchalter")?.addEventListener("click", () => {
+      uebersetzungAnzeigen = !uebersetzungAnzeigen;
+      try { localStorage.setItem("dma_uebersetzung", uebersetzungAnzeigen ? "1" : "0"); } catch (e) { /* privater Modus */ }
+      renderQuestion();
     });
     wireBugReportButton(`Übung „${cat.title}" — Frage: „${q.prompt}"`);
 
@@ -11337,7 +11388,7 @@
   });
 
   /* ============================================================
-     KATZENZIMMER — Präpositionen sehen statt übersetzen
+     WO IST DIE KATZE? — Präpositionen sehen statt übersetzen
      ------------------------------------------------------------
      Ein gezeichnetes Zimmer mit Tisch, Stuhl, Korb und Regal. Die Katze
      sitzt jede Runde woanders — das BILD ist die Aufgabe. Dadurch wird
@@ -11346,17 +11397,30 @@
      Unterschied wo/wohin (Dativ/Akkusativ) dazu.
      ============================================================ */
   const KZ_RUNDEN = { leicht: 10, mittel: 20, schwer: 30 };
+  /* Die Szenen des Katzenzimmers. Jede Szene hat eine eigene Kennung, damit innerhalb
+     einer Runde nie dieselbe Szene zweimal drankommt — vorher gab es pro Präposition
+     nur EIN Bild, und bei vier erlaubten Präpositionen auf A1 wiederholte sich die
+     Frage ständig. Jetzt gibt es zu jeder Präposition mehrere Möbel.
+     haltung bestimmt, WIE die Katze gezeichnet wird: eine liegende Katze liegt wirklich
+     (Beine untergeschlagen), eine sitzende sitzt auf ihrem Hinterteil, eine stehende
+     steht auf allen vieren.
+     Bodenlinie im Bild ist y = 120. Daraus ergeben sich die y-Werte:
+     sitzen = Boden − 18, stehen = Boden − 17, liegen = Boden − 16. */
   const KZ_ORTE = [
-    // haltung bestimmt, WIE die Katze gezeichnet wird — sitzen, liegen oder stehen.
-    // Das ist bewusst getrennt: eine liegende Katze steht nicht auf ihren Beinen,
-    // eine sitzende sitzt wirklich auf ihrem Hinterteil und stützt sich vorn ab.
-    { key: "auf", x: 110, y: 48, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„auf“ — sie berührt die Tischplatte von oben. Ort → Dativ: auf dem Tisch." },
-    { key: "unter", x: 108, y: 95, haltung: "liegen", satz: "Die Katze liegt ___ dem Tisch.", erkl: "„unter“ — sie ist tiefer als der Tisch. Ort → Dativ: unter dem Tisch." },
-    { key: "neben", x: 30, y: 94, haltung: "stehen", satz: "Die Katze steht ___ dem Stuhl.", erkl: "„neben“ — sie ist seitlich davon, nicht darunter und nicht dahinter." },
-    { key: "hinter", x: 47, y: 92, haltung: "stehen", hinten: true, satz: "Die Katze versteckt sich ___ dem Stuhl.", erkl: "„hinter“ — der Stuhl steht zwischen dir und der Katze." },
-    { key: "vor", x: 104, y: 106, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„vor“ — sie ist näher bei dir als der Tisch." },
-    { key: "in", x: 170, y: 84, haltung: "liegen", imKorb: true, skala: 0.7, satz: "Die Katze schläft ___ dem Korb.", erkl: "„in“ — sie ist von etwas umschlossen." },
-    { key: "zwischen", x: 150, y: 93, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch und dem Korb.", erkl: "„zwischen“ — links und rechts von ihr steht je ein Ding." },
+    { id: "auf-tisch", key: "auf", x: 146, y: 48, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„auf“ — sie berührt die Tischplatte von oben. Ort → Dativ: auf dem Tisch." },
+    { id: "auf-stuhl", key: "auf", x: 84, y: 60, haltung: "sitzen", skala: 0.85, satz: "Die Katze sitzt ___ dem Stuhl.", erkl: "„auf“ — sie sitzt oben auf der Sitzfläche. Ort → Dativ: auf dem Stuhl." },
+    { id: "auf-fernseher", key: "auf", x: 34, y: 50, haltung: "liegen", skala: 0.8, satz: "Die Katze liegt ___ dem Fernseher.", erkl: "„auf“ — sie liegt oben auf dem Gerät, weil es dort warm ist." },
+    { id: "unter-tisch", key: "unter", x: 146, y: 104, haltung: "liegen", satz: "Die Katze liegt ___ dem Tisch.", erkl: "„unter“ — sie ist tiefer als der Tisch. Ort → Dativ: unter dem Tisch." },
+    { id: "unter-stuhl", key: "unter", x: 84, y: 104, haltung: "liegen", skala: 0.8, satz: "Die Katze liegt ___ dem Stuhl.", erkl: "„unter“ — sie hat sich unter die Sitzfläche gelegt." },
+    { id: "neben-korb", key: "neben", x: 258, y: 103, haltung: "stehen", skala: 0.8, satz: "Die Katze steht ___ dem Korb.", erkl: "„neben“ — sie steht direkt daneben, aber nicht darin." },
+    { id: "neben-fernseher", key: "neben", x: 66, y: 103, haltung: "stehen", skala: 0.62, satz: "Die Katze steht ___ dem Fernseher.", erkl: "„neben“ — sie ist seitlich davon, nicht davor und nicht dahinter." },
+    { id: "hinter-stuhl", key: "hinter", x: 86, y: 101, haltung: "stehen", hinten: true, satz: "Die Katze versteckt sich ___ dem Stuhl.", erkl: "„hinter“ — der Stuhl steht zwischen dir und der Katze." },
+    { id: "hinter-fernseher", key: "hinter", x: 16, y: 101, haltung: "stehen", hinten: true, skala: 0.85, satz: "Die Katze versteckt sich ___ dem Fernseher.", erkl: "„hinter“ — man sieht nur noch einen Teil von ihr, das Gerät steht davor." },
+    { id: "vor-tisch", key: "vor", x: 142, y: 112, haltung: "sitzen", satz: "Die Katze sitzt ___ dem Tisch.", erkl: "„vor“ — sie ist näher bei dir als der Tisch." },
+    { id: "vor-fernseher", key: "vor", x: 34, y: 112, haltung: "sitzen", skala: 0.9, satz: "Die Katze sitzt ___ dem Fernseher.", erkl: "„vor“ — sie sitzt zwischen dir und dem Gerät und schaut zu." },
+    { id: "in-korb", key: "in", x: 214, y: 90, haltung: "liegen", imKorb: true, skala: 0.65, satz: "Die Katze schläft ___ dem Korb.", erkl: "„in“ — sie ist von etwas umschlossen." },
+    { id: "zwischen-fernseher-stuhl", key: "zwischen", x: 62, y: 102, haltung: "sitzen", skala: 0.6, satz: "Die Katze sitzt ___ dem Fernseher und dem Stuhl.", erkl: "„zwischen“ — links und rechts von ihr steht je ein Ding." },
+    { id: "zwischen-tisch-korb", key: "zwischen", x: 190, y: 102, haltung: "sitzen", skala: 0.6, satz: "Die Katze sitzt ___ dem Tisch und dem Korb.", erkl: "„zwischen“ — sie hat auf beiden Seiten ein Möbelstück." },
   ];
   // Dasselbe Zimmer auf Italienisch: gleiche Bilder, gleiche Orte — nur die
   // Präposition und der Satz wechseln. So übt man im Italienisch-Raum genau
@@ -11394,65 +11458,91 @@
     // „hinter“ setzen räumliches Vokabular voraus, das dort noch fehlt.
     const einfach = ["auf", "unter", "neben", "in"];
     const erlaubt = (kzLevel === "A1" || kzLevel === "A2") ? KZ_ORTE.filter((o) => einfach.includes(o.key)) : KZ_ORTE;
-    const ort = kzOrtFuerRaum(erlaubt[Math.floor(Math.random() * erlaubt.length)]);
-    const andere = erlaubt.map(kzOrtFuerRaum).filter((o) => o.key !== ort.key).map((o) => o.key);
+    // Innerhalb einer Runde kommt keine Szene zweimal dran. Erst wenn wirklich alle
+    // Szenen einmal da waren, fängt die Liste von vorn an — vorher stand dieselbe
+    // Frage regelmäßig mehrmals hintereinander da.
+    if (kzSession && !kzSession.gespielt) kzSession.gespielt = [];
+    const gespielt = (kzSession && kzSession.gespielt) || [];
+    let uebrig = erlaubt.filter((o) => !gespielt.includes(o.id));
+    if (!uebrig.length) { if (kzSession) kzSession.gespielt = []; uebrig = erlaubt; }
+    const roh = uebrig[Math.floor(Math.random() * uebrig.length)];
+    if (kzSession) kzSession.gespielt.push(roh.id);
+    const ort = kzOrtFuerRaum(roh);
+    // Ablenker: andere Präpositionen, jede nur einmal.
+    const andere = [...new Set(erlaubt.map(kzOrtFuerRaum).map((o) => o.key))].filter((k) => k !== ort.key);
     kzAktuell = { ort, optionen: Core.shuffle([ort.key, ...Core.shuffle(andere).slice(0, 3)]) };
     kzZustand = "warten";
   }
   function kzZimmerSvg(ort, zeigen) {
     const k = ort;
     // Die Katze wird je nach Ort an einer anderen Stelle in die Zeichnung eingesetzt:
-    // hinter dem Stuhl liegt sie WIRKLICH dahinter (also vor dem Stuhl gezeichnet),
-    // im Korb steckt sie hinter der Korbwand — sonst sähe „hinter" aus wie „neben".
+    // hinter einem Möbel liegt sie WIRKLICH dahinter (also davor gezeichnet), im Korb
+    // steckt sie hinter der Korbwand — sonst sähe „hinter" aus wie „neben".
     const katze = `<g class="kz-katze" style="transform: translate(${k.x - 100}px, ${k.y - 90}px);"><g transform="translate(100 98) scale(${k.skala || 1}) translate(-100 -98)">${kzKatzeSvg(k.haltung || "sitzen")}</g></g>`;
     return `
-    <svg viewBox="0 0 200 130" width="100%" style="max-width:340px; display:block; margin:0 auto;" aria-hidden="true">
+    <svg viewBox="0 0 280 138" width="100%" style="max-width:380px; display:block; margin:0 auto;" aria-hidden="true">
       <defs>
         <linearGradient id="kzWand" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#F3E4CE"/><stop offset="100%" stop-color="#E4D2B6"/>
         </linearGradient>
+        <linearGradient id="kzBoden" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C09468"/><stop offset="100%" stop-color="#9A7247"/>
+        </linearGradient>
       </defs>
-      <rect x="0" y="0" width="200" height="112" fill="url(#kzWand)"/>
-      <rect x="0" y="112" width="200" height="18" fill="#B08A5F"/>
-      <path d="M0 112 L200 112" stroke="#8A6A45" stroke-width="1.5"/>
+      <rect x="0" y="0" width="280" height="112" fill="url(#kzWand)"/>
+      <!-- Der Boden beginnt deutlich HÖHER als die Möbelfüße enden. Dadurch stehen Stuhl,
+           Tisch, Fernseher und Korb sichtbar AUF dem Boden, statt an der Wandkante zu
+           schweben, wie es vorher aussah. -->
+      <rect x="0" y="112" width="280" height="26" fill="url(#kzBoden)"/>
+      <path d="M0 112 L280 112" stroke="#7E5C38" stroke-width="1.5"/>
+      <path d="M0 121 H280" stroke="#8A6A45" stroke-width="0.7" opacity="0.5"/>
       <!-- Fenster -->
-      <rect x="14" y="14" width="34" height="28" rx="3" fill="#BFE0EA" stroke="#9A7B54" stroke-width="2.5"/>
-      <path d="M31 14 L31 42 M14 28 L48 28" stroke="#9A7B54" stroke-width="1.6"/>
-      <!-- Regal -->
-      <rect x="150" y="26" width="40" height="4" rx="1.5" fill="#9A7B54"/>
-      <rect x="156" y="14" width="6" height="12" rx="1" fill="#C97B5A"/>
-      <rect x="164" y="17" width="6" height="9" rx="1" fill="#6FA88E"/>
-      <rect x="172" y="12" width="6" height="14" rx="1" fill="#E0B24C"/>
+      <rect x="106" y="14" width="34" height="28" rx="3" fill="#BFE0EA" stroke="#9A7B54" stroke-width="2.5"/>
+      <path d="M123 14 L123 42 M106 28 L140 28" stroke="#9A7B54" stroke-width="1.6"/>
+      <!-- Bild an der Wand -->
+      <rect x="200" y="14" width="28" height="21" rx="2" fill="#DCC6A0" stroke="#9A7B54" stroke-width="2"/>
+      <path d="M203 31 L210 22 L216 28 L221 20 L225 31 Z" fill="#8FBF86"/>
       ${k.hinten ? katze : ""}
-      <!-- Stuhl: Sitzfläche, Rückenlehne mit zwei Sprossen, vier Beine (zwei davon
-           versetzt dahinter) — dadurch ist auf einen Blick ein Stuhl erkennbar. -->
-      <rect x="30" y="76" width="34" height="5" rx="2" fill="#C79A67"/>
-      <rect x="30" y="81" width="34" height="2.5" fill="#9A6E43"/>
-      <rect x="31" y="44" width="4.5" height="34" rx="2" fill="#A8794F"/>
-      <rect x="58" y="44" width="4.5" height="34" rx="2" fill="#A8794F"/>
-      <rect x="31" y="47" width="31.5" height="4" rx="2" fill="#B98A5C"/>
-      <rect x="31" y="58" width="31.5" height="4" rx="2" fill="#B98A5C"/>
-      <rect x="37" y="83" width="3" height="28" rx="1.2" fill="#8A6238"/>
-      <rect x="55" y="83" width="3" height="28" rx="1.2" fill="#8A6238"/>
-      <rect x="32" y="83" width="2.6" height="23" rx="1.2" fill="#75522F"/>
-      <rect x="60" y="83" width="2.6" height="23" rx="1.2" fill="#75522F"/>
-      <!-- Tisch: dicke Platte mit sichtbarer Kante und Zarge darunter, vier Beine.
-           Vorher standen nur zwei dünne Striche da — als Tisch kaum zu erkennen. -->
-      <rect x="74" y="66" width="72" height="6" rx="2.5" fill="#C79A67"/>
-      <rect x="74" y="72" width="72" height="3" fill="#9A6E43"/>
-      <rect x="80" y="75" width="60" height="4" rx="1.5" fill="#AE7F52"/>
-      <rect x="82" y="79" width="5" height="32" rx="2" fill="#96683F"/>
-      <rect x="133" y="79" width="5" height="32" rx="2" fill="#96683F"/>
-      <rect x="90" y="79" width="4" height="25" rx="2" fill="#7E552F"/>
-      <rect x="126" y="79" width="4" height="25" rx="2" fill="#7E552F"/>
-      <ellipse cx="110" cy="111" rx="34" ry="3" fill="#8A6A45" opacity="0.3"/>
+      <!-- Fernseher LINKS auf einem niedrigen Sideboard -->
+      <rect x="12" y="96" width="44" height="22" rx="2" fill="#B98A5C"/>
+      <rect x="12" y="96" width="44" height="3" fill="#C79A67"/>
+      <rect x="15" y="118" width="4" height="4" rx="1" fill="#7E552F"/>
+      <rect x="49" y="118" width="4" height="4" rx="1" fill="#7E552F"/>
+      <rect x="16" y="64" width="36" height="26" rx="2.5" fill="#3B3A38"/>
+      <rect x="19" y="67" width="30" height="20" rx="1.5" fill="#79A8C4"/>
+      <path d="M22 84 L30 74 L36 80 L42 71 L47 84 Z" fill="#BBD7E6" opacity="0.8"/>
+      <rect x="30" y="90" width="8" height="4" rx="1" fill="#3B3A38"/>
+      <rect x="24" y="94" width="20" height="2.5" rx="1.2" fill="#2E2D2B"/>
+      <ellipse cx="34" cy="122" rx="26" ry="3" fill="#6B5136" opacity="0.25"/>
+      <!-- Stuhl in der Mitte links -->
+      <rect x="66" y="76" width="36" height="5" rx="2" fill="#C79A67"/>
+      <rect x="66" y="81" width="36" height="2.5" fill="#9A6E43"/>
+      <rect x="67" y="42" width="4.5" height="35" rx="2" fill="#A8794F"/>
+      <rect x="96" y="42" width="4.5" height="35" rx="2" fill="#A8794F"/>
+      <rect x="67" y="46" width="33.5" height="4" rx="2" fill="#B98A5C"/>
+      <rect x="67" y="58" width="33.5" height="4" rx="2" fill="#B98A5C"/>
+      <rect x="73" y="83" width="3.2" height="37" rx="1.4" fill="#8A6238"/>
+      <rect x="93" y="83" width="3.2" height="37" rx="1.4" fill="#8A6238"/>
+      <rect x="68" y="83" width="2.8" height="31" rx="1.4" fill="#75522F"/>
+      <rect x="98" y="83" width="2.8" height="31" rx="1.4" fill="#75522F"/>
+      <ellipse cx="84" cy="120" rx="22" ry="3" fill="#6B5136" opacity="0.28"/>
+      <!-- Tisch rechts daneben -->
+      <rect x="110" y="66" width="72" height="6" rx="2.5" fill="#C79A67"/>
+      <rect x="110" y="72" width="72" height="3" fill="#9A6E43"/>
+      <rect x="116" y="75" width="60" height="4" rx="1.5" fill="#AE7F52"/>
+      <rect x="118" y="79" width="5" height="43" rx="2" fill="#96683F"/>
+      <rect x="169" y="79" width="5" height="43" rx="2" fill="#96683F"/>
+      <rect x="126" y="79" width="4" height="36" rx="2" fill="#7E552F"/>
+      <rect x="162" y="79" width="4" height="36" rx="2" fill="#7E552F"/>
+      <ellipse cx="146" cy="122" rx="38" ry="3.5" fill="#6B5136" opacity="0.28"/>
       ${k.imKorb ? katze : ""}
       <!-- Korb mit Flechtmuster -->
-      <path d="M158 94 L190 94 L186 110 L162 110 Z" fill="#C9A15F"/>
-      <path d="M159.5 99 H188 M161 104 H186" stroke="#A07F45" stroke-width="1.1"/>
-      <path d="M157 92 L191 92 L190 95 L158 95 Z" fill="#B08D4E"/>
+      <path d="M200 96 L238 96 L233 118 L205 118 Z" fill="#C9A15F"/>
+      <path d="M201.5 102 H236 M203 109 H234.5" stroke="#A07F45" stroke-width="1.1"/>
+      <path d="M199 94 L239 94 L238 97 L200 97 Z" fill="#B08D4E"/>
+      <ellipse cx="219" cy="120" rx="20" ry="2.6" fill="#6B5136" opacity="0.25"/>
       ${!k.hinten && !k.imKorb ? katze : ""}
-      ${zeigen ? `<text x="100" y="12" text-anchor="middle" font-size="10" font-weight="800" fill="#8A5A3B">${k.key}</text>` : ""}
+      ${zeigen ? `<text x="140" y="12" text-anchor="middle" font-size="10" font-weight="800" fill="#8A5A3B">${k.key}</text>` : ""}
     </svg>`;
   }
   // Die Katze in drei getrennten Haltungen. Sie werden bewusst NICHT ineinander
@@ -11526,15 +11616,15 @@
   function renderKatzenzimmer() {
     const area = document.getElementById("katzenzimmerArea");
     if (!area) return;
-    if (!renderComingSoonGate(area, "katzenzimmer_neu", "Katzenzimmer", "🐈")) return;
+    if (!renderComingSoonGate(area, "katzenzimmer_neu", "Wo ist die Katze?", "🐈")) return;
     if (!kzSession) neueKzSession();
     if (kzSession.runde >= kzSession.gesamt) { renderKatzenzimmerErgebnis(); return; }
     if (!kzAktuell) neueKzRunde();
     const satzOffen = kzAktuell.ort.satz.replace("___", `<span class="kz-luecke">${kzZustand === "warten" ? "?" : kzAktuell.ort.key}</span>`);
     area.innerHTML = `
       <div class="question-card">
-        ${miniBugReportBtnHtml("Katzenzimmer: " + kzAktuell.ort.key)}
-        <p class="eyebrow">🐈 KATZENZIMMER · RUNDE ${kzSession.runde + 1} / ${kzSession.gesamt} <span class="subnav-info-icon" data-info="Schau, WO die Katze sitzt, und wähle die Präposition, die genau das beschreibt. Das Bild ist die Aufgabe — nicht die Übersetzung.">ⓘ</span></p>
+        ${miniBugReportBtnHtml("Wo ist die Katze?: " + kzAktuell.ort.key)}
+        <p class="eyebrow">🐈 WO IST DIE KATZE? · RUNDE ${kzSession.runde + 1} / ${kzSession.gesamt} <span class="subnav-info-icon" data-info="Schau, WO die Katze sitzt, und wähle die Präposition, die genau das beschreibt. Das Bild ist die Aufgabe — nicht die Übersetzung.">ⓘ</span></p>
         <div class="trophy-case wsm-chips">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip kz-level-btn ${kzLevel === lvl ? "selected" : ""}" data-kz-level="${lvl}">${lvl}</button>`).join("")}
         </div>
@@ -11581,7 +11671,7 @@
     const prozent = Math.round((kzSession.richtig / kzSession.gesamt) * 100);
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🐈 KATZENZIMMER — RUNDE FERTIG</p>
+        <p class="eyebrow">🐈 WO IST DIE KATZE? — RUNDE FERTIG</p>
         <p style="font-size:2rem; margin:8px 0;">${prozent >= 80 ? "🏆" : prozent >= 50 ? "🐈" : "🧶"}</p>
         <h2 style="margin:8px 0;">${kzSession.richtig} / ${kzSession.gesamt} richtig</h2>
         <p class="empty-note">${prozent >= 80 ? "Du siehst den Raum wie ein Muttersprachler." : "Präpositionen sitzen erst, wenn man sie sieht statt übersetzt — dranbleiben."}</p>
@@ -11599,12 +11689,461 @@
     renderKatzenzimmer();
   });
 
+
+  /* ============================================================
+     VIER NEUE SPIELE
+     ------------------------------------------------------------
+     Alle vier schöpfen aus Beständen, die es schon gibt — dem
+     Aufgabenspeicher der Übungen und dem Wörterbuch mit Niveau,
+     Thema, Artikel und Betonung. Dadurch wachsen sie automatisch
+     mit, sobald dort etwas dazukommt.
+     ============================================================ */
+
+  // Fragen des aktuellen Lernraums auf einem Niveau — gemeinsame Quelle für die neuen Spiele.
+  function fragenFuerNiveau(level, mindestens) {
+    const alle = [];
+    ExerciseData.activeCategories().forEach((c) => {
+      let bank = [];
+      try { bank = c.getBank(); } catch (e) { return; }
+      bank.forEach((q) => { if (q && q.options && q.options.length >= 2) alle.push({ ...q, categoryId: c.id, catTitle: c.title }); });
+    });
+    const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const genau = alle.filter((q) => Quiz.questionLevel(q, q.categoryId) === level);
+    if (genau.length >= (mindestens || 1)) return genau;
+    const grenze = stufen.indexOf(level);
+    for (let d = 1; d < stufen.length; d++) {
+      const erweitert = alle.filter((q) => Math.abs(stufen.indexOf(Quiz.questionLevel(q, q.categoryId)) - grenze) <= d);
+      if (erweitert.length >= (mindestens || 1)) return erweitert;
+    }
+    return alle;
+  }
+
+  /* ===== 1. BLITZRUNDE — 90 Sekunden, so viele richtige Antworten wie möglich.
+     Jede richtige Antwort in Folge erhöht den Multiplikator, ein Fehler setzt ihn
+     zurück. Belohnt Sicherheit statt Raten, weil Tempo allein nichts bringt. ===== */
+  let blitzLevel = null;
+  let blitzSession = null;
+  let blitzFrage = null;
+  let blitzTimer = null;
+  const BLITZ_DAUER = 90;
+  function neueBlitzSession() {
+    blitzLevel = applyDefaultCefrLevel(blitzLevel, (v) => { blitzLevel = v; }, "blitzrunde");
+    blitzSession = { zeit: BLITZ_DAUER, richtig: 0, falsch: 0, serie: 0, besteSerie: 0, punkte: 0, laeuft: false, fertig: false, gestellt: [] };
+    blitzFrage = null;
+    if (blitzTimer) { clearInterval(blitzTimer); blitzTimer = null; }
+  }
+  function neueBlitzFrage() {
+    const pool = fragenFuerNiveau(blitzLevel, 30);
+    const uebrig = pool.filter((q) => !blitzSession.gestellt.includes(q.prompt));
+    const quelle = uebrig.length ? uebrig : pool;
+    const q = quelle[Math.floor(Math.random() * quelle.length)];
+    blitzSession.gestellt.push(q.prompt);
+    blitzFrage = q;
+  }
+  function starteBlitz() {
+    blitzSession.laeuft = true;
+    neueBlitzFrage();
+    if (blitzTimer) clearInterval(blitzTimer);
+    blitzTimer = setInterval(() => {
+      blitzSession.zeit -= 1;
+      const anzeige = document.getElementById("blitzZeit");
+      if (anzeige) anzeige.textContent = blitzSession.zeit + " s";
+      if (blitzSession.zeit <= 0) {
+        clearInterval(blitzTimer); blitzTimer = null;
+        blitzSession.laeuft = false; blitzSession.fertig = true;
+        Core.sound.fanfare();
+        if (Backend.currentUser()) {
+          saveResultAndCheck({ categories: ["blitzrunde"], points: blitzSession.punkte, bonus: 0, percent: Math.round((blitzSession.richtig / Math.max(1, blitzSession.richtig + blitzSession.falsch)) * 100), character: "Blitzdenker:in", badges: [], playedAt: new Date().toISOString() });
+        }
+        renderBlitzrunde();
+      }
+    }, 1000);
+    renderBlitzrunde();
+  }
+  function renderBlitzrunde() {
+    const area = document.getElementById("blitzrundeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "blitzrunde_neu", "Blitzrunde", "⚡")) return;
+    if (!blitzSession) neueBlitzSession();
+    if (blitzSession.fertig) {
+      const genauigkeit = Math.round((blitzSession.richtig / Math.max(1, blitzSession.richtig + blitzSession.falsch)) * 100);
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p class="eyebrow">⚡ BLITZRUNDE — ZEIT UM</p>
+          <h2 style="margin:10px 0;">${blitzSession.punkte} Punkte</h2>
+          <p>${blitzSession.richtig} richtig · ${blitzSession.falsch} falsch · ${genauigkeit}% Trefferquote</p>
+          <p class="empty-note">Längste Serie ohne Fehler: <strong>${blitzSession.besteSerie}</strong></p>
+          <p class="empty-note" style="margin-top:8px;">${blitzSession.besteSerie >= 10 ? "Das war sicher gespielt — nicht geraten." : "Tipp: Der Multiplikator wächst nur, solange du keinen Fehler machst. Ruhig lesen lohnt sich mehr als schnell tippen."}</p>
+          <button type="button" class="btn btn-coffee" id="blitzNochmal" style="margin-top:14px;">🔄 Neue Runde</button>
+        </div>`;
+      document.getElementById("blitzNochmal").addEventListener("click", () => { neueBlitzSession(); renderBlitzrunde(); });
+      return;
+    }
+    if (!blitzSession.laeuft) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p class="eyebrow">⚡ BLITZRUNDE</p>
+          <p class="empty-note" style="margin:8px 0 12px;">${BLITZ_DAUER} Sekunden, so viele richtige Antworten wie möglich. Jede richtige Antwort in Folge erhöht den Multiplikator (×1, ×2, ×3 …), ein Fehler setzt ihn auf ×1 zurück. Raten lohnt sich also nicht.</p>
+          <div class="trophy-case wsm-chips" style="justify-content:center;">
+            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip blitz-level-btn ${blitzLevel === lvl ? "selected" : ""}" data-blitz-level="${lvl}">${lvl}</button>`).join("")}
+          </div>
+          <button type="button" class="btn btn-coffee" id="blitzStart" style="margin-top:14px;">▶ Los geht's</button>
+        </div>`;
+      area.querySelectorAll(".blitz-level-btn").forEach((b) => b.addEventListener("click", () => { blitzLevel = b.dataset.blitzLevel; renderBlitzrunde(); }));
+      document.getElementById("blitzStart").addEventListener("click", starteBlitz);
+      return;
+    }
+    const q = blitzFrage;
+    const multi = 1 + Math.floor(blitzSession.serie / 3);
+    area.innerHTML = `
+      <div class="question-card">
+        <div class="question-meta"><span class="cat-tag">${q.catTitle}</span> · ⏱️ <strong id="blitzZeit">${blitzSession.zeit} s</strong> · ${blitzSession.punkte} Punkte · Multiplikator ×${multi}</div>
+        <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(blitzSession.zeit / BLITZ_DAUER) * 100}%"></div></div>
+        <div class="question-prompt" style="margin-top:10px;">${q.prompt.replace("___", '<span class="blank-slot">___</span>')}</div>
+        <div class="option-list">
+          ${q.options.map((opt, i) => `<button type="button" class="option-btn blitz-opt" data-idx="${i}"><span>${opt}</span></button>`).join("")}
+        </div>
+        <p class="empty-note" style="margin-top:8px;">Serie: ${blitzSession.serie} richtig in Folge${blitzSession.serie >= 3 ? " — Multiplikator aktiv!" : ""}</p>
+      </div>`;
+    area.querySelectorAll(".blitz-opt").forEach((b) => b.addEventListener("click", () => {
+      const richtig = q.correct.includes(Number(b.dataset.idx));
+      if (richtig) {
+        blitzSession.richtig += 1;
+        blitzSession.serie += 1;
+        blitzSession.besteSerie = Math.max(blitzSession.besteSerie, blitzSession.serie);
+        blitzSession.punkte += 1 + Math.floor((blitzSession.serie - 1) / 3);
+        Core.sound.correct();
+      } else {
+        blitzSession.falsch += 1;
+        blitzSession.serie = 0;
+        Core.sound.wrong();
+      }
+      neueBlitzFrage();
+      renderBlitzrunde();
+    }));
+  }
+
+  /* ===== 2. WORTANGLER — Wörter treiben vorbei, gefangen werden darf nur, was zur
+     Regel passt (ein bestimmter Artikel, ein Thema oder ein Niveau). Trainiert das
+     schnelle Erkennen von Genus und Sachgebiet statt reinem Vokabelabfragen. ===== */
+  let anglerLevel = null;
+  let anglerSession = null;
+  const ANGLER_RUNDEN = 12;
+  function anglerWortpool() {
+    return buildDictionaryEntries().filter((e) => e.verified && e.level && e.meaning);
+  }
+  function neueAnglerSession() {
+    anglerLevel = applyDefaultCefrLevel(anglerLevel, (v) => { anglerLevel = v; }, "wortangler");
+    anglerSession = { runde: 0, gesamt: ANGLER_RUNDEN, richtig: 0, verpasst: 0, falsch: 0, regel: null, teich: [] };
+    neueAnglerRunde();
+  }
+  function neueAnglerRunde() {
+    const pool = anglerWortpool().filter((e) => e.level === anglerLevel);
+    const quelle = pool.length >= 12 ? pool : anglerWortpool();
+    // Regelarten: nach Artikel oder nach Themenbereich.
+    const artikel = ["der", "die", "das"];
+    const themen = [...new Set(quelle.map((e) => e.category))].filter(Boolean);
+    const nachArtikel = Math.random() < 0.5;
+    let regel, passt;
+    if (nachArtikel) {
+      const a = artikel[Math.floor(Math.random() * artikel.length)];
+      regel = { text: `Fang alle Wörter mit „${a}“`, kurz: a };
+      passt = (e) => e.word.toLowerCase().startsWith(a + " ");
+    } else {
+      const t = themen[Math.floor(Math.random() * themen.length)];
+      regel = { text: `Fang alle Wörter zum Thema „${t}“`, kurz: t };
+      passt = (e) => e.category === t;
+    }
+    const treffer = Core.shuffle(quelle.filter(passt)).slice(0, 3);
+    const nieten = Core.shuffle(quelle.filter((e) => !passt(e))).slice(0, 5);
+    if (!treffer.length) { anglerSession.regel = null; return; }
+    anglerSession.regel = regel;
+    anglerSession.passt = passt;
+    anglerSession.teich = Core.shuffle([...treffer, ...nieten]).map((e) => ({ ...e, gefangen: false }));
+    anglerSession.zuFangen = treffer.length;
+  }
+  function renderWortangler() {
+    const area = document.getElementById("wortanglerArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "wortangler_neu", "Wortangler", "🎣")) return;
+    if (!anglerSession) neueAnglerSession();
+    if (anglerSession.runde >= anglerSession.gesamt) { renderWortanglerErgebnis(); return; }
+    if (!anglerSession.regel) { neueAnglerRunde(); }
+    const s = anglerSession;
+    const gefangen = s.teich.filter((e) => e.gefangen && s.passt(e)).length;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wortangler: " + s.regel.text)}
+        <p class="eyebrow">🎣 WORTANGLER · RUNDE ${s.runde + 1} / ${s.gesamt} <span class="subnav-info-icon" data-info="Im Teich schwimmen Wörter. Tippe genau die an, die zur Regel oben passen — die anderen lässt du schwimmen. Alle Wörter kommen aus dem Wörterbuch der Seite.">ⓘ</span></p>
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip angler-level-btn ${anglerLevel === lvl ? "selected" : ""}" data-angler-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        <p style="font-weight:800; font-size:1.05rem; margin:10px 0 4px;">${s.regel.text}</p>
+        <p class="empty-note" style="margin:0 0 10px;">${gefangen} von ${s.zuFangen} gefangen</p>
+        <div class="angler-teich">
+          ${s.teich.map((e, i) => `
+            <button type="button" class="angler-fisch ${e.gefangen ? (s.passt(e) ? "angler-treffer" : "angler-niete") : ""}" data-angler="${i}" ${e.gefangen ? "disabled" : ""}>
+              <span class="angler-wort">${e.word}</span>
+              <span class="angler-bedeutung">${e.meaning}</span>
+            </button>`).join("")}
+        </div>
+        <button type="button" class="btn btn-ghost" id="anglerWeiter" style="margin-top:12px;">Runde beenden ▸</button>
+      </div>`;
+    area.querySelectorAll(".angler-level-btn").forEach((b) => b.addEventListener("click", () => { anglerLevel = b.dataset.anglerLevel; neueAnglerSession(); renderWortangler(); }));
+    area.querySelectorAll("[data-angler]").forEach((b) => b.addEventListener("click", () => {
+      const e = s.teich[Number(b.dataset.angler)];
+      e.gefangen = true;
+      if (s.passt(e)) { s.richtig += 1; Core.sound.correct(); } else { s.falsch += 1; Core.sound.wrong(); }
+      renderWortangler();
+    }));
+    document.getElementById("anglerWeiter").addEventListener("click", () => {
+      s.verpasst += s.teich.filter((e) => !e.gefangen && s.passt(e)).length;
+      s.runde += 1;
+      if (s.runde < s.gesamt) neueAnglerRunde();
+      renderWortangler();
+    });
+  }
+  function renderWortanglerErgebnis() {
+    const area = document.getElementById("wortanglerArea");
+    const s = anglerSession;
+    const punkte = Math.max(0, s.richtig * 2 - s.falsch);
+    const prozent = Math.round((s.richtig / Math.max(1, s.richtig + s.falsch + s.verpasst)) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🎣 WORTANGLER — RUNDE FERTIG</p>
+        <h2 style="margin:10px 0;">${s.richtig} richtige Fänge</h2>
+        <p>${s.falsch} Fehlgriffe · ${s.verpasst} entwischt · ${punkte} Punkte</p>
+        <p class="empty-note" style="margin-top:8px;">${prozent >= 80 ? "Du erkennst Artikel und Themen schon sehr sicher." : "Tipp: Bei Nomen hilft die Endung — „-ung“, „-heit“ und „-keit“ sind immer „die“."}</p>
+        <button type="button" class="btn btn-coffee" id="anglerNochmal" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>`;
+    document.getElementById("anglerNochmal").addEventListener("click", () => { neueAnglerSession(); renderWortangler(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["wortangler"], points: punkte, bonus: 0, percent: prozent, character: "Wortangler:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+
+  /* ===== 3. WORTLEITER — von A1 nach C2 klettern. Auf jeder Stufe drei Aufgaben
+     dieses Niveaus; wer sie schafft, steigt auf. Das macht den Fortschritt sichtbar
+     und gibt dem Üben eine Richtung, statt nur Einzelrunden zu spielen. ===== */
+  let leiterSession = null;
+  const LEITER_STUFEN = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const LEITER_PRO_STUFE = 3;
+  function neueLeiterSession() {
+    leiterSession = { stufe: 0, richtigAufStufe: 0, fehlerAufStufe: 0, gesamtRichtig: 0, geschafft: [], fertig: false, frage: null, gestellt: [] };
+    neueLeiterFrage();
+  }
+  function neueLeiterFrage() {
+    const level = LEITER_STUFEN[leiterSession.stufe];
+    const pool = fragenFuerNiveau(level, 10);
+    const uebrig = pool.filter((q) => !leiterSession.gestellt.includes(q.prompt));
+    const quelle = uebrig.length ? uebrig : pool;
+    const q = quelle[Math.floor(Math.random() * quelle.length)];
+    leiterSession.gestellt.push(q.prompt);
+    leiterSession.frage = q;
+  }
+  function leiterSvg(stufe, geschafft) {
+    const hoehe = 150;
+    return `
+      <svg viewBox="0 0 90 ${hoehe}" width="70" style="display:block; margin:0 auto;" aria-hidden="true">
+        <rect x="28" y="8" width="5" height="${hoehe - 16}" rx="2" fill="#A8794F"/>
+        <rect x="57" y="8" width="5" height="${hoehe - 16}" rx="2" fill="#A8794F"/>
+        ${LEITER_STUFEN.map((lvl, i) => {
+          const y = hoehe - 20 - i * 22;
+          const erledigt = geschafft.includes(lvl);
+          const aktuell = i === stufe;
+          return `<rect x="28" y="${y}" width="34" height="5" rx="2" fill="${erledigt ? "#57C7AE" : aktuell ? "#F2B84B" : "#C9A98A"}"/>
+                  <text x="14" y="${y + 5}" font-size="9" font-weight="800" fill="${erledigt ? "#57C7AE" : aktuell ? "#F2B84B" : "#B49B80"}">${lvl}</text>
+                  ${erledigt ? `<text x="68" y="${y + 5}" font-size="9">✓</text>` : ""}`;
+        }).join("")}
+      </svg>`;
+  }
+  function renderWortleiter() {
+    const area = document.getElementById("wortleiterArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "wortleiter_neu", "Wortleiter", "🧗")) return;
+    if (!leiterSession) neueLeiterSession();
+    const s = leiterSession;
+    if (s.fertig) {
+      area.innerHTML = `
+        <div class="question-card" style="text-align:center;">
+          <p class="eyebrow">🧗 WORTLEITER — OBEN ANGEKOMMEN</p>
+          ${leiterSvg(LEITER_STUFEN.length - 1, s.geschafft)}
+          <h2 style="margin:10px 0;">${s.geschafft.length} von ${LEITER_STUFEN.length} Stufen</h2>
+          <p class="empty-note">${s.geschafft.length === LEITER_STUFEN.length ? "Von A1 bis C2 durchgeklettert — das schafft nicht jede und jeder." : `Bis ${s.geschafft[s.geschafft.length - 1] || "A1"} bist du gekommen. Beim nächsten Mal weiter.`}</p>
+          <button type="button" class="btn btn-coffee" id="leiterNochmal" style="margin-top:14px;">🔄 Von vorn</button>
+        </div>`;
+      document.getElementById("leiterNochmal").addEventListener("click", () => { neueLeiterSession(); renderWortleiter(); });
+      if (Backend.currentUser()) {
+        saveResultAndCheck({ categories: ["wortleiter"], points: s.gesamtRichtig * 3, bonus: s.geschafft.length === LEITER_STUFEN.length ? 20 : 0, percent: Math.round((s.geschafft.length / LEITER_STUFEN.length) * 100), character: "Aufsteiger:in", badges: [], playedAt: new Date().toISOString() });
+      }
+      return;
+    }
+    const level = LEITER_STUFEN[s.stufe];
+    const q = s.frage;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wortleiter " + level + ": " + q.prompt)}
+        <p class="eyebrow">🧗 WORTLEITER · STUFE ${level} <span class="subnav-info-icon" data-info="Auf jeder Stufe warten drei Aufgaben dieses Niveaus. Schaffst du sie, geht es eine Stufe höher — bis hinauf nach C2. Zwei Fehler auf derselben Stufe beenden den Aufstieg.">ⓘ</span></p>
+        <div style="display:flex; gap:14px; align-items:center;">
+          ${leiterSvg(s.stufe, s.geschafft)}
+          <div style="flex:1; min-width:0;">
+            <p class="empty-note" style="margin:0 0 6px;">${s.richtigAufStufe} von ${LEITER_PRO_STUFE} richtig · ${2 - s.fehlerAufStufe} Fehler übrig</p>
+            <div class="question-prompt">${q.prompt.replace("___", '<span class="blank-slot">___</span>')}</div>
+          </div>
+        </div>
+        <div class="option-list" style="margin-top:10px;">
+          ${q.options.map((opt, i) => `<button type="button" class="option-btn leiter-opt" data-idx="${i}"><span>${opt}</span></button>`).join("")}
+        </div>
+        <p class="empty-note" id="leiterFeedback" style="margin-top:8px;">${q.catTitle}</p>
+      </div>`;
+    area.querySelectorAll(".leiter-opt").forEach((b) => b.addEventListener("click", () => {
+      const richtig = q.correct.includes(Number(b.dataset.idx));
+      const box = document.getElementById("leiterFeedback");
+      if (richtig) {
+        s.richtigAufStufe += 1; s.gesamtRichtig += 1;
+        Core.sound.correct();
+        if (s.richtigAufStufe >= LEITER_PRO_STUFE) {
+          s.geschafft.push(level);
+          s.stufe += 1; s.richtigAufStufe = 0; s.fehlerAufStufe = 0;
+          if (s.stufe >= LEITER_STUFEN.length) { s.fertig = true; Core.sound.fanfare(); }
+          else { Core.sound.okay(); showToast(`🧗 Stufe ${level} geschafft — weiter auf ${LEITER_STUFEN[s.stufe]}!`); }
+        }
+      } else {
+        s.fehlerAufStufe += 1;
+        Core.sound.wrong();
+        if (box) box.textContent = q.explain || "Nicht ganz.";
+        if (s.fehlerAufStufe >= 2) { s.fertig = true; Core.sound.fail(); }
+      }
+      if (!s.fertig) neueLeiterFrage();
+      setTimeout(() => renderWortleiter(), richtig ? 500 : 1600);
+    }));
+  }
+
+  /* ===== 4. SILBENTURM — ein Wort ist in seine Silben zerfallen und muss in der
+     richtigen Reihenfolge wieder aufgebaut werden. Danach wird gefragt, welche Silbe
+     betont ist. Nutzt die Silben- und Betonungsangaben aus dem Wörterbuch. ===== */
+  let turmLevel = null;
+  let turmSession = null;
+  const TURM_RUNDEN = 10;
+  function turmWortpool() {
+    return buildDictionaryEntries().filter((e) => e.verified && e.syl && e.syl.includes("-") && e.syl.split("-").length >= 2 && e.syl.split("-").length <= 5 && e.level);
+  }
+  function neueTurmSession() {
+    turmLevel = applyDefaultCefrLevel(turmLevel, (v) => { turmLevel = v; }, "silbenturm");
+    turmSession = { runde: 0, gesamt: TURM_RUNDEN, richtig: 0, phase: "bauen", gelegt: [], wort: null, gespielt: [] };
+    neueTurmRunde();
+  }
+  function neueTurmRunde() {
+    const pool = turmWortpool();
+    const passend = pool.filter((e) => e.level === turmLevel && !turmSession.gespielt.includes(e.word));
+    const quelle = passend.length ? passend : pool.filter((e) => !turmSession.gespielt.includes(e.word));
+    if (!quelle.length) { turmSession.runde = turmSession.gesamt; return; }
+    const e = quelle[Math.floor(Math.random() * quelle.length)];
+    turmSession.gespielt.push(e.word);
+    const silben = e.syl.split("-");
+    turmSession.wort = { ...e, silben, betontIdx: silben.findIndex((t) => t === t.toUpperCase() && /[A-ZÄÖÜ]/.test(t)) };
+    turmSession.gelegt = [];
+    turmSession.vorrat = Core.shuffle(silben.map((t, i) => ({ t, i })));
+    turmSession.phase = "bauen";
+  }
+  function renderSilbenturm() {
+    const area = document.getElementById("silbenturmArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "silbenturm_neu", "Silbenturm", "🧱")) return;
+    if (!turmSession) neueTurmSession();
+    if (turmSession.runde >= turmSession.gesamt) { renderSilbenturmErgebnis(); return; }
+    const s = turmSession;
+    const w = s.wort;
+    const fertigGebaut = s.gelegt.length === w.silben.length;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Silbenturm: " + w.word)}
+        <p class="eyebrow">🧱 SILBENTURM · RUNDE ${s.runde + 1} / ${s.gesamt} <span class="subnav-info-icon" data-info="Ein Wort ist in seine Silben zerfallen. Bau es von unten nach oben wieder zusammen — und sag danach, welche Silbe betont wird.">ⓘ</span></p>
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip turm-level-btn ${turmLevel === lvl ? "selected" : ""}" data-turm-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        <p class="empty-note" style="margin:10px 0 4px;">Bedeutung: ${w.meaning || "—"}</p>
+        <div class="silbenturm-bau">
+          ${s.gelegt.length ? s.gelegt.map((x) => `<span class="silben-stein ${s.phase === "betonung" && x.i === w.betontIdx ? "" : ""}">${x.t.toLowerCase()}</span>`).join("") : '<span class="empty-note">Noch nichts gelegt</span>'}
+        </div>
+        ${s.phase === "bauen" ? `
+          <p class="empty-note" style="margin:10px 0 4px;">Silben in der richtigen Reihenfolge antippen:</p>
+          <div class="silben-vorrat">
+            ${s.vorrat.filter((x) => !s.gelegt.includes(x)).map((x, idx) => `<button type="button" class="silben-stein silben-waehlbar" data-turm-silbe="${s.vorrat.indexOf(x)}">${x.t.toLowerCase()}</button>`).join("")}
+          </div>
+          ${s.gelegt.length ? `<button type="button" class="btn btn-ghost" id="turmZurueck" style="margin-top:10px;">↩ Letzte Silbe zurück</button>` : ""}
+        ` : `
+          <p style="font-weight:800; margin:12px 0 6px;">${w.word} — welche Silbe wird betont?</p>
+          <div class="silben-vorrat">
+            ${w.silben.map((t, i) => `<button type="button" class="silben-stein silben-waehlbar" data-turm-betonung="${i}">${t.toLowerCase()}</button>`).join("")}
+          </div>
+        `}
+        <p class="empty-note" id="turmFeedback" style="margin-top:10px;">${fertigGebaut && s.phase === "bauen" ? "Der Turm steht — gleich geht es weiter." : ""}</p>
+      </div>`;
+    area.querySelectorAll(".turm-level-btn").forEach((b) => b.addEventListener("click", () => { turmLevel = b.dataset.turmLevel; neueTurmSession(); renderSilbenturm(); }));
+    area.querySelectorAll("[data-turm-silbe]").forEach((b) => b.addEventListener("click", () => {
+      const x = s.vorrat[Number(b.dataset.turmSilbe)];
+      const naechsteRichtige = s.gelegt.length;
+      if (x.i === naechsteRichtige) {
+        s.gelegt.push(x);
+        Core.sound.correct();
+        if (s.gelegt.length === w.silben.length) s.phase = "betonung";
+      } else {
+        Core.sound.wrong();
+        const box = document.getElementById("turmFeedback");
+        if (box) box.textContent = "Diese Silbe kommt später — welche steht ganz vorn?";
+        return;
+      }
+      renderSilbenturm();
+    }));
+    document.getElementById("turmZurueck")?.addEventListener("click", () => { s.gelegt.pop(); renderSilbenturm(); });
+    area.querySelectorAll("[data-turm-betonung]").forEach((b) => b.addEventListener("click", () => {
+      const gewaehlt = Number(b.dataset.turmBetonung);
+      const box = document.getElementById("turmFeedback");
+      if (gewaehlt === w.betontIdx) {
+        s.richtig += 1;
+        Core.sound.fanfare();
+        if (box) box.textContent = "Richtig betont!";
+      } else {
+        Core.sound.wrong();
+        if (box) box.innerHTML = `Betont wird <strong>${w.silben[w.betontIdx] ? w.silben[w.betontIdx].toLowerCase() : "?"}</strong> — ${Core.formatStress(w.syl)}`;
+      }
+      s.runde += 1;
+      setTimeout(() => { if (s.runde < s.gesamt) neueTurmRunde(); renderSilbenturm(); }, 1600);
+    }));
+  }
+  function renderSilbenturmErgebnis() {
+    const area = document.getElementById("silbenturmArea");
+    const s = turmSession;
+    const prozent = Math.round((s.richtig / Math.max(1, s.gesamt)) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🧱 SILBENTURM — RUNDE FERTIG</p>
+        <h2 style="margin:10px 0;">${s.richtig} / ${s.gesamt} richtig betont</h2>
+        <p class="empty-note">${prozent >= 70 ? "Du hörst die Betonung schon sehr sicher heraus." : "Tipp: Bei den meisten deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Vorsilben wie be-, ge-, ver-, ent- sind nie betont."}</p>
+        <button type="button" class="btn btn-coffee" id="turmNochmal" style="margin-top:14px;">🔄 Neue Runde</button>
+      </div>`;
+    document.getElementById("turmNochmal").addEventListener("click", () => { neueTurmSession(); renderSilbenturm(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["silbenturm"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Silbenbaumeister:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+
+  document.querySelector('#learnSubnav [data-sub="sub-blitzrunde"]')?.addEventListener("click", () => renderBlitzrunde());
+  document.querySelector('#learnSubnav [data-sub="sub-wortangler"]')?.addEventListener("click", () => renderWortangler());
+  document.querySelector('#learnSubnav [data-sub="sub-wortleiter"]')?.addEventListener("click", () => renderWortleiter());
+  document.querySelector('#learnSubnav [data-sub="sub-silbenturm"]')?.addEventListener("click", () => renderSilbenturm());
+
   const GAMES_OVERVIEW_LIST = [
     { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
+    { sub: "sub-blitzrunde", emoji: "⚡", name: "Blitzrunde", persona: "Gemischt", flagKey: "blitzrunde_neu" },
+    { sub: "sub-wortangler", emoji: "🎣", name: "Wortangler", persona: "Sprachkünstler", flagKey: "wortangler_neu" },
+    { sub: "sub-wortleiter", emoji: "🧗", name: "Wortleiter", persona: "Gemischt", flagKey: "wortleiter_neu" },
+    { sub: "sub-silbenturm", emoji: "🧱", name: "Silbenturm", persona: "Sprachkünstler", flagKey: "silbenturm_neu" },
     { sub: "sub-stresstrainer", emoji: "🎯", name: "Betonungs-Trainer", persona: "Sprachkünstler" },
     { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
     { sub: "sub-korrektour", emoji: "🚂", name: "KorrekTour", persona: "Grammatik-Profi", flagKey: "korrektour_neu" },
-    { sub: "sub-katzenzimmer", emoji: "🐈", name: "Katzenzimmer", persona: "Logiker", flagKey: "katzenzimmer_neu" },
+    { sub: "sub-katzenzimmer", emoji: "🐈", name: "Wo ist die Katze?", persona: "Logiker", flagKey: "katzenzimmer_neu" },
     { sub: "sub-crossword", emoji: "✏️", name: "Kreuzworträtsel", persona: "Sprachkünstler" },
     { sub: "sub-memory", emoji: "🧩", name: "Memory", persona: "Sprachkünstler" },
     { sub: "sub-satzpuzzle", emoji: "🧩", name: "Satzpuzzle", persona: "Grammatik-Profi" },
@@ -17131,10 +17670,10 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "143";
+  const APP_VERSION = "144";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
-    "143": [
+    "144": [
       "📖 Das Wörterbuch ist jetzt richtig groß: über 6000 Stichwörter, für jedes Niveau von A1 bis C2 rund 1000 Stück — jeweils mit Betonung, deutscher Erklärung, Übersetzung und Beispielsatz. Du kannst nach Niveau UND nach 25 Themenbereichen filtern.",
       "🧭 Dein Sprachniveau aus dem Profil gilt jetzt überall: Übungen, Grammatik, „Es war einmal in Deutschland\", „Dichter und Denker\" und „Schnee von gestern\" starten automatisch in deinem Niveau. Umschalten kannst du natürlich weiterhin jederzeit.",
       "📚 Neue Grammatik-Sektion unter „Lernen\" — die wichtigsten Themen deines Niveaus, kurz erklärt, mit Beispielen. Von dort springst du mit einem Tipp direkt in die passende Übung, die dann auch wirklich im Blick steht.",
@@ -17144,6 +17683,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       "👥 Neu im Ranking: eine Übersicht aller Mitglieder mit grünem Punkt für alle, die gerade online sind.",
       "🎵 Der Musikplayer im Profil hat keine sich verdoppelnde Überschrift mehr, und die Playlist anderer kannst du direkt im Profilstreifen durchhören und übernehmen.",
       "🖼️ Das Profil sieht in der Ansicht, im Bearbeiten-Modus und bei anderen jetzt gleich aus: Bild links, Angaben fließen um die Rundung herum. Dein gewähltes Design steht mit dabei.",
+      "🎮 Vier neue Spiele: ⚡ Blitzrunde (90 Sekunden, Multiplikator für fehlerfreie Serien), 🎣 Wortangler (nur die Wörter fangen, die zur Regel passen), 🧗 Wortleiter (von A1 nach C2 klettern) und 🧱 Silbenturm (Wort aus Silben bauen, dann die Betonung bestimmen).",
+      "🐈 Aus dem Katzenzimmer wird „Wo ist die Katze?“ — mit Fernseher, doppelt so vielen Szenen und Möbeln, die richtig auf dem Boden stehen. Innerhalb einer Runde kommt keine Szene zweimal.",
       "🎮 Übungen: jede der 23 Kategorien hat jetzt 100 Aufgaben auf JEDEM Niveau von A1 bis C2 — rund 11.700 neue Aufgaben. Und eine C2-Runde besteht jetzt wirklich aus C2-Aufgaben, statt überwiegend aus leichteren.",
       "🇮🇹 Der Italienisch-Raum ist ausgebaut: neun Kategorien mit je 100 Aufgaben pro Niveau, über 600 Wörter im italienischen Wörterbuch, ein Satzbaukasten, in dem neben jedem Baustein die deutsche Bedeutung steht, und Artikel-Garten, Katzenzimmer und Memory auf Italienisch.",
       "🗣️ Die Betonung wird jetzt wie im Duden angezeigt: ein Strich unter dem Vokal heißt lang, ein Punkt heißt kurz. Wo die Schreibung die Länge nicht eindeutig hergibt, steht nur die Betonung — geraten wird nichts.",
@@ -17181,6 +17722,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       woerterbuch: () => buildDictionaryEntries(),
       kategorien: () => ExerciseData.activeCategories().map((c) => ({ id: c.id, name: c.title, anzahl: (() => { try { return c.getBank().length; } catch (e) { return -1; } })() })),
       katzenzimmer: (key) => kzZimmerSvg(KZ_ORTE.find((o) => o.key === key) || KZ_ORTE[0], true),
+      katzenSzenen: () => KZ_ORTE.map((o) => ({ k: o.id, svg: kzZimmerSvg(o, true) })),
       satzbruecke: (planken, gesamt, geschafft) => sbBrueckeSvg(planken, gesamt, geschafft, true),
     };
   }

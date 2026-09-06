@@ -4121,3 +4121,57 @@ body.lernraum-it .nur-italienisch { display: inline-flex; }
   line-height: 1.4;
 }
 .baustein-satz-de { font-size: 0.86rem; opacity: 0.8; margin: 0 0 6px; font-style: italic; }
+
+/* ============================================================
+   Vier neue Spiele — Wortangler und Silbenturm
+   ============================================================ */
+.angler-teich {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(87,199,174,0.14), rgba(87,199,174,0.05));
+  border: 1px solid rgba(87,199,174,0.25);
+}
+.angler-fisch {
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  line-height: 1.25;
+}
+.angler-fisch:disabled { cursor: default; }
+.angler-wort { display: block; font-weight: 700; font-size: 0.9rem; }
+.angler-bedeutung { display: block; font-size: 0.68rem; opacity: 0.72; }
+.angler-treffer { border-color: var(--teal-400); background: rgba(87,199,174,0.22); }
+.angler-niete { border-color: var(--coral-400); background: rgba(232,96,138,0.18); opacity: 0.65; }
+
+.silbenturm-bau {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.05);
+}
+.silben-vorrat { display: flex; flex-wrap: wrap; gap: 6px; }
+.silben-stein {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(242,184,75,0.18);
+  border: 1px solid rgba(242,184,75,0.45);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: inherit;
+}
+.silben-waehlbar { cursor: pointer; font: inherit; font-weight: 700; }
+.silben-waehlbar:hover { background: rgba(242,184,75,0.3); }

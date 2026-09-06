@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=143" />
-<link rel="stylesheet" href="app-styles.css?v=143" />
-<link rel="stylesheet" href="themes.css?v=143" />
+<link rel="stylesheet" href="styles.css?v=144" />
+<link rel="stylesheet" href="app-styles.css?v=144" />
+<link rel="stylesheet" href="themes.css?v=144" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -174,7 +174,7 @@
            Spiele-Übersicht (siehe gamesOverviewArea) simuliert bei Bedarf einen Klick auf den
            passenden dieser versteckten Knöpfe, statt jeden einzelnen Listener umzubauen. -->
       <button class="subnav-pill" data-sub="sub-artikelgarten" aria-selected="false" style="display:none;">🌷 Artikel-Garten <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
-      <button class="subnav-pill" data-sub="sub-katzenzimmer" aria-selected="false" style="display:none;">🐈 Katzenzimmer <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-katzenzimmer" aria-selected="false" style="display:none;">🐈 Wo ist die Katze? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
       <button class="subnav-pill" data-sub="sub-wortschmiede" aria-selected="false" style="display:none;">🔨 Wortschmiede <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-satzbruecke" aria-selected="false" style="display:none;">🌉 Satzbrücke <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
       <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false" style="display:none;">🎯 Betonungs-Trainer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
@@ -190,6 +190,10 @@
       <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false" style="display:none;">🔤 Vokabelmeister <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false" style="display:none;">🚂 Korrektour <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
       <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false" style="display:none;">❓ Wer bin ich? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-blitzrunde" aria-selected="false" style="display:none;">⚡ Blitzrunde <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortangler" aria-selected="false" style="display:none;">🎣 Wortangler <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortleiter" aria-selected="false" style="display:none;">🧗 Wortleiter <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-silbenturm" aria-selected="false" style="display:none;">🧱 Silbenturm <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
     </div>
 
     <div class="subview" id="sub-games" data-active="false">
@@ -197,6 +201,26 @@
            vielen Spielen wurde das Menü selbst unübersichtlich lang. Jetzt gebündelt: dieser
            Bereich zeigt eine Kachel-Übersicht, von der aus man das gewünschte Spiel antippt. -->
       <div id="gamesOverviewArea"></div>
+    </div>
+
+    <div class="subview" id="sub-blitzrunde" data-active="false">
+      <div id="blitzrundeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortangler" data-active="false">
+      <div id="wortanglerArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortleiter" data-active="false">
+      <div id="wortleiterArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-silbenturm" data-active="false">
+      <div id="silbenturmArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
     </div>
 
     <div class="subview" id="sub-werbinich" data-active="false">
@@ -405,12 +429,12 @@
 
 <footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
 
-<script src="core.js?v=143"></script>
-<script src="supabase-config.js?v=143"></script>
-<script src="data-exercises.js?v=143"></script>
-<script src="data-vocab.js?v=143"></script>
-<script src="backend.js?v=143"></script>
-<script src="quiz.js?v=143"></script>
-<script src="app.js?v=143"></script>
+<script src="core.js?v=144"></script>
+<script src="supabase-config.js?v=144"></script>
+<script src="data-exercises.js?v=144"></script>
+<script src="data-vocab.js?v=144"></script>
+<script src="backend.js?v=144"></script>
+<script src="quiz.js?v=144"></script>
+<script src="app.js?v=144"></script>
 </body>
 </html>
