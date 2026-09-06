@@ -355,6 +355,14 @@
     });
   }
   wireSubnav("learnSubnav");
+  // Jeder Spielbereich hat unten einen festen Weg zurück zur Spieleübersicht. Vorher endete
+  // eine Runde mit dem Ergebnis, und man kam nur über das Menü ganz oben wieder heraus.
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest && e.target.closest("[data-zur-spieleliste]");
+    if (!btn) return;
+    const pill = document.querySelector('#learnSubnav [data-sub="sub-games"]');
+    if (pill) pill.click();
+  });
 
   /* ============ Geführte Tour für neue Besucher ============ */
   const TOUR_STEPS = [
@@ -13396,6 +13404,11 @@ An einem Morgen lief ein kleiner Fuchs los…
         saveBtn.disabled = false;
         return;
       }
+      // Sprachniveau geändert? Dann zieht die ganze Seite nach.
+      if ((extra.cefrLevel || "") !== (newExtra.cefrLevel || "")) {
+        niveauAusProfilUeberall();
+        if (newExtra.cefrLevel) showToast(`⚖️ Sprachniveau ${newExtra.cefrLevel} — Übungen, Grammatik, Kalender und alle Spiele starten ab jetzt auf diesem Niveau.`);
+      }
       if (bioText.length >= 10) {
         const gotTrophy = Backend.addTrophy("Vorstellungsrunde – Mutig auf Deutsch geschrieben");
         if (gotTrophy) Backend.addActivity(`${profile.name} hat sich in einem deutschen Profiltext vorgestellt. ✍️`);
@@ -13583,6 +13596,31 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-view-photo]").forEach((img) => {
       img.addEventListener("click", () => openLightbox(img.dataset.viewPhoto, "Galerie-Foto"));
     });
+  }
+
+  // Wird nach dem Speichern des Profils aufgerufen: Wenn dort ein anderes Sprachniveau steht,
+  // sollen ALLE Bereiche darauf umspringen — Übungen, Grammatik, Kalender, Dichter und Denker,
+  // Schnee von gestern und alle Spiele. Vorher galt das neue Niveau erst beim nächsten Öffnen
+  // eines Bereichs, und laufende Spielrunden behielten ihr altes Niveau für immer.
+  function niveauAusProfilUeberall() {
+    selectedExerciseLevel = null;
+    grammatikLevel = null;
+    historyLevel = null;
+    dichterLevel = null;
+    schneeLevel = null;
+    wsmLevel = null;
+    sbLevel = null;
+    agLevel = null;
+    kzLevel = null;
+    Object.keys(autoCefrLevel).forEach((k) => { delete autoCefrLevel[k]; });
+    // Laufende Spielrunden verwerfen — sie hängen an ihrem alten Niveau.
+    if (typeof wsmSession !== "undefined") wsmSession = null;
+    if (typeof sbSession !== "undefined") sbSession = null;
+    if (typeof agSession !== "undefined") agSession = null;
+    if (typeof kzSession !== "undefined") kzSession = null;
+    if (typeof renderSetup === "function") renderSetup();
+    if (typeof renderGrammatik === "function") renderGrammatik();
+    if (typeof renderKompass === "function") renderKompass();
   }
 
   function renderTrophyCase(profile, compact) {
@@ -16904,7 +16942,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
           <div>
             <button type="button" class="friend-name-btn" data-view-ranked="${fox.user_id}" style="font-size:1.05rem; font-weight:800;">${fox.name}</button>
-            <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}${fox.vorlaeufig ? " — hält den Titel, bis heute jemand aktiv wird" : ""}</p>
+            <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}${fox.uebernommen ? " — aus den Tagen davor, heute hat noch niemand gepunktet" : ""}</p>
           </div>
         </div>
         <div class="fox-of-day-report-card">
@@ -16914,6 +16952,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           </ul>
           ${fox.profile?.languages?.length ? `<p class="empty-note" style="margin-top:8px;">🗣️ Spricht: ${fox.profile.languages.join(", ")}</p>` : ""}
           ${fox.profile?.origin ? `<p class="empty-note" style="margin-top:4px;">🌍 Kommt aus: ${fox.profile.origin}</p>` : ""}
+          <p class="empty-note" style="margin-top:8px; font-size:0.68rem;">So wird gerechnet: erspielte Punkte aus Übungen und Spielen zählen eins zu eins, jeder eigene Beitrag 50, eine Weiterempfehlung 20. Bloß eingeloggt zu sein oder das Profil auszufüllen zählt nicht.</p>
         </div>
       </div>` : `<p class="empty-note">Noch keine Aktivität in diesem Zeitraum — sei die/der Erste!</p>`}
       <div class="question-card" style="margin-top:14px;">
@@ -17092,10 +17131,10 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "140";
+  const APP_VERSION = "143";
   const APP_CHANGELOG = {
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
-    "140": [
+    "143": [
       "📖 Das Wörterbuch ist jetzt richtig groß: über 6000 Stichwörter, für jedes Niveau von A1 bis C2 rund 1000 Stück — jeweils mit Betonung, deutscher Erklärung, Übersetzung und Beispielsatz. Du kannst nach Niveau UND nach 25 Themenbereichen filtern.",
       "🧭 Dein Sprachniveau aus dem Profil gilt jetzt überall: Übungen, Grammatik, „Es war einmal in Deutschland\", „Dichter und Denker\" und „Schnee von gestern\" starten automatisch in deinem Niveau. Umschalten kannst du natürlich weiterhin jederzeit.",
       "📚 Neue Grammatik-Sektion unter „Lernen\" — die wichtigsten Themen deines Niveaus, kurz erklärt, mit Beispielen. Von dort springst du mit einem Tipp direkt in die passende Übung, die dann auch wirklich im Blick steht.",

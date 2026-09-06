@@ -2675,31 +2675,45 @@ const Backend = (function () {
   // Prinzipien auch für Woche/Monat/Jahr funktioniert, ohne die Logik zu verdoppeln.
   async function getActivityScoresForPeriod(daysBack) {
     const start = new Date(); start.setDate(start.getDate() - (daysBack - 1)); start.setHours(0, 0, 0, 0);
-    const scores = {}; // user_id -> { name, points, contributions, shared, total }
+    const scores = {}; // user_id -> { name, punkteGespielt, contributions, shared, total }
+    function eintrag(userId, name) {
+      if (!scores[userId]) scores[userId] = { name: name || "?", punkteGespielt: 0, contributions: 0, shared: false, total: 0 };
+      if (name && scores[userId].name === "?") scores[userId].name = name;
+      return scores[userId];
+    }
+    // 1. ERSPIELTE PUNKTE — direkt aus der results-Tabelle, in der jede beendete Runde steht.
+    // Das ist die einzige Quelle, die wirklich zeigt, wer geübt und gespielt hat. Vorher wurde
+    // die daily_ranking-Tabelle gelesen; die wird zwar geschrieben, hängt aber an einem
+    // zusätzlichen Datenbank-Index aus dem README. Fehlt der, schlägt das Schreiben still fehl,
+    // und der ganze Fleiß eines Tages taucht in der Fuchs-Rechnung überhaupt nicht auf.
     if (client) {
       try {
-        const { data: rankingRows } = await client.from("daily_ranking").select("user_id,name,points,date").gte("date", start.toISOString().slice(0, 10));
-        (rankingRows || []).forEach((r) => {
+        const { data } = await client.from("results").select("user_id,points,bonus,played_at").gte("played_at", start.toISOString());
+        const ids = new Set();
+        (data || []).forEach((r) => { if (r.user_id) ids.add(r.user_id); });
+        let namen = {};
+        if (ids.size) {
+          const { data: profile } = await client.from("profiles").select("id,name").in("id", [...ids]);
+          (profile || []).forEach((p) => { namen[p.id] = p.name; });
+        }
+        (data || []).forEach((r) => {
           if (!r.user_id) return;
-          scores[r.user_id] = scores[r.user_id] || { name: r.name, points: 0, contributions: 0, shared: false, total: 0 };
-          scores[r.user_id].points += r.points || 0;
-          scores[r.user_id].total += r.points || 0;
+          const e = eintrag(r.user_id, namen[r.user_id]);
+          const punkte = Math.round((r.points || 0) + (r.bonus || 0));
+          e.punkteGespielt += punkte;
+          e.total += punkte;
         });
-      } catch (e) { console.warn("Zeitraum-Ranking-Abfrage fehlgeschlagen:", e); }
+      } catch (e) { console.warn("Ergebnisse für die Fuchs-Rechnung nicht abrufbar:", e); }
     } else {
-      (demo.ranking || []).forEach((r) => {
-        if (!r.user_id || new Date(r.date) < start) return;
-        scores[r.user_id] = scores[r.user_id] || { name: r.name, points: 0, contributions: 0, shared: false, total: 0 };
-        scores[r.user_id].points += r.points || 0;
-        scores[r.user_id].total += r.points || 0;
+      (demo.profile?.history || []).forEach((h) => {
+        if (!h.playedAt || new Date(h.playedAt) < start) return;
+        const e = eintrag(demo.user?.id || "demo", demo.profile.name);
+        const punkte = Math.round((h.points || 0) + (h.bonus || 0));
+        e.punkteGespielt += punkte;
+        e.total += punkte;
       });
     }
-    // Bei "heute" (daysBack=1) bekommt Platz 1 im Tages-Ranking zusätzlich den Erstplatzierten-
-    // Bonus — bei längeren Zeiträumen zählt stattdessen einfach die Gesamtpunktzahl im Zeitraum.
-    if (daysBack === 1) {
-      const sorted = Object.entries(scores).sort((a, b) => b[1].points - a[1].points);
-      if (sorted.length) scores[sorted[0][0]].total += DAILY_ACTIVITY_WEIGHTS.rankingFirstPlace;
-    }
+    // 2. EIGENE BEITRÄGE — Texte, Tipps und Links zählen als Mitarbeit an der Seite.
     if (client) {
       try {
         const [texts, tips, links] = await Promise.all([
@@ -2709,64 +2723,64 @@ const Backend = (function () {
         ]);
         [...(texts.data || []), ...(tips.data || []), ...(links.data || [])].forEach((row) => {
           if (!row.user_id) return;
-          scores[row.user_id] = scores[row.user_id] || { name: row.author_name, points: 0, contributions: 0, shared: false, total: 0 };
-          scores[row.user_id].contributions += 1;
-          scores[row.user_id].total += DAILY_ACTIVITY_WEIGHTS.contribution;
+          const e = eintrag(row.user_id, row.author_name);
+          e.contributions += 1;
+          e.total += DAILY_ACTIVITY_WEIGHTS.contribution;
         });
       } catch (e) { console.warn("Beitrags-Zählung für Fuchs-Zeitraum fehlgeschlagen:", e); }
     } else {
       [...(demo.communityTexts || []), ...(demo.communityTips || []), ...(demo.userLinks || [])].forEach((row) => {
         if (!row.user_id || new Date(row.created_at) < start) return;
-        scores[row.user_id] = scores[row.user_id] || { name: row.author_name, points: 0, contributions: 0, shared: false, total: 0 };
-        scores[row.user_id].contributions += 1;
-        scores[row.user_id].total += DAILY_ACTIVITY_WEIGHTS.contribution;
+        const e = eintrag(row.user_id, row.author_name);
+        e.contributions += 1;
+        e.total += DAILY_ACTIVITY_WEIGHTS.contribution;
       });
     }
+    // 3. Seite geteilt — kleiner Zuschlag, nur für den heutigen Tag.
     if (daysBack === 1 && demo.siteSharesToday) {
       Object.keys(demo.siteSharesToday).forEach((uid) => {
         if (scores[uid]) { scores[uid].shared = true; scores[uid].total += DAILY_ACTIVITY_WEIGHTS.siteShared; }
       });
     }
-    // Wer im Zeitraum überhaupt da war, kommt mit einem kleinen Grundwert auf die Liste.
-    // Damit ist der Titel auch an einem ruhigen Tag besetzt — und sobald jemand wirklich
-    // übt oder etwas beiträgt, zieht dieser Wert sofort daran vorbei.
-    if (client) {
-      try {
-        const { data: aktive } = await client.from("profiles").select("id,name,last_active").gte("last_active", start.toISOString());
-        (aktive || []).forEach((p) => {
-          if (!p.id) return;
-          scores[p.id] = scores[p.id] || { name: p.name, points: 0, contributions: 0, shared: false, total: 0 };
-          scores[p.id].dabei = true;
-          scores[p.id].total += DAILY_ACTIVITY_WEIGHTS.dabeiGewesen;
-        });
-      } catch (e) { console.warn("Anwesenheit für Fuchs-Zeitraum nicht abrufbar:", e); }
-    }
-    return Object.entries(scores).map(([user_id, s]) => ({ user_id, ...s })).sort((a, b) => b.total - a.total);
+    // Wer im Zeitraum NICHTS getan hat, steht hier gar nicht erst drin. Bloße Anwesenheit,
+    // ein ausgefülltes Profil oder ein alter Gesamtpunktestand zählen ausdrücklich nicht —
+    // der Titel soll erkennbar an dem hängen, was jemand in diesem Zeitraum wirklich geleistet hat.
+    return Object.entries(scores)
+      .map(([user_id, s]) => ({ user_id, ...s, points: s.punkteGespielt }))
+      .filter((s) => s.total > 0)
+      .sort((a, b) => b.total - a.total);
   }
-  // Der Titel darf nie leer sein. Reihenfolge: echte Mitarbeit im Zeitraum → wer heute
-  // überhaupt da war → als letzte Rückfallebene die vorderste Person der Gesamtrangliste,
-  // ausdrücklich als vorläufig gekennzeichnet, bis heute jemand tatsächlich etwas tut.
-  async function foxMitRueckfall(scores) {
-    if (scores.length) return scores[0];
-    try {
-      const gesamt = await getRankingAllTime();
-      if (gesamt.length) {
-        return { user_id: gesamt[0].user_id, name: gesamt[0].name, points: 0, contributions: 0, shared: false, total: 0, vorlaeufig: true };
-      }
-    } catch (e) { console.warn("Rückfall auf Gesamtrangliste fehlgeschlagen:", e); }
+  // Kein künstlicher Platzhalter mehr. Wenn heute noch niemand etwas getan hat, hält die
+  // Person den Titel weiter, die ihn ZULETZT durch echte Aktivität verdient hat — dafür wird
+  // der Zeitraum tageweise rückwärts erweitert, bis jemand mit echter Leistung auftaucht.
+  // Damit ist der Titel besetzt, ohne dass er je an jemanden geht, der nichts getan hat.
+  async function letzterAktiverFuchs(maxTage) {
+    for (let tage = 1; tage <= maxTage; tage++) {
+      const liste = await getActivityScoresForPeriod(tage);
+      if (liste.length) return { ...liste[0], ausZeitraum: tage };
+    }
     return null;
   }
+
   async function getFoxOfTheDay() {
-    return foxMitRueckfall(await getDailyActivityScores());
+    const heute = await getDailyActivityScores();
+    if (heute.length) return heute[0];
+    // Heute hat noch niemand gepunktet: der Titel bleibt bei der Person, die ihn zuletzt
+    // wirklich verdient hat (bis zu 30 Tage zurück), gekennzeichnet als übernommen.
+    const letzter = await letzterAktiverFuchs(30);
+    return letzter ? { ...letzter, uebernommen: true } : null;
   }
   async function getFoxOfWeek() {
-    return foxMitRueckfall(await getActivityScoresForPeriod(7));
+    const liste = await getActivityScoresForPeriod(7);
+    return liste.length ? liste[0] : null;
   }
   async function getFoxOfMonth() {
-    return foxMitRueckfall(await getActivityScoresForPeriod(30));
+    const liste = await getActivityScoresForPeriod(30);
+    return liste.length ? liste[0] : null;
   }
   async function getFoxOfYear() {
-    return foxMitRueckfall(await getActivityScoresForPeriod(365));
+    const liste = await getActivityScoresForPeriod(365);
+    return liste.length ? liste[0] : null;
   }
   // Einmalige Bonus-Gutschrift pro Tag, sobald jemand als aktueller Fuchs des Tages erkannt wird —
   // steuert über ein Datum im Profil, damit niemand mehrfach am selben Tag belohnt wird, egal wie
@@ -2780,7 +2794,7 @@ const Backend = (function () {
     if (!fox || fox.user_id !== demo.user.id) return null;
     // Wer den Titel nur vorläufig hält (heute war noch niemand aktiv), bekommt dafür
     // keinen Bonus — der gehört zu echter Mitarbeit an diesem Tag.
-    if (fox.vorlaeufig || !fox.total) return null;
+    if (fox.uebernommen || !fox.total) return null;
     await updateExtraProfileField("foxOfDayClaimedDate", todayKey);
     const bonus = 30;
     demo.profile.points = (demo.profile.points || 0) + bonus;
@@ -2820,14 +2834,14 @@ const Backend = (function () {
     return await getSiteContent(`site_image_${key}`);
   }
   // nur "hat die meisten Punkte", sondern konkret benannt (geteilt, Beiträge eingereicht, Platz 1).
-  function buildFoxOfDayReportCard(entry) {
+  function buildFoxOfDayReportCard(entry, zeitraumText) {
     const lines = [];
-    if (entry.rankPlace === 1) lines.push("Sie/Er steht heute auf Platz 1 im Ranking — fleißig Deutsch geübt!");
-    if (entry.contributions > 0) lines.push(`Hat heute ${entry.contributions} eigene Beiträge zur Seite beigesteuert.`);
-    if (entry.shared) lines.push("Hat die Seite heute mit Freund:innen geteilt und ihnen damit etwas Gutes getan.");
-    if (entry.dabei && !lines.length) lines.push("War heute schon auf der Seite — und hält den Titel, bis jemand mehr schafft.");
-    if (entry.vorlaeufig) lines.push("Hält den Titel vorläufig als vorderste Person der Gesamtrangliste — wer heute übt, etwas beiträgt oder jemanden einlädt, übernimmt ihn sofort.");
-    if (!lines.length) lines.push("War heute einfach besonders aktiv unterwegs.");
+    const wann = zeitraumText || "in diesem Zeitraum";
+    if (entry.punkteGespielt > 0) lines.push(`Hat ${wann} ${entry.punkteGespielt} Punkte erspielt — durch Übungen und Spiele, nicht durch bloßes Anwesendsein.`);
+    if (entry.contributions > 0) lines.push(`Hat ${wann} ${entry.contributions} ${entry.contributions === 1 ? "eigenen Beitrag" : "eigene Beiträge"} zur Seite beigesteuert (je ${DAILY_ACTIVITY_WEIGHTS.contribution} Punkte).`);
+    if (entry.shared) lines.push(`Hat die Seite ${wann} weiterempfohlen (+${DAILY_ACTIVITY_WEIGHTS.siteShared}).`);
+    if (entry.uebernommen) lines.push("Heute hat noch niemand gepunktet — deshalb hält diese Person den Titel weiter, bis jemand etwas erspielt.");
+    if (!lines.length) lines.push("Aktivitätswert " + entry.total + ".");
     return lines;
   }
   async function getFoxOfTheDayShowcase() {
@@ -2837,13 +2851,19 @@ const Backend = (function () {
   // nur mit dem jeweils längeren Zeitraum.
   async function getFoxShowcaseForPeriod(daysBack, label) {
     const scores = await getActivityScoresForPeriod(daysBack);
-    // Der Platz bleibt nie leer: notfalls hält ihn die vorderste Person der Gesamtrangliste,
-    // sichtbar als vorläufig, bis in diesem Zeitraum wirklich jemand aktiv wird.
-    const top = await foxMitRueckfall(scores);
+    // Beim Tages-Fuchs bleibt der Titel bei der Person, die ihn zuletzt durch echte Leistung
+    // verdient hat, solange heute noch niemand gepunktet hat. Bei Woche, Monat und Jahr ist
+    // der rollende Zeitraum lang genug — dort bleibt der Platz leer, wenn wirklich niemand
+    // etwas getan hat, statt ihn jemandem ohne Leistung zuzuschreiben.
+    let top = scores.length ? scores[0] : null;
+    if (!top && daysBack === 1) {
+      const letzter = await letzterAktiverFuchs(30);
+      if (letzter) top = { ...letzter, uebernommen: true };
+    }
     if (!top) return null;
     const entry = { ...top, rankPlace: 1 };
     const profile = top.user_id ? await getPublicProfile(top.user_id) : null;
-    return { ...entry, reportCard: buildFoxOfDayReportCard(entry), profile, periodLabel: label };
+    return { ...entry, reportCard: buildFoxOfDayReportCard(entry, { 1: "heute", 7: "diese Woche", 30: "diesen Monat", 365: "dieses Jahr" }[daysBack]), profile, periodLabel: label };
   }
   async function getFoxOfWeekShowcase() {
     return getFoxShowcaseForPeriod(7, "Wochen");
