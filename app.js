@@ -11675,7 +11675,45 @@
     });
   }
   document.querySelector('#learnSubnav [data-sub="sub-games"]')?.addEventListener("click", renderGamesOverview);
+  // Sprache für die Übersetzungen unter „Es war einmal in Deutschland".
+  // null = automatisch aus dem Herkunftsland im Profil (mit Englisch als Rückfall).
+  let historyUebersetzungSprache = null;
+  const HISTORY_SPRACHEN = { en: "Englisch", ar: "العربية — Arabisch", tr: "Türkçe — Türkisch", ru: "Русский — Russisch", uk: "Українська — Ukrainisch", fa: "فارسی — Persisch", es: "Español — Spanisch", fr: "Français — Französisch", pl: "Polski — Polnisch" };
+  // Der Übersetzungsblock für EINEN Kalendertag — wird sowohl beim heutigen Tag als auch
+  // im Archiv verwendet. Vorher gab es ihn nur beim heutigen Tag; im Archiv fehlte er
+  // vollständig, die Übersetzungen waren dort also nirgends zu finden.
+  function historyUebersetzungHtml(entry, level, idPrefix) {
+    if (!entry || !entry.translationsA1) return "";
+    const auto = firstStepsLangFor(Backend.currentProfile());
+    const lang = historyUebersetzungSprache || auto;
+    // Zuerst die Fassung, die genau zum gewählten Niveau gehört; sonst die A1-Fassung.
+    const nachNiveau = entry.translationsByLevel && entry.translationsByLevel[level];
+    const ausNiveau = nachNiveau && (nachNiveau[lang] || nachNiveau.en);
+    const text = ausNiveau || entry.translationsA1[lang] || entry.translationsA1.en;
+    if (!text) return "";
+    const rtl = lang === "ar" || lang === "fa" || lang === "he";
+    const herkunft = ausNiveau
+      ? "Übersetzung des " + level + "-Textes"
+      : "Übersetzung des A1-Textes — für " + level + " ist noch keine eigene Fassung hinterlegt";
+    return `
+      <details style="margin-top:10px;" open>
+        <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700;">🌍 Übersetzung — ${HISTORY_SPRACHEN[lang] || lang}</summary>
+        <label class="empty-note" style="display:block; margin-top:8px; font-size:0.72rem;">Sprache</label>
+        <select class="challenge-select hist-lang-select" id="${idPrefix}LangSelect" style="margin-bottom:8px;">
+          <option value="">Automatisch (aus dem Herkunftsland)</option>
+          ${Object.entries(HISTORY_SPRACHEN).map(([code, name]) => `<option value="${code}" ${historyUebersetzungSprache === code ? "selected" : ""}>${name}</option>`).join("")}
+        </select>
+        <p class="empty-note" style="margin:0 0 4px; font-size:0.7rem;">${herkunft}</p>
+        <p style="margin-top:4px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${rtl ? "rtl" : "ltr"}">${text}</p>
+      </details>`;
+  }
+
   async function renderKompass() {
+    // Das Sprachniveau wird IMMER gesetzt, nicht erst wenn der heutige Tag freigegeben ist.
+    // Vorher blieb es an Tagen ohne freigegebenen Eintrag auf null — im Archiv stand dann
+    // „undefined" statt des Textes, weil entry.levels[null] nichts ergibt.
+    historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }, "geschichte");
+
     const bannerUrl = await Backend.getEffectiveBannerUrl("wissen_banner");
     // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
     // gelesen — kein extra "Ich hab's gelesen"-Knopf nötig, für Missionen, die das voraussetzen.
@@ -11743,7 +11781,6 @@
         return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 365 Tagen gefüllt${neuText}</p>`;
       })()}
       ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
-      ${todayHistory ? (() => { historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }, "geschichte"); return ""; })() : ""}
       ${todayHistory ? `
         <div class="question-card" style="margin-bottom:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>
@@ -11751,22 +11788,7 @@
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
           </div>
           <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
-          ${todayHistory.translationsA1 ? (() => {
-            const histLang = firstStepsLangFor(Backend.currentProfile());
-            // WICHTIG — sucht zuerst nach einer Übersetzung, die genau zur gerade gewählten
-            // Niveaustufe passt (translationsByLevel.B1 usw., sprachlich an das jeweilige Niveau
-            // angepasst), und fällt nur zurück auf die einfache A1-Übersetzung, wenn für diese
-            // Stufe noch keine eigene existiert — so wächst das Angebot schrittweise, ohne dass
-            // vorhandene A1-Übersetzungen verloren gehen oder umbenannt werden müssen.
-            const levelSpecific = todayHistory.translationsByLevel?.[historyLevel];
-            const t = (levelSpecific && (levelSpecific[histLang] || levelSpecific.en)) || todayHistory.translationsA1[histLang] || todayHistory.translationsA1.en;
-            if (!t) return "";
-            const histRtl = histLang === "ar" || histLang === "fa" || histLang === "he";
-            return `<details style="margin-top:8px;">
-              <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700; list-style:none;">🌍 Übersetzung anzeigen</summary>
-              <p class="empty-note" style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${histRtl ? "rtl" : "ltr"}">${t}</p>
-            </details>`;
-          })() : ""}
+          ${historyUebersetzungHtml(todayHistory, historyLevel, "histHeute")}
           ${todayHistory.sideFacts && todayHistory.sideFacts.length ? `
             <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
             ${todayHistory.sideFacts.map((f) => `<p class="empty-note" style="margin-top:6px;">${f.year}: ${f.text.replace(/^\d{4}\s*/, "")}</p>`).join("")}
@@ -11808,6 +11830,7 @@
               ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-archive-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
             </div>
             <p style="margin-top:8px;">${entry.levels[historyLevel]}</p>
+            ${historyUebersetzungHtml(entry, historyLevel, "histArchiv")}
             ${entry.sideFacts && entry.sideFacts.length ? `
               <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
               ${entry.sideFacts.map((f) => `<p class="empty-note" style="margin-top:6px;">${f.year}: ${f.text.replace(/^\d{4}\s*/, "")}</p>`).join("")}
@@ -11857,6 +11880,9 @@
     });
     kompassArea.querySelectorAll(".hist-archive-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
+    });
+    kompassArea.querySelectorAll(".hist-lang-select").forEach((sel) => {
+      sel.addEventListener("change", (e) => { historyUebersetzungSprache = e.target.value || null; renderKompass(); });
     });
     wireSiteBannerUploads(kompassArea);
     renderDichterUndDenker();
