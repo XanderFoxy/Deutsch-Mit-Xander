@@ -4175,3 +4175,58 @@ body.lernraum-it .nur-italienisch { display: inline-flex; }
 }
 .silben-waehlbar { cursor: pointer; font: inherit; font-weight: 700; }
 .silben-waehlbar:hover { background: rgba(242,184,75,0.3); }
+
+/* Der deutsche Satzbaukasten gehört zum Deutsch-Raum und verschwindet im
+   Italienisch-Raum aus dem Menü — dort steht der italienische an seiner Stelle. */
+body.lernraum-it .nur-deutsch { display: none; }
+/* Die Bausteine des fertigen Satzes werden nach ihrer Rolle eingefärbt, damit das
+   Satzmuster sichtbar wird — besonders, wohin das Verb wandert. */
+.satzteil { display: inline-block; padding: 2px 8px; border-radius: 7px; margin: 2px 1px; }
+.satzteil-subj { background: rgba(91,141,239,0.22); }
+.satzteil-verb { background: rgba(242,184,75,0.3); font-weight: 800; }
+.satzteil-zeit { background: rgba(87,199,174,0.22); }
+.satzteil-erg { background: rgba(232,96,138,0.2); }
+.satzteil-konj { background: rgba(255,255,255,0.12); font-style: italic; }
+
+/* Kursleiter im Italienisch-Raum: sechs Stufen mit Fortschritt, abgeschlossene
+   grün, die aktuelle hervorgehoben, noch gesperrte gedämpft. */
+.kurs-leiter { display: flex; flex-direction: column; gap: 8px; }
+.kurs-stufe {
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.05);
+}
+.kurs-stufe-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.kurs-stufe-name { font-weight: 800; font-size: 1rem; }
+.kurs-fertig { border-color: var(--teal-400); background: rgba(87,199,174,0.12); }
+.kurs-aktuell { border-color: var(--amber-400); background: rgba(242,184,75,0.12); }
+.kurs-zu { opacity: 0.5; }
+
+/* Warnband, wenn das Profil nicht aus der Datenbank geladen werden konnte.
+   Bewusst auffällig und ganz oben: in diesem Zustand zeigt die Seite
+   Standardwerte an, und es wird absichtlich nichts gespeichert. */
+.profil-warnband {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 9000;
+  background: #8c2f21;
+  color: #fff;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.profil-warnband strong { display: block; margin-bottom: 2px; }
+.profil-warnband button {
+  margin-left: 8px;
+  margin-top: 6px;
+  background: #fff;
+  color: #8c2f21;
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.profil-warnband button:disabled { opacity: 0.6; cursor: default; }

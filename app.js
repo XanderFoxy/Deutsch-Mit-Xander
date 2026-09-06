@@ -1374,6 +1374,64 @@
       band.querySelector("#lernraumZurueckBtn").addEventListener("click", () => wechsleLernraum("de", true));
     }
   }
+  /* ============================================================
+     VERZEICHNIS ALLER PROFIL-EINSTELLUNGEN
+     ------------------------------------------------------------
+     Jede Einstellung, die man in seinem Profil setzen kann, steht
+     hier mit Klartext-Namen. Daraus baut die Übersicht in den
+     Einstellungen: man sieht auf einen Blick, was im Konto
+     gespeichert ist und was fehlt. Kommt eine neue Einstellung
+     dazu, gehört sie in diese Liste — sonst taucht sie in der
+     Übersicht nicht auf.
+     ============================================================ */
+  const PROFIL_EINSTELLUNGEN = [
+    { key: "__theme", label: "🎨 Design", spalte: true },
+    { key: "proficiencyLevel", label: "⚖️ Sprachniveau (Fortschritts-Fairness)" },
+    { key: "cefrLevel", label: "🧭 Niveau A1–C2 (gilt in allen Bereichen)" },
+    { key: "learningProfile", label: "📊 Selbsteinschätzung je Bereich (Artikel, Grammatik …)" },
+    { key: "selectedDifficulty", label: "🎚️ Schwierigkeitsgrad (Anzahl Fragen)" },
+    { key: "notifyColor", label: "🎨 Farbe für Benachrichtigungen (allgemein)" },
+    { key: "notifySound", label: "🔊 Ton für Benachrichtigungen (allgemein)" },
+    { key: "notifyTypeSettings", label: "🔔 Eigene Farben und Töne je Art (Nachricht, Freundschaft, Herausforderung, Sonstiges)" },
+    { key: "notifyMuted", label: "🔇 Benachrichtigungston stumm" },
+    { key: "notifyBlinkMuted", label: "⭕ Roter Ring stumm" },
+    { key: "tickerBlink", label: "📰 Laufband blinkt" },
+    { key: "tickerBlinkSpeed", label: "📰 Laufband-Geschwindigkeit" },
+    { key: "headingFontKey", label: "🔤 Überschriften-Schrift" },
+    { key: "playerTemplate", label: "🎵 Design des Musikspielers" },
+    { key: "memoryCardDesign", label: "🃏 Kartenrücken im Memory" },
+    { key: "showcaseSongUrl", label: "🎶 Lieblingslied im Profil" },
+    { key: "hidePremiumBadge", label: "✨ Premium-Abzeichen verbergen" },
+    { key: "stressModeOn", label: "🗣️ Betonungshilfe an" },
+    { key: "stressExcludedSections", label: "🗣️ Betonungshilfe: ausgenommene Bereiche" },
+    { key: "wsHintMode", label: "💡 Tipps in der Wortschmiede" },
+    { key: "knAutoLandPref", label: "🪂 Kettenzauber: automatisch landen" },
+    { key: "uebersetzungAnzeigen", label: "🇩🇪 Übersetzung in italienischen Übungen" },
+    { key: "lernraum", label: "🇮🇹 Lernraum (Deutsch / Italienisch)" },
+    { key: "itKurs", label: "🎓 Fortschritt im Italienischkurs" },
+    { key: "hobbies", label: "🎯 Hobbys", spalte: true },
+    { key: "introduction", label: "🎤 Vorstellung" },
+    { key: "interviewAnswers", label: "🎤 Interview-Antworten" },
+    { key: "bestFriendIds", label: "💚 Beste Freunde" },
+    { key: "personalBanners", label: "🖼️ Eigene Banner" },
+    { key: "loginStreak", label: "🔥 Anmelde-Serie" },
+    { key: "calendarStreak", label: "📅 Kalender-Serie" },
+  ];
+  function profilEinstellungsUebersicht() {
+    const profile = Backend.currentProfile();
+    if (!profile) return [];
+    const extra = profile.extraProfileData || {};
+    return PROFIL_EINSTELLUNGEN.map((e) => {
+      let wert;
+      if (e.key === "__theme") wert = profile.theme;
+      else if (e.key === "hobbies") wert = profile.hobbies;
+      else wert = extra[e.key];
+      const gesetzt = !(wert === undefined || wert === null || wert === ""
+        || (Array.isArray(wert) && !wert.length)
+        || (typeof wert === "object" && wert && !Array.isArray(wert) && !Object.keys(wert).length));
+      return { label: e.label, gesetzt };
+    });
+  }
   function renderSettings() {
     const area = document.getElementById("settingsArea");
     if (!area) return;
@@ -1381,8 +1439,41 @@
     if (!profile) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
     const istBetreiber = Boolean(Backend.isOwner && Backend.isOwner());
     const imItalienischraum = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it";
+    const sicherungStand = Backend.sicherungStand ? Backend.sicherungStand() : null;
     area.innerHTML = `
       <p class="empty-note">Hier stellst du ein, wie dich die Seite beim Lernen unterstützt und wie Benachrichtigungen aussehen und klingen.</p>
+
+      <div class="question-card" style="margin-top:14px; border:2px solid #c98a3a;">
+        <h3>🛟 Profil prüfen und reparieren</h3>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Alles, was du hier einstellst — Design, Sprachniveau, Selbsteinschätzung, Farben und Töne für Freunde,
+          Herausforderungen, Nachrichten, Kommentare und Likes — liegt in deinem Konto in der Datenbank, nicht auf
+          diesem Gerät. Zusätzlich legt die Seite nach jedem Speichern eine <strong>Sicherungskopie</strong> auf
+          diesem Gerät ab. Sie wird nie zum Anzeigen benutzt; sie ist nur dafür da, dass sich ein Verlust
+          zurückholen lässt.
+        </p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          ${sicherungStand
+            ? `Letzte Sicherung auf diesem Gerät: <strong>${new Date(sicherungStand).toLocaleString("de-DE")}</strong>.`
+            : "Auf diesem Gerät liegt noch keine Sicherung — sie entsteht, sobald du das nächste Mal etwas speicherst."}
+        </p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          „Prüfen und reparieren" rechnet deinen Punktestand aus allen gespielten Runden nach und holt Trophäen,
+          Abzeichen und Einstellungen zurück, die im Konto fehlen, aber in der Sicherung stehen.
+          <strong>Überschrieben wird dabei nichts</strong> — es werden nur Lücken gefüllt, und der Punktestand
+          wird nie gesenkt.
+        </p>
+        <button type="button" class="btn btn-coffee" id="profilReparierenBtn">🛟 Prüfen und reparieren</button>
+        <div id="profilReparaturBericht" style="margin-top:10px;"></div>
+
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer; font-weight:700;">Was liegt gerade in meinem Konto?</summary>
+          <div class="breakdown-list" style="margin-top:8px;">
+            ${profilEinstellungsUebersicht().map((e) => `<div class="breakdown-row"><span>${e.gesetzt ? "✅" : "▫️"} ${e.label}</span><span class="empty-note">${e.gesetzt ? "gespeichert" : "nicht gesetzt"}</span></div>`).join("")}
+          </div>
+          <p class="empty-note" style="margin-top:8px;">„nicht gesetzt" heißt nur: du hast dort noch nichts ausgewählt. Sobald du es einstellst, landet es sofort im Konto.</p>
+        </details>
+      </div>
       ${istBetreiber ? `
       <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
         <h3>🇮🇹 Lernraum Italienisch — nur für dich</h3>
@@ -1610,6 +1701,18 @@
     if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); }
     area.querySelectorAll(".lernraum-btn").forEach((btn) => {
       btn.addEventListener("click", () => wechsleLernraum(btn.dataset.lernraum, true));
+    });
+    area.querySelector("#profilReparierenBtn")?.addEventListener("click", async (e) => {
+      const knopf = e.currentTarget;
+      const ziel = area.querySelector("#profilReparaturBericht");
+      knopf.disabled = true; knopf.textContent = "prüfe …";
+      const res = await Backend.profilReparieren();
+      knopf.disabled = false; knopf.textContent = "🛟 Prüfen und reparieren";
+      if (!res.ok) { ziel.innerHTML = `<p class="empty-note" style="color:#c0392b;">${res.message || "Hat nicht geklappt."}</p>`; return; }
+      const zeilen = (res.bericht || []).map((z) => `<li>${z}</li>`).join("");
+      ziel.innerHTML = `<ul class="empty-note" style="margin:0; padding-left:18px;">${zeilen || "<li>Nichts zu tun.</li>"}</ul>`
+        + (res.geaendert ? '<p class="empty-note" style="margin-top:6px;"><strong>Bitte lade die Seite einmal neu, damit alles wieder angezeigt wird.</strong></p>' : "");
+      if (res.geaendert) showToast("🛟 Profil ergänzt — bitte die Seite neu laden.");
     });
     area.querySelectorAll(".proficiency-level-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -2866,6 +2969,48 @@
   window.__dmaPointsSaveFailed = () => {
     showToast("⚠️ Deine Punkte konnten gerade nicht gespeichert werden — bitte Internetverbindung prüfen und die Seite nicht schließen, bis es wieder klappt.");
   };
+
+  /* ============================================================
+     WARNBAND „PROFIL NICHT GELADEN"
+     ------------------------------------------------------------
+     Wenn das Profil nicht aus der Datenbank kommt, sieht die Seite
+     aus wie frisch angelegt: Grunddesign, keine Trophäen, keine
+     Einstellungen. Genau in diesem Zustand darf nichts gespeichert
+     werden — backend.js sperrt das bereits. Damit das aber nicht
+     unbemerkt bleibt, liegt hier ein deutliches Band über der Seite.
+     ============================================================ */
+  function profilWarnbandPruefen() {
+    const noetig = Boolean(Backend.currentUser()) && Backend.profilSchreibbar && !Backend.profilSchreibbar();
+    let band = document.getElementById("profilWarnband");
+    if (!noetig) { if (band) band.remove(); return; }
+    if (band) return;
+    band = Core.el("div", { id: "profilWarnband", class: "profil-warnband" });
+    band.innerHTML = `
+      <strong>⚠️ Dein Profil konnte nicht geladen werden.</strong>
+      Was du hier siehst, ist NICHT dein echter Stand — Design, Trophäen und Einstellungen fehlen nur in der Anzeige.
+      Es wird gerade absichtlich nichts gespeichert, damit dein echter Stand unangetastet bleibt.
+      <button type="button" id="profilNochmalLaden">Nochmal laden</button>`;
+    document.body.appendChild(band);
+    band.querySelector("#profilNochmalLaden").addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      e.target.textContent = "lädt …";
+      const res = await Backend.reloadProfile();
+      if (res.ok) { showToast("✅ Profil ist wieder da."); band.remove(); location.reload(); }
+      else { e.target.disabled = false; e.target.textContent = "Nochmal laden"; showToast("Klappt noch nicht: " + (res.message || "unbekannter Fehler")); }
+    });
+  }
+  // backend.js meldet sich hier, wenn eine Einstellung wegen der Schreibsperre
+  // NICHT gespeichert wurde — höchstens einmal pro halbe Minute, damit es nicht
+  // bei jedem Klick aufpoppt.
+  let letzteSperrMeldung = 0;
+  window.__dmaProfilGesperrt = () => {
+    profilWarnbandPruefen();
+    const jetzt = Date.now();
+    if (jetzt - letzteSperrMeldung < 30000) return;
+    letzteSperrMeldung = jetzt;
+    showToast("⚠️ Nicht gespeichert: dein Profil ist gerade nicht geladen. Bitte die Seite neu laden.");
+  };
+  setInterval(profilWarnbandPruefen, 4000);
   // Kurzer, dezenter Benachrichtigungston -- direkt erzeugt, keine Audiodatei noetig.
   // Spielt einmal sofort; falls die Benachrichtigung dann noch nicht bestaetigt wurde, einmal nach 5s erneut. Danach Ruhe.
   // Web Audio darf laut Browser-Regel nur nach einer echten Nutzer-Interaktion starten,
@@ -3526,7 +3671,13 @@
   // Der Übungsbereich zeigt dann oben ausdrücklich an, WELCHE Übung gemeint ist, damit der
   // Sprung auf den ersten Blick erkennbar ist und nicht wie ein Zufallstreffer wirkt.
   let uebungFokusKategorie = null;
+  // Der zuletzt gewählte Schwierigkeitsgrad gehört ins Konto — sonst steht er nach
+  // jedem Neuladen wieder auf „leicht".
   let selectedDifficulty = "leicht";
+  function schwierigkeitLaden() {
+    const gespeichert = Backend.currentProfile()?.extraProfileData?.selectedDifficulty;
+    if (gespeichert && Quiz.DIFFICULTIES.some((d) => d.id === gespeichert)) selectedDifficulty = gespeichert;
+  }
   // Sprachniveau für die Übungsrunden. null bedeutet „noch nicht festgelegt" —
   // beim ersten Rendern wird dann automatisch das im Profil hinterlegte Niveau
   // übernommen (siehe applyDefaultCefrLevel). Der Schwierigkeitsgrad bleibt
@@ -3770,7 +3921,16 @@
       <div class="question-card" style="margin-bottom:12px;">
         <p class="eyebrow" style="margin-bottom:6px;">⚖️ Sprachniveau der Fragen</p>
         <div class="trophy-case" style="flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px; margin:0;">
-          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip exercise-level-btn ${selectedExerciseLevel === lvl ? "selected" : ""}" data-ex-level="${lvl}">${lvl}</button>`).join("")}
+          ${(() => {
+            // Im Italienisch-Raum folgt die Niveau-Auswahl dem Kurs: erst wenn eine Stufe
+            // abgeschlossen ist, öffnet sich die nächste. Im Deutsch-Raum bleibt alles frei.
+            const imKurs = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it";
+            const stand = imKurs ? itKursStand() : null;
+            return ["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => {
+              const offen = !imKurs || itKursFreigegeben(lvl, stand);
+              return `<button type="button" class="trophy-chip exercise-level-btn ${selectedExerciseLevel === lvl ? "selected" : ""} ${offen ? "" : "trophy-chip-locked"}" data-ex-level="${lvl}" ${offen ? "" : `disabled title="Erst ${["A1", "A2", "B1", "B2", "C1", "C2"][["A1", "A2", "B1", "B2", "C1", "C2"].indexOf(lvl) - 1]} im Kurs abschließen"`}>${lvl}${offen ? "" : " 🔒"}</button>`;
+            }).join("");
+          })()}
         </div>
         <p class="empty-note" style="margin-top:8px; font-size:0.72rem;">Voreingestellt auf dein Profil-Niveau. Der Schwierigkeitsgrad darunter ändert nur die <strong>Anzahl</strong> der Fragen — wie schwer die Sprache ist, entscheidest du hier.</p>
       </div>
@@ -3818,6 +3978,7 @@
     setupEl.querySelectorAll(".diff-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedDifficulty = btn.dataset.diff;
+        if (Backend.currentUser()) Backend.updateExtraProfileField("selectedDifficulty", selectedDifficulty);
         renderSetup();
       });
     });
@@ -4028,9 +4189,14 @@
      deutsche Bedeutung ein — den vollständigen Satz MIT eingesetzter Lösung, dazu die
      Antwortmöglichkeiten. Ohne das muss man raten, worum es im Satz überhaupt geht.
      Die Einstellung bleibt gespeichert, damit man sie nicht bei jeder Frage neu setzt. */
-  let uebersetzungAnzeigen = (() => {
-    try { return localStorage.getItem("dma_uebersetzung") === "1"; } catch (e) { return false; }
-  })();
+  // Im Konto gespeichert, damit der Schalter auf jedem Gerät gleich steht. Der
+  // Wert auf dem Gerät ist nur der Notnagel, solange niemand angemeldet ist.
+  let uebersetzungAnzeigen = false;
+  function uebersetzungSchalterLaden() {
+    const extra = Backend.currentProfile()?.extraProfileData;
+    if (extra && typeof extra.uebersetzungAnzeigen === "boolean") { uebersetzungAnzeigen = extra.uebersetzungAnzeigen; return; }
+    try { uebersetzungAnzeigen = localStorage.getItem("dma_uebersetzung") === "1"; } catch (e) { uebersetzungAnzeigen = false; }
+  }
   function uebersetzungsSchalterHtml(q) {
     const imItalienischraum = ExerciseData.getLernraum && ExerciseData.getLernraum() === "it";
     if (!imItalienischraum) return "";
@@ -4109,6 +4275,7 @@
     });
     document.getElementById("uebersetzungSchalter")?.addEventListener("click", () => {
       uebersetzungAnzeigen = !uebersetzungAnzeigen;
+      if (Backend.currentUser()) Backend.updateExtraProfileField("uebersetzungAnzeigen", uebersetzungAnzeigen);
       try { localStorage.setItem("dma_uebersetzung", uebersetzungAnzeigen ? "1" : "0"); } catch (e) { /* privater Modus */ }
       renderQuestion();
     });
@@ -4230,6 +4397,12 @@
       badges: r.badges.map((b) => b.name),
       playedAt: r.playedAt,
     });
+
+    // Im Italienisch-Raum zählt jede Runde auf den Kursfortschritt der gespielten Stufe ein.
+    if (ExerciseData.getLernraum && ExerciseData.getLernraum() === "it" && r.answers && r.answers.length) {
+      const richtig = r.answers.filter((a) => a.base > 0).length;
+      itKursFortschritt(selectedExerciseLevel, richtig, r.answers.length);
+    }
 
     // Automatische Zusammenfassung ins private Postfach — welche Wörter/Sätze gespielt wurden,
     // richtig/falsch, und (wenn vorhanden) eine kurze Erklärung zur Bedeutung.
@@ -5435,6 +5608,456 @@
   document.querySelector('#learnSubnav [data-sub="sub-grammatik"]')?.addEventListener("click", () => renderGrammatik());
   document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.addEventListener("click", () => renderDictionary());
 
+
+  /* ============================================================
+     ITALIENISCH-KURS — Stufen, Fortschritt und Belohnung
+     ------------------------------------------------------------
+     Der Italienisch-Raum war bisher eine Sammlung einzelner
+     Übungen ohne Weg. Jetzt gibt es sechs Stufen von A1 bis C2:
+     eine Stufe gilt als geschafft, wenn man auf ihr genügend
+     richtige Antworten mit ausreichender Treffsicherheit
+     gesammelt hat. Danach öffnet sich die nächste Stufe, es gibt
+     einen Orden und eine Nachricht ins Postfach.
+     Der Fortschritt liegt in extra_profile_data.itKurs, also im
+     Profil — er wandert damit automatisch zwischen Geräten mit.
+     ============================================================ */
+  const IT_KURS_STUFEN = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const IT_KURS_ZIEL_RICHTIG = 50;   // so viele richtige Antworten braucht eine Stufe
+  const IT_KURS_MIN_QUOTE = 0.8;     // und mindestens diese Trefferquote
+  const IT_KURS_ORDEN = {
+    A1: "Italienisch A1 – Erste Schritte gemeistert",
+    A2: "Italienisch A2 – Alltag gemeistert",
+    B1: "Italienisch B1 – Sicher im Gespräch",
+    B2: "Italienisch B2 – Fortgeschritten",
+    C1: "Italienisch C1 – Sehr fortgeschritten",
+    C2: "Italienisch C2 – Meisterschaft",
+  };
+  function itKursStand() {
+    const extra = Backend.currentProfile()?.extraProfileData || {};
+    const roh = extra.itKurs || {};
+    const stand = {};
+    IT_KURS_STUFEN.forEach((lvl) => {
+      const s = roh[lvl] || {};
+      stand[lvl] = { richtig: s.richtig || 0, gesamt: s.gesamt || 0, gemeistert: Boolean(s.gemeistert) };
+    });
+    return stand;
+  }
+  // Höchste Stufe, die man spielen darf: die erste noch nicht gemeisterte.
+  function itKursAktuelleStufe(stand) {
+    const s = stand || itKursStand();
+    for (const lvl of IT_KURS_STUFEN) if (!s[lvl].gemeistert) return lvl;
+    return "C2";
+  }
+  function itKursFreigegeben(lvl, stand) {
+    const s = stand || itKursStand();
+    const idx = IT_KURS_STUFEN.indexOf(lvl);
+    if (idx <= 0) return true;
+    return s[IT_KURS_STUFEN[idx - 1]].gemeistert;
+  }
+  // Nach jeder beendeten Runde im Italienisch-Raum aufrufen. Zählt richtige und
+  // gesamte Antworten auf der gespielten Stufe und prüft, ob sie damit geschafft ist.
+  async function itKursFortschritt(level, richtig, gesamt) {
+    if (!Backend.currentUser()) return;
+    if (!IT_KURS_STUFEN.includes(level) || !gesamt) return;
+    const extra = Backend.currentProfile()?.extraProfileData || {};
+    const kurs = { ...(extra.itKurs || {}) };
+    const alt = kurs[level] || { richtig: 0, gesamt: 0, gemeistert: false };
+    const neu = { richtig: alt.richtig + richtig, gesamt: alt.gesamt + gesamt, gemeistert: alt.gemeistert };
+    const quote = neu.gesamt ? neu.richtig / neu.gesamt : 0;
+    const geschafftJetzt = !alt.gemeistert && neu.richtig >= IT_KURS_ZIEL_RICHTIG && quote >= IT_KURS_MIN_QUOTE;
+    if (geschafftJetzt) neu.gemeistert = true;
+    kurs[level] = neu;
+    await Backend.updateExtraProfileField("itKurs", kurs);
+    if (geschafftJetzt) {
+      Core.sound.fanfare();
+      const orden = IT_KURS_ORDEN[level];
+      Backend.addTrophy(orden);
+      const naechste = IT_KURS_STUFEN[IT_KURS_STUFEN.indexOf(level) + 1];
+      showToast(`🎓 Stufe ${level} geschafft! ${naechste ? "Stufe " + naechste + " ist jetzt offen." : "Du hast den ganzen Kurs durch."}`);
+      Backend.sendSystemMessage(Backend.currentUser().id,
+        `🎓 Complimenti! Du hast im Italienischkurs die Stufe ${level} abgeschlossen — ${neu.richtig} richtige Antworten bei ${Math.round(quote * 100)} % Trefferquote.\n\n` +
+        (naechste ? `Damit ist Stufe ${naechste} für dich offen.` : "Damit hast du alle sechs Stufen geschafft.") +
+        `\n\nDafür gibt es den Orden „${orden}“.`);
+    }
+    if (typeof renderItalienischkurs === "function") renderItalienischkurs();
+  }
+  function renderItalienischkurs() {
+    const area = document.getElementById("italienischkursArea");
+    if (!area) return;
+    if (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it") {
+      area.innerHTML = '<p class="empty-note">Der Kurs gehört zum Italienisch-Raum. Schalt in den Einstellungen auf 🇮🇹 Italiano um.</p>';
+      return;
+    }
+    const stand = itKursStand();
+    const aktuell = itKursAktuelleStufe(stand);
+    const geschafft = IT_KURS_STUFEN.filter((l) => stand[l].gemeistert).length;
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:12px;">🎓 <strong>Il corso</strong> — dein Weg durch den Italienischkurs. Eine Stufe gilt als geschafft, wenn du auf ihr <strong>${IT_KURS_ZIEL_RICHTIG} richtige Antworten</strong> bei mindestens <strong>${Math.round(IT_KURS_MIN_QUOTE * 100)} % Trefferquote</strong> gesammelt hast. Danach öffnet sich die nächste Stufe, und es gibt einen Orden.</p>
+
+      <div class="question-card" style="margin-bottom:14px;">
+        <p class="eyebrow" style="margin-top:0;">📍 Du bist auf Stufe ${aktuell}</p>
+        <p class="empty-note" style="margin:0;">${geschafft} von ${IT_KURS_STUFEN.length} Stufen abgeschlossen.${geschafft === IT_KURS_STUFEN.length ? " Der ganze Kurs ist durch — bravissimo!" : ""}</p>
+      </div>
+
+      <div class="kurs-leiter">
+        ${IT_KURS_STUFEN.map((lvl) => {
+          const s = stand[lvl];
+          const offen = itKursFreigegeben(lvl, stand);
+          const anteil = Math.min(100, Math.round((s.richtig / IT_KURS_ZIEL_RICHTIG) * 100));
+          const quote = s.gesamt ? Math.round((s.richtig / s.gesamt) * 100) : 0;
+          return `
+            <div class="kurs-stufe ${s.gemeistert ? "kurs-fertig" : lvl === aktuell ? "kurs-aktuell" : offen ? "" : "kurs-zu"}">
+              <div class="kurs-stufe-kopf">
+                <span class="kurs-stufe-name">${s.gemeistert ? "✅" : offen ? "▶" : "🔒"} ${lvl}</span>
+                <span class="empty-note">${s.gemeistert ? "geschafft" : offen ? `${s.richtig} / ${IT_KURS_ZIEL_RICHTIG} richtig` : "noch zu"}</span>
+              </div>
+              ${offen ? `
+                <div class="quiz-progress" style="margin:6px 0 4px;"><div class="quiz-progress-bar" style="width:${anteil}%"></div></div>
+                <p class="empty-note" style="margin:0; font-size:0.68rem;">${s.gesamt ? `${quote} % Trefferquote${quote < Math.round(IT_KURS_MIN_QUOTE * 100) && s.richtig >= IT_KURS_ZIEL_RICHTIG ? " — noch zu niedrig für den Abschluss" : ""}` : "noch keine Antworten"}</p>
+                ${lvl === aktuell ? `<button type="button" class="btn btn-coffee kurs-uebenBtn" data-kurs-level="${lvl}" style="margin-top:8px;">▶ Auf ${lvl} üben</button>` : ""}
+              ` : `<p class="empty-note" style="margin:4px 0 0; font-size:0.68rem;">Erst ${IT_KURS_STUFEN[IT_KURS_STUFEN.indexOf(lvl) - 1]} abschließen.</p>`}
+            </div>`;
+        }).join("")}
+      </div>
+
+      <div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow" style="margin-top:0;">🏅 Was es zu holen gibt</p>
+        <div class="breakdown-list">
+          ${IT_KURS_STUFEN.map((lvl) => `<div class="breakdown-row"><span>${stand[lvl].gemeistert ? "🏅" : "▫️"} ${IT_KURS_ORDEN[lvl]}</span><span class="empty-note">${stand[lvl].gemeistert ? "erhalten" : "offen"}</span></div>`).join("")}
+        </div>
+      </div>
+    `;
+    area.querySelectorAll(".kurs-uebenBtn").forEach((b) => b.addEventListener("click", () => {
+      // Übungsbereich mit genau dieser Stufe öffnen.
+      selectedExerciseLevel = b.dataset.kursLevel;
+      autoCefrLevel.uebungen = null;
+      jumpToSubnavTarget('#learnSubnav [data-sub="sub-exercises"]', ".category-grid");
+    }));
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-italienischkurs"]')?.addEventListener("click", () => renderItalienischkurs());
+
+  /* ============================================================
+     SATZBAUKASTEN DEUTSCH — Bausteine
+     ------------------------------------------------------------
+     Dieselbe Idee wie im italienischen Baukasten, aber auf das
+     zugeschnitten, was im Deutschen wirklich schwer ist: die
+     Stellung des Verbs. Deshalb gibt es drei Satzarten —
+     Aussage (Verb an zweiter Stelle), Frage (Verb ganz vorn) und
+     Nebensatz mit „weil" (Verb ganz hinten) — und zwei Zeiten.
+     ============================================================ */
+  const DE_SUBJEKTE = [
+    { id: "1sg", wort: "ich", zahl: "sg", person: 1 },
+    { id: "2sg", wort: "du", zahl: "sg", person: 2 },
+    { id: "3sgm", wort: "er", zahl: "sg", person: 3 },
+    { id: "3sgf", wort: "sie", zahl: "sg", person: 3 },
+    { id: "1pl", wort: "wir", zahl: "pl", person: 1 },
+    { id: "2pl", wort: "ihr", zahl: "pl", person: 2 },
+    { id: "3pl", wort: "sie", zahl: "pl", person: 3, hinweis: "sie (mehrere)" },
+  ];
+  // formen: ich, du, er/sie, wir, ihr, sie
+  const DE_VERBEN = [
+    { id: "sein", inf: "sein", formen: ["bin", "bist", "ist", "sind", "seid", "sind"], hilfsverb: "sein", partizip: "gewesen", themen: ["zustand", "ort", "beruf"] },
+    { id: "haben", inf: "haben", formen: ["habe", "hast", "hat", "haben", "habt", "haben"], hilfsverb: "haben", partizip: "gehabt", themen: ["besitz", "zustand"] },
+    { id: "wohnen", inf: "wohnen", formen: ["wohne", "wohnst", "wohnt", "wohnen", "wohnt", "wohnen"], hilfsverb: "haben", partizip: "gewohnt", themen: ["ort"] },
+    { id: "arbeiten", inf: "arbeiten", formen: ["arbeite", "arbeitest", "arbeitet", "arbeiten", "arbeitet", "arbeiten"], hilfsverb: "haben", partizip: "gearbeitet", themen: ["ort", "zeit"] },
+    { id: "essen", inf: "essen", formen: ["esse", "isst", "isst", "essen", "esst", "essen"], hilfsverb: "haben", partizip: "gegessen", themen: ["essen", "ort"] },
+    { id: "trinken", inf: "trinken", formen: ["trinke", "trinkst", "trinkt", "trinken", "trinkt", "trinken"], hilfsverb: "haben", partizip: "getrunken", themen: ["trinken", "ort"] },
+    { id: "kochen", inf: "kochen", formen: ["koche", "kochst", "kocht", "kochen", "kocht", "kochen"], hilfsverb: "haben", partizip: "gekocht", themen: ["essen"] },
+    { id: "gehen", inf: "gehen", formen: ["gehe", "gehst", "geht", "gehen", "geht", "gehen"], hilfsverb: "sein", partizip: "gegangen", themen: ["richtung"] },
+    { id: "fahren", inf: "fahren", formen: ["fahre", "fährst", "fährt", "fahren", "fahrt", "fahren"], hilfsverb: "sein", partizip: "gefahren", themen: ["richtung", "verkehr"] },
+    { id: "kommen", inf: "kommen", formen: ["komme", "kommst", "kommt", "kommen", "kommt", "kommen"], hilfsverb: "sein", partizip: "gekommen", themen: ["richtung"] },
+    { id: "lesen", inf: "lesen", formen: ["lese", "liest", "liest", "lesen", "lest", "lesen"], hilfsverb: "haben", partizip: "gelesen", themen: ["lesen", "ort"] },
+    { id: "schreiben", inf: "schreiben", formen: ["schreibe", "schreibst", "schreibt", "schreiben", "schreibt", "schreiben"], hilfsverb: "haben", partizip: "geschrieben", themen: ["schreiben"] },
+    { id: "sehen", inf: "sehen", formen: ["sehe", "siehst", "sieht", "sehen", "seht", "sehen"], hilfsverb: "haben", partizip: "gesehen", themen: ["sehen", "person"] },
+    { id: "hoeren", inf: "hören", formen: ["höre", "hörst", "hört", "hören", "hört", "hören"], hilfsverb: "haben", partizip: "gehört", themen: ["musik", "person"] },
+    { id: "lernen", inf: "lernen", formen: ["lerne", "lernst", "lernt", "lernen", "lernt", "lernen"], hilfsverb: "haben", partizip: "gelernt", themen: ["sprache", "ort"] },
+    { id: "sprechen", inf: "sprechen", formen: ["spreche", "sprichst", "spricht", "sprechen", "sprecht", "sprechen"], hilfsverb: "haben", partizip: "gesprochen", themen: ["sprache", "person"], objRegel: { person: "mit" } },
+    { id: "kaufen", inf: "kaufen", formen: ["kaufe", "kaufst", "kauft", "kaufen", "kauft", "kaufen"], hilfsverb: "haben", partizip: "gekauft", themen: ["kaufen"] },
+    { id: "suchen", inf: "suchen", formen: ["suche", "suchst", "sucht", "suchen", "sucht", "suchen"], hilfsverb: "haben", partizip: "gesucht", themen: ["kaufen", "person"] },
+    { id: "warten", inf: "warten", formen: ["warte", "wartest", "wartet", "warten", "wartet", "warten"], hilfsverb: "haben", partizip: "gewartet", themen: ["person", "zeit"], objRegel: { person: "auf" } },
+    { id: "schlafen", inf: "schlafen", formen: ["schlafe", "schläfst", "schläft", "schlafen", "schlaft", "schlafen"], hilfsverb: "haben", partizip: "geschlafen", themen: ["ort", "zeit"] },
+    { id: "spielen", inf: "spielen", formen: ["spiele", "spielst", "spielt", "spielen", "spielt", "spielen"], hilfsverb: "haben", partizip: "gespielt", themen: ["freizeit", "musik"] },
+    { id: "treffen", inf: "treffen", formen: ["treffe", "triffst", "trifft", "treffen", "trefft", "treffen"], hilfsverb: "haben", partizip: "getroffen", themen: ["person"] },
+    { id: "verstehen", inf: "verstehen", formen: ["verstehe", "verstehst", "versteht", "verstehen", "versteht", "verstehen"], hilfsverb: "haben", partizip: "verstanden", themen: ["sprache", "person"] },
+    { id: "brauchen", inf: "brauchen", formen: ["brauche", "brauchst", "braucht", "brauchen", "braucht", "brauchen"], hilfsverb: "haben", partizip: "gebraucht", themen: ["besitz", "kaufen"] },
+    { id: "machen", inf: "machen", formen: ["mache", "machst", "macht", "machen", "macht", "machen"], hilfsverb: "haben", partizip: "gemacht", themen: ["taetigkeit"] },
+    { id: "helfen", inf: "helfen", formen: ["helfe", "hilfst", "hilft", "helfen", "helft", "helfen"], hilfsverb: "haben", partizip: "geholfen", themen: ["personDativ"] },
+  ];
+  const DE_ERGAENZUNGEN = [
+    { wort: "in Berlin", themen: ["ort"] },
+    { wort: "in München", themen: ["ort"] },
+    { wort: "in der Stadt", themen: ["ort"] },
+    { wort: "auf dem Land", themen: ["ort"] },
+    { wort: "zu Hause", themen: ["ort"] },
+    { wort: "im Büro", themen: ["ort"] },
+    { wort: "im Garten", themen: ["ort"] },
+    { wort: "in der Küche", themen: ["ort", "essen"] },
+    { wort: "am Meer", themen: ["ort", "richtung"] },
+    { wort: "in den Bergen", themen: ["ort"] },
+    { wort: "nach Hause", themen: ["richtung"] },
+    { wort: "zur Arbeit", themen: ["richtung"] },
+    { wort: "in die Schule", themen: ["richtung"] },
+    { wort: "zum Bahnhof", themen: ["richtung"] },
+    { wort: "ans Meer", themen: ["richtung"] },
+    { wort: "einen Apfel", themen: ["essen"] },
+    { wort: "eine Suppe", themen: ["essen"] },
+    { wort: "ein Brot", themen: ["essen", "kaufen"] },
+    { wort: "Nudeln", themen: ["essen"] },
+    { wort: "einen Kuchen", themen: ["essen"] },
+    { wort: "einen Kaffee", themen: ["trinken", "kaufen"] },
+    { wort: "ein Glas Wasser", themen: ["trinken"] },
+    { wort: "einen Tee", themen: ["trinken", "kaufen"] },
+    { wort: "ein Buch", themen: ["lesen", "kaufen"] },
+    { wort: "die Zeitung", themen: ["lesen"] },
+    { wort: "einen Brief", themen: ["schreiben", "lesen"] },
+    { wort: "eine Nachricht", themen: ["schreiben", "lesen"] },
+    { wort: "Deutsch", themen: ["sprache"] },
+    { wort: "Italienisch", themen: ["sprache"] },
+    { wort: "meinen Freund", dativ: "meinem Freund", themen: ["person", "sehen"] },
+    { wort: "meine Freundin", dativ: "meiner Freundin", themen: ["person", "sehen"] },
+    { wort: "meine Eltern", dativ: "meinen Eltern", themen: ["person", "sehen"] },
+    { wort: "meinem Bruder", themen: ["personDativ"] },
+    { wort: "meiner Schwester", themen: ["personDativ"] },
+    { wort: "meinen Nachbarn", themen: ["personDativ"] },
+    { wort: "einen Film", themen: ["sehen"] },
+    { wort: "Musik", themen: ["musik", "sehen"] },
+    { wort: "Klavier", themen: ["musik"] },
+    { wort: "Fußball", themen: ["freizeit"] },
+    { wort: "Karten", themen: ["freizeit"] },
+    { wort: "viel Arbeit", themen: ["besitz"] },
+    { wort: "keine Zeit", themen: ["besitz"] },
+    { wort: "Hunger", themen: ["besitz", "zustand"], nurVerben: ["haben"] },
+    { wort: "Durst", themen: ["besitz", "zustand"], nurVerben: ["haben"] },
+    { wort: "müde", themen: ["zustand"], nurVerben: ["sein"] },
+    { wort: "zufrieden", themen: ["zustand"], nurVerben: ["sein"] },
+    { wort: "zu spät", themen: ["zustand"], nurVerben: ["sein"] },
+    { wort: "Ärztin", themen: ["beruf"] },
+    { wort: "Lehrer", themen: ["beruf"] },
+    { wort: "Studentin", themen: ["beruf"] },
+    { wort: "Frühstück", themen: ["taetigkeit"] },
+    { wort: "die Einkäufe", themen: ["taetigkeit", "kaufen"] },
+    { wort: "mit dem Zug", themen: ["verkehr"] },
+    { wort: "mit dem Bus", themen: ["verkehr"] },
+    { wort: "mit dem Fahrrad", themen: ["verkehr"] },
+  ];
+  const DE_ZEITANGABEN = [
+    { wort: "", hinweis: "ohne Zeitangabe" },
+    { wort: "heute" },
+    { wort: "morgen", nichtVergangenheit: true },
+    { wort: "gestern", nurVergangenheit: true },
+    { wort: "am Morgen" },
+    { wort: "am Abend" },
+    { wort: "jeden Tag" },
+    { wort: "oft" },
+    { wort: "immer" },
+    { wort: "manchmal" },
+    { wort: "montags" },
+    { wort: "am Wochenende" },
+    { wort: "letzte Woche", nurVergangenheit: true },
+    { wort: "nächste Woche", nichtVergangenheit: true },
+  ];
+
+  /* ============================================================
+     SATZBAUKASTEN DEUTSCH
+     ------------------------------------------------------------
+     Man wählt Person, Verb, Ergänzung, Zeitangabe, Zeitform und
+     Satzart — und sieht sofort, WOHIN das Verb rutscht. Genau das
+     ist im Deutschen das Schwierige: in der Aussage steht es an
+     zweiter Stelle, in der Frage ganz vorn, im Nebensatz mit
+     „weil" ganz hinten, und im Perfekt wandert das Partizip ans
+     Satzende. Die Bausteine des fertigen Satzes werden farblich
+     nach ihrer Rolle markiert, damit man das Muster sieht.
+     ============================================================ */
+  let dsbSubjekt = "1sg";
+  let dsbVerb = "trinken";
+  let dsbErgaenzung = null;
+  let dsbZeitangabe = "";
+  let dsbZeitform = "praesens";
+  let dsbSatzart = "aussage";
+  const DSB_FORM_INDEX = { "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 };
+
+  function dsbSubjektObj() { return DE_SUBJEKTE.find((x) => x.id === dsbSubjekt) || DE_SUBJEKTE[0]; }
+  function dsbVerbObj() { return DE_VERBEN.find((v) => v.id === dsbVerb) || DE_VERBEN[0]; }
+  function dsbPassendeErgaenzungen() {
+    const verb = dsbVerbObj();
+    const themen = verb.themen || [];
+    return DE_ERGAENZUNGEN.filter((e) => {
+      if (!(e.themen || []).some((t) => themen.includes(t))) return false;
+      // „ich bin müde" und „ich habe Hunger" gehören fest zusammen — die
+      // jeweils andere Kombination gibt es im Deutschen nicht.
+      if (e.nurVerben && !e.nurVerben.includes(verb.id)) return false;
+      return true;
+    });
+  }
+  /* Manche Verben verlangen eine Präposition und damit einen anderen Fall:
+     „auf meinen Freund warten" (Akkusativ), „mit meinem Freund sprechen"
+     (Dativ). Die Präposition gehört zur Ergänzung, nicht zum Verb — sonst
+     landet sie vor der Zeitangabe und der Satz klingt schief. */
+  const DSB_OBJ_REGELN = {
+    auf: { praep: "auf", dativ: false },
+    mit: { praep: "mit", dativ: true },
+  };
+  function dsbObjRegel(verb, erg) {
+    if (!verb.objRegel || !erg) return null;
+    const treffer = (erg.themen || []).map((t) => verb.objRegel[t]).find(Boolean);
+    return treffer ? DSB_OBJ_REGELN[treffer] || null : null;
+  }
+  function dsbHilfsverbForm(verb, subjekt) {
+    const idx = DSB_FORM_INDEX[subjekt.id];
+    const haben = ["habe", "hast", "hat", "haben", "habt", "haben"];
+    const sein = ["bin", "bist", "ist", "sind", "seid", "sind"];
+    return (verb.hilfsverb === "sein" ? sein : haben)[idx];
+  }
+  // Baut den Satz und liefert die Teile einzeln zurück, damit sie in der Anzeige
+  // nach ihrer Rolle eingefärbt werden können.
+  function dsbSatz() {
+    const subj = dsbSubjektObj();
+    const verb = dsbVerbObj();
+    const erg = dsbPassendeErgaenzungen().find((e) => e.wort === dsbErgaenzung) || null;
+    const zeit = DE_ZEITANGABEN.find((z) => z.wort === dsbZeitangabe) || DE_ZEITANGABEN[0];
+    const finit = dsbZeitform === "perfekt" ? dsbHilfsverbForm(verb, subj) : verb.formen[DSB_FORM_INDEX[subj.id]];
+    const partizip = dsbZeitform === "perfekt" ? verb.partizip : "";
+    const regel = dsbObjRegel(verb, erg);
+    const mittelfeld = [];
+    if (zeit && zeit.wort) mittelfeld.push({ t: zeit.wort, rolle: "zeit" });
+    if (erg) {
+      if (regel && regel.praep) mittelfeld.push({ t: regel.praep, rolle: "praep" });
+      mittelfeld.push({ t: regel && regel.dativ ? (erg.dativ || erg.wort) : erg.wort, rolle: "erg" });
+    }
+    let teile = [];
+    let hinweis = "";
+    if (dsbSatzart === "frage") {
+      teile = [{ t: finit, rolle: "verb" }, { t: subj.wort, rolle: "subj" }, ...mittelfeld];
+      if (partizip) teile.push({ t: partizip, rolle: "verb" });
+      hinweis = partizip
+        ? "In der Frage steht das gebeugte Verb ganz vorn — das Partizip bleibt am Satzende."
+        : "In der Ja-Nein-Frage steht das gebeugte Verb ganz vorn, davor kommt nichts.";
+    } else if (dsbSatzart === "nebensatz") {
+      teile = [{ t: "weil", rolle: "konj" }, { t: subj.wort, rolle: "subj" }, ...mittelfeld];
+      if (partizip) teile.push({ t: partizip, rolle: "verb" });
+      teile.push({ t: finit, rolle: "verb" });
+      hinweis = partizip
+        ? "Im Nebensatz mit „weil“ rutscht das gebeugte Verb ganz ans Ende — hinter das Partizip."
+        : "Im Nebensatz mit „weil“ steht das gebeugte Verb ganz am Ende.";
+    } else {
+      teile = [{ t: subj.wort, rolle: "subj" }, { t: finit, rolle: "verb" }, ...mittelfeld];
+      if (partizip) teile.push({ t: partizip, rolle: "verb" });
+      hinweis = partizip
+        ? "In der Aussage steht das gebeugte Verb an zweiter Stelle, das Partizip ganz am Ende — die Klammer dazwischen heißt Satzklammer."
+        : "In der Aussage steht das gebeugte Verb immer an zweiter Stelle.";
+    }
+    const satzText = teile.map((x) => x.t).join(" ");
+    return {
+      teile,
+      text: satzText.charAt(0).toUpperCase() + satzText.slice(1) + (dsbSatzart === "frage" ? "?" : dsbSatzart === "nebensatz" ? " …" : "."),
+      hinweis, verb, subj,
+    };
+  }
+  function renderSatzbaukastenDe() {
+    const area = document.getElementById("satzbaukastenDeArea");
+    if (!area) return;
+    const ergaenzungen = dsbPassendeErgaenzungen();
+    if (dsbErgaenzung && !ergaenzungen.some((e) => e.wort === dsbErgaenzung)) dsbErgaenzung = null;
+    const zeitangaben = DE_ZEITANGABEN.filter((z) => {
+      if (z.nurVergangenheit && dsbZeitform !== "perfekt") return false;
+      if (z.nichtVergangenheit && dsbZeitform === "perfekt") return false;
+      return true;
+    });
+    if (dsbZeitangabe && !zeitangaben.some((z) => z.wort === dsbZeitangabe)) dsbZeitangabe = "";
+    const s = dsbSatz();
+    const dsbVerbJetzt = dsbVerbObj();
+    const rollenName = { subj: "Wer", verb: "Verb", zeit: "Wann", erg: "Was / Wo", konj: "Bindewort", praep: "Präposition" };
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:12px;">🧱 <strong>Satzbaukasten Deutsch</strong> — bau dir Sätze und schau zu, wohin das Verb wandert. In der Aussage steht es an zweiter Stelle, in der Frage ganz vorn, im Nebensatz ganz hinten.</p>
+
+      <div class="question-card" style="margin-bottom:14px;">
+        <p class="baustein-satz">${s.teile.map((x) => `<span class="satzteil satzteil-${x.rolle}" title="${rollenName[x.rolle] || ""}">${x.t}</span>`).join(" ")}</p>
+        <p class="baustein-satz-de">${s.text}</p>
+        <p class="empty-note" style="margin:6px 0 0;">💡 ${s.hinweis}</p>
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
+          <button type="button" class="btn btn-ghost" id="dsbVorlesen">🔊 Vorlesen</button>
+          <button type="button" class="btn btn-ghost" id="dsbZufall">🎲 Zufallssatz</button>
+        </div>
+      </div>
+
+      <p class="eyebrow">🧭 Satzart</p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-dsb-art="aussage" aria-selected="${dsbSatzart === "aussage"}">Aussage<span class="baustein-de">Verb an zweiter Stelle</span></button>
+        <button type="button" class="baustein" data-dsb-art="frage" aria-selected="${dsbSatzart === "frage"}">Frage<span class="baustein-de">Verb ganz vorn</span></button>
+        <button type="button" class="baustein" data-dsb-art="nebensatz" aria-selected="${dsbSatzart === "nebensatz"}">Nebensatz mit „weil“<span class="baustein-de">Verb ganz hinten</span></button>
+      </div>
+
+      <p class="eyebrow">⏳ Zeit</p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-dsb-zeitform="praesens" aria-selected="${dsbZeitform === "praesens"}">Präsens<span class="baustein-de">Gegenwart</span></button>
+        <button type="button" class="baustein" data-dsb-zeitform="perfekt" aria-selected="${dsbZeitform === "perfekt"}">Perfekt<span class="baustein-de">Vergangenheit, gesprochen</span></button>
+      </div>
+
+      <p class="eyebrow">👤 Wer?</p>
+      <div class="baustein-reihe">
+        ${DE_SUBJEKTE.map((x) => `<button type="button" class="baustein" data-dsb-subjekt="${x.id}" aria-selected="${dsbSubjekt === x.id}">${x.wort}${x.hinweis ? `<span class="baustein-de">${x.hinweis}</span>` : ""}</button>`).join("")}
+      </div>
+
+      <p class="eyebrow">🔤 Was tut sie oder er?</p>
+      <div class="baustein-reihe">
+        ${DE_VERBEN.map((v) => `<button type="button" class="baustein" data-dsb-verb="${v.id}" aria-selected="${dsbVerb === v.id}">${dsbZeitform === "perfekt" ? dsbHilfsverbForm(v, dsbSubjektObj()) + " … " + v.partizip : v.formen[DSB_FORM_INDEX[dsbSubjekt]]}<span class="baustein-de">${v.inf}</span></button>`).join("")}
+      </div>
+
+      <p class="eyebrow">🧩 Was noch?</p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-dsb-erg="" aria-selected="${!dsbErgaenzung}">— nichts —<span class="baustein-de">ohne Ergänzung</span></button>
+        ${ergaenzungen.map((e) => {
+          // Der Baustein zeigt die Form, die beim gewählten Verb wirklich steht:
+          // nach sprechen „mit meinem Freund", nach sehen „meinen Freund".
+          const r = dsbObjRegel(dsbVerbJetzt, e);
+          const wort = r && r.dativ ? (e.dativ || e.wort) : e.wort;
+          const voll = r && r.praep ? r.praep + " " + wort : wort;
+          return `<button type="button" class="baustein" data-dsb-erg="${e.wort.replace(/"/g, "&quot;")}" aria-selected="${dsbErgaenzung === e.wort}">${voll}</button>`;
+        }).join("")}
+      </div>
+
+      <p class="eyebrow">🕒 Wann?</p>
+      <div class="baustein-reihe">
+        ${zeitangaben.map((z) => `<button type="button" class="baustein" data-dsb-zeit="${z.wort}" aria-selected="${dsbZeitangabe === z.wort}">${z.wort || "— nichts —"}${z.hinweis ? `<span class="baustein-de">${z.hinweis}</span>` : ""}</button>`).join("")}
+      </div>
+
+      <div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow" style="margin-top:0;">💡 Was hier gerade passiert</p>
+        <p class="empty-note" style="margin:0;">
+          Das Verb <strong>${s.verb.inf}</strong> bildet das Perfekt mit <strong>${s.verb.hilfsverb}</strong>.
+          ${s.verb.hilfsverb === "sein"
+            ? "Mit <strong>sein</strong> stehen fast nur Verben der Bewegung oder der Zustandsänderung — gehen, fahren, kommen, aufwachen."
+            : "Die allermeisten Verben nehmen <strong>haben</strong>; <strong>sein</strong> ist die Ausnahme."}
+          Die Farben oben zeigen die Rolle jedes Bausteins: <span class="satzteil satzteil-subj">wer</span>, <span class="satzteil satzteil-verb">Verb</span>, <span class="satzteil satzteil-zeit">wann</span>, <span class="satzteil satzteil-erg">was oder wo</span>.
+        </p>
+      </div>
+    `;
+    area.querySelectorAll("[data-dsb-art]").forEach((b) => b.addEventListener("click", () => { dsbSatzart = b.dataset.dsbArt; renderSatzbaukastenDe(); }));
+    area.querySelectorAll("[data-dsb-zeitform]").forEach((b) => b.addEventListener("click", () => { dsbZeitform = b.dataset.dsbZeitform; renderSatzbaukastenDe(); }));
+    area.querySelectorAll("[data-dsb-subjekt]").forEach((b) => b.addEventListener("click", () => { dsbSubjekt = b.dataset.dsbSubjekt; renderSatzbaukastenDe(); }));
+    area.querySelectorAll("[data-dsb-verb]").forEach((b) => b.addEventListener("click", () => { dsbVerb = b.dataset.dsbVerb; renderSatzbaukastenDe(); }));
+    area.querySelectorAll("[data-dsb-erg]").forEach((b) => b.addEventListener("click", () => { dsbErgaenzung = b.dataset.dsbErg || null; renderSatzbaukastenDe(); }));
+    area.querySelectorAll("[data-dsb-zeit]").forEach((b) => b.addEventListener("click", () => { dsbZeitangabe = b.dataset.dsbZeit; renderSatzbaukastenDe(); }));
+    document.getElementById("dsbVorlesen")?.addEventListener("click", () => Core.speak(s.text));
+    document.getElementById("dsbZufall")?.addEventListener("click", () => {
+      const zufall = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      dsbSatzart = zufall(["aussage", "aussage", "frage", "nebensatz"]);
+      dsbZeitform = Math.random() < 0.5 ? "praesens" : "perfekt";
+      dsbSubjekt = zufall(DE_SUBJEKTE).id;
+      dsbVerb = zufall(DE_VERBEN).id;
+      const moeglich = dsbPassendeErgaenzungen();
+      dsbErgaenzung = moeglich.length ? zufall(moeglich).wort : null;
+      const zeiten = DE_ZEITANGABEN.filter((z) => {
+        if (z.nurVergangenheit && dsbZeitform !== "perfekt") return false;
+        if (z.nichtVergangenheit && dsbZeitform === "perfekt") return false;
+        return true;
+      });
+      dsbZeitangabe = zufall(zeiten).wort;
+      renderSatzbaukastenDe();
+    });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-satzbaukasten-de"]')?.addEventListener("click", () => renderSatzbaukastenDe());
+
   /* ============================================================
      IL COSTRUTTORE DI FRASI — Satzbaukasten Italienisch
      ------------------------------------------------------------
@@ -5450,14 +6073,39 @@
   let sbkErgaenzung = null;
   let sbkZeitangabe = "";
   let sbkZeitform = "presente";
+  // Standard: ohne Personalpronomen — so spricht man Italienisch wirklich.
+  let sbkPronomen = false;
   const SBK_FORM_INDEX = { "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 };
 
   function sbkSubjektObj() { return ExerciseData.IT_SUBJEKTE.find((s) => s.id === sbkSubjekt) || ExerciseData.IT_SUBJEKTE[0]; }
   function sbkVerbObj() { return ExerciseData.IT_VERBEN.find((v) => v.id === sbkVerb) || ExerciseData.IT_VERBEN[0]; }
   // Passende Ergänzungen: nur solche, deren Thema auch beim gewählten Verb steht.
   function sbkPassendeErgaenzungen() {
-    const themen = sbkVerbObj().themen || [];
-    return ExerciseData.IT_ERGAENZUNGEN.filter((e) => (e.themen || []).some((t) => themen.includes(t)));
+    const verb = sbkVerbObj();
+    const themen = verb.themen || [];
+    return ExerciseData.IT_ERGAENZUNGEN.filter((e) => {
+      if (!(e.themen || []).some((t) => themen.includes(t))) return false;
+      // Manche Bausteine passen nur zu einem einzigen Verb: „sono stanco“ geht,
+      // „ho stanco“ gibt es nicht. nurVerben hält solche Paare auseinander.
+      if (e.nurVerben && !e.nurVerben.includes(verb.id)) return false;
+      return true;
+    });
+  }
+  /* Verben regieren ihre Ergänzung unterschiedlich — und im Deutschen anders als
+     im Italienischen. „aspettare“ ist im Italienischen direkt („aspetto il mio
+     amico“), im Deutschen mit Präposition („ich warte auf meinen Freund“);
+     „parlare“ braucht in beiden Sprachen eine: „parlo con …“ / „ich spreche mit
+     …“. Genau das steht hier, damit die Präposition an der Ergänzung klebt und
+     nicht am Verb — sonst kam „Sie wartet auf immer meine Freundin“ heraus. */
+  const SBK_OBJ_REGELN = {
+    a:   { itFeld: "itA",   dePraep: "",    deDativ: true },
+    con: { itFeld: "itCon", dePraep: "mit", deDativ: true },
+    auf: { itFeld: null,    dePraep: "auf", deDativ: false },
+  };
+  function sbkObjRegel(verb, erg) {
+    if (!verb.objRegel || !erg) return null;
+    const treffer = (erg.themen || []).map((t) => verb.objRegel[t]).find(Boolean);
+    return treffer ? SBK_OBJ_REGELN[treffer] || null : null;
   }
   // Partizip mit Angleichung: Verben mit „essere" gleichen das Partizip an das
   // Subjekt an (sono andato / sono andata / siamo andati). Wo das Geschlecht
@@ -5477,36 +6125,78 @@
     const essere = ["sono", "sei", "è", "siamo", "siete", "sono"];
     return (verb.hilfsverb === "essere" ? essere : avere)[idx];
   }
-  // Deutsche Entsprechung des Verbs in der gewählten Person — bewusst schlicht
-  // gehalten, sie dient dem Verständnis, nicht als Stilvorlage.
-  const SBK_DE_ENDUNG = { "1sg": "e", "2sg": "st", "3sgm": "t", "3sgf": "t", "1pl": "en", "2pl": "t", "3pl": "en" };
-  function sbkDeutschesVerb(verb, subjekt, zeitform) {
-    const grund = String(verb.de).split(",")[0].trim();
-    const stamm = grund.replace(/e?n$/, "");
-    if (verb.id === "essere") return { "1sg": "bin", "2sg": "bist", "3sgm": "ist", "3sgf": "ist", "1pl": "sind", "2pl": "seid", "3pl": "sind" }[subjekt.id];
-    if (verb.id === "avere") return { "1sg": "habe", "2sg": "hast", "3sgm": "hat", "3sgf": "hat", "1pl": "haben", "2pl": "habt", "3pl": "haben" }[subjekt.id];
-    if (zeitform === "passato") return "habe/bin … " + grund.replace(/en$/, "t");
-    return stamm + (SBK_DE_ENDUNG[subjekt.id] || "");
-  }
+  // Deutsche Entsprechung des Verbs in der gewählten Person — die Formen stehen
+  // ausdrücklich im Datensatz (deFormen), statt aus dem Infinitiv gebastelt zu werden.
+  // Vorher entstand daraus „er esst" statt „er isst".
+  const SBK_DE_SUBJ = { "1sg": "ich", "2sg": "du", "3sgm": "er", "3sgf": "sie", "1pl": "wir", "2pl": "ihr", "3pl": "sie" };
+  const SBK_DE_HILFS = {
+    haben: ["habe", "hast", "hat", "haben", "habt", "haben"],
+    sein: ["bin", "bist", "ist", "sind", "seid", "sind"],
+  };
+  // Zeitangaben, die im Italienischen üblicherweise VORNE stehen ("Oggi lavoro …").
+  // Häufigkeitsangaben wie spesso oder sempre bleiben dagegen beim Verb.
+  const SBK_ZEIT_VORNE = ["oggi", "domani", "ieri", "stamattina", "stasera", "il fine settimana", "il lunedì"];
   function sbkSatz() {
     const subj = sbkSubjektObj();
     const verb = sbkVerbObj();
+    const idx = SBK_FORM_INDEX[subj.id];
     const erg = sbkPassendeErgaenzungen().find((e) => e.it === sbkErgaenzung) || null;
     const zeit = ExerciseData.IT_ZEITANGABEN.find((z) => z.it === sbkZeitangabe) || ExerciseData.IT_ZEITANGABEN[0];
+    const zeitVorne = Boolean(zeit && zeit.it && SBK_ZEIT_VORNE.includes(zeit.it));
+
+    // --- Italienisch ---
     const verbform = sbkZeitform === "passato"
       ? `${sbkHilfsverbForm(verb, subj)} ${sbkPartizip(verb, subj)}`
-      : verb.formen[SBK_FORM_INDEX[subj.id]];
-    const teile = [subj.it, verbform];
-    if (erg) teile.push(erg.it);
-    if (zeit && zeit.it) teile.push(zeit.it);
-    const satz = teile.join(" ");
-    const deTeile = [subj.de, sbkDeutschesVerb(verb, subj, sbkZeitform)];
-    if (erg) deTeile.push(erg.de);
-    if (zeit && zeit.de) deTeile.push(zeit.de);
+      : verb.formen[idx];
+    const regel = sbkObjRegel(verb, erg);
+    const itErg = erg ? ((regel && regel.itFeld && erg[regel.itFeld]) || erg.it) : "";
+    const itTeile = [];
+    if (zeitVorne) itTeile.push(zeit.it);
+    // Das Personalpronomen wird im Italienischen normalerweise weggelassen — die
+    // Verbendung sagt schon, wer gemeint ist. Nur wenn man es ausdrücklich betonen
+    // will, steht es da. Der Schalter oben entscheidet darüber.
+    if (sbkPronomen) itTeile.push(subj.it);
+    itTeile.push(verbform);
+    if (itErg) itTeile.push(itErg);
+    if (zeit && zeit.it && !zeitVorne) itTeile.push(zeit.it);
+    const itSatz = itTeile.join(" ");
+
+    // --- Deutsch: mit echter Verbstellung, nicht Wort für Wort ---
+    const deSubj = SBK_DE_SUBJ[subj.id];
+    const deFinit = sbkZeitform === "passato"
+      ? SBK_DE_HILFS[verb.deHilfsverb || "haben"][idx]
+      : (verb.deFormen ? verb.deFormen[idx] : verb.de);
+    const dePartizip = sbkZeitform === "passato" ? (verb.dePartizip || "") : "";
+    // Trennbare Vorsilbe („abfahren“) steht im Präsens ganz am Satzende; im
+    // Perfekt steckt sie schon im Partizip.
+    const dePraefix = sbkZeitform === "passato" ? "" : (verb.dePraefix || "");
+    // Richtungsverben verlangen im Deutschen den Akkusativ der Richtung:
+    // „in montagna“ heißt bei abitare „in den Bergen“, bei andare „in die Berge“.
+    let deErg = "";
+    if (erg) {
+      if (verb.richtungsverb) deErg = erg.deRichtung || erg.de;
+      else if (regel && regel.deDativ) deErg = erg.deDativ || erg.de;
+      else deErg = erg.de;
+    }
+    const dePraep = regel ? regel.dePraep : "";
+    const deTeile = [];
+    if (zeitVorne) {
+      // Steht die Zeitangabe vorn, dreht sich im Deutschen die Reihenfolge um:
+      // „Heute arbeite ich …" — das Verb bleibt an zweiter Stelle.
+      deTeile.push(zeit.de, deFinit, deSubj);
+    } else {
+      deTeile.push(deSubj, deFinit);
+      if (zeit && zeit.de) deTeile.push(zeit.de);
+    }
+    if (deErg) deTeile.push(dePraep, deErg);
+    if (dePartizip) deTeile.push(dePartizip);
+    if (dePraefix) deTeile.push(dePraefix);
+    const deSatz = deTeile.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+
     return {
-      it: satz.charAt(0).toUpperCase() + satz.slice(1) + ".",
-      de: (() => { const t = deTeile.join(" ").replace(/\s+/g, " ").trim(); return t.charAt(0).toUpperCase() + t.slice(1) + "."; })(),
-      verbform, erg, zeit, verb, subj,
+      it: itSatz.charAt(0).toUpperCase() + itSatz.slice(1) + ".",
+      de: deSatz.charAt(0).toUpperCase() + deSatz.slice(1) + ".",
+      verbform, erg, zeit, verb, subj, zeitVorne,
     };
   }
   function renderItSatzbaukasten() {
@@ -5518,8 +6208,13 @@
     }
     const ergaenzungen = sbkPassendeErgaenzungen();
     if (sbkErgaenzung && !ergaenzungen.some((e) => e.it === sbkErgaenzung)) sbkErgaenzung = null;
+    // Zeitangaben, die zur gewählten Zeitform nicht passen, werden gar nicht erst
+    // angeboten — „domani abbiamo dormito“ soll nicht baubar sein.
+    const zeitangaben = ExerciseData.IT_ZEITANGABEN.filter((z) =>
+      !(z.nurVergangenheit && sbkZeitform !== "passato") && !(z.nichtVergangenheit && sbkZeitform === "passato"));
+    if (sbkZeitangabe && !zeitangaben.some((z) => z.it === sbkZeitangabe)) sbkZeitangabe = "";
     const satz = sbkSatz();
-    const zeitangaben = ExerciseData.IT_ZEITANGABEN.filter((z) => !(z.nurVergangenheit && sbkZeitform !== "passato"));
+    const verbJetzt = sbkVerbObj();
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:12px;">🧱 <strong>Il costruttore di frasi</strong> — bau dir deinen eigenen Satz. Neben jedem Baustein steht, was er auf Deutsch heißt; unter dem Satz siehst du die ganze Übersetzung.</p>
 
@@ -5538,6 +6233,12 @@
         <button type="button" class="baustein" data-sbk-zeitform="passato" aria-selected="${sbkZeitform === "passato"}">passato prossimo<span class="baustein-de">Vergangenheit</span></button>
       </div>
 
+      <p class="eyebrow">🙋 Personalpronomen</p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sbk-pron="0" aria-selected="${!sbkPronomen}">weglassen<span class="baustein-de">so spricht man normalerweise</span></button>
+        <button type="button" class="baustein" data-sbk-pron="1" aria-selected="${sbkPronomen}">mitsprechen<span class="baustein-de">nur zur Betonung: io, tu …</span></button>
+      </div>
+
       <p class="eyebrow">👤 Chi? — Wer?</p>
       <div class="baustein-reihe">
         ${ExerciseData.IT_SUBJEKTE.map((s) => `<button type="button" class="baustein" data-sbk-subjekt="${s.id}" aria-selected="${sbkSubjekt === s.id}">${s.it}<span class="baustein-de">${s.de}</span></button>`).join("")}
@@ -5551,7 +6252,16 @@
       <p class="eyebrow">🧩 Che altro? — Was noch?</p>
       <div class="baustein-reihe">
         <button type="button" class="baustein" data-sbk-erg="" aria-selected="${!sbkErgaenzung}">— nichts —<span class="baustein-de">ohne Ergänzung</span></button>
-        ${ergaenzungen.map((e) => `<button type="button" class="baustein" data-sbk-erg="${e.it.replace(/"/g, "&quot;")}" aria-selected="${sbkErgaenzung === e.it}">${e.it}<span class="baustein-de">${e.de}</span></button>`).join("")}
+        ${ergaenzungen.map((e) => {
+          // Der Baustein zeigt gleich die Form, die beim gewählten Verb wirklich
+          // steht: nach parlare „con il mio amico — mit meinem Freund“, nach
+          // vedere dagegen „il mio amico — meinen Freund“.
+          const r = sbkObjRegel(verbJetzt, e);
+          const zeigeIt = (r && r.itFeld && e[r.itFeld]) || e.it;
+          const zeigeDe = verbJetzt.richtungsverb ? (e.deRichtung || e.de) : (r && r.deDativ ? (e.deDativ || e.de) : e.de);
+          const mitPraep = r && r.dePraep ? r.dePraep + " " + zeigeDe : zeigeDe;
+          return `<button type="button" class="baustein" data-sbk-erg="${e.it.replace(/"/g, "&quot;")}" aria-selected="${sbkErgaenzung === e.it}">${zeigeIt}<span class="baustein-de">${mitPraep}</span></button>`;
+        }).join("")}
       </div>
 
       <p class="eyebrow">🕒 Quando? — Wann?</p>
@@ -5567,11 +6277,12 @@
           ${satz.verb.hilfsverb === "essere"
             ? "Bei <strong>essere</strong> richtet sich das Partizip nach dem Subjekt — deshalb steht dort je nach Person eine andere Endung."
             : "Bei <strong>avere</strong> bleibt das Partizip unverändert, egal wer handelt."}
-          Das Personalpronomen (${satz.subj.it}) darf man im Italienischen übrigens weglassen — die Verbendung sagt schon, wer gemeint ist.
+          ${satz.zeitVorne ? `Die Zeitangabe <strong>${satz.zeit.it}</strong> steht vorn — im Deutschen rutscht das Verb dann vor das Subjekt: „${satz.de}“.` : "Das Personalpronomen darf im Italienischen wegfallen, die Verbendung sagt schon, wer gemeint ist."}
         </p>
       </div>
     `;
     area.querySelectorAll("[data-sbk-zeitform]").forEach((b) => b.addEventListener("click", () => { sbkZeitform = b.dataset.sbkZeitform; renderItSatzbaukasten(); }));
+    area.querySelectorAll("[data-sbk-pron]").forEach((b) => b.addEventListener("click", () => { sbkPronomen = b.dataset.sbkPron === "1"; renderItSatzbaukasten(); }));
     area.querySelectorAll("[data-sbk-subjekt]").forEach((b) => b.addEventListener("click", () => { sbkSubjekt = b.dataset.sbkSubjekt; renderItSatzbaukasten(); }));
     area.querySelectorAll("[data-sbk-verb]").forEach((b) => b.addEventListener("click", () => { sbkVerb = b.dataset.sbkVerb; renderItSatzbaukasten(); }));
     area.querySelectorAll("[data-sbk-erg]").forEach((b) => b.addEventListener("click", () => { sbkErgaenzung = b.dataset.sbkErg || null; renderItSatzbaukasten(); }));
@@ -10245,6 +10956,7 @@
         C2: "In Humboldts Werk verschränken sich aufklärerischer Messeifer und romantische Naturempfindung zu einer Wissenschaftsauffassung, die das Erhabene nicht gegen die Zahl ausspielt, sondern beides als Zugang zu derselben Wirklichkeit versteht — eine Haltung, deren Aktualität sich daran zeigt, dass die heutige Klimaforschung im Kern seine Fragestellung fortführt.",
       },
       translationsA1: {
+        it: "Alexander von Humboldt era un esploratore tedesco. Viaggiò molto lontano, fino al Sudamerica. Studiò piante, animali e montagne.",
         en: "Alexander von Humboldt was a German explorer. He travelled far, all the way to South America. He studied plants, animals and mountains.",
         ar: "كان ألكسندر فون هومبولت مستكشفًا ألمانيًا. سافر بعيدًا حتى أمريكا الجنوبية. درس النباتات والحيوانات والجبال.",
         tr: "Alexander von Humboldt Alman bir kâşifti. Güney Amerika'ya kadar uzaklara gitti. Bitkileri, hayvanları ve dağları inceledi.",
@@ -10254,6 +10966,13 @@
         pl: "Alexander von Humboldt był niemieckim badaczem. Podróżował daleko, aż do Ameryki Południowej. Badał rośliny, zwierzęta i góry.",
         uk: "Александр фон Гумбольдт був німецьким дослідником. Він подорожував далеко, аж до Південної Америки. Він вивчав рослини, тварин і гори.",
         fa: "الکساندر فون هومبولت کاشفی آلمانی بود. او تا آمریکای جنوبی سفر کرد. او گیاهان، جانوران و کوه‌ها را بررسی کرد.",
+      },
+      translationsByLevel: {
+        A2: { en: "Alexander von Humboldt was a German naturalist. He traveled through South America for five years, studying plants, volcanoes, and the climate. Many places around the world are named after him today.", ar: "كان ألكسندر فون هومبولت عالم طبيعة ألمانيًا. سافر عبر أمريكا الجنوبية لمدة خمس سنوات، ودرس النباتات والبراكين والمناخ. تحمل أماكن كثيرة في العالم اسمه اليوم.", tr: "Alexander von Humboldt Alman bir doğa bilimciydi. Beş yıl boyunca Güney Amerika'yı dolaşarak bitkileri, yanardağları ve iklimi araştırdı. Dünyada birçok yer bugün onun adını taşıyor.", ru: "Александр фон Гумбольдт был немецким естествоиспытателем. Он пять лет путешествовал по Южной Америке, изучая растения, вулканы и климат. Сегодня многие места в мире носят его имя.", es: "Alexander von Humboldt fue un naturalista alemán. Viajó durante cinco años por Sudamérica investigando plantas, volcanes y el clima. Hoy muchos lugares del mundo llevan su nombre.", fr: "Alexander von Humboldt était un naturaliste allemand. Il a parcouru l'Amérique du Sud pendant cinq ans, étudiant les plantes, les volcans et le climat. De nombreux lieux dans le monde portent aujourd'hui son nom.", pl: "Alexander von Humboldt był niemieckim przyrodnikiem. Przez pięć lat podróżował po Ameryce Południowej, badając rośliny, wulkany i klimat. Dziś wiele miejsc na świecie nosi jego imię.", uk: "Александр фон Гумбольдт був німецьким натуралістом. Він п'ять років подорожував Південною Америкою, вивчаючи рослини, вулкани та клімат. Сьогодні багато місць у світі носять його ім'я.", fa: "الکساندر فون هومبولت یک طبیعت‌شناس آلمانی بود. او پنج سال در سراسر آمریکای جنوبی سفر کرد و گیاهان، آتشفشان‌ها و آب‌وهوا را بررسی کرد. امروزه بسیاری از مکان‌ها در جهان نام او را دارند.", it: "Alexander von Humboldt era un naturalista tedesco. Viaggiò per cinque anni attraverso il Sudamerica, studiando piante, vulcani e il clima. Oggi molti luoghi nel mondo portano il suo nome." },
+        B1: { en: "Between 1799 and 1804, Alexander von Humboldt traveled through South and Central America, measuring everything that could be measured. From his observations came the idea that climate, plants, and animals form a connected whole.", ar: "بين عامي 1799 و1804، سافر ألكسندر فون هومبولت عبر أمريكا الجنوبية والوسطى وقاس كل ما يمكن قياسه هناك. ومن ملاحظاته نشأت فكرة أن المناخ والنباتات والحيوانات تشكل كلاً مترابطًا.", tr: "Alexander von Humboldt, 1799 ile 1804 yılları arasında Güney ve Orta Amerika'yı dolaştı ve ölçülebilecek her şeyi ölçtü. Gözlemlerinden, iklimin, bitkilerin ve hayvanların birbirine bağlı bir bütün oluşturduğu fikri doğdu.", ru: "Между 1799 и 1804 годами Александр фон Гумбольдт путешествовал по Южной и Центральной Америке и измерял там всё, что можно было измерить. Из его наблюдений родилась идея о том, что климат, растения и животные образуют единое взаимосвязанное целое.", es: "Entre 1799 y 1804, Alexander von Humboldt recorrió Sudamérica y Centroamérica midiendo todo lo que se podía medir. De sus observaciones surgió la idea de que el clima, las plantas y los animales forman un todo interconectado.", fr: "Entre 1799 et 1804, Alexander von Humboldt parcourut l'Amérique du Sud et l'Amérique centrale, mesurant tout ce qui pouvait l'être. De ses observations naquit l'idée que le climat, les plantes et les animaux forment un tout interconnecté.", pl: "W latach 1799–1804 Alexander von Humboldt podróżował po Ameryce Południowej i Środkowej, mierząc tam wszystko, co dało się zmierzyć. Z jego obserwacji zrodziła się idea, że klimat, rośliny i zwierzęta tworzą powiązaną całość.", uk: "Між 1799 і 1804 роками Александр фон Гумбольдт подорожував Південною та Центральною Америкою і вимірював там усе, що можна було виміряти. З його спостережень виникла ідея, що клімат, рослини і тварини утворюють єдине взаємопов'язане ціле.", fa: "الکساندر فون هومبولت بین سال‌های ۱۷۹۹ و ۱۸۰۴ در آمریکای جنوبی و مرکزی سفر کرد و هر آنچه را که قابل اندازه‌گیری بود، اندازه گرفت. از مشاهدات او این ایده پدید آمد که آب‌وهوا، گیاهان و حیوانات یک کل به‌هم‌پیوسته را تشکیل می‌دهند.", it: "Tra il 1799 e il 1804, Alexander von Humboldt viaggiò attraverso il Sudamerica e l'America centrale misurando tutto ciò che si poteva misurare. Dalle sue osservazioni nacque l'idea che clima, piante e animali formino un tutto interconnesso." },
+        B2: { en: "On his five-year journey through the Americas, Alexander von Humboldt (1769-1859) combined precise measurement with vivid description - establishing an understanding of nature that grasps the Earth as a single, interconnected system. His major work Kosmos sought to make this whole comprehensible to everyone.", ar: "جمع ألكسندر فون هومبولت (1769-1859) خلال رحلته الأمريكية التي استمرت خمس سنوات بين القياس الدقيق والوصف الحي، مؤسسًا بذلك فهمًا للطبيعة يرى الأرض كنظام واحد مترابط. أراد عمله الرئيسي كوزموس أن يجعل هذا الكل مفهومًا للجميع.", tr: "Alexander von Humboldt (1769-1859), beş yıl süren Amerika seyahatinde kesin ölçümü canlı betimlemeyle birleştirdi ve böylece Dünya'yı tek, birbirine bağlı bir sistem olarak kavrayan bir doğa anlayışının temelini attı. Ana eseri Kosmos, bu bütünü herkes için anlaşılır kılmayı amaçlıyordu.", ru: "Александр фон Гумбольдт (1769-1859) во время своего пятилетнего путешествия по Америке соединил точные измерения с наглядным описанием — и тем самым заложил понимание природы, рассматривающее Землю как единую, взаимосвязанную систему. Его главный труд Космос должен был сделать это целое понятным для всех.", es: "Alexander von Humboldt (1769-1859) combinó, durante su viaje de cinco años por América, la medición exacta con la descripción vívida, sentando así las bases de una comprensión de la naturaleza que concibe la Tierra como un único sistema interconectado. Su obra principal, Cosmos, pretendía hacer accesible este todo a cualquiera.", fr: "Lors de son voyage de cinq ans en Amérique, Alexander von Humboldt (1769-1859) allia la mesure exacte à la description vivante, fondant ainsi une conception de la nature qui appréhende la Terre comme un système unique et interconnecté. Son œuvre principale, Cosmos, voulait rendre cet ensemble accessible à tous.", pl: "Alexander von Humboldt (1769-1859) podczas swojej pięcioletniej podróży po Ameryce połączył precyzyjny pomiar z obrazowym opisem — zapoczątkowując tym samym rozumienie przyrody, które pojmuje Ziemię jako jeden, powiązany system. Jego główne dzieło Kosmos miało uczynić tę całość zrozumiałą dla wszystkich.", uk: "Александр фон Гумбольдт (1769-1859) під час свого п'ятирічного подорожування Америкою поєднав точні вимірювання з наочним описом — і тим самим заклав розуміння природи, яке сприймає Землю як єдину, взаємопов'язану систему. Його головна праця Космос мала зробити це ціле зрозумілим для всіх.", fa: "الکساندر فون هومبولت (۱۷۶۹-۱۸۵۹) در سفر پنج‌ساله خود به آمریکا، اندازه‌گیری دقیق را با توصیف گویا درآمیخت و بدین‌سان درکی از طبیعت پایه‌گذاری کرد که زمین را نظامی واحد و به‌هم‌پیوسته می‌بیند. اثر اصلی او، کیهان (Kosmos)، می‌خواست این کل را برای همگان قابل‌فهم سازد.", it: "Nel suo viaggio di cinque anni attraverso le Americhe, Alexander von Humboldt (1769-1859) unì la misurazione precisa a una descrizione vivida, fondando così una concezione della natura che intende la Terra come un unico sistema interconnesso. La sua opera principale, Kosmos, voleva rendere questo insieme comprensibile a tutti." },
+        C1: { en: "Humboldt's achievement lies less in a single discovery than in a way of thinking: by considering temperature, altitude, vegetation, and human use together, he formulated the idea of global interdependencies long before modern ecology existed - including an early warning against human-caused deforestation.", ar: "لا يكمن إنجاز هومبولت في اكتشاف واحد بقدر ما يكمن في طريقة تفكير: فمن خلال النظر إلى درجة الحرارة والارتفاع والغطاء النباتي واستخدام الإنسان معًا، صاغ فكرة الترابطات العالمية قبل ظهور علم البيئة الحديث بوقت طويل — بما في ذلك تحذير مبكر من إزالة الغابات التي يسببها الإنسان.", tr: "Humboldt'un başarısı tek bir keşiften çok bir düşünme biçiminde yatar: Sıcaklık, yükseklik, bitki örtüsü ve insan kullanımını birlikte ele alarak, modern ekolojiden çok önce küresel etkileşimler fikrini formüle etti — insan kaynaklı ormansızlaşmaya karşı erken bir uyarı da dahil olmak üzere.", ru: "Заслуга Гумбольдта заключается не столько в отдельном открытии, сколько в образе мышления: рассматривая вместе температуру, высоту, растительность и хозяйственную деятельность человека, он задолго до современной экологии сформулировал идею глобальных взаимосвязей — включая раннее предупреждение об антропогенной вырубке лесов.", es: "El mérito de Humboldt reside menos en un descubrimiento concreto que en una forma de pensar: al considerar juntos la temperatura, la altitud, la vegetación y el uso humano del territorio, formuló, mucho antes de la ecología moderna, la idea de las interdependencias globales, incluida una temprana advertencia sobre la deforestación provocada por el ser humano.", fr: "Le mérite de Humboldt réside moins dans une découverte isolée que dans une manière de penser : en considérant ensemble la température, l'altitude, la végétation et l'usage humain, il a formulé, bien avant l'écologie moderne, l'idée d'interdépendances globales — y compris un avertissement précoce contre la déforestation d'origine humaine.", pl: "Zasługa Humboldta polega nie tyle na pojedynczym odkryciu, ile na sposobie myślenia: rozpatrując razem temperaturę, wysokość, roślinność i sposób użytkowania przez człowieka, sformułował, na długo przed nowoczesną ekologią, ideę globalnych powiązań — w tym wczesne ostrzeżenie przed wylesianiem spowodowanym przez człowieka.", uk: "Заслуга Гумбольдта полягає не так у якомусь окремому відкритті, як у способі мислення: розглядаючи разом температуру, висоту, рослинність і використання людиною, він задовго до сучасної екології сформулював ідею глобальних взаємозв'язків — включно з раннім попередженням про антропогенну вирубку лісів.", fa: "دستاورد هومبولت کمتر در یک کشف خاص و بیشتر در شیوه‌ی تفکر او نهفته است: با در نظر گرفتن هم‌زمان دما، ارتفاع، پوشش گیاهی و بهره‌برداری انسانی، او مدت‌ها پیش از پیدایش بوم‌شناسی مدرن، ایده‌ی تأثیرات متقابل جهانی را صورت‌بندی کرد — از جمله هشداری زودهنگام درباره‌ی جنگل‌زدایی ناشی از فعالیت انسان.", it: "Il merito di Humboldt risiede meno in una singola scoperta che in un modo di pensare: considerando insieme temperatura, altitudine, vegetazione e uso umano del territorio, formulò, molto prima dell'ecologia moderna, l'idea di interdipendenze globali — compreso un avvertimento precoce contro la deforestazione causata dall'uomo." },
+        C2: { en: "In Humboldt's work, Enlightenment zeal for measurement intertwines with a Romantic sense of nature to form a conception of science that does not pit the sublime against the numerical, but understands both as paths to the same reality - an outlook whose relevance is evident in the fact that today's climate research, at its core, continues to pursue his very question.", ar: "تتشابك في عمل هومبولت حماسة عصر التنوير للقياس مع الإحساس الرومانسي بالطبيعة لتشكل فهمًا علميًا لا يضع الجلال في مواجهة الرقم، بل يفهم كليهما كطريقين للوصول إلى الواقع نفسه — موقف تتجلى راهنيته في أن أبحاث المناخ اليوم تواصل في جوهرها طرح سؤاله.", tr: "Humboldt'un eserinde Aydınlanma'nın ölçme tutkusu ile romantik doğa duygusu iç içe geçerek, yüceyi sayıya karşı oynamayan, aksine ikisini de aynı gerçekliğe erişim yolu olarak gören bir bilim anlayışı oluşturur — bu tutumun güncelliği, bugünkü iklim araştırmalarının özünde onun sorusunu sürdürmesinde kendini gösterir.", ru: "В творчестве Гумбольдта просветительское рвение к измерению переплетается с романтическим чувством природы, образуя научное мировоззрение, которое не противопоставляет возвышенное числу, а понимает оба как пути к одной и той же реальности — позиция, актуальность которой проявляется в том, что современные климатические исследования по сути продолжают именно его постановку вопроса.", es: "En la obra de Humboldt se entrelazan el afán ilustrado por la medición y la sensibilidad romántica hacia la naturaleza, dando lugar a una concepción de la ciencia que no opone lo sublime al número, sino que entiende ambos como vías de acceso a una misma realidad — una postura cuya vigencia se manifiesta en que la investigación climática actual continúa, en esencia, su misma pregunta.", fr: "Dans l'œuvre de Humboldt s'entremêlent l'ardeur des Lumières pour la mesure et une sensibilité romantique à la nature, formant une conception de la science qui n'oppose pas le sublime au chiffre, mais comprend l'un et l'autre comme des accès à une même réalité — une posture dont l'actualité se manifeste dans le fait que la recherche climatique actuelle poursuit, au fond, sa question même.", pl: "W dziele Humboldta oświeceniowa żarliwość pomiaru splata się z romantycznym wyczuciem przyrody, tworząc koncepcję nauki, która nie przeciwstawia wzniosłości liczbie, lecz rozumie obie jako drogi dostępu do tej samej rzeczywistości — postawa, której aktualność ujawnia się w tym, że dzisiejsze badania klimatyczne w istocie kontynuują właśnie jego pytanie.", uk: "У творчості Гумбольдта просвітницька пристрасть до вимірювання переплітається з романтичним чуттям природи, утворюючи наукове світобачення, яке не протиставляє піднесене числу, а розуміє обидва як шляхи доступу до однієї й тієї самої реальності — позиція, актуальність якої виявляється в тому, що сучасні кліматичні дослідження по суті продовжують саме його постановку питання.", fa: "در آثار هومبولت، اشتیاق روشنگری برای اندازه‌گیری با احساس رمانتیک نسبت به طبیعت درهم می‌آمیزد و برداشتی علمی پدید می‌آورد که والایی را در برابر عدد قرار نمی‌دهد، بلکه هر دو را راهی به سوی یک واقعیت واحد می‌داند — نگرشی که تازگی آن در این واقعیت نمایان می‌شود که پژوهش‌های اقلیمی امروز در بنیاد خود همان پرسش او را دنبال می‌کنند.", it: "Nell'opera di Humboldt si intrecciano lo zelo illuminista per la misurazione e una sensibilità romantica verso la natura, dando vita a una concezione della scienza che non contrappone il sublime al numero, ma intende entrambi come vie d'accesso alla medesima realtà — un atteggiamento la cui attualità si manifesta nel fatto che la ricerca climatica odierna, in fondo, prosegue proprio il suo interrogativo." },
       },
     },
     {
@@ -10268,6 +10987,7 @@
         C2: "Dass Käthe Kollwitz' Bildsprache bis heute unmittelbar trifft, verdankt sie einer Reduktion, die jede Verklärung verweigert: Wo andere das Opfer erhöhen, zeigt sie den gebeugten Rücken — und macht damit sichtbar, dass Trauer keine Bedeutung braucht, um berechtigt zu sein. Ihre Pietà in der Neuen Wache verpflichtet den Staat noch immer auf diesen Blick.",
       },
       translationsA1: {
+        it: "Käthe Kollwitz era un'artista tedesca. Realizzò immagini di persone povere. Le sue opere sono spesso tristi e molto forti.",
         en: "Käthe Kollwitz was a German artist. She made pictures of poor people. Her pictures are often sad and very powerful.",
         ar: "كانت كاته كولفيتس فنانة ألمانية. رسمت صورًا للفقراء. لوحاتها حزينة غالبًا وقوية جدًا.",
         tr: "Käthe Kollwitz Alman bir sanatçıydı. Yoksul insanların resimlerini yaptı. Resimleri çoğu zaman hüzünlü ve çok güçlüdür.",
@@ -10277,6 +10997,13 @@
         pl: "Käthe Kollwitz była niemiecką artystką. Tworzyła obrazy biednych ludzi. Jej prace są często smutne i bardzo mocne.",
         uk: "Кете Кольвіц була німецькою художницею. Вона створювала зображення бідних людей. Її роботи часто сумні й дуже сильні.",
         fa: "کته کلویتس هنرمندی آلمانی بود. او تصویرهایی از مردم فقیر می‌کشید. تصویرهای او اغلب غمگین و بسیار پرقدرت‌اند.",
+      },
+      translationsByLevel: {
+        A2: { en: "Käthe Kollwitz was a German artist. She drew mainly poor families, hungry children, and grieving mothers. She wanted to show how people were really doing.", ar: "كانت كيثه كولفيتس فنانة ألمانية. رسمت بشكل خاص العائلات الفقيرة والأطفال الجياع والأمهات الثكالى. أرادت أن تُظهر كيف كان حال الناس حقًا.", tr: "Käthe Kollwitz Alman bir sanatçıydı. Özellikle yoksul aileleri, aç çocukları ve yas tutan anneleri resmetti. İnsanların gerçekte nasıl bir durumda olduğunu göstermek istiyordu.", ru: "Кете Кольвиц была немецкой художницей. Она рисовала прежде всего бедные семьи, голодающих детей и скорбящих матерей. Она хотела показать, как на самом деле жили люди.", es: "Käthe Kollwitz fue una artista alemana. Dibujaba sobre todo familias pobres, niños hambrientos y madres afligidas. Quería mostrar cómo vivía realmente la gente.", fr: "Käthe Kollwitz était une artiste allemande. Elle dessinait surtout des familles pauvres, des enfants affamés et des mères endeuillées. Elle voulait montrer comment les gens vivaient vraiment.", pl: "Käthe Kollwitz była niemiecką artystką. Rysowała przede wszystkim biedne rodziny, głodne dzieci i pogrążone w żałobie matki. Chciała pokazać, jak naprawdę żyli ludzie.", uk: "Кете Кольвіц була німецькою художницею. Вона малювала передусім бідні родини, голодних дітей і матерів у жалобі. Вона хотіла показати, як насправді жили люди.", fa: "کته کولویتس یک هنرمند آلمانی بود. او بیشتر خانواده‌های فقیر، کودکان گرسنه و مادران سوگوار را نقاشی می‌کرد. او می‌خواست نشان دهد که وضعیت واقعی مردم چگونه است.", it: "Käthe Kollwitz era un'artista tedesca. Disegnava soprattutto famiglie povere, bambini affamati e madri in lutto. Voleva mostrare come stessero davvero le persone." },
+        B1: { en: "Käthe Kollwitz drew and sculpted what others preferred not to see: poverty, hunger, war, and grief. After her son died in the First World War, her art became one of the clearest indictments of war.", ar: "رسمت كيثه كولفيتس ونحتت ما فضّل الآخرون عدم رؤيته: الفقر والجوع والحرب والحزن. بعد وفاة ابنها في الحرب العالمية الأولى، أصبح فنها واحدًا من أوضح إدانات الحرب.", tr: "Käthe Kollwitz, başkalarının görmek istemediği şeyleri resmetti ve şekillendirdi: yoksulluk, açlık, savaş ve yas. Oğlunun Birinci Dünya Savaşı'nda ölümünden sonra sanatı, savaşa karşı en açık suçlamalardan biri haline geldi.", ru: "Кете Кольвиц рисовала и лепила то, что другие предпочитали не видеть: бедность, голод, войну и скорбь. После смерти её сына в Первой мировой войне её искусство стало одним из самых ясных обвинений против войны.", es: "Käthe Kollwitz dibujaba y modelaba lo que otros preferían no ver: pobreza, hambre, guerra y duelo. Tras la muerte de su hijo en la Primera Guerra Mundial, su arte se convirtió en una de las denuncias más claras contra la guerra.", fr: "Käthe Kollwitz dessinait et sculptait ce que d'autres préféraient ne pas voir : la pauvreté, la faim, la guerre et le deuil. Après la mort de son fils pendant la Première Guerre mondiale, son art devint l'une des dénonciations les plus claires de la guerre.", pl: "Käthe Kollwitz rysowała i rzeźbiła to, czego inni woleli nie widzieć: biedę, głód, wojnę i żałobę. Po śmierci syna podczas pierwszej wojny światowej jej sztuka stała się jednym z najwyraźniejszych oskarżeń przeciwko wojnie.", uk: "Кете Кольвіц малювала і ліпила те, чого інші воліли не бачити: бідність, голод, війну і скорботу. Після смерті сина в Першій світовій війні її мистецтво стало одним із найяскравіших звинувачень проти війни.", fa: "کته کولویتس آنچه را دیگران ترجیح می‌دادند نبینند، نقاشی و مجسمه‌سازی می‌کرد: فقر، گرسنگی، جنگ و سوگ. پس از مرگ پسرش در جنگ جهانی اول، هنر او به یکی از روشن‌ترین محکومیت‌های جنگ تبدیل شد.", it: "Käthe Kollwitz disegnava e scolpiva ciò che altri preferivano non vedere: povertà, fame, guerra e lutto. Dopo la morte del figlio nella Prima guerra mondiale, la sua arte divenne una delle accuse più chiare contro la guerra." },
+        B2: { en: "Käthe Kollwitz (1867-1945) was the first woman admitted to the Prussian Academy of Arts - and was expelled again in 1933. In prints and sculpture, she gave a face to the overlooked; her sculpture of the grieving parents still stands today in a soldiers' cemetery in Belgium.", ar: "كانت كيثه كولفيتس (1867-1945) أول امرأة تُقبل في أكاديمية الفنون البروسية - ثم طُردت منها عام 1933. في أعمالها الغرافيكية والنحتية، منحت المهمَّشين وجهًا؛ ولا يزال تمثالها للوالدين الثكالى قائمًا حتى اليوم في مقبرة للجنود في بلجيكا.", tr: "Käthe Kollwitz (1867-1945), Prusya Sanat Akademisi'ne kabul edilen ilk kadındı — ve 1933'te oradan çıkarıldı. Grafik ve heykel çalışmalarında, göz ardı edilenlere bir yüz kazandırdı; yas tutan ebeveynleri betimleyen heykeli bugün hâlâ Belçika'daki bir asker mezarlığında duruyor.", ru: "Кете Кольвиц (1867-1945) была первой женщиной, принятой в Прусскую академию художеств, — а в 1933 году её оттуда исключили. В графике и скульптуре она дала лицо тем, кого не замечали; её скульптура скорбящих родителей до сих пор стоит на солдатском кладбище в Бельгии.", es: "Käthe Kollwitz (1867-1945) fue la primera mujer admitida en la Academia Prusiana de las Artes, de la que fue expulsada en 1933. En sus grabados y esculturas dio rostro a los invisibles; su escultura de los padres afligidos sigue hoy en un cementerio militar en Bélgica.", fr: "Käthe Kollwitz (1867-1945) fut la première femme admise à l'Académie prussienne des arts — dont elle fut exclue en 1933. Dans ses gravures et ses sculptures, elle donna un visage aux invisibles ; sa sculpture des parents en deuil se dresse encore aujourd'hui dans un cimetière militaire en Belgique.", pl: "Käthe Kollwitz (1867-1945) była pierwszą kobietą przyjętą do Pruskiej Akademii Sztuk — a w 1933 roku została z niej usunięta. W grafice i rzeźbie nadawała twarz tym, których nie dostrzegano; jej rzeźba pogrążonych w żałobie rodziców stoi do dziś na cmentarzu żołnierskim w Belgii.", uk: "Кете Кольвіц (1867-1945) була першою жінкою, прийнятою до Прусської академії мистецтв, — а в 1933 році її звідти виключили. У графіці та скульптурі вона дала обличчя тим, кого не помічали; її скульптура скорботних батьків досі стоїть на солдатському цвинтарі в Бельгії.", fa: "کته کولویتس (۱۸۶۷-۱۹۴۵) نخستین زنی بود که به آکادمی هنرهای پروس راه یافت - و در سال ۱۹۳۳ دوباره از آن اخراج شد. او در آثار گرافیکی و مجسمه‌سازی خود به نادیده‌گرفته‌شدگان چهره بخشید؛ مجسمه او از والدین سوگوار هنوز هم در گورستان سربازان در بلژیک برپاست.", it: "Käthe Kollwitz (1867-1945) fu la prima donna ammessa all'Accademia prussiana delle arti — da cui fu espulsa nel 1933. Nella grafica e nella scultura diede un volto agli invisibili; la sua scultura dei genitori in lutto si trova ancora oggi in un cimitero di soldati in Belgio." },
+        C1: { en: "Kollwitz's work resists the temptation to aestheticize suffering: her figures are neither heroines nor symbols, but remain concrete in their physical exhaustion - an artistic choice that has kept her indictment of war and poverty effective for over a hundred years.", ar: "يقاوم عمل كولفيتس إغراء تجميل المعاناة: فشخصياتها ليست بطلات ولا رموزًا، بل تبقى ملموسة في إنهاكها الجسدي - وهو خيار فني أبقى إدانتها للحرب والفقر فعّالة على مدى أكثر من مئة عام.", tr: "Kollwitz'in eseri, acıyı estetize etme cazibesine direnir: figürleri ne kahraman ne de semboldür, bedensel bitkinlikleri içinde somut kalırlar — bu sanatsal seçim, savaşa ve yoksulluğa karşı suçlamasını yüz yılı aşkın süredir etkili kılmaktadır.", ru: "Творчество Кольвиц сопротивляется искушению эстетизировать страдание: её фигуры не героини и не символы, а остаются конкретными в своём физическом изнеможении — художественное решение, благодаря которому её обвинение войне и бедности сохраняет силу уже более ста лет.", es: "La obra de Kollwitz resiste la tentación de estetizar el sufrimiento: sus figuras no son heroínas ni símbolos, sino que permanecen concretas en su agotamiento físico, una decisión artística que mantiene vigente su denuncia contra la guerra y la pobreza desde hace más de cien años.", fr: "L'œuvre de Kollwitz résiste à la tentation d'esthétiser la souffrance : ses figures ne sont ni des héroïnes ni des symboles, mais restent concrètes dans leur épuisement physique — un choix artistique qui garde sa dénonciation de la guerre et de la pauvreté efficace depuis plus de cent ans.", pl: "Dzieło Kollwitz opiera się pokusie estetyzowania cierpienia: jej postacie nie są ani bohaterkami, ani symbolami, lecz pozostają konkretne w swoim fizycznym wyczerpaniu — wybór artystyczny, dzięki któremu jej oskarżenie wobec wojny i biedy pozostaje skuteczne od ponad stu lat.", uk: "Творчість Кольвіц опирається спокусі естетизувати страждання: її постаті не є ні героїнями, ні символами, а залишаються конкретними у своєму фізичному виснаженні — мистецьке рішення, яке утримує її звинувачення проти війни та бідності дієвим уже понад сто років.", fa: "آثار کولویتس در برابر وسوسه‌ی زیباسازی رنج مقاومت می‌کند: شخصیت‌های او نه قهرمانند و نه نماد، بلکه در فرسودگی جسمانی خود ملموس باقی می‌مانند - انتخابی هنری که محکومیت او علیه جنگ و فقر را برای بیش از صد سال کارآمد نگه داشته است.", it: "L'opera di Kollwitz resiste alla tentazione di estetizzare la sofferenza: le sue figure non sono né eroine né simboli, ma restano concrete nella loro spossatezza fisica — una scelta artistica che ha mantenuto efficace la sua accusa contro la guerra e la povertà per oltre cento anni." },
+        C2: { en: "That Käthe Kollwitz's visual language still strikes so directly today is owed to a reduction that refuses any glorification: where others elevate the victim, she shows the bent back - making visible that grief needs no meaning to be justified. Her Pieta in the Neue Wache still binds the state to this gaze.", ar: "إن لغة كيثه كولفيتس البصرية التي لا تزال تصيب هدفها مباشرة حتى اليوم مدينة لاختزال يرفض أي تجميل: فحيث يعلي الآخرون شأن الضحية، تُظهر هي الظهر المنحني - وبذلك تجعل مرئيًا أن الحزن لا يحتاج إلى معنى ليكون مبررًا. لا يزال تمثالها بييتا في مبنى نويه فاشه يُلزم الدولة بهذه النظرة.", tr: "Käthe Kollwitz'in görsel dilinin bugün hâlâ doğrudan etkilemesi, her türlü yüceltmeyi reddeden bir sadeleştirmeye borçludur: Başkaları kurbanı yücelttiğinde, o eğik sırtı gösterir — ve böylece yasın haklı olmak için bir anlama ihtiyaç duymadığını görünür kılar. Neue Wache'deki Pietà'sı devleti bugün de bu bakışa bağlı tutmaktadır.", ru: "То, что визуальный язык Кете Кольвиц по-прежнему производит непосредственное впечатление, обязано редукции, отвергающей всякое приукрашивание: там, где другие возвышают жертву, она показывает согбенную спину — тем самым делая видимым, что скорби не нужен смысл, чтобы быть оправданной. Её Пьета в Новой караульне и поныне обязывает государство к этому взгляду.", es: "Que el lenguaje visual de Käthe Kollwitz siga impactando de forma tan directa hoy en día se debe a una reducción que rechaza toda idealización: donde otros ensalzan a la víctima, ella muestra la espalda encorvada, haciendo visible que el duelo no necesita ningún significado para ser legítimo. Su Pietà en la Neue Wache sigue obligando hoy al Estado a esa mirada.", fr: "Si le langage visuel de Käthe Kollwitz frappe encore aujourd'hui de manière si directe, elle le doit à une épuration qui refuse toute idéalisation : là où d'autres exaltent la victime, elle montre le dos courbé — rendant ainsi visible que le deuil n'a besoin d'aucune signification pour être légitime. Sa Pietà à la Neue Wache continue d'imposer ce regard à l'État.", pl: "To, że język obrazowy Käthe Kollwitz trafia dziś tak bezpośrednio, zawdzięcza redukcji, która odrzuca wszelkie upiększanie: tam, gdzie inni wywyższają ofiarę, ona pokazuje zgięte plecy — czyniąc tym samym widocznym, że żałoba nie potrzebuje sensu, by być uzasadniona. Jej Pietà w Neue Wache do dziś zobowiązuje państwo do tego spojrzenia.", uk: "Те, що візуальна мова Кете Кольвіц і донині вражає так безпосередньо, завдячує редукції, яка відкидає будь-яке прикрашування: там, де інші звеличують жертву, вона показує зігнуту спину — роблячи тим самим видимим, що скорботі не потрібен сенс, аби бути виправданою. Її Пієта в Новій варті й досі зобов'язує державу до цього погляду.", fa: "این که زبان تصویری کته کولویتس هنوز هم به‌طور مستقیم اثر می‌گذارد، مدیون کاهش و ایجازی است که هرگونه تعالی‌بخشی را رد می‌کند: جایی که دیگران قربانی را برمی‌کشند، او پشت خمیده را نشان می‌دهد - و بدین‌سان آشکار می‌سازد که سوگ برای مشروع بودن نیازی به معنا ندارد. پیتای او در نویه واخه هنوز هم دولت را به این نگاه ملزم می‌کند.", it: "Il fatto che il linguaggio visivo di Käthe Kollwitz colpisca ancora oggi in modo così diretto si deve a una riduzione che rifiuta ogni abbellimento: dove altri esaltano la vittima, lei mostra la schiena curva — rendendo così visibile che il dolore non ha bisogno di un significato per essere legittimo. La sua Pietà nella Neue Wache impegna ancora oggi lo Stato a quello sguardo." },
       },
     },
     {
@@ -10291,6 +11018,7 @@
         C2: "In der Figur Marlene Dietrich verschränken sich Selbstinszenierung und moralische Konsequenz auf eine Weise, die beides voneinander unterscheidbar hält: Die künstlich hergestellte Leinwandpersona blieb Werkzeug, nicht Wesen — und gerade deshalb konnte die Person dahinter eine politische Entscheidung treffen, die dem eigenen Marktwert im Heimatland dauerhaft schadete.",
       },
       translationsA1: {
+        it: "Marlene Dietrich era un'attrice famosa di Berlino. Recitò in molti film e cantò anche. In seguito visse in America.",
         en: "Marlene Dietrich was a famous actress from Berlin. She appeared in many films and also sang. Later she lived in America.",
         ar: "كانت مارلين ديتريش ممثلة مشهورة من برلين. مثّلت في أفلام كثيرة وغنّت أيضًا. عاشت لاحقًا في أمريكا.",
         tr: "Marlene Dietrich Berlinli ünlü bir oyuncuydu. Birçok filmde oynadı ve şarkı da söyledi. Sonradan Amerika'da yaşadı.",
@@ -10300,6 +11028,13 @@
         pl: "Marlene Dietrich była słynną aktorką z Berlina. Zagrała w wielu filmach, a także śpiewała. Później mieszkała w Ameryce.",
         uk: "Марлен Дітріх була відомою акторкою з Берліна. Вона знялася в багатьох фільмах і також співала. Пізніше жила в Америці.",
         fa: "مارلنه دیتریش بازیگر مشهوری از برلین بود. او در فیلم‌های زیادی بازی کرد و آواز هم می‌خواند. بعدها در آمریکا زندگی کرد.",
+      },
+      translationsByLevel: {
+        A2: { en: "Marlene Dietrich was a German actress and singer. She became famous in Hollywood in the 1930s. She refused to work for the Nazis.", ar: "كانت مارلين ديتريش ممثلة ومغنية ألمانية. اشتهرت في هوليوود في ثلاثينيات القرن العشرين. رفضت العمل لصالح النازيين.", tr: "Marlene Dietrich Alman bir aktris ve şarkıcıydı. 1930'larda Hollywood'da ünlendi. Nasyonal Sosyalistler için çalışmayı reddetti.", ru: "Марлен Дитрих была немецкой актрисой и певицей. В 1930-е годы она стала знаменитой в Голливуде. Она отказалась работать на нацистов.", es: "Marlene Dietrich fue una actriz y cantante alemana. Se hizo famosa en Hollywood en la década de 1930. Se negó a trabajar para los nazis.", fr: "Marlene Dietrich était une actrice et chanteuse allemande. Elle devint célèbre à Hollywood dans les années 1930. Elle refusa de travailler pour les nationaux-socialistes.", pl: "Marlene Dietrich była niemiecką aktorką i piosenkarką. W latach 30. XX wieku zasłynęła w Hollywood. Odmówiła pracy dla narodowych socjalistów.", uk: "Марлен Дітріх була німецькою актрисою та співачкою. У 1930-х роках вона стала відомою в Голлівуді. Вона відмовилася працювати на нацистів.", fa: "مارلنه دیتریش یک بازیگر و خواننده آلمانی بود. او در دهه ۱۹۳۰ در هالیوود مشهور شد. او از کار کردن برای ناسیونال‌سوسیالیست‌ها امتناع کرد.", it: "Marlene Dietrich era un'attrice e cantante tedesca. Negli anni '30 divenne famosa a Hollywood. Si rifiutò di lavorare per i nazionalsocialisti." },
+        B1: { en: "Marlene Dietrich became world-famous in 1930 with the film The Blue Angel and moved to Hollywood shortly after. When the Nazis wanted to bring her back, she refused and instead sang for American soldiers.", ar: "أصبحت مارلين ديتريش مشهورة عالميًا عام 1930 بفيلم الملاك الأزرق وانتقلت بعد ذلك بوقت قصير إلى هوليوود. وعندما أراد النازيون استعادتها، رفضت وغنّت بدلاً من ذلك أمام الجنود الأمريكيين.", tr: "Marlene Dietrich, 1930 yılında Mavi Melek filmiyle dünya çapında ünlendi ve kısa süre sonra Hollywood'a gitti. Nasyonal Sosyalistler onu geri getirmek istediğinde reddetti ve bunun yerine Amerikalı askerler önünde şarkı söyledi.", ru: "Марлен Дитрих стала всемирно известной в 1930 году благодаря фильму Голубой ангел и вскоре после этого уехала в Голливуд. Когда нацисты захотели вернуть её обратно, она отказалась и вместо этого пела перед американскими солдатами.", es: "Marlene Dietrich alcanzó fama mundial en 1930 con la película El ángel azul y poco después se marchó a Hollywood. Cuando los nazis quisieron que regresara, ella se negó y cantó en cambio para los soldados estadounidenses.", fr: "Marlene Dietrich devint célèbre dans le monde entier en 1930 grâce au film L'Ange bleu et partit peu après pour Hollywood. Lorsque les nationaux-socialistes voulurent la faire revenir, elle refusa et chanta à la place devant des soldats américains.", pl: "Marlene Dietrich zyskała światową sławę w 1930 roku dzięki filmowi Błękitny anioł i wkrótce potem wyjechała do Hollywood. Gdy naziści chcieli ją sprowadzić z powrotem, odmówiła i zamiast tego śpiewała dla amerykańskich żołnierzy.", uk: "Марлен Дітріх стала всесвітньо відомою в 1930 році завдяки фільму Блакитний ангел і невдовзі після цього поїхала до Голлівуду. Коли нацисти захотіли повернути її, вона відмовилася і натомість співала перед американськими солдатами.", fa: "مارلنه دیتریش در سال ۱۹۳۰ با فیلم «فرشته آبی» به شهرتی جهانی دست یافت و اندکی بعد به هالیوود رفت. هنگامی که ناسیونال‌سوسیالیست‌ها خواستند او را بازگردانند، او امتناع کرد و در عوض برای سربازان آمریکایی آواز خواند.", it: "Marlene Dietrich divenne famosa in tutto il mondo nel 1930 con il film L'angelo azzurro e poco dopo si trasferì a Hollywood. Quando i nazionalsocialisti vollero farla tornare, lei rifiutò e cantò invece per i soldati americani." },
+        B2: { en: "Marlene Dietrich (1901-1992) embodied a self-determination unusual for her time - in a suit as much as in an evening gown. Her refusal to perform for the Nazi regime and her performances for Allied troops made her a controversial figure in Germany for a long time.", ar: "جسّدت مارلين ديتريش (1901-1992) استقلالية ذاتية كانت غير مألوفة لعصرها - سواء في البدلة أو في فستان السهرة. جعلها رفضها الظهور لصالح النظام النازي، وظهورها أمام قوات الحلفاء، شخصية مثيرة للجدل في ألمانيا لفترة طويلة.", tr: "Marlene Dietrich (1901-1992), döneminin ötesinde bir bağımsızlık kişiliği taşıyordu — takım elbise içinde de, gece elbisesi içinde de. Nazi rejimi için sahneye çıkmayı reddetmesi ve Müttefik kuvvetler önündeki gösterileri, onu Almanya'da uzun süre tartışmalı bir figür haline getirdi.", ru: "Марлен Дитрих (1901-1992) воплощала независимость, необычную для своего времени, — как в костюме, так и в вечернем платье. Её отказ выступать для нацистского режима и выступления перед войсками союзников надолго сделали её спорной фигурой в Германии.", es: "Marlene Dietrich (1901-1992) encarnaba una autodeterminación inusual para su época, tanto vestida de traje como de vestido de noche. Su negativa a actuar para el régimen nazi y sus actuaciones ante las tropas aliadas la convirtieron durante mucho tiempo en una figura controvertida en Alemania.", fr: "Marlene Dietrich (1901-1992) incarnait une autodétermination inhabituelle pour son époque — en costume comme en robe du soir. Son refus de se produire pour le régime nazi et ses représentations devant les troupes alliées firent longtemps d'elle une figure controversée en Allemagne.", pl: "Marlene Dietrich (1901-1992) uosabiała niezwykłą jak na swoje czasy niezależność — zarówno w garniturze, jak i w wieczorowej sukni. Jej odmowa występowania dla reżimu nazistowskiego oraz występy przed wojskami alianckimi na długo uczyniły z niej postać kontrowersyjną w Niemczech.", uk: "Марлен Дітріх (1901-1992) втілювала незвичну для свого часу самостійність — як у костюмі, так і у вечірній сукні. Її відмова виступати для нацистського режиму та виступи перед військами союзників надовго зробили її суперечливою постаттю в Німеччині.", fa: "مارلنه دیتریش (۱۹۰۱-۱۹۹۲) نوعی استقلال شخصیتی را که برای زمانه‌اش غیرمعمول بود، به نمایش می‌گذاشت - چه در کت‌وشلوار و چه در لباس شب. امتناع او از اجرا برای رژیم نازی و اجراهایش برای نیروهای متفقین، او را برای مدت‌ها به چهره‌ای بحث‌برانگیز در آلمان تبدیل کرد.", it: "Marlene Dietrich (1901-1992) incarnava un'autodeterminazione insolita per la sua epoca — tanto in abito maschile quanto in abito da sera. Il suo rifiuto di esibirsi per il regime nazista e le sue esibizioni davanti alle truppe alleate ne fecero a lungo una figura controversa in Germania." },
+        C1: { en: "Dietrich's career shows how much public memory depends on political stance: the very decision that internationally distinguished her as an anti-fascist earned her, for decades in West Germany, the accusation of betraying her homeland - a judgment that reversed only late.", ar: "تُظهر مسيرة ديتريش المهنية مدى اعتماد الذاكرة العامة على الموقف السياسي: فنفس القرار الذي ميّزها دوليًا كمناهضة للفاشية، جلب لها في ألمانيا الاتحادية لعقود تهمة خيانة الوطن - وهو حكم لم ينعكس إلا متأخرًا.", tr: "Dietrich'in kariyeri, kamusal hafızanın siyasi tutuma ne kadar bağlı olduğunu gösterir: onu uluslararası alanda bir antifaşist olarak öne çıkaran aynı karar, Federal Almanya'da onlarca yıl boyunca vatana ihanet suçlamasını beraberinde getirdi — bu değerlendirme ancak geç bir dönemde tersine döndü.", ru: "Карьера Дитрих показывает, насколько общественная память зависит от политической позиции: то же самое решение, которое выделило её на международном уровне как антифашистку, десятилетиями навлекало на неё в ФРГ обвинение в предательстве родины — оценка, которая изменилась лишь поздно.", es: "La carrera de Dietrich muestra hasta qué punto la memoria pública depende de la postura política: la misma decisión que internacionalmente la distinguió como antifascista le supuso durante décadas, en la República Federal de Alemania, la acusación de traición a la patria, un juicio que solo se revirtió tardíamente.", fr: "La carrière de Dietrich montre à quel point la mémoire collective dépend de la position politique : la même décision qui la distingua à l'international comme antifasciste lui valut pendant des décennies, en République fédérale, l'accusation de trahison envers la patrie — un jugement qui ne s'inversa que tardivement.", pl: "Kariera Dietrich pokazuje, jak bardzo pamięć publiczna zależy od postawy politycznej: ta sama decyzja, która wyróżniła ją na arenie międzynarodowej jako antyfaszystkę, przyniosła jej w RFN przez dziesięciolecia zarzut zdrady ojczyzny — ocena, która odwróciła się dopiero późno.", uk: "Кар'єра Дітріх показує, наскільки суспільна пам'ять залежить від політичної позиції: те саме рішення, яке вирізнило її на міжнародному рівні як антифашистку, десятиліттями викликало в ФРН звинувачення у зраді батьківщини — оцінка, яка змінилася лише пізно.", fa: "حرفه‌ی دیتریش نشان می‌دهد که خاطره‌ی عمومی چقدر به موضع سیاسی وابسته است: همان تصمیمی که او را در سطح بین‌المللی به‌عنوان یک ضدفاشیست متمایز کرد، در جمهوری فدرال آلمان برای دهه‌ها اتهام خیانت به میهن را برایش به همراه داشت - قضاوتی که تنها با تأخیر زیاد وارونه شد.", it: "La carriera di Dietrich mostra quanto la memoria pubblica dipenda dalla posizione politica: la stessa decisione che la distinse a livello internazionale come antifascista le valse per decenni, nella Repubblica Federale, l'accusa di tradimento della patria — un giudizio che si è ribaltato solo tardivamente." },
+        C2: { en: "In the figure of Marlene Dietrich, self-fashioning and moral consequence intertwine in a way that keeps the two distinguishable: the artificially constructed screen persona remained a tool, not an essence - and precisely for that reason, the person behind it could make a political decision that permanently damaged her own market value in her home country.", ar: "تتشابك في شخصية مارلين ديتريش صناعة الذات مع الاتساق الأخلاقي بطريقة تُبقي الاثنين قابلين للتمييز: بقيت شخصية الشاشة المصطنعة أداة لا جوهرًا - ولهذا السبب بالذات استطاعت الشخصية التي وراءها اتخاذ قرار سياسي أضر بشكل دائم بقيمتها السوقية في وطنها.", tr: "Marlene Dietrich figüründe kendini kurgulama ile ahlaki tutarlılık, ikisini birbirinden ayırt edilebilir kılan bir biçimde iç içe geçer: yapay olarak üretilen perde persona'sı bir araç olarak kaldı, öz olarak değil — ve tam da bu nedenle, arkasındaki kişi kendi memleketindeki piyasa değerine kalıcı olarak zarar veren siyasi bir karar alabildi.", ru: "В фигуре Марлен Дитрих самоинсценировка и моральная последовательность переплетаются таким образом, что остаются различимыми друг от друга: искусственно созданный экранный образ оставался инструментом, а не сущностью — и именно поэтому стоящий за ним человек смог принять политическое решение, надолго повредившее её собственной рыночной стоимости на родине.", es: "En la figura de Marlene Dietrich, la autoescenificación y la coherencia moral se entrelazan de un modo que mantiene ambas distinguibles: la persona cinematográfica, artificialmente construida, siguió siendo una herramienta y no una esencia, y precisamente por ello la persona detrás de ella pudo tomar una decisión política que dañó de forma duradera su propio valor de mercado en su país natal.", fr: "Dans la figure de Marlene Dietrich, mise en scène de soi et cohérence morale s'entremêlent d'une manière qui les garde distinctes : la persona cinématographique, artificiellement construite, resta un outil, non une essence — et c'est précisément pour cela que la personne derrière elle put prendre une décision politique qui nuisit durablement à sa propre valeur marchande dans son pays natal.", pl: "W postaci Marlene Dietrich autokreacja i konsekwencja moralna splatają się w sposób, który utrzymuje je jako rozróżnialne: sztucznie wykreowana persona ekranowa pozostała narzędziem, a nie istotą — i właśnie dlatego osoba stojąca za nią mogła podjąć decyzję polityczną, która trwale zaszkodziła jej własnej wartości rynkowej w ojczyźnie.", uk: "У постаті Марлен Дітріх самоінсценування та моральна послідовність переплітаються так, що обидва залишаються розрізнюваними: штучно створена екранна персона залишалася інструментом, а не сутністю — і саме тому людина за нею змогла ухвалити політичне рішення, яке надовго зашкодило її власній ринковій вартості на батьківщині.", fa: "در شخصیت مارلنه دیتریش، خودآرایی و پیوستگی اخلاقی به گونه‌ای درهم تنیده‌اند که این دو از هم قابل تشخیص باقی می‌مانند: پرسونای مصنوعیِ پرده‌ی نقره‌ای صرفاً ابزاری بود، نه ماهیتی ذاتی - و دقیقاً به همین دلیل بود که شخص پشت آن توانست تصمیمی سیاسی بگیرد که به‌طور دائمی به ارزش بازار او در کشور مادری‌اش آسیب رساند.", it: "Nella figura di Marlene Dietrich, autorappresentazione e coerenza morale si intrecciano in un modo che le mantiene distinguibili: la persona cinematografica costruita artificialmente rimase uno strumento, non un'essenza — e proprio per questo la persona che vi si celava dietro poté prendere una decisione politica che danneggiò in modo duraturo il proprio valore di mercato in patria." },
       },
     },
     {
@@ -10314,6 +11049,7 @@
         C2: "Als Zentralgestalt der Weimarer Klassik verkörpert Goethe wie kaum eine andere Figur das Ideal des Universalgelehrten: sein literarisches Schaffen, allen voran das lebenslange Ringen um „Faust“, verschmilzt mit naturwissenschaftlichen Studien und staatsmännischem Wirken zu einem einzigartigen kulturellen Vermächtnis.",
       },
       translationsA1: {
+        it: "Goethe era un famoso poeta tedesco. Scrisse molte poesie e libri. Il suo libro più famoso si intitola Faust.",
         en: "Goethe was a famous German poet. He wrote many poems and books. His best-known book is called 'Faust'.",
         ar: "كان غوته شاعراً ألمانياً مشهوراً. كتب الكثير من القصائد والكتب. أشهر كتبه اسمه «فاوست».",
         tr: "Goethe ünlü bir Alman şairdi. Birçok şiir ve kitap yazdı. En ünlü kitabı 'Faust' adını taşır.",
@@ -10323,6 +11059,13 @@
         pl: "Goethe był słynnym niemieckim poetą. Napisał wiele wierszy i książek. Jego najsłynniejsza książka nazywa się „Faust”.",
         uk: "Гете був відомим німецьким поетом. Він написав багато віршів і книг. Його найвідоміша книга називається «Фауст».",
         fa: "گوته شاعر معروف آلمانی بود. او شعرها و کتاب‌های زیادی نوشت. معروف‌ترین کتابش «فاوست» نام دارد.",
+      },
+      translationsByLevel: {
+        A2: { en: "Johann Wolfgang von Goethe was a very famous German poet and writer. He lived more than 200 years ago. His most important work is called Faust and is still performed in theaters today.", ar: "كان يوهان فولفغانغ فون غوته شاعرًا وكاتبًا ألمانيًا مشهورًا جدًا. عاش قبل أكثر من 200 عام. عمله الأهم يسمى فاوست ولا يزال يُعرض في المسارح حتى اليوم.", tr: "Johann Wolfgang von Goethe çok ünlü bir Alman şair ve yazardı. 200 yıldan fazla bir süre önce yaşadı. En önemli eseri Faust adını taşır ve bugün hâlâ tiyatrolarda sahnelenmektedir.", ru: "Иоганн Вольфганг фон Гёте был очень известным немецким поэтом и писателем. Он жил более 200 лет назад. Его важнейшее произведение называется Фауст и до сих пор ставится в театрах.", es: "Johann Wolfgang von Goethe fue un poeta y escritor alemán muy famoso. Vivió hace más de 200 años. Su obra más importante se llama Fausto y todavía se representa hoy en los teatros.", fr: "Johann Wolfgang von Goethe était un poète et écrivain allemand très célèbre. Il a vécu il y a plus de 200 ans. Son œuvre la plus importante s'appelle Faust et est encore jouée aujourd'hui dans les théâtres.", pl: "Johann Wolfgang von Goethe był bardzo znanym niemieckim poetą i pisarzem. Żył ponad 200 lat temu. Jego najważniejsze dzieło nosi tytuł Faust i do dziś jest wystawiane w teatrach.", uk: "Йоганн Вольфганг фон Гете був дуже відомим німецьким поетом і письменником. Він жив понад 200 років тому. Його найважливіший твір називається Фауст і досі ставиться в театрах.", fa: "یوهان ولفگانگ فون گوته شاعر و نویسنده‌ای بسیار مشهور آلمانی بود. او بیش از ۲۰۰ سال پیش زندگی می‌کرد. مهم‌ترین اثر او «فاوست» نام دارد و هنوز هم در تئاترها اجرا می‌شود.", it: "Johann Wolfgang von Goethe era un poeta e scrittore tedesco molto famoso. Visse più di 200 anni fa. La sua opera più importante si intitola Faust ed è ancora rappresentata oggi nei teatri." },
+        B1: { en: "Goethe is considered one of the most significant German poets of all time. Besides poems, he wrote novels and plays and was also active as a natural scientist. His major work Faust deals with humanity's striving for knowledge and fulfillment.", ar: "يُعتبر غوته من أعظم الشعراء الألمان على الإطلاق. فإلى جانب الشعر، كتب روايات ومسرحيات، وكان أيضًا نشطًا كعالم طبيعة. يتناول عمله الرئيسي فاوست سعي الإنسان نحو المعرفة والاكتمال.", tr: "Goethe, tüm zamanların en önemli Alman şairlerinden biri sayılır. Şiirlerin yanı sıra romanlar, tiyatro oyunları yazdı ve doğa bilimci olarak da faaliyet gösterdi. Ana eseri Faust, insanın bilgi ve tatmin arayışını konu alır.", ru: "Гёте считается одним из величайших немецких поэтов вообще. Помимо стихов, он писал романы, пьесы, а также занимался естественными науками. Его главное произведение Фауст посвящено стремлению человека к знанию и самореализации.", es: "Goethe está considerado uno de los poetas alemanes más importantes de todos los tiempos. Además de poesía, escribió novelas y obras de teatro, y también se dedicó a las ciencias naturales. Su obra principal, Fausto, trata sobre el afán humano de conocimiento y plenitud.", fr: "Goethe est considéré comme l'un des plus grands poètes allemands de tous les temps. Outre des poèmes, il a écrit des romans, des pièces de théâtre, et s'est aussi consacré aux sciences naturelles. Son œuvre principale, Faust, traite de la quête humaine de savoir et d'accomplissement.", pl: "Goethe uchodzi za jednego z najwybitniejszych niemieckich poetów w ogóle. Oprócz wierszy pisał powieści, sztuki teatralne, zajmował się też naukami przyrodniczymi. Jego główne dzieło Faust opowiada o ludzkim dążeniu do wiedzy i spełnienia.", uk: "Гете вважається одним із найвидатніших німецьких поетів узагалі. Окрім віршів, він писав романи, п'єси, а також займався природничими науками. Його головний твір Фауст присвячений прагненню людини до знання і самореалізації.", fa: "گوته یکی از برجسته‌ترین شاعران آلمانی به شمار می‌رود. او علاوه بر شعر، رمان و نمایشنامه نیز نوشت و به‌عنوان دانشمند علوم طبیعی نیز فعالیت داشت. اثر اصلی او «فاوست» به تلاش انسان برای دانش و کمال می‌پردازد.", it: "Goethe è considerato uno dei più importanti poeti tedeschi di sempre. Oltre alle poesie, scrisse romanzi, opere teatrali e si dedicò anche alle scienze naturali. La sua opera principale, Faust, tratta dell'aspirazione umana alla conoscenza e alla realizzazione." },
+        B2: { en: "Johann Wolfgang von Goethe (1749-1832) was not only a poet but also a statesman, natural scientist, and universal scholar. His work Faust, on which he worked for over 60 years, is considered one of the most important works in German literary history.", ar: "لم يكن يوهان فولفغانغ فون غوته (1749-1832) شاعرًا فحسب، بل كان أيضًا رجل دولة وعالم طبيعة ومفكرًا موسوعيًا. يُعتبر عمله فاوست، الذي عمل عليه لأكثر من 60 عامًا، أحد أهم أعمال تاريخ الأدب الألماني.", tr: "Johann Wolfgang von Goethe (1749-1832) yalnızca bir şair değil, aynı zamanda bir devlet adamı, doğa bilimci ve evrensel bir bilgindi. 60 yıldan fazla süre üzerinde çalıştığı eseri Faust, Alman edebiyat tarihinin en önemli eserlerinden biri sayılır.", ru: "Иоганн Вольфганг фон Гёте (1749-1832) был не только поэтом, но и государственным деятелем, естествоиспытателем и всесторонним учёным. Его произведение Фауст, над которым он работал более 60 лет, считается одним из важнейших произведений в истории немецкой литературы.", es: "Johann Wolfgang von Goethe (1749-1832) no fue solo poeta, sino también hombre de Estado, naturalista y erudito universal. Su obra Fausto, en la que trabajó durante más de 60 años, se considera una de las más importantes de la historia de la literatura alemana.", fr: "Johann Wolfgang von Goethe (1749-1832) n'était pas seulement poète, mais aussi homme d'État, naturaliste et savant universel. Son œuvre Faust, à laquelle il travailla plus de 60 ans, est considérée comme l'une des œuvres les plus importantes de l'histoire littéraire allemande.", pl: "Johann Wolfgang von Goethe (1749-1832) był nie tylko poetą, ale także mężem stanu, przyrodnikiem i uczonym o wszechstronnej wiedzy. Jego dzieło Faust, nad którym pracował ponad 60 lat, uchodzi za jedno z najważniejszych dzieł w historii literatury niemieckiej.", uk: "Йоганн Вольфганг фон Гете (1749-1832) був не лише поетом, а й державним діячем, натуралістом і всебічним ученим. Його твір Фауст, над яким він працював понад 60 років, вважається одним із найважливіших творів в історії німецької літератури.", fa: "یوهان ولفگانگ فون گوته (۱۷۴۹-۱۸۳۲) نه‌تنها شاعر، بلکه سیاستمدار، طبیعت‌شناس و دانشمندی همه‌فن‌حریف نیز بود. اثر او «فاوست»، که بیش از ۶۰ سال روی آن کار کرد، یکی از مهم‌ترین آثار تاریخ ادبیات آلمان به شمار می‌رود.", it: "Johann Wolfgang von Goethe (1749-1832) non fu solo poeta, ma anche statista, naturalista ed erudito universale. La sua opera Faust, a cui lavorò per oltre 60 anni, è considerata una delle opere più importanti della storia della letteratura tedesca." },
+        C1: { en: "Goethe ranks among the most influential figures in German cultural history - as a poet of Weimar Classicism, he shaped European literature lastingly with works such as Faust and The Sorrows of Young Werther, while also active as a natural scientist and state minister.", ar: "يُعد غوته من أكثر الشخصيات تأثيرًا في تاريخ الثقافة الألمانية - فبصفته شاعرًا لكلاسيكية فايمار، شكّل الأدب الأوروبي بشكل دائم بأعمال مثل فاوست وآلام الشاب فرتر، وعمل في الوقت نفسه كعالم طبيعة ووزير دولة.", tr: "Goethe, Alman kültür tarihinin en etkili şahsiyetlerinden biri sayılır — Weimar Klasisizmi'nin şairi olarak Faust ve Genç Werther'in Acıları gibi eserleriyle Avrupa edebiyatını kalıcı biçimde şekillendirdi ve aynı zamanda doğa bilimci ve devlet bakanı olarak görev yaptı.", ru: "Гёте относится к самым влиятельным фигурам немецкой культурной истории — как поэт веймарского классицизма он оказал долговременное влияние на европейскую литературу такими произведениями, как Фауст и Страдания юного Вертера, одновременно выступая как естествоиспытатель и государственный министр.", es: "Goethe se cuenta entre las personalidades más influyentes de la historia cultural alemana: como poeta del clasicismo de Weimar, marcó de forma duradera la literatura europea con obras como Fausto y Las penas del joven Werther, al tiempo que ejercía como naturalista y ministro de Estado.", fr: "Goethe compte parmi les personnalités les plus influentes de l'histoire culturelle allemande — en tant que poète du classicisme de Weimar, il a marqué durablement la littérature européenne avec des œuvres telles que Faust et Les Souffrances du jeune Werther, tout en exerçant les fonctions de naturaliste et de ministre d'État.", pl: "Goethe należy do najbardziej wpływowych postaci niemieckiej historii kultury — jako poeta klasyki weimarskiej trwale ukształtował literaturę europejską dziełami takimi jak Faust i Cierpienia młodego Wertera, działając równocześnie jako przyrodnik i minister stanu.", uk: "Гете належить до найвпливовіших постатей німецької культурної історії — як поет веймарського класицизму, він назавжди вплинув на європейську літературу такими творами, як Фауст і Страждання юного Вертера, водночас працюючи натуралістом і державним міністром.", fa: "گوته یکی از تأثیرگذارترین چهره‌های تاریخ فرهنگ آلمان به شمار می‌رود - او به‌عنوان شاعر کلاسیسیسم وایمار، با آثاری چون «فاوست» و «رنج‌های ورتر جوان»، تأثیری ماندگار بر ادبیات اروپا گذاشت و هم‌زمان به‌عنوان طبیعت‌شناس و وزیر دولت نیز فعالیت می‌کرد.", it: "Goethe è tra le figure più influenti della storia culturale tedesca: come poeta del classicismo di Weimar, plasmò in modo duraturo la letteratura europea con opere come Faust e I dolori del giovane Werther, operando al contempo come naturalista e ministro di Stato." },
+        C2: { en: "As the central figure of Weimar Classicism, Goethe embodies the ideal of the universal scholar like scarcely any other figure: his literary output, above all the lifelong struggle over Faust, merges with natural-scientific studies and statesmanly activity into a unique cultural legacy.", ar: "بوصفه الشخصية المركزية لكلاسيكية فايمار، يجسد غوته مثل معلم قلّ نظيره في التاريخ مثال العالم الموسوعي: يندمج إبداعه الأدبي، وفي مقدمته صراعه مدى الحياة مع فاوست، مع دراساته في العلوم الطبيعية ونشاطه كرجل دولة، ليشكل إرثًا ثقافيًا فريدًا.", tr: "Weimar Klasisizmi'nin merkezi figürü olarak Goethe, hemen hemen hiçbir başka figürün başaramadığı şekilde evrensel bilgin idealini somutlaştırır: edebi üretimi, özellikle Faust ile ömür boyu süren mücadelesi, doğa bilimsel çalışmalarla ve devlet adamlığı faaliyetiyle kaynaşarak eşsiz bir kültürel miras oluşturur.", ru: "Как центральная фигура веймарского классицизма, Гёте воплощает идеал всестороннего учёного, как, пожалуй, никто другой: его литературное творчество, прежде всего пожизненная борьба над Фаустом, сливается с естественнонаучными исследованиями и государственной деятельностью в уникальное культурное наследие.", es: "Como figura central del clasicismo de Weimar, Goethe encarna como pocos el ideal del erudito universal: su creación literaria, sobre todo la lucha de toda una vida por Fausto, se funde con sus estudios de ciencias naturales y su labor de estadista en un legado cultural único.", fr: "En tant que figure centrale du classicisme de Weimar, Goethe incarne comme peu d'autres l'idéal du savant universel : sa création littéraire, au premier chef la lutte de toute une vie autour de Faust, se fond avec ses études scientifiques et son action d'homme d'État en un héritage culturel unique.", pl: "Jako centralna postać klasyki weimarskiej Goethe ucieleśnia jak mało kto ideał uczonego uniwersalnego: jego twórczość literacka, przede wszystkim trwające całe życie zmagania z Faustem, zlewa się z badaniami przyrodniczymi i działalnością mężą stanu w unikatowe dziedzictwo kulturowe.", uk: "Як центральна постать веймарського класицизму, Гете втілює, як мало хто інший, ідеал всебічного вченого: його літературна творчість, передусім довічна боротьба над Фаустом, зливається з природничими дослідженнями та державною діяльністю в унікальну культурну спадщину.", fa: "به‌عنوان چهره‌ی محوری کلاسیسیسم وایمار، گوته همچون هیچ چهره‌ی دیگری آرمان دانشمند همه‌فن‌حریف را تجسم می‌بخشد: آفرینش ادبی او، به‌ویژه کشمکش تمام‌عمرش با «فاوست»، با مطالعات علوم طبیعی و فعالیت سیاست‌مدارانه‌اش در هم می‌آمیزد و میراثی فرهنگی بی‌همتا پدید می‌آورد.", it: "Come figura centrale del classicismo di Weimar, Goethe incarna come pochi altri l'ideale dell'erudito universale: la sua produzione letteraria, prima fra tutte la lotta durata tutta la vita per Faust, si fonde con gli studi scientifici e l'attività di statista in un'eredità culturale unica." },
       },
     },
     {
@@ -10337,6 +11080,7 @@
         C2: "Als Verfechter des Idealismus und der ästhetischen Erziehung des Menschen entwarf Schiller in seinen Dramen und philosophischen Schriften ein Menschenbild, das Freiheit und Sittlichkeit untrennbar miteinander verband — ein Vermächtnis, das die deutsche Geistesgeschichte nachhaltig prägte.",
       },
       translationsA1: {
+        it: "Schiller era un poeta tedesco. Scrisse opere teatrali. Un'opera famosa si intitola Guglielmo Tell.",
         en: "Schiller was a German poet. He wrote plays. A famous play is called 'William Tell'.",
         ar: "كان شيلر شاعراً ألمانياً. كتب مسرحيات. من مسرحياته الشهيرة «فيلهلم تل».",
         tr: "Schiller Alman bir şairdi. Tiyatro oyunları yazdı. Ünlü bir oyunu 'Wilhelm Tell' adını taşır.",
@@ -10346,6 +11090,13 @@
         pl: "Schiller był niemieckim poetą. Pisał sztuki teatralne. Znana sztuka nazywa się „Wilhelm Tell”.",
         uk: "Шиллер був німецьким поетом. Він писав п'єси. Відома п'єса називається «Вільгельм Телль».",
         fa: "شیلر شاعر آلمانی بود. او نمایشنامه می‌نوشت. یک نمایشنامه معروف «ویلهلم تل» نام دارد.",
+      },
+      translationsByLevel: {
+        A2: { en: "Friedrich Schiller was an important German poet and a friend of Goethe. He wrote many plays, for example William Tell. His works are often about freedom.", ar: "كان فريدريش شيلر شاعرًا ألمانيًا مهمًا وصديقًا لغوته. كتب مسرحيات كثيرة، مثل فيلهلم تل. غالبًا ما تتناول أعماله موضوع الحرية.", tr: "Friedrich Schiller önemli bir Alman şair ve Goethe'nin arkadaşıydı. Wilhelm Tell gibi birçok tiyatro oyunu yazdı. Eserleri sıklıkla özgürlüğü konu alır.", ru: "Фридрих Шиллер был важным немецким поэтом и другом Гёте. Он написал много пьес, например Вильгельм Телль. Его произведения часто посвящены свободе.", es: "Friedrich Schiller fue un importante poeta alemán y amigo de Goethe. Escribió muchas obras de teatro, por ejemplo Guillermo Tell. Sus obras tratan a menudo sobre la libertad.", fr: "Friedrich Schiller était un important poète allemand et ami de Goethe. Il a écrit de nombreuses pièces de théâtre, par exemple Guillaume Tell. Ses œuvres traitent souvent de la liberté.", pl: "Friedrich Schiller był ważnym niemieckim poetą i przyjacielem Goethego. Napisał wiele sztuk teatralnych, na przykład Wilhelm Tell. Jego dzieła często mówią o wolności.", uk: "Фрідріх Шиллер був важливим німецьким поетом і другом Гете. Він написав багато п'єс, наприклад Вільгельм Телль. Його твори часто присвячені свободі.", fa: "فریدریش شیلر شاعری مهم آلمانی و دوست گوته بود. او نمایشنامه‌های زیادی نوشت، برای مثال «ویلهلم تل». آثار او اغلب درباره‌ی آزادی است.", it: "Friedrich Schiller era un importante poeta tedesco e amico di Goethe. Scrisse molte opere teatrali, ad esempio Guglielmo Tell. Le sue opere trattano spesso di libertà." },
+        B1: { en: "Schiller was one of the most important German playwrights. Together with Goethe, he shaped Weimar Classicism. His plays, such as William Tell or The Robbers, are often about freedom and justice.", ar: "كان شيلر أحد أهم الكتّاب المسرحيين الألمان. شكّل مع غوته كلاسيكية فايمار. تدور مسرحياته مثل فيلهلم تل أو اللصوص غالبًا حول الحرية والعدالة.", tr: "Schiller, en önemli Alman oyun yazarlarından biriydi. Goethe ile birlikte Weimar Klasisizmi'ni şekillendirdi. Wilhelm Tell veya Haydutlar gibi tiyatro oyunlarında sıklıkla özgürlük ve adalet konu edilir.", ru: "Шиллер был одним из самых значительных немецких драматургов. Вместе с Гёте он сформировал веймарский классицизм. В его пьесах, таких как Вильгельм Телль или Разбойники, часто идёт речь о свободе и справедливости.", es: "Schiller fue uno de los más importantes dramaturgos alemanes. Junto con Goethe, dio forma al clasicismo de Weimar. Sus obras, como Guillermo Tell o Los bandidos, tratan a menudo sobre la libertad y la justicia.", fr: "Schiller fut l'un des plus grands dramaturges allemands. Avec Goethe, il façonna le classicisme de Weimar. Ses pièces, comme Guillaume Tell ou Les Brigands, traitent souvent de liberté et de justice.", pl: "Schiller był jednym z najwybitniejszych niemieckich dramaturgów. Razem z Goethem ukształtował klasykę weimarską. W jego sztukach, takich jak Wilhelm Tell czy Zbójcy, chodzi często o wolność i sprawiedliwość.", uk: "Шиллер був одним із найвидатніших німецьких драматургів. Разом із Гете він сформував веймарський класицизм. У його п'єсах, таких як Вільгельм Телль чи Розбійники, часто йдеться про свободу і справедливість.", fa: "شیلر یکی از مهم‌ترین نمایشنامه‌نویسان آلمانی بود. او همراه با گوته کلاسیسیسم وایمار را شکل داد. نمایشنامه‌های او مانند «ویلهلم تل» یا «راهزنان» اغلب درباره‌ی آزادی و عدالت هستند.", it: "Schiller fu uno dei più importanti drammaturghi tedeschi. Insieme a Goethe, plasmò il classicismo di Weimar. Le sue opere teatrali, come Guglielmo Tell o I masnadieri, trattano spesso di libertà e giustizia." },
+        B2: { en: "Friedrich Schiller (1759-1805), alongside Goethe, is considered the most significant German playwright of Classicism. His works, including The Robbers and William Tell, deal intensively with freedom, morality, and resistance against oppression.", ar: "يُعتبر فريدريش شيلر (1759-1805)، إلى جانب غوته، أعظم كاتب مسرحي ألماني في العصر الكلاسيكي. تتناول أعماله، ومنها اللصوص وفيلهلم تل، بعمق الحرية والأخلاق ومقاومة القمع.", tr: "Friedrich Schiller (1759-1805), Goethe'nin yanı sıra Klasik dönemin en önemli Alman oyun yazarı sayılır. Haydutlar ve Wilhelm Tell başta olmak üzere eserleri, özgürlük, ahlak ve baskıya direniş konularını yoğun biçimde ele alır.", ru: "Фридрих Шиллер (1759-1805) наряду с Гёте считается самым значительным немецким драматургом классицизма. Его произведения, среди них Разбойники и Вильгельм Телль, глубоко посвящены свободе, морали и сопротивлению угнетению.", es: "Friedrich Schiller (1759-1805), junto con Goethe, está considerado el dramaturgo alemán más importante del clasicismo. Sus obras, entre ellas Los bandidos y Guillermo Tell, abordan intensamente la libertad, la moral y la resistencia frente a la opresión.", fr: "Friedrich Schiller (1759-1805) est considéré, aux côtés de Goethe, comme le plus grand dramaturge allemand du classicisme. Ses œuvres, dont Les Brigands et Guillaume Tell, traitent intensément de la liberté, de la morale et de la résistance à l'oppression.", pl: "Friedrich Schiller (1759-1805) uchodzi obok Goethego za najwybitniejszego niemieckiego dramaturga klasycyzmu. Jego dzieła, w tym Zbójcy i Wilhelm Tell, intensywnie zajmują się wolnością, moralnością i oporem wobec ucisku.", uk: "Фрідріх Шиллер (1759-1805) поряд із Гете вважається найвидатнішим німецьким драматургом класицизму. Його твори, серед них Розбійники та Вільгельм Телль, глибоко присвячені свободі, моралі та опору гнобленню.", fa: "فریدریش شیلر (۱۷۵۹-۱۸۰۵) در کنار گوته، مهم‌ترین نمایشنامه‌نویس آلمانی دوره‌ی کلاسیک به شمار می‌رود. آثار او، از جمله «راهزنان» و «ویلهلم تل»، به‌طور عمیق به آزادی، اخلاق و مقاومت در برابر ستم می‌پردازند.", it: "Friedrich Schiller (1759-1805), insieme a Goethe, è considerato il più importante drammaturgo tedesco del classicismo. Le sue opere, tra cui I masnadieri e Guglielmo Tell, trattano intensamente di libertà, moralità e resistenza all'oppressione." },
+        C1: { en: "Schiller's dramatic work, shaped by the ideal of freedom and moral self-determination, made him one of the central figures of Weimar Classicism - his close collaboration with Goethe is still regarded today as one of the most fruitful literary dialogues in German history.", ar: "جعل عمل شيلر المسرحي، المتشبع بمثال الحرية والاستقلالية الأخلاقية، منه إحدى الشخصيات المحورية لكلاسيكية فايمار - ولا يزال تعاونه الوثيق مع غوته يُعتبر حتى اليوم أحد أخصب الحوارات الأدبية في التاريخ الألماني.", tr: "Özgürlük ve ahlaki özerklik idealiyle şekillenen Schiller'in dramatik eseri, onu Weimar Klasisizmi'nin merkezi figürlerinden biri haline getirdi — Goethe ile yakın işbirliği bugün hâlâ Alman tarihinin en verimli edebi diyaloglarından biri sayılmaktadır.", ru: "Драматическое творчество Шиллера, проникнутое идеалом свободы и морального самоопределения, сделало его одной из центральных фигур веймарского классицизма — его тесное сотрудничество с Гёте до сих пор считается одним из самых плодотворных литературных диалогов в истории Германии.", es: "La obra dramática de Schiller, marcada por el ideal de la libertad y la autodeterminación moral, lo convirtió en una de las figuras centrales del clasicismo de Weimar; su estrecha colaboración con Goethe se considera hoy uno de los diálogos literarios más fecundos de la historia alemana.", fr: "L'œuvre dramatique de Schiller, marquée par l'idéal de liberté et d'autodétermination morale, fit de lui l'une des figures centrales du classicisme de Weimar — sa collaboration étroite avec Goethe est encore considérée aujourd'hui comme l'un des dialogues littéraires les plus féconds de l'histoire allemande.", pl: "Dramatyczna twórczość Schillera, naznaczona ideałem wolności i moralnego samostanowienia, uczyniła go jedną z centralnych postaci klasyki weimarskiej — jego ścisła współpraca z Goethem do dziś uchodzi za jeden z najbardziej owocnych dialogów literackich w historii Niemiec.", uk: "Драматична творчість Шиллера, пройнята ідеалом свободи та морального самовизначення, зробила його однією з центральних постатей веймарського класицизму — його тісна співпраця з Гете й досі вважається одним із найплідніших літературних діалогів в історії Німеччини.", fa: "آثار نمایشی شیلر، که با آرمان آزادی و خودمختاری اخلاقی شکل گرفته بود، او را به یکی از چهره‌های محوری کلاسیسیسم وایمار تبدیل کرد - همکاری نزدیک او با گوته هنوز هم یکی از پربارترین گفت‌وگوهای ادبی تاریخ آلمان به شمار می‌رود.", it: "L'opera drammatica di Schiller, segnata dall'ideale della libertà e dell'autodeterminazione morale, ne fece una delle figure centrali del classicismo di Weimar — la sua stretta collaborazione con Goethe è ancora oggi considerata uno dei dialoghi letterari più fecondi della storia tedesca." },
+        C2: { en: "As an advocate of idealism and the aesthetic education of humankind, Schiller designed, in his dramas and philosophical writings, an image of the human being that inseparably linked freedom and morality - a legacy that lastingly shaped German intellectual history.", ar: "بوصفه مدافعًا عن المثالية والتربية الجمالية للإنسان، صاغ شيلر في مسرحياته وكتاباته الفلسفية تصورًا للإنسان يربط الحرية بالأخلاق ربطًا لا انفصام فيه - إرث ترك أثرًا دائمًا في تاريخ الفكر الألماني.", tr: "İdealizmin ve insanın estetik eğitiminin savunucusu olarak Schiller, dramlarında ve felsefi yazılarında özgürlük ile ahlakı birbirinden ayrılamaz biçimde birleştiren bir insan tasavvuru geliştirdi — Alman fikir tarihini kalıcı olarak şekillendiren bir miras.", ru: "Как поборник идеализма и эстетического воспитания человека, Шиллер в своих драмах и философских сочинениях создал образ человека, неразрывно связывающий свободу и нравственность, — наследие, оказавшее долговременное влияние на немецкую историю духа.", es: "Como defensor del idealismo y de la educación estética del ser humano, Schiller diseñó en sus dramas y escritos filosóficos una imagen del hombre que unía indisolublemente libertad y moralidad, un legado que marcó de forma duradera la historia del pensamiento alemán.", fr: "Défenseur de l'idéalisme et de l'éducation esthétique de l'homme, Schiller élabora dans ses drames et ses écrits philosophiques une image de l'être humain unissant indissociablement liberté et moralité — un héritage qui marqua durablement l'histoire intellectuelle allemande.", pl: "Jako orędownik idealizmu i estetycznego wychowania człowieka, Schiller w swoich dramatach i pismach filozoficznych stworzył obraz człowieka, w którym wolność i moralność były nierozerwalnie powiązane — dziedzictwo, które trwale ukształtowało niemiecką historię ducha.", uk: "Як прихильник ідеалізму та естетичного виховання людини, Шиллер у своїх драмах і філософських творах створив образ людини, що нерозривно поєднував свободу і моральність, — спадщину, яка назавжди сформувала німецьку історію духу.", fa: "شیلر به‌عنوان مدافع ایده‌آلیسم و پرورش زیبایی‌شناختی انسان، در نمایشنامه‌ها و نوشته‌های فلسفی خود تصویری از انسان ترسیم کرد که آزادی و اخلاق را به‌طور جدایی‌ناپذیر به هم پیوند می‌داد - میراثی که تاریخ اندیشه‌ی آلمان را به‌طور ماندگار شکل داد.", it: "Come sostenitore dell'idealismo e dell'educazione estetica dell'uomo, Schiller delineò nei suoi drammi e scritti filosofici un'immagine dell'essere umano che univa indissolubilmente libertà e moralità — un'eredità che ha segnato in modo duraturo la storia intellettuale tedesca." },
       },
     },
     {
@@ -10360,6 +11111,7 @@
         C2: "Die von Einstein begründete Relativitätstheorie markiert einen der fundamentalsten Paradigmenwechsel der Naturwissenschaften und verschmilzt in seiner Biografie mit der Tragik der Emigration — eine Verbindung wissenschaftlichen Genies mit dem dunkelsten Kapitel deutscher Geschichte.",
       },
       translationsA1: {
+        it: "Einstein era un famoso scienziato tedesco. Scoprì la teoria della relatività. Vinse il premio Nobel.",
         en: "Einstein was a famous German scientist. He discovered the theory of relativity. He won the Nobel Prize.",
         ar: "كان آينشتاين عالماً ألمانياً مشهوراً. اكتشف نظرية النسبية. فاز بجائزة نوبل.",
         tr: "Einstein ünlü bir Alman bilim insanıydı. Görelilik teorisini keşfetti. Nobel Ödülü'nü kazandı.",
@@ -10369,6 +11121,13 @@
         pl: "Einstein był słynnym niemieckim naukowcem. Odkrył teorię względności. Zdobył Nagrodę Nobla.",
         uk: "Ейнштейн був відомим німецьким науковцем. Він відкрив теорію відносності. Він отримав Нобелівську премію.",
         fa: "اینشتین دانشمند معروف آلمانی بود. او نظریه نسبیت را کشف کرد. او جایزه نوبل را برد.",
+      },
+      translationsByLevel: {
+        A2: { en: "Albert Einstein was a German physicist. He is very famous for his theory of relativity. Later he emigrated to the USA.", ar: "كان ألبرت أينشتاين فيزيائيًا ألمانيًا. اشتهر كثيرًا بنظريته النسبية. هاجر لاحقًا إلى الولايات المتحدة.", tr: "Albert Einstein Alman bir fizikçiydi. Görelilik teorisiyle çok ünlüdür. Daha sonra ABD'ye göç etti.", ru: "Альберт Эйнштейн был немецким физиком. Он очень известен благодаря своей теории относительности. Позже он эмигрировал в США.", es: "Albert Einstein fue un físico alemán. Es muy famoso por su teoría de la relatividad. Más tarde emigró a Estados Unidos.", fr: "Albert Einstein était un physicien allemand. Il est très célèbre pour sa théorie de la relativité. Plus tard, il a émigré aux États-Unis.", pl: "Albert Einstein był niemieckim fizykiem. Jest bardzo znany dzięki swojej teorii względności. Później wyemigrował do USA.", uk: "Альберт Ейнштейн був німецьким фізиком. Він дуже відомий завдяки своїй теорії відносності. Пізніше він емігрував до США.", fa: "آلبرت اینشتین یک فیزیک‌دان آلمانی بود. او به خاطر نظریه‌ی نسبیت بسیار مشهور است. او بعدها به آمریکا مهاجرت کرد.", it: "Albert Einstein era un fisico tedesco. È molto famoso per la sua teoria della relatività. In seguito emigrò negli Stati Uniti." },
+        B1: { en: "Albert Einstein ranks among the most important physicists in history. With his theory of relativity, he changed our understanding of space and time. In 1921, he received the Nobel Prize in Physics.", ar: "يُعد ألبرت أينشتاين من أعظم الفيزيائيين في التاريخ. غيّر بنظريته النسبية فهم المكان والزمان. حصل عام 1921 على جائزة نوبل في الفيزياء.", tr: "Albert Einstein, tarihin en önemli fizikçilerinden biri sayılır. Görelilik teorisiyle uzay ve zaman anlayışını değiştirdi. 1921'de Nobel Fizik Ödülü'nü aldı.", ru: "Альберт Эйнштейн относится к числу величайших физиков в истории. Своей теорией относительности он изменил понимание пространства и времени. В 1921 году он получил Нобелевскую премию по физике.", es: "Albert Einstein se cuenta entre los físicos más importantes de la historia. Con su teoría de la relatividad cambió la comprensión del espacio y el tiempo. En 1921 recibió el Premio Nobel de Física.", fr: "Albert Einstein compte parmi les plus grands physiciens de l'histoire. Avec sa théorie de la relativité, il a transformé la compréhension de l'espace et du temps. En 1921, il reçut le prix Nobel de physique.", pl: "Albert Einstein zalicza się do najważniejszych fizyków w historii. Swoją teorią względności zmienił rozumienie przestrzeni i czasu. W 1921 roku otrzymał Nagrodę Nobla w dziedzinie fizyki.", uk: "Альберт Ейнштейн належить до найвидатніших фізиків в історії. Своєю теорією відносності він змінив розуміння простору і часу. У 1921 році він отримав Нобелівську премію з фізики.", fa: "آلبرت اینشتین یکی از مهم‌ترین فیزیک‌دانان تاریخ به شمار می‌رود. او با نظریه‌ی نسبیت خود، درک از فضا و زمان را دگرگون کرد. او در سال ۱۹۲۱ جایزه‌ی نوبل فیزیک را دریافت کرد.", it: "Albert Einstein è tra i fisici più importanti della storia. Con la sua teoria della relatività cambiò la comprensione dello spazio e del tempo. Nel 1921 ricevette il premio Nobel per la Fisica." },
+        B2: { en: "Albert Einstein (1879-1955), born in Ulm, fundamentally revolutionized the physical worldview with the theory of relativity. Because of his Jewish heritage, he had to flee the Nazis to the USA in 1933.", ar: "أحدث ألبرت أينشتاين (1879-1955)، المولود في أولم، ثورة جذرية في الصورة الفيزيائية للعالم من خلال نظرية النسبية. اضطر بسبب أصله اليهودي إلى الفرار من النازيين إلى الولايات المتحدة عام 1933.", tr: "Ulm'da doğan Albert Einstein (1879-1955), görelilik teorisiyle fiziksel dünya görüşünde köklü bir devrim yarattı. Yahudi kökeni nedeniyle 1933'te Nasyonal Sosyalistler'den kaçarak ABD'ye sığınmak zorunda kaldı.", ru: "Альберт Эйнштейн (1879-1955), родившийся в Ульме, коренным образом произвёл революцию в физической картине мира своей теорией относительности. Из-за своего еврейского происхождения он был вынужден бежать от нацистов в США в 1933 году.", es: "Albert Einstein (1879-1955), nacido en Ulm, revolucionó de manera fundamental la visión física del mundo con la teoría de la relatividad. Debido a su origen judío, tuvo que huir de los nazis a Estados Unidos en 1933.", fr: "Albert Einstein (1879-1955), né à Ulm, révolutionna fondamentalement la vision physique du monde avec la théorie de la relativité. En raison de ses origines juives, il dut fuir les nationaux-socialistes pour les États-Unis en 1933.", pl: "Albert Einstein (1879-1955), urodzony w Ulm, zrewolucjonizował fizyczny obraz świata teorią względności. Z powodu żydowskiego pochodzenia musiał w 1933 roku uciec przed nazistami do USA.", uk: "Альберт Ейнштейн (1879-1955), народжений в Ульмі, докорінно революціонізував фізичну картину світу теорією відносності. Через своє єврейське походження він був змушений у 1933 році втекти від нацистів до США.", fa: "آلبرت اینشتین (۱۸۷۹-۱۹۵۵)، متولد اولم، با نظریه‌ی نسبیت خود انقلابی بنیادین در جهان‌بینی فیزیک ایجاد کرد. او به دلیل ریشه‌ی یهودی خود ناچار شد در سال ۱۹۳۳ از دست ناسیونال‌سوسیالیست‌ها به آمریکا بگریزد.", it: "Albert Einstein (1879-1955), nato a Ulm, rivoluzionò radicalmente la visione fisica del mondo con la teoria della relatività. A causa delle sue origini ebraiche, nel 1933 dovette fuggire dai nazionalsocialisti negli Stati Uniti." },
+        C1: { en: "Einstein's theory of relativity fundamentally challenged classical Newtonian physics and laid the foundation for modern theoretical physics - his fate as an émigré from the Nazi regime also makes him a central figure in twentieth-century German history.", ar: "وضعت نظرية النسبية لأينشتاين الفيزياء النيوتونية الكلاسيكية موضع تساؤل جذري، وأرست أساس الفيزياء النظرية الحديثة - كما أن مصيره كمهاجر هربًا من النظام النازي يجعله في الوقت نفسه شخصية محورية في تاريخ ألمانيا في القرن العشرين.", tr: "Einstein'ın görelilik teorisi, klasik Newton fiziğini kökten sorguladı ve modern teorik fiziğin temelini attı — Nazi rejiminden kaçan bir sürgün olarak kaderi ise onu aynı zamanda 20. yüzyıl Alman tarihinin merkezi bir figürü haline getirir.", ru: "Теория относительности Эйнштейна коренным образом поставила под сомнение классическую ньютоновскую физику и заложила основу современной теоретической физики — его судьба эмигранта, бежавшего от нацистского режима, одновременно делает его центральной фигурой немецкой истории XX века.", es: "La teoría de la relatividad de Einstein cuestionó fundamentalmente la física clásica newtoniana y sentó las bases de la física teórica moderna; su destino como emigrante huido del régimen nazi lo convierte al mismo tiempo en una figura central de la historia alemana del siglo XX.", fr: "La théorie de la relativité d'Einstein remit fondamentalement en cause la physique classique newtonienne et posa les fondements de la physique théorique moderne — son destin d'émigré fuyant le régime nazi fait aussi de lui une figure centrale de l'histoire allemande du XXe siècle.", pl: "Teoria względności Einsteina w sposób fundamentalny podważyła klasyczną fizykę newtonowską i położyła podwaliny pod nowoczesną fizykę teoretyczną — jego los jako emigranta uciekającego przed reżimem nazistowskim czyni go zarazem centralną postacią niemieckiej historii XX wieku.", uk: "Теорія відносності Ейнштейна докорінно поставила під сумнів класичну ньютонівську фізику та заклала основи сучасної теоретичної фізики — його доля емігранта, який утік від нацистського режиму, водночас робить його центральною постаттю німецької історії XX століття.", fa: "نظریه‌ی نسبیت اینشتین فیزیک کلاسیک نیوتنی را به‌طور بنیادین به چالش کشید و پایه‌های فیزیک نظری مدرن را بنا نهاد - سرنوشت او به‌عنوان مهاجری که از رژیم نازی گریخت، او را هم‌زمان به چهره‌ای محوری در تاریخ آلمان قرن بیستم تبدیل می‌کند.", it: "La teoria della relatività di Einstein mise fondamentalmente in discussione la fisica classica newtoniana e gettò le basi della fisica teorica moderna — il suo destino di emigrato in fuga dal regime nazista lo rende al contempo una figura centrale della storia tedesca del XX secolo." },
+        C2: { en: "The theory of relativity founded by Einstein marks one of the most fundamental paradigm shifts in the natural sciences, and in his biography it merges with the tragedy of emigration - a fusion of scientific genius with the darkest chapter of German history.", ar: "تُشكّل نظرية النسبية التي أرساها أينشتاين واحدة من أكثر التحولات الجذرية في مناهج العلوم الطبيعية، وتندمج في سيرته الذاتية مع مأساة الهجرة القسرية - وهو اقتران بين العبقرية العلمية وأحلك فصول التاريخ الألماني.", tr: "Einstein'ın temellendirdiği görelilik teorisi, doğa bilimlerindeki en temel paradigma değişimlerinden birini işaret eder ve onun biyografisinde göçün trajedisiyle iç içe geçer — bilimsel dehanın Alman tarihinin en karanlık bölümüyle birleşimi.", ru: "Основанная Эйнштейном теория относительности знаменует один из самых фундаментальных сдвигов парадигмы в естественных науках и в его биографии сливается с трагедией эмиграции — соединение научного гения с самой мрачной главой немецкой истории.", es: "La teoría de la relatividad fundada por Einstein marca uno de los cambios de paradigma más fundamentales de las ciencias naturales y, en su biografía, se funde con la tragedia de la emigración: una unión del genio científico con el capítulo más oscuro de la historia alemana.", fr: "La théorie de la relativité fondée par Einstein marque l'un des changements de paradigme les plus fondamentaux des sciences naturelles et se confond, dans sa biographie, avec la tragédie de l'émigration — une union du génie scientifique avec le chapitre le plus sombre de l'histoire allemande.", pl: "Ustanowiona przez Einsteina teoria względności wyznacza jedną z najbardziej fundamentalnych zmian paradygmatu w naukach przyrodniczych i w jego biografii zlewa się z tragedią emigracji — połączenie naukowego geniuszu z najciemniejszym rozdziałem niemieckiej historii.", uk: "Заснована Ейнштейном теорія відносності знаменує одну з найфундаментальніших змін парадигми в природничих науках і в його біографії зливається з трагедією еміграції — поєднання наукового генія з найтемнішою главою німецької історії.", fa: "نظریه‌ی نسبیت که اینشتین بنیان نهاد، یکی از بنیادی‌ترین تحولات پارادایمی در علوم طبیعی را رقم می‌زند و در زندگی‌نامه‌ی او با تراژدی مهاجرت درهم می‌آمیزد - پیوندی میان نبوغ علمی و تاریک‌ترین فصل تاریخ آلمان.", it: "La teoria della relatività fondata da Einstein segna uno dei cambiamenti di paradigma più fondamentali delle scienze naturali e nella sua biografia si fonde con la tragedia dell'emigrazione — un'unione tra genio scientifico e il capitolo più oscuro della storia tedesca." },
       },
     },
     {
@@ -10383,6 +11142,7 @@
         C2: "In der Verschmelzung kontrapunktischer Komplexität mit tiefer geistlicher Ausdruckskraft erreicht Bachs Œuvre eine kompositorische Vollendung, die die Barockmusik zu ihrem Höhepunkt führte und als fundamentaler Bezugspunkt der abendländischen Musiktradition bis heute fortwirkt.",
       },
       translationsA1: {
+        it: "Bach era un famoso musicista tedesco. Scrisse molti brani musicali. La sua musica è conosciuta ancora oggi.",
         en: "Bach was a famous German musician. He wrote many pieces of music. His music is still known today.",
         ar: "كان باخ موسيقياً ألمانياً مشهوراً. كتب الكثير من المقطوعات الموسيقية. موسيقاه معروفة حتى اليوم.",
         tr: "Bach ünlü bir Alman müzisyendi. Birçok müzik eseri yazdı. Müziği bugün hâlâ tanınıyor.",
@@ -10392,6 +11152,13 @@
         pl: "Bach był słynnym niemieckim muzykiem. Napisał wiele utworów muzycznych. Jego muzyka jest znana do dziś.",
         uk: "Бах був відомим німецьким музикантом. Він написав багато музичних творів. Його музика відома й сьогодні.",
         fa: "باخ موسیقی‌دان معروف آلمانی بود. او آثار موسیقی زیادی نوشت. موسیقی او هنوز هم شناخته شده است.",
+      },
+      translationsByLevel: {
+        A2: { en: "Johann Sebastian Bach was a German composer. He wrote a great deal of music, especially church music. His music is still played today.", ar: "كان يوهان سيباستيان باخ ملحنًا ألمانيًا. كتب موسيقى كثيرة جدًا، وخاصة الموسيقى الكنسية. لا تزال موسيقاه تُعزف حتى اليوم.", tr: "Johann Sebastian Bach Alman bir bestekârdı. Özellikle kilise müziği olmak üzere çok fazla müzik yazdı. Müziği bugün hâlâ çalınmaktadır.", ru: "Иоганн Себастьян Бах был немецким композитором. Он написал очень много музыки, особенно церковной. Его музыку исполняют и по сей день.", es: "Johann Sebastian Bach fue un compositor alemán. Compuso muchísima música, sobre todo música religiosa. Su música se sigue interpretando hoy en día.", fr: "Johann Sebastian Bach était un compositeur allemand. Il a composé énormément de musique, surtout de la musique religieuse. Sa musique est encore jouée aujourd'hui.", pl: "Johann Sebastian Bach był niemieckim kompozytorem. Napisał bardzo dużo muzyki, przede wszystkim muzykę kościelną. Jego muzyka jest grana do dziś.", uk: "Йоганн Себастьян Бах був німецьким композитором. Він написав дуже багато музики, особливо церковної. Його музику виконують і донині.", fa: "یوهان سباستین باخ آهنگسازی آلمانی بود. او موسیقی بسیار زیادی نوشت، به‌ویژه موسیقی کلیسایی. موسیقی او هنوز هم اجرا می‌شود.", it: "Johann Sebastian Bach era un compositore tedesco. Scrisse moltissima musica, soprattutto musica sacra. La sua musica viene suonata ancora oggi." },
+        B1: { en: "Johann Sebastian Bach is considered one of the most significant composers in the history of music. He wrote hundreds of works, especially church music and organ pieces. His work influenced all of Western music.", ar: "يُعتبر يوهان سيباستيان باخ أحد أعظم الملحنين في تاريخ الموسيقى. كتب مئات الأعمال، وبخاصة الموسيقى الكنسية وقطع الأرغن. أثّر عمله في الموسيقى الغربية بأكملها.", tr: "Johann Sebastian Bach, müzik tarihinin en önemli bestecilerinden biri sayılır. Özellikle kilise müziği ve org eserleri olmak üzere yüzlerce yapıt yazdı. Eseri tüm Batı müziğini etkiledi.", ru: "Иоганн Себастьян Бах считается одним из величайших композиторов в истории музыки. Он написал сотни произведений, особенно церковной музыки и органных пьес. Его творчество повлияло на всю западную музыку.", es: "Johann Sebastian Bach está considerado uno de los compositores más importantes de la historia de la música. Escribió cientos de obras, especialmente música religiosa y piezas para órgano. Su obra influyó en toda la música occidental.", fr: "Johann Sebastian Bach est considéré comme l'un des plus grands compositeurs de l'histoire de la musique. Il a composé des centaines d'œuvres, notamment de la musique religieuse et des pièces pour orgue. Son œuvre a influencé toute la musique occidentale.", pl: "Johann Sebastian Bach uchodzi za jednego z najwybitniejszych kompozytorów w historii muzyki. Napisał setki dzieł, zwłaszcza muzykę kościelną i utwory organowe. Jego twórczość wpłynęła na całą muzykę zachodnią.", uk: "Йоганн Себастьян Бах вважається одним із найвидатніших композиторів в історії музики. Він написав сотні творів, особливо церковної музики та органних п'єс. Його творчість вплинула на всю західну музику.", fa: "یوهان سباستین باخ یکی از مهم‌ترین آهنگسازان تاریخ موسیقی به شمار می‌رود. او صدها اثر نوشت، به‌ویژه موسیقی کلیسایی و قطعات ارگ. آثار او بر کل موسیقی غرب تأثیر گذاشت.", it: "Johann Sebastian Bach è considerato uno dei più importanti compositori della storia della musica. Scrisse centinaia di opere, in particolare musica sacra e brani per organo. La sua opera influenzò tutta la musica occidentale." },
+        B2: { en: "Johann Sebastian Bach (1685-1750) shaped music history lastingly with his extensive body of work - ranging from cantatas and organ music to the Brandenburg Concertos - and is considered the pinnacle of Baroque music.", ar: "شكّل يوهان سيباستيان باخ (1685-1750)، بعمله الضخم - من الكانتاتات إلى موسيقى الأرغن وصولاً إلى كونشرتوهات براندنبورغ - تاريخ الموسيقى بشكل دائم، ويُعتبر ذروة الموسيقى الباروكية.", tr: "Johann Sebastian Bach (1685-1750), kantatlardan org müziğine, Brandenburg Konçertoları'na kadar uzanan kapsamlı eseriyle müzik tarihini kalıcı biçimde şekillendirdi ve Barok müziğin zirvesi sayılır.", ru: "Иоганн Себастьян Бах (1685-1750) своим обширным творчеством — от кантат и органной музыки до Бранденбургских концертов — оказал долговременное влияние на историю музыки и считается вершиной музыки барокко.", es: "Johann Sebastian Bach (1685-1750) marcó de forma duradera la historia de la música con su extensa obra —desde cantatas y música para órgano hasta los Conciertos de Brandeburgo— y se considera la cumbre de la música barroca.", fr: "Johann Sebastian Bach (1685-1750) a marqué durablement l'histoire de la musique par son œuvre considérable — des cantates à la musique pour orgue en passant par les Concertos brandebourgeois — et est considéré comme l'apogée de la musique baroque.", pl: "Johann Sebastian Bach (1685-1750) trwale ukształtował historię muzyki swoją obszerną twórczością — od kantat, przez muzykę organową, po Koncerty brandenburskie — i uchodzi za szczyt muzyki barokowej.", uk: "Йоганн Себастьян Бах (1685-1750) своєю масштабною творчістю — від кантат і органної музики до Бранденбурзьких концертів — назавжди сформував історію музики і вважається вершиною барокової музики.", fa: "یوهان سباستین باخ (۱۶۸۵-۱۷۵۰) با آثار گسترده‌ی خود - از کانتاتاها گرفته تا موسیقی ارگ و کنسرتوهای براندنبورگ - تاریخ موسیقی را به‌طور ماندگار شکل داد و اوج موسیقی باروک به شمار می‌رود.", it: "Johann Sebastian Bach (1685-1750) segnò in modo duraturo la storia della musica con la sua vasta opera — dalle cantate alla musica per organo fino ai Concerti brandeburghesi — ed è considerato l'apice della musica barocca." },
+        C1: { en: "Bach's contrapuntal mastery and his enormous compositional output, encompassing nearly every genre of his time, make him a key figure in music history, whose influence extends from Mozart to today's teaching of composition.", ar: "تجعل براعة باخ في التقنية الكونترابنطية وإنتاجه التأليفي الهائل، الذي يشمل تقريبًا كل الأنواع الموسيقية في عصره، منه شخصية محورية في تاريخ الموسيقى، يمتد تأثيره من موتسارت إلى تدريس التأليف الموسيقي اليوم.", tr: "Bach'ın kontrpuan ustalığı ve döneminin neredeyse tüm türlerini kapsayan muazzam bestecilik üretimi, onu müzik tarihinin kilit bir figürü hâline getirir; etkisi Mozart'tan günümüz kompozisyon öğretimine kadar uzanır.", ru: "Мастерство Баха в контрапункте и его колоссальное композиторское наследие, охватывающее почти все жанры его времени, делают его ключевой фигурой в истории музыки, влияние которой простирается от Моцарта до современного преподавания композиции.", es: "La maestría contrapuntística de Bach y su enorme producción compositiva, que abarca casi todos los géneros de su época, lo convierten en una figura clave de la historia de la música, cuya influencia se extiende desde Mozart hasta la enseñanza actual de la composición.", fr: "La maîtrise contrapuntique de Bach et son immense production de compositeur, qui embrasse presque tous les genres de son époque, font de lui une figure clé de l'histoire de la musique, dont l'influence s'étend de Mozart jusqu'à l'enseignement actuel de la composition.", pl: "Kontrapunktyczne mistrzostwo Bacha oraz jego ogromna twórczość kompozytorska, obejmująca niemal wszystkie gatunki jego epoki, czynią go kluczową postacią historii muzyki, której wpływ sięga od Mozarta aż po dzisiejszą naukę kompozycji.", uk: "Контрапунктична майстерність Баха та його величезний композиторський доробок, що охоплює майже всі жанри його часу, роблять його ключовою постаттю в історії музики, вплив якої сягає від Моцарта аж до сучасного навчання композиції.", fa: "مهارت باخ در کنترپوان و آثار تألیفی عظیم او، که تقریباً همه‌ی گونه‌های موسیقایی زمانه‌اش را دربر می‌گیرد، او را به چهره‌ای کلیدی در تاریخ موسیقی تبدیل می‌کند که تأثیرش از موتسارت تا آموزش آهنگ‌سازی امروز ادامه دارد.", it: "La maestria contrappuntistica di Bach e la sua enorme produzione compositiva, che abbraccia quasi tutti i generi della sua epoca, ne fanno una figura chiave della storia della musica, la cui influenza si estende da Mozart fino all'odierno insegnamento della composizione." },
+        C2: { en: "In the fusion of contrapuntal complexity with profound spiritual expressiveness, Bach's oeuvre achieves a compositional perfection that brought Baroque music to its peak and continues to this day as a fundamental point of reference for the Western musical tradition.", ar: "في اندماج التعقيد الكونترابنطي مع قوة التعبير الروحي العميقة، يبلغ عمل باخ اكتمالاً تأليفيًا قاد الموسيقى الباروكية إلى ذروتها، ولا يزال يعمل حتى اليوم كنقطة مرجعية أساسية للتقليد الموسيقي الغربي.", tr: "Kontrpuan karmaşıklığı ile derin manevi ifade gücünün kaynaşmasında Bach'ın eseri, Barok müziği zirvesine taşıyan ve bugüne kadar Batı müzik geleneğinin temel referans noktası olarak etkisini sürdüren bestecilik mükemmelliğine ulaşır.", ru: "В слиянии контрапунктической сложности с глубокой духовной выразительностью творчество Баха достигает композиторского совершенства, которое привело музыку барокко к её вершине и по сей день остаётся фундаментальной точкой отсчёта западной музыкальной традиции.", es: "En la fusión de la complejidad contrapuntística con una profunda expresividad espiritual, la obra de Bach alcanza una perfección compositiva que llevó la música barroca a su cúspide y que hasta hoy sigue actuando como punto de referencia fundamental de la tradición musical occidental.", fr: "Dans la fusion de la complexité contrapuntique avec une profonde expressivité spirituelle, l'œuvre de Bach atteint une perfection compositionnelle qui porta la musique baroque à son apogée et continue aujourd'hui d'agir comme point de référence fondamental de la tradition musicale occidentale.", pl: "W połączeniu kontrapunktycznej złożoności z głęboką duchową ekspresją dzieło Bacha osiąga kompozytorską doskonałość, która doprowadziła muzykę barokową do jej szczytu i do dziś oddziałuje jako fundamentalny punkt odniesienia zachodniej tradycji muzycznej.", uk: "У поєднанні контрапунктичної складності з глибокою духовною виразністю творчість Баха досягає композиторської досконалості, яка привела барокову музику до її вершини і донині залишається фундаментальною точкою відліку західної музичної традиції.", fa: "در آمیزش پیچیدگی کنترپوانی با بیان معنوی عمیق، اثر باخ به کمالی در آهنگ‌سازی دست می‌یابد که موسیقی باروک را به اوج خود رساند و تا امروز نیز نقطه‌ی مرجع بنیادین سنت موسیقی غرب باقی مانده است.", it: "Nella fusione tra complessità contrappuntistica e profonda espressività spirituale, l'opera di Bach raggiunge una perfezione compositiva che portò la musica barocca al suo apice e continua ancora oggi a costituire un punto di riferimento fondamentale della tradizione musicale occidentale." },
       },
     },
   ];
@@ -10408,6 +11175,7 @@
         C2: "Der Videorekorder ist ein Musterbeispiel dafür, dass Medientechnik nicht nur Inhalte transportiert, sondern Umgangsformen erzeugt: Die Endlichkeit des Bandes, die begrenzte Ausleihfrist und die geteilte Kassette schufen eine Kultur der Rücksicht, die im unbegrenzten Zugriff des Streamings ersatzlos verschwunden ist.",
       },
       translationsA1: {
+        it: "In passato si guardavano i film su cassette. L'apparecchio per farlo si chiamava videoregistratore. Alla fine bisognava riavvolgere la cassetta.",
         en: "People used to watch films on cassettes. The device for this was called a video recorder. You had to rewind the cassette at the end.",
         ar: "في الماضي كان الناس يشاهدون الأفلام على أشرطة. الجهاز لذلك كان اسمه مسجّل الفيديو. وكان عليك إعادة الشريط إلى البداية في النهاية.",
         tr: "Eskiden filmler kasetten izlenirdi. Bunun cihazına video kaydedici deniyordu. Sonunda kaseti geri sarmak gerekiyordu.",
@@ -10417,6 +11185,13 @@
         pl: "Kiedyś filmy oglądało się z kaset. Urządzenie do tego nazywało się magnetowid. Na koniec trzeba było przewinąć kasetę.",
         uk: "Раніше фільми дивилися на касетах. Пристрій для цього називався відеомагнітофон. Наприкінці касету треба було перемотати.",
         fa: "قدیم‌ها فیلم‌ها را روی نوار کاست می‌دیدند. دستگاه آن ویدئو نام داشت. در پایان باید نوار را به عقب برمی‌گرداندی.",
+      },
+      translationsByLevel: {
+        A2: { en: "In the past, television wasn't available on demand. Anyone who wanted to watch a film borrowed a video cassette and put it into the video recorder. At the end you had to rewind it - otherwise there was trouble at the video rental shop.", ar: "في الماضي، لم يكن التلفزيون متاحًا عند الطلب. من أراد مشاهدة فيلم استعار شريط فيديو ووضعه في جهاز الفيديو. في النهاية كان يجب إعادة لفه - وإلا حصلت مشكلة في محل تأجير الأفلام.", tr: "Eskiden televizyon talep üzerine yayın yapmazdı. Bir film izlemek isteyen bir video kaseti kiralar ve video kaydediciye takardı. Sonunda geri sarmak gerekirdi — aksi halde video kiralama dükkânında sorun çıkardı.", ru: "Раньше телевидение не работало по запросу. Тот, кто хотел посмотреть фильм, брал напрокат видеокассету и вставлял её в видеомагнитофон. В конце нужно было перемотать назад — иначе в видеопрокате возникали проблемы.", es: "Antes la televisión no funcionaba a la carta. Quien quería ver una película alquilaba un videocasete y lo ponía en la videograbadora. Al final había que rebobinarlo, si no había problemas en el videoclub.", fr: "Autrefois, la télévision n'était pas disponible à la demande. Celui qui voulait voir un film louait une cassette vidéo et la mettait dans le magnétoscope. À la fin, il fallait la rembobiner, sinon on avait des ennuis au vidéoclub.", pl: "Dawniej telewizja nie działała na żądanie. Kto chciał obejrzeć film, wypożyczał kasetę wideo i wkładał ją do magnetowidu. Na koniec trzeba było ją przewinąć — inaczej były kłopoty w wypożyczalni.", uk: "Раніше телебачення не працювало на замовлення. Хто хотів подивитися фільм, брав напрокат відеокасету і вставляв її у відеомагнітофон. Наприкінці її треба було перемотати назад — інакше виникали проблеми у відеопрокаті.", fa: "در گذشته، تلویزیون بر اساس تقاضا کار نمی‌کرد. هر کس می‌خواست فیلمی ببیند، یک نوار ویدیو کرایه می‌کرد و آن را در دستگاه ویدیو می‌گذاشت. در پایان باید آن را عقب می‌برد - وگرنه در ویدیوکلوب دردسر پیش می‌آمد.", it: "In passato la televisione non era disponibile su richiesta. Chi voleva vedere un film noleggiava una videocassetta e la inseriva nel videoregistratore. Alla fine bisognava riavvolgerla, altrimenti c'erano problemi al videonoleggio." },
+        B1: { en: "Until the 2000s, many German living rooms had a video recorder. People recorded programs to watch them later and rented films from the video rental shop. Hardly anyone today knows the request Please rewind that used to be on the sticker.", ar: "حتى العقد الأول من الألفية، كان في كثير من غرف المعيشة الألمانية جهاز فيديو. كان الناس يسجلون البرامج لمشاهدتها لاحقًا، ويستأجرون الأفلام من محل تأجير الأفلام. لا يعرف اليوم إلا القليل عبارة الرجاء إعادة اللف التي كانت مكتوبة على الملصق.", tr: "2000'li yıllara kadar birçok Alman oturma odasında bir video kaydedici bulunuyordu. İnsanlar programları daha sonra izlemek için kaydeder ve filmleri video kiralama dükkânından kiralardı. Etiketteki Lütfen geri sarın uyarısını bugün neredeyse kimse bilmiyor.", ru: "До 2000-х годов во многих немецких гостиных стоял видеомагнитофон. Люди записывали передачи, чтобы посмотреть их позже, и брали напрокат фильмы в видеопрокате. Просьбу Пожалуйста, перемотайте на наклейке сегодня почти никто не помнит.", es: "Hasta la década de 2000, muchos salones alemanes tenían una videograbadora. Se grababan programas para verlos más tarde y se alquilaban películas en el videoclub. Casi nadie conoce hoy la petición Por favor, rebobine que aparecía en la pegatina.", fr: "Jusque dans les années 2000, de nombreux salons allemands possédaient un magnétoscope. On enregistrait des émissions pour les regarder plus tard et on louait des films au vidéoclub. Presque plus personne ne connaît aujourd'hui la mention Merci de rembobiner sur l'autocollant.", pl: "Aż do lat 2000. w wielu niemieckich salonach stał magnetowid. Nagrywano programy, by obejrzeć je później, i wypożyczano filmy w wypożyczalni wideo. Prośbę Proszę przewinąć z naklejki dziś mało kto pamięta.", uk: "До 2000-х років у багатьох німецьких вітальнях стояв відеомагнітофон. Люди записували передачі, щоб подивитися їх пізніше, і брали напрокат фільми у відеопрокаті. Прохання Будь ласка, перемотайте на наклейці сьогодні мало хто пам'ятає.", fa: "تا دهه‌ی ۲۰۰۰، در بسیاری از اتاق‌های نشیمن آلمانی یک ویدیو وجود داشت. مردم برنامه‌ها را ضبط می‌کردند تا بعداً ببینند و فیلم‌ها را از ویدیوکلوب کرایه می‌کردند. عبارت لطفاً عقب ببرید که روی برچسب نوشته شده بود، امروز کمتر کسی می‌شناسد.", it: "Fino agli anni 2000, molti salotti tedeschi avevano un videoregistratore. Si registravano i programmi per guardarli più tardi e si noleggiavano film al videonoleggio. La richiesta Si prega di riavvolgere sull'adesivo oggi non la conosce quasi più nessuno." },
+        B2: { en: "The video recorder was the first device to shift power over the broadcast schedule from the program to the audience: whoever recorded could decide for themselves when to watch. Together with the video rental shop on the corner, it shaped the leisure habits of an entire generation - until the DVD, and later streaming, made both obsolete.", ar: "كان جهاز الفيديو أول من نقل السلطة على جدول البث من البرنامج إلى الجمهور: فمن سجّل استطاع أن يقرر بنفسه متى يشاهد. شكّل، إلى جانب محل تأجير الأفلام في الحي، سلوك أوقات الفراغ لجيل بأكمله - حتى جاء قرص الدي في دي ثم البث المباشر ليجعلا الاثنين عديمي الفائدة.", tr: "Video kaydedici, yayın programı üzerindeki gücü ilk kez kanaldan izleyiciye kaydırdı: kaydeden kişi ne zaman izleyeceğine kendisi karar verebiliyordu. Köşedeki video kiralama dükkânıyla birlikte, bir kuşağın boş zaman alışkanlıklarını şekillendirdi — ta ki DVD ve daha sonra yayın akışı ikisini de gereksiz kılana kadar.", ru: "Видеомагнитофон впервые перенёс власть над программой передач с телевидения на зрителя: тот, кто записывал, мог сам решать, когда смотреть. Вместе с видеопрокатом на углу он определял досуг целого поколения — пока DVD, а позже стриминг, не сделали оба устройства ненужными.", es: "La videograbadora trasladó por primera vez el poder sobre la programación de la cadena al público: quien grababa podía decidir por sí mismo cuándo ver el programa. Junto con el videoclub de la esquina, marcó los hábitos de ocio de toda una generación, hasta que el DVD y, más tarde, el streaming hicieron innecesarios a ambos.", fr: "Le magnétoscope a été le premier à transférer le pouvoir sur la grille des programmes de la chaîne vers le public : celui qui enregistrait pouvait décider lui-même du moment de son visionnage. Avec le vidéoclub du coin, il a marqué les habitudes de loisirs de toute une génération, jusqu'à ce que le DVD, puis le streaming, rendent les deux obsolètes.", pl: "Magnetowid jako pierwszy przesunął władzę nad ramówką z programu na widza: kto nagrywał, sam decydował, kiedy obejrzy. Razem z wypożyczalnią wideo na rogu ukształtował sposób spędzania wolnego czasu całego pokolenia — aż DVD, a potem streaming, uczyniły oba te rozwiązania zbędnymi.", uk: "Відеомагнітофон уперше перемістив владу над телепрограмою від телебачення до глядача: хто записував, той сам вирішував, коли дивитися. Разом із відеопрокатом на розі він визначав дозвілля цілого покоління — доки DVD, а пізніше стрімінг, не зробили обидва зайвими.", fa: "دستگاه ویدیو نخستین وسیله‌ای بود که قدرت تصمیم‌گیری درباره‌ی برنامه‌ی پخش را از شبکه به بیننده منتقل کرد: هر کس ضبط می‌کرد، خودش تصمیم می‌گرفت چه زمانی تماشا کند. این دستگاه همراه با ویدیوکلوب سر کوچه، عادات اوقات فراغت یک نسل کامل را شکل داد - تا اینکه دی‌وی‌دی و بعدها استریمینگ هر دو را غیرضروری کردند.", it: "Il videoregistratore fu il primo a spostare il potere sulla programmazione dal palinsesto al pubblico: chi registrava poteva decidere da solo quando guardare. Insieme al videonoleggio all'angolo, plasmò le abitudini del tempo libero di un'intera generazione, finché il DVD, e più tardi lo streaming, non resero entrambi superflui." },
+        C1: { en: "In retrospect, the video recorder marks the beginning of that decoupling of content and broadcast time which is taken for granted today. What is remarkable is less the technology than the ritual associated with it: recording as a deliberate choice, rewinding as a small social duty toward the next borrower.", ar: "بالنظر إلى الوراء، يمثّل جهاز الفيديو بداية ذلك الفصل بين المحتوى وزمن البث الذي بات اليوم أمرًا بديهيًا. واللافت هنا ليس التقنية بحد ذاتها بقدر ما هو الطقس المرتبط بها: التسجيل كاختيار واعٍ، وإعادة اللف كواجب اجتماعي صغير تجاه المستأجر التالي.", tr: "Geriye dönüp bakıldığında video kaydedici, bugün son derece doğal görünen içerik ile yayın zamanının bu ayrışmasının başlangıcını işaret eder. Dikkat çekici olan teknolojiden çok, buna bağlı ritüeldir: bilinçli bir seçim olarak kayıt yapmak, bir sonraki kiralayana karşı küçük bir toplumsal görev olarak geri sarmak.", ru: "Оглядываясь назад, видеомагнитофон знаменует начало того разделения контента и времени вещания, которое сегодня воспринимается как само собой разумеющееся. Примечательна здесь не столько техника, сколько связанный с ней ритуал: запись как осознанный выбор, перемотка назад как маленький социальный долг перед следующим арендатором.", es: "En retrospectiva, la videograbadora marca el inicio de esa desvinculación entre contenido y horario de emisión que hoy resulta evidente. Lo destacable no es tanto la tecnología como el ritual asociado a ella: grabar como elección consciente, rebobinar como pequeño deber social hacia el siguiente que alquilaba la cinta.", fr: "Rétrospectivement, le magnétoscope marque le début de ce découplage entre contenu et heure de diffusion qui va aujourd'hui de soi. Ce qui est remarquable, ce n'est pas tant la technique que le rituel qui l'accompagnait : l'enregistrement comme choix délibéré, le rembobinage comme petit devoir social envers le prochain locataire.", pl: "Z perspektywy czasu magnetowid wyznacza początek owego oddzielenia treści od czasu emisji, które dziś jest czymś oczywistym. Godna uwagi jest tu mniej sama technika, a bardziej związany z nią rytuał: nagrywanie jako świadomy wybór, przewijanie jako mały społeczny obowiązek wobec kolejnego wypożyczającego.", uk: "Озираючись назад, відеомагнітофон знаменує початок того відокремлення контенту від часу трансляції, яке сьогодні сприймається як щось само собою зрозуміле. Примітна тут не так техніка, як пов'язаний з нею ритуал: запис як свідомий вибір, перемотування назад як маленький соціальний обов'язок перед наступним орендарем.", fa: "با نگاهی به گذشته، دستگاه ویدیو آغاز آن جدایی میان محتوا و زمان پخش را رقم می‌زند که امروز امری بدیهی به شمار می‌رود. نکته‌ی قابل توجه کمتر خود فناوری و بیشتر آیینی است که به آن پیوند خورده بود: ضبط کردن به‌عنوان انتخابی آگاهانه، و عقب بردن نوار به‌عنوان یک وظیفه‌ی اجتماعی کوچک در قبال کرایه‌گیرنده‌ی بعدی.", it: "Guardando indietro, il videoregistratore segna l'inizio di quello scollegamento tra contenuto e orario di trasmissione che oggi è dato per scontato. Ciò che colpisce non è tanto la tecnologia quanto il rituale ad essa legato: registrare come scelta consapevole, riavvolgere come piccolo dovere sociale verso il prossimo noleggiatore." },
+        C2: { en: "The video recorder is a prime example of the fact that media technology does not merely transport content but generates manners: the finiteness of the tape, the limited rental period, and the shared cassette created a culture of consideration that has vanished without replacement in the unlimited access of streaming.", ar: "يُعد جهاز الفيديو مثالاً نموذجيًا على أن تقنية الإعلام لا تنقل المحتوى فحسب، بل تولّد أعرافًا في التعامل: فمحدودية الشريط، وفترة الاستئجار المحدودة، والشريط المشترك، خلقت ثقافة من المراعاة اختفت دون بديل في ظل الوصول غير المحدود للبث المباشر.", tr: "Video kaydedici, medya teknolojisinin yalnızca içerik taşımadığını, aynı zamanda davranış biçimleri de ürettiğini gösteren tipik bir örnektir: bandın sonluluğu, sınırlı kiralama süresi ve paylaşılan kaset, yayın akışının sınırsız erişiminde yerine hiçbir şey konmadan kaybolan bir saygı kültürü yarattı.", ru: "Видеомагнитофон — яркий пример того, что медиатехника не только передаёт содержание, но и порождает формы поведения: конечность плёнки, ограниченный срок проката и общая кассета создали культуру предупредительности, которая бесследно исчезла в условиях неограниченного доступа стриминга.", es: "La videograbadora es un ejemplo paradigmático de que la tecnología de los medios no solo transporta contenidos, sino que genera formas de comportamiento: la finitud de la cinta, el plazo limitado de alquiler y el casete compartido crearon una cultura de la consideración que ha desaparecido sin sustituto en el acceso ilimitado del streaming.", fr: "Le magnétoscope illustre parfaitement le fait que la technologie médiatique ne se contente pas de transporter des contenus, mais engendre des usages : la finitude de la bande, la durée limitée de location et la cassette partagée ont créé une culture de l'égard qui a disparu sans être remplacée dans l'accès illimité du streaming.", pl: "Magnetowid jest wzorcowym przykładem tego, że technika medialna nie tylko przenosi treści, lecz wytwarza obyczaje: skończoność taśmy, ograniczony czas wypożyczenia i współdzielona kaseta stworzyły kulturę wzajemnego szacunku, która bezpowrotnie zniknęła wraz z nieograniczonym dostępem streamingu.", uk: "Відеомагнітофон є взірцевим прикладом того, що медіатехніка не лише переносить зміст, а й породжує форми поведінки: скінченність плівки, обмежений термін прокату та спільна касета створили культуру взаємної уваги, яка безслідно зникла в умовах необмеженого доступу стрімінгу.", fa: "دستگاه ویدیو نمونه‌ی بارزی از این حقیقت است که فناوری رسانه‌ای صرفاً محتوا را منتقل نمی‌کند، بلکه آداب رفتاری نیز پدید می‌آورد: محدودیت نوار، مدت زمان محدود کرایه و نوار مشترک، فرهنگی از ملاحظه‌ی متقابل خلق کردند که در دسترسی نامحدود استریمینگ بدون جایگزین از میان رفته است.", it: "Il videoregistratore è un esempio emblematico del fatto che la tecnologia mediatica non si limita a trasportare contenuti, ma genera comportamenti: la finitezza del nastro, il periodo di noleggio limitato e la cassetta condivisa crearono una cultura del riguardo che, nell'accesso illimitato dello streaming, è scomparsa senza essere sostituita." },
       },
     },
     {
@@ -10431,6 +11206,7 @@
         C2: "Am Telefonbuch lässt sich ablesen, dass Privatheit keine feste Größe ist, sondern von der jeweiligen technischen Zugriffsmöglichkeit abhängt: Dieselben Angaben, die gebunden im Flur harmlos wirkten, wurden in dem Moment brisant, in dem sie sich in Sekunden durchsuchen, verknüpfen und dauerhaft speichern ließen.",
       },
       translationsA1: {
+        it: "In passato c'era in ogni casa un elenco telefonico spesso. Vi erano riportati i numeri di quasi tutte le persone della città. Bisognava cercare il nome.",
         en: "Every house used to have a thick phone book. It listed the numbers of everyone in town. You had to look up the name.",
         ar: "في الماضي كان في كل بيت دليل هاتف سميك. كانت فيه أرقام كل الناس في المدينة. كان عليك البحث عن الاسم.",
         tr: "Eskiden her evde kalın bir telefon rehberi vardı. İçinde şehirdeki herkesin numarası yazılıydı. İsmi aramak gerekiyordu.",
@@ -10440,6 +11216,13 @@
         pl: "Kiedyś w każdym domu była gruba książka telefoniczna. Były w niej numery wszystkich ludzi w mieście. Trzeba było szukać nazwiska.",
         uk: "Раніше в кожному домі була товста телефонна книга. У ній були номери всіх людей у місті. Треба було шукати прізвище.",
         fa: "قدیم‌ها در هر خانه یک دفترچه تلفن کلفت بود. شماره همه مردم شهر در آن بود. باید نام را پیدا می‌کردی.",
+      },
+      translationsByLevel: {
+        A2: { en: "In the past, every household received a thick phone book once a year. It listed the name, address, and phone number of almost everyone in town. Today you simply search on the internet.", ar: "في الماضي، كانت كل أسرة تحصل مرة في السنة على دليل هاتف سميك. كان يحتوي على اسم وعنوان ورقم هاتف كل شخص تقريبًا في البلدة. أما اليوم فيبحث المرء ببساطة على الإنترنت.", tr: "Eskiden her hane yılda bir kez kalın bir telefon rehberi alırdı. İçinde şehirdeki neredeyse herkesin adı, adresi ve telefon numarası bulunurdu. Bugün ise sadece internetten aranıyor.", ru: "Раньше каждое домохозяйство раз в год получало толстую телефонную книгу. В ней были указаны имя, адрес и номер телефона почти всех жителей города. Сегодня же просто ищут в интернете.", es: "Antes cada hogar recibía una vez al año una gruesa guía telefónica. En ella figuraban el nombre, la dirección y el número de teléfono de casi todos los habitantes de la localidad. Hoy simplemente se busca en internet.", fr: "Autrefois, chaque foyer recevait une fois par an un épais annuaire téléphonique. On y trouvait le nom, l'adresse et le numéro de téléphone de presque tous les habitants de la ville. Aujourd'hui, on cherche simplement sur internet.", pl: "Dawniej każde gospodarstwo domowe otrzymywało raz w roku grubą książkę telefoniczną. Zawierała ona nazwisko, adres i numer telefonu niemal wszystkich mieszkańców miejscowości. Dziś po prostu szuka się w internecie.", uk: "Раніше кожне домогосподарство раз на рік отримувало товсту телефонну книгу. У ній були ім'я, адреса і номер телефону майже всіх людей у місті. Сьогодні ж просто шукають в інтернеті.", fa: "در گذشته، هر خانواده سالی یک بار یک دفترچه‌ی تلفن ضخیم دریافت می‌کرد. نام، آدرس و شماره‌ی تلفن تقریباً همه‌ی افراد شهر در آن ثبت بود. امروزه به‌سادگی در اینترنت جست‌وجو می‌کنند.", it: "In passato ogni famiglia riceveva una volta all'anno un grosso elenco telefonico. Vi erano riportati nome, indirizzo e numero di telefono di quasi tutte le persone della città. Oggi si cerca semplicemente su internet." },
+        B1: { en: "Until the 2000s, a phone book lay in almost every German hallway. Whoever needed a number leafed through it alphabetically - and along the way found the addresses of neighbors, doctors, and tradespeople as well.", ar: "حتى العقد الأول من الألفية، كان دليل الهاتف موجودًا في مدخل كل بيت ألماني تقريبًا. من احتاج إلى رقم، تصفّح الدليل أبجديًا - ووجد في الوقت نفسه عناوين الجيران والأطباء والحرفيين.", tr: "2000'li yıllara kadar neredeyse her Alman evinin girişinde bir telefon rehberi bulunurdu. Bir numaraya ihtiyacı olan alfabetik olarak sayfaları çevirir — ve bu arada komşuların, doktorların ve zanaatkârların adreslerini de bulurdu.", ru: "До 2000-х годов почти в каждой немецкой прихожей лежала телефонная книга. Тот, кому нужен был номер, листал её по алфавиту — и заодно находил адреса соседей, врачей и мастеровых.", es: "Hasta la década de 2000, casi todos los recibidores alemanes tenían una guía telefónica. Quien necesitaba un número la hojeaba por orden alfabético y de paso encontraba también las direcciones de vecinos, médicos y artesanos.", fr: "Jusque dans les années 2000, un annuaire téléphonique se trouvait dans presque toutes les entrées allemandes. Celui qui avait besoin d'un numéro le feuilletait par ordre alphabétique - et trouvait au passage les adresses des voisins, des médecins et des artisans.", pl: "Aż do lat 2000. w niemal każdym niemieckim przedpokoju leżała książka telefoniczna. Kto potrzebował numeru, przeglądał ją alfabetycznie — i przy okazji znajdował także adresy sąsiadów, lekarzy i rzemieślników.", uk: "До 2000-х років майже в кожному німецькому передпокої лежала телефонна книга. Хто потребував номер, гортав її за алфавітом — і заразом знаходив адреси сусідів, лікарів і майстрів.", fa: "تا دهه‌ی ۲۰۰۰، در تقریباً هر راهروی خانه‌ی آلمانی یک دفترچه‌ی تلفن وجود داشت. هر کس به شماره‌ای نیاز داشت، آن را به ترتیب الفبا ورق می‌زد - و در همان حال، آدرس همسایه‌ها، پزشکان و صنعتگران را نیز می‌یافت.", it: "Fino agli anni 2000, un elenco telefonico si trovava in quasi tutti gli ingressi tedeschi. Chi aveva bisogno di un numero lo sfogliava in ordine alfabetico - e trovava così anche gli indirizzi di vicini, medici e artigiani." },
+        B2: { en: "The annually distributed phone book was a public directory in which you were listed by default unless you explicitly objected. What would today be considered a data-protection problem was taken for granted for decades - and made the neighborhood, quite literally, look-up-able.", ar: "كان دليل الهاتف الموزَّع سنويًا سجلاً عامًا يظهر فيه المرء تلقائيًا ما لم يعترض صراحةً. ما يُعد اليوم مشكلة تتعلق بحماية البيانات كان أمرًا بديهيًا لعقود - وجعل الحي قابلاً للبحث بمعنى الكلمة الحرفي.", tr: "Yıllık olarak dağıtılan telefon rehberi, açıkça itiraz edilmediği sürece kişinin varsayılan olarak listelendiği kamusal bir dizindi. Bugün veri koruma sorunu sayılabilecek şey, onlarca yıl boyunca son derece doğaldı — ve komşuluğu tam anlamıyla aranabilir kıldı.", ru: "Ежегодно распространяемая телефонная книга была публичным справочником, в который человек попадал по умолчанию, если он прямо не возражал против этого. То, что сегодня считалось бы проблемой защиты данных, десятилетиями воспринималось как нечто само собой разумеющееся — и делало соседство буквально доступным для поиска.", es: "La guía telefónica distribuida anualmente era un directorio público en el que uno figuraba por defecto, salvo que se opusiera expresamente. Lo que hoy se consideraría un problema de protección de datos fue durante décadas algo normal, y convertía al vecindario, literalmente, en algo consultable.", fr: "L'annuaire distribué chaque année était un registre public dans lequel on figurait par défaut, sauf opposition expresse. Ce qui serait aujourd'hui considéré comme un problème de protection des données allait de soi pendant des décennies - et rendait le voisinage, au sens propre, consultable.", pl: "Corocznie rozprowadzana książka telefoniczna była publicznym spisem, w którym figurowało się domyślnie, o ile nie zgłoszono wyraźnego sprzeciwu. To, co dziś uznano by za problem ochrony danych, przez dziesięciolecia było czymś oczywistym - i czyniło sąsiedztwo dosłownie przeszukiwalnym.", uk: "Щорічно розповсюджувана телефонна книга була публічним реєстром, у якому людина фігурувала за замовчуванням, якщо прямо не заперечувала проти цього. Те, що сьогодні вважалося б проблемою захисту даних, десятиліттями сприймалося як щось само собою зрозуміле - і робило сусідство буквально доступним для пошуку.", fa: "دفترچه‌ی تلفنی که سالانه توزیع می‌شد، فهرستی عمومی بود که هر کس به‌طور پیش‌فرض در آن ثبت می‌شد، مگر آنکه صراحتاً مخالفت می‌کرد. آنچه امروز مشکلی مربوط به حریم خصوصی داده‌ها به شمار می‌رود، برای دهه‌ها امری بدیهی بود - و همسایگی را به معنای واقعی کلمه قابل جست‌وجو می‌کرد.", it: "L'elenco telefonico distribuito annualmente era un registro pubblico in cui si compariva di default, a meno di opposizione esplicita. Ciò che oggi sarebbe considerato un problema di protezione dei dati era per decenni normale amministrazione - e rendeva il vicinato, letteralmente, consultabile." },
+        C1: { en: "The phone book documents an astonishing shift in the handling of personal data: the widespread publication of name, address, and phone number was considered a service, not an intrusion. Only the possibility of automated analysis suddenly made the same information appear in need of protection.", ar: "يوثّق دليل الهاتف تحولاً مذهلاً في التعامل مع البيانات الشخصية: فقد كان نشر الاسم والعنوان ورقم الهاتف على نطاق واسع يُعتبر خدمة، لا تعديًا. ولم يجعل نفس المعلومات تبدو فجأة بحاجة إلى الحماية سوى إمكانية التحليل الآلي.", tr: "Telefon rehberi, kişisel verilerle ilişkide şaşırtıcı bir değişimi belgeler: ad, adres ve telefon numarasının geniş çapta yayınlanması bir hizmet olarak görülüyordu, bir müdahale olarak değil. Aynı bilginin aniden korunmaya muhtaç görünmesine ancak makineyle değerlendirme olanağı yol açtı.", ru: "Телефонная книга документирует поразительный сдвиг в обращении с персональными данными: повсеместное опубликование имени, адреса и номера телефона считалось услугой, а не вмешательством. Лишь возможность машинной обработки внезапно заставила ту же самую информацию казаться требующей защиты.", es: "La guía telefónica documenta un asombroso cambio en el manejo de los datos personales: la publicación generalizada de nombre, dirección y número de teléfono se consideraba un servicio, no una intromisión. Solo la posibilidad de un tratamiento automatizado hizo que esa misma información pareciera de repente necesitada de protección.", fr: "L'annuaire téléphonique témoigne d'une évolution étonnante dans le traitement des données personnelles : la publication généralisée du nom, de l'adresse et du numéro de téléphone était considérée comme un service, non comme une atteinte. Ce n'est que la possibilité d'un traitement automatisé qui a soudain fait apparaître cette même information comme digne de protection.", pl: "Książka telefoniczna dokumentuje zdumiewającą zmianę w podejściu do danych osobowych: powszechna publikacja imienia, nazwiska, adresu i numeru telefonu była uznawana za usługę, a nie za naruszenie. Dopiero możliwość maszynowej analizy sprawiła, że ta sama informacja nagle zaczęła wydawać się wymagająca ochrony.", uk: "Телефонна книга документує вражаючу зміну у ставленні до персональних даних: масове оприлюднення імені, адреси та номера телефону вважалося послугою, а не втручанням. Лише можливість машинної обробки раптово змусила ту саму інформацію здаватися такою, що потребує захисту.", fa: "دفترچه‌ی تلفن گواهی بر تحولی شگفت‌انگیز در نحوه‌ی برخورد با داده‌های شخصی است: انتشار گسترده‌ی نام، آدرس و شماره‌ی تلفن، خدمتی به شمار می‌رفت، نه دخالتی. تنها امکان تحلیل ماشینی بود که ناگهان همان اطلاعات را نیازمند حفاظت جلوه داد.", it: "L'elenco telefonico documenta uno straordinario cambiamento nel trattamento dei dati personali: la pubblicazione capillare di nome, indirizzo e numero di telefono era considerata un servizio, non un'intrusione. Solo la possibilità di un'analisi automatizzata ha fatto sì che quella stessa informazione apparisse improvvisamente bisognosa di tutela." },
+        C2: { en: "The phone book shows that privacy is not a fixed quantity but depends on the technical possibility of access at any given time: the very same details that seemed harmless bound in the hallway became explosive the moment they could be searched, linked, and permanently stored within seconds.", ar: "يُظهر دليل الهاتف أن الخصوصية ليست كمية ثابتة، بل تتوقف على إمكانية الوصول التقني المتاحة في كل حقبة: فالمعلومات نفسها التي بدت غير ضارة وهي مجلَّدة في الممر، أصبحت متفجرة في اللحظة التي أمكن فيها البحث فيها وربطها وتخزينها بشكل دائم في ثوانٍ.", tr: "Telefon rehberinden anlaşılan şu: mahremiyet sabit bir büyüklük değildir, ilgili teknik erişim olanağına bağlıdır: koridorda ciltli haldeyken zararsız görünen aynı bilgiler, saniyeler içinde aranabilir, ilişkilendirilebilir ve kalıcı olarak depolanabilir hale geldiği anda patlayıcı bir nitelik kazandı.", ru: "Телефонная книга показывает, что приватность — не постоянная величина, а зависит от имеющейся на данный момент технической возможности доступа: те же самые сведения, которые казались безобидными, будучи переплетёнными в прихожей, стали взрывоопасными в тот момент, когда их можно было за секунды находить, связывать и постоянно хранить.", es: "La guía telefónica muestra que la privacidad no es una magnitud fija, sino que depende de la posibilidad técnica de acceso de cada época: los mismos datos que parecían inofensivos encuadernados en el recibidor se volvieron explosivos en el instante en que podían buscarse, relacionarse y almacenarse de forma permanente en cuestión de segundos.", fr: "L'annuaire téléphonique montre que la vie privée n'est pas une grandeur fixe, mais dépend de la possibilité technique d'accès du moment : les mêmes informations, inoffensives une fois reliées dans l'entrée, sont devenues explosives dès l'instant où elles pouvaient être recherchées, croisées et stockées durablement en quelques secondes.", pl: "Książka telefoniczna pokazuje, że prywatność nie jest wielkością stałą, lecz zależy od aktualnie dostępnej technicznej możliwości dostępu: te same dane, które w oprawionym tomie w przedpokoju wydawały się nieszkodliwe, stały się wybuchowe w chwili, gdy można je było w sekundy przeszukiwać, łączyć i trwale zapisywać.", uk: "Телефонна книга показує, що приватність не є сталою величиною, а залежить від наявної на певний момент технічної можливості доступу: ті самі дані, які здавалися безневинними у переплетеному вигляді в передпокої, стали вибухонебезпечними тієї миті, коли їх можна було за секунди шукати, пов'язувати й постійно зберігати.", fa: "دفترچه‌ی تلفن نشان می‌دهد که حریم خصوصی مقداری ثابت نیست، بلکه به امکان دسترسی فنی موجود در هر دوره بستگی دارد: همان اطلاعاتی که در جلد صحافی‌شده در راهرو بی‌ضرر به نظر می‌رسید، در لحظه‌ای که قابل جست‌وجو، پیوند و ذخیره‌ی دائمی در چند ثانیه شد، حساس و بحرانی گشت.", it: "L'elenco telefonico mostra che la privacy non è una grandezza fissa, ma dipende dalla possibilità tecnica di accesso del momento: gli stessi dati che, rilegati nell'ingresso, apparivano innocui, sono diventati esplosivi nell'istante in cui è stato possibile cercarli, collegarli e conservarli permanentemente in pochi secondi." },
       },
     },
     {
@@ -10454,6 +11237,7 @@
         C2: "Im Rückblick erscheint der Overheadprojektor als letzte Stufe einer Unterrichtskultur, in der das Sichtbare noch vor den Augen der Lernenden entstand. Der Wechsel zur vorproduzierten Folie verlagerte die didaktische Entscheidung aus dem Klassenzimmer in die Vorbereitung — mit Gewinnen an Klarheit und Verlusten an Beweglichkeit.",
       },
       translationsA1: {
+        it: "In passato non c'erano schermi a scuola. L'insegnante scriveva su un foglio trasparente. Una lampada proiettava tutto ingrandito sulla parete.",
         en: "There used to be no screens at school. The teacher wrote on a transparent sheet. A lamp showed everything large on the wall.",
         ar: "في الماضي لم تكن هناك شاشات في المدرسة. كان المعلم يكتب على ورقة شفافة. ومصباح يعرض كل شيء كبيرًا على الحائط.",
         tr: "Eskiden okulda ekran yoktu. Öğretmen saydam bir folyoya yazardı. Bir lamba her şeyi duvarda büyük gösterirdi.",
@@ -10463,6 +11247,13 @@
         pl: "Kiedyś w szkole nie było ekranów. Nauczyciel pisał na przezroczystej folii. Lampa pokazywała wszystko duże na ścianie.",
         uk: "Раніше в школі не було екранів. Учитель писав на прозорій плівці. Лампа показувала все великим на стіні.",
         fa: "قدیم‌ها در مدرسه صفحه‌نمایش نبود. معلم روی یک ورق شفاف می‌نوشت. یک چراغ همه‌چیز را بزرگ روی دیوار نشان می‌داد.",
+      },
+      translationsByLevel: {
+        A2: { en: "In the past, almost every classroom had an overhead projector. The teacher placed a transparent sheet on it and wrote with a special pen. That way everyone could read along without the teacher having to turn to the blackboard.", ar: "في الماضي، كان في كل فصل دراسي تقريبًا جهاز عرض علوي. كان المعلم يضع شريحة شفافة عليه ويكتب بقلم خاص. بهذه الطريقة استطاع الجميع القراءة معه دون أن يضطر المعلم إلى الاستدارة نحو السبورة.", tr: "Eskiden neredeyse her sınıfta bir tepegöz bulunurdu. Öğretmen üzerine şeffaf bir asetat koyar ve özel bir kalemle yazardı. Böylece öğretmen tahtaya dönmek zorunda kalmadan herkes takip edebiliyordu.", ru: "Раньше почти в каждом классе стоял графопроектор. Учитель клал на него прозрачную плёнку и писал специальным маркером. Так все могли читать вместе с ним, и учителю не нужно было поворачиваться к доске.", es: "Antes casi todas las aulas tenían un retroproyector. El profesor colocaba en él una lámina transparente y escribía con un rotulador especial. Así todos podían leer al mismo tiempo, sin que el profesor tuviera que darse la vuelta hacia la pizarra.", fr: "Autrefois, presque toutes les salles de classe avaient un rétroprojecteur. Le professeur y posait un transparent et écrivait avec un feutre spécial. Ainsi tout le monde pouvait suivre sans que le professeur ait à se retourner vers le tableau.", pl: "Dawniej niemal w każdej klasie stał rzutnik pisma. Nauczyciel kładł na nim przezroczystą folię i pisał specjalnym flamastrem. Dzięki temu wszyscy mogli czytać na bieżąco, a nauczyciel nie musiał odwracać się do tablicy.", uk: "Раніше майже в кожному класі стояв графопроектор. Учитель клав на нього прозору плівку і писав спеціальним маркером. Так усі могли читати разом з ним, і вчителю не треба було повертатися до дошки.", fa: "در گذشته، تقریباً در هر کلاس درسی یک اورهد پروژکتور وجود داشت. معلم یک ورق شفاف روی آن می‌گذاشت و با ماژیک مخصوصی می‌نوشت. به این ترتیب همه می‌توانستند همراه بخوانند، بدون آنکه معلم مجبور باشد به تخته پشت کند.", it: "In passato, quasi ogni classe aveva un lavagna luminosa. L'insegnante vi appoggiava un foglio trasparente e scriveva con un pennarello speciale. Così tutti potevano leggere senza che l'insegnante dovesse voltarsi verso la lavagna." },
+        B1: { en: "The overhead projector was part of German classrooms for decades. Written on transparent sheets, the text appeared large on the wall - and the humming fan belonged to the lesson for many, just as much as the smell of the transparency pens.", ar: "كان جهاز العرض العلوي جزءًا من الفصول الدراسية الألمانية على مدى عقود. كُتبت النصوص على شرائح شفافة وظهرت بحجم كبير على الحائط - وكان طنين المروحة بالنسبة للكثيرين جزءًا من الدرس مثله مثل رائحة أقلام الشرائح.", tr: "Tepegöz onlarca yıl boyunca Alman sınıflarının bir parçasıydı. Şeffaf asetatlara yazılan yazı duvarda büyük görünürdü — ve vızıldayan fan, birçok kişi için asetat kalemlerinin kokusu kadar derse aitti.", ru: "Графопроектор десятилетиями был частью немецких классов. Написанный на прозрачных плёнках текст крупно появлялся на стене — и жужжащий вентилятор был для многих такой же частью урока, как запах маркеров для плёнки.", es: "El retroproyector formó parte de las aulas alemanas durante décadas. Escrito en láminas transparentes, el texto aparecía en grande en la pared, y el zumbido del ventilador formaba parte de la clase para muchos, tanto como el olor de los rotuladores para transparencias.", fr: "Le rétroprojecteur a fait partie des salles de classe allemandes pendant des décennies. Écrit sur des transparents, le texte apparaissait en grand sur le mur - et le ventilateur bourdonnant faisait tout autant partie du cours pour beaucoup que l'odeur des feutres pour transparents.", pl: "Rzutnik pisma przez dziesięciolecia był częścią niemieckich klas. Pismo naniesione na przezroczyste folie pojawiało się w powiększeniu na ścianie — a buczący wentylator należał dla wielu do lekcji tak samo jak zapach flamastrów do folii.", uk: "Графопроектор десятиліттями був частиною німецьких класів. Написаний на прозорих плівках текст з'являвся великим на стіні — а гудіння вентилятора для багатьох було такою ж частиною уроку, як і запах маркерів для плівки.", fa: "اورهد پروژکتور برای دهه‌ها بخشی از کلاس‌های درسی آلمان بود. متن نوشته‌شده روی ورق‌های شفاف به‌صورت بزرگ روی دیوار ظاهر می‌شد - و صدای وزوز فن آن برای بسیاری به همان اندازه بخشی از درس بود که بوی ماژیک‌های مخصوص ورق‌ها.", it: "La lavagna luminosa ha fatto parte delle aule tedesche per decenni. Scritto su fogli trasparenti, il testo appariva ingrandito sulla parete - e il ronzio della ventola apparteneva alla lezione, per molti, quanto l'odore dei pennarelli per lucidi." },
+        B2: { en: "With the overhead projector, teachers could for the first time write facing the class without turning their backs on it - a small but effective change to the teaching situation. Prepared sets of transparencies were also the first reusable teaching materials in today's sense.", ar: "بفضل جهاز العرض العلوي، استطاع المعلمون للمرة الأولى الكتابة وهم يواجهون الصف دون أن يديروا ظهورهم له - وهو تغيير صغير لكنه فعّال في موقف التدريس. كانت مجموعات الشرائح المُعدّة مسبقًا أيضًا أول مواد تعليمية قابلة لإعادة الاستخدام بالمعنى الحالي.", tr: "Tepegöz sayesinde öğretmenler ilk kez sınıfa sırtlarını dönmeden yazabildiler — bu, öğretim durumunda küçük ama etkili bir değişimdi. Önceden hazırlanmış asetat setleri de bugünkü anlamda ilk yeniden kullanılabilir ders materyalleriydi.", ru: "Благодаря графопроектору учителя впервые смогли писать, стоя лицом к классу, не поворачиваясь к нему спиной, — небольшое, но действенное изменение учебной ситуации. Подготовленные наборы плёнок стали также первыми многоразовыми учебными материалами в современном смысле.", es: "Con el retroproyector, los profesores pudieron por primera vez escribir de frente a la clase sin darle la espalda, un cambio pequeño pero eficaz en la situación docente. Los juegos de transparencias preparados de antemano fueron además los primeros materiales didácticos reutilizables en el sentido actual.", fr: "Avec le rétroprojecteur, les enseignants ont pu pour la première fois écrire face à la classe sans lui tourner le dos - un changement modeste mais efficace de la situation d'enseignement. Les jeux de transparents préparés à l'avance furent aussi les premiers supports pédagogiques réutilisables au sens actuel.", pl: "Dzięki rzutnikowi pisma nauczyciele po raz pierwszy mogli pisać przodem do klasy, nie odwracając się do niej plecami - niewielka, lecz skuteczna zmiana sytuacji dydaktycznej. Przygotowane wcześniej zestawy folii były też pierwszymi materiałami dydaktycznymi wielokrotnego użytku w dzisiejszym rozumieniu.", uk: "Завдяки графопроектору вчителі вперше змогли писати, стоячи обличчям до класу, не повертаючись до нього спиною, — невелика, але дієва зміна навчальної ситуації. Заздалегідь підготовлені набори плівок стали також першими багаторазовими навчальними матеріалами в сучасному розумінні.", fa: "با اورهد پروژکتور، معلمان برای نخستین بار توانستند رو به کلاس بنویسند بدون آنکه پشت به دانش‌آموزان کنند - تغییری کوچک اما مؤثر در موقعیت آموزشی. مجموعه‌های از پیش آماده‌شده‌ی ورق‌ها نیز نخستین مواد آموزشی قابل استفاده‌ی مجدد به معنای امروزی بودند.", it: "Con la lavagna luminosa, gli insegnanti poterono per la prima volta scrivere rivolti verso la classe senza voltarle le spalle - un cambiamento piccolo ma efficace della situazione didattica. I set di lucidi preparati in anticipo furono inoltre i primi materiali didattici riutilizzabili nel senso odierno." },
+        C1: { en: "The replacement of the overhead projector by digital presentations changed not only the medium but the dramaturgy of teaching: the handwritten transparency emerged in the moment and could be interrupted, while the finished presentation brings with it a sequence fixed in advance.", ar: "لم يغيّر استبدال جهاز العرض العلوي بالعروض الرقمية الوسيلة فحسب، بل غيّر أيضًا دراماتورجيا التدريس: فالشريحة المكتوبة يدويًا كانت تنشأ في اللحظة نفسها وكان يمكن مقاطعتها، بينما يأتي العرض الجاهز بترتيب محدد سلفًا.", tr: "Tepegözün dijital sunumlarla değiştirilmesi yalnızca aracı değil, öğretimin dramaturjisini de değiştirdi: el yazısıyla yazılan asetat anlık olarak ortaya çıkıyor ve kesintiye uğratılabiliyordu, hazır sunum ise önceden belirlenmiş bir akışı beraberinde getiriyor.", ru: "Замена графопроектора цифровыми презентациями изменила не только средство, но и драматургию урока: рукописная плёнка возникала в момент действия и её можно было прервать, тогда как готовая презентация несёт с собой заранее заданную последовательность.", es: "La sustitución del retroproyector por presentaciones digitales cambió no solo el medio, sino la dramaturgia de la clase: la transparencia escrita a mano surgía en el momento y podía interrumpirse, mientras que la presentación acabada trae consigo un desarrollo fijado de antemano.", fr: "Le remplacement du rétroprojecteur par les présentations numériques a changé non seulement le support, mais aussi la dramaturgie de l'enseignement : le transparent manuscrit naissait sur le moment et pouvait être interrompu, tandis que la présentation achevée apporte avec elle un déroulement fixé à l'avance.", pl: "Zastąpienie rzutnika pisma cyfrowymi prezentacjami zmieniło nie tylko medium, ale i dramaturgię lekcji: odręcznie pisana folia powstawała na bieżąco i można ją było przerwać, podczas gdy gotowa prezentacja niesie ze sobą z góry ustalony przebieg.", uk: "Заміна графопроектора цифровими презентаціями змінила не лише засіб, а й драматургію навчання: рукописна плівка виникала в момент дії і її можна було перервати, тоді як готова презентація несе із собою заздалегідь визначену послідовність.", fa: "جایگزینی اورهد پروژکتور با ارائه‌های دیجیتال نه‌تنها رسانه، بلکه دراماتورژی تدریس را نیز تغییر داد: ورق دست‌نویس در همان لحظه شکل می‌گرفت و می‌شد آن را قطع کرد، در حالی که ارائه‌ی آماده، توالی‌ای از پیش‌تعیین‌شده را به همراه دارد.", it: "La sostituzione della lavagna luminosa con le presentazioni digitali ha cambiato non solo il mezzo, ma la drammaturgia della lezione: il lucido scritto a mano nasceva nel momento stesso e poteva essere interrotto, mentre la presentazione finita porta con sé una sequenza fissata in anticipo." },
+        C2: { en: "In retrospect, the overhead projector appears as the last stage of a teaching culture in which what was visible still emerged before the learners' eyes. The shift to the pre-produced slide moved the didactic decision out of the classroom and into preparation - with gains in clarity and losses in flexibility.", ar: "بالنظر إلى الوراء، يبدو جهاز العرض العلوي المرحلة الأخيرة من ثقافة تعليمية كان فيها ما هو مرئي لا يزال ينشأ أمام أعين المتعلمين. نقل التحول إلى الشريحة المُنتجة سلفًا القرار الديداكتيكي من الفصل الدراسي إلى مرحلة التحضير - مع مكاسب في الوضوح وخسائر في المرونة.", tr: "Geriye dönüp bakıldığında tepegöz, görünür olanın hâlâ öğrencilerin gözü önünde ortaya çıktığı bir öğretim kültürünün son aşaması olarak görünür. Önceden üretilmiş asetata geçiş, didaktik kararı sınıftan hazırlık aşamasına taşıdı — netlikte kazanımlar ve esneklikte kayıplarla birlikte.", ru: "Оглядываясь назад, графопроектор предстаёт последней стадией той учебной культуры, в которой видимое ещё возникало на глазах учащихся. Переход к заранее подготовленному слайду перенёс дидактическое решение из класса в подготовку — с выигрышем в ясности и потерями в гибкости.", es: "En retrospectiva, el retroproyector aparece como la última fase de una cultura docente en la que lo visible todavía se generaba ante los ojos de los alumnos. El paso a la diapositiva preproducida trasladó la decisión didáctica del aula a la preparación previa, con ganancias en claridad y pérdidas en flexibilidad.", fr: "Rétrospectivement, le rétroprojecteur apparaît comme le dernier stade d'une culture d'enseignement où le visible naissait encore sous les yeux des élèves. Le passage à la diapositive préproduite a déplacé la décision didactique de la salle de classe vers la préparation - avec des gains en clarté et des pertes en souplesse.", pl: "Z perspektywy czasu rzutnik pisma jawi się jako ostatni etap kultury nauczania, w której to, co widoczne, powstawało jeszcze na oczach uczniów. Przejście do wcześniej przygotowanego slajdu przeniosło decyzję dydaktyczną z klasy do fazy przygotowań - z zyskiem w postaci klarowności i stratą w postaci elastyczności.", uk: "Озираючись назад, графопроектор постає останнім етапом навчальної культури, в якій видиме ще виникало на очах учнів. Перехід до заздалегідь виготовленого слайда переніс дидактичне рішення з класу до підготовки - з виграшем у ясності та втратами у гнучкості.", fa: "با نگاهی به گذشته، اورهد پروژکتور به‌عنوان آخرین مرحله‌ی فرهنگ آموزشی‌ای پدیدار می‌شود که در آن، آنچه دیده می‌شد هنوز پیش چشم دانش‌آموزان شکل می‌گرفت. گذار به اسلاید از پیش‌تولیدشده، تصمیم آموزشی را از کلاس درس به مرحله‌ی آماده‌سازی منتقل کرد - با دستاوردهایی در وضوح و از دست‌رفتن‌هایی در انعطاف‌پذیری.", it: "Guardando indietro, la lavagna luminosa appare come l'ultima fase di una cultura didattica in cui ciò che era visibile nasceva ancora sotto gli occhi degli studenti. Il passaggio alla diapositiva preconfezionata ha spostato la decisione didattica dall'aula alla fase di preparazione - con guadagni in chiarezza e perdite in flessibilità." },
       },
     },
     {
@@ -10477,6 +11268,7 @@
         C2: "Das Faxgerät steht exemplarisch für jene technischen Übergangsphänomene, die eine Ära prägten und binnen kürzester Zeit durch überlegene digitale Alternativen obsolet wurden — ein Umstand, den insbesondere die fortdauernde behördliche Anhänglichkeit an das Fax in Deutschland auf bemerkenswerte Weise konterkariert.",
       },
       translationsA1: {
+        it: "In passato molti uffici avevano un fax. Con esso si inviavano documenti in altri luoghi. Oggi la maggior parte delle persone usa la posta elettronica.",
         en: "In the past, many offices had a fax machine. It was used to send papers to other places. Today most people use email.",
         ar: "في السابق، كان لدى الكثير من المكاتب جهاز فاكس. كان يُستخدم لإرسال الأوراق إلى أماكن أخرى. اليوم يستخدم معظم الناس البريد الإلكتروني.",
         tr: "Eskiden birçok ofiste faks makinesi vardı. Bununla kağıtlar başka yerlere gönderilirdi. Bugün çoğu insan e-posta kullanıyor.",
@@ -10486,6 +11278,13 @@
         pl: "Dawniej wiele biur miało faks. Używano go do wysyłania papierów w inne miejsca. Dziś większość ludzi korzysta z e-maila.",
         uk: "Раніше в багатьох офісах був факс. Його використовували, щоб надсилати папери в інші місця. Сьогодні більшість людей користуються електронною поштою.",
         fa: "قبلاً بسیاری از دفاتر دستگاه فکس داشتند. با آن کاغذها به جاهای دیگر فرستاده می‌شد. امروزه بیشتر مردم از ایمیل استفاده می‌کنند.",
+      },
+      translationsByLevel: {
+        A2: { en: "In the past, the fax machine could be found in almost every office. With it, documents could be sent over the phone line to other places. Today the fax machine is barely used anymore because email is much faster.", ar: "في الماضي، كان جهاز الفاكس موجودًا في كل مكتب تقريبًا. كان يمكن به إرسال المستندات عبر خط الهاتف إلى أماكن أخرى. أما اليوم فقلَّ استخدام الفاكس كثيرًا لأن البريد الإلكتروني أسرع بكثير.", tr: "Eskiden faks makinesi neredeyse her ofiste bulunurdu. Bununla belgeler telefon hattı üzerinden başka yerlere gönderilebilirdi. Bugün e-posta çok daha hızlı olduğu için faks makinesi neredeyse hiç kullanılmıyor.", ru: "Раньше факс можно было найти почти в каждом офисе. С его помощью документы отправлялись по телефонной линии в другие места. Сегодня факс почти не используется, потому что электронная почта намного быстрее.", es: "Antes la máquina de fax se encontraba en casi todas las oficinas. Con ella se podían enviar documentos por la línea telefónica a otros lugares. Hoy apenas se usa el fax porque el correo electrónico es mucho más rápido.", fr: "Autrefois, le télécopieur se trouvait dans presque tous les bureaux. Il permettait d'envoyer des documents par la ligne téléphonique vers d'autres lieux. Aujourd'hui, le fax est à peine utilisé car le courrier électronique est bien plus rapide.", pl: "Dawniej faks znajdował się niemal w każdym biurze. Za jego pomocą można było wysyłać dokumenty przez linię telefoniczną w inne miejsca. Dziś faks jest ledwie używany, bo e-mail jest o wiele szybszy.", uk: "Раніше факс можна було знайти майже в кожному офісі. За його допомогою документи надсилали телефонною лінією в інші місця. Сьогодні факс майже не використовують, бо електронна пошта набагато швидша.", fa: "در گذشته، دستگاه فکس تقریباً در هر دفتری یافت می‌شد. با آن می‌شد اسناد را از طریق خط تلفن به مکان‌های دیگر فرستاد. امروزه فکس به‌ندرت استفاده می‌شود، زیرا ایمیل بسیار سریع‌تر است.", it: "In passato il fax si trovava in quasi tutti gli uffici. Con esso si potevano inviare documenti tramite la linea telefonica ad altri luoghi. Oggi il fax viene usato a malapena perché l'email è molto più veloce." },
+        B1: { en: "The fax machine was a fixed part of German office life for decades. Documents were transmitted instantly to other places over the phone line. With the spread of email and digital documents, the fax has now largely disappeared from everyday life.", ar: "كان جهاز الفاكس جزءًا ثابتًا من حياة المكاتب الألمانية لعقود. كانت المستندات تُنقل فورًا إلى أماكن أخرى عبر خط الهاتف. ومع انتشار البريد الإلكتروني والمستندات الرقمية، اختفى الفاكس اليوم إلى حد كبير من الحياة اليومية.", tr: "Faks makinesi onlarca yıl boyunca Alman ofis hayatının sabit bir parçasıydı. Belgeler telefon hattı üzerinden anında başka yerlere iletilirdi. E-posta ve dijital belgelerin yaygınlaşmasıyla faks bugün günlük hayattan büyük ölçüde kaybolmuştur.", ru: "Факс десятилетиями был неотъемлемой частью офисной жизни в Германии. Документы мгновенно передавались по телефонной линии в другие места. С распространением электронной почты и цифровых документов факс сегодня в значительной степени исчез из повседневной жизни.", es: "El fax fue parte fija de la vida de oficina alemana durante décadas. Los documentos se transmitían al instante a otros lugares por la línea telefónica. Con la difusión del correo electrónico y los documentos digitales, el fax ha desaparecido hoy en gran medida de la vida cotidiana.", fr: "Le télécopieur a fait partie intégrante de la vie de bureau allemande pendant des décennies. Les documents étaient transmis instantanément vers d'autres lieux par la ligne téléphonique. Avec la diffusion du courrier électronique et des documents numériques, le fax a aujourd'hui largement disparu du quotidien.", pl: "Faks przez dziesięciolecia był stałym elementem niemieckiego życia biurowego. Dokumenty przesyłano natychmiast w inne miejsca przez linię telefoniczną. Wraz z rozpowszechnieniem e-maila i dokumentów cyfrowych faks w dużej mierze zniknął dziś z codzienności.", uk: "Факс десятиліттями був постійною частиною німецького офісного життя. Документи миттєво передавали телефонною лінією в інші місця. Із поширенням електронної пошти та цифрових документів факс сьогодні значною мірою зник із повсякденного життя.", fa: "دستگاه فکس برای دهه‌ها بخش ثابتی از زندگی اداری آلمان بود. اسناد به‌طور آنی از طریق خط تلفن به مکان‌های دیگر منتقل می‌شدند. با گسترش ایمیل و اسناد دیجیتال، فکس امروزه تا حد زیادی از زندگی روزمره ناپدید شده است.", it: "Il fax è stato per decenni parte integrante della vita d'ufficio tedesca. I documenti venivano trasmessi istantaneamente ad altri luoghi tramite la linea telefonica. Con la diffusione dell'email e dei documenti digitali, il fax è oggi in gran parte scomparso dalla quotidianità." },
+        B2: { en: "For decades, the fax machine was considered an indispensable means of communication in German offices and public authorities. It enabled the instant transmission of documents over the phone line. Only with increasing digitalization was it almost completely replaced by email and electronic documents.", ar: "على مدى عقود، كان جهاز الفاكس يُعتبر وسيلة اتصال لا غنى عنها في المكاتب والدوائر الحكومية الألمانية. أتاح النقل الفوري للمستندات عبر خط الهاتف. ولم يُستبدل بشكل شبه كامل بالبريد الإلكتروني والمستندات الإلكترونية إلا مع تزايد الرقمنة.", tr: "Faks makinesi onlarca yıl boyunca Alman ofislerinde ve dairelerinde vazgeçilmez bir iletişim aracı sayılırdı. Belgelerin telefon hattı üzerinden anında iletilmesini sağlıyordu. Ancak dijitalleşmenin artmasıyla neredeyse tamamen e-posta ve elektronik belgelerin yerini almasına yol açtı.", ru: "На протяжении десятилетий факс считался незаменимым средством связи в немецких офисах и учреждениях. Он обеспечивал мгновенную передачу документов по телефонной линии. Лишь с ростом цифровизации он был почти полностью вытеснен электронной почтой и электронными документами.", es: "Durante décadas, el fax se consideró un medio de comunicación imprescindible en las oficinas y administraciones públicas alemanas. Permitía la transmisión instantánea de documentos por la línea telefónica. Solo con la creciente digitalización fue sustituido casi por completo por el correo electrónico y los documentos electrónicos.", fr: "Pendant des décennies, le télécopieur a été considéré comme un moyen de communication indispensable dans les bureaux et les administrations allemandes. Il permettait la transmission instantanée de documents par la ligne téléphonique. Ce n'est qu'avec la numérisation croissante qu'il a été presque entièrement remplacé par le courrier électronique et les documents électroniques.", pl: "Przez dziesięciolecia faks uchodził za niezbędny środek komunikacji w niemieckich biurach i urzędach. Umożliwiał natychmiastowe przesyłanie dokumentów przez linię telefoniczną. Dopiero wraz z postępującą cyfryzacją został niemal całkowicie zastąpiony przez e-mail i dokumenty elektroniczne.", uk: "Упродовж десятиліть факс вважався незамінним засобом зв'язку в німецьких офісах та установах. Він забезпечував миттєву передачу документів телефонною лінією. Лише з поширенням цифровізації його майже повністю замінили електронна пошта та електронні документи.", fa: "برای دهه‌ها، دستگاه فکس وسیله‌ای ارتباطی ضروری در دفاتر و ادارات آلمان به شمار می‌رفت. این دستگاه امکان انتقال آنی اسناد از طریق خط تلفن را فراهم می‌کرد. تنها با گسترش دیجیتالی‌شدن بود که تقریباً به‌طور کامل جای خود را به ایمیل و اسناد الکترونیکی داد.", it: "Per decenni, il fax è stato considerato un mezzo di comunicazione indispensabile negli uffici e negli enti pubblici tedeschi. Consentiva la trasmissione istantanea di documenti tramite la linea telefonica. Solo con la crescente digitalizzazione è stato quasi completamente sostituito da email e documenti elettronici." },
+        C1: { en: "Scarcely any device embodies the transformation of German office communication as clearly as the fax machine: once valued as an efficient, instant means of transmission, it was almost completely displaced within a few years by the triumph of digital communication - though in some places the fax requirement in public authorities stubbornly persists to this day.", ar: "لا يجسد أي جهاز آخر تحول الاتصال المكتبي الألماني بهذا الوضوح مثل جهاز الفاكس: فبعدما كان يُقدَّر كوسيلة نقل فعالة وفورية، أُزيح تقريبًا بالكامل خلال سنوات قليلة مع انتصار الاتصال الرقمي - وإن كان إلزام الفاكس ما زال قائمًا بعناد في بعض الدوائر الحكومية حتى اليوم.", tr: "Hiçbir cihaz, Alman ofis iletişimindeki dönüşümü faks makinesi kadar açık şekilde somutlaştırmaz: bir zamanlar verimli, anlık bir iletim aracı olarak değer görürken, dijital iletişimin zaferiyle birkaç yıl içinde neredeyse tamamen ortadan kalktı — bazı yerlerde ise dairelerdeki faks zorunluluğu bugün hâlâ inatla sürmektedir.", ru: "Едва ли какой-либо другой прибор так наглядно воплощает трансформацию немецкой офисной коммуникации, как факс: некогда ценимый как эффективное, мгновенное средство передачи, он был почти полностью вытеснен в течение нескольких лет с триумфальным шествием цифровой связи — хотя кое-где «факсовая обязательность» в учреждениях упорно сохраняется до сих пор.", es: "Pocos aparatos encarnan tan claramente la transformación de la comunicación de oficina alemana como el fax: apreciado en su día como un medio de transmisión eficiente e instantáneo, fue desplazado casi por completo en pocos años por el auge de la comunicación digital, aunque en algunos lugares la exigencia administrativa del fax persiste tercamente hasta hoy.", fr: "Peu d'appareils incarnent aussi clairement la transformation de la communication de bureau allemande que le télécopieur : autrefois apprécié comme moyen de transmission efficace et instantané, il a été presque entièrement supplanté en quelques années par le triomphe de la communication numérique - même si, par endroits, l'obligation administrative du fax persiste obstinément aujourd'hui encore.", pl: "Chyba żadne urządzenie nie uosabia przemiany niemieckiej komunikacji biurowej tak wyraźnie jak faks: niegdyś ceniony jako wydajny, natychmiastowy środek przekazu, w ciągu kilku lat został niemal całkowicie wyparty przez triumf komunikacji cyfrowej — choć gdzieniegdzie tak zwany przymus faksowy w urzędach uparcie utrzymuje się do dziś.", uk: "Мабуть, жоден пристрій не втілює трансформацію німецької офісної комунікації так наочно, як факс: колись цінований як ефективний, миттєвий засіб передачі, він за кілька років був майже повністю витіснений тріумфом цифрового зв'язку — хоча подекуди «факсовий обов'язок» в установах вперто зберігається й донині.", fa: "شاید هیچ دستگاهی به‌اندازه‌ی فکس، تحول ارتباطات اداری آلمان را این‌چنین آشکار به نمایش نگذارد: زمانی به‌عنوان وسیله‌ای کارآمد و آنی برای انتقال ارج نهاده می‌شد، اما با پیروزی ارتباطات دیجیتال، در عرض چند سال تقریباً به‌طور کامل کنار گذاشته شد - هرچند در برخی جاها، الزام اداری به استفاده از فکس هنوز هم به‌طور سرسختانه ادامه دارد.", it: "Difficilmente un altro apparecchio incarna con altrettanta chiarezza la trasformazione della comunicazione d'ufficio tedesca quanto il fax: un tempo apprezzato come mezzo di trasmissione efficiente e istantaneo, è stato quasi completamente soppiantato nel giro di pochi anni dal trionfo della comunicazione digitale - sebbene in alcuni luoghi il cosiddetto obbligo del fax negli uffici pubblici persista ostinatamente ancora oggi." },
+        C2: { en: "The fax machine stands as an exemplary case of those technical transitional phenomena that defined an era and were rendered obsolete within the shortest time by superior digital alternatives - a circumstance that is remarkably contradicted, in particular, by the continued official attachment to the fax in Germany.", ar: "يُعد جهاز الفاكس مثالاً نموذجيًا على تلك الظواهر التقنية الانتقالية التي طبعت عصرًا وأصبحت بائدة خلال أقصر مدة بفعل بدائل رقمية متفوقة - وهو أمر يناقضه بشكل لافت، على وجه الخصوص، تعلّق الدوائر الحكومية المستمر بالفاكس في ألمانيا.", tr: "Faks makinesi, bir çağı biçimlendiren ve üstün dijital alternatiflerle en kısa sürede geçersiz kılınan teknik geçiş fenomenlerinin örnek bir vakasıdır — bu durumu özellikle çarpıcı biçimde çelişen, Almanya'da dairelerin fakse duyduğu süregelen bağlılıktır.", ru: "Факс представляет собой образцовый пример тех технических переходных явлений, которые определяли эпоху и за кратчайшее время были вытеснены превосходящими цифровыми альтернативами, — обстоятельство, которому особенно примечательным образом противоречит сохраняющаяся приверженность немецких учреждений факсу.", es: "El fax constituye un caso ejemplar de esos fenómenos técnicos de transición que marcaron una época y quedaron obsoletos en muy poco tiempo ante alternativas digitales superiores, una circunstancia que contradice de manera notable, en particular, el persistente apego administrativo al fax en Alemania.", fr: "Le télécopieur constitue un cas exemplaire de ces phénomènes techniques de transition qui ont marqué une époque et sont devenus obsolètes en un temps record face à des alternatives numériques supérieures - une réalité que contredit de manière remarquable, en particulier, l'attachement administratif persistant au fax en Allemagne.", pl: "Faks stanowi wzorcowy przykład owych technicznych zjawisk przejściowych, które ukształtowały pewną epokę i w bardzo krótkim czasie zostały zdezaktualizowane przez lepsze cyfrowe alternatywy - okoliczność, której w sposób szczególnie znamienny przeczy utrzymujące się przywiązanie urzędów w Niemczech do faksu.", uk: "Факс є взірцевим прикладом тих технічних перехідних явищ, які визначали цілу епоху й були витіснені найкращими цифровими альтернативами за найкоротший час, — обставина, якій особливо промовисто суперечить збережена прихильність німецьких установ до факсу.", fa: "دستگاه فکس نمونه‌ای الگووار از آن پدیده‌های فنیِ گذار است که یک دوره را تعریف کردند و در کوتاه‌ترین زمان با جایگزین‌های دیجیتالِ برتر منسوخ شدند - وضعیتی که به‌طور قابل‌توجهی با وفاداری همچنان ادامه‌دار ادارات آلمان به فکس در تضاد قرار می‌گیرد.", it: "Il fax rappresenta un caso esemplare di quei fenomeni tecnici di transizione che hanno segnato un'epoca e sono stati resi obsoleti in brevissimo tempo da alternative digitali superiori - una circostanza che è smentita in modo notevole, in particolare, dalla persistente fedeltà degli uffici pubblici tedeschi al fax." },
       },
     },
     {
@@ -10500,6 +11299,7 @@
         C2: "Als Verkörperung einer analogen Schreibkultur, deren mechanische Unerbittlichkeit zu einer eigenen Form gedanklicher Disziplin zwang, steht die Schreibmaschine sinnbildlich für einen Verlust an Langsamkeit und Sorgfalt, den die digitale Beliebigkeit des Textverarbeitungszeitalters mit sich brachte.",
       },
       translationsA1: {
+        it: "In passato le persone scrivevano con una macchina da scrivere. Non c'erano computer. Oggi si scrive per lo più al computer.",
         en: "In the past, people wrote with a typewriter. There were no computers. Today people mostly write on a computer.",
         ar: "في السابق كان الناس يكتبون بالآلة الكاتبة. لم يكن هناك حواسيب. اليوم يكتب معظم الناس على الحاسوب.",
         tr: "Eskiden insanlar daktilo ile yazardı. Bilgisayar yoktu. Bugün insanlar genellikle bilgisayarda yazıyor.",
@@ -10509,6 +11309,13 @@
         pl: "Dawniej ludzie pisali na maszynie do pisania. Nie było komputerów. Dziś większość pisze na komputerze.",
         uk: "Раніше люди писали на друкарській машинці. Комп'ютерів не було. Сьогодні більшість пише на комп'ютері.",
         fa: "قبلاً مردم با ماشین تحریر می‌نوشتند. کامپیوتر وجود نداشت. امروزه بیشتر مردم با کامپیوتر می‌نویسند.",
+      },
+      translationsByLevel: {
+        A2: { en: "Before the computer, the typewriter was the most important device for writing letters and texts. Every letter had to be struck with a key. Today it is barely used anymore.", ar: "قبل الحاسوب، كانت الآلة الكاتبة أهم جهاز لكتابة الرسائل والنصوص. كان يجب ضرب كل حرف بمفتاح. أما اليوم فلا تُستخدم تقريبًا.", tr: "Bilgisayardan önce daktilo, mektup ve metin yazmak için en önemli araçtı. Her harfe bir tuşla vurmak gerekiyordu. Bugün neredeyse hiç kullanılmıyor.", ru: "До появления компьютера пишущая машинка была важнейшим устройством для написания писем и текстов. Каждую букву нужно было отпечатывать нажатием клавиши. Сегодня она почти не используется.", es: "Antes del ordenador, la máquina de escribir era el aparato más importante para redactar cartas y textos. Cada letra había que teclearla golpeando una tecla. Hoy apenas se usa.", fr: "Avant l'ordinateur, la machine à écrire était l'appareil le plus important pour écrire des lettres et des textes. Il fallait frapper chaque lettre avec une touche. Aujourd'hui, elle n'est presque plus utilisée.", pl: "Przed komputerem maszyna do pisania była najważniejszym urządzeniem do pisania listów i tekstów. Każdą literę trzeba było uderzyć klawiszem. Dziś jest już prawie nieużywana.", uk: "До появи комп'ютера друкарська машинка була найважливішим пристроєм для написання листів і текстів. Кожну букву треба було вдаряти клавішею. Сьогодні вона майже не використовується.", fa: "پیش از کامپیوتر، ماشین تحریر مهم‌ترین وسیله برای نوشتن نامه و متن بود. هر حرف باید با فشردن یک کلید نوشته می‌شد. امروزه تقریباً دیگر استفاده نمی‌شود.", it: "Prima del computer, la macchina da scrivere era l'apparecchio più importante per scrivere lettere e testi. Ogni lettera doveva essere battuta con un tasto. Oggi non viene quasi più usata." },
+        B1: { en: "The typewriter was indispensable for decades in offices, editorial rooms, and households. Texts were typed mechanically letter by letter, and mistakes were laborious to correct. The computer has almost completely displaced it.", ar: "كانت الآلة الكاتبة لا غنى عنها لعقود في المكاتب وغرف التحرير والمنازل. كانت النصوص تُكتب ميكانيكيًا حرفًا حرفًا، وكان تصحيح الأخطاء شاقًا. أزاحها الحاسوب تقريبًا بالكامل.", tr: "Daktilo, onlarca yıl boyunca ofislerde, yayın odalarında ve evlerde vazgeçilmezdi. Metinler mekanik olarak harf harf yazılırdı, hatalar düzeltmesi zahmetliydi. Bilgisayar onu neredeyse tamamen ortadan kaldırdı.", ru: "Пишущая машинка десятилетиями была незаменима в офисах, редакциях и домашних хозяйствах. Тексты печатались механически буква за буквой, а исправление ошибок было трудоёмким. Компьютер почти полностью её вытеснил.", es: "La máquina de escribir fue imprescindible durante décadas en oficinas, redacciones y hogares. Los textos se escribían mecánicamente letra por letra, y corregir errores era laborioso. El ordenador la ha desplazado casi por completo.", fr: "La machine à écrire fut indispensable pendant des décennies dans les bureaux, les rédactions et les foyers. Les textes étaient tapés mécaniquement lettre par lettre, et les erreurs étaient laborieuses à corriger. L'ordinateur l'a presque entièrement supplantée.", pl: "Maszyna do pisania była przez dziesięciolecia niezbędna w biurach, redakcjach i domach. Teksty pisano mechanicznie litera po literze, a błędy trudno było poprawiać. Komputer niemal całkowicie ją wyparł.", uk: "Друкарська машинка десятиліттями була незамінною в офісах, редакціях і домашніх господарствах. Тексти друкували механічно літера за літерою, а виправляти помилки було важко. Комп'ютер майже повністю її витіснив.", fa: "ماشین تحریر برای دهه‌ها در دفاتر، دفاتر تحریریه و خانه‌ها ضروری بود. متن‌ها به‌صورت مکانیکی حرف به حرف تایپ می‌شدند و تصحیح اشتباهات دشوار بود. کامپیوتر تقریباً به‌طور کامل جای آن را گرفت.", it: "La macchina da scrivere è stata indispensabile per decenni negli uffici, nelle redazioni e nelle case. I testi venivano battuti meccanicamente lettera per lettera, e gli errori erano difficili da correggere. Il computer l'ha quasi completamente soppiantata." },
+        B2: { en: "Until the 1980s, the typewriter was the central writing device in German offices and private households. Unlike on a computer, typing errors could only be corrected laboriously, which required a completely different writing discipline. With the PC, it almost entirely disappeared.", ar: "حتى ثمانينيات القرن العشرين، كانت الآلة الكاتبة جهاز الكتابة المركزي في المكاتب والمنازل الألمانية. وخلافًا للحاسوب، لم يكن بالإمكان تصحيح الأخطاء الكتابية إلا بمشقة، ما تطلب انضباطًا مختلفًا تمامًا في الكتابة. اختفت تقريبًا بالكامل مع ظهور الحاسوب الشخصي.", tr: "1980'lere kadar daktilo, Alman ofislerinde ve özel hanelerde merkezi yazı aracıydı. Bilgisayardan farklı olarak yazım hataları ancak zahmetle düzeltilebiliyordu, bu da tamamen farklı bir yazma disiplini gerektiriyordu. Kişisel bilgisayarla birlikte neredeyse tamamen ortadan kalktı.", ru: "До 1980-х годов пишущая машинка была центральным пишущим устройством в немецких офисах и частных домах. В отличие от компьютера, опечатки можно было исправить лишь с трудом, что требовало совершенно иной дисциплины письма. С появлением ПК она почти полностью исчезла.", es: "Hasta la década de 1980, la máquina de escribir fue el instrumento central de escritura en las oficinas y los hogares alemanes. A diferencia del ordenador, los errores tipográficos solo podían corregirse con esfuerzo, lo que exigía una disciplina de escritura completamente distinta. Con el PC desapareció casi por completo.", fr: "Jusque dans les années 1980, la machine à écrire était l'instrument d'écriture central dans les bureaux et les foyers allemands. Contrairement à l'ordinateur, les fautes de frappe ne pouvaient être corrigées que laborieusement, ce qui exigeait une discipline d'écriture tout autre. Avec le PC, elle a presque entièrement disparu.", pl: "Aż do lat 80. XX wieku maszyna do pisania była centralnym narzędziem pisarskim w niemieckich biurach i domach prywatnych. W przeciwieństwie do komputera błędy w pisowni dawało się poprawić tylko z trudem, co wymagało zupełnie innej dyscypliny pisania. Wraz z pojawieniem się PC niemal całkowicie zniknęła.", uk: "До 1980-х років друкарська машинка була центральним пристроєм для письма в німецьких офісах і приватних домах. На відміну від комп'ютера, друкарські помилки можна було виправити лише з труднощами, що вимагало зовсім іншої дисципліни письма. З появою ПК вона майже повністю зникла.", fa: "تا دهه‌ی ۱۹۸۰، ماشین تحریر ابزار اصلی نگارش در دفاتر و خانه‌های خصوصی آلمان بود. برخلاف کامپیوتر، اشتباهات تایپی تنها به‌سختی قابل تصحیح بودند، که این امر مستلزم نظمی کاملاً متفاوت در نگارش بود. با ورود کامپیوتر شخصی، این دستگاه تقریباً به‌طور کامل ناپدید شد.", it: "Fino agli anni '80, la macchina da scrivere era lo strumento di scrittura centrale negli uffici e nelle case private tedesche. A differenza del computer, gli errori di battitura potevano essere corretti solo con fatica, il che richiedeva una disciplina di scrittura completamente diversa. Con il PC è quasi del tutto scomparsa." },
+        C1: { en: "The typewriter shaped writing culture for over a century - its mechanical limits forced a care and discipline in formulation that has largely been lost with the arbitrary correctability of digital text.", ar: "شكّلت الآلة الكاتبة ثقافة الكتابة لأكثر من قرن - فقد فرضت حدودها الميكانيكية عناية وانضباطًا في الصياغة فُقدا إلى حد كبير مع إمكانية التصحيح غير المحدودة للنص الرقمي.", tr: "Daktilo, yüz yılı aşkın süre yazı kültürünü şekillendirdi — mekanik sınırları, dijital metnin keyfi düzeltilebilirliğiyle büyük ölçüde kaybolan bir ifade özeni ve disiplini zorunlu kılıyordu.", ru: "Пишущая машинка более века формировала культуру письма — её механические ограничения требовали тщательности и дисциплины в формулировках, во многом утраченных с произвольной исправляемостью цифрового текста.", es: "La máquina de escribir marcó la cultura de la escritura durante más de un siglo: sus límites mecánicos imponían un cuidado y una disciplina en la redacción que se han perdido en gran medida con la corregibilidad arbitraria del texto digital.", fr: "La machine à écrire a façonné la culture de l'écriture pendant plus d'un siècle - ses limites mécaniques imposaient un soin et une discipline dans la formulation qui se sont en grande partie perdus avec la corrigibilité arbitraire du texte numérique.", pl: "Maszyna do pisania kształtowała kulturę pisania przez ponad sto lat - jej mechaniczne ograniczenia wymuszały staranność i dyscyplinę w formułowaniu myśli, które w dużej mierze zaginęły wraz z dowolną poprawialnością tekstu cyfrowego.", uk: "Друкарська машинка понад століття формувала культуру письма - її механічні обмеження вимагали ретельності та дисципліни у формулюванні, які значною мірою втрачені разом із довільною виправностою цифрового тексту.", fa: "ماشین تحریر برای بیش از یک قرن فرهنگ نگارش را شکل داد - محدودیت‌های مکانیکی آن دقت و نظمی در نگارش می‌طلبید که با قابلیت تصحیح دلبخواهی متن دیجیتال تا حد زیادی از دست رفته است.", it: "La macchina da scrivere ha plasmato la cultura della scrittura per oltre un secolo - i suoi limiti meccanici imponevano una cura e una disciplina nella formulazione che si sono in gran parte perse con la correggibilità arbitraria del testo digitale." },
+        C2: { en: "As the embodiment of an analog writing culture whose mechanical relentlessness forced its own form of intellectual discipline, the typewriter symbolizes a loss of slowness and care brought about by the digital arbitrariness of the word-processing age.", ar: "بوصفها تجسيدًا لثقافة كتابة تناظرية فرضت صرامتها الميكانيكية شكلاً خاصًا من الانضباط الفكري، تُعد الآلة الكاتبة رمزًا لفقدان البطء والعناية اللذين جلبتهما اللاعشوائية الرقمية لعصر معالجة النصوص.", tr: "Mekanik amansızlığı kendine özgü bir düşünsel disiplini zorunlu kılan analog bir yazı kültürünün somutlaşması olarak daktilo, kelime işlemci çağının dijital keyfiliğinin beraberinde getirdiği yavaşlık ve özen kaybının simgesidir.", ru: "Как воплощение аналоговой культуры письма, механическая неумолимость которой вынуждала к особой форме интеллектуальной дисциплины, пишущая машинка символизирует утрату неспешности и тщательности, вызванную цифровым произволом эпохи текстовых редакторов.", es: "Como encarnación de una cultura de escritura analógica cuya inexorabilidad mecánica imponía una forma propia de disciplina intelectual, la máquina de escribir simboliza una pérdida de lentitud y esmero provocada por la arbitrariedad digital de la era del procesamiento de textos.", fr: "En tant qu'incarnation d'une culture d'écriture analogique dont l'inexorabilité mécanique imposait une forme propre de discipline intellectuelle, la machine à écrire symbolise une perte de lenteur et de soin qu'a entraînée l'arbitraire numérique de l'ère du traitement de texte.", pl: "Jako ucieleśnienie analogowej kultury pisania, której mechaniczna nieubłaganość wymuszała własną formę intelektualnej dyscypliny, maszyna do pisania symbolizuje utratę powolności i staranności, jaką przyniosła cyfrowa dowolność epoki edytorów tekstu.", uk: "Як втілення аналогової культури письма, чия механічна невблаганність вимагала власної форми інтелектуальної дисципліни, друкарська машинка символізує втрату повільності та ретельності, спричинену цифровою свавільністю епохи текстових редакторів.", fa: "به‌عنوان تجسم فرهنگی آنالوگ در نگارش که سرسختی مکانیکی‌اش نوعی نظم فکری خاص خود را الزامی می‌کرد، ماشین تحریر نمادی از فقدان کندی و دقتی است که خودسری دیجیتال عصر واژه‌پردازی به همراه آورد.", it: "Come incarnazione di una cultura della scrittura analogica la cui inflessibilità meccanica imponeva una propria forma di disciplina intellettuale, la macchina da scrivere simboleggia una perdita di lentezza e cura provocata dall'arbitrarietà digitale dell'era dell'elaborazione testi." },
       },
     },
     {
@@ -10523,6 +11330,7 @@
         C2: "Als Relikt einer ortsgebundenen Kommunikationskultur markiert die Telefonzelle den Übergang zu einer Gesellschaft permanenter Erreichbarkeit — ihr Verschwinden aus dem Stadtbild dokumentiert eindrücklich die Geschwindigkeit technologischen und sozialen Wandels der letzten Jahrzehnte.",
       },
       translationsA1: {
+        it: "In passato c'erano molte cabine telefoniche per strada. Da lì si poteva telefonare con le monete. Oggi non ce ne sono quasi più perché tutti hanno un cellulare.",
         en: "In the past, there were many phone booths on the street. You could call from there with coins. Today there are almost none left, because everyone has a cell phone.",
         ar: "في السابق كانت هناك أكشاك هاتف كثيرة في الشارع. كان يمكن الاتصال منها بالعملات المعدنية. اليوم لم يبق منها شيء تقريباً لأن الجميع لديه هاتف محمول.",
         tr: "Eskiden sokakta birçok telefon kulübesi vardı. Oradan madeni parayla arama yapılabilirdi. Bugün herkeste cep telefonu olduğu için neredeyse hiç kalmadı.",
@@ -10532,6 +11340,13 @@
         pl: "Dawniej na ulicach było wiele budek telefonicznych. Można było stamtąd dzwonić za monety. Dziś prawie ich nie ma, bo każdy ma telefon komórkowy.",
         uk: "Раніше на вулицях було багато телефонних будок. Звідти можна було телефонувати за монети. Сьогодні їх майже не залишилося, бо в усіх є мобільний телефон.",
         fa: "قبلاً باجه‌های تلفن زیادی در خیابان بود. می‌شد از آنجا با سکه تماس گرفت. امروزه تقریباً هیچ‌کدام باقی نمانده، چون همه موبایل دارند.",
+      },
+      translationsByLevel: {
+        A2: { en: "Phone booths used to stand on many street corners in Germany. You could make calls from there with coins or a phone card. Since almost everyone has a mobile phone, they have almost disappeared.", ar: "كانت أكشاك الهاتف موجودة سابقًا على أركان كثيرة من الشوارع في ألمانيا. كان بإمكان المرء الاتصال منها بالعملات المعدنية أو ببطاقة هاتف. ومنذ أن أصبح لدى الجميع تقريبًا هاتف محمول، اختفت تقريبًا.", tr: "Almanya'da eskiden birçok sokak köşesinde telefon kulübeleri bulunurdu. Oradan madeni para veya telefon kartıyla arama yapılabilirdi. Neredeyse herkesin cep telefonu olduğundan beri neredeyse tamamen kayboldular.", ru: "Раньше телефонные будки стояли на многих уличных углах в Германии. Оттуда можно было звонить с помощью монет или телефонной карты. С тех пор как почти у всех появился мобильный телефон, они почти исчезли.", es: "Antes había cabinas telefónicas en muchas esquinas de Alemania. Desde allí se podía llamar con monedas o con una tarjeta telefónica. Desde que casi todo el mundo tiene un móvil, casi han desaparecido.", fr: "Des cabines téléphoniques se trouvaient autrefois à de nombreux coins de rue en Allemagne. On pouvait y téléphoner avec des pièces de monnaie ou une carte téléphonique. Depuis que presque tout le monde a un téléphone portable, elles ont presque disparu.", pl: "Dawniej budki telefoniczne stały na wielu rogach ulic w Niemczech. Można było z nich dzwonić za monety lub kartą telefoniczną. Odkąd niemal każdy ma telefon komórkowy, niemal całkowicie zniknęły.", uk: "Раніше телефонні будки стояли на багатьох вуличних кутах у Німеччині. Звідти можна було дзвонити за монети або телефонну картку. Відколи майже в усіх є мобільний телефон, вони майже зникли.", fa: "باجه‌های تلفن پیش‌تر در بسیاری از گوشه‌های خیابان در آلمان قرار داشتند. می‌شد از آنجا با سکه یا کارت تلفن تماس گرفت. از زمانی که تقریباً همه یک تلفن همراه دارند، تقریباً ناپدید شده‌اند.", it: "Un tempo le cabine telefoniche si trovavano a molti angoli di strada in Germania. Da lì si poteva telefonare con monete o una scheda telefonica. Da quando quasi tutti hanno un cellulare, sono quasi scomparse." },
+        B1: { en: "The yellow phone booth was part of the typical German streetscape for decades. Whoever wanted to make a call while out and about had to pay there with coins or a phone card. With the spread of mobile phones, most were removed.", ar: "كان كشك الهاتف الأصفر جزءًا من المشهد الشارعي الألماني النموذجي لعقود. من أراد الاتصال وهو خارج المنزل كان يدفع هناك بالعملات المعدنية أو ببطاقة هاتف. ومع انتشار الهواتف المحمولة، أُزيل معظمها.", tr: "Sarı telefon kulübesi onlarca yıl boyunca tipik Alman sokak manzarasının bir parçasıydı. Dışarıdayken arama yapmak isteyen orada madeni para veya telefon kartıyla ödeme yapardı. Cep telefonlarının yaygınlaşmasıyla çoğu kaldırıldı.", ru: "Жёлтая телефонная будка десятилетиями была частью типичного немецкого уличного пейзажа. Тот, кто хотел позвонить, находясь вне дома, платил там монетами или телефонной картой. С распространением мобильных телефонов большинство их убрали.", es: "La cabina telefónica amarilla formó parte del típico paisaje urbano alemán durante décadas. Quien quería llamar estando fuera tenía que pagar allí con monedas o una tarjeta telefónica. Con la difusión de los teléfonos móviles, la mayoría fueron retiradas.", fr: "La cabine téléphonique jaune a fait partie du paysage urbain typique allemand pendant des décennies. Celui qui voulait téléphoner en déplacement devait y payer avec des pièces ou une carte téléphonique. Avec la diffusion des téléphones portables, la plupart ont été démontées.", pl: "Żółta budka telefoniczna przez dziesięciolecia była częścią typowego niemieckiego krajobrazu ulicznego. Kto chciał zadzwonić będąc poza domem, musiał tam płacić monetami lub kartą telefoniczną. Wraz z rozpowszechnieniem telefonów komórkowych większość z nich zdemontowano.", uk: "Жовта телефонна будка десятиліттями була частиною типового німецького вуличного пейзажу. Хто хотів подзвонити, перебуваючи поза домом, мав там платити монетами або телефонною карткою. Із поширенням мобільних телефонів більшість із них демонтували.", fa: "باجه‌ی تلفن زرد رنگ برای دهه‌ها بخشی از منظره‌ی خیابانی معمول آلمان بود. هر کس می‌خواست بیرون از خانه تماس بگیرد، باید آنجا با سکه یا کارت تلفن پرداخت می‌کرد. با گسترش تلفن‌های همراه، بیشتر آن‌ها برچیده شدند.", it: "La cabina telefonica gialla ha fatto parte per decenni del tipico paesaggio urbano tedesco. Chi voleva telefonare fuori casa doveva pagare lì con monete o una scheda telefonica. Con la diffusione dei telefoni cellulari, la maggior parte sono state smantellate." },
+        B2: { en: "Until the 1990s, the phone booth was an indispensable part of public infrastructure in Germany. It enabled reachability while out and about long before mobile phones became affordable. Today only scattered, often repurposed, booths still recall that era.", ar: "حتى تسعينيات القرن العشرين، كانت أكشاك الهاتف جزءًا لا غنى عنه من البنية التحتية العامة في ألمانيا. أتاحت إمكانية التواصل أثناء التنقل قبل وقت طويل من أن تصبح الهواتف المحمولة في متناول اليد. أما اليوم فلا يُذكِّر بتلك الحقبة سوى أكشاك متفرقة، أُعيد استخدام كثير منها لأغراض أخرى.", tr: "1990'lara kadar telefon kulübesi Almanya'daki kamusal altyapının vazgeçilmez bir parçasıydı. Cep telefonları uygun fiyatlı hale gelmeden çok önce dışarıdayken ulaşılabilirliği sağlıyordu. Bugün ise o döneme yalnızca dağınık, çoğu zaman başka amaçlarla kullanılan kulübeler hatırlatıyor.", ru: "До 1990-х годов телефонная будка была неотъемлемой частью общественной инфраструктуры в Германии. Она обеспечивала доступность вне дома задолго до того, как мобильные телефоны стали доступными. Сегодня об этой эпохе напоминают лишь отдельные, часто перепрофилированные будки.", es: "Hasta la década de 1990, la cabina telefónica fue una parte imprescindible de la infraestructura pública en Alemania. Permitía estar localizable fuera de casa mucho antes de que los teléfonos móviles se hicieran asequibles. Hoy solo algunas cabinas dispersas, a menudo reutilizadas, recuerdan aquella época.", fr: "Jusque dans les années 1990, la cabine téléphonique faisait partie intégrante de l'infrastructure publique en Allemagne. Elle permettait d'être joignable en déplacement bien avant que les téléphones portables ne deviennent abordables. Aujourd'hui, seules quelques cabines isolées, souvent reconverties, rappellent encore cette époque.", pl: "Aż do lat 90. XX wieku budka telefoniczna była nieodzowną częścią infrastruktury publicznej w Niemczech. Umożliwiała osiągalność w drodze na długo, zanim telefony komórkowe stały się przystępne cenowo. Dziś przypominają o tamtej epoce jedynie pojedyncze, często przekształcone budki.", uk: "До 1990-х років телефонна будка була невід'ємною частиною громадської інфраструктури в Німеччині. Вона забезпечувала доступність поза домом задовго до того, як мобільні телефони стали доступними. Сьогодні про ту епоху нагадують лише поодинокі, часто перероблені будки.", fa: "تا دهه‌ی ۱۹۹۰، باجه‌ی تلفن بخشی جدایی‌ناپذیر از زیرساخت عمومی در آلمان بود. این باجه‌ها مدت‌ها پیش از اینکه تلفن‌های همراه مقرون‌به‌صرفه شوند، امکان دسترسی در بیرون از خانه را فراهم می‌کردند. امروزه فقط چند باجه‌ی پراکنده و اغلب بازکاربری‌شده، یادآور آن دوران هستند.", it: "Fino agli anni '90, la cabina telefonica era una parte indispensabile dell'infrastruttura pubblica in Germania. Consentiva di essere raggiungibili fuori casa molto prima che i telefoni cellulari diventassero accessibili. Oggi solo poche cabine sparse, spesso riconvertite, ricordano ancora quell'epoca." },
+        C1: { en: "The once ubiquitous phone booth symbolizes an era in which reachability was tied to fixed places - its almost complete disappearance within a few decades illustrates how radically mobile communication has transformed public space.", ar: "يرمز كشك الهاتف الذي كان في كل مكان يومًا ما إلى حقبة كانت فيها إمكانية التواصل مرتبطة بأماكن ثابتة - ويوضح اختفاؤه شبه الكامل خلال عقود قليلة مدى الجذرية التي غيّر بها التواصل المتنقل الفضاء العام.", tr: "Bir zamanlar her yerde bulunan telefon kulübesi, ulaşılabilirliğin sabit yerlere bağlı olduğu bir çağı simgeler — birkaç on yıl içinde neredeyse tamamen ortadan kalkması, mobil iletişimin kamusal alanı ne denli köklü biçimde değiştirdiğini gözler önüne serer.", ru: "Некогда вездесущая телефонная будка символизирует эпоху, в которой доступность была привязана к определённым местам, — её почти полное исчезновение за несколько десятилетий наглядно показывает, насколько радикально мобильная связь изменила общественное пространство.", es: "La cabina telefónica, antaño omnipresente, simboliza una época en la que la localización estaba ligada a lugares fijos; su casi total desaparición en pocas décadas ilustra hasta qué punto la comunicación móvil ha transformado radicalmente el espacio público.", fr: "La cabine téléphonique, jadis omniprésente, symbolise une époque où la joignabilité était liée à des lieux fixes - sa disparition quasi totale en quelques décennies illustre à quel point la communication mobile a radicalement transformé l'espace public.", pl: "Niegdyś wszechobecna budka telefoniczna symbolizuje epokę, w której osiągalność była związana ze stałymi miejscami - jej niemal całkowite zniknięcie w ciągu kilku dekad pokazuje, jak radykalnie komunikacja mobilna zmieniła przestrzeń publiczną.", uk: "Колись всюдисуща телефонна будка символізує епоху, в якій доступність була прив'язана до сталих місць - її майже повне зникнення протягом кількох десятиліть наочно показує, наскільки радикально мобільний зв'язок змінив публічний простір.", fa: "باجه‌ی تلفنی که زمانی همه‌جاحاضر بود، نمادی از دورانی است که دسترس‌پذیری به مکان‌های ثابت وابسته بود - ناپدید شدن تقریباً کامل آن در عرض چند دهه نشان می‌دهد که ارتباطات همراه چقدر به‌طور بنیادین فضای عمومی را دگرگون کرده است.", it: "La cabina telefonica, un tempo onnipresente, simboleggia un'epoca in cui la raggiungibilità era legata a luoghi fissi - la sua scomparsa quasi totale nel giro di pochi decenni illustra quanto radicalmente la comunicazione mobile abbia trasformato lo spazio pubblico." },
+        C2: { en: "As a relic of a place-bound communication culture, the phone booth marks the transition to a society of permanent reachability - its disappearance from the cityscape vividly documents the speed of technological and social change in recent decades.", ar: "بوصفه أثرًا من ثقافة اتصال مرتبطة بالمكان، يمثّل كشك الهاتف الانتقال إلى مجتمع التواصل الدائم - ويوثّق اختفاؤه من المشهد المدني بشكل حي سرعة التحول التكنولوجي والاجتماعي في العقود الأخيرة.", tr: "Yer bağımlı bir iletişim kültürünün kalıntısı olarak telefon kulübesi, kalıcı ulaşılabilirlik toplumuna geçişi işaret eder — şehir manzarasından kaybolması, son on yıllardaki teknolojik ve toplumsal değişimin hızını çarpıcı biçimde belgeler.", ru: "Как реликт привязанной к месту культуры связи, телефонная будка отмечает переход к обществу постоянной доступности — её исчезновение из городского пейзажа наглядно документирует скорость технологических и социальных изменений последних десятилетий.", es: "Como reliquia de una cultura comunicativa ligada al lugar, la cabina telefónica marca la transición hacia una sociedad de disponibilidad permanente; su desaparición del paisaje urbano documenta de forma elocuente la velocidad del cambio tecnológico y social de las últimas décadas.", fr: "Vestige d'une culture de la communication liée au lieu, la cabine téléphonique marque la transition vers une société de disponibilité permanente - sa disparition du paysage urbain documente de façon frappante la rapidité du changement technologique et social de ces dernières décennies.", pl: "Jako relikt kultury komunikacji związanej z miejscem, budka telefoniczna wyznacza przejście do społeczeństwa permanentnej osiągalności - jej zniknięcie z krajobrazu miejskiego wymownie dokumentuje tempo zmian technologicznych i społecznych ostatnich dziesięcioleci.", uk: "Як релікт прив'язаної до місця культури спілкування, телефонна будка знаменує перехід до суспільства постійної доступності - її зникнення з міського пейзажу яскраво документує швидкість технологічних і соціальних змін останніх десятиліть.", fa: "به‌عنوان بازمانده‌ای از فرهنگ ارتباطی وابسته به مکان، باجه‌ی تلفن نشان‌دهنده‌ی گذار به جامعه‌ای با دسترس‌پذیری دائمی است - ناپدید شدن آن از منظره‌ی شهری، سرعت تحول فناورانه و اجتماعی دهه‌های اخیر را به‌روشنی مستند می‌کند.", it: "Come reliquia di una cultura comunicativa legata al luogo, la cabina telefonica segna il passaggio a una società di raggiungibilità permanente - la sua scomparsa dal paesaggio urbano documenta in modo eloquente la velocità del cambiamento tecnologico e sociale degli ultimi decenni." },
       },
     },
     {
@@ -10546,6 +11361,7 @@
         C2: "Als demokratisierendes Medium eröffnete die Musikkassette erstmals eine partizipative Aneignung von Musikkultur durch selbst kuratierte Mixtapes — ein Stück analoger Handwerklichkeit und persönlicher Widmung, das im algorithmisch generierten Playlist-Zeitalter kaum eine Entsprechung findet.",
       },
       translationsA1: {
+        it: "In passato le persone ascoltavano musica su cassette. Si potevano registrare da soli le canzoni. Oggi la musica viene ascoltata in streaming sul telefono.",
         en: "In the past, people listened to music on cassettes. You could record songs yourself. Today people stream music on their phone.",
         ar: "في السابق كان الناس يستمعون إلى الموسيقى على الأشرطة. كان يمكن تسجيل الأغاني بنفسك. اليوم يستمع الناس إلى الموسيقى عبر الهاتف.",
         tr: "Eskiden insanlar müziği kasetlerde dinlerdi. Şarkıları kendin kaydedebilirdin. Bugün insanlar müziği telefondan dinliyor.",
@@ -10555,6 +11371,13 @@
         pl: "Dawniej ludzie słuchali muzyki na kasetach. Można było samemu nagrywać piosenki. Dziś muzykę słucha się przez telefon.",
         uk: "Раніше люди слухали музику на касетах. Можна було самому записувати пісні. Сьогодні музику слухають через телефон.",
         fa: "قبلاً مردم موسیقی را با نوار کاست گوش می‌دادند. می‌شد خودت آهنگ‌ها را ضبط کنی. امروزه مردم موسیقی را از طریق موبایل پخش می‌کنند.",
+      },
+      translationsByLevel: {
+        A2: { en: "The music cassette used to be very popular for listening to and recording music. Many people made their own mixtapes. Today music is mostly streamed.", ar: "كانت شرائط الموسيقى في السابق شائعة جدًا للاستماع إلى الموسيقى وتسجيلها. صنع كثير من الناس أشرطتهم الخاصة المختلطة. أما اليوم فتُبث الموسيقى في معظم الأحيان.", tr: "Müzik kaseti eskiden müzik dinlemek ve kaydetmek için çok popülerdi. Birçok kişi kendi karışık kasetlerini yapardı. Bugün müzik çoğunlukla akış olarak dinleniyor.", ru: "Музыкальная кассета раньше была очень популярна для прослушивания и записи музыки. Многие люди делали собственные сборники — миксленты. Сегодня музыку в основном слушают через стриминг.", es: "El casete de música fue antes muy popular para escuchar y grabar música. Mucha gente se hacía sus propias cintas recopilatorias. Hoy la música se escucha sobre todo en streaming.", fr: "La cassette audio était autrefois très populaire pour écouter et enregistrer de la musique. Beaucoup de gens se faisaient leurs propres compilations. Aujourd'hui, la musique est surtout diffusée en streaming.", pl: "Kaseta magnetofonowa była kiedyś bardzo popularna do słuchania i nagrywania muzyki. Wiele osób robiło własne składanki. Dziś muzyki słucha się głównie przez streaming.", uk: "Музична касета раніше була дуже популярною для прослуховування і запису музики. Багато людей робили власні збірки — мікстейпи. Сьогодні музику здебільшого слухають через стрімінг.", fa: "نوار کاست موسیقی پیش‌تر برای گوش دادن و ضبط موسیقی بسیار محبوب بود. بسیاری از مردم نوارهای ترکیبی خودشان را می‌ساختند. امروزه موسیقی بیشتر به‌صورت استریم شنیده می‌شود.", it: "La musicassetta era un tempo molto popolare per ascoltare e registrare musica. Molte persone si facevano le proprie compilation. Oggi la musica viene per lo più ascoltata in streaming." },
+        B1: { en: "The music cassette shaped listening to music in Germany for decades. You could record songs from the radio or create your own compilations, called mixtapes. Today streaming has almost completely replaced this technology.", ar: "شكّل شريط الموسيقى الاستماع إلى الموسيقى في ألمانيا لعقود. كان بالإمكان تسجيل الأغاني من الراديو أو إنشاء تجميعات خاصة تُسمى أشرطة مختلطة. أما اليوم فقد حلّ البث المباشر محل هذه التقنية تقريبًا بالكامل.", tr: "Müzik kaseti onlarca yıl boyunca Almanya'da müzik dinleme alışkanlığını şekillendirdi. Radyodan şarkı kaydedilebilir veya karışık kaset denilen kendi derlemeleri oluşturulabilirdi. Bugün akış hizmeti bu teknolojinin neredeyse tamamen yerini aldı.", ru: "Музыкальная кассета десятилетиями формировала прослушивание музыки в Германии. Можно было записывать песни с радио или создавать собственные сборники, так называемые миксленты. Сегодня стриминг почти полностью вытеснил эту технологию.", es: "El casete de música marcó la manera de escuchar música en Alemania durante décadas. Se podían grabar canciones de la radio o crear compilaciones propias, llamadas mixtapes. Hoy el streaming ha sustituido casi por completo esta tecnología.", fr: "La cassette audio a marqué l'écoute de la musique en Allemagne pendant des décennies. On pouvait enregistrer des chansons à la radio ou créer ses propres compilations, appelées mixtapes. Aujourd'hui, le streaming a presque entièrement remplacé cette technologie.", pl: "Kaseta magnetofonowa przez dziesięciolecia kształtowała słuchanie muzyki w Niemczech. Można było nagrywać piosenki z radia lub tworzyć własne składanki, tak zwane mixtape'y. Dziś streaming niemal całkowicie zastąpił tę technologię.", uk: "Музична касета десятиліттями формувала прослуховування музики в Німеччині. Можна було записувати пісні з радіо або створювати власні збірки, так звані мікстейпи. Сьогодні стрімінг майже повністю замінив цю технологію.", fa: "نوار کاست موسیقی برای دهه‌ها نحوه‌ی گوش دادن به موسیقی در آلمان را شکل داد. می‌شد آهنگ‌ها را از رادیو ضبط کرد یا مجموعه‌های شخصی به نام میکس‌تیپ ساخت. امروزه استریمینگ تقریباً به‌طور کامل جای این فناوری را گرفته است.", it: "La musicassetta ha plasmato per decenni l'ascolto della musica in Germania. Si potevano registrare canzoni dalla radio o creare proprie compilation, chiamate mixtape. Oggi lo streaming ha quasi completamente sostituito questa tecnologia." },
+        B2: { en: "From the 1970s to the 1990s, the music cassette was the dominant format for private music enjoyment in Germany. Especially popular was personally compiling mixtapes for friends. Digital streaming has now almost entirely displaced it.", ar: "من سبعينيات القرن العشرين حتى تسعينياته، كان شريط الموسيقى الصيغة السائدة للاستمتاع الشخصي بالموسيقى في ألمانيا. وكان تجميع الأشرطة المختلطة شخصيًا للأصدقاء أمرًا شائعًا بشكل خاص. أزاحه البث الرقمي اليوم تقريبًا بالكامل.", tr: "1970'lerden 1990'lara kadar müzik kaseti, Almanya'da özel müzik dinleme keyfinin baskın formatıydı. Özellikle arkadaşlar için kişisel olarak karışık kaset hazırlamak popülerdi. Dijital akış bugün onun yerini neredeyse tamamen almıştır.", ru: "С 1970-х по 1990-е годы музыкальная кассета была доминирующим форматом для домашнего прослушивания музыки в Германии. Особенно популярным было личное составление миксленты для друзей. Цифровой стриминг сегодня почти полностью её вытеснил.", es: "Desde los años setenta hasta los noventa, el casete de música fue el formato dominante para el disfrute musical privado en Alemania. Era especialmente popular componer mixtapes personales para amigos. El streaming digital lo ha desplazado hoy casi por completo.", fr: "Des années 1970 aux années 1990, la cassette audio a été le format dominant pour l'écoute privée de musique en Allemagne. La confection personnelle de mixtapes pour des amis était particulièrement populaire. Le streaming numérique l'a aujourd'hui presque entièrement supplantée.", pl: "Od lat 70. do 90. XX wieku kaseta magnetofonowa była dominującym formatem prywatnego słuchania muzyki w Niemczech. Szczególnie popularne było osobiste komponowanie mixtape'ów dla przyjaciół. Cyfrowy streaming niemal całkowicie ją dziś wyparł.", uk: "З 1970-х до 1990-х років музична касета була домінуючим форматом для приватного прослуховування музики в Німеччині. Особливо популярним було особисте укладання мікстейпів для друзів. Цифровий стрімінг сьогодні майже повністю її витіснив.", fa: "از دهه‌ی ۱۹۷۰ تا ۱۹۹۰، نوار کاست موسیقی قالب غالب برای لذت بردن شخصی از موسیقی در آلمان بود. تهیه‌ی شخصی میکس‌تیپ برای دوستان به‌ویژه محبوب بود. استریمینگ دیجیتال امروزه تقریباً به‌طور کامل جای آن را گرفته است.", it: "Dagli anni '70 agli anni '90, la musicassetta è stata il formato dominante per l'ascolto musicale privato in Germania. Era particolarmente popolare comporre personalmente mixtape per gli amici. Lo streaming digitale l'ha ormai quasi completamente soppiantata." },
+        C1: { en: "The music cassette for the first time enabled a broad public to compile and pass on music themselves - the culture of the homemade mixtape is regarded by many as a more personal, lost precursor to today's digital playlists.", ar: "أتاح شريط الموسيقى للمرة الأولى لجمهور واسع أن يجمّع الموسيقى وينقلها بنفسه - ويعتبر كثيرون ثقافة الشريط المختلط المصنوع يدويًا مرحلة سابقة أكثر شخصية وضائعة لقوائم التشغيل الرقمية اليوم.", tr: "Müzik kaseti, ilk kez geniş bir kitlenin müziği kendisinin derlemesine ve aktarmasına olanak sağladı — evde yapılan karışık kaset kültürü, birçokları tarafından bugünün dijital çalma listelerinin daha kişisel, kaybolmuş bir öncülü olarak görülür.", ru: "Музыкальная кассета впервые позволила широкой публике самостоятельно составлять и передавать музыку — культура самодельного микстейпа многими воспринимается как более личный, утраченный предшественник сегодняшних цифровых плейлистов.", es: "El casete de música permitió por primera vez a un público amplio recopilar y compartir música por sí mismo; muchos consideran la cultura del mixtape casero como un antecedente más personal, hoy perdido, de las actuales listas de reproducción digitales.", fr: "La cassette audio a permis pour la première fois à un large public de compiler et de transmettre lui-même de la musique - la culture de la mixtape faite maison est considérée par beaucoup comme un précurseur plus personnel, aujourd'hui disparu, des playlists numériques actuelles.", pl: "Kaseta magnetofonowa po raz pierwszy umożliwiła szerokiej publiczności samodzielne komponowanie i przekazywanie muzyki - kultura domowego mixtape'u jest przez wielu uważana za bardziej osobistego, zaginionego poprzednika dzisiejszych cyfrowych playlist.", uk: "Музична касета вперше дозволила широкій публіці самостійно укладати й передавати музику - культуру саморобного мікстейпу багато хто вважає більш особистим, втраченим попередником сучасних цифрових плейлистів.", fa: "نوار کاست موسیقی برای نخستین بار به عموم مردم این امکان را داد که خودشان موسیقی را گردآوری و منتقل کنند - بسیاری فرهنگ میکس‌تیپ خانگی را پیش‌درآمدی شخصی‌تر و از‌دست‌رفته برای پلی‌لیست‌های دیجیتال امروزی می‌دانند.", it: "La musicassetta ha permesso per la prima volta a un vasto pubblico di compilare e trasmettere musica autonomamente - la cultura della mixtape fatta in casa è considerata da molti un precursore più personale, ormai perduto, delle attuali playlist digitali." },
+        C2: { en: "As a democratizing medium, the music cassette opened up for the first time a participatory appropriation of music culture through self-curated mixtapes - a piece of analog craftsmanship and personal dedication that finds hardly any equivalent in the age of algorithmically generated playlists.", ar: "بوصفه وسيطًا ديمقراطيًا، فتح شريط الموسيقى للمرة الأولى بابًا لاستحواذ تشاركي على الثقافة الموسيقية عبر أشرطة مختلطة منسّقة ذاتيًا - قطعة من الحرفية التناظرية والإهداء الشخصي لا تجد لها ما يعادلها تقريبًا في عصر قوائم التشغيل المولَّدة خوارزميًا.", tr: "Demokratikleştirici bir araç olarak müzik kaseti, kendi seçtiği karışık kasetlerle ilk kez müzik kültürüne katılımcı bir sahiplenme olanağı sundu — algoritmik olarak oluşturulan çalma listeleri çağında neredeyse hiçbir karşılığı bulunmayan analog el işçiliği ve kişisel adanmışlığın bir parçası.", ru: "Как демократизирующее средство, музыкальная кассета впервые открыла возможность соучастного присвоения музыкальной культуры через самостоятельно составленные миксленты — часть аналогового мастерства и личной посвящённости, почти не имеющую соответствия в эпоху алгоритмически создаваемых плейлистов.", es: "Como medio democratizador, el casete de música abrió por primera vez una apropiación participativa de la cultura musical mediante mixtapes curados por uno mismo, una pieza de artesanía analógica y dedicación personal que apenas encuentra equivalente en la era de las listas de reproducción generadas algorítmicamente.", fr: "En tant que média démocratisant, la cassette audio a ouvert pour la première fois une appropriation participative de la culture musicale par le biais de mixtapes composées soi-même - un morceau d'artisanat analogique et de dévouement personnel qui ne trouve guère d'équivalent à l'ère des playlists générées algorithmiquement.", pl: "Jako medium demokratyzujące, kaseta magnetofonowa po raz pierwszy otworzyła możliwość uczestniczącego zawłaszczania kultury muzycznej poprzez samodzielnie kuratorowane mixtape'y - kawałek analogowego rzemiosła i osobistego oddania, który w epoce algorytmicznie generowanych playlist niemal nie ma odpowiednika.", uk: "Як демократизуючий засіб, музична касета вперше відкрила можливість спільної причетності до музичної культури через самостійно укладені мікстейпи - частину аналогової майстерності та особистої відданості, яка майже не має відповідника в епоху алгоритмічно згенерованих плейлистів.", fa: "نوار کاست موسیقی به‌عنوان رسانه‌ای دموکراتیزه‌کننده، برای نخستین بار امکان مشارکت در تصاحب فرهنگ موسیقی را از طریق میکس‌تیپ‌های خودانتخابی فراهم کرد - قطعه‌ای از صنعتگری آنالوگ و ابراز ارادت شخصی که در عصر پلی‌لیست‌های تولیدشده با الگوریتم، تقریباً هیچ معادلی ندارد.", it: "Come mezzo democratizzante, la musicassetta ha aperto per la prima volta un'appropriazione partecipativa della cultura musicale attraverso mixtape curate personalmente - un pezzo di artigianalità analogica e dedizione personale che trova a malapena un equivalente nell'era delle playlist generate algoritmicamente." },
       },
     },
   ];
@@ -10620,23 +11443,7 @@
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip level-switch-btn" data-level="${lvl}" style="${lvl === level ? "background:var(--amber-400); color:#241505;" : ""}">${lvl}</button>`).join("")}
         </div>
         <p style="margin-top:8px;">${entry.levels[level]}</p>
-        ${entry.translationsA1 ? (() => {
-          const tileLang = firstStepsLangFor(Backend.currentProfile());
-          // WICHTIG — behebt eine echte Lücke: die translationsA1-Übersetzungen wurden ursprünglich
-          // nur für die ersten 9 Sprachen gebaut, bevor Italienisch/Hindi/Chinesisch/Hebräisch
-          // dazukamen — ohne Fallback erschien für diese 4 Sprachen gar keine Übersetzung. Englisch
-          // als Rückfalloption sorgt dafür, dass immer etwas Sinnvolles angezeigt wird.
-          const t = entry.translationsA1[tileLang] || entry.translationsA1.en;
-          if (!t) return "";
-          const tileRtl = tileLang === "ar" || tileLang === "fa" || tileLang === "he";
-          // WICHTIG — wie ausdrücklich gewünscht: die Übersetzung steht nicht mehr fest sichtbar
-          // da, sondern klappt erst nach einem gezielten Klick auf den kleinen 🌍-Knopf auf — ein
-          // natives <details>-Element übernimmt das Auf-/Zuklappen ganz ohne eigene JS-Logik.
-          return `<details style="margin-top:8px;">
-            <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700; list-style:none;">🌍 Übersetzung anzeigen</summary>
-            <p class="empty-note" style="margin-top:6px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${tileRtl ? "rtl" : "ltr"}">${t}</p>
-          </details>`;
-        })() : ""}
+        ${historyUebersetzungHtml(entry, level, "tile-" + entry.id)}
       </div>
     `;
     // WICHTIG — behebt einen echten Bug: bei zwei gleichzeitig auf derselben Seite gerenderten
@@ -10653,6 +11460,12 @@
       // verschachteltes rAF wartet einen kompletten weiteren Frame ab, in dem das Layout
       // garantiert final steht, bevor die Position gesetzt wird.
       requestAnimationFrame(() => { requestAnimationFrame(() => { window.scrollTo({ top: kompassTileScrollY, behavior: "instant" }); }); });
+    });
+    area.querySelectorAll(".hist-lang-select").forEach((sel) => {
+      sel.addEventListener("change", (e) => {
+        historyUebersetzungSprache = e.target.value || null;
+        renderEntryDetail(area, entries, entry, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
+      });
     });
     area.querySelectorAll(".level-switch-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -12225,7 +13038,7 @@
   // Sprache für die Übersetzungen unter „Es war einmal in Deutschland".
   // null = automatisch aus dem Herkunftsland im Profil (mit Englisch als Rückfall).
   let historyUebersetzungSprache = null;
-  const HISTORY_SPRACHEN = { en: "Englisch", ar: "العربية — Arabisch", tr: "Türkçe — Türkisch", ru: "Русский — Russisch", uk: "Українська — Ukrainisch", fa: "فارسی — Persisch", es: "Español — Spanisch", fr: "Français — Französisch", pl: "Polski — Polnisch" };
+  const HISTORY_SPRACHEN = { en: "Englisch", ar: "العربية — Arabisch", tr: "Türkçe — Türkisch", ru: "Русский — Russisch", uk: "Українська — Ukrainisch", fa: "فارسی — Persisch", es: "Español — Spanisch", fr: "Français — Französisch", pl: "Polski — Polnisch", it: "Italiano — Italienisch" };
   // Der Übersetzungsblock für EINEN Kalendertag — wird sowohl beim heutigen Tag als auch
   // im Archiv verwendet. Vorher gab es ihn nur beim heutigen Tag; im Archiv fehlte er
   // vollständig, die Übersetzungen waren dort also nirgends zu finden.
@@ -17657,6 +18470,12 @@ An einem Morgen lief ein kleiner Fuchs los…
   // Falls Supabase verbunden ist: bestehende Anmeldung (Session) wiederherstellen
   Backend.restoreSession().then(async () => {
     await Backend.getFeatureFlags(); // Freigabe-Schalter laden — unabhängig davon, ob eingeloggt
+    // Warnband sofort zeigen, falls das Profil nicht durchkam — bevor irgendetwas
+    // gespeichert werden könnte.
+    profilWarnbandPruefen();
+    // Gespeicherte Einstellungen aus dem Konto übernehmen.
+    uebersetzungSchalterLaden();
+    schwierigkeitLaden();
     claimLoginStreak();
     refreshHeaderAuth();
     renderAccount();
@@ -17670,10 +18489,17 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "144";
+  const APP_VERSION = "147";
   const APP_CHANGELOG = {
+    "147": [
+      "🛟 Wichtige Reparatur: Wenn dein Profil beim Laden nicht durchkam (Funkloch, kurzer Aussetzer beim Server), zeigte die Seite bisher ein leeres Profil — Grunddesign, keine Trophäen, keine Einstellungen — und hat diesen leeren Stand beim nächsten Speichern über deinen echten geschrieben. Genau so gingen Design, Füchse und Einstellungen verloren. Das kann jetzt nicht mehr passieren: Die Seite versucht dreimal zu laden, und wenn es dann immer noch nicht klappt, wird ABSICHTLICH nichts gespeichert und ein rotes Band oben sagt dir Bescheid.",
+      "🔁 Deine Einstellungen werden beim Speichern jetzt mit dem Serverstand zusammengeführt statt ersetzt. Damit kann ein zweites Gerät nichts mehr löschen, was du am ersten eingestellt hast — und Trophäen, Abzeichen und Sammelfiguren gehen dabei nie verloren.",
+      "🗂️ Neu unter Profil → Einstellungen: „Profil prüfen und reparieren“. Es rechnet deinen Punktestand aus allen gespielten Runden nach und holt Einstellungen, Trophäen und dein Design aus der Sicherungskopie zurück. Überschrieben wird dabei nichts, gesenkt wird nichts — es werden nur Lücken gefüllt. Darunter siehst du außerdem eine Liste aller Einstellungen und ob sie in deinem Konto liegen.",
+      "🎚️ Schwierigkeitsgrad und der Übersetzungs-Schalter im Italienisch-Raum werden jetzt ebenfalls im Konto gespeichert statt nur auf dem Gerät.",
+      "🧱 Satzbaukasten (Deutsch und Italienisch): Die Sätze stimmen jetzt grammatisch. „Ich warte auf meinen Freund“ statt „Ich warte meinen Freund“, „Parlo con il mio amico“ statt „Parlo il mio amico“, „Ich gehe in die Berge“ statt „in den Bergen“ — und Sätze wie „Morgen haben wir geschlafen“ lassen sich gar nicht mehr bauen.",
+    ],
     "21": "🎉 Neu: privates Postfach (mit Antworten & Bildern), mehrseitiger Steckbrief mit viel mehr Eintragsmöglichkeiten, neue Übung 'Lückentext-Geschichten', schwimmende Fische zeigen jetzt in die richtige Richtung, und ein paar hartnäckige Fehler beim Freischalten wurden behoben.",
-    "144": [
+    "145": [
       "📖 Das Wörterbuch ist jetzt richtig groß: über 6000 Stichwörter, für jedes Niveau von A1 bis C2 rund 1000 Stück — jeweils mit Betonung, deutscher Erklärung, Übersetzung und Beispielsatz. Du kannst nach Niveau UND nach 25 Themenbereichen filtern.",
       "🧭 Dein Sprachniveau aus dem Profil gilt jetzt überall: Übungen, Grammatik, „Es war einmal in Deutschland\", „Dichter und Denker\" und „Schnee von gestern\" starten automatisch in deinem Niveau. Umschalten kannst du natürlich weiterhin jederzeit.",
       "📚 Neue Grammatik-Sektion unter „Lernen\" — die wichtigsten Themen deines Niveaus, kurz erklärt, mit Beispielen. Von dort springst du mit einem Tipp direkt in die passende Übung, die dann auch wirklich im Blick steht.",
@@ -17683,6 +18509,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       "👥 Neu im Ranking: eine Übersicht aller Mitglieder mit grünem Punkt für alle, die gerade online sind.",
       "🎵 Der Musikplayer im Profil hat keine sich verdoppelnde Überschrift mehr, und die Playlist anderer kannst du direkt im Profilstreifen durchhören und übernehmen.",
       "🖼️ Das Profil sieht in der Ansicht, im Bearbeiten-Modus und bei anderen jetzt gleich aus: Bild links, Angaben fließen um die Rundung herum. Dein gewähltes Design steht mit dabei.",
+      "🧱 Neu: ein Satzbaukasten für Deutsch. Person, Verb, Ergänzung und Zeitangabe wählen — und zusehen, wohin das Verb wandert: in der Aussage an die zweite Stelle, in der Frage ganz nach vorn, im Nebensatz mit „weil“ ganz ans Ende. Die Bausteine sind nach ihrer Rolle eingefärbt.",
+      "🌍 Übersetzungen: Italienisch ist als zehnte Sprache dazugekommen, und „Dichter und Denker“ sowie „Schnee von gestern“ haben jetzt Übersetzungen für jedes Niveau — mit freier Sprachwahl statt nur der Sprache aus dem Herkunftsland.",
       "🎮 Vier neue Spiele: ⚡ Blitzrunde (90 Sekunden, Multiplikator für fehlerfreie Serien), 🎣 Wortangler (nur die Wörter fangen, die zur Regel passen), 🧗 Wortleiter (von A1 nach C2 klettern) und 🧱 Silbenturm (Wort aus Silben bauen, dann die Betonung bestimmen).",
       "🐈 Aus dem Katzenzimmer wird „Wo ist die Katze?“ — mit Fernseher, doppelt so vielen Szenen und Möbeln, die richtig auf dem Boden stehen. Innerhalb einer Runde kommt keine Szene zweimal.",
       "🎮 Übungen: jede der 23 Kategorien hat jetzt 100 Aufgaben auf JEDEM Niveau von A1 bis C2 — rund 11.700 neue Aufgaben. Und eine C2-Runde besteht jetzt wirklich aus C2-Aufgaben, statt überwiegend aus leichteren.",
@@ -17724,6 +18552,55 @@ An einem Morgen lief ein kleiner Fuchs los…
       katzenzimmer: (key) => kzZimmerSvg(KZ_ORTE.find((o) => o.key === key) || KZ_ORTE[0], true),
       katzenSzenen: () => KZ_ORTE.map((o) => ({ k: o.id, svg: kzZimmerSvg(o, true) })),
       satzbruecke: (planken, gesamt, geschafft) => sbBrueckeSvg(planken, gesamt, geschafft, true),
+      // Spielt jede baubare Kombination des italienischen Satzbaukastens durch —
+      // so lässt sich prüfen, dass wirklich kein schiefer Satz entstehen kann.
+      sbkAlle: () => {
+        const merk = [sbkSubjekt, sbkVerb, sbkErgaenzung, sbkZeitangabe, sbkZeitform];
+        const raus = [];
+        ["presente", "passato"].forEach((zf) => {
+          sbkZeitform = zf;
+          ExerciseData.IT_SUBJEKTE.forEach((s) => {
+            sbkSubjekt = s.id;
+            ExerciseData.IT_VERBEN.forEach((v) => {
+              sbkVerb = v.id;
+              const ergs = [null].concat(sbkPassendeErgaenzungen());
+              ExerciseData.IT_ZEITANGABEN
+                .filter((z) => !(z.nurVergangenheit && zf !== "passato") && !(z.nichtVergangenheit && zf === "passato"))
+                .forEach((z) => {
+                  sbkZeitangabe = z.it;
+                  ergs.forEach((e) => { sbkErgaenzung = e ? e.it : null; const r = sbkSatz(); raus.push({ it: r.it, de: r.de }); });
+                });
+            });
+          });
+        });
+        [sbkSubjekt, sbkVerb, sbkErgaenzung, sbkZeitangabe, sbkZeitform] = merk;
+        return raus;
+      },
+      dsbAlle: () => {
+        const merk = [dsbSubjekt, dsbVerb, dsbErgaenzung, dsbZeitangabe, dsbZeitform, dsbSatzart];
+        const raus = [];
+        ["praesens", "perfekt"].forEach((zf) => {
+          dsbZeitform = zf;
+          ["aussage", "frage", "nebensatz"].forEach((art) => {
+            dsbSatzart = art;
+            DE_SUBJEKTE.forEach((s) => {
+              dsbSubjekt = s.id;
+              DE_VERBEN.forEach((v) => {
+                dsbVerb = v.id;
+                const ergs = [null].concat(dsbPassendeErgaenzungen());
+                DE_ZEITANGABEN
+                  .filter((z) => !(z.nurVergangenheit && zf !== "perfekt") && !(z.nichtVergangenheit && zf === "perfekt"))
+                  .forEach((z) => {
+                    dsbZeitangabe = z.wort;
+                    ergs.forEach((e) => { dsbErgaenzung = e ? e.wort : null; raus.push(dsbSatz().text); });
+                  });
+              });
+            });
+          });
+        });
+        [dsbSubjekt, dsbVerb, dsbErgaenzung, dsbZeitangabe, dsbZeitform, dsbSatzart] = merk;
+        return raus;
+      },
     };
   }
 })();

@@ -78,9 +78,30 @@ const Backend = (function () {
 
   /* ================= AUTH ================= */
 
+  /* ============================================================
+     DATENVERLUST-SCHUTZ — die wichtigste Regel dieser Datei
+     ------------------------------------------------------------
+     Vorher galt: schlägt das Laden des Profils fehl (Funkloch,
+     kurzer Aussetzer bei Supabase, abgelaufenes Token), lieferte
+     diese Funktion still ein LEERES Standardprofil zurück. Die App
+     lief damit weiter, als hätte die Person nichts — Grunddesign,
+     keine Trophäen, keine Einstellungen. Und beim nächsten
+     Speichern wurde genau dieses leere Profil in die Datenbank
+     geschrieben und hat den echten Stand endgültig überschrieben.
+     Genau so gingen Design, Füchse, Schwierigkeits-Selbsteinschätzung
+     und die Benachrichtigungsfarben und -töne verloren.
+     Jetzt gilt: dreimal versuchen, und wenn es dann immer noch nicht
+     klappt, bekommt das Ersatzprofil die Markierung ladefehler. Ist
+     sie gesetzt, verweigert JEDER Schreibvorgang den Dienst
+     (siehe profilSchreibbar) — lieber gar nicht speichern als den
+     echten Stand mit Leere überschreiben.
+     ============================================================ */
   async function fetchOrCreateProfile(userId, email, name) {
+    let letzterFehler = null;
+    for (let versuch = 1; versuch <= 3; versuch++) {
     try {
       const { data, error } = await client.from("profiles").select("*").eq("id", userId).maybeSingle();
+      if (error) throw new Error(error.message);
       if (!error && data) {
         return {
           name: data.name || name || email,
@@ -123,13 +144,25 @@ const Backend = (function () {
           extraProfileData: data.extra_profile_data || {},
         };
       }
-      // Noch kein Profil-Eintrag -> anlegen
+      // Wirklich noch kein Profil-Eintrag (die Abfrage lief sauber durch und
+      // hat nichts gefunden) -> neu anlegen. Das ist der EINZIGE Fall, in dem
+      // ein leeres Profil in Ordnung ist.
       const { error: insertError } = await client.from("profiles").insert({ id: userId, name: name || email, points: 0, badges: [], is_premium: false, theme: "bastelheft" });
-      if (insertError) console.warn("Profil-Tabelle nicht erreichbar (fehlt sie noch in Supabase?):", insertError.message);
+      if (insertError) throw new Error(insertError.message);
+      return defaultProfile(name || email);
     } catch (e) {
-      console.warn("Profil konnte nicht geladen/angelegt werden — Login funktioniert trotzdem, nur ohne gespeicherte Punkte:", e);
+      letzterFehler = e;
+      console.warn("Profil konnte nicht geladen werden (Versuch " + versuch + " von 3):", e && e.message ? e.message : e);
+      if (versuch < 3) await new Promise((r) => setTimeout(r, versuch * 900));
     }
-    return defaultProfile(name || email);
+    }
+    // Alle drei Versuche fehlgeschlagen: Ersatzprofil NUR zum Anzeigen, mit
+    // Schreibsperre. So kann nichts überschrieben werden.
+    console.warn("Profil bleibt ungeladen — alle Schreibvorgänge sind bis auf Weiteres gesperrt.");
+    const ersatz = defaultProfile(name || email);
+    ersatz.ladefehler = true;
+    ersatz.ladefehlerText = letzterFehler && letzterFehler.message ? letzterFehler.message : "unbekannter Fehler";
+    return ersatz;
   }
 
   async function loadHistory(userId) {
@@ -159,6 +192,7 @@ const Backend = (function () {
       const name = (authUser.user_metadata && authUser.user_metadata.name) || authUser.email;
       demo.user = { id: authUser.id, email: authUser.email, name };
       demo.profile = await fetchOrCreateProfile(authUser.id, authUser.email, name);
+      sicherungSchreiben();
       demo.profile.history = await loadHistory(authUser.id);
     } catch (e) {
       console.warn("Sitzung konnte nicht wiederhergestellt werden:", e);
@@ -187,6 +221,7 @@ const Backend = (function () {
       }
       demo.user = { id: data.user.id, email: data.user.email, name };
       demo.profile = await fetchOrCreateProfile(data.user.id, data.user.email, name);
+      sicherungSchreiben();
       await applyReferralBonus(referrerId);
       return demo.user;
     }
@@ -239,6 +274,7 @@ const Backend = (function () {
       const name = (data.user.user_metadata && data.user.user_metadata.name) || data.user.email;
       demo.user = { id: data.user.id, email: data.user.email, name };
       demo.profile = await fetchOrCreateProfile(data.user.id, data.user.email, name);
+      sicherungSchreiben();
       demo.profile.history = await loadHistory(data.user.id);
       return demo.user;
     }
@@ -275,8 +311,12 @@ const Backend = (function () {
     if (!demo.user) return demo.profile;
     if (client) {
       const fresh = await fetchOrCreateProfile(demo.user.id, demo.user.email, demo.user.name);
+      // Ein misslungener Ladeversuch darf ein bereits sauber geladenes Profil
+      // NICHT durch das leere Ersatzprofil ersetzen.
+      if (fresh.ladefehler && demo.profile && !demo.profile.ladefehler) return demo.profile;
       const history = demo.profile ? demo.profile.history : [];
       demo.profile = Object.assign({}, fresh, { history });
+      sicherungSchreiben();
     }
     return demo.profile;
   }
@@ -333,19 +373,31 @@ const Backend = (function () {
       // Serverstand abholen und ERST DANN draufaddieren. Sonst könnte ein zweites Gerät (z. B.
       // Handy + Tablet gleichzeitig offen) mit einem älteren lokalen Stand den neueren Stand des
       // anderen Geräts überschreiben — Punkte gehen dabei komplett und unbemerkt verloren.
-      const { data: freshRow } = await client.from("profiles").select("points").eq("id", demo.user.id).maybeSingle();
-      const serverPoints = freshRow ? (freshRow.points || 0) : demo.profile.points;
-      const newTotal = serverPoints + earned;
-      demo.profile.points = newTotal;
-
-      let profileError = (await client.from("profiles").update({ points: newTotal, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
-      if (profileError) {
-        await new Promise((r) => setTimeout(r, 800));
-        profileError = (await client.from("profiles").update({ points: newTotal, badges: demo.profile.badges }).eq("id", demo.user.id)).error;
-      }
-      if (profileError) {
-        console.warn("Punkte/Abzeichen im Profil konnten nicht gespeichert werden:", profileError.message);
+      // Ist das Profil nicht geladen, stünde der Punktestand hier auf 0 und würde
+      // beim Schreiben den echten Stand ersetzen. Dann wird lieber gar nichts
+      // geschrieben — die Runde selbst liegt bereits in results und lässt sich
+      // später über „Profil reparieren" nachrechnen.
+      if (!profilSchreibbar()) {
+        console.warn("Punkte nicht gespeichert: Profil ist nicht geladen.");
         if (typeof window !== "undefined" && window.__dmaPointsSaveFailed) window.__dmaPointsSaveFailed();
+      } else {
+        const { data: freshRow } = await client.from("profiles").select("points, badges").eq("id", demo.user.id).maybeSingle();
+        const serverPoints = freshRow ? (freshRow.points || 0) : demo.profile.points;
+        const newTotal = serverPoints + earned;
+        demo.profile.points = newTotal;
+        // Abzeichen ebenfalls zusammenführen statt ersetzen.
+        const alleBadges = Array.from(new Set([...((freshRow && freshRow.badges) || []), ...(demo.profile.badges || [])]));
+        demo.profile.badges = alleBadges;
+
+        let profileError = (await client.from("profiles").update({ points: newTotal, badges: alleBadges }).eq("id", demo.user.id)).error;
+        if (profileError) {
+          await new Promise((r) => setTimeout(r, 800));
+          profileError = (await client.from("profiles").update({ points: newTotal, badges: alleBadges }).eq("id", demo.user.id)).error;
+        }
+        if (profileError) {
+          console.warn("Punkte/Abzeichen im Profil konnten nicht gespeichert werden:", profileError.message);
+          if (typeof window !== "undefined" && window.__dmaPointsSaveFailed) window.__dmaPointsSaveFailed();
+        }
       }
     } else {
       demo.profile.points += earned;
@@ -1270,12 +1322,183 @@ const Backend = (function () {
 
   async function saveBio(bio) {
     if (!demo.profile) return true;
+    if (!profilSchreibbar()) return false;
     demo.profile.bio = bio;
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({ bio }).eq("id", demo.user.id).select();
       if (error || !data || !data.length) return false;
     }
     return true;
+  }
+
+  /* ============================================================
+     SCHREIBSPERRE UND SICHERES SPEICHERN
+     ------------------------------------------------------------
+     profilSchreibbar() ist der Türsteher: solange das Profil nicht
+     sauber geladen werden konnte, darf NICHTS in die profiles-Zeile
+     geschrieben werden. Sonst überschreibt ein Ersatzprofil aus
+     lauter Standardwerten den echten Stand.
+     profilSpalten() ist der einzige Weg, Profilspalten zu ändern —
+     mit Wiederholung und mit einer verständlichen Rückmeldung.
+     ============================================================ */
+  function profilSchreibbar() {
+    return Boolean(demo.profile) && !demo.profile.ladefehler;
+  }
+  const SPERR_TEXT = "Dein Profil konnte gerade nicht geladen werden. Damit nichts überschrieben wird, wird bis dahin nichts gespeichert — bitte die Seite neu laden.";
+  // Die Oberfläche prüft die Rückgabewerte nicht an jeder der über 40 Stellen, an
+  // denen eine Einstellung gespeichert wird. Deshalb meldet sich die Sperre von
+  // sich aus — sonst tippt jemand an einer Einstellung herum und merkt nicht, dass
+  // sie nirgendwo ankommt.
+  function sperreMelden() {
+    if (typeof window !== "undefined" && window.__dmaProfilGesperrt) window.__dmaProfilGesperrt();
+  }
+  async function profilSpalten(felder) {
+    if (!demo.profile) return { ok: true };
+    if (!profilSchreibbar()) { sperreMelden(); return { ok: false, gesperrt: true, message: SPERR_TEXT }; }
+    if (!client || !demo.user) return { ok: true };
+    let fehler = (await client.from("profiles").update(felder).eq("id", demo.user.id)).error;
+    if (fehler) {
+      await new Promise((r) => setTimeout(r, 800));
+      fehler = (await client.from("profiles").update(felder).eq("id", demo.user.id)).error;
+    }
+    if (fehler) return { ok: false, message: friendlyDbError(fehler.message) };
+    return { ok: true };
+  }
+  // Holt den WIRKLICH aktuellen Stand von extra_profile_data aus der Datenbank und
+  // führt ihn mit dem lokalen zusammen. Nötig, weil derselbe Mensch die Seite auf
+  // mehreren Geräten offen haben kann: ohne dieses Zusammenführen würde das Gerät
+  // mit dem älteren Stand die Einstellungen des anderen Geräts löschen.
+  async function frischesExtra() {
+    const lokal = demo.profile.extraProfileData || {};
+    if (!client || !demo.user) return { ...lokal };
+    try {
+      const { data, error } = await client.from("profiles").select("extra_profile_data").eq("id", demo.user.id).maybeSingle();
+      if (error || !data) return { ...lokal };
+      return { ...(data.extra_profile_data || {}), ...lokal };
+    } catch (e) { return { ...lokal }; }
+  }
+  // Erneuter Ladeversuch — für den Knopf im Hinweisbanner, wenn das Profil beim
+  // Anmelden nicht durchkam.
+  async function reloadProfile() {
+    if (!client || !demo.user) return { ok: false, message: "Nicht angemeldet." };
+    const frisch = await fetchOrCreateProfile(demo.user.id, demo.user.email, demo.profile && demo.profile.name);
+    if (frisch.ladefehler) return { ok: false, message: frisch.ladefehlerText || "Klappt noch nicht." };
+    const verlauf = demo.profile ? demo.profile.history : [];
+    demo.profile = frisch;
+    demo.profile.history = verlauf || [];
+    sicherungSchreiben();
+    return { ok: true };
+  }
+
+  /* ============================================================
+     SICHERUNGSKOPIE UND REPARATUR
+     ------------------------------------------------------------
+     Die Datenbank bleibt die einzige Quelle der Wahrheit — gelesen
+     und geschrieben wird immer dort. Zusätzlich legt die App nach
+     jedem erfolgreichen Speichern eine reine SICHERUNGSKOPIE der
+     eigenen Einstellungen auf dem Gerät ab. Sie wird nie zum
+     Anzeigen benutzt und überschreibt nie etwas von allein; sie
+     existiert nur, damit sich ein Verlust wie der vom 6. September
+     überhaupt rückgängig machen lässt. Genau daran fehlte es: als
+     das leere Ersatzprofil den echten Stand überschrieben hatte,
+     gab es nirgendwo mehr eine zweite Kopie.
+     ============================================================ */
+  function sicherungsSchluessel() {
+    return demo.user ? "dma_sicherung_" + demo.user.id : null;
+  }
+  function sicherungSchreiben() {
+    const k = sicherungsSchluessel();
+    if (!k || !demo.profile || demo.profile.ladefehler) return;
+    try {
+      localStorage.setItem(k, JSON.stringify({
+        stand: new Date().toISOString(),
+        theme: demo.profile.theme || "",
+        trophies: demo.profile.trophies || [],
+        badges: demo.profile.badges || [],
+        collectedFigures: demo.profile.collectedFigures || [],
+        points: demo.profile.points || 0,
+        extra: demo.profile.extraProfileData || {},
+      }));
+    } catch (e) { /* privater Modus oder Speicher voll — Sicherung ist freiwillig */ }
+  }
+  function sicherungLesen() {
+    const k = sicherungsSchluessel();
+    if (!k) return null;
+    try { const roh = localStorage.getItem(k); return roh ? JSON.parse(roh) : null; } catch (e) { return null; }
+  }
+  function sicherungStand() {
+    const s = sicherungLesen();
+    return s && s.stand ? s.stand : null;
+  }
+
+  /* Rechnet den Punktestand aus der results-Tabelle nach und holt aus der
+     Sicherungskopie zurück, was in der profiles-Zeile fehlt. Angefasst wird nur,
+     was nachweislich fehlt: vorhandene Werte auf dem Server bleiben unberührt,
+     der Punktestand wird nie gesenkt. */
+  async function profilReparieren() {
+    if (!client || !demo.user) return { ok: false, message: "Dafür musst du angemeldet sein." };
+    if (!profilSchreibbar()) return { ok: false, message: SPERR_TEXT };
+    const bericht = [];
+    const patch = {};
+
+    // 1. Punkte aus den gespielten Runden nachrechnen
+    try {
+      const { data: runden } = await client.from("results").select("points, bonus").eq("user_id", demo.user.id);
+      if (Array.isArray(runden) && runden.length) {
+        const ausRunden = runden.reduce((n, r) => n + Math.round((r.points || 0) + (r.bonus || 0)), 0);
+        if (ausRunden > (demo.profile.points || 0)) {
+          patch.points = ausRunden;
+          bericht.push(`Punkte aus ${runden.length} gespielten Runden nachgerechnet: ${demo.profile.points || 0} → ${ausRunden}.`);
+        } else {
+          bericht.push(`Punktestand ist stimmig (${demo.profile.points || 0}); aus den Runden ergeben sich ${ausRunden}.`);
+        }
+      }
+    } catch (e) { bericht.push("Die gespielten Runden ließen sich nicht auslesen."); }
+
+    // 2. Sicherungskopie dieses Geräts heranziehen
+    const sich = sicherungLesen();
+    if (!sich) {
+      bericht.push("Auf diesem Gerät liegt keine Sicherungskopie — Einstellungen lassen sich von hier aus nicht zurückholen.");
+    } else {
+      const fehlend = {};
+      Object.entries(sich.extra || {}).forEach(([k, v]) => {
+        const da = demo.profile.extraProfileData && demo.profile.extraProfileData[k];
+        const leer = da === undefined || da === null || da === "" || (Array.isArray(da) && !da.length) || (typeof da === "object" && da && !Array.isArray(da) && !Object.keys(da).length);
+        if (leer && v !== undefined && v !== null && v !== "") fehlend[k] = v;
+      });
+      if (Object.keys(fehlend).length) {
+        // Der Server gewinnt bei allem, was dort belegt ist — die Sicherung füllt
+        // ausschließlich die Lücken.
+        patch.extra_profile_data = { ...(demo.profile.extraProfileData || {}), ...fehlend };
+        demo.profile.extraProfileData = patch.extra_profile_data;
+        bericht.push(`${Object.keys(fehlend).length} Einstellungen aus der Sicherung zurückgeholt: ${Object.keys(fehlend).join(", ")}.`);
+      } else {
+        bericht.push("Alle gesicherten Einstellungen sind bereits im Profil vorhanden.");
+      }
+      const vorher = (demo.profile.trophies || []).length;
+      const trophaeen = Array.from(new Set([...(sich.trophies || []), ...(demo.profile.trophies || [])]));
+      if (trophaeen.length > vorher) {
+        patch.trophies = trophaeen;
+        demo.profile.trophies = trophaeen;
+        bericht.push(`${trophaeen.length - vorher} Trophäen (Füchse und Orden) zurückgeholt.`);
+      }
+      const figuren = Array.from(new Set([...(sich.collectedFigures || []), ...(demo.profile.collectedFigures || [])]));
+      if (figuren.length > (demo.profile.collectedFigures || []).length) { patch.collected_figures = figuren; demo.profile.collectedFigures = figuren; }
+      const abzeichen = Array.from(new Set([...(sich.badges || []), ...(demo.profile.badges || [])]));
+      if (abzeichen.length > (demo.profile.badges || []).length) { patch.badges = abzeichen; demo.profile.badges = abzeichen; }
+      if (sich.theme && (!demo.profile.theme || demo.profile.theme === "bastelheft") && sich.theme !== demo.profile.theme) {
+        patch.theme = sich.theme;
+        demo.profile.theme = sich.theme;
+        bericht.push(`Design „${sich.theme}“ aus der Sicherung zurückgeholt.`);
+      }
+    }
+
+    if (!Object.keys(patch).length) return { ok: true, bericht, geaendert: false };
+    if (patch.points !== undefined) demo.profile.points = patch.points;
+    const res = await profilSpalten(patch);
+    if (!res.ok) return { ok: false, message: res.message, bericht };
+    sicherungSchreiben();
+    return { ok: true, bericht, geaendert: true };
   }
 
   // Leichtgewichtige, gezielte Aktualisierung EINES Feldes in extra_profile_data — für schnelle
@@ -1286,12 +1509,19 @@ const Backend = (function () {
   // anderen Gerät nicht ankamen.
   async function updateExtraProfileField(key, value) {
     if (!demo.profile) return { ok: true };
+    if (!profilSchreibbar()) { sperreMelden(); return { ok: false, gesperrt: true, message: SPERR_TEXT }; }
     demo.profile.extraProfileData = demo.profile.extraProfileData || {};
     demo.profile.extraProfileData[key] = value;
     if (client && demo.user) {
-      const { error } = await client.from("profiles").update({ extra_profile_data: demo.profile.extraProfileData }).eq("id", demo.user.id);
+      // Erst den Serverstand dazuholen, dann schreiben — sonst löscht dieses
+      // Gerät Einstellungen, die inzwischen auf einem anderen gemacht wurden.
+      const zusammen = await frischesExtra();
+      zusammen[key] = value;
+      demo.profile.extraProfileData = zusammen;
+      const { error } = await client.from("profiles").update({ extra_profile_data: zusammen }).eq("id", demo.user.id);
       if (error) return { ok: false, message: friendlyDbError(error.message) };
     }
+    sicherungSchreiben();
     return { ok: true };
   }
   // "Beste Freunde" markieren — nutzt dasselbe flexible extra_profile_data-Feld statt einer
@@ -1408,6 +1638,7 @@ const Backend = (function () {
   }
   async function saveExtendedProfile({ languages, favMovie, favSeries, favSong, favFood, favDrink, favCountry, favQuote, poem, extra }) {
     if (!demo.profile) return { ok: true };
+    if (!profilSchreibbar()) { sperreMelden(); return { ok: false, gesperrt: true, message: SPERR_TEXT }; }
     demo.profile.languages = languages;
     demo.profile.favMovie = favMovie;
     demo.profile.favSeries = favSeries;
@@ -1421,7 +1652,9 @@ const Backend = (function () {
     // schlankeren updateExtraProfileField-Weg gespeichert wurden (z. B. Lernprofil-Bewertung,
     // Laufband-Einstellungen, "schon gesehene" Meilensteine), beim nächsten Abschicken des
     // normalen Bearbeitungsformulars unabsichtlich wieder gelöscht.
-    demo.profile.extraProfileData = { ...(demo.profile.extraProfileData || {}), ...(extra || {}) };
+    // Serverstand + lokaler Stand + neue Angaben — in dieser Reihenfolge, damit
+    // weder ein anderes Gerät noch dieses Formular Einstellungen wegwirft.
+    demo.profile.extraProfileData = { ...(await frischesExtra()), ...(extra || {}) };
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({
         languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood,
@@ -1430,16 +1663,28 @@ const Backend = (function () {
       if (error) return { ok: false, message: friendlyDbError(error.message) };
       if (!data || !data.length) return { ok: false, message: "Speichern hat nichts zurückgegeben — evtl. blockiert Row Level Security (RLS) den Schreibzugriff." };
     }
+    sicherungSchreiben();
     return { ok: true };
   }
 
   function addTrophy(label) {
     if (!demo.profile) return false;
+    demo.profile.trophies = demo.profile.trophies || [];
     if (demo.profile.trophies.includes(label)) return false;
     demo.profile.trophies.push(label);
-    if (client && demo.user) {
-      client.from("profiles").update({ trophies: demo.profile.trophies }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Trophäe konnte nicht gespeichert werden:", e));
+    if (client && demo.user && profilSchreibbar()) {
+      // Zusammenführen statt überschreiben: eine Trophäe, die auf einem anderen
+      // Gerät dazugekommen ist, darf hier nicht verloren gehen.
+      (async () => {
+        try {
+          const { data } = await client.from("profiles").select("trophies").eq("id", demo.user.id).maybeSingle();
+          const server = (data && data.trophies) || [];
+          const alle = Array.from(new Set([...server, ...demo.profile.trophies]));
+          demo.profile.trophies = alle;
+          await client.from("profiles").update({ trophies: alle }).eq("id", demo.user.id);
+          sicherungSchreiben();
+        } catch (e) { console.warn("Trophäe konnte nicht gespeichert werden:", e); }
+      })();
     }
     return true;
   }
@@ -1453,15 +1698,22 @@ const Backend = (function () {
     demo.profile.collectedFigures = demo.profile.collectedFigures || [];
     if (demo.profile.collectedFigures.includes(figureId)) return false;
     demo.profile.collectedFigures.push(figureId);
-    if (client && demo.user) {
-      client.from("profiles").update({ collected_figures: demo.profile.collectedFigures }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Sammelfigur konnte nicht dauerhaft gespeichert werden:", e));
+    if (client && demo.user && profilSchreibbar()) {
+      (async () => {
+        try {
+          const { data } = await client.from("profiles").select("collected_figures").eq("id", demo.user.id).maybeSingle();
+          const alle = Array.from(new Set([...((data && data.collected_figures) || []), ...demo.profile.collectedFigures]));
+          demo.profile.collectedFigures = alle;
+          await client.from("profiles").update({ collected_figures: alle }).eq("id", demo.user.id);
+        } catch (e) { console.warn("Sammelfigur konnte nicht dauerhaft gespeichert werden:", e); }
+      })();
     }
     return true;
   }
 
   async function saveBirthday(birthday) {
     if (!demo.profile) return true;
+    if (!profilSchreibbar()) return false;
     demo.profile.birthday = birthday;
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({ birthday }).eq("id", demo.user.id).select();
@@ -1644,6 +1896,7 @@ const Backend = (function () {
 
   async function saveHobbies(hobbies) {
     if (!demo.profile) return true;
+    if (!profilSchreibbar()) return false;
     demo.profile.hobbies = hobbies;
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({ hobbies }).eq("id", demo.user.id).select();
@@ -1654,6 +1907,7 @@ const Backend = (function () {
 
   async function saveOrigin(origin) {
     if (!demo.profile) return true;
+    if (!profilSchreibbar()) return false;
     demo.profile.origin = origin;
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({ origin }).eq("id", demo.user.id).select();
@@ -1926,9 +2180,12 @@ const Backend = (function () {
   }
 
   function saveThemePreference(themeId) {
-    if (client && demo.user) {
+    // Nicht speichern, solange das Profil nicht geladen ist — sonst würde beim
+    // ersten Klick das angezeigte Grunddesign das echte Design überschreiben.
+    if (client && demo.user && profilSchreibbar()) {
+      if (demo.profile) demo.profile.theme = themeId;
       client.from("profiles").update({ theme: themeId }).eq("id", demo.user.id)
-        .then(() => {}, (e) => console.warn("Design konnte nicht gespeichert werden:", e));
+        .then(() => sicherungSchreiben(), (e) => console.warn("Design konnte nicht gespeichert werden:", e));
     }
   }
 
@@ -3076,6 +3333,7 @@ const Backend = (function () {
     deleteComment,
     saveBio,
     saveExtendedProfile, updateExtraProfileField, toggleBestFriend, getBestFriendIds,
+    profilSchreibbar, reloadProfile, profilReparieren, SPERR_TEXT, sicherungSchreiben, sicherungStand,
     SYMPATHY_LEVELS, setSympathyLevel, removeSympathyLevel, getMySympathyFor,
     getAllSympathyLevels, addCustomSympathyLevel, removeCustomSympathyLevel,
     saveBirthday,
