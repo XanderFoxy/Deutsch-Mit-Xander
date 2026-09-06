@@ -4299,9 +4299,21 @@
         const chosenIdx = selection[0];
         blankSlot.textContent = q.options[chosenIdx];
         blankSlot.classList.add(record.base > 0 ? "blank-correct" : "blank-wrong");
+        // Italienische Elision: endet das eingesetzte Wort auf einen Apostroph
+        // (all', dell', un', l'), folgt KEIN Leerzeichen — sonst stünde nach dem
+        // Antworten "Molti ricorrono all' avvocato" statt "all'avvocato" im Satz.
+        // Die Lücke selbst braucht die Leerzeichen, damit sie sichtbar bleibt;
+        // erst beim Einsetzen wird das folgende weggenommen.
+        if (/['’]$/.test(q.options[chosenIdx] || "")) {
+          const danach = blankSlot.nextSibling;
+          if (danach && danach.nodeType === 3) danach.nodeValue = danach.nodeValue.replace(/^\s+/, "");
+        }
         if (record.base === 0) {
           const correctWord = q.options[q.correct[0]];
           blankSlot.insertAdjacentHTML("afterend", ` <span class="blank-correction">(richtig: ${correctWord})</span>`);
+          // Wurde das Leerzeichen oben entfernt, hängt die Korrektur sonst am Wort.
+          const korr = blankSlot.nextElementSibling;
+          if (korr && korr.classList.contains("blank-correction")) korr.insertAdjacentText("afterend", " ");
         }
       }
       document.getElementById("explainBox").classList.add("open");
@@ -18489,8 +18501,13 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "148";
+  const APP_VERSION = "149";
   const APP_CHANGELOG = {
+    "149": [
+      "🇮🇹 Alle 5333 italienischen Übungssätze wurden inhaltlich durchgesehen. 172 Sätze waren zwar grammatisch richtig, ergaben aber keinen Sinn — „eine Torte streng untersuchen, um die Frage zu verstehen“, „müde Zimmer“, „einen warmen Baum“. Die sind jetzt durch ordentliche Sätze ersetzt, mit derselben Lücke und derselben Lösung.",
+      "🙂 Acht Beispielsätze nannten Kinder, Freunde oder die Katze „dumm“. Das Wort bleibt als Vokabel im Kurs, steht jetzt aber bei Filmen, Ideen, Fehlern und Regeln statt bei Menschen und Tieren.",
+      "✍️ Kleiner, aber sichtbarer Fehler behoben: Nach dem Antworten stand im Satz „Molti ricorrono all’ avvocato“ mit Leerzeichen. Im Italienischen folgt nach der Elision keines — jetzt steht dort „all’avvocato“.",
+    ],
     "148": [
       "🇮🇹 Alle 5333 italienischen Übungssätze haben jetzt eine deutsche Übersetzung. Mit dem Schalter „🇩🇪 Übersetzung einblenden“ siehst du bei jeder Lückenaufgabe, was der Satz heißt — bei allen neun Kategorien und auf allen Niveaus von A1 bis C2.",
     ],
