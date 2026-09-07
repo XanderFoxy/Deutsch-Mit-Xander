@@ -6071,6 +6071,7 @@
   let sbkZeitform = "praesens";
   let sbkSatzart = "aussage";
   let sbkPronomen = false;   // im Italienischen normalerweise weggelassen
+  let sbkAnsicht = "bauen";  // "bauen" oder "beispiele"
 
   function sbkImItalienischraum() {
     return Boolean(ExerciseData.getLernraum && ExerciseData.getLernraum() === "it");
@@ -6082,9 +6083,9 @@
     const kat = sbkKategorie === "alle" ? null : sbkKategorie;
     const verben = S.verbenFuer(kat, sbkNiveau);
     let verb = verben.find((v) => v.id === sbkWahl.verb) || verben[0];
-    const orte = S.orteFuer(kat, sbkNiveau);
+    const orte = S.orteFuer(kat, sbkNiveau, verb);
     const dinge = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau) : [];
-    const personen = verb.personFall ? S.personenFuer(null, sbkNiveau) : [];
+    const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
     const zeiten = S.zeitenFuer(sbkZeitform);
     const arten = S.artenFuer(verb);
     const subjekt = S.SUBJEKTE.find((s) => s.id === sbkWahl.subjekt) || S.SUBJEKTE[0];
@@ -6105,9 +6106,9 @@
     const zufall = (liste) => liste[Math.floor(Math.random() * liste.length)];
     const verben = S.verbenFuer(kat, sbkNiveau);
     const verb = zufall(verben);
-    const orte = S.orteFuer(kat, sbkNiveau);
+    const orte = S.orteFuer(kat, sbkNiveau, verb);
     const dinge = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau) : [];
-    const personen = verb.personFall ? S.personenFuer(null, sbkNiveau) : [];
+    const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
     const zeiten = S.zeitenFuer(sbkZeitform);
     sbkWahl = {
       subjekt: zufall(S.SUBJEKTE).id,
@@ -6139,7 +6140,20 @@
     const area = document.getElementById(zielId || "satzbaukastenDeArea");
     if (!area) return;
     const S = window.Satzbau;
-    if (!S) { area.innerHTML = '<p class="empty-note">Der Satzbaukasten wird geladen …</p>'; return; }
+    if (!S) {
+      /* Der Satzbaukasten lebt in einer eigenen Datei (satzbau.js). Fehlt sie,
+         blieb hier vorher für immer „wird geladen …“ stehen — ohne Hinweis,
+         woran es liegt. Jetzt steht es da. */
+      area.innerHTML = `
+        <div class="question-card">
+          <p class="eyebrow" style="margin-top:0;">⚠️ Satzbaukasten nicht geladen</p>
+          <p class="empty-note">Die Datei <strong>satzbau.js</strong> fehlt oder konnte nicht geladen werden.
+          Sie enthält die Formenlehre (Fälle, Präpositionen, Verbformen) und ist seit Version 152 eine
+          <strong>eigene, neue Datei</strong> — sie muss zusätzlich hochgeladen werden, nicht nur ersetzt.</p>
+          <p class="empty-note" style="margin-top:8px;">Danach die Seite einmal vollständig neu laden.</p>
+        </div>`;
+      return;
+    }
     sbkNiveau = applyDefaultCefrLevel(sbkNiveau, (v) => { sbkNiveau = v; }, "satzbaukasten");
     const italienisch = sbkImItalienischraum();
     const a = sbkAuswahl();
@@ -6162,8 +6176,45 @@
       ? "Richtung — im Deutschen mit Akkusativ: ans Meer, ins Bett"
       : a.verb.ortRolle === "woher" ? "Herkunft — vom, aus dem" : "Ort — im Deutschen mit Dativ: am Meer, im Bett";
 
-    area.innerHTML = `
-      <p class="empty-note" style="margin-bottom:12px;">🧱 <strong>Satzbaukasten</strong> — beantworte so viele Fragen, wie du willst: <strong>Wer</strong> macht <strong>was</strong>, <strong>wo</strong>, <strong>wann</strong> und <strong>wie</strong>. Schon „Wer + Verb“ ergibt einen Satz.</p>
+    // Umschalter zwischen selbst bauen und fertige Sätze nachlesen.
+    const kopf = `
+      <p class="empty-note" style="margin-bottom:10px;">🧱 <strong>Satzbaukasten</strong> — entweder du baust dir selbst einen Satz aus den Grundfragen, oder du liest die geprüften Beispielsätze nach.</p>
+      <div class="baustein-reihe" style="margin-bottom:12px;">
+        <button type="button" class="baustein" data-sbk-ansicht="bauen" aria-selected="${sbkAnsicht === "bauen"}">🔧 Selbst bauen<span class="baustein-de">Wer · macht was · wo · wann · wie</span></button>
+        <button type="button" class="baustein" data-sbk-ansicht="beispiele" aria-selected="${sbkAnsicht === "beispiele"}">📖 Beispiele lesen<span class="baustein-de">${S.beispielAnzahl ? S.beispielAnzahl(sbkKategorie === "alle" ? "alltag" : sbkKategorie) : 0} Sätze in diesem Bereich</span></button>
+      </div>`;
+    const bereichsReihe = `
+      <p class="eyebrow sbk-frage">🗂️ Bereich<span class="sbk-frage-hinweis">${sbkAnsicht === "beispiele" ? "je Bereich 102 geprüfte Sätze" : anzahl.toLocaleString("de-DE") + " mögliche Sätze auf " + sbkNiveau}</span></p>
+      <div class="baustein-reihe">
+        ${sbkAnsicht === "bauen" ? `<button type="button" class="baustein" data-sbk-kat="alle" aria-selected="${sbkKategorie === "alle"}">🌍 Alle</button>` : ""}
+        ${S.KATEGORIEN.map((k) => `<button type="button" class="baustein" data-sbk-kat="${k.id}" aria-selected="${sbkKategorie === k.id}">${k.icon} ${k.name}</button>`).join("")}
+      </div>
+      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt, wie einfach die Sätze sind</span></p>
+      <div class="baustein-reihe">
+        ${CEFR_LEVELS.map((l) => `<button type="button" class="baustein" data-sbk-niveau="${l}" aria-selected="${sbkNiveau === l}">${l}</button>`).join("")}
+      </div>`;
+
+    if (sbkAnsicht === "beispiele") {
+      const kat = sbkKategorie === "alle" ? "alltag" : sbkKategorie;
+      const liste = S.beispieleFuer ? S.beispieleFuer(kat, sbkNiveau) : [];
+      const artName = { aussage: "Aussage", frage: "Frage", nebensatz: "mit Nebensatz" };
+      area.innerHTML = kopf + bereichsReihe + `
+        <p class="empty-note" style="margin-top:14px;">${liste.length} Sätze auf ${sbkNiveau} — jeder einzeln geschrieben und durchgesehen, keiner aus Bausteinen zusammengesetzt.</p>
+        <div class="beispiel-liste">
+          ${liste.map((b) => `
+            <div class="beispiel-satz">
+              <p class="beispiel-de">${b.de}</p>
+              <p class="beispiel-it">${b.it}</p>
+              <span class="beispiel-art">${artName[b.art] || b.art}</span>
+            </div>`).join("") || '<p class="empty-note">Für dieses Niveau sind hier noch keine Beispiele hinterlegt.</p>'}
+        </div>`;
+      area.querySelectorAll("[data-sbk-ansicht]").forEach((b) => b.addEventListener("click", () => { sbkAnsicht = b.dataset.sbkAnsicht; renderSatzbaukasten(zielId); }));
+      area.querySelectorAll("[data-sbk-kat]").forEach((b) => b.addEventListener("click", () => { sbkKategorie = b.dataset.sbkKat; renderSatzbaukasten(zielId); }));
+      area.querySelectorAll("[data-sbk-niveau]").forEach((b) => b.addEventListener("click", () => { sbkNiveau = b.dataset.sbkNiveau; autoCefrLevel.satzbaukasten = null; renderSatzbaukasten(zielId); }));
+      return;
+    }
+
+    area.innerHTML = kopf + `
 
       <div class="question-card sbk-anzeige">
         <p class="baustein-satz">${teile.map((x, i) => {
@@ -6179,16 +6230,7 @@
         </div>
       </div>
 
-      <p class="eyebrow sbk-frage">🗂️ Bereich<span class="sbk-frage-hinweis">${anzahl.toLocaleString("de-DE")} mögliche Sätze auf ${sbkNiveau}</span></p>
-      <div class="baustein-reihe">
-        <button type="button" class="baustein" data-sbk-kat="alle" aria-selected="${sbkKategorie === "alle"}">🌍 Alle</button>
-        ${S.KATEGORIEN.map((k) => `<button type="button" class="baustein" data-sbk-kat="${k.id}" aria-selected="${sbkKategorie === k.id}">${k.icon} ${k.name}</button>`).join("")}
-      </div>
-
-      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt, wie einfach die Bausteine sind</span></p>
-      <div class="baustein-reihe">
-        ${CEFR_LEVELS.map((l) => `<button type="button" class="baustein" data-sbk-niveau="${l}" aria-selected="${sbkNiveau === l}">${l}</button>`).join("")}
-      </div>
+      ${bereichsReihe}
 
       <p class="eyebrow sbk-frage">⏳ Zeit<span class="sbk-frage-hinweis">Gegenwart, Vergangenheit oder Zukunft</span></p>
       <div class="baustein-reihe">
@@ -6244,6 +6286,7 @@
         (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne —")}
     `;
 
+    area.querySelectorAll("[data-sbk-ansicht]").forEach((b) => b.addEventListener("click", () => { sbkAnsicht = b.dataset.sbkAnsicht; renderSatzbaukasten(zielId); }));
     area.querySelectorAll("[data-sbk-kat]").forEach((b) => b.addEventListener("click", () => {
       sbkKategorie = b.dataset.sbkKat;
       sbkWahl.ort = ""; sbkWahl.objekt = ""; sbkWahl.person = "";
@@ -18662,8 +18705,15 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "153";
+  const APP_VERSION = "154";
   const APP_CHANGELOG = {
+    "154": [
+      "\u{1F1EE}\u{1F1F9} Die unsinnigen italienischen \u00dcbungss\u00e4tze sind weg. Der Grund war eine feste Satzh\u00fclle, in die reihum verschiedene W\u00f6rter gesetzt wurden \u2014 sie passte zum ersten und zu keinem der \u00fcbrigen. So entstand \u201Ew\u00e4hrend ich auf den Bus warte, bevorzuge ich den Psychiater\u201C. 42 solcher Schablonen mit 381 S\u00e4tzen wurden gefunden; jeder dieser S\u00e4tze ist jetzt einzeln neu geschrieben, mit derselben Aufgabe an derselben Stelle. Ergebnis: 0 Schablonen, 0 Verdachtsf\u00e4lle.",
+      "\u{1F9F1} Der Satzbaukasten verbindet nicht mehr \u00fcber Themen, sondern \u00fcber ausdr\u00fcckliche Listen: Bei jedem Verb steht, welche Orte, Dinge und Personen wirklich dazugeh\u00f6ren, und welche Angaben zu Art und Weise passen. Was dort nicht steht, l\u00e4sst sich gar nicht erst bauen \u2014 kein \u201EIch bin gut gegangen\u201C, kein \u201ETermin im Garten haben\u201C mehr.",
+      "\u{1F4D6} Neu im Satzbaukasten: \u201EBeispiele lesen\u201C. 1020 S\u00e4tze, 102 je Bereich, 17 auf jedem Niveau von A1 bis C2 \u2014 jeder einzeln geschrieben und durchgesehen, keiner aus Bausteinen zusammengesetzt, jeder mit italienischer Entsprechung.",
+      "\u{1F4DA} Das W\u00f6rterbuch ist von 6054 auf 8606 Stichw\u00f6rter gewachsen. Jedes der 25 Themen hat jetzt auf jedem Niveau genug W\u00f6rter \u2014 vorher waren 80 von 150 Kombinationen unter 40 Eintr\u00e4gen, jetzt hat die kleinste 30 und die meisten 50 und mehr. Daraus speisen sich auch die \u00dcbungen: 9259 Wortschatz-Aufgaben statt 6759.",
+      "\u26A0\uFE0F Wenn der Satzbaukasten leer bleibt, sagt er jetzt warum: Die Datei satzbau.js ist seit Version 152 neu und muss zus\u00e4tzlich hochgeladen werden \u2014 vorher stand dort nur endlos \u201Ewird geladen\u201C.",
+    ],
     "153": [
       "\u{1F309} Satzbr\u00fccke: Der Fuchs geht jetzt erst los, wenn die Br\u00fccke wirklich durchgehend ist \u2014 vorher lief er auch bei L\u00fccken los und blieb am Abbruch stehen. Fehlt eine Planke, bleibt er auf dem Felsen und traut sich nicht. Ist sie fertig, l\u00e4uft er ganz hin\u00fcber, setzt sich auf dem anderen Felsen hin, macht die Augen zufrieden zu und hebt die Pfote \u2014 mit Fanfare und einem Miau.",
       "\u{1F431} Neuer Ton: ein Miau, das die Seite selbst erzeugt (steigendes \u201Emi\u201C, fallendes \u201Eau\u201C mit leichtem Vibrato). Keine Tondatei n\u00f6tig.",
@@ -18781,9 +18831,9 @@ An einem Morgen lief ein kleiner Fuchs los…
               if (!verben.length) return;
               for (let i = 0; i < n; i++) {
                 const verb = zufall(verben);
-                const orte = S.orteFuer(kat.id, lvl);
+                const orte = S.orteFuer(kat.id, lvl, verb);
                 const dinge = verb.objekt ? S.dingeFuer(verb, null, lvl) : [];
-                const personen = verb.personFall ? S.personenFuer(null, lvl) : [];
+                const personen = verb.personFall ? S.personenFuer(null, lvl, verb) : [];
                 const zeiten = S.zeitenFuer(zf);
                 const r = S.bauSatz({
                   subjekt: zufall(S.SUBJEKTE), verb,

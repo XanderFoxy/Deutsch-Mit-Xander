@@ -4432,3 +4432,23 @@ body.lernraum-it .nur-deutsch { display: none; }
 .profil-bereich-zahl { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.78rem; }
 .profil-bereich-stand { margin: 0 12px 8px; font-size: 0.7rem; }
 .profil-bereich .breakdown-list { margin: 0 10px 10px; }
+
+/* Beispielsätze im Satzbaukasten — Deutsch groß, Italienisch darunter. */
+.beispiel-liste { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.beispiel-satz {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 239, 228, 0.12);
+  position: relative;
+}
+.beispiel-de { margin: 0; font-size: 0.92rem; line-height: 1.45; overflow-wrap: break-word; }
+.beispiel-it { margin: 3px 0 0; font-size: 0.8rem; font-style: italic; opacity: 0.75; overflow-wrap: break-word; }
+.beispiel-art {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
