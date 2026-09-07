@@ -18501,8 +18501,14 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "149";
+  const APP_VERSION = "150";
   const APP_CHANGELOG = {
+    "150": [
+      "\u{1F5D3}\uFE0F \u201EEs war einmal in Deutschland\u201C ist vollst\u00e4ndig: alle 366 Tage, alle sechs Niveaus von A1 bis C2, in zehn Sprachen \u2014 Englisch, Arabisch, T\u00fcrkisch, Russisch, Spanisch, Franz\u00f6sisch, Polnisch, Ukrainisch, Persisch und jetzt auch Italienisch. Knapp 22.000 \u00dcbersetzungen.",
+      "\u{1F1EE}\u{1F1F9} Italienisch war die einzige Sprache, die im Kalender \u00fcberall gefehlt hat \u2014 auch im Archiv. Jetzt ist sie \u00fcberall dabei. \u201EDichter und Denker\u201C und \u201ESchnee von gestern\u201C hatten sie schon.",
+      "\u{1F4DD} Zehn Tage hatten keine \u00dcberschrift und fehlten deshalb auch im Geschichts-Quiz \u2014 darunter das Reinheitsgebot, das Wunder von Bern, die Entdeckung der R\u00f6ntgenstrahlen und die M\u00e4rchen der Br\u00fcder Grimm. Sie sind jetzt vollst\u00e4ndig dabei.",
+      "\u270D\uFE0F 111 weitere Stellen korrigiert, an denen im Italienischen ein Leerzeichen nach dem Apostroph stand (\u201Eall\u2019 avvocato\u201C statt \u201Eall\u2019avvocato\u201C), und die letzten drei Beispiels\u00e4tze ersetzt, in denen ein gehobener Satz um ein Br\u00f6tchen oder eine Erdbeere gebaut war.",
+    ],
     "149": [
       "🇮🇹 Alle 5333 italienischen Übungssätze wurden inhaltlich durchgesehen. 172 Sätze waren zwar grammatisch richtig, ergaben aber keinen Sinn — „eine Torte streng untersuchen, um die Frage zu verstehen“, „müde Zimmer“, „einen warmen Baum“. Die sind jetzt durch ordentliche Sätze ersetzt, mit derselben Lücke und derselben Lösung.",
       "🙂 Acht Beispielsätze nannten Kinder, Freunde oder die Katze „dumm“. Das Wort bleibt als Vokabel im Kurs, steht jetzt aber bei Filmen, Ideen, Fehlern und Regeln statt bei Menschen und Tieren.",
