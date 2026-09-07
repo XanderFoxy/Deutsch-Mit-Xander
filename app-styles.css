@@ -3856,11 +3856,17 @@ details summary::marker { content: ""; }
    Strecke wirklich ab — vom linken Felsen bis dorthin, wo die Brücke aufhört.
    Trägt sie ganz, steht er am Ende drüben; fehlt ein Stück, bleibt er an der
    Lücke stehen. Ein leichtes Auf und Ab macht die Schritte sichtbar. */
+/* Der Fuchs überquert die Brücke — aber erst, wenn sie durchgehend ist.
+   Er startet auf dem linken Felsen, läuft die Planken ab und kommt auf dem
+   rechten Felsen an. Dort blendet er aus und der sitzende, zufriedene Fuchs
+   erscheint. Ohne vollständige Brücke gibt es diese Klasse gar nicht — dann
+   bleibt er stehen. */
 .sb-fuchs-ueberquert {
   transition: none;
   transform: translate(var(--sb-start-x), var(--sb-start-y));
-  animation: sbFuchsUeberquert 2200ms cubic-bezier(0.45, 0, 0.55, 1) forwards,
-             sbFuchsSchritte 320ms ease-in-out 0ms 7;
+  animation: sbFuchsUeberquert 2400ms cubic-bezier(0.35, 0, 0.6, 1) forwards,
+             sbFuchsSchritte 300ms ease-in-out 0ms 8,
+             sbFuchsAusblenden 260ms ease-in forwards;
 }
 @keyframes sbFuchsUeberquert {
   from { transform: translate(var(--sb-start-x), var(--sb-start-y)); }
@@ -3870,11 +3876,37 @@ details summary::marker { content: ""; }
   0%, 100% { translate: 0 0; }
   50%      { translate: 0 -1.2px; }
 }
+/* Das Ausblenden setzt erst am Ende des Laufs ein: gleiche Verzögerung wie
+   die Laufanimation plus deren Dauer. */
+.sb-fuchs-ueberquert { animation-delay: var(--sb-verzoegerung, 0ms), var(--sb-verzoegerung, 0ms), calc(var(--sb-verzoegerung, 0ms) + 2300ms); }
+@keyframes sbFuchsAusblenden {
+  to { opacity: 0; }
+}
+/* Der sitzende Fuchs am Ziel: taucht auf, wenn der Lauf vorbei ist. */
+.sb-fuchs-sitzt {
+  opacity: 0;
+  animation: sbSitztAuf 420ms ease-out forwards;
+}
+@keyframes sbSitztAuf {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Die erhobene Pfote winkt zweimal kurz. */
+.sb-fuchs-pfote {
+  transform-origin: 166px 54px;
+  animation: sbPfoteWinkt 620ms ease-in-out 300ms 3;
+}
+@keyframes sbPfoteWinkt {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-22deg); }
+}
 @media (prefers-reduced-motion: reduce) {
   .sb-fuchs-ueberquert {
     animation: none;
-    transform: translate(var(--sb-ziel-x), var(--sb-ziel-y));
+    opacity: 0;
   }
+  .sb-fuchs-sitzt { opacity: 1; animation: none; }
+  .sb-fuchs-pfote { animation: none; }
 }
 .wsm-bedeutung {
   text-align: center;
@@ -4230,3 +4262,173 @@ body.lernraum-it .nur-deutsch { display: none; }
   cursor: pointer;
 }
 .profil-warnband button:disabled { opacity: 0.6; cursor: default; }
+
+/* ---------------------------------------------------------------
+   SATZBAUKASTEN — Fragezeilen und Bausteine
+   Die Frage steht als Überschrift, der Hinweis darunter in normaler
+   Schreibweise. Vorher liefen beide in einer Zeile ineinander
+   ("BEREICH5.057 MÖGLICHE SÄTZE"), weil die Überschrift alles in
+   Großbuchstaben setzt.
+   --------------------------------------------------------------- */
+.sbk-frage {
+  display: block;
+  margin: 16px 0 4px;
+}
+.sbk-frage-hinweis {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-body, inherit);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.75;
+}
+.sbk-anzeige .baustein-satz { line-height: 1.7; }
+.sbk-hinweis { margin: 8px 0 0; font-size: 0.72rem; }
+.sbk-nebensatz-hinweis {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--teal-400, #4a9d8f);
+  background: rgba(74, 157, 143, 0.08);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.74rem;
+}
+/* Die Satzteile bekommen je Rolle eine eigene Farbe, damit man sieht,
+   welche Frage welcher Teil beantwortet. */
+.satzteil { border-radius: 6px; padding: 1px 4px; }
+.satzteil-wer { background: rgba(232, 130, 95, 0.18); }
+.satzteil-verb { background: rgba(74, 157, 143, 0.22); font-weight: 600; }
+.satzteil-was { background: rgba(201, 138, 58, 0.18); }
+.satzteil-wen { background: rgba(214, 69, 80, 0.15); }
+.satzteil-wo, .satzteil-wohin, .satzteil-woher { background: rgba(91, 168, 160, 0.18); }
+.satzteil-wann { background: rgba(139, 201, 168, 0.20); }
+.satzteil-wie { background: rgba(160, 160, 200, 0.18); }
+.satzteil-konj { background: rgba(0, 0, 0, 0.07); font-style: italic; }
+
+/* ---------------------------------------------------------------
+   ÜBERSETZUNGSHILFE im Italienisch-Raum
+   Steht direkt unter der Frage und ist sichtbar, WÄHREND man
+   überlegt. Vorher lag sie im Erklärkasten, der bis zum Antworten
+   ausgeblendet ist — der Schalter wirkte deshalb funktionslos.
+   --------------------------------------------------------------- */
+.uebersetzung-hilfe {
+  margin: 8px 0 4px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--teal-400, #4a9d8f);
+  background: rgba(74, 157, 143, 0.07);
+  border-radius: 0 8px 8px 0;
+}
+.uebersetzung-satz {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-style: italic;
+  overflow-wrap: break-word;
+}
+.uebersetzung-fehlt { opacity: 0.65; font-style: normal; }
+.uebersetzung-woerter {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.uebersetzung-option { white-space: normal; overflow-wrap: break-word; }
+.uebersetzung-option em { font-style: normal; opacity: 0.72; }
+.uebersetzung-option em::before { content: "= "; }
+.uebersetzung-schalter { margin-top: 8px; display: inline-block; }
+
+/* ---------------------------------------------------------------
+   KONSISTENZ AUF SCHMALEN BILDSCHIRMEN
+   ---------------------------------------------------------------
+   Zwei Fehler, die auf dem Handy sichtbar waren:
+   1. In der Auswertung von Spielen wurde der linke Text senkrecht
+      zusammengequetscht (ein Buchstabe pro Zeile), weil die rechte
+      Spalte nicht schrumpfen durfte.
+   2. Der erklärende Text neben einem Häkchen lief über den rechten
+      Rand hinaus und war nicht lesbar.
+   Beides sind dieselbe Ursache: eine Flex-Zeile, deren Teile nicht
+   umbrechen dürfen.
+   --------------------------------------------------------------- */
+.breakdown-row { flex-wrap: wrap; }
+.breakdown-row > *:first-child { flex: 1 1 60%; min-width: 0; }
+.breakdown-row > *:last-child { flex: 0 1 auto; max-width: 100%; min-width: 0; }
+
+@media (max-width: 460px) {
+  /* Unter dieser Breite bekommt jede Angabe ihre eigene Zeile, statt
+     dass zwei Spalten um denselben Platz streiten. */
+  .breakdown-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .breakdown-row > *:first-child,
+  .breakdown-row > *:last-child {
+    flex: 1 1 auto;
+    text-align: left;
+    max-width: 100%;
+  }
+}
+
+/* Beschriftungen mit Häkchen: Text bricht um und bleibt im Bild. */
+.form-field label {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+.form-field label[style*="flex"] { flex-wrap: nowrap; align-items: flex-start !important; }
+.form-field label > span { min-width: 0; flex: 1 1 auto; overflow-wrap: break-word; }
+.form-field label > input[type="checkbox"] { flex: 0 0 auto; margin-top: 2px; }
+
+/* Karten dürfen nie breiter werden als ihr Platz. */
+.category-card, .question-card, .breakdown-list, .baustein-reihe {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.category-card { min-width: 0; }
+.cat-body { min-width: 0; overflow-wrap: break-word; }
+
+/* Lange Wörter ohne Trennmöglichkeit (Fachbegriffe, URLs) sprengen
+   sonst jede Karte. */
+.question-prompt, .baustein-satz, .baustein-satz-de, .empty-note, .option-btn span {
+  overflow-wrap: break-word;
+}
+
+/* Wörterbuch-Karte auf sehr schmalen Geräten: Der Vorlese-Knopf hatte eine
+   feste Breite und schob sich rechts aus der Karte heraus. Jetzt bricht die
+   Karte um, statt zu überlaufen. */
+.vocab-card { flex-wrap: wrap; min-width: 0; }
+.vocab-card > *:not(.speak-btn) { min-width: 0; }
+@media (max-width: 360px) {
+  .speak-btn { width: 34px; height: 34px; font-size: 1rem; }
+}
+
+/* Profil-Übersicht: je Bereich ein aufklappbarer Abschnitt mit Zählung
+   und dem Zeitpunkt der letzten Speicherung. */
+.profil-bereich {
+  margin-top: 8px;
+  border: 1px solid rgba(245, 239, 228, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.profil-bereich > summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-weight: 700;
+  font-size: 0.86rem;
+  list-style: none;
+}
+.profil-bereich > summary::-webkit-details-marker { display: none; }
+.profil-bereich > summary::before { content: "▸ "; opacity: 0.6; }
+.profil-bereich[open] > summary::before { content: "▾ "; }
+.profil-bereich-name { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
+.profil-bereich-zahl { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.78rem; }
+.profil-bereich-stand { margin: 0 12px 8px; font-size: 0.7rem; }
+.profil-bereich .breakdown-list { margin: 0 10px 10px; }

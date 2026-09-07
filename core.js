@@ -226,6 +226,35 @@ const Core = (function () {
       tone(220, 0, 0.14, "square", 0.16); tone(160, 0.05, 0.14, "square", 0.14);
       tone(200, 0.28, 0.16, "square", 0.18); tone(130, 0.34, 0.18, "square", 0.16);
     },
+    miau() {
+      /* Ein Katzenlaut aus zwei Teilen: das "mi" steigt kurz an, das "au"
+         fällt langsam ab. Zusammen mit dem leichten Vibrato klingt es nach
+         Katze statt nach Piepton. Rein erzeugt, keine Audiodatei nötig. */
+      const ctx = getCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const vib = ctx.createOscillator();
+      const vibGain = ctx.createGain();
+      osc.type = "sawtooth";
+      const t = ctx.currentTime;
+      osc.frequency.setValueAtTime(520, t);
+      osc.frequency.linearRampToValueAtTime(760, t + 0.09);   // „mi“ steigt
+      osc.frequency.linearRampToValueAtTime(430, t + 0.42);   // „au“ fällt
+      vib.type = "sine";
+      vib.frequency.setValueAtTime(16, t);
+      vibGain.gain.setValueAtTime(22, t);
+      vib.connect(vibGain).connect(osc.frequency);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.13, t + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1600, t);
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(t); vib.start(t);
+      osc.stop(t + 0.5); vib.stop(t + 0.5);
+    },
     bubblePop() {
       // Kurzes, helles "Blubb" wie eine echte Seifenblase — bewusst deutlich anders als
       // explosion() (dumpfer Knall): ein kurzer, hoher Ton, der schnell in der Tonhöhe absackt
