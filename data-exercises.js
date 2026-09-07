@@ -3361,23 +3361,100 @@ const ExerciseData = (function () {
     ["Je mehr man vergibt, ___ leichter wird das Herz.", "umso", "als", "Je … umso ist gleichbedeutend mit je … desto — beide Formen sind korrekt."],
   ];
 
-  function bankWortschatzThemen(topic) {
-    const pool = topic ? WORTSCHATZ_THEMEN.filter(([, , t]) => t === topic) : WORTSCHATZ_THEMEN;
-    return Core.shuffle(pool).map(([word, correctDef, topicName]) => {
-      const sameTopic = WORTSCHATZ_THEMEN.filter(([w, , t]) => t === topicName && w !== word);
-      const distractors = Core.shuffle(sameTopic).slice(0, 2).map((x) => x[1]);
-      const opts = Core.shuffle([correctDef, ...distractors]);
-      return {
-        prompt: `Was bedeutet „${word}“?`,
-        options: opts,
-        correct: [opts.indexOf(correctDef)],
-        explain: `„${word}“ bedeutet: ${correctDef}.`,
-      };
+  /* ============================================================
+     WORTSCHATZ NACH THEMEN — aus dem Wörterbuch statt aus einer
+     eigenen kleinen Liste
+     ------------------------------------------------------------
+     Vorher speiste sich diese Kategorie aus WORTSCHATZ_THEMEN: rund
+     fünf Themen, ohne Niveau-Angabe, unabhängig vom Wörterbuch. Man
+     bekam auf C1 dieselben Haushaltswörter wie auf A1, und kein Wort
+     aus dem Wörterbuch tauchte hier je auf.
+     Jetzt ist das Wörterbuch die Quelle: 25 Themen, jedes auf allen
+     sechs Niveaus besetzt. Jede Frage trägt ihr Niveau, damit der
+     Niveau-Filter greift, und jedes geübte Wort lässt sich im
+     Wörterbuch nachschlagen — beides war ausdrücklich gewünscht.
+     Die alte Liste bleibt als zusätzliche Quelle erhalten; ihre
+     Themen werden auf die Wörterbuch-Themen abgebildet, damit nichts
+     verloren geht.
+     ============================================================ */
+  const WS_ALT_THEMA = {
+    "Haushalt": "Alltag & Zuhause",
+    "Kommunikation & Freunde": "Sprache & Kommunikation",
+    "Schule & Beruf": "Bildung & Lernen",
+    "Essen & Trinken": "Essen & Trinken",
+    "Reisen & Urlaub": "Reisen & Unterwegs",
+  };
+  // Alle Wörter, die für diese Kategorie in Frage kommen — Wörterbuch
+  // plus die alte Liste, einmal zusammengeführt und gemerkt.
+  let wsPoolCache = null;
+  function wsPool() {
+    if (wsPoolCache) return wsPoolCache;
+    const aus = [];
+    const woerter = (typeof VocabData !== "undefined" && VocabData.WORDS) || [];
+    woerter.forEach((w) => {
+      if (!w.word || !w.de || !w.theme) return;
+      aus.push({ wort: w.word, bedeutung: w.de, thema: w.theme, level: w.level || "B1", beispiel: w.example || "" });
     });
+    WORTSCHATZ_THEMEN.forEach(([wort, bedeutung, thema]) => {
+      aus.push({ wort, bedeutung, thema: WS_ALT_THEMA[thema] || thema, level: "A2", beispiel: "" });
+    });
+    // Doppelte Stichwörter zusammenfassen — das Wörterbuch gewinnt.
+    const gesehen = new Set();
+    wsPoolCache = aus.filter((e) => {
+      const k = e.wort.toLowerCase();
+      if (gesehen.has(k)) return false;
+      gesehen.add(k);
+      return true;
+    });
+    return wsPoolCache;
+  }
+  // Der nackte Wortkörper ohne Artikel — für die Lückenfrage aus dem Beispielsatz.
+  function wsStamm(wort) {
+    return String(wort).replace(/^(der|die|das|sich)\s+/i, "").trim();
+  }
+  function bankWortschatzThemen(topic) {
+    const alle = wsPool();
+    const pool = topic ? alle.filter((e) => e.thema === topic) : alle;
+    if (!pool.length) return [];
+    return Core.shuffle(pool).map((e, i) => {
+      // Ablenker bevorzugt aus demselben Thema UND demselben Niveau — sonst
+      // verrät schon die Wortwahl, welche Antwort gemeint ist.
+      const gleichesNiveau = pool.filter((x) => x.wort !== e.wort && x.level === e.level);
+      const restlich = pool.filter((x) => x.wort !== e.wort && x.level !== e.level);
+      const kandidaten = gleichesNiveau.length >= 3 ? gleichesNiveau : gleichesNiveau.concat(restlich);
+      const ablenker = Core.shuffle(kandidaten).slice(0, 3);
+      // Zwei Fragetypen im Wechsel: Bedeutung erkennen und Wort einsetzen.
+      const stamm = wsStamm(e.wort);
+      const luecke = e.beispiel && stamm.length > 3 && e.beispiel.includes(stamm);
+      if (luecke && i % 2 === 1 && ablenker.length >= 3) {
+        // In die Lücke gehört der nackte Wortkörper, NICHT die Wörterbuchform
+        // mit Artikel — sonst entsteht „eine strenge die Weiterbildungspflicht“.
+        const richtig = stamm;
+        const andere = ablenker.map((x) => wsStamm(x.wort)).filter((w) => w !== richtig);
+        if (andere.length < 3) return null;
+        const optionen = Core.shuffle([richtig, ...andere.slice(0, 3)]);
+        return {
+          prompt: e.beispiel.replace(stamm, "___"),
+          options: optionen,
+          correct: [optionen.indexOf(richtig)],
+          explain: `„${e.wort}“ — ${e.bedeutung}.`,
+          level: e.level,
+        };
+      }
+      const optionen = Core.shuffle([e.bedeutung, ...ablenker.slice(0, 3).map((x) => x.bedeutung)]);
+      return {
+        prompt: `Was bedeutet „${e.wort}“?`,
+        options: optionen,
+        correct: [optionen.indexOf(e.bedeutung)],
+        explain: `„${e.wort}“ bedeutet: ${e.bedeutung}.` + (e.beispiel ? ` Beispiel: ${e.beispiel}` : ""),
+        level: e.level,
+      };
+    }).filter(Boolean);
   }
 
   function getWortschatzThemen() {
-    return [...new Set(WORTSCHATZ_THEMEN.map((w) => w[2]))];
+    // Nach Häufigkeit sortiert wäre unruhig — alphabetisch findet man ein Thema wieder.
+    return [...new Set(wsPool().map((e) => e.thema))].sort((a, b) => a.localeCompare(b, "de"));
   }
 
   function bankKonnektoren() {
@@ -23431,7 +23508,7 @@ const ExerciseData = (function () {
       info: "Präsens, Perfekt, Präteritum, Plusquamperfekt und Futur I — anhand von Zeitwörtern und Satzbau erkennst du, welche Zeitform gemeint ist.",
       getBank: mitZusatz("zeitformen", bankZeitformen), unlock: { type: "points", value: 40 } },
     { id: "wortschatz", title: "Wortschatz nach Themen", icon: "🧠", group: "wortschatz",
-      info: "Alltagswortschatz zu Haushalt, Freunden, Schule & Beruf, Essen und Reisen — wähl ein Thema oder übe querbeet.",
+      info: "Wortschatz aus dem Wörterbuch: 25 Themen von Alltag & Zuhause bis Wissenschaft & Forschung, auf jedem Niveau von A1 bis C2. Wähl ein Thema oder übe querbeet — jedes Wort hier kannst du im Wörterbuch nachschlagen.",
       getBank: mitZusatz("wortschatz", bankWortschatzThemen), unlock: { type: "points", value: 20 } },
     { id: "konnektoren", title: "Zweiteilige Konnektoren", icon: "🪢", group: "logik",
       info: "sowohl…als auch, nicht nur…sondern auch, entweder…oder, weder…noch, zwar…aber, einerseits…andererseits — Wortpaare, die zusammengehören.",

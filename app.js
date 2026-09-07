@@ -897,6 +897,7 @@
     { key: "wortangler_neu", label: "🎣 Wortangler (neues Spiel)", desc: "Aus einem Teich voller Wörter nur die fangen, die zur Regel passen — ein bestimmter Artikel oder ein Themenbereich. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "wortleiter_neu", label: "🧗 Wortleiter (neues Spiel)", desc: "Von A1 nach C2 klettern: drei Aufgaben je Stufe, zwei Fehler beenden den Aufstieg. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "silbenturm_neu", label: "🧱 Silbenturm (neues Spiel)", desc: "Ein Wort aus seinen Silben wieder aufbauen und danach die betonte Silbe bestimmen. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
+    { key: "sortierer_neu", label: "🧺 Wörter-Sortierer (neues Spiel)", desc: "In welches Wortfeld gehört das Wort? Die Wörter kommen aus dem Wörterbuch und richten sich nach dem eingestellten Niveau. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "musikplayer_update", label: "🎵 Musikplayer-Update", desc: "Wellenform-Anzeige, Schnellliste (☰), MP3-Symbol im Video-Bereich. Bis zur Freigabe sehen andere Nutzer:innen den Player ohne diese neuen Elemente (die eigentlichen Stabilitäts-Fixes — Song hängt sich nicht mehr auf, Layout-Wechsel startet Song nicht neu — gelten unabhängig davon bereits für alle, da das reine Fehlerbehebungen waren)." },
   ];
   // Kleiner Freigabe-Schalter DIREKT AM ORT des jeweiligen Features (statt nur zentral in den
@@ -3788,6 +3789,20 @@
   }
   let selectedQuizTopic = "";
   let selectedWortschatzTopic = "";
+  /* Die Wortschatz-Kategorie zieht ihre Themen jetzt aus dem Wörterbuch — 25
+     statt fünf. Damit die Reihe auf einem Handy noch überschaubar bleibt,
+     bekommt jedes Thema ein Zeichen, an dem man es wiedererkennt. */
+  const WS_THEMA_ICON = {
+    "Alltag & Zuhause": "🏠", "Bildung & Lernen": "🎓", "Denken & Argumentieren": "🤔",
+    "Essen & Trinken": "🍽️", "Familie & Menschen": "👨‍👩‍👧", "Freizeit & Sport": "⚽",
+    "Gefühle & Charakter": "💛", "Geschichte & Erinnerung": "📜", "Gesundheit & Körper": "🩺",
+    "Grundwörter & Struktur": "🧩", "Kleidung & Einkaufen": "👕", "Kunst & Musik": "🎨",
+    "Literatur & Schreiben": "📖", "Medien & Öffentlichkeit": "📰", "Natur & Wetter": "🌦️",
+    "Politik & Gesellschaft": "🏛️", "Recht & Verwaltung": "⚖️", "Reisen & Unterwegs": "🧳",
+    "Sprache & Kommunikation": "💬", "Stadt & Verkehr": "🚋", "Technik & Erfindung": "🔧",
+    "Umwelt & Klima": "🌍", "Wirtschaft & Arbeit": "💼", "Wissenschaft & Forschung": "🔬",
+    "Zeit & Kalender": "🗓️",
+  };
 
   async function renderSetup() {
     setupEl.style.display = "";
@@ -3819,8 +3834,9 @@
         topicPicker = `
         <div class="quiztopic-row">
           <button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="" aria-selected="${selectedWortschatzTopic === ""}">🧠 Alle Themen</button>
-          ${ExerciseData.getWortschatzThemen().map((t) => `<button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="${t}" aria-selected="${selectedWortschatzTopic === t}">${t}</button>`).join("")}
-        </div>`;
+          ${ExerciseData.getWortschatzThemen().map((t) => `<button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="${t}" aria-selected="${selectedWortschatzTopic === t}">${WS_THEMA_ICON[t] || "🔹"} ${t}</button>`).join("")}
+        </div>
+        <p class="cat-pool-note">25 Themen aus dem Wörterbuch, jedes von A1 bis C2 — jedes Wort hier kannst du dort nachschlagen.</p>`;
       }
       if (!unlocked) {
         const cond = cat.unlock.type === "points" ? `Ab ${cat.unlock.value} Punkten` : `Pokal „${cat.unlock.match}" nötig`;
@@ -12959,12 +12975,160 @@
   document.querySelector('#learnSubnav [data-sub="sub-wortleiter"]')?.addEventListener("click", () => renderWortleiter());
   document.querySelector('#learnSubnav [data-sub="sub-silbenturm"]')?.addEventListener("click", () => renderSilbenturm());
 
+  /* ============================================================
+     WÖRTER-SORTIERER — Wortfelder statt Einzelvokabeln
+     ------------------------------------------------------------
+     Die Spiele bisher prüfen ein Wort für sich: Artikel, Betonung,
+     Bedeutung. Was fehlte, war das Gefühl dafür, WOHIN ein Wort
+     gehört — dass „die Kündigung“ ins Arbeitsleben gehört und „die
+     Niederschlagsmenge“ zum Wetter. Genau das übt dieses Spiel.
+     Die Wörter kommen aus dem Wörterbuch, gefiltert nach dem
+     eingestellten Niveau: auf A1 sortiert man Brot und Bahnhof, auf
+     C1 Rechtsbegriffe und Fachwörter. Damit hängt das Spiel wirklich
+     an den Themen des jeweiligen Niveaus und nicht an einer festen
+     kleinen Liste.
+     ============================================================ */
+  const SORT_RUNDEN = 12;      // so viele Wörter pro Runde
+  const SORT_KOERBE = 3;       // so viele Themen stehen gleichzeitig zur Wahl
+  let sortLevel = "";
+  let sortSession = null;
+
+  // Alle Wörter des Niveaus, nach Thema gebündelt — nur Themen mit genug
+  // Material, sonst wiederholen sich dieselben zwei Wörter.
+  function sortWortfelder(level) {
+    const nach = {};
+    (VocabData.WORDS || []).forEach((w) => {
+      if (w.level !== level || !w.theme || !w.word) return;
+      (nach[w.theme] = nach[w.theme] || []).push(w);
+    });
+    return Object.entries(nach).filter(([, liste]) => liste.length >= 6);
+  }
+
+  function neueSortSession() {
+    const felder = sortWortfelder(sortLevel);
+    if (felder.length < SORT_KOERBE) { sortSession = { leer: true }; return; }
+    const gewaehlt = Core.shuffle(felder).slice(0, SORT_KOERBE);
+    // Aus jedem Feld gleich viele Wörter, damit kein Korb erkennbar häufiger stimmt.
+    const proKorb = Math.ceil(SORT_RUNDEN / SORT_KOERBE);
+    const karten = [];
+    gewaehlt.forEach(([thema, liste]) => {
+      Core.shuffle(liste).slice(0, proKorb).forEach((w) => karten.push({ wort: w.word, thema, bedeutung: w.de || "", beispiel: w.example || "", syl: w.syl || "" }));
+    });
+    sortSession = {
+      koerbe: gewaehlt.map(([thema]) => thema),
+      karten: Core.shuffle(karten).slice(0, SORT_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0,
+      letzte: null, fehler: [],
+    };
+  }
+
+  function sortAntwort(thema) {
+    const s = sortSession;
+    const karte = s.karten[s.index];
+    const korrekt = thema === karte.thema;
+    if (korrekt) {
+      s.richtig += 1;
+      s.serie += 1;
+      s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+    } else {
+      s.serie = 0;
+      s.fehler.push(karte);
+      Core.sound.wrong();
+    }
+    s.letzte = { karte, gewaehlt: thema, korrekt };
+    s.index += 1;
+    renderSortierer();
+  }
+
+  function renderSortierer() {
+    const area = document.getElementById("sortiererArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "sortierer_neu", "Wörter-Sortierer", "🧺")) return;
+    sortLevel = applyDefaultCefrLevel(sortLevel, (v) => { sortLevel = v; }, "sortierer");
+    if (!sortSession) neueSortSession();
+    const s = sortSession;
+
+    const niveauReihe = `
+      <div class="baustein-reihe" style="margin-bottom:12px;">
+        ${CEFR_LEVELS.map((l) => `<button type="button" class="trophy-chip sort-level-btn ${l === sortLevel ? "selected" : ""}" data-sort-level="${l}">${l}</button>`).join("")}
+      </div>`;
+
+    if (s.leer) {
+      area.innerHTML = niveauReihe + `<p class="empty-note">Für ${sortLevel} sind noch nicht genug Wortfelder im Wörterbuch. Wähl ein anderes Niveau.</p>`;
+      area.querySelectorAll("[data-sort-level]").forEach((b) => b.addEventListener("click", () => {
+        sortLevel = b.dataset.sortLevel; autoCefrLevel.sortierer = null; sortSession = null; renderSortierer();
+      }));
+      return;
+    }
+    if (s.index >= s.karten.length) { renderSortiererErgebnis(); return; }
+
+    const karte = s.karten[s.index];
+    const rueckmeldung = s.letzte
+      ? `<p class="empty-note" style="margin:8px 0 0; color:${s.letzte.korrekt ? "var(--teal-400)" : "#c0392b"};">
+           ${s.letzte.korrekt ? "✅" : "❌"} „${s.letzte.karte.wort}“ gehört zu <strong>${s.letzte.karte.thema}</strong>${s.letzte.karte.bedeutung ? " — " + s.letzte.karte.bedeutung : ""}
+         </p>` : "";
+
+    area.innerHTML = `
+      <p class="empty-note" style="margin-bottom:10px;">🧺 <strong>Wörter-Sortierer</strong> — in welches Wortfeld gehört das Wort? Die Wörter kommen aus dem Wörterbuch und richten sich nach deinem Niveau.</p>
+      ${niveauReihe}
+      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(s.index / s.karten.length) * 100}%"></div></div>
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wörter-Sortierer: " + karte.wort)}
+        <div class="question-meta"><span class="cat-tag">🧺 Wort ${s.index + 1} / ${s.karten.length}</span> · Serie: ${s.serie}${s.serie >= 3 ? " 🔥" : ""}</div>
+        <div class="question-prompt" style="text-align:center; font-size:1.35rem; margin:14px 0;">${karte.wort}</div>
+        ${karte.syl && isStressModeOn() ? `<div class="vocab-syl" style="text-align:center; margin:-8px 0 12px;">${Core.formatStress(karte.syl)}</div>` : ""}
+        <div class="option-list">
+          ${s.koerbe.map((t) => `<button type="button" class="option-btn sort-korb" data-sort-korb="${t.replace(/"/g, "&quot;")}"><span>${t}</span></button>`).join("")}
+        </div>
+        ${rueckmeldung}
+      </div>`;
+
+    area.querySelectorAll("[data-sort-korb]").forEach((b) => b.addEventListener("click", () => sortAntwort(b.dataset.sortKorb)));
+    area.querySelectorAll("[data-sort-level]").forEach((b) => b.addEventListener("click", () => {
+      sortLevel = b.dataset.sortLevel; autoCefrLevel.sortierer = null; sortSession = null; renderSortierer();
+    }));
+  }
+
+  function renderSortiererErgebnis() {
+    const area = document.getElementById("sortiererArea");
+    const s = sortSession;
+    const prozent = Math.round((s.richtig / Math.max(1, s.karten.length)) * 100);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🧺 WÖRTER-SORTIERER — RUNDE FERTIG</p>
+        <h2 style="margin:10px 0;">${s.richtig} / ${s.karten.length} richtig einsortiert</h2>
+        <p class="empty-note">Längste Serie: ${s.besteSerie} · Niveau ${sortLevel}</p>
+        <p class="empty-note" style="margin-top:8px;">${prozent >= 80
+          ? "Du hast ein sicheres Gefühl dafür, wohin ein Wort gehört."
+          : "Tipp: Frag dich, in welcher Situation du das Wort hören würdest — beim Arzt, im Amt, in der Küche. Das Wortfeld ergibt sich meist daraus."}</p>
+      </div>
+      ${s.fehler.length ? `
+      <div class="question-card" style="margin-top:12px;">
+        <p class="eyebrow" style="margin-top:0;">📌 Zum Nachlesen</p>
+        <div class="breakdown-list">
+          ${s.fehler.map((f) => `<div class="breakdown-row"><span><strong>${f.wort}</strong> — ${f.thema}</span><span class="empty-note">${f.bedeutung}</span></div>`).join("")}
+        </div>
+      </div>` : ""}
+      <div class="quiz-actions" style="justify-content:center; margin-top:14px;">
+        <button type="button" class="btn btn-coffee" id="sortNochmal">🔄 Neue Runde</button>
+      </div>`;
+    document.getElementById("sortNochmal").addEventListener("click", () => { sortSession = null; renderSortierer(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["sortierer"], points: s.richtig * 2, bonus: s.besteSerie >= 6 ? 5 : 0,
+        percent: prozent, character: "Wortfeld-Kenner:in", badges: [], playedAt: new Date().toISOString() });
+    }
+  }
+
+  document.querySelector('#learnSubnav [data-sub="sub-sortierer"]')?.addEventListener("click", () => renderSortierer());
+
   const GAMES_OVERVIEW_LIST = [
     { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
     { sub: "sub-blitzrunde", emoji: "⚡", name: "Blitzrunde", persona: "Gemischt", flagKey: "blitzrunde_neu" },
     { sub: "sub-wortangler", emoji: "🎣", name: "Wortangler", persona: "Sprachkünstler", flagKey: "wortangler_neu" },
     { sub: "sub-wortleiter", emoji: "🧗", name: "Wortleiter", persona: "Gemischt", flagKey: "wortleiter_neu" },
     { sub: "sub-silbenturm", emoji: "🧱", name: "Silbenturm", persona: "Sprachkünstler", flagKey: "silbenturm_neu" },
+    { sub: "sub-sortierer", emoji: "🧺", name: "Wörter-Sortierer", persona: "Sprachkünstler", flagKey: "sortierer_neu" },
     { sub: "sub-stresstrainer", emoji: "🎯", name: "Betonungs-Trainer", persona: "Sprachkünstler" },
     { sub: "sub-wordsearch", emoji: "🔍", name: "Buchstabensalat", persona: "Sprachkünstler" },
     { sub: "sub-korrektour", emoji: "🚂", name: "KorrekTour", persona: "Grammatik-Profi", flagKey: "korrektour_neu" },
@@ -18501,8 +18665,13 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "150";
+  const APP_VERSION = "151";
   const APP_CHANGELOG = {
+    "151": [
+      "\u{1F9E0} \u201EWortschatz nach Themen\u201C hatte f\u00fcnf Themen \u2014 Haushalt, Freunde, Schule, Essen, Reisen \u2014 und auf C1 kamen dieselben Alltagsw\u00f6rter wie auf A1. Jetzt speist sich die Kategorie aus dem W\u00f6rterbuch: 25 Themen von Alltag & Zuhause bis Wissenschaft & Forschung, jedes auf allen sechs Niveaus, zusammen \u00fcber 6700 Aufgaben. Jedes Wort, das dir hier begegnet, kannst du im W\u00f6rterbuch nachschlagen.",
+      "\u{1F4DD} Zwei Aufgabentypen im Wechsel: Bedeutung erkennen und das Wort in einen echten Beispielsatz einsetzen. Die falschen Antworten kommen aus demselben Thema und demselben Niveau \u2014 vorher war oft schon an der Wortwahl zu erraten, welche gemeint ist.",
+      "\u{1F9FA} Neues Spiel \u201EW\u00f6rter-Sortierer\u201C: In welches Wortfeld geh\u00f6rt das Wort? Drei Themen zur Wahl, zw\u00f6lf W\u00f6rter pro Runde, direkt aus dem W\u00f6rterbuch in deinem Niveau \u2014 auf A1 Brot und Bahnhof, auf C1 Rechtsbegriffe. Am Ende siehst du, welche W\u00f6rter danebenlagen, mit Bedeutung zum Nachlesen.",
+    ],
     "150": [
       "\u{1F5D3}\uFE0F \u201EEs war einmal in Deutschland\u201C ist vollst\u00e4ndig: alle 366 Tage, alle sechs Niveaus von A1 bis C2, in zehn Sprachen \u2014 Englisch, Arabisch, T\u00fcrkisch, Russisch, Spanisch, Franz\u00f6sisch, Polnisch, Ukrainisch, Persisch und jetzt auch Italienisch. Knapp 22.000 \u00dcbersetzungen.",
       "\u{1F1EE}\u{1F1F9} Italienisch war die einzige Sprache, die im Kalender \u00fcberall gefehlt hat \u2014 auch im Archiv. Jetzt ist sie \u00fcberall dabei. \u201EDichter und Denker\u201C und \u201ESchnee von gestern\u201C hatten sie schon.",
