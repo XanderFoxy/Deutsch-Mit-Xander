@@ -6057,72 +6057,109 @@
   /* ============================================================
      SATZBAUKASTEN — eine Oberfläche für Deutsch und Italienisch
      ------------------------------------------------------------
-     Gebaut wird über die Grundfragen: WER macht WAS, WO, WANN, WIE.
-     Man muss nicht alle beantworten — „Wer + Verb“ ergibt schon
-     einen Satz, alles Weitere macht ihn genauer.
-     Die Formen kommen aus satzbau.js: dort steht nicht „am Meer“,
-     sondern „Meer, sächlich, Präposition an“. Ob daraus „am Meer“
-     oder „ans Meer“ wird, entscheidet das Verb. Deshalb kann hier
-     kein „wir fahren am Meer“ mehr entstehen.
+     Gebaut wird über die Grundfragen. Neben WER · MACHT WAS gibt es
+     jetzt alle vier Umstandsbestimmungen:
+         🕒 WANN   temporal
+         ❓ WARUM  kausal
+         ✨ WIE    modal
+         📍 WO / WOHIN / WOHER   lokal
+     Bei Verben, die mehrere Ortsfragen zulassen, wählt man die Frage
+     selbst — und der Satz stellt sich darauf ein: aus „gehen“ + wohin
+     wird „ins Bett“, aus „gehen“ + woher wird „aus dem Büro“, und im
+     Italienischen wechselt dabei sogar das Verb von andare zu venire.
+     Dazu der Begleiter des Objekts: „ich esse einen Apfel“ ist der
+     Normalfall, „den Apfel“ nur, wenn ein bestimmter gemeint ist.
      ============================================================ */
   let sbkKategorie = "alltag";
   let sbkNiveau = "";
-  let sbkWahl = { subjekt: "1sg", verb: "gehen", objekt: "", person: "", ort: "", zeit: "keine", art: "keine" };
+  let sbkWahl = {
+    subjekt: "1sg", verb: "gehen", objekt: "", objektBegleiter: "", objektAdjektiv: "",
+    person: "", ort: "", ortRolle: "", zeit: "keine", grund: "keiner", art: "keine", vorfeld: "subjekt",
+  };
   let sbkZeitform = "praesens";
   let sbkSatzart = "aussage";
-  let sbkPronomen = false;   // im Italienischen normalerweise weggelassen
-  let sbkAnsicht = "bauen";  // "bauen" oder "beispiele"
+  let sbkPronomen = false;
+  let sbkAnsicht = "bauen";
 
   function sbkImItalienischraum() {
     return Boolean(ExerciseData.getLernraum && ExerciseData.getLernraum() === "it");
   }
-  // Sammelt die aktuell gültige Auswahl und sorgt dafür, dass nichts
-  // stehenbleibt, was zur neuen Kategorie oder zum neuen Verb nicht passt.
   function sbkAuswahl() {
     const S = window.Satzbau;
     const kat = sbkKategorie === "alle" ? null : sbkKategorie;
     const verben = S.verbenFuer(kat, sbkNiveau);
-    let verb = verben.find((v) => v.id === sbkWahl.verb) || verben[0];
-    const orte = S.orteFuer(kat, sbkNiveau, verb);
+    const verb = verben.find((v) => v.id === sbkWahl.verb) || verben[0];
+    const subjekt = S.SUBJEKTE.find((x) => x.id === sbkWahl.subjekt) || S.SUBJEKTE[0];
+
+    const rollen = S.ortRollenFuer(verb);
+    const ortRolle = rollen.includes(sbkWahl.ortRolle) ? sbkWahl.ortRolle : rollen[0] || "";
     const dinge = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau) : [];
+    const gewaehltesDing = dinge.find((d) => d.id === sbkWahl.objekt) || null;
+    // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
+    const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, gewaehltesDing) : [];
     const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
-    const zeiten = S.zeitenFuer(sbkZeitform);
-    const arten = S.artenFuer(verb);
-    const subjekt = S.SUBJEKTE.find((s) => s.id === sbkWahl.subjekt) || S.SUBJEKTE[0];
-    const ort = verb.ortRolle ? (orte.find((o) => o.id === sbkWahl.ort) || null) : null;
-    // Verben wie „haben“, „machen“ und „kaufen“ ergeben ohne Objekt keinen Satz —
-    // dort wird eines gesetzt, statt einen halben Satz zu zeigen.
+    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau);
+    const gruende = S.gruendeFuer(verb, sbkNiveau);
+    const arten = S.artenFuer(verb, sbkNiveau, subjekt);
+
+    let ort = orte.find((o) => o.id === sbkWahl.ort) || null;
+    // Manche Verben ergeben ohne ihre Ergänzung gar keinen Satz —
+    // „Ich wohne.“ oder „Ich besuche.“ sind keine Sätze. Deshalb wird
+    // hier notfalls das erste passende Wort eingesetzt.
+    if (!ort && verb.ortPflicht && orte.length) ort = orte[0];
     let objekt = dinge.find((d) => d.id === sbkWahl.objekt) || null;
     if (!objekt && verb.objektPflicht && dinge.length) objekt = dinge[0];
-    const person = personen.find((p) => p.id === sbkWahl.person) || null;
+    const begleiterListe = S.begleiterFuer(objekt, verb);
+    const objektBegleiter = begleiterListe.some((b) => b.id === sbkWahl.objektBegleiter)
+      ? sbkWahl.objektBegleiter : (begleiterListe[0] && begleiterListe[0].id) || "bestimmt";
+    const adjListe = S.adjektiveFuer(objekt, sbkNiveau);
+    const objektAdjektiv = adjListe.find((a) => a.id === sbkWahl.objektAdjektiv) || null;
+    let person = personen.find((p) => p.id === sbkWahl.person) || null;
+    if (!person && verb.personPflicht && personen.length) person = personen[0];
     const zeit = zeiten.find((z) => z.id === sbkWahl.zeit) || zeiten[0];
+    const grund = gruende.find((g) => g.id === sbkWahl.grund) || gruende[0];
     const art = arten.find((a) => a.id === sbkWahl.art) || arten[0];
-    return { verben, orte: verb.ortRolle ? orte : [], dinge, personen, zeiten, arten, subjekt, verb, ort, objekt, person, zeit, art };
+
+    return { verben, rollen, ortRolle, orte, dinge, personen, zeiten, gruende, arten, begleiterListe, adjListe,
+      subjekt, verb, ort, objekt, objektBegleiter, objektAdjektiv, person, zeit, grund, art };
   }
 
   function sbkZufall() {
     const S = window.Satzbau;
     const kat = sbkKategorie === "alle" ? null : sbkKategorie;
-    const zufall = (liste) => liste[Math.floor(Math.random() * liste.length)];
+    const zufall = (l) => l[Math.floor(Math.random() * l.length)];
     const verben = S.verbenFuer(kat, sbkNiveau);
     const verb = zufall(verben);
-    const orte = S.orteFuer(kat, sbkNiveau, verb);
+    const subjekt = zufall(S.SUBJEKTE);
+    const rollen = S.ortRollenFuer(verb);
+    const ortRolle = rollen.length ? zufall(rollen) : "";
     const dinge = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau) : [];
+    const objekt = dinge.length && (verb.objektPflicht || Math.random() < 0.75) ? zufall(dinge) : null;
+    // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
+    const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, objekt) : [];
     const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
-    const zeiten = S.zeitenFuer(sbkZeitform);
+    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau);
+    const gruende = S.gruendeFuer(verb, sbkNiveau);
+    const arten = S.artenFuer(verb, sbkNiveau, subjekt);
+    const arten2 = S.artenFuer(verb, sbkNiveau, subjekt, objekt);
+    const begl = objekt ? S.begleiterFuer(objekt, verb) : [];
+    const adj = objekt ? S.adjektiveFuer(objekt, sbkNiveau) : [];
     sbkWahl = {
-      subjekt: zufall(S.SUBJEKTE).id,
+      subjekt: subjekt.id,
       verb: verb.id,
-      // Nicht jeder Satz braucht alles — mal mit, mal ohne, das wirkt lebendiger.
-      objekt: dinge.length && (verb.objektPflicht || Math.random() < 0.75) ? zufall(dinge).id : "",
-      person: personen.length && Math.random() < 0.6 ? zufall(personen).id : "",
-      ort: verb.ortRolle && orte.length && Math.random() < 0.7 ? zufall(orte).id : "",
+      ortRolle,
+      objekt: objekt ? objekt.id : "",
+      objektBegleiter: begl.length ? zufall(begl).id : "",
+      objektAdjektiv: adj.length && Math.random() < 0.35 ? zufall(adj).id : "",
+      person: personen.length && (verb.personPflicht || Math.random() < 0.6) ? zufall(personen).id : "",
+      ort: orte.length && (verb.ortPflicht || Math.random() < 0.7) ? zufall(orte).id : "",
       zeit: zufall(zeiten).id,
-      art: Math.random() < 0.4 ? zufall(S.artenFuer(verb)).id : "keine",
+      grund: gruende.length && Math.random() < 0.35 ? zufall(gruende).id : "keiner",
+      art: arten2.length && Math.random() < 0.4 ? zufall(arten2).id : "keine",
+      vorfeld: Math.random() < 0.25 ? "zeit" : "subjekt",
     };
   }
 
-  // Eine Reihe Bausteine. leerText steht auf dem Knopf, der die Rolle wieder frei lässt.
   function sbkReihe(frage, hinweis, feld, liste, aktuell, beschriften, leerText) {
     if (!liste.length) return "";
     return `
@@ -6136,20 +6173,23 @@
       </div>`;
   }
 
+  const SBK_ROLLE_NAME = {
+    wo: { frage: "📍 Wo?", hinweis: "Ort — im Deutschen mit Dativ: am Meer, im Bett" },
+    wohin: { frage: "📍 Wohin?", hinweis: "Richtung — im Deutschen mit Akkusativ: ans Meer, ins Bett" },
+    woher: { frage: "📍 Woher?", hinweis: "Herkunft — aus dem Büro, vom Meer" },
+  };
+
   function renderSatzbaukasten(zielId) {
     const area = document.getElementById(zielId || "satzbaukastenDeArea");
     if (!area) return;
     const S = window.Satzbau;
     if (!S) {
-      /* Der Satzbaukasten lebt in einer eigenen Datei (satzbau.js). Fehlt sie,
-         blieb hier vorher für immer „wird geladen …“ stehen — ohne Hinweis,
-         woran es liegt. Jetzt steht es da. */
       area.innerHTML = `
         <div class="question-card">
           <p class="eyebrow" style="margin-top:0;">⚠️ Satzbaukasten nicht geladen</p>
           <p class="empty-note">Die Datei <strong>satzbau.js</strong> fehlt oder konnte nicht geladen werden.
-          Sie enthält die Formenlehre (Fälle, Präpositionen, Verbformen) und ist seit Version 152 eine
-          <strong>eigene, neue Datei</strong> — sie muss zusätzlich hochgeladen werden, nicht nur ersetzt.</p>
+          Sie enthält die Formenlehre und ist eine <strong>eigene, neue Datei</strong> — sie muss zusätzlich
+          hochgeladen werden, nicht nur ersetzt.</p>
           <p class="empty-note" style="margin-top:8px;">Danach die Seite einmal vollständig neu laden.</p>
         </div>`;
       return;
@@ -6158,45 +6198,29 @@
     const italienisch = sbkImItalienischraum();
     const a = sbkAuswahl();
     sbkWahl.verb = a.verb.id;
-
-    const satz = S.bauSatz({
-      subjekt: a.subjekt, verb: a.verb, objekt: a.objekt, person: a.person,
-      ort: a.ort, zeit: a.zeit, art: a.art,
-      zeitform: sbkZeitform, satzart: sbkSatzart, pronomen: sbkPronomen,
-    });
-
-    const rollenName = { wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", wie: "Wie", konj: "Bindewort" };
-    const teile = italienisch ? satz.itTeile : satz.deTeile;
-    const hauptsatz = italienisch ? satz.it : satz.de;
-    const zweitsatz = italienisch ? satz.de : satz.it;
+    sbkWahl.ortRolle = a.ortRolle;
 
     const anzahl = S.anzahlBeispiele(sbkKategorie === "alle" ? null : sbkKategorie, sbkNiveau);
-    const ortFrage = a.verb.ortRolle === "wohin" ? "📍 Wohin?" : a.verb.ortRolle === "woher" ? "📍 Woher?" : "📍 Wo?";
-    const ortHinweis = a.verb.ortRolle === "wohin"
-      ? "Richtung — im Deutschen mit Akkusativ: ans Meer, ins Bett"
-      : a.verb.ortRolle === "woher" ? "Herkunft — vom, aus dem" : "Ort — im Deutschen mit Dativ: am Meer, im Bett";
-
-    // Umschalter zwischen selbst bauen und fertige Sätze nachlesen.
     const kopf = `
-      <p class="empty-note" style="margin-bottom:10px;">🧱 <strong>Satzbaukasten</strong> — entweder du baust dir selbst einen Satz aus den Grundfragen, oder du liest die geprüften Beispielsätze nach.</p>
+      <p class="empty-note" style="margin-bottom:10px;">🧱 <strong>Satzbaukasten</strong> — entweder du baust dir selbst einen Satz, oder du liest die geprüften Beispielsätze nach.</p>
       <div class="baustein-reihe" style="margin-bottom:12px;">
-        <button type="button" class="baustein" data-sbk-ansicht="bauen" aria-selected="${sbkAnsicht === "bauen"}">🔧 Selbst bauen<span class="baustein-de">Wer · macht was · wo · wann · wie</span></button>
-        <button type="button" class="baustein" data-sbk-ansicht="beispiele" aria-selected="${sbkAnsicht === "beispiele"}">📖 Beispiele lesen<span class="baustein-de">${S.beispielAnzahl ? S.beispielAnzahl(sbkKategorie === "alle" ? "alltag" : sbkKategorie) : 0} Sätze in diesem Bereich</span></button>
+        <button type="button" class="baustein" data-sbk-ansicht="bauen" aria-selected="${sbkAnsicht === "bauen"}">🔧 Selbst bauen<span class="baustein-de">Wer · macht was · wann · warum · wie · wo</span></button>
+        <button type="button" class="baustein" data-sbk-ansicht="beispiele" aria-selected="${sbkAnsicht === "beispiele"}">📖 Beispiele lesen<span class="baustein-de">${S.beispielAnzahl(sbkKategorie === "alle" ? "alltag" : sbkKategorie)} Sätze in diesem Bereich</span></button>
       </div>`;
     const bereichsReihe = `
-      <p class="eyebrow sbk-frage">🗂️ Bereich<span class="sbk-frage-hinweis">${sbkAnsicht === "beispiele" ? "je Bereich 102 geprüfte Sätze" : anzahl.toLocaleString("de-DE") + " mögliche Sätze auf " + sbkNiveau}</span></p>
+      <p class="eyebrow sbk-frage">🗂️ Bereich<span class="sbk-frage-hinweis">${sbkAnsicht === "beispiele" ? "je Bereich " + S.beispielAnzahl("alltag") + " geprüfte Sätze, " + Math.round(S.beispielAnzahl("alltag") / 6) + " je Niveau" : anzahl.toLocaleString("de-DE") + " mögliche Sätze auf " + sbkNiveau}</span></p>
       <div class="baustein-reihe">
         ${sbkAnsicht === "bauen" ? `<button type="button" class="baustein" data-sbk-kat="alle" aria-selected="${sbkKategorie === "alle"}">🌍 Alle</button>` : ""}
         ${S.KATEGORIEN.map((k) => `<button type="button" class="baustein" data-sbk-kat="${k.id}" aria-selected="${sbkKategorie === k.id}">${k.icon} ${k.name}</button>`).join("")}
       </div>
-      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt, wie einfach die Sätze sind</span></p>
+      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt, wie einfach die Bausteine sind</span></p>
       <div class="baustein-reihe">
         ${CEFR_LEVELS.map((l) => `<button type="button" class="baustein" data-sbk-niveau="${l}" aria-selected="${sbkNiveau === l}">${l}</button>`).join("")}
       </div>`;
 
     if (sbkAnsicht === "beispiele") {
       const kat = sbkKategorie === "alle" ? "alltag" : sbkKategorie;
-      const liste = S.beispieleFuer ? S.beispieleFuer(kat, sbkNiveau) : [];
+      const liste = S.beispieleFuer(kat, sbkNiveau);
       const artName = { aussage: "Aussage", frage: "Frage", nebensatz: "mit Nebensatz" };
       area.innerHTML = kopf + bereichsReihe + `
         <p class="empty-note" style="margin-top:14px;">${liste.length} Sätze auf ${sbkNiveau} — jeder einzeln geschrieben und durchgesehen, keiner aus Bausteinen zusammengesetzt.</p>
@@ -6214,14 +6238,28 @@
       return;
     }
 
-    area.innerHTML = kopf + `
+    const satz = S.bauSatz({
+      subjekt: a.subjekt, verb: a.verb, objekt: a.objekt, objektBegleiter: a.objektBegleiter,
+      objektAdjektiv: a.objektAdjektiv, person: a.person, ort: a.ort, ortRolle: a.ortRolle,
+      zeit: a.zeit, grund: a.grund, art: a.art,
+      zeitform: sbkZeitform, satzart: sbkSatzart, pronomen: sbkPronomen, vorfeld: sbkWahl.vorfeld,
+    });
+    const rollenName = { wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", warum: "Warum", wie: "Wie", konj: "Bindewort" };
+    const teile = italienisch ? satz.itTeile : satz.deTeile;
+    const zweitsatz = italienisch ? satz.de : satz.it;
+    const ortInfo = SBK_ROLLE_NAME[a.ortRolle] || SBK_ROLLE_NAME.wo;
+    const idx = { "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 }[a.subjekt.id];
 
+    area.innerHTML = kopf + `
       <div class="question-card sbk-anzeige">
         <p class="baustein-satz">${teile.map((x, i) => {
-          // Der erste Baustein wird großgeschrieben — der Satz beginnt ja hier.
           const t = i === 0 ? x.t.charAt(0).toUpperCase() + x.t.slice(1) : x.t;
-          return `<span class="satzteil satzteil-${x.rolle}" title="${rollenName[x.rolle] || ""}">${t}</span>`;
-        }).join(" ")}${satz.satzart === "frage" ? "?" : satz.satzart === "nebensatz" ? " …" : "."}</p>
+          /* Vor einem Komma darf kein Leerzeichen stehen — die Bausteine
+             werden sonst mit einem Zwischenraum aneinandergesetzt und es
+             erscheint „im Bett , weil …“. */
+          const trenner = i === 0 ? "" : (/^\s*,/.test(x.t) ? "" : " ");
+          return trenner + `<span class="satzteil satzteil-${x.rolle}" title="${rollenName[x.rolle] || ""}">${t.replace(/^\s*,\s*/, ", ")}</span>`;
+        }).join("")}${satz.satzart === "frage" ? "?" : satz.satzart === "nebensatz" ? " …" : "."}</p>
         <p class="baustein-satz-de">${zweitsatz}</p>
         <p class="empty-note sbk-hinweis">💡 ${satz.hinweis}</p>
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
@@ -6229,7 +6267,6 @@
           <button type="button" class="btn btn-ghost" id="sbkZufallBtn">🎲 Zufallssatz</button>
         </div>
       </div>
-
       ${bereichsReihe}
 
       <p class="eyebrow sbk-frage">⏳ Zeit<span class="sbk-frage-hinweis">Gegenwart, Vergangenheit oder Zukunft</span></p>
@@ -6245,7 +6282,13 @@
         <button type="button" class="baustein" data-sbk-satzart="frage" aria-selected="${sbkSatzart === "frage"}">Frage<span class="baustein-de">Verb ganz vorn</span></button>
         <button type="button" class="baustein" data-sbk-satzart="nebensatz" aria-selected="${sbkSatzart === "nebensatz"}">Nebensatz mit „weil“<span class="baustein-de">Verb ganz hinten</span></button>
       </div>
-      ${sbkSatzart === "nebensatz" ? `<p class="empty-note sbk-nebensatz-hinweis">Ein Nebensatz steht nie allein — er gehört an einen Hauptsatz: <em>„Ich bleibe heute zu Hause, ${hauptsatz.replace(/\.$/, "").replace(/ …$/, "")}.“</em></p>` : ""}
+      ${sbkSatzart === "aussage" ? `
+      <p class="eyebrow sbk-frage">🚩 Was steht vorn?<span class="sbk-frage-hinweis">im Deutschen darf fast jeder Teil an den Anfang — das Verb bleibt trotzdem an zweiter Stelle</span></p>
+      <div class="baustein-reihe">
+        <button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="subjekt" aria-selected="${sbkWahl.vorfeld === "subjekt"}">die Person<span class="baustein-de">Ich gehe heute …</span></button>
+        ${a.zeit && a.zeit.de ? `<button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="zeit" aria-selected="${sbkWahl.vorfeld === "zeit"}">die Zeitangabe<span class="baustein-de">Heute gehe ich …</span></button>` : ""}
+        ${a.ort ? `<button type="button" class="baustein" data-sbk-feld="vorfeld" data-sbk-wert="ort" aria-selected="${sbkWahl.vorfeld === "ort"}">die Ortsangabe<span class="baustein-de">Ins Büro gehe ich …</span></button>` : ""}
+      </div>` : ""}
 
       ${italienisch ? `
       <p class="eyebrow sbk-frage">🙋 Personalpronomen<span class="sbk-frage-hinweis">im Italienischen sagt man es normalerweise nicht mit</span></p>
@@ -6257,12 +6300,37 @@
       ${sbkReihe("👤 Wer?", "die Person, die handelt", "subjekt", S.SUBJEKTE, sbkWahl.subjekt,
         (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "")}
 
-      ${sbkReihe("🏃 Macht was?", "das Verb bestimmt, welche Fragen danach noch offen sind", "verb", a.verben, a.verb.id,
-        (e) => [italienisch ? e.itFormen[{ "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 }[a.subjekt.id]] : e.formen[{ "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 2, "1pl": 3, "2pl": 4, "3pl": 5 }[a.subjekt.id]],
-                italienisch ? e.itInf + " — " + e.inf : e.inf], "")}
+      ${sbkReihe("🏃 Macht was?", "das Verb bestimmt, welche Fragen danach offen sind", "verb", a.verben, a.verb.id,
+        (e) => [italienisch ? e.itFormen[idx] : e.formen[idx], italienisch ? e.itInf + " — " + e.inf : e.inf], "")}
 
-      ${a.dinge.length ? sbkReihe("📦 Was?", a.verb.objektPflicht ? "dieses Verb braucht ein Objekt" : "das Objekt — im Deutschen im Akkusativ", "objekt", a.dinge, a.objekt ? a.objekt.id : "",
-        (e) => [italienisch ? e.it : window.Satzbau.nominalgruppe(e, "akk", e.begleiter), italienisch ? window.Satzbau.nominalgruppe(e, "akk", e.begleiter) : ""], a.verb.objektPflicht ? "" : "— nichts —") : ""}
+      ${a.rollen.length > 1 ? `
+      <p class="eyebrow sbk-frage">🧭 Welche Ortsfrage?<span class="sbk-frage-hinweis">dieses Verb lässt mehrere zu — der Satz stellt sich darauf ein</span></p>
+      <div class="baustein-reihe">
+        ${a.rollen.map((r) => `<button type="button" class="baustein" data-sbk-feld="ortRolle" data-sbk-wert="${r}" aria-selected="${a.ortRolle === r}">${SBK_ROLLE_NAME[r].frage}<span class="baustein-de">${SBK_ROLLE_NAME[r].hinweis}</span></button>`).join("")}
+      </div>` : ""}
+
+      ${a.dinge.length ? sbkReihe("📦 Was?", a.verb.objektPflicht ? "dieses Verb braucht ein Objekt" : "das Objekt", "objekt", a.dinge, a.objekt ? a.objekt.id : "",
+        (e) => {
+          const b = (e.begleiter && e.begleiter[0]) || "bestimmt";
+          const de = window.Satzbau.nominalgruppe(e, a.verb.objekt || "akk", b, null, a.subjekt);
+          return italienisch ? [window.Satzbau.itDingform(e, b), de] : [de, ""];
+        }, a.verb.objektPflicht ? "" : "— nichts —") : ""}
+
+      ${a.objekt && a.begleiterListe.length > 1 ? `
+      <p class="eyebrow sbk-frage">🔤 Welcher Begleiter?<span class="sbk-frage-hinweis">„ein Apfel“ sagt man beim ersten Mal, „der Apfel“ nur bei einem bestimmten</span></p>
+      <div class="baustein-reihe">
+        ${a.begleiterListe.map((b) => {
+          const de = window.Satzbau.nominalgruppe(a.objekt, a.verb.objekt || "akk", b.id, a.objektAdjektiv, a.subjekt);
+          const it = window.Satzbau.itDingform(a.objekt, b.id);
+          return `<button type="button" class="baustein" data-sbk-feld="objektBegleiter" data-sbk-wert="${b.id}" aria-selected="${a.objektBegleiter === b.id}">${italienisch ? it : de}<span class="baustein-de">${b.hinweis}</span></button>`;
+        }).join("")}
+      </div>` : ""}
+
+      ${a.adjListe.length ? sbkReihe("🎨 Wie ist es?", "eine Eigenschaft dazu — im Deutschen ändert sich dabei die Adjektivendung", "objektAdjektiv", a.adjListe, sbkWahl.objektAdjektiv,
+        (e) => {
+          const de = window.Satzbau.nominalgruppe(a.objekt, a.verb.objekt || "akk", a.objektBegleiter, e, a.subjekt);
+          return italienisch ? [window.Satzbau.itAdjektiv(e, a.objekt.genus, a.objekt.plural), de] : [de, ""];
+        }, "— ohne —") : ""}
 
       ${a.personen.length ? sbkReihe(a.verb.personFall === "dat" ? "🧑 Wem?" : "🧑 Wen?",
         a.verb.personPraep ? `mit „${a.verb.personPraep}“ — ${a.verb.personFall === "dat" ? "Dativ" : "Akkusativ"}` : (a.verb.personFall === "dat" ? "Dativ" : "Akkusativ"),
@@ -6273,23 +6341,30 @@
           return italienisch ? [e[a.verb.itPersonFeld || "it"] || e.it, deVoll] : [deVoll, ""];
         }, "— niemanden —") : ""}
 
-      ${a.orte.length ? sbkReihe(ortFrage, ortHinweis, "ort", a.orte, sbkWahl.ort,
+      ${a.orte.length ? sbkReihe(ortInfo.frage, ortInfo.hinweis, "ort", a.orte, sbkWahl.ort,
         (e) => {
-          const deForm = window.Satzbau.ortsform(e, a.verb.ortRolle || "wo");
-          return italienisch ? [e.it, deForm] : [deForm, ""];
+          const deForm = window.Satzbau.ortsform(e, a.ortRolle);
+          return italienisch ? [window.Satzbau.itOrtsform(e, a.ortRolle), deForm] : [deForm, ""];
         }, "— ohne Ort —") : ""}
 
-      ${sbkReihe("🕒 Wann?", "passt sich der gewählten Zeit an", "zeit", a.zeiten.filter((z) => z.id !== "keine"), sbkWahl.zeit,
+      ${sbkReihe("🕒 Wann?", "temporal — passt sich der gewählten Zeitform an", "zeit", a.zeiten.filter((z) => z.id !== "keine"), sbkWahl.zeit,
         (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne Zeitangabe —")}
 
-      ${sbkReihe("✨ Wie?", "die Art und Weise — es werden nur Angaben angeboten, die zu diesem Verb passen", "art", a.arten.filter((z) => z.id !== "keine"), sbkWahl.art,
-        (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne —")}
+      ${a.gruende.length > 1 ? sbkReihe("❓ Warum?", "kausal — als Nebensatz mit „weil“ oder mit „wegen“ und Genitiv", "grund", a.gruende.filter((g) => g.id !== "keiner"), sbkWahl.grund,
+        (e) => {
+          const de = window.Satzbau.grundText(e, a.subjekt, sbkZeitform, "de");
+          const it = window.Satzbau.grundText(e, a.subjekt, sbkZeitform, "it");
+          return italienisch ? [it, de] : [de, ""];
+        }, "— ohne Grund —") : ""}
+
+      ${a.arten.length > 1 ? sbkReihe("✨ Wie?", "modal — nur Angaben, die zu diesem Verb passen", "art", a.arten.filter((z) => z.id !== "keine"), sbkWahl.art,
+        (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne —") : ""}
     `;
 
     area.querySelectorAll("[data-sbk-ansicht]").forEach((b) => b.addEventListener("click", () => { sbkAnsicht = b.dataset.sbkAnsicht; renderSatzbaukasten(zielId); }));
     area.querySelectorAll("[data-sbk-kat]").forEach((b) => b.addEventListener("click", () => {
       sbkKategorie = b.dataset.sbkKat;
-      sbkWahl.ort = ""; sbkWahl.objekt = ""; sbkWahl.person = "";
+      sbkWahl.ort = ""; sbkWahl.objekt = ""; sbkWahl.person = ""; sbkWahl.objektAdjektiv = "";
       renderSatzbaukasten(zielId);
     }));
     area.querySelectorAll("[data-sbk-niveau]").forEach((b) => b.addEventListener("click", () => {
@@ -6297,27 +6372,34 @@
     }));
     area.querySelectorAll("[data-sbk-zeitform]").forEach((b) => b.addEventListener("click", () => {
       sbkZeitform = b.dataset.sbkZeitform;
-      // Zeitangabe zurücksetzen, wenn sie zur neuen Zeitform nicht passt.
-      if (!window.Satzbau.zeitenFuer(sbkZeitform).some((z) => z.id === sbkWahl.zeit)) sbkWahl.zeit = "keine";
+      if (!window.Satzbau.zeitenFuer(sbkZeitform, sbkNiveau).some((z) => z.id === sbkWahl.zeit)) sbkWahl.zeit = "keine";
       renderSatzbaukasten(zielId);
     }));
-    area.querySelectorAll("[data-sbk-satzart]").forEach((b) => b.addEventListener("click", () => { sbkSatzart = b.dataset.sbkSatzart; renderSatzbaukasten(zielId); }));
+    area.querySelectorAll("[data-sbk-satzart]").forEach((b) => b.addEventListener("click", () => {
+      sbkSatzart = b.dataset.sbkSatzart;
+      if (sbkSatzart !== "aussage") sbkWahl.vorfeld = "subjekt";
+      renderSatzbaukasten(zielId);
+    }));
     area.querySelectorAll("[data-sbk-pron]").forEach((b) => b.addEventListener("click", () => { sbkPronomen = b.dataset.sbkPron === "1"; renderSatzbaukasten(zielId); }));
     area.querySelectorAll("[data-sbk-feld]").forEach((b) => b.addEventListener("click", () => {
       sbkWahl[b.dataset.sbkFeld] = b.dataset.sbkWert;
+      const S2 = window.Satzbau;
       if (b.dataset.sbkFeld === "verb") {
-        // Ein anderes Verb heißt oft andere Objekte und andere Angaben — was
-        // nicht mehr passt, wird still zurückgesetzt statt falsch stehenzubleiben.
-        const S2 = window.Satzbau;
+        // Anderes Verb heißt andere Orte, Objekte, Gründe und Angaben.
+        // Was nicht mehr passt, wird still zurückgesetzt.
         const v = S2.VERBEN.find((x) => x.id === sbkWahl.verb);
         if (v) {
-          if (!S2.artenFuer(v).some((x) => x.id === sbkWahl.art)) sbkWahl.art = "keine";
-          if (!v.objekt) sbkWahl.objekt = "";
-          else if (!S2.dingeFuer(v, null, sbkNiveau).some((d) => d.id === sbkWahl.objekt)) sbkWahl.objekt = "";
+          sbkWahl.ortRolle = "";
+          if (!S2.artenFuer(v, sbkNiveau, a.subjekt).some((x) => x.id === sbkWahl.art)) sbkWahl.art = "keine";
+          if (!S2.gruendeFuer(v, sbkNiveau).some((x) => x.id === sbkWahl.grund)) sbkWahl.grund = "keiner";
+          if (!v.objekt) { sbkWahl.objekt = ""; sbkWahl.objektAdjektiv = ""; }
+          else if (!S2.dingeFuer(v, null, sbkNiveau).some((d) => d.id === sbkWahl.objekt)) { sbkWahl.objekt = ""; sbkWahl.objektAdjektiv = ""; sbkWahl.objektBegleiter = ""; }
           if (!v.personFall) sbkWahl.person = "";
-          if (!v.ortRolle) sbkWahl.ort = "";
+          if (!v.lokal || !v.lokal.length) { sbkWahl.ort = ""; sbkWahl.vorfeld = sbkWahl.vorfeld === "ort" ? "subjekt" : sbkWahl.vorfeld; }
         }
       }
+      if (b.dataset.sbkFeld === "ortRolle") sbkWahl.ort = "";
+      if (b.dataset.sbkFeld === "objekt") { sbkWahl.objektAdjektiv = ""; sbkWahl.objektBegleiter = ""; }
       renderSatzbaukasten(zielId);
     }));
     document.getElementById("sbkZufallBtn")?.addEventListener("click", () => { sbkZufall(); renderSatzbaukasten(zielId); });
@@ -18705,8 +18787,19 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "154";
+  const APP_VERSION = "155";
   const APP_CHANGELOG = {
+    "155": [
+      "\u{1F9F0} Der Satzbaukasten hat jetzt einen richtigen Wortschatz: 82 Verben statt 24, 164 Dinge statt 34, 99 Orte statt 49, 30 Personen, 81 Adjektive, 54 Zeit\u00adangaben, 35 Gr\u00fcnde und 41 Angaben zur Art und Weise. Bei jedem Verb steht weiterhin ausdr\u00fccklich, was dazu passt \u2014 nichts wird \u00fcber Themen geraten.",
+      "\u{1F517} Alle vier Umstandsbestimmungen lassen sich frei zusammenstellen: wann (temporal), warum (kausal), wie (modal) und wo/wohin/woher (lokal). Bei Verben, die mehrere Ortsfragen zulassen, w\u00e4hlst du selbst \u2014 und der Satz stellt sich darauf ein, bis hin zum Verbwechsel: man geht irgendwohin, aber man KOMMT von irgendwoher.",
+      "\u{1F34E} Nat\u00fcrliches Deutsch statt Roboterdeutsch: \u201EIch esse einen Apfel\u201C ist jetzt der Normalfall, nicht \u201Eden Apfel\u201C. Zu jedem Wort steht, welche Begleiter dazu passen \u2014 ein/eine, der/die/das, mein/dein, kein oder gar keiner \u2014 und welcher davon der nat\u00fcrliche ist. Umschalten kannst du jederzeit.",
+      "\u{1F1EE}\u{1F1F9} Der italienische Artikel wird nicht mehr aus einer fertigen Zeichenkette geschnitten, sondern jedes Mal neu gebildet \u2014 er richtet sich n\u00e4mlich nach dem WORT dahinter. Aus \u201El\u2019e-mail\u201C wird deshalb richtig \u201Ela lunga e-mail\u201C, sobald ein Adjektiv dazwischen tritt. Ebenso neu: un buon libro, un bel film, begli occhi.",
+      "\u{1F464} Das Possessivpronomen richtet sich jetzt nach der Person: \u201Eihre Kinder\u201C hei\u00dft \u201Ei loro bambini\u201C, nicht mehr \u201Ei miei bambini\u201C. Verwandte stehen im Singular ohne Artikel (mio fratello), alles andere mit (il mio amico, i miei fratelli).",
+      "\u2702\uFE0F Trennbare Verben teilen sich richtig: \u201EIch r\u00e4ume mein Zimmer auf\u201C, aber \u201Eweil ich mein Zimmer aufr\u00e4ume\u201C. Und \u201Emögen\u201C dreht sich im Italienischen um, wie es dort \u00fcblich ist: nicht ich mag den Kaffee, sondern der Kaffee gef\u00e4llt mir \u2014 \u201Emi piace il caff\u00e8\u201C.",
+      "\u{1F4D6} Die Beispielsammlung ist von 1020 auf 2400 S\u00e4tze gewachsen: 240 je Bereich, 40 auf jedem Niveau von A1 bis C2. Jeder Satz einzeln geschrieben und durchgesehen, keiner aus Bausteinen zusammengesetzt, jeder mit italienischer Entsprechung.",
+      "\u{1F50D} Gepr\u00fcft wurde diesmal nicht mit Stichproben: 182948 verschiedene S\u00e4tze wurden gebaut und maschinell auf F\u00e4lle, Verschmelzungen, Wortstellung und Verneinung abgeklopft \u2014 0 Beanstandungen. Zus\u00e4tzlich haben f\u00fcnf Korrekturrunden je 264 S\u00e4tze von Hand durchgesehen; die Fehlerzahl fiel von 85 auf 0.",
+      "\u{1F3EA} Ein Fachgesch\u00e4ft f\u00fchrt nur sein Sortiment: \u00c4pfel gibt es nicht mehr in der Buchhandlung und B\u00fccher nicht in der Metzgerei.",
+    ],
     "154": [
       "\u{1F1EE}\u{1F1F9} Die unsinnigen italienischen \u00dcbungss\u00e4tze sind weg. Der Grund war eine feste Satzh\u00fclle, in die reihum verschiedene W\u00f6rter gesetzt wurden \u2014 sie passte zum ersten und zu keinem der \u00fcbrigen. So entstand \u201Ew\u00e4hrend ich auf den Bus warte, bevorzuge ich den Psychiater\u201C. 42 solcher Schablonen mit 381 S\u00e4tzen wurden gefunden; jeder dieser S\u00e4tze ist jetzt einzeln neu geschrieben, mit derselben Aufgabe an derselben Stelle. Ergebnis: 0 Schablonen, 0 Verdachtsf\u00e4lle.",
       "\u{1F9F1} Der Satzbaukasten verbindet nicht mehr \u00fcber Themen, sondern \u00fcber ausdr\u00fcckliche Listen: Bei jedem Verb steht, welche Orte, Dinge und Personen wirklich dazugeh\u00f6ren, und welche Angaben zu Art und Weise passen. Was dort nicht steht, l\u00e4sst sich gar nicht erst bauen \u2014 kein \u201EIch bin gut gegangen\u201C, kein \u201ETermin im Garten haben\u201C mehr.",
@@ -18807,17 +18900,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       katzenzimmer: (key) => kzZimmerSvg(KZ_ORTE.find((o) => o.key === key) || KZ_ORTE[0], true),
       katzenSzenen: () => KZ_ORTE.map((o) => ({ k: o.id, svg: kzZimmerSvg(o, true) })),
       satzbruecke: (planken, gesamt, geschafft) => sbBrueckeSvg(planken, gesamt, geschafft, true),
-      // Spielt Kombinationen des Satzbaukastens durch — vollständig wären es
-      // Millionen, deshalb wird gestreut gezogen: jede Kategorie, jede Zeitform,
-      // jede Satzart kommt gleich oft vor.
-      uebersetzungHtml: (q) => uebersetzungHilfeHtml(q),
-      profilFelder: () => PROFIL_FELDER.map((f) => ({ key: f.key, bereich: f.bereich, quelle: f.quelle })),
-      // Alle Spiele mit ihrem Anzeigebereich — für den Auswertungstest.
-      spieleListe: () => GAMES_OVERVIEW_LIST.map((g) => {
-        const el = document.getElementById(g.sub)?.querySelector("div[id$='Area']");
-        return { sub: g.sub, name: g.name, area: el ? el.id : null };
-      }).filter((g) => g.area),
-      profilUebersicht: () => profilUebersichtHtml(),
+      /* Spielt Kombinationen des Satzbaukastens durch. Vollständig wären es
+         Millionen, deshalb wird gestreut gezogen: jede Kategorie, jede
+         Zeitform, jede Satzart, jede Ortsfrage und jeder Begleiter kommen
+         gleich oft vor. */
       sbkAlle: (level, proGruppe) => {
         const S = window.Satzbau;
         const lvl = level || "B1";
@@ -18831,19 +18917,32 @@ An einem Morgen lief ein kleiner Fuchs los…
               if (!verben.length) return;
               for (let i = 0; i < n; i++) {
                 const verb = zufall(verben);
-                const orte = S.orteFuer(kat.id, lvl, verb);
+                const subjekt = zufall(S.SUBJEKTE);
+                const rollen = S.ortRollenFuer(verb);
+                const ortRolle = rollen.length ? zufall(rollen) : "";
                 const dinge = verb.objekt ? S.dingeFuer(verb, null, lvl) : [];
+                const objekt = dinge.length && (verb.objektPflicht || Math.random() < 0.8) ? zufall(dinge) : null;
+                const orte = ortRolle ? S.orteFuer(kat.id, lvl, verb, ortRolle, objekt) : [];
                 const personen = verb.personFall ? S.personenFuer(null, lvl, verb) : [];
-                const zeiten = S.zeitenFuer(zf);
+                const zeiten = S.zeitenFuer(zf, lvl);
+                const gruende = S.gruendeFuer(verb, lvl);
+                const arten = S.artenFuer(verb, lvl, subjekt, objekt);
+                const begl = objekt ? S.begleiterFuer(objekt, verb) : [];
+                const adjs = objekt ? S.adjektiveFuer(objekt, lvl) : [];
                 const r = S.bauSatz({
-                  subjekt: zufall(S.SUBJEKTE), verb,
-                  ort: verb.ortRolle && orte.length && Math.random() < 0.8 ? zufall(orte) : null,
-                  objekt: dinge.length && (verb.objektPflicht || Math.random() < 0.8) ? zufall(dinge) : null,
-                  person: personen.length && Math.random() < 0.7 ? zufall(personen) : null,
-                  zeit: zufall(zeiten), art: zufall(S.artenFuer(verb)),
+                  subjekt, verb, ortRolle,
+                  ort: orte.length && (verb.ortPflicht || Math.random() < 0.8) ? zufall(orte) : null,
+                  objekt,
+                  objektBegleiter: begl.length ? zufall(begl).id : "",
+                  objektAdjektiv: adjs.length && Math.random() < 0.4 ? zufall(adjs) : null,
+                  person: personen.length && (verb.personPflicht || Math.random() < 0.7) ? zufall(personen) : null,
+                  zeit: zufall(zeiten),
+                  grund: gruende.length && Math.random() < 0.4 ? zufall(gruende) : null,
+                  art: arten.length ? zufall(arten) : null,
                   zeitform: zf, satzart: art,
+                  vorfeld: art === "aussage" && Math.random() < 0.3 ? "zeit" : "subjekt",
                 });
-                raus.push({ de: r.de, it: r.it, kat: kat.id });
+                raus.push({ de: r.de, it: r.it, kat: kat.id, rolle: ortRolle });
               }
             });
           });
