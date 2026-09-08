@@ -738,8 +738,8 @@
     { id: "schwester", nomen: "Schwester", genus: "f", itNomen: "sorella", itGenus: "f", itModus: "verwandt", it: "mia sorella", itMit: "con mia sorella", itAn: "a mia sorella", kategorie: "familie", level: "A1", adjektive: ["gross", "klein", "nett"] },
     { id: "kollege", nomen: "Kollege", genus: "m", schwach: true, itNomen: "collega", itGenus: "m", itModus: "poss", it: "il mio collega", itMit: "con il mio collega", itAn: "al mio collega", kategorie: "arbeit", level: "A2", adjektive: ["neu", "nett", "gut"] },
     { id: "nachbar", nomen: "Nachbar", genus: "m", schwach: true, itNomen: "vicino", itGenus: "m", itModus: "poss", it: "il mio vicino", itMit: "con il mio vicino", itAn: "al mio vicino", kategorie: "alltag", level: "A2", adjektive: ["neu", "nett", "alt"] },
-    { id: "chef", nomen: "Chef", genus: "m", itNomen: "capo", itGenus: "m", itModus: "poss", it: "il mio capo", itMit: "con il mio capo", itAn: "al mio capo", kategorie: "arbeit", level: "A2", adjektive: ["neu", "nett", "streng"] },
-    { id: "lehrerin", nomen: "Lehrerin", genus: "f", itNomen: "insegnante", itGenus: "f", itModus: "poss", it: "la mia insegnante", itMit: "con la mia insegnante", itAn: "alla mia insegnante", kategorie: "bildung", level: "A1", adjektive: ["neu", "nett", "streng", "gut"] },
+    { id: "chef", nomen: "Chef", genus: "m", itNomen: "capo", itGenus: "m", itModus: "poss", it: "il mio capo", itMit: "con il mio capo", itAn: "al mio capo", kategorie: "arbeit", level: "A2", adjektive: ["neu", "nett", "streng"] , alsBegleitung: false},
+    { id: "lehrerin", nomen: "Lehrerin", genus: "f", itNomen: "insegnante", itGenus: "f", itModus: "poss", it: "la mia insegnante", itMit: "con la mia insegnante", itAn: "alla mia insegnante", kategorie: "bildung", level: "A1", adjektive: ["neu", "nett", "streng", "gut"] , alsBegleitung: false},
     { id: "kind", nomen: "Kind", genus: "n", begleiter: "bestimmt", itNomen: "bambino", itGenus: "m", itModus: "ohne", begleiter: "bestimmt", it: "il bambino", itMit: "con il bambino", itAn: "al bambino", kategorie: "familie", level: "A1", adjektive: ["klein", "gross", "nett"] },
 
     /* --- neu aufgenommen --- */
@@ -757,12 +757,12 @@
     { id: "kinder", nomen: "Kinder", genus: "f", plural: true, itNomen: "bambini", itGenus: "m", itPlural: true, itModus: "poss", it: "i bambini", itMit: "con i bambini", itAn: "ai bambini", kategorie: "familie", level: "A1", adjektive: ["klein","nett","lustig"] },
     { id: "freunde", nomen: "Freunde", genus: "f", plural: true, itNomen: "amici", itGenus: "m", itPlural: true, itModus: "poss", it: "i miei amici", itMit: "con i miei amici", itAn: "ai miei amici", kategorie: "familie", level: "A1", adjektive: ["gut","nett","lustig"] },
     { id: "kollegen", nomen: "Kollegen", genus: "f", plural: true, itNomen: "colleghi", itGenus: "m", itPlural: true, itModus: "poss", it: "i miei colleghi", itMit: "con i miei colleghi", itAn: "ai miei colleghi", kategorie: "arbeit", level: "A2", adjektive: ["nett","gut","neu"] },
-    { id: "arzt", nomen: "Arzt", genus: "m", begleiter: "bestimmt", itNomen: "medico", itGenus: "m", itModus: "ohne", it: "il medico", itMit: "con il medico", itAn: "al medico", kategorie: "gesundheit", level: "A1", adjektive: ["nett","jung","freundlich"] },
-    { id: "verkaeufer", nomen: "Verkäufer", genus: "m", begleiter: "bestimmt", itNomen: "commesso", itGenus: "m", itModus: "ohne", begleiter: "bestimmt", it: "il commesso", itMit: "con il commesso", itAn: "al commesso", kategorie: "einkaufen", level: "A2", adjektive: ["nett","freundlich","jung"] },
-    { id: "kellner", nomen: "Kellner", genus: "m", begleiter: "bestimmt", itNomen: "cameriere", itGenus: "m", itModus: "ohne", begleiter: "bestimmt", it: "il cameriere", itMit: "con il cameriere", itAn: "al cameriere", kategorie: "essen", level: "A2", adjektive: ["nett","freundlich","jung"] },
+    { id: "arzt", nomen: "Arzt", genus: "m", begleiter: "bestimmt", itNomen: "medico", itGenus: "m", itModus: "ohne", it: "il medico", itMit: "con il medico", itAn: "al medico", kategorie: "gesundheit", level: "A1", adjektive: ["nett","jung","freundlich"] , alsBegleitung: false},
+    { id: "verkaeufer", nomen: "Verkäufer", genus: "m", begleiter: "bestimmt", itNomen: "commesso", itGenus: "m", itModus: "ohne", begleiter: "bestimmt", it: "il commesso", itMit: "con il commesso", itAn: "al commesso", kategorie: "einkaufen", level: "A2", adjektive: ["nett","freundlich","jung"] , alsBegleitung: false},
+    { id: "kellner", nomen: "Kellner", genus: "m", begleiter: "bestimmt", itNomen: "cameriere", itGenus: "m", itModus: "ohne", begleiter: "bestimmt", it: "il cameriere", itMit: "con il cameriere", itAn: "al cameriere", kategorie: "essen", level: "A2", adjektive: ["nett","freundlich","jung"] , alsBegleitung: false},
     { id: "nachbarin", nomen: "Nachbarin", genus: "f", itNomen: "vicina", itGenus: "f", itModus: "poss", it: "la mia vicina", itMit: "con la mia vicina", itAn: "alla mia vicina", kategorie: "alltag", level: "A2", adjektive: ["neu","nett","alt"] },
-    { id: "lehrer", nomen: "Lehrer", genus: "m", itNomen: "insegnante", itGenus: "m", itModus: "poss", it: "il mio insegnante", itMit: "con il mio insegnante", itAn: "al mio insegnante", kategorie: "bildung", level: "A1", adjektive: ["neu","nett","streng","gut"] },
-    { id: "vermieter", nomen: "Vermieter", genus: "m", itNomen: "padrone di casa", itGenus: "m", itModus: "poss", it: "il mio padrone di casa", itMit: "con il mio padrone di casa", itAn: "al mio padrone di casa", kategorie: "alltag", level: "B1", adjektive: ["streng","nett","alt"] },
+    { id: "lehrer", nomen: "Lehrer", genus: "m", itNomen: "insegnante", itGenus: "m", itModus: "poss", it: "il mio insegnante", itMit: "con il mio insegnante", itAn: "al mio insegnante", kategorie: "bildung", level: "A1", adjektive: ["neu","nett","streng","gut"] , alsBegleitung: false},
+    { id: "vermieter", nomen: "Vermieter", genus: "m", itNomen: "padrone di casa", itGenus: "m", itModus: "poss", it: "il mio padrone di casa", itMit: "con il mio padrone di casa", itAn: "al mio padrone di casa", kategorie: "alltag", level: "B1", adjektive: ["streng","nett","alt"] , alsBegleitung: false},
   ];
 
   /* Adjektive. „stamm“ ist die Form ohne Endung — daran hängt die
@@ -935,47 +935,82 @@
      des Regens nach Hause, aber man isst nicht wegen des Regens. */
   const GRUENDE = [
     { id: "keiner", art: "keiner", de: "", it: "" },
-    { id: "muede", art: "zustand", adjektiv: "müde", it: "stanco", level: "A2" },
-    { id: "krank", art: "zustand", adjektiv: "krank", it: "malato", level: "A2" },
-    { id: "hungrig", nurDingRollen: ["essen", "kochen", "bestellen"], art: "zustand", adjektiv: "hungrig", it: "affamato", level: "A2" },
-    { id: "durstig", nurDingRollen: ["trinken"], art: "zustand", adjektiv: "durstig", it: "assetato", level: "B1" },
-    { id: "beschaeftigt", art: "zustand", adjektiv: "beschäftigt", it: "occupato", level: "B1" },
-    { id: "spaet", art: "zustand", adjektiv: "spät dran", it: "in ritardo", itUnveraenderlich: true, level: "A2" },
-    { id: "neugierig", art: "zustand", adjektiv: "neugierig", it: "curioso", level: "B1" },
-    { id: "wetter", art: "wegen", nomen: "Wetter", genus: "n", it: "a causa del tempo", level: "B1" },
-    { id: "regen", art: "wegen", nomen: "Regen", genus: "m", it: "a causa della pioggia", level: "B1" },
-    { id: "hitze", art: "wegen", nomen: "Hitze", genus: "f", it: "a causa del caldo", level: "B1" },
-    { id: "arbeitgrund", art: "wegen", nomen: "Arbeit", genus: "f", it: "per via del lavoro", level: "B1" },
-    { id: "zeitmangel", art: "wegen", nomen: "Zeitmangel", genus: "m", it: "per mancanza di tempo", level: "B2" },
-    { id: "laerm", art: "wegen", nomen: "Lärm", genus: "m", it: "a causa del rumore", level: "B2" },
-    { id: "termingrund", art: "wegen", nomen: "Termin", genus: "m", it: "per via di un appuntamento", level: "B2" },
+    { id: "muede", art: "zustand", stimmung: "negativ", adjektiv: "müde", it: "stanco", level: "A2" },
+    { id: "krank", art: "zustand", stimmung: "negativ", adjektiv: "krank", it: "malato", level: "A2" },
+    { id: "hungrig", nurDingRollen: ["essen", "kochen", "bestellen"], art: "zustand", adjektiv: "hungrig", it: "affamato", level: "A2" , stimmung: "negativ"},
+    { id: "durstig", nurDingRollen: ["trinken"], art: "zustand", adjektiv: "durstig", it: "assetato", level: "B1" , stimmung: "negativ"},
+    { id: "beschaeftigt", art: "zustand", stimmung: "negativ", adjektiv: "beschäftigt", it: "occupato", level: "B1" },
+    { id: "spaet", art: "zustand", stimmung: "negativ", adjektiv: "spät dran", it: "in ritardo", itUnveraenderlich: true, level: "A2" },
+    { id: "neugierig", art: "zustand", stimmung: "positiv", adjektiv: "neugierig", it: "curioso", level: "B1" },
+    { id: "wetter", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Wetter", genus: "n", it: "a causa del tempo", level: "B1" },
+    { id: "regen", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Regen", genus: "m", it: "a causa della pioggia", level: "B1" },
+    { id: "hitze", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Hitze", genus: "f", it: "a causa del caldo", level: "B1" },
+    { id: "arbeitgrund", art: "wegen", stimmung: "neutral", nomen: "Arbeit", genus: "f", it: "per via del lavoro", level: "B1" },
+    { id: "zeitmangel", art: "wegen", stimmung: "negativ", nomen: "Zeitmangel", genus: "m", it: "per mancanza di tempo", level: "B2" },
+    { id: "laerm", art: "wegen", stimmung: "negativ", anlass: "einmalig", nomen: "Lärm", genus: "m", it: "a causa del rumore", level: "B2" },
+    { id: "termingrund", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Termin", genus: "m", it: "per via di un appuntamento", level: "B2" },
 
     /* --- neu aufgenommen --- */
-    { id: "nervoes", art: "zustand", adjektiv: "nervös", it: "nervoso", level: "A2" },
-    { id: "traurig", art: "zustand", adjektiv: "traurig", it: "triste", level: "A2" },
-    { id: "gluecklich", art: "zustand", adjektiv: "glücklich", it: "felice", level: "A2" },
-    { id: "allein", art: "zustand", adjektiv: "allein", it: "solo", level: "A2" },
-    { id: "erkaeltet", art: "zustand", adjektiv: "erkältet", it: "raffreddato", level: "B1" },
-    { id: "fertig", art: "zustand", adjektiv: "fertig", it: "pronto", level: "A2" },
-    { id: "puenktlich", art: "zustand", adjektiv: "pünktlich", it: "puntuale", level: "B1" },
-    { id: "unterwegs", art: "zustand", adjektiv: "unterwegs", it: "in viaggio", itUnveraenderlich: true, level: "B1" },
-    { id: "frei", art: "zustand", adjektiv: "frei", it: "libero", level: "A2" },
-    { id: "unsicher", art: "zustand", adjektiv: "unsicher", it: "insicuro", level: "B1" },
-    { id: "stau", art: "wegen", nomen: "Stau", genus: "m", it: "a causa del traffico", level: "B1" },
-    { id: "kaelte", art: "wegen", nomen: "Kälte", genus: "f", it: "a causa del freddo", level: "B1" },
-    { id: "schnee", art: "wegen", nomen: "Schnee", genus: "m", genitiv: "Schnees", it: "a causa della neve", level: "B1" },
-    { id: "sturm", art: "wegen", nomen: "Sturm", genus: "m", genitiv: "Sturms", it: "a causa della tempesta", level: "B1" },
-    { id: "streik", art: "wegen", nomen: "Streik", genus: "m", genitiv: "Streiks", it: "a causa dello sciopero", level: "B1" },
-    { id: "umzug", art: "wegen", nomen: "Umzug", genus: "m", genitiv: "Umzugs", it: "a causa del trasloco", level: "B1" },
-    { id: "pruefung", art: "wegen", nomen: "Prüfung", genus: "f", it: "a causa dell'esame", level: "B1" },
-    { id: "krankheit", art: "wegen", nomen: "Krankheit", genus: "f", it: "a causa della malattia", level: "B1" },
-    { id: "baustelle", art: "wegen", nomen: "Baustelle", genus: "f", it: "a causa del cantiere", level: "B1" },
-    { id: "zeitverschiebung", art: "wegen", nomen: "Zeitverschiebung", genus: "f", it: "a causa del fuso orario", level: "B1" },
+    { id: "nervoes", art: "zustand", stimmung: "negativ", adjektiv: "nervös", it: "nervoso", level: "A2" },
+    { id: "traurig", art: "zustand", stimmung: "negativ", adjektiv: "traurig", it: "triste", level: "A2" },
+    { id: "gluecklich", art: "zustand", stimmung: "positiv", adjektiv: "glücklich", it: "felice", level: "A2" },
+    { id: "allein", art: "zustand", stimmung: "negativ", adjektiv: "allein", it: "solo", level: "A2" },
+    { id: "erkaeltet", art: "zustand", stimmung: "negativ", adjektiv: "erkältet", it: "raffreddato", level: "B1" },
+    { id: "fertig", art: "zustand", stimmung: "positiv", adjektiv: "fertig", it: "pronto", level: "A2" },
+    { id: "puenktlich", art: "zustand", stimmung: "neutral", adjektiv: "pünktlich", it: "puntuale", level: "B1" },
+    { id: "unterwegs", art: "zustand", stimmung: "neutral", adjektiv: "unterwegs", it: "in viaggio", itUnveraenderlich: true, level: "B1" },
+    { id: "frei", art: "zustand", stimmung: "positiv", universal: true, adjektiv: "frei", it: "libero", level: "A2" },
+    { id: "unsicher", art: "zustand", stimmung: "negativ", adjektiv: "unsicher", it: "insicuro", level: "B1" },
+    { id: "stau", art: "wegen", stimmung: "negativ", anlass: "einmalig", nomen: "Stau", genus: "m", it: "a causa del traffico", level: "B1" },
+    { id: "kaelte", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Kälte", genus: "f", it: "a causa del freddo", level: "B1" },
+    { id: "schnee", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Schnee", genus: "m", genitiv: "Schnees", it: "a causa della neve", level: "B1" },
+    { id: "sturm", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Sturm", genus: "m", genitiv: "Sturms", it: "a causa della tempesta", level: "B1" },
+    { id: "streik", art: "wegen", stimmung: "negativ", anlass: "einmalig", nomen: "Streik", genus: "m", genitiv: "Streiks", it: "a causa dello sciopero", level: "B1" },
+    { id: "umzug", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Umzug", genus: "m", genitiv: "Umzugs", it: "a causa del trasloco", level: "B1" },
+    { id: "pruefung", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Prüfung", genus: "f", it: "a causa dell'esame", level: "B1" },
+    { id: "krankheit", art: "wegen", stimmung: "negativ", anlass: "einmalig", nomen: "Krankheit", genus: "f", it: "a causa della malattia", level: "B1" },
+    { id: "baustelle", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Baustelle", genus: "f", it: "a causa del cantiere", level: "B1" },
+    { id: "zeitverschiebung", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Zeitverschiebung", genus: "f", it: "a causa del fuso orario", level: "B1" },
+
+    /* --- Gründe, die zu jeder Tätigkeit passen --- */
+    { id: "hungerhaben", art: "haben", nomen: "Hunger", it: "fame", stimmung: "negativ", nurDingRollen: ["essen","kochen","bestellen","kaufen"], level: "A1" },
+    { id: "dursthaben", art: "haben", nomen: "Durst", it: "sete", stimmung: "negativ", nurDingRollen: ["trinken","bestellen","kaufen"], level: "A1" },
+    { id: "zeithaben", art: "haben", nomen: "Zeit", it: "tempo", stimmung: "positiv", universal: true, level: "A1" },
+    { id: "keinezeit", art: "haben", nomen: "keine Zeit", it: "tempo", itVerneint: true, stimmung: "negativ", universal: true, level: "A2" },
+    { id: "lusthaben", art: "haben", nomen: "Lust", it: "voglia", stimmung: "positiv", universal: true, level: "A2" },
+    { id: "keinelust", art: "haben", nomen: "keine Lust", it: "voglia", itVerneint: true, stimmung: "negativ", universal: true, level: "A2" },
+    { id: "langeweile", art: "haben", nomen: "Langeweile", it: "noia", stimmung: "negativ", universal: true, level: "B1" },
+    { id: "besuchhaben", art: "haben", nomen: "Besuch", it: "ospiti", stimmung: "positiv", anlass: "einmalig", level: "B1" },
+    { id: "geburtstag", art: "haben", nomen: "Geburtstag", it: "il compleanno", itFest: true, stimmung: "positiv", anlass: "einmalig", level: "A2" },
+    { id: "urlaubhaben", art: "haben", nomen: "Urlaub", it: "le ferie", itFest: true, stimmung: "positiv", level: "A2" },
+    { id: "frei_haben", art: "haben", nomen: "frei", it: "libero", itFest: true, stimmung: "positiv", universal: true, level: "A2" },
+    { id: "magdas", art: "satz", deFormen: ["das mag","das magst","das mag","das mögen","das mögt","das mögen"], itFormen: ["mi piace","ti piace","gli piace","le piace","ci piace","vi piace","a loro piace"], itNachSubjekt: true, stimmung: "positiv", universal: true, level: "A2" },
+    { id: "mussdas", art: "satz", deFormen: ["das muss","das musst","das muss","das müssen","das müsst","das müssen"], itFormen: ["devo","devi","deve","deve","dobbiamo","dovete","devono"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "A2" },
+    { id: "willdas", art: "satz", deFormen: ["das will","das willst","das will","das wollen","das wollt","das wollen"], itFormen: ["voglio","vuoi","vuole","vuole","vogliamo","volete","vogliono"], itNachSubjekt: true, stimmung: "positiv", universal: true, level: "A2" },
+    { id: "solldas", art: "satz", deFormen: ["das soll","das sollst","das soll","das sollen","das sollt","das sollen"], itFormen: ["dovrei","dovresti","dovrebbe","dovrebbe","dovremmo","dovreste","dovrebbero"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "B1" },
+    { id: "nichtanders", art: "satz", deFormen: ["nicht anders kann","nicht anders kannst","nicht anders kann","nicht anders können","nicht anders könnt","nicht anders können"], itFormen: ["non posso fare altrimenti","non puoi fare altrimenti","non può fare altrimenti","non può fare altrimenti","non possiamo fare altrimenti","non potete fare altrimenti","non possono fare altrimenti"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "B1" },
+    { id: "versprochen", art: "satz", deFormen: ["es versprochen habe","es versprochen hast","es versprochen hat","es versprochen haben","es versprochen habt","es versprochen haben"], itFormen: ["l'ho promesso","l'hai promesso","l'ha promesso","l'ha promesso","l'abbiamo promesso","l'avete promesso","l'hanno promesso"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "B1" },
+    { id: "vergessen_grund", art: "satz", deFormen: ["es vergessen habe","es vergessen hast","es vergessen hat","es vergessen haben","es vergessen habt","es vergessen haben"], itFormen: ["me ne sono dimenticato","te ne sei dimenticato","se ne è dimenticato","se ne è dimenticata","ce ne siamo dimenticati","ve ne siete dimenticati","se ne sono dimenticati"], itNachSubjekt: true, stimmung: "negativ", universal: true, level: "B1" },
+    { id: "wichtig_ist", art: "unpersoenlich", de: "es wichtig ist", it: "è importante", stimmung: "neutral", universal: true, level: "A2" },
+    { id: "spass", art: "unpersoenlich", de: "es Spaß macht", it: "è divertente", stimmung: "positiv", universal: true, level: "A2" },
+    { id: "lohnt", art: "unpersoenlich", de: "es sich lohnt", it: "ne vale la pena", stimmung: "positiv", universal: true, level: "B1" },
+    { id: "noetig", art: "unpersoenlich", de: "es nötig ist", it: "è necessario", stimmung: "neutral", universal: true, level: "B1" },
+    { id: "gesund_ist", art: "unpersoenlich", de: "es gesund ist", it: "fa bene", stimmung: "positiv", universal: true, level: "B1" },
+    { id: "guenstiger", art: "unpersoenlich", de: "es günstiger ist", it: "costa meno", stimmung: "positiv", universal: true, level: "B1" },
+    { id: "schneller_ist", art: "unpersoenlich", de: "es schneller geht", it: "è più veloce", stimmung: "positiv", universal: true, level: "A2" },
+    { id: "gewohnheit", art: "unpersoenlich", de: "es so üblich ist", it: "si fa così", stimmung: "neutral", universal: true, level: "B2" },
   ];
   const GRUND_SEIN = ["bin", "bist", "ist", "sind", "seid", "sind"];
   const GRUND_WAR = ["war", "warst", "war", "waren", "wart", "waren"];
   const GRUND_IT_SEIN = ["sono", "sei", "è", "siamo", "siete", "sono"];
   const GRUND_IT_WAR = ["ero", "eri", "era", "eravamo", "eravate", "erano"];
+  const GRUND_HABEN = ["habe", "hast", "hat", "haben", "habt", "haben"];
+  const GRUND_HATTE = ["hatte", "hattest", "hatte", "hatten", "hattet", "hatten"];
+  const GRUND_IT_HABEN = ["ho", "hai", "ha", "abbiamo", "avete", "hanno"];
+  const GRUND_IT_HATTE = ["avevo", "avevi", "aveva", "avevamo", "avevate", "avevano"];
+  // Für „mi piace“ und Ähnliches braucht es sieben Formen, weil er und sie
+  // im Italienischen verschiedene Pronomen haben (gli / le).
+  const IT_PERSON_INDEX = { "1sg": 0, "2sg": 1, "3sgm": 2, "3sgf": 3, "1pl": 4, "2pl": 5, "3pl": 6 };
 
   /* --- MODAL -------------------------------------------------------
      art: "weise" (wie man es tut), "mittel" (womit), "grad" (wie sehr).
@@ -983,9 +1018,9 @@
      mit sprechen und schlafen, nicht mit gehen. */
   const ARTEN = [
     { id: "keine", de: "", it: "", art: "keine" },
-    { id: "gern", de: "gern", it: "volentieri", art: "grad",
+    { id: "gern", stimmung: "positiv", de: "gern", it: "volentieri", art: "grad",
       passtVerben: ["essen", "trinken", "kochen", "lesen", "schreiben", "sehen", "hoeren", "spielen", "lernen", "sprechen", "treffen", "helfen", "machen", "gehen", "fahren", "kommen", "arbeiten", "wohnen", "schlafen", "warten", "kaufen"] },
-    { id: "sehrgern", de: "sehr gern", it: "molto volentieri", art: "grad", level: "A2",
+    { id: "sehrgern", stimmung: "positiv", de: "sehr gern", it: "molto volentieri", art: "grad", level: "A2",
       passtVerben: ["essen", "trinken", "kochen", "lesen", "sehen", "hoeren", "spielen", "lernen", "sprechen", "treffen", "helfen", "gehen", "fahren", "arbeiten", "wohnen"] },
     { id: "schnell", de: "schnell", it: "in fretta", art: "weise",
       passtVerben: ["essen", "trinken", "kochen", "lesen", "schreiben", "spielen", "lernen", "sprechen", "machen", "gehen", "fahren", "kommen", "arbeiten", "kaufen", "verstehen"] },
@@ -1022,7 +1057,7 @@
     { id: "aufmerksam", de: "aufmerksam", it: "attentamente", art: "weise", passtVerben: ["hoeren","lesen"] },
     { id: "deutlich", de: "deutlich", it: "chiaramente", art: "weise", passtVerben: ["sprechen","schreiben","erklaeren"] },
     { id: "puenktlich", de: "pünktlich", it: "puntualmente", art: "weise", passtVerben: ["kommen","sein","anfangen","bezahlen"] },
-    { id: "mitfreude", de: "mit Freude", it: "con gioia", art: "weise", passtVerben: ["singen","tanzen","feiern","spielen","kochen","arbeiten"] },
+    { id: "mitfreude", stimmung: "positiv", de: "mit Freude", it: "con gioia", art: "weise", passtVerben: ["singen","tanzen","feiern","spielen","kochen","arbeiten"] },
     { id: "zuzweit", de: "zu zweit", it: "in due", art: "weise", nurPlural: true, passtVerben: ["wandern","tanzen","spielen","reisen","kochen","singen","schwimmen"] },
     { id: "aufdeutsch", de: "auf Deutsch", it: "in tedesco", art: "mittel", passtVerben: ["sprechen","schreiben","lesen","lernen","verstehen","erklaeren","uebersetzen","singen"] , nichtMitDingen: ["deutsch","italienisch"] },
     { id: "aufitalienisch", de: "auf Italienisch", it: "in italiano", art: "mittel", passtVerben: ["sprechen","schreiben","lesen","lernen","verstehen","erklaeren","uebersetzen","singen"] , nichtMitDingen: ["deutsch","italienisch"] },
@@ -1698,6 +1733,27 @@
       const kopula = zeitform === "perfekt" ? GRUND_WAR[i] : GRUND_SEIN[i];
       return "weil " + subjekt.de + " " + grund.adjektiv + " " + kopula;
     }
+    /* „weil ich Hunger habe“ — so redet man wirklich; „weil ich hungrig
+       bin“ ist die Schulbuchvariante. Beides gibt es jetzt. */
+    if (grund.art === "haben") {
+      if (sprache === "it") {
+        const hilf = zeitform === "perfekt" ? GRUND_IT_HATTE[i] : GRUND_IT_HABEN[i];
+        if (grund.itFest) return "perché " + hilf + " " + grund.it;
+        return "perché " + (grund.itVerneint ? "non " + hilf : hilf) + " " + grund.it;
+      }
+      const hilf = zeitform === "perfekt" ? GRUND_HATTE[i] : GRUND_HABEN[i];
+      return "weil " + subjekt.de + " " + grund.nomen + " " + hilf;
+    }
+    /* „weil ich das mag“, „weil ich muss“ — die Gründe, die zu jeder
+       Tätigkeit passen. Sie werden nach der Person gebeugt. */
+    if (grund.art === "satz") {
+      if (sprache === "it") return "perché " + (grund.itFormen[IT_PERSON_INDEX[subjekt.id]] || grund.itFormen[0]);
+      return "weil " + subjekt.de + " " + grund.deFormen[i];
+    }
+    // „weil es wichtig ist“ — unpersönlich, unverändert in jeder Person.
+    if (grund.art === "unpersoenlich") {
+      return sprache === "it" ? "perché " + grund.it : "weil " + grund.de;
+    }
     // wegen + Genitiv
     if (sprache === "it") return grund.it;
     const eintrag = { nomen: grund.nomen, genus: grund.genus, genitiv: grund.genitiv };
@@ -1737,35 +1793,14 @@
     const zeitVorne = wahl.vorfeld === "zeit" && wahl.zeit && wahl.zeit.de;
     const ortVorne = wahl.vorfeld === "ort" && wahl.ort;
 
-    if (wahl.zeit && wahl.zeit.de && !zeitVorne) deTeile.push({ t: wahl.zeit.de, rolle: "wann" });
-    /* „Ich trinke nie Tee, weil ich neugierig bin“ — ein Grund, der für
-       die Handlung spricht, passt nicht zu ihrer Verneinung. */
-    if (schonVerneint || wahl.objektBegleiter === "kein") {
-      if (wahl.grund && wahl.grund.art === "zustand") wahl = Object.assign({}, wahl, { grund: null });
-    }
-    /* „Ich bestelle ein Brötchen, weil ich durstig bin“ — der Grund muss
-       zum Objekt passen. Was nicht passt, fällt weg. */
-    if (wahl.grund && wahl.grund.nurDingRollen) {
-      const rollen = (wahl.objekt && wahl.objekt.rollen) || [];
-      if (!wahl.grund.nurDingRollen.some((r) => rollen.includes(r))) {
-        wahl = Object.assign({}, wahl, { grund: null });
-      }
-    }
-    // Derselbe Gedanke zweimal — als Art und als Grund — wird einmal gesagt.
-    if (wahl.grund && wahl.art && wahl.grund.id === wahl.art.id) {
-      wahl = Object.assign({}, wahl, { grund: null });
-    }
-    const grundDe = grundText(wahl.grund, subjekt, zeitform, "de");
-    // Ein weil-Satz kann nicht mitten im Mittelfeld stehen — er kommt hinten
-    // als eigener Nebensatz. „wegen des Wetters“ dagegen steht im Mittelfeld.
-    const grundIstNebensatz = wahl.grund && wahl.grund.art === "zustand";
-    if (grundDe && !grundIstNebensatz) deTeile.push({ t: grundDe, rolle: "warum" });
-    const artNachObjekt = Boolean(wahl.art && wahl.art.nachObjekt);
-    if (wahl.art && wahl.art.de && !artNachObjekt) deTeile.push({ t: wahl.art.de, rolle: "wie" });
-    /* Stehen Dativ und Akkusativ beide als Nomen im Satz, kommt der
-       Dativ zuerst: „Ich gebe meinem Bruder ein Buch.“ — nicht umgekehrt. */
+    /* Personen sind im Satz immer bekannte Information („mein Freund“,
+       „der Arzt“) und stehen deshalb vor den Umstandsangaben. Nur wenn
+       eine Präposition dazugehört („auf den Kellner warten“), rückt die
+       Gruppe nach hinten. Stehen Dativ und Akkusativ beide als Nomen da,
+       kommt der Dativ zuerst: „Ich gebe meinem Bruder ein Buch.“ */
     const zeigePerson = Boolean(wahl.person) && Boolean(verb.personFall);
-    const personZuerst = zeigePerson && verb.personFall === "dat" && !verb.personPraep;
+    const personZuerstImSatz = zeigePerson && !verb.personPraep;
+    const personZuerst = personZuerstImSatz;
     function personTeil() {
       const fall = verb.personFall || "akk";
       /* Manche Personen gehören einem („mein Bruder“), andere nicht
@@ -1782,10 +1817,56 @@
         : zusammen + (teile.length > 1 ? " " + teile.slice(1).join(" ") : "");
       return { t: text, rolle: "wen" };
     }
-    if (personZuerst) deTeile.push(personTeil());
-    if (zeigeObjekt) {
-      const begl = wahl.objektBegleiter || (wahl.objekt.begleiter && wahl.objekt.begleiter[0]) || "bestimmt";
-      deTeile.push({ t: nominalgruppe(wahl.objekt, verb.objekt || "akk", begl, wahl.objektAdjektiv, subjekt), rolle: "was" });
+
+    /* Bekanntes zuerst, Neues zuletzt — daran hängt, ob ein deutscher Satz
+       natürlich klingt. „Ich frage meinen Freund oft per E-Mail“ (bekannt:
+       mein Freund) gegen „Ich esse heute einen Apfel“ (neu: ein Apfel).
+       Ein bestimmtes oder besitzanzeigendes Objekt rutscht deshalb vor die
+       Umstandsangaben, ein unbestimmtes bleibt dahinter. */
+    const objBegl = wahl.objektBegleiter || (wahl.objekt && wahl.objekt.begleiter && wahl.objekt.begleiter[0]) || "bestimmt";
+    const objektBekannt = zeigeObjekt && ["bestimmt", "possessiv"].includes(objBegl);
+    /* Personen sind immer bekannt („mein Freund“, „der Arzt“) und stehen
+       deshalb vorn — vor Zeit, Grund und Art. */
+    if (personZuerstImSatz) deTeile.push(personTeil());
+    if (objektBekannt) {
+      deTeile.push({ t: nominalgruppe(wahl.objekt, verb.objekt || "akk", objBegl, wahl.objektAdjektiv, subjekt), rolle: "was" });
+    }
+    if (wahl.zeit && wahl.zeit.de && !zeitVorne) deTeile.push({ t: wahl.zeit.de, rolle: "wann" });
+    /* „Ich trinke nie Tee, weil ich neugierig bin“ — ein Grund, der für
+       die Handlung spricht, passt nicht zu ihrer Verneinung. */
+    if (schonVerneint || wahl.objektBegleiter === "kein") {
+      if (wahl.grund && wahl.grund.art === "zustand") wahl = Object.assign({}, wahl, { grund: null });
+    }
+    /* Dieselben Regeln, die die Auswahl steuern, gelten auch hier: eine
+       Auswahl, die vor einer späteren Änderung noch passte, darf danach
+       keinen widersprüchlichen Satz mehr ergeben. */
+    if (wahl.grund && !grundPasst(wahl.grund, verb, wahl)) wahl = Object.assign({}, wahl, { grund: null });
+    if (wahl.art && !artPasst(wahl.art, verb, wahl)) wahl = Object.assign({}, wahl, { art: null });
+    // „allein mit meiner Frau“ ist ein Widerspruch.
+    if (wahl.begleitung && wahl.art && ["allein", "zusammen", "zuzweit"].includes(wahl.art.id)) {
+      wahl = Object.assign({}, wahl, { art: null });
+    }
+    // Derselbe Gedanke zweimal — als Art und als Grund — wird einmal gesagt.
+    if (wahl.grund && wahl.art && wahl.grund.id === wahl.art.id) {
+      wahl = Object.assign({}, wahl, { grund: null });
+    }
+    const grundDe = grundText(wahl.grund, subjekt, zeitform, "de");
+    // Ein weil-Satz kann nicht mitten im Mittelfeld stehen — er kommt hinten
+    // als eigener Nebensatz. „wegen des Wetters“ dagegen steht im Mittelfeld.
+    /* Alles, was ein „weil“ mit eigenem Verb bildet, gehört als Nebensatz
+       ans Satzende. Nur „wegen des Wetters“ ist eine Wortgruppe und steht
+       im Mittelfeld. */
+    const grundIstNebensatz = wahl.grund && ["zustand", "haben", "satz", "unpersoenlich"].includes(wahl.grund.art);
+    if (grundDe && !grundIstNebensatz) deTeile.push({ t: grundDe, rolle: "warum" });
+    // Die Begleitung steht vor der Angabe des Mittels.
+    const begleitungDe = wahl.begleitung && !(zeigePerson && wahl.person === wahl.begleitung)
+      ? begleitungText(wahl.begleitung, subjekt, "de") : "";
+    if (begleitungDe) deTeile.push({ t: begleitungDe, rolle: "mitwem" });
+    const artNachObjekt = Boolean(wahl.art && wahl.art.nachObjekt);
+    if (wahl.art && wahl.art.de && !artNachObjekt) deTeile.push({ t: wahl.art.de, rolle: "wie" });
+    // Ein unbestimmtes Objekt ist die neue Information und steht hinten.
+    if (!objektBekannt && zeigeObjekt) {
+      deTeile.push({ t: nominalgruppe(wahl.objekt, verb.objekt || "akk", objBegl, wahl.objektAdjektiv, subjekt), rolle: "was" });
     }
     if (zeigePerson && !personZuerst) {
       deTeile.push(personTeil());
@@ -1979,6 +2060,8 @@
     }
     if (verb.itZusatz) it.push({ t: verb.itZusatz, rolle: "verb" });
     itTeile.forEach((x) => it.push(x));
+    // Im Italienischen folgt die Begleitung dem Objekt: gioco a calcio con …
+    if (begleitungDe) it.push({ t: begleitungText(wahl.begleitung, subjekt, "it"), rolle: "mitwem" });
     /* Ist der Satz selbst ein weil-Satz, fällt der kausale Baustein im
        Deutschen weg — dann darf er im Italienischen nicht auftauchen. */
     if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) it.push({ t: grundIt, rolle: "warum" });
@@ -2050,28 +2133,110 @@
     }
     return liste;
   }
-  function zeitenFuer(zeitform, level) {
+  function zeitenFuer(zeitform, level, wahl) {
     return ZEITEN.filter((z) => {
       if (z.nurVergangenheit && zeitform !== "perfekt") return false;
       if (z.nurZukunft && zeitform === "perfekt") return false;
       if (z.nichtZukunft && zeitform === "futur") return false;
       if (z.nurGegenwart && zeitform !== "praesens") return false;
+      if (!zeitPasst(z, null, wahl)) return false;
       return passtZumNiveau(z, level);
     });
   }
-  function gruendeFuer(verb, level) {
+  /* ---------------------------------------------------------------
+     Verträglichkeit — was sich widerspricht, wird gar nicht erst
+     angeboten. Diese Regeln stehen bewusst an EINER Stelle, damit die
+     Oberfläche und der Satzbau nie auseinanderlaufen.
+     ---------------------------------------------------------------
+     R1  Eine Vorliebe verträgt sich nicht mit einem Missstand:
+         „gern … weil ich müde bin“ widerspricht sich.
+     R2  Ein einmaliger Anlass verträgt sich nicht mit einer Gewohnheit:
+         Kälte ist ein Anlass, kein „jeden Tag“.
+     R3  Ein Grund, der für die Handlung spricht, verträgt sich nicht mit
+         ihrer Verneinung.
+     R4  Ein Grund, der ein bestimmtes Objekt voraussetzt (Hunger), passt
+         nur, wenn dieses Objekt auch dasteht.                        */
+  function grundPasst(grund, verb, wahl) {
+    if (!grund || grund.art === "keiner") return true;
+    const w = wahl || {};
+    if (w.art && w.art.stimmung === "positiv" && grund.stimmung === "negativ") return false;      // R1
+    if (grund.anlass === "einmalig" && w.zeit && w.zeit.art === "haeufigkeit") return false;      // R2
+    const verneint = (w.objektBegleiter === "kein") || (w.zeit && w.zeit.itBrauchtNon)
+      || (w.art && w.art.verneinend);
+    if (verneint && grund.stimmung === "positiv") return false;                                   // R3
+    if (grund.nurDingRollen) {                                                                    // R4
+      const rollen = (w.objekt && w.objekt.rollen) || [];
+      if (!grund.nurDingRollen.some((r) => rollen.includes(r))) return false;
+    }
+    return true;
+  }
+  function artPasst(art, verb, wahl) {
+    if (!art || !art.de) return true;
+    const w = wahl || {};
+    if (art.stimmung === "positiv" && w.grund && w.grund.stimmung === "negativ") return false;    // R1
+    if (art.nichtMitDingen && w.objekt && art.nichtMitDingen.includes(w.objekt.id)) return false;
+    return true;
+  }
+  function zeitPasst(zeit, verb, wahl) {
+    if (!zeit || !zeit.de) return true;
+    const w = wahl || {};
+    if (zeit.art === "haeufigkeit" && w.grund && w.grund.anlass === "einmalig") return false;     // R2
+    if ((zeit.itBrauchtNon || zeit.nichtVerneinbar) && w.objektBegleiter === "kein") return false;
+    return true;
+  }
+
+  /* „Mit wem?“ — die Begleitung. Bisher konnte man nur sagen, WAS man
+     tut und WO, aber nicht, mit wem. Dabei ist das im Alltag die
+     häufigste Ergänzung überhaupt: mit meiner Frau ins Kino, mit den
+     Kindern in den Park, mit einem Kollegen zum Essen. Sie steht im
+     Deutschen vor der Angabe des Mittels („mit meiner Frau mit dem Zug“)
+     und verlangt den Dativ. */
+  /* Eine Begleitung passt nur zu Tätigkeiten, die man wirklich GEMEINSAM
+     macht. „Ich schließe mein Buch mit meiner Cousine“ ist kein Satz —
+     deshalb steht hier eine Positivliste statt einer Ausschlussliste:
+     was nicht darauf steht, bekommt die Frage „Mit wem?“ gar nicht erst
+     gestellt. */
+  const GEMEINSAM_MOEGLICH = [
+    "gehen", "fahren", "kommen", "laufen", "fliegen", "reisen", "wandern", "steigen", "bleiben",
+    "essen", "trinken", "kochen", "fruehstuecken", "einkaufen", "kaufen", "bestellen", "bezahlen",
+    "spielen", "sehen", "hoeren", "singen", "tanzen", "feiern", "schwimmen", "lachen",
+    "lernen", "sprechen", "ueben", "wiederholen", "arbeiten", "aufraeumen", "putzen", "waschen",
+    "warten", "sitzen", "stehen", "wohnen", "sein", "schlafen", "besuchen", "treffen",
+    "telefonieren", "packen", "buchen", "vorbereiten", "anfangen", "machen", "lesen",
+  ];
+  function begleitungFuer(verb, level) {
+    if (!verb || !GEMEINSAM_MOEGLICH.includes(verb.id)) return [];
+    return PERSONEN.filter((p) => p.alsBegleitung !== false && passtZumNiveau(p, level));
+  }
+  function begleitungText(person, subjekt, sprache) {
+    if (!person) return "";
+    if (sprache === "it") return itPersonform(person, subjekt, "itMit");
+    const kern = nominalgruppe(person, "dat", person.begleiter || "possessiv", null, subjekt);
+    const teile = kern.split(" ");
+    const zusammen = verschmelze("mit", teile[0]);
+    return zusammen === "mit " + teile[0]
+      ? "mit " + kern
+      : zusammen + (teile.length > 1 ? " " + teile.slice(1).join(" ") : "");
+  }
+
+  function gruendeFuer(verb, level, wahl) {
     return GRUENDE.filter((g) => {
       if (g.art === "keiner") return true;
-      if (verb && verb.passtGruende && !verb.passtGruende.includes(g.id)) return false;
+      /* Gründe, die zu jeder Tätigkeit passen (weil ich Zeit habe, weil
+         ich muss), stehen überall zur Verfügung — sonst hätte man bei
+         manchen Verben nur zwei zur Auswahl. */
+      if (!g.universal && verb && verb.passtGruende && !verb.passtGruende.includes(g.id)) return false;
+      if (!grundPasst(g, verb, wahl)) return false;
       return passtZumNiveau(g, level);
     });
   }
-  function artenFuer(verb, level, subjekt, objekt) {
+  function artenFuer(verb, level, subjekt, objekt, wahl) {
     return ARTEN.filter((a) => {
       if (a.passtVerben && verb && !a.passtVerben.includes(verb.id)) return false;
       if (a.nurPlural && subjekt && subjekt.zahl !== "pl") return false;
       // „auf Deutsch Deutsch sprechen“ — solche Dopplungen fallen hier weg.
       if (a.nichtMitDingen && objekt && a.nichtMitDingen.includes(objekt.id)) return false;
+      if (!artPasst(a, verb, wahl)) return false;
       return passtZumNiveau(a, level);
     });
   }
@@ -4540,7 +4705,7 @@
     ORTE, DINGE, PERSONEN, SUBJEKTE, VERBEN, ZEITEN, ARTEN, GRUENDE, ADJEKTIVE, KATEGORIEN,
     BEGLEITER_NAMEN, BEISPIELE,
     bauSatz, ortsform, itOrtsform, nominalgruppe, verschmelze, itDingform, itAdjektiv, itAdjektivDavor, grundText,
-    verbenFuer, orteFuer, dingeFuer, personenFuer, zeitenFuer, artenFuer, gruendeFuer,
+    verbenFuer, orteFuer, dingeFuer, personenFuer, zeitenFuer, artenFuer, gruendeFuer, begleitungFuer, begleitungText,
     adjektiveFuer, begleiterFuer, ortRollenFuer, anzahlBeispiele, beispieleFuer, beispielAnzahl,
     WECHSEL, NUR_DATIV, NUR_AKKUSATIV, NUR_GENITIV,
   };

@@ -3642,20 +3642,46 @@
       suppressNextSubnavScroll = true;
       pill.click();
     }
-    // Zusätzlich beim nächsten Bildaufbau noch einmal absichern: Falls doch ein anderer
-    // Automatismus dazwischenfunkt, gewinnt am Ende trotzdem das gemeinte Ziel.
-    requestAnimationFrame(() => scrollToAndHighlightWhenReady(zielSelector, versuche));
-    // Manche Bereiche (z. B. der Kompass) bauen sich nach dem ersten Sprung noch einmal
-    // neu auf, weil sie ihr Banner nachladen — dabei ginge die Sprungposition verloren.
-    // Deshalb wird kurz danach zweimal nachgefasst, aber nur, wenn das Ziel dann nicht
-    // ohnehin schon sichtbar im Bild steht.
-    [500, 1300].forEach((ms) => setTimeout(() => {
-      const ziel = document.querySelector(zielSelector);
-      if (!ziel) return;
-      const kasten = ziel.getBoundingClientRect();
-      const sichtbar = kasten.top >= 0 && kasten.bottom <= (window.innerHeight || 0);
-      if (!sichtbar) ziel.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, ms));
+    /* Der Sprung wurde bisher einmal ausgelöst, sobald das Ziel im
+       Dokument stand — und ging danach wieder verloren, weil der Kompass
+       sein Banner nachlädt und dabei alles darunter nach unten schiebt.
+       Zwei Nachfassversuche mit einer großzügigen Sichtbarkeitsprüfung
+       haben das nicht aufgefangen: „irgendwo im Bild“ ist eben nicht
+       „oben im Bild“. Deshalb wird die Position jetzt so lange
+       nachgeführt, bis sie wirklich steht. */
+    requestAnimationFrame(() => bringeZielNachOben(zielSelector, versuche));
+  }
+
+  /* Hält das Sprungziel oben im Bild, bis das Nachladen ringsherum fertig
+     ist. Jede Verschiebung wird sofort ausgeglichen; erst wenn die
+     Position ein paar Bilder lang ruhig bleibt, hört das Nachführen auf. */
+  function bringeZielNachOben(selector, versuche = 40, abstand = 16) {
+    const start = Date.now();
+    const frist = Math.max(1500, versuche * 60);
+    let ruhe = 0;
+    let hervorgehoben = false;
+    const schritt = () => {
+      const ziel = document.querySelector(selector);
+      if (!ziel) {
+        if (Date.now() - start < frist) requestAnimationFrame(schritt);
+        return;
+      }
+      if (!hervorgehoben) {
+        hervorgehoben = true;
+        const marke = ziel.closest(".breakdown-row") || ziel;
+        marke.classList.add("notify-target-highlight");
+        setTimeout(() => marke.classList.remove("notify-target-highlight"), 2600);
+      }
+      const oben = ziel.getBoundingClientRect().top;
+      if (Math.abs(oben - abstand) > 4) {
+        window.scrollBy(0, oben - abstand);
+        ruhe = 0;
+      } else {
+        ruhe += 1;
+      }
+      if (ruhe < 10 && Date.now() - start < frist) requestAnimationFrame(schritt);
+    };
+    requestAnimationFrame(schritt);
   }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
@@ -4313,6 +4339,47 @@
   let currentSelection = [];
   const AUTO_ADVANCE_DELAY = 900;
 
+  /* --- Was war gerade zu sehen? -------------------------------------
+     Bisher stand in einer Fehlermeldung nur, WO etwas schieflief, nicht
+     WAS. Wer meldet, musste den fehlerhaften Satz selbst abtippen — und
+     meistens tut das niemand. Jetzt merkt sich die Seite, was gerade
+     angezeigt wird, und legt es der Meldung von selbst bei. So steht die
+     Aufgabe samt Antwortmöglichkeiten und richtiger Lösung im Bericht,
+     und man sieht auf einen Blick, woran es lag. */
+  let letzterZustand = null;
+  function merkeZustand(zustand) {
+    letzterZustand = Object.assign({ zeitpunkt: new Date().toISOString() }, zustand);
+  }
+  /* Notnagel für Bereiche, die nichts eingetragen haben: nimm einfach das,
+     was gerade sichtbar auf dem Bildschirm steht. */
+  function zustandAusDerAnzeige() {
+    const karte = document.querySelector(".question-card, .baustein-satz, .quiz-card");
+    if (!karte) return null;
+    const text = (karte.innerText || "").replace(/\s+/g, " ").trim().slice(0, 400);
+    return text ? { art: "Bildschirmausschnitt", text } : null;
+  }
+  function zustandJetzt() {
+    return letzterZustand || zustandAusDerAnzeige();
+  }
+  /* Der Zustand als lesbarer Text — genau so steht er später in der
+     Nachricht und lässt sich von dort einfach herauskopieren. */
+  function zustandAlsText(z) {
+    if (!z) return "";
+    const zeilen = [];
+    if (z.art) zeilen.push("Art: " + z.art);
+    if (z.kategorie) zeilen.push("Kategorie: " + z.kategorie);
+    if (z.niveau) zeilen.push("Niveau: " + z.niveau);
+    if (z.frage) zeilen.push("Aufgabe: " + z.frage);
+    if (z.antworten) zeilen.push("Antwortmöglichkeiten: " + z.antworten.join(" / "));
+    if (z.richtig) zeilen.push("Als richtig hinterlegt: " + z.richtig);
+    if (z.erklaerung) zeilen.push("Erklärung: " + z.erklaerung);
+    if (z.satz) zeilen.push("Satz: " + z.satz);
+    if (z.uebersetzung) zeilen.push("Übersetzung: " + z.uebersetzung);
+    if (z.bausteine) zeilen.push("Gewählte Bausteine: " + z.bausteine);
+    if (z.text) zeilen.push(z.text);
+    return zeilen.join("\n");
+  }
+
   // Wiederverwendbarer "Fehler melden"-Button — kann in jedes Spiel eingebunden werden. Öffnet
   // eine kleine Auswahl (kein Text nötig), landet automatisch im Postfach des Betreibers.
   function reportBugButtonHtml() {
@@ -4327,10 +4394,21 @@
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
         Core.el("h3", {}, "🪲 Fehler melden"),
         Core.el("p", { class: "empty-note" }, "Was ist hier gerade schiefgelaufen? Du musst nichts schreiben, nur auswählen:"),
+        (() => {
+          /* Was gerade auf dem Bildschirm steht, wird mitgeschickt — und
+             vorher gezeigt, damit klar ist, was die Meldung enthält. */
+          const z = zustandJetzt();
+          const text = zustandAlsText(z);
+          if (!text) return Core.el("span", {});
+          return Core.el("div", { class: "empty-note", style: "text-align:left; white-space:pre-wrap; font-size:0.78rem; background:rgba(0,0,0,0.05); border-radius:8px; padding:8px 10px; margin-bottom:10px; max-height:170px; overflow:auto;" },
+            "📋 Das wird automatisch mitgeschickt:\n" + text);
+        })(),
         Core.el("textarea", { id: "bugDetailInput", class: "guestbook-form-textarea", placeholder: "Beschreibung (optional) — hilft, den Fehler genauer zu verstehen …", maxlength: "300", style: "margin-bottom:10px;" }),
-        ...["Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Falsche Antwort markiert", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
+        ...["Falsche Antwort markiert", "Satz klingt falsch / unnatürlich", "Rechtschreibfehler", "Spiel reagiert nicht / hängt", "Text abgeschnitten / falscher Zeilenumbruch", "Fehlermeldung erschienen", "Sonstiges"].map((label) =>
           Core.el("button", { type: "button", class: "btn btn-ghost", style: "display:block; width:100%; margin-bottom:8px; text-align:left; white-space:normal; overflow-wrap:break-word;", onclick: async () => {
-            const detail = document.getElementById("bugDetailInput")?.value.trim() || "";
+            const eigenes = document.getElementById("bugDetailInput")?.value.trim() || "";
+            const schnappschuss = zustandAlsText(zustandJetzt());
+            const detail = [eigenes, schnappschuss ? "--- Zustand ---\n" + schnappschuss : ""].filter(Boolean).join("\n\n");
             await Backend.reportBug(context, label, detail);
             box.remove();
             showToast("✅ Danke, Alex wurde informiert!");
@@ -4464,6 +4542,18 @@
     // (normale deutsche Rechtschreibung) — unabhängig davon, wie es in der Datenbank gespeichert
     // ist. Rein für die ANZEIGE, die interne Prüfung bleibt unverändert über den Index.
     const displayOption = (opt) => capitalizeIfSentenceStart(opt, q.prompt);
+
+    /* Für den Fall, dass jemand hier einen Fehler meldet: die Aufgabe mit
+       allem, was zu ihrer Beurteilung nötig ist. */
+    merkeZustand({
+      art: "Übungsaufgabe",
+      kategorie: cat ? cat.title : q.categoryId,
+      niveau: q.level || "",
+      frage: q.prompt,
+      antworten: q.options,
+      richtig: (q.correct || []).map((n) => q.options[n]).join(" + "),
+      erklaerung: q.explain || "",
+    });
 
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
@@ -6074,7 +6164,7 @@
   let sbkNiveau = "";
   let sbkWahl = {
     subjekt: "1sg", verb: "gehen", objekt: "", objektBegleiter: "", objektAdjektiv: "",
-    person: "", ort: "", ortRolle: "", zeit: "keine", grund: "keiner", art: "keine", vorfeld: "subjekt",
+    person: "", begleitung: "", ort: "", ortRolle: "", zeit: "keine", grund: "keiner", art: "keine", vorfeld: "subjekt",
   };
   let sbkZeitform = "praesens";
   let sbkSatzart = "aussage";
@@ -6106,21 +6196,24 @@
     // Manche Verben ergeben ohne ihre Ergänzung gar keinen Satz —
     // „Ich wohne.“ oder „Ich besuche.“ sind keine Sätze. Deshalb wird
     // hier notfalls das erste passende Wort eingesetzt.
-    if (!ort && verb.ortPflicht && orte.length) ort = orte[0];
+    if (!ort && verb.ortPflicht && orte.length) { ort = orte[0]; sbkWahl.ort = ort.id; }
     let objekt = dinge.find((d) => d.id === sbkWahl.objekt) || null;
-    if (!objekt && verb.objektPflicht && dinge.length) objekt = dinge[0];
+    if (!objekt && verb.objektPflicht && dinge.length) { objekt = dinge[0]; sbkWahl.objekt = objekt.id; }
     const begleiterListe = S.begleiterFuer(objekt, verb);
     const objektBegleiter = begleiterListe.some((b) => b.id === sbkWahl.objektBegleiter)
       ? sbkWahl.objektBegleiter : (begleiterListe[0] && begleiterListe[0].id) || "bestimmt";
     const adjListe = S.adjektiveFuer(objekt, sbkNiveau);
     const objektAdjektiv = adjListe.find((a) => a.id === sbkWahl.objektAdjektiv) || null;
     let person = personen.find((p) => p.id === sbkWahl.person) || null;
-    if (!person && verb.personPflicht && personen.length) person = personen[0];
+    if (!person && verb.personPflicht && personen.length) { person = personen[0]; sbkWahl.person = person.id; }
+    const begleitungListe = S.begleitungFuer(verb, sbkNiveau);
+    const begleitung = begleitungListe.find((b) => b.id === sbkWahl.begleitung) || null;
     const zeit = zeiten.find((z) => z.id === sbkWahl.zeit) || zeiten[0];
     const grund = gruende.find((g) => g.id === sbkWahl.grund) || gruende[0];
     const art = arten.find((a) => a.id === sbkWahl.art) || arten[0];
 
     return { verben, rollen, ortRolle, orte, dinge, personen, zeiten, gruende, arten, begleiterListe, adjListe,
+      begleitung: begleitungListe, gewaehlteBegleitung: begleitung,
       subjekt, verb, ort, objekt, objektBegleiter, objektAdjektiv, person, zeit, grund, art };
   }
 
@@ -6156,21 +6249,88 @@
       zeit: zufall(zeiten).id,
       grund: gruende.length && Math.random() < 0.35 ? zufall(gruende).id : "keiner",
       art: arten2.length && Math.random() < 0.4 ? zufall(arten2).id : "keine",
+      begleitung: (() => { const bl = S.begleitungFuer(verb, sbkNiveau); return bl.length && Math.random() < 0.3 ? zufall(bl).id : ""; })(),
       vorfeld: Math.random() < 0.25 ? "zeit" : "subjekt",
     };
   }
 
-  function sbkReihe(frage, hinweis, feld, liste, aktuell, beschriften, leerText) {
+  /* Die Namen der Gruppen, in die eine lange Auswahl zerfällt. Hundert
+     Wörter auf einem Haufen kann niemand überblicken — nach Sinngruppen
+     sortiert findet man dagegen sofort, was man sucht. */
+  const SBK_GRUPPEN_NAME = {
+    alltag: "🏠 Alltag", einkaufen: "🛒 Einkaufen", arbeit: "💼 Arbeit", familie: "👨‍👩‍👧 Familie",
+    freizeit: "⚽ Freizeit", essen: "🍽️ Essen", reisen: "🧳 Reisen", bildung: "🎓 Lernen",
+    gesundheit: "🩺 Gesundheit", verwaltung: "⚖️ Amt",
+    zeitpunkt: "📅 Wann genau", haeufigkeit: "🔁 Wie oft", dauer: "⏳ Wie lange",
+    zustand: "😐 Wie ich mich fühle", haben: "🤲 Was ich habe", satz: "💭 Was ich will",
+    unpersoenlich: "🌍 Wie es ist", wegen: "🌧️ Wegen etwas",
+    weise: "🎭 Auf welche Art", mittel: "🔧 Womit", grad: "📊 Wie sehr",
+  };
+
+  /* Eine Auswahlreihe. Ab zwölf Einträgen wird nach Gruppen unterteilt,
+     damit die Reihe lesbar bleibt. */
+  function sbkReihe(frage, hinweis, feld, liste, aktuell, beschriften, leerText, gruppeVon) {
     if (!liste.length) return "";
-    return `
-      <p class="eyebrow sbk-frage">${frage}<span class="sbk-frage-hinweis">${hinweis}</span></p>
-      <div class="baustein-reihe">
-        ${leerText ? `<button type="button" class="baustein" data-sbk-feld="${feld}" data-sbk-wert="" aria-selected="${!aktuell}">${leerText}</button>` : ""}
-        ${liste.map((e) => {
-          const [oben, unten] = beschriften(e);
-          return `<button type="button" class="baustein" data-sbk-feld="${feld}" data-sbk-wert="${e.id}" aria-selected="${aktuell === e.id}">${oben}${unten ? `<span class="baustein-de">${unten}</span>` : ""}</button>`;
-        }).join("")}
-      </div>`;
+    const knopf = (e) => {
+      const [oben, unten] = beschriften(e);
+      return `<button type="button" class="baustein" data-sbk-feld="${feld}" data-sbk-wert="${e.id}" aria-selected="${aktuell === e.id}">${oben}${unten ? `<span class="baustein-de">${unten}</span>` : ""}</button>`;
+    };
+    const leer = leerText ? `<button type="button" class="baustein" data-sbk-feld="${feld}" data-sbk-wert="" aria-selected="${!aktuell}">${leerText}</button>` : "";
+    const kopf = `<p class="eyebrow sbk-frage">${frage}<span class="sbk-frage-hinweis">${hinweis}${liste.length > 11 ? " · " + liste.length + " zur Auswahl" : ""}</span></p>`;
+
+    if (!gruppeVon || liste.length < 12) {
+      return kopf + `<div class="baustein-reihe">${leer}${liste.map(knopf).join("")}</div>`;
+    }
+    const gruppen = new Map();
+    liste.forEach((e) => {
+      const g = gruppeVon(e) || "sonstiges";
+      if (!gruppen.has(g)) gruppen.set(g, []);
+      gruppen.get(g).push(e);
+    });
+    const teile = [...gruppen.entries()].map(([g, eintraege], n) => `
+      <p class="sbk-gruppe">${SBK_GRUPPEN_NAME[g] || g}</p>
+      <div class="baustein-reihe">${n === 0 ? leer : ""}${eintraege.map(knopf).join("")}</div>`);
+    return kopf + teile.join("");
+  }
+
+  /* --- Satzurteile sammeln -------------------------------------------
+     Nicht jedes Urteil einzeln ins Postfach — man probiert im
+     Satzbaukasten ja zwanzig Kombinationen hintereinander aus. Die
+     Urteile sammeln sich deshalb erst auf dem Gerät und gehen am Ende
+     als EIN Bericht raus, in dem zu jedem Urteil auch der Satz steht,
+     um den es ging. Sonst weiß später niemand, was gemeint war. */
+  const SBK_URTEILE_SCHLUESSEL = "dma_sbk_urteile";
+  function sbkUrteileLesen() {
+    try { return JSON.parse(localStorage.getItem(SBK_URTEILE_SCHLUESSEL) || "[]"); } catch (e) { return []; }
+  }
+  function sbkUrteilSchreiben(urteil) {
+    const liste = sbkUrteileLesen();
+    // Denselben Satz nicht zweimal führen — das letzte Urteil zählt.
+    const ohne = liste.filter((u) => u.de !== urteil.de);
+    ohne.push(urteil);
+    try { localStorage.setItem(SBK_URTEILE_SCHLUESSEL, JSON.stringify(ohne.slice(-200))); } catch (e) {}
+    return ohne.length;
+  }
+  function sbkUrteileLeeren() {
+    try { localStorage.removeItem(SBK_URTEILE_SCHLUESSEL); } catch (e) {}
+  }
+  async function sbkUrteileSenden() {
+    const liste = sbkUrteileLesen();
+    if (!liste.length) { showToast("Noch keine Bewertungen gesammelt."); return; }
+    const schlecht = liste.filter((u) => u.urteil === "falsch");
+    const gut = liste.filter((u) => u.urteil === "gut");
+    const zeilen = [
+      "Bewertete Sätze: " + liste.length + "  (" + gut.length + " klingen gut, " + schlecht.length + " klingen falsch)",
+      "",
+      "--- KLINGT FALSCH ---",
+      ...schlecht.map((u, n) => (n + 1) + ". " + u.de + "\n   IT: " + u.it + "\n   Bausteine: " + u.bausteine),
+      "",
+      "--- KLINGT GUT ---",
+      ...gut.map((u) => "· " + u.de),
+    ];
+    await Backend.reportBug("Satzbaukasten (Sammelbericht)", "Satz klingt falsch / unnatürlich", zeilen.join("\n"));
+    sbkUrteileLeeren();
+    showToast("✅ " + liste.length + " Bewertungen abgeschickt — danke!");
   }
 
   const SBK_ROLLE_NAME = {
@@ -6207,15 +6367,17 @@
         <button type="button" class="baustein" data-sbk-ansicht="bauen" aria-selected="${sbkAnsicht === "bauen"}">🔧 Selbst bauen<span class="baustein-de">Wer · macht was · wann · warum · wie · wo</span></button>
         <button type="button" class="baustein" data-sbk-ansicht="beispiele" aria-selected="${sbkAnsicht === "beispiele"}">📖 Beispiele lesen<span class="baustein-de">${S.beispielAnzahl(sbkKategorie === "alle" ? "alltag" : sbkKategorie)} Sätze in diesem Bereich</span></button>
       </div>`;
+    /* Das Niveau steht jetzt oben: es bestimmt, welche Bausteine es
+       überhaupt gibt, und gehört deshalb vor die Wahl des Bereichs. */
     const bereichsReihe = `
+      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt, wie einfach die Bausteine sind</span></p>
+      <div class="baustein-reihe">
+        ${CEFR_LEVELS.map((l) => `<button type="button" class="baustein" data-sbk-niveau="${l}" aria-selected="${sbkNiveau === l}">${l}</button>`).join("")}
+      </div>
       <p class="eyebrow sbk-frage">🗂️ Bereich<span class="sbk-frage-hinweis">${sbkAnsicht === "beispiele" ? "je Bereich " + S.beispielAnzahl("alltag") + " geprüfte Sätze, " + Math.round(S.beispielAnzahl("alltag") / 6) + " je Niveau" : anzahl.toLocaleString("de-DE") + " mögliche Sätze auf " + sbkNiveau}</span></p>
       <div class="baustein-reihe">
         ${sbkAnsicht === "bauen" ? `<button type="button" class="baustein" data-sbk-kat="alle" aria-selected="${sbkKategorie === "alle"}">🌍 Alle</button>` : ""}
         ${S.KATEGORIEN.map((k) => `<button type="button" class="baustein" data-sbk-kat="${k.id}" aria-selected="${sbkKategorie === k.id}">${k.icon} ${k.name}</button>`).join("")}
-      </div>
-      <p class="eyebrow sbk-frage">🧭 Niveau<span class="sbk-frage-hinweis">bestimmt, wie einfach die Bausteine sind</span></p>
-      <div class="baustein-reihe">
-        ${CEFR_LEVELS.map((l) => `<button type="button" class="baustein" data-sbk-niveau="${l}" aria-selected="${sbkNiveau === l}">${l}</button>`).join("")}
       </div>`;
 
     if (sbkAnsicht === "beispiele") {
@@ -6241,10 +6403,10 @@
     const satz = S.bauSatz({
       subjekt: a.subjekt, verb: a.verb, objekt: a.objekt, objektBegleiter: a.objektBegleiter,
       objektAdjektiv: a.objektAdjektiv, person: a.person, ort: a.ort, ortRolle: a.ortRolle,
-      zeit: a.zeit, grund: a.grund, art: a.art,
+      zeit: a.zeit, grund: a.grund, art: a.art, begleitung: a.gewaehlteBegleitung,
       zeitform: sbkZeitform, satzart: sbkSatzart, pronomen: sbkPronomen, vorfeld: sbkWahl.vorfeld,
     });
-    const rollenName = { wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", warum: "Warum", wie: "Wie", konj: "Bindewort" };
+    const rollenName = { mitwem: "Mit wem", wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", warum: "Warum", wie: "Wie", konj: "Bindewort" };
     const teile = italienisch ? satz.itTeile : satz.deTeile;
     const zweitsatz = italienisch ? satz.de : satz.it;
     const ortInfo = SBK_ROLLE_NAME[a.ortRolle] || SBK_ROLLE_NAME.wo;
@@ -6262,6 +6424,12 @@
         }).join("")}${satz.satzart === "frage" ? "?" : satz.satzart === "nebensatz" ? " …" : "."}</p>
         <p class="baustein-satz-de">${zweitsatz}</p>
         <p class="empty-note sbk-hinweis">💡 ${satz.hinweis}</p>
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:10px; gap:6px; flex-wrap:wrap;">
+          <span class="empty-note" style="width:100%; margin:0 0 2px;">Klingt dieser Satz für dich nach echtem Deutsch?</span>
+          <button type="button" class="btn btn-ghost" id="sbkUrteilGut">👍 klingt gut</button>
+          <button type="button" class="btn btn-ghost" id="sbkUrteilFalsch">👎 klingt falsch</button>
+          ${sbkUrteileLesen().length ? `<button type="button" class="btn btn-ghost" id="sbkUrteilSenden">📨 ${sbkUrteileLesen().length} Bewertungen abschicken</button>` : ""}
+        </div>
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
           <button type="button" class="btn btn-ghost" id="sbkVorlesen">🔊 Vorlesen</button>
           <button type="button" class="btn btn-ghost" id="sbkZufallBtn">🎲 Zufallssatz</button>
@@ -6314,7 +6482,7 @@
           const b = (e.begleiter && e.begleiter[0]) || "bestimmt";
           const de = window.Satzbau.nominalgruppe(e, a.verb.objekt || "akk", b, null, a.subjekt);
           return italienisch ? [window.Satzbau.itDingform(e, b), de] : [de, ""];
-        }, a.verb.objektPflicht ? "" : "— nichts —") : ""}
+        }, a.verb.objektPflicht ? "" : "— nichts —", (e) => e.kategorie) : ""}
 
       ${a.objekt && a.begleiterListe.length > 1 ? `
       <p class="eyebrow sbk-frage">🔤 Welcher Begleiter?<span class="sbk-frage-hinweis">„ein Apfel“ sagt man beim ersten Mal, „der Apfel“ nur bei einem bestimmten</span></p>
@@ -6336,29 +6504,36 @@
         a.verb.personPraep ? `mit „${a.verb.personPraep}“ — ${a.verb.personFall === "dat" ? "Dativ" : "Akkusativ"}` : (a.verb.personFall === "dat" ? "Dativ" : "Akkusativ"),
         "person", a.personen, sbkWahl.person,
         (e) => {
-          const kern = window.Satzbau.nominalgruppe(e, a.verb.personFall || "akk", "mein");
+          const kern = window.Satzbau.nominalgruppe(e, a.verb.personFall || "akk", e.begleiter || "possessiv", null, a.subjekt);
           const deVoll = a.verb.personPraep ? a.verb.personPraep + " " + kern : kern;
-          return italienisch ? [e[a.verb.itPersonFeld || "it"] || e.it, deVoll] : [deVoll, ""];
-        }, "— niemanden —") : ""}
+          return italienisch ? [window.Satzbau.itPersonform ? window.Satzbau.itPersonform(e, a.subjekt, a.verb.itPersonFeld || "it") : e.it, deVoll] : [deVoll, ""];
+        }, a.verb.personPflicht ? "" : "— niemanden —", (e) => e.kategorie) : ""}
 
-      ${a.orte.length ? sbkReihe(ortInfo.frage, ortInfo.hinweis, "ort", a.orte, sbkWahl.ort,
+      ${a.orte.length ? sbkReihe(ortInfo.frage, a.verb.ortPflicht ? ortInfo.hinweis + " · dieses Verb braucht eine Ortsangabe" : ortInfo.hinweis, "ort", a.orte, sbkWahl.ort,
         (e) => {
           const deForm = window.Satzbau.ortsform(e, a.ortRolle);
           return italienisch ? [window.Satzbau.itOrtsform(e, a.ortRolle), deForm] : [deForm, ""];
-        }, "— ohne Ort —") : ""}
+        }, a.verb.ortPflicht ? "" : "— ohne Ort —", (e) => e.kategorie) : ""}
 
       ${sbkReihe("🕒 Wann?", "temporal — passt sich der gewählten Zeitform an", "zeit", a.zeiten.filter((z) => z.id !== "keine"), sbkWahl.zeit,
-        (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne Zeitangabe —")}
+        (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne Zeitangabe —", (e) => e.art)}
 
       ${a.gruende.length > 1 ? sbkReihe("❓ Warum?", "kausal — als Nebensatz mit „weil“ oder mit „wegen“ und Genitiv", "grund", a.gruende.filter((g) => g.id !== "keiner"), sbkWahl.grund,
         (e) => {
           const de = window.Satzbau.grundText(e, a.subjekt, sbkZeitform, "de");
           const it = window.Satzbau.grundText(e, a.subjekt, sbkZeitform, "it");
           return italienisch ? [it, de] : [de, ""];
-        }, "— ohne Grund —") : ""}
+        }, "— ohne Grund —", (e) => e.art) : ""}
 
       ${a.arten.length > 1 ? sbkReihe("✨ Wie?", "modal — nur Angaben, die zu diesem Verb passen", "art", a.arten.filter((z) => z.id !== "keine"), sbkWahl.art,
-        (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne —") : ""}
+        (e) => [italienisch ? e.it : e.de, italienisch ? e.de : ""], "— ohne —", (e) => e.art) : ""}
+
+      ${a.begleitung.length ? sbkReihe("👥 Mit wem?", "die Begleitung — im Deutschen mit „mit“ und Dativ", "begleitung", a.begleitung, sbkWahl.begleitung,
+        (e) => {
+          const de = window.Satzbau.begleitungText(e, a.subjekt, "de");
+          const it = window.Satzbau.begleitungText(e, a.subjekt, "it");
+          return italienisch ? [it, de] : [de, ""];
+        }, "— allein —", (e) => e.kategorie) : ""}
     `;
 
     area.querySelectorAll("[data-sbk-ansicht]").forEach((b) => b.addEventListener("click", () => { sbkAnsicht = b.dataset.sbkAnsicht; renderSatzbaukasten(zielId); }));
@@ -6411,6 +6586,47 @@
         speechSynthesis.cancel();
         speechSynthesis.speak(u);
       } catch (e) { showToast("Vorlesen klappt auf diesem Gerät gerade nicht."); }
+    });
+
+    /* Urteil über den gerade gebauten Satz. Es wird zusammen mit dem Satz
+       UND den gewählten Bausteinen abgelegt — ohne die weiß später
+       niemand mehr, welche Kombination gemeint war. */
+    const bausteineText = () => {
+      const teile = [];
+      if (a.subjekt) teile.push("Wer: " + a.subjekt.de);
+      if (a.verb) teile.push("Verb: " + a.verb.inf);
+      if (a.objekt) teile.push("Was: " + a.objekt.nomen + " (" + a.objektBegleiter + ")");
+      if (a.objektAdjektiv) teile.push("Eigenschaft: " + a.objektAdjektiv.de);
+      if (a.person) teile.push("Wen/Wem: " + a.person.nomen);
+      if (a.gewaehlteBegleitung) teile.push("Mit wem: " + a.gewaehlteBegleitung.nomen);
+      if (a.ort) teile.push(a.ortRolle + ": " + a.ort.nomen);
+      if (a.zeit && a.zeit.de) teile.push("Wann: " + a.zeit.de);
+      if (a.grund && a.grund.id !== "keiner") teile.push("Warum: " + a.grund.id);
+      if (a.art && a.art.de) teile.push("Wie: " + a.art.de);
+      teile.push("Zeitform: " + sbkZeitform + ", Satzart: " + sbkSatzart);
+      return teile.join(" · ");
+    };
+    const urteilen = (urteil) => {
+      const anzahl = sbkUrteilSchreiben({ urteil, de: satz.de, it: satz.it, bausteine: bausteineText(), niveau: sbkNiveau });
+      showToast(urteil === "gut" ? "👍 Notiert — " + anzahl + " gesammelt" : "👎 Notiert — " + anzahl + " gesammelt");
+      renderSatzbaukasten(zielId);
+    };
+    document.getElementById("sbkUrteilGut")?.addEventListener("click", () => urteilen("gut"));
+    document.getElementById("sbkUrteilFalsch")?.addEventListener("click", () => urteilen("falsch"));
+    document.getElementById("sbkUrteilSenden")?.addEventListener("click", async () => {
+      await sbkUrteileSenden();
+      renderSatzbaukasten(zielId);
+    });
+
+    /* Wer hier den Fehlerknopf drückt, meldet den Satz mit, der gerade
+       dasteht — samt aller gewählten Bausteine. */
+    merkeZustand({
+      art: "Satzbaukasten",
+      niveau: sbkNiveau,
+      kategorie: sbkKategorie,
+      satz: satz.de,
+      uebersetzung: satz.it,
+      bausteine: bausteineText(),
     });
   }
 
@@ -13410,13 +13626,13 @@
     const schneeVisible = Backend.isFeatureOn("schnee_von_gestern") || canSeeGatedSections;
     kompassArea.innerHTML = `
       <div style="margin:-4px -4px 14px; border-radius:var(--radius-md); overflow:hidden;">${siteBannerHtml("wissen_banner", bannerUrl, WISSEN_PLACEHOLDER_SVG, "Wissen")}</div>
-      <div class="wegweiser">
+      <div class="wegweiser" data-wegweiser="kompass">
         <a href="#kompass-geschichte" class="wegweiser-item"><span>📜</span>Es war einmal in Deutschland</a>
+        ${dichterVisible ? `<a href="#kompass-dichter" class="wegweiser-item"><span>✒️</span>Dichter &amp; Denker</a>` : ""}
+        ${schneeVisible ? `<a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>` : ""}
         <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
         <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
         <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
-        ${dichterVisible ? `<a href="#kompass-dichter" class="wegweiser-item"><span>✒️</span>Dichter &amp; Denker</a>` : ""}
-        ${schneeVisible ? `<a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>` : ""}
       </div>
 
       <h3 id="kompass-geschichte" class="kompass-heading">${ExerciseData.activeHistoryTitle ? ExerciseData.activeHistoryTitle() : "📜 Es war einmal in Deutschland …"}</h3>
@@ -13493,6 +13709,11 @@
           </div>`;
       })() : ""}
 
+      ${dichterVisible ? `<h3 id="kompass-dichter" class="kompass-heading">✒️ Dichter &amp; Denker</h3>
+      <div id="dichterArea"></div>` : ""}
+      ${schneeVisible ? `<h3 id="kompass-schnee" class="kompass-heading">❄️ Schnee von gestern</h3>
+      <div id="schneeArea"></div>` : ""}
+
       <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
       <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
       <div class="kompass-grid">${VocabData.REDEWENDUNGEN_KURZ.map((r) => kompassCard(r.phrase, r.explain, r.example)).join("")}</div>
@@ -13502,11 +13723,19 @@
 
       <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
       <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
-      ${dichterVisible ? `<h3 id="kompass-dichter" class="kompass-heading">✒️ Dichter &amp; Denker</h3>
-      <div id="dichterArea"></div>` : ""}
-      ${schneeVisible ? `<h3 id="kompass-schnee" class="kompass-heading">❄️ Schnee von gestern</h3>
-      <div id="schneeArea"></div>` : ""}
     `;
+    /* Auch die Wegweiser-Links landen sonst zu früh: der Kompass lädt
+       sein Banner nach, alles darunter rutscht, und man steht neben dem
+       Ziel statt davor. Sie nehmen deshalb denselben Weg wie der Sprung
+       aus dem Kalender. */
+    kompassArea.querySelectorAll(".wegweiser-item").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const ziel = a.getAttribute("href");
+        if (!ziel || !ziel.startsWith("#")) return;
+        e.preventDefault();
+        bringeZielNachOben(ziel, 40);
+      });
+    });
     kompassArea.querySelectorAll(".hist-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { historyLevel = btn.dataset.histLevel; renderKompass(); });
     });
@@ -18787,8 +19016,20 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "155";
+  const APP_VERSION = "157";
   const APP_CHANGELOG = {
+    "157": [
+      "\u{1F517} Der Link „Es war einmal in Deutschland“ aus dem Kalender springt endlich dorthin, wo er hinsoll. Er hat vorher zu früh losgesprungen: der Kompass lädt sein Banner nach, alles darunter rutscht — und man stand daneben statt davor. Jetzt wird die Position so lange nachgeführt, bis sie steht. Dasselbe gilt für alle Wegweiser-Links im Kompass.",
+      "\u{1F5C2}\uFE0F Reihenfolge im Kompass wie gewünscht: „Es war einmal in Deutschland“, darunter „Dichter & Denker“, darunter „Schnee von gestern“, danach der Rest.",
+      "\u{1FAB2} Eine Fehlermeldung schickt jetzt mit, WAS gerade zu sehen war — die Aufgabe, die Antwortmöglichkeiten, die hinterlegte Lösung, die Erklärung, im Satzbaukasten den Satz samt aller gewählten Bausteine. Vorher stand dort nur, wo etwas schieflief. Vor dem Absenden siehst du, was mitgeht.",
+      "\u{1F44D} Neu im Satzbaukasten: „klingt gut“ und „klingt falsch“ direkt unter dem Satz. Die Urteile sammeln sich auf dem Gerät, statt einzeln ins Postfach zu wandern, und gehen am Ende als EIN Bericht raus — zu jedem Urteil steht der Satz und die Bausteinkombination dabei.",
+      "\u{1F465} Neuer Baustein „Mit wem?“: mit meiner Frau ins Kino, mit den Kindern in den Park. Es gibt ihn nur bei Tätigkeiten, die man wirklich gemeinsam macht — ein Buch schließt man nicht mit seiner Cousine.",
+      "\u2696\uFE0F Die Gründe waren das dünnste Glied: 57 von 82 Verben hatten weniger als fünf, 13 gar keinen. Jetzt hat jedes Verb mindestens 23. Neu sind die Gründe, die zu jeder Tätigkeit passen — „weil ich Zeit habe“, „weil ich das mag“, „weil ich muss“, „weil es Spaß macht“ — und die Formen, die man wirklich sagt: „weil ich Hunger habe“ statt nur „weil ich hungrig bin“.",
+      "\u{1F6AB} Widersprüche lassen sich nicht mehr bauen. „Ich gehe gern nach Hause, weil ich müde bin“ (eine Vorliebe passt nicht zu einem Missstand) und „Ich fahre jeden Tag wegen der Kälte“ (Kälte ist ein Anlass, keine Gewohnheit) sind jetzt gar nicht mehr anwählbar — dieselbe Regel steuert die Auswahl UND den Satzbau, damit beide nie auseinanderlaufen.",
+      "\u{1F4D0} Die Wortstellung folgt jetzt der Regel „Bekanntes vor Neuem“: „Ich frage meinen Freund oft per E-Mail“ statt „Ich frage oft per E-Mail meinen Freund“. Ein bestimmtes Objekt rutscht vor die Umstandsangaben, ein unbestimmtes bleibt dahinter: „Ich esse heute einen Apfel“.",
+      "\u{1F9ED} Das Niveau steht jetzt über dem Bereich — es entscheidet ja, welche Bausteine es überhaupt gibt. Und lange Auswahlreihen sind nach Sinngruppen unterteilt statt alles auf einem Haufen.",
+      "\u{1F4CD} Verben, die zwingend eine Ortsangabe, ein Objekt oder eine Person brauchen, markieren die automatisch gesetzte Wahl jetzt auch in der Auswahl — vorher stand ein Ort im Satz, den man nie angeklickt hatte.",
+    ],
     "155": [
       "\u{1F9F0} Der Satzbaukasten hat jetzt einen richtigen Wortschatz: 82 Verben statt 24, 164 Dinge statt 34, 99 Orte statt 49, 30 Personen, 81 Adjektive, 54 Zeit\u00adangaben, 35 Gr\u00fcnde und 41 Angaben zur Art und Weise. Bei jedem Verb steht weiterhin ausdr\u00fccklich, was dazu passt \u2014 nichts wird \u00fcber Themen geraten.",
       "\u{1F517} Alle vier Umstandsbestimmungen lassen sich frei zusammenstellen: wann (temporal), warum (kausal), wie (modal) und wo/wohin/woher (lokal). Bei Verben, die mehrere Ortsfragen zulassen, w\u00e4hlst du selbst \u2014 und der Satz stellt sich darauf ein, bis hin zum Verbwechsel: man geht irgendwohin, aber man KOMMT von irgendwoher.",

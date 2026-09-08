@@ -4452,3 +4452,15 @@ body.lernraum-it .nur-deutsch { display: none; }
   text-transform: uppercase;
   opacity: 0.6;
 }
+
+/* Überschrift einer Sinngruppe innerhalb einer Auswahlreihe des
+   Satzbaukastens. Hundert Bausteine auf einem Haufen kann niemand
+   überblicken — die Gruppen machen die Reihe wieder lesbar. */
+.sbk-gruppe {
+  margin: 10px 0 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+.sbk-gruppe:first-of-type { margin-top: 4px; }
