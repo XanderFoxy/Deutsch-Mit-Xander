@@ -236,6 +236,13 @@
       }
     });
   }
+  /* Steht ein Element wirklich auf dem Bildschirm? Die Seite zeichnet
+     alle Bereiche schon beim Start vor — ohne diese Unterscheidung würde
+     jeder Bereich seine Daten sofort holen, und das Aufteilen der
+     großen Dateien hätte nichts gebracht. */
+  function bereichSichtbar(el) {
+    return Boolean(el && el.offsetParent !== null);
+  }
   function activateTab(targetId) {
     tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.target === targetId)));
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
@@ -254,6 +261,15 @@
   const tabsFreshlyRendered = new Set();
   tabs.forEach((t) => t.addEventListener("click", () => {
     activateTab(t.dataset.target);
+    /* Jetzt ist der Bereich wirklich offen — jetzt lohnt sich das
+       Nachladen seiner Daten, und der Bereich wird danach neu
+       gezeichnet, damit er sie auch benutzt. */
+    if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa()) {
+      ExerciseData.ladeUebungen().then(() => { dailyTaskPoolCache = null; renderSetup(); });
+    }
+    if (t.dataset.target === "view-knowledge" && ExerciseData.ladeKalender && !ExerciseData.kalenderDa()) {
+      ExerciseData.ladeKalender().then(() => renderKompass());
+    }
     if (!tabsFreshlyRendered.has(t.dataset.target)) {
       tabsFreshlyRendered.add(t.dataset.target);
       const view = document.getElementById(t.dataset.target);
@@ -2523,7 +2539,14 @@
     if (dailyTaskPoolCache) return dailyTaskPoolCache;
     const pool = [];
     const seenPrompts = new Set();
-    ExerciseData.activeCategories().forEach((cat) => {
+    /* Auch hier reichen die Rohzeilen — cat.getBank() für alle 23
+       Kategorien war für einen einzigen Tagesauftrag viel zu teuer. */
+    const roh = ExerciseData.alleRohfragen && (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it")
+      ? ExerciseData.alleRohfragen() : null;
+    const kategorien = roh
+      ? [{ id: "__roh", getBank: () => roh.map((z) => ({ prompt: z.prompt, options: [z.correct, ...(z.wrongs || [])], correct: [0], explain: z.explain, level: z.level, categoryId: z.categoryId })) }]
+      : ExerciseData.activeCategories();
+    kategorien.forEach((cat) => {
       try {
         const bank = cat.getBank();
         bank.forEach((q) => {
@@ -2531,7 +2554,13 @@
             seenPrompts.add(q.prompt);
             // "Artikel"-Fragen sind sehr knapp ("___ Regen") und brauchen ohne die sonstige
             // Übungsoberfläche drumherum eine kurze Erklärung, damit klar ist, was gefragt wird.
-            const promptText = cat.id === "artikel"
+            /* Nur die echten Artikel-Aufgaben umformulieren („___ Regen“).
+               Bei längeren Sätzen, in denen die Lücke mitten drin steht,
+               entstand sonst Unsinn wie „Welcher Artikel gehört zu
+               ,Gefallen, um den sie bat, kostete ihn kaum Mühe.'?“ */
+            const kurzeArtikelfrage = (q.categoryId || cat.id) === "artikel"
+              && /^___ \S+$/.test(q.prompt.trim());
+            const promptText = kurzeArtikelfrage
               ? `Welcher Artikel gehört zu „${q.prompt.replace("___ ", "")}"?`
               : q.prompt.replace("___", "…");
             pool.push({ word: promptText, options: q.options, correctIdx: q.correct[0] });
@@ -2623,10 +2652,11 @@
     document.getElementById("calModalMonth").textContent = MONTH_NAMES_LONG[now.getMonth()];
     document.getElementById("calModalDay").textContent = now.getDate();
     document.getElementById("calModalWeekday").textContent = WEEKDAY_NAMES[now.getDay()];
-    cwCalendarTask = pickDailyTask();
-    renderCalendarBack();
     document.getElementById("calendarModalPage").classList.remove("torn");
     document.getElementById("calendarModalOverlay").style.display = "flex";
+    /* Erst die Daten, dann die Aufgabe — vorher stand die Sammlung noch
+       nicht bereit und die Tagesaufgabe wäre leer geblieben. */
+    renderCalendarBackMitDaten();
   }
   let cwCalendarTask = null;
   function isDailyTaskSolvedToday() {
@@ -2701,6 +2731,22 @@
       return friends.filter((f) => f.birthday && f.birthday.slice(5) === md).map((f) => f.name);
     } catch (e) { return []; }
   }
+  /* Der Kalenderrücken braucht die Aufgabensammlung (für die
+     Tagesaufgabe) und den Geschichtskalender. Beide liegen in eigenen
+     Dateien und werden hier nachgeladen — der Rücken erscheint ohnehin
+     erst, wenn jemand den Kalender antippt. */
+  async function renderCalendarBackMitDaten() {
+    if (ExerciseData.ladeUebungen && (!ExerciseData.uebungenDa() || !ExerciseData.kalenderDa())) {
+      const box = document.querySelector(".cal-back-scroll");
+      if (box) box.innerHTML = '<p class="cal-tip-text">Einen Moment, die Tagesaufgabe wird geladen …</p>';
+      await Promise.all([ExerciseData.ladeUebungen(), ExerciseData.ladeKalender()]);
+      dailyTaskPoolCache = null;
+    }
+    // Erst jetzt gibt es überhaupt eine Aufgabe — vorher las das Zeichnen
+    // auf einem leeren Feld und brach ab.
+    cwCalendarTask = pickDailyTask();
+    renderCalendarBack();
+  }
   function renderCalendarBack() {
     const back = document.querySelector(".cal-back-scroll");
     if (!back) return;
@@ -2747,6 +2793,10 @@
     }
     // Sicherheitsbegrenzung: manche Aufgaben-Texte können ungewöhnlich lang sein — damit die
     // Kalenderkarte in jedem Fall vollständig hineinpasst, wird hier gekürzt statt zu scrollen.
+    if (!cwCalendarTask) {
+      back.innerHTML = '<p class="cal-tip-text">Die Tagesaufgabe wird geladen …</p>';
+      return;
+    }
     const questionText = truncate(cwCalendarTask.word, 160);
     back.innerHTML = `
       ${specialDayHtml}
@@ -3979,6 +4029,17 @@
     playEl.style.display = "none";
     resultsEl.style.display = "none";
 
+    /* Die Aufgabensammlung liegt seit dieser Fassung in einer eigenen
+       Datei und wird erst geholt, wenn der Bereich WIRKLICH auf dem
+       Bildschirm steht. Die Seite zeichnet alle Bereiche schon beim
+       Start vor, auch die unsichtbaren — würde hier ohne diese Prüfung
+       geladen, wäre nichts gewonnen. */
+    if (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa() && bereichSichtbar(setupEl)) {
+      setupEl.innerHTML = '<p class="empty-note">Die Aufgaben werden geladen …</p>';
+      await ExerciseData.ladeUebungen();
+      dailyTaskPoolCache = null;
+    }
+
     const paused = Quiz.getState();
     const isPaused = paused && paused.index < paused.questions.length;
     const resumeBar = isPaused ? `
@@ -5019,25 +5080,40 @@
   }
   // Sammelt einzelne, in Anführungszeichen genannte Wörter aus ALLEN Übungskategorien
   // (nicht nur Artikel) — so wächst das Wörterbuch mit dem tatsächlichen Inhalt der Seite.
+  /* Diese Liste ändert sich innerhalb einer Sitzung nicht mehr — sie
+     einmal zu bilden reicht. Vorher wurde für jede der 23 Kategorien
+     die komplette Bank neu aufgebaut UND gemischt, für über 20.000
+     Aufgaben je ein frisches Objekt. Das allein hat das Wörterbuch auf
+     einem Telefon unbenutzbar gemacht. */
+  let extVocabCache = null;
+  let extVocabCacheRaum = null;
   function extractExtendedVocabulary() {
+    const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
+    if (extVocabCache && extVocabCacheRaum === raum) return extVocabCache;
     const found = new Map();
-    ExerciseData.activeCategories().forEach((cat) => {
-      try {
-        const bank = cat.getBank();
-        bank.forEach((q) => {
-          const text = `${q.prompt || ""} ${q.explain || ""}`;
-          const matches = text.match(/„([^„“]{2,30})“/g) || [];
-          matches.forEach((m) => {
-            const word = m.slice(1, -1).trim();
-            if (/^[A-ZÄÖÜa-zäöüß]+$/.test(word) && word.length >= 3) {
-              const key = word.toLowerCase();
-              if (!found.has(key)) found.set(key, word);
-            }
-          });
-        });
-      } catch (e) { /* Kategorien, die nicht kompatibel sind, einfach überspringen */ }
-    });
-    return [...found.values()];
+    const sammle = (text) => {
+      const matches = text.match(/„([^„“]{2,30})“/g);
+      if (!matches) return;
+      matches.forEach((m) => {
+        const word = m.slice(1, -1).trim();
+        if (word.length >= 3 && /^[A-ZÄÖÜa-zäöüß]+$/.test(word)) {
+          const key = word.toLowerCase();
+          if (!found.has(key)) found.set(key, word);
+        }
+      });
+    };
+    if (ExerciseData.alleRohfragen && (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it")) {
+      // Der billige Weg: die Rohzeilen, ohne Mischen und ohne Objektbau.
+      ExerciseData.alleRohfragen().forEach((z) => sammle((z.prompt || "") + " " + (z.explain || "")));
+    } else {
+      ExerciseData.activeCategories().forEach((cat) => {
+        try { cat.getBank().forEach((q) => sammle(`${q.prompt || ""} ${q.explain || ""}`)); }
+        catch (e) { /* Kategorien, die nicht passen, einfach überspringen */ }
+      });
+    }
+    extVocabCache = [...found.values()];
+    extVocabCacheRaum = raum;
+    return extVocabCache;
   }
   // Best-mögliche CEFR-Einstufung (A1–C2) für den handgeprüften Kernwortschatz — eigene
   // Einschätzung nach gängigen Sprachlern-Frequenzlisten, kein offizielles Zertifikat.
@@ -5869,6 +5945,25 @@
     trennbarVerbSelect?.addEventListener("change", updateTrennbarPreview);
     updateTrennbarPreview();
   }
+  /* Das Wörterbuch baute bisher ALLE 8606 Einträge auf einmal in die
+     Seite — 1,3 Millionen Zeichen HTML und für jedes Wort ein eigener
+     Klick-Handler. Auf einem Telefon reicht dafür der Speicher nicht,
+     auf dem iPhone dauert es sehr lange. Jetzt kommen sie in Portionen,
+     und ein einziger Handler bedient alle Vorlese-Knöpfe. */
+  const DICT_SEITE = 60;
+  let dictGezeigt = DICT_SEITE;
+  function dictKarte(e) {
+    return `
+          <div class="vocab-card">
+            <div>
+              <div class="vocab-word">${e.word}${e.level ? ` <span class="empty-note" style="font-size:0.7rem;">${e.level}</span>` : ""}</div>
+              <div class="vocab-syl">${Core.formatStress(e.syl)}</div>
+              <div class="vocab-en">${e.meaning || (e.verified ? "" : "aus dem Übungsinhalt — Bedeutung nicht hinterlegt")}</div>
+              ${e.example ? `<div class="vocab-example">„${e.example}"</div>` : ""}
+            </div>
+            <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
+          </div>`;
+  }
   function renderDictionary(filter = "") {
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
@@ -5891,29 +5986,43 @@
       <select id="dictCategorySelect" class="challenge-select" style="margin-bottom:12px;">
         ${categories.map((c) => `<option value="${c}" ${dictCategoryFilter === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
       </select>
-      <div class="vocab-grid">
-        ${list.map((e) => `
-          <div class="vocab-card">
-            <div>
-              <div class="vocab-word">${e.word}${e.level ? ` <span class="empty-note" style="font-size:0.7rem;">${e.level}</span>` : ""}</div>
-              <div class="vocab-syl">${Core.formatStress(e.syl)}</div>
-              <div class="vocab-en">${e.meaning || (e.verified ? "" : "aus dem Übungsinhalt — Bedeutung nicht hinterlegt")}</div>
-              ${e.example ? `<div class="vocab-example">„${e.example}"</div>` : ""}
-            </div>
-            <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
-          </div>`).join("")}
+      <div class="vocab-grid" id="dictGrid">
+        ${list.slice(0, dictGezeigt).map(dictKarte).join("")}
       </div>
+      ${list.length > dictGezeigt ? `<button type="button" class="btn btn-ghost" id="dictMehr" style="display:block; width:100%; margin-top:10px;">Weitere ${Math.min(DICT_SEITE, list.length - dictGezeigt)} anzeigen (${(list.length - dictGezeigt).toLocaleString("de-DE")} übrig)</button>` : ""}
       ${list.length === 0 ? '<p class="empty-note">Keine Treffer.</p>' : ""}
     `;
-    document.getElementById("dictSearch").addEventListener("input", (e) => renderDictionary(e.target.value));
+    const suche = document.getElementById("dictSearch");
+    suche.addEventListener("input", (e) => { dictGezeigt = DICT_SEITE; renderDictionary(e.target.value); });
     area.querySelectorAll(".dict-level-btn").forEach((btn) => {
-      btn.addEventListener("click", () => { dictLevelFilter = btn.dataset.level; renderDictionary(filter); });
+      btn.addEventListener("click", () => { dictLevelFilter = btn.dataset.level; dictGezeigt = DICT_SEITE; renderDictionary(filter); });
     });
     document.getElementById("dictCategorySelect").addEventListener("change", (e) => {
       dictCategoryFilter = e.target.value;
+      dictGezeigt = DICT_SEITE;
       renderDictionary(filter);
     });
-    area.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
+    /* Nachladen hängt nur die neuen Karten an, statt die ganze Liste neu
+       zu bauen — so bleibt die Bildlaufstelle stehen. */
+    document.getElementById("dictMehr")?.addEventListener("click", () => {
+      const gitter = document.getElementById("dictGrid");
+      const naechste = list.slice(dictGezeigt, dictGezeigt + DICT_SEITE);
+      dictGezeigt += DICT_SEITE;
+      gitter.insertAdjacentHTML("beforeend", naechste.map(dictKarte).join(""));
+      const knopf = document.getElementById("dictMehr");
+      const uebrig = list.length - dictGezeigt;
+      if (uebrig <= 0) knopf.remove();
+      else knopf.textContent = `Weitere ${Math.min(DICT_SEITE, uebrig)} anzeigen (${uebrig.toLocaleString("de-DE")} übrig)`;
+    });
+    /* EIN Klick-Handler für alle Vorlese-Knöpfe statt einer pro Wort.
+       Bei 8606 Einträgen waren das bisher 8606 Handler. */
+    if (!area.dataset.vorlesenVerdrahtet) {
+      area.dataset.vorlesenVerdrahtet = "1";
+      area.addEventListener("click", (ev) => {
+        const knopf = ev.target.closest(".speak-btn");
+        if (knopf) Core.speak(knopf.dataset.word);
+      });
+    }
   }
   document.querySelector('#learnSubnav [data-sub="sub-erste-schritte"]')?.addEventListener("click", () => renderFirstSteps());
   document.querySelector('#learnSubnav [data-sub="sub-grammatik"]')?.addEventListener("click", () => renderGrammatik());
@@ -13579,6 +13688,13 @@
   }
 
   async function renderKompass() {
+    /* Der Kalender liegt seit dieser Fassung in einer eigenen Datei, die
+       erst bei Bedarf geladen wird — beim Seitenstart wäre er mit 7,4 MB
+       die größte Einzellast, obwohl man immer nur einen Tag sieht.
+       Geladen wird erst, wenn der Kompass wirklich sichtbar ist. */
+    if (ExerciseData.ladeKalender && !ExerciseData.kalenderDa() && bereichSichtbar(kompassArea)) {
+      await ExerciseData.ladeKalender();
+    }
     // Das Sprachniveau wird IMMER gesetzt, nicht erst wenn der heutige Tag freigegeben ist.
     // Vorher blieb es an Tagen ohne freigegebenen Eintrag auf null — im Archiv stand dann
     // „undefined" statt des Textes, weil entry.levels[null] nichts ergibt.
@@ -19016,8 +19132,14 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "157";
+  const APP_VERSION = "158";
   const APP_CHANGELOG = {
+    "158": [
+      "\u26A1 Die Seite lud beim Start 16 MB JavaScript. Jetzt sind es 5 MB — und der Start dauert auf einem langsamen Gerät 1,6 statt 2,7 Sekunden. Der Grund: mehr als die Hälfte der größten Datei war der Kalender (366 Tage mal sechs Niveaus mal zehn Sprachen), von dem man immer nur EINEN Tag sieht. Er liegt jetzt in einer eigenen Datei und wird erst geladen, wenn du den Kalender oder den Kompass öffnest. Dasselbe gilt für die Aufgabensammlung.",
+      "\u{1F4D6} Das Wörterbuch öffnet sich jetzt in 0,7 statt 19,7 Sekunden. Zwei Ursachen: Es baute ALLE 11.500 Einträge auf einmal in die Seite (1,3 Millionen Zeichen und für jedes Wort ein eigener Klick-Handler) — und für die Wortliste wurden vorher alle 23 Übungskategorien komplett neu aufgebaut und gemischt, über 20.000 Aufgaben, bei jedem Öffnen. Jetzt kommen die Einträge in Portionen zu 60, ein einziger Handler bedient alle Vorlese-Knöpfe, und die Wortliste wird einmal gebildet statt jedes Mal.",
+      "\u{1F5C2}\uFE0F Neue Dateien: data-kalender.js und data-uebungen.js. Beide MÜSSEN mit hochgeladen werden — ohne sie bleiben Kalender und Übungen leer.",
+      "\u{1F3F7}\uFE0F Die Tagesaufgabe formulierte Artikel-Fragen um („Welcher Artikel gehört zu …?“) — auch dann, wenn die Lücke mitten in einem langen Satz stand. Dabei kam Unsinn heraus. Jetzt wird nur noch umformuliert, wo es wirklich eine kurze Artikel-Frage ist.",
+    ],
     "157": [
       "\u{1F517} Der Link „Es war einmal in Deutschland“ aus dem Kalender springt endlich dorthin, wo er hinsoll. Er hat vorher zu früh losgesprungen: der Kompass lädt sein Banner nach, alles darunter rutscht — und man stand daneben statt davor. Jetzt wird die Position so lange nachgeführt, bis sie steht. Dasselbe gilt für alle Wegweiser-Links im Kompass.",
       "\u{1F5C2}\uFE0F Reihenfolge im Kompass wie gewünscht: „Es war einmal in Deutschland“, darunter „Dichter & Denker“, darunter „Schnee von gestern“, danach der Rest.",
