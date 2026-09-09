@@ -259,6 +259,7 @@
   // Unterreiter jetzt einmal automatisch "nachgeklickt", damit er mit den echten, aktuellen
   // Berechtigungen neu rendert.
   const tabsFreshlyRendered = new Set();
+  let profileSchonGezeichnet = false;
   tabs.forEach((t) => t.addEventListener("click", () => {
     activateTab(t.dataset.target);
     /* Jetzt ist der Bereich wirklich offen — jetzt lohnt sich das
@@ -282,7 +283,14 @@
       // Bei jedem weiteren Rückkehr blieb der Inhalt seither komplett statisch — Änderungen wie
       // Herkunftsland, Sternzeichen, neu verdiente Punkte oder Abzeichen erschienen erst nach
       // einem Seiten-Neuladen. Explizit bei JEDEM Besuch neu rendern behebt das zuverlässig.
-      if (typeof renderAccount === "function" && !profileEditMode) renderAccount();
+      /* Beim ALLERERSTEN Besuch hat der nachgeklickte Unterreiter oben
+         schon gezeichnet — dann hier nicht ein zweites Mal. Das kostete
+         auf einem Telefon fast eine Sekunde für nichts. */
+      const geradeNachgeklickt = tabsFreshlyRendered.has(t.dataset.target)
+        && document.querySelector('#profileSubnav [data-sub="sub-account"][aria-selected="true"]')
+        && !profileSchonGezeichnet;
+      profileSchonGezeichnet = true;
+      if (typeof renderAccount === "function" && !profileEditMode && !geradeNachgeklickt) renderAccount();
       maybeShowFoxIntro();
     }
     if (t.dataset.target === "view-about") renderAboutEditButton();
@@ -15560,7 +15568,7 @@
         const neuText = histNeuKeys.length && !histBatchFreigegeben && histDarfNeuesSehen
           ? ` · <strong style="color:var(--coral-400,#E8825F);">${histNeuKeys.length} neu</strong>`
           : "";
-        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 365 Tagen gefüllt${neuText}</p>`;
+        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 366 Tagen gefüllt${neuText}</p>`;
       })()}
       ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
       ${todayHistory ? `
@@ -15664,8 +15672,17 @@
       renderKompass();
     });
     kompassArea.querySelectorAll("[data-archive-date]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         historyArchiveDate = btn.dataset.archiveDate;
+        /* Der TEXT dieses Tages liegt in seiner Monatsdatei. Die Liste
+           kennt Tag, Titel und Jahr aus dem Verzeichnis — der Monat
+           kommt erst jetzt dazu, für genau diesen einen Klick. */
+        const monat = historyArchiveDate.split("-")[0];
+        if (ExerciseData.ladeKalenderMonat) {
+          btn.style.opacity = "0.55";
+          await ExerciseData.ladeKalenderMonat(monat);
+          btn.style.opacity = "";
+        }
         renderKompass();
         scrollToAndHighlightWhenReady(`[data-archive-date="${historyArchiveDate}"]`);
       });
@@ -16552,11 +16569,17 @@ An einem Morgen lief ein kleiner Fuchs los…
   async function renderAccount() {
     const area = document.getElementById("accountArea");
     const user = Backend.currentUser();
-    const myUnread = user ? await Backend.getUnreadNotifications() : [];
+    /* Diese drei Abfragen hingen bisher hintereinander — jede wartete
+       auf die vorige, obwohl keine von der anderen abhängt. Nebeneinander
+       gestartet dauert das Ganze so lange wie die langsamste statt wie
+       alle zusammen. */
+    const [myUnread, myFoxBedBadge] = await Promise.all([
+      user ? Backend.getUnreadNotifications() : Promise.resolve([]),
+      user ? foxOfPeriodBadgeHtml(Backend.currentUser()?.id) : Promise.resolve(""),
+    ]);
     if (user && myUnread.length) await Backend.refreshCurrentProfile();
     const profile = Backend.currentProfile();
     const extra = (profile && profile.extraProfileData) || {};
-    const myFoxBedBadge = profile ? await foxOfPeriodBadgeHtml(Backend.currentUser()?.id) : "";
     // WICHTIG: profile (Backend.currentProfile()) hat KEIN eigenes "id"-Feld (anders als das
     // fremde Profil-Objekt aus getPublicProfile) — deshalb hier ein passendes Objekt für die
     // Transport-Leisten-Funktion zusammenbauen, die das Feld erwartet.
@@ -21043,7 +21066,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       "\u{1F50D} Der Vokabelmeister markierte ganz normale deutsche W\u00f6rter als unbekannt \u2014 \u00c4pfel, gegangen, arbeitest, Betriebskosten. Er f\u00fchrt ein Wort jetzt auf seine Grundform zur\u00fcck und zerlegt Zusammensetzungen, statt nur die W\u00f6rterbuchform zu kennen.",
       "\u{1F33C} Die Blumen im Artikel-Garten schwebten ab der vierten Blume in der Luft. Jetzt wurzelt jede in der Erde.",
       "\u{1F4D0} Kein Text wird mehr senkrecht zerquetscht, und nichts ragt mehr \u00fcber den Bildschirmrand \u2014 auf einem 320 Pixel schmalen Telefon gepr\u00fcft.",
-      "\u{1F5C2}\ufe0f Neue Dateien: data-witze.js und data-logik.js. Beide M\u00dcSSEN mit hochgeladen werden \u2014 ohne sie bleiben Witze und Logik-Trainer leer.",
+      "\u26A1 Ladezeiten: „Wissen“ zu \u00f6ffnen dauerte 1,9 Sekunden, jetzt 0,55. Der Grund war der Kalender \u2014 7,5 MB f\u00fcr einen einzigen Tag, weil dort 366 Tage in sechs Niveaus und zehn Sprachen liegen. Er liegt jetzt im Ordner „kalender“ als zw\u00f6lf Monatsdateien; geladen wird nur der laufende Monat. Ein winziges Verzeichnis h\u00e4lt Tag und Jahr aller Eintr\u00e4ge bereit, damit Z\u00e4hler und Archivliste sofort vollst\u00e4ndig sind \u2014 der Text eines Archivtages kommt erst beim Antippen. Das Profil \u00f6ffnet in 0,4 statt 1,9 Sekunden: es wurde beim ersten Besuch doppelt gezeichnet, und drei Abfragen warteten hintereinander statt nebeneinander. Der Start liegt bei 1,56 statt 2,26 Sekunden.",
+      "\u{1F5C2}\ufe0f Neue Dateien: data-witze.js, data-logik.js, data-kalender-index.js und der ORDNER kalender mit den zw\u00f6lf Monatsdateien 01.js bis 12.js. Die alte data-kalender.js wird nicht mehr gebraucht und kann geloescht werden.",
     ],
     "158": [
       "\u26A1 Die Seite lud beim Start 16 MB JavaScript. Jetzt sind es 5 MB — und der Start dauert auf einem langsamen Gerät 1,6 statt 2,7 Sekunden. Der Grund: mehr als die Hälfte der größten Datei war der Kalender (366 Tage mal sechs Niveaus mal zehn Sprachen), von dem man immer nur EINEN Tag sieht. Er liegt jetzt in einer eigenen Datei und wird erst geladen, wenn du den Kalender oder den Kompass öffnest. Dasselbe gilt für die Aufgabensammlung.",

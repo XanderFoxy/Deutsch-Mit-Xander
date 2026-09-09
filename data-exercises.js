@@ -398,7 +398,21 @@ const ExerciseData = (function () {
   // damit man nicht nur den heutigen Tag sieht, sondern auch vergangene (oder kommende) Einträge
   // durchstöbern kann.
   function getAllHistoryEntries() {
-    return Object.entries(GERMAN_HISTORY_TODAY_())
+    /* Die Archivliste kommt aus dem Verzeichnis, nicht aus den gerade
+       geladenen Monaten: dort stehen Tag, Jahr und (über HISTORY_TITLES)
+       der Titel — mehr braucht die Liste nicht. Sonst sähe man im
+       Archiv nur den einen geladenen Monat. Der TEXT eines Eintrags
+       wird erst geholt, wenn man ihn öffnet. */
+    const verz = window.DMA_DATEN && window.DMA_DATEN.KALENDER_VERZEICHNIS;
+    const geladen = GERMAN_HISTORY_TODAY_();
+    if (verz) {
+      return Object.entries(verz)
+        .map(([monthDay, jahr]) => Object.assign(
+          { monthDay, year: jahr, title: HISTORY_TITLES[monthDay] || "" },
+          geladen[monthDay] || {}))
+        .sort((a, b) => a.monthDay.localeCompare(b.monthDay));
+    }
+    return Object.entries(geladen)
       .map(([monthDay, entry]) => ({ monthDay, ...entry, title: HISTORY_TITLES[monthDay] || "" }))
       .sort((a, b) => a.monthDay.localeCompare(b.monthDay));
   }
@@ -7097,7 +7111,14 @@ const ExerciseData = (function () {
   function historyStand() { return HISTORY_STAND; }
   function historyBatchKey() { return HISTORY_BATCH; }
   function historyPending() { return HISTORY_NEU; }
-  function historyDayCount() { return Object.keys(GERMAN_HISTORY_TODAY_()).length; }
+  /* Der Zähler zählt ALLE Tage der Sammlung — aus dem Verzeichnis,
+     nicht aus den gerade geladenen Monaten. Sonst stünde dort „31 von
+     365“, nur weil erst ein Monat geladen ist. */
+  function historyDayCount() {
+    const verz = window.DMA_DATEN && window.DMA_DATEN.KALENDER_VERZEICHNIS;
+    if (verz) return Object.keys(verz).length;
+    return Object.keys(GERMAN_HISTORY_TODAY_()).length;
+  }
 
 
   /* --- Nachladen der großen Datenteile ------------------------------
@@ -7108,7 +7129,7 @@ const ExerciseData = (function () {
      geöffnet wird. Jede Datei wird höchstens einmal geholt. */
   const nachgeladen = {};
   function ladeDatenteil(datei, schluessel) {
-    if (window.DMA_DATEN && window.DMA_DATEN[schluessel]) return Promise.resolve(true);
+    if (schluessel && window.DMA_DATEN && window.DMA_DATEN[schluessel]) return Promise.resolve(true);
     if (nachgeladen[datei]) return nachgeladen[datei];
     nachgeladen[datei] = new Promise((fertig) => {
       const s = document.createElement("script");
@@ -7142,9 +7163,52 @@ const ExerciseData = (function () {
     return alle;
   }
   function ladeUebungen() { return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN"); }
-  function ladeKalender() { return ladeDatenteil("data-kalender.js", "GERMAN_HISTORY_TODAY"); }
-  function uebungenDa() { return Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN); }
-  function kalenderDa() { return Boolean(window.DMA_DATEN && window.DMA_DATEN.GERMAN_HISTORY_TODAY); }
+  /* --- Der Kalender kommt monatsweise -------------------------------
+     Der ganze Kalender wiegt 7,5 MB, weil dort 366 Tage in sechs
+     Niveaus und zehn Sprachen liegen. Gebraucht wird davon fast immer
+     ein einziger Tag. Deshalb liegt er in zwölf Monatsdateien im
+     Ordner „kalender“, und geladen wird nur der Monat, in dem man
+     gerade ist — rund ein Zwölftel.
 
-  return { ladeUebungen, ladeKalender, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_GRAMMATIK, IT_WOERTER, IT_KATEGORIEN, IT_GESCHICHTE, IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, setLernraum, getLernraum, activeCategories, activeGetCategory, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+     Dazu ein winziges Verzeichnis (data-kalender-index.js) mit Tag
+     und Jahreszahl aller Einträge: damit stimmen der Zähler und die
+     Archivliste sofort, ohne dass ein Monat geladen sein muss. */
+  function monatGeladen(mm) {
+    return Boolean(window.DMA_DATEN && window.DMA_DATEN.KALENDER_MONATE && window.DMA_DATEN.KALENDER_MONATE[mm]);
+  }
+  function ladeKalenderMonat(mm) {
+    const nummer = String(mm).padStart(2, "0");
+    if (monatGeladen(nummer)) return Promise.resolve(true);
+    return ladeDatenteil("kalender/" + nummer + ".js", null);
+  }
+  function ladeKalenderVerzeichnis() {
+    return ladeDatenteil("data-kalender-index.js", "KALENDER_VERZEICHNIS");
+  }
+  /* Der Normalfall: Verzeichnis plus der laufende Monat. */
+  function ladeKalender() {
+    const jetzt = new Date();
+    return Promise.all([ladeKalenderVerzeichnis(), ladeKalenderMonat(jetzt.getMonth() + 1)]).then(() => true);
+  }
+  /* Für das Archiv und das Geschichts-Quiz, die wirklich alle Tage
+     brauchen — bewusst NUR dort, nicht beim normalen Öffnen. */
+  function ladeKalenderGanz() {
+    const monate = [];
+    for (let m = 1; m <= 12; m++) monate.push(ladeKalenderMonat(m));
+    return Promise.all([ladeKalenderVerzeichnis(), ...monate]).then(() => true);
+  }
+  function kalenderGanzDa() {
+    for (let m = 1; m <= 12; m++) if (!monatGeladen(String(m).padStart(2, "0"))) return false;
+    return true;
+  }
+  function uebungenDa() { return Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN); }
+  /* „Kalender da“ heißt jetzt: das Verzeichnis UND der laufende Monat
+     sind geladen. Nur die leere Sammlung zu prüfen, würde reichen,
+     sobald irgendein Monat da ist — dann fehlte womöglich genau der
+     heutige Tag. */
+  function kalenderDa() {
+    if (!window.DMA_DATEN || !window.DMA_DATEN.KALENDER_VERZEICHNIS) return false;
+    return monatGeladen(String(new Date().getMonth() + 1).padStart(2, "0"));
+  }
+
+  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_GRAMMATIK, IT_WOERTER, IT_KATEGORIEN, IT_GESCHICHTE, IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, setLernraum, getLernraum, activeCategories, activeGetCategory, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();
