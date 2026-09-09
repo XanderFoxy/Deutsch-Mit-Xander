@@ -15208,46 +15208,100 @@
      Jeder Buchstabe sitzt in seinem eigenen Stein, die Steine sind
      versetzt gestapelt wie in einer Mauer. Der Turm wächst nach oben,
      und die obersten Steine stehen schon ein wenig schief. */
-  /* Die Steine des Turms: gebrannte Ziegel in leicht verschiedenen
-     Tönen, wie sie in einer echten Mauer nebeneinander liegen. Die
-     Buchstaben stehen hell darin, sonst wären sie nicht zu lesen. */
-  const MAUER_STEINE = ["#C0693F", "#A9542F", "#D07B4C", "#B45E36", "#CE7043", "#9C4D2B"];
-  function mauerSchriftzug(text, optionen) {
+  /* ------------------------------------------------------------------
+     TURMSCHRIFT — für den Wackelturm
+     ------------------------------------------------------------------
+     Der Wackelturm baut sich im Spiel senkrecht auf, und seine Blöcke
+     wechseln dabei die Farbe: unten warmes Orange, nach oben hin über
+     Gelb ins Grüne (siehe .wt-block, hsl(28 + i*7 …)). Genau so wird
+     hier auch der Schriftzug gebaut — senkrecht von oben nach unten,
+     jeder Buchstabe ein eigener Block, und die Farben folgen derselben
+     Reihe. Der Turm steht leicht schief, wie im Spiel kurz vor dem
+     Einsturz.
+     ------------------------------------------------------------------ */
+  function turmSchriftzug(text, optionen) {
     const o = optionen || {};
-    const hoehe = o.hoehe || 62;
-    const zeichen = String(text).toUpperCase().split("");
+    const hoehe = o.hoehe || 150;
+    const zeichen = String(text).toUpperCase().replace(/[^A-ZÄÖÜẞ]/g, "").split("");
     const teile = [];
-    let x = 0, minY = 0;
+    const blockBreite = 190, blockHoehe = 74, zeilen = zeichen.length;
     zeichen.forEach((z, i) => {
-      const breite = 96;
-      const y = -i * 10;
-      const kipp = i > zeichen.length - 4 ? (i - zeichen.length + 4) * 3 : 0;
-      const stein = MAUER_STEINE[i % MAUER_STEINE.length];
-      const dreh = `rotate(${kipp} ${x + 45} ${y + 63})`;
-      // Der Stein …
-      teile.push(`<rect x="${x - 6}" y="${y - 14}" width="106" height="156" rx="10" fill="${stein}"`
-        + ` stroke="rgba(0,0,0,0.28)" stroke-width="4" transform="${dreh}"/>`);
-      // … eine hellere Oberkante, damit er plastisch wirkt …
-      teile.push(`<rect x="${x - 6}" y="${y - 14}" width="106" height="16" rx="8" fill="#fff" opacity="0.18" transform="${dreh}"/>`);
+      /* Oben grün, unten orange — dieselbe Farbreihe wie die Blöcke im
+         Spiel, nur umgekehrt gelesen, weil hier von oben nach unten
+         geschrieben wird. */
+      const stufe = zeilen - 1 - i;
+      const ton = 28 + stufe * Math.max(4, Math.round(112 / Math.max(1, zeilen - 1)));
+      const farbe = `hsl(${ton}, 58%, 56%)`;
+      const dunkel = `hsl(${ton}, 58%, 42%)`;
+      const y = i * (blockHoehe + 8);
+      // Der Turm steht schief: je höher, desto stärker versetzt.
+      const versatz = Math.sin((i / Math.max(1, zeilen - 1)) * Math.PI) * 16 - 8;
+      const kipp = (stufe / Math.max(1, zeilen)) * 3.5 - 1;
+      const dreh = `rotate(${kipp} ${versatz + blockBreite / 2} ${y + blockHoehe / 2})`;
+      teile.push(`<rect x="${versatz}" y="${y}" width="${blockBreite}" height="${blockHoehe}" rx="9"`
+        + ` fill="${farbe}" stroke="${dunkel}" stroke-width="4" transform="${dreh}"/>`);
+      // Die dunkle Unterkante — dieselbe Kante, die die Blöcke im Spiel haben.
+      teile.push(`<rect x="${versatz}" y="${y + blockHoehe - 12}" width="${blockBreite}" height="12" rx="6"`
+        + ` fill="rgba(0,0,0,0.16)" transform="${dreh}"/>`);
       const pfade = BUCHSTABEN[z];
-      if (pfade) {
-        pfade.forEach((d) => {
-          teile.push(`<path d="${d}" transform="translate(${x + 3} ${y + 4}) rotate(${kipp} 50 70)" fill="none"`
-            + ` stroke="rgba(0,0,0,0.35)" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter"/>`);
-        });
-        pfade.forEach((d) => {
-          teile.push(`<path d="${d}" transform="translate(${x} ${y}) rotate(${kipp} 50 70)" fill="none"`
-            + ` stroke="#FFF3DF" stroke-width="17" stroke-linecap="square" stroke-linejoin="miter"/>`);
-        });
-      }
-      x += breite;
-      minY = Math.min(minY, y - 22);
+      if (pfade) pfade.forEach((d) => {
+        // Der Buchstabe sitzt mittig im Block, dafür verkleinert.
+        const sk = 0.44;
+        const bx = versatz + blockBreite / 2 - 50 * sk;
+        const by = y + blockHoehe / 2 - 70 * sk;
+        teile.push(`<path d="${d}" transform="${dreh} translate(${bx} ${by}) scale(${sk})" fill="none"`
+          + ` stroke="#FFF8E8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>`);
+      });
     });
-    const breiteGesamt = x + 14;
-    const hoeheGesamt = BUCHSTABEN_HOEHE - minY + 40;
-    return `<svg class="wortlogo" viewBox="-12 ${minY} ${breiteGesamt + 12} ${hoeheGesamt}" height="${hoehe}"`
+    const breiteGesamt = blockBreite + 30;
+    const hoeheGesamt = zeilen * (blockHoehe + 8) + 12;
+    return `<svg class="wortlogo" viewBox="-14 -6 ${breiteGesamt} ${hoeheGesamt}" height="${hoehe}"`
       + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
-      + ` aria-label="${String(text).replace(/"/g, "&quot;")}" preserveAspectRatio="xMinYMid meet">${teile.join("")}</svg>`;
+      + ` aria-label="${String(text).replace(/"/g, "&quot;")}" preserveAspectRatio="xMidYMid meet">${teile.join("")}</svg>`;
+  }
+
+  /* ------------------------------------------------------------------
+     SILBENSCHRIFT — für den Silbenturm
+     ------------------------------------------------------------------
+     Im Spiel setzt man ein Wort aus SILBEN zusammen, jede auf ihrem
+     eigenen Stein. Der Schriftzug macht dasselbe mit seinem eigenen
+     Namen: SIL / BEN / TURM, drei Steine übereinander, in derselben
+     bernsteinfarbenen Art wie die Silbensteine im Spiel.
+     ------------------------------------------------------------------ */
+  function silbenSchriftzug(silben, optionen) {
+    const o = optionen || {};
+    const hoehe = o.hoehe || 140;
+    const teile = [];
+    const zeilenhoehe = 86;
+    let breiteste = 0;
+    const gemessen = silben.map((silbe) => {
+      const zeichen = silbe.toUpperCase().split("");
+      const breite = zeichen.reduce((n, z) => n + (BUCHSTABEN_ABSTAND[z] || 78) * 0.5, 0) + 34;
+      breiteste = Math.max(breiteste, breite);
+      return { zeichen, breite };
+    });
+    gemessen.forEach(({ zeichen, breite }, reihe) => {
+      const y = reihe * zeilenhoehe;
+      const links = (breiteste - breite) / 2 + (reihe % 2 ? 9 : -9);   // leicht versetzt gestapelt
+      teile.push(`<rect x="${links}" y="${y}" width="${breite}" height="74" rx="11"`
+        + ` fill="rgba(242,184,75,0.22)" stroke="#E0A536" stroke-width="4"/>`);
+      teile.push(`<rect x="${links}" y="${y}" width="${breite}" height="12" rx="6" fill="#fff" opacity="0.22"/>`);
+      let x = links + 17;
+      zeichen.forEach((z) => {
+        const pfade = BUCHSTABEN[z];
+        const sk = 0.5;
+        if (pfade) pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x} ${y + 37 - 70 * sk}) scale(${sk})" fill="none"`
+            + ` stroke="#B4741C" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>`);
+        });
+        x += (BUCHSTABEN_ABSTAND[z] || 78) * 0.5;
+      });
+    });
+    const breiteGesamt = breiteste + 34;
+    const hoeheGesamt = silben.length * zeilenhoehe + 8;
+    return `<svg class="wortlogo" viewBox="-17 -6 ${breiteGesamt} ${hoeheGesamt}" height="${hoehe}"`
+      + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
+      + ` aria-label="${silben.join("")}" preserveAspectRatio="xMidYMid meet">${teile.join("")}</svg>`;
   }
 
   function spielSchriftzug(text, form, optionen) {
@@ -15360,8 +15414,8 @@
     "sub-crossword": { bauart: "kreuz", woerter: ["Kreuzwort", "Rätsel"] },
     "sub-bubbles": { bauart: "blase" },
     "sub-kanone": { bauart: "wucht" },
-    "sub-silbenturm": { bauart: "mauer" },
-    "sub-wackelturm": { bauart: "mauer" },
+    "sub-silbenturm": { bauart: "silben", silben: ["Sil", "ben", "turm"] },
+    "sub-wackelturm": { bauart: "turm" },
   };
 
   function spielTitelEinsetzen(sub) {
@@ -15380,7 +15434,8 @@
     if (wunsch.bauart === "kreuz") kopf.innerHTML = kreuzSchriftzug(wunsch.woerter[0], wunsch.woerter[1], { hoehe: 150 });
     else if (wunsch.bauart === "blase") kopf.innerHTML = blasenSchriftzug(eintrag.name, { hoehe: 62 });
     else if (wunsch.bauart === "wucht") kopf.innerHTML = wuchtSchriftzug(eintrag.name, { hoehe: 58 });
-    else if (wunsch.bauart === "mauer") kopf.innerHTML = mauerSchriftzug(eintrag.name, { hoehe: 64 });
+    else if (wunsch.bauart === "turm") kopf.innerHTML = turmSchriftzug(eintrag.name, { hoehe: 190 });
+    else if (wunsch.bauart === "silben") kopf.innerHTML = silbenSchriftzug(wunsch.silben, { hoehe: 150 });
   }
   /* Ein Beobachter, damit der Titel auch nach einem Neuzeichnen des
      Spielbereichs wieder oben steht — viele Spiele bauen ihren Inhalt
@@ -20983,7 +21038,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       "\u{1F4CA} Fortschrittsbalken in jedem Spiel: 0 bis 10, im schweren Modus 0 bis 30 \u2014 w\u00e4hrend des Spiels, damit man wei\u00df, wie viel noch kommt.",
       "\u{1F9F1} Der Satzbaukasten baut deutlich weniger Unsinn. Neue Regeln: keine Angabe der Art neben einer Verneinung (\u201eordentlich keinen Rucksack packen\u201c), keine zwei Ortsangaben, kein Zeitraum bei einem Verb, das keinen Zeitraum f\u00fcllt (\u201ezwei Stunden lang mitbringen\u201c), keine Ortsangabe, wenn das Objekt selbst ein Raum ist, und Verben wie suchen, finden, verstehen bekommen immer ihre Erg\u00e4nzung. Au\u00dferdem bekommt ein Satz nicht mehr f\u00fcnf Zusatzangaben auf einmal, sondern meist eine oder zwei.",
       "\u{1F5C2}\ufe0f Die langen Auswahllisten im Satzbaukasten sind jetzt aufklappbare Gruppen \u2014 und die Dinge sind danach sortiert, WAS sie sind: Essen, Getr\u00e4nke, Papiere, Ger\u00e4te, Haushalt, Kleidung, Fahrzeuge, Gedanken.",
-      "\u{1F3A8} Vier Spiele haben jetzt einen eigenen, farbigen Schriftzug aus selbst gezeichneter Geometrie \u2014 keine Schriftart, sondern gebaute Buchstaben: die Wortblasen als bunte Luftballons mit Knoten, die Wort-Kanone gl\u00fchend mit Druckwelle, Silbenturm und Wackelturm als gestapelte Ziegel, das Kreuzwortr\u00e4tsel als echtes Gitter mit gekreuztem Wort. Die \u00fcbrigen Spiele bleiben vorerst ohne Schriftzug \u2014 dieselbe Schrift \u00fcber allen w\u00e4re keine eigene Gestaltung.",
+      "\u{1F3A8} F\u00fcnf Spiele haben jetzt einen eigenen, farbigen Schriftzug aus selbst gezeichneter Geometrie \u2014 keine Schriftart, sondern gebaute Buchstaben, jeder Schriftzug am Spiel selbst entlang: die Wortblasen als bunte Luftballons mit Knoten und Glanzlicht, die Wort-Kanone gl\u00fchend mit Druckwelle, der Wackelturm senkrecht von oben nach unten als gestapelte Bl\u00f6cke in genau den Farben des Spiels (oben gr\u00fcn, unten orange, leicht schief), der Silbenturm als drei Silbensteine SIL/BEN/TURM \u00fcbereinander, das Kreuzwortr\u00e4tsel als echtes Gitter mit gekreuztem Wort. Die \u00fcbrigen Spiele bleiben vorerst ohne Schriftzug \u2014 dieselbe Schrift \u00fcber allen w\u00e4re keine eigene Gestaltung.",
       "\u{1F464} Spuren, die andere auf deinem Profil hinterlassen, siehst du jetzt in deinem eigenen Profil \u2014 und bekommst eine Nachricht, wenn jemand eine hinterl\u00e4sst. Dazu eine Meldung, wenn du Fuchs des Tages, der Woche, des Monats oder des Jahres geworden bist.",
       "\u{1F50D} Der Vokabelmeister markierte ganz normale deutsche W\u00f6rter als unbekannt \u2014 \u00c4pfel, gegangen, arbeitest, Betriebskosten. Er f\u00fchrt ein Wort jetzt auf seine Grundform zur\u00fcck und zerlegt Zusammensetzungen, statt nur die W\u00f6rterbuchform zu kennen.",
       "\u{1F33C} Die Blumen im Artikel-Garten schwebten ab der vierten Blume in der Luft. Jetzt wurzelt jede in der Erde.",
@@ -21130,7 +21185,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         if (w.bauart === "kreuz") return kreuzSchriftzug(w.woerter[0], w.woerter[1], { hoehe: 120 });
         if (w.bauart === "blase") return blasenSchriftzug(e.name, { hoehe: 80 });
         if (w.bauart === "wucht") return wuchtSchriftzug(e.name, { hoehe: 76 });
-        if (w.bauart === "mauer") return mauerSchriftzug(e.name, { hoehe: 84 });
+        if (w.bauart === "turm") return turmSchriftzug(e.name, { hoehe: 230 });
+        if (w.bauart === "silben") return silbenSchriftzug(w.silben, { hoehe: 180 });
         return null;
       },
       /* Eine ganze Trainer-Runde durchspielen und melden, WO die
