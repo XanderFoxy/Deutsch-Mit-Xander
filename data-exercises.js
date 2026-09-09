@@ -4433,6 +4433,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Der unbestimmte Artikel: ein, eine",
+        "uebung": "artikel",
         "kurz": "„ein“ steht bei der- und das-Wörtern, „eine“ bei die-Wörtern. Man benutzt ihn, wenn etwas neu ist oder noch nicht bekannt.",
         "beispiele": [
           "Das ist ein Hund.",
@@ -4442,6 +4443,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Das Verb steht an Position 2",
+        "uebung": "wortstellung",
         "kurz": "Im normalen Aussagesatz steht das Verb immer an zweiter Stelle — egal, was vorne steht.",
         "beispiele": [
           "Ich gehe heute ins Kino.",
@@ -4452,6 +4454,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Ja/Nein-Fragen",
+        "uebung": "fragen",
         "kurz": "Bei einer Frage ohne Fragewort rutscht das Verb ganz nach vorn.",
         "beispiele": [
           "Kommst du mit?",
@@ -4461,6 +4464,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "W-Fragen",
+        "uebung": "fragen",
         "kurz": "Fragewort zuerst, dann das Verb, dann die Person.",
         "beispiele": [
           "Wo wohnst du?",
@@ -4470,6 +4474,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Verneinung mit nicht und kein",
+        "uebung": "verneinung",
         "kurz": "„kein“ verneint Substantive, „nicht“ verneint alles andere.",
         "beispiele": [
           "Ich habe kein Auto.",
@@ -4492,6 +4497,7 @@ const ExerciseData = (function () {
     "A2": [
       {
         "titel": "Perfekt: über Vergangenes sprechen",
+        "uebung": "zeitformen",
         "kurz": "Im Gespräch erzählt man Vergangenes fast immer im Perfekt: haben oder sein + Partizip II.",
         "beispiele": [
           "Ich habe gearbeitet.",
@@ -4502,6 +4508,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Modalverben",
+        "uebung": "modalverben",
         "kurz": "können, müssen, wollen, dürfen, sollen, mögen — sie schicken das Hauptverb als Grundform ans Satzende.",
         "beispiele": [
           "Ich kann schwimmen.",
@@ -4521,6 +4528,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Akkusativ und Dativ",
+        "uebung": "faelle",
         "kurz": "Der Akkusativ antwortet auf „wen oder was?“, der Dativ auf „wem?“.",
         "beispiele": [
           "Ich sehe den Mann. (Akkusativ)",
@@ -4531,6 +4539,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Possessivartikel",
+        "uebung": "possessiv",
         "kurz": "mein, dein, sein, ihr, unser, euer — sie richten sich nach dem Substantiv dahinter.",
         "beispiele": [
           "mein Bruder",
@@ -4599,6 +4608,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Wechselpräpositionen",
+        "uebung": "praepositionen",
         "kurz": "an, auf, hinter, in, neben, über, unter, vor, zwischen — Akkusativ bei Bewegung wohin, Dativ bei Ort wo.",
         "beispiele": [
           "Ich gehe in die Küche. (wohin → Akkusativ)",
@@ -4617,6 +4627,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Reflexive Verben",
+        "uebung": "reflexiv",
         "kurz": "Manche Verben brauchen ein Reflexivpronomen, das auf die handelnde Person zurückweist.",
         "beispiele": [
           "Ich freue mich.",
@@ -4628,6 +4639,7 @@ const ExerciseData = (function () {
     "B2": [
       {
         "titel": "Passiv",
+        "uebung": "passiv",
         "kurz": "Das Passiv rückt die Handlung in den Mittelpunkt, nicht die Person: werden + Partizip II.",
         "beispiele": [
           "Das Haus wird gebaut.",
@@ -4638,6 +4650,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Konjunktiv II: höflich und irreal",
+        "uebung": "konjunktiv",
         "kurz": "Für Wünsche, Höflichkeit und Nicht-Wirkliches. Meist mit würde, bei sein/haben/Modalverben mit der eigenen Form.",
         "beispiele": [
           "Ich hätte gern einen Kaffee.",
@@ -4647,6 +4660,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Plusquamperfekt",
+        "uebung": "zeitformen",
         "kurz": "Die Vorvergangenheit: etwas war schon vorher passiert. hatte oder war + Partizip II.",
         "beispiele": [
           "Bevor er kam, hatten wir schon gegessen.",
@@ -4666,6 +4680,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Genitiv",
+        "uebung": "faelle",
         "kurz": "Zeigt Zugehörigkeit. In der Schriftsprache üblich, im Alltag oft durch „von“ ersetzt.",
         "beispiele": [
           "das Auto meines Vaters",
@@ -4675,6 +4690,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Nomen-Verb-Verbindungen",
+        "uebung": "funktionsverben",
         "kurz": "Feste Paare aus Substantiv und Verb, die zusammen eine Bedeutung ergeben. Man lernt sie als Ganzes.",
         "beispiele": [
           "eine Entscheidung treffen",
@@ -4685,6 +4701,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Indirekte Rede mit Konjunktiv I",
+        "uebung": "konjunktiv",
         "kurz": "In Berichten gibt man fremde Aussagen mit dem Konjunktiv I wieder — man distanziert sich damit von der Aussage.",
         "beispiele": [
           "Er sagte, er habe keine Zeit.",
@@ -4695,6 +4712,7 @@ const ExerciseData = (function () {
     "C1": [
       {
         "titel": "Partizipialkonstruktionen",
+        "uebung": "partizip",
         "kurz": "Ein Partizip ersetzt einen ganzen Relativsatz und macht den Satz dichter — typisch für geschriebene Sprache.",
         "beispiele": [
           "die am Montag beschlossene Regelung",
@@ -4704,6 +4722,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Nominalstil",
+        "uebung": "stil",
         "kurz": "Verben werden zu Substantiven. Amts- und Fachsprache klingt so, wirkt aber schnell schwerfällig.",
         "beispiele": [
           "Nach Prüfung des Antrags …",
@@ -4714,6 +4733,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Irreale Bedingungssätze der Vergangenheit",
+        "uebung": "konjunktiv",
         "kurz": "Etwas, das anders hätte laufen können — aber nicht so gelaufen ist.",
         "beispiele": [
           "Hätte ich das gewusst, wäre ich früher gekommen.",
@@ -4722,6 +4742,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Modalpartikeln",
+        "uebung": "modalpartikeln",
         "kurz": "Kleine Wörter ohne eigene Bedeutung, die den Ton verändern: doch, mal, ja, eben, halt, wohl.",
         "beispiele": [
           "Komm doch mal vorbei!",
@@ -4732,6 +4753,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Konnektoren der Schriftsprache",
+        "uebung": "konnektoren",
         "kurz": "Für klar gegliederte Texte: gehobene Verbindungen statt „und“ und „aber“.",
         "beispiele": [
           "sofern",
@@ -4744,6 +4766,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Erweiterte Infinitivsätze",
+        "uebung": "infinitivsatz",
         "kurz": "Infinitiv mit „zu“, oft eingeleitet durch um, ohne, statt oder anstatt.",
         "beispiele": [
           "Er ging, ohne sich zu verabschieden.",
@@ -4755,6 +4778,7 @@ const ExerciseData = (function () {
     "C2": [
       {
         "titel": "Stilistische Wortstellung",
+        "uebung": "wortstellung",
         "kurz": "Was am Satzende steht, wirkt am stärksten. Die Reihenfolge wird zum Mittel der Betonung.",
         "beispiele": [
           "Verloren hat er nie.",
@@ -4764,6 +4788,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Konjunktiv in der Zitierpraxis",
+        "uebung": "konjunktiv",
         "kurz": "In journalistischen Texten markiert der Konjunktiv Distanz zur wiedergegebenen Aussage — ein feiner, aber wirksamer Unterschied.",
         "beispiele": [
           "Der Sprecher erklärte, die Zahlen seien korrekt.",
@@ -4772,6 +4797,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Funktionsverbgefüge der Amtssprache",
+        "uebung": "funktionsverben",
         "kurz": "Feste Wendungen, in denen das Verb fast bedeutungslos wird. Zu erkennen, um sie zu verstehen — und um sie bewusst zu vermeiden.",
         "beispiele": [
           "in Erwägung ziehen",
@@ -4782,6 +4808,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Ellipsen und Auslassungen",
+        "uebung": "stil",
         "kurz": "Weglassen, was der Zusammenhang ohnehin trägt — wirkt lebendig, wenn es gezielt geschieht.",
         "beispiele": [
           "Alles klar?",
@@ -4791,6 +4818,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Wortbildung als Ausdrucksmittel",
+        "uebung": "wortbildung",
         "kurz": "Deutsch erlaubt neue Wörter durch Zusammensetzung. Die Feinsteuerung liegt in Vorsilben und Endungen.",
         "beispiele": [
           "Verantwortungsbewusstsein",
@@ -4800,6 +4828,7 @@ const ExerciseData = (function () {
       },
       {
         "titel": "Register bewusst wechseln",
+        "uebung": "stil",
         "kurz": "Dasselbe sagen — nur anders. Wer beide Ebenen beherrscht, kann gezielt wählen.",
         "beispiele": [
           "Ich hab keine Lust. (umgangssprachlich)",
@@ -6188,6 +6217,54 @@ const ExerciseData = (function () {
     { id: "quiz", title: "Deutschland-Quiz", icon: "🏆", group: "quiz",
       info: "Allgemeinwissen rund um Deutschland — im Stil von „Wer wird Millionär“. Manche Fragen haben zwei richtige Antworten für Bonuspunkte!",
       getBank: mitZusatz("quiz", bankQuiz) },
+    { id: "wortstellung", title: "Wortstellung im Satz", icon: "🔢", group: "grammatik",
+      info: "Im deutschen Hauptsatz steht das gebeugte Verb immer an zweiter Stelle — egal, was davor steht. Im Nebensatz rutscht es ans Ende. Alles andere im Mittelfeld folgt der Reihe Zeit, Grund, Art, Ort.",
+      getBank: () => zusatzBank("wortstellung") },
+    { id: "fragen", title: "Fragen stellen", icon: "❓", group: "grammatik",
+      info: "Zwei Bauarten: die Ja/Nein-Frage beginnt mit dem Verb („Kommst du?“), die W-Frage mit dem Fragewort („Wann kommst du?“). In beiden steht das Verb sehr weit vorn.",
+      getBank: () => zusatzBank("fragen") },
+    { id: "verneinung", title: "Verneinung: nicht und kein", icon: "🚫", group: "grammatik",
+      info: "„kein“ verneint ein Substantiv mit unbestimmtem oder ohne Artikel, „nicht“ alles andere. Die Stellung von „nicht“ verrät, was genau verneint wird.",
+      getBank: () => zusatzBank("verneinung") },
+    { id: "modalverben", title: "Modalverben", icon: "🎚️", group: "grammatik",
+      info: "können, müssen, dürfen, sollen, wollen, mögen verändern die Aussage eines Satzes. Das zweite Verb bleibt im Infinitiv und rutscht ans Satzende.",
+      getBank: () => zusatzBank("modalverben"), unlock: {type: "points", value: 40} },
+    { id: "faelle", title: "Die vier Fälle", icon: "🧭", group: "grammatik",
+      info: "Nominativ, Akkusativ, Dativ und Genitiv. Der Fall zeigt die Rolle im Satz: wer handelt, wen oder was es trifft, wem etwas gilt, wessen etwas ist. Er bestimmt Artikel, Pronomen und Adjektivendung.",
+      getBank: () => zusatzBank("faelle"), unlock: {type: "points", value: 60} },
+    { id: "possessiv", title: "Possessivartikel: mein, dein, sein", icon: "🔑", group: "grammatik",
+      info: "Wem etwas gehört, sagt der Possessivartikel. Der Stamm richtet sich nach dem Besitzer, die Endung nach dem besessenen Wort — und nach seinem Fall.",
+      getBank: () => zusatzBank("possessiv") },
+    { id: "praepositionen", title: "Präpositionen & Fälle", icon: "📍", group: "grammatik",
+      info: "Jede Präposition verlangt einen festen Fall. Die Wechselpräpositionen (in, an, auf, über, unter, vor, hinter, neben, zwischen) verlangen beides: Akkusativ bei Bewegung wohin, Dativ bei Ruhe wo.",
+      getBank: () => zusatzBank("praepositionen"), unlock: {type: "points", value: 80} },
+    { id: "reflexiv", title: "Reflexive Verben", icon: "🪞", group: "grammatik",
+      info: "Manche Verben brauchen ein Reflexivpronomen: sich freuen, sich erinnern, sich beeilen. Meist steht es im Akkusativ — bei einem zweiten Objekt aber im Dativ: „Ich wasche mir die Hände.“",
+      getBank: () => zusatzBank("reflexiv"), unlock: {type: "points", value: 120} },
+    { id: "passiv", title: "Passiv", icon: "🔄", group: "grammatik",
+      info: "Das Passiv rückt die Handlung in den Mittelpunkt und die handelnde Person in den Hintergrund: werden + Partizip II. Wer handelt, kann mit „von“ oder „durch“ nachgereicht werden.",
+      getBank: () => zusatzBank("passiv"), unlock: {type: "points", value: 160} },
+    { id: "konjunktiv", title: "Konjunktiv I & II", icon: "🎭", group: "grammatik",
+      info: "Der Konjunktiv II sagt, was nicht wirklich ist: Wünsche, Höflichkeit, irreale Bedingungen. Der Konjunktiv I gibt fremde Aussagen wieder, ohne sie sich zu eigen zu machen.",
+      getBank: () => zusatzBank("konjunktiv"), unlock: {type: "points", value: 200} },
+    { id: "funktionsverben", title: "Nomen-Verb-Verbindungen", icon: "🧩", group: "grammatik",
+      info: "Feste Paare aus Substantiv und blassem Verb: eine Entscheidung treffen, in Frage kommen, zur Verfügung stehen. Das Verb allein sagt wenig — die Verbindung ist der Ausdruck.",
+      getBank: () => zusatzBank("funktionsverben"), unlock: {type: "points", value: 240} },
+    { id: "partizip", title: "Partizipien & Partizipialsätze", icon: "✂️", group: "grammatik",
+      info: "Ein Partizip ersetzt einen ganzen Relativsatz: „die am Montag beschlossene Regelung“. Partizip I steht für ein Geschehen, das noch läuft, Partizip II für ein abgeschlossenes.",
+      getBank: () => zusatzBank("partizip"), unlock: {type: "points", value: 280} },
+    { id: "infinitivsatz", title: "Infinitiv mit zu", icon: "➡️", group: "grammatik",
+      info: "Nach vielen Verben und Ausdrücken folgt ein Infinitiv mit „zu“ — „Ich habe vor, morgen zu kommen“. Nach Modalverben und einigen anderen steht er dagegen ohne „zu“.",
+      getBank: () => zusatzBank("infinitivsatz"), unlock: {type: "points", value: 140} },
+    { id: "modalpartikeln", title: "Modalpartikeln", icon: "🎵", group: "grammatik",
+      info: "doch, mal, ja, halt, eben, wohl: kleine Wörter ohne eigene Bedeutung, die den Ton eines Satzes bestimmen. Wer sie richtig setzt, klingt sofort deutsch.",
+      getBank: () => zusatzBank("modalpartikeln"), unlock: {type: "points", value: 320} },
+    { id: "wortbildung", title: "Wortbildung", icon: "🔩", group: "wortschatz",
+      info: "Aus wenigen Bausteinen entstehen unzählige Wörter: Vorsilben verändern die Bedeutung, Nachsilben die Wortart, und Zusammensetzungen bestimmt immer das letzte Glied.",
+      getBank: () => zusatzBank("wortbildung"), unlock: {type: "points", value: 260} },
+    { id: "stil", title: "Stil & Register", icon: "🎩", group: "wortschatz",
+      info: "Derselbe Inhalt klingt im Amtsbrief anders als im Gespräch. Nominalstil, Ellipsen und die Wahl der Wörter entscheiden, ob ein Satz sachlich, schroff oder freundlich wirkt.",
+      getBank: () => zusatzBank("stil"), unlock: {type: "points", value: 300} },
     { id: "lueckentext", title: "Lückentext-Geschichten", icon: "📖", group: "wortschatz",
       info: "Kurze, zusammenhängende Mini-Geschichten mit einer Lücke — anders als Einzelsätze musst du hier den Kontext der ganzen Geschichte im Kopf behalten.",
       getBank: mitZusatz("lueckentext", bankLueckentext), unlock: { type: "points", value: 60 } },

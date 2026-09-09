@@ -567,7 +567,7 @@
     { id: "glas", nomen: "Glas", genus: "n", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "bicchiere", itGenus: "m", itBest: "il bicchiere", itUnbest: "un bicchiere", it: "un bicchiere", kategorie: "alltag", level: "A1", rollen: ["haben","benutzen","waschen","kaufen"], adjektive: ["voll","leer","sauber","kaputt","gross","klein"] },
     { id: "flasche", nomen: "Flasche", genus: "f", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "bottiglia", itGenus: "f", itBest: "la bottiglia", itUnbest: "una bottiglia", it: "una bottiglia", kategorie: "alltag", level: "A1", rollen: ["kaufen","haben","oeffnen","schliessen","tragen","bringen"], adjektive: ["voll","leer","gross","klein","teuer","guenstig"] },
     { id: "korb", nomen: "Korb", genus: "m", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "cesto", itGenus: "m", itBest: "il cesto", itUnbest: "un cesto", it: "un cesto", kategorie: "einkaufen", level: "A2", rollen: ["kaufen","tragen","haben","packen"], adjektive: ["gross","klein","voll","leer"] },
-    { id: "geld", nomen: "Geld", genus: "n", begleiter: ["ohne","bestimmt","kein"], itNomen: "denaro", itGenus: "m", itBest: "il denaro", itOhne: "denaro", it: "denaro", kategorie: "einkaufen", level: "A1", rollen: ["haben","brauchen","geben","bezahlen"], adjektive: ["wichtig"] },
+    { id: "geld", nomen: "Geld", genus: "n", begleiter: ["ohne","bestimmt","kein"], itNomen: "denaro", itGenus: "m", itBest: "il denaro", itOhne: "denaro", it: "denaro", kategorie: "einkaufen", level: "A1", rollen: ["haben","brauchen","geben","bezahlen"] },
     { id: "preis", nomen: "Preis", genus: "m", begleiter: ["unbestimmt","bestimmt","kein"], itNomen: "prezzo", itGenus: "m", itBest: "il prezzo", itUnbest: "un prezzo", it: "un prezzo", kategorie: "einkaufen", level: "A1", rollen: ["haben","bezahlen","sehen","finden"], adjektive: ["hoch","niedrig","teuer","guenstig","richtig","falsch"] },
     { id: "quittung", nomen: "Quittung", genus: "f", begleiter: ["unbestimmt","bestimmt","kein"], itNomen: "ricevuta", itGenus: "f", itBest: "la ricevuta", itUnbest: "una ricevuta", it: "una ricevuta", kategorie: "einkaufen", level: "A2", rollen: ["bekommen","geben","brauchen","haben"], adjektive: ["wichtig"] },
     { id: "karte", nomen: "Karte", genus: "f", begleiter: ["unbestimmt","bestimmt","possessiv","kein"], itNomen: "carta", itGenus: "f", itBest: "la carta", itUnbest: "una carta", it: "una carta", kategorie: "einkaufen", level: "A1", rollen: ["haben","bezahlen","benutzen","verlieren","suchen","finden"], adjektive: ["neu","alt","wichtig"] },
@@ -1217,7 +1217,7 @@
       kategorien: ["bildung", "arbeit", "familie"] },
 
     { id: "verstehen", inf: "verstehen", formen: ["verstehe", "verstehst", "versteht", "verstehen", "versteht", "verstehen"], hilfsverb: "haben", partizip: "verstanden",
-      lokal: ["wo"], objekt: "akk", personFall: "akk",
+      lokal: ["wo"], objekt: "akk", objektPflicht: true, personFall: "akk",
       passtOrte: {"wo":["schule","uni","kurs","besprechung","klassenzimmer","hoersaal","sprachschule","seminarraum","bibliothek","buero","zuhause","cafe"]},
       passtDinge: ["deutsch","italienisch","aufgabe","grammatik","uebung","frage","problem","fehler","regel","grund","antwort"],
       passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["muede","unsicher","nervoes","laerm","zeitverschiebung"],
@@ -1270,7 +1270,7 @@
 
     /* --- neu aufgenommen --- */
     { id: "fragen", inf: "fragen", formen: ["frage","fragst","fragt","fragen","fragt","fragen"], hilfsverb: "haben", partizip: "gefragt",
-      lokal: [], personFall: "akk", itPersonFeld: "itAn",
+      lokal: [], personFall: "akk", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["neugierig","unsicher"],
       itInf: "chiedere", itFormen: ["chiedo","chiedi","chiede","chiediamo","chiedete","chiedono"], itHilf: "avere", itPart: "chiesto", itFutStamm: "chieder",
@@ -1284,14 +1284,14 @@
       kategorien: ["alltag","bildung","arbeit"] },
 
     { id: "suchen", inf: "suchen", formen: ["suche","suchst","sucht","suchen","sucht","suchen"], hilfsverb: "haben", partizip: "gesucht",
-      lokal: [], objekt: "akk", personFall: "akk", itPersonFeld: "it",
+      lokal: [], objekt: "akk", objektPflicht: true, personFall: "akk", itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["schluessel","preis","karte","schuhe","projekt","protokoll","heft","stift","woerterbuch","handy","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","regenschirm","pass","bus","fahrkarte","ausweis","wohnung","idee","antwort","problem","loesung","fehler","grund"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["zeitmangel","spaet"],
       itInf: "cercare", itFormen: ["cerco","cerchi","cerca","cerchiamo","cercate","cercano"], itHilf: "avere", itPart: "cercato", itFutStamm: "cercher",
       kategorien: ["alltag","arbeit","bildung"] },
 
     { id: "finden", inf: "finden", formen: ["finde","findest","findet","finden","findet","finden"], hilfsverb: "haben", partizip: "gefunden",
-      lokal: [], objekt: "akk", personFall: "akk", itPersonFeld: "it",
+      lokal: [], objekt: "akk", objektPflicht: true, personFall: "akk", itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["schluessel","preis","karte","schuhe","projekt","protokoll","heft","stift","woerterbuch","handy","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","regenschirm","pass","bus","fahrkarte","ausweis","wohnung","idee","antwort","problem","loesung","fehler","grund"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
       itInf: "trovare", itFormen: ["trovo","trovi","trova","troviamo","trovate","trovano"], itHilf: "avere", itPart: "trovato", itFutStamm: "trover",
@@ -1312,14 +1312,14 @@
       kategorien: ["alltag","arbeit","bildung"] },
 
     { id: "bringen", inf: "bringen", formen: ["bringe","bringst","bringt","bringen","bringt","bringen"], hilfsverb: "haben", partizip: "gebracht",
-      lokal: ["wohin"], objekt: "akk", personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
+      lokal: ["wohin"], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {"wohin":["zuhause","kueche","garten","balkon","bett","keller","wohnzimmer","badezimmer","supermarkt","markt","baeckerei","apotheke","kaufhaus","buero","arbeit","besprechung","werkstatt","baustelle","schule","uni","bibliothek","kurs","meer","berge","see","park","kino","theater","museum","schwimmbad","stadion","konzert","restaurant","cafe","kantine","bahnhof","flughafen","hotel","italien","berlin","rom","stadt","land","arzt","krankenhaus","zahnarzt","amt","bank","post","flur","schlafzimmer","terrasse","garage","hof","dachboden","metzgerei","buchhandlung","drogerie","schuhgeschaeft","fabrik","labor","lager","filiale","kinderzimmer","kindergarten","kita","spielplatz","elternhaus","wald","strand","fluss","zoo","disko","imbiss","eisdiele","pizzeria","bar","weinkeller","hafen","haltestelle","faehre","autobahn","schweiz","oesterreich","klassenzimmer","hoersaal","sprachschule","seminarraum","schulhof","praxis","notaufnahme","physiotherapie","sauna","fitnessstudio","rathaus","botschaft","polizei","gericht","auslaenderbehoerde"]},
       passtDinge: ["schluessel","muell","flasche","kaese","broetchen","sandwich","spiel","roman","lied","zeitschrift","konzertkarte","regenschirm","pass","ausweis","buch","brief","geld","koffer","rucksack","handy","blume","medikament","tablette","rezept","formular","kuchen","kaffee","wasser","wein","bier","zeitung","karte","fahrkarte","quittung","nachricht","suppe","salat","pizza","obst","gemuese","fleisch","fisch"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["termingrund","arbeitgrund"],
       itInf: "portare", itFormen: ["porto","porti","porta","portiamo","portate","portano"], itHilf: "avere", itPart: "portato", itFutStamm: "porter",
       kategorien: ["alltag","arbeit","reisen"] },
 
     { id: "geben", inf: "geben", formen: ["gebe","gibst","gibt","geben","gebt","geben"], hilfsverb: "haben", partizip: "gegeben",
-      lokal: [], objekt: "akk", personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
+      lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: ["rechnung","schluessel","blume","geld","quittung","aufgabe","note","rezept","formular","kuendigung","idee","antwort","meinung","grund","buch","brief","zeitung","karte","fahrkarte","pass","ausweis","tablette","medikament","verband","impfung","loesung","plan"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich"],
       itInf: "dare", itFormen: ["do","dai","dà","diamo","date","danno"], itHilf: "avere", itPart: "dato", itFutStamm: "dar",
@@ -1424,14 +1424,14 @@
       kategorien: ["reisen"] },
 
     { id: "erklaeren", inf: "erklären", formen: ["erkläre","erklärst","erklärt","erklären","erklärt","erklären"], hilfsverb: "haben", partizip: "erklärt",
-      lokal: [], objekt: "akk", personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
+      lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: ["aufgabe","projekt","grammatik","uebung","loesung","fehler","regel"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
       itInf: "spiegare", itFormen: ["spiego","spieghi","spiega","spieghiamo","spiegate","spiegano"], itHilf: "avere", itPart: "spiegato", itFutStamm: "spiegher",
       kategorien: ["bildung","arbeit"] },
 
     { id: "zeigen", inf: "zeigen", formen: ["zeige","zeigst","zeigt","zeigen","zeigt","zeigen"], hilfsverb: "haben", partizip: "gezeigt",
-      lokal: [], objekt: "akk", personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
+      lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: ["projekt","praesentation","pass","fahrkarte","rezept","ausweis","loesung","foto"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
       itInf: "mostrare", itFormen: ["mostro","mostri","mostra","mostriamo","mostrate","mostrano"], itHilf: "avere", itPart: "mostrato", itFutStamm: "mostrer",
@@ -1445,7 +1445,7 @@
       kategorien: ["bildung"] },
 
     { id: "wiederholen", inf: "wiederholen", formen: ["wiederhole","wiederholst","wiederholt","wiederholen","wiederholt","wiederholen"], hilfsverb: "haben", partizip: "wiederholt",
-      lokal: [], objekt: "akk",
+      lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["grammatik","vokabel","uebung","gedicht","regel"], passtPersonen: [], passtGruende: ["pruefung","unsicher","frei"],
       itInf: "ripetere", itFormen: ["ripeto","ripeti","ripete","ripetiamo","ripetete","ripetono"], itHilf: "avere", itPart: "ripetuto", itFutStamm: "ripeter",
@@ -1466,7 +1466,7 @@
       kategorien: ["alltag"] },
 
     { id: "wissen", inf: "wissen", formen: ["weiß","weißt","weiß","wissen","wisst","wissen"], hilfsverb: "haben", partizip: "gewusst",
-      lokal: [], objekt: "akk",
+      lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["antwort","loesung","regel","grund","preis","termin"], passtPersonen: [], passtGruende: [],
       itInf: "sapere", itFormen: ["so","sai","sa","sappiamo","sapete","sanno"], itHilf: "avere", itPart: "saputo", itFutStamm: "sapr",
@@ -1662,7 +1662,7 @@
       kategorien: ["familie","freizeit","reisen"] },
 
     { id: "erzaehlen", inf: "erzählen", formen: ["erzähle","erzählst","erzählt","erzählen","erzählt","erzählen"], hilfsverb: "haben", partizip: "erzählt",
-      lokal: [], objekt: "akk", personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
+      lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: ["roman","gedicht","idee","problem","grund","meinung","plan","wunsch"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich","traurig","frei","nervoes"],
       itInf: "raccontare", itFormen: ["racconto","racconti","racconta","raccontiamo","raccontate","raccontano"], itHilf: "avere", itPart: "raccontato", itFutStamm: "racconter",
@@ -1775,6 +1775,12 @@
        einem, der stolpert. */
     const deTeile = [];
     const itTeile = [];
+    /* Steht eine indirekte Frage mit „perché“ (warum) vor einem Grund mit
+       „perché“ (weil), stünde das Wort zweimal hintereinander. Der Grund
+       weicht dann auf „visto che“ aus — dasselbe in Grün.
+       (Kein \b im Muster: „é“ zählt in JavaScript nicht als Wortzeichen,
+       eine Wortgrenze dahinter gibt es also gar nicht.) */
+    const doppeltesPerche = Boolean(wahl.fragesatz && (wahl.fragesatz.it || "").indexOf("perché") >= 0);
 
     // Ein Verb nimmt entweder ein Ding oder eine Person als Objekt.
     const nurEines = verb.objekt === "akk" && verb.personFall === "akk" && !verb.personPraep;
@@ -1994,6 +2000,12 @@
         ? "In der Aussage steht das gebeugte Verb an zweiter Stelle."
         : "Steht etwas anderes vorn, rutscht das Subjekt hinter das Verb — das Verb bleibt an zweiter Stelle.";
     }
+    /* Eine indirekte Frage hängt als eigener Nebensatz hinten dran und
+       steht VOR einem weil-Satz: „Ich frage meinen Freund, warum er das
+       gemacht hat, weil ich neugierig bin.“ */
+    if (wahl.fragesatz && satzart !== "nebensatz") {
+      de.push({ t: ", " + wahl.fragesatz.de, rolle: "wonach" });
+    }
     // Ein weil-Satz als Grund hängt hinten dran.
     if (grundDe && grundIstNebensatz && satzart !== "nebensatz") de.push({ t: ", " + grundDe, rolle: "warum" });
 
@@ -2032,7 +2044,9 @@
       itTeile.forEach((x) => it.push(x));
       /* Ist der Satz selbst ein weil-Satz, fällt der kausale Baustein im
        Deutschen weg — dann darf er im Italienischen nicht auftauchen. */
-    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) it.push({ t: grundIt, rolle: "warum" });
+    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) {
+      it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
+    }
       return fertig(de, it, satzart, hinweis, zeitform, ortRolle);
     }
 
@@ -2062,9 +2076,12 @@
     itTeile.forEach((x) => it.push(x));
     // Im Italienischen folgt die Begleitung dem Objekt: gioco a calcio con …
     if (begleitungDe) it.push({ t: begleitungText(wahl.begleitung, subjekt, "it"), rolle: "mitwem" });
+    if (wahl.fragesatz && satzart !== "nebensatz") it.push({ t: wahl.fragesatz.it, rolle: "wonach" });
     /* Ist der Satz selbst ein weil-Satz, fällt der kausale Baustein im
        Deutschen weg — dann darf er im Italienischen nicht auftauchen. */
-    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) it.push({ t: grundIt, rolle: "warum" });
+    if (grundIt && !(grundIstNebensatz && satzart === "nebensatz")) {
+      it.push({ t: doppeltesPerche ? grundIt.replace(/^perché /, "visto che ") : grundIt, rolle: "warum" });
+    }
 
     return fertig(de, it, satzart, hinweis, zeitform, ortRolle);
   }
@@ -2099,6 +2116,10 @@
       /* Ein Fachgeschäft führt nur sein Sortiment — sonst entstünde
          „Ich kaufe Äpfel in der Buchhandlung“. */
       if (objekt && o.verkauft && !o.verkauft.includes(objekt.id)) return false;
+      /* Ist das Objekt selbst ein Raum, gibt es keine Ortsangabe dazu —
+         siehe RAUM_ALS_DING. „Die Wohnung im Kinderzimmer aufräumen“
+         entstand genau hier. */
+      if (objekt && RAUM_ALS_DING.has(objekt.id)) return false;
       return passtZumNiveau(o, level);
     });
     /* Braucht das Verb zwingend eine Ortsangabe, darf der Kategorie- oder
@@ -2133,13 +2154,13 @@
     }
     return liste;
   }
-  function zeitenFuer(zeitform, level, wahl) {
+  function zeitenFuer(zeitform, level, wahl, verb) {
     return ZEITEN.filter((z) => {
       if (z.nurVergangenheit && zeitform !== "perfekt") return false;
       if (z.nurZukunft && zeitform === "perfekt") return false;
       if (z.nichtZukunft && zeitform === "futur") return false;
       if (z.nurGegenwart && zeitform !== "praesens") return false;
-      if (!zeitPasst(z, null, wahl)) return false;
+      if (!zeitPasst(z, verb || null, wahl)) return false;
       return passtZumNiveau(z, level);
     });
   }
@@ -2170,17 +2191,45 @@
     }
     return true;
   }
+  /* Die Angaben, die selbst einen Ort nennen. Sie dürfen nicht neben
+     einer echten Ortsangabe stehen: „Sie kauft ihr Bett jede Woche im
+     Internet im Kaufhaus“ hat zwei Orte und ergibt keinen Sinn. */
+  const ART_MIT_ORT = new Set(["iminternet", "amtelefon"]);
+  /* Dinge, die selbst ein Raum sind. Steht so etwas als Objekt im Satz,
+     darf keine Ortsangabe daneben stehen: „Ich räume eine Wohnung im
+     Kinderzimmer auf“ ist Unsinn — die Wohnung IST der Ort. */
+  const RAUM_ALS_DING = new Set(["wohnung", "haus", "zimmer", "kueche", "bad", "garage",
+    "keller", "buero", "werkstatt", "wohnzimmer", "schlafzimmer", "kinderzimmer", "garten", "balkon"]);
+  /* Angaben, die eine Art und Weise oder einen Grad beschreiben, passen
+     nicht zu einem verneinten Objekt: „Sie packt ordentlich keinen
+     Rucksack“ ist kein Satz. Wer etwas NICHT tut, tut es auch nicht
+     ordentlich. Erlaubt bleibt nur, was die Verneinung verstärkt. */
+  const ART_MIT_KEIN_ERLAUBT = new Set(["keine", "ueberhauptnicht"]);
   function artPasst(art, verb, wahl) {
     if (!art || !art.de) return true;
     const w = wahl || {};
     if (art.stimmung === "positiv" && w.grund && w.grund.stimmung === "negativ") return false;    // R1
     if (art.nichtMitDingen && w.objekt && art.nichtMitDingen.includes(w.objekt.id)) return false;
+    // R5 — Art und Weise neben einer Verneinung des Objekts
+    if (w.objektBegleiter === "kein" && !ART_MIT_KEIN_ERLAUBT.has(art.id)) return false;
+    // R6 — zwei Orte im selben Satz
+    if (ART_MIT_ORT.has(art.id) && w.ort) return false;
     return true;
   }
+  /* Verben, die einen Augenblick beschreiben, keinen Zeitraum. „Zwei
+     Stunden lang eine Zeitschrift mitbringen“ oder „seit einer Stunde
+     den Schlüssel finden“ sind keine Sätze: das Mitbringen und das
+     Finden dauern nicht, sie geschehen. */
+  const PUNKTUELLE_VERBEN = new Set(["mitbringen", "bringen", "nehmen", "bekommen", "geben",
+    "oeffnen", "schliessen", "finden", "vergessen", "verlieren", "schenken", "schicken",
+    "ankommen", "aufstehen", "anfangen", "aufhoeren", "einsteigen", "aussteigen", "kaufen",
+    "bezahlen", "bestellen", "buchen", "anrufen"]);
   function zeitPasst(zeit, verb, wahl) {
     if (!zeit || !zeit.de) return true;
     const w = wahl || {};
     if (zeit.art === "haeufigkeit" && w.grund && w.grund.anlass === "einmalig") return false;     // R2
+    // R7 — Zeitraum neben einem Verb, das keinen Zeitraum füllt
+    if (zeit.art === "dauer" && verb && PUNKTUELLE_VERBEN.has(verb.id)) return false;
     if ((zeit.itBrauchtNon || zeit.nichtVerneinbar) && w.objektBegleiter === "kein") return false;
     return true;
   }
@@ -2196,6 +2245,55 @@
      deshalb steht hier eine Positivliste statt einer Ausschlussliste:
      was nicht darauf steht, bekommt die Frage „Mit wem?“ gar nicht erst
      gestellt. */
+  /* ------------------------------------------------------------------
+     Indirekte Fragen als Ergänzung
+     ------------------------------------------------------------------
+     „Ich frage meinen Freund" ist ein halber Satz — man fragt jemanden
+     ja immer NACH etwas. Genau das fehlte: die Möglichkeit, einen
+     Fragenebensatz anzuhängen. „Ich frage meinen Freund, warum er nicht
+     zurückschreibt." Solche Nebensätze passen auch zu wissen, verstehen,
+     erzählen, erklären und sehen.
+
+     Im Nebensatz steht das gebeugte Verb am Ende — deshalb stehen hier
+     fertige, geprüfte Nebensätze statt zusammengesetzter Teile: bei einer
+     Konstruktion aus Bausteinen käme sonst genau die Sorte Satz heraus,
+     die niemand sagt. */
+  const FRAGESAETZE = [
+    { id: "warum_nicht_schreibt", de: "warum er nicht zurückschreibt", it: "perché non risponde", wort: "warum", level: "B1" },
+    { id: "warum_gemacht", de: "warum er das gemacht hat", it: "perché l'ha fatto", wort: "warum", level: "B1" },
+    { id: "warum_spaet", de: "warum sie so spät kommt", it: "perché arriva così tardi", wort: "warum", level: "B1" },
+    { id: "wann_kommt", de: "wann der Zug kommt", it: "quando arriva il treno", wort: "wann", level: "A2" },
+    { id: "wann_anfaengt", de: "wann der Kurs anfängt", it: "quando comincia il corso", wort: "wann", level: "A2" },
+    { id: "wann_zeit", de: "wann sie Zeit hat", it: "quando ha tempo", wort: "wann", level: "A2" },
+    { id: "wo_wohnt", de: "wo er wohnt", it: "dove abita", wort: "wo", level: "A2" },
+    { id: "wo_bahnhof", de: "wo der Bahnhof ist", it: "dov'è la stazione", wort: "wo", level: "A1" },
+    { id: "wo_schluessel", de: "wo der Schlüssel liegt", it: "dove sono le chiavi", wort: "wo", level: "A2" },
+    { id: "wie_heisst", de: "wie das Wort heißt", it: "come si chiama la parola", wort: "wie", level: "A1" },
+    { id: "wie_geht", de: "wie es ihr geht", it: "come sta", wort: "wie", level: "A1" },
+    { id: "wie_funktioniert", de: "wie das funktioniert", it: "come funziona", wort: "wie", level: "A2" },
+    { id: "wie_lange", de: "wie lange es dauert", it: "quanto dura", wort: "wie lange", level: "A2" },
+    { id: "wie_viel", de: "wie viel es kostet", it: "quanto costa", wort: "wie viel", level: "A1" },
+    { id: "was_bedeutet", de: "was das bedeutet", it: "che cosa significa", wort: "was", level: "A2" },
+    { id: "was_macht", de: "was sie beruflich macht", it: "che lavoro fa", wort: "was", level: "B1" },
+    { id: "was_passiert", de: "was passiert ist", it: "che cosa è successo", wort: "was", level: "B1" },
+    { id: "wer_kommt", de: "wer noch kommt", it: "chi altro viene", wort: "wer", level: "A2" },
+    { id: "wer_geholfen", de: "wer ihm geholfen hat", it: "chi lo ha aiutato", wort: "wer", level: "B1" },
+    { id: "welche_bahn", de: "welche Bahn zum Museum fährt", it: "quale tram va al museo", wort: "welche", level: "B1" },
+    { id: "ob_kommt", de: "ob sie mitkommt", it: "se viene anche lei", wort: "ob", level: "A2" },
+    { id: "ob_offen", de: "ob das Geschäft noch offen ist", it: "se il negozio è ancora aperto", wort: "ob", level: "A2" },
+    { id: "ob_richtig", de: "ob das richtig ist", it: "se è giusto", wort: "ob", level: "A2" },
+    { id: "ob_gefallen", de: "ob es ihm gefallen hat", it: "se gli è piaciuto", wort: "ob", level: "B1" },
+    { id: "wohin_faehrt", de: "wohin der Bus fährt", it: "dove va l'autobus", wort: "wohin", level: "A2" },
+    { id: "woher_kommt", de: "woher sie kommt", it: "da dove viene", wort: "woher", level: "A1" },
+  ];
+  /* Nur Verben, die überhaupt eine indirekte Frage vertragen. „Ich esse,
+     warum er das gemacht hat" wäre kein Satz. */
+  const FRAGESATZ_VERBEN = ["fragen", "wissen", "verstehen", "erzaehlen", "erklaeren", "sehen", "hoeren", "lesen", "vergessen", "denken"];
+  function fragesaetzeFuer(verb, level) {
+    if (!verb || !FRAGESATZ_VERBEN.includes(verb.id)) return [];
+    return FRAGESAETZE.filter((f) => passtZumNiveau(f, level));
+  }
+
   const GEMEINSAM_MOEGLICH = [
     "gehen", "fahren", "kommen", "laufen", "fliegen", "reisen", "wandern", "steigen", "bleiben",
     "essen", "trinken", "kochen", "fruehstuecken", "einkaufen", "kaufen", "bestellen", "bezahlen",
@@ -4706,7 +4804,7 @@
     BEGLEITER_NAMEN, BEISPIELE,
     bauSatz, ortsform, itOrtsform, nominalgruppe, verschmelze, itDingform, itAdjektiv, itAdjektivDavor, grundText,
     verbenFuer, orteFuer, dingeFuer, personenFuer, zeitenFuer, artenFuer, gruendeFuer, begleitungFuer, begleitungText,
-    adjektiveFuer, begleiterFuer, ortRollenFuer, anzahlBeispiele, beispieleFuer, beispielAnzahl,
+    adjektiveFuer, begleiterFuer, ortRollenFuer, anzahlBeispiele, beispieleFuer, beispielAnzahl, fragesaetzeFuer, FRAGESAETZE,
     WECHSEL, NUR_DATIV, NUR_AKKUSATIV, NUR_GENITIV,
   };
 })();

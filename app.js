@@ -1057,7 +1057,13 @@
   }
   function renderComingSoonGate(area, flagKey, gameName, gameIcon, defaultTrue) {
     const isOn = defaultTrue ? Backend.isFeatureOnDefaultTrue(flagKey) : Backend.isFeatureOn(flagKey);
-    const canSeeAnyway = Backend.canModerate && Backend.canModerate();
+    /* Beta-Tester:innen ausdrücklich mitzählen. Bisher hing das allein an
+       isFeatureOn(), das sie zwar mitmeint — nur war damit nirgends
+       sichtbar, dass es so gemeint ist, und in der Spieleliste fehlte die
+       Bedingung ganz. Genau deshalb sah der frisch bestätigte Beta-Tester
+       die Spiele nicht. */
+    const canSeeAnyway = (Backend.canModerate && Backend.canModerate())
+      || (Backend.isBetaTester && Backend.isBetaTester());
     // WICHTIG — zentraler Ansatz statt 8+ einzelner Umbauten: der Freischalt-Schalter wird hier,
     // an EINER Stelle für alle Spiele, als eigenes Geschwister-Element direkt VOR dem Spielbereich
     // eingefügt (nicht innerhalb von area selbst, da dessen innerHTML ja beim Spielen laufend neu
@@ -2121,12 +2127,165 @@
     const profile = Backend.currentProfile();
     return (profile && profile.extraProfileData && profile.extraProfileData.proficiencyLevel) || "fortgeschritten";
   }
+  /* ============================================================
+     AUSWERTUNG AM ENDE JEDER SPIELRUNDE
+     ------------------------------------------------------------
+     Bisher schickten nur sechs von zweiundzwanzig Spielen eine
+     Auswertung ins Postfach, und wer sie lesen wollte, musste sie
+     dort selbst suchen. Beides wird hier an EINER Stelle gelöst:
+
+     Jede Runde endet in saveResultAndCheck() — das ist der einzige
+     Punkt, den wirklich alle Spiele gemeinsam haben. Von dort aus
+     wird die Auswertung geschrieben, verschickt und als Karte mit
+     einem Knopf gezeigt, der direkt zu genau dieser Nachricht im
+     Postfach springt.
+
+     Ein Spiel kann während der Runde Einzelheiten eintragen
+     (spielNotiz), damit in der Auswertung nicht nur die Punktzahl,
+     sondern auch steht, welche Wörter oder Sätze vorkamen und was
+     richtig oder falsch war. Trägt ein Spiel nichts ein, gibt es
+     trotzdem eine Auswertung — nur eben kürzer.
+     ============================================================ */
+  /* Ein Fortschrittsbalken für JEDES Spiel, überall gleich gebaut:
+     leer bei null, voll am Ende — und darunter in Zahlen, wie viele
+     Aufgaben noch kommen. Wer im schweren Modus dreißig Runden hat, soll
+     0 von 30 sehen und nicht raten müssen, wie lang es noch dauert. */
+  function fortschrittHtml(jetzt, gesamt) {
+    const n = Math.max(0, Number(jetzt) || 0);
+    const g = Math.max(1, Number(gesamt) || 1);
+    const anteil = Math.min(100, Math.round((n / g) * 100));
+    return `<div class="runden-fortschritt">
+      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${anteil}%"></div></div>
+      <span class="runden-zahl">${n} / ${g}</span>
+    </div>`;
+  }
+
+  const SPIEL_TITEL = {
+    artikel: "Artikel-Garten", artikelgarten: "Artikel-Garten", blitzrunde: "Blitzrunde",
+    wortangler: "Wortangler", wortleiter: "Wortleiter", silbenturm: "Silbenturm",
+    sortierer: "Wörter-Sortierer", betonungstrainer: "Betonungs-Trainer",
+    buchstabensalat: "Buchstabensalat", korrektour: "KorrekTour", katzenzimmer: "Wo ist die Katze?",
+    kreuzwortraetsel: "Kreuzworträtsel", memory: "Memory", satzpuzzle: "Satzpuzzle",
+    vokabelmeister: "Vokabelmeister", satzbruecke: "Satzbrücke", wackelturm: "Wackelturm",
+    wortschmiede: "Wortschmiede", werbinich: "Wer bin ich?", wortbaustelle: "Wortbaustelle",
+    wortblasen: "Wortblasen", wortkanone: "Wort-Kanone", wortarten: "Wort-Typ",
+  };
+  /* Das Protokoll der laufenden Runde. Es wird nicht beim Start
+     zurückgesetzt, sondern beim ABSCHLUSS geleert — so muss kein
+     Spiel daran denken, sich an- und abzumelden. */
+  let spielProtokoll = [];
+  let letzteAuswertungId = null;
+  /* richtig: true/false/null (null = nur eine Notiz ohne Wertung) */
+  function spielNotiz(richtig, text) {
+    if (!text) return;
+    const zeichen = richtig === true ? "✅ " : richtig === false ? "❌ " : "• ";
+    spielProtokoll.push(zeichen + text);
+    // Ein Deckel gegen endlose Runden (Wackelturm, Wortblasen): die
+    // Nachricht soll lesbar bleiben, nicht vollständig sein.
+    if (spielProtokoll.length > 400) spielProtokoll.splice(0, spielProtokoll.length - 400);
+  }
+  function auswertungsText(result) {
+    const namen = (result.categories || []).map((c) => SPIEL_TITEL[c]).filter(Boolean);
+    /* Die Übungen selbst haben keine feste Spielkennung — sie tragen
+       ihren Namen deshalb direkt im Ergebnis mit (titelText). */
+    const titel = namen.length ? namen.join(" & ") : (result.titelText || "deine Übung");
+    const punkte = (result.points || 0) + (result.bonus || 0);
+    const kopf = `📊 Auswertung: „${titel}“\n\n`
+      + `Punkte: ${result.points || 0}${result.bonus ? ` (+${result.bonus} Bonus)` : ""}\n`
+      + (typeof result.percent === "number" ? `Trefferquote: ${result.percent} %\n` : "")
+      + (result.character ? `Titel dieser Runde: ${result.character}\n` : "")
+      + `Gespielt am ${new Date().toLocaleDateString("de-DE")} um ${new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr.`;
+    if (!spielProtokoll.length) return { titel, punkte, text: kopf };
+    const gezeigt = spielProtokoll.slice(0, 60);
+    const rest = spielProtokoll.length - gezeigt.length;
+    return { titel, punkte,
+      text: kopf + "\n\nDas kam in dieser Runde vor:\n" + gezeigt.join("\n") + (rest > 0 ? `\n… und ${rest} weitere.` : "") };
+  }
+  /* ============================================================
+     DER AUSWERTUNGSBILDSCHIRM — EINER FÜR ALLES
+     ------------------------------------------------------------
+     Genau der Bildschirm, den die Übungen seit jeher haben, Stück
+     für Stück in derselben Reihenfolge und mit denselben Klassen:
+
+       Sternenbogen  →  „+N Punkte“ (mit Bonus-Chip)
+                     →  Prozentzahl groß
+                     →  Titel der Runde („Deutsch-Superheld“)
+                     →  Charakterkarte mit Emoji, Name, Beschreibung
+                     →  Abzeichen
+                     →  Aufschlüsselung mit Balken je Bereich
+                     →  Knöpfe
+
+     Hier wird nichts neu erfunden. Der einzige Zusatz ist der Knopf
+     ins Postfach, wo die gespielten Inhalte zum Nachlesen liegen.
+     Jedes Spiel ruft das auf, statt sich ein eigenes Abschlussbild
+     zu bauen — nur so sieht es überall gleich aus.
+     ============================================================ */
+  function ergebnisSchirmHtml(e) {
+    const punkte = e.punkte || 0;
+    const bonus = e.bonus || 0;
+    const prozent = typeof e.prozent === "number" ? e.prozent : 0;
+    const zeilen = (e.zeilen || []).map((z) => `<div class="breakdown-row">
+        <span>${z.name}</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round(z.anteil || 0)}%"></div></div>
+        <span>${z.wert}</span>
+      </div>`).join("");
+    return `
+      <div class="question-card results-hero">
+        ${starRatingArcHtml(prozent)}
+        <div class="results-points-line">
+          <span class="results-points-big">+${punkte}</span> <span class="empty-note">Punkte</span>
+          ${bonus ? `<span class="results-bonus-chip">+${bonus} Bonus</span>` : ""}
+        </div>
+        <div class="results-percent">${prozent}%</div>
+        ${e.tier ? `<div class="results-tier">${e.tier}</div>` : ""}
+        ${e.charakter ? `<div class="character-card">
+          ${e.emoji ? `<div class="character-emoji">${e.emoji}</div>` : ""}
+          <h3>${e.charakter}</h3>
+          ${e.beschreibung ? `<p class="empty-note">${e.beschreibung}</p>` : ""}
+          ${e.abzeichen && e.abzeichen.length ? `<div class="badge-row">${e.abzeichen.map((b) => `<div class="badge-chip"><span class="emoji">${b.emoji || "🏅"}</span><span>${b.name || b}</span></div>`).join("")}</div>` : ""}
+        </div>` : ""}
+        ${zeilen ? `<div class="breakdown-list">${zeilen}</div>` : ""}
+        <div class="quiz-actions" style="justify-content:center; margin-top:24px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost" data-zur-auswertung="1">✉️ Ergebnis im Postfach</button>
+          ${e.knoepfe || ""}
+        </div>
+      </div>`;
+  }
+
+  /* Schickt die Zusammenfassung ins Postfach und merkt sich die
+     Nachricht, damit der Knopf auf dem Auswertungsbildschirm direkt
+     dorthin springen kann. Ein eigenes Fenster wird NICHT gezeigt —
+     das Abschlussbild gehört dem jeweiligen Spiel. */
+  async function auswertungVerschicken(result) {
+    const nutzer = Backend.currentUser();
+    const info = auswertungsText(result);
+    spielProtokoll = [];
+    if (!nutzer) return;
+    try { letzteAuswertungId = await Backend.sendSystemMessage(nutzer.id, info.text); }
+    catch (e) { letzteAuswertungId = null; }
+  }
+  /* Ein einziger Zuhörer für alle Auswertungs-Knöpfe — die Karte wird
+     ständig neu gebaut, einzeln verdrahtete Knöpfe gingen dabei
+     verloren. */
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-zur-auswertung]")) return;
+    activateTab("view-profile");
+    /* Großzügig nachfassen: das Postfach holt seine Nachrichten erst beim
+       Öffnen aus der Datenbank, und die eben verschickte Auswertung ist
+       im Zweifel die letzte, die ankommt. Mit den üblichen 40 Versuchen
+       (gut zwei Sekunden) landete man bei langsamer Verbindung nur im
+       leeren Postfach. */
+    jumpToSubnavTarget('[data-sub="sub-inbox"]',
+      letzteAuswertungId ? `[data-msg-row="${letzteAuswertungId}"]` : ".inbox-list, #inboxArea", 150);
+  });
+
   async function saveResultAndCheck(result) {
     // WICHTIG — der private Italienisch-Raum bleibt vollständig außerhalb der
     // Wertung: keine Punkte, keine Ranglisten, keine Sammelfiguren, keine
     // Aktivitätsmeldungen. Er ist ein Übungsraum, kein Teil des Spielstands.
     if (ExerciseData.getLernraum && ExerciseData.getLernraum() === "it") {
       showToast("🇮🇹 Italienisch-Raum — dieses Ergebnis wird nicht gewertet.");
+      spielProtokoll = [];
       return;
     }
     const factor = PROFICIENCY_MULTIPLIERS[getProficiencyLevel()] || 1.0;
@@ -2169,6 +2328,12 @@
       const gemerkt = Backend.currentProfile()?.extraProfileData?.lernraum;
       if (gemerkt === "it") wechsleLernraum("it", false);
     }
+    /* Die Auswertung — aber nur für echte Spielrunden. Der
+       Tageskalender, die Anmeldebelohnung und der Tagesbeste laufen
+       durch dieselbe Stelle, dort wäre eine Rundenauswertung Unsinn. */
+    if (result.zwischenstand) { /* Serie läuft weiter — die Auswertung kommt am Ende. */ }
+    else if (result.titelText || (result.categories || []).some((c) => SPIEL_TITEL[c])) await auswertungVerschicken(adjusted);
+    else spielProtokoll = [];
     await checkForSpecialMoment(Backend.currentProfile());
     await checkContentUpdate();
     await checkDailyRankingReward();
@@ -2786,9 +2951,9 @@
         <p class="cal-tip-text" id="calTipText" style="font-size:0.85rem;">${truncate(pickDailyTip().text, 220)}</p>
         <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:10px;">🔄 Anderen Tipp</button>
       `;
-      document.getElementById("calAnotherBtn").addEventListener("click", () => {
-        document.getElementById("calTipText").innerHTML = pickRandomTip().text;
-      });
+      // „Anderer Tipp“ und der Verweis auf „Es war einmal in Deutschland“
+      // hängen jetzt am Dokument (siehe weiter unten) — hier NICHT erneut
+      // anhängen, sonst liefe der Zuhörer nach jedem Zeichnen doppelt.
       return;
     }
     // Sicherheitsbegrenzung: manche Aufgaben-Texte können ungewöhnlich lang sein — damit die
@@ -2843,9 +3008,6 @@
         }, 1400);
       });
     });
-    document.getElementById("calAnotherBtn").addEventListener("click", () => {
-      document.getElementById("calTipText").innerHTML = pickRandomTip().text;
-    });
     // Geburtstage von Freunden asynchron nachladen — ergänzt den Feiertag oben, falls heute
     // jemand aus der Freundesliste Geburtstag hat (nur Freunde, aus Datenschutzgründen).
     friendBirthdaysToday(now).then((names) => {
@@ -2856,38 +3018,61 @@
       el.style.display = "";
       el.textContent = el.textContent ? `${el.textContent} · ${birthdayLine}` : birthdayLine;
     });
-    const historyLinkBtn = document.getElementById("calHistoryLinkBtn");
-    if (historyLinkBtn) {
-      historyLinkBtn.addEventListener("click", () => {
-        document.querySelector('[data-target="view-knowledge"]')?.click();
-        document.getElementById("calCloseBtn")?.click();
-        document.getElementById("calendarModalPage")?.classList.remove("torn");
-        // Deutlich längere Verzögerung als vorher (war 150ms) — der Hauptreiter-Wechsel löst
-        // beim allerersten Besuch selbst einen automatischen Klick auf seinen STANDARD-
-        // Unterreiter aus (siehe tabsFreshlyRendered), der diesen gezielten Klick auf "Kompass"
-        // sonst überschrieb, sodass man im falschen Unterreiter landete.
-        setTimeout(() => {
-          // Sprung mit Unterdrückung des allgemeinen Bereichs-Sprungs (siehe jumpToSubnavTarget).
-          jumpToSubnavTarget('[data-sub="sub-kompass"]', "#kompass-geschichte", 40);
-          // WICHTIG: Der Kompass wird ASYNCHRON aufgebaut (er lädt zuerst sein Banner).
-          // Eine feste Wartezeit ging deshalb regelmäßig ins Leere — man landete oben
-          // im Kompass statt bei der Sektion. Jetzt wird gewartet, bis die Überschrift
-          // wirklich im Dokument steht, und dann erst gesprungen (und kurz hervorgehoben).
-        }, 400);
-      });
-    }
-    // Klick auf die Rückseite (aber nicht auf Buttons/Links darauf, die interaktiv bleiben
-    // müssen) schließt jetzt das GESAMTE Kalenderblatt — nicht nur ein Zurückklappen zur
-    // Vorderseite. Wie ausdrücklich gewünscht: irgendwo innerhalb der Karte tippen, wo kein Text-
-    // Link ist, soll genauso zuverlässig schließen wie ein Klick außerhalb der Karte.
-    if (back) {
-      back.addEventListener("click", (e) => {
-        if (e.target.closest("button, a")) return; // interaktive Elemente nicht mit-schließen
-        document.getElementById("calendarModalOverlay").style.display = "none";
-        document.getElementById("calendarModalPage")?.classList.remove("torn");
-      });
-    }
   }
+
+  /* ============================================================
+     DER SPRUNG VOM KALENDERBLATT ZU „ES WAR EINMAL IN DEUTSCHLAND“
+     ------------------------------------------------------------
+     Mehr als zehnmal gemeldet, und der Grund war die ganze Zeit
+     derselbe — nur nicht dort, wo ich gesucht habe:
+
+     Der Knopf bekam seinen Klick-Zuhörer ganz am ENDE von
+     renderCalendarBack(). Ist die Tagesaufgabe aber schon gelöst,
+     steigt diese Funktion viel früher mit „return“ aus (der Zweig
+     mit „✅ Tagesaufgabe gelöst!“). Der Knopf wird dort trotzdem
+     gezeichnet — er bekam nur nie einen Zuhörer. Und genau das ist
+     die Lage, die man beschreibt: man löst die Aufgabe, die Karte
+     wird neu gezeichnet, und ab da ist der Knopf tot.
+
+     Deshalb hängt der Zuhörer jetzt EINMAL am Dokument und nicht
+     mehr an einem Knopf, der bei jedem Neuzeichnen verschwindet.
+     Dasselbe gilt für „Anderer Tipp“ und für das Schließen der
+     Karte — die wurden bei jedem Zeichnen erneut angehängt und
+     liefen mehrfach.
+     ============================================================ */
+  document.addEventListener("click", (e) => {
+    // Klick irgendwo auf die Rückseite schließt das Kalenderblatt …
+    const rueckseite = e.target.closest(".cal-back-scroll");
+    if (rueckseite && !e.target.closest("button, a")) {
+      const overlay = document.getElementById("calendarModalOverlay");
+      if (overlay) overlay.style.display = "none";
+      document.getElementById("calendarModalPage")?.classList.remove("torn");
+      return;
+    }
+    if (e.target.closest("#calAnotherBtn")) {
+      const el = document.getElementById("calTipText");
+      if (el) el.innerHTML = pickRandomTip().text;
+      return;
+    }
+    if (!e.target.closest("#calHistoryLinkBtn")) return;
+
+    // Kalenderblatt zu, Bereich „Wissen“ auf.
+    const overlay = document.getElementById("calendarModalOverlay");
+    if (overlay) overlay.style.display = "none";
+    document.getElementById("calendarModalPage")?.classList.remove("torn");
+    document.querySelector('[data-target="view-knowledge"]')?.click();
+    /* Der Hauptreiter-Wechsel klickt beim ersten Besuch selbst seinen
+       Standard-Unterreiter an; erst danach darf der gezielte Klick auf
+       „Kompass“ kommen, sonst wird er überschrieben. */
+    setTimeout(() => {
+      /* Ziel ist der Eintrag des heutigen Tages selbst, nicht nur die
+         Überschrift darüber — gewünscht war „direkt in dem Tag landen“.
+         Gibt es für heute (noch) keinen Eintrag, bleibt die Überschrift
+         als Ziel. */
+      jumpToSubnavTarget('[data-sub="sub-kompass"]',
+        "#kompass-geschichte-heute, #kompass-geschichte", 150);
+    }, 400);
+  });
   function claimDailyTaskPoints() {
     if (!Backend.currentUser()) return;
     if (isDailyTaskSolvedToday()) return;
@@ -3364,6 +3549,25 @@
     // Nur echte Wörter ab 3 Buchstaben behandeln (kurze Wörter/Artikel haben ohnehin nur
     // eine Silbe und keine sinnvolle "Betonungswahl").
     if (!/^[A-Za-zÄÖÜäöüß]+$/.test(word) || word.length < 3) return null;
+    /* Zusammengesetzte Wörter haben mehr als eine Betonung:
+       „Betriebskostenabrechnung“ wird auf BETRIEBS haupt-, auf KOSten und
+       ABrechnung nebenbetont. Wer nur die erste Betonung sieht, liest den
+       Rest flach — und genau das klingt falsch. */
+    const teile = zerlegeKompositum(word);
+    if (teile && teile.length > 1) {
+      let pos = 0;
+      const stuecke = teile.map((teil, n) => {
+        const echt = word.slice(pos, pos + teil.length);
+        pos += teil.length;
+        const silben = ruleSyllabify(echt);
+        if (silben.length <= 1) return n === 0 ? `<span class="stress">${echt}</span>` : `<span class="stress stress-neben-inline">${echt}</span>`;
+        const idx = ruleStressIndex(echt, silben);
+        const klasse = n === 0 ? "stress" : "stress stress-neben-inline";
+        return silben.map((sil, i) => (i === idx ? `<span class="${klasse}">${sil}</span>` : sil)).join("");
+      });
+      if (pos < word.length) stuecke.push(word.slice(pos));
+      return stuecke.join("");
+    }
     const syllables = ruleSyllabify(word);
     if (syllables.length <= 1) return null;
     const idx = ruleStressIndex(word, syllables);
@@ -3418,6 +3622,49 @@
   function setStressExcludedSections(ids) {
     Backend.updateExtraProfileField("stressExcludedSections", ids);
   }
+  /* ------------------------------------------------------------------
+     Betonung nur zum Lesen
+     ------------------------------------------------------------------
+     Beim gemeinsamen Lautlesen von „Es war einmal in Deutschland“,
+     „Dichter und Denker“ oder „Schnee von gestern“ soll man sehen, wo
+     betont wird — ohne dafür den Betonungsmodus für die ganze Seite
+     einzuschalten. Dieser Schalter gilt deshalb NUR für diese drei
+     Lesebereiche und liegt auf dem Gerät, nicht im Profil: er ist eine
+     Sache des Augenblicks, nicht der Einstellung. */
+  const LESE_BETONUNG_SCHLUESSEL = "dma_lese_betonung";
+  function leseBetonungAn() {
+    try { return localStorage.getItem(LESE_BETONUNG_SCHLUESSEL) === "1"; } catch (e) { return false; }
+  }
+  function setzeLeseBetonung(an) {
+    try { localStorage.setItem(LESE_BETONUNG_SCHLUESSEL, an ? "1" : "0"); } catch (e) {}
+  }
+  function leseBetonungKnopfHtml() {
+    const an = leseBetonungAn();
+    return `<button type="button" class="btn btn-ghost lese-betonung-knopf" data-lese-betonung="1" style="font-size:0.78rem; padding:5px 10px; margin-bottom:8px;">${an ? "🔊 Betonung an" : "🔈 Betonung anzeigen"}<span class="baustein-de">nur hier, unabhängig von den Einstellungen</span></button>`;
+  }
+  /* Setzt die Betonung in einem Lesebereich — oder nimmt sie wieder weg. */
+  function leseBetonungAnwenden(bereich) {
+    if (!bereich) return;
+    if (leseBetonungAn()) applyStressToTree(bereich);
+    else if (!isStressModeOn()) removeStressFromTree(bereich);
+  }
+  /* Ein Klick-Handler für alle drei Bereiche. */
+  document.addEventListener("click", (ev) => {
+    const knopf = ev.target.closest("[data-lese-betonung]");
+    if (!knopf) return;
+    setzeLeseBetonung(!leseBetonungAn());
+    // Alle Lesebereiche neu zeichnen, damit der Schalter überall gleich steht.
+    ["kompassArea", "dichterArea", "schneeArea"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const stand = el.querySelector("[data-lese-betonung]");
+      if (stand) stand.innerHTML = leseBetonungAn()
+        ? '🔊 Betonung an<span class="baustein-de">nur hier, unabhängig von den Einstellungen</span>'
+        : '🔈 Betonung anzeigen<span class="baustein-de">nur hier, unabhängig von den Einstellungen</span>';
+      leseBetonungAnwenden(el);
+    });
+  });
+
   function applyStressEverywhere(on) {
     const excluded = new Set(getStressExcludedSections());
     STRESS_EXCLUDABLE_SECTIONS.forEach((sec) => {
@@ -3823,6 +4070,10 @@
       playNotifySound(newestKind ? resolveNotifySound(newestKind) : undefined);
       startNotifyReminder();
     }
+    /* Auch ohne offene Benachrichtigung prüfen, ob man gerade Fuchs eines
+       Zeitraums geworden ist — das passiert im Hintergrund, sobald jemand
+       anders Punkte macht, und wäre sonst nie zu bemerken. */
+    pruefeFuchsAuszeichnung();
   }
   // Wiederholt den sanften Hinweiston alle 5 Sekunden, solange noch etwas unbestätigt ist — hört
   // von selbst auf, sobald das Lämpchen verschwindet (z. B. weil im Profil bestätigt wurde).
@@ -4760,8 +5011,26 @@
     else if (r.basePercent >= 40) Core.sound.okay();
     else Core.sound.fail();
 
+    /* Die Einzelheiten der Runde wandern ins gemeinsame Protokoll —
+       verschickt und gezeigt wird alles zusammen in
+       saveResultAndCheck(), damit jede Runde in jedem Spiel dieselbe
+       Auswertung mit demselben Weg ins Postfach bekommt. Deshalb muss
+       das Protokoll VOR dem Speichern stehen. */
+    let uebungsTitel = "";
+    if (r.answers && r.answers.length) {
+      uebungsTitel = [...new Set(r.answers.map((a) => a.categoryId))]
+        .map((id) => ExerciseData.activeGetCategory(id)?.title || id).join(", ");
+      r.answers.forEach((a) => {
+        const wordMatch = a.prompt.match(/___\s*([A-ZÄÖÜ][a-zäöüß]+)|([A-ZÄÖÜ][a-zäöüß]+)\s*___/);
+        const word = wordMatch ? (wordMatch[1] || wordMatch[2]) : null;
+        const meaning = word && ExerciseData.WORD_MEANINGS && ExerciseData.WORD_MEANINGS[word] ? ` — ${ExerciseData.WORD_MEANINGS[word]}` : "";
+        spielNotiz(a.base > 0, `${a.prompt} → ${a.correctText}${meaning}`);
+      });
+    }
+
     saveResultAndCheck({
       categories: r.categories,
+      titelText: uebungsTitel,
       points: r.totalBase,
       bonus: r.totalBonus,
       percent: r.combinedPercent,
@@ -4776,23 +5045,7 @@
       itKursFortschritt(selectedExerciseLevel, richtig, r.answers.length);
     }
 
-    // Automatische Zusammenfassung ins private Postfach — welche Wörter/Sätze gespielt wurden,
-    // richtig/falsch, und (wenn vorhanden) eine kurze Erklärung zur Bedeutung.
-    if (Backend.currentUser() && r.answers && r.answers.length) {
-      const catTitles = [...new Set(r.answers.map((a) => a.categoryId))]
-        .map((id) => ExerciseData.activeGetCategory(id)?.title || id).join(", ");
-      const lines = r.answers.slice(0, 20).map((a) => {
-        const wordMatch = a.prompt.match(/___\s*([A-ZÄÖÜ][a-zäöüß]+)|([A-ZÄÖÜ][a-zäöüß]+)\s*___/);
-        const word = wordMatch ? (wordMatch[1] || wordMatch[2]) : null;
-        const meaning = word && ExerciseData.WORD_MEANINGS && ExerciseData.WORD_MEANINGS[word] ? ` — ${ExerciseData.WORD_MEANINGS[word]}` : "";
-        const mark = a.base > 0 ? "✅" : "❌";
-        return `${mark} ${a.prompt} → ${a.correctText}${meaning}`;
-      }).join("\n");
-      const summary = `📊 Du hast gerade „${catTitles}" gespielt — Ergebnis: ${r.combinedPercent}%.\n\n${lines}${r.answers.length > 20 ? `\n… und ${r.answers.length - 20} weitere.` : ""}`;
-      Backend.sendSystemMessage(Backend.currentUser().id, summary);
-    }
-
-    const trophyLabel = `${r.character.name} – ${r.tier.replace("Deutsch-", "")}`;
+    const trophyLabel =`${r.character.name} – ${r.tier.replace("Deutsch-", "")}`;
     const newTrophy = Backend.addTrophy(trophyLabel);
     const profileForActivity = Backend.currentProfile();
     if (profileForActivity) {
@@ -4844,6 +5097,7 @@
         <div class="breakdown-list">${breakdown}</div>
 
         <div class="quiz-actions" style="justify-content:center; margin-top:24px;">
+          <button type="button" class="btn btn-ghost" data-zur-auswertung="1">✉️ Ergebnis im Postfach</button>
           <button type="button" class="btn btn-ghost" id="againBtn">Neue Runde wählen</button>
         </div>
       </div>
@@ -4913,12 +5167,22 @@
   // ersten Silbe — die "offensichtlichen" Fälle. SCHWER = alles, wo die Betonung NICHT auf der
   // ersten Silbe liegt (z. B. "arbeiten") oder das Wort vier Silben oder mehr hat — genau die
   // Fälle, bei denen man wirklich überlegen muss. MITTEL = alles dazwischen (Standard, wie bisher).
+  /* Der Schwierigkeitsgrad richtet sich nach der SILBENZAHL, nicht nach
+     der Betonungsstelle.
+
+     Vorher hieß „leicht“: zwei Silben, Betonung vorn — und „schwer“:
+     Betonung nicht vorn. Damit verriet die gewählte Stufe schon die
+     Lösung: auf „leicht“ und „mittel“ war IMMER die erste Silbe richtig,
+     auf „schwer“ nie. Man konnte die ganze Übung gewinnen, ohne ein
+     einziges Wort anzusehen. Genau das wurde gemeldet.
+
+     Jetzt enthält jede Stufe beide Fälle; schwerer wird es allein durch
+     längere Wörter. */
   function stressWordDifficulty(entry) {
-    const syllables = entry.syl.split("-");
-    const stressIdx = syllables.findIndex((s) => s === s.toUpperCase());
-    if (syllables.length === 2 && stressIdx === 0) return "leicht";
-    if (stressIdx > 0 || syllables.length >= 4) return "schwer";
-    return "mittel";
+    const anzahl = entry.syl.split("-").length;
+    if (anzahl <= 2) return "leicht";
+    if (anzahl === 3) return "mittel";
+    return "schwer";
   }
   function stressTrainerWordPoolForDifficulty(difficulty) {
     const pool = stressTrainerWordPool();
@@ -4949,7 +5213,47 @@
   let stTrainerWord = null;
   let stTrainerDifficulty = "mittel"; // "leicht" | "mittel" | "schwer" | "alle"
   function newStressTrainerSession() {
-    stTrainerSession = { round: 0, total: 10, correct: 0, usedWords: new Set() };
+    stTrainerSession = { round: 0, total: 10, correct: 0, usedWords: new Set(),
+      plan: stressTrainerPlan(10), letzteSilbenzahl: 0 };
+  }
+  /* ------------------------------------------------------------------
+     WOHIN DIE BETONUNG FÄLLT — UND WARUM DIE ÜBUNG DAS MISCHEN MUSS
+
+     Gemeldet: „die Sachen kommen meistens so, dass man hauptsächlich die
+     erste Silbe anklickt“. Das stimmt und ist kein Zufall: Im deutschen
+     Wortschatz liegt die Betonung ganz überwiegend vorn. Zieht man rein
+     zufällig, gewinnt man diese Übung, indem man immer links tippt — und
+     lernt dabei nichts.
+
+     Deshalb wird nicht mehr zufällig gezogen, sondern nach einem Plan.
+     Jede Runde bekommt eine feste Mischung von Betonungsstellen: etwa die
+     Hälfte der Wörter wird NICHT auf der ersten Silbe betont, und unter
+     diesen wechselt die Stelle (zweite, dritte, letzte). Der Plan wird
+     gemischt, damit die Reihenfolge nicht vorhersehbar ist.
+
+     Zusätzlich wird die Silbenzahl gemischt: nach einem Wort mit zwei
+     Silben kommt möglichst eines mit drei oder vier. Wer die Übung so
+     spielt, kann sich auf keine Stelle mehr verlassen — genau das war
+     der Wunsch.
+     ------------------------------------------------------------------ */
+  function stressPosition(entry) {
+    const s = entry.syl.split("-");
+    const i = s.findIndex((x) => x === x.toUpperCase() && /[A-ZÄÖÜ]/.test(x));
+    if (i < 0) return null;
+    if (i === 0) return "erste";
+    if (i === s.length - 1 && s.length > 2) return "letzte";
+    return "mittlere";
+  }
+  /* Der Plan für eine Runde: welche Betonungsstelle wann drankommt.
+     „erste“ bleibt die häufigste Stelle — sie ist im Deutschen nun einmal
+     die Regel, und wer sie nie sieht, lernt eine falsche Regel. Aber sie
+     ist nicht mehr die Mehrheit. */
+  function stressTrainerPlan(anzahl) {
+    const plan = [];
+    for (let i = 0; i < anzahl; i++) {
+      plan.push(i % 2 === 0 ? "erste" : (i % 4 === 1 ? "mittlere" : "letzte"));
+    }
+    return Core.shuffle(plan);
   }
   function pickStressTrainerWord() {
     let pool = stressTrainerWordPoolForDifficulty(stTrainerDifficulty);
@@ -4959,10 +5263,26 @@
     const usedWords = (stTrainerSession && stTrainerSession.usedWords) || new Set();
     let available = pool.filter((e) => !usedWords.has(e.word));
     if (available.length === 0) { usedWords.clear(); available = pool; } // Pool erschöpft -> zurücksetzen
-    const entry = available[Math.floor(Math.random() * available.length)];
+
+    // Die für diese Runde vorgesehene Betonungsstelle …
+    const gewuenscht = stTrainerSession && stTrainerSession.plan
+      ? stTrainerSession.plan[stTrainerSession.round % stTrainerSession.plan.length] : null;
+    let passend = gewuenscht ? available.filter((e) => stressPosition(e) === gewuenscht) : [];
+    // … und die Silbenzahl möglichst anders als beim Wort davor.
+    const vorher = stTrainerSession && stTrainerSession.letzteSilbenzahl;
+    if (vorher && passend.length > 8) {
+      const anders = passend.filter((e) => e.syl.split("-").length !== vorher);
+      if (anders.length > 4) passend = anders;
+    }
+    /* Gibt es zu einer Stelle im gewählten Schwierigkeitsgrad zu wenige
+       Wörter, wird nicht künstlich wiederholt — dann gilt wieder die
+       ganze Auswahl. Lieber eine Stelle zu oft als dasselbe Wort. */
+    const quelle = passend.length >= 3 ? passend : available;
+    const entry = quelle[Math.floor(Math.random() * quelle.length)];
     usedWords.add(entry.word);
     const syllables = entry.syl.split("-");
     const correctIdx = syllables.findIndex((s) => s === s.toUpperCase());
+    if (stTrainerSession) stTrainerSession.letzteSilbenzahl = syllables.length;
     stTrainerWord = { ...entry, syllables, correctIdx };
   }
   function renderStressTrainerResults() {
@@ -4971,15 +5291,11 @@
     // Rang-Titel, passend zum Betonungs-Trainer — "Sprachtalent" als anerkennender Titel für eine
     // richtig starke Runde, ähnlich wie "Superhirn" beim Memory oder die Ränge bei den Übungen.
     const tier = percent >= 90 ? "🌟 Sprachtalent" : percent >= 70 ? "🎯 Betonungs-Profi" : percent >= 50 ? "👂 Gutes Gehör" : "🌱 Übungssache";
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🎯 BETONUNGS-TRAINER — RUNDE FERTIG</p>
-        <h2 style="margin:8px 0;">${stTrainerSession.correct} / ${stTrainerSession.total} richtig (${percent}%)</h2>
-        ${starRatingArcHtml(percent)}
-        <p style="font-weight:800; font-size:1.1rem; color:var(--amber-400); margin:4px 0 0;">${tier}</p>
-        <button type="button" class="btn btn-coffee" id="stPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>
-    `;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: stTrainerSession.correct, prozent: percent, tier: tier,
+      charakter: "Betonungs-Trainer", zeilen: [{ name: "🎯 Betonung", anteil: percent, wert: stTrainerSession.correct + "/" + stTrainerSession.total }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="stPlayAgainBtn">🔄 Neue Runde</button>`,
+    });
     if (Backend.currentUser() && percent >= 90) {
       Backend.addTrophy(`Betonungs-Trainer – Sprachtalent`);
     }
@@ -4999,11 +5315,13 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total} <span class="subnav-info-icon" data-info="Ein paar zuverlässige Faustregeln zur deutschen Wortbetonung: Verben auf „-ieren&quot; werden IMMER auf dem „ie&quot; betont (stu-DIE-ren, te-le-fo-NIE-ren). Die Vorsilben be-, ge-, ver-, ent-, er-, zer-, emp- sind NIE betont — die Betonung liegt auf der Silbe danach (be-KOM-men, ver-STE-hen). Trennbare Vorsilben wie auf-, an-, aus-, ein-, mit-, vor-, zu- werden dagegen SELBST betont (AUF-stehen, MIT-nehmen). Bei den meisten anderen deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Fremdwörter folgen oft ihrem eigenen, aus der Ursprungssprache übernommenen Muster.">ⓘ</span></p>
+        ${fortschrittHtml(stTrainerSession.round, stTrainerSession.total)}
         <div id="stChallengeBar"></div>
         <div class="trophy-case" style="margin-bottom:10px;">
-          ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
+          ${[["leicht", "🟢 Kurze Wörter"], ["mittel", "🟡 Drei Silben"], ["schwer", "🔴 Lange Wörter"], ["alle", "🎲 Gemischt"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
         </div>
-        <p class="empty-note" style="margin-bottom:12px;">Welche Silbe wird bei diesem Wort betont? Antippen zum Wählen.</p>
+        <p class="empty-note" style="margin-bottom:12px;">Welche Silbe wird bei diesem Wort betont? Antippen zum Wählen.<br>
+          <em>Vorsicht: Die Betonung liegt hier absichtlich nicht immer vorn — in etwa jedem zweiten Wort steckt sie woanders.</em></p>
         <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
           ${w.syllables.map((s, i) => `<button type="button" class="btn btn-ghost st-syl-btn" data-syl-idx="${i}" style="font-size:1.2rem; font-weight:800; text-transform:lowercase;">${s.toLowerCase()}</button>`).join("")}
         </div>
@@ -5027,6 +5345,7 @@
         const fb = document.getElementById("stFeedback");
         const correct = idx === w.correctIdx;
         stTrainerSession.round += 1;
+        spielNotiz(correct, `${w.word} — betont: ${w.syllables[w.correctIdx] || "?"}`);
         if (correct) {
           stTrainerSession.correct += 1;
           btn.style.background = "#4FA88E"; btn.style.color = "#fff";
@@ -5077,6 +5396,154 @@
     if (syllables.length <= 1) return word;
     const idx = ruleStressIndex(word, syllables);
     return syllables.map((s, i) => (i === idx ? s.toUpperCase() : s.toLowerCase())).join("-");
+  }
+
+  /* ------------------------------------------------------------------
+     Betonung bei zusammengesetzten Wörtern
+     ------------------------------------------------------------------
+     „Betriebskostenabrechnung“ hat nicht EINE Betonung, sondern drei:
+     die Hauptbetonung auf dem ersten Glied und Nebenbetonungen auf den
+     folgenden. Bisher wurde nur die erste angezeigt — wer damit laut
+     liest, betont den Rest flach, und genau das klingt falsch.
+
+     Der Zerleger sucht die Bestandteile von links nach rechts als
+     längste passende Wörter aus dem eigenen Wortschatz und erlaubt die
+     üblichen Fugenzeichen (-s-, -es-, -n-, -en-). Was sich nicht
+     zerlegen lässt, bleibt einfach ein Wort — dann ändert sich nichts. */
+  const FUGEN = ["s", "es", "n", "en", "er", "e"];
+  /* Der eigene Wortschatz allein reicht als Zerlegungshilfe nicht: er
+     enthält „Wendung“, aber nicht „Wendungen“, und „Tür“ ist zu kurz, um
+     als Stichwort zu taugen. Diese Liste ergänzt die Bausteine, aus denen
+     deutsche Zusammensetzungen tatsächlich bestehen — Grundwörter, die
+     immer wieder als zweiter oder dritter Teil auftauchen. */
+  const KOMPOSITUM_TEILE = [
+    "abrechnung", "abteilung", "amt", "anlage", "antrag", "anzeige", "arbeit", "art", "auto",
+    "bad", "bahn", "batterie", "bau", "baum", "beamte", "berater", "bereich", "berg", "bericht",
+    "besuch", "betrieb", "bett", "bild", "blatt", "block", "boden", "buch", "bude", "burg", "buero", "büro",
+    "dach", "dienst", "dose", "dorf", "druck", "eingang", "eis", "ende", "erde", "essen",
+    "fach", "fahrer", "fahrt", "fall", "farbe", "feld", "fenster", "fest", "feuer", "film", "firma",
+    "fläche", "flug", "form", "frage", "frau", "freund", "frist", "führer", "garten", "gebäude",
+    "gebühr", "gefühl", "geld", "gerät", "geschäft", "geschichte", "gesetz", "glas", "grund",
+    "gruppe", "haar", "hafen", "halle", "hand", "haus", "heft", "heim", "herr", "hilfe", "hof",
+    "hund", "jahr", "karte", "kasse", "kind", "kirche", "klasse", "kleid", "knopf", "koffer",
+    "kopf", "korb", "kosten", "kraft", "kreis", "küche", "kunde", "kunst", "kurs", "land",
+    "lauf", "leben", "lehrer", "leiter", "leistung", "licht", "lied", "liste", "loch", "lohn",
+    "luft", "mann", "markt", "maschine", "material", "meister", "mensch", "messe", "miete",
+    "mittel", "monat", "musik", "mutter", "name", "netz", "nummer", "ordnung", "papier", "partner",
+    "pass", "person", "pflanze", "plan", "platz", "post", "preis", "problem", "programm", "punkt",
+    "raum", "recht", "regal", "regel", "reise", "rechnung", "richtung", "ring", "saal", "sache",
+    "schacht", "schaden", "schein", "schiff", "schlüssel", "schrank", "schrift", "schuh", "schule",
+    "schutz", "seite", "sicherung", "sinn", "sitz", "spiel", "sprache", "stadt", "stand", "stelle",
+    "stern", "stein", "stimme", "stoff", "straße", "strasse", "strom", "stück", "stunde", "stuhl",
+    "system", "tag", "tasche", "teil", "text", "tier", "tisch", "tür", "turm", "uhr", "unterricht",
+    "urlaub", "vater", "verein", "verkehr", "versicherung", "vertrag", "wagen", "wald", "wand",
+    "wasser", "weg", "welt", "wende", "wendung", "werk", "wert", "wetter", "woche", "wohnung",
+    "wort", "zahl", "zahn", "zeit", "zettel", "zeug", "zimmer", "zug", "zweck",
+    // Umlautplurale und weitere häufige Erstglieder
+    "wörter", "bücher", "häuser", "länder", "städte", "männer", "blätter", "räume", "plätze",
+    "bäume", "gärten", "höfe", "köpfe", "kräfte", "stühle", "tücher", "väter", "mütter",
+    "rede", "sprach", "sprache", "niveau", "lese", "schreib", "hör", "sprech", "lern",
+    "haupt", "neben", "vor", "nach", "mit", "aus", "ein", "über", "unter", "zwischen",
+  ];
+  let kompositumStaemme = null;
+  function kompositumWortschatz() {
+    if (kompositumStaemme) return kompositumStaemme;
+    const menge = new Set();
+    const merken = (w) => {
+      if (!w) return;
+      const rein = String(w).replace(/^(der|die|das)\s+/i, "").trim();
+      // Nur Glieder, die als Wortteil überhaupt taugen.
+      if (rein.length >= 4 && /^[A-Za-zÄÖÜäöüß]+$/.test(rein)) menge.add(rein.toLowerCase());
+    };
+    KOMPOSITUM_TEILE.forEach((t) => menge.add(t));
+    (VocabData.WORDS || []).forEach((w) => merken(w && w.word));
+    Object.keys(ExerciseData.WORD_SYL || {}).forEach(merken);
+    Object.keys(ExerciseData.WORD_MEANINGS || {}).forEach(merken);
+    kompositumStaemme = menge;
+    return menge;
+  }
+  function zerlegeKompositum(wort) {
+    const staemme = kompositumWortschatz();
+    const klein = String(wort).toLowerCase();
+    if (klein.length < 7) return null;          // darunter lohnt die Suche nicht
+    const teile = [];
+    let pos = 0;
+    let sicherheit = 0;
+    while (pos < klein.length && sicherheit < 12) {
+      sicherheit += 1;
+      let gefunden = 0;
+      // Längstes passendes Glied zuerst — sonst zerfällt „Haustür“ in „Haus“+„tür“
+      // statt in sinnvolle Teile, oder „Betriebs“ in „Betrieb“+„s“.
+      /* Beim ERSTEN Glied darf der Treffer nicht das ganze Wort umfassen:
+         „Bahnhof" steht selbst im Wortschatz und hätte sich sonst als
+         ein einziges Glied verschluckt, statt in Bahn + Hof zu zerfallen. */
+      const maxLen = pos === 0
+        ? Math.min(klein.length - 3, 18)
+        : Math.min(klein.length - pos, 18);
+      for (let len = maxLen; len >= 3; len--) {
+        const stueck = klein.slice(pos, pos + len);
+        if (staemme.has(stueck)) { gefunden = len; break; }
+      }
+      if (!gefunden) {
+        /* Das letzte Glied steht oft gebeugt da: „Redewendungen" endet auf
+           die Pluralform von „Wendung". Deshalb hier noch einmal mit
+           abgeschnittener Endung suchen. */
+        const rest = klein.slice(pos);
+        const endungen = ["en", "er", "es", "em", "n", "e", "s"];
+        // Erst als komplettes Schlussglied versuchen …
+        for (const e of endungen) {
+          if (rest.length > e.length + 2 && rest.endsWith(e) && staemme.has(rest.slice(0, -e.length))) {
+            gefunden = rest.length;
+            break;
+          }
+        }
+        // … sonst mitten im Wort: „Wörter" in „Wörterbuch" ist „Wort" gebeugt.
+        if (!gefunden) {
+          for (let len = Math.min(rest.length, 14); len >= 4 && !gefunden; len--) {
+            const stueck = rest.slice(0, len);
+            for (const e of endungen) {
+              if (stueck.length > e.length + 2 && stueck.endsWith(e) && staemme.has(stueck.slice(0, -e.length))) {
+                gefunden = len; break;
+              }
+            }
+          }
+        }
+      }
+      if (!gefunden) {
+        // Kein Glied gefunden: dann ist es kein zerlegbares Wort.
+        return null;
+      }
+      teile.push({ von: pos, bis: pos + gefunden });
+      pos += gefunden;
+      // Fugenzeichen überspringen
+      for (const f of FUGEN) {
+        if (klein.startsWith(f, pos) && pos + f.length < klein.length) {
+          const restStueck = klein.slice(pos + f.length);
+          // nur überspringen, wenn danach wirklich ein weiteres Glied beginnt
+          const passt = [...staemme].length && [18, 16, 14, 12, 10, 8, 7, 6, 5, 4]
+            .some((l) => staemme.has(restStueck.slice(0, l)));
+          if (passt) { teile[teile.length - 1].fuge = f; pos += f.length; break; }
+        }
+      }
+    }
+    if (teile.length < 2 || pos < klein.length) return null;
+    return teile.map((t) => wort.slice(t.von, t.bis) + (t.fuge || ""));
+  }
+  /* Die Silbenkette eines zusammengesetzten Wortes: Hauptbetonung im
+     ersten Glied in GROSSBUCHSTABEN, Nebenbetonungen mit einem
+     vorangestellten * gekennzeichnet. */
+  function kompositumSylString(wort) {
+    const teile = zerlegeKompositum(wort);
+    if (!teile) return null;
+    const ketten = teile.map((teil, n) => {
+      const silben = ruleSyllabify(teil);
+      const idx = silben.length > 1 ? ruleStressIndex(teil, silben) : 0;
+      return silben.map((sil, i) => {
+        if (i !== idx) return sil.toLowerCase();
+        return n === 0 ? sil.toUpperCase() : "*" + sil.toLowerCase();
+      }).join("-");
+    });
+    return ketten.join("-");
   }
   // Sammelt einzelne, in Anführungszeichen genannte Wörter aus ALLEN Übungskategorien
   // (nicht nur Artikel) — so wächst das Wörterbuch mit dem tatsächlichen Inhalt der Seite.
@@ -5268,15 +5735,15 @@
     "Stadt": "Verkehr & Reisen",
     "Rucksack": "Verkehr & Reisen",
     "Rucksäcke": "Verkehr & Reisen",
-    "Supermarkt": "Einkaufen & Alltag",
-    "Supermärkte": "Einkaufen & Alltag",
-    "Tasche": "Einkaufen & Alltag",
-    "Taschen": "Einkaufen & Alltag",
-    "Portemonnaie": "Einkaufen & Alltag",
-    "Handy": "Einkaufen & Alltag",
-    "Handys": "Einkaufen & Alltag",
-    "Zeitung": "Einkaufen & Alltag",
-    "Zeitungen": "Einkaufen & Alltag",
+    "Supermarkt": "Kleidung & Einkaufen",
+    "Supermärkte": "Kleidung & Einkaufen",
+    "Tasche": "Kleidung & Einkaufen",
+    "Taschen": "Kleidung & Einkaufen",
+    "Portemonnaie": "Kleidung & Einkaufen",
+    "Handy": "Kleidung & Einkaufen",
+    "Handys": "Kleidung & Einkaufen",
+    "Zeitung": "Kleidung & Einkaufen",
+    "Zeitungen": "Kleidung & Einkaufen",
     "Lehrer": "Schule & Arbeit",
     "Lehrerin": "Schule & Arbeit",
     "die Arbeit": "Schule & Arbeit",
@@ -5382,15 +5849,15 @@
     "werden": "Grundverben",
     "wissen": "Grundverben",
     "wollen": "Grundverben",
-    "die Ausrede": "Abstrakte Begriffe",
-    "die Erfahrung": "Abstrakte Begriffe",
-    "die Frage": "Abstrakte Begriffe",
-    "die Gelegenheit": "Abstrakte Begriffe",
-    "die Hand": "Abstrakte Begriffe",
-    "der Kopf": "Abstrakte Begriffe",
+    "die Ausrede": "Denken & Argumentieren",
+    "die Erfahrung": "Denken & Argumentieren",
+    "die Frage": "Denken & Argumentieren",
+    "die Gelegenheit": "Denken & Argumentieren",
+    "die Hand": "Denken & Argumentieren",
+    "der Kopf": "Denken & Argumentieren",
     "besonders": "Kleine Wörter & Partikeln",
-    "Brillen": "Einkaufen & Alltag",
-    "Brille": "Einkaufen & Alltag",
+    "Brillen": "Kleidung & Einkaufen",
+    "Brille": "Kleidung & Einkaufen",
     "Buch": "Haushalt & Wohnen",
     "Bus": "Verkehr & Reisen",
     "Bank": "Verkehr & Reisen",
@@ -5444,9 +5911,9 @@
     "bezeichnen": "Grundverben", "bieten": "Grundverben", "binden": "Grundverben",
     "bitten": "Grundverben", "blitzen": "Grundverben", "brechen": "Grundverben",
     "brennen": "Grundverben", "buchen": "Grundverben",
-    "bedeutend": "Abstrakte Begriffe", "beliebt": "Abstrakte Begriffe", "bequem": "Abstrakte Begriffe",
-    "bereit": "Abstrakte Begriffe", "berühmt": "Abstrakte Begriffe", "besetzt": "Abstrakte Begriffe",
-    "betrunken": "Abstrakte Begriffe", "billig": "Abstrakte Begriffe", "dankbar": "Abstrakte Begriffe",
+    "bedeutend": "Denken & Argumentieren", "beliebt": "Denken & Argumentieren", "bequem": "Denken & Argumentieren",
+    "bereit": "Denken & Argumentieren", "berühmt": "Denken & Argumentieren", "besetzt": "Denken & Argumentieren",
+    "betrunken": "Denken & Argumentieren", "billig": "Denken & Argumentieren", "dankbar": "Denken & Argumentieren",
     "Berge": "Tiere & Natur", "Bäume": "Tiere & Natur", "Blätter": "Tiere & Natur",
     "Betten": "Haushalt & Wohnen", "Bücher": "Haushalt & Wohnen",
     "Brote": "Essen & Trinken",
@@ -5461,8 +5928,8 @@
     "der Berufsverkehr": "Verkehr & Reisen",
     "das Steak": "Essen & Trinken", "das Salz": "Essen & Trinken",
     "das Pferd": "Tiere & Natur", "der Baum": "Tiere & Natur", "der Berg": "Tiere & Natur",
-    "das Interesse": "Abstrakte Begriffe", "das Mitleid": "Abstrakte Begriffe", "das Schicksal": "Abstrakte Begriffe",
-    "das Wunder": "Abstrakte Begriffe", "der Ärger": "Abstrakte Begriffe",
+    "das Interesse": "Denken & Argumentieren", "das Mitleid": "Denken & Argumentieren", "das Schicksal": "Denken & Argumentieren",
+    "das Wunder": "Denken & Argumentieren", "der Ärger": "Denken & Argumentieren",
     "das Mitglied": "Familie & Menschen", "der Ausländer": "Familie & Menschen", "der Autor": "Familie & Menschen",
     "der Quatsch": "Umgangssprache", "doof": "Umgangssprache",
     "der Job": "Umgangssprache", "total": "Umgangssprache", "der Kumpel": "Umgangssprache",
@@ -5591,12 +6058,13 @@
       if (gesehen.has("w:" + roh) || gesehen.has("N:" + roh)) return;
       if (schonDa(word)) return;
       belegen(word);
-      entries.push({ word, syl: ruleSylString(word), meaning: "", example: "", level: null, verified: false, category: "Sonstiges" });
+      entries.push({ word, syl: kompositumSylString(word) || ruleSylString(word), meaning: "", example: "", level: null, verified: false, category: "Sonstiges" });
     });
     return entries.sort((a, b) => a.word.localeCompare(b.word, "de"));
   }
   let dictLevelFilter = "alle";
   let dictCategoryFilter = "alle";
+  let dictNurGemerkte = false;
   // ============================================================================
   // ERSTE SCHRITTE — Brücken-Baukasten für absolute Anfänger:innen. Zeigt statt
   // einer festen englischen Übersetzung automatisch die Muttersprache passend zum
@@ -5952,7 +6420,44 @@
      und ein einziger Handler bedient alle Vorlese-Knöpfe. */
   const DICT_SEITE = 60;
   let dictGezeigt = DICT_SEITE;
+
+  /* ============================================================
+     MEIN WORTSCHATZ
+     ------------------------------------------------------------
+     In anderen Apps übt man, was vorgelegt wird. Hier soll man selbst
+     bestimmen können: im Wörterbuch die Wörter merken, die man gerade
+     braucht, und dann genau mit diesen üben — Betonung, Aussprache,
+     Bedeutung.
+
+     Gespeichert wird im Profil (extraProfileData.meinWortschatz), nicht
+     auf dem Gerät: Wer am Telefon markiert, findet es am Rechner wieder.
+     Damit das Markieren trotzdem sofort reagiert, wird die Liste hier
+     mitgeführt und im Hintergrund gespeichert.
+     ============================================================ */
+  let meinWortschatzZwischen = null;
+  function meinWortschatz() {
+    if (meinWortschatzZwischen) return meinWortschatzZwischen;
+    const p = Backend.currentProfile();
+    meinWortschatzZwischen = new Set(((p && p.extraProfileData && p.extraProfileData.meinWortschatz) || []));
+    return meinWortschatzZwischen;
+  }
+  function imWortschatz(wort) { return meinWortschatz().has(wort); }
+  async function wortschatzUmschalten(wort) {
+    if (!Backend.currentUser()) { showToast("Zum Merken bitte zuerst anmelden."); return false; }
+    const menge = meinWortschatz();
+    const drin = menge.has(wort);
+    if (drin) menge.delete(wort); else menge.add(wort);
+    try { await Backend.updateExtraProfileField("meinWortschatz", [...menge]); }
+    catch (e) {
+      // Konnte nicht gespeichert werden: die Anzeige darf nicht lügen.
+      if (drin) menge.add(wort); else menge.delete(wort);
+      showToast("Konnte gerade nicht gespeichert werden — bitte Verbindung prüfen.");
+      return drin;
+    }
+    return !drin;
+  }
   function dictKarte(e) {
+    const gemerkt = imWortschatz(e.word);
     return `
           <div class="vocab-card">
             <div>
@@ -5961,7 +6466,11 @@
               <div class="vocab-en">${e.meaning || (e.verified ? "" : "aus dem Übungsinhalt — Bedeutung nicht hinterlegt")}</div>
               ${e.example ? `<div class="vocab-example">„${e.example}"</div>` : ""}
             </div>
-            <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
+            <div class="vocab-karte-knoepfe">
+              <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
+              <button type="button" class="merk-btn ${gemerkt ? "gemerkt" : ""}" data-merken="${e.word.replace(/"/g, "&quot;")}"
+                aria-pressed="${gemerkt}" title="${gemerkt ? "Aus meinem Wortschatz entfernen" : "In meinen Wortschatz aufnehmen"}">${gemerkt ? "★" : "☆"}</button>
+            </div>
           </div>`;
   }
   function renderDictionary(filter = "") {
@@ -5976,6 +6485,8 @@
     if (dictCategoryFilter !== "alle") {
       list = list.filter((e) => e.category === dictCategoryFilter);
     }
+    if (dictNurGemerkte) list = list.filter((e) => imWortschatz(e.word));
+    const gemerkteGesamt = meinWortschatz().size;
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.<br>Betonung wie im Duden: <strong>fett</strong> = betonte Silbe, <span class="stress-vokal stress-lang">Strich</span> darunter = langer Vokal, <span class="stress-vokal stress-kurz">Punkt</span> = kurzer Vokal, kleiner offener Kreis = betont, Länge aus der Schreibung nicht eindeutig.</p>
       <div class="vocab-toolbar"><input type="text" class="vocab-search" id="dictSearch" placeholder="Wort oder Bedeutung suchen…" value="${filter}" /></div>
@@ -5986,6 +6497,11 @@
       <select id="dictCategorySelect" class="challenge-select" style="margin-bottom:12px;">
         ${categories.map((c) => `<option value="${c}" ${dictCategoryFilter === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
       </select>
+      <div class="wortschatz-leiste">
+        <button type="button" class="trophy-chip ${dictNurGemerkte ? "selected" : ""}" id="dictNurGemerkt">★ Nur mein Wortschatz (${gemerkteGesamt})</button>
+        ${gemerkteGesamt ? '<button type="button" class="trophy-chip" id="dictZurAussprache">🎤 Damit die Aussprache üben</button>' : ""}
+      </div>
+      <p class="empty-note" style="margin-bottom:10px;">Mit dem Stern ☆ neben einem Wort nimmst du es in deinen Wortschatz auf. Daraus kannst du dir eigene Übungen bauen — im Aussprache-Trainer und im Betonungs-Trainer.</p>
       <div class="vocab-grid" id="dictGrid">
         ${list.slice(0, dictGezeigt).map(dictKarte).join("")}
       </div>
@@ -6018,12 +6534,406 @@
        Bei 8606 Einträgen waren das bisher 8606 Handler. */
     if (!area.dataset.vorlesenVerdrahtet) {
       area.dataset.vorlesenVerdrahtet = "1";
-      area.addEventListener("click", (ev) => {
+      area.addEventListener("click", async (ev) => {
         const knopf = ev.target.closest(".speak-btn");
-        if (knopf) Core.speak(knopf.dataset.word);
+        if (knopf) { Core.speak(knopf.dataset.word); return; }
+        const merken = ev.target.closest("[data-merken]");
+        if (!merken) return;
+        // Der Stern muss SOFORT reagieren; gespeichert wird nebenher.
+        const jetztDrin = await wortschatzUmschalten(merken.dataset.merken);
+        merken.textContent = jetztDrin ? "★" : "☆";
+        merken.classList.toggle("gemerkt", jetztDrin);
+        merken.setAttribute("aria-pressed", String(jetztDrin));
+        const zaehler = document.getElementById("dictNurGemerkt");
+        if (zaehler) zaehler.textContent = `★ Nur mein Wortschatz (${meinWortschatz().size})`;
       });
     }
+    document.getElementById("dictNurGemerkt")?.addEventListener("click", () => {
+      dictNurGemerkte = !dictNurGemerkte;
+      dictGezeigt = DICT_SEITE;
+      renderDictionary(filter);
+    });
+    document.getElementById("dictZurAussprache")?.addEventListener("click", () => {
+      ausspracheQuelle = "wortschatz";
+      document.querySelector('#learnSubnav [data-sub="sub-aussprache"]')?.click();
+    });
   }
+  /* ============================================================
+     AUSSPRACHE-TRAINER
+     ------------------------------------------------------------
+     Man wählt, WOMIT geübt wird — dem eigenen gemerkten Wortschatz,
+     einem Themenbereich, einem Niveau oder allem —, hört das Wort,
+     spricht es nach und bekommt eine Zahl zurück.
+
+     Zur Ehrlichkeit dieser Zahl: gemessen wird, ob die Spracherkennung
+     des Geräts das Wort erkennt. Das ist Verständlichkeit, nicht
+     Lautgenauigkeit — und genau so steht es auch in der Oberfläche.
+     Eine Anzeige, die mehr verspricht, als sie kann, wäre schlimmer als
+     gar keine.
+
+     Der Trainer ist absichtlich ein eigener Bereich UND ans Wörterbuch
+     angebunden: aus dem Wörterbuch heraus kann man mit einem Knopf mit
+     genau den gemerkten Wörtern weiterüben.
+     ============================================================ */
+  let ausspracheQuelle = "wortschatz";   // wortschatz | kategorie | niveau | alle
+  let ausspracheKategorie = "alle";
+  let ausspracheNiveau = "alle";
+  let ausspracheSitzung = null;
+  const AUSSPRACHE_RUNDEN = 10;
+
+  function ausspracheWortliste() {
+    const alle = buildDictionaryEntries().filter((e) => e.syl && e.word);
+    if (ausspracheQuelle === "wortschatz") return alle.filter((e) => imWortschatz(e.word));
+    if (ausspracheQuelle === "kategorie") return ausspracheKategorie === "alle" ? alle : alle.filter((e) => e.category === ausspracheKategorie);
+    if (ausspracheQuelle === "niveau") return ausspracheNiveau === "alle" ? alle : alle.filter((e) => e.level === ausspracheNiveau);
+    return alle;
+  }
+  function neueAusspracheSitzung() {
+    const liste = ausspracheWortliste();
+    ausspracheSitzung = {
+      woerter: Core.shuffle(liste).slice(0, AUSSPRACHE_RUNDEN),
+      index: 0, ergebnisse: [], laeuft: false, letztes: null,
+    };
+  }
+  function ausspracheBalken(prozent) {
+    const farbe = prozent >= 80 ? "#4FA88E" : prozent >= 55 ? "#E8A33D" : "#E85F6F";
+    return `<div class="aussprache-balken"><div class="aussprache-balken-fuellung" style="width:${Math.max(3, prozent)}%; background:${farbe};"></div></div>`;
+  }
+  function ausspracheUrteil(prozent) {
+    if (prozent >= 90) return "Sehr gut verstanden — so kann dich jeder verstehen.";
+    if (prozent >= 75) return "Gut angekommen. Kleine Abweichungen, aber deutlich.";
+    if (prozent >= 55) return "Erkannt, aber undeutlich. Hör dir das Wort noch einmal an und sprich langsamer.";
+    if (prozent > 0) return "Kaum erkannt. Achte besonders auf die betonte Silbe.";
+    return "Nichts verstanden — war das Mikrofon an, und war es ruhig genug?";
+  }
+
+  function renderAussprache() {
+    const area = document.getElementById("ausspracheArea");
+    if (!area) return;
+    const kannHoeren = Core.spracherkennungDa();
+    const alle = buildDictionaryEntries();
+    const kategorien = ["alle", ...new Set(alle.map((e) => e.category).filter(Boolean))].sort((a, b) => a === "alle" ? -1 : b === "alle" ? 1 : a.localeCompare(b, "de"));
+    const gemerkt = meinWortschatz().size;
+
+    if (!ausspracheSitzung) {
+      const liste = ausspracheWortliste();
+      area.innerHTML = `
+        <div class="question-card">
+          <p class="eyebrow">🎤 AUSSPRACHE-TRAINER</p>
+          <p class="empty-note" style="margin-bottom:12px;">Du hörst ein Wort, sprichst es nach, und bekommst zurück, wie gut es angekommen ist.</p>
+          ${!kannHoeren ? `<div class="beta-hinweis" style="border-color:rgba(232,95,111,0.6); background:rgba(232,95,111,0.08);">
+            <strong>Dieser Browser kann nicht zuhören.</strong> Die Spracherkennung ist hier nicht eingebaut.
+            Am besten klappt es in Chrome auf Android oder am Rechner; auf dem iPhone braucht es Safari ab iOS 14.5.
+            Vorlesen und Betonung kannst du trotzdem üben.
+          </div>` : ""}
+          <p class="eyebrow" style="margin-top:14px;">WOMIT MÖCHTEST DU ÜBEN?</p>
+          <div class="trophy-case" style="margin-bottom:10px;">
+            <button type="button" class="trophy-chip ${ausspracheQuelle === "wortschatz" ? "selected" : ""}" data-ausspr-quelle="wortschatz">★ Mein Wortschatz (${gemerkt})</button>
+            <button type="button" class="trophy-chip ${ausspracheQuelle === "kategorie" ? "selected" : ""}" data-ausspr-quelle="kategorie">🗂️ Ein Themenbereich</button>
+            <button type="button" class="trophy-chip ${ausspracheQuelle === "niveau" ? "selected" : ""}" data-ausspr-quelle="niveau">📶 Ein Niveau</button>
+            <button type="button" class="trophy-chip ${ausspracheQuelle === "alle" ? "selected" : ""}" data-ausspr-quelle="alle">🎲 Zufällig aus allem</button>
+          </div>
+          ${ausspracheQuelle === "kategorie" ? `
+            <label class="empty-note" style="display:block; margin-bottom:4px;">Themenbereich</label>
+            <select id="ausspracheKatSelect" class="challenge-select" style="margin-bottom:12px;">
+              ${kategorien.map((c) => `<option value="${c}" ${ausspracheKategorie === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
+            </select>` : ""}
+          ${ausspracheQuelle === "niveau" ? `
+            <div class="trophy-case" style="margin-bottom:12px;">
+              ${["alle", "A1", "A2", "B1", "B2", "C1", "C2"].map((l) => `<button type="button" class="trophy-chip ${ausspracheNiveau === l ? "selected" : ""}" data-ausspr-niveau="${l}">${l === "alle" ? "Alle" : l}</button>`).join("")}
+            </div>` : ""}
+          ${ausspracheQuelle === "wortschatz" && !gemerkt ? `
+            <p class="empty-note">Du hast dir noch keine Wörter gemerkt. Geh ins Wörterbuch und tippe bei den Wörtern, die du gerade lernst, auf den Stern ☆ — dann kannst du hier genau mit diesen üben.</p>
+            <button type="button" class="btn btn-ghost" id="ausspracheZumWoerterbuch" style="margin-top:8px;">📖 Zum Wörterbuch</button>`
+          : `<p class="empty-note" style="margin-bottom:12px;">${liste.length.toLocaleString("de-DE")} Wörter stehen bereit — eine Runde geht über ${Math.min(AUSSPRACHE_RUNDEN, liste.length)}.</p>
+             <button type="button" class="btn btn-coffee" id="ausspracheStart" ${liste.length ? "" : "disabled"}>🎤 Runde starten</button>`}
+          <p class="empty-note" style="margin-top:16px; font-size:0.72rem;">
+            Was hier gemessen wird: ob die Spracherkennung deines Geräts das Wort erkennt — also deine <strong>Verständlichkeit</strong>.
+            Ob ein einzelner Laut ganz genau sitzt, kann diese Prüfung nicht sagen; das können nur eigene Aussprache-Dienste.
+            Deine Aufnahme wird nicht gespeichert und verlässt dein Gerät nur zur Erkennung durch den Browser.
+          </p>
+        </div>`;
+      area.querySelectorAll("[data-ausspr-quelle]").forEach((b) => b.addEventListener("click", () => { ausspracheQuelle = b.dataset.aussprQuelle; renderAussprache(); }));
+      area.querySelectorAll("[data-ausspr-niveau]").forEach((b) => b.addEventListener("click", () => { ausspracheNiveau = b.dataset.aussprNiveau; renderAussprache(); }));
+      document.getElementById("ausspracheKatSelect")?.addEventListener("change", (e) => { ausspracheKategorie = e.target.value; renderAussprache(); });
+      document.getElementById("ausspracheZumWoerterbuch")?.addEventListener("click", () => {
+        document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.click();
+      });
+      document.getElementById("ausspracheStart")?.addEventListener("click", () => { neueAusspracheSitzung(); renderAussprache(); });
+      return;
+    }
+
+    const s = ausspracheSitzung;
+    if (s.index >= s.woerter.length) { renderAusspracheErgebnis(); return; }
+    const w = s.woerter[s.index];
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🎤 AUSSPRACHE · WORT ${s.index + 1} / ${s.woerter.length}</p>
+        <div class="aussprache-wort">${w.word}</div>
+        <div class="vocab-syl" style="text-align:center; font-size:1.1rem;">${Core.formatStress(w.syl)}</div>
+        ${w.meaning ? `<p class="empty-note" style="text-align:center;">${w.meaning}</p>` : ""}
+        <div class="quiz-actions" style="justify-content:center; margin:14px 0 6px;">
+          <button type="button" class="btn btn-ghost" id="ausspracheHoeren">🔊 Vorsprechen lassen</button>
+          <button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${kannHoeren ? "" : "disabled"}>${s.laeuft ? "🎙️ Ich höre zu …" : "🎙️ Jetzt sprechen"}</button>
+        </div>
+        <div id="ausspracheRueckmeldung">
+          ${s.letztes ? `
+            ${ausspracheBalken(s.letztes.prozent)}
+            <p class="aussprache-prozent">${s.letztes.prozent} % verständlich</p>
+            <p class="empty-note" style="text-align:center;">${ausspracheUrteil(s.letztes.prozent)}</p>
+            ${s.letztes.beste && s.letztes.prozent < 90 ? `<p class="empty-note" style="text-align:center;">Verstanden wurde: „${s.letztes.beste}“</p>` : ""}`
+          : '<p class="empty-note" style="text-align:center;">Tippe auf „Jetzt sprechen“ und sag das Wort deutlich.</p>'}
+        </div>
+        <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+          <button type="button" class="btn btn-ghost" id="ausspracheWeiter">${s.letztes ? "Weiter ▸" : "Überspringen ▸"}</button>
+          <button type="button" class="btn btn-ghost" id="ausspracheAbbrechen">Runde beenden</button>
+        </div>
+        ${miniBugReportBtnHtml(`Aussprache-Trainer, Wort „${w.word}“`)}
+      </div>`;
+    document.getElementById("ausspracheHoeren").addEventListener("click", () => Core.speak(w.word));
+    document.getElementById("ausspracheAufnehmen").addEventListener("click", async () => {
+      if (s.laeuft) return;
+      s.laeuft = true;
+      const knopf = document.getElementById("ausspracheAufnehmen");
+      knopf.textContent = "🎙️ Ich höre zu …";
+      knopf.disabled = true;
+      const gehoert = await Core.hoereZu({ hoechstdauer: 8000 });
+      s.laeuft = false;
+      if (gehoert.fehler) {
+        const texte = {
+          "not-allowed": "Das Mikrofon ist nicht freigegeben. In den Browser-Einstellungen für diese Seite den Zugriff erlauben.",
+          "nicht-verfuegbar": "Dieser Browser hat keine Spracherkennung.",
+          "nichts-verstanden": "Ich habe nichts gehört. Näher ans Mikrofon und noch einmal.",
+          "zeit-abgelaufen": "Die Aufnahme hat zu lange gedauert — noch einmal, kürzer.",
+          "no-speech": "Ich habe nichts gehört. Näher ans Mikrofon und noch einmal.",
+          "network": "Die Erkennung braucht gerade eine Internetverbindung.",
+        };
+        document.getElementById("ausspracheRueckmeldung").innerHTML =
+          `<p class="empty-note" style="text-align:center;">${texte[gehoert.fehler] || "Das hat gerade nicht geklappt — bitte noch einmal."}</p>`;
+        knopf.textContent = "🎙️ Noch einmal";
+        knopf.disabled = false;
+        return;
+      }
+      const bewertung = Core.bewerteAussprache(w.word, gehoert);
+      s.letztes = bewertung;
+      if (bewertung.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
+      renderAussprache();
+    });
+    document.getElementById("ausspracheWeiter").addEventListener("click", () => {
+      if (s.letztes) {
+        s.ergebnisse.push({ wort: w.word, prozent: s.letztes.prozent, gehoert: s.letztes.beste });
+        spielNotiz(s.letztes.prozent >= 75, `${w.word} — ${s.letztes.prozent} % verständlich${s.letztes.beste && s.letztes.prozent < 90 ? ` (verstanden: „${s.letztes.beste}“)` : ""}`);
+      } else {
+        s.ergebnisse.push({ wort: w.word, prozent: null, gehoert: "" });
+        spielNotiz(null, `${w.word} — übersprungen`);
+      }
+      s.letztes = null;
+      s.index += 1;
+      renderAussprache();
+    });
+    document.getElementById("ausspracheAbbrechen").addEventListener("click", () => { s.index = s.woerter.length; renderAussprache(); });
+  }
+
+  function renderAusspracheErgebnis() {
+    const area = document.getElementById("ausspracheArea");
+    const s = ausspracheSitzung;
+    const gewertet = s.ergebnisse.filter((e) => typeof e.prozent === "number");
+    const schnitt = gewertet.length ? Math.round(gewertet.reduce((a, e) => a + e.prozent, 0) / gewertet.length) : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: gewertet.filter((e) => e.prozent >= 75).length, prozent: schnitt, tier: "Deutlichsprecher:in",
+      charakter: "Aussprache-Trainer", zeilen: s.ergebnisse.map((e) => ({ name: e.wort, anteil: typeof e.prozent === "number" ? e.prozent : 0, wert: typeof e.prozent === "number" ? e.prozent + " %" : "—" })),
+      knoepfe: `<button type="button" class="btn btn-coffee" id="ausspracheNochmal">🔄 Noch eine Runde</button><button type="button" class="btn btn-ghost" id="ausspracheZurueck">Andere Wörter wählen</button>`,
+    });
+    if (gewertet.length) {
+      saveResultAndCheck({
+        categories: ["aussprache"], titelText: "Aussprache-Trainer",
+        points: gewertet.filter((e) => e.prozent >= 75).length, bonus: schnitt >= 90 ? 3 : 0,
+        percent: schnitt, character: "Deutlichsprecher:in", badges: [], playedAt: new Date().toISOString(),
+      });
+    }
+    document.getElementById("ausspracheNochmal").addEventListener("click", () => { neueAusspracheSitzung(); renderAussprache(); });
+    document.getElementById("ausspracheZurueck").addEventListener("click", () => { ausspracheSitzung = null; renderAussprache(); });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-aussprache"]')?.addEventListener("click", () => renderAussprache());
+
+  /* ============================================================
+     LOGIK-TRAINER
+     ------------------------------------------------------------
+     Der Anlass war eine genaue Beobachtung: Leute antworten im
+     Gespräch mit „ja, ja“ und „genau“ und haben nichts verstanden.
+     Sie lesen Wörter als Ganzes und raten aus dem Zusammenhang.
+
+     Hier wird das Gegenteil geübt — ein Wort auseinandernehmen:
+       · Welches bekannte Wort steckt in „Verkäuferin“?
+       · Welches Glied bestimmt bei „Krankenhaus“ Artikel und
+         Grundbedeutung?
+       · Was sagt die Vorsilbe von „abholen“ über die Richtung?
+
+     Wer das einmal sieht, muss viel weniger auswendig lernen: aus
+     einem Wortstamm und sechs Vorsilben werden Dutzende Wörter,
+     deren Bedeutung man sich herleiten kann.
+     ============================================================ */
+  const LOGIK_RUNDEN = 10;
+  let logikSitzung = null;
+  let logikArt = "gemischt";   // gemischt | stamm | kompositum | richtung
+  let logikGeladen = null;
+  function logikLaden() {
+    if (window.DMA_DATEN && window.DMA_DATEN.LOGIK_STAMM) return Promise.resolve(true);
+    if (logikGeladen) return logikGeladen;
+    logikGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-logik.js?v=" + (window.DMA_VERSION || "1");
+      s.onload = () => fertig(true);
+      s.onerror = () => { logikGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return logikGeladen;
+  }
+  const LOGIK_ARTEN = {
+    gemischt: "🎲 Gemischt", stamm: "🌱 Welches Wort steckt drin?",
+    kompositum: "🧱 Zusammengesetzte Wörter", richtung: "🧭 Vorsilben & Richtung",
+  };
+  /* Aus den Rohdaten werden die Aufgaben hier gebaut — bei den
+     Zusammensetzungen aus dem Muster, bei den anderen beiden direkt
+     aus den kuratierten Zeilen. */
+  function logikAufgaben() {
+    const D = window.DMA_DATEN || {};
+    const raus = [];
+    (D.LOGIK_STAMM || []).forEach(([wort, stamm, falsch, erkl, level]) => {
+      raus.push({ art: "stamm", frage: `Welches Wort steckt in „${wort}“?`, richtig: stamm, falsch, erkl, level });
+    });
+    (D.LOGIK_KOMPOSITA || []).forEach(([wort, bestimmung, grund, artikel, sagt, level]) => {
+      const rein = wort.replace(/^(der|die|das)\s+/, "");
+      raus.push({ art: "kompositum",
+        frage: `Welches Glied bestimmt bei „${rein}“ den Artikel und die Grundbedeutung?`,
+        richtig: grund,
+        falsch: [bestimmung, rein, artikel + " " + bestimmung],
+        erkl: `Bei zusammengesetzten Wörtern entscheidet IMMER das letzte Glied: „${rein}“ ist ${artikel === "der" ? "ein" : artikel === "die" ? "eine" : "ein"} ${grund}. Das erste Glied „${bestimmung}“ sagt nur, ${sagt}.`,
+        level });
+      raus.push({ art: "kompositum",
+        frage: `Was sagt das erste Glied „${bestimmung}“ bei „${rein}“?`,
+        richtig: sagt,
+        falsch: ["Es bestimmt den Artikel des ganzen Wortes.",
+          "Es hat keine eigene Bedeutung.",
+          "Es macht das Wort zur Mehrzahl."],
+        erkl: `Das erste Glied beschreibt genauer — es sagt ${sagt}. Den Artikel bestimmt dagegen das letzte Glied „${grund}“: ${artikel} ${rein}.`,
+        level });
+    });
+    (D.LOGIK_RICHTUNG || []).forEach(([verb, richtig, falsch, erkl, level]) => {
+      raus.push({ art: "richtung", frage: `Was bedeutet „${verb}“ genau — welche Richtung steckt darin?`, richtig, falsch, erkl, level });
+    });
+    return raus;
+  }
+  function neueLogikSitzung() {
+    let pool = logikAufgaben();
+    if (logikArt !== "gemischt") pool = pool.filter((a) => a.art === logikArt);
+    /* Nach Niveau vorsortieren, aber nicht hart abschneiden: sonst
+       bliebe für A1 fast nichts übrig. Passende zuerst, der Rest
+       füllt auf. */
+    const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const meins = stufen.indexOf(logikNiveau);
+    const passend = pool.filter((a) => stufen.indexOf(a.level) <= meins);
+    const quelle = passend.length >= LOGIK_RUNDEN ? passend : pool;
+    logikSitzung = {
+      aufgaben: Core.shuffle(quelle).slice(0, LOGIK_RUNDEN),
+      index: 0, richtig: 0, beantwortet: null,
+    };
+  }
+  let logikNiveau = null;
+  async function renderLogik() {
+    const area = document.getElementById("logikArea");
+    if (!area) return;
+    if (!(window.DMA_DATEN && window.DMA_DATEN.LOGIK_STAMM)) {
+      area.innerHTML = '<p class="empty-note">Der Logik-Trainer wird geladen …</p>';
+      const ok = await logikLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Der Logik-Trainer konnte nicht geladen werden.</p>'; return; }
+    }
+    logikNiveau = applyDefaultCefrLevel(logikNiveau, (v) => { logikNiveau = v; }, "logik");
+    if (!logikSitzung) {
+      const anzahl = logikAufgaben().filter((a) => logikArt === "gemischt" || a.art === logikArt).length;
+      area.innerHTML = `
+        <div class="question-card">
+          <p class="eyebrow">🧠 LOGIK-TRAINER</p>
+          <p class="empty-note" style="margin-bottom:12px;">
+            Nicht auswendig lernen, sondern sehen, wie ein Wort gebaut ist. Wer erkennt, dass in
+            „Verkäuferin“ das Verb „verkaufen“ steckt, dass beim „Krankenhaus“ das <strong>Haus</strong>
+            das Grundwort ist und dass „ab-“ in „abholen“ eine Richtung angibt, muss die Hälfte
+            nicht mehr auswendig können — er kann sie sich herleiten.
+          </p>
+          <p class="eyebrow">WAS MÖCHTEST DU ÜBEN?</p>
+          <div class="trophy-case" style="margin-bottom:12px;">
+            ${Object.entries(LOGIK_ARTEN).map(([k, name]) => `<button type="button" class="trophy-chip logik-art-btn ${logikArt === k ? "selected" : ""}" data-logik-art="${k}">${name}</button>`).join("")}
+          </div>
+          <p class="eyebrow">SPRACHNIVEAU</p>
+          <div class="trophy-case" style="margin-bottom:12px;">
+            ${["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => `<button type="button" class="trophy-chip logik-level-btn ${logikNiveau === l ? "selected" : ""}" data-logik-level="${l}">${l}</button>`).join("")}
+          </div>
+          <p class="empty-note" style="margin-bottom:12px;">${anzahl} Aufgaben stehen bereit — eine Runde geht über ${LOGIK_RUNDEN}.</p>
+          <button type="button" class="btn btn-coffee" id="logikStart">▶ Runde starten</button>
+        </div>`;
+      area.querySelectorAll(".logik-art-btn").forEach((b) => b.addEventListener("click", () => { logikArt = b.dataset.logikArt; renderLogik(); }));
+      area.querySelectorAll(".logik-level-btn").forEach((b) => b.addEventListener("click", () => { logikNiveau = b.dataset.logikLevel; autoCefrLevel.logik = null; renderLogik(); }));
+      document.getElementById("logikStart").addEventListener("click", () => { neueLogikSitzung(); renderLogik(); });
+      return;
+    }
+    const s = logikSitzung;
+    if (s.index >= s.aufgaben.length) { renderLogikErgebnis(); return; }
+    const a = s.aufgaben[s.index];
+    const optionen = s.beantwortet ? s.beantwortet.optionen : Core.shuffle([a.richtig, ...a.falsch]);
+    if (!s.beantwortet) s.optionen = optionen;
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🧠 LOGIK-TRAINER · RUNDE ${s.index + 1} / ${s.aufgaben.length} · ${LOGIK_ARTEN[a.art] || ""}</p>
+        ${fortschrittHtml(s.index, s.aufgaben.length)}
+        <p class="question-prompt" style="margin:10px 0 14px;">${a.frage}</p>
+        <div class="option-list">
+          ${(s.optionen || optionen).map((opt, i) => {
+            const gewaehlt = s.beantwortet && s.beantwortet.gewaehlt === opt;
+            const istRichtig = opt === a.richtig;
+            const zustand = !s.beantwortet ? "" : istRichtig ? " option-correct" : gewaehlt ? " option-wrong" : "";
+            return `<button type="button" class="option-btn logik-opt${zustand}" data-logik-opt="${i}" ${s.beantwortet ? "disabled" : ""}><span>${opt}</span></button>`;
+          }).join("")}
+        </div>
+        ${s.beantwortet ? `
+          <div class="witz-erklaerung" style="margin-top:12px;">
+            <p style="margin:0;">${s.beantwortet.gewaehlt === a.richtig ? "✅ " : "❌ "}${a.erkl}</p>
+          </div>
+          <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+            <button type="button" class="btn btn-coffee" id="logikWeiter">Weiter ▸</button>
+          </div>` : ""}
+        ${miniBugReportBtnHtml("Logik-Trainer: " + a.frage)}
+      </div>`;
+    area.querySelectorAll(".logik-opt").forEach((b) => b.addEventListener("click", () => {
+      const opt = (s.optionen || optionen)[Number(b.dataset.logikOpt)];
+      const stimmt = opt === a.richtig;
+      if (stimmt) { s.richtig += 1; Core.sound.correct(); } else Core.sound.wrong();
+      spielNotiz(stimmt, `${a.frage} → ${a.richtig}`);
+      s.beantwortet = { gewaehlt: opt, optionen: s.optionen || optionen };
+      renderLogik();
+    }));
+    document.getElementById("logikWeiter")?.addEventListener("click", () => {
+      s.index += 1; s.beantwortet = null; s.optionen = null; renderLogik();
+    });
+  }
+  function renderLogikErgebnis() {
+    const area = document.getElementById("logikArea");
+    const s = logikSitzung;
+    const prozent = Math.round((s.richtig / s.aufgaben.length) * 100);
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: s.richtig, prozent: prozent, tier: "Wortdetektiv:in",
+      charakter: "Logik-Trainer", zeilen: [{ name: "🧠 Richtig erkannt", anteil: prozent, wert: s.richtig + "/" + s.aufgaben.length }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="logikNochmal">🔄 Noch eine Runde</button><button type="button" class="btn btn-ghost" id="logikZurueck">Andere Art wählen</button>`,
+    });
+    saveResultAndCheck({
+      categories: ["logik"], titelText: "Logik-Trainer",
+      points: s.richtig, bonus: prozent === 100 ? 3 : 0, percent: prozent,
+      character: "Wortdetektiv:in", badges: [], playedAt: new Date().toISOString(),
+    });
+    document.getElementById("logikNochmal").addEventListener("click", () => { neueLogikSitzung(); renderLogik(); });
+    document.getElementById("logikZurueck").addEventListener("click", () => { logikSitzung = null; renderLogik(); });
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-logik"]')?.addEventListener("click", () => renderLogik());
+
   document.querySelector('#learnSubnav [data-sub="sub-erste-schritte"]')?.addEventListener("click", () => renderFirstSteps());
   document.querySelector('#learnSubnav [data-sub="sub-grammatik"]')?.addEventListener("click", () => renderGrammatik());
   document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.addEventListener("click", () => renderDictionary());
@@ -6273,12 +7183,126 @@
   let sbkNiveau = "";
   let sbkWahl = {
     subjekt: "1sg", verb: "gehen", objekt: "", objektBegleiter: "", objektAdjektiv: "",
-    person: "", begleitung: "", ort: "", ortRolle: "", zeit: "keine", grund: "keiner", art: "keine", vorfeld: "subjekt",
+    person: "", begleitung: "", fragesatz: "", ort: "", ortRolle: "", zeit: "keine", grund: "keiner", art: "keine", vorfeld: "subjekt",
   };
   let sbkZeitform = "praesens";
   let sbkSatzart = "aussage";
   let sbkPronomen = false;
   let sbkAnsicht = "bauen";
+
+  /* ============================================================
+     SINNVOLLE VORAUSWAHL JE NACH TÄTIGKEIT
+     ------------------------------------------------------------
+     Beim Wechsel des Verbs standen bisher alle anderen Bausteine
+     auf „nichts“ — man bekam „Ich spiele.“ und musste sich alles
+     Weitere selbst zusammensuchen. Jetzt startet jede Tätigkeit mit
+     einer Zusammenstellung, die es wirklich gibt: Fußball spielt
+     man mit einem Freund, ins Restaurant geht man mit seiner Frau,
+     eingekauft wird im Supermarkt.
+
+     Vorgeschlagen wird nur, was ohnehin zur Auswahl steht — passt
+     ein Vorschlag im gewählten Niveau oder Bereich nicht, bleibt
+     das Feld einfach leer. Und wer selbst schon etwas gewählt hat,
+     dem wird nichts überschrieben.
+     ============================================================ */
+  const SBK_VORAUSWAHL = {
+    spielen: { objekt: "fussball", ortRolle: "wo", ort: "garten", begleitung: "freund" },
+    essen: { objekt: "pizza", ortRolle: "wo", ort: "restaurant", begleitung: "frau" },
+    trinken: { objekt: "kaffee", ortRolle: "wo", ort: "cafe", begleitung: "freundin" },
+    kochen: { objekt: "suppe", ortRolle: "wo", ort: "kueche", begleitung: "mann" },
+    einkaufen: { ortRolle: "wo", ort: "supermarkt", begleitung: "schwester" },
+    kaufen: { objekt: "brot", ortRolle: "wo", ort: "baeckerei" },
+    lesen: { objekt: "buch", ortRolle: "wo", ort: "bibliothek" },
+    schreiben: { objekt: "brief", ortRolle: "wo", ort: "buero" },
+    lernen: { objekt: "deutsch", ortRolle: "wo", ort: "sprachschule", begleitung: "freund" },
+    arbeiten: { ortRolle: "wo", ort: "buero", begleitung: "kollege" },
+    feiern: { ortRolle: "wo", ort: "garten", begleitung: "freunde" },
+    tanzen: { ortRolle: "wo", ort: "disko", begleitung: "freundin" },
+    singen: { ortRolle: "wo", ort: "konzert" },
+    schwimmen: { ortRolle: "wo", ort: "schwimmbad", begleitung: "kinder" },
+    wandern: { ortRolle: "wo", ort: "berge", begleitung: "bruder" },
+    laufen: { ortRolle: "wohin", ort: "park" },
+    reisen: { ortRolle: "wohin", ort: "italien", begleitung: "frau" },
+    fliegen: { ortRolle: "wohin", ort: "rom" },
+    fahren: { ortRolle: "wohin", ort: "arbeit" },
+    gehen: { ortRolle: "wohin", ort: "supermarkt" },
+    kommen: { ortRolle: "woher", ort: "arbeit" },
+    wohnen: { ortRolle: "wo", ort: "stadt" },
+    sein: { ortRolle: "wo", ort: "zuhause" },
+    bleiben: { ortRolle: "wo", ort: "zuhause" },
+    schlafen: { ortRolle: "wo", ort: "bett" },
+    aufstehen: {},
+    treffen: { ortRolle: "wo", ort: "cafe", person: "freund" },
+    besuchen: { person: "oma" },
+    telefonieren: { ortRolle: "wo", ort: "buero", person: "freundin" },
+    anrufen: { person: "freund" },
+    bringen: { objekt: "kuchen", person: "freundin", ortRolle: "wohin", ort: "buero" },
+    geben: { objekt: "schluessel", person: "nachbarin" },
+    erklaeren: { objekt: "grammatik", person: "freund" },
+    zeigen: { objekt: "foto", person: "freundin" },
+    suchen: { objekt: "schluessel" },
+    finden: { objekt: "schluessel" },
+    verstehen: { objekt: "grammatik" },
+    anfangen: { objekt: "projekt" },
+    steigen: { ortRolle: "wohin", ort: "dachboden" },
+    tragen: { objekt: "koffer" },
+    machen: { objekt: "aufgabe" },
+    denken: {},
+    glauben: { person: "freundin" },
+    antworten: { person: "kollege" },
+    sehen: { objekt: "film", ortRolle: "wo", ort: "kino", begleitung: "freundin" },
+    hoeren: { objekt: "lied", ortRolle: "wo", ort: "zuhause" },
+    sprechen: { ortRolle: "wo", ort: "buero", begleitung: "kollege" },
+    fragen: { person: "freund" },
+    helfen: { person: "bruder", ortRolle: "wo", ort: "kueche" },
+    warten: { ortRolle: "wo", ort: "bahnhof" },
+    bezahlen: { objekt: "rechnung" },
+    bestellen: { objekt: "pizza" },
+    waschen: { objekt: "teller" },
+    putzen: { objekt: "fenster" },
+    aufraeumen: {},
+    reparieren: { objekt: "lampe" },
+    packen: { objekt: "koffer" },
+    buchen: { objekt: "urlaub" },
+    ueben: { objekt: "grammatik" },
+    wiederholen: { objekt: "vokabel" },
+    erzaehlen: { objekt: "idee", person: "freundin" },
+    schenken: { objekt: "blume", person: "schwester" },
+    mitbringen: { objekt: "broetchen", ortRolle: "wohin", ort: "buero", person: "kollege" },
+    schicken: { objekt: "brief", person: "freund" },
+    vorbereiten: { objekt: "fruehstueck" },
+  };
+  /* Setzt die Vorauswahl, ohne etwas zu überschreiben, was schon
+     dasteht — und nur mit Werten, die im aktuellen Niveau/Bereich
+     überhaupt zur Auswahl stehen. */
+  function sbkVorauswahlSetzen(verb) {
+    const S = window.Satzbau;
+    const v = SBK_VORAUSWAHL[verb.id];
+    if (!v) return;
+    const gibtEs = (liste, id) => Boolean(id) && liste.some((x) => x.id === id);
+    if (v.objekt && !sbkWahl.objekt && verb.objekt) {
+      const dinge = S.dingeFuer(verb, null, sbkNiveau);
+      if (gibtEs(dinge, v.objekt)) sbkWahl.objekt = v.objekt;
+    }
+    const rollen = S.ortRollenFuer(verb);
+    if (v.ortRolle && rollen.includes(v.ortRolle)) sbkWahl.ortRolle = v.ortRolle;
+    if (v.ort && !sbkWahl.ort && sbkWahl.ortRolle) {
+      const kat = sbkKategorie === "alle" ? null : sbkKategorie;
+      const objekt = verb.objekt ? S.dingeFuer(verb, null, sbkNiveau).find((d) => d.id === sbkWahl.objekt) || null : null;
+      const orte = S.orteFuer(kat, sbkNiveau, verb, sbkWahl.ortRolle, objekt);
+      if (gibtEs(orte, v.ort)) sbkWahl.ort = v.ort;
+    }
+    if (v.begleitung && !sbkWahl.begleitung) {
+      const bl = S.begleitungFuer(verb, sbkNiveau);
+      if (gibtEs(bl, v.begleitung)) sbkWahl.begleitung = v.begleitung;
+    }
+    /* Bei „fragen“, „helfen“, „schenken“ ist die Person kein Beiwerk,
+       sondern das, worum es geht — „Ich frage.“ ist kein Satz. */
+    if (v.person && !sbkWahl.person && verb.personFall) {
+      const pl = S.personenFuer(null, sbkNiveau, verb);
+      if (gibtEs(pl, v.person)) sbkWahl.person = v.person;
+    }
+  }
 
   function sbkImItalienischraum() {
     return Boolean(ExerciseData.getLernraum && ExerciseData.getLernraum() === "it");
@@ -6297,9 +7321,8 @@
     // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
     const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, gewaehltesDing) : [];
     const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
-    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau);
+    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau, null, verb);
     const gruende = S.gruendeFuer(verb, sbkNiveau);
-    const arten = S.artenFuer(verb, sbkNiveau, subjekt);
 
     let ort = orte.find((o) => o.id === sbkWahl.ort) || null;
     // Manche Verben ergeben ohne ihre Ergänzung gar keinen Satz —
@@ -6317,12 +7340,22 @@
     if (!person && verb.personPflicht && personen.length) { person = personen[0]; sbkWahl.person = person.id; }
     const begleitungListe = S.begleitungFuer(verb, sbkNiveau);
     const begleitung = begleitungListe.find((b) => b.id === sbkWahl.begleitung) || null;
+    const fragesatzListe = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau) : [];
+    const fragesatz = fragesatzListe.find((f) => f.id === sbkWahl.fragesatz) || null;
     const zeit = zeiten.find((z) => z.id === sbkWahl.zeit) || zeiten[0];
     const grund = gruende.find((g) => g.id === sbkWahl.grund) || gruende[0];
+    /* Die Liste der Angaben hängt von Ort und Objekt ab: „im Internet“
+       passt nicht neben eine Ortsangabe, „ordentlich“ nicht neben ein
+       verneintes Objekt. Deshalb wird sie erst hier gebildet, wenn
+       beides feststeht — sonst stünde in der Auswahl etwas, das der
+       gebaute Satz gleich wieder wegwirft. */
+    const arten = S.artenFuer(verb, sbkNiveau, subjekt, objekt,
+      { ort, objekt, objektBegleiter, grund, zeit });
     const art = arten.find((a) => a.id === sbkWahl.art) || arten[0];
 
     return { verben, rollen, ortRolle, orte, dinge, personen, zeiten, gruende, arten, begleiterListe, adjListe,
       begleitung: begleitungListe, gewaehlteBegleitung: begleitung,
+      fragesaetze: fragesatzListe, gewaehlterFragesatz: fragesatz,
       subjekt, verb, ort, objekt, objektBegleiter, objektAdjektiv, person, zeit, grund, art };
   }
 
@@ -6346,6 +7379,30 @@
     const arten2 = S.artenFuer(verb, sbkNiveau, subjekt, objekt);
     const begl = objekt ? S.begleiterFuer(objekt, verb) : [];
     const adj = objekt ? S.adjektiveFuer(objekt, sbkNiveau) : [];
+    /* WIE VIELE ANGABEN EIN SATZ VERTRÄGT
+       ------------------------------------------------------------
+       Bisher wurde jede Angabe einzeln ausgewürfelt. Bei fünf
+       unabhängigen Würfen kam regelmäßig alles zugleich heraus:
+       „Sie kauft ihr Bett jede Woche im Internet im Kaufhaus, weil
+       sie Zeit hat.“ Grammatisch geht das — gesagt wird es nie.
+
+       Deshalb wird jetzt zuerst gezogen, WIE VIELE freiwillige
+       Angaben der Satz überhaupt bekommt (meistens eine, manchmal
+       zwei, selten drei), und erst dann, WELCHE. Pflichtteile —
+       Ort bei „wohnen“, Objekt bei „brauchen“ — zählen nicht mit;
+       ohne sie gäbe es keinen Satz. */
+    const wuerfel = Math.random();
+    const wieViele = wuerfel < 0.45 ? 1 : wuerfel < 0.85 ? 2 : 3;
+    const kandidaten = [];
+    if (zeiten.length) kandidaten.push("zeit");
+    if (gruende.length) kandidaten.push("grund");
+    if (arten2.length) kandidaten.push("art");
+    if (orte.length && !verb.ortPflicht) kandidaten.push("ort");
+    const bl = S.begleitungFuer(verb, sbkNiveau);
+    if (bl.length) kandidaten.push("begleitung");
+    const fl = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau) : [];
+    if (fl.length) kandidaten.push("fragesatz");
+    const gewaehlt = new Set(Core.shuffle(kandidaten).slice(0, wieViele));
     sbkWahl = {
       subjekt: subjekt.id,
       verb: verb.id,
@@ -6354,11 +7411,12 @@
       objektBegleiter: begl.length ? zufall(begl).id : "",
       objektAdjektiv: adj.length && Math.random() < 0.35 ? zufall(adj).id : "",
       person: personen.length && (verb.personPflicht || Math.random() < 0.6) ? zufall(personen).id : "",
-      ort: orte.length && (verb.ortPflicht || Math.random() < 0.7) ? zufall(orte).id : "",
-      zeit: zufall(zeiten).id,
-      grund: gruende.length && Math.random() < 0.35 ? zufall(gruende).id : "keiner",
-      art: arten2.length && Math.random() < 0.4 ? zufall(arten2).id : "keine",
-      begleitung: (() => { const bl = S.begleitungFuer(verb, sbkNiveau); return bl.length && Math.random() < 0.3 ? zufall(bl).id : ""; })(),
+      ort: verb.ortPflicht && orte.length ? zufall(orte).id : (gewaehlt.has("ort") ? zufall(orte).id : ""),
+      zeit: gewaehlt.has("zeit") ? zufall(zeiten).id : "keine",
+      grund: gewaehlt.has("grund") ? zufall(gruende).id : "keiner",
+      art: gewaehlt.has("art") ? zufall(arten2).id : "keine",
+      begleitung: gewaehlt.has("begleitung") ? zufall(bl).id : "",
+      fragesatz: gewaehlt.has("fragesatz") ? zufall(fl).id : "",
       vorfeld: Math.random() < 0.25 ? "zeit" : "subjekt",
     };
   }
@@ -6366,7 +7424,55 @@
   /* Die Namen der Gruppen, in die eine lange Auswahl zerfällt. Hundert
      Wörter auf einem Haufen kann niemand überblicken — nach Sinngruppen
      sortiert findet man dagegen sofort, was man sucht. */
+  /* WONACH DIE OBJEKTE GRUPPIERT WERDEN
+     ------------------------------------------------------------
+     Gewünscht war ausdrücklich, dass zwischen Personen, Fahrzeugen
+     und Gegenständen unterschieden wird. Bisher lief die Gruppierung
+     über den Lebensbereich (Alltag, Arbeit, Freizeit) — das sagt
+     etwas über die SITUATION, aber nichts über die ART der Sache.
+
+     Deshalb hier eine Einteilung nach dem, was das Ding IST. Sie ist
+     von Hand gemacht und nicht geraten: jedes Wort steht genau in
+     einer Gruppe, und was nirgends steht, landet unter „Sonstiges“ —
+     sichtbar, statt still falsch einsortiert. */
+  const SBK_DING_GRUPPEN = {
+    essen: ["brot", "apfel", "pizza", "suppe", "kuchen", "nudeln", "kaese", "butter", "ei",
+      "fleisch", "fisch", "gemuese", "obst", "salat", "reis", "kartoffeln", "tomaten", "zwiebel",
+      "zucker", "salz", "pfeffer", "oel", "marmelade", "joghurt", "schokolade", "eis", "keks",
+      "broetchen", "sandwich", "nachtisch", "fruehstueck", "rezept"],
+    trinken: ["kaffee", "tee", "wasser", "wein", "milch", "saft", "bier"],
+    lesen: ["buch", "zeitung", "brief", "nachricht", "bericht", "mail", "roman", "gedicht",
+      "zeitschrift", "woerterbuch", "heft", "protokoll"],
+    papier: ["termin", "vertrag", "antrag", "rechnung", "quittung", "pass", "visum", "ausweis",
+      "formular", "anmeldung", "kuendigung", "versicherung", "steuer", "miete", "note",
+      "fahrkarte", "konzertkarte", "karte"],
+    technik: ["computer", "laptop", "handy", "bildschirm", "drucker", "tastatur", "programm",
+      "datei", "ordner", "app"],
+    haushalt: ["tisch", "stuhl", "bett", "schrank", "lampe", "fenster", "tuer", "schluessel",
+      "handtuch", "seife", "zahnbuerste", "muell", "topf", "pfanne", "messer", "gabel", "loeffel",
+      "teller", "tasse", "glas", "flasche", "korb", "geschirr", "waesche", "wohnung", "blume"],
+    kleidung: ["hemd", "hose", "jacke", "schuhe", "mantel", "kleid", "pullover", "muetze",
+      "schal", "handschuhe", "koffer", "rucksack", "regenschirm"],
+    fahren: ["fahrrad", "bus", "urlaub"],
+    lernen: ["aufgabe", "projekt", "praesentation", "pruefung", "stift", "tafel", "grammatik",
+      "vokabel", "uebung", "deutsch", "italienisch"],
+    freizeit: ["film", "musik", "fussball", "klavier", "karten", "foto", "lied", "spiel", "ball"],
+    gesundheit: ["medikament", "tablette", "verband", "impfung", "krankheit"],
+    gedanken: ["idee", "frage", "antwort", "problem", "loesung", "fehler", "regel", "plan",
+      "meinung", "grund", "wunsch", "zeit", "hunger", "durst", "geld", "preis", "einkauf", "wetter"],
+  };
+  const SBK_DING_NACH_ID = (() => {
+    const m = {};
+    Object.entries(SBK_DING_GRUPPEN).forEach(([gruppe, ids]) => ids.forEach((id) => { m[id] = gruppe; }));
+    return m;
+  })();
+  function sbkDingGruppe(e) { return SBK_DING_NACH_ID[e.id] || "sonstiges"; }
+
   const SBK_GRUPPEN_NAME = {
+    essen: "🍽️ Essen", trinken: "🥤 Getränke", lesen: "📖 Zum Lesen", papier: "📄 Papiere & Behörde",
+    technik: "💻 Geräte & Technik", haushalt: "🏠 Haushalt & Möbel", kleidung: "👕 Kleidung & Gepäck",
+    fahren: "🚲 Fahrzeuge & Wege", lernen: "🎓 Zum Lernen", gedanken: "💭 Gedanken & Abstraktes",
+    sonstiges: "📦 Sonstiges",
     alltag: "🏠 Alltag", einkaufen: "🛒 Einkaufen", arbeit: "💼 Arbeit", familie: "👨‍👩‍👧 Familie",
     freizeit: "⚽ Freizeit", essen: "🍽️ Essen", reisen: "🧳 Reisen", bildung: "🎓 Lernen",
     gesundheit: "🩺 Gesundheit", verwaltung: "⚖️ Amt",
@@ -6374,6 +7480,9 @@
     zustand: "😐 Wie ich mich fühle", haben: "🤲 Was ich habe", satz: "💭 Was ich will",
     unpersoenlich: "🌍 Wie es ist", wegen: "🌧️ Wegen etwas",
     weise: "🎭 Auf welche Art", mittel: "🔧 Womit", grad: "📊 Wie sehr",
+    warum: "❓ warum", wann: "🕒 wann", wo: "📍 wo", wohin: "➡️ wohin", woher: "⬅️ woher",
+    wie: "🎭 wie", "wie lange": "⏳ wie lange", "wie viel": "💶 wie viel",
+    was: "📦 was", wer: "👤 wer", welche: "🔢 welche", ob: "🤔 ob",
   };
 
   /* Eine Auswahlreihe. Ab zwölf Einträgen wird nach Gruppen unterteilt,
@@ -6396,11 +7505,28 @@
       if (!gruppen.has(g)) gruppen.set(g, []);
       gruppen.get(g).push(e);
     });
-    const teile = [...gruppen.entries()].map(([g, eintraege], n) => `
-      <p class="sbk-gruppe">${SBK_GRUPPEN_NAME[g] || g}</p>
-      <div class="baustein-reihe">${n === 0 ? leer : ""}${eintraege.map(knopf).join("")}</div>`);
+    /* Aufklappbar, nicht alles auf einem Haufen. Bei über hundert
+       Bausteinen scrollt man sonst minutenlang an Dingen vorbei, die
+       einen gerade nicht interessieren. Offen bleibt, was die aktuelle
+       Auswahl enthält — sonst müsste man erst suchen, was man gewählt
+       hat. Beim ersten Öffnen ist zusätzlich die erste Gruppe offen,
+       damit die Reihe nicht leer wirkt. */
+    const teile = [...gruppen.entries()].map(([g, eintraege], n) => {
+      const enthaeltAuswahl = eintraege.some((e) => e.id === aktuell);
+      const offen = enthaeltAuswahl || sbkOffeneGruppen.has(feld + "|" + g) || (n === 0 && !aktuell);
+      return `
+      <button type="button" class="sbk-gruppe" data-sbk-gruppe="${feld}|${g}" aria-expanded="${offen}">
+        <span class="sbk-gruppe-pfeil">${offen ? "▾" : "▸"}</span>
+        <span>${SBK_GRUPPEN_NAME[g] || g}</span>
+        <span class="sbk-gruppe-zahl">${eintraege.length}</span>
+      </button>
+      <div class="baustein-reihe"${offen ? "" : " hidden"}>${n === 0 ? leer : ""}${eintraege.map(knopf).join("")}</div>`;
+    });
     return kopf + teile.join("");
   }
+  /* Welche Gruppen gerade aufgeklappt sind — überlebt das Neuzeichnen,
+     das nach jedem Klick auf einen Baustein passiert. */
+  const sbkOffeneGruppen = new Set();
 
   /* --- Satzurteile sammeln -------------------------------------------
      Nicht jedes Urteil einzeln ins Postfach — man probiert im
@@ -6512,10 +7638,10 @@
     const satz = S.bauSatz({
       subjekt: a.subjekt, verb: a.verb, objekt: a.objekt, objektBegleiter: a.objektBegleiter,
       objektAdjektiv: a.objektAdjektiv, person: a.person, ort: a.ort, ortRolle: a.ortRolle,
-      zeit: a.zeit, grund: a.grund, art: a.art, begleitung: a.gewaehlteBegleitung,
+      zeit: a.zeit, grund: a.grund, art: a.art, begleitung: a.gewaehlteBegleitung, fragesatz: a.gewaehlterFragesatz,
       zeitform: sbkZeitform, satzart: sbkSatzart, pronomen: sbkPronomen, vorfeld: sbkWahl.vorfeld,
     });
-    const rollenName = { mitwem: "Mit wem", wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", warum: "Warum", wie: "Wie", konj: "Bindewort" };
+    const rollenName = { mitwem: "Mit wem", wonach: "Wonach", wer: "Wer", verb: "Verb", was: "Was", wen: "Wen / Wem", wo: "Wo", wohin: "Wohin", woher: "Woher", wann: "Wann", warum: "Warum", wie: "Wie", konj: "Bindewort" };
     const teile = italienisch ? satz.itTeile : satz.deTeile;
     const zweitsatz = italienisch ? satz.de : satz.it;
     const ortInfo = SBK_ROLLE_NAME[a.ortRolle] || SBK_ROLLE_NAME.wo;
@@ -6591,7 +7717,7 @@
           const b = (e.begleiter && e.begleiter[0]) || "bestimmt";
           const de = window.Satzbau.nominalgruppe(e, a.verb.objekt || "akk", b, null, a.subjekt);
           return italienisch ? [window.Satzbau.itDingform(e, b), de] : [de, ""];
-        }, a.verb.objektPflicht ? "" : "— nichts —", (e) => e.kategorie) : ""}
+        }, a.verb.objektPflicht ? "" : "— nichts —", sbkDingGruppe) : ""}
 
       ${a.objekt && a.begleiterListe.length > 1 ? `
       <p class="eyebrow sbk-frage">🔤 Welcher Begleiter?<span class="sbk-frage-hinweis">„ein Apfel“ sagt man beim ersten Mal, „der Apfel“ nur bei einem bestimmten</span></p>
@@ -6643,6 +7769,9 @@
           const it = window.Satzbau.begleitungText(e, a.subjekt, "it");
           return italienisch ? [it, de] : [de, ""];
         }, "— allein —", (e) => e.kategorie) : ""}
+
+      ${a.fragesaetze.length ? sbkReihe("❔ Wonach?", "eine indirekte Frage — im Nebensatz steht das Verb ganz hinten", "fragesatz", a.fragesaetze, sbkWahl.fragesatz,
+        (e) => italienisch ? [e.it, e.de] : [e.de, ""], "— ohne —", (e) => e.wort) : ""}
     `;
 
     area.querySelectorAll("[data-sbk-ansicht]").forEach((b) => b.addEventListener("click", () => { sbkAnsicht = b.dataset.sbkAnsicht; renderSatzbaukasten(zielId); }));
@@ -6665,6 +7794,18 @@
       renderSatzbaukasten(zielId);
     }));
     area.querySelectorAll("[data-sbk-pron]").forEach((b) => b.addEventListener("click", () => { sbkPronomen = b.dataset.sbkPron === "1"; renderSatzbaukasten(zielId); }));
+    /* Eine Gruppe auf- oder zuklappen — ohne den ganzen Baukasten neu
+       zu zeichnen, damit die Bildlaufstelle stehen bleibt. */
+    area.querySelectorAll("[data-sbk-gruppe]").forEach((b) => b.addEventListener("click", () => {
+      const schluessel = b.dataset.sbkGruppe;
+      const reihe = b.nextElementSibling;
+      const jetztOffen = reihe.hidden;
+      reihe.hidden = !jetztOffen;
+      b.setAttribute("aria-expanded", String(jetztOffen));
+      const pfeil = b.querySelector(".sbk-gruppe-pfeil");
+      if (pfeil) pfeil.textContent = jetztOffen ? "▾" : "▸";
+      if (jetztOffen) sbkOffeneGruppen.add(schluessel); else sbkOffeneGruppen.delete(schluessel);
+    }));
     area.querySelectorAll("[data-sbk-feld]").forEach((b) => b.addEventListener("click", () => {
       sbkWahl[b.dataset.sbkFeld] = b.dataset.sbkWert;
       const S2 = window.Satzbau;
@@ -6680,6 +7821,9 @@
           else if (!S2.dingeFuer(v, null, sbkNiveau).some((d) => d.id === sbkWahl.objekt)) { sbkWahl.objekt = ""; sbkWahl.objektAdjektiv = ""; sbkWahl.objektBegleiter = ""; }
           if (!v.personFall) sbkWahl.person = "";
           if (!v.lokal || !v.lokal.length) { sbkWahl.ort = ""; sbkWahl.vorfeld = sbkWahl.vorfeld === "ort" ? "subjekt" : sbkWahl.vorfeld; }
+          // Und dann eine Zusammenstellung anbieten, die zu dieser
+          // Tätigkeit wirklich passt, statt eines nackten „Ich spiele.“
+          sbkVorauswahlSetzen(v);
         }
       }
       if (b.dataset.sbkFeld === "ortRolle") sbkWahl.ort = "";
@@ -6708,6 +7852,7 @@
       if (a.objektAdjektiv) teile.push("Eigenschaft: " + a.objektAdjektiv.de);
       if (a.person) teile.push("Wen/Wem: " + a.person.nomen);
       if (a.gewaehlteBegleitung) teile.push("Mit wem: " + a.gewaehlteBegleitung.nomen);
+      if (a.gewaehlterFragesatz) teile.push("Wonach: " + a.gewaehlterFragesatz.de);
       if (a.ort) teile.push(a.ortRolle + ": " + a.ort.nomen);
       if (a.zeit && a.zeit.de) teile.push("Wann: " + a.zeit.de);
       if (a.grund && a.grund.id !== "keiner") teile.push("Warum: " + a.grund.id);
@@ -6880,6 +8025,7 @@
         }).join("")}
       </div>
       <p class="memory-status">Züge: ${memoryState.moves} · Gefunden: ${memoryState.matched.size} / ${memoryState.cards.length / 2}</p>
+        ${fortschrittHtml(memoryState.matched.size, memoryState.cards.length / 2)}
       ${memoryState.finished ? `<div class="question-card" style="text-align:center; margin-top:10px;">
         <p style="font-size:2rem; margin:4px 0;">🎉</p>
         <h3 style="margin:4px 0;">Runde geschafft!</h3>
@@ -6982,6 +8128,12 @@
           const timeScore = Core.clamp(1 - (seconds - pairs * 3) / (pairs * 12), 0.4, 1);
           const score = Math.max(10, Math.round(100 * moveScore * timeScore));
           Core.sound.fanfare();
+          // Die gefundenen Paare gehören in die Auswertung — beim Memory
+          // lernt man die Wortpaare, nicht die Zugzahl.
+          [...new Set(memoryState.cards.map((c) => c.pairId))].forEach((pid) => {
+            const paar = memoryState.cards.filter((c) => c.pairId === pid).map((c) => c.text || c.label || c.word).filter(Boolean);
+            if (paar.length) spielNotiz(null, paar.join(" – "));
+          });
           saveResultAndCheck({
             categories: ["memory"],
             points: score,
@@ -7069,32 +8221,26 @@
   function renderSatzpuzzleResults() {
     const area = document.getElementById("satzpuzzleArea");
     const percent = spSession.total > 0 ? Math.round((spSession.correct / spSession.total) * 100) : 0;
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🧩 SATZPUZZLE — SITZUNG FERTIG</p>
-        <p style="font-size:2rem; margin:8px 0;">🎉</p>
-        <h2 style="margin:8px 0;">${spSession.correct} / ${spSession.total} Sätze richtig gebaut!</h2>
-        ${starRatingArcHtml(percent)}
-        <button type="button" class="btn btn-coffee" id="spPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: spSession.correct, prozent: percent, tier: "Satzbaumeister:in",
+      charakter: "Satzpuzzle", zeilen: [{ name: "🧩 Sätze gebaut", anteil: percent, wert: spSession.correct + "/" + spSession.total }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="spPlayAgainBtn">🔄 Neue Runden</button>`,
+    });
     document.getElementById("spPlayAgainBtn").addEventListener("click", () => {
       newSatzpuzzleSession(); newSatzpuzzleRound(); renderSatzpuzzle();
     });
     if (!spResultsFinalized) {
       spResultsFinalized = true;
       if (Backend.currentUser()) {
+        // Wer während der Runde Fehler gemacht hat, bekommt die richtigen Sätze in der
+        // Auswertung mit — die kurze Einblendung im Spiel selbst (2,6s) reicht oft nicht,
+        // um sich alles zu merken. Die Notizen müssen VOR dem Speichern stehen, weil die
+        // Auswertung dort geschrieben wird.
+        spMistakesThisSession.forEach((m) => spielNotiz(false, `„${m.correctSentence}“ — ${m.explain}`));
         saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent, character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
         // WICHTIG — behebt den echten Bug: eine über eine Herausforderung gestartete Runde wurde
         // bisher nie ans Backend zurückgemeldet, siehe activeGameChallengeId (gameRouting).
         if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
-        // Wer während der Runde Fehler gemacht hat, bekommt die richtigen Sätze zusätzlich als
-        // Zusammenfassung ins Postfach — die kurze Einblendung im Spiel selbst (2,6s) reicht oft
-        // nicht, um sich alles zu merken; so kann man in Ruhe nachlesen, was man beim nächsten
-        // Mal besser machen könnte.
-        if (spMistakesThisSession.length) {
-          const summary = spMistakesThisSession.map((m, i) => `${i + 1}. „${m.correctSentence}“\n${m.explain}`).join("\n\n");
-          Backend.sendSystemMessage(Backend.currentUser().id, `🧩 Deine Satzpuzzle-Runde: ${spSession.correct}/${spSession.total} richtig. Hier die korrekten Sätze zu deinen ${spMistakesThisSession.length} ${spMistakesThisSession.length === 1 ? "Fehler" : "Fehlern"}, zum Nachlesen:\n\n${summary}`);
-        }
       }
     }
   }
@@ -7146,6 +8292,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Satzpuzzle: " + spCurrentEntry[0].join(" "))}
         <p class="eyebrow">🧩 SATZPUZZLE · RUNDE ${spSession.round + 1} / ${spSession.total} <span class="subnav-info-icon" data-info="Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Genau das übst du hier.">ⓘ</span></p>
+        ${fortschrittHtml(spSession.round, spSession.total)}
         <div id="spChallengeBar"></div>
         <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen. Ein gebautes Wort nochmal antippen macht es (und alles Spätere) rückgängig.</p>
         <div class="sp-built-row" style="min-height:44px; display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); margin-bottom:14px;">
@@ -7226,22 +8373,29 @@
   const WT_MAX_MISTAKES = 3;
   const WT_TOTAL_BLOCKS = 18;
   function pickRandomWackelturmQuestion() {
-    const cats = ExerciseData.activeCategories().filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    /* WICHTIG: eine Kategorie kann (noch) leer sein — etwa eine gerade
+       erst angelegte, deren Aufgaben noch entstehen. Wurde daraus
+       gezogen, kam „undefined“ heraus und das Spiel brach mit
+       „Cannot read properties of undefined“ ab. Leere Bänke werden
+       deshalb übersprungen, nicht gezogen. */
+    const cats = ExerciseData.activeCategories()
+      .filter((c) => c.getBank && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())))
+      .map((c) => ({ c, bank: (() => { try { return c.getBank() || []; } catch (e) { return []; } })() }))
+      .filter((x) => x.bank.length);
+    if (!cats.length) return null;
     // Bis zu 20 Versuche eine noch nicht gestellte Frage zu finden, bevor wir aufgeben und den
     // Vorrat für diese Sitzung zurücksetzen (falls wirklich alle verfügbaren Fragen schon dran waren).
     for (let attempt = 0; attempt < 20; attempt++) {
-      const cat = cats[Math.floor(Math.random() * cats.length)];
-      const bank = cat.getBank();
+      const { bank } = cats[Math.floor(Math.random() * cats.length)];
       const q = bank[Math.floor(Math.random() * bank.length)];
-      if (!wtUsedPrompts.includes(q.prompt)) {
+      if (q && !wtUsedPrompts.includes(q.prompt)) {
         wtUsedPrompts.push(q.prompt);
         return q;
       }
     }
     wtUsedPrompts = []; // Vorrat aufgebraucht -> neu beginnen
-    const cat = cats[Math.floor(Math.random() * cats.length)];
-    const bank = cat.getBank();
-    return bank[Math.floor(Math.random() * bank.length)];
+    const { bank } = cats[Math.floor(Math.random() * cats.length)];
+    return bank[Math.floor(Math.random() * bank.length)] || null;
   }
   function newWackelturmGame() {
     wtBlocksRemoved = 0;
@@ -7299,6 +8453,7 @@
           <p style="font-size:2.5rem;">🗼</p>
           <h2 style="margin:8px 0;">Bereit für einen neuen Turm?</h2>
           <p class="empty-note">Der letzte Turm ist geschafft — starte jederzeit eine neue Runde.</p>
+          <button type="button" class="btn btn-ghost" data-zur-auswertung="1" style="margin-top:14px;">✉️ Ergebnis im Postfach</button>
           <button type="button" class="btn btn-coffee" id="wtStartBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
         </div>`;
       document.getElementById("wtStartBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
@@ -7311,6 +8466,7 @@
       <div class="question-card" style="text-align:center;">
         ${miniBugReportBtnHtml("Wackelturm: " + wtCurrentQuestion.prompt)}
         <p class="eyebrow">🗼 WACKELTURM · ${wtBlocksRemoved} Blöcke sicher entfernt · ${wtMistakes}/${WT_MAX_MISTAKES} Fehler <span class="subnav-info-icon" data-info="Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast.">ⓘ</span></p>
+        ${fortschrittHtml(WT_MAX_MISTAKES - wtMistakes, WT_MAX_MISTAKES)}
         <div id="wtChallengeBar"></div>
         <div class="wt-tower-wrap">
           <div class="wt-tower" id="wtTower" style="transform: rotate(${tiltDeg}deg);">
@@ -7359,14 +8515,11 @@
   }
   function renderWackelturmVictory() {
     const area = document.getElementById("wackelturmArea");
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p style="font-size:2.5rem;">🏆</p>
-        <h2 style="margin:8px 0;">Kompletter Turm geschafft!</h2>
-        ${starRatingArcHtml(100)}
-        <p class="empty-note">Alle ${WT_TOTAL_BLOCKS} Blöcke sicher entfernt, ohne dass er umgefallen ist — echt stark!</p>
-        <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: wtBlocksRemoved + 5, bonus: 5, prozent: 100, tier: "Turmbaumeister:in",
+      charakter: "Wackelturm", zeilen: [{ name: "🗼 Blöcke sicher entfernt", anteil: 100, wert: WT_TOTAL_BLOCKS + "/" + WT_TOTAL_BLOCKS }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="wtRetryBtn">🔄 Neuer Turm</button>`,
+    });
     document.getElementById("wtRetryBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
     // Nur beim ERSTEN Anzeigen dieser geschafften Runde Punkte vergeben — nicht erneut, nur weil
     // man zu einem anderen Spiel wechselt und zurückkommt (vorher kam dabei die letzte Frage UND
@@ -7393,6 +8546,7 @@
         <h2 style="margin:8px 0;">Der Turm ist eingestürzt!</h2>
         ${starRatingArcHtml(accuracy)}
         <p class="empty-note">Du hast <strong>${wtBlocksRemoved}</strong> Blöcke sicher entfernt, bevor er umgefallen ist.</p>
+        <button type="button" class="btn btn-ghost" data-zur-auswertung="1" style="margin-top:14px;">✉️ Ergebnis im Postfach</button>
         <button type="button" class="btn btn-coffee" id="wtRetryBtn" style="margin-top:14px;">🔄 Neuer Turm</button>
       </div>`;
     document.getElementById("wtRetryBtn").addEventListener("click", () => { newWackelturmGame(); renderWackelturm(); });
@@ -7434,13 +8588,11 @@
   }
   function renderWortartenResults() {
     const area = document.getElementById("wortartenArea");
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🔤 WORT-TYP — SITZUNG FERTIG</p>
-        <p style="font-size:2rem; margin:8px 0;">🎉</p>
-        <h2 style="margin:8px 0;">${waSession.correct} / ${waSession.total} richtig zugeordnet!</h2>
-        <button type="button" class="btn btn-coffee" id="waPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: waSession.correct, prozent: percent, tier: "Wort-Typ:in",
+      charakter: "Wort-Typ", zeilen: [{ name: "🔤 Zuordnungen", anteil: percent, wert: waSession.correct + "/" + waSession.total }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="waPlayAgainBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("waPlayAgainBtn").addEventListener("click", () => {
       newWortartenSession(); newWortartenRound(); renderWortarten();
     });
@@ -7461,6 +8613,7 @@
       <div class="question-card" style="text-align:center;">
         ${miniBugReportBtnHtml("Wort-Typ: " + waCurrentWord[0])}
         <p class="eyebrow">🔤 WORT-TYP · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen der richtigen Kategorie zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
+        ${fortschrittHtml(waSession.round, waSession.total)}
         <div id="waChallengeBar"></div>
         <p style="font-size:1.8rem; font-weight:800; margin:20px 0;">${waCurrentWord[0]}</p>
         <div class="trophy-case" style="justify-content:center;">
@@ -7478,6 +8631,7 @@
     const correct = chosen === waCurrentWord[1];
     const fb = document.getElementById("waFeedback");
     waSession.round += 1;
+    spielNotiz(correct, `${waCurrentWord[0]} → ${waCurrentWord[1]}`);
     if (correct) {
       waSession.correct += 1;
       Core.sound.correct();
@@ -7577,11 +8731,15 @@
     // Sprache konzentrieren, ohne zusätzlich noch Allgemeinwissen abzuverlangen. Das wäre für
     // Deutschlernende eine unfaire Doppelbelastung.
     const cats = ExerciseData.activeCategories().filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    // Leere Kategorien überspringen — sonst zieht man „undefined“.
+    const gefuellt = cats
+      .map((c) => { try { return c.getBank() || []; } catch (e) { return []; } })
+      .filter((b) => b.length);
+    if (!gefuellt.length) return null;
     for (let attempt = 0; attempt < 25; attempt++) {
-      const cat = cats[Math.floor(Math.random() * cats.length)];
-      const bank = cat.getBank();
+      const bank = gefuellt[Math.floor(Math.random() * gefuellt.length)];
       const q = bank[Math.floor(Math.random() * bank.length)];
-      if (!bbUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 13)) {
+      if (q && !bbUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 13)) {
         bbUsedPrompts.push(q.prompt);
         return q;
       }
@@ -7703,6 +8861,7 @@
           <button type="button" class="btn btn-ghost" id="bbPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${bbPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(bbLives, 3)}</p>
+        ${fortschrittHtml(bbLives, 3)}
         <p style="font-weight:700; margin:8px 0 12px;">${bbCurrentQuestion.prompt}</p>
         <div class="bb-pool" id="bbPool">
           ${bbActiveBubbles.map((b) => {
@@ -7786,15 +8945,11 @@
     else if (accuracy >= 70) rating = "💪 Richtig stark — sehr gute Trefferquote!";
     else if (accuracy >= 50) rating = "👍 Solide Runde — schon über die Hälfte getroffen.";
     else rating = "🌱 Übung macht den Meister — weiter dran bleiben!";
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p style="font-size:2.5rem;">🫧</p>
-        <h2 style="margin:8px 0;">Runde beendet!</h2>
-        ${starRatingArcHtml(accuracy)}
-        <p class="empty-note">Du hast <strong>${bbScore}</strong> richtige Blasen getroffen${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
-        <p style="font-weight:700; margin-top:8px;">${rating}</p>
-        <button type="button" class="btn btn-coffee" id="bbRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: bbScore, prozent: accuracy, tier: rating,
+      charakter: "Wortblasen", zeilen: [{ name: "🫧 Getroffen", anteil: accuracy, wert: bbScore + " von " + totalAttempts }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="bbRetryBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("bbRetryBtn").addEventListener("click", () => { newBubbleGame(); renderBubbleGame(); });
     if (!bbGameOverFinalized) {
       bbGameOverFinalized = true;
@@ -7921,7 +9076,76 @@
     (VocabData.LANGUAGES || []).forEach((l) => { if (typeof l === "string") words.add(l.toLowerCase()); if (l && l.name) words.add(l.name.toLowerCase()); });
     (VocabData.MATERIALS || []).forEach((m) => { if (typeof m === "string") words.add(m.toLowerCase()); if (m && m.name) words.add(m.name.toLowerCase()); });
     Object.keys(WordbuildArtikel()).forEach((w) => words.add(w.toLowerCase()));
+    /* Die Verbformen aus dem Satzbaukasten: Grundform, alle sechs
+       Personalformen und das Partizip. Ohne sie galt „gegangen“ oder
+       „arbeitest“ als unbekannt, obwohl „gehen“ und „arbeiten“ längst
+       in der Liste stehen. */
+    ((window.Satzbau && window.Satzbau.VERBEN) || []).forEach((v) => {
+      if (v.inf) words.add(v.inf.toLowerCase());
+      (v.formen || []).forEach((f) => words.add(String(f).toLowerCase()));
+      if (v.partizip) words.add(v.partizip.toLowerCase());
+    });
     return words;
+  }
+
+  /* ------------------------------------------------------------------
+     ERKENNT DER VOKABELMEISTER AUCH ECHTES DEUTSCH?
+
+     Gemeldet wurde: „der Vokabelmeister markiert ganz normale deutsche
+     Wörter als falsch“. Das lag daran, dass nur die WÖRTERBUCHFORM zählte
+     — „Apfel“ ja, „Äpfel“ nein; „gehen“ ja, „ging“ nein;
+     „Betriebskosten“ nein, obwohl „Betrieb“ und „Kosten“ beide bekannt
+     sind. Eine Wortliste kann Deutsch nie vollständig abbilden; also wird
+     hier nicht die Liste vergrößert, sondern das Wort auf eine bekannte
+     Form zurückgeführt:
+
+       1. direkt in der Liste
+       2. gebeugte Form (Plural, Fälle, Personalformen, Partizip)
+       3. Zusammensetzung aus bekannten Teilen (Betriebs|kosten)
+
+     Im Zweifel gilt das Wort als richtig. Ein zu Unrecht anerkanntes Wort
+     ärgert niemanden; ein zu Unrecht abgelehntes schon.
+     ------------------------------------------------------------------ */
+  const VM_ENDUNGEN = ["en", "er", "es", "em", "e", "n", "s", "ern", "nen", "innen", "in",
+    "st", "t", "te", "ten", "test", "tet", "end", "ung", "ungen",
+    /* Steigerungsformen: schneller, am schnellsten, der größte */
+    "ere", "eren", "erem", "erer", "eres",
+    "ste", "sten", "stem", "ster", "stes", "este", "esten", "estem", "ester", "estes"];
+  const vmEntumlautet = (w) => w.replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/äu/g, "au");
+  function vmZurueckgefuehrt(wort) {
+    const w = wort.toLowerCase();
+    const formen = new Set([w]);
+    // Plural allein durch Umlaut: Äpfel → Apfel, Väter → Vater, Öfen → Ofen
+    formen.add(vmEntumlautet(w));
+    VM_ENDUNGEN.forEach((endung) => {
+      if (w.length > endung.length + 2 && w.endsWith(endung)) {
+        const stamm = w.slice(0, w.length - endung.length);
+        formen.add(stamm);
+        formen.add(stamm + "e");
+        formen.add(stamm + "en");
+        // Rückumlaut: Äpfel → Apfel, Bücher → Buch, Häuser → Haus
+        formen.add(stamm.replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u"));
+        formen.add(stamm.replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u") + "en");
+      }
+    });
+    // Partizip: gegangen → gehen, gemacht → machen
+    const p = w.match(/^ge(.+?)(t|en)$/);
+    if (p) { formen.add(p[1]); formen.add(p[1] + "en"); }
+    return formen;
+  }
+  function vmWortBekannt(wort, dict) {
+    for (const form of vmZurueckgefuehrt(wort)) if (dict.has(form)) return true;
+    // Zusammensetzung: jeder Teil muss für sich bekannt sein.
+    const teile = typeof zerlegeKompositum === "function" ? zerlegeKompositum(wort) : null;
+    if (teile && teile.length > 1) {
+      const alleBekannt = teile.every((t) => {
+        const sauber = t.toLowerCase().replace(/(s|es|n|en)$/, "");
+        for (const form of vmZurueckgefuehrt(t)) if (dict.has(form)) return true;
+        return dict.has(sauber) || dict.has(sauber + "e") || dict.has(sauber + "en");
+      });
+      if (alleBekannt) return true;
+    }
+    return false;
   }
   function vmWordCountForLetter(letter) {
     const dict = vmBuildDictionary();
@@ -7944,6 +9168,7 @@
         vmRunning = false;
         vmFinished = true;
         Core.sound.fanfare();
+        vmFoundWords.forEach((w) => spielNotiz(Boolean(w.confirmed), w.word || String(w)));
         if (Backend.currentUser()) {
           saveResultAndCheck({ categories: ["vokabelmeister"], points: vmFoundWords.filter((w) => w.confirmed).length * 2, bonus: 0, percent: 100, character: "Wortschatz-Sammler:in", badges: [], playedAt: new Date().toISOString() });
         }
@@ -7996,6 +9221,7 @@
           <div class="breakdown-list" style="margin-top:10px; text-align:left;">
             ${vmFoundWords.map((w) => `<div class="breakdown-row"><span>${w.confirmed ? "✅" : "❔"} ${w.text}</span></div>`).join("")}
           </div>
+          <button type="button" class="btn btn-ghost" data-zur-auswertung="1" style="margin-top:14px;">✉️ Ergebnis im Postfach</button>
           <button type="button" class="btn btn-coffee" id="vmNewRoundBtn" style="margin-top:14px;">🔄 Neue Runde</button>
         </div>`;
       document.getElementById("vmNewRoundBtn").addEventListener("click", () => { vmLetter = null; renderVokabelmeister(); });
@@ -8005,6 +9231,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🔤 VOKABELMEISTER · Buchstabe ${vmLetter} · <span id="vmTimerDisplay">⏱️ ${vmTimeLeft}s</span></p>
+        ${fortschrittHtml(60 - vmTimeLeft, 60)}
         ${dictSize < 3 ? `<p class="empty-note" style="font-size:0.74rem;">💡 Bei „${vmLetter}" ist unsere Bibliothek noch klein — auch echte, richtige Wörter werden dann eventuell nicht bestätigt erkannt. Trotzdem eine gute Herausforderung!</p>` : ""}
         <input type="text" id="vmWordInput" class="vocab-search" placeholder="Wort mit ${vmLetter} eingeben und Enter drücken…" autocomplete="off" style="margin-top:8px;" />
         <div class="breakdown-list" style="margin-top:10px;">
@@ -8028,7 +9255,7 @@
         return;
       }
       const dict = vmBuildDictionary();
-      const confirmed = dict.has(raw.toLowerCase());
+      const confirmed = vmWortBekannt(raw, dict);
       vmFoundWords.unshift({ text: raw, confirmed });
       if (confirmed) Core.sound.correct();
       input.value = "";
@@ -8094,6 +9321,7 @@
     if (ktRoundTimer) { clearTimeout(ktRoundTimer); ktRoundTimer = null; }
     const fb = document.getElementById("ktFeedback");
     const wasRight = saidCorrect === ktIsCorrectSentence;
+    spielNotiz(wasRight, `„${ktCurrentSentence.text}“ — ${ktIsCorrectSentence ? "korrekt" : "fehlerhaft"}. ${ktCurrentSentence.explain}`);
     if (wasRight) {
       ktScore += 1;
       Core.sound.correct();
@@ -8230,6 +9458,7 @@
           <button type="button" class="btn btn-ghost" id="ktPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${ktPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(ktLives, 3)}</p>
+        ${fortschrittHtml(ktLives, 3)}
         <div class="kt-track" id="ktTrack">
           <span class="kt-bird" aria-hidden="true">˅</span>
           <span class="kt-bird kt-bird-2" aria-hidden="true">˅</span>
@@ -8297,15 +9526,11 @@
     else if (accuracy >= 70) rating = "💪 Richtig stark — sehr gutes Gespür für Grammatik!";
     else if (accuracy >= 50) rating = "👍 Solide Runde — schon über die Hälfte richtig.";
     else rating = "🌱 Übung macht den Meister — weiter dran bleiben!";
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p style="font-size:2.5rem;">🚂</p>
-        <h2 style="margin:8px 0;">Runde beendet!</h2>
-        ${starRatingArcHtml(accuracy)}
-        <p class="empty-note">Du hast <strong>${ktScore}</strong> Sätze richtig eingeschätzt${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
-        <p style="font-weight:700; margin-top:8px;">${rating}</p>
-        <button type="button" class="btn btn-coffee" id="ktRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: ktScore, prozent: accuracy, tier: rating,
+      charakter: "KorrekTour", zeilen: [{ name: "🚂 Richtig eingeschätzt", anteil: accuracy, wert: ktScore + " von " + totalAttempts }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="ktRetryBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("ktRetryBtn").addEventListener("click", () => { ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
     // WICHTIG: Punkte/Freischaltungen nur beim ERSTEN Anzeigen dieser beendeten Runde vergeben —
     // sonst würde ein Wechsel zu einem anderen Spiel und zurück (der renderKorrektourGameOver()
@@ -8327,17 +9552,21 @@
   function pickRandomKanoneQuestion() {
     // Gleicher Ausschluss wie bei Wortblasen — keine Allgemeinwissens-Fragen bei der Wort-Kanone.
     const cats = ExerciseData.activeCategories().filter((c) => c.getBank && c.group !== "quiz" && (!c.unlock || isUnlocked(c.unlock, Backend.currentProfile())));
+    // Leere Kategorien überspringen — sonst zieht man „undefined“.
+    const gefuellt = cats
+      .map((c) => { try { return c.getBank() || []; } catch (e) { return []; } })
+      .filter((b) => b.length);
+    if (!gefuellt.length) return null;
     for (let attempt = 0; attempt < 25; attempt++) {
-      const cat = cats[Math.floor(Math.random() * cats.length)];
-      const bank = cat.getBank();
+      const bank = gefuellt[Math.floor(Math.random() * gefuellt.length)];
       const q = bank[Math.floor(Math.random() * bank.length)];
-      if (!knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) {
+      if (q && !knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) {
         knUsedPrompts.push(q.prompt);
         return q;
       }
     }
     knUsedPrompts = [];
-    const cat = cats[Math.floor(Math.random() * cats.length)];
+    const cat = { getBank: () => gefuellt[Math.floor(Math.random() * gefuellt.length)] };
     const bank = cat.getBank();
     return bank.find((q) => q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) || bank[0];
   }
@@ -8487,6 +9716,7 @@
           <button type="button" class="btn btn-ghost" id="knPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${knPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
+        ${fortschrittHtml(knLives, 3)}
         <div id="knChallengeBar"></div>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
@@ -8983,15 +10213,11 @@
     else if (accuracy >= 70) rating = "💪 Richtig stark — sehr gute Trefferquote!";
     else if (accuracy >= 50) rating = "👍 Solide Runde — schon über die Hälfte getroffen.";
     else rating = "🌱 Übung macht den Meister — weiter dran bleiben!";
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p style="font-size:2.5rem;">🎯</p>
-        <h2 style="margin:8px 0;">Runde beendet!</h2>
-        ${starRatingArcHtml(accuracy)}
-        <p class="empty-note">Du hast <strong>${knScore}</strong> falsche Antworten korrekt abgeschossen${totalAttempts > 0 ? ` (${accuracy}% Genauigkeit)` : ""}.</p>
-        <p style="font-weight:700; margin-top:8px;">${rating}</p>
-        <button type="button" class="btn btn-coffee" id="knRetryBtn" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: knScore, prozent: accuracy, tier: rating,
+      charakter: "Wort-Kanone", zeilen: [{ name: "🎯 Treffer", anteil: accuracy, wert: knScore + " von " + totalAttempts }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="knRetryBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("knRetryBtn").addEventListener("click", () => { newKanoneGame(); renderKanone(); });
   }
   document.querySelector('#learnSubnav [data-sub="sub-kanone"]')?.addEventListener("click", () => {
@@ -9024,14 +10250,11 @@
   function renderWerBinIchResults() {
     const area = document.getElementById("werbinichArea");
     const percent = wbiSession.total > 0 ? Math.round((wbiSession.correct / wbiSession.total) * 100) : 0;
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">❓ WER BIN ICH? — SITZUNG FERTIG</p>
-        <p style="font-size:2rem; margin:8px 0;">🎉</p>
-        <h2 style="margin:8px 0;">${wbiSession.correct} / ${wbiSession.total} richtig erraten!</h2>
-        ${starRatingArcHtml(percent)}
-        <button type="button" class="btn btn-coffee" id="wbiPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: wbiSession.correct, prozent: percent, tier: "Rätsel-Detektiv:in",
+      charakter: "Wer bin ich?", zeilen: [{ name: "❓ Erraten", anteil: percent, wert: wbiSession.correct + "/" + wbiSession.total }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="wbiPlayAgainBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("wbiPlayAgainBtn").addEventListener("click", () => { wbiResultsFinalized = false; newWerBinIchSession(); newWerBinIchRound(); renderWerBinIch(); });
     // WICHTIG: Einmal-Absicherung ergänzt — vorher fehlte sie hier komplett, sodass ein Wechsel zu
     // einem anderen Spiel und zurück (was diese Funktion erneut aufruft) die Punkte jedes Mal
@@ -9057,6 +10280,7 @@
       <div class="question-card" style="text-align:center;">
         ${miniBugReportBtnHtml("Wer bin ich: " + correct)}
         <p class="eyebrow">❓ WER BIN ICH? · RUNDE ${wbiSession.round + 1} / ${wbiSession.total}</p>
+        ${fortschrittHtml(wbiSession.round, wbiSession.total)}
         <div id="wbiChallengeBar"></div>
         <label class="quiz-actions" style="justify-content:center; margin-bottom:10px; gap:8px; cursor:pointer; font-size:0.8rem;">
           <input type="checkbox" id="wbiModeToggle" ${wbiTypeMode ? "checked" : ""} />
@@ -9092,6 +10316,7 @@
     const [, correct] = wbiCurrentItem;
     const fb = document.getElementById("wbiFeedback");
     wbiSession.round += 1;
+    spielNotiz(isCorrect, `Gesucht war „${correct}“`);
     if (isCorrect) {
       wbiSession.correct += 1;
       Core.sound.correct();
@@ -9164,15 +10389,11 @@
     const area = document.getElementById("wordbuildArea");
     const percent = Math.round((wbSession.points / wbSession.total) * 100);
     const tier = WB_TIERS.find((t) => wbSession.points <= t.max) || WB_TIERS[WB_TIERS.length - 1];
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🔤 WORTBAUSTELLE — RUNDE FERTIG</p>
-        <h2 style="margin:8px 0;">${wbSession.points} / ${wbSession.total} richtig</h2>
-        <p style="font-size:1.1rem; font-weight:700; color:var(--amber-400);">${tier.title}</p>
-        ${wbSession.bonus ? `<p class="empty-note">+ ${wbSession.bonus} Tempo-Bonus</p>` : ""}
-        <button type="button" class="btn btn-coffee" id="wbPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>
-    `;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: wbSession.points, bonus: wbSession.bonus, prozent: percent, tier: "Wortbaumeister:in",
+      charakter: "Wortbaustelle", zeilen: [{ name: "🔤 Wörter gebaut", anteil: percent, wert: wbSession.points + "/" + wbSession.total }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="wbPlayAgainBtn">🔄 Neue Runde</button>`,
+    });
     // WICHTIG — behebt den echten Bug: eine über eine Herausforderung gestartete Runde wurde
     // bisher nie ans Backend zurückgemeldet, siehe activeGameChallengeId (gameRouting).
     if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
@@ -9192,6 +10413,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🔤 WORTBAUSTELLE · RUNDE ${wbSession.round + 1} / ${wbSession.total}</p>
+        ${fortschrittHtml(wbSession.round, wbSession.total)}
         <div id="wbChallengeBar"></div>
         <div class="trophy-case" style="margin-bottom:8px;">
           ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip wb-diff-btn ${wbDifficulty === key ? "selected" : ""}" data-wb-diff="${key}">${label}</button>`).join("")}
@@ -9259,15 +10481,12 @@
             wbSession.playedWords.push(`${s.word.charAt(0)}${s.word.slice(1).toLowerCase()} — ${s.clue}`);
             Core.sound.fanfare();
             if (wbSession.round >= wbSession.total) {
+              wbSession.playedWords.forEach((w) => spielNotiz(null, w));
               saveResultAndCheck({
                 categories: ["wortbaustelle"], points: wbSession.points, bonus: wbSession.bonus, percent: Math.round((wbSession.points / wbSession.total) * 100),
                 character: (WB_TIERS.find((t) => wbSession.points <= t.max) || WB_TIERS[WB_TIERS.length - 1]).title,
                 badges: [], playedAt: new Date().toISOString(),
               });
-              if (Backend.currentUser()) {
-                const wordList = wbSession.playedWords.map((w) => `• ${w}`).join("\n");
-                Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Wortbaustelle" gespielt — Ergebnis: ${wbSession.points} / ${wbSession.total} richtig${wbSession.bonus ? ` (+${wbSession.bonus} Tempo-Bonus)` : ""}.\n\nDiese Wörter kamen vor:\n${wordList}`);
-              }
               setTimeout(() => renderWordbuild(), 900);
             } else {
               setTimeout(() => { newWordbuildRound(); renderWordbuild(); }, 900);
@@ -9370,15 +10589,11 @@
     const area = document.getElementById("wordsearchArea");
     const tier = WS_TIERS.find((t) => wsSession.correctCount <= t.max) || WS_TIERS[WS_TIERS.length - 1];
     const percent = wsSession.target > 0 ? Math.round((wsSession.correctCount / wsSession.target) * 100) : 0;
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🔍 BUCHSTABENSALAT — RUNDE FERTIG</p>
-        <h2 style="margin:8px 0;">${wsSession.correctCount} / ${wsSession.target} richtig gelöst</h2>
-        ${starRatingArcHtml(percent)}
-        <p style="font-size:1.1rem; font-weight:700; color:var(--amber-400);">${tier.title}</p>
-        <button type="button" class="btn btn-coffee" id="wsPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>
-    `;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: wsSession.correctCount, prozent: percent, tier: "Buchstabensalat",
+      charakter: "Buchstabensalat", zeilen: [{ name: "🔍 Wörter samt Artikel", anteil: percent, wert: wsSession.correctCount + "/" + wsSession.target }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="wsPlayAgainBtn">🔄 Neue Runde</button>`,
+    });
     if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
     document.getElementById("wsPlayAgainBtn").addEventListener("click", () => {
       newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
@@ -9402,6 +10617,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.wordsAttempted} / ${wsSession.target} WÖRTER · ${wsSession.correctCount} RICHTIG</p>
+        ${fortschrittHtml(wsSession.wordsAttempted, wsSession.target)}
         <div id="wsChallengeBar"></div>
         <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen — waagerecht, senkrecht oder diagonal, in jede Richtung. Danach den richtigen Artikel wählen, um das Wort abzuschließen.</p>
         <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, minmax(0, 1fr));">
@@ -9468,16 +10684,14 @@
         else { Core.sound.wrong(); }
         s.pendingArticleFor = null;
         if (wsSession.wordsAttempted >= wsSession.target) {
+          // Die Häkchen stehen schon im Text, deshalb hier ohne eigene Wertung.
+          wsSession.playedWords.forEach((w) => spielProtokoll.push(w));
           saveResultAndCheck({
             categories: ["buchstabensalat"], points: wsSession.correctCount, bonus: 0,
             percent: Math.round((wsSession.correctCount / wsSession.target) * 100),
             character: (WS_TIERS.find((t) => wsSession.correctCount <= t.max) || WS_TIERS[WS_TIERS.length - 1]).title,
             badges: [], playedAt: new Date().toISOString(),
           });
-          if (Backend.currentUser()) {
-            const wordList = wsSession.playedWords.map((w) => `• ${w}`).join("\n");
-            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade „Buchstabensalat" gespielt — ${wsSession.correctCount} von ${wsSession.target} Wörtern samt Artikel richtig gelöst.\n\nDiese Wörter kamen vor:\n${wordList}`);
-          }
         }
         renderWordSearch();
       });
@@ -11127,16 +12341,11 @@
   }
   function renderCrosswordResults() {
     const area = document.getElementById("crosswordArea");
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">✏️ KREUZWORTRÄTSEL — SITZUNG FERTIG</p>
-        <p style="font-size:2rem; margin:8px 0;">🎉</p>
-        <h2 style="margin:8px 0;">Alle Rätsel gelöst!</h2>
-        ${starRatingArcHtml(100)}
-        <p class="empty-note">Eine Zusammenfassung wartet in deinem Postfach.</p>
-        <button type="button" class="btn btn-coffee" id="cwPlayAgainBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>
-    `;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: cwSession ? cwSession.punkteGesamt || 0 : 0, prozent: 100, tier: "Rätsel-Genie",
+      charakter: "Kreuzworträtsel", zeilen: [{ name: "✏️ Rätsel gelöst", anteil: 100, wert: String(cwSession ? cwSession.total : 4) }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="cwPlayAgainBtn">🔄 Neue Runden</button>`,
+    });
     if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; }
     document.getElementById("cwPlayAgainBtn").addEventListener("click", () => {
       newCrosswordSession(); newCrossword(cwSession.startIdx); renderCrossword();
@@ -11180,6 +12389,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">✏️ KREUZWORTRÄTSEL · RUNDE ${cwSession.round + 1} / ${cwSession.total} · ${puzzle.title}</p>
+        ${fortschrittHtml(cwSession.round, cwSession.total)}
         <div id="cwChallengeBar"></div>
         <p class="empty-note" style="margin-bottom:10px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
         <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, minmax(0, 1fr)); max-width: min(${puzzle.cols * 42}px, 94vw);">
@@ -11284,16 +12494,19 @@
         const seconds = (Date.now() - cwState.startedAt) / 1000;
         cwSession.round += 1;
         cwSession.allWordsPlayed.push(...puzzle.words.map((w) => `• ${w.answer} — ${w.clue}`));
+        puzzle.words.forEach((w) => spielNotiz(true, `${w.answer} — ${w.clue}`));
+        cwSession.punkteGesamt = (cwSession.punkteGesamt || 0) + puzzle.words.length;
+        const letztes = cwSession.round >= cwSession.total;
+        /* Gespeichert wird nach JEDEM Rätsel, aber die Auswertung soll erst
+           am Ende der ganzen Sitzung erscheinen — sonst käme die Karte
+           mitten in der Serie und man müsste sie jedes Mal wegklicken. */
         saveResultAndCheck({
-          categories: ["kreuzwortraetsel"], points: puzzle.words.length, bonus: seconds < 60 ? 1 : 0, percent: 100,
+          categories: ["kreuzwortraetsel"], points: letztes ? cwSession.punkteGesamt : puzzle.words.length,
+          bonus: seconds < 60 ? 1 : 0, percent: 100, zwischenstand: !letztes,
           character: "Rätsel-Genie", badges: [], playedAt: new Date().toISOString(),
         });
-        if (cwSession.round >= cwSession.total) {
+        if (letztes) {
           fb.textContent = `🎉 Alles richtig! Sitzung fertig (${cwSession.total} Rätsel gelöst).`;
-          if (Backend.currentUser()) {
-            const wordList = cwSession.allWordsPlayed.join("\n");
-            Backend.sendSystemMessage(Backend.currentUser().id, `📊 Du hast gerade ${cwSession.total} Kreuzworträtsel hintereinander gelöst — alles richtig!\n\nDiese Wörter kamen vor:\n${wordList}`);
-          }
           // WICHTIG: cwSession erst NACH der Verzögerung auf null setzen, nicht sofort — sonst
           // würde der direkt folgende renderCrossword()-Aufruf unten schon vorzeitig zur
           // Abschluss-Anzeige springen, statt erst kurz die grün markierte, gelöste letzte
@@ -11918,6 +13131,8 @@
     dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; }, "dichter");
     renderTileGallery(area, DICHTER_ENTRIES, () => kompassDichterOpenId, (v) => { kompassDichterOpenId = v; }, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
       "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
+    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
+    leseBetonungAnwenden(area);
   }
   function renderSchneeVonGestern() {
     const area = document.getElementById("schneeArea");
@@ -11926,9 +13141,92 @@
     schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; }, "schnee");
     renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
+    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
+    leseBetonungAnwenden(area);
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-dichter"]')?.addEventListener("click", renderDichterUndDenker);
   document.querySelector('#knowledgeSubnav [data-sub="sub-schnee"]')?.addEventListener("click", renderSchneeVonGestern);
+  /* ============================================================
+     WITZE — mit der Erklärung als eigentlichem Inhalt
+     ------------------------------------------------------------
+     Wer Deutsch lernt, lacht in Gesprächen oft mit, ohne den Witz
+     verstanden zu haben. Genau darum steht die Pointe hier nicht
+     allein da: zu jedem Witz gibt es das Wort, an dem er hängt,
+     und seine beiden Bedeutungen — aber erst auf Antippen. Wer es
+     selbst herausbekommt, soll die Freude daran haben.
+     ============================================================ */
+  let witzeArt = "alle";
+  let witzeOffen = new Set();
+  let witzeGeladen = null;
+  function witzeLaden() {
+    if (window.DMA_DATEN && window.DMA_DATEN.WITZE) return Promise.resolve(true);
+    if (witzeGeladen) return witzeGeladen;
+    witzeGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-witze.js?v=" + (window.DMA_VERSION || "1");
+      s.onload = () => fertig(true);
+      s.onerror = () => { witzeGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return witzeGeladen;
+  }
+  const WITZ_ARTEN = {
+    alle: "Alle", beruf: "😎 Berufe", wortspiel: "🔤 Wortspiele",
+    logik: "🧠 Denkfehler", alltag: "🇩🇪 Alltag & Deutschlernen",
+  };
+  async function renderWitze() {
+    const area = document.getElementById("witzeArea");
+    if (!area) return;
+    if (!(window.DMA_DATEN && window.DMA_DATEN.WITZE)) {
+      area.innerHTML = '<p class="empty-note">Die Witze werden geladen …</p>';
+      const ok = await witzeLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Die Witze konnten nicht geladen werden.</p>'; return; }
+    }
+    const alle = window.DMA_DATEN.WITZE;
+    const liste = witzeArt === "alle" ? alle : alle.filter((w) => w.art === witzeArt);
+    area.innerHTML = `
+      <h3 class="kompass-heading">😄 Witze — und warum sie funktionieren</h3>
+      <p class="empty-note" style="margin-bottom:12px;">
+        Humor ist das Letzte, was man in einer fremden Sprache versteht. Die meisten deutschen Witze
+        hängen an einem einzigen Wort, das zwei Bedeutungen hat — „auflegen“, „abschalten“, „aufgehen“.
+        Lies erst den Witz. Wenn du die Pointe hast, tipp auf <strong>Warum ist das lustig?</strong> und
+        vergleiche. Wenn nicht, findest du dort das Wort und beide Bedeutungen.
+      </p>
+      <div class="trophy-case" style="margin-bottom:12px;">
+        ${Object.entries(WITZ_ARTEN).map(([k, name]) => `<button type="button" class="trophy-chip witz-art-btn ${witzeArt === k ? "selected" : ""}" data-witz-art="${k}">${name}</button>`).join("")}
+      </div>
+      ${liste.map((w, i) => {
+        const offen = witzeOffen.has(w.text);
+        return `
+        <div class="question-card witz-karte" style="margin-bottom:10px;">
+          <p class="witz-text">${w.text}</p>
+          <div class="witz-fuss">
+            <span class="empty-note" style="font-size:0.68rem;">ab ${w.level}</span>
+            <button type="button" class="btn btn-ghost witz-aufloesen" data-witz-idx="${i}" style="padding:4px 12px; font-size:0.76rem;">${offen ? "▾ Erklärung" : "▸ Warum ist das lustig?"}</button>
+          </div>
+          ${offen ? `
+            <div class="witz-erklaerung">
+              ${w.wort ? `
+                <p style="margin:0 0 6px;"><strong>Das Wort:</strong> „${w.wort}“</p>
+                <div class="breakdown-list" style="margin-bottom:8px;">
+                  <div class="breakdown-row" style="justify-content:flex-start; gap:8px;"><span>1️⃣</span><span>${w.eins}</span></div>
+                  <div class="breakdown-row" style="justify-content:flex-start; gap:8px;"><span>2️⃣</span><span>${w.zwei}</span></div>
+                </div>` : ""}
+              <p style="margin:0;">${w.erklaerung}</p>
+            </div>` : ""}
+        </div>`;
+      }).join("")}
+      <p class="empty-note" style="margin-top:14px;">${liste.length} ${liste.length === 1 ? "Witz" : "Witze"} in dieser Auswahl.</p>`;
+    area.querySelectorAll(".witz-art-btn").forEach((b) => b.addEventListener("click", () => { witzeArt = b.dataset.witzArt; renderWitze(); }));
+    area.querySelectorAll(".witz-aufloesen").forEach((b) => b.addEventListener("click", () => {
+      const w = liste[Number(b.dataset.witzIdx)];
+      if (witzeOffen.has(w.text)) witzeOffen.delete(w.text); else witzeOffen.add(w.text);
+      renderWitze();
+    }));
+    leseBetonungAnwenden(area);
+  }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-witze"]')?.addEventListener("click", renderWitze);
+
   function renderHowItWorks() {
     const area = document.getElementById("howItWorksArea");
     if (!area) return;
@@ -12172,6 +13470,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Wortschmiede: " + wsmAktuell.wort)}
         <p class="eyebrow">🔨 WORTSCHMIEDE · RUNDE ${wsmSession.runde + 1} / ${wsmSession.gesamt} <span class="subnav-info-icon" data-info="Deutsch baut aus zwei Wörtern ein neues. Das letzte Wort bestimmt Artikel und Bedeutung, das erste beschreibt genauer. Alle vier Rohlinge ergeben ein echtes deutsches Wort — gesucht ist aber genau das eine, das zur angegebenen Bedeutung passt.">ⓘ</span></p>
+        ${fortschrittHtml(wsmSession.runde, wsmSession.gesamt)}
         <div class="wsm-level-zeile">
           <div class="trophy-case wsm-chips">
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip wsm-level-btn ${wsmLevel === lvl ? "selected" : ""}" data-wsm-level="${lvl}">${lvl}</button>`).join("")}
@@ -12199,6 +13498,7 @@
     const gewaehlt = btn.dataset.wsmOpt;
     const richtig = gewaehlt === wsmAktuell.teil2;
     wsmSession.runde += 1;
+    spielNotiz(richtig, `${wsmAktuell.wort} — ${wsmAktuell.bedeutung}`);
     document.querySelectorAll(".wsm-rohling").forEach((b) => { b.disabled = true; });
     const fb = document.getElementById("wsmFeedback");
     if (richtig) {
@@ -12219,14 +13519,11 @@
   function renderWortschmiedeErgebnis() {
     const area = document.getElementById("wortschmiedeArea");
     const prozent = Math.round((wsmSession.richtig / wsmSession.gesamt) * 100);
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🔨 WORTSCHMIEDE — FERTIG GESCHMIEDET</p>
-        <p style="font-size:2rem; margin:8px 0;">${prozent >= 80 ? "🏆" : prozent >= 50 ? "🔥" : "🔨"}</p>
-        <h2 style="margin:8px 0;">${wsmSession.richtig} / ${wsmSession.gesamt} Wörter geschmiedet</h2>
-        <p class="empty-note">${prozent >= 80 ? "Meisterschmied:in — das saß." : prozent >= 50 ? "Solide Arbeit. Der nächste Schwung wird besser." : "Zusammengesetzte Wörter brauchen Übung — das letzte Wort trägt die Bedeutung."}</p>
-        <button type="button" class="btn btn-coffee" id="wsmNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: wsmSession.richtig, prozent: prozent, tier: "Wortschmied:in",
+      charakter: "Wortschmiede", zeilen: [{ name: "🔨 Geschmiedet", anteil: prozent, wert: wsmSession.richtig + "/" + wsmSession.gesamt }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="wsmNochmalBtn">🔄 Neue Runden</button>`,
+    });
     document.getElementById("wsmNochmalBtn").addEventListener("click", () => { neueWsmSession(); neueWsmRunde(); renderWortschmiede(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["wortschmiede"], points: wsmSession.richtig, bonus: 0, percent: prozent, character: "Wortschmied:in", badges: [], playedAt: new Date().toISOString() });
@@ -12399,6 +13696,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Satzbrücke: " + sbAktuell.a)}
         <p class="eyebrow">🌉 SATZBRÜCKE · RUNDE ${sbSession.runde + 1} / ${sbSession.gesamt} <span class="subnav-info-icon" data-info="Zwei Satzhälften, eine Schlucht dazwischen. Nur das passende Verbindungswort trägt die Brücke. Jede richtige Antwort legt eine Planke.">ⓘ</span></p>
+        ${fortschrittHtml(sbSession.runde, sbSession.gesamt)}
         <div class="trophy-case wsm-chips">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip sb-level-btn ${sbLevel === lvl ? "selected" : ""}" data-sb-level="${lvl}">${lvl}</button>`).join("")}
         </div>
@@ -12426,6 +13724,7 @@
     const gewaehlt = btn.dataset.sbOpt;
     const richtig = gewaehlt === sbAktuell.loesung;
     sbSession.runde += 1;
+    spielNotiz(richtig, `Lösung „${sbAktuell.loesung}“ — ${sbAktuell.erklaerung}`);
     sbZustand = richtig ? "richtig" : "falsch";
     document.querySelectorAll(".sb-option").forEach((b) => { b.disabled = true; });
     const fb = document.getElementById("sbFeedback");
@@ -12450,16 +13749,11 @@
     const area = document.getElementById("satzbrueckeArea");
     const prozent = Math.round((sbSession.richtig / sbSession.gesamt) * 100);
     const geschafft = prozent >= 60;
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🌉 SATZBRÜCKE — ${sbSession.richtig >= sbSession.gesamt ? "BRÜCKE STEHT" : "NOCH LÜCKEN IM WEG"}</p>
-        ${sbBrueckeSvg(sbSession.richtig, sbSession.gesamt, geschafft, true)}
-        <h2 style="margin:10px 0;">${sbSession.richtig} / ${sbSession.gesamt} Planken gelegt</h2>
-        <p class="empty-note">${sbSession.richtig >= sbSession.gesamt
-          ? "Die Brücke ist durchgehend — der Fuchs traut sich hinüber und macht es sich drüben bequem."
-          : `Noch ${sbSession.gesamt - sbSession.richtig} ${sbSession.gesamt - sbSession.richtig === 1 ? "Planke fehlt" : "Planken fehlen"} — der Fuchs bleibt auf dem Felsen stehen und traut sich nicht. Verbinder tragen den ganzen Satz.`}</p>
-        <button type="button" class="btn btn-coffee" id="sbNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: sbSession.richtig, prozent: prozent, tier: "Brückenbauer:in",
+      charakter: "Satzbrücke", zeilen: [{ name: "🌉 Planken gelegt", anteil: prozent, wert: sbSession.richtig + "/" + sbSession.gesamt }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="sbNochmalBtn">🔄 Neue Runden</button>`,
+    });
     document.getElementById("sbNochmalBtn").addEventListener("click", () => { neueSbSession(); neueSbRunde(); renderSatzbruecke(); });
     // Ton erst, wenn der Fuchs wirklich angekommen (oder an der Lücke stehen geblieben) ist —
     // vorher lief der Ton, während die Brücke noch gebaut wurde.
@@ -12578,15 +13872,25 @@
           <g>
             <rect x="${x}" y="80" width="${beetBreite}" height="26" rx="5" fill="url(#agErde)"/>
             <rect x="${x}" y="78" width="${beetBreite}" height="5" rx="2.5" fill="${beet.farbe}"/>
-            ${Array.from({ length: blumen }).map((_, k) => {
-              const bx = x + 9 + (k % 3) * 20;
-              const by = 78 - (k < 3 ? 0 : 12);
+            ${/* Ab der vierten Blume kam bisher eine zweite Reihe dazu, deren
+                  Stängel zwölf Bildpunkte ÜBER der Erde begann — die Blumen
+                  schwebten sichtbar in der Luft. Jetzt wurzelt jede Blume in
+                  der Erde; die hintere Reihe steht nur weiter hinten (höher
+                  im Bild), ist etwas kleiner und wird zuerst gezeichnet,
+                  damit sie hinter der vorderen liegt. */""}
+            ${[...Array.from({ length: blumen }).keys()].sort((a, b) => (b < 3 ? 1 : 0) - (a < 3 ? 1 : 0)).map((k) => {
+              const hinten = k >= 3;
+              const bx = hinten ? x + 15 + (k - 3) * 17 : x + 9 + k * 20;
+              const wurzel = hinten ? 84 : 88;            // beides innerhalb des Erdstreifens (80–106)
+              const stiel = hinten ? 13 : 16;
+              const r = hinten ? 3.4 : 4.2;
+              const kopf = wurzel - stiel - 3;
               return `
                 <g class="ag-blume" style="animation-delay:${k * 70}ms">
-                  <path d="M${bx} ${by} L${bx} ${by - 12}" stroke="#3F7D4E" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M${bx} ${by - 6} q-5 -3 -6 -7 q5 0 6 4" fill="#4E9660"/>
-                  <circle cx="${bx}" cy="${by - 15}" r="4.2" fill="${beet.blume}"/>
-                  <circle cx="${bx}" cy="${by - 15}" r="1.8" fill="#F6CC78"/>
+                  <path d="M${bx} ${wurzel} L${bx} ${wurzel - stiel}" stroke="#3F7D4E" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M${bx} ${wurzel - stiel * 0.5} q-5 -3 -6 -7 q5 0 6 4" fill="#4E9660"/>
+                  <circle cx="${bx}" cy="${kopf}" r="${r}" fill="${beet.blume}"/>
+                  <circle cx="${bx}" cy="${kopf}" r="${r * 0.43}" fill="#F6CC78"/>
                 </g>`;
             }).join("")}
             <text x="${x + beetBreite / 2}" y="97" text-anchor="middle" font-size="11" font-weight="800" fill="#FFF7E9">${beet.label}</text>
@@ -12606,6 +13910,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Artikel-Garten: " + agAktuell.wort)}
         <p class="eyebrow">🌷 ARTIKEL-GARTEN · RUNDE ${agSession.runde + 1} / ${agSession.gesamt} <span class="subnav-info-icon" data-info="Jedes deutsche Substantiv gehört zu genau einem der drei Beete. Pflanze das Wort ins richtige — bei jedem Treffer wächst dort eine Blume.">ⓘ</span></p>
+        ${fortschrittHtml(agSession.runde, agSession.gesamt)}
         <div class="trophy-case wsm-chips">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip ag-level-btn ${agLevel === lvl ? "selected" : ""}" data-ag-level="${lvl}">${lvl}</button>`).join("")}
         </div>
@@ -12630,6 +13935,7 @@
     const gewaehlt = btn.dataset.agBeet;
     const richtig = gewaehlt === agAktuell.loesung;
     agSession.runde += 1;
+    spielNotiz(richtig, `${agAktuell.loesung} ${agAktuell.wort}`);
     agZustand = richtig ? "richtig" : "falsch";
     document.querySelectorAll(".ag-beet-btn").forEach((b) => { b.disabled = true; });
     const fb = document.getElementById("agFeedback");
@@ -12650,15 +13956,11 @@
   function renderArtikelgartenErgebnis() {
     const area = document.getElementById("artikelgartenArea");
     const prozent = Math.round((agSession.richtig / agSession.gesamt) * 100);
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🌷 ARTIKEL-GARTEN — ERNTEZEIT</p>
-        ${agGartenSvg()}
-        <h2 style="margin:10px 0;">${agSession.richtig} / ${agSession.gesamt} Blumen gepflanzt</h2>
-        <p class="empty-note">der: ${agSession.beete.der} · die: ${agSession.beete.die} · das: ${agSession.beete.das}</p>
-        <p class="empty-note" style="margin-top:8px;">${prozent >= 80 ? "Der Garten steht in voller Blüte." : prozent >= 50 ? "Ein paar Lücken im Beet — aber es wächst." : "Artikel lernt man am besten zusammen mit dem Wort, nie einzeln."}</p>
-        <button type="button" class="btn btn-coffee" id="agNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: agSession.richtig, prozent: prozent, tier: "Gärtner:in",
+      charakter: "Artikel-Garten", zeilen: [{ name: "🌷 Blumen gepflanzt", anteil: prozent, wert: agSession.richtig + "/" + agSession.gesamt }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="agNochmalBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("agNochmalBtn").addEventListener("click", () => { neueAgSession(); neueAgRunde(); renderArtikelgarten(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["artikel"], points: agSession.richtig, bonus: 0, percent: prozent, character: "Gärtner:in", badges: [], playedAt: new Date().toISOString() });
@@ -12909,6 +14211,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Wo ist die Katze?: " + kzAktuell.ort.key)}
         <p class="eyebrow">🐈 WO IST DIE KATZE? · RUNDE ${kzSession.runde + 1} / ${kzSession.gesamt} <span class="subnav-info-icon" data-info="Schau, WO die Katze sitzt, und wähle die Präposition, die genau das beschreibt. Das Bild ist die Aufgabe — nicht die Übersetzung.">ⓘ</span></p>
+        ${fortschrittHtml(kzSession.runde, kzSession.gesamt)}
         <div class="trophy-case wsm-chips">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip kz-level-btn ${kzLevel === lvl ? "selected" : ""}" data-kz-level="${lvl}">${lvl}</button>`).join("")}
         </div>
@@ -12932,6 +14235,7 @@
     if (kzZustand !== "warten") return;
     const richtig = btn.dataset.kzOpt === kzAktuell.ort.key;
     kzSession.runde += 1;
+    spielNotiz(richtig, kzAktuell.ort.erkl || kzAktuell.ort.key);
     kzZustand = richtig ? "richtig" : "falsch";
     document.querySelectorAll(".kz-option").forEach((b) => { b.disabled = true; });
     const fb = document.getElementById("kzFeedback");
@@ -12953,14 +14257,11 @@
   function renderKatzenzimmerErgebnis() {
     const area = document.getElementById("katzenzimmerArea");
     const prozent = Math.round((kzSession.richtig / kzSession.gesamt) * 100);
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🐈 WO IST DIE KATZE? — RUNDE FERTIG</p>
-        <p style="font-size:2rem; margin:8px 0;">${prozent >= 80 ? "🏆" : prozent >= 50 ? "🐈" : "🧶"}</p>
-        <h2 style="margin:8px 0;">${kzSession.richtig} / ${kzSession.gesamt} richtig</h2>
-        <p class="empty-note">${prozent >= 80 ? "Du siehst den Raum wie ein Muttersprachler." : "Präpositionen sitzen erst, wenn man sie sieht statt übersetzt — dranbleiben."}</p>
-        <button type="button" class="btn btn-coffee" id="kzNochmalBtn" style="margin-top:14px;">🔄 Neue Runden</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: kzSession.richtig, prozent: prozent, tier: "Raumkenner:in",
+      charakter: "Wo ist die Katze?", zeilen: [{ name: "🐈 Gefunden", anteil: prozent, wert: kzSession.richtig + "/" + kzSession.gesamt }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="kzNochmalBtn">🔄 Neue Runde</button>`,
+    });
     document.getElementById("kzNochmalBtn").addEventListener("click", () => { neueKzSession(); neueKzRunde(); renderKatzenzimmer(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["katzenzimmer"], points: kzSession.richtig, bonus: 0, percent: prozent, character: "Raumkenner:in", badges: [], playedAt: new Date().toISOString() });
@@ -13058,6 +14359,7 @@
           <p>${blitzSession.richtig} richtig · ${blitzSession.falsch} falsch · ${genauigkeit}% Trefferquote</p>
           <p class="empty-note">Längste Serie ohne Fehler: <strong>${blitzSession.besteSerie}</strong></p>
           <p class="empty-note" style="margin-top:8px;">${blitzSession.besteSerie >= 10 ? "Das war sicher gespielt — nicht geraten." : "Tipp: Der Multiplikator wächst nur, solange du keinen Fehler machst. Ruhig lesen lohnt sich mehr als schnell tippen."}</p>
+          <button type="button" class="btn btn-ghost" data-zur-auswertung="1" style="margin-top:14px;">✉️ Ergebnis im Postfach</button>
           <button type="button" class="btn btn-coffee" id="blitzNochmal" style="margin-top:14px;">🔄 Neue Runde</button>
         </div>`;
       document.getElementById("blitzNochmal").addEventListener("click", () => { neueBlitzSession(); renderBlitzrunde(); });
@@ -13082,7 +14384,7 @@
     area.innerHTML = `
       <div class="question-card">
         <div class="question-meta"><span class="cat-tag">${q.catTitle}</span> · ⏱️ <strong id="blitzZeit">${blitzSession.zeit} s</strong> · ${blitzSession.punkte} Punkte · Multiplikator ×${multi}</div>
-        <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(blitzSession.zeit / BLITZ_DAUER) * 100}%"></div></div>
+        ${fortschrittHtml(blitzSession.zeit, BLITZ_DAUER)}
         <div class="question-prompt" style="margin-top:10px;">${q.prompt.replace("___", '<span class="blank-slot">___</span>')}</div>
         <div class="option-list">
           ${q.options.map((opt, i) => `<button type="button" class="option-btn blitz-opt" data-idx="${i}"><span>${opt}</span></button>`).join("")}
@@ -13091,6 +14393,7 @@
       </div>`;
     area.querySelectorAll(".blitz-opt").forEach((b) => b.addEventListener("click", () => {
       const richtig = q.correct.includes(Number(b.dataset.idx));
+      spielNotiz(richtig, `${q.prompt} → ${q.options[q.correct[0]]}`);
       if (richtig) {
         blitzSession.richtig += 1;
         blitzSession.serie += 1;
@@ -13159,6 +14462,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Wortangler: " + s.regel.text)}
         <p class="eyebrow">🎣 WORTANGLER · RUNDE ${s.runde + 1} / ${s.gesamt} <span class="subnav-info-icon" data-info="Im Teich schwimmen Wörter. Tippe genau die an, die zur Regel oben passen — die anderen lässt du schwimmen. Alle Wörter kommen aus dem Wörterbuch der Seite.">ⓘ</span></p>
+        ${fortschrittHtml(s.runde, s.gesamt)}
         <div class="trophy-case wsm-chips">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip angler-level-btn ${anglerLevel === lvl ? "selected" : ""}" data-angler-level="${lvl}">${lvl}</button>`).join("")}
         </div>
@@ -13177,7 +14481,9 @@
     area.querySelectorAll("[data-angler]").forEach((b) => b.addEventListener("click", () => {
       const e = s.teich[Number(b.dataset.angler)];
       e.gefangen = true;
-      if (s.passt(e)) { s.richtig += 1; Core.sound.correct(); } else { s.falsch += 1; Core.sound.wrong(); }
+      const passt = s.passt(e);
+      spielNotiz(passt, `${e.word} — ${e.meaning}`);
+      if (passt) { s.richtig += 1; Core.sound.correct(); } else { s.falsch += 1; Core.sound.wrong(); }
       renderWortangler();
     }));
     document.getElementById("anglerWeiter").addEventListener("click", () => {
@@ -13192,14 +14498,11 @@
     const s = anglerSession;
     const punkte = Math.max(0, s.richtig * 2 - s.falsch);
     const prozent = Math.round((s.richtig / Math.max(1, s.richtig + s.falsch + s.verpasst)) * 100);
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🎣 WORTANGLER — RUNDE FERTIG</p>
-        <h2 style="margin:10px 0;">${s.richtig} richtige Fänge</h2>
-        <p>${s.falsch} Fehlgriffe · ${s.verpasst} entwischt · ${punkte} Punkte</p>
-        <p class="empty-note" style="margin-top:8px;">${prozent >= 80 ? "Du erkennst Artikel und Themen schon sehr sicher." : "Tipp: Bei Nomen hilft die Endung — „-ung“, „-heit“ und „-keit“ sind immer „die“."}</p>
-        <button type="button" class="btn btn-coffee" id="anglerNochmal" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: punkte, prozent: prozent, tier: "Wortangler:in",
+      charakter: "Wortangler", zeilen: [{ name: "🎣 Richtig gefangen", anteil: prozent, wert: String(s.richtig) }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="anglerNochmal">🔄 Neue Runde</button>`,
+    });
     document.getElementById("anglerNochmal").addEventListener("click", () => { neueAnglerSession(); renderWortangler(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["wortangler"], points: punkte, bonus: 0, percent: prozent, character: "Wortangler:in", badges: [], playedAt: new Date().toISOString() });
@@ -13254,6 +14557,7 @@
           ${leiterSvg(LEITER_STUFEN.length - 1, s.geschafft)}
           <h2 style="margin:10px 0;">${s.geschafft.length} von ${LEITER_STUFEN.length} Stufen</h2>
           <p class="empty-note">${s.geschafft.length === LEITER_STUFEN.length ? "Von A1 bis C2 durchgeklettert — das schafft nicht jede und jeder." : `Bis ${s.geschafft[s.geschafft.length - 1] || "A1"} bist du gekommen. Beim nächsten Mal weiter.`}</p>
+          <button type="button" class="btn btn-ghost" data-zur-auswertung="1" style="margin-top:14px;">✉️ Ergebnis im Postfach</button>
           <button type="button" class="btn btn-coffee" id="leiterNochmal" style="margin-top:14px;">🔄 Von vorn</button>
         </div>`;
       document.getElementById("leiterNochmal").addEventListener("click", () => { neueLeiterSession(); renderWortleiter(); });
@@ -13268,6 +14572,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Wortleiter " + level + ": " + q.prompt)}
         <p class="eyebrow">🧗 WORTLEITER · STUFE ${level} <span class="subnav-info-icon" data-info="Auf jeder Stufe warten drei Aufgaben dieses Niveaus. Schaffst du sie, geht es eine Stufe höher — bis hinauf nach C2. Zwei Fehler auf derselben Stufe beenden den Aufstieg.">ⓘ</span></p>
+        ${fortschrittHtml(s.geschafft.length, LEITER_STUFEN.length)}
         <div style="display:flex; gap:14px; align-items:center;">
           ${leiterSvg(s.stufe, s.geschafft)}
           <div style="flex:1; min-width:0;">
@@ -13343,6 +14648,7 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Silbenturm: " + w.word)}
         <p class="eyebrow">🧱 SILBENTURM · RUNDE ${s.runde + 1} / ${s.gesamt} <span class="subnav-info-icon" data-info="Ein Wort ist in seine Silben zerfallen. Bau es von unten nach oben wieder zusammen — und sag danach, welche Silbe betont wird.">ⓘ</span></p>
+        ${fortschrittHtml(s.runde, s.gesamt)}
         <div class="trophy-case wsm-chips">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip turm-level-btn ${turmLevel === lvl ? "selected" : ""}" data-turm-level="${lvl}">${lvl}</button>`).join("")}
         </div>
@@ -13384,6 +14690,7 @@
     area.querySelectorAll("[data-turm-betonung]").forEach((b) => b.addEventListener("click", () => {
       const gewaehlt = Number(b.dataset.turmBetonung);
       const box = document.getElementById("turmFeedback");
+      spielNotiz(gewaehlt === w.betontIdx, `${w.wort || w.word || w.syl} — betont: ${w.silben[w.betontIdx] || "?"}`);
       if (gewaehlt === w.betontIdx) {
         s.richtig += 1;
         Core.sound.fanfare();
@@ -13400,13 +14707,11 @@
     const area = document.getElementById("silbenturmArea");
     const s = turmSession;
     const prozent = Math.round((s.richtig / Math.max(1, s.gesamt)) * 100);
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🧱 SILBENTURM — RUNDE FERTIG</p>
-        <h2 style="margin:10px 0;">${s.richtig} / ${s.gesamt} richtig betont</h2>
-        <p class="empty-note">${prozent >= 70 ? "Du hörst die Betonung schon sehr sicher heraus." : "Tipp: Bei den meisten deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Vorsilben wie be-, ge-, ver-, ent- sind nie betont."}</p>
-        <button type="button" class="btn btn-coffee" id="turmNochmal" style="margin-top:14px;">🔄 Neue Runde</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: s.richtig * 2, prozent: prozent, tier: "Silbenbaumeister:in",
+      charakter: "Silbenturm", zeilen: [{ name: "🧱 Richtig betont", anteil: prozent, wert: s.richtig + "/" + s.gesamt }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="turmNochmal">🔄 Neue Runde</button>`,
+    });
     document.getElementById("turmNochmal").addEventListener("click", () => { neueTurmSession(); renderSilbenturm(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["silbenturm"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Silbenbaumeister:in", badges: [], playedAt: new Date().toISOString() });
@@ -13469,6 +14774,7 @@
     const s = sortSession;
     const karte = s.karten[s.index];
     const korrekt = thema === karte.thema;
+    spielNotiz(korrekt, `${karte.wort || karte.text || ""} → ${karte.thema}`);
     if (korrekt) {
       s.richtig += 1;
       s.serie += 1;
@@ -13515,7 +14821,7 @@
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">🧺 <strong>Wörter-Sortierer</strong> — in welches Wortfeld gehört das Wort? Die Wörter kommen aus dem Wörterbuch und richten sich nach deinem Niveau.</p>
       ${niveauReihe}
-      <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(s.index / s.karten.length) * 100}%"></div></div>
+      ${fortschrittHtml(s.index, s.karten.length)}
       <div class="question-card">
         ${miniBugReportBtnHtml("Wörter-Sortierer: " + karte.wort)}
         <div class="question-meta"><span class="cat-tag">🧺 Wort ${s.index + 1} / ${s.karten.length}</span> · Serie: ${s.serie}${s.serie >= 3 ? " 🔥" : ""}</div>
@@ -13537,25 +14843,11 @@
     const area = document.getElementById("sortiererArea");
     const s = sortSession;
     const prozent = Math.round((s.richtig / Math.max(1, s.karten.length)) * 100);
-    area.innerHTML = `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">🧺 WÖRTER-SORTIERER — RUNDE FERTIG</p>
-        <h2 style="margin:10px 0;">${s.richtig} / ${s.karten.length} richtig einsortiert</h2>
-        <p class="empty-note">Längste Serie: ${s.besteSerie} · Niveau ${sortLevel}</p>
-        <p class="empty-note" style="margin-top:8px;">${prozent >= 80
-          ? "Du hast ein sicheres Gefühl dafür, wohin ein Wort gehört."
-          : "Tipp: Frag dich, in welcher Situation du das Wort hören würdest — beim Arzt, im Amt, in der Küche. Das Wortfeld ergibt sich meist daraus."}</p>
-      </div>
-      ${s.fehler.length ? `
-      <div class="question-card" style="margin-top:12px;">
-        <p class="eyebrow" style="margin-top:0;">📌 Zum Nachlesen</p>
-        <div class="breakdown-list">
-          ${s.fehler.map((f) => `<div class="breakdown-row"><span><strong>${f.wort}</strong> — ${f.thema}</span><span class="empty-note">${f.bedeutung}</span></div>`).join("")}
-        </div>
-      </div>` : ""}
-      <div class="quiz-actions" style="justify-content:center; margin-top:14px;">
-        <button type="button" class="btn btn-coffee" id="sortNochmal">🔄 Neue Runde</button>
-      </div>`;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: s.richtig * 2, prozent: prozent, tier: "Sortierprofi",
+      charakter: "Wörter-Sortierer", zeilen: [{ name: "🧺 Richtig einsortiert", anteil: prozent, wert: s.richtig + "/" + s.karten.length }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="sortNochmal">🔄 Neue Runde</button>`,
+    });
     document.getElementById("sortNochmal").addEventListener("click", () => { sortSession = null; renderSortierer(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["sortierer"], points: s.richtig * 2, bonus: s.besteSerie >= 6 ? 5 : 0,
@@ -13564,6 +14856,101 @@
   }
 
   document.querySelector('#learnSubnav [data-sub="sub-sortierer"]')?.addEventListener("click", () => renderSortierer());
+
+
+  /* ------------------------------------------------------------------
+     Selbstgezeichnete Buchstaben für die Spieltitel.
+     Jeder Eintrag ist eine Liste von Teilstrichen (SVG-Pfaddaten) auf
+     einem Feld 100 x 140. Grundlinie 120, Oberkante 20.
+     ------------------------------------------------------------------ */
+  const BUCHSTABEN_BREITE = 100;
+  const BUCHSTABEN_HOEHE = 140;
+  const BUCHSTABEN = {
+    A: ["M12 120 L50 22 L88 120", "M27 82 L73 82"],
+    B: ["M22 22 L22 120", "M22 22 L60 22 Q84 22 84 46 Q84 68 58 70 L22 70", "M22 70 L62 70 Q88 70 88 95 Q88 120 60 120 L22 120"],
+    C: ["M84 40 Q68 20 48 20 Q16 20 16 71 Q16 122 48 122 Q68 122 84 102"],
+    D: ["M22 22 L22 120", "M22 22 L52 22 Q86 22 86 71 Q86 120 52 120 L22 120"],
+    E: ["M84 22 L22 22 L22 120 L84 120", "M22 70 L72 70"],
+    F: ["M84 22 L22 22 L22 120", "M22 70 L70 70"],
+    G: ["M84 40 Q68 20 48 20 Q16 20 16 71 Q16 122 48 122 Q84 122 84 88 L84 74 L54 74"],
+    H: ["M20 22 L20 120", "M80 22 L80 120", "M20 70 L80 70"],
+    I: ["M24 22 L24 120"],
+    J: ["M70 22 L70 92 Q70 122 44 122 Q20 122 18 98"],
+    K: ["M22 22 L22 120", "M82 22 L26 70", "M42 57 L84 120"],
+    L: ["M24 22 L24 120 L84 120"],
+    M: ["M18 120 L18 22 L50 82 L82 22 L82 120"],
+    N: ["M20 120 L20 22 L80 120 L80 22"],
+    O: ["M50 20 Q16 20 16 71 Q16 122 50 122 Q84 122 84 71 Q84 20 50 20"],
+    P: ["M22 120 L22 22 L58 22 Q88 22 88 50 Q88 78 58 78 L22 78"],
+    Q: ["M50 20 Q16 20 16 71 Q16 122 50 122 Q84 122 84 71 Q84 20 50 20", "M62 96 L90 128"],
+    R: ["M22 120 L22 22 L58 22 Q86 22 86 48 Q86 74 56 74 L22 74", "M50 74 L86 120"],
+    S: ["M82 40 Q74 20 48 20 Q18 20 18 46 Q18 68 50 72 Q84 76 84 98 Q84 122 50 122 Q22 122 14 100"],
+    T: ["M50 22 L50 120", "M14 22 L86 22"],
+    U: ["M20 22 L20 88 Q20 122 50 122 Q80 122 80 88 L80 22"],
+    V: ["M14 22 L50 120 L86 22"],
+    W: ["M10 22 L28 120 L50 52 L72 120 L90 22"],
+    X: ["M18 22 L82 120", "M82 22 L18 120"],
+    Y: ["M18 22 L50 72 L82 22", "M50 72 L50 120"],
+    Z: ["M18 22 L82 22 L18 120 L82 120"],
+    "Ä": ["M12 120 L50 22 L88 120", "M27 82 L73 82", "M34 6 L34 14", "M66 6 L66 14"],
+    "Ö": ["M50 20 Q16 20 16 71 Q16 122 50 122 Q84 122 84 71 Q84 20 50 20", "M34 6 L34 14", "M66 6 L66 14"],
+    "Ü": ["M20 22 L20 88 Q20 122 50 122 Q80 122 80 88 L80 22", "M34 6 L34 14", "M66 6 L66 14"],
+    "ß": ["M24 120 L24 44 Q24 20 48 20 Q72 20 72 40 Q72 58 52 64 Q80 68 80 92 Q80 116 54 116 Q38 116 32 106"],
+    "0": ["M50 20 Q18 20 18 71 Q18 122 50 122 Q82 122 82 71 Q82 20 50 20", "M30 104 L70 38"],
+    "1": ["M28 44 L52 22 L52 120", "M30 120 L76 120"],
+    "2": ["M20 44 Q22 20 50 20 Q80 20 80 46 Q80 68 20 120 L84 120"],
+    "3": ["M20 40 Q26 20 52 20 Q80 20 80 44 Q80 66 52 68 Q82 70 82 96 Q82 122 50 122 Q24 122 18 102"],
+    "4": ["M66 120 L66 22 L16 88 L86 88"],
+    "5": ["M80 22 L30 22 L26 64 Q40 56 54 56 Q84 56 84 89 Q84 122 50 122 Q24 122 18 104"],
+    "6": ["M76 30 Q66 20 50 20 Q20 20 20 74 Q20 122 52 122 Q82 122 82 92 Q82 64 52 64 Q26 64 20 84"],
+    "7": ["M16 22 L84 22 L44 120"],
+    "8": ["M50 68 Q20 68 20 95 Q20 122 50 122 Q80 122 80 95 Q80 68 50 68", "M50 68 Q24 66 24 44 Q24 20 50 20 Q76 20 76 44 Q76 66 50 68"],
+    "9": ["M24 112 Q34 122 50 122 Q80 122 80 68 Q80 20 48 20 Q18 20 18 50 Q18 78 48 78 Q74 78 80 58"],
+    "-": ["M22 74 L78 74"],
+    "!": ["M50 22 L50 90", "M50 112 L50 118"],
+    "?": ["M20 44 Q22 20 50 20 Q80 20 80 46 Q80 68 50 76 L50 92", "M50 112 L50 118"],
+    "&": ["M84 120 Q40 120 26 96 Q14 74 40 60 Q62 48 60 34 Q58 20 44 20 Q28 20 28 36 Q28 52 50 72 L84 108"],
+    ":": ["M50 52 L50 58", "M50 96 L50 102"],
+    ".": ["M50 112 L50 118"],
+    ",": ["M52 110 L46 126"],
+  };
+  /* Der Abstand nach einem Buchstaben. Schmale Zeichen bekommen weniger,
+     damit „TI“ nicht auseinanderfällt und „MW“ nicht zusammenklebt. */
+  const BUCHSTABEN_ABSTAND = { I: 44, "1": 58, ".": 38, ",": 38, ":": 38, "!": 42, "-": 62, M: 100, W: 100, J: 74, L: 76, T: 76, " ": 40 };
+
+  /* Ein Schriftzug aus eigener Geometrie statt aus einer Schriftart.
+     hoehe   die Zeilenhöhe in Bildpunkten
+     farbe   eine CSS-Farbe oder "currentColor"
+     staerke die Strichstärke im Buchstabenfeld (100 breit) */
+  function svgSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const hoehe = o.hoehe || 34;
+    const farbe = o.farbe || "currentColor";
+    const staerke = o.staerke || 10;
+    const zeichen = String(text).toUpperCase().split("");
+    let x = 0;
+    const teile = [];
+    zeichen.forEach((z) => {
+      const breite = BUCHSTABEN_ABSTAND[z] || 78;
+      const pfade = BUCHSTABEN[z];
+      if (pfade) {
+        pfade.forEach((d, n) => {
+          /* Jeder Strich schwankt ein wenig in der Stärke — das ist der
+             Unterschied zwischen „gezeichnet“ und „konstruiert“. */
+          const abweichung = ((z.charCodeAt(0) + n * 7) % 5) - 2;
+          teile.push('<path d="' + d + '" transform="translate(' + x + ' 0)" fill="none" stroke="' + farbe
+            + '" stroke-width="' + (staerke + abweichung * 0.6) + '" stroke-linecap="round" stroke-linejoin="round"/>');
+        });
+      }
+      x += breite;
+    });
+    /* Die Tinte eines Buchstabens reicht bis etwa 90, sein Platz aber nur
+       bis 78 — ohne diesen Zuschlag würde der letzte angeschnitten. */
+    const gesamtBreite = Math.max(x + 14, 1);
+    return '<svg class="wortlogo" viewBox="-4 -4 ' + (gesamtBreite + 8) + ' ' + (BUCHSTABEN_HOEHE + 8) + '" height="' + hoehe
+      + '" width="' + Math.round((gesamtBreite / BUCHSTABEN_HOEHE) * hoehe) + '" role="img" aria-label="' + String(text).replace(/"/g, "&quot;")
+      + '" preserveAspectRatio="xMinYMid meet">' + teile.join("") + "</svg>";
+  }
 
   const GAMES_OVERVIEW_LIST = [
     { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
@@ -13624,7 +15011,9 @@
     // WICHTIG: canModerate() zusätzlich zu isFeatureOn() geprüft — sonst wäre die Liste
     // inkonsistent mit renderComingSoonGate() selbst (das ja auch Admins/Moderator:innen immer
     // durchlässt, nicht nur Owner/Beta-Tester:innen wie isFeatureOn() allein).
-    const canSeeGatedGames = Backend.canModerate && Backend.canModerate();
+    const istBeta = Boolean(Backend.isBetaTester && Backend.isBetaTester());
+    const canSeeGatedGames = (Backend.canModerate && Backend.canModerate()) || istBeta;
+    const gesperrte = GAMES_OVERVIEW_LIST.filter((g) => g.flagKey && !Backend.getRawFeatureFlag(g.flagKey));
     const visibleGames = GAMES_OVERVIEW_LIST
       .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames)
       // Verlässlich alphabetisch sortieren (mit deutschen Umlauten korrekt einsortiert),
@@ -13638,6 +15027,12 @@
     // sollten. Jetzt eigene Klassen, unabhängig vom Kompass-Kachel-Design.
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>
+      ${istBeta && gesperrte.length ? `<div class="beta-hinweis">
+        <strong>🧪 Du bist Beta-Tester:in.</strong>
+        Deshalb siehst du hier auch ${gesperrte.length} ${gesperrte.length === 1 ? "Spiel" : "Spiele"}, die für alle anderen noch nicht freigegeben sind:
+        ${gesperrte.map((g) => g.name).join(", ")}.
+        Wenn dort etwas nicht stimmt, nutze bitte den Fehler-Knopf im Spiel — die Meldung kommt mit dem aktuellen Spielstand direkt an.
+      </div>` : ""}
       <div class="games-pill-list">
         ${visibleGames.map((g) => `
           <button type="button" class="games-pill" data-game-sub="${g.sub}">
@@ -13654,6 +15049,351 @@
     });
   }
   document.querySelector('#learnSubnav [data-sub="sub-games"]')?.addEventListener("click", renderGamesOverview);
+
+  /* ------------------------------------------------------------------
+     Der Spieltitel als gezeichneter Schriftzug
+     ------------------------------------------------------------------
+     Jedes Spiel bekommt seinen Namen oben als eigene Geometrie — nicht
+     als Schriftart, sondern aus Strichen und Bögen, die hier gezeichnet
+     werden. Statt das in 22 Spielen einzeln einzubauen, hängt es an
+     EINER Stelle: sobald ein Spielbereich geöffnet wird, kommt der
+     Schriftzug davor, falls er noch nicht dasteht. So kann er bei einem
+     neuen Spiel auch nicht vergessen werden. */
+  /* ============================================================
+     DER SCHRIFTZUG JEDES SPIELS — EIGENE GEOMETRIE, EIGENE FORM
+     ------------------------------------------------------------
+     Die Buchstaben stammen nicht aus einer Schriftart, sondern aus
+     der eigenen Geometrie oben (BUCHSTABEN). Damit jedes Spiel
+     seinen eigenen Schriftzug bekommt, wird diese Geometrie hier
+     unterschiedlich ANGEORDNET — passend zum Spiel:
+
+       Kreuzworträtsel  „KREUZWORT“ waagerecht, „RÄTSEL“ senkrecht
+                        durch das R hindurch, wie im Gitter
+       Silbenturm       jeder Buchstabe eine Stufe höher, wie Steine
+       Wortleiter       aufsteigende Treppe
+       Satzbrücke       auf einem Bogen, wie eine Brücke
+       Wortblasen       jeder Buchstabe steigt anders hoch
+       Wackelturm       gestapelt und leicht gekippt
+       Buchstabensalat  durcheinandergewürfelt und gedreht
+       Wort-Kanone      auf einer Flugbahn
+       Wortangler       hängend, wie an der Angelschnur
+
+     Jede Anordnung benutzt dieselben Striche — es entsteht keine
+     zweite Schrift, sondern dieselbe Handschrift in anderer Lage.
+     ============================================================ */
+  function buchstabenPfade(z, x, y, drehung, farbe, staerke, skala) {
+    const pfade = BUCHSTABEN[z];
+    if (!pfade) return "";
+    const s = skala || 1;
+    const dreh = drehung ? ` rotate(${drehung} 50 70)` : "";
+    const groesse = s !== 1 ? ` scale(${s})` : "";
+    return pfade.map((d, n) => {
+      const abweichung = ((z.charCodeAt(0) + n * 7) % 5) - 2;
+      return `<path d="${d}" transform="translate(${x} ${y})${groesse}${dreh}" fill="none" stroke="${farbe}"`
+        + ` stroke-width="${staerke + abweichung * 0.6}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }).join("");
+  }
+  /* ------------------------------------------------------------------
+     BALLONSCHRIFT — für die Wortblasen
+     ------------------------------------------------------------------
+     Ballonkünstler biegen EINEN langen Schlauch zu einem Buchstaben.
+     Genau so entsteht diese Schrift: derselbe Strichverlauf wie sonst,
+     aber als dicker, praller Schlauch mit rundem Ende, einem hellen
+     Glanzlicht obendrauf und einem kleinen Knoten am Fuß. Es ist keine
+     Schrift, in die Blasen gemalt wurden — die Buchstaben SIND der
+     Ballon. */
+  /* Die Ballonfarben. Bewusst kräftig und unterschiedlich — ein
+     Ballonstrauß ist nie einfarbig. Die Reihenfolge wiederholt sich
+     nach sieben Buchstaben, aber nie zwei gleiche nebeneinander. */
+  const BLASEN_FARBEN = ["#E8608A", "#F2B84B", "#5B8DEF", "#4FA88E", "#E8825F", "#9B6BD6", "#3FBFD1"];
+  function blasenSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const hoehe = o.hoehe || 60;
+    const zeichen = String(text).toUpperCase().split("");
+    const teile = [];
+    let x = 0;
+    zeichen.forEach((z, i) => {
+      const breite = (BUCHSTABEN_ABSTAND[z] || 78) + 20;
+      const farbe = BLASEN_FARBEN[i % BLASEN_FARBEN.length];
+      const pfade = BUCHSTABEN[z];
+      if (pfade) {
+        // Ein dunklerer Rand gibt dem Schlauch Rundung …
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x} 0)" fill="none" stroke="rgba(0,0,0,0.22)"`
+            + ` stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>`);
+        });
+        // … darauf der pralle, farbige Ballon …
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x} 0)" fill="none" stroke="${farbe}"`
+            + ` stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>`);
+        });
+        // … und das Glanzlicht, leicht versetzt, damit er gewölbt wirkt.
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x - 6} -7)" fill="none" stroke="#fff"`
+            + ` stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>`);
+        });
+        // Der Knoten, mit dem der Ballon zugebunden ist.
+        teile.push(`<circle cx="${x + 50}" cy="136" r="9" fill="${farbe}"/>`);
+        teile.push(`<path d="M${x + 50} 145 q6 10 -4 16" stroke="${farbe}" stroke-width="4" fill="none" opacity="0.75"/>`);
+      }
+      x += breite;
+    });
+    const breiteGesamt = x + 30;
+    const hoeheGesamt = BUCHSTABEN_HOEHE + 76;
+    return `<svg class="wortlogo" viewBox="-22 -28 ${breiteGesamt + 22} ${hoeheGesamt}" height="${hoehe}"`
+      + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
+      + ` aria-label="${String(text).replace(/"/g, "&quot;")}" preserveAspectRatio="xMinYMid meet">${teile.join("")}</svg>`;
+  }
+
+  /* ------------------------------------------------------------------
+     WUCHTSCHRIFT — für die Wort-Kanone
+     ------------------------------------------------------------------
+     Schwere, gedrungene Buchstaben mit harten Enden, dahinter eine
+     Druckwelle aus kurzen Splittern. Die Buchstaben fliegen leicht
+     auseinander, als hätte sie gerade etwas fortgeschleudert. */
+  /* Die Farben der Wucht: von der glühenden Mitte nach außen kühler,
+     wie bei etwas, das gerade abgefeuert wurde. */
+  const WUCHT_FARBEN = ["#FFD24A", "#F79A2B", "#E8603A", "#D6392B", "#F2B84B", "#FF7A45"];
+  function wuchtSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const hoehe = o.hoehe || 58;
+    const zeichen = String(text).toUpperCase().split("");
+    const teile = [];
+    let x = 0, minY = -40;
+    zeichen.forEach((z, i) => {
+      const breite = (BUCHSTABEN_ABSTAND[z] || 78) + 12;
+      const pfade = BUCHSTABEN[z];
+      const t = zeichen.length > 1 ? i / (zeichen.length - 1) : 0;
+      const y = -t * 26;                       // die Flugbahn
+      const kipp = (t - 0.4) * 22;
+      const farbe = WUCHT_FARBEN[i % WUCHT_FARBEN.length];
+      if (pfade) {
+        // Die Druckwelle hinter dem Buchstaben
+        for (let k = 0; k < 4; k++) {
+          const w = ((z.charCodeAt(0) + k * 47) % 360) * Math.PI / 180;
+          const r = 70 + ((k * 23) % 28);
+          teile.push(`<path d="M${x + 50 + Math.cos(w) * 46} ${y + 70 + Math.sin(w) * 46}`
+            + ` L${x + 50 + Math.cos(w) * r} ${y + 70 + Math.sin(w) * r}" stroke="${farbe}"`
+            + ` stroke-width="7" stroke-linecap="round" opacity="0.45"/>`);
+        }
+        // Ein dunkler Kern, damit der Buchstabe Gewicht bekommt …
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x + 4} ${y + 5}) rotate(${kipp} 50 70)" fill="none"`
+            + ` stroke="rgba(0,0,0,0.32)" stroke-width="30" stroke-linecap="butt" stroke-linejoin="miter"/>`);
+        });
+        // … darüber die glühende Farbe …
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x} ${y}) rotate(${kipp} 50 70)" fill="none"`
+            + ` stroke="${farbe}" stroke-width="28" stroke-linecap="butt" stroke-linejoin="miter"/>`);
+        });
+        // … und ein heller Grat auf der Oberseite.
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x - 3} ${y - 4}) rotate(${kipp} 50 70)" fill="none"`
+            + ` stroke="#FFF1C9" stroke-width="6" stroke-linecap="butt" stroke-linejoin="miter" opacity="0.7"/>`);
+        });
+      }
+      x += breite;
+      minY = Math.min(minY, y - 50);
+    });
+    const breiteGesamt = x + 36;
+    const hoeheGesamt = BUCHSTABEN_HOEHE - minY + 56;
+    return `<svg class="wortlogo" viewBox="-28 ${minY} ${breiteGesamt + 28} ${hoeheGesamt}" height="${hoehe}"`
+      + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
+      + ` aria-label="${String(text).replace(/"/g, "&quot;")}" preserveAspectRatio="xMinYMid meet">${teile.join("")}</svg>`;
+  }
+
+  /* ------------------------------------------------------------------
+     MAUERSCHRIFT — für den Silbenturm und den Wackelturm
+     ------------------------------------------------------------------
+     Jeder Buchstabe sitzt in seinem eigenen Stein, die Steine sind
+     versetzt gestapelt wie in einer Mauer. Der Turm wächst nach oben,
+     und die obersten Steine stehen schon ein wenig schief. */
+  /* Die Steine des Turms: gebrannte Ziegel in leicht verschiedenen
+     Tönen, wie sie in einer echten Mauer nebeneinander liegen. Die
+     Buchstaben stehen hell darin, sonst wären sie nicht zu lesen. */
+  const MAUER_STEINE = ["#C0693F", "#A9542F", "#D07B4C", "#B45E36", "#CE7043", "#9C4D2B"];
+  function mauerSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const hoehe = o.hoehe || 62;
+    const zeichen = String(text).toUpperCase().split("");
+    const teile = [];
+    let x = 0, minY = 0;
+    zeichen.forEach((z, i) => {
+      const breite = 96;
+      const y = -i * 10;
+      const kipp = i > zeichen.length - 4 ? (i - zeichen.length + 4) * 3 : 0;
+      const stein = MAUER_STEINE[i % MAUER_STEINE.length];
+      const dreh = `rotate(${kipp} ${x + 45} ${y + 63})`;
+      // Der Stein …
+      teile.push(`<rect x="${x - 6}" y="${y - 14}" width="106" height="156" rx="10" fill="${stein}"`
+        + ` stroke="rgba(0,0,0,0.28)" stroke-width="4" transform="${dreh}"/>`);
+      // … eine hellere Oberkante, damit er plastisch wirkt …
+      teile.push(`<rect x="${x - 6}" y="${y - 14}" width="106" height="16" rx="8" fill="#fff" opacity="0.18" transform="${dreh}"/>`);
+      const pfade = BUCHSTABEN[z];
+      if (pfade) {
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x + 3} ${y + 4}) rotate(${kipp} 50 70)" fill="none"`
+            + ` stroke="rgba(0,0,0,0.35)" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter"/>`);
+        });
+        pfade.forEach((d) => {
+          teile.push(`<path d="${d}" transform="translate(${x} ${y}) rotate(${kipp} 50 70)" fill="none"`
+            + ` stroke="#FFF3DF" stroke-width="17" stroke-linecap="square" stroke-linejoin="miter"/>`);
+        });
+      }
+      x += breite;
+      minY = Math.min(minY, y - 22);
+    });
+    const breiteGesamt = x + 14;
+    const hoeheGesamt = BUCHSTABEN_HOEHE - minY + 40;
+    return `<svg class="wortlogo" viewBox="-12 ${minY} ${breiteGesamt + 12} ${hoeheGesamt}" height="${hoehe}"`
+      + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
+      + ` aria-label="${String(text).replace(/"/g, "&quot;")}" preserveAspectRatio="xMinYMid meet">${teile.join("")}</svg>`;
+  }
+
+  function spielSchriftzug(text, form, optionen) {
+    const o = optionen || {};
+    const farbe = o.farbe || "currentColor";
+    const staerke = o.staerke || 10;
+    const hoehe = o.hoehe || 46;
+    const zeichen = String(text).toUpperCase().split("");
+    const teile = [];
+    let x = 0, minY = 0, maxY = BUCHSTABEN_HOEHE;
+    zeichen.forEach((z, i) => {
+      const breite = BUCHSTABEN_ABSTAND[z] || 78;
+      let y = 0, drehung = 0;
+      if (form === "treppe") y = -i * 16;
+      else if (form === "turm") y = -i * 12 + (i % 2 ? 6 : 0);
+      else if (form === "bogen") {
+        // Eine Brücke: die Mitte liegt höher als die Enden.
+        const t = zeichen.length > 1 ? i / (zeichen.length - 1) : 0.5;
+        y = -Math.sin(t * Math.PI) * 62;
+        drehung = (t - 0.5) * 34;
+      } else if (form === "blasen") y = -((i * 37) % 44);
+      else if (form === "gekippt") { y = -i * 10; drehung = ((i % 3) - 1) * 7; }
+      else if (form === "gestreut") { y = ((i * 53) % 40) - 20; drehung = ((i * 71) % 34) - 17; }
+      else if (form === "flug") {
+        const t = zeichen.length > 1 ? i / (zeichen.length - 1) : 0;
+        y = -Math.sin(t * Math.PI) * 34 + t * 22;
+        drehung = (t - 0.35) * 30;
+      } else if (form === "haengend") y = 18 + ((i * 29) % 34);
+      teile.push(buchstabenPfade(z, x, y, drehung, farbe, staerke));
+      minY = Math.min(minY, y - 8);
+      maxY = Math.max(maxY, y + BUCHSTABEN_HOEHE + 8);
+      x += breite;
+    });
+    if (form === "haengend") {
+      // Die Angelschnur, an der die Buchstaben hängen.
+      teile.unshift(`<path d="M0 -6 L${x} -6" stroke="${farbe}" stroke-width="3" opacity="0.5"/>`);
+      minY = Math.min(minY, -12);
+    }
+    const breiteGesamt = Math.max(x + 14, 1);
+    const hoeheGesamt = maxY - minY;
+    return `<svg class="wortlogo" viewBox="-4 ${minY} ${breiteGesamt + 8} ${hoeheGesamt}" height="${hoehe}"`
+      + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
+      + ` aria-label="${String(text).replace(/"/g, "&quot;")}" preserveAspectRatio="xMinYMid meet">${teile.join("")}</svg>`;
+  }
+  /* Der Sonderfall: zwei Wörter, die sich kreuzen — genau das, was ein
+     Kreuzworträtsel ausmacht. Das senkrechte Wort beginnt mit dem
+     Buchstaben, an dem es das waagerechte schneidet. */
+  /* Das Kreuzworträtsel bekommt ein echtes Gitter: helle Kästchen mit
+     dunklem Rand, darin kräftig gefärbte Buchstaben — das Wort, das
+     senkrecht steht, in einer zweiten Farbe, damit man die Kreuzung
+     sofort sieht. */
+  const KREUZ_FARBEN = { waagerecht: "#2F6B8F", senkrecht: "#C0562F", kasten: "#FFF8EC", rand: "#3B3348" };
+  function kreuzSchriftzug(waagerecht, senkrecht, optionen) {
+    const o = optionen || {};
+    const farbe = o.farbe || KREUZ_FARBEN.waagerecht;
+    const staerke = o.staerke || 26;
+    const hoehe = o.hoehe || 92;
+    const wa = waagerecht.toUpperCase().split("");
+    const se = senkrecht.toUpperCase().split("");
+    // Die Stelle im waagerechten Wort, an der der Anfangsbuchstabe des
+    // senkrechten steht — dort kreuzen sie sich.
+    let kreuzung = wa.lastIndexOf(se[0]);
+    if (kreuzung < 0) kreuzung = 0;
+    const teile = [];
+    let x = 0, kreuzX = 0;
+    wa.forEach((z, i) => {
+      if (i === kreuzung) kreuzX = x;
+      teile.push(buchstabenPfade(z, x, 0, 0, farbe, staerke));
+      x += BUCHSTABEN_ABSTAND[z] || 78;
+    });
+    const zeilenhoehe = 146;
+    let minY = 0;
+    se.forEach((z, i) => {
+      if (i === 0) return;                         // der Schnittpunkt steht schon
+      teile.push(buchstabenPfade(z, kreuzX, i * zeilenhoehe, 0, KREUZ_FARBEN.senkrecht, staerke));
+    });
+    // Die Kästchen des Gitters — hell gefüllt, mit dunklem Rand, wie im
+    // gedruckten Rätsel. Sie liegen HINTER den Buchstaben.
+    const kaesten = [];
+    wa.forEach((z, i) => {
+      const bx = kaestchenX(wa, i);
+      kaesten.push(`<rect x="${bx - 10}" y="-16" width="98" height="152" fill="${KREUZ_FARBEN.kasten}"`
+        + ` stroke="${KREUZ_FARBEN.rand}" stroke-width="6" rx="10"/>`);
+    });
+    se.forEach((z, i) => {
+      if (i === 0) return;
+      kaesten.push(`<rect x="${kreuzX - 10}" y="${i * zeilenhoehe - 16}" width="98" height="152" fill="${KREUZ_FARBEN.kasten}"`
+        + ` stroke="${KREUZ_FARBEN.rand}" stroke-width="6" rx="10"/>`);
+    });
+    const breiteGesamt = x + 14;
+    const hoeheGesamt = (se.length - 1) * zeilenhoehe + BUCHSTABEN_HOEHE + 28;
+    return `<svg class="wortlogo" viewBox="-14 ${minY - 18} ${breiteGesamt + 18} ${hoeheGesamt}" height="${hoehe}"`
+      + ` width="${Math.round((breiteGesamt / hoeheGesamt) * hoehe)}" role="img"`
+      + ` aria-label="${waagerecht} ${senkrecht}" preserveAspectRatio="xMidYMid meet">${kaesten.join("")}${teile.join("")}</svg>`;
+  }
+  function kaestchenX(zeichen, index) {
+    let x = 0;
+    for (let i = 0; i < index; i++) x += BUCHSTABEN_ABSTAND[zeichen[i]] || 78;
+    return x;
+  }
+  /* Welches Spiel bekommt welche Form. Die Zuordnung ist nicht
+     dekorativ gemeint: sie soll schon vor dem ersten Zug zeigen,
+     worum es in dem Spiel geht. */
+  /* Nur Spiele mit einer WIRKLICH eigenen Schrift bekommen einen
+     gezeichneten Titel. Dieselbe Schrift über allen Spielen wäre keine
+     eigene Gestaltung, sondern nur ein anderer Font — und genau das
+     soll es nicht sein. Die übrigen Spiele bleiben so lange ohne
+     Schriftzug, bis auch sie eine eigene Form haben. */
+  const SPIEL_SCHRIFTFORM = {
+    "sub-crossword": { bauart: "kreuz", woerter: ["Kreuzwort", "Rätsel"] },
+    "sub-bubbles": { bauart: "blase" },
+    "sub-kanone": { bauart: "wucht" },
+    "sub-silbenturm": { bauart: "mauer" },
+    "sub-wackelturm": { bauart: "mauer" },
+  };
+
+  function spielTitelEinsetzen(sub) {
+    const eintrag = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
+    if (!eintrag) return;
+    const bereich = document.getElementById(sub);
+    if (!bereich) return;
+    let kopf = bereich.querySelector(".spiel-titel");
+    if (!kopf) {
+      kopf = document.createElement("div");
+      kopf.className = "spiel-titel";
+      bereich.insertBefore(kopf, bereich.firstChild);
+    }
+    const wunsch = SPIEL_SCHRIFTFORM[sub];
+    if (!wunsch) { kopf.remove(); return; }
+    if (wunsch.bauart === "kreuz") kopf.innerHTML = kreuzSchriftzug(wunsch.woerter[0], wunsch.woerter[1], { hoehe: 150 });
+    else if (wunsch.bauart === "blase") kopf.innerHTML = blasenSchriftzug(eintrag.name, { hoehe: 62 });
+    else if (wunsch.bauart === "wucht") kopf.innerHTML = wuchtSchriftzug(eintrag.name, { hoehe: 58 });
+    else if (wunsch.bauart === "mauer") kopf.innerHTML = mauerSchriftzug(eintrag.name, { hoehe: 64 });
+  }
+  /* Ein Beobachter, damit der Titel auch nach einem Neuzeichnen des
+     Spielbereichs wieder oben steht — viele Spiele bauen ihren Inhalt
+     bei jedem Zug neu auf. */
+  document.querySelectorAll("#learnSubnav [data-sub]").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      const sub = pill.getAttribute("data-sub");
+      spielTitelEinsetzen(sub);
+      // Nach dem Neuzeichnen des Spiels noch einmal nachfassen.
+      setTimeout(() => spielTitelEinsetzen(sub), 250);
+      setTimeout(() => spielTitelEinsetzen(sub), 900);
+    });
+  });
   // Sprache für die Übersetzungen unter „Es war einmal in Deutschland".
   // null = automatisch aus dem Herkunftsland im Profil (mit Englisch als Rückfall).
   let historyUebersetzungSprache = null;
@@ -13752,6 +15492,7 @@
       </div>
 
       <h3 id="kompass-geschichte" class="kompass-heading">${ExerciseData.activeHistoryTitle ? ExerciseData.activeHistoryTitle() : "📜 Es war einmal in Deutschland …"}</h3>
+      ${leseBetonungKnopfHtml()}
       ${(() => {
         // Sichtbarer Stand der Sammlung — zeigt auf einen Blick, wann zuletzt neue
         // Tage dazugekommen sind und wie voll das Jahr inzwischen ist.
@@ -13768,7 +15509,7 @@
       })()}
       ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
       ${todayHistory ? `
-        <div class="question-card" style="margin-bottom:16px;">
+        <div class="question-card" id="kompass-geschichte-heute" style="margin-bottom:16px; scroll-margin-top:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>
           <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
@@ -13844,6 +15585,7 @@
        sein Banner nach, alles darunter rutscht, und man steht neben dem
        Ziel statt davor. Sie nehmen deshalb denselben Weg wie der Sprung
        aus dem Kalender. */
+    leseBetonungAnwenden(kompassArea);
     kompassArea.querySelectorAll(".wegweiser-item").forEach((a) => {
       a.addEventListener("click", (e) => {
         const ziel = a.getAttribute("href");
@@ -15590,6 +17332,35 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-view-photo]").forEach((img) => {
       img.addEventListener("click", () => openLightbox(img.dataset.viewPhoto, "Galerie-Foto"));
     });
+    renderEigeneSpuren(area);
+  }
+
+  /* Die Spuren, die andere auf dem eigenen Profil hinterlassen haben.
+     Sie standen bisher nur im Profil-Fenster, das man von außen öffnet —
+     das eigene Profil öffnet aber niemand über die Mitgliederliste. Hier
+     stehen sie jetzt da, wo man ohnehin täglich vorbeikommt. Nachgeladen
+     wird erst NACH dem Zeichnen des Profils, damit die Seite nicht auf
+     die Datenbank warten muss. */
+  async function renderEigeneSpuren(area) {
+    const user = Backend.currentUser();
+    if (!user || !area) return;
+    const karte = Core.el("div", { class: "question-card", style: "text-align:left; margin-top:14px;" });
+    karte.innerHTML = '<p class="eyebrow" style="margin-top:0;">👣 SPUREN AUF DEINEM PROFIL</p><p class="empty-note">Wird geladen …</p>';
+    area.appendChild(karte);
+    let spuren = [];
+    try { spuren = await Backend.getProfileNotes(user.id); } catch (e) { spuren = []; }
+    karte.innerHTML = `
+      <p class="eyebrow" style="margin-top:0;">👣 SPUREN AUF DEINEM PROFIL</p>
+      ${spuren.length ? `<div class="breakdown-list">
+        ${spuren.map((n) => `<div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:2px;">
+          <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+            <strong style="font-size:0.82rem;">${n.author_name}</strong>
+            <span class="empty-note" style="font-size:0.68rem;">${new Date(n.created_at).toLocaleDateString("de-DE")}</span>
+          </div>
+          <span class="empty-note">${n.message}</span>
+        </div>`).join("")}
+      </div>`
+      : '<p class="empty-note">Noch hat niemand eine Spur hinterlassen. Wer dein Profil besucht, kann dir dort einen Gruß dalassen.</p>'}`;
   }
 
   // Wird nach dem Speichern des Profils aufgerufen: Wenn dort ein anderes Sprachniveau steht,
@@ -18124,9 +19895,20 @@ An einem Morgen lief ein kleiner Fuchs los…
   function shrinkInlineEmojis(text) {
     return text.replace(/\p{Extended_Pictographic}/gu, (e) => `<span style="font-size:0.8em;">${e}</span>`);
   }
+  /* Das Postfach zeigte bisher ALLE bis zu 120 Nachrichten auf einmal.
+     Seit jede Spielrunde eine Auswertung hineinschreibt, sind das
+     schnell lange, ausführliche Texte — und der Aufbau dauerte
+     spürbar. Jetzt kommen sie in Portionen, wie im Wörterbuch. */
+  const INBOX_SEITE = 25;
+  let inboxGezeigt = INBOX_SEITE;
   async function renderInbox(isEntering) {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
+    /* Sofort etwas zeigen, statt auf zwei Abfragen zu warten: beim
+       BETRETEN stand das Postfach sonst leer da, solange die
+       Nachrichten geladen wurden. */
+    if (isEntering && !area.innerHTML.trim()) area.innerHTML = '<p class="empty-note">Nachrichten werden geladen …</p>';
+    if (isEntering) inboxGezeigt = INBOX_SEITE;
     const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
     // Beim BETRETEN des Postfachs (nicht bei jedem internen renderInbox()-Aufruf, z. B. nach dem
     // Löschen einer Nachricht) den aufgeklappt-Zustand neu setzen: nur die gerade noch
@@ -18195,7 +19977,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="order-pill" id="inboxTabImportant" aria-selected="${inboxViewTab === "important"}">⭐ Wichtig${getImportantMsgIds().length ? ` (${getImportantMsgIds().length})` : ""}</button>
         </div>
         ${list.length ? `<button type="button" class="btn btn-ghost" id="inboxDownloadAllBtn" style="margin-bottom:10px;">⬇️ Diese Ansicht als Text herunterladen</button>` : ""}
-        ${list.length ? list.map((m) => {
+        ${list.length ? list.slice(0, inboxGezeigt).map((m) => {
           const isExpanded = inboxExpandedIds.has(m.id);
           const senderLabel = inboxViewTab === "out" ? "An: " + (m.to_user_name || "Freund") : (m.is_system ? "🔔 System" : (m.author_name || "Unbekannt"));
           const timeLabel = m.created_at ? new Date(m.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
@@ -18249,8 +20031,10 @@ An einem Morgen lief ein kleiner Fuchs los…
             </div>
           </div>`;
         }).join("") : `<p class="empty-note">${inboxViewTab === "important" ? "Noch keine Nachrichten als wichtig markiert." : inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
+        ${list.length > inboxGezeigt ? `<button type="button" class="btn btn-ghost" id="inboxMehr" style="display:block; width:100%; margin-top:10px;">Weitere ${Math.min(INBOX_SEITE, list.length - inboxGezeigt)} anzeigen (${list.length - inboxGezeigt} übrig)</button>` : ""}
       </div>
     `;
+    document.getElementById("inboxMehr")?.addEventListener("click", () => { inboxGezeigt += INBOX_SEITE; renderInbox(false); });
     renderStickerRow();
     let selectedRecipients = new Set();
     let recipientMode = "select"; // "select" | "broadcast"
@@ -18890,6 +20674,59 @@ An einem Morgen lief ein kleiner Fuchs los…
     <text x="200" y="55" text-anchor="middle" font-size="30" font-family="sans-serif">🏆</text>
     <text x="200" y="90" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="sans-serif">Hall of Fame</text>
   </svg>`;
+  /* ============================================================
+     BENACHRICHTIGUNG „DU BIST FUCHS DES TAGES“
+     ------------------------------------------------------------
+     Die Auszeichnung stand bisher nur im Ranking — wer nicht zufällig
+     dort nachschaute, erfuhr nie davon. Jetzt kommt sie ins Postfach
+     und als Blase auf den Bildschirm, für Tag, Woche, Monat und Jahr.
+     Gemeldet wird jeder Zeitraum höchstens einmal: gemerkt wird nicht
+     „schon gemeldet“, sondern WELCHER Tag / welche Woche gemeldet
+     wurde — sonst bliebe die Meldung nächste Woche aus.
+     ============================================================ */
+  const FUCHS_MELDUNG_SCHLUESSEL = "dma_fuchs_gemeldet";
+  function fuchsZeitraumMarke(art) {
+    const d = new Date();
+    if (art === "tag") return d.toISOString().slice(0, 10);
+    if (art === "jahr") return String(d.getFullYear());
+    if (art === "monat") return d.toISOString().slice(0, 7);
+    // Kalenderwoche nach ISO — der Donnerstag der Woche bestimmt das Jahr.
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+    const jahresStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    const woche = Math.ceil(((t - jahresStart) / 86400000 + 1) / 7);
+    return `${t.getUTCFullYear()}-W${woche}`;
+  }
+  async function pruefeFuchsAuszeichnung() {
+    const nutzer = Backend.currentUser();
+    if (!nutzer) return;
+    let gemerkt = {};
+    try { gemerkt = JSON.parse(localStorage.getItem(FUCHS_MELDUNG_SCHLUESSEL) || "{}"); } catch (e) { gemerkt = {}; }
+    const zeitraeume = [
+      { art: "tag", titel: "Fuchs des Tages", holen: () => Backend.getFoxOfTheDayShowcase() },
+      { art: "woche", titel: "Fuchs der Woche", holen: () => Backend.getFoxOfWeekShowcase() },
+      { art: "monat", titel: "Fuchs des Monats", holen: () => Backend.getFoxOfMonthShowcase() },
+      { art: "jahr", titel: "Fuchs des Jahres", holen: () => Backend.getFoxOfYearShowcase() },
+    ];
+    for (const z of zeitraeume) {
+      const marke = fuchsZeitraumMarke(z.art);
+      if (gemerkt[z.art] === marke) continue;
+      let fuchs = null;
+      try { fuchs = await z.holen(); } catch (e) { continue; }
+      if (!fuchs || fuchs.user_id !== nutzer.id) continue;
+      gemerkt[z.art] = marke;
+      try { localStorage.setItem(FUCHS_MELDUNG_SCHLUESSEL, JSON.stringify(gemerkt)); } catch (e) { /* egal */ }
+      const text = `🦊 Du bist ${z.titel}!\n\n${fuchs.total} Aktivitäts-Punkte — das reicht gerade für Platz eins.\n\n`
+        + (fuchs.reportCard || []).map((l) => `• ${l}`).join("\n");
+      try { letzteAuswertungId = await Backend.sendSystemMessage(nutzer.id, text); } catch (e) { /* egal */ }
+      showToast(`🦊 Du bist ${z.titel}!`, () => {
+        activateTab("view-profile");
+        jumpToSubnavTarget('[data-sub="sub-inbox"]',
+          letzteAuswertungId ? `[data-msg-row="${letzteAuswertungId}"]` : ".inbox-list, #inboxArea", 150);
+      });
+    }
+  }
+
   async function renderRanking() {
     const area = document.getElementById("rankingArea");
     // WICHTIG: kein "Lade Ranking…"-Zwischenschritt mehr, der area.innerHTML sofort auf einen viel
@@ -18932,8 +20769,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         </svg>
         <p class="eyebrow" style="margin-top:0;">🦊 ${pt.title}</p>
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px; margin-top:14px;">
-          <div style="width:56px; height:56px; flex-shrink:0; position:relative; overflow:hidden; border-radius:50%;">
-            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url).replace('class="avatar-photo"', 'class="avatar-photo" style="width:100%; height:100%; object-fit:cover;"') : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
+          <div class="fox-avatar">
+            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url) : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
           </div>
           <div>
             <button type="button" class="friend-name-btn" data-view-ranked="${fox.user_id}" style="font-size:1.05rem; font-weight:800;">${fox.name}</button>
@@ -19132,8 +20969,27 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "158";
+  const APP_VERSION = "159";
   const APP_CHANGELOG = {
+    "159": [
+      "\u{1F4CB} Nach JEDER Runde \u2014 in allen 22 Spielen und in allen \u00dcbungen \u2014 kommt jetzt derselbe Auswertungsbildschirm mit den drei Sternen, und die Inhalte der Runde landen zum Nachlesen im Postfach. Ein Knopf \u201e\u2709\ufe0f Ergebnis im Postfach\u201c springt direkt zu der Nachricht, statt dass man sie suchen muss.",
+      "\u{1F5D3}\ufe0f Der Verweis vom Kalenderblatt zu \u201eEs war einmal in Deutschland\u201c funktioniert endlich \u2014 auch NACH dem L\u00f6sen der Tagesaufgabe. Genau da lag der Fehler: in dem Moment stieg die Zeichenfunktion vorher aus, der Knopf war noch da, hatte aber keinen Klick mehr. Der Sprung landet jetzt direkt auf dem Eintrag des heutigen Tages.",
+      "\u{1F604} Neu: eine Witze-Sektion unter Wissen \u2014 55 Witze, und zu jedem steht auf Wunsch dabei, an welchem Wort er h\u00e4ngt und welche zwei Bedeutungen dieses Wort hat (\u201eabschalten\u201c, \u201eauflegen\u201c, \u201eaufgehen\u201c). Humor ist das Letzte, was man in einer fremden Sprache versteht \u2014 hier kann man es \u00fcben.",
+      "\u{1F9E0} Neu: der Logik-Trainer. Welches Wort steckt in \u201eVerk\u00e4uferin\u201c? Welches Glied bestimmt bei \u201eKrankenhaus\u201c den Artikel? Was sagt die Vorsilbe von \u201eabholen\u201c \u00fcber die Richtung? Wer das sieht, muss die H\u00e4lfte nicht mehr auswendig lernen.",
+      "\u{1F3A4} Neu: der Aussprache-Trainer. Du h\u00f6rst ein Wort, sprichst es nach und bekommst zur\u00fcck, wie gut es angekommen ist. Im W\u00f6rterbuch kannst du dir mit dem Stern \u2606 deinen EIGENEN Wortschatz markieren und genau damit \u00fcben \u2014 nach Thema, nach Niveau oder aus deiner eigenen Liste.",
+      "\u{1F4DA} 16 neue \u00dcbungsbereiche, darunter der ausdr\u00fccklich gew\u00fcnschte Kasus-Bereich \u201eDie vier F\u00e4lle\u201c. Damit hat jetzt JEDES der 40 Grammatikthemen eine verlinkte \u00dcbung \u2014 vorher waren es elf. Zusammen \u00fcber 4.500 neue Aufgaben, jede Zelle mit mindestens 50 Aufgaben gef\u00fcllt.",
+      "\u{1F3AF} Der Betonungs-Trainer fragte auf \u201eLeicht\u201c und \u201eMittel\u201c IMMER die erste Silbe ab \u2014 man konnte gewinnen, ohne ein Wort anzusehen. Jetzt liegt die Betonung in etwa jedem zweiten Wort woanders, und der Schwierigkeitsgrad richtet sich nach der Wortl\u00e4nge statt nach der L\u00f6sung.",
+      "\u{1F9EA} Beta-Tester:innen sehen die noch nicht freigegebenen Spiele wieder. Die Ursache war heimt\u00fcckisch: Supabase meldet ein von den Zeilenschutz-Regeln abgewiesenes UPDATE NICHT als Fehler \u2014 die Rollenvergabe sagte \u201eerledigt\u201c, ohne etwas zu \u00e4ndern. Das wird jetzt best\u00e4tigt, bei Rollen wie bei Fehlermeldungen.",
+      "\u{1F4CA} Fortschrittsbalken in jedem Spiel: 0 bis 10, im schweren Modus 0 bis 30 \u2014 w\u00e4hrend des Spiels, damit man wei\u00df, wie viel noch kommt.",
+      "\u{1F9F1} Der Satzbaukasten baut deutlich weniger Unsinn. Neue Regeln: keine Angabe der Art neben einer Verneinung (\u201eordentlich keinen Rucksack packen\u201c), keine zwei Ortsangaben, kein Zeitraum bei einem Verb, das keinen Zeitraum f\u00fcllt (\u201ezwei Stunden lang mitbringen\u201c), keine Ortsangabe, wenn das Objekt selbst ein Raum ist, und Verben wie suchen, finden, verstehen bekommen immer ihre Erg\u00e4nzung. Au\u00dferdem bekommt ein Satz nicht mehr f\u00fcnf Zusatzangaben auf einmal, sondern meist eine oder zwei.",
+      "\u{1F5C2}\ufe0f Die langen Auswahllisten im Satzbaukasten sind jetzt aufklappbare Gruppen \u2014 und die Dinge sind danach sortiert, WAS sie sind: Essen, Getr\u00e4nke, Papiere, Ger\u00e4te, Haushalt, Kleidung, Fahrzeuge, Gedanken.",
+      "\u{1F3A8} Vier Spiele haben jetzt einen eigenen, farbigen Schriftzug aus selbst gezeichneter Geometrie \u2014 keine Schriftart, sondern gebaute Buchstaben: die Wortblasen als bunte Luftballons mit Knoten, die Wort-Kanone gl\u00fchend mit Druckwelle, Silbenturm und Wackelturm als gestapelte Ziegel, das Kreuzwortr\u00e4tsel als echtes Gitter mit gekreuztem Wort. Die \u00fcbrigen Spiele bleiben vorerst ohne Schriftzug \u2014 dieselbe Schrift \u00fcber allen w\u00e4re keine eigene Gestaltung.",
+      "\u{1F464} Spuren, die andere auf deinem Profil hinterlassen, siehst du jetzt in deinem eigenen Profil \u2014 und bekommst eine Nachricht, wenn jemand eine hinterl\u00e4sst. Dazu eine Meldung, wenn du Fuchs des Tages, der Woche, des Monats oder des Jahres geworden bist.",
+      "\u{1F50D} Der Vokabelmeister markierte ganz normale deutsche W\u00f6rter als unbekannt \u2014 \u00c4pfel, gegangen, arbeitest, Betriebskosten. Er f\u00fchrt ein Wort jetzt auf seine Grundform zur\u00fcck und zerlegt Zusammensetzungen, statt nur die W\u00f6rterbuchform zu kennen.",
+      "\u{1F33C} Die Blumen im Artikel-Garten schwebten ab der vierten Blume in der Luft. Jetzt wurzelt jede in der Erde.",
+      "\u{1F4D0} Kein Text wird mehr senkrecht zerquetscht, und nichts ragt mehr \u00fcber den Bildschirmrand \u2014 auf einem 320 Pixel schmalen Telefon gepr\u00fcft.",
+      "\u{1F5C2}\ufe0f Neue Dateien: data-witze.js und data-logik.js. Beide M\u00dcSSEN mit hochgeladen werden \u2014 ohne sie bleiben Witze und Logik-Trainer leer.",
+    ],
     "158": [
       "\u26A1 Die Seite lud beim Start 16 MB JavaScript. Jetzt sind es 5 MB — und der Start dauert auf einem langsamen Gerät 1,6 statt 2,7 Sekunden. Der Grund: mehr als die Hälfte der größten Datei war der Kalender (366 Tage mal sechs Niveaus mal zehn Sprachen), von dem man immer nur EINEN Tag sieht. Er liegt jetzt in einer eigenen Datei und wird erst geladen, wenn du den Kalender oder den Kompass öffnest. Dasselbe gilt für die Aufgabensammlung.",
       "\u{1F4D6} Das Wörterbuch öffnet sich jetzt in 0,7 statt 19,7 Sekunden. Zwei Ursachen: Es baute ALLE 11.500 Einträge auf einmal in die Seite (1,3 Millionen Zeichen und für jedes Wort ein eigener Klick-Handler) — und für die Wortliste wurden vorher alle 23 Übungskategorien komplett neu aufgebaut und gemischt, über 20.000 Aufgaben, bei jedem Öffnen. Jetzt kommen die Einträge in Portionen zu 60, ein einziger Handler bedient alle Vorlese-Knöpfe, und die Wortliste wird einmal gebildet statt jedes Mal.",
@@ -19259,7 +21115,89 @@ An einem Morgen lief ein kleiner Fuchs los…
   if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     window.DMA_PRUEFUNG = {
       woerterbuch: () => buildDictionaryEntries(),
+      betonung: (w) => ruleMarkWord(w),
+      /* Wie die Bausteine gruppiert werden — damit sich prüfen lässt,
+         dass keiner unter „Sonstiges“ verschwindet. */
+      dingGruppen: () => window.Satzbau.DINGE.map((d) => [d.id, sbkDingGruppe(d)]),
+      /* Den Schriftzug eines Spiels anzeigen lassen, ohne das Spiel zu
+         öffnen — damit sich prüfen lässt, dass jedes seine eigene Form
+         bekommt. */
+      spielSchrift: (sub) => {
+        const e = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
+        const w = SPIEL_SCHRIFTFORM[sub];
+        if (!e) return null;
+        if (!w) return null;
+        if (w.bauart === "kreuz") return kreuzSchriftzug(w.woerter[0], w.woerter[1], { hoehe: 120 });
+        if (w.bauart === "blase") return blasenSchriftzug(e.name, { hoehe: 80 });
+        if (w.bauart === "wucht") return wuchtSchriftzug(e.name, { hoehe: 76 });
+        if (w.bauart === "mauer") return mauerSchriftzug(e.name, { hoehe: 84 });
+        return null;
+      },
+      /* Eine ganze Trainer-Runde durchspielen und melden, WO die
+         Betonung jeweils lag — so lässt sich nachweisen, dass nicht mehr
+         überwiegend die erste Silbe gefragt ist. */
+      betonungsRunde: (stufe) => {
+        const alt = stTrainerDifficulty;
+        stTrainerDifficulty = stufe || "mittel";
+        newStressTrainerSession();
+        const stellen = [];
+        for (let i = 0; i < 10; i++) {
+          pickStressTrainerWord();
+          stellen.push({ wort: stTrainerWord.word, silben: stTrainerWord.syllables.length, stelle: stTrainerWord.correctIdx });
+          stTrainerSession.round += 1;
+        }
+        stTrainerDifficulty = alt;
+        stTrainerSession = null;
+        return stellen;
+      },
+      /* Was kommt heraus, wenn man im Satzbaukasten eine Tätigkeit
+         wählt und sonst nichts? Genau das sieht man hier. */
+      sbkVorschlag: (verbId, niveau) => {
+        const S = window.Satzbau;
+        const v = S.VERBEN.find((x) => x.id === verbId);
+        if (!v) return null;
+        const alt = JSON.parse(JSON.stringify(sbkWahl));
+        const altNiveau = sbkNiveau;
+        const altKat = sbkKategorie;
+        sbkKategorie = "alle";
+        if (niveau) sbkNiveau = niveau;
+        sbkWahl = { subjekt: "1sg", verb: verbId, objekt: "", objektBegleiter: "", objektAdjektiv: "",
+          person: "", begleitung: "", fragesatz: "", ort: "", ortRolle: "", zeit: "keine",
+          grund: "keiner", art: "keine", vorfeld: "subjekt" };
+        sbkVorauswahlSetzen(v);
+        const a = sbkAuswahl();
+        const satz = S.bauSatz({ subjekt: a.subjekt, verb: a.verb, objekt: a.objekt,
+          objektBegleiter: a.objektBegleiter, objektAdjektiv: a.objektAdjektiv, person: a.person,
+          begleitung: a.gewaehlteBegleitung, fragesatz: a.gewaehlterFragesatz, ort: a.ort,
+          ortRolle: a.ortRolle, zeit: a.zeit, grund: a.grund, art: a.art,
+          zeitform: sbkZeitform, satzart: sbkSatzart, vorfeld: sbkWahl.vorfeld, pronomen: sbkPronomen });
+        sbkWahl = alt; sbkNiveau = altNiveau; sbkKategorie = altKat;
+        return satz;
+      },
+      /* Prüft, ob der Vokabelmeister ein Wort anerkennt — gemeldet war,
+         dass er ganz normale deutsche Wörter ablehnt. */
+      vokabelWort: (w) => vmWortBekannt(w, vmBuildDictionary()),
+      /* Das Ende einer Spielrunde nachstellen, ohne das Spiel wirklich
+         durchzuspielen — damit sich prüfen lässt, dass wirklich JEDES
+         Spiel eine Auswertung samt Weg ins Postfach bekommt. */
+      rundeEnde: async (kategorie) => {
+        spielNotiz(true, "Probewort A");
+        spielNotiz(false, "Probewort B");
+        await auswertungVerschicken({ categories: [kategorie], points: 7, bonus: 1, percent: 70, character: "Testfuchs" });
+      },
+      schriftzug: (t, o) => svgSchriftzug(t, o),
+      zerlegung: (w) => zerlegeKompositum(w),
       kategorien: () => ExerciseData.activeCategories().map((c) => ({ id: c.id, name: c.title, anzahl: (() => { try { return c.getBank().length; } catch (e) { return -1; } })() })),
+      /* Das Blumenbeet im vollen Zustand — dort schwebten die Blumen
+         der zweiten Reihe, und nur voll besetzt sieht man, ob sie jetzt
+         wirklich in der Erde wurzeln. */
+      gartenVoll: () => {
+        const alt = agSession;
+        agSession = { beete: Object.fromEntries(agBeete().map((b) => [b.key, 6])), runde: 0, gesamt: 10, richtig: 18 };
+        const svg = agGartenSvg();
+        agSession = alt;
+        return svg;
+      },
       katzenzimmer: (key) => kzZimmerSvg(KZ_ORTE.find((o) => o.key === key) || KZ_ORTE[0], true),
       katzenSzenen: () => KZ_ORTE.map((o) => ({ k: o.id, svg: kzZimmerSvg(o, true) })),
       satzbruecke: (planken, gesamt, geschafft) => sbBrueckeSvg(planken, gesamt, geschafft, true),
@@ -19287,21 +21225,33 @@ An einem Morgen lief ein kleiner Fuchs los…
                 const objekt = dinge.length && (verb.objektPflicht || Math.random() < 0.8) ? zufall(dinge) : null;
                 const orte = ortRolle ? S.orteFuer(kat.id, lvl, verb, ortRolle, objekt) : [];
                 const personen = verb.personFall ? S.personenFuer(null, lvl, verb) : [];
-                const zeiten = S.zeitenFuer(zf, lvl);
+                const zeiten = S.zeitenFuer(zf, lvl, null, verb);
                 const gruende = S.gruendeFuer(verb, lvl);
                 const arten = S.artenFuer(verb, lvl, subjekt, objekt);
                 const begl = objekt ? S.begleiterFuer(objekt, verb) : [];
                 const adjs = objekt ? S.adjektiveFuer(objekt, lvl) : [];
+                /* Dieselbe Begrenzung wie beim Zufallsknopf: erst
+                   wird gezogen, WIE VIELE freiwillige Angaben der Satz
+                   bekommt, dann welche. Sonst misst diese Prüfung
+                   Sätze, die so nie erzeugt werden. */
+                const wuerfel = Math.random();
+                const wieViele = wuerfel < 0.45 ? 1 : wuerfel < 0.85 ? 2 : 3;
+                const kandidaten = [];
+                if (zeiten.length) kandidaten.push("zeit");
+                if (gruende.length) kandidaten.push("grund");
+                if (arten.length) kandidaten.push("art");
+                if (orte.length && !verb.ortPflicht) kandidaten.push("ort");
+                const gewaehlt = new Set(Core.shuffle(kandidaten).slice(0, wieViele));
                 const r = S.bauSatz({
                   subjekt, verb, ortRolle,
-                  ort: orte.length && (verb.ortPflicht || Math.random() < 0.8) ? zufall(orte) : null,
+                  ort: verb.ortPflicht && orte.length ? zufall(orte) : (gewaehlt.has("ort") ? zufall(orte) : null),
                   objekt,
                   objektBegleiter: begl.length ? zufall(begl).id : "",
                   objektAdjektiv: adjs.length && Math.random() < 0.4 ? zufall(adjs) : null,
                   person: personen.length && (verb.personPflicht || Math.random() < 0.7) ? zufall(personen) : null,
-                  zeit: zufall(zeiten),
-                  grund: gruende.length && Math.random() < 0.4 ? zufall(gruende) : null,
-                  art: arten.length ? zufall(arten) : null,
+                  zeit: gewaehlt.has("zeit") ? zufall(zeiten) : null,
+                  grund: gewaehlt.has("grund") ? zufall(gruende) : null,
+                  art: gewaehlt.has("art") ? zufall(arten) : null,
                   zeitform: zf, satzart: art,
                   vorfeld: art === "aussage" && Math.random() < 0.3 ? "zeit" : "subjekt",
                 });

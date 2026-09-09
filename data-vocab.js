@@ -4847,7 +4847,7 @@ const VocabData = (function () {
     {"word":"scheinen","de":"Licht ausstrahlen, oder den Anschein haben","syl":"SCHEI-nen","en":"to shine/seem","example":"Die Sonne scheint heute.","level":"A2","theme":"Natur & Wetter"},
     {"word":"das Schicksal","de":"das, was einem im Leben zufällig widerfährt","syl":"das SCHICK-sal","en":"fate/destiny","example":"Das war wohl Schicksal.","level":"B2","theme":"Gefühle & Charakter"},
     {"word":"schieben","de":"etwas mit Kraft vorwärts bewegen","syl":"SCHIE-ben","en":"to push","example":"Kannst du das Auto schieben?","level":"A2","theme":"Alltag & Zuhause"},
-    {"word":"die Schlacht","de":"ein militärischer Kampf","syl":"die SCHLACHT","en":"battle","example":"Die Schlacht dauerte drei Tage.","level":"B2","theme":"Geschichte & Erinnerung"},
+    {"word":"die Schlacht","de":"ein militärischer Kampf","syl":"SCHLACHT","en":"battle","example":"Die Schlacht dauerte drei Tage.","level":"B2","theme":"Geschichte & Erinnerung"},
     {"word":"schlagen","de":"mit der Hand oder einem Gegenstand kräftig treffen","syl":"SCHLA-gen","en":"to hit/beat","example":"Er schlägt den Nagel in die Wand.","level":"A2","theme":"Grundwörter & Struktur"},
     {"word":"die Schlange","de":"ein langes, beinloses Reptil, oder eine Warteschlange","syl":"die SCHLAN-ge","en":"snake/queue","example":"Vor dem Laden steht eine lange Schlange.","level":"A2","theme":"Natur & Wetter"},
     {"word":"schleppen","de":"etwas Schweres mühsam tragen oder ziehen","syl":"SCHLEP-pen","en":"to drag/lug","example":"Ich schleppe die Einkäufe nach Hause.","level":"B2","theme":"Alltag & Zuhause"},

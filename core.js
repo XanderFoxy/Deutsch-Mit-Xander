@@ -55,6 +55,119 @@ const Core = (function () {
     window.speechSynthesis.speak(utter);
   }
 
+  /* ============================================================
+     AUSSPRACHE HÖREN UND PRÜFEN
+     ------------------------------------------------------------
+     Was hier gemessen wird — und was nicht:
+
+     Der Browser bringt eine Spracherkennung mit (Web Speech API). Sie
+     hört zu und liefert zurück, welches Wort sie VERSTANDEN hat, dazu
+     eine eigene Sicherheit zwischen 0 und 1. Daraus lässt sich ehrlich
+     ableiten, ob das gesprochene Wort ANKOMMT: Wer „Betriebskosten-
+     abrechnung“ sagt und die Erkennung schreibt genau das, hat sich
+     verständlich gemacht.
+
+     Was hier NICHT gemessen wird, ist die Lautqualität — ob das „ö“
+     wirklich ein „ö“ ist oder eher ein „ø“. Das können nur eigens dafür
+     gebaute Dienste (z. B. die Aussprachebewertung von Azure), und die
+     brauchen einen Server und kosten Geld. Deshalb heißt die Anzeige in
+     der Oberfläche „Verständlichkeit“ und nicht „Aussprachenote“ — ein
+     Prozentwert, der etwas anderes verspricht, als er misst, wäre
+     Augenwischerei.
+
+     Die Anbindung ist so geschnitten, dass ein solcher Dienst später nur
+     eine weitere Bewertungsquelle wäre: hoerePruefung() gibt Text und
+     Sicherheit zurück, bewerteAussprache() macht daraus die Zahl.
+     ============================================================ */
+  function spracherkennungDa() {
+    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+  /* Hört EINMAL zu und meldet, was verstanden wurde.
+     Auflösung: { text, sicherheit, alternativen } oder { fehler }. */
+  function hoereZu(optionen) {
+    const o = optionen || {};
+    return new Promise((fertig) => {
+      const Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Erkenner) { fertig({ fehler: "nicht-verfuegbar" }); return; }
+      let erkenner;
+      try { erkenner = new Erkenner(); } catch (e) { fertig({ fehler: "nicht-verfuegbar" }); return; }
+      erkenner.lang = o.sprache || "de-DE";
+      erkenner.interimResults = false;
+      erkenner.continuous = false;
+      /* Mehrere Vorschläge anfordern: die Erkennung schreibt oft eine
+         gängigere Schreibweise an die erste Stelle („Bahn hofs“ statt
+         „Bahnhofs“). Wer richtig gesprochen hat, soll daran nicht
+         scheitern — deshalb zählt der beste Treffer, nicht der erste. */
+      erkenner.maxAlternatives = 5;
+      let beendet = false;
+      const schluss = (ergebnis) => { if (beendet) return; beendet = true; try { erkenner.stop(); } catch (e) {} fertig(ergebnis); };
+      erkenner.onresult = (e) => {
+        const treffer = e.results && e.results[0];
+        if (!treffer || !treffer.length) { schluss({ fehler: "nichts-verstanden" }); return; }
+        const alternativen = [];
+        for (let i = 0; i < treffer.length; i++) alternativen.push({ text: treffer[i].transcript, sicherheit: treffer[i].confidence || 0 });
+        schluss({ text: alternativen[0].text, sicherheit: alternativen[0].sicherheit, alternativen });
+      };
+      erkenner.onerror = (e) => {
+        // "not-allowed" heißt: das Mikrofon wurde abgelehnt oder ist gesperrt.
+        schluss({ fehler: e && e.error ? e.error : "fehler" });
+      };
+      erkenner.onend = () => schluss({ fehler: "nichts-verstanden" });
+      // Notbremse: manche Geräte lösen weder onend noch onerror aus.
+      setTimeout(() => schluss({ fehler: "zeit-abgelaufen" }), o.hoechstdauer || 8000);
+      try { erkenner.start(); } catch (e) { schluss({ fehler: "start-fehlgeschlagen" }); }
+    });
+  }
+  /* Wie ähnlich sind zwei Wörter? Levenshtein-Abstand, auf 0–1 normiert.
+     Klein geschrieben, ohne Satzzeichen — „Bahnhof.“ und „bahnhof“ sind
+     dieselbe Aussprache. */
+  function wortAehnlichkeit(a, b) {
+    /* Leerzeichen fallen weg, wenn das Zielwort selbst keines hat: die
+       Erkennung trennt zusammengesetzte Wörter gern („Bahn Hof“), wer sie
+       richtig ausgesprochen hat, soll daran nicht scheitern. Auch der
+       Artikel wird abgeschnitten — geprüft wird die Aussprache des Wortes,
+       nicht ob jemand „der“ mitgesprochen hat. */
+    const grund = (s) => String(s || "").toLowerCase()
+      .replace(/^(der|die|das|ein|eine)\s+/, "")
+      .replace(/[^a-zäöüß\s]/g, "").replace(/\s+/g, " ").trim();
+    const zielHatLuecke = grund(a).includes(" ");
+    const norm = (s) => (zielHatLuecke ? grund(s) : grund(s).replace(/\s+/g, ""));
+    const x = norm(a), y = norm(b);
+    if (!x || !y) return 0;
+    if (x === y) return 1;
+    const m = x.length, n = y.length;
+    let vorher = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const jetzt = [i];
+      for (let j = 1; j <= n; j++) {
+        jetzt[j] = Math.min(vorher[j] + 1, jetzt[j - 1] + 1, vorher[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+      }
+      vorher = jetzt;
+    }
+    return Math.max(0, 1 - vorher[n] / Math.max(m, n));
+  }
+  /* Aus dem Gehörten eine Zahl machen.
+     Die Ähnlichkeit wiegt schwer (sie sagt, OB das Wort ankam), die
+     Sicherheit der Erkennung ergänzt sie (sie sagt, wie deutlich).
+     Bei Geräten, die gar keine Sicherheit liefern (Safari gibt oft 0),
+     zählt allein die Ähnlichkeit — sonst wäre dort jede Aufnahme
+     schlecht bewertet, obwohl richtig gesprochen wurde. */
+  function bewerteAussprache(ziel, gehoert) {
+    const liste = (gehoert && gehoert.alternativen) || (gehoert && gehoert.text ? [{ text: gehoert.text, sicherheit: gehoert.sicherheit || 0 }] : []);
+    if (!liste.length) return { prozent: 0, beste: "", aehnlichkeit: 0 };
+    let beste = liste[0], besteAehnlichkeit = -1;
+    liste.forEach((a) => { const w = wortAehnlichkeit(ziel, a.text); if (w > besteAehnlichkeit) { besteAehnlichkeit = w; beste = a; } });
+    const sicherheit = beste.sicherheit > 0 ? beste.sicherheit : null;
+    /* Die Sicherheit wird MULTIPLIZIERT, nicht addiert. Sie sagt ja nur,
+       wie sicher sich die Erkennung ihrer eigenen Abschrift ist — nicht,
+       ob das Wort stimmt. Addiert man sie, bekäme ein selbstsicher
+       erkanntes FALSCHES Wort trotzdem eine ordentliche Note; „Banane“
+       für „Bahnhof“ kam so auf 55 %. Multipliziert kann sie eine gute
+       Aussprache bestätigen, aber eine falsche nie retten. */
+    const wert = sicherheit === null ? besteAehnlichkeit : besteAehnlichkeit * (0.7 + 0.3 * sicherheit);
+    return { prozent: Math.round(clamp(wert, 0, 1) * 100), beste: beste.text, aehnlichkeit: besteAehnlichkeit, sicherheit };
+  }
+
   function clamp(n, min, max) {
     return Math.max(min, Math.min(max, n));
   }
@@ -122,7 +235,17 @@ const Core = (function () {
     if (!syl) return "";
     // Mehrteilige Angaben („das ZIEL") Wort für Wort behandeln.
     if (syl.includes(" ")) return syl.split(" ").map(formatStress).join(" ");
-    const parts = syl.split("-");
+    const rohTeile = syl.split("-");
+    /* Ein Stern vor einer Silbe kennzeichnet eine NEBENbetonung. Lange
+       zusammengesetzte Wörter haben nämlich mehr als eine betonte Silbe:
+       „Be-TRIEBS-kos-ten-ab-rech-nung" wird auf BETRIEBS haupt-, auf
+       KOSten und ABrechnung nebenbetont. Wer nur die erste Betonung
+       sieht, liest den Rest flach — und genau das klingt falsch. */
+    const nebenIdx = new Set();
+    const parts = rohTeile.map((p, i) => {
+      if (p.startsWith("*")) { nebenIdx.add(i); return p.slice(1); }
+      return p;
+    });
     // Betonte Silbe finden. Achtung: die ERSTE Silbe ist bei Nomen ohnehin groß
     // geschrieben — ein einzelner Großbuchstabe („Ü-ber-LIE-fe-rung") ist deshalb
     // kein Betonungszeichen, solange es eine echte Großbuchstaben-Silbe gibt.
@@ -134,15 +257,25 @@ const Core = (function () {
       const mehrbuchstabig = kandidaten.filter((i) => parts[i].length > 1);
       betontIdx = mehrbuchstabig.length ? mehrbuchstabig[0] : kandidaten[0];
     }
-    if (betontIdx < 0) return syl;
+    if (betontIdx < 0 && !nebenIdx.size) return syl;
     const klein = parts.map((p) => p.toLowerCase());
     const wort = klein.join("");
     const versatz = betontIdx > 0 ? klein.slice(0, betontIdx).join("").length : 0;
-    const marke = betonterVokal(wort, versatz, klein[betontIdx].length);
+    const marke = betontIdx >= 0 ? betonterVokal(wort, versatz, klein[betontIdx].length) : null;
     return parts.map((part, i) => {
       let shown = part.toLowerCase();
       if (i === 0) shown = shown.charAt(0).toUpperCase() + shown.slice(1);
-      if (i !== betontIdx) return shown;
+      if (i !== betontIdx) {
+        if (!nebenIdx.has(i)) return shown;
+        // Nebenbetonung: schwächer als die Hauptbetonung, aber sichtbar.
+        const nebenMarke = betonterVokal(wort, klein.slice(0, i).join("").length, klein[i].length);
+        if (!nebenMarke) return `<span class="stress-neben" title="nebenbetont">${shown}</span>`;
+        const nv = shown.slice(0, nebenMarke.von);
+        const nk = shown.slice(nebenMarke.von, nebenMarke.bis);
+        const nh = shown.slice(nebenMarke.bis);
+        const nart = nebenMarke.lang === true ? "stress-lang" : nebenMarke.lang === false ? "stress-kurz" : "stress-offen";
+        return `<span class="stress-neben" title="nebenbetont"><span class="stress-vokal ${nart}">${nv}${nk}${nh}</span></span>`;
+      }
       if (!marke) return `<span class="stress-mark">${shown}</span>`;
       const vorne = shown.slice(0, marke.von);
       const kern = shown.slice(marke.von, marke.bis);
@@ -281,5 +414,6 @@ const Core = (function () {
     },
   };
 
-  return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound };
+  return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound,
+    spracherkennungDa, hoereZu, wortAehnlichkeit, bewerteAussprache };
 })();

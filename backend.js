@@ -666,16 +666,67 @@ const Backend = (function () {
     });
   }
 
+  /* Dieselbe Systemnachricht kam mehrfach an — einmal am Abend, am
+     nächsten Morgen noch einmal. Der Grund liegt nicht an einer
+     einzelnen Stelle: viele Auslöser laufen bei jedem Seitenaufruf neu,
+     und wenn eine Gutschrift ihr „schon erledigt“-Merkmal nicht
+     rechtzeitig speichern konnte, wird die Nachricht ein zweites Mal
+     geschickt. Statt jede dieser Stellen einzeln abzusichern, sitzt die
+     Sperre jetzt hier, wo jede Systemnachricht durchmuss: derselbe Text
+     an dieselbe Person geht innerhalb eines Tages nur EINMAL raus.
+     Nachrichten von Menschen sind davon nicht betroffen — nur die
+     automatisch erzeugten. */
+  const SYSTEMNACHRICHT_SPERRE = new Map();   // "empfänger|text" → Zeitpunkt
+  const SPERRFRIST_MS = 24 * 60 * 60 * 1000;
+  function schonGeschickt(toUserId, body) {
+    const schluessel = toUserId + "|" + body;
+    const zuletzt = SYSTEMNACHRICHT_SPERRE.get(schluessel);
+    if (zuletzt && Date.now() - zuletzt < SPERRFRIST_MS) return true;
+    SYSTEMNACHRICHT_SPERRE.set(schluessel, Date.now());
+    // Die Karte klein halten: alles Ältere fliegt raus.
+    if (SYSTEMNACHRICHT_SPERRE.size > 300) {
+      const grenze = Date.now() - SPERRFRIST_MS;
+      SYSTEMNACHRICHT_SPERRE.forEach((t, k) => { if (t < grenze) SYSTEMNACHRICHT_SPERRE.delete(k); });
+    }
+    return false;
+  }
   async function sendSystemMessage(toUserId, body) {
     if (!toUserId) return;
+    if (schonGeschickt(toUserId, body)) return;
     if (client) {
       try {
-        await client.from("private_messages").insert({ from_user: null, to_user: toUserId, author_name: "System", body, is_system: true });
+        /* Auch über einen Neustart hinweg prüfen: die Sperre oben lebt nur
+           im Speicher, die Nachricht von gestern Abend aber in der
+           Datenbank. Ohne diesen Blick dorthin käme sie heute früh
+           trotzdem noch einmal. */
+        const seit = new Date(Date.now() - SPERRFRIST_MS).toISOString();
+        const { data } = await client.from("private_messages")
+          .select("id")
+          .eq("to_user", toUserId)
+          .eq("is_system", true)
+          .eq("body", body)
+          .gte("created_at", seit)
+          .limit(1);
+        if (data && data.length) return;
+      } catch (e) { /* Lässt sich das nicht prüfen, wird lieber zugestellt als verschluckt. */ }
+      try {
+        /* Die Kennung der neu angelegten Nachricht wird zurückgegeben, damit
+           der Aufrufer direkt dorthin springen kann — die Spiele zeigen nach
+           der Runde einen Knopf „Auswertung im Postfach“, und der braucht
+           genau diese Kennung, sonst landet man nur irgendwo im Postfach. */
+        const { data } = await client.from("private_messages")
+          .insert({ from_user: null, to_user: toUserId, author_name: "System", body, is_system: true })
+          .select("id").single();
+        return data ? data.id : null;
       } catch (e) { console.warn("System-Nachricht konnte nicht gespeichert werden:", e); }
-      return;
+      return null;
     }
-    demo.privateMessages.push({ id: Core.uid(), from_user: null, to_user: toUserId, author_name: "System", body, is_system: true, read: false, created_at: new Date().toISOString() });
-    return;
+    const schonDa = (demo.privateMessages || []).some((m) => m.is_system && m.to_user === toUserId && m.body === body
+      && Date.now() - new Date(m.created_at).getTime() < SPERRFRIST_MS);
+    if (schonDa) return null;
+    const id = Core.uid();
+    demo.privateMessages.push({ id, from_user: null, to_user: toUserId, author_name: "System", body, is_system: true, read: false, created_at: new Date().toISOString() });
+    return id;
   }
   // Fehlermeldung von Nutzer:innen — landet automatisch im Postfach des Betreibers, ohne dass
   // die Person selbst etwas schreiben muss. Nur die Art des Fehlers und der Ort (welches Spiel,
@@ -710,7 +761,15 @@ const Backend = (function () {
     // Verstehen, wenn die feste Kategorie allein nicht reicht, um den Fehler nachzuvollziehen.
     const record = { reporter_name: reporterName, reporter_id: reporterId, context, category: errorType, description: detail || "", resolved: false, created_at: new Date().toISOString() };
     if (client) {
-      client.from("bug_reports").insert(record).then(() => {}, (e) => console.warn("Bug-Report konnte nicht gespeichert werden:", e));
+      /* Bestätigen lassen, dass die Zeile wirklich angelegt wurde. Ein von
+         den Zeilenschutz-Regeln abgewiesenes INSERT meldet bei Supabase
+         keinen Fehler — die Meldung wäre dann spurlos verschwunden,
+         während die Oberfläche „danke, angekommen“ sagt. */
+      try {
+        const { data, error } = await client.from("bug_reports").insert(record).select("id");
+        if (error) throw new Error(error.message);
+        if (!data || !data.length) console.warn("Fehlermeldung wurde von der Datenbank abgelehnt (Zeilenschutz-Regel für „bug_reports“) — sie geht nur als Nachricht an den Betreiber.");
+      } catch (e) { console.warn("Bug-Report konnte nicht gespeichert werden:", e && e.message ? e.message : e); }
     } else {
       demo.bugReports = demo.bugReports || [];
       record.id = Core.uid();
@@ -877,14 +936,26 @@ const Backend = (function () {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (!message.trim()) throw new Error("Nachricht darf nicht leer sein.");
     const note = { profile_owner_id: profileOwnerId, author_id: demo.user.id, author_name: demo.profile.name, message: message.trim(), created_at: new Date().toISOString() };
+    /* Wer eine Spur bekommt, soll das auch merken. Bisher stand sie
+       still auf dem Profil und wurde oft erst Wochen später entdeckt —
+       oder nie. Nicht an sich selbst, das wäre albern. */
+    const benachrichtigen = async () => {
+      if (profileOwnerId === demo.user.id) return;
+      try {
+        await sendSystemMessage(profileOwnerId,
+          `👣 ${note.author_name} hat eine Spur auf deinem Profil hinterlassen:\n\n„${note.message}“`);
+      } catch (e) { /* Die Spur selbst ist wichtiger als die Benachrichtigung. */ }
+    };
     if (client) {
       const { error } = await client.from("profile_notes").insert(note);
       if (error) throw new Error(friendlyDbError(error.message));
+      await benachrichtigen();
       return;
     }
     demo.profileNotes = demo.profileNotes || [];
     note.id = Core.uid();
     demo.profileNotes.push(note);
+    await benachrichtigen();
   }
   // Eigene, selbst geschriebene Spuren wieder löschen können — bewusst NUR der eigene Eintrag
   // (author_id muss übereinstimmen), unabhängig davon, auf wessen Profil er steht.
@@ -977,6 +1048,13 @@ const Backend = (function () {
   // Prüft, ob ein Feature gerade sichtbar sein soll: für dich als Betreiber IMMER ja (damit du in
   // echt durchklicken/durchspielen kannst, bevor es live geht) — für alle anderen nur, wenn du es
   // bereits ausdrücklich freigeschaltet hast.
+  /* Ist die angemeldete Person Beta-Testerin? Öffentlich gemacht, damit die
+     Oberfläche das nicht über Umwege aus isFeatureOn() herauslesen muss —
+     genau dort ging bisher verloren, dass Beta-Tester:innen die noch nicht
+     freigegebenen Spiele ausdrücklich sehen SOLLEN. */
+  function isBetaTester() {
+    return Boolean(demo.profile && demo.profile.isBetaTester);
+  }
   function isFeatureOn(key) {
     if (isOwner()) return true;
     if (demo.profile && demo.profile.isBetaTester) return true;
@@ -2697,8 +2775,14 @@ const Backend = (function () {
   async function setAdminStatus(targetUserId, value) {
     if (!isOwner()) throw new Error("Nur der Seitenbetreiber kann Administrator-Rechte vergeben.");
     if (client) {
-      const { error } = await client.from("profiles").update({ is_admin: value }).eq("id", targetUserId);
+      const { data: geaendert, error } = await client.from("profiles").update({ is_admin: value }).eq("id", targetUserId).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      /* Ohne diese Prüfung bliebe ein von den Zeilenschutz-Regeln (RLS)
+         abgewiesenes UPDATE unbemerkt: Supabase meldet dann keinen Fehler,
+         ändert aber auch nichts. */
+      if (!geaendert || !geaendert.length) {
+        throw new Error("Die Administrator-Rolle konnte nicht gesetzt werden — die Datenbank hat die Änderung abgelehnt (Zeilenschutz-Regel für die Tabelle „profiles“). Bitte in Supabase eine Regel anlegen, die Administratoren das Ändern fremder Profile erlaubt.");
+      }
       const names = await namesFor([targetUserId]);
       const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
       await addActivity(value ? `${targetName} wurde von ${demo.profile.name} zum Administrator ernannt. 🛡️` : `${targetName} ist nicht mehr Administrator. 🛡️`);
@@ -2835,8 +2919,14 @@ const Backend = (function () {
   async function setModeratorStatus(targetUserId, value) {
     if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können Moderator-Rechte vergeben.");
     if (client) {
-      const { error } = await client.from("profiles").update({ is_moderator: value }).eq("id", targetUserId);
+      const { data: geaendert, error } = await client.from("profiles").update({ is_moderator: value }).eq("id", targetUserId).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      /* Ohne diese Prüfung bliebe ein von den Zeilenschutz-Regeln (RLS)
+         abgewiesenes UPDATE unbemerkt: Supabase meldet dann keinen Fehler,
+         ändert aber auch nichts. */
+      if (!geaendert || !geaendert.length) {
+        throw new Error("Die Moderations-Rolle konnte nicht gesetzt werden — die Datenbank hat die Änderung abgelehnt (Zeilenschutz-Regel für die Tabelle „profiles“). Bitte in Supabase eine Regel anlegen, die Administratoren das Ändern fremder Profile erlaubt.");
+      }
       const names = await namesFor([targetUserId]);
       const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
       await addActivity(value ? `${targetName} wurde von ${demo.profile.name} zum Moderator ernannt. 🧹` : `${targetName} ist nicht mehr Moderator. 🧹`);
@@ -2856,8 +2946,14 @@ const Backend = (function () {
   async function setBetaTesterStatus(targetUserId, value) {
     if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können diese Rolle vergeben.");
     if (client) {
-      const { error } = await client.from("profiles").update({ is_beta_tester: value }).eq("id", targetUserId);
+      const { data: geaendert, error } = await client.from("profiles").update({ is_beta_tester: value }).eq("id", targetUserId).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      /* Ohne diese Prüfung bliebe ein von den Zeilenschutz-Regeln (RLS)
+         abgewiesenes UPDATE unbemerkt: Supabase meldet dann keinen Fehler,
+         ändert aber auch nichts. */
+      if (!geaendert || !geaendert.length) {
+        throw new Error("Die Beta-Tester-Rolle konnte nicht gesetzt werden — die Datenbank hat die Änderung abgelehnt (Zeilenschutz-Regel für die Tabelle „profiles“). Bitte in Supabase eine Regel anlegen, die Administratoren das Ändern fremder Profile erlaubt.");
+      }
       const names = await namesFor([targetUserId]);
       const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
       if (value) await sendSystemMessage(targetUserId, "🧪 Du bist jetzt Beta-Tester:in! Du kannst neue, noch nicht öffentliche Funktionen als Erste:r ausprobieren — schau regelmäßig in den Einstellungen vorbei.");
@@ -2877,8 +2973,14 @@ const Backend = (function () {
   async function setContributorStatus(targetUserId, value) {
     if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können diese Rolle vergeben.");
     if (client) {
-      const { error } = await client.from("profiles").update({ is_contributor: value }).eq("id", targetUserId);
+      const { data: geaendert, error } = await client.from("profiles").update({ is_contributor: value }).eq("id", targetUserId).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      /* Ohne diese Prüfung bliebe ein von den Zeilenschutz-Regeln (RLS)
+         abgewiesenes UPDATE unbemerkt: Supabase meldet dann keinen Fehler,
+         ändert aber auch nichts. */
+      if (!geaendert || !geaendert.length) {
+        throw new Error("Die Mitgestalter-Rolle konnte nicht gesetzt werden — die Datenbank hat die Änderung abgelehnt (Zeilenschutz-Regel für die Tabelle „profiles“). Bitte in Supabase eine Regel anlegen, die Administratoren das Ändern fremder Profile erlaubt.");
+      }
       const names = await namesFor([targetUserId]);
       const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
       if (value) await sendSystemMessage(targetUserId, "🛠️ Du bist jetzt offiziell Mitgestalter:in! Danke, dass du die Seite mit aufbaust — das sieht jetzt auch jeder an deinem Profil.");
@@ -2899,8 +3001,14 @@ const Backend = (function () {
   async function setSupporterStatus(targetUserId, value) {
     if (!isAdmin()) throw new Error("Nur Administratoren oder der Betreiber können diese Rolle vergeben.");
     if (client) {
-      const { error } = await client.from("profiles").update({ is_supporter: value }).eq("id", targetUserId);
+      const { data: geaendert, error } = await client.from("profiles").update({ is_supporter: value }).eq("id", targetUserId).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      /* Ohne diese Prüfung bliebe ein von den Zeilenschutz-Regeln (RLS)
+         abgewiesenes UPDATE unbemerkt: Supabase meldet dann keinen Fehler,
+         ändert aber auch nichts. */
+      if (!geaendert || !geaendert.length) {
+        throw new Error("Die Unterstützer-Rolle konnte nicht gesetzt werden — die Datenbank hat die Änderung abgelehnt (Zeilenschutz-Regel für die Tabelle „profiles“). Bitte in Supabase eine Regel anlegen, die Administratoren das Ändern fremder Profile erlaubt.");
+      }
       const names = await namesFor([targetUserId]);
       const targetName = (names[targetUserId] && names[targetUserId].name) || "jemand";
       if (value) await sendSystemMessage(targetUserId, "💛 Ganz herzlichen Dank für deine Unterstützung! Du trägst jetzt offiziell das Unterstützer-Abzeichen in deinem Profil.");
@@ -3259,7 +3367,7 @@ const Backend = (function () {
     saveIntroduction, getAllIntroductions,
     getLastPlaylistLoadError: () => lastPlaylistLoadError,
     getLastUserListError: () => lastUserListError,
-    getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, getRawFeatureFlag, getRawFeatureFlagValue,
+    getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, isBetaTester, getRawFeatureFlag, getRawFeatureFlagValue,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
     getBugReports, resolveBugReport,
     notifyPracticing,

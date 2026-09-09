@@ -729,6 +729,10 @@
    steht ein PUNKT (kurz gesprochen) oder ein STRICH (lang gesprochen). Vorher
    bekam die ganze Silbe einen Punkt, ohne Aussage über die Länge. */
 .stress-mark { font-weight: 800; }
+/* Nebenbetonung in zusammengesetzten Wörtern: schwächer als die
+   Hauptbetonung, aber deutlich genug, um beim Lautlesen zu helfen.
+   „Betriebskostenabrechnung" hat drei betonte Silben, nicht eine. */
+.stress-neben { font-weight: 650; opacity: 0.9; }
 .stress-vokal { position: relative; }
 .stress-vokal::after {
   content: "";
@@ -1611,6 +1615,9 @@
   white-space: normal;
 }
 .stress { text-decoration: underline; text-decoration-thickness: 2.5px; text-underline-offset: 3px; font-weight: 800; }
+/* Nebenbetonung in zusammengesetzten Wörtern: dünner unterstrichen als
+   die Hauptbetonung, damit man beim Lautlesen die Rangfolge sieht. */
+.stress.stress-neben-inline { text-decoration-thickness: 1.5px; font-weight: 650; opacity: 0.85; }
 .stress-toggle-btn { font-size: 0.95rem; font-weight: 800; }
 .stress-toggle-btn.active { background: var(--amber-400); color: #241505; }
 .ws-cell {
@@ -4038,7 +4045,12 @@ details summary::marker { content: ""; }
   0% { opacity: 0; transform: translateY(6px) scale(0.5); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.ag-blume { animation: agBlumeWachsen 420ms ease-out backwards; transform-origin: center bottom; }
+/* transform-box: fill-box ist hier entscheidend. Ohne diese Zeile bezieht
+   sich „center bottom“ in einem SVG auf den Rahmen der GANZEN Zeichnung,
+   nicht auf die Blume selbst — die Blume wuchs dann nicht aus ihrem
+   eigenen Stiel, sondern schob sich von unten quer durchs Bild und stand
+   am Ende sichtbar neben ihrem Platz. */
+.ag-blume { animation: agBlumeWachsen 420ms ease-out backwards; transform-box: fill-box; transform-origin: center bottom; }
 
 /* ============================================================
    KATZENZIMMER
@@ -4464,3 +4476,241 @@ body.lernraum-it .nur-deutsch { display: none; }
   opacity: 0.72;
 }
 .sbk-gruppe:first-of-type { margin-top: 4px; }
+
+/* Das Bild beim „Fuchs des Tages“ (und Woche/Monat/Jahr).
+   Vorher klemmte hier ein eigener Kreis mit overflow:hidden um das Bild.
+   Für ein Foto ging das gut, aber eine Sammelfigur wurde dadurch
+   abgeschnitten — im Profil steht sie unbeschnitten, hier war sie in
+   einen Kreis gezwängt und wirkte wie eine angeschnittene Ellipse.
+   Jetzt gilt hier dieselbe Regel wie im Profil: das Foto ist rund (das
+   macht .avatar-photo selbst), der Sticker bleibt ganz. */
+.fox-avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  position: relative;
+}
+.fox-avatar .avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Der Sticker-Wrapper trägt selbst die Klasse .avatar-photo, darf aber
+   weder rund geschnitten noch beschnitten werden. */
+.fox-avatar .avatar-figure-sticker-wrap {
+  width: 100%;
+  height: 100%;
+  object-fit: initial;
+  overflow: visible;
+  border-radius: 0;
+  box-shadow: none;
+}
+.fox-avatar .initials-avatar {
+  width: 100%;
+  height: 100%;
+}
+
+/* Der gezeichnete Spielname über jedem Spiel. Die Buchstaben sind eigene
+   Geometrie (siehe svgSchriftzug in app.js), keine Schriftart — deshalb
+   bekommt der Block hier nur Farbe und Abstand. */
+.spiel-titel {
+  margin: 0 0 10px;
+  color: var(--amber-700, #8a5a1e);
+  line-height: 0;
+}
+.spiel-titel .wortlogo { max-width: 100%; height: auto; }
+
+/* Der Auswertungsbildschirm nach einer Runde benutzt bewusst die
+   BESTEHENDEN Klassen der Übungs-Auswertung (results-hero,
+   results-points-line, results-tier …) — er soll überall gleich
+   aussehen, nicht in jedem Spiel anders. Deshalb steht hier nichts
+   Eigenes mehr. */
+
+/* Hinweisband für Beta-Tester:innen über der Spieleliste — macht sichtbar,
+   dass sie mehr sehen als alle anderen, und wozu. */
+.beta-hinweis {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(242, 184, 75, 0.6);
+  border-radius: 10px;
+  background: rgba(242, 184, 75, 0.10);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------
+   AUSSPRACHE-TRAINER
+   ------------------------------------------------------------------ */
+.aussprache-wort {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 10px 0 2px;
+  word-break: break-word;
+}
+.aussprache-balken {
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin: 10px auto 6px;
+  max-width: 320px;
+}
+.aussprache-balken-fuellung { height: 100%; border-radius: 7px; transition: width 420ms ease-out; }
+.aussprache-prozent { text-align: center; font-size: 1.3rem; font-weight: 800; margin: 2px 0 4px; }
+
+/* Der Merkstern im Wörterbuch */
+.vocab-karte-knoepfe { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.merk-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  color: var(--ink-400, #9a8f80);
+}
+.merk-btn.gemerkt { color: var(--amber-500, #e0a536); }
+.wortschatz-leiste { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+
+/* Rundenfortschritt — in jedem Spiel gleich: Balken plus Zahl, damit
+   man auf einen Blick sieht, wie viel noch kommt. */
+.runden-fortschritt { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+.runden-fortschritt .quiz-progress { flex: 1 1 auto; margin: 0; }
+.runden-zahl {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------
+   WITZE
+   Der Witz steht groß, die Erklärung erscheint erst auf Wunsch —
+   wer selbst darauf kommt, soll die Freude daran haben.
+   ------------------------------------------------------------------ */
+.witz-text { font-size: 1.02rem; line-height: 1.55; margin: 0 0 10px; }
+.witz-fuss { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.witz-erklaerung {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(242, 184, 75, 0.10);
+  border-left: 3px solid var(--amber-400, #f2b84b);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* ==================================================================
+   KEIN TEXT DARF SENKRECHT ZERQUETSCHT WERDEN
+   ------------------------------------------------------------------
+   Gemeldet: sobald man im Profil etwas einträgt, rutscht die
+   Titelzeile senkrecht nach unten — ein Buchstabe pro Zeile.
+
+   Die Ursache ist immer dieselbe und hat mit dem Text nichts zu tun:
+   Ein Kind in einem Flex- oder Grid-Kasten hat von sich aus eine
+   Mindestbreite — die Breite seines LÄNGSTEN WORTES. Steht daneben
+   ein zweites Kind, das viel Platz beansprucht (ein Bild, eine lange
+   Angabe), reicht der Rest nicht mehr für dieses Wort. Der Browser
+   löst das, indem er die Spalte auf wenige Pixel schrumpft — und der
+   Text fällt in die Senkrechte.
+
+   „min-width: 0“ hebt genau diese Mindestbreite auf, „overflow-wrap“
+   erlaubt dem Browser, ein überlanges Wort notfalls zu trennen.
+   Beides zusammen macht die Quetschung unmöglich — nicht nur im
+   Profil, sondern überall, wo so ein Kasten steht.
+   ================================================================== */
+.profile-header-flow > *,
+.profile-header-below-photo > *,
+.breakdown-row > *,
+.vocab-card > *,
+.games-pill > *,
+.quiz-actions > *,
+.witz-fuss > *,
+.runden-fortschritt > *,
+.wortschatz-leiste > *,
+.subnav > *,
+.trophy-case > *,
+.order-toggle > *,
+.form-field > * {
+  min-width: 0;
+}
+.profile-header-flow,
+.profile-header-below-photo,
+.breakdown-row,
+.vocab-card,
+.witz-fuss,
+.quiz-actions {
+  min-width: 0;
+}
+/* Überlange Einträge (Behördenwörter, Links, E-Mail-Adressen) brechen
+   an einer sinnvollen Stelle um, statt die Spalte zu sprengen. */
+.profile-header-flow h1,
+.profile-header-flow h2,
+.profile-header-flow h3,
+.profile-bio-flow-text,
+.strip-ueberschrift,
+.vocab-word,
+.vocab-en,
+.vocab-example,
+.witz-text,
+.breakdown-row span,
+.games-pill-name,
+.aussprache-wort,
+.question-prompt,
+.cal-tip-text,
+.kompass-heading {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  hyphens: auto;
+}
+
+/* Der Schalter „Betonung anzeigen“ trägt seine Erklärung im Knopf.
+   Auf einem schmalen Telefon stand beides in EINER Zeile und der Knopf
+   ragte über den Bildschirmrand hinaus — die Erklärung bekommt deshalb
+   eine eigene Zeile. */
+.lese-betonung-knopf {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+  white-space: normal;
+  box-sizing: border-box;
+}
+.lese-betonung-knopf .baustein-de {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  white-space: normal;
+}
+
+/* Aufklappbare Gruppen im Satzbaukasten — bei über hundert Bausteinen
+   ist eine einzige lange Reihe unbenutzbar. */
+button.sbk-gruppe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 10px 0 4px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.045);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.sbk-gruppe-pfeil { flex: 0 0 auto; opacity: 0.6; }
+.sbk-gruppe-zahl {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-weight: 600;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
