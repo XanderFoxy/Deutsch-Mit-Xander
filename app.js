@@ -13168,6 +13168,138 @@
   // Kleine, handgezeichnete SVG-Portrait-Kachel statt eines echten Fotos — es gibt hier keinen
   // Internetzugriff, um echte, rechtefreie Fotos zu laden. Jede Person/jedes Thema bekommt eine
   // eigene, thematisch passende, stilisierte Illustration statt eines generischen Platzhalters.
+  /* ============================================================
+     GEZEICHNETE BILDER FÜR DIE KACHELN
+     ------------------------------------------------------------
+     Ein Bild je Eintrag, in derselben Bildgröße (120x120) und mit
+     demselben Farbverlauf im Rücken wie bisher, damit die Galerie
+     ruhig bleibt. Gezeichnet wird mit einfachen Formen: Das Bild
+     ist auf dem Telefon rund 70 Pixel groß — Feinheiten gingen
+     dort ohnehin verloren.
+     ============================================================ */
+  const KACHEL_ZEICHNUNGEN = {
+    // — Dichter & Denker: Sinnbilder, keine Porträts —
+    humboldt: `
+      <path d="M14 88 38 54l16 20 14-18 24 32z" fill="#ffffff" opacity="0.28"/>
+      <path d="M14 88 38 54l16 20 14-18 24 32z" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" opacity="0.85"/>
+      <circle cx="60" cy="42" r="18" fill="none" stroke="#ffffff" stroke-width="3.2"/>
+      <path d="M60 42 71 31 64 46z" fill="#ffffff"/>
+      <path d="M60 42 49 53 56 38z" fill="#ffffff" opacity="0.6"/>
+      <circle cx="60" cy="42" r="2.6" fill="#ffffff"/>
+      <path d="M92 84q6-10 0-18-8 6-4 14" fill="#ffffff" opacity="0.7"/>`,
+    kollwitz: `
+      <path d="M40 96V64q0-12 10-12t10 12v10" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+      <path d="M60 74V58q0-9 8-9t8 9v18" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+      <path d="M76 78V64q0-8 7-8t7 8v22q0 14-14 14H54" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M26 30l10 26" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" opacity="0.75"/>
+      <path d="M24 26l5 3-2 6z" fill="#ffffff" opacity="0.9"/>`,
+    dietrich: `
+      <ellipse cx="60" cy="58" rx="34" ry="7" fill="#ffffff" opacity="0.85"/>
+      <path d="M38 58V34q0-6 22-6t22 6v24" fill="#ffffff" opacity="0.6"/>
+      <path d="M38 42h44" stroke="#ffffff" stroke-width="4" opacity="0.9"/>
+      <rect x="52" y="70" width="16" height="20" rx="8" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <path d="M46 84q0 14 14 14t14-14M60 98v8M50 106h20" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>`,
+    goethe: `
+      <path d="M92 20q-30 6-46 30T34 84l12-4q6-24 20-38t26-22z" fill="#ffffff" opacity="0.92"/>
+      <path d="M92 20q-16 20-26 34T50 82" fill="none" stroke="#c9b89a" stroke-width="1.8" opacity="0.75"/>
+      <path d="M74 34q-8 4-14 12M66 48q-8 4-13 12M58 62q-7 4-11 11" stroke="#c9b89a" stroke-width="1.5" opacity="0.6" fill="none"/>
+      <path d="M34 84 24 98" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M18 92q10-2 18 6-12 4-18-6z" fill="#2a2a2a" opacity="0.55"/>
+      <ellipse cx="30" cy="104" rx="16" ry="5" fill="#2a2a2a" opacity="0.35"/>`,
+    schiller: `
+      <path d="M18 40q14-8 28 0v20q0 16-14 16T18 60z" fill="#ffffff" opacity="0.9"/>
+      <circle cx="26" cy="52" r="2.8" fill="#3a2a4a"/><circle cx="38" cy="52" r="2.8" fill="#3a2a4a"/>
+      <path d="M26 64q6 5 12 0" stroke="#3a2a4a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M74 40q14-8 28 0v20q0 16-14 16T74 60z" fill="#ffffff" opacity="0.65"/>
+      <circle cx="82" cy="52" r="2.8" fill="#3a2a4a"/><circle cx="94" cy="52" r="2.8" fill="#3a2a4a"/>
+      <path d="M82 62q6-5 12 0" stroke="#3a2a4a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M60 84v18M50 102h20" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`,
+    einstein: `
+      <rect x="16" y="26" width="88" height="56" rx="5" fill="#2a2a2a" opacity="0.55"/>
+      <rect x="16" y="26" width="88" height="56" rx="5" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <text x="60" y="62" text-anchor="middle" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#ffffff">E=mc²</text>
+      <path d="M30 92h60" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+      <rect x="46" y="96" width="28" height="7" rx="3" fill="#ffffff" opacity="0.85"/>`,
+    bach: `
+      <rect x="26" y="30" width="10" height="62" rx="5" fill="#ffffff" opacity="0.9"/>
+      <rect x="42" y="20" width="10" height="72" rx="5" fill="#ffffff" opacity="0.75"/>
+      <rect x="58" y="34" width="10" height="58" rx="5" fill="#ffffff" opacity="0.9"/>
+      <rect x="74" y="24" width="10" height="68" rx="5" fill="#ffffff" opacity="0.75"/>
+      <rect x="20" y="92" width="80" height="8" rx="3" fill="#ffffff" opacity="0.95"/>
+      <path d="M92 34q8 4 8 12t-8 12" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>`,
+
+    // — Schnee von gestern: die Gegenstände selbst —
+    videorekorder: `
+      <rect x="14" y="40" width="92" height="44" rx="6" fill="#ffffff" opacity="0.2"/>
+      <rect x="14" y="40" width="92" height="44" rx="6" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <rect x="28" y="52" width="46" height="18" rx="3" fill="none" stroke="#ffffff" stroke-width="2.6"/>
+      <circle cx="40" cy="61" r="4" fill="#ffffff"/><circle cx="62" cy="61" r="4" fill="#ffffff"/>
+      <circle cx="88" cy="55" r="3.4" fill="#ffffff" opacity="0.9"/>
+      <path d="M82 70h14M82 76h9" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" opacity="0.8"/>`,
+    telefonbuch: `
+      <path d="M22 24h32q8 0 8 8v64q0-6-8-6H22z" fill="#ffffff" opacity="0.85"/>
+      <path d="M98 24H66q-8 0-8 8v64q0-6 8-6h32z" fill="#ffffff" opacity="0.6"/>
+      <path d="M60 32v58" stroke="#ffffff" stroke-width="2.4" opacity="0.9"/>
+      <path d="M30 42h20M30 52h20M30 62h14M70 42h20M70 52h20M70 62h14" stroke="#8a6a4a" stroke-width="2.4" stroke-linecap="round" opacity="0.65"/>`,
+    overheadprojektor: `
+      <rect x="24" y="76" width="72" height="14" rx="4" fill="#ffffff" opacity="0.85"/>
+      <rect x="34" y="66" width="52" height="10" rx="3" fill="#ffffff" opacity="0.55"/>
+      <path d="M60 66V40" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+      <path d="M46 40h28l-6-12H52z" fill="#ffffff" opacity="0.9"/>
+      <path d="M38 66 24 30M82 66l14-36" stroke="#ffffff" stroke-width="2" opacity="0.35"/>
+      <path d="M24 30h72" stroke="#ffffff" stroke-width="2" opacity="0.3"/>`,
+    faxgeraet: `
+      <rect x="18" y="52" width="84" height="34" rx="5" fill="#ffffff" opacity="0.22"/>
+      <rect x="18" y="52" width="84" height="34" rx="5" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <path d="M34 52V26h44l12 12v14" fill="#ffffff" opacity="0.85"/>
+      <path d="M42 34h28M42 42h20" stroke="#7a6a4a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/>
+      <rect x="30" y="86" width="60" height="12" rx="3" fill="#ffffff" opacity="0.7"/>
+      <circle cx="88" cy="62" r="3.2" fill="#ffffff"/>
+      <path d="M28 68h34" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" opacity="0.75"/>`,
+    schreibmaschine: `
+      <path d="M22 82h76l6 16H16z" fill="#ffffff" opacity="0.85"/>
+      <rect x="28" y="56" width="64" height="26" rx="4" fill="#ffffff" opacity="0.3"/>
+      <rect x="28" y="56" width="64" height="26" rx="4" fill="none" stroke="#ffffff" stroke-width="2.8"/>
+      <rect x="38" y="26" width="44" height="26" rx="3" fill="#ffffff" opacity="0.9"/>
+      <path d="M44 34h32M44 42h22" stroke="#7a6a4a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/>
+      <circle cx="34" cy="90" r="3" fill="#5a4a3a" opacity="0.6"/><circle cx="52" cy="90" r="3" fill="#5a4a3a" opacity="0.6"/>
+      <circle cx="70" cy="90" r="3" fill="#5a4a3a" opacity="0.6"/><circle cx="88" cy="90" r="3" fill="#5a4a3a" opacity="0.6"/>`,
+    telefonzelle: `
+      <rect x="34" y="16" width="52" height="90" rx="4" fill="#ffffff" opacity="0.2"/>
+      <rect x="34" y="16" width="52" height="90" rx="4" fill="none" stroke="#ffffff" stroke-width="3.4"/>
+      <rect x="42" y="28" width="36" height="40" rx="2" fill="#ffffff" opacity="0.35"/>
+      <path d="M60 28v40M42 48h36" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+      <rect x="30" y="10" width="60" height="10" rx="3" fill="#ffffff" opacity="0.9"/>
+      <path d="M52 78q0 8 8 8t8-8" fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"/>`,
+    musikkassette: `
+      <rect x="16" y="34" width="88" height="52" rx="6" fill="#ffffff" opacity="0.22"/>
+      <rect x="16" y="34" width="88" height="52" rx="6" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <rect x="28" y="44" width="64" height="20" rx="3" fill="#ffffff" opacity="0.75"/>
+      <circle cx="44" cy="54" r="7" fill="none" stroke="#6a5a4a" stroke-width="2.6"/>
+      <circle cx="76" cy="54" r="7" fill="none" stroke="#6a5a4a" stroke-width="2.6"/>
+      <circle cx="44" cy="54" r="2" fill="#6a5a4a"/><circle cx="76" cy="54" r="2" fill="#6a5a4a"/>
+      <path d="M30 74h60" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" opacity="0.8"/>
+      <circle cx="30" cy="80" r="2.4" fill="#ffffff" opacity="0.8"/>
+      <circle cx="90" cy="80" r="2.4" fill="#ffffff" opacity="0.8"/>`,
+  };
+
+  /* Das fertige Kachelbild: Farbverlauf im Rücken, darauf die
+     Zeichnung. Fehlt eine Zeichnung, bleibt es beim bisherigen
+     Bild mit Initialen — dann fehlt eben nur die Zeichnung, statt
+     dass die Kachel leer ist. */
+  function kachelBildSvg(schluessel, bgFrom, bgTo, initials, symbol) {
+    const zeichnung = KACHEL_ZEICHNUNGEN[schluessel];
+    if (!zeichnung) return portraitSvg(initials || "?", bgFrom, bgTo, symbol || "");
+    const id = "kg-" + schluessel;
+    return `<svg viewBox="0 0 120 120" style="width:100%; height:100%; display:block;" role="img" aria-hidden="true">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${bgFrom}"/><stop offset="100%" stop-color="${bgTo}"/>
+      </linearGradient></defs>
+      <rect width="120" height="120" fill="url(#${id})"/>
+      ${zeichnung}
+    </svg>`;
+  }
+
   function portraitSvg(initials, bgFrom, bgTo, symbol) {
     return `<svg viewBox="0 0 120 120" style="width:100%; height:100%; display:block;">
       <defs><linearGradient id="pg-${initials}" x1="0" y1="0" x2="1" y2="1">
@@ -13181,7 +13313,7 @@
   const DICHTER_ENTRIES = [
     {
       id: "humboldt", name: "Alexander von Humboldt", years: "1769–1859",
-      img: portraitSvg("AH", "#4FA88E", "#7FB87A", "🧭"),
+      img: kachelBildSvg("humboldt", "#4FA88E", "#7FB87A"),
       levels: {
         A1: "Alexander von Humboldt war ein deutscher Forscher. Er ist weit gereist, bis nach Südamerika. Er hat Pflanzen, Tiere und Berge untersucht.",
         A2: "Alexander von Humboldt war ein deutscher Naturforscher. Er reiste fünf Jahre lang durch Südamerika und erforschte Pflanzen, Vulkane und das Klima. Viele Orte auf der Welt tragen heute seinen Namen.",
@@ -13212,7 +13344,7 @@
     },
     {
       id: "kollwitz", name: "Käthe Kollwitz", years: "1867–1945",
-      img: portraitSvg("KK", "#8A7A93", "#B79FC4", "🖤"),
+      img: kachelBildSvg("kollwitz", "#8A7A93", "#B79FC4"),
       levels: {
         A1: "Käthe Kollwitz war eine deutsche Künstlerin. Sie hat Bilder von armen Menschen gemacht. Ihre Bilder sind oft traurig und sehr stark.",
         A2: "Käthe Kollwitz war eine deutsche Künstlerin. Sie zeichnete vor allem arme Familien, hungrige Kinder und trauernde Mütter. Sie wollte zeigen, wie es den Menschen wirklich ging.",
@@ -13243,7 +13375,7 @@
     },
     {
       id: "dietrich", name: "Marlene Dietrich", years: "1901–1992",
-      img: portraitSvg("MD", "#C9A15F", "#E8A03D", "🎬"),
+      img: kachelBildSvg("dietrich", "#C9A15F", "#E8A03D"),
       levels: {
         A1: "Marlene Dietrich war eine berühmte Schauspielerin aus Berlin. Sie hat in vielen Filmen gespielt und auch gesungen. Später lebte sie in Amerika.",
         A2: "Marlene Dietrich war eine deutsche Schauspielerin und Sängerin. In den 1930er-Jahren wurde sie in Hollywood berühmt. Sie weigerte sich, für die Nationalsozialisten zu arbeiten.",
@@ -13274,7 +13406,7 @@
     },
     {
       id: "goethe", name: "Johann Wolfgang von Goethe", years: "1749–1832",
-      img: portraitSvg("JG", "#5BA8A0", "#3EC6C6", "✒️"),
+      img: kachelBildSvg("goethe", "#5BA8A0", "#3EC6C6"),
       levels: {
         A1: "Goethe war ein berühmter deutscher Dichter. Er hat viele Gedichte und Bücher geschrieben. Sein bekanntestes Buch heißt „Faust“.",
         A2: "Johann Wolfgang von Goethe war ein sehr berühmter deutscher Dichter und Schriftsteller. Er lebte vor über 200 Jahren. Sein wichtigstes Werk heißt „Faust“ und wird noch heute in Theatern gespielt.",
@@ -13305,7 +13437,7 @@
     },
     {
       id: "schiller", name: "Friedrich Schiller", years: "1759–1805",
-      img: portraitSvg("FS", "#A875D8", "#B084CC", "🎭"),
+      img: kachelBildSvg("schiller", "#A875D8", "#B084CC"),
       levels: {
         A1: "Schiller war ein deutscher Dichter. Er hat Theaterstücke geschrieben. Ein bekanntes Stück heißt „Wilhelm Tell“.",
         A2: "Friedrich Schiller war ein wichtiger deutscher Dichter und Freund von Goethe. Er schrieb viele Theaterstücke, zum Beispiel „Wilhelm Tell“. Seine Werke handeln oft von Freiheit.",
@@ -13336,7 +13468,7 @@
     },
     {
       id: "einstein", name: "Albert Einstein", years: "1879–1955",
-      img: portraitSvg("AE", "#4A90D9", "#7FC4D4", "🧠"),
+      img: kachelBildSvg("einstein", "#4A90D9", "#7FC4D4"),
       levels: {
         A1: "Einstein war ein berühmter deutscher Wissenschaftler. Er hat die Relativitätstheorie entdeckt. Er hat den Nobelpreis gewonnen.",
         A2: "Albert Einstein war ein deutscher Physiker. Er ist sehr berühmt für seine Relativitätstheorie. Später ist er in die USA ausgewandert.",
@@ -13367,7 +13499,7 @@
     },
     {
       id: "bach", name: "Johann Sebastian Bach", years: "1685–1750",
-      img: portraitSvg("JB", "#E8825F", "#F2B84B", "🎼"),
+      img: kachelBildSvg("bach", "#E8825F", "#F2B84B"),
       levels: {
         A1: "Bach war ein berühmter deutscher Musiker. Er hat viele Musikstücke geschrieben. Seine Musik ist heute noch bekannt.",
         A2: "Johann Sebastian Bach war ein deutscher Komponist. Er hat sehr viel Musik geschrieben, vor allem Kirchenmusik. Seine Musik wird bis heute gespielt.",
@@ -13400,7 +13532,7 @@
   const SCHNEE_ENTRIES = [
     {
       id: "videorekorder", name: "Der Videorekorder und die Kassette",
-      img: portraitSvg("📼", "#7A6A93", "#5BA8A0", "📼"),
+      img: kachelBildSvg("videorekorder", "#7A6A93", "#5BA8A0"),
       levels: {
         A1: "Früher hat man Filme auf Kassetten gesehen. Das Gerät dafür hieß Videorekorder. Man musste die Kassette am Ende zurückspulen.",
         A2: "Früher lief das Fernsehen nicht auf Abruf. Wer einen Film sehen wollte, lieh sich eine Videokassette aus und legte sie in den Videorekorder. Am Ende musste man zurückspulen — sonst gab es Ärger in der Videothek.",
@@ -13431,7 +13563,7 @@
     },
     {
       id: "telefonbuch", name: "Das Telefonbuch im Flur",
-      img: portraitSvg("📒", "#C97B5A", "#E8A03D", "📒"),
+      img: kachelBildSvg("telefonbuch", "#C97B5A", "#E8A03D"),
       levels: {
         A1: "Früher gab es in jedem Haus ein dickes Telefonbuch. Darin standen die Nummern von allen Leuten in der Stadt. Man musste den Namen suchen.",
         A2: "Früher bekam jeder Haushalt einmal im Jahr ein dickes Telefonbuch. Darin standen Name, Adresse und Telefonnummer fast aller Menschen im Ort. Heute sucht man einfach im Internet.",
@@ -13462,7 +13594,7 @@
     },
     {
       id: "overheadprojektor", name: "Der Overheadprojektor im Klassenzimmer",
-      img: portraitSvg("🔦", "#5BA8A0", "#7FB87A", "🔦"),
+      img: kachelBildSvg("overheadprojektor", "#5BA8A0", "#7FB87A"),
       levels: {
         A1: "Früher gab es in der Schule keine Bildschirme. Der Lehrer schrieb auf eine durchsichtige Folie. Eine Lampe zeigte alles groß an der Wand.",
         A2: "Früher stand in fast jedem Klassenzimmer ein Overheadprojektor. Der Lehrer legte eine durchsichtige Folie darauf und schrieb mit einem Spezialstift. So konnten alle mitlesen, ohne dass er sich zur Tafel umdrehen musste.",
@@ -13493,7 +13625,7 @@
     },
     {
       id: "faxgeraet", name: "Das Faxgerät im Büroalltag",
-      img: portraitSvg("📠", "#7FB87A", "#5BA8A0", "📠"),
+      img: kachelBildSvg("faxgeraet", "#7FB87A", "#5BA8A0"),
       levels: {
         A1: "Früher hatten viele Büros ein Faxgerät. Man hat damit Papiere an andere Orte geschickt. Heute nutzen die meisten Menschen E-Mails.",
         A2: "Früher war das Faxgerät in fast jedem Büro zu finden. Damit konnte man Dokumente über die Telefonleitung an andere Orte senden. Heute wird das Faxgerät kaum noch benutzt, weil E-Mails viel schneller sind.",
@@ -13524,7 +13656,7 @@
     },
     {
       id: "schreibmaschine", name: "Die Schreibmaschine",
-      img: portraitSvg("⌨️", "#E85F6F", "#E8825F", "⌨️"),
+      img: kachelBildSvg("schreibmaschine", "#E85F6F", "#E8825F"),
       levels: {
         A1: "Früher haben Menschen mit einer Schreibmaschine geschrieben. Es gab keine Computer. Heute schreibt man meistens am Computer.",
         A2: "Vor dem Computer war die Schreibmaschine das wichtigste Gerät zum Schreiben von Briefen und Texten. Man musste jeden Buchstaben mit einer Taste anschlagen. Heute wird sie fast nicht mehr benutzt.",
@@ -13555,7 +13687,7 @@
     },
     {
       id: "telefonzelle", name: "Die Telefonzelle",
-      img: portraitSvg("☎️", "#F2B84B", "#E8D34B", "☎️"),
+      img: kachelBildSvg("telefonzelle", "#F2B84B", "#E8D34B"),
       levels: {
         A1: "Früher gab es viele Telefonzellen auf der Straße. Man konnte dort mit Münzen telefonieren. Heute gibt es fast keine mehr, weil alle ein Handy haben.",
         A2: "Telefonzellen standen früher an vielen Straßenecken in Deutschland. Mit Münzen oder einer Telefonkarte konnte man von dort aus telefonieren. Seit fast jeder ein Handy hat, sind sie fast verschwunden.",
@@ -13586,7 +13718,7 @@
     },
     {
       id: "musikkassette", name: "Die Musikkassette",
-      img: portraitSvg("📼", "#B084CC", "#A875D8", "📼"),
+      img: kachelBildSvg("musikkassette", "#B084CC", "#A875D8"),
       levels: {
         A1: "Früher haben Menschen Musik auf Kassetten gehört. Man konnte Lieder selbst aufnehmen. Heute streamt man Musik über das Handy.",
         A2: "Die Musikkassette war früher sehr beliebt, um Musik zu hören und aufzunehmen. Viele Menschen haben sich eigene Mixtapes gemacht. Heute wird Musik meistens gestreamt.",
