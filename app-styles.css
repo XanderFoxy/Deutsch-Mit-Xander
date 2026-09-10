@@ -5061,3 +5061,315 @@ button.sbk-gruppe {
 .zwilling-luecke { display:inline-block; min-width:70px; border-bottom:3px solid #8A6234; }
 .zwilling-luecke-voll { border-bottom-color:#4FA96C; background:#D8F0DF; border-radius:5px; padding:0 6px; font-weight:800; }
 .zwilling-hinweis { text-align:center; min-height:3em; margin-top:12px; line-height:1.5; }
+
+/* ============================================================
+   BESCHREIBUNG UNTER DEM SPIELTITEL
+   ------------------------------------------------------------
+   Steht in JEDEM Spiel und ersetzt die früheren, uneinheitlichen
+   Begrüßungsbildschirme: manche Spiele hatten einen, andere
+   starteten sofort. Jetzt weiß man in jedem Spiel sofort, was zu
+   tun ist — und kann trotzdem gleich anfangen.
+   ============================================================ */
+.spiel-beschreibung {
+  text-align: center;
+  margin: 2px auto 12px;
+  max-width: 34em;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   START-SCHILD IM SPIELFELD
+   ------------------------------------------------------------
+   Nur für Spiele, die von selbst losrennen (Wort-Kanone,
+   KorrekTour). Es liegt mittig über dem Feld — dort, wo man bei
+   einem Computerspiel hinschaut.
+   ============================================================ */
+.spiel-startschild {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(20, 30, 40, 0.45);
+  backdrop-filter: blur(1.5px);
+  border-radius: inherit;
+}
+.spiel-startknopf {
+  width: 74px; height: 74px; border-radius: 50%; border: 0; cursor: pointer;
+  background: linear-gradient(160deg, #F2B84B, #E08A2B);
+  color: #2E1F0A; font-size: 2rem; line-height: 1; padding-left: 6px;
+  box-shadow: 0 6px 0 rgba(120,70,10,0.55), 0 0 0 6px rgba(255,255,255,0.35);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.spiel-startknopf:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(120,70,10,0.55), 0 0 0 6px rgba(255,255,255,0.35); }
+.spiel-startwort {
+  color: #FFFDF6; font-weight: 800; letter-spacing: 3px; font-size: 0.9rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   EINLADUNGSLEISTE UNTER DEM SPIEL-SCHRIFTZUG
+   ------------------------------------------------------------
+   Zu jedem Spiel kann man jemanden einladen — genau wie bei den
+   Übungen. Die Leiste liegt außerhalb des Spielbereichs, damit
+   sie jedes Neuzeichnen der Runde übersteht, und ist mittig
+   gesetzt wie die Beschreibung darüber.
+   ============================================================ */
+.spiel-einladung {
+  margin: -4px auto 12px;
+  max-width: 34em;
+  text-align: center;
+}
+.spiel-einladung:empty { display: none; }
+.spiel-einladung .challenge-friend-list { justify-content: center; }
+
+/* Ein Spiel, das gerade überarbeitet wird: sichtbar, aber erkennbar
+   nicht spielbar — Bauzaun statt Verschwinden. */
+.games-pill-baustelle {
+  border-style: dashed !important;
+  opacity: 0.78;
+}
+.games-pill-baustelle .games-pill-bedingung {
+  color: var(--coral-400, #E8825F);
+  font-weight: 700;
+}
+
+/* Der grüne Anwesenheits-Zähler in der Kopfzeile. Klein, unaufdringlich,
+   aber nicht versteckt: man soll sehen, dass gerade jemand da ist. */
+.online-jetzt-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding-inline: 10px;
+  min-width: 0;
+}
+.online-jetzt-btn[style*="display: none"],
+.online-jetzt-btn[style*="display:none"] { display: none !important; }
+.online-jetzt-btn .online-dot { flex-shrink: 0; }
+
+/* ============================================================
+   WORTLISTEN — Ampel, Editor, Spiel-Hervorhebung
+   ------------------------------------------------------------
+   Beim Prüfen einer eingereichten Liste soll man auf einen Blick
+   sehen, was ankommt und was nicht: Grün heißt, ein Spiel kann
+   damit üben; Rot heißt, das Wörterbuch kennt es noch nicht —
+   diese Wörter wandern automatisch in die Sammelliste.
+   ============================================================ */
+.wortliste-bilanz {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  margin: 14px 0 8px; font-weight: 800; font-size: 0.9rem;
+}
+.wortliste-bilanz-da { color: #2f8f5b; }
+.wortliste-bilanz-fehlt { color: #c0392b; }
+
+.wortliste-chip-da {
+  background: rgba(47, 143, 91, 0.14);
+  border: 1px solid rgba(47, 143, 91, 0.45);
+  color: inherit;
+}
+.wortliste-chip-fehlt {
+  background: rgba(192, 57, 43, 0.12);
+  border: 1px solid rgba(192, 57, 43, 0.45);
+  text-decoration: none;
+}
+.wortliste-stufe { font-size: 0.66rem; opacity: 0.7; }
+.wortliste-weg {
+  border: 0; background: transparent; cursor: pointer;
+  color: #c0392b; font-weight: 800; padding: 0 0 0 4px; font-size: 0.9em;
+}
+.wortliste-editor { background: rgba(0, 0, 0, 0.03); border-radius: var(--radius-sm); padding: 10px; }
+
+/* Der Hinweisstreifen über der Spieleübersicht, wenn man aus einer
+   Wortliste kommt. */
+.wortliste-banner {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px; margin-bottom: 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(242, 184, 75, 0.16);
+  border: 1px dashed rgba(224, 138, 43, 0.6);
+  font-size: 0.86rem;
+}
+/* Ein Spiel, das mit der gewählten Liste üben kann … */
+.games-pill-wortliste {
+  border-color: rgba(47, 143, 91, 0.7) !important;
+  box-shadow: 0 0 0 2px rgba(47, 143, 91, 0.25);
+  background: rgba(47, 143, 91, 0.09) !important;
+}
+/* … und eines, das das nicht kann: sichtbar, aber zurückgenommen. */
+.games-pill-blass { opacity: 0.45; }
+
+/* ============================================================
+   LESBARKEIT AUF HELLEN FLÄCHEN — Sammelkorrektur
+   ------------------------------------------------------------
+   GEMELDET: „bei einigen Spielen sind die Buttons abhängig vom
+   Design gar nicht zu erkennen … beim Maskenspiel erkennt man gar
+   nicht, was man wählt … und bei der Wortliste sieht man nicht,
+   was man schreibt."
+
+   Die Ursache war überall dieselbe und ließ sich im Stylesheet
+   abzählen: 29 Regeln verdrahten einen HELLEN Hintergrund fest
+   (#FFFDF6, #FFFBF0, weiß), lassen die Schriftfarbe aber erben.
+   In den hellen Designs geht das gut — dort ist die geerbte Farbe
+   dunkel. In den dunklen Designs ist sie cremefarben: creme auf
+   creme, gemessener Kontrast 1,06 statt der nötigen 4,5. Man sieht
+   buchstäblich nichts.
+
+   Wer einen Hintergrund festlegt, muss auch die Schrift festlegen.
+   #241505 ist der Ton, den die Seite überall sonst auf hellen
+   Flächen benutzt.
+   ============================================================ */
+.wortliste-feld,
+.wortliste-feld::placeholder,
+.kette-karte,
+.aug-wort,
+.umzug-satz, .umzug-karte,
+.waage-platz, .waage-wort,
+.maske-karte,
+.atlas-knopf,
+.baum-wort,
+.zwilling-seite, .zwilling-satz, .zwilling-wort, .zwilling-luecke,
+.setz-type.setz-hoch,
+.cw-cell,
+.cal-front, .cal-back,
+.album-page-left, .album-page-right,
+.fox-of-day-report-card,
+.ag-beet-btn,
+.silbenturm-bau,
+.satzteil-konj,
+.kurs-stufe {
+  color: #241505;
+}
+/* Der Platzhaltertext darf blasser sein — aber lesbar blass. */
+.wortliste-feld::placeholder { color: rgba(36, 21, 5, 0.55); }
+/* Auch die Kindelemente dieser Flächen erben jetzt einen dunklen Ton
+   statt des Design-Cremes. */
+.kette-karte *, .aug-wort *, .umzug-karte *, .waage-wort *,
+.maske-karte *, .atlas-knopf *, .baum-wort *, .zwilling-seite *,
+.fox-of-day-report-card * {
+  color: inherit;
+}
+
+/* ============================================================
+   LESBARKEIT — zweite Ursache: Akzentfarbe als Schriftfarbe
+   ------------------------------------------------------------
+   Die erste Ursache war heller Grund + geerbte Schrift. Die
+   zweite ist ihr Spiegelbild: An mehreren Stellen dient
+   --amber-300 als SCHRIFTfarbe auf einer Kartenfläche. In den
+   dunklen Designs ist das ein helles Amber auf dunklem Grund —
+   gut lesbar. In den hellen Designs (bastelheft & Verwandte) ist
+   --amber-300 ein zartes Koralle (#FFA987) und die Fläche
+   cremefarben: gemessener Kontrast 1,65. Das traf ausgerechnet
+   den AKTIVEN Hauptreiter — also die Stelle, an der man ablesen
+   soll, wo man gerade ist.
+
+   --cream-50 ist der Ton, den jedes Design ausdrücklich als
+   Schrift auf seinen Flächen definiert: in dunklen Designs hell,
+   in hellen dunkel. Damit stimmt es überall. Das Amber bleibt als
+   Rahmen und Punkt erhalten, die Auswahl sieht also unverändert
+   aus — nur die Schrift ist jetzt zu lesen.
+   ============================================================ */
+.tape-tab[aria-selected="true"] { color: var(--cream-50); }
+.speak-btn { color: var(--cream-50); }
+
+/* Flächen, die eine Kartenfarbe setzen, aber keine Schriftfarbe:
+   ein <button> faellt sonst auf Schwarz zurueck — auf dunklem
+   Grund unsichtbar. Betraf die Kacheln bei „Dichter & Denker" und
+   die Mitgliederzeilen. */
+.kompass-tile,
+.member-row,
+.ticker-toggle,
+.bug-report-btn {
+  color: var(--cream-50);
+}
+.bug-report-btn { background: rgba(127, 127, 127, 0.22); }
+
+/* Das ✕ im Bildschirmfenster stand weiß auf einer fast
+   durchsichtigen weißen Scheibe. */
+.lightbox-close {
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+}
+/* Kleines Kalenderblatt in der Kopfzeile: weiß auf Rosa ist knapp —
+   ein Schatten macht die drei Buchstaben eindeutig. */
+.cal-page-mini-month { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55); }
+
+/* Der Name in der Kopfzeile: --amber-400 ist in den hellen Designs ein
+   helles Koralle (#FF8A65) und stand damit auf hellem Grund (Kontrast
+   2,19). --coral-400 ist ein Mittelton und funktioniert in beide
+   Richtungen — dunkel genug auf Creme, hell genug auf Nacht. */
+.brand-name span { color: var(--coral-400); }
+
+/* Der Platzhalterstrich in einem leeren Waagen-Fach war praktisch
+   unsichtbar — er soll ja gerade zeigen, dass hier noch etwas hingehört. */
+.waage-platz .empty-note { color: rgba(36, 21, 5, 0.55); }
+
+/* Die Scheibe hinter dem ✕ deckend genug, dass Weiß darauf sicher steht. */
+.lightbox-close { background: rgba(0, 0, 0, 0.78); }
+
+/* Ein Duell mit fremder Wortliste: der Hinweis ersetzt die eigene
+   Quellenauswahl, damit nicht der Eindruck entsteht, man könnte hier
+   gerade etwas wählen. */
+.wortliste-geliehen {
+  margin: 2px 0 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(47, 143, 91, 0.14);
+  border: 1px dashed rgba(47, 143, 91, 0.55);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* ============================================================
+   SAMMEL-MODUS BEIM LESEN
+   ------------------------------------------------------------
+   Beim Lesen stolpert man über ein Wort — genau dort soll man es
+   mitnehmen können, nicht erst später im Wörterbuch. Der Schalter
+   macht jedes Wort antippbar; ohne ihn ist der Text ganz normaler
+   Fließtext.
+   ============================================================ */
+.sammel-schalter {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin: 10px 0 2px; padding: 6px 12px;
+  border-radius: 999px;
+  /* Deckend, nicht getönt: Eine 16-Prozent-Tönung lässt in dunklen
+     Designs den dunklen Grund durch — die dunkle Schrift darauf wäre
+     dann nicht zu lesen. Mit einer vollen Fläche stimmt es überall. */
+  background: #F7DFA8;
+  border: 1px dashed rgba(150, 90, 20, 0.7);
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+}
+.sammel-schalter input { accent-color: var(--coral-400, #E8825F); }
+/* Der Schaltertext selbst braucht eine eigene Farbe: die amberfarbene
+   Flaeche ist in jedem Design hell, der geerbte Ton aber nicht. */
+.sammel-schalter { color: #241505; }
+.sammel-text .sammel-wort {
+  cursor: pointer;
+  border-bottom: 1px dotted rgba(224, 138, 43, 0.75);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.sammel-text .sammel-wort:hover,
+.sammel-text .sammel-wort:active { background: rgba(242, 184, 75, 0.3); }
+
+/* Die Karte, die beim Antippen aufgeht. */
+.sammel-karte {
+  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+  z-index: 1200; width: min(360px, calc(100vw - 32px));
+  padding: 16px 18px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--plum-800);
+  color: var(--cream-50);
+  border: 1px solid rgba(245, 239, 228, 0.14);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.sammel-karte-zu {
+  position: absolute; top: 8px; right: 10px;
+  border: 0; background: transparent; cursor: pointer;
+  font-size: 1.1rem; color: var(--cream-50); opacity: 0.7;
+}
+.sammel-karte-wort { margin: 0 0 4px; font-size: 1.15rem; font-weight: 800; }
+.sammel-karte-syl { margin: 0 0 8px; font-size: 0.9rem; opacity: 0.85; }
+.sammel-karte-bed { margin: 0 0 6px; font-size: 0.9rem; }
+.sammel-karte-bsp { margin: 0 0 10px; font-size: 0.84rem; font-style: italic; opacity: 0.85; }
+.sammel-karte-knoepfe .btn { width: 100%; }

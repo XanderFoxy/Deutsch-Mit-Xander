@@ -1003,21 +1003,43 @@ const Backend = (function () {
     if (r) r.resolved = true;
   }
 
-  async function getSiteContent(key) {
+  /* Kurzzeitgedächtnis für site_content.
+
+     Jeder Bereich mit Banner fragte beim Zeichnen neu nach — und weil
+     jede Ansicht ein Banner hat, hing an jedem Wechsel eine Netzrunde,
+     die immer dieselbe Antwort brachte. 90 Sekunden reichen, damit ein
+     Rundgang durch die Seite ohne Wartezeit läuft, und sind kurz genug,
+     dass eine Änderung von selbst durchkommt. Eigene Schreibvorgänge
+     räumen den Eintrag sofort weg. */
+  const SITE_CACHE_MS = 90000;
+  const siteContentCache = new Map();
+  function siteContentVergessen(key) {
+    if (key === undefined) siteContentCache.clear(); else siteContentCache.delete(key);
+  }
+  async function getSiteContent(key, frisch) {
+    if (!frisch) {
+      const merk = siteContentCache.get(key);
+      if (merk && Date.now() - merk.zeit < SITE_CACHE_MS) return merk.wert;
+    }
+    let wert = null;
     if (client) {
       try {
         const { data, error } = await client.from("site_content").select("value").eq("key", key).maybeSingle();
-        if (!error && data) return data.value;
-      } catch (e) { console.warn("Seiteninhalt konnte nicht geladen werden:", e); }
-      return null;
+        if (!error && data) wert = data.value;
+      } catch (e) { console.warn("Seiteninhalt konnte nicht geladen werden:", e); return null; }
+    } else {
+      wert = (demo.siteContent && demo.siteContent[key]) || null;
     }
-    return (demo.siteContent && demo.siteContent[key]) || null;
+    siteContentCache.set(key, { wert, zeit: Date.now() });
+    return wert;
   }
   async function setSiteContent(key, value) {
     if (!isAdmin()) throw new Error("Nur Administratoren können Seiteninhalte ändern.");
+    siteContentVergessen(key);
     if (client) {
       const { error } = await client.from("site_content").upsert({ key, value });
       if (error) throw new Error(friendlyDbError(error.message));
+      siteContentCache.set(key, { wert: value, zeit: Date.now() });
       return;
     }
     demo.siteContent = demo.siteContent || {};
@@ -2127,13 +2149,31 @@ const Backend = (function () {
       });
   }
 
-  async function createChallenge(toId, categoryIds) {
+  /* Konnte die zuletzt verschickte Herausforderung ihre Wortliste
+     mitnehmen? Die Oberfläche fragt das ab, um es ehrlich zu sagen,
+     statt eine Liste zu versprechen, die nie ankommt. */
+  let letzteChallengeMitListe = true;
+  function challengeListeMoeglich() { return letzteChallengeMitListe; }
+  async function createChallenge(toId, categoryIds, extra) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     let challengeId;
+    letzteChallengeMitListe = true;
     if (client) {
-      const { data, error } = await client.from("challenges")
-        .insert({ from_user: myId(), to_user: toId, categories: categoryIds, status: "pending" })
-        .select("id").single();
+      const grund = { from_user: myId(), to_user: toId, categories: categoryIds, status: "pending" };
+      let data = null, error = null;
+      if (extra) {
+        ({ data, error } = await client.from("challenges").insert({ ...grund, extra }).select("id").single());
+        /* Fehlt die Spalte noch (das Nachrüst-SQL aus dem README wurde
+           nicht ausgeführt), meldet Postgres das als Schema-Fehler.
+           Dann geht die Herausforderung eben ohne Liste raus — besser
+           als gar keine. */
+        if (error) {
+          letzteChallengeMitListe = false;
+          ({ data, error } = await client.from("challenges").insert(grund).select("id").single());
+        }
+      } else {
+        ({ data, error } = await client.from("challenges").insert(grund).select("id").single());
+      }
       if (error) throw error;
       challengeId = data.id;
       const names = await namesFor([toId]);
@@ -2145,6 +2185,7 @@ const Backend = (function () {
       from: demo.user.email,
       to: toId,
       categories: categoryIds,
+      extra: extra || null,
       fromResult: null,
       toResult: null,
       status: "pending",
@@ -2176,6 +2217,9 @@ const Backend = (function () {
       const names = await namesFor(ids);
       const withNames = (c) => ({
         id: c.id, from: c.from_user, to: c.to_user, categories: c.categories, status: c.status, winner: c.winner,
+        // Die mitgereiste Wortliste (falls die Spalte da ist und eine
+        // Liste angehängt war) — damit beide mit denselben Wörtern üben.
+        extra: c.extra || null,
         fromResult: c.from_result, toResult: c.to_result,
         fromName: (names[c.from_user] && names[c.from_user].name) || c.from_user,
         toName: (names[c.to_user] && names[c.to_user].name) || c.to_user,
@@ -2278,15 +2322,19 @@ const Backend = (function () {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (!text) throw new Error("Bitte einen Tipp-Text schreiben.");
     if (client) {
-      const { error } = await client.from("community_tips").insert({
+      const { data, error } = await client.from("community_tips").insert({
         user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending",
-      });
+      }).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      if (!data || !data.length) throw new Error("Der Tipp konnte nicht gespeichert werden — die Datenbank hat ihn abgelehnt (Zeilenschutz-Regel für „community_tips“).");
       addActivity(`${demo.profile.name} hat einen Schwarmwissen-Tipp geteilt. 💡`);
+      await meldeZurFreigabe("tipp", data[0].id, text.slice(0, 80), link || "");
       return;
     }
-    demo.communityTips.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending", created_at: new Date().toISOString() });
+    const neuerTipp = { id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, text, link: link || "", image_url: imageUrl || "", status: "pending", created_at: new Date().toISOString() };
+    demo.communityTips.push(neuerTipp);
     addActivity(`${demo.profile.name} hat einen Schwarmwissen-Tipp geteilt. 💡`);
+    await meldeZurFreigabe("tipp", neuerTipp.id, text.slice(0, 80), link || "");
   }
   async function getApprovedCommunityTips() {
     if (client) {
@@ -2353,6 +2401,56 @@ const Backend = (function () {
     }
     demo.communityTips = demo.communityTips.filter((x) => !(x.id === id && x.user_id === demo.user.id));
   }
+  /* ============================================================
+     FREIGABEN — jede Einreichung meldet sich bei der Moderation
+     ============================================================ */
+  const FREIGABE_ART = {
+    link: { symbol: "🔗", was: "einen weiterführenden Link" },
+    tipp: { symbol: "💡", was: "einen Schwarmwissen-Tipp" },
+    text: { symbol: "✍️", was: "einen eigenen Beitrag" },
+  };
+  /* Wer darf freischalten? Bewusst Betreiber UND Administration UND
+     Moderation — hängt das is_owner-Häkchen in der Datenbank, wäre die
+     Meldung sonst nicht zustellbar. */
+  async function verantwortlicheIds() {
+    if (client) {
+      try {
+        const { data } = await client.from("profiles").select("id")
+          .or("is_owner.eq.true,is_admin.eq.true,is_moderator.eq.true").limit(20);
+        return (data || []).map((z) => z.id);
+      } catch (e) { return []; }
+    }
+    return Object.keys(demo.users || {}).filter((e) => {
+      const pr = demo.users[e].profile;
+      return pr.isOwner || pr.isAdmin || pr.isModerator;
+    });
+  }
+  async function meldeZurFreigabe(art, id, titel, zusatz) {
+    const a = FREIGABE_ART[art] || { symbol: "📬", was: "einen Beitrag" };
+    const von = (demo.profile && demo.profile.name) || "Jemand";
+    const text = `[FREIGABE:${art}:${id}] ${a.symbol} ${von} hat ${a.was} eingereicht:\n\n„${titel}"`
+      + (zusatz ? `\n${zusatz}` : "");
+    let zugestellt = 0;
+    for (const ziel of await verantwortlicheIds()) {
+      try { await sendSystemMessage(ziel, text); zugestellt += 1; } catch (e) { /* nächster */ }
+    }
+    // Der zweite, vom Postfach unabhängige Weg.
+    try {
+      const offen = (await getSiteContent("freigaben")) || [];
+      if (!offen.some((f) => f.art === art && String(f.id) === String(id))) {
+        offen.unshift({ art, id, titel, von, am: new Date().toISOString() });
+        await setSiteContentInternal("freigaben", offen.slice(0, 100));
+      }
+    } catch (e) { /* die Postfach-Meldung steht trotzdem */ }
+    return zugestellt;
+  }
+  async function getFreigaben() { return (await getSiteContent("freigaben")) || []; }
+  async function clearFreigabe(art, id) {
+    const offen = (await getSiteContent("freigaben")) || [];
+    await setSiteContentInternal("freigaben",
+      offen.filter((f) => !(f.art === art && String(f.id) === String(id))));
+  }
+
   // Von Nutzer:innen vorgeschlagene Links für "Weiterführende Links" — landet erst als Vorschlag,
   // wird von Alex geprüft/freigeschaltet, danach bekommt die einreichende Person eine
   // Benachrichtigung. Dasselbe Muster wie bei den eigenen Text-Beiträgen.
@@ -2360,15 +2458,24 @@ const Backend = (function () {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (!title || !url) throw new Error("Bitte Titel und Adresse angeben.");
     if (client) {
-      const { error } = await client.from("user_links").insert({
+      /* .select("id") ist hier kein Beiwerk: es bestätigt, dass die Zeile
+         wirklich angelegt wurde (ein von den Zeilenschutz-Regeln
+         abgewiesenes Einfügen bliebe sonst unbemerkt) UND liefert die
+         Kennung, die für den Freischalten-Knopf im Postfach gebraucht
+         wird. */
+      const { data, error } = await client.from("user_links").insert({
         user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending",
-      });
+      }).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      if (!data || !data.length) throw new Error("Der Vorschlag konnte nicht gespeichert werden — die Datenbank hat ihn abgelehnt (Zeilenschutz-Regel für „user_links“).");
       addActivity(`${demo.profile.name} hat einen Link vorgeschlagen: „${title}". 🔗`);
+      await meldeZurFreigabe("link", data[0].id, title, url);
       return;
     }
-    demo.userLinks.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending", created_at: new Date().toISOString() });
+    const neuerLink = { id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, url, desc: desc || "", status: "pending", created_at: new Date().toISOString() };
+    demo.userLinks.push(neuerLink);
     addActivity(`${demo.profile.name} hat einen Link vorgeschlagen: „${title}". 🔗`);
+    await meldeZurFreigabe("link", neuerLink.id, title, url);
   }
   async function getApprovedUserLinks() {
     if (client) {
@@ -2447,15 +2554,19 @@ const Backend = (function () {
   async function submitCommunityText({ title, level, body, coverUrl }) {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
     if (client) {
-      const { error } = await client.from("community_texts").insert({
+      const { data, error } = await client.from("community_texts").insert({
         user_id: demo.user.id, author_name: demo.profile.name, title, level, body, status: "pending", cover_url: coverUrl || null,
-      });
+      }).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
+      if (!data || !data.length) throw new Error("Der Beitrag konnte nicht gespeichert werden — die Datenbank hat ihn abgelehnt (Zeilenschutz-Regel für „community_texts“).");
       addActivity(`${demo.profile.name} hat einen eigenen Beitrag eingereicht: „${title}". ✍️`);
+      await meldeZurFreigabe("text", data[0].id, title, "Niveau " + level);
       return;
     }
-    demo.communityTexts.push({ id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, cover_url: coverUrl || null, status: "pending", created_at: new Date().toISOString() });
+    const neuerText = { id: Core.uid(), user_id: demo.user.id, author_name: demo.profile.name, title, level, body, cover_url: coverUrl || null, status: "pending", created_at: new Date().toISOString() };
+    demo.communityTexts.push(neuerText);
     addActivity(`${demo.profile.name} hat einen eigenen Beitrag eingereicht: „${title}". ✍️`);
+    await meldeZurFreigabe("text", neuerText.id, title, "Niveau " + level);
   }
   // Nachträgliches Bearbeiten des eigenen Beitrags — Titelbild ändern/ergänzen und/oder eine
   // weitere Sprachniveau-Fassung zur bestehenden Geschichte hinzufügen (ohne dass man vorher
@@ -3160,6 +3271,9 @@ const Backend = (function () {
     // Wer den Titel nur vorläufig hält (heute war noch niemand aktiv), bekommt dafür
     // keinen Bonus — der gehört zu echter Mitarbeit an diesem Tag.
     if (fox.uebernommen || !fox.total) return null;
+    // Dieselbe Zehn-Punkte-Hürde wie bei der Meldung: der Bonus gehört zu
+    // einer wirklich gespielten Runde, nicht zu einem Streifschuss.
+    if (fox.total < 10) return null;
     await updateExtraProfileField("foxOfDayClaimedDate", todayKey);
     const bonus = 30;
     demo.profile.points = (demo.profile.points || 0) + bonus;
@@ -3314,10 +3428,76 @@ const Backend = (function () {
   // Hall-of-Fame-Eintragung, die JEDE Person auslösen kann (nicht nur Admins), im Unterschied zum
   // öffentlichen setSiteContent (das bewusst nur Admins erlaubt, absichtlich Seiteninhalte zu
   // ändern).
+  /* ============================================================
+     WORTLÜCKEN — was das Wörterbuch noch nicht kennt
+     ------------------------------------------------------------
+     Reicht jemand eine Wortliste ein, prüft die App jedes Wort gegen
+     das Wörterbuch. Was durchfällt, landet hier: nicht als einzelne
+     Meldung, sondern als Zählliste. Dieselbe Lücke, von mehreren
+     Leuten vermisst, rutscht dadurch nach oben.
+
+     Bewusst OHNE Namen: Es geht um das fehlende Wort, nicht darum,
+     wer es eingereicht hat. Gezählt wird nur, VON WIE VIELEN
+     verschiedenen Konten ein Wort vermisst wurde.
+     ============================================================ */
+  const WORTLUECKEN_SCHLUESSEL = "wortluecken";
+  const WORTLUECKEN_MAX = 800;
+  async function meldeWortluecken(woerter) {
+    const liste = (Array.isArray(woerter) ? woerter : [])
+      .map((w) => String(w || "").trim())
+      .filter((w) => w.length >= 2 && w.length <= 60);
+    if (!liste.length) return { ok: true, neu: 0 };
+    const wer = (demo.user && demo.user.id) || "anonym";
+    let bestand = [];
+    try { bestand = (await getSiteContent(WORTLUECKEN_SCHLUESSEL, true)) || []; } catch (e) { bestand = []; }
+    if (!Array.isArray(bestand)) bestand = [];
+    const nachWort = new Map();
+    bestand.forEach((e) => { if (e && e.wort) nachWort.set(e.wort.toLowerCase(), e); });
+    const jetzt = new Date().toISOString();
+    let neuAngelegt = 0;
+    liste.forEach((wort) => {
+      const schluessel = wort.toLowerCase();
+      let eintrag = nachWort.get(schluessel);
+      if (!eintrag) {
+        eintrag = { wort, anzahl: 0, konten: [], zuerst: jetzt, zuletzt: jetzt };
+        nachWort.set(schluessel, eintrag);
+        neuAngelegt += 1;
+      }
+      eintrag.zuletzt = jetzt;
+      // Pro Konto nur einmal zählen — sonst treibt eine Person, die
+      // dieselbe Liste dreimal einreicht, ihr Wort nach oben.
+      if (eintrag.konten.indexOf(wer) === -1) {
+        eintrag.konten.push(wer);
+        eintrag.anzahl = eintrag.konten.length;
+      }
+    });
+    const zusammen = [...nachWort.values()]
+      .sort((a, b) => (b.anzahl - a.anzahl) || String(a.wort).localeCompare(String(b.wort), "de"))
+      .slice(0, WORTLUECKEN_MAX);
+    try { await setSiteContentInternal(WORTLUECKEN_SCHLUESSEL, zusammen); }
+    catch (e) { return { ok: false, message: e.message }; }
+    return { ok: true, neu: neuAngelegt, gesamt: zusammen.length };
+  }
+  async function getWortluecken() {
+    if (!canModerate()) return [];
+    const bestand = (await getSiteContent(WORTLUECKEN_SCHLUESSEL, true)) || [];
+    return Array.isArray(bestand) ? bestand : [];
+  }
+  async function clearWortluecken(woerter) {
+    if (!canModerate()) throw new Error("Nur Administrator:innen können das.");
+    const bestand = (await getSiteContent(WORTLUECKEN_SCHLUESSEL, true)) || [];
+    if (!Array.isArray(bestand)) return;
+    const weg = new Set((woerter || []).map((w) => String(w).toLowerCase()));
+    const rest = weg.size ? bestand.filter((e) => !weg.has(String(e.wort).toLowerCase())) : [];
+    await setSiteContentInternal(WORTLUECKEN_SCHLUESSEL, rest);
+  }
+
   async function setSiteContentInternal(key, value) {
+    siteContentVergessen(key);
     if (client) {
       const { error } = await client.from("site_content").upsert({ key, value });
       if (error) throw new Error(friendlyDbError(error.message));
+      siteContentCache.set(key, { wert: value, zeit: Date.now() });
       return;
     }
     demo.siteContent = demo.siteContent || {};
@@ -3404,7 +3584,7 @@ const Backend = (function () {
     acceptFriendRequest,
     declineFriendRequest,
     getFriends,
-    createChallenge,
+    createChallenge, challengeListeMoeglich,
     cancelChallenge,
     getMyChallenges,
     submitChallengeResult,
@@ -3416,7 +3596,7 @@ const Backend = (function () {
     saveIntroduction, getAllIntroductions,
     getLastPlaylistLoadError: () => lastPlaylistLoadError,
     getLastUserListError: () => lastUserListError,
-    getSiteContent, setSiteContent, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, isBetaTester, getRawFeatureFlag, getRawFeatureFlagValue,
+    getSiteContent, setSiteContent, siteContentVergessen, meldeWortluecken, getWortluecken, clearWortluecken, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, isBetaTester, getRawFeatureFlag, getRawFeatureFlagValue,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
     getBugReports, resolveBugReport,
     notifyPracticing,
@@ -3450,7 +3630,7 @@ const Backend = (function () {
     getPendingCommunityTexts,
     approveCommunityText,
     rejectCommunityText,
-    submitLink,
+    submitLink, getFreigaben, clearFreigabe, meldeZurFreigabe,
     getApprovedUserLinks,
     getMyUserLinks,
     getPendingUserLinks,

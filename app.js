@@ -251,7 +251,17 @@
        lädt ihn gar nicht. Die Ansichten selbst warten trotzdem nicht: sie
        zeichnen sich über wortschatzNachziehen() nach, sobald die Wörter da
        sind. */
-    if ((targetId === "view-learn" || targetId === "view-knowledge") && typeof VocabData !== "undefined" && VocabData.ladeWoerter) VocabData.ladeWoerter();
+    /* Gemessen: das Einlesen der 3,4 MB Wortschatz blockiert den
+       Hauptstrang eines gedrosselten Telefons rund 330 ms am Stück. Lief
+       das im selben Moment los wie der Ansichtswechsel, sah man diese
+       Zeit als leeren Bildschirm. Deshalb erst zeichnen lassen, dann
+       laden — die Ansichten holen sich die Wörter über
+       wortschatzNachziehen() ohnehin nach, sobald sie da sind. */
+    if ((targetId === "view-learn" || targetId === "view-knowledge") && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
+      const spaeter = () => VocabData.ladeWoerter();
+      if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 });
+      else setTimeout(spaeter, 300);
+    }
     tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.target === targetId)));
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
     history.replaceState(null, "", `#${targetId}`);
@@ -930,7 +940,6 @@
   ];
   const KNOWN_FEATURE_FLAGS = [
     { key: "demo_test_schalter", label: "🧪 Test-Schalter (Beispiel)", desc: "Dient nur zum Ausprobieren des Freigabe-Systems selbst — hat keine echte Funktion." },
-    { key: "wortkanone_redesign", label: "🎯 Wort-Kanone (Neugestaltung)", desc: "Sequentielles Fallen, echte SVG-Kanone mit Zielrichtung, Explosions-Effekte, Rot/Grün-Landefeedback. Bis zur Freigabe sehen andere eine 'Wird gerade verbessert'-Meldung statt des Spiels." },
     { key: "wortblasen_neu", label: "🫧 Wortblasen (neues Spiel)", desc: "Mehrere Wort-Sprechblasen erscheinen gleichzeitig und zerplatzen — die richtige muss rechtzeitig getroffen werden. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "vokabelmeister_neu", label: "🔤 Vokabelmeister (neues Spiel)", desc: "Buchstabe wählen, dann 60 Sekunden Zeit für möglichst viele passende Wörter. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "korrektour_neu", label: "🚂 Korrektour (neues Spiel)", desc: "Satz-Zug fährt im Bogen durchs Bild — per Ampel-Signal entscheiden, ob der Satz richtig ist. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
@@ -1111,11 +1120,16 @@
       if (isOn) notifyAdminsIfBetaTesting(flagKey, gameName);
       return true;
     }
+    /* Ausdrücklich auf „aus" gestellt heißt: es war schon draußen und
+       wurde zurückgezogen. Nie gesetzt heißt: es war noch nie draußen. */
+    const zurueckgezogen = Backend.getRawFeatureFlagValue(flagKey) === false;
     area.innerHTML = `
       <div class="question-card" style="text-align:center;">
-        <p style="font-size:2.5rem;">${gameIcon}</p>
+        <p style="font-size:2.5rem;">${zurueckgezogen ? "🚧" : gameIcon}</p>
         <h2 style="margin:8px 0;">${gameName}</h2>
-        <p class="empty-note">Dieses Spiel wird gerade fertig vorbereitet — kommt bald!</p>
+        ${zurueckgezogen
+          ? `<p class="empty-note">Dieses Spiel gibt es — es wird gerade überarbeitet und ist deshalb kurz nicht spielbar. Es kommt zurück, dein Punktestand darin bleibt erhalten.</p>`
+          : `<p class="empty-note">Dieses Spiel wird gerade fertig vorbereitet — kommt bald!</p>`}
       </div>`;
     return false;
   }
@@ -1165,6 +1179,86 @@
      Datenbank und nicht bloß die Nachricht im Postfach: genau daran
      ist es vorher gescheitert — kam die Nachricht nicht an, war die
      Anfrage spurlos weg. */
+  /* Die Sammelliste der Wörter, die das Wörterbuch noch nicht kennt. */
+  async function loadAdminWortluecken() {
+    const area = document.getElementById("adminWortlueckenArea");
+    if (!area) return;
+    let liste = [];
+    try { liste = await Backend.getWortluecken(); } catch (e) { liste = []; }
+    if (!liste.length) { area.innerHTML = '<p class="empty-note">Noch nichts gesammelt — bisher hat jede eingereichte Liste vollständig ins Wörterbuch gepasst.</p>'; return; }
+    const mehrfach = liste.filter((e) => (e.anzahl || 0) > 1).length;
+    area.innerHTML = `
+      <p class="empty-note" style="margin-top:0;"><strong>${liste.length}</strong> ${liste.length === 1 ? "Wort" : "Wörter"} gesammelt${mehrfach ? `, davon <strong>${mehrfach}</strong> von mehreren Personen vermisst` : ""}.</p>
+      <textarea id="adminWortlueckenText" class="wortliste-feld" rows="7" readonly>${liste.map((e) => e.wort + ((e.anzahl || 1) > 1 ? "  (" + e.anzahl + "\u00d7)" : "")).join("\n")}</textarea>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
+        <button type="button" class="btn btn-coffee" id="wortlueckenKopieren" style="padding:6px 14px; font-size:0.8rem;">📋 Alles kopieren</button>
+        <button type="button" class="btn btn-ghost" id="wortlueckenLeeren" style="padding:6px 14px; font-size:0.8rem;">🗑️ Liste leeren</button>
+      </div>
+      <div class="wortliste-treffer" style="margin-top:10px;">
+        ${liste.slice(0, 120).map((e) => `<span class="wortliste-chip wortliste-chip-fehlt">${String(e.wort).replace(/</g, "&lt;")}${(e.anzahl || 1) > 1 ? ` <strong>${e.anzahl}\u00d7</strong>` : ""} <button type="button" class="wortliste-weg" data-luecke-weg="${String(e.wort).replace(/"/g, "&quot;")}" title="Aus der Sammlung nehmen">✕</button></span>`).join("")}
+      </div>
+      ${liste.length > 120 ? `<p class="empty-note" style="margin-top:6px;">… und ${liste.length - 120} weitere. Im Textfeld oben stehen alle.</p>` : ""}`;
+    document.getElementById("wortlueckenKopieren")?.addEventListener("click", async () => {
+      const text = liste.map((e) => e.wort).join("\n");
+      try { await navigator.clipboard.writeText(text); showToast(`📋 ${liste.length} Wörter kopiert.`); }
+      catch (e) {
+        // Ohne Zwischenablage-Recht: das Feld markieren, dann geht es von Hand.
+        const feld = document.getElementById("adminWortlueckenText");
+        if (feld) { feld.focus(); feld.select(); }
+        showToast("Bitte von Hand kopieren — das Feld ist markiert.");
+      }
+    });
+    document.getElementById("wortlueckenLeeren")?.addEventListener("click", async () => {
+      if (!confirm(`Alle ${liste.length} gesammelten Wörter verwerfen? Nur machen, wenn sie schon im Wörterbuch gelandet sind.`)) return;
+      try { await Backend.clearWortluecken([]); } catch (e) { showToast("⚠️ " + (e.message || "Hat nicht geklappt.")); return; }
+      loadAdminWortluecken();
+    });
+    area.querySelectorAll("[data-luecke-weg]").forEach((b) => b.addEventListener("click", async () => {
+      try { await Backend.clearWortluecken([b.dataset.lueckeWeg]); } catch (e) { return; }
+      loadAdminWortluecken();
+    }));
+  }
+
+  /* Die Sammelbox aller offenen Einreichungen. */
+  const FREIGABE_SYMBOL = { link: "🔗", tipp: "💡", text: "✍️" };
+  const FREIGABE_NAME = { link: "Weiterführender Link", tipp: "Schwarmwissen-Tipp", text: "Eigener Beitrag" };
+  async function loadAdminFreigaben() {
+    const area = document.getElementById("adminFreigabenArea");
+    if (!area) return;
+    let offen = [];
+    try { offen = await Backend.getFreigaben(); } catch (e) { offen = []; }
+    if (!offen.length) { area.innerHTML = '<p class="empty-note">Nichts zu prüfen — alles freigeschaltet.</p>'; return; }
+    area.innerHTML = `
+      <div class="breakdown-list">
+        ${offen.map((f) => `
+          <div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:6px;">
+            <span style="display:flex; justify-content:space-between; width:100%; align-items:center; gap:8px;">
+              <strong>${FREIGABE_SYMBOL[f.art] || "📬"} ${f.titel || "(ohne Titel)"}</strong>
+              <span class="empty-note">${f.am ? new Date(f.am).toLocaleDateString("de-DE") : ""}</span>
+            </span>
+            <span class="empty-note" style="font-size:0.76rem;">${FREIGABE_NAME[f.art] || f.art} · von ${f.von || "unbekannt"}</span>
+            <span style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-coffee" style="padding:5px 12px; font-size:0.78rem;" data-adm-frei-ja="${f.art}" data-adm-frei-id="${f.id}">✅ Freischalten</button>
+              <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-adm-frei-nein="${f.art}" data-adm-frei-id="${f.id}">✕ Ablehnen</button>
+            </span>
+          </div>`).join("")}
+      </div>`;
+    const ja = { link: (id) => Backend.approveUserLink(id), tipp: (id) => Backend.approveCommunityTip(id), text: (id) => Backend.approveCommunityText(id) };
+    const nein = { link: (id) => Backend.rejectUserLink(id), tipp: (id) => Backend.rejectCommunityTip(id), text: (id) => Backend.rejectCommunityText(id) };
+    area.querySelectorAll("[data-adm-frei-ja]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      try { await ja[b.dataset.admFreiJa](b.dataset.admFreiId); await Backend.clearFreigabe(b.dataset.admFreiJa, b.dataset.admFreiId); showToast("✅ Freigeschaltet."); }
+      catch (e) { b.disabled = false; showToast("⚠️ " + (e.message || "Hat nicht geklappt.")); return; }
+      loadAdminFreigaben();
+    }));
+    area.querySelectorAll("[data-adm-frei-nein]").forEach((b) => b.addEventListener("click", async () => {
+      if (!confirm("Diese Einreichung ablehnen und löschen?")) return;
+      b.disabled = true;
+      try { await nein[b.dataset.admFreiNein](b.dataset.admFreiId); await Backend.clearFreigabe(b.dataset.admFreiNein, b.dataset.admFreiId); }
+      catch (e) { b.disabled = false; showToast("⚠️ " + (e.message || "Hat nicht geklappt.")); return; }
+      loadAdminFreigaben();
+    }));
+  }
   async function loadAdminBetaRequests() {
     const area = document.getElementById("adminBetaRequestsArea");
     if (!area) return;
@@ -1892,6 +1986,16 @@
         <p class="form-error" id="sympathyLevelError" style="display:none;"></p>
       </div>` : ""}
       ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
+        <h3>📖 Wortlücken</h3>
+        <p class="empty-note" style="margin-top:0;">Wörter, die Lernende in ihre Listen eingetragen haben und die das Wörterbuch nicht kennt — von allen Nutzer:innen gesammelt, nach Häufigkeit sortiert. Kopiere sie heraus und schick sie ans Update, dann wandern sie ins Wörterbuch.</p>
+        <div id="adminWortlueckenArea"><p class="empty-note">Lade Sammelliste…</p></div>
+      </div>` : ""}
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
+        <h3>📬 Zu prüfen</h3>
+        <p class="empty-note" style="margin-top:0;">Alles, was Mitglieder eingereicht haben und noch auf deine Freischaltung wartet — Links, Tipps und eigene Beiträge an einer Stelle. Diese Liste hängt NICHT am Postfach.</p>
+        <div id="adminFreigabenArea"><p class="empty-note">Lade Einreichungen…</p></div>
+      </div>` : ""}
+      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px;">
         <h3>🧪 Beta-Anfragen</h3>
         <p class="empty-note" style="margin-top:0;">Wer sich als Beta-Tester:in beworben hat. Diese Liste hängt NICHT am Postfach — deshalb steht sie hier auch dann, wenn eine Nachricht einmal nicht durchkommt.</p>
         <div id="adminBetaRequestsArea"><p class="empty-note">Lade Anfragen…</p></div>
@@ -1969,7 +2073,7 @@
     if (premiumBadgeHideToggle) premiumBadgeHideToggle.addEventListener("change", async () => { await Backend.updateExtraProfileField("hidePremiumBadge", premiumBadgeHideToggle.checked); });
     const shareSiteBtn = document.getElementById("shareSiteBtn");
     if (shareSiteBtn) shareSiteBtn.addEventListener("click", shareReferralLink);
-    if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); loadAdminBetaRequests(); }
+    if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); loadAdminBetaRequests(); loadAdminFreigaben(); loadAdminWortluecken(); }
     area.querySelectorAll(".lernraum-btn").forEach((btn) => {
       btn.addEventListener("click", () => wechsleLernraum(btn.dataset.lernraum, true));
     });
@@ -2386,7 +2490,7 @@
        (gut zwei Sekunden) landete man bei langsamer Verbindung nur im
        leeren Postfach. */
     jumpToSubnavTarget('[data-sub="sub-inbox"]',
-      letzteAuswertungId ? `[data-msg-row="${letzteAuswertungId}"]` : ".inbox-list, #inboxArea", 150);
+      letzteAuswertungId ? `[data-msg-row="${letzteAuswertungId}"]` : ".inbox-list, #inboxArea", 60);
   });
 
   async function saveResultAndCheck(result) {
@@ -3441,7 +3545,31 @@
     e.stopPropagation();
     showToast(`ℹ️ ${icon.dataset.info}`);
   }, true);
-  function showToast(text, onClick) {
+  /* Der Fassungs-Wächter aus index.html meldet sich hier, wenn auf dem
+     Server eine neuere Seite liegt als die gerade laufende. Wir laden
+     NICHT von selbst neu — mitten in einer Spielrunde wäre das
+     ärgerlich —, sondern bieten es an. */
+  let neueFassungGemeldet = false;
+  window.dmaNeueFassungMelden = function (nummer) {
+    if (neueFassungGemeldet) return;
+    neueFassungGemeldet = true;
+    showToast(`🔄 Neue Fassung ${nummer} ist da — zum Laden antippen`, () => {
+      /* Erst die alten Antworten wegräumen, dann neu holen. Ohne das
+         käme im Zweifel dieselbe alte Seite noch einmal aus dem
+         Zwischenspeicher. */
+      if (window.caches && caches.keys) {
+        caches.keys().then((namen) => Promise.all(namen.map((n) => caches.delete(n)))).catch(() => {}).then(() => {
+          location.replace(location.pathname + "?neu=" + Date.now());
+        });
+      } else {
+        location.replace(location.pathname + "?neu=" + Date.now());
+      }
+    }, 20000);
+  };
+  // Falls der Wächter schneller war als diese Datei geladen wurde.
+  setTimeout(() => { if (window.DMA_NEUE_FASSUNG) window.dmaNeueFassungMelden(window.DMA_NEUE_FASSUNG); }, 1200);
+
+  function showToast(text, onClick, dauerMs) {
     // Antippt man den Toast selbst, soll er SOFORT verschwinden — unabhängig davon, ob zusätzlich
     // eine eigene Aktion (onClick) ausgeführt wird. Bisher tat ein Klick bei reinen Info-Bubbles
     // (kein onClick übergeben) gar nichts, man musste die vollen ~5,5 Sekunden abwarten.
@@ -3457,7 +3585,9 @@
     if (onClick) toast.classList.add("toast-clickable");
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add("toast-visible"), 20);
-    setTimeout(dismiss, 5500);
+    // Meldungen, die eine Handlung anbieten (etwa „neue Fassung laden"),
+    // dürfen länger stehen bleiben als eine reine Rückmeldung.
+    setTimeout(dismiss, dauerMs || 5500);
   }
   // Sichtbare Warnung, falls das Speichern der Punkte im Hintergrund fehlschlägt (auch nach
   // Wiederholung) — sonst könnte jemand beim nächsten Neuladen unbemerkt Punkte verlieren, weil
@@ -4105,6 +4235,7 @@
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
     const [requests, challenges, notifications, myMessages] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getMyMessages()]);
+    herausforderungenMerken(challenges.incoming);
     const unreadInbox = myMessages.inbox.filter((m) => !m.read);
     const unreadMsgCount = unreadInbox.length;
     const inboxBadge = document.getElementById("inboxTabBadge");
@@ -4318,7 +4449,12 @@
     return await Backend.getFriends();
   }
   function buildMiniChallengeBarHtml(gameKey, categoryId, friends) {
-    if (!friends.length) return "";
+    /* Ohne Freundesliste stand hier bisher gar nichts — man erfuhr nie,
+       dass man zu einem Spiel überhaupt einladen kann. Jetzt steht ein
+       kurzer Hinweis mit dem Weg dorthin. */
+    if (!friends.length) {
+      return `<button type="button" class="emoji-toggle-link" data-zu-freunden="1" style="font-size:0.78rem;">🎮 Zu diesem Spiel jemanden einladen — erst Freund:innen hinzufügen</button>`;
+    }
     const selected = miniChallengeSelections[gameKey];
     const expanded = miniChallengeExpanded[gameKey];
     const search = miniChallengeSearch[gameKey] || "";
@@ -4350,6 +4486,10 @@
       </div>`;
   }
   function wireMiniChallengeBar(container, gameKey, onRerender) {
+    container.querySelectorAll("[data-zu-freunden]").forEach((b) => b.addEventListener("click", () => {
+      activateTab("view-profile");
+      jumpToSubnavTarget('[data-sub="sub-friends"]', "#friendsArea", 60);
+    }));
     container.querySelector(`[data-mini-toggle="${gameKey}"]`)?.addEventListener("click", () => {
       miniChallengeExpanded[gameKey] = !miniChallengeExpanded[gameKey];
       onRerender();
@@ -4372,8 +4512,29 @@
         const ids = [...miniChallengeSelections[gameKey]];
         const catId = sendBtn.dataset.miniCat;
         sendBtn.disabled = true; sendBtn.textContent = "Sende…";
+        /* Übt man gerade mit einer eigenen Wortliste, reist sie mit —
+           die herausgeforderte Person bekommt genau diese Wörter. */
+        const eigeneWahl = wortQuelleWahl[gameKey] || "";
+        let mitgabe = null;
+        if (eigeneWahl.startsWith("liste:")) {
+          const l = wortlisteMitId(eigeneWahl.slice(6));
+          if (l && l.woerter.length >= 4) {
+            mitgabe = { wortliste: { name: l.name, woerter: l.woerter.slice(0, 400), von: (Backend.currentProfile() || {}).name || "" } };
+          }
+        } else if (eigeneWahl === "wortschatz") {
+          const eigene = [...meinWortschatz()];
+          if (eigene.length >= 4) {
+            mitgabe = { wortliste: { name: "Mein Wortschatz", woerter: eigene.slice(0, 400), von: (Backend.currentProfile() || {}).name || "" } };
+          }
+        }
         for (const fid of ids) {
-          try { await Backend.createChallenge(fid, [catId]); } catch (e) { console.warn(e); }
+          try { await Backend.createChallenge(fid, [catId], mitgabe); } catch (e) { console.warn(e); }
+        }
+        if (mitgabe) {
+          const ging = Backend.challengeListeMoeglich && Backend.challengeListeMoeglich();
+          showToast(ging
+            ? `🎮 Herausgefordert — mit deinen ${mitgabe.wortliste.woerter.length} Wörtern.`
+            : "🎮 Herausgefordert. Deine Wortliste konnte nicht mitgeschickt werden — dafür fehlt in der Datenbank noch die Spalte „extra“ (siehe README, Nachrüst-SQL).");
         }
         miniChallengeSelections[gameKey] = new Set();
         onRerender();
@@ -5283,7 +5444,16 @@
       </div>
       ${list.length === 0 ? '<p class="empty-note">Keine Treffer.</p>' : ""}
     `;
-    document.getElementById("vocabSearch").addEventListener("input", (e) => renderVocab(e.target.value));
+    /* Derselbe Fehler wie im Wörterbuch: das Feld, in das man tippt,
+       wurde bei jedem Zeichen mit neu gebaut. Hier reicht es, den
+       Fokus zurückzuholen — die Liste ist kürzer. */
+    const vSuche = document.getElementById("vocabSearch");
+    vSuche.addEventListener("input", (e) => {
+      const stelle = e.target.selectionStart;
+      renderVocab(e.target.value);
+      const neu = document.getElementById("vocabSearch");
+      if (neu) { neu.focus(); try { neu.setSelectionRange(stelle, stelle); } catch (err) { /* egal */ } }
+    });
     vocabArea.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
   }
   renderVocab();
@@ -5475,7 +5645,7 @@
     if (Backend.currentUser() && percent >= 90) {
       Backend.addTrophy(`Betonungs-Trainer – Sprachtalent`);
     }
-    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     document.getElementById("stPlayAgainBtn").addEventListener("click", () => {
       newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer();
     });
@@ -5492,7 +5662,6 @@
       <div class="question-card">
         <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total} <span class="subnav-info-icon" data-info="Ein paar zuverlässige Faustregeln zur deutschen Wortbetonung: Verben auf „-ieren&quot; werden IMMER auf dem „ie&quot; betont (stu-DIE-ren, te-le-fo-NIE-ren). Die Vorsilben be-, ge-, ver-, ent-, er-, zer-, emp- sind NIE betont — die Betonung liegt auf der Silbe danach (be-KOM-men, ver-STE-hen). Trennbare Vorsilben wie auf-, an-, aus-, ein-, mit-, vor-, zu- werden dagegen SELBST betont (AUF-stehen, MIT-nehmen). Bei den meisten anderen deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Fremdwörter folgen oft ihrem eigenen, aus der Ursprungssprache übernommenen Muster.">ⓘ</span></p>
         ${fortschrittHtml(stTrainerSession.round, stTrainerSession.total)}
-        <div id="stChallengeBar"></div>
         <div class="trophy-case" style="margin-bottom:10px;">
           ${[["leicht", "🟢 Kurze Wörter"], ["mittel", "🟡 Drei Silben"], ["schwer", "🔴 Lange Wörter"], ["alle", "🎲 Gemischt"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
         </div>
@@ -5506,7 +5675,6 @@
         <p class="empty-note" id="stFeedback" style="text-align:center;"></p>
       </div>
     `;
-    renderMiniChallengeBarCached("betonungstrainer", "betonungstrainer", "stChallengeBar", area, renderStressTrainer);
     wortQuelleBinden(area, "stresstrainer", () => { newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer(); });
     area.querySelectorAll(".st-diff-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -6137,6 +6305,94 @@
   // Mögliche Singularformen zu einer Pluralform. Rein regelbasiert und bewusst
   // großzügig: der Treffer zählt nur, wenn die Form tatsächlich schon im
   // Wörterbuch steht — falsche Kandidaten laufen also einfach ins Leere.
+  /* Grundform-Kandidaten für alles, was kein Nomen-Plural ist: Verben
+     in gebeugter Form und Adjektive mit Endung.
+
+     Wichtig: Hier wird nichts entschieden, nur vorgeschlagen. Jeder
+     Kandidat wird anschließend im Wörterbuch nachgeschlagen; findet
+     sich keiner, bleibt das Wort „nicht gefunden". Dadurch kann diese
+     Funktion großzügig raten, ohne falsche Treffer zu erzeugen. */
+  function grundformKandidaten(wort) {
+    const roh = String(wort || "").trim().toLowerCase();
+    if (roh.length < 3 || /\s/.test(roh)) return [];
+    const aus = new Set();
+    const dazu = (form) => {
+      if (form && form.length >= 3) aus.add(form);
+    };
+
+    /* 1. Partizip II: „gegangen" → „gangen"/„gehen", „gekauft" → „kauft".
+       Das ge- fällt weg, der Rest wird unten weiterbehandelt. */
+    const ohneGe = /^ge[a-zäöüß]{3,}/.test(roh) ? roh.slice(2) : null;
+
+    const stammFormen = [roh];
+    if (ohneGe) stammFormen.push(ohneGe);
+
+    stammFormen.forEach((form) => {
+      /* 2. Verbendungen abschneiden und den Infinitiv bilden. Die
+         Reihenfolge ist wichtig: längere Endungen zuerst, sonst
+         verschluckt „t" schon das „est". */
+      ["test", "test", "etest", "eten", "etet", "este", "esten",
+       "st", "et", "en", "te", "ten", "t", "e"].forEach((endung) => {
+        if (!form.endsWith(endung)) return;
+        const stamm = form.slice(0, form.length - endung.length);
+        if (stamm.length < 2) return;
+        dazu(stamm + "en");
+        dazu(stamm + "n");          // „sammeln", „ändern"
+        dazu(stamm + "eln");
+        dazu(stamm + "ern");
+        /* Starke Verben bekommen im Präsens einen Umlaut oder einen
+           anderen Vokal: „trägt" → tragen, „läuft" → laufen,
+           „sieht" → sehen, „nimmt" → nehmen, „gibt" → geben. */
+        const rueck = { "ä": "a", "ö": "o", "ü": "u", "äu": "au" };
+        Object.entries(rueck).forEach(([um, klar]) => {
+          const i = stamm.lastIndexOf(um);
+          if (i >= 0) dazu(stamm.slice(0, i) + klar + stamm.slice(i + um.length) + "en");
+        });
+        // ie → e („sieht" → sehen, „liest" → lesen, „empfiehlt" → empfehlen)
+        const ie = stamm.lastIndexOf("ie");
+        if (ie >= 0) dazu(stamm.slice(0, ie) + "e" + stamm.slice(ie + 2) + "en");
+        // i → e (gibt/geben, nimmt/nehmen, hilft/helfen)
+        const j = stamm.lastIndexOf("i");
+        if (j >= 0) {
+          dazu(stamm.slice(0, j) + "e" + stamm.slice(j + 1) + "en");
+          // Doppelkonsonant zurücknehmen: „nimmt" → „nimm" → „nehm" → „nehmen"
+          const kurz = stamm.slice(0, j) + "e" + stamm.slice(j + 1).replace(/([bdfgklmnprst])\1$/, "$1");
+          dazu(kurz + "en");
+        }
+        // „ie" im Präteritum: „ging" → gehen, „lief" → laufen, „hielt" → halten
+        dazu(stamm + "ien");
+      });
+
+      /* 3. Adjektivendungen: „kleine", „kleinen", „kleiner", „kleines",
+         „kleinem" → klein. Und der Komparativ: „größer" → groß über den
+         Umlaut, „schneller" → schnell. */
+      ["esten", "este", "estes", "ester", "estem",
+       "ere", "eren", "erer", "eres", "erem", "sten", "ste", "stes", "ster", "stem",
+       "en", "em", "er", "es", "e"].forEach((endung) => {
+        if (!form.endsWith(endung)) return;
+        const stamm = form.slice(0, form.length - endung.length);
+        if (stamm.length < 3) return;
+        dazu(stamm);
+        /* Vor einer Endung fällt das e im Stamm oft aus: „dunklem" steht
+           für „dunkel", „teuren" für „teuer", „edler" für „edel". Hier
+           wird es versuchsweise wieder eingesetzt. */
+        if (/[bdfgklmnprstz][lrn]$/.test(stamm)) {
+          dazu(stamm.slice(0, -1) + "e" + stamm.slice(-1));
+        }
+        const i = Math.max(stamm.lastIndexOf("ä"), stamm.lastIndexOf("ö"), stamm.lastIndexOf("ü"));
+        if (i >= 0) {
+          const klar = { "ä": "a", "ö": "o", "ü": "u" }[stamm[i]];
+          dazu(stamm.slice(0, i) + klar + stamm.slice(i + 1));
+          // „größer" → „gross" → „groß"
+          dazu((stamm.slice(0, i) + klar + stamm.slice(i + 1)).replace(/ss$/, "ß"));
+        }
+      });
+    });
+
+    aus.delete(roh);
+    return [...aus];
+  }
+
   function singularKandidaten(wort) {
     const voll = dictKey(wort);
     const praefix = voll.slice(0, 2);
@@ -6620,11 +6876,29 @@
      mitgeführt und im Hintergrund gespeichert.
      ============================================================ */
   let meinWortschatzZwischen = null;
+  let meinWortschatzFuer = null;   // zu welchem Konto die Liste im Speicher gehört
   function meinWortschatz() {
-    if (meinWortschatzZwischen) return meinWortschatzZwischen;
+    /* Wichtig: die Liste im Speicher gehört zu EINEM Konto. Ohne diese
+       Prüfung sah die nächste Person, die sich am selben Gerät anmeldet,
+       die Merkwörter der vorherigen. */
+    const nutzer = Backend.currentUser();
+    const id = (nutzer && nutzer.id) || null;
+    if (meinWortschatzZwischen && meinWortschatzFuer === id) return meinWortschatzZwischen;
     const p = Backend.currentProfile();
     meinWortschatzZwischen = new Set(((p && p.extraProfileData && p.extraProfileData.meinWortschatz) || []));
+    meinWortschatzFuer = id;
     return meinWortschatzZwischen;
+  }
+  function wortschatzStandVerwerfen() { meinWortschatzZwischen = null; meinWortschatzFuer = null; }
+
+  /* Einmal an EINER Stelle speichern — mit echter Erfolgsprüfung.
+     Supabase meldet einen an der Zugriffsregel gescheiterten Schreibvorgang
+     nicht als Fehler, sondern liefert still {ok:false}; wer nur try/catch
+     benutzt, hält das für gelungen. */
+  async function wortschatzSichern(menge) {
+    const antwort = await Backend.updateExtraProfileField("meinWortschatz", [...menge]);
+    if (antwort && antwort.ok === false) throw new Error(antwort.message || "Konnte nicht gespeichert werden.");
+    return true;
   }
   function imWortschatz(wort) { return meinWortschatz().has(wort); }
   async function wortschatzUmschalten(wort) {
@@ -6632,11 +6906,11 @@
     const menge = meinWortschatz();
     const drin = menge.has(wort);
     if (drin) menge.delete(wort); else menge.add(wort);
-    try { await Backend.updateExtraProfileField("meinWortschatz", [...menge]); }
+    try { await wortschatzSichern(menge); }
     catch (e) {
       // Konnte nicht gespeichert werden: die Anzeige darf nicht lügen.
       if (drin) menge.add(wort); else menge.delete(wort);
-      showToast("Konnte gerade nicht gespeichert werden — bitte Verbindung prüfen.");
+      showToast("⚠️ Nicht gespeichert: " + (e.message || "Bitte Verbindung prüfen."));
       return drin;
     }
     return !drin;
@@ -6689,6 +6963,95 @@
   async function wortlisteLoeschen(id) {
     await wortlisteSichern(meineWortlisten().filter((l) => l.id !== id));
   }
+  /* Eine bestehende Liste ändern — umbenennen, Wörter ergänzen oder
+     einzelne wieder herausnehmen. Vorher konnte man eine Liste nur
+     anlegen und wegwerfen; wer ein Wort vergessen hatte, musste die
+     ganze Liste noch einmal eintippen. */
+  async function wortlisteAendern(id, aenderung) {
+    const listen = meineWortlisten().map((l) => {
+      if (l.id !== id) return l;
+      const neuL = { ...l };
+      if (aenderung.name !== undefined) neuL.name = String(aenderung.name || l.name).slice(0, 40);
+      if (aenderung.woerter !== undefined) neuL.woerter = aenderung.woerter.slice(0, 400);
+      neuL.geaendert = new Date().toISOString();
+      return neuL;
+    });
+    return wortlisteSichern(listen);
+  }
+
+  /* Welche Spiele mit einer Wortliste üben können — als Reiter-Namen,
+     damit die Spieleübersicht sie hervorheben kann. WORTQUELLE_SPIELE
+     nennt dieselben Spiele unter ihrem internen Kürzel. */
+  const WORTQUELLE_ZU_SUB = {
+    stresstrainer: "sub-stresstrainer",
+    silbenturm: "sub-silbenturm",
+    flussfuchs: "sub-flussfuchs",
+    setzerei: "sub-setzerei",
+    wortkette: "sub-wortkette",
+    augenblick: "sub-augenblick",
+    wordbuild: "sub-wordbuild",
+  };
+  /* Solange gesetzt, hebt die Spieleübersicht genau diese Spiele
+     hervor. Wird beim Verlassen der Übersicht wieder gelöscht —
+     gewünscht war ausdrücklich „aber nur in dem Moment, wenn man sagt:
+     mit Wortliste spielen". */
+  let wortlisteImBlick = null;
+  let wortlisteAnkunft = false;   // dieser eine Sprung kommt aus einer Wortliste
+
+  /* ============================================================
+     GELIEHENE WORTLISTE AUS EINEM DUELL
+     ------------------------------------------------------------
+     Fordert jemand mit seiner Wortliste heraus, übt die andere
+     Seite mit GENAU denselben Wörtern. Sonst wäre der Vergleich
+     der Prozentzahlen am Ende sinnlos: der eine mit zwanzig
+     Wörtern aus Kapitel 7, der andere mit dem ganzen Wörterbuch.
+
+     Solange eine geliehene Liste gilt, ist die eigene Wahl
+     ausdrücklich NICHT markiert — man spielt ja gerade nicht mit
+     seiner eigenen Liste. Nach der Runde ist der Zustand weg.
+     ============================================================ */
+  /* Von der Ergebniskategorie einer Herausforderung zum Kürzel, unter
+     dem das Spiel seine Wortquelle führt. Die beiden Namen sind
+     historisch verschieden — „betonungstrainer" zählt die Ergebnisse,
+     „stresstrainer" wählt die Wörter. */
+  const SPIEL_ZU_WORTQUELLE = {
+    betonungstrainer: "stresstrainer",
+    silbenturm: "silbenturm",
+    flussfuchs: "flussfuchs",
+    setzerei: "setzerei",
+    wortkette: "wortkette",
+    augenblick: "augenblick",
+    wortbaustelle: "wordbuild",
+  };
+  /* Die Liste, die eine bestimmte Herausforderung mitgebracht hat.
+     Gefüllt beim Laden der Herausforderungen, damit das Annehmen nicht
+     erst nachfragen muss. */
+  const herausforderungListen = {};
+  function herausforderungListe(id) { return herausforderungListen[id] || null; }
+  function herausforderungenMerken(liste) {
+    (liste || []).forEach((c) => {
+      const w = c && c.extra && c.extra.wortliste;
+      if (w && Array.isArray(w.woerter) && w.woerter.length >= 4) {
+        herausforderungListen[c.id] = { name: w.name || "Wortliste", woerter: w.woerter, von: w.von || c.fromName || "" };
+      }
+    });
+  }
+
+  const geliehenListe = {};   // { spielKuerzel: { name, woerter, von } }
+  function geliehenSetzen(spielKuerzel, liste) {
+    if (liste) geliehenListe[spielKuerzel] = liste;
+    else delete geliehenListe[spielKuerzel];
+  }
+  function geliehenAktiv(spielKuerzel) { return geliehenListe[spielKuerzel] || null; }
+  function geliehenAlleWeg() { Object.keys(geliehenListe).forEach((k) => delete geliehenListe[k]); }
+  /* Der Hinweisstreifen im Spiel — man soll wissen, warum hier
+     fremde Wörter stehen. */
+  function geliehenHinweisHtml(spielKuerzel) {
+    const g = geliehenAktiv(spielKuerzel);
+    if (!g) return "";
+    return `<p class="wortliste-geliehen">🎮 Duell: Du übst mit <strong>${g.von || "der herausfordernden Person"}</strong>s Liste
+      <strong>${g.name || "Wortliste"}</strong> — ${g.woerter.length} ${g.woerter.length === 1 ? "Wort" : "Wörter"}. Ihr habt damit dieselbe Aufgabe.</p>`;
+  }
 
   /* Das Nachschlagewerk für eingereichte Wörter. Gebaut wird es aus
      denselben Einträgen, die auch das Wörterbuch zeigt — was man
@@ -6723,6 +7086,16 @@
     for (const v of versuche) {
       for (const k of singularKandidaten(v)) {
         const treffer = karte.get(k);
+        if (treffer) return treffer;
+      }
+    }
+    /* Zuletzt: gebeugte Verben und Adjektive auf ihre Grundform
+       zurückführen. Erst hier, damit ein direkter Treffer immer
+       Vorrang hat — „das Essen" soll das Nomen finden, nicht das
+       Verb „essen". */
+    for (const kandidat of grundformKandidaten(roh)) {
+      for (const v of [kandidat, kandidat.charAt(0).toUpperCase() + kandidat.slice(1)]) {
+        const treffer = karte.get(dictKey(v));
         if (treffer) return treffer;
       }
     }
@@ -6778,6 +7151,16 @@
      Wörterbuch-Einträgen und gibt zurück, was die Quelle davon
      übriglässt. */
   function wortQuelleFilter(spiel, eintraege) {
+    /* Eine geliehene Liste aus einem Duell schlägt jede eigene Wahl —
+       beide Seiten müssen dieselben Wörter bekommen. */
+    const geliehen = geliehenAktiv(spiel);
+    if (geliehen) {
+      const menge = new Set(geliehen.woerter);
+      const treffer = eintraege.filter((e) => menge.has(e.word));
+      // Reicht die fremde Liste für dieses Spiel nicht, lieber alles
+      // nehmen als eine halbe Runde zu zeigen.
+      return treffer.length >= 4 ? treffer : eintraege;
+    }
     const wahl = wortQuelleAktiv(spiel);
     if (wahl === "wortschatz") {
       const menge = meinWortschatz();
@@ -6792,6 +7175,11 @@
     return eintraege;
   }
   function wortQuelleChipsHtml(spiel) {
+    /* Läuft ein Duell mit fremder Liste, wird die eigene Auswahl gar
+       nicht erst angeboten: Es gibt gerade nichts zu wählen, und eine
+       markierte eigene Liste wäre schlicht gelogen. */
+    const geliehen = geliehenAktiv(spiel);
+    if (geliehen) return geliehenHinweisHtml(spiel);
     const wahl = wortQuelleAktiv(spiel);
     const listen = meineWortlisten();
     const gemerkt = meinWortschatz().size;
@@ -6836,20 +7224,80 @@
             </div>
           </div>`;
   }
+  /* ------------------------------------------------------------
+     Die Treffersuche und das Zeichnen der Trefferliste stehen für
+     sich, damit beim Tippen NUR die Liste neu entsteht. Vorher wurde
+     der ganze Bereich neu gebaut — mitsamt dem Eingabefeld, in dem
+     man gerade schrieb. Genau das war der gemeldete Abbruch nach
+     jedem Buchstaben.
+     ------------------------------------------------------------ */
+  let dictFilterText = "";
+  let dictTippUhr = null;
+  function dictGefiltert(filter) {
+    const suchtext = String(filter || "").toLowerCase().trim();
+    let list = buildDictionaryEntries();
+    if (suchtext) {
+      /* Reihenfolge der Treffer, und das ist der eigentliche Punkt:
+         wer „au" eintippt, will Auge, Augenblick, Auster, außen sehen
+         — nicht „abarbeiten", nur weil in dessen ERKLÄRUNG das Wort
+         „Aufgaben" steht. Deshalb wird nicht nur gefiltert, sondern
+         auch sortiert: erst die Wörter, die so ANFANGEN, dann die, die
+         die Buchstaben irgendwo enthalten, und ganz zuletzt die
+         Treffer aus der Bedeutung. */
+      const rang = (e) => {
+        const wort = e.word.toLowerCase();
+        const nackt = wort.replace(/^(der|die|das)\s+/, "");
+        if (nackt.startsWith(suchtext) || wort.startsWith(suchtext)) return 0;
+        if (nackt.includes(suchtext)) return 1;
+        if ((e.meaning || "").toLowerCase().includes(suchtext)) return 2;
+        return 3;
+      };
+      list = list.map((e) => ({ e, r: rang(e) })).filter((x) => x.r < 3)
+        .sort((a, b) => a.r - b.r).map((x) => x.e);
+    }
+    if (dictLevelFilter !== "alle") {
+      list = dictLevelFilter === "erweitert" ? list.filter((e) => !e.verified) : list.filter((e) => e.level === dictLevelFilter);
+    }
+    if (dictCategoryFilter !== "alle") list = list.filter((e) => e.category === dictCategoryFilter);
+    if (dictNurGemerkte) list = list.filter((e) => imWortschatz(e.word));
+    return list;
+  }
+  /* Nur das Gitter, den Nachladeknopf und den Leer-Hinweis erneuern. */
+  function dictListeErneuern() {
+    const gitter = document.getElementById("dictGrid");
+    if (!gitter) return;
+    const list = dictGefiltert(dictFilterText);
+    gitter.innerHTML = list.slice(0, dictGezeigt).map(dictKarte).join("");
+    const leer = document.getElementById("dictLeer");
+    if (leer) leer.style.display = list.length ? "none" : "";
+    const knopf = document.getElementById("dictMehr");
+    const uebrig = list.length - dictGezeigt;
+    if (knopf) {
+      knopf.style.display = uebrig > 0 ? "" : "none";
+      if (uebrig > 0) knopf.textContent = `Weitere ${Math.min(DICT_SEITE, uebrig)} anzeigen (${uebrig.toLocaleString("de-DE")} übrig)`;
+    }
+  }
+  /* Muss die ganze Ansicht doch neu gebaut werden, kommt die
+     Schreibmarke danach dorthin zurück, wo sie war. */
+  function dictFokusRetten(neuZeichnen) {
+    const vorher = document.getElementById("dictSearch");
+    const hatteFokus = vorher && document.activeElement === vorher;
+    const stelle = vorher ? vorher.selectionStart : 0;
+    neuZeichnen();
+    if (!hatteFokus) return;
+    const nachher = document.getElementById("dictSearch");
+    if (!nachher) return;
+    nachher.focus();
+    try { nachher.setSelectionRange(stelle, stelle); } catch (e) { /* egal */ }
+  }
   function renderDictionary(filter = "") {
-    wortschatzNachziehen(() => renderDictionary(filter));
+    dictFilterText = filter;
+    wortschatzNachziehen(() => renderDictionary(dictFilterText));
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
     const verifiedCount = all.filter((e) => e.verified).length;
     const categories = ["alle", ...new Set(all.map((e) => e.category))].sort((a, b) => a === "alle" ? -1 : b === "alle" ? 1 : a.localeCompare(b, "de"));
-    let list = all.filter((e) => e.word.toLowerCase().includes(filter.toLowerCase()) || (e.meaning || "").toLowerCase().includes(filter.toLowerCase()));
-    if (dictLevelFilter !== "alle") {
-      list = dictLevelFilter === "erweitert" ? list.filter((e) => !e.verified) : list.filter((e) => e.level === dictLevelFilter);
-    }
-    if (dictCategoryFilter !== "alle") {
-      list = list.filter((e) => e.category === dictCategoryFilter);
-    }
-    if (dictNurGemerkte) list = list.filter((e) => imWortschatz(e.word));
+    const list = dictGefiltert(filter);
     const gemerkteGesamt = meinWortschatz().size;
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">Alle Vokabeln der Seite an einem Ort (${all.length} Einträge, davon ${verifiedCount} mit handgeprüfter Betonung) — mit Betonung und Bedeutung.<br>Betonung wie im Duden: <strong>fett</strong> = betonte Silbe, <span class="stress-vokal stress-lang">Strich</span> darunter = langer Vokal, <span class="stress-vokal stress-kurz">Punkt</span> = kurzer Vokal, kleiner offener Kreis = betont, Länge aus der Schreibung nicht eindeutig.</p>
@@ -6869,29 +7317,38 @@
       <div class="vocab-grid" id="dictGrid">
         ${list.slice(0, dictGezeigt).map(dictKarte).join("")}
       </div>
-      ${list.length > dictGezeigt ? `<button type="button" class="btn btn-ghost" id="dictMehr" style="display:block; width:100%; margin-top:10px;">Weitere ${Math.min(DICT_SEITE, list.length - dictGezeigt)} anzeigen (${(list.length - dictGezeigt).toLocaleString("de-DE")} übrig)</button>` : ""}
-      ${list.length === 0 ? '<p class="empty-note">Keine Treffer.</p>' : ""}
+      <button type="button" class="btn btn-ghost" id="dictMehr" style="display:${list.length > dictGezeigt ? "block" : "none"}; width:100%; margin-top:10px;">Weitere ${Math.min(DICT_SEITE, Math.max(0, list.length - dictGezeigt))} anzeigen (${Math.max(0, list.length - dictGezeigt).toLocaleString("de-DE")} übrig)</button>
+      <p class="empty-note" id="dictLeer" style="display:${list.length === 0 ? "block" : "none"};">Keine Treffer.</p>
     `;
     const suche = document.getElementById("dictSearch");
-    suche.addEventListener("input", (e) => { dictGezeigt = DICT_SEITE; renderDictionary(e.target.value); });
+    suche.addEventListener("input", (e) => {
+      dictFilterText = e.target.value;
+      dictGezeigt = DICT_SEITE;
+      clearTimeout(dictTippUhr);
+      dictTippUhr = setTimeout(dictListeErneuern, 160);
+    });
     area.querySelectorAll(".dict-level-btn").forEach((btn) => {
-      btn.addEventListener("click", () => { dictLevelFilter = btn.dataset.level; dictGezeigt = DICT_SEITE; renderDictionary(filter); });
+      btn.addEventListener("click", () => {
+        dictLevelFilter = btn.dataset.level; dictGezeigt = DICT_SEITE;
+        dictFokusRetten(() => renderDictionary(dictFilterText));
+      });
     });
     document.getElementById("dictCategorySelect").addEventListener("change", (e) => {
       dictCategoryFilter = e.target.value;
       dictGezeigt = DICT_SEITE;
-      renderDictionary(filter);
+      dictFokusRetten(() => renderDictionary(dictFilterText));
     });
     /* Nachladen hängt nur die neuen Karten an, statt die ganze Liste neu
        zu bauen — so bleibt die Bildlaufstelle stehen. */
     document.getElementById("dictMehr")?.addEventListener("click", () => {
       const gitter = document.getElementById("dictGrid");
-      const naechste = list.slice(dictGezeigt, dictGezeigt + DICT_SEITE);
+      const aktuell = dictGefiltert(dictFilterText);
+      const naechste = aktuell.slice(dictGezeigt, dictGezeigt + DICT_SEITE);
       dictGezeigt += DICT_SEITE;
       gitter.insertAdjacentHTML("beforeend", naechste.map(dictKarte).join(""));
       const knopf = document.getElementById("dictMehr");
-      const uebrig = list.length - dictGezeigt;
-      if (uebrig <= 0) knopf.remove();
+      const uebrig = aktuell.length - dictGezeigt;
+      if (uebrig <= 0) knopf.style.display = "none";
       else knopf.textContent = `Weitere ${Math.min(DICT_SEITE, uebrig)} anzeigen (${uebrig.toLocaleString("de-DE")} übrig)`;
     });
     /* EIN Klick-Handler für alle Vorlese-Knöpfe statt einer pro Wort.
@@ -8604,7 +9061,7 @@
         saveResultAndCheck({ categories: ["satzpuzzle"], points: spSession.correct, bonus: 0, percent, character: "Satzbaumeister:in", badges: [], playedAt: new Date().toISOString() });
         // WICHTIG — behebt den echten Bug: eine über eine Herausforderung gestartete Runde wurde
         // bisher nie ans Backend zurückgemeldet, siehe activeGameChallengeId (gameRouting).
-        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
+        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; geliehenAlleWeg(); }
       }
     }
   }
@@ -8623,31 +9080,6 @@
     const area = document.getElementById("satzpuzzleArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "satzpuzzle_aktiv", "Satzpuzzle", "🧩", true)) return;
-    if (!spIntroShown && !hasSeenGameIntro("satzpuzzle")) {
-      // "SATZPUZZLE" als Reihe kleiner, bunter Puzzleteile (mit angedeuteten Verbindungsnoppen an
-      // den Seiten) statt Emoji + Text — passend zum Zusammensetz-Thema des Spiels.
-      const SP_TITLE_LETTERS = ["S", "A", "T", "Z", "P", "U", "Z", "Z", "L", "E"];
-      const SP_TITLE_COLORS = ["#E85F6F", "#F2B84B", "#5BA8A0", "#A875D8", "#4A90D9", "#E8825F", "#7FB87A", "#E8D34B", "#B084CC", "#5BA8A0"];
-      const pieceW = 36;
-      const titleSvg = `<svg viewBox="0 0 ${pieceW * SP_TITLE_LETTERS.length + 10} 56" style="width:100%; max-width:400px; height:auto;">
-        ${SP_TITLE_LETTERS.map((letter, i) => {
-          const x = 5 + i * pieceW;
-          return `<g>
-            <rect x="${x}" y="8" width="${pieceW - 4}" height="40" rx="6" fill="${SP_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.3"/>
-            <circle cx="${x + pieceW - 4}" cy="28" r="5" fill="${SP_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.3"/>
-            <text x="${x + (pieceW - 4) / 2}" y="34" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF" stroke="#241505" stroke-width="0.5">${letter}</text>
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center; overflow-x:auto;">${titleSvg}</div>
-          <p class="empty-note">Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen.</p>
-          <button type="button" class="btn btn-coffee" id="spStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      document.getElementById("spStartIntroBtn").addEventListener("click", () => { spIntroShown = true; markGameIntroSeen("satzpuzzle"); renderSatzpuzzle(); });
-      return;
-    }
     if (!spSession) newSatzpuzzleSession();
     if (spSession.round >= spSession.total) { renderSatzpuzzleResults(); return; }
     if (!spCurrentEntry) newSatzpuzzleRound();
@@ -8657,7 +9089,6 @@
         ${miniBugReportBtnHtml("Satzpuzzle: " + spCurrentEntry[0].join(" "))}
         <p class="eyebrow">🧩 SATZPUZZLE · RUNDE ${spSession.round + 1} / ${spSession.total} <span class="subnav-info-icon" data-info="Im deutschen Hauptsatz steht das Verb an Position 2. Im Nebensatz (nach weil, dass, ob, wenn, obwohl …) wandert das Verb dagegen ganz ans Ende. Genau das übst du hier.">ⓘ</span></p>
         ${fortschrittHtml(spSession.round, spSession.total)}
-        <div id="spChallengeBar"></div>
         <p class="empty-note" style="margin-bottom:10px;">Tipp die Bausteine in der richtigen Reihenfolge an, um den Satz zu bauen. Ein gebautes Wort nochmal antippen macht es (und alles Spätere) rückgängig.</p>
         <div class="sp-built-row" style="min-height:44px; display:flex; flex-wrap:wrap; gap:6px; padding:10px; background:rgba(0,0,0,0.04); border-radius:var(--radius-sm); margin-bottom:14px;">
           ${built.length ? built.map((w, pos) => `<button type="button" class="trophy-chip sp-built-word" data-built-pos="${pos}" title="Antippen zum Rückgängigmachen">${w}</button>`).join("") : '<span class="empty-note">…</span>'}
@@ -8667,7 +9098,6 @@
         </div>
         <p class="empty-note" id="spFeedback" style="text-align:center; margin-top:10px;"></p>
       </div>`;
-    renderMiniChallengeBarCached("satzpuzzle", "satzpuzzle", "spChallengeBar", area, renderSatzpuzzle);
     document.querySelector(".sp-choices-row").querySelectorAll("[data-idx]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.idx);
@@ -8776,38 +9206,6 @@
     if (!renderVerdienenGate(area, "sub-wackelturm", "Wackelturm")) return;
     // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
     // statt sofort mitten im Spiel zu landen, ohne zu wissen, worum es geht.
-    if (!wtIntroShown && !hasSeenGameIntro("wackelturm")) {
-      // Statt Emoji + Text: das Wort "WACKELTURM" als wackelig gestapelte Blöcke — jeder Block
-      // trägt einen Buchstaben und ist leicht zufällig seitlich versetzt, wie ein echter,
-      // instabiler Turm aus einzelnen Klötzen.
-      const WT_TITLE_LETTERS = ["W", "A", "C", "K", "E", "L", "T", "U", "R", "M"];
-      const WT_TITLE_COLORS = ["#E85F6F", "#F2B84B", "#5BA8A0", "#A875D8", "#4A90D9", "#E8825F", "#7FB87A", "#E8D34B", "#B084CC", "#5BA8A0"];
-      const blockH = 30;
-      const blockW = 58;
-      const rows = 2;
-      const perRow = Math.ceil(WT_TITLE_LETTERS.length / rows);
-      const titleSvg = `<svg viewBox="0 0 ${blockW * perRow + 30} ${blockH * rows + 20}" style="width:100%; max-width:340px; height:auto;">
-        ${WT_TITLE_LETTERS.map((letter, i) => {
-          const row = rows - 1 - Math.floor(i / perRow);
-          const colInRow = i % perRow;
-          const jitter = ((i * 7) % 11) - 5;
-          const x = 15 + colInRow * blockW + jitter;
-          const y = 10 + row * blockH;
-          return `<g>
-            <rect x="${x}" y="${y}" width="${blockW - 6}" height="${blockH - 5}" rx="4" fill="${WT_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.5"/>
-            <text x="${x + (blockW - 6) / 2}" y="${y + (blockH - 5) / 2 + 6}" text-anchor="middle" font-family="Comic Sans MS, cursive, sans-serif" font-size="18" font-weight="800" fill="#FFFFFF" stroke="#241505" stroke-width="0.5">${letter}</text>
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          <p class="empty-note">Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast. Schaffst du alle Blöcke, ohne dass er umfällt?</p>
-          <button type="button" class="btn btn-coffee" id="wtStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      document.getElementById("wtStartIntroBtn").addEventListener("click", () => { wtIntroShown = true; markGameIntroSeen("wackelturm"); renderWackelturm(); });
-      return;
-    }
     // Nach einer geschafften Runde zeigt sich (nach kurzer Zeit automatisch) ein bereiter,
     // leerer Turm statt der letzten Frage — genau wie beim allerersten Einstieg, aber OHNE dass
     // dabei schon eine neue Runde/ein neues Spiel gezählt wird. Erst der aktive Klick auf "Neuer
@@ -8832,7 +9230,6 @@
         ${miniBugReportBtnHtml("Wackelturm: " + wtCurrentQuestion.prompt)}
         <p class="eyebrow">🗼 WACKELTURM · ${wtBlocksRemoved} Blöcke sicher entfernt · ${wtMistakes}/${WT_MAX_MISTAKES} Fehler <span class="subnav-info-icon" data-info="Wie beim Steckturm-Spiel: jede richtige Antwort entfernt sicher einen Block. Bei jeder falschen Antwort wird der Turm instabiler — nach 3 Fehlern stürzt er ein. Die Fragen kommen zufällig aus allen Übungskategorien, die du schon freigeschaltet hast.">ⓘ</span></p>
         ${fortschrittHtml(WT_MAX_MISTAKES - wtMistakes, WT_MAX_MISTAKES)}
-        <div id="wtChallengeBar"></div>
         <div class="wt-tower-wrap">
           <div class="wt-tower" id="wtTower" style="transform: rotate(${tiltDeg}deg);">
             ${Array.from({ length: remainingBlocks }).map((_, i) => `<div class="wt-block" style="background: hsl(${28 + i * 7}, 58%, 56%);"></div>`).join("")}
@@ -8844,7 +9241,6 @@
         </div>
         <p class="empty-note" id="wtFeedback" style="margin-top:10px; min-height:20px;"></p>
       </div>`;
-    renderMiniChallengeBarCached("wackelturm", "wackelturm", "wtChallengeBar", area, renderWackelturm);
     area.querySelectorAll(".wt-opt-btn").forEach((btn) => {
       btn.addEventListener("click", () => checkWackelturm(Number(btn.dataset.idx), btn));
     });
@@ -8893,7 +9289,7 @@
       wtGameOverFinalized = true;
       if (Backend.currentUser()) {
         saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved + 5, bonus: 5, percent: 100, character: "Turmbaumeister:in", badges: [], playedAt: new Date().toISOString() });
-        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; }
+        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; geliehenAlleWeg(); }
       }
     }
     // Nach kurzer Zeit automatisch zum bereiten, leeren Turm wechseln — wie gewünscht, damit man
@@ -8923,7 +9319,7 @@
       if (Backend.currentUser() && wtBlocksRemoved > 0) {
         saveResultAndCheck({ categories: ["wackelturm"], points: wtBlocksRemoved, bonus: 0, percent: 100, character: "Turmbauer:in", badges: [], playedAt: new Date().toISOString() });
       }
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: accuracy }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: accuracy }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wackelturm"]')?.addEventListener("click", () => {
@@ -8964,7 +9360,7 @@
     if (Backend.currentUser()) {
       const percent = Math.round((waSession.correct / waSession.total) * 100);
       saveResultAndCheck({ categories: ["wortarten"], points: waSession.correct, bonus: 0, percent, character: "Wort-Typ:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   function renderWortarten() {
@@ -8979,14 +9375,12 @@
         ${miniBugReportBtnHtml("Wort-Typ: " + waCurrentWord[0])}
         <p class="eyebrow">🔤 WORT-TYP · RUNDE ${waSession.round + 1} / ${waSession.total} <span class="subnav-info-icon" data-info="Ordne jedes Wort per Antippen der richtigen Kategorie zu: Verb (Tätigkeit), Adjektiv (Eigenschaft), Substantiv (Ding/Person, immer groß), oder Adverb (z. B. Zeit/Ort/Art, ändert sich nie).">ⓘ</span></p>
         ${fortschrittHtml(waSession.round, waSession.total)}
-        <div id="waChallengeBar"></div>
         <p style="font-size:1.8rem; font-weight:800; margin:20px 0;">${waCurrentWord[0]}</p>
         <div class="trophy-case" style="justify-content:center;">
           ${WA_BUCKETS.map((b) => `<button type="button" class="trophy-chip wa-bucket-btn" data-bucket="${b.key}" style="font-size:0.95rem; padding:10px 16px;">${b.label}</button>`).join("")}
         </div>
         <p class="empty-note" id="waFeedback" style="margin-top:14px; min-height:20px;"></p>
       </div>`;
-    renderMiniChallengeBarCached("wortarten", "wortarten", "waChallengeBar", area, renderWortarten);
     area.querySelectorAll(".wa-bucket-btn").forEach((btn) => {
       btn.addEventListener("click", () => checkWortarten(btn.dataset.bucket, btn));
     });
@@ -9066,6 +9460,7 @@
   // Antworten als auch durchgekommene falsche Antworten zählen als Fehler.
   let knMistakes = 0;
   let knUsedPrompts = [];
+  let knSlotBreite = 22;
   let knCurrentQuestion = null;
   let knActiveWords = [];
   let knRoundActive = false;
@@ -9186,38 +9581,6 @@
     if (!area) return;
     if (!renderComingSoonGate(area, "wortblasen_neu", "Wortblasen", "🫧")) return;
     if (!renderVerdienenGate(area, "sub-bubbles", "Wortblasen")) return;
-    if (!bbIntroShown && !hasSeenGameIntro("wortblasen")) {
-      // WICHTIG — behebt einen echten Verstoß gegen die Vorgabe "keine Bubbles mit normalen
-      // Schriftzeichen drin": vorher waren die Buchstaben hier <text>-Elemente mit Comic-Sans-
-      // Schriftart innerhalb der Blasen — genau das Muster, das ausdrücklich vermieden werden
-      // sollte. Jetzt zeichnet handDrawnLetterGroup() (dieselben handgebauten Strichformen wie bei
-      // Vokabelmeister) die Buchstaben direkt als Linien in jede Blase hinein.
-      const BB_TITLE_LETTERS = ["W", "O", "R", "T", "B", "L", "A", "S", "E", "N"];
-      const BB_TITLE_COLORS = ["#5BA8A0", "#4A90D9", "#7FC4D4", "#3EC6C6", "#5BA8A0", "#4A90D9", "#7FC4D4", "#3EC6C6", "#5BA8A0", "#4A90D9"];
-      const bubbleR = 19;
-      const bubbleGap = 4;
-      const step = bubbleR * 2 + bubbleGap;
-      const titleSvg = `<svg viewBox="0 0 ${step * BB_TITLE_LETTERS.length + 10} ${bubbleR * 2 + 16}" style="width:100%; max-width:400px; height:auto;">
-        ${BB_TITLE_LETTERS.map((letter, i) => {
-          const cx = 10 + bubbleR + i * step;
-          const cy = bubbleR + 8;
-          return `<g>
-            <circle cx="${cx}" cy="${cy}" r="${bubbleR}" fill="${BB_TITLE_COLORS[i]}" fill-opacity="0.75" stroke="#FFFFFF" stroke-width="1.5"/>
-            <ellipse cx="${cx - 6}" cy="${cy - 7}" rx="5" ry="3" fill="#FFFFFF" fill-opacity="0.8"/>
-            ${handDrawnLetterGroup(letter, cx, cy + 1, 22, "#FFFFFF", 2.6)}
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          <p class="empty-note">Mehrere Wort-Blasen erscheinen gleichzeitig — tipp die RICHTIGE Antwort an, bevor sie von selbst zerplatzt! Tippst du eine falsche Blase an, oder zerplatzt die richtige ungetroffen, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
-          <button type="button" class="btn btn-coffee" id="bbStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      wireInlineFeatureFlagToggles(area, renderBubbleGame);
-      document.getElementById("bbStartIntroBtn").addEventListener("click", () => { bbIntroShown = true; markGameIntroSeen("wortblasen"); newBubbleGame(); renderBubbleGame(); });
-      return;
-    }
     if (bbLives <= 0) { renderBubbleGameOver(); return; }
     if (!bbRoundActive) newBubbleGame();
     area.innerHTML = `
@@ -9651,6 +10014,9 @@
   let ktIsCorrectSentence = false;
   let ktAnswered = false;
   let ktIntroShown = false;
+  /* Der Zug wartet, bis jemand auf START tippt. Vorher rollte er schon
+     los, während man die Aufgabe noch las. */
+  let ktGestartet = false;
   let ktRoundTimer = null;
   function ktBuildContentPool() {
     const pool = [];
@@ -9709,39 +10075,10 @@
     const area = document.getElementById("korrektourArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "korrektour_neu", "Korrektour", "🚂")) return;
-    if (!ktIntroShown && !hasSeenGameIntro("korrektour")) {
-      // Statt eines schlichten Text-Titels: ein kleiner, bunter Zug, bei dem jeder Waggon einen
-      // Buchstaben von "KORREKTOUR" trägt — dem Kunstwort aus "Korrektur" + "Tour" (mit dem
-      // zusätzlichen O vor dem U, das erst das Wortspiel ergibt) — passend zum Zug-Thema des
-      // Spiels, kindlich-verspielt mit leichter Neigung pro Waggon statt einer starren Reihe. Der
-      // T-Waggon (das eingefügte Kunstwort-T) bekommt bewusst die Signalfarbe aus dem ursprünglich
-      // farblich hervorgehobenen Text-Titel, damit der Wortwitz weiterhin auffällt.
-      const KT_TITLE_LETTERS = ["K", "O", "R", "R", "E", "K", "T", "O", "U", "R"];
-      const KT_TITLE_COLORS = ["#5BA8A0", "#F2B84B", "#A875D8", "#4A90D9", "#7FB87A", "#B084CC", "#E85F6F", "#F2B84B", "#5BA8A0", "#A875D8"];
-      const wagonW = 38;
-      const titleSvg = `<svg viewBox="0 0 ${wagonW * KT_TITLE_LETTERS.length + 20} 70" style="width:100%; max-width:400px; height:auto;">
-        ${KT_TITLE_LETTERS.map((letter, i) => {
-          const x = 10 + i * wagonW;
-          const rot = (i % 2 === 0 ? -1 : 1) * (4 + (i * 3) % 5);
-          return `<g transform="translate(${x + wagonW / 2},35) rotate(${rot}) translate(${-wagonW / 2},-35)">
-            <rect x="2" y="14" width="${wagonW - 6}" height="34" rx="6" fill="${KT_TITLE_COLORS[i]}" stroke="#241505" stroke-width="1.5"/>
-            <circle cx="9" cy="52" r="5" fill="#241505"/>
-            <circle cx="${wagonW - 11}" cy="52" r="5" fill="#241505"/>
-            ${bubbleLetterSvg(letter, (wagonW - 6) / 2 + 2, 32, 26, "#FFFFFF", "#D8E8EA")}
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          <p class="empty-note">Ein Satz-Zug fährt am unteren Bildrand vorbei — du hast nur dieses kurze Zeitfenster, um zu entscheiden: Ist der Satz grammatikalisch RICHTIG (🟢 Grün) oder enthält er einen typischen Fehler (🔴 Rot)? Nach 3 Fehlern ist die Runde vorbei.</p>
-          <button type="button" class="btn btn-coffee" id="ktStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      wireInlineFeatureFlagToggles(area, renderKorrektour);
-      document.getElementById("ktStartIntroBtn").addEventListener("click", () => { ktIntroShown = true; markGameIntroSeen("korrektour"); ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
-      return;
-    }
     if (!ktCurrentSentence) { newKorrektourRound(); return; }
+    // Vor dem Start steht der Zug: dieselbe Pause-Mechanik wie beim
+    // Pause-Knopf, nur eben von Anfang an.
+    if (!ktGestartet) ktPaused = true;
     const words = ktCurrentSentence.text.split(" ");
     // Echtes SVG statt Emoji für die Lokomotive — ein Emoji wie 🚂 wird je nach Plattform/
     // Schriftart unterschiedlich dargestellt (manchmal nach links, manchmal nach rechts fahrend),
@@ -9823,11 +10160,12 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Korrektour: " + ktCurrentSentence.text)}
         <p class="eyebrow">🚂 KORREKTOUR · ${ktScore} Treffer
-          <button type="button" class="btn btn-ghost" id="ktPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${ktPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
+          ${ktGestartet ? `<button type="button" class="btn btn-ghost" id="ktPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${ktPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>` : ""}
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(ktLives, 3)}</p>
         ${fortschrittHtml(ktLives, 3)}
         <div class="kt-track" id="ktTrack">
+          ${!ktGestartet ? startSchildHtml("LOSFAHREN") : ""}
           <span class="kt-bird" aria-hidden="true">˅</span>
           <span class="kt-bird kt-bird-2" aria-hidden="true">˅</span>
           <div class="kt-train" id="ktTrain" style="animation-play-state:${ktPaused ? "paused" : "running"};">
@@ -9841,6 +10179,11 @@
         </div>
         <p class="empty-note" id="ktFeedback" style="text-align:center; min-height:36px; margin-top:8px;"></p>
       </div>`;
+    document.getElementById("spielStartKnopf")?.addEventListener("click", () => {
+      ktGestartet = true;
+      ktPaused = false;
+      renderKorrektour();
+    });
     document.getElementById("ktGreenBtn").addEventListener("click", () => ktResolveSignal(true));
     document.getElementById("ktRedBtn").addEventListener("click", () => ktResolveSignal(false));
     document.getElementById("ktPauseBtn")?.addEventListener("click", () => {
@@ -9899,7 +10242,7 @@
       charakter: "KorrekTour", zeilen: [{ name: "🚂 Richtig eingeschätzt", anteil: accuracy, wert: ktScore + " von " + totalAttempts }],
       knoepfe: `<button type="button" class="btn btn-coffee" id="ktRetryBtn">🔄 Neue Runde</button>`,
     });
-    document.getElementById("ktRetryBtn").addEventListener("click", () => { ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; newKorrektourRound(); });
+    document.getElementById("ktRetryBtn").addEventListener("click", () => { ktScore = 0; ktLives = 3; ktMistakes = 0; ktGameOverFinalized = false; ktGestartet = false; newKorrektourRound(); });
     // WICHTIG: Punkte/Freischaltungen nur beim ERSTEN Anzeigen dieser beendeten Runde vergeben —
     // sonst würde ein Wechsel zu einem anderen Spiel und zurück (der renderKorrektourGameOver()
     // erneut aufruft, ohne dass eine neue Runde gestartet wurde) dieselben Punkte und
@@ -9914,6 +10257,8 @@
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-korrektour"]')?.addEventListener("click", () => {
+    ktGestartet = false;
+    ktPaused = false;
     renderKorrektour();
   });
 
@@ -9928,7 +10273,14 @@
     for (let attempt = 0; attempt < 25; attempt++) {
       const bank = gefuellt[Math.floor(Math.random() * gefuellt.length)];
       const q = bank[Math.floor(Math.random() * bank.length)];
-      if (q && !knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) {
+      /* GEMELDET: „die Wörter überlappen immer noch … wenn es so mit
+         Artikel oder kleine Sätze sind, das soll man vermeiden."
+         Deshalb strenger als vorher: höchstens VIER Antworten (fünf
+         passen auf einem Telefon nie nebeneinander), jede höchstens
+         14 Zeichen und höchstens zweiteilig — ein ganzer kleiner Satz
+         als fallende Blase ist auf 360 Pixeln nicht lesbar. */
+      if (q && !knUsedPrompts.includes(q.prompt) && q.options && q.options.length >= 2 && q.options.length <= 4
+        && q.options.every((o) => o.length <= 14 && o.trim().split(/\s+/).length <= 2)) {
         knUsedPrompts.push(q.prompt);
         return q;
       }
@@ -9936,9 +10288,15 @@
     knUsedPrompts = [];
     const cat = { getBank: () => gefuellt[Math.floor(Math.random() * gefuellt.length)] };
     const bank = cat.getBank();
-    return bank.find((q) => q.options.length >= 2 && q.options.length <= 5 && q.options.every((o) => o.length <= 18)) || bank[0];
+    return bank.find((q) => q.options.length >= 2 && q.options.length <= 4
+      && q.options.every((o) => o.length <= 14 && o.trim().split(/\s+/).length <= 2)) || null;
   }
+  /* Solange nicht gestartet wurde, fällt nichts. Vorher legte die Kanone
+     sofort los, sobald man das Spiel antippte — man las die erste Frage,
+     während die Antworten schon herunterkamen. */
+  let knGestartet = false;
   function newKanoneGame() {
+    knGestartet = false;
     knLives = 3;
     knScore = 0;
     knMistakes = 0;
@@ -9954,6 +10312,7 @@
   }
   function newKanoneRound() {
     knCurrentQuestion = pickRandomKanoneQuestion();
+    if (!knCurrentQuestion || !knCurrentQuestion.correct) { knRoundActive = false; return; }
     const correctIdx = knCurrentQuestion.correct[0];
     // WICHTIG: die Positionen werden jetzt mit GARANTIERTEM Mindestabstand berechnet, statt in
     // einem engen, zufälligen Cluster (35–65% Breite) — bei bis zu 5 Antwortoptionen PLUS zwei
@@ -9964,6 +10323,11 @@
     const wantsCoinBonus = Math.random() < 0.3;
     const totalSlots = knCurrentQuestion.options.length + (wantsHeartBonus ? 1 : 0) + (wantsCoinBonus ? 1 : 0);
     const slotWidth = 80 / totalSlots;
+    /* Die Blase darf nie breiter werden als ihre Spur — genau daran lag
+       das Überlappen: die feste Höchstbreite von 108 Pixeln passte bei
+       vier Blasen nebeneinander schon rechnerisch nicht mehr auf ein
+       schmales Telefon. */
+    knSlotBreite = Math.max(16, slotWidth - 2);
     const slotOrder = Core.shuffle(Array.from({ length: totalSlots }, (_, i) => i));
     let slotIdx = 0;
     const nextSlotX = () => {
@@ -10006,42 +10370,20 @@
     const area = document.getElementById("kanoneArea");
     if (!area) return;
     if (!renderVerdienenGate(area, "sub-kanone", "Wort-Kanone")) return;
-    // Die komplett neu gebaute Wort-Kanone (sequentielles Fallen, SVG-Kanone, Explosions-Effekte)
-    // ist noch nicht öffentlich freigegeben — nur der Betreiber und Beta-Tester:innen spielen sie
-    // schon. Alle anderen spielen ganz normal weiter die bisherige, bereits fertige Version — KEIN
-    // Hinweis, kein Unterbrechen, sie merken nichts vom Update, bis es wirklich freigegeben wird.
-    if (!Backend.isFeatureOn("wortkanone_redesign")) { renderKanoneOld(); return; }
-    // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
-    // statt dass sofort ohne Erklärung losgeschossen wird.
-    if (!knIntroShown && !hasSeenGameIntro("wortkanone")) {
-      // Statt Emoji + Text: das Wort "WORTKANONE" als Reihe kleiner Zielscheiben, passend zum
-      // Zielscheiben-Thema der Wort-Kanone — jede Zielscheibe trägt einen Buchstaben mittig.
-      const KN_TITLE_LETTERS = ["W", "O", "R", "T", "K", "A", "N", "O", "N", "E"];
-      const targetR = 18;
-      const step = targetR * 2 + 4;
-      const titleSvg = `<svg viewBox="0 0 ${step * KN_TITLE_LETTERS.length + 8} ${targetR * 2 + 10}" style="width:100%; max-width:400px; height:auto;">
-        ${KN_TITLE_LETTERS.map((letter, i) => {
-          const cx = 8 + targetR + i * step;
-          const cy = targetR + 5;
-          return `<g>
-            <circle cx="${cx}" cy="${cy}" r="${targetR}" fill="#E85F6F"/>
-            <circle cx="${cx}" cy="${cy}" r="${targetR * 0.68}" fill="#FFFFFF"/>
-            <circle cx="${cx}" cy="${cy}" r="${targetR * 0.36}" fill="#E85F6F"/>
-            ${handDrawnLetterGroup(letter, cx, cy + 1, 20, "#FFFFFF", 2.4)}
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          <p class="empty-note">Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
-          <button type="button" class="btn btn-coffee" id="knStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      document.getElementById("knStartIntroBtn").addEventListener("click", () => { knIntroShown = true; markGameIntroSeen("wortkanone"); renderKanone(); });
-      return;
-    }
+    // Es gibt nur noch EINE Wort-Kanone: die neu gebaute (sequentielles
+    // Fallen, echte SVG-Kanone, feste Spalten ohne Überlappung). Die alte
+    // Fassung ist entfallen — sie war der Grund, warum sich bei den
+    // meisten Nutzern die Wörter noch überlagert haben.
     if (knLives <= 0) { renderKanoneGameOver(); return; }
     if (!knRoundActive) newKanoneRound();
+    if (!knCurrentQuestion) {
+      area.innerHTML = `<div class="question-card" style="text-align:center;">
+        <p class="empty-note">Für die Wort-Kanone braucht es kurze Antworten, die nebeneinander vom Himmel passen — gerade ist keine passende Frage da. Probier es später noch einmal.</p></div>`;
+      return;
+    }
+    // Vor dem Start zählt die Zeit nicht: die Wörter stehen still, bis
+    // jemand auf das Schild in der Mitte tippt.
+    if (!knGestartet) knPaused = true;
     // Statt NUR einem einzelnen Wort sind jetzt bis zu 3 gleichzeitig sichtbar — näher beieinander
     // positioniert (siehe newKanoneRound), wie mehrere Blätter, die etwa zur gleichen Zeit fallen.
     // Jedes bekommt beim ERSTEN Erscheinen einen Zeitstempel; bei jedem Neu-Rendern wird darüber
@@ -10082,11 +10424,10 @@
       <div class="question-card">
         ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
         <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span>
-          <button type="button" class="btn btn-ghost" id="knPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${knPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>
+          ${knGestartet ? `<button type="button" class="btn btn-ghost" id="knPauseBtn" style="float:right; padding:2px 10px; font-size:0.78rem;">${knPaused ? "▶️ Weiter" : "⏸️ Pause"}</button>` : ""}
         </p>
         <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
         ${fortschrittHtml(knLives, 3)}
-        <div id="knChallengeBar"></div>
         <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
         <div class="kn-sky" id="knSky">
           <span class="kn-sun" aria-hidden="true">☀️</span>
@@ -10120,8 +10461,9 @@
               duration = duration / SPEED_UP;
               effectiveElapsed = elapsed / SPEED_UP;
             }
-            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; animation-duration:${duration}s; animation-delay:-${effectiveElapsed.toFixed(2)}s; animation-play-state:${knPaused ? "paused" : "running"};" ${knPaused ? "disabled" : ""}>${w.text}</button>`;
+            return `<button type="button" class="kn-word ${w.isBonus ? "kn-word-bonus" : ""} ${w.isCoinBonus ? "kn-word-coin" : ""}" data-wid="${w.id}" style="left:${w.xPercent}%; max-width:${knSlotBreite.toFixed(1)}%; animation-duration:${duration}s; animation-delay:-${effectiveElapsed.toFixed(2)}s; animation-play-state:${knPaused ? "paused" : "running"};" ${knPaused ? "disabled" : ""}>${w.text}</button>`;
           }).join("")}
+          ${!knGestartet ? startSchildHtml("START") : ""}
           <svg id="knCannon" class="kn-cannon-svg" viewBox="0 0 60 44" style="left:50%;">
             <!-- Fester Lafetten-Sockel (Räder + Stütze) — bleibt bewusst UNBEWEGT, damit klar
                  sichtbar ist: nur der Kanonenkörper selbst dreht sich, nicht die ganze Kanone. -->
@@ -10150,11 +10492,16 @@
         </label>
         <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
         <button type="button" class="emoji-toggle-link" id="knRestartLink" style="font-size:0.75rem;">🔄 Runde neu starten (Punkte bleiben erhalten)</button>
-        ${inlineFeatureFlagToggleHtml("wortkanone_redesign")}
       </div>`;
-    renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanone);
     wireInlineFeatureFlagToggles(area, renderKanone);
     startKanoneCloudTimer();
+    document.getElementById("spielStartKnopf")?.addEventListener("click", () => {
+      knGestartet = true;
+      knPaused = false;
+      // Die Fallzeit beginnt jetzt — nicht schon beim Öffnen des Spiels.
+      knActiveWords.forEach((w) => { w.spawnedAt = null; });
+      renderKanone();
+    });
     document.getElementById("knPauseBtn")?.addEventListener("click", () => {
       if (knPaused) {
         // Fortsetzen: die verstrichene Pausendauer auf JEDEN spawnedAt-Zeitstempel addieren, damit
@@ -10434,108 +10781,6 @@
     if (knLives <= 0) { setTimeout(renderKanoneGameOver, 900); return; }
     setTimeout(() => { newKanoneRound(); renderKanone(); }, 1100);
   }
-  // ===== Alte, bisher live laufende Wort-Kanone-Version — bleibt für alle Nutzer unverändert
-  // erreichbar, bis "wortkanone_redesign" freigegeben wird. Eigene Funktionsnamen, damit sie
-  // nicht mit der neuen Version kollidiert. =====
-  function renderKanoneOld() {
-    const area = document.getElementById("kanoneArea");
-    if (!area) return;
-    // WICHTIG — behebt den gemeldeten Bug: diese ältere Version (die die meisten Nutzer sehen, da
-    // das Redesign nur für Betreiber/Beta-Tester:innen aktiv ist) hatte bisher GAR KEIN Intro —
-    // sie startete sofort mit dem Spielfeld. Nutzt dieselbe hasSeenGameIntro()-Prüfung wie die
-    // neue Version, damit auch hier zuerst kurz erklärt wird, wie das Spiel funktioniert.
-    if (!knIntroShown && !hasSeenGameIntro("wortkanone")) {
-      // Dieselbe SVG-Zielscheiben-Titel-Logik wie im Redesign (keine Systemschrift, keine Emojis) —
-      // konsistent, egal welche der beiden Versionen man gerade sieht.
-      const KN_OLD_TITLE_LETTERS = ["W", "O", "R", "T", "K", "A", "N", "O", "N", "E"];
-      const targetROld = 16;
-      const stepOld = targetROld * 2 + 3;
-      const titleSvgOld = `<svg viewBox="0 0 ${stepOld * KN_OLD_TITLE_LETTERS.length + 6} ${targetROld * 2 + 8}" style="width:100%; max-width:380px; height:auto;">
-        ${KN_OLD_TITLE_LETTERS.map((letter, i) => {
-          const cx = 6 + targetROld + i * stepOld;
-          const cy = targetROld + 4;
-          return `<g>
-            <circle cx="${cx}" cy="${cy}" r="${targetROld}" fill="#E85F6F"/>
-            <circle cx="${cx}" cy="${cy}" r="${targetROld * 0.68}" fill="#FFFFFF"/>
-            <circle cx="${cx}" cy="${cy}" r="${targetROld * 0.36}" fill="#E85F6F"/>
-            ${handDrawnLetterGroup(letter, cx, cy + 1, 17, "#FFFFFF", 2.2)}
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center;">${titleSvgOld}</div>
-          <p class="empty-note" style="margin-top:10px;">Tipp die FALSCHE Antwort an, bevor sie unten ankommt — die richtige Antwort darfst du NICHT treffen, einfach durchlaufen lassen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz. Nach 3 Fehlern ist die Runde vorbei.</p>
-          <button type="button" class="btn btn-coffee" id="knOldStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      document.getElementById("knOldStartIntroBtn").addEventListener("click", () => { knIntroShown = true; markGameIntroSeen("wortkanone"); renderKanoneOld(); });
-      return;
-    }
-    if (knLives <= 0) { renderKanoneGameOver(); return; }
-    if (!knRoundActive) newKanoneRound();
-    const n = knActiveWords.length;
-    area.innerHTML = `
-      <div class="question-card">
-        ${miniBugReportBtnHtml("Wort-Kanone: " + knCurrentQuestion.prompt)}
-        <p class="eyebrow">🎯 WORT-KANONE · ${knScore} Treffer <span class="subnav-info-icon" data-info="Tipp die FALSCHEN Antworten an, bevor sie unten ankommen — die richtige Antwort darfst du NICHT treffen! Kommt eine falsche Antwort unten an, ohne getroffen zu werden, oder triffst du versehentlich die richtige, verlierst du ein Herz.">ⓘ</span></p>
-        <p class="eyebrow" style="margin-top:-6px;">${heartsLivesHtml(knLives, 3)}</p>
-        <div id="knChallengeBar"></div>
-        <p style="font-weight:700; margin:8px 0 12px;">${knCurrentQuestion.prompt}</p>
-        <div class="kn-sky kn-sky-old" id="knSky">
-          ${knActiveWords.map((w, i) => `<button type="button" class="kn-word kn-word-old" data-wid="${w.id}" style="left:${(100 / (n + 1)) * (i + 1)}%; animation-duration:${7 + n}s; animation-delay:${i * 0.9}s;">${w.text}</button>`).join("")}
-        </div>
-        <p class="empty-note" id="knFeedback" style="text-align:center; min-height:20px;"></p>
-        ${inlineFeatureFlagToggleHtml("wortkanone_redesign")}
-      </div>`;
-    renderMiniChallengeBarCached("wortkanone", "wortkanone", "knChallengeBar", area, renderKanoneOld);
-    wireInlineFeatureFlagToggles(area, renderKanone);
-    area.querySelectorAll(".kn-word-old").forEach((btn) => {
-      btn.addEventListener("click", () => shootKanoneWordOld(btn.dataset.wid, btn));
-      btn.addEventListener("animationend", () => landKanoneWordOld(btn.dataset.wid, btn));
-    });
-  }
-  function shootKanoneWordOld(wid, btn) {
-    const word = knActiveWords.find((w) => w.id === wid);
-    if (!word || word.resolved) return;
-    word.resolved = true;
-    btn.style.pointerEvents = "none";
-    btn.style.animationPlayState = "paused";
-    const fb = document.getElementById("knFeedback");
-    if (word.isCorrect) {
-      knLives -= 1;
-      Core.sound.wrong();
-      btn.style.background = "#FBDCDC";
-      fb.textContent = `⚠️ Das war die richtige Antwort! (${knLives} ❤️ übrig)`;
-    } else {
-      knScore += 1;
-      Core.sound.explosion();
-      spawnKanoneExplosion(btn);
-      btn.style.background = "#DFF3E5";
-      fb.textContent = "💥 Volltreffer!";
-    }
-    btn.classList.add("kn-shot");
-    checkKanoneRoundDoneOld();
-  }
-  function landKanoneWordOld(wid, btn) {
-    const word = knActiveWords.find((w) => w.id === wid);
-    if (!word || word.resolved) return;
-    word.resolved = true;
-    const fb = document.getElementById("knFeedback");
-    if (word.isCorrect) {
-      fb.textContent = "✅ Richtige Antwort sicher unten angekommen!";
-    } else {
-      knLives -= 1;
-      Core.sound.wrong();
-      fb.textContent = `⚠️ Falsche Antwort durchgekommen! (${knLives} ❤️ übrig)`;
-    }
-    checkKanoneRoundDoneOld();
-  }
-  function checkKanoneRoundDoneOld() {
-    if (!knActiveWords.every((w) => w.resolved)) return;
-    knRoundActive = false;
-    if (knLives <= 0) { setTimeout(renderKanoneOld, 900); return; }
-    setTimeout(() => { newKanoneRound(); renderKanoneOld(); }, 1100);
-  }
   // Herzen-Anzeige mit festen 3 Plätzen — verlorene Herzen bleiben als leerer Umriss sichtbar
   // (statt einfach zu verschwinden), damit klar ist, dass dort vorher eins war.
   const HEART_SVG_PATH = "M12 21 C12 21 3 14.5 3 8.5 C3 5.5 5.5 3 8.5 3 C10 3 11.3 3.7 12 4.8 C12.7 3.7 14 3 15.5 3 C18.5 3 21 5.5 21 8.5 C21 14.5 12 21 12 21 Z";
@@ -10573,6 +10818,7 @@
       if (activeGameChallengeId) {
         Backend.submitChallengeResult(activeGameChallengeId, { percent: accuracy });
         activeGameChallengeId = null;
+        geliehenAlleWeg();
       }
     }
     const area = document.getElementById("kanoneArea");
@@ -10632,7 +10878,7 @@
       wbiResultsFinalized = true;
       if (Backend.currentUser()) {
         saveResultAndCheck({ categories: ["werbinich"], points: wbiSession.correct, bonus: 0, percent, character: "Rätsel-Detektiv:in", badges: [], playedAt: new Date().toISOString() });
-        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
+        if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; geliehenAlleWeg(); }
       }
     }
   }
@@ -10650,7 +10896,6 @@
         ${miniBugReportBtnHtml("Wer bin ich: " + correct)}
         <p class="eyebrow">❓ WER BIN ICH? · RUNDE ${wbiSession.round + 1} / ${wbiSession.total}</p>
         ${fortschrittHtml(wbiSession.round, wbiSession.total)}
-        <div id="wbiChallengeBar"></div>
         <label class="quiz-actions" style="justify-content:center; margin-bottom:10px; gap:8px; cursor:pointer; font-size:0.8rem;">
           <input type="checkbox" id="wbiModeToggle" ${wbiTypeMode ? "checked" : ""} />
           <span>Stattdessen selbst eintippen (schwieriger)</span>
@@ -10668,7 +10913,6 @@
         `}
         <p class="empty-note" id="wbiFeedback" style="margin-top:10px; min-height:20px;"></p>
       </div>`;
-    renderMiniChallengeBarCached("werbinich", "werbinich", "wbiChallengeBar", area, renderWerBinIch);
     document.getElementById("wbiModeToggle")?.addEventListener("change", (e) => { wbiTypeMode = e.target.checked; renderWerBinIch(); });
     document.getElementById("wbiSubmitBtn")?.addEventListener("click", () => {
       const val = document.getElementById("wbiTypeInput").value;
@@ -10767,7 +11011,7 @@
     });
     // WICHTIG — behebt den echten Bug: eine über eine Herausforderung gestartete Runde wurde
     // bisher nie ans Backend zurückgemeldet, siehe activeGameChallengeId (gameRouting).
-    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     document.getElementById("wbPlayAgainBtn").addEventListener("click", () => {
       newWordbuildSession(); newWordbuildRound(); renderWordbuild();
     });
@@ -10785,7 +11029,6 @@
       <div class="question-card">
         <p class="eyebrow">🔤 WORTBAUSTELLE · RUNDE ${wbSession.round + 1} / ${wbSession.total}</p>
         ${fortschrittHtml(wbSession.round, wbSession.total)}
-        <div id="wbChallengeBar"></div>
         <div class="trophy-case" style="margin-bottom:8px;">
           ${[["leicht", "🟢 Leicht"], ["mittel", "🟡 Mittel"], ["schwer", "🔴 Schwer"]].map(([key, label]) => `<button type="button" class="trophy-chip wb-diff-btn ${wbDifficulty === key ? "selected" : ""}" data-wb-diff="${key}">${label}</button>`).join("")}
         </div>
@@ -10817,7 +11060,6 @@
         </div>
       </div>
     `;
-    renderMiniChallengeBarCached("wortbaustelle", "wortbaustelle", "wbChallengeBar", area, renderWordbuild);
     // Bei einem Wort, das breiter als der verfügbare Platz ist, würde "justify-content:center" den
     // Anfang (z. B. den ersten Buchstaben) standardmäßig außerhalb des sichtbaren Bereichs
     // zentrieren, ohne dass ersichtlich ist, dass man nach links scrollen könnte — sieht dann wie
@@ -10967,7 +11209,7 @@
       charakter: "Buchstabensalat", zeilen: [{ name: "🔍 Wörter samt Artikel", anteil: percent, wert: wsSession.correctCount + "/" + wsSession.target }],
       knoepfe: `<button type="button" class="btn btn-coffee" id="wsPlayAgainBtn">🔄 Neue Runde</button>`,
     });
-    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; }
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     document.getElementById("wsPlayAgainBtn").addEventListener("click", () => {
       newWordSearchSession(); wsState = buildWordSearch(); renderWordSearch();
     });
@@ -10991,7 +11233,6 @@
       <div class="question-card">
         <p class="eyebrow">🔍 BUCHSTABENSALAT · ${wsSession.wordsAttempted} / ${wsSession.target} WÖRTER · ${wsSession.correctCount} RICHTIG</p>
         ${fortschrittHtml(wsSession.wordsAttempted, wsSession.target)}
-        <div id="wsChallengeBar"></div>
         <p class="empty-note wrap-words" style="margin-bottom:10px;">Erste und letzte Zelle eines Wortes antippen — waagerecht, senkrecht oder diagonal, in jede Richtung. Danach den richtigen Artikel wählen, um das Wort abzuschließen.</p>
         <div class="ws-grid" style="grid-template-columns: repeat(${s.size}, minmax(0, 1fr));">
           ${s.grid.map((row, r) => row.map((ch, c) => {
@@ -11017,7 +11258,6 @@
           </label>`}
       </div>
     `;
-    renderMiniChallengeBarCached("buchstabensalat", "buchstabensalat", "wsChallengeBar", area, renderWordSearch);
     area.querySelectorAll(".ws-cell").forEach((btn) => {
       btn.addEventListener("click", () => {
         if (s.pendingArticleFor) return;
@@ -12719,7 +12959,7 @@
       charakter: "Kreuzworträtsel", zeilen: [{ name: "✏️ Rätsel gelöst", anteil: 100, wert: String(cwSession ? cwSession.total : 4) }],
       knoepfe: `<button type="button" class="btn btn-coffee" id="cwPlayAgainBtn">🔄 Neue Runden</button>`,
     });
-    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; }
+    if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: 100 }); activeGameChallengeId = null; geliehenAlleWeg(); }
     document.getElementById("cwPlayAgainBtn").addEventListener("click", () => {
       newCrosswordSession(); newCrossword(cwSession.startIdx); renderCrossword();
     });
@@ -12729,33 +12969,6 @@
     if (!area) return;
     if (!renderComingSoonGate(area, "kreuzwortraetsel_aktiv", "Kreuzworträtsel", "✏️", true)) return;
     if (!renderVerdienenGate(area, "sub-crossword", "Kreuzworträtsel")) return;
-    if (!cwIntroShown && !hasSeenGameIntro("kreuzwortraetsel")) {
-      // "KREUZWORTRÄTSEL" als kleines, echtes Kreuzworträtsel-Gitter (schwarz umrandete, weiße
-      // Kästchen) statt Emoji + Text — zwei Zeilen, da das Wort für eine einzelne Reihe zu lang ist.
-      const CW_TITLE_LETTERS = ["K", "R", "E", "U", "Z", "W", "O", "R", "T", "R", "Ä", "T", "S", "E", "L"];
-      const cellSize = 26;
-      const perRow = 8;
-      const titleSvg = `<svg viewBox="0 0 ${cellSize * perRow + 4} ${cellSize * 2 + 4}" style="width:100%; max-width:320px; height:auto;">
-        ${CW_TITLE_LETTERS.map((letter, i) => {
-          const row = Math.floor(i / perRow);
-          const col = i % perRow;
-          const x = 2 + col * cellSize;
-          const y = 2 + row * cellSize;
-          return `<g>
-            <rect x="${x}" y="${y}" width="${cellSize - 2}" height="${cellSize - 2}" fill="#FFFFFF" stroke="#241505" stroke-width="1.3"/>
-            <text x="${x + (cellSize - 2) / 2}" y="${y + (cellSize - 2) / 2 + 6}" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-weight="800" fill="#241505">${letter}</text>
-          </g>`;
-        }).join("")}
-      </svg>`;
-      area.innerHTML = `
-        <div class="question-card" style="text-align:center;">
-          <div style="display:flex; justify-content:center;">${titleSvg}</div>
-          <p class="empty-note" style="margin-top:12px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
-          <button type="button" class="btn btn-coffee" id="cwStartIntroBtn" style="margin-top:14px;">▶️ Los geht's</button>
-        </div>`;
-      document.getElementById("cwStartIntroBtn").addEventListener("click", () => { cwIntroShown = true; markGameIntroSeen("kreuzwortraetsel"); if (!cwSession) newCrosswordSession(); renderCrossword(); });
-      return;
-    }
     if (!cwSession) { renderCrosswordResults(); return; }
     if (!cwState) newCrossword(cwSession.startIdx);
     const { puzzle } = cwState;
@@ -12764,7 +12977,6 @@
       <div class="question-card">
         <p class="eyebrow">✏️ KREUZWORTRÄTSEL · RUNDE ${cwSession.round + 1} / ${cwSession.total} · ${puzzle.title}</p>
         ${fortschrittHtml(cwSession.round, cwSession.total)}
-        <div id="cwChallengeBar"></div>
         <p class="empty-note" style="margin-bottom:10px;">Antippen und tippen — waagerecht oder senkrecht, je nachdem wo du startest. Nochmal auf dieselbe Zelle tippen wechselt die Richtung.</p>
         <div class="cw-grid" style="grid-template-columns: repeat(${puzzle.cols}, minmax(0, 1fr)); max-width: min(${puzzle.cols * 42}px, 94vw);">
           ${puzzle.grid.map((row, r) => row.map((ch, c) => {
@@ -12797,7 +13009,6 @@
         <p class="empty-note" id="cwFeedback" style="text-align:center; margin-top:10px;"></p>
       </div>
     `;
-    renderMiniChallengeBarCached("kreuzwortraetsel", "kreuzwortraetsel", "cwChallengeBar", area, renderCrossword);
     area.querySelectorAll(".cw-input").forEach((input) => {
       const r = Number(input.dataset.r), c = Number(input.dataset.c);
       // Beim Antippen die Schreibrichtung festlegen: startet die Zelle ein Runter-Wort, aber
@@ -13466,7 +13677,8 @@
         <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip level-switch-btn" data-level="${lvl}" style="${lvl === level ? "background:var(--amber-400); color:#241505;" : ""}">${lvl}</button>`).join("")}
         </div>
-        <p style="margin-top:8px;">${entry.levels[level]}</p>
+        ${sammelSchalterHtml()}
+        <p style="margin-top:8px;" class="sammel-text">${sammelTextHtml(entry.levels[level])}</p>
         ${historyUebersetzungHtml(entry, level, "tile-" + entry.id)}
       </div>
     `;
@@ -13475,6 +13687,7 @@
     // es zwei Elemente mit derselben globalen ID "tileBackBtn" — document.getElementById fand
     // dabei immer nur das ERSTE, sodass der "Zurück"-Knopf im zweiten Bereich nie funktionierte.
     // area.querySelector() sucht jetzt gezielt nur innerhalb des eigenen, aufrufenden Bereichs.
+    sammelBinden(area, () => renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading));
     area.querySelector(".tile-back-btn").addEventListener("click", () => {
       setOpenIdVar(null);
       renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading);
@@ -13901,7 +14114,7 @@
     document.getElementById("wsmNochmalBtn").addEventListener("click", () => { neueWsmSession(); neueWsmRunde(); renderWortschmiede(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["wortschmiede"], points: wsmSession.richtig, bonus: 0, percent: prozent, character: "Wortschmied:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wortschmiede"]')?.addEventListener("click", () => {
@@ -14145,7 +14358,7 @@
     }, laufDauer);
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["satzbruecke"], points: sbSession.richtig, bonus: 0, percent: prozent, character: "Brückenbauer:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-satzbruecke"]')?.addEventListener("click", () => {
@@ -14338,7 +14551,7 @@
     document.getElementById("agNochmalBtn").addEventListener("click", () => { neueAgSession(); neueAgRunde(); renderArtikelgarten(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["artikel"], points: agSession.richtig, bonus: 0, percent: prozent, character: "Gärtner:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-artikelgarten"]')?.addEventListener("click", () => {
@@ -14639,7 +14852,7 @@
     document.getElementById("kzNochmalBtn").addEventListener("click", () => { neueKzSession(); neueKzRunde(); renderKatzenzimmer(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["katzenzimmer"], points: kzSession.richtig, bonus: 0, percent: prozent, character: "Raumkenner:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-katzenzimmer"]')?.addEventListener("click", () => {
@@ -15592,7 +15805,7 @@
     document.getElementById("flussNochmal")?.addEventListener("click", () => { neueFlussSession(); renderFlussfuchs(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["flussfuchs"], points: punkte, bonus: s.geschafft === s.gesamt ? 10 : 0, percent: prozent, character: "Flussgänger:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-flussfuchs"]')?.addEventListener("click", () => renderFlussfuchs());
@@ -15622,6 +15835,35 @@
      ============================================================ */
   let wortlistenPruefung = null;   // Ergebnis der letzten Prüfung
   let wortlistenText = "";
+  let wortlisteOffen = null;       // welche gespeicherte Liste gerade bearbeitet wird
+  let wortlisteNachtragText = "";  // Eingabefeld beim Nachtragen
+  let wortlisteNachtragPruefung = null;
+
+  /* Was das Wörterbuch nicht kennt, wandert ins Sammelbecken. Läuft im
+     Hintergrund und ohne Rückmeldung — es ist eine Nebenwirkung des
+     Prüfens, keine Handlung, für die jemand um Erlaubnis gefragt
+     werden müsste. Gemeldet wird das Wort, nicht die Person. */
+  function wortlueckenMelden(fehlend) {
+    if (!fehlend || !fehlend.length || !Backend.currentUser()) return;
+    if (!Backend.meldeWortluecken) return;
+    Backend.meldeWortluecken(fehlend).catch(() => { /* nicht schlimm */ });
+  }
+
+  function wortlisteChipsHtml(gefunden, fehlend, mitEntfernen) {
+    return `
+      ${gefunden.length ? `<div class="wortliste-treffer">
+        ${gefunden.map((g) => {
+          const wort = typeof g === "string" ? g : g.wort;
+          const stufe = typeof g === "string" ? "" : (g.level || "");
+          return `<span class="wortliste-chip wortliste-chip-da">✓ ${wort}${stufe ? ` <span class="wortliste-stufe">${stufe}</span>` : ""}${
+            mitEntfernen ? ` <button type="button" class="wortliste-weg" data-wort-weg="${String(wort).replace(/"/g, "&quot;")}" title="Aus der Liste nehmen">✕</button>` : ""
+          }</span>`;
+        }).join("")}
+      </div>` : ""}
+      ${fehlend.length ? `<div class="wortliste-treffer" style="margin-top:8px;">
+        ${fehlend.map((f) => `<span class="wortliste-chip wortliste-chip-fehlt">✕ ${String(f).replace(/</g, "&lt;")}</span>`).join("")}
+      </div>` : ""}`;
+  }
 
   function renderWortlisten() {
     const area = document.getElementById("wortlistenArea");
@@ -15641,10 +15883,11 @@
     }
     const listen = meineWortlisten();
     const p = wortlistenPruefung;
+    const gemerkt = meinWortschatz().size;
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">📋 MEINE WORTLISTEN <span class="subnav-info-icon" data-info="Wirf eine Liste Wörter ein — aus dem Kursbuch, von der Tafel, aus einer Nachricht. Danach kannst du in den Spielen genau mit diesen Wörtern üben.">ⓘ</span></p>
-        <p class="empty-note" style="margin-top:0;">Schreib oder füge deine Wörter ein — eines pro Zeile oder mit Komma getrennt. Artikel darfst du weglassen, eine Übersetzung hinter einem Gedankenstrich wird abgeschnitten. Danach findest du die Liste in den Spielen unter <strong>📋</strong> wieder.</p>
+        <p class="empty-note" style="margin-top:0;">Schreib oder füge deine Wörter ein — eines pro Zeile oder mit Komma getrennt. Artikel darfst du weglassen, eine Übersetzung hinter einem Gedankenstrich wird abgeschnitten.</p>
         <textarea id="wortlisteEingabe" class="wortliste-feld" rows="7" placeholder="der Tisch&#10;Fenster&#10;aufstehen – to get up&#10;1. die Verspätung&#10;Bahnhof, Fahrkarte, umsteigen">${wortlistenText.replace(/</g, "&lt;")}</textarea>
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
           <button type="button" class="btn btn-coffee" id="wortlistePruefen">🔍 Prüfen</button>
@@ -15652,16 +15895,13 @@
         </div>
         ${p ? `
           <div class="wortliste-ergebnis">
-            <p style="font-weight:800; margin:14px 0 6px;">${p.gefunden.length} von ${p.gesamt} ${p.gesamt === 1 ? "Eintrag" : "Einträgen"} gefunden</p>
-            ${p.gefunden.length ? `<div class="wortliste-treffer">
-              ${p.gefunden.map((g) => `<span class="wortliste-chip">${g.wort}${g.level ? ` <span class="empty-note" style="font-size:0.66rem;">${g.level}</span>` : ""}</span>`).join("")}
-            </div>` : ""}
+            <p class="wortliste-bilanz">
+              <span class="wortliste-bilanz-da">✓ ${p.gefunden.length} gefunden</span>
+              ${p.fehlend.length ? `<span class="wortliste-bilanz-fehlt">✕ ${p.fehlend.length} unbekannt</span>` : ""}
+            </p>
+            ${wortlisteChipsHtml(p.gefunden, p.fehlend, false)}
             ${p.fehlend.length ? `
-              <p style="font-weight:800; margin:14px 0 4px;">Nicht im Wörterbuch: ${p.fehlend.length}</p>
-              <p class="empty-note" style="margin:0 0 6px;">Diese Wörter kann kein Spiel abfragen — es hat weder Betonung noch Beispielsatz dafür. Häufigste Gründe: ein Tippfehler, eine gebeugte Form (geh statt gehen, größer statt groß), oder ein Wort, das es wirklich noch nicht gibt. Melde es gern über den Fehler-Knopf, dann kommt es ins Wörterbuch.</p>
-              <div class="wortliste-treffer">
-                ${p.fehlend.map((f) => `<span class="wortliste-chip wortliste-chip-fehlt">${f.replace(/</g, "&lt;")}</span>`).join("")}
-              </div>` : ""}
+              <p class="empty-note" style="margin:10px 0 0;">Die roten Wörter kennt das Wörterbuch noch nicht — kein Spiel kann sie abfragen, weil weder Betonung noch Beispielsatz dafür hinterlegt sind. Meist ist es ein Tippfehler oder eine gebeugte Form (<em>geh</em> statt <em>gehen</em>). <strong>Gemeldet sind sie schon:</strong> Sie liegen jetzt in Alex' Sammelliste und kommen mit einem der nächsten Updates ins Wörterbuch.</p>` : ""}
             ${p.gefunden.length ? `
               <div class="form-field" style="margin-top:16px;">
                 <label>Name der Liste</label>
@@ -15673,24 +15913,19 @@
               </div>` : ""}
           </div>` : ""}
       </div>
+
+      ${gemerkt ? `<div class="question-card" style="margin-top:14px;">
+        <h3 style="margin-top:0;">★ Dein Wortschatz</h3>
+        <p class="empty-note" style="margin-top:0;">${gemerkt} ${gemerkt === 1 ? "Wort" : "Wörter"} hast du im Wörterbuch mit dem Stern markiert. Du kannst daraus jederzeit eine Liste machen — dann lässt sie sich einzeln bearbeiten, ohne deinen Wortschatz zu verändern.</p>
+        <button type="button" class="btn btn-ghost" id="wortschatzAlsListe">📋 Daraus eine Wortliste machen</button>
+      </div>` : ""}
+
       <div class="question-card" style="margin-top:14px;">
         <h3 style="margin-top:0;">Gespeicherte Listen</h3>
         ${listen.length ? `<div class="breakdown-list">
-          ${listen.map((l) => `
-            <div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:6px;">
-              <span style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                <strong>📋 ${l.name}</strong>
-                <span class="empty-note">${l.woerter.length} Wörter</span>
-              </span>
-              <span class="empty-note" style="font-size:0.74rem;">${l.woerter.slice(0, 8).join(" · ")}${l.woerter.length > 8 ? " …" : ""}</span>
-              <span style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-spielen="${l.id}">🎮 Damit spielen</button>
-                <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-stern="${l.id}">★ In meinen Wortschatz</button>
-                <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-weg="${l.id}">🗑️ Löschen</button>
-              </span>
-            </div>`).join("")}
+          ${listen.map((l) => wortlisteZeileHtml(l)).join("")}
         </div>` : '<p class="empty-note">Noch keine Liste gespeichert.</p>'}
-        <p class="empty-note" style="margin-top:12px; font-size:0.74rem;">Wo die Listen wirken: in allen Spielen, die mit einzelnen Wörtern arbeiten — dort steht oben eine Reihe mit <strong>Alle Wörter</strong>, <strong>★ Mein Wortschatz</strong> und deinen Listen.</p>
+        <p class="empty-note" style="margin-top:12px; font-size:0.74rem;">Wo die Listen wirken: in allen Spielen, die mit einzelnen Wörtern arbeiten. Tippst du <strong>🎮 Damit spielen</strong>, führt dich die App in die Spieleübersicht und hebt genau diese Spiele hervor.</p>
       </div>`;
 
     const feld = document.getElementById("wortlisteEingabe");
@@ -15698,6 +15933,7 @@
     document.getElementById("wortlistePruefen")?.addEventListener("click", () => {
       wortlistenText = feld ? feld.value : "";
       wortlistenPruefung = wortlisteEinlesen(wortlistenText);
+      wortlueckenMelden(wortlistenPruefung.fehlend);
       renderWortlisten();
     });
     document.getElementById("wortlisteLeeren")?.addEventListener("click", () => {
@@ -15715,27 +15951,133 @@
     document.getElementById("wortlisteAlsWortschatz")?.addEventListener("click", async () => {
       const menge = meinWortschatz();
       wortlistenPruefung.gefunden.forEach((g) => menge.add(g.wort));
-      try { await Backend.updateExtraProfileField("meinWortschatz", [...menge]); showToast(`★ ${wortlistenPruefung.gefunden.length} Wörter in deinen Wortschatz übernommen.`); }
+      try { await wortschatzSichern(menge); showToast(`★ ${wortlistenPruefung.gefunden.length} Wörter in deinen Wortschatz übernommen.`); }
       catch (e) { showToast("Konnte gerade nicht gespeichert werden."); }
       renderWortlisten();
     });
+    document.getElementById("wortschatzAlsListe")?.addEventListener("click", async () => {
+      const woerter = [...meinWortschatz()];
+      if (!woerter.length) return;
+      const name = "Mein Wortschatz (" + new Date().toLocaleDateString("de-DE") + ")";
+      const id = await wortlisteSpeichern(name, woerter);
+      if (id) showToast(`📋 „${name}“ angelegt — ${woerter.length} Wörter.`);
+      renderWortlisten();
+    });
+    wortlistenZeilenVerdrahten(area);
+  }
+
+  /* Eine Zeile in „Gespeicherte Listen" — zugeklappt eine Übersicht,
+     aufgeklappt der Editor. */
+  function wortlisteZeileHtml(l) {
+    const offen = wortlisteOffen === l.id;
+    if (!offen) {
+      return `
+        <div class="breakdown-row" style="flex-direction:column; align-items:flex-start; gap:6px;">
+          <span style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+            <strong>📋 ${l.name}</strong>
+            <span class="empty-note">${l.woerter.length} Wörter</span>
+          </span>
+          <span class="empty-note" style="font-size:0.74rem;">${l.woerter.slice(0, 8).join(" · ")}${l.woerter.length > 8 ? " …" : ""}</span>
+          <span style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-spielen="${l.id}">🎮 Damit spielen</button>
+            <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-auf="${l.id}">✏️ Bearbeiten</button>
+            <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-stern="${l.id}">★ In meinen Wortschatz</button>
+            <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" data-liste-weg="${l.id}">🗑️ Löschen</button>
+          </span>
+        </div>`;
+    }
+    const n = wortlisteNachtragPruefung;
+    return `
+      <div class="breakdown-row wortliste-editor" style="flex-direction:column; align-items:stretch; gap:8px;">
+        <div class="form-field" style="margin:0;">
+          <label>Name der Liste</label>
+          <input type="text" id="wortlisteNameNeu" maxlength="40" value="${String(l.name).replace(/"/g, "&quot;")}" />
+        </div>
+        <p class="empty-note" style="margin:0;">${l.woerter.length} ${l.woerter.length === 1 ? "Wort" : "Wörter"} — tippe auf ✕, um eines herauszunehmen.</p>
+        ${wortlisteChipsHtml(l.woerter, [], true)}
+        <label class="empty-note" style="margin-top:6px; font-size:0.76rem;">Wörter nachtragen</label>
+        <textarea id="wortlisteNachtrag" class="wortliste-feld" rows="3" placeholder="neue Wörter, eines pro Zeile oder mit Komma">${wortlisteNachtragText.replace(/</g, "&lt;")}</textarea>
+        <div class="quiz-actions" style="justify-content:flex-start; margin:0;">
+          <button type="button" class="btn btn-ghost" style="padding:5px 12px; font-size:0.78rem;" id="wortlisteNachtragPruefen">🔍 Prüfen</button>
+        </div>
+        ${n ? `
+          <p class="wortliste-bilanz" style="margin:4px 0 0;">
+            <span class="wortliste-bilanz-da">✓ ${n.gefunden.length} gefunden</span>
+            ${n.fehlend.length ? `<span class="wortliste-bilanz-fehlt">✕ ${n.fehlend.length} unbekannt</span>` : ""}
+          </p>
+          ${wortlisteChipsHtml(n.gefunden, n.fehlend, false)}
+          ${n.fehlend.length ? `<p class="empty-note" style="margin:6px 0 0; font-size:0.74rem;">Die roten sind gemeldet und kommen mit einem Update ins Wörterbuch.</p>` : ""}
+        ` : ""}
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:4px;">
+          <button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem;" data-liste-speichern="${l.id}">💾 Änderungen speichern</button>
+          <button type="button" class="btn btn-ghost" style="padding:6px 14px; font-size:0.8rem;" data-liste-zu="1">Abbrechen</button>
+        </div>
+      </div>`;
+  }
+
+  function wortlistenZeilenVerdrahten(area) {
     area.querySelectorAll("[data-liste-weg]").forEach((b) => b.addEventListener("click", async () => {
+      if (!confirm("Diese Liste wirklich löschen?")) return;
       await wortlisteLoeschen(b.dataset.listeWeg); renderWortlisten();
+    }));
+    area.querySelectorAll("[data-liste-auf]").forEach((b) => b.addEventListener("click", () => {
+      wortlisteOffen = b.dataset.listeAuf;
+      wortlisteNachtragText = ""; wortlisteNachtragPruefung = null;
+      renderWortlisten();
+    }));
+    area.querySelectorAll("[data-liste-zu]").forEach((b) => b.addEventListener("click", () => {
+      wortlisteOffen = null; wortlisteNachtragText = ""; wortlisteNachtragPruefung = null;
+      renderWortlisten();
+    }));
+    const nachtragFeld = document.getElementById("wortlisteNachtrag");
+    nachtragFeld?.addEventListener("input", () => { wortlisteNachtragText = nachtragFeld.value; });
+    document.getElementById("wortlisteNachtragPruefen")?.addEventListener("click", () => {
+      wortlisteNachtragText = nachtragFeld ? nachtragFeld.value : "";
+      wortlisteNachtragPruefung = wortlisteEinlesen(wortlisteNachtragText);
+      wortlueckenMelden(wortlisteNachtragPruefung.fehlend);
+      renderWortlisten();
+    });
+    /* Ein Wort herausnehmen wirkt sofort im Bild, gespeichert wird es
+       aber erst mit „Änderungen speichern" — sonst könnte man ein
+       versehentliches ✕ nicht mehr zurücknehmen. */
+    area.querySelectorAll("[data-wort-weg]").forEach((b) => b.addEventListener("click", () => {
+      b.closest(".wortliste-chip")?.remove();
+    }));
+    area.querySelectorAll("[data-liste-speichern]").forEach((b) => b.addEventListener("click", async () => {
+      const id = b.dataset.listeSpeichern;
+      const alteListe = wortlisteMitId(id);
+      if (!alteListe) return;
+      const editor = b.closest(".wortliste-editor");
+      const uebrig = [...editor.querySelectorAll(".wortliste-chip-da [data-wort-weg]")].map((x) => x.dataset.wortWeg);
+      const dazu = (wortlisteNachtragPruefung ? wortlisteNachtragPruefung.gefunden.map((g) => g.wort) : []);
+      const zusammen = [...new Set([...uebrig, ...dazu])];
+      if (!zusammen.length) { showToast("Eine Liste ohne Wörter ergibt keinen Sinn — dann lieber löschen."); return; }
+      const name = (document.getElementById("wortlisteNameNeu")?.value || alteListe.name).trim();
+      const ok = await wortlisteAendern(id, { name, woerter: zusammen });
+      if (ok) {
+        showToast(`📋 „${name}“ gespeichert — ${zusammen.length} ${zusammen.length === 1 ? "Wort" : "Wörter"}.`);
+        wortlisteOffen = null; wortlisteNachtragText = ""; wortlisteNachtragPruefung = null;
+      }
+      renderWortlisten();
     }));
     area.querySelectorAll("[data-liste-stern]").forEach((b) => b.addEventListener("click", async () => {
       const l = wortlisteMitId(b.dataset.listeStern);
       if (!l) return;
       const menge = meinWortschatz();
       l.woerter.forEach((w) => menge.add(w));
-      try { await Backend.updateExtraProfileField("meinWortschatz", [...menge]); showToast(`★ ${l.woerter.length} Wörter übernommen.`); }
+      try { await wortschatzSichern(menge); showToast(`★ ${l.woerter.length} Wörter übernommen.`); }
       catch (e) { showToast("Konnte gerade nicht gespeichert werden."); }
       renderWortlisten();
     }));
     area.querySelectorAll("[data-liste-spielen]").forEach((b) => b.addEventListener("click", () => {
+      const l = wortlisteMitId(b.dataset.listeSpielen);
       // Die Liste für ALLE Spiele auf einmal vorwählen — sonst müsste
       // man sie in jedem Spiel einzeln antippen.
       WORTQUELLE_SPIELE.forEach((spiel) => { wortQuelleWahl[spiel] = "liste:" + b.dataset.listeSpielen; });
-      showToast("📋 Ausgewählt — die Spiele üben jetzt mit dieser Liste.");
+      /* Und die Übersicht wissen lassen, worum es geht: sie hebt genau
+         die Spiele hervor, die mit dieser Liste üben können. */
+      wortlisteImBlick = l ? { id: l.id, name: l.name, anzahl: l.woerter.length } : null;
+      wortlisteAnkunft = true;
       document.querySelector('#learnSubnav [data-sub="sub-games"]')?.click();
     }));
   }
@@ -15927,7 +16269,7 @@
     document.getElementById("setzNochmal")?.addEventListener("click", () => { neueSetzSession(); renderSetzerei(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["setzerei"], points: s.treffer * 2 + s.richtig * 3, bonus: s.danebenGesamt === 0 ? 10 : 0, percent: prozent, character: "Schriftsetzer:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-setzerei"]')?.addEventListener("click", () => renderSetzerei());
@@ -16144,7 +16486,7 @@
     document.getElementById("ketteNochmal")?.addEventListener("click", () => { neueKetteSession(); renderWortkette(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["wortkette"], points: s.richtig * 3, bonus: s.fehler === 0 ? 8 : 0, percent: prozent, character: "Kettenschmied:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wortkette"]')?.addEventListener("click", () => renderWortkette());
@@ -16332,7 +16674,7 @@
     document.getElementById("augNochmalRunde")?.addEventListener("click", () => { neueAugSession(); renderAugenblick(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["augenblick"], points: s.punkte, bonus: 0, percent: prozent, character: "Schnellleser:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-augenblick"]')?.addEventListener("click", () => renderAugenblick());
@@ -16636,7 +16978,7 @@
     document.getElementById("umzugNochmal")?.addEventListener("click", () => { neueUmzugSession(); renderUmzug(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["umzug"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Umzugshelfer:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-umzug"]')?.addEventListener("click", () => renderUmzug());
@@ -16886,7 +17228,7 @@
     document.getElementById("marktNochmal")?.addEventListener("click", () => { neueMarktSession(); renderMarktstand(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["marktstand"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Marktfrau/Marktmann", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-marktstand"]')?.addEventListener("click", () => renderMarktstand());
@@ -17118,7 +17460,7 @@
     document.getElementById("waageNochmal")?.addEventListener("click", () => { neueWaageSession(); renderWortwaage(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["wortwaage"], points: s.treffer + s.richtig * 3, bonus: 0, percent: prozent, character: "Feingefühl", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wortwaage"]')?.addEventListener("click", () => renderWortwaage());
@@ -17324,7 +17666,7 @@
     document.getElementById("maskeNochmal")?.addEventListener("click", () => { neueMaskeSession(); renderMaskenball(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["maskenball"], points: s.richtig * 3, bonus: 0, percent: prozent, character: "Entlarver:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-maskenball"]')?.addEventListener("click", () => renderMaskenball());
@@ -17527,7 +17869,7 @@
     document.getElementById("atlasNochmal")?.addEventListener("click", () => { neueAtlasSession(); renderSprachatlas(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["sprachatlas"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Landeskundler:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-sprachatlas"]')?.addEventListener("click", () => renderSprachatlas());
@@ -17746,7 +18088,7 @@
     document.getElementById("baumNochmal")?.addEventListener("click", () => { neueBaumSession(); renderWortbaum(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["wortbaum"], points: s.richtig * 2 + s.aeste, bonus: 0, percent: prozent, character: "Wurzelkenner:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-wortbaum"]')?.addEventListener("click", () => renderWortbaum());
@@ -17963,7 +18305,7 @@
     document.getElementById("zwillingNochmal")?.addEventListener("click", () => { neueZwillingSession(); renderZwillinge(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["zwillinge"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Feines Gehör", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-zwillinge"]')?.addEventListener("click", () => renderZwillinge());
@@ -18264,7 +18606,7 @@
     document.getElementById("uhrNochmal")?.addEventListener("click", () => { neueUhrSession(); renderFuchsuhr(); });
     if (Backend.currentUser()) {
       saveResultAndCheck({ categories: ["fuchsuhr"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Uhrleser:in", badges: [], playedAt: new Date().toISOString() });
-      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-fuchsuhr"]')?.addEventListener("click", () => renderFuchsuhr());
@@ -18289,6 +18631,135 @@
   let sortLevel = "";
   let sortSession = null;
 
+  /* Themen, die sich im Alltagsverständnis überschneiden. Zwei davon
+     stehen nie gleichzeitig als Körbe zur Wahl — sonst gäbe es Fragen,
+     bei denen beide Antworten vertretbar sind. */
+  const SORT_VERWANDT = [
+    ["Stadt & Verkehr", "Reisen & Unterwegs"],
+    ["Stadt & Verkehr", "Umwelt & Klima"],
+    ["Stadt & Verkehr", "Technik & Erfindung"],
+    ["Reisen & Unterwegs", "Freizeit & Sport"],
+    ["Natur & Wetter", "Umwelt & Klima"],
+    ["Natur & Wetter", "Freizeit & Sport"],
+    ["Politik & Gesellschaft", "Recht & Verwaltung"],
+    ["Politik & Gesellschaft", "Geschichte & Erinnerung"],
+    ["Politik & Gesellschaft", "Wirtschaft & Arbeit"],
+    ["Politik & Gesellschaft", "Medien & Öffentlichkeit"],
+    ["Politik & Gesellschaft", "Umwelt & Klima"],
+    ["Recht & Verwaltung", "Wirtschaft & Arbeit"],
+    ["Sprache & Kommunikation", "Literatur & Schreiben"],
+    ["Sprache & Kommunikation", "Medien & Öffentlichkeit"],
+    ["Sprache & Kommunikation", "Grundwörter & Struktur"],
+    ["Sprache & Kommunikation", "Denken & Argumentieren"],
+    ["Literatur & Schreiben", "Kunst & Musik"],
+    ["Literatur & Schreiben", "Medien & Öffentlichkeit"],
+    ["Literatur & Schreiben", "Bildung & Lernen"],
+    ["Literatur & Schreiben", "Geschichte & Erinnerung"],
+    ["Kunst & Musik", "Medien & Öffentlichkeit"],
+    ["Kunst & Musik", "Freizeit & Sport"],
+    ["Denken & Argumentieren", "Wissenschaft & Forschung"],
+    ["Denken & Argumentieren", "Bildung & Lernen"],
+    ["Denken & Argumentieren", "Grundwörter & Struktur"],
+    ["Wissenschaft & Forschung", "Bildung & Lernen"],
+    ["Wissenschaft & Forschung", "Technik & Erfindung"],
+    ["Wissenschaft & Forschung", "Umwelt & Klima"],
+    ["Familie & Menschen", "Gefühle & Charakter"],
+    ["Familie & Menschen", "Gesundheit & Körper"],
+    ["Gefühle & Charakter", "Gesundheit & Körper"],
+    ["Alltag & Zuhause", "Essen & Trinken"],
+    ["Alltag & Zuhause", "Kleidung & Einkaufen"],
+    ["Alltag & Zuhause", "Familie & Menschen"],
+    ["Kleidung & Einkaufen", "Wirtschaft & Arbeit"],
+    ["Essen & Trinken", "Gesundheit & Körper"],
+    ["Zeit & Kalender", "Grundwörter & Struktur"],
+    ["Zeit & Kalender", "Geschichte & Erinnerung"],
+    ["Technik & Erfindung", "Medien & Öffentlichkeit"],
+    ["Wirtschaft & Arbeit", "Bildung & Lernen"],
+  ];
+  let sortVerwandtSet = null;
+  function sortSindVerwandt(a, b) {
+    if (!sortVerwandtSet) {
+      sortVerwandtSet = new Set();
+      SORT_VERWANDT.forEach(([x, y]) => { sortVerwandtSet.add(x + "||" + y); sortVerwandtSet.add(y + "||" + x); });
+    }
+    return sortVerwandtSet.has(a + "||" + b);
+  }
+
+  /* Der Eindeutigkeits-Index: zu jedem Lemma und zu jedem
+     Bestimmungswort die Themen, unter denen es im Wortschatz auftaucht.
+     Wird einmal gebaut und an der Wortzahl gemessen zwischengespeichert. */
+  let sortIndex = null;
+  function sortEindeutigIndex() {
+    const woerter = VocabData.WORDS || [];
+    if (sortIndex && sortIndex.stand === woerter.length) return sortIndex;
+    const ohneArtikel = (w) => String(w).replace(/^(der|die|das)\s+/i, "").toLowerCase();
+    const nomen = new Set();
+    const lemma = new Map();
+    woerter.forEach((w) => {
+      if (!w.word || !w.theme) return;
+      const k = ohneArtikel(w.word);
+      if (/^(der|die|das)\s/i.test(w.word)) nomen.add(k);
+      if (!lemma.has(k)) lemma.set(k, new Set());
+      lemma.get(k).add(w.theme);
+    });
+    /* Bestimmungswort = das längste bekannte NOMEN, das am Wortanfang
+       steht und mindestens vier Buchstaben Rest übrig lässt. Die
+       Nomen-Bedingung ist wichtig: sonst gälte „ver-", „unter-" oder
+       „nach-" als Bestimmungswort und fast jedes zweite Wort wäre
+       plötzlich mehrdeutig. */
+    const stammVon = (wort) => {
+      const k = ohneArtikel(wort);
+      for (let len = Math.min(k.length - 4, 16); len >= 4; len--) {
+        const st = k.slice(0, len);
+        if (nomen.has(st)) return st;
+      }
+      return null;
+    };
+    const stamm = new Map();
+    woerter.forEach((w) => {
+      if (!w.word || !w.theme) return;
+      const st = stammVon(w.word);
+      if (!st) return;
+      if (!stamm.has(st)) stamm.set(st, new Set());
+      stamm.get(st).add(w.theme);
+    });
+    sortIndex = { stand: woerter.length, ohneArtikel, lemma, stamm, stammVon };
+    return sortIndex;
+  }
+
+  /* Darf dieses Wort in einer Runde mit genau diesen Körbern gefragt
+     werden, ohne dass eine zweite Antwort genauso vertretbar wäre? */
+  function sortWortIstEindeutig(w, koerbe) {
+    const ix = sortEindeutigIndex();
+    const themenDesLemmas = ix.lemma.get(ix.ohneArtikel(w.word));
+    if (themenDesLemmas && themenDesLemmas.size > 1) return false;
+    const st = ix.stammVon(w.word);
+    if (!st) return true;
+    const themenDesStamms = ix.stamm.get(st);
+    if (!themenDesStamms) return true;
+    for (const t of themenDesStamms) if (t !== w.theme && koerbe.indexOf(t) >= 0) return false;
+    return true;
+  }
+
+  /* Drei Körbe ziehen, die nichts miteinander zu tun haben — und in
+     denen nach der Eindeutigkeits-Prüfung noch genug Wörter übrig sind. */
+  function sortKoerbeZiehen(felder, proKorb) {
+    for (let versuch = 0; versuch < 60; versuch++) {
+      const misch = Core.shuffle(felder.slice());
+      const gewaehlt = [];
+      for (const eintrag of misch) {
+        if (gewaehlt.some(([t]) => sortSindVerwandt(t, eintrag[0]))) continue;
+        gewaehlt.push(eintrag);
+        if (gewaehlt.length === SORT_KOERBE) break;
+      }
+      if (gewaehlt.length < SORT_KOERBE) continue;
+      const namen = gewaehlt.map(([t]) => t);
+      const gefiltert = gewaehlt.map(([thema, liste]) => [thema, liste.filter((w) => sortWortIstEindeutig(w, namen))]);
+      if (gefiltert.every(([, liste]) => liste.length >= proKorb)) return gefiltert;
+    }
+    return null;
+  }
+
   // Alle Wörter des Niveaus, nach Thema gebündelt — nur Themen mit genug
   // Material, sonst wiederholen sich dieselben zwei Wörter.
   function sortWortfelder(level) {
@@ -18303,9 +18774,10 @@
   function neueSortSession() {
     const felder = sortWortfelder(sortLevel);
     if (felder.length < SORT_KOERBE) { sortSession = { leer: true }; return; }
-    const gewaehlt = Core.shuffle(felder).slice(0, SORT_KOERBE);
     // Aus jedem Feld gleich viele Wörter, damit kein Korb erkennbar häufiger stimmt.
     const proKorb = Math.ceil(SORT_RUNDEN / SORT_KOERBE);
+    const gewaehlt = sortKoerbeZiehen(felder, proKorb);
+    if (!gewaehlt) { sortSession = { leer: true }; return; }
     const karten = [];
     gewaehlt.forEach(([thema, liste]) => {
       Core.shuffle(liste).slice(0, proKorb).forEach((w) => karten.push({ wort: w.word, thema, bedeutung: w.de || "", beispiel: w.example || "", syl: w.syl || "" }));
@@ -18533,7 +19005,7 @@
     { sub: "sub-werbinich", emoji: "❓", name: "Wer bin ich?", persona: "Logiker" },
     { sub: "sub-wordbuild", emoji: "🔤", name: "Wortbaustelle", persona: "Sprachkünstler" },
     { sub: "sub-bubbles", emoji: "🫧", name: "Wortblasen", persona: "Gemischt", flagKey: "wortblasen_neu" },
-    { sub: "sub-kanone", emoji: "🎯", name: "Wort-Kanone", persona: "Gemischt", flagKey: "wortkanone_redesign" },
+    { sub: "sub-kanone", emoji: "🎯", name: "Wort-Kanone", persona: "Gemischt" },
     { sub: "sub-wortarten", emoji: "🔤", name: "Wort-Typ", persona: "Grammatik-Profi" },
   ];
   /* ==================================================================
@@ -18693,6 +19165,11 @@
       katzenzimmer: `<rect x="2" y="4" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 16h20" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="19" rx="5" ry="2.6" fill="currentColor"/><circle cx="15.6" cy="16.6" r="2.4" fill="currentColor"/><path d="M14 14.6l.6-2 1.4 1.4Z" fill="currentColor"/><path d="M16.4 14l1.4-1.6.4 2Z" fill="currentColor"/>`,
       fuchsuhr: `<circle cx="11" cy="11" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11 5.6V11l3.8 2.6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="1.2" fill="currentColor"/>`,
       flussfuchs: `<path d="M3.6 2.6 5.4 8.2 9.4 5.4Z" fill="currentColor"/><path d="M18.4 2.6 16.6 8.2 12.6 5.4Z" fill="currentColor"/><path d="M11 4.4c3.8 0 6.2 2.5 6.2 5.3 0 3.2-2.7 5.4-6.2 7.1-3.5-1.7-6.2-3.9-6.2-7.1 0-2.8 2.4-5.3 6.2-5.3z" fill="currentColor"/><path d="M2 19.8q3-1.7 6 0t6 0 6 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+      blitzrunde: `<path d="M12.6 2.2 5.2 12.4h4.6l-1.4 7.4 7.4-10.2h-4.6z" fill="currentColor"/>`,
+      wortangler: `<path d="M4.4 2.6v8.8a4.6 4.6 0 0 0 4.6 4.6" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M9 16v2.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.4 19.4c-2.4 0-4.4-1.4-4.4-2.6s2-2.6 4.4-2.6c2.8 0 5.2 1.4 6.4 2.6-1.2 1.2-3.6 2.6-6.4 2.6z" fill="currentColor"/><circle cx="12.4" cy="16.6" r="0.8" fill="#fff" opacity="0.85"/><path d="M2.6 2.6h3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`,
+      wortleiter: `<path d="M6.4 20V4.6M15.6 20V4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6.4 17h9.2M6.4 13.2h9.2M6.4 9.4h9.2M6.4 5.6h9.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11 4.4 8.6 1.8h4.8z" fill="currentColor"/>`,
+      silbenturm: `<rect x="4.2" y="15.4" width="13.6" height="4.2" rx="1.2" fill="currentColor"/><rect x="5.8" y="10.6" width="10.4" height="4.2" rx="1.2" fill="currentColor" opacity="0.72"/><rect x="7.4" y="5.8" width="7.2" height="4.2" rx="1.2" fill="currentColor" opacity="0.48"/><circle cx="11" cy="3" r="1.5" fill="currentColor"/>`,
+      sortierer: `<path d="M2.6 8.6h6.2l-1 9a1.4 1.4 0 0 1-1.4 1.2H5a1.4 1.4 0 0 1-1.4-1.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M13.2 8.6h6.2l-1 9a1.4 1.4 0 0 1-1.4 1.2h-1.4a1.4 1.4 0 0 1-1.4-1.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="4" r="1.8" fill="currentColor"/><circle cx="14.4" cy="3.4" r="1.5" fill="currentColor" opacity="0.6"/><path d="M2.2 8.6h7M12.8 8.6h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
       wortarten: `<rect x="3" y="4" width="7" height="7" rx="1.5" fill="currentColor"/><circle cx="16" cy="7.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 19l4-8 4 8M5.4 16.5h5.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
     };
     return `<svg viewBox="0 0 22 22" width="26" height="26" aria-hidden="true">${icons[key] || ""}</svg>`;
@@ -18709,8 +19186,13 @@
     const istBeta = Boolean(Backend.isBetaTester && Backend.isBetaTester());
     const canSeeGatedGames = (Backend.canModerate && Backend.canModerate()) || istBeta;
     const gesperrte = GAMES_OVERVIEW_LIST.filter((g) => g.flagKey && !Backend.getRawFeatureFlag(g.flagKey));
+    /* Ein zurückgezogenes Spiel (Schalter ausdrücklich auf „aus") bleibt
+       in der Liste stehen — als Baustelle. Vorher verschwand es
+       spurlos, und wer es kannte, hielt es für gelöscht. Ein Spiel, das
+       noch nie draußen war, bleibt dagegen unsichtbar. */
+    const inReparatur = (g) => Boolean(g.flagKey) && Backend.getRawFeatureFlagValue(g.flagKey) === false;
     const visibleGames = GAMES_OVERVIEW_LIST
-      .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames)
+      .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames || inReparatur(g))
       // Verlässlich alphabetisch sortieren (mit deutschen Umlauten korrekt einsortiert),
       // statt sich auf die Reihenfolge im Quelltext zu verlassen — die geriet beim
       // Nachtragen neuer Spiele immer wieder durcheinander.
@@ -18720,7 +19202,20 @@
     // gebaut wurde, verwandelten sich diese Spiele-Buttons ungewollt gleich mit in Kacheln, obwohl
     // sie wie vorher als Pillen (schmale, breite Reihen mit Emoji+Name nebeneinander) aussehen
     // sollten. Jetzt eigene Klassen, unabhängig vom Kompass-Kachel-Design.
+    /* Kommt man aus „🎮 Damit spielen" einer Wortliste, sind genau die
+       Spiele hervorgehoben, die mit einzelnen Wörtern arbeiten und die
+       Liste deshalb wirklich benutzen können. Bewusst nur in diesem
+       Moment — beim nächsten normalen Besuch der Übersicht ist die
+       Hervorhebung wieder weg. */
+    const listenSubs = wortlisteImBlick
+      ? new Set(WORTQUELLE_SPIELE.map((k) => WORTQUELLE_ZU_SUB[k]).filter(Boolean))
+      : null;
     area.innerHTML = `
+      ${wortlisteImBlick ? `<div class="wortliste-banner">
+        <span>📋 <strong>${wortlisteImBlick.name}</strong> — ${wortlisteImBlick.anzahl} ${wortlisteImBlick.anzahl === 1 ? "Wort" : "Wörter"}</span>
+        <span class="empty-note">Hervorgehoben sind die ${listenSubs.size} Spiele, die mit dieser Liste üben können. Die übrigen arbeiten mit Sätzen oder Bildern und lassen sich nicht auf eine Wortliste umstellen.</span>
+        <button type="button" class="btn btn-ghost" id="wortlisteBannerWeg" style="padding:4px 12px; font-size:0.76rem; align-self:flex-start;">Hervorhebung aufheben</button>
+      </div>` : ""}
       <p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>
       ${istBeta && gesperrte.length ? `<div class="beta-hinweis">
         <strong>🧪 Du bist Beta-Tester:in.</strong>
@@ -18733,13 +19228,17 @@
           /* Spiele, die man sich verdient, tragen ihr Schloss und ihre
              Bedingung gleich auf der Kachel — man soll sehen, WAS man
              sich da erspielt, nicht erst nach dem Antippen. */
-          const zu = !spielFreigeschaltet(g.sub);
+          const baustelle = inReparatur(g) && !canSeeGatedGames;
+          const zu = !baustelle && !spielFreigeschaltet(g.sub);
           const bed = spielBedingung(g.sub);
           const stand = zu ? spielStandText(g.sub) : "";
+          const passtZurListe = listenSubs && listenSubs.has(g.sub);
           return `
-          <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}" data-game-sub="${g.sub}">
-            <span class="games-pill-emoji">${zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
-            <span class="games-pill-name">${g.name}${zu && bed
+          <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}${baustelle ? " games-pill-baustelle" : ""}${passtZurListe ? " games-pill-wortliste" : ""}${listenSubs && !passtZurListe ? " games-pill-blass" : ""}" data-game-sub="${g.sub}">
+            <span class="games-pill-emoji">${baustelle ? "🚧" : zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
+            <span class="games-pill-name">${g.name}${baustelle
+              ? `<span class="games-pill-bedingung">wird gerade überarbeitet</span>`
+              : zu && bed
               ? `<span class="games-pill-bedingung">${unlockShortText(bed.unlock)}${stand ? " · " + stand : ""}</span>`
               : ""}</span>
             <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}"></span>
@@ -18747,13 +19246,26 @@
         }).join("")}
       </div>
     `;
+    document.getElementById("wortlisteBannerWeg")?.addEventListener("click", () => {
+      wortlisteImBlick = null;
+      renderGamesOverview();
+    });
     area.querySelectorAll("[data-game-sub]").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelector(`#learnSubnav [data-sub="${btn.dataset.gameSub}"]`)?.click();
       });
     });
   }
-  document.querySelector('#learnSubnav [data-sub="sub-games"]')?.addEventListener("click", renderGamesOverview);
+  document.querySelector('#learnSubnav [data-sub="sub-games"]')?.addEventListener("click", () => {
+    /* Die Hervorhebung gilt für GENAU EINEN Besuch — den aus „Damit
+       spielen". Tippt jemand die Übersicht danach selbst an, ist sie
+       weg. Deshalb wird hier gemerkt, ob der Besuch aus der Wortliste
+       kam, und die Markierung anschließend zurückgesetzt. */
+    const ausWortliste = wortlisteAnkunft;
+    wortlisteAnkunft = false;
+    if (!ausWortliste) wortlisteImBlick = null;
+    renderGamesOverview();
+  });
 
   /* ------------------------------------------------------------------
      Der Spieltitel als gezeichneter Schriftzug
@@ -20029,6 +20541,160 @@
     "sub-fuchsuhr": { bauart: "uhr", text: "Fuchsuhr" },
   };
 
+  /* ============================================================
+     WAS JEDES SPIEL VERLANGT — in einem Satz
+     ------------------------------------------------------------
+     Steht unter dem Schriftzug, mittig, in jedem Spiel. Damit
+     braucht kein Spiel mehr einen eigenen Begrüßungsbildschirm:
+     wer das Spiel öffnet, sieht sofort, was zu tun ist, und kann
+     trotzdem gleich anfangen.
+     ============================================================ */
+  /* Das START-Schild, das über einem laufenden Spielfeld liegt.
+     Bewusst mittig und groß: bei einem Spiel, das von selbst losläuft,
+     schaut man in die Mitte und nicht an den Rand. */
+  function startSchildHtml(text) {
+    return `<div class="spiel-startschild" id="spielStartSchild">
+      <button type="button" class="spiel-startknopf" id="spielStartKnopf">▶</button>
+      <span class="spiel-startwort">${text || "START"}</span>
+    </div>`;
+  }
+
+  const SPIEL_BESCHREIBUNG = {
+    "sub-artikelgarten": "Wähle den richtigen Artikel — für jede richtige Antwort wächst eine Blume in deinem Garten.",
+    "sub-blitzrunde": "Gemischte Fragen gegen die Uhr. Je schneller du antwortest, desto mehr Punkte.",
+    "sub-wortangler": "Angle dir das Wort, das zur Bedeutung passt.",
+    "sub-wortleiter": "Drei richtige Antworten je Stufe, dann geht es ein Niveau höher — von A1 bis C2.",
+    "sub-silbenturm": "Bau das Wort aus seinen Silben wieder auf und sag danach, welche Silbe betont wird.",
+    "sub-sortierer": "Jedes Wort gehört in einen Korb. Sortiere es in das Thema, zu dem es passt.",
+    "sub-stresstrainer": "Welche Silbe wird betont? Antippen — und in etwa jedem zweiten Wort liegt die Betonung nicht vorn.",
+    "sub-wordsearch": "Finde die versteckten Wörter im Buchstabengitter.",
+    "sub-korrektour": "In jedem Satz steckt ein Fehler. Tippe ihn an, bevor der Zug weiterfährt.",
+    "sub-katzenzimmer": "Schau, WO die Katze sitzt, und wähle die Präposition, die genau das beschreibt.",
+    "sub-crossword": "Ein Kreuzworträtsel aus deinem Lernwortschatz — waagerecht und senkrecht.",
+    "sub-memory": "Finde die Paare: Wort und Bedeutung, Gegenteil oder Synonym.",
+    "sub-satzpuzzle": "Bring die Wörter in die richtige Reihenfolge — deutsche Satzstellung.",
+    "sub-vokabelmeister": "Wie viele echte deutsche Wörter mit diesem Buchstaben schaffst du in 60 Sekunden?",
+    "sub-satzbruecke": "Verbinde die zwei Satzhälften mit dem Wort, das dazwischen passt.",
+    "sub-wackelturm": "Jede richtige Antwort ist ein Stein. Wie hoch wird dein Turm, bevor er kippt?",
+    "sub-wortschmiede": "Schmiede aus zwei Wörtern ein zusammengesetztes — und finde heraus, welcher Artikel gilt.",
+    "sub-werbinich": "Aus Hinweisen erraten, welches Wort gesucht ist. Je weniger Hinweise, desto mehr Punkte.",
+    "sub-wordbuild": "Setz das Wort Buchstabe für Buchstabe zusammen. Die Erklärung darüber ist dein einziger Hinweis.",
+    "sub-bubbles": "Tipp die Blase mit der richtigen Antwort an, bevor sie oben zerplatzt.",
+    "sub-kanone": "Schieß die FALSCHE Antwort ab, bevor sie unten ankommt — die richtige lässt du durch.",
+    "sub-wortarten": "Nomen, Verb oder Adjektiv? Ordne jedes Wort seiner Wortart zu.",
+    "sub-flussfuchs": "Für jede Überquerung gilt eine Regel. Von drei Steinen trägt nur der eine, auf den sie passt.",
+    "sub-fuchsuhr": "Wie spät ist es? Mal suchst du die Worte zur Uhr, mal die Uhr zum Satz.",
+    "sub-setzerei": "Der Satz liegt klein gesetzt im Kasten. Tippe jedes Wort an, das groß geschrieben wird.",
+    "sub-wortkette": "Das letzte Stück eines Wortes ist das erste des nächsten: Feier·abend, Abend·brot, Brot·korb.",
+    "sub-augenblick": "Der Satz erscheint kurz und verschwindet. Danach legst du ihn aus seinen Wörtern neu zusammen.",
+    "sub-umzug": "Fliegt der Gegenstand noch dorthin oder liegt er schon da? Danach richtet sich der Fall.",
+    "sub-marktstand": "Auf dem Schild steht die Zahl in Worten — tipp sie als Ziffern in die Kasse.",
+    "sub-wortwaage": "Dieselbe Bedeutung, verschiedene Stärke. Sortiere die Wörter von schwach nach stark.",
+    "sub-maskenball": "Diese Wörter sehen aus wie Englisch und heißen etwas anderes. Was steckt wirklich dahinter?",
+    "sub-sprachatlas": "Semmel, Schrippe, Erdapfel: tipp auf der Karte an, wo dieses Wort zu Hause ist.",
+    "sub-wortbaum": "Gehört das Wort zu diesem Stamm? Bei jedem Treffer wächst ein Ast.",
+    "sub-zwillinge": "Zwei Wörter, ein Laut Unterschied. Nur eines passt in den Satz.",
+  };
+  function spielBeschreibungEinsetzen(sub) {
+    const bereich = document.getElementById(sub);
+    if (!bereich) return;
+    const text = SPIEL_BESCHREIBUNG[sub];
+    let zeile = bereich.querySelector(".spiel-beschreibung");
+    if (!text) { if (zeile) zeile.remove(); return; }
+    if (!zeile) {
+      zeile = document.createElement("p");
+      zeile.className = "spiel-beschreibung";
+      const titel = bereich.querySelector(".spiel-titel");
+      if (titel && titel.nextSibling) bereich.insertBefore(zeile, titel.nextSibling);
+      else bereich.insertBefore(zeile, bereich.firstChild);
+    }
+    zeile.textContent = text;
+  }
+
+  /* ============================================================
+     SPIEL-VERZEICHNIS FÜR EINLADUNGEN
+     ------------------------------------------------------------
+     Zu jedem Spiel: der Reiter, unter dem es liegt, und der Name,
+     unter dem seine Ergebnisse gezählt werden. Beides zusammen
+     genügt, um jemanden einzuladen UND die Einladung beim Annehmen
+     im richtigen Spiel landen zu lassen.
+     ============================================================ */
+  const SPIEL_VERZEICHNIS = {
+    "sub-artikelgarten": "artikel",
+    "sub-blitzrunde": "blitzrunde",
+    "sub-wortangler": "wortangler",
+    "sub-wortleiter": "wortleiter",
+    "sub-silbenturm": "silbenturm",
+    "sub-sortierer": "sortierer",
+    "sub-stresstrainer": "betonungstrainer",
+    "sub-wordsearch": "buchstabensalat",
+    "sub-korrektour": "korrektour",
+    "sub-katzenzimmer": "katzenzimmer",
+    "sub-crossword": "kreuzwortraetsel",
+    "sub-memory": "memory",
+    "sub-satzpuzzle": "satzpuzzle",
+    "sub-vokabelmeister": "vokabelmeister",
+    "sub-satzbruecke": "satzbruecke",
+    "sub-wackelturm": "wackelturm",
+    "sub-wortschmiede": "wortschmiede",
+    "sub-werbinich": "werbinich",
+    "sub-wordbuild": "wortbaustelle",
+    "sub-bubbles": "wortblasen",
+    "sub-kanone": "wortkanone",
+    "sub-wortarten": "wortarten",
+    "sub-flussfuchs": "flussfuchs",
+    "sub-fuchsuhr": "fuchsuhr",
+    "sub-setzerei": "setzerei",
+    "sub-wortkette": "wortkette",
+    "sub-augenblick": "augenblick",
+    "sub-umzug": "umzug",
+    "sub-marktstand": "marktstand",
+    "sub-wortwaage": "wortwaage",
+    "sub-maskenball": "maskenball",
+    "sub-sprachatlas": "sprachatlas",
+    "sub-wortbaum": "wortbaum",
+    "sub-zwillinge": "zwillinge",
+  };
+  // Umgekehrt: von der Ergebniskategorie zum Reiter.
+  const SPIEL_ZU_REITER = {};
+  Object.entries(SPIEL_VERZEICHNIS).forEach(([sub, key]) => { SPIEL_ZU_REITER[key] = sub; });
+
+  /* Die Einladungsleiste jedes Spiels. Sie hängt — wie die
+     Beschreibung — AUSSERHALB des Spielbereichs und überlebt damit
+     jedes Neuzeichnen der Runde. */
+  function spielEinladungEinsetzen(sub) {
+    const bereich = document.getElementById(sub);
+    if (!bereich) return;
+    const key = SPIEL_VERZEICHNIS[sub];
+    let kasten = bereich.querySelector(".spiel-einladung");
+    if (!key || !Backend.currentUser()) { if (kasten) kasten.remove(); return; }
+    /* Ein Spiel, das noch hinter einem Freigabe-Schalter liegt, sehen
+       nur Betreiber und Beta-Tester:innen. Eine Einladung dorthin
+       liefe bei der eingeladenen Person ins Leere. */
+    const eintrag = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
+    const nochNichtDraussen = eintrag && eintrag.flagKey && !Backend.getRawFeatureFlag(eintrag.flagKey);
+    if (nochNichtDraussen) {
+      if (!kasten) {
+        kasten = document.createElement("div");
+        kasten.className = "spiel-einladung";
+        const zeile = bereich.querySelector(".spiel-beschreibung");
+        if (zeile && zeile.nextSibling) bereich.insertBefore(kasten, zeile.nextSibling);
+        else bereich.insertBefore(kasten, bereich.firstChild);
+      }
+      kasten.innerHTML = `<p class="empty-note" style="font-size:0.78rem; margin:0;">🔒 Solange dieses Spiel nicht freigegeben ist, kannst du niemanden dazu einladen — bei den anderen wäre es nicht zu öffnen.</p>`;
+      return;
+    }
+    if (!kasten) {
+      kasten = document.createElement("div");
+      kasten.className = "spiel-einladung";
+      kasten.id = "spielEinladung-" + key;
+      const zeile = bereich.querySelector(".spiel-beschreibung");
+      if (zeile && zeile.nextSibling) bereich.insertBefore(kasten, zeile.nextSibling);
+      else bereich.insertBefore(kasten, bereich.firstChild);
+    }
+    renderMiniChallengeBarCached(key, key, kasten.id, bereich, () => {});
+  }
+
   function spielTitelEinsetzen(sub) {
     const eintrag = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
     if (!eintrag) return;
@@ -20040,6 +20706,8 @@
       kopf.className = "spiel-titel";
       bereich.insertBefore(kopf, bereich.firstChild);
     }
+    spielBeschreibungEinsetzen(sub);
+    spielEinladungEinsetzen(sub);
     const wunsch = SPIEL_SCHRIFTFORM[sub];
     if (!wunsch) { kopf.remove(); return; }
     const wort = wunsch.text || eintrag.name;
@@ -20101,6 +20769,123 @@
   // Der Übersetzungsblock für EINEN Kalendertag — wird sowohl beim heutigen Tag als auch
   // im Archiv verwendet. Vorher gab es ihn nur beim heutigen Tag; im Archiv fehlte er
   // vollständig, die Übersetzungen waren dort also nirgends zu finden.
+  /* ============================================================
+     SAMMEL-MODUS BEIM LESEN
+     ------------------------------------------------------------
+     Jedes Wort im Text wird antippbar. Der Text bleibt dabei Wort
+     für Wort derselbe — es werden nur Spans gesetzt, nichts
+     ergänzt und nichts entfernt. Deshalb wird auch nur an
+     Wortgrenzen geteilt und alles andere (Satzzeichen,
+     Leerzeichen, vorhandene Auszeichnungen) unangetastet
+     durchgereicht.
+     ============================================================ */
+  let sammelModus = false;
+
+  function sammelSchalterHtml() {
+    return `<label class="sammel-schalter">
+      <input type="checkbox" id="sammelSchalter" ${sammelModus ? "checked" : ""} />
+      <span>🔖 Wörter zum Mitnehmen antippen</span>
+    </label>`;
+  }
+
+  /* Text in antippbare Wörter zerlegen. Arbeitet auf dem fertigen
+     HTML: alles innerhalb spitzer Klammern bleibt unberührt, damit
+     vorhandene Auszeichnungen heil bleiben. */
+  function sammelTextHtml(text) {
+    if (!sammelModus) return text;
+    const roh = String(text || "");
+    let aus = "";
+    let i = 0;
+    while (i < roh.length) {
+      if (roh[i] === "<") {                       // Auszeichnung unverändert
+        const ende = roh.indexOf(">", i);
+        if (ende < 0) { aus += roh.slice(i); break; }
+        aus += roh.slice(i, ende + 1);
+        i = ende + 1;
+        continue;
+      }
+      const rest = roh.slice(i);
+      const treffer = rest.match(/^[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß-]*/);
+      if (treffer) {
+        const wort = treffer[0];
+        aus += `<span class="sammel-wort" data-sammel="${wort.replace(/"/g, "&quot;")}">${wort}</span>`;
+        i += wort.length;
+      } else {
+        aus += roh[i];
+        i += 1;
+      }
+    }
+    return aus;
+  }
+
+  /* Die kleine Karte, die beim Antippen aufgeht. */
+  function sammelKarteZeigen(wort) {
+    document.querySelector(".sammel-karte")?.remove();
+    const treffer = wortNachschlagen(wort);
+    const imWortschatz = treffer && meinWortschatz().has(treffer.word);
+    const listen = meineWortlisten();
+    const karte = document.createElement("div");
+    karte.className = "sammel-karte";
+    karte.innerHTML = `
+      <button type="button" class="sammel-karte-zu" aria-label="Schließen">✕</button>
+      <p class="sammel-karte-wort">${treffer ? treffer.word : wort}</p>
+      ${treffer ? `
+        ${treffer.syl ? `<p class="sammel-karte-syl">${Core.formatStress(treffer.syl)}</p>` : ""}
+        ${treffer.meaning ? `<p class="sammel-karte-bed">${treffer.meaning}</p>` : ""}
+        ${treffer.example ? `<p class="sammel-karte-bsp">„${treffer.example}“</p>` : ""}
+        <div class="sammel-karte-knoepfe">
+          <button type="button" class="btn ${imWortschatz ? "btn-ghost" : "btn-coffee"}" data-sammel-stern="${treffer.word.replace(/"/g, "&quot;")}">
+            ${imWortschatz ? "★ Schon in deinem Wortschatz" : "★ In meinen Wortschatz"}
+          </button>
+          ${listen.length ? `
+            <label class="empty-note" style="display:block; margin-top:8px; font-size:0.74rem;">In eine Wortliste legen</label>
+            <select class="challenge-select" id="sammelListenWahl">
+              <option value="">— Liste wählen —</option>
+              ${listen.map((l) => `<option value="${l.id}">📋 ${l.name} (${l.woerter.length})</option>`).join("")}
+            </select>
+            <button type="button" class="btn btn-ghost" style="margin-top:6px;" data-sammel-liste="${treffer.word.replace(/"/g, "&quot;")}">📋 Hinzufügen</button>
+          ` : `<p class="empty-note" style="margin-top:8px; font-size:0.74rem;">Du hast noch keine Wortliste — im Bereich „Meine Wortlisten“ legst du eine an.</p>`}
+        </div>
+      ` : `
+        <p class="empty-note">Dieses Wort steht so noch nicht im Wörterbuch. Es ist notiert und kommt mit einem der nächsten Updates dazu.</p>
+      `}`;
+    document.body.appendChild(karte);
+    if (!treffer) wortlueckenMelden([wort]);
+
+    const zu = () => karte.remove();
+    karte.querySelector(".sammel-karte-zu")?.addEventListener("click", zu);
+    karte.querySelector("[data-sammel-stern]")?.addEventListener("click", async (e) => {
+      const w = e.currentTarget.dataset.sammelStern;
+      const menge = meinWortschatz();
+      if (menge.has(w)) { showToast("Steht schon drin."); return; }
+      menge.add(w);
+      try { await wortschatzSichern(menge); showToast(`★ „${w}“ in deinen Wortschatz.`); zu(); }
+      catch (err) { menge.delete(w); showToast("⚠️ Nicht gespeichert: " + (err.message || "Bitte Verbindung prüfen.")); }
+    });
+    karte.querySelector("[data-sammel-liste]")?.addEventListener("click", async (e) => {
+      const w = e.currentTarget.dataset.sammelListe;
+      const id = document.getElementById("sammelListenWahl")?.value;
+      if (!id) { showToast("Bitte zuerst eine Liste wählen."); return; }
+      const l = wortlisteMitId(id);
+      if (!l) return;
+      if (l.woerter.includes(w)) { showToast("Steht schon in dieser Liste."); return; }
+      const ok = await wortlisteAendern(id, { woerter: [...l.woerter, w] });
+      if (ok) { showToast(`📋 „${w}“ zu „${l.name}“ hinzugefügt.`); zu(); }
+    });
+  }
+
+  /* Schalter und Wörter verdrahten — einmal für jeden Bereich, in dem
+     ein Geschichtentext steht. */
+  function sammelBinden(wurzel, neuZeichnen) {
+    if (!wurzel) return;
+    wurzel.querySelectorAll("#sammelSchalter").forEach((el) => {
+      el.addEventListener("change", () => { sammelModus = el.checked; neuZeichnen(); });
+    });
+    wurzel.querySelectorAll("[data-sammel]").forEach((el) => {
+      el.addEventListener("click", (e) => { e.stopPropagation(); sammelKarteZeigen(el.dataset.sammel); });
+    });
+  }
+
   function historyUebersetzungHtml(entry, level, idPrefix) {
     if (!entry || !entry.translationsA1) return "";
     const auto = firstStepsLangFor(Backend.currentProfile());
@@ -20132,24 +20917,43 @@
        erst bei Bedarf geladen wird — beim Seitenstart wäre er mit 7,4 MB
        die größte Einzellast, obwohl man immer nur einen Tag sieht.
        Geladen wird erst, wenn der Kompass wirklich sichtbar ist. */
+    let kalenderFehltNoch = false;
     if (ExerciseData.ladeKalender && !ExerciseData.kalenderDa() && bereichSichtbar(kompassArea)) {
-      await ExerciseData.ladeKalender();
+      /* NICHT abwarten: der Kalender füllt genau eine Karte auf dieser
+         Seite, alles andere steht sofort bereit. Ist er da, zeichnen
+         wir noch einmal — dann steht die Tagesgeschichte drin. */
+      kalenderFehltNoch = true;
+      ExerciseData.ladeKalender().then(() => {
+        if (bereichSichtbar(kompassArea)) renderKompass();
+      }).catch(() => {});
     }
     // Das Sprachniveau wird IMMER gesetzt, nicht erst wenn der heutige Tag freigegeben ist.
     // Vorher blieb es an Tagen ohne freigegebenen Eintrag auf null — im Archiv stand dann
     // „undefined" statt des Textes, weil entry.levels[null] nichts ergibt.
     historyLevel = applyDefaultCefrLevel(historyLevel, (v) => { historyLevel = v; }, "geschichte");
 
-    const bannerUrl = await Backend.getEffectiveBannerUrl("wissen_banner");
+    /* Bewusst NICHT abgewartet: das Bannerbild kommt aus dem Netz, und
+       so lange darf der ganze Bereich nicht leer bleiben. Gezeichnet
+       wird sofort mit dem Platzhalter, das Bild wird nachgereicht. */
+    let bannerUrl = null;
+    const bannerNachreichen = Backend.getEffectiveBannerUrl("wissen_banner")
+      .then((url) => {
+        if (!url || url === bannerUrl) return;
+        const ziel = kompassArea.querySelector('[data-banner-key="wissen_banner"]');
+        if (ziel) siteBannerBildEinsetzen(ziel, url);
+      })
+      .catch(() => {});
     // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
     // gelesen — kein extra "Ich hab's gelesen"-Knopf nötig, für Missionen, die das voraussetzen.
+    // Läuft im Hintergrund: es ist ein Vermerk, kein Inhalt dieser Seite.
     const visitedProfile = Backend.currentProfile();
     if (visitedProfile) {
       const visited = (visitedProfile.extraProfileData && visitedProfile.extraProfileData.visitedSections) || [];
       if (!visited.includes("es-war-einmal")) {
-        await Backend.updateExtraProfileField("visitedSections", [...visited, "es-war-einmal"]);
+        Backend.updateExtraProfileField("visitedSections", [...visited, "es-war-einmal"]).catch(() => {});
       }
     }
+    void bannerNachreichen;
     const now = new Date();
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
@@ -20214,7 +21018,8 @@
           <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
             ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
           </div>
-          <p style="margin-top:8px;">${todayHistory.levels[historyLevel]}</p>
+          ${sammelSchalterHtml()}
+          <p style="margin-top:8px;" class="sammel-text">${sammelTextHtml(todayHistory.levels[historyLevel])}</p>
           ${historyUebersetzungHtml(todayHistory, historyLevel, "histHeute")}
           ${todayHistory.sideFacts && todayHistory.sideFacts.length ? `
             <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
@@ -20224,7 +21029,7 @@
         </div>
       ` : `
         <div class="question-card" style="margin-bottom:16px;">
-          <p class="empty-note">Für den heutigen Tag ist noch kein geprüfter Eintrag hinterlegt — diese Sammlung wächst nach und nach, jeder Eintrag wird vorher recherchiert und geprüft.</p>
+          <p class="empty-note">${kalenderFehltNoch ? "📜 Die Geschichte des Tages wird geladen …" : "Für den heutigen Tag ist noch kein geprüfter Eintrag hinterlegt — diese Sammlung wächst nach und nach, jeder Eintrag wird vorher recherchiert und geprüft."}</p>
           ${todaysBirthdayGreeting(`${mm}-${dd}`) ? `<p style="margin-top:12px; font-weight:700;">🎂 Heute ist dein Geburtstag — alles Gute, ${todaysBirthdayGreeting(`${mm}-${dd}`)}!</p>` : ""}
         </div>
       `}
@@ -20256,7 +21061,8 @@
             <div class="trophy-case" style="margin:10px 0; flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px;">
               ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip hist-archive-level-btn ${historyLevel === lvl ? "selected" : ""}" data-hist-level="${lvl}">${lvl}</button>`).join("")}
             </div>
-            <p style="margin-top:8px;">${entry.levels[historyLevel]}</p>
+            ${sammelSchalterHtml()}
+            <p style="margin-top:8px;" class="sammel-text">${sammelTextHtml(entry.levels[historyLevel])}</p>
             ${historyUebersetzungHtml(entry, historyLevel, "histArchiv")}
             ${entry.sideFacts && entry.sideFacts.length ? `
               <p class="eyebrow" style="margin-top:16px;">Außerdem an diesem Tag …</p>
@@ -20286,6 +21092,7 @@
        Ziel statt davor. Sie nehmen deshalb denselben Weg wie der Sprung
        aus dem Kalender. */
     leseBetonungAnwenden(kompassArea);
+    sammelBinden(kompassArea, renderKompass);
     kompassArea.querySelectorAll(".wegweiser-item").forEach((a) => {
       a.addEventListener("click", (e) => {
         const ziel = a.getAttribute("href");
@@ -21445,6 +22252,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
       document.getElementById("logoutBtn").addEventListener("click", async () => {
         await Backend.signOut();
+        wortschatzStandVerwerfen();
         refreshHeaderAuth();
         renderAccount();
       });
@@ -21760,6 +22568,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     `;
     document.getElementById("logoutBtn").addEventListener("click", async () => {
       await Backend.signOut();
+      wortschatzStandVerwerfen();
       refreshHeaderAuth();
       renderAccount();
     });
@@ -23980,10 +24789,44 @@ An einem Morgen lief ein kleiner Fuchs los…
     return "";
   }
 
+  /* Der kleine grüne Zähler oben rechts. Er sagt nur, WIE VIELE gerade
+     da sind — wer, steht einen Tipp weiter in der Mitgliederliste. */
+  async function onlineZaehlerAuffrischen() {
+    const knopf = document.getElementById("onlineJetztBtn");
+    if (!knopf) return;
+    if (!Backend.currentUser()) { knopf.style.display = "none"; return; }
+    let alle = [];
+    try { alle = await Backend.getAllMembers(); } catch (e) { return; }
+    const eigeneId = (Backend.currentUser() || {}).id;
+    const andere = alle.filter((m) => m.online && m.id !== eigeneId).length;
+    const zahl = document.getElementById("onlineJetztZahl");
+    if (zahl) zahl.textContent = String(andere);
+    knopf.style.display = andere ? "" : "none";
+    knopf.title = andere === 1 ? "Eine Person ist gerade online" : andere + " Personen sind gerade online";
+  }
+  document.getElementById("onlineJetztBtn")?.addEventListener("click", () => {
+    activateTab("view-profile");
+    jumpToSubnavTarget('[data-sub="sub-ranking"]', "#mitgliederListe", 60);
+  });
+
   // Öffentliche Mitgliederliste im Ranking-Bereich: wer ist überhaupt angemeldet, wer ist
   // gerade online. Für ALLE sichtbar, nicht nur für die Betreiberin/den Betreiber.
   let mitgliederSuche = "";
   let mitgliederNurOnline = false;
+  /* „zuletzt vor 3 Stunden" liest sich besser als ein Datum — außer es
+     ist so lange her, dass das Datum die genauere Auskunft ist. */
+  function zuletztGesehenText(zeitpunkt) {
+    const dann = new Date(zeitpunkt);
+    if (isNaN(dann)) return "";
+    const minuten = Math.floor((Date.now() - dann.getTime()) / 60000);
+    if (minuten < 60) return `vor ${Math.max(1, minuten)} Min.`;
+    const stunden = Math.floor(minuten / 60);
+    if (stunden < 24) return `vor ${stunden} ${stunden === 1 ? "Stunde" : "Stunden"}`;
+    const tage = Math.floor(stunden / 24);
+    if (tage === 1) return "gestern";
+    if (tage < 7) return `vor ${tage} Tagen`;
+    return "am " + dann.toLocaleDateString("de-DE");
+  }
   async function renderMitgliederListe() {
     const box = document.getElementById("mitgliederListe");
     if (!box) return;
@@ -24006,7 +24849,8 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${liste.length ? liste.map((m) => `
           <button type="button" class="friend-list-row" data-view-member="${m.id}">
             ${tinyAvatar(m)}
-            <span class="name">${m.name}${m.online ? ' <span class="mitglied-online" title="gerade online">🟢</span>' : ""}</span>
+            <span class="name">${m.name}${m.online ? ' <span class="mitglied-online" title="gerade online">🟢</span>' : ""}
+              ${!m.online && m.last_active ? `<span class="empty-note" style="display:block; font-size:0.68rem;">zuletzt ${zuletztGesehenText(m.last_active)}</span>` : ""}</span>
             ${adminBadge(m.is_admin, m.is_owner, m.is_moderator)}
             <span class="empty-note" style="margin-left:auto; font-size:0.7rem;">${m.points} Pkt.</span>
           </button>`).join("") : '<p class="empty-note">Niemand gefunden.</p>'}
@@ -24615,16 +25459,68 @@ An einem Morgen lief ein kleiner Fuchs los…
      schnell lange, ausführliche Texte — und der Aufbau dauerte
      spürbar. Jetzt kommen sie in Portionen, wie im Wörterbuch. */
   const INBOX_SEITE = 25;
+  /* Nach dem Löschen, Senden oder Lesen ist der letzte Stand überholt —
+     dann wird wieder wirklich geladen statt aus dem Zwischenspeicher
+     gezeichnet. */
+  function inboxStandVerwerfen() { inboxZwischen = null; }
   let inboxGezeigt = INBOX_SEITE;
-  async function renderInbox(isEntering) {
+  /* ------------------------------------------------------------
+     Der Zwischenspeicher des Postfachs.
+
+     Vorher wartete jedes Öffnen auf zwei Datenbankabfragen, bevor
+     irgendetwas erschien — und der Sprung „✉️ Ergebnis im Postfach"
+     suchte solange ins Leere. Jetzt steht beim Betreten sofort der
+     letzte bekannte Stand da, und aufgefrischt wird im Hintergrund.
+     Neu gezeichnet wird nur, wenn sich wirklich etwas geändert hat;
+     sonst würde die Ansicht unter den Fingern zucken.
+     ------------------------------------------------------------ */
+  let inboxZwischen = null;
+  let inboxAuffrischenLaeuft = false;
+  function inboxMarke(messages, friends) {
+    return [messages.inbox.length, messages.outbox.length, friends.length,
+      messages.inbox.map((m) => m.id + (m.read ? "1" : "0")).join(","),
+      messages.outbox.map((m) => m.id).join(",")].join("|");
+  }
+  async function inboxDatenLaden() {
+    const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
+    const marke = inboxMarke(messages, friends);
+    const geaendert = !inboxZwischen || inboxZwischen.marke !== marke;
+    inboxZwischen = { messages, friends, marke };
+    return geaendert;
+  }
+  /* Kurz nach der Anmeldung einmal im Hintergrund füllen, damit auch
+     der ERSTE Sprung ins Postfach schon schnell ist. */
+  function inboxVorwaermen() {
+    if (!Backend.currentUser() || inboxZwischen || inboxAuffrischenLaeuft) return;
+    inboxAuffrischenLaeuft = true;
+    inboxDatenLaden().catch(() => {}).then(() => { inboxAuffrischenLaeuft = false; });
+  }
+  async function renderInbox(isEntering, nurAusZwischenspeicher) {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
-    /* Sofort etwas zeigen, statt auf zwei Abfragen zu warten: beim
-       BETRETEN stand das Postfach sonst leer da, solange die
-       Nachrichten geladen wurden. */
-    if (isEntering && !area.innerHTML.trim()) area.innerHTML = '<p class="empty-note">Nachrichten werden geladen …</p>';
     if (isEntering) inboxGezeigt = INBOX_SEITE;
-    const [messages, friends] = await Promise.all([Backend.getMyMessages(), Backend.getFriends()]);
+    let messages, friends;
+    if (nurAusZwischenspeicher && inboxZwischen) {
+      messages = inboxZwischen.messages;
+      friends = inboxZwischen.friends;
+    } else if (isEntering && inboxZwischen) {
+      // Sofort mit dem letzten Stand zeichnen …
+      messages = inboxZwischen.messages;
+      friends = inboxZwischen.friends;
+      // … und im Hintergrund nachsehen, ob etwas dazugekommen ist.
+      if (!inboxAuffrischenLaeuft) {
+        inboxAuffrischenLaeuft = true;
+        inboxDatenLaden().then((geaendert) => {
+          inboxAuffrischenLaeuft = false;
+          if (geaendert && document.getElementById("inboxArea")) renderInbox(false, true);
+        }).catch(() => { inboxAuffrischenLaeuft = false; });
+      }
+    } else {
+      if (!area.innerHTML.trim()) area.innerHTML = '<p class="empty-note">Nachrichten werden geladen …</p>';
+      await inboxDatenLaden();
+      messages = inboxZwischen.messages;
+      friends = inboxZwischen.friends;
+    }
     // Beim BETRETEN des Postfachs (nicht bei jedem internen renderInbox()-Aufruf, z. B. nach dem
     // Löschen einer Nachricht) den aufgeklappt-Zustand neu setzen: nur die gerade noch
     // ungelesenen Nachrichten starten offen, alles andere kompakt — genau wie gewünscht.
@@ -24700,7 +25596,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             // Kompakte Zeile: nur Absender, Zeit und ein kurzer Textausschnitt — antippen klappt
             // sie auf. Macht die Übersicht deutlich kürzer, wenn viele Nachrichten schon gelesen
             // sind, statt dass man sich durch lauter ausgeklappte Alt-Nachrichten scrollen muss.
-            const preview = m.body.replace(/^\[BETA_REQUEST\]\s*/, "").replace(/\[BETA_JUMP:[\w-]+\]/, "")
+            const preview = m.body.replace(/^\[BETA_REQUEST\]\s*/, "").replace(/\[BETA_JUMP:[\w-]+\]/, "").replace(/\[FREIGABE:\w+:[\w-]+\]\s*/, "")
               // WICHTIG — vorher wurde JEDER Sticker/jedes Fox-Bild durch dasselbe generische
               // 🏷️-Symbol ersetzt, das in der Vorschau winzig und nichtssagend wirkte. Jetzt
               // erscheint der tatsächliche, kleine SVG-Sticker bzw. ein kleines Fox-Vorschaubild,
@@ -24725,6 +25621,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             </button>
             <p style="white-space:pre-wrap; margin:0;">${shrinkInlineEmojis(m.body
               .replace(/^\[BETA_REQUEST\]\s*/, "")
+              .replace(/\[FREIGABE:\w+:[\w-]+\]\s*/, "")
               .replace(/\n?\[BETA_JUMP:[\w-]+\]/, ""))
               .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
               .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:44px; height:44px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
@@ -24738,6 +25635,18 @@ An einem Morgen lief ein kleiner Fuchs los…
             <div style="display:flex; gap:8px; margin-top:2px;">
               <button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem;" data-approve-beta="${m.from_user}" data-approve-beta-name="${m.author_name || "Diese Person"}">🧪 Als Beta-Tester:in bestätigen</button>
             </div>` : ""}
+            ${(() => {
+              /* Eine eingereichte Sache (Link, Tipp, eigener Beitrag)
+                 trägt die Marke [FREIGABE:art:id]. Daraus werden hier
+                 die beiden Knöpfe — freischalten geht damit direkt aus
+                 dem Postfach, ohne die richtige Seite suchen zu müssen. */
+              const f = m.body.match(/\[FREIGABE:(\w+):([\w-]+)\]/);
+              if (!f || inboxViewTab !== "in" || !(Backend.canModerate && Backend.canModerate())) return "";
+              return `<div style="display:flex; gap:8px; margin-top:2px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem;" data-freigabe-ja="${f[1]}" data-freigabe-id="${f[2]}">✅ Freischalten</button>
+                <button type="button" class="btn btn-ghost" style="padding:6px 14px; font-size:0.8rem;" data-freigabe-nein="${f[1]}" data-freigabe-id="${f[2]}">✕ Ablehnen</button>
+              </div>`;
+            })()}
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               ${inboxViewTab === "in" && !m.is_system && m.from_user ? `<button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-reply-to="${m.from_user}" data-reply-name="${m.author_name}">↩️ Antworten</button>` : ""}
               <button type="button" class="btn btn-ghost" style="padding:4px 12px; font-size:0.78rem; margin-top:2px;" data-toggle-important="${m.id}">${getImportantMsgIds().includes(m.id) ? "⭐ Wichtig" : "☆ Als wichtig markieren"}</button>
@@ -24749,7 +25658,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${list.length > inboxGezeigt ? `<button type="button" class="btn btn-ghost" id="inboxMehr" style="display:block; width:100%; margin-top:10px;">Weitere ${Math.min(INBOX_SEITE, list.length - inboxGezeigt)} anzeigen (${list.length - inboxGezeigt} übrig)</button>` : ""}
       </div>
     `;
-    document.getElementById("inboxMehr")?.addEventListener("click", () => { inboxGezeigt += INBOX_SEITE; renderInbox(false); });
+    document.getElementById("inboxMehr")?.addEventListener("click", () => { inboxGezeigt += INBOX_SEITE; renderInbox(false, true); });
     renderStickerRow();
     let selectedRecipients = new Set();
     let recipientMode = "select"; // "select" | "broadcast"
@@ -24889,6 +25798,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             showToast(giftPoints > 0 ? `🎁 ${giftPoints} Punkte an ${selectedRecipients.size} Person(en) verschenkt!` : `⚖️ ${Math.abs(giftPoints)} Punkte bei ${selectedRecipients.size} Person(en) korrigiert.`);
           }
         }
+        inboxStandVerwerfen();
         renderInbox();
         Backend.updateExtraProfileField("msgDraft", null);
       } catch (err) {
@@ -24907,14 +25817,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-modal-view-photo]").forEach((img) => {
       img.addEventListener("click", () => openGallerySlideshow([img.dataset.modalViewPhoto], 0, "Foto"));
     });
-    document.getElementById("inboxTabIn").addEventListener("click", () => { inboxViewTab = "in"; renderInbox(); });
-    document.getElementById("inboxTabOut").addEventListener("click", () => { inboxViewTab = "out"; renderInbox(); });
-    document.getElementById("inboxTabImportant").addEventListener("click", () => { inboxViewTab = "important"; renderInbox(); });
+    document.getElementById("inboxTabIn").addEventListener("click", () => { inboxViewTab = "in"; renderInbox(false, true); });
+    document.getElementById("inboxTabOut").addEventListener("click", () => { inboxViewTab = "out"; renderInbox(false, true); });
+    document.getElementById("inboxTabImportant").addEventListener("click", () => { inboxViewTab = "important"; renderInbox(false, true); });
     area.querySelectorAll("[data-msg-expand]").forEach((btn) => {
-      btn.addEventListener("click", () => { inboxExpandedIds.add(btn.dataset.msgExpand); renderInbox(); });
+      btn.addEventListener("click", () => { inboxExpandedIds.add(btn.dataset.msgExpand); renderInbox(false, true); });
     });
     area.querySelectorAll("[data-msg-collapse]").forEach((btn) => {
-      btn.addEventListener("click", () => { inboxExpandedIds.delete(btn.dataset.msgCollapse); renderInbox(); });
+      btn.addEventListener("click", () => { inboxExpandedIds.delete(btn.dataset.msgCollapse); renderInbox(false, true); });
     });
     // Wie gewünscht: ein Klick IRGENDWO innerhalb einer aufgeklappten Nachricht soll sie wieder
     // schließen — nicht nur auf den kleinen Kopfbereich oben. Klicks auf interaktive Elemente
@@ -24926,11 +25836,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       row.addEventListener("click", (e) => {
         if (e.target.closest("button, a, img, input")) return;
         inboxExpandedIds.delete(row.dataset.msgRow);
-        renderInbox();
+        renderInbox(false, true);
       });
     });
     area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
-      btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(); });
+      btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(false, true); });
     });
     area.querySelectorAll("[data-jump-to]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -24955,8 +25865,48 @@ An einem Morgen lief ein kleiner Fuchs los…
           try { await Backend.clearBetaRequest(btn.dataset.approveBeta); } catch (e) { /* egal */ }
           await Backend.sendSystemMessage(btn.dataset.approveBeta, "🧪 Du wurdest als Beta-Tester:in bestätigt! Du siehst jetzt neue Funktionen, bevor sie für alle freigegeben werden — probier sie gern aus und gib Rückmeldung.");
           showToast(`🧪 ${btn.dataset.approveBetaName} ist jetzt Beta-Tester:in!`);
+          inboxStandVerwerfen();
           renderInbox();
         } catch (e) { alert(e.message || "Konnte nicht bestätigt werden."); }
+      });
+    });
+    /* Freischalten und Ablehnen aus dem Postfach heraus. Welche
+       Funktion zuständig ist, sagt die Art in der Marke. */
+    const FREIGABE_JA = {
+      link: (id) => Backend.approveUserLink(id),
+      tipp: (id) => Backend.approveCommunityTip(id),
+      text: (id) => Backend.approveCommunityText(id),
+    };
+    const FREIGABE_NEIN = {
+      link: (id) => Backend.rejectUserLink(id),
+      tipp: (id) => Backend.rejectCommunityTip(id),
+      text: (id) => Backend.rejectCommunityText(id),
+    };
+    area.querySelectorAll("[data-freigabe-ja]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const art = btn.dataset.freigabeJa, id = btn.dataset.freigabeId;
+        btn.disabled = true;
+        try {
+          await FREIGABE_JA[art](id);
+          try { await Backend.clearFreigabe(art, id); } catch (e) { /* egal */ }
+          showToast("✅ Freigeschaltet — die Person bekommt eine Nachricht.");
+          inboxStandVerwerfen();
+          renderInbox();
+        } catch (e) { btn.disabled = false; alert(e.message || "Hat nicht geklappt."); }
+      });
+    });
+    area.querySelectorAll("[data-freigabe-nein]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const art = btn.dataset.freigabeNein, id = btn.dataset.freigabeId;
+        if (!confirm("Diese Einreichung ablehnen und löschen?")) return;
+        btn.disabled = true;
+        try {
+          await FREIGABE_NEIN[art](id);
+          try { await Backend.clearFreigabe(art, id); } catch (e) { /* egal */ }
+          showToast("Abgelehnt.");
+          inboxStandVerwerfen();
+          renderInbox();
+        } catch (e) { btn.disabled = false; alert(e.message || "Hat nicht geklappt."); }
       });
     });
     area.querySelectorAll("[data-download-msg]").forEach((btn) => {
@@ -24983,11 +25933,17 @@ An einem Morgen lief ein kleiner Fuchs los…
       btn.addEventListener("click", async () => {
         if (!confirm("Diese Nachricht wirklich löschen? (Nur bei dir — beim Gegenüber bleibt sie sichtbar.)")) return;
         await Backend.deletePrivateMessage(btn.dataset.deleteMsg, btn.dataset.isSender === "true");
+        inboxStandVerwerfen();
         renderInbox();
       });
     });
     const unreadIds = messages.inbox.filter((m) => !m.read).map((m) => m.id);
-    if (unreadIds.length) await Backend.markMessagesRead(unreadIds);
+    if (unreadIds.length) {
+      await Backend.markMessagesRead(unreadIds);
+      // Im Zwischenspeicher gleich mitführen, damit die Nachrichten beim
+      // nächsten Öffnen nicht wieder als ungelesen aufspringen.
+      if (inboxZwischen) inboxZwischen.messages.inbox.forEach((m) => { if (unreadIds.includes(m.id)) m.read = true; });
+    }
   }
 
   let friendFilterMode = "all"; // "all", "online" oder "best"
@@ -25005,6 +25961,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       Backend.getIncomingRequests(),
       Backend.getMyChallenges(),
     ]);
+    herausforderungenMerken(incomingChallenges);
 
     area.innerHTML = `
       <div class="question-card">
@@ -25031,7 +25988,12 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${incomingChallenges.map((c) => {
           const specialLabels = { memory: "🧠 Gehirnjogger", wortbaustelle: "🔤 Wortbaustelle", buchstabensalat: "🔍 Buchstabensalat", kreuzwortraetsel: "✏️ Kreuzworträtsel", betonungstrainer: "🎯 Betonungs-Trainer" };
           const label = specialLabels[c.categories[0]] || c.categories.map((id) => ExerciseData.activeGetCategory(id)?.icon || "❓").join(" ");
-          return `<div class="breakdown-row"><span>${c.fromName} · ${label}</span><button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`;
+          /* Bringt die Herausforderung eine Wortliste mit, steht das
+             gleich hier — man soll vorher wissen, womit man übt. */
+          const mitListe = c.extra && c.extra.wortliste;
+          return `<div class="breakdown-row" style="flex-wrap:wrap; gap:6px;">
+            <span>${c.fromName} · ${label}${mitListe ? `<span class="empty-note" style="display:block; font-size:0.72rem;">📋 mit der Liste „${mitListe.name}“ — ${mitListe.woerter.length} Wörter</span>` : ""}</span>
+            <button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`;
         }).join("")}
       </div>` : ""}
 
@@ -25191,6 +26153,15 @@ An einem Morgen lief ein kleiner Fuchs los…
         const categoryIds = btn.dataset.cats.split(",");
         const challengeId = btn.dataset.acceptChallenge;
         checkNotifications();
+        /* Hat die Herausforderung eine Wortliste mitgebracht, gilt sie
+           für dieses Spiel — die eigene Wahl bleibt so lange außen vor. */
+        geliehenAlleWeg();
+        const mitgebracht = herausforderungListe(challengeId);
+        if (mitgebracht) {
+          const kuerzel = SPIEL_ZU_WORTQUELLE[categoryIds[0]] || categoryIds[0];
+          geliehenSetzen(kuerzel, mitgebracht);
+          showToast(`📋 Ihr spielt beide mit „${mitgebracht.name}“ — ${mitgebracht.woerter.length} Wörter.`);
+        }
         // Jedes der neueren Spiele braucht seine eigene Weiterleitung — vorher landete eine
         // angenommene Einladung zu Wortbaustelle/Buchstabensalat/Kreuzworträtsel/Betonungs-
         // Trainer fälschlich in den klassischen Übungen, weil nur "memory" als Sonderfall
@@ -25264,6 +26235,20 @@ An einem Morgen lief ein kleiner Fuchs los…
           gameRouting[categoryIds[0]]();
           return;
         }
+        /* Alle übrigen Spiele: der Reiter steht im Verzeichnis, und sein
+           Klick-Empfänger zeichnet das Spiel. Vorher landete jede
+           Einladung zu einem Spiel ohne eigenen Eintrag oben still in der
+           allgemeinen Übungsübersicht. */
+        const spielReiter = SPIEL_ZU_REITER[categoryIds[0]];
+        if (spielReiter) {
+          const pille = document.querySelector(`#learnSubnav [data-sub="${spielReiter}"]`);
+          if (pille) {
+            activeGameChallengeId = challengeId;
+            pille.click();
+            showToast("🎮 Viel Erfolg — dein Ergebnis wird für das Duell gezählt.");
+            return;
+          }
+        }
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
         Quiz.startSession(categoryIds, "leicht", { challengeId });
         showToast(`🦊 Willkommen, ${personaForCategory(categoryIds[0])}!`);
@@ -25324,6 +26309,22 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${currentUrl ? `<img src="${currentUrl}" alt="${altText}" class="site-banner-img" />` : placeholderSvg}
         ${canPropose ? `<label class="site-banner-upload-btn" title="${Backend.canModerate() ? "Eigene Grafik hochladen" : "Eigene Grafik vorschlagen (muss erst von einem Admin bestätigt werden)"}">📷<input type="file" accept="image/*" class="site-banner-upload-input" data-banner-key-input="${key}" style="display:none;" /></label>` : ""}
       </div>`;
+  }
+  /* Das Bannerbild nachträglich einsetzen, ohne den Knopf zu verlieren.
+     Gebraucht von Ansichten, die zuerst zeichnen und das Bild erst
+     nachreichen, damit kein leerer Bereich auf das Netz wartet. */
+  function siteBannerBildEinsetzen(bannerEl, url) {
+    if (!bannerEl || !url) return;
+    const vorhanden = bannerEl.querySelector(".site-banner-img");
+    if (vorhanden && vorhanden.getAttribute("src") === url) return;
+    const knopf = bannerEl.querySelector(".site-banner-upload-btn");
+    const bild = document.createElement("img");
+    bild.className = "site-banner-img";
+    bild.alt = "";
+    bild.src = url;
+    bannerEl.innerHTML = "";
+    bannerEl.appendChild(bild);
+    if (knopf) bannerEl.appendChild(knopf);
   }
   function wireSiteBannerUploads(root) {
     root.querySelectorAll("[data-banner-key-input]").forEach((input) => {
@@ -25430,6 +26431,21 @@ An einem Morgen lief ein kleiner Fuchs los…
       let fuchs = null;
       try { fuchs = await z.holen(); } catch (e) { continue; }
       if (!fuchs || fuchs.user_id !== nutzer.id) continue;
+      /* GEMELDET: „ich hab Meldungen bekommen, dass ich Tagessieger bin,
+         obwohl ich gar nichts gemacht habe."
+
+         Genau so war es auch: hat an einem Tag NIEMAND etwas getan,
+         behält die Person den Titel, die ihn zuletzt verdient hat —
+         die Auszeichnung ist dann übernommen, nicht neu erspielt
+         (fuchs.uebernommen). Die Meldung sah das bisher nicht an und
+         gratulierte trotzdem. Jetzt wird nur gemeldet, was in diesem
+         Zeitraum wirklich erarbeitet wurde. */
+      if (fuchs.uebernommen || !fuchs.total) continue;
+      /* Und noch eine Hürde: unter zehn Punkten ist niemand „Sieger".
+         So viel bringt eine einzige zu Ende gespielte Runde locker —
+         eine einzelne angetippte Übung oder ein Ergebnis mit null
+         Punkten löst dagegen keine Gratulation mehr aus. */
+      if (fuchs.total < 10) continue;
       gemerkt[z.art] = marke;
       try { localStorage.setItem(FUCHS_MELDUNG_SCHLUESSEL, JSON.stringify(gemerkt)); } catch (e) { /* egal */ }
       const text = `🦊 Du bist ${z.titel}!\n\n${fuchs.total} Aktivitäts-Punkte — das reicht gerade für Platz eins.\n\n`
@@ -25438,7 +26454,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       showToast(`🦊 Du bist ${z.titel}!`, () => {
         activateTab("view-profile");
         jumpToSubnavTarget('[data-sub="sub-inbox"]',
-          letzteAuswertungId ? `[data-msg-row="${letzteAuswertungId}"]` : ".inbox-list, #inboxArea", 150);
+          letzteAuswertungId ? `[data-msg-row="${letzteAuswertungId}"]` : ".inbox-list, #inboxArea", 60);
       });
     }
   }
@@ -25685,8 +26701,27 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "161";
+  const APP_VERSION = "162";
+  /* ============================================================
+     WAS ALLE LESEN
+     ------------------------------------------------------------
+     Kurz halten. Was hier steht, geht an jede Person auf der Seite:
+     also nur, was jemanden beim Lernen betrifft. Keine Dateinamen,
+     keine Ordner, keine Tabellen, keine Technik — das steht in
+     APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
+     ============================================================ */
   const APP_CHANGELOG = {
+    "162": [
+      "🆕 **Fünf neue Spiele** sind dazugekommen: Die Setzerei, Die Wortkette, Der Maskenball, Die Wortwaage und Die Zwillinge.",
+      "📋 **Eigene Wortlisten** kannst du jetzt nachträglich bearbeiten — Wörter ergänzen, einzelne herausnehmen, die Liste umbenennen. Und beim Prüfen siehst du grün, was ankommt, und rot, was das Wörterbuch noch nicht kennt.",
+      "🎮 Tippst du bei einer Liste auf **\u201eDamit spielen\u201c**, führt dich die App in die Spieleübersicht und hebt genau die Spiele hervor, die mit dieser Liste üben können.",
+      "✉️ Zu **jedem** Spiel kannst du jetzt jemanden einladen — vorher ging das nur bei neun von 34.",
+      "👀 **Besser zu lesen:** In den dunklen Designs waren Schaltflächen in mehreren Spielen kaum zu erkennen, und in der Wortliste sah man nicht, was man tippt. Das ist überall behoben.",
+      "▶️ Wort-Kanone und KorrekTour laufen nicht mehr von selbst los — ein **Start-Schild** in der Mitte wartet, bis du bereit bist.",
+      "🟢 Oben rechts siehst du jetzt, **wer gerade da ist**, und in der Mitgliederliste, wann jemand zuletzt online war.",
+      "⚡ Der Bereich **\u201eEs war einmal in Deutschland\u201c** öffnet sich deutlich schneller.",
+    ],
+
     "161": [
       "🎮 **Zehn neue Spiele.** Nicht zehn Abwandlungen desselben Quiz, sondern zehn verschiedene Arten zu denken — und jedes zielt auf etwas, das anderswo nicht geübt wird. Alle haben ihre eigene Niveau-Auswahl von A1 bis C2, ihren eigenen gezeichneten Schriftzug und ihr eigenes Bild. Damit hat die Seite jetzt 34 Spiele.",
       "🅰️ **Die Setzerei** — groß oder klein? Der Satz liegt klein gesetzt im Bleikasten, und du tippst die Wörter an, die groß gehören. Sie springen sichtbar hoch. Die Großschreibung mitten im Satz gibt es so nur im Deutschen, und sie ist keine Zierde: das große E in „das Essen“ sagt dir, dass hier ein Ding steht und kein Tun. Die Sätze sind die geprüften Beispielsätze aus dem Wörterbuch — die richtige Lösung ist also einfach die ursprüngliche Schreibweise, da ist nichts geraten. Das erste Wort steht schon groß da; der Satzanfang wäre keine Aufgabe, sondern die halbe Runde geschenkt.",
@@ -25836,13 +26871,51 @@ An einem Morgen lief ein kleiner Fuchs los…
       "📎 Am Profil kann man jetzt mehrere Dateien auf einmal ablegen — auch PDF und MP3, und MP3 lässt sich direkt anhören.",
     ].join("\n\n"),
   };
+  /* Was jede Update-Nachricht an ALLE enthalten darf — und was nicht.
+     Nicht hinein gehören Dateinamen, Ordner, Pfade, Tabellennamen und
+     alles andere, was jemandem verrät, wie die Seite innen gebaut ist.
+     Das ist kein Geschmacksurteil: eine bekannte Adresse ist eine
+     Einladung. Diese Prüfung läuft beim Versenden und lässt einen
+     Verstoß gar nicht erst hinaus. */
+  const INTERN_VERDAECHTIG = /(\.js\b|\.css\b|\.html\b|\.json\b|\/[a-z0-9_-]+\/|supabase|localStorage|RLS|SQL|\bAPI\b|Tabelle|Spalte|Commit|Repository|Ordner|Verzeichnis|Pfad)/i;
+  function oeffentlicheNeuigkeiten() {
+    const roh = APP_CHANGELOG[APP_VERSION];
+    const punkte = (Array.isArray(roh) ? roh : [roh]).filter(Boolean).map(String);
+    return punkte.filter((z) => !INTERN_VERDAECHTIG.test(z));
+  }
+  /* ============================================================
+     NUR FÜR DIE BETREIBERSEITE
+     ------------------------------------------------------------
+     Hier darf alles stehen: Ursachen, Messwerte, Zahlen, Technik.
+     Diese Liste verlässt die Moderation nie — sie wird als zweite,
+     eigene Nachricht verschickt, und nur an Konten, die moderieren
+     dürfen.
+     ============================================================ */
+  const APP_CHANGELOG_INTERN = {
+    "162": [
+      "**Lesbarkeit — 29 Stellen, zwei Ursachen.** Der Kontrast wurde in zehn Designs auf zehn Seiten gemessen. (1) 29 CSS-Regeln setzen einen hellen Hintergrund fest, lassen die Schriftfarbe aber erben — in dunklen Designs also creme auf creme, gemessen 1,06 statt der nötigen 4,5. Betraf die Wortlisten-Eingabe, Maskenball, Wortwaage, Zwillinge, Wortkette, Augenblick, Umzug, Sprachatlas, Wortbaum, Kreuzworträtsel. (2) Umgekehrt dient --amber-300 als SCHRIFTfarbe auf Kartenflächen; in den hellen Designs ergibt das 1,65 — es traf den aktiven Hauptreiter. Dazu Schaltflächen mit Kartenfarbe ohne Schriftfarbe (ein button fällt dann auf Schwarz zurück): Dichter-&-Denker-Kacheln, Mitgliederzeilen. Danach eine Meldung übrig, die einen Textschatten hat, den die Messung nicht sieht.",
+      "**Wörter-Sortierer — Streitfälle beseitigt.** Nachgewiesen im Bestand: „der Fahrradhelm\u201c stand unter Freizeit & Sport, „der Fahrradständer\u201c unter Stadt & Verkehr, „die Fahrradtour\u201c unter Reisen, „der Fahrradweg\u201c unter Umwelt. Drei Regeln: verwandte Themen nie gemeinsam als Körbe (Tabelle mit 40 Paaren, es bleiben 1474 brauchbare Dreier je Niveau); ein Wort fällt raus, wenn sein Bestimmungswort in einem anderen Korb der Runde vorkommt; ein Wort fällt immer raus, wenn dasselbe Lemma unter mehreren Themen steht (44 Fälle). Kosten rund 9 % der Wörter, kleinster Korb auf A1 noch 23. Geprüft: 120 Runden, 1440 Karten, kein Streitfall.",
+      "**Wortschatz am Profil.** Schreibfehler an der Zugriffsregel wurden bisher als Erfolg gewertet — Supabase liefert bei einer abgelehnten Änderung still {ok:false} statt eines Fehlers. Wird jetzt geprüft. Außerdem hing die Merkliste im Speicher an keinem Konto: nach einem Kontowechsel am selben Gerät sah die nächste Person die Wörter der vorherigen.",
+      "**Tagessieger.** Ursache der falschen Meldungen: Hat an einem Tag niemand gepunktet, behält die zuletzt aktive Person den Titel (übernommen, nicht erspielt) — die Meldung sah das nicht an. Jetzt zusätzlich eine Hürde von zehn Punkten für Meldung und Bonus.",
+      "**Tempo und Zwischenspeicher.** Der Wissens-Bereich wartete vor dem ersten Bild auf zwei Netzrunden (Bannerbild, Besuchsvermerk) und auf die 630 kB des Kalendermonats; der Wortschatz (3,4 MB) wurde im selben Moment eingelesen und blockierte den Hauptstrang 330 ms. Alles vier entkoppelt, Seiteninhalte werden 90 Sekunden zwischengespeichert. Gemessen mit vierfach gedrosseltem Prozessor: 941 ms auf 340 ms.",
+      "**Fassungs-Wächter.** Die Cache-Angaben im Kopf reichen bei Safari nicht; eine einmal geladene Seite blieb samt ihrer alten ?v=-Nummern liegen. Die Seite fragt jetzt ohne Zwischenspeicher nach, welche Fassung auf dem Server steht, und bietet das Neuladen an.",
+      "**Einladungen und Weiche.** Ein Spiel-Verzeichnis löst zwei Teillisten ab: Einladungsleiste in allen 34 Spielen statt neun, und eine angenommene Einladung landet im richtigen Spiel statt still in der Übungsübersicht (vorher 11 von 34 verdrahtet). Neun spielinterne Leisten entfernt, damit nichts doppelt steht.",
+      "**Alte Wort-Kanone entfernt.** Es liefen zwei Fassungen parallel; die alte sahen alle außer dir und genau sie hatte den Überlappungsfehler (Verteilung ohne Breitenbegrenzung). 75 Zeilen doppelter Code weg.",
+      "**Wortlücken-Sammlung.** Unbekannte Wörter aus eingereichten Listen sammeln sich jetzt zentral, nach Wort gezählt und ohne Namen. Anlass war eine Messung: von 278 geprüften Grundwörtern fehlen elf, darunter „deswegen\u201c, „darum\u201c, „stattdessen\u201c, „frei\u201c und „Bedürfnis\u201c. Die Liste findest du in der Verwaltung.",
+      "**Vorschau-Symbole.** 29 von 34 Spielen hatten eines; Blitzrunde, Wortangler, Wortleiter, Silbenturm und Wörter-Sortierer haben jetzt auch eines.",
+      "**Begrüßungsbildschirme abgeschafft** (waren bei sieben von 34 Spielen, uneinheitlich). Stattdessen in jedem Spiel eine zentrierte Beschreibungszeile, und in den beiden Spielen, die von selbst loslaufen, ein START-Schild im Spielfeld.",
+      "**Diese Nachricht** ist ab jetzt zweigeteilt: Die öffentliche Liste enthält nur, was Lernende betrifft, und eine Prüfung beim Versenden lässt Dateinamen, Ordner, Pfade, Tabellen- und Technikbegriffe gar nicht erst hinaus.",
+    ],
+  };
+  // Für die Prüfung auf dem Testrechner erreichbar gemacht.
+  window.__dmaUpdateNachricht = () => notifyAboutAppUpdateIfNeeded();
   function notifyAboutAppUpdateIfNeeded() {
     if (!Backend.currentUser()) return;
     const profile = Backend.currentProfile();
     const seenVersion = (profile && profile.extraProfileData && profile.extraProfileData.seenAppVersion) || null;
     if (seenVersion === APP_VERSION) return;
-    const note = APP_CHANGELOG[APP_VERSION];
-    if (!note) return;
+    const note = oeffentlicheNeuigkeiten();
+    if (!note.length) return;
     /* Der Eintrag ist eine LISTE. Bisher wurde sie einfach in den Text
        eingesetzt — JavaScript hängt dabei die Punkte mit Komma
        aneinander, und die ganze Neuerungsliste kam als ein einziger
@@ -25857,20 +26930,44 @@ An einem Morgen lief ein kleiner Fuchs los…
     // fehlschlägt, verhindert diese zusätzliche Prüfung trotzdem, dass dieselbe Nachricht bei
     // jedem Neuladen erneut verschickt wird — sie schaut einfach nach, ob genau dieser Text
     // schon im Postfach liegt.
+    /* Und für die Betreiberseite die ausführliche Fassung — als
+       ZWEITE Nachricht, damit die erste genau so im Postfach steht,
+       wie alle anderen sie auch bekommen. */
+    const intern = APP_CHANGELOG_INTERN[APP_VERSION];
+    const internText = intern && (Backend.canModerate && Backend.canModerate())
+      ? `🔒 Nur für dich — Update ${APP_VERSION} vollständig:\n\n`
+        + (Array.isArray(intern) ? intern : [intern])
+          .map((z) => String(z).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")).join("\n\n")
+        + `\n\n———\nAn alle Nutzer:innen ist die Nachricht darüber gegangen (${note.length} ${note.length === 1 ? "Punkt" : "Punkte"}).`
+      : null;
     Backend.getMyMessages().then((messages) => {
       const alreadySent = messages.inbox.some((m) => m.body === messageText);
       if (!alreadySent) Backend.sendSystemMessage(Backend.currentUser().id, messageText);
+      if (internText && !messages.inbox.some((m) => m.body === internText)) {
+        Backend.sendSystemMessage(Backend.currentUser().id, internText);
+      }
       Backend.updateExtraProfileField("seenAppVersion", APP_VERSION);
     });
   }
 
-  // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt
-  setInterval(() => { if (Backend.currentUser()) Backend.touchActivity(); }, 60000);
+  // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt —
+  // und im selben Takt den grünen Zähler in der Kopfzeile nachziehen.
+  setInterval(() => {
+    if (!Backend.currentUser()) return;
+    Backend.touchActivity();
+    onlineZaehlerAuffrischen();
+  }, 60000);
+  setTimeout(onlineZaehlerAuffrischen, 3500);
+  /* Das Postfach im Hintergrund vorwärmen: so ist auch der allererste
+     Sprung „✉️ Ergebnis im Postfach" sofort da und nicht erst nach zwei
+     Datenbankabfragen. */
+  setTimeout(inboxVorwaermen, 2500);
 
   // Prüf-Zugang nur auf dem Testrechner: erlaubt es, Wörterbuch und Aufgabenbestand
   // automatisch durchzuzählen, ohne die Seite dafür umbauen zu müssen. Im Netz
   // (jede echte Domain) wird dieser Block nie ausgeführt.
   if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    window.__wortQuellePruef = (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word);
     window.DMA_PRUEFUNG = {
       woerterbuch: () => buildDictionaryEntries(),
       /* Der Fuchs am Fluss: der laufende Stand und, welcher Stein
@@ -25900,6 +26997,34 @@ An einem Morgen lief ein kleiner Fuchs los…
         satz: e.example, stufe: setzSatzStufe(e.example),
         gross: setzZerlegen(e.example).filter((t) => t.zaehlt && t.gross).map((t) => t.kern),
       })),
+      /* Sortierer: n Runden ziehen und jede Karte gegen die
+         Eindeutigkeits-Regel gegenprüfen. Erwartet: keine Streitfälle. */
+      sortProben: (n) => {
+        const bericht = { runden: 0, karten: 0, streitfaelle: [], verwandtePaare: [], leer: 0 };
+        const merk = sortLevel;
+        for (let i = 0; i < (n || 40); i++) {
+          sortLevel = ["A1", "A2", "B1", "B2", "C1", "C2"][i % 6];
+          sortSession = null;
+          neueSortSession();
+          if (!sortSession || sortSession.leer) { bericht.leer += 1; continue; }
+          bericht.runden += 1;
+          const k = sortSession.koerbe;
+          for (let x = 0; x < k.length; x++) for (let y = x + 1; y < k.length; y++) {
+            if (sortSindVerwandt(k[x], k[y])) bericht.verwandtePaare.push(k[x] + " + " + k[y]);
+          }
+          sortSession.karten.forEach((karte) => {
+            bericht.karten += 1;
+            if (!sortWortIstEindeutig({ word: karte.wort, theme: karte.thema }, k)) {
+              bericht.streitfaelle.push(karte.wort + " (" + karte.thema + ") bei " + k.join(" | "));
+            }
+          });
+        }
+        sortLevel = merk; sortSession = null;
+        return bericht;
+      },
+      /* Welche Wörter ein Spiel gerade wirklich benutzt — für die
+         Prüfung, ob eine geliehene Duell-Liste greift. */
+      wortQuelle: (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word),
       /* Alle Zwillingssätze mit eingesetzter Lösung. */
       zwillingProben: () => ZWILLINGE.map((z) => ({
         paar: z.a + " / " + z.b, u: z.u, lvl: z.lvl,

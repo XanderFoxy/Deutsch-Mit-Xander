@@ -117,6 +117,7 @@ eigener Server nötig). Eine gelbe Hinweisbox im Profil-Bereich zeigt das an.
      id uuid default gen_random_uuid() primary key,
      from_user uuid references auth.users, to_user uuid references auth.users,
      categories text[], from_result jsonb, to_result jsonb,
+     extra jsonb,
      status text default 'pending', winner uuid, created_at timestamptz default now()
    );
 
@@ -226,6 +227,11 @@ wird überschrieben, nur ergänzt) — einfach alles auf einmal in den
 Supabase SQL-Editor einfügen und ausführen:
 
 ```sql
+-- Damit eine Herausforderung die Wortliste des Herausforderers mitnehmen
+-- kann: beide spielen dann mit denselben Wörtern. Fehlt die Spalte, geht
+-- die Herausforderung trotzdem raus — nur eben ohne die Wörter.
+alter table challenges add column if not exists extra jsonb;
+
 -- Neuere Profil-Spalten nachrüsten
 alter table profiles add column if not exists is_admin boolean default false;
 alter table profiles add column if not exists is_owner boolean default false;
