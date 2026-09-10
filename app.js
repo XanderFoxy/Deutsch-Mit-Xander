@@ -4136,6 +4136,8 @@
        Zeitraums geworden ist — das passiert im Hintergrund, sobald jemand
        anders Punkte macht, und wäre sonst nie zu bemerken. */
     pruefeFuchsAuszeichnung();
+    // Genauso beiläufig prüfen, ob ein Spiel neu offen ist.
+    pruefeSpielFreischaltung();
   }
   // Wiederholt den sanften Hinweiston alle 5 Sekunden, solange noch etwas unbestätigt ist — hört
   // von selbst auf, sobald das Lämpchen verschwindet (z. B. weil im Profil bestätigt wurde).
@@ -8511,6 +8513,7 @@
     const area = document.getElementById("wackelturmArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "wackelturm_aktiv", "Wackelturm", "🗼", true)) return;
+    if (!renderVerdienenGate(area, "sub-wackelturm", "Wackelturm")) return;
     // Beim allerersten Betreten dieser Sitzung: kurze Spielbeschreibung mit "Los geht's"-Knopf,
     // statt sofort mitten im Spiel zu landen, ohne zu wissen, worum es geht.
     if (!wtIntroShown && !hasSeenGameIntro("wackelturm")) {
@@ -8922,6 +8925,7 @@
     const area = document.getElementById("bubblesArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "wortblasen_neu", "Wortblasen", "🫧")) return;
+    if (!renderVerdienenGate(area, "sub-bubbles", "Wortblasen")) return;
     if (!bbIntroShown && !hasSeenGameIntro("wortblasen")) {
       // WICHTIG — behebt einen echten Verstoß gegen die Vorgabe "keine Bubbles mit normalen
       // Schriftzeichen drin": vorher waren die Buchstaben hier <text>-Elemente mit Comic-Sans-
@@ -9291,6 +9295,7 @@
     const area = document.getElementById("vokabelmeisterArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "vokabelmeister_neu", "Vokabelmeister", "🔤")) return;
+    if (!renderVerdienenGate(area, "sub-vokabelmeister", "Vokabelmeister")) return;
     if (!vmLetter) {
       const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       area.innerHTML = `
@@ -9740,6 +9745,7 @@
   function renderKanone() {
     const area = document.getElementById("kanoneArea");
     if (!area) return;
+    if (!renderVerdienenGate(area, "sub-kanone", "Wort-Kanone")) return;
     // Die komplett neu gebaute Wort-Kanone (sequentielles Fallen, SVG-Kanone, Explosions-Effekte)
     // ist noch nicht öffentlich freigegeben — nur der Betreiber und Beta-Tester:innen spielen sie
     // schon. Alle anderen spielen ganz normal weiter die bisherige, bereits fertige Version — KEIN
@@ -12458,6 +12464,7 @@
     const area = document.getElementById("crosswordArea");
     if (!area) return;
     if (!renderComingSoonGate(area, "kreuzwortraetsel_aktiv", "Kreuzworträtsel", "✏️", true)) return;
+    if (!renderVerdienenGate(area, "sub-crossword", "Kreuzworträtsel")) return;
     if (!cwIntroShown && !hasSeenGameIntro("kreuzwortraetsel")) {
       // "KREUZWORTRÄTSEL" als kleines, echtes Kreuzworträtsel-Gitter (schwarz umrandete, weiße
       // Kästchen) statt Emoji + Text — zwei Zeilen, da das Wort für eine einzelne Reihe zu lang ist.
@@ -14826,6 +14833,787 @@
   document.querySelector('#learnSubnav [data-sub="sub-wortleiter"]')?.addEventListener("click", () => renderWortleiter());
   document.querySelector('#learnSubnav [data-sub="sub-silbenturm"]')?.addEventListener("click", () => renderSilbenturm());
 
+
+  /* ============================================================
+     DER FUCHS AM FLUSS — ein Spiel mit einer Figur, die sich bewegt
+     ------------------------------------------------------------
+     Die 22 vorhandenen Spiele stellen im Kern alle dieselbe Sorte
+     Frage: hier ist EIN Wort, sag etwas darüber. Dieses hier fragt
+     andersherum. Für eine ganze Überquerung gilt EINE Regel — „nur
+     der-Wörter", „nur Wörter, die auf der ersten Silbe betont werden",
+     „nur Wörter aus Essen & Trinken" — und aus drei Steinen muss jedes
+     Mal der eine gewählt werden, auf den die Regel passt. Man prüft
+     also nicht ein Wort für sich, sondern siebt Wörter gegeneinander.
+     Das ist die Bewegung, die man beim Lesen wirklich braucht.
+
+     Der Fuchs ist dabei keine Verzierung. Er steht sichtbar auf dem
+     Stein, den man zuletzt getroffen hat, und man sieht am Bild, wie
+     weit man ist, ohne eine Zahl zu lesen. Gezeichnet ist er hier im
+     Quelltext und nicht als Bilddatei abgelegt: die Dateien werden vom
+     Telefon aus von Hand hochgeladen, und ein Spiel, das drei neue
+     Bilder braucht, wäre genau deshalb keins geworden.
+
+     Drei Fehler in einer Überquerung, und der Fuchs sitzt im Wasser —
+     die Überquerung ist verloren, die Runde aber nicht: die nächste
+     beginnt mit einer neuen Regel. Vier Überquerungen ergeben eine
+     Runde. So endet ein Fehler nicht das ganze Spiel, kostet aber
+     etwas.
+     ============================================================ */
+  let flussLevel = null;
+  let flussSession = null;
+  const FLUSS_STEINE = 5;           // Steine je Überquerung
+  const FLUSS_UEBERQUERUNGEN = 4;   // Überquerungen je Runde
+  const FLUSS_LEBEN = 3;            // Fehltritte je Überquerung
+
+  function flussOhneArtikel(wort) { return String(wort).replace(/^(der|die|das)\s+/i, ""); }
+  function flussArtikel(wort) {
+    const m = String(wort).match(/^(der|die|das)\s+/i);
+    return m ? m[1].toLowerCase() : "";
+  }
+  function flussSilben(e) { return String(e.syl || "").split("-").filter(Boolean); }
+  // Zwei Sammelfächer, die kein Wortfeld sind: „Sonstiges“ ist die Restkiste,
+  // „Grundwörter & Struktur“ ein Grammatikfach. Beide taugen weder als
+  // gesuchtes Thema noch als Gegenprobe — was dort steht, kann niemand am
+  // Wort ablesen.
+  const FLUSS_KEIN_WORTFELD = new Set(["Sonstiges", "Grundwörter & Struktur"]);
+  const FLUSS_ORDNUNGSZAHL = ["ersten", "zweiten", "dritten", "vierten", "fünften", "sechsten"];
+
+  /* Nur Wörter, die auf einen Stein passen: geprüfte Einträge mit Niveau,
+     ohne Leerzeichen und Bindestrich (mehrteilige Stichwörter wie „Erste
+     Hilfe" würden den Stein sprengen) und nicht länger als 15 Zeichen. */
+  function flussPool() {
+    return buildDictionaryEntries().filter((e) => {
+      if (!e || !e.verified || !e.word || !e.syl || !e.level) return false;
+      const nackt = flussOhneArtikel(e.word);
+      return nackt.length >= 3 && nackt.length <= 15 && !/[\s-]/.test(nackt);
+    });
+  }
+
+  /* Die Regeln. Jede sagt drei Dinge: was auf dem Stein stehen darf
+     (passt), was daneben liegen soll (gegen — bewusst KEIN Zufallswort,
+     sondern ein knapper Fehlschlag: bei „der-Wörter" liegen die-/das-
+     Wörter daneben, nicht Verben), und wie der Fehltritt erklärt wird.
+     `ohneArtikel` blendet den Artikel auf dem Stein aus — sonst stünde
+     die Antwort bei den Artikelregeln mit auf dem Stein. */
+  function flussRegelnFuer(pool) {
+    const regeln = [];
+    ["der", "die", "das"].forEach((a) => regeln.push({
+      id: "artikel-" + a,
+      text: `Nur Steine mit <strong>${a}</strong>-Wörtern`,
+      hinweis: "Alle drei sind Nomen — nur eines hat diesen Artikel.",
+      ohneArtikel: true,
+      passt: (e) => flussArtikel(e.word) === a,
+      gegen: (e) => { const b = flussArtikel(e.word); return Boolean(b) && b !== a; },
+      erklaerung: (e) => `Es heißt <strong>${e.word}</strong>.`,
+    }));
+    regeln.push({
+      id: "betonung-erste",
+      text: "Nur Wörter, die auf der <strong>ersten Silbe</strong> betont werden",
+      hinweis: "Sprich die Wörter leise mit — wo liegt der Druck?",
+      passt: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) === 0,
+      gegen: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) > 0,
+      erklaerung: (e) => `${Core.formatStress(e.syl)} — der Druck liegt auf der ${FLUSS_ORDNUNGSZAHL[Core.betonteSilbenIndex(flussSilben(e))] || "letzten"} Silbe.`,
+    });
+    regeln.push({
+      id: "betonung-spaeter",
+      text: "Nur Wörter, die <strong>nicht</strong> auf der ersten Silbe betont werden",
+      hinweis: "Zwei fangen betont an — eines nicht.",
+      passt: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) > 0,
+      gegen: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) === 0,
+      erklaerung: (e) => `${Core.formatStress(e.syl)} — der Druck liegt auf der ${FLUSS_ORDNUNGSZAHL[Core.betonteSilbenIndex(flussSilben(e))] || "letzten"} Silbe.`,
+    });
+    regeln.push({
+      id: "silben-zwei",
+      text: "Nur Wörter mit <strong>genau zwei Silben</strong>",
+      hinweis: "Klatsch die Wörter im Kopf mit.",
+      passt: (e) => flussSilben(e).length === 2,
+      gegen: (e) => flussSilben(e).length >= 3,
+      erklaerung: (e) => `${flussSilbenSchrift(e)} — das sind ${flussSilben(e).length} Silben.`,
+    });
+    regeln.push({
+      id: "silben-viele",
+      text: "Nur Wörter mit <strong>drei oder mehr Silben</strong>",
+      hinweis: "Klatsch die Wörter im Kopf mit.",
+      passt: (e) => flussSilben(e).length >= 3,
+      gegen: (e) => flussSilben(e).length === 2,
+      erklaerung: (e) => `${flussSilbenSchrift(e)} — das sind ${flussSilben(e).length} Silben.`,
+    });
+    /* Themenregeln: nicht alle 25 auf einmal, sonst käme eine Artikel-
+       oder Betonungsregel kaum noch dran. Drei ausgeloste reichen. */
+    const zaehler = {};
+    pool.forEach((e) => {
+      if (e.category && !FLUSS_KEIN_WORTFELD.has(e.category) && flussArtikel(e.word)) zaehler[e.category] = (zaehler[e.category] || 0) + 1;
+    });
+    const brauchbar = Object.keys(zaehler).filter((t) => zaehler[t] >= 25);
+    Core.shuffle(brauchbar).slice(0, 3).forEach((t) => regeln.push({
+      id: "thema-" + t,
+      text: `Nur Wörter aus dem Bereich <strong>${t}</strong>`,
+      hinweis: "Was gehört zusammen, was nicht?",
+      passt: (e) => e.category === t && Boolean(flussArtikel(e.word)),
+      gegen: (e) => e.category !== t && !FLUSS_KEIN_WORTFELD.has(e.category) && Boolean(flussArtikel(e.word)),
+      erklaerung: (e) => `„${e.word}“ steht bei „${e.category}“.`,
+      loesung: (e) => (e.meaning ? `<strong>${e.word}</strong> — ${e.meaning}` : `<strong>${e.word}</strong> gehört dazu.`),
+    }));
+    return regeln;
+  }
+
+  function neueFlussSession() {
+    flussLevel = applyDefaultCefrLevel(flussLevel, (v) => { flussLevel = v; }, "flussfuchs");
+    const alle = flussPool();
+    // Auf dem gewählten Niveau spielen, solange dort genug Wörter liegen —
+    // sonst lieber der ganze Wortschatz als eine leere Reihe.
+    const passend = alle.filter((e) => e.level === flussLevel);
+    const pool = passend.length >= 200 ? passend : alle;
+    const regeln = flussRegelnFuer(pool).filter((r) => pool.filter(r.passt).length >= 20 && pool.filter(r.gegen).length >= 20);
+    flussSession = {
+      pool,
+      regelVorrat: Core.shuffle(regeln),
+      ueberquerung: 0, gesamt: FLUSS_UEBERQUERUNGEN,
+      schritt: 0, leben: FLUSS_LEBEN,
+      geschafft: 0, steine: 0, fehler: 0,
+      regel: null, poolJa: [], poolNein: [], reihe: [],
+      zustand: "warten", letzte: null,
+      gespielt: [], fertig: false,
+    };
+    neueFlussUeberquerung();
+  }
+
+  function neueFlussUeberquerung() {
+    const s = flussSession;
+    if (!s.regelVorrat.length) { s.fertig = true; return; }
+    s.regel = s.regelVorrat.shift();
+    s.poolJa = s.pool.filter(s.regel.passt);
+    s.poolNein = s.pool.filter(s.regel.gegen);
+    s.schritt = 0;
+    s.leben = FLUSS_LEBEN;
+    s.zustand = "warten";
+    s.letzte = null;
+    neueFlussReihe();
+  }
+
+  function neueFlussReihe() {
+    const s = flussSession;
+    const frei = (e) => !s.gespielt.includes(e.word);
+    const treffer = s.poolJa.filter(frei);
+    const daneben = s.poolNein.filter(frei);
+    if (!treffer.length || daneben.length < 2) { s.schritt = FLUSS_STEINE; s.zustand = "drueben"; return; }
+    const richtig = treffer[Math.floor(Math.random() * treffer.length)];
+    const falsch = Core.shuffle(daneben).slice(0, 2);
+    [richtig].concat(falsch).forEach((e) => s.gespielt.push(e.word));
+    s.reihe = Core.shuffle([{ e: richtig, ok: true }].concat(falsch.map((e) => ({ e, ok: false }))));
+    s.zustand = "warten";
+  }
+
+  /* Ein langes Wort auf einem schmalen Telefon bricht sonst irgendwo:
+     „Wanderst / iefel". Die Silbengrenzen stehen im Wörterbuch ohnehin
+     schon — also werden sie als weiche Trennstellen (\u00AD) eingesetzt,
+     und der Browser trennt an einer Stelle, an der man das Wort auch
+     schreiben würde. Die Zuordnung ist mechanisch prüfbar: nimmt man aus
+     `syl` die Bindestriche heraus, muss exakt das Wort ohne Artikel
+     herauskommen — sonst wird gar nicht getrennt. */
+  function flussSilbenTeile(eintrag) {
+    const teile = String(eintrag.syl || "").split("-").filter(Boolean);
+    const nackt = flussOhneArtikel(eintrag.word);
+    if (teile.length < 2 || teile.join("").toLowerCase() !== nackt.toLowerCase()) return null;
+    const heraus = [];
+    let pos = 0;
+    teile.forEach((t) => { heraus.push(nackt.substr(pos, t.length)); pos += t.length; });
+    return heraus;
+  }
+  /* F\u00FCrs Trennen zus\u00E4tzlich: eine Silbe aus einem einzigen Buchstaben
+     wird mit der Nachbarsilbe zusammengezogen. \u201EE-lek-tro-mo-tor\u201C ist
+     als Silbengliederung richtig, als Trennung am Zeilenende aber
+     falsch \u2014 ein einzelner Buchstabe bleibt nicht allein stehen. */
+  function flussTrennTeile(eintrag) {
+    const teile = flussSilbenTeile(eintrag);
+    if (!teile) return null;
+    const zusammen = [];
+    teile.forEach((t, i) => {
+      // Eine kurze Silbe hängt sich an die VORIGE an („Vi-de-o-por-tal“ →
+      // „Vi-deo-por-tal“). Nur die allererste hat keine vorige — die zieht
+      // stattdessen die folgende zu sich („E-lek-tro“ → „Elek-tro“).
+      if (i > 0 && t.length < 2) zusammen[zusammen.length - 1] += t;
+      else if (zusammen.length && zusammen[zusammen.length - 1].length < 2) zusammen[zusammen.length - 1] += t;
+      else zusammen.push(t);
+    });
+    return zusammen.length > 1 ? zusammen : null;
+  }
+  function flussSteinText(eintrag, regel) {
+    const teile = flussTrennTeile(eintrag);
+    const kern = teile ? teile.join("\u00AD") : flussOhneArtikel(eintrag.word);
+    const artikel = flussArtikel(eintrag.word);
+    // Bei den Artikelregeln bleibt der Artikel weg — er stünde sonst als
+    // Antwort mit auf dem Stein.
+    return regel && regel.ohneArtikel ? kern : (artikel ? artikel + " " + kern : kern);
+  }
+  /* Für die Auflösung: „Wan · der · stie · fel" statt alles klein. */
+  function flussSilbenSchrift(eintrag) {
+    const teile = flussSilbenTeile(eintrag);
+    return teile ? teile.join(" · ") : flussOhneArtikel(eintrag.word);
+  }
+
+  /* ------------------------------------------------------------
+     DIE FUCHSFIGUR — gezeichnet, nicht als Bilddatei
+     ------------------------------------------------------------
+     Sie gehört keinem einzelnen Spiel: „Der Fuchs am Fluss“ setzt sie
+     auf die Steine, „Die Fuchsuhr“ stellt sie neben das Zifferblatt.
+     Deshalb steht sie hier für sich und nicht in einem der beiden.
+
+     Der Fuchs, in drei Haltungen. Sie werden bewusst nicht
+     ineinander gerechnet, sondern jede für sich gezeichnet: wer
+     sitzt, sitzt wirklich auf dem Hinterteil, wer springt, ist
+     gestreckt und hat keinen Boden unter den Pfoten, und wer im
+     Wasser liegt, schaut nur noch mit Kopf und Schultern heraus.
+     Anker ist in allen drei Fällen derselbe Punkt (0 / 0): der
+     Boden unter den Vorderpfoten. Dadurch lässt sich der Fuchs
+     ohne Umrechnung auf jeden Stein setzen.
+     ------------------------------------------------------------ */
+  const FUCHS_FELL = "#E2703A", FUCHS_HELL = "#F3A063", FUCHS_BAUCH = "#FBEFE0";
+  const FUCHS_DUNKEL = "#4A3428", FUCHS_AUGE = "#2B2018";
+  function fuchsKopfSvg(neigung) {
+    return `
+      <g transform="rotate(${neigung || 0})">
+        <path d="M-6.8 -4.2 l-2.2 -8.4 l7.4 4.8 Z" fill="${FUCHS_FELL}"/>
+        <path d="M5.6 -4.8 l1.8 -8.2 l-6.8 5.2 Z" fill="${FUCHS_FELL}"/>
+        <path d="M-5.4 -4.6 l-1.3 -5 l4.6 2.9 Z" fill="${FUCHS_DUNKEL}"/>
+        <path d="M4.7 -5 l1 -4.9 l-4 3.1 Z" fill="${FUCHS_DUNKEL}"/>
+        <ellipse cx="0" cy="0" rx="7.2" ry="6.4" fill="${FUCHS_HELL}"/>
+        <path d="M3.4 -1.4 q6.4 1.4 9 3.8 q-2.8 2.8 -9 2.6 Z" fill="${FUCHS_BAUCH}" stroke="#D8B78F" stroke-width="0.5"/>
+        <ellipse cx="0.4" cy="2.8" rx="4.8" ry="3.2" fill="${FUCHS_BAUCH}" stroke="#D8B78F" stroke-width="0.4"/>
+        <circle cx="12.2" cy="2.3" r="1.6" fill="${FUCHS_AUGE}"/>
+        <circle cx="3.6" cy="-1.8" r="1.8" fill="${FUCHS_AUGE}"/>
+        <circle cx="4.2" cy="-2.5" r="0.7" fill="#ffffff"/>
+        <path d="M-3.4 -1.8 a1.8 1.8 0 0 1 3.4 0.4" stroke="${FUCHS_AUGE}" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+      </g>`;
+  }
+  function fuchsFigurSvg(haltung) {
+    if (haltung === "springen") {
+      // Gestreckt, leicht aufwärts gedreht, alle vier Läufe angezogen,
+      // die Rute fliegt hinterher. Kein Schatten — er hat keinen Boden.
+      return `
+        <g transform="rotate(-14)">
+          <path d="M-8 -12 q-14 -3 -18 -11 q-2 -6 4 -6 q0 8 8 10 q6 2 8 5 Z" fill="${FUCHS_FELL}"/>
+          <path d="M-24 -25 q-6 -2 -5 -7 q1 -4 5 -2 q-1 5 2 8 Z" fill="${FUCHS_BAUCH}"/>
+          <ellipse cx="0" cy="-13" rx="13" ry="7.6" fill="${FUCHS_FELL}"/>
+          <path d="M-9 -9.6 q10 4.6 20 -0.6 q-4 4.6 -10.6 4.6 q-6.4 0 -9.4 -4 Z" fill="${FUCHS_BAUCH}"/>
+          <path d="M-7 -8 q-4 3 -7.4 2.6 q2 -3.6 5.4 -5 Z" fill="${FUCHS_DUNKEL}"/>
+          <path d="M6 -8.4 q4.6 2.6 8 1.6 q-2.4 -3.6 -6 -4.6 Z" fill="${FUCHS_DUNKEL}"/>
+          <g transform="translate(11 -21)">${fuchsKopfSvg(-6)}</g>
+        </g>`;
+    }
+    if (haltung === "nass") {
+      // Im Wasser: nur Kopf und Schultern über der Linie, Ohren angelegt,
+      // drei Ringe darum. Der Rest ist bewusst nicht gezeichnet — was
+      // unter Wasser ist, sieht man nicht.
+      return `
+        <ellipse cx="4" cy="-1" rx="17" ry="3.4" fill="#2E7FA8" opacity="0.5"/>
+        <ellipse cx="4" cy="-1" rx="12" ry="2.2" fill="none" stroke="#BFE6F5" stroke-width="1" opacity="0.9"/>
+        <ellipse cx="4" cy="-1" rx="19" ry="4.4" fill="none" stroke="#BFE6F5" stroke-width="0.9" opacity="0.6"/>
+        <path d="M-3 -3 q5 -7 12 -6 q6 1 7 6 Z" fill="${FUCHS_FELL}"/>
+        <g transform="translate(7 -9)">${fuchsKopfSvg(8)}</g>
+        <path d="M-1 -13 q3 -4 7 -3" stroke="#BFE6F5" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.8"/>`;
+    }
+    // sitzen — die Ruhehaltung, in der man ihn fragt, wohin es weitergeht
+    return `
+      <ellipse cx="2" cy="0.6" rx="15" ry="2.4" fill="#123A4E" opacity="0.22"/>
+      <path d="M-6 -8 q-13 -2 -15 -12 q-1.4 -7 5 -6.2 q-1 8.4 6.4 10.4 q5.2 1.6 7 5 Z" fill="${FUCHS_FELL}"/>
+      <path d="M-20.4 -22.4 q-5.4 -1.4 -5 -6.4 q0.4 -4 4.6 -2.6 q-1.2 5 2 8 Z" fill="${FUCHS_BAUCH}" stroke="#D8B78F" stroke-width="0.5"/>
+      <ellipse cx="-1" cy="-9" rx="9.6" ry="9" fill="${FUCHS_FELL}"/>
+      <path d="M1.6 -20 q7.4 3 8.2 12.6 q0.4 4.6 -3.4 5.4 l-6.6 0 q-3 -1 -2.4 -6 q0.8 -9 4.2 -12 Z" fill="${FUCHS_HELL}"/>
+      <path d="M2.6 -16 q4.6 3.4 5 9.8 q0.2 3 -2.2 3.6 l-3.6 0 q-2 -0.6 -1.8 -3.6 q0.4 -6.4 2.6 -9.8 Z" fill="${FUCHS_BAUCH}"/>
+      <rect x="1.4" y="-8.6" width="3.6" height="8" rx="1.7" fill="${FUCHS_HELL}"/>
+      <rect x="6.4" y="-8.6" width="3.6" height="8" rx="1.7" fill="${FUCHS_FELL}"/>
+      <rect x="1" y="-3.2" width="4.4" height="3.4" rx="1.5" fill="${FUCHS_DUNKEL}"/>
+      <rect x="6" y="-3.2" width="4.4" height="3.4" rx="1.5" fill="${FUCHS_DUNKEL}"/>
+      <g transform="translate(7 -23)">${fuchsKopfSvg(0)}</g>`;
+  }
+
+  /* Die Szene. Sie ist die Fortschrittsanzeige des Spiels: wie weit der
+     Fuchs rechts steht, so weit ist man. Die drei Wörter stehen NICHT
+     auf den Steinen, sondern darunter als richtige Knöpfe — auf einem
+     schmalen Telefon wäre ein Wort wie „Geschwindigkeit" im Stein nur
+     noch ein grauer Streifen. */
+  function flussSzeneSvg(s) {
+    const H = 118, UFER_L = 44, UFER_R = 256;
+    const steinX = (i) => 68 + i * 40;
+    const steinY = (i) => 86 + (i % 2 ? -6 : 4);
+    const drueben = s.zustand === "drueben";
+    const abgesoffen = s.zustand === "abgesoffen";
+    const teile = [];
+    teile.push(`<rect x="0" y="0" width="300" height="${H}" fill="#CFE9F3"/>`);
+    // Ferne Bäume am oberen Rand, damit oben nicht nur leere Fläche steht
+    for (let i = 0; i < 9; i++) {
+      const bx = 12 + i * 34, bh = 14 + ((i * 7) % 9);
+      teile.push(`<path d="M${bx} 46 l${-6} 0 l6 -${bh} l6 ${bh} Z" fill="#5C8F5A" opacity="0.55"/>`);
+    }
+    teile.push(`<rect x="0" y="40" width="300" height="8" fill="#7FBF5A" opacity="0.5"/>`);
+    // Wasser
+    teile.push(`<rect x="0" y="46" width="300" height="${H - 46}" fill="#3E96C4"/>`);
+    for (let i = 0; i < 7; i++) {
+      const wy = 56 + i * 11;
+      teile.push(`<path d="M-4 ${wy} q14 -4 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0"`
+        + ` stroke="#69B4D9" stroke-width="1.6" fill="none" opacity="0.55"/>`);
+    }
+    // Ufer links und rechts
+    teile.push(`<path d="M0 46 h${UFER_L} q-6 8 -4 18 q2 14 -6 20 q-8 6 -6 20 q2 12 -4 ${H} H0 Z" fill="#79B855"/>`);
+    teile.push(`<path d="M0 40 h${UFER_L + 2} q-4 6 -2 10 H0 Z" fill="#8FCB63"/>`);
+    teile.push(`<path d="M300 46 h-${300 - UFER_R} q6 8 4 18 q-2 14 6 20 q8 6 6 20 q-2 12 4 ${H} H300 Z" fill="#79B855"/>`);
+    teile.push(`<path d="M300 40 h-${300 - UFER_R + 2} q4 6 2 10 H300 Z" fill="#8FCB63"/>`);
+    // Das Ziel drüben: ein Bau im Hang mit einer kleinen Fahne davor
+    teile.push(`<path d="M272 100 q10 -16 20 0 Z" fill="#3F2E22"/>`);
+    teile.push(`<rect x="266" y="58" width="2.4" height="30" rx="1" fill="#8B6446"/>`);
+    teile.push(`<path d="M268.4 59 l13 5 l-13 5 Z" fill="${drueben ? "#F2B84B" : "#E2703A"}"/>`);
+    // Die fünf Steine: was hinter dem Fuchs liegt, ist fest; was vor ihm
+    // liegt, schaut nur halb aus dem Wasser.
+    for (let i = 0; i < FLUSS_STEINE; i++) {
+      const x = steinX(i), y = steinY(i);
+      const fest = i < s.schritt || drueben;
+      teile.push(`<ellipse cx="${x}" cy="${y + 5}" rx="19" ry="4.4" fill="#1E5C7C" opacity="${fest ? 0.35 : 0.2}"/>`);
+      teile.push(`<ellipse cx="${x}" cy="${y}" rx="18.5" ry="8.6" fill="${fest ? "#9AA3A8" : "#6E93A6"}" opacity="${fest ? 1 : 0.75}"/>`);
+      teile.push(`<ellipse cx="${x - 3.5}" cy="${y - 2.6}" rx="10.5" ry="3.6" fill="${fest ? "#C2CBD0" : "#89AABA"}" opacity="${fest ? 1 : 0.7}"/>`);
+      if (fest) teile.push(`<path d="M${x - 13} ${y + 2} q6 3 13 2" stroke="#7C868C" stroke-width="1" fill="none" opacity="0.7"/>`);
+    }
+    // Der Stein, der eben weggebrochen ist: ein Spritzer an seiner Stelle
+    if (s.zustand === "falsch" || abgesoffen) {
+      const x = steinX(Math.min(s.schritt, FLUSS_STEINE - 1)), y = steinY(Math.min(s.schritt, FLUSS_STEINE - 1));
+      teile.push(`<ellipse cx="${x}" cy="${y}" rx="18" ry="6" fill="none" stroke="#DCF1FA" stroke-width="1.8" opacity="0.9"/>`);
+      teile.push(`<ellipse cx="${x}" cy="${y}" rx="26" ry="9" fill="none" stroke="#DCF1FA" stroke-width="1.2" opacity="0.55"/>`);
+      [-14, -6, 4, 13].forEach((dx, n) => teile.push(
+        `<circle cx="${x + dx}" cy="${y - 10 - (n % 2) * 6}" r="${2.6 - (n % 2) * 0.8}" fill="#EAF7FD" opacity="0.9"/>`));
+    }
+    // Der Fuchs
+    let fx, fy, haltung;
+    if (abgesoffen) {
+      fx = steinX(Math.min(s.schritt, FLUSS_STEINE - 1)); fy = steinY(Math.min(s.schritt, FLUSS_STEINE - 1)) + 4; haltung = "nass";
+    } else if (drueben) {
+      fx = 278; fy = 96; haltung = "sitzen";
+    } else if (s.schritt === 0) {
+      fx = 22; fy = 96; haltung = s.zustand === "richtig" ? "springen" : "sitzen";
+    } else {
+      fx = steinX(s.schritt - 1); fy = steinY(s.schritt - 1) - 7; haltung = s.zustand === "richtig" ? "springen" : "sitzen";
+    }
+    if (haltung === "springen") { fx += 14; fy -= 16; }
+    const groesse = haltung === "nass" ? 1 : 0.86;
+    teile.push(`<g transform="translate(${fx} ${fy}) scale(${groesse})">${fuchsFigurSvg(haltung)}</g>`);
+    return `<svg class="fluss-szene" viewBox="0 0 300 ${H}" role="img"
+      aria-label="Der Fuchs steht auf Stein ${Math.min(s.schritt + 1, FLUSS_STEINE)} von ${FLUSS_STEINE}.">${teile.join("")}</svg>`;
+  }
+
+  function renderFlussfuchs() {
+    const area = document.getElementById("flussfuchsArea");
+    if (!area) return;
+    /* Der ganze Wortschatz wird erst beim Wechsel nach „Lernen“ geladen.
+       Solange er unterwegs ist, hätte eine Reihe zu wenig Wörter zur
+       Auswahl — also lieber kurz warten als eine halbe Reihe zeigen.
+       Kein Kreislauf: nach dem Laden ist alleThemenDa() wahr. */
+    if (!(VocabData.alleThemenDa && VocabData.alleThemenDa()) && flussPool().length < 300) {
+      area.innerHTML = `<div class="question-card" style="text-align:center;">
+        <p class="eyebrow">🦊 DER FUCHS AM FLUSS</p>
+        <p class="empty-note">Der Fuchs sucht sich seine Steine zusammen …</p></div>`;
+      wortschatzBereit().then(() => renderFlussfuchs());
+      return;
+    }
+    if (!flussSession) neueFlussSession();
+    const s = flussSession;
+    if (s.fertig || s.ueberquerung >= s.gesamt) { renderFlussfuchsErgebnis(); return; }
+    const r = s.regel;
+    const pfoten = "🐾".repeat(s.leben) + "<span style=\"opacity:0.3\">" + "🐾".repeat(FLUSS_LEBEN - s.leben) + "</span>";
+    const ruht = s.zustand === "drueben" || s.zustand === "abgesoffen";
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Der Fuchs am Fluss: " + (r ? r.id : "?"))}
+        <p class="eyebrow">🦊 DER FUCHS AM FLUSS · ÜBERQUERUNG ${Math.min(s.ueberquerung + 1, s.gesamt)} / ${s.gesamt}
+          <span class="subnav-info-icon" data-info="Für die ganze Überquerung gilt eine Regel. Von den drei Steinen trägt nur einer — der, auf den die Regel passt. Drei Fehltritte, und der Fuchs sitzt im Wasser.">ⓘ</span></p>
+        ${fortschrittHtml(s.ueberquerung, s.gesamt)}
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip fluss-level-btn ${flussLevel === lvl ? "selected" : ""}" data-fluss-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        <p class="fluss-regel">${r ? r.text : ""}</p>
+        ${flussSzeneSvg(s)}
+        <div class="fluss-pfoten">${ruht ? "" : pfoten + " <span class=\"empty-note\">trockene Pfoten</span>"}</div>
+        ${ruht ? "" : `<div class="fluss-steine">
+          ${s.reihe.map((x, i) => `<button type="button" class="fluss-stein" data-fluss-stein="${i}"><span>${flussSteinText(x.e, r)}</span></button>`).join("")}
+        </div>`}
+        <p class="empty-note fluss-hinweis" id="flussHinweis">${r ? r.hinweis : ""}</p>
+      </div>`;
+    area.querySelectorAll(".fluss-level-btn").forEach((b) => b.addEventListener("click", () => {
+      flussLevel = b.dataset.flussLevel; neueFlussSession(); renderFlussfuchs();
+    }));
+    area.querySelectorAll("[data-fluss-stein]").forEach((b) => b.addEventListener("click", () => flussSchritt(Number(b.dataset.flussStein), b)));
+  }
+
+  function flussSchritt(idx, knopf) {
+    const s = flussSession;
+    if (s.zustand !== "warten") return;
+    const wahl = s.reihe[idx];
+    const richtig = wahl.ok;
+    const r = s.regel;
+    spielNotiz(richtig, `${r.text.replace(/<[^>]+>/g, "")} — ${wahl.e.word}`);
+    document.querySelectorAll(".fluss-stein").forEach((b) => { b.disabled = true; });
+    const hinweis = document.getElementById("flussHinweis");
+    if (richtig) {
+      knopf.classList.add("fluss-stein-fest");
+      s.steine += 1;
+      s.schritt += 1;
+      s.zustand = "richtig";
+      if (hinweis) hinweis.innerHTML = `✅ ${r.erklaerung(wahl.e)}`;
+      if (s.schritt >= FLUSS_STEINE) {
+        s.zustand = "drueben";
+        s.geschafft += 1;
+        Core.sound.fanfare();
+      } else {
+        Core.sound.correct();
+      }
+    } else {
+      knopf.classList.add("fluss-stein-weg");
+      s.fehler += 1;
+      s.leben -= 1;
+      s.zustand = s.leben <= 0 ? "abgesoffen" : "falsch";
+      Core.sound.wrong();
+      const treffer = s.reihe.find((x) => x.ok);
+      document.querySelectorAll(".fluss-stein").forEach((b, i) => { if (s.reihe[i].ok) b.classList.add("fluss-stein-fest"); });
+      const aufloesung = (r.loesung || r.erklaerung)(treffer.e);
+      if (hinweis) hinweis.innerHTML = `❌ ${r.erklaerung(wahl.e)}<br>Getragen hätte ${aufloesung}`;
+      if (s.leben <= 0) Core.sound.fail();
+    }
+    // Das Bild sofort nachziehen — der Sprung (oder der Spritzer) ist die
+    // eigentliche Rückmeldung, der Text daneben nur die Begründung.
+    const szene = document.querySelector("#flussfuchsArea .fluss-szene");
+    if (szene) szene.outerHTML = flussSzeneSvg(s);
+    const pfotenZeile = document.querySelector("#flussfuchsArea .fluss-pfoten");
+    if (pfotenZeile) {
+      pfotenZeile.innerHTML = (s.zustand === "drueben" || s.zustand === "abgesoffen") ? ""
+        : "🐾".repeat(Math.max(0, s.leben)) + "<span style=\"opacity:0.3\">" + "🐾".repeat(FLUSS_LEBEN - Math.max(0, s.leben))
+          + "</span> <span class=\"empty-note\">trockene Pfoten</span>";
+    }
+    const wartezeit = s.zustand === "drueben" ? 2200 : s.zustand === "abgesoffen" ? 2600 : richtig ? 1100 : 2400;
+    setTimeout(() => {
+      if (s.zustand === "drueben" || s.zustand === "abgesoffen") {
+        s.ueberquerung += 1;
+        if (s.ueberquerung >= s.gesamt) { renderFlussfuchsErgebnis(); return; }
+        neueFlussUeberquerung();
+      } else {
+        neueFlussReihe();
+      }
+      renderFlussfuchs();
+    }, wartezeit);
+  }
+
+  function renderFlussfuchsErgebnis() {
+    const area = document.getElementById("flussfuchsArea");
+    const s = flussSession;
+    const moeglich = FLUSS_STEINE * s.gesamt;
+    const prozent = Math.round((s.steine / Math.max(1, moeglich)) * 100);
+    const punkte = s.steine * 2 + s.geschafft * 5;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, tier: "Flussgänger:in", charakter: "Der Fuchs am Fluss",
+      bonus: s.geschafft === s.gesamt ? 10 : 0,
+      zeilen: [
+        { name: "🦊 Überquerungen", anteil: Math.round((s.geschafft / s.gesamt) * 100), wert: s.geschafft + "/" + s.gesamt },
+        { name: "🪨 Sichere Steine", anteil: prozent, wert: s.steine + "/" + moeglich },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="flussNochmal">🔄 Neue Runde</button>`,
+    });
+    document.getElementById("flussNochmal")?.addEventListener("click", () => { neueFlussSession(); renderFlussfuchs(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["flussfuchs"], points: punkte, bonus: s.geschafft === s.gesamt ? 10 : 0, percent: prozent, character: "Flussgänger:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-flussfuchs"]')?.addEventListener("click", () => renderFlussfuchs());
+
+
+  /* ============================================================
+     DIE FUCHSUHR — die Uhrzeit, in beide Richtungen
+     ------------------------------------------------------------
+     Eine Lücke, die beim Durchsehen der 40 Grammatikthemen und der
+     23 Spiele auffiel: die Uhrzeit kommt in Aufgabentexten vor
+     („Wir treffen uns um halb neun"), aber geübt wird sie nirgends.
+     Dabei ist sie das erste, woran ein Termin scheitert — und das
+     deutsche „halb vier" ist für alle, die aus dem Englischen oder
+     dem Russischen kommen, eine echte Falle: es zeigt auf die
+     NÄCHSTE Stunde, nicht auf die vergangene. Genau diese Falle ist
+     hier in jeder Runde als falsche Antwort dabei.
+
+     Das Spiel fragt in beide Richtungen, damit es kein Abfragen
+     bleibt: mal steht die Uhr da und man sucht die Worte, mal steht
+     der Satz da und man sucht unter drei Zifferblättern das
+     richtige. Beides ist gezeichnet — auch hier kommt keine neue
+     Bilddatei dazu, die von Hand hochgeladen werden müsste.
+
+     Es wird nichts erfunden: die gesprochene Form wird gerechnet,
+     nicht geraten, und zwar nur in Fünf-Minuten-Schritten — „siebzehn
+     nach drei" sagt niemand. Für jede andere Minute fragt das Spiel
+     die amtliche Form, die auf jedem Fahrplan steht.
+     ============================================================ */
+  let uhrLevel = null;
+  let uhrSession = null;
+  const UHR_RUNDEN = 10;
+  const UHR_EINER = ["null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun",
+    "zehn", "elf", "zwölf", "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"];
+  const UHR_ZEHNER = { 20: "zwanzig", 30: "dreißig", 40: "vierzig", 50: "fünfzig" };
+  function uhrZahlWort(n) {
+    if (n < 20) return UHR_EINER[n];
+    const z = Math.floor(n / 10) * 10, e = n % 10;
+    if (!e) return UHR_ZEHNER[z];
+    return (e === 1 ? "ein" : UHR_EINER[e]) + "und" + UHR_ZEHNER[z];
+  }
+  // „ein Uhr", aber „halb eins": vor dem Wort „Uhr" steht die gekürzte Form.
+  function uhrStundeWort(h24, vorUhr) {
+    const h = ((h24 + 11) % 12) + 1;
+    if (h === 1) return vorUhr ? "ein" : "eins";
+    return UHR_EINER[h];
+  }
+  function uhrGesprochen(h, m) {
+    const naechste = (h + 1) % 24;
+    if (m === 0) return uhrStundeWort(h, true) + " Uhr";
+    if (m === 15) return "Viertel nach " + uhrStundeWort(h);
+    if (m === 30) return "halb " + uhrStundeWort(naechste);
+    if (m === 45) return "Viertel vor " + uhrStundeWort(naechste);
+    if (m === 25) return "fünf vor halb " + uhrStundeWort(naechste);
+    if (m === 35) return "fünf nach halb " + uhrStundeWort(naechste);
+    if (m < 30) return uhrZahlWort(m) + " nach " + uhrStundeWort(h);
+    return uhrZahlWort(60 - m) + " vor " + uhrStundeWort(naechste);
+  }
+  function uhrAmtlich(h, m) {
+    return (h === 1 ? "ein" : uhrZahlWort(h)) + " Uhr" + (m ? " " + uhrZahlWort(m) : "");
+  }
+  function uhrText(h, m, amtlich) { return amtlich ? uhrAmtlich(h, m) : uhrGesprochen(h, m); }
+  function uhrZiffern(h, m) { return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0"); }
+  /* Zur Auflösung passend anzeigen: neben „zehn nach vier" steht 4:10 und
+     nicht 04:10 — sonst liest sich die Antwort so, als gälte sie nur
+     morgens. Neben der amtlichen Form steht die amtliche Zählung. */
+  function uhrZiffernAnzeige(a) {
+    return a.amtlich ? uhrZiffern(a.h, a.m) : (((a.h + 11) % 12) + 1) + ":" + String(a.m).padStart(2, "0");
+  }
+
+  /* Die Stufen: erst volle und halbe Stunden, dann die Viertel, dann
+     alle Fünf-Minuten-Schritte, und ganz oben zusätzlich die amtliche
+     Form mit jeder beliebigen Minute. */
+  const UHR_STUFEN = {
+    A1: { minuten: [0, 30], amtlich: 0 },
+    A2: { minuten: [0, 15, 30, 45], amtlich: 0 },
+    B1: { minuten: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55], amtlich: 0 },
+    B2: { minuten: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55], amtlich: 0.4 },
+    C1: { minuten: "alle", amtlich: 0.7 },
+    C2: { minuten: "alle", amtlich: 0.85 },
+  };
+  /* Die falschen Antworten sind keine Zufallszeiten, sondern die Fehler,
+     die wirklich gemacht werden: die Stunde daneben, vor und nach
+     vertauscht, und bei der halben Stunde die englische Lesart. */
+  function uhrAblenker(h, m) {
+    const raus = [];
+    const dazu = (hh, mm) => {
+      const g = ((hh % 24) + 24) % 24;
+      if (g === h && mm === m) return;
+      if (raus.some((x) => x[0] === g && x[1] === mm)) return;
+      raus.push([g, mm]);
+    };
+    if (m === 30) dazu(h - 1, 30);              // „halb drei" für 15:30 — der Klassiker
+    if (m === 15) dazu(h, 45);
+    if (m === 45) dazu(h, 15);
+    if (m && m !== 30) dazu(h, 60 - m);         // vor und nach vertauscht
+    dazu(h + 1, m);
+    dazu(h - 1, m);
+    if (m % 5 === 0) { dazu(h, (m + 5) % 60); dazu(h, (m + 55) % 60); }
+    else { dazu(h, (m + 10) % 60); dazu(h, (m + 50) % 60); }
+    return Core.shuffle(raus);
+  }
+  function neueUhrSession() {
+    uhrLevel = applyDefaultCefrLevel(uhrLevel, (v) => { uhrLevel = v; }, "fuchsuhr");
+    uhrSession = { runde: 0, gesamt: UHR_RUNDEN, richtig: 0, zustand: "warten", aufgabe: null, gespielt: [] };
+    neueUhrRunde();
+  }
+  function neueUhrRunde() {
+    const stufe = UHR_STUFEN[uhrLevel] || UHR_STUFEN.B1;
+    let h = 0, m = 0, versuche = 0;
+    do {
+      h = Math.floor(Math.random() * 24);
+      m = stufe.minuten === "alle" ? Math.floor(Math.random() * 60)
+        : stufe.minuten[Math.floor(Math.random() * stufe.minuten.length)];
+      versuche += 1;
+    } while (uhrSession.gespielt.includes(h * 60 + m) && versuche < 40);
+    uhrSession.gespielt.push(h * 60 + m);
+    // Die gesprochene Form gibt es nur im Fünf-Minuten-Takt — sonst
+    // müsste das Spiel Sätze behaupten, die niemand sagt.
+    const amtlich = m % 5 !== 0 ? true : Math.random() < stufe.amtlich;
+    const richtung = Math.random() < 0.5 ? "lesen" : "stellen";
+    const loesung = uhrText(h, m, amtlich);
+    const andere = [];
+    uhrAblenker(h, m).forEach((z) => {
+      if (andere.length >= 2) return;
+      if (!amtlich && z[1] % 5 !== 0) return;
+      const t = uhrText(z[0], z[1], amtlich);
+      if (t === loesung || andere.some((a) => uhrText(a[0], a[1], amtlich) === t)) return;
+      andere.push(z);
+    });
+    uhrSession.aufgabe = {
+      h, m, amtlich, richtung, loesung,
+      wahl: Core.shuffle([[h, m]].concat(andere).map((z) => ({ h: z[0], m: z[1], ok: z[0] === h && z[1] === m }))),
+    };
+    uhrSession.zustand = "warten";
+  }
+  /* Der Merksatz zur Runde — er sagt nicht „richtig" oder „falsch",
+     sondern WORAN man es beim nächsten Mal erkennt. */
+  function uhrMerksatz(a) {
+    if (a.amtlich) return "Auf dem Fahrplan und im Termin wird von 0 bis 23 Uhr durchgezählt — die Minute kommt einfach hinterher.";
+    if (a.m === 30) return `Achtung: „halb ${uhrStundeWort((a.h + 1) % 24)}“ heißt halb DURCH die ${uhrStundeWort((a.h + 1) % 24)}. Also ${((a.h + 11) % 12) + 1}:30 — nicht ${((a.h + 12) % 12) + 1}:30.`;
+    if (a.m === 45) return "„Viertel vor“ heißt: ein Viertel fehlt noch bis zur vollen Stunde.";
+    if (a.m === 15) return "„Viertel nach“ heißt: ein Viertel ist seit der vollen Stunde vergangen.";
+    if (a.m === 25 || a.m === 35) return "Rund um die halbe Stunde zählt man von „halb“ aus, nicht von der vollen Stunde.";
+    if (a.m === 0) return "Die volle Stunde bekommt das Wort „Uhr“ dahinter.";
+    return a.m < 30 ? "Bis zur halben Stunde zählt man NACH der vergangenen Stunde."
+      : "Nach der halben Stunde zählt man VOR der kommenden Stunde.";
+  }
+
+  /* ------------------------------------------------------------
+     Das Zifferblatt. Zwölf Zahlen, ein kurzer dicker Stundenzeiger
+     und ein langer dünner Minutenzeiger — der Unterschied muss auf
+     einen Blick zu sehen sein, sonst ist die Aufgabe nicht die
+     Uhrzeit, sondern das Erkennen der Zeiger.
+     ------------------------------------------------------------ */
+  function uhrBlattSvg(h, m, opt) {
+    const o = opt || {};
+    const cx = 55, cy = 55, r = 46;
+    const stundeWinkel = ((h % 12) + m / 60) * 30;
+    const minuteWinkel = m * 6;
+    const zeiger = (winkel, laenge, breite, farbe) => {
+      const b = ((winkel - 90) * Math.PI) / 180;
+      return `<line x1="${(cx - Math.cos(b) * 6).toFixed(1)}" y1="${(cy - Math.sin(b) * 6).toFixed(1)}"`
+        + ` x2="${(cx + Math.cos(b) * laenge).toFixed(1)}" y2="${(cy + Math.sin(b) * laenge).toFixed(1)}"`
+        + ` stroke="${farbe}" stroke-width="${breite}" stroke-linecap="round"/>`;
+    };
+    const zahlen = [];
+    for (let n = 1; n <= 12; n++) {
+      const b = ((n * 30 - 90) * Math.PI) / 180;
+      zahlen.push(`<text x="${(cx + Math.cos(b) * 34).toFixed(1)}" y="${(cy + Math.sin(b) * 34 + 4).toFixed(1)}"`
+        + ` text-anchor="middle" font-size="11" font-weight="800" fill="#4A3428">${n}</text>`);
+    }
+    const striche = [];
+    for (let n = 0; n < 60; n++) {
+      const b = ((n * 6 - 90) * Math.PI) / 180;
+      const lang = n % 5 === 0;
+      striche.push(`<line x1="${(cx + Math.cos(b) * (r - 3)).toFixed(1)}" y1="${(cy + Math.sin(b) * (r - 3)).toFixed(1)}"`
+        + ` x2="${(cx + Math.cos(b) * (r - (lang ? 8 : 5))).toFixed(1)}" y2="${(cy + Math.sin(b) * (r - (lang ? 8 : 5))).toFixed(1)}"`
+        + ` stroke="#B49B80" stroke-width="${lang ? 1.8 : 0.8}" stroke-linecap="round"/>`);
+    }
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${r + 4}" fill="#C8892F"/>
+      <circle cx="${cx}" cy="${cy}" r="${r + 1}" fill="#F2B84B"/>
+      <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="#FFFBF0"/>
+      ${striche.join("")}
+      ${zahlen.join("")}
+      ${zeiger(stundeWinkel, 24, 6, "#4A3428")}
+      ${zeiger(minuteWinkel, 36, 3.4, "#C64B3C")}
+      <circle cx="${cx}" cy="${cy}" r="3.4" fill="#4A3428"/>
+      ${o.ziffern ? `<text x="${cx}" y="${cy + 26}" text-anchor="middle" font-size="10" font-weight="800" fill="#8A7E6A">${uhrZiffern(h, m)}</text>` : ""}`;
+  }
+  /* Zwei Ansichten, je nach Frage. Beim Ablesen hängt die Uhr an der
+     Wand und der Fuchs sitzt darunter. Beim Stellen sitzt er allein
+     neben einem Zettel — und der Zettel ist bewusst HTML und nicht
+     Teil der Zeichnung: ein Satz wie „dreiundzwanzig Uhr
+     neunundfünfzig" bricht in SVG nicht um und stünde sonst quer
+     über den halben Bildschirm hinaus. */
+  function uhrWandSvg(a) {
+    return `<svg class="uhr-szene" viewBox="0 0 230 138" role="img"
+      aria-label="Eine Uhr an der Wand zeigt ${uhrZiffern(a.h, a.m)}.">
+      <rect x="0" y="0" width="230" height="138" fill="#E7E0CE"/>
+      <rect x="0" y="118" width="230" height="20" fill="#C6A87E"/>
+      <path d="M0 118 h230" stroke="#A98A5F" stroke-width="2"/>
+      <g transform="translate(102 6)">${uhrBlattSvg(a.h, a.m)}</g>
+      <g transform="translate(44 118) scale(1.2)">${fuchsFigurSvg("sitzen")}</g>
+    </svg>`;
+  }
+  function uhrFuchsSvg() {
+    return `<svg class="uhr-fuchs" viewBox="0 0 80 76" aria-hidden="true">
+      <g transform="translate(38 70) scale(1.5)">${fuchsFigurSvg("sitzen")}</g>
+    </svg>`;
+  }
+
+
+  function renderFuchsuhr() {
+    const area = document.getElementById("fuchsuhrArea");
+    if (!area) return;
+    if (!uhrSession) neueUhrSession();
+    const s = uhrSession;
+    if (s.runde >= s.gesamt) { renderFuchsuhrErgebnis(); return; }
+    const a = s.aufgabe;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Die Fuchsuhr: " + uhrZiffern(a.h, a.m))}
+        <p class="eyebrow">🕰️ DIE FUCHSUHR · RUNDE ${s.runde + 1} / ${s.gesamt}
+          <span class="subnav-info-icon" data-info="Mal zeigt die Uhr eine Zeit und du suchst die Worte, mal steht der Satz da und du suchst das passende Zifferblatt. Vorsicht bei „halb“: im Deutschen zeigt es auf die NÄCHSTE Stunde.">ⓘ</span></p>
+        ${fortschrittHtml(s.runde, s.gesamt)}
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip uhr-level-btn ${uhrLevel === lvl ? "selected" : ""}" data-uhr-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        <p class="uhr-frage">${a.richtung === "lesen"
+          ? (a.amtlich ? "Wie steht diese Zeit auf dem Fahrplan?" : "Wie spät ist es?")
+          : "Welche Uhr zeigt das?"}</p>
+        ${a.richtung === "lesen" ? uhrWandSvg(a) : `
+          <div class="uhr-bote">
+            ${uhrFuchsSvg()}
+            <p class="uhr-zettel">${a.loesung}</p>
+          </div>`}
+        ${a.richtung === "lesen" ? `
+          <div class="uhr-worte">
+            ${a.wahl.map((w, i) => `<button type="button" class="uhr-wort" data-uhr-wahl="${i}">${uhrText(w.h, w.m, a.amtlich)}</button>`).join("")}
+          </div>`
+          : `<div class="uhr-blaetter">
+            ${a.wahl.map((w, i) => `<button type="button" class="uhr-blatt" data-uhr-wahl="${i}" aria-label="${uhrZiffern(w.h, w.m)}">
+              <svg viewBox="0 0 110 110" aria-hidden="true">${uhrBlattSvg(w.h, w.m)}</svg></button>`).join("")}
+          </div>`}
+        <p class="empty-note uhr-hinweis" id="uhrHinweis"></p>
+      </div>`;
+    area.querySelectorAll(".uhr-level-btn").forEach((b) => b.addEventListener("click", () => {
+      uhrLevel = b.dataset.uhrLevel; neueUhrSession(); renderFuchsuhr();
+    }));
+    area.querySelectorAll("[data-uhr-wahl]").forEach((b) => b.addEventListener("click", () => uhrAntwort(Number(b.dataset.uhrWahl), b)));
+  }
+
+  function uhrAntwort(idx, knopf) {
+    const s = uhrSession;
+    if (s.zustand !== "warten") return;
+    const a = s.aufgabe;
+    const gewaehlt = a.wahl[idx];
+    const richtig = gewaehlt.ok;
+    s.zustand = richtig ? "richtig" : "falsch";
+    spielNotiz(richtig, `${uhrZiffern(a.h, a.m)} — ${a.loesung}`);
+    uhrKnoepfe().forEach((b) => { b.disabled = true; });
+    uhrKnoepfe().forEach((b, i) => { if (a.wahl[i].ok) b.classList.add("uhr-treffer"); });
+    if (!richtig) knopf.classList.add("uhr-daneben");
+    const box = document.getElementById("uhrHinweis");
+    if (box) {
+      box.innerHTML = (richtig ? "✅ " : "❌ ")
+        + `<strong>${uhrZiffernAnzeige(a)}</strong> — ${a.loesung}.<br>${uhrMerksatz(a)}`;
+    }
+    if (richtig) { s.richtig += 1; Core.sound.correct(); } else { Core.sound.wrong(); }
+    s.runde += 1;
+    setTimeout(() => { if (s.runde < s.gesamt) neueUhrRunde(); renderFuchsuhr(); }, richtig ? 2000 : 3200);
+  }
+  function uhrKnoepfe() {
+    return [...document.querySelectorAll("#fuchsuhrArea [data-uhr-wahl]")];
+  }
+
+  function renderFuchsuhrErgebnis() {
+    const area = document.getElementById("fuchsuhrArea");
+    const s = uhrSession;
+    const prozent = Math.round((s.richtig / Math.max(1, s.gesamt)) * 100);
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: s.richtig * 2, prozent, tier: "Uhrleser:in", charakter: "Die Fuchsuhr",
+      zeilen: [{ name: "🕰️ Richtig abgelesen", anteil: prozent, wert: s.richtig + "/" + s.gesamt }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="uhrNochmal">🔄 Neue Runde</button>`,
+    });
+    document.getElementById("uhrNochmal")?.addEventListener("click", () => { neueUhrSession(); renderFuchsuhr(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["fuchsuhr"], points: s.richtig * 2, bonus: 0, percent: prozent, character: "Uhrleser:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-fuchsuhr"]')?.addEventListener("click", () => renderFuchsuhr());
+
+
+
   /* ============================================================
      WÖRTER-SORTIERER — Wortfelder statt Einzelvokabeln
      ------------------------------------------------------------
@@ -15057,6 +15845,8 @@
 
   const GAMES_OVERVIEW_LIST = [
     { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
+    { sub: "sub-flussfuchs", emoji: "🦊", name: "Der Fuchs am Fluss", persona: "Sprachkünstler" },
+    { sub: "sub-fuchsuhr", emoji: "🕰️", name: "Die Fuchsuhr", persona: "Logiker" },
     { sub: "sub-blitzrunde", emoji: "⚡", name: "Blitzrunde", persona: "Gemischt", flagKey: "blitzrunde_neu" },
     { sub: "sub-wortangler", emoji: "🎣", name: "Wortangler", persona: "Sprachkünstler", flagKey: "wortangler_neu" },
     { sub: "sub-wortleiter", emoji: "🧗", name: "Wortleiter", persona: "Gemischt", flagKey: "wortleiter_neu" },
@@ -15079,6 +15869,129 @@
     { sub: "sub-kanone", emoji: "🎯", name: "Wort-Kanone", persona: "Gemischt", flagKey: "wortkanone_redesign" },
     { sub: "sub-wortarten", emoji: "🔤", name: "Wort-Typ", persona: "Grammatik-Profi" },
   ];
+  /* ==================================================================
+     SPIELE, DIE MAN SICH VERDIENT
+     ------------------------------------------------------------------
+     Gewünscht: nicht alle Spiele sollen von Anfang an offenstehen —
+     manche soll man sich erst erspielen. Die Bedingungen sind dieselben
+     wie bei den Fuchs-Figuren (isUnlocked / unlockProgressFraction /
+     unlockShortText), damit es nur EINE Sorte Freischaltregel in der
+     App gibt und nicht zwei nebeneinander.
+
+     Drei Dinge sind dabei bewusst so entschieden:
+
+     1. Wer nicht angemeldet ist, sieht alles. Ohne Konto gibt es keine
+        Punkte, an denen sich etwas verdienen ließe — ein Schloss wäre
+        dort nur eine Sackgasse.
+     2. Wer ein Spiel schon einmal gespielt hat, behält es. Ein Spiel,
+        das gestern noch ging und heute zu ist, fühlt sich wie ein
+        Fehler an, nicht wie ein Ziel.
+     3. Moderation und Beta-Test sehen alles — sie müssen prüfen können.
+     ================================================================== */
+  const SPIEL_BEDINGUNG = {
+    "sub-bubbles": { unlock: { type: "points", value: 80 },
+      warum: "Die Wortblasen sind das erste Ziel — ein paar Runden in den anderen Spielen, dann steigen sie auf." },
+    "sub-wackelturm": { unlock: { type: "games_played", value: 10 },
+      warum: "Der Wackelturm braucht eine ruhige Hand. Zehn gespielte Runden, dann steht er bereit." },
+    "sub-crossword": { unlock: { type: "categories_tried", value: 6 },
+      warum: "Ein Kreuzworträtsel zieht seine Wörter aus allen Ecken — deshalb erst, wenn du sechs verschiedene Kategorien kennst." },
+    "sub-kanone": { unlock: { type: "points", value: 200 },
+      warum: "Die Wort-Kanone ist das schnellste Spiel der Seite. Zweihundert Punkte, dann darf sie feuern." },
+    "sub-vokabelmeister": { unlock: { type: "points", value: 350 },
+      warum: "Der Vokabelmeister misst deinen ganzen Wortschatz gegen die Uhr — dafür lohnt sich etwas Vorlauf." },
+  };
+  // Für die Erinnerung, welches Spiel schon einmal als „neu offen“ gemeldet wurde.
+  const SPIEL_MELDUNG_SCHLUESSEL = "dma_spiele_freigeschaltet";
+
+  /* Hat diese Person das Spiel schon einmal gespielt? Dann bleibt es
+     offen, egal was die Bedingung sagt. Der Spielverlauf führt die
+     Kategorien mit, unter denen eine Runde verbucht wurde. */
+  function spielSchonGespielt(sub, profil) {
+    if (!profil || !profil.history) return false;
+    const marke = sub.replace("sub-", "");
+    return profil.history.some((h) => (h.categories || []).some((c) => String(c).includes(marke)));
+  }
+  function spielBedingung(sub) { return SPIEL_BEDINGUNG[sub] || null; }
+  function spielFreigeschaltet(sub) {
+    const b = spielBedingung(sub);
+    if (!b) return true;
+    const profil = Backend.currentProfile && Backend.currentProfile();
+    if (!profil) return true;                                   // ohne Konto keine Hürde
+    if ((Backend.canModerate && Backend.canModerate())
+      || (Backend.isBetaTester && Backend.isBetaTester())) return true;
+    if (spielSchonGespielt(sub, profil)) return true;
+    return isUnlocked(b.unlock, profil);
+  }
+  /* Wie weit ist der Weg? Für den Balken auf dem Schloss-Bildschirm und
+     für die kleine Angabe in der Spieleliste. */
+  function spielFortschritt(sub) {
+    const b = spielBedingung(sub);
+    const profil = Backend.currentProfile && Backend.currentProfile();
+    if (!b || !profil) return 1;
+    return unlockProgressFraction(b.unlock, profil);
+  }
+  function spielStandText(sub) {
+    const b = spielBedingung(sub);
+    const profil = Backend.currentProfile && Backend.currentProfile();
+    if (!b || !profil) return "";
+    const u = b.unlock;
+    if (u.type === "points") return `${Math.min(profil.points || 0, u.value)} von ${u.value} Punkten`;
+    if (u.type === "games_played") return `${Math.min((profil.history || []).length, u.value)} von ${u.value} Runden`;
+    if (u.type === "categories_tried") {
+      const menge = new Set();
+      (profil.history || []).forEach((h) => (h.categories || []).forEach((c) => menge.add(c)));
+      return `${Math.min(menge.size, u.value)} von ${u.value} Kategorien`;
+    }
+    return "";
+  }
+  /* Der Bildschirm, der statt des Spiels erscheint. Er sagt drei Dinge:
+     was fehlt, wie weit du bist, und wo du es dir holst — ein Schloss
+     ohne Weg dahinter wäre nur eine geschlossene Tür. */
+  function renderVerdienenGate(area, sub, name) {
+    if (spielFreigeschaltet(sub)) return true;
+    const b = spielBedingung(sub);
+    const anteil = Math.round(spielFortschritt(sub) * 100);
+    const stand = spielStandText(sub);
+    area.innerHTML = `
+      <div class="question-card" style="text-align:center;">
+        <div style="font-size:2.6rem; line-height:1;">🔒</div>
+        <h2 style="margin:10px 0 4px;">${name}</h2>
+        <p class="empty-note" style="margin:0 0 14px;">${b.warum}</p>
+        <div class="runden-fortschritt" style="margin:0 auto 8px; max-width:320px;">
+          <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${anteil}%"></div></div>
+          <span class="runden-zahl">${anteil} %</span>
+        </div>
+        <p style="font-weight:800; margin:0 0 4px;">${unlockShortText(b.unlock)}</p>
+        ${stand ? `<p class="empty-note" style="margin:0 0 16px;">Du hast ${stand}.</p>` : ""}
+        <button type="button" class="btn btn-primary" data-zur-spieleliste>Zu den offenen Spielen</button>
+      </div>`;
+    return false;
+  }
+  /* Sobald ein Spiel neu offen ist, kommt eine Nachricht ins Postfach —
+     sonst merkt man es nur zufällig beim Durchblättern. Gemeldet wird
+     jedes Spiel genau einmal. */
+  async function pruefeSpielFreischaltung() {
+    const nutzer = Backend.currentUser && Backend.currentUser();
+    if (!nutzer) return;
+    let gemerkt = [];
+    try { gemerkt = JSON.parse(localStorage.getItem(SPIEL_MELDUNG_SCHLUESSEL) || "[]"); } catch (e) { gemerkt = []; }
+    for (const sub of Object.keys(SPIEL_BEDINGUNG)) {
+      if (gemerkt.includes(sub)) continue;
+      if (!spielFreigeschaltet(sub)) continue;
+      const eintrag = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
+      const name = eintrag ? eintrag.name : sub;
+      gemerkt.push(sub);
+      try { localStorage.setItem(SPIEL_MELDUNG_SCHLUESSEL, JSON.stringify(gemerkt)); } catch (e) { /* egal */ }
+      const text = `🔓 „${name}“ ist jetzt für dich offen!\n\n`
+        + `${SPIEL_BEDINGUNG[sub].warum}\n\nDu findest es unter „Lernen“ in der Spieleliste.`;
+      try { await Backend.sendSystemMessage(nutzer.id, text); } catch (e) { /* egal */ }
+      showToast(`🔓 „${name}“ ist jetzt offen!`, () => {
+        activateTab("view-learn");
+        jumpToSubnavTarget(`[data-sub="${sub}"]`, null, 150);
+      });
+    }
+  }
+
   // WICHTIG — wie gewünscht: eigens gestaltete SVG-Symbole statt normaler Emoji für jedes Spiel
   // in der Übersicht. Jedes Symbol ist eine kleine, selbst gezeichnete Szene aus einfachen
   // geometrischen Formen (Kreise, Rechtecke, Pfade) statt eines Systemschrift-Emojis — passend
@@ -15101,6 +16014,8 @@
       wortschmiede: `<path d="M4 15h12l-1.6 2.6H5.6z" fill="currentColor"/><rect x="8" y="17.6" width="4" height="3" fill="currentColor"/><rect x="7" y="12" width="8" height="2.4" rx="1" fill="currentColor" opacity="0.6"/><rect x="13" y="4" width="7" height="2.6" rx="1" fill="currentColor" transform="rotate(28 16.5 5.3)"/><rect x="11.4" y="2.6" width="4" height="5" rx="1.2" fill="currentColor" transform="rotate(28 13.4 5.1)"/>`,
       artikelgarten: `<rect x="2" y="15" width="20" height="5" rx="2" fill="currentColor" opacity="0.5"/><path d="M7 15V9M12 15V7M17 15v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="7" cy="7.5" r="2.6" fill="currentColor"/><circle cx="12" cy="5.5" r="2.6" fill="currentColor"/><circle cx="17" cy="8" r="2.6" fill="currentColor"/>`,
       katzenzimmer: `<rect x="2" y="4" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 16h20" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="19" rx="5" ry="2.6" fill="currentColor"/><circle cx="15.6" cy="16.6" r="2.4" fill="currentColor"/><path d="M14 14.6l.6-2 1.4 1.4Z" fill="currentColor"/><path d="M16.4 14l1.4-1.6.4 2Z" fill="currentColor"/>`,
+      fuchsuhr: `<circle cx="11" cy="11" r="8.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11 5.6V11l3.8 2.6" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="1.2" fill="currentColor"/>`,
+      flussfuchs: `<path d="M3.6 2.6 5.4 8.2 9.4 5.4Z" fill="currentColor"/><path d="M18.4 2.6 16.6 8.2 12.6 5.4Z" fill="currentColor"/><path d="M11 4.4c3.8 0 6.2 2.5 6.2 5.3 0 3.2-2.7 5.4-6.2 7.1-3.5-1.7-6.2-3.9-6.2-7.1 0-2.8 2.4-5.3 6.2-5.3z" fill="currentColor"/><path d="M2 19.8q3-1.7 6 0t6 0 6 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
       wortarten: `<rect x="3" y="4" width="7" height="7" rx="1.5" fill="currentColor"/><circle cx="16" cy="7.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 19l4-8 4 8M5.4 16.5h5.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
     };
     return `<svg viewBox="0 0 22 22" width="26" height="26" aria-hidden="true">${icons[key] || ""}</svg>`;
@@ -15137,12 +16052,22 @@
         Wenn dort etwas nicht stimmt, nutze bitte den Fehler-Knopf im Spiel — die Meldung kommt mit dem aktuellen Spielstand direkt an.
       </div>` : ""}
       <div class="games-pill-list">
-        ${visibleGames.map((g) => `
-          <button type="button" class="games-pill" data-game-sub="${g.sub}">
-            <span class="games-pill-emoji">${gameIconSvg(g.sub.replace("sub-", ""))}</span>
-            <span class="games-pill-name">${g.name}</span>
+        ${visibleGames.map((g) => {
+          /* Spiele, die man sich verdient, tragen ihr Schloss und ihre
+             Bedingung gleich auf der Kachel — man soll sehen, WAS man
+             sich da erspielt, nicht erst nach dem Antippen. */
+          const zu = !spielFreigeschaltet(g.sub);
+          const bed = spielBedingung(g.sub);
+          const stand = zu ? spielStandText(g.sub) : "";
+          return `
+          <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}" data-game-sub="${g.sub}">
+            <span class="games-pill-emoji">${zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
+            <span class="games-pill-name">${g.name}${zu && bed
+              ? `<span class="games-pill-bedingung">${unlockShortText(bed.unlock)}${stand ? " · " + stand : ""}</span>`
+              : ""}</span>
             <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}"></span>
-          </button>`).join("")}
+          </button>`;
+        }).join("")}
       </div>
     `;
     area.querySelectorAll("[data-game-sub]").forEach((btn) => {
@@ -15750,6 +16675,84 @@
     return schriftHuelle(teile, -30, -40, x + 100, BUCHSTABEN_HOEHE + 110, o.hoehe || 70, text);
   }
 
+  /* --- Die Fuchsuhr: Messing und dunkles Holz, wie ein Wandwerk.
+         Über jedem zweiten Buchstaben hängt ein kleines Zifferblatt,
+         und jedes zeigt eine andere Zeit — dieselbe Uhr zwölfmal wäre
+         nur ein Muster. Unter der Mitte schwingt ein Pendel. ------ */
+  const UHR_MESSING = ["#E0A32F", "#D2932A", "#EBB347"];
+  function uhrSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 12;
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, UHR_MESSING[i % UHR_MESSING.length], "#5A3E1E", 26));
+        if (i % 2 === 0) {
+          // Ein Zifferblatt über dem Buchstaben, jedes mit anderer Zeit
+          const cx = x + 42, cy = -46, r = 21;
+          const std = ((i * 5) % 12) * 30 - 90, min = ((i * 25) % 60) * 6 - 90;
+          teile.push(`<circle cx="${cx}" cy="${cy}" r="${r + 3}" fill="#5A3E1E"/>`);
+          teile.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFFBF0"/>`);
+          for (let n = 0; n < 12; n++) {
+            const w = ((n * 30 - 90) * Math.PI) / 180;
+            teile.push(`<circle cx="${(cx + Math.cos(w) * (r - 4)).toFixed(1)}" cy="${(cy + Math.sin(w) * (r - 4)).toFixed(1)}" r="1.4" fill="#B49B80"/>`);
+          }
+          teile.push(`<line x1="${cx}" y1="${cy}" x2="${(cx + Math.cos((std * Math.PI) / 180) * 10).toFixed(1)}" y2="${(cy + Math.sin((std * Math.PI) / 180) * 10).toFixed(1)}" stroke="#4A3428" stroke-width="4" stroke-linecap="round"/>`);
+          teile.push(`<line x1="${cx}" y1="${cy}" x2="${(cx + Math.cos((min * Math.PI) / 180) * 15).toFixed(1)}" y2="${(cy + Math.sin((min * Math.PI) / 180) * 15).toFixed(1)}" stroke="#C64B3C" stroke-width="2.6" stroke-linecap="round"/>`);
+          teile.push(`<circle cx="${cx}" cy="${cy}" r="2.4" fill="#4A3428"/>`);
+        }
+      }
+      x += b;
+    });
+    // Das Gehäuse als Brett unter der Schrift, darunter das Pendel
+    teile.push(`<rect x="-16" y="${BUCHSTABEN_HOEHE + 12}" width="${x + 22}" height="16" rx="8" fill="#7A5230"/>`);
+    const px = x / 2;
+    teile.push(`<line x1="${px}" y1="${BUCHSTABEN_HOEHE + 24}" x2="${px + 18}" y2="${BUCHSTABEN_HOEHE + 74}" stroke="#8A6234" stroke-width="5" stroke-linecap="round"/>`);
+    teile.push(`<circle cx="${px + 20}" cy="${BUCHSTABEN_HOEHE + 82}" r="15" fill="#E0A32F" stroke="#5A3E1E" stroke-width="5"/>`);
+    return schriftHuelle(teile, -34, -76, x + 60, BUCHSTABEN_HOEHE + 186, o.hoehe || 80, text);
+  }
+
+  /* --- Der Fuchs am Fluss: die Buchstaben stehen als Steine im
+         Wasser. Jeder steckt bis zu einem Drittel unter der Linie,
+         darunter liegt sein Spiegelbild — gestaucht, gedreht und
+         blass, wie eine Spiegelung eben aussieht — und um jeden Fuß
+         zieht ein Ring. Die Buchstaben wippen leicht auf und ab,
+         damit die Wasserlinie nicht wie ein Lineal wirkt. ------- */
+  const FLUSS_FARBEN = ["#2E86AB", "#3FA796", "#4C93C3", "#2F9E7E", "#3B7FB5", "#37A2A8"];
+  function flussSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const spiegel = [];
+    const zeichen = zeichenListe(text);
+    const LINIE = 118;   // die Wasseroberfläche
+    let x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 12;
+      if (BUCHSTABEN[z]) {
+        const y = ((i * 37) % 16) - 8;          // leichtes Wippen
+        const f = FLUSS_FARBEN[i % FLUSS_FARBEN.length];
+        teile.push(dickerBuchstabe(z, x, y, f, "#1B3A4B", 25));
+        // Das Spiegelbild: an der Wasserlinie gespiegelt und gestaucht
+        spiegel.push(`<g transform="translate(0 ${(2 * LINIE).toFixed(1)}) scale(1 -0.55)" opacity="0.3">`
+          + dickerBuchstabe(z, x, y, f, "", 25) + `</g>`);
+        teile.push(`<ellipse cx="${x + 44}" cy="${LINIE}" rx="${(zeichenBreite(z) / 1.5).toFixed(0)}" ry="9"`
+          + ` fill="none" stroke="#BFE6F5" stroke-width="6" opacity="0.85"/>`);
+      }
+      x += b;
+    });
+    // Wasserband unter allem, damit die Spiegelung auf etwas liegt
+    teile.unshift(`<rect x="-40" y="${LINIE}" width="${x + 90}" height="120" fill="#3E96C4" opacity="0.34"/>`);
+    teile.unshift(...spiegel);
+    for (let n = 0; n < 4; n++) {
+      const wy = LINIE + 16 + n * 20;
+      teile.push(`<path d="M-30 ${wy} q26 -9 52 0 t52 0 t52 0 t52 0 t52 0 t52 0 t52 0 t52 0"`
+        + ` stroke="#7FC7E4" stroke-width="6" fill="none" opacity="0.55"/>`);
+    }
+    return schriftHuelle(teile, -34, -34, x + 60, BUCHSTABEN_HOEHE + 132, o.hoehe || 76, text);
+  }
+
   /* --- KorrekTour: jeder Buchstabe fährt in einem Waggon. ---------- */
   const ZUG_FARBEN = ["#C0392B", "#2E86AB", "#E3A81C", "#3E8E5A", "#7D5BA6"];
   function zugSchriftzug(text, optionen) {
@@ -16057,6 +17060,8 @@
     "sub-werbinich": { bauart: "raetsel", text: "Wer bin ich?" },
     "sub-wordbuild": { bauart: "baustelle" },
     "sub-wortarten": { bauart: "wortart" },
+    "sub-flussfuchs": { bauart: "fluss", text: "Fuchs am Fluss" },
+    "sub-fuchsuhr": { bauart: "uhr", text: "Fuchsuhr" },
   };
 
   function spielTitelEinsetzen(sub) {
@@ -16094,6 +17099,8 @@
       raetsel: () => raetselSchriftzug(wort, { hoehe: 68 }),
       baustelle: () => baustelleSchriftzug(wort, { hoehe: 70 }),
       wortart: () => wortartSchriftzug(wort, { hoehe: 66 }),
+      fluss: () => flussSchriftzug(wort, { hoehe: 76 }),
+      uhr: () => uhrSchriftzug(wort, { hoehe: 80 }),
     };
     if (wunsch.bauart === "kreuz") kopf.innerHTML = kreuzSchriftzug(wunsch.woerter[0], wunsch.woerter[1], { hoehe: 150 });
     else if (wunsch.bauart === "silben") kopf.innerHTML = silbenSchriftzug(wunsch.silben, { hoehe: 150 });
@@ -21710,7 +22717,12 @@ An einem Morgen lief ein kleiner Fuchs los…
       "\u{1F3AF} Die Betonungsanzeige erkannte bei 567 W\u00f6rtern gar keine betonte Silbe \u2014 sie fielen aus dem Betonungs-Trainer heraus und wurden im W\u00f6rterbuch ohne Markierung gezeigt. Zwei Ursachen: bei W\u00f6rtern mit \u00df (Ma\u00dfband, Fu\u00dfsohle, Stra\u00dfenschild, Bu\u00dfgeld) rechnet JavaScript \u201e\u00df\u201c beim Gro\u00dfschreiben zu \u201eSS\u201c um, wodurch die Silbe nicht mehr als Gro\u00dfsilbe galt; und bei vielen Eintr\u00e4gen stand der Artikel mit in der Silbenangabe (\u201edie DA-me\u201c). Beides ist behoben, im Bestand wie in der Erkennung.",
       "\u{1FAB2} Gefragt: wo die gemeldeten Fehler landen. Antwort: unter Profil \u2192 Verwaltung in der Box \u201e\u{1FAB2} Gemeldete Fehler\u201c, nach H\u00e4ufigkeit sortiert, offene oben, erledigte ausklappbar \u2014 sichtbar f\u00fcr Moderation und Betrieb. Neu sind zwei Kn\u00f6pfe darin: \u201eAlle Meldungen kopieren\u201c und \u201eNur die offenen\u201c. Beide legen die Liste als fertigen Text mit Datum, Bereich, Art und Beschreibung in die Zwischenablage \u2014 damit l\u00e4sst sie sich am Telefon in eine Nachricht einf\u00fcgen, ohne den Umweg \u00fcber eine Datei.",
       "\u{1F9F1} Der Satzbaukasten baut wieder ein St\u00fcck weniger Unsinn. Sechs neue Regeln, alle aus echten Beispiels\u00e4tzen abgeleitet: keine H\u00e4ufigkeit und kein Zeitraum neben einem Zustand (\u201ezweimal in der Woche in der Stadt wohnen\u201c, \u201eden ganzen Abend seine Kinder verstehen\u201c), kein Zeitraum neben einem Ziel (\u201eden ganzen Tag ins Caf\u00e9 gehen\u201c), kein Mittel, das das Objekt wiederholt (\u201emit Karte eine Karte bezahlen\u201c), keine bewertende Angabe bei unbestimmtem Objekt (\u201egut einen Tee kochen\u201c), und der Ort steht jetzt VOR der festen Pr\u00e4position (\u201ein der Kita auf den Opa warten\u201c statt umgekehrt). Dazu: treffen verlangt jetzt eine Person, \u201esehr brauchen\u201c hei\u00dft \u201edringend brauchen\u201c, an jemanden schreibt man einen Brief und kein Protokoll, und erz\u00e4hlt wird, was eine Geschichte hat. Auf 4.320 erzeugten S\u00e4tzen nachgez\u00e4hlt: von den bekannten Fehlermustern bleiben 0,14 Prozent \u00fcbrig \u2014 und die sind bei genauem Hinsehen richtig.",
-      "\u{1F3A8} Jetzt hat JEDES der 22 Spiele seinen eigenen Schriftzug \u2014 vorher waren es f\u00fcnf. Keine Schriftart, sondern jedes Mal aus derselben selbst gezeichneten Buchstabengeometrie neu gebaut, farbig und kr\u00e4ftig, und jeder am eigenen Spiel entlang: der Artikel-Garten w\u00e4chst als Bl\u00fctenstiele aus der Erde, die Blitzrunde gl\u00fcht \u00fcber einem Zickzack, der Wortangler h\u00e4ngt an der Schnur, die Wortleiter steigt eine Leiter hinauf, der Sortierer sitzt in K\u00f6rben, der Betonungs-Trainer tr\u00e4gt den Dudenpunkt unter der betonten Silbe, der Buchstabensalat liegt durcheinander unter einer Lupe, die KorrekTour f\u00e4hrt als Zug \u00fcber Schienen, \u201eWo ist die Katze?\u201c bekommt Ohren, Schnurrhaare und Schwanz, Memory liegt als Karten mit verdecktem Stapel, das Satzpuzzle greift ineinander, der Vokabelmeister sitzt auf bunten Tasten, die Satzbr\u00fccke spannt sich \u00fcber Seile, die Wortschmiede gl\u00fcht auf dem Amboss, \u201eWer bin ich?\u201c ist halb verdeckt, die Wortbaustelle ist abgesperrt, und der Wort-Typ ist nach Wortarten eingef\u00e4rbt. Auf einem 320 Pixel schmalen Telefon gepr\u00fcft \u2014 keiner ragt hinaus.",
+      "\u{1F3A8} Jetzt hat JEDES Spiel seinen eigenen Schriftzug \u2014 vorher waren es f\u00fcnf. Keine Schriftart, sondern jedes Mal aus derselben selbst gezeichneten Buchstabengeometrie neu gebaut, farbig und kr\u00e4ftig, und jeder am eigenen Spiel entlang: der Artikel-Garten w\u00e4chst als Bl\u00fctenstiele aus der Erde, die Blitzrunde gl\u00fcht \u00fcber einem Zickzack, der Wortangler h\u00e4ngt an der Schnur, die Wortleiter steigt eine Leiter hinauf, der Sortierer sitzt in K\u00f6rben, der Betonungs-Trainer tr\u00e4gt den Dudenpunkt unter der betonten Silbe, der Buchstabensalat liegt durcheinander unter einer Lupe, die KorrekTour f\u00e4hrt als Zug \u00fcber Schienen, \u201eWo ist die Katze?\u201c bekommt Ohren, Schnurrhaare und Schwanz, Memory liegt als Karten mit verdecktem Stapel, das Satzpuzzle greift ineinander, der Vokabelmeister sitzt auf bunten Tasten, die Satzbr\u00fccke spannt sich \u00fcber Seile, die Wortschmiede gl\u00fcht auf dem Amboss, \u201eWer bin ich?\u201c ist halb verdeckt, die Wortbaustelle ist abgesperrt, und der Wort-Typ ist nach Wortarten eingef\u00e4rbt. Auf einem 320 Pixel schmalen Telefon gepr\u00fcft \u2014 keiner ragt hinaus.",
+      "🦊 Neu: **Der Fuchs am Fluss** — ein Spiel mit einer Figur, die sich bewegt. Bisher fragen alle Spiele im Kern dasselbe: hier ist EIN Wort, sag etwas darüber. Dieses fragt andersherum. Für eine ganze Überquerung gilt EINE Regel — „nur der-Wörter“, „nur Wörter, die auf der ersten Silbe betont werden“, „nur Wörter aus Essen & Trinken“, „nur Wörter mit genau zwei Silben“ — und von drei Steinen trägt jedes Mal nur der eine, auf den die Regel passt. Man prüft also nicht ein Wort für sich, sondern siebt Wörter gegeneinander; das ist die Bewegung, die man beim Lesen wirklich braucht. Der Fuchs steht dabei sichtbar auf dem Stein, den du zuletzt getroffen hast — wie weit du bist, siehst du am Bild und musst keine Zahl lesen. Drei Fehltritte, und er sitzt im Wasser: die Überquerung ist verloren, die Runde nicht — die nächste beginnt mit einer neuen Regel. Nach jedem Fehltritt steht da, warum dein Stein nicht trug UND warum der andere getragen hätte. Die Wörter kommen aus dem neuen Wörterbuch, nach Niveau gefiltert, und werden am Zeilenende an ihren echten Silbengrenzen getrennt.",
+      "🕰️ Neu: **Die Fuchsuhr** — die Uhrzeit, endlich geübt. Sie kommt in Aufgabentexten überall vor („Wir treffen uns um halb neun“), war aber in keinem der 40 Grammatikthemen und in keinem Spiel dran. Dabei ist sie das Erste, woran ein Termin scheitert: das deutsche „halb vier“ zeigt auf die NÄCHSTE Stunde und heißt 3:30 — wer aus dem Englischen kommt, liest 4:30. Genau dieser Fehler steht bei jeder halben Stunde als falsche Antwort mit dabei, und die Erklärung sagt hinterher, woran man es erkennt. Gefragt wird in beide Richtungen: mal hängt die Uhr an der Wand und du suchst die Worte, mal hält der Fuchs einen Zettel und du suchst unter drei Zifferblättern das richtige. A1 fängt bei vollen und halben Stunden an, A2 nimmt die Viertel dazu, B1 alle Fünf-Minuten-Schritte, ab B2 kommt die amtliche Form vom Fahrplan dazu („fünfzehn Uhr siebenunddreißig“). Nichts davon ist erfunden: jede Uhrzeit wird gerechnet, und gesprochen wird nur im Fünf-Minuten-Takt — „siebzehn nach drei“ sagt niemand. Alle 1440 Minuten des Tages sind durchgeprüft.",
+      "✉️ Die Nachricht „Was ist neu“ kam bisher als EIN Absatz im Postfach an — alle Punkte mit Komma aneinandergehängt. Der Grund lag im Code: die Liste der Neuerungen wurde einfach in den Text eingesetzt, und JavaScript klebt eine Liste dabei kommagetrennt zusammen. Jetzt steht jeder Punkt für sich, mit Leerzeile dazwischen, und Hervorhebungen sind fett.",
+      "🖌️ Beide neuen Spiele teilen sich dieselbe gezeichnete Fuchsfigur — in drei Haltungen: sitzend, im Sprung, und klatschnass im Wasser. Sie steckt im Quelltext und nicht in einer Bilddatei, denn jede neue Bilddatei müsstest du von Hand mit hochladen. Dazu die beiden neuen Schriftzüge: „Fuchs am Fluss“ steht als Buchstabensteine im Wasser mit Spiegelung darunter, „Fuchsuhr“ hängt in Messing an einem Brett, über jedem zweiten Buchstaben ein Zifferblatt mit anderer Zeit, darunter ein Pendel. Damit haben jetzt alle 24 Spiele ihren eigenen Schriftzug.",
+      "\u{1F512} F\u00fcnf Spiele muss man sich jetzt verdienen. Sie standen bisher alle vom ersten Augenblick an offen \u2014 und genau deshalb sah man sie sich nicht an. Neu: die Wortblasen gehen bei 80 Punkten auf, der Wackelturm nach 10 gespielten Runden, das Kreuzwortr\u00e4tsel, sobald du 6 verschiedene Kategorien probiert hast, die Wort-Kanone bei 200 Punkten und der Vokabelmeister bei 350. Statt des Spiels steht dann ein Schloss mit dem Grund, der Bedingung und einem Balken, wie weit du bist \u2014 eine geschlossene T\u00fcr ohne Weg dahinter w\u00e4re nur \u00e4rgerlich. Drei Dinge sind bewusst so: ohne Anmeldung ist alles offen (ohne Konto gibt es keine Punkte, an denen sich etwas verdienen lie\u00dfe), ein Spiel, das du schon einmal gespielt hast, bleibt dir, und Moderation und Beta-Test sehen weiterhin alles. Wird eines frei, kommt eine Nachricht ins Postfach.",
       "\u{1F5C2}\ufe0f Neuer ORDNER \u201evokabeln\u201c mit f\u00fcnf Dateien: teil-1.js bis teil-5.js. Er MUSS mit hochgeladen werden \u2014 ohne ihn bleiben W\u00f6rterbuch, Vokabeltrainer und die Wortspiele leer. F\u00fcnf Dateien statt 25, damit das Hochladen vom Telefon aus \u00fcberhaupt zu schaffen ist.",
     ],
     "159": [
@@ -21837,7 +22849,16 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (seenVersion === APP_VERSION) return;
     const note = APP_CHANGELOG[APP_VERSION];
     if (!note) return;
-    const messageText = `🆕 Was ist neu (Version ${APP_VERSION}):\n\n${note}`;
+    /* Der Eintrag ist eine LISTE. Bisher wurde sie einfach in den Text
+       eingesetzt — JavaScript hängt dabei die Punkte mit Komma
+       aneinander, und die ganze Neuerungsliste kam als ein einziger
+       Absatz im Postfach an. Jetzt steht jeder Punkt für sich, und
+       **Hervorhebungen** werden fett dargestellt (der Nachrichtentext
+       wird ohnehin als HTML eingesetzt). */
+    const punkte = (Array.isArray(note) ? note : [note])
+      .map((z) => String(z).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>"))
+      .join("\n\n");
+    const messageText = `🆕 Was ist neu (Version ${APP_VERSION}):\n\n${punkte}`;
     // Zweite Absicherung: falls das Speichern der "gesehen"-Markierung aus irgendeinem Grund
     // fehlschlägt, verhindert diese zusätzliche Prüfung trotzdem, dass dieselbe Nachricht bei
     // jedem Neuladen erneut verschickt wird — sie schaut einfach nach, ob genau dieser Text
@@ -21858,6 +22879,80 @@ An einem Morgen lief ein kleiner Fuchs los…
   if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     window.DMA_PRUEFUNG = {
       woerterbuch: () => buildDictionaryEntries(),
+      /* Der Fuchs am Fluss: der laufende Stand und, welcher Stein
+         trägt — damit sich eine ganze Runde ohne Raten durchspielen
+         und nachzählen lässt. */
+      flussStand: () => {
+        const s = flussSession;
+        if (!s) return null;
+        return {
+          regel: s.regel ? s.regel.id : null,
+          schritt: s.schritt, leben: s.leben, zustand: s.zustand,
+          ueberquerung: s.ueberquerung, geschafft: s.geschafft,
+          steine: s.steine, fehler: s.fehler, fertig: Boolean(s.fertig),
+          richtigerStein: s.reihe.findIndex((x) => x.ok),
+          reihe: s.reihe.map((x) => x.e.word + (x.ok ? " ✓" : "")),
+        };
+      },
+      /* Jede Regel gegen den ganzen Wortschatz halten: wie viele Wörter
+         sie trifft, wie viele danebenliegen — und ob ein Wort auf BEIDE
+         Seiten passt, was ein Widerspruch wäre. */
+      flussPool: () => flussPool(),
+      /* Die Fuchsuhr gegen jede Minute des Tages halten: erzeugt jede
+         Uhrzeit einen Satz, und stimmt er? Ausgegeben wird die volle
+         Tabelle, damit sie sich von Hand nachlesen lässt. */
+      uhrAlleZeiten: () => {
+        const liste = [];
+        for (let h = 0; h < 24; h++) {
+          for (let m = 0; m < 60; m++) {
+            liste.push({ zeit: uhrZiffern(h, m), amtlich: uhrAmtlich(h, m),
+              gesprochen: m % 5 === 0 ? uhrGesprochen(h, m) : null });
+          }
+        }
+        return liste;
+      },
+      /* Eine Runde nachbauen: die drei Antworten mit der richtigen
+         markiert — damit sich prüfen lässt, dass nie zwei gleich sind
+         und die richtige wirklich dabei ist. */
+      uhrRunden: (anzahl, stufe) => {
+        const alt = uhrLevel, altS = uhrSession;
+        uhrLevel = stufe || "B1";
+        const raus = [];
+        uhrSession = { runde: 0, gesamt: 99, richtig: 0, zustand: "warten", aufgabe: null, gespielt: [] };
+        for (let i = 0; i < (anzahl || 20); i++) {
+          neueUhrRunde();
+          const a = uhrSession.aufgabe;
+          raus.push({ zeit: uhrZiffern(a.h, a.m), amtlich: a.amtlich, richtung: a.richtung,
+            loesung: a.loesung, wahl: a.wahl.map((w) => uhrText(w.h, w.m, a.amtlich) + (w.ok ? " ✓" : "")) });
+        }
+        uhrLevel = alt; uhrSession = altS;
+        return raus;
+      },
+      /* Beispielreihen bauen, wie sie im Spiel erscheinen — damit sich
+         von Hand nachlesen lässt, ob eine Frage wirklich FAIR ist. */
+      flussReihen: (proRegel) => {
+        const pool = flussPool();
+        return flussRegelnFuer(pool).map((r) => {
+          const ja = pool.filter(r.passt), nein = pool.filter(r.gegen);
+          const reihen = [];
+          for (let i = 0; i < (proRegel || 6) && ja.length && nein.length > 1; i++) {
+            const richtig = ja[Math.floor(Math.random() * ja.length)];
+            const falsch = Core.shuffle(nein).slice(0, 2);
+            reihen.push({ richtig: richtig.word, falsch: falsch.map((e) => e.word + " [" + e.category + "]") });
+          }
+          return { id: r.id, reihen };
+        });
+      },
+      flussRegelPruefung: () => {
+        const pool = flussPool();
+        return flussRegelnFuer(pool).map((r) => {
+          const ja = pool.filter(r.passt);
+          const nein = pool.filter(r.gegen);
+          const beides = ja.filter((e) => r.gegen(e)).length;
+          return { id: r.id, treffer: ja.length, gegen: nein.length, widerspruch: beides,
+            beispiel: ja.slice(0, 3).map((e) => e.word) };
+        });
+      },
       betonung: (w) => ruleMarkWord(w),
       /* Wie die Bausteine gruppiert werden — damit sich prüfen lässt,
          dass keiner unter „Sonstiges“ verschwindet. */
