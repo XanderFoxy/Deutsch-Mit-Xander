@@ -85,8 +85,13 @@ const Quiz = (function () {
      jede Aufgabe nach C2 schieben. Gemessen wird das Niveau, auf dem neun von zehn
      erkannten Wörtern abgedeckt sind. */
   let wortNiveauKarteCache = null;
+  let wortNiveauKarteWoerter = -1;
   function wortNiveauKarte() {
-    if (wortNiveauKarteCache) return wortNiveauKarteCache;
+    // Das Wörterbuch wird nachgeladen; ein vor dem Nachladen gebauter
+    // Zwischenspeicher wäre leer und würde jede Aufgabe falsch einstufen.
+    const jetzt = (typeof VocabData !== "undefined" && VocabData.WORDS && VocabData.WORDS.length) || 0;
+    if (wortNiveauKarteCache && wortNiveauKarteWoerter === jetzt) return wortNiveauKarteCache;
+    wortNiveauKarteWoerter = jetzt;
     const karte = new Map();
     const quelle = (typeof VocabData !== "undefined" && VocabData.WORDS) || [];
     quelle.forEach((w) => {

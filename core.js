@@ -231,6 +231,30 @@ const Core = (function () {
     }
     return { von: i, bis: ende, lang };
   }
+  /* Ist diese Silbe komplett großgeschrieben, also die betonte?
+
+     Zwei Fallen stecken darin, und beide sind echte Fehlerquellen gewesen:
+
+     1. Das ß. „MAß-band" ist eine Großsilbe, aber `"MAß" === "MAß".toUpperCase()`
+        ist falsch, weil JavaScript aus ß beim Großschreiben „SS" macht. Wörter
+        mit ß in der betonten Silbe (Maßband, Fußsohle, Straßenschild, Bußgeld …)
+        galten dadurch als „ohne Betonung" und fielen aus dem Betonungs-Trainer
+        heraus. Deshalb wird ß hier als Zeichen ohne Groß-/Kleinform behandelt.
+     2. Einzelne Großbuchstaben am Wortanfang. „E-le-MENT" schreibt das E groß,
+        weil das Wort nun einmal so geschrieben wird — betont ist trotzdem MENT.
+        Darum entscheidet betonteSilbenIndex() bei mehreren Kandidaten für die
+        erste MEHRbuchstabige Silbe. */
+  function silbeIstGross(p) {
+    return /[A-ZÄÖÜ]/.test(p) && !/[a-zäöü]/.test(p.replace(/ß/g, ""));
+  }
+  function betonteSilbenIndex(teile) {
+    const kandidaten = [];
+    teile.forEach((p, i) => { if (silbeIstGross(p)) kandidaten.push(i); });
+    if (!kandidaten.length) return -1;
+    if (kandidaten.length === 1) return kandidaten[0];
+    const mehrbuchstabig = kandidaten.filter((i) => teile[i].length > 1);
+    return mehrbuchstabig.length ? mehrbuchstabig[0] : kandidaten[0];
+  }
   function formatStress(syl) {
     if (!syl) return "";
     // Mehrteilige Angaben („das ZIEL") Wort für Wort behandeln.
@@ -249,14 +273,7 @@ const Core = (function () {
     // Betonte Silbe finden. Achtung: die ERSTE Silbe ist bei Nomen ohnehin groß
     // geschrieben — ein einzelner Großbuchstabe („Ü-ber-LIE-fe-rung") ist deshalb
     // kein Betonungszeichen, solange es eine echte Großbuchstaben-Silbe gibt.
-    const kandidaten = [];
-    parts.forEach((p, i) => { if (p === p.toUpperCase() && /[A-ZÄÖÜ]/.test(p)) kandidaten.push(i); });
-    let betontIdx = -1;
-    if (kandidaten.length === 1) betontIdx = kandidaten[0];
-    else if (kandidaten.length > 1) {
-      const mehrbuchstabig = kandidaten.filter((i) => parts[i].length > 1);
-      betontIdx = mehrbuchstabig.length ? mehrbuchstabig[0] : kandidaten[0];
-    }
+    const betontIdx = betonteSilbenIndex(parts);
     if (betontIdx < 0 && !nebenIdx.size) return syl;
     const klein = parts.map((p) => p.toLowerCase());
     const wort = klein.join("");
@@ -415,5 +432,6 @@ const Core = (function () {
   };
 
   return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound,
+    silbeIstGross, betonteSilbenIndex,
     spracherkennungDa, hoereZu, wortAehnlichkeit, bewerteAussprache };
 })();

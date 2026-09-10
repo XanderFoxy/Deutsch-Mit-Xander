@@ -1061,14 +1061,18 @@
     { id: "zuzweit", de: "zu zweit", it: "in due", art: "weise", nurPlural: true, passtVerben: ["wandern","tanzen","spielen","reisen","kochen","singen","schwimmen"] },
     { id: "aufdeutsch", de: "auf Deutsch", it: "in tedesco", art: "mittel", passtVerben: ["sprechen","schreiben","lesen","lernen","verstehen","erklaeren","uebersetzen","singen"] , nichtMitDingen: ["deutsch","italienisch"] },
     { id: "aufitalienisch", de: "auf Italienisch", it: "in italiano", art: "mittel", passtVerben: ["sprechen","schreiben","lesen","lernen","verstehen","erklaeren","uebersetzen","singen"] , nichtMitDingen: ["deutsch","italienisch"] },
-    { id: "mitderhand", de: "mit der Hand", it: "a mano", art: "mittel", passtVerben: ["schreiben","waschen","machen","zeigen"] },
+    { id: "mitderhand", de: "mit der Hand", it: "a mano", art: "mittel", passtVerben: ["schreiben","waschen","machen"] },
     { id: "amtelefon", de: "am Telefon", it: "al telefono", art: "mittel", passtVerben: ["sprechen","fragen","antworten","erklaeren","bestellen"] },
     { id: "peremail", de: "per E-Mail", it: "per email", art: "mittel", passtVerben: ["schreiben","schicken","fragen","antworten","buchen","bestellen"] },
     { id: "iminternet", de: "im Internet", it: "su Internet", art: "mittel", passtVerben: ["suchen","finden","lesen","kaufen","bestellen","buchen","spielen","lernen"] },
     { id: "mitdemwoerterbuch", de: "mit dem Wörterbuch", it: "con il dizionario", art: "mittel", passtVerben: ["uebersetzen","lernen","lesen","schreiben","ueben"] },
     { id: "inbar", de: "in bar", it: "in contanti", art: "mittel", passtVerben: ["bezahlen"] },
     { id: "mitkarte", de: "mit Karte", it: "con la carta", art: "mittel", passtVerben: ["bezahlen","buchen","bestellen"] },
-    { id: "sehr", de: "sehr", it: "molto", art: "grad", passtVerben: ["moegen","brauchen","helfen","lachen","weinen"] },
+    { id: "sehr", de: "sehr", it: "molto", art: "grad", passtVerben: ["moegen","helfen","lachen","weinen"] },
+    /* „Er braucht seinen Lehrer sehr“ sagt niemand — gemeint ist
+       „dringend“. Deshalb hat brauchen sein eigenes Gradwort. */
+    { id: "dringend", de: "dringend", it: "urgentemente", art: "grad", level: "A2",
+      passtVerben: ["brauchen","suchen","anrufen","antworten","reparieren"] },
     { id: "einbisschen", de: "ein bisschen", it: "un po'", art: "grad", passtVerben: ["verstehen","sprechen","warten","helfen","schlafen"] },
     { id: "ueberhauptnicht", verneinend: true, nachObjekt: true, de: "überhaupt nicht", it: "per niente", art: "grad", passtVerben: ["verstehen","moegen","glauben","wissen"] },
   ];
@@ -1170,6 +1174,11 @@
 
     { id: "schreiben", inf: "schreiben", formen: ["schreibe", "schreibst", "schreibt", "schreiben", "schreibt", "schreiben"], hilfsverb: "haben", partizip: "geschrieben",
       lokal: ["wo"], objekt: "akk", personPraep: "an", personFall: "akk",
+      /* „an jemanden schreiben“ geht nur bei dem, was man wirklich an
+         jemanden schreibt. Ein Protokoll, ein Formular oder einen Roman
+         schreibt man NICHT an die Tochter — deshalb bekommt schreiben
+         die Person nur zu den Dingen dieser Liste gestellt. */
+      personNurBeiDingen: ["brief", "nachricht", "mail", "kuendigung", "antrag", "gedicht", "lied"],
       passtOrte: {"wo":["zuhause","buero","bibliothek","schule","uni","cafe","amt","klassenzimmer","hoersaal","seminarraum","sprachschule","rathaus"]},
       passtDinge: ["brief","nachricht","bericht","mail","antrag","buch","vertrag","protokoll","vokabel","roman","gedicht","lied","kuendigung","formular"],
       passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","chef","lehrerin","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","nachbar","nachbarin","kind","lehrer","vermieter","verkaeufer"],
@@ -1225,7 +1234,7 @@
       kategorien: ["bildung", "familie"] },
 
     { id: "treffen", inf: "treffen", formen: ["treffe", "triffst", "trifft", "treffen", "trefft", "treffen"], hilfsverb: "haben", partizip: "getroffen",
-      lokal: ["wo"], personFall: "akk",
+      lokal: ["wo"], personFall: "akk", personPflicht: true,
       passtOrte: {"wo":["zuhause","cafe","restaurant","park","stadt","bahnhof","kino","buero","bibliothek","flughafen","hotel","bar","disko","imbiss","eisdiele","pizzeria","museum","theater","konzert","zoo","spielplatz","schwimmbad","see","meer","strand","berge","wald","schule","uni","kurs","klassenzimmer","supermarkt","markt","kaufhaus","haltestelle","krankenhaus","arzt"]},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"],
       passtGruende: ["termingrund","neugierig","pruefung","frei","unterwegs","stau","umzug"],
@@ -1664,7 +1673,9 @@
     { id: "erzaehlen", inf: "erzählen", formen: ["erzähle","erzählst","erzählt","erzählen","erzählt","erzählen"], hilfsverb: "haben", partizip: "erzählt",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
-      passtDinge: ["roman","gedicht","idee","problem","grund","meinung","plan","wunsch"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich","traurig","frei","nervoes"],
+      /* Erzählt wird, was eine Geschichte hat. „Der Tante einen Plan
+         erzählen“ sagt niemand — den erklärt oder zeigt man. */
+      passtDinge: ["roman","gedicht","idee","problem","traum","witz"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["gluecklich","traurig","frei","nervoes"],
       itInf: "raccontare", itFormen: ["racconto","racconti","racconta","raccontiamo","raccontate","raccontano"], itHilf: "avere", itPart: "raccontato", itFutStamm: "racconter",
       kategorien: ["alltag","familie","freizeit"] },
 
@@ -1796,6 +1807,12 @@
         objektBegleiter: ["ohne", "unbestimmt", "bestimmt"].find((b) => (wahl.objekt.begleiter || []).includes(b)) || "bestimmt",
       });
     }
+    /* Dieselbe Prüfung wie bei der Auswahl, jetzt aber auf der FERTIGEN
+       Zusammenstellung: erst hier steht fest, ob der Satz ein Ziel hat
+       („den ganzen Tag ins Café gehen“) oder das Objekt verneint ist.
+       Passt die Zeitangabe dann nicht mehr, fällt sie weg statt den
+       Satz zu verderben. */
+    if (wahl.zeit && !zeitPasst(wahl.zeit, verb, wahl)) wahl = Object.assign({}, wahl, { zeit: null });
     const zeitVorne = wahl.vorfeld === "zeit" && wahl.zeit && wahl.zeit.de;
     const ortVorne = wahl.vorfeld === "ort" && wahl.ort;
 
@@ -1804,7 +1821,13 @@
        eine Präposition dazugehört („auf den Kellner warten“), rückt die
        Gruppe nach hinten. Stehen Dativ und Akkusativ beide als Nomen da,
        kommt der Dativ zuerst: „Ich gebe meinem Bruder ein Buch.“ */
-    const zeigePerson = Boolean(wahl.person) && Boolean(verb.personFall);
+    /* personNurBeiDingen: manche Verben nehmen die Person nur zu
+       bestimmten Objekten. „einen Brief an die Tochter schreiben“ ja,
+       „ein Protokoll an die Tochter schreiben“ nein. Passt das Objekt
+       nicht, bleibt die Person einfach weg — der Satz stimmt trotzdem. */
+    const personPasstZumDing = !verb.personNurBeiDingen || !wahl.objekt
+      || verb.personNurBeiDingen.includes(wahl.objekt.id);
+    const zeigePerson = Boolean(wahl.person) && Boolean(verb.personFall) && personPasstZumDing;
     const personZuerstImSatz = zeigePerson && !verb.personPraep;
     const personZuerst = personZuerstImSatz;
     function personTeil() {
@@ -1874,11 +1897,18 @@
     if (!objektBekannt && zeigeObjekt) {
       deTeile.push({ t: nominalgruppe(wahl.objekt, verb.objekt || "akk", objBegl, wahl.objektAdjektiv, subjekt), rolle: "was" });
     }
+    /* Bei einem Verb mit fester Präposition („auf jemanden warten“,
+       „mit jemandem sprechen“) steht der Ort VOR dieser Ergänzung:
+       „in der Kita auf unseren Opa warten“, nicht „auf unseren Opa in
+       der Kita warten“. Die Präpositionalgruppe gehört eng zum Verb und
+       rückt deshalb ganz ans Ende des Mittelfelds. */
+    const ortVorPerson = Boolean(verb.personPraep) && zeigePerson && !personZuerst;
+    if (ortVorPerson && wahl.ort && !ortVorne) deTeile.push({ t: ortsform(wahl.ort, ortRolle), rolle: ortRolle });
     if (zeigePerson && !personZuerst) {
       deTeile.push(personTeil());
     }
     if (wahl.art && wahl.art.de && artNachObjekt) deTeile.push({ t: wahl.art.de, rolle: "wie" });
-    if (wahl.ort && !ortVorne) deTeile.push({ t: ortsform(wahl.ort, ortRolle), rolle: ortRolle });
+    if (!ortVorPerson && wahl.ort && !ortVorne) deTeile.push({ t: ortsform(wahl.ort, ortRolle), rolle: ortRolle });
 
     /* --- Italienisch --------------------------------------------------
        Zeitpunkte stehen vorn, Häufigkeiten und Art beim Verb, alles
@@ -2205,6 +2235,8 @@
      Rucksack“ ist kein Satz. Wer etwas NICHT tut, tut es auch nicht
      ordentlich. Erlaubt bleibt nur, was die Verneinung verstärkt. */
   const ART_MIT_KEIN_ERLAUBT = new Set(["keine", "ueberhauptnicht"]);
+  // Siehe R12 weiter unten: diese Angaben bewerten das Ergebnis.
+  const ERGEBNIS_ARTEN = new Set(["gut", "ordentlich", "gruendlich", "sorgfaeltig"]);
   function artPasst(art, verb, wahl) {
     if (!art || !art.de) return true;
     const w = wahl || {};
@@ -2214,6 +2246,18 @@
     if (w.objektBegleiter === "kein" && !ART_MIT_KEIN_ERLAUBT.has(art.id)) return false;
     // R6 — zwei Orte im selben Satz
     if (ART_MIT_ORT.has(art.id) && w.ort) return false;
+    /* R12 — Angaben, die das ERGEBNIS bewerten („gut“, „ordentlich“,
+       „gründlich“, „sorgfältig“), setzen voraus, dass man weiß, wovon
+       die Rede ist. Mit einem unbestimmten Objekt klingen sie falsch:
+       „Habt ihr gut einen Tee gekocht?“ — mit „den Tee“ stimmt es. */
+    if (ERGEBNIS_ARTEN.has(art.id) && w.objekt && !["bestimmt", "possessiv"].includes(w.objektBegleiter || "")) return false;
+    /* R10 — das Mittel wiederholt das Objekt: „mit Karte eine Karte
+       bezahlen“. Geprüft wird auf dem nackten Wort, damit auch
+       „die Karte“ gegen „mit Karte“ greift. */
+    if (art.art === "mittel" && w.objekt && w.objekt.de) {
+      const ding = String(w.objekt.de).replace(/^(der|die|das)\s+/i, "").toLowerCase();
+      if (ding.length > 3 && String(art.de).toLowerCase().includes(ding)) return false;
+    }
     return true;
   }
   /* Verben, die einen Augenblick beschreiben, keinen Zeitraum. „Zwei
@@ -2223,13 +2267,32 @@
   const PUNKTUELLE_VERBEN = new Set(["mitbringen", "bringen", "nehmen", "bekommen", "geben",
     "oeffnen", "schliessen", "finden", "vergessen", "verlieren", "schenken", "schicken",
     "ankommen", "aufstehen", "anfangen", "aufhoeren", "einsteigen", "aussteigen", "kaufen",
-    "bezahlen", "bestellen", "buchen", "anrufen"]);
+    "bezahlen", "bestellen", "buchen", "anrufen", "kommen", "besuchen", "treffen", "antworten"]);
+  /* Verben, die einen Zustand beschreiben statt einer Handlung. Ein
+     Zustand lässt sich nicht zählen und nicht abmessen: „zweimal in der
+     Woche in der Stadt wohnen“, „den ganzen Abend seine Kinder
+     verstehen“, „oft Müller heißen“ — alles keine Sätze. Erlaubt bleibt
+     der Zeitpunkt („heute“, „am Abend“) und, bei wohnen und sein, auch
+     die Dauer („seit einem Jahr hier wohnen“ ist richtig). */
+  const ZUSTANDS_VERBEN = new Set(["wohnen", "heissen", "gehoeren", "kennen", "wissen",
+    "moegen", "verstehen", "lieben", "brauchen", "glauben"]);
+  // Bei diesen ist die Dauer trotzdem richtig — „seit einem Jahr wohnen“.
+  const DAUER_TROTZ_ZUSTAND = new Set(["wohnen", "kennen", "lieben"]);
   function zeitPasst(zeit, verb, wahl) {
     if (!zeit || !zeit.de) return true;
     const w = wahl || {};
     if (zeit.art === "haeufigkeit" && w.grund && w.grund.anlass === "einmalig") return false;     // R2
     // R7 — Zeitraum neben einem Verb, das keinen Zeitraum füllt
     if (zeit.art === "dauer" && verb && PUNKTUELLE_VERBEN.has(verb.id)) return false;
+    // R8 — Häufigkeit neben einem Zustand
+    if (zeit.art === "haeufigkeit" && verb && ZUSTANDS_VERBEN.has(verb.id)) return false;
+    // R9 — Zeitraum neben einem Zustand, der sich nicht abmessen lässt
+    if (zeit.art === "dauer" && verb && ZUSTANDS_VERBEN.has(verb.id) && !DAUER_TROTZ_ZUSTAND.has(verb.id)) return false;
+    /* R11 — ein Zeitraum neben einem Ziel: „den ganzen Abend in die
+       Berge steigen“ geht nicht. Wer irgendwohin geht, kommt dort an;
+       das ist ein Punkt, keine Strecke Zeit. */
+    const rolleJetzt = w.ortRolle || (verb && verb.lokal && verb.lokal[0]) || "";
+    if (zeit.art === "dauer" && (rolleJetzt === "wohin" || rolleJetzt === "woher")) return false;
     if ((zeit.itBrauchtNon || zeit.nichtVerneinbar) && w.objektBegleiter === "kein") return false;
     return true;
   }

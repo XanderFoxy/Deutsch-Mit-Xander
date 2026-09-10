@@ -3038,8 +3038,13 @@ const ExerciseData = (function () {
   // Alle Wörter, die für diese Kategorie in Frage kommen — Wörterbuch
   // plus die alte Liste, einmal zusammengeführt und gemerkt.
   let wsPoolCache = null;
+  let wsPoolWoerter = -1;
   function wsPool() {
-    if (wsPoolCache) return wsPoolCache;
+    // siehe quiz.js: das Wörterbuch kommt nachgeladen, der Zwischenspeicher
+    // muss sich neu aufbauen, sobald mehr Wörter da sind.
+    const jetzt = (typeof VocabData !== "undefined" && VocabData.WORDS && VocabData.WORDS.length) || 0;
+    if (wsPoolCache && wsPoolWoerter === jetzt) return wsPoolCache;
+    wsPoolWoerter = jetzt;
     const aus = [];
     const woerter = (typeof VocabData !== "undefined" && VocabData.WORDS) || [];
     woerter.forEach((w) => {

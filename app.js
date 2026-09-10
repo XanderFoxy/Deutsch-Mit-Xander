@@ -244,6 +244,14 @@
     return Boolean(el && el.offsetParent !== null);
   }
   function activateTab(targetId) {
+    /* Der Wortschatz (Ordner „vokabeln", rund 3,4 MB) wird NICHT beim Start
+       geladen, sondern beim ersten Wechsel nach „Lernen" oder „Wissen" —
+       dort liegen Wörterbuch, Vokabeltrainer, Betonungs-Trainer und die
+       Wortspiele. Wer nur den Startbildschirm oder sein Profil ansieht,
+       lädt ihn gar nicht. Die Ansichten selbst warten trotzdem nicht: sie
+       zeichnen sich über wortschatzNachziehen() nach, sobald die Wörter da
+       sind. */
+    if ((targetId === "view-learn" || targetId === "view-knowledge") && typeof VocabData !== "undefined" && VocabData.ladeWoerter) VocabData.ladeWoerter();
     tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.target === targetId)));
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
     history.replaceState(null, "", `#${targetId}`);
@@ -1183,6 +1191,42 @@
         ${resolved.map((r) => `<div class="breakdown-row"><span>${BUG_CATEGORY_ICONS[r.category] || "🪲"} ${r.category} — ${r.context}</span></div>`).join("")}
       </div>` : ""}
     `;
+    /* Gefragt: „Sag mir bitte, wo ich die gebündelten Fehler finde und wie
+       ich sie weiterschicke.“ Die Meldungen stehen hier — und dieser Knopf
+       legt sie ALLE als ein Stück Text in die Zwischenablage, sauber
+       untereinander mit Datum, Bereich, Art und Beschreibung. Das lässt
+       sich dann in eine Nachricht, eine Mail oder eine Notiz einfügen,
+       ohne dass man auf dem Telefon eine Datei herunterladen muss. */
+    const kopfzeile = document.createElement("div");
+    kopfzeile.style.cssText = "display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;";
+    kopfzeile.innerHTML = `<button type="button" class="btn btn-ghost" id="bugsKopieren" style="padding:6px 12px; font-size:0.78rem;">📋 Alle ${reports.length} Meldungen kopieren</button>`
+      + `<button type="button" class="btn btn-ghost" id="bugsOffenKopieren" style="padding:6px 12px; font-size:0.78rem;">📋 Nur die ${open.length} offenen</button>`;
+    area.prepend(kopfzeile);
+    const alsText = (liste) => liste.map((r) => {
+      const datum = r.created_at ? new Date(r.created_at).toLocaleString("de-DE") : "ohne Datum";
+      return [datum, r.context || "ohne Bereich", r.category || "ohne Art", (r.detail || "").trim() || "keine Beschreibung"]
+        .join("  |  ");
+    }).join("\n");
+    const kopieren = async (liste, knopf) => {
+      const text = `Fehlermeldungen aus Deutsch mit Alex (${liste.length} Stück, ${new Date().toLocaleString("de-DE")})\n`
+        + "Datum  |  Bereich  |  Art  |  Beschreibung\n"
+        + "-".repeat(60) + "\n" + alsText(liste);
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Meldungen sind in der Zwischenablage — jetzt einfügen.");
+      } catch (e) {
+        /* Ohne Zwischenablage-Recht (ältere Browser, kein HTTPS) bleibt der
+           Text sichtbar stehen, damit man ihn von Hand markieren kann. */
+        const feld = document.createElement("textarea");
+        feld.value = text;
+        feld.style.cssText = "width:100%; min-height:180px; margin-top:8px; font-size:0.72rem;";
+        knopf.parentElement.after(feld);
+        feld.select();
+        showToast("Zwischenablage nicht erlaubt — Text steht unten zum Markieren.");
+      }
+    };
+    document.getElementById("bugsKopieren")?.addEventListener("click", (e) => kopieren(reports, e.target));
+    document.getElementById("bugsOffenKopieren")?.addEventListener("click", (e) => kopieren(open, e.target));
     area.querySelectorAll("[data-resolve-bug]").forEach((btn) => {
       btn.addEventListener("click", async () => { await Backend.resolveBugReport(btn.dataset.resolveBug); loadAdminBugReports(); });
     });
@@ -2789,8 +2833,15 @@
   // wenigen Wochen zu wiederholen. Auswahl ist wie bei der Tagesaufgabe fest an den Kalendertag
   // gekoppelt, nicht zufällig.
   let dailyTipPoolCache = null;
+  let dailyTipPoolWoerter = -1;
   function buildDailyTipPool() {
-    if (dailyTipPoolCache) return dailyTipPoolCache;
+    // Das Wörterbuch kommt seit Version 160 nachgeladen. Ein Zwischenspeicher,
+    // der VOR dem Nachladen gebaut wurde, kennt die Wörter nicht — deshalb
+    // merkt er sich, mit wie vielen Wörtern er entstanden ist, und baut sich
+    // neu auf, sobald mehr da sind. Dasselbe Muster gilt unten für den
+    // Kompositum-Wortschatz, die Niveaukarte und den Wörterbuch-Aufbau.
+    if (dailyTipPoolCache && dailyTipPoolWoerter === VocabData.WORDS.length) return dailyTipPoolCache;
+    dailyTipPoolWoerter = VocabData.WORDS.length;
     const pool = [...ExerciseData.DAILY_TIPS];
     Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
       if (syl.includes("-")) pool.push({ text: `Bei „${word}" wird betont: ${stressHtml(syl)}.` });
@@ -3450,8 +3501,10 @@
   // Wandelt "FOTO-gra-FIE" in HTML mit unterstrichener betonter Silbe um.
   function stressHtml(sylString) {
     if (!sylString) return "";
-    return sylString.split("-").map((part) => {
-      const isStressed = part === part.toUpperCase() && /[A-ZÄÖÜ]/.test(part);
+    const teileHtml = sylString.split("-");
+    const betontHtml = Core.betonteSilbenIndex(teileHtml);
+    return teileHtml.map((part, iSil) => {
+      const isStressed = iSil === betontHtml;
       const display = isStressed ? part.charAt(0) + part.slice(1).toLowerCase() : part;
       return isStressed ? `<span class="stress">${display}</span>` : display;
     }).join("");
@@ -3466,9 +3519,10 @@
   function stressHtmlKeepCase(sylString, originalWord) {
     if (!sylString) return "";
     const flatSyllables = sylString.split("-");
+    const betontKeep = Core.betonteSilbenIndex(flatSyllables);
     let pos = 0;
-    return flatSyllables.map((part) => {
-      const isStressed = part === part.toUpperCase() && /[A-ZÄÖÜ]/.test(part);
+    return flatSyllables.map((part, iSil) => {
+      const isStressed = iSil === betontKeep;
       const len = part.length;
       const real = (originalWord || "").slice(pos, pos + len) || part.toLowerCase();
       pos += len;
@@ -5122,7 +5176,36 @@
      VOKABELTRAINER
      ============================================================ */
   const vocabArea = document.getElementById("vocabArea");
+
+  /* ============================================================
+     Wörterbuch nachladen
+     ------------------------------------------------------------
+     Seit Version 160 steckt die Wortliste nicht mehr in
+     data-vocab.js, sondern in vokabeln/<thema>.js. Das spart beim
+     Start 3,6 MB Download und Parsen — auf dem Handy war das die
+     teuerste Einzeldatei der App.
+
+     wortschatzBereit() stößt das Nachladen an und liefert ein
+     Promise. Alle Ansichten, die Wörter brauchen, rufen
+     wortschatzNachziehen(fn) auf: die Ansicht zeichnet sofort mit
+     dem, was schon da ist, und zeichnet sich noch einmal, sobald
+     die Wörter angekommen sind. So wartet niemand vor einem
+     leeren Bildschirm.
+     ============================================================ */
+  function wortschatzBereit() {
+    return (VocabData.ladeWoerter ? VocabData.ladeWoerter() : Promise.resolve(true));
+  }
+  function wortschatzNachziehen(nachzeichnen) {
+    if (VocabData.alleThemenDa && VocabData.alleThemenDa()) return false;
+    // Nicht selbst anstoßen: sonst würde schon der allererste Aufbau der Seite
+    // den ganzen Wortschatz ziehen, obwohl niemand eine Wortansicht geöffnet
+    // hat. Angestoßen wird beim Wechsel nach „Lernen"/„Wissen" (activateTab).
+    if (!VocabData.ladenLaeuft || !VocabData.ladenLaeuft()) return true;
+    wortschatzBereit().then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
+    return true;
+  }
   function renderVocab(filter = "") {
+    wortschatzNachziehen(() => { if (vocabArea && vocabArea.innerHTML) renderVocab(filter); });
     const list = VocabData.WORDS.filter((w) => w.word.toLowerCase().includes(filter.toLowerCase()) || w.en.toLowerCase().includes(filter.toLowerCase()));
     vocabArea.innerHTML = `
       <div class="vocab-toolbar"><input type="text" class="vocab-search" id="vocabSearch" placeholder="Wort suchen…" value="${filter}" /></div>
@@ -5159,9 +5242,13 @@
   }
   function stressTrainerWordPool() {
     const pool = [];
-    VocabData.WORDS.forEach((w) => { if (w.syl && w.syl.includes("-")) pool.push({ word: w.word, syl: stripArticleFromSyl(w.syl), en: w.en }); });
+    /* Mehrwortige Stichwörter („zu Lebzeiten", „gute Besserung") sind für das
+       Wörterbuch richtig, für diese Übung aber nicht: hier soll man EINE Silbe
+       eines EINEN Wortes anklicken. Sie bleiben deshalb draußen. */
+    const einWort = (syl) => syl.includes("-") && !stripArticleFromSyl(syl).includes(" ");
+    VocabData.WORDS.forEach((w) => { if (w.syl && einWort(w.syl)) pool.push({ word: w.word, syl: stripArticleFromSyl(w.syl), en: w.en }); });
     Object.entries(ExerciseData.WORD_SYL || {}).forEach(([word, syl]) => {
-      if (syl.includes("-")) pool.push({ word, syl: stripArticleFromSyl(syl), en: ExerciseData.WORD_MEANINGS[word] });
+      if (einWort(syl)) pool.push({ word, syl: stripArticleFromSyl(syl), en: ExerciseData.WORD_MEANINGS[word] });
     });
     // Typische "Problemwörter" für Deutschlernende werden dreifach ins Los-Topf gelegt, damit sie
     // im Schnitt deutlich häufiger drankommen als der übrige, eher zufällige Wortschatz — genau
@@ -5212,7 +5299,7 @@
     for (const [suf, label] of Object.entries(suffixes)) {
       if (lower.endsWith(suf)) return `Wörter mit der Endung „${label}" (meist aus dem Lateinischen/Französischen) werden auf dieser Endung betont.`;
     }
-    if (syl.split("-")[0] === syl.split("-")[0].toUpperCase()) {
+    if (Core.silbeIstGross(syl.split("-")[0])) {
       return "Typisches deutsches Muster: Die erste (Stamm-)Silbe trägt die Betonung.";
     }
     return "Bei diesem Wort (oft ein Lehnwort) liegt die Betonung nicht auf der ersten Silbe — das kommt bei Fremdwörtern öfter vor.";
@@ -5246,7 +5333,7 @@
      ------------------------------------------------------------------ */
   function stressPosition(entry) {
     const s = entry.syl.split("-");
-    const i = s.findIndex((x) => x === x.toUpperCase() && /[A-ZÄÖÜ]/.test(x));
+    const i = Core.betonteSilbenIndex(s);
     if (i < 0) return null;
     if (i === 0) return "erste";
     if (i === s.length - 1 && s.length > 2) return "letzte";
@@ -5289,7 +5376,7 @@
     const entry = quelle[Math.floor(Math.random() * quelle.length)];
     usedWords.add(entry.word);
     const syllables = entry.syl.split("-");
-    const correctIdx = syllables.findIndex((s) => s === s.toUpperCase());
+    const correctIdx = Core.betonteSilbenIndex(syllables);
     if (stTrainerSession) stTrainerSession.letzteSilbenzahl = syllables.length;
     stTrainerWord = { ...entry, syllables, correctIdx };
   }
@@ -5454,8 +5541,10 @@
     "haupt", "neben", "vor", "nach", "mit", "aus", "ein", "über", "unter", "zwischen",
   ];
   let kompositumStaemme = null;
+  let kompositumWoerter = -1;
   function kompositumWortschatz() {
-    if (kompositumStaemme) return kompositumStaemme;
+    if (kompositumStaemme && kompositumWoerter === VocabData.WORDS.length) return kompositumStaemme;
+    kompositumWoerter = VocabData.WORDS.length;
     const menge = new Set();
     const merken = (w) => {
       if (!w) return;
@@ -5603,8 +5692,10 @@
   // zuverlässig erkennen könnte.
   // ============================================================
   let vocabExtraMapCache = null;
+  let vocabExtraMapWoerter = -1;
   function vocabExtraMap() {
-    if (vocabExtraMapCache) return vocabExtraMapCache;
+    if (vocabExtraMapCache && vocabExtraMapWoerter === VocabData.WORDS.length) return vocabExtraMapCache;
+    vocabExtraMapWoerter = VocabData.WORDS.length;
     const m = Object.create(null);
     (VocabData.WORDS || []).filter((w) => w && (w.level || w.theme)).forEach((w) => {
       if (!w || !w.word) return;
@@ -6003,12 +6094,14 @@
     return `${h.emoji} ${it.article}${it.article.endsWith("'") ? "" : " "}${it.noun} <span class="empty-note" style="font-size:0.68rem;">(${h.article} ${h.noun})</span>`;
   }
 
+  let dictCacheWoerter = -1;
   function buildDictionaryEntries() {
     const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
-    if (dictCache && dictCacheRaum === raum) return dictCache;
+    if (dictCache && dictCacheRaum === raum && dictCacheWoerter === VocabData.WORDS.length) return dictCache;
     const entries = buildDictionaryEntriesUncached();
     dictCache = entries;
     dictCacheRaum = raum;
+    dictCacheWoerter = VocabData.WORDS.length;
     return entries;
   }
   function buildDictionaryEntriesUncached() {
@@ -6482,6 +6575,7 @@
           </div>`;
   }
   function renderDictionary(filter = "") {
+    wortschatzNachziehen(() => renderDictionary(filter));
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
     const verifiedCount = all.filter((e) => e.verified).length;
@@ -9072,6 +9166,7 @@
   let vmFinished = false;
   function vmBuildDictionary() {
     const words = new Set();
+    wortschatzBereit();   // beim ersten Spiel anstoßen, falls noch nicht geschehen
     // Wörter mit Artikel-Präfix ("der Apfel") müssen für den Buchstaben-Abgleich bereinigt
     // werden — sonst würde "der Apfel" fälschlich unter "D" statt "A" gezählt.
     const stripArticle = (w) => w.replace(/^(der|die|das)\s+/i, "");
@@ -14623,7 +14718,7 @@
   let turmSession = null;
   const TURM_RUNDEN = 10;
   function turmWortpool() {
-    return buildDictionaryEntries().filter((e) => e.verified && e.syl && e.syl.includes("-") && e.syl.split("-").length >= 2 && e.syl.split("-").length <= 5 && e.level);
+    return buildDictionaryEntries().filter((e) => e.verified && e.syl && e.syl.includes("-") && !e.syl.includes(" ") && e.syl.split("-").length >= 2 && e.syl.split("-").length <= 5 && e.level);
   }
   function neueTurmSession() {
     turmLevel = applyDefaultCefrLevel(turmLevel, (v) => { turmLevel = v; }, "silbenturm");
@@ -14638,7 +14733,7 @@
     const e = quelle[Math.floor(Math.random() * quelle.length)];
     turmSession.gespielt.push(e.word);
     const silben = e.syl.split("-");
-    turmSession.wort = { ...e, silben, betontIdx: silben.findIndex((t) => t === t.toUpperCase() && /[A-ZÄÖÜ]/.test(t)) };
+    turmSession.wort = { ...e, silben, betontIdx: Core.betonteSilbenIndex(silben) };
     turmSession.gelegt = [];
     turmSession.vorrat = Core.shuffle(silben.map((t, i) => ({ t, i })));
     turmSession.phase = "bauen";
@@ -15418,12 +15513,550 @@
      eigene Gestaltung, sondern nur ein anderer Font — und genau das
      soll es nicht sein. Die übrigen Spiele bleiben so lange ohne
      Schriftzug, bis auch sie eine eigene Form haben. */
+  /* ==================================================================
+     EIGENE SCHRIFTZÜGE FÜR DIE ÜBRIGEN SPIELE
+     ------------------------------------------------------------------
+     Ausdrücklicher Wunsch: NICHT überall dieselbe Schrift. Jedes Spiel
+     bekommt seinen eigenen, farbigen Schriftzug, gebaut aus derselben
+     selbst gezeichneten Buchstabengeometrie (BUCHSTABEN), aber jeweils
+     anders behandelt — so wie die Wortblasen Luftballons sind und die
+     Wort-Kanone glüht. Die Buchstaben sind bewusst kräftig; dünne
+     Striche waren der Kritikpunkt an der ersten Fassung.
+
+     Jede Funktion hier baut ihr SVG selbst, damit sie Dinge tun kann,
+     die eine gemeinsame Schablone nicht hergäbe: Schienen unterlegen,
+     Karten stapeln, Blüten aufsetzen, Funken sprühen.
+     ================================================================== */
+
+  // Zählt hoch, damit Verlaufs- und Musterkennungen im Dokument eindeutig
+  // bleiben — zwei SVGs mit derselben id würden sich gegenseitig stören.
+  let schriftzugNr = 0;
+
+  function schriftHuelle(teile, minX, minY, breite, hoehe, zielHoehe, label) {
+    const h = Math.max(hoehe, 1);
+    const b = Math.max(breite, 1);
+    return `<svg class="wortlogo" viewBox="${minX} ${minY} ${b} ${h}" height="${zielHoehe}"`
+      + ` width="${Math.round((b / h) * zielHoehe)}" role="img"`
+      + ` aria-label="${String(label).replace(/"/g, "&quot;")}" preserveAspectRatio="xMinYMid meet">${teile.join("")}</svg>`;
+  }
+  // Ein Buchstabe als gefüllter Umriss wirkt schwerer als ein Strich —
+  // erreicht wird das über zwei übereinanderliegende Striche: außen dunkel
+  // und dick, innen die eigentliche Farbe.
+  function dickerBuchstabe(z, x, y, farbe, randfarbe, staerke, drehung, skala) {
+    const pfade = BUCHSTABEN[z];
+    if (!pfade) return "";
+    const dreh = drehung ? ` rotate(${drehung} 50 70)` : "";
+    const gr = skala && skala !== 1 ? ` scale(${skala})` : "";
+    const tf = `translate(${x} ${y})${gr}${dreh}`;
+    let out = "";
+    if (randfarbe) {
+      out += pfade.map((d) => `<path d="${d}" transform="${tf}" fill="none" stroke="${randfarbe}"`
+        + ` stroke-width="${staerke + 9}" stroke-linecap="round" stroke-linejoin="round"/>`).join("");
+    }
+    out += pfade.map((d) => `<path d="${d}" transform="${tf}" fill="none" stroke="${farbe}"`
+      + ` stroke-width="${staerke}" stroke-linecap="round" stroke-linejoin="round"/>`).join("");
+    return out;
+  }
+  function zeichenListe(text) { return String(text).toUpperCase().split(""); }
+  function zeichenBreite(z) { return BUCHSTABEN_ABSTAND[z] || 78; }
+
+  /* --- Artikel-Garten: die Buchstaben wachsen als Stängel, oben blüht
+         je eine Blüte in den drei Artikelfarben. ------------------- */
+  const GARTEN_BLUETEN = ["#3B82C4", "#D2456B", "#3E9C6B"];
+  function gartenSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    let x = 0;
+    // Erde unter allem
+    zeichenListe(text).forEach((z, i) => {
+      const b = zeichenBreite(z) + 16;
+      const farbe = GARTEN_BLUETEN[i % 3];
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, "#4E9E4A", "#2F6E33", 24));
+        // Blüte: fünf Blätter um einen gelben Kern, sitzt oben links am Buchstaben
+        const bx = x + 26, by = -14;
+        for (let n = 0; n < 5; n++) {
+          const w = (n / 5) * Math.PI * 2;
+          teile.push(`<ellipse cx="${(bx + Math.cos(w) * 15).toFixed(1)}" cy="${(by + Math.sin(w) * 15).toFixed(1)}"`
+            + ` rx="11" ry="8" fill="${farbe}" transform="rotate(${Math.round((w * 180) / Math.PI)} ${(bx + Math.cos(w) * 15).toFixed(1)} ${(by + Math.sin(w) * 15).toFixed(1)})"/>`);
+        }
+        teile.push(`<circle cx="${bx}" cy="${by}" r="8" fill="#F6C445"/>`);
+        // Ein Blatt am Stängel
+        teile.push(`<path d="M${x + 44} 84 q22 -6 30 10 q-24 8 -30 -10 Z" fill="#66B45C"/>`);
+      }
+      x += b;
+    });
+    teile.unshift(`<path d="M-14 138 Q${x / 2} 152 ${x + 10} 138 L${x + 10} 158 L-14 158 Z" fill="#8B6446"/>`);
+    return schriftHuelle(teile, -30, -46, x + 46, BUCHSTABEN_HOEHE + 96, o.hoehe || 74, text);
+  }
+
+  /* --- Blitzrunde: heller Kern, gelber Hof, ein Zickzack dahinter. --- */
+  function blitzSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const id = "bl" + (schriftzugNr += 1);
+    const teile = [`<defs><filter id="${id}" x="-40%" y="-40%" width="180%" height="180%">`
+      + `<feGaussianBlur stdDeviation="7" result="w"/><feMerge><feMergeNode in="w"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`];
+    let x = 0;
+    const zeichen = zeichenListe(text);
+    // Der Blitz hinter der Schrift
+    let zack = "M-16 20";
+    zeichen.forEach((z, i) => { zack += ` L${x + 30} ${i % 2 ? 128 : 24} L${x + 62} ${i % 2 ? 24 : 128}`; x += zeichenBreite(z) + 12; });
+    teile.push(`<path d="${zack}" fill="none" stroke="#2E86AB" stroke-width="16" opacity="0.35" stroke-linejoin="round"/>`);
+    teile.push(`<path d="${zack}" fill="none" stroke="#6FC3FF" stroke-width="7" opacity="0.95" stroke-linejoin="round"/>`);
+    x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 12;
+      const y = (i % 2 ? -9 : 7);
+      if (BUCHSTABEN[z]) {
+        teile.push(`<g filter="url(#${id})">${dickerBuchstabe(z, x, y, "#FFD62E", "#E07B0B", 26, (i % 2 ? -5 : 5))}</g>`);
+        teile.push(dickerBuchstabe(z, x, y, "#FFF6C9", "", 9, (i % 2 ? -5 : 5)));
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -26, -34, x + 46, BUCHSTABEN_HOEHE + 76, o.hoehe || 62, text);
+  }
+
+  /* --- Wortangler: die Buchstaben hängen an der Schnur, unten ein
+         Haken, dazu ein paar Luftblasen im Wasser. ----------------- */
+  const ANGEL_FARBEN = ["#2E86AB", "#34A0A4", "#4C9F70", "#3D7EA6", "#2F8F83"];
+  function anglerSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const haenger = zeichen.map((z, i) => 16 + ((i * 29) % 38));
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 10;
+      if (BUCHSTABEN[z]) {
+        // Die Schnur zum Buchstaben
+        teile.push(`<path d="M${x + 40} -18 L${x + 40} ${haenger[i]}" stroke="#9AA7B2" stroke-width="4"/>`);
+        teile.push(dickerBuchstabe(z, x, haenger[i], ANGEL_FARBEN[i % ANGEL_FARBEN.length], "#1B3C53", 25, (i % 2 ? 4 : -4)));
+      }
+      x += b;
+    });
+    teile.unshift(`<path d="M-20 -18 L${x + 12} -18" stroke="#9AA7B2" stroke-width="5"/>`);
+    // Der Haken am Ende
+    teile.push(`<path d="M${x + 12} -18 L${x + 12} 30 q0 22 -20 22 q-18 0 -18 -16" fill="none" stroke="#8892A0" stroke-width="7" stroke-linecap="round"/>`);
+    // Luftblasen
+    [[-6, 96, 9], [26, 132, 6], [70, 118, 5]].forEach(([bx, by, r]) => {
+      teile.push(`<circle cx="${bx}" cy="${by}" r="${r}" fill="none" stroke="#8FD3E8" stroke-width="3" opacity="0.8"/>`);
+    });
+    return schriftHuelle(teile, -34, -34, x + 68, BUCHSTABEN_HOEHE + 108, o.hoehe || 70, text);
+  }
+
+  /* --- Wortleiter: die Buchstaben steigen eine Leiter hinauf. ------- */
+  function leiterSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const hoehen = zeichen.map((z, i) => -i * 15);
+    // Holme und Sprossen hinter der Schrift
+    const letzteY = hoehen[hoehen.length - 1] || 0;
+    zeichen.forEach((z) => { x += zeichenBreite(z) + 8; });
+    teile.push(`<path d="M-18 150 L${x - 40} ${150 + letzteY}" stroke="#B07A3E" stroke-width="10" stroke-linecap="round"/>`);
+    teile.push(`<path d="M-18 -6 L${x - 40} ${-6 + letzteY}" stroke="#B07A3E" stroke-width="10" stroke-linecap="round"/>`);
+    x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 8;
+      teile.push(`<path d="M${x - 10} ${hoehen[i] + 150} L${x - 10} ${hoehen[i] - 6}" stroke="#C98F4E" stroke-width="7" stroke-linecap="round" opacity="0.85"/>`);
+      x += b;
+    });
+    x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 8;
+      if (BUCHSTABEN[z]) {
+        const gruen = 92 - i * 5;
+        teile.push(dickerBuchstabe(z, x, hoehen[i], `hsl(${18 + i * 9} 74% ${gruen > 40 ? 52 : 46}%)`, "#5A3213", 26));
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -34, letzteY - 30, x + 50, BUCHSTABEN_HOEHE + 66 - letzteY, o.hoehe || 96, text);
+  }
+
+  /* --- Wörter-Sortierer: jeder Buchstabe sitzt in einem Korb. ------- */
+  const KORB_FARBEN = ["#D9822B", "#3E8E7E", "#8E5EA2"];
+  function korbSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    let x = 0;
+    zeichenListe(text).forEach((z, i) => {
+      const b = zeichenBreite(z) + 30;
+      const farbe = KORB_FARBEN[i % KORB_FARBEN.length];
+      if (BUCHSTABEN[z]) {
+        // Der Korb: unten breit, oben offen, mit Henkel
+        teile.push(`<path d="M${x - 12} 62 L${x + 96} 62 L${x + 84} 156 L${x} 156 Z" fill="${farbe}" opacity="0.22"/>`);
+        teile.push(`<path d="M${x - 12} 62 L${x + 96} 62 L${x + 84} 156 L${x} 156 Z" fill="none" stroke="${farbe}" stroke-width="7" stroke-linejoin="round"/>`);
+        teile.push(`<path d="M${x + 8} 62 q34 -34 68 0" fill="none" stroke="${farbe}" stroke-width="6"/>`);
+        teile.push(dickerBuchstabe(z, x, -2, farbe, "#2C2438", 25, 0, 0.86));
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -28, -26, x + 40, BUCHSTABEN_HOEHE + 74, o.hoehe || 76, text);
+  }
+
+  /* --- Betonungs-Trainer: eine Silbe trägt den Dudenpunkt. Genau
+         darum geht das Spiel, also zeigt es der Schriftzug auch. --- */
+  function betonungSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    // Die betonte Stelle: die erste Silbe des Wortes, hier schlicht der
+    // zweite Buchstabe — auffällig, aber nicht am Rand.
+    const betont = Math.min(1, zeichen.length - 1);
+    let x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 10;
+      if (BUCHSTABEN[z]) {
+        const hervor = i === betont;
+        teile.push(dickerBuchstabe(z, x, hervor ? -8 : 0, hervor ? "#D63B3B" : "#5C6673", hervor ? "#7C1D1D" : "#39414C", hervor ? 30 : 22));
+        if (hervor) {
+          teile.push(`<circle cx="${x + 50}" cy="${BUCHSTABEN_HOEHE + 16}" r="10" fill="#D63B3B"/>`);
+          teile.push(`<path d="M${x + 8} ${BUCHSTABEN_HOEHE + 40} q42 20 84 0" fill="none" stroke="#D63B3B" stroke-width="6" stroke-linecap="round" opacity="0.7"/>`);
+        } else {
+          teile.push(`<path d="M${x + 26} ${BUCHSTABEN_HOEHE + 16} L${x + 74} ${BUCHSTABEN_HOEHE + 16}" stroke="#98A1AC" stroke-width="6" stroke-linecap="round"/>`);
+        }
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -22, -30, x + 40, BUCHSTABEN_HOEHE + 96, o.hoehe || 66, text);
+  }
+
+  /* --- Buchstabensalat: durcheinandergewürfelt, eine Lupe darüber. -- */
+  const SALAT_FARBEN = ["#E4572E", "#17A2B8", "#E8B10A", "#2E86AB", "#5FA83C", "#A053A1"];
+  function salatSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const lupe = Math.floor(zeichen.length / 2);
+    let lupeX = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 6;
+      if (BUCHSTABEN[z]) {
+        const y = ((i * 53) % 44) - 22;
+        const dreh = ((i * 71) % 40) - 20;
+        teile.push(dickerBuchstabe(z, x, y, SALAT_FARBEN[i % SALAT_FARBEN.length], "#231F20", 24, dreh));
+        if (i === lupe) lupeX = x;
+      }
+      x += b;
+    });
+    // Die Lupe über einem der Buchstaben
+    teile.push(`<circle cx="${lupeX + 50}" cy="66" r="66" fill="#CDEFF9" opacity="0.42"/>`);
+    teile.push(`<circle cx="${lupeX + 50}" cy="66" r="66" fill="none" stroke="#FFFDF6" stroke-width="18"/>`);
+    teile.push(`<circle cx="${lupeX + 50}" cy="66" r="66" fill="none" stroke="#2E282A" stroke-width="9"/>`);
+    teile.push(`<path d="M${lupeX + 97} 113 L${lupeX + 140} 158" stroke="#2E282A" stroke-width="18" stroke-linecap="round"/>`);
+    teile.push(`<path d="M${lupeX + 97} 113 L${lupeX + 140} 158" stroke="#8A7E6A" stroke-width="8" stroke-linecap="round"/>`);
+    return schriftHuelle(teile, -30, -40, x + 100, BUCHSTABEN_HOEHE + 110, o.hoehe || 70, text);
+  }
+
+  /* --- KorrekTour: jeder Buchstabe fährt in einem Waggon. ---------- */
+  const ZUG_FARBEN = ["#C0392B", "#2E86AB", "#E3A81C", "#3E8E5A", "#7D5BA6"];
+  function zugSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    zeichen.forEach((z) => { x += zeichenBreite(z) + 26; });
+    const gesamt = x;
+    // Gleis
+    teile.push(`<path d="M-24 178 L${gesamt + 10} 178" stroke="#6B6357" stroke-width="8"/>`);
+    teile.push(`<path d="M-24 192 L${gesamt + 10} 192" stroke="#6B6357" stroke-width="8"/>`);
+    for (let s = -20; s < gesamt + 10; s += 34) {
+      teile.push(`<path d="M${s} 170 L${s} 200" stroke="#8B7E6A" stroke-width="7" opacity="0.7"/>`);
+    }
+    x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 26;
+      const farbe = ZUG_FARBEN[i % ZUG_FARBEN.length];
+      if (BUCHSTABEN[z]) {
+        teile.push(`<rect x="${x - 14}" y="-6" width="${zeichenBreite(z) + 26}" height="${BUCHSTABEN_HOEHE + 32}" rx="12" fill="${farbe}" opacity="0.2"/>`);
+        teile.push(`<rect x="${x - 14}" y="-6" width="${zeichenBreite(z) + 26}" height="${BUCHSTABEN_HOEHE + 32}" rx="12" fill="none" stroke="${farbe}" stroke-width="8"/>`);
+        teile.push(dickerBuchstabe(z, x, 6, farbe, "#2B2B33", 24, 0, 0.9));
+        teile.push(`<circle cx="${x + 6}" cy="166" r="13" fill="#3B3348"/><circle cx="${x + 6}" cy="166" r="5" fill="#C9C2B4"/>`);
+        teile.push(`<circle cx="${x + 60}" cy="166" r="13" fill="#3B3348"/><circle cx="${x + 60}" cy="166" r="5" fill="#C9C2B4"/>`);
+        if (i > 0) teile.push(`<path d="M${x - 22} 120 L${x - 14} 120" stroke="#3B3348" stroke-width="7"/>`);
+      }
+      x += b;
+    });
+    // Schornstein mit Rauch über dem ersten Waggon
+    teile.push(`<rect x="10" y="-44" width="24" height="40" rx="5" fill="#3B3348"/>`);
+    [[6, -70, 13], [34, -92, 10], [58, -108, 7]].forEach(([cx, cy, r]) => {
+      teile.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#C9C2B4" opacity="0.75"/>`);
+    });
+    return schriftHuelle(teile, -34, -122, gesamt + 60, BUCHSTABEN_HOEHE + 200, o.hoehe || 92, text);
+  }
+
+  /* --- Wo ist die Katze?: Ohren vorn, Schwanz hinten, Schnurrhaare. - */
+  function katzenSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 10;
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, i % 2 ? "#E9A23B" : "#B9762E", "#4A2E17", 26));
+        if (i === 0) {
+          // Zwei Ohren auf dem ersten Buchstaben
+          teile.push(`<path d="M${x + 8} 16 L${x + 16} -26 L${x + 42} 6 Z" fill="#B9762E" stroke="#4A2E17" stroke-width="6" stroke-linejoin="round"/>`);
+          teile.push(`<path d="M${x + 92} 16 L${x + 84} -26 L${x + 58} 6 Z" fill="#B9762E" stroke="#4A2E17" stroke-width="6" stroke-linejoin="round"/>`);
+        }
+        if (i === zeichen.length - 1) {
+          teile.push(`<path d="M${x + 92} 116 q52 12 40 -44 q-6 -26 -30 -18" fill="none" stroke="#B9762E" stroke-width="20" stroke-linecap="round"/>`);
+          teile.push(`<path d="M${x + 92} 116 q52 12 40 -44 q-6 -26 -30 -18" fill="none" stroke="#4A2E17" stroke-width="6" stroke-linecap="round" opacity="0.45"/>`);
+        }
+      }
+      x += b;
+    });
+    // Schnurrhaare links
+    teile.push(`<path d="M-26 74 L14 68 M-26 90 L14 88 M-24 106 L14 104" stroke="#4A2E17" stroke-width="5" stroke-linecap="round" opacity="0.8"/>`);
+    return schriftHuelle(teile, -44, -44, x + 108, BUCHSTABEN_HOEHE + 92, o.hoehe || 72, text);
+  }
+
+  /* --- Memory: die Buchstaben liegen als Karten aus, dahinter ein
+         verdeckter Stapel. ---------------------------------------- */
+  function memorySchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    let x = 0;
+    zeichenListe(text).forEach((z, i) => {
+      const b = zeichenBreite(z) + 28;
+      if (BUCHSTABEN[z]) {
+        const dreh = ((i % 3) - 1) * 4;
+        const g = `rotate(${dreh} ${x + 44} 70)`;
+        teile.push(`<g transform="${g}">`
+          + `<rect x="${x - 16}" y="-14" width="${zeichenBreite(z) + 32}" height="${BUCHSTABEN_HOEHE + 34}" rx="12" fill="#FFFDF6" stroke="#3B3348" stroke-width="7"/>`
+          + `<rect x="${x - 8}" y="-6" width="${zeichenBreite(z) + 16}" height="${BUCHSTABEN_HOEHE + 18}" rx="8" fill="none" stroke="#D9CEB8" stroke-width="4"/>`
+          + dickerBuchstabe(z, x, 2, i % 2 ? "#2E86AB" : "#C0562F", "", 26)
+          + `</g>`);
+      }
+      x += b;
+    });
+    // Verdeckter Stapel rechts
+    for (let n = 2; n >= 0; n--) {
+      teile.push(`<rect x="${x + 6 + n * 7}" y="${-6 - n * 7}" width="84" height="${BUCHSTABEN_HOEHE + 26}" rx="12" fill="#5B4B8A" stroke="#3B3348" stroke-width="7"/>`);
+    }
+    teile.push(`<path d="M${x + 26} 26 L${x + 76} 116 M${x + 76} 26 L${x + 26} 116" stroke="#EADFF7" stroke-width="6" opacity="0.55"/>`);
+    return schriftHuelle(teile, -30, -46, x + 130, BUCHSTABEN_HOEHE + 92, o.hoehe || 68, text);
+  }
+
+  /* --- Satzpuzzle: jeder Buchstabe ist ein Puzzleteil, das ins
+         nächste greift. ------------------------------------------- */
+  function puzzleSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const farben = ["#7FB2D9", "#F2A65A", "#8FCB9B", "#D98FB0", "#C7B3E5"];
+    const teile = [];
+    let x = 0;
+    zeichenListe(text).forEach((z, i) => {
+      const b = zeichenBreite(z) + 20;
+      const w = zeichenBreite(z) + 24;
+      const f = farben[i % farben.length];
+      if (BUCHSTABEN[z]) {
+        const links = i === 0
+          ? `L${x - 12} ${BUCHSTABEN_HOEHE + 22}`
+          : `L${x - 12} 86 q-20 0 -20 -16 q0 -16 20 -16 L${x - 12} ${BUCHSTABEN_HOEHE + 22}`;
+        const d = `M${x - 12} -12 L${x - 12 + w} -12 `
+          + `L${x - 12 + w} 54 q20 0 20 16 q0 16 -20 16 L${x - 12 + w} ${BUCHSTABEN_HOEHE + 22} `
+          + `L${x - 12} ${BUCHSTABEN_HOEHE + 22} ` + (i === 0 ? "" : `L${x - 12} 86 q-20 0 -20 -16 q0 -16 20 -16 `) + "Z";
+        teile.push(`<path d="${d}" fill="${f}" stroke="#3B3348" stroke-width="6" stroke-linejoin="round"/>`);
+        teile.push(dickerBuchstabe(z, x, 4, "#FFFDF6", "#3B3348", 22, 0, 0.92));
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -44, -30, x + 74, BUCHSTABEN_HOEHE + 72, o.hoehe || 66, text);
+  }
+
+  /* --- Vokabelmeister: Buchstaben auf Tasten, wie auf einer
+         Schreibmaschine. ------------------------------------------ */
+  const TASTEN_FARBEN = [
+    { kappe: "#2F6B8F", sockel: "#1B4055" }, { kappe: "#C0562F", sockel: "#72301A" },
+    { kappe: "#3E8E5A", sockel: "#215434" }, { kappe: "#7D5BA6", sockel: "#48326A" },
+    { kappe: "#D9A02B", sockel: "#8B6212" },
+  ];
+  function tastenSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    let x = 0;
+    zeichenListe(text).forEach((z, i) => {
+      const b = zeichenBreite(z) + 26;
+      const w = zeichenBreite(z) + 30;
+      if (BUCHSTABEN[z]) {
+        const t = TASTEN_FARBEN[i % TASTEN_FARBEN.length];
+        teile.push(`<rect x="${x - 15}" y="0" width="${w}" height="${BUCHSTABEN_HOEHE + 34}" rx="14" fill="${t.sockel}"/>`);
+        teile.push(`<rect x="${x - 15}" y="-12" width="${w}" height="${BUCHSTABEN_HOEHE + 34}" rx="14" fill="${t.kappe}" stroke="${t.sockel}" stroke-width="6"/>`);
+        teile.push(`<rect x="${x - 6}" y="-4" width="${w - 18}" height="${BUCHSTABEN_HOEHE + 16}" rx="9" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.45"/>`);
+        teile.push(dickerBuchstabe(z, x, 4, "#FFFDF6", "", 25, 0, 0.9));
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -30, -32, x + 46, BUCHSTABEN_HOEHE + 88, o.hoehe || 66, text);
+  }
+
+  /* --- Satzbrücke: die Buchstaben spannen sich als Bogen, darunter
+         die Fahrbahn, dazwischen die Seile. ------------------------ */
+  function brueckeSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const stellen = [];
+    zeichen.forEach((z, i) => {
+      const t = zeichen.length > 1 ? i / (zeichen.length - 1) : 0.5;
+      const y = -Math.sin(t * Math.PI) * 70;
+      stellen.push([x, y, (t - 0.5) * 30]);
+      x += zeichenBreite(z) + 10;
+    });
+    const gesamt = x;
+    // Fahrbahn
+    teile.push(`<path d="M-26 176 L${gesamt + 10} 176" stroke="#6E7B8B" stroke-width="14" stroke-linecap="round"/>`);
+    teile.push(`<path d="M-26 192 L${gesamt + 10} 192" stroke="#95A3B3" stroke-width="6" stroke-linecap="round" opacity="0.8"/>`);
+    // Pylone
+    [-10, gesamt - 34].forEach((px) => {
+      teile.push(`<path d="M${px + 22} 176 L${px + 22} -96" stroke="#4A5A6A" stroke-width="12" stroke-linecap="round"/>`);
+      teile.push(`<path d="M${px + 4} -96 L${px + 40} -96" stroke="#4A5A6A" stroke-width="10" stroke-linecap="round"/>`);
+    });
+    // Seile von den Pylonen zur Fahrbahn
+    stellen.forEach(([sx]) => {
+      teile.push(`<path d="M12 -92 L${sx + 44} 172" stroke="#8FA0B2" stroke-width="3" opacity="0.6"/>`);
+      teile.push(`<path d="M${gesamt - 12} -92 L${sx + 44} 172" stroke="#8FA0B2" stroke-width="3" opacity="0.6"/>`);
+    });
+    stellen.forEach(([sx, sy, dreh], i) => {
+      const z = zeichen[i];
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, sx, sy, i % 2 ? "#2F6B8F" : "#3E8E7E", "#1F3543", 26, dreh));
+    });
+    return schriftHuelle(teile, -36, -112, gesamt + 64, BUCHSTABEN_HOEHE + 200, o.hoehe || 92, text);
+  }
+
+  /* --- Wortschmiede: glühendes Eisen auf dem Amboss, mit Funken. --- */
+  function schmiedeSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const id = "sm" + (schriftzugNr += 1);
+    const teile = [`<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">`
+      + `<stop offset="0%" stop-color="#FFD36E"/><stop offset="45%" stop-color="#E8721F"/><stop offset="100%" stop-color="#8E3416"/></linearGradient></defs>`];
+    let x = 0;
+    const zeichen = zeichenListe(text);
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 10;
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, "#2F2A33", "", 40));
+        teile.push(dickerBuchstabe(z, x, 0, `url(#${id})`, "", 26));
+        teile.push(dickerBuchstabe(z, x, -4, "#FFE9AE", "", 7));
+        // Funken um den Buchstaben
+        for (let n = 0; n < 3; n++) {
+          const fx = x + 12 + ((i * 37 + n * 53) % 70);
+          const fy = -18 - ((i * 23 + n * 31) % 26);
+          teile.push(`<circle cx="${fx}" cy="${fy}" r="${3 + (n % 2)}" fill="#FFC24A" opacity="0.9"/>`);
+        }
+      }
+      x += b;
+    });
+    // Amboss unter der Schrift
+    teile.push(`<path d="M-16 156 L${x + 4} 156 L${x - 16} 178 L4 178 Z" fill="#4A4550"/>`);
+    return schriftHuelle(teile, -30, -56, x + 52, BUCHSTABEN_HOEHE + 122, o.hoehe || 66, text);
+  }
+
+  /* --- Wer bin ich?: halb verdeckt, ein großes Fragezeichen dahinter. */
+  function raetselSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    zeichen.forEach((z) => { x += zeichenBreite(z) + 10; });
+    const gesamt = x;
+    // Das Fragezeichen im Hintergrund
+    teile.push(`<g opacity="0.16" transform="translate(${gesamt / 2 - 46} -14) scale(1.5)">`
+      + (BUCHSTABEN["?"] || []).map((d) => `<path d="${d}" fill="none" stroke="#5B4B8A" stroke-width="30" stroke-linecap="round"/>`).join("")
+      + `</g>`);
+    x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 10;
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, i % 2 ? "#6C4FA1" : "#3F8F8B", "#2A2140", 26));
+        // Jeder zweite Buchstabe verschwindet halb hinter einem Tuch
+        if (i % 2 === 1) {
+          teile.push(`<path d="M${x - 16} 64 L${x + 96} 64 L${x + 96} ${BUCHSTABEN_HOEHE + 26} q-28 14 -56 0 q-28 -14 -56 0 Z" fill="#241C38" opacity="0.82"/>`);
+        }
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -30, -40, gesamt + 52, BUCHSTABEN_HOEHE + 86, o.hoehe || 66, text);
+  }
+
+  /* --- Wortbaustelle: Warnstreifen, Absperrung, ein Hütchen. ------- */
+  function baustelleSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const id = "ba" + (schriftzugNr += 1);
+    const teile = [`<defs><pattern id="${id}" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">`
+      + `<rect width="26" height="26" fill="#F4C02C"/><rect width="13" height="26" fill="#2B2B33"/></pattern></defs>`];
+    let x = 0;
+    const zeichen = zeichenListe(text);
+    zeichen.forEach((z) => { x += zeichenBreite(z) + 10; });
+    const gesamt = x;
+    // Absperrbalken hinter der Schrift
+    teile.push(`<rect x="-24" y="-34" width="${gesamt + 40}" height="22" rx="6" fill="url(#${id})"/>`);
+    teile.push(`<rect x="-24" y="${BUCHSTABEN_HOEHE + 16}" width="${gesamt + 40}" height="22" rx="6" fill="url(#${id})"/>`);
+    x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 10;
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, "#2B2B33", "", 38));
+        teile.push(dickerBuchstabe(z, x, 0, i % 2 ? "#F4C02C" : "#F09030", "", 24));
+      }
+      x += b;
+    });
+    // Ein Hütchen am Ende
+    teile.push(`<path d="M${gesamt + 6} ${BUCHSTABEN_HOEHE + 12} L${gesamt + 34} 12 L${gesamt + 62} ${BUCHSTABEN_HOEHE + 12} Z" fill="#E4572E" stroke="#8E2C14" stroke-width="5" stroke-linejoin="round"/>`);
+    teile.push(`<rect x="${gesamt + 12}" y="60" width="44" height="16" fill="#FFFDF6" opacity="0.9"/>`);
+    return schriftHuelle(teile, -34, -46, gesamt + 116, BUCHSTABEN_HOEHE + 104, o.hoehe || 66, text);
+  }
+
+  /* --- Wort-Typ: jede Wortart hat ihre Farbe, wie in der Grammatik. - */
+  const WORTART_FARBEN = [
+    { farbe: "#2F6B8F", rand: "#1C3F55" },   // Nomen
+    { farbe: "#C0562F", rand: "#71301A" },   // Verb
+    { farbe: "#3E8E5A", rand: "#215433" },   // Adjektiv
+  ];
+  function wortartSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    let x = 0;
+    zeichenListe(text).forEach((z, i) => {
+      const b = zeichenBreite(z) + 12;
+      const f = WORTART_FARBEN[i % WORTART_FARBEN.length];
+      if (BUCHSTABEN[z]) {
+        teile.push(dickerBuchstabe(z, x, 0, f.farbe, f.rand, 27));
+        // Der Farbstreifen darunter, wie eine Markierung im Heft
+        teile.push(`<rect x="${x - 6}" y="${BUCHSTABEN_HOEHE + 14}" width="${zeichenBreite(z) + 8}" height="14" rx="7" fill="${f.farbe}" opacity="0.85"/>`);
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -24, -28, x + 40, BUCHSTABEN_HOEHE + 78, o.hoehe || 64, text);
+  }
+
   const SPIEL_SCHRIFTFORM = {
     "sub-crossword": { bauart: "kreuz", woerter: ["Kreuzwort", "Rätsel"] },
     "sub-bubbles": { bauart: "blase" },
     "sub-kanone": { bauart: "wucht" },
     "sub-silbenturm": { bauart: "silben", silben: ["Sil", "ben", "turm"] },
     "sub-wackelturm": { bauart: "turm" },
+    "sub-artikelgarten": { bauart: "garten" },
+    "sub-blitzrunde": { bauart: "blitz" },
+    "sub-wortangler": { bauart: "angler" },
+    "sub-wortleiter": { bauart: "leiter" },
+    "sub-sortierer": { bauart: "korb", text: "Sortierer" },
+    "sub-stresstrainer": { bauart: "betonung", text: "Betonung" },
+    "sub-wordsearch": { bauart: "salat" },
+    "sub-korrektour": { bauart: "zug" },
+    "sub-katzenzimmer": { bauart: "katze", text: "Katze" },
+    "sub-memory": { bauart: "memory" },
+    "sub-satzpuzzle": { bauart: "puzzle" },
+    "sub-vokabelmeister": { bauart: "tasten" },
+    "sub-satzbruecke": { bauart: "bruecke" },
+    "sub-wortschmiede": { bauart: "schmiede" },
+    "sub-werbinich": { bauart: "raetsel", text: "Wer bin ich?" },
+    "sub-wordbuild": { bauart: "baustelle" },
+    "sub-wortarten": { bauart: "wortart" },
   };
 
   function spielTitelEinsetzen(sub) {
@@ -15439,11 +16072,33 @@
     }
     const wunsch = SPIEL_SCHRIFTFORM[sub];
     if (!wunsch) { kopf.remove(); return; }
+    const wort = wunsch.text || eintrag.name;
+    const bauer = {
+      blase: () => blasenSchriftzug(wort, { hoehe: 62 }),
+      wucht: () => wuchtSchriftzug(wort, { hoehe: 58 }),
+      turm: () => turmSchriftzug(wort, { hoehe: 190 }),
+      garten: () => gartenSchriftzug(wort, { hoehe: 78 }),
+      blitz: () => blitzSchriftzug(wort, { hoehe: 64 }),
+      angler: () => anglerSchriftzug(wort, { hoehe: 74 }),
+      leiter: () => leiterSchriftzug(wort, { hoehe: 100 }),
+      korb: () => korbSchriftzug(wort, { hoehe: 80 }),
+      betonung: () => betonungSchriftzug(wort, { hoehe: 70 }),
+      salat: () => salatSchriftzug(wort, { hoehe: 74 }),
+      zug: () => zugSchriftzug(wort, { hoehe: 96 }),
+      katze: () => katzenSchriftzug(wort, { hoehe: 76 }),
+      memory: () => memorySchriftzug(wort, { hoehe: 70 }),
+      puzzle: () => puzzleSchriftzug(wort, { hoehe: 68 }),
+      tasten: () => tastenSchriftzug(wort, { hoehe: 68 }),
+      bruecke: () => brueckeSchriftzug(wort, { hoehe: 96 }),
+      schmiede: () => schmiedeSchriftzug(wort, { hoehe: 70 }),
+      raetsel: () => raetselSchriftzug(wort, { hoehe: 68 }),
+      baustelle: () => baustelleSchriftzug(wort, { hoehe: 70 }),
+      wortart: () => wortartSchriftzug(wort, { hoehe: 66 }),
+    };
     if (wunsch.bauart === "kreuz") kopf.innerHTML = kreuzSchriftzug(wunsch.woerter[0], wunsch.woerter[1], { hoehe: 150 });
-    else if (wunsch.bauart === "blase") kopf.innerHTML = blasenSchriftzug(eintrag.name, { hoehe: 62 });
-    else if (wunsch.bauart === "wucht") kopf.innerHTML = wuchtSchriftzug(eintrag.name, { hoehe: 58 });
-    else if (wunsch.bauart === "turm") kopf.innerHTML = turmSchriftzug(eintrag.name, { hoehe: 190 });
     else if (wunsch.bauart === "silben") kopf.innerHTML = silbenSchriftzug(wunsch.silben, { hoehe: 150 });
+    else if (bauer[wunsch.bauart]) kopf.innerHTML = bauer[wunsch.bauart]();
+    else kopf.remove();
   }
   /* Ein Beobachter, damit der Titel auch nach einem Neuzeichnen des
      Spielbereichs wieder oben steht — viele Spiele bauen ihren Inhalt
@@ -21047,8 +21702,17 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "159";
+  const APP_VERSION = "160";
   const APP_CHANGELOG = {
+    "160": [
+      "\u{1F4D6} Das W\u00f6rterbuch hat jetzt \u00fcber **1000 W\u00f6rter in JEDER der 25 Kategorien** \u2014 25.703 Eintr\u00e4ge statt bisher 8.664. Das sind 17.039 neue W\u00f6rter, jedes einzeln gepr\u00fcft: Artikel, Betonung, deutsche Erkl\u00e4rung, englische Entsprechung und ein Beispielsatz, in dem das Wort wirklich vorkommt. Kein Wort steht doppelt. Neu ist vor allem der Alltag: Werkzeug, Backen und Gew\u00fcrze, Kleidungsst\u00fccke und Stoffe, Wetterlagen, Tiere und Pflanzen, Beh\u00f6rdenw\u00f6rter, Berufe in m\u00e4nnlicher UND weiblicher Form, Gef\u00fchle in feinen Abstufungen.",
+      "\u26A1 Der Start ist trotzdem leichter geworden, nicht schwerer. Die Wortliste w\u00e4re als eine Datei auf \u00fcber 5 MB gewachsen \u2014 und wurde bisher bei JEDEM Start heruntergeladen und gelesen, obwohl man sie erst braucht, wenn man das W\u00f6rterbuch oder ein Wortspiel \u00f6ffnet. Sie liegt jetzt im Ordner \u201evokabeln\u201c als 25 Themendateien und wird erst geladen, wenn du auf \u201eLernen\u201c oder \u201eWissen\u201c gehst. Gemessen auf einem vierfach gedrosselten Ger\u00e4t: bedienbar nach 0,95 statt 2,03 Sekunden, 3,6 statt 7,0 MB beim Start. data-vocab.js selbst ist von 3,6 MB auf 31 kB geschrumpft.",
+      "\u{1F3AF} Die Betonungsanzeige erkannte bei 567 W\u00f6rtern gar keine betonte Silbe \u2014 sie fielen aus dem Betonungs-Trainer heraus und wurden im W\u00f6rterbuch ohne Markierung gezeigt. Zwei Ursachen: bei W\u00f6rtern mit \u00df (Ma\u00dfband, Fu\u00dfsohle, Stra\u00dfenschild, Bu\u00dfgeld) rechnet JavaScript \u201e\u00df\u201c beim Gro\u00dfschreiben zu \u201eSS\u201c um, wodurch die Silbe nicht mehr als Gro\u00dfsilbe galt; und bei vielen Eintr\u00e4gen stand der Artikel mit in der Silbenangabe (\u201edie DA-me\u201c). Beides ist behoben, im Bestand wie in der Erkennung.",
+      "\u{1FAB2} Gefragt: wo die gemeldeten Fehler landen. Antwort: unter Profil \u2192 Verwaltung in der Box \u201e\u{1FAB2} Gemeldete Fehler\u201c, nach H\u00e4ufigkeit sortiert, offene oben, erledigte ausklappbar \u2014 sichtbar f\u00fcr Moderation und Betrieb. Neu sind zwei Kn\u00f6pfe darin: \u201eAlle Meldungen kopieren\u201c und \u201eNur die offenen\u201c. Beide legen die Liste als fertigen Text mit Datum, Bereich, Art und Beschreibung in die Zwischenablage \u2014 damit l\u00e4sst sie sich am Telefon in eine Nachricht einf\u00fcgen, ohne den Umweg \u00fcber eine Datei.",
+      "\u{1F9F1} Der Satzbaukasten baut wieder ein St\u00fcck weniger Unsinn. Sechs neue Regeln, alle aus echten Beispiels\u00e4tzen abgeleitet: keine H\u00e4ufigkeit und kein Zeitraum neben einem Zustand (\u201ezweimal in der Woche in der Stadt wohnen\u201c, \u201eden ganzen Abend seine Kinder verstehen\u201c), kein Zeitraum neben einem Ziel (\u201eden ganzen Tag ins Caf\u00e9 gehen\u201c), kein Mittel, das das Objekt wiederholt (\u201emit Karte eine Karte bezahlen\u201c), keine bewertende Angabe bei unbestimmtem Objekt (\u201egut einen Tee kochen\u201c), und der Ort steht jetzt VOR der festen Pr\u00e4position (\u201ein der Kita auf den Opa warten\u201c statt umgekehrt). Dazu: treffen verlangt jetzt eine Person, \u201esehr brauchen\u201c hei\u00dft \u201edringend brauchen\u201c, an jemanden schreibt man einen Brief und kein Protokoll, und erz\u00e4hlt wird, was eine Geschichte hat. Auf 4.320 erzeugten S\u00e4tzen nachgez\u00e4hlt: von den bekannten Fehlermustern bleiben 0,14 Prozent \u00fcbrig \u2014 und die sind bei genauem Hinsehen richtig.",
+      "\u{1F3A8} Jetzt hat JEDES der 22 Spiele seinen eigenen Schriftzug \u2014 vorher waren es f\u00fcnf. Keine Schriftart, sondern jedes Mal aus derselben selbst gezeichneten Buchstabengeometrie neu gebaut, farbig und kr\u00e4ftig, und jeder am eigenen Spiel entlang: der Artikel-Garten w\u00e4chst als Bl\u00fctenstiele aus der Erde, die Blitzrunde gl\u00fcht \u00fcber einem Zickzack, der Wortangler h\u00e4ngt an der Schnur, die Wortleiter steigt eine Leiter hinauf, der Sortierer sitzt in K\u00f6rben, der Betonungs-Trainer tr\u00e4gt den Dudenpunkt unter der betonten Silbe, der Buchstabensalat liegt durcheinander unter einer Lupe, die KorrekTour f\u00e4hrt als Zug \u00fcber Schienen, \u201eWo ist die Katze?\u201c bekommt Ohren, Schnurrhaare und Schwanz, Memory liegt als Karten mit verdecktem Stapel, das Satzpuzzle greift ineinander, der Vokabelmeister sitzt auf bunten Tasten, die Satzbr\u00fccke spannt sich \u00fcber Seile, die Wortschmiede gl\u00fcht auf dem Amboss, \u201eWer bin ich?\u201c ist halb verdeckt, die Wortbaustelle ist abgesperrt, und der Wort-Typ ist nach Wortarten eingef\u00e4rbt. Auf einem 320 Pixel schmalen Telefon gepr\u00fcft \u2014 keiner ragt hinaus.",
+      "\u{1F5C2}\ufe0f Neuer ORDNER \u201evokabeln\u201c mit f\u00fcnf Dateien: teil-1.js bis teil-5.js. Er MUSS mit hochgeladen werden \u2014 ohne ihn bleiben W\u00f6rterbuch, Vokabeltrainer und die Wortspiele leer. F\u00fcnf Dateien statt 25, damit das Hochladen vom Telefon aus \u00fcberhaupt zu schaffen ist.",
+    ],
     "159": [
       "\u{1F4CB} Nach JEDER Runde \u2014 in allen 22 Spielen und in allen \u00dcbungen \u2014 kommt jetzt derselbe Auswertungsbildschirm mit den drei Sternen, und die Inhalte der Runde landen zum Nachlesen im Postfach. Ein Knopf \u201e\u2709\ufe0f Ergebnis im Postfach\u201c springt direkt zu der Nachricht, statt dass man sie suchen muss.",
       "\u{1F5D3}\ufe0f Der Verweis vom Kalenderblatt zu \u201eEs war einmal in Deutschland\u201c funktioniert endlich \u2014 auch NACH dem L\u00f6sen der Tagesaufgabe. Genau da lag der Fehler: in dem Moment stieg die Zeichenfunktion vorher aus, der Knopf war noch da, hatte aber keinen Klick mehr. Der Sprung landet jetzt direkt auf dem Eintrag des heutigen Tages.",
