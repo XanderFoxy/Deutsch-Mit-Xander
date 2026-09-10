@@ -4714,3 +4714,86 @@ button.sbk-gruppe {
   opacity: 0.55;
   font-variant-numeric: tabular-nums;
 }
+
+/* Spiele, die man sich erst verdient: gedämpft, aber nicht versteckt.
+   Man soll sehen, dass es sie gibt, und lesen können, was noch fehlt —
+   ein ausgegrautes Feld ohne Erklärung wäre nur ärgerlich. */
+.games-pill-zu { opacity: 0.72; }
+.games-pill-zu .games-pill-emoji { font-size: 1.2rem; }
+.games-pill-bedingung {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.75;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   DER FUCHS AM FLUSS
+   ------------------------------------------------------------
+   Die Wörter stehen bewusst NICHT im Bild, sondern darunter als
+   eigene Knöpfe in Steinform. Im Bild wären sie auf einem schmalen
+   Telefon nur noch graue Streifen; als Knopf bleiben sie lesbar,
+   antippbar und für die Sprachausgabe erreichbar. Die Steinform
+   stellt die Verbindung zum Bild her: dieselbe Rundung, dieselbe
+   Kante, derselbe Schatten nach unten.
+   ============================================================ */
+.fluss-szene { display:block; width:100%; height:auto; border-radius:14px; margin:10px 0 8px; }
+.fluss-regel { text-align:center; font-weight:800; font-size:1.02rem; margin:12px 0 2px; line-height:1.35; }
+.fluss-pfoten { text-align:center; font-size:0.82rem; letter-spacing:1px; min-height:1.2em; margin-bottom:6px; }
+.fluss-steine { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.fluss-stein {
+  flex:1 1 28%; min-width:88px; max-width:180px;
+  padding:13px 10px; border:0; cursor:pointer;
+  border-radius:38% 38% 44% 44% / 52% 52% 48% 48%;
+  background:linear-gradient(180deg,#C8D1D6 0%,#9AA3A8 62%,#7E888E 100%);
+  box-shadow:0 4px 0 rgba(30,92,124,0.45), inset 0 2px 0 rgba(255,255,255,0.55);
+  color:#26333A; font-weight:800; font-size:0.94rem; line-height:1.2;
+  overflow-wrap:break-word; hyphens:auto;
+  transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease;
+}
+.fluss-stein:active { transform:translateY(3px); box-shadow:0 1px 0 rgba(30,92,124,0.45); }
+.fluss-stein[disabled] { cursor:default; }
+.fluss-stein-fest { background:linear-gradient(180deg,#B7E7C4 0%,#6FC98A 62%,#4FA96C 100%); color:#14361F; }
+.fluss-stein-weg { background:linear-gradient(180deg,#8FC3DA 0%,#4E9AC0 62%,#3B7FA4 100%); color:#eaf7fd; opacity:0.75; transform:translateY(6px); }
+.fluss-hinweis { text-align:center; min-height:2.4em; margin-top:10px; }
+@media (max-width: 360px) {
+  .fluss-stein { flex:1 1 100%; max-width:none; }
+}
+
+/* ============================================================
+   DIE FUCHSUHR
+   ------------------------------------------------------------
+   Der Zettel mit dem Satz ist bewusst HTML und nicht Teil der
+   Zeichnung: „dreiundzwanzig Uhr neunundfünfzig" bricht in SVG
+   nicht um und stünde sonst quer über den Bildschirmrand hinaus.
+   ============================================================ */
+.uhr-szene { display:block; width:100%; height:auto; border-radius:14px; margin:8px 0; }
+.uhr-frage { text-align:center; font-weight:800; font-size:1.02rem; margin:12px 0 2px; }
+.uhr-bote { display:flex; align-items:center; gap:10px; margin:10px 0; }
+.uhr-fuchs { flex:0 0 74px; width:74px; height:auto; }
+.uhr-zettel {
+  flex:1 1 auto; margin:0; padding:14px 12px; text-align:center;
+  background:#FFFDF6; border:2px solid #C8B393; border-radius:10px;
+  font-weight:800; font-size:1.06rem; color:#3B2E22; line-height:1.3;
+  box-shadow:0 3px 0 rgba(90,62,30,0.18);
+}
+.uhr-worte { display:flex; flex-direction:column; gap:8px; }
+.uhr-wort {
+  padding:13px 12px; border:2px solid #E2D3B6; border-radius:12px; cursor:pointer;
+  background:#FFFBF0; color:#3B2E22; font-weight:800; font-size:1rem;
+  transition:transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.uhr-wort:active { transform:translateY(2px); }
+.uhr-blaetter { display:flex; gap:8px; justify-content:center; }
+.uhr-blatt {
+  flex:1 1 33%; max-width:130px; padding:6px; cursor:pointer;
+  background:transparent; border:2px solid transparent; border-radius:14px;
+  transition:border-color 0.2s ease, transform 0.12s ease;
+}
+.uhr-blatt svg { display:block; width:100%; height:auto; }
+.uhr-blatt:active { transform:translateY(2px); }
+.uhr-treffer { border-color:#4FA96C !important; background:#EAF7EE; }
+.uhr-daneben { border-color:#C64B3C !important; background:#FBEDEA; }
+.uhr-hinweis { text-align:center; min-height:3em; margin-top:12px; }
