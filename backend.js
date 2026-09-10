@@ -3241,23 +3241,72 @@ const Backend = (function () {
   }
   // Bewerbung als Beta-Tester:in — landet als normale Nachricht im Postfach des Betreibers, der
   // die Rolle dann über die bestehende Admin-Nutzerliste vergeben kann (siehe setBetaTesterStatus).
+  /* Bewerbung als Beta-Tester:in.
+
+     GEMELDETER FEHLER: die Anfragen kamen beim Betreiber nie an, und
+     trotzdem stand jedes Mal „Anfrage verschickt" auf dem Bildschirm.
+     Die Ursache steckte in der alten Fassung gleich doppelt:
+
+     1. Sie suchte den Betreiber über `profiles … eq("is_owner", true)`.
+        Darf eine normale angemeldete Person fremde Profilzeilen nicht
+        lesen (Zeilenschutz), kommt eine LEERE Liste zurück — kein
+        Fehler. Dann war ownerId null, und die Funktion stieg mit einem
+        blanken `return` aus: nichts verschickt, nichts gemeldet.
+     2. Selbst wenn das Verschicken scheiterte, sagte die Oberfläche
+        „verschickt", weil sie das Ergebnis gar nicht ansah.
+
+     Jetzt drei Dinge: es wird an ALLE Verantwortlichen geschickt (nicht
+     nur an die eine Zeile mit is_owner), die Anfrage wird ZUSÄTZLICH in
+     der Liste `beta_requests` abgelegt — die der Betreiber in der
+     Verwaltung sieht, ganz ohne Postfach —, und die Funktion gibt
+     ehrlich zurück, welcher Weg funktioniert hat. */
   async function applyForBetaTester() {
     if (!demo.user) throw new Error("Bitte zuerst anmelden.");
-    let ownerId = null;
+    const ergebnis = { postfach: false, liste: false, empfaenger: 0, grund: "" };
+    const name = (demo.profile && demo.profile.name) || "Jemand";
+    const text = `[BETA_REQUEST] 🧪 ${name} möchte gerne Beta-Tester:in werden.`;
+    let ziele = [];
     if (client) {
       try {
-        const { data } = await client.from("profiles").select("id").eq("is_owner", true).limit(1);
-        if (data && data[0]) ownerId = data[0].id;
-      } catch (e) {}
+        // Betreiber UND Administrator:innen — fehlt das is_owner-Häkchen
+        // in der Datenbank, ist die Anfrage sonst nicht zustellbar.
+        const { data } = await client.from("profiles").select("id").or("is_owner.eq.true,is_admin.eq.true").limit(10);
+        ziele = (data || []).map((z) => z.id);
+      } catch (e) { ergebnis.grund = "Empfänger nicht gefunden: " + (e && e.message ? e.message : e); }
     } else {
-      const ownerEmail = Object.keys(demo.users || {}).find((email) => demo.users[email].profile.isOwner);
-      ownerId = ownerEmail || null; // im Demo-Modus ist die E-Mail selbst die ID
+      ziele = Object.keys(demo.users || {}).filter((email) => demo.users[email].profile.isOwner || demo.users[email].profile.isAdmin);
     }
-    if (!ownerId) return;
-    // Der Marker "[BETA_REQUEST]" am Anfang wird beim Anzeigen im Postfach erkannt, um dort
-    // direkt einen Genehmigen-Knopf einzublenden — from_user der Nachricht ist automatisch die
-    // ID der anfragenden Person selbst, kein zusätzliches Datenbankfeld nötig.
-    await sendPrivateMessage(ownerId, `[BETA_REQUEST] 🧪 ${demo.profile.name} möchte gerne Beta-Tester:in werden.`, null);
+    for (const ziel of ziele) {
+      try {
+        await sendPrivateMessage(ziel, text, null);
+        ergebnis.postfach = true;
+        ergebnis.empfaenger += 1;
+      } catch (e) { ergebnis.grund = ergebnis.grund || (e && e.message ? e.message : String(e)); }
+    }
+    // Der zweite, vom Postfach unabhängige Weg: eine Liste offener
+    // Anfragen, die in der Verwaltung angezeigt wird. Sie überlebt es,
+    // wenn das Verschicken oder die Empfängersuche scheitert.
+    try {
+      const offen = (await getSiteContent("beta_requests")) || [];
+      const schon = offen.some((a) => a.id === demo.user.id);
+      if (!schon) {
+        offen.unshift({ id: demo.user.id, name, am: new Date().toISOString() });
+        await setSiteContentInternal("beta_requests", offen.slice(0, 60));
+      }
+      ergebnis.liste = true;
+    } catch (e) { ergebnis.grund = ergebnis.grund || (e && e.message ? e.message : String(e)); }
+    if (!ergebnis.postfach && !ergebnis.liste) {
+      throw new Error("Die Anfrage konnte nicht abgelegt werden" + (ergebnis.grund ? ": " + ergebnis.grund : "."));
+    }
+    return ergebnis;
+  }
+  /* Die offenen Beta-Anfragen für die Verwaltung. */
+  async function getBetaRequests() {
+    return (await getSiteContent("beta_requests")) || [];
+  }
+  async function clearBetaRequest(userId) {
+    const offen = (await getSiteContent("beta_requests")) || [];
+    await setSiteContentInternal("beta_requests", offen.filter((a) => a.id !== userId));
   }
   // Hall of Fame: kurzer, wachsender Verlauf vergangener Krönungen — genutzt wird dieselbe
   // generische site_content-Tabelle (kein neues SQL nötig), gedeckelt auf die letzten 30 Einträge.
@@ -3393,6 +3442,7 @@ const Backend = (function () {
     removeProfileFile,
     getProfileFiles,
     setModeratorStatus, setBetaTesterStatus, submitBetaFeedback, setContributorStatus, setSupporterStatus, getFoxOfTheWeek, applyForBetaTester,
+    getBetaRequests, clearBetaRequest,
     getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,
     getFoxOfWeek, getFoxOfMonth, getFoxOfYear, getFoxOfWeekShowcase, getFoxOfMonthShowcase, getFoxOfYearShowcase,
     getFoxOfTheDayShowcase, getFoxOfDayHallOfFame, uploadSiteImage, getSiteImage,

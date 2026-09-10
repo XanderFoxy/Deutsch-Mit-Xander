@@ -4797,3 +4797,267 @@ button.sbk-gruppe {
 .uhr-treffer { border-color:#4FA96C !important; background:#EAF7EE; }
 .uhr-daneben { border-color:#C64B3C !important; background:#FBEDEA; }
 .uhr-hinweis { text-align:center; min-height:3em; margin-top:12px; }
+
+/* ============================================================
+   MEINE WORTLISTEN + WORTQUELLE
+   ============================================================ */
+.wortliste-feld {
+  width:100%; box-sizing:border-box; padding:12px; border-radius:12px;
+  border:2px solid var(--amber-400, #E2D3B6); background:#FFFDF6; color:inherit;
+  font-family:inherit; font-size:0.95rem; line-height:1.5; resize:vertical;
+}
+.wortliste-treffer { display:flex; flex-wrap:wrap; gap:6px; }
+.wortliste-chip {
+  display:inline-block; padding:5px 10px; border-radius:999px;
+  background:rgba(79,169,108,0.16); color:inherit; font-weight:700; font-size:0.84rem;
+}
+.wortliste-chip-fehlt { background:rgba(198,75,60,0.14); text-decoration:line-through; opacity:0.85; }
+.wortquelle-chips { margin-bottom:6px; }
+.wortquelle-stand { margin:2px 0 8px; font-size:0.76rem; }
+
+/* ============================================================
+   DIE SETZEREI
+   ------------------------------------------------------------
+   Die Wörter sind Bleitypen im Kasten. Ein angetipptes Wort
+   springt sichtbar hoch — das ist die ganze Bedienung, deshalb
+   muss man sie sehen, ohne dass jemand sie erklärt.
+   ============================================================ */
+.setz-auftrag { font-weight:800; margin:12px 0 8px; }
+.setz-kasten {
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:5px 6px;
+  padding:14px 12px; border-radius:12px;
+  background:linear-gradient(180deg,#EFE7DA 0%,#DFD3C0 100%);
+  border:3px solid #8A6234; box-shadow:inset 0 2px 6px rgba(90,62,30,0.2);
+  font-size:1.06rem; line-height:1.5;
+}
+.setz-fest { padding:6px 2px; font-weight:700; color:#3B2E22; }
+.setz-type {
+  padding:6px 8px; border:0; cursor:pointer; border-radius:4px;
+  background:#C9BFB2; color:#2E282A; font-weight:800; font-size:1rem;
+  font-family:inherit; box-shadow:0 3px 0 #9A8F82;
+  transition:transform 0.12s ease, background 0.15s ease, box-shadow 0.12s ease;
+}
+.setz-type.setz-hoch { transform:translateY(-6px); background:#F2B84B; box-shadow:0 8px 0 #B8862B; }
+.setz-type.setz-ok { background:#7FC98F; box-shadow:0 3px 0 #4C9160; }
+.setz-type.setz-falsch { background:#E8908A; box-shadow:0 3px 0 #A8514B; }
+.setz-type[disabled] { cursor:default; }
+.setz-aufloesung { margin:14px 0 10px; line-height:1.5; }
+
+/* ============================================================
+   DIE WORTKETTE
+   ============================================================ */
+.kette-band {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+  gap:2px; margin:12px 0 4px;
+}
+.kette-glied {
+  display:inline-flex; padding:7px 12px; border-radius:999px;
+  background:#EEF3F5; border:2px solid #8FA3AD; font-weight:800; font-size:0.9rem;
+}
+.kette-glied-neu { border-color:#E4572E; background:#FDEFE9; }
+.kette-kopf { color:#5A6B75; }
+.kette-schwanz { color:#C4441C; }
+.kette-haken { color:#8FA3AD; font-weight:800; }
+.kette-frage { text-align:center; font-weight:800; font-size:1.04rem; margin:14px 0 8px; }
+.kette-wahl { display:flex; flex-direction:column; gap:8px; }
+.kette-karte {
+  padding:14px 12px; border:2px solid #C9D6DC; border-radius:12px; cursor:pointer;
+  background:#FFFDF6; color:inherit; font-weight:800; font-size:1rem; font-family:inherit;
+  transition:transform 0.12s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.kette-karte:active { transform:translateY(2px); }
+.kette-karte-passt { border-color:#4FA96C; background:#EAF7EE; }
+.kette-karte-passt-nicht { border-color:#C64B3C; background:#FBEDEA; }
+.kette-hinweis { text-align:center; min-height:2.6em; margin-top:12px; }
+
+/* ============================================================
+   AUGENBLICK!
+   ============================================================ */
+.aug-buehne {
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  min-height:110px; padding:16px 14px; margin:10px 0;
+  border-radius:14px; border:2px dashed #C9B99A; background:#FFFBF0;
+}
+.aug-buehne-satz { background:linear-gradient(180deg,#FFF6DC 0%,#FFEFC0 100%); border-style:solid; border-color:#F2B84B; }
+.aug-buehne-bau { flex-wrap:wrap; gap:6px; align-items:flex-start; border-style:solid; }
+.aug-satz { margin:0; font-size:1.14rem; font-weight:800; line-height:1.5; color:#3B2E22; }
+.aug-vorrat { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin-top:10px; }
+.aug-wort {
+  padding:9px 12px; border:2px solid #D9CBB0; border-radius:10px; cursor:pointer;
+  background:#FFFDF6; color:inherit; font-weight:700; font-size:0.96rem; font-family:inherit;
+  transition:transform 0.1s ease, background 0.15s ease;
+}
+.aug-wort:active { transform:translateY(2px); }
+.aug-wort-gelegt { background:#F6E7C4; border-color:#E0BE7A; }
+.aug-hinweis { text-align:center; min-height:2.6em; margin-top:12px; line-height:1.5; }
+
+/* ============================================================
+   DER UMZUG
+   ============================================================ */
+.umzug-bild { display:block; width:100%; height:auto; border-radius:14px; margin:8px 0; }
+.umzug-frage { text-align:center; font-size:1rem; margin:8px 0 4px; }
+.umzug-satz {
+  text-align:center; font-size:1.1rem; font-weight:700; line-height:1.6;
+  margin:6px 0 14px; padding:10px 12px; border-radius:10px; background:#FFFBF0;
+}
+.umzug-luecke-voll { background:#D8F0DF; border-radius:6px; padding:0 6px; font-weight:800; }
+.umzug-wahl { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.umzug-karte {
+  flex:1 1 30%; min-width:96px; max-width:180px;
+  padding:14px 10px; border:2px solid #D9CBB0; border-radius:12px; cursor:pointer;
+  background:#FFFDF6; color:inherit; font-weight:800; font-size:1.02rem; font-family:inherit;
+  transition:transform 0.12s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.umzug-karte:active { transform:translateY(2px); }
+.umzug-treffer { border-color:#4FA96C; background:#EAF7EE; }
+.umzug-daneben { border-color:#C64B3C; background:#FBEDEA; }
+.umzug-hinweis { text-align:center; min-height:3.4em; margin-top:12px; line-height:1.5; }
+
+/* ============================================================
+   DER MARKTSTAND
+   ------------------------------------------------------------
+   Die Kasse ist bewusst eine echte Zifferntastatur und keine
+   Auswahl: wer die Zahl nur ankreuzt, kann sie raten, ohne sie
+   verstanden zu haben.
+   ============================================================ */
+.markt-bild { display:block; width:100%; height:auto; border-radius:14px; margin:8px 0 4px; }
+.markt-wort {
+  text-align:center; font-size:1.14rem; font-weight:800; line-height:1.45;
+  margin:6px 0 14px; padding:12px; border-radius:10px;
+  background:#FFFDF6; border:2px dashed #C9A227; color:#3B2E22;
+  overflow-wrap:break-word; hyphens:auto;
+}
+.markt-kasse { max-width:300px; margin:0 auto; }
+.markt-anzeige {
+  font-family:"JetBrains Mono", ui-monospace, monospace; font-size:1.8rem; font-weight:800;
+  text-align:right; padding:10px 14px; border-radius:10px; margin-bottom:10px;
+  background:#20303A; color:#9FE8B4; letter-spacing:2px;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.4);
+}
+.markt-anzeige-gut { color:#9FE8B4; box-shadow:inset 0 0 0 3px #4FA96C; }
+.markt-anzeige-schlecht { color:#F0A99F; box-shadow:inset 0 0 0 3px #C64B3C; }
+.markt-einheit { font-size:1rem; margin-left:6px; opacity:0.8; }
+.markt-tasten { display:grid; grid-template-columns:repeat(3, 1fr); gap:7px; }
+.markt-taste {
+  padding:15px 0; border:0; border-radius:10px; cursor:pointer;
+  background:#E8E0D2; color:#2E282A; font-weight:800; font-size:1.24rem; font-family:inherit;
+  box-shadow:0 4px 0 #B5AB9C; transition:transform 0.08s ease, box-shadow 0.08s ease;
+}
+.markt-taste:active { transform:translateY(3px); box-shadow:0 1px 0 #B5AB9C; }
+.markt-taste-weg { background:#E8B4AC; box-shadow:0 4px 0 #B57F76; }
+.markt-taste-leer { background:transparent; box-shadow:none; cursor:default; }
+.markt-kassieren { display:block; width:100%; margin-top:12px; }
+.markt-hinweis { text-align:center; min-height:3.2em; margin-top:12px; line-height:1.5; }
+
+.markt-kassieren[disabled] { opacity:0.45; cursor:default; }
+
+/* ============================================================
+   DIE WORTWAAGE
+   ============================================================ */
+.waage-bild { display:block; width:100%; height:auto; border-radius:14px; margin:6px 0 10px; }
+.waage-achse { text-align:center; font-size:0.98rem; margin:10px 0 2px; }
+.waage-treppe { display:flex; flex-direction:column; gap:7px; margin:10px 0; }
+.waage-platz {
+  display:flex; align-items:center; gap:10px; text-align:left;
+  padding:12px 12px; border:2px dashed #C9B99A; border-radius:11px;
+  background:#FFFBF0; color:inherit; font-weight:800; font-size:1rem; font-family:inherit;
+  cursor:pointer;
+}
+.waage-platz[disabled] { cursor:default; }
+.waage-platz-voll { border-style:solid; border-color:#E0BE7A; background:#F9EFD6; }
+.waage-platz-ok { border-style:solid; border-color:#4FA96C; background:#EAF7EE; }
+.waage-platz-falsch { border-style:solid; border-color:#C64B3C; background:#FBEDEA; }
+.waage-nr {
+  flex:0 0 24px; width:24px; height:24px; border-radius:50%;
+  background:#8A6234; color:#FFFDF6; font-size:0.8rem;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.waage-vorrat { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:12px 0; }
+.waage-wort {
+  padding:11px 14px; border:2px solid #D9CBB0; border-radius:999px; cursor:pointer;
+  background:#FFFDF6; color:inherit; font-weight:800; font-size:0.98rem; font-family:inherit;
+  transition:transform 0.1s ease;
+}
+.waage-wort:active { transform:translateY(2px); }
+.waage-aufloesung { margin:14px 0 10px; line-height:1.6; text-align:center; }
+
+/* ============================================================
+   DER MASKENBALL
+   ============================================================ */
+.maske-bild { display:block; width:100%; height:auto; border-radius:14px; margin:8px 0; }
+.maske-frage { text-align:center; font-size:1.04rem; margin:10px 0 12px; line-height:1.5; }
+.maske-wahl { display:flex; flex-direction:column; gap:8px; }
+.maske-karte {
+  padding:13px 12px; border:2px solid #C9B0DC; border-radius:12px; cursor:pointer;
+  background:#FFFDF6; color:inherit; font-weight:700; font-size:0.98rem; font-family:inherit;
+  text-align:left; line-height:1.4;
+}
+.maske-karte:active { transform:translateY(2px); }
+.maske-treffer { border-color:#4FA96C; background:#EAF7EE; }
+.maske-daneben { border-color:#C64B3C; background:#FBEDEA; }
+.maske-hinweis { text-align:center; min-height:4em; margin-top:12px; line-height:1.6; }
+
+/* ============================================================
+   DER SPRACHATLAS
+   ============================================================ */
+.atlas-karte { display:block; width:100%; max-width:330px; height:auto; margin:6px auto; border-radius:14px; }
+.atlas-wort { text-align:center; font-size:1.36rem; font-weight:800; margin:12px 0 2px; }
+.atlas-bedeutung { text-align:center; font-size:0.92rem; margin:0 0 8px; opacity:0.8; }
+.atlas-knoepfe { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; }
+.atlas-knopf {
+  flex:1 1 44%; min-width:120px; padding:12px 8px;
+  border:2px solid #A9C88E; border-radius:11px; cursor:pointer;
+  background:#FFFDF6; color:inherit; font-weight:800; font-size:0.92rem; font-family:inherit;
+}
+.atlas-knopf:active { transform:translateY(2px); }
+.atlas-treffer { border-color:#4FA96C; background:#EAF7EE; }
+.atlas-daneben { border-color:#C64B3C; background:#FBEDEA; }
+.atlas-hinweis { text-align:center; min-height:3.4em; margin-top:12px; line-height:1.5; }
+
+/* ============================================================
+   DER WORTBAUM
+   ============================================================ */
+.baum-bild { display:block; width:100%; max-width:300px; height:auto; margin:4px auto; border-radius:14px; }
+.baum-stamm { text-align:center; font-size:1rem; margin:10px 0 4px; }
+.baum-wort {
+  text-align:center; font-size:1.44rem; font-weight:800; margin:10px 0 14px;
+  padding:12px; border-radius:12px; background:#FFFBF0; border:2px solid #C9B99A;
+}
+.baum-wahl { display:flex; gap:8px; }
+.baum-knopf {
+  flex:1 1 50%; padding:16px 8px; border:0; border-radius:12px; cursor:pointer;
+  font-weight:800; font-size:0.98rem; font-family:inherit; color:#2E282A;
+  transition:transform 0.1s ease;
+}
+.baum-ja { background:#A9D8B4; box-shadow:0 4px 0 #6FA97E; }
+.baum-nein { background:#E8C4A8; box-shadow:0 4px 0 #B58E6E; }
+.baum-knopf:active { transform:translateY(3px); }
+.baum-knopf[disabled] { opacity:0.55; cursor:default; }
+.baum-hinweis { text-align:center; min-height:3em; margin-top:12px; line-height:1.5; }
+
+/* ============================================================
+   DIE ZWILLINGE
+   ============================================================ */
+.zwilling-paar { display:flex; gap:10px; justify-content:center; margin:12px 0 6px; }
+.zwilling-seite {
+  flex:1 1 50%; display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:12px 8px; border:2px solid #A8C6D4; border-radius:14px; background:#FFFDF6;
+}
+.zwilling-richtig { border-color:#4FA96C; background:#EAF7EE; }
+.zwilling-falsch { border-color:#C64B3C; background:#FBEDEA; }
+.zwilling-wort {
+  width:100%; padding:8px 4px; border:0; background:transparent; cursor:pointer;
+  font-weight:800; font-size:1.1rem; font-family:inherit; color:inherit; line-height:1.3;
+}
+.zwilling-hoeren {
+  border:0; background:#DCEEF6; border-radius:999px; cursor:pointer;
+  width:38px; height:38px; font-size:1rem;
+}
+.zwilling-unterschied { text-align:center; font-size:0.86rem; opacity:0.8; margin:2px 0 12px; }
+.zwilling-satz {
+  text-align:center; font-size:1.1rem; font-weight:700; line-height:1.7;
+  padding:12px; border-radius:10px; background:#FFFBF0; margin:0 0 8px;
+}
+.zwilling-luecke { display:inline-block; min-width:70px; border-bottom:3px solid #8A6234; }
+.zwilling-luecke-voll { border-bottom-color:#4FA96C; background:#D8F0DF; border-radius:5px; padding:0 6px; font-weight:800; }
+.zwilling-hinweis { text-align:center; min-height:3em; margin-top:12px; line-height:1.5; }
