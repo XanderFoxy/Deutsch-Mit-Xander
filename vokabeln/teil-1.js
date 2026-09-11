@@ -3,6 +3,9 @@
    „Wissen“ geht — nicht beim Start. */
 window.DMA_VOKABELN = window.DMA_VOKABELN || {};
 window.DMA_VOKABELN["Alltag & Zuhause"] = [
+  {"word": "der Sturz", "de": "ein Fall nach unten; beim Bauen außerdem der Balken über einer Tür oder einem Fenster", "syl": "STURZ", "en": "fall; lintel", "example": "Über dem Fenster liegt ein Sturz aus Beton.", "level": "B2", "theme": "Alltag & Zuhause"},
+  {"word": "die Schwelle", "de": "die kleine Stufe unten in einer Türöffnung", "syl": "SCHWEL-le", "en": "threshold", "example": "Über der Schwelle der Haustür liegt eine Fußmatte.", "level": "B1", "theme": "Alltag & Zuhause"},
+  {"word": "der Dachziegel", "de": "eine gebrannte Platte, mit der ein Dach gedeckt wird", "syl": "DACH-zie-gel", "en": "roof tile", "example": "Der Sturm hat einen Dachziegel vom Haus geweht.", "level": "B1", "theme": "Alltag & Zuhause"},
   {"word":"der Handfeger","de":"eine kleine Bürste zum Kehren von Krümeln oder Staub","syl":"HAND-fe-ger","en":"hand brush","example":"Sie kehrt die Krümel mit dem Handfeger vom Tisch.","level":"A2","theme":"Alltag & Zuhause"},
   {"word":"die Wäscheklammer","de":"ein kleines Ding, das nasse Wäsche an der Leine festhält","syl":"WÄ-sche-klam-mer","en":"clothespin","example":"Er hängt die Socken mit einer Wäscheklammer auf.","level":"A2","theme":"Alltag & Zuhause"},
   {"word":"der Hausschuh","de":"ein weicher Schuh, den man zu Hause trägt","syl":"HAUS-schuh","en":"slipper","example":"Im Winter trage ich warme Hausschuhe.","level":"A2","theme":"Alltag & Zuhause"},
@@ -2065,6 +2068,10 @@ window.DMA_VOKABELN["Bildung & Lernen"] = [
   {"word":"der Lehrerberuf","de":"die Tätigkeit als Lehrkraft","syl":"LEH-rer-be-ruf","en":"teaching profession","example":"Der Lehrerberuf verlangt viel Geduld.","level":"B2","theme":"Bildung & Lernen"}
 ];
 window.DMA_VOKABELN["Essen & Trinken"] = [
+  {"word": "der Smoothie", "de": "ein dickflüssiges Getränk aus pürierten Früchten", "syl": "SMOO-thie", "en": "smoothie", "example": "Aus Banane und Spinat mixt er einen grünen Smoothie.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der Milchshake", "de": "ein kaltes Getränk aus Milch, Eis und Früchten", "syl": "MILCH-shake", "en": "milkshake", "example": "Sie trinkt einen Milchshake mit Erdbeeren.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Rote Bete", "de": "ein dunkelrotes Wurzelgemüse", "syl": "RO-te BE-te", "en": "beetroot", "example": "Rote Bete färbt den ganzen Salat rosa.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "die Nudeln", "de": "Teigwaren, die man in Wasser kocht — meist in der Mehrzahl", "syl": "NU-deln", "en": "pasta, noodles", "example": "Zum Mittagessen gibt es Nudeln mit Tomatensoße.", "level": "A1", "theme": "Essen & Trinken"},
   {"word":"der Pfannkuchen","de":"eine flache, runde Speise aus Eiern, Milch und Mehl, in der Pfanne gebacken","syl":"PFANN-ku-chen","en":"pancake","example":"Zum Frühstück backe ich Pfannkuchen.","level":"A2","theme":"Essen & Trinken"},
   {"word":"das Würstchen","de":"eine kleine Wurst, die man oft warm isst","syl":"WÜRST-chen","en":"small sausage","example":"Zum Mittagessen gibt es Würstchen mit Senf.","level":"A2","theme":"Essen & Trinken"},
   {"word":"die Brotzeit","de":"eine kleine Mahlzeit mit Brot, oft am Nachmittag","syl":"BROT-zeit","en":"light snack meal","example":"Am Nachmittag machen wir eine kurze Brotzeit.","level":"A2","theme":"Essen & Trinken"},
@@ -4132,6 +4139,11 @@ window.DMA_VOKABELN["Reisen & Unterwegs"] = [
   {"word":"das Weite suchen","de":"schnell verschwinden, um einer Sache zu entgehen","syl":"das WEI-te su-chen","en":"to make oneself scarce","example":"Als der Regen einsetzte, suchten alle das Weite.","level":"C1","theme":"Reisen & Unterwegs"}
 ];
 window.DMA_VOKABELN["Zeit & Kalender"] = [
+  {"word": "Chanukka", "de": "das jüdische Lichterfest im Winter", "syl": "CHA-nuk-ka", "en": "Hanukkah", "example": "An Chanukka wird jeden Abend eine weitere Kerze angezündet.", "level": "B1", "theme": "Zeit & Kalender"},
+  {"word": "der Ramadan", "de": "der Fastenmonat im islamischen Kalender", "syl": "Ra-ma-DAN", "en": "Ramadan", "example": "Im Ramadan essen viele Muslime erst nach Sonnenuntergang.", "level": "B1", "theme": "Zeit & Kalender"},
+  {"word": "Silvester", "de": "der letzte Abend des Jahres, der 31. Dezember", "syl": "Sil-VES-ter", "en": "New Year's Eve", "example": "An Silvester bleiben wir bis Mitternacht wach.", "level": "A2", "theme": "Zeit & Kalender"},
+  {"word": "Pfingsten", "de": "ein christliches Fest fünfzig Tage nach Ostern", "syl": "PFINGS-ten", "en": "Whitsun", "example": "Pfingsten liegt fünfzig Tage nach Ostern.", "level": "B1", "theme": "Zeit & Kalender"},
+  {"word": "Ostern", "de": "das Frühlingsfest im christlichen Kalender", "syl": "OS-tern", "en": "Easter", "example": "An Ostern suchen die Kinder bunte Eier im Garten.", "level": "A1", "theme": "Zeit & Kalender"},
   {"word":"der August","de":"der achte Monat des Jahres","syl":"au-GUST","en":"August","example":"Im August machen wir Urlaub am Meer.","level":"A2","theme":"Zeit & Kalender"},
   {"word":"der September","de":"der neunte Monat des Jahres","syl":"sep-TEM-ber","en":"September","example":"Die Schule beginnt im September wieder.","level":"A2","theme":"Zeit & Kalender"},
   {"word":"der Oktober","de":"der zehnte Monat des Jahres","syl":"ok-TO-ber","en":"October","example":"Im Oktober werden die Blätter bunt.","level":"A2","theme":"Zeit & Kalender"},

@@ -2031,6 +2031,7 @@ window.DMA_VOKABELN["Geschichte & Erinnerung"] = [
   {"word":"die Trümmer","de":"die Reste von etwas, das eingestürzt ist","syl":"TRÜM-mer","en":"rubble","example":"Aus den Trümmern wurden neue Häuser gebaut.","level":"B2","theme":"Geschichte & Erinnerung"}
 ];
 window.DMA_VOKABELN["Kleidung & Einkaufen"] = [
+  {"word": "der BH", "de": "die kurze Form von Büstenhalter, ein Kleidungsstück für die Brust", "syl": "be-HA", "en": "bra", "example": "Der BH ist die Abkürzung für Büstenhalter.", "level": "A2", "theme": "Kleidung & Einkaufen"},
   {"word":"die Geldbörse","de":"eine kleine Tasche für Geld und Karten","syl":"GELD-bör-se","en":"wallet","example":"Er sucht seine Geldbörse in der Jackentasche.","level":"A2","theme":"Kleidung & Einkaufen"},
   {"word":"die Umhängetasche","de":"eine Tasche mit einem langen Riemen, die man über der Schulter trägt","syl":"UM-hän-ge-ta-sche","en":"shoulder bag","example":"Sie trägt ihre Bücher in einer Umhängetasche.","level":"A2","theme":"Kleidung & Einkaufen"},
   {"word":"der Kleiderständer","de":"ein Ständer zum Aufhängen von Kleidung in einem Geschäft","syl":"KLEI-der-stän-der","en":"clothes rack","example":"Die Jacken hängen ordentlich am Kleiderständer.","level":"A2","theme":"Kleidung & Einkaufen"},
@@ -4105,6 +4106,11 @@ window.DMA_VOKABELN["Sprache & Kommunikation"] = [
   {"word":"die Diskussionsleitung","de":"Aufgabe, ein Streitgespräch zu führen und zu ordnen","syl":"dis-kus-SI-ons-lei-tung","en":"moderation of a debate","example":"Die Diskussionsleitung übernahm eine Kollegin.","level":"C1","theme":"Sprache & Kommunikation"}
 ];
 window.DMA_VOKABELN["Wissenschaft & Forschung"] = [
+  {"word": "das Uran", "de": "ein schweres, radioaktives Element", "syl": "U-RAN", "en": "uranium", "example": "Uran liefert die Energie in einem Kernkraftwerk.", "level": "B2", "theme": "Wissenschaft & Forschung"},
+  {"word": "das Platin", "de": "ein sehr seltenes, teures Edelmetall", "syl": "PLA-tin", "en": "platinum", "example": "Platin ist noch teurer als Gold.", "level": "B1", "theme": "Wissenschaft & Forschung"},
+  {"word": "das Magnesium", "de": "ein leichtes Metall, das mit sehr hellem Licht brennt", "syl": "Mag-NE-si-um", "en": "magnesium", "example": "Magnesium brennt mit blendend weißem Licht.", "level": "B1", "theme": "Wissenschaft & Forschung"},
+  {"word": "das Natrium", "de": "ein chemisches Element; zusammen mit Chlor ergibt es Kochsalz", "syl": "NA-tri-um", "en": "sodium", "example": "Natrium und Chlor bilden zusammen das Kochsalz.", "level": "B1", "theme": "Wissenschaft & Forschung"},
+  {"word": "das Kalzium", "de": "ein chemisches Element; es macht Knochen und Zähne fest", "syl": "KAL-zi-um", "en": "calcium", "example": "Kalzium steckt in Milch und in grünem Gemüse.", "level": "B1", "theme": "Wissenschaft & Forschung"},
   {"word":"der Solipsismus","de":"die Auffassung, dass nur das eigene Bewusstsein sicher existiert","syl":"So-lip-SIS-mus","en":"solipsism","example":"Gegen den Solipsismus lässt sich schwer argumentieren, überzeugend ist er dennoch nicht.","level":"C2","theme":"Wissenschaft & Forschung"},
   {"word":"das Forschungsdesign","de":"der geplante Aufbau einer wissenschaftlichen Untersuchung","syl":"FOR-schungs-de-sign","en":"research design","example":"Vor der Studie legten die Forscher das genaue Forschungsdesign fest.","level":"C1","theme":"Wissenschaft & Forschung"},
   {"word":"die Kohortenstudie","de":"eine Langzeituntersuchung, bei der eine bestimmte Gruppe über Jahre beobachtet wird","syl":"ko-HOR-ten-stu-die","en":"cohort study","example":"In der Kohortenstudie wurden tausend Kinder über zwanzig Jahre begleitet.","level":"C1","theme":"Wissenschaft & Forschung"},

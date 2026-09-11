@@ -1011,6 +1011,9 @@ window.DMA_VOKABELN["Familie & Menschen"] = [
   {"word":"anlehnungsbedürftig","de":"voller Wunsch nach Nähe und Halt","syl":"AN-leh-nungs-be-dürf-tig","en":"in need of affection","example":"Der kleine Hund ist sehr anlehnungsbedürftig.","level":"C1","theme":"Familie & Menschen"}
 ];
 window.DMA_VOKABELN["Gesundheit & Körper"] = [
+  {"word": "der Schädel", "de": "der Knochen, der den Kopf bildet und das Gehirn schützt", "syl": "SCHÄ-del", "en": "skull", "example": "Der Schädel schützt das Gehirn wie ein Helm.", "level": "B1", "theme": "Gesundheit & Körper"},
+  {"word": "der Nabel", "de": "die kleine Vertiefung in der Mitte des Bauches", "syl": "NA-bel", "en": "navel", "example": "Der Nabel erinnert daran, wo einmal die Nabelschnur war.", "level": "B1", "theme": "Gesundheit & Körper"},
+  {"word": "der Zeh", "de": "einer der fünf beweglichen Teile vorn am Fuß", "syl": "ZEH", "en": "toe", "example": "Ich habe mir den kleinen Zeh am Bettpfosten gestoßen.", "level": "A1", "theme": "Gesundheit & Körper"},
   {"word":"die Wimper","de":"eines der kleinen Haare am Rand des Augenlids","syl":"WIM-per","en":"eyelash","example":"Sie hat lange, dunkle Wimpern.","level":"A2","theme":"Gesundheit & Körper"},
   {"word":"das Schienbein","de":"der vordere Knochen zwischen Knie und Fuß","syl":"SCHIEN-bein","en":"shin","example":"Er hat sich am Tisch das Schienbein gestoßen.","level":"A2","theme":"Gesundheit & Körper"},
   {"word":"die Sommersprosse","de":"ein kleiner, brauner Fleck auf der Haut, oft im Sommer","syl":"SOM-mer-spros-se","en":"freckle","example":"Im Sommer bekommt sie mehr Sommersprossen im Gesicht.","level":"A2","theme":"Gesundheit & Körper"},
@@ -2036,6 +2039,10 @@ window.DMA_VOKABELN["Gesundheit & Körper"] = [
   {"word":"das Verbandsmaterial","de":"Binden, Pflaster und Watte für Wunden","syl":"ver-BANDS-ma-te-ri-al","en":"dressing material","example":"Im Schrank liegt genug Verbandsmaterial für den Notfall.","level":"C1","theme":"Gesundheit & Körper"}
 ];
 window.DMA_VOKABELN["Grundwörter & Struktur"] = [
+  {"word": "aufgrund", "de": "wegen — eine Präposition mit Genitiv", "syl": "auf-GRUND", "en": "due to", "example": "Aufgrund des Sturms fällt der Zug aus.", "level": "B1", "theme": "Grundwörter & Struktur"},
+  {"word": "stattdessen", "de": "an der Stelle dessen, was eigentlich geplant war", "syl": "statt-DES-sen", "en": "instead", "example": "Der Bus kam nicht, stattdessen nahm sie das Fahrrad.", "level": "B1", "theme": "Grundwörter & Struktur"},
+  {"word": "darum", "de": "aus diesem Grund — wie „deshalb“ und „deswegen“", "syl": "da-RUM", "en": "that's why", "example": "Er war müde, darum ging er früh ins Bett.", "level": "A2", "theme": "Grundwörter & Struktur"},
+  {"word": "deswegen", "de": "nennt den Grund für das, was danach kommt — wie „deshalb“", "syl": "des-WE-gen", "en": "therefore, that's why", "example": "Es hat geregnet, deswegen ist die Straße nass.", "level": "A2", "theme": "Grundwörter & Struktur"},
   {"word":"die Präposition","de":"ein kleines Wort wie in, auf oder mit vor einem Nomen","syl":"prä-po-si-ti-ON","en":"preposition","example":"In ist eine Präposition.","level":"A2","theme":"Grundwörter & Struktur"},
   {"word":"die Mehrzahl","de":"die Form eines Wortes für mehr als eins, auch Plural genannt","syl":"MEHR-zahl","en":"plural","example":"Bücher ist die Mehrzahl von Buch.","level":"A2","theme":"Grundwörter & Struktur"},
   {"word":"die Einzahl","de":"die Form eines Wortes für genau eins, auch Singular genannt","syl":"EIN-zahl","en":"singular","example":"Buch ist die Einzahl von Bücher.","level":"A2","theme":"Grundwörter & Struktur"},
@@ -3110,6 +3117,7 @@ window.DMA_VOKABELN["Grundwörter & Struktur"] = [
   {"word":"vertikal","de":"von oben nach unten","syl":"ver-ti-KAL","en":"vertical","example":"Die Stäbe stehen vertikal im Zaun.","level":"B2","theme":"Grundwörter & Struktur"}
 ];
 window.DMA_VOKABELN["Kunst & Musik"] = [
+  {"word": "der Song", "de": "ein Lied, meist aus der Popmusik", "syl": "SONG", "en": "song", "example": "Dieser Song läuft gerade in jedem Radio.", "level": "A1", "theme": "Kunst & Musik"},
   {"word":"der Manierismus","de":"ein Kunststil, der übertriebene, gekünstelte Formen bevorzugt","syl":"ma-nie-RIS-mus","en":"mannerism","example":"Die verschlungenen Figuren des Gemäldes gelten als typisch für den Manierismus.","level":"C2","theme":"Kunst & Musik"},
   {"word":"die Tonalität","de":"das System, nach dem Töne in einem Musikstück auf einen zentralen Grundton bezogen sind","syl":"to-na-li-TÄT","en":"tonality","example":"Das Stück wechselt mehrfach überraschend die Tonalität.","level":"C2","theme":"Kunst & Musik"},
   {"word":"die Farbenlehre","de":"die wissenschaftliche und künstlerische Lehre von der Wirkung und Mischung der Farben","syl":"FAR-ben-leh-re","en":"color theory","example":"Goethes Farbenlehre beeinflusste viele Maler seiner Zeit.","level":"C2","theme":"Kunst & Musik"},

@@ -3,6 +3,7 @@
    „Wissen“ geht — nicht beim Start. */
 window.DMA_VOKABELN = window.DMA_VOKABELN || {};
 window.DMA_VOKABELN["Freizeit & Sport"] = [
+  {"word": "das Schlittschuhlaufen", "de": "das Fahren auf Eis mit Schuhen, unter denen Kufen sitzen", "syl": "SCHLITT-schuh-lau-fen", "en": "ice skating", "example": "Im Winter gehen wir zum Schlittschuhlaufen auf den See.", "level": "A2", "theme": "Freizeit & Sport"},
   {"word":"die Sporthalle","de":"ein großes Gebäude, in dem man drinnen Sport treibt","syl":"SPORT-hal-le","en":"sports hall","example":"Das Basketballspiel findet in der Sporthalle statt.","level":"A2","theme":"Freizeit & Sport"},
   {"word":"der Handball","de":"eine Sportart, bei der zwei Mannschaften einen Ball mit der Hand ins Tor werfen","syl":"HAND-ball","en":"handball","example":"Am Dienstag trainieren wir Handball in der Halle.","level":"A2","theme":"Freizeit & Sport"},
   {"word":"die Verlängerung","de":"die zusätzliche Spielzeit, wenn ein Spiel unentschieden endet","syl":"ver-LÄN-ge-rung","en":"overtime","example":"Erst in der Verlängerung fiel das entscheidende Tor.","level":"B1","theme":"Freizeit & Sport"},
@@ -3075,6 +3076,7 @@ window.DMA_VOKABELN["Medien & Öffentlichkeit"] = [
   {"word":"die Langfassung","de":"die vollständige, ungekürzte Form eines Werks","syl":"LANG-fas-sung","en":"long version","example":"Im Netz steht die Langfassung des Gesprächs.","level":"B2","theme":"Medien & Öffentlichkeit"}
 ];
 window.DMA_VOKABELN["Natur & Wetter"] = [
+  {"word": "der Wurm", "de": "ein langes Tier ohne Beine, das in der Erde lebt", "syl": "WURM", "en": "worm", "example": "Im Beet kriecht ein Wurm durch die feuchte Erde.", "level": "A1", "theme": "Natur & Wetter"},
   {"word":"der Hirsch","de":"ein großes, wildes Tier im Wald mit einem Geweih","syl":"HIRSCH","en":"deer","example":"Im Wald haben wir einen Hirsch gesehen.","level":"A2","theme":"Natur & Wetter"},
   {"word":"der Sonnenbrand","de":"eine rote, schmerzende Haut nach zu viel Sonne","syl":"SON-nen-brand","en":"sunburn","example":"Nach dem Strand hatte er einen starken Sonnenbrand.","level":"A2","theme":"Natur & Wetter"},
   {"word":"die Windrichtung","de":"die Richtung, aus der der Wind kommt","syl":"WIND-rich-tung","en":"wind direction","example":"Die Windrichtung ändert sich vor dem Sturm.","level":"A2","theme":"Natur & Wetter"},

@@ -3,6 +3,7 @@
    „Wissen“ geht — nicht beim Start. */
 window.DMA_VOKABELN = window.DMA_VOKABELN || {};
 window.DMA_VOKABELN["Gefühle & Charakter"] = [
+  {"word": "sich ärgern", "de": "wütend oder verärgert über etwas sein", "syl": "ÄR-gern", "en": "to be annoyed", "example": "Er ärgert sich über den verpassten Bus.", "level": "A2", "theme": "Gefühle & Charakter"},
   {"word":"der Choleriker","de":"eine Person, die schnell wütend wird und heftig reagiert","syl":"cho-LE-ri-ker","en":"a choleric person, hothead","example":"Als Choleriker rastete er schon bei kleinen Problemen aus.","level":"C1","theme":"Gefühle & Charakter"},
   {"word":"die Selbstironie","de":"die Fähigkeit, über die eigenen Schwächen zu scherzen","syl":"selbst-i-ro-NIE","en":"self-deprecating humor","example":"Mit viel Selbstironie erzählte sie von ihrem missglückten Kuchen.","level":"C1","theme":"Gefühle & Charakter"},
   {"word":"die Verschlagenheit","de":"eine listige und hinterhältige Art, andere zu täuschen","syl":"ver-SCHLA-gen-heit","en":"cunning, slyness","example":"Mit großer Verschlagenheit gelang es ihm, alle zu täuschen.","level":"C1","theme":"Gefühle & Charakter"},
@@ -3100,6 +3101,8 @@ window.DMA_VOKABELN["Stadt & Verkehr"] = [
   {"word":"zähflüssig","de":"nur sehr langsam vorwärtskommend","syl":"ZÄH-flüs-sig","en":"slow-moving","example":"Der Verkehr auf dem Ring ist zähflüssig.","level":"C1","theme":"Stadt & Verkehr"}
 ];
 window.DMA_VOKABELN["Technik & Erfindung"] = [
+  {"word": "der Kork", "de": "das leichte Material aus der Rinde der Korkeiche", "syl": "KORK", "en": "cork", "example": "Der Kork im Flaschenhals hält den Wein frisch.", "level": "B1", "theme": "Technik & Erfindung"},
+  {"word": "der Träger", "de": "ein Balken, der die Last einer Decke oder eines Dachs aufnimmt", "syl": "TRÄ-ger", "en": "beam, girder", "example": "Ein Träger aus Stahl hält die Decke über der Werkstatt.", "level": "B1", "theme": "Technik & Erfindung"},
   {"word":"der Schraubenzieher","de":"ein Werkzeug, mit dem man Schrauben dreht","syl":"SCHRAU-ben-zie-her","en":"screwdriver","example":"Er braucht einen Schraubenzieher, um das Regal aufzubauen.","level":"A2","theme":"Technik & Erfindung"},
   {"word":"die Fehlfunktion","de":"ein technisches Gerät, das nicht richtig funktioniert","syl":"FEHL-funk-ti-on","en":"malfunction","example":"Wegen einer Fehlfunktion stoppte der Aufzug plötzlich.","level":"B1","theme":"Technik & Erfindung"},
   {"word":"der Bastler","de":"jemand, der gerne technische Dinge selbst baut oder repariert","syl":"BAST-ler","en":"tinkerer","example":"Der Bastler hat sich in seiner Garage einen eigenen Roboter gebaut.","level":"B1","theme":"Technik & Erfindung"},
@@ -4130,6 +4133,9 @@ window.DMA_VOKABELN["Technik & Erfindung"] = [
   {"word":"kabelgebunden","de":"mit einer festen Leitung verbunden und nicht frei","syl":"KA-bel-ge-bun-den","en":"wired","example":"Die Maus ist kabelgebunden, die Tastatur nicht.","level":"B2","theme":"Technik & Erfindung"}
 ];
 window.DMA_VOKABELN["Wirtschaft & Arbeit"] = [
+  {"word": "die Schulden", "de": "Geld, das man jemandem zurückzahlen muss — immer Mehrzahl", "syl": "SCHUL-den", "en": "debts", "example": "Er zahlt jeden Monat einen Teil seiner Schulden zurück.", "level": "B1", "theme": "Wirtschaft & Arbeit"},
+  {"word": "der Euro", "de": "die Währung in Deutschland, Österreich und vielen anderen Ländern", "syl": "EU-ro", "en": "euro", "example": "Das Brot kostet zwei Euro fünfzig.", "level": "A1", "theme": "Wirtschaft & Arbeit"},
+  {"word": "der Schein", "de": "Papiergeld — ein Geldschein", "syl": "SCHEIN", "en": "banknote", "example": "Sie bezahlt mit einem Schein und bekommt Münzen zurück.", "level": "A2", "theme": "Wirtschaft & Arbeit"},
   {"word":"der Onlinehandel","de":"der Verkauf und Kauf von Waren über das Internet","syl":"ON-line-han-del","en":"e-commerce, online retail","example":"Der Onlinehandel wächst schneller als der klassische Einzelhandel.","level":"B2","theme":"Wirtschaft & Arbeit"},
   {"word":"die Berufsausbildung","de":"eine praktische und theoretische Ausbildung für einen bestimmten Beruf","syl":"Be-rufs-AUS-bil-dung","en":"vocational training","example":"Nach der Schule beginnt sie eine Berufsausbildung zur Elektrikerin.","level":"B2","theme":"Wirtschaft & Arbeit"},
   {"word":"der Zuverdienst","de":"zusätzliches Geld, das man neben dem Haupteinkommen verdient","syl":"Zu-ver-DIENST","en":"supplementary income","example":"Als Rentner hat er noch einen kleinen Zuverdienst durch Gartenarbeit.","level":"B2","theme":"Wirtschaft & Arbeit"},
