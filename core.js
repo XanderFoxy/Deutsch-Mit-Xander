@@ -596,6 +596,12 @@ const Core = (function () {
   // Ausnahme zu -ologia: dort liegt die Betonung auf dem i (bio-lo-GI-a),
   // also NICHT sdrucciola. Wird unten eigens behandelt.
   const IT_IA_ENDBETONT = /(log|graf|nom|terap|farmac|chirurg)ia$/;
+  /* Auf der letzten Silbe betont, obwohl kein Akzent geschrieben wird —
+     meist Fremdwörter und verkürzte Formen. */
+  const IT_TRONCHE_OHNE_AKZENT = new Set([
+    "robot", "film", "sport", "castel", "san", "gran", "buon",
+    "bel", "quel", "nessun", "alcun", "ciascun", "suol", "vien", "andar",
+  ]);
 
   /* Die Vorhersage: welche Silbe ist betont? Rückgabe ist der Index in
      das Ergebnis von italienischeSilben(), oder -1, wenn unklar. */
@@ -604,6 +610,13 @@ const Core = (function () {
     if (!wort) return { silben: [], index: -1, regel: null };
     const silben = italienischeSilben(wort);
     if (!silben.length) return { silben, index: -1, regel: null };
+    /* Ein „einsilbiges" Wort, das auf einen fallenden Diphthong endet,
+       ist in Wahrheit zweisilbig: „sdraio" ist sdrà-io, nicht sdraio.
+       Die Silbentrennung fasst -aio/-eio/-oio zusammen; hier wird es
+       wieder getrennt, damit der Ton vorn sitzt. */
+    if (silben.length === 1 && /^.{2,}[aeo]io$/.test(wort)) {
+      return { silben: [wort.slice(0, -2), wort.slice(-2)], index: 0, regel: "diphthong-vorn" };
+    }
     if (silben.length === 1) return { silben, index: 0, regel: "einsilbig" };
     // 1. Geschriebener Akzent am Wortende
     if (IT_AKZENT_ENDE.test(wort)) return { silben, index: silben.length - 1, regel: "akzent" };
@@ -644,6 +657,13 @@ const Core = (function () {
     // 4. Die Liste
     if (IT_SDRUCCIOLE.has(wort) && silben.length >= 3) {
       return { silben, index: silben.length - 3, regel: "liste-sdrucciola" };
+    }
+    /* 4b. Wörter, die auf dem letzten Vokal betont werden, obwohl dort
+       kein Akzent steht: Fremdwörter (robot, film) und verkürzte Formen
+       wie „castel" in Castel Sant'Angelo. Ohne diese Liste läge der Ton
+       eine Silbe zu weit vorn. */
+    if (IT_TRONCHE_OHNE_AKZENT.has(wort) && silben.length >= 2) {
+      return { silben, index: silben.length - 1, regel: "tronca-ohne-akzent" };
     }
     // 5. Der Normalfall
     return { silben, index: silben.length - 2, regel: "piana" };

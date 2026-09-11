@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=164" />
-<link rel="stylesheet" href="app-styles.css?v=164" />
-<link rel="stylesheet" href="themes.css?v=164" />
+<link rel="stylesheet" href="styles.css?v=165" />
+<link rel="stylesheet" href="app-styles.css?v=165" />
+<link rel="stylesheet" href="themes.css?v=165" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -225,6 +225,7 @@
       <button class="subnav-pill" data-sub="sub-gewitter" aria-selected="false" style="display:none;">⛈️ Das Gewitter <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
       <button class="subnav-pill" data-sub="sub-arzt" aria-selected="false" style="display:none;">🩺 Beim Arzt <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
       <button class="subnav-pill" data-sub="sub-erbschaft" aria-selected="false" style="display:none;">🗝️ Die Erbschaft <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-meinesaetze" aria-selected="false" style="display:none;">🧩 Meine Sätze <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-wortlisten" aria-selected="false">📋 Meine Wortlisten</button>
       <button class="subnav-pill" data-sub="sub-sortierer" aria-selected="false" style="display:none;">🧺 Wörter-Sortierer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
     </div>
@@ -371,6 +372,11 @@
 
     <div class="subview" id="sub-erbschaft" data-active="false">
       <div id="erbschaftArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-meinesaetze" data-active="false">
+      <div id="meineSaetzeArea"></div>
       <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
     </div>
 
@@ -610,7 +616,7 @@
 <!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
      nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
      Fassung aus dem Zwischenspeicher des Browsers. -->
-<script>window.DMA_VERSION = "164";</script>
+<script>window.DMA_VERSION = "165";</script>
 <script>
 /* Fassungs-Wächter: liegt auf dem Server eine neuere Seite als die hier
    geladene, sagt die App Bescheid, statt still eine alte Fassung zu
@@ -635,13 +641,14 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) pruefen(); });
 })();
 </script>
-<script src="core.js?v=164"></script>
-<script src="supabase-config.js?v=164"></script>
-<script src="satzbau.js?v=164"></script>
-<script src="data-exercises.js?v=164"></script>
-<script src="data-vocab.js?v=164"></script>
-<script src="backend.js?v=164"></script>
-<script src="quiz.js?v=164"></script>
-<script src="app.js?v=164"></script>
+<script src="core.js?v=165"></script>
+<script src="bildverwaltung.js?v=165"></script>
+<script src="supabase-config.js?v=165"></script>
+<script src="satzbau.js?v=165"></script>
+<script src="data-exercises.js?v=165"></script>
+<script src="data-vocab.js?v=165"></script>
+<script src="backend.js?v=165"></script>
+<script src="quiz.js?v=165"></script>
+<script src="app.js?v=165"></script>
 </body>
 </html>

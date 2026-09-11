@@ -4495,19 +4495,51 @@ body.lernraum-it .nur-deutsch { display: none; }
    einen Kreis gezwängt und wirkte wie eine angeschnittene Ellipse.
    Jetzt gilt hier dieselbe Regel wie im Profil: das Foto ist rund (das
    macht .avatar-photo selbst), der Sticker bleibt ganz. */
+/* GEMELDET: „Achte darauf, dass das Profilbild bei Fuchs des Tages
+   korrekt angezeigt ist, dass die Sticker als Sticker angezeigt werden,
+   die nicht in einem kreisrunden Ausschnitt oder ellipsenartig doppelt
+   geschnitten werden … das Profilbild darf auch nicht den Text
+   überlappen."
+
+   Beides hing zusammen. Der Sticker durfte zwar über seinen 56er-Kasten
+   hinausragen (overflow:visible), aber daneben stand direkt der Name —
+   und mit z-index:5 legte sich der überstehende Fuchs darüber.
+
+   Die Lösung ist nicht noch eine Ausnahme, sondern mehr Platz: Der
+   Kasten ist jetzt groß genug für den ganzen Sticker, und der Sticker
+   passt sich mit object-fit:contain hinein. Damit ist er vollständig zu
+   sehen, wird nirgends beschnitten UND ragt nirgendwo hin, wo Text
+   steht. */
+.fox-kopfzeile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0 10px;
+}
+.fox-kopf-text { min-width: 0; flex: 1; }
+.fox-kopf-text .friend-name-btn {
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
 .fox-avatar {
-  width: 56px;
-  height: 56px;
+  width: 84px;
+  height: 84px;
   flex-shrink: 0;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .fox-avatar .avatar-photo {
-  width: 100%;
-  height: 100%;
+  width: 68px;
+  height: 68px;
   object-fit: cover;
 }
 /* Der Sticker-Wrapper trägt selbst die Klasse .avatar-photo, darf aber
-   weder rund geschnitten noch beschnitten werden. */
+   weder rund geschnitten noch beschnitten werden — und bleibt jetzt
+   innerhalb seines Platzes, statt über den Text zu ragen. */
 .fox-avatar .avatar-figure-sticker-wrap {
   width: 100%;
   height: 100%;
@@ -4515,10 +4547,18 @@ body.lernraum-it .nur-deutsch { display: none; }
   overflow: visible;
   border-radius: 0;
   box-shadow: none;
+  z-index: auto;
 }
-.fox-avatar .initials-avatar {
+.fox-avatar .avatar-figure-sticker {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
+}
+.fox-avatar .initials-avatar {
+  width: 68px;
+  height: 68px;
+  font-size: 1.5rem;
 }
 
 /* Der gezeichnete Spielname über jedem Spiel. Die Buchstaben sind eigene
@@ -6004,24 +6044,114 @@ input[type="checkbox"], input[type="radio"] {
 .lernweg-art { font-size: 0.68rem; opacity: 0.65; margin-left: auto; }
 .lernweg-zaehler { margin: 8px 0 0; font-size: 0.72rem; }
 
-/* ------------------------------------------------------------
-   Die Begrüßung mit dem Sammelfuchs — über der ersten Aufgabe
-   einer Runde. Bewusst KEIN Fenster zum Wegklicken: sie steht im
-   Spiel und rutscht mit der nächsten Frage von selbst weg.
-   ------------------------------------------------------------ */
-.fuchs-begruessung {
-  border: 2px solid var(--amber-300, #e8b64c);
-  background: rgba(255, 252, 246, 0.94);
-  color: #241505;
-  margin-bottom: 12px;
+
+
+/* ---------------------------------------------------------------
+   BILDVERWALTUNG (Einstellungen)
+   Ein Aufklappmenü je Bereich, darin jedes Ding mit Vorschau.
+   --------------------------------------------------------------- */
+.bildv-box { display: flex; flex-direction: column; gap: 8px; }
+.bildv-gruppe {
+  border: 1.5px solid var(--line, #d8cbb4);
+  border-radius: 12px;
+  background: var(--card, #fffdf8);
+  overflow: hidden;
 }
-.fuchs-begruessung * { color: inherit; }
-.fuchs-begruessung-kopf { display: flex; align-items: center; gap: 12px; }
-.fuchs-begruessung-bild {
-  width: 62px; height: 62px;
+.bildv-gruppe > summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.bildv-gruppe > summary::-webkit-details-marker { display: none; }
+.bildv-gruppe > summary::before { content: "▸"; font-size: 0.9em; opacity: 0.6; }
+.bildv-gruppe[open] > summary::before { content: "▾"; }
+.bildv-zaehler {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+.bildv-liste { padding: 0 12px 6px; display: flex; flex-direction: column; gap: 6px; }
+.bildv-zeile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px dashed var(--line, #e4dac6);
+  flex-wrap: wrap;
+}
+.bildv-vorschau {
+  width: 40px; height: 40px;
+  flex: 0 0 40px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.04);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.bildv-vorschau svg, .bildv-vorschau img {
+  width: 100%; height: 100%;
   object-fit: contain;
-  flex: 0 0 auto;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.18));
 }
-.fuchs-begruessung-text { margin: 10px 0 0; font-size: 0.88rem; line-height: 1.45; }
-.fuchs-begruessung-fuss { margin: 8px 0 0; font-size: 0.76rem; }
+.bildv-name { flex: 1 1 120px; font-size: 0.9rem; font-weight: 600; }
+.bildv-marke {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #2E8B57;
+  color: #fff;
+  white-space: nowrap;
+}
+.bildv-knopf { padding: 5px 10px; font-size: 0.82rem; }
+/* Liegt ein eigenes Bild über einem Ding, wird die Zeichnung ausgeblendet —
+   gelöscht wird sie nie, sie steckt weiter in der Datei. */
+.bw-teil-eigen .bw-kunst { display: none; }
+
+/* Der Merkstern auf der Wortkarte in der Bilderwelt. */
+.bw-merkknopf {
+  margin-top: 8px;
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+.bw-merkknopf[aria-pressed="true"] {
+  background: #2E8B57;
+  color: #fff;
+  border-color: #26734a;
+}
+
+/* ---------------------------------------------------------------
+   MEINE SÄTZE — Beispielsatz mit Lücke
+   --------------------------------------------------------------- */
+.ms-satz {
+  font-size: 1.06rem;
+  line-height: 1.75;
+  margin: 14px 0 12px;
+  font-weight: 600;
+}
+.ms-luecke {
+  display: inline-block;
+  min-width: 74px;
+  padding: 0 6px;
+  border-bottom: 2.5px solid var(--amber-500, #c98a3a);
+  text-align: center;
+  font-weight: 800;
+}
+.ms-wahlen { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-wahl { flex: 1 1 44%; font-size: 0.95rem; padding: 10px 8px; }
+.ms-wahl-richtig { background: #2E8B57; color: #fff; border-color: #26734a; }
+.ms-wahl-falsch { background: #b8452f; color: #fff; border-color: #93341f; }
+.ms-aufloesung {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 252, 246, 0.86);
+  color: #241505;
+}
+.ms-aufloesung * { color: inherit; }

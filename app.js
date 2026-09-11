@@ -1892,6 +1892,139 @@
     const d = new Date(iso);
     return "zuletzt gespeichert am " + d.toLocaleDateString("de-DE") + " um " + d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
   }
+  /* ---------------------------------------------------------------
+     BILDVERWALTUNG — eigene Bilder statt der gezeichneten Dinge
+     GEWÜNSCHT: „ein Bereich in den Einstellungen, wo ich kleine
+     PNG-Files für die einzelnen Bereiche hochladen … und das immer
+     wieder rausnehmen kann und verwalten kann."
+     Ein Aufklappmenü je Szene, darin jedes Ding mit Vorschau,
+     Hochladen und Herausnehmen. Die Zeichnung bleibt immer erhalten.
+     --------------------------------------------------------------- */
+  function bildverwaltungHtml() {
+    const szenen = (window.DMA_SZENEN || []);
+    if (!szenen.length) {
+      return `<p class="empty-note">Die Bilder werden geladen, sobald du einmal in der
+              <strong>Bilderwelt</strong> warst. Geh einmal auf „Lernen → Bilderwelt" und komm
+              dann hierher zurück — dann stehen hier alle Bereiche zum Verwalten.</p>
+              <button type="button" class="btn btn-ghost" id="bildverwaltungLaden">🖼️ Jetzt laden</button>`;
+    }
+    const gesamt = szenen.reduce((a, s) => a + s.teile.length, 0);
+    const eigene = typeof Bildverwaltung !== "undefined" ? Bildverwaltung.anzahl() : 0;
+    const kopf = `
+      <p class="empty-note" style="margin-bottom:10px;">
+        Jedes Ding in der Bilderwelt ist gezeichnet. Wenn dir ein eigenes Bild besser gefällt,
+        kannst du es hier darüberlegen — am besten ein <strong>durchsichtiges PNG</strong> oder ein
+        GIF, klein und quadratisch. Die Zeichnung wird dabei <strong>nicht gelöscht</strong>: Sie
+        bleibt in der Seite und kommt sofort zurück, sobald du das eigene Bild wieder herausnimmst.
+        Die Bilder liegen nur auf diesem Gerät, nicht in deinem Konto.
+      </p>
+      <p class="empty-note" style="margin-bottom:10px;">
+        <strong>${eigene}</strong> von <strong>${gesamt}</strong> Dingen haben gerade ein eigenes Bild.
+        ${eigene ? `<button type="button" class="btn btn-ghost" id="bildAllesRaus"
+                     style="margin-left:8px;">↩︎ Alle zurücksetzen</button>` : ""}
+      </p>`;
+    const bloecke = szenen.map((s) => {
+      const mit = s.teile.filter((t) => typeof Bildverwaltung !== "undefined"
+        && Bildverwaltung.hat(bildSchluessel(s.id, t.id))).length;
+      const zeilen = s.teile.map((t) => {
+        const k = bildSchluessel(s.id, t.id);
+        const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(k))
+          ? Bildverwaltung.bild(k) : null;
+        return `
+          <div class="bildv-zeile">
+            <span class="bildv-vorschau">${eigenesBild
+              ? `<img src="${eigenesBild}" alt="" />`
+              : `<svg viewBox="-26 -26 52 52" aria-hidden="true">${t.kunst}</svg>`}</span>
+            <span class="bildv-name">${escapeHtml(t.de)}${eigenesBild
+              ? ' <span class="bildv-marke">eigenes Bild</span>' : ""}</span>
+            <label class="btn btn-ghost bildv-knopf">
+              ${eigenesBild ? "Tauschen" : "Hochladen"}
+              <input type="file" accept="image/png,image/gif,image/webp,image/jpeg,image/svg+xml"
+                     data-bild-neu="${k}" hidden />
+            </label>
+            ${eigenesBild
+              ? `<button type="button" class="btn btn-ghost bildv-knopf" data-bild-raus="${k}">Raus</button>`
+              : ""}
+          </div>`;
+      }).join("");
+      return `
+        <details class="bildv-gruppe">
+          <summary>${s.emoji || "🖼️"} ${escapeHtml(s.titel)}
+            <span class="bildv-zaehler">${mit ? mit + " eigene" : s.teile.length + " Dinge"}</span>
+          </summary>
+          <div class="bildv-liste">${zeilen}</div>
+          ${mit ? `<button type="button" class="btn btn-ghost" data-bild-szene-raus="${s.id}"
+                     style="margin:8px 0 4px;">↩︎ In diesem Bereich alle zurücksetzen</button>` : ""}
+        </details>`;
+    }).join("");
+    return kopf + `<div class="bildv-box">${bloecke}</div>`;
+  }
+
+  function bildverwaltungBinden() {
+    const box = document.getElementById("bildverwaltungBox");
+    if (!box) return;
+    const neuZeichnen = () => { box.innerHTML = bildverwaltungHtml(); bildverwaltungBinden(); };
+    /* Beim allerersten Öffnen liegen die eigenen Bilder noch nicht im
+       Speicher — holen und die Liste danach noch einmal zeichnen. */
+    if (typeof Bildverwaltung !== "undefined" && !Bildverwaltung.istBereit()) {
+      Bildverwaltung.laden().then(neuZeichnen);
+      return;
+    }
+
+    const laden = box.querySelector("#bildverwaltungLaden");
+    if (laden) {
+      laden.addEventListener("click", async () => {
+        laden.disabled = true;
+        laden.textContent = "⏳ lädt …";
+        await szenenLaden();
+        neuZeichnen();
+      });
+    }
+    box.querySelectorAll("[data-bild-neu]").forEach((feld) => {
+      feld.addEventListener("change", async () => {
+        const datei = feld.files && feld.files[0];
+        if (!datei) return;
+        try {
+          const bild = await Bildverwaltung.einlesen(datei);
+          await Bildverwaltung.speichern(feld.dataset.bildNeu, bild);
+          showToast("Bild übernommen 🖼️");
+          neuZeichnen();
+          if (typeof renderBilderwelt === "function" && document.getElementById("bilderweltArea")) {
+            renderBilderwelt();
+          }
+        } catch (e) {
+          showToast(e && e.message ? e.message : "Das Bild ließ sich nicht übernehmen.");
+        }
+        feld.value = "";
+      });
+    });
+    box.querySelectorAll("[data-bild-raus]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        await Bildverwaltung.entfernen(b.dataset.bildRaus);
+        showToast("Zeichnung ist wieder da ✏️");
+        neuZeichnen();
+        if (typeof renderBilderwelt === "function" && document.getElementById("bilderweltArea")) {
+          renderBilderwelt();
+        }
+      });
+    });
+    box.querySelectorAll("[data-bild-szene-raus]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const n = await Bildverwaltung.entferneAlle(b.dataset.bildSzeneRaus + ":");
+        showToast(n + " Bild" + (n === 1 ? "" : "er") + " zurückgesetzt");
+        neuZeichnen();
+      });
+    });
+    const alles = box.querySelector("#bildAllesRaus");
+    if (alles) {
+      alles.addEventListener("click", async () => {
+        const n = await Bildverwaltung.entferneAlle("");
+        showToast(n + " Bild" + (n === 1 ? "" : "er") + " zurückgesetzt");
+        neuZeichnen();
+      });
+    }
+  }
+
   function profilUebersichtHtml() {
     const bereiche = profilBereichsUebersicht();
     if (!bereiche.length) return '<p class="empty-note">Bitte zuerst anmelden.</p>';
@@ -1958,6 +2091,11 @@
       <div class="question-card" style="margin-top:14px;">
         <h3>🗂️ Was liegt in meinem Konto?</h3>
         <div id="profilUebersichtBox">${profilUebersichtHtml()}</div>
+      </div>
+
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🖼️ Bildverwaltung</h3>
+        <div id="bildverwaltungBox">${bildverwaltungHtml()}</div>
       </div>
       ${darfItalienischraum() ? `
       <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
@@ -2197,6 +2335,7 @@
         errBox.style.display = "block";
       }
     });
+    bildverwaltungBinden();
     const premiumToggle = document.getElementById("premiumSelfToggle");
     if (premiumToggle) premiumToggle.addEventListener("change", async () => { await Backend.togglePremium(premiumToggle.checked); renderSettings(); });
     area.querySelectorAll(".feature-flag-toggle").forEach((toggle) => {
@@ -2575,7 +2714,7 @@
     vokabelmeister: "Vokabelmeister", satzbruecke: "Satzbrücke", wackelturm: "Wackelturm",
     wortschmiede: "Wortschmiede", werbinich: "Wer bin ich?", wortbaustelle: "Wortbaustelle",
     wortblasen: "Wortblasen", wortkanone: "Wort-Kanone", wortarten: "Wort-Typ",
-    bilderwelt: "Bilderwelt",
+    bilderwelt: "Bilderwelt", meinesaetze: "Meine Sätze",
   };
   /* GEMELDET: „bei den Spielen, wo keine Auswertungs-Mails gesendet werden …
      das soll automatisch kommen wie wir das bisher immer hatten."
@@ -4991,6 +5130,29 @@
   }
   checkNotifications();
   setInterval(checkNotifications, 20000);
+  /* GEWÜNSCHT: „Den Begrüßungsbildschirm mit den Beispiel-Füchsen sollst
+     du beim ERSTMALIGEN Öffnen der Seite haben, damit die Leute wissen,
+     dass es die Sammelfüchse gibt — und nicht vor jedem Spiel."
+
+     Genau so war es früher. Das Popup lag zwar noch im Code, wurde aber
+     nur noch beim Betreten des Profils ausgelöst — wer nie ins Profil
+     ging, sah es nie. Jetzt kommt es wieder beim ersten Öffnen der
+     Seite, sobald das Profil geladen ist. Gemerkt wird es im Konto
+     (extra_profile_data.seenFoxIntro), also auch auf einem zweiten
+     Gerät nur ein einziges Mal. */
+  (function begruessungBeimStart() {
+    let versuche = 0;
+    const takt = setInterval(() => {
+      versuche += 1;
+      if (versuche > 40) { clearInterval(takt); return; }   // rund 20 Sekunden
+      const profil = Backend.currentProfile();
+      if (!profil) return;
+      clearInterval(takt);
+      if (profil.extraProfileData && profil.extraProfileData.seenFoxIntro) return;
+      // Erst wenn die Seite steht, nicht mitten in den Startladevorgang hinein.
+      setTimeout(() => maybeShowFoxIntro(), 900);
+    }, 500);
+  })();
   loadAndRenderAboutSection();
 
   const weatherOut = document.getElementById("weatherOut");
@@ -5801,60 +5963,6 @@
     e: "und", ma: "aber", o: "oder", anche: "auch", non: "nicht",
   };
 
-  /* ============================================================
-     DIE BEGRÜSSUNG MIT DEM SAMMELFUCHS
-     ------------------------------------------------------------
-     GEWÜNSCHT: „Dann musst du die alte Begrüßungsanzeige wieder
-     einrichten mit den Sammelfüchsen, die die Übung vorstellt."
-
-     Sie erscheint einmal pro Runde, über der ERSTEN Frage — nicht als
-     Fenster, das man wegklicken muss. Das war die alte Beschwerde
-     („keine Willkommensbildschirme, die Beschreibung soll im Spiel
-     stehen"), und daran ändert sich nichts: Die Karte steht IM Spiel,
-     über der Aufgabe, und verschwindet, sobald man geantwortet hat.
-
-     Welcher Fuchs begrüßt, hängt davon ab, wie weit man ist: Man wird
-     von der Figur empfangen, die man zuletzt freigeschaltet hat — und
-     sieht daneben, welche als Nächste dran wäre. */
-  let begruessungGezeigt = null;   // für welche Runde die Karte schon dran war
-
-  function begruessungsFuchs() {
-    const profil = Backend.currentProfile();
-    if (!profil) return { fuchs: COLLECTIBLE_FIGURES[0], naechster: COLLECTIBLE_FIGURES[1] };
-    const frei = COLLECTIBLE_FIGURES.filter((f) => isFigureUnlocked(f, profil));
-    const offen = COLLECTIBLE_FIGURES.filter((f) => !isFigureUnlocked(f, profil));
-    return {
-      fuchs: frei.length ? frei[frei.length - 1] : COLLECTIBLE_FIGURES[0],
-      naechster: offen.length ? offen[0] : null,
-      anzahl: frei.length,
-    };
-  }
-
-  function begruessungHtml(cat, gesamt) {
-    if (!cat) return "";
-    const { fuchs, naechster, anzahl } = begruessungsFuchs();
-    const stufen = (() => {
-      try { return [...new Set((cat.getBank() || []).map((f) => f.level).filter(Boolean))].sort(); }
-      catch (e) { return []; }
-    })();
-    return `
-      <div class="question-card fuchs-begruessung">
-        <div class="fuchs-begruessung-kopf">
-          <img src="${fuchs.img}" alt="${escapeHtml(fuchs.name)}" class="fuchs-begruessung-bild" />
-          <div>
-            <p class="eyebrow" style="margin:0;">${fuchs.name} begrüßt dich</p>
-            <h3 style="margin:2px 0 0;">${cat.icon} ${escapeHtml(cat.title)}</h3>
-            <p class="empty-note" style="margin:2px 0 0;">${gesamt} Aufgaben${stufen.length ? " · " + stufen.join(", ") : ""}</p>
-          </div>
-        </div>
-        ${cat.info ? `<p class="fuchs-begruessung-text">${cat.info}</p>` : ""}
-        <p class="empty-note fuchs-begruessung-fuss">
-          ${typeof anzahl === "number" && anzahl ? `Du hast ${anzahl} ${anzahl === 1 ? "Fuchs" : "Füchse"} gesammelt.` : "Deinen ersten Fuchs bekommst du bei 20 Punkten."}
-          ${naechster ? ` Als Nächstes wartet <strong>${escapeHtml(naechster.name)}</strong> — ${escapeHtml(naechster.desc)}` : " Du hast alle Füchse."}
-        </p>
-      </div>`;
-  }
-
   function renderQuestion() {
     setupEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -5888,18 +5996,8 @@
       erklaerung: q.explain || "",
     });
 
-    /* Die Begrüßungskarte: nur über der ersten Aufgabe einer Runde. */
-    /* Eine Runde wird über ihre Kennung erkannt: Kategorie, Länge und
-       die Frage selbst. Startet jemand dieselbe Kategorie noch einmal,
-       sind die Fragen gemischt — die Marke stimmt dann nicht mehr, und
-       die Begrüßung kommt wieder. */
-    const rundenMarke = q.categoryId + ":" + p.total + ":" + String(q.prompt).slice(0, 40);
-    const zeigeBegruessung = p.index === 0 && begruessungGezeigt !== rundenMarke;
-    if (zeigeBegruessung) begruessungGezeigt = rundenMarke;
-
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
-      ${zeigeBegruessung ? begruessungHtml(cat, p.total) : ""}
       <div class="question-card">
         ${reportBugButtonHtml()}
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
@@ -7922,6 +8020,7 @@
     wortkette: "wortkette",
     augenblick: "augenblick",
     wortbaustelle: "wordbuild",
+    meinesaetze: "meinesaetze",
   };
   /* Die Liste, die eine bestimmte Herausforderung mitgebracht hat.
      Gefüllt beim Laden der Herausforderungen, damit das Annehmen nicht
@@ -8032,7 +8131,7 @@
      Stelle, damit „Damit spielen" in den Wortlisten alle auf einmal
      umstellen kann. */
   const WORTQUELLE_SPIELE = ["stresstrainer", "silbenturm", "flussfuchs",
-    "setzerei", "wortkette", "augenblick", "wordbuild"];
+    "setzerei", "wortkette", "augenblick", "wordbuild", "meinesaetze"];
   const wortQuelleWahl = {};
   function wortQuelleAktiv(spiel) {
     const wahl = wortQuelleWahl[spiel] || "alle";
@@ -8488,6 +8587,14 @@
       s.letztes = bewertung;
       if (bewertung.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
       renderAussprache();
+      /* GEWÜNSCHT: „dass das automatisch alleine weitergeht und man nicht
+         erst auf den Knopf drücken muss." Nach einem bewerteten Versuch
+         geht es von selbst zum nächsten Wort — der Knopf bleibt für alle,
+         die es schneller wollen. */
+      autoWeiter(bewertung.prozent >= 75, () => {
+        const knopf = document.getElementById("ausspracheWeiter");
+        if (knopf) knopf.click();
+      });
     });
     document.getElementById("ausspracheWeiter").addEventListener("click", () => {
       if (s.letztes) {
@@ -18275,6 +18382,190 @@
 
 
   /* ============================================================
+     MEINE SÄTZE — Beispielsätze zu den eigenen Vokabeln
+     ------------------------------------------------------------
+     GEWÜNSCHT: „dass du vielleicht Beispielsätze hast für mehrere
+     Spiele, wo man die eigenen Vokabeln [benutzt], wo das System
+     erkennt."
+
+     Zu jedem Wort im Wörterbuch steht ein Beispielsatz. Wer ein Wort
+     mit dem Stern merkt oder in eine Wortliste schreibt, hat damit
+     auch dessen Satz. Dieses Spiel schneidet das Wort aus seinem Satz
+     heraus und lässt es wieder einsetzen — so übt man das Wort nicht
+     nackt, sondern an der Stelle, an der es im Deutschen wirklich
+     steht. Ohne eigene Wörter läuft es mit dem ganzen Wörterbuch.
+     ============================================================ */
+  const MS_RUNDEN = 8;
+  let msSession = null;
+  let msLevel = "A2";
+
+  /* Das nackte Wort ohne Artikel — nur damit lässt sich im Satz suchen. */
+  function msKern(wort) { return String(wort || "").replace(/^(der|die|das)\s+/i, "").trim(); }
+
+  /* Wo steckt das Wort im Satz? Erst wörtlich, dann über den Wortstamm:
+     „die Verspätung" steht im Satz vielleicht als „Verspätungen". Ohne
+     Fund wird das Wort übersprungen — ein Satz mit falscher Lücke wäre
+     schlimmer als ein Wort weniger. */
+  function msLuecke(satz, wort) {
+    const kern = msKern(wort);
+    if (!kern || !satz) return null;
+    const escape = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const woertlich = new RegExp("(^|[^\\wÄÖÜäöüß])(" + escape(kern) + ")([^\\wÄÖÜäöüß]|$)", "i");
+    let treffer = satz.match(woertlich);
+    if (!treffer) {
+      const stamm = kern.length > 6 ? kern.slice(0, kern.length - 2) : kern;
+      if (stamm.length < 4) return null;
+      const mitEndung = new RegExp("(^|[^\\wÄÖÜäöüß])(" + escape(stamm) + "[\\wÄÖÜäöüß]{0,4})([^\\wÄÖÜäöüß]|$)", "i");
+      treffer = satz.match(mitEndung);
+    }
+    if (!treffer) return null;
+    const gefunden = treffer[2];
+    const stelle = satz.indexOf(gefunden);
+    if (stelle < 0) return null;
+    return {
+      vorn: satz.slice(0, stelle),
+      hinten: satz.slice(stelle + gefunden.length),
+      form: gefunden,
+      /* Steht das Wort im Satz genau so da wie im Wörterbuch? Dann
+         passen die Ablenker (die immer in der Grundform kommen)
+         dazu — und man kann die Lücke nicht an der Endung erraten. */
+      grundform: gefunden.toLowerCase() === kern.toLowerCase(),
+    };
+  }
+
+  function msPool() {
+    const alle = buildDictionaryEntries().filter((e) => e.verified && e.example && e.word);
+    const eigene = wortQuelleFilter("meinesaetze", alle);
+    const quelle = eigene.length >= MS_RUNDEN ? eigene : alle;
+    const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const grenze = stufen.indexOf(msLevel);
+    const passend = quelle.filter((e) => stufen.indexOf(e.level || "A2") <= Math.max(0, grenze));
+    return (passend.length >= MS_RUNDEN ? passend : quelle);
+  }
+
+  function neueMsSession() {
+    msLevel = applyDefaultCefrLevel(msLevel, (v) => { msLevel = v; }, "meinesaetze");
+    const pool = msPool();
+    const aufgaben = [];
+    const nachrangig = [];
+    for (const e of Core.shuffle(pool)) {
+      if (aufgaben.length >= MS_RUNDEN) break;
+      const l = msLuecke(e.example, e.word);
+      if (!l) continue;
+      const ablenker = Core.shuffle(pool.filter((x) => x.word !== e.word))
+        .slice(0, 3).map((x) => msKern(x.word));
+      if (ablenker.length < 3) continue;
+      const aufgabe = {
+        wort: e.word, kern: msKern(e.word), syl: e.syl, uebersetzung: e.en,
+        bedeutung: e.de, satz: e.example, luecke: l,
+        wahlen: Core.shuffle([l.form].concat(ablenker)),
+      };
+      if (l.grundform) aufgaben.push(aufgabe); else nachrangig.push(aufgabe);
+    }
+    // Gebeugte Formen erst auffüllen, wenn die sauberen nicht reichen.
+    while (aufgaben.length < MS_RUNDEN && nachrangig.length) aufgaben.push(nachrangig.shift());
+    msSession = { aufgaben, runde: 0, richtig: 0, punkte: 0, letzte: null };
+  }
+
+  function renderMeineSaetze() {
+    const area = document.getElementById("meineSaetzeArea");
+    if (!area) return;
+    if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
+      area.innerHTML = `<div class="question-card"><p class="eyebrow">🧩 MEINE SÄTZE</p>
+        <p class="empty-note">Der Wortschatz wird geladen …</p></div>`;
+      wortschatzBereit().then(() => renderMeineSaetze());
+      return;
+    }
+    if (!msSession) neueMsSession();
+    const s = msSession;
+    if (!s.aufgaben.length) {
+      area.innerHTML = `<div class="question-card"><p class="eyebrow">🧩 MEINE SÄTZE</p>
+        <p class="empty-note">Für diese Auswahl gibt es gerade keine Beispielsätze. Markiere im
+        Wörterbuch ein paar Wörter mit dem Stern ☆ — dann übt dieses Spiel genau mit deinen Sätzen.</p>
+        ${wortQuelleChipsHtml("meinesaetze")}</div>`;
+      wortQuelleBinden(area, "meinesaetze", () => { neueMsSession(); renderMeineSaetze(); });
+      return;
+    }
+    if (s.runde >= s.aufgaben.length) { renderMeineSaetzeErgebnis(); return; }
+    const a = s.aufgaben[s.runde];
+    const l = a.luecke;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Meine Sätze: " + a.wort)}
+        <p class="eyebrow">🧩 MEINE SÄTZE · SATZ ${s.runde + 1} / ${s.aufgaben.length}
+          <span class="subnav-info-icon" data-info="Zu jedem Wort im Wörterbuch gehört ein Beispielsatz. Hier fehlt genau dieses Wort — setz es wieder ein. Mit dem Stern gemerkte Wörter kommen zuerst dran.">ⓘ</span></p>
+        ${fortschrittHtml(s.runde, s.aufgaben.length)}
+        <div class="trophy-case wsm-chips">
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip ms-level-btn ${msLevel === lvl ? "selected" : ""}" data-ms-level="${lvl}">${lvl}</button>`).join("")}
+        </div>
+        ${wortQuelleChipsHtml("meinesaetze")}
+        <p class="ms-satz">${escapeHtml(l.vorn)}<span class="ms-luecke">${s.letzte ? escapeHtml(l.form) : "_____"}</span>${escapeHtml(l.hinten)}</p>
+        <div class="ms-wahlen">
+          ${a.wahlen.map((w) => {
+            const richtig = w === l.form;
+            const markiert = s.letzte
+              ? (richtig ? " ms-wahl-richtig" : (s.letzte.gewaehlt === w ? " ms-wahl-falsch" : ""))
+              : "";
+            return `<button type="button" class="btn btn-ghost ms-wahl${markiert}" data-ms-wahl="${escapeHtml(w)}"
+                     ${s.letzte ? "disabled" : ""}>${escapeHtml(w)}</button>`;
+          }).join("")}
+        </div>
+        ${s.letzte ? `
+          <div class="ms-aufloesung">
+            <p style="margin:0 0 4px; font-weight:700;">${escapeHtml(a.wort)}
+              <button type="button" class="btn btn-ghost bw-hoerknopf bw-hoerknopf-klein" id="msSprich" aria-label="Satz vorlesen">🔊</button></p>
+            <p class="bw-betonung" style="margin:0 0 4px;">${betonungAnzeigen(a.syl)}</p>
+            <p class="empty-note" style="margin:0;">${escapeHtml(a.bedeutung || "")}${a.uebersetzung ? " · 🇬🇧 " + escapeHtml(a.uebersetzung) : ""}</p>
+          </div>` : ""}
+      </div>`;
+    area.querySelectorAll("[data-ms-level]").forEach((b) => b.addEventListener("click", () => {
+      msLevel = b.dataset.msLevel; neueMsSession(); renderMeineSaetze();
+    }));
+    wortQuelleBinden(area, "meinesaetze", () => { neueMsSession(); renderMeineSaetze(); });
+    area.querySelectorAll("[data-ms-wahl]").forEach((b) => b.addEventListener("click", () => msAntwort(b.dataset.msWahl)));
+    document.getElementById("msSprich")?.addEventListener("click", () => Core.speak(a.satz, "de-DE"));
+  }
+
+  function msAntwort(gewaehlt) {
+    const s = msSession;
+    if (!s || s.letzte) return;          // doppeltes Antippen zählt nicht zweimal
+    const a = s.aufgaben[s.runde];
+    const richtig = gewaehlt === a.luecke.form;
+    s.letzte = { gewaehlt, richtig };
+    if (richtig) { s.richtig += 1; s.punkte += 3; Core.sound.correct?.(); }
+    else Core.sound.wrong?.();
+    spielNotiz(richtig, a.wort + " — " + a.satz);
+    renderMeineSaetze();
+    autoWeiter(richtig, () => {
+      s.letzte = null;
+      s.runde += 1;
+      renderMeineSaetze();
+    });
+  }
+
+  function renderMeineSaetzeErgebnis() {
+    const area = document.getElementById("meineSaetzeArea");
+    const s = msSession;
+    const prozent = Math.round((s.richtig / Math.max(1, s.aufgaben.length)) * 100);
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: s.punkte, prozent, tier: "Satzbauer:in", charakter: "Meine Sätze",
+      bonus: s.richtig === s.aufgaben.length ? 6 : 0,
+      zeilen: [
+        { name: "🧩 Wort richtig eingesetzt", anteil: prozent, wert: s.richtig + "/" + s.aufgaben.length },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="msNochmal">🔄 Neue Runde</button>`,
+    });
+    document.getElementById("msNochmal")?.addEventListener("click", () => { neueMsSession(); renderMeineSaetze(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["meinesaetze"], points: s.punkte, bonus: 0, percent: prozent,
+        character: "Satzbauer:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-meinesaetze"]')?.addEventListener("click", () => renderMeineSaetze());
+
+
+  /* ============================================================
      DER UMZUG — wohin oder wo?
      ------------------------------------------------------------
      Neun deutsche Präpositionen können beides: in, an, auf, über,
@@ -22897,6 +23188,7 @@
     { sub: "sub-marktstand", emoji: "🥕", name: "Der Marktstand", persona: "Logiker" },
     { sub: "sub-umzug", emoji: "📦", name: "Der Umzug", persona: "Grammatik-Profi" },
     { sub: "sub-augenblick", emoji: "👁️", name: "Augenblick!", persona: "Gemischt" },
+    { sub: "sub-meinesaetze", emoji: "🧩", name: "Meine Sätze", persona: "Sprachkünstler" },
     { sub: "sub-wortkette", emoji: "⛓️", name: "Die Wortkette", persona: "Sprachkünstler" },
     { sub: "sub-setzerei", emoji: "🅰️", name: "Die Setzerei", persona: "Grammatik-Profi" },
     { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
@@ -24972,6 +25264,9 @@
      ============================================================ */
   let szenenGeladen = null;
   function szenenLaden() {
+    /* Die eigenen Bilder aus der Bildverwaltung gleich mitholen — sie
+       müssen dasein, bevor das erste Bild gezeichnet wird. */
+    if (typeof Bildverwaltung !== "undefined") Bildverwaltung.laden();
     if (szenenGeladen) return szenenGeladen;
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
     szenenGeladen = new Promise((fertig) => {
@@ -25063,6 +25358,7 @@
         return;
       }
     }
+    if (typeof Bildverwaltung !== "undefined") await Bildverwaltung.laden();
     if (!bwSzene) { bwUebersichtZeichnen(area); return; }
     bwSzeneZeichnen(area);
   }
@@ -25109,6 +25405,11 @@
   /* Das Bild selbst. Jedes Teil kommt in eine eigene Gruppe mit
      role="button" — antippbar, mit Tastatur erreichbar, und mit einem
      Namen, den ein Screenreader vorliest. */
+  /* Der Schlüssel, unter dem ein eigenes Bild für ein Ding liegt.
+     Szene und Ding zusammen — „kueche:topf" ist etwas anderes als
+     „werkstatt:topf". */
+  function bildSchluessel(szeneId, teilId) { return szeneId + ":" + teilId; }
+
   function bwBildHtml(szene, opt) {
     const o = opt || {};
     const treffer = o.treffer || new Set();
@@ -25121,12 +25422,23 @@
           if (bwGewaehlt && bwGewaehlt.id === t.id) klassen.push("bw-teil-aktiv");
           if (treffer.has(t.id)) klassen.push("bw-teil-treffer");
           else if (bwEntdeckt.has(t.id) && bwModus === "entdecken") klassen.push("bw-teil-entdeckt");
+          /* Hat jemand für dieses Ding ein eigenes Bild hochgeladen, wird
+             es darübergelegt — die Zeichnung bleibt in der Datei und kommt
+             zurück, sobald das eigene Bild wieder herausgenommen wird. */
+          const eigen = bildSchluessel(szene.id, t.id);
+          const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(eigen))
+            ? Bildverwaltung.bild(eigen) : null;
+          if (eigenesBild) klassen.push("bw-teil-eigen");
           return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"
                      transform="translate(${t.x},${t.y})"
                      role="button" tabindex="0"
                      aria-label="${escapeHtml(bwWort(t))}">
                     <title>${escapeHtml(bwWort(t))}</title>
-                    ${t.kunst}
+                    <g class="bw-kunst">${t.kunst}</g>
+                    ${eigenesBild
+                      ? `<image class="bw-eigenbild" href="${eigenesBild}" x="-22" y="-22"
+                                width="44" height="44" preserveAspectRatio="xMidYMid meet" />`
+                      : ""}
                   </g>`;
         }).join("")}
       </svg>`;
@@ -25199,8 +25511,24 @@
         <p class="empty-note" style="margin:6px 0 0;">${imItalienischraum() ? "🇩🇪" : "🇮🇹"} ${escapeHtml(bwZweitwort(t))} <span class="bw-zweitbetonung">${bwFormatStressZweit(bwZweitSyl(t))}</span>
           <button type="button" class="btn btn-ghost bw-hoerknopf bw-hoerknopf-klein" data-bw-sprich2="${t.id}" aria-label="Zweitsprache vorlesen">🔊</button></p>
         ${t.en ? `<p class="empty-note" style="margin:2px 0 0;">🇬🇧 ${escapeHtml(t.en)}</p>` : ""}
+        ${/* GEWÜNSCHT: „dass man sämtliche Wörter, die man auf der Seite
+              findet, sammeln kann und in seinem Wörterbuch als Auswahl in
+              seine Favoriten nehmen kann." Also steht der Stern auch hier —
+              ein Wort aus dem Bild landet in demselben „Mein Wortschatz",
+              mit dem der Aussprache-, der Betonungs- und die Wortspiele
+              üben. */ ""}
+        ${Backend.currentUser() ? `
+        <button type="button" class="btn btn-ghost bw-merkknopf" data-bw-merken="${escapeHtml(bwMerkwort(t))}"
+                aria-pressed="${imWortschatz(bwMerkwort(t))}">
+          ${imWortschatz(bwMerkwort(t)) ? "★ In meinem Wortschatz" : "☆ In meinen Wortschatz"}
+        </button>` : ""}
       </div>`;
   }
+
+  /* Welches Wort wandert in den eigenen Wortschatz? Im deutschen Raum das
+     deutsche, im italienischen das italienische — dasselbe Wort, das oben
+     groß auf der Karte steht. */
+  function bwMerkwort(t) { return bwWort(t); }
 
   function bwBinden(area) {
     document.getElementById("bwZurueck")?.addEventListener("click", () => {
@@ -25230,12 +25558,55 @@
       // ein Tipp ins Bild zeigt dort nur, welches Ding gemeint ist.
       else { bwGewaehlt = t; renderBilderwelt(); }
     };
+    /* Unsichtbare Trefferflächen — eine eigene Ebene UNTER allen Dingen.
+       Sonst müsste man auf dem Telefon genau den dünnen Strich treffen;
+       zwischen den Beinen eines Tisches ginge der Tipp ins Leere. Weil die
+       Ebene ganz unten liegt, gewinnt immer das gezeichnete Ding, und die
+       Flächen fangen nur, was daneben geht. */
+    area.querySelectorAll("svg.bw-bild").forEach((svg) => {
+      if (svg.querySelector(".bw-treffer-ebene")) return;
+      const ns = "http://www.w3.org/2000/svg";
+      const ebene = document.createElementNS(ns, "g");
+      ebene.setAttribute("class", "bw-treffer-ebene");
+      ebene.setAttribute("aria-hidden", "true");
+      svg.querySelectorAll("[data-bw-teil]").forEach((g) => {
+        try {
+          const k = g.getBBox();
+          if (!(k.width > 0 && k.height > 0)) return;
+          const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
+          const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
+          const feld = document.createElementNS(ns, "rect");
+          feld.setAttribute("class", "bw-treffflaeche");
+          feld.setAttribute("data-bw-treff", g.dataset.bwTeil);
+          feld.setAttribute("x", vx + k.x);
+          feld.setAttribute("y", vy + k.y);
+          feld.setAttribute("width", k.width);
+          feld.setAttribute("height", k.height);
+          feld.setAttribute("fill", "transparent");
+          ebene.appendChild(feld);
+        } catch (e) { /* ohne Trefferfläche geht es auch, nur fummeliger */ }
+      });
+      const kulisse = svg.querySelector(".bw-kulisse");
+      if (kulisse && kulisse.nextSibling) svg.insertBefore(ebene, kulisse.nextSibling);
+      else svg.insertBefore(ebene, svg.firstChild);
+    });
+    area.querySelectorAll("[data-bw-treff]").forEach((f) => {
+      f.addEventListener("click", () => teilAntippen(f.dataset.bwTreff));
+    });
     area.querySelectorAll("[data-bw-teil]").forEach((g) => {
       g.addEventListener("click", () => teilAntippen(g.dataset.bwTeil));
       g.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); teilAntippen(g.dataset.bwTeil); }
       });
     });
+    area.querySelectorAll("[data-bw-merken]").forEach((b) => b.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const wort = b.dataset.bwMerken;
+      const drin = await wortschatzUmschalten(wort);
+      b.setAttribute("aria-pressed", String(drin));
+      b.textContent = drin ? "★ In meinem Wortschatz" : "☆ In meinen Wortschatz";
+      showToast(drin ? "★ „" + wort + "\u201c gemerkt" : "☆ „" + wort + "\u201c entfernt");
+    }));
     area.querySelectorAll("[data-bw-chip]").forEach((b) => b.addEventListener("click", () => teilAntippen(b.dataset.bwChip)));
     area.querySelectorAll("[data-bw-sprich]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -25678,6 +26049,7 @@
     "sub-setzerei": "setzerei",
     "sub-wortkette": "wortkette",
     "sub-augenblick": "augenblick",
+    "sub-meinesaetze": "meinesaetze",
     "sub-umzug": "umzug",
     "sub-marktstand": "marktstand",
     "sub-wortwaage": "wortwaage",
@@ -31552,20 +31924,26 @@ An einem Morgen lief ein kleiner Fuchs los…
           <path d="M100 40 C70 40 50 65 45 95 C42 115 50 135 65 148 L60 170 L80 158 C87 161 93 162 100 162 C107 162 113 161 120 158 L140 170 L135 148 C150 135 158 115 155 95 C150 65 130 40 100 40 Z M70 55 L55 25 L80 48 Z M130 55 L145 25 L120 48 Z" fill="currentColor"/>
         </svg>
         <p class="eyebrow" style="margin-top:0;">🦊 ${pt.title}</p>
-        <div style="display:flex; align-items:center; gap:14px; margin-bottom:10px; margin-top:14px;">
+        <div class="fox-kopfzeile">
           <div class="fox-avatar">
-            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url) : `<div class="initials-avatar" style="width:56px; height:56px;">${(fox.name || "?")[0].toUpperCase()}</div>`}
+            ${fox.profile?.avatar_url ? avatarPhotoHtml(fox.profile.avatar_url) : `<div class="initials-avatar">${(fox.name || "?")[0].toUpperCase()}</div>`}
           </div>
-          <div>
-            <button type="button" class="friend-name-btn" data-view-ranked="${fox.user_id}" style="font-size:1.05rem; font-weight:800;">${fox.name}</button>
+          <div class="fox-kopf-text">
+            <button type="button" class="friend-name-btn" data-view-ranked="${fox.user_id}">${escapeHtml(fox.name || "")}</button>
             <p class="empty-note" style="margin:2px 0 0;">${fox.total} Aktivitäts-Punkte ${pt.suffix}${fox.uebernommen ? " — aus den Tagen davor, heute hat noch niemand gepunktet" : ""}</p>
           </div>
         </div>
         <div class="fox-of-day-report-card">
           <p style="font-weight:700; margin:0 0 6px;">📋 ${pt.report}:</p>
-          <ul style="margin:0; padding-left:18px;">
-            ${fox.reportCard.map((line) => `<li>${line}</li>`).join("")}
-          </ul>
+          ${/* GEMELDET: „Der Fuchs des Tages ist irgendwie kaputt, da ist kein Text mehr."
+                Eine Ursache war die dunkle Schrift auf dunklem Grund (weiter oben behoben),
+                die zweite steht hier: fehlt reportCard — etwa weil die Datenbank die Runden
+                nicht mitgeliefert hat —, warf .map() und riss die GANZE Ranglistenseite mit
+                sich. Sichtbar war dann gar nichts mehr. Jetzt steht im schlimmsten Fall eine
+                Zeile statt einer leeren Seite. */ ""}
+          ${Array.isArray(fox.reportCard) && fox.reportCard.length
+            ? `<ul style="margin:0; padding-left:18px;">${fox.reportCard.map((line) => `<li>${escapeHtml(String(line))}</li>`).join("")}</ul>`
+            : `<p class="empty-note" style="margin:0;">Für diesen Zeitraum liegt keine Aufschlüsselung vor.</p>`}
           ${fox.profile?.languages?.length ? `<p class="empty-note" style="margin-top:8px;">🗣️ Spricht: ${fox.profile.languages.join(", ")}</p>` : ""}
           ${fox.profile?.origin ? `<p class="empty-note" style="margin-top:4px;">🌍 Kommt aus: ${fox.profile.origin}</p>` : ""}
           <p class="empty-note" style="margin-top:8px; font-size:0.68rem;">So wird gerechnet: erspielte Punkte aus Übungen und Spielen zählen eins zu eins, jeder eigene Beitrag 50, eine Weiterempfehlung 20. Bloß eingeloggt zu sein oder das Profil auszufüllen zählt nicht.</p>
@@ -31762,7 +32140,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "164";
+  const APP_VERSION = "165";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -31772,6 +32150,17 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "165": [
+      "🖼️ **Die Bilderwelt ist fast doppelt so groß.** Siebzehn neue Bilder sind dazugekommen: Süßigkeiten und Snacks, Getränke, die Waschküche, Küchengeräte, Pflege und Hygiene, Technik und Energie, Schulsachen, Fahrzeuge und Verkehr, Spielzeug, der Strand, Sport und Hobbys, Rom mit seinen Wundern, berühmte Städte der Welt, Tiere aus aller Welt, der Wald, das Büro und Materialien mit Pfand und Mülltrennung. Insgesamt 36 Bilder und 594 Dinge zum Antippen — jedes mit Artikel, Betonung, italienischem Wort und Ton.",
+      "★ **Wörter sammeln, wo du sie findest.** Auf jeder Wortkarte in der Bilderwelt steht jetzt ein Stern. Damit wandert das Wort in deinen Wortschatz — denselben, mit dem der Aussprache-Trainer, der Betonungs-Trainer und die Wortspiele üben.",
+      "🧩 **Neues Spiel: Meine Sätze.** Zu jedem Wort im Wörterbuch gehört ein Beispielsatz. Das Spiel schneidet dein Wort aus seinem Satz heraus und lässt es wieder einsetzen — mit deinen gemerkten Wörtern zuerst. So übst du ein Wort nicht nackt, sondern an der Stelle, an der es im Deutschen wirklich steht.",
+      "🎨 **Eigene Bilder statt der gezeichneten.** In den Einstellungen gibt es jetzt eine Bildverwaltung: Jeder Bereich lässt sich aufklappen, und zu jedem Ding kannst du ein eigenes kleines Bild hochladen — am besten ein durchsichtiges PNG oder ein GIF. Die Zeichnung wird dabei nicht gelöscht; sie kommt sofort zurück, sobald du dein Bild wieder herausnimmst. Einzeln, bereichsweise oder alles auf einmal.",
+      "📖 **Das Wörterbuch ist wieder gewachsen.** Rund 220 neue Einträge: Süßigkeiten und italienisches Gebäck von Amaretti bis Panettone, fehlende Getränke, Haushalt und Sehenswürdigkeiten — dazu die Wörter, die in den Kalendertexten täglich vorkommen und bisher fehlten. In sechzehn geprüften Alltagsbereichen ist jetzt jedes Stichwort da.",
+      "🇮🇹 **900 neue italienische Aufgaben** aus den neuen Bildern — Artikel, Wortschatz und Übersetzung in beide Richtungen.",
+      "🎯 **Die Betonung sitzt genauer.** Fremdwörter wie „robot\u201c, verkürzte Formen wie „castel\u201c und Wörter mit fallendem Zwielaut wie „sdraio\u201c werden jetzt richtig betont. Im Aussprache-Trainer geht es nach einem bewerteten Versuch von selbst weiter.",
+      "👆 **Kleine Dinge sind leichter zu treffen.** In den Bildern liegt jetzt über jedem Ding eine unsichtbare Fläche — man muss nicht mehr genau den dünnen Strich erwischen.",
+    ],
+
     "164": [
       "🖼️ **Die Bilderwelt.** Neunzehn gezeichnete Räume zum Antippen: Kinderzimmer, Wohnzimmer, Küche, Bad, Schlafzimmer, Flur, Klassenzimmer, Supermarkt, Straße, Restaurant, Arztpraxis, Bahnhof, Garten, Bauernhof, Werkstatt, dazu der Körper, die Kleidung, der Tagesablauf und das Wetter mit den Jahreszeiten. Jedes Ding im Bild ist eine Schaltfläche: Sie liest das Wort vor und zeigt dir Artikel, Betonung und das italienische Wort dazu. Danach kannst du dieselbe Szene als Suchspiel oder als Artikel-Übung spielen — 285 Wörter zum Antippen.",
       "🧭 **Ein Lernweg mit Anfang und Reihenfolge.** Bisher standen sechzig Übungen und vierzig Spiele nebeneinander, und du musstest selbst entscheiden, womit du anfängst. Jetzt gibt es einen Kurs: 57 Module in fester Reihenfolge, von „Hallo und tschüss\" über Zahlen, Uhrzeit, Familie und den eigenen Tag bis zu Passiv und Stil — für Deutsch und für Italienisch getrennt. Ein Knopf bringt dich immer genau zur nächsten offenen Station.",
@@ -31977,6 +32366,19 @@ An einem Morgen lief ein kleiner Fuchs los…
      dürfen.
      ============================================================ */
   const APP_CHANGELOG_INTERN = {
+    "165": [
+      "🖼️ **Bilderwelt auf 36 Szenen / 594 Teile (539 kB).** Neu: szenen_e.py (suessigkeiten, getraenke, waschkueche, kuechengeraete, pflege, technik, schulsachen) und szenen_f.py (fahrzeuge, spielzeug, strand, sport, rom, weltstaedte, tiere_welt, wald, buero, materialien) mit den Hilfen _regalkulisse/_tuete/_flasche bzw. gitter()/tafel_kulisse()/bauen(). Gemessen: 798 SVG-Pfade ohne fehlerhafte Argumentzahl (pfadcheck.js), 0 Teile ausserhalb des Rahmens, beide Spielarten laufen durch, 0 Seitenfehler. Ein Teil (technik/kopfhoerer) lag ueber den Rand hinaus und wurde versetzt.",
+      "👆 **Trefferflaechen.** Playwright konnte Teile nicht anklicken, deren Bounding-Box-Mitte leer ist (Tisch zwischen den Beinen) — auf dem Telefon derselbe Effekt. bwBinden() legt jetzt eine eigene Ebene .bw-treffer-ebene direkt hinter die Teile, mit einem transparenten Rechteck je Teil. Weil sie UNTER den Zeichnungen liegt, gewinnt immer das sichtbare Ding; die Flaeche faengt nur, was daneben geht.",
+      "🎨 **Bildverwaltung.** Neue Datei bildverwaltung.js: IndexedDB (dma-bilder/bilder), Cache im Speicher fuer synchrones Zeichnen, einlesen() skaliert auf 256 px und schreibt PNG (GIF/SVG bleiben unveraendert, Deckel 400 kB). bwBildHtml() legt bei vorhandenem Eintrag ein <image class=bw-eigenbild> ueber die Zeichnung, .bw-teil-eigen .bw-kunst {display:none}. UI in renderSettings: ein <details> je Szene, 594 Zeilen mit Vorschau, Hochladen, Raus, plus bereichsweises und komplettes Zuruecksetzen. Schluessel ist szeneId:teilId.",
+      "🧩 **Neues Spiel meinesaetze.** Lueckensatz aus dem Beispielsatz des Woerterbuchs; msLuecke() findet das Wort woertlich oder ueber den Stamm, Aufgaben mit Grundform werden bevorzugt, gebeugte nur als Auffuellung. In WORTQUELLE_SPIELE, SPIEL_ZU_WORTQUELLE, SPIEL_ZU_REITER, SPIEL_TITEL und GAMES_OVERVIEW_LIST eingetragen; Auswertung ueber ergebnisSchirmHtml + saveResultAndCheck. Gemessen: 8 Runden, Auswertung erscheint, 0 Seitenfehler.",
+      "★ **Merkstern in der Bilderwelt.** bwWortkarteHtml() zeigt [data-bw-merken]; der Knopf haengt an wortschatzUmschalten(), also am selben extraProfileData.meinWortschatz wie das Woerterbuch.",
+      "📖 **Woerterbuch 26.383 Eintraege** (+220). 25 Szenenwoerter, 156 aus dem Kalenderabgleich, 36 aus der Bereichs-Stichprobe. Neues Werkzeug scratchpad/kalender-abgleich.js: erzeugt zu jedem Eintrag die Beugungsformen (Verbstamm mit Binde-e, trennbare und untrennbare Vorsilben, zu-Infinitiv, Partizip mit Adjektivendungen, Umlautplural) plus eine Tabelle unregelmaessiger Formen, und meldet nur, was danach uebrig bleibt. Abdeckung der Kalendertexte 48,7 % → 67,5 %; von 3.639 offenen Formen sind 2.664 Eigennamen. Bereichs-Stichprobe (scratchpad/bereichs-probe.py, 16 Bereiche, 598 Stichwoerter): 100 % in jedem Bereich.",
+      "🇮🇹 **833 neue it-Aufgaben** aus den neuen Szenen. bau-uebungen-it2.py: SZENE_ZU_KAT um 17 Szenen erweitert; Ablenker werden jetzt entdoppelt (dieselbe Vokabel kann in zwei Szenen derselben Kategorie stehen — vorher stand die falsche Antwort doppelt da, 6 Faelle). Neues Einbauskript scratchpad/nachtrag-uebungen.py prueft gegen den Bestand, traegt nur Neues nach und setzt das fehlende Komma am letzten bestehenden Eintrag — ohne das lasen zwei Kategorien als liste[...] und hatten ein Loch (undefined) an der Nahtstelle.",
+      "🎯 **core.js Betonung.** Neue Liste IT_TRONCHE_OHNE_AKZENT (robot, film, castel, san, gran …) und eine Regel fuer fallende Zwielaute am Wortende (sdraio → sdra-io, Ton vorn). it-betonung-pruefen.js: 6 Abweichungen → 1 (radiografia, reine Silbentrennungsfrage, Anzeige stimmt).",
+      "⏭️ **Aussprache-Trainer** schaltet nach einem bewerteten Versuch selbst weiter (autoWeiter). Insgesamt 45 von 45 Spielen haben eine Spielkennung, also eine Auswertung im Postfach.",
+      "🔎 **Gemessen zum Schluss:** 81 Ansichten ohne Seitenfehler, 0 unlesbare Stellen ueber 10 Designs, 150/150 deutsche Vokallaengen, 798 SVG-Pfade fehlerfrei, alle JS-Dateien syntaktisch geprueft.",
+    ],
+
     "164": [
       "🖼️ **Bilderwelt.** Neue Datei data-szenen.js (235 kB, lazy geladen ueber szenenLaden()): 19 Szenen, 285 Teile, jedes mit de/syl/it/itSyl/en/x/y/kunst. Erzeugt von scratchpad/bau-szenen.py aus szenen_kit.py + szenen_a..d.py — Aenderungen dort machen, nicht in der JS-Datei. Neuer Reiter sub-bilderwelt im Lernbereich, Modul renderBilderwelt() mit drei Arten (entdecken/finden/artikel), Schriftzug-Bauart bilderrahmen. Gemessen: 19 Szenen geprueft, 0 Teile ausserhalb des Bildrahmens, beide Spielarten laufen bis zur Auswertung durch, 0 Seitenfehler.",
       "🇮🇹 **Italienische Betonung.** core.js: italienischeSilben() (Vokal-/Konsonantengruppen, Diphthonge, muta cum liquida, Digraphen, s-impurum), betonungItAuto() (Akzentregel, 3.-Person-Plural gegen IT_VERBEN gesichert, -abile/-ibile/-evole/-issimo/-ologo-Endungen, -logia endbetont, IT_SDRUCCIOLE, sonst piana), formatStressIt() (markiert nur die betonte Silbe, KEINE Laengenzeichen), betonungItErklaerung(). Geprueft mit scratchpad/it-betonung-pruefen.js gegen 247 italienische Eintraege: Regel allein 90,3 %, mit der aus den Daten erzeugten Liste (24 sdrucciole) 100 %. Zwei echte Abweichungen gefunden und behoben: divano und asciugamano wurden von der -ano-Regel faelschlich als Verbformen gelesen.",
