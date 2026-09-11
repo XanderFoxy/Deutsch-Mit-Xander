@@ -3,6 +3,8 @@
    „Wissen“ geht — nicht beim Start. */
 window.DMA_VOKABELN = window.DMA_VOKABELN || {};
 window.DMA_VOKABELN["Alltag & Zuhause"] = [
+  {"word": "das Platzdeckchen", "de": "die kleine Unterlage, auf der ein Gedeck steht", "syl": "PLATZ-deck-chen", "en": "placemat", "example": "Unter jedem Teller liegt ein Platzdeckchen.", "level": "B1", "theme": "Alltag & Zuhause"},
+  {"word": "der Unterteller", "de": "der große Teller, auf den der eigentliche Teller gestellt wird", "syl": "UN-ter-tel-ler", "en": "charger plate", "example": "Der Unterteller bleibt den ganzen Abend stehen.", "level": "B1", "theme": "Alltag & Zuhause"},
   {"word": "die Geschirrspülmaschine", "de": "ein Gerät, das Teller und Gläser wäscht", "syl": "Ge-SCHIRR-spül-ma-schi-ne", "en": "dishwasher", "example": "Die Geschirrspülmaschine läuft nachts, weil der Strom dann günstiger ist.", "level": "A2", "theme": "Alltag & Zuhause"},
   {"word": "das Feuchttuch", "de": "ein vorgefeuchtetes Tuch zum Säubern", "syl": "FEUCHT-tuch", "en": "wet wipe", "example": "Feuchttücher gehören nicht in die Toilette.", "level": "A2", "theme": "Alltag & Zuhause"},
   {"word": "der Teppichreiniger", "de": "ein Mittel gegen Flecken im Teppich", "syl": "TEP-pich-rei-ni-ger", "en": "carpet cleaner", "example": "Der Teppichreiniger muss erst einwirken.", "level": "A2", "theme": "Alltag & Zuhause"},
@@ -2109,6 +2111,27 @@ window.DMA_VOKABELN["Bildung & Lernen"] = [
   {"word":"der Lehrerberuf","de":"die Tätigkeit als Lehrkraft","syl":"LEH-rer-be-ruf","en":"teaching profession","example":"Der Lehrerberuf verlangt viel Geduld.","level":"B2","theme":"Bildung & Lernen"}
 ];
 window.DMA_VOKABELN["Essen & Trinken"] = [
+  {"word": "das Baklava", "de": "ein süßes Gebäck aus dünnen Teigblättern, Nüssen und Sirup", "syl": "Bak-LA-va", "en": "baklava", "example": "Zum Tee gibt es bei uns Baklava.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "der Halva", "de": "eine feste Süßigkeit aus Sesammus und Zucker", "syl": "HAL-va", "en": "halva", "example": "Halva schmeckt nussig und sehr süß.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "das Simit", "de": "ein runder Kringel mit Sesam, der in der Türkei an jeder Ecke verkauft wird", "syl": "Si-MIT", "en": "sesame ring", "example": "Zum Frühstück isst er ein Simit mit Tee.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "das Börek", "de": "ein Gebäck aus dünnem Teig, gefüllt mit Käse, Spinat oder Kartoffeln", "syl": "BÖ-rek", "en": "filled pastry", "example": "Sie bringt für alle Börek mit.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "der Ayran", "de": "ein salziges Getränk aus Joghurt und Wasser", "syl": "AY-ran", "en": "ayran", "example": "Zum Döner trinkt er immer einen Ayran.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "das Lokum", "de": "eine weiche, gezuckerte Süßigkeit, auch türkischer Honig genannt", "syl": "Lo-KUM", "en": "Turkish delight", "example": "Auf dem Tisch steht eine Schale mit Lokum.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "die Reiswaffel", "de": "eine leichte, trockene Waffel aus gepufftem Reis", "syl": "REIS-waf-fel", "en": "rice cake", "example": "Als kleinen Snack isst sie eine Reiswaffel.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Maiswaffel", "de": "eine leichte Waffel aus gepufftem Mais", "syl": "MAIS-waf-fel", "en": "corn cake", "example": "Maiswaffeln schmecken mit etwas Honig gut.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der Sesamriegel", "de": "ein harter, süßer Riegel aus Sesam und Honig", "syl": "SE-sam-rie-gel", "en": "sesame bar", "example": "Der Sesamriegel klebt ein bisschen an den Zähnen.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "der Fruchtriegel", "de": "ein Riegel aus gepressten Trockenfrüchten", "syl": "FRUCHT-rie-gel", "en": "fruit bar", "example": "Ein Fruchtriegel hält bis zum Mittagessen.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Sonnenblumenkerne", "de": "die kleinen Kerne der Sonnenblume, geröstet und gesalzen ein Knabberzeug", "syl": "SON-nen-blu-men-ker-ne", "en": "sunflower seeds", "example": "Auf dem Balkon knabbern sie Sonnenblumenkerne.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Cashewkerne", "de": "milde, gebogene Nüsse, die oft geröstet verkauft werden", "syl": "CASH-ew-ker-ne", "en": "cashews", "example": "Zu den Getränken stellt er Cashewkerne auf den Tisch.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "die Nussmischung", "de": "eine Tüte mit verschiedenen Nüssen", "syl": "NUSS-mi-schung", "en": "mixed nuts", "example": "Die Nussmischung war schnell leer.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Trockenfrüchte", "de": "Obst, dem das Wasser entzogen wurde, damit es lange hält", "syl": "TRO-cken-früch-te", "en": "dried fruit", "example": "Trockenfrüchte sind süß, aber ohne Zucker.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Salzmandeln", "de": "gesalzene und geröstete Mandeln", "syl": "SALZ-man-deln", "en": "salted almonds", "example": "Zu den Salzmandeln passt ein Glas Tee.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "das Fruchtgummi", "de": "eine weiche Süßigkeit aus Saft, Zucker und einem Bindemittel", "syl": "FRUCHT-gum-mi", "en": "fruit gum", "example": "In vielen Fruchtgummis steckt Gelatine.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Gelatine", "de": "ein Bindemittel aus tierischen Teilen — steht in vielen Gummisüßigkeiten in der Zutatenliste", "syl": "Ge-la-TI-ne", "en": "gelatine", "example": "Ohne Gelatine bleibt das Fruchtgummi weich.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "halal", "de": "nach islamischen Regeln erlaubt", "syl": "ha-LAL", "en": "halal", "example": "Auf der Packung steht, dass das Fleisch halal ist.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "koscher", "de": "nach jüdischen Regeln erlaubt", "syl": "KO-scher", "en": "kosher", "example": "Im Regal daneben stehen koschere Produkte.", "level": "B1", "theme": "Essen & Trinken"},
+  {"word": "die Kekse", "de": "kleines, trockenes Gebäck", "syl": "KEK-se", "en": "biscuits", "example": "Zu den Keksen gibt es Tee.", "level": "A1", "theme": "Essen & Trinken"},
+  {"word": "die Backwaren", "de": "alles, was beim Bäcker aus dem Ofen kommt", "syl": "BACK-wa-ren", "en": "baked goods", "example": "Die Backwaren sind am Morgen noch warm.", "level": "B1", "theme": "Essen & Trinken"},
   {"word": "das Lakritz", "de": "eine schwarze Süßigkeit aus Süßholzsaft", "syl": "La-KRITZ", "en": "liquorice", "example": "Lakritz mag man entweder sehr oder gar nicht.", "level": "A2", "theme": "Essen & Trinken"},
   {"word": "der Donut", "de": "ein süßer Kringel aus Hefeteig mit Zuckerguss", "syl": "DO-nut", "en": "doughnut", "example": "Auf dem Donut liegen bunte Streusel.", "level": "A2", "theme": "Essen & Trinken"},
   {"word": "der Cupcake", "de": "ein kleiner Kuchen mit einer Haube aus Creme", "syl": "CUP-cake", "en": "cupcake", "example": "Jeder Cupcake trägt eine Rosette aus Buttercreme.", "level": "A2", "theme": "Essen & Trinken"},
@@ -2517,8 +2540,8 @@ window.DMA_VOKABELN["Essen & Trinken"] = [
   {"word":"das Fischstäbchen","de":"ein länglich geformtes, paniertes Stück Fisch","syl":"FISCH-stäb-chen","en":"fish stick, fish finger","example":"Für die Kinder gibt es heute Fischstäbchen mit Kartoffelpüree.","level":"B1","theme":"Essen & Trinken"},
   {"word":"die Frühlingsrolle","de":"eine dünne, gefüllte und frittierte Teigrolle aus der asiatischen Küche","syl":"FRÜH-lings-rol-le","en":"spring roll","example":"Im Thai-Restaurant bestellen sie zuerst Frühlingsrollen als Vorspeise.","level":"B1","theme":"Essen & Trinken"},
   {"word":"das Sushi","de":"ein japanisches Gericht aus Reis, oft mit rohem Fisch und Gemüse","syl":"SU-shi","en":"sushi","example":"Am Wochenende gehen sie gern Sushi essen.","level":"B1","theme":"Essen & Trinken"},
-  {"word":"der Falafel","de":"eine frittierte Kugel aus Kichererbsen, typisch für die arabische Küche","syl":"fa-LA-fel","en":"falafel","example":"Der vegane Imbiss ist bekannt für seinen knusprigen Falafel.","level":"B1","theme":"Essen & Trinken"},
-  {"word":"das Hummus","de":"eine cremige Paste aus Kichererbsen, Sesam und Zitrone","syl":"HUM-mus","en":"hummus","example":"Sie streicht sich Hummus aufs Fladenbrot.","level":"B1","theme":"Essen & Trinken"},
+  
+  
   {"word":"der Couscous","de":"kleine Grießkügelchen aus Hartweizen, typisch für die nordafrikanische Küche","syl":"KUS-kus","en":"couscous","example":"Zum Gemüse serviert sie duftenden Couscous.","level":"B1","theme":"Essen & Trinken"},
   {"word":"die Quinoa","de":"ein kleines, eiweißreiches Getreide aus Südamerika","syl":"KI-no-a","en":"quinoa","example":"Als gesunde Beilage kocht er heute Quinoa statt Reis.","level":"B1","theme":"Essen & Trinken"},
   {"word":"der Tofu","de":"eine feste, eiweißreiche Masse aus Sojabohnen","syl":"TO-fu","en":"tofu","example":"Als Fleischersatz brät sie den Tofu mit Gemüse an.","level":"B1","theme":"Essen & Trinken"},
