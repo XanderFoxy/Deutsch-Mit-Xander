@@ -355,6 +355,24 @@
         nav.querySelectorAll(".subnav-pill").forEach((p) => p.setAttribute("aria-selected", String(p === pill)));
         const parent = nav.parentElement;
         parent.querySelectorAll(".subview").forEach((v) => (v.dataset.active = String(v.id === pill.dataset.sub)));
+        /* Der italienische Ticker zeigt, WO man gerade ist — er muss
+           deshalb bei jedem Reiterwechsel neu geschrieben werden, nicht
+           erst beim nächsten Zwanzig-Sekunden-Takt. */
+        if (typeof imItalienischraum === "function" && imItalienischraum()
+            && typeof updateTicker === "function") setTimeout(updateTicker, 60);
+        /* GEWÜNSCHT: „Jede Übung und jedes Spiel soll für eine
+           Herausforderung nutzbar sein."
+
+           Die Einladungsleiste hing bisher am Spieltitel — und der wird
+           nur für Einträge der Spieleübersicht gebaut. Bereiche, die
+           keine Spielekachel haben (die Bilderwelt zum Beispiel), hatten
+           deshalb keine. Jetzt bekommt sie jeder Bereich, der im
+           Spielverzeichnis steht, ganz gleich wo er im Menü hängt. */
+        if (typeof spielEinladungEinsetzen === "function"
+            && typeof SPIEL_VERZEICHNIS !== "undefined"
+            && SPIEL_VERZEICHNIS[pill.dataset.sub]) {
+          setTimeout(() => spielEinladungEinsetzen(pill.dataset.sub), 80);
+        }
         // Bei JEDEM Unterreiter-Wechsel (nicht nur beim Song-Wechsel selbst) neu prüfen, ob die
         // schwebende Player-Leiste sichtbar sein soll — sie muss verschwinden, sobald man in den
         // Musik-Unterreiter wechselt (der schon seine eigene Leiste hat), und wieder erscheinen,
@@ -2557,7 +2575,33 @@
     vokabelmeister: "Vokabelmeister", satzbruecke: "Satzbrücke", wackelturm: "Wackelturm",
     wortschmiede: "Wortschmiede", werbinich: "Wer bin ich?", wortbaustelle: "Wortbaustelle",
     wortblasen: "Wortblasen", wortkanone: "Wort-Kanone", wortarten: "Wort-Typ",
+    bilderwelt: "Bilderwelt",
   };
+  /* GEMELDET: „bei den Spielen, wo keine Auswertungs-Mails gesendet werden …
+     das soll automatisch kommen wie wir das bisher immer hatten."
+
+     Die Ursache war diese Tabelle. Eine Runde landet nur dann im Postfach,
+     wenn ihre Kennung hier steht — und alle Spiele, die nach dieser Liste
+     dazugekommen sind (Fundbüro, Schatzkarte, Gewitter, Beim Arzt, Die
+     Erbschaft, Der verpasste Zug, Flohmarkt, Baustelle, Wetterkarte,
+     Backstube, Zwillinge, Wortbaum, Sprachatlas, Maskenball, Wortwaage,
+     Marktstand, Umzug, Augenblick, Wortkette, Setzerei, Fuchsuhr,
+     Flussfuchs) standen nicht drin. Zweiundzwanzig Spiele schickten
+     deshalb nie eine Auswertung.
+
+     Statt die Liste nur zu ergänzen — was beim nächsten neuen Spiel
+     wieder schiefgehen würde — wird sie jetzt bei Bedarf aus dem
+     Spielverzeichnis vervollständigt, das ohnehin für jedes Spiel den
+     Namen kennt. Wer ein Spiel einträgt, trägt damit automatisch auch
+     seine Auswertung ein. */
+  function spielTitelFuer(key) {
+    if (!key) return null;
+    if (SPIEL_TITEL[key]) return SPIEL_TITEL[key];
+    const sub = SPIEL_ZU_REITER[key];
+    const eintrag = sub ? GAMES_OVERVIEW_LIST.find((g) => g.sub === sub) : null;
+    if (eintrag) { SPIEL_TITEL[key] = eintrag.name; return eintrag.name; }
+    return null;
+  }
   /* Das Protokoll der laufenden Runde. Es wird nicht beim Start
      zurückgesetzt, sondern beim ABSCHLUSS geleert — so muss kein
      Spiel daran denken, sich an- und abzumelden. */
@@ -2572,8 +2616,42 @@
     // Nachricht soll lesbar bleiben, nicht vollständig sein.
     if (spielProtokoll.length > 400) spielProtokoll.splice(0, spielProtokoll.length - 400);
   }
+
+  /* ============================================================
+     AUTOMATISCH WEITERSCHALTEN
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Es soll einfach weiterschalten nach erfolgreicher
+     Lösung der Aufgabe, bis man fertig ist, und dann die Auswertung
+     bekommen." Bisher stand nach jeder Aufgabe ein „Weiter"-Knopf, den
+     man antippen musste — bei zwölf Aufgaben also zwölf zusätzliche
+     Tipper.
+
+     Die Auflösung bleibt trotzdem stehen, nur eben von selbst
+     ablaufend: nach einer richtigen Antwort kurz (man hat nichts
+     nachzulesen), nach einer falschen deutlich länger, damit die
+     Erklärung wirklich zu lesen ist. Der Knopf bleibt zusätzlich da —
+     wer schneller ist, tippt und überspringt das Warten.
+     ============================================================ */
+  const AUTO_WEITER_RICHTIG_MS = 1100;
+  const AUTO_WEITER_FALSCH_MS = 3200;
+  let autoWeiterTimer = null;
+  function autoWeiterAbbrechen() {
+    if (autoWeiterTimer) { clearTimeout(autoWeiterTimer); autoWeiterTimer = null; }
+  }
+  function autoWeiter(richtig, weiter) {
+    autoWeiterAbbrechen();
+    autoWeiterTimer = setTimeout(() => {
+      autoWeiterTimer = null;
+      try { weiter(); } catch (e) { console.warn("Weiterschalten:", e); }
+    }, richtig ? AUTO_WEITER_RICHTIG_MS : AUTO_WEITER_FALSCH_MS);
+  }
+  /* Verlässt man den Bereich, darf kein Zeitgeber mehr nachfeuern und
+     eine Runde im Hintergrund weiterdrehen. */
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".subnav-pill, .tab-btn, [data-zur-spieleliste]")) autoWeiterAbbrechen();
+  }, true);
   function auswertungsText(result) {
-    const namen = (result.categories || []).map((c) => SPIEL_TITEL[c]).filter(Boolean);
+    const namen = (result.categories || []).map((c) => spielTitelFuer(c)).filter(Boolean);
     /* Die Übungen selbst haben keine feste Spielkennung — sie tragen
        ihren Namen deshalb direkt im Ergebnis mit (titelText). */
     const titel = namen.length ? namen.join(" & ") : (result.titelText || "deine Übung");
@@ -2668,6 +2746,18 @@
   });
 
   async function saveResultAndCheck(result) {
+    /* Erst den Lernweg bedienen, dann alles Übrige. Das steht bewusst
+       ganz oben: Der Italienisch-Raum steigt weiter unten vorzeitig aus
+       (dort gibt es keine Punkte), sein Kursfortschritt soll aber
+       trotzdem zählen. */
+    if (typeof result.percent === "number") {
+      (result.categories || []).forEach((c) => lernwegFortschrittMelden("uebung", c, result.percent));
+      (result.categories || []).forEach((c) => {
+        const sub = SPIEL_ZU_REITER[c];
+        if (sub) lernwegFortschrittMelden("spiel", sub, result.percent);
+      });
+      if (result.lernwegSzene) lernwegFortschrittMelden("szene", result.lernwegSzene, result.percent);
+    }
     // WICHTIG — der private Italienisch-Raum bleibt vollständig außerhalb der
     // Wertung: keine Punkte, keine Ranglisten, keine Sammelfiguren, keine
     // Aktivitätsmeldungen. Er ist ein Übungsraum, kein Teil des Spielstands.
@@ -2743,7 +2833,7 @@
        Tageskalender, die Anmeldebelohnung und der Tagesbeste laufen
        durch dieselbe Stelle, dort wäre eine Rundenauswertung Unsinn. */
     if (result.zwischenstand) { /* Serie läuft weiter — die Auswertung kommt am Ende. */ }
-    else if (result.titelText || (result.categories || []).some((c) => SPIEL_TITEL[c])) await auswertungVerschicken(adjusted);
+    else if (result.titelText || (result.categories || []).some((c) => spielTitelFuer(c))) await auswertungVerschicken(adjusted);
     else spielProtokoll = [];
     await checkForSpecialMoment(Backend.currentProfile());
     await checkContentUpdate();
@@ -3730,6 +3820,97 @@
   }
   updateSpecialDayBar();
 
+  /* ============================================================
+     DER ITALIENISCHE TICKER — was DU gerade tust
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Der italienische Ticker soll anzeigen, was der
+     Spieler gerade tut, und nicht die Redewendungen."
+
+     Der deutsche Ticker zeigt, was auf der Seite passiert — wer
+     gerade gespielt hat, wer neu dazugekommen ist. Im
+     Italienisch-Raum gibt es diese Aktivität nicht: der Raum ist
+     privat, es sind höchstens zwei Leute darin. Deshalb liefen dort
+     bisher Redewendungen. Jetzt läuft dort der eigene Stand — auf
+     Italienisch, mit deutscher Entsprechung dahinter, damit das
+     Mitlesen selbst schon eine kleine Übung ist.
+     ============================================================ */
+  const IT_TICKER_BEREICHE = {
+    "sub-lernweg": ["Stai seguendo il tuo percorso", "Du bist auf deinem Lernweg"],
+    "sub-bilderwelt": ["Stai esplorando le immagini", "Du bist in der Bilderwelt"],
+    "sub-exercises": ["Stai facendo esercizi", "Du machst Übungen"],
+    "sub-grammatik": ["Stai studiando la grammatica", "Du liest Grammatik"],
+    "sub-dictionary": ["Stai sfogliando il dizionario", "Du blätterst im Wörterbuch"],
+    "sub-games": ["Stai scegliendo un gioco", "Du suchst dir ein Spiel aus"],
+    "sub-kalender": ["Stai leggendo il calendario", "Du liest im Kalender"],
+    "sub-wortlisten": ["Stai curando le tue liste di parole", "Du pflegst deine Wortlisten"],
+    "sub-italienisch": ["Sei nella stanza italiana", "Du bist im Italienisch-Raum"],
+  };
+  function itTickerZeilen() {
+    const zeilen = [];
+    const profil = Backend.currentProfile();
+    const name = (profil && profil.name) ? profil.name.split(" ")[0] : null;
+
+    // 1. Wo bin ich gerade?
+    const offen = document.querySelector('#view-learn .subview[data-active="true"]');
+    const bereich = offen ? IT_TICKER_BEREICHE[offen.id] : null;
+    if (bereich) zeilen.push(`${bereich[0]} — ${bereich[1]}`);
+    else if (name) zeilen.push(`Ciao ${name}! Benvenuto — willkommen zurück`);
+
+    // 2. Die geöffnete Szene oder Übung beim Namen nennen
+    if (offen && offen.id === "sub-bilderwelt" && bwSzene) {
+      zeilen.push(`Scena: ${bwSzene.titel} — ${bwSzene.teile.length} parole da toccare `
+        + `(${bwSzene.teile.length} Wörter zum Antippen)`);
+      if (bwEntdeckt.size) {
+        zeilen.push(`Hai già scoperto ${bwEntdeckt.size} parole — schon ${bwEntdeckt.size} Wörter entdeckt`);
+      }
+    }
+
+    // 3. Der Kursstand
+    try {
+      const stand = itKursStand();
+      const stufe = itKursAktuelleStufe(stand);
+      const fertig = IT_KURS_STUFEN.filter((l) => stand[l].gemeistert).length;
+      zeilen.push(`Livello attuale: ${stufe} — du bist gerade auf Stufe ${stufe}`);
+      if (fertig) zeilen.push(`${fertig} livelli completati — ${fertig} Stufen geschafft`);
+      const s = stand[stufe];
+      if (s && s.gesamt) {
+        const p = Math.round((s.richtig / s.gesamt) * 100);
+        zeilen.push(`In questo livello: ${s.richtig} risposte giuste su ${s.gesamt} (${p} %) `
+          + `— ${s.richtig} von ${s.gesamt} richtig`);
+      }
+    } catch (e) { /* ohne Anmeldung gibt es keinen Kursstand */ }
+
+    // 4. Die italienischen Punkte
+    try {
+      const p = itPunkteStand();
+      if (p && p.runden) {
+        zeilen.push(`Punti italiani: ${p.punkte} in ${p.runden} partite — `
+          + `${p.punkte} Punkte aus ${p.runden} Runden`);
+        if (p.beste) zeilen.push(`Il tuo record: ${p.beste} punti in una partita — dein Bestwert`);
+      } else {
+        zeilen.push("Nessuna partita ancora — noch keine Runde gespielt. Iniziamo!");
+      }
+    } catch (e) { /* egal */ }
+
+    // 5. Was als Nächstes dran ist
+    try {
+      if (window.DMA_LERNWEG) {
+        const m = lernwegNaechstes(lernwegStand());
+        if (m) zeilen.push(`Prossimo passo: ${m.titel} — als Nächstes dran (${m.stufe})`);
+      } else { lernwegLaden(); }
+    } catch (e) { /* egal */ }
+
+    // 6. Datum und Uhrzeit in Rom — gehört zum Raum
+    try {
+      const jetzt = new Date();
+      const romZeit = jetzt.toLocaleTimeString("it-IT", { timeZone: "Europe/Rome", hour: "2-digit", minute: "2-digit" });
+      const romTag = jetzt.toLocaleDateString("it-IT", { timeZone: "Europe/Rome", weekday: "long", day: "numeric", month: "long" });
+      zeilen.push(`A Roma sono le ${romZeit} — ${romTag}`);
+    } catch (e) { /* egal */ }
+
+    return zeilen;
+  }
+
   /* ============ Lauftext-Ticker ============ */
   let tickerVisible = true;
   let tickerUpdateInFlight = false;
@@ -3750,11 +3931,21 @@
       let text;
       let items = [];
       if (imItalienischraum()) {
-        const spruch = ExerciseData.IT_TICKER || [];
-        text = spruch.length
-          ? Core.shuffle(spruch.slice()).map((x) => `• ${x.it} — wörtlich „${x.woertlich}“, gemeint: ${x.de}`).join("   ")
-          : track.textContent;
-        items = spruch;
+        /* Nicht mehr Redewendungen, sondern der eigene Stand: wo man
+           gerade ist, wie weit man im Kurs ist, was als Nächstes dran
+           ist. Erst wenn davon gar nichts vorliegt (nicht angemeldet,
+           nichts geöffnet), tritt der alte Lesestoff an seine Stelle. */
+        const eigene = itTickerZeilen();
+        if (eigene.length >= 3) {
+          items = eigene;
+          text = eigene.map((z) => `• ${z}`).join("   ");
+        } else {
+          const spruch = ExerciseData.IT_TICKER || [];
+          text = spruch.length
+            ? Core.shuffle(spruch.slice()).map((x) => `• ${x.it} — wörtlich „${x.woertlich}“, gemeint: ${x.de}`).join("   ")
+            : track.textContent;
+          items = spruch;
+        }
       } else {
         items = await Backend.getActivity();
         text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
@@ -4186,7 +4377,7 @@
        fürs Nachtragen. */
     const geprueft = betonungNachschlagen(word);
     if (geprueft) {
-      const gesetzt = Core.formatStress(geprueft);
+      const gesetzt = betonungAnzeigen(geprueft);
       /* formatStress schreibt die erste Silbe groß (Wörterbuch-Form).
          Im Fließtext muss die Schreibung des Satzes erhalten bleiben —
          „der fuchs" darf nicht zu „der Fuchs" werden und umgekehrt. */
@@ -5533,6 +5724,28 @@
      Antwortmöglichkeiten heißen — in der Reihenfolge, in der sie
      dastehen, damit die Lösung nicht verraten wird.
      ============================================================ */
+  /* ============================================================
+     WELCHE BETONUNGSANZEIGE GILT HIER?
+     ------------------------------------------------------------
+     GEMELDET: „Kein Pseudosystem … genauso im Italienischen ein
+     eigenes Betonungssystem, das jedes Wort richtig erkennt."
+
+     Die deutsche Anzeige sagt zweierlei: WO betont wird (Großbuchstaben
+     in der Silbenangabe) und WIE der Vokal klingt (Strich für lang,
+     Punkt für kurz). Das Zweite gibt es im Italienischen nicht — dort
+     wäre ein Längsstrich schlicht falsch.
+
+     Deshalb geht ab hier jede Betonungsanzeige über diese eine Stelle.
+     Vorher riefen neun Stellen betonungAnzeigen() direkt auf: im
+     Wörterbuch, im Vokabeltrainer, im Betonungs-Trainer, im Flussfuchs,
+     im Lesetext, in der Sammelkarte. Im Italienisch-Raum bekamen
+     italienische Wörter dort deutsche Längenzeichen verpasst.
+     ============================================================ */
+  function betonungAnzeigen(syl) {
+    if (!syl) return "";
+    return imItalienischraum() ? Core.formatStressIt(syl) : Core.formatStress(syl);
+  }
+
   function imItalienischraum() {
     return Boolean(ExerciseData.getLernraum && ExerciseData.getLernraum() === "it");
   }
@@ -5588,6 +5801,60 @@
     e: "und", ma: "aber", o: "oder", anche: "auch", non: "nicht",
   };
 
+  /* ============================================================
+     DIE BEGRÜSSUNG MIT DEM SAMMELFUCHS
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Dann musst du die alte Begrüßungsanzeige wieder
+     einrichten mit den Sammelfüchsen, die die Übung vorstellt."
+
+     Sie erscheint einmal pro Runde, über der ERSTEN Frage — nicht als
+     Fenster, das man wegklicken muss. Das war die alte Beschwerde
+     („keine Willkommensbildschirme, die Beschreibung soll im Spiel
+     stehen"), und daran ändert sich nichts: Die Karte steht IM Spiel,
+     über der Aufgabe, und verschwindet, sobald man geantwortet hat.
+
+     Welcher Fuchs begrüßt, hängt davon ab, wie weit man ist: Man wird
+     von der Figur empfangen, die man zuletzt freigeschaltet hat — und
+     sieht daneben, welche als Nächste dran wäre. */
+  let begruessungGezeigt = null;   // für welche Runde die Karte schon dran war
+
+  function begruessungsFuchs() {
+    const profil = Backend.currentProfile();
+    if (!profil) return { fuchs: COLLECTIBLE_FIGURES[0], naechster: COLLECTIBLE_FIGURES[1] };
+    const frei = COLLECTIBLE_FIGURES.filter((f) => isFigureUnlocked(f, profil));
+    const offen = COLLECTIBLE_FIGURES.filter((f) => !isFigureUnlocked(f, profil));
+    return {
+      fuchs: frei.length ? frei[frei.length - 1] : COLLECTIBLE_FIGURES[0],
+      naechster: offen.length ? offen[0] : null,
+      anzahl: frei.length,
+    };
+  }
+
+  function begruessungHtml(cat, gesamt) {
+    if (!cat) return "";
+    const { fuchs, naechster, anzahl } = begruessungsFuchs();
+    const stufen = (() => {
+      try { return [...new Set((cat.getBank() || []).map((f) => f.level).filter(Boolean))].sort(); }
+      catch (e) { return []; }
+    })();
+    return `
+      <div class="question-card fuchs-begruessung">
+        <div class="fuchs-begruessung-kopf">
+          <img src="${fuchs.img}" alt="${escapeHtml(fuchs.name)}" class="fuchs-begruessung-bild" />
+          <div>
+            <p class="eyebrow" style="margin:0;">${fuchs.name} begrüßt dich</p>
+            <h3 style="margin:2px 0 0;">${cat.icon} ${escapeHtml(cat.title)}</h3>
+            <p class="empty-note" style="margin:2px 0 0;">${gesamt} Aufgaben${stufen.length ? " · " + stufen.join(", ") : ""}</p>
+          </div>
+        </div>
+        ${cat.info ? `<p class="fuchs-begruessung-text">${cat.info}</p>` : ""}
+        <p class="empty-note fuchs-begruessung-fuss">
+          ${typeof anzahl === "number" && anzahl ? `Du hast ${anzahl} ${anzahl === 1 ? "Fuchs" : "Füchse"} gesammelt.` : "Deinen ersten Fuchs bekommst du bei 20 Punkten."}
+          ${naechster ? ` Als Nächstes wartet <strong>${escapeHtml(naechster.name)}</strong> — ${escapeHtml(naechster.desc)}` : " Du hast alle Füchse."}
+        </p>
+      </div>`;
+  }
+
   function renderQuestion() {
     setupEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -5621,8 +5888,18 @@
       erklaerung: q.explain || "",
     });
 
+    /* Die Begrüßungskarte: nur über der ersten Aufgabe einer Runde. */
+    /* Eine Runde wird über ihre Kennung erkannt: Kategorie, Länge und
+       die Frage selbst. Startet jemand dieselbe Kategorie noch einmal,
+       sind die Fragen gemischt — die Marke stimmt dann nicht mehr, und
+       die Begrüßung kommt wieder. */
+    const rundenMarke = q.categoryId + ":" + p.total + ":" + String(q.prompt).slice(0, 40);
+    const zeigeBegruessung = p.index === 0 && begruessungGezeigt !== rundenMarke;
+    if (zeigeBegruessung) begruessungGezeigt = rundenMarke;
+
     playEl.innerHTML = `
       <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${(p.index / p.total) * 100}%"></div></div>
+      ${zeigeBegruessung ? begruessungHtml(cat, p.total) : ""}
       <div class="question-card">
         ${reportBugButtonHtml()}
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
@@ -5913,7 +6190,7 @@
           <div class="vocab-card">
             <div>
               <div class="vocab-word">${w.word}</div>
-              ${isStressModeOn() ? `<div class="vocab-syl">${Core.formatStress(w.syl)}</div>` : ""}
+              ${isStressModeOn() ? `<div class="vocab-syl">${betonungAnzeigen(w.syl)}</div>` : ""}
               <div class="vocab-en">${w.de || w.en}</div>
               <div class="vocab-example">„${w.example}"</div>
             </div>
@@ -7836,7 +8113,7 @@
           <div class="vocab-card">
             <div>
               <div class="vocab-word">${e.word}${e.level ? ` <span class="empty-note" style="font-size:0.7rem;">${e.level}</span>` : ""}</div>
-              <div class="vocab-syl">${Core.formatStress(e.syl)}</div>
+              <div class="vocab-syl">${betonungAnzeigen(e.syl)}</div>
               <div class="vocab-en">${e.meaning || (e.verified ? "" : "aus dem Übungsinhalt — Bedeutung nicht hinterlegt")}</div>
               ${e.example ? `<div class="vocab-example">„${e.example}"</div>` : ""}
             </div>
@@ -8160,7 +8437,7 @@
       <div class="question-card">
         <p class="eyebrow">🎤 AUSSPRACHE · WORT ${s.index + 1} / ${s.woerter.length}</p>
         <div class="aussprache-wort">${w.word}</div>
-        <div class="vocab-syl" style="text-align:center; font-size:1.1rem;">${Core.formatStress(w.syl)}</div>
+        <div class="vocab-syl" style="text-align:center; font-size:1.1rem;">${betonungAnzeigen(w.syl)}</div>
         ${w.meaning ? `<p class="empty-note" style="text-align:center;">${w.meaning}</p>` : ""}
         <div class="quiz-actions" style="justify-content:center; margin:14px 0 6px;">
           <button type="button" class="btn btn-ghost" id="ausspracheHoeren">🔊 Vorsprechen lassen</button>
@@ -8334,6 +8611,7 @@
   }
   let logikNiveau = null;
   async function renderLogik() {
+    autoWeiterAbbrechen();
     const area = document.getElementById("logikArea");
     if (!area) return;
     if (!(window.DMA_DATEN && window.DMA_DATEN.LOGIK_STAMM)) {
@@ -8404,9 +8682,9 @@
       s.beantwortet = { gewaehlt: opt, optionen: s.optionen || optionen };
       renderLogik();
     }));
-    document.getElementById("logikWeiter")?.addEventListener("click", () => {
-      s.index += 1; s.beantwortet = null; s.optionen = null; renderLogik();
-    });
+    const logikNaechste = () => { s.index += 1; s.beantwortet = null; s.optionen = null; renderLogik(); };
+    document.getElementById("logikWeiter")?.addEventListener("click", () => { autoWeiterAbbrechen(); logikNaechste(); });
+    if (s.beantwortet) autoWeiter(s.beantwortet.gewaehlt === a.richtig, logikNaechste);
   }
   function renderLogikErgebnis() {
     const area = document.getElementById("logikArea");
@@ -16509,7 +16787,7 @@
         if (box) box.textContent = "Richtig betont!";
       } else {
         Core.sound.wrong();
-        if (box) box.innerHTML = `Betont wird <strong>${w.silben[w.betontIdx] ? w.silben[w.betontIdx].toLowerCase() : "?"}</strong> — ${Core.formatStress(w.syl)}`;
+        if (box) box.innerHTML = `Betont wird <strong>${w.silben[w.betontIdx] ? w.silben[w.betontIdx].toLowerCase() : "?"}</strong> — ${betonungAnzeigen(w.syl)}`;
       }
       s.runde += 1;
       setTimeout(() => { if (s.runde < s.gesamt) neueTurmRunde(); renderSilbenturm(); }, 1600);
@@ -16614,7 +16892,7 @@
       hinweis: "Sprich die Wörter leise mit — wo liegt der Druck?",
       passt: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) === 0,
       gegen: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) > 0,
-      erklaerung: (e) => `${Core.formatStress(e.syl)} — der Druck liegt auf der ${FLUSS_ORDNUNGSZAHL[Core.betonteSilbenIndex(flussSilben(e))] || "letzten"} Silbe.`,
+      erklaerung: (e) => `${betonungAnzeigen(e.syl)} — der Druck liegt auf der ${FLUSS_ORDNUNGSZAHL[Core.betonteSilbenIndex(flussSilben(e))] || "letzten"} Silbe.`,
     });
     regeln.push({
       id: "betonung-spaeter",
@@ -16622,7 +16900,7 @@
       hinweis: "Zwei fangen betont an — eines nicht.",
       passt: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) > 0,
       gegen: (e) => flussSilben(e).length >= 2 && Core.betonteSilbenIndex(flussSilben(e)) === 0,
-      erklaerung: (e) => `${Core.formatStress(e.syl)} — der Druck liegt auf der ${FLUSS_ORDNUNGSZAHL[Core.betonteSilbenIndex(flussSilben(e))] || "letzten"} Silbe.`,
+      erklaerung: (e) => `${betonungAnzeigen(e.syl)} — der Druck liegt auf der ${FLUSS_ORDNUNGSZAHL[Core.betonteSilbenIndex(flussSilben(e))] || "letzten"} Silbe.`,
     });
     regeln.push({
       id: "silben-zwei",
@@ -17529,11 +17807,16 @@
       renderSetzerei();
     }));
     document.getElementById("setzPruefen")?.addEventListener("click", () => setzPruefen());
-    document.getElementById("setzWeiter")?.addEventListener("click", () => {
+    const setzNaechste = () => {
       s.runde += 1;
       if (s.runde < s.saetze.length) setzRundeVorbereiten();
       renderSetzerei();
-    });
+    };
+    document.getElementById("setzWeiter")?.addEventListener("click", () => { autoWeiterAbbrechen(); setzNaechste(); });
+    if (s.geprueft) {
+      const sauber = s.teile.every((t) => !t.zaehlt || t.gross === s.gewaehlt.has(t.i));
+      autoWeiter(sauber, setzNaechste);
+    }
   }
   function setzGross(wort) { return wort.charAt(0).toUpperCase() + wort.slice(1); }
   function setzAufloesung(s) {
@@ -18729,11 +19012,13 @@
       if (s.gelegt[i]) { s.gelegt.splice(i, 1); renderWortwaage(); }
     }));
     document.getElementById("waagePruefen")?.addEventListener("click", () => waagePruefen());
-    document.getElementById("waageWeiter")?.addEventListener("click", () => {
+    const waageNaechste = () => {
       s.runde += 1;
       if (s.runde < s.reihen.length) waageRundeVorbereiten();
       renderWortwaage();
-    });
+    };
+    document.getElementById("waageWeiter")?.addEventListener("click", () => { autoWeiterAbbrechen(); waageNaechste(); });
+    if (s.geprueft) autoWeiter(s.gelegt.every((g, i) => g.i === i), waageNaechste);
   }
   function waageAufloesung(s) {
     const r = s.reihe;
@@ -20052,6 +20337,56 @@
     return true;
   }
 
+  /* ============================================================
+     DIE FEINKATEGORIEN IM SORTIERSPIEL
+     ------------------------------------------------------------
+     GEMELDET: „Der Fahrradsattel könnte auch im Bereich Freizeit und
+     Sport sein … Das darf nicht sein."
+
+     Das Sortierspiel zog seine Körbe bisher aus den 26 großen Themen
+     des Wörterbuchs. Die sind fürs Nachschlagen richtig, fürs
+     Sortieren aber zu weit: „Natur & Wetter" enthält Tiere UND
+     Wolken, „Freizeit & Sport" auch Fahrradteile. Ein Filter versuchte
+     die Zweideutigkeiten herauszurechnen — eine Notlösung.
+
+     Jetzt gibt es data-wortkategorien.js: 5.067 Wörter, jedes mit
+     GENAU EINER Feinkategorie (Tiere, Körperteile, Obst, Gemüse,
+     Werkzeuge, Möbel, Geld, Feiertage …), ermittelt aus der Erklärung,
+     die im Wörterbuch ohnehin bei jedem Wort steht. Wörter ohne
+     eindeutige Zuordnung stehen absichtlich nicht drin. Damit lassen
+     sich Körbe bilden, bei denen es kein „könnte auch" gibt.
+     ============================================================ */
+  let wortKatGeladen = null;
+  function wortKategorienLaden() {
+    if (wortKatGeladen) return wortKatGeladen;
+    if (window.DMA_WORTKATEGORIEN) { wortKatGeladen = Promise.resolve(true); return wortKatGeladen; }
+    wortKatGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-wortkategorien.js?v=" + (window.DMA_VERSION || "1");
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => { wortKatGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return wortKatGeladen;
+  }
+  /* Körbe aus den Feinkategorien: Name des Korbs, dann die Wörter des
+     gewählten Niveaus, die eindeutig dazugehören. */
+  function sortFeinfelder(level) {
+    const k = window.DMA_WORTKATEGORIEN;
+    if (!k) { wortKategorienLaden(); return []; }
+    const nachWort = new Map();
+    (VocabData.WORDS || []).forEach((w) => { if (w.word) nachWort.set(w.word, w); });
+    const felder = [];
+    Object.entries(k.woerter || {}).forEach(([kat, woerter]) => {
+      const liste = woerter
+        .map((x) => nachWort.get(x))
+        .filter((w) => w && w.level === level);
+      if (liste.length >= 6) felder.push([k.namen[kat] || kat, liste]);
+    });
+    return felder;
+  }
+
   /* Drei Körbe ziehen, die nichts miteinander zu tun haben — und in
      denen nach der Eindeutigkeits-Prüfung noch genug Wörter übrig sind. */
   function sortKoerbeZiehen(felder, proKorb) {
@@ -20083,7 +20418,11 @@
   }
 
   function neueSortSession() {
-    const felder = sortWortfelder(sortLevel);
+    /* Zuerst die Feinkategorien versuchen — sie sind eindeutig. Erst
+       wenn für dieses Niveau zu wenige davon Material haben, treten die
+       großen Themen wie bisher an ihre Stelle. */
+    const fein = sortFeinfelder(sortLevel);
+    const felder = fein.length >= SORT_KOERBE ? fein : sortWortfelder(sortLevel);
     if (felder.length < SORT_KOERBE) { sortSession = { leer: true }; return; }
     // Aus jedem Feld gleich viele Wörter, damit kein Korb erkennbar häufiger stimmt.
     const proKorb = Math.ceil(SORT_RUNDEN / SORT_KOERBE);
@@ -20124,6 +20463,9 @@
   function renderSortierer() {
     const area = document.getElementById("sortiererArea");
     if (!area) return;
+    if (!window.DMA_WORTKATEGORIEN) {
+      wortKategorienLaden().then((ok) => { if (ok && sortSession && sortSession.leer) { sortSession = null; renderSortierer(); } });
+    }
     if (!renderComingSoonGate(area, "sortierer_neu", "Wörter-Sortierer", "🧺")) return;
     sortLevel = applyDefaultCefrLevel(sortLevel, (v) => { sortLevel = v; }, "sortierer");
     if (!sortSession) neueSortSession();
@@ -20157,7 +20499,7 @@
         ${miniBugReportBtnHtml("Wörter-Sortierer: " + karte.wort)}
         <div class="question-meta"><span class="cat-tag">🧺 Wort ${s.index + 1} / ${s.karten.length}</span> · Serie: ${s.serie}${s.serie >= 3 ? " 🔥" : ""}</div>
         <div class="question-prompt" style="text-align:center; font-size:1.35rem; margin:14px 0;">${karte.wort}</div>
-        ${karte.syl && isStressModeOn() ? `<div class="vocab-syl" style="text-align:center; margin:-8px 0 12px;">${Core.formatStress(karte.syl)}</div>` : ""}
+        ${karte.syl && isStressModeOn() ? `<div class="vocab-syl" style="text-align:center; margin:-8px 0 12px;">${betonungAnzeigen(karte.syl)}</div>` : ""}
         <div class="option-list">
           ${s.koerbe.map((t) => `<button type="button" class="option-btn sort-korb" data-sort-korb="${t.replace(/"/g, "&quot;")}"><span>${t}</span></button>`).join("")}
         </div>
@@ -20220,6 +20562,16 @@
   document.querySelector('#learnSubnav [data-sub="sub-zug"]')?.addEventListener("click", () => {
     if (zugSession && zugSession.index >= (zugSession.faelle || []).length) zugSession = null;
     renderZug();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-lernweg"]')?.addEventListener("click", () => {
+    renderLernweg();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-bilderwelt"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen, damit
+       nicht der alte Ergebnisbildschirm begrüßt. Die geöffnete Szene
+       bleibt stehen — wer weiterschauen will, ist gleich wieder dort. */
+    if (bwRunde && bwRunde.index >= bwRunde.plan.length) { bwRunde = null; bwModus = "entdecken"; }
+    renderBilderwelt();
   });
   document.querySelector('#learnSubnav [data-sub="sub-schatzkarte"]')?.addEventListener("click", () => {
     /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
@@ -23757,6 +24109,45 @@
     return schriftHuelle(teile, links, oben, gb, gh, o.hoehe || 74, text);
   }
 
+  /* Der Schriftzug der Bilderwelt: die Wörter hängen in einem
+     Bilderrahmen an der Wand, wie in den Büchern, aus denen die Idee
+     kommt. Ein Rahmen, eine Passepartout-Fläche, ein kleiner Nagel und
+     der Schatten darunter. */
+  function bilderrahmenSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    const h = BUCHSTABEN_HOEHE;
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 14; });
+    const rahmen = 26, passe = 18;
+    const links = -(rahmen + passe), oben = -(rahmen + passe);
+    const gb = breite + 2 * (rahmen + passe) + 10, gh = h + 2 * (rahmen + passe);
+    // Schatten hinter dem Rahmen
+    teile.push(`<rect x="${links + 6}" y="${oben + 8}" width="${gb}" height="${gh}" rx="4" fill="#2C1F12" opacity="0.18"/>`);
+    // Der Rahmen selbst, aus zwei Hölzern: außen dunkel, innen heller
+    teile.push(`<rect x="${links}" y="${oben}" width="${gb}" height="${gh}" rx="4" fill="#8A5F32"/>`);
+    teile.push(`<rect x="${links + 7}" y="${oben + 7}" width="${gb - 14}" height="${gh - 14}" rx="3" fill="#C08F52"/>`);
+    teile.push(`<rect x="${links + rahmen}" y="${oben + rahmen}" width="${gb - 2 * rahmen}" height="${gh - 2 * rahmen}" rx="2" fill="#FBF4E4" stroke="#D8C7A4" stroke-width="1.6"/>`);
+    // Ecken angedeutet, damit es nach Holz aussieht und nicht nach Kasten
+    [[links, oben, 1, 1], [links + gb, oben, -1, 1], [links, oben + gh, 1, -1], [links + gb, oben + gh, -1, -1]]
+      .forEach(([ex, ey, sx, sy]) => {
+        teile.push(`<path d="M${ex} ${ey} L${ex + sx * rahmen} ${ey + sy * rahmen}" stroke="#6E4922" stroke-width="1.6"/>`);
+      });
+    // Nagel und Aufhängung
+    const nx = links + gb / 2;
+    teile.push(`<path d="M${nx} ${oben - 26} L${links + rahmen + 10} ${oben + 4} M${nx} ${oben - 26} L${links + gb - rahmen - 10} ${oben + 4}" stroke="#6E4922" stroke-width="2.2" fill="none"/>`);
+    teile.push(`<circle cx="${nx}" cy="${oben - 28}" r="5" fill="#7A848B"/>`);
+    // Die Buchstaben als das Bild im Rahmen
+    let x = 0;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 14;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#4F7FD9", "#2A4B86", 26));
+      x += b;
+    });
+    return schriftHuelle(teile, links - 8, oben - 36, gb + 20, gh + 48, o.hoehe || 76, text);
+  }
+
   function preisanhaengerSchriftzug(text, optionen) {
     const o = optionen || {};
     const teile = [];
@@ -24416,6 +24807,7 @@
   }
 
   const SPIEL_SCHRIFTFORM = {
+    "sub-bilderwelt": { bauart: "bilderrahmen", text: "Bilderwelt" },
     "sub-erbschaft": { bauart: "urkunde" },
     "sub-arzt": { bauart: "rezeptblock" },
     "sub-gewitter": { bauart: "gewitterhimmel" },
@@ -24553,6 +24945,693 @@
   }
 
   /* ============================================================
+     DIE BILDERWELT — Räume, in denen jedes Ding anklickbar ist
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Ich hab da mal was in so Büchern gesehen … da hat man
+     zum Beispiel ein komplettes Kinderzimmer gesehen und alle Sachen,
+     die dazugehören, mit Artikeln … wenn man sie anklickt, dann ist
+     das interaktiv wie eine Schaltfläche, die den Namen vorliest, und
+     gleichzeitig steht der Artikel da, dass man gleichzeitig weiß, wie
+     das gesprochen wird, ob es männlich, weiblich oder sächlich ist."
+
+     Genau das. Neunzehn gezeichnete Szenen — Kinderzimmer, Wohnzimmer,
+     Küche, Bad, Schlafzimmer, Flur, Garten, Klassenzimmer, Supermarkt,
+     Straße, Restaurant, Arztpraxis, Bahnhof, Körper, Kleidung,
+     Tagesablauf, Wetter & Jahreszeiten, Bauernhof, Werkstatt. Jedes
+     Ding darin ist eine Schaltfläche mit Artikel, Betonung, Aussprache
+     und italienischer Entsprechung.
+
+     Drei Arten, damit umzugehen:
+       Entdecken — antippen, hören, lesen. Keine Wertung, kein Druck.
+       Finden    — „Tippe auf: der Teddybär." Gesucht wird im Bild.
+       Artikel   — der, die oder das? Dieselben Wörter, andere Frage.
+
+     Im Italienisch-Raum läuft dieselbe Szene auf Italienisch: gefragt
+     und vorgelesen wird dann „il letto", und der Artikel-Modus fragt
+     il/lo/la/l' statt der/die/das.
+     ============================================================ */
+  let szenenGeladen = null;
+  function szenenLaden() {
+    if (szenenGeladen) return szenenGeladen;
+    if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
+    szenenGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-szenen.js?v=" + (window.DMA_VERSION || "1");
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => { szenenGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return szenenGeladen;
+  }
+  function szenenListe() { return window.DMA_SZENEN || []; }
+
+  let bwSzene = null;      // die geöffnete Szene (Objekt) oder null = Übersicht
+  let bwModus = "entdecken";
+  let bwEntdeckt = new Set();   // Teil-Kennungen, die schon angetippt wurden
+  let bwGewaehlt = null;        // das gerade angezeigte Teil
+  let bwRunde = null;           // laufende Übungsrunde
+
+  const BW_RUNDEN = 12;
+  const BW_BESUCHT_SCHLUESSEL = "dma_bilderwelt_besucht";
+
+  function bwBesucht() {
+    try { return new Set(JSON.parse(localStorage.getItem(BW_BESUCHT_SCHLUESSEL) || "[]")); }
+    catch (e) { return new Set(); }
+  }
+  function bwBesuchMerken(id) {
+    const s = bwBesucht(); s.add(id);
+    try { localStorage.setItem(BW_BESUCHT_SCHLUESSEL, JSON.stringify([...s])); } catch (e) { /* egal */ }
+  }
+
+  /* Das Wort, um das es in der aktuellen Sprache geht — und seine
+     Betonungsangabe. Im Italienisch-Raum dreht sich alles um „il letto",
+     im Deutsch-Raum um „das Bett". */
+  function bwWort(t) { return imItalienischraum() ? t.it : t.de; }
+  function bwSyl(t) { return imItalienischraum() ? t.itSyl : t.syl; }
+  function bwZweitwort(t) { return imItalienischraum() ? t.de : t.it; }
+  function bwZweitSyl(t) { return imItalienischraum() ? t.syl : t.itSyl; }
+  function bwSprache() { return imItalienischraum() ? "it" : "de"; }
+
+  /* Der Artikel vorn weg — für den Artikel-Modus und für die
+     Betonungsanzeige, die nur das Wort selbst meint. */
+  const BW_ART_DE = ["der", "die", "das"];
+  const BW_ART_IT = ["il", "lo", "la", "l'", "i", "gli", "le"];
+  function bwArtikelTrennen(wort) {
+    const m = String(wort).match(/^(der|die|das|il|lo|la|l'|i|gli|le)\s*(.+)$/i);
+    if (!m) return { artikel: null, rest: wort };
+    // l' klebt am Wort: „l'armadio"
+    const artikel = m[1].toLowerCase();
+    return { artikel, rest: m[2] };
+  }
+  function bwArtikelAuswahl(richtig) {
+    /* Nur Artikel anbieten, die es in dieser Sprache gibt — und im
+       Italienischen nur die, die zur Zahl passen: bei „le scarpe" wäre
+       „il" keine echte Alternative, sondern eine Fangfrage. */
+    if (!imItalienischraum()) return BW_ART_DE;
+    const mehrzahl = ["i", "gli", "le"];
+    return mehrzahl.includes(richtig) ? mehrzahl : ["il", "lo", "la", "l'"];
+  }
+
+  // Dieselbe Entscheidung wie überall sonst — betonungAnzeigen() trifft sie.
+  const bwFormatStress = (syl) => betonungAnzeigen(syl);
+  /* Die ZWEITE Sprache braucht die Anzeige der zweiten Sprache, nicht die
+     des Raums. Sonst bekam das italienische Wort im Deutsch-Raum die
+     deutschen Längenzeichen verpasst — „la finestra" mit Duden-Punkt, und
+     die erste Silbe groß, weil deutsche Nomen so geschrieben werden. Beides
+     falsch für ein italienisches Wort. */
+  function bwFormatStressZweit(syl) {
+    return imItalienischraum() ? Core.formatStress(syl) : Core.formatStressIt(syl);
+  }
+
+  function bwVorlesen(t) {
+    const { rest } = bwArtikelTrennen(bwWort(t));
+    // Mit Artikel vorlesen: das Geschlecht hört man dann mit.
+    Core.speak(bwWort(t).replace(/^l'/, "l'"), bwSprache());
+    return rest;
+  }
+
+  async function renderBilderwelt() {
+    autoWeiterAbbrechen();
+    const area = document.getElementById("bilderweltArea");
+    if (!area) return;
+    if (!window.DMA_SZENEN) {
+      area.innerHTML = '<p class="empty-note">Die Bilderwelt wird geladen …</p>';
+      const ok = await szenenLaden();
+      if (!ok) {
+        area.innerHTML = '<p class="empty-note">Die Bilder konnten nicht geladen werden. Seite neu laden und noch einmal versuchen.</p>';
+        return;
+      }
+    }
+    if (!bwSzene) { bwUebersichtZeichnen(area); return; }
+    bwSzeneZeichnen(area);
+  }
+
+  function bwUebersichtZeichnen(area) {
+    const besucht = bwBesucht();
+    const szenen = szenenListe();
+    const themen = [...new Set(szenen.map((s) => s.thema))];
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow" style="margin-top:0;">🖼️ Bilderwelt <span class="subnav-info-icon" data-info="Ganze Räume zum Antippen. Jedes Ding im Bild ist eine Schaltfläche: Sie liest das Wort vor und zeigt Artikel, Betonung und die italienische Entsprechung. Danach kannst du dieselbe Szene als Suchspiel oder als Artikel-Übung spielen.">ⓘ</span></p>
+        <h3 style="margin:4px 0 6px;">Wo willst du hin?</h3>
+        <p class="empty-note" style="margin-bottom:4px;">
+          Tippe auf ein Ding im Bild — du hörst das Wort, siehst den Artikel
+          und die Betonung. ${imItalienischraum()
+            ? "Im Italienisch-Raum läuft alles auf Italienisch: <em>il letto</em>, <em>la finestra</em>."
+            : "Wer will, sieht zu jedem Wort auch gleich das italienische daneben."}
+        </p>
+        <p class="empty-note" style="margin-bottom:0;">${szenen.length} Szenen · ${szenen.reduce((n, s) => n + s.teile.length, 0)} Wörter · ${besucht.size} schon besucht</p>
+      </div>
+      ${themen.map((th) => `
+        <div class="question-card" style="margin-top:12px;">
+          <p class="eyebrow" style="margin-top:0;">${th}</p>
+          <div class="bw-kacheln">
+            ${szenen.filter((s) => s.thema === th).map((s) => `
+              <button type="button" class="bw-kachel" data-bw-szene="${s.id}">
+                <span class="bw-kachel-emoji">${s.emoji}</span>
+                <span class="bw-kachel-name">${escapeHtml(s.titel)}</span>
+                <span class="bw-kachel-zahl">${s.teile.length} Wörter${besucht.has(s.id) ? " · ✓" : ""}</span>
+              </button>`).join("")}
+          </div>
+        </div>`).join("")}
+    `;
+    area.querySelectorAll("[data-bw-szene]").forEach((b) => b.addEventListener("click", () => {
+      bwSzene = szenenListe().find((s) => s.id === b.dataset.bwSzene) || null;
+      bwEntdeckt = new Set(); bwGewaehlt = null; bwRunde = null; bwModus = "entdecken";
+      if (bwSzene) bwBesuchMerken(bwSzene.id);
+      renderBilderwelt();
+      const k = document.getElementById("bilderweltArea");
+      if (k) k.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+  }
+
+  /* Das Bild selbst. Jedes Teil kommt in eine eigene Gruppe mit
+     role="button" — antippbar, mit Tastatur erreichbar, und mit einem
+     Namen, den ein Screenreader vorliest. */
+  function bwBildHtml(szene, opt) {
+    const o = opt || {};
+    const treffer = o.treffer || new Set();
+    return `
+      <svg class="bw-bild bw-szene-${szene.id}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
+           role="group" aria-label="${escapeHtml(szene.titel)}">
+        <g class="bw-kulisse" aria-hidden="true">${szene.kulisse}</g>
+        ${szene.teile.map((t) => {
+          const klassen = ["bw-teil"];
+          if (bwGewaehlt && bwGewaehlt.id === t.id) klassen.push("bw-teil-aktiv");
+          if (treffer.has(t.id)) klassen.push("bw-teil-treffer");
+          else if (bwEntdeckt.has(t.id) && bwModus === "entdecken") klassen.push("bw-teil-entdeckt");
+          return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"
+                     transform="translate(${t.x},${t.y})"
+                     role="button" tabindex="0"
+                     aria-label="${escapeHtml(bwWort(t))}">
+                    <title>${escapeHtml(bwWort(t))}</title>
+                    ${t.kunst}
+                  </g>`;
+        }).join("")}
+      </svg>`;
+  }
+
+  function bwSzeneZeichnen(area) {
+    const s = bwSzene;
+    const treffer = bwRunde ? new Set(bwRunde.getroffen) : new Set();
+    const fertig = bwRunde && bwRunde.index >= bwRunde.plan.length;
+    if (fertig) { bwErgebnisZeichnen(area); return; }
+    const aufgabe = bwRunde ? bwRunde.plan[bwRunde.index] : null;
+    area.innerHTML = `
+      <div class="question-card bw-karte">
+        <div class="bw-kopf">
+          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">← Alle Szenen</button>
+          <p class="eyebrow" style="margin:0;">${s.emoji} ${escapeHtml(s.titel)}</p>
+        </div>
+        <div class="order-toggle bw-modi">
+          <button type="button" class="order-pill" data-bw-modus="entdecken" aria-selected="${bwModus === "entdecken"}">👆 Entdecken</button>
+          <button type="button" class="order-pill" data-bw-modus="finden" aria-selected="${bwModus === "finden"}">🔍 Finden</button>
+          <button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>
+        </div>
+        ${bwModus === "entdecken" ? `
+          <p class="empty-note bw-hinweis">Tippe auf die Dinge im Bild — ${bwEntdeckt.size} von ${s.teile.length} entdeckt.</p>
+          <div class="bw-fortschritt"><div class="bw-fortschritt-balken" style="width:${Math.round(100 * bwEntdeckt.size / s.teile.length)}%"></div></div>
+        ` : aufgabe ? `
+          <p class="bw-auftrag">${bwModus === "finden"
+            ? `Wo ist <strong>${escapeHtml(bwWort(aufgabe.teil))}</strong>?`
+            : `Welcher Artikel gehört zu <strong>${escapeHtml(bwArtikelTrennen(bwWort(aufgabe.teil)).rest)}</strong>?`}</p>
+          <p class="empty-note bw-hinweis">Aufgabe ${bwRunde.index + 1} von ${bwRunde.plan.length} · ${bwRunde.richtig} richtig</p>
+        ` : ""}
+        ${bwBildHtml(s, { treffer })}
+        ${bwModus === "artikel" && aufgabe ? `
+          <div class="bw-artikel-reihe">
+            ${bwArtikelAuswahl(bwArtikelTrennen(bwWort(aufgabe.teil)).artikel).map((a) => {
+              const richtig = a === bwArtikelTrennen(bwWort(aufgabe.teil)).artikel;
+              const zustand = !bwRunde.letzte ? "" : richtig ? " bw-artikel-richtig" : " bw-artikel-daneben";
+              return `<button type="button" class="btn bw-artikel-knopf${zustand}" data-bw-artikel="${a}" ${bwRunde.letzte ? "disabled" : ""}>${a}</button>`;
+            }).join("")}
+          </div>` : ""}
+        ${bwGewaehlt ? bwWortkarteHtml(bwGewaehlt) : ""}
+        ${bwRunde && bwRunde.letzte ? `<p class="bw-rueckmeldung ${bwRunde.letzte.ok ? "bw-ok" : "bw-falsch"}">${bwRunde.letzte.text}</p>` : ""}
+        ${bwModus === "entdecken" ? `
+          <div class="bw-wortleiste">
+            ${s.teile.map((t) => `<button type="button" class="bw-wortchip ${bwEntdeckt.has(t.id) ? "bw-wortchip-da" : ""} ${bwGewaehlt && bwGewaehlt.id === t.id ? "bw-wortchip-aktiv" : ""}" data-bw-chip="${t.id}">${escapeHtml(bwWort(t))}</button>`).join("")}
+          </div>
+          <div class="quiz-actions" style="justify-content:flex-start; flex-wrap:wrap; margin-top:12px;">
+            <button type="button" class="btn btn-ghost" id="bwAlleHoeren">🔊 Alle nacheinander vorlesen</button>
+            <button type="button" class="btn btn-ghost" id="bwAlsListe">📋 Als Wortliste speichern</button>
+          </div>` : ""}
+        ${miniBugReportBtnHtml("Bilderwelt: " + s.titel)}
+      </div>`;
+    bwBinden(area);
+  }
+
+  function bwWortkarteHtml(t) {
+    const { artikel, rest } = bwArtikelTrennen(bwWort(t));
+    const geschlecht = imItalienischraum()
+      ? { il: "männlich", lo: "männlich", la: "weiblich", "l'": "vor Vokal", i: "männlich, Mehrzahl", gli: "männlich, Mehrzahl", le: "weiblich, Mehrzahl" }[artikel]
+      : { der: "männlich", die: "weiblich", das: "sächlich" }[artikel];
+    return `
+      <div class="bw-wortkarte">
+        <div class="bw-wortkarte-kopf">
+          ${artikel ? `<span class="bw-artikel bw-artikel-${artikel.replace("'", "")}">${artikel}</span>` : ""}
+          <span class="bw-wort">${escapeHtml(rest)}</span>
+          <button type="button" class="btn btn-ghost bw-hoerknopf" data-bw-sprich="${t.id}" aria-label="Wort vorlesen">🔊</button>
+        </div>
+        <p class="bw-betonung">${bwFormatStress(bwSyl(t))}</p>
+        ${geschlecht ? `<p class="empty-note" style="margin:2px 0 0;">${artikel} → ${geschlecht}</p>` : ""}
+        <p class="empty-note" style="margin:6px 0 0;">${imItalienischraum() ? "🇩🇪" : "🇮🇹"} ${escapeHtml(bwZweitwort(t))} <span class="bw-zweitbetonung">${bwFormatStressZweit(bwZweitSyl(t))}</span>
+          <button type="button" class="btn btn-ghost bw-hoerknopf bw-hoerknopf-klein" data-bw-sprich2="${t.id}" aria-label="Zweitsprache vorlesen">🔊</button></p>
+        ${t.en ? `<p class="empty-note" style="margin:2px 0 0;">🇬🇧 ${escapeHtml(t.en)}</p>` : ""}
+      </div>`;
+  }
+
+  function bwBinden(area) {
+    document.getElementById("bwZurueck")?.addEventListener("click", () => {
+      bwSzene = null; bwRunde = null; bwGewaehlt = null; renderBilderwelt();
+    });
+    area.querySelectorAll("[data-bw-modus]").forEach((b) => b.addEventListener("click", () => {
+      bwModus = b.dataset.bwModus;
+      bwGewaehlt = null;
+      bwRunde = bwModus === "entdecken" ? null : bwNeueRunde();
+      renderBilderwelt();
+    }));
+    const teilAntippen = (id) => {
+      const t = bwSzene.teile.find((x) => x.id === id);
+      if (!t) return;
+      if (bwModus === "entdecken") {
+        bwGewaehlt = t;
+        bwEntdeckt.add(t.id);
+        Core.speak(bwWort(t), bwSprache());
+        Core.sound.click?.();
+        const alleDa = bwEntdeckt.size >= bwSzene.teile.length;
+        renderBilderwelt();
+        if (alleDa) bwAllesEntdeckt();
+        return;
+      }
+      if (bwModus === "finden") bwFindenAntwort(t);
+      // Im Artikel-Modus antwortet man über die Knöpfe, nicht über das Bild —
+      // ein Tipp ins Bild zeigt dort nur, welches Ding gemeint ist.
+      else { bwGewaehlt = t; renderBilderwelt(); }
+    };
+    area.querySelectorAll("[data-bw-teil]").forEach((g) => {
+      g.addEventListener("click", () => teilAntippen(g.dataset.bwTeil));
+      g.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); teilAntippen(g.dataset.bwTeil); }
+      });
+    });
+    area.querySelectorAll("[data-bw-chip]").forEach((b) => b.addEventListener("click", () => teilAntippen(b.dataset.bwChip)));
+    area.querySelectorAll("[data-bw-sprich]").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const t = bwSzene.teile.find((x) => x.id === b.dataset.bwSprich);
+      if (t) Core.speak(bwWort(t), bwSprache());
+    }));
+    area.querySelectorAll("[data-bw-sprich2]").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const t = bwSzene.teile.find((x) => x.id === b.dataset.bwSprich2);
+      if (t) Core.speak(bwZweitwort(t), imItalienischraum() ? "de" : "it");
+    }));
+    area.querySelectorAll("[data-bw-artikel]").forEach((b) => b.addEventListener("click", () => bwArtikelAntwort(b.dataset.bwArtikel)));
+    document.getElementById("bwAlleHoeren")?.addEventListener("click", () => bwAlleVorlesen());
+    document.getElementById("bwAlsListe")?.addEventListener("click", async () => {
+      const woerter = bwSzene.teile.map((t) => bwArtikelTrennen(bwWort(t)).rest);
+      const id = await wortlisteSpeichern(bwSzene.titel, woerter);
+      showToast(id ? `📋 „${bwSzene.titel}" als Wortliste gespeichert — ${woerter.length} Wörter.`
+                   : "Die Liste konnte nicht gespeichert werden.");
+    });
+  }
+
+  /* Alle Wörter der Szene nacheinander vorlesen, mit Pause dazwischen
+     und mitlaufender Markierung — wie eine kleine Führung durch den Raum. */
+  let bwFuehrungTimer = null;
+  function bwAlleVorlesen() {
+    if (bwFuehrungTimer) { clearTimeout(bwFuehrungTimer); bwFuehrungTimer = null; showToast("Vorlesen beendet."); return; }
+    const teile = bwSzene.teile.slice();
+    let i = 0;
+    const weiter = () => {
+      if (i >= teile.length || !bwSzene) { bwFuehrungTimer = null; return; }
+      const t = teile[i]; i += 1;
+      bwGewaehlt = t; bwEntdeckt.add(t.id);
+      renderBilderwelt();
+      Core.speak(bwWort(t), bwSprache());
+      bwFuehrungTimer = setTimeout(weiter, 2100);
+    };
+    weiter();
+  }
+
+  function bwAllesEntdeckt() {
+    Core.sound.fanfare?.();
+    /* Wer eine Szene vollständig entdeckt hat, hat diese Station des
+       Lernwegs erledigt — auch ohne Suchspiel. */
+    lernwegFortschrittMelden("szene", bwSzene.id, 100);
+    showToast(`🎉 Alle ${bwSzene.teile.length} Wörter in „${bwSzene.titel}" entdeckt! Jetzt als Suchspiel probieren?`, () => {
+      bwModus = "finden"; bwRunde = bwNeueRunde(); renderBilderwelt();
+    });
+  }
+
+  function bwNeueRunde() {
+    const teile = bwSzene.teile.slice();
+    // Durchmischen und auf die Rundenlänge kürzen — bei kleinen Szenen
+    // eben so viele Aufgaben, wie es Dinge gibt.
+    for (let i = teile.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [teile[i], teile[j]] = [teile[j], teile[i]];
+    }
+    const plan = teile.slice(0, Math.min(BW_RUNDEN, teile.length)).map((t) => ({ teil: t }));
+    letzteSpielStufe = "A1";
+    return { plan, index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], getroffen: [], letzte: null };
+  }
+
+  function bwFindenAntwort(t) {
+    const rd = bwRunde;
+    /* Solange die Auflösung noch steht, zählt kein weiterer Tipp. Ohne
+       diese Sperre ließ sich dieselbe Aufgabe mehrfach beantworten —
+       und mit jedem Tipp begann die Wartezeit von vorn, die Runde kam
+       also nie zum Ende. */
+    if (rd.letzte) return;
+    const soll = rd.plan[rd.index].teil;
+    const ok = t.id === soll.id;
+    spielNotiz(ok, `${bwSzene.titel}: ${bwWort(soll)}${ok ? "" : ` — angetippt: ${bwWort(t)}`}`);
+    if (ok) {
+      rd.richtig += 1; rd.serie += 1; rd.besteSerie = Math.max(rd.besteSerie, rd.serie);
+      rd.getroffen.push(t.id);
+      Core.sound.correct();
+      rd.letzte = { ok: true, text: `✅ Richtig — ${bwWort(soll)}.` };
+    } else {
+      rd.serie = 0; rd.fehler.push(soll); Core.sound.wrong();
+      rd.letzte = { ok: false, text: `❌ Das war <strong>${escapeHtml(bwWort(t))}</strong>. Gesucht war <strong>${escapeHtml(bwWort(soll))}</strong>.` };
+    }
+    bwGewaehlt = ok ? soll : t;
+    Core.speak(bwWort(soll), bwSprache());
+    renderBilderwelt();
+    autoWeiter(ok, () => { rd.index += 1; rd.letzte = null; bwGewaehlt = null; renderBilderwelt(); });
+  }
+
+  function bwArtikelAntwort(gewaehlt) {
+    const rd = bwRunde;
+    if (rd.letzte) return;
+    const soll = rd.plan[rd.index].teil;
+    const { artikel, rest } = bwArtikelTrennen(bwWort(soll));
+    const ok = gewaehlt === artikel;
+    spielNotiz(ok, `${rest} → ${artikel}${ok ? "" : ` (geantwortet: ${gewaehlt})`}`);
+    if (ok) {
+      rd.richtig += 1; rd.serie += 1; rd.besteSerie = Math.max(rd.besteSerie, rd.serie);
+      rd.getroffen.push(soll.id); Core.sound.correct();
+      rd.letzte = { ok: true, text: `✅ <strong>${artikel} ${escapeHtml(rest)}</strong>.` };
+    } else {
+      rd.serie = 0; rd.fehler.push(soll); Core.sound.wrong();
+      rd.letzte = { ok: false, text: `❌ Richtig ist <strong>${artikel} ${escapeHtml(rest)}</strong>.` };
+    }
+    bwGewaehlt = soll;
+    Core.speak(bwWort(soll), bwSprache());
+    renderBilderwelt();
+    autoWeiter(ok, () => { rd.index += 1; rd.letzte = null; bwGewaehlt = null; renderBilderwelt(); });
+  }
+
+  function bwErgebnisZeichnen(area) {
+    const rd = bwRunde;
+    const prozent = Math.round((rd.richtig / rd.plan.length) * 100);
+    const punkte = rd.richtig * 2;
+    const bonus = rd.richtig === rd.plan.length ? 5 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus,
+      tier: bwModus === "artikel" ? "Artikel sortiert" : "Alles gefunden",
+      charakter: bwSzene.titel,
+      emoji: bwSzene.emoji,
+      beschreibung: bwModus === "artikel"
+        ? "Der Artikel gehört zum Wort wie die Farbe zum Ding — am besten lernt man beides zusammen."
+        : "Wörter, die man im Bild gesehen hat, sitzen fester als Wörter aus einer Liste.",
+      zeilen: [
+        { name: "🔍 Richtig", anteil: prozent, wert: rd.richtig + "/" + rd.plan.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((rd.besteSerie / rd.plan.length) * 100), wert: String(rd.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="bwNochmal">🔄 Noch eine Runde</button>
+                <button type="button" class="btn btn-ghost" id="bwZurEntdeckung">👆 Szene ansehen</button>
+                <button type="button" class="btn btn-ghost" id="bwAndereSzene">🖼️ Andere Szene</button>`,
+    });
+    if (rd.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Noch einmal in Ruhe</p>
+        ${rd.fehler.map((t) => `<p style="margin:8px 0;"><strong>${escapeHtml(bwWort(t))}</strong>
+          <span class="bw-betonung-klein">${bwFormatStress(bwSyl(t))}</span>
+          <br><span class="empty-note">${imItalienischraum() ? "🇩🇪" : "🇮🇹"} ${escapeHtml(bwZweitwort(t))}</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("bwNochmal")?.addEventListener("click", () => { bwRunde = bwNeueRunde(); renderBilderwelt(); });
+    document.getElementById("bwZurEntdeckung")?.addEventListener("click", () => { bwModus = "entdecken"; bwRunde = null; renderBilderwelt(); });
+    document.getElementById("bwAndereSzene")?.addEventListener("click", () => { bwSzene = null; bwRunde = null; renderBilderwelt(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["bilderwelt"], points: punkte, bonus, percent: prozent,
+        character: bwSzene.titel, badges: [], playedAt: new Date().toISOString(),
+        lernwegSzene: bwSzene.id });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+  /* ============================================================
+     DER LERNWEG — „wo fange ich an und was kommt als Nächstes?"
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Es müsste auch einen richtigen Kurs geben, wo man
+     anfängt und geführt wird … dass sich das aufbaut wie in
+     Lehrbüchern und in anderen Apps, die Module der Reihe nach,
+     für A1 bis C2, im Deutschen und im Italienischen."
+
+     Das Problem war nie der Stoff — der war reichlich da. Es fehlte
+     die Reihenfolge. Wer die Seite öffnete, sah sechzig
+     Übungskategorien und vierzig Spiele und musste selbst
+     entscheiden, womit man anfängt. Diese Ansicht beantwortet das:
+     eine Wegkarte mit Modulen, ein Punkt „hier stehst du" und ein
+     einziger Knopf „weiter".
+
+     Der Fortschritt wird im Profil gespeichert (extra_profile_data
+     .lernweg), getrennt nach Raum — der deutsche und der
+     italienische Weg laufen unabhängig voneinander.
+     ============================================================ */
+  let lernwegGeladen = null;
+  function lernwegLaden() {
+    if (lernwegGeladen) return lernwegGeladen;
+    if (window.DMA_LERNWEG) { lernwegGeladen = Promise.resolve(true); return lernwegGeladen; }
+    lernwegGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-lernweg.js?v=" + (window.DMA_VERSION || "1");
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => { lernwegGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return lernwegGeladen;
+  }
+
+  const LERNWEG_STUFEN = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const LERNWEG_SCHWELLE = 70;   // ab so viel Prozent gilt ein Schritt als geschafft
+  let lernwegStufe = null;       // welche Stufe gerade angesehen wird
+
+  function lernwegRaum() { return imItalienischraum() ? "it" : "de"; }
+  function lernwegModule(stufe) {
+    const w = (window.DMA_LERNWEG || {})[lernwegRaum()] || {};
+    return w[stufe] || [];
+  }
+  function lernwegAlleModule() {
+    return LERNWEG_STUFEN.flatMap((s) => lernwegModule(s).map((m) => ({ ...m, stufe: s })));
+  }
+
+  /* Der gespeicherte Stand. Aufbau:
+       { de: { "<schritt-schlüssel>": <bestes Prozent> }, it: { … } }
+     Ein Schritt-Schlüssel ist „art:ziel" — also „uebung:zahlen" oder
+     „szene:kueche". Dadurch zählt ein Schritt, der in zwei Modulen
+     vorkommt, auch in beiden. */
+  function lernwegStand() {
+    const p = Backend.currentProfile();
+    const roh = (p && p.extraProfileData && p.extraProfileData.lernweg) || {};
+    const raum = roh[lernwegRaum()];
+    return raum && typeof raum === "object" ? raum : {};
+  }
+  async function lernwegMerken(schluessel, prozent) {
+    const p = Backend.currentProfile();
+    if (!p) return;
+    const roh = (p.extraProfileData && p.extraProfileData.lernweg) || {};
+    const raum = lernwegRaum();
+    const stand = (roh[raum] && typeof roh[raum] === "object") ? { ...roh[raum] } : {};
+    if ((stand[schluessel] || 0) >= prozent) return;      // schlechter als bisher: nichts ändern
+    stand[schluessel] = prozent;
+    try {
+      await Backend.updateExtraProfileField("lernweg", { ...roh, [raum]: stand });
+    } catch (e) { /* ohne Anmeldung geht das nicht — dann eben nicht */ }
+  }
+
+  /* Nach JEDER Runde aufrufen: Wenn die gespielte Kategorie oder Szene
+     in irgendeinem Modul vorkommt, wird der Fortschritt vermerkt. So
+     muss kein Spiel und keine Übung vom Lernweg wissen. */
+  function lernwegFortschrittMelden(art, ziel, prozent) {
+    if (!ziel || typeof prozent !== "number") return;
+    if (!window.DMA_LERNWEG) { lernwegLaden(); return; }
+    const schluessel = art + ":" + ziel;
+    const kommtVor = lernwegAlleModule().some((m) =>
+      (m.schritte || []).some((s) => s.art === art && s.ziel === ziel));
+    if (!kommtVor) return;
+    lernwegMerken(schluessel, Math.round(prozent));
+  }
+
+  function lernwegSchrittFertig(stand, schritt) {
+    return (stand[schritt.art + ":" + schritt.ziel] || 0) >= LERNWEG_SCHWELLE;
+  }
+  function lernwegModulStand(stand, modul) {
+    const schritte = modul.schritte || [];
+    const fertig = schritte.filter((s) => lernwegSchrittFertig(stand, s)).length;
+    return { fertig, gesamt: schritte.length, ganz: schritte.length > 0 && fertig === schritte.length };
+  }
+  /* Das nächste Modul: das erste, das noch nicht ganz fertig ist —
+     von der niedrigsten Stufe an. */
+  function lernwegNaechstes(stand) {
+    const alle = lernwegAlleModule();
+    for (const m of alle) {
+      if (!lernwegModulStand(stand, m).ganz) return m;
+    }
+    return null;
+  }
+
+  const LERNWEG_ART_NAME = { szene: "Bilderwelt", uebung: "Übung", grammatik: "Grammatik", spiel: "Spiel" };
+  const LERNWEG_ART_ICON = { szene: "🖼️", uebung: "✏️", grammatik: "📘", spiel: "🎲" };
+
+  function lernwegSchrittName(schritt) {
+    if (schritt.art === "szene") {
+      const s = szenenListe().find((x) => x.id === schritt.ziel);
+      return s ? s.titel : schritt.ziel;
+    }
+    if (schritt.art === "uebung") {
+      const c = (ExerciseData.activeCategories() || []).find((x) => x.id === schritt.ziel);
+      return c ? c.title : schritt.ziel;
+    }
+    if (schritt.art === "spiel") {
+      const g = GAMES_OVERVIEW_LIST.find((x) => x.sub === schritt.ziel);
+      if (g) return g.name;
+      return (document.querySelector(`[data-sub="${schritt.ziel}"]`)?.textContent || schritt.ziel).trim();
+    }
+    if (schritt.art === "grammatik") return "Grammatik " + schritt.ziel;
+    return schritt.ziel;
+  }
+
+  async function lernwegSchrittOeffnen(schritt) {
+    if (schritt.art === "szene") {
+      activateTab("view-learn");
+      await szenenLaden();
+      bwSzene = szenenListe().find((x) => x.id === schritt.ziel) || null;
+      bwModus = "entdecken"; bwRunde = null; bwGewaehlt = null; bwEntdeckt = new Set();
+      jumpToSubnavTarget('[data-sub="sub-bilderwelt"]', "#bilderweltArea", 40);
+      setTimeout(() => renderBilderwelt(), 120);
+      return;
+    }
+    if (schritt.art === "uebung") {
+      /* Genau wie der Sprung aus der Grammatik: die Kategorie einzeln
+         auswählen und gezielt zu ihrer Karte scrollen. */
+      selectedCategories.clear();
+      selectedCategories.add(schritt.ziel);
+      uebungFokusKategorie = schritt.ziel;
+      activateTab("view-learn");
+      jumpToSubnavTarget('#learnSubnav [data-sub="sub-exercises"]',
+        `.category-card[data-cat="${schritt.ziel}"]`);
+      return;
+    }
+    if (schritt.art === "grammatik") {
+      grammatikLevel = schritt.ziel;
+      activateTab("view-learn");
+      jumpToSubnavTarget('[data-sub="sub-grammatik"]', "#grammatikArea", 40);
+      setTimeout(() => renderGrammatik(), 120);
+      return;
+    }
+    if (schritt.art === "spiel") {
+      activateTab("view-learn");
+      jumpToSubnavTarget(`[data-sub="${schritt.ziel}"]`, "#" + schritt.ziel, 40);
+      return;
+    }
+  }
+
+  async function renderLernweg() {
+    const area = document.getElementById("lernwegArea");
+    if (!area) return;
+    if (!window.DMA_LERNWEG) {
+      area.innerHTML = '<p class="empty-note">Der Lernweg wird geladen …</p>';
+      const ok = await lernwegLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Der Lernweg konnte nicht geladen werden.</p>'; return; }
+    }
+    await szenenLaden();
+    const stand = lernwegStand();
+    const naechstes = lernwegNaechstes(stand);
+    if (!lernwegStufe) lernwegStufe = naechstes ? naechstes.stufe : "A1";
+    const module = lernwegModule(lernwegStufe);
+    const alle = lernwegAlleModule();
+    const geschafft = alle.filter((m) => lernwegModulStand(stand, m).ganz).length;
+    const raumName = lernwegRaum() === "it" ? "Italienisch" : "Deutsch";
+
+    area.innerHTML = `
+      <div class="question-card lernweg-kopf">
+        <p class="eyebrow" style="margin-top:0;">🧭 Dein Lernweg · ${raumName} <span class="subnav-info-icon" data-info="Ein Kurs mit fester Reihenfolge, wie in einem Lehrbuch. Jedes Modul besteht aus Stationen — einer Bilderwelt-Szene, einer Übung, einem Grammatikthema oder einem Spiel. Eine Station gilt als geschafft, sobald du sie einmal mit mindestens 70 Prozent abgeschlossen hast.">ⓘ</span></p>
+        <h3 style="margin:4px 0 6px;">${geschafft} von ${alle.length} Modulen geschafft</h3>
+        <div class="bw-fortschritt"><div class="bw-fortschritt-balken" style="width:${alle.length ? Math.round(100 * geschafft / alle.length) : 0}%"></div></div>
+        ${naechstes ? `
+          <div class="lernweg-jetzt">
+            <p class="eyebrow" style="margin:0 0 2px;">📍 Hier geht es weiter</p>
+            <p style="margin:0 0 4px; font-weight:800;">${naechstes.icon} ${escapeHtml(naechstes.titel)} <span class="empty-note">· Stufe ${naechstes.stufe}</span></p>
+            <p class="empty-note" style="margin:0 0 10px;">${escapeHtml(naechstes.text)}</p>
+            <button type="button" class="btn btn-coffee" id="lernwegWeiter">▶ Weiterlernen</button>
+          </div>` : `<p class="empty-note" style="margin-top:10px;">🎓 Der ganze Weg ist geschafft — von A1 bis C2. Respekt.</p>`}
+      </div>
+
+      <div class="question-card" style="margin-top:12px;">
+        <p class="eyebrow" style="margin-top:0;">Stufe wählen</p>
+        <div class="trophy-case" style="flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px; margin:0;">
+          ${LERNWEG_STUFEN.map((s) => {
+            const mods = lernwegModule(s);
+            const fertig = mods.filter((m) => lernwegModulStand(stand, m).ganz).length;
+            const zeichen = mods.length && fertig === mods.length ? "✅ "
+              : naechstes && naechstes.stufe === s ? "📍 " : "";
+            return `<button type="button" class="trophy-chip lernweg-stufe-btn ${lernwegStufe === s ? "selected" : ""}" data-lw-stufe="${s}">${zeichen}${s}</button>`;
+          }).join("")}
+        </div>
+      </div>
+
+      <ol class="lernweg-liste">
+        ${module.map((m, i) => {
+          const st = lernwegModulStand(stand, m);
+          const istJetzt = naechstes && naechstes.id === m.id;
+          return `
+          <li class="lernweg-modul ${st.ganz ? "lernweg-fertig" : ""} ${istJetzt ? "lernweg-aktuell" : ""}">
+            <div class="lernweg-perle">${st.ganz ? "✓" : i + 1}</div>
+            <div class="lernweg-inhalt">
+              <p class="lernweg-titel">${m.icon} ${escapeHtml(m.titel)}</p>
+              <p class="empty-note" style="margin:2px 0 8px;">${escapeHtml(m.text)}</p>
+              <div class="lernweg-schritte">
+                ${(m.schritte || []).map((s, j) => {
+                  const fertig = lernwegSchrittFertig(stand, s);
+                  const wert = stand[s.art + ":" + s.ziel];
+                  return `<button type="button" class="lernweg-schritt ${fertig ? "lernweg-schritt-fertig" : ""}"
+                            data-lw-modul="${m.id}" data-lw-schritt="${j}">
+                            ${fertig ? "✓" : LERNWEG_ART_ICON[s.art] || "•"} ${escapeHtml(lernwegSchrittName(s))}
+                            <span class="lernweg-art">${LERNWEG_ART_NAME[s.art] || ""}${typeof wert === "number" ? " · " + wert + " %" : ""}</span>
+                          </button>`;
+                }).join("")}
+              </div>
+              <p class="empty-note lernweg-zaehler">${st.fertig} von ${st.gesamt} Stationen</p>
+            </div>
+          </li>`;
+        }).join("")}
+      </ol>
+      ${module.length ? "" : '<p class="empty-note">Für diese Stufe ist noch kein Modul hinterlegt.</p>'}
+    `;
+
+    area.querySelectorAll("[data-lw-stufe]").forEach((b) => b.addEventListener("click", () => {
+      lernwegStufe = b.dataset.lwStufe; renderLernweg();
+    }));
+    document.getElementById("lernwegWeiter")?.addEventListener("click", () => {
+      const m = lernwegNaechstes(lernwegStand());
+      if (!m) return;
+      const offen = (m.schritte || []).find((s) => !lernwegSchrittFertig(lernwegStand(), s));
+      if (offen) lernwegSchrittOeffnen(offen);
+    });
+    area.querySelectorAll("[data-lw-schritt]").forEach((b) => b.addEventListener("click", () => {
+      const m = lernwegAlleModule().find((x) => x.id === b.dataset.lwModul);
+      const s = m && (m.schritte || [])[Number(b.dataset.lwSchritt)];
+      if (s) lernwegSchrittOeffnen(s);
+    }));
+  }
+
+  /* ============================================================
      SPIEL-VERZEICHNIS FÜR EINLADUNGEN
      ------------------------------------------------------------
      Zu jedem Spiel: der Reiter, unter dem es liegt, und der Name,
@@ -24561,6 +25640,7 @@
      im richtigen Spiel landen zu lassen.
      ============================================================ */
   const SPIEL_VERZEICHNIS = {
+    "sub-bilderwelt": "bilderwelt",
     "sub-erbschaft": "erbschaft",
     "sub-arzt": "arzt",
     "sub-gewitter": "gewitter",
@@ -24663,6 +25743,7 @@
     if (!wunsch) { kopf.remove(); return; }
     const wort = wunsch.text || eintrag.name;
     const bauer = {
+      bilderrahmen: () => bilderrahmenSchriftzug(wort, { hoehe: 76 }),
       urkunde: () => urkundeSchriftzug(wort, { hoehe: 78 }),
       rezeptblock: () => rezeptblockSchriftzug(wort, { hoehe: 78 }),
       gewitterhimmel: () => gewitterhimmelSchriftzug(wort, { hoehe: 76 }),
@@ -24791,7 +25872,7 @@
       <button type="button" class="sammel-karte-zu" aria-label="Schließen">✕</button>
       <p class="sammel-karte-wort">${treffer ? treffer.word : wort}</p>
       ${treffer ? `
-        ${treffer.syl ? `<p class="sammel-karte-syl">${Core.formatStress(treffer.syl)}</p>` : ""}
+        ${treffer.syl ? `<p class="sammel-karte-syl">${betonungAnzeigen(treffer.syl)}</p>` : ""}
         ${treffer.meaning ? `<p class="sammel-karte-bed">${treffer.meaning}</p>` : ""}
         ${treffer.example ? `<p class="sammel-karte-bsp">„${treffer.example}“</p>` : ""}
         <div class="sammel-karte-knoepfe">
@@ -30681,7 +31762,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "163";
+  const APP_VERSION = "164";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -30691,6 +31772,19 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "164": [
+      "🖼️ **Die Bilderwelt.** Neunzehn gezeichnete Räume zum Antippen: Kinderzimmer, Wohnzimmer, Küche, Bad, Schlafzimmer, Flur, Klassenzimmer, Supermarkt, Straße, Restaurant, Arztpraxis, Bahnhof, Garten, Bauernhof, Werkstatt, dazu der Körper, die Kleidung, der Tagesablauf und das Wetter mit den Jahreszeiten. Jedes Ding im Bild ist eine Schaltfläche: Sie liest das Wort vor und zeigt dir Artikel, Betonung und das italienische Wort dazu. Danach kannst du dieselbe Szene als Suchspiel oder als Artikel-Übung spielen — 285 Wörter zum Antippen.",
+      "🧭 **Ein Lernweg mit Anfang und Reihenfolge.** Bisher standen sechzig Übungen und vierzig Spiele nebeneinander, und du musstest selbst entscheiden, womit du anfängst. Jetzt gibt es einen Kurs: 57 Module in fester Reihenfolge, von „Hallo und tschüss\" über Zahlen, Uhrzeit, Familie und den eigenen Tag bis zu Passiv und Stil — für Deutsch und für Italienisch getrennt. Ein Knopf bringt dich immer genau zur nächsten offenen Station.",
+      "✏️ **43 neue Übungsbereiche.** Zahlen und Zählen, die Uhrzeit, Wochentage, Monate und Jahreszeiten, Tiere, Körper und Anatomie, Gefühle, Haushalt, Kleidung, Essen und Trinken, Möbel, Werkzeug, Begrüßung, Umgangssprache, Einkaufen, von seinem Tag erzählen, Familie und Verwandte, Freundschaft, Musik, Freizeit, Alltagsverben, Präpositionen sowie Beschreiben und Wetter. Dieselben Themen gibt es auf Italienisch, dazu eigene Bereiche für die italienische Aussprache und die Artikelregeln. Insgesamt 3.600 neue Aufgaben.",
+      "🇮🇹 **Italienisch hat jetzt ein eigenes Betonungssystem.** Die deutschen Betonungszeichen sagen auch, ob ein Vokal lang oder kurz ist — diesen Unterschied gibt es im Italienischen gar nicht. Ein deutscher Längsstrich über einem italienischen Wort behauptet also etwas Falsches. Jetzt gilt dort die italienische Regel: Silbentrennung nach italienischen Regeln, betonte Silbe markiert, keine Längenzeichen. Geprüft gegen jedes italienische Wort auf der Seite.",
+      "📖 **Das Wörterbuch ist vollständiger.** Alle Länder der Welt stehen jetzt als richtige Einträge drin — mit Erdteil, Artikel und Beispielsatz. Dazu die Wörter, die noch gefehlt haben: Wurm, Zeh, Nabel, Schädel, Nudeln, Rote Bete, Dachziegel, Schwelle, Schein, Euro, Schulden, Ostern, Pfingsten, Silvester, Ramadan, Chanukka, deswegen, darum, stattdessen, aufgrund und weitere. Von 1.086 geprüften Grundwörtern sind jetzt 99,9 Prozent vorhanden.",
+      "🦊 **Die Begrüßung mit dem Sammelfuchs ist zurück.** Über der ersten Aufgabe jeder Runde stellt dir der zuletzt freigeschaltete Fuchs die Übung vor: worum es geht, wie viele Aufgaben, welche Stufen — und welcher Fuchs als Nächstes auf dich wartet.",
+      "✉️ **Jede Runde landet jetzt im Postfach.** Zweiundzwanzig Spiele haben nie eine Auswertung geschickt — die Erbschaft, Beim Arzt, Das Gewitter, Das Fundbüro, Die Schatzkarte, Der verpasste Zug und die anderen. Das ist behoben, und zwar so, dass es beim nächsten neuen Spiel nicht wieder passieren kann.",
+      "⏭️ **Es schaltet von selbst weiter.** Nach jeder Antwort läuft die Auflösung ab und die nächste Aufgabe kommt — kurz nach einer richtigen Antwort, deutlich länger nach einer falschen, damit du die Erklärung wirklich lesen kannst. Wer schneller ist, tippt weiter und überspringt das Warten.",
+      "🦊 **Fuchs des Tages wieder lesbar.** In den meisten Designs stand die Mitarbeits-Liste als dunkle Schrift auf dunklem Grund — da war nichts zu lesen. Jetzt hat die Auszeichnung in jedem Design denselben hellen Grund.",
+      "🇮🇹 **Die Laufschrift im Italienisch-Raum zeigt dich.** Statt Redewendungen läuft dort jetzt dein eigener Stand: wo du gerade bist, auf welcher Stufe, wie viele Punkte, was als Nächstes dran ist und wie spät es in Rom ist — auf Italienisch, mit der deutschen Entsprechung daneben.",
+      "🎮 **Herausfordern geht jetzt überall.** Auch aus Bereichen, die keine Kachel in der Spieleübersicht haben — zum Beispiel aus der Bilderwelt.",
+    ],
     "163": [
       "🇮🇹 **Der Italienischkurs ist fertig** — A1 bis C2 mit 5.333 Aufgaben, 29 Grammatikthemen, 618 Wörtern und einem Einstufungstest, der dir sagt, wo du anfangen sollst. Fünfzehn Spiele laufen dort mit italienischen Inhalten, und der Betonungs-Trainer zählt jetzt von hinten, so wie das Italienische es tut: la POR-ta, aber TA-vo-lo.",
       "🗺️ **Zehn neue Abenteuerspiele.** Die Backstube (trennbare Verben), Die Wetterkarte (Adjektivendungen), Die Baustelle (Passiv), Der Flohmarkt (Steigerung), Der verpasste Zug (Konjunktiv II), Die Schatzkarte (Imperativ), Das Fundbüro (Relativsätze), Das Gewitter (als, wenn, wann), Beim Arzt (Dativ) und Die Erbschaft (Genitiv). Jedes mit eigener gezeichneter Szene, eigenem Schriftzug und Niveaus von A1 bis C2.",
@@ -30883,6 +31977,20 @@ An einem Morgen lief ein kleiner Fuchs los…
      dürfen.
      ============================================================ */
   const APP_CHANGELOG_INTERN = {
+    "164": [
+      "🖼️ **Bilderwelt.** Neue Datei data-szenen.js (235 kB, lazy geladen ueber szenenLaden()): 19 Szenen, 285 Teile, jedes mit de/syl/it/itSyl/en/x/y/kunst. Erzeugt von scratchpad/bau-szenen.py aus szenen_kit.py + szenen_a..d.py — Aenderungen dort machen, nicht in der JS-Datei. Neuer Reiter sub-bilderwelt im Lernbereich, Modul renderBilderwelt() mit drei Arten (entdecken/finden/artikel), Schriftzug-Bauart bilderrahmen. Gemessen: 19 Szenen geprueft, 0 Teile ausserhalb des Bildrahmens, beide Spielarten laufen bis zur Auswertung durch, 0 Seitenfehler.",
+      "🇮🇹 **Italienische Betonung.** core.js: italienischeSilben() (Vokal-/Konsonantengruppen, Diphthonge, muta cum liquida, Digraphen, s-impurum), betonungItAuto() (Akzentregel, 3.-Person-Plural gegen IT_VERBEN gesichert, -abile/-ibile/-evole/-issimo/-ologo-Endungen, -logia endbetont, IT_SDRUCCIOLE, sonst piana), formatStressIt() (markiert nur die betonte Silbe, KEINE Laengenzeichen), betonungItErklaerung(). Geprueft mit scratchpad/it-betonung-pruefen.js gegen 247 italienische Eintraege: Regel allein 90,3 %, mit der aus den Daten erzeugten Liste (24 sdrucciole) 100 %. Zwei echte Abweichungen gefunden und behoben: divano und asciugamano wurden von der -ano-Regel faelschlich als Verbformen gelesen.",
+      "✉️ **Postfach.** SPIEL_TITEL enthielt 22 Spiele nicht — saveResultAndCheck() verschickt die Auswertung nur, wenn result.titelText gesetzt ist ODER eine Kategorie in SPIEL_TITEL steht. Neu: spielTitelFuer(key) ergaenzt die Tabelle bei Bedarf aus SPIEL_ZU_REITER + GAMES_OVERVIEW_LIST. Damit traegt jedes kuenftige Spiel seine Auswertung automatisch ein.",
+      "⏭️ **Automatisches Weiterschalten.** autoWeiter(richtig, fn) / autoWeiterAbbrechen(), 1100 ms nach richtig, 3200 ms nach falsch. Eingebaut in renderLogik, renderSetzerei, renderWortwaage; Doppelantworten in der Bilderwelt gesperrt (rd.letzte). Ein capture-Listener bricht den Zeitgeber beim Reiterwechsel ab.",
+      "🦊 **Fuchs des Tages.** [data-theme] .fox-of-day-report-card setzte rgba(0,0,0,0.15) als Grund, waehrend die Lesbarkeitskorrektur weiter unten color:#241505 erzwingt — dunkelbraun auf dunkel. Regel entfernt, fester heller Grund rgba(255,252,246,0.86).",
+      "🧭 **Lernweg.** data-lernweg.js (57 Module, de/it getrennt), renderLernweg(), Fortschritt in extra_profile_data.lernweg[raum] als \"art:ziel\" → bestes Prozent, Schwelle 70. Gemeldet zentral am Anfang von saveResultAndCheck() — bewusst VOR dem Italienisch-Ausstieg, damit der italienische Weg mitzaehlt. Bilderwelt reicht lernwegSzene mit; vollstaendiges Entdecken einer Szene zaehlt als 100.",
+      "✏️ **Uebungen.** ZUSATZ_FRAGEN in data-uebungen.js: 23.662 → 27.291 Aufgaben, 90 Kategorien. Zahlen/Uhrzeit/Wochentage/Monate regelbasiert erzeugt (Zahlwortbildner bis 999.999, Ordnungszahlen, Uhrzeitregel), Wortschatzkategorien aus dem Woerterbuch ueber die neuen Feinkategorien, der Rest von Hand. Italienisch: 20 Kategorien, Wortschatz aus data-szenen.js. Pruefung vor dem Einbau: leere Felder, richtige Antwort unter den Ablenkern, doppelte Ablenker, unbekannte Stufen, doppelte Fragen — 31 Beanstandungen, alle behoben oder entfernt. Wichtig: Der Einbau ERGAENZT bestehende Kategorien, er ersetzt sie nicht (erster Versuch hatte praepositionen und it-zahlen ueberschrieben).",
+      "🧺 **Feinkategorien.** data-wortkategorien.js: 5.067 Woerter mit genau EINER eindeutigen Feinkategorie (26 Gruppen). Entschieden wird nach der Erklaerung, die am Wortanfang die Gattung nennt, plus Wortart-Sperre (Nomen/Verb/Adjektiv) und Ausschluss von Personenbezeichnungen. Vorher zog eine Mustersuche 388 Woerter in „Geld\", darunter Ehrenamt und aufwendig — jetzt kuratierte Liste. Direkt gegen die alte Meldung „der Fahrradsattel koennte auch im Bereich Freizeit und Sport sein\".",
+      "📖 **Woerterbuch.** vokabeln/teil-6.js mit 220 Eintraegen „Laender & Welt\" (aus COUNTRIES, Betonung uebernommen, Erdteil und Artikel von Hand, Sonderformen fuer die Kongos, die Emirate, das Vereinigte Koenigreich). 39 gemessene Luecken nachgetragen. Abdeckung des Grundwortschatzes 93,9 → 99,9 % (1.086 geprueft, 1 fehlt: „Karten\" als blosse Mehrzahl).",
+      "🦊 **Sammelfuchs-Begruessung.** maybeShowFoxIntro() existierte, hatte aber keinen Aufrufer. Statt das Popup zurueckzuholen (es war ja aus gutem Grund weg): begruessungHtml() ueber der ersten Aufgabe einer Runde, mit dem zuletzt freigeschalteten Fuchs, den Stufen der Kategorie und dem naechsten Fuchs. Erkannt wird der Rundenbeginn ueber eine Marke aus Kategorie, Laenge und erster Frage.",
+      "🎮 **Einladung.** spielEinladungEinsetzen() haengt nicht mehr nur an spielTitelEinsetzen() (das bricht ab, wenn der Reiter keine Kachel in GAMES_OVERVIEW_LIST hat), sondern zusaetzlich am Reiterwechsel fuer jeden Reiter in SPIEL_VERZEICHNIS.",
+      "🔍 **Gemessen zum Schluss:** 80 Ansichten durchgeklickt, 0 Seitenfehler. Alle 61 aktiven Uebungskategorien geladen und geprueft, 0 fehlerhafte Aufgaben (die 10 Kategorien mit „nur zwei Optionen\" sind Absicht: als/wie, das/dass).",
+    ],
     "163": [
       "🇮🇹 **Italienischkurs.** Zugang ueber site_content[\"it_kurs_zugang\"] — einzelne Konten freigeben, Suche und Freigabe in den Einstellungen, Nachricht an die freigegebene Person. Eigene Wertung in extra_profile_data.itPunkte, eigene Rangliste (nur Freigegebene), Duelle tragen jetzt extra.raum und werden je Raum gefiltert. Uhr und Wetter auf Rom, Laufschrift auf 30 italienische Redewendungen. Einstufungstest: vier Aufgaben je Stufe, Huerde drei; die Einstufung oeffnet Stufen, macht sie aber nicht zu gemeisterten.",
       "🐞 **Im Italienisch-Raum gefundene Fehler:** WordbuildArtikel() rief activeGetCategory(\"artikel\") mit fester deutscher Id auf — Buchstabensalat und Vokabelmeister brachen mit TypeError ab. Vokabelmeister zaehlte „la porta\" unter L und liess deutsche Hobbys und Verbformen als richtige italienische Woerter durchgehen. Memory suchte nach dem Raumwechsel eine deutsche Spielkennung (getPairs of undefined). Die Vokabelansicht zeigte deutsche Woerter. Der Wortangler suchte nach der/die/das.",

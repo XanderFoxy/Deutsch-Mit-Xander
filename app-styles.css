@@ -3592,13 +3592,24 @@
   z-index: 0;
 }
 .fox-of-day-showcase > *:not(.fox-bg-flourish) { position: relative; z-index: 1; }
+/* GEMELDET: „bei Fuchs des Tages/der Woche/des Monats/des Jahres ist kein
+   Text mehr zu lesen." Und so war es: weiter unten setzt die Lesbarkeits-
+   Korrektur für helle Kartenflächen diese Karte auf ein dunkles Braun
+   (#241505) — richtig auf dem hellen rgba(255,255,255,0.5). Die Zeile
+   darunter gab ihr in JEDEM Design mit data-theme aber einen DUNKLEN
+   Grund (rgba(0,0,0,0.15)). Dunkelbraun auf dunkel: die Mitarbeits-Liste,
+   also gerade der Inhalt der Auszeichnung, war unlesbar.
+
+   Jetzt bleibt der Grund in allen Designs hell und damit zur
+   festgelegten Schriftfarbe passend — eine Auszeichnung darf ruhig wie
+   ein Blatt Pergament aussehen, in jedem Design gleich. */
 .fox-of-day-report-card {
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 252, 246, 0.86);
+  border: 1px solid rgba(36, 21, 5, 0.12);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-size: 0.86rem;
 }
-[data-theme] .fox-of-day-report-card { background: rgba(0,0,0,0.15); }
 
 /* Wiederverwendbares Design-Banner-System — hochladbare Grafiken vom Betreiber, mit hübschem
    SVG-Platzhalter, solange noch nichts hochgeladen wurde. */
@@ -5766,3 +5777,251 @@ input[type="checkbox"], input[type="radio"] {
 }
 .beitrag-bild-tausch input[type="file"] { font-size: 0.8rem; max-width: 100%; }
 .beitrag-bild-tausch .empty-note { color: #4A3A2A; opacity: 1; padding: 0; }
+
+/* ============================================================
+   DIE BILDERWELT
+   ------------------------------------------------------------
+   Ganze Räume zum Antippen. Das Bild ist ein SVG, jedes Ding
+   darin eine Gruppe mit role="button" — deshalb braucht es hier
+   sichtbare Zustände: Zeigefinger beim Darüberfahren, ein
+   Leuchten für das gerade gewählte Ding, ein sanftes Ausgrauen
+   für die schon entdeckten.
+   ============================================================ */
+.bw-kacheln {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+.bw-kachel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--amber-300, #e8b64c);
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 252, 246, 0.9);
+  color: #241505;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.bw-kachel:hover, .bw-kachel:focus-visible { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14); }
+.bw-kachel-emoji { font-size: 1.7rem; line-height: 1.1; }
+.bw-kachel-name { font-weight: 700; font-size: 0.82rem; }
+.bw-kachel-zahl { font-size: 0.68rem; opacity: 0.7; }
+
+.bw-kopf { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.bw-zurueck { padding: 4px 10px; font-size: 0.78rem; }
+.bw-modi { margin-bottom: 10px; }
+.bw-hinweis { text-align: center; margin: 4px 0 8px; }
+.bw-auftrag { text-align: center; font-size: 1.05rem; margin: 6px 0 2px; }
+
+.bw-bild {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 560px;
+  margin: 0 auto;
+  border-radius: var(--radius-sm, 10px);
+  border: 2px solid #8a5f32;
+  background: #fdfaf4;
+  box-shadow: inset 0 0 0 4px #c08f52;
+  touch-action: manipulation;
+}
+.bw-teil { cursor: pointer; transition: opacity 0.15s ease; }
+.bw-teil:hover { filter: brightness(1.12) drop-shadow(0 0 3px rgba(255, 255, 255, 0.9)); }
+.bw-teil:focus-visible { outline: none; filter: drop-shadow(0 0 4px #4f7fd9); }
+.bw-teil-aktiv { filter: drop-shadow(0 0 5px #e8b64c) drop-shadow(0 0 2px #e8b64c); }
+.bw-teil-entdeckt { opacity: 0.88; }
+.bw-teil-treffer { filter: drop-shadow(0 0 5px #5aa86b); }
+
+.bw-fortschritt { height: 7px; border-radius: 4px; background: rgba(0, 0, 0, 0.12); overflow: hidden; margin-bottom: 10px; }
+.bw-fortschritt-balken { height: 100%; background: linear-gradient(90deg, #5aa86b, #8fd0a0); transition: width 0.3s ease; }
+
+.bw-wortkarte {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 252, 246, 0.94);
+  border: 1px solid rgba(36, 21, 5, 0.14);
+  color: #241505;
+}
+.bw-wortkarte * { color: inherit; }
+.bw-wortkarte-kopf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bw-artikel {
+  font-weight: 800;
+  font-size: 0.94rem;
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: #8b8377;
+}
+/* Die drei Geschlechter bekommen jeweils eine eigene Farbe — man merkt
+   sich „der" leichter, wenn es immer blau aussieht. */
+.bw-artikel-der, .bw-artikel-il, .bw-artikel-lo, .bw-artikel-i, .bw-artikel-gli { background: #4f7fd9; }
+.bw-artikel-die, .bw-artikel-la, .bw-artikel-le { background: #d9654f; }
+.bw-artikel-das, .bw-artikel-l { background: #5aa86b; }
+.bw-wort { font-size: 1.2rem; font-weight: 800; }
+.bw-hoerknopf { padding: 2px 8px; font-size: 0.9rem; line-height: 1.2; }
+.bw-hoerknopf-klein { padding: 0 6px; font-size: 0.76rem; }
+.bw-betonung { font-size: 1.02rem; margin: 6px 0 0; letter-spacing: 0.02em; }
+.bw-betonung-klein, .bw-zweitbetonung { font-size: 0.82rem; opacity: 0.85; }
+
+.bw-artikel-reihe { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+.bw-artikel-knopf { min-width: 68px; font-weight: 800; font-size: 1rem; background: #4f7fd9; color: #fff; border: none; }
+.bw-artikel-knopf:hover { filter: brightness(1.08); }
+
+.bw-rueckmeldung { text-align: center; margin: 10px 0 0; font-size: 0.92rem; }
+.bw-ok { color: #2f7a45; }
+.bw-falsch { color: #a8382a; }
+[data-theme] .bw-ok { color: #8fd0a0; }
+[data-theme] .bw-falsch { color: #f0a294; }
+
+.bw-wortleiste { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.bw-wortchip {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 21, 5, 0.2);
+  background: rgba(255, 252, 246, 0.9);
+  color: #241505;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.bw-wortchip-da { border-color: #5aa86b; background: rgba(143, 208, 160, 0.35); }
+.bw-wortchip-aktiv { border-color: #e8b64c; background: rgba(232, 182, 76, 0.4); font-weight: 700; }
+
+/* ------------------------------------------------------------
+   Die italienische Betonungsanzeige.
+   Bewusst ANDERS als die deutsche: keine Längenstriche, keine
+   Punkte — die gibt es im Italienischen nicht. Nur die betonte
+   Silbe, mit einem Akut über ihrem Vokal, so wie italienische
+   Wörterbücher es machen. Dazu ein feiner Mittelpunkt zwischen
+   den Silben.
+   ------------------------------------------------------------ */
+.stress-it { font-weight: 700; }
+/* Kein Akzentzeichen dazugeschrieben: im Italienischen ist der
+   geschriebene Akzent eine Rechtschreibfrage (caffè mit Gravis, perché
+   mit Akut), und ein falsch gesetzter Akzent würde falsch mitgelernt.
+   Markiert wird deshalb der Vokal selbst — Farbe und Unterstrich. */
+.stress-it-vokal {
+  color: #b4553c;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+[data-theme] .stress-it-vokal { color: #f0a294; }
+.stress-it-trenn { opacity: 0.4; margin: 0 1px; font-weight: 400; }
+/* Nach der Antwort steht die Auflösung an den Knöpfen selbst: der richtige
+   wird grün, ein danebengegriffener blass. Gleichzeitig sind sie gesperrt,
+   damit dieselbe Aufgabe nicht zweimal zählt. */
+.bw-artikel-knopf[disabled] { cursor: default; }
+.bw-artikel-richtig { background: #4f9a63; }
+.bw-artikel-daneben { background: #b3aca2; }
+/* Der Körper ist anders als die Räume: dort steht jedes Ding für sich,
+   hier liegen Auge, Nase, Mund und Ohr dicht beieinander am selben
+   Gesicht. Die Markierungspunkte halten sich deshalb zurück, bis man
+   sie anfasst — sonst deckt der Punkt genau das zu, was er zeigt. */
+.bw-szene-koerper .bw-teil { opacity: 0.5; }
+.bw-szene-koerper .bw-teil:hover,
+.bw-szene-koerper .bw-teil:focus-visible,
+.bw-szene-koerper .bw-teil-aktiv,
+.bw-szene-koerper .bw-teil-treffer { opacity: 1; }
+
+/* ============================================================
+   DER LERNWEG
+   ------------------------------------------------------------
+   Eine senkrechte Wegkarte: links die Perlenkette der Module,
+   rechts, was drinsteckt. Geschafftes ist grün und abgehakt,
+   der aktuelle Punkt leuchtet.
+   ============================================================ */
+.lernweg-kopf { border: 2px solid var(--amber-300, #e8b64c); }
+.lernweg-jetzt {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 252, 246, 0.9);
+  border: 1px dashed rgba(36, 21, 5, 0.28);
+  color: #241505;
+}
+.lernweg-jetzt * { color: inherit; }
+
+.lernweg-liste { list-style: none; margin: 14px 0 0; padding: 0; position: relative; }
+/* Die Linie, die die Module verbindet — sie macht aus einer Liste einen Weg. */
+.lernweg-liste::before {
+  content: "";
+  position: absolute;
+  left: 17px; top: 12px; bottom: 12px;
+  width: 3px;
+  border-radius: 2px;
+  background: rgba(36, 21, 5, 0.16);
+}
+.lernweg-modul { display: flex; gap: 12px; margin-bottom: 14px; position: relative; }
+.lernweg-perle {
+  flex: 0 0 auto;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  background: #fdfaf4;
+  color: #241505;
+  border: 3px solid rgba(36, 21, 5, 0.2);
+  position: relative; z-index: 1;
+}
+.lernweg-fertig .lernweg-perle { background: #5aa86b; color: #fff; border-color: #3e7a48; }
+.lernweg-aktuell .lernweg-perle {
+  border-color: #e8b64c;
+  box-shadow: 0 0 0 4px rgba(232, 182, 76, 0.3);
+}
+.lernweg-inhalt {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 252, 246, 0.92);
+  border: 1px solid rgba(36, 21, 5, 0.12);
+  color: #241505;
+}
+.lernweg-inhalt * { color: inherit; }
+.lernweg-aktuell .lernweg-inhalt { border-color: #e8b64c; border-width: 2px; }
+.lernweg-titel { margin: 0; font-weight: 800; font-size: 0.98rem; }
+.lernweg-schritte { display: flex; flex-direction: column; gap: 5px; }
+.lernweg-schritt {
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(36, 21, 5, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  color: #241505;
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+.lernweg-schritt:hover { background: rgba(232, 182, 76, 0.22); }
+.lernweg-schritt-fertig { background: rgba(143, 208, 160, 0.3); border-color: #5aa86b; }
+.lernweg-art { font-size: 0.68rem; opacity: 0.65; margin-left: auto; }
+.lernweg-zaehler { margin: 8px 0 0; font-size: 0.72rem; }
+
+/* ------------------------------------------------------------
+   Die Begrüßung mit dem Sammelfuchs — über der ersten Aufgabe
+   einer Runde. Bewusst KEIN Fenster zum Wegklicken: sie steht im
+   Spiel und rutscht mit der nächsten Frage von selbst weg.
+   ------------------------------------------------------------ */
+.fuchs-begruessung {
+  border: 2px solid var(--amber-300, #e8b64c);
+  background: rgba(255, 252, 246, 0.94);
+  color: #241505;
+  margin-bottom: 12px;
+}
+.fuchs-begruessung * { color: inherit; }
+.fuchs-begruessung-kopf { display: flex; align-items: center; gap: 12px; }
+.fuchs-begruessung-bild {
+  width: 62px; height: 62px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.18));
+}
+.fuchs-begruessung-text { margin: 10px 0 0; font-size: 0.88rem; line-height: 1.45; }
+.fuchs-begruessung-fuss { margin: 8px 0 0; font-size: 0.76rem; }

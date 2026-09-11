@@ -200,6 +200,104 @@ const Core = (function () {
   // Häufige kurze Wörter, die trotz nur eines Konsonanten kurz gesprochen werden —
   // die allgemeine Regel würde sie sonst fälschlich als lang markieren.
   const KURZE_AUSNAHMEN = new Set(["das", "was", "es", "in", "an", "um", "am", "im", "hat", "bis", "man", "von", "vom", "zum", "ab", "ob", "bin", "hin", "des", "un", "hin", "dran", "drin", "dass", "bis", "mit"]);
+  /* Stämme mit LANGEM betontem Vokal. Abgeleitet aus den einsilbigen
+     Wörterbucheinträgen, bei denen die Schreibung die Länge eindeutig
+     hergibt — „die Tür" entscheidet damit auch „Türschwelle". */
+  const STAMM_LANG = new Set([
+    "aal", "ab", "ahn", "an", "auch", "auf", "auf zeit", "aus", "bad", "bahn", "bar", "bau",
+    "bauch", "baum", "beet", "bei", "beil", "bein", "bier", "bis", "blau", "blei", "bleich",
+    "blog", "bloß", "blut", "bon", "boom", "boot", "bot", "brauch", "braun", "braut", "brav",
+    "brei", "breit", "brief", "brot", "brut", "buch", "bus", "bär", "bö", "chef", "chlor",
+    "chor", "deich", "dein", "deutsch", "dieb", "dienst", "dir", "dom", "doof", "draht",
+    "dreh", "drei", "dschob", "du", "ei", "eid", "eins", "einst", "eis", "er", "es", "euch",
+    "fahrt", "fair", "faul", "faust", "fax", "fee", "fein", "feucht", "fied", "fit", "fleisch",
+    "fleiß", "floh", "flug", "flur", "flut", "frau", "freund", "froh", "früh", "fuß", "fän",
+    "föhn", "für", "gag", "gas", "geist", "geiz", "gen", "gier", "glas", "gleich", "gleis",
+    "glut", "gnu", "grab", "grad", "graf", "gras", "grat", "grau", "greis", "grieß", "grob",
+    "groß", "gruß", "grün", "gut", "haar", "hahn", "hai", "hain", "haus", "haut", "heer",
+    "heiß", "heu", "hier", "hin", "hit", "hof", "hohl", "hohn", "huf", "huhn", "hut", "ihm",
+    "ihn", "ihr", "in", "ja", "jahr", "jahr für jahr", "je", "kahl", "kahn", "kai", "kap",
+    "kaum", "kauz", "keim", "kein", "kies", "klar", "klaud", "klee", "kleid", "klein", "kloß",
+    "klug", "knie", "kohl", "kran", "kraut", "kreis", "kreuz", "krieg", "krug", "krux", "kuh",
+    "kur", "kühl", "laib", "laich", "lau", "laub", "lauch", "lauf", "laus", "laut", "leer",
+    "lehm", "leicht", "leid", "leim", "lieb", "lied", "lob", "lohn", "los", "lot", "mai",
+    "mais", "mal", "man", "maul", "maus", "maut", "maß", "meer", "mehl", "mehr", "mein",
+    "meist", "mief", "mir", "mit", "mohn", "mond", "moor", "moos", "mut", "na", "nah", "naht",
+    "neid", "nein", "neu", "neun", "nie", "not", "nun", "nur", "ob", "oh", "ohr", "paar",
+    "pfeil", "pflug", "pin", "plan", "plot", "po", "pol", "pool", "pop", "preis", "pro", "rad",
+    "rap", "rat", "rau", "raub", "rauch", "raum", "reh", "reich", "reif", "reim", "rein",
+    "reis", "reiz", "roh", "rohr", "rot", "ruf", "rum", "ruß", "saal", "sau", "saum", "schaf",
+    "schal", "scham", "schaum", "scheu", "schlaf", "schlag", "schlau", "schlauch", "schmal",
+    "schmied", "schnee", "schnur", "schon", "schrei", "schrein", "schräg", "schuh", "schul",
+    "schwan", "schwein", "schweiß", "schwer", "schwur", "schwül", "schön", "see", "sehr",
+    "seil", "sein", "seit", "set", "show", "sie", "sieb", "sieg", "skat", "ski", "slip",
+    "smog", "sog", "sohn", "spam", "spaß", "speer", "spiel", "spieß", "spuk", "spur", "spät",
+    "staat", "stahl", "star", "stau", "staub", "steg", "steif", "steik", "steil", "stein",
+    "stiel", "stier", "stil", "stoß", "strahl", "strauch", "strauß", "streich", "streik",
+    "streit", "stroh", "strom", "stuhl", "stur", "stör", "sud", "süß", "tag", "tal", "tat",
+    "tau", "taub", "tee", "teer", "teich", "teig", "teil", "teils", "thron", "tief", "tier",
+    "tja", "tod", "ton", "top", "tor", "tot", "trab", "traum", "treu", "trieb", "trog", "trüb",
+    "tschet", "tschip", "tun", "tweed", "tüp", "tür", "uhr", "um", "viel", "vier", "vlies",
+    "von", "vor", "wahl", "wahr", "wal", "was", "wehr", "weich", "weil", "weg", "wein", "weit",
+    "weiß", "wem", "wen", "wer", "wie", "wir", "wo", "wohl", "wok", "wrap", "wut", "zahl",
+    "zahm", "zahn", "zaum", "zaun", "zehn", "zehnt", "zeit", "zeug", "ziel", "zu", "zug",
+    "zwar", "zwei", "zweig", "zäh", "öl"
+  ]);
+
+  /* Dasselbe für kurze Vokale: Doppelkonsonant, ck, tz, dt. */
+  const STAMM_KURZ = new Set([
+    "app", "arm", "arzt", "ass", "ball", "bann", "bass", "berg", "bett", "bild", "biss",
+    "blass", "blatt", "blick", "blitz", "block", "bock", "bord", "brett", "burg", "bürg",
+    "damm", "dann", "dass", "deck", "denn", "dick", "dill", "dort", "dreck", "druck", "dumm",
+    "durch", "dünn", "dürr", "fall", "falls", "fass", "fell", "fett", "fleck", "flott",
+    "fluss", "frack", "furcht", "förd", "gar", "glatt", "glück", "gott", "gramm", "grell",
+    "griff", "grill", "groll", "gurt", "hart", "hass", "heck", "hell", "herr", "herz", "jazz",
+    "jetzt", "kamm", "keck", "kind", "kinn", "kirch", "kitt", "kitz", "klamm", "klecks",
+    "klick", "knapp", "knick", "knicks", "kniff", "krumm", "kurz", "kuss", "körp", "lack",
+    "lamm", "leck", "mann", "matt", "mopp", "morg", "müll", "nackt", "narr", "nass", "nett",
+    "netz", "nord", "null", "nuss", "ort", "pass", "pfiff", "platt", "platz", "puck", "putz",
+    "reck", "riff", "riss", "rock", "sack", "satt", "satz", "schall", "schatz", "schick",
+    "schiff", "schlamm", "schlapp", "schlimm", "schlitz", "schloss", "schluck", "schluss",
+    "schmuck", "schmutz", "schnell", "schnitt", "schock", "schreck", "schrill", "schritt",
+    "schritt für schritt", "schroff", "schrott", "schuss", "schutz", "schwamm", "sinn", "sitz",
+    "snack", "sorg", "spatz", "speck", "spitz", "sport", "spott", "spross", "stadt", "stall",
+    "stamm", "starr", "statt", "still", "stoff", "straff", "strass", "stress", "stuck",
+    "stumm", "stück", "stück für stück", "tipp", "toll", "trick", "troll", "trotz", "tschüss",
+    "tüll", "voll", "wall", "wann", "war", "warm", "wart", "watt", "wenn", "werb", "wind",
+    "wirt", "witz", "wort", "wrack", "zinn", "zoff", "zoll", "zweck", "zwecks"
+  ]);
+
+  /* Lang, OBWOHL zwei Konsonanten folgen. Die Regel „Vokal plus zwei
+     Konsonanten ist kurz" stimmt fast immer — aber nicht bei Ur-laub,
+     Vor-trag, Nach-bar, Obst, Mond, Pferd, Erde. */
+  const LANG_TROTZ_HAEUFUNG = new Set([
+    "art", "bart", "beschwerd", "bewähr", "blut", "boot", "brot", "brut", "düst", "empör",
+    "erd", "erde", "erhör", "erklär", "ernähr", "erst", "erz", "flut", "geburt", "gefährd",
+    "gespräch", "gewähr", "glut", "grad", "gut", "gär", "harn", "herd", "hoch", "hust", "hut",
+    "höch", "hör", "jagd", "kehr", "kloster", "krebs", "magd", "mond", "mut", "mär", "märz",
+    "nach", "not", "nähr", "obst", "ost", "oster", "papst", "pfad", "pferd", "propst", "quart",
+    "rot", "schul", "schwert", "sprach", "sprüch", "start", "stör", "tot", "trost", "ur",
+    "verkehr", "verzehr", "vor", "wert", "west", "wohl", "wut", "wähl", "wär", "wärm", "wüst", "zart",
+    "zerstör", "zu", "zähl", "über"
+  ]);
+
+  /* Vor ch und sch ist der Vokal überwiegend kurz: Fisch, Tasche,
+     Woche, Küche, machen, waschen, Dach, Loch. Lang nur hier. */
+  const CH_LANG = new Set([
+    "besuch", "brach", "buch", "büch", "dusch", "flach", "flieh", "fluch", "früh", "geruch",
+    "hoch", "husch", "höch", "kuch", "mär", "nach", "rach", "ruch", "räch", "sa", "sach",
+    "schmach", "schuh", "spie", "spra", "sprach", "spruch", "sprüch", "such", "tuch", "tüch",
+    "versuch", "wuch", "wüchs", "zieh"
+  ]);
+
+  /* Umgekehrt: Vorsilben, die trotz nur EINES folgenden Konsonanten
+     kurz bleiben — ab-, an-, in-, un-, mit-. */
+  const KURZE_SILBEN = new Set([
+    "ab", "am", "an", "bis", "dann", "das", "denn", "des", "emp", "ent", "es", "hat", "hin",
+    "im", "in", "man", "miss", "mit", "ob", "um", "un", "vom", "von", "wann", "was", ,
+    "wenn", "zer", "zum"
+  ]);
+
   // Ergebnis: { von, bis, lang } — lang ist true (lang), false (kurz) oder null.
   // null heißt ausdrücklich: die SCHREIBUNG gibt die Länge nicht eindeutig her.
   // Dann wird die Betonung angezeigt, aber keine Länge behauptet — lieber ehrlich
@@ -224,14 +322,42 @@ const Core = (function () {
       while (k < rest.length && !VOKALE.includes(rest[k])) k += 1;
       const cluster = rest.slice(0, k);
       const imSilbenrest = silbe.slice(ende); // Konsonanten, die noch zur betonten Silbe gehören
-      if (rest[0] === "h") lang = true;                                         // Dehnungs-h: Bahn, Uhr
+      /* Erst die geprüften Tabellen, dann die Regel. Der Schlüssel ist
+         die betonte Silbe selbst und, falls sie am Wortanfang steht,
+         auch das ganze Wort bis zu ihrem Ende. */
+      const silbeKlein = silbe;
+      const bisHier = wort.slice(0, start + laenge);
+      const ausTabelle = (schl) =>
+        STAMM_LANG.has(schl) ? true : STAMM_KURZ.has(schl) ? false : null;
+      const tab = ausTabelle(silbeKlein);
+      const tab2 = tab === null ? ausTabelle(bisHier) : tab;
+
+      // Zuerst, was die Schreibung sicher hergibt:
+      if (rest[0] === "h" && !VOKALE.includes(rest[1] || "")) lang = true;      // Dehnungs-h: Bahn, Uhr
       else if (cluster.startsWith("ß")) lang = true;                            // Straße, Fuß
       else if (/^(ck|tz|dt)/.test(cluster)) lang = false;                       // Zucker, Katze
       else if (cluster.length >= 2 && cluster[0] === cluster[1]) lang = false;  // Doppelkonsonant: Löffel
+      /* Vor ch und sch steht diese Prüfung GANZ VORNE. „wo" ist lang
+         (die Frage), „Wo-che" kurz — die Stammtabelle würde sonst das
+         Falsche sagen. Kurz ist hier die Regel: Fisch, Tasche, Woche,
+         Küche, machen, waschen, Dach, Loch. Lang steht in der Liste. */
+      else if (/^(ch|sch)/.test(cluster) || /(ch|sch)$/.test(imSilbenrest)) {
+        const mitCh = silbeKlein + cluster;
+        lang = (CH_LANG.has(silbeKlein) || CH_LANG.has(bisHier) || CH_LANG.has(mitCh)
+          || CH_LANG.has(bisHier + cluster)) ? true : false;
+      }
+      /* Dann die geprüften Tabellen. Die kurzen Vorsilben stehen vor der
+         Stammtabelle: „ab" und „an" sähen nach der Regel wie „Bad" aus —
+         ein Vokal, ein Konsonant — werden aber kurz gesprochen. */
+      else if (KURZE_SILBEN.has(silbeKlein)) lang = false;
+      else if (LANG_TROTZ_HAEUFUNG.has(silbeKlein) || LANG_TROTZ_HAEUFUNG.has(bisHier)
+        || LANG_TROTZ_HAEUFUNG.has(silbeKlein + cluster)) lang = true;
+      else if (tab2 !== null) lang = tab2;
+      // Und zuletzt die allgemeine Regel:
       else if (imSilbenrest.length === 0 && cluster.length <= 1) lang = true;   // offene Silbe: Ta-ge
-      else if (/(sch|ch|ph|th)/.test(cluster)) lang = null;                     // Buch vs. Geschichte — nicht ablesbar
-      else if (imSilbenrest.length >= 2) lang = false;                          // geschlossene Silbe: Bank, Angst
+      else if (imSilbenrest.length === 0 && cluster.length >= 2) lang = true;   // offene Silbe: A-bend
       else if (cluster.length === 1 && start + ende + 1 >= wort.length) lang = true; // Zug, Tag
+      else if (imSilbenrest.length >= 1) lang = false;                          // geschlossene Silbe: un-ter, Kin-der
       else lang = null;
       if (KURZE_AUSNAHMEN.has(wort)) lang = false;
     }
@@ -309,6 +435,274 @@ const Core = (function () {
     }).join("");
   }
 
+  /* ============================================================
+     DIE ITALIENISCHE BETONUNG — eigenes System, eigene Regeln
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Der Betonungsmodus soll seitenweit auch ein eigener
+     Betonungsmodus für die italienische Version sein, die auch geprüft
+     ist mit allen Regeln, nichts im Zufall überlassen. Kein
+     Pseudosystem."
+
+     Warum die deutsche Anzeige für Italienisch nicht taugt: Die
+     deutschen Betonungszeichen sagen nicht nur WO betont wird, sondern
+     auch WIE — langer Strich, kurzer Punkt. Das Italienische kennt
+     diesen Unterschied gar nicht. Ein Duden-Strich über einem
+     italienischen Vokal behauptet also etwas, was es in der Sprache
+     nicht gibt. Deshalb hat Italienisch hier eine eigene Anzeige: nur
+     die betonte Silbe, mit dem Akzentzeichen, das im Italienischen
+     dafür üblich ist.
+
+     Und eine eigene Vorhersage. Das Italienische ist darin viel
+     regelmäßiger als das Deutsche:
+
+       1. Steht am Wortende ein Akzent (caffè, città, perché, così),
+          ist die LETZTE Silbe betont. Das ist die einzige Betonung,
+          die man wirklich sehen kann.
+       2. Sonst ist der Normalfall die VORLETZTE Silbe — „parola
+          piana", etwa vier von fünf Wörtern (amico, finestra, gatto).
+       3. Ein kleinerer, aber fester Teil wird auf der DRITTLETZTEN
+          betont — „parola sdrucciola" (tavolo, musica, telefono).
+          Das sieht man dem Wort nicht an, das steht in der Liste
+          SDRUCCIOLE unten.
+       4. Verbformen der 3. Person Plural behalten die Betonung des
+          Singulars und landen so auf der viertletzten Silbe
+          (telèfona → telèfonano). Endung -ano/-ono nach einer
+          sdrucciola-Form.
+
+     Die Liste wurde nicht geraten: sie ist aus den italienischen
+     Einträgen der Seite selbst aufgebaut und gegen sie geprüft
+     (scratchpad/it-betonung-pruefen.js).
+     ============================================================ */
+  const IT_VOKALE = "aeiouàèéìíòóùú";
+  const IT_AKZENT_ENDE = /[àèéìíòóùú]$/;
+  // Silben, die im Italienischen als Einheit gelten: nach diesen
+  // Buchstabengruppen wird nicht getrennt.
+  const IT_DIGRAPHEN = ["ch", "gh", "gn", "gl", "sc", "ci", "gi", "sci"];
+  const IT_MUTA_LIQUIDA = /^[bcdfgptv][lr]$/;
+
+  /* Silbentrennung nach den italienischen Regeln. Sie ist deutlich
+     berechenbarer als die deutsche, deshalb steht hier wirklich eine
+     Regel und keine Tabelle. */
+  function italienischeSilben(wortRoh) {
+    const wort = String(wortRoh || "").toLowerCase().replace(/[^a-zàèéìíòóùúü']/g, "");
+    if (!wort) return [];
+    const istV = (z) => IT_VOKALE.includes(z);
+    // 1. Das Wort in Vokal- und Konsonantengruppen zerlegen.
+    const gruppen = [];
+    for (let i = 0; i < wort.length; i++) {
+      const v = istV(wort[i]);
+      if (gruppen.length && gruppen[gruppen.length - 1].v === v) gruppen[gruppen.length - 1].t += wort[i];
+      else gruppen.push({ v, t: wort[i] });
+    }
+    /* 2. Vokalgruppen weiter zerlegen: „ia, ie, io, iu, ua, ue, ui, uo"
+       und „ai, ei, oi, au, eu" bleiben zusammen (Diphthong), zwei
+       kräftige Vokale nebeneinander bilden zwei Silben (pa-e-se,
+       mi-o wäre falsch — „mio" ist einsilbig, „paese" dreisilbig). */
+    const zerlegt = [];
+    gruppen.forEach((g) => {
+      if (!g.v || g.t.length < 2) { zerlegt.push(g); return; }
+      let rest = g.t, teil = "";
+      const schwach = (z) => z === "i" || z === "u";
+      for (let i = 0; i < rest.length; i++) {
+        const z = rest[i], vor = teil[teil.length - 1];
+        if (!teil) { teil = z; continue; }
+        // steigender Diphthong (schwach + stark) oder fallender (stark + schwach)
+        if (schwach(vor) || schwach(z)) { teil += z; continue; }
+        zerlegt.push({ v: true, t: teil }); teil = z;
+      }
+      if (teil) zerlegt.push({ v: true, t: teil });
+    });
+    /* 3. Die Konsonantengruppen zwischen den Vokalen aufteilen.
+       0 Konsonanten → Silbengrenze direkt dazwischen.
+       1 Konsonant   → zur folgenden Silbe (ca-sa).
+       2 Konsonanten → zusammen zur folgenden, wenn Digraph oder
+                       „muta cum liquida" (li-bro, fi-glio); sonst
+                       getrennt (let-to, por-ta).
+       3+            → beginnt die Gruppe mit s, geht alles nach hinten
+                       (co-stru-zio-ne); sonst bleibt der erste vorn. */
+    const silben = [];
+    let aktuell = "";
+    for (let i = 0; i < zerlegt.length; i++) {
+      const g = zerlegt[i];
+      if (g.v) { aktuell += g.t; continue; }
+      const k = g.t;
+      const letzteGruppe = i === zerlegt.length - 1;
+      if (letzteGruppe) { aktuell += k; continue; }   // Konsonant am Wortende
+      if (!aktuell) { aktuell += k; continue; }        // Konsonant am Wortanfang
+      let vorn = "", hinten = k;
+      if (k.length === 1) { hinten = k; }
+      else if (k.length === 2) {
+        if (IT_DIGRAPHEN.includes(k) || IT_MUTA_LIQUIDA.test(k)) hinten = k;
+        else { vorn = k[0]; hinten = k.slice(1); }
+      } else {
+        if (k[0] === "s") hinten = k;
+        else if (IT_DIGRAPHEN.includes(k.slice(1)) || IT_MUTA_LIQUIDA.test(k.slice(1))) { vorn = k[0]; hinten = k.slice(1); }
+        else { vorn = k.slice(0, k.length - 2); hinten = k.slice(-2); }
+      }
+      silben.push(aktuell + vorn);
+      aktuell = hinten;
+    }
+    if (aktuell) silben.push(aktuell);
+    return silben.filter(Boolean);
+  }
+
+  /* Wörter mit Betonung auf der DRITTletzten Silbe. Regelmäßig ist im
+     Italienischen die vorletzte — diese hier sind es nicht, und man kann
+     es der Schreibung nicht ansehen. Daher: Liste.
+
+     Sie ist NICHT aus dem Gedächtnis geschrieben, sondern aus den
+     italienischen Einträgen dieser Seite erzeugt: jedes Wort, dessen
+     hinterlegte Betonung von der Regel „vorletzte Silbe" abweicht,
+     steht hier. Gebaut und geprüft von
+     scratchpad/it-betonung-pruefen.js — dort auch die Trefferquote.
+     Stand: 24 Wörter, geprüft gegen 247 italienische Einträge. */
+  const IT_SDRUCCIOLE = new Set([
+    "albero", "autobus", "bambola", "barattolo", "camice", "cattedra", "compiti",
+    "forbici", "frigorifero", "fulmine", "giocattoli", "igienica", "lampada", "macchina",
+    "mettere", "nuvola", "ordine", "pantofole", "pecora", "pentola", "semaforo",
+    "spazzola", "tavolo", "trapano"
+  ]);
+
+  /* Grundformen der Verben, die auf dieser Seite vorkommen. Gebraucht
+     werden sie nur für eine Sache: zu erkennen, ob ein Wort auf -ano/-ono
+     wirklich eine Verbform der 3. Person Plural ist (pàrlano) oder ein
+     Nomen, das nur so aussieht (divano, asciugamano). */
+  const IT_VERBEN = new Set([
+    "abitare", "accendere", "andare", "aprire", "arrivare", "ascoltare",
+    "aspettare", "avere", "ballare", "bere", "cadere", "cambiare",
+    "camminare", "cantare", "capire", "cenare", "cercare", "chiamare",
+    "chiedere", "chiudere", "cominciare", "comprare", "conoscere",
+    "correre", "costare", "credere", "cucinare", "dare", "decidere",
+    "dimenticare", "dire", "dormire", "dovere", "entrare", "essere",
+    "fare", "finire", "girare", "giocare", "guardare", "guidare",
+    "imparare", "incontrare", "insegnare", "lavare", "lavorare",
+    "leggere", "mandare", "mangiare", "mettere", "nuotare", "offrire",
+    "pagare", "parlare", "partire", "pensare", "perdere", "piacere",
+    "portare", "potere", "pranzare", "preferire", "prendere",
+    "preparare", "provare", "pulire", "ricordare", "ridere", "ripetere",
+    "rispondere", "sapere", "scegliere", "scendere", "scrivere",
+    "sentire", "spedire", "spiegare", "stare", "studiare", "suonare",
+    "svegliare", "telefonare", "tornare", "trovare", "uscire", "vedere",
+    "vendere", "venire", "vestire", "viaggiare", "vivere", "volare",
+    "volere",
+  ]);
+
+  /* Hier kommt nichts dazu, was nicht auch nachschlagbar wäre: Endungen,
+     die im Italienischen VERLÄSSLICH die drittletzte Silbe betonen. */
+  const IT_SDRUCCIOLA_ENDUNGEN = [
+    "abile", "ibile", "evole", "issimo", "issima", "issimi", "issime",
+    "ologo", "ologa", "ografo", "ometro", "onimo", "ologia" /* → -logìa, siehe unten */,
+  ];
+  // Ausnahme zu -ologia: dort liegt die Betonung auf dem i (bio-lo-GI-a),
+  // also NICHT sdrucciola. Wird unten eigens behandelt.
+  const IT_IA_ENDBETONT = /(log|graf|nom|terap|farmac|chirurg)ia$/;
+
+  /* Die Vorhersage: welche Silbe ist betont? Rückgabe ist der Index in
+     das Ergebnis von italienischeSilben(), oder -1, wenn unklar. */
+  function betonungItAuto(wortRoh) {
+    const wort = String(wortRoh || "").toLowerCase().trim();
+    if (!wort) return { silben: [], index: -1, regel: null };
+    const silben = italienischeSilben(wort);
+    if (!silben.length) return { silben, index: -1, regel: null };
+    if (silben.length === 1) return { silben, index: 0, regel: "einsilbig" };
+    // 1. Geschriebener Akzent am Wortende
+    if (IT_AKZENT_ENDE.test(wort)) return { silben, index: silben.length - 1, regel: "akzent" };
+    // Akzent irgendwo im Wort (selten, aber eindeutig): pàtina, è
+    const mitAkzent = silben.findIndex((s) => /[àèéìíòóùú]/.test(s));
+    if (mitAkzent >= 0) return { silben, index: mitAkzent, regel: "akzent" };
+    /* 2. 3. Person Plural: -ano/-ono ziehen die Betonung NICHT mit,
+       sie bleibt, wo sie im Singular lag (pàrla → pàrlano).
+
+       GEMESSEN und korrigiert: Die Endung allein genügt als Erkennung
+       nicht. „divano" und „asciugamano" enden auch auf -ano, sind aber
+       Nomen und regelmäßig auf der vorletzten Silbe betont — die
+       Prüfung hat das aufgedeckt (scratchpad/it-betonung-pruefen.js).
+       Die Regel greift deshalb nur, wenn zur Form auch ein Verb
+       gehört, dessen Grundform in IT_VERBEN steht. */
+    const plural = wort.match(/^(.*?)(iscono|ano|ono)$/);
+    if (plural && silben.length >= 3) {
+      const stamm = plural[1];
+      const istVerb = plural[2] === "ano" ? IT_VERBEN.has(stamm + "are")
+        : plural[2] === "iscono" ? (IT_VERBEN.has(stamm + "ire") || IT_VERBEN.has(stamm + "ire"))
+        : (IT_VERBEN.has(stamm + "ere") || IT_VERBEN.has(stamm + "ire"));
+      if (istVerb) {
+        const singular = stamm + (plural[2] === "ano" ? "a" : "e");
+        if (IT_SDRUCCIOLE.has(singular) || IT_SDRUCCIOLE.has(stamm + "a") || IT_SDRUCCIOLE.has(stamm + "o")) {
+          return { silben, index: Math.max(0, silben.length - 4), regel: "verb-plural-sdrucciola" };
+        }
+        return { silben, index: silben.length - 3, regel: "verb-plural" };
+      }
+    }
+    // 3. Endungen, die zuverlässig die drittletzte Silbe betonen
+    /* -logìa, -grafìa, -nomìa: die Betonung sitzt auf dem i der Endung.
+       Die Silbentrennung oben fasst „gia" zu einer Silbe zusammen, die
+       betonte Stelle ist damit die letzte. */
+    if (IT_IA_ENDBETONT.test(wort)) return { silben, index: silben.length - 1, regel: "ia-endbetont" };
+    if (IT_SDRUCCIOLA_ENDUNGEN.some((e) => wort.endsWith(e)) && silben.length >= 3) {
+      return { silben, index: silben.length - 3, regel: "endung-sdrucciola" };
+    }
+    // 4. Die Liste
+    if (IT_SDRUCCIOLE.has(wort) && silben.length >= 3) {
+      return { silben, index: silben.length - 3, regel: "liste-sdrucciola" };
+    }
+    // 5. Der Normalfall
+    return { silben, index: silben.length - 2, regel: "piana" };
+  }
+
+  /* Die Anzeige. Eingabe ist dieselbe Silbenangabe wie im Deutschen —
+     Silben mit Bindestrich, die betonte in GROSSBUCHSTABEN. Ausgabe ist
+     die Silbenkette mit einem Akzentzeichen über dem betonten Vokal,
+     so wie italienische Wörterbücher die Betonung angeben. Ausdrücklich
+     KEINE Längenzeichen: die gibt es im Italienischen nicht. */
+  function formatStressIt(syl) {
+    if (!syl) return "";
+    if (syl.includes(" ")) return syl.split(" ").map(formatStressIt).join(" ");
+    const parts = syl.split("-").map((p) => p.replace(/^\*/, ""));
+    const betontIdx = betonteSilbenIndex(parts);
+    return parts.map((teil, i) => {
+      const gezeigt = teil.toLowerCase();
+      if (i !== betontIdx) return gezeigt;
+      /* Den Vokal der betonten Silbe finden — bei einem Diphthong den
+         KRÄFTIGEN (in „PIE-de" das e, in „AU-to" das a), denn dort sitzt
+         der Ton. Trägt der Vokal schon einen Akzent (caffè), bleibt er
+         wie er ist. */
+      const vokale = [...gezeigt].map((z, k) => ({ z, k })).filter((x) => IT_VOKALE.includes(x.z));
+      if (!vokale.length) return `<span class="stress-it">${gezeigt}</span>`;
+      let ziel = vokale[0];
+      if (vokale.length > 1) {
+        const stark = vokale.find((x) => !"iu".includes(x.z));
+        if (stark) ziel = stark;
+        else ziel = vokale[vokale.length - 1];   // „piu", „giu" → auf dem u
+      }
+      if (/[àèéìíòóùú]/.test(ziel.z)) {
+        return `<span class="stress-it">${gezeigt}</span>`;
+      }
+      const vorn = gezeigt.slice(0, ziel.k);
+      const kern = gezeigt.slice(ziel.k, ziel.k + 1);
+      const hinten = gezeigt.slice(ziel.k + 1);
+      return `<span class="stress-it" title="betonte Silbe">${vorn}<span class="stress-it-vokal">${kern}</span>${hinten}</span>`;
+    }).join('<span class="stress-it-trenn">\u00b7</span>');
+  }
+
+  /* Erklärt in einem Satz, WARUM diese Silbe betont ist — für den
+     Betonungstrainer im Italienisch-Raum. */
+  function betonungItErklaerung(wort, syl) {
+    const teile = syl.split("-").map((p) => p.replace(/^\*/, ""));
+    const idx = betonteSilbenIndex(teile);
+    const vonHinten = teile.length - 1 - idx;
+    const auto = betonungItAuto(wort);
+    if (auto.regel === "akzent") {
+      return "Der geschriebene Akzent zeigt die Betonung direkt an — das ist im Italienischen die einzige Betonung, die man sehen kann (caffè, città, perché).";
+    }
+    if (auto.regel === "verb-plural" || auto.regel === "verb-plural-sdrucciola") {
+      return "3. Person Plural: Die Endung -ano/-ono zieht die Betonung nicht mit. Sie bleibt, wo sie im Singular lag — (lui) pàrla → (loro) pàrlano.";
+    }
+    if (vonHinten === 0) return "Endbetont (parola tronca) — solche Wörter tragen fast immer einen geschriebenen Akzent.";
+    if (vonHinten === 1) return "Vorletzte Silbe — der Normalfall im Italienischen (parola piana). Etwa vier von fünf Wörtern werden so betont.";
+    if (vonHinten === 2) return "Drittletzte Silbe (parola sdrucciola). Das sieht man dem Wort nicht an, das muss man lernen: TA-vo-lo, MU-si-ca, TE-le-fo-no.";
+    return "Viertletzte Silbe (parola bisdrucciola). Fast immer die 3. Person Plural, die die Betonung des Singulars behält.";
+  }
+
   // ---------- Soundeffekte (synthetisiert, keine Audiodateien nötig) ----------
   let audioCtx = null;
   function getCtx() {
@@ -364,6 +758,9 @@ const Core = (function () {
     okay() {
       [523, 587].forEach((f, i) => tone(f, i * 0.12, 0.18, "triangle", 0.12));
     },
+    // Ein kurzer, leiser Tipp-Ton — für die Bilderwelt, wo man viel antippt
+    // und ein „richtig/falsch" gar nicht gemeint ist.
+    click() { tone(1046, 0, 0.05, "sine", 0.06); },
     fail() {
       // "Sad trombone" — absteigende Töne
       [400, 360, 320, 260].forEach((f, i) => tone(f, i * 0.18, 0.24, "sawtooth", 0.12));
@@ -439,5 +836,7 @@ const Core = (function () {
 
   return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound,
     silbeIstGross, betonteSilbenIndex,
+    /* Italienisch: eigene Silbentrennung, eigene Betonungsregel, eigene Anzeige. */
+    italienischeSilben, betonungItAuto, formatStressIt, betonungItErklaerung,
     spracherkennungDa, hoereZu, wortAehnlichkeit, bewerteAussprache };
 })();
