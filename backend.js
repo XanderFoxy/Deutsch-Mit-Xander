@@ -3492,6 +3492,196 @@ const Backend = (function () {
     await setSiteContentInternal(WORTLUECKEN_SCHLUESSEL, rest);
   }
 
+  /* ============ EIGENE WERTUNG IM LERNRAUM ITALIENISCH ============
+     Der Italienisch-Raum ist ausdrücklich eine eigene Kammer: was dort
+     gespielt wird, darf den deutschen Punktestand nicht anfassen — und
+     umgekehrt sollen die eigenen Punkte dort nicht in der großen
+     Rangliste zwischen hunderten Deutschlernenden untergehen.
+
+     Deshalb liegt der italienische Punktestand in extra_profile_data
+     unter „itPunkte", und die Rangliste besteht ausschließlich aus den
+     Konten, die für den Kurs freigegeben sind. Wer nicht freigegeben
+     ist, taucht dort nicht auf — er hat dort ja auch nie gespielt. */
+  async function itRangliste() {
+    const zugang = await getItKursZugang();
+    const ids = new Set(zugang.map((e) => e.id));
+    const eigeneId = myId();
+    // Der Betreiber gehört immer dazu, auch wenn er sich nie selbst
+    // in die Liste eingetragen hat.
+    if (isOwner() && eigeneId) ids.add(eigeneId);
+    const ownerId = await getOwnerId();
+    if (ownerId) ids.add(ownerId);
+    if (!ids.size) return [];
+    const liste = [];
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles")
+          .select("id,name,extra_profile_data").in("id", [...ids]);
+        if (!error && data) {
+          data.forEach((p) => {
+            const extra = p.extra_profile_data || {};
+            const it = extra.itPunkte || {};
+            liste.push({ id: p.id, name: p.name, punkte: it.punkte || 0, runden: it.runden || 0, beste: it.beste || 0 });
+          });
+        }
+      } catch (e) { console.warn("Italienische Rangliste nicht verfügbar:", e); }
+    }
+    /* Ohne Datenbank (oder wenn die Zeilenschutz-Regeln fremde Profile
+       nicht hergeben) steht wenigstens der eigene Stand da — eine leere
+       Liste sähe aus wie ein Fehler. */
+    if (!liste.length && demo.profile && eigeneId) {
+      const it = (demo.profile.extraProfileData || {}).itPunkte || {};
+      liste.push({ id: eigeneId, name: demo.profile.name, punkte: it.punkte || 0, runden: it.runden || 0, beste: it.beste || 0 });
+    }
+    return liste.sort((a, b) => b.punkte - a.punkte);
+  }
+  /* Die Kennung des Betreibers — für die Rangliste, damit er auch dann
+     darin steht, wenn er sich selbst nie freigegeben hat. */
+  let ownerIdCache = null;
+  async function getOwnerId() {
+    if (ownerIdCache !== null) return ownerIdCache;
+    if (isOwner()) { ownerIdCache = myId(); return ownerIdCache; }
+    if (client) {
+      try {
+        const { data, error } = await client.from("profiles").select("id").eq("is_owner", true).limit(1);
+        if (!error && data && data.length) { ownerIdCache = data[0].id; return ownerIdCache; }
+      } catch (e) { /* Zeilenschutz — dann eben ohne */ }
+    }
+    ownerIdCache = "";
+    return ownerIdCache;
+  }
+
+  /* ============ MITGESTALTUNG AM WÖRTERBUCH ============
+     Das Wörterbuch soll wachsen können, ohne dass jedes Mal eine Datei
+     hochgeladen werden muss. Deshalb liegt hier ein zweiter, kleiner
+     Wortschatz in site_content: „wortschatz_zusatz". Er wird beim
+     Aufbau des Wörterbuchs dazugelegt und verhält sich wie jeder
+     andere Eintrag — mit einem Unterschied: Er trägt, wer ihn
+     vorgeschlagen hat, und er gilt erst, wenn der Betreiber ihn
+     freigegeben hat.
+
+     Der Weg eines Wortes:
+       1. Jemand schlägt es nach und findet nichts → es landet im
+          Lückentopf (meldeWortluecken).
+       2. Jemand schlägt eine Erklärung vor → wortVorschlagen.
+       3. Der Betreiber übernimmt sie → wortZusatzAufnehmen.
+     Erst nach Schritt 3 steht das Wort für alle im Wörterbuch. */
+  const WORTZUSATZ_SCHLUESSEL = "wortschatz_zusatz";
+  let wortZusatzCache = null;
+  async function getWortZusatz(frisch) {
+    if (wortZusatzCache && !frisch) return wortZusatzCache;
+    const roh = await getSiteContent(WORTZUSATZ_SCHLUESSEL, frisch);
+    wortZusatzCache = Array.isArray(roh) ? roh : [];
+    return wortZusatzCache;
+  }
+  /* Einen Vorschlag an ein gesammeltes Lückenwort hängen. Darf jede
+     angemeldete Person — freigegeben wird er dadurch noch nicht. */
+  async function wortVorschlagen(wort, vorschlag) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    const name = String(wort || "").trim();
+    if (name.length < 2) throw new Error("Kein Wort angegeben.");
+    let bestand = [];
+    try { bestand = (await getSiteContent(WORTLUECKEN_SCHLUESSEL, true)) || []; } catch (e) { bestand = []; }
+    if (!Array.isArray(bestand)) bestand = [];
+    const schluessel = name.toLowerCase();
+    let eintrag = bestand.find((e) => e && e.wort && e.wort.toLowerCase() === schluessel);
+    if (!eintrag) {
+      eintrag = { wort: name, anzahl: 1, konten: [], zuerst: new Date().toISOString(), zuletzt: new Date().toISOString() };
+      bestand.push(eintrag);
+    }
+    eintrag.vorschlag = {
+      artikel: String((vorschlag && vorschlag.artikel) || "").slice(0, 12),
+      bedeutung: String((vorschlag && vorschlag.bedeutung) || "").slice(0, 300),
+      beispiel: String((vorschlag && vorschlag.beispiel) || "").slice(0, 300),
+      silben: String((vorschlag && vorschlag.silben) || "").slice(0, 60),
+      von: (demo.profile && demo.profile.name) || "jemand",
+      vonId: myId() || "",
+      am: new Date().toISOString(),
+    };
+    await setSiteContentInternal(WORTLUECKEN_SCHLUESSEL, bestand.slice(0, 2000));
+    return { ok: true };
+  }
+  /* Der Betreiber übernimmt einen Vorschlag ins Wörterbuch. */
+  async function wortZusatzAufnehmen(eintrag) {
+    if (!isOwner()) throw new Error("Nur der Betreiber kann Wörter freigeben.");
+    const liste = (await getWortZusatz(true)).slice();
+    const wort = String((eintrag && eintrag.word) || "").trim();
+    if (!wort) throw new Error("Kein Wort angegeben.");
+    const ohne = liste.filter((e) => String(e.word || "").toLowerCase() !== wort.toLowerCase());
+    ohne.push({
+      word: wort,
+      syl: String(eintrag.syl || "").slice(0, 60),
+      de: String(eintrag.de || "").slice(0, 300),
+      example: String(eintrag.example || "").slice(0, 300),
+      level: ["A1", "A2", "B1", "B2", "C1", "C2"].includes(eintrag.level) ? eintrag.level : "B1",
+      theme: String(eintrag.theme || "Nachgetragen").slice(0, 60),
+      von: String(eintrag.von || "").slice(0, 60),
+      am: new Date().toISOString(),
+    });
+    await setSiteContent(WORTZUSATZ_SCHLUESSEL, ohne.slice(-4000));
+    wortZusatzCache = ohne.slice(-4000);
+    return wortZusatzCache;
+  }
+  async function wortZusatzEntfernen(wort) {
+    if (!isOwner()) throw new Error("Nur der Betreiber kann Wörter entfernen.");
+    const liste = (await getWortZusatz(true)).filter((e) => String(e.word || "").toLowerCase() !== String(wort || "").toLowerCase());
+    await setSiteContent(WORTZUSATZ_SCHLUESSEL, liste);
+    wortZusatzCache = liste;
+    return liste;
+  }
+
+  /* ============ ZUGANG ZUM ITALIENISCHKURS ============
+     Der Lernraum Italienisch hing bisher fest an isOwner() — damit
+     konnte ihn niemand sonst benutzen, auch dann nicht, wenn der
+     Betreiber es ausdrücklich wollte. Jetzt steht in site_content unter
+     „it_kurs_zugang" eine Liste von Konten, die den Kurs ebenfalls
+     öffnen dürfen. Lesen darf sie jeder — sonst wüsste die Seite gar
+     nicht, ob sie den Schalter anzeigen soll; schreiben nur der
+     Betreiber.
+
+     Bewusst NICHT über die Feature-Schalter gelöst: die gelten für alle
+     oder für niemanden. Hier geht es um einzelne, namentlich benannte
+     Konten. */
+  let itZugangCache = null;
+  async function getItKursZugang(frisch) {
+    if (itZugangCache && !frisch) return itZugangCache;
+    const roh = await getSiteContent("it_kurs_zugang", frisch);
+    itZugangCache = Array.isArray(roh) ? roh : [];
+    return itZugangCache;
+  }
+  async function darfItKurs(frisch) {
+    if (isOwner()) return true;
+    const id = myId();
+    if (!id) return false;
+    const liste = await getItKursZugang(frisch);
+    return liste.some((e) => e && e.id === id);
+  }
+  async function setItKursZugang(liste) {
+    if (!isOwner()) throw new Error("Nur der Betreiber kann den Kurs freigeben.");
+    const gesehen = new Set();
+    const sauber = [];
+    (liste || []).forEach((e) => {
+      if (!e || !e.id || gesehen.has(e.id)) return;
+      gesehen.add(e.id);
+      sauber.push({ id: e.id, name: String(e.name || "").slice(0, 60) });
+    });
+    await setSiteContent("it_kurs_zugang", sauber.slice(0, 20));
+    itZugangCache = sauber.slice(0, 20);
+    return itZugangCache;
+  }
+  /* Wer freigeschaltet wird, soll es auch erfahren — sonst bleibt die
+     Freigabe eine Zeile in einer Tabelle, die niemand sieht. */
+  async function meldeItKursFreigabe(targetId, name) {
+    try {
+      await sendSystemMessage(targetId,
+        `🇮🇹 Ciao ${name || ""}! Der Italienischkurs ist jetzt für dich offen.\n\n` +
+        "Du findest ihn in den Einstellungen unter „Lernraum Italienisch“. " +
+        "Dort schaltest du die ganze Seite auf Italienisch um: eigener Wortschatz, eigene Grammatik, " +
+        "eigene Übungen, eigener Betonungs-Trainer und der Kurs von A1 bis C2.\n\n" +
+        "Mit „Zurück zu Deutsch“ bist du jederzeit wieder im Deutsch-Raum — dein deutscher Fortschritt bleibt davon unberührt.");
+    } catch (e) { console.warn("Freigabe-Nachricht konnte nicht zugestellt werden:", e); }
+  }
+
   async function setSiteContentInternal(key, value) {
     siteContentVergessen(key);
     if (client) {
@@ -3596,6 +3786,9 @@ const Backend = (function () {
     saveIntroduction, getAllIntroductions,
     getLastPlaylistLoadError: () => lastPlaylistLoadError,
     getLastUserListError: () => lastUserListError,
+    getItKursZugang, darfItKurs, setItKursZugang, meldeItKursFreigabe,
+    getWortZusatz, wortVorschlagen, wortZusatzAufnehmen, wortZusatzEntfernen,
+    itRangliste,
     getSiteContent, setSiteContent, siteContentVergessen, meldeWortluecken, getWortluecken, clearWortluecken, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, isBetaTester, getRawFeatureFlag, getRawFeatureFlagValue,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
     getBugReports, resolveBugReport,

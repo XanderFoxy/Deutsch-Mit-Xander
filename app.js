@@ -534,14 +534,20 @@
     const lvl = Backend.currentProfile()?.extraProfileData?.cefrLevel;
     return lvl && CEFR_LEVELS.includes(lvl) ? lvl : null;
   }
+  /* Auf welcher Stufe zuletzt gespielt wurde. Jedes Spiel mit
+     Niveau-Auswahl geht durch diese Stelle — damit weiß der
+     Italienischkurs hinterher, welcher Stufe er eine Runde
+     gutschreiben muss, ohne dass 30 Spiele das einzeln melden. */
+  let letzteSpielStufe = null;
   function applyDefaultCefrLevel(currentValue, setter, key) {
     const ausProfil = profileCefrLevel();
     const merker = key || "allgemein";
     const eigeneWahl = currentValue && currentValue !== autoCefrLevel[merker];
-    if (eigeneWahl) return currentValue;
+    if (eigeneWahl) { letzteSpielStufe = currentValue; return currentValue; }
     const level = ausProfil || currentValue || "B1";
     autoCefrLevel[merker] = level;
     if (level !== currentValue) setter(level);
+    letzteSpielStufe = level;
     return level;
   }
 
@@ -939,6 +945,7 @@
     { label: "📈 Im Ranking aufgestiegen", text: "Glückwunsch zum Aufstieg im Ranking — weiter so!" },
   ];
   const KNOWN_FEATURE_FLAGS = [
+    { key: "eigene_beitraege", label: "🗂️ Menschen, Dinge, Geschichten", desc: "Fünf recherchierte Beiträge (iPhone Duo, Captain Kirk, ALF, Alphaville, Zorro), jeder in sechs Niveaustufen und zehn Sprachen. Bis zur Freigabe siehst nur du sie." },
     { key: "demo_test_schalter", label: "🧪 Test-Schalter (Beispiel)", desc: "Dient nur zum Ausprobieren des Freigabe-Systems selbst — hat keine echte Funktion." },
     { key: "wortblasen_neu", label: "🫧 Wortblasen (neues Spiel)", desc: "Mehrere Wort-Sprechblasen erscheinen gleichzeitig und zerplatzen — die richtige muss rechtzeitig getroffen werden. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
     { key: "vokabelmeister_neu", label: "🔤 Vokabelmeister (neues Spiel)", desc: "Buchstabe wählen, dann 60 Sekunden Zeit für möglichst viele passende Wörter. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung statt des Spiels." },
@@ -1185,7 +1192,10 @@
     if (!area) return;
     let liste = [];
     try { liste = await Backend.getWortluecken(); } catch (e) { liste = []; }
-    if (!liste.length) { area.innerHTML = '<p class="empty-note">Noch nichts gesammelt — bisher hat jede eingereichte Liste vollständig ins Wörterbuch gepasst.</p>'; return; }
+    let zusatz = [];
+    try { zusatz = (Backend.getWortZusatz ? await Backend.getWortZusatz(true) : []) || []; } catch (e) { zusatz = []; }
+    const vorschlaege = liste.filter((e) => e && e.vorschlag && e.vorschlag.bedeutung);
+    if (!liste.length && !zusatz.length) { area.innerHTML = '<p class="empty-note">Noch nichts gesammelt — bisher hat jede eingereichte Liste vollständig ins Wörterbuch gepasst.</p>'; return; }
     const mehrfach = liste.filter((e) => (e.anzahl || 0) > 1).length;
     area.innerHTML = `
       <p class="empty-note" style="margin-top:0;"><strong>${liste.length}</strong> ${liste.length === 1 ? "Wort" : "Wörter"} gesammelt${mehrfach ? `, davon <strong>${mehrfach}</strong> von mehreren Personen vermisst` : ""}.</p>
@@ -1197,7 +1207,31 @@
       <div class="wortliste-treffer" style="margin-top:10px;">
         ${liste.slice(0, 120).map((e) => `<span class="wortliste-chip wortliste-chip-fehlt">${String(e.wort).replace(/</g, "&lt;")}${(e.anzahl || 1) > 1 ? ` <strong>${e.anzahl}\u00d7</strong>` : ""} <button type="button" class="wortliste-weg" data-luecke-weg="${String(e.wort).replace(/"/g, "&quot;")}" title="Aus der Sammlung nehmen">✕</button></span>`).join("")}
       </div>
-      ${liste.length > 120 ? `<p class="empty-note" style="margin-top:6px;">… und ${liste.length - 120} weitere. Im Textfeld oben stehen alle.</p>` : ""}`;
+      ${liste.length > 120 ? `<p class="empty-note" style="margin-top:6px;">… und ${liste.length - 120} weitere. Im Textfeld oben stehen alle.</p>` : ""}
+      ${/* Vorschläge aus der Gemeinschaft: hier werden sie mit einem
+            Klick ins Wörterbuch übernommen — ohne Datei, ohne Upload. */ ""}
+      ${vorschlaege.length ? `
+        <h4 style="margin:16px 0 6px;">✍️ ${vorschlaege.length} ${vorschlaege.length === 1 ? "Vorschlag" : "Vorschläge"} aus der Gemeinschaft</h4>
+        ${vorschlaege.map((e) => {
+          const v = e.vorschlag || {};
+          const voll = (v.artikel ? v.artikel + " " : "") + e.wort;
+          return `<div class="question-card" style="margin-bottom:8px;">
+            <p style="margin:0 0 4px; font-weight:800;">${escapeHtml(voll)}</p>
+            <p class="empty-note" style="margin:0 0 4px;">${escapeHtml(v.bedeutung || "")}</p>
+            ${v.beispiel ? `<p class="empty-note" style="margin:0 0 4px;">„${escapeHtml(v.beispiel)}"</p>` : ""}
+            ${v.silben ? `<p class="empty-note" style="margin:0 0 4px;">Silben: ${escapeHtml(v.silben)}</p>` : ""}
+            <p class="empty-note" style="margin:0 0 8px; font-size:0.68rem;">vorgeschlagen von ${escapeHtml(v.von || "jemandem")}</p>
+            <div class="quiz-actions" style="justify-content:flex-start; gap:6px; margin:0;">
+              <button type="button" class="btn btn-coffee" data-vorschlag-ok="${escapeHtml(e.wort)}" style="padding:5px 12px; font-size:0.78rem;">✅ Ins Wörterbuch</button>
+              <button type="button" class="btn btn-ghost" data-luecke-weg="${escapeHtml(e.wort)}" style="padding:5px 12px; font-size:0.78rem;">Verwerfen</button>
+            </div>
+          </div>`;
+        }).join("")}` : ""}
+      ${zusatz.length ? `
+        <h4 style="margin:16px 0 6px;">📖 ${zusatz.length} nachgetragene ${zusatz.length === 1 ? "Wort" : "Wörter"} im Wörterbuch</h4>
+        <div class="wortliste-treffer">
+          ${zusatz.slice(-60).map((w) => `<span class="wortliste-chip wortliste-chip-da">${escapeHtml(w.word)} <button type="button" class="wortliste-weg" data-zusatz-weg="${escapeHtml(w.word)}" title="Wieder herausnehmen">✕</button></span>`).join("")}
+        </div>` : ""}`;
     document.getElementById("wortlueckenKopieren")?.addEventListener("click", async () => {
       const text = liste.map((e) => e.wort).join("\n");
       try { await navigator.clipboard.writeText(text); showToast(`📋 ${liste.length} Wörter kopiert.`); }
@@ -1215,6 +1249,29 @@
     });
     area.querySelectorAll("[data-luecke-weg]").forEach((b) => b.addEventListener("click", async () => {
       try { await Backend.clearWortluecken([b.dataset.lueckeWeg]); } catch (e) { return; }
+      loadAdminWortluecken();
+    }));
+    /* Einen Vorschlag übernehmen: er wandert in den freigegebenen
+       Zusatzwortschatz und verschwindet aus dem Lückentopf. */
+    area.querySelectorAll("[data-vorschlag-ok]").forEach((b) => b.addEventListener("click", async () => {
+      const wort = b.dataset.vorschlagOk;
+      const eintrag = liste.find((e) => e.wort === wort);
+      const v = (eintrag && eintrag.vorschlag) || {};
+      b.disabled = true;
+      try {
+        await Backend.wortZusatzAufnehmen({
+          word: (v.artikel ? v.artikel + " " : "") + wort,
+          syl: v.silben || "", de: v.bedeutung || "", example: v.beispiel || "",
+          level: "B1", theme: "Nachgetragen", von: v.von || "",
+        });
+        await Backend.clearWortluecken([wort]);
+        await wortZusatzLaden(true);
+        showToast("📖 Ins Wörterbuch aufgenommen.");
+      } catch (e) { showToast("⚠️ " + (e.message || "Ging nicht.")); }
+      loadAdminWortluecken();
+    }));
+    area.querySelectorAll("[data-zusatz-weg]").forEach((b) => b.addEventListener("click", async () => {
+      try { await Backend.wortZusatzEntfernen(b.dataset.zusatzWeg); await wortZusatzLaden(true); } catch (e) { return; }
       loadAdminWortluecken();
     }));
   }
@@ -1555,6 +1612,51 @@
      Wechsel wird die Oberfläche neu aufgebaut, weil Kategorien, Grammatik,
      Wörterbuch und Kompass jetzt aus einer anderen Quelle kommen.
      ============================================================ */
+  /* Wer den Italienischkurs öffnen darf: der Betreiber immer, sonst
+     die namentlich freigegebenen Konten. Der Wert wird einmal geladen
+     und hier gehalten, weil die Einstellungen, die Spieleübersicht und
+     die Wiederherstellung beim Start ihn synchron brauchen. */
+  let itKursErlaubt = false;
+  async function itKursZugangLaden(frisch) {
+    try {
+      itKursErlaubt = Backend.darfItKurs ? await Backend.darfItKurs(frisch) : false;
+    } catch (e) {
+      itKursErlaubt = Boolean(Backend.isOwner && Backend.isOwner());
+    }
+    return itKursErlaubt;
+  }
+  /* Fremder Text in einer Vorlage: Namen kommen aus fremden Konten und
+     dürfen kein Markup mitbringen. */
+  function escapeHtml(text) {
+    return String(text == null ? "" : text)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  /* Die Freigabeliste selbst — synchron gehalten, weil renderSettings()
+     sie sofort zeichnen muss. Nachgeladen wird sie beim Öffnen der
+     Einstellungen und nach jeder Änderung. */
+  let itZugangListe = [];
+  async function itZugangListeLaden(frisch) {
+    try { itZugangListe = (Backend.getItKursZugang ? await Backend.getItKursZugang(frisch) : []) || []; }
+    catch (e) { itZugangListe = []; }
+    return itZugangListe;
+  }
+  function itZugangListeHtml() {
+    if (!itZugangListe.length) {
+      return '<p class="empty-note" style="margin:0;">Bisher niemand — außer dir. Such unten einen Namen, um den Kurs für jemanden zu öffnen.</p>';
+    }
+    return `<div class="breakdown-list">${itZugangListe.map((e) => `
+      <div class="breakdown-row">
+        <span>🇮🇹 ${escapeHtml(e.name || "Unbekannt")}</span>
+        <button type="button" class="btn btn-ghost it-zugang-weg" data-it-id="${escapeHtml(e.id)}" style="margin:0; padding:2px 10px; font-size:0.72rem;">entziehen</button>
+      </div>`).join("")}</div>`;
+  }
+
+  function darfItalienischraum() {
+    return Boolean(itKursErlaubt || (Backend.isOwner && Backend.isOwner()));
+  }
+
   function wechsleLernraum(raum, merken) {
     if (!ExerciseData.setLernraum) return;
     ExerciseData.setLernraum(raum);
@@ -1573,6 +1675,11 @@
     if (typeof renderKompass === "function") renderKompass();
     if (typeof renderGamesOverview === "function") renderGamesOverview();
     if (typeof renderItSatzbaukasten === "function") renderItSatzbaukasten();
+    // Uhr, Wetter und Laufschrift gehören zum Raum — sofort umstellen,
+    // nicht erst beim nächsten Takt.
+    if (typeof updateClock === "function") updateClock();
+    if (typeof updateWeather === "function") updateWeather();
+    if (typeof updateTicker === "function") updateTicker();
     dictCache = null; // Wörterbuch gehört jetzt zum anderen Raum
   }
   // Ein durchgehend sichtbares Band, solange der Italienisch-Raum aktiv ist —
@@ -1834,14 +1941,25 @@
         <h3>🗂️ Was liegt in meinem Konto?</h3>
         <div id="profilUebersichtBox">${profilUebersichtHtml()}</div>
       </div>
-      ${istBetreiber ? `
+      ${darfItalienischraum() ? `
       <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
-        <h3>🇮🇹 Lernraum Italienisch — nur für dich</h3>
-        <p class="empty-note" style="margin-bottom:10px;">Schaltet die ganze Seite auf Italienisch-Lernen um: eigene Grammatik, eigener Wortschatz, eigene Übungen und „C'era una volta in Italia" statt „Es war einmal in Deutschland". <strong>Für alle anderen ändert sich nichts</strong>, und nichts davon zählt in deine Punkte, Ranglisten oder Sammelfiguren.</p>
+        <h3>🇮🇹 Lernraum Italienisch</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Schaltet die ganze Seite auf Italienisch-Lernen um: eigene Grammatik, eigener Wortschatz, eigene Übungen, eigener Betonungs-Trainer, der Kurs von A1 bis C2 und „C'era una volta in Italia" statt „Es war einmal in Deutschland". <strong>Für alle anderen ändert sich nichts</strong>, und nichts davon zählt in deine Punkte, Ranglisten oder Sammelfiguren.</p>
         <div style="display:flex; flex-wrap:wrap; gap:6px;">
           <button type="button" class="trophy-chip lernraum-btn ${!imItalienischraum ? "selected" : ""}" data-lernraum="de">🇩🇪 Deutsch</button>
           <button type="button" class="trophy-chip lernraum-btn ${imItalienischraum ? "selected" : ""}" data-lernraum="it">🇮🇹 Italiano</button>
         </div>
+      </div>` : ""}
+      ${istBetreiber ? `
+      <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
+        <h3>🔑 Wer darf den Italienischkurs benutzen?</h3>
+        <p class="empty-note" style="margin-bottom:10px;">Der Kurs lässt sich für einzelne Mitglieder öffnen. Wer hier steht, sieht in seinen eigenen Einstellungen denselben Schalter 🇮🇹 und bekommt eine Nachricht darüber. Alle anderen merken nichts davon.</p>
+        <div id="itZugangListe">${itZugangListeHtml()}</div>
+        <div class="quiz-actions" style="margin-top:10px; gap:6px; flex-wrap:wrap; justify-content:flex-start;">
+          <input type="text" id="itZugangSuche" placeholder="Namen suchen …" style="flex:1 1 160px; min-width:140px;">
+          <button type="button" class="btn btn-ghost" id="itZugangSuchBtn" style="margin:0;">🔍 Suchen</button>
+        </div>
+        <div id="itZugangTreffer"></div>
       </div>` : ""}
       <div class="question-card" style="margin-top:14px; border:2px solid var(--teal-400);">
         <h3>⚖️ Sprachniveau — für faire Fortschritts-Geschwindigkeit</h3>
@@ -2077,6 +2195,62 @@
     area.querySelectorAll(".lernraum-btn").forEach((btn) => {
       btn.addEventListener("click", () => wechsleLernraum(btn.dataset.lernraum, true));
     });
+    /* Kursfreigabe: suchen, hinzufügen, entziehen. Die Liste wird nach
+       jeder Änderung frisch geholt — zwei Fenster nebeneinander sollen
+       sich nicht gegenseitig überschreiben. */
+    const zugangKasten = area.querySelector("#itZugangListe");
+    if (zugangKasten) {
+      itZugangListeLaden(true).then(() => { zugangKasten.innerHTML = itZugangListeHtml(); zugangVerdrahten(); });
+    }
+    function zugangVerdrahten() {
+      area.querySelectorAll(".it-zugang-weg").forEach((b) => b.addEventListener("click", async () => {
+        const id = b.dataset.itId;
+        b.disabled = true;
+        try {
+          await Backend.setItKursZugang(itZugangListe.filter((e) => e.id !== id));
+          await itZugangListeLaden(true);
+          zugangKasten.innerHTML = itZugangListeHtml();
+          zugangVerdrahten();
+          showToast("🔑 Zugang entzogen.");
+        } catch (err) { b.disabled = false; showToast("⚠️ " + (err.message || "Ging nicht.")); }
+      }));
+    }
+    const zugangSuchen = async () => {
+      const feld = area.querySelector("#itZugangSuche");
+      const ziel = area.querySelector("#itZugangTreffer");
+      if (!feld || !ziel) return;
+      const wort = feld.value.trim();
+      if (wort.length < 2) { ziel.innerHTML = '<p class="empty-note" style="margin:8px 0 0;">Bitte mindestens zwei Buchstaben eingeben.</p>'; return; }
+      ziel.innerHTML = '<p class="empty-note" style="margin:8px 0 0;">suche …</p>';
+      let treffer = [];
+      try { treffer = await Backend.searchUsers(wort); } catch (e) { treffer = []; }
+      const schon = new Set(itZugangListe.map((e) => e.id));
+      const frei = treffer.filter((t) => !schon.has(t.id));
+      if (!frei.length) {
+        ziel.innerHTML = '<p class="empty-note" style="margin:8px 0 0;">Niemand gefunden, der noch nicht freigegeben wäre.</p>';
+        return;
+      }
+      ziel.innerHTML = `<div class="breakdown-list" style="margin-top:8px;">${frei.map((t) => `
+        <div class="breakdown-row">
+          <span>${escapeHtml(t.name || "Unbekannt")}</span>
+          <button type="button" class="btn btn-ghost it-zugang-dazu" data-it-id="${escapeHtml(t.id)}" data-it-name="${escapeHtml(t.name || "")}" style="margin:0; padding:2px 10px; font-size:0.72rem;">freigeben</button>
+        </div>`).join("")}</div>`;
+      ziel.querySelectorAll(".it-zugang-dazu").forEach((b) => b.addEventListener("click", async () => {
+        b.disabled = true;
+        try {
+          await Backend.setItKursZugang(itZugangListe.concat([{ id: b.dataset.itId, name: b.dataset.itName }]));
+          await itZugangListeLaden(true);
+          zugangKasten.innerHTML = itZugangListeHtml();
+          zugangVerdrahten();
+          if (Backend.meldeItKursFreigabe) await Backend.meldeItKursFreigabe(b.dataset.itId, b.dataset.itName);
+          ziel.innerHTML = "";
+          feld.value = "";
+          showToast("🇮🇹 Kurs freigegeben — die Person hat eine Nachricht bekommen.");
+        } catch (err) { b.disabled = false; showToast("⚠️ " + (err.message || "Ging nicht.")); }
+      }));
+    };
+    area.querySelector("#itZugangSuchBtn")?.addEventListener("click", zugangSuchen);
+    area.querySelector("#itZugangSuche")?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); zugangSuchen(); } });
     area.querySelector("#profilReparierenBtn")?.addEventListener("click", async (e) => {
       const knopf = e.currentTarget;
       const ziel = area.querySelector("#profilReparaturBericht");
@@ -2498,7 +2672,29 @@
     // Wertung: keine Punkte, keine Ranglisten, keine Sammelfiguren, keine
     // Aktivitätsmeldungen. Er ist ein Übungsraum, kein Teil des Spielstands.
     if (ExerciseData.getLernraum && ExerciseData.getLernraum() === "it") {
-      showToast("🇮🇹 Italienisch-Raum — dieses Ergebnis wird nicht gewertet.");
+      /* Nicht gewertet heißt: keine Punkte, keine Rangliste, keine
+         Sammelfiguren. Auf den KURSFORTSCHRITT zählt eine Runde aber
+         sehr wohl — sonst wären die fünfzehn italienischen Spiele vom
+         Kurs abgeschnitten, und der Weg von A1 nach C2 ließe sich nur
+         über den Übungsbereich gehen.
+
+         Gezählt wird nicht geschätzt: spielProtokoll enthält für jede
+         Antwort eine Zeile, die mit ✅ oder ❌ beginnt. */
+      const zeilen = spielProtokoll.filter((z) => z.startsWith("✅") || z.startsWith("❌"));
+      const stufe = IT_KURS_STUFEN.includes(letzteSpielStufe) ? letzteSpielStufe : null;
+      const richtig = zeilen.filter((z) => z.startsWith("✅")).length;
+      if (zeilen.length && stufe) itKursFortschritt(stufe, richtig, zeilen.length);
+      /* Die italienischen Punkte — eine eigene Wertung, die mit dem
+         deutschen Punktestand nichts zu tun hat. */
+      const itPunkte = (result.points || 0) + (result.bonus || 0);
+      if (itPunkte > 0) itPunkteGutschreiben(itPunkte);
+      if (zeilen.length && stufe) {
+        showToast(`🇮🇹 ${richtig} von ${zeilen.length} richtig · +${itPunkte} italienische Punkte · Stufe ${stufe}`);
+      } else if (itPunkte > 0) {
+        showToast(`🇮🇹 +${itPunkte} italienische Punkte.`);
+      } else {
+        showToast("🇮🇹 Italienisch-Raum — dieses Ergebnis zählt nicht in den deutschen Punktestand.");
+      }
       spielProtokoll = [];
       return;
     }
@@ -2536,9 +2732,10 @@
         Backend.sendSystemMessage(Backend.currentUser().id, `🦊 Gleich ${newlyUnlocked.length} neue Füchse auf einmal freigeschaltet: ${newlyUnlocked.map((f) => `„${f.name}"`).join(", ")}!`);
       }
     }
-    // Gemerkten Lernraum wiederherstellen — ausschließlich für den Betreiber.
-    // Für alle anderen bleibt es beim Deutsch-Raum, ganz gleich, was im Profil steht.
-    if (Backend.isOwner && Backend.isOwner()) {
+    // Gemerkten Lernraum wiederherstellen — für den Betreiber und für
+    // alle, die für den Kurs freigegeben wurden. Für alle anderen bleibt
+    // es beim Deutsch-Raum, ganz gleich, was im Profil steht.
+    if (darfItalienischraum()) {
       const gemerkt = Backend.currentProfile()?.extraProfileData?.lernraum;
       if (gemerkt === "it") wechsleLernraum("it", false);
     }
@@ -2702,18 +2899,32 @@
   }
 
   /* ============ Uhr (analog) & Wetter ============ */
+  /* Im Lernraum Italienisch zeigen Uhr und Wetter Rom statt Berlin.
+     Das ist keine Spielerei: wer eine Sprache lernt, soll auch mitbekommen,
+     wie spät es dort gerade ist und ob die Sonne scheint — und die Uhrzeit
+     ist im Italienischen ein eigenes Kapitel. Zeitzone und Ort hängen
+     deshalb am Lernraum, nicht fest an Deutschland. */
+  function ortFuerLernraum() {
+    return imItalienischraum()
+      ? { zone: "Europe/Rome", sprache: "it-IT", breite: 41.9028, laenge: 12.4964, name: "Roma" }
+      : { zone: "Europe/Berlin", sprache: "de-DE", breite: 52.52, laenge: 13.405, name: "Berlin" };
+  }
   const clockOut = document.getElementById("clockOut");
   const hourHand = document.getElementById("clockHour");
   const minuteHand = document.getElementById("clockMinute");
   function updateClock() {
+    const ort = ortFuerLernraum();
     const now = new Date();
-    const berlin = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
-    const h = berlin.getHours() % 12;
-    const m = berlin.getMinutes();
+    const dort = new Date(now.toLocaleString("en-US", { timeZone: ort.zone }));
+    const h = dort.getHours() % 12;
+    const m = dort.getMinutes();
     if (hourHand) hourHand.style.transform = `rotate(${h * 30 + m * 0.5}deg)`;
     if (minuteHand) minuteHand.style.transform = `rotate(${m * 6}deg)`;
-    if (clockOut) clockOut.textContent = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(now);
-    updateDaytimeSky(berlin.getHours() * 60 + berlin.getMinutes());
+    if (clockOut) {
+      clockOut.textContent = new Intl.DateTimeFormat(ort.sprache, { timeZone: ort.zone, hour: "2-digit", minute: "2-digit" }).format(now);
+      clockOut.title = ort.name;
+    }
+    updateDaytimeSky(dort.getHours() * 60 + dort.getMinutes());
   }
 
   // Tageszeiten-Himmel: verläuft fließend über den ganzen Tag statt harter Umschaltpunkte
@@ -2860,7 +3071,10 @@
   // über die Person, nur eine schlichte Häufigkeitszählung der von ihr selbst gewählten Übungen.
   function analyzeFocusCategory() {
     const profile = Backend.currentProfile();
-    if (!profile || !profile.history || profile.history.length < 3) return null;
+    /* Schon nach EINER gespielten Runde richtet sich die Aufgabe nach
+       dem, was gespielt wurde. Vorher brauchte es drei — für alle
+       Neuen passierte damit erst einmal gar nichts. */
+    if (!profile || !profile.history || !profile.history.length) return null;
     const stats = {}; // { count, totalPercent }
     profile.history.forEach((h) => {
       (h.categories || []).forEach((catId) => {
@@ -2876,7 +3090,7 @@
     // hilft — oder, falls die Ergebnisse überall ähnlich gut sind, einfach die meistgespielte
     // Kategorie (reines Interesse).
     const weakCandidates = Object.entries(stats)
-      .filter(([, s]) => s.count >= 2)
+      .filter(([, s]) => s.count >= 1)
       .map(([id, s]) => ({ id, avgPercent: Math.round(s.totalPercent / s.count), count: s.count }))
       .filter((c) => c.avgPercent < 60)
       .sort((a, b) => a.avgPercent - b.avgPercent);
@@ -2890,7 +3104,7 @@
     }
     const [topId, topStat] = Object.entries(stats).sort((a, b) => b[1].count - a[1].count)[0];
     const playPercent = Math.round((topStat.count / total) * 100);
-    if (playPercent < 25) return null; // kein klarer Schwerpunkt erkennbar
+    if (playPercent < 20) return null; // kein klarer Schwerpunkt erkennbar
     return { id: topId, label: labelFor(topId), percent: playPercent, kind: "frequent" };
   }
   function todayDateKey() {
@@ -2920,8 +3134,12 @@
     const seenPrompts = new Set();
     /* Auch hier reichen die Rohzeilen — cat.getBank() für alle 23
        Kategorien war für einen einzigen Tagesauftrag viel zu teuer. */
+    /* Im Deutsch-Raum nur deutsche Aufgaben: alleRohfragen() liefert
+       auch den Italienisch-Kurs mit (Kategorien mit dem Vorsatz
+       „it-"), und der gehört hier nicht in den Topf. */
     const roh = ExerciseData.alleRohfragen && (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it")
-      ? ExerciseData.alleRohfragen() : null;
+      ? ExerciseData.alleRohfragen().filter((z) => !String(z.categoryId || "").startsWith("it-"))
+      : null;
     const kategorien = roh
       ? [{ id: "__roh", getBank: () => roh.map((z) => ({ prompt: z.prompt, options: [z.correct, ...(z.wrongs || [])], correct: [0], explain: z.explain, level: z.level, categoryId: z.categoryId })) }]
       : ExerciseData.activeCategories();
@@ -2961,6 +3179,78 @@
     Backend.updateExtraProfileField("dailyTaskCache", task);
     return task;
   }
+  /* Eine Zahl, die für dieses Konto typisch ist. Damit bekommen zwei
+     Personen am selben Tag verschiedene Aufgaben, und dieselbe Person
+     den ganzen Tag über dieselbe. Absichtlich einfach: es geht um
+     Streuung, nicht um Geheimhaltung. */
+  function kontoStreuung() {
+    const nutzer = Backend.currentUser();
+    const quelle = String((nutzer && nutzer.id) || (nutzer && nutzer.email) || "gast");
+    let h = 0;
+    for (let i = 0; i < quelle.length; i++) h = (h * 31 + quelle.charCodeAt(i)) % 100000;
+    return h;
+  }
+
+  /* Welche Übungskategorie zu einem Spiel passt. Die neueren Spiele
+     tragen ihre Ergebnisse unter eigenen Namen ein; ohne diese
+     Zuordnung lief die Personalisierung für sie ins Leere. */
+  const SPIEL_ZU_UEBUNG = {
+    erbschaft: "faelle",
+    arzt: "faelle",
+    gewitter: "konnektoren",
+    fundbuero: "relativsatz",
+    // Die neuen Abenteuerspiele hatten hier keinen Eintrag — damit
+    // konnte die Tagesaufgabe zu ihnen keine passende Übung ziehen.
+    wetterkarte: "faelle",          // Adjektivendungen
+    baustelle: "passiv",
+    flohmarkt: "als-wie",           // Vergleich und Steigerung
+    zug: "konjunktiv",
+    schatzkarte: "praefixverben",   // Befehlsform, oft mit Vorsilbe
+    backstube: "praefixverben",      // trennbare Verben
+    setzerei: "haeufige-fehler",     // Großschreibung
+    wortkette: "wortbildung",        // Komposita
+    augenblick: "wortstellung",
+    umzug: "praepositionen",         // Wechselpräpositionen
+    marktstand: "wortschatz",
+    wortwaage: "synonyme",           // Bedeutungsnuancen
+    maskenball: "haeufige-fehler",   // falsche Freunde
+    sprachatlas: "wortschatz",
+    wortbaum: "wortbildung",         // Wortfamilien
+    zwillinge: "homophone",          // Minimalpaare
+    silbenturm: "wortschatz",
+    flussfuchs: "artikel",
+    fuchsuhr: "wortschatz",
+    sortierer: "wortschatz",
+    korrektour: "haeufige-fehler",
+    wortkanone: "wortschatz",
+    wortblasen: "wortschatz",
+    wortarten: "wortbildung",
+    satzpuzzle: "wortstellung",
+    wackelturm: "wortschatz",
+    werbinich: "wortschatz",
+    wortbaustelle: "wortschatz",
+    buchstabensalat: "wortschatz",
+    vokabelmeister: "wortschatz",
+    blitzrunde: "wortschatz",
+    wortangler: "synonyme",
+    wortleiter: "wortschatz",
+    katzenzimmer: "praepositionen",
+    satzbruecke: "konnektoren",
+    wortschmiede: "wortbildung",
+    betonungstrainer: "wortschatz",
+    kreuzwortraetsel: "wortschatz",
+    memory: "synonyme",
+  };
+
+  /* Aus einem Schwerpunkt die Kategorie machen, aus der sich wirklich
+     eine Aufgabe ziehen lässt. */
+  function uebungFuerSchwerpunkt(id) {
+    if (!id) return null;
+    if (ExerciseData.activeGetCategory(id)) return id;
+    const ersatz = SPIEL_ZU_UEBUNG[id];
+    return ersatz && ExerciseData.activeGetCategory(ersatz) ? ersatz : null;
+  }
+
   function pickDailyTaskFresh() {
     // Selbsteinschätzung hat Vorrang vor der automatisch aus dem Spielverhalten erkannten
     // Schwäche — die Person hat das aktiv selbst angegeben, das ist die klarste Absicht.
@@ -2971,13 +3261,17 @@
     // dann wirklich genau das, was man ohnehin am meisten spielt. Auswahl INNERHALB der
     // Kategorie ist ebenfalls fest an den Kalendertag gekoppelt, nicht zufällig.
     if (focus) {
-      const cat = ExerciseData.activeGetCategory(focus.id);
+      /* Führt der Schwerpunkt auf ein Spiel ohne eigene Fragen-Bank,
+         wird das verwandte Übungsgebiet genommen — sonst fiele die
+         Personalisierung genau bei den neueren Spielen still aus. */
+      const catId = uebungFuerSchwerpunkt(focus.id);
+      const cat = catId ? ExerciseData.activeGetCategory(catId) : null;
       if (cat && typeof cat.getBank === "function") {
         try {
           const bank = cat.getBank().filter((q) => q.options && q.correct && q.correct.length === 1);
           if (bank.length) {
-            const q = bank[dayIdx % bank.length];
-            const promptText = focus.id === "artikel"
+            const q = bank[(dayIdx + kontoStreuung()) % bank.length];
+            const promptText = catId === "artikel"
               ? `Welcher Artikel gehört zu „${q.prompt.replace("___ ", "")}"?`
               : q.prompt.replace("___", "…");
             return { word: promptText, options: q.options, correctIdx: q.correct[0], focus, isPersonalized: true };
@@ -2985,8 +3279,11 @@
         } catch (e) { /* falls eine Kategorie nicht kompatibel ist, einfach auf Standard zurückfallen */ }
       }
     }
+    /* Auch ohne erkannten Schwerpunkt nicht für alle dieselbe: Der
+       Tagesindex allein ist bei jedem gleich — erst zusammen mit der
+       Konto-Streuung wird daraus eine eigene Aufgabe. */
     const pool = buildDailyTaskPool();
-    const picked = pool[dayIdx % pool.length];
+    const picked = pool[(dayIdx + kontoStreuung()) % pool.length];
     return { ...picked, focus };
   }
   // Großer, kombinierter Tipp-Pool — kombiniert alle bereits geprüften Erklärungsquellen der
@@ -3446,8 +3743,22 @@
     if (tickerUpdateInFlight) return;
     tickerUpdateInFlight = true;
     try {
-      const items = await Backend.getActivity();
-      const text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
+      /* Im Lernraum Italienisch läuft nicht die deutsche
+         Seitenaktivität, sondern italienische Redewendungen mit
+         wörtlicher und wirklicher Bedeutung — Lesestoff, der zum Raum
+         gehört, statt deutscher Meldungen unter italienischer Flagge. */
+      let text;
+      let items = [];
+      if (imItalienischraum()) {
+        const spruch = ExerciseData.IT_TICKER || [];
+        text = spruch.length
+          ? Core.shuffle(spruch.slice()).map((x) => `• ${x.it} — wörtlich „${x.woertlich}“, gemeint: ${x.de}`).join("   ")
+          : track.textContent;
+        items = spruch;
+      } else {
+        items = await Backend.getActivity();
+        text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
+      }
       // WICHTIG: Ist der Text UNVERÄNDERT gegenüber dem letzten Durchlauf, die laufende Animation
       // gar nicht erst anfassen — sonst würde sie bei jedem der vielen Auslöser (alle 20 Sekunden
       // per Intervall, plus mehrere weitere Ereignisse im Code) komplett neu gestartet, selbst
@@ -3491,9 +3802,13 @@
   const tickerToggle = document.getElementById("tickerToggle");
   if (tickerToggle) {
     tickerToggle.addEventListener("click", () => {
+      /* Ausgeblendet wird jetzt die LAUFSCHRIFT, nicht die ganze
+         Leiste: rechts in ihr sitzt die Online-Anzeige, und die soll
+         nicht mitverschwinden. Links bleibt das Auge zum Umschalten. */
       tickerVisible = !tickerVisible;
       document.getElementById("tickerBar").classList.toggle("ticker-hidden", !tickerVisible);
       tickerToggle.textContent = tickerVisible ? "👁️" : "🙈";
+      tickerToggle.setAttribute("aria-label", tickerVisible ? "Laufschrift ausblenden" : "Laufschrift einblenden");
     });
   }
   updateTicker();
@@ -3795,34 +4110,127 @@
     }
     return 0; // Standard: erste (Stamm-)Silbe
   }
+  /* Ein schneller Zugriff „Wortform → geprüfte Silbenangabe". Wird
+     einmal gebaut und an der Wortzahl gemessen zwischengespeichert;
+     ein Lesetext fragt sonst für jedes Wort einzeln nach. */
+  let betonungIndex = null;
+  let betonungIndexStand = -1;
+  function betonungNachschlagen(wort) {
+    if (!VocabData.WORDS || !VocabData.WORDS.length) return null;
+    if (!betonungIndex || betonungIndexStand !== VocabData.WORDS.length) {
+      betonungIndex = new Map();
+      VocabData.WORDS.forEach((w) => {
+        if (!w.word || !w.syl) return;
+        /* Nur Angaben, die wirklich zur Schreibung passen. Bei
+           Fremdwörtern steht in syl absichtlich eine Lautschrift
+           („die Pizza" → „PIT-za"); die ist im Wörterbuch richtig, im
+           Fließtext würde sie aber das geschriebene Wort verfälschen. */
+        const nackt = String(w.word).replace(/^(der|die|das|sich)\s+/i, "").replace(/\s+/g, "");
+        const ausSilben = String(w.syl).split("-").map((t) => t.replace(/^\*/, "")).join("");
+        if (nackt.toLowerCase() !== ausSilben.toLowerCase()) return;
+        const k = nackt.toLowerCase();
+        if (!betonungIndex.has(k)) betonungIndex.set(k, w.syl);
+      });
+      betonungIndexStand = VocabData.WORDS.length;
+    }
+    return betonungIndex.get(String(wort).toLowerCase()) || null;
+  }
+
+  /* Welche Wörter im Fließtext beim Betonungsmodus KEINE Markierung
+     bekommen haben. Daraus wird die Liste, die ins Wörterbuch nachgetragen
+     werden muss — gesammelt statt geraten. */
+  const betonungFehlt = new Set();
+
+  /* Gebeugte Formen tragen ihre Betonung an derselben Stelle wie die
+     Grundform: „ABend" → „ABende", „ABbauen" → „er baut AB" bleibt am
+     Stamm. Das ist keine Regel, die etwas errät — die betonte Silbe
+     kommt weiter aus dem geprüften Wörterbucheintrag, sie wird nur auf
+     die tatsächlich geschriebene Form übertragen. Übertragen wird
+     ausschließlich dann, wenn die Buchstaben bis zum Ende der betonten
+     Silbe wirklich übereinstimmen. */
+  function betonungAusGrundform(word) {
+    const kandidaten = grundformKandidaten(word) || [];
+    for (const kand of kandidaten) {
+      const syl = betonungNachschlagen(kand);
+      if (!syl) continue;
+      const roh = String(syl).split("-");
+      const silben = roh.map((x) => x.replace(/^\*/, ""));
+      const idx = Core.betonteSilbenIndex(roh);
+      if (idx < 0) continue;
+      const bisEnde = silben.slice(0, idx + 1).join("").length;
+      if (word.length < bisEnde) continue;
+      if (word.slice(0, bisEnde).toLowerCase() !== silben.slice(0, idx + 1).join("").toLowerCase()) continue;
+      const anfang = bisEnde - silben[idx].length;
+      return word.slice(0, anfang)
+        + `<span class="stress">${word.slice(anfang, bisEnde)}</span>`
+        + word.slice(bisEnde);
+    }
+    return null;
+  }
+
   function ruleMarkWord(word) {
     // Nur echte Wörter ab 3 Buchstaben behandeln (kurze Wörter/Artikel haben ohnehin nur
     // eine Silbe und keine sinnvolle "Betonungswahl").
     if (!/^[A-Za-zÄÖÜäöüß]+$/.test(word) || word.length < 3) return null;
+    /* AUSDRÜCKLICH GEWÜNSCHT: nur GEPRÜFTE Betonungen anzeigen.
+
+       Vorher sprang der Regelalgorithmus ein, sobald ein Wort nicht im
+       Wörterbuch stand — und der rät. Bei „Betriebskostenabrechnung"
+       ging das gut, bei einem Fremdwort oder einem Namen nicht, und
+       eine falsch markierte Silbe ist schlimmer als gar keine: man
+       lernt sie mit. Wer die Betonung anschaltet, soll sich darauf
+       verlassen können, dass jede Markierung von Hand geprüft ist.
+
+       Steht nichts im Wörterbuch, bleibt das Wort deshalb unmarkiert
+       und wandert in betonungFehlt — die Liste ist die Arbeitsvorlage
+       fürs Nachtragen. */
+    const geprueft = betonungNachschlagen(word);
+    if (geprueft) {
+      const gesetzt = Core.formatStress(geprueft);
+      /* formatStress schreibt die erste Silbe groß (Wörterbuch-Form).
+         Im Fließtext muss die Schreibung des Satzes erhalten bleiben —
+         „der fuchs" darf nicht zu „der Fuchs" werden und umgekehrt. */
+      return word[0] === word[0].toUpperCase()
+        ? gesetzt
+        : gesetzt.replace(/(>|^)([A-ZÄÖÜ])/, (m, vor, buchstabe) => vor + buchstabe.toLowerCase());
+    }
     /* Zusammengesetzte Wörter haben mehr als eine Betonung:
-       „Betriebskostenabrechnung“ wird auf BETRIEBS haupt-, auf KOSten und
-       ABrechnung nebenbetont. Wer nur die erste Betonung sieht, liest den
-       Rest flach — und genau das klingt falsch. */
+       „Betriebskostenabrechnung" wird auf BETRIEBS haupt-, auf KOSten und
+       ABrechnung nebenbetont. Das gilt aber nur, wenn JEDES Glied selbst
+       im Wörterbuch steht — sonst wäre es wieder geraten. */
     const teile = zerlegeKompositum(word);
     if (teile && teile.length > 1) {
-      let pos = 0;
-      const stuecke = teile.map((teil, n) => {
-        const echt = word.slice(pos, pos + teil.length);
-        pos += teil.length;
-        const silben = ruleSyllabify(echt);
-        if (silben.length <= 1) return n === 0 ? `<span class="stress">${echt}</span>` : `<span class="stress stress-neben-inline">${echt}</span>`;
-        const idx = ruleStressIndex(echt, silben);
-        const klasse = n === 0 ? "stress" : "stress stress-neben-inline";
-        return silben.map((sil, i) => (i === idx ? `<span class="${klasse}">${sil}</span>` : sil)).join("");
-      });
-      if (pos < word.length) stuecke.push(word.slice(pos));
-      return stuecke.join("");
+      const silbenTeile = teile.map((t) => betonungNachschlagen(t));
+      if (silbenTeile.every(Boolean)) {
+        let pos = 0;
+        const stuecke = teile.map((teil, n) => {
+          const echt = word.slice(pos, pos + teil.length);
+          pos += teil.length;
+          const silben = String(silbenTeile[n]).split("-").map((x) => x.replace(/^\*/, ""));
+          const idx = Core.betonteSilbenIndex(String(silbenTeile[n]).split("-"));
+          const klasse = n === 0 ? "stress" : "stress stress-neben-inline";
+          if (silben.length <= 1 || idx < 0) return `<span class="${klasse}">${echt}</span>`;
+          /* Die Silben aus dem Wörterbuch stehen in Wörterbuchschreibung;
+             im Satz gilt die Schreibung des Satzes. Deshalb wird die
+             Länge jeder Silbe genommen und daraus das echte Wort
+             geschnitten. */
+          let k = 0;
+          return silben.map((sil, i) => {
+            const stueck = echt.slice(k, k + sil.length);
+            k += sil.length;
+            return i === idx ? `<span class="${klasse}">${stueck}</span>` : stueck;
+          }).join("") + echt.slice(k);
+        });
+        if (pos < word.length) stuecke.push(word.slice(pos));
+        return stuecke.join("");
+      }
     }
-    const syllables = ruleSyllabify(word);
-    if (syllables.length <= 1) return null;
-    const idx = ruleStressIndex(word, syllables);
-    return syllables.map((s, i) => (i === idx ? `<span class="stress">${s}</span>` : s)).join("");
+    const ausGrundform = betonungAusGrundform(word);
+    if (ausGrundform) return ausGrundform;
+    betonungFehlt.add(word.toLowerCase());
+    return null;
   }
+
   // Wendet die Betonung auf alle Text-Knoten innerhalb von `root` an (umkehrbar: das
   // Original bleibt in data-orig gespeichert, damit man beim Ausschalten exakt zurückwechseln
   // kann, ohne die ganze Seite neu laden zu müssen).
@@ -3837,6 +4245,16 @@
         // Bereits handgeprüft markierte Bereiche (Vokabeltrainer-Silben, Sternzeichen/Geschlecht-Badges)
         // dürfen vom groben, regelbasierten Algorithmus nicht noch einmal angefasst werden.
         if (parent.closest(".vocab-syl, .zodiac-badge, .stress-mark")) return NodeFilter.FILTER_REJECT;
+        /* Nur der gelesene Text, nicht die Umgebung. Überschriften,
+           Schaltflächen, Reiter, Marken und Hinweiszeilen liest niemand
+           vor — dort ist die Betonungsmarkierung nur Unruhe. Vorher
+           stand sogar auf dem Schalter „Betonung an" selbst ein Punkt
+           unter jedem betonten Vokal. */
+        if (parent.closest(
+          "h1, h2, h3, h4, h5, h6, button, a, label, summary, select, "
+          + ".eyebrow, .empty-note, .subnav-pill, .tape-tab, .trophy-chip, .level-badge, "
+          + ".wegweiser, .games-pill, .btn, .badge, .chip, .site-banner, .toast-popup"
+        )) return NodeFilter.FILTER_REJECT;
         if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       },
@@ -3895,7 +4313,29 @@
   /* Setzt die Betonung in einem Lesebereich — oder nimmt sie wieder weg. */
   function leseBetonungAnwenden(bereich) {
     if (!bereich) return;
-    if (leseBetonungAn()) applyStressToTree(bereich);
+    /* Die geprüften Betonungen stehen im Wortschatz, und der wird erst
+       beim Wechsel nach „Lernen"/„Wissen" geladen. Ist er noch
+       unterwegs, bliebe der ganze Text unmarkiert — seit nur noch
+       Geprüftes markiert wird, gäbe es dann gar keine Betonung. Also
+       nach dem Laden noch einmal drübergehen. */
+    if (leseBetonungAn() && wortschatzNachziehen(() => leseBetonungAnwenden(bereich))) {
+      if (!(VocabData.WORDS && VocabData.WORDS.length)) return;
+    }
+    /* AUSDRÜCKLICH GEWÜNSCHT: im Kalenderbereich soll die Betonung nur
+       auf dem LESETEXT der Niveaus A1 bis C2 liegen — nicht auf der
+       ganzen Sektion. Vorher bekamen auch Nebenbemerkungen,
+       Archivzeilen und Erklärkästen ihre Punkte, und der eigentliche
+       Text ging darin unter.
+
+       Die Lesetexte tragen ohnehin schon die Klasse .sammel-text (die
+       Stelle, an der man im Sammelmodus Wörter antippt). Gibt es davon
+       welche, gilt die Betonung genau dort; sonst wie bisher für den
+       ganzen Bereich. */
+    const lesestellen = bereich.querySelectorAll(".sammel-text");
+    const ziele = lesestellen.length ? [...lesestellen] : [bereich];
+    if (leseBetonungAn()) ziele.forEach((z) => applyStressToTree(z));
+    // Beim Abschalten immer den GANZEN Bereich säubern: früher markierte
+    // Stellen außerhalb der Lesetexte sollen nicht stehen bleiben.
     else if (!isStressModeOn()) removeStressFromTree(bereich);
   }
   /* Ein Klick-Handler für alle drei Bereiche. */
@@ -3904,7 +4344,7 @@
     if (!knopf) return;
     setzeLeseBetonung(!leseBetonungAn());
     // Alle Lesebereiche neu zeichnen, damit der Schalter überall gleich steht.
-    ["kompassArea", "dichterArea", "schneeArea"].forEach((id) => {
+    ["kompassArea", "dichterArea", "schneeArea", "beitraegeArea"].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const stand = el.querySelector("[data-lese-betonung]");
@@ -3916,6 +4356,11 @@
   });
 
   function applyStressEverywhere(on) {
+    // Dasselbe wie oben: ohne geladenen Wortschatz gibt es keine
+    // geprüfte Betonung, also nach dem Laden noch einmal anwenden.
+    if (on && wortschatzNachziehen(() => applyStressEverywhere(true))) {
+      if (!(VocabData.WORDS && VocabData.WORDS.length)) return;
+    }
     const excluded = new Set(getStressExcludedSections());
     STRESS_EXCLUDABLE_SECTIONS.forEach((sec) => {
       const el = document.getElementById(sec.id);
@@ -4234,7 +4679,9 @@
   let toastedNotificationIds = new Set();
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    const [requests, challenges, notifications, myMessages] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getMyMessages()]);
+    const [requests, alleDuelle, notifications, myMessages] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getMyMessages()]);
+    /* Nur die Duelle des aktuellen Lernraums zählen und blinken. */
+    const challenges = { incoming: challengesFuerRaum(alleDuelle.incoming), outgoing: challengesFuerRaum(alleDuelle.outgoing) };
     herausforderungenMerken(challenges.incoming);
     const unreadInbox = myMessages.inbox.filter((m) => !m.read);
     const unreadMsgCount = unreadInbox.length;
@@ -4372,10 +4819,13 @@
   async function updateWeather() {
     if (!weatherOut) return;
     try {
-      const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.405&current=temperature_2m,weather_code&timezone=Europe%2FBerlin");
+      const ort = ortFuerLernraum();
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ort.breite}&longitude=${ort.laenge}`
+        + `&current=temperature_2m,weather_code&timezone=${encodeURIComponent(ort.zone)}`);
       if (!res.ok) throw new Error("Wetter nicht verfügbar");
       const data = await res.json();
       weatherOut.textContent = `${Math.round(data.current.temperature_2m)}°`;
+      weatherOut.title = ort.name;
       if (weatherIcon) weatherIcon.textContent = WEATHER_ICONS[data.current.weather_code] || "🌡️";
     } catch (e) {
       weatherOut.textContent = "—";
@@ -4528,7 +4978,7 @@
           }
         }
         for (const fid of ids) {
-          try { await Backend.createChallenge(fid, [catId], mitgabe); } catch (e) { console.warn(e); }
+          try { await challengeErstellen(fid, [catId], mitgabe); } catch (e) { console.warn(e); }
         }
         if (mitgabe) {
           const ging = Backend.challengeListeMoeglich && Backend.challengeListeMoeglich();
@@ -4831,7 +5281,7 @@
           // Bei mehreren Freunden: ein Duell pro Person anlegen, alle mit derselben Auswahl
           let firstChallengeId = null;
           for (const fid of selectedChallengeFriendIds) {
-            const cid = await Backend.createChallenge(fid, [...selectedCategories]);
+            const cid = await challengeErstellen(fid, [...selectedCategories]);
             if (!firstChallengeId) firstChallengeId = cid;
           }
           Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters, selectedExerciseLevel);
@@ -4879,14 +5329,28 @@
     grammatikLevel = applyDefaultCefrLevel(grammatikLevel, (v) => { grammatikLevel = v; }, "grammatik");
     const alle = ExerciseData.activeGrammatik() || {};
     const themen = alle[grammatikLevel] || [];
+    /* Im Italienisch-Raum soll die Grammatik nicht nur sechs Stufen
+       anbieten, sondern auch beantworten, wo man anfängt. Deshalb
+       stehen hier der Stand aus dem Kurs und ein Sprung genau dorthin. */
+    const itRaum = imItalienischraum();
+    const kursStand = itRaum ? itKursStand() : null;
+    const kursStufe = itRaum ? itKursAktuelleStufe(kursStand) : null;
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:10px;">Die wichtigsten Grammatikthemen deines Niveaus — jeweils in zwei Sätzen erklärt, mit Beispielen. Antippen zum Aufklappen.</p>
+      ${itRaum ? `<div class="question-card" style="margin-bottom:14px; border:2px dashed #2E8B57;">
+        <p class="eyebrow" style="margin-top:0;">📍 Hier stehst du im Kurs: Stufe ${kursStufe}</p>
+        <p class="empty-note" style="margin:0 0 8px;">${IT_KURS_STUFEN.filter((l) => kursStand[l].gemeistert).length} von 6 Stufen abgeschlossen. Die Grammatik kannst du auf jeder Stufe lesen — geübt wird der Reihe nach.</p>
+        <div class="quiz-actions" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin:0;">
+          <button type="button" class="btn btn-coffee" id="grammatikZuKursstufe" style="margin:0;">▶ Grammatik zu Stufe ${kursStufe}</button>
+          <button type="button" class="btn btn-ghost" id="grammatikZumEinstufungstest" style="margin:0;">🧭 Wo soll ich anfangen?</button>
+        </div>
+      </div>` : ""}
       <div class="question-card" style="margin-bottom:14px;">
         <p class="eyebrow" style="margin-bottom:6px;">⚖️ Sprachniveau</p>
         <div class="trophy-case" style="flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:2px; margin:0;">
-          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip grammatik-level-btn ${grammatikLevel === lvl ? "selected" : ""}" data-gr-level="${lvl}">${lvl}</button>`).join("")}
+          ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip grammatik-level-btn ${grammatikLevel === lvl ? "selected" : ""}" data-gr-level="${lvl}">${itRaum && kursStand[lvl].gemeistert ? "✅ " : itRaum && lvl === kursStufe ? "📍 " : ""}${lvl}</button>`).join("")}
         </div>
-        <p class="empty-note" style="margin-top:8px; font-size:0.72rem;">Voreingestellt auf dein Profil-Niveau.</p>
+        <p class="empty-note" style="margin-top:8px; font-size:0.72rem;">${itRaum ? "✅ geschafft · 📍 hier stehst du gerade" : "Voreingestellt auf dein Profil-Niveau."}</p>
       </div>
       ${themen.length ? themen.map((t, i) => `
         <div class="question-card" style="margin-bottom:10px;">
@@ -4907,6 +5371,13 @@
     `;
     area.querySelectorAll(".grammatik-level-btn").forEach((btn) => {
       btn.addEventListener("click", () => { grammatikLevel = btn.dataset.grLevel; grammatikOffen = null; renderGrammatik(); });
+    });
+    area.querySelector("#grammatikZuKursstufe")?.addEventListener("click", () => {
+      grammatikLevel = kursStufe; grammatikOffen = 0; autoCefrLevel.grammatik = null; renderGrammatik();
+    });
+    area.querySelector("#grammatikZumEinstufungstest")?.addEventListener("click", () => {
+      jumpToSubnavTarget('#learnSubnav [data-sub="sub-italienischkurs"]', "#italienischkursArea");
+      setTimeout(() => { itEinstufungStarten(); }, 260);
     });
     area.querySelectorAll(".grammatik-toggle").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -5427,7 +5898,14 @@
   }
   function renderVocab(filter = "") {
     wortschatzNachziehen(() => { if (vocabArea && vocabArea.innerHTML) renderVocab(filter); });
-    const list = VocabData.WORDS.filter((w) => w.word.toLowerCase().includes(filter.toLowerCase()) || w.en.toLowerCase().includes(filter.toLowerCase()));
+    /* Im Lernraum Italienisch kommt die Vokabelliste aus dem
+       italienischen Wortschatz. Vorher stand hier fest VocabData.WORDS —
+       also deutsche Vokabeln mitten im Italienischkurs. */
+    const quelle = imItalienischraum() ? (ExerciseData.IT_WOERTER || []) : VocabData.WORDS;
+    const suchtext = filter.toLowerCase();
+    const list = quelle.filter((w) => w.word.toLowerCase().includes(suchtext)
+      || String(w.de || "").toLowerCase().includes(suchtext)
+      || String(w.en || "").toLowerCase().includes(suchtext));
     vocabArea.innerHTML = `
       <div class="vocab-toolbar"><input type="text" class="vocab-search" id="vocabSearch" placeholder="Wort suchen…" value="${filter}" /></div>
       <div class="vocab-grid">
@@ -5454,7 +5932,7 @@
       const neu = document.getElementById("vocabSearch");
       if (neu) { neu.focus(); try { neu.setSelectionRange(stelle, stelle); } catch (err) { /* egal */ } }
     });
-    vocabArea.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word)));
+    vocabArea.querySelectorAll(".speak-btn").forEach((btn) => btn.addEventListener("click", () => Core.speak(btn.dataset.word, imItalienischraum() ? "it" : "de")));
   }
   renderVocab();
 
@@ -5470,7 +5948,25 @@
   function stripArticleFromSyl(syl) {
     return syl.replace(/^(der|die|das)\s+/, "");
   }
+  /* Der italienische Artikel steht im Wörterbuch am Wort („la porta"),
+     die Silben aber nur am Wort selbst („POR-ta"). Für den Trainer wird
+     er abgetrennt: Man soll eine Silbe DES WORTES antippen, und ein
+     Artikel, der in keinem Knopf vorkommt, stiftet nur Verwirrung. */
+  function itOhneArtikel(wort) {
+    return String(wort || "").replace(/^(l'|un'|il|lo|la|i|gli|le|un|uno|una)\s*/i, "").trim() || String(wort || "");
+  }
   function stressTrainerWordPool() {
+    /* Im Lernraum Italienisch kommt der Vorrat aus dem italienischen
+       Wörterbuch. Sonst übte man ausgerechnet im Italienischkurs die
+       Betonung deutscher Wörter — und genau die Betonung war der Punkt,
+       an dem es im Italienischen am häufigsten hakt. Die Silben stehen
+       dort in derselben Schreibweise (betonte Silbe in Großbuchstaben),
+       der ganze Rest der Übung bleibt unverändert. */
+    if (imItalienischraum()) {
+      return (ExerciseData.IT_WOERTER || [])
+        .filter((w) => w.syl && w.syl.includes("-") && !itOhneArtikel(w.word).includes(" "))
+        .map((w) => ({ word: itOhneArtikel(w.word), syl: w.syl, en: w.de, level: w.level, it: true }));
+    }
     const pool = [];
     /* Mehrwortige Stichwörter („zu Lebzeiten", „gute Besserung") sind für das
        Wörterbuch richtig, für diese Übung aber nicht: hier soll man EINE Silbe
@@ -5517,7 +6013,28 @@
   // Kurze, pädagogisch begründete Erklärung, WARUM die Betonung so liegt — nur bei Mustern, die
   // ich wirklich sicher weiß (unbetonte Vorsilben, bekannte Fremdwort-Endungen), sonst schlicht
   // "typisches deutsches Muster" statt einer erfundenen Begründung.
+  /* Die italienischen Betonungsregeln — anders als im Deutschen zählt
+     man von hinten, und die vier Fälle haben eigene Namen. */
+  function stBetonungsRegelnText() {
+    if (imItalienischraum()) {
+      return "Italienisch zählt die Betonung von hinten. Vorletzte Silbe = der Normalfall (parola piana): la POR-ta, il bam-BI-no. Drittletzte Silbe = die Ausnahme, die man lernen muss (sdrucciola): TA-vo-lo, MU-si-ca, TE-le-fo-no. Letzte Silbe = trägt fast immer einen geschriebenen Akzent (tronca): caf-FÈ, cit-TÀ, per-CHÉ. Und viertletzte Silbe gibt es fast nur bei der 3. Person Plural: TE-le-fo-na-no.";
+    }
+    return "Ein paar zuverlässige Faustregeln zur deutschen Wortbetonung: Verben auf -ieren werden IMMER auf dem ie betont (stu-DIE-ren, te-le-fo-NIE-ren). Die Vorsilben be-, ge-, ver-, ent-, er-, zer-, emp- sind NIE betont — die Betonung liegt auf der Silbe danach (be-KOM-men, ver-STE-hen). Trennbare Vorsilben wie auf-, an-, aus-, ein-, mit-, vor-, zu- werden dagegen SELBST betont (AUF-stehen, MIT-nehmen). Bei den meisten anderen deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Fremdwörter folgen oft ihrem eigenen Muster.";
+  }
+  function explainStressIt(word, syl) {
+    const s = syl.split("-");
+    const i = Core.betonteSilbenIndex(s);
+    const vonHinten = s.length - 1 - i;
+    if (/[àèéìòù]$/i.test(word)) {
+      return "Steht am Wortende ein Akzent, ist die letzte Silbe betont — das ist im Italienischen die einzige Betonung, die man wirklich sehen kann (caffè, città, perché).";
+    }
+    if (vonHinten === 0) return "Endbetont (parola tronca). Solche Wörter tragen im Italienischen fast immer einen geschriebenen Akzent auf der letzten Silbe.";
+    if (vonHinten === 1) return "Vorletzte Silbe — der Normalfall im Italienischen (parola piana). Ungefähr vier von fünf Wörtern werden so betont.";
+    if (vonHinten === 2) return "Drittletzte Silbe (parola sdrucciola). Das sieht man dem Wort nicht an, das muss man lernen: TA-vo-lo, MU-si-ca, TE-le-fo-no.";
+    return "Viertletzte Silbe (parola bisdrucciola). Fast immer Verbformen der 3. Person Plural — die Betonung bleibt dort, wo sie im Singular lag: (lui) TE-le-fo-na → (loro) TE-le-fo-na-no.";
+  }
   function explainStress(word, syl) {
+    if (imItalienischraum()) return explainStressIt(word, syl);
     const lower = word.toLowerCase();
     const prefixes = { "be": "be-", "ge": "ge-", "er": "er-", "ver": "ver-", "zer": "zer-", "ent": "ent-", "emp": "emp-", "miss": "miss-" };
     for (const [p, label] of Object.entries(prefixes)) {
@@ -5565,6 +6082,17 @@
     const s = entry.syl.split("-");
     const i = Core.betonteSilbenIndex(s);
     if (i < 0) return null;
+    /* Italienisch zählt von hinten: die vorletzte Silbe ist der
+       Normalfall (parola piana), die drittletzte die Ausnahme, die man
+       lernen muss (sdrucciola), die letzte trägt fast immer einen
+       geschriebenen Akzent (tronca). Die deutschen Kategorien
+       „erste/mittlere/letzte" träfen hier nichts. */
+    if (entry.it) {
+      const vonHinten = s.length - 1 - i;
+      if (vonHinten === 0) return "letzte";
+      if (vonHinten === 1) return "vorletzte";
+      return "drittletzte";
+    }
     if (i === 0) return "erste";
     if (i === s.length - 1 && s.length > 2) return "letzte";
     return "mittlere";
@@ -5574,6 +6102,23 @@
      die Regel, und wer sie nie sieht, lernt eine falsche Regel. Aber sie
      ist nicht mehr die Mehrheit. */
   function stressTrainerPlan(anzahl) {
+    /* Im Italienischen ist die VORLETZTE Silbe die Regel — wer nur sie
+       zu sehen bekommt, gewinnt die Übung, indem er immer die zweite
+       von rechts antippt. Deshalb bekommt sie auch hier nur etwa die
+       Hälfte der Runden. */
+    if (imItalienischraum()) {
+      /* Die endbetonten Wörter tragen ihren Akzent sichtbar (caffè,
+         città) — sie sind damit die einzigen, die man ABLESEN kann, und
+         wären als Viertel jeder Runde verschenkte Zeit. Der Schwerpunkt
+         liegt deshalb auf der drittletzten Silbe: die sieht man nicht,
+         und genau dort wird falsch betont. */
+      const itPlan = [];
+      for (let i = 0; i < anzahl; i++) {
+        const r = i % 10;
+        itPlan.push(r < 5 ? "vorletzte" : r < 9 ? "drittletzte" : "letzte");
+      }
+      return Core.shuffle(itPlan);
+    }
     const plan = [];
     for (let i = 0; i < anzahl; i++) {
       plan.push(i % 2 === 0 ? "erste" : (i % 4 === 1 ? "mittlere" : "letzte"));
@@ -5660,7 +6205,7 @@
     const w = stTrainerWord;
     area.innerHTML = `
       <div class="question-card">
-        <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total} <span class="subnav-info-icon" data-info="Ein paar zuverlässige Faustregeln zur deutschen Wortbetonung: Verben auf „-ieren&quot; werden IMMER auf dem „ie&quot; betont (stu-DIE-ren, te-le-fo-NIE-ren). Die Vorsilben be-, ge-, ver-, ent-, er-, zer-, emp- sind NIE betont — die Betonung liegt auf der Silbe danach (be-KOM-men, ver-STE-hen). Trennbare Vorsilben wie auf-, an-, aus-, ein-, mit-, vor-, zu- werden dagegen SELBST betont (AUF-stehen, MIT-nehmen). Bei den meisten anderen deutschen Wörtern liegt die Betonung auf der ersten Silbe des Wortstamms — Fremdwörter folgen oft ihrem eigenen, aus der Ursprungssprache übernommenen Muster.">ⓘ</span></p>
+        <p class="eyebrow">🎯 BETONUNGS-TRAINER · RUNDE ${stTrainerSession.round + 1} / ${stTrainerSession.total} <span class="subnav-info-icon" data-info="${stBetonungsRegelnText()}">ⓘ</span></p>
         ${fortschrittHtml(stTrainerSession.round, stTrainerSession.total)}
         <div class="trophy-case" style="margin-bottom:10px;">
           ${[["leicht", "🟢 Kurze Wörter"], ["mittel", "🟡 Drei Silben"], ["schwer", "🔴 Lange Wörter"], ["alle", "🎲 Gemischt"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
@@ -5668,7 +6213,9 @@
         ${wortQuelleChipsHtml("stresstrainer")}
         ${wortQuelleHinweisHtml("stresstrainer", wortQuelleFilter("stresstrainer", stressTrainerWordPool()).length, 4)}
         <p class="empty-note" style="margin-bottom:12px;">Welche Silbe wird bei diesem Wort betont? Antippen zum Wählen.<br>
-          <em>Vorsicht: Die Betonung liegt hier absichtlich nicht immer vorn — in etwa jedem zweiten Wort steckt sie woanders.</em></p>
+          <em>${imItalienischraum()
+            ? "Vorsicht: Die vorletzte Silbe ist im Italienischen zwar der Normalfall — hier liegt die Betonung aber in etwa jedem zweiten Wort woanders."
+            : "Vorsicht: Die Betonung liegt hier absichtlich nicht immer vorn — in etwa jedem zweiten Wort steckt sie woanders."}</em></p>
         <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0;">
           ${w.syllables.map((s, i) => `<button type="button" class="btn btn-ghost st-syl-btn" data-syl-idx="${i}" style="font-size:1.2rem; font-weight:800; text-transform:lowercase;">${s.toLowerCase()}</button>`).join("")}
         </div>
@@ -5709,7 +6256,7 @@
         // daraus lernt. Nur eine kurze Verzögerung (nicht 500ms+), da manche Geräte (v. a. iOS)
         // Sprachausgabe nach zu langer Verzögerung nicht mehr als direkte Reaktion auf den
         // Tastendruck werten und sie dann stillschweigend unterdrücken.
-        setTimeout(() => Core.speak(w.word), 150);
+        setTimeout(() => Core.speak(w.word, imItalienischraum() ? "it" : "de"), 150);
         setTimeout(() => {
           if (stTrainerSession.round >= stTrainerSession.total) {
             saveResultAndCheck({
@@ -6312,6 +6859,61 @@
      Kandidat wird anschließend im Wörterbuch nachgeschlagen; findet
      sich keiner, bleibt das Wort „nicht gefunden". Dadurch kann diese
      Funktion großzügig raten, ohne falsche Treffer zu erzeugen. */
+  /* Starke Verben, deren Präteritum und Partizip sich nicht aus der
+     Grundform ableiten lassen. Ohne diese Tabelle blieb in jedem
+     Erzähltext die halbe Handlung unerkannt. */
+  const STARKE_VERBEN = {
+    ging: "gehen", gingen: "gehen", gegangen: "gehen",
+    nahm: "nehmen", nahmen: "nehmen", genommen: "nehmen",
+    sprach: "sprechen", sprachen: "sprechen", gesprochen: "sprechen",
+    kam: "kommen", kamen: "kommen", gekommen: "kommen",
+    sah: "sehen", sahen: "sehen", gesehen: "sehen",
+    gab: "geben", gaben: "geben", gegeben: "geben",
+    fand: "finden", fanden: "finden", gefunden: "finden",
+    stand: "stehen", standen: "stehen", gestanden: "stehen",
+    lag: "liegen", lagen: "liegen", gelegen: "liegen",
+    saß: "sitzen", saßen: "sitzen", gesessen: "sitzen",
+    lief: "laufen", liefen: "laufen", gelaufen: "laufen",
+    fuhr: "fahren", fuhren: "fahren", gefahren: "fahren",
+    trug: "tragen", trugen: "tragen", getragen: "tragen",
+    schrieb: "schreiben", schrieben: "schreiben", geschrieben: "schreiben",
+    blieb: "bleiben", blieben: "bleiben", geblieben: "bleiben",
+    rief: "rufen", riefen: "rufen", gerufen: "rufen",
+    zog: "ziehen", zogen: "ziehen", gezogen: "ziehen",
+    flog: "fliegen", flogen: "fliegen", geflogen: "fliegen",
+    half: "helfen", halfen: "helfen", geholfen: "helfen",
+    hielt: "halten", hielten: "halten", gehalten: "halten",
+    ließ: "lassen", ließen: "lassen", gelassen: "lassen",
+    aß: "essen", aßen: "essen", gegessen: "essen",
+    trank: "trinken", tranken: "trinken", getrunken: "trinken",
+    schlief: "schlafen", schliefen: "schlafen", geschlafen: "schlafen",
+    sprang: "springen", sprangen: "springen", gesprungen: "springen",
+    warf: "werfen", warfen: "werfen", geworfen: "werfen",
+    schloss: "schließen", schlossen: "schließen", geschlossen: "schließen",
+    verlor: "verlieren", verloren: "verlieren",
+    gewann: "gewinnen", gewannen: "gewinnen", gewonnen: "gewinnen",
+    begann: "beginnen", begannen: "beginnen", begonnen: "beginnen",
+    vergaß: "vergessen", vergaßen: "vergessen", vergessen: "vergessen",
+    dachte: "denken", dachten: "denken", gedacht: "denken",
+    brachte: "bringen", brachten: "bringen", gebracht: "bringen",
+    wusste: "wissen", wussten: "wissen", gewusst: "wissen",
+    kannte: "kennen", kannten: "kennen", gekannt: "kennen",
+    nannte: "nennen", nannten: "nennen", genannt: "nennen",
+    stieg: "steigen", stiegen: "steigen", gestiegen: "steigen",
+    schien: "scheinen", schienen: "scheinen", geschienen: "scheinen",
+    hieß: "heißen", hießen: "heißen", geheißen: "heißen",
+    zwang: "zwingen", zwangen: "zwingen", gezwungen: "zwingen",
+    wuchs: "wachsen", wuchsen: "wachsen", gewachsen: "wachsen",
+    trat: "treten", traten: "treten", getreten: "treten",
+    schoss: "schießen", schossen: "schießen", geschossen: "schießen",
+    fiel: "fallen", fielen: "fallen", gefallen: "fallen",
+    hob: "heben", hoben: "heben", gehoben: "heben",
+    bot: "bieten", boten: "bieten", geboten: "bieten",
+    schnitt: "schneiden", schnitten: "schneiden", geschnitten: "schneiden",
+    band: "binden", banden: "binden", gebunden: "binden",
+    bat: "bitten", baten: "bitten", gebeten: "bitten",
+  };
+
   function grundformKandidaten(wort) {
     const roh = String(wort || "").trim().toLowerCase();
     if (roh.length < 3 || /\s/.test(roh)) return [];
@@ -6319,6 +6921,8 @@
     const dazu = (form) => {
       if (form && form.length >= 3) aus.add(form);
     };
+    // Steht die Form in der Tabelle, ist die Sache entschieden.
+    if (STARKE_VERBEN[roh]) dazu(STARKE_VERBEN[roh]);
 
     /* 1. Partizip II: „gegangen" → „gangen"/„gehen", „gekauft" → „kauft".
        Das ge- fällt weg, der Rest wird unten weiterbehandelt. */
@@ -6444,6 +7048,17 @@
     dictCacheWoerter = VocabData.WORDS.length;
     return entries;
   }
+  /* Die freigegebenen Zusatzwörter — der Teil des Wörterbuchs, der
+     ohne Dateiupload wächst. Sie werden einmal geladen und danach hier
+     gehalten, weil der Wörterbuchaufbau synchron läuft. */
+  let wortZusatzListe = [];
+  async function wortZusatzLaden(frisch) {
+    try { wortZusatzListe = (Backend.getWortZusatz ? await Backend.getWortZusatz(frisch) : []) || []; }
+    catch (e) { wortZusatzListe = []; }
+    dictCache = null;   // das Wörterbuch muss neu gebaut werden
+    return wortZusatzListe;
+  }
+
   function buildDictionaryEntriesUncached() {
     const entries = [];
     // Italienisch-Raum: eigener Wortschatz, komplett getrennt vom deutschen.
@@ -6453,6 +7068,14 @@
       });
       return entries;
     }
+    /* Ganz vorn die Wörter, die über die Seite selbst nachgetragen
+       wurden: sie sind ausdrücklich freigegeben und sollen eine ältere
+       Fassung überschreiben dürfen. */
+    wortZusatzListe.forEach((w) => {
+      if (!w || !w.word) return;
+      entries.push({ word: w.word, syl: w.syl || "", meaning: w.de || "", example: w.example || "",
+        level: w.level || "B1", verified: Boolean(w.syl), category: w.theme || "Nachgetragen", nachgetragen: true });
+    });
     // Zuerst der nachgelieferte Wortschatz — dadurch gewinnt bei gleichem Stichwort
     // immer die ausdrücklich gepflegte Fassung mit Niveau, Thema und Beispielsatz.
     // Ein Wort darf nur EINMAL im Wörterbuch stehen. Deshalb wird nicht nach dem
@@ -7263,6 +7886,49 @@
     return list;
   }
   /* Nur das Gitter, den Nachladeknopf und den Leer-Hinweis erneuern. */
+  /* AUSDRÜCKLICH GEWÜNSCHT: das Wörterbuch soll enthalten, was
+     gebraucht wird — und wachsen können, ohne dass jemand eine Datei
+     hochlädt. Findet die Suche nichts, steht hier der Vorschlagskasten.
+     Er wird eigens gezeichnet, weil beim Tippen nur die Trefferliste
+     erneuert wird und nicht die ganze Ansicht. */
+  function dictVorschlagZeichnen(leer) {
+    const host = document.getElementById("dictVorschlagHost");
+    if (!host) return;
+    const wort = dictFilterText.trim();
+    if (!leer || wort.length < 2) { host.innerHTML = ""; return; }
+    if (host.dataset.wort === wort) return;   // steht schon da
+    host.dataset.wort = wort;
+    host.innerHTML = `
+      <div class="question-card wort-vorschlag" style="margin-top:10px;">
+        <p class="eyebrow" style="margin-top:0;">➕ Fehlt „${escapeHtml(wort)}"?</p>
+        <p class="empty-note" style="margin:0 0 10px;">Trag ein, was du weißt — schon eine Erklärung reicht. Der Eintrag geht zur Prüfung und steht danach für alle im Wörterbuch.</p>
+        <div class="wort-vorschlag-felder">
+          <input type="text" id="vorschlagArtikel" placeholder="der / die / das (wenn es ein Nomen ist)" maxlength="12">
+          <input type="text" id="vorschlagBedeutung" placeholder="Was heißt es? *" maxlength="200">
+          <input type="text" id="vorschlagBeispiel" placeholder="Ein Satz, in dem es vorkommt" maxlength="200">
+          <input type="text" id="vorschlagSilben" placeholder="Silben mit Betonung, z. B. FEN-ster (wenn du sie kennst)" maxlength="60">
+        </div>
+        <button type="button" class="btn btn-coffee" id="vorschlagSenden" style="margin-top:8px;">Vorschlagen</button>
+        <p class="empty-note" id="vorschlagMeldung" style="margin:8px 0 0;"></p>
+      </div>`;
+    host.querySelector("#vorschlagSenden").addEventListener("click", async () => {
+      const meldung = host.querySelector("#vorschlagMeldung");
+      const bedeutung = host.querySelector("#vorschlagBedeutung").value.trim();
+      if (!Backend.currentUser()) { meldung.textContent = "Dafür musst du angemeldet sein."; return; }
+      if (bedeutung.length < 3) { meldung.textContent = "Bitte schreib wenigstens kurz, was das Wort heißt."; return; }
+      try {
+        await Backend.wortVorschlagen(wort, {
+          artikel: host.querySelector("#vorschlagArtikel").value.trim(),
+          bedeutung,
+          beispiel: host.querySelector("#vorschlagBeispiel").value.trim(),
+          silben: host.querySelector("#vorschlagSilben").value.trim(),
+        });
+        meldung.textContent = "✅ Danke — der Vorschlag ist zur Prüfung eingegangen.";
+        host.querySelector("#vorschlagSenden").disabled = true;
+      } catch (e) { meldung.textContent = "⚠️ " + (e.message || "Hat nicht geklappt."); }
+    });
+  }
+
   function dictListeErneuern() {
     const gitter = document.getElementById("dictGrid");
     if (!gitter) return;
@@ -7270,6 +7936,7 @@
     gitter.innerHTML = list.slice(0, dictGezeigt).map(dictKarte).join("");
     const leer = document.getElementById("dictLeer");
     if (leer) leer.style.display = list.length ? "none" : "";
+    dictVorschlagZeichnen(list.length === 0);
     const knopf = document.getElementById("dictMehr");
     const uebrig = list.length - dictGezeigt;
     if (knopf) {
@@ -7319,7 +7986,9 @@
       </div>
       <button type="button" class="btn btn-ghost" id="dictMehr" style="display:${list.length > dictGezeigt ? "block" : "none"}; width:100%; margin-top:10px;">Weitere ${Math.min(DICT_SEITE, Math.max(0, list.length - dictGezeigt))} anzeigen (${Math.max(0, list.length - dictGezeigt).toLocaleString("de-DE")} übrig)</button>
       <p class="empty-note" id="dictLeer" style="display:${list.length === 0 ? "block" : "none"};">Keine Treffer.</p>
+      <div id="dictVorschlagHost"></div>
     `;
+    dictVorschlagZeichnen(list.length === 0);
     const suche = document.getElementById("dictSearch");
     suche.addEventListener("input", (e) => {
       dictFilterText = e.target.value;
@@ -7357,7 +8026,7 @@
       area.dataset.vorlesenVerdrahtet = "1";
       area.addEventListener("click", async (ev) => {
         const knopf = ev.target.closest(".speak-btn");
-        if (knopf) { Core.speak(knopf.dataset.word); return; }
+        if (knopf) { Core.speak(knopf.dataset.word, imItalienischraum() ? "it" : "de"); return; }
         const merken = ev.target.closest("[data-merken]");
         if (!merken) return;
         // Der Stern muss SOFORT reagieren; gespeichert wird nebenher.
@@ -7511,14 +8180,17 @@
         </div>
         ${miniBugReportBtnHtml(`Aussprache-Trainer, Wort „${w.word}“`)}
       </div>`;
-    document.getElementById("ausspracheHoeren").addEventListener("click", () => Core.speak(w.word));
+    document.getElementById("ausspracheHoeren").addEventListener("click", () => Core.speak(w.word, imItalienischraum() ? "it" : "de"));
     document.getElementById("ausspracheAufnehmen").addEventListener("click", async () => {
       if (s.laeuft) return;
       s.laeuft = true;
       const knopf = document.getElementById("ausspracheAufnehmen");
       knopf.textContent = "🎙️ Ich höre zu …";
       knopf.disabled = true;
-      const gehoert = await Core.hoereZu({ hoechstdauer: 8000 });
+      /* Ohne Sprachangabe hört der Browser auf Deutsch zu — ein
+         italienisches Wort käme dann immer als „nicht verstanden"
+         zurück, ganz gleich wie gut es gesprochen war. */
+      const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
       s.laeuft = false;
       if (gehoert.fehler) {
         const texte = {
@@ -7791,18 +8463,26 @@
       const s = roh[lvl] || {};
       stand[lvl] = { richtig: s.richtig || 0, gesamt: s.gesamt || 0, gemeistert: Boolean(s.gemeistert) };
     });
+    // Die Stufe aus dem Einstufungstest — sie öffnet die Stufen bis
+    // dorthin, ohne sie als geschafft auszugeben.
+    stand.einstufung = IT_KURS_STUFEN.includes(roh.einstufung) ? roh.einstufung : null;
     return stand;
   }
   // Höchste Stufe, die man spielen darf: die erste noch nicht gemeisterte.
   function itKursAktuelleStufe(stand) {
     const s = stand || itKursStand();
-    for (const lvl of IT_KURS_STUFEN) if (!s[lvl].gemeistert) return lvl;
-    return "C2";
+    let erste = "C2";
+    for (const lvl of IT_KURS_STUFEN) { if (!s[lvl].gemeistert) { erste = lvl; break; } }
+    /* Wer sich eingestuft hat, steht mindestens dort — sonst schickte
+       der Kurs eine B1-Lernerin weiter nach A1 zurück. */
+    if (s.einstufung && IT_KURS_STUFEN.indexOf(s.einstufung) > IT_KURS_STUFEN.indexOf(erste)) return s.einstufung;
+    return erste;
   }
   function itKursFreigegeben(lvl, stand) {
     const s = stand || itKursStand();
     const idx = IT_KURS_STUFEN.indexOf(lvl);
     if (idx <= 0) return true;
+    if (s.einstufung && IT_KURS_STUFEN.indexOf(s.einstufung) >= idx) return true;
     return s[IT_KURS_STUFEN[idx - 1]].gemeistert;
   }
   // Nach jeder beendeten Runde im Italienisch-Raum aufrufen. Zählt richtige und
@@ -7832,11 +8512,210 @@
     }
     if (typeof renderItalienischkurs === "function") renderItalienischkurs();
   }
+  /* ============================================================
+     EINSTUFUNGSTEST — wo fängt man an?
+     ------------------------------------------------------------
+     Ohne ihn beginnt jede und jeder bei A1, auch wer längst
+     weiterkommt. Der Test geht die Stufen der Reihe nach durch:
+     vier echte Aufgaben aus den italienischen Kategorien, und wer
+     mindestens drei davon trifft, rückt eine Stufe weiter. Bei der
+     ersten Stufe, die nicht mehr sitzt, ist Schluss — genau dort
+     fängt der Kurs an.
+
+     Bewusst KEINE Meisterschaft: Wer bei B1 einsteigt, hat A1 und A2
+     nicht „geschafft" und bekommt dafür auch keinen Orden. Die
+     Einstufung öffnet die Stufen nur, damit man nicht bei Null
+     anfangen muss. Die Orden holt man sich nach wie vor durch Üben.
+     ============================================================ */
+  const IT_EINSTUFUNG_PRO_STUFE = 4;
+  const IT_EINSTUFUNG_HUERDE = 3;
+  let itEinstufung = null;
+
+  function itEinstufungZiehen(level) {
+    const kats = Core.shuffle((ExerciseData.activeCategories() || []).slice());
+    const raus = [];
+    const versuche = kats.concat(kats); // reicht eine Runde nicht, noch einmal von vorn
+    for (const k of versuche) {
+      if (raus.length >= IT_EINSTUFUNG_PRO_STUFE) break;
+      let bank = [];
+      try { bank = k.getBank() || []; } catch (e) { bank = []; }
+      const passend = bank.filter((q) => q.level === level && q.options && q.options.length >= 2 && q.prompt);
+      if (!passend.length) continue;
+      const q = passend[Math.floor(Math.random() * passend.length)];
+      if (raus.some((x) => x.prompt === q.prompt)) continue;
+      raus.push({ prompt: q.prompt, options: q.options, correct: q.correct, explain: q.explain, katTitel: k.title, stufe: level });
+    }
+    return raus;
+  }
+
+  function itEinstufungStarten() {
+    itEinstufung = {
+      stufeIndex: 0, fragen: itEinstufungZiehen(IT_KURS_STUFEN[0]),
+      frageIndex: 0, richtigAufStufe: 0, verlauf: [], fertig: false, ergebnis: null, letzte: null,
+    };
+    renderItalienischkurs();
+  }
+
+  function itEinstufungAntwort(idx) {
+    const e = itEinstufung;
+    if (!e || e.fertig) return;
+    const frage = e.fragen[e.frageIndex];
+    const richtig = (frage.correct || []).includes(idx);
+    if (richtig) { e.richtigAufStufe += 1; Core.sound.correct(); } else { Core.sound.wrong(); }
+    e.letzte = {
+      richtig,
+      loesung: frage.options[(frage.correct || [0])[0]],
+      erklaerung: frage.explain || "",
+    };
+    e.frageIndex += 1;
+    if (e.frageIndex >= e.fragen.length) {
+      const stufe = IT_KURS_STUFEN[e.stufeIndex];
+      e.verlauf.push({ stufe, richtig: e.richtigAufStufe, gesamt: e.fragen.length });
+      const geschafft = e.richtigAufStufe >= IT_EINSTUFUNG_HUERDE;
+      if (!geschafft || e.stufeIndex >= IT_KURS_STUFEN.length - 1) {
+        e.fertig = true;
+        /* Die Empfehlung ist die erste Stufe, die NICHT mehr saß —
+           wer alle sechs schafft, bekommt C2. */
+        e.ergebnis = geschafft ? "C2" : stufe;
+      } else {
+        e.stufeIndex += 1;
+        e.fragen = itEinstufungZiehen(IT_KURS_STUFEN[e.stufeIndex]);
+        e.frageIndex = 0; e.richtigAufStufe = 0;
+        if (!e.fragen.length) { e.fertig = true; e.ergebnis = IT_KURS_STUFEN[e.stufeIndex]; }
+      }
+    }
+    renderItalienischkurs();
+  }
+
+  async function itEinstufungUebernehmen(level) {
+    const extra = Backend.currentProfile()?.extraProfileData || {};
+    const kurs = { ...(extra.itKurs || {}), einstufung: level };
+    await Backend.updateExtraProfileField("itKurs", kurs);
+    itEinstufung = null;
+    showToast(`🧭 Der Kurs beginnt jetzt bei Stufe ${level}.`);
+    renderItalienischkurs();
+    if (typeof renderGrammatik === "function") renderGrammatik();
+  }
+
+  function itEinstufungHtml() {
+    const e = itEinstufung;
+    if (e.fertig) {
+      const stand = itKursStand();
+      const schon = stand.einstufung;
+      return `
+        <div class="question-card">
+          <p class="eyebrow" style="margin-top:0;">🧭 Einstufung fertig</p>
+          <p style="font-size:1.1rem; font-weight:800; margin:0 0 8px;">Empfehlung: Stufe ${e.ergebnis}</p>
+          <div class="breakdown-list" style="margin-bottom:10px;">
+            ${e.verlauf.map((v) => `<div class="breakdown-row"><span>${v.richtig >= IT_EINSTUFUNG_HUERDE ? "✅" : "▫️"} ${v.stufe}</span><span class="empty-note">${v.richtig} von ${v.gesamt} richtig</span></div>`).join("")}
+          </div>
+          <p class="empty-note" style="margin:0 0 10px;">${e.ergebnis === "A1"
+            ? "Der Kurs fängt bei A1 an — genau dort, wo alles anfängt. Das ist keine schlechte Nachricht: A1 hat 877 Aufgaben, und die erste Stufe geht am schnellsten."
+            : `Übernimmst du die Einstufung, sind die Stufen bis ${e.ergebnis} für dich offen — du musst dich nicht erst durch A1 arbeiten. Die Orden gibt es trotzdem nur fürs Üben, nicht für den Test.`}${schon ? ` Bisher eingestuft: ${schon}.` : ""}</p>
+          <div class="quiz-actions" style="justify-content:flex-start; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-coffee" id="itEinstufungOk" data-level="${e.ergebnis}" style="margin:0;">▶ Bei ${e.ergebnis} anfangen</button>
+            <button type="button" class="btn btn-ghost" id="itEinstufungNochmal" style="margin:0;">🔄 Noch einmal</button>
+            <button type="button" class="btn btn-ghost" id="itEinstufungAbbrechen" style="margin:0;">Abbrechen</button>
+          </div>
+        </div>`;
+    }
+    const frage = e.fragen[e.frageIndex];
+    const stufe = IT_KURS_STUFEN[e.stufeIndex];
+    return `
+      <div class="question-card">
+        <p class="eyebrow" style="margin-top:0;">🧭 EINSTUFUNGSTEST · Stufe ${stufe} · Frage ${e.frageIndex + 1} / ${e.fragen.length}</p>
+        <p class="empty-note" style="margin:0 0 8px;">${escapeHtml(frage.katTitel || "")}</p>
+        <p class="it-einstufung-frage">${frage.prompt}</p>
+        <div class="it-einstufung-wahlen">
+          ${frage.options.map((o, i) => `<button type="button" class="it-einstufung-wahl" data-it-antwort="${i}">${o}</button>`).join("")}
+        </div>
+        ${e.letzte ? `<p class="empty-note it-einstufung-rueck">${e.letzte.richtig ? "✅ Richtig." : `❌ Richtig war <strong>${escapeHtml(e.letzte.loesung)}</strong>.`}${e.letzte.erklaerung ? " " + e.letzte.erklaerung : ""}</p>` : `<p class="empty-note it-einstufung-rueck">Der Test geht so lange weiter, wie es sitzt — bei der ersten Stufe, die nicht mehr klappt, ist Schluss.</p>`}
+        <button type="button" class="btn btn-ghost" id="itEinstufungAbbrechen" style="margin-top:10px;">Abbrechen</button>
+      </div>`;
+  }
+
+  function itEinstufungBinden(area) {
+    area.querySelectorAll("[data-it-antwort]").forEach((b) => b.addEventListener("click", () => itEinstufungAntwort(Number(b.dataset.itAntwort))));
+    area.querySelector("#itEinstufungOk")?.addEventListener("click", (ev) => itEinstufungUebernehmen(ev.currentTarget.dataset.level));
+    area.querySelector("#itEinstufungNochmal")?.addEventListener("click", () => itEinstufungStarten());
+    area.querySelector("#itEinstufungAbbrechen")?.addEventListener("click", () => { itEinstufung = null; renderItalienischkurs(); });
+  }
+
+  /* ============================================================
+     PUNKTE IM LERNRAUM ITALIENISCH
+     ------------------------------------------------------------
+     Eine eigene Kasse. Sie liegt in extra_profile_data unter
+     „itPunkte" und wird nie mit dem deutschen Punktestand verrechnet:
+     kein Level, keine Sammelfiguren, keine Tagesrangliste. Sichtbar
+     ist sie nur im Italienisch-Raum — verlässt man ihn, ist wieder
+     der deutsche Stand der einzige, den man sieht.
+     ============================================================ */
+  /* Jede Herausforderung trägt jetzt den Lernraum mit, aus dem sie
+     stammt. Sonst käme im Deutsch-Raum plötzlich ein italienisches
+     Duell an — mit Kategorien, die es dort gar nicht gibt. */
+  async function challengeErstellen(toId, kategorien, extra) {
+    const raum = imItalienischraum() ? "it" : "de";
+    const mitRaum = { ...(extra || {}), raum };
+    return Backend.createChallenge(toId, kategorien, mitRaum);
+  }
+  /* Nur die Duelle des aktuellen Raums. Alte Herausforderungen ohne
+     Raum-Vermerk gelten als deutsch — sie sind vor dieser Änderung
+     entstanden. */
+  function challengesFuerRaum(liste) {
+    const raum = imItalienischraum() ? "it" : "de";
+    return (liste || []).filter((c) => (((c && c.extra) || {}).raum || "de") === raum);
+  }
+
+  function itPunkteStand() {
+    const extra = Backend.currentProfile()?.extraProfileData || {};
+    const p = extra.itPunkte || {};
+    return { punkte: p.punkte || 0, runden: p.runden || 0, beste: p.beste || 0 };
+  }
+  async function itPunkteGutschreiben(punkte) {
+    if (!Backend.currentUser() || !punkte) return;
+    const alt = itPunkteStand();
+    const neu = {
+      punkte: alt.punkte + punkte,
+      runden: alt.runden + 1,
+      beste: Math.max(alt.beste, punkte),
+    };
+    await Backend.updateExtraProfileField("itPunkte", neu);
+    if (typeof renderItalienischkurs === "function") renderItalienischkurs();
+  }
+  /* Die Rangliste des Raums. Sie wird nachgeladen und danach in die
+     Kursseite gehängt — synchron ginge es nicht, und ein leerer Kasten,
+     der sich später füllt, ist besser als eine wartende Seite. */
+  async function itRanglisteEinsetzen() {
+    const ziel = document.getElementById("itRanglisteBox");
+    if (!ziel || !Backend.itRangliste) return;
+    let liste = [];
+    try { liste = await Backend.itRangliste(); } catch (e) { liste = []; }
+    const ich = Backend.currentUser()?.id;
+    if (!liste.length) {
+      ziel.innerHTML = '<p class="empty-note" style="margin:0;">Noch keine Runde gespielt.</p>';
+      return;
+    }
+    ziel.innerHTML = `<div class="breakdown-list">${liste.map((e, i) => `
+      <div class="breakdown-row${e.id === ich ? " it-rang-ich" : ""}">
+        <span>${["🥇", "🥈", "🥉"][i] || (i + 1) + "."} ${escapeHtml(e.name || "Unbekannt")}${e.id === ich ? " (du)" : ""}</span>
+        <span class="empty-note">${e.punkte} Punkte · ${e.runden} ${e.runden === 1 ? "Runde" : "Runden"}${e.beste ? " · beste " + e.beste : ""}</span>
+      </div>`).join("")}</div>
+      <p class="empty-note" style="margin:8px 0 0; font-size:0.7rem;">In dieser Liste steht nur, wer für den Italienischkurs freigegeben ist. Mit dem deutschen Punktestand hat sie nichts zu tun.</p>`;
+  }
+
   function renderItalienischkurs() {
     const area = document.getElementById("italienischkursArea");
     if (!area) return;
     if (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it") {
       area.innerHTML = '<p class="empty-note">Der Kurs gehört zum Italienisch-Raum. Schalt in den Einstellungen auf 🇮🇹 Italiano um.</p>';
+      return;
+    }
+    /* Läuft gerade eine Einstufung, tritt sie an die Stelle der Leiter —
+       sonst stünden zwei Wege nebeneinander, und man wüsste nicht,
+       welcher gerade gilt. */
+    if (itEinstufung) {
+      area.innerHTML = itEinstufungHtml();
+      itEinstufungBinden(area);
       return;
     }
     const stand = itKursStand();
@@ -7847,7 +8726,30 @@
 
       <div class="question-card" style="margin-bottom:14px;">
         <p class="eyebrow" style="margin-top:0;">📍 Du bist auf Stufe ${aktuell}</p>
-        <p class="empty-note" style="margin:0;">${geschafft} von ${IT_KURS_STUFEN.length} Stufen abgeschlossen.${geschafft === IT_KURS_STUFEN.length ? " Der ganze Kurs ist durch — bravissimo!" : ""}</p>
+        <p class="empty-note" style="margin:0 0 8px;">${geschafft} von ${IT_KURS_STUFEN.length} Stufen abgeschlossen.${geschafft === IT_KURS_STUFEN.length ? " Der ganze Kurs ist durch — bravissimo!" : ""}${stand.einstufung ? ` Eingestuft auf ${stand.einstufung}.` : ""}</p>
+        <div class="quiz-actions" style="justify-content:flex-start; gap:6px; flex-wrap:wrap; margin:0;">
+          <button type="button" class="btn btn-ghost" id="itEinstufungStartBtn" style="margin:0;">🧭 ${stand.einstufung ? "Neu einstufen" : "Wo soll ich anfangen? Einstufungstest"}</button>
+        </div>
+      </div>
+
+      <div class="question-card" style="margin-bottom:14px; border:2px solid var(--teal-400);">
+        <p class="eyebrow" style="margin-top:0;">🏆 Deine italienischen Punkte</p>
+        <p style="font-size:1.4rem; font-weight:900; margin:0 0 2px;">${itPunkteStand().punkte}</p>
+        <p class="empty-note" style="margin:0 0 10px;">aus ${itPunkteStand().runden} ${itPunkteStand().runden === 1 ? "Runde" : "Runden"}${itPunkteStand().beste ? ` · beste Runde: ${itPunkteStand().beste}` : ""}. Diese Punkte gelten nur hier — dein deutscher Punktestand bleibt davon unberührt.</p>
+        <p class="eyebrow" style="margin-top:0;">📊 Rangliste im Italienisch-Raum</p>
+        <div id="itRanglisteBox"><p class="empty-note" style="margin:0;">wird geladen …</p></div>
+      </div>
+
+      <div class="question-card" style="margin-bottom:14px;">
+        <p class="eyebrow" style="margin-top:0;">🚀 So kommst du voran</p>
+        <div class="breakdown-list">
+          <div class="breakdown-row"><span>📖 Grammatik lesen</span><span class="empty-note">29 Themen, A1 bis C2</span></div>
+          <div class="breakdown-row"><span>✍️ Übungen</span><span class="empty-note">5.333 Aufgaben, jede Stufe eigen</span></div>
+          <div class="breakdown-row"><span>🎮 Spiele</span><span class="empty-note">15 Spiele zählen auf den Kurs</span></div>
+          <div class="breakdown-row"><span>🎯 Betonungs-Trainer</span><span class="empty-note">607 Wörter mit italienischer Betonung</span></div>
+          <div class="breakdown-row"><span>📚 Wörterbuch</span><span class="empty-note">618 Wörter mit Silben und Beispielsatz</span></div>
+          <div class="breakdown-row"><span>🇮🇹 C'era una volta in Italia</span><span class="empty-note">ein Stück Geschichte für jeden Tag</span></div>
+        </div>
       </div>
 
       <div class="kurs-leiter">
@@ -7878,6 +8780,8 @@
         </div>
       </div>
     `;
+    area.querySelector("#itEinstufungStartBtn")?.addEventListener("click", () => itEinstufungStarten());
+    itRanglisteEinsetzen();
     area.querySelectorAll(".kurs-uebenBtn").forEach((b) => b.addEventListener("click", () => {
       // Übungsbereich mit genau dieser Stufe öffnen.
       selectedExerciseLevel = b.dataset.kursLevel;
@@ -8737,7 +9641,14 @@
   let activeGameChallengeId = null;
 
   async function newMemoryGame() {
-    const game = ExerciseData.MEMORY_GAMES.find((g) => g.id === memoryGameId);
+    /* Beim Wechsel des Lernraums wechselt auch die Spielliste: die
+       gemerkte Kennung („synonyme") gibt es im italienischen Memory
+       nicht, game war dann undefined und getPairs() brach ab. Also
+       zurückfallen auf das erste Spiel des aktuellen Raums. */
+    const spiele = ExerciseData.MEMORY_GAMES;
+    let game = spiele.find((g) => g.id === memoryGameId);
+    if (!game) { game = spiele[0]; if (game) memoryGameId = game.id; }
+    if (!game || typeof game.getPairs !== "function") return;
     const pairs = Core.drawUnique(game.getPairs(), MEMORY_PAIR_COUNT);
     let cards = [];
     pairs.forEach((p, i) => {
@@ -8906,7 +9817,7 @@
           let firstId = null;
           let firstName = "";
           for (const fid of selectedMemoryFriendIds) {
-            const cid = await Backend.createChallenge(fid, ["memory"]);
+            const cid = await challengeErstellen(fid, ["memory"]);
             if (!firstId) {
               firstId = cid;
               firstName = memFriends.find((f) => f.id === fid)?.name || "";
@@ -9796,11 +10707,23 @@
     wortschatzBereit();   // beim ersten Spiel anstoßen, falls noch nicht geschehen
     // Wörter mit Artikel-Präfix ("der Apfel") müssen für den Buchstaben-Abgleich bereinigt
     // werden — sonst würde "der Apfel" fälschlich unter "D" statt "A" gezählt.
-    const stripArticle = (w) => w.replace(/^(der|die|das)\s+/i, "");
+    /* Im Lernraum Italienisch stehen il/lo/la/l' vor dem Wort. Ohne
+       diesen Zweig hätte „la porta" unter L gezählt und wer „porta"
+       eingibt, hätte ein falsches Wort geschrieben. */
+    const stripArticle = (w) => imItalienischraum()
+      ? itOhneArtikel(w)
+      : w.replace(/^(der|die|das)\s+/i, "");
     // EINE Quelle für alles: genau die Einträge, die auch im Wörterbuch stehen — samt der
     // Wörter aus den Übungstexten. Damit gilt ausnahmslos: was im Wörterbuch steht, zählt
     // hier als richtig, und was hier zählt, findet man auch im Wörterbuch wieder.
     buildDictionaryEntries().forEach((e) => words.add(stripArticle(e.word).toLowerCase()));
+    if (imItalienischraum()) {
+      /* Hier ist Schluss: Länder, Hobbys, Materialien und die
+         Satzbaukasten-Verben sind deutsch. Im Italienischkurs würden
+         sie als richtige Antworten durchgehen. */
+      Object.keys(WordbuildArtikel()).forEach((w) => words.add(itOhneArtikel(w).toLowerCase()));
+      return words;
+    }
     (VocabData.HOBBIES || []).forEach((h) => words.add(h.noun.toLowerCase()));
     (VocabData.COUNTRIES || []).forEach((c) => { if (c.name) words.add(c.name.toLowerCase()); if (typeof c === "string") words.add(c.toLowerCase()); });
     (VocabData.LANGUAGES || []).forEach((l) => { if (typeof l === "string") words.add(l.toLowerCase()); if (l && l.name) words.add(l.name.toLowerCase()); });
@@ -11191,8 +12114,14 @@
   function WordbuildArtikel() {
     // Nutzt dieselbe geprüfte Wörterliste wie die Artikel-Übung, damit hier keine
     // neuen, ungeprüften Inhalte entstehen.
-    const cat = ExerciseData.activeGetCategory("artikel");
+    /* Die Kategorie-Id stand hier fest auf „artikel". Im Lernraum
+       Italienisch heißt sie „it-artikel", activeGetCategory() gab
+       deshalb undefined zurück — und der Zugriff auf getBank() brach
+       Buchstabensalat und Vokabelmeister mit einem Fehler ab. Der
+       Artikelgarten macht es an seiner Stelle längst richtig. */
+    const cat = ExerciseData.activeGetCategory(imItalienischraum() ? "it-artikel" : "artikel");
     const out = {};
+    if (!cat || typeof cat.getBank !== "function") return out;
     cat.getBank().forEach((q) => {
       const word = q.prompt.replace("___ ", "").trim();
       const article = q.options[q.correct[0]];
@@ -13228,6 +14157,47 @@
       <rect x="20" y="92" width="80" height="8" rx="3" fill="#ffffff" opacity="0.95"/>
       <path d="M92 34q8 4 8 12t-8 12" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>`,
 
+    // — Eigene Beiträge —
+    folding: `
+      <rect x="12" y="26" width="44" height="68" rx="6" fill="#ffffff" opacity="0.9"/>
+      <rect x="64" y="26" width="44" height="68" rx="6" fill="#ffffff" opacity="0.62"/>
+      <rect x="60" y="22" width="4" height="76" rx="2" fill="#ffffff" opacity="0.95"/>
+      <rect x="20" y="34" width="28" height="46" rx="3" fill="#2a3a4a" opacity="0.5"/>
+      <rect x="72" y="34" width="28" height="46" rx="3" fill="#2a3a4a" opacity="0.3"/>
+      <circle cx="34" cy="88" r="2.4" fill="#2a3a4a" opacity="0.6"/>`,
+    raumschiff: `
+      <ellipse cx="60" cy="44" rx="36" ry="10" fill="#ffffff" opacity="0.92"/>
+      <ellipse cx="60" cy="42" rx="16" ry="5" fill="#2a3a4a" opacity="0.35"/>
+      <path d="M56 52v14" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+      <rect x="26" y="66" width="60" height="9" rx="4.5" fill="#ffffff" opacity="0.85"/>
+      <rect x="18" y="84" width="34" height="8" rx="4" fill="#ffffff" opacity="0.62"/>
+      <rect x="68" y="84" width="34" height="8" rx="4" fill="#ffffff" opacity="0.62"/>
+      <path d="M52 75 40 84M68 75l12 9" stroke="#ffffff" stroke-width="2.6" opacity="0.7"/>`,
+    alien: `
+      <ellipse cx="60" cy="34" rx="26" ry="9" fill="#ffffff" opacity="0.9"/>
+      <path d="M42 34q18-12 36 0" fill="none" stroke="#ffffff" stroke-width="2.4" opacity="0.7"/>
+      <path d="M34 34 24 46M86 34l10 12" stroke="#ffffff" stroke-width="2" opacity="0.45"/>
+      <path d="M20 96 60 62l40 34z" fill="#ffffff" opacity="0.55"/>
+      <rect x="50" y="80" width="20" height="16" rx="2" fill="#2a2a2a" opacity="0.45"/>
+      <circle cx="46" cy="32" r="2.6" fill="#3a2a1a"/><circle cx="74" cy="32" r="2.6" fill="#3a2a1a"/>`,
+    musik: `
+      <circle cx="60" cy="60" r="34" fill="#2a2a2a" opacity="0.5"/>
+      <circle cx="60" cy="60" r="34" fill="none" stroke="#ffffff" stroke-width="2.6" opacity="0.85"/>
+      <circle cx="60" cy="60" r="24" fill="none" stroke="#ffffff" stroke-width="1.4" opacity="0.4"/>
+      <circle cx="60" cy="60" r="16" fill="none" stroke="#ffffff" stroke-width="1.4" opacity="0.4"/>
+      <circle cx="60" cy="60" r="9" fill="#ffffff" opacity="0.9"/>
+      <circle cx="60" cy="60" r="2.6" fill="#2a2a2a" opacity="0.6"/>
+      <path d="M84 30v20" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" opacity="0.8"/>
+      <circle cx="80" cy="50" r="4" fill="#ffffff" opacity="0.8"/>`,
+    maske: `
+      <path d="M22 44q0-10 38-10t38 10q0 22-16 32-10 6-22 6t-22-6Q22 66 22 44z" fill="#2a2a2a" opacity="0.55"/>
+      <path d="M22 44q0-10 38-10t38 10q0 22-16 32-10 6-22 6t-22-6Q22 66 22 44z" fill="none" stroke="#ffffff" stroke-width="2.6"/>
+      <ellipse cx="44" cy="50" rx="7" ry="4.6" fill="#ffffff" opacity="0.95"/>
+      <ellipse cx="76" cy="50" rx="7" ry="4.6" fill="#ffffff" opacity="0.95"/>
+      <path d="M18 92 96 20" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+      <path d="M96 20l-3 9 9-3z" fill="#ffffff" opacity="0.9"/>
+      <path d="M18 92l8-3-3 8z" fill="#ffffff" opacity="0.7"/>`,
+
     // — Schnee von gestern: die Gegenstände selbst —
     videorekorder: `
       <rect x="14" y="40" width="92" height="44" rx="6" fill="#ffffff" opacity="0.2"/>
@@ -13529,6 +14499,56 @@
       },
     },
   ];
+  /* Die fünf eigenen Beiträge. Sie liegen in einer eigenen Datei, die
+     erst geladen wird, wenn der Wissens-Bereich sichtbar ist — 300 kB
+     gehören nicht in den Seitenstart. Bis dahin ist die Liste leer,
+     und der Bereich sagt, dass geladen wird. */
+  const BEITRAG_FARBEN = {
+    "iphone-duo": ["#4A6D8C", "#7FA8C4"],
+    kirk: ["#3F5E8C", "#6FA0D0"],
+    alf: ["#8A6A4A", "#C99A5F"],
+    alphaville: ["#6A4A93", "#A875D8"],
+    zorro: ["#3A3A44", "#7A6A93"],
+  };
+  let beitraegeGeladen = null;
+  /* Zu jedem Beitrag gehört ein Bild. Solange keins hochgeladen ist,
+     steht dort eine gezeichnete Kachel — ein Platzhalter, der nicht wie
+     ein Fehler aussieht. Wird eins hochgeladen, tritt es an seine
+     Stelle; die Zuordnung liegt in site_content unter „beitrag_bilder",
+     lässt sich also von der Seite aus ändern, ohne eine Datei im
+     Projekt anzufassen. */
+  let beitragBilder = {};
+  let beitragBilderGeholt = false;
+  async function beitragBilderLaden(frisch) {
+    try { beitragBilder = (await Backend.getSiteContent("beitrag_bilder", frisch)) || {}; }
+    catch (e) { beitragBilder = {}; }
+    return beitragBilder;
+  }
+  function eigeneBeitraege() {
+    const roh = (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) || [];
+    return roh.map((e) => {
+      const farben = BEITRAG_FARBEN[e.id] || ["#5BA8A0", "#7FB87A"];
+      const eigenes = beitragBilder && beitragBilder[e.id];
+      const img = eigenes
+        ? `<img src="${escapeHtml(eigenes)}" alt="${escapeHtml(e.name || "")}" style="width:100%; height:100%; object-fit:cover; display:block;">`
+        : kachelBildSvg(e.bild, farben[0], farben[1], "?", "");
+      return { ...e, img, hatEigenesBild: Boolean(eigenes) };
+    });
+  }
+  function beitraegeLaden() {
+    if (beitraegeGeladen) return beitraegeGeladen;
+    beitraegeGeladen = new Promise((fertig) => {
+      if (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) { fertig(true); return; }
+      const sk = document.createElement("script");
+      sk.src = "data-beitraege.js?v=" + (window.DMA_VERSION || "1");
+      sk.async = true;
+      sk.onload = () => fertig(true);
+      sk.onerror = () => { console.warn("Beiträge konnten nicht geladen werden."); fertig(false); };
+      document.head.appendChild(sk);
+    });
+    return beitraegeGeladen;
+  }
+
   const SCHNEE_ENTRIES = [
     {
       id: "videorekorder", name: "Der Videorekorder und die Kassette",
@@ -13811,7 +14831,18 @@
         </div>
         ${sammelSchalterHtml()}
         <p style="margin-top:8px;" class="sammel-text">${sammelTextHtml(entry.levels[level])}</p>
+        ${entry.quelle ? `<p class="empty-note" style="margin-top:10px; font-size:0.72rem;">Quelle: ${entry.quelle}</p>` : ""}
         ${historyUebersetzungHtml(entry, level, "tile-" + entry.id)}
+        ${/* Das Bild ist zunächst eine gezeichnete Platzhalter-Kachel.
+              Der Betreiber kann sie hier durch ein echtes Bild ersetzen —
+              ohne Dateiupload ins Projekt, ohne neue Version. */ ""}
+        ${(Backend.isOwner && Backend.isOwner()) ? `
+          <div class="beitrag-bild-tausch">
+            <p class="eyebrow" style="margin:0 0 6px;">🖼️ Bild ${entry.hatEigenesBild ? "ersetzen" : "statt der Platzhalter-Kachel"}</p>
+            <input type="file" accept="image/*" data-beitrag-bild="${escapeHtml(entry.id)}">
+            ${entry.hatEigenesBild ? `<button type="button" class="btn btn-ghost" data-beitrag-bild-weg="${escapeHtml(entry.id)}" style="margin-top:6px; padding:4px 12px; font-size:0.76rem;">Zurück zur Zeichnung</button>` : ""}
+            <p class="empty-note" data-beitrag-bild-meldung style="margin:6px 0 0;"></p>
+          </div>` : ""}
       </div>
     `;
     // WICHTIG — behebt einen echten Bug: bei zwei gleichzeitig auf derselben Seite gerenderten
@@ -13819,6 +14850,32 @@
     // es zwei Elemente mit derselben globalen ID "tileBackBtn" — document.getElementById fand
     // dabei immer nur das ERSTE, sodass der "Zurück"-Knopf im zweiten Bereich nie funktionierte.
     // area.querySelector() sucht jetzt gezielt nur innerhalb des eigenen, aufrufenden Bereichs.
+    /* Bild hochladen und dem Beitrag zuordnen. */
+    const bildFeld = area.querySelector("[data-beitrag-bild]");
+    const bildMeldung = area.querySelector("[data-beitrag-bild-meldung]");
+    bildFeld?.addEventListener("change", async () => {
+      const datei = bildFeld.files && bildFeld.files[0];
+      if (!datei) return;
+      bildMeldung.textContent = "lädt hoch …";
+      try {
+        const url = await Backend.uploadSiteImage("beitrag_" + entry.id, datei);
+        const alle = { ...(await Backend.getSiteContent("beitrag_bilder", true) || {}) };
+        alle[entry.id] = url;
+        await Backend.setSiteContent("beitrag_bilder", alle);
+        await beitragBilderLaden(true);
+        bildMeldung.textContent = "✅ Bild gesetzt.";
+        renderEigeneBeitraege();
+      } catch (e) { bildMeldung.textContent = "⚠️ " + (e.message || "Hat nicht geklappt."); }
+    });
+    area.querySelector("[data-beitrag-bild-weg]")?.addEventListener("click", async () => {
+      try {
+        const alle = { ...(await Backend.getSiteContent("beitrag_bilder", true) || {}) };
+        delete alle[entry.id];
+        await Backend.setSiteContent("beitrag_bilder", alle);
+        await beitragBilderLaden(true);
+        renderEigeneBeitraege();
+      } catch (e) { if (bildMeldung) bildMeldung.textContent = "⚠️ " + (e.message || "Ging nicht."); }
+    });
     sammelBinden(area, () => renderTileGallery(area, entries, openIdVar, setOpenIdVar, levelVar, setLevelVar, iconEmoji, subheading));
     area.querySelector(".tile-back-btn").addEventListener("click", () => {
       setOpenIdVar(null);
@@ -13860,6 +14917,30 @@
     schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; }, "schnee");
     renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
+    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
+    leseBetonungAnwenden(area);
+  }
+  let kompassBeitragOpenId = null;
+  let beitragLevel = "";
+  function renderEigeneBeitraege() {
+    const area = document.getElementById("beitraegeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "eigene_beitraege", "Menschen, Dinge, Geschichten", "🗂️")) return;
+    const eintraege = eigeneBeitraege();
+    if (!eintraege.length) {
+      area.innerHTML = '<p class="empty-note">Die Beiträge werden geladen …</p>';
+      beitraegeLaden().then(() => { if (document.getElementById("beitraegeArea")) renderEigeneBeitraege(); });
+      return;
+    }
+    beitragLevel = applyDefaultCefrLevel(beitragLevel, (v) => { beitragLevel = v; }, "beitraege");
+    // Beim ersten Mal die hochgeladenen Bilder nachziehen und neu zeichnen.
+    if (!beitragBilderGeholt) {
+      beitragBilderGeholt = true;
+      beitragBilderLaden().then(() => { if (document.getElementById("beitraegeArea")) renderEigeneBeitraege(); });
+    }
+    renderTileGallery(area, eintraege, () => kompassBeitragOpenId, (v) => { kompassBeitragOpenId = v; },
+      () => beitragLevel, (v) => { beitragLevel = v; }, "🗂️",
+      "Menschen, Geräte und Geschichten, über die man auf Deutsch reden kann — jeder Beitrag in sechs Niveaustufen und zehn Sprachen. Zu jedem steht die Quelle dabei.");
     area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
     leseBetonungAnwenden(area);
   }
@@ -13912,7 +14993,13 @@
         vergleiche. Wenn nicht, findest du dort das Wort und beide Bedeutungen.
       </p>
       <div class="trophy-case" style="margin-bottom:12px;">
-        ${Object.entries(WITZ_ARTEN).map(([k, name]) => `<button type="button" class="trophy-chip witz-art-btn ${witzeArt === k ? "selected" : ""}" data-witz-art="${k}">${name}</button>`).join("")}
+        ${/* Nur die Arten anbieten, zu denen es auch Witze gibt — sonst
+              führt ein Reiter auf eine leere Seite. Die Berufs-Witze
+              sind herausgenommen worden; ihr Reiter hätte sonst noch
+              dagestanden. */ ""}
+        ${Object.entries(WITZ_ARTEN)
+          .filter(([k]) => k === "alle" || alle.some((w) => w.art === k))
+          .map(([k, name]) => `<button type="button" class="trophy-chip witz-art-btn ${witzeArt === k ? "selected" : ""}" data-witz-art="${k}">${name}</button>`).join("")}
       </div>
       ${liste.map((w, i) => {
         const offen = witzeOffen.has(w.text);
@@ -15147,7 +16234,9 @@
     const pool = anglerWortpool().filter((e) => e.level === anglerLevel);
     const quelle = pool.length >= 12 ? pool : anglerWortpool();
     // Regelarten: nach Artikel oder nach Themenbereich.
-    const artikel = ["der", "die", "das"];
+    /* Im Lernraum Italienisch gibt es kein der/die/das — dort fände die
+       Artikelregel nie einen Fisch, und die Runde bliebe leer. */
+    const artikel = imItalienischraum() ? ["il", "lo", "la", "i", "gli", "le"] : ["der", "die", "das"];
     const themen = [...new Set(quelle.map((e) => e.category))].filter(Boolean);
     const nachArtikel = Math.random() < 0.5;
     let regel, passt;
@@ -15968,6 +17057,7 @@
   let wortlistenPruefung = null;   // Ergebnis der letzten Prüfung
   let wortlistenText = "";
   let wortlisteOffen = null;       // welche gespeicherte Liste gerade bearbeitet wird
+  let wortlisteArt = "liste";      // "liste" = Wörter einzeln, "text" = ganze Geschichte
   let wortlisteNachtragText = "";  // Eingabefeld beim Nachtragen
   let wortlisteNachtragPruefung = null;
 
@@ -15997,6 +17087,79 @@
       </div>` : ""}`;
   }
 
+  /* ============================================================
+     AUS EINEM TEXT EINE WORTLISTE MACHEN
+     ------------------------------------------------------------
+     Funktionswörter tragen die Grammatik, aber man lernt sie nicht
+     als Vokabeln — und in einem Fließtext sind sie in der Überzahl.
+     Diese Liste hält sie heraus. Sie ist bewusst kurz und enthält
+     nur, was zweifelsfrei Funktionswort ist; alles Fragliche darf
+     durch, denn ein Wort zu viel ist harmloser als ein fehlendes.
+     ============================================================ */
+  const TEXT_FUNKTIONSWOERTER = new Set([
+    "der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines",
+    "und", "oder", "aber", "denn", "sondern", "doch", "sowie",
+    "ich", "du", "er", "sie", "es", "wir", "ihr", "mich", "dich", "sich", "uns", "euch",
+    "mir", "dir", "ihm", "ihn", "ihnen", "man", "mein", "dein", "sein", "unser", "euer",
+    "in", "an", "auf", "aus", "bei", "mit", "nach", "seit", "von", "zu", "zur", "zum", "im", "am",
+    "vom", "beim", "ins", "aufs", "durch", "für", "gegen", "ohne", "um", "über", "unter", "vor",
+    "hinter", "neben", "zwischen", "bis", "ab", "als", "wie", "so", "auch", "noch", "schon",
+    "nur", "nicht", "kein", "keine", "keinen", "sehr", "mehr", "immer", "wieder", "dann", "da",
+    "hier", "dort", "wo", "wann", "warum", "was", "wer", "wen", "wem", "welche", "welcher",
+    "dass", "weil", "wenn", "ob", "damit", "obwohl", "während", "bevor", "nachdem", "sobald",
+    "ist", "sind", "war", "waren", "bin", "bist", "sei", "wäre", "hat", "haben", "hatte",
+    "hatten", "habe", "hast", "wird", "werden", "wurde", "wurden", "worden", "kann", "können",
+    "konnte", "muss", "müssen", "musste", "soll", "sollen", "sollte", "will", "wollen",
+    "wollte", "darf", "dürfen", "durfte", "mag", "möchte", "möchten",
+    "dieser", "diese", "dieses", "diesen", "diesem", "jener", "jede", "jeder", "jedes", "jedem",
+    "alle", "allen", "alles", "aller", "viele", "vielen", "manche", "einige", "beide",
+    "jeden", "jedoch", "solche", "solchen", "welchen", "welches",
+    "etwas", "nichts", "jemand", "niemand", "selbst", "sogar", "eben", "gerade", "ja", "nein",
+    "zwar", "also", "denn", "halt", "mal", "wohl", "eigentlich", "vielleicht",
+    "andere", "anderen", "anderer", "anderes", "anderem", "weiter", "weiteren",
+    "ganz", "ganze", "ganzen", "erst", "erste", "ersten", "erster", "erstes",
+  ]);
+
+  /* Aus einem Text die lernbaren Wörter ziehen, nach Häufigkeit
+     sortiert. Zurück kommt genau die Form, die auch wortlisteEinlesen
+     liefert — damit passt das Ergebnis in alles, was es schon gibt. */
+  function textAuswerten(text, hoechstens) {
+    const roh = String(text || "");
+    const woerter = roh.match(/[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüß-]{1,}/g) || [];
+    const zaehler = new Map();     // Grundform → { anzahl, eintrag }
+    const unbekannt = new Map();   // Wort → Anzahl
+    woerter.forEach((wort) => {
+      if (wort.length < 3) return;
+      if (TEXT_FUNKTIONSWOERTER.has(wort.toLowerCase())) return;
+      const treffer = wortNachschlagen(wort);
+      /* Ohne Sprachniveau ist es kein vollwertiger Wörterbuch-Eintrag:
+         dann fehlen auch Betonung und Beispielsatz, und kein Spiel kann
+         damit üben. Solche Treffer zählen wie „nicht gefunden". */
+      if (!treffer || !treffer.level) {
+        // Nur Wörter, die wie Inhaltswörter aussehen, als Lücke melden.
+        if (wort.length >= 4) unbekannt.set(wort, (unbekannt.get(wort) || 0) + 1);
+        return;
+      }
+      const k = treffer.word;
+      if (!zaehler.has(k)) zaehler.set(k, { anzahl: 0, eintrag: treffer });
+      zaehler.get(k).anzahl += 1;
+    });
+    /* Nach Häufigkeit: Was in DIESEM Text oft vorkommt, ist das, worum
+       es geht. Bei Gleichstand entscheidet das Alphabet, damit
+       dieselbe Geschichte immer dieselbe Liste ergibt. */
+    const sortiert = [...zaehler.entries()]
+      .sort((a, b) => (b[1].anzahl - a[1].anzahl) || a[0].localeCompare(b[0], "de"))
+      .slice(0, hoechstens || 60);
+    return {
+      gefunden: sortiert.map(([wort, v]) => ({
+        eingabe: wort, wort, level: v.eintrag.level, thema: v.eintrag.category, anzahl: v.anzahl,
+      })),
+      fehlend: [...unbekannt.entries()].sort((a, b) => b[1] - a[1]).map(([w]) => w).slice(0, 40),
+      gesamt: woerter.length,
+      saetze: (roh.match(/[.!?]+/g) || []).length,
+    };
+  }
+
   function renderWortlisten() {
     const area = document.getElementById("wortlistenArea");
     if (!area) return;
@@ -16019,14 +17182,23 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">📋 MEINE WORTLISTEN <span class="subnav-info-icon" data-info="Wirf eine Liste Wörter ein — aus dem Kursbuch, von der Tafel, aus einer Nachricht. Danach kannst du in den Spielen genau mit diesen Wörtern üben.">ⓘ</span></p>
-        <p class="empty-note" style="margin-top:0;">Schreib oder füge deine Wörter ein — eines pro Zeile oder mit Komma getrennt. Artikel darfst du weglassen, eine Übersetzung hinter einem Gedankenstrich wird abgeschnitten.</p>
-        <textarea id="wortlisteEingabe" class="wortliste-feld" rows="7" placeholder="der Tisch&#10;Fenster&#10;aufstehen – to get up&#10;1. die Verspätung&#10;Bahnhof, Fahrkarte, umsteigen">${wortlistenText.replace(/</g, "&lt;")}</textarea>
+        <div class="trophy-case wsm-chips" style="margin-bottom:10px;">
+          <button type="button" class="trophy-chip ${wortlisteArt === "liste" ? "selected" : ""}" data-listenart="liste">📋 Einzelne Wörter</button>
+          <button type="button" class="trophy-chip ${wortlisteArt === "text" ? "selected" : ""}" data-listenart="text">📖 Ganzer Text</button>
+        </div>
+        ${wortlisteArt === "text"
+          ? `<p class="empty-note" style="margin-top:0;">Füge eine ganze Geschichte, einen Artikel oder ein Kapitel ein. Die App sucht sich die Wörter heraus, mit denen sich üben lässt — Artikel, Pronomen und Hilfsverben lässt sie weg — und sortiert sie danach, wie oft sie in <em>diesem</em> Text vorkommen.</p>`
+          : `<p class="empty-note" style="margin-top:0;">Schreib oder füge deine Wörter ein — eines pro Zeile oder mit Komma getrennt. Artikel darfst du weglassen, eine Übersetzung hinter einem Gedankenstrich wird abgeschnitten.</p>`}
+        <textarea id="wortlisteEingabe" class="wortliste-feld" rows="${wortlisteArt === "text" ? 10 : 7}" placeholder="${wortlisteArt === "text"
+          ? "Es war einmal ein kleiner Fuchs, der am Fluss wohnte. Jeden Morgen ging er zum Wasser und schaute den Fischen zu …"
+          : "der Tisch&#10;Fenster&#10;aufstehen – to get up&#10;1. die Verspätung&#10;Bahnhof, Fahrkarte, umsteigen"}">${wortlistenText.replace(/</g, "&lt;")}</textarea>
         <div class="quiz-actions" style="justify-content:flex-start; margin-top:8px;">
-          <button type="button" class="btn btn-coffee" id="wortlistePruefen">🔍 Prüfen</button>
+          <button type="button" class="btn btn-coffee" id="wortlistePruefen">${wortlisteArt === "text" ? "📖 Wörter heraussuchen" : "🔍 Prüfen"}</button>
           ${wortlistenText ? `<button type="button" class="btn btn-ghost" id="wortlisteLeeren">Leeren</button>` : ""}
         </div>
         ${p ? `
           <div class="wortliste-ergebnis">
+            ${p.saetze !== undefined ? `<p class="empty-note" style="margin:12px 0 0;">Aus deinem Text (${p.gesamt} Wörter, ${p.saetze} ${p.saetze === 1 ? "Satz" : "Sätze"}) sind das die <strong>${p.gefunden.length}</strong> lernbaren Wörter — die häufigsten zuerst.</p>` : ""}
             <p class="wortliste-bilanz">
               <span class="wortliste-bilanz-da">✓ ${p.gefunden.length} gefunden</span>
               ${p.fehlend.length ? `<span class="wortliste-bilanz-fehlt">✕ ${p.fehlend.length} unbekannt</span>` : ""}
@@ -16037,7 +17209,7 @@
             ${p.gefunden.length ? `
               <div class="form-field" style="margin-top:16px;">
                 <label>Name der Liste</label>
-                <input type="text" id="wortlisteName" maxlength="40" placeholder="z. B. Kapitel 7 oder Prüfung Freitag" />
+                <input type="text" id="wortlisteName" maxlength="40" placeholder="${wortlisteArt === "text" ? "z. B. Der Fuchs am Fluss" : "z. B. Kapitel 7 oder Prüfung Freitag"}" />
               </div>
               <div class="quiz-actions" style="justify-content:flex-start;">
                 <button type="button" class="btn btn-coffee" id="wortlisteSichern">💾 Als Liste speichern</button>
@@ -16062,9 +17234,16 @@
 
     const feld = document.getElementById("wortlisteEingabe");
     feld?.addEventListener("input", () => { wortlistenText = feld.value; });
+    area.querySelectorAll("[data-listenart]").forEach((b) => b.addEventListener("click", () => {
+      wortlisteArt = b.dataset.listenart;
+      wortlistenPruefung = null;
+      renderWortlisten();
+    }));
     document.getElementById("wortlistePruefen")?.addEventListener("click", () => {
       wortlistenText = feld ? feld.value : "";
-      wortlistenPruefung = wortlisteEinlesen(wortlistenText);
+      wortlistenPruefung = wortlisteArt === "text"
+        ? textAuswerten(wortlistenText)
+        : wortlisteEinlesen(wortlistenText);
       wortlueckenMelden(wortlistenPruefung.fehlend);
       renderWortlisten();
     });
@@ -19008,6 +20187,2212 @@
   }
 
   document.querySelector('#learnSubnav [data-sub="sub-sortierer"]')?.addEventListener("click", () => renderSortierer());
+  document.querySelector('#learnSubnav [data-sub="sub-backstube"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
+       sonst begrüßt einen der alte Ergebnisbildschirm. Eine laufende
+       Runde bleibt stehen. */
+    if (backSession && backSession.index >= (backSession.saetze || []).length) backSession = null;
+    renderBackstube();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-wetterkarte"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
+       sonst begrüßt einen der alte Ergebnisbildschirm. Eine laufende
+       Runde bleibt stehen. */
+    if (wetterSession && wetterSession.index >= (wetterSession.lagen || []).length) wetterSession = null;
+    renderWetterkarte();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-baustelle"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
+       sonst begrüßt einen der alte Ergebnisbildschirm. Eine laufende
+       Runde bleibt stehen. */
+    if (bauSession && bauSession.index >= (bauSession.schritte || []).length) bauSession = null;
+    renderBaustelle();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-flohmarkt"]')?.addEventListener("click", () => {
+
+
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
+       sonst begrüßt einen der alte Ergebnisbildschirm. Eine laufende
+       Runde bleibt stehen. */
+    if (flohSession && flohSession.index >= (flohSession.waren || []).length) flohSession = null;
+    renderFlohmarkt();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-zug"]')?.addEventListener("click", () => {
+    if (zugSession && zugSession.index >= (zugSession.faelle || []).length) zugSession = null;
+    renderZug();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-schatzkarte"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
+       sonst begrüßt einen der alte Ergebnisbildschirm, und der hat
+       keine Niveau-Schalter. Eine laufende Runde bleibt stehen. */
+    if (schatzSession && schatzSession.index >= (schatzSession.schritte || []).length) schatzSession = null;
+    renderSchatzkarte();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-fundbuero"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen —
+       sonst begrüßt einen der alte Ergebnisbildschirm ohne
+       Niveau-Schalter. Eine laufende Runde bleibt stehen. */
+    if (fundSession && fundSession.index >= (fundSession.faelle || []).length) fundSession = null;
+    renderFundbuero();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-gewitter"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen. */
+    if (gewitterSession && gewitterSession.index >= (gewitterSession.faelle || []).length) gewitterSession = null;
+    renderGewitter();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-arzt"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen. */
+    if (arztSession && arztSession.index >= (arztSession.faelle || []).length) arztSession = null;
+    renderArzt();
+  });
+  document.querySelector('#learnSubnav [data-sub="sub-erbschaft"]')?.addEventListener("click", () => {
+    /* Eine abgeschlossene Runde beim Wiederbetreten zurücksetzen. */
+    if (erbSession && erbSession.index >= (erbSession.faelle || []).length) erbSession = null;
+    renderErbschaft();
+  });
+
+  /* ============================================================
+     DIE ERBSCHAFT — der Genitiv
+     ------------------------------------------------------------
+     Der Genitiv verschwindet aus der gesprochenen Sprache und steht
+     trotzdem in jedem Vertrag, jeder Zeitung und jedem Formular. Wer
+     ihn nie übt, versteht die Hälfte dessen nicht, was er unterschreibt.
+
+     Zwei Dinge machen ihn schwer, und beide kommen hier vor. Erstens
+     das -s: männlich und sächlich bekommen es (des Wagens), weiblich
+     und Mehrzahl nicht (der Tante, der Kinder). Zweitens die
+     Präpositionen — wegen, trotz, während, statt, innerhalb, aufgrund
+     verlangen ihn, und man hört sie täglich falsch.
+
+     Auf dem Dachboden liegen die Sachen einer Erbschaft. Jede richtige
+     Antwort hängt einen Namenszettel an ein Stück: Man sortiert also
+     einen Nachlass und übt dabei genau die Form, die sagt, WEM etwas
+     gehört.
+     ============================================================ */
+  const ERB_FAELLE = [
+    { satz: "Das ist das Haus ___ Großmutter.", loesung: "der", falsch: ["des", "dem"], ding: "haus",
+      warum: "Weiblich im Genitiv heißt <strong>der</strong> — und das Wort selbst bekommt kein -s.", lvl: "A2" },
+    { satz: "Hier liegt die Uhr ___ Großvaters.", loesung: "des", falsch: ["der", "dem"], ding: "uhr",
+      warum: "Männlich im Genitiv heißt <strong>des</strong>, und das Wort bekommt ein -s: des Großvaters.", lvl: "A2" },
+    { satz: "Das sind die Bücher ___ Kinder.", loesung: "der", falsch: ["des", "den"], ding: "buch",
+      warum: "In der Mehrzahl heißt der Genitiv <strong>der</strong> — bei allen drei Geschlechtern.", lvl: "A2" },
+    { satz: "Die Farbe ___ Teppichs gefällt mir.", loesung: "des", falsch: ["der", "dem"], ding: "teppich",
+      warum: "Sächlich und männlich bekommen <strong>des</strong> und ein -s am Wort.", lvl: "A2" },
+    { satz: "Wo ist der Schlüssel ___ Truhe?", loesung: "der", falsch: ["des", "dem"], ding: "truhe",
+      warum: "„die Truhe“ ist weiblich: <strong>der</strong> Truhe, ohne -s.", lvl: "A2" },
+    { satz: "Wir bleiben zu Hause, ___ des Regens.", loesung: "wegen", falsch: ["weil", "obwohl"], ding: "schirm",
+      warum: "<strong>wegen</strong> ist eine Präposition und verlangt den Genitiv. „weil“ und „obwohl“ leiten dagegen einen Nebensatz ein.", lvl: "B1" },
+    { satz: "Trotz ___ Wetters gehen wir spazieren.", loesung: "des", falsch: ["dem", "der"], ding: "schirm",
+      warum: "„trotz“ verlangt den Genitiv: <strong>des</strong> Wetters. „trotz dem“ hört man oft, richtig ist es nicht.", lvl: "B1" },
+    { satz: "Während ___ Ferien war das Haus leer.", loesung: "der", falsch: ["den", "die"], ding: "haus",
+      warum: "„während“ verlangt den Genitiv, und die Mehrzahl heißt dort <strong>der</strong>.", lvl: "B1" },
+    { satz: "Statt ___ Briefes kam nur eine Karte.", loesung: "eines", falsch: ["einem", "einen"], ding: "brief",
+      warum: "„statt“ verlangt den Genitiv: <strong>eines</strong> Briefes.", lvl: "B1" },
+    { satz: "Innerhalb ___ Woche ist alles geregelt.", loesung: "einer", falsch: ["eine", "einem"], ding: "kalender",
+      warum: "„innerhalb“ verlangt den Genitiv, weiblich also <strong>einer</strong>.", lvl: "B1" },
+    { satz: "Das ist der Anfang ___ Geschichte.", loesung: "der", falsch: ["des", "die"], ding: "buch",
+      warum: "„die Geschichte“ ist weiblich: der Anfang <strong>der</strong> Geschichte.", lvl: "B1" },
+    { satz: "Die Hälfte ___ Erbes geht an die Stiftung.", loesung: "des", falsch: ["dem", "der"], ding: "truhe",
+      warum: "„das Erbe“ ist sächlich: <strong>des</strong> Erbes.", lvl: "B1" },
+    { satz: "Aufgrund ___ Testaments erbt der Neffe alles.", loesung: "des", falsch: ["dem", "der"], ding: "brief",
+      warum: "„aufgrund“ verlangt den Genitiv: <strong>des</strong> Testaments.", lvl: "B2" },
+    { satz: "Wir kennen den Namen ___ Nachbarn nicht.", loesung: "des", falsch: ["der", "dem"], ding: "haus",
+      warum: "<strong>des</strong> Nachbarn — „der Nachbar“ gehört zur n-Deklination und bekommt im Genitiv ein -n statt eines -s.", lvl: "B2" },
+    { satz: "Am Ende ___ Films weint der Hund.", loesung: "des", falsch: ["dem", "der"], ding: "kamera",
+      warum: "Männlich im Genitiv: <strong>des</strong> Films. Bei „Film“ geht auch „des Filmes“.", lvl: "B2" },
+    { satz: "Auf der Rückseite ___ Fotos steht ein Datum.", loesung: "des", falsch: ["dem", "der"], ding: "kamera",
+      warum: "„das Foto“ ist sächlich: <strong>des</strong> Fotos.", lvl: "B2" },
+    { satz: "Der Wert ___ alten Möbel ist beachtlich.", loesung: "der", falsch: ["des", "den"], ding: "stuhl",
+      warum: "Mehrzahl im Genitiv: <strong>der</strong> Möbel. Das Adjektiv bekommt dort immer -en.", lvl: "B2" },
+    { satz: "Ungeachtet ___ Widerspruchs wurde das Testament eröffnet.", loesung: "des", falsch: ["dem", "der"], ding: "brief",
+      warum: "„ungeachtet“ ist eine der seltenen Präpositionen, die nur mit Genitiv vorkommen: <strong>des</strong> Widerspruchs.", lvl: "B2" },
+  ];
+
+  /* Die Erbstücke auf dem Dachboden — gezeichnet, damit sie überall
+     gleich aussehen und zusammenpassen. */
+  const ERB_DINGE = {
+    haus: `<path d="M-12 10V-2l12-9 12 9v12z" fill="#C9A97E" stroke="#8A6640" stroke-width="1.4" stroke-linejoin="round"/><rect x="-4" y="1" width="8" height="9" fill="#7A4A22"/>`,
+    uhr: `<circle cx="0" cy="0" r="11" fill="#E8D9B4" stroke="#B08D5F" stroke-width="2"/><path d="M0 0v-6M0 0l5 3" stroke="#3A2410" stroke-width="1.6" stroke-linecap="round"/>`,
+    buch: `<path d="M-9 -9h18v18h-18z" fill="#7A3A8C"/><path d="M-9 -9h4v18h-4z" fill="#5A2568"/><path d="M-2 -4h8M-2 0h8M-2 4h6" stroke="#E8D9B4" stroke-width="1.2"/>`,
+    teppich: `<path d="M-13 -5h26v10h-26z" fill="#B4553C"/><path d="M-13 -5h26v3h-26z" fill="#8E3B26"/><path d="M-9 0h4M-1 0h4M7 0h4" stroke="#F2C24B" stroke-width="1.6"/>`,
+    truhe: `<path d="M-12 9V-1a12 6 0 0 1 24 0v10z" fill="#8A5A32" stroke="#5E3A1E" stroke-width="1.4"/><rect x="-12" y="1" width="24" height="2.6" fill="#C9A227"/><rect x="-2" y="2" width="4" height="5" rx="1" fill="#C9A227"/>`,
+    schirm: `<path d="M-11 0a11 11 0 0 1 22 0z" fill="#3E7A8C"/><path d="M0 0v9a3 3 0 0 0 5 0" fill="none" stroke="#5E3A1E" stroke-width="2"/>`,
+    brief: `<rect x="-11" y="-7" width="22" height="14" rx="1.4" fill="#FDF8EA" stroke="#B9A87E" stroke-width="1.4"/><path d="M-11 -7 0 2l11-9" fill="none" stroke="#B9A87E" stroke-width="1.4"/>`,
+    kalender: `<rect x="-9" y="-9" width="18" height="18" rx="2" fill="#FDF8EA" stroke="#B9A87E" stroke-width="1.4"/><rect x="-9" y="-9" width="18" height="5" rx="2" fill="#C0392B"/><path d="M-5 0h10M-5 4h7" stroke="#8A7A5A" stroke-width="1.4"/>`,
+    kamera: `<rect x="-11" y="-6" width="22" height="14" rx="2.4" fill="#33404A"/><circle cx="0" cy="1" r="5" fill="#8FB8CE"/><circle cx="0" cy="1" r="2.4" fill="#33404A"/><rect x="-8" y="-9" width="6" height="3" rx="1" fill="#33404A"/>`,
+    stuhl: `<path d="M-7 9V-9h3v18M4 9V-9h3v18" fill="#8A5A32"/><rect x="-8" y="-2" width="16" height="3.4" fill="#8A5A32"/><rect x="-8" y="-9" width="16" height="3" fill="#8A5A32"/>`,
+  };
+
+  const ERB_RUNDEN = 8;
+  let erbSession = null;
+  let erbLevel = "";
+
+  function neueErbSession() {
+    const rang = { A2: 1, B1: 2, B2: 3 };
+    const grenze = rang[erbLevel] || 3;
+    const passt = ERB_FAELLE.filter((x) => (rang[x.lvl] || 3) <= grenze);
+    const topf = passt.length >= 4 ? passt : ERB_FAELLE;
+    erbSession = {
+      faelle: Core.shuffle(topf.slice()).slice(0, ERB_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+      beschriftet: [],
+    };
+  }
+
+  /* Der Dachboden. Was schon richtig zugeordnet wurde, trägt einen
+     Namenszettel — man sieht den Nachlass wachsen, statt eine Zahl
+     hochzählen zu müssen. */
+  function erbSzeneSvg(s) {
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="150" fill="#EDE2CE"/>`);
+    // Dachschräge
+    t.push(`<path d="M0 0 L150 -8 L300 0 v34 L150 26 L0 34 z" fill="#B08D5F" opacity="0.35"/>`);
+    t.push(`<path d="M0 34 L150 26 L300 34" stroke="#8A6640" stroke-width="2" fill="none"/>`);
+    // Dachfenster
+    t.push(`<path d="M196 6 h44 v26 h-44 z" fill="#BEDCEA" stroke="#8A6640" stroke-width="2"/>`);
+    t.push(`<path d="M218 6v26M196 19h44" stroke="#8A6640" stroke-width="1.4"/>`);
+    // Balken
+    t.push(`<rect x="0" y="44" width="300" height="5" fill="#A98A5E"/>`);
+    // Boden
+    t.push(`<rect x="0" y="120" width="300" height="30" fill="#C9A97E"/>`);
+    [40, 100, 160, 220, 280].forEach((x) => t.push(`<path d="M${x} 120v30" stroke="#A98A5E" stroke-width="1.6"/>`));
+    // Die Erbstücke: was beschriftet ist, steht vorn mit Zettel
+    const dinge = s.beschriftet.slice(0, 6);
+    dinge.forEach((ding, i) => {
+      const x = 32 + i * 46, y = 106;
+      t.push(`<ellipse cx="${x}" cy="${y + 14}" rx="15" ry="4" fill="#8A6640" opacity="0.35"/>`);
+      t.push(`<g transform="translate(${x} ${y})">${ERB_DINGE[ding] || ERB_DINGE.truhe}</g>`);
+      // Namenszettel an einer Schnur
+      t.push(`<line x1="${x}" y1="${y - 12}" x2="${x + 8}" y2="${y - 22}" stroke="#B08D5F" stroke-width="1.4"/>`);
+      t.push(`<rect x="${x + 4}" y="${y - 30}" width="18" height="9" rx="1.4" fill="#FDF8EA" stroke="#A98A5E" stroke-width="1"/>`);
+      t.push(`<path d="M${x + 7} ${y - 26}h11M${x + 7} ${y - 23.5}h7" stroke="#8A7A5A" stroke-width="1"/>`);
+    });
+    // Noch unsortierte Kisten im Hintergrund
+    [[38, 62], [96, 62], [154, 62]].forEach(([x, y], i) => {
+      t.push(`<rect x="${x}" y="${y}" width="42" height="26" rx="2" fill="${i % 2 ? "#B58C5C" : "#A87C4E"}"/>`);
+      t.push(`<path d="M${x} ${y + 13}h42M${x + 21} ${y}v26" stroke="#8A6640" stroke-width="1.2"/>`);
+    });
+    return `<svg class="erb-szene" viewBox="0 0 300 150" role="img" aria-label="Dachboden mit Erbstücken">${t.join("")}</svg>`;
+  }
+
+  function renderErbschaft() {
+    const area = document.getElementById("erbschaftArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-erbschaft", "Die Erbschaft")) return;
+    if (!renderComingSoonGate(area, "erbschaft_neu", "Die Erbschaft", "🗝️")) return;
+    erbLevel = applyDefaultCefrLevel(erbLevel, (v) => { erbLevel = v; erbSession = null; }, "erbschaft");
+    if (!erbSession) neueErbSession();
+    const s = erbSession;
+    if (s.index >= s.faelle.length) { renderErbschaftErgebnis(); return; }
+    const fall = s.faelle[s.index];
+    const wahlen = Core.shuffle([fall.loesung, ...fall.falsch]);
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Erbschaft: " + fall.loesung)}
+        <p class="eyebrow">🗝️ DIE ERBSCHAFT · Stück ${s.index + 1} / ${s.faelle.length}
+          <span class="subnav-info-icon" data-info="Der Genitiv sagt, wem etwas gehört. Männlich und sächlich: des, und das Wort bekommt ein -s (des Wagens). Weiblich und Mehrzahl: der, ohne -s (der Tante, der Kinder). Dazu die Präpositionen wegen, trotz, während, statt, innerhalb, aufgrund — sie alle verlangen den Genitiv.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.faelle.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${erbLevel === l ? "selected" : ""}" data-erb-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${erbSzeneSvg(s)}
+        <p class="erb-satz">${fall.satz.replace("___", '<span class="erb-luecke">?</span>')}</p>
+        <div class="erb-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="erb-wahl" data-erb-wahl="${w}">${w}</button>`).join("")}
+        </div>
+        <p class="erb-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-erb-wahl]").forEach((b) => b.addEventListener("click", () => erbAntwort(b.dataset.erbWahl, fall)));
+    area.querySelectorAll("[data-erb-level]").forEach((b) => b.addEventListener("click", () => {
+      erbLevel = b.dataset.erbLevel; autoCefrLevel.erbschaft = null; erbSession = null; renderErbschaft();
+    }));
+  }
+
+  function erbAntwort(wahl, fall) {
+    const s = erbSession;
+    const korrekt = wahl === fall.loesung;
+    spielNotiz(korrekt, fall.satz.replace("___", fall.loesung));
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      if (!s.beschriftet.includes(fall.ding)) s.beschriftet.push(fall.ding);
+      Core.sound.correct();
+    } else {
+      s.serie = 0; s.fehler.push(fall); Core.sound.wrong();
+    }
+    s.letzte = { text: (korrekt ? "✅ " : "❌ ") + fall.satz.replace("___", `<strong>${fall.loesung}</strong>`) + "<br>" + fall.warum };
+    s.index += 1;
+    renderErbschaft();
+  }
+
+  function renderErbschaftErgebnis() {
+    const area = document.getElementById("erbschaftArea");
+    const s = erbSession;
+    const prozent = Math.round((s.richtig / s.faelle.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.faelle.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Nachlass geordnet", charakter: "Die Erbschaft",
+      zeilen: [
+        { name: "🗝️ Richtig zugeordnet", anteil: prozent, wert: s.richtig + "/" + s.faelle.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.faelle.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="erbNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Noch einmal in Ruhe</p>
+        ${s.fehler.map((f) => `<p style="margin:8px 0;">${f.satz.replace("___", `<strong>${f.loesung}</strong>`)}<br><span class="empty-note">${f.warum.replace(/<\/?strong>/g, "")}</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("erbNochmal")?.addEventListener("click", () => { neueErbSession(); renderErbschaft(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["erbschaft"], points: punkte, bonus, percent: prozent,
+        character: "Die Erbschaft", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     BEIM ARZT — wem tut was weh?
+     ------------------------------------------------------------
+     „Ich habe Kopfschmerzen“ lernt man am ersten Tag. „Mir tut der
+     Kopf weh“ ist derselbe Satz und trotzdem viel schwerer, weil das
+     Deutsche hier den Dativ nimmt, wo andere Sprachen das Subjekt
+     erwarten: nicht ICH tue weh, sondern der Kopf tut MIR weh.
+
+     Dieselbe Falle steckt in „mir ist schlecht“, „mir ist kalt“,
+     „hilf mir“, „das hat mir geholfen“ — und daneben stehen die Sätze,
+     in denen doch der Akkusativ kommt: „der Arzt untersucht mich“,
+     „wie fühlst du dich“. Wer beides nebeneinander sieht, lernt die
+     Regel; wer nur Dativ übt, lernt eine Gewohnheit.
+
+     Deshalb liegt hier eine gezeichnete Figur auf der Liege, und die
+     Stelle, um die es gerade geht, leuchtet auf. Man antwortet also
+     nicht auf einen Satz, sondern auf eine Beschwerde.
+     ============================================================ */
+  const ARZT_FAELLE = [
+    { satz: "___ tut der Kopf weh.", loesung: "Mir", falsch: ["Mich", "Ich"], stelle: "kopf",
+      warum: "Nicht ich tue weh — der Kopf tut <strong>mir</strong> weh. „wehtun“ verlangt den Dativ.", lvl: "A1" },
+    { satz: "___ ist schlecht.", loesung: "Mir", falsch: ["Mich", "Ich"], stelle: "bauch",
+      warum: "Zustände wie schlecht, kalt, warm, schwindelig stehen im Deutschen mit dem Dativ: <strong>mir</strong> ist schlecht.", lvl: "A1" },
+    { satz: "Der Hals tut ___ weh.", loesung: "mir", falsch: ["mich", "ich"], stelle: "hals",
+      warum: "Dieselbe Regel, nur andere Reihenfolge: der Hals tut <strong>mir</strong> weh.", lvl: "A1" },
+    { satz: "Wie geht es ___?", loesung: "dir", falsch: ["dich", "du"], stelle: "kopf",
+      warum: "„Wie geht es …“ fragt immer im Dativ: wie geht es <strong>dir</strong>, ihm, ihr, Ihnen.", lvl: "A1" },
+    { satz: "___ tun die Füße weh.", loesung: "Mir", falsch: ["Mich", "Meine"], stelle: "fuss",
+      warum: "Auch in der Mehrzahl bleibt es dabei: die Füße tun <strong>mir</strong> weh.", lvl: "A1" },
+    { satz: "Kannst du ___ helfen?", loesung: "mir", falsch: ["mich", "meiner"], stelle: "arm",
+      warum: "„helfen“ ist eines der Verben, die immer den Dativ nehmen: jemandem helfen — <strong>mir</strong> helfen.", lvl: "A2" },
+    { satz: "Der Arzt untersucht ___.", loesung: "mich", falsch: ["mir", "ich"], stelle: "bauch",
+      warum: "Hier eben NICHT Dativ: untersuchen nimmt den Akkusativ — der Arzt untersucht <strong>mich</strong>.", lvl: "A2" },
+    { satz: "Ich habe ___ den Arm gebrochen.", loesung: "mir", falsch: ["mich", "meinen"], stelle: "arm",
+      warum: "Der Körperteil bekommt den Artikel, die Person den Dativ: ich habe <strong>mir</strong> den Arm gebrochen.", lvl: "A2" },
+    { satz: "Er hat ___ in den Finger geschnitten.", loesung: "sich", falsch: ["ihn", "seinen"], stelle: "hand",
+      warum: "Dieselbe Bauart in der 3. Person: er hat <strong>sich</strong> in den Finger geschnitten.", lvl: "A2" },
+    { satz: "Wie fühlst du ___ heute?", loesung: "dich", falsch: ["dir", "du"], stelle: "kopf",
+      warum: "„sich fühlen“ ist reflexiv mit Akkusativ: wie fühlst du <strong>dich</strong>. Verwechselt wird es gern mit „wie geht es dir“.", lvl: "A2" },
+    { satz: "Die Tabletten haben ___ gutgetan.", loesung: "mir", falsch: ["mich", "meiner"], stelle: "bauch",
+      warum: "„guttun“ gehört zu den Dativ-Verben: das tut <strong>mir</strong> gut.", lvl: "B1" },
+    { satz: "___ ist schwindelig, wenn ich aufstehe.", loesung: "Mir", falsch: ["Mich", "Ich"], stelle: "kopf",
+      warum: "Wieder ein Zustand ohne Subjekt: <strong>mir</strong> ist schwindelig.", lvl: "B1" },
+    { satz: "Ich muss ___ zweimal am Tag die Zähne putzen.", loesung: "mir", falsch: ["mich", "meine"], stelle: "hals",
+      warum: "Auch hier gehört der Körperteil zum Artikel und die Person in den Dativ: ich putze <strong>mir</strong> die Zähne.", lvl: "B1" },
+    { satz: "Der Rücken macht ___ seit Wochen zu schaffen.", loesung: "mir", falsch: ["mich", "meiner"], stelle: "ruecken",
+      warum: "„jemandem zu schaffen machen“ — feste Wendung mit Dativ: das macht <strong>mir</strong> zu schaffen.", lvl: "B1" },
+    { satz: "Die Ärztin hat ___ Blut abgenommen.", loesung: "mir", falsch: ["mich", "meines"], stelle: "arm",
+      warum: "Abgenommen wird das Blut, und zwar <strong>mir</strong> — die Person steht im Dativ.", lvl: "B1" },
+    { satz: "Das Bein ist ___ eingeschlafen.", loesung: "mir", falsch: ["mich", "meines"], stelle: "bein",
+      warum: "Der Körperteil ist das Subjekt, die Person steht im Dativ: das Bein ist <strong>mir</strong> eingeschlafen.", lvl: "B2" },
+    { satz: "___ wurde geraten, mehr zu laufen.", loesung: "Mir", falsch: ["Mich", "Ich"], stelle: "bein",
+      warum: "„raten“ nimmt den Dativ, auch im Passiv: <strong>mir</strong> wurde geraten.", lvl: "B2" },
+    { satz: "Es fehlt ___ an nichts.", loesung: "mir", falsch: ["mich", "meiner"], stelle: "bauch",
+      warum: "„fehlen“ geht mit Dativ: was fehlt <strong>Ihnen</strong>? — mir fehlt nichts.", lvl: "B2" },
+  ];
+
+  const ARZT_RUNDEN = 8;
+  let arztSession = null;
+  let arztLevel = "";
+
+  function neueArztSession() {
+    const rang = { A1: 1, A2: 2, B1: 3, B2: 4 };
+    const grenze = rang[arztLevel] || 4;
+    const passt = ARZT_FAELLE.filter((x) => (rang[x.lvl] || 4) <= grenze);
+    const topf = passt.length >= 4 ? passt : ARZT_FAELLE;
+    arztSession = {
+      faelle: Core.shuffle(topf.slice()).slice(0, ARZT_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+    };
+  }
+
+  /* Die Figur auf der Liege. Die Stelle, um die es geht, bekommt einen
+     roten Kringel — man liest also nicht nur „der Hals“, man sieht es. */
+  function arztSzeneSvg(stelle) {
+    const punkte = {
+      kopf: [150, 34], hals: [150, 56], bauch: [150, 92], arm: [116, 84],
+      hand: [100, 104], ruecken: [150, 76], bein: [138, 126], fuss: [136, 143],
+    };
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="160" fill="#E6EFF2"/>`);
+    // Fenster und Vorhang
+    t.push(`<rect x="16" y="14" width="52" height="44" rx="3" fill="#BEDCEA" stroke="#8FB8CE" stroke-width="2"/>`);
+    t.push(`<path d="M16 14h10v44h-10z" fill="#7FA6B8" opacity="0.5"/>`);
+    // Schrank mit Gläsern
+    t.push(`<rect x="238" y="26" width="48" height="72" rx="3" fill="#D8CBB4" stroke="#B09A78" stroke-width="2"/>`);
+    [40, 62].forEach((y) => t.push(`<rect x="242" y="${y}" width="40" height="2.6" fill="#B09A78"/>`));
+    [246, 258, 270].forEach((x) => t.push(`<rect x="${x}" y="${30}" width="7" height="9" rx="1.4" fill="#9AC0A0"/>`));
+    [248, 262].forEach((x) => t.push(`<rect x="${x}" y="${50}" width="9" height="11" rx="1.4" fill="#E2A0A0"/>`));
+    // Die Liege
+    t.push(`<rect x="60" y="112" width="180" height="16" rx="4" fill="#8A9AA6"/>`);
+    t.push(`<rect x="60" y="100" width="180" height="14" rx="5" fill="#F2F6F8" stroke="#B8C6CE" stroke-width="1.6"/>`);
+    t.push(`<rect x="66" y="128" width="7" height="22" fill="#6E7C86"/><rect x="227" y="128" width="7" height="22" fill="#6E7C86"/>`);
+    // Die Figur, sitzend auf der Liege
+    t.push(`<g>
+      <circle cx="150" cy="34" r="15" fill="#F2C4A0"/>
+      <path d="M136 30q14 -16 28 0 q-6 -12 -14 -12 t-14 12z" fill="#7A4A22"/>
+      <circle cx="145" cy="34" r="1.6" fill="#3A2410"/><circle cx="155" cy="34" r="1.6" fill="#3A2410"/>
+      <path d="M145 41q5 4 10 0" stroke="#3A2410" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <rect x="145" y="48" width="10" height="10" fill="#F2C4A0"/>
+      <path d="M132 58h36l6 44h-48z" fill="#7FA6B8"/>
+      <path d="M132 62 l-22 26 l-12 14" stroke="#7FA6B8" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M168 62 l20 24" stroke="#7FA6B8" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <circle cx="98" cy="104" r="5" fill="#F2C4A0"/><circle cx="190" cy="88" r="5" fill="#F2C4A0"/>
+      <path d="M138 102v30M162 102v30" stroke="#4A5F6E" stroke-width="10" stroke-linecap="round"/>
+      <path d="M138 138h-10M162 138h10" stroke="#33404A" stroke-width="7" stroke-linecap="round"/>
+    </g>`);
+    // Die betroffene Stelle
+    const p = punkte[stelle] || punkte.kopf;
+    t.push(`<circle cx="${p[0]}" cy="${p[1]}" r="15" fill="none" stroke="#C0392B" stroke-width="3" opacity="0.9"/>`);
+    t.push(`<circle cx="${p[0]}" cy="${p[1]}" r="21" fill="none" stroke="#C0392B" stroke-width="1.6" opacity="0.45"/>`);
+    return `<svg class="arzt-szene" viewBox="0 0 300 160" role="img" aria-label="Sprechzimmer mit einer Figur auf der Liege">${t.join("")}</svg>`;
+  }
+
+  function renderArzt() {
+    const area = document.getElementById("arztArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-arzt", "Beim Arzt")) return;
+    if (!renderComingSoonGate(area, "arzt_neu", "Beim Arzt", "🩺")) return;
+    arztLevel = applyDefaultCefrLevel(arztLevel, (v) => { arztLevel = v; arztSession = null; }, "arzt");
+    if (!arztSession) neueArztSession();
+    const s = arztSession;
+    if (s.index >= s.faelle.length) { renderArztErgebnis(); return; }
+    const fall = s.faelle[s.index];
+    const wahlen = Core.shuffle([fall.loesung, ...fall.falsch]);
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Beim Arzt: " + fall.loesung)}
+        <p class="eyebrow">🩺 BEIM ARZT · Beschwerde ${s.index + 1} / ${s.faelle.length}
+          <span class="subnav-info-icon" data-info="Im Deutschen tut nicht die Person weh, sondern der Körperteil — und die Person steht im Dativ: mir tut der Kopf weh, mir ist schlecht, hilf mir. Aber Vorsicht: untersuchen und sich fühlen nehmen den Akkusativ.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.faelle.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A1", "A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${arztLevel === l ? "selected" : ""}" data-arzt-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${arztSzeneSvg(fall.stelle)}
+        <p class="arzt-satz">${fall.satz.replace("___", '<span class="arzt-luecke">?</span>')}</p>
+        <div class="arzt-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="arzt-wahl" data-arzt-wahl="${w}">${w}</button>`).join("")}
+        </div>
+        <p class="arzt-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-arzt-wahl]").forEach((b) => b.addEventListener("click", () => arztAntwort(b.dataset.arztWahl, fall)));
+    area.querySelectorAll("[data-arzt-level]").forEach((b) => b.addEventListener("click", () => {
+      arztLevel = b.dataset.arztLevel; autoCefrLevel.arzt = null; arztSession = null; renderArzt();
+    }));
+  }
+
+  function arztAntwort(wahl, fall) {
+    const s = arztSession;
+    const korrekt = wahl === fall.loesung;
+    spielNotiz(korrekt, fall.satz.replace("___", fall.loesung));
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie); Core.sound.correct();
+    } else {
+      s.serie = 0; s.fehler.push(fall); Core.sound.wrong();
+    }
+    s.letzte = { text: (korrekt ? "✅ " : "❌ ") + fall.satz.replace("___", `<strong>${fall.loesung}</strong>`) + "<br>" + fall.warum };
+    s.index += 1;
+    renderArzt();
+  }
+
+  function renderArztErgebnis() {
+    const area = document.getElementById("arztArea");
+    const s = arztSession;
+    const prozent = Math.round((s.richtig / s.faelle.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.faelle.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Sprechstunde bestanden", charakter: "Beim Arzt",
+      zeilen: [
+        { name: "🩺 Richtig beschrieben", anteil: prozent, wert: s.richtig + "/" + s.faelle.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.faelle.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="arztNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Noch einmal in Ruhe</p>
+        ${s.fehler.map((f) => `<p style="margin:8px 0;">${f.satz.replace("___", `<strong>${f.loesung}</strong>`)}<br><span class="empty-note">${f.warum.replace(/<\/?strong>/g, "")}</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("arztNochmal")?.addEventListener("click", () => { neueArztSession(); renderArzt(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["arzt"], points: punkte, bonus, percent: prozent,
+        character: "Beim Arzt", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DAS GEWITTER — als, wenn, wann und die anderen Zeitwörter
+     ------------------------------------------------------------
+     „Als“ oder „wenn“ entscheidet sich nicht am Gefühl, sondern
+     daran, ob etwas einmal geschah oder immer wieder — und „wann“
+     gehört überhaupt nur in Fragen. Dazu kommen die Wörter, die eine
+     Reihenfolge festlegen: nachdem verlangt Vorzeitigkeit, bevor das
+     Gegenteil, während Gleichzeitigkeit.
+
+     Damit man den Fortschritt sieht statt ihn zu zählen, zieht das
+     Gewitter ab: Der Himmel wird mit jeder richtigen Antwort heller,
+     der Regen dünner — und wer danebengreift, holt sich einen Blitz.
+
+     Wichtig bei den Ablenkern: Es darf nie ein zweites Wort geben,
+     das auch passen würde. Deshalb stehen als falsche Antworten nur
+     Wörter, die an dieser Stelle grammatisch ausgeschlossen sind —
+     „nachdem“ ohne Vorzeitigkeit, „wann“ außerhalb einer Frage.
+     ============================================================ */
+  const GEWITTER_FAELLE = [
+    { satz: "___ ich ein Kind war, hatte ich Angst vor dem Donner.", loesung: "Als", falsch: ["Wenn", "Wann"],
+      warum: "Ein einziger Zeitraum in der Vergangenheit — dafür steht immer <strong>als</strong>.", lvl: "A2" },
+    { satz: "Immer ___ es blitzt, zähle ich die Sekunden bis zum Donner.", loesung: "wenn", falsch: ["als", "wann"],
+      warum: "„Immer“ zeigt an: Das wiederholt sich. Wiederholtes bekommt <strong>wenn</strong>.", lvl: "A2" },
+    { satz: "Niemand weiß, ___ das Gewitter aufhört.", loesung: "wann", falsch: ["wenn", "als"],
+      warum: "Hier steckt eine Frage im Satz („Wann hört es auf?“). In indirekten Fragen steht <strong>wann</strong>.", lvl: "A2" },
+    { satz: "___ es blitzt und donnert, bleibt der Hund unter dem Tisch.", loesung: "Wenn", falsch: ["Als", "Wann"],
+      warum: "Es geht um jedes Gewitter, nicht um ein bestimmtes: <strong>wenn</strong>.", lvl: "A2" },
+    { satz: "___ ich losfahre, schaue ich auf die Wetterkarte.", loesung: "Bevor", falsch: ["Nachdem", "Wann"],
+      warum: "Der Blick auf die Karte kommt zuerst: <strong>bevor</strong>. „Nachdem“ bräuchte hier „losgefahren bin“.", lvl: "A2" },
+    { satz: "___ wir alle Fenster geschlossen hatten, begann der Regen.", loesung: "Nachdem", falsch: ["Während", "Seit"],
+      warum: "<strong>nachdem</strong> verlangt genau das: Das eine war fertig, bevor das andere anfing — daher „geschlossen hatten“.", lvl: "B1" },
+    { satz: "___ ich auf den Bus wartete, wurde der Himmel immer dunkler.", loesung: "Während", falsch: ["Nachdem", "Wann"],
+      warum: "Beides läuft gleichzeitig — das ist <strong>während</strong>.", lvl: "B1" },
+    { satz: "___ der Blitz gestern in den Baum einschlug, war der Strom sofort weg.", loesung: "Als", falsch: ["Wenn", "Während"],
+      warum: "„Gestern“ macht daraus ein einmaliges Ereignis: <strong>als</strong>.", lvl: "B1" },
+    { satz: "___ ich hier wohne, hat es nur zweimal so stark gestürmt.", loesung: "Seit", falsch: ["Bis", "Bevor"],
+      warum: "Ein Zeitpunkt in der Vergangenheit, von dem an bis heute gezählt wird: <strong>seit</strong>.", lvl: "B1" },
+    { satz: "Wir warten hier, ___ der Regen aufhört.", loesung: "bis", falsch: ["seit", "nachdem"],
+      warum: "<strong>bis</strong> nennt das Ende des Wartens.", lvl: "B1" },
+    { satz: "Ich rufe dich an, ___ ich zu Hause angekommen bin.", loesung: "sobald", falsch: ["während", "bevor"],
+      warum: "<strong>sobald</strong> heißt: in dem Moment, in dem es so weit ist — keine Minute später.", lvl: "B1" },
+    { satz: "___ das Unwetter kam, hatten wir schon alles ins Haus geräumt.", loesung: "Als", falsch: ["Nachdem", "Seit"],
+      warum: "Ein einmaliger Moment in der Vergangenheit: <strong>als</strong>. Was vorher fertig war, steht im Plusquamperfekt.", lvl: "B1" },
+    { satz: "Erst ___ der letzte Donner verklungen war, wagte er sich heraus.", loesung: "nachdem", falsch: ["während", "seit"],
+      warum: "„Erst … nachdem“ ist eine feste Verbindung; sie verlangt <strong>nachdem</strong>.", lvl: "B2" },
+    { satz: "___ ich das Fenster schließen konnte, war der Boden schon nass.", loesung: "Bevor", falsch: ["Nachdem", "Seit"],
+      warum: "Das Fenster war noch offen — das Nasswerden kam zuerst, also <strong>bevor</strong>.", lvl: "B2" },
+    { satz: "___ es aufgehört hatte zu regnen, kamen die Schnecken aus dem Beet.", loesung: "Nachdem", falsch: ["Während", "Bevor"],
+      warum: "Der Regen war vorbei, dann kamen die Schnecken: <strong>nachdem</strong> mit Plusquamperfekt.", lvl: "B2" },
+    { satz: "Es hat nicht mehr geregnet, ___ das Gewitter durchgezogen ist.", loesung: "seitdem", falsch: ["bevor", "während"],
+      warum: "Von diesem Zeitpunkt an bis heute — das ist <strong>seitdem</strong> (auch „seit“ wäre möglich).", lvl: "B2" },
+  ];
+
+  const GEWITTER_RUNDEN = 8;
+  let gewitterSession = null;
+  let gewitterLevel = "";
+
+  function neueGewitterSession() {
+    const rang = { A2: 1, B1: 2, B2: 3 };
+    const grenze = rang[gewitterLevel] || 3;
+    const passt = GEWITTER_FAELLE.filter((x) => (rang[x.lvl] || 3) <= grenze);
+    const topf = passt.length >= 4 ? passt : GEWITTER_FAELLE;
+    gewitterSession = {
+      faelle: Core.shuffle(topf.slice()).slice(0, GEWITTER_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+      blitz: false,
+    };
+  }
+
+  /* Der Himmel als Anzeige: Je mehr stimmt, desto heller wird er und
+     desto weniger Tropfen fallen. Am Ende steht ein Regenbogen —
+     eine Zahl hätte dasselbe gesagt, aber nicht dasselbe gezeigt. */
+  function gewitterHimmelSvg(s) {
+    const anteil = s.faelle.length ? s.richtig / s.faelle.length : 0;
+    const t = [];
+    // Himmelsfarbe: von Gewittergrau nach hellem Blau
+    const misch = (a, b) => Math.round(a + (b - a) * anteil);
+    const oben = `rgb(${misch(58, 150)},${misch(66, 196)},${misch(78, 226)})`;
+    const unten = `rgb(${misch(96, 208)},${misch(104, 232)},${misch(112, 246)})`;
+    t.push(`<defs><linearGradient id="gewHimmel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${oben}"/><stop offset="1" stop-color="${unten}"/></linearGradient></defs>`);
+    t.push(`<rect x="0" y="0" width="300" height="150" fill="url(#gewHimmel)"/>`);
+    // Wolken — sie ziehen mit jedem Treffer weiter nach links hinaus
+    const weg = anteil * 150;
+    const wolkeHell = 150 + anteil * 70;
+    [[70, 34, 1], [160, 26, 0.86], [238, 40, 0.72]].forEach(([wx, wy, gr], i) => {
+      const x = wx - weg * (i + 1) * 0.5;
+      const c = `rgb(${Math.round(wolkeHell)},${Math.round(wolkeHell + 6)},${Math.round(wolkeHell + 14)})`;
+      t.push(`<g transform="translate(${x.toFixed(1)} ${wy}) scale(${gr})" opacity="${(1 - anteil * 0.55).toFixed(2)}">
+        <ellipse cx="0" cy="0" rx="30" ry="15" fill="${c}"/>
+        <ellipse cx="-18" cy="4" rx="18" ry="11" fill="${c}"/>
+        <ellipse cx="18" cy="5" rx="20" ry="12" fill="${c}"/>
+      </g>`);
+    });
+    // Regen — dünner, je besser es läuft
+    const tropfen = Math.max(0, Math.round(26 * (1 - anteil)));
+    for (let i = 0; i < tropfen; i++) {
+      const x = 12 + ((i * 37) % 280), y = 56 + ((i * 23) % 62);
+      t.push(`<line x1="${x}" y1="${y}" x2="${x - 3}" y2="${y + 9}" stroke="#C8DCEA" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>`);
+    }
+    // Der Blitz nach einer falschen Antwort
+    if (s.blitz) {
+      t.push(`<path d="M150 20 l-14 44 h13 l-10 40 26 -50 h-13 z" fill="#F2D24B" stroke="#B08D1F" stroke-width="1.4" stroke-linejoin="round"/>`);
+    }
+    // Der Regenbogen, sobald mehr als die Hälfte steht
+    if (anteil > 0.5) {
+      ["#C0392B", "#E8825F", "#F2C24B", "#5AA05A", "#3E7A8C", "#6A5A9A"].forEach((f, i) => {
+        t.push(`<path d="M40 ${124} a${106 - i * 6} ${76 - i * 5} 0 0 1 ${212 - i * 12} 0" fill="none" stroke="${f}" stroke-width="4" opacity="${(anteil - 0.5) * 1.8}"/>`);
+      });
+    }
+    // Boden
+    t.push(`<path d="M0 124 q40 -8 78 0 t80 2 t80 -4 t62 4 V150 H0 z" fill="#6A8C4A"/>`);
+    // Ein Haus mit Fenstern, damit man weiß, wo man steht
+    t.push(`<g transform="translate(28 96)">
+      <rect x="0" y="10" width="44" height="26" fill="#E8D9B4" stroke="#8A6640" stroke-width="1.4"/>
+      <path d="M-5 10 L22 -6 L49 10 z" fill="#B4553C"/>
+      <rect x="7" y="17" width="11" height="10" fill="#F2C24B"/>
+      <rect x="26" y="17" width="11" height="10" fill="#F2C24B"/>
+    </g>`);
+    return `<svg class="gew-himmel" viewBox="0 0 300 150" role="img" aria-label="Himmel über einem Haus, der mit jeder richtigen Antwort aufklart">${t.join("")}</svg>`;
+  }
+
+  function renderGewitter() {
+    const area = document.getElementById("gewitterArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-gewitter", "Das Gewitter")) return;
+    if (!renderComingSoonGate(area, "gewitter_neu", "Das Gewitter", "⛈️")) return;
+    gewitterLevel = applyDefaultCefrLevel(gewitterLevel, (v) => { gewitterLevel = v; gewitterSession = null; }, "gewitter");
+    if (!gewitterSession) neueGewitterSession();
+    const s = gewitterSession;
+    if (s.index >= s.faelle.length) { renderGewitterErgebnis(); return; }
+    const fall = s.faelle[s.index];
+    const wahlen = Core.shuffle([fall.loesung, ...fall.falsch]);
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Gewitter: " + fall.loesung)}
+        <p class="eyebrow">⛈️ DAS GEWITTER · Satz ${s.index + 1} / ${s.faelle.length}
+          <span class="subnav-info-icon" data-info="als = einmal in der Vergangenheit. wenn = immer wieder oder in der Zukunft. wann = nur in Fragen. nachdem = das eine war vorher fertig. bevor = das andere kommt zuerst. während = beides gleichzeitig.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.faelle.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${gewitterLevel === l ? "selected" : ""}" data-gew-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${gewitterHimmelSvg(s)}
+        <p class="gew-satz">${fall.satz.replace("___", '<span class="gew-luecke">?</span>')}</p>
+        <div class="gew-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="gew-wahl" data-gew-wahl="${w}">${w}</button>`).join("")}
+        </div>
+        <p class="gew-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-gew-wahl]").forEach((b) => b.addEventListener("click", () => gewitterAntwort(b.dataset.gewWahl, fall)));
+    area.querySelectorAll("[data-gew-level]").forEach((b) => b.addEventListener("click", () => {
+      gewitterLevel = b.dataset.gewLevel; autoCefrLevel.gewitter = null; gewitterSession = null; renderGewitter();
+    }));
+  }
+
+  function gewitterAntwort(wahl, fall) {
+    const s = gewitterSession;
+    const korrekt = wahl === fall.loesung;
+    spielNotiz(korrekt, fall.satz.replace("___", fall.loesung));
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      s.blitz = false; Core.sound.correct();
+    } else {
+      s.serie = 0; s.fehler.push(fall); s.blitz = true; Core.sound.wrong();
+    }
+    s.letzte = { text: (korrekt ? "✅ " : "❌ ") + fall.satz.replace("___", `<strong>${fall.loesung}</strong>`) + "<br>" + fall.warum };
+    s.index += 1;
+    renderGewitter();
+  }
+
+  function renderGewitterErgebnis() {
+    const area = document.getElementById("gewitterArea");
+    const s = gewitterSession;
+    const prozent = Math.round((s.richtig / s.faelle.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.faelle.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Wetterfest", charakter: "Das Gewitter",
+      zeilen: [
+        { name: "⛈️ Aufgeklart", anteil: prozent, wert: s.richtig + "/" + s.faelle.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.faelle.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="gewNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Noch einmal in Ruhe</p>
+        ${s.fehler.map((f) => `<p style="margin:8px 0;">${f.satz.replace("___", `<strong>${f.loesung}</strong>`)}<br><span class="empty-note">${f.warum.replace(/<\/?strong>/g, "")}</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("gewNochmal")?.addEventListener("click", () => { neueGewitterSession(); renderGewitter(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["gewitter"], points: punkte, bonus, percent: prozent,
+        character: "Wetterfest", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DAS FUNDBÜRO — Relativsätze
+     ------------------------------------------------------------
+     Ein Relativpronomen richtet sich in Geschlecht und Zahl nach dem
+     Wort davor, im Fall aber nach dem, was im Nebensatz mit ihm
+     geschieht. Genau diese Teilung ist die Hürde: „der Koffer“ bleibt
+     männlich, heißt aber „den“, sobald man ihn vergisst, und „dem“,
+     sobald etwas darin liegt.
+
+     Deshalb steht hier ein Schalter, an dem beschrieben wird, was
+     verloren ging. Wer das richtige Pronomen wählt, bekommt den
+     Gegenstand ausgehändigt — er wandert sichtbar aus dem Regal auf
+     den Tresen. Man sammelt also nicht Punkte, sondern seine Sachen.
+     ============================================================ */
+  const FUND_FAELLE = [
+    { satz: "Das ist der Koffer, ___ mir gehört.", loesung: "der", falsch: ["den", "dem"],
+      warum: "„der Koffer“ ist männlich, und im Nebensatz ist er das Subjekt: <strong>der</strong> (Nominativ).",
+      ding: "koffer", lvl: "A2" },
+    { satz: "Hier ist das Handy, ___ im Bus lag.", loesung: "das", falsch: ["dem", "dessen"],
+      warum: "„das Handy“ ist sächlich und im Nebensatz das Subjekt: <strong>das</strong> (Nominativ).",
+      ding: "handy", lvl: "A2" },
+    { satz: "Das ist die Tasche, ___ ich gestern verloren habe.", loesung: "die", falsch: ["der", "deren"],
+      warum: "„die Tasche“ ist weiblich; verloren wird sie, also Akkusativ — und der ist bei weiblich gleich dem Nominativ: <strong>die</strong>.",
+      ding: "tasche", lvl: "A2" },
+    { satz: "Das ist der Schirm, ___ ich im Café vergessen habe.", loesung: "den", falsch: ["der", "dem"],
+      warum: "Vergessen wird der Schirm — männlich im Akkusativ heißt <strong>den</strong>.",
+      ding: "schirm", lvl: "A2" },
+    { satz: "Das sind die Handschuhe, ___ ich seit Wochen suche.", loesung: "die", falsch: ["denen", "deren"],
+      warum: "Mehrzahl im Akkusativ: <strong>die</strong>. „denen“ wäre der Dativ.",
+      ding: "handschuhe", lvl: "A2" },
+    { satz: "Das ist der Mann, ___ ich den Schlüssel gegeben habe.", loesung: "dem", falsch: ["den", "der"],
+      warum: "Geben tut man jemandem — männlich im Dativ heißt <strong>dem</strong>.",
+      ding: "schluessel", lvl: "B1" },
+    { satz: "Das ist die Frau, ___ der Rucksack gehört.", loesung: "der", falsch: ["die", "deren"],
+      warum: "„gehören“ verlangt den Dativ, und weiblich im Dativ heißt <strong>der</strong>.",
+      ding: "rucksack", lvl: "B1" },
+    { satz: "Das ist das Kind, ___ die Mütze gehört.", loesung: "dem", falsch: ["das", "dessen"],
+      warum: "Sächlich im Dativ heißt <strong>dem</strong> — genauso wie männlich.",
+      ding: "muetze", lvl: "B1" },
+    { satz: "Das sind die Leute, ___ ich die Adresse gegeben habe.", loesung: "denen", falsch: ["die", "deren"],
+      warum: "Die Mehrzahl hat im Dativ eine eigene Form: <strong>denen</strong>.",
+      ding: "zettel", lvl: "B1" },
+    { satz: "Das ist die Tasche, in ___ mein Pass war.", loesung: "der", falsch: ["die", "denen"],
+      warum: "„in“ mit Ortsangabe verlangt den Dativ; weiblich im Dativ heißt <strong>der</strong>.",
+      ding: "tasche", lvl: "B1" },
+    { satz: "Das ist der Zug, mit ___ ich gekommen bin.", loesung: "dem", falsch: ["den", "der"],
+      warum: "„mit“ verlangt immer den Dativ: <strong>dem</strong> Zug.",
+      ding: "fahrkarte", lvl: "B1" },
+    { satz: "Das ist das Buch, von ___ ich dir erzählt habe.", loesung: "dem", falsch: ["das", "dessen"],
+      warum: "„von“ verlangt den Dativ — sächlich also <strong>dem</strong>.",
+      ding: "buch", lvl: "B1" },
+    { satz: "Das ist der Herr, ___ Geige hier steht.", loesung: "dessen", falsch: ["dem", "deren"],
+      warum: "Wem die Geige gehört, sagt der Genitiv: männlich <strong>dessen</strong>.",
+      ding: "geige", lvl: "B2" },
+    { satz: "Das ist die Dame, ___ Brille wir gefunden haben.", loesung: "deren", falsch: ["dessen", "der"],
+      warum: "Weiblich im Genitiv heißt <strong>deren</strong> — und danach steht kein Artikel mehr.",
+      ding: "brille", lvl: "B2" },
+    { satz: "Das ist der Koffer, ___ Griff abgebrochen ist.", loesung: "dessen", falsch: ["der", "dem"],
+      warum: "Der Griff gehört zum Koffer, also Genitiv: <strong>dessen</strong> Griff.",
+      ding: "koffer", lvl: "B2" },
+    { satz: "Das ist der Ort, ___ ich die Brille verloren habe.", loesung: "wo", falsch: ["den", "dem"],
+      warum: "Bei Orten tritt <strong>wo</strong> an die Stelle von „an dem“.",
+      ding: "brille", lvl: "B2" },
+    { satz: "Das ist alles, ___ ich noch habe.", loesung: "was", falsch: ["das", "dessen"],
+      warum: "Nach „alles“, „nichts“, „etwas“ und „das“ steht <strong>was</strong>.",
+      ding: "zettel", lvl: "B2" },
+    { satz: "Das ist die Kamera, ___ Objektiv fehlt.", loesung: "deren", falsch: ["die", "der"],
+      warum: "Das Objektiv gehört zur Kamera — weiblich im Genitiv: <strong>deren</strong>.",
+      ding: "kamera", lvl: "B2" },
+  ];
+
+  /* Die Gegenstände, die man zurückbekommt. Gezeichnet, nicht als
+     Zeichen gesetzt: ein Emoji sieht auf jedem Gerät anders aus, und
+     im Regal sollen alle Sachen zusammenpassen. */
+  const FUND_DINGE = {
+    koffer: `<rect x="-11" y="-6" width="22" height="15" rx="2" fill="#8A5A32"/><rect x="-11" y="-1" width="22" height="2.4" fill="#5E3A1E"/><path d="M-4 -6v-3h8v3" fill="none" stroke="#5E3A1E" stroke-width="2"/>`,
+    handy: `<rect x="-6" y="-9" width="12" height="18" rx="2.4" fill="#33404A"/><rect x="-4.6" y="-7" width="9.2" height="13" rx="1" fill="#8FB8CE"/><circle cx="0" cy="7" r="1.2" fill="#8FB8CE"/>`,
+    tasche: `<path d="M-10 -2h20l-2 11h-16z" fill="#B4553C"/><path d="M-5 -2a5 5 0 0 1 10 0" fill="none" stroke="#7A2F1E" stroke-width="2"/>`,
+    schirm: `<path d="M-11 0a11 11 0 0 1 22 0z" fill="#3E7A8C"/><path d="M0 0v8a3 3 0 0 0 5 0" fill="none" stroke="#5E3A1E" stroke-width="2"/>`,
+    handschuhe: `<path d="M-10 8V-2a2 2 0 0 1 4 0v2h1v-4a2 2 0 0 1 4 0v4h1v-2a2 2 0 0 1 3 0v8z" fill="#6A5A9A"/><path d="M-10 8h13v3h-13z" fill="#4A3F72"/>`,
+    schluessel: `<circle cx="-6" cy="0" r="5" fill="none" stroke="#C9A227" stroke-width="3"/><path d="M-1 0h12M8 0v4M11 0v3" stroke="#C9A227" stroke-width="3" stroke-linecap="round"/>`,
+    rucksack: `<rect x="-9" y="-4" width="18" height="14" rx="4" fill="#4A7A4A"/><path d="M-5 -4v-3a5 5 0 0 1 10 0v3" fill="none" stroke="#2F5230" stroke-width="2"/><rect x="-6" y="2" width="12" height="4" rx="1.4" fill="#2F5230"/>`,
+    muetze: `<path d="M-10 4a10 9 0 0 1 20 0z" fill="#C0392B"/><rect x="-11" y="4" width="22" height="3.4" rx="1.7" fill="#8E2B20"/><circle cx="0" cy="-6" r="2.4" fill="#F2C24B"/>`,
+    zettel: `<rect x="-8" y="-10" width="16" height="20" rx="1.4" fill="#FDF8EA" stroke="#B9A87E" stroke-width="1.2"/><path d="M-5 -5h10M-5 -1h10M-5 3h7" stroke="#8A7A5A" stroke-width="1.4"/>`,
+    fahrkarte: `<rect x="-11" y="-6" width="22" height="12" rx="1.6" fill="#E8D9B4" stroke="#B08D5F" stroke-width="1.2"/><path d="M-4 -6v12" stroke="#B08D5F" stroke-width="1.2" stroke-dasharray="2 2"/><path d="M1 -2h7M1 2h5" stroke="#7A5A3A" stroke-width="1.4"/>`,
+    buch: `<path d="M-9 -8h18v16h-18z" fill="#7A3A8C"/><path d="M-9 -8h4v16h-4z" fill="#5A2568"/><path d="M-2 -4h8M-2 0h8" stroke="#E8D9B4" stroke-width="1.2"/>`,
+    geige: `<path d="M0 -10c4 0 5 4 3 6 3 2 3 9-3 11-6-2-6-9-3-11-2-2-1-6 3-6z" fill="#9A4A22"/><path d="M0 -9v18" stroke="#3A2410" stroke-width="1"/><path d="M-2 -12h4v3h-4z" fill="#3A2410"/>`,
+    brille: `<circle cx="-6" cy="0" r="5" fill="none" stroke="#33404A" stroke-width="2"/><circle cx="6" cy="0" r="5" fill="none" stroke="#33404A" stroke-width="2"/><path d="M-1 0h2M-11 -1l-4-2M11 -1l4-2" stroke="#33404A" stroke-width="2" stroke-linecap="round"/>`,
+    kamera: `<rect x="-11" y="-6" width="22" height="14" rx="2.4" fill="#33404A"/><circle cx="0" cy="1" r="5" fill="#8FB8CE"/><circle cx="0" cy="1" r="2.4" fill="#33404A"/><rect x="-8" y="-9" width="6" height="3" rx="1" fill="#33404A"/>`,
+  };
+
+  const FUND_RUNDEN = 8;
+  let fundSession = null;
+  let fundLevel = "";
+
+  function neueFundSession() {
+    const rang = { A2: 1, B1: 2, B2: 3 };
+    const grenze = rang[fundLevel] || 3;
+    const passt = FUND_FAELLE.filter((x) => (rang[x.lvl] || 3) <= grenze);
+    const topf = passt.length >= 4 ? passt : FUND_FAELLE;
+    fundSession = {
+      faelle: Core.shuffle(topf.slice()).slice(0, FUND_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+      // Was schon zurückgegeben wurde — liegt sichtbar auf dem Tresen
+      tresen: [],
+    };
+  }
+
+  /* Der Schalter: hinten das Regal mit den ungeklärten Sachen, vorn
+     der Tresen, auf dem sich sammelt, was man zurückbekommen hat. */
+  function fundSzeneSvg(s) {
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="140" fill="#EFE4CE"/>`);
+    /* Das Regal in drei sauber getrennten Boeden: oben die
+       Nummernschildchen, darunter die Kartons. In der ersten Fassung
+       lagen beide Reihen uebereinander — die Schildchen verschwanden
+       hinter den Kartons. */
+    t.push(`<rect x="14" y="8" width="272" height="88" rx="3" fill="#C9A97E"/>`);
+    [36, 64, 92].forEach((y) => t.push(`<rect x="14" y="${y}" width="272" height="4" fill="#A98A5E"/>`));
+    for (let i = 0; i < 5; i++) {
+      const x = 24 + i * 52;
+      t.push(`<rect x="${x}" y="16" width="42" height="14" rx="1.6" fill="#FDF8EA" stroke="#A98A5E" stroke-width="0.9"/>`);
+      t.push(`<text x="${x + 21}" y="${26}" text-anchor="middle" font-size="8" fill="#7A5A3A" font-family="monospace">Nr. ${101 + i}</text>`);
+    }
+    [[26, 42], [92, 42], [158, 42], [224, 42], [26, 70], [92, 70], [158, 70], [224, 70]].forEach(([x, y], i) => {
+      t.push(`<rect x="${x}" y="${y}" width="50" height="20" rx="2" fill="${i % 2 ? "#B58C5C" : "#A87C4E"}"/>`);
+      t.push(`<path d="M${x} ${y + 10}h50M${x + 25} ${y}v20" stroke="#8A6640" stroke-width="1.2"/>`);
+    });
+    // Der Tresen
+    t.push(`<rect x="0" y="104" width="300" height="36" fill="#8A5A32"/>`);
+    t.push(`<rect x="0" y="104" width="300" height="6" fill="#B58C5C"/>`);
+    // Die Klingel am rechten Rand
+    t.push(`<path d="M268 104a9 7 0 0 1 18 0z" fill="#C9A227"/><rect x="266" y="103" width="22" height="3" rx="1.5" fill="#9A7A18"/><circle cx="277" cy="95" r="2" fill="#C9A227"/>`);
+    // Was schon zurueckgegeben wurde, liegt auf dem Tresen
+    s.tresen.slice(0, 7).forEach((ding, i) => {
+      const x = 26 + i * 34;
+      t.push(`<ellipse cx="${x}" cy="132" rx="13" ry="3" fill="#5E3A1E" opacity="0.45"/>`);
+      t.push(`<g transform="translate(${x} 122) scale(0.8)">${FUND_DINGE[ding] || FUND_DINGE.zettel}</g>`);
+    });
+    return `<svg class="fund-szene" viewBox="0 0 300 140" role="img" aria-label="Fundbüro mit Regal und Tresen">${t.join("")}</svg>`;
+  }
+
+  function renderFundbuero() {
+    const area = document.getElementById("fundbueroArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-fundbuero", "Das Fundbüro")) return;
+    if (!renderComingSoonGate(area, "fundbuero_neu", "Das Fundbüro", "🧳")) return;
+    fundLevel = applyDefaultCefrLevel(fundLevel, (v) => { fundLevel = v; fundSession = null; }, "fundbuero");
+    if (!fundSession) neueFundSession();
+    const s = fundSession;
+    if (s.index >= s.faelle.length) { renderFundbueroErgebnis(); return; }
+    const fall = s.faelle[s.index];
+    const wahlen = Core.shuffle([fall.loesung, ...fall.falsch]);
+    const satzHtml = fall.satz.replace("___", '<span class="fund-luecke">?</span>');
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Fundbüro: " + fall.loesung)}
+        <p class="eyebrow">🧳 DAS FUNDBÜRO · Stück ${s.index + 1} / ${s.faelle.length}
+          <span class="subnav-info-icon" data-info="Das Relativpronomen nimmt Geschlecht und Zahl vom Wort davor, den Fall aber von seiner Aufgabe im Nebensatz. Der Koffer bleibt männlich – aber: den ich vergessen habe, dem Griff fehlt, dessen Griff abgebrochen ist.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.faelle.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${fundLevel === l ? "selected" : ""}" data-fund-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${fundSzeneSvg(s)}
+        <p class="fund-satz">${satzHtml}</p>
+        <p class="fund-frage">Welches Wort gehört in die Lücke?</p>
+        <div class="fund-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="fund-wahl" data-fund-wahl="${w}">${w}</button>`).join("")}
+        </div>
+        <p class="fund-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-fund-wahl]").forEach((b) => b.addEventListener("click", () => fundAntwort(b.dataset.fundWahl, fall)));
+    area.querySelectorAll("[data-fund-level]").forEach((b) => b.addEventListener("click", () => {
+      fundLevel = b.dataset.fundLevel; autoCefrLevel.fundbuero = null; fundSession = null; renderFundbuero();
+    }));
+  }
+
+  function fundAntwort(wahl, fall) {
+    const s = fundSession;
+    const korrekt = wahl === fall.loesung;
+    spielNotiz(korrekt, fall.satz.replace("___", fall.loesung));
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      s.tresen.push(fall.ding);
+      Core.sound.correct();
+    } else {
+      s.serie = 0; s.fehler.push(fall); Core.sound.wrong();
+    }
+    const ganz = fall.satz.replace("___", `<strong>${fall.loesung}</strong>`);
+    s.letzte = { text: (korrekt ? "✅ " : "❌ ") + ganz + "<br>" + fall.warum };
+    s.index += 1;
+    renderFundbuero();
+  }
+
+  function renderFundbueroErgebnis() {
+    const area = document.getElementById("fundbueroArea");
+    const s = fundSession;
+    const prozent = Math.round((s.richtig / s.faelle.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.faelle.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Schalter-Profi", charakter: "Das Fundbüro",
+      zeilen: [
+        { name: "🧳 Zurückbekommen", anteil: prozent, wert: s.richtig + "/" + s.faelle.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.faelle.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="fundNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Noch einmal in Ruhe</p>
+        ${s.fehler.map((f) => `<p style="margin:8px 0;">${f.satz.replace("___", `<strong>${f.loesung}</strong>`)}<br><span class="empty-note">${f.warum.replace(/<\/?strong>/g, "")}</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("fundNochmal")?.addEventListener("click", () => { neueFundSession(); renderFundbuero(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["fundbuero"], points: punkte, bonus, percent: prozent,
+        character: "Schalter-Profi", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DIE SCHATZKARTE — Imperativ und Wegbeschreibung
+     ------------------------------------------------------------
+     Den Imperativ lernt man nicht an Formen, sondern indem jemand
+     ihn befolgt. Deshalb steht hier eine Karte, auf der sich eine
+     Figur wirklich bewegt: Wer den richtigen Befehl wählt, bringt
+     sie einen Schritt weiter; wer danebengreift, sieht sofort, dass
+     sie in die falsche Richtung läuft.
+
+     Die eigentliche Schwierigkeit ist nicht „geh" gegen „gehe",
+     sondern dass die du-Form bei starken Verben den Vokal wechselt
+     („du nimmst" → „nimm!", „du fährst" → „fahr!") und das -st
+     verliert. Genau diese Verben sind hier versammelt.
+     ============================================================ */
+  const SCHATZ_SCHRITTE = [
+    { anweisung: "geradeaus zum Brunnen gehen", verb: "gehen", du: "du gehst", imp: "Geh", falsch: ["Gehst", "Gehen"], richtung: "hoch", lvl: "A1" },
+    { anweisung: "die Tür öffnen", verb: "öffnen", du: "du öffnest", imp: "Öffne", falsch: ["Öffn", "Öffnest"], richtung: "hoch", lvl: "A1" },
+    { anweisung: "den Fuchs rufen", verb: "rufen", du: "du rufst", imp: "Ruf", falsch: ["Rufst", "Rufen"], richtung: "rechts", lvl: "A1" },
+    { anweisung: "das Wasser trinken", verb: "trinken", du: "du trinkst", imp: "Trink", falsch: ["Trinkst", "Trinken"], richtung: "links", lvl: "A1" },
+    { anweisung: "die alte Karte suchen", verb: "suchen", du: "du suchst", imp: "Such", falsch: ["Suchst", "Suchen"], richtung: "rechts", lvl: "A1" },
+    { anweisung: "auf den Fuchs warten", verb: "warten", du: "du wartest", imp: "Warte", falsch: ["Wart", "Wartest"], richtung: "hoch", lvl: "A1" },
+    { anweisung: "an der Eiche nach links abbiegen", verb: "abbiegen", du: "du biegst ab", imp: "Bieg", falsch: ["Biegst", "Abbieg"], richtung: "links", lvl: "A2", nachsatz: "ab" },
+    { anweisung: "den Weg am Fluss nehmen", verb: "nehmen", du: "du nimmst", imp: "Nimm", falsch: ["Nehm", "Nimmst"], richtung: "rechts", lvl: "A2", stark: true },
+    { anweisung: "über die kleine Brücke fahren", verb: "fahren", du: "du fährst", imp: "Fahr", falsch: ["Fährst", "Fähr"], richtung: "rechts", lvl: "A2", stark: true },
+    { anweisung: "vor der Höhle anhalten", verb: "anhalten", du: "du hältst an", imp: "Halt", falsch: ["Hältst", "Anhalt"], richtung: "hoch", lvl: "A2", stark: true, nachsatz: "an" },
+    { anweisung: "die Lampe mitnehmen", verb: "mitnehmen", du: "du nimmst mit", imp: "Nimm", falsch: ["Mitnimm", "Nehm"], richtung: "hoch", lvl: "B1", stark: true, nachsatz: "mit" },
+    { anweisung: "leise sprechen", verb: "sprechen", du: "du sprichst", imp: "Sprich", falsch: ["Sprech", "Sprichst"], richtung: "links", lvl: "B1", stark: true },
+    { anweisung: "den Stein zur Seite schieben", verb: "schieben", du: "du schiebst", imp: "Schieb", falsch: ["Schiebst", "Schob"], richtung: "rechts", lvl: "B1" },
+    { anweisung: "in die Truhe sehen", verb: "sehen", du: "du siehst", imp: "Sieh", falsch: ["Seh", "Siehst"], richtung: "hoch", lvl: "B1", stark: true },
+    { anweisung: "keine Angst haben", verb: "haben", du: "du hast", imp: "Hab", falsch: ["Hast", "Habst"], richtung: "hoch", lvl: "A2" },
+    { anweisung: "vorsichtig sein", verb: "sein", du: "du bist", imp: "Sei", falsch: ["Bist", "Seist"], richtung: "links", lvl: "B1", stark: true },
+    { anweisung: "dem Fuchs folgen", verb: "folgen", du: "du folgst", imp: "Folg", falsch: ["Folgst", "Folgen"], richtung: "rechts", lvl: "A2" },
+  ];
+
+  const SCHATZ_RUNDEN = 8;
+  let schatzSession = null;
+  let schatzLevel = "";
+
+  function neueSchatzSession() {
+    const rang = { A1: 1, A2: 2, B1: 3 };
+    const grenze = rang[schatzLevel] || 3;
+    const passt = SCHATZ_SCHRITTE.filter((x) => (rang[x.lvl] || 3) <= grenze);
+    const topf = passt.length >= 4 ? passt : SCHATZ_SCHRITTE;
+    schatzSession = {
+      schritte: Core.shuffle(topf.slice()).slice(0, SCHATZ_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+      // Der Weg, den die Figur bisher genommen hat — für die Karte
+      pfad: [{ x: 72, y: 122 }],
+      irrweg: null,
+    };
+  }
+
+  /* Die Karte: altes Papier, ein gezeichneter Pfad, und die Figur
+     steht dort, wo sie durch die bisherigen Antworten hingelangt ist.
+     Bei einer falschen Antwort wird kurz ein Irrweg gezeigt — man
+     sieht den Fehler, statt ihn nur zu lesen. */
+  function schatzKarteSvg(s) {
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="150" fill="#E8D9B4"/>`);
+    // Papierflecken
+    [[40, 30, 22], [230, 40, 26], [120, 130, 18], [270, 120, 20]].forEach(([x, y, r]) => {
+      t.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="#DCC79A" opacity="0.55"/>`);
+    });
+    // Küste
+    t.push(`<path d="M0 20 q40 12 30 34 t20 40 q14 22 -6 34 T60 150 H0 z" fill="#A8C9D9" opacity="0.75"/>`);
+    // Wald
+    for (let i = 0; i < 7; i++) {
+      const bx = 150 + (i % 4) * 26, by = 26 + Math.floor(i / 4) * 22;
+      t.push(`<path d="M${bx} ${by + 14} l-7 0 l7 -14 l7 14 z" fill="#6A9A5A"/>`);
+      t.push(`<rect x="${bx - 1.4}" y="${by + 14}" width="2.8" height="5" fill="#7A5A3A"/>`);
+    }
+    // Berge
+    t.push(`<path d="M196 118 l22 -34 l14 20 l12 -16 l24 30 z" fill="#B0A88C"/>`);
+    t.push(`<path d="M218 84 l6 9 h-12 z" fill="#F2EDE0"/>`);
+    // Brunnen
+    t.push(`<circle cx="112" cy="70" r="9" fill="#9AA3AA"/><circle cx="112" cy="70" r="5" fill="#4A6D8C"/>`);
+    // Höhle
+    t.push(`<path d="M228 118 q11 -19 22 0 z" fill="#3A2A1A"/>`);
+    // Der bisher gegangene Weg
+    if (s.pfad.length > 1) {
+      const d = s.pfad.map((p, i) => `${i ? "L" : "M"}${p.x} ${p.y}`).join(" ");
+      t.push(`<path d="${d}" stroke="#B4553C" stroke-width="2.6" fill="none" stroke-dasharray="6 5" stroke-linecap="round"/>`);
+    }
+    // Ein Irrweg nach einer falschen Antwort
+    if (s.irrweg) {
+      const p = s.pfad[s.pfad.length - 1];
+      t.push(`<path d="M${p.x} ${p.y} L${s.irrweg.x} ${s.irrweg.y}" stroke="#C0392B" stroke-width="2.4" fill="none" stroke-dasharray="3 4"/>`);
+      t.push(`<text x="${s.irrweg.x}" y="${s.irrweg.y - 6}" text-anchor="middle" font-size="13">❌</text>`);
+    }
+    // Die Figur — ein kleiner Fuchs mit Hut
+    const jetzt = s.pfad[s.pfad.length - 1];
+    t.push(`<g transform="translate(${jetzt.x} ${jetzt.y})">
+      <ellipse cx="0" cy="2" rx="9" ry="6" fill="#E2703A"/>
+      <circle cx="7" cy="-3" r="5.4" fill="#E2703A"/>
+      <path d="M4 -7 l-1.6 -4 l4 2 z" fill="#E2703A"/>
+      <path d="M10 -7 l1.6 -4 l-4 2 z" fill="#E2703A"/>
+      <circle cx="9" cy="-3" r="1.2" fill="#2A1A0A"/>
+      <path d="M-9 1 q-7 -3 -8 -8 q5 2 8 5 z" fill="#F2C4A0"/>
+      <path d="M2 -8 h11 v2 h-11 z" fill="#5A4432"/>
+      <path d="M4 -12 h7 v4 h-7 z" fill="#5A4432"/>
+    </g>`);
+    // Das Ziel
+    t.push(`<text x="274" y="128" text-anchor="middle" font-size="15">❌</text>`);
+    return `<svg class="schatz-karte" viewBox="0 0 300 150" role="img" aria-label="Schatzkarte mit Weg">${t.join("")}</svg>`;
+  }
+
+  function renderSchatzkarte() {
+    const area = document.getElementById("schatzkarteArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-schatzkarte", "Die Schatzkarte")) return;
+    if (!renderComingSoonGate(area, "schatzkarte_neu", "Die Schatzkarte", "🗺️")) return;
+    schatzLevel = applyDefaultCefrLevel(schatzLevel, (v) => { schatzLevel = v; schatzSession = null; }, "schatzkarte");
+    if (!schatzSession) neueSchatzSession();
+    const s = schatzSession;
+    if (s.index >= s.schritte.length) { renderSchatzkarteErgebnis(); return; }
+    const schritt = s.schritte[s.index];
+    const wahlen = Core.shuffle([schritt.imp, ...schritt.falsch]);
+    /* „Bieg … ab!" ist richtig, „Abbieg!" der typische Fehler. Wer an
+       den Ablenker auch noch „… ab" haengt, macht daraus „Abbieg … ab!"
+       — Unsinn, den niemand je sagen wuerde, und damit als falsche
+       Antwort wertlos. Deshalb: Vorsilbe nur anhaengen, wenn sie nicht
+       schon vorn steht. */
+    const mitNachsatz = (w) => {
+      if (!schritt.nachsatz) return w + "!";
+      const vorn = w.toLowerCase().startsWith(schritt.nachsatz.toLowerCase());
+      return vorn ? w + "!" : w + " … " + schritt.nachsatz + "!";
+    };
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Schatzkarte: " + schritt.verb)}
+        <p class="eyebrow">🗺️ DIE SCHATZKARTE · Schritt ${s.index + 1} / ${s.schritte.length}
+          <span class="subnav-info-icon" data-info="Der Imperativ für „du“ hat kein -st und kein Personalwort. Bei starken Verben mit e/i-Wechsel bleibt der Wechsel: du nimmst → nimm!, du siehst → sieh!">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.schritte.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A1", "A2", "B1"].map((l) => `<button type="button" class="trophy-chip ${schatzLevel === l ? "selected" : ""}" data-schatz-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${schatzKarteSvg(s)}
+        <p class="schatz-anweisung">Auf dem Zettel steht: <em>${schritt.anweisung}</em>.<br>
+          <span class="empty-note">Sag es dem Fuchs — in der du-Form.</span></p>
+        <div class="schatz-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="schatz-wahl" data-schatz-wahl="${w}">${mitNachsatz(w)}</button>`).join("")}
+        </div>
+        <p class="empty-note schatz-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-schatz-wahl]").forEach((b) => b.addEventListener("click", () => schatzAntwort(b.dataset.schatzWahl, schritt)));
+    area.querySelectorAll("[data-schatz-level]").forEach((b) => b.addEventListener("click", () => {
+      schatzLevel = b.dataset.schatzLevel; autoCefrLevel.schatzkarte = null; schatzSession = null; renderSchatzkarte();
+    }));
+  }
+
+  function schatzAntwort(wahl, schritt) {
+    const s = schatzSession;
+    const korrekt = wahl === schritt.imp;
+    spielNotiz(korrekt, `${schritt.du} → ${schritt.imp}${schritt.nachsatz ? " … " + schritt.nachsatz : ""}!`);
+    const jetzt = s.pfad[s.pfad.length - 1];
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+      /* Ein Schritt weiter auf der Karte — in die Richtung, die der
+         Zettel nennt. So entsteht am Ende wirklich ein Weg zum X. */
+      const versatz = { hoch: [22, -13], links: [16, -20], rechts: [24, 6] }[schritt.richtung] || [22, 0];
+      s.pfad.push({
+        x: Math.min(262, jetzt.x + versatz[0]),
+        y: Math.max(28, Math.min(126, jetzt.y + versatz[1])),
+      });
+      s.irrweg = null;
+    } else {
+      s.serie = 0; s.fehler.push(schritt); Core.sound.wrong();
+      s.irrweg = { x: Math.min(286, jetzt.x + 20), y: Math.min(138, jetzt.y + 18) };
+    }
+    const grund = schritt.stark
+      ? `Starkes Verb: „${schritt.du}“ wechselt den Vokal, und der bleibt im Befehl — <strong>${schritt.imp}!</strong>`
+      : `Von „${schritt.du}“ fällt das -st weg: <strong>${schritt.imp}!</strong>`;
+    s.letzte = { text: (korrekt ? "✅ " : `❌ Richtig wäre <strong>${schritt.imp}${schritt.nachsatz ? " … " + schritt.nachsatz : ""}!</strong> `) + grund };
+    s.index += 1;
+    renderSchatzkarte();
+  }
+
+  function renderSchatzkarteErgebnis() {
+    const area = document.getElementById("schatzkarteArea");
+    const s = schatzSession;
+    const prozent = Math.round((s.richtig / s.schritte.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.schritte.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Schatzsucher:in", charakter: "Die Schatzkarte",
+      zeilen: [
+        { name: "🗺️ Richtige Befehle", anteil: prozent, wert: s.richtig + "/" + s.schritte.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.schritte.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="schatzNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Vom du zur Befehlsform</p>
+        ${s.fehler.map((f) => `<p style="margin:6px 0;">${f.du} → <strong>${f.imp}${f.nachsatz ? " … " + f.nachsatz : ""}!</strong>${f.stark ? ' <span class="empty-note">(starkes Verb)</span>' : ""}</p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("schatzNochmal")?.addEventListener("click", () => { neueSchatzSession(); renderSchatzkarte(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["schatzkarte"], points: punkte, bonus, percent: prozent,
+        character: "Schatzsucher:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DER VERPASSTE ZUG — Konjunktiv II
+     ------------------------------------------------------------
+     Den Konjunktiv II braucht man genau dann, wenn etwas ANDERS
+     gekommen wäre: „Wenn ich früher losgegangen wäre, hätte ich den
+     Zug bekommen." Das ist keine Grammatikübung, das ist die Art,
+     wie man über einen verpassten Zug redet.
+
+     Deshalb steht am Anfang jeder Runde eine kleine Geschichte, die
+     schiefgegangen ist — und man baut den Satz, der beschreibt, wie
+     es hätte laufen können. Der schwierige Teil ist nicht die Form
+     „wäre/hätte", sondern zu erkennen, WELCHES der beiden Hilfsverben
+     das Partizip verlangt. Genau danach wird gefragt.
+     ============================================================ */
+  const ZUG_FAELLE = [
+    { pech: "Du bist zu spät losgegangen.", bedingung: "früher losgehen",
+      folge: "den Zug bekommen", hilfsBed: "wäre", partBed: "losgegangen",
+      hilfsFolge: "hätte", partFolge: "bekommen", lvl: "B1" },
+    { pech: "Du hast den Wecker überhört.", bedingung: "den Wecker hören",
+      folge: "rechtzeitig aufstehen", hilfsBed: "hätte", partBed: "gehört",
+      hilfsFolge: "wäre", partFolge: "aufgestanden", lvl: "B1" },
+    { pech: "Du bist in den falschen Wagen gestiegen.", bedingung: "auf die Anzeige schauen",
+      folge: "richtig sitzen", hilfsBed: "hätte", partBed: "geschaut",
+      hilfsFolge: "hätte", partFolge: "gesessen", lvl: "B1" },
+    { pech: "Du hast die Fahrkarte zu Hause vergessen.", bedingung: "die Tasche kontrollieren",
+      folge: "keine Strafe zahlen", hilfsBed: "hätte", partBed: "kontrolliert",
+      hilfsFolge: "hätte", partFolge: "gezahlt", lvl: "B1" },
+    { pech: "Du bist am falschen Bahnhof ausgestiegen.", bedingung: "die Durchsage verstehen",
+      folge: "weiterfahren", hilfsBed: "hätte", partBed: "verstanden",
+      hilfsFolge: "wäre", partFolge: "weitergefahren", lvl: "B2" },
+    { pech: "Der Anschluss war schon weg.", bedingung: "der erste Zug pünktlich sein",
+      folge: "umsteigen können", hilfsBed: "wäre", partBed: "gewesen",
+      hilfsFolge: "hätte", partFolge: "umsteigen können", lvl: "B2" },
+    { pech: "Du hast im Zug geschlafen.", bedingung: "einen Kaffee trinken",
+      folge: "die Haltestelle merken", hilfsBed: "hätte", partBed: "getrunken",
+      hilfsFolge: "hätte", partFolge: "gemerkt", lvl: "B1" },
+    { pech: "Dein Handy war leer.", bedingung: "das Ladegerät einpacken",
+      folge: "anrufen können", hilfsBed: "hätte", partBed: "eingepackt",
+      hilfsFolge: "hätte", partFolge: "anrufen können", lvl: "B2" },
+    { pech: "Du bist zu Fuß gegangen.", bedingung: "mit dem Rad fahren",
+      folge: "schneller ankommen", hilfsBed: "wäre", partBed: "gefahren",
+      hilfsFolge: "wäre", partFolge: "angekommen", lvl: "A2" },
+    { pech: "Du hast dich verlaufen.", bedingung: "nach dem Weg fragen",
+      folge: "den Bahnsteig finden", hilfsBed: "hätte", partBed: "gefragt",
+      hilfsFolge: "hätte", partFolge: "gefunden", lvl: "A2" },
+    { pech: "Es hat geregnet und du warst nass.", bedingung: "an den Schirm denken",
+      folge: "trocken bleiben", hilfsBed: "hätte", partBed: "gedacht",
+      hilfsFolge: "wäre", partFolge: "geblieben", lvl: "B2" },
+    { pech: "Der Automat hat deine Karte nicht genommen.", bedingung: "Bargeld mitnehmen",
+      folge: "ein Ticket kaufen", hilfsBed: "hätte", partBed: "mitgenommen",
+      hilfsFolge: "hätte", partFolge: "gekauft", lvl: "B2" },
+  ];
+
+  const ZUG_RUNDEN = 8;
+  let zugSession = null;
+  let zugLevel = "";
+
+  function neueZugSession() {
+    const passt = ZUG_FAELLE.filter((f) => f.lvl === zugLevel);
+    const topf = passt.length >= 4 ? passt : ZUG_FAELLE;
+    zugSession = {
+      faelle: Core.shuffle(topf.slice()).slice(0, ZUG_RUNDEN),
+      index: 0, teil: 0, richtig: 0, gefragt: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+    };
+  }
+
+  /* Der Bahnsteig: der Zug fährt ab, je weiter die Runde, desto weiter
+     ist er weg. Am Ende ist er nur noch ein Punkt am Horizont — das
+     ist die ganze Geschichte des Spiels in einem Bild. */
+  function zugSzeneSvg(s) {
+    const anteil = s.faelle.length ? s.index / s.faelle.length : 0;
+    const zugX = 150 + anteil * 190;
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="132" fill="#CBDCE8"/>`);
+    // Bahnhofshalle: Dachträger
+    t.push(`<path d="M0 34 h300 v6 H0 z" fill="#8A8A94"/>`);
+    for (let i = 0; i < 6; i++) t.push(`<rect x="${8 + i * 56}" y="40" width="5" height="26" fill="#8A8A94" opacity="0.7"/>`);
+    // Gleis
+    t.push(`<rect x="0" y="104" width="300" height="6" fill="#7A6A5A"/>`);
+    for (let i = 0; i < 20; i++) t.push(`<rect x="${i * 16}" y="100" width="9" height="14" fill="#5A4A3A" opacity="0.55"/>`);
+    t.push(`<rect x="0" y="98" width="300" height="2.4" fill="#B4B4BC"/>`);
+    t.push(`<rect x="0" y="110" width="300" height="2.4" fill="#B4B4BC"/>`);
+    // Bahnsteig
+    t.push(`<rect x="0" y="114" width="300" height="18" fill="#C4BCAE"/>`);
+    t.push(`<rect x="0" y="114" width="300" height="3" fill="#E2DACC"/>`);
+    // Anzeigetafel
+    t.push(`<rect x="14" y="44" width="56" height="20" rx="2" fill="#1E2A33"/>`);
+    t.push(`<text x="42" y="58" text-anchor="middle" font-family="Nunito, sans-serif" font-size="10" font-weight="800" fill="#F2C24B">verpasst</text>`);
+    // Der Zug, der wegfährt
+    t.push(`<g transform="translate(${zugX.toFixed(0)} 0)" opacity="${(1 - anteil * 0.55).toFixed(2)}">
+      <rect x="-58" y="74" width="56" height="26" rx="4" fill="#C0392B"/>
+      <rect x="0" y="74" width="44" height="26" rx="4" fill="#B4553C"/>
+      <rect x="-52" y="80" width="14" height="10" rx="1.5" fill="#CBE4F0"/>
+      <rect x="-32" y="80" width="14" height="10" rx="1.5" fill="#CBE4F0"/>
+      <rect x="8" y="80" width="12" height="10" rx="1.5" fill="#CBE4F0"/>
+      <rect x="26" y="80" width="12" height="10" rx="1.5" fill="#CBE4F0"/>
+      <circle cx="-44" cy="102" r="4.4" fill="#3A3A44"/>
+      <circle cx="-14" cy="102" r="4.4" fill="#3A3A44"/>
+      <circle cx="16" cy="102" r="4.4" fill="#3A3A44"/>
+      <circle cx="36" cy="102" r="4.4" fill="#3A3A44"/>
+    </g>`);
+    // Die Person auf dem Bahnsteig, die zuschaut
+    t.push(`<g transform="translate(96 0)">
+      <circle cx="0" cy="76" r="7" fill="#E8C49A"/>
+      <path d="M-6 70 q6 -6 12 0 q-2 -5 -6 -5 t-6 5z" fill="#5A4432"/>
+      <rect x="-6" y="83" width="12" height="20" rx="4" fill="#4A6D8C"/>
+      <rect x="-6" y="103" width="5" height="11" fill="#3A3A44"/>
+      <rect x="1" y="103" width="5" height="11" fill="#3A3A44"/>
+      <rect x="7" y="90" width="12" height="10" rx="2" fill="#8A5F3A"/>
+      <path d="M6 88 l4 2" stroke="#E8C49A" stroke-width="3" stroke-linecap="round"/>
+    </g>`);
+    return `<svg class="zug-szene" viewBox="0 0 300 132" role="img" aria-label="Bahnsteig, der Zug faehrt ab">${t.join("")}</svg>`;
+  }
+
+  function renderZug() {
+    const area = document.getElementById("zugArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-zug", "Der verpasste Zug")) return;
+    if (!renderComingSoonGate(area, "zug_neu", "Der verpasste Zug", "🚆")) return;
+    zugLevel = applyDefaultCefrLevel(zugLevel, (v) => { zugLevel = v; zugSession = null; }, "zug");
+    if (!zugSession) neueZugSession();
+    const s = zugSession;
+    if (s.index >= s.faelle.length) { renderZugErgebnis(); return; }
+    const f = s.faelle[s.index];
+    /* Jeder Fall wird zweimal gefragt: einmal für den Wenn-Teil, einmal
+       für die Folge. Das ist wichtig, weil die beiden Hälften
+       unterschiedliche Hilfsverben verlangen können — „Wenn ich früher
+       losgegangen WÄRE, HÄTTE ich den Zug bekommen." */
+    const teilBed = s.teil === 0;
+    const richtig = teilBed ? f.hilfsBed : f.hilfsFolge;
+    const satzBed = `Wenn ich ${f.partBed} <span class="zug-luecke">${teilBed ? "___" : f.hilfsBed}</span>,`;
+    const satzFolge = `${teilBed ? "…" : "<span class=\"zug-luecke\">___</span> ich " + f.partFolge}`;
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Verpasster Zug: " + f.bedingung)}
+        <p class="eyebrow">🚆 DER VERPASSTE ZUG · Fall ${s.index + 1} / ${s.faelle.length}
+          <span class="subnav-info-icon" data-info="Im Konjunktiv II der Vergangenheit steht „wäre" bei Verben der Bewegung und der Zustandsänderung (gehen, fahren, aufstehen, bleiben), sonst „hätte".">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.faelle.length * 2)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${zugLevel === l ? "selected" : ""}" data-zug-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${zugSzeneSvg(s)}
+        <p class="zug-pech">😖 ${f.pech}</p>
+        <p class="zug-satz">${satzBed}<br>${satzFolge}</p>
+        <p class="zug-frage">Was gehört in die Lücke — <strong>${teilBed ? "im Wenn-Teil" : "in der Folge"}</strong>?</p>
+        <div class="zug-wahlen">
+          ${["wäre", "hätte", "würde"].map((w) => `<button type="button" class="zug-wahl" data-zug-wahl="${w}">${w}</button>`).join("")}
+        </div>
+        <p class="empty-note zug-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-zug-wahl]").forEach((b) => b.addEventListener("click", () => zugAntwort(b.dataset.zugWahl, richtig)));
+    area.querySelectorAll("[data-zug-level]").forEach((b) => b.addEventListener("click", () => {
+      zugLevel = b.dataset.zugLevel; autoCefrLevel.zug = null; zugSession = null; renderZug();
+    }));
+  }
+
+  function zugAntwort(wahl, richtig) {
+    const s = zugSession;
+    const f = s.faelle[s.index];
+    const korrekt = wahl === richtig;
+    s.gefragt += 1;
+    spielNotiz(korrekt, `Wenn ich ${f.partBed} ${f.hilfsBed}, ${f.hilfsFolge} ich ${f.partFolge}.`);
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+    } else { s.serie = 0; if (!s.fehler.includes(f)) s.fehler.push(f); Core.sound.wrong(); }
+    /* Warum „wäre"? Weil das Verb eine Bewegung oder eine Veränderung
+       beschreibt. Das steht in der Rückmeldung, sonst merkt man es sich
+       als Zufall. */
+    const grund = richtig === "wäre"
+      ? "„wäre“, weil das Verb eine Bewegung oder eine Zustandsänderung beschreibt."
+      : "„hätte“ — das ist der Normalfall, „wäre“ nur bei Bewegung und Zustandsänderung.";
+    s.letzte = { text: (korrekt ? "✅ " : `❌ Richtig wäre <strong>${richtig}</strong>. `) + grund
+      + `<br><span class="empty-note">Ganz: Wenn ich ${f.partBed} ${f.hilfsBed}, ${f.hilfsFolge} ich ${f.partFolge}.</span>` };
+    if (s.teil === 0) { s.teil = 1; } else { s.teil = 0; s.index += 1; }
+    renderZug();
+  }
+
+  function renderZugErgebnis() {
+    const area = document.getElementById("zugArea");
+    const s = zugSession;
+    const gesamt = s.faelle.length * 2;
+    const prozent = Math.round((s.richtig / gesamt) * 100);
+    const punkte = s.richtig * 2;
+    const bonus = s.richtig === gesamt ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Fahrgast mit Weitblick", charakter: "Der verpasste Zug",
+      zeilen: [
+        { name: "🚆 Richtige Hilfsverben", anteil: prozent, wert: s.richtig + "/" + gesamt },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / gesamt) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="zugNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Die Sätze im Ganzen</p>
+        ${s.fehler.map((f) => `<p style="margin:8px 0;">Wenn ich ${f.partBed} <strong>${f.hilfsBed}</strong>, <strong>${f.hilfsFolge}</strong> ich ${f.partFolge}.</p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("zugNochmal")?.addEventListener("click", () => { neueZugSession(); renderZug(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["zug"], points: punkte, bonus, percent: prozent,
+        character: "Fahrgast mit Weitblick", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+  /* ============================================================
+     DER FLOHMARKT — Komparativ und Superlativ
+     ------------------------------------------------------------
+     Steigern lernt man nicht an Formen, sondern am Vergleich: Man
+     braucht zwei Dinge nebeneinander, um „größer" überhaupt sagen zu
+     können. Auf dem Flohmarkt liegt genau das auf dem Tisch — zwei
+     Lampen, drei Stühle, und man muss sagen, welche billiger ist.
+
+     Die Unregelmäßigen (gut/besser/am besten, viel/mehr/am meisten,
+     gern/lieber/am liebsten, hoch/höher, nah/näher) sind eigens
+     dabei: Sie sind die häufigsten und werden am zuverlässigsten
+     falsch gebildet.
+     ============================================================ */
+  const FLOH_WAREN = [
+    { name: "die Lampe", form: "lampe", adj: "alt", komp: "älter", sup: "am ältesten", werte: [12, 40, 95], einheit: "Jahre", lvl: "A2" },
+    { name: "der Stuhl", form: "stuhl", adj: "billig", komp: "billiger", sup: "am billigsten", werte: [8, 15, 30], einheit: "Euro", lvl: "A1" },
+    { name: "das Buch", form: "buch", adj: "dick", komp: "dicker", sup: "am dicksten", werte: [120, 340, 800], einheit: "Seiten", lvl: "A1" },
+    { name: "die Vase", form: "vase", adj: "hoch", komp: "höher", sup: "am höchsten", werte: [14, 22, 35], einheit: "cm", lvl: "B1", unregelmaessig: true },
+    { name: "die Uhr", form: "uhr", adj: "teuer", komp: "teurer", sup: "am teuersten", werte: [25, 60, 140], einheit: "Euro", lvl: "B1", unregelmaessig: true },
+    { name: "der Teppich", form: "teppich", adj: "groß", komp: "größer", sup: "am größten", werte: [2, 6, 11], einheit: "m²", lvl: "A2" },
+    { name: "die Schallplatte", form: "platte", adj: "selten", komp: "seltener", sup: "am seltensten", werte: [200, 40, 6], einheit: "Stück gepresst", lvl: "B2", kleinerIstMehr: true },
+    { name: "die Tasse", form: "tasse", adj: "klein", komp: "kleiner", sup: "am kleinsten", werte: [80, 200, 350], einheit: "ml", lvl: "A1", kleinerIstMehr: true },
+    { name: "das Fahrrad", form: "fahrrad", adj: "schwer", komp: "schwerer", sup: "am schwersten", werte: [9, 14, 21], einheit: "kg", lvl: "A2" },
+    { name: "der Koffer", form: "koffer", adj: "gut", komp: "besser", sup: "am besten", werte: [2, 4, 5], einheit: "von 5 Sternen", lvl: "B1", unregelmaessig: true },
+    { name: "die Kette", form: "kette", adj: "lang", komp: "länger", sup: "am längsten", werte: [30, 45, 70], einheit: "cm", lvl: "A2" },
+    { name: "der Sessel", form: "sessel", adj: "bequem", komp: "bequemer", sup: "am bequemsten", werte: [2, 3, 5], einheit: "von 5 Punkten", lvl: "B1" },
+  ];
+
+  const FLOH_RUNDEN = 8;
+  let flohSession = null;
+  let flohLevel = "";
+
+  function neueFlohSession() {
+    const passt = FLOH_WAREN.filter((w) => w.lvl === flohLevel);
+    const topf = passt.length >= 4 ? passt : FLOH_WAREN;
+    flohSession = {
+      waren: Core.shuffle(topf.slice()).slice(0, FLOH_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+    };
+  }
+
+  /* Ein Gegenstand, gezeichnet und in drei Größen — die Größe im Bild
+     folgt dem Wert, damit man den Vergleich SIEHT und nicht nur liest. */
+  function flohWareSvg(form, x, y, groesse) {
+    const g = 0.62 + groesse * 0.28;   // groesse: 0, 1, 2
+    const t = [];
+    const s = (n) => (n * g).toFixed(1);
+    if (form === "lampe") {
+      t.push(`<path d="M${x - Number(s(11))} ${y} h${s(22)} l${s(-5)} ${s(-14)} h${s(-12)} z" fill="#E8C24B"/>`);
+      t.push(`<rect x="${x - 1.4}" y="${y}" width="2.8" height="${s(18)}" fill="#8A7A5A"/>`);
+      t.push(`<ellipse cx="${x}" cy="${y + Number(s(18))}" rx="${s(9)}" ry="${s(3)}" fill="#6A5A3A"/>`);
+    } else if (form === "stuhl") {
+      t.push(`<rect x="${x - Number(s(9))}" y="${y}" width="${s(18)}" height="${s(3.4)}" fill="#A8754A"/>`);
+      t.push(`<rect x="${x - Number(s(9))}" y="${y - Number(s(16))}" width="${s(3.4)}" height="${s(16)}" fill="#8A5F3A"/>`);
+      t.push(`<rect x="${x - Number(s(8))}" y="${y + Number(s(3.4))}" width="${s(2.6)}" height="${s(12)}" fill="#8A5F3A"/>`);
+      t.push(`<rect x="${x + Number(s(5))}" y="${y + Number(s(3.4))}" width="${s(2.6)}" height="${s(12)}" fill="#8A5F3A"/>`);
+    } else if (form === "buch") {
+      t.push(`<rect x="${x - Number(s(9))}" y="${y - Number(s(12))}" width="${s(18)}" height="${s(24)}" rx="1.5" fill="#4A6D8C"/>`);
+      t.push(`<rect x="${x - Number(s(6))}" y="${y - Number(s(12))}" width="${s(2)}" height="${s(24)}" fill="#7FA8C4"/>`);
+    } else if (form === "vase") {
+      t.push(`<path d="M${x - Number(s(7))} ${y} q${s(-2)} ${s(-12)} ${s(3)} ${s(-16)} h${s(8)} q${s(5)} ${s(4)} ${s(3)} ${s(16)} z" fill="#5BA8A0"/>`);
+      t.push(`<ellipse cx="${x}" cy="${y}" rx="${s(7)}" ry="${s(2.6)}" fill="#3E8A82"/>`);
+    } else if (form === "uhr") {
+      t.push(`<circle cx="${x}" cy="${y - Number(s(8))}" r="${s(10)}" fill="#E8DCC0" stroke="#8A7A5A" stroke-width="2"/>`);
+      t.push(`<path d="M${x} ${y - Number(s(8))} v${s(-6)} M${x} ${y - Number(s(8))} l${s(4)} ${s(3)}" stroke="#3A2A1A" stroke-width="1.6" stroke-linecap="round"/>`);
+    } else if (form === "teppich") {
+      t.push(`<rect x="${x - Number(s(14))}" y="${y - Number(s(8))}" width="${s(28)}" height="${s(16)}" rx="2" fill="#B4553C"/>`);
+      t.push(`<rect x="${x - Number(s(10))}" y="${y - Number(s(5))}" width="${s(20)}" height="${s(10)}" rx="1" fill="none" stroke="#E8C24B" stroke-width="1.6"/>`);
+    } else if (form === "platte") {
+      t.push(`<circle cx="${x}" cy="${y}" r="${s(12)}" fill="#2A2A2A"/>`);
+      t.push(`<circle cx="${x}" cy="${y}" r="${s(4)}" fill="#C9503C"/>`);
+      t.push(`<circle cx="${x}" cy="${y}" r="${s(1)}" fill="#E8DCC0"/>`);
+    } else if (form === "tasse") {
+      t.push(`<path d="M${x - Number(s(8))} ${y - Number(s(8))} h${s(16)} v${s(12)} q0 ${s(4)} ${s(-8)} ${s(4)} q${s(-8)} 0 ${s(-8)} ${s(-4)} z" fill="#E8E2D4" stroke="#A89A82" stroke-width="1.6"/>`);
+      t.push(`<path d="M${x + Number(s(8))} ${y - Number(s(4))} q${s(6)} ${s(2)} 0 ${s(7)}" stroke="#A89A82" stroke-width="2" fill="none"/>`);
+    } else if (form === "fahrrad") {
+      t.push(`<circle cx="${x - Number(s(9))}" cy="${y}" r="${s(7)}" fill="none" stroke="#3A3A44" stroke-width="2"/>`);
+      t.push(`<circle cx="${x + Number(s(9))}" cy="${y}" r="${s(7)}" fill="none" stroke="#3A3A44" stroke-width="2"/>`);
+      t.push(`<path d="M${x - Number(s(9))} ${y} l${s(6)} ${s(-9)} h${s(7)} l${s(5)} ${s(9)}" stroke="#C9503C" stroke-width="2" fill="none"/>`);
+    } else if (form === "koffer") {
+      t.push(`<rect x="${x - Number(s(11))}" y="${y - Number(s(8))}" width="${s(22)}" height="${s(16)}" rx="2" fill="#8A5F3A"/>`);
+      t.push(`<rect x="${x - Number(s(4))}" y="${y - Number(s(12))}" width="${s(8)}" height="${s(4)}" rx="2" fill="none" stroke="#5A4432" stroke-width="1.8"/>`);
+    } else if (form === "kette") {
+      for (let i = 0; i < 5; i++) t.push(`<circle cx="${x - Number(s(10)) + i * Number(s(5))}" cy="${y + Math.sin(i) * Number(s(3))}" r="${s(2.6)}" fill="none" stroke="#E8C24B" stroke-width="1.8"/>`);
+    } else {
+      t.push(`<path d="M${x - Number(s(12))} ${y + Number(s(6))} v${s(-10)} q0 ${s(-6)} ${s(6)} ${s(-6)} h${s(12)} q${s(6)} 0 ${s(6)} ${s(6)} v${s(10)} z" fill="#A8748C"/>`);
+      t.push(`<rect x="${x - Number(s(13))}" y="${y + Number(s(4))}" width="${s(26)}" height="${s(4)}" rx="2" fill="#8A5A6C"/>`);
+    }
+    return t.join("");
+  }
+
+  function flohSzeneSvg(s, ware, werte) {
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="140" fill="#E8DCC0"/>`);
+    // Markise
+    for (let i = 0; i < 10; i++) {
+      t.push(`<path d="M${i * 30} 0 h30 v14 q-15 6 -30 0 z" fill="${i % 2 ? "#C9503C" : "#F2E6D2"}"/>`);
+    }
+    // Tisch
+    t.push(`<rect x="8" y="104" width="284" height="10" rx="3" fill="#A8754A"/>`);
+    t.push(`<rect x="20" y="114" width="8" height="22" fill="#8A5F3A"/>`);
+    t.push(`<rect x="272" y="114" width="8" height="22" fill="#8A5F3A"/>`);
+    // Die drei Stücke, von links nach rechts wie im Text
+    [0, 1, 2].forEach((i) => {
+      const x = 66 + i * 84;
+      t.push(flohWareSvg(ware.form, x, 96, i));
+      t.push(`<rect x="${x - 22}" y="118" width="44" height="15" rx="3" fill="#FFFDF6" stroke="#B08D5F" stroke-width="1.4"/>`);
+      t.push(`<text x="${x}" y="129" text-anchor="middle" font-family="Nunito, sans-serif" font-size="10" font-weight="800" fill="#3A2A1A">${werte[i]}</text>`);
+      t.push(`<text x="${x}" y="${88 - i * 2}" text-anchor="middle" font-family="Nunito, sans-serif" font-size="11" font-weight="800" fill="#5A4432">${["A", "B", "C"][i]}</text>`);
+    });
+    return `<svg class="floh-szene" viewBox="0 0 300 140" role="img" aria-label="Flohmarktstand mit drei Stuecken">${t.join("")}</svg>`;
+  }
+
+  function renderFlohmarkt() {
+    const area = document.getElementById("flohmarktArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-flohmarkt", "Der Flohmarkt")) return;
+    if (!renderComingSoonGate(area, "flohmarkt_neu", "Der Flohmarkt", "🏷️")) return;
+    flohLevel = applyDefaultCefrLevel(flohLevel, (v) => { flohLevel = v; flohSession = null; }, "flohmarkt");
+    if (!flohSession) neueFlohSession();
+    const s = flohSession;
+    if (s.index >= s.waren.length) { renderFlohmarktErgebnis(); return; }
+    const ware = s.waren[s.index];
+    /* Mal wird der Komparativ gefragt (zwei Stücke), mal der
+       Superlativ (alle drei). Fest am Index, damit eine Runde beides
+       enthält und nicht zufällig nur eins. */
+    const superlativ = s.index % 2 === 1;
+    const werte = ware.werte;
+    /* „Kleiner ist mehr" bei Eigenschaften wie „selten" oder „klein":
+       Dort gewinnt der KLEINSTE Wert. Ohne diese Angabe wäre die
+       Aufgabe schlicht falsch. */
+    const gewinnerIdx = ware.kleinerIstMehr
+      ? werte.indexOf(Math.min(...werte))
+      : werte.indexOf(Math.max(...werte));
+    const zweiterIdx = ware.kleinerIstMehr
+      ? werte.indexOf(Math.min(...werte.filter((w, i) => i !== gewinnerIdx)))
+      : werte.indexOf(Math.max(...werte.filter((w, i) => i !== gewinnerIdx)));
+    const buchstabe = ["A", "B", "C"];
+
+    const richtig = superlativ ? ware.sup : ware.komp;
+    /* Die falschen Formen sind die, die man wirklich bildet: die
+       regelmäßige Form bei unregelmäßigen Wörtern, und die Verwechslung
+       von Komparativ und Superlativ. */
+    const regelKomp = ware.adj + (ware.adj.endsWith("e") ? "r" : "er");
+    const regelSup = "am " + ware.adj + "sten";
+    const kandidaten = [
+      richtig,
+      superlativ ? ware.komp : ware.sup,
+      superlativ ? regelSup : regelKomp,
+      // Auffüller für regelmäßige Adjektive, wo der Regel-Ablenker
+      // mit der richtigen Form zusammenfällt:
+      superlativ ? ware.adj + "sten" : ware.adj,
+    ];
+    const eindeutig = [];
+    kandidaten.forEach((k) => { if (k && eindeutig.indexOf(k) === -1 && eindeutig.length < 3) eindeutig.push(k); });
+    const wahlen = Core.shuffle(eindeutig);
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Flohmarkt: " + ware.adj)}
+        <p class="eyebrow">🏷️ DER FLOHMARKT · Stück ${s.index + 1} / ${s.waren.length}
+          <span class="subnav-info-icon" data-info="Komparativ vergleicht zwei Dinge (älter als), Superlativ hebt eines aus allen heraus (am ältesten). Ein paar Wörter steigern unregelmäßig: gut/besser, hoch/höher, teuer/teurer.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.waren.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A1", "A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${flohLevel === l ? "selected" : ""}" data-floh-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${flohSzeneSvg(s, ware, werte.map((w) => w + " " + ware.einheit))}
+        <p class="floh-frage">${superlativ
+          ? `Welche Form passt? <strong>${buchstabe[gewinnerIdx]}</strong> ist von allen dreien …`
+          : `Welche Form passt? <strong>${buchstabe[gewinnerIdx]}</strong> ist … als <strong>${buchstabe[zweiterIdx]}</strong>.`}
+          <span class="empty-note" style="display:block; margin-top:4px;">${ware.name} · Grundform: <strong>${ware.adj}</strong></span></p>
+        <div class="floh-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="floh-wahl" data-floh-wahl="${w.replace(/"/g, "&quot;")}">${w}</button>`).join("")}
+        </div>
+        <p class="empty-note floh-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-floh-wahl]").forEach((b) => b.addEventListener("click", () => flohAntwort(b.dataset.flohWahl, richtig, ware)));
+    area.querySelectorAll("[data-floh-level]").forEach((b) => b.addEventListener("click", () => {
+      flohLevel = b.dataset.flohLevel; autoCefrLevel.flohmarkt = null; flohSession = null; renderFlohmarkt();
+    }));
+  }
+
+  function flohAntwort(wahl, richtig, ware) {
+    const s = flohSession;
+    const korrekt = wahl === richtig;
+    spielNotiz(korrekt, `${ware.adj} → ${ware.komp} → ${ware.sup}`);
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+    } else { s.serie = 0; s.fehler.push(ware); Core.sound.wrong(); }
+    s.letzte = { text: `${korrekt ? "✅ Richtig" : "❌ Richtig wäre <strong>" + richtig + "</strong>"} — die ganze Reihe: `
+      + `<strong>${ware.adj} · ${ware.komp} · ${ware.sup}</strong>`
+      + (ware.unregelmaessig ? ' <span class="empty-note">(unregelmäßig — die muss man sich merken)</span>' : "") };
+    s.index += 1;
+    renderFlohmarkt();
+  }
+
+  function renderFlohmarktErgebnis() {
+    const area = document.getElementById("flohmarktArea");
+    const s = flohSession;
+    const prozent = Math.round((s.richtig / s.waren.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.waren.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Schnäppchenjäger:in", charakter: "Der Flohmarkt",
+      zeilen: [
+        { name: "🏷️ Richtig gesteigert", anteil: prozent, wert: s.richtig + "/" + s.waren.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.waren.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="flohNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Die Reihen zum Nachlesen</p>
+        ${s.fehler.map((f) => `<p style="margin:6px 0;"><strong>${f.adj} · ${f.komp} · ${f.sup}</strong>${f.unregelmaessig ? ' <span class="empty-note">unregelmäßig</span>' : ""}</p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("flohNochmal")?.addEventListener("click", () => { neueFlohSession(); renderFlohmarkt(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["flohmarkt"], points: punkte, bonus, percent: prozent,
+        character: "Schnäppchenjäger:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DIE BAUSTELLE — das Passiv
+     ------------------------------------------------------------
+     Das Passiv ist im Deutschen keine Stilfrage, sondern eine
+     Blickrichtung: Es rückt die Handlung nach vorn und lässt offen,
+     wer sie tut. Auf einer Baustelle ist das die natürlichste Sache
+     der Welt — „Das Dach wird gedeckt" sagt jeder, „Ein Dachdecker
+     deckt das Dach" fast niemand.
+
+     Deshalb spielt es hier. Man sieht das Haus wachsen, und zu jedem
+     Bauabschnitt ist zu entscheiden, wie man ihn beschreibt. Der
+     häufigste Fehler ist nicht die Form, sondern das falsche
+     Hilfsverb: „ist gebaut" (Zustand) statt „wird gebaut" (Vorgang).
+     Genau darauf zielen die Antwortmöglichkeiten.
+     ============================================================ */
+  const BAU_SCHRITTE = [
+    { was: "die Baugrube", verb: "ausheben", partizip: "ausgehoben", stufe: 1, lvl: "B1",
+      zustand: "Die Baugrube ist ausgehoben — sie ist fertig.",
+      vorgang: "Die Baugrube wird ausgehoben — es passiert gerade." },
+    { was: "das Fundament", verb: "gießen", partizip: "gegossen", stufe: 2, lvl: "B1",
+      zustand: "Das Fundament ist gegossen — es steht.",
+      vorgang: "Das Fundament wird gegossen — der Beton läuft gerade." },
+    { was: "die Mauern", verb: "hochziehen", partizip: "hochgezogen", stufe: 3, lvl: "B1",
+      zustand: "Die Mauern sind hochgezogen — sie stehen.",
+      vorgang: "Die Mauern werden hochgezogen — Stein für Stein." },
+    { was: "die Fenster", verb: "einsetzen", partizip: "eingesetzt", stufe: 4, lvl: "A2",
+      zustand: "Die Fenster sind eingesetzt — sie sitzen fest.",
+      vorgang: "Die Fenster werden eingesetzt — gerade jetzt." },
+    { was: "das Dach", verb: "decken", partizip: "gedeckt", stufe: 5, lvl: "A2",
+      zustand: "Das Dach ist gedeckt — es ist dicht.",
+      vorgang: "Das Dach wird gedeckt — Ziegel um Ziegel." },
+    { was: "die Wände", verb: "verputzen", partizip: "verputzt", stufe: 6, lvl: "B1",
+      zustand: "Die Wände sind verputzt — glatt und trocken.",
+      vorgang: "Die Wände werden verputzt — der Putz ist noch feucht." },
+    { was: "die Leitungen", verb: "verlegen", partizip: "verlegt", stufe: 6, lvl: "B2",
+      zustand: "Die Leitungen sind verlegt — der Strom kann fließen.",
+      vorgang: "Die Leitungen werden verlegt — die Kabel liegen offen." },
+    { was: "die Treppe", verb: "einbauen", partizip: "eingebaut", stufe: 7, lvl: "B1",
+      zustand: "Die Treppe ist eingebaut — man kann hinauf.",
+      vorgang: "Die Treppe wird eingebaut — sie hängt noch am Kran." },
+    { was: "der Garten", verb: "anlegen", partizip: "angelegt", stufe: 8, lvl: "A2",
+      zustand: "Der Garten ist angelegt — er ist fertig bepflanzt.",
+      vorgang: "Der Garten wird angelegt — die Erde wird verteilt." },
+    { was: "das Haus", verb: "übergeben", partizip: "übergeben", stufe: 8, lvl: "B2",
+      zustand: "Das Haus ist übergeben — die Schlüssel sind weg.",
+      vorgang: "Das Haus wird übergeben — die Schlüssel wechseln gerade." },
+  ];
+
+  const BAU_RUNDEN = 8;
+  let bauSession = null;
+  let bauLevel = "";
+
+  function neueBauSession() {
+    const passt = BAU_SCHRITTE.filter((b) => b.lvl === bauLevel);
+    const topf = passt.length >= 4 ? passt : BAU_SCHRITTE;
+    /* Nach Bauabschnitt sortiert, nicht gemischt: Ein Haus wächst von
+       unten nach oben, und genau das soll man beim Spielen sehen. */
+    const schritte = Core.shuffle(topf.slice()).slice(0, BAU_RUNDEN).sort((a, b) => a.stufe - b.stufe);
+    bauSession = { schritte, index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null };
+  }
+
+  /* Das Haus wächst mit jedem gelösten Abschnitt. Gezeichnet wird
+     immer der Stand, der WIRKLICH erreicht ist — man sieht seinen
+     Fortschritt als Gebäude, nicht als Balken. */
+  function bauSzeneSvg(s) {
+    const stufe = s.index === 0 ? 0 : (s.schritte[Math.min(s.index, s.schritte.length - 1)].stufe);
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="150" fill="#CFE4F2"/>`);
+    // Wolken
+    t.push(`<g fill="#FFFFFF" opacity="0.85"><circle cx="42" cy="24" r="10"/><circle cx="54" cy="20" r="13"/><circle cx="68" cy="25" r="9"/></g>`);
+    t.push(`<g fill="#FFFFFF" opacity="0.6"><circle cx="226" cy="18" r="8"/><circle cx="238" cy="15" r="11"/><circle cx="250" cy="19" r="7"/></g>`);
+    // Boden
+    t.push(`<rect x="0" y="118" width="300" height="32" fill="#B08D5F"/>`);
+    t.push(`<rect x="0" y="118" width="300" height="5" fill="#8FBF6A"/>`);
+    // Baugrube (ab Stufe 1)
+    if (stufe >= 1) t.push(`<path d="M84 122 h96 l-8 16 H92 z" fill="#7A5A38"/>`);
+    // Fundament
+    if (stufe >= 2) t.push(`<rect x="88" y="112" width="88" height="10" fill="#9A9A9A"/>`);
+    // Mauern
+    if (stufe >= 3) {
+      t.push(`<rect x="90" y="62" width="84" height="50" fill="#E4C9A0"/>`);
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 6; c++) {
+          t.push(`<rect x="${92 + c * 14 + (r % 2 ? 7 : 0)}" y="${64 + r * 10}" width="12" height="8" rx="1" fill="#D4B183" opacity="0.85"/>`);
+        }
+      }
+    }
+    // Fenster
+    if (stufe >= 4) {
+      t.push(`<rect x="100" y="76" width="22" height="20" rx="2" fill="#8FD0EE" stroke="#5A4432" stroke-width="2"/>`);
+      t.push(`<rect x="142" y="76" width="22" height="20" rx="2" fill="#8FD0EE" stroke="#5A4432" stroke-width="2"/>`);
+      t.push(`<path d="M111 76v20M100 86h22M153 76v20M142 86h22" stroke="#5A4432" stroke-width="1.6"/>`);
+    }
+    // Dach
+    if (stufe >= 5) {
+      t.push(`<path d="M82 62 132 32 182 62 z" fill="#B4553C"/>`);
+      for (let i = 0; i < 5; i++) t.push(`<path d="M${92 + i * 18} 62 l${9} -${(i + 1) * 0}" stroke="#8E3F2C" stroke-width="1.4"/>`);
+      t.push(`<path d="M82 62 h100" stroke="#8E3F2C" stroke-width="2.4"/>`);
+    }
+    // Putz
+    if (stufe >= 6) t.push(`<rect x="90" y="62" width="84" height="50" fill="#F2E6D2" opacity="0.75"/>`);
+    if (stufe >= 6) {
+      t.push(`<rect x="100" y="76" width="22" height="20" rx="2" fill="#8FD0EE" stroke="#5A4432" stroke-width="2"/>`);
+      t.push(`<rect x="142" y="76" width="22" height="20" rx="2" fill="#8FD0EE" stroke="#5A4432" stroke-width="2"/>`);
+    }
+    // Tür/Treppe
+    if (stufe >= 7) {
+      t.push(`<rect x="122" y="92" width="20" height="20" rx="2" fill="#7A5230"/>`);
+      t.push(`<circle cx="138" cy="102" r="1.8" fill="#E8C97A"/>`);
+      t.push(`<rect x="118" y="112" width="28" height="4" fill="#9A9A9A"/>`);
+    }
+    // Garten
+    if (stufe >= 8) {
+      for (let i = 0; i < 4; i++) {
+        const gx = 196 + i * 20;
+        t.push(`<rect x="${gx}" y="106" width="2.4" height="14" fill="#5C8F3A"/>`);
+        t.push(`<circle cx="${gx + 1}" cy="104" r="5" fill="#7FBF5A"/>`);
+      }
+      t.push(`<circle cx="60" cy="108" r="8" fill="#7FBF5A"/><rect x="58.6" y="108" width="2.8" height="12" fill="#5C8F3A"/>`);
+    }
+    // Kran — steht, solange gebaut wird
+    if (stufe < 8) {
+      t.push(`<rect x="212" y="40" width="5" height="80" fill="#E8A93D"/>`);
+      t.push(`<rect x="150" y="38" width="80" height="5" fill="#E8A93D"/>`);
+      t.push(`<line x1="168" y1="43" x2="168" y2="66" stroke="#5A4432" stroke-width="1.6"/>`);
+      t.push(`<rect x="162" y="66" width="12" height="9" rx="1.5" fill="#B4553C"/>`);
+    }
+    return `<svg class="bau-szene" viewBox="0 0 300 150" role="img" aria-label="Baustelle, das Haus waechst">${t.join("")}</svg>`;
+  }
+
+  function renderBaustelle() {
+    const area = document.getElementById("baustelleArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-baustelle", "Die Baustelle")) return;
+    if (!renderComingSoonGate(area, "baustelle_neu", "Die Baustelle", "🏗️")) return;
+    bauLevel = applyDefaultCefrLevel(bauLevel, (v) => { bauLevel = v; bauSession = null; }, "baustelle");
+    if (!bauSession) neueBauSession();
+    const s = bauSession;
+    if (s.index >= s.schritte.length) { renderBaustelleErgebnis(); return; }
+    const schritt = s.schritte[s.index];
+
+    /* Drei Möglichkeiten, und alle drei sind grammatisch gebaut —
+       falsch ist nur, was nicht zur Lage passt. „Man …" ist dabei
+       kein Fehler, sondern die Aktiv-Umschreibung: sie stimmt, sagt
+       aber etwas anderes. */
+    const wahlen = Core.shuffle([
+      { id: "vorgang", text: `${schritt.was.charAt(0).toUpperCase() + schritt.was.slice(1)} wird ${schritt.partizip}.`,
+        richtig: true },
+      { id: "zustand", text: `${schritt.was.charAt(0).toUpperCase() + schritt.was.slice(1)} ist ${schritt.partizip}.`,
+        richtig: false },
+      { id: "aktiv", text: `Man ${schritt.verb.endsWith("n") ? schritt.verb.slice(0, -1) + "t" : schritt.verb} ${schritt.was}.`,
+        richtig: false },
+    ]);
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Baustelle: " + schritt.verb)}
+        <p class="eyebrow">🏗️ DIE BAUSTELLE · Abschnitt ${s.index + 1} / ${s.schritte.length}
+          <span class="subnav-info-icon" data-info="„wird gebaut" beschreibt den Vorgang — es passiert gerade. „ist gebaut" beschreibt den Zustand — es ist fertig. Hier wird noch gearbeitet.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.schritte.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${bauLevel === l ? "selected" : ""}" data-bau-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${bauSzeneSvg(s)}
+        <p class="bau-frage">Auf der Baustelle passiert <strong>gerade jetzt</strong>: ${schritt.was} — ${schritt.verb}.<br>
+          <span class="empty-note">Wie sagt man das?</span></p>
+        <div class="bau-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="bau-wahl" data-bau-wahl="${w.id}">${w.text}</button>`).join("")}
+        </div>
+        <p class="empty-note bau-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-bau-wahl]").forEach((b) => b.addEventListener("click", () => bauAntwort(b.dataset.bauWahl)));
+    area.querySelectorAll("[data-bau-level]").forEach((b) => b.addEventListener("click", () => {
+      bauLevel = b.dataset.bauLevel; autoCefrLevel.baustelle = null; bauSession = null; renderBaustelle();
+    }));
+  }
+
+  function bauAntwort(wahl) {
+    const s = bauSession;
+    const schritt = s.schritte[s.index];
+    const korrekt = wahl === "vorgang";
+    spielNotiz(korrekt, `${schritt.was} wird ${schritt.partizip}.`);
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+    } else { s.serie = 0; s.fehler.push(schritt); Core.sound.wrong(); }
+    /* Die Rückmeldung erklärt nicht „falsch", sondern WAS der gewählte
+       Satz bedeutet hätte. Das ist der Unterschied, um den es geht. */
+    const erklaerung = wahl === "zustand"
+      ? `Das wäre der Zustand: ${schritt.zustand}`
+      : wahl === "aktiv"
+        ? "Das ist Aktiv — richtig gebaut, rückt aber die handelnde Person nach vorn. Auf der Baustelle zählt, WAS geschieht."
+        : "";
+    s.letzte = { text: korrekt
+      ? `✅ ${schritt.vorgang}`
+      : `❌ Gesucht war: <strong>${schritt.was} wird ${schritt.partizip}.</strong> ${erklaerung}` };
+    s.index += 1;
+    renderBaustelle();
+  }
+
+  function renderBaustelleErgebnis() {
+    const area = document.getElementById("baustelleArea");
+    const s = bauSession;
+    const prozent = Math.round((s.richtig / s.schritte.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.schritte.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Bauleiter:in", charakter: "Die Baustelle",
+      zeilen: [
+        { name: "🏗️ Richtig beschrieben", anteil: prozent, wert: s.richtig + "/" + s.schritte.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.schritte.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="bauNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Vorgang und Zustand nebeneinander</p>
+        ${s.fehler.map((f) => `<p style="margin:8px 0;"><strong>${f.vorgang}</strong><br><span class="empty-note">${f.zustand}</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("bauNochmal")?.addEventListener("click", () => { neueBauSession(); renderBaustelle(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["baustelle"], points: punkte, bonus, percent: prozent,
+        character: "Bauleiter:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DIE WETTERKARTE — Adjektivendungen
+     ------------------------------------------------------------
+     Die Adjektivendung ist im Deutschen kein Schmuck, sondern eine
+     Auskunft: Sie sagt, welchen Fall und welches Geschlecht das
+     Nomen hat — und WIE VIEL davon der Artikel schon verraten hat.
+     Deshalb heißt es „ein kalter Wind", aber „der kalte Wind": Wo
+     „der" das Geschlecht schon zeigt, muss die Endung es nicht mehr
+     tun.
+
+     Genau diese Abhängigkeit ist der Grund, warum Listen hier so
+     schlecht helfen. Man muss sehen, dass sich die Endung ÄNDERT,
+     wenn nur der Artikel wechselt — und dafür braucht es dasselbe
+     Adjektiv zweimal. Das Spiel zeigt immer beide Fassungen im
+     Feedback nebeneinander.
+     ============================================================ */
+  const WETTER_LAGEN = [
+    { ort: "Hamburg", x: 118, y: 30, art: "regen",
+      nomen: "Wind", genus: "m", adj: "kalt",
+      mitDer: "der kalte Wind", mitEin: "ein kalter Wind", lvl: "A2" },
+    { ort: "Berlin", x: 196, y: 46, art: "wolke",
+      nomen: "Himmel", genus: "m", adj: "grau",
+      mitDer: "der graue Himmel", mitEin: "ein grauer Himmel", lvl: "A2" },
+    { ort: "Köln", x: 62, y: 74, art: "sonne",
+      nomen: "Morgen", genus: "m", adj: "mild",
+      mitDer: "der milde Morgen", mitEin: "ein milder Morgen", lvl: "B1" },
+    { ort: "München", x: 156, y: 122, art: "schnee",
+      nomen: "Wetter", genus: "n", adj: "schlecht",
+      mitDer: "das schlechte Wetter", mitEin: "ein schlechtes Wetter", lvl: "A2" },
+    { ort: "Dresden", x: 202, y: 82, art: "gewitter",
+      nomen: "Gewitter", genus: "n", adj: "kräftig",
+      mitDer: "das kräftige Gewitter", mitEin: "ein kräftiges Gewitter", lvl: "B1" },
+    { ort: "Frankfurt", x: 96, y: 88, art: "wolke",
+      nomen: "Luft", genus: "f", adj: "feucht",
+      mitDer: "die feuchte Luft", mitEin: "eine feuchte Luft", lvl: "A2" },
+    { ort: "Stuttgart", x: 104, y: 116, art: "sonne",
+      nomen: "Sonne", genus: "f", adj: "warm",
+      mitDer: "die warme Sonne", mitEin: "eine warme Sonne", lvl: "A1" },
+    { ort: "Leipzig", x: 176, y: 76, art: "regen",
+      nomen: "Regen", genus: "m", adj: "leicht",
+      mitDer: "der leichte Regen", mitEin: "ein leichter Regen", lvl: "A2" },
+    { ort: "Rostock", x: 168, y: 20, art: "wind",
+      nomen: "Küste", genus: "f", adj: "rau",
+      mitDer: "die raue Küste", mitEin: "eine raue Küste", lvl: "B1" },
+    { ort: "Nürnberg", x: 148, y: 100, art: "wolke",
+      nomen: "Nebel", genus: "m", adj: "dicht",
+      mitDer: "der dichte Nebel", mitEin: "ein dichter Nebel", lvl: "B1" },
+    { ort: "Bremen", x: 92, y: 40, art: "regen",
+      nomen: "Schauer", genus: "m", adj: "kurz",
+      mitDer: "der kurze Schauer", mitEin: "ein kurzer Schauer", lvl: "B2" },
+    { ort: "Kiel", x: 122, y: 12, art: "wind",
+      nomen: "Böe", genus: "f", adj: "stark",
+      mitDer: "die starke Böe", mitEin: "eine starke Böe", lvl: "B2" },
+  ];
+
+  const WETTER_RUNDEN = 8;
+  let wetterSession = null;
+  let wetterLevel = "";
+
+  function neueWetterSession() {
+    const passt = WETTER_LAGEN.filter((l) => l.lvl === wetterLevel);
+    const topf = passt.length >= 4 ? passt : WETTER_LAGEN;
+    wetterSession = {
+      lagen: Core.shuffle(topf.slice()).slice(0, WETTER_RUNDEN),
+      index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null,
+    };
+  }
+
+  /* Ein Wettersymbol, gezeichnet statt als Emoji — damit es auf jedem
+     Gerät gleich aussieht und sich in die Karte einfügt. */
+  function wetterSymbolSvg(art, x, y, gross) {
+    const r = gross ? 1.5 : 1;
+    const t = [];
+    if (art === "sonne") {
+      t.push(`<circle cx="${x}" cy="${y}" r="${7 * r}" fill="#F2C24B"/>`);
+      for (let i = 0; i < 8; i++) {
+        const w = (i * Math.PI) / 4;
+        t.push(`<line x1="${x + Math.cos(w) * 9 * r}" y1="${y + Math.sin(w) * 9 * r}" x2="${x + Math.cos(w) * 12 * r}" y2="${y + Math.sin(w) * 12 * r}" stroke="#F2C24B" stroke-width="${1.8 * r}" stroke-linecap="round"/>`);
+      }
+    } else {
+      // Wolke als Grundform für alles Übrige
+      t.push(`<g fill="${art === "gewitter" ? "#6A6A7A" : "#D8DEE6"}">
+        <circle cx="${x - 5 * r}" cy="${y}" r="${5 * r}"/>
+        <circle cx="${x + 1 * r}" cy="${y - 3 * r}" r="${6.5 * r}"/>
+        <circle cx="${x + 7 * r}" cy="${y}" r="${5 * r}"/>
+        <rect x="${x - 10 * r}" y="${y}" width="${20 * r}" height="${5 * r}" rx="${2.5 * r}"/>
+      </g>`);
+      if (art === "regen") {
+        for (let i = 0; i < 3; i++) {
+          t.push(`<line x1="${x - 6 * r + i * 6 * r}" y1="${y + 6 * r}" x2="${x - 8 * r + i * 6 * r}" y2="${y + 12 * r}" stroke="#4A90D9" stroke-width="${1.8 * r}" stroke-linecap="round"/>`);
+        }
+      }
+      if (art === "schnee") {
+        for (let i = 0; i < 3; i++) {
+          t.push(`<circle cx="${x - 6 * r + i * 6 * r}" cy="${y + 9 * r}" r="${1.8 * r}" fill="#FFFFFF"/>`);
+        }
+      }
+      if (art === "gewitter") {
+        t.push(`<path d="M${x + 1 * r} ${y + 5 * r} l${-5 * r} ${8 * r} h${4 * r} l${-2 * r} ${6 * r} l${8 * r} ${-9 * r} h${-4 * r} z" fill="#F2C24B"/>`);
+      }
+      if (art === "wind") {
+        for (let i = 0; i < 3; i++) {
+          t.push(`<path d="M${x - 9 * r} ${y + 6 * r + i * 4 * r} h${12 * r} q${4 * r} 0 ${4 * r} ${-2 * r}" stroke="#8FB8C9" stroke-width="${1.6 * r}" fill="none" stroke-linecap="round"/>`);
+        }
+      }
+    }
+    return t.join("");
+  }
+
+  /* Die Karte: eine stark vereinfachte Umrisslinie Deutschlands. Sie
+     muss nicht geografisch stimmen — sie soll wiedererkennbar sein
+     und die Städte auseinanderhalten. */
+  function wetterKarteSvg(s) {
+    const lage = s.lagen[s.index];
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="150" fill="#D9EDF7"/>`);
+    t.push(`<path d="M112 6 q22 -4 30 8 t26 6 q16 -2 22 12 t-4 22 q10 10 4 22 t2 24 q6 14 -8 20 t-24 14 q-14 10 -28 2 t-22 -18 q-16 -4 -18 -20 t6 -26 q-10 -14 2 -28 t12 -38 z"
+      fill="#B6D9A8" stroke="#7FA86A" stroke-width="2"/>`);
+    // Die übrigen Städte blass, die gefragte hervorgehoben
+    s.lagen.forEach((l, i) => {
+      if (i === s.index) return;
+      t.push(`<g opacity="0.35">${wetterSymbolSvg(l.art, l.x, l.y, false)}</g>`);
+    });
+    t.push(`<g>${wetterSymbolSvg(lage.art, lage.x, lage.y, true)}</g>`);
+    t.push(`<circle cx="${lage.x}" cy="${lage.y + 22}" r="3" fill="#C0392B"/>`);
+    t.push(`<text x="${lage.x}" y="${lage.y + 36}" text-anchor="middle" font-family="Nunito, sans-serif" font-size="11" font-weight="800" fill="#2A3A2A">${lage.ort}</text>`);
+    return `<svg class="wetter-karte" viewBox="0 0 300 150" role="img" aria-label="Wetterkarte mit Städten">${t.join("")}</svg>`;
+  }
+
+  function renderWetterkarte() {
+    const area = document.getElementById("wetterkarteArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-wetterkarte", "Die Wetterkarte")) return;
+    if (!renderComingSoonGate(area, "wetterkarte_neu", "Die Wetterkarte", "🌦️")) return;
+    wetterLevel = applyDefaultCefrLevel(wetterLevel, (v) => { wetterLevel = v; wetterSession = null; }, "wetterkarte");
+    if (!wetterSession) neueWetterSession();
+    const s = wetterSession;
+    if (s.index >= s.lagen.length) { renderWetterkarteErgebnis(); return; }
+    const lage = s.lagen[s.index];
+    /* Mal wird nach der Form mit „der/die/das" gefragt, mal nach der
+       mit „ein" — sonst lernt man eine Endung, statt die Regel zu
+       verstehen. Welche gefragt ist, hängt fest am Index, damit
+       dieselbe Runde nicht zweimal dasselbe fragt. */
+    const mitUnbestimmt = s.index % 2 === 1;
+    const richtig = mitUnbestimmt ? lage.mitEin : lage.mitDer;
+    const falsch = mitUnbestimmt ? lage.mitDer : lage.mitEin;
+    /* Die dritte Möglichkeit: dieselbe Endung wie die richtige, aber
+       am falschen Artikel — der häufigste echte Fehler. */
+    const dritte = mitUnbestimmt
+      ? (lage.genus === "f"
+        ? `eine ${lage.adj}er ${lage.nomen}`
+        : `${lage.genus === "n" ? "ein" : "ein"} ${lage.adj}e ${lage.nomen}`)
+      : `${lage.genus === "f" ? "die" : lage.genus === "n" ? "das" : "der"} ${lage.adj}${lage.genus === "m" ? "er" : lage.genus === "n" ? "es" : "er"} ${lage.nomen}`;
+    const wahlen = Core.shuffle([richtig, falsch, dritte].filter((w, i, a) => a.indexOf(w) === i));
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Wetterkarte: " + lage.ort + " / " + lage.adj)}
+        <p class="eyebrow">🌦️ DIE WETTERKARTE · Ort ${s.index + 1} / ${s.lagen.length}
+          <span class="subnav-info-icon" data-info="Die Adjektivendung hängt davon ab, wie viel der Artikel schon verrät. Nach „der/die/das" reicht meist -e, nach „ein" muss die Endung das Geschlecht selbst zeigen.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.lagen.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A1", "A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${wetterLevel === l ? "selected" : ""}" data-wetter-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${wetterKarteSvg(s)}
+        <p class="wetter-frage">In <strong>${lage.ort}</strong>: Wie heißt es mit
+          <strong>${mitUnbestimmt ? "„ein“" : "„der/die/das“"}</strong>?</p>
+        <div class="wetter-wahlen">
+          ${wahlen.map((w) => `<button type="button" class="wetter-wahl" data-wetter-wahl="${w.replace(/"/g, "&quot;")}">${w}</button>`).join("")}
+        </div>
+        <p class="empty-note wetter-rueckmeldung">${s.letzte ? s.letzte.text : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-wetter-wahl]").forEach((b) => b.addEventListener("click", () => wetterAntwort(b.dataset.wetterWahl, richtig)));
+    area.querySelectorAll("[data-wetter-level]").forEach((b) => b.addEventListener("click", () => {
+      wetterLevel = b.dataset.wetterLevel; autoCefrLevel.wetterkarte = null; wetterSession = null; renderWetterkarte();
+    }));
+  }
+
+  function wetterAntwort(wahl, richtig) {
+    const s = wetterSession;
+    const lage = s.lagen[s.index];
+    const korrekt = wahl === richtig;
+    spielNotiz(korrekt, `${lage.ort}: ${richtig}`);
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+    } else { s.serie = 0; s.fehler.push(lage); Core.sound.wrong(); }
+    /* Die Rückmeldung zeigt IMMER beide Formen nebeneinander — daran
+       sieht man, dass sich nur die Endung ändert, wenn der Artikel
+       wechselt. Das ist die eigentliche Lektion. */
+    s.letzte = { text: `${korrekt ? "✅ Richtig" : "❌ Richtig wäre"}: <strong>${richtig}</strong>`
+      + ` <span class="empty-note">— zum Vergleich: ${richtig === lage.mitDer ? lage.mitEin : lage.mitDer}</span>` };
+    s.index += 1;
+    renderWetterkarte();
+  }
+
+  function renderWetterkarteErgebnis() {
+    const area = document.getElementById("wetterkarteArea");
+    const s = wetterSession;
+    const prozent = Math.round((s.richtig / s.lagen.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.lagen.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Wetterfrosch", charakter: "Die Wetterkarte",
+      zeilen: [
+        { name: "🌦️ Richtige Endungen", anteil: prozent, wert: s.richtig + "/" + s.lagen.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.lagen.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="wetterNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Beide Formen im Vergleich</p>
+        ${s.fehler.map((f) => `<p style="margin:6px 0;">${f.mitDer} &nbsp;·&nbsp; ${f.mitEin}</p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("wetterNochmal")?.addEventListener("click", () => { neueWetterSession(); renderWetterkarte(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["wetterkarte"], points: punkte, bonus, percent: prozent,
+        character: "Wetterfrosch", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
+
+  /* ============================================================
+     DIE BACKSTUBE — trennbare Verben
+     ------------------------------------------------------------
+     Trennbare Verben sind für Deutschlernende deshalb schwer, weil
+     das Wort im Satz auseinanderfällt: „aufstehen" wird zu „ich
+     stehe … auf", und die Vorsilbe wartet ganz am Satzende. Wer das
+     nur als Regel liest, vergisst es; wer es einmal SIEHT, behält
+     es.
+
+     Hier ist das Bild die Regel: In der Backstube fliegt die
+     Vorsilbe wie ein Brötchen aus dem Wort heraus und muss an der
+     richtigen Stelle wieder landen. Nur ein Platz im Satz ist
+     richtig — der letzte. Bei einem Nebensatz dagegen bleibt das
+     Verb zusammen, und genau das ist die zweite Hälfte der Übung.
+     ============================================================ */
+  const BACK_SAETZE = [
+    // [Satzteile vor der Lücke, Vorsilbe, Verbstamm, Satzteile nach der Lücke, Niveau, Ort der Lücke]
+    { vorn: "Ich", verb: "stehe", rest: "jeden Morgen um fünf Uhr", vorsilbe: "auf", inf: "aufstehen", lvl: "A1",
+      bedeutung: "das Bett verlassen" },
+    { vorn: "Der Bäcker", verb: "macht", rest: "die Backstube schon um vier Uhr", vorsilbe: "auf", inf: "aufmachen", lvl: "A1",
+      bedeutung: "öffnen" },
+    { vorn: "Wir", verb: "kaufen", rest: "am Samstag frische Brötchen", vorsilbe: "ein", inf: "einkaufen", lvl: "A1",
+      bedeutung: "Waren besorgen" },
+    { vorn: "Der Teig", verb: "geht", rest: "in der warmen Küche schnell", vorsilbe: "auf", inf: "aufgehen", lvl: "A2",
+      bedeutung: "größer werden, sich heben" },
+    { vorn: "Die Verkäuferin", verb: "packt", rest: "das Brot sorgfältig", vorsilbe: "ein", inf: "einpacken", lvl: "A1",
+      bedeutung: "in Papier oder Tüte tun" },
+    { vorn: "Ich", verb: "hole", rest: "die Bestellung um acht Uhr", vorsilbe: "ab", inf: "abholen", lvl: "A1",
+      bedeutung: "etwas irgendwo mitnehmen" },
+    { vorn: "Der Lehrling", verb: "räumt", rest: "die Bleche nach dem Backen", vorsilbe: "weg", inf: "wegräumen", lvl: "A2",
+      bedeutung: "an seinen Platz zurücklegen" },
+    { vorn: "Die Chefin", verb: "stellt", rest: "den neuen Kollegen", vorsilbe: "vor", inf: "vorstellen", lvl: "A2",
+      bedeutung: "jemanden bekannt machen" },
+    { vorn: "Der Ofen", verb: "kühlt", rest: "über Nacht langsam", vorsilbe: "ab", inf: "abkühlen", lvl: "B1",
+      bedeutung: "kälter werden" },
+    { vorn: "Wir", verb: "fangen", rest: "morgen eine Stunde früher", vorsilbe: "an", inf: "anfangen", lvl: "A1",
+      bedeutung: "beginnen" },
+    { vorn: "Die Kundin", verb: "probiert", rest: "den neuen Kuchen gern", vorsilbe: "aus", inf: "ausprobieren", lvl: "A2",
+      bedeutung: "testen" },
+    { vorn: "Der Bäcker", verb: "schaltet", rest: "den Ofen nach Feierabend", vorsilbe: "aus", inf: "ausschalten", lvl: "A2",
+      bedeutung: "abstellen, ausmachen" },
+    { vorn: "Ich", verb: "schreibe", rest: "das Rezept schnell", vorsilbe: "auf", inf: "aufschreiben", lvl: "A2",
+      bedeutung: "notieren" },
+    { vorn: "Die Lieferung", verb: "kommt", rest: "heute leider zwei Stunden später", vorsilbe: "an", inf: "ankommen", lvl: "A2",
+      bedeutung: "eintreffen" },
+    { vorn: "Der Meister", verb: "sieht", rest: "sich den zu dunklen Boden genau", vorsilbe: "an", inf: "ansehen", lvl: "B1",
+      bedeutung: "betrachten, prüfen" },
+    { vorn: "Wir", verb: "hören", rest: "um achtzehn Uhr mit der Arbeit", vorsilbe: "auf", inf: "aufhören", lvl: "A2",
+      bedeutung: "beenden, Schluss machen" },
+    { vorn: "Die Bäckerei", verb: "stellt", rest: "im Sommer zwei Aushilfen", vorsilbe: "ein", inf: "einstellen", lvl: "B1",
+      bedeutung: "jemanden anstellen" },
+    { vorn: "Der Duft", verb: "zieht", rest: "durch die ganze Straße", vorsilbe: "hinaus", inf: "hinausziehen", lvl: "B2",
+      bedeutung: "sich nach draußen ausbreiten" },
+    { vorn: "Der Lehrling", verb: "gibt", rest: "trotz der frühen Stunde nicht", vorsilbe: "auf", inf: "aufgeben", lvl: "B1",
+      bedeutung: "etwas beenden, weil es zu schwer ist" },
+    { vorn: "Die Kundschaft", verb: "nimmt", rest: "über die Jahre spürbar", vorsilbe: "zu", inf: "zunehmen", lvl: "B2",
+      bedeutung: "mehr werden" },
+  ];
+
+  const BACK_RUNDEN = 8;
+  let backSession = null;
+  let backLevel = "";
+
+  function backPassendeSaetze(level) {
+    const passt = BACK_SAETZE.filter((s) => s.lvl === level);
+    return passt.length >= 4 ? passt : BACK_SAETZE;
+  }
+
+  function neueBackSession() {
+    const saetze = Core.shuffle(backPassendeSaetze(backLevel).slice()).slice(0, BACK_RUNDEN);
+    backSession = { saetze, index: 0, richtig: 0, serie: 0, besteSerie: 0, fehler: [], letzte: null };
+  }
+
+  /* Die Szene: Backstube im Querschnitt. Links der Ofen, rechts die
+     Theke, in der Mitte fliegt die Vorsilbe als Brötchen durchs Bild.
+     Der Ofen glüht stärker, je weiter man ist — das ist der einzige
+     Fortschrittsbalken, den das Spiel braucht. */
+  function backSzeneSvg(s) {
+    const anteil = s.saetze.length ? s.index / s.saetze.length : 0;
+    const glut = 0.25 + anteil * 0.75;
+    const t = [];
+    t.push(`<rect x="0" y="0" width="300" height="132" fill="#F3E2C7"/>`);
+    // Wand mit Kacheln
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 3; j++) {
+        t.push(`<rect x="${i * 30 + 1}" y="${j * 22 + 1}" width="28" height="20" rx="2" fill="#EAD6B4" opacity="0.7"/>`);
+      }
+    }
+    // Der Ofen links
+    t.push(`<rect x="10" y="34" width="86" height="80" rx="6" fill="#8A6A4A"/>`);
+    t.push(`<rect x="18" y="42" width="70" height="46" rx="4" fill="#3A2A1A"/>`);
+    t.push(`<rect x="22" y="46" width="62" height="38" rx="3" fill="#E8892B" opacity="${glut.toFixed(2)}"/>`);
+    t.push(`<circle cx="40" cy="66" r="7" fill="#F2C24B" opacity="${(glut * 0.9).toFixed(2)}"/>`);
+    t.push(`<circle cx="60" cy="70" r="6" fill="#F2C24B" opacity="${(glut * 0.8).toFixed(2)}"/>`);
+    t.push(`<rect x="18" y="94" width="70" height="8" rx="3" fill="#5A4432"/>`);
+    t.push(`<circle cx="53" cy="98" r="3" fill="#E8C97A"/>`);
+    // Arbeitsplatte mit Teiglingen
+    t.push(`<rect x="104" y="96" width="120" height="9" rx="3" fill="#C9A87A"/>`);
+    for (let i = 0; i < 5; i++) {
+      t.push(`<ellipse cx="${116 + i * 24}" cy="93" rx="9" ry="6" fill="#E8C489"/>`);
+      t.push(`<path d="M${110 + i * 24} 91 q6 -4 12 0" stroke="#C9A15F" stroke-width="1.4" fill="none"/>`);
+    }
+    // Theke rechts mit Regal
+    t.push(`<rect x="234" y="52" width="60" height="62" rx="4" fill="#A8845C"/>`);
+    for (let r = 0; r < 3; r++) {
+      t.push(`<rect x="238" y="${58 + r * 19}" width="52" height="4" rx="2" fill="#7A5F3F"/>`);
+      for (let k = 0; k < 3; k++) {
+        t.push(`<ellipse cx="${247 + k * 17}" cy="${55 + r * 19}" rx="7" ry="5" fill="#DFB77C"/>`);
+      }
+    }
+    // Die Vorsilbe fliegt als Brötchen
+    const flugX = 118 + anteil * 90;
+    t.push(`<g transform="translate(${flugX.toFixed(0)} 40)">
+      <ellipse cx="0" cy="0" rx="17" ry="12" fill="#E8B871"/>
+      <path d="M-11 -3 q11 -7 22 0" stroke="#C08A45" stroke-width="1.8" fill="none"/>
+      <text x="0" y="4" text-anchor="middle" font-family="Nunito, sans-serif" font-size="11" font-weight="800" fill="#4A3418">${s.vorsilbeImFlug || "auf"}</text>
+    </g>`);
+    // Mehlstaub
+    for (let i = 0; i < 7; i++) {
+      t.push(`<circle cx="${112 + i * 26}" cy="${76 + (i % 3) * 6}" r="1.6" fill="#FFFFFF" opacity="0.6"/>`);
+    }
+    return `<svg class="back-szene" viewBox="0 0 300 132" role="img" aria-label="Backstube mit Ofen und Theke">${t.join("")}</svg>`;
+  }
+
+  function renderBackstube() {
+    const area = document.getElementById("backstubeArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-backstube", "Die Backstube")) return;
+    if (!renderComingSoonGate(area, "backstube_neu", "Die Backstube", "🥐")) return;
+    backLevel = applyDefaultCefrLevel(backLevel, (v) => { backLevel = v; backSession = null; }, "backstube");
+    if (!backSession) neueBackSession();
+    const s = backSession;
+    if (s.index >= s.saetze.length) { renderBackstubeErgebnis(); return; }
+    const satz = s.saetze[s.index];
+    s.vorsilbeImFlug = satz.vorsilbe;
+
+    /* Die drei Plätze: nach dem Verb, in der Mitte, am Satzende.
+       Genau einer ist richtig — und es ist immer der letzte. Dass die
+       Regel so eindeutig ist, soll man selbst merken, deshalb steht
+       sie nicht vorher da, sondern in der Rückmeldung. */
+    const plaetze = [
+      { id: "nach", text: `${satz.vorn} ${satz.verb} <span class="back-luecke">___</span> ${satz.rest}.` },
+      { id: "mitte", text: `${satz.vorn} ${satz.verb} ${satz.rest.split(" ").slice(0, 2).join(" ")} <span class="back-luecke">___</span> ${satz.rest.split(" ").slice(2).join(" ")}.` },
+      { id: "ende", text: `${satz.vorn} ${satz.verb} ${satz.rest} <span class="back-luecke">___</span>.` },
+    ];
+
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Backstube: " + satz.inf)}
+        <p class="eyebrow">🥐 DIE BACKSTUBE · Brötchen ${s.index + 1} / ${s.saetze.length}
+          <span class="subnav-info-icon" data-info="Trennbare Verben fallen im Hauptsatz auseinander: die Vorsilbe fliegt ans Satzende. Wähle den Satz, in dem sie richtig gelandet ist.">ⓘ</span></p>
+        ${fortschrittHtml(s.richtig, s.saetze.length)}
+        <div class="trophy-case wsm-chips" style="margin:6px 0 10px;">
+          ${["A1", "A2", "B1", "B2"].map((l) => `<button type="button" class="trophy-chip ${backLevel === l ? "selected" : ""}" data-back-level="${l}">${l}</button>`).join("")}
+        </div>
+        ${backSzeneSvg(s)}
+        <p class="back-frage">Das Verb heißt <strong>${satz.inf}</strong> <span class="empty-note">— ${satz.bedeutung}</span>.<br>
+          Wohin fliegt <strong>${satz.vorsilbe}</strong>?</p>
+        <div class="back-plaetze">
+          ${Core.shuffle(plaetze.slice()).map((pl) => `
+            <button type="button" class="back-platz" data-back-wahl="${pl.id}">${pl.text}</button>`).join("")}
+        </div>
+        <p class="empty-note back-rueckmeldung" id="backFeedback">${s.letzte
+          ? (s.letzte.korrekt
+            ? `✅ Richtig — <strong>${s.letzte.satz.vorsilbe}</strong> steht ganz am Ende: „${s.letzte.satz.vorn} ${s.letzte.satz.verb} ${s.letzte.satz.rest} <strong>${s.letzte.satz.vorsilbe}</strong>."`
+            : `❌ Im Hauptsatz rutscht die Vorsilbe immer ganz ans Ende: „${s.letzte.satz.vorn} ${s.letzte.satz.verb} ${s.letzte.satz.rest} <strong>${s.letzte.satz.vorsilbe}</strong>."`)
+          : "&nbsp;"}</p>
+      </div>`;
+
+    area.querySelectorAll("[data-back-wahl]").forEach((b) => b.addEventListener("click", () => backAntwort(b.dataset.backWahl)));
+    area.querySelectorAll("[data-back-level]").forEach((b) => b.addEventListener("click", () => {
+      backLevel = b.dataset.backLevel; autoCefrLevel.backstube = null; backSession = null; renderBackstube();
+    }));
+  }
+
+  function backAntwort(wahl) {
+    const s = backSession;
+    const satz = s.saetze[s.index];
+    const korrekt = wahl === "ende";
+    spielNotiz(korrekt, `${satz.inf} → ${satz.vorn} ${satz.verb} ${satz.rest} ${satz.vorsilbe}.`);
+    if (korrekt) {
+      s.richtig += 1; s.serie += 1; s.besteSerie = Math.max(s.besteSerie, s.serie);
+      Core.sound.correct();
+    } else {
+      s.serie = 0; s.fehler.push(satz); Core.sound.wrong();
+    }
+    s.letzte = { satz, korrekt };
+    s.index += 1;
+    renderBackstube();
+  }
+
+  function renderBackstubeErgebnis() {
+    const area = document.getElementById("backstubeArea");
+    const s = backSession;
+    const prozent = Math.round((s.richtig / s.saetze.length) * 100);
+    const punkte = s.richtig * 3;
+    const bonus = s.richtig === s.saetze.length ? 6 : 0;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte, prozent, bonus, tier: "Backstuben-Meister:in", charakter: "Die Backstube",
+      zeilen: [
+        { name: "🥐 Richtig gelandet", anteil: prozent, wert: s.richtig + "/" + s.saetze.length },
+        { name: "🔥 Längste Serie", anteil: Math.round((s.besteSerie / s.saetze.length) * 100), wert: String(s.besteSerie) },
+      ],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="backNochmal">🔄 Neue Runde</button>`,
+    });
+    if (s.fehler.length) {
+      area.insertAdjacentHTML("beforeend", `<div class="question-card" style="margin-top:14px;">
+        <p class="eyebrow">Das nehmen wir noch mit</p>
+        ${s.fehler.map((f) => `<p style="margin:6px 0;"><strong>${f.inf}</strong> — ${f.vorn} ${f.verb} ${f.rest} <strong>${f.vorsilbe}</strong>. <span class="empty-note">(${f.bedeutung})</span></p>`).join("")}
+      </div>`);
+    }
+    document.getElementById("backNochmal")?.addEventListener("click", () => { neueBackSession(); renderBackstube(); });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["backstube"], points: punkte, bonus, percent: prozent,
+        character: "Backstuben-Meister:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) { Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent }); activeGameChallengeId = null; geliehenAlleWeg(); }
+    }
+  }
+
 
 
   /* ------------------------------------------------------------------
@@ -19104,7 +22489,54 @@
       + '" preserveAspectRatio="xMinYMid meet">' + teile.join("") + "</svg>";
   }
 
+  /* ============================================================
+     WELCHE SPIELE IM LERNRAUM ITALIENISCH LAUFEN
+     ------------------------------------------------------------
+     Nicht jedes Spiel lässt sich übersetzen — und die Wahrheit ist
+     hier wichtiger als eine lange Liste. Die Setzerei fragt, welches
+     Wort großgeschrieben wird; die Großschreibung mitten im Satz gibt
+     es nur im Deutschen. Die Wortkette zerlegt Komposita, die es im
+     Italienischen so nicht gibt. Die Zwillinge leben vom Umlaut, der
+     Sprachatlas von deutschen Mundarten, die Fuchsuhr von „Viertel
+     vor". Solche Spiele im Italienisch-Raum anzubieten hieße, deutsche
+     Inhalte mit italienischer Aufschrift zu verkaufen.
+
+     Hier stehen deshalb genau die Spiele, die im Italienisch-Raum
+     wirklich italienische Inhalte zeigen: weil sie ihre Aufgaben aus
+     den Kategorien des aktiven Raums ziehen, aus dem italienischen
+     Wörterbuch, oder weil sie von vornherein zweisprachig gebaut sind.
+     Alle übrigen bleiben im Deutsch-Raum — mit einem Hinweis, statt
+     wortlos zu verschwinden.
+     ============================================================ */
+  const IT_SPIELBAR = new Set([
+    "sub-stresstrainer",    // Silben aus IT_WOERTER, eigene italienische Regeln
+    "sub-aussprache",       // Wörterbuch des Raums, Stimme und Erkennung auf Italienisch
+    "sub-silbenturm",       // Silbentrennung — sprachneutral
+    "sub-wortangler",       // Bedeutung und Artikel il/lo/la aus dem Raum-Wörterbuch
+    "sub-augenblick",       // Beispielsätze des Raum-Wörterbuchs
+    "sub-vokabelmeister",   // Raum-Wörterbuch
+    "sub-wordsearch",       // Buchstabensalat: Raum-Wörterbuch samt italienischer Artikel
+    "sub-blitzrunde",       // Fragen der aktiven Kategorien
+    "sub-wortleiter",       // Fragen der aktiven Kategorien, A1 bis C2
+    "sub-kanone",           // Wort-Kanone: Fragen der aktiven Kategorien
+    "sub-bubbles",          // Wortblasen: Fragen der aktiven Kategorien
+    "sub-wackelturm",       // Fragen der aktiven Kategorien
+    "sub-memory",           // MEMORY_GAMES schaltet auf die italienischen Sätze um
+    "sub-artikelgarten",    // eigene Beete il/lo/la
+    "sub-katzenzimmer",     // eigene italienische Präpositionen
+  ]);
+
   const GAMES_OVERVIEW_LIST = [
+    { sub: "sub-erbschaft", emoji: "🗝️", name: "Die Erbschaft", persona: "Grammatik-Profi" },
+    { sub: "sub-arzt", emoji: "🩺", name: "Beim Arzt", persona: "Grammatik-Profi" },
+    { sub: "sub-gewitter", emoji: "⛈️", name: "Das Gewitter", persona: "Grammatik-Profi" },
+    { sub: "sub-fundbuero", emoji: "🧳", name: "Das Fundbüro", persona: "Grammatik-Profi" },
+    { sub: "sub-schatzkarte", emoji: "🗺️", name: "Die Schatzkarte", persona: "Grammatik-Profi" },
+    { sub: "sub-zug", emoji: "🚆", name: "Der verpasste Zug", persona: "Grammatik-Profi" },
+    { sub: "sub-flohmarkt", emoji: "🏷️", name: "Der Flohmarkt", persona: "Sprachkünstler" },
+    { sub: "sub-baustelle", emoji: "🏗️", name: "Die Baustelle", persona: "Grammatik-Profi" },
+    { sub: "sub-wetterkarte", emoji: "🌦️", name: "Die Wetterkarte", persona: "Grammatik-Profi" },
+    { sub: "sub-backstube", emoji: "🥐", name: "Die Backstube", persona: "Grammatik-Profi" },
     { sub: "sub-zwillinge", emoji: "👂", name: "Die Zwillinge", persona: "Sprachkünstler" },
     { sub: "sub-wortbaum", emoji: "🌳", name: "Der Wortbaum", persona: "Sprachkünstler" },
     { sub: "sub-sprachatlas", emoji: "🗺️", name: "Der Sprachatlas", persona: "Logiker" },
@@ -19269,6 +22701,16 @@
   // zum jeweiligen Spielthema.
   function gameIconSvg(key) {
     const icons = {
+      erbschaft: `<circle cx="7.6" cy="8.4" r="4.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11.4 10.4 19 18v3h-3v-2h-2v-2h-2l-1.6-1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><circle cx="6.4" cy="7.2" r="1.2" fill="currentColor"/>`,
+      arzt: `<path d="M7.4 3v3.4a4.6 4.6 0 0 0 9.2 0V3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 11v3.2a3.6 3.6 0 0 0 7.2 0v-1.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="19.2" cy="10.6" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="6" cy="3" r="1.5" fill="currentColor"/><circle cx="18" cy="3" r="1.5" fill="currentColor"/>`,
+      gewitter: `<path d="M6.4 13.6q-3.2 0-3.2-3t3.2-3q.4-3.2 3.8-3.2 2.6 0 3.4 2.1 3-.4 3.6 2.4 2.6.2 2.6 2.5t-3 2.2h-10.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M11.6 14.4 8.8 18.2h2.8l-1.6 3.4 4.4-4.8h-2.8z" fill="currentColor"/><path d="M5.6 16.4 4.6 19M17 16.4 16 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>`,
+      fundbuero: `<rect x="3" y="7.6" width="16" height="11.4" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 7.6V5.4a3 3 0 0 1 6 0v2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 12.6h16" stroke="currentColor" stroke-width="1.4"/><rect x="9" y="10.6" width="4" height="4" rx="0.8" fill="currentColor"/>`,
+      schatzkarte: `<path d="M2.6 5.2 8 3.4l6 1.8 5.4-1.8v13.4L14 18.6l-6-1.8-5.4 1.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 3.4v13.2M14 5.2v13.4" stroke="currentColor" stroke-width="1.3" opacity="0.6"/><path d="M5.6 13.6q2.4-3.4 5-1.6t4.2-2.2" stroke="currentColor" stroke-width="1.4" fill="none" stroke-dasharray="1.6 1.6" stroke-linecap="round"/><path d="M14.8 7.4l2.4 2.4M17.2 7.4l-2.4 2.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+      zug: `<rect x="4" y="4" width="14" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4 9.4h14" stroke="currentColor" stroke-width="1.4"/><circle cx="7.6" cy="12.4" r="1.2" fill="currentColor"/><circle cx="14.4" cy="12.4" r="1.2" fill="currentColor"/><path d="M6.6 15 4.6 19M15.4 15l2 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 19h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>`,
+      flohmarkt: `<path d="M11.4 2.4 19.6 10.6a2 2 0 0 1 0 2.8l-6.2 6.2a2 2 0 0 1-2.8 0L2.4 11.4V4.4a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="6.6" cy="6.6" r="1.7" fill="currentColor"/>`,
+      baustelle: `<rect x="15.6" y="3" width="2.6" height="16" fill="currentColor"/><rect x="4" y="2.4" width="14" height="2.4" fill="currentColor"/><line x1="8" y1="4.8" x2="8" y2="9" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="9" width="4.4" height="3.4" rx="0.8" fill="currentColor"/><rect x="2" y="16.4" width="11" height="2.6" fill="currentColor" opacity="0.6"/><rect x="3.6" y="13" width="7.6" height="3.4" fill="currentColor" opacity="0.4"/>`,
+      wetterkarte: `<path d="M6.4 14.6q-3 0-3-2.8t3-2.8q.4-3 3.6-3 2.4 0 3.2 2 2.8-.4 3.4 2.2 2.4.2 2.4 2.4t-2.8 2h-9.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7.4 17l-.8 2.6M11 17l-.8 2.6M14.6 17l-.8 2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.4" cy="5.4" r="2.4" fill="currentColor" opacity="0.75"/>`,
+      backstube: `<path d="M3.4 13.6q0-4.4 7.6-4.4t7.6 4.4q0 3.6-7.6 3.6t-7.6-3.6z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7 12.2q4-2 8 0M6 15q5-2.4 10 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M3.4 13.6 1.6 9.4M18.6 13.6l1.8-4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11 6.4V2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>`,
       zwillinge: `<circle cx="7.4" cy="6.4" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="14.6" cy="6.4" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M2.6 19.4q0-4.6 4.8-4.6t4.8 4.6M11.8 19.4q0-4.6 4.8-4.6t4.8 4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`,
       wortbaum: `<path d="M11 20v-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 14 6.6 10M11 12l4.4-3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="11" cy="5.6" r="3.4" fill="currentColor"/><circle cx="5.4" cy="9.2" r="2.6" fill="currentColor"/><circle cx="16.6" cy="7.8" r="2.6" fill="currentColor"/>`,
       sprachatlas: `<path d="M2.4 5 8 3.2l6 1.8 5.6-1.8v14L14 19l-6-1.8L2.4 19Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 3.2v14M14 5v14" stroke="currentColor" stroke-width="1.5"/><circle cx="11" cy="9.4" r="1.6" fill="currentColor"/>`,
@@ -19323,7 +22765,18 @@
        spurlos, und wer es kannte, hielt es für gelöscht. Ein Spiel, das
        noch nie draußen war, bleibt dagegen unsichtbar. */
     const inReparatur = (g) => Boolean(g.flagKey) && Backend.getRawFeatureFlagValue(g.flagKey) === false;
+    /* Im Lernraum Italienisch nur die Spiele zeigen, die dort auch
+       wirklich italienische Inhalte liefern — der Rest steht darunter
+       als Hinweis, damit niemand denkt, die Spiele seien verschwunden. */
+    const itRaum = imItalienischraum();
+    const nurDeutsch = itRaum
+      ? GAMES_OVERVIEW_LIST
+          .filter((g) => !IT_SPIELBAR.has(g.sub))
+          .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames)
+          .map((g) => g.name).sort((a, b) => a.localeCompare(b, "de"))
+      : [];
     const visibleGames = GAMES_OVERVIEW_LIST
+      .filter((g) => !itRaum || IT_SPIELBAR.has(g.sub))
       .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames || inReparatur(g))
       // Verlässlich alphabetisch sortieren (mit deutschen Umlauten korrekt einsortiert),
       // statt sich auf die Reihenfolge im Quelltext zu verlassen — die geriet beim
@@ -19348,7 +22801,13 @@
         <span class="empty-note">Hervorgehoben sind die ${listenSubs.size} Spiele, die mit dieser Liste üben können. Die übrigen arbeiten mit Sätzen oder Bildern und lassen sich nicht auf eine Wortliste umstellen.</span>
         <button type="button" class="btn btn-ghost" id="wortlisteBannerWeg" style="padding:4px 12px; font-size:0.76rem; align-self:flex-start;">Hervorhebung aufheben</button>
       </div>` : ""}
-      <p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>
+      ${itRaum ? `<div class="it-spiele-hinweis">
+        <p style="margin:0 0 6px; font-weight:800;">🇮🇹 ${visibleGames.length} Spiele auf Italienisch</p>
+        <p class="empty-note" style="margin:0;">Sie ziehen ihre Aufgaben aus dem italienischen Wörterbuch und den italienischen Übungen — und zählen auf deinen Kursfortschritt ein.</p>
+        ${nurDeutsch.length ? `<details style="margin-top:8px;"><summary style="cursor:pointer; font-size:0.8rem;">Warum sind ${nurDeutsch.length} Spiele hier nicht dabei?</summary>
+          <p class="empty-note" style="margin:6px 0 0;">Diese Spiele üben etwas, das es nur im Deutschen gibt — Großschreibung mitten im Satz, Umlaute, zusammengesetzte Wörter, ß, Wechselpräpositionen, deutsche Zahlwörter, Mundarten. Auf Italienisch umgeschaltet würden sie deutsche Inhalte unter italienischer Aufschrift zeigen. Sie warten im Deutsch-Raum auf dich: ${nurDeutsch.join(", ")}.</p>
+        </details>` : ""}
+      </div>` : `<p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>`}
       ${istBeta && gesperrte.length ? `<div class="beta-hinweis">
         <strong>🧪 Du bist Beta-Tester:in.</strong>
         Deshalb siehst du hier auch ${gesperrte.length} ${gesperrte.length === 1 ? "Spiel" : "Spiele"}, die für alle anderen noch nicht freigegeben sind:
@@ -20077,6 +23536,326 @@
   /* --- Die Zwillinge: jeder Buchstabe steht doppelt — einmal
          fest, einmal als leicht versetzter Schatten daneben.
          Man sieht zwei, wo eines steht. -------------------- */
+  /* --- Die Backstube: die Buchstaben liegen als Teiglinge auf dem
+         Blech, jeder mit dem Einschnitt, den ein Bäcker vor dem Backen
+         setzt. Darunter der Blechrand. -------------------------- */
+  /* --- Die Wetterkarte: die Buchstaben stehen in einem Wolkenband,
+         darunter fallen Tropfen. --------------------------------- */
+  /* --- Die Baustelle: die Buchstaben stehen hinter Geruest-Stangen,
+         darunter das gelb-schwarze Absperrband. ------------------ */
+  /* --- Der Flohmarkt: an jedem Buchstaben haengt ein Preisschild an
+         einer Schnur, jedes ein wenig anders geneigt. ------------ */
+  /* --- Der verpasste Zug: die Buchstaben leuchten auf einer dunklen
+         Abfahrtstafel, darunter laeuft eine Schiene. ------------- */
+  /* --- Die Schatzkarte: die Buchstaben stehen als Tinte auf einem
+         Pergament mit ausgefransten Raendern, links eine Windrose,
+         darunter der gestrichelte Weg zum Kreuz. ---------------- */
+  /* --- Das Fundbuero: jeder Buchstabe steht in seinem eigenen
+         Regalfach, darunter haengt ein Nummernschildchen. ------- */
+  /* --- Das Gewitter: die Buchstaben leuchten vor einem dunklen
+         Himmel, ein Blitz faehrt hinter ihnen herunter, darunter
+         steht der Regen als schraege Striche. ------------------- */
+  /* --- Beim Arzt: die Buchstaben stehen auf einem Rezeptblock mit
+         Kopfzeile, Perforation und rotem Kreuz. ----------------- */
+  /* --- Die Erbschaft: die Buchstaben stehen auf vergilbtem
+         Aktenpapier, oben ein Siegel, unten die Faltkante. ------- */
+  function fahrplanSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const h = BUCHSTABEN_HOEHE;
+    // Die Tafel als Hintergrund
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 16; });
+    teile.push(`<rect x="-18" y="-14" width="${breite + 36}" height="${h + 30}" rx="6" fill="#1E2A33"/>`);
+    teile.push(`<rect x="-18" y="-14" width="${breite + 36}" height="${h + 30}" rx="6" fill="none" stroke="#3E5260" stroke-width="2"/>`);
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#F2C24B", "#B4863A", 26));
+      x += b;
+    });
+    // Schiene darunter
+    teile.push(`<rect x="-24" y="${h + 22}" width="${breite + 48}" height="3" fill="#B4B4BC"/>`);
+    for (let i = 0; i < Math.ceil((breite + 48) / 18); i++) {
+      teile.push(`<rect x="${-24 + i * 18}" y="${h + 25}" width="10" height="5" fill="#5A4A3A" opacity="0.7"/>`);
+    }
+    return schriftHuelle(teile, -36, -32, breite + 72, h + 78, o.hoehe || 72, text);
+  }
+
+  function urkundeSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    const h = BUCHSTABEN_HOEHE;
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 16; });
+    const links = -34, oben = -40, gb = breite + 68, gh = h + 92;
+    // Vergilbtes Aktenpapier mit leicht gewellter Unterkante
+    const welle = [];
+    for (let i = 0; i <= 10; i++) {
+      const px = links + (gb * i) / 10;
+      welle.push(`${i ? "L" : "M"}${px.toFixed(1)} ${(oben + gh - (i % 2 ? 5 : 0)).toFixed(1)}`);
+    }
+    teile.push(`<path d="M${links} ${oben} h${gb} V${oben + gh - 6} ${welle.slice(1).join(" ")} Z" fill="#F4ECD6" stroke="#C9B58A" stroke-width="1.8"/>`);
+    // Kopfzeile
+    teile.push(`<rect x="${links + 14}" y="${oben + 12}" width="${Math.max(24, gb * 0.5)}" height="4" rx="2" fill="#C2AC80"/>`);
+    teile.push(`<rect x="${links + 14}" y="${oben + 21}" width="${Math.max(16, gb * 0.32)}" height="4" rx="2" fill="#D6C7A2"/>`);
+    // Siegel oben rechts
+    const sx = links + gb - 34, sy = oben + 22;
+    teile.push(`<circle cx="${sx}" cy="${sy}" r="16" fill="#B4553C"/>`);
+    teile.push(`<circle cx="${sx}" cy="${sy}" r="11" fill="none" stroke="#8E3B26" stroke-width="2"/>`);
+    teile.push(`<path d="M${sx - 5} ${sy + 4} l5 -9 l5 9 z" fill="#F4ECD6" opacity="0.9"/>`);
+    // Die Buchstaben in Tinte
+    let x = 0;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#5A4432", "#2A1E14", 26));
+      x += b;
+    });
+    // Zwei Schreiblinien und eine Unterschrift
+    teile.push(`<rect x="${links + 14}" y="${h + 18}" width="${gb - 28}" height="2.4" rx="1.2" fill="#D6C7A2"/>`);
+    teile.push(`<path d="M${links + 22} ${h + 40} q22 -14 40 2 t34 -6 t28 4" stroke="#2A1E14" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.7"/>`);
+    return schriftHuelle(teile, links - 6, oben - 6, gb + 12, gh + 12, o.hoehe || 78, text);
+  }
+
+  function rezeptblockSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    const h = BUCHSTABEN_HOEHE;
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 16; });
+    const links = -30, oben = -46, gb = breite + 60, gh = h + 92;
+    // Der Block
+    teile.push(`<rect x="${links}" y="${oben}" width="${gb}" height="${gh}" rx="4" fill="#FDFBF2" stroke="#C8C0A8" stroke-width="2"/>`);
+    // Kopfzeile mit rotem Kreuz
+    teile.push(`<rect x="${links}" y="${oben}" width="${gb}" height="30" fill="#EFE9D6"/>`);
+    teile.push(`<rect x="${links + 12}" y="${oben + 8}" width="14" height="5" rx="1" fill="#C0392B"/>`);
+    teile.push(`<rect x="${links + 16.5}" y="${oben + 3.5}" width="5" height="14" rx="1" fill="#C0392B"/>`);
+    teile.push(`<rect x="${links + 34}" y="${oben + 9}" width="${Math.max(20, gb * 0.42)}" height="3.4" rx="1.7" fill="#B8B098"/>`);
+    teile.push(`<rect x="${links + 34}" y="${oben + 16}" width="${Math.max(14, gb * 0.28)}" height="3.4" rx="1.7" fill="#CFC8B4"/>`);
+    // Perforation unten
+    for (let i = 0; i < Math.ceil(gb / 12); i++) {
+      teile.push(`<circle cx="${links + 6 + i * 12}" cy="${oben + gh - 8}" r="2.2" fill="#E4DCC6"/>`);
+    }
+    // Zwei Linien, auf denen die Schrift steht
+    teile.push(`<rect x="${links + 10}" y="${h + 12}" width="${gb - 20}" height="2.4" rx="1.2" fill="#D8D0B8"/>`);
+    // Die Buchstaben
+    let x = 0;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#2E6B8C", "#17384A", 26));
+      x += b;
+    });
+    // Unterschrift-Schwung unter der Schrift
+    teile.push(`<path d="M${breite * 0.55} ${h + 34} q26 -16 44 2 t34 -6" stroke="#2E6B8C" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.75"/>`);
+    return schriftHuelle(teile, links - 6, oben - 6, gb + 12, gh + 12, o.hoehe || 78, text);
+  }
+
+  function gewitterhimmelSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    const h = BUCHSTABEN_HOEHE;
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 16; });
+    // Der dunkle Himmel
+    teile.push(`<rect x="-26" y="-26" width="${breite + 52}" height="${h + 74}" rx="6" fill="#2A3440"/>`);
+    // Wolkenkanten oben
+    for (let i = 0; i < 7; i++) {
+      const cx = -14 + (i * (breite + 28)) / 6;
+      teile.push(`<ellipse cx="${cx.toFixed(1)}" cy="-20" rx="34" ry="17" fill="#3E4C5A" opacity="0.9"/>`);
+    }
+    // Der Blitz hinter der Schrift
+    const bx = breite * 0.62;
+    teile.push(`<path d="M${bx} -16 l-22 ${h * 0.5} h20 l-16 ${h * 0.52} 40 -${h * 0.62} h-20 z" fill="#F2D24B" opacity="0.55"/>`);
+    // Die Buchstaben
+    let x = 0;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#F7E7A8", "#8A6A18", 26));
+      x += b;
+    });
+    // Regen darunter
+    for (let i = 0; i < 26; i++) {
+      const rx = -18 + (i * (breite + 36)) / 25, ry = h + 16 + (i % 3) * 8;
+      teile.push(`<line x1="${rx.toFixed(1)}" y1="${ry}" x2="${(rx - 7).toFixed(1)}" y2="${ry + 20}" stroke="#9CC2D8" stroke-width="3" stroke-linecap="round" opacity="0.75"/>`);
+    }
+    return schriftHuelle(teile, -36, -36, breite + 72, h + 94, o.hoehe || 76, text);
+  }
+
+  function regalfachSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    const h = BUCHSTABEN_HOEHE;
+    // Erst das Regal aufbauen, dann die Buchstaben hineinstellen
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 16; });
+    teile.push(`<rect x="-20" y="-22" width="${breite + 40}" height="${h + 62}" rx="4" fill="#C9A97E"/>`);
+    teile.push(`<rect x="-14" y="-16" width="${breite + 28}" height="${h + 40}" rx="3" fill="#B58C5C"/>`);
+    let x = 0;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) {
+        // Das Fach hinter dem Buchstaben
+        teile.push(`<rect x="${x - 6}" y="-10" width="${zeichenBreite(z) + 12}" height="${h + 20}" rx="2" fill="#8A6640"/>`);
+        teile.push(`<rect x="${x - 3}" y="-7" width="${zeichenBreite(z) + 6}" height="${h + 14}" rx="2" fill="#E8D9B4"/>`);
+        teile.push(dickerBuchstabe(z, x, 0, "#7A3A22", "#3A1C10", 26));
+        // Das Nummernschildchen unter dem Fach
+        const m = x + zeichenBreite(z) / 2;
+        teile.push(`<rect x="${m - 16}" y="${h + 16}" width="32" height="15" rx="2" fill="#FDF8EA" stroke="#8A6640" stroke-width="1.6"/>`);
+        teile.push(`<text x="${m}" y="${h + 27}" text-anchor="middle" font-size="11" fill="#7A5A3A" font-family="monospace">${101 + i}</text>`);
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -30, -30, breite + 60, h + 78, o.hoehe || 76, text);
+  }
+
+  function pergamentSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    const h = BUCHSTABEN_HOEHE;
+    let breite = 0;
+    zeichen.forEach((z) => { breite += zeichenBreite(z) + 16; });
+    const links = -46, oben = -20, gb = breite + 66, gh = h + 46;
+    // Das Pergament: oben und unten ausgefranst, nicht gerade
+    const rissOben = [];
+    for (let i = 0; i <= 8; i++) {
+      const px = links + (gb * i) / 8;
+      rissOben.push(`${i ? "L" : "M"}${px.toFixed(1)} ${(oben + (i % 2 ? 4 : 0)).toFixed(1)}`);
+    }
+    const rissUnten = [];
+    for (let i = 8; i >= 0; i--) {
+      const px = links + (gb * i) / 8;
+      rissUnten.push(`L${px.toFixed(1)} ${(oben + gh - (i % 2 ? 4 : 0)).toFixed(1)}`);
+    }
+    teile.push(`<path d="${rissOben.join(" ")} ${rissUnten.join(" ")} Z" fill="#E8D9B4" stroke="#C2A97A" stroke-width="1.6"/>`);
+    // Alterungsflecken
+    [[0.18, 0.22, 12], [0.62, 0.8, 15], [0.86, 0.28, 10]].forEach(([fx, fy, r]) => {
+      teile.push(`<circle cx="${(links + gb * fx).toFixed(1)}" cy="${(oben + gh * fy).toFixed(1)}" r="${r}" fill="#D8C293" opacity="0.5"/>`);
+    });
+    // Windrose links
+    const wx = links + 22, wy = oben + gh * 0.36;
+    teile.push(`<circle cx="${wx}" cy="${wy}" r="13" fill="none" stroke="#8A6A42" stroke-width="1.4"/>`);
+    teile.push(`<path d="M${wx} ${wy - 16} l4 12 l-4 12 l-4 -12 z" fill="#B4553C"/>`);
+    teile.push(`<path d="M${wx - 16} ${wy} l12 -4 l12 4 l-12 4 z" fill="#8A6A42" opacity="0.8"/>`);
+    // Die Buchstaben als Tinte
+    let x = 0;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#7A4A22", "#3A2410", 26));
+      x += b;
+    });
+    // Der gestrichelte Weg unter der Schrift, der im Kreuz endet
+    const wy2 = h + 14;
+    teile.push(`<path d="M0 ${wy2} q${breite * 0.25} -10 ${breite * 0.5} 0 t${breite * 0.5} 0" stroke="#B4553C" stroke-width="2.4" fill="none" stroke-dasharray="6 5" stroke-linecap="round"/>`);
+    const kx = breite + 8, ky = wy2;
+    teile.push(`<path d="M${kx - 6} ${ky - 6} L${kx + 6} ${ky + 6} M${kx + 6} ${ky - 6} L${kx - 6} ${ky + 6}" stroke="#3A2410" stroke-width="3" stroke-linecap="round"/>`);
+    return schriftHuelle(teile, links, oben, gb, gh, o.hoehe || 74, text);
+  }
+
+  function preisanhaengerSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const h = BUCHSTABEN_HOEHE;
+    zeichen.forEach((z, i) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) {
+        const m = x + zeichenBreite(z) / 2;
+        const tief = 12 + (i % 3) * 7;
+        // Schnur
+        teile.push(`<line x1="${m}" y1="${h}" x2="${m}" y2="${h + tief}" stroke="#B08D5F" stroke-width="1.6"/>`);
+        // Schildchen
+        teile.push(`<g transform="rotate(${(i % 2 ? 8 : -8)} ${m} ${h + tief})">
+          <path d="M${m - 13} ${h + tief} h20 l7 8 -7 8 h-20 z" fill="#F2C24B" stroke="#B08D5F" stroke-width="1.4"/>
+          <circle cx="${m - 8}" cy="${h + tief + 8}" r="2" fill="#B08D5F"/>
+        </g>`);
+        teile.push(dickerBuchstabe(z, x, 0, "#B4553C", "#6E2F1F", 26));
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -30, -26, x + 60, h + 78, o.hoehe || 74, text);
+  }
+
+  function geruestSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const h = BUCHSTABEN_HOEHE;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) teile.push(dickerBuchstabe(z, x, 0, "#C9782E", "#7A4415", 26));
+      x += b;
+    });
+    // Waagerechte Geruest-Ebenen ueber und unter den Buchstaben
+    [h * 0.2, h * 0.72].forEach((y) => {
+      teile.push(`<rect x="-18" y="${y}" width="${x + 40}" height="4" rx="2" fill="#9AA3AA" opacity="0.9"/>`);
+    });
+    // Senkrechte Stangen
+    for (let i = 0; i <= 4; i++) {
+      const sx = -14 + (i * (x + 30)) / 4;
+      teile.push(`<rect x="${sx}" y="${h * 0.14}" width="3.4" height="${h * 0.66}" rx="1.7" fill="#9AA3AA" opacity="0.75"/>`);
+    }
+    // Absperrband
+    teile.push(`<rect x="-18" y="${h + 14}" width="${x + 40}" height="9" fill="#F2C24B"/>`);
+    for (let i = 0; i < Math.ceil((x + 40) / 16); i++) {
+      teile.push(`<path d="M${-18 + i * 16} ${h + 23} l9 -9 h7 l-9 9 z" fill="#2A2A2A"/>`);
+    }
+    return schriftHuelle(teile, -34, -26, x + 66, h + 66, o.hoehe || 74, text);
+  }
+
+  function wolkenbandSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const h = BUCHSTABEN_HOEHE;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) {
+        const m = x + zeichenBreite(z) / 2;
+        teile.push(`<g fill="#E4ECF4" opacity="0.95">
+          <circle cx="${m - 9}" cy="${h * 0.42}" r="13"/>
+          <circle cx="${m + 2}" cy="${h * 0.3}" r="16"/>
+          <circle cx="${m + 13}" cy="${h * 0.44}" r="12"/>
+          <rect x="${m - 20}" y="${h * 0.42}" width="40" height="16" rx="8"/>
+        </g>`);
+        teile.push(dickerBuchstabe(z, x, 0, "#3E7EA8", "#1E4A68", 26));
+        teile.push(`<line x1="${m - 4}" y1="${h + 8}" x2="${m - 8}" y2="${h + 20}" stroke="#5BA8D9" stroke-width="2.6" stroke-linecap="round" opacity="0.85"/>`);
+      }
+      x += b;
+    });
+    return schriftHuelle(teile, -34, -30, x + 66, h + 66, o.hoehe || 74, text);
+  }
+
+  function backblechSchriftzug(text, optionen) {
+    const o = optionen || {};
+    const teile = [];
+    const zeichen = zeichenListe(text);
+    let x = 0;
+    const hoehe = BUCHSTABEN_HOEHE;
+    zeichen.forEach((z) => {
+      const b = zeichenBreite(z) + 16;
+      if (BUCHSTABEN[z]) {
+        // Der Teigling darunter: eine weiche, warme Fläche
+        teile.push(`<ellipse cx="${x + zeichenBreite(z) / 2}" cy="${hoehe * 0.55}" rx="${zeichenBreite(z) * 0.66 + 8}" ry="${hoehe * 0.46}" fill="#E8C489" opacity="0.9"/>`);
+        teile.push(`<path d="M${x - 2} ${hoehe * 0.3} q${zeichenBreite(z) / 2 + 4} -9 ${zeichenBreite(z) + 8} 0" stroke="#C08A45" stroke-width="2" fill="none" opacity="0.75"/>`);
+        teile.push(dickerBuchstabe(z, x, 0, "#7A4A18", "#3E2408", 26));
+      }
+      x += b;
+    });
+    // Das Blech
+    teile.push(`<rect x="-16" y="${hoehe + 12}" width="${x + 40}" height="10" rx="5" fill="#9A9A9A"/>`);
+    teile.push(`<rect x="-16" y="${hoehe + 12}" width="${x + 40}" height="4" rx="2" fill="#C4C4C4"/>`);
+    return schriftHuelle(teile, -30, -26, x + 60, hoehe + 62, o.hoehe || 74, text);
+  }
+
   function spiegelpaarSchriftzug(text, optionen) {
     const o = optionen || {};
     const teile = [];
@@ -20637,6 +24416,16 @@
   }
 
   const SPIEL_SCHRIFTFORM = {
+    "sub-erbschaft": { bauart: "urkunde" },
+    "sub-arzt": { bauart: "rezeptblock" },
+    "sub-gewitter": { bauart: "gewitterhimmel" },
+    "sub-fundbuero": { bauart: "regalfach" },
+    "sub-schatzkarte": { bauart: "pergament" },
+    "sub-zug": { bauart: "fahrplan", text: "Der Zug" },
+    "sub-flohmarkt": { bauart: "preisanhaenger", text: "Flohmarkt" },
+    "sub-baustelle": { bauart: "geruest", text: "Baustelle" },
+    "sub-wetterkarte": { bauart: "wolkenband", text: "Wetterkarte" },
+    "sub-backstube": { bauart: "backblech", text: "Backstube" },
     "sub-zwillinge": { bauart: "spiegelpaar", text: "Zwillinge" },
     "sub-wortbaum": { bauart: "baumschrift", text: "Wortbaum" },
     "sub-sprachatlas": { bauart: "atlas", text: "Sprachatlas" },
@@ -20691,7 +24480,27 @@
     </div>`;
   }
 
+  /* Ein paar Beschreibungen stimmen im Lernraum Italienisch nicht mehr
+     — „echte deutsche Wörter" wäre dort schlicht falsch. Nur die
+     betroffenen Zeilen stehen hier, alles andere gilt weiter. */
+  const SPIEL_BESCHREIBUNG_IT = {
+    "sub-vokabelmeister": "Wie viele echte italienische Wörter mit diesem Buchstaben schaffst du in 60 Sekunden?",
+    "sub-stresstrainer": "Welche Silbe wird betont? Italienisch zählt von hinten — und die drittletzte Silbe sieht man dem Wort nicht an.",
+    "sub-artikelgarten": "il, lo oder la? Der Artikel hängt nicht nur vom Geschlecht ab, sondern auch vom ersten Laut des Wortes.",
+    "sub-katzenzimmer": "Schau, WO die Katze sitzt, und wähle die italienische Präposition: sul, sotto, accanto, nel …",
+  };
+
   const SPIEL_BESCHREIBUNG = {
+    "sub-erbschaft": "Auf dem Dachboden liegt ein Nachlass. Sag im Genitiv, wem was gehört — dann bekommt jedes Stück seinen Zettel.",
+    "sub-arzt": "Im Deutschen tut nicht die Person weh, sondern der Körperteil — und die Person steht im Dativ. Sag, was fehlt.",
+    "sub-gewitter": "als, wenn oder wann? Mit jedem richtigen Wort klart der Himmel auf — und bei jedem falschen fährt ein Blitz herunter.",
+    "sub-fundbuero": "Am Schalter wird beschrieben, was verloren ging. Wähle das richtige Relativpronomen — dann bekommst du das Stück zurück.",
+    "sub-schatzkarte": "Der Fuchs geht nur los, wenn du ihm richtig sagst, was er tun soll: geh, nimm, sieh — der Imperativ in der du-Form.",
+    "sub-zug": "Was wäre gewesen, wenn? Baue den Satz — und entscheide, ob er wäre oder hätte verlangt.",
+    "sub-flohmarkt": "Zwei Dinge vergleichen, drei Dinge sortieren: älter, am ältesten — und die Unregelmäßigen dazwischen.",
+    "sub-baustelle": "Auf der Baustelle passiert es gerade: wird gebaut, nicht ist gebaut. Beschreibe jeden Abschnitt richtig.",
+    "sub-wetterkarte": "Wie heißt es — der kalte Wind oder ein kalter Wind? Die Endung verrät, was der Artikel noch nicht gesagt hat.",
+    "sub-backstube": "Im Hauptsatz fliegt die Vorsilbe ans Satzende. Wähle den Satz, in dem sie richtig gelandet ist.",
     "sub-artikelgarten": "Wähle den richtigen Artikel — für jede richtige Antwort wächst eine Blume in deinem Garten.",
     "sub-blitzrunde": "Gemischte Fragen gegen die Uhr. Je schneller du antwortest, desto mehr Punkte.",
     "sub-wortangler": "Angle dir das Wort, das zur Bedeutung passt.",
@@ -20730,7 +24539,7 @@
   function spielBeschreibungEinsetzen(sub) {
     const bereich = document.getElementById(sub);
     if (!bereich) return;
-    const text = SPIEL_BESCHREIBUNG[sub];
+    const text = ((imItalienischraum() && SPIEL_BESCHREIBUNG_IT[sub]) || SPIEL_BESCHREIBUNG[sub]);
     let zeile = bereich.querySelector(".spiel-beschreibung");
     if (!text) { if (zeile) zeile.remove(); return; }
     if (!zeile) {
@@ -20752,6 +24561,16 @@
      im richtigen Spiel landen zu lassen.
      ============================================================ */
   const SPIEL_VERZEICHNIS = {
+    "sub-erbschaft": "erbschaft",
+    "sub-arzt": "arzt",
+    "sub-gewitter": "gewitter",
+    "sub-fundbuero": "fundbuero",
+    "sub-schatzkarte": "schatzkarte",
+    "sub-zug": "zug",
+    "sub-flohmarkt": "flohmarkt",
+    "sub-baustelle": "baustelle",
+    "sub-wetterkarte": "wetterkarte",
+    "sub-backstube": "backstube",
     "sub-artikelgarten": "artikel",
     "sub-blitzrunde": "blitzrunde",
     "sub-wortangler": "wortangler",
@@ -20844,6 +24663,16 @@
     if (!wunsch) { kopf.remove(); return; }
     const wort = wunsch.text || eintrag.name;
     const bauer = {
+      urkunde: () => urkundeSchriftzug(wort, { hoehe: 78 }),
+      rezeptblock: () => rezeptblockSchriftzug(wort, { hoehe: 78 }),
+      gewitterhimmel: () => gewitterhimmelSchriftzug(wort, { hoehe: 76 }),
+      regalfach: () => regalfachSchriftzug(wort, { hoehe: 76 }),
+      pergament: () => pergamentSchriftzug(wort, { hoehe: 74 }),
+      fahrplan: () => fahrplanSchriftzug(wort, { hoehe: 72 }),
+      preisanhaenger: () => preisanhaengerSchriftzug(wort, { hoehe: 74 }),
+      geruest: () => geruestSchriftzug(wort, { hoehe: 74 }),
+      wolkenband: () => wolkenbandSchriftzug(wort, { hoehe: 74 }),
+      backblech: () => backblechSchriftzug(wort, { hoehe: 74 }),
       spiegelpaar: () => spiegelpaarSchriftzug(wort, { hoehe: 76 }),
       baumschrift: () => baumschriftSchriftzug(wort, { hoehe: 80 }),
       atlas: () => atlasSchriftzug(wort, { hoehe: 74 }),
@@ -20897,7 +24726,7 @@
   // Sprache für die Übersetzungen unter „Es war einmal in Deutschland".
   // null = automatisch aus dem Herkunftsland im Profil (mit Englisch als Rückfall).
   let historyUebersetzungSprache = null;
-  const HISTORY_SPRACHEN = { en: "Englisch", ar: "العربية — Arabisch", tr: "Türkçe — Türkisch", ru: "Русский — Russisch", uk: "Українська — Ukrainisch", fa: "فارسی — Persisch", es: "Español — Spanisch", fr: "Français — Französisch", pl: "Polski — Polnisch", it: "Italiano — Italienisch" };
+  const HISTORY_SPRACHEN = { de: "Deutsch", en: "Englisch", ar: "العربية — Arabisch", tr: "Türkçe — Türkisch", ru: "Русский — Russisch", uk: "Українська — Ukrainisch", fa: "فارسی — Persisch", es: "Español — Spanisch", fr: "Français — Französisch", pl: "Polski — Polnisch", it: "Italiano — Italienisch" };
   // Der Übersetzungsblock für EINEN Kalendertag — wird sowohl beim heutigen Tag als auch
   // im Archiv verwendet. Vorher gab es ihn nur beim heutigen Tag; im Archiv fehlte er
   // vollständig, die Übersetzungen waren dort also nirgends zu finden.
@@ -21021,7 +24850,9 @@
   function historyUebersetzungHtml(entry, level, idPrefix) {
     if (!entry || !entry.translationsA1) return "";
     const auto = firstStepsLangFor(Backend.currentProfile());
-    const lang = historyUebersetzungSprache || auto;
+    /* Im Lernraum Italienisch ist der Text italienisch — die Hilfe
+       gehört dann auf Deutsch, nicht in die Herkunftssprache. */
+    const lang = historyUebersetzungSprache || (imItalienischraum() ? "de" : auto);
     // Zuerst die Fassung, die genau zum gewählten Niveau gehört; sonst die A1-Fassung.
     const nachNiveau = entry.translationsByLevel && entry.translationsByLevel[level];
     const ausNiveau = nachNiveau && (nachNiveau[lang] || nachNiveau.en);
@@ -21116,12 +24947,14 @@
     const canSeeGatedSections = Backend.canModerate && Backend.canModerate();
     const dichterVisible = Backend.isFeatureOn("dichter_und_denker") || canSeeGatedSections;
     const schneeVisible = Backend.isFeatureOn("schnee_von_gestern") || canSeeGatedSections;
+    const beitraegeVisible = Backend.isFeatureOn("eigene_beitraege") || canSeeGatedSections;
     kompassArea.innerHTML = `
       <div style="margin:-4px -4px 14px; border-radius:var(--radius-md); overflow:hidden;">${siteBannerHtml("wissen_banner", bannerUrl, WISSEN_PLACEHOLDER_SVG, "Wissen")}</div>
       <div class="wegweiser" data-wegweiser="kompass">
-        <a href="#kompass-geschichte" class="wegweiser-item"><span>📜</span>Es war einmal in Deutschland</a>
+        <a href="#kompass-geschichte" class="wegweiser-item"><span>📜</span>${imItalienischraum() ? "C'era una volta in Italia" : "Es war einmal in Deutschland"}</a>
         ${dichterVisible ? `<a href="#kompass-dichter" class="wegweiser-item"><span>✒️</span>Dichter &amp; Denker</a>` : ""}
         ${schneeVisible ? `<a href="#kompass-schnee" class="wegweiser-item"><span>❄️</span>Schnee von gestern</a>` : ""}
+        ${beitraegeVisible ? `<a href="#kompass-beitraege" class="wegweiser-item"><span>🗂️</span>Menschen, Dinge, Geschichten</a>` : ""}
         <a href="#kompass-redewendungen" class="wegweiser-item"><span>💬</span>Redewendungen</a>
         <a href="#kompass-jugendsprache" class="wegweiser-item"><span>🗣️</span>Umgangssprache &amp; Jugendslang</a>
         <a href="#kompass-partikeln" class="wegweiser-item"><span>✨</span>Kleine Wörter, große Wirkung</a>
@@ -21208,6 +25041,8 @@
       <div id="dichterArea"></div>` : ""}
       ${schneeVisible ? `<h3 id="kompass-schnee" class="kompass-heading">❄️ Schnee von gestern</h3>
       <div id="schneeArea"></div>` : ""}
+      ${beitraegeVisible ? `<h3 id="kompass-beitraege" class="kompass-heading">🗂️ Menschen, Dinge, Geschichten</h3>
+      <div id="beitraegeArea"></div>` : ""}
 
       <h3 id="kompass-redewendungen" class="kompass-heading">💬 Redewendungen</h3>
       <p class="empty-note">Eine kleine Auswahl — alle 30 kannst du in „Lernen → Übungen" spielerisch abfragen.</p>
@@ -21276,6 +25111,7 @@
     wireSiteBannerUploads(kompassArea);
     renderDichterUndDenker();
     renderSchneeVonGestern();
+    renderEigeneBeitraege();
   }
   renderKompass();
 
@@ -26088,11 +29924,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
     area.innerHTML = `<p class="empty-note">Lade …</p>`;
 
-    const [friends, incoming, { incoming: incomingChallenges, outgoing: outgoingChallenges }] = await Promise.all([
+    const [friends, incoming, alleDuelle] = await Promise.all([
       Backend.getFriends(),
       Backend.getIncomingRequests(),
       Backend.getMyChallenges(),
     ]);
+    /* Nur die Duelle des Raums, in dem man gerade ist. */
+    const incomingChallenges = challengesFuerRaum(alleDuelle.incoming);
+    const outgoingChallenges = challengesFuerRaum(alleDuelle.outgoing);
     herausforderungenMerken(incomingChallenges);
 
     area.innerHTML = `
@@ -26409,7 +30248,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         challengePickInProgress = true;
         const categoryId = card.dataset.pickCat;
         try {
-          const challengeId = await Backend.createChallenge(friendChallengeTarget.id, [categoryId]);
+          const challengeId = await challengeErstellen(friendChallengeTarget.id, [categoryId]);
           friendChallengeTarget = null;
           activateTab("view-learn");
           document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
@@ -26814,6 +30653,15 @@ An einem Morgen lief ein kleiner Fuchs los…
   // Falls Supabase verbunden ist: bestehende Anmeldung (Session) wiederherstellen
   Backend.restoreSession().then(async () => {
     await Backend.getFeatureFlags(); // Freigabe-Schalter laden — unabhängig davon, ob eingeloggt
+    await itKursZugangLaden();       // wer den Italienischkurs öffnen darf
+    wortZusatzLaden();               // die über die Seite nachgetragenen Wörter
+    /* Den gemerkten Lernraum gleich beim Start wiederherstellen. Bisher
+       geschah das erst nach der ersten ausgewerteten Runde — wer die
+       Seite im Italienisch-Raum verlassen hatte, landete beim nächsten
+       Öffnen trotzdem wieder im Deutsch-Raum. */
+    if (darfItalienischraum() && Backend.currentProfile()?.extraProfileData?.lernraum === "it") {
+      wechsleLernraum("it", false);
+    }
     // Warnband sofort zeigen, falls das Profil nicht durchkam — bevor irgendetwas
     // gespeichert werden könnte.
     profilWarnbandPruefen();
@@ -26833,7 +30681,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "162";
+  const APP_VERSION = "163";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -26843,6 +30691,17 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "163": [
+      "🇮🇹 **Der Italienischkurs ist fertig** — A1 bis C2 mit 5.333 Aufgaben, 29 Grammatikthemen, 618 Wörtern und einem Einstufungstest, der dir sagt, wo du anfangen sollst. Fünfzehn Spiele laufen dort mit italienischen Inhalten, und der Betonungs-Trainer zählt jetzt von hinten, so wie das Italienische es tut: la POR-ta, aber TA-vo-lo.",
+      "🗺️ **Zehn neue Abenteuerspiele.** Die Backstube (trennbare Verben), Die Wetterkarte (Adjektivendungen), Die Baustelle (Passiv), Der Flohmarkt (Steigerung), Der verpasste Zug (Konjunktiv II), Die Schatzkarte (Imperativ), Das Fundbüro (Relativsätze), Das Gewitter (als, wenn, wann), Beim Arzt (Dativ) und Die Erbschaft (Genitiv). Jedes mit eigener gezeichneter Szene, eigenem Schriftzug und Niveaus von A1 bis C2.",
+      "🎯 **Die Betonung zeigt nur noch Geprüftes.** Vorher sprang ein Rechenverfahren ein, sobald ein Wort nicht im Wörterbuch stand — und das rät. Eine falsch markierte Silbe lernt man mit. Jetzt bleibt ein Wort lieber unmarkiert. Gebeugte Formen erben die Betonung ihrer Grundform, aber nur wenn die Buchstaben wirklich übereinstimmen. Im Kalender liegt die Betonung nur noch auf dem Lesetext, nicht mehr auf der ganzen Seite.",
+      "📖 **Du kannst am Wörterbuch mitschreiben.** Findet die Suche ein Wort nicht, steht darunter ein Kasten: Bedeutung eintragen, abschicken. Nach der Prüfung steht es für alle drin — mit deinem Namen dahinter.",
+      "🇮🇹 **C'era una volta in Italia** — für jeden Septembertag ein Stück italienische Geschichte und Kultur, in sechs Stufen und mit deutscher Übersetzung. Von Ghirlandaio über Verdis größten Misserfolg und die erste Autobahn der Welt bis zu Dylan Dog und Barilla.",
+      "😄 Die Witze-Sektion ist ausgemistet: alle Berufs-Witze und zwanzig weitere sind raus. Was bleibt, sind die 22, die wirklich an einem Wortspiel hängen.",
+      "🟢 Die Online-Anzeige sitzt jetzt rechts in der Laufschrift-Leiste statt oben im Kopf — dort hat sie die Kopfzeile jedes Mal verschoben, sobald jemand da war. Das Auge links blendet nur noch die Laufschrift aus, nicht die ganze Leiste.",
+      "☑️ Kästchen und Schalter sind in den dunklen Designs wieder zu sehen.",
+    ],
+
     "162": [
       "🆕 **Fünf neue Spiele** sind dazugekommen: Die Setzerei, Die Wortkette, Der Maskenball, Die Wortwaage und Die Zwillinge.",
       "📋 **Eigene Wortlisten** kannst du jetzt nachträglich bearbeiten — Wörter ergänzen, einzelne herausnehmen, die Liste umbenennen. Und beim Prüfen siehst du grün, was ankommt, und rot, was das Wörterbuch noch nicht kennt.",
@@ -27024,6 +30883,20 @@ An einem Morgen lief ein kleiner Fuchs los…
      dürfen.
      ============================================================ */
   const APP_CHANGELOG_INTERN = {
+    "163": [
+      "🇮🇹 **Italienischkurs.** Zugang ueber site_content[\"it_kurs_zugang\"] — einzelne Konten freigeben, Suche und Freigabe in den Einstellungen, Nachricht an die freigegebene Person. Eigene Wertung in extra_profile_data.itPunkte, eigene Rangliste (nur Freigegebene), Duelle tragen jetzt extra.raum und werden je Raum gefiltert. Uhr und Wetter auf Rom, Laufschrift auf 30 italienische Redewendungen. Einstufungstest: vier Aufgaben je Stufe, Huerde drei; die Einstufung oeffnet Stufen, macht sie aber nicht zu gemeisterten.",
+      "🐞 **Im Italienisch-Raum gefundene Fehler:** WordbuildArtikel() rief activeGetCategory(\"artikel\") mit fester deutscher Id auf — Buchstabensalat und Vokabelmeister brachen mit TypeError ab. Vokabelmeister zaehlte „la porta\" unter L und liess deutsche Hobbys und Verbformen als richtige italienische Woerter durchgehen. Memory suchte nach dem Raumwechsel eine deutsche Spielkennung (getPairs of undefined). Die Vokabelansicht zeigte deutsche Woerter. Der Wortangler suchte nach der/die/das.",
+      "🎯 **Betonung.** ruleMarkWord() markiert nur noch, was betonungNachschlagen() liefert; Zusammensetzungen nur, wenn JEDES Glied im Woerterbuch steht. Neu: betonungAusGrundform() uebertraegt die gepruefte Betonung auf gebeugte Formen, aber nur wenn die Buchstaben bis zum Ende der betonten Silbe uebereinstimmen — Markierungen 4.461 → 53.442 bei gleichbleibend geprueften Quellen, 9.240 Formen bleiben offen. leseBetonungAnwenden() wirkt nur noch auf .sammel-text. Neuer Pruefhaken __betonungFehlt().",
+      "📖 **Woerterbuch-Mitgestaltung.** Backend: wortVorschlagen(), wortZusatzAufnehmen(), wortZusatzEntfernen(), getWortZusatz(). Freigegebene Woerter in site_content[\"wortschatz_zusatz\"], werden in buildDictionaryEntriesUncached() ganz vorn eingehaengt. Der Vorschlagskasten wird eigens gezeichnet (dictVorschlagZeichnen), weil beim Tippen nur die Trefferliste erneuert wird.",
+      "📏 **Gemessene Woerterbuch-Luecke:** ueber alle deutschen Texte der Seite (2.196 Kalendertexte in sechs Stufen, Uebungsaufgaben) fehlen 4.897 verschiedene Wortformen. Kalender 61,8 % abgedeckt, Uebungen 81,5 %. Ein grosser Teil ist Grammatik-Fachsprache aus den Erklaerungen, Eigennamen und Abkuerzungen. Die Liste liegt als fehlende-woerter.txt bei.",
+      "🗂️ **Neue Datei: kalender/it-09.js** (114 kB, 30 Tage x 6 Stufen x 2 Sprachen). Geladen nur im Italienisch-Raum ueber ladeItKalenderMonat(); fehlt eine Monatsdatei, ist das kein Fehler. IT_GESCHICHTE_() legt eingebaute und nachgeladene Tage zusammen.",
+      "🖼️ **Beitraege:** Platzhalterbild ueber Backend.uploadSiteImage(\"beitrag_<id>\") ersetzbar, Zuordnung in site_content[\"beitrag_bilder\"].",
+      "🎮 **Spiele:** IT_SPIELBAR listet die 15 im Italienisch-Raum spielbaren; die Uebersicht filtert danach und begruendet auf Wunsch, warum die uebrigen fehlen. SPIEL_ZU_UEBUNG um alle zehn neuen Spiele ergaenzt. Spielrunden zaehlen ueber das Spielprotokoll auf den Kursfortschritt — gezaehlt, nicht geschaetzt.",
+      "🔧 **einbau.py** setzte neue Module hinter die ERSTE ZEILE des zuletzt eingebauten Klick-Empfaengers; seit die mehrzeilig sind, landete das ganze Modul in einem fremden Rumpf. Jetzt wird ueber die Klammertiefe das echte Ende der Anweisung gesucht.",
+      "📊 **Geprueft:** 78 Ansichten ohne Seitenfehler, 10 Designs x 18 Ansichten ohne unlesbare Stelle (der Monatsbalken auf dem Kalenderblatt lag bei 2,3 und ist behoben), Kursanrechnung 54/60 auf A1 → A2 offen bei Punktestand 0, Wortvorschlag komplett durchgespielt.",
+      "🗂️ **Zu ladende Dateien:** app.js, backend.js, core.js, app-styles.css, styles.css, index.html, data-exercises.js, data-uebungen.js, data-witze.js, data-beitraege.js, README.md und NEU der Ordnereintrag kalender/it-09.js.",
+    ],
+
     "162": [
       "**Lesbarkeit — 29 Stellen, zwei Ursachen.** Der Kontrast wurde in zehn Designs auf zehn Seiten gemessen. (1) 29 CSS-Regeln setzen einen hellen Hintergrund fest, lassen die Schriftfarbe aber erben — in dunklen Designs also creme auf creme, gemessen 1,06 statt der nötigen 4,5. Betraf die Wortlisten-Eingabe, Maskenball, Wortwaage, Zwillinge, Wortkette, Augenblick, Umzug, Sprachatlas, Wortbaum, Kreuzworträtsel. (2) Umgekehrt dient --amber-300 als SCHRIFTfarbe auf Kartenflächen; in den hellen Designs ergibt das 1,65 — es traf den aktiven Hauptreiter. Dazu Schaltflächen mit Kartenfarbe ohne Schriftfarbe (ein button fällt dann auf Schwarz zurück): Dichter-&-Denker-Kacheln, Mitgliederzeilen. Danach eine Meldung übrig, die einen Textschatten hat, den die Messung nicht sieht.",
       "**Wörter-Sortierer — Streitfälle beseitigt.** Nachgewiesen im Bestand: „der Fahrradhelm\u201c stand unter Freizeit & Sport, „der Fahrradständer\u201c unter Stadt & Verkehr, „die Fahrradtour\u201c unter Reisen, „der Fahrradweg\u201c unter Umwelt. Drei Regeln: verwandte Themen nie gemeinsam als Körbe (Tabelle mit 40 Paaren, es bleiben 1474 brauchbare Dreier je Niveau); ein Wort fällt raus, wenn sein Bestimmungswort in einem anderen Korb der Runde vorkommt; ein Wort fällt immer raus, wenn dasselbe Lemma unter mehreren Themen steht (44 Fälle). Kosten rund 9 % der Wörter, kleinster Korb auf A1 noch 23. Geprüft: 120 Runden, 1440 Karten, kein Streitfall.",
@@ -27039,8 +30912,6 @@ An einem Morgen lief ein kleiner Fuchs los…
       "**Diese Nachricht** ist ab jetzt zweigeteilt: Die öffentliche Liste enthält nur, was Lernende betrifft, und eine Prüfung beim Versenden lässt Dateinamen, Ordner, Pfade, Tabellen- und Technikbegriffe gar nicht erst hinaus.",
     ],
   };
-  // Für die Prüfung auf dem Testrechner erreichbar gemacht.
-  window.__dmaUpdateNachricht = () => notifyAboutAppUpdateIfNeeded();
   function notifyAboutAppUpdateIfNeeded() {
     if (!Backend.currentUser()) return;
     const profile = Backend.currentProfile();
@@ -27099,8 +30970,43 @@ An einem Morgen lief ein kleiner Fuchs los…
   // automatisch durchzuzählen, ohne die Seite dafür umbauen zu müssen. Im Netz
   // (jede echte Domain) wird dieser Block nie ausgeführt.
   if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    /* Prüfhaken — nur auf dem Testrechner, siehe Bedingung oben. */
+    window.__textProbe = (t) => textAuswerten(t);
+    window.__dmaTagesaufgabe = () => pickDailyTaskFresh();
+    window.__dmaUpdateNachricht = () => notifyAboutAppUpdateIfNeeded();
     window.__wortQuellePruef = (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word);
+    window.__betonungFehlt = () => [...betonungFehlt].sort();
+    window.__dmaOeffentlich = () => oeffentlicheNeuigkeiten();
+    /* Wie viele Wörter aus einem Text kennt das Wörterbuch wirklich —
+       gemessen mit derselben Nachschlagelogik wie im Sammelmodus,
+       also samt Grundformen und Zusammensetzungen. Damit lässt sich
+       die echte Lücke zählen statt sie zu schätzen. */
+    window.__luecke = (text) => {
+      const woerter = String(text || "").match(/[A-Za-zÄÖÜäöüß][A-Za-zÄÖÜäöüßa-z-]*/g) || [];
+      const gesehen = new Set();
+      const fehlt = [];
+      let da = 0;
+      woerter.forEach((w) => {
+        const k = w.toLowerCase();
+        if (gesehen.has(k)) return;
+        gesehen.add(k);
+        if (wortNachschlagen(w)) da += 1; else fehlt.push(w);
+      });
+      return { verschieden: gesehen.size, gefunden: da, fehlend: fehlt };
+    };
     window.DMA_PRUEFUNG = {
+      /* Eine Spielrunde im Italienisch-Raum nachstellen, ohne sich
+         erst jedes Spiel freischalten zu müssen — prüft, ob der
+         Kursfortschritt wirklich mitzählt. Nur auf localhost. */
+      itKursRunde: async (stufe, richtig, gesamt) => {
+        spielProtokoll = [];
+        for (let i = 0; i < gesamt; i++) spielNotiz(i < richtig, "Probe " + i);
+        letzteSpielStufe = stufe;
+        await saveResultAndCheck({ categories: ["wortangler"], points: richtig,
+          percent: Math.round((richtig / gesamt) * 100), character: "Probe", badges: [],
+          playedAt: new Date().toISOString() });
+        return Backend.currentProfile()?.extraProfileData?.itKurs || null;
+      },
       woerterbuch: () => buildDictionaryEntries(),
       /* Der Fuchs am Fluss: der laufende Stand und, welcher Stein
          trägt — damit sich eine ganze Runde ohne Raten durchspielen

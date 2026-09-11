@@ -5080,45 +5080,45 @@ const ExerciseData = (function () {
 
   const IT_GRAMMATIK = {
     A1: [
-      { titel: "Die Artikel: il, lo, la", kurz: "Italienisch hat nur zwei Geschlechter. Männlich ist meist „il“, vor s+Konsonant, z, gn, ps steht „lo“; weiblich ist „la“.", beispiele: ["il libro — das Buch", "lo studente — der Student", "la casa — das Haus"], tipp: "Vor einem Vokal wird „lo“ und „la“ zu „l'“: l'amico, l'acqua." },
-      { titel: "Der Plural", kurz: "Die Endung entscheidet: -o wird zu -i, -a wird zu -e, -e wird zu -i. Keine Umlaute, kein angehängtes -s.", beispiele: ["il libro → i libri", "la casa → le case", "il fiore → i fiori"] },
-      { titel: "essere und avere", kurz: "Die beiden wichtigsten Verben. „essere“ heißt sein, „avere“ heißt haben — beide sind unregelmäßig und müssen auswendig gelernt werden.", beispiele: ["io sono, tu sei, lui è", "io ho, tu hai, lui ha", "Sono tedesco. — Ich bin Deutscher."] },
-      { titel: "Das Personalpronomen darf weg", kurz: "Die Verbendung sagt schon, wer handelt. „io“, „tu“ und so weiter stehen nur zur Betonung.", beispiele: ["Parlo italiano. — Ich spreche Italienisch.", "Vieni? — Kommst du?", "IO pago! — ICH zahle!"], tipp: "Anders als im Deutschen: Ein Satz ohne Subjektpronomen ist die Normalform, nicht die Ausnahme." },
-      { titel: "Die Verneinung mit non", kurz: "Ein einziges Wort, und es steht immer direkt vor dem Verb.", beispiele: ["Non parlo francese.", "Non è vero.", "Non ho tempo."] },
+      { titel: "Die Artikel: il, lo, la", kurz: "Italienisch hat nur zwei Geschlechter. Männlich ist meist „il“, vor s+Konsonant, z, gn, ps steht „lo“; weiblich ist „la“.", beispiele: ["il libro — das Buch", "lo studente — der Student", "la casa — das Haus"], tipp: "Vor einem Vokal wird „lo“ und „la“ zu „l'“: l'amico, l'acqua.", uebung: "it-artikel" },
+      { titel: "Der Plural", kurz: "Die Endung entscheidet: -o wird zu -i, -a wird zu -e, -e wird zu -i. Keine Umlaute, kein angehängtes -s.", beispiele: ["il libro → i libri", "la casa → le case", "il fiore → i fiori"], uebung: "it-plural" },
+      { titel: "essere und avere", kurz: "Die beiden wichtigsten Verben. „essere“ heißt sein, „avere“ heißt haben — beide sind unregelmäßig und müssen auswendig gelernt werden.", beispiele: ["io sono, tu sei, lui è", "io ho, tu hai, lui ha", "Sono tedesco. — Ich bin Deutscher."], uebung: "it-verben" },
+      { titel: "Das Personalpronomen darf weg", kurz: "Die Verbendung sagt schon, wer handelt. „io“, „tu“ und so weiter stehen nur zur Betonung.", beispiele: ["Parlo italiano. — Ich spreche Italienisch.", "Vieni? — Kommst du?", "IO pago! — ICH zahle!"], tipp: "Anders als im Deutschen: Ein Satz ohne Subjektpronomen ist die Normalform, nicht die Ausnahme.", uebung: "it-verben" },
+      { titel: "Die Verneinung mit non", kurz: "Ein einziges Wort, und es steht immer direkt vor dem Verb.", beispiele: ["Non parlo francese.", "Non è vero.", "Non ho tempo."], uebung: "it-alltag" },
     ],
     A2: [
-      { titel: "Passato prossimo", kurz: "Die normale Vergangenheit im Gespräch: avere oder essere plus Partizip.", beispiele: ["Ho mangiato una pizza.", "Sono andato a Roma.", "Abbiamo visto un film."], tipp: "Mit „essere“ passt sich das Partizip an: sono andato / sono andata." },
-      { titel: "Die Präpositionen mit Artikel", kurz: "Präposition und Artikel verschmelzen zu einem Wort — das ist Pflicht, keine Kürzung.", beispiele: ["a + il = al ristorante", "di + la = della città", "in + il = nel giardino"] },
-      { titel: "Die Modalverben", kurz: "potere (können), dovere (müssen), volere (wollen) — danach steht das zweite Verb im Infinitiv.", beispiele: ["Posso entrare?", "Devo andare.", "Voglio imparare l'italiano."] },
-      { titel: "Reflexive Verben", kurz: "Sehr häufig im Italienischen, oft dort, wo das Deutsche kein „sich“ braucht.", beispiele: ["mi chiamo — ich heiße", "si alza alle sette — er steht um sieben auf", "ci vediamo — wir sehen uns"] },
-      { titel: "Das Adjektiv richtet sich", kurz: "Es passt sich in Geschlecht und Zahl an und steht meist NACH dem Substantiv.", beispiele: ["un libro rosso", "una casa rossa", "due libri rossi"] },
+      { titel: "Passato prossimo", kurz: "Die normale Vergangenheit im Gespräch: avere oder essere plus Partizip.", beispiele: ["Ho mangiato una pizza.", "Sono andato a Roma.", "Abbiamo visto un film."], tipp: "Mit „essere“ passt sich das Partizip an: sono andato / sono andata.", uebung: "it-vergangenheit" },
+      { titel: "Die Präpositionen mit Artikel", kurz: "Präposition und Artikel verschmelzen zu einem Wort — das ist Pflicht, keine Kürzung.", beispiele: ["a + il = al ristorante", "di + la = della città", "in + il = nel giardino"], uebung: "it-praepositionen" },
+      { titel: "Die Modalverben", kurz: "potere (können), dovere (müssen), volere (wollen) — danach steht das zweite Verb im Infinitiv.", beispiele: ["Posso entrare?", "Devo andare.", "Voglio imparare l'italiano."], uebung: "it-verben" },
+      { titel: "Reflexive Verben", kurz: "Sehr häufig im Italienischen, oft dort, wo das Deutsche kein „sich“ braucht.", beispiele: ["mi chiamo — ich heiße", "si alza alle sette — er steht um sieben auf", "ci vediamo — wir sehen uns"], uebung: "it-verben" },
+      { titel: "Das Adjektiv richtet sich", kurz: "Es passt sich in Geschlecht und Zahl an und steht meist NACH dem Substantiv.", beispiele: ["un libro rosso", "una casa rossa", "due libri rossi"], uebung: "it-adjektive" },
     ],
     B1: [
-      { titel: "Imperfetto oder passato prossimo", kurz: "Imperfetto beschreibt Zustände und Gewohnheiten, passato prossimo eine abgeschlossene Handlung.", beispiele: ["Da bambino andavo sempre al mare. (Gewohnheit)", "Ieri sono andato al mare. (einmal)", "Pioveva quando sono uscito."], tipp: "Faustregel: Kulisse im Imperfetto, Ereignis im Passato prossimo." },
-      { titel: "Die Pronomen: lo, la, li, le, gli, le", kurz: "Direkte und indirekte Objektpronomen stehen vor dem Verb — anders als im Deutschen.", beispiele: ["Lo vedo. — Ich sehe ihn.", "Le parlo. — Ich spreche mit ihr.", "Gli ho scritto. — Ich habe ihm geschrieben."] },
-      { titel: "Futuro semplice", kurz: "Eine eigene Zukunftsform mit fester Endung — sie drückt oft auch eine Vermutung aus.", beispiele: ["Domani partirò.", "Sarà stanco. — Er wird wohl müde sein.", "Ci vedremo presto."] },
-      { titel: "ci und ne", kurz: "Zwei kleine Wörter mit großer Wirkung: „ci“ ersetzt einen Ort, „ne“ eine Menge oder ein „davon“.", beispiele: ["Ci vado domani. — Da gehe ich morgen hin.", "Ne voglio due. — Davon will ich zwei.", "Non ne so nulla."] },
-      { titel: "Der Imperativ", kurz: "Für Aufforderungen — bei „Lei“ (höflich) sieht er anders aus als beim „tu“.", beispiele: ["Vieni! — Komm!", "Venga! — Kommen Sie!", "Non parlare! — Sprich nicht!"] },
+      { titel: "Imperfetto oder passato prossimo", kurz: "Imperfetto beschreibt Zustände und Gewohnheiten, passato prossimo eine abgeschlossene Handlung.", beispiele: ["Da bambino andavo sempre al mare. (Gewohnheit)", "Ieri sono andato al mare. (einmal)", "Pioveva quando sono uscito."], tipp: "Faustregel: Kulisse im Imperfetto, Ereignis im Passato prossimo.", uebung: "it-vergangenheit" },
+      { titel: "Die Pronomen: lo, la, li, le, gli, le", kurz: "Direkte und indirekte Objektpronomen stehen vor dem Verb — anders als im Deutschen.", beispiele: ["Lo vedo. — Ich sehe ihn.", "Le parlo. — Ich spreche mit ihr.", "Gli ho scritto. — Ich habe ihm geschrieben."], uebung: "it-alltag" },
+      { titel: "Futuro semplice", kurz: "Eine eigene Zukunftsform mit fester Endung — sie drückt oft auch eine Vermutung aus.", beispiele: ["Domani partirò.", "Sarà stanco. — Er wird wohl müde sein.", "Ci vedremo presto."], uebung: "it-verben" },
+      { titel: "ci und ne", kurz: "Zwei kleine Wörter mit großer Wirkung: „ci“ ersetzt einen Ort, „ne“ eine Menge oder ein „davon“.", beispiele: ["Ci vado domani. — Da gehe ich morgen hin.", "Ne voglio due. — Davon will ich zwei.", "Non ne so nulla."], uebung: "it-alltag" },
+      { titel: "Der Imperativ", kurz: "Für Aufforderungen — bei „Lei“ (höflich) sieht er anders aus als beim „tu“.", beispiele: ["Vieni! — Komm!", "Venga! — Kommen Sie!", "Non parlare! — Sprich nicht!"], uebung: "it-verben" },
     ],
     B2: [
-      { titel: "Congiuntivo — der Modus der Unsicherheit", kurz: "Nach Ausdrücken von Meinung, Wunsch, Zweifel und Gefühl steht nicht der Indikativ, sondern der Congiuntivo.", beispiele: ["Penso che sia vero.", "Voglio che tu venga.", "Benché sia tardi, resto."], tipp: "Grobe Faustregel: Wenn im Deutschen „dass“ mit einer Meinung davor steht, ist der Congiuntivo wahrscheinlich." },
-      { titel: "Der Bedingungssatz", kurz: "Drei Typen: real, möglich, irreal — jeder mit einer festen Zeitenkombination.", beispiele: ["Se ho tempo, vengo. (real)", "Se avessi tempo, verrei. (möglich)", "Se avessi avuto tempo, sarei venuto. (irreal)"] },
-      { titel: "Das Passiv", kurz: "Mit essere oder venire plus Partizip; im Alltag oft durch das unpersönliche „si“ ersetzt.", beispiele: ["La casa è stata venduta.", "Il libro viene letto.", "Qui si parla italiano."] },
-      { titel: "Passato remoto", kurz: "Die literarische Vergangenheit — im Norden fast nur geschrieben, im Süden auch gesprochen.", beispiele: ["Dante nacque nel 1265.", "Andò a Roma e non tornò più."] },
-      { titel: "Die Steigerung", kurz: "Regelmäßig mit più und meno; einige Formen sind unregelmäßig und müssen gelernt werden.", beispiele: ["più grande — größer", "buono → migliore — besser", "il più bello — der schönste"] },
+      { titel: "Congiuntivo — der Modus der Unsicherheit", kurz: "Nach Ausdrücken von Meinung, Wunsch, Zweifel und Gefühl steht nicht der Indikativ, sondern der Congiuntivo.", beispiele: ["Penso che sia vero.", "Voglio che tu venga.", "Benché sia tardi, resto."], tipp: "Grobe Faustregel: Wenn im Deutschen „dass“ mit einer Meinung davor steht, ist der Congiuntivo wahrscheinlich.", uebung: "it-verben" },
+      { titel: "Der Bedingungssatz", kurz: "Drei Typen: real, möglich, irreal — jeder mit einer festen Zeitenkombination.", beispiele: ["Se ho tempo, vengo. (real)", "Se avessi tempo, verrei. (möglich)", "Se avessi avuto tempo, sarei venuto. (irreal)"], uebung: "it-verben" },
+      { titel: "Das Passiv", kurz: "Mit essere oder venire plus Partizip; im Alltag oft durch das unpersönliche „si“ ersetzt.", beispiele: ["La casa è stata venduta.", "Il libro viene letto.", "Qui si parla italiano."], uebung: "it-verben" },
+      { titel: "Passato remoto", kurz: "Die literarische Vergangenheit — im Norden fast nur geschrieben, im Süden auch gesprochen.", beispiele: ["Dante nacque nel 1265.", "Andò a Roma e non tornò più."], uebung: "it-vergangenheit" },
+      { titel: "Die Steigerung", kurz: "Regelmäßig mit più und meno; einige Formen sind unregelmäßig und müssen gelernt werden.", beispiele: ["più grande — größer", "buono → migliore — besser", "il più bello — der schönste"], uebung: "it-adjektive" },
     ],
     C1: [
-      { titel: "Congiuntivo in der Zeitenfolge", kurz: "Der Modus allein reicht nicht — die Zeitstufe des Hauptsatzes bestimmt, welche Congiuntivo-Form folgt.", beispiele: ["Credo che venga. (jetzt)", "Credevo che venisse. (damals)", "Credo che sia venuto. (vorher)"] },
-      { titel: "Die Gerundio-Konstruktionen", kurz: "Verdichtet zwei Handlungen zu einer — entspricht oft einem deutschen Nebensatz.", beispiele: ["Essendo stanco, sono rimasto a casa.", "Pur sapendolo, non ha detto nulla.", "Sta piovendo."] },
-      { titel: "Die Stellung mehrerer Pronomen", kurz: "Treffen zwei Pronomen aufeinander, ändert sich das erste: mi + lo wird zu me lo.", beispiele: ["Me lo dai? — Gibst du es mir?", "Gliel'ho detto. — Ich habe es ihm gesagt.", "Ce ne sono tre."] },
-      { titel: "Register und Anrede", kurz: "Der Wechsel zwischen tu und Lei ist im Italienischen deutlich markierter als das deutsche du/Sie.", beispiele: ["Come sta? (förmlich)", "Come stai? (vertraut)", "Diamoci del tu. — Sagen wir doch du."] },
-      { titel: "Idiomatische Verbverbindungen", kurz: "Feste Wendungen, deren Bedeutung sich nicht aus den Einzelwörtern ergibt.", beispiele: ["farcela — es schaffen", "andarsene — abhauen", "prendersela — beleidigt sein"] },
+      { titel: "Congiuntivo in der Zeitenfolge", kurz: "Der Modus allein reicht nicht — die Zeitstufe des Hauptsatzes bestimmt, welche Congiuntivo-Form folgt.", beispiele: ["Credo che venga. (jetzt)", "Credevo che venisse. (damals)", "Credo che sia venuto. (vorher)"], uebung: "it-verben" },
+      { titel: "Die Gerundio-Konstruktionen", kurz: "Verdichtet zwei Handlungen zu einer — entspricht oft einem deutschen Nebensatz.", beispiele: ["Essendo stanco, sono rimasto a casa.", "Pur sapendolo, non ha detto nulla.", "Sta piovendo."], uebung: "it-verben" },
+      { titel: "Die Stellung mehrerer Pronomen", kurz: "Treffen zwei Pronomen aufeinander, ändert sich das erste: mi + lo wird zu me lo.", beispiele: ["Me lo dai? — Gibst du es mir?", "Gliel'ho detto. — Ich habe es ihm gesagt.", "Ce ne sono tre."], uebung: "it-alltag" },
+      { titel: "Register und Anrede", kurz: "Der Wechsel zwischen tu und Lei ist im Italienischen deutlich markierter als das deutsche du/Sie.", beispiele: ["Come sta? (förmlich)", "Come stai? (vertraut)", "Diamoci del tu. — Sagen wir doch du."], uebung: "it-alltag" },
+      { titel: "Idiomatische Verbverbindungen", kurz: "Feste Wendungen, deren Bedeutung sich nicht aus den Einzelwörtern ergibt.", beispiele: ["farcela — es schaffen", "andarsene — abhauen", "prendersela — beleidigt sein"], uebung: "it-wortschatz" },
     ],
     C2: [
-      { titel: "Stilebenen und Wortstellung", kurz: "Die freie Satzstellung ist ein Ausdrucksmittel: Was vorn steht, ist betont.", beispiele: ["A Roma ci vado spesso.", "Bello, questo film.", "Di soldi non ne ho."] },
-      { titel: "Das unpersönliche si und das passivierende si", kurz: "Zwei verschiedene Konstruktionen, die gleich aussehen — der Unterschied zeigt sich am Verb.", beispiele: ["Si mangia bene qui. (man)", "Si vendono case. (werden verkauft)"] },
-      { titel: "Regionalsprachen und Standard", kurz: "Italienisch ist eine junge Standardsprache über einer sehr lebendigen Dialektlandschaft.", beispiele: ["Standard: Non ho voglia.", "Römisch: Nun me va.", "Neapolitanisch: Nun tengo genio."] },
-      { titel: "Feste Wendungen der Schriftsprache", kurz: "In Verwaltung und Presse übliche Formeln, die man erkennen, aber selten selbst schreiben muss.", beispiele: ["ai sensi dell'articolo …", "in merito a quanto sopra", "si porta a conoscenza che …"] },
+      { titel: "Stilebenen und Wortstellung", kurz: "Die freie Satzstellung ist ein Ausdrucksmittel: Was vorn steht, ist betont.", beispiele: ["A Roma ci vado spesso.", "Bello, questo film.", "Di soldi non ne ho."], uebung: "it-alltag" },
+      { titel: "Das unpersönliche si und das passivierende si", kurz: "Zwei verschiedene Konstruktionen, die gleich aussehen — der Unterschied zeigt sich am Verb.", beispiele: ["Si mangia bene qui. (man)", "Si vendono case. (werden verkauft)"], uebung: "it-verben" },
+      { titel: "Regionalsprachen und Standard", kurz: "Italienisch ist eine junge Standardsprache über einer sehr lebendigen Dialektlandschaft.", beispiele: ["Standard: Non ho voglia.", "Römisch: Nun me va.", "Neapolitanisch: Nun tengo genio."], uebung: "it-wortschatz" },
+      { titel: "Feste Wendungen der Schriftsprache", kurz: "In Verwaltung und Presse übliche Formeln, die man erkennen, aber selten selbst schreiben muss.", beispiele: ["ai sensi dell'articolo …", "in merito a quanto sopra", "si porta a conoscenza che …"], uebung: "it-wortschatz" },
     ],
   };
 
@@ -6066,6 +6066,49 @@ const ExerciseData = (function () {
   };
 
   /* ---------- Italienische Kategorien im gewohnten Format ---------- */
+  /* ============================================================
+     LAUFSCHRIFT IM LERNRAUM ITALIENISCH
+     ------------------------------------------------------------
+     Die deutsche Laufschrift zeigt, was auf der Seite passiert —
+     auf Deutsch. Im Italienisch-Raum wäre das ein Fremdkörper.
+     Hier läuft stattdessen etwas, das man im Vorbeigehen mitnimmt:
+     gebräuchliche Redewendungen mit ihrer wörtlichen und ihrer
+     wirklichen Bedeutung. Die wörtliche Übersetzung steht dabei,
+     weil genau sie die Wendung merkbar macht.
+     ============================================================ */
+  const IT_TICKER = [
+    { it: "In bocca al lupo!", woertlich: "in den Rachen des Wolfs", de: "Viel Glück! — geantwortet wird: Crepi il lupo!" },
+    { it: "Non vedo l'ora.", woertlich: "ich sehe die Stunde nicht", de: "Ich kann es kaum erwarten." },
+    { it: "Costa un occhio della testa.", woertlich: "es kostet ein Auge des Kopfes", de: "Es kostet ein Vermögen." },
+    { it: "Essere al verde", woertlich: "beim Grün sein", de: "pleite sein" },
+    { it: "Prendere due piccioni con una fava", woertlich: "zwei Tauben mit einer Bohne fangen", de: "zwei Fliegen mit einer Klappe schlagen" },
+    { it: "Chi dorme non piglia pesci.", woertlich: "wer schläft, fängt keine Fische", de: "Wer nichts tut, bekommt nichts." },
+    { it: "Piove sul bagnato.", woertlich: "es regnet auf das Nasse", de: "Es kommt immer dicke." },
+    { it: "Tra il dire e il fare c'è di mezzo il mare.", woertlich: "zwischen dem Sagen und dem Tun liegt das Meer", de: "Gesagt ist noch lange nicht getan." },
+    { it: "Meglio tardi che mai.", woertlich: "besser spät als nie", de: "Besser spät als nie." },
+    { it: "Fare il ponte", woertlich: "die Brücke machen", de: "einen Brückentag nehmen" },
+    { it: "Acqua in bocca!", woertlich: "Wasser im Mund", de: "Kein Wort zu niemandem!" },
+    { it: "Non tutte le ciambelle riescono col buco.", woertlich: "nicht alle Kringel geraten mit Loch", de: "Es gelingt nicht immer alles." },
+    { it: "Buono come il pane", woertlich: "gut wie das Brot", de: "grundgut, herzensgut" },
+    { it: "Avere un diavolo per capello", woertlich: "einen Teufel pro Haar haben", de: "fuchsteufelswild sein" },
+    { it: "Cadere dalle nuvole", woertlich: "von den Wolken fallen", de: "aus allen Wolken fallen" },
+    { it: "Avere le mani in pasta", woertlich: "die Hände im Teig haben", de: "die Finger im Spiel haben" },
+    { it: "Fare quattro chiacchiere", woertlich: "vier Plaudereien machen", de: "ein Schwätzchen halten" },
+    { it: "Essere in gamba", woertlich: "im Bein sein", de: "tüchtig und fit sein" },
+    { it: "Rompere il ghiaccio", woertlich: "das Eis brechen", de: "das Eis brechen" },
+    { it: "Toccare ferro", woertlich: "Eisen berühren", de: "auf Holz klopfen" },
+    { it: "L'abito non fa il monaco.", woertlich: "das Gewand macht nicht den Mönch", de: "Kleider machen keine Leute." },
+    { it: "Chi va piano, va sano e va lontano.", woertlich: "wer langsam geht, geht gesund und geht weit", de: "Eile mit Weile." },
+    { it: "Non c'è due senza tre.", woertlich: "es gibt keine zwei ohne drei", de: "Aller guten Dinge sind drei." },
+    { it: "Il mattino ha l'oro in bocca.", woertlich: "der Morgen hat das Gold im Mund", de: "Morgenstund hat Gold im Mund." },
+    { it: "Parla come mangi!", woertlich: "sprich, wie du isst", de: "Red ganz normal, mach es nicht so geschwollen." },
+    { it: "Che pizza!", woertlich: "was für eine Pizza", de: "Wie langweilig!" },
+    { it: "Mangiare come un lupo", woertlich: "essen wie ein Wolf", de: "essen wie ein Scheunendrescher" },
+    { it: "Avere la testa fra le nuvole", woertlich: "den Kopf zwischen den Wolken haben", de: "mit den Gedanken woanders sein" },
+    { it: "Ogni lasciata è persa.", woertlich: "jede ausgelassene ist verloren", de: "Verpasste Gelegenheiten kommen nicht wieder." },
+    { it: "Alla buon'ora!", woertlich: "zur guten Stunde", de: "Na endlich!" },
+  ];
+
   const IT_KATEGORIEN = [
     { id: "it-artikel", title: "Gli articoli — il, lo, la", icon: "🏷️", group: "grammatik",
       info: "Italienisch kennt nur männlich und weiblich. Welcher Artikel steht, hängt nicht nur vom Geschlecht ab, sondern auch vom ersten Laut des Wortes.",
@@ -6122,13 +6165,23 @@ const ExerciseData = (function () {
   function activeGetCategory(id) { return activeCategories().find((c) => c.id === id); }
   function activeGrammatik() { return lernraum === "it" ? IT_GRAMMATIK : GRAMMATIK; }
   function activeWoerter() { return lernraum === "it" ? IT_WOERTER : null; }
+  /* Der italienische Kalender liegt teils fest in dieser Datei, teils in
+     nachgeladenen Monatsdateien (kalender/it-09.js und später mehr) —
+     genau wie der deutsche. Hier werden beide Quellen zusammengelegt;
+     die nachgeladene Fassung gewinnt, damit sich ein Tag korrigieren
+     lässt, ohne diese Datei anzufassen. */
+  function IT_GESCHICHTE_() {
+    const nachgeladen = (window.DMA_DATEN && window.DMA_DATEN.IT_HISTORY_TODAY) || null;
+    if (!nachgeladen) return IT_GESCHICHTE;
+    return Object.assign({}, IT_GESCHICHTE, nachgeladen);
+  }
   function activeHistoryForToday(monthDay) {
-    if (lernraum === "it") return IT_GESCHICHTE[monthDay] || null;
+    if (lernraum === "it") return IT_GESCHICHTE_()[monthDay] || null;
     return germanHistoryForToday(monthDay);
   }
   function activeHistoryEntries() {
     if (lernraum !== "it") return getAllHistoryEntries();
-    return Object.entries(IT_GESCHICHTE).map(([monthDay, e]) => ({ monthDay, ...e })).sort((a, b) => a.monthDay.localeCompare(b.monthDay));
+    return Object.entries(IT_GESCHICHTE_()).map(([monthDay, e]) => ({ monthDay, ...e })).sort((a, b) => a.monthDay.localeCompare(b.monthDay));
   }
   function activeHistoryTitle() {
     return lernraum === "it" ? "📜 C'era una volta in Italia …" : "📜 Es war einmal in Deutschland …";
@@ -7186,19 +7239,34 @@ const ExerciseData = (function () {
     if (monatGeladen(nummer)) return Promise.resolve(true);
     return ladeDatenteil("kalender/" + nummer + ".js", null);
   }
+  /* „C'era una volta in Italia" — der italienische Gegenpart. Bisher
+     gibt es den September als Probemonat; fehlt eine Monatsdatei, ist
+     das kein Fehler, dann bleibt es bei den fest eingebauten Tagen. */
+  function itMonatGeladen(mm) {
+    return Boolean(window.DMA_DATEN && window.DMA_DATEN.IT_KALENDER_MONATE && window.DMA_DATEN.IT_KALENDER_MONATE[mm]);
+  }
+  function ladeItKalenderMonat(mm) {
+    const nummer = String(mm).padStart(2, "0");
+    if (itMonatGeladen(nummer)) return Promise.resolve(true);
+    return ladeDatenteil("kalender/it-" + nummer + ".js", null).catch(() => false);
+  }
   function ladeKalenderVerzeichnis() {
     return ladeDatenteil("data-kalender-index.js", "KALENDER_VERZEICHNIS");
   }
   /* Der Normalfall: Verzeichnis plus der laufende Monat. */
   function ladeKalender() {
     const jetzt = new Date();
-    return Promise.all([ladeKalenderVerzeichnis(), ladeKalenderMonat(jetzt.getMonth() + 1)]).then(() => true);
+    const teile = [ladeKalenderVerzeichnis(), ladeKalenderMonat(jetzt.getMonth() + 1)];
+    // Im Lernraum Italienisch zusätzlich den italienischen Monat holen.
+    if (lernraum === "it") teile.push(ladeItKalenderMonat(jetzt.getMonth() + 1));
+    return Promise.all(teile).then(() => true);
   }
   /* Für das Archiv und das Geschichts-Quiz, die wirklich alle Tage
      brauchen — bewusst NUR dort, nicht beim normalen Öffnen. */
   function ladeKalenderGanz() {
     const monate = [];
     for (let m = 1; m <= 12; m++) monate.push(ladeKalenderMonat(m));
+    if (lernraum === "it") for (let m = 1; m <= 12; m++) monate.push(ladeItKalenderMonat(m));
     return Promise.all([ladeKalenderVerzeichnis(), ...monate]).then(() => true);
   }
   function kalenderGanzDa() {
@@ -7215,5 +7283,5 @@ const ExerciseData = (function () {
     return monatGeladen(String(new Date().getMonth() + 1).padStart(2, "0"));
   }
 
-  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_GRAMMATIK, IT_WOERTER, IT_KATEGORIEN, IT_GESCHICHTE, IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, setLernraum, getLernraum, activeCategories, activeGetCategory, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_GRAMMATIK, IT_WOERTER, IT_KATEGORIEN, IT_TICKER, IT_GESCHICHTE, IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, setLernraum, getLernraum, activeCategories, activeGetCategory, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();

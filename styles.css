@@ -320,7 +320,10 @@ button:focus-visible,
   border-bottom: 1px solid rgba(0,0,0,0.05);
   overflow: hidden;
 }
-.ticker-bar.ticker-hidden { display: none; }
+/* Ausgeblendet wird nur die Laufschrift: die Leiste selbst bleibt
+   stehen, weil links das Auge und rechts die Online-Anzeige darin
+   sitzen. Vorher verschwand die ganze Leiste. */
+.ticker-bar.ticker-hidden .ticker-track-wrap { visibility: hidden; }
 .ticker-toggle {
   flex-shrink: 0;
   width: 22px; height: 22px;

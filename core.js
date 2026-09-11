@@ -40,15 +40,21 @@ const Core = (function () {
     return node;
   }
 
-  function speak(text) {
+  /* Zweiter Parameter „sprache": ein Sprachkürzel wie "it". Ohne
+     Angabe bleibt es bei Deutsch. Gebraucht wird das vom Lernraum
+     Italienisch — ein italienisches Wort mit deutscher Stimme
+     vorgelesen ist als Aussprachehilfe wertlos. */
+  function speak(text, sprache) {
     if (!("speechSynthesis" in window)) return;
+    const kurz = (sprache || "de").slice(0, 2).toLowerCase();
+    const voll = { de: "de-DE", it: "it-IT", en: "en-GB", fr: "fr-FR", es: "es-ES" }[kurz] || "de-DE";
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "de-DE";
+    utter.lang = voll;
     utter.rate = 0.92;
-    // Viele Geräte (besonders iPhone) bieten mehrere deutsche Stimmen an — eine "Standard"-
+    // Viele Geräte (besonders iPhone) bieten mehrere Stimmen je Sprache an — eine "Standard"-
     // Stimme, die oft roboterhaft klingt, und daneben oft bessere "Enhanced"/"Premium"-Stimmen.
-    // Wenn eine davon verfügbar ist, wird sie bevorzugt statt der ersten besten deutschen Stimme.
-    const voices = window.speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith("de"));
+    // Wenn eine davon verfügbar ist, wird sie bevorzugt statt der ersten besten Stimme.
+    const voices = window.speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith(kurz));
     const preferred = voices.find((v) => /enhanced|premium|natural/i.test(v.name)) || voices[0];
     if (preferred) utter.voice = preferred;
     window.speechSynthesis.cancel();

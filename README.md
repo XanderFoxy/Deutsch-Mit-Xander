@@ -232,6 +232,16 @@ Supabase SQL-Editor einfügen und ausführen:
 -- die Herausforderung trotzdem raus — nur eben ohne die Wörter.
 alter table challenges add column if not exists extra jsonb;
 
+-- Ab Version 163 braucht es KEINE neue Spalte und KEINE neue Tabelle.
+-- Der Italienischkurs, die Wörterbuch-Vorschläge und die Bilder der
+-- Beiträge legen ihre Daten als gewöhnliche Zeilen in site_content ab:
+--   it_kurs_zugang     wer den Italienischkurs öffnen darf
+--   wortschatz_zusatz  die freigegebenen, nachgetragenen Wörter
+--   beitrag_bilder     hochgeladene Bilder statt der Platzhalter-Kacheln
+-- Der italienische Punktestand liegt in profiles.extra_profile_data
+-- unter itPunkte, der Kursfortschritt unter itKurs. Wer site_content
+-- schon hat, muss also nichts tun.
+
 -- Neuere Profil-Spalten nachrüsten
 alter table profiles add column if not exists is_admin boolean default false;
 alter table profiles add column if not exists is_owner boolean default false;

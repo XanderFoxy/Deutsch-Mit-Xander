@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=162" />
-<link rel="stylesheet" href="app-styles.css?v=162" />
-<link rel="stylesheet" href="themes.css?v=162" />
+<link rel="stylesheet" href="styles.css?v=163" />
+<link rel="stylesheet" href="app-styles.css?v=163" />
+<link rel="stylesheet" href="themes.css?v=163" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -59,9 +59,6 @@
         <span class="cal-page-mini-day" id="calMiniDay">–</span>
         <span class="cal-page-mini-corner"></span>
       </span>
-    </button>
-    <button class="btn btn-ghost btn-icon-only online-jetzt-btn" type="button" id="onlineJetztBtn" aria-label="Wer ist gerade online" title="Wer ist gerade online" style="display:none;">
-      <span class="online-dot" aria-hidden="true"></span><span id="onlineJetztZahl">0</span>
     </button>
     <button class="btn btn-ghost btn-icon-only" type="button" id="loginBtn" aria-label="Profil">
       <span aria-hidden="true" id="loginBtnIcon" class="header-avatar-wrap"><span id="loginBtnIconInner">👤</span></span><span class="btn-label" id="loginBtnLabel">Anmelden</span>
@@ -125,6 +122,9 @@
   <div class="ticker-track-wrap">
     <div class="ticker-track" id="tickerTrack">Willkommen! Hier siehst du gleich, was auf der Seite passiert …</div>
   </div>
+  <button class="online-jetzt-btn" type="button" id="onlineJetztBtn" aria-label="Wer ist gerade online" title="Wer ist gerade online" style="display:none;">
+    <span class="online-dot" aria-hidden="true"></span><span id="onlineJetztZahl">0</span>
+  </button>
 </div>
 
 <nav class="tape-nav" aria-label="Hauptnavigation">
@@ -213,6 +213,16 @@
       <button class="subnav-pill" data-sub="sub-sprachatlas" aria-selected="false" style="display:none;">🗺️ Der Sprachatlas <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
       <button class="subnav-pill" data-sub="sub-wortbaum" aria-selected="false" style="display:none;">🌳 Der Wortbaum <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
       <button class="subnav-pill" data-sub="sub-zwillinge" aria-selected="false" style="display:none;">👂 Die Zwillinge <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-backstube" aria-selected="false" style="display:none;">🥐 Die Backstube <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-wetterkarte" aria-selected="false" style="display:none;">🌦️ Die Wetterkarte <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-baustelle" aria-selected="false" style="display:none;">🏗️ Die Baustelle <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-flohmarkt" aria-selected="false" style="display:none;">🏷️ Der Flohmarkt <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-zug" aria-selected="false" style="display:none;">🚆 Der verpasste Zug <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-schatzkarte" aria-selected="false" style="display:none;">🗺️ Die Schatzkarte <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-fundbuero" aria-selected="false" style="display:none;">🧳 Das Fundbüro <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-gewitter" aria-selected="false" style="display:none;">⛈️ Das Gewitter <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-arzt" aria-selected="false" style="display:none;">🩺 Beim Arzt <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-erbschaft" aria-selected="false" style="display:none;">🗝️ Die Erbschaft <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
       <button class="subnav-pill" data-sub="sub-wortlisten" aria-selected="false">📋 Meine Wortlisten</button>
       <button class="subnav-pill" data-sub="sub-sortierer" aria-selected="false" style="display:none;">🧺 Wörter-Sortierer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
     </div>
@@ -301,6 +311,56 @@
 
     <div class="subview" id="sub-zwillinge" data-active="false">
       <div id="zwillingeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-backstube" data-active="false">
+      <div id="backstubeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wetterkarte" data-active="false">
+      <div id="wetterkarteArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-baustelle" data-active="false">
+      <div id="baustelleArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-flohmarkt" data-active="false">
+      <div id="flohmarktArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-zug" data-active="false">
+      <div id="zugArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-schatzkarte" data-active="false">
+      <div id="schatzkarteArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-fundbuero" data-active="false">
+      <div id="fundbueroArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-gewitter" data-active="false">
+      <div id="gewitterArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-arzt" data-active="false">
+      <div id="arztArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-erbschaft" data-active="false">
+      <div id="erbschaftArea"></div>
       <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
     </div>
 
@@ -540,7 +600,7 @@
 <!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
      nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
      Fassung aus dem Zwischenspeicher des Browsers. -->
-<script>window.DMA_VERSION = "162";</script>
+<script>window.DMA_VERSION = "163";</script>
 <script>
 /* Fassungs-Wächter: liegt auf dem Server eine neuere Seite als die hier
    geladene, sagt die App Bescheid, statt still eine alte Fassung zu
@@ -565,13 +625,13 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) pruefen(); });
 })();
 </script>
-<script src="core.js?v=162"></script>
-<script src="supabase-config.js?v=162"></script>
-<script src="satzbau.js?v=162"></script>
-<script src="data-exercises.js?v=162"></script>
-<script src="data-vocab.js?v=162"></script>
-<script src="backend.js?v=162"></script>
-<script src="quiz.js?v=162"></script>
-<script src="app.js?v=162"></script>
+<script src="core.js?v=163"></script>
+<script src="supabase-config.js?v=163"></script>
+<script src="satzbau.js?v=163"></script>
+<script src="data-exercises.js?v=163"></script>
+<script src="data-vocab.js?v=163"></script>
+<script src="backend.js?v=163"></script>
+<script src="quiz.js?v=163"></script>
+<script src="app.js?v=163"></script>
 </body>
 </html>
