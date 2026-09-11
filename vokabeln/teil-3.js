@@ -2048,6 +2048,12 @@ window.DMA_VOKABELN["Recht & Verwaltung"] = [
   {"word":"die Vorstrafe","de":"eine frühere Verurteilung eines Menschen","syl":"VOR-stra-fe","en":"previous conviction","example":"Er hat zwei Vorstrafen wegen Diebstahls.","level":"B2","theme":"Recht & Verwaltung"}
 ];
 window.DMA_VOKABELN["Stadt & Verkehr"] = [
+  {"word": "der PKW", "de": "die Abkürzung für Personenkraftwagen — ein Auto; gesprochen „pe-ka-weh“", "syl": "PKW", "en": "car", "example": "Auf dem Parkplatz stehen nur Pkw, keine Lastwagen.", "level": "A2", "theme": "Stadt & Verkehr"},
+  {"word": "der LKW", "de": "die Abkürzung für Lastkraftwagen — ein Lastwagen; gesprochen „el-ka-weh“", "syl": "LKW", "en": "lorry, truck", "example": "Der Lkw darf hier nicht durchfahren.", "level": "A2", "theme": "Stadt & Verkehr"},
+  {"word": "das Moped", "de": "ein kleines Motorrad, das man schon mit sechzehn fahren darf", "syl": "MO-ped", "en": "moped", "example": "Mit sechzehn fährt er mit dem Moped zur Arbeit.", "level": "A2", "theme": "Stadt & Verkehr"},
+  {"word": "das E-Bike", "de": "ein Fahrrad mit elektrischer Unterstützung beim Treten", "syl": "E-BIKE", "en": "e-bike", "example": "Mit dem E-Bike schafft sie auch den Berg.", "level": "A2", "theme": "Stadt & Verkehr"},
+  {"word": "der Hubschrauber", "de": "ein Fluggerät, das mit einem Rotor senkrecht starten kann", "syl": "HUB-schrau-ber", "en": "helicopter", "example": "Der Hubschrauber landete direkt vor dem Krankenhaus.", "level": "A2", "theme": "Stadt & Verkehr"},
+  {"word": "der TÜV", "de": "die regelmäßige Prüfung, ob ein Fahrzeug noch verkehrssicher ist", "syl": "TÜV", "en": "vehicle inspection", "example": "Das Auto muss alle zwei Jahre zum TÜV.", "level": "A2", "theme": "Stadt & Verkehr"},
   {"word":"der Bordstein","de":"die erhöhte Kante zwischen Straße und Gehweg","syl":"BORD-stein","en":"curb","example":"Das Kind steht sicher hinter dem Bordstein.","level":"A2","theme":"Stadt & Verkehr"},
   {"word":"der Fahrradständer","de":"ein Gestell, an dem man ein Fahrrad abstellen kann","syl":"FAHR-rad-stän-der","en":"bike rack","example":"Sie stellt ihr Fahrrad am Fahrradständer ab.","level":"A2","theme":"Stadt & Verkehr"},
   {"word":"die Bushaltestelle","de":"der Ort, an dem der Bus hält und Fahrgäste ein- und aussteigen","syl":"BUS-hal-te-stel-le","en":"bus stop","example":"Ich warte an der Bushaltestelle auf den Bus.","level":"A2","theme":"Stadt & Verkehr"},
