@@ -307,6 +307,9 @@
 .subnav-cat-tag[data-persona="Grammatik-Profi"] { background: #e85f6f; }
 .subnav-cat-tag[data-persona="Abenteurer"] { background: #f2b84b; }
 .subnav-cat-tag[data-persona="Tausendsassa"] { background: #e8d34b; }
+/* „Gemischt" gab es in der Navigation, aber keine Farbe dafür — die
+   Punkte blieben grau. Jetzt hat auch dieser Fall seinen Ton. */
+.subnav-cat-tag[data-persona="Gemischt"] { background: linear-gradient(135deg, #5b8def 0%, #a875d8 50%, #e85f6f 100%); }
 
 .blank-slot {
   display: inline-block;
@@ -3593,23 +3596,28 @@
 }
 .fox-of-day-showcase > *:not(.fox-bg-flourish) { position: relative; z-index: 1; }
 /* GEMELDET: „bei Fuchs des Tages/der Woche/des Monats/des Jahres ist kein
-   Text mehr zu lesen." Und so war es: weiter unten setzt die Lesbarkeits-
-   Korrektur für helle Kartenflächen diese Karte auf ein dunkles Braun
-   (#241505) — richtig auf dem hellen rgba(255,255,255,0.5). Die Zeile
-   darunter gab ihr in JEDEM Design mit data-theme aber einen DUNKLEN
-   Grund (rgba(0,0,0,0.15)). Dunkelbraun auf dunkel: die Mitarbeits-Liste,
-   also gerade der Inhalt der Auszeichnung, war unlesbar.
+   Text mehr zu lesen." Die Ursache war eine Lesbarkeits-Korrektur, die
+   dieser Karte color:#241505 aufgezwungen hat — dunkelbraune Schrift auf
+   dem dunklen Schleier, den die Karte in jedem Design mit data-theme
+   trägt. Behoben ist das, indem die aufgezwungene Schriftfarbe wieder
+   weg ist, NICHT indem der Grund umgebaut wurde.
 
-   Jetzt bleibt der Grund in allen Designs hell und damit zur
-   festgelegten Schriftfarbe passend — eine Auszeichnung darf ruhig wie
-   ein Blatt Pergament aussehen, in jedem Design gleich. */
+   GEWÜNSCHT: „Der alte Stil bleibt in dieser Box … da sollte nichts
+   geändert werden." Also wieder der durchscheinende Schleier, der die
+   Farbe des jeweiligen Designs annimmt — hell im hellen Design, dunkel
+   im dunklen. Das war nie das Problem.
+
+   Das Problem war eine ANDERE Regel weiter unten, die hier
+   color:#241505 erzwungen hat: dunkelbraune Schrift auf dunklem
+   Schleier ist unsichtbar. Diese Regel ist entfernt; die Box erbt jetzt
+   wieder die Schriftfarbe ihres Designs, so wie früher. */
 .fox-of-day-report-card {
-  background: rgba(255, 252, 246, 0.86);
-  border: 1px solid rgba(36, 21, 5, 0.12);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-size: 0.86rem;
 }
+[data-theme] .fox-of-day-report-card { background: rgba(0, 0, 0, 0.15); }
 
 /* Wiederverwendbares Design-Banner-System — hochladbare Grafiken vom Betreiber, mit hübschem
    SVG-Platzhalter, solange noch nichts hochgeladen wurde. */
@@ -4524,8 +4532,8 @@ body.lernraum-it .nur-deutsch { display: none; }
   overflow-wrap: anywhere;
 }
 .fox-avatar {
-  width: 84px;
-  height: 84px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
   position: relative;
   display: flex;
@@ -4533,8 +4541,8 @@ body.lernraum-it .nur-deutsch { display: none; }
   justify-content: center;
 }
 .fox-avatar .avatar-photo {
-  width: 68px;
-  height: 68px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 /* Der Sticker-Wrapper trägt selbst die Klasse .avatar-photo, darf aber
@@ -4556,9 +4564,8 @@ body.lernraum-it .nur-deutsch { display: none; }
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
 }
 .fox-avatar .initials-avatar {
-  width: 68px;
-  height: 68px;
-  font-size: 1.5rem;
+  width: 100%;
+  height: 100%;
 }
 
 /* Der gezeichnete Spielname über jedem Spiel. Die Buchstaben sind eigene
@@ -5284,7 +5291,6 @@ button.sbk-gruppe {
 .cw-cell,
 .cal-front, .cal-back,
 .album-page-left, .album-page-right,
-.fox-of-day-report-card,
 .ag-beet-btn,
 .silbenturm-bau,
 .satzteil-konj,
@@ -5296,8 +5302,7 @@ button.sbk-gruppe {
 /* Auch die Kindelemente dieser Flächen erben jetzt einen dunklen Ton
    statt des Design-Cremes. */
 .kette-karte *, .aug-wort *, .umzug-karte *, .waage-wort *,
-.maske-karte *, .atlas-knopf *, .baum-wort *, .zwilling-seite *,
-.fox-of-day-report-card * {
+.maske-karte *, .atlas-knopf *, .baum-wort *, .zwilling-seite * {
   color: inherit;
 }
 
@@ -6052,9 +6057,9 @@ input[type="checkbox"], input[type="radio"] {
    --------------------------------------------------------------- */
 .bildv-box { display: flex; flex-direction: column; gap: 8px; }
 .bildv-gruppe {
-  border: 1.5px solid var(--line, #d8cbb4);
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
   border-radius: 12px;
-  background: var(--card, #fffdf8);
+  background: var(--plum-700, #fffdf8);
   overflow: hidden;
 }
 .bildv-gruppe > summary {
@@ -6082,7 +6087,7 @@ input[type="checkbox"], input[type="radio"] {
   align-items: center;
   gap: 8px;
   padding: 5px 0;
-  border-top: 1px dashed var(--line, #e4dac6);
+  border-top: 1px dashed rgba(128, 128, 128, 0.32);
   flex-wrap: wrap;
 }
 .bildv-vorschau {
@@ -6155,3 +6160,547 @@ input[type="checkbox"], input[type="radio"] {
   color: #241505;
 }
 .ms-aufloesung * { color: inherit; }
+
+/* Der gemeinsame Profilkopf im Fenster für fremde Profile: Er bringt
+   .profile-card-view nur mit, damit der Punkte-Aufkleber sich in die Ecke
+   hängen kann — einen zweiten Kartenrahmen soll er nicht malen. */
+.profil-kopf-blank {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 0 6px;
+}
+
+/* ---------------------------------------------------------------
+   DIE ONLINE-KLAPPE
+   Aus der kleinen Pille in der Laufschrift-Leiste klappt eine
+   schwebende Liste mit den Namen der gerade Anwesenden auf — noch
+   einmal antippen, und sie ist wieder eine Pille.
+   --------------------------------------------------------------- */
+.online-klappe {
+  position: fixed;
+  z-index: 1200;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--plum-700, #fffdf8);
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+  max-height: 46vh;
+  overflow-y: auto;
+  animation: online-klappe-auf 0.16s ease-out;
+}
+@keyframes online-klappe-auf {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+.online-klappe-kopf {
+  margin: 0 0 6px;
+  padding: 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.85;
+}
+.online-klappe-zeile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 6px;
+  border: none;
+  background: none;
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.online-klappe-zeile:hover, .online-klappe-zeile:focus-visible {
+  background: rgba(127, 127, 127, 0.14);
+}
+.online-klappe-zeile .name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.online-klappe-mehr { margin: 4px 0 0; padding: 0 6px; font-size: 0.7rem; opacity: 0.7; }
+
+/* Sprachen, die von rechts nach links geschrieben werden (Arabisch,
+   Persisch, Hebräisch), brauchen die passende Laufrichtung — sonst
+   stehen Satzzeichen und Zahlen an der falschen Seite. */
+.bw-rtl { direction: rtl; unicode-bidi: isolate; text-align: right; }
+
+/* Die Zeile „so sagt man es im Alltag" auf der Wortkarte. */
+.alltags-zeile {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 9px;
+  background: rgba(127, 127, 127, 0.12);
+  font-size: 0.82rem;
+}
+.alltags-stil {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.68rem;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+/* Die Lupe: Dinge, hinter denen ein eigenes Detailbild steckt. */
+.bw-spur {
+  margin: 0 0 8px;
+  font-size: 0.74rem;
+  opacity: 0.8;
+}
+.bw-lupenknopf {
+  margin-top: 10px;
+  width: 100%;
+  font-size: 0.88rem;
+  padding: 8px 10px;
+}
+.bw-lupenmarke { pointer-events: none; }
+.bw-teil:hover .bw-lupenmarke circle:first-child { fill: #ffe9a8; }
+
+/* Die Zeigeringe auf den Anatomie-Tafeln: dezent, bis man sie antippt.
+   Die Zeichnung soll wirken, nicht der Ring. */
+.bw-marke { opacity: 0.5; transition: opacity 0.12s ease; }
+.bw-teil:hover .bw-marke,
+.bw-teil:focus-visible .bw-marke,
+.bw-teil-aktiv .bw-marke,
+.bw-teil-entdeckt .bw-marke,
+.bw-teil-treffer .bw-marke { opacity: 1; }
+.bw-teil-aktiv .bw-marke circle:first-child { fill: rgba(255, 233, 168, 0.55); }
+.bw-teil-entdeckt .bw-marke circle:first-child { fill: rgba(90, 168, 107, 0.22); }
+
+/* GEWÜNSCHT: „senkrecht von oben nach unten rechts neben dem Profilbild".
+   Jede Angabe steht in einer eigenen Zeile und legt sich dabei um die
+   Rundung des Bildes — das macht shape-outside am gefloateten Bild.
+   Ein Badge ist nur so breit wie sein Inhalt, damit die Zeilen nicht
+   wie Balken wirken. */
+.profil-zeilen .flow-badge {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 4px 0;
+}
+.profile-header-below-photo .flow-badge { display: inline-block; }
+
+/* Der Betonungsschalter, der in jeder Sektion oben steht. */
+.sektion-betonung { margin: 0 0 6px; }
+.sektion-betonung .lese-betonung-knopf { font-size: 0.76rem; padding: 4px 9px; }
+
+/* ============================================================
+   AUSSPRACHE-KURS
+   ------------------------------------------------------------
+   Alphabet, Regeln zur Vokallänge, Konsonantenbündel und die
+   Tricks für ü, ö, ng und ch. Die Schnittbilder durch Mund und
+   Rachen liegen als SVG in data-aussprache.js — hier stehen nur
+   die Farben und Größen dafür.
+   ============================================================ */
+.ak-kopf { margin-bottom: 12px; }
+
+/* --- Alphabet: eine Kachel je Buchstabe --- */
+.ak-gitter {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+  gap: 10px;
+}
+.ak-buchstabe {
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  background: var(--plum-700, #fffdf8);
+  padding: 10px 12px 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ak-buchstabe:active { transform: scale(0.98); }
+.ak-buchstabe:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+.ak-b-kopf { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ak-b-zeichen { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.04em; }
+.ak-b-name { font-size: 0.9rem; font-weight: 600; opacity: 0.75; }
+.ak-b-ipa { margin: 2px 0 6px; font-size: 0.76rem; opacity: 0.55; font-family: ui-monospace, monospace; }
+.ak-b-laut { margin: 0 0 6px; font-size: 0.82rem; line-height: 1.35; }
+.ak-b-bsp { margin: 0; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ak-b-hinweis { margin: 6px 0 0; font-size: 0.76rem; opacity: 0.7; line-height: 1.35; }
+
+/* --- Der kleine Lautsprecher --- */
+.ak-hoer {
+  padding: 2px 7px;
+  font-size: 0.86rem;
+  line-height: 1.2;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+/* --- Listen (Buchstabenpaare, Bündel, Zungenbrecher) --- */
+.ak-liste { display: flex; flex-direction: column; gap: 10px; }
+.ak-verb, .ak-buendel, .ak-brecher {
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  background: var(--plum-700, #fffdf8);
+  padding: 10px 12px;
+}
+.ak-verb-kopf { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.ak-verb-schrift { font-size: 1.1rem; font-weight: 800; font-family: ui-monospace, monospace; }
+.ak-verb-pfeil { opacity: 0.5; }
+.ak-verb-laut { font-size: 0.95rem; font-weight: 700; }
+.ak-verb-wann { margin: 0 0 6px; font-size: 0.78rem; opacity: 0.7; }
+.ak-verb-bsp { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.82rem;
+  background: rgba(128, 128, 128, 0.12);
+}
+.ak-buendel-richtig { margin: 6px 0 2px; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ak-buendel-falsch { margin: 0; font-size: 0.86rem; opacity: 0.8; text-decoration: line-through; text-decoration-color: rgba(217, 79, 79, 0.6); }
+.ak-brecher-satz { margin: 0 0 4px; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* --- Regeln --- */
+.ak-regel, .ak-trick { margin-bottom: 12px; }
+.ak-bsp-gitter {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 8px;
+}
+.ak-bsp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 10px;
+  padding: 6px 9px;
+  background: rgba(128, 128, 128, 0.12);
+}
+.ak-bsp-wort { font-weight: 700; font-size: 0.92rem; }
+.ak-bsp-hinweis { font-size: 0.74rem; opacity: 0.7; width: 100%; }
+.ak-ausnahme {
+  margin-top: 12px;
+  border-left: 3px solid #e59a6a;
+  border-radius: 0 10px 10px 0;
+  padding: 8px 12px;
+  background: rgba(229, 154, 106, 0.12);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+.ak-ausnahme p { margin: 0 0 6px; }
+.ak-ausnahme p:last-child { margin-bottom: 0; }
+.ak-ausnahme-titel { font-weight: 700; }
+.ak-ausnahme-woerter { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* --- Tricks --- */
+.ak-schritte { margin: 10px 0 12px; padding-left: 20px; font-size: 0.88rem; line-height: 1.5; }
+.ak-schritte li { margin-bottom: 6px; }
+.ak-probe {
+  margin-top: 10px;
+  border-left: 3px solid #8fc7a4;
+  border-radius: 0 10px 10px 0;
+  padding: 8px 12px;
+  background: rgba(143, 199, 164, 0.14);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+.ak-probe p { margin: 0; }
+
+/* --- Die Schnittbilder --- */
+.aus-grafik {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 10px auto;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  background: #fffdf8;
+}
+.aus-grafik-lippens { max-width: 340px; }
+.aus-lab { font-size: 9px; fill: #6b5f4e; font-weight: 600; }
+.aus-unter { font-size: 10.5px; fill: #4a4036; font-weight: 700; }
+.aus-gross { font-size: 26px; fill: #3a3229; font-weight: 800; letter-spacing: 0.06em; }
+.aus-rot { fill: #c33c3c; }
+.aus-blau { fill: #2f7fae; }
+.aus-gruen { fill: #3f8a5c; }
+
+@media (max-width: 420px) {
+  .ak-gitter { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
+  .ak-bsp-gitter { grid-template-columns: 1fr 1fr; }
+  .ak-b-zeichen { font-size: 1.3rem; }
+}
+
+/* ============================================================
+   DIALOGE — formell und informell
+   ============================================================ */
+.dlg-satzliste { display: flex; flex-direction: column; gap: 6px; }
+.dlg-satz { display: flex; align-items: center; gap: 6px; }
+.dlg-satz-text {
+  flex: 1;
+  text-align: left;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 10px;
+  /* Nicht --plum-700: in ein paar sehr dunklen Designs liegt diese
+     Fläche zu nah an der Schriftfarbe. Ein durchscheinender Grauschleier
+     hebt sich von JEDEM Untergrund gleich stark ab. */
+  background: rgba(128, 128, 128, 0.14);
+  color: var(--cream-50, inherit);
+  padding: 7px 11px;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: background 0.12s ease, transform 0.1s ease;
+}
+.dlg-satz-text:hover { background: rgba(232, 154, 106, 0.18); }
+.dlg-satz-text:active { transform: scale(0.99); }
+.dlg-satz-fest { cursor: default; }
+.dlg-satz-fest:hover { background: rgba(128, 128, 128, 0.14); }
+.dlg-schritt { margin-bottom: 12px; }
+
+.dlg-meins { margin: 0; padding-left: 22px; font-size: 0.9rem; line-height: 1.6; }
+.dlg-meins li { margin-bottom: 4px; }
+.dlg-weg {
+  border: none; background: none; cursor: pointer;
+  font-size: 0.8rem; opacity: 0.5; padding: 0 4px; color: inherit;
+}
+.dlg-weg:hover { opacity: 1; color: #c33c3c; }
+
+/* --- Übersicht der Gespräche --- */
+.dlg-kacheln { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.dlg-kachel {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  background: var(--plum-700, #fffdf8);
+  padding: 11px 13px;
+  cursor: pointer; font-family: inherit; color: inherit;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.dlg-kachel:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+.dlg-kachel:active { transform: scale(0.99); }
+.dlg-kachel-titel { font-weight: 700; font-size: 0.94rem; line-height: 1.3; }
+.dlg-kachel-ort { font-size: 0.78rem; opacity: 0.7; }
+.dlg-kachel-zeile { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.dlg-kachel-anzahl { font-size: 0.74rem; opacity: 0.65; }
+.dlg-reg-marke {
+  font-size: 0.74rem; font-weight: 700;
+  border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+}
+.dlg-reg-formell { background: rgba(91, 141, 239, 0.22); border: 1px solid rgba(91, 141, 239, 0.5); }
+.dlg-reg-informell { background: rgba(143, 199, 164, 0.28); border: 1px solid rgba(90, 168, 120, 0.5); }
+
+/* --- Der Gesprächsverlauf --- */
+.dlg-verlauf { display: flex; flex-direction: column; gap: 8px; }
+.dlg-zeile { display: flex; flex-direction: column; gap: 2px; max-width: 88%; }
+.dlg-andere { align-self: flex-start; }
+.dlg-ich { align-self: flex-end; align-items: flex-end; text-align: right; }
+.dlg-wer { font-size: 0.72rem; font-weight: 700; opacity: 0.6; padding: 0 8px; }
+.dlg-text {
+  border-radius: 14px; padding: 8px 12px; font-size: 0.9rem; line-height: 1.5;
+  display: block;
+}
+/* Der Lautsprecher soll hinter dem letzten Wort stehen, nicht in einer
+   eigenen Zeile darunter — sonst wird jede Sprechblase doppelt so hoch. */
+.dlg-text .ak-hoer, .ak-b-bsp .ak-hoer, .ak-bsp .ak-hoer, .dlg-paar .ak-hoer {
+  display: inline-flex; vertical-align: middle; margin-left: 4px;
+}
+.dlg-andere .dlg-text { background: rgba(128, 128, 128, 0.16); border-bottom-left-radius: 4px; }
+.dlg-ich .dlg-text { background: rgba(232, 154, 106, 0.26); border-bottom-right-radius: 4px; }
+
+/* --- Sie und du nebeneinander --- */
+.dlg-paare { display: flex; flex-direction: column; gap: 6px; }
+.dlg-paar {
+  display: grid; grid-template-columns: 1fr 1.4fr 1.4fr; gap: 8px;
+  align-items: start; font-size: 0.85rem; line-height: 1.35;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.28); padding-bottom: 6px;
+}
+.dlg-paar-kopf { font-weight: 700; opacity: 0.7; font-size: 0.78rem; }
+.dlg-paar-was { font-weight: 600; opacity: 0.8; }
+.dlg-regeln { display: flex; flex-direction: column; gap: 8px; }
+.dlg-regel { display: flex; gap: 9px; align-items: flex-start; font-size: 0.86rem; line-height: 1.4; }
+.dlg-regel-wann { display: flex; flex-direction: column; }
+
+@media (max-width: 480px) {
+  .dlg-paar { grid-template-columns: 1fr; gap: 2px; padding-bottom: 8px; }
+  .dlg-paar-kopf { display: none; }
+  .dlg-paar-was { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.6; }
+  .dlg-kacheln { grid-template-columns: 1fr; }
+  .dlg-zeile { max-width: 94%; }
+}
+.dlg-paar-icon { margin-right: 5px; opacity: 0.8; }
+
+/* ============================================================
+   FESTE, FEIERTAGE UND KULTUR
+   ============================================================ */
+.fst-monat {
+  margin: 18px 0 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.fst-fest { margin-bottom: 10px; }
+.fst-fest-kopf {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+}
+.fst-fest-name { grid-column: 1; grid-row: 1; font-size: 1.02rem; font-weight: 800; line-height: 1.25; }
+.fst-fest-wann { grid-column: 1; grid-row: 2; font-size: 0.8rem; opacity: 0.7; line-height: 1.35; }
+.fst-pfeil { grid-column: 2; grid-row: 1 / span 3; align-self: center; opacity: 0.5; font-size: 0.95rem; }
+.fst-art {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 9px;
+  margin-top: 5px;
+  white-space: nowrap;
+}
+.fst-art-gesetzlich { background: rgba(217, 79, 79, 0.2); border: 1px solid rgba(190, 60, 60, 0.55); }
+.fst-art-regional { background: rgba(242, 184, 75, 0.3); border: 1px solid rgba(198, 144, 36, 0.55); }
+.fst-art-brauch { background: rgba(143, 199, 164, 0.3); border: 1px solid rgba(90, 168, 120, 0.55); }
+.fst-legende { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.fst-legende .fst-art { margin-top: 6px; }
+.fst-ablauf { margin: 4px 0 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.55; }
+.fst-ablauf li { margin-bottom: 7px; }
+.fst-offen .fst-fest-name { color: var(--accent, inherit); }
+
+/* ============================================================
+   WEGWEISER
+   ============================================================ */
+.weg-liste { display: flex; flex-direction: column; gap: 8px; }
+.weg-ziel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  background: var(--plum-700, #fffdf8);
+  padding: 10px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.weg-ziel:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+.weg-ziel:active { transform: scale(0.99); }
+.weg-icon { font-size: 1.4rem; line-height: 1.2; }
+.weg-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.weg-name { font-weight: 800; font-size: 0.98rem; line-height: 1.25; }
+.weg-was { font-size: 0.82rem; line-height: 1.35; opacity: 0.85; }
+.weg-fuer { font-size: 0.76rem; line-height: 1.35; opacity: 0.62; font-style: italic; }
+.weg-pfeil { align-self: center; opacity: 0.45; font-size: 1.1rem; }
+
+.weg-schritt { margin-bottom: 10px; }
+.weg-kopfzeile { display: flex; align-items: flex-start; gap: 10px; }
+.weg-titel {
+  flex: 1; text-align: left; border: none; background: none; padding: 0;
+  cursor: pointer; font-family: inherit; color: inherit;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.weg-wann, .weg-wo { font-size: 0.78rem; opacity: 0.72; line-height: 1.35; }
+.weg-haken {
+  flex: 0 0 auto;
+  width: 26px; height: 26px; margin-top: 2px;
+  border: 2px solid rgba(128, 128, 128, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem; font-weight: 800; line-height: 1;
+  color: inherit;
+  display: flex; align-items: center; justify-content: center;
+}
+.weg-haken-an { border-color: #4f9d68; background: rgba(143, 199, 164, 0.3); }
+.weg-fertig .weg-name { opacity: 0.65; text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* ============================================================
+   STADT · LAND · FLUSS
+   ============================================================ */
+.slf-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.slf-buchstabe {
+  font-size: 2.6rem; font-weight: 900; line-height: 1;
+  width: 62px; height: 62px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(232, 154, 106, 0.24);
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+}
+.slf-uhr { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.slf-eilig { color: #d94f4f; animation: slfPuls 1s ease-in-out infinite; }
+@keyframes slfPuls { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+.slf-felder { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.slf-feld { display: flex; flex-direction: column; gap: 4px; }
+.slf-label { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.65; }
+.slf-eingabe {
+  width: 100%;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 10px;
+  background: var(--plum-700, #fffdf8);
+  color: inherit;
+  padding: 10px 12px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+.slf-eingabe:focus { outline: 2px solid rgba(232, 154, 106, 0.7); outline-offset: 1px; }
+
+.slf-tabelle-wrap { overflow-x: auto; }
+.slf-tabelle { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.slf-tabelle th, .slf-tabelle td {
+  border: 1px solid rgba(128, 128, 128, 0.28);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+.slf-tabelle thead th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.75; }
+.slf-tabelle th[scope="row"] { white-space: nowrap; font-size: 0.78rem; opacity: 0.75; }
+.slf-zellwort { display: block; font-weight: 600; }
+.slf-zellpunkte { display: block; font-size: 0.72rem; opacity: 0.7; margin-top: 2px; }
+.slf-wert-20 { background: rgba(143, 199, 164, 0.3); }
+.slf-wert-10 { background: rgba(143, 199, 164, 0.15); }
+.slf-wert-5 { background: rgba(242, 184, 75, 0.2); }
+.slf-wert-0 { background: rgba(217, 79, 79, 0.12); }
+.slf-summe td { font-size: 1.05rem; background: rgba(128, 128, 128, 0.1); }
+
+/* Bildverwaltung: mehrere Bilder auf einmal, am Dateinamen erkannt */
+.bildv-stapel {
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: rgba(128, 128, 128, 0.08);
+}
+.bildv-stapel code {
+  font-size: 0.82em;
+  background: rgba(128, 128, 128, 0.16);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.bildv-bericht { margin-top: 10px; font-size: 0.84rem; line-height: 1.45; }
+.bildv-bericht ul { margin: 4px 0 8px; padding-left: 20px; }
+.bildv-bericht li { margin-bottom: 3px; }
+.bildv-bericht-gut { font-weight: 700; margin: 6px 0 2px; }
+.bildv-bericht-schlecht { font-weight: 700; margin: 6px 0 2px; }

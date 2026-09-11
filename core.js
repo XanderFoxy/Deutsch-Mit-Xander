@@ -194,7 +194,9 @@ const Core = (function () {
      Schreibregeln am ganzen Wort abgelesen: Dehnungs-h, Doppelvokal,
      „ie", Diphthong und die Zahl der folgenden Konsonanten.
      ============================================================ */
-  const VOKALE = "aeiouäöüy";
+  /* Auch Vokale mit Akzent zählen als Vokal — sonst findet die Anzeige
+     in „Ca-FÉ" oder „Ka-NA-pee" gar keinen Vokal und markiert nichts. */
+  const VOKALE = "aeiouäöüyáàâéèêíìîóòôúùûý";
   const DIPHTHONGE = ["ei", "ai", "au", "eu", "äu", "ey", "ay"];
   const LANGE_PAARE = ["ie", "aa", "ee", "oo"];
   // Häufige kurze Wörter, die trotz nur eines Konsonanten kurz gesprochen werden —
@@ -224,7 +226,7 @@ const Core = (function () {
     "mais", "mal", "man", "maul", "maus", "maut", "maß", "meer", "mehl", "mehr", "mein",
     "meist", "mief", "mir", "mit", "mohn", "mond", "moor", "moos", "mut", "na", "nah", "naht",
     "neid", "nein", "neu", "neun", "nie", "not", "nun", "nur", "ob", "oh", "ohr", "paar",
-    "pfeil", "pflug", "pin", "plan", "plot", "po", "pol", "pool", "pop", "preis", "pro", "rad",
+    "pfeil", "pflug", "pin", "plan", "plot", "po", "pol", "pool", "preis", "pro", "rad",
     "rap", "rat", "rau", "raub", "rauch", "raum", "reh", "reich", "reif", "reim", "rein",
     "reis", "reiz", "roh", "rohr", "rot", "ruf", "rum", "ruß", "saal", "sau", "saum", "schaf",
     "schal", "scham", "schaum", "scheu", "schlaf", "schlag", "schlau", "schlauch", "schmal",
@@ -261,6 +263,9 @@ const Core = (function () {
     "schmuck", "schmutz", "schnell", "schnitt", "schock", "schreck", "schrill", "schritt",
     "schritt für schritt", "schroff", "schrott", "schuss", "schutz", "schwamm", "sinn", "sitz",
     "snack", "sorg", "spatz", "speck", "spitz", "sport", "spott", "spross", "stadt", "stall",
+    /* Lehnwörter: Die deutsche Schreibung gibt ihre Länge nicht her,
+       gesprochen sind sie aber eindeutig kurz. */
+    "pop", "popcorn", "cash", "cashew", "lokum", "kum",
     "stamm", "starr", "statt", "still", "stoff", "straff", "strass", "stress", "stuck",
     "stumm", "stück", "stück für stück", "tipp", "toll", "trick", "troll", "trotz", "tschüss",
     "tüll", "voll", "wall", "wann", "war", "warm", "wart", "watt", "wenn", "werb", "wind",
@@ -277,7 +282,9 @@ const Core = (function () {
     "höch", "hör", "jagd", "kehr", "kloster", "krebs", "magd", "mond", "mut", "mär", "märz",
     "nach", "not", "nähr", "obst", "ost", "oster", "papst", "pfad", "pferd", "propst", "quart",
     "rot", "schul", "schwert", "sprach", "sprüch", "start", "stör", "tot", "trost", "ur",
-    "verkehr", "verzehr", "vor", "wert", "west", "wohl", "wut", "wähl", "wär", "wärm", "wüst", "zart",
+    "verkehr", "verzehr", "vor", "wart", "war", "waren", "warst", "wert", "west", "wohl",
+    "kek", "keks",
+    "wut", "wähl", "wär", "wäre", "wären", "wärst", "wärm", "wüst", "zart",
     "zerstör", "zu", "zähl", "über"
   ]);
 
@@ -287,14 +294,14 @@ const Core = (function () {
     "besuch", "brach", "buch", "büch", "dusch", "flach", "flieh", "fluch", "früh", "geruch",
     "hoch", "husch", "höch", "kuch", "mär", "nach", "rach", "ruch", "räch", "sa", "sach",
     "schmach", "schuh", "spie", "spra", "sprach", "spruch", "sprüch", "such", "tuch", "tüch",
-    "versuch", "wuch", "wüchs", "zieh"
+    "versuch", "wuch", "wuchs", "wüchs", "zieh", "kosch"
   ]);
 
   /* Umgekehrt: Vorsilben, die trotz nur EINES folgenden Konsonanten
      kurz bleiben — ab-, an-, in-, un-, mit-. */
   const KURZE_SILBEN = new Set([
     "ab", "am", "an", "bis", "dann", "das", "denn", "des", "emp", "ent", "es", "hat", "hin",
-    "im", "in", "man", "miss", "mit", "ob", "um", "un", "vom", "von", "wann", "was", ,
+    "im", "in", "man", "miss", "mit", "ob", "um", "un", "vom", "von", "wann", "was",
     "wenn", "zer", "zum"
   ]);
 

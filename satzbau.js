@@ -946,7 +946,7 @@
     { id: "regen", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Regen", genus: "m", it: "a causa della pioggia", level: "B1" },
     { id: "hitze", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Hitze", genus: "f", it: "a causa del caldo", level: "B1" },
     { id: "arbeitgrund", art: "wegen", stimmung: "neutral", nomen: "Arbeit", genus: "f", it: "per via del lavoro", level: "B1" },
-    { id: "zeitmangel", art: "wegen", stimmung: "negativ", nomen: "Zeitmangel", genus: "m", it: "per mancanza di tempo", level: "B2" },
+    { id: "zeitmangel", widerspricht: ["langsam", "ruhig", "gruendlich", "sorgfaeltig", "geduldig"], art: "wegen", stimmung: "negativ", nomen: "Zeitmangel", genus: "m", it: "per mancanza di tempo", level: "B2" },
     { id: "laerm", art: "wegen", stimmung: "negativ", anlass: "einmalig", nomen: "Lärm", genus: "m", it: "a causa del rumore", level: "B2" },
     { id: "termingrund", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Termin", genus: "m", it: "per via di un appuntamento", level: "B2" },
 
@@ -959,7 +959,7 @@
     { id: "fertig", art: "zustand", stimmung: "positiv", adjektiv: "fertig", it: "pronto", level: "A2" },
     { id: "puenktlich", art: "zustand", stimmung: "neutral", adjektiv: "pünktlich", it: "puntuale", level: "B1" },
     { id: "unterwegs", art: "zustand", stimmung: "neutral", adjektiv: "unterwegs", it: "in viaggio", itUnveraenderlich: true, level: "B1" },
-    { id: "frei", art: "zustand", stimmung: "positiv", universal: true, adjektiv: "frei", it: "libero", level: "A2" },
+    { id: "frei", art: "zustand", stimmung: "positiv", universal: true, grundKlasse: "gelegenheit", adjektiv: "frei", it: "libero", level: "A2" },
     { id: "unsicher", art: "zustand", stimmung: "negativ", adjektiv: "unsicher", it: "insicuro", level: "B1" },
     { id: "stau", art: "wegen", stimmung: "negativ", anlass: "einmalig", nomen: "Stau", genus: "m", it: "a causa del traffico", level: "B1" },
     { id: "kaelte", art: "wegen", stimmung: "neutral", anlass: "einmalig", nomen: "Kälte", genus: "f", it: "a causa del freddo", level: "B1" },
@@ -975,30 +975,30 @@
     /* --- Gründe, die zu jeder Tätigkeit passen --- */
     { id: "hungerhaben", art: "haben", nomen: "Hunger", it: "fame", stimmung: "negativ", nurDingRollen: ["essen","kochen","bestellen","kaufen"], level: "A1" },
     { id: "dursthaben", art: "haben", nomen: "Durst", it: "sete", stimmung: "negativ", nurDingRollen: ["trinken","bestellen","kaufen"], level: "A1" },
-    { id: "zeithaben", art: "haben", nomen: "Zeit", it: "tempo", stimmung: "positiv", universal: true, level: "A1" },
-    { id: "keinezeit", art: "haben", nomen: "keine Zeit", it: "tempo", itVerneint: true, stimmung: "negativ", universal: true, level: "A2" },
-    { id: "lusthaben", art: "haben", nomen: "Lust", it: "voglia", stimmung: "positiv", universal: true, level: "A2" },
-    { id: "keinelust", art: "haben", nomen: "keine Lust", it: "voglia", itVerneint: true, stimmung: "negativ", universal: true, level: "A2" },
-    { id: "langeweile", art: "haben", nomen: "Langeweile", it: "noia", stimmung: "negativ", universal: true, level: "B1" },
-    { id: "besuchhaben", art: "haben", nomen: "Besuch", it: "ospiti", stimmung: "positiv", anlass: "einmalig", level: "B1" },
-    { id: "geburtstag", art: "haben", nomen: "Geburtstag", it: "il compleanno", itFest: true, stimmung: "positiv", anlass: "einmalig", level: "A2" },
-    { id: "urlaubhaben", art: "haben", nomen: "Urlaub", it: "le ferie", itFest: true, stimmung: "positiv", level: "A2" },
-    { id: "frei_haben", art: "haben", nomen: "frei", it: "libero", itFest: true, stimmung: "positiv", universal: true, level: "A2" },
-    { id: "magdas", art: "satz", deFormen: ["das mag","das magst","das mag","das mögen","das mögt","das mögen"], itFormen: ["mi piace","ti piace","gli piace","le piace","ci piace","vi piace","a loro piace"], itNachSubjekt: true, stimmung: "positiv", universal: true, level: "A2" },
-    { id: "mussdas", art: "satz", deFormen: ["das muss","das musst","das muss","das müssen","das müsst","das müssen"], itFormen: ["devo","devi","deve","deve","dobbiamo","dovete","devono"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "A2" },
-    { id: "willdas", art: "satz", deFormen: ["das will","das willst","das will","das wollen","das wollt","das wollen"], itFormen: ["voglio","vuoi","vuole","vuole","vogliamo","volete","vogliono"], itNachSubjekt: true, stimmung: "positiv", universal: true, level: "A2" },
-    { id: "solldas", art: "satz", deFormen: ["das soll","das sollst","das soll","das sollen","das sollt","das sollen"], itFormen: ["dovrei","dovresti","dovrebbe","dovrebbe","dovremmo","dovreste","dovrebbero"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "B1" },
-    { id: "nichtanders", art: "satz", deFormen: ["nicht anders kann","nicht anders kannst","nicht anders kann","nicht anders können","nicht anders könnt","nicht anders können"], itFormen: ["non posso fare altrimenti","non puoi fare altrimenti","non può fare altrimenti","non può fare altrimenti","non possiamo fare altrimenti","non potete fare altrimenti","non possono fare altrimenti"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "B1" },
-    { id: "versprochen", art: "satz", deFormen: ["es versprochen habe","es versprochen hast","es versprochen hat","es versprochen haben","es versprochen habt","es versprochen haben"], itFormen: ["l'ho promesso","l'hai promesso","l'ha promesso","l'ha promesso","l'abbiamo promesso","l'avete promesso","l'hanno promesso"], itNachSubjekt: true, stimmung: "neutral", universal: true, level: "B1" },
-    { id: "vergessen_grund", art: "satz", deFormen: ["es vergessen habe","es vergessen hast","es vergessen hat","es vergessen haben","es vergessen habt","es vergessen haben"], itFormen: ["me ne sono dimenticato","te ne sei dimenticato","se ne è dimenticato","se ne è dimenticata","ce ne siamo dimenticati","ve ne siete dimenticati","se ne sono dimenticati"], itNachSubjekt: true, stimmung: "negativ", universal: true, level: "B1" },
-    { id: "wichtig_ist", art: "unpersoenlich", de: "es wichtig ist", it: "è importante", stimmung: "neutral", universal: true, level: "A2" },
-    { id: "spass", art: "unpersoenlich", de: "es Spaß macht", it: "è divertente", stimmung: "positiv", universal: true, level: "A2" },
-    { id: "lohnt", art: "unpersoenlich", de: "es sich lohnt", it: "ne vale la pena", stimmung: "positiv", universal: true, level: "B1" },
-    { id: "noetig", art: "unpersoenlich", de: "es nötig ist", it: "è necessario", stimmung: "neutral", universal: true, level: "B1" },
-    { id: "gesund_ist", art: "unpersoenlich", de: "es gesund ist", it: "fa bene", stimmung: "positiv", universal: true, level: "B1" },
-    { id: "guenstiger", art: "unpersoenlich", de: "es günstiger ist", it: "costa meno", stimmung: "positiv", universal: true, level: "B1" },
-    { id: "schneller_ist", art: "unpersoenlich", de: "es schneller geht", it: "è più veloce", stimmung: "positiv", universal: true, level: "A2" },
-    { id: "gewohnheit", art: "unpersoenlich", de: "es so üblich ist", it: "si fa così", stimmung: "neutral", universal: true, level: "B2" },
+    { id: "zeithaben", art: "haben", nomen: "Zeit", it: "tempo", stimmung: "positiv", universal: true, grundKlasse: "gelegenheit", level: "A1" },
+    { id: "keinezeit", art: "haben", nomen: "keine Zeit", it: "tempo", itVerneint: true, stimmung: "negativ", universal: true, grundKlasse: "gelegenheit", level: "A2" },
+    { id: "lusthaben", art: "haben", nomen: "Lust", it: "voglia", stimmung: "positiv", universal: true, grundKlasse: "antrieb", level: "A2" },
+    { id: "keinelust", art: "haben", nomen: "keine Lust", it: "voglia", itVerneint: true, stimmung: "negativ", universal: true, grundKlasse: "antrieb", level: "A2" },
+    { id: "langeweile", art: "haben", nomen: "Langeweile", it: "noia", stimmung: "negativ", universal: true, nurVerben: ["lesen","sehen","hoeren","spielen","anrufen","telefonieren","schreiben","aufraeumen","putzen","einkaufen","kochen","laufen","wandern","schwimmen","tanzen","singen","ueben","lernen","besuchen","erzaehlen","machen","suchen","gehen","fahren","essen","reisen"], grundKlasse: "antrieb", level: "B1" },
+    { id: "besuchhaben", art: "haben", nomen: "Besuch", it: "ospiti", universal: true, nurVerben: ["kochen","einkaufen","kaufen","aufraeumen","putzen","waschen","bestellen","bleiben","machen","bringen","mitbringen","vorbereiten","essen","trinken","feiern","packen"], grundKlasse: "antrieb", stimmung: "positiv", anlass: "einmalig", level: "B1" },
+    { id: "geburtstag", art: "haben", nomen: "Geburtstag", it: "il compleanno", itFest: true, universal: true, nurVerben: ["feiern","kochen","einkaufen","bestellen","essen","trinken","tanzen","singen","treffen","machen","aufraeumen","putzen","bringen","mitbringen","schenken","anrufen","telefonieren","buchen","bleiben","einladen","vorbereiten","backen"], grundKlasse: "antrieb", stimmung: "positiv", anlass: "einmalig", level: "A2" },
+    { id: "urlaubhaben", art: "haben", nomen: "Urlaub", it: "le ferie", itFest: true, universal: true, nurVerben: ["reisen","fliegen","fahren","schlafen","schwimmen","wandern","lesen","sehen","hoeren","spielen","feiern","tanzen","singen","besuchen","kochen","essen","trinken","aufraeumen","putzen","waschen","gehen","bleiben","sitzen","liegen","treffen","einkaufen","laufen","machen","ueben","lernen","schreiben","telefonieren","anrufen","buchen","sein"], grundKlasse: "antrieb", stimmung: "positiv", level: "A2" },
+    { id: "frei_haben", art: "haben", nomen: "frei", it: "libero", itFest: true, stimmung: "positiv", universal: true, grundKlasse: "gelegenheit", level: "A2" },
+    { id: "magdas", art: "satz", deFormen: ["das mag","das magst","das mag","das mögen","das mögt","das mögen"], itFormen: ["mi piace","ti piace","gli piace","le piace","ci piace","vi piace","a loro piace"], dePastFormen: ["das mochte","das mochtest","das mochte","das mochten","das mochtet","das mochten"], itPastFormen: ["mi piaceva","ti piaceva","gli piaceva","le piaceva","ci piaceva","vi piaceva","a loro piaceva"], itNachSubjekt: true, stimmung: "positiv", universal: true, nurVerben: ["sein","wohnen","gehen","fahren","fliegen","reisen","laufen","schwimmen","wandern","spielen","lernen","lesen","sehen","hoeren","sprechen","treffen","kochen","essen","trinken","tanzen","singen","feiern","ueben","besuchen","erzaehlen","schreiben","machen","einkaufen","arbeiten","sitzen","liegen","bleiben","schlafen","telefonieren","helfen","zeigen","kaufen","tragen","schenken","mitbringen"], grundKlasse: "antrieb", level: "A2" },
+    { id: "mussdas", art: "satz", deFormen: ["das muss","das musst","das muss","das müssen","das müsst","das müssen"], itFormen: ["devo","devi","deve","deve","dobbiamo","dovete","devono"], dePastFormen: ["das musste","das musstest","das musste","das mussten","das musstet","das mussten"], itPastFormen: ["dovevo","dovevi","doveva","doveva","dovevamo","dovevate","dovevano"], itNachSubjekt: true, stimmung: "neutral", universal: true, grundKlasse: "antrieb", level: "A2" },
+    { id: "willdas", art: "satz", deFormen: ["das will","das willst","das will","das wollen","das wollt","das wollen"], itFormen: ["voglio","vuoi","vuole","vuole","vogliamo","volete","vogliono"], dePastFormen: ["das wollte","das wolltest","das wollte","das wollten","das wolltet","das wollten"], itPastFormen: ["volevo","volevi","voleva","voleva","volevamo","volevate","volevano"], itNachSubjekt: true, stimmung: "positiv", universal: true, grundKlasse: "antrieb", level: "A2" },
+    { id: "solldas", art: "satz", deFormen: ["das soll","das sollst","das soll","das sollen","das sollt","das sollen"], itFormen: ["dovrei","dovresti","dovrebbe","dovrebbe","dovremmo","dovreste","dovrebbero"], dePastFormen: ["das sollte","das solltest","das sollte","das sollten","das solltet","das sollten"], itPastFormen: ["avrei dovuto","avresti dovuto","avrebbe dovuto","avrebbe dovuto","avremmo dovuto","avreste dovuto","avrebbero dovuto"], itNachSubjekt: true, stimmung: "neutral", universal: true, grundKlasse: "antrieb", level: "B1" },
+    { id: "nichtanders", art: "satz", deFormen: ["nicht anders kann","nicht anders kannst","nicht anders kann","nicht anders können","nicht anders könnt","nicht anders können"], itFormen: ["non posso fare altrimenti","non puoi fare altrimenti","non può fare altrimenti","non può fare altrimenti","non possiamo fare altrimenti","non potete fare altrimenti","non possono fare altrimenti"], dePastFormen: ["nicht anders konnte","nicht anders konntest","nicht anders konnte","nicht anders konnten","nicht anders konntet","nicht anders konnten"], itPastFormen: ["non potevo fare altrimenti","non potevi fare altrimenti","non poteva fare altrimenti","non poteva fare altrimenti","non potevamo fare altrimenti","non potevate fare altrimenti","non potevano fare altrimenti"], itNachSubjekt: true, stimmung: "neutral", universal: true, grundKlasse: "antrieb", level: "B1" },
+    { id: "versprochen", art: "satz", deFormen: ["es versprochen habe","es versprochen hast","es versprochen hat","es versprochen haben","es versprochen habt","es versprochen haben"], itFormen: ["l'ho promesso","l'hai promesso","l'ha promesso","l'ha promesso","l'abbiamo promesso","l'avete promesso","l'hanno promesso"], dePastFormen: ["es versprochen hatte","es versprochen hattest","es versprochen hatte","es versprochen hatten","es versprochen hattet","es versprochen hatten"], itPastFormen: ["l'avevo promesso","l'avevi promesso","l'aveva promesso","l'aveva promesso","l'avevamo promesso","l'avevate promesso","l'avevano promesso"], itNachSubjekt: true, stimmung: "neutral", universal: true, grundKlasse: "antrieb", level: "B1" },
+    { id: "vergessen_grund", art: "satz", deFormen: ["es vergessen habe","es vergessen hast","es vergessen hat","es vergessen haben","es vergessen habt","es vergessen haben"], itFormen: ["me ne sono dimenticato","te ne sei dimenticato","se ne è dimenticato","se ne è dimenticata","ce ne siamo dimenticati","ve ne siete dimenticati","se ne sono dimenticati"], dePastFormen: ["es vergessen hatte","es vergessen hattest","es vergessen hatte","es vergessen hatten","es vergessen hattet","es vergessen hatten"], itPastFormen: ["me n'ero dimenticato","te n'eri dimenticato","se n'era dimenticato","se n'era dimenticata","ce n'eravamo dimenticati","ve n'eravate dimenticati","se n'erano dimenticati"], itNachSubjekt: true, stimmung: "negativ", universal: true, nurVerben: ["anrufen","telefonieren","schreiben","mitbringen","bringen","kaufen","einkaufen","bezahlen","packen","aufraeumen","waschen","suchen","fragen","wiederholen","vorbereiten","buchen","schicken"], level: "B1" },
+    { id: "wichtig_ist", art: "unpersoenlich", nichtVerben: ["moegen"], dePast: "es wichtig war", itPast: "era importante", de: "es wichtig ist", it: "è importante", stimmung: "positiv", universal: true, grundKlasse: "bewertung", level: "A2" },
+    { id: "spass", art: "unpersoenlich", dePast: "es Spaß gemacht hat", itPast: "era divertente", de: "es Spaß macht", it: "è divertente", stimmung: "positiv", universal: true, nurVerben: ["sein","gehen","fahren","fliegen","reisen","laufen","schwimmen","wandern","spielen","lernen","lesen","sehen","hoeren","sprechen","treffen","kochen","essen","trinken","tanzen","singen","feiern","ueben","besuchen","erzaehlen","schreiben","machen","einkaufen","zeigen","telefonieren","anrufen","arbeiten","wiederholen","helfen"], grundKlasse: "antrieb", level: "A2" },
+    { id: "lohnt", art: "unpersoenlich", nichtVerben: ["moegen","brauchen"], dePast: "es sich gelohnt hat", itPast: "ne valeva la pena", de: "es sich lohnt", it: "ne vale la pena", stimmung: "positiv", universal: true, grundKlasse: "bewertung", level: "B1" },
+    { id: "noetig", art: "unpersoenlich", nichtVerben: ["moegen"], dePast: "es nötig war", itPast: "era necessario", de: "es nötig ist", it: "è necessario", stimmung: "positiv", universal: true, grundKlasse: "bewertung", level: "B1" },
+    { id: "gesund_ist", art: "unpersoenlich", dePast: "es gesund war", itPast: "faceva bene", de: "es gesund ist", it: "fa bene", stimmung: "positiv", universal: true, nurVerben: ["essen","trinken","kochen","schlafen","laufen","schwimmen","wandern","spielen","gehen","fahren","aufstehen","aufhoeren","machen","ueben","tanzen","bleiben","einkaufen","kaufen","bestellen","haben","brauchen","moegen"], grundKlasse: "bewertung", level: "B1" },
+    { id: "guenstiger", art: "unpersoenlich", dePast: "es günstiger war", itPast: "costava meno", de: "es günstiger ist", it: "costa meno", stimmung: "positiv", universal: true, nurVerben: ["kaufen","einkaufen","bestellen","buchen","fahren","fliegen","reisen","wohnen","nehmen","bezahlen","essen","trinken","machen","schicken","telefonieren","anrufen","benutzen","reparieren","haben","brauchen"], grundKlasse: "bewertung", level: "B1" },
+    { id: "schneller_ist", widerspricht: ["langsam", "ruhig", "geduldig", "gruendlich", "sorgfaeltig"], art: "unpersoenlich", nichtVerben: ["haben"], dePast: "es schneller ging", itPast: "era più veloce", de: "es schneller geht", it: "è più veloce", stimmung: "positiv", universal: true, nurVerben: ["gehen","fahren","fliegen","laufen","nehmen","schicken","schreiben","anrufen","telefonieren","buchen","bezahlen","machen","suchen","benutzen","kommen","reisen","einkaufen","bestellen","kochen","waschen","putzen","aufraeumen","packen","haben","brauchen"], grundKlasse: "bewertung", level: "A2" },
+    { id: "gewohnheit", art: "unpersoenlich", dePast: "es so üblich war", itPast: "era l'usanza", de: "es so üblich ist", it: "si fa così", stimmung: "neutral", universal: true, nurVerben: ["bezahlen","tragen","bringen","mitbringen","schenken","feiern","essen","trinken","warten","anrufen","schreiben","sprechen","gehen","kommen","sein","machen","geben","nehmen","aufstehen","waschen","putzen","aufraeumen","gruessen","einkaufen","kochen","besuchen","fragen","antworten","helfen"], grundKlasse: "bewertung", level: "B2" },
   ];
   const GRUND_SEIN = ["bin", "bist", "ist", "sind", "seid", "sind"];
   const GRUND_WAR = ["war", "warst", "war", "waren", "wart", "waren"];
@@ -1225,7 +1225,7 @@
       itInf: "parlare", itFormen: ["parlo", "parli", "parla", "parliamo", "parlate", "parlano"], itHilf: "avere", itPart: "parlato", itFutStamm: "parler", itPersonFeld: "itMit",
       kategorien: ["bildung", "arbeit", "familie"] },
 
-    { id: "verstehen", inf: "verstehen", formen: ["verstehe", "verstehst", "versteht", "verstehen", "versteht", "verstehen"], hilfsverb: "haben", partizip: "verstanden",
+    { id: "verstehen", steuerbar: false, inf: "verstehen", formen: ["verstehe", "verstehst", "versteht", "verstehen", "versteht", "verstehen"], hilfsverb: "haben", partizip: "verstanden",
       lokal: ["wo"], objekt: "akk", objektPflicht: true, personFall: "akk",
       passtOrte: {"wo":["schule","uni","kurs","besprechung","klassenzimmer","hoersaal","sprachschule","seminarraum","bibliothek","buero","zuhause","cafe"]},
       passtDinge: ["deutsch","italienisch","aufgabe","grammatik","uebung","frage","problem","fehler","regel","grund","antwort"],
@@ -1264,7 +1264,7 @@
       itInf: "fare", itFormen: ["faccio", "fai", "fa", "facciamo", "fate", "fanno"], itHilf: "avere", itPart: "fatto", itFutStamm: "far",
       kategorien: ["alltag", "arbeit", "freizeit", "einkaufen"] },
 
-    { id: "haben", inf: "haben", formen: ["habe", "hast", "hat", "haben", "habt", "haben"], hilfsverb: "haben", partizip: "gehabt",
+    { id: "haben", steuerbar: false, bewertbar: true, inf: "haben", formen: ["habe", "hast", "hat", "haben", "habt", "haben"], hilfsverb: "haben", partizip: "gehabt",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {}, passtDinge: ["termin","zeit","hunger","durst","tisch","stuhl","bett","schrank","lampe","fenster","tuer","schluessel","handtuch","zahnbuerste","blume","topf","pfanne","messer","gabel","loeffel","teller","tasse","glas","flasche","korb","geld","preis","quittung","karte","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe","aufgabe","projekt","protokoll","praesentation","pruefung","note","heft","stift","woerterbuch","computer","laptop","handy","bildschirm","drucker","tastatur","programm","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","rucksack","regenschirm","pass","visum","fahrkarte","urlaub","wetter","rezept","medikament","tablette","verband","impfung","krankheit","ausweis","formular","anmeldung","kuendigung","versicherung","steuer","wohnung","miete","idee","frage","antwort","problem","loesung","fehler","regel","plan","meinung","grund","wunsch","vertrag","rechnung"], passtPersonen: [], passtGruende: [],
       itInf: "avere", itFormen: ["ho", "hai", "ha", "abbiamo", "avete", "hanno"], itHilf: "avere", itPart: "avuto", itFutStamm: "avr",
@@ -1299,7 +1299,7 @@
       itInf: "cercare", itFormen: ["cerco","cerchi","cerca","cerchiamo","cercate","cercano"], itHilf: "avere", itPart: "cercato", itFutStamm: "cercher",
       kategorien: ["alltag","arbeit","bildung"] },
 
-    { id: "finden", inf: "finden", formen: ["finde","findest","findet","finden","findet","finden"], hilfsverb: "haben", partizip: "gefunden",
+    { id: "finden", steuerbar: false, inf: "finden", formen: ["finde","findest","findet","finden","findet","finden"], hilfsverb: "haben", partizip: "gefunden",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "akk", itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["schluessel","preis","karte","schuhe","projekt","protokoll","heft","stift","woerterbuch","handy","datei","ordner","app","spiel","ball","fahrrad","roman","zeitschrift","konzertkarte","koffer","regenschirm","pass","bus","fahrkarte","ausweis","wohnung","idee","antwort","problem","loesung","fehler","grund"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
@@ -1355,28 +1355,28 @@
       itInf: "ordinare", itFormen: ["ordino","ordini","ordina","ordiniamo","ordinate","ordinano"], itHilf: "avere", itPart: "ordinato", itFutStamm: "ordiner",
       kategorien: ["essen","einkaufen"] },
 
-    { id: "brauchen", inf: "brauchen", formen: ["brauche","brauchst","braucht","brauchen","braucht","brauchen"], hilfsverb: "haben", partizip: "gebraucht",
+    { id: "brauchen", steuerbar: false, bewertbar: true, inf: "brauchen", formen: ["brauche","brauchst","braucht","brauchen","braucht","brauchen"], hilfsverb: "haben", partizip: "gebraucht",
       lokal: [], objekt: "akk", objektPflicht: true, personFall: "akk", itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["butter","ei","zwiebel","milch","zucker","salz","pfeffer","oel","rechnung","bett","handtuch","seife","zahnbuerste","messer","gabel","loeffel","teller","geld","quittung","jacke","mantel","pullover","handschuhe","projekt","protokoll","praesentation","pruefung","note","heft","stift","woerterbuch","computer","laptop","handy","drucker","programm","app","fahrrad","konzertkarte","regenschirm","pass","visum","fahrkarte","urlaub","rezept","medikament","tablette","verband","impfung","ausweis","formular","anmeldung","kuendigung","versicherung","steuer","miete","antwort","loesung","plan","wasser","kaffee","zeit","schluessel","buch","wohnung","tastatur","bildschirm","topf","pfanne","hemd","hose","schuhe","kleid","muetze","schal","termin","idee"], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: ["hungrig","durstig","krank","erkaeltet"],
       itInf: "avere bisogno di", itFormen: ["ho","hai","ha","abbiamo","avete","hanno"], itHilf: "avere", itPart: "avuto", itFutStamm: "avr", itZusatz: "bisogno di",
       kategorien: ["alltag","einkaufen","gesundheit"] },
 
-    { id: "bekommen", inf: "bekommen", formen: ["bekomme","bekommst","bekommt","bekommen","bekommt","bekommen"], hilfsverb: "haben", partizip: "bekommen",
+    { id: "bekommen", steuerbar: false, inf: "bekommen", formen: ["bekomme","bekommst","bekommt","bekommen","bekommt","bekommen"], hilfsverb: "haben", partizip: "bekommen",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["rechnung","quittung","aufgabe","note","pass","visum","rezept","medikament","impfung","krankheit","formular","anmeldung","kuendigung","versicherung"], passtPersonen: [], passtGruende: ["krank","erkaeltet","pruefung"],
       itInf: "ricevere", itFormen: ["ricevo","ricevi","riceve","riceviamo","ricevete","ricevono"], itHilf: "avere", itPart: "ricevuto", itFutStamm: "ricever",
       kategorien: ["alltag","einkaufen","verwaltung","gesundheit"] },
 
-    { id: "vergessen", inf: "vergessen", formen: ["vergesse","vergisst","vergisst","vergessen","vergesst","vergessen"], hilfsverb: "haben", partizip: "vergessen",
+    { id: "vergessen", steuerbar: false, inf: "vergessen", formen: ["vergesse","vergisst","vergisst","vergessen","vergesst","vergessen"], hilfsverb: "haben", partizip: "vergessen",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["aufgabe","protokoll","pruefung","vokabel","medikament","tablette","idee","frage","antwort","problem","termin","schluessel","handy","regenschirm","pass","ausweis"], passtPersonen: [], passtGruende: ["muede","beschaeftigt","zeitmangel","spaet"],
       itInf: "dimenticare", itFormen: ["dimentico","dimentichi","dimentica","dimentichiamo","dimenticate","dimenticano"], itHilf: "avere", itPart: "dimenticato", itFutStamm: "dimenticher",
       kategorien: ["alltag","bildung","arbeit","gesundheit"] },
 
-    { id: "verlieren", inf: "verlieren", formen: ["verliere","verlierst","verliert","verlieren","verliert","verlieren"], hilfsverb: "haben", partizip: "verloren",
+    { id: "verlieren", steuerbar: false, inf: "verlieren", formen: ["verliere","verlierst","verliert","verlieren","verliert","verlieren"], hilfsverb: "haben", partizip: "verloren",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["schluessel","karte","heft","stift","handy","datei","spiel","ball","fahrrad","zeitschrift","konzertkarte","koffer","regenschirm","pass","fahrkarte","ausweis"], passtPersonen: [], passtGruende: ["muede","beschaeftigt","spaet"],
@@ -1460,28 +1460,28 @@
       itInf: "ripetere", itFormen: ["ripeto","ripeti","ripete","ripetiamo","ripetete","ripetono"], itHilf: "avere", itPart: "ripetuto", itFutStamm: "ripeter",
       kategorien: ["bildung"] },
 
-    { id: "denken", inf: "denken", formen: ["denke","denkst","denkt","denken","denkt","denken"], hilfsverb: "haben", partizip: "gedacht",
+    { id: "denken", steuerbar: false, inf: "denken", formen: ["denke","denkst","denkt","denken","denkt","denken"], hilfsverb: "haben", partizip: "gedacht",
       lokal: [],
       passtOrte: {},
       passtDinge: [], passtPersonen: [], passtGruende: ["muede","beschaeftigt","nervoes","unsicher"],
       itInf: "pensare", itFormen: ["penso","pensi","pensa","pensiamo","pensate","pensano"], itHilf: "avere", itPart: "pensato", itFutStamm: "penser",
       kategorien: ["alltag"] },
 
-    { id: "glauben", inf: "glauben", formen: ["glaube","glaubst","glaubt","glauben","glaubt","glauben"], hilfsverb: "haben", partizip: "geglaubt",
+    { id: "glauben", steuerbar: false, inf: "glauben", formen: ["glaube","glaubst","glaubt","glauben","glaubt","glauben"], hilfsverb: "haben", partizip: "geglaubt",
       lokal: [], personFall: "dat", personPflicht: true, itPersonFeld: "itAn",
       passtOrte: {},
       passtDinge: [], passtPersonen: ["freund","freundin","eltern","bruder","schwester","kollege","nachbar","chef","lehrerin","kind","onkel","tante","oma","opa","cousin","cousine","sohn","tochter","mann","frau","grosseltern","kinder","freunde","kollegen","arzt","verkaeufer","kellner","nachbarin","lehrer","vermieter"], passtGruende: [],
       itInf: "credere", itFormen: ["credo","credi","crede","crediamo","credete","credono"], itHilf: "avere", itPart: "creduto", itFutStamm: "creder",
       kategorien: ["alltag"] },
 
-    { id: "wissen", inf: "wissen", formen: ["weiß","weißt","weiß","wissen","wisst","wissen"], hilfsverb: "haben", partizip: "gewusst",
+    { id: "wissen", steuerbar: false, inf: "wissen", formen: ["weiß","weißt","weiß","wissen","wisst","wissen"], hilfsverb: "haben", partizip: "gewusst",
       lokal: [], objekt: "akk", objektPflicht: true,
       passtOrte: {},
       passtDinge: ["antwort","loesung","regel","grund","preis","termin"], passtPersonen: [], passtGruende: [],
       itInf: "sapere", itFormen: ["so","sai","sa","sappiamo","sapete","sanno"], itHilf: "avere", itPart: "saputo", itFutStamm: "sapr",
       kategorien: ["alltag","bildung"] },
 
-    { id: "moegen", inf: "mögen", formen: ["mag","magst","mag","mögen","mögt","mögen"], hilfsverb: "haben", partizip: "gemocht",
+    { id: "moegen", steuerbar: false, bewertbar: true, inf: "mögen", formen: ["mag","magst","mag","mögen","mögt","mögen"], hilfsverb: "haben", partizip: "gemocht",
       lokal: [], objekt: "akk", objektPflicht: true, nurBegleiter: ["bestimmt", "ohne"], itPersonFeld: "it",
       passtOrte: {},
       passtDinge: ["brot","apfel","pizza","suppe","kuchen","nudeln","kaffee","tee","wasser","wein","kaese","fleisch","fisch","gemuese","obst","salat","reis","kartoffeln","tomaten","zwiebel","milch","saft","bier","schokolade","eis","keks","broetchen","sandwich","nachtisch","joghurt","marmelade","film","musik","fussball","klavier","karten","spiel","buch","roman","gedicht","lied","zeitschrift","fahrrad","wetter","urlaub","blume","hemd","hose","jacke","schuhe","mantel","kleid","pullover","muetze","schal","handschuhe","handy","laptop","computer","app"], passtPersonen: [], passtGruende: [],
@@ -1593,14 +1593,14 @@
       itInf: "mandare", itFormen: ["mando","mandi","manda","mandiamo","mandate","mandano"], itHilf: "avere", itPart: "mandato", itFutStamm: "mander",
       kategorien: ["alltag","arbeit"] },
 
-    { id: "lachen", inf: "lachen", formen: ["lache","lachst","lacht","lachen","lacht","lachen"], hilfsverb: "haben", partizip: "gelacht",
+    { id: "lachen", steuerbar: false, inf: "lachen", formen: ["lache","lachst","lacht","lachen","lacht","lachen"], hilfsverb: "haben", partizip: "gelacht",
       lokal: ["wo"],
       passtOrte: {"wo":["zuhause","wohnzimmer","kueche","buero","park","kino","cafe","restaurant","schule","disko"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["gluecklich","nervoes"],
       itInf: "ridere", itFormen: ["rido","ridi","ride","ridiamo","ridete","ridono"], itHilf: "avere", itPart: "riso", itFutStamm: "rider",
       kategorien: ["alltag","freizeit"] },
 
-    { id: "weinen", inf: "weinen", formen: ["weine","weinst","weint","weinen","weint","weinen"], hilfsverb: "haben", partizip: "geweint",
+    { id: "weinen", steuerbar: false, inf: "weinen", formen: ["weine","weinst","weint","weinen","weint","weinen"], hilfsverb: "haben", partizip: "geweint",
       lokal: ["wo"],
       passtOrte: {"wo":["zuhause","schlafzimmer","badezimmer","wohnzimmer","kino","buero","schule"]},
       passtDinge: [], passtPersonen: [], passtGruende: ["traurig","muede","krank","allein","nervoes","unsicher"],
@@ -1758,12 +1758,22 @@
     /* „weil ich das mag“, „weil ich muss“ — die Gründe, die zu jeder
        Tätigkeit passen. Sie werden nach der Person gebeugt. */
     if (grund.art === "satz") {
-      if (sprache === "it") return "perché " + (grund.itFormen[IT_PERSON_INDEX[subjekt.id]] || grund.itFormen[0]);
-      return "weil " + subjekt.de + " " + grund.deFormen[i];
+      /* In der Vergangenheit muss auch der Grund in der Vergangenheit
+         stehen: „Wir haben geschrieben, weil wir das sollTEN" — vorher
+         stand dort immer die Gegenwart. */
+      const past = zeitform === "perfekt";
+      if (sprache === "it") {
+        const reihe = (past && grund.itPastFormen) ? grund.itPastFormen : grund.itFormen;
+        return "perché " + (reihe[IT_PERSON_INDEX[subjekt.id]] || reihe[0]);
+      }
+      const deReihe = (past && grund.dePastFormen) ? grund.dePastFormen : grund.deFormen;
+      return "weil " + subjekt.de + " " + deReihe[i];
     }
     // „weil es wichtig ist“ — unpersönlich, unverändert in jeder Person.
     if (grund.art === "unpersoenlich") {
-      return sprache === "it" ? "perché " + grund.it : "weil " + grund.de;
+      const past = zeitform === "perfekt";
+      if (sprache === "it") return "perché " + ((past && grund.itPast) || grund.it);
+      return "weil " + ((past && grund.dePast) || grund.de);
     }
     // wegen + Genitiv
     if (sprache === "it") return grund.it;
@@ -1869,6 +1879,14 @@
     /* Dieselben Regeln, die die Auswahl steuern, gelten auch hier: eine
        Auswahl, die vor einer späteren Änderung noch passte, darf danach
        keinen widersprüchlichen Satz mehr ergeben. */
+    if ((wahl.person || wahl.begleitung) && wahl.objekt && wahl.objektBegleiter === "possessiv") {
+      // siehe begleiterFuer: nicht zweimal „ihren … ihren" in einem Satz
+      const ersatz = ["bestimmt", "unbestimmt", "ohne"].find((b) => (wahl.objekt.begleiter || []).includes(b));
+      if (ersatz) wahl = Object.assign({}, wahl, { objektBegleiter: ersatz });
+    }
+    if (wahl.begleitung && !begleitungFuer(verb, null, wahl).some((p) => p.id === wahl.begleitung.id)) {
+      wahl = Object.assign({}, wahl, { begleitung: null });
+    }
     if (wahl.grund && !grundPasst(wahl.grund, verb, wahl)) wahl = Object.assign({}, wahl, { grund: null });
     if (wahl.art && !artPasst(wahl.art, verb, wahl)) wahl = Object.assign({}, wahl, { art: null });
     // „allein mit meiner Frau“ ist ein Widerspruch.
@@ -2150,13 +2168,18 @@
          siehe RAUM_ALS_DING. „Die Wohnung im Kinderzimmer aufräumen“
          entstand genau hier. */
       if (objekt && RAUM_ALS_DING.has(objekt.id)) return false;
+      /* R17 — Ort und Objekt dürfen nicht dasselbe Wort sein:
+         „Ich buche im Urlaub einen Urlaub." */
+      if (objekt && kernWort(o) && kernWort(o) === kernWort(objekt)) return false;
       return passtZumNiveau(o, level);
     });
     /* Braucht das Verb zwingend eine Ortsangabe, darf der Kategorie- oder
        Niveaufilter die Liste nicht leerräumen — sonst entsteht „Ihr wohnt
        sonntags.“, und das ist kein Satz. */
     if (!liste.length && verb && verb.ortPflicht && erlaubt) {
-      return ORTE.filter((o) => erlaubt.includes(o.id) && (!objekt || !o.verkauft || o.verkauft.includes(objekt.id)));
+      return ORTE.filter((o) => erlaubt.includes(o.id)
+        && (!objekt || !o.verkauft || o.verkauft.includes(objekt.id))
+        && !(objekt && kernWort(o) && kernWort(o) === kernWort(objekt)));
     }
     return liste;
   }
@@ -2207,6 +2230,17 @@
          ihrer Verneinung.
      R4  Ein Grund, der ein bestimmtes Objekt voraussetzt (Hunger), passt
          nur, wenn dieses Objekt auch dasteht.                        */
+  /* Das nackte Wort eines Bausteins — ohne Artikel, klein geschrieben.
+     Dinge und Orte tragen ihr Wort in „nomen", Angaben in „de". Die
+     alte Fassung sah nur in „de" nach und lief deshalb bei Dingen ins
+     Leere: „mit Karte eine Karte bezahlen" kam durch. */
+  function kernWort(x) {
+    if (!x) return "";
+    return String(x.nomen || x.de || "")
+      .replace(/^(der|die|das|ein|eine|kein|keine|keinen)\s+/i, "")
+      .trim().toLowerCase();
+  }
+
   function grundPasst(grund, verb, wahl) {
     if (!grund || grund.art === "keiner") return true;
     const w = wahl || {};
@@ -2215,11 +2249,102 @@
     const verneint = (w.objektBegleiter === "kein") || (w.zeit && w.zeit.itBrauchtNon)
       || (w.art && w.art.verneinend);
     if (verneint && grund.stimmung === "positiv") return false;                                   // R3
+    /* R3b — ein Beweggrund, ETWAS ZU TUN, widerspricht der Verneinung
+       derselben Handlung: „Du buchst keinen Urlaub, weil du es
+       versprochen hast." Nur die von sich aus negativen Beweggründe
+       („weil ich keine Lust habe") passen dann. */
+    if (verneint && grund.grundKlasse === "antrieb" && grund.stimmung !== "negativ") return false;
     if (grund.nurDingRollen) {                                                                    // R4
       const rollen = (w.objekt && w.objekt.rollen) || [];
       if (!grund.nurDingRollen.some((r) => rollen.includes(r))) return false;
     }
+    /* R13 — GEMELDET: „Der Satzbaukasten soll unbedingt funktionieren,
+       ohne unlogische Sachen … nie wieder: der Opa ist krank, weil er zu
+       faul war, zur Arbeit zu gehen."
+
+       Das war die letzte offene Stelle. Jedes Verb sagt zwar genau, welche
+       Gründe zu ihm passen — aber 22 Gründe galten als „universal" und
+       standen damit AUCH bei Verben zur Verfügung, die gar keine
+       Entscheidung beschreiben. Daraus entstanden Sätze wie
+       „Ich weiß das, weil ich Lust habe" oder
+       „Ich verliere den Schlüssel, weil es Spaß macht".
+
+       Jetzt trägt jeder universale Grund seine Klasse:
+
+         antrieb      — ein innerer Beweggrund, ETWAS ZU TUN
+                        (weil ich Lust habe, weil es Spaß macht, weil ich muss)
+         gelegenheit  — die Möglichkeit, es zu tun
+                        (weil ich Zeit habe, weil ich frei habe)
+         bewertung    — ein Urteil über die Sache selbst
+                        (weil es günstiger ist, weil es gesund ist)
+
+       Antrieb und Gelegenheit setzen voraus, dass man die Handlung
+       steuern kann. Ein Urteil geht auch bei „haben", „brauchen" und
+       „mögen" — man hat ein Fahrrad, WEIL es günstiger ist. Bei
+       „vergessen", „verlieren", „lachen" oder „wissen" geht keins von
+       beidem: Das tut niemand absichtlich. */
+    if (grund.grundKlasse && verb && verb.steuerbar === false) {
+      if (grund.grundKlasse !== "bewertung") return false;
+      if (!verb.bewertbar) return false;
+    }
+    // Gründe, die nur bei bestimmten Tätigkeiten einen Sinn ergeben.
+    if (grund.nurVerben && verb && !grund.nurVerben.includes(verb.id)) return false;               // R14
+    if (grund.nichtVerben && verb && grund.nichtVerben.includes(verb.id)) return false;             // R14b
+    /* R15 — der Grund darf nicht dasselbe Wort nennen wie das Objekt
+       oder der Ort. Sonst entstanden Sätze wie „Ich buche einen Urlaub,
+       weil ich Urlaub habe", „Wir kommen wegen der Baustelle auf die
+       Baustelle" oder „Er bereitet die Prüfung wegen der Prüfung vor". */
+    const gnomen = kernWort(grund);
+    if (gnomen && gnomen.length > 3) {
+      if (kernWort(w.objekt) === gnomen) return false;
+      if (kernWort(w.ort) === gnomen) return false;
+      /* Auch die Zeitangabe zählt mit: „Sie schlafen im Urlaub, weil sie
+         Urlaub haben." Verglichen wird das letzte Wort, weil dort eine
+         Präposition davorsteht („im Urlaub"). */
+      const zletzt = String((w.zeit && w.zeit.de) || "").toLowerCase().split(/\s+/).pop();
+      if (zletzt === gnomen) return false;
+
+    }
+    /* R16 — ein Grund kann der Art und Weise widersprechen: „Sie geht
+       langsam zum Bahnhof, weil es schneller geht." */
+    if (grund.widerspricht && w.art && grund.widerspricht.includes(w.art.id)) return false;
+    /* R18 — der Grund darf nicht das Verb wiederholen: „Sie geht in die
+       Bar, weil es schneller GEHT", „Ihr macht das Foto, weil es Spaß
+       MACHT". Verglichen wird der Wortstamm, damit auch die gebeugte
+       Form greift. */
+    /* Und die indirekte Frage zählt ebenfalls mit: „Sie fragen, wann sie
+       ZEIT hat, weil sie keine ZEIT haben", „Sie lesen, was sie beruflich
+       MACHT, weil es Spaß MACHT." Verglichen werden die Inhaltswörter
+       beider Teile. */
+    if (w.fragesatz && w.fragesatz.de) {
+      const ohne = new Set(["weil","dass","ob","wann","warum","wie","wer","was","wo","wohin",
+        "der","die","das","den","dem","des","ein","eine","einen","einem","einer","nicht","kein",
+        "keine","keinen","ich","du","er","sie","wir","ihr","es","man","sich","und","oder","aber",
+        "ist","sind","war","waren","habe","hast","hat","haben","habt","hatte","hatten","wird",
+        "werde","wirst","sehr","noch","schon","auch","mit","für","von","bei","nach","aus","um"]);
+      const worte = (t) => new Set(String(t).toLowerCase().split(/[\s,.?!']+/)
+        .filter((x) => x.length > 3 && !ohne.has(x)));
+      const a = worte(grundText2(grund)), b = worte(w.fragesatz.de);
+      for (const x of a) if (b.has(x)) return false;
+    }
+    if (verb && verb.inf) {
+      const stamm = String(verb.inf).replace(/e?n$/, "").toLowerCase();
+      if (stamm.length >= 3) {
+        /* Getroffen wird nur eine gebeugte Form desselben Verbs, nicht
+           irgendein Wort, das zufällig so anfängt: „geb-" darf nicht den
+           „Geburtstag" wegwerfen. Deshalb höchstens drei Buchstaben
+           Endung. */
+        const woerter = grundText2(grund).toLowerCase().split(/[\s,.]+/);
+        if (woerter.some((x) => x.startsWith(stamm) && x.length <= stamm.length + 3)) return false;
+      }
+    }
     return true;
+  }
+  /* Der reine Text eines Grundes — für die Vergleiche oben. */
+  function grundText2(g) {
+    if (!g) return "";
+    return [g.de, g.adjektiv, g.nomen, (g.deFormen || [])[0], (g.deFormen || [])[2]]
+      .filter(Boolean).join(" ");
   }
   /* Die Angaben, die selbst einen Ort nennen. Sie dürfen nicht neben
      einer echten Ortsangabe stehen: „Sie kauft ihr Bett jede Woche im
@@ -2240,6 +2365,8 @@
   function artPasst(art, verb, wahl) {
     if (!art || !art.de) return true;
     const w = wahl || {};
+    // R16 — siehe grundPasst: „langsam … weil es schneller geht".
+    if (w.grund && w.grund.widerspricht && w.grund.widerspricht.includes(art.id)) return false;
     if (art.stimmung === "positiv" && w.grund && w.grund.stimmung === "negativ") return false;    // R1
     if (art.nichtMitDingen && w.objekt && art.nichtMitDingen.includes(w.objekt.id)) return false;
     // R5 — Art und Weise neben einer Verneinung des Objekts
@@ -2254,8 +2381,8 @@
     /* R10 — das Mittel wiederholt das Objekt: „mit Karte eine Karte
        bezahlen“. Geprüft wird auf dem nackten Wort, damit auch
        „die Karte“ gegen „mit Karte“ greift. */
-    if (art.art === "mittel" && w.objekt && w.objekt.de) {
-      const ding = String(w.objekt.de).replace(/^(der|die|das)\s+/i, "").toLowerCase();
+    if (art.art === "mittel" && w.objekt) {
+      const ding = kernWort(w.objekt);
       if (ding.length > 3 && String(art.de).toLowerCase().includes(ding)) return false;
     }
     return true;
@@ -2294,6 +2421,16 @@
     const rolleJetzt = w.ortRolle || (verb && verb.lokal && verb.lokal[0]) || "";
     if (zeit.art === "dauer" && (rolleJetzt === "wohin" || rolleJetzt === "woher")) return false;
     if ((zeit.itBrauchtNon || zeit.nichtVerneinbar) && w.objektBegleiter === "kein") return false;
+    /* R19 — die Zeitangabe darf nicht dasselbe Wort nennen wie das
+       Objekt oder der Ort: „Ich buche im Urlaub einen Urlaub." */
+    const zk = kernWort(zeit);
+    if (zk && zk.length > 3) {
+      if (kernWort(w.objekt) === zk || kernWort(w.ort) === zk) return false;
+      // auch „im Urlaub … den Urlaub" mit Präposition davor
+      const zw = String(zeit.de).toLowerCase().split(/\s+/).pop();
+      const ok = kernWort(w.objekt), orw = kernWort(w.ort);
+      if (zw.length > 3 && (zw === ok || zw === orw)) return false;
+    }
     return true;
   }
 
@@ -2352,8 +2489,13 @@
   /* Nur Verben, die überhaupt eine indirekte Frage vertragen. „Ich esse,
      warum er das gemacht hat" wäre kein Satz. */
   const FRAGESATZ_VERBEN = ["fragen", "wissen", "verstehen", "erzaehlen", "erklaeren", "sehen", "hoeren", "lesen", "vergessen", "denken"];
-  function fragesaetzeFuer(verb, level) {
+  function fragesaetzeFuer(verb, level, wahl) {
     if (!verb || !FRAGESATZ_VERBEN.includes(verb.id)) return [];
+    /* R20 — die indirekte Frage IST das Objekt: „Ich vergesse, ob es ihm
+       gefallen hat." Steht schon ein Objekt im Satz, geht beides nicht
+       zusammen: „Ich vergesse keine Aufgabe, ob es ihm gefallen hat."
+       war ein echter Fehler. */
+    if (wahl && wahl.objekt) return [];
     return FRAGESAETZE.filter((f) => passtZumNiveau(f, level));
   }
 
@@ -2362,12 +2504,24 @@
     "essen", "trinken", "kochen", "fruehstuecken", "einkaufen", "kaufen", "bestellen", "bezahlen",
     "spielen", "sehen", "hoeren", "singen", "tanzen", "feiern", "schwimmen", "lachen",
     "lernen", "sprechen", "ueben", "wiederholen", "arbeiten", "aufraeumen", "putzen", "waschen",
-    "warten", "sitzen", "stehen", "wohnen", "sein", "schlafen", "besuchen", "treffen",
+    "warten", "sitzen", "stehen", "wohnen", "sein", "besuchen", "treffen",
     "telefonieren", "packen", "buchen", "vorbereiten", "anfangen", "machen", "lesen",
   ];
-  function begleitungFuer(verb, level) {
+  function begleitungFuer(verb, level, wahl) {
     if (!verb || !GEMEINSAM_MOEGLICH.includes(verb.id)) return [];
-    return PERSONEN.filter((p) => p.alsBegleitung !== false && passtZumNiveau(p, level));
+    /* R21 — steht die Person des Verbs schon mit „mit" im Satz
+       („mit meinem Nachbarn sprechen"), darf die Begleitung nicht auch
+       noch eine „mit"-Angabe sein. Sonst entstand
+       „Sie haben mit ihrem Nachbarn mit ihrem Opa gesprochen." */
+    if (wahl && wahl.person && verb.personPraep === "mit") return [];
+    /* Und auch nicht dieselbe Person zweimal: „Er besucht seinen
+       Kollegen mit seinen Kollegen." Verglichen wird ohne die Endung,
+       damit Einzahl und Mehrzahl zusammenfallen. */
+    const stumpf = (x) => kernWort(x).replace(/(e?n|e|er|in|innen)$/, "");
+    const schon = wahl && wahl.person ? stumpf(wahl.person) : "";
+    return PERSONEN.filter((p) => p.alsBegleitung !== false
+      && (!schon || schon.length < 3 || stumpf(p) !== schon)
+      && passtZumNiveau(p, level));
   }
   function begleitungText(person, subjekt, sprache) {
     if (!person) return "";
@@ -2405,8 +2559,18 @@
     if (!eintrag || !eintrag.adjektive) return [];
     return eintrag.adjektive.map((id) => ADJ_NACH_ID[id]).filter((a) => a && passtZumNiveau(a, level));
   }
-  function begleiterFuer(ding, verb) {
+  function begleiterFuer(ding, verb, wahl) {
     if (!ding) return [];
+    /* Eine PERSON im Satz trägt immer schon ein Possessiv („meinen
+       Freunden"). Bekommt das Ding dann auch eins, stolpert der Satz:
+       „Erzählen sie ihren Freunden ihren Roman?" Deshalb fällt der
+       Possessivbegleiter weg, sobald eine Person mit im Satz steht. */
+    if (wahl && (wahl.person || wahl.begleitung)) {
+      const ohnePoss = (ding.begleiter || ["bestimmt"]).filter((b) => b !== "possessiv");
+      if (ohnePoss.length) {
+        return ohnePoss.map((id) => ({ id, ...BEGLEITER_NAMEN[id] }));
+      }
+    }
     /* Manche Verben lassen nur bestimmte Begleiter zu: „mögen“ steht im
        Italienischen immer mit Artikel („mi piace il caffè“), also auch
        im Deutschen. */

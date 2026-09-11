@@ -8,7 +8,7 @@
    Diese Datei wird NICHT beim Start geladen, sondern erst, wenn
    die Bilderwelt geoeffnet wird.
 
-   Gebaut von scratchpad/bau-szenen.py aus szenen_a..f.py —
+   Gebaut von scratchpad/bau-szenen.py aus szenen_a..g.py —
    Aenderungen dort machen, nicht hier.
    ========================================================= */
 window.DMA_SZENEN = [
@@ -129,7 +129,8 @@ window.DMA_SZENEN = [
     "en": "book",
     "x": 150,
     "y": 122,
-    "kunst": "<path d=\"M-11 0 L0 -3 L11 0 L11 7 L0 4 L-11 7 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"-3\" x2=\"0\" y2=\"4\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\"/>"
+    "kunst": "<path d=\"M-11 0 L0 -3 L11 0 L11 7 L0 4 L-11 7 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"-3\" x2=\"0\" y2=\"4\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\"/>",
+    "lupe": "buch_detail"
    },
    {
     "id": "teddy",
@@ -481,7 +482,8 @@ window.DMA_SZENEN = [
     "en": "kitchen table",
     "x": 230,
     "y": 140,
-    "kunst": "<rect x=\"-32.0\" y=\"0\" width=\"64\" height=\"6\" rx=\"3\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><line x1=\"-26.0\" y1=\"6\" x2=\"-26.0\" y2=\"24\" stroke=\"#a06c3c\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><line x1=\"26.0\" y1=\"6\" x2=\"26.0\" y2=\"24\" stroke=\"#a06c3c\" stroke-width=\"2.6\" stroke-linecap=\"round\"/>"
+    "kunst": "<rect x=\"-32.0\" y=\"0\" width=\"64\" height=\"6\" rx=\"3\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><line x1=\"-26.0\" y1=\"6\" x2=\"-26.0\" y2=\"24\" stroke=\"#a06c3c\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><line x1=\"26.0\" y1=\"6\" x2=\"26.0\" y2=\"24\" stroke=\"#a06c3c\" stroke-width=\"2.6\" stroke-linecap=\"round\"/>",
+    "lupe": "backen_detail"
    },
    {
     "id": "stuhl",
@@ -1129,8 +1131,8 @@ window.DMA_SZENEN = [
     "itSyl": "SCIAR-pa",
     "en": "scarf",
     "x": 178,
-    "y": 78,
-    "kunst": "<path d=\"M0 0 C-6 10 -6 22 -3 34 L-9 34 C-12 20 -12 8 -7 0 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4 0 C10 10 10 22 7 34 L13 34 C16 20 16 8 11 0 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "y": 86,
+    "kunst": "<path d=\"M-22 -14 Q0 -2 22 -14 L22 -6 Q0 6 -22 -6 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9 0 Q-11 12 -8 24 L-1 24 Q-4 12 -2 1 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2 1 Q4 12 1 24 L8 24 Q11 12 9 0 Z\" fill=\"#c25441\" stroke=\"#a64a39\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8 24 L-1 24 M1 24 L8 24\" fill=\"none\" stroke=\"#a64a39\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-16 -9 L-16 -1 M-4 -4 L-4 4 M10 -6 L10 2\" fill=\"none\" stroke=\"#a64a39\" stroke-width=\"0.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
    },
    {
     "id": "muetze",
@@ -1779,7 +1781,8 @@ window.DMA_SZENEN = [
     "en": "table",
     "x": 120,
     "y": 124,
-    "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"58\" ry=\"14\" fill=\"#e8dcc8\" stroke=\"#c0a98a\" stroke-width=\"1.6\"/><ellipse cx=\"0\" cy=\"-3\" rx=\"58\" ry=\"14\" fill=\"#fdfaf4\" stroke=\"#c0a98a\" stroke-width=\"1.6\"/><line x1=\"0\" y1=\"8\" x2=\"0\" y2=\"36\" stroke=\"#a06c3c\" stroke-width=\"4\" stroke-linecap=\"round\"/><ellipse cx=\"0\" cy=\"38\" rx=\"16\" ry=\"5\" fill=\"#a06c3c\"/>"
+    "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"58\" ry=\"14\" fill=\"#e8dcc8\" stroke=\"#c0a98a\" stroke-width=\"1.6\"/><ellipse cx=\"0\" cy=\"-3\" rx=\"58\" ry=\"14\" fill=\"#fdfaf4\" stroke=\"#c0a98a\" stroke-width=\"1.6\"/><line x1=\"0\" y1=\"8\" x2=\"0\" y2=\"36\" stroke=\"#a06c3c\" stroke-width=\"4\" stroke-linecap=\"round\"/><ellipse cx=\"0\" cy=\"38\" rx=\"16\" ry=\"5\" fill=\"#a06c3c\"/>",
+    "lupe": "tisch_detail"
    },
    {
     "id": "tischdecke",
@@ -2076,7 +2079,8 @@ window.DMA_SZENEN = [
     "en": "X-ray",
     "x": 128,
     "y": 40,
-    "kunst": "<rect x=\"-24\" y=\"-20\" width=\"48\" height=\"40\" rx=\"2\" fill=\"#1d3a4a\" stroke=\"#8b8377\" stroke-width=\"1.4\"/><line x1=\"-14\" y1=\"-14\" x2=\"-14\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"-7\" y1=\"-14\" x2=\"-7\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"-14\" x2=\"0\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"7\" y1=\"-14\" x2=\"7\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"-14\" x2=\"14\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><path d=\"M-18 -12 C-6 -18 6 -18 18 -12\" fill=\"none\" stroke=\"#9fc8dc\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<rect x=\"-24\" y=\"-20\" width=\"48\" height=\"40\" rx=\"2\" fill=\"#1d3a4a\" stroke=\"#8b8377\" stroke-width=\"1.4\"/><line x1=\"-14\" y1=\"-14\" x2=\"-14\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"-7\" y1=\"-14\" x2=\"-7\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"-14\" x2=\"0\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"7\" y1=\"-14\" x2=\"7\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"-14\" x2=\"14\" y2=\"14\" stroke=\"#9fc8dc\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><path d=\"M-18 -12 C-6 -18 6 -18 18 -12\" fill=\"none\" stroke=\"#9fc8dc\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "koerper_innen"
    },
    {
     "id": "kittel",
@@ -2296,7 +2300,8 @@ window.DMA_SZENEN = [
     "en": "head",
     "x": 137,
     "y": 20,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "lupe": "kopf_detail"
    },
    {
     "id": "auge",
@@ -2373,7 +2378,8 @@ window.DMA_SZENEN = [
     "en": "chest",
     "x": 146,
     "y": 92,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "lupe": "koerper_innen"
    },
    {
     "id": "arm",
@@ -2417,7 +2423,8 @@ window.DMA_SZENEN = [
     "en": "hand",
     "x": 211,
     "y": 123,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "lupe": "hand_detail"
    },
    {
     "id": "finger",
@@ -2472,7 +2479,8 @@ window.DMA_SZENEN = [
     "en": "foot",
     "x": 132,
     "y": 208,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "lupe": "fuss_detail"
    },
    {
     "id": "zeh",
@@ -2624,9 +2632,9 @@ window.DMA_SZENEN = [
     "it": "la sciarpa",
     "itSyl": "SCIAR-pa",
     "en": "scarf",
-    "x": 300,
+    "x": 288,
     "y": 140,
-    "kunst": "<path d=\"M-6 -16 C-12 0 -12 14 -8 26 L-16 26 C-20 10 -20 -4 -14 -16 Z\" fill=\"#e08a42\" stroke=\"#c06d2c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2 -16 C8 0 8 14 4 26 L12 26 C16 10 16 -4 10 -16 Z\" fill=\"#e08a42\" stroke=\"#c06d2c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<path d=\"M-22 -14 Q0 -2 22 -14 L22 -6 Q0 6 -22 -6 Z\" fill=\"#e08a42\" stroke=\"#c06d2c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9 0 Q-11 12 -8 24 L-1 24 Q-4 12 -2 1 Z\" fill=\"#e08a42\" stroke=\"#c06d2c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2 1 Q4 12 1 24 L8 24 Q11 12 9 0 Z\" fill=\"#d97f36\" stroke=\"#c06d2c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8 24 L-1 24 M1 24 L8 24\" fill=\"none\" stroke=\"#c06d2c\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-16 -9 L-16 -1 M-4 -4 L-4 4 M10 -6 L10 2\" fill=\"none\" stroke=\"#c06d2c\" stroke-width=\"0.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
    },
    {
     "id": "handschuhe",
@@ -2637,7 +2645,7 @@ window.DMA_SZENEN = [
     "en": "gloves",
     "x": 172,
     "y": 178,
-    "kunst": "<path d=\"M-14 8 L-14 -6 L-10 -8 L-10 -2 L-6 -8 L-2 -6 L-2 8 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2 8 L2 -6 L6 -8 L6 -2 L10 -8 L14 -6 L14 8 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<path d=\"M-15 9 L-15 -3 Q-15 -6 -12 -6 L-12 -13 Q-12 -16 -9.5 -16 Q-7 -16 -7 -13 L-7 -6 L-6 -6 L-6 -15 Q-6 -18 -3.5 -18 Q-1 -18 -1 -15 L-1 -6 L0 -6 L0 -14 Q0 -17 2.5 -17 Q5 -17 5 -14 L5 -5 L6 -5 L6 -11 Q6 -14 8 -14 Q10.5 -14 10.5 -11 L10.5 0 Q14 -4 16.5 -1.5 Q19 1 14 5.5 L11 9 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-15 9 L11 9 L11 15 Q11 17 9 17 L-13 17 Q-15 17 -15 15 Z\" fill=\"#c25441\" stroke=\"#a64a39\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9.5 -6 L-9.5 3 M-3.5 -6 L-3.5 3 M2.5 -5 L2.5 3 M8 -4 L8 3\" fill=\"none\" stroke=\"#a64a39\" stroke-width=\"0.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
    },
    {
     "id": "guertel",
@@ -3163,7 +3171,7 @@ window.DMA_SZENEN = [
     "it": "il gatto",
     "itSyl": "GAT-to",
     "en": "cat",
-    "x": 306,
+    "x": 300,
     "y": 172,
     "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"10\" ry=\"6\" fill=\"#9a9289\"/><circle cx=\"9\" cy=\"-4\" r=\"5\" fill=\"#9a9289\"/><path d=\"M6 -8 L7 -12 L10 -8 Z\" fill=\"#9a9289\"/><path d=\"M11 -8 L13 -12 L15 -8 Z\" fill=\"#9a9289\"/><circle cx=\"8\" cy=\"-5\" r=\"1\" fill=\"#3a2b1c\"/><circle cx=\"11\" cy=\"-5\" r=\"1\" fill=\"#3a2b1c\"/><path d=\"M-9 -2 C-16 -10 -13 0 -9 0\" fill=\"none\" stroke=\"#7a736b\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-4\" y1=\"5\" x2=\"-4\" y2=\"10\" stroke=\"#7a736b\" stroke-width=\"1.8\" stroke-linecap=\"round\"/><line x1=\"4\" y1=\"5\" x2=\"4\" y2=\"10\" stroke=\"#7a736b\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>"
    }
@@ -3352,7 +3360,7 @@ window.DMA_SZENEN = [
     "en": "work gloves",
     "x": 158,
     "y": 172,
-    "kunst": "<path d=\"M-13 7 L-13 -5 L-9 -7 L-9 -2 L-5 -7 L-1 -5 L-1 7 Z\" fill=\"#c8a06a\" stroke=\"#a07c48\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3 7 L3 -5 L7 -7 L7 -2 L11 -7 L15 -5 L15 7 Z\" fill=\"#c8a06a\" stroke=\"#a07c48\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<path d=\"M-15 9 L-15 -3 Q-15 -6 -12 -6 L-12 -13 Q-12 -16 -9.5 -16 Q-7 -16 -7 -13 L-7 -6 L-6 -6 L-6 -15 Q-6 -18 -3.5 -18 Q-1 -18 -1 -15 L-1 -6 L0 -6 L0 -14 Q0 -17 2.5 -17 Q5 -17 5 -14 L5 -5 L6 -5 L6 -11 Q6 -14 8 -14 Q10.5 -14 10.5 -11 L10.5 0 Q14 -4 16.5 -1.5 Q19 1 14 5.5 L11 9 Z\" fill=\"#c8a06a\" stroke=\"#a07c48\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-15 9 L11 9 L11 15 Q11 17 9 17 L-13 17 Q-15 17 -15 15 Z\" fill=\"#a9854f\" stroke=\"#a07c48\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9.5 -6 L-9.5 3 M-3.5 -6 L-3.5 3 M2.5 -5 L2.5 3 M8 -4 L8 3\" fill=\"none\" stroke=\"#a07c48\" stroke-width=\"0.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
    }
   ]
  },
@@ -3362,8 +3370,8 @@ window.DMA_SZENEN = [
   "emoji": "🍬",
   "thema": "Einkaufen",
   "breite": 320,
-  "hoehe": 210,
-  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"210\" rx=\"0\" fill=\"#f2ece0\"/><rect x=\"0\" y=\"45.5\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"40.5\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"98.0\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"93.0\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"150.5\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"145.5\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"203.0\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"198.0\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"0\" width=\"320\" height=\"5\" rx=\"0\" fill=\"#a06c3c\"/>",
+  "hoehe": 262,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"262\" rx=\"0\" fill=\"#f2ece0\"/><rect x=\"0\" y=\"45.4\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"40.4\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"97.8\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"92.8\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"150.2\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"145.2\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"202.6\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"197.6\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"255.0\" width=\"320\" height=\"7\" rx=\"1\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><rect x=\"0\" y=\"250.0\" width=\"320\" height=\"5\" rx=\"1\" fill=\"#dfd3bd\"/><rect x=\"0\" y=\"0\" width=\"320\" height=\"5\" rx=\"0\" fill=\"#a06c3c\"/>",
   "teile": [
    {
     "id": "schokolade",
@@ -3561,7 +3569,8 @@ window.DMA_SZENEN = [
     "en": "flour",
     "x": 106,
     "y": 182,
-    "kunst": "<path d=\"M-13 -12 L13 -12 L11 12 L-11 12 Z\" fill=\"#f2ece0\" stroke=\"#c8bca8\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><text x=\"0\" y=\"2\" font-size=\"6\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8d7a5f\" font-family=\"system-ui, sans-serif\">MEHL</text>"
+    "kunst": "<path d=\"M-13 -12 L13 -12 L11 12 L-11 12 Z\" fill=\"#f2ece0\" stroke=\"#c8bca8\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><text x=\"0\" y=\"2\" font-size=\"6\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8d7a5f\" font-family=\"system-ui, sans-serif\">MEHL</text>",
+    "lupe": "backen_detail"
    },
    {
     "id": "nudeln",
@@ -3583,7 +3592,7 @@ window.DMA_SZENEN = [
     "en": "coffee",
     "x": 228,
     "y": 182,
-    "kunst": "<path d=\"M-11 -13 L11 -13 L9 13 L-9 13 Z\" fill=\"#5a3a1c\" stroke=\"#3a2410\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-9\" y=\"-6\" width=\"18\" height=\"9\" rx=\"1.6\" fill=\"#e8c9a0\"/><text x=\"0\" y=\"1\" font-size=\"5\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#5a3a1c\" font-family=\"system-ui, sans-serif\">CAFFÈ</text>"
+    "kunst": "<path d=\"M-11 -13 L11 -13 L9 13 L-9 13 Z\" fill=\"#5a3a1c\" stroke=\"#3a2410\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-9\" y=\"-6\" width=\"18\" height=\"9\" rx=\"1.6\" fill=\"#e8c9a0\"/><text x=\"0\" y=\"1\" font-size=\"3.9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#5a3a1c\" font-family=\"system-ui, sans-serif\">KAFFEE</text>"
    },
    {
     "id": "preisschild",
@@ -3595,6 +3604,61 @@ window.DMA_SZENEN = [
     "x": 288,
     "y": 180,
     "kunst": "<rect x=\"-13\" y=\"-7\" width=\"26\" height=\"14\" rx=\"2\" fill=\"#e8b64c\" stroke=\"#c2962f\" stroke-width=\"1.2\"/><text x=\"0\" y=\"3\" font-size=\"8\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#3a2b1c\" font-family=\"system-ui, sans-serif\">2,49</text>"
+   },
+   {
+    "id": "datteln",
+    "de": "die Datteln",
+    "syl": "DAT-teln",
+    "it": "i datteri",
+    "itSyl": "DAT-te-ri",
+    "en": "dates",
+    "x": 40,
+    "y": 234,
+    "kunst": "<path d=\"M-17 4 L17 4 L14 12 L-14 12 Z\" fill=\"#c8a06a\" stroke=\"#a07c48\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-8\" cy=\"1\" rx=\"7\" ry=\"4.5\" fill=\"#6b4226\" stroke=\"#4a2c18\" stroke-width=\"1\"/><ellipse cx=\"1\" cy=\"-1\" rx=\"7\" ry=\"4.5\" fill=\"#7a4d2c\" stroke=\"#4a2c18\" stroke-width=\"1\"/><ellipse cx=\"9\" cy=\"2\" rx=\"7\" ry=\"4.5\" fill=\"#6b4226\" stroke=\"#4a2c18\" stroke-width=\"1\"/><ellipse cx=\"-8\" cy=\"0\" rx=\"3\" ry=\"1.6\" fill=\"#8f6242\"/><ellipse cx=\"1\" cy=\"-2\" rx=\"3\" ry=\"1.6\" fill=\"#9a6c4a\"/>"
+   },
+   {
+    "id": "nussmischung",
+    "de": "die Nussmischung",
+    "syl": "NUSS-mi-schung",
+    "it": "la frutta secca",
+    "itSyl": "FRUT-ta SEC-ca",
+    "en": "mixed nuts",
+    "x": 102,
+    "y": 232,
+    "kunst": "<path d=\"M-12.0 -14.0 L12.0 -14.0 L10.0 14.0 L-10.0 14.0 Z\" fill=\"#e8dcc2\" stroke=\"#b99f6f\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-12.0 -14.0 L-8.0 -18.0 L8.0 -18.0 L12.0 -14.0 Z\" fill=\"#b99f6f\"/><rect x=\"-9.0\" y=\"-4\" width=\"18\" height=\"9\" rx=\"2\" fill=\"#ffffff\" opacity=\"0.75\"/><circle cx=\"-5\" cy=\"4\" r=\"3.4\" fill=\"#a0703c\" stroke=\"#7d5326\" stroke-width=\"0.9\"/><circle cx=\"3\" cy=\"2\" r=\"3.4\" fill=\"#c69a5a\" stroke=\"#7d5326\" stroke-width=\"0.9\"/><circle cx=\"-1\" cy=\"9\" r=\"3.2\" fill=\"#8a5c30\" stroke=\"#7d5326\" stroke-width=\"0.9\"/><circle cx=\"6\" cy=\"8\" r=\"3\" fill=\"#b5834a\" stroke=\"#7d5326\" stroke-width=\"0.9\"/>"
+   },
+   {
+    "id": "sesamriegel",
+    "de": "der Sesamriegel",
+    "syl": "SE-sam-rie-gel",
+    "it": "la barretta di sesamo",
+    "itSyl": "bar-RET-ta di SE-sa-mo",
+    "en": "sesame bar",
+    "x": 164,
+    "y": 236,
+    "kunst": "<rect x=\"-18\" y=\"-7\" width=\"36\" height=\"14\" rx=\"3\" fill=\"#d8b169\" stroke=\"#b08f4c\" stroke-width=\"1.2\"/><circle cx=\"-13\" cy=\"-3\" r=\"1.5\" fill=\"#f2e3c0\"/><circle cx=\"-8\" cy=\"1\" r=\"1.5\" fill=\"#f2e3c0\"/><circle cx=\"-3\" cy=\"5\" r=\"1.5\" fill=\"#f2e3c0\"/><circle cx=\"2\" cy=\"-3\" r=\"1.5\" fill=\"#f2e3c0\"/><circle cx=\"7\" cy=\"1\" r=\"1.5\" fill=\"#f2e3c0\"/><circle cx=\"12\" cy=\"5\" r=\"1.5\" fill=\"#f2e3c0\"/><circle cx=\"17\" cy=\"-3\" r=\"1.5\" fill=\"#f2e3c0\"/><rect x=\"-18\" y=\"-7\" width=\"36\" height=\"4\" rx=\"2\" fill=\"#e2c489\"/>"
+   },
+   {
+    "id": "reiswaffel",
+    "de": "die Reiswaffel",
+    "syl": "REIS-waf-fel",
+    "it": "la galletta di riso",
+    "itSyl": "gal-LET-ta di RI-so",
+    "en": "rice cake",
+    "x": 222,
+    "y": 234,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"14\" fill=\"#f0e6cf\" stroke=\"#cbbc99\" stroke-width=\"1.3\"/><circle cx=\"-8\" cy=\"-7\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"-3\" cy=\"-7\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"2\" cy=\"-7\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"7\" cy=\"-7\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"-8\" cy=\"-2\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"-3\" cy=\"-2\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"2\" cy=\"-2\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"7\" cy=\"-2\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"-8\" cy=\"3\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"-3\" cy=\"3\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"2\" cy=\"3\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"7\" cy=\"3\" r=\"1.7\" fill=\"#dcd0ad\"/><circle cx=\"0\" cy=\"0\" r=\"14\" fill=\"none\" stroke=\"#cbbc99\" stroke-width=\"1.3\"/>"
+   },
+   {
+    "id": "trockenfruechte",
+    "de": "die Trockenfrüchte",
+    "syl": "TRO-cken-früch-te",
+    "it": "la frutta essiccata",
+    "itSyl": "FRUT-ta es-sic-CA-ta",
+    "en": "dried fruit",
+    "x": 282,
+    "y": 232,
+    "kunst": "<path d=\"M-12.0 -14.0 L12.0 -14.0 L10.0 14.0 L-10.0 14.0 Z\" fill=\"#f4ead4\" stroke=\"#c2a46a\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-12.0 -14.0 L-8.0 -18.0 L8.0 -18.0 L12.0 -14.0 Z\" fill=\"#c2a46a\"/><rect x=\"-9.0\" y=\"-4\" width=\"18\" height=\"9\" rx=\"2\" fill=\"#ffffff\" opacity=\"0.75\"/><ellipse cx=\"-5\" cy=\"3\" rx=\"4.5\" ry=\"3\" fill=\"#d98f3c\" stroke=\"#a8682a\" stroke-width=\"0.9\"/><ellipse cx=\"4\" cy=\"1\" rx=\"4.5\" ry=\"3\" fill=\"#8a4b2a\" stroke=\"#6b3a1e\" stroke-width=\"0.9\"/><ellipse cx=\"-2\" cy=\"8\" rx=\"4.5\" ry=\"3\" fill=\"#c46a2c\" stroke=\"#a8682a\" stroke-width=\"0.9\"/><ellipse cx=\"6\" cy=\"7\" rx=\"4\" ry=\"2.6\" fill=\"#9a5a2e\" stroke=\"#6b3a1e\" stroke-width=\"0.9\"/>"
    }
   ]
  },
@@ -4617,7 +4681,8 @@ window.DMA_SZENEN = [
     "en": "textbook",
     "x": 148,
     "y": 122,
-    "kunst": "<rect x=\"-22\" y=\"-28\" width=\"44\" height=\"56\" rx=\"3\" fill=\"#c8342b\" stroke=\"#8d1f18\" stroke-width=\"1.6\"/><rect x=\"-22\" y=\"-28\" width=\"5\" height=\"56\" rx=\"2\" fill=\"#8d1f18\"/><rect x=\"-14\" y=\"-20\" width=\"28\" height=\"16\" rx=\"2\" fill=\"#f0dfb8\"/><line x1=\"-12\" y1=\"2\" x2=\"12\" y2=\"2\" stroke=\"#e08a80\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"8\" x2=\"12\" y2=\"8\" stroke=\"#e08a80\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"14\" x2=\"12\" y2=\"14\" stroke=\"#e08a80\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+    "kunst": "<rect x=\"-22\" y=\"-28\" width=\"44\" height=\"56\" rx=\"3\" fill=\"#c8342b\" stroke=\"#8d1f18\" stroke-width=\"1.6\"/><rect x=\"-22\" y=\"-28\" width=\"5\" height=\"56\" rx=\"2\" fill=\"#8d1f18\"/><rect x=\"-14\" y=\"-20\" width=\"28\" height=\"16\" rx=\"2\" fill=\"#f0dfb8\"/><line x1=\"-12\" y1=\"2\" x2=\"12\" y2=\"2\" stroke=\"#e08a80\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"8\" x2=\"12\" y2=\"8\" stroke=\"#e08a80\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"14\" x2=\"12\" y2=\"14\" stroke=\"#e08a80\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>",
+    "lupe": "buch_detail"
    },
    {
     "id": "ordner",
@@ -6939,6 +7004,1135 @@ window.DMA_SZENEN = [
     "x": 223,
     "y": 174,
     "kunst": "<path d=\"M-18 8 Q-12 -8 -6 8 Q0 -8 6 8 Q12 -8 18 8\" fill=\"none\" stroke=\"#c08a4c\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-18 12 L18 12\" fill=\"none\" stroke=\"#a8794c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-18\" cy=\"8\" r=\"1.6\" fill=\"#8a5f2a\"/><circle cx=\"18\" cy=\"8\" r=\"1.6\" fill=\"#8a5f2a\"/>"
+   }
+  ]
+ },
+ {
+  "id": "kopf_detail",
+  "titel": "Der Kopf ganz nah",
+  "emoji": "🔍",
+  "thema": "Körper",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#f6f1e6\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"140\" y=\"168\" width=\"40\" height=\"32\" rx=\"6\" fill=\"#d8ab8c\"/><ellipse cx=\"160\" cy=\"100\" rx=\"66\" ry=\"80\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"2\"/><ellipse cx=\"95\" cy=\"104\" rx=\"11\" ry=\"18\" fill=\"#f0cdb2\" stroke=\"#b98a68\" stroke-width=\"1.6\"/><path d=\"M99 96 Q91 104 98 114\" fill=\"none\" stroke=\"#b98a68\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"95\" cy=\"120\" rx=\"7.5\" ry=\"7\" fill=\"#f0cdb2\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"225\" cy=\"104\" rx=\"11\" ry=\"18\" fill=\"#f0cdb2\" stroke=\"#b98a68\" stroke-width=\"1.6\"/><path d=\"M221 96 Q229 104 222 114\" fill=\"none\" stroke=\"#b98a68\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"225\" cy=\"120\" rx=\"7.5\" ry=\"7\" fill=\"#f0cdb2\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><path d=\"M94 78 C94 24 226 24 226 78 C226 46 204 34 160 34 C116 34 94 46 94 78 Z\" fill=\"#8a5f2a\"/><path d=\"M96 76 Q118 52 160 50 Q202 52 224 76\" fill=\"none\" stroke=\"#6b4a24\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"118\" cy=\"124\" rx=\"19\" ry=\"15\" fill=\"#f7c9b4\"/><ellipse cx=\"202\" cy=\"124\" rx=\"19\" ry=\"15\" fill=\"#f7c9b4\"/><circle cx=\"206\" cy=\"130\" r=\"2.4\" fill=\"#dfa286\"/><path d=\"M116 76 Q134 66 152 74\" fill=\"none\" stroke=\"#6b4a24\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M168 74 Q186 66 204 76\" fill=\"none\" stroke=\"#6b4a24\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"134\" cy=\"94\" rx=\"17\" ry=\"10\" fill=\"#fdfbf4\" stroke=\"#c9a484\" stroke-width=\"1.4\"/><path d=\"M117 94 Q134 81 151 94\" fill=\"none\" stroke=\"#b98a68\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M117 94 Q134 105 151 94\" fill=\"none\" stroke=\"#c9a484\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"134\" cy=\"94\" r=\"7.5\" fill=\"#4a7c9b\" stroke=\"#2f5468\" stroke-width=\"1.2\"/><circle cx=\"134\" cy=\"94\" r=\"3.6\" fill=\"#1c1a17\"/><circle cx=\"131.6\" cy=\"91.6\" r=\"1.6\" fill=\"#ffffff\"/><path d=\"M121.0 88 L119 81\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M127.5 88 L126 81\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M134.0 88 L133 81\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M140.5 88 L140 81\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M147.0 88 L147 81\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"186\" cy=\"94\" rx=\"17\" ry=\"10\" fill=\"#fdfbf4\" stroke=\"#c9a484\" stroke-width=\"1.4\"/><path d=\"M169 94 Q186 81 203 94\" fill=\"none\" stroke=\"#b98a68\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M169 94 Q186 105 203 94\" fill=\"none\" stroke=\"#c9a484\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"186\" cy=\"94\" r=\"7.5\" fill=\"#4a7c9b\" stroke=\"#2f5468\" stroke-width=\"1.2\"/><circle cx=\"186\" cy=\"94\" r=\"3.6\" fill=\"#1c1a17\"/><circle cx=\"183.6\" cy=\"91.6\" r=\"1.6\" fill=\"#ffffff\"/><path d=\"M160 88 L160 128\" fill=\"none\" stroke=\"#b98a68\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M160 128 Q150 134 150 128\" fill=\"#f0cdb2\" stroke=\"#b98a68\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M160 128 Q170 134 170 128\" fill=\"#f0cdb2\" stroke=\"#b98a68\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"153\" cy=\"133\" rx=\"3.6\" ry=\"2.2\" fill=\"#a8724f\"/><ellipse cx=\"167\" cy=\"133\" rx=\"3.6\" ry=\"2.2\" fill=\"#a8724f\"/><path d=\"M136 152 Q148 142 160 148 Q172 142 184 152 Z\" fill=\"#d1766f\" stroke=\"#a8504a\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M136 152 Q160 176 184 152 Z\" fill=\"#7a2f36\"/><path d=\"M139 153 Q160 159 181 153 Z\" fill=\"#d98a96\"/><rect x=\"141\" y=\"154\" width=\"7\" height=\"7\" rx=\"1.4\" fill=\"#fdfcf6\" stroke=\"#e2dccf\" stroke-width=\"0.9\"/><rect x=\"149\" y=\"154\" width=\"7\" height=\"7\" rx=\"1.4\" fill=\"#fdfcf6\" stroke=\"#e2dccf\" stroke-width=\"0.9\"/><rect x=\"157\" y=\"154\" width=\"7\" height=\"7\" rx=\"1.4\" fill=\"#fdfcf6\" stroke=\"#e2dccf\" stroke-width=\"0.9\"/><rect x=\"165\" y=\"154\" width=\"7\" height=\"7\" rx=\"1.4\" fill=\"#fdfcf6\" stroke=\"#e2dccf\" stroke-width=\"0.9\"/><rect x=\"173\" y=\"154\" width=\"7\" height=\"7\" rx=\"1.4\" fill=\"#fdfcf6\" stroke=\"#e2dccf\" stroke-width=\"0.9\"/><path d=\"M146 166 Q160 176 174 166 Z\" fill=\"#d9737f\" stroke=\"#a8505c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M136 152 Q160 172 184 152 Q160 180 136 152 Z\" fill=\"#c9635d\" stroke=\"#a8504a\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"160\" cy=\"178\" rx=\"20\" ry=\"11\" fill=\"#f7ddc6\"/>",
+  "teile": [
+   {
+    "id": "stirn",
+    "de": "die Stirn",
+    "syl": "STIRN",
+    "it": "la fronte",
+    "itSyl": "FRON-te",
+    "en": "forehead",
+    "x": 160,
+    "y": 62,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"13\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "schlaefe",
+    "de": "die Schläfe",
+    "syl": "SCHLÄ-fe",
+    "it": "la tempia",
+    "itSyl": "TEM-pia",
+    "en": "temple",
+    "x": 112,
+    "y": 82,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "augenbraue",
+    "de": "die Augenbraue",
+    "syl": "AU-gen-brau-e",
+    "it": "il sopracciglio",
+    "itSyl": "so-pra-CCI-glio",
+    "en": "eyebrow",
+    "x": 186,
+    "y": 72,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "wimper",
+    "de": "die Wimpern",
+    "syl": "WIM-pern",
+    "it": "le ciglia",
+    "itSyl": "CI-glia",
+    "en": "eyelashes",
+    "x": 128,
+    "y": 82,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "augenlid",
+    "de": "das Augenlid",
+    "syl": "AU-gen-lid",
+    "it": "la palpebra",
+    "itSyl": "PAL-pe-bra",
+    "en": "eyelid",
+    "x": 196,
+    "y": 86,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "auge_d",
+    "de": "der Augapfel",
+    "syl": "AUG-ap-fel",
+    "it": "il bulbo oculare",
+    "itSyl": "BUL-bo o-cu-LA-re",
+    "en": "eyeball",
+    "x": 145,
+    "y": 98,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "pupille",
+    "de": "die Pupille",
+    "syl": "Pu-PIL-le",
+    "it": "la pupilla",
+    "itSyl": "pu-PIL-la",
+    "en": "pupil",
+    "x": 186,
+    "y": 94,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "nasenruecken",
+    "de": "der Nasenrücken",
+    "syl": "NA-sen-rü-cken",
+    "it": "il dorso del naso",
+    "itSyl": "DOR-so del NA-so",
+    "en": "bridge of the nose",
+    "x": 160,
+    "y": 110,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "nasenfluegel",
+    "de": "der Nasenflügel",
+    "syl": "NA-sen-flü-gel",
+    "it": "l'ala del naso",
+    "itSyl": "A-la del NA-so",
+    "en": "side of the nose",
+    "x": 173,
+    "y": 127,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "nasenloch",
+    "de": "das Nasenloch",
+    "syl": "NA-sen-loch",
+    "it": "la narice",
+    "itSyl": "na-RI-ce",
+    "en": "nostril",
+    "x": 153,
+    "y": 133,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "wange",
+    "de": "die Wange",
+    "syl": "WAN-ge",
+    "it": "la guancia",
+    "itSyl": "GUAN-cia",
+    "en": "cheek",
+    "x": 118,
+    "y": 124,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"12\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "gruebchen",
+    "de": "das Grübchen",
+    "syl": "GRÜB-chen",
+    "it": "la fossetta",
+    "itSyl": "fos-SET-ta",
+    "en": "dimple",
+    "x": 206,
+    "y": 130,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "oberlippe",
+    "de": "die Oberlippe",
+    "syl": "O-ber-lip-pe",
+    "it": "il labbro superiore",
+    "itSyl": "LAB-bro su-pe-RIO-re",
+    "en": "upper lip",
+    "x": 148,
+    "y": 147,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "zahnfleisch",
+    "de": "das Zahnfleisch",
+    "syl": "ZAHN-fleisch",
+    "it": "la gengiva",
+    "itSyl": "gen-GI-va",
+    "en": "gums",
+    "x": 172,
+    "y": 153,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "zahn",
+    "de": "der Zahn",
+    "syl": "ZAHN",
+    "it": "il dente",
+    "itSyl": "DEN-te",
+    "en": "tooth",
+    "x": 145,
+    "y": 157,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "zunge",
+    "de": "die Zunge",
+    "syl": "ZUN-ge",
+    "it": "la lingua",
+    "itSyl": "LIN-gua",
+    "en": "tongue",
+    "x": 160,
+    "y": 169,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "unterlippe",
+    "de": "die Unterlippe",
+    "syl": "UN-ter-lip-pe",
+    "it": "il labbro inferiore",
+    "itSyl": "LAB-bro in-fe-RIO-re",
+    "en": "lower lip",
+    "x": 182,
+    "y": 161,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "kinn",
+    "de": "das Kinn",
+    "syl": "KINN",
+    "it": "il mento",
+    "itSyl": "MEN-to",
+    "en": "chin",
+    "x": 160,
+    "y": 182,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"11\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "ohrmuschel",
+    "de": "die Ohrmuschel",
+    "syl": "OHR-mu-schel",
+    "it": "il padiglione auricolare",
+    "itSyl": "pa-di-GLIO-ne au-ri-co-LA-re",
+    "en": "outer ear",
+    "x": 225,
+    "y": 102,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "ohrlaeppchen",
+    "de": "das Ohrläppchen",
+    "syl": "OHR-läpp-chen",
+    "it": "il lobo dell'orecchio",
+    "itSyl": "LO-bo dell o-REC-chio",
+    "en": "earlobe",
+    "x": 95,
+    "y": 121,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   }
+  ]
+ },
+ {
+  "id": "hand_detail",
+  "titel": "Die Hand ganz nah",
+  "emoji": "🔍",
+  "thema": "Körper",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#f6f1e6\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"84\" y=\"26\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8a7450\" font-family=\"system-ui, sans-serif\">Handfläche</text><text x=\"236\" y=\"26\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8a7450\" font-family=\"system-ui, sans-serif\">Handrücken</text><ellipse cx=\"84\" cy=\"128\" rx=\"30\" ry=\"30\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.6\"/><rect x=\"70\" y=\"156\" width=\"28\" height=\"30\" rx=\"8\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"1.5\"/><line x1=\"70\" y1=\"166\" x2=\"98\" y2=\"166\" stroke=\"#dfb493\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"70\" y1=\"172\" x2=\"98\" y2=\"172\" stroke=\"#dfb493\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"56.0\" y=\"64\" width=\"12\" height=\"50\" rx=\"6.0\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"62\" cy=\"71\" rx=\"3.4\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"57.0\" y1=\"87.2\" x2=\"67.0\" y2=\"87.2\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"57.0\" y1=\"98.4\" x2=\"67.0\" y2=\"98.4\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"72.0\" y=\"52\" width=\"12\" height=\"56\" rx=\"6.0\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"78\" cy=\"59\" rx=\"3.4\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"73.0\" y1=\"78.68\" x2=\"83.0\" y2=\"78.68\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"73.0\" y1=\"91.56\" x2=\"83.0\" y2=\"91.56\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"88.0\" y=\"60\" width=\"12\" height=\"52\" rx=\"6.0\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"94\" cy=\"67\" rx=\"3.4\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"89.0\" y1=\"84.36\" x2=\"99.0\" y2=\"84.36\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"89.0\" y1=\"96.12\" x2=\"99.0\" y2=\"96.12\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"103.5\" y=\"78\" width=\"11\" height=\"42\" rx=\"5.5\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"109\" cy=\"85\" rx=\"2.9\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"104.5\" y1=\"96.56\" x2=\"113.5\" y2=\"96.56\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"104.5\" y1=\"105.52\" x2=\"113.5\" y2=\"105.52\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><path d=\"M56 140 Q38 130 36 116 Q35 104 45 104 Q55 104 60 118 L64 134 Z\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"42\" cy=\"108\" rx=\"5\" ry=\"6.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><ellipse cx=\"64\" cy=\"150\" rx=\"12\" ry=\"8\" fill=\"#f7c9b4\"/><path d=\"M66 112 Q80 124 98 120\" fill=\"none\" stroke=\"#dfb493\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M66 126 Q84 134 100 132\" fill=\"none\" stroke=\"#dfb493\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"236\" cy=\"128\" rx=\"29\" ry=\"30\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"1.6\"/><rect x=\"222\" y=\"156\" width=\"28\" height=\"30\" rx=\"8\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"1.5\"/><rect x=\"208.0\" y=\"64\" width=\"12\" height=\"50\" rx=\"6.0\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"214\" cy=\"71\" rx=\"3.4\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"209.0\" y1=\"87.2\" x2=\"219.0\" y2=\"87.2\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"209.0\" y1=\"98.4\" x2=\"219.0\" y2=\"98.4\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"224.0\" y=\"52\" width=\"12\" height=\"56\" rx=\"6.0\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"230\" cy=\"59\" rx=\"3.4\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"225.0\" y1=\"78.68\" x2=\"235.0\" y2=\"78.68\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"225.0\" y1=\"91.56\" x2=\"235.0\" y2=\"91.56\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"240.0\" y=\"60\" width=\"12\" height=\"52\" rx=\"6.0\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"246\" cy=\"67\" rx=\"3.4\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"241.0\" y1=\"84.36\" x2=\"251.0\" y2=\"84.36\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"241.0\" y1=\"96.12\" x2=\"251.0\" y2=\"96.12\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><rect x=\"255.5\" y=\"78\" width=\"11\" height=\"42\" rx=\"5.5\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"261\" cy=\"85\" rx=\"2.9\" ry=\"5.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><line x1=\"256.5\" y1=\"96.56\" x2=\"265.5\" y2=\"96.56\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"256.5\" y1=\"105.52\" x2=\"265.5\" y2=\"105.52\" stroke=\"#e0b998\" stroke-width=\"1\" stroke-linecap=\"round\"/><path d=\"M208 140 Q190 130 188 116 Q187 104 197 104 Q207 104 212 118 L216 134 Z\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"194\" cy=\"108\" rx=\"5\" ry=\"6.5\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1\"/><path d=\"M214 122 Q216 134 214 144\" fill=\"none\" stroke=\"#cfa484\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M230 122 Q232 134 230 144\" fill=\"none\" stroke=\"#cfa484\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M246 122 Q248 134 246 144\" fill=\"none\" stroke=\"#cfa484\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M262 122 Q264 134 262 144\" fill=\"none\" stroke=\"#cfa484\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"214\" cy=\"118\" r=\"4\" fill=\"#f7ddc6\" stroke=\"#d8ab8c\" stroke-width=\"1\"/><circle cx=\"230\" cy=\"118\" r=\"4\" fill=\"#f7ddc6\" stroke=\"#d8ab8c\" stroke-width=\"1\"/><circle cx=\"246\" cy=\"118\" r=\"4\" fill=\"#f7ddc6\" stroke=\"#d8ab8c\" stroke-width=\"1\"/><circle cx=\"262\" cy=\"118\" r=\"4\" fill=\"#f7ddc6\" stroke=\"#d8ab8c\" stroke-width=\"1\"/>",
+  "teile": [
+   {
+    "id": "daumen",
+    "de": "der Daumen",
+    "syl": "DAU-men",
+    "it": "il pollice",
+    "itSyl": "POL-li-ce",
+    "en": "thumb",
+    "x": 46,
+    "y": 116,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "zeigefinger",
+    "de": "der Zeigefinger",
+    "syl": "ZEI-ge-fin-ger",
+    "it": "l'indice",
+    "itSyl": "IN-di-ce",
+    "en": "index finger",
+    "x": 62,
+    "y": 84,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "mittelfinger",
+    "de": "der Mittelfinger",
+    "syl": "MIT-tel-fin-ger",
+    "it": "il medio",
+    "itSyl": "ME-dio",
+    "en": "middle finger",
+    "x": 78,
+    "y": 76,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "ringfinger",
+    "de": "der Ringfinger",
+    "syl": "RING-fin-ger",
+    "it": "l'anulare",
+    "itSyl": "a-nu-LA-re",
+    "en": "ring finger",
+    "x": 94,
+    "y": 82,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "kleinerfinger",
+    "de": "der kleine Finger",
+    "syl": "KLEI-ne FIN-ger",
+    "it": "il mignolo",
+    "itSyl": "MI-gno-lo",
+    "en": "little finger",
+    "x": 109,
+    "y": 94,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fingerkuppe",
+    "de": "die Fingerkuppe",
+    "syl": "FIN-ger-kup-pe",
+    "it": "il polpastrello",
+    "itSyl": "pol-pa-STREL-lo",
+    "en": "fingertip",
+    "x": 78,
+    "y": 56,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "handflaeche",
+    "de": "die Handfläche",
+    "syl": "HAND-flä-che",
+    "it": "il palmo",
+    "itSyl": "PAL-mo",
+    "en": "palm",
+    "x": 84,
+    "y": 132,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"14\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "daumenballen",
+    "de": "der Daumenballen",
+    "syl": "DAU-men-bal-len",
+    "it": "l'eminenza tenar",
+    "itSyl": "e-mi-NEN-za TE-nar",
+    "en": "ball of the thumb",
+    "x": 64,
+    "y": 150,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "handgelenk",
+    "de": "das Handgelenk",
+    "syl": "HAND-ge-lenk",
+    "it": "il polso",
+    "itSyl": "POL-so",
+    "en": "wrist",
+    "x": 84,
+    "y": 172,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"11\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "handruecken",
+    "de": "der Handrücken",
+    "syl": "HAND-rü-cken",
+    "it": "il dorso della mano",
+    "itSyl": "DOR-so del-la MA-no",
+    "en": "back of the hand",
+    "x": 240,
+    "y": 136,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"13\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "knoechel",
+    "de": "der Knöchel",
+    "syl": "KNÖ-chel",
+    "it": "la nocca",
+    "itSyl": "NOC-ca",
+    "en": "knuckle",
+    "x": 230,
+    "y": 118,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fingernagel",
+    "de": "der Fingernagel",
+    "syl": "FIN-ger-na-gel",
+    "it": "l'unghia",
+    "itSyl": "UN-ghia",
+    "en": "fingernail",
+    "x": 230,
+    "y": 59,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   }
+  ]
+ },
+ {
+  "id": "fuss_detail",
+  "titel": "Der Fuß ganz nah",
+  "emoji": "🔍",
+  "thema": "Körper",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#f6f1e6\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"86\" y=\"26\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8a7450\" font-family=\"system-ui, sans-serif\">von oben</text><text x=\"236\" y=\"26\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8a7450\" font-family=\"system-ui, sans-serif\">von unten</text><path d=\"M62 176 Q56 120 72 86 Q86 58 110 62 Q126 66 122 96 Q118 132 112 176 Z\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"76\" cy=\"60\" rx=\"12\" ry=\"14\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.4\"/><ellipse cx=\"76\" cy=\"55\" rx=\"7\" ry=\"8\" fill=\"#fdf0e4\" stroke=\"#cfa484\" stroke-width=\"1.1\"/><ellipse cx=\"92\" cy=\"52\" rx=\"6.5\" ry=\"8\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><ellipse cx=\"102\" cy=\"56\" rx=\"6.5\" ry=\"8\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><ellipse cx=\"112\" cy=\"60\" rx=\"6.5\" ry=\"8\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><ellipse cx=\"122\" cy=\"64\" rx=\"6.5\" ry=\"8\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><path d=\"M74 160 Q78 110 80 82\" fill=\"none\" stroke=\"#dfb493\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M85 160 Q89 110 91 82\" fill=\"none\" stroke=\"#dfb493\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M96 160 Q100 110 102 82\" fill=\"none\" stroke=\"#dfb493\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M107 160 Q111 110 113 82\" fill=\"none\" stroke=\"#dfb493\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"66\" y=\"172\" width=\"46\" height=\"24\" rx=\"8\" fill=\"#f2d3ba\" stroke=\"#b98a68\" stroke-width=\"1.5\"/><circle cx=\"64\" cy=\"180\" r=\"7\" fill=\"#f7ddc6\" stroke=\"#d8ab8c\" stroke-width=\"1.3\"/><path d=\"M212 176 Q206 120 222 86 Q236 58 260 62 Q276 66 272 96 Q268 132 262 176 Z\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M222 150 Q238 158 262 150 Q262 172 240 176 Q220 172 222 150 Z\" fill=\"#f2c8ae\"/><path d=\"M222 96 Q244 106 268 98\" fill=\"none\" stroke=\"#e8c0a0\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M228 112 Q240 130 234 150\" fill=\"none\" stroke=\"#e8c0a0\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"226\" cy=\"60\" rx=\"11\" ry=\"13\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.3\"/><ellipse cx=\"242\" cy=\"52\" rx=\"6\" ry=\"7.5\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><ellipse cx=\"252\" cy=\"56\" rx=\"6\" ry=\"7.5\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><ellipse cx=\"262\" cy=\"60\" rx=\"6\" ry=\"7.5\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/><ellipse cx=\"272\" cy=\"64\" rx=\"6\" ry=\"7.5\" fill=\"#f7ddc6\" stroke=\"#b98a68\" stroke-width=\"1.2\"/>",
+  "teile": [
+   {
+    "id": "grosserzeh",
+    "de": "der große Zeh",
+    "syl": "GRO-ße ZEH",
+    "it": "l'alluce",
+    "itSyl": "AL-lu-ce",
+    "en": "big toe",
+    "x": 76,
+    "y": 60,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"10\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "zehen",
+    "de": "die Zehen",
+    "syl": "ZE-hen",
+    "it": "le dita del piede",
+    "itSyl": "DI-ta del PIE-de",
+    "en": "toes",
+    "x": 112,
+    "y": 62,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"12\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fussnagel",
+    "de": "der Fußnagel",
+    "syl": "FUß-na-gel",
+    "it": "l'unghia del piede",
+    "itSyl": "UN-ghia del PIE-de",
+    "en": "toenail",
+    "x": 76,
+    "y": 54,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fussruecken",
+    "de": "der Fußrücken",
+    "syl": "FUß-rü-cken",
+    "it": "il dorso del piede",
+    "itSyl": "DOR-so del PIE-de",
+    "en": "top of the foot",
+    "x": 92,
+    "y": 120,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"14\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fussknoechel",
+    "de": "der Knöchel",
+    "syl": "KNÖ-chel",
+    "it": "la caviglia",
+    "itSyl": "ca-VI-glia",
+    "en": "ankle",
+    "x": 64,
+    "y": 180,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "ferse",
+    "de": "die Ferse",
+    "syl": "FER-se",
+    "it": "il tallone",
+    "itSyl": "tal-LO-ne",
+    "en": "heel",
+    "x": 240,
+    "y": 168,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"12\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fusssohle",
+    "de": "die Fußsohle",
+    "syl": "FUß-soh-le",
+    "it": "la pianta del piede",
+    "itSyl": "PIAN-ta del PIE-de",
+    "en": "sole of the foot",
+    "x": 246,
+    "y": 120,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"14\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   },
+   {
+    "id": "fussgewoelbe",
+    "de": "das Fußgewölbe",
+    "syl": "FUß-ge-wöl-be",
+    "it": "l'arco plantare",
+    "itSyl": "AR-co plan-TA-re",
+    "en": "arch of the foot",
+    "x": 230,
+    "y": 134,
+    "kunst": "<g class=\"bw-marke\"><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"none\" stroke=\"#8a5f2a\" stroke-width=\"1.1\"/><circle cx=\"0\" cy=\"0\" r=\"1.5\" fill=\"#8a5f2a\"/></g>"
+   }
+  ]
+ },
+ {
+  "id": "tisch_detail",
+  "titel": "Der gedeckte Tisch",
+  "emoji": "🔍",
+  "thema": "Essen & Trinken",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#e8dcc4\"/><rect x=\"14\" y=\"24\" width=\"292\" height=\"162\" rx=\"6\" fill=\"#fdfaf2\" stroke=\"#d8cbb4\" stroke-width=\"2\"/><line x1=\"14\" y1=\"40\" x2=\"306\" y2=\"40\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"62\" x2=\"306\" y2=\"62\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"84\" x2=\"306\" y2=\"84\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"106\" x2=\"306\" y2=\"106\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"128\" x2=\"306\" y2=\"128\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"150\" x2=\"306\" y2=\"150\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"14\" y1=\"172\" x2=\"306\" y2=\"172\" stroke=\"#eee6d6\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "platzdeckchen",
+    "de": "das Platzdeckchen",
+    "syl": "PLATZ-deck-chen",
+    "it": "la tovaglietta",
+    "itSyl": "to-va-GLIET-ta",
+    "en": "placemat",
+    "x": 122,
+    "y": 128,
+    "kunst": "<rect x=\"-58\" y=\"-34\" width=\"116\" height=\"68\" rx=\"4\" fill=\"#e0d0b0\" stroke=\"#c4b18c\" stroke-width=\"1.6\"/>"
+   },
+   {
+    "id": "unterteller",
+    "de": "der Unterteller",
+    "syl": "UN-ter-tel-ler",
+    "it": "il sottopiatto",
+    "itSyl": "sot-to-PIAT-to",
+    "en": "charger plate",
+    "x": 122,
+    "y": 128,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"32\" fill=\"#f0e8d8\" stroke=\"#cfc2a4\" stroke-width=\"1.6\"/><circle cx=\"0\" cy=\"0\" r=\"26\" fill=\"#f7f2e6\"/>"
+   },
+   {
+    "id": "teller_d",
+    "de": "der Teller",
+    "syl": "TEL-ler",
+    "it": "il piatto",
+    "itSyl": "PIAT-to",
+    "en": "plate",
+    "x": 122,
+    "y": 128,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"24\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.6\"/><circle cx=\"0\" cy=\"0\" r=\"17\" fill=\"#fdfcf6\" stroke=\"#e2dccf\" stroke-width=\"1.2\"/><circle cx=\"0\" cy=\"0\" r=\"24\" fill=\"none\" stroke=\"#7fb8d6\" stroke-width=\"1\"/>"
+   },
+   {
+    "id": "messer_d",
+    "de": "das Messer",
+    "syl": "MES-ser",
+    "it": "il coltello",
+    "itSyl": "col-TEL-lo",
+    "en": "knife",
+    "x": 170,
+    "y": 128,
+    "kunst": "<rect x=\"-3\" y=\"-28\" width=\"6\" height=\"30\" rx=\"2\" fill=\"#c9c2b4\" stroke=\"#9a9384\" stroke-width=\"1\"/><path d=\"M-3 -28 Q0 -34 3 -28 Z\" fill=\"#dcd6c8\"/><rect x=\"-3.4\" y=\"2\" width=\"6.8\" height=\"26\" rx=\"2\" fill=\"#5b4a30\"/>"
+   },
+   {
+    "id": "gabel_d",
+    "de": "die Gabel",
+    "syl": "GA-bel",
+    "it": "la forchetta",
+    "itSyl": "for-CHET-ta",
+    "en": "fork",
+    "x": 74,
+    "y": 128,
+    "kunst": "<rect x=\"-6\" y=\"-28\" width=\"2.4\" height=\"12\" rx=\"1\" fill=\"#c9c2b4\"/><rect x=\"-2\" y=\"-28\" width=\"2.4\" height=\"12\" rx=\"1\" fill=\"#c9c2b4\"/><rect x=\"2\" y=\"-28\" width=\"2.4\" height=\"12\" rx=\"1\" fill=\"#c9c2b4\"/><rect x=\"6\" y=\"-28\" width=\"2.4\" height=\"12\" rx=\"1\" fill=\"#c9c2b4\"/><rect x=\"-6\" y=\"-17\" width=\"12\" height=\"5\" rx=\"2\" fill=\"#c9c2b4\"/><rect x=\"-2.6\" y=\"-12\" width=\"5.2\" height=\"40\" rx=\"2\" fill=\"#c9c2b4\" stroke=\"#9a9384\" stroke-width=\"1\"/>"
+   },
+   {
+    "id": "esslöffel",
+    "de": "der Esslöffel",
+    "syl": "ESS-löf-fel",
+    "it": "il cucchiaio",
+    "itSyl": "cuc-CHIA-io",
+    "en": "tablespoon",
+    "x": 196,
+    "y": 128,
+    "kunst": "<ellipse cx=\"0\" cy=\"-20\" rx=\"7\" ry=\"11\" fill=\"#c9c2b4\" stroke=\"#9a9384\" stroke-width=\"1.2\"/><rect x=\"-2.4\" y=\"-9\" width=\"4.8\" height=\"38\" rx=\"2\" fill=\"#c9c2b4\" stroke=\"#9a9384\" stroke-width=\"1\"/>"
+   },
+   {
+    "id": "teeloeffel",
+    "de": "der Teelöffel",
+    "syl": "TEE-löf-fel",
+    "it": "il cucchiaino",
+    "itSyl": "cuc-chia-I-no",
+    "en": "teaspoon",
+    "x": 268,
+    "y": 136,
+    "kunst": "<g transform=\"rotate(38)\"><ellipse cx=\"0\" cy=\"-9\" rx=\"4.2\" ry=\"6.4\" fill=\"#c9c2b4\" stroke=\"#9a9384\" stroke-width=\"1.1\"/><ellipse cx=\"0\" cy=\"-9\" rx=\"2.4\" ry=\"4\" fill=\"#b5ae9f\"/><rect x=\"-1.5\" y=\"-3\" width=\"3\" height=\"17\" rx=\"1.5\" fill=\"#c9c2b4\" stroke=\"#9a9384\" stroke-width=\"1\"/></g>"
+   },
+   {
+    "id": "untertasse",
+    "de": "die Untertasse",
+    "syl": "UN-ter-tas-se",
+    "it": "il piattino",
+    "itSyl": "piat-TI-no",
+    "en": "saucer",
+    "x": 254,
+    "y": 128,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"20\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"#f2ece0\" stroke=\"#e2dccf\" stroke-width=\"1\"/>"
+   },
+   {
+    "id": "tasse_d",
+    "de": "die Tasse",
+    "syl": "TAS-se",
+    "it": "la tazza",
+    "itSyl": "TAZ-za",
+    "en": "cup",
+    "x": 254,
+    "y": 118,
+    "kunst": "<path d=\"M-12 -12 L12 -12 L10 8 L-10 8 Z\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"0\" cy=\"-12\" rx=\"12\" ry=\"4\" fill=\"#6b4a2a\"/><path d=\"M12 -7 Q21 -4 12 3\" fill=\"none\" stroke=\"#cfc7ba\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "kaffee",
+    "de": "der Kaffee",
+    "syl": "KAF-fee",
+    "it": "il caffè",
+    "itSyl": "caf-FÈ",
+    "en": "coffee",
+    "x": 254,
+    "y": 106,
+    "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"11\" ry=\"3.6\" fill=\"#5a3b22\"/><ellipse cx=\"0\" cy=\"0\" rx=\"7\" ry=\"2.2\" fill=\"#7d5a35\"/><path d=\"M-4 -4 Q-1 -10 -4 -16 M4 -4 Q7 -10 4 -16\" fill=\"none\" stroke=\"#cfc7ba\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "glas_d",
+    "de": "das Glas",
+    "syl": "GLAS",
+    "it": "il bicchiere",
+    "itSyl": "bic-CHIE-re",
+    "en": "glass",
+    "x": 206,
+    "y": 76,
+    "kunst": "<path d=\"M-9 -20 L9 -20 L7 12 L-7 12 Z\" fill=\"#d8ecf4\" stroke=\"#8fc2d8\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8.4 -8 L8.4 -8 L7 12 L-7 12 Z\" fill=\"#a8d6ea\"/><ellipse cx=\"0\" cy=\"-20\" rx=\"9\" ry=\"3\" fill=\"#e4f4fa\" stroke=\"#8fc2d8\" stroke-width=\"1.1\"/>"
+   },
+   {
+    "id": "serviette_d",
+    "de": "die Serviette",
+    "syl": "Ser-vi-ET-te",
+    "it": "il tovagliolo",
+    "itSyl": "to-va-GLIO-lo",
+    "en": "napkin",
+    "x": 62,
+    "y": 70,
+    "kunst": "<rect x=\"-16\" y=\"-16\" width=\"32\" height=\"32\" rx=\"2\" fill=\"#f2b6d2\" stroke=\"#c96f87\" stroke-width=\"1.4\"/><path d=\"M-16 -16 L16 16 M16 -16 L-16 16\" fill=\"none\" stroke=\"#f7d3e2\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-16 -16 L0 0 L-16 16 Z\" fill=\"#f7d3e2\"/>"
+   },
+   {
+    "id": "salzstreuer",
+    "de": "der Salzstreuer",
+    "syl": "SALZ-streu-er",
+    "it": "la saliera",
+    "itSyl": "sa-LIE-ra",
+    "en": "salt shaker",
+    "x": 160,
+    "y": 64,
+    "kunst": "<path d=\"M-7 12 L-6 -6 Q0 -10 6 -6 L7 12 Z\" fill=\"#f6f2e8\" stroke=\"#cfc7ba\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-6 -6 Q0 -13 6 -6 Z\" fill=\"#c9c2b4\"/><circle cx=\"-2.4\" cy=\"-9\" r=\"0.9\" fill=\"#8b8377\"/><circle cx=\"0.0\" cy=\"-9\" r=\"0.9\" fill=\"#8b8377\"/><circle cx=\"2.4\" cy=\"-9\" r=\"0.9\" fill=\"#8b8377\"/>"
+   },
+   {
+    "id": "pfeffermuehle",
+    "de": "die Pfeffermühle",
+    "syl": "PFEF-fer-müh-le",
+    "it": "il macinapepe",
+    "itSyl": "ma-ci-na-PE-pe",
+    "en": "pepper mill",
+    "x": 186,
+    "y": 58,
+    "kunst": "<path d=\"M-7 18 L-5 -10 L5 -10 L7 18 Z\" fill=\"#8b6a3a\" stroke=\"#5b4a24\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-5\" y=\"-16\" width=\"10\" height=\"6\" rx=\"2\" fill=\"#c9c2b4\"/><circle cx=\"0\" cy=\"-18\" r=\"2.4\" fill=\"#5b5348\"/><line x1=\"-7\" y1=\"2\" x2=\"7\" y2=\"2\" stroke=\"#6b512c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-7\" y1=\"8\" x2=\"7\" y2=\"8\" stroke=\"#6b512c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-7\" y1=\"14\" x2=\"7\" y2=\"14\" stroke=\"#6b512c\" stroke-width=\"1\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "zuckerdose",
+    "de": "die Zuckerdose",
+    "syl": "ZU-cker-do-se",
+    "it": "la zuccheriera",
+    "itSyl": "zuc-che-RIE-ra",
+    "en": "sugar bowl",
+    "x": 286,
+    "y": 76,
+    "kunst": "<path d=\"M-13 12 L-11 -4 L11 -4 L13 12 Z\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"0\" cy=\"-4\" rx=\"12\" ry=\"4\" fill=\"#f2ece0\" stroke=\"#cfc7ba\" stroke-width=\"1.2\"/><path d=\"M-12 -6 Q0 -16 12 -6 Z\" fill=\"#f6f2e8\" stroke=\"#cfc7ba\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"0\" cy=\"-16\" r=\"2.6\" fill=\"#cfc7ba\"/>"
+   },
+   {
+    "id": "milchkaennchen",
+    "de": "das Milchkännchen",
+    "syl": "MILCH-känn-chen",
+    "it": "il bricco del latte",
+    "itSyl": "BRIC-co del LAT-te",
+    "en": "milk jug",
+    "x": 286,
+    "y": 140,
+    "kunst": "<path d=\"M-9 12 L-8 -8 L8 -8 L9 12 Z\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8 -8 L-11 -12 L0 -10 Z\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M9 -3 Q17 0 9 6\" fill=\"none\" stroke=\"#cfc7ba\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "brotkorb",
+    "de": "der Brotkorb",
+    "syl": "BROT-korb",
+    "it": "il cestino del pane",
+    "itSyl": "ce-STI-no del PA-ne",
+    "en": "bread basket",
+    "x": 62,
+    "y": 176,
+    "kunst": "<path d=\"M-20 -4 L20 -4 L15 14 L-15 14 Z\" fill=\"#d6ad72\" stroke=\"#a8854c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-17\" y1=\"-4\" x2=\"-14\" y2=\"14\" stroke=\"#a8854c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-10\" y1=\"-4\" x2=\"-7\" y2=\"14\" stroke=\"#a8854c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-3\" y1=\"-4\" x2=\"0\" y2=\"14\" stroke=\"#a8854c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"4\" y1=\"-4\" x2=\"7\" y2=\"14\" stroke=\"#a8854c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"11\" y1=\"-4\" x2=\"14\" y2=\"14\" stroke=\"#a8854c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"18\" y1=\"-4\" x2=\"21\" y2=\"14\" stroke=\"#a8854c\" stroke-width=\"1\" stroke-linecap=\"round\"/><ellipse cx=\"-6\" cy=\"-6\" rx=\"9\" ry=\"5\" fill=\"#c9a468\" stroke=\"#a8854c\" stroke-width=\"1\"/><ellipse cx=\"7\" cy=\"-7\" rx=\"9\" ry=\"5\" fill=\"#e0be86\" stroke=\"#a8854c\" stroke-width=\"1\"/>"
+   }
+  ]
+ },
+ {
+  "id": "backen_detail",
+  "titel": "Backen — alles bereit",
+  "emoji": "🔍",
+  "thema": "Essen & Trinken",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#f7efdf\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "mehl_d",
+    "de": "das Mehl",
+    "syl": "MEHL",
+    "it": "la farina",
+    "itSyl": "fa-RI-na",
+    "en": "flour",
+    "x": 60,
+    "y": 70,
+    "kunst": "<path d=\"M-16 20 L-12 -16 L12 -16 L16 20 Z\" fill=\"#f0e4c8\" stroke=\"#c9b98c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-13\" y=\"-20\" width=\"26\" height=\"5\" rx=\"2\" fill=\"#d8c9a0\"/><text x=\"0\" y=\"6\" font-size=\"7\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8a7450\" font-family=\"system-ui, sans-serif\">MEHL</text>"
+   },
+   {
+    "id": "zucker_d",
+    "de": "der Zucker",
+    "syl": "ZU-cker",
+    "it": "lo zucchero",
+    "itSyl": "ZUC-che-ro",
+    "en": "sugar",
+    "x": 130,
+    "y": 70,
+    "kunst": "<path d=\"M-14 20 L-11 -14 L11 -14 L14 20 Z\" fill=\"#fdfcf6\" stroke=\"#cfc7ba\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-8\" y=\"-2\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"-2\" y=\"-2\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"4\" y=\"-2\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"-8\" y=\"4\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"-2\" y=\"4\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"4\" y=\"4\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"-8\" y=\"10\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"-2\" y=\"10\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/><rect x=\"4\" y=\"10\" width=\"4.4\" height=\"4.4\" rx=\"1\" fill=\"#eae4d6\"/>"
+   },
+   {
+    "id": "butter",
+    "de": "die Butter",
+    "syl": "BUT-ter",
+    "it": "il burro",
+    "itSyl": "BUR-ro",
+    "en": "butter",
+    "x": 198,
+    "y": 78,
+    "kunst": "<path d=\"M-20 8 L-14 -8 L20 -8 L14 8 Z\" fill=\"#f6dd8a\" stroke=\"#c9a83c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-14 -8 L-8 -14 L26 -14 L20 -8 Z\" fill=\"#fbe9a8\" stroke=\"#c9a83c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20 -8 L26 -14 L26 2 L20 8 Z\" fill=\"#e8cd6c\" stroke=\"#c9a83c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "ei_d",
+    "de": "das Ei",
+    "syl": "EI",
+    "it": "l'uovo",
+    "itSyl": "UO-vo",
+    "en": "egg",
+    "x": 262,
+    "y": 76,
+    "kunst": "<ellipse cx=\"-9\" cy=\"0\" rx=\"9\" ry=\"12\" fill=\"#fdf2e0\" stroke=\"#d8c9a0\" stroke-width=\"1.3\"/><ellipse cx=\"9\" cy=\"4\" rx=\"9\" ry=\"12\" fill=\"#fdf2e0\" stroke=\"#d8c9a0\" stroke-width=\"1.3\"/><ellipse cx=\"2\" cy=\"-12\" rx=\"8\" ry=\"10\" fill=\"#f6e8d0\" stroke=\"#d8c9a0\" stroke-width=\"1.2\"/>"
+   },
+   {
+    "id": "backpulver",
+    "de": "das Backpulver",
+    "syl": "BACK-pul-ver",
+    "it": "il lievito in polvere",
+    "itSyl": "LIE-vi-to in POL-ve-re",
+    "en": "baking powder",
+    "x": 60,
+    "y": 150,
+    "kunst": "<rect x=\"-9\" y=\"-18\" width=\"18\" height=\"34\" rx=\"3\" fill=\"#e8e2d2\" stroke=\"#b9b2a0\" stroke-width=\"1.3\"/><rect x=\"-9\" y=\"-18\" width=\"18\" height=\"9\" rx=\"3\" fill=\"#c94f6a\"/><text x=\"0\" y=\"4\" font-size=\"8\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#8a7450\" font-family=\"system-ui, sans-serif\">BP</text>"
+   },
+   {
+    "id": "ruehrschuessel",
+    "de": "die Rührschüssel",
+    "syl": "RÜHR-schüs-sel",
+    "it": "la ciotola",
+    "itSyl": "CIO-to-la",
+    "en": "mixing bowl",
+    "x": 132,
+    "y": 150,
+    "kunst": "<path d=\"M-28 -12 Q-24 20 0 20 Q24 20 28 -12 Z\" fill=\"#d6eaf2\" stroke=\"#8fc2d8\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"0\" cy=\"-12\" rx=\"28\" ry=\"7\" fill=\"#e8f4fa\" stroke=\"#8fc2d8\" stroke-width=\"1.3\"/><path d=\"M-16 -8 Q0 2 16 -8\" fill=\"none\" stroke=\"#f6e8c8\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "schneebesen",
+    "de": "der Schneebesen",
+    "syl": "SCHNEE-be-sen",
+    "it": "la frusta",
+    "itSyl": "FRU-sta",
+    "en": "whisk",
+    "x": 200,
+    "y": 148,
+    "kunst": "<rect x=\"-3\" y=\"-24\" width=\"6\" height=\"20\" rx=\"3\" fill=\"#8b6a3a\"/><path d=\"M0 -4 Q-12 8 0 20\" fill=\"none\" stroke=\"#b9b2a4\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -4 Q-6 8 0 20\" fill=\"none\" stroke=\"#b9b2a4\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -4 Q0 8 0 20\" fill=\"none\" stroke=\"#b9b2a4\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -4 Q6 8 0 20\" fill=\"none\" stroke=\"#b9b2a4\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -4 Q12 8 0 20\" fill=\"none\" stroke=\"#b9b2a4\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "messbecher",
+    "de": "der Messbecher",
+    "syl": "MESS-be-cher",
+    "it": "il misurino",
+    "itSyl": "mi-su-RI-no",
+    "en": "measuring jug",
+    "x": 262,
+    "y": 150,
+    "kunst": "<path d=\"M-13 -20 L13 -20 L10 20 L-10 20 Z\" fill=\"#dceff6\" stroke=\"#8fc2d8\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-12 0 L11.5 0 L10 20 L-10 20 Z\" fill=\"#a8d6ea\"/><line x1=\"-12\" y1=\"-12\" x2=\"-6\" y2=\"-12\" stroke=\"#5f93a8\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"-4\" x2=\"-6\" y2=\"-4\" stroke=\"#5f93a8\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"4\" x2=\"-6\" y2=\"4\" stroke=\"#5f93a8\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-12\" y1=\"12\" x2=\"-6\" y2=\"12\" stroke=\"#5f93a8\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><path d=\"M13 -14 Q21 -10 13 -6\" fill=\"none\" stroke=\"#8fc2d8\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "teigrolle",
+    "de": "das Nudelholz",
+    "syl": "NU-del-holz",
+    "it": "il matterello",
+    "itSyl": "mat-te-REL-lo",
+    "en": "rolling pin",
+    "x": 60,
+    "y": 190,
+    "kunst": "<rect x=\"-20\" y=\"-6\" width=\"40\" height=\"12\" rx=\"6\" fill=\"#d6ad72\" stroke=\"#a8854c\" stroke-width=\"1.4\"/><rect x=\"-28\" y=\"-3\" width=\"8\" height=\"6\" rx=\"3\" fill=\"#a8854c\"/><rect x=\"20\" y=\"-3\" width=\"8\" height=\"6\" rx=\"3\" fill=\"#a8854c\"/>"
+   },
+   {
+    "id": "backblech",
+    "de": "das Backblech",
+    "syl": "BACK-blech",
+    "it": "la teglia",
+    "itSyl": "TE-glia",
+    "en": "baking tray",
+    "x": 160,
+    "y": 192,
+    "kunst": "<path d=\"M-34 -8 L34 -8 L30 6 L-30 6 Z\" fill=\"#b9b2a4\" stroke=\"#8b8377\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-30 -5 L30 -5\" fill=\"none\" stroke=\"#cfc7ba\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "backform",
+    "de": "die Backform",
+    "syl": "BACK-form",
+    "it": "lo stampo",
+    "itSyl": "STAM-po",
+    "en": "cake tin",
+    "x": 248,
+    "y": 192,
+    "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"22\" ry=\"8\" fill=\"#9aa4ac\" stroke=\"#6f7880\" stroke-width=\"1.4\"/><ellipse cx=\"0\" cy=\"-2\" rx=\"16\" ry=\"5.5\" fill=\"#b6bec6\"/><circle cx=\"0\" cy=\"-2\" r=\"4\" fill=\"#9aa4ac\"/>"
+   },
+   {
+    "id": "teig",
+    "de": "der Teig",
+    "syl": "TEIG",
+    "it": "l'impasto",
+    "itSyl": "im-PA-sto",
+    "en": "dough",
+    "x": 300,
+    "y": 118,
+    "kunst": "<path d=\"M-16 8 Q-18 -8 -4 -10 Q6 -14 14 -6 Q20 2 12 8 Z\" fill=\"#f2e2bc\" stroke=\"#d8c290\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-6\" cy=\"-2\" r=\"1.6\" fill=\"#d8c290\"/><circle cx=\"5\" cy=\"1\" r=\"1.4\" fill=\"#d8c290\"/>"
+   }
+  ]
+ },
+ {
+  "id": "buch_detail",
+  "titel": "Das Buch von innen",
+  "emoji": "🔍",
+  "thema": "Bildung",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#e6ddcb\"/><path d=\"M22 30 L155 24 L155 182 L22 176 Z\" fill=\"#fdfaf0\" stroke=\"#cfc2a4\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M298 30 L165 24 L165 182 L298 176 Z\" fill=\"#fdfaf0\" stroke=\"#cfc2a4\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M155 24 L160 28 L165 24 L165 182 L160 178 L155 182 Z\" fill=\"#e4d9c0\"/>",
+  "teile": [
+   {
+    "id": "buchdeckel",
+    "de": "der Buchdeckel",
+    "syl": "BUCH-de-ckel",
+    "it": "la copertina",
+    "itSyl": "co-per-TI-na",
+    "en": "book cover",
+    "x": 44,
+    "y": 46,
+    "kunst": "<rect x=\"-16\" y=\"-16\" width=\"32\" height=\"40\" rx=\"2\" fill=\"#9a3a2c\" stroke=\"#6e2418\" stroke-width=\"1.4\"/><rect x=\"-12\" y=\"-12\" width=\"24\" height=\"8\" rx=\"1\" fill=\"#e8c98a\"/>"
+   },
+   {
+    "id": "buchruecken",
+    "de": "der Buchrücken",
+    "syl": "BUCH-rü-cken",
+    "it": "il dorso del libro",
+    "itSyl": "DOR-so del LI-bro",
+    "en": "spine",
+    "x": 160,
+    "y": 104,
+    "kunst": "<rect x=\"-5\" y=\"-74\" width=\"10\" height=\"148\" rx=\"2\" fill=\"#c9b89a\" stroke=\"#a08c66\" stroke-width=\"1.3\"/><line x1=\"-5\" y1=\"-50\" x2=\"5\" y2=\"-50\" stroke=\"#a08c66\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-5\" y1=\"-20\" x2=\"5\" y2=\"-20\" stroke=\"#a08c66\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-5\" y1=\"10\" x2=\"5\" y2=\"10\" stroke=\"#a08c66\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-5\" y1=\"40\" x2=\"5\" y2=\"40\" stroke=\"#a08c66\" stroke-width=\"1\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "seite",
+    "de": "die Seite",
+    "syl": "SEI-te",
+    "it": "la pagina",
+    "itSyl": "PA-gi-na",
+    "en": "page",
+    "x": 82,
+    "y": 104,
+    "kunst": "<rect x=\"-32\" y=\"-58\" width=\"64\" height=\"116\" rx=\"2\" fill=\"#fdfcf6\" stroke=\"#d8cbb4\" stroke-width=\"1.3\"/><line x1=\"-24\" y1=\"-40\" x2=\"24\" y2=\"-40\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"-28\" x2=\"24\" y2=\"-28\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"-16\" x2=\"24\" y2=\"-16\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"-4\" x2=\"24\" y2=\"-4\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"8\" x2=\"24\" y2=\"8\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"20\" x2=\"24\" y2=\"20\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"32\" x2=\"24\" y2=\"32\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><line x1=\"-24\" y1=\"44\" x2=\"24\" y2=\"44\" stroke=\"#cfc2a4\" stroke-width=\"1.1\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "titel",
+    "de": "der Titel",
+    "syl": "TI-tel",
+    "it": "il titolo",
+    "itSyl": "TI-to-lo",
+    "en": "title",
+    "x": 232,
+    "y": 46,
+    "kunst": "<rect x=\"-40\" y=\"-10\" width=\"80\" height=\"20\" rx=\"2\" fill=\"#f6efdf\" stroke=\"#cfc2a4\" stroke-width=\"1.2\"/><text x=\"0\" y=\"5\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#5b4a30\" font-family=\"system-ui, sans-serif\">Der kleine Fuchs</text>"
+   },
+   {
+    "id": "autor",
+    "de": "der Autor",
+    "syl": "AU-tor",
+    "it": "l'autore",
+    "itSyl": "au-TO-re",
+    "en": "author",
+    "x": 232,
+    "y": 74,
+    "kunst": "<text x=\"0\" y=\"0\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#7a6a50\" font-family=\"system-ui, sans-serif\">von Alex F.</text>"
+   },
+   {
+    "id": "kapitel",
+    "de": "das Kapitel",
+    "syl": "Ka-PI-tel",
+    "it": "il capitolo",
+    "itSyl": "ca-PI-to-lo",
+    "en": "chapter",
+    "x": 232,
+    "y": 102,
+    "kunst": "<text x=\"0\" y=\"-6\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#5b4a30\" font-family=\"system-ui, sans-serif\">Kapitel 3</text><line x1=\"-24\" y1=\"0\" x2=\"24\" y2=\"0\" stroke=\"#c9b89a\" stroke-width=\"1.4\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "absatz",
+    "de": "der Absatz",
+    "syl": "AB-satz",
+    "it": "il paragrafo",
+    "itSyl": "pa-RA-gra-fo",
+    "en": "paragraph",
+    "x": 232,
+    "y": 132,
+    "kunst": "<line x1=\"-30\" y1=\"-10\" x2=\"22\" y2=\"-10\" stroke=\"#b9ac90\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"-3\" x2=\"22\" y2=\"-3\" stroke=\"#b9ac90\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"4\" x2=\"22\" y2=\"4\" stroke=\"#b9ac90\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"11\" x2=\"4\" y2=\"11\" stroke=\"#b9ac90\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "zeile",
+    "de": "die Zeile",
+    "syl": "ZEI-le",
+    "it": "la riga",
+    "itSyl": "RI-ga",
+    "en": "line",
+    "x": 232,
+    "y": 160,
+    "kunst": "<line x1=\"-30\" y1=\"0\" x2=\"30\" y2=\"0\" stroke=\"#3a2b1c\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"-6\" x2=\"30\" y2=\"-6\" stroke=\"#d8cbb4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"6\" x2=\"30\" y2=\"6\" stroke=\"#d8cbb4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "fussnote",
+    "de": "die Fußnote",
+    "syl": "FUß-no-te",
+    "it": "la nota a piè di pagina",
+    "itSyl": "NO-ta a PIÈ di PA-gi-na",
+    "en": "footnote",
+    "x": 82,
+    "y": 172,
+    "kunst": "<line x1=\"-26\" y1=\"-8\" x2=\"26\" y2=\"-8\" stroke=\"#cfc2a4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><text x=\"-18\" y=\"2\" font-size=\"7\" font-weight=\"700\" text-anchor=\"start\" fill=\"#7a6a50\" font-family=\"system-ui, sans-serif\">¹ siehe S. 4</text>"
+   },
+   {
+    "id": "seitenzahl",
+    "de": "die Seitenzahl",
+    "syl": "SEI-ten-zahl",
+    "it": "il numero di pagina",
+    "itSyl": "NU-me-ro di PA-gi-na",
+    "en": "page number",
+    "x": 44,
+    "y": 172,
+    "kunst": "<text x=\"0\" y=\"0\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\" fill=\"#7a6a50\" font-family=\"system-ui, sans-serif\">— 42 —</text>"
+   },
+   {
+    "id": "lesezeichen",
+    "de": "das Lesezeichen",
+    "syl": "LE-se-zei-chen",
+    "it": "il segnalibro",
+    "itSyl": "se-gna-LI-bro",
+    "en": "bookmark",
+    "x": 290,
+    "y": 104,
+    "kunst": "<path d=\"M-6 -50 L6 -50 L6 44 L0 36 L-6 44 Z\" fill=\"#c94f6a\" stroke=\"#94334a\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"24\" stroke=\"#e08a9c\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "inhaltsverzeichnis",
+    "de": "das Inhaltsverzeichnis",
+    "syl": "IN-halts-ver-zeich-nis",
+    "it": "l'indice",
+    "itSyl": "IN-di-ce",
+    "en": "table of contents",
+    "x": 290,
+    "y": 168,
+    "kunst": "<rect x=\"-16\" y=\"-16\" width=\"32\" height=\"32\" rx=\"2\" fill=\"#fdfcf6\" stroke=\"#cfc2a4\" stroke-width=\"1.2\"/><line x1=\"-11\" y1=\"-9\" x2=\"4\" y2=\"-9\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"9\" y1=\"-9\" x2=\"12\" y2=\"-9\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-11\" y1=\"-3\" x2=\"4\" y2=\"-3\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"9\" y1=\"-3\" x2=\"12\" y2=\"-3\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-11\" y1=\"3\" x2=\"4\" y2=\"3\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"9\" y1=\"3\" x2=\"12\" y2=\"3\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"-11\" y1=\"9\" x2=\"4\" y2=\"9\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"9\" y1=\"9\" x2=\"12\" y2=\"9\" stroke=\"#b9ac90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+   }
+  ]
+ },
+ {
+  "id": "koerper_innen",
+  "titel": "Innen im Körper",
+  "emoji": "🔍",
+  "thema": "Körper",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#f4eaea\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "gehirn",
+    "de": "das Gehirn",
+    "syl": "Ge-HIRN",
+    "it": "il cervello",
+    "itSyl": "cer-VEL-lo",
+    "en": "brain",
+    "x": 160,
+    "y": 42,
+    "kunst": "<path d=\"M-22 12 Q-26 -14 -8 -16 Q0 -22 8 -16 Q26 -14 22 12 Z\" fill=\"#e8b0b8\" stroke=\"#b87c88\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-16 8 Q-13 -4 -16 -12\" fill=\"none\" stroke=\"#b87c88\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8 8 Q-5 -4 -8 -12\" fill=\"none\" stroke=\"#b87c88\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 8 Q3 -4 0 -12\" fill=\"none\" stroke=\"#b87c88\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8 8 Q11 -4 8 -12\" fill=\"none\" stroke=\"#b87c88\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M16 8 Q19 -4 16 -12\" fill=\"none\" stroke=\"#b87c88\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "herz",
+    "de": "das Herz",
+    "syl": "HERZ",
+    "it": "il cuore",
+    "itSyl": "CUO-re",
+    "en": "heart",
+    "x": 128,
+    "y": 104,
+    "kunst": "<path d=\"M0 20 C-22 6 -22 -10 -10 -14 C-3 -16 0 -10 0 -6 C0 -10 3 -16 10 -14 C22 -10 22 6 0 20 Z\" fill=\"#c94f4a\" stroke=\"#94302c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-6 -12 Q-2 0 -4 10\" fill=\"none\" stroke=\"#e0736c\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "lunge",
+    "de": "die Lunge",
+    "syl": "LUN-ge",
+    "it": "il polmone",
+    "itSyl": "pol-MO-ne",
+    "en": "lung",
+    "x": 196,
+    "y": 100,
+    "kunst": "<path d=\"M-4 -18 Q-22 -12 -20 8 Q-18 22 -6 20 L-4 -2 Z\" fill=\"#e0a8b0\" stroke=\"#b07c88\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4 -18 Q22 -12 20 8 Q18 22 6 20 L4 -2 Z\" fill=\"#e0a8b0\" stroke=\"#b07c88\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-2.5\" y=\"-24\" width=\"5\" height=\"12\" rx=\"2\" fill=\"#cfa0a8\"/>"
+   },
+   {
+    "id": "magen",
+    "de": "der Magen",
+    "syl": "MA-gen",
+    "it": "lo stomaco",
+    "itSyl": "STO-ma-co",
+    "en": "stomach",
+    "x": 96,
+    "y": 148,
+    "kunst": "<path d=\"M-8 -18 Q-20 -10 -16 6 Q-12 20 4 18 Q18 14 14 0 Q10 -12 -2 -14 Z\" fill=\"#e8c090\" stroke=\"#b8904c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "leber",
+    "de": "die Leber",
+    "syl": "LE-ber",
+    "it": "il fegato",
+    "itSyl": "FE-ga-to",
+    "en": "liver",
+    "x": 160,
+    "y": 138,
+    "kunst": "<path d=\"M-24 -8 Q-6 -18 22 -12 Q26 4 8 12 Q-14 16 -24 4 Z\" fill=\"#8a3a30\" stroke=\"#5f241c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "niere",
+    "de": "die Niere",
+    "syl": "NIE-re",
+    "it": "il rene",
+    "itSyl": "RE-ne",
+    "en": "kidney",
+    "x": 226,
+    "y": 142,
+    "kunst": "<path d=\"M-4 -14 Q-18 -12 -18 0 Q-18 12 -4 14 Q2 8 0 0 Q2 -8 -4 -14 Z\" fill=\"#a8504a\" stroke=\"#7a302c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M12 -14 Q26 -12 26 0 Q26 12 12 14 Q6 8 8 0 Q6 -8 12 -14 Z\" fill=\"#a8504a\" stroke=\"#7a302c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "darm",
+    "de": "der Darm",
+    "syl": "DARM",
+    "it": "l'intestino",
+    "itSyl": "in-te-STI-no",
+    "en": "intestine",
+    "x": 160,
+    "y": 178,
+    "kunst": "<path d=\"M-30 12 Q-22 -8 -10 6 Q0 18 10 4 Q20 -8 28 10\" fill=\"none\" stroke=\"#d8a074\" stroke-width=\"7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-30 12 Q-22 -8 -10 6 Q0 18 10 4 Q20 -8 28 10\" fill=\"none\" stroke=\"#e8bc94\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "knochen",
+    "de": "der Knochen",
+    "syl": "KNO-chen",
+    "it": "l'osso",
+    "itSyl": "OS-so",
+    "en": "bone",
+    "x": 58,
+    "y": 60,
+    "kunst": "<rect x=\"-18\" y=\"-4\" width=\"36\" height=\"8\" rx=\"4\" fill=\"#f2ede0\" stroke=\"#cfc7ba\" stroke-width=\"1.3\"/><circle cx=\"-20\" cy=\"-6\" r=\"5.5\" fill=\"#f2ede0\" stroke=\"#cfc7ba\" stroke-width=\"1.3\"/><circle cx=\"-20\" cy=\"6\" r=\"5.5\" fill=\"#f2ede0\" stroke=\"#cfc7ba\" stroke-width=\"1.3\"/><circle cx=\"20\" cy=\"-6\" r=\"5.5\" fill=\"#f2ede0\" stroke=\"#cfc7ba\" stroke-width=\"1.3\"/><circle cx=\"20\" cy=\"6\" r=\"5.5\" fill=\"#f2ede0\" stroke=\"#cfc7ba\" stroke-width=\"1.3\"/>"
+   },
+   {
+    "id": "muskel",
+    "de": "der Muskel",
+    "syl": "MUS-kel",
+    "it": "il muscolo",
+    "itSyl": "MU-sco-lo",
+    "en": "muscle",
+    "x": 58,
+    "y": 116,
+    "kunst": "<path d=\"M-20 0 Q-10 -16 4 -12 Q20 -8 20 4 Q14 14 0 12 Q-12 10 -20 0 Z\" fill=\"#c96a62\" stroke=\"#94403a\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-12 -2 Q0 -8 12 -2\" fill=\"none\" stroke=\"#e08a80\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "rippe",
+    "de": "die Rippe",
+    "syl": "RIP-pe",
+    "it": "la costola",
+    "itSyl": "CO-sto-la",
+    "en": "rib",
+    "x": 262,
+    "y": 60,
+    "kunst": "<rect x=\"-1.6\" y=\"-22\" width=\"3.2\" height=\"44\" rx=\"2\" fill=\"#e8e2d2\"/><path d=\"M0 -16 Q16 -14 18 -6\" fill=\"none\" stroke=\"#f2ede0\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -6 Q16 -4 18 4\" fill=\"none\" stroke=\"#f2ede0\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 4 Q16 6 18 14\" fill=\"none\" stroke=\"#f2ede0\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 14 Q16 16 18 24\" fill=\"none\" stroke=\"#f2ede0\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "wirbelsaeule",
+    "de": "die Wirbelsäule",
+    "syl": "WIR-bel-säu-le",
+    "it": "la colonna vertebrale",
+    "itSyl": "co-LON-na ver-te-BRA-le",
+    "en": "spine",
+    "x": 290,
+    "y": 116,
+    "kunst": "<rect x=\"-5\" y=\"-44\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"-33\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"-22\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"-11\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"0\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"11\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"22\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"33\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/><rect x=\"-5\" y=\"44\" width=\"10\" height=\"8\" rx=\"3\" fill=\"#efe8d8\" stroke=\"#cfc7ba\" stroke-width=\"1.1\"/>"
+   },
+   {
+    "id": "ader",
+    "de": "die Ader",
+    "syl": "A-der",
+    "it": "la vena",
+    "itSyl": "VE-na",
+    "en": "vein",
+    "x": 262,
+    "y": 148,
+    "kunst": "<path d=\"M-20 -10 Q-6 2 0 -6 Q8 -16 22 -4\" fill=\"none\" stroke=\"#4a6ea8\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-20 10 Q-6 20 0 12 Q8 2 22 14\" fill=\"none\" stroke=\"#b0404a\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "blut",
+    "de": "das Blut",
+    "syl": "BLUT",
+    "it": "il sangue",
+    "itSyl": "SAN-gue",
+    "en": "blood",
+    "x": 226,
+    "y": 186,
+    "kunst": "<path d=\"M0 -12 Q10 2 0 12 Q-10 2 0 -12 Z\" fill=\"#b0202a\" stroke=\"#7a1218\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-3\" cy=\"0\" r=\"1.8\" fill=\"#e06060\"/>"
+   },
+   {
+    "id": "haut_d",
+    "de": "die Haut",
+    "syl": "HAUT",
+    "it": "la pelle",
+    "itSyl": "PEL-le",
+    "en": "skin",
+    "x": 96,
+    "y": 190,
+    "kunst": "<rect x=\"-22\" y=\"-8\" width=\"44\" height=\"16\" rx=\"3\" fill=\"#f2d3ba\" stroke=\"#d8ab8c\" stroke-width=\"1.3\"/><circle cx=\"-16\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"-8\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"0\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"8\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"16\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/>"
    }
   ]
  }

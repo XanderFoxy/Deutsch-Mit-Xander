@@ -590,7 +590,53 @@
     zeitformen: "Grammatik-Profi", wortschatz: "Sprachkünstler", konnektoren: "Grammatik-Profi",
     jedesto: "Grammatik-Profi", quiz: "Wissenschaftler", lueckentext: "Sprachkünstler",
     wortbaustelle: "Sprachkünstler", buchstabensalat: "Sprachkünstler", kreuzwortraetsel: "Sprachkünstler",
-    betonungstrainer: "Sprachkünstler",
+    betonungstrainer: "Sprachkünstler", aussprachekurs: "Sprachkünstler", dialoge: "Abenteurer", kultur: "Wissenschaftler", stadtlandfluss: "Abenteurer",
+
+    /* GEMELDET: „Bei den Übungen kommt es mir manchmal vor, dass du nur
+       noch gelbe Labels gemacht hast."
+
+       Genau so war es: Diese Tabelle kannte 22 Kategorien, es gibt aber
+       90. Alles Übrige fiel auf „Abenteurer" zurück — und der ist gelb.
+       Jetzt trägt jede Kategorie ihren Charakter, und die Farbpunkte
+       sagen wieder etwas aus. */
+
+    // Wortschatz nach Themen — der Sprachkünstler sammelt Wörter.
+    tiere: "Sprachkünstler", koerper: "Sprachkünstler", gefuehle: "Sprachkünstler",
+    haushalt: "Sprachkünstler", kleidung: "Sprachkünstler", essen: "Sprachkünstler",
+    moebel: "Sprachkünstler", werkzeug: "Sprachkünstler", musik: "Sprachkünstler",
+    familie: "Sprachkünstler", freundschaft: "Sprachkünstler", freizeit: "Sprachkünstler",
+    einkaufen: "Sprachkünstler", umgangssprache: "Sprachkünstler",
+    begruessung: "Abenteurer", tagesablauf: "Abenteurer", beschreiben: "Abenteurer",
+
+    // Zahlen, Zeit und Ordnung — das ist Kopfarbeit.
+    zahlen: "Wissenschaftler", uhrzeit: "Wissenschaftler", wochentage: "Wissenschaftler",
+    monate: "Wissenschaftler",
+
+    // Genaues Unterscheiden — der Logiker.
+    wortpaare: "Logiker", "sinn-trainer": "Logiker", "doppelt-gemoppelt": "Logiker",
+    homophone: "Logiker", alltagsverben: "Logiker", praefixverben: "Logiker",
+
+    // Satzbau und Formenlehre — der Grammatik-Profi.
+    wortstellung: "Grammatik-Profi", fragen: "Grammatik-Profi", verneinung: "Grammatik-Profi",
+    modalverben: "Grammatik-Profi", faelle: "Grammatik-Profi", possessiv: "Grammatik-Profi",
+    praepositionen: "Grammatik-Profi", reflexiv: "Grammatik-Profi", passiv: "Grammatik-Profi",
+    konjunktiv: "Grammatik-Profi", funktionsverben: "Grammatik-Profi", partizip: "Grammatik-Profi",
+    infinitivsatz: "Grammatik-Profi", modalpartikeln: "Grammatik-Profi",
+    wortbildung: "Tausendsassa", stil: "Tausendsassa",
+
+    // Der Italienischkurs bekommt dieselbe Einteilung wie der deutsche.
+    "it-artikel": "Grammatik-Profi", "it-plural": "Grammatik-Profi", "it-verben": "Grammatik-Profi",
+    "it-praepositionen": "Grammatik-Profi", "it-adjektive": "Grammatik-Profi",
+    "it-vergangenheit": "Grammatik-Profi", "it-artikelregeln": "Grammatik-Profi",
+    "it-aussprache": "Sprachkünstler", "it-aussprachekurs": "Sprachkünstler", "it-dialoge": "Abenteurer", "it-kultur": "Wissenschaftler", "it-wortschatz": "Sprachkünstler",
+    "it-koerper": "Sprachkünstler", "it-tiere": "Sprachkünstler", "it-essen": "Sprachkünstler",
+    "it-kleidung": "Sprachkünstler", "it-wohnen": "Sprachkünstler", "it-haushalt": "Sprachkünstler",
+    "it-schule": "Sprachkünstler", "it-natur": "Sprachkünstler", "it-werkzeug": "Sprachkünstler",
+    "it-alltag": "Sprachkünstler", "it-einkaufen": "Sprachkünstler",
+    "it-zahlen": "Wissenschaftler", "it-uhrzeit": "Wissenschaftler",
+    "it-wochentage": "Wissenschaftler", "it-monate": "Wissenschaftler",
+    "it-begruessung": "Abenteurer", "it-tagesablauf": "Abenteurer",
+    "it-beschreiben": "Abenteurer", "it-wetter": "Abenteurer", "it-unterwegs": "Abenteurer",
   };
   function personaForCategory(catId) {
     return CATEGORY_PERSONA[catId] || "Abenteurer";
@@ -869,7 +915,7 @@
       const extra = profile.extraProfileData || {};
       const filled = [
         profile.bio, profile.birthday, profile.origin,
-        Array.isArray(profile.languages) && profile.languages.length > 0,
+        Array.isArray(profile.languages) && (profile.languages || []).length > 0,
         profile.favMovie, profile.favSeries, profile.favSong,
         Array.isArray(extra.gallery) && extra.gallery.length > 0,
       ].filter(Boolean).length;
@@ -973,6 +1019,10 @@
     { key: "wortleiter_neu", label: "🧗 Wortleiter (neues Spiel)", desc: "Von A1 nach C2 klettern: drei Aufgaben je Stufe, zwei Fehler beenden den Aufstieg. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "silbenturm_neu", label: "🧱 Silbenturm (neues Spiel)", desc: "Ein Wort aus seinen Silben wieder aufbauen und danach die betonte Silbe bestimmen. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "sortierer_neu", label: "🧺 Wörter-Sortierer (neues Spiel)", desc: "In welches Wortfeld gehört das Wort? Die Wörter kommen aus dem Wörterbuch und richten sich nach dem eingestellten Niveau. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
+    { key: "stadtlandfluss_neu", label: "🏙️ Stadt · Land · Fluss (neues Spiel)", desc: "Ein Buchstabe, fünf Spalten, zwei Minuten — allein gegen den Fuchs oder zu zweit mit gemeinsamem Start: Beide bekommen denselben Buchstaben, dieselben Spalten und dieselbe Startsekunde, danach werden die Zettel nebeneinandergelegt und klassisch gewertet (20/10/5/0). Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
+    { key: "aussprachekurs_neu", label: "🗣️ Aussprache-Kurs (neuer Bereich)", desc: "Das komplette Alphabet mit Umlauten und ß, die Regeln zur Vokallänge mit ihren Ausnahmen, Konsonanten am Stück (Straße statt Se-tra-ße) und die Tricks für ü, ö, ng und ch — mit Schnittbildern durch Mund und Rachen, auf Deutsch und auf Italienisch. Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
+    { key: "dialoge_neu", label: "💬 Dialoge (neuer Bereich)", desc: "Das Gesprächs-Formular mit fertigen Sätzen für jeden Schritt in der Sie- und in der du-Form, dazu 20 durchspielbare Situationen (Bürgeramt, Arzt, Wohnungsbesichtigung, Vorstellungsgespräch, Nachbarn, Sprachkurs). Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
+    { key: "feste_kultur_neu", label: "🎄 Feste & Kultur (neuer Bereich)", desc: "Der Jahreslauf mit allen Festen und dazu das Ungeschriebene: Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, Behörden, Vereine, Zutatenliste. Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
     { key: "musikplayer_update", label: "🎵 Musikplayer-Update", desc: "Wellenform-Anzeige, Schnellliste (☰), MP3-Symbol im Video-Bereich. Bis zur Freigabe sehen andere Nutzer:innen den Player ohne diese neuen Elemente (die eigentlichen Stabilitäts-Fixes — Song hängt sich nicht mehr auf, Layout-Wechsel startet Song nicht neu — gelten unabhängig davon bereits für alle, da das reine Fehlerbehebungen waren)." },
   ];
   // Kleiner Freigabe-Schalter DIREKT AM ORT des jeweiligen Features (statt nur zentral in den
@@ -1114,7 +1164,7 @@
       await Backend.notifyAdminsBetaTesting(profile.name, featureName, subTarget);
     } catch (e) { console.warn("Beta-Test-Benachrichtigung an Admins fehlgeschlagen:", e); }
   }
-  function renderComingSoonGate(area, flagKey, gameName, gameIcon, defaultTrue) {
+  function renderComingSoonGate(area, flagKey, gameName, gameIcon, defaultTrue, istBereich) {
     const isOn = defaultTrue ? Backend.isFeatureOnDefaultTrue(flagKey) : Backend.isFeatureOn(flagKey);
     /* Beta-Tester:innen ausdrücklich mitzählen. Bisher hing das allein an
        isFeatureOn(), das sie zwar mitmeint — nur war damit nirgends
@@ -1153,8 +1203,8 @@
         <p style="font-size:2.5rem;">${zurueckgezogen ? "🚧" : gameIcon}</p>
         <h2 style="margin:8px 0;">${gameName}</h2>
         ${zurueckgezogen
-          ? `<p class="empty-note">Dieses Spiel gibt es — es wird gerade überarbeitet und ist deshalb kurz nicht spielbar. Es kommt zurück, dein Punktestand darin bleibt erhalten.</p>`
-          : `<p class="empty-note">Dieses Spiel wird gerade fertig vorbereitet — kommt bald!</p>`}
+          ? `<p class="empty-note">🚧 ${istBereich ? "Diesen Bereich gibt es — er wird gerade überarbeitet und ist deshalb kurz nicht zu öffnen. Er kommt zurück, und was du dort schon gemacht hast, bleibt erhalten." : "Dieses Spiel gibt es — es wird gerade überarbeitet und ist deshalb kurz nicht spielbar. Es kommt zurück, dein Punktestand darin bleibt erhalten."}</p>`
+          : `<p class="empty-note">🚧 ${istBereich ? "Dieser Bereich wird gerade fertig gebaut — er kommt bald!" : "Dieses Spiel wird gerade fertig vorbereitet — kommt bald!"}</p>`}
       </div>`;
     return false;
   }
@@ -1900,6 +1950,77 @@
      Ein Aufklappmenü je Szene, darin jedes Ding mit Vorschau,
      Hochladen und Herausnehmen. Die Zeichnung bleibt immer erhalten.
      --------------------------------------------------------------- */
+  /* ============================================================
+     BILDER AN IHREN NAMEN ERKENNEN
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Das System soll das schon selber erkennen — einfach
+     Gabel PNG."
+
+     Man wählt beliebig viele Bilder auf einmal aus. Jede Datei wird
+     an ihrem Dateinamen erkannt: „gabel.png", „Die Gabel.png",
+     „der_loeffel.webp", „kueche-gabel.png" — alles landet beim
+     richtigen Ding. Was sich nicht zuordnen lässt, wird hinterher
+     namentlich aufgezählt, statt still verloren zu gehen.
+     ============================================================ */
+  function bvNormal(text) {
+    return bvNormalStrich(text).replace(/-/g, "");
+  }
+  /* Dieselbe Vereinfachung, aber die Trennstellen bleiben als „-"
+     stehen. Nur so lässt sich „kueche-fenster" von „nasenwurzel"
+     unterscheiden: Im ersten Fall steht der Name hinter einer echten
+     Grenze, im zweiten klebt er mitten im Wort. */
+  function bvNormalStrich(text) {
+    return String(text || "")
+      .replace(/\.[a-z0-9]{2,5}$/i, "")                 // Dateiendung weg
+      .replace(/^(der|die|das)[\s_-]+/i, "")            // Artikel weg
+      .toLowerCase()
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+  /* Alle Dinge aus allen Bildern, mit ihren möglichen Namen. */
+  function bvVerzeichnis() {
+    const raus = [];
+    (window.DMA_SZENEN || []).forEach((s) => {
+      (s.teile || []).forEach((t) => {
+        raus.push({
+          schluessel: bildSchluessel(s.id, t.id),
+          szene: s.id, szeneTitel: s.titel, teil: t.id, name: t.de,
+          namen: [bvNormal(t.de), bvNormal(t.id), bvNormal(s.id + t.id), bvNormal(s.id + "-" + t.de)],
+          kurz: [bvNormal(t.de), bvNormal(t.id)].filter((x) => x && x.length > 2),
+        });
+      });
+    });
+    return raus;
+  }
+  /* Eine Datei einem Ding zuordnen. Erst der genaue Name, dann der
+     Name mit dem Bereich davor („kueche-gabel"), zuletzt der Name als
+     Ende des Dateinamens („foto_gabel"). */
+  function bvZuordnen(dateiname, verzeichnis) {
+    const n = bvNormal(dateiname);
+    if (!n) return null;
+    let treffer = verzeichnis.filter((e) => e.namen.includes(n));
+    if (!treffer.length) {
+      /* Jetzt mit Grenze: „kueche-fenster" trifft das Fenster, aber
+         „nasenwurzel" trifft NICHT die Nase. */
+      const ns = bvNormalStrich(dateiname);
+      treffer = verzeichnis.filter((e) => e.kurz.some((x) => ns.endsWith("-" + x) || ns.startsWith(x + "-")));
+      /* Bei mehreren gleich guten Kandidaten gewinnt der längste
+         übereinstimmende Name — „salzstreuer" schlägt „salz". */
+      treffer.sort((a, b) => Math.max(...b.kurz.map((x) => x.length)) - Math.max(...a.kurz.map((x) => x.length)));
+    }
+    if (!treffer.length) return null;
+    /* „Fenster" gibt es in vier Bildern, „Stuhl" ebenso. Dann landet
+       das Bild im ersten — und der Bericht sagt ausdrücklich, wie man
+       ein anderes trifft: den Bereich vor den Namen setzen. */
+    return Object.assign({}, treffer[0], {
+      mehrdeutig: treffer.length > 1,
+      andere: treffer.slice(1, 5).map((t) => t.szene),
+    });
+  }
+
+  let bildvSuche = "";
+  let bildvStapelBericht = null;
   function bildverwaltungHtml() {
     const szenen = (window.DMA_SZENEN || []);
     if (!szenen.length) {
@@ -1922,11 +2043,51 @@
         <strong>${eigene}</strong> von <strong>${gesamt}</strong> Dingen haben gerade ein eigenes Bild.
         ${eigene ? `<button type="button" class="btn btn-ghost" id="bildAllesRaus"
                      style="margin-left:8px;">↩︎ Alle zurücksetzen</button>` : ""}
-      </p>`;
+      </p>
+      <div class="bildv-stapel">
+        <p class="eyebrow">MEHRERE AUF EINMAL</p>
+        <p class="empty-note" style="margin:0 0 8px;">
+          Du musst nicht jedes Ding einzeln antippen. Wähl einfach alle Bilder auf einmal aus —
+          erkannt wird jedes an seinem <strong>Dateinamen</strong>: <code>gabel.png</code>,
+          <code>Die Gabel.png</code>, <code>der_loeffel.webp</code> oder
+          <code>kueche-gabel.png</code> landen alle an der richtigen Stelle. Was nicht passt,
+          wird dir danach namentlich aufgezählt.
+        </p>
+        <label class="btn btn-coffee bildv-knopf">
+          📂 Bilder auswählen
+          <input type="file" multiple accept="image/png,image/gif,image/webp,image/jpeg,image/svg+xml"
+                 id="bildStapel" hidden />
+        </label>
+        <span id="bildStapelStand" class="empty-note" style="margin-left:8px;"></span>
+        ${bildvStapelBericht ? `
+          <div class="bildv-bericht">
+            ${bildvStapelBericht.genommen.length ? `
+              <p class="bildv-bericht-gut">✅ ${bildvStapelBericht.genommen.length} zugeordnet:</p>
+              <ul>${bildvStapelBericht.genommen.slice(0, 40).map((g) =>
+                `<li><code>${escapeHtml(g.name)}</code> → ${escapeHtml(g.ziel)} <span class="ak-b-hinweis">(${escapeHtml(g.szene)})</span>${
+                  g.mehrdeutig ? `<span class="ak-b-hinweis">Diesen Namen gibt es auch in ${g.andere.join(", ")}. Soll das Bild dorthin, nenn die Datei <code>${escapeHtml(g.andere[0] + "-" + g.teil)}.png</code>.</span>` : ""}</li>`).join("")}
+                ${bildvStapelBericht.genommen.length > 40 ? `<li>… und ${bildvStapelBericht.genommen.length - 40} weitere</li>` : ""}</ul>` : ""}
+            ${bildvStapelBericht.abgelehnt.length ? `
+              <p class="bildv-bericht-schlecht">⚠️ ${bildvStapelBericht.abgelehnt.length} nicht zugeordnet — benenne die Datei nach dem Ding, das sie zeigen soll:</p>
+              <ul>${bildvStapelBericht.abgelehnt.slice(0, 40).map((g) =>
+                `<li><code>${escapeHtml(g.name)}</code> <span class="ak-b-hinweis">${escapeHtml(g.warum)}</span></li>`).join("")}
+                ${bildvStapelBericht.abgelehnt.length > 40 ? `<li>… und ${bildvStapelBericht.abgelehnt.length - 40} weitere</li>` : ""}</ul>` : ""}
+            <button type="button" class="btn btn-ghost" id="bildBerichtZu" style="margin-top:6px;">Bericht schließen</button>
+          </div>` : ""}
+      </div>
+      <div class="form-field" style="margin:12px 0 4px;">
+        <label for="bildSuche">Suchen</label>
+        <input type="text" id="bildSuche" placeholder="z. B. Gabel" value="${escapeHtml(bildvSuche)}" autocomplete="off" />
+      </div>`;
+    const suche = bvNormal(bildvSuche);
     const bloecke = szenen.map((s) => {
-      const mit = s.teile.filter((t) => typeof Bildverwaltung !== "undefined"
+      const teile = suche
+        ? s.teile.filter((t) => bvNormal(t.de).includes(suche) || bvNormal(t.id).includes(suche))
+        : s.teile;
+      if (!teile.length) return "";
+      const mit = teile.filter((t) => typeof Bildverwaltung !== "undefined"
         && Bildverwaltung.hat(bildSchluessel(s.id, t.id))).length;
-      const zeilen = s.teile.map((t) => {
+      const zeilen = teile.map((t) => {
         const k = bildSchluessel(s.id, t.id);
         const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(k))
           ? Bildverwaltung.bild(k) : null;
@@ -1948,9 +2109,9 @@
           </div>`;
       }).join("");
       return `
-        <details class="bildv-gruppe">
-          <summary>${s.emoji || "🖼️"} ${escapeHtml(s.titel)}
-            <span class="bildv-zaehler">${mit ? mit + " eigene" : s.teile.length + " Dinge"}</span>
+        <details class="bildv-gruppe" ${suche ? "open" : ""}>
+          <summary>${s.emoji || "🖼️"} ${escapeHtml(s.titel)}${s.detail ? ' <span class="bildv-marke">🔍 Detailbild</span>' : ""}
+            <span class="bildv-zaehler">${mit ? mit + " eigene" : teile.length + " Dinge"}</span>
           </summary>
           <div class="bildv-liste">${zeilen}</div>
           ${mit ? `<button type="button" class="btn btn-ghost" data-bild-szene-raus="${s.id}"
@@ -2015,6 +2176,49 @@
         neuZeichnen();
       });
     });
+    const suchfeld = box.querySelector("#bildSuche");
+    if (suchfeld) {
+      suchfeld.addEventListener("input", () => {
+        bildvSuche = suchfeld.value;
+        neuZeichnen();
+        const frisch = document.getElementById("bildSuche");
+        if (frisch) { frisch.focus(); frisch.setSelectionRange(frisch.value.length, frisch.value.length); }
+      });
+    }
+    /* Der Stapel: alle gewählten Dateien der Reihe nach einlesen und
+       am Dateinamen zuordnen. Danach steht schwarz auf weiß da, was
+       angekommen ist und was nicht. */
+    const stapel = box.querySelector("#bildStapel");
+    if (stapel) {
+      stapel.addEventListener("change", async () => {
+        const dateien = [...(stapel.files || [])];
+        if (!dateien.length) return;
+        const stand = document.getElementById("bildStapelStand");
+        const verzeichnis = bvVerzeichnis();
+        const genommen = [];
+        const abgelehnt = [];
+        for (let i = 0; i < dateien.length; i++) {
+          const d = dateien[i];
+          if (stand) stand.textContent = `${i + 1} von ${dateien.length} …`;
+          const ziel = bvZuordnen(d.name, verzeichnis);
+          if (!ziel) { abgelehnt.push({ name: d.name, warum: "kein passendes Ding gefunden" }); continue; }
+          try {
+            const bild = await Bildverwaltung.einlesen(d);
+            await Bildverwaltung.speichern(ziel.schluessel, bild);
+            genommen.push({ name: d.name, ziel: ziel.name, szene: ziel.szeneTitel,
+              mehrdeutig: ziel.mehrdeutig, andere: ziel.andere, teil: ziel.teil });
+          } catch (e) {
+            abgelehnt.push({ name: d.name, warum: (e && e.message) || "ließ sich nicht lesen" });
+          }
+        }
+        stapel.value = "";
+        bildvStapelBericht = { genommen, abgelehnt };
+        neuZeichnen();
+        if (typeof renderBilderwelt === "function" && document.getElementById("bilderweltArea")) renderBilderwelt();
+        showToast(`${genommen.length} Bild${genommen.length === 1 ? "" : "er"} zugeordnet${abgelehnt.length ? `, ${abgelehnt.length} nicht` : ""}`);
+      });
+    }
+    box.querySelector("#bildBerichtZu")?.addEventListener("click", () => { bildvStapelBericht = null; neuZeichnen(); });
     const alles = box.querySelector("#bildAllesRaus");
     if (alles) {
       alles.addEventListener("click", async () => {
@@ -2094,6 +2298,30 @@
       </div>
 
       <div class="question-card" style="margin-top:14px;">
+        <h3>🌍 Sprache der Erklärungen</h3>
+        <p class="empty-note" style="margin-bottom:10px;">
+          In welcher Sprache stehen die Übersetzungen und Hilfen auf der Seite — in der Bilderwelt,
+          bei den Übungen und in „Es war einmal in Deutschland". Standard ist die Sprache deines
+          Herkunftslandes; hier kannst du eine andere wählen. Für Wörter, zu denen in deiner Sprache
+          noch keine Entsprechung hinterlegt ist, steht die englische da.
+        </p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:12px;">
+          <input type="checkbox" id="umgangsspracheSchalter" ${umgangsspracheAn() ? "checked" : ""} />
+          <span>🗣️ Umgangssprache zuerst zeigen — „das Klopapier" statt „das Toilettenpapier"</span>
+        </label>
+        <p class="empty-note" style="margin:6px 0 0; font-size:0.74rem;">
+          Beide Wörter stehen immer auf der Karte; der Schalter entscheidet nur, welches oben steht.
+          Aufgenommen ist nur, was im Wörterbuch als umgangssprachlich, salopp, Kurzform oder regional
+          verzeichnet ist — keine erfundenen Alltagswörter.
+        </p>
+        <select id="hilfsSpracheWahl" class="challenge-select" style="margin-top:12px;">
+          <option value="">Automatisch (aus meinem Herkunftsland) — gerade ${escapeHtml(hilfsSpracheName(hilfsSprache()))}</option>
+          ${Object.entries(HILFSSPRACHEN).filter(([c]) => c !== "de").map(([c, n]) =>
+            `<option value="${c}" ${((profile.extraProfileData || {}).hilfsSprache === c) ? "selected" : ""}>${n}</option>`).join("")}
+        </select>
+      </div>
+
+      <div class="question-card" style="margin-top:14px;">
         <h3>🖼️ Bildverwaltung</h3>
         <div id="bildverwaltungBox">${bildverwaltungHtml()}</div>
       </div>
@@ -2111,11 +2339,22 @@
         <h3>🔑 Wer darf den Italienischkurs benutzen?</h3>
         <p class="empty-note" style="margin-bottom:10px;">Der Kurs lässt sich für einzelne Mitglieder öffnen. Wer hier steht, sieht in seinen eigenen Einstellungen denselben Schalter 🇮🇹 und bekommt eine Nachricht darüber. Alle anderen merken nichts davon.</p>
         <div id="itZugangListe">${itZugangListeHtml()}</div>
-        <div class="quiz-actions" style="margin-top:10px; gap:6px; flex-wrap:wrap; justify-content:flex-start;">
-          <input type="text" id="itZugangSuche" placeholder="Namen suchen …" style="flex:1 1 160px; min-width:140px;">
-          <button type="button" class="btn btn-ghost" id="itZugangSuchBtn" style="margin:0;">🔍 Suchen</button>
-        </div>
-        <div id="itZugangTreffer"></div>
+        ${/* GEWÜNSCHT: „Ich möchte bei der Auswahl für denjenigen, den ich zu
+              meinem Italienischkurs dazuholen möchte, die Namen so angezeigt
+              haben wie wenn ich die Leute für die Herausforderung einlade —
+              dass ich sehe, wann der online ist oder wer zu meinen Freunden
+              gehört, und den einfach antippen kann, ohne dass ich das
+              schreiben muss." */ ""}
+        <p class="eyebrow" style="margin:12px 0 6px;">Antippen genügt</p>
+        <div id="itZugangPersonen"><p class="empty-note" style="margin:0;">Wird geladen …</p></div>
+        <details style="margin-top:10px;">
+          <summary class="empty-note" style="cursor:pointer;">Jemanden suchen, der nicht in der Liste steht</summary>
+          <div class="quiz-actions" style="margin-top:8px; gap:6px; flex-wrap:wrap; justify-content:flex-start;">
+            <input type="text" id="itZugangSuche" placeholder="Namen suchen …" style="flex:1 1 160px; min-width:140px;">
+            <button type="button" class="btn btn-ghost" id="itZugangSuchBtn" style="margin:0;">🔍 Suchen</button>
+          </div>
+          <div id="itZugangTreffer"></div>
+        </details>
       </div>` : ""}
       <div class="question-card" style="margin-top:14px; border:2px solid var(--teal-400);">
         <h3>⚖️ Sprachniveau — für faire Fortschritts-Geschwindigkeit</h3>
@@ -2335,6 +2574,20 @@
         errBox.style.display = "block";
       }
     });
+    document.getElementById("umgangsspracheSchalter")?.addEventListener("change", async (e) => {
+      try {
+        const antwort = await Backend.updateExtraProfileField("umgangssprache", e.target.checked);
+        if (antwort && antwort.ok === false) throw new Error(antwort.message || "Nicht gespeichert.");
+        showToast(e.target.checked ? "🗣️ Umgangssprache steht jetzt oben" : "📖 Wörterbuchform steht jetzt oben");
+      } catch (err) { showToast("⚠️ " + (err.message || "Nicht gespeichert.")); e.target.checked = !e.target.checked; }
+    });
+    document.getElementById("hilfsSpracheWahl")?.addEventListener("change", async (e) => {
+      try {
+        await hilfsSpracheSetzen(e.target.value || null);
+        showToast("🌍 Erklärungen jetzt auf " + hilfsSpracheName(hilfsSprache()).split(" — ").pop());
+        renderSettings();
+      } catch (err) { showToast("⚠️ " + (err.message || "Nicht gespeichert.")); }
+    });
     bildverwaltungBinden();
     const premiumToggle = document.getElementById("premiumSelfToggle");
     if (premiumToggle) premiumToggle.addEventListener("change", async () => { await Backend.togglePremium(premiumToggle.checked); renderSettings(); });
@@ -2406,6 +2659,46 @@
         } catch (err) { b.disabled = false; showToast("⚠️ " + (err.message || "Ging nicht.")); }
       }));
     };
+    /* Die Personen zum Antippen — dieselbe Darstellung wie beim
+       Herausfordern: grüner Punkt für „gerade online", Stern für
+       Freunde, alphabetisch dahinter. */
+    const zugangPersonenZeichnen = async () => {
+      const kasten = area.querySelector("#itZugangPersonen");
+      if (!kasten) return;
+      let alle = [];
+      try { alle = await Backend.getAllMembers(); } catch (e) { alle = []; }
+      let freunde = [];
+      try { freunde = await Backend.getFriends((Backend.currentUser() || {}).id); } catch (e) { freunde = []; }
+      const freundIds = new Set(freunde.map((f) => f.id));
+      const schon = new Set(itZugangListe.map((e) => e.id));
+      const eigeneId = (Backend.currentUser() || {}).id;
+      const frei = alle.filter((m) => m.id !== eigeneId && !schon.has(m.id));
+      if (!frei.length) {
+        kasten.innerHTML = '<p class="empty-note" style="margin:0;">Alle Mitglieder sind schon freigegeben.</p>';
+        return;
+      }
+      frei.sort((a, b) => (Number(b.online) - Number(a.online))
+        || (Number(freundIds.has(b.id)) - Number(freundIds.has(a.id)))
+        || String(a.name || "").localeCompare(String(b.name || ""), "de"));
+      kasten.innerHTML = `<div class="challenge-friend-list">${frei.slice(0, 40).map((m) => `
+        <button type="button" class="challenge-friend-pill ${m.online ? "" : "offline"}" data-it-frei="${escapeHtml(m.id)}" data-it-name="${escapeHtml(m.name || "")}">
+          ${m.online ? '<span class="online-dot"></span>' : ""}${freundIds.has(m.id) ? "⭐ " : ""}${escapeHtml(m.name || "Unbekannt")}${m.online ? "" : ' <span class="empty-note">(offline)</span>'}
+        </button>`).join("")}</div>
+        ${frei.length > 40 ? `<p class="empty-note" style="margin:6px 0 0;">… und ${frei.length - 40} weitere — die findest du über die Suche.</p>` : ""}`;
+      kasten.querySelectorAll("[data-it-frei]").forEach((b) => b.addEventListener("click", async () => {
+        b.disabled = true;
+        try {
+          await Backend.setItKursZugang(itZugangListe.concat([{ id: b.dataset.itFrei, name: b.dataset.itName }]));
+          await itZugangListeLaden(true);
+          zugangKasten.innerHTML = itZugangListeHtml();
+          zugangVerdrahten();
+          if (Backend.meldeItKursFreigabe) await Backend.meldeItKursFreigabe(b.dataset.itFrei, b.dataset.itName);
+          showToast("🇮🇹 Kurs für " + (b.dataset.itName || "die Person") + " freigegeben.");
+          zugangPersonenZeichnen();
+        } catch (err) { b.disabled = false; showToast("⚠️ " + (err.message || "Ging nicht.")); }
+      }));
+    };
+    zugangPersonenZeichnen();
     area.querySelector("#itZugangSuchBtn")?.addEventListener("click", zugangSuchen);
     area.querySelector("#itZugangSuche")?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); zugangSuchen(); } });
     area.querySelector("#profilReparierenBtn")?.addEventListener("click", async (e) => {
@@ -3303,7 +3596,7 @@
     /* Schon nach EINER gespielten Runde richtet sich die Aufgabe nach
        dem, was gespielt wurde. Vorher brauchte es drei — für alle
        Neuen passierte damit erst einmal gar nichts. */
-    if (!profile || !profile.history || !profile.history.length) return null;
+    if (!profile || !profile.history || !(profile.history || []).length) return null;
     const stats = {}; // { count, totalPercent }
     profile.history.forEach((h) => {
       (h.categories || []).forEach((catId) => {
@@ -4331,16 +4624,12 @@
     applyStressEverywhere(on);
     if (on) startStressObserver();
   }
-  // Wandelt "FOTO-gra-FIE" in HTML mit unterstrichener betonter Silbe um.
+  /* Eine einzige Bildsprache für die ganze Seite: Punkt für kurz,
+     Strich für lang, Kreis, wenn die Schreibung die Länge nicht verrät.
+     Früher gab es hier einen zweiten Weg mit schlichtem Unterstrich —
+     daher die gemeldeten „grauen Striche" neben den farbigen Punkten. */
   function stressHtml(sylString) {
-    if (!sylString) return "";
-    const teileHtml = sylString.split("-");
-    const betontHtml = Core.betonteSilbenIndex(teileHtml);
-    return teileHtml.map((part, iSil) => {
-      const isStressed = iSil === betontHtml;
-      const display = isStressed ? part.charAt(0) + part.slice(1).toLowerCase() : part;
-      return isStressed ? `<span class="stress">${display}</span>` : display;
-    }).join("");
+    return betonungAnzeigen(sylString);
   }
   // WICHTIG — behebt einen echten, gemeldeten Bug: stressHtml() (oben) schreibt bei einer
   // betonten Silbe IMMER deren ersten Buchstaben groß (z. B. "IM-mer" → "Immer") — das ist bei
@@ -4353,14 +4642,20 @@
     if (!sylString) return "";
     const flatSyllables = sylString.split("-");
     const betontKeep = Core.betonteSilbenIndex(flatSyllables);
+    /* Die Schreibung des echten Wortes übernehmen, die Betonung aber mit
+       Punkt und Strich zeigen wie überall sonst. */
     let pos = 0;
-    return flatSyllables.map((part, iSil) => {
-      const isStressed = iSil === betontKeep;
-      const len = part.length;
+    const neuSyl = flatSyllables.map((part, iSil) => {
+      const len = part.replace(/^\*/, "").length;
       const real = (originalWord || "").slice(pos, pos + len) || part.toLowerCase();
       pos += len;
-      return isStressed ? `<span class="stress">${real}</span>` : real;
-    }).join("");
+      if (iSil === betontKeep) return grossMitEszett(real);
+      return part.startsWith("*") ? "*" + real : real.toLowerCase();
+    }).join("-");
+    const gesetzt = betonungAnzeigen(neuSyl);
+    const ersterGross = originalWord && originalWord[0] === originalWord[0].toUpperCase();
+    return ersterGross ? gesetzt
+      : gesetzt.replace(/(>|^)([A-ZÄÖÜ])/, (m, vor, b) => vor + b.toLowerCase());
   }
   // Zeigt ein Wort mit Betonung an, falls der Modus aktiv ist UND eine geprüfte Silbentrennung
   // vorliegt (sylLookup ist z. B. ExerciseData.WORD_SYL oder VocabData.LANGUAGE_SYL) — sonst
@@ -4445,7 +4740,80 @@
      ein Lesetext fragt sonst für jedes Wort einzeln nach. */
   let betonungIndex = null;
   let betonungIndexStand = -1;
+  /* ============================================================
+     KLEINE WÖRTER — damit ein Text lückenlos gelesen werden kann
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Die seitenweite Betonungsanzeige war für jedes Wort,
+     sogar die Links, alles war punktiert oder unterstrichen, sodass
+     man die komplette Webseite richtig lesen konnte."
+
+     Artikel, Pronomen, Präpositionen und Hilfsverben stehen nicht im
+     Wortschatz — sie sind keine Vokabeln. Genau sie machen aber die
+     Hälfte jedes Satzes aus. Ohne sie blieb ein Lesetext löchrig.
+
+     Diese Tabelle ist von Hand geprüft, Wort für Wort, gegen die
+     Aussprache: langer Vokal = Strich, kurzer = Punkt. Sie steht
+     ausdrücklich hier und nicht im Wörterbuch, weil „der" keine
+     Vokabel ist, die man lernt, sondern ein Wort, das man liest.
+     ============================================================ */
+  const KLEINE_WOERTER = {
+    // Artikel und Begleiter
+    der: "DER", die: "DIE", das: "DAS", den: "DEN", dem: "DEM", des: "DES",
+    ein: "EIN", eine: "EI-ne", einen: "EI-nen", einem: "EI-nem", einer: "EI-ner",
+    eines: "EI-nes", kein: "KEIN", keine: "KEI-ne", keinen: "KEI-nen", keiner: "KEI-ner",
+    // Pronomen
+    ich: "ICH", du: "DU", er: "ER", sie: "SIE", es: "ES", wir: "WIR", ihr: "IHR",
+    mich: "MICH", dich: "DICH", uns: "UNS", euch: "EUCH", sich: "SICH",
+    mir: "MIR", dir: "DIR", ihm: "IHM", ihn: "IHN", ihnen: "IH-nen",
+    mein: "MEIN", dein: "DEIN", sein: "SEIN", unser: "UN-ser", euer: "EU-er",
+    man: "MAN", wer: "WER", wen: "WEN", wem: "WEM", was: "WAS", wie: "WIE",
+    wo: "WO", wann: "WANN", warum: "wa-RUM", wieso: "wie-SO", welche: "WEL-che",
+    dieser: "DIE-ser", diese: "DIE-se", dieses: "DIE-ses", jener: "JE-ner",
+    alle: "AL-le", allen: "AL-len", alles: "AL-les", jeder: "JE-der", jede: "JE-de",
+    // Präpositionen
+    an: "AN", auf: "AUF", aus: "AUS", bei: "BEI", bis: "BIS", durch: "DURCH",
+    für: "FÜR", gegen: "GE-gen", hinter: "HIN-ter", in: "IN", mit: "MIT",
+    nach: "NACH", neben: "NE-ben", ohne: "OH-ne", seit: "SEIT", über: "Ü-ber",
+    um: "UM", unter: "UN-ter", von: "VON", vor: "VOR", während: "WÄH-rend",
+    wegen: "WE-gen", zu: "ZU", zwischen: "ZWI-schen",
+    am: "AM", ans: "ANS", beim: "BEIM", im: "IM", ins: "INS", vom: "VOM",
+    zum: "ZUM", zur: "ZUR",
+    // Konjunktionen und Partikeln
+    und: "UND", oder: "O-der", aber: "A-ber", denn: "DENN", sondern: "SON-dern",
+    dass: "DASS", weil: "WEIL", wenn: "WENN", als: "ALS", ob: "OB", damit: "da-MIT",
+    obwohl: "ob-WOHL", also: "AL-so", doch: "DOCH", noch: "NOCH", nur: "NUR",
+    auch: "AUCH", schon: "SCHON", nicht: "NICHT", nichts: "NICHTS", sehr: "SEHR",
+    mehr: "MEHR", immer: "IM-mer", nie: "NIE", oft: "OFT", dann: "DANN",
+    hier: "HIER", dort: "DORT", heute: "HEU-te", gestern: "GES-tern",
+    morgen: "MOR-gen", jetzt: "JETZT", bald: "BALD", eben: "E-ben",
+    // Hilfs- und Modalverben, die man ständig liest
+    bin: "BIN", bist: "BIST", ist: "IST", sind: "SIND", seid: "SEID",
+    war: "WAR", warst: "WARST", waren: "WA-ren", wart: "WART",
+    habe: "HA-be", hast: "HAST", hat: "HAT", haben: "HA-ben", habt: "HABT",
+    hatte: "HAT-te", hatten: "HAT-ten",
+    werde: "WER-de", wirst: "WIRST", wird: "WIRD", werden: "WER-den",
+    wurde: "WUR-de", wurden: "WUR-den", worden: "WOR-den",
+    kann: "KANN", kannst: "KANNST", können: "KÖN-nen", konnte: "KONN-te",
+    muss: "MUSS", musst: "MUSST", müssen: "MÜS-sen", musste: "MUSS-te",
+    will: "WILL", willst: "WILLST", wollen: "WOL-len", wollte: "WOLL-te",
+    soll: "SOLL", sollst: "SOLLST", sollen: "SOL-len", sollte: "SOLL-te",
+    darf: "DARF", dürfen: "DÜR-fen", durfte: "DURF-te",
+    mag: "MAG", mögen: "MÖ-gen", mochte: "MOCH-te",
+  };
+
+  /* Groß schreiben, ohne das ß zu zerstören. JavaScript macht aus „maß"
+     beim Großschreiben „MASS" — damit passt die Silbenangabe nicht mehr
+     zum Wort, und die Betonung fällt still aus. Genau daran sind früher
+     alle Wörter mit ß gescheitert. */
+  function grossMitEszett(text) {
+    return String(text).replace(/ß/g, "\u0000").toUpperCase().replace(/\u0000/g, "ß");
+  }
+
   function betonungNachschlagen(wort) {
+    /* Erst die kleinen Wörter — sie stehen nicht im Wortschatz, machen
+       aber den halben Satz aus. */
+    const klein = String(wort).toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(KLEINE_WOERTER, klein)) return KLEINE_WOERTER[klein];
     if (!VocabData.WORDS || !VocabData.WORDS.length) return null;
     if (!betonungIndex || betonungIndexStand !== VocabData.WORDS.length) {
       betonungIndex = new Map();
@@ -4490,10 +4858,22 @@
       const bisEnde = silben.slice(0, idx + 1).join("").length;
       if (word.length < bisEnde) continue;
       if (word.slice(0, bisEnde).toLowerCase() !== silben.slice(0, idx + 1).join("").toLowerCase()) continue;
-      const anfang = bisEnde - silben[idx].length;
-      return word.slice(0, anfang)
-        + `<span class="stress">${word.slice(anfang, bisEnde)}</span>`
-        + word.slice(bisEnde);
+      /* Auch hier dieselbe Bildsprache wie überall: Punkt für kurz,
+         Strich für lang — nicht der graue Unterstrich von früher. Die
+         Silben bis zur betonten kommen aus dem Wörterbuch, der Rest der
+         gebeugten Form hängt als eine Silbe hinten dran. */
+      const bis = [];
+      let k = 0;
+      for (let i = 0; i <= idx; i++) {
+        const stueck = word.slice(k, k + silben[i].length);
+        k += silben[i].length;
+        bis.push(i === idx ? grossMitEszett(stueck) : stueck.toLowerCase());
+      }
+      if (k < word.length) bis.push(word.slice(k).toLowerCase());
+      const gesetzt = betonungAnzeigen(bis.join("-"));
+      return word[0] === word[0].toUpperCase()
+        ? gesetzt
+        : gesetzt.replace(/(>|^)([A-ZÄÖÜ])/, (m, vor, b) => vor + b.toLowerCase());
     }
     return null;
   }
@@ -4501,7 +4881,11 @@
   function ruleMarkWord(word) {
     // Nur echte Wörter ab 3 Buchstaben behandeln (kurze Wörter/Artikel haben ohnehin nur
     // eine Silbe und keine sinnvolle "Betonungswahl").
-    if (!/^[A-Za-zÄÖÜäöüß]+$/.test(word) || word.length < 3) return null;
+    /* Früher blieben alle Wörter unter drei Buchstaben außen vor. Damit
+       fehlten „an", „im", „zu", „es" — mitten im Satz. Sie haben zwar nur
+       eine Silbe, aber auch die hat eine Länge, und genau die will man
+       beim Lautlesen sehen. */
+    if (!/^[A-Za-zÄÖÜäöüß]+$/.test(word) || word.length < 2) return null;
     /* AUSDRÜCKLICH GEWÜNSCHT: nur GEPRÜFTE Betonungen anzeigen.
 
        Vorher sprang der Regelalgorithmus ein, sobald ein Wort nicht im
@@ -4528,31 +4912,49 @@
        „Betriebskostenabrechnung" wird auf BETRIEBS haupt-, auf KOSten und
        ABrechnung nebenbetont. Das gilt aber nur, wenn JEDES Glied selbst
        im Wörterbuch steht — sonst wäre es wieder geraten. */
+    /* GEMELDET: „Abhängig vom Design habe ich bei Galaxie pinke Punkte,
+       ich habe aber auch manchmal graue Striche."
+
+       Genau das war hier die Ursache: Zusammensetzungen wurden mit einem
+       schlichten Unterstrich in der Textfarbe markiert (grau), während
+       einzelne Wörter Punkt und Strich in der Akzentfarbe bekamen
+       (pink). Zwei Bildsprachen für dieselbe Sache — und die graue
+       sagte nichts über kurz oder lang.
+
+       Jetzt wird aus den Gliedern EINE Silbenangabe gebaut: das erste
+       Glied trägt die Hauptbetonung, jedes weitere eine Nebenbetonung
+       (Stern davor). Diese Angabe geht durch dieselbe Anzeige wie alles
+       andere — also überall Punkt für kurz, Strich für lang. */
     const teile = zerlegeKompositum(word);
     if (teile && teile.length > 1) {
       const silbenTeile = teile.map((t) => betonungNachschlagen(t));
       if (silbenTeile.every(Boolean)) {
+        const zusammen = [];
         let pos = 0;
-        const stuecke = teile.map((teil, n) => {
+        let passt = true;
+        teile.forEach((teil, n) => {
+          const roh = String(silbenTeile[n]).split("-");
+          const idx = Core.betonteSilbenIndex(roh);
           const echt = word.slice(pos, pos + teil.length);
           pos += teil.length;
-          const silben = String(silbenTeile[n]).split("-").map((x) => x.replace(/^\*/, ""));
-          const idx = Core.betonteSilbenIndex(String(silbenTeile[n]).split("-"));
-          const klasse = n === 0 ? "stress" : "stress stress-neben-inline";
-          if (silben.length <= 1 || idx < 0) return `<span class="${klasse}">${echt}</span>`;
-          /* Die Silben aus dem Wörterbuch stehen in Wörterbuchschreibung;
-             im Satz gilt die Schreibung des Satzes. Deshalb wird die
-             Länge jeder Silbe genommen und daraus das echte Wort
-             geschnitten. */
           let k = 0;
-          return silben.map((sil, i) => {
-            const stueck = echt.slice(k, k + sil.length);
-            k += sil.length;
-            return i === idx ? `<span class="${klasse}">${stueck}</span>` : stueck;
-          }).join("") + echt.slice(k);
+          roh.forEach((sil, i) => {
+            const nackt = sil.replace(/^\*/, "");
+            const stueck = echt.slice(k, k + nackt.length);
+            k += nackt.length;
+            if (stueck.length !== nackt.length) { passt = false; return; }
+            // Hauptbetonung nur im ersten Glied, sonst Nebenbetonung.
+            if (i === idx) zusammen.push(n === 0 ? grossMitEszett(stueck) : "*" + grossMitEszett(stueck));
+            else zusammen.push(stueck.toLowerCase());
+          });
+          if (k < echt.length) zusammen.push(echt.slice(k).toLowerCase());
         });
-        if (pos < word.length) stuecke.push(word.slice(pos));
-        return stuecke.join("");
+        if (passt && pos === word.length && zusammen.length) {
+          const gesetzt = betonungAnzeigen(zusammen.join("-"));
+          return word[0] === word[0].toUpperCase()
+            ? gesetzt
+            : gesetzt.replace(/(>|^)([A-ZÄÖÜ])/, (m, vor, b) => vor + b.toLowerCase());
+        }
       }
     }
     const ausGrundform = betonungAusGrundform(word);
@@ -4594,7 +4996,10 @@
     while ((n = walker.nextNode())) nodes.push(n);
     nodes.forEach((textNode) => {
       const text = textNode.nodeValue;
-      const html = text.replace(/[A-Za-zÄÖÜäöüß]{3,}/g, (word) => {
+      /* Ab ZWEI Buchstaben, nicht erst ab drei: „am", „in", „zu", „es"
+         stehen in jedem zweiten Satz, und auch ihre Vokallänge will man
+         beim Lautlesen sehen. */
+      const html = text.replace(/[A-Za-zÄÖÜäöüß]{2,}/g, (word) => {
         const marked = ruleMarkWord(word);
         return marked || word;
       });
@@ -4668,20 +5073,65 @@
     // Stellen außerhalb der Lesetexte sollen nicht stehen bleiben.
     else if (!isStressModeOn()) removeStressFromTree(bereich);
   }
+  /* ============================================================
+     DER BETONUNGSSCHALTER IN JEDER SEKTION
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Auch wenn man das in den Einstellungen nicht
+     einstellt, soll man global in JEDER Sektion die Möglichkeit
+     haben, die Betonung dazuzuschalten."
+
+     Bisher gab es den Schalter nur in drei Lesebereichen. Jetzt
+     hängt er von selbst oben in jeder Unteransicht — man muss nicht
+     erst in die Einstellungen, um beim Vorlesen mit einer Klasse
+     die Punkte und Striche zu sehen. Der Schalter wirkt genau in
+     der Ansicht, in der er steht. */
+  function betonungsSchalterEinhaengen(wurzel) {
+    const ziel = wurzel || document;
+    ziel.querySelectorAll(".subview[data-active='true'], .view[data-active='true']").forEach((ansicht) => {
+      /* Eine Hauptansicht mit Unterreitern bekommt KEINEN eigenen
+         Schalter — sonst stand er zweimal untereinander: einmal für
+         „Lernen" und gleich darunter noch einmal für den gerade
+         geöffneten Unterreiter. Der Schalter gehört dorthin, wo der
+         Text steht, also in den Unterreiter. */
+      if (ansicht.classList.contains("view") && ansicht.querySelector(".subview[data-active='true']")) {
+        ansicht.querySelector(":scope > .sektion-betonung")?.remove();
+        return;
+      }
+      if (ansicht.querySelector(":scope > .sektion-betonung")) return;
+      if (!ansicht.textContent || ansicht.textContent.trim().length < 40) return;
+      const leiste = document.createElement("div");
+      leiste.className = "sektion-betonung";
+      leiste.innerHTML = leseBetonungKnopfHtml();
+      ansicht.insertBefore(leiste, ansicht.firstChild);
+    });
+  }
+  /* Nach jedem Ansichtswechsel und nach jedem Neuzeichnen noch einmal
+     nachsehen — die Ansichten bauen sich unterschiedlich spät auf. */
+  document.addEventListener("click", (ev) => {
+    if (!ev.target.closest(".subnav-pill, .tape-tab")) return;
+    setTimeout(() => betonungsSchalterEinhaengen(), 260);
+    setTimeout(() => betonungsSchalterEinhaengen(), 1200);
+  }, true);
+  setTimeout(() => betonungsSchalterEinhaengen(), 1500);
+
   /* Ein Klick-Handler für alle drei Bereiche. */
   document.addEventListener("click", (ev) => {
     const knopf = ev.target.closest("[data-lese-betonung]");
     if (!knopf) return;
     setzeLeseBetonung(!leseBetonungAn());
-    // Alle Lesebereiche neu zeichnen, damit der Schalter überall gleich steht.
-    ["kompassArea", "dichterArea", "schneeArea", "beitraegeArea"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const stand = el.querySelector("[data-lese-betonung]");
-      if (stand) stand.innerHTML = leseBetonungAn()
+    /* Jeden Schalter auf der Seite auf denselben Stand bringen und die
+       Betonung in JEDER offenen Ansicht anwenden — nicht mehr nur in den
+       drei Lesebereichen. */
+    document.querySelectorAll("[data-lese-betonung]").forEach((stand) => {
+      stand.innerHTML = leseBetonungAn()
         ? '🔊 Betonung an<span class="baustein-de">nur hier, unabhängig von den Einstellungen</span>'
         : '🔈 Betonung anzeigen<span class="baustein-de">nur hier, unabhängig von den Einstellungen</span>';
-      leseBetonungAnwenden(el);
+    });
+    document.querySelectorAll(".subview[data-active='true'], .view[data-active='true']")
+      .forEach((el) => leseBetonungAnwenden(el));
+    ["kompassArea", "dichterArea", "schneeArea", "beitraegeArea"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) leseBetonungAnwenden(el);
     });
   });
 
@@ -6357,7 +6807,25 @@
     Object.entries(ExerciseData.STRESS_PROBLEM_WORDS || {}).forEach(([word, syl]) => {
       for (let i = 0; i < 3; i++) pool.push({ word, syl: stripArticleFromSyl(syl), en: "" });
     });
-    return pool;
+    /* GEMELDET: „Auch im Betonungs-Trainer soll kein Wort mehr so
+       vorkommen, als wenn man einen Fehler gemacht hat, wo gar kein
+       Fehler drin ist."
+
+       Das konnte passieren, wenn ein Eintrag keine eindeutig betonte
+       Silbe hat: Core.betonteSilbenIndex() gibt dann -1 zurück, und
+       gegen -1 ist jede Antwort falsch. Ebenso, wenn die Silbenangabe
+       eine Lautschrift ist („Souterrain" → „Su-ter-RÄN"): dann stehen
+       auf den Knöpfen Silben, die im geschriebenen Wort gar nicht
+       vorkommen. Beides fliegt hier raus — geprüft wird der Vorrat,
+       nicht die Antwort. */
+    const nacktVergleich = (x) => String(x).replace(/[^A-Za-zÄÖÜäöüß]/g, "").toLowerCase();
+    const sauber = pool.filter((e) => {
+      const teile = String(e.syl).split("-").filter(Boolean);
+      if (teile.length < 2) return false;
+      if (Core.betonteSilbenIndex(teile) < 0) return false;
+      return nacktVergleich(e.syl) === nacktVergleich(String(e.word).replace(/^(der|die|das|sich)\s+/i, ""));
+    });
+    return sauber.length >= 20 ? sauber : pool;
   }
   // Schwierigkeitsstufen: LEICHT = zwei Silben, Betonung liegt (wie meistens im Deutschen) auf der
   // ersten Silbe — die "offensichtlichen" Fälle. SCHWER = alles, wo die Betonung NICHT auf der
@@ -6597,6 +7065,11 @@
         <p class="empty-note" id="stFeedback" style="text-align:center;"></p>
       </div>
     `;
+    /* Nur für den automatischen Prüflauf, und nur wenn der ausdrücklich
+       eingeschaltet ist: die richtige Silbe maschinenlesbar. So lässt
+       sich nachweisen, dass eine richtige Antwort auch als richtig
+       gewertet wird — ohne die Lösung im normalen Betrieb zu verraten. */
+    try { if (window.DMA_TEST) window.__stLoesung = w.correctIdx; } catch (e) { /* egal */ }
     wortQuelleBinden(area, "stresstrainer", () => { newStressTrainerSession(); pickStressTrainerWord(); renderStressTrainer(); });
     area.querySelectorAll(".st-diff-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -7238,6 +7711,62 @@
      Grundform ableiten lassen. Ohne diese Tabelle blieb in jedem
      Erzähltext die halbe Handlung unerkannt. */
   const STARKE_VERBEN = {
+    /* Ergänzt nach einer Messung an den Kalendertexten: Das waren die
+       Formen, die dort am häufigsten unmarkiert blieben, weil die
+       Endungsregel sie nicht auf ihren Infinitiv zurückführen kann. */
+    stirbt: "sterben", starb: "sterben", starben: "sterben", gestorben: "sterben",
+    gilt: "gelten", galt: "gelten", galten: "gelten", gegolten: "gelten",
+    lässt: "lassen", liegt: "liegen", lag: "liegen", lagen: "liegen", gelegen: "liegen",
+    steht: "stehen", stand: "stehen", standen: "stehen", gestanden: "stehen",
+    tritt: "treten", trat: "treten", traten: "treten", getreten: "treten",
+    nimmt: "nehmen", hält: "halten", hielt: "halten", hielten: "halten", gehalten: "halten",
+    trägt: "tragen", trug: "tragen", trugen: "tragen", getragen: "tragen",
+    fährt: "fahren", fuhr: "fahren", fuhren: "fahren", gefahren: "fahren",
+    fällt: "fallen", fiel: "fallen", fielen: "fallen", gefallen: "fallen",
+    läuft: "laufen", lief: "laufen", liefen: "laufen", gelaufen: "laufen",
+    gibt: "geben", gaben: "geben", gegeben: "geben",
+    wächst: "wachsen", wuchs: "wachsen", wuchsen: "wachsen", gewachsen: "wachsen",
+    hängt: "hängen", hing: "hängen", hingen: "hängen", gehangen: "hängen",
+    heißt: "heißen", hieß: "heißen", hießen: "heißen", geheißen: "heißen",
+    scheint: "scheinen", schien: "scheinen", schienen: "scheinen", geschienen: "scheinen",
+    stößt: "stoßen", stieß: "stoßen", stießen: "stoßen", gestoßen: "stoßen",
+    wendet: "wenden", wandte: "wenden", wandten: "wenden", gewandt: "wenden",
+    ruft: "rufen", rief: "rufen", riefen: "rufen", gerufen: "rufen",
+    weist: "weisen", wies: "weisen", wiesen: "weisen", gewiesen: "weisen",
+    hilft: "helfen", half: "helfen", halfen: "helfen", geholfen: "helfen",
+    sitzt: "sitzen", saß: "sitzen", saßen: "sitzen", gesessen: "sitzen",
+    singt: "singen", sang: "singen", sangen: "singen", gesungen: "singen",
+    zwingt: "zwingen", zwang: "zwingen", gezwungen: "zwingen",
+    gewinnt: "gewinnen", gewann: "gewinnen", gewonnen: "gewinnen",
+    verliert: "verlieren", verlor: "verlieren", verloren: "verlieren",
+    schließt: "schließen", schloss: "schließen", geschlossen: "schließen",
+    trifft: "treffen", traf: "treffen", trafen: "treffen", getroffen: "treffen",
+    misst: "messen", maß: "messen", gemessen: "messen",
+    wirft: "werfen", warf: "werfen", geworfen: "werfen",
+    bricht: "brechen", brach: "brechen", gebrochen: "brechen",
+    liest: "lesen", las: "lesen", lasen: "lesen", gelesen: "lesen",
+    erhält: "erhalten", erhielt: "erhalten", erhielten: "erhalten",
+    entsteht: "entstehen", entstand: "entstehen", entstanden: "entstehen",
+    besteht: "bestehen", bestand: "bestehen", bestanden: "bestehen",
+    versteht: "verstehen", verstand: "verstehen", verstanden: "verstehen",
+    beginnt: "beginnen", begannen: "beginnen", begonnen: "beginnen",
+    bekommt: "bekommen", bekam: "bekommen", bekamen: "bekommen",
+    übernimmt: "übernehmen", übernahm: "übernehmen", übernommen: "übernehmen",
+    erscheint: "erscheinen", erschien: "erscheinen", erschienen: "erscheinen",
+    verschwindet: "verschwinden", verschwand: "verschwinden", verschwunden: "verschwinden",
+    erfindet: "erfinden", erfand: "erfinden", erfunden: "erfinden",
+    entscheidet: "entscheiden", entschied: "entscheiden", entschieden: "entscheiden",
+    verbindet: "verbinden", verband: "verbinden", verbunden: "verbinden",
+    geschieht: "geschehen", geschah: "geschehen",
+    schafft: "schaffen", schuf: "schaffen", geschaffen: "schaffen",
+    besitzt: "besitzen", besaß: "besitzen", besessen: "besitzen",
+    zieht: "ziehen", zogen: "ziehen", gezogen: "ziehen",
+    vollzieht: "vollziehen", vollzog: "vollziehen", vollzogen: "vollziehen",
+    erweist: "erweisen", erwies: "erweisen", erwiesen: "erweisen",
+    verlässt: "verlassen", verließ: "verlassen", verlassen: "verlassen",
+    behält: "behalten", behielt: "behalten", behalten: "behalten",
+    entzieht: "entziehen", entzog: "entziehen", entzogen: "entziehen",
+    beruft: "berufen", berief: "berufen", berufen: "berufen",
     ging: "gehen", gingen: "gehen", gegangen: "gehen",
     nahm: "nehmen", nahmen: "nehmen", genommen: "nehmen",
     sprach: "sprechen", sprachen: "sprechen", gesprochen: "sprechen",
@@ -7537,6 +8066,150 @@
   function firstStepsLangFor(profile) {
     const origin = profile?.origin;
     return (origin && ORIGIN_TO_LANG[origin]) || "en";
+  }
+
+  /* ============================================================
+     DIE HILFSSPRACHE — in welcher Sprache die Erklärung steht
+     ------------------------------------------------------------
+     GEMELDET: „Manchmal hab ich in der Beschreibung italienischen
+     Text, obwohl ich das gar nicht als meine Sprache eingestellt
+     hab … es soll die Sprache sein, die ich bei mir eingestellt
+     habe, und das in allen Bereichen."
+
+     Und so war es: In der Bilderwelt stand die zweite Zeile fest
+     auf Italienisch, weil dort zuerst der Italienischkurs gebaut
+     wurde. Jetzt gibt es EINE Stelle, die sagt, welche Sprache die
+     Hilfe spricht — und alle Bereiche fragen sie:
+
+       1. Was im Profil ausdrücklich eingestellt ist.
+       2. Sonst die Sprache des Herkunftslandes.
+       3. Sonst Englisch.
+
+     Zusätzlich kann man eine Sprache als „gerade im Fokus" wählen,
+     wenn man nicht Deutsch, sondern etwas anderes übt.
+     ============================================================ */
+  const HILFSSPRACHEN = {
+    en: "English — Englisch", ar: "العربية — Arabisch", tr: "Türkçe — Türkisch",
+    ru: "Русский — Russisch", uk: "Українська — Ukrainisch", fa: "فارسی — Persisch",
+    es: "Español — Spanisch", pt: "Português — Portugiesisch", fr: "Français — Französisch",
+    pl: "Polski — Polnisch", it: "Italiano — Italienisch", hi: "हिन्दी — Hindi",
+    zh: "中文 — Chinesisch", he: "עברית — Hebräisch", de: "Deutsch",
+  };
+  const RTL_SPRACHEN = ["ar", "fa", "he"];
+  function istRtl(code) { return RTL_SPRACHEN.indexOf(code) >= 0; }
+
+  function hilfsSprache() {
+    const p = Backend.currentProfile();
+    const gewaehlt = p && p.extraProfileData && p.extraProfileData.hilfsSprache;
+    if (gewaehlt && HILFSSPRACHEN[gewaehlt]) return gewaehlt;
+    return firstStepsLangFor(p);
+  }
+  function hilfsSpracheName(code) { return HILFSSPRACHEN[code] || code; }
+  async function hilfsSpracheSetzen(code) {
+    const antwort = await Backend.updateExtraProfileField("hilfsSprache", code || null);
+    if (antwort && antwort.ok === false) throw new Error(antwort.message || "Konnte nicht gespeichert werden.");
+    return true;
+  }
+
+  /* ============================================================
+     UMGANGSSPRACHE — wie man es wirklich sagt
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Du brauchst nicht Toilettenpapier sagen, sag lieber
+     Klopapier — oder du machst eine Umschaltung in die Umgangssprache,
+     sodass man die gewöhnlichen Begriffe hat, die man im Alltag
+     wirklich verwendet … aber das musst du erst mal recherchieren, ob
+     das überhaupt akkurat ist."
+
+     Deshalb steht hier NUR, was belegt ist. Jeder Eintrag trägt seine
+     Stilebene mit:
+       „ugs."     im Wörterbuch als umgangssprachlich verzeichnet
+       „salopp"   noch eine Stufe lockerer, unter Freunden
+       „kurz"     eine übliche Kurzform desselben Wortes
+       „regional" nur in einem Teil des Sprachgebiets üblich
+     Erfundene „Alltagswörter" stehen hier nicht. Wo es keine gibt,
+     bleibt das Wort, wie es ist — das ist kein Loch, sondern die
+     Wahrheit über das Wort.
+     ============================================================ */
+  const UMGANGSSPRACHE = {
+    "das Toilettenpapier": { wort: "das Klopapier", syl: "KLO-pa-pier", stil: "ugs." },
+    "der Kugelschreiber": { wort: "der Kuli", syl: "KU-li", stil: "ugs." },
+    "das Spülmittel": { wort: "das Spüli", syl: "SPÜ-li", stil: "ugs." },
+    "die Geschirrspülmaschine": { wort: "die Spülmaschine", syl: "SPÜL-ma-schi-ne", stil: "kurz" },
+    "das Federmäppchen": { wort: "das Mäppchen", syl: "MÄPP-chen", stil: "kurz" },
+    "das Smartphone": { wort: "das Handy", syl: "HAN-dy", stil: "ugs." },
+    "das Mobiltelefon": { wort: "das Handy", syl: "HAN-dy", stil: "ugs." },
+    "das Fahrrad": { wort: "das Rad", syl: "RAD", stil: "kurz" },
+    "die Universität": { wort: "die Uni", syl: "U-ni", stil: "kurz" },
+    "der Personalausweis": { wort: "der Perso", syl: "PER-so", stil: "ugs." },
+    "die Limonade": { wort: "die Limo", syl: "LI-mo", stil: "kurz" },
+    "die Schokolade": { wort: "die Schoki", syl: "SCHO-ki", stil: "ugs." },
+    "das Deodorant": { wort: "das Deo", syl: "DE-o", stil: "kurz" },
+    "der Regenschirm": { wort: "der Schirm", syl: "SCHIRM", stil: "kurz" },
+    "die Lokomotive": { wort: "die Lok", syl: "LOK", stil: "kurz" },
+    "die Fahrkarte": { wort: "das Ticket", syl: "TI-cket", stil: "ugs." },
+    "die Mathematik": { wort: "Mathe", syl: "MA-the", stil: "kurz" },
+    "der Pullover": { wort: "der Pulli", syl: "PUL-li", stil: "ugs." },
+    "das Sofa": { wort: "die Couch", syl: "COUCH", stil: "ugs." },
+    "das Motorrad": { wort: "die Maschine", syl: "Ma-SCHI-ne", stil: "ugs." },
+    "der Schraubendreher": { wort: "der Schraubenzieher", syl: "SCHRAU-ben-zie-her", stil: "ugs." },
+    "die Turnschuhe": { wort: "die Sneaker", syl: "SNEA-ker", stil: "ugs." },
+    "die Mülltonne": { wort: "die Tonne", syl: "TON-ne", stil: "kurz" },
+    "das Geld": { wort: "die Kohle", syl: "KOH-le", stil: "salopp" },
+    "der Fernseher": { wort: "die Glotze", syl: "GLOT-ze", stil: "salopp" },
+    "die Arbeit": { wort: "der Job", syl: "JOB", stil: "ugs." },
+    "der Großvater": { wort: "der Opa", syl: "O-pa", stil: "ugs." },
+    "die Großmutter": { wort: "die Oma", syl: "O-ma", stil: "ugs." },
+    "der Vater": { wort: "der Papa", syl: "PA-pa", stil: "ugs." },
+    "die Mutter": { wort: "die Mama", syl: "MA-ma", stil: "ugs." },
+    "der Taschenrechner": { wort: "der Taschenrechner", syl: "TA-schen-rech-ner", stil: "" },
+    "die Straßenbahn": { wort: "die Tram", syl: "TRAM", stil: "regional", wo: "Süddeutschland, Österreich, Schweiz" },
+    "das Brötchen": { wort: "die Semmel", syl: "SEM-mel", stil: "regional", wo: "Bayern, Österreich; im Norden „Schrippe“, im Südwesten „Weck“" },
+    "die Kartoffel": { wort: "der Erdapfel", syl: "ERD-ap-fel", stil: "regional", wo: "Österreich, Teile Süddeutschlands" },
+    "das Mineralwasser": { wort: "der Sprudel", syl: "SPRU-del", stil: "regional", wo: "Südwestdeutschland" },
+    "die Semmelbrösel": { wort: "das Paniermehl", syl: "Pa-NIER-mehl", stil: "regional", wo: "Norddeutschland" },
+  };
+  // Einträge ohne echtes Alltagswort fliegen raus — sie stünden nur im Weg.
+  Object.keys(UMGANGSSPRACHE).forEach((k) => {
+    if (!UMGANGSSPRACHE[k].stil) delete UMGANGSSPRACHE[k];
+  });
+
+  function alltagsWort(standard) { return UMGANGSSPRACHE[standard] || null; }
+  function umgangsspracheAn() {
+    const p = Backend.currentProfile();
+    return Boolean(p && p.extraProfileData && p.extraProfileData.umgangssprache);
+  }
+  const STIL_TEXT = {
+    "ugs.": "umgangssprachlich", "salopp": "salopp — unter Freunden",
+    "kurz": "übliche Kurzform", "regional": "regional",
+  };
+  /* Die kleine Zeile „so sagt man es im Alltag". Sie steht IMMER da —
+     auch wenn der Schalter aus ist. Wer Deutsch lernt, soll beides
+     kennen: das Wort aus dem Wörterbuch und das Wort von der Straße. */
+  function alltagsZeileHtml(standard) {
+    const a = alltagsWort(standard);
+    if (!a) return "";
+    const an = umgangsspracheAn();
+    const stil = (STIL_TEXT[a.stil] || a.stil) + (a.wo ? " · " + a.wo : "");
+    /* Die Stilangabe gehört immer zum Alltagswort — steht das oben,
+       sagt die Zeile das, statt die Angabe an die Wörterbuchform zu
+       hängen, wo sie nicht hingehört. */
+    return an
+      ? `<p class="alltags-zeile">🗣️ Oben steht die Alltagsform <span class="alltags-stil">${escapeHtml(stil)}</span>
+           <br>Im Wörterbuch: <strong>${escapeHtml(standard)}</strong></p>`
+      : `<p class="alltags-zeile">🗣️ Im Alltag sagt man: <strong>${escapeHtml(a.wort)}</strong>
+           <span class="alltags-stil">${escapeHtml(stil)}</span></p>`;
+  }
+
+  /* Das Wort in der Hilfssprache. Gibt es dort keine Entsprechung,
+     ist Englisch der Rückfall — das steht zu jedem Wort bereit. */
+  function inHilfsSprache(teil, code) {
+    const c = code || hilfsSprache();
+    if (c === "de") return teil.de || "";
+    if (c === "it") return teil.it || teil.en || "";
+    if (c === "en") return teil.en || "";
+    const tabelle = window.DMA_WORTSPRACHEN || {};
+    const eintrag = (teil.t) || tabelle[teil.de];
+    return (eintrag && eintrag[c]) || teil.en || "";
   }
   function firstStepsTranslate(entry, lang) {
     return entry.translations[lang] || entry.translations.en;
@@ -8355,6 +9028,10 @@
       <div class="wortschatz-leiste">
         <button type="button" class="trophy-chip ${dictNurGemerkte ? "selected" : ""}" id="dictNurGemerkt">★ Nur mein Wortschatz (${gemerkteGesamt})</button>
         ${gemerkteGesamt ? '<button type="button" class="trophy-chip" id="dictZurAussprache">🎤 Damit die Aussprache üben</button>' : ""}
+        ${/* GEWÜNSCHT: „Es soll auch im Wörterbuch diese Schaltfläche sein,
+              seine Wörter nicht nur mit dem Aussprache-Trainer zu
+              trainieren, sondern auch mit dem Betonungs-Trainer." */ ""}
+        ${gemerkteGesamt ? '<button type="button" class="trophy-chip" id="dictZurBetonung">🎯 Damit die Betonung üben</button>' : ""}
       </div>
       <p class="empty-note" style="margin-bottom:10px;">Mit dem Stern ☆ neben einem Wort nimmst du es in deinen Wortschatz auf. Daraus kannst du dir eigene Übungen bauen — im Aussprache-Trainer und im Betonungs-Trainer.</p>
       <div class="vocab-grid" id="dictGrid">
@@ -8422,6 +9099,14 @@
     document.getElementById("dictZurAussprache")?.addEventListener("click", () => {
       ausspracheQuelle = "wortschatz";
       document.querySelector('#learnSubnav [data-sub="sub-aussprache"]')?.click();
+    });
+    document.getElementById("dictZurBetonung")?.addEventListener("click", () => {
+      // Dieselbe Quelle wie im Aussprache-Trainer: der eigene Wortschatz.
+      wortQuelleWahl.stresstrainer = "wortschatz";
+      stTrainerSession = null;
+      stTrainerWord = null;
+      const pille = document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]');
+      if (pille) { pille.style.display = ""; pille.click(); }
     });
   }
   /* ============================================================
@@ -8811,6 +9496,1269 @@
     document.getElementById("logikZurueck").addEventListener("click", () => { logikSitzung = null; renderLogik(); });
   }
   document.querySelector('#learnSubnav [data-sub="sub-logik"]')?.addEventListener("click", () => renderLogik());
+
+  /* ============================================================
+     AUSSPRACHE-KURS
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Das Alphabet wurde auch noch nicht behandelt …
+     mit den Umlauten und den Regeln, das mit dem Dehnungs-h und
+     dem E nach dem I … wenn ein Konsonant nach einem Vokal steht,
+     dass der Vokal lang gesprochen wird … die Ausnahmen davon …
+     dass sie nicht SETR sagen, sondern Straße … Tricks, wie man
+     ein sauberes Ü nachfüllen kann, vom I, indem man einen
+     Kussmund macht … das mit dem NG richtig erklärt, mit einer
+     grafischen Darstellung."
+
+     Sechs Teile, jeder für sich benutzbar:
+       Alphabet      — jeder Buchstabe einzeln, antippen = hören
+       Buchstabenpaare — ch, sch, ie, ng … zwei Zeichen, ein Laut
+       Regeln        — Vokallänge, Dehnungs-h, ie, ß/ss, Betonung
+       Bündel        — Konsonanten am Stück, ohne Zwischenvokal
+       Tricks        — wie man einen Laut körperlich herstellt
+       Test          — zählt auf das Punktekonto
+
+     Alles gibt es auf Deutsch UND auf Italienisch, jeweils mit
+     den Regeln, die für diese Sprache wirklich gelten.
+     ============================================================ */
+  let ausspracheKursGeladen = null;
+  function ausspracheKursLaden() {
+    if (window.DMA_AUSSPRACHE) return Promise.resolve(true);
+    if (ausspracheKursGeladen) return ausspracheKursGeladen;
+    ausspracheKursGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-aussprache.js?v=" + (window.DMA_VERSION || "1");
+      s.onload = () => fertig(true);
+      s.onerror = () => { ausspracheKursGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return ausspracheKursGeladen;
+  }
+
+  const AK_TEILE = {
+    alphabet: "🔤 Alphabet",
+    verbindungen: "🔗 Zwei Zeichen, ein Laut",
+    regeln: "📏 Regeln",
+    buendel: "🧱 Konsonanten am Stück",
+    tricks: "🎯 Tricks",
+    test: "✅ Test",
+  };
+  let akTeil = "alphabet";
+  let akSprache = null;        // null = die Sprache des Raums
+  let akTest = null;
+
+  function akAktuelleSprache() {
+    if (akSprache) return akSprache;
+    return imItalienischraum() ? "it" : "de";
+  }
+  function akDaten(feld) {
+    const A = window.DMA_AUSSPRACHE || {};
+    return (A[feld] && A[feld][akAktuelleSprache()]) || [];
+  }
+  /* Ein Wort anzeigen: mit Betonungsmarke, wenn eine Silbenangabe
+     dabei ist, sonst schlicht. Die Marke folgt derselben Stelle wie
+     überall sonst auf der Seite — im Italienisch-Raum also ohne
+     Längsstrich, den es dort nicht gibt. */
+  /* Den ersten echten Buchstaben (also nicht innerhalb eines Tags)
+     wieder kleinschreiben. Die Betonungsanzeige schreibt die erste
+     Silbe immer groß — im Wörterbuch stimmt das, weil dort Nomen
+     stehen. Hier stehen auch Verben und Adjektive: „singen“, „lang“,
+     „früh“ dürfen kein großes S, L oder F bekommen. */
+  function akErsteKlein(html) {
+    let imTag = false;
+    for (let i = 0; i < html.length; i++) {
+      const c = html[i];
+      if (c === "<") { imTag = true; continue; }
+      if (c === ">") { imTag = false; continue; }
+      if (imTag) continue;
+      if (/[A-Za-zÄÖÜäöüß]/.test(c)) {
+        return html.slice(0, i) + c.toLowerCase() + html.slice(i + 1);
+      }
+    }
+    return html;
+  }
+  function akWort(wort, syl) {
+    const text = String(wort);
+    if (!syl) return text;
+    let gezeigt = akAktuelleSprache() === "it" ? Core.formatStressIt(syl) : Core.formatStress(syl);
+    /* Der Artikel steht im Wort, nicht in der Silbenangabe — er kommt
+       davor zurück. Das Leerzeichen ist Pflicht: sonst hätte „lang“
+       als Artikel „la“ gegolten und wäre zu „la Lang“ geworden. */
+    const artikel = text.match(/^(?:(?:der|die|das|il|lo|la|i|gli|le)\s|l['’])/i);
+    const rest = artikel ? text.slice(artikel[0].length) : text;
+    if (rest && rest[0] === rest[0].toLowerCase() && rest[0] !== rest[0].toUpperCase()) {
+      gezeigt = akErsteKlein(gezeigt);
+    }
+    return (artikel ? artikel[0] : "") + gezeigt;
+  }
+  /* Ein Lautsprecher-Knopf. Die Sprache steht am Knopf selbst — sonst
+     läse die deutsche Stimme die italienischen Sätze vor. */
+  function sprichKnopfHtml(text, sprache, titel) {
+    return `<button type="button" class="btn btn-ghost ak-hoer"
+      data-ak-sprich="${String(text).replace(/"/g, "&quot;")}" data-ak-lang="${sprache || "de"}"
+      aria-label="${titel || "anhören"}" title="${titel || "anhören"}">🔊</button>`;
+  }
+  function akHoerKnopf(text, titel) {
+    return sprichKnopfHtml(text, akAktuelleSprache(), titel);
+  }
+
+  function akKopfHtml() {
+    const spr = akAktuelleSprache();
+    return `
+      <div class="question-card ak-kopf">
+        <p class="eyebrow">🗣️ AUSSPRACHE-KURS</p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Lesen kann man erst, wenn man weiß, wie die Buchstaben klingen. Hier steht das komplette
+          Alphabet, dazu die Regeln, die einem sagen, ob ein Vokal lang oder kurz ist — und die
+          Tricks für die Laute, die es in der eigenen Muttersprache nicht gibt.
+          Jedes Wort lässt sich antippen und anhören.
+        </p>
+        <div class="trophy-case" style="margin-bottom:10px;">
+          <button type="button" class="trophy-chip ak-spr-btn ${spr === "de" ? "selected" : ""}" data-ak-spr="de">🇩🇪 Deutsch</button>
+          <button type="button" class="trophy-chip ak-spr-btn ${spr === "it" ? "selected" : ""}" data-ak-spr="it">🇮🇹 Italienisch</button>
+        </div>
+        <div class="trophy-case">
+          ${Object.entries(AK_TEILE).map(([k, name]) =>
+            `<button type="button" class="trophy-chip ak-teil-btn ${akTeil === k ? "selected" : ""}" data-ak-teil="${k}">${name}</button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function akAlphabetHtml() {
+    const spr = akAktuelleSprache();
+    const zeilen = akDaten("ALPHABET");
+    const einleitung = spr === "it"
+      ? "Das italienische Alphabet hat nur 21 Buchstaben. j, k, w, x und y stehen nur in Fremdwörtern. Tippe einen Buchstaben an, dann hörst du seinen Namen und das Beispielwort."
+      : "26 Buchstaben, dazu die drei Umlaute und das ß. Tippe einen Buchstaben an, dann hörst du seinen Namen und das Beispielwort.";
+    return `
+      <div class="question-card">
+        <p class="eyebrow">${spr === "it" ? "L’ALFABETO" : "DAS ALPHABET"}</p>
+        <p class="empty-note" style="margin-bottom:12px;">${einleitung}</p>
+        <div class="ak-gitter">
+          ${zeilen.map((z, i) => `
+            <div class="ak-buchstabe" data-ak-buchstabe="${i}">
+              <div class="ak-b-kopf">
+                <span class="ak-b-zeichen">${z.b}</span>
+                <span class="ak-b-name">${z.name}</span>
+              </div>
+              <p class="ak-b-ipa">[${z.ipa}]</p>
+              <p class="ak-b-laut">${z.laut}</p>
+              <p class="ak-b-bsp">${akWort(z.bsp, z.syl)} ${akHoerKnopf(z.bsp, "„" + z.bsp + "“ anhören")}</p>
+              ${z.hinweis ? `<p class="ak-b-hinweis">${z.hinweis}</p>` : ""}
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function akVerbindungenHtml() {
+    const zeilen = akDaten("VERBINDUNGEN");
+    return `
+      <div class="question-card">
+        <p class="eyebrow">ZWEI ZEICHEN, EIN LAUT</p>
+        <p class="empty-note" style="margin-bottom:12px;">
+          Manche Buchstaben stehen nie allein. Erst zusammen ergeben sie einen einzigen Laut —
+          und der hat oft nichts mit den einzelnen Buchstaben zu tun.
+        </p>
+        <div class="ak-liste">
+          ${zeilen.map((z) => `
+            <div class="ak-verb">
+              <div class="ak-verb-kopf">
+                <span class="ak-verb-schrift">${z.schrift}</span>
+                <span class="ak-verb-pfeil">→</span>
+                <span class="ak-verb-laut">${z.gesprochen}</span>
+              </div>
+              <p class="ak-verb-wann">${z.wann}</p>
+              <p class="ak-verb-bsp">${z.bsp.map((w) => `<span class="ak-chip">${w} ${akHoerKnopf(w)}</span>`).join("")}</p>
+              ${z.hinweis ? `<p class="ak-b-hinweis">${z.hinweis}</p>` : ""}
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function akRegelnHtml() {
+    const zeilen = akDaten("REGELN");
+    return zeilen.map((r) => `
+      <div class="question-card ak-regel">
+        <p class="eyebrow">${r.titel}</p>
+        ${r.svg || ""}
+        <p class="empty-note" style="margin:10px 0 12px;">${r.text}</p>
+        <div class="ak-bsp-gitter">
+          ${(r.beispiele || []).map((b) => `
+            <div class="ak-bsp">
+              <span class="ak-bsp-wort">${akWort(b.wort, b.syl)}</span>
+              ${akHoerKnopf(b.wort)}
+              ${b.hinweis ? `<span class="ak-bsp-hinweis">${b.hinweis}</span>` : ""}
+            </div>`).join("")}
+        </div>
+        ${r.ausnahmen && (r.ausnahmen.text || (r.ausnahmen.woerter || []).length) ? `
+          <div class="ak-ausnahme">
+            <p class="ak-ausnahme-titel">⚠️ Ausnahmen</p>
+            ${r.ausnahmen.text ? `<p>${r.ausnahmen.text}</p>` : ""}
+            ${(r.ausnahmen.woerter || []).length ? `<p class="ak-ausnahme-woerter">${r.ausnahmen.woerter.map((w) => `<span class="ak-chip">${w}</span>`).join("")}</p>` : ""}
+          </div>` : ""}
+      </div>`).join("");
+  }
+
+  function akBuendelHtml() {
+    const zeilen = akDaten("BUENDEL");
+    const brecher = akDaten("ZUNGENBRECHER");
+    const spr = akAktuelleSprache();
+    const einleitung = spr === "it"
+      ? "Auch im Italienischen stehen Konsonanten am Stück — und anders als im Deutschen bleibt das s dabei scharf: „la strada“, nicht „schtrada“."
+      : "Im Arabischen, Türkischen, Persischen und Spanischen schiebt die Zunge von selbst einen kleinen Vokal zwischen zwei Konsonanten. Im Deutschen gibt es diesen Vokal nicht. Trick: von hinten aufbauen — „raße“, „traße“, „schtraße“.";
+    return `
+      <div class="question-card">
+        <p class="eyebrow">KONSONANTEN AM STÜCK</p>
+        <p class="empty-note" style="margin-bottom:12px;">${einleitung}</p>
+        ${spr === "de" ? ((window.DMA_AUSSPRACHE.GRAFIK || {}).buendel || "") : ""}
+        <div class="ak-liste">
+          ${zeilen.map((z) => `
+            <div class="ak-buendel">
+              <div class="ak-verb-kopf">
+                <span class="ak-verb-schrift">${z.schrift}</span>
+                <span class="ak-verb-pfeil">→</span>
+                <span class="ak-verb-laut">${z.gesprochen}</span>
+              </div>
+              <p class="ak-buendel-richtig">✅ ${akWort(z.bsp, z.syl)} ${akHoerKnopf(z.bsp)}</p>
+              <p class="ak-buendel-falsch">❌ ${z.falsch}</p>
+              <p class="ak-verb-bsp">${(z.weitere || []).map((w) => `<span class="ak-chip">${w} ${akHoerKnopf(w)}</span>`).join("")}</p>
+            </div>`).join("")}
+        </div>
+      </div>
+      <div class="question-card">
+        <p class="eyebrow">ZUM LAUT SPRECHEN</p>
+        <p class="empty-note" style="margin-bottom:12px;">Erst langsam, dann schneller. Jeder Satz übt genau eine Schwierigkeit.</p>
+        <div class="ak-liste">
+          ${brecher.map((b) => `
+            <div class="ak-brecher">
+              <p class="ak-brecher-satz">${b.satz} ${akHoerKnopf(b.satz)}</p>
+              <p class="ak-b-hinweis">übt: ${b.uebt}</p>
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function akTricksHtml() {
+    const zeilen = akDaten("TRICKS");
+    return zeilen.map((t) => `
+      <div class="question-card ak-trick">
+        <p class="eyebrow">${t.titel}</p>
+        <p class="empty-note" style="margin-bottom:12px;">${t.worum}</p>
+        ${t.svg || ""}
+        <ol class="ak-schritte">
+          ${(t.schritte || []).map((s) => `<li>${s}</li>`).join("")}
+        </ol>
+        ${t.svg2 || ""}
+        <div class="ak-bsp-gitter">
+          ${(t.beispiele || []).map((b) => `
+            <div class="ak-bsp">
+              <span class="ak-bsp-wort">${akWort(b.wort, b.syl)}</span>
+              ${akHoerKnopf(b.wort)}
+              ${b.hinweis ? `<span class="ak-bsp-hinweis">${b.hinweis}</span>` : ""}
+            </div>`).join("")}
+        </div>
+        ${t.probe ? `<div class="ak-probe"><p>🎧 ${t.probe}</p></div>` : ""}
+      </div>`).join("");
+  }
+
+  const AK_TEST_RUNDEN = 10;
+  function neuerAkTest() {
+    const pool = akDaten("TEST");
+    akTest = {
+      aufgaben: Core.shuffle(pool).slice(0, Math.min(AK_TEST_RUNDEN, pool.length)),
+      index: 0, richtig: 0, beantwortet: null, optionen: null,
+      sprache: akAktuelleSprache(),
+    };
+  }
+  function akTestHtml() {
+    const pool = akDaten("TEST");
+    if (!akTest || akTest.sprache !== akAktuelleSprache()) {
+      const teile = [...new Set(pool.map((t) => t.teil))];
+      return `
+        <div class="question-card">
+          <p class="eyebrow">TEST</p>
+          <p class="empty-note" style="margin-bottom:12px;">
+            ${AK_TEST_RUNDEN} Fragen aus allem, was auf dieser Seite steht — Alphabet, Vokallänge,
+            Konsonantenbündel, Betonung. Jede richtige Antwort zählt auf dein Punktekonto.
+          </p>
+          <p class="empty-note" style="margin-bottom:12px;">Bereiche: ${teile.join(" · ")} · ${pool.length} Fragen stehen bereit.</p>
+          <button type="button" class="btn btn-coffee" id="akTestStart">▶ Test starten</button>
+        </div>`;
+    }
+    const s = akTest;
+    if (s.index >= s.aufgaben.length) return "";
+    const a = s.aufgaben[s.index];
+    const optionen = s.optionen || Core.shuffle([a.richtig, ...a.falsch]);
+    s.optionen = optionen;
+    return `
+      <div class="question-card">
+        <p class="eyebrow">TEST · FRAGE ${s.index + 1} / ${s.aufgaben.length} · ${a.teil}</p>
+        ${fortschrittHtml(s.index, s.aufgaben.length)}
+        <p class="question-prompt" style="margin:10px 0 14px;">${a.frage}</p>
+        <div class="option-list">
+          ${optionen.map((opt, i) => {
+            const gewaehlt = s.beantwortet && s.beantwortet.gewaehlt === opt;
+            const istRichtig = opt === a.richtig;
+            const zustand = !s.beantwortet ? "" : istRichtig ? " option-correct" : gewaehlt ? " option-wrong" : "";
+            return `<button type="button" class="option-btn ak-opt${zustand}" data-ak-opt="${i}" ${s.beantwortet ? "disabled" : ""}><span>${opt}</span></button>`;
+          }).join("")}
+        </div>
+        ${s.beantwortet ? `
+          <div class="witz-erklaerung" style="margin-top:12px;">
+            <p style="margin:0;">${s.beantwortet.gewaehlt === a.richtig ? "✅ " : "❌ "}${a.erkl}</p>
+          </div>
+          <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+            <button type="button" class="btn btn-coffee" id="akWeiter">Weiter ▸</button>
+          </div>` : ""}
+        ${miniBugReportBtnHtml("Aussprache-Kurs: " + a.frage)}
+      </div>`;
+  }
+
+  async function renderAusspracheKurs() {
+    autoWeiterAbbrechen();
+    const area = document.getElementById("ausspracheKursArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "aussprachekurs_neu", "Aussprache-Kurs", "🗣️", false, true)) return;
+    if (!window.DMA_AUSSPRACHE) {
+      area.innerHTML = '<p class="empty-note">Der Aussprache-Kurs wird geladen …</p>';
+      const ok = await ausspracheKursLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Der Aussprache-Kurs konnte nicht geladen werden.</p>'; return; }
+    }
+    if (akTeil === "test" && akTest && akTest.sprache === akAktuelleSprache()
+        && akTest.index >= akTest.aufgaben.length) { renderAkTestErgebnis(); return; }
+
+    let inhalt = "";
+    if (akTeil === "alphabet") inhalt = akAlphabetHtml();
+    else if (akTeil === "verbindungen") inhalt = akVerbindungenHtml();
+    else if (akTeil === "regeln") inhalt = akRegelnHtml();
+    else if (akTeil === "buendel") inhalt = akBuendelHtml();
+    else if (akTeil === "tricks") inhalt = akTricksHtml();
+    else if (akTeil === "test") inhalt = akTestHtml();
+    area.innerHTML = akKopfHtml() + inhalt;
+    akBinden(area);
+  }
+
+  function akBinden(area) {
+    area.querySelectorAll(".ak-spr-btn").forEach((b) => b.addEventListener("click", () => {
+      akSprache = b.dataset.akSpr; akTest = null; renderAusspracheKurs();
+    }));
+    area.querySelectorAll(".ak-teil-btn").forEach((b) => b.addEventListener("click", () => {
+      akTeil = b.dataset.akTeil; renderAusspracheKurs();
+      setTimeout(() => { area.scrollIntoView({ behavior: "smooth", block: "start" }); }, 40);
+    }));
+    // Ein Buchstabe: Name und Beispielwort nacheinander.
+    area.querySelectorAll("[data-ak-buchstabe]").forEach((k) => k.addEventListener("click", (ev) => {
+      if (ev.target.closest("[data-ak-sprich]")) return;
+      const z = akDaten("ALPHABET")[Number(k.dataset.akBuchstabe)];
+      if (!z) return;
+      Core.speak(z.name, akAktuelleSprache());
+      setTimeout(() => Core.speak(z.bsp, akAktuelleSprache()), 1100);
+    }));
+    document.getElementById("akTestStart")?.addEventListener("click", () => { neuerAkTest(); renderAusspracheKurs(); });
+    const s = akTest;
+    if (akTeil === "test" && s && s.index < s.aufgaben.length) {
+      const a = s.aufgaben[s.index];
+      area.querySelectorAll(".ak-opt").forEach((b) => b.addEventListener("click", () => {
+        const opt = s.optionen[Number(b.dataset.akOpt)];
+        const stimmt = opt === a.richtig;
+        if (stimmt) { s.richtig += 1; Core.sound.correct(); } else Core.sound.wrong();
+        spielNotiz(stimmt, `${a.frage} → ${a.richtig}`);
+        s.beantwortet = { gewaehlt: opt };
+        renderAusspracheKurs();
+      }));
+      const weiter = () => { s.index += 1; s.beantwortet = null; s.optionen = null; renderAusspracheKurs(); };
+      document.getElementById("akWeiter")?.addEventListener("click", () => { autoWeiterAbbrechen(); weiter(); });
+      if (s.beantwortet) autoWeiter(s.beantwortet.gewaehlt === a.richtig, weiter);
+    }
+    betonungsSchalterEinhaengen(area.closest(".subview") || undefined);
+  }
+
+  function renderAkTestErgebnis() {
+    const area = document.getElementById("ausspracheKursArea");
+    const s = akTest;
+    const prozent = Math.round((s.richtig / s.aufgaben.length) * 100);
+    const kategorie = s.sprache === "it" ? "it-aussprachekurs" : "aussprachekurs";
+    area.innerHTML = akKopfHtml() + ergebnisSchirmHtml({
+      punkte: s.richtig, prozent: prozent, tier: "Lautlotse",
+      charakter: "Aussprache-Kurs",
+      zeilen: [{ name: "🗣️ Richtig beantwortet", anteil: prozent, wert: s.richtig + "/" + s.aufgaben.length }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="akNochmal">🔄 Noch ein Test</button><button type="button" class="btn btn-ghost" id="akZurueck">Zurück zum Kurs</button>`,
+    });
+    saveResultAndCheck({
+      categories: [kategorie], titelText: "Aussprache-Kurs",
+      points: s.richtig, bonus: prozent === 100 ? 3 : 0, percent: prozent,
+      character: "Lautlotse", badges: [], playedAt: new Date().toISOString(),
+    });
+    akBinden(area);
+    document.getElementById("akNochmal")?.addEventListener("click", () => { neuerAkTest(); renderAusspracheKurs(); });
+    document.getElementById("akZurueck")?.addEventListener("click", () => { akTest = null; akTeil = "alphabet"; renderAusspracheKurs(); });
+  }
+
+  /* Ein Klick auf ein Lautsprechersymbol — überall im Kurs derselbe Griff. */
+  document.addEventListener("click", (ev) => {
+    const knopf = ev.target.closest("[data-ak-sprich]");
+    if (!knopf) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    Core.speak(knopf.dataset.akSprich, knopf.dataset.akLang || akAktuelleSprache());
+  });
+
+  document.querySelector('#learnSubnav [data-sub="sub-alphabet"]')?.addEventListener("click", () => renderAusspracheKurs());
+
+  /* ============================================================
+     DIALOGE — formell und informell
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Gibt es diese Formulare, wo man ausfüllt, wo man
+     so eine Begrüßung durchspielt … dass man so einen Formular-
+     Ablauf hat, wie man mit jemandem ins Gespräch kommt, locker,
+     wie man das formell macht, wie man das informell macht."
+
+     Drei Teile:
+       Formular   — die Schritte eines Gesprächs, zu jedem Schritt
+                    fertige Sätze in beiden Formen. Man tippt sich
+                    sein eigenes Gespräch zusammen.
+       Gespräche  — ausgespielte Situationen. Die andere Person
+                    redet, man wählt selbst die Antwort. Falsche
+                    Antworten sind nicht unverständlich, sondern
+                    unpassend — und das wird erklärt.
+       Du oder Sie — dieselbe Aussage in beiden Formen, dazu die
+                    Regel, wann welche gilt.
+     ============================================================ */
+  let dialogeGeladen = null;
+  function dialogeLaden() {
+    if (window.DMA_DIALOGE) return Promise.resolve(true);
+    if (dialogeGeladen) return dialogeGeladen;
+    dialogeGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-dialoge.js?v=" + (window.DMA_VERSION || "1");
+      s.onload = () => fertig(true);
+      s.onerror = () => { dialogeGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return dialogeGeladen;
+  }
+
+  const DLG_TEILE = { formular: "📋 Gesprächs-Formular", gespraeche: "💬 Gespräche", anrede: "🤝 Du oder Sie?" };
+  let dlgTeil = "formular";
+  let dlgRegister = "formell";
+  let dlgMeins = [];          // die selbst zusammengestellten Sätze
+  let dlgLauf = null;         // das gerade gespielte Gespräch
+
+  function dlgSprache() { return imItalienischraum() ? "it" : "de"; }
+  function dlgDaten(feld) {
+    const D = window.DMA_DIALOGE || {};
+    return (D[feld] && D[feld][dlgSprache()]) || [];
+  }
+
+  function dlgKopfHtml() {
+    return `
+      <div class="question-card">
+        <p class="eyebrow">💬 GESPRÄCHE FÜHREN</p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Ein Gespräch hat immer dieselben Schritte: grüßen, sagen worum es geht, nachfragen,
+          antworten, danken, sich verabschieden. Hier stehen die Sätze für jeden Schritt —
+          einmal in der Sie-Form für Ämter, Ärzte und Fremde, einmal in der du-Form für
+          Nachbarn, Kurs und Freunde. Und dann spielt man es durch.
+        </p>
+        <div class="trophy-case">
+          ${Object.entries(DLG_TEILE).map(([k, name]) =>
+            `<button type="button" class="trophy-chip dlg-teil-btn ${dlgTeil === k ? "selected" : ""}" data-dlg-teil="${k}">${name}</button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function dlgFormularHtml() {
+    const schritte = dlgDaten("SCHRITTE");
+    const spr = dlgSprache();
+    return `
+      <div class="question-card">
+        <p class="eyebrow">WELCHE FORM?</p>
+        <div class="trophy-case" style="margin-bottom:10px;">
+          <button type="button" class="trophy-chip dlg-reg-btn ${dlgRegister === "formell" ? "selected" : ""}" data-dlg-reg="formell">🎩 Sie — Amt, Arzt, Fremde</button>
+          <button type="button" class="trophy-chip dlg-reg-btn ${dlgRegister === "informell" ? "selected" : ""}" data-dlg-reg="informell">👋 Du — Freunde, Kurs, Nachbarn</button>
+        </div>
+        <p class="empty-note" style="margin:0;">Tippe die Sätze an, die du brauchst. Unten entsteht daraus dein eigenes Gespräch, das du behalten kannst.</p>
+      </div>
+      ${schritte.map((s, si) => `
+        <div class="question-card dlg-schritt">
+          <p class="eyebrow">${s.name}</p>
+          ${s.erklaerung ? `<p class="empty-note" style="margin-bottom:10px;">${s.erklaerung}</p>` : ""}
+          <div class="dlg-satzliste">
+            ${(s[dlgRegister] || []).map((satz, i) => `
+              <div class="dlg-satz">
+                <button type="button" class="dlg-satz-text" data-dlg-nimm="${si}:${i}">${satz}</button>
+                ${sprichKnopfHtml(satz, spr)}
+              </div>`).join("")}
+          </div>
+          ${s.hinweis ? `<p class="ak-b-hinweis">💡 ${s.hinweis}</p>` : ""}
+        </div>`).join("")}
+      <div class="question-card" id="dlgMeinsKarte">
+        <p class="eyebrow">MEIN GESPRÄCH</p>
+        ${dlgMeins.length ? `
+          <ol class="dlg-meins sammel-text">
+            ${dlgMeins.map((z, i) => `<li>${z} <button type="button" class="dlg-weg" data-dlg-weg="${i}" aria-label="entfernen">✕</button></li>`).join("")}
+          </ol>
+          <div class="quiz-actions" style="justify-content:flex-start; margin-top:10px;">
+            <button type="button" class="btn btn-ghost" id="dlgVorlesen">🔊 Ganz vorlesen</button>
+            ${textInListeKnopfHtml("Mein Gespräch")}
+            <button type="button" class="btn btn-ghost" id="dlgLeeren">🗑️ Leeren</button>
+          </div>` : `<p class="empty-note" style="margin:0;">Noch nichts ausgewählt. Tippe oben auf die Sätze, die du sagen würdest.</p>`}
+      </div>`;
+  }
+
+  function dlgListeHtml() {
+    const alle = dlgDaten("SITUATIONEN");
+    return `
+      <div class="question-card">
+        <p class="eyebrow">GESPRÄCHE ZUM DURCHSPIELEN</p>
+        <p class="empty-note" style="margin-bottom:12px;">
+          Die andere Person fängt an, du wählst die Antwort. Was nicht passt, wird erklärt —
+          nicht weil es falsch wäre, sondern weil es in dieser Situation anders klingt, als du es meinst.
+        </p>
+        <div class="dlg-kacheln">
+          ${alle.map((s) => `
+            <button type="button" class="dlg-kachel" data-dlg-start="${s.id}">
+              <span class="dlg-kachel-titel">${s.titel}</span>
+              <span class="dlg-kachel-ort">${s.ort}</span>
+              <span class="dlg-kachel-zeile">
+                <span class="dlg-reg-marke dlg-reg-${s.register}">${s.register === "formell" ? "🎩 Sie" : "👋 du"}</span>
+                <span class="level-badge">${s.niveau}</span>
+                <span class="dlg-kachel-anzahl">${s.zeilen.filter((z) => z.optionen).length} Entscheidungen</span>
+              </span>
+            </button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function dlgSpielHtml() {
+    const l = dlgLauf;
+    const s = l.situation;
+    const spr = dlgSprache();
+    const bisher = l.verlauf.map((v) => `
+      <div class="dlg-zeile ${v.ich ? "dlg-ich" : "dlg-andere"}">
+        <span class="dlg-wer">${v.ich ? "Du" : s.gegenueber.split(",")[0]}</span>
+        <span class="dlg-text">${v.text} ${sprichKnopfHtml(v.text, spr)}</span>
+      </div>`).join("");
+    if (l.index >= s.zeilen.length) return "";
+    const z = s.zeilen[l.index];
+    return `
+      <div class="question-card">
+        <p class="eyebrow">${s.titel}</p>
+        <p class="empty-note" style="margin-bottom:6px;">📍 ${s.ort} · ${s.register === "formell" ? "🎩 Sie-Form" : "👋 du-Form"} · ${s.niveau}</p>
+        <p class="empty-note" style="margin-bottom:12px;">${s.worum}</p>
+        ${fortschrittHtml(l.gewaehlt, l.stellen)}
+        <div class="dlg-verlauf">${bisher}</div>
+        ${z.optionen ? `
+          <p class="question-prompt" style="margin:12px 0 10px;">Was sagst du?</p>
+          <div class="option-list">
+            ${z.optionen.map((o, i) => {
+              const g = l.versuche.indexOf(i) >= 0;
+              const zustand = !g ? "" : o.ok ? " option-correct" : " option-wrong";
+              return `<button type="button" class="option-btn dlg-opt${zustand}" data-dlg-opt="${i}" ${l.fertig || g ? "disabled" : ""}><span>${o.text}</span></button>`;
+            }).join("")}
+          </div>
+          ${l.versuche.length ? `<div class="witz-erklaerung" style="margin-top:12px;">
+            ${l.versuche.map((i) => `<p style="margin:0 0 6px;">${z.optionen[i].ok ? "✅ " : "❌ "}${z.optionen[i].warum}</p>`).join("")}
+          </div>` : ""}
+          ${l.fertig ? `<div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+            <button type="button" class="btn btn-coffee" id="dlgWeiter">Weiter ▸</button></div>` : ""}
+        ` : `<div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+            <button type="button" class="btn btn-coffee" id="dlgWeiter">Weiter ▸</button></div>`}
+        ${miniBugReportBtnHtml("Dialog: " + s.titel)}
+      </div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:10px;">
+        <button type="button" class="btn btn-ghost" id="dlgAbbrechen">← Zurück zur Übersicht</button>
+      </div>`;
+  }
+
+  function dlgAnredeHtml() {
+    const D = window.DMA_DIALOGE || {};
+    const paare = dlgDaten("REGISTER");
+    const regeln = (D.ANREDE && D.ANREDE.de) || [];
+    const anbieten = D.DU_ANBIETEN || {};
+    const spr = dlgSprache();
+    return `
+      <div class="question-card">
+        <p class="eyebrow">DIESELBE AUSSAGE, ZWEI FORMEN</p>
+        <div class="dlg-paare">
+          <div class="dlg-paar dlg-paar-kopf"><span>Wozu</span><span>🎩 Sie</span><span>👋 du</span></div>
+          ${paare.map((p) => `
+            <div class="dlg-paar">
+              <span class="dlg-paar-was">${p.was}</span>
+              <span class="dlg-paar-sie"><span class="dlg-paar-icon">🎩</span>${p.sie} ${sprichKnopfHtml(p.sie, spr)}</span>
+              <span class="dlg-paar-du"><span class="dlg-paar-icon">👋</span>${p.du} ${sprichKnopfHtml(p.du, spr)}</span>
+            </div>`).join("")}
+        </div>
+      </div>
+      ${regeln.length ? `
+      <div class="question-card">
+        <p class="eyebrow">WANN DUZT MAN, WANN SIEZT MAN?</p>
+        <div class="dlg-regeln">
+          ${regeln.map((r) => `
+            <div class="dlg-regel">
+              <span class="dlg-reg-marke dlg-reg-${r.form === "Sie" ? "formell" : "informell"}">${r.form === "Sie" ? "🎩 Sie" : "👋 du"}</span>
+              <span class="dlg-regel-wann">${r.wann}${r.warum ? `<span class="ak-b-hinweis">${r.warum}</span>` : ""}</span>
+            </div>`).join("")}
+        </div>
+      </div>` : ""}
+      ${anbieten.titel ? `
+      <div class="question-card">
+        <p class="eyebrow">${anbieten.titel}</p>
+        <p class="empty-note" style="margin-bottom:10px;">${anbieten.text}</p>
+        <div class="dlg-satzliste">
+          ${(anbieten.saetze || []).map((s) => `
+            <div class="dlg-satz"><span class="dlg-satz-text dlg-satz-fest">${s}</span>${sprichKnopfHtml(s, "de")}</div>`).join("")}
+        </div>
+        <p class="ak-b-hinweis">💡 ${anbieten.ablehnen}</p>
+      </div>` : ""}`;
+  }
+
+  async function renderDialoge() {
+    autoWeiterAbbrechen();
+    const area = document.getElementById("dialogeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "dialoge_neu", "Dialoge", "💬", false, true)) return;
+    if (!window.DMA_DIALOGE) {
+      area.innerHTML = '<p class="empty-note">Die Gespräche werden geladen …</p>';
+      const ok = await dialogeLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Die Gespräche konnten nicht geladen werden.</p>'; return; }
+    }
+    if (dlgLauf && dlgLauf.index >= dlgLauf.situation.zeilen.length) { renderDialogErgebnis(); return; }
+    let inhalt = "";
+    if (dlgLauf) inhalt = dlgSpielHtml();
+    else if (dlgTeil === "formular") inhalt = dlgFormularHtml();
+    else if (dlgTeil === "gespraeche") inhalt = dlgListeHtml();
+    else if (dlgTeil === "anrede") inhalt = dlgAnredeHtml();
+    area.innerHTML = (dlgLauf ? "" : dlgKopfHtml()) + inhalt;
+    dlgBinden(area);
+  }
+
+  function dlgStarten(id) {
+    const s = dlgDaten("SITUATIONEN").find((x) => x.id === id);
+    if (!s) return;
+    dlgLauf = {
+      situation: s, index: 0, verlauf: [], versuche: [], fertig: false,
+      punkte: 0, gewaehlt: 0, ohneFehler: 0,
+      stellen: s.zeilen.filter((z) => z.optionen).length,
+    };
+    // Alles, was vor der ersten Wahlstelle steht, gehört schon in den Verlauf.
+    dlgVorspulen();
+    renderDialoge();
+  }
+  /* Die Sätze der anderen Person laufen von selbst — stehen bleibt es
+     erst, wenn man selbst dran ist. */
+  function dlgVorspulen() {
+    const l = dlgLauf;
+    while (l.index < l.situation.zeilen.length && !l.situation.zeilen[l.index].optionen) {
+      const z = l.situation.zeilen[l.index];
+      l.verlauf.push({ ich: false, text: z.text });
+      l.index += 1;
+    }
+  }
+
+  function dlgBinden(area) {
+    area.querySelectorAll(".dlg-teil-btn").forEach((b) => b.addEventListener("click", () => {
+      dlgTeil = b.dataset.dlgTeil; renderDialoge();
+    }));
+    area.querySelectorAll(".dlg-reg-btn").forEach((b) => b.addEventListener("click", () => {
+      dlgRegister = b.dataset.dlgReg; renderDialoge();
+    }));
+    area.querySelectorAll("[data-dlg-nimm]").forEach((b) => b.addEventListener("click", () => {
+      const [si, i] = b.dataset.dlgNimm.split(":").map(Number);
+      const satz = (dlgDaten("SCHRITTE")[si] || {})[dlgRegister][i];
+      if (satz) { dlgMeins.push(satz); renderDialoge();
+        setTimeout(() => document.getElementById("dlgMeinsKarte")?.scrollIntoView({ behavior: "smooth", block: "end" }), 60); }
+    }));
+    area.querySelectorAll("[data-dlg-weg]").forEach((b) => b.addEventListener("click", () => {
+      dlgMeins.splice(Number(b.dataset.dlgWeg), 1); renderDialoge();
+    }));
+    document.getElementById("dlgLeeren")?.addEventListener("click", () => { dlgMeins = []; renderDialoge(); });
+    document.getElementById("dlgVorlesen")?.addEventListener("click", () => {
+      Core.speak(dlgMeins.join(". "), dlgSprache());
+    });
+    area.querySelectorAll("[data-dlg-start]").forEach((b) => b.addEventListener("click", () => dlgStarten(b.dataset.dlgStart)));
+    document.getElementById("dlgAbbrechen")?.addEventListener("click", () => { dlgLauf = null; dlgTeil = "gespraeche"; renderDialoge(); });
+
+    const l = dlgLauf;
+    if (l && l.index < l.situation.zeilen.length) {
+      const z = l.situation.zeilen[l.index];
+      area.querySelectorAll(".dlg-opt").forEach((b) => b.addEventListener("click", () => {
+        const i = Number(b.dataset.dlgOpt);
+        if (l.versuche.indexOf(i) >= 0) return;
+        const o = z.optionen[i];
+        l.versuche.push(i);
+        if (o.ok) {
+          /* Punkt gibt es nur, wenn die passende Antwort im ersten
+             Anlauf kam — sonst hätte Durchprobieren denselben Wert. */
+          if (l.versuche.length === 1) { l.punkte += 1; l.ohneFehler += 1; }
+          l.fertig = true;
+          l.verlauf.push({ ich: true, text: o.text });
+          Core.sound.correct();
+        } else Core.sound.wrong();
+        spielNotiz(Boolean(o.ok), `${l.situation.titel}: ${o.text}`);
+        renderDialoge();
+      }));
+      document.getElementById("dlgWeiter")?.addEventListener("click", () => {
+        if (z.optionen) l.gewaehlt += 1;
+        l.index += 1; l.versuche = []; l.fertig = false;
+        dlgVorspulen();
+        renderDialoge();
+      });
+    }
+    betonungsSchalterEinhaengen(area.closest(".subview") || undefined);
+  }
+
+  function renderDialogErgebnis() {
+    const area = document.getElementById("dialogeArea");
+    const l = dlgLauf;
+    const s = l.situation;
+    const spr = dlgSprache();
+    const prozent = l.stellen ? Math.round((l.ohneFehler / l.stellen) * 100) : 100;
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: l.punkte, prozent: prozent, tier: "Gesprächspartner:in",
+      charakter: "Dialoge",
+      zeilen: [{ name: "💬 Auf Anhieb passend", anteil: prozent, wert: l.ohneFehler + "/" + l.stellen }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="dlgNochmal">🔄 Noch einmal</button><button type="button" class="btn btn-ghost" id="dlgAndere">Anderes Gespräch</button>`,
+    }) + `
+      <div class="question-card">
+        <p class="eyebrow">DAS GANZE GESPRÄCH</p>
+        <p class="empty-note" style="margin-bottom:10px;">So ist es gelaufen. Lies es einmal laut mit — beide Rollen.</p>
+        <div class="dlg-verlauf">
+          ${l.verlauf.map((v) => `
+            <div class="dlg-zeile ${v.ich ? "dlg-ich" : "dlg-andere"}">
+              <span class="dlg-wer">${v.ich ? "Du" : s.gegenueber.split(",")[0]}</span>
+              <span class="dlg-text">${v.text} ${sprichKnopfHtml(v.text, spr)}</span>
+            </div>`).join("")}
+        </div>
+        <div class="quiz-actions" style="justify-content:flex-start; margin-top:10px;">
+          <button type="button" class="btn btn-ghost" id="dlgAllesHoeren">🔊 Ganzes Gespräch vorlesen</button>
+        </div>
+      </div>`;
+    saveResultAndCheck({
+      categories: [spr === "it" ? "it-dialoge" : "dialoge"], titelText: "Dialog: " + s.titel,
+      points: l.punkte, bonus: prozent === 100 ? 3 : 0, percent: prozent,
+      character: "Gesprächspartner:in", badges: [], playedAt: new Date().toISOString(),
+    });
+    dlgBinden(area);
+    document.getElementById("dlgNochmal")?.addEventListener("click", () => dlgStarten(s.id));
+    document.getElementById("dlgAndere")?.addEventListener("click", () => { dlgLauf = null; dlgTeil = "gespraeche"; renderDialoge(); });
+    document.getElementById("dlgAllesHoeren")?.addEventListener("click", () => {
+      Core.speak(l.verlauf.map((v) => v.text).join(" … "), spr);
+    });
+  }
+
+  document.querySelector('#learnSubnav [data-sub="sub-dialoge"]')?.addEventListener("click", () => renderDialoge());
+
+  /* ============================================================
+     FESTE, FEIERTAGE UND KULTUR
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Zu Festen und Feiertagen möchte ich auch noch
+     irgendwas haben — ja, Weihnachten, Ostern und die wichtigsten
+     Sachen zur deutschen Kultur."
+
+     Drei Teile:
+       Jahreslauf — jedes Fest mit Datum, Ablauf, Wörtern und den
+                    Sätzen, die man an dem Tag braucht.
+       Alltag     — das Ungeschriebene: Pünktlichkeit, Ruhezeiten,
+                    Mülltrennung, Pfand, Behörden, Vereine.
+       Test       — zählt aufs Punktekonto.
+     ============================================================ */
+  let festeGeladen = null;
+  function festeLaden() {
+    if (window.DMA_FESTE) return Promise.resolve(true);
+    if (festeGeladen) return festeGeladen;
+    festeGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "data-feste.js?v=" + (window.DMA_VERSION || "1");
+      s.onload = () => fertig(true);
+      s.onerror = () => { festeGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return festeGeladen;
+  }
+
+  const FST_TEILE = { jahr: "🗓️ Das Jahr", alltag: "🏠 Alltag & Regeln", test: "✅ Test" };
+  const FST_ART = {
+    gesetzlich: { marke: "🔴 gesetzlicher Feiertag", erklaerung: "arbeitsfrei, Läden zu" },
+    regional: { marke: "🟡 nur in manchen Bundesländern", erklaerung: "je nach Wohnort frei oder nicht" },
+    brauch: { marke: "🟢 Brauch", erklaerung: "normaler Arbeitstag — aber alle machen mit" },
+  };
+  const FST_MONATE = ["", "Januar", "Februar", "März", "April", "Mai", "Juni",
+    "Juli", "August", "September", "Oktober", "November", "Dezember"];
+  let fstTeil = "jahr";
+  let fstOffen = null;
+  let fstTest = null;
+
+  function fstSprache() { return imItalienischraum() ? "it" : "de"; }
+  function fstDaten(feld) {
+    const D = window.DMA_FESTE || {};
+    return (D[feld] && D[feld][fstSprache()]) || [];
+  }
+
+  function fstKopfHtml() {
+    const it = fstSprache() === "it";
+    return `
+      <div class="question-card">
+        <p class="eyebrow">🎄 ${it ? "FESTE UND KULTUR IN ITALIEN" : "FESTE, FEIERTAGE UND KULTUR"}</p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          ${it
+            ? "Der italienische Jahreslauf — und die Dinge, die man wissen muss, ohne dass sie jemand erklärt."
+            : "Wann hat alles zu, und warum? Was tut man an Ostern, was an Silvester, und wann gratuliert man auf keinen Fall? Dazu das Ungeschriebene: Ruhezeiten, Mülltrennung, Pfand, Behörden, Vereine. Nichts davon steht in einem Gesetz, das man liest — und alles davon merkt man, wenn man es falsch macht."}
+        </p>
+        <div class="trophy-case">
+          ${Object.entries(FST_TEILE).map(([k, name]) =>
+            `<button type="button" class="trophy-chip fst-teil-btn ${fstTeil === k ? "selected" : ""}" data-fst-teil="${k}">${name}</button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function fstFestHtml(f, offen) {
+    const spr = fstSprache();
+    const art = FST_ART[f.art] || FST_ART.brauch;
+    return `
+      <div class="question-card fst-fest ${offen ? "fst-offen" : ""}">
+        <button type="button" class="fst-fest-kopf" data-fst-fest="${f.id}">
+          <span class="fst-fest-name">${betonungAnzeigen(f.syl) || f.name}</span>
+          <span class="fst-fest-wann">${f.wann}</span>
+          <span class="fst-art fst-art-${f.art}" title="${art.erklaerung}">${art.marke}</span>
+          <span class="fst-pfeil">${offen ? "▾" : "▸"}</span>
+        </button>
+        ${offen ? `
+          <p class="empty-note" style="margin:10px 0 12px;">${f.worum}</p>
+          <ul class="fst-ablauf">
+            ${f.ablauf.map((z) => `<li>${z}</li>`).join("")}
+          </ul>
+          <p class="eyebrow" style="margin-top:14px;">WÖRTER DAZU</p>
+          <div class="ak-bsp-gitter">
+            ${f.woerter.map((x) => `
+              <div class="ak-bsp">
+                <span class="ak-bsp-wort">${akWortFrei(x.wort, x.syl, spr)}</span>
+                ${sprichKnopfHtml(x.wort, spr)}
+                ${x.was ? `<span class="ak-bsp-hinweis">${x.was}</span>` : ""}
+              </div>`).join("")}
+          </div>
+          <p class="eyebrow" style="margin-top:14px;">DAS SAGT MAN</p>
+          <div class="dlg-satzliste">
+            ${f.saetze.map((s) => `
+              <div class="dlg-satz"><span class="dlg-satz-text dlg-satz-fest">${s}</span>${sprichKnopfHtml(s, spr)}</div>`).join("")}
+          </div>
+          ${f.hinweis ? `<div class="ak-probe"><p>💡 ${f.hinweis}</p></div>` : ""}
+        ` : ""}
+      </div>`;
+  }
+
+  /* Wie akWort, aber mit frei wählbarer Sprache — der Kulturbereich
+     benutzt sie unabhängig vom Aussprache-Kurs. */
+  function akWortFrei(wort, syl, sprache) {
+    const text = String(wort);
+    if (!syl) return text;
+    let gezeigt = sprache === "it" ? Core.formatStressIt(syl) : Core.formatStress(syl);
+    const artikel = text.match(/^(?:(?:der|die|das|il|lo|la|i|gli|le)\s|l['’])/i);
+    const rest = artikel ? text.slice(artikel[0].length) : text;
+    if (rest && rest[0] === rest[0].toLowerCase() && rest[0] !== rest[0].toUpperCase()) {
+      gezeigt = akErsteKlein(gezeigt);
+    }
+    return (artikel ? artikel[0] : "") + gezeigt;
+  }
+
+  function fstJahrHtml() {
+    const feste = fstDaten("FESTE");
+    /* Nach Monaten sortiert, damit man den Jahreslauf sieht. Was kein
+       festes Datum hat (Geburtstag), steht am Ende. */
+    const sortiert = [...feste].sort((a, b) => (a.monat || 13) - (b.monat || 13));
+    const heute = new Date().getMonth() + 1;
+    const naechstes = sortiert.find((f) => f.monat >= heute) || sortiert[0];
+    let letzterMonat = -1;
+    return `
+      <div class="question-card">
+        <p class="eyebrow">DIE DREI ARTEN</p>
+        <div class="fst-legende">
+          ${Object.entries(FST_ART).map(([k, v]) =>
+            `<span class="fst-art fst-art-${k}">${v.marke}</span><span class="ak-b-hinweis" style="margin:0 0 6px;">${v.erklaerung}</span>`).join("")}
+        </div>
+        ${naechstes ? `<p class="empty-note" style="margin:10px 0 0;">Als Nächstes im Jahr: <strong>${naechstes.name}</strong> — ${naechstes.wann}.</p>` : ""}
+      </div>
+      ${sortiert.map((f) => {
+        let kopf = "";
+        if (f.monat !== letzterMonat) {
+          letzterMonat = f.monat;
+          kopf = `<p class="fst-monat">${f.monat ? FST_MONATE[f.monat] : "Das ganze Jahr"}</p>`;
+        }
+        return kopf + fstFestHtml(f, fstOffen === f.id);
+      }).join("")}`;
+  }
+
+  function fstAlltagHtml() {
+    const spr = fstSprache();
+    return fstDaten("ALLTAG").map((a) => `
+      <div class="question-card fst-fest ${fstOffen === a.id ? "fst-offen" : ""}">
+        <button type="button" class="fst-fest-kopf" data-fst-fest="${a.id}">
+          <span class="fst-fest-name">${a.titel}</span>
+          <span class="fst-fest-wann">${a.kurz}</span>
+          <span class="fst-pfeil">${fstOffen === a.id ? "▾" : "▸"}</span>
+        </button>
+        ${fstOffen === a.id ? `
+          <ul class="fst-ablauf">${a.punkte.map((p) => `<li>${p}</li>`).join("")}</ul>
+          <p class="eyebrow" style="margin-top:14px;">WÖRTER DAZU</p>
+          <div class="ak-bsp-gitter">
+            ${a.woerter.map((x) => `
+              <div class="ak-bsp">
+                <span class="ak-bsp-wort">${akWortFrei(x.wort, x.syl, spr)}</span>
+                ${sprichKnopfHtml(x.wort, spr)}
+                ${x.was ? `<span class="ak-bsp-hinweis">${x.was}</span>` : ""}
+              </div>`).join("")}
+          </div>
+          <p class="eyebrow" style="margin-top:14px;">DAS SAGT MAN</p>
+          <div class="dlg-satzliste">
+            ${a.saetze.map((s) => `
+              <div class="dlg-satz"><span class="dlg-satz-text dlg-satz-fest">${s}</span>${sprichKnopfHtml(s, spr)}</div>`).join("")}
+          </div>
+          ${a.warnung ? `<div class="ak-ausnahme"><p class="ak-ausnahme-titel">⚠️ Wichtig</p><p>${a.warnung}</p></div>` : ""}
+        ` : ""}
+      </div>`).join("");
+  }
+
+  const FST_RUNDEN = 10;
+  function neuerFstTest() {
+    const pool = fstDaten("QUIZ");
+    fstTest = {
+      aufgaben: Core.shuffle(pool).slice(0, Math.min(FST_RUNDEN, pool.length)),
+      index: 0, richtig: 0, beantwortet: null, optionen: null, sprache: fstSprache(),
+    };
+  }
+  function fstTestHtml() {
+    const pool = fstDaten("QUIZ");
+    if (!fstTest || fstTest.sprache !== fstSprache()) {
+      return `
+        <div class="question-card">
+          <p class="eyebrow">TEST</p>
+          <p class="empty-note" style="margin-bottom:12px;">
+            Fragen aus allem, was hier steht — Feiertage, Bräuche und die Regeln des Alltags.
+            ${pool.length} Fragen stehen bereit, eine Runde geht über ${Math.min(FST_RUNDEN, pool.length)}.
+          </p>
+          <button type="button" class="btn btn-coffee" id="fstTestStart">▶ Test starten</button>
+        </div>`;
+    }
+    const s = fstTest;
+    if (s.index >= s.aufgaben.length) return "";
+    const a = s.aufgaben[s.index];
+    const optionen = s.optionen || Core.shuffle([a.richtig, ...a.falsch]);
+    s.optionen = optionen;
+    return `
+      <div class="question-card">
+        <p class="eyebrow">TEST · FRAGE ${s.index + 1} / ${s.aufgaben.length}</p>
+        ${fortschrittHtml(s.index, s.aufgaben.length)}
+        <p class="question-prompt" style="margin:10px 0 14px;">${a.frage}</p>
+        <div class="option-list">
+          ${optionen.map((opt, i) => {
+            const gewaehlt = s.beantwortet && s.beantwortet.gewaehlt === opt;
+            const istRichtig = opt === a.richtig;
+            const zustand = !s.beantwortet ? "" : istRichtig ? " option-correct" : gewaehlt ? " option-wrong" : "";
+            return `<button type="button" class="option-btn fst-opt${zustand}" data-fst-opt="${i}" ${s.beantwortet ? "disabled" : ""}><span>${opt}</span></button>`;
+          }).join("")}
+        </div>
+        ${s.beantwortet ? `
+          <div class="witz-erklaerung" style="margin-top:12px;">
+            <p style="margin:0;">${s.beantwortet.gewaehlt === a.richtig ? "✅ " : "❌ "}${a.erkl}</p>
+          </div>
+          <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+            <button type="button" class="btn btn-coffee" id="fstWeiter">Weiter ▸</button>
+          </div>` : ""}
+        ${miniBugReportBtnHtml("Feste & Kultur: " + a.frage)}
+      </div>`;
+  }
+
+  async function renderFeste() {
+    autoWeiterAbbrechen();
+    const area = document.getElementById("festeArea");
+    if (!area) return;
+    if (!renderComingSoonGate(area, "feste_kultur_neu", "Feste & Kultur", "🎄", false, true)) return;
+    if (!window.DMA_FESTE) {
+      area.innerHTML = '<p class="empty-note">Feste und Kultur werden geladen …</p>';
+      const ok = await festeLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Der Bereich konnte nicht geladen werden.</p>'; return; }
+    }
+    if (fstTeil === "test" && fstTest && fstTest.sprache === fstSprache()
+        && fstTest.index >= fstTest.aufgaben.length) { renderFstErgebnis(); return; }
+    let inhalt = "";
+    if (fstTeil === "jahr") inhalt = fstJahrHtml();
+    else if (fstTeil === "alltag") inhalt = fstAlltagHtml();
+    else if (fstTeil === "test") inhalt = fstTestHtml();
+    area.innerHTML = fstKopfHtml() + inhalt;
+    fstBinden(area);
+  }
+
+  function fstBinden(area) {
+    area.querySelectorAll(".fst-teil-btn").forEach((b) => b.addEventListener("click", () => {
+      fstTeil = b.dataset.fstTeil; fstOffen = null; renderFeste();
+    }));
+    area.querySelectorAll("[data-fst-fest]").forEach((b) => b.addEventListener("click", () => {
+      const id = b.dataset.fstFest;
+      fstOffen = fstOffen === id ? null : id;
+      renderFeste();
+      if (fstOffen) setTimeout(() => {
+        document.querySelector(`[data-fst-fest="${id}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 60);
+    }));
+    document.getElementById("fstTestStart")?.addEventListener("click", () => { neuerFstTest(); renderFeste(); });
+    const s = fstTest;
+    if (fstTeil === "test" && s && s.index < s.aufgaben.length) {
+      const a = s.aufgaben[s.index];
+      area.querySelectorAll(".fst-opt").forEach((b) => b.addEventListener("click", () => {
+        const opt = s.optionen[Number(b.dataset.fstOpt)];
+        const stimmt = opt === a.richtig;
+        if (stimmt) { s.richtig += 1; Core.sound.correct(); } else Core.sound.wrong();
+        spielNotiz(stimmt, `${a.frage} → ${a.richtig}`);
+        s.beantwortet = { gewaehlt: opt };
+        renderFeste();
+      }));
+      const weiter = () => { s.index += 1; s.beantwortet = null; s.optionen = null; renderFeste(); };
+      document.getElementById("fstWeiter")?.addEventListener("click", () => { autoWeiterAbbrechen(); weiter(); });
+      if (s.beantwortet) autoWeiter(s.beantwortet.gewaehlt === a.richtig, weiter);
+    }
+    betonungsSchalterEinhaengen(area.closest(".subview") || undefined);
+  }
+
+  function renderFstErgebnis() {
+    const area = document.getElementById("festeArea");
+    const s = fstTest;
+    const prozent = Math.round((s.richtig / s.aufgaben.length) * 100);
+    area.innerHTML = fstKopfHtml() + ergebnisSchirmHtml({
+      punkte: s.richtig, prozent: prozent, tier: "Landeskundler:in",
+      charakter: "Feste & Kultur",
+      zeilen: [{ name: "🎄 Richtig beantwortet", anteil: prozent, wert: s.richtig + "/" + s.aufgaben.length }],
+      knoepfe: `<button type="button" class="btn btn-coffee" id="fstNochmal">🔄 Noch ein Test</button><button type="button" class="btn btn-ghost" id="fstZurueck">Zurück zum Jahr</button>`,
+    });
+    saveResultAndCheck({
+      categories: [s.sprache === "it" ? "it-kultur" : "kultur"], titelText: "Feste & Kultur",
+      points: s.richtig, bonus: prozent === 100 ? 3 : 0, percent: prozent,
+      character: "Landeskundler:in", badges: [], playedAt: new Date().toISOString(),
+    });
+    fstBinden(area);
+    document.getElementById("fstNochmal")?.addEventListener("click", () => { neuerFstTest(); renderFeste(); });
+    document.getElementById("fstZurueck")?.addEventListener("click", () => { fstTest = null; fstTeil = "jahr"; renderFeste(); });
+  }
+
+  document.querySelector('#knowledgeSubnav [data-sub="sub-feste"]')?.addEventListener("click", () => renderFeste());
+  document.querySelector('#learnSubnav [data-sub="sub-feste"]')?.addEventListener("click", () => renderFeste());
+
+  /* ============================================================
+     WEGWEISER
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Wegweiser: Orientierung auf der Seite und in
+     Deutschland."
+
+     Zwei Teile, die beide „Wo muss ich hin?" beantworten:
+
+     Auf der Seite — was es gibt, wo es steht und wofür es gut
+     ist. Jeder Eintrag ist ein Knopf, der direkt dorthin
+     springt. Wer neu ist, sieht sonst zwanzig Reiter und weiß
+     nicht, womit er anfangen soll.
+
+     In Deutschland — die ersten Wochen in der richtigen
+     Reihenfolge. Vieles hängt voneinander ab: ohne Anmeldung
+     keine Meldebescheinigung, ohne die kein Konto, ohne Konto
+     kein Gehalt. Jeder Schritt lässt sich abhaken; der Stand
+     hängt am Konto und ist auf jedem Gerät derselbe.
+     ============================================================ */
+  const WEGWEISER_SEITE = [
+    { icon: "🧭", name: "Kompass", tab: "view-knowledge", sub: "sub-kompass",
+      was: "Dein Überblick: was du gerade übst, wo du stark bist, wo noch nicht.",
+      fuer: "Wenn du nicht weißt, was du heute machen sollst." },
+    { icon: "🌉", name: "Erste Schritte", tab: "view-learn", sub: "sub-erste-schritte",
+      was: "Die allerersten Wörter und Sätze, ganz ohne Vorwissen.",
+      fuer: "Wenn du gerade erst anfängst." },
+    { icon: "🗣️", name: "Aussprache-Kurs", tab: "view-learn", sub: "sub-alphabet",
+      was: "Das Alphabet, die Regeln für lange und kurze Vokale, und die Tricks für ü, ö, ng und ch.",
+      fuer: "Wenn du lesen lernst — oder wenn dich niemand versteht." },
+    { icon: "🎤", name: "Aussprache-Trainer", tab: "view-learn", sub: "sub-aussprache",
+      was: "Sprich ein Wort ins Mikrofon und sieh, ob es ankommt.",
+      fuer: "Wenn du üben willst, ob man dich versteht." },
+    { icon: "📖", name: "Wörterbuch", tab: "view-learn", sub: "sub-dictionary",
+      was: "Über 26.000 Wörter mit Erklärung, Beispielsatz und Betonung.",
+      fuer: "Wenn du ein Wort nachschlagen oder dir merken willst." },
+    { icon: "📝", name: "Übungen", tab: "view-learn", sub: "sub-exercises",
+      was: "Aufgaben zu 90 Bereichen, von A1 bis C2.",
+      fuer: "Wenn du gezielt etwas üben willst." },
+    { icon: "📐", name: "Grammatik", tab: "view-learn", sub: "sub-grammatik",
+      was: "Die Regeln, erklärt und mit einem Sprung zur passenden Übung.",
+      fuer: "Wenn du wissen willst, warum etwas so heißt." },
+    { icon: "🧱", name: "Satzbaukasten", tab: "view-learn", sub: "sub-satzbaukasten-de",
+      was: "Sätze aus Bausteinen zusammensetzen und sehen, wie sich die Formen ändern.",
+      fuer: "Wenn du verstehen willst, wie ein deutscher Satz gebaut ist." },
+    { icon: "💬", name: "Dialoge", tab: "view-learn", sub: "sub-dialoge",
+      was: "Fertige Sätze für jeden Schritt eines Gesprächs — in der Sie- und in der du-Form — und echte Situationen zum Durchspielen.",
+      fuer: "Vor dem Amt, vor dem Arzt, vor der Wohnungsbesichtigung." },
+    { icon: "🎮", name: "Spiele", tab: "view-learn", sub: "sub-games",
+      was: "Über dreißig Spiele, alle mit echtem Wortschatz.",
+      fuer: "Wenn Üben sich nicht nach Üben anfühlen soll." },
+    { icon: "🖼️", name: "Bilderwelt", tab: "view-learn", sub: "sub-bilderwelt",
+      was: "Gezeichnete Szenen, in denen jedes Ding seinen Namen trägt — mit Lupe für die Einzelheiten.",
+      fuer: "Wenn du Wörter über Bilder lernst statt über Listen." },
+    { icon: "📋", name: "Meine Wortlisten", tab: "view-learn", sub: "sub-wortlisten",
+      was: "Eigene Listen anlegen — auch aus einem ganzen Text auf einmal — und damit spielen.",
+      fuer: "Wenn du genau die Wörter üben willst, die du brauchst." },
+    { icon: "🧭", name: "Lernweg", tab: "view-learn", sub: "sub-lernweg",
+      was: "Der feste Weg von A1 bis C2, Modul für Modul.",
+      fuer: "Wenn du einen Plan willst statt Zufall." },
+    { icon: "🎄", name: "Feste & Kultur", tab: "view-knowledge", sub: "sub-feste",
+      was: "Der Jahreslauf mit allen Festen, dazu Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, Behörden und Vereine.",
+      fuer: "Wenn du wissen willst, warum alle am 3. Oktober frei haben." },
+    { icon: "📚", name: "Materialien", tab: "view-knowledge", sub: "sub-materials",
+      was: "Zum Herunterladen und Ausdrucken.",
+      fuer: "Wenn du etwas auf Papier brauchst." },
+    { icon: "🔗", name: "Weiterführende Links", tab: "view-knowledge", sub: "sub-links",
+      was: "Geprüfte Adressen außerhalb dieser Seite.",
+      fuer: "Wenn du weiterlesen willst." },
+    { icon: "💡", name: "Schwarmwissen", tab: "view-knowledge", sub: "sub-tips",
+      was: "Was bei anderen Lernenden funktioniert hat.",
+      fuer: "Wenn du wissen willst, wie andere es geschafft haben." },
+    { icon: "✍️", name: "Eigene Beiträge", tab: "view-knowledge", sub: "sub-community",
+      was: "Selbst etwas schreiben und veröffentlichen.",
+      fuer: "Wenn du selbst etwas beitragen willst." },
+    { icon: "👋", name: "Vorstellungsrunde", tab: "view-knowledge", sub: "sub-intro",
+      was: "Sich kurz vorstellen und die anderen kennenlernen.",
+      fuer: "Wenn du neu bist." },
+    { icon: "👤", name: "Profil", tab: "view-profile", sub: "sub-account",
+      was: "Punkte, Abzeichen, Designs, Freunde, Postfach, Einstellungen.",
+      fuer: "Wenn du etwas an dir oder an der Seite ändern willst." },
+  ];
+
+  let wegTeil = "seite";
+  let wegOffen = null;
+
+  function wegErledigt() {
+    const p = Backend.currentProfile();
+    return ((p && p.extraProfileData && p.extraProfileData.wegweiser) || []);
+  }
+  async function wegUmschalten(id) {
+    const jetzt = wegErledigt();
+    const neu = jetzt.includes(id) ? jetzt.filter((x) => x !== id) : [...jetzt, id];
+    try { await Backend.updateExtraProfileField("wegweiser", neu); }
+    catch (e) { showToast("Konnte gerade nicht gespeichert werden."); return; }
+    renderWegweiser();
+  }
+
+  function wegSpringen(tab, sub) {
+    document.querySelector(`[data-target="${tab}"]`)?.click();
+    setTimeout(() => {
+      const nav = tab === "view-learn" ? "#learnSubnav" : tab === "view-knowledge" ? "#knowledgeSubnav" : "#profileSubnav";
+      const pille = document.querySelector(`${nav} [data-sub="${sub}"]`);
+      if (pille) pille.click();
+      else showToast("Diesen Bereich gibt es hier gerade nicht.");
+    }, 140);
+  }
+
+  function wegSeiteHtml() {
+    return `
+      <div class="question-card">
+        <p class="eyebrow">WAS ES HIER GIBT</p>
+        <p class="empty-note" style="margin-bottom:12px;">
+          Tippe auf einen Eintrag — du landest direkt dort. Du musst nicht alles kennen:
+          Fang mit dem an, was gerade zu dir passt.
+        </p>
+        <div class="weg-liste">
+          ${WEGWEISER_SEITE.map((e, i) => `
+            <button type="button" class="weg-ziel" data-weg-ziel="${i}">
+              <span class="weg-icon">${e.icon}</span>
+              <span class="weg-text">
+                <span class="weg-name">${e.name}</span>
+                <span class="weg-was">${e.was}</span>
+                <span class="weg-fuer">${e.fuer}</span>
+              </span>
+              <span class="weg-pfeil">→</span>
+            </button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function wegDeutschlandHtml() {
+    const D = window.DMA_FESTE || {};
+    const schritte = (D.WEGWEISER && D.WEGWEISER.de) || [];
+    const fertig = wegErledigt();
+    const angemeldet = Boolean(Backend.currentUser());
+    const anzahl = schritte.filter((x) => fertig.includes(x.id)).length;
+    return `
+      <div class="question-card">
+        <p class="eyebrow">DIE ERSTEN WOCHEN — DER REIHE NACH</p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Vieles hängt voneinander ab: ohne Anmeldung keine Meldebescheinigung, ohne die kein
+          Konto, ohne Konto kein Gehalt. Deshalb steht hier alles in der Reihenfolge, in der es
+          wirklich geht. Zu jedem Schritt: was du brauchst, wohin du musst und was du dort sagst.
+        </p>
+        ${angemeldet
+          ? `${fortschrittHtml(anzahl, schritte.length)}
+             <p class="empty-note" style="margin:8px 0 0;">${anzahl} von ${schritte.length} erledigt. Der Haken wird in deinem Konto gespeichert — auf jedem Gerät derselbe.</p>`
+          : `<p class="empty-note" style="margin:0;">Melde dich an, dann kannst du die Schritte abhaken und den Stand behalten.</p>`}
+      </div>
+      ${schritte.map((x) => {
+        const offen = wegOffen === x.id;
+        const ok = fertig.includes(x.id);
+        return `
+        <div class="question-card weg-schritt ${ok ? "weg-fertig" : ""}">
+          <div class="weg-kopfzeile">
+            ${angemeldet ? `<button type="button" class="weg-haken ${ok ? "weg-haken-an" : ""}" data-weg-haken="${x.id}"
+                 aria-label="${ok ? "wieder offen" : "erledigt"}" title="${ok ? "wieder offen" : "erledigt"}">${ok ? "✓" : ""}</button>` : ""}
+            <button type="button" class="weg-titel" data-weg-auf="${x.id}">
+              <span class="weg-name">${x.titel}</span>
+              <span class="weg-wann">🕒 ${x.wann}</span>
+              <span class="weg-wo">📍 ${x.wo}</span>
+            </button>
+            <span class="fst-pfeil">${offen ? "▾" : "▸"}</span>
+          </div>
+          ${offen ? `
+            <p class="eyebrow" style="margin-top:12px;">DAS BRAUCHST DU</p>
+            <ul class="fst-ablauf">${x.brauchst.map((b) => `<li>${b}</li>`).join("")}</ul>
+            <p class="eyebrow" style="margin-top:12px;">SO GEHT ES</p>
+            <ul class="fst-ablauf">${x.schritte.map((b) => `<li>${b}</li>`).join("")}</ul>
+            <p class="eyebrow" style="margin-top:12px;">DAS SAGST DU</p>
+            <div class="dlg-satzliste">
+              ${x.saetze.map((b) => `<div class="dlg-satz"><span class="dlg-satz-text dlg-satz-fest">${b}</span>${sprichKnopfHtml(b, "de")}</div>`).join("")}
+            </div>
+            ${x.hinweis ? `<div class="ak-probe"><p>💡 ${x.hinweis}</p></div>` : ""}
+          ` : ""}
+        </div>`;
+      }).join("")}`;
+  }
+
+  async function renderWegweiser() {
+    const area = document.getElementById("wegweiserArea");
+    if (!area) return;
+    if (wegTeil === "deutschland" && !window.DMA_FESTE) {
+      area.innerHTML = '<p class="empty-note">Der Wegweiser wird geladen …</p>';
+      const ok = await festeLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Der Wegweiser konnte nicht geladen werden.</p>'; return; }
+    }
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🧭 WEGWEISER</p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Zwei Wege, die beide dieselbe Frage beantworten: Wo muss ich hin?
+        </p>
+        <div class="trophy-case">
+          <button type="button" class="trophy-chip weg-teil-btn ${wegTeil === "seite" ? "selected" : ""}" data-weg-teil="seite">🗺️ Auf dieser Seite</button>
+          <button type="button" class="trophy-chip weg-teil-btn ${wegTeil === "deutschland" ? "selected" : ""}" data-weg-teil="deutschland">🇩🇪 In Deutschland</button>
+        </div>
+      </div>
+      ${wegTeil === "seite" ? wegSeiteHtml() : wegDeutschlandHtml()}`;
+
+    area.querySelectorAll(".weg-teil-btn").forEach((b) => b.addEventListener("click", () => {
+      wegTeil = b.dataset.wegTeil; wegOffen = null; renderWegweiser();
+    }));
+    area.querySelectorAll("[data-weg-ziel]").forEach((b) => b.addEventListener("click", () => {
+      const e = WEGWEISER_SEITE[Number(b.dataset.wegZiel)];
+      if (e) wegSpringen(e.tab, e.sub);
+    }));
+    area.querySelectorAll("[data-weg-auf]").forEach((b) => b.addEventListener("click", () => {
+      const id = b.dataset.wegAuf;
+      wegOffen = wegOffen === id ? null : id;
+      renderWegweiser();
+      if (wegOffen) setTimeout(() => document.querySelector(`[data-weg-auf="${id}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    }));
+    area.querySelectorAll("[data-weg-haken]").forEach((b) => b.addEventListener("click", () => wegUmschalten(b.dataset.wegHaken)));
+    betonungsSchalterEinhaengen(area.closest(".subview") || undefined);
+  }
+
+  document.querySelector('#knowledgeSubnav [data-sub="sub-wegweiser"]')?.addEventListener("click", () => renderWegweiser());
 
   document.querySelector('#learnSubnav [data-sub="sub-erste-schritte"]')?.addEventListener("click", () => renderFirstSteps());
   document.querySelector('#learnSubnav [data-sub="sub-grammatik"]')?.addEventListener("click", () => renderGrammatik());
@@ -9403,7 +11351,9 @@
       if (gibtEs(orte, v.ort)) sbkWahl.ort = v.ort;
     }
     if (v.begleitung && !sbkWahl.begleitung) {
-      const bl = S.begleitungFuer(verb, sbkNiveau);
+      const personJetzt = verb.personFall
+        ? S.personenFuer(null, sbkNiveau, verb).find((x) => x.id === sbkWahl.person) || null : null;
+      const bl = S.begleitungFuer(verb, sbkNiveau, { person: personJetzt });
       if (gibtEs(bl, v.begleitung)) sbkWahl.begleitung = v.begleitung;
     }
     /* Bei „fragen“, „helfen“, „schenken“ ist die Person kein Beiwerk,
@@ -9431,9 +11381,6 @@
     // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
     const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, gewaehltesDing) : [];
     const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
-    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau, null, verb);
-    const gruende = S.gruendeFuer(verb, sbkNiveau);
-
     let ort = orte.find((o) => o.id === sbkWahl.ort) || null;
     // Manche Verben ergeben ohne ihre Ergänzung gar keinen Satz —
     // „Ich wohne.“ oder „Ich besuche.“ sind keine Sätze. Deshalb wird
@@ -9441,18 +11388,30 @@
     if (!ort && verb.ortPflicht && orte.length) { ort = orte[0]; sbkWahl.ort = ort.id; }
     let objekt = dinge.find((d) => d.id === sbkWahl.objekt) || null;
     if (!objekt && verb.objektPflicht && dinge.length) { objekt = dinge[0]; sbkWahl.objekt = objekt.id; }
-    const begleiterListe = S.begleiterFuer(objekt, verb);
+    let person0 = personen.find((p) => p.id === sbkWahl.person) || null;
+    if (!person0 && verb.personPflicht && personen.length) person0 = personen[0];
+    const begleiterListe = S.begleiterFuer(objekt, verb, { person: person0 });
     const objektBegleiter = begleiterListe.some((b) => b.id === sbkWahl.objektBegleiter)
       ? sbkWahl.objektBegleiter : (begleiterListe[0] && begleiterListe[0].id) || "bestimmt";
     const adjListe = S.adjektiveFuer(objekt, sbkNiveau);
     const objektAdjektiv = adjListe.find((a) => a.id === sbkWahl.objektAdjektiv) || null;
     let person = personen.find((p) => p.id === sbkWahl.person) || null;
     if (!person && verb.personPflicht && personen.length) { person = personen[0]; sbkWahl.person = person.id; }
-    const begleitungListe = S.begleitungFuer(verb, sbkNiveau);
+    const begleitungListe = S.begleitungFuer(verb, sbkNiveau, { person: person0 });
     const begleitung = begleitungListe.find((b) => b.id === sbkWahl.begleitung) || null;
-    const fragesatzListe = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau) : [];
+    const fragesatzListe = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau, { objekt }) : [];
     const fragesatz = fragesatzListe.find((f) => f.id === sbkWahl.fragesatz) || null;
+    /* Auch die Zeitangabe hängt an Objekt und Ort: „im Urlaub einen
+       Urlaub buchen" fällt sonst durch. */
+    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau, { ort, objekt, objektBegleiter }, verb);
     const zeit = zeiten.find((z) => z.id === sbkWahl.zeit) || zeiten[0];
+    /* Die Gründe hängen vom Objekt und vom Ort ab: „weil ich Urlaub
+       habe" passt nicht, wenn schon ein Urlaub gebucht wird, und
+       „wegen der Baustelle" nicht, wenn es auf die Baustelle geht.
+       Deshalb wird die Liste erst hier gebildet, wenn beides feststeht
+       — sonst stünde in der Auswahl etwas, das der gebaute Satz
+       gleich wieder wegwirft. */
+    const gruende = S.gruendeFuer(verb, sbkNiveau, { ort, objekt, objektBegleiter, zeit });
     const grund = gruende.find((g) => g.id === sbkWahl.grund) || gruende[0];
     /* Die Liste der Angaben hängt von Ort und Objekt ab: „im Internet“
        passt nicht neben eine Ortsangabe, „ordentlich“ nicht neben ein
@@ -9483,11 +11442,17 @@
     // Ein Fachgeschäft taucht nur auf, wenn es das Gewählte auch führt.
     const orte = ortRolle ? S.orteFuer(kat, sbkNiveau, verb, ortRolle, objekt) : [];
     const personen = verb.personFall ? S.personenFuer(null, sbkNiveau, verb) : [];
-    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau);
-    const gruende = S.gruendeFuer(verb, sbkNiveau);
-    const arten = S.artenFuer(verb, sbkNiveau, subjekt);
-    const arten2 = S.artenFuer(verb, sbkNiveau, subjekt, objekt);
-    const begl = objekt ? S.begleiterFuer(objekt, verb) : [];
+    /* Auch beim Würfeln gilt der ganze Zusammenhang: sonst zieht der
+       Zufall eine Angabe, die der fertige Satz gleich wieder wegwirft —
+       „im Urlaub einen Urlaub buchen" kam genau so zustande. */
+    const person0 = personen.length && verb.personPflicht ? personen[0] : null;
+    const zusammenhang = { ort: null, objekt, objektBegleiter: null, person: person0 };
+    const begl = objekt ? S.begleiterFuer(objekt, verb, zusammenhang) : [];
+    zusammenhang.objektBegleiter = begl.length ? begl[0].id : null;
+    const zeiten = S.zeitenFuer(sbkZeitform, sbkNiveau, zusammenhang, verb);
+    const gruende = S.gruendeFuer(verb, sbkNiveau, zusammenhang);
+    const arten = S.artenFuer(verb, sbkNiveau, subjekt, null, zusammenhang);
+    const arten2 = S.artenFuer(verb, sbkNiveau, subjekt, objekt, zusammenhang);
     const adj = objekt ? S.adjektiveFuer(objekt, sbkNiveau) : [];
     /* WIE VIELE ANGABEN EIN SATZ VERTRÄGT
        ------------------------------------------------------------
@@ -9508,9 +11473,9 @@
     if (gruende.length) kandidaten.push("grund");
     if (arten2.length) kandidaten.push("art");
     if (orte.length && !verb.ortPflicht) kandidaten.push("ort");
-    const bl = S.begleitungFuer(verb, sbkNiveau);
+    const bl = S.begleitungFuer(verb, sbkNiveau, zusammenhang);
     if (bl.length) kandidaten.push("begleitung");
-    const fl = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau) : [];
+    const fl = S.fragesaetzeFuer ? S.fragesaetzeFuer(verb, sbkNiveau, { objekt }) : [];
     if (fl.length) kandidaten.push("fragesatz");
     const gewaehlt = new Set(Core.shuffle(kandidaten).slice(0, wieViele));
     sbkWahl = {
@@ -15292,7 +17257,7 @@
     dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; }, "dichter");
     renderTileGallery(area, DICHTER_ENTRIES, () => kompassDichterOpenId, (v) => { kompassDichterOpenId = v; }, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
       "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
-    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
+    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml() + textInListeKnopfHtml("Lesetext"));
     leseBetonungAnwenden(area);
   }
   function renderSchneeVonGestern() {
@@ -15302,7 +17267,7 @@
     schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; }, "schnee");
     renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
-    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
+    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml() + textInListeKnopfHtml("Lesetext"));
     leseBetonungAnwenden(area);
   }
   let kompassBeitragOpenId = null;
@@ -15326,7 +17291,7 @@
     renderTileGallery(area, eintraege, () => kompassBeitragOpenId, (v) => { kompassBeitragOpenId = v; },
       () => beitragLevel, (v) => { beitragLevel = v; }, "🗂️",
       "Menschen, Geräte und Geschichten, über die man auf Deutsch reden kann — jeder Beitrag in sechs Niveaustufen und zehn Sprachen. Zu jedem steht die Quelle dabei.");
-    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml());
+    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml() + textInListeKnopfHtml("Lesetext"));
     leseBetonungAnwenden(area);
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-dichter"]')?.addEventListener("click", renderDichterUndDenker);
@@ -17545,6 +19510,58 @@
     };
   }
 
+  /* ============================================================
+     EINEN GANZEN TEXT IN EINE WORTLISTE
+     ------------------------------------------------------------
+     GEWÜNSCHT: „dass alle wichtigen Wörter aus dem heutigen Beitrag
+     in einem Rutsch abgespeichert werden können, in eine Wortliste
+     übernommen werden können, und man diese Wörter aus diesem Beitrag
+     gezielt lernen kann … und man soll andere auch mit seiner eigenen
+     Wortliste herausfordern können."
+
+     Der Knopf steht direkt über dem Lesetext. Er nimmt genau das, was
+     dort steht, führt jede gebeugte Form auf ihre Wörterbuchform
+     zurück (wortNachschlagen() macht das schon für die Wortlisten) und
+     legt daraus eine Liste an — fertig zum Üben und zum Herausfordern.
+     ============================================================ */
+  function textInListeKnopfHtml(titel) {
+    return `<button type="button" class="btn btn-ghost text-in-liste-knopf" data-text-in-liste="${escapeHtml(titel || "")}"
+              style="font-size:0.78rem; padding:5px 10px; margin-bottom:8px;">
+              📋 Alle Wörter dieses Textes in eine Liste
+            </button>`;
+  }
+
+  async function textInListe(knopf) {
+    if (!Backend.currentUser()) { showToast("Zum Anlegen einer Liste bitte zuerst anmelden."); return; }
+    /* Der Text steht im selben Kasten wie der Knopf. Gibt es dort
+       mehrere Lesestellen, kommen alle zusammen in die Liste. */
+    const kasten = knopf.closest(".question-card") || knopf.parentElement;
+    const stellen = kasten ? kasten.querySelectorAll(".sammel-text") : [];
+    const text = stellen.length
+      ? [...stellen].map((e) => e.textContent).join(" ")
+      : (kasten ? kasten.textContent : "");
+    if (!text || text.trim().length < 40) { showToast("Hier steht noch kein Text zum Sammeln."); return; }
+    if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
+      showToast("Der Wortschatz wird geladen — gleich noch einmal antippen.");
+      wortschatzBereit();
+      return;
+    }
+    const ergebnis = textAuswerten(text, 120);
+    if (!ergebnis.gefunden.length) { showToast("In diesem Text war kein Wort aus dem Wörterbuch."); return; }
+    const name = (knopf.dataset.textInListe || "Lesetext") + " · " + new Date().toLocaleDateString("de-DE");
+    const id = await wortlisteSpeichern(name, ergebnis.gefunden.map((g) => g.wort));
+    if (!id) { showToast("Die Liste konnte nicht gespeichert werden."); return; }
+    wortlueckenMelden(ergebnis.fehlend);
+    showToast(`📋 ${ergebnis.gefunden.length} Wörter in „${name}" — du findest sie unter „Meine Wortlisten".`);
+  }
+
+  document.addEventListener("click", (ev) => {
+    const knopf = ev.target.closest("[data-text-in-liste]");
+    if (!knopf) return;
+    ev.preventDefault();
+    textInListe(knopf);
+  });
+
   function renderWortlisten() {
     const area = document.getElementById("wortlistenArea");
     if (!area) return;
@@ -18563,6 +20580,639 @@
     }
   }
   document.querySelector('#learnSubnav [data-sub="sub-meinesaetze"]')?.addEventListener("click", () => renderMeineSaetze());
+
+  /* ============================================================
+     STADT · LAND · FLUSS
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Stadt-Land-Fluss als Gruppenspiel mit
+     gleichzeitigem Start."
+
+     Zwei Arten zu spielen:
+
+     Allein — der Fuchs füllt heimlich seinen eigenen Zettel aus.
+     Dadurch gilt dieselbe Wertung wie am Küchentisch, ohne dass
+     jemand anders online sein müsste.
+
+     Zu zweit — beide bekommen denselben Buchstaben, dieselben
+     Spalten UND dieselbe Startzeit. Die steht in der Einladung;
+     beide Geräte warten auf dieselbe Sekunde und zählen dann
+     gemeinsam herunter. Danach werden die Zettel nebeneinander
+     gelegt.
+
+     Gewertet wird klassisch:
+        20 Punkte — nur du hast in dieser Spalte etwas stehen
+        10 Punkte — du hast etwas, aber ein anderes Wort als die anderen
+         5 Punkte — dasselbe Wort wie jemand anders
+         0 Punkte — leer oder falscher Anfangsbuchstabe
+     ============================================================ */
+
+  /* Städte, Flüsse, Vornamen und Berufe stehen so nicht im
+     Wörterbuch — die vier Listen sind deshalb von Hand angelegt.
+     Alles Übrige (Land, Tier, Essen, Gegenstand, Verb,
+     Eigenschaft) holt sich der Fuchs aus den Feinkategorien des
+     Wörterbuchs, damit er echte Wörter schreibt. */
+  const SLF_STAEDTE = {
+    a: ["Augsburg", "Aachen", "Amsterdam", "Ankara", "Athen"],
+    b: ["Berlin", "Bremen", "Bonn", "Bochum", "Barcelona"],
+    c: ["Chemnitz", "Cottbus", "Celle", "Chicago"],
+    d: ["Dresden", "Dortmund", "Düsseldorf", "Duisburg", "Damaskus"],
+    e: ["Essen", "Erfurt", "Emden", "Eisenach"],
+    f: ["Frankfurt", "Freiburg", "Flensburg", "Florenz"],
+    g: ["Göttingen", "Gelsenkirchen", "Gera", "Genf"],
+    h: ["Hamburg", "Hannover", "Heidelberg", "Halle", "Helsinki"],
+    i: ["Ingolstadt", "Iserlohn", "Istanbul", "Innsbruck"],
+    j: ["Jena", "Jerusalem", "Jakarta"],
+    k: ["Köln", "Kassel", "Kiel", "Karlsruhe", "Kairo"],
+    l: ["Leipzig", "Lübeck", "Ludwigshafen", "Lissabon", "London"],
+    m: ["München", "Mainz", "Mannheim", "Magdeburg", "Mailand"],
+    n: ["Nürnberg", "Neuss", "Neubrandenburg", "Neapel"],
+    o: ["Oldenburg", "Osnabrück", "Offenbach", "Oslo"],
+    p: ["Potsdam", "Paderborn", "Passau", "Paris", "Prag"],
+    r: ["Rostock", "Regensburg", "Recklinghausen", "Rom"],
+    s: ["Stuttgart", "Siegen", "Solingen", "Schwerin", "Stockholm"],
+    t: ["Trier", "Tübingen", "Tokio", "Turin"],
+    u: ["Ulm", "Unna", "Utrecht"],
+    v: ["Verden", "Viersen", "Venedig", "Vancouver"],
+    w: ["Wuppertal", "Würzburg", "Wiesbaden", "Wien", "Warschau"],
+    z: ["Zwickau", "Zweibrücken", "Zürich", "Zagreb"],
+  };
+  const SLF_FLUESSE = {
+    a: ["Aller", "Alster", "Amazonas", "Amper"],
+    b: ["Bode", "Bille", "Brahmaputra"],
+    c: ["Chiemsee-Ache", "Colorado"],
+    d: ["Donau", "Drau", "Dnjepr"],
+    e: ["Elbe", "Ems", "Eider", "Euphrat"],
+    f: ["Fulda", "Fils"],
+    g: ["Ganges", "Glan", "Gera"],
+    h: ["Havel", "Hunte", "Hudson"],
+    i: ["Iller", "Isar", "Inn", "Indus"],
+    j: ["Jagst", "Jangtse", "Jordan"],
+    k: ["Kinzig", "Kocher", "Kongo"],
+    l: ["Lahn", "Leine", "Lippe", "Loire"],
+    m: ["Main", "Mosel", "Mulde", "Mississippi"],
+    n: ["Neckar", "Nahe", "Nil", "Newa"],
+    o: ["Oder", "Ohre", "Orinoko", "Ob"],
+    p: ["Pegnitz", "Po", "Paraná"],
+    r: ["Rhein", "Ruhr", "Regen", "Rhone"],
+    s: ["Saale", "Spree", "Seine", "Save"],
+    t: ["Tauber", "Themse", "Tiber", "Tigris"],
+    u: ["Unstrut", "Uecker", "Ural"],
+    v: ["Volga", "Vecht", "Vils"],
+    w: ["Werra", "Weser", "Wupper", "Weichsel"],
+    z: ["Zusam", "Zschopau", "Zambesi"],
+  };
+  const SLF_NAMEN = {
+    a: ["Anna", "Ali", "Aynur", "Andreas", "Amina"],
+    b: ["Bernd", "Beate", "Bilal", "Bianca"],
+    c: ["Clara", "Christian", "Cem", "Carla"],
+    d: ["David", "Dilara", "Doris", "Daniel"],
+    e: ["Emre", "Eva", "Elias", "Erika"],
+    f: ["Farhad", "Franziska", "Felix", "Fatima"],
+    g: ["Georg", "Gülay", "Greta", "Gabriel"],
+    h: ["Hannah", "Hasan", "Heinz", "Helena"],
+    i: ["Ines", "Ibrahim", "Ida", "Igor"],
+    j: ["Jonas", "Julia", "Jasmin", "Jakob"],
+    k: ["Karin", "Kevin", "Karim", "Katja"],
+    l: ["Lena", "Lukas", "Leyla", "Ludwig"],
+    m: ["Marie", "Murat", "Max", "Marisol"],
+    n: ["Nadine", "Nils", "Nadia", "Nino"],
+    o: ["Olaf", "Omar", "Olga", "Oskar"],
+    p: ["Paul", "Petra", "Pia", "Piotr"],
+    r: ["Robert", "Rosa", "Rami", "Rita"],
+    s: ["Sonja", "Selim", "Simon", "Sara"],
+    t: ["Timo", "Tanja", "Tarek", "Thomas"],
+    u: ["Ulrike", "Uwe", "Umut", "Ursula"],
+    v: ["Viktor", "Vera", "Valentina"],
+    w: ["Werner", "Wanda", "Wilhelm"],
+    z: ["Zeynep", "Zoe", "Zlatan"],
+  };
+  const SLF_BERUFE = {
+    a: ["Arzt", "Apothekerin", "Architekt", "Altenpflegerin"],
+    b: ["Bäcker", "Busfahrerin", "Bauarbeiter", "Buchhalterin"],
+    c: ["Chemikerin", "Chirurg", "Coach"],
+    d: ["Dachdecker", "Dolmetscherin", "Designer"],
+    e: ["Elektriker", "Erzieherin", "Ernährungsberater"],
+    f: ["Fahrlehrer", "Friseurin", "Fotograf", "Floristin"],
+    g: ["Gärtner", "Grafikerin", "Goldschmied"],
+    h: ["Hebamme", "Hausmeister", "Historikerin"],
+    i: ["Informatikerin", "Ingenieur", "Installateur"],
+    j: ["Journalistin", "Jurist", "Justizbeamtin"],
+    k: ["Kellner", "Krankenpflegerin", "Koch", "Kaufmann"],
+    l: ["Lehrerin", "Lagerist", "Logopädin"],
+    m: ["Maler", "Mechanikerin", "Metzger", "Musikerin"],
+    n: ["Notarin", "Näherin"],
+    o: ["Optiker", "Onkologin"],
+    p: ["Pilot", "Physiotherapeutin", "Polizist", "Postbotin"],
+    r: ["Richterin", "Rechtsanwalt", "Reinigungskraft"],
+    s: ["Schreiner", "Sekretärin", "Schlosser", "Sozialarbeiterin"],
+    t: ["Tischler", "Tierärztin", "Techniker", "Taxifahrerin"],
+    u: ["Uhrmacher", "Übersetzerin", "Unternehmerin"],
+    v: ["Verkäuferin", "Versicherungsmakler"],
+    w: ["Winzerin", "Wachmann", "Werkzeugmacher"],
+    z: ["Zahnärztin", "Zimmermann", "Zugbegleiterin"],
+  };
+  const SLF_LAENDER = {
+    a: ["Ägypten", "Albanien", "Algerien", "Andorra", "Angola", "Argentinien", "Armenien", "Aserbaidschan", "Äthiopien", "Australien", "Afghanistan"],
+    b: ["Bangladesch", "Belgien", "Bolivien", "Bosnien", "Brasilien", "Bulgarien", "Burkina Faso", "Bahrain", "Belarus"],
+    c: ["Chile", "China", "Costa Rica", "Kolumbien"],
+    d: ["Dänemark", "Deutschland", "Dominikanische Republik", "Dschibuti"],
+    e: ["Ecuador", "Eritrea", "Estland", "Elfenbeinküste", "El Salvador"],
+    f: ["Finnland", "Frankreich", "Fidschi"],
+    g: ["Gabun", "Gambia", "Georgien", "Ghana", "Griechenland", "Guatemala", "Guinea"],
+    h: ["Haiti", "Honduras", "Hongkong", "Ungarn"],
+    i: ["Indien", "Indonesien", "Irak", "Iran", "Irland", "Island", "Israel", "Italien"],
+    j: ["Jamaika", "Japan", "Jemen", "Jordanien"],
+    k: ["Kambodscha", "Kamerun", "Kanada", "Kasachstan", "Kenia", "Kirgisistan", "Kolumbien", "Kongo", "Kroatien", "Kuba", "Kuwait"],
+    l: ["Laos", "Lettland", "Libanon", "Liberia", "Libyen", "Liechtenstein", "Litauen", "Luxemburg"],
+    m: ["Madagaskar", "Malaysia", "Mali", "Malta", "Marokko", "Mexiko", "Moldau", "Monaco", "Mongolei", "Montenegro", "Mosambik", "Myanmar"],
+    n: ["Namibia", "Nepal", "Neuseeland", "Nicaragua", "Niederlande", "Niger", "Nigeria", "Norwegen", "Nordmazedonien"],
+    o: ["Oman", "Österreich"],
+    p: ["Pakistan", "Panama", "Paraguay", "Peru", "Philippinen", "Polen", "Portugal"],
+    r: ["Ruanda", "Rumänien", "Russland"],
+    s: ["Sambia", "Saudi-Arabien", "Schweden", "Schweiz", "Senegal", "Serbien", "Simbabwe", "Singapur", "Slowakei", "Slowenien", "Somalia", "Spanien", "Sri Lanka", "Südafrika", "Südkorea", "Sudan", "Syrien"],
+    t: ["Tadschikistan", "Tansania", "Thailand", "Togo", "Tschad", "Tschechien", "Tunesien", "Türkei", "Turkmenistan"],
+    u: ["Uganda", "Ukraine", "Ungarn", "Uruguay", "Usbekistan", "USA"],
+    v: ["Venezuela", "Vietnam", "Vereinigte Arabische Emirate"],
+    w: ["Weißrussland"],
+    z: ["Zypern", "Zentralafrikanische Republik"],
+  };
+  /* Die Feinkategorie „Tiere" enthält auch alles DRUMHERUM — Napf,
+     Käfig, Leine, Bienenstich. Im Spiel wäre das eine Blamage für den
+     Fuchs, deshalb bleiben diese Wörter hier draußen. */
+  const SLF_KEIN_TIER = new Set(["Halsband", "Körbchen", "Napf", "Käfig", "Vogelkäfig", "Bienenstich", "Insektenstich", "Impfpflicht", "Tarnung", "Verhaltensweise", "Lebensraum", "Revier", "Auslauf", "Versteck", "Unterschlupf", "Nistplatz", "Köder", "Trockenfutter", "Hundehütte", "Hundeleine", "Katzenklappe", "Katzentoilette", "Winterquartier", "Gelege", "Beute", "Fährte", "Flügel", "Flosse", "Kieme", "Wurf", "Organismus", "Fabeltier", "Haustier", "Jungtier", "Nagetier", "Raubtier", "Säugetier", "Zugtier", "Schädling", "Nützling", "Raubvogel", "Zugvogel", "Blindenhund", "Suppenhuhn", "Versuchskaninchen", "Brieftaube", "Schneehase"]);
+
+  /* Dasselbe bei zwei weiteren Körben: „das Gericht" ist im
+     Wörterbuch zu Recht beim Essen einsortiert, bringt aber die
+     ganze Gerichtsbarkeit mit; und unter den Verben stehen ein paar
+     Wörter, die auf -gen enden, ohne Verben zu sein. */
+  const SLF_KEIN_VERB = new Set(["dagegen", "deswegen", "eigen", "fotogen", "hauseigen", "morgen", "übermorgen", "gestern", "vorgestern", "niedergeschlagen", "seinerzeitig"]);
+  const SLF_KEIN_ESSEN = new Set(["Gericht", "Hauptgericht", "Landgericht", "Schöffengericht", "Tagesgericht", "Verwaltungsgericht", "Instanz", "Urteilsbegründung", "Feststellungsklage", "Kaufhalle", "Raststätte", "Tischplatte", "Wirtshaus", "Frühstücksraum", "Frühstückstisch", "Eiskeller", "Vorratsraum", "Vorratsschrank", "Vorratskammer", "Speisekammer", "Gefrierschrank", "Gefriertruhe", "Gefrierbeutel", "Plastikfolie", "Picknickdecke", "Kuchengabel", "Brotkorb", "Teller", "Konditorei", "Konditor", "Konditorin"]);
+
+  /* q, x und y bleiben draußen: Wer soll dazu eine Stadt, einen Fluss
+     und einen Beruf finden? Am Küchentisch würfelt man sie auch weg. */
+  const SLF_BUCHSTABEN = "abcdefghijklmnoprstuvwz".split("");
+
+  const SLF_SPALTEN = [
+    { id: "stadt", name: "Stadt", liste: SLF_STAEDTE, fest: true },
+    { id: "land", name: "Land", liste: SLF_LAENDER, fest: true },
+    { id: "fluss", name: "Fluss", liste: SLF_FLUESSE, fest: true },
+    { id: "name", name: "Name", liste: SLF_NAMEN },
+    { id: "beruf", name: "Beruf", liste: SLF_BERUFE },
+    { id: "tier", name: "Tier", kat: ["tiere"] },
+    { id: "essen", name: "Essen & Trinken", kat: ["essen", "obst", "gemuese", "getraenke"] },
+    { id: "ding", name: "Gegenstand", kat: ["werkzeuge", "moebel", "haushalt", "kleidung"] },
+    { id: "verb", name: "Verb", kat: ["verben"] },
+    { id: "eigenschaft", name: "Eigenschaft", kat: ["adjektive"] },
+  ];
+  const SLF_DAUER = 120;   // Sekunden je Runde
+
+  let slfLauf = null;
+  let slfUhr = null;
+  let slfPoller = null;
+
+  function slfKleinOhneArtikel(w) {
+    return String(w || "").replace(/^(der|die|das)\s+/i, "").trim();
+  }
+  /* Was der Fuchs in eine Spalte schreiben könnte. */
+  function slfVorschlaege(spalte, buchstabe) {
+    if (spalte.liste) return (spalte.liste[buchstabe] || []).slice();
+    const K = window.DMA_WORTKATEGORIEN;
+    if (!K || !K.woerter) return [];
+    const raus = [];
+    (spalte.kat || []).forEach((k) => {
+      (K.woerter[k] || []).forEach((w) => {
+        const rein = slfKleinOhneArtikel(w);
+        if (k === "tiere" && SLF_KEIN_TIER.has(rein)) return;
+        if (k === "verben" && (SLF_KEIN_VERB.has(rein) || rein.includes(" "))) return;
+        if (k === "essen" && SLF_KEIN_ESSEN.has(rein)) return;
+        if (rein.toLowerCase().startsWith(buchstabe)) raus.push(rein);
+      });
+    });
+    return raus;
+  }
+  function slfNeueRunde(buchstabe, spaltenIds) {
+    const spalten = spaltenIds.map((id) => SLF_SPALTEN.find((s) => s.id === id)).filter(Boolean);
+    return { buchstabe, spalten, blatt: {}, sekunden: SLF_DAUER };
+  }
+  function slfZufallsrunde() {
+    const buchstabe = SLF_BUCHSTABEN[Math.floor(Math.random() * SLF_BUCHSTABEN.length)];
+    const fest = SLF_SPALTEN.filter((s) => s.fest).map((s) => s.id);
+    const rest = Core.shuffle(SLF_SPALTEN.filter((s) => !s.fest).map((s) => s.id)).slice(0, 2);
+    return { buchstabe, spalten: [...fest, ...rest] };
+  }
+  /* Der Zettel des Fuchses. Er lässt absichtlich Lücken — sonst wäre
+     die 20-Punkte-Wertung nie zu holen und das Spiel unfair. */
+  function slfFuchsblatt(runde) {
+    const blatt = {};
+    runde.spalten.forEach((s) => {
+      const moeglich = slfVorschlaege(s, runde.buchstabe);
+      if (!moeglich.length) return;
+      if (Math.random() < 0.28) return;      // der Fuchs fällt auch mal nichts ein
+      blatt[s.id] = moeglich[Math.floor(Math.random() * moeglich.length)];
+    });
+    return blatt;
+  }
+
+  /* Die klassische Wertung. blaetter = [{name, blatt}, …] */
+  function slfWerten(runde, blaetter) {
+    const gueltig = (w) => {
+      const rein = slfKleinOhneArtikel(w);
+      return rein.length >= 2 && rein[0].toLowerCase() === runde.buchstabe;
+    };
+    const punkte = blaetter.map(() => 0);
+    const zellen = {};
+    runde.spalten.forEach((s) => {
+      const eintraege = blaetter.map((b) => (gueltig(b.blatt[s.id]) ? slfKleinOhneArtikel(b.blatt[s.id]) : ""));
+      const gefuellt = eintraege.filter(Boolean).length;
+      zellen[s.id] = eintraege.map((w, i) => {
+        if (!w) return { wort: blatt0(blaetter[i], s.id), wert: 0, grund: blatt0(blaetter[i], s.id) ? "falscher Anfangsbuchstabe" : "leer" };
+        if (gefuellt === 1) { punkte[i] += 20; return { wort: w, wert: 20, grund: "nur du" }; }
+        const gleich = eintraege.filter((x, j) => j !== i && x.toLowerCase() === w.toLowerCase()).length;
+        if (gleich) { punkte[i] += 5; return { wort: w, wert: 5, grund: "gleiches Wort" }; }
+        punkte[i] += 10; return { wort: w, wert: 10, grund: "eigenes Wort" };
+      });
+    });
+    return { punkte, zellen };
+  }
+  function blatt0(b, id) { return (b && b.blatt && b.blatt[id]) || ""; }
+
+  function slfUhrStoppen() {
+    if (slfUhr) { clearInterval(slfUhr); slfUhr = null; }
+    if (slfPoller) { clearInterval(slfPoller); slfPoller = null; }
+  }
+
+  function slfStartHtml() {
+    const angemeldet = Boolean(Backend.currentUser());
+    return `
+      <div class="question-card">
+        <p class="eyebrow">🏙️ STADT · LAND · FLUSS</p>
+        <p class="empty-note" style="margin-bottom:12px;">
+          Ein Buchstabe, fünf Spalten, zwei Minuten. Gewertet wird wie am Küchentisch:
+          <strong>20 Punkte</strong>, wenn nur du in dieser Spalte etwas stehen hast,
+          <strong>10</strong>, wenn du ein anderes Wort hast als die anderen,
+          <strong>5</strong> bei demselben Wort, <strong>0</strong> bei leer oder falschem Anfangsbuchstaben.
+        </p>
+        <div class="quiz-actions" style="justify-content:flex-start; flex-wrap:wrap; gap:8px;">
+          <button type="button" class="btn btn-coffee" id="slfAllein">🦊 Gegen den Fuchs spielen</button>
+          ${angemeldet
+            ? `<button type="button" class="btn btn-ghost" id="slfZuZweit">👥 Jemanden einladen</button>`
+            : `<span class="empty-note" style="width:100%;">Zu zweit geht es, sobald du angemeldet bist — dann bekommt ihr denselben Buchstaben und denselben Start.</span>`}
+        </div>
+        ${slfAuswahlHtml()}
+        ${slfEinladungenHtml()}
+      </div>`;
+  }
+
+  let slfOffeneEinladungen = [];
+  function slfEinladungenHtml() {
+    if (!slfOffeneEinladungen.length) return "";
+    return `
+      <p class="eyebrow" style="margin-top:14px;">OFFENE RUNDEN</p>
+      <div class="dlg-satzliste">
+        ${slfOffeneEinladungen.map((c) => `
+          <div class="dlg-satz">
+            <button type="button" class="dlg-satz-text" data-slf-annehmen="${c.id}">
+              ${c.mitName} · Buchstabe „${String(c.extra.buchstabe).toUpperCase()}“ ·
+              ${c.extra.startAt > Date.now() ? "Start in " + Math.max(0, Math.round((c.extra.startAt - Date.now()) / 1000)) + " s" : "läuft schon — jetzt mitspielen"}
+            </button>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  async function slfEinladungenLaden() {
+    if (!Backend.currentUser()) { slfOffeneEinladungen = []; return; }
+    try {
+      const { incoming, outgoing } = await Backend.getMyChallenges();
+      const meins = Backend.currentUser().id || Backend.currentUser().email;
+      slfOffeneEinladungen = [...incoming, ...outgoing]
+        .filter((c) => c.extra && c.extra.spiel === "stadtlandfluss" && c.status !== "completed")
+        .filter((c) => (c.from === meins ? !c.fromResult : !c.toResult))
+        .map((c) => ({ ...c, mitName: c.from === meins ? c.toName : c.fromName }));
+    } catch (e) { slfOffeneEinladungen = []; }
+  }
+
+  function slfCountdownHtml() {
+    const rest = Math.max(0, Math.ceil((slfLauf.startAt - Date.now()) / 1000));
+    return `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">GEMEINSAMER START</p>
+        <p style="font-size:3.4rem; font-weight:800; margin:10px 0;">${rest}</p>
+        <p class="empty-note">Buchstabe: <strong style="font-size:1.4rem;">${slfLauf.runde.buchstabe.toUpperCase()}</strong></p>
+        <p class="empty-note">${slfLauf.gegnerName ? "Ihr startet beide gleichzeitig — " + slfLauf.gegnerName + " sieht denselben Countdown." : "Gleich geht es los."}</p>
+      </div>`;
+  }
+
+  function slfBlattHtml() {
+    const r = slfLauf.runde;
+    const min = Math.floor(r.sekunden / 60), sek = r.sekunden % 60;
+    return `
+      <div class="question-card">
+        <div class="slf-kopf">
+          <span class="slf-buchstabe">${r.buchstabe.toUpperCase()}</span>
+          <span class="slf-uhr ${r.sekunden <= 15 ? "slf-eilig" : ""}">${min}:${String(sek).padStart(2, "0")}</span>
+        </div>
+        ${fortschrittHtml(SLF_DAUER - r.sekunden, SLF_DAUER)}
+        <div class="slf-felder">
+          ${r.spalten.map((s) => `
+            <label class="slf-feld">
+              <span class="slf-label">${s.name}</span>
+              <input type="text" class="slf-eingabe" data-slf-spalte="${s.id}" autocomplete="off"
+                     spellcheck="false" value="${escapeHtml(r.blatt[s.id] || "")}"
+                     placeholder="mit ${r.buchstabe.toUpperCase()} …" />
+            </label>`).join("")}
+        </div>
+        <div class="quiz-actions" style="justify-content:center; margin-top:14px;">
+          <button type="button" class="btn btn-coffee" id="slfFertig">✋ Stopp — ich bin fertig</button>
+        </div>
+      </div>`;
+  }
+
+  function slfWartenHtml() {
+    return `
+      <div class="question-card" style="text-align:center;">
+        <p class="eyebrow">ABGEGEBEN</p>
+        <p style="font-size:2.6rem;">⏳</p>
+        <p class="empty-note">Dein Zettel ist abgegeben. Sobald ${slfLauf.gegnerName || "die andere Person"} fertig ist,
+        werden die Zettel nebeneinandergelegt.</p>
+        <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
+          <button type="button" class="btn btn-ghost" id="slfAbbrechen">Zurück zur Übersicht</button>
+        </div>
+      </div>`;
+  }
+
+  function slfVergleichHtml() {
+    const { runde, blaetter, wertung } = slfLauf;
+    const max = Math.max(...wertung.punkte);
+    return `
+      <div class="question-card">
+        <p class="eyebrow">DIE ZETTEL NEBENEINANDER · BUCHSTABE ${runde.buchstabe.toUpperCase()}</p>
+        <div class="slf-tabelle-wrap">
+          <table class="slf-tabelle">
+            <thead>
+              <tr><th></th>${blaetter.map((b, i) => `<th>${b.name}${wertung.punkte[i] === max ? " 🏆" : ""}</th>`).join("")}</tr>
+            </thead>
+            <tbody>
+              ${runde.spalten.map((s) => `
+                <tr>
+                  <th scope="row">${s.name}</th>
+                  ${wertung.zellen[s.id].map((z) => `
+                    <td class="slf-wert-${z.wert}">
+                      <span class="slf-zellwort">${z.wort ? escapeHtml(z.wort) : "—"}</span>
+                      <span class="slf-zellpunkte">${z.wert}</span>
+                    </td>`).join("")}
+                </tr>`).join("")}
+              <tr class="slf-summe">
+                <th scope="row">Summe</th>
+                ${wertung.punkte.map((p) => `<td><strong>${p}</strong></td>`).join("")}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="ak-b-hinweis">20 = nur du hattest etwas · 10 = eigenes Wort · 5 = dasselbe Wort · 0 = leer oder falscher Anfangsbuchstabe</p>
+        <div class="quiz-actions" style="justify-content:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
+          <button type="button" class="btn btn-coffee" id="slfNochmal">🔄 Noch eine Runde</button>
+          <button type="button" class="btn btn-ghost" id="slfAbbrechen">Zur Übersicht</button>
+        </div>
+        ${miniBugReportBtnHtml("Stadt-Land-Fluss, Buchstabe " + runde.buchstabe)}
+      </div>`;
+  }
+
+  async function renderStadtLandFluss() {
+    autoWeiterAbbrechen();
+    const area = document.getElementById("stadtlandflussArea");
+    if (!area) return;
+    if (!renderVerdienenGate(area, "sub-stadtlandfluss", "Stadt · Land · Fluss")) return;
+    if (!renderComingSoonGate(area, "stadtlandfluss_neu", "Stadt · Land · Fluss", "🏙️")) return;
+    if (!window.DMA_WORTKATEGORIEN) {
+      area.innerHTML = '<p class="empty-note">Das Spiel wird geladen …</p>';
+      const ok = await wortKategorienLaden();
+      if (!ok) { area.innerHTML = '<p class="empty-note">Das Spiel konnte nicht geladen werden.</p>'; return; }
+    }
+
+    if (!slfLauf) {
+      await slfEinladungenLaden();
+      area.innerHTML = slfStartHtml();
+      document.getElementById("slfAllein")?.addEventListener("click", () => slfStartAllein());
+      document.getElementById("slfZuZweit")?.addEventListener("click", async () => {
+        slfAuswahlOffen = !slfAuswahlOffen;
+        if (slfAuswahlOffen) await slfFreundeLaden();
+        renderStadtLandFluss();
+      });
+      area.querySelectorAll("[data-slf-wen]").forEach((b) =>
+        b.addEventListener("click", () => slfEinladen(b.dataset.slfWen, b.dataset.slfName)));
+      area.querySelectorAll("[data-slf-annehmen]").forEach((b) =>
+        b.addEventListener("click", () => slfAnnehmen(b.dataset.slfAnnehmen)));
+      return;
+    }
+    if (slfLauf.phase === "countdown") { area.innerHTML = slfCountdownHtml(); return; }
+    if (slfLauf.phase === "warten") {
+      area.innerHTML = slfWartenHtml();
+      document.getElementById("slfAbbrechen")?.addEventListener("click", () => { slfUhrStoppen(); slfLauf = null; renderStadtLandFluss(); });
+      return;
+    }
+    if (slfLauf.phase === "vergleich") {
+      area.innerHTML = slfVergleichHtml();
+      document.getElementById("slfNochmal")?.addEventListener("click", () => { slfUhrStoppen(); slfLauf = null; renderStadtLandFluss(); });
+      document.getElementById("slfAbbrechen")?.addEventListener("click", () => { slfUhrStoppen(); slfLauf = null; renderStadtLandFluss(); });
+      return;
+    }
+    // läuft
+    const vorher = document.activeElement && document.activeElement.dataset
+      ? document.activeElement.dataset.slfSpalte : null;
+    const pos = document.activeElement && document.activeElement.selectionStart;
+    area.innerHTML = slfBlattHtml();
+    area.querySelectorAll("[data-slf-spalte]").forEach((el) => {
+      el.addEventListener("input", () => { slfLauf.runde.blatt[el.dataset.slfSpalte] = el.value; });
+      el.addEventListener("keydown", (ev) => { if (ev.key === "Enter") slfAbgeben(); });
+    });
+    document.getElementById("slfFertig")?.addEventListener("click", () => slfAbgeben());
+    if (vorher) {
+      const feld = area.querySelector(`[data-slf-spalte="${vorher}"]`);
+      if (feld) { feld.focus(); try { feld.setSelectionRange(pos, pos); } catch (e) {} }
+    }
+  }
+
+  function slfLosSpielen() {
+    slfLauf.phase = "laeuft";
+    Core.sound.correct();
+    renderStadtLandFluss();
+    slfUhrStoppen();
+    slfUhr = setInterval(() => {
+      if (!slfLauf || slfLauf.phase !== "laeuft") { slfUhrStoppen(); return; }
+      slfLauf.runde.sekunden -= 1;
+      if (slfLauf.runde.sekunden <= 0) { slfAbgeben(); return; }
+      // Nur die Uhr neu schreiben, nicht das ganze Blatt — sonst springt der Cursor.
+      const uhr = document.querySelector(".slf-uhr");
+      if (uhr) {
+        const m = Math.floor(slfLauf.runde.sekunden / 60), s = slfLauf.runde.sekunden % 60;
+        uhr.textContent = m + ":" + String(s).padStart(2, "0");
+        uhr.classList.toggle("slf-eilig", slfLauf.runde.sekunden <= 15);
+      }
+      const balken = document.querySelector("#stadtlandflussArea .quiz-progress-bar");
+      if (balken) balken.style.width = Math.round(((SLF_DAUER - slfLauf.runde.sekunden) / SLF_DAUER) * 100) + "%";
+      const zahl = document.querySelector("#stadtlandflussArea .runden-zahl");
+      if (zahl) zahl.textContent = (SLF_DAUER - slfLauf.runde.sekunden) + " / " + SLF_DAUER;
+    }, 1000);
+  }
+
+  function slfStartAllein() {
+    const z = slfZufallsrunde();
+    slfLauf = { modus: "allein", runde: slfNeueRunde(z.buchstabe, z.spalten), phase: "countdown", startAt: Date.now() + 3200 };
+    renderStadtLandFluss();
+    slfUhrStoppen();
+    slfUhr = setInterval(() => {
+      if (!slfLauf) { slfUhrStoppen(); return; }
+      if (Date.now() >= slfLauf.startAt) { slfUhrStoppen(); slfLosSpielen(); return; }
+      renderStadtLandFluss();
+    }, 250);
+  }
+
+  /* Die Auswahl der Person: dieselbe Darstellung wie bei der
+     Herausforderung — mit grünem Punkt für „gerade online", zum
+     Antippen. GEWÜNSCHT war ausdrücklich genau das. */
+  let slfFreunde = null;
+  let slfAuswahlOffen = false;
+  async function slfFreundeLaden() {
+    if (slfFreunde) return slfFreunde;
+    try { slfFreunde = await Backend.getFriends(); } catch (e) { slfFreunde = []; }
+    return slfFreunde;
+  }
+  function slfAuswahlHtml() {
+    if (!slfAuswahlOffen) return "";
+    const liste = slfFreunde || [];
+    if (!liste.length) {
+      return `<p class="empty-note" style="margin-top:10px;">Du hast noch niemanden in deiner Freundesliste. Unter „Profil → Freunde" kannst du jemanden hinzufügen.</p>`;
+    }
+    const online = liste.filter((f) => f.online);
+    const rest = liste.filter((f) => !f.online);
+    const pille = (f) => `<button type="button" class="challenge-friend-pill ${f.online ? "" : "offline"}" data-slf-wen="${f.id}" data-slf-name="${escapeHtml(f.name)}">
+        ${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${f.online ? "" : ' <span class="empty-note">(offline)</span>'}</button>`;
+    return `
+      <p class="eyebrow" style="margin-top:14px;">WEN LÄDST DU EIN?</p>
+      <p class="empty-note" style="margin-bottom:8px;">Antippen — die Person bekommt sofort die Einladung mit demselben Buchstaben und derselben Startzeit.</p>
+      <div class="challenge-friend-list">
+        ${online.map(pille).join("")}${rest.map(pille).join("")}
+      </div>`;
+  }
+
+  async function slfEinladen(wenId, wenName) {
+    const wen = { id: wenId, name: wenName };
+    const z = slfZufallsrunde();
+    const startAt = Date.now() + 25000;   // genug Zeit, um die Einladung zu öffnen
+    try {
+      await Backend.createChallenge(wen.id, ["stadtlandfluss"], {
+        spiel: "stadtlandfluss", buchstabe: z.buchstabe, spalten: z.spalten, startAt,
+      });
+    } catch (e) { showToast("Die Einladung ging nicht raus: " + (e.message || e)); return; }
+    slfAuswahlOffen = false;
+    showToast(`📨 Einladung an ${wen.name} — ihr startet beide in 25 Sekunden.`);
+    slfLauf = { modus: "duell", gegnerName: wen.name, runde: slfNeueRunde(z.buchstabe, z.spalten), phase: "countdown", startAt, challengeId: null };
+    // Die eigene Challenge-Kennung nachschlagen, damit das Ergebnis dorthin zurückgeht.
+    await slfEinladungenLaden();
+    const meins = slfOffeneEinladungen.find((c) => c.extra && c.extra.startAt === startAt);
+    if (meins) slfLauf.challengeId = meins.id;
+    renderStadtLandFluss();
+    slfUhrStoppen();
+    slfUhr = setInterval(() => {
+      if (!slfLauf) { slfUhrStoppen(); return; }
+      if (Date.now() >= slfLauf.startAt) { slfUhrStoppen(); slfLosSpielen(); return; }
+      renderStadtLandFluss();
+    }, 250);
+  }
+
+  async function slfAnnehmen(id) {
+    const c = slfOffeneEinladungen.find((x) => x.id === id);
+    if (!c) return;
+    const runde = slfNeueRunde(c.extra.buchstabe, c.extra.spalten);
+    /* Ist der gemeinsame Start schon vorbei (die Einladung wurde spät
+       geöffnet), läuft die Uhr ab dem Startzeitpunkt — dann hat man eben
+       weniger Zeit, genau wie am Tisch, wenn man später dazukommt. */
+    const vergangen = Math.max(0, Math.floor((Date.now() - c.extra.startAt) / 1000));
+    runde.sekunden = Math.max(20, SLF_DAUER - vergangen);
+    slfLauf = { modus: "duell", gegnerName: c.mitName, runde, challengeId: c.id,
+      phase: c.extra.startAt > Date.now() ? "countdown" : "laeuft", startAt: c.extra.startAt };
+    if (slfLauf.phase === "laeuft") { slfLosSpielen(); return; }
+    renderStadtLandFluss();
+    slfUhrStoppen();
+    slfUhr = setInterval(() => {
+      if (!slfLauf) { slfUhrStoppen(); return; }
+      if (Date.now() >= slfLauf.startAt) { slfUhrStoppen(); slfLosSpielen(); return; }
+      renderStadtLandFluss();
+    }, 250);
+  }
+
+  async function slfAbgeben() {
+    if (!slfLauf || slfLauf.phase !== "laeuft") return;
+    slfUhrStoppen();
+    document.querySelectorAll("[data-slf-spalte]").forEach((el) => {
+      slfLauf.runde.blatt[el.dataset.slfSpalte] = el.value;
+    });
+    const meinName = (Backend.currentProfile() && Backend.currentProfile().name) || "Du";
+
+    if (slfLauf.modus === "allein") {
+      const blaetter = [
+        { name: meinName, blatt: slfLauf.runde.blatt },
+        { name: "🦊 Der Fuchs", blatt: slfFuchsblatt(slfLauf.runde) },
+      ];
+      slfLauf.blaetter = blaetter;
+      slfLauf.wertung = slfWerten(slfLauf.runde, blaetter);
+      slfLauf.phase = "vergleich";
+      slfPunkteBuchen();
+      renderStadtLandFluss();
+      return;
+    }
+
+    // Zu zweit: abgeben und auf den anderen Zettel warten.
+    const eigene = slfLauf.runde.blatt;
+    const vorlaeufig = slfWerten(slfLauf.runde, [{ name: meinName, blatt: eigene }]);
+    try {
+      await Backend.submitChallengeResult(slfLauf.challengeId, {
+        percent: Math.min(100, Math.round((vorlaeufig.punkte[0] / (slfLauf.runde.spalten.length * 20)) * 100)),
+        points: vorlaeufig.punkte[0], blatt: eigene, name: meinName,
+      });
+    } catch (e) { showToast("Der Zettel konnte nicht abgegeben werden."); }
+    slfLauf.phase = "warten";
+    renderStadtLandFluss();
+    slfPoller = setInterval(() => slfNachGegnerSehen(), 3000);
+    slfNachGegnerSehen();
+  }
+
+  async function slfNachGegnerSehen() {
+    if (!slfLauf || slfLauf.phase !== "warten") { slfUhrStoppen(); return; }
+    let c = null;
+    try {
+      const { incoming, outgoing } = await Backend.getMyChallenges();
+      c = [...incoming, ...outgoing].find((x) => x.id === slfLauf.challengeId);
+    } catch (e) { return; }
+    if (!c || !c.fromResult || !c.toResult) return;
+    slfUhrStoppen();
+    const meins = Backend.currentUser().id || Backend.currentUser().email;
+    const ichBinFrom = c.from === meins;
+    const meinE = ichBinFrom ? c.fromResult : c.toResult;
+    const seinE = ichBinFrom ? c.toResult : c.fromResult;
+    slfLauf.blaetter = [
+      { name: meinE.name || "Du", blatt: meinE.blatt || {} },
+      { name: seinE.name || slfLauf.gegnerName || "Gegner", blatt: seinE.blatt || {} },
+    ];
+    slfLauf.wertung = slfWerten(slfLauf.runde, slfLauf.blaetter);
+    slfLauf.phase = "vergleich";
+    slfPunkteBuchen();
+    renderStadtLandFluss();
+  }
+
+  function slfPunkteBuchen() {
+    const eigen = slfLauf.wertung.punkte[0];
+    const moeglich = slfLauf.runde.spalten.length * 20;
+    const prozent = Math.round((eigen / moeglich) * 100);
+    saveResultAndCheck({
+      categories: ["stadtlandfluss"], titelText: "Stadt · Land · Fluss",
+      points: Math.round(eigen / 10), bonus: eigen === moeglich ? 3 : 0, percent: prozent,
+      character: "Weltenbummler:in", badges: [], playedAt: new Date().toISOString(),
+    });
+  }
+
+  document.querySelector('#learnSubnav [data-sub="sub-stadtlandfluss"]')?.addEventListener("click", () => renderStadtLandFluss());
+
 
 
   /* ============================================================
@@ -23189,6 +25839,7 @@
     { sub: "sub-umzug", emoji: "📦", name: "Der Umzug", persona: "Grammatik-Profi" },
     { sub: "sub-augenblick", emoji: "👁️", name: "Augenblick!", persona: "Gemischt" },
     { sub: "sub-meinesaetze", emoji: "🧩", name: "Meine Sätze", persona: "Sprachkünstler" },
+    { sub: "sub-stadtlandfluss", emoji: "🏙️", name: "Stadt · Land · Fluss", persona: "Abenteurer", flagKey: "stadtlandfluss_neu" },
     { sub: "sub-wortkette", emoji: "⛓️", name: "Die Wortkette", persona: "Sprachkünstler" },
     { sub: "sub-setzerei", emoji: "🅰️", name: "Die Setzerei", persona: "Grammatik-Profi" },
     { sub: "sub-artikelgarten", emoji: "🌷", name: "Artikel-Garten", persona: "Grammatik-Profi", flagKey: "artikelgarten_neu" },
@@ -25263,10 +27914,28 @@
      il/lo/la/l' statt der/die/das.
      ============================================================ */
   let szenenGeladen = null;
+  /* Die Wörter in den anderen Sprachen — dieselbe Nachlade-Regel wie
+     bei den Bildern: erst holen, wenn jemand sie wirklich sieht. */
+  let sprachenGeladen = null;
+  function wortSprachenLaden() {
+    if (sprachenGeladen) return sprachenGeladen;
+    if (window.DMA_WORTSPRACHEN) { sprachenGeladen = Promise.resolve(true); return sprachenGeladen; }
+    sprachenGeladen = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = "wortsprachen.js?v=" + (window.DMA_VERSION || "1");
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => { sprachenGeladen = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return sprachenGeladen;
+  }
+
   function szenenLaden() {
     /* Die eigenen Bilder aus der Bildverwaltung gleich mitholen — sie
        müssen dasein, bevor das erste Bild gezeichnet wird. */
     if (typeof Bildverwaltung !== "undefined") Bildverwaltung.laden();
+    wortSprachenLaden();
     if (szenenGeladen) return szenenGeladen;
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
     szenenGeladen = new Promise((fertig) => {
@@ -25279,7 +27948,8 @@
     });
     return szenenGeladen;
   }
-  function szenenListe() { return window.DMA_SZENEN || []; }
+  function szenenListe() { return (window.DMA_SZENEN || []).filter((s) => !s.detail); }
+  function szeneMitId(id) { return (window.DMA_SZENEN || []).find((s) => s.id === id) || null; }
 
   let bwSzene = null;      // die geöffnete Szene (Objekt) oder null = Übersicht
   let bwModus = "entdecken";
@@ -25302,10 +27972,35 @@
   /* Das Wort, um das es in der aktuellen Sprache geht — und seine
      Betonungsangabe. Im Italienisch-Raum dreht sich alles um „il letto",
      im Deutsch-Raum um „das Bett". */
-  function bwWort(t) { return imItalienischraum() ? t.it : t.de; }
-  function bwSyl(t) { return imItalienischraum() ? t.itSyl : t.syl; }
-  function bwZweitwort(t) { return imItalienischraum() ? t.de : t.it; }
-  function bwZweitSyl(t) { return imItalienischraum() ? t.syl : t.itSyl; }
+  /* Mit eingeschalteter Umgangssprache steht das Alltagswort oben —
+     aber nur, wenn es für dieses Wort wirklich eines gibt. */
+  function bwWort(t) {
+    if (imItalienischraum()) return t.it;
+    const a = umgangsspracheAn() && alltagsWort(t.de);
+    return a ? a.wort : t.de;
+  }
+  function bwSyl(t) {
+    if (imItalienischraum()) return t.itSyl;
+    const a = umgangsspracheAn() && alltagsWort(t.de);
+    return a ? a.syl : t.syl;
+  }
+  /* Die zweite Zeile auf der Wortkarte. Im Italienischkurs ist das
+     immer Deutsch — man lernt ja Italienisch AUS dem Deutschen. Sonst
+     ist es die im Profil eingestellte Hilfssprache, nicht mehr fest
+     Italienisch. */
+  function bwZweitCode() { return imItalienischraum() ? "de" : hilfsSprache(); }
+  function bwZweitwort(t) { return inHilfsSprache(t, bwZweitCode()); }
+  function bwZweitSyl(t) {
+    const c = bwZweitCode();
+    if (c === "de") return t.syl;
+    if (c === "it") return t.itSyl;
+    return "";                       // für andere Sprachen ist keine Betonung hinterlegt
+  }
+  function bwZweitFlagge(c) {
+    return { de: "🇩🇪", it: "🇮🇹", en: "🇬🇧", ar: "🇸🇦", tr: "🇹🇷", ru: "🇷🇺", uk: "🇺🇦",
+             fa: "🇮🇷", es: "🇪🇸", pt: "🇵🇹", fr: "🇫🇷", pl: "🇵🇱", hi: "🇮🇳", zh: "🇨🇳",
+             he: "🇮🇱" }[c] || "🌍";
+  }
   function bwSprache() { return imItalienischraum() ? "it" : "de"; }
 
   /* Der Artikel vorn weg — für den Artikel-Modus und für die
@@ -25335,8 +28030,15 @@
      deutschen Längenzeichen verpasst — „la finestra" mit Duden-Punkt, und
      die erste Silbe groß, weil deutsche Nomen so geschrieben werden. Beides
      falsch für ein italienisches Wort. */
+  /* Betonung der zweiten Zeile: deutsch mit Längenzeichen, italienisch
+     ohne. Für alle anderen Hilfssprachen ist keine Betonung hinterlegt —
+     dann steht dort nichts, statt etwas Erfundenes. */
   function bwFormatStressZweit(syl) {
-    return imItalienischraum() ? Core.formatStress(syl) : Core.formatStressIt(syl);
+    if (!syl) return "";
+    const c = bwZweitCode();
+    if (c === "de") return Core.formatStress(syl);
+    if (c === "it") return Core.formatStressIt(syl);
+    return "";
   }
 
   function bwVorlesen(t) {
@@ -25359,6 +28061,7 @@
       }
     }
     if (typeof Bildverwaltung !== "undefined") await Bildverwaltung.laden();
+    await wortSprachenLaden();
     if (!bwSzene) { bwUebersichtZeichnen(area); return; }
     bwSzeneZeichnen(area);
   }
@@ -25435,6 +28138,11 @@
                      aria-label="${escapeHtml(bwWort(t))}">
                     <title>${escapeHtml(bwWort(t))}</title>
                     <g class="bw-kunst">${t.kunst}</g>
+                    ${t.lupe ? `<g class="bw-lupenmarke" aria-hidden="true">
+                       <circle cx="15" cy="-15" r="6.5" fill="rgba(255,253,246,0.92)" stroke="#8a5f2a" stroke-width="1.6"/>
+                       <circle cx="14" cy="-16" r="3.4" fill="none" stroke="#8a5f2a" stroke-width="1.3"/>
+                       <line x1="16.4" y1="-13.6" x2="19" y2="-11" stroke="#8a5f2a" stroke-width="1.8" stroke-linecap="round"/>
+                     </g>` : ""}
                     ${eigenesBild
                       ? `<image class="bw-eigenbild" href="${eigenesBild}" x="-22" y="-22"
                                 width="44" height="44" preserveAspectRatio="xMidYMid meet" />`
@@ -25442,6 +28150,48 @@
                   </g>`;
         }).join("")}
       </svg>`;
+  }
+
+  /* ============================================================
+     DIE LUPE — Detailbilder im Bild
+     ------------------------------------------------------------
+     GEWÜNSCHT: „wenn du etwas näher beleuchten willst, sollte da
+     irgendwie eine Lupe sein … zum Beispiel bei Menschen: wenn man
+     auf den Kopf klickt, dass man den Kopf noch viel detaillierter
+     sieht als Einzelbild versteckt im Bild … dass man nicht alles nur
+     an der Oberfläche sieht, sondern die Details erforschen kann."
+
+     Ein Ding kann ein eigenes Bild hinter sich haben. Trägt es eines,
+     bekommt es im Bild eine kleine Lupe und auf der Wortkarte einen
+     Knopf. Der Weg zurück steht oben als Spur — man kann beliebig
+     tief gehen und Schritt für Schritt wieder heraus.
+     ============================================================ */
+  let bwSpur = [];                 // die Szenen, durch die man hereingekommen ist
+
+  function bwDetailOeffnen(zielId) {
+    const ziel = szeneMitId(zielId);
+    if (!ziel) return;
+    if (bwSzene) bwSpur.push(bwSzene.id);
+    bwSzene = ziel;
+    bwModus = "entdecken";
+    bwRunde = null;
+    bwGewaehlt = null;
+    renderBilderwelt();
+  }
+
+  function bwEinsZurueck() {
+    const vorher = bwSpur.pop();
+    bwSzene = vorher ? szeneMitId(vorher) : null;
+    bwModus = "entdecken";
+    bwRunde = null;
+    bwGewaehlt = null;
+    renderBilderwelt();
+  }
+
+  function bwSpurHtml() {
+    if (!bwSpur.length) return "";
+    const kette = bwSpur.map((id) => (szeneMitId(id) || {}).titel || id);
+    return `<p class="bw-spur">🔍 ${kette.map((t) => escapeHtml(t)).join(" › ")} › <strong>${escapeHtml(bwSzene.titel)}</strong></p>`;
   }
 
   function bwSzeneZeichnen(area) {
@@ -25453,9 +28203,10 @@
     area.innerHTML = `
       <div class="question-card bw-karte">
         <div class="bw-kopf">
-          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">← Alle Szenen</button>
+          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">${bwSpur.length ? "← Zurück zu " + escapeHtml((szeneMitId(bwSpur[bwSpur.length - 1]) || {}).titel || "") : "← Alle Szenen"}</button>
           <p class="eyebrow" style="margin:0;">${s.emoji} ${escapeHtml(s.titel)}</p>
         </div>
+        ${bwSpurHtml()}
         <div class="order-toggle bw-modi">
           <button type="button" class="order-pill" data-bw-modus="entdecken" aria-selected="${bwModus === "entdecken"}">👆 Entdecken</button>
           <button type="button" class="order-pill" data-bw-modus="finden" aria-selected="${bwModus === "finden"}">🔍 Finden</button>
@@ -25508,9 +28259,16 @@
         </div>
         <p class="bw-betonung">${bwFormatStress(bwSyl(t))}</p>
         ${geschlecht ? `<p class="empty-note" style="margin:2px 0 0;">${artikel} → ${geschlecht}</p>` : ""}
-        <p class="empty-note" style="margin:6px 0 0;">${imItalienischraum() ? "🇩🇪" : "🇮🇹"} ${escapeHtml(bwZweitwort(t))} <span class="bw-zweitbetonung">${bwFormatStressZweit(bwZweitSyl(t))}</span>
-          <button type="button" class="btn btn-ghost bw-hoerknopf bw-hoerknopf-klein" data-bw-sprich2="${t.id}" aria-label="Zweitsprache vorlesen">🔊</button></p>
-        ${t.en ? `<p class="empty-note" style="margin:2px 0 0;">🇬🇧 ${escapeHtml(t.en)}</p>` : ""}
+        <p class="empty-note${istRtl(bwZweitCode()) ? " bw-rtl" : ""}" style="margin:6px 0 0;">${bwZweitFlagge(bwZweitCode())} ${escapeHtml(bwZweitwort(t))} <span class="bw-zweitbetonung">${bwFormatStressZweit(bwZweitSyl(t))}</span>
+          <button type="button" class="btn btn-ghost bw-hoerknopf bw-hoerknopf-klein" data-bw-sprich2="${t.id}" aria-label="Übersetzung vorlesen">🔊</button></p>
+        ${/* Die englische Zeile nur dann, wenn Englisch nicht ohnehin schon
+              die Hilfssprache ist — sonst stünde dasselbe Wort zweimal da. */ ""}
+        ${t.en && bwZweitCode() !== "en" ? `<p class="empty-note" style="margin:2px 0 0;">🇬🇧 ${escapeHtml(t.en)}</p>` : ""}
+        ${imItalienischraum() ? "" : alltagsZeileHtml(t.de)}
+        ${t.lupe && szeneMitId(t.lupe) ? `
+          <button type="button" class="btn btn-coffee bw-lupenknopf" data-bw-lupe="${t.lupe}">
+            🔍 ${escapeHtml(szeneMitId(t.lupe).titel)} — genauer ansehen
+          </button>` : ""}
         ${/* GEWÜNSCHT: „dass man sämtliche Wörter, die man auf der Seite
               findet, sammeln kann und in seinem Wörterbuch als Auswahl in
               seine Favoriten nehmen kann." Also steht der Stern auch hier —
@@ -25532,8 +28290,13 @@
 
   function bwBinden(area) {
     document.getElementById("bwZurueck")?.addEventListener("click", () => {
+      if (bwSpur.length) { bwEinsZurueck(); return; }
       bwSzene = null; bwRunde = null; bwGewaehlt = null; renderBilderwelt();
     });
+    area.querySelectorAll("[data-bw-lupe]").forEach((b) => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bwDetailOeffnen(b.dataset.bwLupe);
+    }));
     area.querySelectorAll("[data-bw-modus]").forEach((b) => b.addEventListener("click", () => {
       bwModus = b.dataset.bwModus;
       bwGewaehlt = null;
@@ -25616,7 +28379,7 @@
     area.querySelectorAll("[data-bw-sprich2]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
       const t = bwSzene.teile.find((x) => x.id === b.dataset.bwSprich2);
-      if (t) Core.speak(bwZweitwort(t), imItalienischraum() ? "de" : "it");
+      if (t) Core.speak(bwZweitwort(t), bwZweitCode());
     }));
     area.querySelectorAll("[data-bw-artikel]").forEach((b) => b.addEventListener("click", () => bwArtikelAntwort(b.dataset.bwArtikel)));
     document.getElementById("bwAlleHoeren")?.addEventListener("click", () => bwAlleVorlesen());
@@ -25741,7 +28504,7 @@
         <p class="eyebrow">Noch einmal in Ruhe</p>
         ${rd.fehler.map((t) => `<p style="margin:8px 0;"><strong>${escapeHtml(bwWort(t))}</strong>
           <span class="bw-betonung-klein">${bwFormatStress(bwSyl(t))}</span>
-          <br><span class="empty-note">${imItalienischraum() ? "🇩🇪" : "🇮🇹"} ${escapeHtml(bwZweitwort(t))}</span></p>`).join("")}
+          <br><span class="empty-note${istRtl(bwZweitCode()) ? " bw-rtl" : ""}">${bwZweitFlagge(bwZweitCode())} ${escapeHtml(bwZweitwort(t))}</span></p>`).join("")}
       </div>`);
     }
     document.getElementById("bwNochmal")?.addEventListener("click", () => { bwRunde = bwNeueRunde(); renderBilderwelt(); });
@@ -26050,6 +28813,7 @@
     "sub-wortkette": "wortkette",
     "sub-augenblick": "augenblick",
     "sub-meinesaetze": "meinesaetze",
+    "sub-stadtlandfluss": "stadtlandfluss",
     "sub-umzug": "umzug",
     "sub-marktstand": "marktstand",
     "sub-wortwaage": "wortwaage",
@@ -26415,6 +29179,7 @@
 
       <h3 id="kompass-geschichte" class="kompass-heading">${ExerciseData.activeHistoryTitle ? ExerciseData.activeHistoryTitle() : "📜 Es war einmal in Deutschland …"}</h3>
       ${leseBetonungKnopfHtml()}
+      ${textInListeKnopfHtml("Es war einmal in Deutschland")}
       ${(() => {
         // Sichtbarer Stand der Sammlung — zeigt auf einen Blick, wann zuletzt neue
         // Tage dazugekommen sind und wie voll das Jahr inzwischen ist.
@@ -27537,25 +30302,29 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
         </div>` : ""}
         <div class="question-card profile-card-view">
-          <button type="button" class="profile-points" id="pointsBreakdownBtn"><span class="num">${profile.points}</span><span class="empty-note">Punkte</span></button>
-          ${myFoxBedBadge ? `<div class="fox-period-badge-stack">${myFoxBedBadge}</div>` : ""}
-          <div class="profile-header-flow${myFoxBedBadge ? " has-fox-badges" : ""}">
-            ${avatarHtml}
-            <div class="profile-header-stack">
-              <h2 style="margin:0 0 2px 0;" class="profile-header-name">${profile.name}${!extra.hideAge && calculateAge(profile.birthday) ? `, ${calculateAge(profile.birthday)}` : ""}${genderSymbolCompact(extra.genderSymbol) ? ` ${genderSymbolCompact(extra.genderSymbol)}` : ""}</h2>
-              ${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter) ? `<p style="margin:0 0 6px;">${adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter)}</p>` : ""}
-              <span class="flow-badge"><button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button></span>
-              ${originFlag ? `<span class="flow-badge">${originFlag} ${profile.origin}</span>` : ""}
-              ${zodiacBadgeHtml(profile.birthday) ? `<span class="flow-badge">${zodiacBadgeHtml(profile.birthday)}</span>` : ""}
-            </div>
-          </div>
-          <div style="clear:both;"></div>
-          <div class="profile-header-below-photo">
-            <span class="flow-badge">🎨 Design: ${(THEMES.find((t) => t.id === (profile.theme || "bastelheft")) || {}).name || "Bastelheft"}</span>
-            ${extra.proficiencyLevel ? `<span class="flow-badge">${PROFICIENCY_BADGE[extra.proficiencyLevel]}</span>` : `<span class="flow-badge" style="cursor:pointer;" id="proficiencyPromptBadge">⚖️ Sprachniveau festlegen</span>`}
-            ${profile.isPremium && !(extra.hidePremiumBadge) ? '<span class="flow-badge">✨ Premium</span>' : ""}
-            ${profile.bio ? `<p class="empty-note profile-bio-flow-text">${profile.bio}</p>` : `<button type="button" class="emoji-toggle-link" id="introPromptBtn">✏️ Noch keine Beschreibung — jetzt vorstellen</button>`}
-          </div>
+          ${/* Derselbe Baustein wie im Fenster für fremde Profile — siehe
+                profilKopfHtml(). Was hier zu sehen ist, sehen andere
+                genauso. */ ""}
+          ${profilKopfHtml({
+            avatarHtml,
+            name: profile.name,
+            alter: extra.hideAge ? null : calculateAge(profile.birthday),
+            geschlecht: genderSymbolCompact(extra.genderSymbol),
+            rang: adminBadge(profile.isAdmin, profile.isOwner, profile.isModerator, profile.isBetaTester, profile.isContributor, profile.isSupporter),
+            punkte: profile.points,
+            punkteId: "pointsBreakdownBtn",
+            freundeHtml: `<button type="button" class="friend-name-btn" id="myFriendsToggle">👥 ${friendCount} ${friendCount === 1 ? "Freund" : "Freunde"}</button>`,
+            sternzeichen: zodiacBadgeHtml(profile.birthday),
+            herkunft: originFlag ? `${originFlag} ${profile.origin}` : "",
+            foxBadges: myFoxBedBadge,
+            design: (THEMES.find((t) => t.id === (profile.theme || "bastelheft")) || {}).name || "Bastelheft",
+            sprachen: profile.languages || [],
+            niveau: extra.proficiencyLevel ? PROFICIENCY_BADGE[extra.proficiencyLevel] : "",
+            niveauKnopfId: "proficiencyPromptBadge",
+            premium: profile.isPremium && !(extra.hidePremiumBadge),
+            bio: profile.bio,
+            bioKnopfId: "introPromptBtn",
+          })}
           ${myTransportStrip}
           <div style="clear:both;"></div>
           <div class="modal-friends-list" id="myFriendsList" style="display:none; margin-top:10px;">
@@ -27564,9 +30333,12 @@ An einem Morgen lief ein kleiner Fuchs los…
           ${hobbyReadout ? `<p class="eyebrow" style="margin-top:12px;">🎯 Hobbys & Interessen</p><div class="trophy-case" style="margin-top:6px;">${hobbyReadout}</div>` : ""}
           ${renderExtendedSteckbrief(profile, "own")}
           <div class="badge-row">
-            ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
+            ${/* Fehlt das Feld — etwa weil die Datenbank es nicht mitgeliefert
+                  hat —, warf .length hier früher und riss die GANZE Profilseite
+                  mit sich. Eine leere Liste ist besser als eine leere Seite. */ ""}
+            ${(profile.badges || []).length ? (profile.badges || []).map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
           </div>
-          ${profile.trophies && profile.trophies.length ? `<div class="quiz-actions" style="justify-content:center; gap:18px; margin-top:10px;">
+          ${profile.trophies && (profile.trophies || []).length ? `<div class="quiz-actions" style="justify-content:center; gap:18px; margin-top:10px;">
             <button type="button" class="empty-note trophy-summary-link" id="trophySummaryJump" style="font-size:0.95rem; background:none; border:none; cursor:pointer; padding:0;">🎖️ ${trophyCounts(profile).orden} Orden · 🏆 ${trophyCounts(profile).pokale} Pokale</button>
           </div>` : ""}
           <p class="eyebrow" style="margin-top:14px;">🦊 Sammelfiguren <span class="subnav-info-icon" data-info="Diese Fuchs-Figuren sind Sammelobjekte, die man sich beim Deutschlernen erspielt — je mehr Punkte du sammelst (oder bestimmte Pokale erreichst), desto mehr Figuren schaltest du frei. Auf eine bereits freigeschaltete Figur tippen zeigt dir mehr dazu.">ⓘ</span></p>
@@ -27603,7 +30375,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${renderInterviewPreview(profile)}
         ${await renderRecentMembers()}
         ${await renderActivityFeed()}
-        ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
+        ${(profile.history || []).length ? `<div class="breakdown-list" style="margin-top:16px;">
           <p class="eyebrow" style="margin-top:0;">🎯 Deine letzten Ergebnisse</p>
           ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
         </div>` : ""}
@@ -27727,7 +30499,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         <div class="form-error" id="avatarError"></div>
         <div class="badge-row">
-          ${profile.badges.length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
+          ${(profile.badges || []).length ? profile.badges.map((b) => `<div class="badge-chip"><span class="emoji">🏅</span><span>${b}</span></div>`).join("") : '<p class="empty-note">Noch keine Abzeichen — spiel eine Runde in „Lernen"!</p>'}
         </div>
         <div class="form-field" style="margin-top:16px;">
           <label>Über mich (sichtbar für Freunde)</label>
@@ -27982,7 +30754,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       </div>` : ""}
       ${await renderRecentMembers()}
       ${await renderActivityFeed()}
-      ${profile.history.length ? `<div class="breakdown-list" style="margin-top:16px;">
+      ${(profile.history || []).length ? `<div class="breakdown-list" style="margin-top:16px;">
         <p class="eyebrow" style="margin-top:0;">🎯 Deine letzten Ergebnisse</p>
         ${profile.history.slice(0, 8).map((h) => `<div class="breakdown-row"><span>${new Date(h.playedAt).toLocaleDateString("de-DE")}</span><span>${h.character}</span><span>${h.percent}%</span></div>`).join("")}
       </div>` : ""}
@@ -28334,7 +31106,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
 
   function renderTrophyCase(profile, compact) {
-    if (!profile.trophies || !profile.trophies.length) return "";
+    if (!profile.trophies || !(profile.trophies || []).length) return "";
     // WICHTIG: nach CHARAKTER gruppiert statt einer flachen Liste — vorher standen z. B.
     // "Wissenschaftler – Lehrmeister" (Orden) und "Wissenschaftler – Profi" (Pokal) weit
     // auseinander in der Liste, obwohl es derselbe Charakter ist, nur eine höhere erreichte Stufe.
@@ -30210,25 +32982,86 @@ An einem Morgen lief ein kleiner Fuchs los…
     return "";
   }
 
-  /* Der kleine grüne Zähler oben rechts. Er sagt nur, WIE VIELE gerade
-     da sind — wer, steht einen Tipp weiter in der Mitgliederliste. */
+  /* Der kleine grüne Zähler in der Laufschrift-Leiste.
+
+     GEWÜNSCHT: „dass das nicht unbedingt zur Ranking-Liste überswipet,
+     sondern dass man das so ein bisschen aufklappen kann und das Menü
+     schwebt … ganz klein und niedlich, nur das Nötigste drin, und der
+     Name desjenigen, der gerade online ist, zu lesen ist, dass man
+     weiß, wer sich hinter der Eins versteckt … und dann wieder zur
+     Pille werden, wenn man noch mal drauf klickt."
+
+     Also: Antippen klappt eine kleine schwebende Liste mit den Namen
+     auf, noch einmal antippen schließt sie wieder. Wer mehr will,
+     tippt auf einen Namen — dann öffnet sich dessen Profil. */
+  let onlineListe = [];
   async function onlineZaehlerAuffrischen() {
     const knopf = document.getElementById("onlineJetztBtn");
     if (!knopf) return;
-    if (!Backend.currentUser()) { knopf.style.display = "none"; return; }
+    if (!Backend.currentUser()) { knopf.style.display = "none"; onlineKlappeZu(); return; }
     let alle = [];
     try { alle = await Backend.getAllMembers(); } catch (e) { return; }
     const eigeneId = (Backend.currentUser() || {}).id;
-    const andere = alle.filter((m) => m.online && m.id !== eigeneId).length;
+    onlineListe = alle.filter((m) => m.online && m.id !== eigeneId);
     const zahl = document.getElementById("onlineJetztZahl");
-    if (zahl) zahl.textContent = String(andere);
-    knopf.style.display = andere ? "" : "none";
-    knopf.title = andere === 1 ? "Eine Person ist gerade online" : andere + " Personen sind gerade online";
+    if (zahl) zahl.textContent = String(onlineListe.length);
+    knopf.style.display = onlineListe.length ? "" : "none";
+    knopf.title = onlineListe.length === 1 ? "Eine Person ist gerade online"
+      : onlineListe.length + " Personen sind gerade online";
+    if (!onlineListe.length) onlineKlappeZu();
+    else if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();
   }
-  document.getElementById("onlineJetztBtn")?.addEventListener("click", () => {
-    activateTab("view-profile");
-    jumpToSubnavTarget('[data-sub="sub-ranking"]', "#mitgliederListe", 60);
+
+  function onlineKlappeZu() {
+    document.getElementById("onlineKlappe")?.remove();
+    document.getElementById("onlineJetztBtn")?.setAttribute("aria-expanded", "false");
+  }
+
+  function onlineKlappeZeichnen() {
+    const knopf = document.getElementById("onlineJetztBtn");
+    if (!knopf) return;
+    let klappe = document.getElementById("onlineKlappe");
+    if (!klappe) {
+      klappe = document.createElement("div");
+      klappe.id = "onlineKlappe";
+      klappe.className = "online-klappe";
+      document.body.appendChild(klappe);
+    }
+    klappe.innerHTML = `
+      <p class="online-klappe-kopf">
+        <span class="online-dot" aria-hidden="true"></span>
+        ${onlineListe.length === 1 ? "Eine Person ist da" : onlineListe.length + " sind da"}
+      </p>
+      ${onlineListe.slice(0, 8).map((m) => `
+        <button type="button" class="online-klappe-zeile" data-online-profil="${m.id}">
+          ${tinyAvatar(m)}<span class="name">${escapeHtml(m.name || "")}</span>
+        </button>`).join("")}
+      ${onlineListe.length > 8 ? `<p class="online-klappe-mehr">… und ${onlineListe.length - 8} weitere</p>` : ""}`;
+    // Unter der Pille aufhängen, aber nie über den Bildschirmrand hinaus.
+    const r = knopf.getBoundingClientRect();
+    klappe.style.top = Math.round(r.bottom + 6) + "px";
+    const breite = Math.min(210, window.innerWidth - 16);
+    klappe.style.width = breite + "px";
+    klappe.style.left = Math.round(Math.max(8, Math.min(r.right - breite, window.innerWidth - breite - 8))) + "px";
+    klappe.querySelectorAll("[data-online-profil]").forEach((b) => {
+      b.addEventListener("click", () => { onlineKlappeZu(); openProfileModal(b.dataset.onlineProfil); });
+    });
+    knopf.setAttribute("aria-expanded", "true");
+  }
+
+  document.getElementById("onlineJetztBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (document.getElementById("onlineKlappe")) onlineKlappeZu();
+    else onlineKlappeZeichnen();
   });
+  // Ein Tipp irgendwo anders schließt die Klappe wieder.
+  document.addEventListener("click", (e) => {
+    if (!document.getElementById("onlineKlappe")) return;
+    if (e.target.closest("#onlineKlappe, #onlineJetztBtn")) return;
+    onlineKlappeZu();
+  });
+  window.addEventListener("resize", () => { if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen(); });
+  window.addEventListener("scroll", () => { if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen(); }, true);
 
   // Öffentliche Mitgliederliste im Ranking-Bereich: wer ist überhaupt angemeldet, wer ist
   // gerade online. Für ALLE sichtbar, nicht nur für die Betreiberin/den Betreiber.
@@ -30368,6 +33201,79 @@ An einem Morgen lief ein kleiner Fuchs los…
     // Zeile bisher über den Rand hinaus und wurde von der Punkteanzeige verdeckt.
     return labels.map((label) => `<span class="admin-badge fox-period-badge" style="display:block; width:fit-content; margin-bottom:4px;"><span class="fox-period-badge-emoji">🦊</span> <span class="fox-period-badge-text">${label}</span></span>`).join("");
   }
+  /* ============================================================
+     DER PROFILKOPF — einmal gebaut, überall gleich
+     ------------------------------------------------------------
+     GEMELDET: „Man sieht bei Profilen, die man aufruft, von anderen
+     nicht diesen Fließtext um das Foto herum … es soll exakt genauso
+     aussehen. Die Gesamtpunktzahl soll auch nicht einfach nur eine
+     Nummer sein, sondern dieses Badge oben in der rechten Ecke …
+     das soll kein Unterschied machen."
+
+     Vorher gab es zwei Bauanleitungen: eine im eigenen Profil, eine im
+     Fenster für fremde Profile. Sie sind auseinandergelaufen — im
+     eigenen Profil klebte die Punktzahl als Aufkleber in der Ecke, im
+     fremden stand sie als Textblase mitten im Fließtext; das Design
+     stand oben statt unter dem Bild; die Vorstellung rutschte ganz
+     woandershin.
+
+     Jetzt gibt es NUR NOCH DIESE eine Anleitung. Beide Ansichten
+     rufen sie auf, also können sie gar nicht mehr auseinanderlaufen.
+     Reihenfolge im Fließtext rechts neben dem Bild:
+       Name, Alter, Geschlecht → Rang (falls vorhanden) → Freunde →
+       Sternzeichen → Herkunft.
+     Und darunter, unter dem Bild: Design, Sprachniveau, Premium,
+     Vorstellungstext.
+     ============================================================ */
+  function profilKopfHtml(d) {
+    const kopfzeile = [
+      escapeHtml(d.name || ""),
+      d.alter ? ", " + d.alter : "",
+      d.geschlecht ? " " + d.geschlecht : "",
+    ].join("");
+    /* Ohne Kartenrahmen — den bringt jede Ansicht selbst mit. Wichtig ist
+       nur, dass der umgebende Kasten .profile-card-view trägt, sonst hat
+       der Punkte-Aufkleber nichts, woran er sich in die Ecke hängen kann.
+
+       GEWÜNSCHT: „Ich will senkrecht von oben nach unten rechts neben dem
+       Profilbild alle Sachen stehen haben über diese Person … und nur
+       unter dem Bild soll die Muttersprache und das Niveau stehen,
+       nichts weiter."
+
+       Also: Alles Persönliche läuft rechts am Bild entlang nach unten,
+       Zeile für Zeile, und legt sich dabei um die Rundung des Bildes.
+       Unter dem Bild stehen genau zwei Dinge: welche Sprachen jemand
+       spricht und auf welchem Niveau er Deutsch lernt. */
+    return `
+      <div style="display:contents;">
+        <button type="button" class="profile-points" ${d.punkteId ? `id="${d.punkteId}"` : ""}>
+          <span class="num">${d.punkte || 0}</span><span class="empty-note">Punkte</span>
+        </button>
+        ${d.foxBadges ? `<div class="fox-period-badge-stack">${d.foxBadges}</div>` : ""}
+        <div class="profile-header-flow${d.foxBadges ? " has-fox-badges" : ""}">
+          ${d.avatarHtml || ""}
+          <div class="profile-header-stack profil-zeilen">
+            <h2 class="profile-header-name" style="margin:0 0 2px 0;">${kopfzeile}</h2>
+            ${d.rang ? `<p style="margin:0 0 6px;">${d.rang}</p>` : ""}
+            ${d.freundeHtml ? `<span class="flow-badge">${d.freundeHtml}</span>` : ""}
+            ${d.sternzeichen ? `<span class="flow-badge">${d.sternzeichen}</span>` : ""}
+            ${d.herkunft ? `<span class="flow-badge">${d.herkunft}</span>` : ""}
+            ${d.design ? `<span class="flow-badge">🎨 ${escapeHtml(d.design)}</span>` : ""}
+            ${d.premium ? '<span class="flow-badge">✨ Premium</span>' : ""}
+          </div>
+        </div>
+        <div style="clear:both;"></div>
+        <div class="profile-header-below-photo">
+          ${d.sprachen && d.sprachen.length
+            ? `<span class="flow-badge">🗣️ ${escapeHtml(d.sprachen.join(", "))}</span>` : ""}
+          ${d.niveau ? `<span class="flow-badge">${d.niveau}</span>`
+            : (d.niveauKnopfId ? `<span class="flow-badge" style="cursor:pointer;" id="${d.niveauKnopfId}">⚖️ Sprachniveau festlegen</span>` : "")}
+        </div>
+        ${d.bio ? `<p class="empty-note profile-bio-flow-text">${escapeHtml(d.bio)}</p>`
+          : (d.bioKnopfId ? `<button type="button" class="emoji-toggle-link" id="${d.bioKnopfId}">✏️ Noch keine Beschreibung — jetzt vorstellen</button>` : "")}
+      </div>`;
+  }
+
   async function openProfileModal(id, existingBox) {
     const p = await Backend.getPublicProfile(id);
     if (!p) {
@@ -30400,24 +33306,29 @@ An einem Morgen lief ein kleiner Fuchs los…
     const box = Core.el("div", { class: "lightbox", onclick: (e) => { if (e.target === box) box.remove(); } },
       Core.el("div", { class: "profile-modal-card", "data-theme": p.theme || "bastelheft" },
         Core.el("button", { class: "lightbox-close", type: "button", onclick: () => box.remove() }, "✕"),
-        Core.el("p", { class: "empty-note", style: "text-align:center; margin:-6px 0 4px; letter-spacing:0.02em;" }, `🎨 ${p.name}s Design: ${(THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft"}`),
-        // Fremde Profile bekommen jetzt denselben Fließtext-Kopf wie das eigene Profil: Name,
-        // Abzeichen, Freunde, Herkunft und Sternzeichen laufen um die Rundung des Profilbilds
-        // herum, statt darunter in einer Mittelspalte zu stehen.
-        Core.el("div", { class: "profile-header-flow" + (foxBedBadge ? " has-fox-badges" : ""), html: `
-          ${avatarHtml}
-          ${foxBedBadge ? `<div class="fox-period-badge-stack">${foxBedBadge}</div>` : ""}
-          <div class="profile-header-stack">
-            <h2 class="profile-header-name" style="margin:0 0 2px 0;">${p.name}${!(p.extra_profile_data || {}).hideAge && calculateAge(p.birthday) ? `, ${calculateAge(p.birthday)}` : ""}${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol) ? ` ${genderSymbolCompact((p.extra_profile_data || {}).genderSymbol)}` : ""}</h2>
-            ${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter) ? `<p style="margin:0 0 6px;">${adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter)}</p>` : ""}
-            <span class="flow-badge">🎯 ${p.points || 0} Punkte</span>
-            <span class="flow-badge"><button type="button" class="friend-name-btn" id="modalFriendsToggle">👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}</button></span>
-            ${originFlag ? `<span class="flow-badge">${originFlag} ${p.origin}</span>` : ""}
-            ${zodiacBadgeHtml(p.birthday) ? `<span class="flow-badge">${zodiacBadgeHtml(p.birthday)}</span>` : ""}
-          </div>
-        ` }),
-        Core.el("div", { style: "clear:both;" }),
-        (p.extra_profile_data && p.extra_profile_data.proficiencyLevel) ? Core.el("p", { class: "empty-note profile-header-below-photo", style: "margin-top:0;" }, PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel]) : "",
+        /* GEWÜNSCHT: „Es soll exakt genauso aussehen … das soll kein
+           Unterschied machen." Ein fremdes Profil wird deshalb aus
+           demselben Baustein gebaut wie das eigene: Punktzahl als
+           Aufkleber oben rechts, Fließtext um das Bild herum, und
+           darunter Design, Sprachniveau und die Vorstellung. */
+        Core.el("div", { class: "profile-card-view profil-kopf-blank", html: profilKopfHtml({
+          avatarHtml,
+          name: p.name,
+          alter: (p.extra_profile_data || {}).hideAge ? null : calculateAge(p.birthday),
+          geschlecht: genderSymbolCompact((p.extra_profile_data || {}).genderSymbol),
+          rang: adminBadge(p.is_admin, p.is_owner, p.is_moderator, p.is_beta_tester, p.is_contributor, p.is_supporter),
+          punkte: p.points || 0,
+          freundeHtml: `<button type="button" class="friend-name-btn" id="modalFriendsToggle">👥 ${theirFriends.length} ${theirFriends.length === 1 ? "Freund" : "Freunde"}</button>`,
+          sternzeichen: zodiacBadgeHtml(p.birthday),
+          herkunft: originFlag ? `${originFlag} ${p.origin}` : "",
+          foxBadges: foxBedBadge,
+          design: (THEMES.find((t) => t.id === (p.theme || "bastelheft")) || {}).name || "Bastelheft",
+          sprachen: p.languages || [],
+          niveau: (p.extra_profile_data && p.extra_profile_data.proficiencyLevel)
+            ? PROFICIENCY_BADGE[p.extra_profile_data.proficiencyLevel] : "",
+          premium: p.is_premium && !((p.extra_profile_data || {}).hidePremiumBadge),
+          bio: p.bio || "Noch keine Beschreibung.",
+        }) }),
         !isMe && me ? Core.el("div", { class: "sympathy-hearts-row", html: `
           <p class="empty-note" style="text-align:center; margin-bottom:4px;">Wie gerne magst du ${p.name}? <span class="subnav-info-icon" data-info="Ganz privat — nur du siehst deine Auswahl. Wählt ihr euch beide gegenseitig, bekommt ihr automatisch Nachricht, dass es ein Match ist.">ⓘ</span></p>
           <div style="display:flex; justify-content:center; gap:8px;">
@@ -30427,7 +33338,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         Core.el("div", { html: await profileTransportStripHtml(p) }),
         Core.el("div", { style: "clear:both;" }),
         Core.el("p", { class: "empty-note", style: "text-align:center; margin-top:-4px;" }, lastSeenText(p.last_active, p.online)),
-        Core.el("p", { class: "empty-note profile-bio-flow-text" }, p.bio || "Noch keine Beschreibung."),
         Core.el("div", { html: profilDateienAnsichtHtml(p) }),
         Core.el("div", { class: "modal-friends-list", id: "modalFriendsList", style: "display:none;" },
           theirFriends.length
@@ -32140,7 +35050,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "165";
+  const APP_VERSION = "166";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
