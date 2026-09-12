@@ -34,9 +34,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=166" />
-<link rel="stylesheet" href="app-styles.css?v=166" />
-<link rel="stylesheet" href="themes.css?v=166" />
+<link rel="stylesheet" href="styles.css?v=167" />
+<link rel="stylesheet" href="app-styles.css?v=167" />
+<link rel="stylesheet" href="themes.css?v=167" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -53,13 +53,12 @@
   <div class="header-spacer"></div>
 
   <div class="header-actions">
-    <!-- Der seitenweite Betonungsschalter. Er war zwischendurch aus der
-         Kopfzeile verschwunden — verdrahtet war er die ganze Zeit, nur
-         der Knopf fehlte. Jetzt ist er wieder da, wo er hingehört. -->
-    <button class="btn btn-ghost btn-icon-only stress-toggle-btn" type="button" id="stressToggleBtn"
-            aria-label="Betonung anzeigen" title="Betonung überall anzeigen: Punkt = kurzer Vokal, Strich = langer Vokal">
-      <span aria-hidden="true">a&#775;</span>
-    </button>
+    <!-- Der Betonungsschalter stand hier früher als kleines „ȧ".
+         Er ist weg: er saß deplatziert in der Kopfzeile, und man musste
+         erst erraten, was er tut. Stattdessen genügt jetzt ein Tippen
+         mitten in einen Textkasten — dann stehen dort die Punkte und
+         Striche, noch einmal tippen und sie sind wieder weg.
+         Siehe betonungTippen() in app.js. -->
     <button class="btn btn-ghost btn-icon-only calendar-page-btn" type="button" id="calendarPageBtn" aria-label="Tageskalender">
       <span class="cal-page-mini">
         <span class="cal-page-mini-month" id="calMiniMonth">—</span>
@@ -126,6 +125,20 @@
 
 <div class="ticker-bar" id="tickerBar">
   <button type="button" class="ticker-toggle" id="tickerToggle" aria-label="Ticker ein/aus">👁️</button>
+  <!-- Das Sende-Zeichen: ein Punkt mit Klammern, die links und rechts
+       abstrahlen. Es blinkt in der Farbe der App, bei der Alex gerade
+       live ist. WICHTIG: der Platz ist IMMER da (nur leer, wenn niemand
+       live ist) — dadurch verschiebt sich die Leiste nicht, wenn die
+       Anzeige angeht. Das Auge links behält seine Aufgabe. -->
+  <button type="button" class="live-zeichen" id="liveZeichen" aria-label="Live" title="Live" hidden>
+    <svg viewBox="0 0 28 16" aria-hidden="true" focusable="false">
+      <circle cx="14" cy="8" r="3.1" class="live-kern"/>
+      <path d="M8.6 3.4A7 7 0 0 0 8.6 12.6" class="live-welle live-welle-1"/>
+      <path d="M19.4 3.4A7 7 0 0 1 19.4 12.6" class="live-welle live-welle-1"/>
+      <path d="M4.6 1.2A10.6 10.6 0 0 0 4.6 14.8" class="live-welle live-welle-2"/>
+      <path d="M23.4 1.2A10.6 10.6 0 0 1 23.4 14.8" class="live-welle live-welle-2"/>
+    </svg>
+  </button>
   <div class="ticker-track-wrap">
     <div class="ticker-track" id="tickerTrack">Willkommen! Hier siehst du gleich, was auf der Seite passiert …</div>
   </div>
@@ -643,7 +656,7 @@
 <!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
      nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
      Fassung aus dem Zwischenspeicher des Browsers. -->
-<script>window.DMA_VERSION = "166";</script>
+<script>window.DMA_VERSION = "167";</script>
 <script>
 /* Fassungs-Wächter: liegt auf dem Server eine neuere Seite als die hier
    geladene, sagt die App Bescheid, statt still eine alte Fassung zu
@@ -668,14 +681,14 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) pruefen(); });
 })();
 </script>
-<script src="core.js?v=166"></script>
-<script src="bildverwaltung.js?v=166"></script>
-<script src="supabase-config.js?v=166"></script>
-<script src="satzbau.js?v=166"></script>
-<script src="data-exercises.js?v=166"></script>
-<script src="data-vocab.js?v=166"></script>
-<script src="backend.js?v=166"></script>
-<script src="quiz.js?v=166"></script>
-<script src="app.js?v=166"></script>
+<script src="core.js?v=167"></script>
+<script src="bildverwaltung.js?v=167"></script>
+<script src="supabase-config.js?v=167"></script>
+<script src="satzbau.js?v=167"></script>
+<script src="data-exercises.js?v=167"></script>
+<script src="data-vocab.js?v=167"></script>
+<script src="backend.js?v=167"></script>
+<script src="quiz.js?v=167"></script>
+<script src="app.js?v=167"></script>
 </body>
 </html>

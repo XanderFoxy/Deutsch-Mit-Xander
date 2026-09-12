@@ -33,38 +33,59 @@ const VocabData = (function () {
   const VOKABEL_THEMEN = [["Alltag & Zuhause","teil-1"],["Bildung & Lernen","teil-1"],["Denken & Argumentieren","teil-4"],["Essen & Trinken","teil-1"],["Familie & Menschen","teil-2"],["Freizeit & Sport","teil-5"],["Gefühle & Charakter","teil-3"],["Geschichte & Erinnerung","teil-4"],["Gesundheit & Körper","teil-2"],["Grundwörter & Struktur","teil-2"],["Kleidung & Einkaufen","teil-4"],["Kunst & Musik","teil-2"],["Länder & Welt","teil-6"],["Literatur & Schreiben","teil-5"],["Medien & Öffentlichkeit","teil-5"],["Natur & Wetter","teil-5"],["Politik & Gesellschaft","teil-2"],["Recht & Verwaltung","teil-3"],["Reisen & Unterwegs","teil-1"],["Sprache & Kommunikation","teil-4"],["Stadt & Verkehr","teil-3"],["Technik & Erfindung","teil-3"],["Umwelt & Klima","teil-5"],["Wirtschaft & Arbeit","teil-3"],["Wissenschaft & Forschung","teil-4"],["Zeit & Kalender","teil-1"]];
   const geladeneThemen = {};
   const laufendeThemen = {};
-  function themaDatei(thema) {
+  /* Ein Thema kann in MEHREREN Dateien stehen. Das ist neu: teil-7
+     ergänzt fünfzehn bestehende Themen um die kleinen Wörter, die
+     Vornamen und die häufigsten Lücken aus den Tagestexten. Solange hier
+     nur EINE Datei je Thema stand, wurde teil-7 nie geladen. */
+  const ZUSATZTEILE = ["teil-7"];
+  function themaDateien(thema) {
     const t = VOKABEL_THEMEN.find((x) => x[0] === thema);
-    return t ? t[1] : null;
+    if (!t) return [];
+    return [t[1], ...ZUSATZTEILE];
   }
   function themaEinfuegen(thema) {
     const teil = (window.DMA_VOKABELN || {})[thema];
     if (!teil || geladeneThemen[thema]) return;
     geladeneThemen[thema] = true;
     for (let i = 0; i < teil.length; i++) WORDS.push(teil[i]);
+    /* Die Nachträge aus teil-7 stehen in einem eigenen Topf und werden
+       hier dazugemischt. Sie ins selbe Objekt zu schreiben ginge schief:
+       die Teile 1 bis 6 SETZEN ihr Thema, und je nach Ladereihenfolge
+       wäre der Nachtrag im nächsten Augenblick wieder weg. */
+    const zusatz = (window.DMA_VOKABELN_ZUSATZ || {})[thema];
+    if (zusatz) for (let i = 0; i < zusatz.length; i++) WORDS.push(zusatz[i]);
+  }
+  /* Jede Datei nur EINMAL laden, auch wenn mehrere Themen sie brauchen. */
+  const dateiLaeuft = {};
+  function dateiLaden(datei) {
+    if (dateiLaeuft[datei]) return dateiLaeuft[datei];
+    dateiLaeuft[datei] = new Promise((fertig) => {
+      const s = document.createElement('script');
+      s.src = 'vokabeln/' + datei + '.js?v=' + (window.DMA_VERSION || '1');
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => {
+        // Fehlt eine Datei, bleibt dieses Thema leer statt die App zu brechen.
+        console.warn('Vokabelteil fehlt: ' + datei);
+        fertig(false);
+      };
+      document.head.appendChild(s);
+    });
+    return dateiLaeuft[datei];
   }
   function ladeThema(thema) {
     if (geladeneThemen[thema]) return Promise.resolve(true);
     if (laufendeThemen[thema]) return laufendeThemen[thema];
-    const datei = themaDatei(thema);
-    if (!datei) return Promise.resolve(false);
-    laufendeThemen[thema] = new Promise((fertig) => {
-      const s = document.createElement('script');
-      s.src = 'vokabeln/' + datei + '.js?v=' + (window.DMA_VERSION || '1');
-      s.async = true;
-      s.onload = () => {
-        // Eine Datei enthält mehrere Themen — alle einhängen, nicht nur das
-        // angefragte, sonst würde dieselbe Datei später erneut geladen.
-        VOKABEL_THEMEN.forEach((t) => { if (t[1] === datei) themaEinfuegen(t[0]); });
-        fertig(true);
-      };
-      s.onerror = () => {
-        // Fehlt eine Datei, bleibt dieses Thema leer statt die App zu brechen.
-        console.warn('Vokabelteil fehlt: ' + datei);
-        laufendeThemen[thema] = null;
-        fertig(false);
-      };
-      document.head.appendChild(s);
+    const dateien = themaDateien(thema);
+    if (!dateien.length) return Promise.resolve(false);
+    laufendeThemen[thema] = Promise.all(dateien.map(dateiLaden)).then((ok) => {
+      // Eine Datei enthält mehrere Themen — alle einhängen, deren Dateien
+      // jetzt da sind, sonst würde dieselbe Datei später erneut geladen.
+      VOKABEL_THEMEN.forEach((t) => {
+        if (dateien.indexOf(t[1]) >= 0) themaEinfuegen(t[0]);
+      });
+      themaEinfuegen(thema);
+      return ok.some(Boolean);
     });
     return laufendeThemen[thema];
   }

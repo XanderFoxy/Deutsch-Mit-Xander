@@ -281,7 +281,13 @@ button:focus-visible,
 .weather-readout #weatherOut {
   color: var(--sky-ink, #1a1a1a);
   font-weight: 800;
-  transition: color 1.5s ease;
+  /* Der feine Saum in der Gegenfarbe — KEIN Hintergrund, nur ein
+     Schatten um die Zeichen. Genau in der Dämmerung, wo Himmel und
+     Schrift sonst zu ähnlich hell sind, wird er stärker; bei klarem
+     Tag und in tiefer Nacht ist er fast unsichtbar. Gesetzt wird die
+     Stärke in app.js (updateDaytimeSky → --sky-saum). */
+  text-shadow: var(--sky-saum, none);
+  transition: color 1.5s ease, text-shadow 1.5s ease;
   max-width: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -296,6 +302,15 @@ button:focus-visible,
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  /* Dieselbe Idee wie bei der Zahl: eine feine Kante in der
+     Gegenfarbe um Zeiger und Zifferblatt, damit die Uhr auch am
+     Übergang zwischen Tag und Nacht klar bleibt — ohne Hintergrund. */
+  filter: drop-shadow(0 0 1px var(--sky-saum-farbe, transparent));
+}
+/* Das Wettersymbol selbst ist ein Emoji und trägt seine Farben mit;
+   auch es bekommt nur die Kante, keine Fläche. */
+.weather-bar .weather-icon {
+  filter: drop-shadow(0 0 1.5px var(--sky-saum-farbe, transparent));
 }
 .clock-face { fill: transparent; stroke: var(--sky-ink, #1a1a1a); stroke-width: 1.5; opacity: 0.85; transition: stroke 1.5s ease; }
 .clock-tick { fill: var(--sky-ink, #1a1a1a); opacity: 0.5; transition: fill 1.5s ease; }
@@ -829,4 +844,57 @@ footer {
 }
 @media (max-width: 300px) {
   .brand-name { font-size: 0.62rem !important; max-width: 68px; }
+}
+
+/* ---------------------------------------------------------------
+   NIEDERSCHLAG IM KOPFSTREIFEN
+   Solange das Wetteramt Regen oder Schnee meldet, fällt es hier
+   wirklich. Die Schicht liegt über dem Himmel, aber UNTER Uhr und
+   Symbol — die behalten ihren durchsichtigen Grund.
+   --------------------------------------------------------------- */
+.weather-bar { position: relative; }
+.niederschlag {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Alles Sichtbare im Streifen liegt über der Niederschlagsschicht. */
+.weather-bar > *:not(.niederschlag) { position: relative; z-index: 1; }
+.niederschlag .tropfen {
+  position: absolute;
+  top: -30%;
+  width: 1px;
+  height: 7px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, transparent, var(--niederschlag-farbe, rgba(255,255,255,0.7)));
+  animation-name: tropfenFallen;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.niederschlag .flocke {
+  position: absolute;
+  top: -30%;
+  border-radius: 50%;
+  background: var(--niederschlag-farbe, rgba(255,255,255,0.8));
+  animation-name: flockeFallen;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes tropfenFallen {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(240%); opacity: 0.2; }
+}
+@keyframes flockeFallen {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.95; }
+  50% { transform: translate(4px, 120%); }
+  100% { transform: translate(-3px, 260%); opacity: 0.15; }
+}
+/* Wer Bewegung nicht mag, bekommt gar keinen Niederschlag zu sehen —
+   das Wettersymbol sagt es ohnehin schon. */
+@media (prefers-reduced-motion: reduce) {
+  .niederschlag { display: none; }
 }

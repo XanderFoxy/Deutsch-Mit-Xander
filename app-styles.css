@@ -6264,7 +6264,12 @@ input[type="checkbox"], input[type="radio"] {
   font-size: 0.88rem;
   padding: 8px 10px;
 }
-.bw-lupenmarke { pointer-events: none; }
+/* WICHTIG: die Lupe war hier auf pointer-events:none gestellt, als sie
+   nur ein Hinweis-Symbol war. Jetzt führt ein Tipp DARAUF unmittelbar in
+   die Nahaufnahme — also muss sie Berührungen wieder annehmen. Ohne
+   diese Zeile fing die unsichtbare Trefferfläche des Dings den Tipp ab,
+   und man landete auf der Wortkarte statt im Bereich. */
+.bw-lupenmarke { pointer-events: auto; }
 .bw-teil:hover .bw-lupenmarke circle:first-child { fill: #ffe9a8; }
 
 /* Die Zeigeringe auf den Anatomie-Tafeln: dezent, bis man sie antippt.
@@ -6704,3 +6709,284 @@ input[type="checkbox"], input[type="radio"] {
 .bildv-bericht li { margin-bottom: 3px; }
 .bildv-bericht-gut { font-weight: 700; margin: 6px 0 2px; }
 .bildv-bericht-schlecht { font-weight: 700; margin: 6px 0 2px; }
+
+/* ---------------------------------------------------------------
+   DIE KLEINE ÜBERSETZUNGSZEILE
+   GEWÜNSCHT: „Übersetzungen lesen in der Sprache wie beim Kalender,
+   allerdings nicht so ein Riesentext."
+   Also bewusst klein, eine Zeile, ohne Kasten und ohne Rahmen —
+   sie soll unter dem Beispiel liegen und nicht mit ihm konkurrieren.
+   Keine feste Farbe: cream-200 ist der gedämpfte Textton des
+   jeweiligen Themas, damit die Zeile in allen 67 Themen lesbar bleibt.
+   --------------------------------------------------------------- */
+.klein-uebers {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  /* Kein zusätzliches opacity: gemessen über alle 67 Designs war die
+     Zeile damit in 22 Fällen zu blass. Die kleinere Schrift genügt, um
+     sie als Nebenzeile zu lesen. */
+  color: var(--cream-200, inherit);
+  overflow-wrap: break-word;
+}
+.klein-uebers-rtl { direction: rtl; text-align: right; }
+.klein-uebers-satz { font-size: 0.7rem; opacity: 0.78; }
+.klein-uebers-quelle {
+  font-size: 0.62rem;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.16);
+}
+
+/* ---------------------------------------------------------------
+   BETONUNG DURCH TIPPEN
+   Statt eines Knopfes in der Kopfzeile: ein Tippen mitten in den
+   Textkasten. Damit das auffindbar ist, ohne aufdringlich zu sein,
+   trägt ein Kasten mit eingeschalteter Betonung eine feine Kante —
+   sonst nichts. Kein zusätzlicher Rand, keine Verschiebung: die
+   Kante liegt als inset-Schatten INNEN, damit sich das Layout
+   dadurch nicht um einen Pixel bewegt (auf Android fällt so ein
+   Sprung sonst sofort auf).
+   --------------------------------------------------------------- */
+.betonung-hier {
+  box-shadow: inset 0 0 0 1.5px rgba(128, 128, 128, 0.34);
+}
+
+/* ---------------------------------------------------------------
+   DIE LIVE-ANZEIGE
+   GEWÜNSCHT: „eine Option, die symbolisiert, dass ich gerade live
+   irgendwo bin — zum Beispiel bei HelloTalk, bei Clubhouse, bei
+   Tandem … drei verschiedene Färbungen … ohne dass es das Design
+   verschiebt … da wo das Auge ist, aber das Auge soll seine
+   Funktion behalten."
+
+   Deshalb: ein eigenes kleines Sende-Zeichen direkt neben dem Auge.
+   Solange niemand live ist, ist es per [hidden] weg — und weil es
+   nur 26px breit ist und die Leiste ohnehin per flex/gap arbeitet,
+   springt beim Erscheinen nichts um, was Text verschieben würde.
+   Farben kommen aus --live-farbe, das JavaScript je Plattform setzt.
+   --------------------------------------------------------------- */
+.live-zeichen {
+  flex-shrink: 0;
+  width: 26px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--live-farbe, #f2b84b);
+}
+.live-zeichen[hidden] { display: none !important; }
+.live-zeichen svg { width: 26px; height: 16px; overflow: visible; }
+.live-kern { fill: currentColor; }
+.live-welle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+/* Der Kern pulst, die Wellen strahlen versetzt nach außen — so liest
+   man „Sendung läuft“ auch ohne Schrift. Wer Bewegung nicht mag,
+   bekommt ein ruhiges Zeichen (prefers-reduced-motion unten). */
+.live-zeichen .live-kern { animation: livePuls 1.3s ease-in-out infinite; }
+.live-zeichen .live-welle-1 { animation: liveWelle 1.6s ease-out infinite; }
+.live-zeichen .live-welle-2 { animation: liveWelle 1.6s ease-out 0.35s infinite; }
+@keyframes livePuls {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes liveWelle {
+  0% { opacity: 0.15; }
+  45% { opacity: 1; }
+  100% { opacity: 0.15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-zeichen .live-kern,
+  .live-zeichen .live-welle-1,
+  .live-zeichen .live-welle-2 { animation: none; }
+}
+/* TikTok-Weiß braucht eine dunkle Kante, sonst verschwindet es in
+   den hellen Themen vollständig. */
+.live-zeichen[data-live="tiktok"] .live-kern,
+.live-zeichen[data-live="tiktok"] .live-welle {
+  paint-order: stroke;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.85));
+}
+/* Die Zeile in der Laufschrift: in der Farbe der App, der Rest des
+   Fließtextes bleibt wie er war. */
+.ticker-live {
+  color: var(--live-farbe, #f2b84b);
+  font-weight: 800;
+}
+.ticker-live-tiktok { text-shadow: 0 0 2px rgba(0, 0, 0, 0.8); }
+/* Der Verwaltungsschalter in den Einstellungen — nur Alex sieht ihn. */
+.live-wahl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.live-wahl-knopf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(128, 128, 128, 0.3);
+  background: rgba(128, 128, 128, 0.1);
+  color: var(--cream-50, inherit);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.live-wahl-knopf .live-punkt {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--live-farbe, #999);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.live-wahl-knopf.selected {
+  border-color: var(--live-farbe, var(--teal-400));
+  background: rgba(128, 128, 128, 0.22);
+}
+
+/* ---------------------------------------------------------------
+   DIE LUPE IM BILD — jetzt unübersehbar und sofort wirksam
+   GEMELDET: „Man kommt gar nicht darauf, dass man die Teilbereiche
+   anklicken kann … ich möchte, dass es durch den Klick auf die Lupe
+   im Bild schon in diesen Bereich reingeht."
+   Deshalb: größer, mit pulsierendem Ring, eigener Tippfläche und
+   einer Zeile darüber, die sagt, wie viele Lupen das Bild hat.
+   --------------------------------------------------------------- */
+.bw-lupenmarke { cursor: zoom-in; }
+.bw-lupenmarke:focus-visible { outline: 2px solid var(--amber-400, #f2b84b); outline-offset: 2px; }
+.bw-lupen-puls {
+  transform-origin: 16px -16px;
+  animation: bwLupePuls 1.9s ease-out infinite;
+}
+@keyframes bwLupePuls {
+  0%   { transform: scale(0.75); opacity: 0.95; }
+  70%  { transform: scale(1.5);  opacity: 0; }
+  100% { transform: scale(1.5);  opacity: 0; }
+}
+.bw-lupenmarke:hover .bw-lupen-puls,
+.bw-lupenmarke:focus .bw-lupen-puls { animation-duration: 0.9s; }
+@media (prefers-reduced-motion: reduce) {
+  .bw-lupen-puls { animation: none; opacity: 0.7; }
+}
+.bw-lupenhinweis {
+  margin: 4px 0 8px;
+  padding: 7px 10px;
+  border-left: 3px solid var(--amber-400, #f2b84b);
+  background: rgba(242, 184, 75, 0.1);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--cream-50, inherit);
+}
+.bw-lupenliste { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.bw-lupenchip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--amber-400, #f2b84b);
+  background: rgba(242, 184, 75, 0.16);
+  color: var(--cream-50, inherit);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------
+   STADT · LAND · FLUSS — WARTERAUM UND COUNTDOWN
+   GEWÜNSCHT: „dass man wirklich erst den Countdown hat, wenn alle da
+   sind … und das muss auch mit mehreren Mitgliedern gleichzeitig
+   gehen … und dann immer wieder einen Countdown vor den Fragen."
+   --------------------------------------------------------------- */
+.slf-warteliste { display: flex; flex-direction: column; gap: 6px; }
+.slf-wartezeile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid rgba(128, 128, 128, 0.22);
+  font-size: 0.84rem;
+}
+.slf-wartezeile > span:nth-child(2) { flex: 1; min-width: 0; overflow-wrap: break-word; }
+.slf-ampel {
+  flex-shrink: 0;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(128, 128, 128, 0.45);
+}
+/* „Ist da" blinkt kurz auf, damit man es bemerkt, ohne hinzustarren. */
+.slf-wartezeile.slf-da { border-color: rgba(90, 168, 107, 0.5); }
+.slf-wartezeile.slf-da .slf-ampel {
+  background: #5aa86b;
+  box-shadow: 0 0 0 3px rgba(90, 168, 107, 0.22);
+  animation: slfDa 1.8s ease-out 2;
+}
+@keyframes slfDa {
+  0% { box-shadow: 0 0 0 0 rgba(90, 168, 107, 0.6); }
+  100% { box-shadow: 0 0 0 10px rgba(90, 168, 107, 0); }
+}
+.slf-countdown-zahl {
+  font-size: 4.2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 12px 0;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slf-wartezeile.slf-da .slf-ampel { animation: none; }
+}
+
+/* Die Marke für ein Bild, das für alle gilt — sie muss sich von der
+   Marke für das eigene Bild unterscheiden, sonst rätselt man, warum
+   ein Bild nach dem Entfernen wieder da ist. */
+.bildv-marke-global {
+  background: rgba(74, 157, 143, 0.2);
+  border-color: rgba(74, 157, 143, 0.5);
+}
+
+/* ---------------------------------------------------------------
+   LESBARKEIT AUF DEM TELEFON — „wie ausgebrannt"
+   ---------------------------------------------------------------
+   GEMELDET: „dass es in meinem Galaxy-Design manche Inhalte gibt, die
+   ich auf einem Android-Telefon schwächer lesen kann, die dort ganz
+   komisch dargestellt sind — als wenn jemand den Background
+   ausgebrannt hat."
+
+   Gemessen über alle 67 Designs und zwölf Bereiche. Der Befund war
+   eindeutig und hatte nichts mit Android zu tun, sondern mit den
+   Farbtokens:
+
+     .btn-ghost hatte fest  background: var(--plum-700)
+                            color:      var(--cream-50)
+     In Designs, in denen diese beiden Töne ähnlich hell sind
+     (sternenstaubneon, schattenreich, spukwald, osterwiese …), lag der
+     Kontrast bei 1,02:1 — die Schrift war praktisch unsichtbar. Genau
+     das sieht aus, als sei der Hintergrund „ausgebrannt".
+
+   Die Lösung kommt ohne 67 Einzelanpassungen aus: der Knopf bekommt
+   keinen eigenen Farbton mehr, sondern eine NEUTRALE, durchscheinende
+   Tönung über dem, worauf er liegt. Dadurch bleibt die Helligkeit des
+   Untergrunds erhalten — und die Schriftfarbe der Karte, die dort
+   ohnehin lesbar ist, bleibt es auch auf dem Knopf. Form, Größe und
+   Rundung bleiben unverändert.
+   --------------------------------------------------------------- */
+.btn-ghost {
+  background: rgba(128, 128, 128, 0.14);
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  color: var(--cream-50);
+}
+.btn-ghost:hover,
+.btn-ghost:focus-visible { background: rgba(128, 128, 128, 0.22); filter: none; }
+.btn-ghost:active { background: rgba(128, 128, 128, 0.3); }
+.btn-ghost[aria-pressed="true"],
+.btn-ghost.active { background: rgba(128, 128, 128, 0.3); }
+
+/* Die gedämpften Texte (.empty-note, .eyebrow) wurden hier zunächst
+   ebenfalls umgestellt — und gemessen wurde es DADURCH schlechter, nicht
+   besser: in den dunklen Designs ist --cream-200 der besser lesbare Ton,
+   nicht --cream-50. Also bleiben sie, wie sie sind. Nur die Beschriftung
+   unter dem Knopf wird etwas kräftiger. */
+.baustein-de { opacity: 0.88; }

@@ -1069,11 +1069,8 @@
       <span>🚦 <strong>Update-Freigabe:</strong> ${on ? "Für alle Nutzer:innen live" : "Nur für dich als Test sichtbar"} — hier umschalten, um dieses Update in die Welt zu bringen (oder wieder zurückzuziehen)</span>
     </label>
     <div class="beta-invite-box" data-beta-invite-flag="${flagKey}" style="margin:4px 0 8px; padding:8px; border:1px dashed rgba(242,184,75,0.5); border-radius:8px;">
-      <button type="button" class="emoji-toggle-link beta-invite-toggle" style="font-size:0.78rem;">🧪 Beta-Tester:in für dieses Update einladen</button>
-      <div class="beta-invite-search-body" style="display:none; margin-top:8px;">
-        <input type="text" class="beta-invite-search-input" placeholder="Name suchen…" style="width:100%; padding:8px; border-radius:6px; border:1px solid rgba(0,0,0,0.15);" />
-        <div class="beta-invite-results" style="margin-top:6px;"></div>
-      </div>
+      <button type="button" class="emoji-toggle-link beta-invite-toggle" style="font-size:0.78rem;">🧪 Leute zum Mittesten einladen — nur für dieses Update</button>
+      <div class="beta-invite-search-body" style="display:none; margin-top:8px;"></div>
     </div>`;
   }
   // Gemeinsame Anzeige-Funktion für Beta-Tester-Vorschläge/Suchergebnisse — verwendet sowohl beim
@@ -1096,6 +1093,63 @@
       });
     });
   }
+  /* Beta-Einladung für GENAU EIN Spiel — steht direkt im noch nicht
+     freigegebenen Spiel selbst, dort wo sonst die Einladungsleiste wäre.
+     Die eingeladene Person sieht danach dieses eine Spiel, sonst nichts. */
+  function betaSpielEinladungHtml(flagKey, spielName) {
+    const drin = Backend.betaListeFuerSpiel ? Backend.betaListeFuerSpiel(flagKey) : [];
+    return `<div class="beta-spiel-einladung" data-beta-spiel="${flagKey}">
+      <p class="empty-note" style="font-size:0.78rem; margin:0 0 6px;">🧪 Dieses Spiel ist noch nicht freigegeben. Du kannst einzelne Leute ausdrücklich für <strong>${spielName}</strong> zum Mittesten einladen — sie sehen dann nur dieses Spiel, sonst nichts Neues. Punkte zählen dabei wie immer.</p>
+      <p class="empty-note" style="font-size:0.74rem; margin:0 0 6px;">${drin.length ? `✅ Schon eingeladen: ${drin.length} ${drin.length === 1 ? "Person" : "Personen"}` : "Noch niemand eingeladen."}</p>
+      <input type="text" class="vocab-search beta-spiel-suche" placeholder="Name suchen …" style="width:100%;" />
+      <div class="beta-spiel-treffer" style="margin-top:6px;"></div>
+    </div>`;
+  }
+  function betaSpielEinladungBinden(kasten, flagKey, spielName) {
+    const feld = kasten.querySelector(".beta-spiel-suche");
+    const treffer = kasten.querySelector(".beta-spiel-treffer");
+    if (!feld || !treffer) return;
+    const zeichnen = (liste) => {
+      const drin = Backend.betaListeFuerSpiel ? Backend.betaListeFuerSpiel(flagKey) : [];
+      treffer.innerHTML = liste.length ? liste.map((u) => `
+        <button type="button" class="breakdown-row beta-spiel-pick" data-uid="${u.id}" data-uname="${u.name}" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; font:inherit; color:inherit;">
+          <span>${u.name}</span>
+          <span class="empty-note">${drin.includes(u.id) ? "✅ dabei — antippen zum Entfernen" : "einladen →"}</span>
+        </button>`).join("") : `<p class="empty-note">Niemanden gefunden.</p>`;
+      treffer.querySelectorAll(".beta-spiel-pick").forEach((zeile) => {
+        zeile.addEventListener("click", async () => {
+          const id = zeile.dataset.uid;
+          const war = (Backend.betaListeFuerSpiel ? Backend.betaListeFuerSpiel(flagKey) : []).includes(id);
+          try {
+            await Backend.setBetaFuerSpiel(flagKey, id, !war);
+            if (!war) {
+              await Backend.sendSystemMessage(id, `🧪 Du bist zum Mittesten von „${spielName}" eingeladen! Das Spiel ist sonst noch für niemanden offen — schau gern rein und sag, was auffällt.`);
+              showToast(`🧪 ${zeile.dataset.uname} für „${spielName}" eingeladen.`);
+            } else {
+              showToast(`${zeile.dataset.uname} ist nicht mehr dabei.`);
+            }
+            zeichnen(liste);
+          } catch (e) { alert(e.message || "Konnte nicht gespeichert werden."); }
+        });
+      });
+    };
+    const vorschlaege = async () => {
+      treffer.innerHTML = `<p class="empty-note">Lade …</p>`;
+      const alle = await Backend.getAllUsers();
+      zeichnen([...alle].sort((a, b) => new Date(b.last_active || 0) - new Date(a.last_active || 0)).slice(0, 8));
+    };
+    vorschlaege();
+    let uhr = null;
+    feld.addEventListener("input", () => {
+      clearTimeout(uhr);
+      uhr = setTimeout(async () => {
+        const wort = feld.value.trim();
+        if (!wort) { vorschlaege(); return; }
+        const gefunden = await Backend.searchUsers(wort);
+        zeichnen(gefunden.slice(0, 8));
+      }, 300);
+    });
+  }
   function wireInlineFeatureFlagToggles(root, onToggled) {
     root.querySelectorAll(".inline-feature-flag-toggle").forEach((toggle) => {
       toggle.addEventListener("change", async () => {
@@ -1110,6 +1164,15 @@
         const body = box.querySelector(".beta-invite-search-body");
         const opening = body.style.display === "none";
         body.style.display = opening ? "block" : "none";
+        /* Gezielt für DIESES Update einladen — nicht mehr die alte
+           Rundum-Rolle, mit der jemand sofort jedes unfertige Spiel sah. */
+        if (opening && !body.dataset.gebaut) {
+          body.dataset.gebaut = "1";
+          const flagKey = box.dataset.betaInviteFlag;
+          body.innerHTML = betaSpielEinladungHtml(flagKey, flagKey);
+          betaSpielEinladungBinden(body, flagKey, flagKey);
+        }
+        return;
         // Beim ERSTEN Öffnen sofort ein paar sinnvolle Vorschläge zeigen (die aktivsten
         // Mitglieder), statt eines komplett leeren Feldes, das man erst mit einer Suche befüllen
         // muss — die Suche filtert diese Vorschlagsliste dann bei Bedarf weiter ein.
@@ -1896,7 +1959,14 @@
     if (!profile) return [];
     const staende = (profile.extraProfileData || {}).sektionStand || {};
     return PROFIL_BEREICHE.map((bereich) => {
-      const felder = PROFIL_FELDER.filter((f) => f.bereich === bereich.id).map((f) => {
+      /* Italienisch ist nur für Freigeschaltete da. Die Übersicht zählte
+         die beiden italienischen Felder aber bei allen mit — dadurch stand
+         in den Einstellungen „2 von 5 ausgefüllt" für Dinge, die man nicht
+         einmal sehen kann. */
+      const felder = PROFIL_FELDER
+        .filter((f) => f.bereich === bereich.id)
+        .filter((f) => darfItalienischraum() || (f.key !== "lernraum" && f.key !== "uebersetzungAnzeigen"))
+        .map((f) => {
         const wert = feldWert(f, profile);
         const gesetzt = feldGesetzt(wert, f);
         return { label: f.label, gesetzt, anzahl: f.zaehlen && gesetzt ? feldAnzahl(wert) : 0 };
@@ -2030,14 +2100,26 @@
               <button type="button" class="btn btn-ghost" id="bildverwaltungLaden">🖼️ Jetzt laden</button>`;
     }
     const gesamt = szenen.reduce((a, s) => a + s.teile.length, 0);
-    const eigene = typeof Bildverwaltung !== "undefined" ? Bildverwaltung.anzahl() : 0;
+    const eigene = typeof Bildverwaltung !== "undefined" ? Bildverwaltung.anzahlEigene() : 0;
+    const gBilder = typeof Bildverwaltung !== "undefined" ? Bildverwaltung.anzahlGlobal() : 0;
+    const darfGlobal = Boolean(Backend.canModerate && Backend.canModerate());
     const kopf = `
       <p class="empty-note" style="margin-bottom:10px;">
         Jedes Ding in der Bilderwelt ist gezeichnet. Wenn dir ein eigenes Bild besser gefällt,
         kannst du es hier darüberlegen — am besten ein <strong>durchsichtiges PNG</strong> oder ein
         GIF, klein und quadratisch. Die Zeichnung wird dabei <strong>nicht gelöscht</strong>: Sie
         bleibt in der Seite und kommt sofort zurück, sobald du das eigene Bild wieder herausnimmst.
-        Die Bilder liegen nur auf diesem Gerät, nicht in deinem Konto.
+        Deine eigenen Bilder liegen auf diesem Gerät.
+      </p>
+      ${/* GEWÜNSCHT: „ich möchte, dass die Bild-Uploads global für alle sind,
+            dass alle meine Version sehen … jeder kann sich das dann umgestalten
+            mit seinen eigenen Lieblingsfiguren." */ ""}
+      <p class="empty-note" style="margin-bottom:10px; padding:8px 10px; border-left:3px solid var(--teal-400,#4a9d8f); background:rgba(74,157,143,0.07); border-radius:0 8px 8px 0;">
+        🌐 <strong>Zwei Ebenen.</strong> Was Alex hier für alle festlegt, sieht jede:r —
+        das ist die gemeinsame Fassung. Legst du ein eigenes Bild darüber, gilt bei dir deines;
+        nimmst du es wieder heraus, kommt die gemeinsame Fassung zurück, und darunter liegt
+        immer noch die Zeichnung.
+        ${gBilder ? ` Gerade sind <strong>${gBilder}</strong> Bilder für alle festgelegt.` : ""}
       </p>
       <p class="empty-note" style="margin-bottom:10px;">
         <strong>${eigene}</strong> von <strong>${gesamt}</strong> Dingen haben gerade ein eigenes Bild.
@@ -2089,23 +2171,28 @@
         && Bildverwaltung.hat(bildSchluessel(s.id, t.id))).length;
       const zeilen = teile.map((t) => {
         const k = bildSchluessel(s.id, t.id);
-        const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(k))
-          ? Bildverwaltung.bild(k) : null;
+        const woher = typeof Bildverwaltung !== "undefined" ? Bildverwaltung.herkunft(k) : null;
+        const eigenesBild = woher ? Bildverwaltung.bild(k) : null;
         return `
           <div class="bildv-zeile">
             <span class="bildv-vorschau">${eigenesBild
               ? `<img src="${eigenesBild}" alt="" />`
               : `<svg viewBox="-26 -26 52 52" aria-hidden="true">${t.kunst}</svg>`}</span>
-            <span class="bildv-name">${escapeHtml(t.de)}${eigenesBild
-              ? ' <span class="bildv-marke">eigenes Bild</span>' : ""}</span>
+            <span class="bildv-name">${escapeHtml(t.de)}${
+              woher === "eigen" ? ' <span class="bildv-marke">dein Bild</span>'
+              : woher === "global" ? ' <span class="bildv-marke bildv-marke-global">🌐 für alle</span>' : ""}</span>
             <label class="btn btn-ghost bildv-knopf">
-              ${eigenesBild ? "Tauschen" : "Hochladen"}
+              ${woher === "eigen" ? "Tauschen" : "Hochladen"}
               <input type="file" accept="image/png,image/gif,image/webp,image/jpeg,image/svg+xml"
                      data-bild-neu="${k}" hidden />
             </label>
-            ${eigenesBild
+            ${woher === "eigen"
               ? `<button type="button" class="btn btn-ghost bildv-knopf" data-bild-raus="${k}">Raus</button>`
               : ""}
+            ${darfGlobal && woher === "eigen"
+              ? `<button type="button" class="btn btn-ghost bildv-knopf" data-bild-global="${k}">🌐 Für alle</button>` : ""}
+            ${darfGlobal && Bildverwaltung.hatGlobal(k)
+              ? `<button type="button" class="btn btn-ghost bildv-knopf" data-bild-global-raus="${k}">🌐 zurücknehmen</button>` : ""}
           </div>`;
       }).join("");
       return `
@@ -2157,6 +2244,49 @@
           showToast(e && e.message ? e.message : "Das Bild ließ sich nicht übernehmen.");
         }
         feld.value = "";
+      });
+    });
+    /* ============================================================
+       BILDER FÜR ALLE
+       ------------------------------------------------------------
+       Gespeichert wird die gemeinsame Ebene in derselben allgemeinen
+       Tabelle wie die Freigabeschalter, unter dem Schlüssel
+       "bilder_global". Schreiben darf nur der Betreiber — lesen alle.
+       Die Bilder sind auf 256 Pixel verkleinert, ein Stück also rund
+       20 bis 60 kB; bei etwa 120 Stück wird gewarnt, damit der Eintrag
+       nicht ins Unermessliche wächst.
+       ============================================================ */
+    box.querySelectorAll("[data-bild-global]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const k = b.dataset.bildGlobal;
+        const bild = Bildverwaltung.bild(k);
+        if (!bild) return;
+        const karte = Object.assign({}, Bildverwaltung.globalKarte());
+        karte[k] = bild;
+        const groesse = JSON.stringify(karte).length;
+        if (groesse > 3.5 * 1024 * 1024) {
+          alert("Die gemeinsamen Bilder wären zusammen über 3,5 MB groß. Nimm zuerst ein paar heraus — sonst wird der Seitenaufbau für alle langsam.");
+          return;
+        }
+        try {
+          await Backend.setSiteContent("bilder_global", karte);
+          Bildverwaltung.globalSetzen(karte);
+          showToast("🌐 Jetzt sehen alle dieses Bild — wer mag, legt sein eigenes darüber.");
+          neuZeichnen();
+        } catch (e) { alert(e.message || "Konnte nicht gespeichert werden."); }
+      });
+    });
+    box.querySelectorAll("[data-bild-global-raus]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const karte = Object.assign({}, Bildverwaltung.globalKarte());
+        delete karte[b.dataset.bildGlobalRaus];
+        try {
+          await Backend.setSiteContent("bilder_global", karte);
+          Bildverwaltung.globalSetzen(karte);
+          showToast("🌐 Zurückgenommen — für alle gilt wieder die Zeichnung.");
+          neuZeichnen();
+          if (typeof renderBilderwelt === "function" && document.getElementById("bilderweltArea")) renderBilderwelt();
+        } catch (e) { alert(e.message || "Konnte nicht gespeichert werden."); }
       });
     });
     box.querySelectorAll("[data-bild-raus]").forEach((b) => {
@@ -2335,6 +2465,17 @@
         </div>
       </div>` : ""}
       ${istBetreiber ? `
+      <div class="question-card" style="margin-top:14px; border:2px dashed var(--amber-400,#f2b84b);">
+        <h3>📡 Ich bin gerade live</h3>
+        <p class="empty-note" style="margin-bottom:4px;">Antippen, wo du gerade sendest — dann blinkt oben neben dem Auge das Sende-Zeichen in der Farbe der App, und in der Laufschrift steht eine Zeile dazu. Noch einmal auf dieselbe Plattform tippen beendet die Anzeige. Das Auge behält seine Aufgabe, und die Leiste verschiebt sich nicht.</p>
+        <div class="live-wahl" id="liveWahl">
+          ${Object.entries(LIVE_PLATTFORMEN).map(([k, p]) => `
+            <button type="button" class="live-wahl-knopf ${liveStand && liveStand.plattform === k ? "selected" : ""}" data-live-setzen="${k}" style="--live-farbe:${p.farbe};">
+              <span class="live-punkt"></span>${p.name}
+            </button>`).join("")}
+          <button type="button" class="live-wahl-knopf ${liveStand ? "" : "selected"}" data-live-setzen="">⚫ Nicht live</button>
+        </div>
+      </div>
       <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
         <h3>🔑 Wer darf den Italienischkurs benutzen?</h3>
         <p class="empty-note" style="margin-bottom:10px;">Der Kurs lässt sich für einzelne Mitglieder öffnen. Wer hier steht, sieht in seinen eigenen Einstellungen denselben Schalter 🇮🇹 und bekommt eine Nachricht darüber. Alle anderen merken nichts davon.</p>
@@ -2602,6 +2743,27 @@
     const shareSiteBtn = document.getElementById("shareSiteBtn");
     if (shareSiteBtn) shareSiteBtn.addEventListener("click", shareReferralLink);
     if (Backend.canModerate()) { loadAdminUserList(); loadAdminBugReports(); loadAdminBetaRequests(); loadAdminFreigaben(); loadAdminWortluecken(); }
+    /* Beim ersten Öffnen den echten Stand holen, damit die Auswahl nicht
+       fälschlich auf „Nicht live" steht. Genau EINMAL — sonst würde sich
+       Nachladen und Neuzeichnen gegenseitig aufschaukeln. */
+    if (area.querySelector("#liveWahl") && !liveWahlGeladen) {
+      liveWahlGeladen = true;
+      liveStandLaden(true).then(() => { liveZeichenZeichnen(); renderSettings(); });
+    }
+    area.querySelectorAll("[data-live-setzen]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const wahl = btn.dataset.liveSetzen;
+        // Dieselbe Plattform noch einmal antippen beendet die Anzeige.
+        const neuWert = (wahl && liveStand && liveStand.plattform === wahl) ? "" : wahl;
+        try {
+          await liveStandSetzen(neuWert || null);
+          showToast(neuWert
+            ? `📡 Live bei ${(LIVE_PLATTFORMEN[neuWert] || {}).name || neuWert} — oben blinkt es jetzt.`
+            : "⚫ Live-Anzeige aus.");
+          renderSettings();
+        } catch (e) { alert(e.message || "Konnte nicht gespeichert werden."); }
+      });
+    });
     area.querySelectorAll(".lernraum-btn").forEach((btn) => {
       btn.addEventListener("click", () => wechsleLernraum(btn.dataset.lernraum, true));
     });
@@ -3456,10 +3618,19 @@
     { t: 420,  top: [247,185,140], bottom: [234,246,255], text: [122,61,22], dark: 0.35 }, // 07:00 Dämmerung
     { t: 540,  top: [143,197,240], bottom: [234,246,255], text: [12,74,114], dark: 0 },   // 09:00 Tag
     { t: 1020, top: [143,197,240], bottom: [234,246,255], text: [12,74,114], dark: 0 },   // 17:00 noch Tag
-    { t: 1140, top: [107,74,138],  bottom: [232,135,95], text: [255,243,230], dark: 0.55 }, // 19:00 Abenddämmerung
+    /* Die Abenddämmerung ist bewusst TIEFER als früher. Vorher lag der
+       Himmel hier genau in der Helligkeit, bei der weder dunkle noch
+       helle Schrift richtig trägt — daran scheiterte die Lesbarkeit
+       „genau an der Schwelle". Ein tieferes Abendrot sieht nicht nur
+       echter aus, es schafft der Uhr auch den Kontrast, den sie
+       braucht. Tag und Nacht bleiben unverändert. */
+    { t: 1140, top: [86,56,116],  bottom: [196,102,72], text: [255,243,230], dark: 0.55 }, // 19:00 Abenddämmerung
     { t: 1290, top: [27,32,68],   bottom: [58,47,90],   text: [207,224,255], dark: 0.9 }, // 21:30 wird Nacht
     { t: 1439, top: [12,16,36],  bottom: [27,32,68],   text: [207,224,255], dark: 1 },
   ];
+  /* Der zuletzt gerechnete Himmel — damit sich nachprüfen lässt, welcher
+     Kontrast zu welcher Minute wirklich herauskommt. */
+  const himmelZuletzt = { grund: [128, 128, 128], tinte: 20 };
   function lerp(a, b, f) { return a + (b - a) * f; }
   function lerpColor(a, b, f) {
     return [Math.round(lerp(a[0], b[0], f)), Math.round(lerp(a[1], b[1], f)), Math.round(lerp(a[2], b[2], f))];
@@ -3485,11 +3656,68 @@
     const stars = document.getElementById("starsLayer");
     if (stars) stars.style.opacity = Math.max(0, (dark - 0.6) / 0.4);
 
-    // Uhr & Temperaturzahl: stufenlos von Schwarz (hell) zu Weiß (dunkel), passend zur echten Helligkeit
-    const shade = Math.round(lerp(20, 245, dark)); // dunkler Text bei Tag, heller Text bei Nacht
-    const rimShade = Math.round(lerp(30, 255, dark));
-    document.documentElement.style.setProperty("--sky-ink", `rgb(${shade},${shade},${shade})`);
-    document.documentElement.style.setProperty("--sky-ink-soft", `rgba(${rimShade},${rimShade},${rimShade},0.55)`);
+    /* ------------------------------------------------------------
+       UHR UND TEMPERATURZAHL AN DER SCHWELLE
+       ------------------------------------------------------------
+       GEMELDET: „in dem Moment, wo es an der Grenze zwischen Tag und
+       Nacht ist, ist die Schrift nicht mehr deutlich … in dieser
+       Schwelle muss es irgendwie deutlicher sein, ohne der Uhr oder
+       dem Niederschlagssymbol irgendwie einen anderen Hintergrund zu
+       geben. Es geht nur um den Übergang."
+
+       Vorher lief die Schriftfarbe stufenlos von Schwarz nach Weiß —
+       also mitten durch Grau. Genau in der Dämmerung, wo der Himmel
+       selbst rot-braun und mittelhell ist, traf mittleres Grau auf
+       mittlere Helligkeit: der schlechteste Fall.
+
+       Jetzt wird nicht mehr geraten, sondern GERECHNET: aus der
+       wirklichen Himmelsfarbe dieses Augenblicks kommt die Helligkeit
+       nach der üblichen Formel, und die Schrift wird dann entweder
+       ganz dunkel oder ganz hell — immer die von beiden, die mehr
+       Kontrast bringt. Am Tag ist das wie bisher dunkel, nachts wie
+       bisher hell; Tag und Nacht sehen also unverändert aus. Nur die
+       Schwelle springt jetzt an der Stelle um, an der beide gleich gut
+       lesbar sind — dort fällt der Wechsel am wenigsten auf.
+       Dazu kommt ein feiner Saum in der Gegenfarbe (text-shadow,
+       nicht Hintergrund) — damit bleibt die Zahl auch dort deutlich,
+       wo der Himmel selbst gerade Zwischentöne hat.
+       ------------------------------------------------------------ */
+    // Der Streifen ist flach, die Schrift sitzt in seiner Mitte: die
+    // Mischfarbe aus oben und unten ist der Grund, gegen den gelesen wird.
+    const grund = lerpColor(top, bottom, 0.5);
+    const hell = relativeHelligkeit(grund);
+    himmelZuletzt.grund = grund;
+    // Kontrast gegen Schwarz und gegen Weiß — die bessere gewinnt.
+    const gegenWeiss = 1.05 / (hell + 0.05);
+    const gegenSchwarz = (hell + 0.05) / 0.05;
+    const dunkleSchrift = gegenSchwarz >= gegenWeiss;
+    const schrift = dunkleSchrift ? 20 : 245;
+    const saum = dunkleSchrift ? "255,255,255" : "0,0,0";
+    himmelZuletzt.tinte = schrift;
+    document.documentElement.style.setProperty("--sky-ink", `rgb(${schrift},${schrift},${schrift})`);
+    document.documentElement.style.setProperty("--sky-ink-soft", `rgba(${schrift},${schrift},${schrift},0.55)`);
+    /* Der Saum liegt als Schatten um die Zeichen, nicht als Fläche
+       dahinter — genau wie gewünscht. In der Dämmerung, wo er wirklich
+       gebraucht wird, ist er am stärksten; bei klarem Tag und in tiefer
+       Nacht verschwindet er fast. */
+    const noetig = Core.clamp(1 - (Math.max(gegenSchwarz, gegenWeiss) - 4.5) / 6, 0, 1);
+    document.documentElement.style.setProperty("--sky-saum",
+      `0 0 ${(1 + noetig * 2).toFixed(1)}px rgba(${saum},${(0.25 + noetig * 0.55).toFixed(2)})`);
+    document.documentElement.style.setProperty("--sky-saum-farbe", `rgba(${saum},${(0.35 + noetig * 0.5).toFixed(2)})`);
+    /* Niederschlag und Jahreszeit bestimmen, ob es im Streifen wirklich
+       regnet oder schneit — siehe niederschlagZeichnen(). */
+    niederschlagAnpassen(dark);
+  }
+  /* Die Helligkeit einer Farbe nach der üblichen Formel (sRGB erst
+     entzerren, dann gewichtet mitteln). Damit lässt sich ausrechnen,
+     ob dunkle oder helle Schrift darauf besser zu lesen ist — statt
+     das aus der Tageszeit zu erraten. */
+  function relativeHelligkeit(rgb) {
+    const kanal = (v) => {
+      const x = v / 255;
+      return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * kanal(rgb[0]) + 0.7152 * kanal(rgb[1]) + 0.0722 * kanal(rgb[2]);
   }
 
   updateClock();
@@ -4215,18 +4443,10 @@
   ];
   // Betonungsmodus initial anwenden + Umschalter verdrahten
   setStressMode(isStressModeOn());
-  const stressToggleBtn = document.getElementById("stressToggleBtn");
-  if (stressToggleBtn) {
-    stressToggleBtn.classList.toggle("active", isStressModeOn());
-    stressToggleBtn.addEventListener("click", () => {
-      setStressMode(!isStressModeOn());
-      stressToggleBtn.classList.toggle("active", isStressModeOn());
-      // Aktuell sichtbare Vokabel-/Steckbrief-Ansichten neu zeichnen, falls offen
-      if (document.getElementById("vocabArea")?.innerHTML) renderVocab();
-      if (document.getElementById("accountArea")?.innerHTML) renderAccount();
-      renderKompass();
-    });
-  }
+  /* Der alte Kopfzeilen-Knopf „ȧ" ist raus (siehe index.html). Die
+     Betonung schaltet man jetzt durch Tippen in den Textkasten selbst
+     — betonungTippen() weiter unten. Der Wert aus den Einstellungen
+     gilt unverändert weiter und wird oben schon angewendet. */
 
   // Zentrale, wiederverwendbare Prüfung: hat die eingeloggte Person heute Geburtstag? Wird sowohl
   // im Kopfbereich als auch in "Es war einmal in Deutschland" genutzt — funktioniert automatisch
@@ -4346,6 +4566,98 @@
   /* ============ Lauftext-Ticker ============ */
   let tickerVisible = true;
   let tickerUpdateInFlight = false;
+  /* ============================================================
+     LIVE-ANZEIGE — „Alex ist gerade live bei …"
+     ------------------------------------------------------------
+     GEWÜNSCHT: „eine Option, die symbolisiert, dass ich gerade live
+     irgendwo bin … Clubhouse ist ein gelbes Blinken, HelloTalk
+     violett/lila, Tandem rosa/hellblau/türkis, TikTok weiß …
+     optional möchte ich auch, dass im Fließtext steht ‚Alex ist grad
+     live bei Clubhouse' … in der Farbe der jeweiligen App, der
+     restliche Fließtext bleibt im Original … und dass ich irgendwo
+     eine administrative Eingabe machen kann."
+
+     Gespeichert wird das in derselben allgemeinen Tabelle wie die
+     Freigabeschalter, unter dem Schlüssel „live_status" — also ohne
+     neue Tabelle und ohne neue Rechteregel. Schreiben darf nur Alex.
+     ============================================================ */
+  const LIVE_PLATTFORMEN = {
+    clubhouse: { name: "Clubhouse", farbe: "#f2c40f", wie: "Alex", url: "https://www.clubhouse.com/" },
+    hellotalk: { name: "HelloTalk", farbe: "#8b5cf6", wie: "Xander Fox", url: "https://www.hellotalk.com/" },
+    tandem:    { name: "Tandem",    farbe: "#ff5fa2", zweitfarbe: "#4fd1c5", wie: "Xander Fox", url: "https://www.tandem.net/" },
+    tiktok:    { name: "TikTok",    farbe: "#ffffff", wie: "Xander Fox", url: "https://www.tiktok.com/" },
+  };
+  let liveStand = null;      // { plattform, name, seit } oder null
+  let liveGeladen = 0;
+  let liveWahlGeladen = false;
+  async function liveStandLaden(frisch) {
+    /* Höchstens alle 15 Sekunden nachfragen — die Laufschrift
+       aktualisiert sich alle 20 Sekunden und soll den Server nicht
+       öfter als nötig behelligen. */
+    if (!frisch && Date.now() - liveGeladen < 15000) return liveStand;
+    liveGeladen = Date.now();
+    try {
+      const wert = await Backend.getSiteContent("live_status", Boolean(frisch));
+      liveStand = (wert && wert.plattform && LIVE_PLATTFORMEN[wert.plattform]) ? wert : null;
+    } catch (e) { /* offline oder Tabelle fehlt — dann eben keine Anzeige */ }
+    return liveStand;
+  }
+  async function liveStandSetzen(plattform) {
+    const wert = plattform
+      ? { plattform, name: (LIVE_PLATTFORMEN[plattform] || {}).wie || "Alex", seit: new Date().toISOString() }
+      : { plattform: null };
+    await Backend.setSiteContent("live_status", wert);
+    liveStand = plattform ? wert : null;
+    liveGeladen = Date.now();
+    liveZeichenZeichnen();
+    tickerNeuErzwingen();
+    updateTicker();
+  }
+  function liveZeichenZeichnen() {
+    const knopf = document.getElementById("liveZeichen");
+    if (!knopf) return;
+    const p = liveStand && LIVE_PLATTFORMEN[liveStand.plattform];
+    if (!p) { knopf.hidden = true; knopf.removeAttribute("data-live"); return; }
+    knopf.hidden = false;
+    knopf.dataset.live = liveStand.plattform;
+    knopf.style.setProperty("--live-farbe", p.farbe);
+    const wer = liveStand.name || p.wie || "Alex";
+    knopf.setAttribute("aria-label", `${wer} ist gerade live bei ${p.name}`);
+    knopf.title = `${wer} ist gerade live bei ${p.name} — antippen für Einzelheiten`;
+  }
+  /* Antippen sagt klar, WO gesendet wird — dafür ist die Anzeige da. */
+  document.addEventListener("click", (ev) => {
+    if (!ev.target.closest("#liveZeichen")) return;
+    const p = liveStand && LIVE_PLATTFORMEN[liveStand.plattform];
+    if (!p) return;
+    const wer = liveStand.name || p.wie || "Alex";
+    const box = document.createElement("div");
+    box.className = "lightbox";
+    box.innerHTML = `
+      <div class="profile-modal-card" style="text-align:center;">
+        <button type="button" class="lightbox-close" data-live-zu="1">✕</button>
+        <p style="font-size:2.2rem; margin:6px 0 0; color:${p.farbe}; text-shadow:0 0 2px rgba(0,0,0,0.6);">◉</p>
+        <h3 style="margin:6px 0 4px;">${escapeHtml(wer)} ist gerade live</h3>
+        <p style="margin:0 0 10px; font-weight:800; color:${p.farbe}; text-shadow:0 0 2px rgba(0,0,0,0.6);">${escapeHtml(p.name)}</p>
+        <p class="empty-note" style="margin:0 0 12px;">Komm gern dazu — dort wird gerade gesprochen, nicht geschrieben. Zuhören reicht auch.</p>
+        <a class="btn btn-coffee" href="${p.url}" target="_blank" rel="noopener">${escapeHtml(p.name)} öffnen</a>
+      </div>`;
+    document.body.appendChild(box);
+    box.querySelector("[data-live-zu]").addEventListener("click", () => box.remove());
+    box.addEventListener("click", (e2) => { if (e2.target === box) box.remove(); });
+  });
+  /* Die Zeile für die Laufschrift — in der Farbe der App, während der
+     übrige Fließtext seine eigene Farbe behält. */
+  function liveTickerHtml() {
+    const p = liveStand && LIVE_PLATTFORMEN[liveStand.plattform];
+    if (!p) return "";
+    const wer = liveStand.name || p.wie || "Alex";
+    return `<span class="ticker-live${liveStand.plattform === "tiktok" ? " ticker-live-tiktok" : ""}" style="--live-farbe:${p.farbe};">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
+  }
+  function tickerNeuErzwingen() {
+    const track = document.getElementById("tickerTrack");
+    if (track) delete track.dataset.lastTickerText;
+  }
   async function updateTicker() {
     const track = document.getElementById("tickerTrack");
     if (!track) return;
@@ -4382,18 +4694,31 @@
         items = await Backend.getActivity();
         text = items.length ? items.map((a) => `• ${a.text}`).join("   ") : track.textContent;
       }
+      /* Die Live-Zeile läuft vorneweg mit — in der Farbe der App,
+         während der übrige Fließtext seine Farbe behält. Deshalb wird
+         der Text hier zu HTML, und die Meldungen aus der Datenbank
+         werden dabei ausdrücklich entschärft (escapeHtml): sie stammen
+         von Mitgliedern und dürfen keine Auszeichnung mitbringen. */
+      await liveStandLaden();
+      liveZeichenZeichnen();
+      const liveHtml = liveTickerHtml();
       // WICHTIG: Ist der Text UNVERÄNDERT gegenüber dem letzten Durchlauf, die laufende Animation
       // gar nicht erst anfassen — sonst würde sie bei jedem der vielen Auslöser (alle 20 Sekunden
       // per Intervall, plus mehrere weitere Ereignisse im Code) komplett neu gestartet, selbst
       // wenn es gar nichts Neues gibt. Der Text lief dadurch nie vollständig durch, sondern begann
       // ständig von vorn — genau das erzeugte den "rasenden", gehetzten Eindruck, nicht die
       // eigentliche Scroll-Geschwindigkeit selbst (die korrekt bei ~55px/s lag).
-      if (text === track.dataset.lastTickerText) return;
-      track.dataset.lastTickerText = text;
+      if ((liveHtml + "|" + text) === track.dataset.lastTickerText) return;
+      track.dataset.lastTickerText = liveHtml + "|" + text;
       // Animation zuerst abschalten, damit scrollWidth die NEUE Textlänge korrekt misst
       // (nicht noch die alte, gerade laufende Animation beeinflusst die Messung).
       track.style.animation = "none";
-      if (items.length) track.textContent = text;
+      /* Der reine Meldungstext wird getrennt gemerkt. Sonst würde beim
+         nächsten Durchlauf die schon eingebaute Live-Zeile als Teil des
+         Textes wieder mitgelesen und stände doppelt da. */
+      const basis = items.length ? text : (track.dataset.basisText || track.textContent || "");
+      track.dataset.basisText = basis;
+      track.innerHTML = liveHtml ? `${liveHtml}   ${escapeHtml(basis)}` : escapeHtml(basis);
       void track.offsetHeight; // Reflow erzwingen, damit die neue Breite feststeht
       // Feste Geschwindigkeit statt fester Dauer: läuft der Text nach mehreren Aktionen länger,
       // wurde die Animation vorher trotzdem in derselben festen Zeit durchgezogen — dadurch wirkte
@@ -5086,19 +5411,38 @@
      die Punkte und Striche zu sehen. Der Schalter wirkt genau in
      der Ansicht, in der er steht. */
   function betonungsSchalterEinhaengen(wurzel) {
+    /* GEMELDET: „dann hat sich irgendwas bei Android verschoben … schau
+       da noch mal nach, ob es irgendwelche Design-Inkonsistenzen gibt."
+
+       Gefunden: dieser Schalter setzte sich von selbst GANZ OBEN in jede
+       Unteransicht mit mehr als 40 Zeichen Text — auch in die
+       Einstellungen, ins Profil, in die Verwaltung. Dort gibt es nichts
+       vorzulesen, und der Kasten schob den ganzen Inhalt um rund neunzig
+       Pixel nach unten. Auf einem Telefon fällt genau das als
+       „verschoben" auf.
+
+       Jetzt steht er nur noch dort, wo es wirklich Lesetext gibt — und
+       auch dort nur, wenn nicht ohnehin schon einer da ist. Für alles
+       andere genügt das Tippen mitten in den Textkasten
+       (siehe betonungTippen). */
     const ziel = wurzel || document;
     ziel.querySelectorAll(".subview[data-active='true'], .view[data-active='true']").forEach((ansicht) => {
       /* Eine Hauptansicht mit Unterreitern bekommt KEINEN eigenen
-         Schalter — sonst stand er zweimal untereinander: einmal für
-         „Lernen" und gleich darunter noch einmal für den gerade
-         geöffneten Unterreiter. Der Schalter gehört dorthin, wo der
-         Text steht, also in den Unterreiter. */
+         Schalter — sonst stand er zweimal untereinander. */
       if (ansicht.classList.contains("view") && ansicht.querySelector(".subview[data-active='true']")) {
         ansicht.querySelector(":scope > .sektion-betonung")?.remove();
         return;
       }
-      if (ansicht.querySelector(":scope > .sektion-betonung")) return;
-      if (!ansicht.textContent || ansicht.textContent.trim().length < 40) return;
+      const vorhanden = ansicht.querySelector(":scope > .sektion-betonung");
+      /* Nur Lesebereiche: dort, wo Text zum Vorlesen steht (.sammel-text)
+         oder wo ein Beitrag in einer Karte liegt und wirklich Prosa
+         enthält — nicht in Formularen, Listen und Einstellungen. */
+      const lesestellen = ansicht.querySelectorAll(".sammel-text");
+      const istLesebereich = lesestellen.length > 0;
+      if (!istLesebereich) { vorhanden?.remove(); return; }
+      // Steht schon einer im Inhalt selbst, kommt keiner dazu.
+      if (ansicht.querySelector(".lese-betonung-knopf")) { vorhanden?.remove(); return; }
+      if (vorhanden) return;
       const leiste = document.createElement("div");
       leiste.className = "sektion-betonung";
       leiste.innerHTML = leseBetonungKnopfHtml();
@@ -5113,6 +5457,70 @@
     setTimeout(() => betonungsSchalterEinhaengen(), 1200);
   }, true);
   setTimeout(() => betonungsSchalterEinhaengen(), 1500);
+
+  /* ============================================================
+     BETONUNG DURCH TIPPEN IN DEN TEXTKASTEN
+     ------------------------------------------------------------
+     GEWÜNSCHT: „dieser Buchstabe oben aus dem Head, dieses A — das
+     ist total hässlich und deplatziert an der Stelle, das möchte ich
+     nicht. Ich möchte, dass es eher wie bei Apple vom Design
+     funktioniert, dass wenn man in einen Beitrag klickt, einfach in
+     das Panel von dem Beitrag, in diese CSS-Box, dass sich die
+     Betonung automatisch einschalten soll, ohne dass man einen Knopf
+     dafür braucht — wenn man den noch mal anklickt, geht es wieder
+     aus."
+
+     Also: kein Knopf. Ein Tippen mitten in den Kasten schaltet die
+     Betonung für GENAU DIESEN Kasten ein, ein zweites Tippen wieder
+     aus. Damit dabei nichts kaputtgeht, bleibt alles ausgenommen, was
+     selbst auf Berührung reagiert: Knöpfe, Links, Eingabefelder,
+     Auswahlkästen, die antippbaren Wörter im Sammelmodus, und ein
+     Tippen, mit dem gerade Text markiert wird.
+     ============================================================ */
+  const BETONUNG_TIPP_HINWEIS = "dma_betonung_tipp_gesehen";
+  /* Woran ein Kasten erkannt wird: die Textkarten der Seite. Nur
+     Kasten mit genug echtem Lesetext — in einer Kachelreihe oder
+     einer Knopfleiste würde ein Tippen sonst nichts Sichtbares tun
+     und wie ein Fehler wirken. */
+  const BETONUNG_KASTEN = ".question-card, .sammel-text, .kal-karte, .lesetext";
+  function betonungKastenTaugt(kasten) {
+    if (!kasten) return false;
+    const text = (kasten.innerText || "").trim();
+    if (text.length < 40) return false;
+    // Ein Kasten, der fast nur aus Knöpfen besteht, ist keine Leseflaeche.
+    const knoepfe = kasten.querySelectorAll("button, a, input, select, textarea").length;
+    return knoepfe < 12;
+  }
+  function betonungTippen(ev) {
+    // Alles, was selbst auf Berührung reagiert, bleibt unangetastet.
+    if (ev.target.closest("button, a, input, select, textarea, label, summary, [role='button'], [contenteditable], .sammel-wort, .speak-btn, svg")) return;
+    // Wer Text markiert, will lesen, nicht schalten.
+    const auswahl = window.getSelection && window.getSelection();
+    if (auswahl && String(auswahl).trim().length > 1) return;
+    const kasten = ev.target.closest(BETONUNG_KASTEN);
+    if (!kasten || !betonungKastenTaugt(kasten)) return;
+    const an = !kasten.classList.contains("betonung-hier");
+    kasten.classList.toggle("betonung-hier", an);
+    /* Die geprüften Betonungen stehen im Wortschatz, und der wird erst
+       beim Wechsel nach „Lernen"/„Wissen" geladen. Ist er noch
+       unterwegs, wäre der Kasten unmarkiert — also nach dem Laden noch
+       einmal drübergehen. */
+    if (an) {
+      const setzen = () => { if (kasten.classList.contains("betonung-hier")) applyStressToTree(kasten); };
+      if (wortschatzNachziehen(setzen) && !(VocabData.WORDS && VocabData.WORDS.length)) {
+        // wird nachgeholt, sobald der Wortschatz da ist
+      } else setzen();
+      let gesehen = false;
+      try { gesehen = localStorage.getItem(BETONUNG_TIPP_HINWEIS) === "1"; } catch (e) {}
+      if (!gesehen) {
+        showToast("🔤 Betonung an — Punkt heißt kurz, Strich heißt lang. Noch einmal in den Kasten tippen macht sie wieder aus.");
+        try { localStorage.setItem(BETONUNG_TIPP_HINWEIS, "1"); } catch (e) {}
+      }
+    } else if (!isStressModeOn() && !leseBetonungAn()) {
+      removeStressFromTree(kasten);
+    }
+  }
+  document.addEventListener("click", betonungTippen);
 
   /* Ein Klick-Handler für alle drei Bereiche. */
   document.addEventListener("click", (ev) => {
@@ -5619,6 +6027,74 @@
     85: "🌨️", 86: "❄️",
     95: "⛈️", 96: "⛈️", 99: "⛈️",
   };
+  /* ============================================================
+     ECHTER NIEDERSCHLAG IM KOPFSTREIFEN
+     ------------------------------------------------------------
+     GEWÜNSCHT: „ich würde gern, dass wenn es grad Niederschlag gibt,
+     echten Regen tags:über … auch im Winter wenn es schneit, dass
+     wirklich Schnee fällt in dieser Hintergrundanimation."
+
+     Also: solange das Wetteramt Regen oder Schnee meldet, fallen im
+     Streifen wirklich Tropfen oder Flocken — hinter Uhr und Symbol,
+     nicht darüber. Gezeichnet wird einmal als CSS-Bewegung mit wenigen
+     Teilchen; das kostet fast nichts und läuft auch auf einem älteren
+     Android-Telefon ruhig. Wer Bewegung nicht mag (Systemeinstellung
+     „Bewegung reduzieren"), bekommt nichts davon zu sehen.
+     ============================================================ */
+  const WETTER_NIEDERSCHLAG = {
+    // Regen: Nieseln, Regen, Schauer, Gewitter
+    51: "regen", 53: "regen", 55: "regen", 56: "regen", 57: "regen",
+    61: "regen", 63: "regen", 65: "regen", 80: "regen", 81: "regen", 82: "regen",
+    95: "gewitter", 96: "gewitter", 99: "gewitter",
+    // Schnee: Schneefall, Graupel, Schneeschauer, gefrierender Regen
+    66: "schnee", 67: "schnee", 71: "schnee", 73: "schnee", 75: "schnee",
+    77: "schnee", 85: "schnee", 86: "schnee",
+  };
+  let niederschlagArt = null;   // null | "regen" | "schnee" | "gewitter"
+  function niederschlagZeichnen(art) {
+    const bar = document.getElementById("deckDisplay");
+    if (!bar) return;
+    niederschlagArt = art || null;
+    let schicht = document.getElementById("niederschlagSchicht");
+    if (!niederschlagArt) { if (schicht) schicht.remove(); bar.classList.remove("hat-niederschlag"); return; }
+    if (!schicht) {
+      schicht = document.createElement("div");
+      schicht.id = "niederschlagSchicht";
+      schicht.className = "niederschlag";
+      schicht.setAttribute("aria-hidden", "true");
+      /* Vorn in den Streifen, aber hinter allem anderen: die Schicht
+         liegt absolut und ohne eigene Fläche über dem Himmel, Uhr und
+         Symbol bleiben darüber lesbar und bekommen KEINEN Hintergrund. */
+      bar.insertBefore(schicht, bar.firstChild);
+    }
+    const schnee = niederschlagArt === "schnee";
+    const anzahl = schnee ? 14 : 18;
+    let teile = "";
+    for (let i = 0; i < anzahl; i++) {
+      /* Feste, gleichmäßig verteilte Werte statt Zufall: dadurch sieht
+         es bei jedem Neuzeichnen gleich aus und flackert nicht. */
+      const links = Math.round(((i * 137) % 100));
+      const dauer = (schnee ? 3.4 : 1.1) + ((i % 5) * (schnee ? 0.45 : 0.16));
+      const spaet = ((i * 7) % 20) / 10;
+      const groesse = schnee ? 2 + (i % 3) : 0;
+      teile += schnee
+        ? `<span class="flocke" style="left:${links}%; animation-duration:${dauer}s; animation-delay:-${spaet}s; width:${groesse}px; height:${groesse}px;"></span>`
+        : `<span class="tropfen" style="left:${links}%; animation-duration:${dauer}s; animation-delay:-${spaet}s;"></span>`;
+    }
+    schicht.className = "niederschlag " + (schnee ? "niederschlag-schnee" : "niederschlag-regen");
+    schicht.innerHTML = teile;
+    bar.classList.add("hat-niederschlag");
+  }
+  /* Nachts sind Tropfen hell, tagsüber dunkel — sonst verschwinden sie
+     jeweils im Himmel. Wird von updateDaytimeSky() bei jedem Takt
+     mitgesetzt, kostet nur eine Variable. */
+  function niederschlagAnpassen(dark) {
+    const bar = document.getElementById("deckDisplay");
+    if (!bar) return;
+    bar.style.setProperty("--niederschlag-farbe", dark > 0.5
+      ? "rgba(255,255,255,0.75)"
+      : "rgba(40,60,90,0.5)");
+  }
   async function updateWeather() {
     if (!weatherOut) return;
     try {
@@ -5630,8 +6106,10 @@
       weatherOut.textContent = `${Math.round(data.current.temperature_2m)}°`;
       weatherOut.title = ort.name;
       if (weatherIcon) weatherIcon.textContent = WEATHER_ICONS[data.current.weather_code] || "🌡️";
+      niederschlagZeichnen(WETTER_NIEDERSCHLAG[data.current.weather_code] || null);
     } catch (e) {
       weatherOut.textContent = "—";
+      niederschlagZeichnen(null);
     }
   }
   updateWeather();
@@ -7832,6 +8310,37 @@
        Das ge- fällt weg, der Rest wird unten weiterbehandelt. */
     const ohneGe = /^ge[a-zäöüß]{3,}/.test(roh) ? roh.slice(2) : null;
 
+    /* 1b. TRENNBARE VORSILBEN — hier ging bisher das meiste verloren.
+       „angewendet" ist das Partizip von „anwenden", „abgehängt" von
+       „abhängen", „aufgeschrieben" von „aufschreiben". Die Vorsilbe
+       steht VOR dem ge-, und ohne diese Regel fand das Wörterbuch
+       keines dieser Wörter, obwohl der Infinitiv längst darin steht.
+       Genauso beim zu-Infinitiv: „anzuwenden" → „anwenden". */
+    const VORSILBEN = ["auseinander", "gegenüber", "herüber", "hinüber", "herunter",
+      "hinunter", "heraus", "hinaus", "herein", "hinein", "zurück", "zusammen", "davon",
+      "voran", "voraus", "vorbei", "weiter", "wieder", "durch", "über", "unter", "hinter",
+      "statt", "gegen", "entgegen", "empor", "fest", "frei", "hoch", "kaputt", "kennen",
+      "ab", "an", "auf", "aus", "bei", "dar", "ein", "fort", "her", "hin", "los", "mit",
+      "nach", "vor", "weg", "zu", "um", "wahr", "teil", "statt", "heim", "quer"]
+      .sort((a, b) => b.length - a.length);
+    const trennbar = [];
+    VORSILBEN.forEach((vs) => {
+      if (!roh.startsWith(vs) || roh.length < vs.length + 4) return;
+      const rest = roh.slice(vs.length);
+      // Partizip: an|ge|wendet → anwenden
+      if (/^ge[a-zäöüß]{2,}$/.test(rest)) {
+        const kern = rest.slice(2).replace(/(et|t|en)$/, "");
+        if (kern.length >= 2) { trennbar.push(vs + kern + "en"); trennbar.push(vs + kern + "n"); }
+      }
+      // zu-Infinitiv: an|zu|wenden → anwenden
+      if (/^zu[a-zäöüß]{3,}$/.test(rest)) {
+        trennbar.push(vs + rest.slice(2));
+      }
+      // Gebeugte Form mit Vorsilbe: „anwandte" → anwenden (über den Rest)
+      trennbar.push(vs + rest.replace(/(te|ten|test|tet|t|st|e|en)$/, "") + "en");
+    });
+    trennbar.forEach(dazu);
+
     const stammFormen = [roh];
     if (ohneGe) stammFormen.push(ohneGe);
 
@@ -8001,7 +8510,10 @@
     // 1. Gepflegter Wortschatz mit ausdrücklichem Niveau und Thema — hat immer Vorrang.
     (VocabData.WORDS || []).forEach((w) => {
       if (!w || !w.word || !belegen(w.word)) return;
-      entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, example: w.example || "", level: w.level || cefrLevelFor(w.word), verified: true, category: w.theme || categoryForWord(w.word) });
+      // en wird ausdrücklich mitgenommen: daraus baut kleineUebersetzung() die
+      // kleine Zeile unter Beispielwörtern. Vorher war die englische Bedeutung
+      // nach dem Bauen des Eintrags verloren.
+      entries.push({ word: w.word, syl: w.syl, meaning: w.de || w.en, en: w.en || "", example: w.example || "", level: w.level || cefrLevelFor(w.word), verified: true, category: w.theme || categoryForWord(w.word) });
     });
     // 2. Wörter aus den Übungstexten mit eigener Erklärung.
     Object.entries(ExerciseData.WORD_MEANINGS || {}).forEach(([word, meaning]) => {
@@ -8210,6 +8722,64 @@
     const tabelle = window.DMA_WORTSPRACHEN || {};
     const eintrag = (teil.t) || tabelle[teil.de];
     return (eintrag && eintrag[c]) || teil.en || "";
+  }
+  /* ============================================================
+     DIE KLEINE ÜBERSETZUNGSZEILE
+     ------------------------------------------------------------
+     GEWÜNSCHT: „in den Spielen generell, da wo es angebracht ist,
+     Übersetzungen lesen in der Sprache wie beim Kalender — allerdings
+     nicht so ein Riesentext."
+
+     Also: eine Zeile, klein, in der Sprache aus dem Profil. Es wird
+     nichts erfunden. Zuerst die gepflegte Sprachtabelle (acht
+     Sprachen), dann die englische Bedeutung aus dem Wörterbuch, die
+     zu jedem der 26.000 Wörter dasteht — und die ist dann auch als
+     Englisch gekennzeichnet, damit niemand denkt, das sei seine
+     eigene Sprache. Weiß die Seite nichts, steht auch nichts da.
+     ============================================================ */
+  function kleineUebersetzung(deutsch, opt) {
+    const wort = String(deutsch || "").trim();
+    if (!wort) return "";
+    const code = hilfsSprache();
+    const tabelle = window.DMA_WORTSPRACHEN || {};
+    const ohneArtikel = wort.replace(/^(der|die|das)\s+/i, "");
+    const eintrag = tabelle[wort] || tabelle[ohneArtikel]
+      || tabelle["der " + ohneArtikel] || tabelle["die " + ohneArtikel] || tabelle["das " + ohneArtikel];
+    let text = "";
+    let sprache = code;
+    if (code !== "de" && eintrag && eintrag[code]) text = eintrag[code];
+    if (!text) {
+      const w = wortNachschlagen(wort);
+      if (w && w.en) { text = w.en; sprache = "en"; }
+    }
+    if (!text) return "";
+    const rtl = istRtl(sprache);
+    const flagge = bwZweitFlagge(sprache);
+    return `<p class="klein-uebers${rtl ? " klein-uebers-rtl" : ""}" lang="${sprache}"${rtl ? ' dir="rtl"' : ""}>${flagge} ${escapeHtml(text)}${opt && opt.mitHinweis && sprache !== code ? ' <span class="klein-uebers-quelle">Englisch</span>' : ""}</p>`;
+  }
+  /* Ein ganzer kurzer Satz: Wort für Wort, nur die Wörter, die die
+     Seite wirklich kennt — als eine einzige kleine Zeile. So bleibt es
+     ehrlich (nichts maschinell Erfundenes) und kurz. */
+  function kleineSatzHilfeHtml(satz) {
+    const code = hilfsSprache();
+    const stuecke = String(satz || "").split(/\s+/).map((x) => x.replace(/^[„“"»«(]+|[.,;:!?„“"»«)]+$/g, "")).filter(Boolean);
+    const tabelle = window.DMA_WORTSPRACHEN || {};
+    const teile = [];
+    const gesehen = new Set();
+    stuecke.forEach((roh) => {
+      if (roh.length < 3) return;
+      const schl = roh.toLowerCase();
+      if (gesehen.has(schl)) return;
+      const w = wortNachschlagen(roh);
+      if (!w) return;
+      gesehen.add(schl);
+      const ohneArtikel = String(w.word || roh).replace(/^(der|die|das)\s+/i, "");
+      const e = tabelle[w.word] || tabelle[ohneArtikel];
+      const ziel = (code !== "de" && e && e[code]) ? e[code] : (w.en || "");
+      if (ziel) teile.push(`${escapeHtml(roh)} = ${escapeHtml(ziel)}`);
+    });
+    if (!teile.length) return "";
+    return `<p class="klein-uebers klein-uebers-satz">${teile.slice(0, 8).join(" · ")}</p>`;
   }
   function firstStepsTranslate(entry, lang) {
     return entry.translations[lang] || entry.translations.en;
@@ -9522,6 +10092,10 @@
      ============================================================ */
   let ausspracheKursGeladen = null;
   function ausspracheKursLaden() {
+    /* Die Sprachtabelle gleich mitholen: die kleine Übersetzungszeile
+       unter den Beispielwörtern zieht ihre acht Sprachen daraus. Ohne
+       das stünde dort nur Englisch. */
+    wortSprachenLaden();
     if (window.DMA_AUSSPRACHE) return Promise.resolve(true);
     if (ausspracheKursGeladen) return ausspracheKursGeladen;
     ausspracheKursGeladen = new Promise((fertig) => {
@@ -9612,10 +10186,10 @@
           Tricks für die Laute, die es in der eigenen Muttersprache nicht gibt.
           Jedes Wort lässt sich antippen und anhören.
         </p>
-        <div class="trophy-case" style="margin-bottom:10px;">
+        ${darfItalienischraum() ? `<div class="trophy-case" style="margin-bottom:10px;">
           <button type="button" class="trophy-chip ak-spr-btn ${spr === "de" ? "selected" : ""}" data-ak-spr="de">🇩🇪 Deutsch</button>
           <button type="button" class="trophy-chip ak-spr-btn ${spr === "it" ? "selected" : ""}" data-ak-spr="it">🇮🇹 Italienisch</button>
-        </div>
+        </div>` : ""}
         <div class="trophy-case">
           ${Object.entries(AK_TEILE).map(([k, name]) =>
             `<button type="button" class="trophy-chip ak-teil-btn ${akTeil === k ? "selected" : ""}" data-ak-teil="${k}">${name}</button>`).join("")}
@@ -9643,6 +10217,7 @@
               <p class="ak-b-ipa">[${z.ipa}]</p>
               <p class="ak-b-laut">${z.laut}</p>
               <p class="ak-b-bsp">${akWort(z.bsp, z.syl)} ${akHoerKnopf(z.bsp, "„" + z.bsp + "“ anhören")}</p>
+              ${spr === "de" ? kleineUebersetzung(z.bsp) : ""}
               ${z.hinweis ? `<p class="ak-b-hinweis">${z.hinweis}</p>` : ""}
             </div>`).join("")}
         </div>
@@ -9668,6 +10243,7 @@
               </div>
               <p class="ak-verb-wann">${z.wann}</p>
               <p class="ak-verb-bsp">${z.bsp.map((w) => `<span class="ak-chip">${w} ${akHoerKnopf(w)}</span>`).join("")}</p>
+              ${akAktuelleSprache() === "de" ? kleineSatzHilfeHtml(z.bsp.join(" ")) : ""}
               ${z.hinweis ? `<p class="ak-b-hinweis">${z.hinweis}</p>` : ""}
             </div>`).join("")}
         </div>
@@ -9687,6 +10263,7 @@
               <span class="ak-bsp-wort">${akWort(b.wort, b.syl)}</span>
               ${akHoerKnopf(b.wort)}
               ${b.hinweis ? `<span class="ak-bsp-hinweis">${b.hinweis}</span>` : ""}
+              ${akAktuelleSprache() === "de" ? kleineUebersetzung(b.wort) : ""}
             </div>`).join("")}
         </div>
         ${r.ausnahmen && (r.ausnahmen.text || (r.ausnahmen.woerter || []).length) ? `
@@ -9719,6 +10296,7 @@
                 <span class="ak-verb-laut">${z.gesprochen}</span>
               </div>
               <p class="ak-buendel-richtig">✅ ${akWort(z.bsp, z.syl)} ${akHoerKnopf(z.bsp)}</p>
+              ${spr === "de" ? kleineUebersetzung(z.bsp) : ""}
               <p class="ak-buendel-falsch">❌ ${z.falsch}</p>
               <p class="ak-verb-bsp">${(z.weitere || []).map((w) => `<span class="ak-chip">${w} ${akHoerKnopf(w)}</span>`).join("")}</p>
             </div>`).join("")}
@@ -9731,6 +10309,7 @@
           ${brecher.map((b) => `
             <div class="ak-brecher">
               <p class="ak-brecher-satz">${b.satz} ${akHoerKnopf(b.satz)}</p>
+              ${spr === "de" ? kleineSatzHilfeHtml(b.satz) : ""}
               <p class="ak-b-hinweis">übt: ${b.uebt}</p>
             </div>`).join("")}
         </div>
@@ -9835,7 +10414,16 @@
     else if (akTeil === "test") inhalt = akTestHtml();
     area.innerHTML = akKopfHtml() + inhalt;
     akBinden(area);
+    /* Die kleine Übersetzungszeile unter den Beispielwörtern zieht ihre
+       Bedeutungen aus dem Wörterbuch. Das wird erst beim Wechsel nach
+       „Lernen" geladen — ist es noch unterwegs, stände hier gar keine
+       Übersetzung. Also nach dem Laden einmal neu zeichnen. */
+    if (!akUebersNachgezogen && wortschatzNachziehen(() => {
+      akUebersNachgezogen = true;
+      if (document.getElementById("ausspracheKursArea") === area) renderAusspracheKurs();
+    })) { /* wird nachgeholt */ }
   }
+  let akUebersNachgezogen = false;
 
   function akBinden(area) {
     area.querySelectorAll(".ak-spr-btn").forEach((b) => b.addEventListener("click", () => {
@@ -20841,6 +21429,63 @@
     if (slfPoller) { clearInterval(slfPoller); slfPoller = null; }
   }
 
+  /* ============================================================
+     STADT · LAND · FLUSS — GEMEINSAM UND SYNCHRON
+     ------------------------------------------------------------
+     GEWÜNSCHT: „das muss irgendwie synchron gehen … dass man wirklich
+     erst den Countdown hat, wenn alle da sind … und das muss auch mit
+     mehreren Mitgliedern gleichzeitig gehen … und dann immer wieder
+     einen Countdown vor den Fragen, ich glaub dann reichen 3 Sekunden
+     … vielleicht optional, dass wir einfach Buchstaben festlegen
+     können — ansonsten so zufällig ausgewählt vom Computer wie bisher.
+     Beide Optionen sind okay."
+
+     So läuft es jetzt:
+
+       1  WARTERAUM   Wer einlädt, öffnet einen Raum und lädt eine oder
+                      mehrere Personen ein. Im Raum steht, wer schon da
+                      ist und auf wen noch gewartet wird. NICHTS beginnt,
+                      solange jemand fehlt.
+       2  GROSSER     Sind alle da, zählt EIN gemeinsamer Countdown von
+          COUNTDOWN   fünf herunter — auf allen Geräten derselbe.
+       3  BUCHSTABE   Entweder würfelt der Rechner ihn (wie bisher), oder
+                      der Raumgeber legt ihn fest — für den Fall, dass
+                      man nebeneinandersitzt und einer „Stopp" sagt.
+       4  KURZER      Vor JEDER weiteren Runde drei Sekunden Countdown
+          COUNTDOWN   mit dem neuen Buchstaben.
+       5  RUNDE       Alle schreiben gleichzeitig, alle haben dieselbe
+                      Restzeit und dieselbe Frist.
+       6  VERGLEICH   Danach stehen alle Zettel nebeneinander, und es
+                      wird gezählt wie am Küchentisch.
+
+     ZUR GLEICHZEITIGKEIT: verschickt wird nie eine Uhrzeit, sondern
+     „von jetzt an noch so viele Millisekunden" plus eine Rundennummer.
+     Jedes Gerät startet seine Uhr, sobald es eine neue Rundennummer zum
+     ersten Mal sieht. Dadurch spielt es keine Rolle, wie die Uhren der
+     Telefone gestellt sind — und weil während des Countdowns dreimal je
+     Sekunde nachgefragt wird, liegen alle nur Bruchteile einer Sekunde
+     auseinander. Genau das war vorher das Problem: eine feste Uhrzeit
+     plus 25 Sekunden Vorlauf, und wer später kam, spielte allein.
+     ============================================================ */
+  const SLF_VORLAUF = 5200;      // Millisekunden vor der ersten Runde
+  const SLF_ZWISCHEN = 3200;     // Millisekunden vor jeder weiteren Runde
+  let slfRaum = null;            // { id, host, hostName, mitglieder:[], zeilen:[], stand, … }
+  let slfOffeneEinladungen = [];
+  let slfFreunde = null;
+  let slfAuswahl = new Set();    // wen der Raumgeber gerade eingeladen hat
+  let slfAuswahlOffen = false;
+  let slfWahlmodus = "zufall";   // "zufall" | "selbst"
+  let slfEigenerBuchstabe = "";
+  let slfGesamt = {};            // { spielerId: Punkte } über mehrere Runden
+
+  function slfIch() {
+    const u = Backend.currentUser();
+    return u ? (u.id || u.email) : null;
+  }
+  function slfMeinName() {
+    return (Backend.currentProfile() || {}).name || "Du";
+  }
+
   function slfStartHtml() {
     const angemeldet = Boolean(Backend.currentUser());
     return `
@@ -20853,64 +21498,379 @@
           <strong>5</strong> bei demselben Wort, <strong>0</strong> bei leer oder falschem Anfangsbuchstaben.
         </p>
         <div class="quiz-actions" style="justify-content:flex-start; flex-wrap:wrap; gap:8px;">
-          <button type="button" class="btn btn-coffee" id="slfAllein">🦊 Gegen den Fuchs spielen</button>
+          <button type="button" class="btn btn-ghost" id="slfAllein">🦊 Allein gegen den Fuchs üben</button>
           ${angemeldet
-            ? `<button type="button" class="btn btn-ghost" id="slfZuZweit">👥 Jemanden einladen</button>`
-            : `<span class="empty-note" style="width:100%;">Zu zweit geht es, sobald du angemeldet bist — dann bekommt ihr denselben Buchstaben und denselben Start.</span>`}
+            ? `<button type="button" class="btn btn-coffee" id="slfRaumOeffnen">👥 Runde mit anderen — Warteraum öffnen</button>`
+            : `<span class="empty-note" style="width:100%;">Gemeinsam geht es, sobald du angemeldet bist — dann bekommt ihr denselben Buchstaben, denselben Start und dieselbe Uhr.</span>`}
         </div>
+        <p class="empty-note" style="margin-top:10px; font-size:0.76rem;">
+          Gemeinsam heißt wirklich gemeinsam: es geht erst los, wenn alle im Warteraum sind —
+          und dann zählt bei allen derselbe Countdown.
+        </p>
         ${slfAuswahlHtml()}
         ${slfEinladungenHtml()}
       </div>`;
   }
 
-  let slfOffeneEinladungen = [];
   function slfEinladungenHtml() {
     if (!slfOffeneEinladungen.length) return "";
     return `
-      <p class="eyebrow" style="margin-top:14px;">OFFENE RUNDEN</p>
+      <p class="eyebrow" style="margin-top:14px;">DU BIST EINGELADEN</p>
       <div class="dlg-satzliste">
-        ${slfOffeneEinladungen.map((c) => `
+        ${slfOffeneEinladungen.map((c) => {
+          const e = c.extra || {};
+          const wieviele = (e.mitglieder || []).length;
+          return `
           <div class="dlg-satz">
             <button type="button" class="dlg-satz-text" data-slf-annehmen="${c.id}">
-              ${c.mitName} · Buchstabe „${String(c.extra.buchstabe).toUpperCase()}“ ·
-              ${c.extra.startAt > Date.now() ? "Start in " + Math.max(0, Math.round((c.extra.startAt - Date.now()) / 1000)) + " s" : "läuft schon — jetzt mitspielen"}
+              🏙️ ${escapeHtml(c.mitName || "Jemand")} lädt dich ein${wieviele > 2 ? ` — ${wieviele} Leute` : ""}
+              <span class="empty-note">${e.stand ? "Die Runde läuft schon — du kommst dazu." : "Antippen: in den Warteraum"}</span>
             </button>
-          </div>`).join("")}
+          </div>`;
+        }).join("")}
       </div>`;
   }
 
   async function slfEinladungenLaden() {
     if (!Backend.currentUser()) { slfOffeneEinladungen = []; return; }
     try {
-      const { incoming, outgoing } = await Backend.getMyChallenges();
-      const meins = Backend.currentUser().id || Backend.currentUser().email;
-      slfOffeneEinladungen = [...incoming, ...outgoing]
+      const { incoming } = await Backend.getMyChallenges();
+      slfOffeneEinladungen = incoming
         .filter((c) => c.extra && c.extra.spiel === "stadtlandfluss" && c.status !== "completed")
-        .filter((c) => (c.from === meins ? !c.fromResult : !c.toResult))
-        .map((c) => ({ ...c, mitName: c.from === meins ? c.toName : c.fromName }));
+        .filter((c) => !c.toResult)
+        .map((c) => ({ ...c, mitName: c.fromName }));
     } catch (e) { slfOffeneEinladungen = []; }
   }
 
-  function slfCountdownHtml() {
-    const rest = Math.max(0, Math.ceil((slfLauf.startAt - Date.now()) / 1000));
+  /* ---------- Der Warteraum ---------- */
+  function slfWarteraumHtml() {
+    const r = slfRaum;
+    const alle = r.mitglieder;
+    const da = alle.filter((m) => r.anwesend[m.id]);
+    const fehlen = alle.filter((m) => !r.anwesend[m.id]);
+    const binHost = r.host === slfIch();
     return `
-      <div class="question-card" style="text-align:center;">
-        <p class="eyebrow">GEMEINSAMER START</p>
-        <p style="font-size:3.4rem; font-weight:800; margin:10px 0;">${rest}</p>
-        <p class="empty-note">Buchstabe: <strong style="font-size:1.4rem;">${slfLauf.runde.buchstabe.toUpperCase()}</strong></p>
-        <p class="empty-note">${slfLauf.gegnerName ? "Ihr startet beide gleichzeitig — " + slfLauf.gegnerName + " sieht denselben Countdown." : "Gleich geht es los."}</p>
+      <div class="question-card">
+        <p class="eyebrow">🚪 WARTERAUM</p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          ${fehlen.length
+            ? `Es geht los, sobald alle da sind. ${fehlen.length === 1 ? "Eine Person fehlt" : fehlen.length + " Personen fehlen"} noch.`
+            : "Alle sind da — gleich beginnt der Countdown."}
+        </p>
+        <div class="slf-warteliste">
+          ${alle.map((m) => `
+            <div class="slf-wartezeile ${r.anwesend[m.id] ? "slf-da" : ""}">
+              <span class="slf-ampel"></span>
+              <span>${escapeHtml(m.name)}${m.id === r.host ? " · lädt ein" : ""}</span>
+              <span class="empty-note">${r.anwesend[m.id] ? "ist da" : "wartet noch"}</span>
+            </div>`).join("")}
+        </div>
+        ${binHost ? `
+          <p class="eyebrow" style="margin-top:14px;">WOHER KOMMT DER BUCHSTABE?</p>
+          <div class="order-toggle" style="margin-bottom:8px;">
+            <button type="button" class="order-pill" data-slf-wahl="zufall" aria-selected="${slfWahlmodus === "zufall"}">🎲 Der Rechner würfelt</button>
+            <button type="button" class="order-pill" data-slf-wahl="selbst" aria-selected="${slfWahlmodus === "selbst"}">✍️ Ich lege ihn fest</button>
+          </div>
+          ${slfWahlmodus === "selbst" ? `
+            <p class="empty-note" style="margin-bottom:6px;">Für den Fall, dass ihr zusammen am Telefon sitzt und einer „Stopp" sagt.</p>
+            <input type="text" id="slfBuchstabeFeld" class="vocab-search" maxlength="1" placeholder="Ein Buchstabe, z. B. M"
+                   value="${escapeHtml(slfEigenerBuchstabe)}" style="max-width:160px; text-transform:uppercase;" />` : ""}
+          <div class="quiz-actions" style="justify-content:flex-start; flex-wrap:wrap; gap:8px; margin-top:10px;">
+            <button type="button" class="btn btn-coffee" id="slfJetztStarten" ${fehlen.length ? "disabled" : ""}>
+              ${fehlen.length ? "⏳ Warten auf " + fehlen.length : "▶️ Runde starten"}
+            </button>
+            <button type="button" class="btn btn-ghost" id="slfTrotzdem">Ohne die Fehlenden starten</button>
+            <button type="button" class="btn btn-ghost" id="slfRaumSchliessen">Abbrechen</button>
+          </div>` : `
+          <p class="empty-note" style="margin-top:12px;">${escapeHtml(r.hostName)} startet die Runde, sobald alle da sind.</p>
+          <button type="button" class="btn btn-ghost" id="slfRaumVerlassen" style="margin-top:8px;">Warteraum verlassen</button>`}
       </div>`;
   }
+
+  function slfCountdownHtml() {
+    const rest = Math.max(0, Math.ceil(slfRaum.startIn / 1000));
+    const ersteRunde = slfRaum.runde <= 1;
+    return `
+      <div class="question-card slf-countdown" style="text-align:center;">
+        <p class="eyebrow">${ersteRunde ? "GEMEINSAMER START" : "RUNDE " + slfRaum.runde}</p>
+        <p class="slf-countdown-zahl">${rest}</p>
+        <p class="empty-note">Buchstabe: <strong style="font-size:1.6rem;">${String(slfRaum.buchstabe || "?").toUpperCase()}</strong></p>
+        <p class="empty-note">${slfRaum.mitglieder.length > 1
+          ? "Alle " + slfRaum.mitglieder.length + " fangen gleichzeitig an — ihr habt dieselbe Zeit."
+          : "Gleich geht es los."}</p>
+      </div>`;
+  }
+
+  /* ---------- Den Raum öffnen und Leute hineinbitten ---------- */
+  async function slfRaumOeffnen() {
+    const ich = slfIch();
+    if (!ich) return;
+    slfRaum = {
+      id: "raum-" + Date.now(),
+      host: ich, hostName: slfMeinName(),
+      mitglieder: [{ id: ich, name: slfMeinName() }],
+      anwesend: { [ich]: true },
+      zeilen: [],                 // die Einladungs-Kennungen, eine je Gast
+      phase: "warteraum",
+      runde: 0, stand: 0, buchstabe: null, spalten: null,
+      blaetter: {}, startIn: 0,
+    };
+    slfAuswahlOffen = true;
+    await slfFreundeLaden();
+    renderStadtLandFluss();
+  }
+
+  async function slfFreundeLaden() {
+    if (slfFreunde) return slfFreunde;
+    try { slfFreunde = await Backend.getFriends(); } catch (e) { slfFreunde = []; }
+    return slfFreunde;
+  }
+
+  function slfAuswahlHtml() {
+    if (!slfAuswahlOffen) return "";
+    const liste = slfFreunde || [];
+    if (!liste.length) {
+      return `<p class="empty-note" style="margin-top:10px;">Du hast noch niemanden in deiner Freundesliste. Unter „Profil → Freunde" kannst du jemanden hinzufügen — danach könnt ihr zusammen spielen.</p>`;
+    }
+    const online = liste.filter((f) => f.online);
+    const rest = liste.filter((f) => !f.online);
+    const pille = (f) => `<button type="button" class="challenge-friend-pill ${f.online ? "" : "offline"} ${slfAuswahl.has(f.id) ? "selected" : ""}" data-slf-wen="${f.id}" data-slf-name="${escapeHtml(f.name)}">
+        ${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${f.online ? "" : ' <span class="empty-note">(offline)</span>'}</button>`;
+    return `
+      <p class="eyebrow" style="margin-top:14px;">WEN LÄDST DU EIN?</p>
+      <p class="empty-note" style="margin-bottom:8px;">Mehrere antippen geht — ihr spielt dann alle zusammen dieselbe Runde.</p>
+      <div class="challenge-friend-list">
+        ${online.map(pille).join("")}${rest.map(pille).join("")}
+      </div>
+      ${slfAuswahl.size ? `<button type="button" class="btn btn-coffee" id="slfRaumStarten" style="margin-top:10px;">
+        🚪 Warteraum mit ${slfAuswahl.size} ${slfAuswahl.size === 1 ? "Person" : "Personen"} öffnen</button>` : ""}`;
+  }
+
+  async function slfEinladungenVerschicken() {
+    const ich = slfIch();
+    const gewaehlt = (slfFreunde || []).filter((f) => slfAuswahl.has(f.id));
+    if (!gewaehlt.length) return;
+    slfRaum.mitglieder = [{ id: ich, name: slfMeinName() }, ...gewaehlt.map((f) => ({ id: f.id, name: f.name }))];
+    const grund = {
+      spiel: "stadtlandfluss", raum: slfRaum.id, host: ich, hostName: slfMeinName(),
+      mitglieder: slfRaum.mitglieder, stand: 0, phase: "warteraum", anwesend: { [ich]: true },
+    };
+    slfRaum.zeilen = [];
+    for (const f of gewaehlt) {
+      try {
+        const id = await Backend.createChallenge(f.id, ["stadtlandfluss"], grund);
+        if (id) slfRaum.zeilen.push({ id, spieler: f.id });
+      } catch (e) { console.warn("Einladung ging nicht raus:", e); }
+    }
+    slfAuswahlOffen = false;
+    slfAuswahl = new Set();
+    showToast(`🚪 Warteraum offen — ${gewaehlt.length} ${gewaehlt.length === 1 ? "Person wurde" : "Personen wurden"} eingeladen.`);
+    slfPollenStarten();
+    renderStadtLandFluss();
+  }
+
+  /* ---------- Nachfragen: wer ist da, was gilt gerade ---------- */
+  function slfPollenStarten(schnell) {
+    if (slfPoller) clearInterval(slfPoller);
+    slfPoller = setInterval(slfNachsehen, schnell ? 340 : 1100);
+  }
+
+  async function slfNachsehen() {
+    if (!slfRaum) { slfUhrStoppen(); return; }
+    const binHost = slfRaum.host === slfIch();
+    try {
+      const { incoming, outgoing } = await Backend.getMyChallenges();
+      const meine = [...incoming, ...outgoing].filter(
+        (c) => c.extra && c.extra.raum === slfRaum.id);
+      if (!meine.length) return;
+      if (binHost) {
+        /* Der Raumgeber sammelt ein, wer sich gemeldet hat, und schreibt
+           den Stand in ALLE Zeilen zurück — dadurch sehen alle dasselbe. */
+        let geaendert = false;
+        meine.forEach((c) => {
+          const a = (c.extra && c.extra.anwesend) || {};
+          Object.keys(a).forEach((k) => {
+            if (!slfRaum.anwesend[k]) { slfRaum.anwesend[k] = true; geaendert = true; }
+          });
+          const b = (c.extra && c.extra.blaetter) || {};
+          Object.keys(b).forEach((k) => {
+            if (!slfRaum.blaetter[k]) { slfRaum.blaetter[k] = b[k]; geaendert = true; }
+          });
+        });
+        if (geaendert) {
+          await slfAnAlleSchreiben({ anwesend: slfRaum.anwesend, blaetter: slfRaum.blaetter });
+          renderStadtLandFluss();
+        }
+        return;
+      }
+      /* Gäste: dem Stand des Raumgebers folgen. */
+      const c = meine[0];
+      const e = c.extra || {};
+      slfRaum.zeilen = [{ id: c.id, spieler: slfIch() }];
+      slfRaum.mitglieder = e.mitglieder || slfRaum.mitglieder;
+      slfRaum.anwesend = Object.assign({}, e.anwesend || {}, slfRaum.anwesend);
+      slfRaum.blaetter = Object.assign({}, e.blaetter || {}, slfRaum.blaetter);
+      if (e.stand && e.stand > slfRaum.stand) {
+        /* EINE NEUE RUNDENNUMMER — jetzt, in diesem Augenblick, startet
+           die eigene Uhr. Keine Uhrzeit aus der Ferne, sondern die
+           Restzeit ab dem Moment des Sehens. Deshalb laufen alle
+           höchstens einen Abfragetakt auseinander. */
+        slfRaum.stand = e.stand;
+        slfRaum.runde = e.runde || 1;
+        slfRaum.buchstabe = e.buchstabe;
+        slfRaum.spalten = e.spalten;
+        slfRaum.startIn = e.startIn || SLF_ZWISCHEN;
+        slfRaum.dauer = e.dauer || SLF_DAUER;
+        slfRaum.blaetter = {};
+        slfCountdownStarten();
+        return;
+      }
+      if (e.phase === "vergleich" && slfRaum.phase !== "vergleich") {
+        slfRaum.blaetter = e.blaetter || slfRaum.blaetter;
+        slfVergleichZeigen();
+        return;
+      }
+      renderStadtLandFluss();
+    } catch (err) { /* Netz weg — beim nächsten Takt noch einmal */ }
+  }
+
+  async function slfAnAlleSchreiben(patch) {
+    for (const z of slfRaum.zeilen) {
+      try { await Backend.updateChallengeExtra(z.id, patch); } catch (e) { /* weiter */ }
+    }
+  }
+
+  /* ---------- Die Runde starten ---------- */
+  async function slfRundeStarten(ohneFehlende) {
+    const r = slfRaum;
+    if (!ohneFehlende && r.mitglieder.some((m) => !r.anwesend[m.id])) return;
+    if (ohneFehlende) {
+      r.mitglieder = r.mitglieder.filter((m) => r.anwesend[m.id]);
+    }
+    let buchstabe;
+    if (slfWahlmodus === "selbst" && /^[a-zäöü]$/i.test(slfEigenerBuchstabe.trim())) {
+      buchstabe = slfEigenerBuchstabe.trim().toLowerCase();
+    } else {
+      buchstabe = slfZufallsrunde().buchstabe;
+    }
+    const spalten = r.spalten || slfZufallsrunde().spalten;
+    r.runde = (r.runde || 0) + 1;
+    r.stand = (r.stand || 0) + 1;
+    r.buchstabe = buchstabe;
+    r.spalten = spalten;
+    r.blaetter = {};
+    r.dauer = SLF_DAUER;
+    r.startIn = r.runde === 1 ? SLF_VORLAUF : SLF_ZWISCHEN;
+    await slfAnAlleSchreiben({
+      stand: r.stand, runde: r.runde, buchstabe, spalten,
+      startIn: r.startIn, dauer: r.dauer, phase: "countdown", blaetter: {},
+    });
+    slfCountdownStarten();
+  }
+
+  /* Der Countdown läuft rein lokal ab dem Moment, in dem dieses Gerät die
+     neue Rundennummer gesehen hat. */
+  function slfCountdownStarten() {
+    slfUhrStoppen();
+    slfRaum.phase = "countdown";
+    slfRaum.countdownBis = Date.now() + slfRaum.startIn;
+    slfLauf = null;
+    slfPollenStarten(true);
+    renderStadtLandFluss();
+    slfUhr = setInterval(() => {
+      if (!slfRaum || slfRaum.phase !== "countdown") { clearInterval(slfUhr); slfUhr = null; return; }
+      slfRaum.startIn = slfRaum.countdownBis - Date.now();
+      if (slfRaum.startIn <= 0) { clearInterval(slfUhr); slfUhr = null; slfRundeLosSpielen(); return; }
+      const zahl = document.querySelector(".slf-countdown-zahl");
+      if (zahl) zahl.textContent = String(Math.max(0, Math.ceil(slfRaum.startIn / 1000)));
+    }, 120);
+  }
+
+  function slfRundeLosSpielen() {
+    slfRaum.phase = "laeuft";
+    slfLauf = {
+      modus: slfRaum.mitglieder.length > 1 ? "raum" : "allein",
+      runde: slfNeueRunde(slfRaum.buchstabe, slfRaum.spalten),
+      phase: "laeuft",
+    };
+    slfLauf.runde.sekunden = slfRaum.dauer || SLF_DAUER;
+    slfLauf.endeUm = Date.now() + slfLauf.runde.sekunden * 1000;
+    Core.sound.correct();
+    slfPollenStarten(false);
+    renderStadtLandFluss();
+    if (slfUhr) clearInterval(slfUhr);
+    slfUhr = setInterval(() => {
+      if (!slfLauf || slfLauf.phase !== "laeuft") { clearInterval(slfUhr); slfUhr = null; return; }
+      /* Die Restzeit kommt aus der FRIST, nicht aus einem Herunterzählen.
+         Ein Takt, der einmal verschluckt wird (Telefon kurz im Schlaf,
+         Reiter im Hintergrund), verschiebt sonst die ganze Runde — und
+         schon hätte einer mehr Zeit als der andere. */
+      slfLauf.runde.sekunden = Math.max(0, Math.round((slfLauf.endeUm - Date.now()) / 1000));
+      if (slfLauf.runde.sekunden <= 0) { slfAbgeben(); return; }
+      const uhr = document.querySelector(".slf-uhr");
+      if (uhr) {
+        const m = Math.floor(slfLauf.runde.sekunden / 60), sek = slfLauf.runde.sekunden % 60;
+        uhr.textContent = m + ":" + String(sek).padStart(2, "0");
+        uhr.classList.toggle("slf-eilig", slfLauf.runde.sekunden <= 15);
+      }
+      const balken = document.querySelector("#stadtlandflussArea .quiz-progress-bar");
+      if (balken) balken.style.width = Math.round(((SLF_DAUER - slfLauf.runde.sekunden) / SLF_DAUER) * 100) + "%";
+      const zahl = document.querySelector("#stadtlandflussArea .runden-zahl");
+      if (zahl) zahl.textContent = (SLF_DAUER - slfLauf.runde.sekunden) + " / " + SLF_DAUER;
+    }, 250);
+  }
+
+  /* ---------- Allein üben: derselbe Ablauf, nur ohne Warteraum ---------- */
+  function slfStartAllein() {
+    const z = slfZufallsrunde();
+    slfRaum = {
+      id: "allein", host: slfIch() || "ich", hostName: slfMeinName(),
+      mitglieder: [{ id: slfIch() || "ich", name: slfMeinName() }],
+      anwesend: { [slfIch() || "ich"]: true }, zeilen: [],
+      phase: "countdown", runde: 1, stand: 1,
+      buchstabe: z.buchstabe, spalten: z.spalten, blaetter: {},
+      startIn: SLF_ZWISCHEN, dauer: SLF_DAUER,
+    };
+    slfCountdownStarten();
+  }
+
+  /* ---------- Eine Einladung annehmen: in den Warteraum ---------- */
+  async function slfAnnehmen(id) {
+    const c = slfOffeneEinladungen.find((x) => x.id === id);
+    if (!c) return;
+    const e = c.extra || {};
+    const ich = slfIch();
+    slfRaum = {
+      id: e.raum, host: e.host, hostName: e.hostName || c.mitName,
+      mitglieder: e.mitglieder || [{ id: e.host, name: c.mitName }, { id: ich, name: slfMeinName() }],
+      anwesend: Object.assign({}, e.anwesend || {}, { [ich]: true }),
+      zeilen: [{ id: c.id, spieler: ich }],
+      phase: "warteraum", runde: e.runde || 0, stand: 0,
+      buchstabe: e.buchstabe, spalten: e.spalten, blaetter: {},
+      startIn: 0, dauer: e.dauer || SLF_DAUER,
+    };
+    /* „Ich bin da" sofort eintragen — genau darauf wartet der Raumgeber. */
+    try {
+      await Backend.updateChallengeExtra(c.id, { anwesend: slfRaum.anwesend });
+    } catch (err) { showToast("Der Warteraum ist gerade nicht erreichbar."); }
+    slfPollenStarten(true);
+    renderStadtLandFluss();
+  }
+
 
   function slfBlattHtml() {
     const r = slfLauf.runde;
     const min = Math.floor(r.sekunden / 60), sek = r.sekunden % 60;
+    const mit = slfRaum && slfRaum.mitglieder.length > 1
+      ? slfRaum.mitglieder.filter((m) => m.id !== slfIch()).map((m) => m.name).join(", ") : "";
     return `
       <div class="question-card">
         <div class="slf-kopf">
           <span class="slf-buchstabe">${r.buchstabe.toUpperCase()}</span>
           <span class="slf-uhr ${r.sekunden <= 15 ? "slf-eilig" : ""}">${min}:${String(sek).padStart(2, "0")}</span>
         </div>
+        ${slfRaum && slfRaum.runde > 1 ? `<p class="empty-note" style="margin:0 0 6px;">Runde ${slfRaum.runde}</p>` : ""}
+        ${mit ? `<p class="empty-note" style="margin:0 0 6px;">Gleichzeitig dabei: ${escapeHtml(mit)} — ihr habt dieselbe Uhr.</p>` : ""}
         ${fortschrittHtml(SLF_DAUER - r.sekunden, SLF_DAUER)}
         <div class="slf-felder">
           ${r.spalten.map((s) => `
@@ -20928,12 +21888,16 @@
   }
 
   function slfWartenHtml() {
+    const fehlen = slfRaum
+      ? slfRaum.mitglieder.filter((m) => m.id !== slfIch() && !slfRaum.blaetter[m.id])
+      : [];
     return `
       <div class="question-card" style="text-align:center;">
         <p class="eyebrow">ABGEGEBEN</p>
         <p style="font-size:2.6rem;">⏳</p>
-        <p class="empty-note">Dein Zettel ist abgegeben. Sobald ${slfLauf.gegnerName || "die andere Person"} fertig ist,
-        werden die Zettel nebeneinandergelegt.</p>
+        <p class="empty-note">Dein Zettel ist abgegeben.${fehlen.length
+          ? ` Es fehlt noch ${fehlen.map((m) => escapeHtml(m.name)).join(", ")}.`
+          : " Gleich werden die Zettel nebeneinandergelegt."}</p>
         <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
           <button type="button" class="btn btn-ghost" id="slfAbbrechen">Zurück zur Übersicht</button>
         </div>
@@ -20943,13 +21907,14 @@
   function slfVergleichHtml() {
     const { runde, blaetter, wertung } = slfLauf;
     const max = Math.max(...wertung.punkte);
+    const binHost = slfRaum && slfRaum.host === slfIch();
     return `
       <div class="question-card">
         <p class="eyebrow">DIE ZETTEL NEBENEINANDER · BUCHSTABE ${runde.buchstabe.toUpperCase()}</p>
         <div class="slf-tabelle-wrap">
           <table class="slf-tabelle">
             <thead>
-              <tr><th></th>${blaetter.map((b, i) => `<th>${b.name}${wertung.punkte[i] === max ? " 🏆" : ""}</th>`).join("")}</tr>
+              <tr><th></th>${blaetter.map((b, i) => `<th>${escapeHtml(b.name)}${wertung.punkte[i] === max ? " 🏆" : ""}</th>`).join("")}</tr>
             </thead>
             <tbody>
               ${runde.spalten.map((s) => `
@@ -20962,19 +21927,34 @@
                     </td>`).join("")}
                 </tr>`).join("")}
               <tr class="slf-summe">
-                <th scope="row">Summe</th>
+                <th scope="row">Diese Runde</th>
                 ${wertung.punkte.map((p) => `<td><strong>${p}</strong></td>`).join("")}
               </tr>
+              ${Object.keys(slfGesamt).length ? `<tr class="slf-summe">
+                <th scope="row">Zusammen</th>
+                ${blaetter.map((b) => `<td><strong>${slfGesamt[b.name] || 0}</strong></td>`).join("")}
+              </tr>` : ""}
             </tbody>
           </table>
         </div>
         <p class="ak-b-hinweis">20 = nur du hattest etwas · 10 = eigenes Wort · 5 = dasselbe Wort · 0 = leer oder falscher Anfangsbuchstabe</p>
         <div class="quiz-actions" style="justify-content:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
-          <button type="button" class="btn btn-coffee" id="slfNochmal">🔄 Noch eine Runde</button>
+          ${(!slfRaum || binHost)
+            ? `<button type="button" class="btn btn-coffee" id="slfNochmal">🔄 Noch eine Runde — neuer Buchstabe</button>`
+            : `<p class="empty-note" style="width:100%;">${escapeHtml((slfRaum && slfRaum.hostName) || "Der Raumgeber")} kann gleich die nächste Runde starten — bleib einfach hier.</p>`}
           <button type="button" class="btn btn-ghost" id="slfAbbrechen">Zur Übersicht</button>
         </div>
         ${miniBugReportBtnHtml("Stadt-Land-Fluss, Buchstabe " + runde.buchstabe)}
       </div>`;
+  }
+
+  function slfAufraeumen() {
+    slfUhrStoppen();
+    slfLauf = null;
+    slfRaum = null;
+    slfAuswahl = new Set();
+    slfAuswahlOffen = false;
+    slfGesamt = {};
   }
 
   async function renderStadtLandFluss() {
@@ -20989,33 +21969,65 @@
       if (!ok) { area.innerHTML = '<p class="empty-note">Das Spiel konnte nicht geladen werden.</p>'; return; }
     }
 
-    if (!slfLauf) {
+    /* --- Übersicht: noch kein Raum offen --- */
+    if (!slfRaum) {
       await slfEinladungenLaden();
       area.innerHTML = slfStartHtml();
       document.getElementById("slfAllein")?.addEventListener("click", () => slfStartAllein());
-      document.getElementById("slfZuZweit")?.addEventListener("click", async () => {
-        slfAuswahlOffen = !slfAuswahlOffen;
-        if (slfAuswahlOffen) await slfFreundeLaden();
+      document.getElementById("slfRaumOeffnen")?.addEventListener("click", () => slfRaumOeffnen());
+      area.querySelectorAll("[data-slf-wen]").forEach((b) => b.addEventListener("click", () => {
+        const id = b.dataset.slfWen;
+        if (slfAuswahl.has(id)) slfAuswahl.delete(id); else slfAuswahl.add(id);
         renderStadtLandFluss();
-      });
-      area.querySelectorAll("[data-slf-wen]").forEach((b) =>
-        b.addEventListener("click", () => slfEinladen(b.dataset.slfWen, b.dataset.slfName)));
+      }));
+      document.getElementById("slfRaumStarten")?.addEventListener("click", () => slfEinladungenVerschicken());
       area.querySelectorAll("[data-slf-annehmen]").forEach((b) =>
         b.addEventListener("click", () => slfAnnehmen(b.dataset.slfAnnehmen)));
       return;
     }
-    if (slfLauf.phase === "countdown") { area.innerHTML = slfCountdownHtml(); return; }
-    if (slfLauf.phase === "warten") {
+
+    /* --- Warteraum --- */
+    if (slfRaum.phase === "warteraum") {
+      area.innerHTML = slfAuswahlOffen
+        ? `<div class="question-card"><p class="eyebrow">🚪 WARTERAUM ÖFFNEN</p>${slfAuswahlHtml()}
+             <button type="button" class="btn btn-ghost" id="slfRaumSchliessen" style="margin-top:10px;">Abbrechen</button></div>`
+        : slfWarteraumHtml();
+      area.querySelectorAll("[data-slf-wen]").forEach((b) => b.addEventListener("click", () => {
+        const id = b.dataset.slfWen;
+        if (slfAuswahl.has(id)) slfAuswahl.delete(id); else slfAuswahl.add(id);
+        renderStadtLandFluss();
+      }));
+      document.getElementById("slfRaumStarten")?.addEventListener("click", () => slfEinladungenVerschicken());
+      area.querySelectorAll("[data-slf-wahl]").forEach((b) => b.addEventListener("click", () => {
+        slfWahlmodus = b.dataset.slfWahl; renderStadtLandFluss();
+      }));
+      const feld = document.getElementById("slfBuchstabeFeld");
+      if (feld) feld.addEventListener("input", () => { slfEigenerBuchstabe = feld.value; });
+      document.getElementById("slfJetztStarten")?.addEventListener("click", () => slfRundeStarten(false));
+      document.getElementById("slfTrotzdem")?.addEventListener("click", () => slfRundeStarten(true));
+      document.getElementById("slfRaumSchliessen")?.addEventListener("click", () => { slfAufraeumen(); renderStadtLandFluss(); });
+      document.getElementById("slfRaumVerlassen")?.addEventListener("click", () => { slfAufraeumen(); renderStadtLandFluss(); });
+      return;
+    }
+
+    if (slfRaum.phase === "countdown") { area.innerHTML = slfCountdownHtml(); return; }
+
+    if (slfLauf && slfLauf.phase === "warten") {
       area.innerHTML = slfWartenHtml();
-      document.getElementById("slfAbbrechen")?.addEventListener("click", () => { slfUhrStoppen(); slfLauf = null; renderStadtLandFluss(); });
+      document.getElementById("slfAbbrechen")?.addEventListener("click", () => { slfAufraeumen(); renderStadtLandFluss(); });
       return;
     }
-    if (slfLauf.phase === "vergleich") {
+    if (slfLauf && slfLauf.phase === "vergleich") {
       area.innerHTML = slfVergleichHtml();
-      document.getElementById("slfNochmal")?.addEventListener("click", () => { slfUhrStoppen(); slfLauf = null; renderStadtLandFluss(); });
-      document.getElementById("slfAbbrechen")?.addEventListener("click", () => { slfUhrStoppen(); slfLauf = null; renderStadtLandFluss(); });
+      document.getElementById("slfNochmal")?.addEventListener("click", () => {
+        if (slfRaum && slfRaum.mitglieder.length > 1) { slfRundeStarten(true); return; }
+        slfStartAllein();
+      });
+      document.getElementById("slfAbbrechen")?.addEventListener("click", () => { slfAufraeumen(); renderStadtLandFluss(); });
       return;
     }
+    if (!slfLauf) { area.innerHTML = slfWarteraumHtml(); return; }
+
     // läuft
     const vorher = document.activeElement && document.activeElement.dataset
       ? document.activeElement.dataset.slfSpalte : null;
@@ -21027,177 +22039,101 @@
     });
     document.getElementById("slfFertig")?.addEventListener("click", () => slfAbgeben());
     if (vorher) {
-      const feld = area.querySelector(`[data-slf-spalte="${vorher}"]`);
-      if (feld) { feld.focus(); try { feld.setSelectionRange(pos, pos); } catch (e) {} }
+      const feld2 = area.querySelector(`[data-slf-spalte="${vorher}"]`);
+      if (feld2) { feld2.focus(); try { feld2.setSelectionRange(pos, pos); } catch (e) {} }
     }
-  }
-
-  function slfLosSpielen() {
-    slfLauf.phase = "laeuft";
-    Core.sound.correct();
-    renderStadtLandFluss();
-    slfUhrStoppen();
-    slfUhr = setInterval(() => {
-      if (!slfLauf || slfLauf.phase !== "laeuft") { slfUhrStoppen(); return; }
-      slfLauf.runde.sekunden -= 1;
-      if (slfLauf.runde.sekunden <= 0) { slfAbgeben(); return; }
-      // Nur die Uhr neu schreiben, nicht das ganze Blatt — sonst springt der Cursor.
-      const uhr = document.querySelector(".slf-uhr");
-      if (uhr) {
-        const m = Math.floor(slfLauf.runde.sekunden / 60), s = slfLauf.runde.sekunden % 60;
-        uhr.textContent = m + ":" + String(s).padStart(2, "0");
-        uhr.classList.toggle("slf-eilig", slfLauf.runde.sekunden <= 15);
-      }
-      const balken = document.querySelector("#stadtlandflussArea .quiz-progress-bar");
-      if (balken) balken.style.width = Math.round(((SLF_DAUER - slfLauf.runde.sekunden) / SLF_DAUER) * 100) + "%";
-      const zahl = document.querySelector("#stadtlandflussArea .runden-zahl");
-      if (zahl) zahl.textContent = (SLF_DAUER - slfLauf.runde.sekunden) + " / " + SLF_DAUER;
-    }, 1000);
-  }
-
-  function slfStartAllein() {
-    const z = slfZufallsrunde();
-    slfLauf = { modus: "allein", runde: slfNeueRunde(z.buchstabe, z.spalten), phase: "countdown", startAt: Date.now() + 3200 };
-    renderStadtLandFluss();
-    slfUhrStoppen();
-    slfUhr = setInterval(() => {
-      if (!slfLauf) { slfUhrStoppen(); return; }
-      if (Date.now() >= slfLauf.startAt) { slfUhrStoppen(); slfLosSpielen(); return; }
-      renderStadtLandFluss();
-    }, 250);
-  }
-
-  /* Die Auswahl der Person: dieselbe Darstellung wie bei der
-     Herausforderung — mit grünem Punkt für „gerade online", zum
-     Antippen. GEWÜNSCHT war ausdrücklich genau das. */
-  let slfFreunde = null;
-  let slfAuswahlOffen = false;
-  async function slfFreundeLaden() {
-    if (slfFreunde) return slfFreunde;
-    try { slfFreunde = await Backend.getFriends(); } catch (e) { slfFreunde = []; }
-    return slfFreunde;
-  }
-  function slfAuswahlHtml() {
-    if (!slfAuswahlOffen) return "";
-    const liste = slfFreunde || [];
-    if (!liste.length) {
-      return `<p class="empty-note" style="margin-top:10px;">Du hast noch niemanden in deiner Freundesliste. Unter „Profil → Freunde" kannst du jemanden hinzufügen.</p>`;
-    }
-    const online = liste.filter((f) => f.online);
-    const rest = liste.filter((f) => !f.online);
-    const pille = (f) => `<button type="button" class="challenge-friend-pill ${f.online ? "" : "offline"}" data-slf-wen="${f.id}" data-slf-name="${escapeHtml(f.name)}">
-        ${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${f.online ? "" : ' <span class="empty-note">(offline)</span>'}</button>`;
-    return `
-      <p class="eyebrow" style="margin-top:14px;">WEN LÄDST DU EIN?</p>
-      <p class="empty-note" style="margin-bottom:8px;">Antippen — die Person bekommt sofort die Einladung mit demselben Buchstaben und derselben Startzeit.</p>
-      <div class="challenge-friend-list">
-        ${online.map(pille).join("")}${rest.map(pille).join("")}
-      </div>`;
-  }
-
-  async function slfEinladen(wenId, wenName) {
-    const wen = { id: wenId, name: wenName };
-    const z = slfZufallsrunde();
-    const startAt = Date.now() + 25000;   // genug Zeit, um die Einladung zu öffnen
-    try {
-      await Backend.createChallenge(wen.id, ["stadtlandfluss"], {
-        spiel: "stadtlandfluss", buchstabe: z.buchstabe, spalten: z.spalten, startAt,
-      });
-    } catch (e) { showToast("Die Einladung ging nicht raus: " + (e.message || e)); return; }
-    slfAuswahlOffen = false;
-    showToast(`📨 Einladung an ${wen.name} — ihr startet beide in 25 Sekunden.`);
-    slfLauf = { modus: "duell", gegnerName: wen.name, runde: slfNeueRunde(z.buchstabe, z.spalten), phase: "countdown", startAt, challengeId: null };
-    // Die eigene Challenge-Kennung nachschlagen, damit das Ergebnis dorthin zurückgeht.
-    await slfEinladungenLaden();
-    const meins = slfOffeneEinladungen.find((c) => c.extra && c.extra.startAt === startAt);
-    if (meins) slfLauf.challengeId = meins.id;
-    renderStadtLandFluss();
-    slfUhrStoppen();
-    slfUhr = setInterval(() => {
-      if (!slfLauf) { slfUhrStoppen(); return; }
-      if (Date.now() >= slfLauf.startAt) { slfUhrStoppen(); slfLosSpielen(); return; }
-      renderStadtLandFluss();
-    }, 250);
-  }
-
-  async function slfAnnehmen(id) {
-    const c = slfOffeneEinladungen.find((x) => x.id === id);
-    if (!c) return;
-    const runde = slfNeueRunde(c.extra.buchstabe, c.extra.spalten);
-    /* Ist der gemeinsame Start schon vorbei (die Einladung wurde spät
-       geöffnet), läuft die Uhr ab dem Startzeitpunkt — dann hat man eben
-       weniger Zeit, genau wie am Tisch, wenn man später dazukommt. */
-    const vergangen = Math.max(0, Math.floor((Date.now() - c.extra.startAt) / 1000));
-    runde.sekunden = Math.max(20, SLF_DAUER - vergangen);
-    slfLauf = { modus: "duell", gegnerName: c.mitName, runde, challengeId: c.id,
-      phase: c.extra.startAt > Date.now() ? "countdown" : "laeuft", startAt: c.extra.startAt };
-    if (slfLauf.phase === "laeuft") { slfLosSpielen(); return; }
-    renderStadtLandFluss();
-    slfUhrStoppen();
-    slfUhr = setInterval(() => {
-      if (!slfLauf) { slfUhrStoppen(); return; }
-      if (Date.now() >= slfLauf.startAt) { slfUhrStoppen(); slfLosSpielen(); return; }
-      renderStadtLandFluss();
-    }, 250);
   }
 
   async function slfAbgeben() {
     if (!slfLauf || slfLauf.phase !== "laeuft") return;
-    slfUhrStoppen();
+    if (slfUhr) { clearInterval(slfUhr); slfUhr = null; }
     document.querySelectorAll("[data-slf-spalte]").forEach((el) => {
       slfLauf.runde.blatt[el.dataset.slfSpalte] = el.value;
     });
-    const meinName = (Backend.currentProfile() && Backend.currentProfile().name) || "Du";
+    const meinName = slfMeinName();
+    const ich = slfIch() || "ich";
 
-    if (slfLauf.modus === "allein") {
+    /* Allein gegen den Fuchs: sofort auswerten. */
+    if (!slfRaum || slfRaum.mitglieder.length <= 1) {
       const blaetter = [
         { name: meinName, blatt: slfLauf.runde.blatt },
-        { name: "🦊 Der Fuchs", blatt: slfFuchsblatt(slfLauf.runde) },
+        { name: "\u{1F98A} Der Fuchs", blatt: slfFuchsblatt(slfLauf.runde) },
       ];
       slfLauf.blaetter = blaetter;
       slfLauf.wertung = slfWerten(slfLauf.runde, blaetter);
       slfLauf.phase = "vergleich";
+      slfGesamtZaehlen(blaetter, slfLauf.wertung);
       slfPunkteBuchen();
+      if (slfRaum) slfRaum.phase = "vergleich";
       renderStadtLandFluss();
       return;
     }
 
-    // Zu zweit: abgeben und auf den anderen Zettel warten.
-    const eigene = slfLauf.runde.blatt;
-    const vorlaeufig = slfWerten(slfLauf.runde, [{ name: meinName, blatt: eigene }]);
+    /* Zu mehreren: den eigenen Zettel in den gemeinsamen Stand legen und
+       warten, bis alle abgegeben haben. Der Raumgeber f\u00fchrt zusammen. */
+    slfRaum.blaetter[ich] = { name: meinName, blatt: slfLauf.runde.blatt };
     try {
-      await Backend.submitChallengeResult(slfLauf.challengeId, {
-        percent: Math.min(100, Math.round((vorlaeufig.punkte[0] / (slfLauf.runde.spalten.length * 20)) * 100)),
-        points: vorlaeufig.punkte[0], blatt: eigene, name: meinName,
-      });
+      await slfAnAlleSchreiben({ blaetter: slfRaum.blaetter });
     } catch (e) { showToast("Der Zettel konnte nicht abgegeben werden."); }
     slfLauf.phase = "warten";
     renderStadtLandFluss();
-    slfPoller = setInterval(() => slfNachGegnerSehen(), 3000);
-    slfNachGegnerSehen();
+    if (slfPoller) clearInterval(slfPoller);
+    slfPoller = setInterval(() => slfAufAlleWarten(), 1400);
+    slfAufAlleWarten();
   }
 
-  async function slfNachGegnerSehen() {
-    if (!slfLauf || slfLauf.phase !== "warten") { slfUhrStoppen(); return; }
-    let c = null;
+  /* Sind alle Zettel da? Dann nebeneinanderlegen. Nach h\u00f6chstens
+     45 Sekunden wird ohne die Fehlenden ausgewertet \u2014 sonst h\u00e4ngt die
+     ganze Runde an einer Person, die das Telefon weggelegt hat. */
+  let slfWartenSeit = 0;
+  async function slfAufAlleWarten() {
+    if (!slfLauf || slfLauf.phase !== "warten" || !slfRaum) { if (slfPoller) { clearInterval(slfPoller); slfPoller = null; } return; }
+    if (!slfWartenSeit) slfWartenSeit = Date.now();
     try {
       const { incoming, outgoing } = await Backend.getMyChallenges();
-      c = [...incoming, ...outgoing].find((x) => x.id === slfLauf.challengeId);
-    } catch (e) { return; }
-    if (!c || !c.fromResult || !c.toResult) return;
-    slfUhrStoppen();
-    const meins = Backend.currentUser().id || Backend.currentUser().email;
-    const ichBinFrom = c.from === meins;
-    const meinE = ichBinFrom ? c.fromResult : c.toResult;
-    const seinE = ichBinFrom ? c.toResult : c.fromResult;
-    slfLauf.blaetter = [
-      { name: meinE.name || "Du", blatt: meinE.blatt || {} },
-      { name: seinE.name || slfLauf.gegnerName || "Gegner", blatt: seinE.blatt || {} },
-    ];
-    slfLauf.wertung = slfWerten(slfLauf.runde, slfLauf.blaetter);
+      const meine = [...incoming, ...outgoing].filter((c) => c.extra && c.extra.raum === slfRaum.id);
+      meine.forEach((c) => {
+        const b = (c.extra && c.extra.blaetter) || {};
+        Object.keys(b).forEach((k) => { if (!slfRaum.blaetter[k]) slfRaum.blaetter[k] = b[k]; });
+      });
+      if (slfRaum.host === slfIch()) await slfAnAlleSchreiben({ blaetter: slfRaum.blaetter });
+    } catch (e) { /* n\u00e4chster Takt */ }
+    const fehlen = slfRaum.mitglieder.filter((m) => !slfRaum.blaetter[m.id]);
+    const zuLang = Date.now() - slfWartenSeit > 45000;
+    if (fehlen.length && !zuLang) { renderStadtLandFluss(); return; }
+    if (slfPoller) { clearInterval(slfPoller); slfPoller = null; }
+    slfWartenSeit = 0;
+    slfVergleichZeigen();
+  }
+
+  function slfVergleichZeigen() {
+    if (!slfRaum) return;
+    /* Die eigene Person zuerst, damit man den eigenen Zettel sofort findet. */
+    const ich = slfIch() || "ich";
+    const reihe = [ich, ...slfRaum.mitglieder.map((m) => m.id).filter((x) => x !== ich)];
+    const blaetter = reihe
+      .filter((id) => slfRaum.blaetter[id])
+      .map((id) => ({ name: slfRaum.blaetter[id].name || (slfRaum.mitglieder.find((m) => m.id === id) || {}).name || "?",
+                      blatt: slfRaum.blaetter[id].blatt || {} }));
+    if (!blaetter.length) return;
+    if (!slfLauf) slfLauf = { runde: slfNeueRunde(slfRaum.buchstabe, slfRaum.spalten) };
+    slfLauf.blaetter = blaetter;
+    slfLauf.wertung = slfWerten(slfLauf.runde, blaetter);
     slfLauf.phase = "vergleich";
+    slfRaum.phase = "vergleich";
+    slfGesamtZaehlen(blaetter, slfLauf.wertung);
     slfPunkteBuchen();
+    if (slfPoller) { clearInterval(slfPoller); slfPoller = null; }
+    slfPollenStarten(false);   // weiter horchen: der Raumgeber kann eine neue Runde starten
     renderStadtLandFluss();
+  }
+
+  /* Der Punktestand \u00fcber mehrere Runden \u2014 damit ein Abend Stadt \u00b7 Land \u00b7
+     Fluss auch wie ein Abend z\u00e4hlt und nicht wie f\u00fcnf einzelne Runden. */
+  function slfGesamtZaehlen(blaetter, wertung) {
+    blaetter.forEach((b, i) => {
+      slfGesamt[b.name] = (slfGesamt[b.name] || 0) + (wertung.punkte[i] || 0);
+    });
   }
 
   function slfPunkteBuchen() {
@@ -26055,6 +26991,9 @@
     const istBeta = Boolean(Backend.isBetaTester && Backend.isBetaTester());
     const canSeeGatedGames = (Backend.canModerate && Backend.canModerate()) || istBeta;
     const gesperrte = GAMES_OVERVIEW_LIST.filter((g) => g.flagKey && !Backend.getRawFeatureFlag(g.flagKey));
+    /* Ausdrücklich für EINZELNE Spiele eingeladen — ohne Rundum-Rolle. */
+    const einzelBeta = (Backend.canModerate && Backend.canModerate()) || istBeta ? [] :
+      GAMES_OVERVIEW_LIST.filter((g) => g.flagKey && Backend.istBetaFuerSpiel && Backend.istBetaFuerSpiel(g.flagKey));
     /* Ein zurückgezogenes Spiel (Schalter ausdrücklich auf „aus") bleibt
        in der Liste stehen — als Baustelle. Vorher verschwand es
        spurlos, und wer es kannte, hielt es für gelöscht. Ein Spiel, das
@@ -26067,12 +27006,14 @@
     const nurDeutsch = itRaum
       ? GAMES_OVERVIEW_LIST
           .filter((g) => !IT_SPIELBAR.has(g.sub))
-          .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames)
+          .filter((g) => spielSichtbar(g.sub))
           .map((g) => g.name).sort((a, b) => a.localeCompare(b, "de"))
       : [];
     const visibleGames = GAMES_OVERVIEW_LIST
       .filter((g) => !itRaum || IT_SPIELBAR.has(g.sub))
-      .filter((g) => !g.flagKey || Backend.isFeatureOn(g.flagKey) || canSeeGatedGames || inReparatur(g))
+      // Eine Regel für die ganze Seite (siehe spielSichtbar): nie freigegeben = unsichtbar,
+      // zurückgezogen = Baustelle, freigegeben oder für mich eingeladen = normal.
+      .filter((g) => spielSichtbar(g.sub))
       // Verlässlich alphabetisch sortieren (mit deutschen Umlauten korrekt einsortiert),
       // statt sich auf die Reihenfolge im Quelltext zu verlassen — die geriet beim
       // Nachtragen neuer Spiele immer wieder durcheinander.
@@ -26103,6 +27044,11 @@
           <p class="empty-note" style="margin:6px 0 0;">Diese Spiele üben etwas, das es nur im Deutschen gibt — Großschreibung mitten im Satz, Umlaute, zusammengesetzte Wörter, ß, Wechselpräpositionen, deutsche Zahlwörter, Mundarten. Auf Italienisch umgeschaltet würden sie deutsche Inhalte unter italienischer Aufschrift zeigen. Sie warten im Deutsch-Raum auf dich: ${nurDeutsch.join(", ")}.</p>
         </details>` : ""}
       </div>` : `<p class="empty-note" style="margin-bottom:14px;">Alle Spiele an einem Ort — antippen zum Loslegen.</p>`}
+      ${einzelBeta.length ? `<div class="beta-hinweis">
+        <strong>🧪 Du testest mit.</strong>
+        ${einzelBeta.length === 1 ? "Ein Spiel ist" : einzelBeta.length + " Spiele sind"} nur für dich freigeschaltet, für alle anderen noch nicht: ${einzelBeta.map((g) => g.name).join(", ")}.
+        Wenn dort etwas nicht stimmt, nutze bitte den Fehler-Knopf im Spiel — die Meldung kommt mit dem aktuellen Spielstand direkt an.
+      </div>` : ""}
       ${istBeta && gesperrte.length ? `<div class="beta-hinweis">
         <strong>🧪 Du bist Beta-Tester:in.</strong>
         Deshalb siehst du hier auch ${gesperrte.length} ${gesperrte.length === 1 ? "Spiel" : "Spiele"}, die für alle anderen noch nicht freigegeben sind:
@@ -27931,10 +28877,25 @@
     return sprachenGeladen;
   }
 
+  /* Die gemeinsame Bildebene — einmal je Sitzung geholt. */
+  let globaleBilderGeholt = false;
+  async function globaleBilderLaden() {
+    if (globaleBilderGeholt || typeof Bildverwaltung === "undefined") return;
+    globaleBilderGeholt = true;
+    try {
+      const karte = await Backend.getSiteContent("bilder_global");
+      if (karte && typeof karte === "object") {
+        Bildverwaltung.globalSetzen(karte);
+        if (typeof renderBilderwelt === "function" && document.getElementById("bilderweltArea")) renderBilderwelt();
+      }
+    } catch (e) { /* ohne gemeinsame Bilder bleibt alles gezeichnet */ }
+  }
   function szenenLaden() {
     /* Die eigenen Bilder aus der Bildverwaltung gleich mitholen — sie
-       müssen dasein, bevor das erste Bild gezeichnet wird. */
+       müssen dasein, bevor das erste Bild gezeichnet wird. Dazu die
+       gemeinsame Ebene, die Alex für alle festgelegt hat. */
     if (typeof Bildverwaltung !== "undefined") Bildverwaltung.laden();
+    globaleBilderLaden();
     wortSprachenLaden();
     if (szenenGeladen) return szenenGeladen;
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
@@ -28138,10 +29099,17 @@
                      aria-label="${escapeHtml(bwWort(t))}">
                     <title>${escapeHtml(bwWort(t))}</title>
                     <g class="bw-kunst">${t.kunst}</g>
-                    ${t.lupe ? `<g class="bw-lupenmarke" aria-hidden="true">
-                       <circle cx="15" cy="-15" r="6.5" fill="rgba(255,253,246,0.92)" stroke="#8a5f2a" stroke-width="1.6"/>
-                       <circle cx="14" cy="-16" r="3.4" fill="none" stroke="#8a5f2a" stroke-width="1.3"/>
-                       <line x1="16.4" y1="-13.6" x2="19" y2="-11" stroke="#8a5f2a" stroke-width="1.8" stroke-linecap="round"/>
+                    ${t.lupe ? `<g class="bw-lupenmarke" role="button" tabindex="0"
+                       data-bw-lupe-sofort="${t.lupe}"
+                       aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
+                       <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
+                       ${/* Ein größerer, unsichtbarer Ring als Tippfläche — auf einem
+                            Telefon trifft man 10 Pixel sonst nicht. */ ""}
+                       <circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/>
+                       <circle class="bw-lupen-puls" cx="16" cy="-16" r="10" fill="none" stroke="#f2b84b" stroke-width="2"/>
+                       <circle cx="16" cy="-16" r="8.5" fill="rgba(255,253,246,0.96)" stroke="#8a5f2a" stroke-width="2"/>
+                       <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
+                       <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
                      </g>` : ""}
                     ${eigenesBild
                       ? `<image class="bw-eigenbild" href="${eigenesBild}" x="-22" y="-22"
@@ -28194,6 +29162,11 @@
     return `<p class="bw-spur">🔍 ${kette.map((t) => escapeHtml(t)).join(" › ")} › <strong>${escapeHtml(bwSzene.titel)}</strong></p>`;
   }
 
+  /* Wie viele Lupen stecken in diesem Bild? Steht im Hinweis darüber,
+     damit niemand sie überliest. */
+  function bwLupenZahl(szene) {
+    return (szene.teile || []).filter((t) => t.lupe && szeneMitId(t.lupe)).length;
+  }
   function bwSzeneZeichnen(area) {
     const s = bwSzene;
     const treffer = bwRunde ? new Set(bwRunde.getroffen) : new Set();
@@ -28214,6 +29187,15 @@
         </div>
         ${bwModus === "entdecken" ? `
           <p class="empty-note bw-hinweis">Tippe auf die Dinge im Bild — ${bwEntdeckt.size} von ${s.teile.length} entdeckt.</p>
+          ${/* GEMELDET: „Man kommt gar nicht darauf, dass man die
+                Teilbereiche anklicken kann." Deshalb steht hier jetzt
+                ausdrücklich, was die blinkenden Lupen bedeuten — und wie
+                viele es in diesem Bild sind. */ ""}
+          ${bwLupenZahl(s) ? `<p class="bw-lupenhinweis">🔍 ${bwLupenZahl(s) === 1
+              ? "In diesem Bild blinkt eine Lupe. Tipp direkt darauf — dann gehst du hinein und siehst die Einzelteile."
+              : `In diesem Bild blinken ${bwLupenZahl(s)} Lupen. Tipp direkt auf eine — dann gehst du hinein und siehst die Einzelteile.`}
+            <span class="bw-lupenliste">${s.teile.filter((t) => t.lupe && szeneMitId(t.lupe))
+              .map((t) => `<button type="button" class="bw-lupenchip" data-bw-lupe="${t.lupe}">🔍 ${escapeHtml(bwArtikelTrennen(bwWort(t)).rest)}</button>`).join("")}</span></p>` : ""}
           <div class="bw-fortschritt"><div class="bw-fortschritt-balken" style="width:${Math.round(100 * bwEntdeckt.size / s.teile.length)}%"></div></div>
         ` : aufgabe ? `
           <p class="bw-auftrag">${bwModus === "finden"
@@ -28297,6 +29279,22 @@
       e.stopPropagation();
       bwDetailOeffnen(b.dataset.bwLupe);
     }));
+    /* GEWÜNSCHT: „dass in dem Moment, wenn man auf die Lupe klickt, nicht
+       erst ’ne Erklärung kommt, sondern dass es durch den Klick auf die
+       Lupe im Bild schon in diesen Bereich reingeht."
+       Also: die Lupe IM BILD führt unmittelbar hinein. Das Antippen des
+       Dings selbst zeigt weiterhin erst die Wortkarte — beides
+       nebeneinander, jedes mit seiner eigenen Aufgabe. */
+    area.querySelectorAll("[data-bw-lupe-sofort]").forEach((g) => {
+      const hinein = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        Core.sound.click?.();
+        bwDetailOeffnen(g.dataset.bwLupeSofort);
+      };
+      g.addEventListener("click", hinein);
+      g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") hinein(e); });
+    });
     area.querySelectorAll("[data-bw-modus]").forEach((b) => b.addEventListener("click", () => {
       bwModus = b.dataset.bwModus;
       bwGewaehlt = null;
@@ -28602,11 +29600,31 @@
     lernwegMerken(schluessel, Math.round(prozent));
   }
 
+  /* ============================================================
+     IST DIESES SPIEL FÜR MICH ÜBERHAUPT DA?
+     ------------------------------------------------------------
+     Eine einzige Regel für die ganze Seite. Ein Spiel, das noch nie
+     freigegeben war, taucht nirgends auf — nicht in der Spieleliste,
+     nicht im Lernweg, nirgends. Ein Spiel, das freigegeben WAR und
+     zurückgezogen wurde, bleibt sichtbar und zeigt die Baustelle:
+     wer es kannte, soll nicht denken, es sei gelöscht.
+     ============================================================ */
+  function spielSichtbar(sub) {
+    const eintrag = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
+    if (!eintrag || !eintrag.flagKey) return true;
+    if (Backend.isFeatureOn(eintrag.flagKey)) return true;               // frei, oder ich bin eingeladen
+    if (Backend.canModerate && Backend.canModerate()) return true;       // Betreiber:in
+    if (Backend.getRawFeatureFlagValue(eintrag.flagKey) === false) return true; // Baustelle
+    return false;
+  }
+  function lernwegSchritte(modul) {
+    return (modul.schritte || []).filter((s) => s.art !== "spiel" || spielSichtbar(s.ziel));
+  }
   function lernwegSchrittFertig(stand, schritt) {
     return (stand[schritt.art + ":" + schritt.ziel] || 0) >= LERNWEG_SCHWELLE;
   }
   function lernwegModulStand(stand, modul) {
-    const schritte = modul.schritte || [];
+    const schritte = lernwegSchritte(modul);
     const fertig = schritte.filter((s) => lernwegSchrittFertig(stand, s)).length;
     return { fertig, gesamt: schritte.length, ganz: schritte.length > 0 && fertig === schritte.length };
   }
@@ -28731,7 +29749,7 @@
               <p class="lernweg-titel">${m.icon} ${escapeHtml(m.titel)}</p>
               <p class="empty-note" style="margin:2px 0 8px;">${escapeHtml(m.text)}</p>
               <div class="lernweg-schritte">
-                ${(m.schritte || []).map((s, j) => {
+                ${lernwegSchritte(m).map((s, j) => {
                   const fertig = lernwegSchrittFertig(stand, s);
                   const wert = stand[s.art + ":" + s.ziel];
                   return `<button type="button" class="lernweg-schritt ${fertig ? "lernweg-schritt-fertig" : ""}"
@@ -28755,12 +29773,14 @@
     document.getElementById("lernwegWeiter")?.addEventListener("click", () => {
       const m = lernwegNaechstes(lernwegStand());
       if (!m) return;
-      const offen = (m.schritte || []).find((s) => !lernwegSchrittFertig(lernwegStand(), s));
+      const offen = lernwegSchritte(m).find((s) => !lernwegSchrittFertig(lernwegStand(), s));
       if (offen) lernwegSchrittOeffnen(offen);
     });
     area.querySelectorAll("[data-lw-schritt]").forEach((b) => b.addEventListener("click", () => {
       const m = lernwegAlleModule().find((x) => x.id === b.dataset.lwModul);
-      const s = m && (m.schritte || [])[Number(b.dataset.lwSchritt)];
+      // WICHTIG: dieselbe gefilterte Liste wie beim Zeichnen — sonst zeigt der
+      // Index auf einen anderen Schritt, sobald ein Spiel ausgeblendet ist.
+      const s = m && lernwegSchritte(m)[Number(b.dataset.lwSchritt)];
       if (s) lernwegSchrittOeffnen(s);
     }));
   }
@@ -28840,26 +29860,36 @@
        liefe bei der eingeladenen Person ins Leere. */
     const eintrag = GAMES_OVERVIEW_LIST.find((g) => g.sub === sub);
     const nochNichtDraussen = eintrag && eintrag.flagKey && !Backend.getRawFeatureFlag(eintrag.flagKey);
-    if (nochNichtDraussen) {
-      if (!kasten) {
-        kasten = document.createElement("div");
-        kasten.className = "spiel-einladung";
-        const zeile = bereich.querySelector(".spiel-beschreibung");
-        if (zeile && zeile.nextSibling) bereich.insertBefore(kasten, zeile.nextSibling);
-        else bereich.insertBefore(kasten, bereich.firstChild);
-      }
-      kasten.innerHTML = `<p class="empty-note" style="font-size:0.78rem; margin:0;">🔒 Solange dieses Spiel nicht freigegeben ist, kannst du niemanden dazu einladen — bei den anderen wäre es nicht zu öffnen.</p>`;
-      return;
-    }
+    /* WICHTIG: der Kasten bekommt IMMER seine Kennung. Vorher blieb sie im
+       Sperr-Zweig leer — und sobald das Spiel dann freigegeben wurde, fand
+       renderMiniChallengeBarCached() den Kasten nie wieder (getElementById("")
+       ist null) und die Einladung blieb bis zum Neuladen der Seite stumm. */
     if (!kasten) {
       kasten = document.createElement("div");
       kasten.className = "spiel-einladung";
-      kasten.id = "spielEinladung-" + key;
       const zeile = bereich.querySelector(".spiel-beschreibung");
       if (zeile && zeile.nextSibling) bereich.insertBefore(kasten, zeile.nextSibling);
       else bereich.insertBefore(kasten, bereich.firstChild);
     }
-    renderMiniChallengeBarCached(key, key, kasten.id, bereich, () => {});
+    kasten.id = "spielEinladung-" + key;
+    if (nochNichtDraussen) {
+      /* Noch nicht freigegeben: normale Mitglieder könnten hier niemanden
+         einladen — bei den Eingeladenen wäre das Spiel ja zu. Betreiber:innen
+         dagegen bekommen genau hier den Weg, einzelne Leute AUSDRÜCKLICH FÜR
+         DIESES SPIEL zum Beta-Testen einzuladen. */
+      if (Backend.canModerate && Backend.canModerate() && eintrag.flagKey) {
+        kasten.innerHTML = betaSpielEinladungHtml(eintrag.flagKey, eintrag.name || key);
+        betaSpielEinladungBinden(kasten, eintrag.flagKey, eintrag.name || key);
+      } else {
+        kasten.innerHTML = `<p class="empty-note" style="font-size:0.78rem; margin:0;">🔒 Solange dieses Spiel nicht freigegeben ist, kannst du niemanden dazu einladen — bei den anderen wäre es nicht zu öffnen.</p>`;
+      }
+      return;
+    }
+    /* Der Rerender-Rückruf war hier früher eine leere Funktion. Dadurch
+       merkte sich das Aufklappen den neuen Zustand zwar, zeichnete ihn aber
+       nie — der Knopf „Optional: Freunde herausfordern" tat also sichtbar
+       gar nichts. Jetzt zeichnet er den Kasten wirklich neu. */
+    renderMiniChallengeBarCached(key, key, kasten.id, kasten, () => spielEinladungEinsetzen(sub));
   }
 
   function spielTitelEinsetzen(sub) {
@@ -35050,7 +36080,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "166";
+  const APP_VERSION = "167";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -35060,6 +36090,23 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "167": [
+      "🗣️ **Betonung ohne Knopf.** Der kleine Buchstabe oben in der Kopfzeile ist weg. Stattdessen genügt ein Tippen mitten in einen Textkasten: dann stehen dort die Punkte und Striche, die sagen, welche Silbe betont wird und ob der Vokal lang oder kurz ist. Noch einmal tippen, und sie sind wieder weg.",
+      "🔍 **Die Lupe führt sofort hinein.** In vielen Bildern blinken jetzt Lupen. Tippst du eine an, gehst du unmittelbar in den Bereich hinein — keine Erklärung davor. Fünf neue Nahaufnahmen sind dazugekommen: das Bett mit Bettdecke, Bettlaken, Bettbezug und Lattenrost, das Fenster mit Rahmen, Scheibe, Griff und Rollo, die Tür mit Klinke, Schloss und Scharnier, der Schuh mit Sohle, Schnürsenkel und Öse und der Baum mit Rinde, Ast, Knospe und Jahresring. Über der Zeichnung steht, wie viele Lupen dieses Bild hat.",
+      "🧍 **Der Mensch ist neu gezeichnet.** Die Figur im Körper-Bild war aus dicken Strichen gebaut — die Hände Kreise, die Füße Stummel. Jetzt stimmen die Maße: eine Hand mit fünf Fingern und gegenüberstehendem Daumen, ein Fuß mit Ferse, Gewölbe und fünf Zehen, ein Kopf mit Schädel, Kiefer und Kinn. Die Markierungen im Gesicht liegen jetzt daneben und zeigen mit einer feinen Linie auf Auge, Nase, Mund und Ohr — vorher deckten sie das halbe Gesicht zu.",
+      "🐎 **Pferd und Kuh sehen aus wie Pferd und Kuh.** Beide sind vom Umriss her neu gebaut: Kruppe, Widerrist, Mähne, Schweif, Hufe — und bei der Kuh Flecken, Hörner und Flotzmaul.",
+      "📖 **Das Buch biegt sich nicht mehr nach außen.** Beim aufgeschlagenen Buch lagen die Seiten am Bund höher als außen — genau andersherum, als ein Buch liegt. Jetzt fallen sie zum Bund hin ab, mit Einband, Seitenstapel und Bundrinne. Auch die kleinen Bücher in den Zimmern sind richtige Bücher geworden.",
+      "🏙️ **Stadt · Land · Fluss zu mehreren.** Es gibt jetzt einen Warteraum: Du lädst mehrere Leute ein und siehst, wer schon da ist. Erst wenn alle da sind, läuft ein gemeinsamer Countdown — auf allen Geräten derselbe, mit derselben Uhr und derselben Frist. Vor jeder weiteren Runde zählen drei Sekunden herunter. Den Buchstaben würfelt entweder der Rechner, oder ihr legt ihn selbst fest.",
+      "🌧️ **Es regnet wirklich.** Meldet das Wetteramt Regen oder Schnee, fällt es im Streifen oben auch. Und beim Übergang zwischen Tag und Nacht sind Uhr und Temperatur wieder klar zu lesen — dort lag der Kontrast vorher bei 1,3 zu 1, jetzt nie unter 4,2 zu 1, ohne dass Uhr oder Wettersymbol einen Kasten bekommen hätten.",
+      "📡 **Live-Anzeige.** Wenn Alex gerade irgendwo live spricht, blinkt oben neben dem Auge ein Sende-Zeichen in der Farbe der App — und in der Laufschrift steht eine Zeile dazu. Antippen sagt, wo.",
+      "🎮 **Der Einladen-Knopf tut wieder etwas.** „Optional: Freunde herausfordern“ ließ sich antippen, ohne dass sich etwas öffnete. Das ist behoben. Außerdem kann man jetzt gezielt für EIN bestimmtes Spiel zum Mittesten eingeladen werden — man sieht dann nur dieses Spiel, sonst nichts.",
+      "📖 **335 neue Wörter im Wörterbuch** — diesmal die kleinen: am, im, beim, zum, zur, dieser/diese/dieses in allen Formen, die da-Wörter von darin bis dazwischen, hundert Formen von sein, haben, werden und den Modalverben. Dazu neunzig Vornamen mit ihrer Herkunft und die Einrichtungen, von denen die Tagestexte handeln.",
+      "📱 **Besser lesbar auf dem Telefon.** In dreizehn Designs war die Schrift auf hellen Knöpfen praktisch unsichtbar — bis hinunter zu 1,02 zu 1. Das lag nicht am Gerät, sondern an zwei Farbwerten, die in diesen Designs fast gleich hell sind. Behoben. Und der Betonungs-Schalter setzt sich nicht mehr von selbst über jede Seite — dadurch verschob sich vor allem in den Einstellungen alles nach unten.",
+      "🌐 **Bilder für alle.** Was Alex in der Bildverwaltung für alle festlegt, sieht jede:r. Wer mag, legt sein eigenes Bild darüber — dann gilt bei ihm seines. Nimmt man es wieder heraus, kommt die gemeinsame Fassung zurück, und darunter liegt immer noch die Zeichnung.",
+      "🌍 **Kleine Übersetzungen unter den Beispielwörtern** im Aussprache-Kurs — in der Sprache, die im Profil steht, in kleiner Schrift, eine Zeile.",
+      "🚧 **Was noch nicht fertig ist, steht nicht mehr in der Liste.** Spiele, die es noch nie gab, tauchen gar nicht erst auf. Nur was schon einmal offen war und gerade überarbeitet wird, bleibt stehen — mit einem Baustellen-Hinweis.",
+    ],
+
     "165": [
       "🖼️ **Die Bilderwelt ist fast doppelt so groß.** Siebzehn neue Bilder sind dazugekommen: Süßigkeiten und Snacks, Getränke, die Waschküche, Küchengeräte, Pflege und Hygiene, Technik und Energie, Schulsachen, Fahrzeuge und Verkehr, Spielzeug, der Strand, Sport und Hobbys, Rom mit seinen Wundern, berühmte Städte der Welt, Tiere aus aller Welt, der Wald, das Büro und Materialien mit Pfand und Mülltrennung. Insgesamt 36 Bilder und 594 Dinge zum Antippen — jedes mit Artikel, Betonung, italienischem Wort und Ton.",
       "★ **Wörter sammeln, wo du sie findest.** Auf jeder Wortkarte in der Bilderwelt steht jetzt ein Stern. Damit wandert das Wort in deinen Wortschatz — denselben, mit dem der Aussprache-Trainer, der Betonungs-Trainer und die Wortspiele üben.",
@@ -35276,6 +36323,22 @@ An einem Morgen lief ein kleiner Fuchs los…
      dürfen.
      ============================================================ */
   const APP_CHANGELOG_INTERN = {
+    "167": [
+      "\U0001f3ae **Einladung.** Zwei echte Fehler: (1) renderMiniChallengeBarCached() bekam von spielEinladungEinsetzen() eine LEERE Rerender-Funktion — das Aufklappen merkte sich den Zustand, zeichnete ihn nie. (2) Im Sperr-Zweig bekam der Kasten keine id; nach einer Freigabe fand getElementById(\"\") den Kasten nie wieder. Beides behoben, container ist jetzt der Kasten selbst statt der ganzen Unteransicht.",
+      "\U0001f9ea **Beta je Spiel.** Neu in backend.js: updateChallengeExtra(), betaListeFuerSpiel(), istBetaFuerSpiel(), setBetaFuerSpiel(), istBetaFuerIrgendeinSpiel(). Gespeichert unter feature_flags[\"beta:<flagKey>\"] als Liste von Konto-Kennungen — keine neue Tabelle, keine neue Rechteregel. isFeatureOn() prueft die Liste mit.",
+      "\U0001f512 **spielSichtbar(sub)** als EINE Regel fuer die ganze Seite: nie freigegeben = unsichtbar, zurueckgezogen = Baustelle, freigegeben/eingeladen = normal. Verwendet in renderGamesOverview() und im Lernweg (lernwegSchritte filtert Spiel-Schritte heraus; der Klick-Index benutzt dieselbe gefilterte Liste, sonst zeigte er auf einen anderen Schritt).",
+      "\U0001f5e3\ufe0f **Betonung.** #stressToggleBtn aus index.html entfernt. Neu: betonungTippen() als globaler Klick-Handler auf .question-card/.sammel-text/.kal-karte/.lesetext; ausgenommen sind Knoepfe, Links, Felder, .sammel-wort und laufende Textauswahl. betonungsSchalterEinhaengen() setzt die Leiste nur noch in Ansichten MIT .sammel-text und nur, wenn nicht schon eine .lese-betonung-knopf drin steht — vorher stand sie in jeder Unteransicht ueber 40 Zeichen, auch in den Einstellungen, und schob dort alles um ~90px nach unten.",
+      "\U0001f4e1 **Live.** LIVE_PLATTFORMEN, liveStandLaden/Setzen, liveZeichenZeichnen, liveTickerHtml, tickerNeuErzwingen. Gespeichert in site_content[\"live_status\"]. Der Ticker setzt jetzt innerHTML statt textContent — Aktivitaetstexte werden dabei escapeHtml()-behandelt, und der reine Meldungstext wird in dataset.basisText gemerkt, sonst stuende die Live-Zeile beim naechsten Takt doppelt da.",
+      "\U0001f3d9\ufe0f **Stadt-Land-Fluss.** Kompletter Umbau auf Warteraum (slfRaum) statt 1:1-Duell. Kein absoluter Zeitstempel mehr: verschickt wird startIn (ms ab jetzt) plus eine Rundennummer (stand); jedes Geraet startet seine Uhr, wenn es eine NEUE Nummer zum ersten Mal sieht. Abfragetakt waehrend des Countdowns 340 ms, sonst 1100 ms. Die Restzeit kommt aus der Frist (endeUm), nicht aus einem Herunterzaehlen — ein verschluckter Takt verschiebt sonst die ganze Runde. Nach 45 s Warten auf fehlende Zettel wird ohne sie ausgewertet.",
+      "\U0001f3a8 **Grafik.** Neue Module scratchpad/mensch_kit.py, tier_kit.py, buch_kit.py. Technik: umriss() zeichnet dieselben Formen zweimal — einmal dick in der Randfarbe, einmal gefuellt ohne Kontur; daraus entsteht die Silhouette der Vereinigung. glied() statt kapsel() fuer Finger und Beine, weil eine breitere Kapsel unter einer schmaleren ihre Kontur seitlich als hellen Ring stehen liess. Fingerluecken muessen breiter als die doppelte Konturstaerke sein, sonst laufen die Konturen zu dunklen Keilen zusammen. mensch_kit.figur_punkte() liefert die Markierungspunkte aus DENSELBEN Massen, aus denen figur() zeichnet.",
+      "\U0001f50d **Lupen 10 -> 27**, Detailszenen 7 -> 12 (szenen_h.py: bett, fenster, tuer, schuh, baum). Die Lupenmarke ist jetzt selbst anklickbar (data-bw-lupe-sofort, stopPropagation) mit eigener unsichtbarer Trefferflaeche r=15 und pulsierendem Ring.",
+      "\U0001f327\ufe0f **Kopfstreifen.** updateDaytimeSky(): die Schriftfarbe wird nicht mehr linear von 20 nach 245 interpoliert (das lief mitten durch Grau und traf in der Daemmerung auf mittelhellen Himmel — gemessen 1,34:1), sondern aus der relativen Helligkeit des Grundes bestimmt; dazu ein text-shadow-Saum in der Gegenfarbe, dessen Staerke aus dem Kontrastabstand kommt. Die 19-Uhr-Stuetzstelle wurde vertieft. Gemessen ueber 288 Tagesminuten: Minimum jetzt 4,21:1. Neu: WETTER_NIEDERSCHLAG, niederschlagZeichnen(), niederschlagAnpassen().",
+      "\U0001f4d6 **Woerterbuch.** vokabeln/teil-7.js (335 Eintraege) schreibt in window.DMA_VOKABELN_ZUSATZ, NICHT in DMA_VOKABELN — die Teile 1-6 SETZEN ihr Thema, je nach Ladereihenfolge waere der Nachtrag sonst sofort wieder weg. data-vocab.js: themaDateien() statt themaDatei(), dateiLaden() mit Einmal-Sperre, themaEinfuegen() mischt den Zusatztopf dazu. grundformKandidaten() kennt jetzt trennbare Vorsilben (angewendet -> anwenden) und zu-Infinitive (anzuwenden -> anwenden). Gemessen an 366 Kalendertagen: 7.363 -> 7.669 von 11.286 verschiedenen Woertern gefunden. Es fehlen noch 3.617 — das ist ein Anfang, nicht das Ende.",
+      "\U0001f4f1 **Lesbarkeit.** .btn-ghost hatte fest background:var(--plum-700) und color:var(--cream-50); in 13 Designs sind beide fast gleich hell (sternenstaubneon 1,02:1). Jetzt neutrale Toenung rgba(128,128,128,.14) plus Rand — die Helligkeit des Untergrunds bleibt, die Kartenschrift bleibt lesbar. Gemessen ueber 67 Designs x 12 Bereiche: Faelle unter 3:1 von 1410 auf 1257, .btn und .baustein-de komplett weg. Ein Versuch, auch .empty-note und .eyebrow auf color-mix umzustellen, machte es MESSBAR schlechter (1840) und wurde zurueckgenommen.",
+      "\U0001f310 **Bilder global.** bildverwaltung.js kennt jetzt zwei Ebenen: cache (IndexedDB, eigenes Geraet) schlaegt global (site_content[\"bilder_global\"]). Neu: globalSetzen/globalKarte/hatGlobal/hatEigenes/herkunft/anzahlEigene/anzahlGlobal. Grenze 3,5 MB fuer die gemeinsame Ebene.",
+      "\U0001f1ee\U0001f1f9 **Italienisch.** Der Sprachumschalter im Aussprache-Kurs haengt jetzt an darfItalienischraum(); die beiden italienischen Felder zaehlen in der Einstellungs-Uebersicht nur noch fuer Freigeschaltete mit.",
+      "\U0001f30d **kleineUebersetzung()/kleineSatzHilfeHtml()** bauen die Zeile aus DMA_WORTSPRACHEN (8 Sprachen) und faellt auf die englische Bedeutung aus dem Woerterbuch zurueck — dafuer traegt buildDictionaryEntries() jetzt das Feld en mit. wortSprachenLaden() wird auch beim Aussprache-Kurs angestossen.",
+    ],
     "165": [
       "🖼️ **Bilderwelt auf 36 Szenen / 594 Teile (539 kB).** Neu: szenen_e.py (suessigkeiten, getraenke, waschkueche, kuechengeraete, pflege, technik, schulsachen) und szenen_f.py (fahrzeuge, spielzeug, strand, sport, rom, weltstaedte, tiere_welt, wald, buero, materialien) mit den Hilfen _regalkulisse/_tuete/_flasche bzw. gitter()/tafel_kulisse()/bauen(). Gemessen: 798 SVG-Pfade ohne fehlerhafte Argumentzahl (pfadcheck.js), 0 Teile ausserhalb des Rahmens, beide Spielarten laufen durch, 0 Seitenfehler. Ein Teil (technik/kopfhoerer) lag ueber den Rand hinaus und wurde versetzt.",
       "👆 **Trefferflaechen.** Playwright konnte Teile nicht anklicken, deren Bounding-Box-Mitte leer ist (Tisch zwischen den Beinen) — auf dem Telefon derselbe Effekt. bwBinden() legt jetzt eine eigene Ebene .bw-treffer-ebene direkt hinter die Teile, mit einem transparenten Rechteck je Teil. Weil sie UNTER den Zeichnungen liegt, gewinnt immer das sichtbare Ding; die Flaeche faengt nur, was daneben geht.",
@@ -35397,6 +36460,22 @@ An einem Morgen lief ein kleiner Fuchs los…
     window.__wortQuellePruef = (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word);
     window.__betonungFehlt = () => [...betonungFehlt].sort();
     window.__dmaOeffentlich = () => oeffentlicheNeuigkeiten();
+    window.__kleineUebers = (w) => kleineUebersetzung(w);
+    window.__wortNach = (w) => { const t = wortNachschlagen(w); return t ? { word: t.word, en: t.en } : null; };
+    window.__spielSichtbar = (sub) => spielSichtbar(sub);
+    /* Prüfhaken für den Kopfstreifen: Uhrzeit vorgeben und den
+       ausgerechneten Kontrast zurückgeben — damit sich beweisen lässt,
+       dass die Schrift zu JEDER Minute des Tages lesbar ist. */
+    window.__himmelPruefen = (minuten) => {
+      updateDaytimeSky(minuten);
+      const l1 = relativeHelligkeit(himmelZuletzt.grund);
+      const l2 = relativeHelligkeit([himmelZuletzt.tinte, himmelZuletzt.tinte, himmelZuletzt.tinte]);
+      const hoch = Math.max(l1, l2), tief = Math.min(l1, l2);
+      return { minuten, grund: himmelZuletzt.grund, tinte: himmelZuletzt.tinte,
+               kontrast: Number(((hoch + 0.05) / (tief + 0.05)).toFixed(2)) };
+    };
+    window.__niederschlag = (art) => { niederschlagZeichnen(art); return document.querySelectorAll("#niederschlagSchicht > *").length; };
+    window.__liveSetzen = (pf) => { liveStand = pf ? { plattform: pf, name: "Alex" } : null; liveGeladen = Date.now(); liveZeichenZeichnen(); tickerNeuErzwingen(); return updateTicker(); };
     /* Wie viele Wörter aus einem Text kennt das Wörterbuch wirklich —
        gemessen mit derselben Nachschlagelogik wie im Sammelmodus,
        also samt Grundformen und Zusammensetzungen. Damit lässt sich

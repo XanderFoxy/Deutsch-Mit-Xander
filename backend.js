@@ -1077,9 +1077,19 @@ const Backend = (function () {
   function isBetaTester() {
     return Boolean(demo.profile && demo.profile.isBetaTester);
   }
+  /* Für die Spieleliste: sieht die angemeldete Person IRGENDEIN noch nicht
+     freigegebenes Spiel, weil sie dafür einzeln eingeladen wurde? */
+  function istBetaFuerIrgendeinSpiel() {
+    if (!featureFlagsCache) return false;
+    const ich = myId();
+    if (!ich) return false;
+    return Object.keys(featureFlagsCache).some((k) => k.startsWith("beta:")
+      && Array.isArray(featureFlagsCache[k]) && featureFlagsCache[k].includes(ich));
+  }
   function isFeatureOn(key) {
     if (isOwner()) return true;
     if (demo.profile && demo.profile.isBetaTester) return true;
+    if (istBetaFuerSpiel(key)) return true; // ausdrücklich für DIESES Spiel eingeladen
     return Boolean(featureFlagsCache && featureFlagsCache[key]);
   }
   // WICHTIG — Variante mit umgekehrtem Standardwert: für Spiele, die schon lange live und in
@@ -1107,6 +1117,33 @@ const Backend = (function () {
   // sichtbar ist; explizit false → Schalter zeigt "aus").
   function getRawFeatureFlagValue(key) {
     return featureFlagsCache ? featureFlagsCache[key] : undefined;
+  }
+
+  // ============ BETA-EINLADUNG FÜR EIN EINZELNES SPIEL ============
+  // Bisher gab es Beta-Testen nur als ganzes: wer die Rolle hatte, sah JEDES noch nicht
+  // freigegebene Spiel. Gewünscht ist das Gegenteil — jemanden gezielt für GENAU EIN Spiel
+  // einladen, ohne dass die Person damit alles andere zu sehen bekommt. Gespeichert wird das im
+  // selben feature_flags-Objekt unter dem Nebenschlüssel "beta:<flagKey>" als Liste von
+  // Konto-Kennungen; dadurch braucht es keine neue Tabelle und keine neue Rechteregel.
+  function betaListeFuerSpiel(flagKey) {
+    const wert = featureFlagsCache ? featureFlagsCache["beta:" + flagKey] : null;
+    return Array.isArray(wert) ? wert : [];
+  }
+  function istBetaFuerSpiel(flagKey) {
+    const ich = myId();
+    return Boolean(ich) && betaListeFuerSpiel(flagKey).includes(ich);
+  }
+  async function setBetaFuerSpiel(flagKey, targetUserId, an) {
+    const flags = await getFeatureFlags();
+    const schluessel = "beta:" + flagKey;
+    const liste = Array.isArray(flags[schluessel]) ? flags[schluessel].slice() : [];
+    const drin = liste.indexOf(targetUserId);
+    if (an && drin < 0) liste.push(targetUserId);
+    if (!an && drin >= 0) liste.splice(drin, 1);
+    flags[schluessel] = liste;
+    featureFlagsCache = flags;
+    await setSiteContent("feature_flags", flags);
+    return liste;
   }
 
   let lastPlaylistLoadError = null;
@@ -2240,6 +2277,47 @@ const Backend = (function () {
       outgoing: demo.challenges.filter((c) => c.from === me).map(withNames),
     };
   }
+
+  /* ============================================================
+     GEMEINSAMER SPIELSTAND IN EINER EINLADUNG
+     ------------------------------------------------------------
+     Für Stadt · Land · Fluss zu mehreren braucht es eine Stelle, in die
+     ALLE Beteiligten schreiben können: wer schon im Warteraum ist, welcher
+     Buchstabe gilt, wann die Runde losgeht. Genau dafür ist das Feld
+     "extra" jeder Einladung da — es wird hier zusammengeführt (nicht
+     ersetzt), damit zwei gleichzeitige Einträge sich nicht gegenseitig
+     überschreiben. Eine neue Tabelle braucht es dafür nicht.
+     ============================================================ */
+  async function updateChallengeExtra(challengeId, patch) {
+    if (!demo.user) return null;
+    if (client) {
+      const { data: c, error } = await client.from("challenges").select("extra").eq("id", challengeId).single();
+      if (error || !c) return null;
+      const zusammen = Object.assign({}, c.extra || {}, patch);
+      const { error: e2 } = await client.from("challenges").update({ extra: zusammen }).eq("id", challengeId);
+      if (e2) { console.warn("Spielstand konnte nicht geschrieben werden:", e2.message); return null; }
+      return zusammen;
+    }
+    const d = demo.challenges.find((x) => x.id === challengeId);
+    if (!d) return null;
+    d.extra = Object.assign({}, d.extra || {}, patch);
+    return d.extra;
+  }
+  /* ============================================================
+     WARUM HIER KEINE ABSOLUTEN UHRZEITEN STEHEN
+     ------------------------------------------------------------
+     Zwei Telefone haben nie genau dieselbe Uhr — ein paar Sekunden
+     Unterschied sind normal. Eine Startzeit als Uhrzeit zu verschicken
+     hieße: der eine fängt an, während der andere noch wartet.
+     Deshalb steht in der Einladung NICHT "Start um 14:03:12", sondern
+     "von jetzt an noch so viele Millisekunden" — zusammen mit einer
+     Nummer ("stand"), die bei jeder neuen Runde hochzählt. Jedes Gerät
+     startet seine eigene Uhr in dem Moment, in dem es eine NEUE Nummer
+     zum ersten Mal sieht. Damit hängt der Unterschied nur noch daran,
+     wie oft nachgefragt wird — und das ist während des Countdowns
+     dreimal pro Sekunde. Alle laufen also höchstens Bruchteile einer
+     Sekunde auseinander, unabhängig davon, wie die Uhren gestellt sind.
+     ============================================================ */
 
   async function submitChallengeResult(challengeId, result) {
     if (!demo.user) return;
@@ -3790,6 +3868,7 @@ const Backend = (function () {
     getWortZusatz, wortVorschlagen, wortZusatzAufnehmen, wortZusatzEntfernen,
     itRangliste,
     getSiteContent, setSiteContent, siteContentVergessen, meldeWortluecken, getWortluecken, clearWortluecken, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, isBetaTester, getRawFeatureFlag, getRawFeatureFlagValue,
+    betaListeFuerSpiel, istBetaFuerSpiel, setBetaFuerSpiel, istBetaFuerIrgendeinSpiel,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
     getBugReports, resolveBugReport,
     notifyPracticing,
@@ -3814,6 +3893,7 @@ const Backend = (function () {
     uploadProfileFiles,
     removeProfileFile,
     getProfileFiles,
+    updateChallengeExtra,
     setModeratorStatus, setBetaTesterStatus, submitBetaFeedback, setContributorStatus, setSupporterStatus, getFoxOfTheWeek, applyForBetaTester,
     getBetaRequests, clearBetaRequest,
     getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,

@@ -30,7 +30,8 @@ window.DMA_SZENEN = [
     "en": "window",
     "x": 130,
     "y": 26,
-    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"52\" height=\"44\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"46\" height=\"38\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"23.0\" y1=\"0\" x2=\"23.0\" y2=\"38\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"19.0\" x2=\"46\" y2=\"19.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 42 L52 42\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"52\" height=\"44\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"46\" height=\"38\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"23.0\" y1=\"0\" x2=\"23.0\" y2=\"38\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"19.0\" x2=\"46\" y2=\"19.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 42 L52 42\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "fenster_detail"
    },
    {
     "id": "tuer",
@@ -41,7 +42,8 @@ window.DMA_SZENEN = [
     "en": "door",
     "x": 272,
     "y": 82,
-    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"38\" height=\"69\" rx=\"3\" fill=\"#a06c3c\"/><rect x=\"0\" y=\"0\" width=\"32\" height=\"66\" rx=\"2\" fill=\"#c98f5a\"/><rect x=\"4\" y=\"5\" width=\"24\" height=\"26\" rx=\"2\" fill=\"#a06c3c\" opacity=\"0.45\"/><rect x=\"4\" y=\"35\" width=\"24\" height=\"26\" rx=\"2\" fill=\"#a06c3c\" opacity=\"0.45\"/><circle cx=\"27\" cy=\"34\" r=\"2.6\" fill=\"#e8b64c\"/>"
+    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"38\" height=\"69\" rx=\"3\" fill=\"#a06c3c\"/><rect x=\"0\" y=\"0\" width=\"32\" height=\"66\" rx=\"2\" fill=\"#c98f5a\"/><rect x=\"4\" y=\"5\" width=\"24\" height=\"26\" rx=\"2\" fill=\"#a06c3c\" opacity=\"0.45\"/><rect x=\"4\" y=\"35\" width=\"24\" height=\"26\" rx=\"2\" fill=\"#a06c3c\" opacity=\"0.45\"/><circle cx=\"27\" cy=\"34\" r=\"2.6\" fill=\"#e8b64c\"/>",
+    "lupe": "tuer_detail"
    },
    {
     "id": "lampe",
@@ -63,7 +65,8 @@ window.DMA_SZENEN = [
     "en": "bed",
     "x": 56,
     "y": 128,
-    "kunst": "<rect x=\"-36.0\" y=\"-4\" width=\"72\" height=\"26\" rx=\"3\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.4\"/><rect x=\"-39.0\" y=\"-20\" width=\"8\" height=\"38\" rx=\"3\" fill=\"#a06c3c\"/><rect x=\"31.0\" y=\"-12\" width=\"8\" height=\"30\" rx=\"3\" fill=\"#a06c3c\"/><rect x=\"-32.0\" y=\"-2\" width=\"64\" height=\"16\" rx=\"3\" fill=\"#fdfaf4\"/><rect x=\"-30.0\" y=\"-1\" width=\"22\" height=\"11\" rx=\"3\" fill=\"#e3899f\"/><path d=\"M-6.0 -1 L30.0 -1 L30.0 14 L-6.0 14 Z\" fill=\"#4fb3a8\"/><line x1=\"-2.0\" y1=\"-1\" x2=\"-2.0\" y2=\"14\" stroke=\"#3d9a90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+    "kunst": "<rect x=\"-36.0\" y=\"-4\" width=\"72\" height=\"26\" rx=\"3\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.4\"/><rect x=\"-39.0\" y=\"-20\" width=\"8\" height=\"38\" rx=\"3\" fill=\"#a06c3c\"/><rect x=\"31.0\" y=\"-12\" width=\"8\" height=\"30\" rx=\"3\" fill=\"#a06c3c\"/><rect x=\"-32.0\" y=\"-2\" width=\"64\" height=\"16\" rx=\"3\" fill=\"#fdfaf4\"/><rect x=\"-30.0\" y=\"-1\" width=\"22\" height=\"11\" rx=\"3\" fill=\"#e3899f\"/><path d=\"M-6.0 -1 L30.0 -1 L30.0 14 L-6.0 14 Z\" fill=\"#4fb3a8\"/><line x1=\"-2.0\" y1=\"-1\" x2=\"-2.0\" y2=\"14\" stroke=\"#3d9a90\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>",
+    "lupe": "bett_detail"
    },
    {
     "id": "kissen",
@@ -128,8 +131,8 @@ window.DMA_SZENEN = [
     "itSyl": "LI-bro",
     "en": "book",
     "x": 150,
-    "y": 122,
-    "kunst": "<path d=\"M-11 0 L0 -3 L11 0 L11 7 L0 4 L-11 7 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"-3\" x2=\"0\" y2=\"4\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\"/>",
+    "y": 120,
+    "kunst": "<path d=\"M-13.0 0 L-9.0 -3.2 L13.0 -3.2 L9.0 0 Z\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-13.0\" y=\"0\" width=\"22\" height=\"8\" rx=\"1.2\" fill=\"#d9654f\" stroke=\"#a64a39\" stroke-width=\"1.1\"/><path d=\"M-11.6 1.6 L7.6 1.6\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-11.6 3.6 L7.6 3.6\" fill=\"none\" stroke=\"#e8e0cc\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-11.6 5.2 L7.6 5.2\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
     "lupe": "buch_detail"
    },
    {
@@ -229,7 +232,8 @@ window.DMA_SZENEN = [
     "en": "window",
     "x": 34,
     "y": 24,
-    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"58\" height=\"48\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"52\" height=\"42\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"26.0\" y1=\"0\" x2=\"26.0\" y2=\"42\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"21.0\" x2=\"52\" y2=\"21.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 46 L58 46\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"58\" height=\"48\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"52\" height=\"42\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"26.0\" y1=\"0\" x2=\"26.0\" y2=\"42\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"21.0\" x2=\"52\" y2=\"21.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 46 L58 46\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "fenster_detail"
    },
    {
     "id": "vorhang",
@@ -405,7 +409,8 @@ window.DMA_SZENEN = [
     "en": "window",
     "x": 118,
     "y": 20,
-    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"54\" height=\"42\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"48\" height=\"36\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"24.0\" y1=\"0\" x2=\"24.0\" y2=\"36\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"18.0\" x2=\"48\" y2=\"18.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 40 L54 40\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"54\" height=\"42\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"48\" height=\"36\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"24.0\" y1=\"0\" x2=\"24.0\" y2=\"36\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"18.0\" x2=\"48\" y2=\"18.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 40 L54 40\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "fenster_detail"
    },
    {
     "id": "kuehlschrank",
@@ -747,7 +752,8 @@ window.DMA_SZENEN = [
     "en": "double bed",
     "x": 96,
     "y": 132,
-    "kunst": "<rect x=\"-62\" y=\"-6\" width=\"124\" height=\"30\" rx=\"4\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.6\"/><rect x=\"-66\" y=\"-30\" width=\"10\" height=\"52\" rx=\"4\" fill=\"#a06c3c\"/><rect x=\"56\" y=\"-18\" width=\"10\" height=\"40\" rx=\"4\" fill=\"#a06c3c\"/><rect x=\"-56\" y=\"-4\" width=\"112\" height=\"20\" rx=\"4\" fill=\"#fdfaf4\"/><rect x=\"-52\" y=\"-2\" width=\"30\" height=\"13\" rx=\"4\" fill=\"#b9a7d4\" stroke=\"#8d7ab2\" stroke-width=\"1\"/><rect x=\"-18\" y=\"-2\" width=\"30\" height=\"13\" rx=\"4\" fill=\"#b9a7d4\" stroke=\"#8d7ab2\" stroke-width=\"1\"/><path d=\"M14 -2 L52 -2 L52 14 L14 14 Z\" fill=\"#7f6fb0\"/><line x1=\"20\" y1=\"-2\" x2=\"20\" y2=\"14\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"34\" y1=\"-2\" x2=\"34\" y2=\"14\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+    "kunst": "<rect x=\"-62\" y=\"-6\" width=\"124\" height=\"30\" rx=\"4\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.6\"/><rect x=\"-66\" y=\"-30\" width=\"10\" height=\"52\" rx=\"4\" fill=\"#a06c3c\"/><rect x=\"56\" y=\"-18\" width=\"10\" height=\"40\" rx=\"4\" fill=\"#a06c3c\"/><rect x=\"-56\" y=\"-4\" width=\"112\" height=\"20\" rx=\"4\" fill=\"#fdfaf4\"/><rect x=\"-52\" y=\"-2\" width=\"30\" height=\"13\" rx=\"4\" fill=\"#b9a7d4\" stroke=\"#8d7ab2\" stroke-width=\"1\"/><rect x=\"-18\" y=\"-2\" width=\"30\" height=\"13\" rx=\"4\" fill=\"#b9a7d4\" stroke=\"#8d7ab2\" stroke-width=\"1\"/><path d=\"M14 -2 L52 -2 L52 14 L14 14 Z\" fill=\"#7f6fb0\"/><line x1=\"20\" y1=\"-2\" x2=\"20\" y2=\"14\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"34\" y1=\"-2\" x2=\"34\" y2=\"14\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>",
+    "lupe": "bett_detail"
    },
    {
     "id": "decke",
@@ -758,7 +764,8 @@ window.DMA_SZENEN = [
     "en": "duvet",
     "x": 132,
     "y": 140,
-    "kunst": "<path d=\"M-26 -6 C-10 -12 12 -12 26 -6 L26 12 L-26 12 Z\" fill=\"#7f6fb0\" stroke=\"#5f5090\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-14\" y1=\"-8\" x2=\"-14\" y2=\"12\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"2\" y1=\"-9\" x2=\"2\" y2=\"12\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"16\" y1=\"-8\" x2=\"16\" y2=\"12\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>"
+    "kunst": "<path d=\"M-26 -6 C-10 -12 12 -12 26 -6 L26 12 L-26 12 Z\" fill=\"#7f6fb0\" stroke=\"#5f5090\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-14\" y1=\"-8\" x2=\"-14\" y2=\"12\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"2\" y1=\"-9\" x2=\"2\" y2=\"12\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><line x1=\"16\" y1=\"-8\" x2=\"16\" y2=\"12\" stroke=\"#9a8ac4\" stroke-width=\"1.2\" stroke-linecap=\"round\"/>",
+    "lupe": "bett_detail"
    },
    {
     "id": "nachttisch",
@@ -846,7 +853,8 @@ window.DMA_SZENEN = [
     "en": "pillow",
     "x": 48,
     "y": 128,
-    "kunst": "<rect x=\"-15\" y=\"-8\" width=\"32\" height=\"16\" rx=\"6\" fill=\"#fdfaf4\" stroke=\"#8b8377\" stroke-width=\"1.2\"/><rect x=\"-11\" y=\"-5\" width=\"24\" height=\"10\" rx=\"5\" fill=\"#eff2f5\"/>"
+    "kunst": "<rect x=\"-15\" y=\"-8\" width=\"32\" height=\"16\" rx=\"6\" fill=\"#fdfaf4\" stroke=\"#8b8377\" stroke-width=\"1.2\"/><rect x=\"-11\" y=\"-5\" width=\"24\" height=\"10\" rx=\"5\" fill=\"#eff2f5\"/>",
+    "lupe": "bett_detail"
    },
    {
     "id": "teppich",
@@ -868,7 +876,8 @@ window.DMA_SZENEN = [
     "en": "window",
     "x": 44,
     "y": 22,
-    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"56\" height=\"46\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"50\" height=\"40\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"25.0\" y1=\"0\" x2=\"25.0\" y2=\"40\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"20.0\" x2=\"50\" y2=\"20.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 44 L56 44\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<rect x=\"-3\" y=\"-3\" width=\"56\" height=\"46\" rx=\"3\" fill=\"#fdfaf4\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"0\" y=\"0\" width=\"50\" height=\"40\" rx=\"2\" fill=\"#bcdcea\"/><line x1=\"25.0\" y1=\"0\" x2=\"25.0\" y2=\"40\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"20.0\" x2=\"50\" y2=\"20.0\" stroke=\"#fdfaf4\" stroke-width=\"2.4\" stroke-linecap=\"round\"/><path d=\"M-6 44 L56 44\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "fenster_detail"
    },
    {
     "id": "buch",
@@ -879,7 +888,7 @@ window.DMA_SZENEN = [
     "en": "book",
     "x": 214,
     "y": 128,
-    "kunst": "<path d=\"M-9 0 L0 -2 L9 0 L9 6 L0 4 L-9 6 Z\" fill=\"#5aa86b\" stroke=\"#3e7a48\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"-2\" x2=\"0\" y2=\"4\" stroke=\"#3e7a48\" stroke-width=\"1\" stroke-linecap=\"round\"/>"
+    "kunst": "<path d=\"M-11.0 0 L-7.0 -3.2 L11.0 -3.2 L7.0 0 Z\" fill=\"#5aa86b\" stroke=\"#3e7a48\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"-11.0\" y=\"0\" width=\"18\" height=\"7\" rx=\"1.2\" fill=\"#5aa86b\" stroke=\"#3e7a48\" stroke-width=\"1.1\"/><path d=\"M-9.6 1.6 L5.6 1.6\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9.6 3.6 L5.6 3.6\" fill=\"none\" stroke=\"#e8e0cc\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9.6 5.2 L5.6 5.2\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
    },
    {
     "id": "waeschekorb",
@@ -1099,7 +1108,8 @@ window.DMA_SZENEN = [
     "en": "front door",
     "x": 52,
     "y": 78,
-    "kunst": "<rect x=\"-6\" y=\"-6\" width=\"60\" height=\"84\" rx=\"4\" fill=\"#a06c3c\"/><rect x=\"0\" y=\"0\" width=\"48\" height=\"78\" rx=\"3\" fill=\"#c98f5a\"/><rect x=\"6\" y=\"6\" width=\"36\" height=\"24\" rx=\"2\" fill=\"#bcdcea\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><line x1=\"24\" y1=\"6\" x2=\"24\" y2=\"30\" stroke=\"#a06c3c\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><rect x=\"6\" y=\"38\" width=\"36\" height=\"32\" rx=\"2\" fill=\"#a06c3c\" opacity=\"0.4\"/><circle cx=\"40\" cy=\"46\" r=\"3.2\" fill=\"#e8b64c\"/><rect x=\"38\" y=\"34\" width=\"5\" height=\"3\" rx=\"1.4\" fill=\"#b9a44f\"/>"
+    "kunst": "<rect x=\"-6\" y=\"-6\" width=\"60\" height=\"84\" rx=\"4\" fill=\"#a06c3c\"/><rect x=\"0\" y=\"0\" width=\"48\" height=\"78\" rx=\"3\" fill=\"#c98f5a\"/><rect x=\"6\" y=\"6\" width=\"36\" height=\"24\" rx=\"2\" fill=\"#bcdcea\" stroke=\"#a06c3c\" stroke-width=\"1.2\"/><line x1=\"24\" y1=\"6\" x2=\"24\" y2=\"30\" stroke=\"#a06c3c\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><rect x=\"6\" y=\"38\" width=\"36\" height=\"32\" rx=\"2\" fill=\"#a06c3c\" opacity=\"0.4\"/><circle cx=\"40\" cy=\"46\" r=\"3.2\" fill=\"#e8b64c\"/><rect x=\"38\" y=\"34\" width=\"5\" height=\"3\" rx=\"1.4\" fill=\"#b9a44f\"/>",
+    "lupe": "tuer_detail"
    },
    {
     "id": "garderobe",
@@ -1176,7 +1186,8 @@ window.DMA_SZENEN = [
     "en": "shoes",
     "x": 176,
     "y": 160,
-    "kunst": "<path d=\"M-14 4 L-14 -2 C-14 -6 -6 -6 -6 -2 L0 0 L0 4 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4 4 L4 -2 C4 -6 12 -6 12 -2 L18 0 L18 4 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<path d=\"M-14 4 L-14 -2 C-14 -6 -6 -6 -6 -2 L0 0 L0 4 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4 4 L4 -2 C4 -6 12 -6 12 -2 L18 0 L18 4 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "schuh_detail"
    },
    {
     "id": "stiefel",
@@ -1264,7 +1275,8 @@ window.DMA_SZENEN = [
     "en": "tree",
     "x": 50,
     "y": 104,
-    "kunst": "<rect x=\"-5\" y=\"0\" width=\"10\" height=\"34\" rx=\"3\" fill=\"#8d6a42\"/><circle cx=\"0\" cy=\"-14\" r=\"24\" fill=\"#5aa86b\"/><circle cx=\"-16\" cy=\"-4\" r=\"15\" fill=\"#4d9459\"/><circle cx=\"16\" cy=\"-4\" r=\"15\" fill=\"#4d9459\"/><circle cx=\"-6\" cy=\"-26\" r=\"13\" fill=\"#6ab77a\"/><circle cx=\"-9\" cy=\"-10\" r=\"2.6\" fill=\"#d9654f\"/><circle cx=\"8\" cy=\"-18\" r=\"2.6\" fill=\"#d9654f\"/><circle cx=\"2\" cy=\"-2\" r=\"2.6\" fill=\"#d9654f\"/>"
+    "kunst": "<rect x=\"-5\" y=\"0\" width=\"10\" height=\"34\" rx=\"3\" fill=\"#8d6a42\"/><circle cx=\"0\" cy=\"-14\" r=\"24\" fill=\"#5aa86b\"/><circle cx=\"-16\" cy=\"-4\" r=\"15\" fill=\"#4d9459\"/><circle cx=\"16\" cy=\"-4\" r=\"15\" fill=\"#4d9459\"/><circle cx=\"-6\" cy=\"-26\" r=\"13\" fill=\"#6ab77a\"/><circle cx=\"-9\" cy=\"-10\" r=\"2.6\" fill=\"#d9654f\"/><circle cx=\"8\" cy=\"-18\" r=\"2.6\" fill=\"#d9654f\"/><circle cx=\"2\" cy=\"-2\" r=\"2.6\" fill=\"#d9654f\"/>",
+    "lupe": "baum_detail"
    },
    {
     "id": "blume",
@@ -2277,8 +2289,8 @@ window.DMA_SZENEN = [
   "emoji": "🧍",
   "thema": "Gesundheit",
   "breite": 320,
-  "hoehe": 230,
-  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"230\" rx=\"0\" fill=\"#f4efe4\"/><ellipse cx=\"160\" cy=\"216\" rx=\"62\" ry=\"9\" fill=\"#e0d6c4\"/><g transform=\"translate(160,74)\"><path d=\"M-17 58 L-20 132\" fill=\"none\" stroke=\"#f0c9a8\" stroke-width=\"17\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17 58 L20 132\" fill=\"none\" stroke=\"#f0c9a8\" stroke-width=\"17\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-20 132 L-36 138\" fill=\"none\" stroke=\"#f0c9a8\" stroke-width=\"12\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20 132 L36 138\" fill=\"none\" stroke=\"#f0c9a8\" stroke-width=\"12\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-26 -8 L26 -8 L21 64 L-21 64 Z\" fill=\"#f0c9a8\" stroke=\"#cf9f79\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-26 0 L-49 44\" fill=\"none\" stroke=\"#f0c9a8\" stroke-width=\"14\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M26 0 L49 44\" fill=\"none\" stroke=\"#f0c9a8\" stroke-width=\"14\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-51\" cy=\"49\" r=\"8\" fill=\"#f0c9a8\" stroke=\"#cf9f79\" stroke-width=\"1.4\"/><circle cx=\"51\" cy=\"49\" r=\"8\" fill=\"#f0c9a8\" stroke=\"#cf9f79\" stroke-width=\"1.4\"/><rect x=\"-7\" y=\"-22\" width=\"14\" height=\"16\" rx=\"4\" fill=\"#f0c9a8\"/><circle cx=\"0\" cy=\"-44\" r=\"26\" fill=\"#f0c9a8\" stroke=\"#cf9f79\" stroke-width=\"1.8\"/><path d=\"M-26 -52 C-22 -70 22 -70 26 -52 C14 -62 -14 -62 -26 -52 Z\" fill=\"#5a4632\"/><ellipse cx=\"-9\" cy=\"-47\" rx=\"4.6\" ry=\"3.2\" fill=\"#ffffff\" stroke=\"#cf9f79\" stroke-width=\"1\"/><circle cx=\"-9\" cy=\"-47\" r=\"2.2\" fill=\"#3a2b1c\"/><ellipse cx=\"9\" cy=\"-47\" rx=\"4.6\" ry=\"3.2\" fill=\"#ffffff\" stroke=\"#cf9f79\" stroke-width=\"1\"/><circle cx=\"9\" cy=\"-47\" r=\"2.2\" fill=\"#3a2b1c\"/><path d=\"M0 -44 L-3 -37 L3 -37 Z\" fill=\"#e8bb99\"/><path d=\"M-8 -31 Q0 -25 8 -31\" fill=\"none\" stroke=\"#b5785a\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-26\" cy=\"-42\" r=\"4.4\" fill=\"#e8bb99\" stroke=\"#cf9f79\" stroke-width=\"1.2\"/><circle cx=\"26\" cy=\"-42\" r=\"4.4\" fill=\"#e8bb99\" stroke=\"#cf9f79\" stroke-width=\"1.2\"/></g>",
+  "hoehe": 320,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"320\" rx=\"0\" fill=\"#f4efe4\"/><ellipse cx=\"156\" cy=\"306\" rx=\"66\" ry=\"9\" fill=\"#e0d6c4\"/><g transform=\"translate(156,96)\"><g stroke=\"#c08e66\" stroke-width=\"2.8600000000000003\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M-32.5 4 C-33.5 14 -31.5 24 -22.1 34 C-22.6 42 -27.3 46 -27.3 54 C-27.3 60 -25.3 64 -24.3 66 L24.3 66 C25.3 64 27.3 60 27.3 54 C27.3 46 22.6 42 22.1 34 C11.4 24 31.5 14 32.5 4 C29.5 1 -29.5 1 -32.5 4 Z\" fill=\"#c08e66\"/><path d=\"M-8.12 -13.00 L-8.12 7.80 A8.12 8.12 0 0 1 8.12 7.80 L8.12 -13.00 A8.12 8.12 0 0 1 -8.12 -13.00 Z\" fill=\"#c08e66\"/><circle cx=\"-28.60\" cy=\"10.40\" r=\"9.88\" fill=\"#c08e66\"/><path d=\"M-37.27 9.54 L-39.36 49.19 A6.89 6.89 0 0 1 -25.64 50.55 L-19.93 11.26 Z\" fill=\"#c08e66\"/><path d=\"M-39.64 49.47 L-40.16 95.92 A5.07 5.07 0 0 1 -30.04 96.48 L-25.36 50.27 Z\" fill=\"#c08e66\"/><circle cx=\"28.60\" cy=\"10.40\" r=\"9.88\" fill=\"#c08e66\"/><path d=\"M19.93 11.26 L25.64 50.55 A6.89 6.89 0 0 1 39.36 49.19 L37.27 9.54 Z\" fill=\"#c08e66\"/><path d=\"M25.36 50.27 L30.04 96.48 A5.07 5.07 0 0 1 40.16 95.92 L39.64 49.47 Z\" fill=\"#c08e66\"/><path d=\"M-26.26 75.66 L-21.40 128.00 A8.84 8.84 0 0 1 -3.72 127.63 L-1.04 75.14 Z\" fill=\"#c08e66\"/><circle cx=\"-12.56\" cy=\"127.82\" r=\"8.97\" fill=\"#c08e66\"/><path d=\"M-21.27 127.98 L-19.90 151.82 A7.80 7.80 0 0 1 -4.30 151.52 L-3.85 127.65 Z\" fill=\"#c08e66\"/><path d=\"M-19.90 151.82 L-16.67 184.70 A5.20 5.20 0 0 1 -6.27 184.50 L-4.30 151.52 Z\" fill=\"#c08e66\"/><path d=\"M1.04 75.14 L3.72 127.63 A8.84 8.84 0 0 1 21.40 128.00 L26.26 75.66 Z\" fill=\"#c08e66\"/><circle cx=\"12.56\" cy=\"127.82\" r=\"8.97\" fill=\"#c08e66\"/><path d=\"M3.85 127.65 L4.30 151.52 A7.80 7.80 0 0 1 19.90 151.82 L21.27 127.98 Z\" fill=\"#c08e66\"/><path d=\"M4.30 151.52 L6.27 184.50 A5.20 5.20 0 0 1 16.67 184.70 L19.90 151.82 Z\" fill=\"#c08e66\"/><path d=\"M-16.38 67.60000000000001 C-8.736 80.60000000000001 8.736 80.60000000000001 16.38 67.60000000000001 L16.38 62.400000000000006 L-16.38 62.400000000000006 Z\" fill=\"#c08e66\"/></g><g stroke=\"none\"><path d=\"M-32.5 4 C-33.5 14 -31.5 24 -22.1 34 C-22.6 42 -27.3 46 -27.3 54 C-27.3 60 -25.3 64 -24.3 66 L24.3 66 C25.3 64 27.3 60 27.3 54 C27.3 46 22.6 42 22.1 34 C11.4 24 31.5 14 32.5 4 C29.5 1 -29.5 1 -32.5 4 Z\" fill=\"#f0c9a8\"/><path d=\"M-8.12 -13.00 L-8.12 7.80 A8.12 8.12 0 0 1 8.12 7.80 L8.12 -13.00 A8.12 8.12 0 0 1 -8.12 -13.00 Z\" fill=\"#f0c9a8\"/><circle cx=\"-28.60\" cy=\"10.40\" r=\"9.88\" fill=\"#f0c9a8\"/><path d=\"M-37.27 9.54 L-39.36 49.19 A6.89 6.89 0 0 1 -25.64 50.55 L-19.93 11.26 Z\" fill=\"#f0c9a8\"/><path d=\"M-39.64 49.47 L-40.16 95.92 A5.07 5.07 0 0 1 -30.04 96.48 L-25.36 50.27 Z\" fill=\"#f0c9a8\"/><circle cx=\"28.60\" cy=\"10.40\" r=\"9.88\" fill=\"#f0c9a8\"/><path d=\"M19.93 11.26 L25.64 50.55 A6.89 6.89 0 0 1 39.36 49.19 L37.27 9.54 Z\" fill=\"#f0c9a8\"/><path d=\"M25.36 50.27 L30.04 96.48 A5.07 5.07 0 0 1 40.16 95.92 L39.64 49.47 Z\" fill=\"#f0c9a8\"/><path d=\"M-26.26 75.66 L-21.40 128.00 A8.84 8.84 0 0 1 -3.72 127.63 L-1.04 75.14 Z\" fill=\"#f0c9a8\"/><circle cx=\"-12.56\" cy=\"127.82\" r=\"8.97\" fill=\"#f0c9a8\"/><path d=\"M-21.27 127.98 L-19.90 151.82 A7.80 7.80 0 0 1 -4.30 151.52 L-3.85 127.65 Z\" fill=\"#f0c9a8\"/><path d=\"M-19.90 151.82 L-16.67 184.70 A5.20 5.20 0 0 1 -6.27 184.50 L-4.30 151.52 Z\" fill=\"#f0c9a8\"/><path d=\"M1.04 75.14 L3.72 127.63 A8.84 8.84 0 0 1 21.40 128.00 L26.26 75.66 Z\" fill=\"#f0c9a8\"/><circle cx=\"12.56\" cy=\"127.82\" r=\"8.97\" fill=\"#f0c9a8\"/><path d=\"M3.85 127.65 L4.30 151.52 A7.80 7.80 0 0 1 19.90 151.82 L21.27 127.98 Z\" fill=\"#f0c9a8\"/><path d=\"M4.30 151.52 L6.27 184.50 A5.20 5.20 0 0 1 16.67 184.70 L19.90 151.82 Z\" fill=\"#f0c9a8\"/><path d=\"M-16.38 67.60000000000001 C-8.736 80.60000000000001 8.736 80.60000000000001 16.38 67.60000000000001 L16.38 62.400000000000006 L-16.38 62.400000000000006 Z\" fill=\"#f0c9a8\"/></g><path d=\"M-20.8 10.4 C-7.15 14.3 7.15 14.3 20.8 10.4\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.1700000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"0\" cy=\"48.1\" rx=\"1.6900000000000002\" ry=\"2.21\" fill=\"#c08e66\"/><path d=\"M-26.0 11.700000000000001 C-19.5 8.450000000000001 -10.4 9.1 -7.15 13.65 C-3.25 17.55 3.25 17.55 7.15 13.65 C10.4 9.1 19.5 8.450000000000001 26.0 11.700000000000001 C28.6 20.8 24.752000000000006 36.4 25.636 53.300000000000004 C13.26 56.550000000000004 -13.26 56.550000000000004 -25.636 53.300000000000004 C-24.752000000000006 36.4 -28.6 20.8 -26.0 11.700000000000001 Z\" fill=\"#6f8fc4\" stroke=\"#4f6ea3\" stroke-width=\"1.6900000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-24.752000000000006 49.4 C-12.376000000000003 52.65 12.376000000000003 52.65 24.752000000000006 49.4\" fill=\"none\" stroke=\"#4f6ea3\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-30.576000000000004 54.6 C-15.288000000000002 57.85 15.288000000000002 57.85 30.576000000000004 54.6 C32.76 67.60000000000001 30.576000000000004 78.0 27.3 87.10000000000001 C18.564000000000004 89.7 7.644000000000001 89.7 5.460000000000001 87.10000000000001 C3.8220000000000005 79.3 -3.8220000000000005 79.3 -5.460000000000001 87.10000000000001 C-7.644000000000001 89.7 -18.564000000000004 89.7 -27.3 87.10000000000001 C-30.576000000000004 78.0 -32.76 67.60000000000001 -30.576000000000004 54.6 Z\" fill=\"#4f6ea3\" stroke=\"#3b5580\" stroke-width=\"1.6900000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-29.484 59.800000000000004 C-14.196 63.050000000000004 14.196 63.050000000000004 29.484 59.800000000000004\" fill=\"none\" stroke=\"#3b5580\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><g transform=\"translate(-35.1,93.1)\"><g stroke=\"#c08e66\" stroke-width=\"1.3572\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M4.147 0.0 C5.7303999999999995 3.77 6.4844 8.294 6.182799999999999 12.365599999999999 C5.8812 14.778400000000001 3.6191999999999998 15.9848 0.377 16.1356 C-3.3176 16.2864 -6.182799999999999 14.9292 -6.6352 12.064 C-7.163 7.9924 -5.8812 3.77 -4.147 0.0 Z\" fill=\"#c08e66\"/><ellipse cx=\"4.52\" cy=\"7.92\" rx=\"3.17\" ry=\"4.98\" fill=\"#c08e66\" transform=\"rotate(14 4.52 7.92)\"/><path d=\"M3.20 6.35 L8.08 10.66 A2.04 2.04 0 0 1 10.92 7.74 L6.45 3.00 Z\" fill=\"#c08e66\"/><path d=\"M7.33 9.40 L9.94 14.53 A1.66 1.66 0 0 1 12.99 13.22 L11.07 7.79 Z\" fill=\"#c08e66\"/><path d=\"M2.45 15.46 L4.16 22.29 A1.22 1.22 0 0 1 6.54 21.74 L5.09 14.85 Z\" fill=\"#c08e66\"/><path d=\"M4.16 22.29 L5.88 29.12 A1.09 1.09 0 0 1 7.99 28.63 L6.54 21.74 Z\" fill=\"#c08e66\"/><path d=\"M-0.64 15.65 L-0.12 23.18 A1.26 1.26 0 0 1 2.38 23.05 L2.15 15.51 Z\" fill=\"#c08e66\"/><path d=\"M-0.12 23.18 L0.39 30.71 A1.12 1.12 0 0 1 2.62 30.60 L2.38 23.05 Z\" fill=\"#c08e66\"/><path d=\"M-3.57 15.21 L-4.27 22.16 A1.19 1.19 0 0 1 -1.91 22.44 L-0.95 15.52 Z\" fill=\"#c08e66\"/><path d=\"M-4.27 22.16 L-4.97 29.11 A1.06 1.06 0 0 1 -2.87 29.37 L-1.91 22.44 Z\" fill=\"#c08e66\"/><path d=\"M-6.05 14.64 L-7.68 20.03 A1.02 1.02 0 0 1 -5.74 20.65 L-3.90 15.34 Z\" fill=\"#c08e66\"/><path d=\"M-7.68 20.03 L-9.31 25.41 A0.90 0.90 0 0 1 -7.58 25.97 L-5.74 20.65 Z\" fill=\"#c08e66\"/></g><g stroke=\"none\"><path d=\"M4.147 0.0 C5.7303999999999995 3.77 6.4844 8.294 6.182799999999999 12.365599999999999 C5.8812 14.778400000000001 3.6191999999999998 15.9848 0.377 16.1356 C-3.3176 16.2864 -6.182799999999999 14.9292 -6.6352 12.064 C-7.163 7.9924 -5.8812 3.77 -4.147 0.0 Z\" fill=\"#f0c9a8\"/><ellipse cx=\"4.52\" cy=\"7.92\" rx=\"3.17\" ry=\"4.98\" fill=\"#f0c9a8\" transform=\"rotate(14 4.52 7.92)\"/><path d=\"M3.20 6.35 L8.08 10.66 A2.04 2.04 0 0 1 10.92 7.74 L6.45 3.00 Z\" fill=\"#f0c9a8\"/><path d=\"M7.33 9.40 L9.94 14.53 A1.66 1.66 0 0 1 12.99 13.22 L11.07 7.79 Z\" fill=\"#f0c9a8\"/><path d=\"M2.45 15.46 L4.16 22.29 A1.22 1.22 0 0 1 6.54 21.74 L5.09 14.85 Z\" fill=\"#f0c9a8\"/><path d=\"M4.16 22.29 L5.88 29.12 A1.09 1.09 0 0 1 7.99 28.63 L6.54 21.74 Z\" fill=\"#f0c9a8\"/><path d=\"M-0.64 15.65 L-0.12 23.18 A1.26 1.26 0 0 1 2.38 23.05 L2.15 15.51 Z\" fill=\"#f0c9a8\"/><path d=\"M-0.12 23.18 L0.39 30.71 A1.12 1.12 0 0 1 2.62 30.60 L2.38 23.05 Z\" fill=\"#f0c9a8\"/><path d=\"M-3.57 15.21 L-4.27 22.16 A1.19 1.19 0 0 1 -1.91 22.44 L-0.95 15.52 Z\" fill=\"#f0c9a8\"/><path d=\"M-4.27 22.16 L-4.97 29.11 A1.06 1.06 0 0 1 -2.87 29.37 L-1.91 22.44 Z\" fill=\"#f0c9a8\"/><path d=\"M-6.05 14.64 L-7.68 20.03 A1.02 1.02 0 0 1 -5.74 20.65 L-3.90 15.34 Z\" fill=\"#f0c9a8\"/><path d=\"M-7.68 20.03 L-9.31 25.41 A0.90 0.90 0 0 1 -7.58 25.97 L-5.74 20.65 Z\" fill=\"#f0c9a8\"/></g><ellipse cx=\"6.9368\" cy=\"28.5766\" rx=\"0.9228960000000002\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"1.508\" cy=\"30.35604\" rx=\"0.9485320000000002\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"-3.9208000000000003\" cy=\"28.93852\" rx=\"0.8972600000000002\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"-8.444799999999999\" cy=\"25.391703999999997\" rx=\"0.76908\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"11.2346\" cy=\"13.119599999999998\" rx=\"1.3572\" ry=\"0.9802000000000001\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><path d=\"M4.0716 13.7228 C1.508 15.08 -1.9604000000000001 14.778400000000001 -5.4288 13.119599999999998\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.45239999999999997\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2.5636 2.5636 C1.0555999999999999 6.4844 1.3572 10.1036 2.5636 12.667200000000001\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.5277999999999999\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M3.6191999999999998 1.2064000000000001 C0 2.5636 0 2.5636 -3.6191999999999998 1.2064000000000001\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.6032000000000001\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g><g transform=\"translate(35.1,93.1)\"><g stroke=\"#c08e66\" stroke-width=\"1.3572\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M-4.147 0.0 C-5.7303999999999995 3.77 -6.4844 8.294 -6.182799999999999 12.365599999999999 C-5.8812 14.778400000000001 -3.6191999999999998 15.9848 -0.377 16.1356 C3.3176 16.2864 6.182799999999999 14.9292 6.6352 12.064 C7.163 7.9924 5.8812 3.77 4.147 0.0 Z\" fill=\"#c08e66\"/><ellipse cx=\"-4.52\" cy=\"7.92\" rx=\"3.17\" ry=\"4.98\" fill=\"#c08e66\" transform=\"rotate(-14 -4.52 7.92)\"/><path d=\"M-6.45 3.00 L-10.92 7.74 A2.04 2.04 0 0 1 -8.08 10.66 L-3.20 6.35 Z\" fill=\"#c08e66\"/><path d=\"M-11.07 7.79 L-12.99 13.22 A1.66 1.66 0 0 1 -9.94 14.53 L-7.33 9.40 Z\" fill=\"#c08e66\"/><path d=\"M-5.09 14.85 L-6.54 21.74 A1.22 1.22 0 0 1 -4.16 22.29 L-2.45 15.46 Z\" fill=\"#c08e66\"/><path d=\"M-6.54 21.74 L-7.99 28.63 A1.09 1.09 0 0 1 -5.88 29.12 L-4.16 22.29 Z\" fill=\"#c08e66\"/><path d=\"M-2.15 15.51 L-2.38 23.05 A1.26 1.26 0 0 1 0.12 23.18 L0.64 15.65 Z\" fill=\"#c08e66\"/><path d=\"M-2.38 23.05 L-2.62 30.60 A1.12 1.12 0 0 1 -0.39 30.71 L0.12 23.18 Z\" fill=\"#c08e66\"/><path d=\"M0.95 15.52 L1.91 22.44 A1.19 1.19 0 0 1 4.27 22.16 L3.57 15.21 Z\" fill=\"#c08e66\"/><path d=\"M1.91 22.44 L2.87 29.37 A1.06 1.06 0 0 1 4.97 29.11 L4.27 22.16 Z\" fill=\"#c08e66\"/><path d=\"M3.90 15.34 L5.74 20.65 A1.02 1.02 0 0 1 7.68 20.03 L6.05 14.64 Z\" fill=\"#c08e66\"/><path d=\"M5.74 20.65 L7.58 25.97 A0.90 0.90 0 0 1 9.31 25.41 L7.68 20.03 Z\" fill=\"#c08e66\"/></g><g stroke=\"none\"><path d=\"M-4.147 0.0 C-5.7303999999999995 3.77 -6.4844 8.294 -6.182799999999999 12.365599999999999 C-5.8812 14.778400000000001 -3.6191999999999998 15.9848 -0.377 16.1356 C3.3176 16.2864 6.182799999999999 14.9292 6.6352 12.064 C7.163 7.9924 5.8812 3.77 4.147 0.0 Z\" fill=\"#f0c9a8\"/><ellipse cx=\"-4.52\" cy=\"7.92\" rx=\"3.17\" ry=\"4.98\" fill=\"#f0c9a8\" transform=\"rotate(-14 -4.52 7.92)\"/><path d=\"M-6.45 3.00 L-10.92 7.74 A2.04 2.04 0 0 1 -8.08 10.66 L-3.20 6.35 Z\" fill=\"#f0c9a8\"/><path d=\"M-11.07 7.79 L-12.99 13.22 A1.66 1.66 0 0 1 -9.94 14.53 L-7.33 9.40 Z\" fill=\"#f0c9a8\"/><path d=\"M-5.09 14.85 L-6.54 21.74 A1.22 1.22 0 0 1 -4.16 22.29 L-2.45 15.46 Z\" fill=\"#f0c9a8\"/><path d=\"M-6.54 21.74 L-7.99 28.63 A1.09 1.09 0 0 1 -5.88 29.12 L-4.16 22.29 Z\" fill=\"#f0c9a8\"/><path d=\"M-2.15 15.51 L-2.38 23.05 A1.26 1.26 0 0 1 0.12 23.18 L0.64 15.65 Z\" fill=\"#f0c9a8\"/><path d=\"M-2.38 23.05 L-2.62 30.60 A1.12 1.12 0 0 1 -0.39 30.71 L0.12 23.18 Z\" fill=\"#f0c9a8\"/><path d=\"M0.95 15.52 L1.91 22.44 A1.19 1.19 0 0 1 4.27 22.16 L3.57 15.21 Z\" fill=\"#f0c9a8\"/><path d=\"M1.91 22.44 L2.87 29.37 A1.06 1.06 0 0 1 4.97 29.11 L4.27 22.16 Z\" fill=\"#f0c9a8\"/><path d=\"M3.90 15.34 L5.74 20.65 A1.02 1.02 0 0 1 7.68 20.03 L6.05 14.64 Z\" fill=\"#f0c9a8\"/><path d=\"M5.74 20.65 L7.58 25.97 A0.90 0.90 0 0 1 9.31 25.41 L7.68 20.03 Z\" fill=\"#f0c9a8\"/></g><ellipse cx=\"-6.9368\" cy=\"28.5766\" rx=\"0.9228960000000002\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"-1.508\" cy=\"30.35604\" rx=\"0.9485320000000002\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"3.9208000000000003\" cy=\"28.93852\" rx=\"0.8972600000000002\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"8.444799999999999\" cy=\"25.391703999999997\" rx=\"0.76908\" ry=\"0.8671\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><ellipse cx=\"-11.2346\" cy=\"13.119599999999998\" rx=\"1.3572\" ry=\"0.9802000000000001\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.377\"/><path d=\"M-4.0716 13.7228 C-1.508 15.08 1.9604000000000001 14.778400000000001 5.4288 13.119599999999998\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.45239999999999997\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-2.5636 2.5636 C-1.0555999999999999 6.4844 -1.3572 10.1036 -2.5636 12.667200000000001\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.5277999999999999\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-3.6191999999999998 1.2064000000000001 C0 2.5636 0 2.5636 3.6191999999999998 1.2064000000000001\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.6032000000000001\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g><g transform=\"translate(-11.5,179.4)\"><g stroke=\"#c08e66\" stroke-width=\"1.8719999999999999\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M-3.34 0.29 L-2.87 5.75 A3.35 3.35 0 0 1 3.81 5.17 L3.34 -0.29 A3.35 3.35 0 0 1 -3.34 0.29 Z\" fill=\"#c08e66\"/><path d=\"M3.9000000000000004 3.12 C5.928 8.58 6.5520000000000005 14.040000000000001 4.836 17.471999999999998 C2.34 20.748 -3.2760000000000002 20.28 -5.46 16.848000000000003 C-6.708 14.040000000000001 -5.928 8.19 -4.056 3.12 Z\" fill=\"#c08e66\"/><circle cx=\"4.21\" cy=\"20.75\" r=\"2.34\" fill=\"#c08e66\"/><circle cx=\"1.09\" cy=\"21.53\" r=\"1.79\" fill=\"#c08e66\"/><circle cx=\"-1.40\" cy=\"20.75\" r=\"1.56\" fill=\"#c08e66\"/><circle cx=\"-3.59\" cy=\"19.34\" r=\"1.40\" fill=\"#c08e66\"/><circle cx=\"-5.30\" cy=\"17.47\" r=\"1.17\" fill=\"#c08e66\"/></g><g stroke=\"none\"><path d=\"M-3.34 0.29 L-2.87 5.75 A3.35 3.35 0 0 1 3.81 5.17 L3.34 -0.29 A3.35 3.35 0 0 1 -3.34 0.29 Z\" fill=\"#f0c9a8\"/><path d=\"M3.9000000000000004 3.12 C5.928 8.58 6.5520000000000005 14.040000000000001 4.836 17.471999999999998 C2.34 20.748 -3.2760000000000002 20.28 -5.46 16.848000000000003 C-6.708 14.040000000000001 -5.928 8.19 -4.056 3.12 Z\" fill=\"#f0c9a8\"/><circle cx=\"4.21\" cy=\"20.75\" r=\"2.34\" fill=\"#f0c9a8\"/><circle cx=\"1.09\" cy=\"21.53\" r=\"1.79\" fill=\"#f0c9a8\"/><circle cx=\"-1.40\" cy=\"20.75\" r=\"1.56\" fill=\"#f0c9a8\"/><circle cx=\"-3.59\" cy=\"19.34\" r=\"1.40\" fill=\"#f0c9a8\"/><circle cx=\"-5.30\" cy=\"17.47\" r=\"1.17\" fill=\"#f0c9a8\"/></g><path d=\"M2.028 4.68 C2.8080000000000003 9.36 3.12 13.26 2.964 16.38\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.5459999999999999\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-1.2480000000000002 4.68 C-1.4040000000000001 9.36 -1.7160000000000002 12.48 -1.56 15.600000000000001\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.5459999999999999\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"4.212000000000001\" cy=\"21.356400000000004\" rx=\"1.2168\" ry=\"1.0296\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"1.0919999999999999\" cy=\"21.99444\" rx=\"0.93288\" ry=\"0.7893600000000001\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"-1.4040000000000001\" cy=\"21.1536\" rx=\"0.8112\" ry=\"0.6864\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"-3.5879999999999996\" cy=\"19.70904\" rx=\"0.7300800000000001\" ry=\"0.6177600000000001\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"-5.304\" cy=\"17.7762\" rx=\"0.6084\" ry=\"0.5148\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/></g><g transform=\"translate(11.5,179.4)\"><g stroke=\"#c08e66\" stroke-width=\"1.8719999999999999\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M-3.34 -0.29 L-3.81 5.17 A3.35 3.35 0 0 1 2.87 5.75 L3.34 0.29 A3.35 3.35 0 0 1 -3.34 -0.29 Z\" fill=\"#c08e66\"/><path d=\"M-3.9000000000000004 3.12 C-5.928 8.58 -6.5520000000000005 14.040000000000001 -4.836 17.471999999999998 C-2.34 20.748 3.2760000000000002 20.28 5.46 16.848000000000003 C6.708 14.040000000000001 5.928 8.19 4.056 3.12 Z\" fill=\"#c08e66\"/><circle cx=\"-4.21\" cy=\"20.75\" r=\"2.34\" fill=\"#c08e66\"/><circle cx=\"-1.09\" cy=\"21.53\" r=\"1.79\" fill=\"#c08e66\"/><circle cx=\"1.40\" cy=\"20.75\" r=\"1.56\" fill=\"#c08e66\"/><circle cx=\"3.59\" cy=\"19.34\" r=\"1.40\" fill=\"#c08e66\"/><circle cx=\"5.30\" cy=\"17.47\" r=\"1.17\" fill=\"#c08e66\"/></g><g stroke=\"none\"><path d=\"M-3.34 -0.29 L-3.81 5.17 A3.35 3.35 0 0 1 2.87 5.75 L3.34 0.29 A3.35 3.35 0 0 1 -3.34 -0.29 Z\" fill=\"#f0c9a8\"/><path d=\"M-3.9000000000000004 3.12 C-5.928 8.58 -6.5520000000000005 14.040000000000001 -4.836 17.471999999999998 C-2.34 20.748 3.2760000000000002 20.28 5.46 16.848000000000003 C6.708 14.040000000000001 5.928 8.19 4.056 3.12 Z\" fill=\"#f0c9a8\"/><circle cx=\"-4.21\" cy=\"20.75\" r=\"2.34\" fill=\"#f0c9a8\"/><circle cx=\"-1.09\" cy=\"21.53\" r=\"1.79\" fill=\"#f0c9a8\"/><circle cx=\"1.40\" cy=\"20.75\" r=\"1.56\" fill=\"#f0c9a8\"/><circle cx=\"3.59\" cy=\"19.34\" r=\"1.40\" fill=\"#f0c9a8\"/><circle cx=\"5.30\" cy=\"17.47\" r=\"1.17\" fill=\"#f0c9a8\"/></g><path d=\"M-2.028 4.68 C-2.8080000000000003 9.36 -3.12 13.26 -2.964 16.38\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.5459999999999999\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M1.2480000000000002 4.68 C1.4040000000000001 9.36 1.7160000000000002 12.48 1.56 15.600000000000001\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"0.5459999999999999\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-4.212000000000001\" cy=\"21.356400000000004\" rx=\"1.2168\" ry=\"1.0296\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"-1.0919999999999999\" cy=\"21.99444\" rx=\"0.93288\" ry=\"0.7893600000000001\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"1.4040000000000001\" cy=\"21.1536\" rx=\"0.8112\" ry=\"0.6864\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"3.5879999999999996\" cy=\"19.70904\" rx=\"0.7300800000000001\" ry=\"0.6177600000000001\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/><ellipse cx=\"5.304\" cy=\"17.7762\" rx=\"0.6084\" ry=\"0.5148\" fill=\"#f7ddc8\" stroke=\"#c08e66\" stroke-width=\"0.39\"/></g><g transform=\"translate(0,-29.9) scale(0.68)\"><path d=\"M0 -33.800000000000004 C-14.3 -33.800000000000004 -24.7 -26.0 -26.0 -11.700000000000001 C-26.650000000000002 -3.9000000000000004 -24.7 2.6 -22.1 7.800000000000001 C-18.2 16.900000000000002 -10.4 26.0 0 27.3 C10.4 26.0 18.2 16.900000000000002 22.1 7.800000000000001 C24.7 2.6 26.650000000000002 -3.9000000000000004 26.0 -11.700000000000001 C24.7 -26.0 14.3 -33.800000000000004 0 -33.800000000000004 Z\" fill=\"#f0c9a8\" stroke=\"#c08e66\" stroke-width=\"1.9500000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-25.35 -9.1 C-32.5 -10.4 -32.5 3.9000000000000004 -23.400000000000002 3.9000000000000004\" fill=\"#f0c9a8\" stroke=\"#c08e66\" stroke-width=\"1.6900000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-27.3 -5.2 C-29.900000000000002 -5.2 -29.25 0 -26.0 0.65\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M25.35 -9.1 C32.5 -10.4 32.5 3.9000000000000004 23.400000000000002 3.9000000000000004\" fill=\"#f0c9a8\" stroke=\"#c08e66\" stroke-width=\"1.6900000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M27.3 -5.2 C29.900000000000002 -5.2 29.25 0 26.0 0.65\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-9.620000000000001 20.8 C-10.920000000000002 28.6 -14.3 33.800000000000004 -20.8 37.7 L20.8 37.7 C14.3 33.800000000000004 10.920000000000002 28.6 9.620000000000001 20.8 Z\" fill=\"#f0c9a8\" stroke=\"#c08e66\" stroke-width=\"1.6900000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-7.0200000000000005 24.7 C-8.58 29.900000000000002 -10.920000000000002 33.800000000000004 -14.3 36.92\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.04\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M7.0200000000000005 24.7 C8.58 29.900000000000002 10.920000000000002 33.800000000000004 14.3 36.92\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.04\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-26.52 -9.1 C-28.6 -27.3 -15.600000000000001 -35.75 0 -35.75 C15.600000000000001 -35.75 28.6 -27.3 26.52 -9.1 C25.22 -13.65 22.880000000000003 -16.900000000000002 20.28 -18.720000000000002 C17.42 -22.880000000000003 10.4 -23.919999999999998 4.680000000000001 -21.32 C0.52 -19.5 -4.680000000000001 -20.02 -9.879999999999999 -21.580000000000002 C-16.12 -23.400000000000002 -21.32 -20.8 -22.880000000000003 -15.600000000000001 C-24.7 -13.78 -25.740000000000002 -11.440000000000001 -26.52 -9.1 Z\" fill=\"#5a4632\"/><path d=\"M-17.42 -7.800000000000001 C-14.170000000000002 -12.22 -7.670000000000002 -12.22 -4.420000000000002 -7.800000000000001 C-7.670000000000002 -3.6399999999999997 -14.170000000000002 -3.6399999999999997 -17.42 -7.800000000000001 Z\" fill=\"#fdfaf4\" stroke=\"#c08e66\" stroke-width=\"1.1700000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-10.920000000000002\" cy=\"-7.800000000000001\" r=\"2.7300000000000004\" fill=\"#6b8e6b\"/><circle cx=\"-10.920000000000002\" cy=\"-7.800000000000001\" r=\"1.3\" fill=\"#3a2b1c\"/><circle cx=\"-11.96\" cy=\"-8.84\" r=\"0.65\" fill=\"#ffffff\"/><path d=\"M-18.720000000000002 -15.08 C-14.820000000000002 -17.94 -7.020000000000001 -17.94 -3.120000000000001 -14.82\" fill=\"none\" stroke=\"#5a4632\" stroke-width=\"1.9500000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-17.42 -8.06 C-14.170000000000002 -12.48 -7.670000000000002 -12.48 -4.420000000000002 -8.06\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4.420000000000002 -7.800000000000001 C7.670000000000002 -12.22 14.170000000000002 -12.22 17.42 -7.800000000000001 C14.170000000000002 -3.6399999999999997 7.670000000000002 -3.6399999999999997 4.420000000000002 -7.800000000000001 Z\" fill=\"#fdfaf4\" stroke=\"#c08e66\" stroke-width=\"1.1700000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"10.920000000000002\" cy=\"-7.800000000000001\" r=\"2.7300000000000004\" fill=\"#6b8e6b\"/><circle cx=\"10.920000000000002\" cy=\"-7.800000000000001\" r=\"1.3\" fill=\"#3a2b1c\"/><circle cx=\"9.880000000000003\" cy=\"-8.84\" r=\"0.65\" fill=\"#ffffff\"/><path d=\"M3.120000000000001 -15.08 C7.020000000000001 -17.94 14.820000000000002 -17.94 18.720000000000002 -14.82\" fill=\"none\" stroke=\"#5a4632\" stroke-width=\"1.9500000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4.420000000000002 -8.06 C7.670000000000002 -12.48 14.170000000000002 -12.48 17.42 -8.06\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-1.1700000000000002 -5.2 C-2.3400000000000003 -0.78 -3.3800000000000003 1.8199999999999998 -3.9000000000000004 3.3800000000000003 C-4.42 5.460000000000001 -2.08 6.370000000000001 0 6.370000000000001 C2.08 6.370000000000001 4.42 5.460000000000001 3.9000000000000004 3.3800000000000003 C3.3800000000000003 1.8199999999999998 2.3400000000000003 -0.78 1.1700000000000002 -5.2\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-2.21\" cy=\"5.59\" rx=\"0.9750000000000001\" ry=\"0.65\" fill=\"#c08e66\"/><ellipse cx=\"2.21\" cy=\"5.59\" rx=\"0.9750000000000001\" ry=\"0.65\" fill=\"#c08e66\"/><path d=\"M-8.06 15.08 C-4.9399999999999995 12.870000000000001 -1.6900000000000002 14.3 0 14.3 C1.6900000000000002 14.3 4.9399999999999995 12.870000000000001 8.06 15.08 C5.33 19.37 -5.33 19.37 -8.06 15.08 Z\" fill=\"#c9806a\" stroke=\"#a96552\" stroke-width=\"1.1700000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8.06 15.08 C-2.4699999999999998 16.12 2.4699999999999998 16.12 8.06 15.08\" fill=\"none\" stroke=\"#a96552\" stroke-width=\"1.1700000000000002\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-3.12 22.619999999999997 C-1.04 23.66 1.04 23.66 3.12 22.619999999999997\" fill=\"none\" stroke=\"#c08e66\" stroke-width=\"1.04\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
   "teile": [
    {
     "id": "haar",
@@ -2287,9 +2299,9 @@ window.DMA_SZENEN = [
     "it": "i capelli",
     "itSyl": "ca-PEL-li",
     "en": "hair",
-    "x": 160,
-    "y": 12,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 156,
+    "y": 26,
+    "kunst": "<path d=\"M0 0 L0.0 17.9\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"0.0\" cy=\"17.9\" r=\"1.5\" fill=\"#b4553c\"/><circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "kopf",
@@ -2298,9 +2310,9 @@ window.DMA_SZENEN = [
     "it": "la testa",
     "itSyl": "TE-sta",
     "en": "head",
-    "x": 137,
-    "y": 20,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "x": 112,
+    "y": 46,
+    "kunst": "<path d=\"M0 0 L31.6 5.9\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"31.6\" cy=\"5.9\" r=\"1.5\" fill=\"#b4553c\"/><circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>",
     "lupe": "kopf_detail"
    },
    {
@@ -2310,9 +2322,9 @@ window.DMA_SZENEN = [
     "it": "l'occhio",
     "itSyl": "OC-chio",
     "en": "eye",
-    "x": 151,
-    "y": 27,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 110,
+    "y": 68,
+    "kunst": "<path d=\"M0 0 L38.6 -7.3\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"38.6\" cy=\"-7.3\" r=\"1.5\" fill=\"#b4553c\"/><circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "nase",
@@ -2321,9 +2333,9 @@ window.DMA_SZENEN = [
     "it": "il naso",
     "itSyl": "NA-so",
     "en": "nose",
-    "x": 169,
-    "y": 32,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 202,
+    "y": 82,
+    "kunst": "<path d=\"M0 0 L-44.2 -13.3\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-44.2\" cy=\"-13.3\" r=\"1.5\" fill=\"#b4553c\"/><circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "ohr",
@@ -2332,9 +2344,9 @@ window.DMA_SZENEN = [
     "it": "l'orecchio",
     "itSyl": "o-REC-chio",
     "en": "ear",
-    "x": 186,
-    "y": 32,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 200,
+    "y": 62,
+    "kunst": "<path d=\"M0 0 L-26.3 2.2\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-26.3\" cy=\"2.2\" r=\"1.5\" fill=\"#b4553c\"/><circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "mund",
@@ -2343,9 +2355,9 @@ window.DMA_SZENEN = [
     "it": "la bocca",
     "itSyl": "BOC-ca",
     "en": "mouth",
-    "x": 160,
-    "y": 45,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 112,
+    "y": 92,
+    "kunst": "<path d=\"M0 0 L39.6 -14.5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"39.6\" cy=\"-14.5\" r=\"1.5\" fill=\"#b4553c\"/><circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "hals",
@@ -2354,9 +2366,9 @@ window.DMA_SZENEN = [
     "it": "il collo",
     "itSyl": "COL-lo",
     "en": "neck",
-    "x": 160,
-    "y": 60,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 156,
+    "y": 96,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "schulter",
@@ -2365,9 +2377,9 @@ window.DMA_SZENEN = [
     "it": "la spalla",
     "itSyl": "SPAL-la",
     "en": "shoulder",
-    "x": 188,
-    "y": 74,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 185,
+    "y": 104,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "brust",
@@ -2376,9 +2388,9 @@ window.DMA_SZENEN = [
     "it": "il petto",
     "itSyl": "PET-to",
     "en": "chest",
-    "x": 146,
-    "y": 92,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "x": 142,
+    "y": 122,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>",
     "lupe": "koerper_innen"
    },
    {
@@ -2388,9 +2400,9 @@ window.DMA_SZENEN = [
     "it": "il braccio",
     "itSyl": "BRAC-cio",
     "en": "arm",
-    "x": 199,
-    "y": 100,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 189,
+    "y": 126,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "ruecken",
@@ -2399,9 +2411,9 @@ window.DMA_SZENEN = [
     "it": "la schiena",
     "itSyl": "SCHIE-na",
     "en": "back",
-    "x": 176,
-    "y": 108,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 130,
+    "y": 130,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "bauch",
@@ -2410,9 +2422,9 @@ window.DMA_SZENEN = [
     "it": "la pancia",
     "itSyl": "PAN-cia",
     "en": "belly",
-    "x": 152,
-    "y": 122,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 156,
+    "y": 144,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "hand",
@@ -2421,9 +2433,9 @@ window.DMA_SZENEN = [
     "it": "la mano",
     "itSyl": "MA-no",
     "en": "hand",
-    "x": 211,
-    "y": 123,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "x": 191,
+    "y": 201,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>",
     "lupe": "hand_detail"
    },
    {
@@ -2433,9 +2445,9 @@ window.DMA_SZENEN = [
     "it": "il dito",
     "itSyl": "DI-to",
     "en": "finger",
-    "x": 228,
-    "y": 130,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 193,
+    "y": 218,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "ellbogen",
@@ -2444,9 +2456,9 @@ window.DMA_SZENEN = [
     "it": "il gomito",
     "itSyl": "GO-mi-to",
     "en": "elbow",
-    "x": 109,
-    "y": 100,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 122,
+    "y": 146,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "bein",
@@ -2455,9 +2467,9 @@ window.DMA_SZENEN = [
     "it": "la gamba",
     "itSyl": "GAM-ba",
     "en": "leg",
-    "x": 178,
-    "y": 158,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 168,
+    "y": 198,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "knie",
@@ -2466,9 +2478,9 @@ window.DMA_SZENEN = [
     "it": "il ginocchio",
     "itSyl": "gi-NOC-chio",
     "en": "knee",
-    "x": 142,
-    "y": 168,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 143,
+    "y": 224,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    },
    {
     "id": "fuss",
@@ -2477,9 +2489,9 @@ window.DMA_SZENEN = [
     "it": "il piede",
     "itSyl": "PIE-de",
     "en": "foot",
-    "x": 132,
-    "y": 208,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>",
+    "x": 145,
+    "y": 290,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>",
     "lupe": "fuss_detail"
    },
    {
@@ -2489,9 +2501,9 @@ window.DMA_SZENEN = [
     "it": "il dito del piede",
     "itSyl": "DI-to del PIE-de",
     "en": "toe",
-    "x": 194,
-    "y": 212,
-    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"7\" fill=\"#ffffff\" opacity=\"0.4\"/><circle cx=\"0\" cy=\"0\" r=\"5\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.7\"/><circle cx=\"0\" cy=\"0\" r=\"1.8\" fill=\"#b4553c\"/>"
+    "x": 170,
+    "y": 299,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.2\" fill=\"#ffffff\" opacity=\"0.45\"/><circle cx=\"0\" cy=\"0\" r=\"3.8\" fill=\"none\" stroke=\"#b4553c\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"1.4\" fill=\"#b4553c\"/>"
    }
   ]
  },
@@ -2612,7 +2624,8 @@ window.DMA_SZENEN = [
     "en": "shoes",
     "x": 206,
     "y": 150,
-    "kunst": "<path d=\"M-18 6 L-18 -4 C-18 -10 -6 -10 -6 -3 L2 0 L2 6 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M6 6 L6 -4 C6 -10 18 -10 18 -3 L26 0 L26 6 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-18\" y1=\"4\" x2=\"2\" y2=\"4\" stroke=\"#5b5750\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"6\" y1=\"4\" x2=\"26\" y2=\"4\" stroke=\"#5b5750\" stroke-width=\"1.4\" stroke-linecap=\"round\"/>"
+    "kunst": "<path d=\"M-18 6 L-18 -4 C-18 -10 -6 -10 -6 -3 L2 0 L2 6 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M6 6 L6 -4 C6 -10 18 -10 18 -3 L26 0 L26 6 Z\" fill=\"#3a2b1c\" stroke=\"#1f1710\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-18\" y1=\"4\" x2=\"2\" y2=\"4\" stroke=\"#5b5750\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"6\" y1=\"4\" x2=\"26\" y2=\"4\" stroke=\"#5b5750\" stroke-width=\"1.4\" stroke-linecap=\"round\"/>",
+    "lupe": "schuh_detail"
    },
    {
     "id": "muetze",
@@ -3028,9 +3041,9 @@ window.DMA_SZENEN = [
     "it": "la vacca",
     "itSyl": "VAC-ca",
     "en": "cow",
-    "x": 132,
-    "y": 140,
-    "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"24\" ry=\"14\" fill=\"#fdfaf4\" stroke=\"#8b8377\" stroke-width=\"1.4\"/><circle cx=\"-6\" cy=\"-4\" r=\"6\" fill=\"#3a2b1c\"/><circle cx=\"9\" cy=\"4\" r=\"5\" fill=\"#3a2b1c\"/><circle cx=\"-15\" cy=\"5\" r=\"4\" fill=\"#3a2b1c\"/><circle cx=\"22\" cy=\"-8\" r=\"9\" fill=\"#fdfaf4\" stroke=\"#8b8377\" stroke-width=\"1.4\"/><ellipse cx=\"24\" cy=\"-4\" rx=\"5\" ry=\"3.4\" fill=\"#e3899f\"/><circle cx=\"21\" cy=\"-10\" r=\"1.2\" fill=\"#3a2b1c\"/><circle cx=\"26\" cy=\"-10\" r=\"1.2\" fill=\"#3a2b1c\"/><path d=\"M16 -15 C13 -19 18 -20 19 -16 Z\" fill=\"#fdfaf4\" stroke=\"#8b8377\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M28 -15 C31 -19 26 -20 25 -16 Z\" fill=\"#fdfaf4\" stroke=\"#8b8377\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-14\" y1=\"13\" x2=\"-14\" y2=\"24\" stroke=\"#cf9f79\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><line x1=\"-6\" y1=\"13\" x2=\"-6\" y2=\"24\" stroke=\"#cf9f79\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><line x1=\"10\" y1=\"13\" x2=\"10\" y2=\"24\" stroke=\"#cf9f79\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><path d=\"M-24 -4 C-32 -8 -32 6 -24 2\" fill=\"none\" stroke=\"#8b8377\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "x": 136,
+    "y": 128,
+    "kunst": "<g stroke=\"#c9bfae\" stroke-width=\"1.1\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M-15.0 -1.5 C-16.5 5.0 -15.0 10.5 -11.0 12.0 C-4.0 14.0 5.0 14.0 10.0 12.0 C13.5 10.5 15.0 6.0 14.5 0.5 C14.0 -3.0 11.5 -4.5 7.5 -4.5 C1.0 -4.5 -8.0 -4.5 -12.5 -3.5 C-14.5 -3.0 -15.0 -2.5 -15.0 -1.5 Z\" fill=\"#c9bfae\"/><ellipse cx=\"-12.50\" cy=\"1.00\" rx=\"4.00\" ry=\"5.00\" fill=\"#c9bfae\" transform=\"rotate(-8 -12.50 1.00)\"/><ellipse cx=\"11.50\" cy=\"3.00\" rx=\"4.00\" ry=\"5.50\" fill=\"#c9bfae\" transform=\"rotate(8 11.50 3.00)\"/><path d=\"M15.75 2.94 L21.11 -6.10 A4.25 4.25 0 0 1 14.89 -11.90 L6.25 -5.94 Z\" fill=\"#c9bfae\"/><ellipse cx=\"20.00\" cy=\"-10.50\" rx=\"4.75\" ry=\"5.00\" fill=\"#c9bfae\" transform=\"rotate(18 20.00 -10.50)\"/><path d=\"M18.49 -7.71 L23.99 -3.77 A3.00 3.00 0 0 1 28.01 -8.23 L23.51 -13.29 Z\" fill=\"#c9bfae\"/><ellipse cx=\"26.50\" cy=\"-5.50\" rx=\"3.20\" ry=\"2.70\" fill=\"#c9bfae\" transform=\"rotate(30 26.50 -5.50)\"/><path d=\"M18.44 -14.32 L14.44 -16.11 A0.75 0.75 0 0 1 13.56 -14.89 L16.56 -11.68 Z\" fill=\"#c9bfae\"/><path d=\"M21.54 -12.25 L23.98 -15.42 A0.75 0.75 0 0 1 23.02 -16.58 L19.46 -14.75 Z\" fill=\"#c9bfae\"/><path d=\"M-12.55 6.36 L-13.32 14.67 A1.36 1.36 0 0 1 -10.68 15.33 L-7.45 7.64 Z\" fill=\"#c9bfae\"/><path d=\"M-13.35 15.19 L-11.88 22.13 A0.89 0.89 0 0 1 -10.12 21.87 L-10.65 14.81 Z\" fill=\"#c9bfae\"/><path d=\"M-10.80 6.34 L-11.46 15.16 A1.50 1.50 0 0 1 -8.54 15.84 L-5.20 7.66 Z\" fill=\"#c9bfae\"/><path d=\"M-11.48 15.70 L-9.97 23.13 A0.98 0.98 0 0 1 -8.03 22.87 L-8.52 15.30 Z\" fill=\"#c9bfae\"/><path d=\"M6.63 6.13 L8.27 15.07 A1.24 1.24 0 0 1 10.73 14.93 L11.37 5.87 Z\" fill=\"#c9bfae\"/><path d=\"M8.27 15.00 L8.69 22.00 A0.81 0.81 0 0 1 10.31 22.00 L10.73 15.00 Z\" fill=\"#c9bfae\"/><path d=\"M8.38 6.14 L10.14 15.57 A1.36 1.36 0 0 1 12.86 15.43 L13.62 5.86 Z\" fill=\"#c9bfae\"/><path d=\"M10.13 15.50 L10.61 23.00 A0.89 0.89 0 0 1 12.39 23.00 L12.87 15.50 Z\" fill=\"#c9bfae\"/></g><g stroke=\"none\"><path d=\"M-15.0 -1.5 C-16.5 5.0 -15.0 10.5 -11.0 12.0 C-4.0 14.0 5.0 14.0 10.0 12.0 C13.5 10.5 15.0 6.0 14.5 0.5 C14.0 -3.0 11.5 -4.5 7.5 -4.5 C1.0 -4.5 -8.0 -4.5 -12.5 -3.5 C-14.5 -3.0 -15.0 -2.5 -15.0 -1.5 Z\" fill=\"#fdfaf4\"/><ellipse cx=\"-12.50\" cy=\"1.00\" rx=\"4.00\" ry=\"5.00\" fill=\"#fdfaf4\" transform=\"rotate(-8 -12.50 1.00)\"/><ellipse cx=\"11.50\" cy=\"3.00\" rx=\"4.00\" ry=\"5.50\" fill=\"#fdfaf4\" transform=\"rotate(8 11.50 3.00)\"/><path d=\"M15.75 2.94 L21.11 -6.10 A4.25 4.25 0 0 1 14.89 -11.90 L6.25 -5.94 Z\" fill=\"#fdfaf4\"/><ellipse cx=\"20.00\" cy=\"-10.50\" rx=\"4.75\" ry=\"5.00\" fill=\"#fdfaf4\" transform=\"rotate(18 20.00 -10.50)\"/><path d=\"M18.49 -7.71 L23.99 -3.77 A3.00 3.00 0 0 1 28.01 -8.23 L23.51 -13.29 Z\" fill=\"#fdfaf4\"/><ellipse cx=\"26.50\" cy=\"-5.50\" rx=\"3.20\" ry=\"2.70\" fill=\"#fdfaf4\" transform=\"rotate(30 26.50 -5.50)\"/><path d=\"M18.44 -14.32 L14.44 -16.11 A0.75 0.75 0 0 1 13.56 -14.89 L16.56 -11.68 Z\" fill=\"#fdfaf4\"/><path d=\"M21.54 -12.25 L23.98 -15.42 A0.75 0.75 0 0 1 23.02 -16.58 L19.46 -14.75 Z\" fill=\"#fdfaf4\"/><path d=\"M-12.55 6.36 L-13.32 14.67 A1.36 1.36 0 0 1 -10.68 15.33 L-7.45 7.64 Z\" fill=\"#fdfaf4\"/><path d=\"M-13.35 15.19 L-11.88 22.13 A0.89 0.89 0 0 1 -10.12 21.87 L-10.65 14.81 Z\" fill=\"#fdfaf4\"/><path d=\"M-10.80 6.34 L-11.46 15.16 A1.50 1.50 0 0 1 -8.54 15.84 L-5.20 7.66 Z\" fill=\"#fdfaf4\"/><path d=\"M-11.48 15.70 L-9.97 23.13 A0.98 0.98 0 0 1 -8.03 22.87 L-8.52 15.30 Z\" fill=\"#fdfaf4\"/><path d=\"M6.63 6.13 L8.27 15.07 A1.24 1.24 0 0 1 10.73 14.93 L11.37 5.87 Z\" fill=\"#fdfaf4\"/><path d=\"M8.27 15.00 L8.69 22.00 A0.81 0.81 0 0 1 10.31 22.00 L10.73 15.00 Z\" fill=\"#fdfaf4\"/><path d=\"M8.38 6.14 L10.14 15.57 A1.36 1.36 0 0 1 12.86 15.43 L13.62 5.86 Z\" fill=\"#fdfaf4\"/><path d=\"M10.13 15.50 L10.61 23.00 A0.89 0.89 0 0 1 12.39 23.00 L12.87 15.50 Z\" fill=\"#fdfaf4\"/></g><ellipse cx=\"-9.0\" cy=\"2.0\" rx=\"4.0\" ry=\"3.25\" fill=\"#2e2622\"/><ellipse cx=\"1.0\" cy=\"4.0\" rx=\"4.5\" ry=\"3.5\" fill=\"#2e2622\"/><ellipse cx=\"8.0\" cy=\"1.0\" rx=\"3.0\" ry=\"2.5\" fill=\"#2e2622\"/><ellipse cx=\"-4.0\" cy=\"9.0\" rx=\"2.75\" ry=\"2.0\" fill=\"#2e2622\"/><ellipse cx=\"20.0\" cy=\"-11.0\" rx=\"2.75\" ry=\"2.5\" fill=\"#2e2622\"/><path d=\"M18.0 -14.5 C17.55 -16.25 16.5 -16.0 16.5 -17.25\" fill=\"none\" stroke=\"#e8dfc8\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M20.0 -15.0 C20.525 -16.75 21.75 -16.5 21.75 -17.75\" fill=\"none\" stroke=\"#e8dfc8\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-12.26 22.0 L-9.74 22.0 L-9.53 23.5 L-12.365 23.5 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.45\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-10.379999999999999 23.0 L-7.62 23.0 L-7.39 24.5 L-10.495000000000001 24.5 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.45\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8.36 22.0 L10.64 22.0 L10.83 23.5 L8.265 23.5 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.45\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M10.24 23.0 L12.76 23.0 L12.97 24.5 L10.135 24.5 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.45\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"21.5\" cy=\"-12.0\" rx=\"0.95\" ry=\"0.85\" fill=\"#2a211a\" stroke=\"#15100c\" stroke-width=\"0.4\"/><circle cx=\"21.75\" cy=\"-12.3\" r=\"0.3\" fill=\"#ffffff\"/><ellipse cx=\"27.0\" cy=\"-5.75\" rx=\"0.85\" ry=\"0.7\" fill=\"#c48a90\"/><path d=\"M28.0 -4.5 C27.0 -3.7 25.5 -3.5 24.5 -3.9\" fill=\"none\" stroke=\"#c9bfae\" stroke-width=\"0.45\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-4.5\" cy=\"12.5\" rx=\"3.0\" ry=\"2.2\" fill=\"#e8a8ac\" stroke=\"#c9868c\" stroke-width=\"0.55\"/><path d=\"M-6.25 14.0 L-6.25 15.5\" fill=\"none\" stroke=\"#c9868c\" stroke-width=\"0.95\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-4.5 14.0 L-4.5 15.5\" fill=\"none\" stroke=\"#c9868c\" stroke-width=\"0.95\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-2.75 14.0 L-2.75 15.5\" fill=\"none\" stroke=\"#c9868c\" stroke-width=\"0.95\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-15.0 -1.5 C-18.0 3.0 -18.5 9.0 -17.5 15.0\" fill=\"none\" stroke=\"#c9bfae\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-17.5\" cy=\"16.5\" rx=\"1.3\" ry=\"2.2\" fill=\"#2e2622\"/>"
    },
    {
     "id": "schwein",
@@ -3072,9 +3085,9 @@ window.DMA_SZENEN = [
     "it": "il cavallo",
     "itSyl": "ca-VAL-lo",
     "en": "horse",
-    "x": 88,
-    "y": 132,
-    "kunst": "<ellipse cx=\"0\" cy=\"0\" rx=\"20\" ry=\"12\" fill=\"#a06c3c\" stroke=\"#7a5028\" stroke-width=\"1.4\"/><path d=\"M16 -4 L26 -18 L31 -14 L22 -2 Z\" fill=\"#a06c3c\" stroke=\"#7a5028\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"29\" cy=\"-17\" r=\"4.4\" fill=\"#a06c3c\" stroke=\"#7a5028\" stroke-width=\"1.2\"/><circle cx=\"29\" cy=\"-19\" r=\"1.1\" fill=\"#3a2b1c\"/><path d=\"M20 -16 C15 -22 22 -24 24 -19 Z\" fill=\"#5a4632\"/><line x1=\"-12\" y1=\"11\" x2=\"-13\" y2=\"24\" stroke=\"#7a5028\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><line x1=\"-4\" y1=\"11\" x2=\"-4\" y2=\"24\" stroke=\"#7a5028\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><line x1=\"8\" y1=\"11\" x2=\"9\" y2=\"24\" stroke=\"#7a5028\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><path d=\"M-20 -4 C-30 -2 -28 10 -20 6\" fill=\"none\" stroke=\"#5a4632\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "x": 86,
+    "y": 118,
+    "kunst": "<g stroke=\"#6d4520\" stroke-width=\"1.1440000000000001\" stroke-linejoin=\"round\" stroke-linecap=\"round\"><path d=\"M-15.600000000000001 -1.04 C-16.64 5.2 -14.56 10.4 -10.4 11.440000000000001 C-4.16 13.0 4.16 13.0 9.36 11.440000000000001 C13.52 9.88 15.08 5.2 14.56 0.0 C14.040000000000001 -3.12 11.440000000000001 -4.68 7.28 -4.68 C1.04 -4.68 -7.28 -4.16 -12.48 -3.12 C-14.56 -2.6 -15.600000000000001 -2.08 -15.600000000000001 -1.04 Z\" fill=\"#6d4520\"/><ellipse cx=\"-12.48\" cy=\"2.08\" rx=\"5.20\" ry=\"6.24\" fill=\"#6d4520\" transform=\"rotate(-12 -12.48 2.08)\"/><ellipse cx=\"12.48\" cy=\"3.12\" rx=\"4.16\" ry=\"5.72\" fill=\"#6d4520\" transform=\"rotate(10 12.48 3.12)\"/><path d=\"M14.80 2.17 L22.51 -11.14 A3.64 3.64 0 0 1 17.01 -15.90 L4.96 -6.33 Z\" fill=\"#6d4520\"/><ellipse cx=\"21.32\" cy=\"-14.04\" rx=\"4.94\" ry=\"5.20\" fill=\"#6d4520\" transform=\"rotate(22 21.32 -14.04)\"/><path d=\"M19.71 -10.66 L28.05 -5.05 A2.34 2.34 0 0 1 31.23 -8.47 L25.01 -16.38 Z\" fill=\"#6d4520\"/><ellipse cx=\"30.16\" cy=\"-6.24\" rx=\"2.81\" ry=\"2.50\" fill=\"#6d4520\" transform=\"rotate(40 30.16 -6.24)\"/><path d=\"M20.08 -16.98 L17.82 -21.94 A0.42 0.42 0 0 1 17.02 -21.74 L17.36 -16.30 Z\" fill=\"#6d4520\"/><path d=\"M22.20 -17.16 L21.22 -22.36 A0.42 0.42 0 0 1 20.38 -22.36 L19.40 -17.16 Z\" fill=\"#6d4520\"/><path d=\"M-12.99 5.38 L-14.87 15.15 A1.42 1.42 0 0 1 -12.17 16.05 L-7.81 7.10 Z\" fill=\"#6d4520\"/><path d=\"M-14.88 15.99 L-12.33 23.13 A0.93 0.93 0 0 1 -10.55 22.63 L-12.16 15.21 Z\" fill=\"#6d4520\"/><path d=\"M-11.17 5.34 L-12.92 15.65 A1.55 1.55 0 0 1 -9.96 16.59 L-5.47 7.14 Z\" fill=\"#6d4520\"/><path d=\"M-12.94 16.52 L-10.34 24.18 A1.02 1.02 0 0 1 -8.38 23.66 L-9.94 15.72 Z\" fill=\"#6d4520\"/><path d=\"M6.89 5.32 L8.60 15.66 A1.28 1.28 0 0 1 11.16 15.54 L11.83 5.08 Z\" fill=\"#6d4520\"/><path d=\"M8.60 15.60 L9.04 22.88 A0.84 0.84 0 0 1 10.72 22.88 L11.16 15.60 Z\" fill=\"#6d4520\"/><path d=\"M8.71 5.33 L10.54 16.19 A1.42 1.42 0 0 1 13.38 16.05 L14.17 5.07 Z\" fill=\"#6d4520\"/><path d=\"M10.54 16.12 L11.03 23.92 A0.93 0.93 0 0 1 12.89 23.92 L13.38 16.12 Z\" fill=\"#6d4520\"/></g><g stroke=\"none\"><path d=\"M-15.600000000000001 -1.04 C-16.64 5.2 -14.56 10.4 -10.4 11.440000000000001 C-4.16 13.0 4.16 13.0 9.36 11.440000000000001 C13.52 9.88 15.08 5.2 14.56 0.0 C14.040000000000001 -3.12 11.440000000000001 -4.68 7.28 -4.68 C1.04 -4.68 -7.28 -4.16 -12.48 -3.12 C-14.56 -2.6 -15.600000000000001 -2.08 -15.600000000000001 -1.04 Z\" fill=\"#a9713f\"/><ellipse cx=\"-12.48\" cy=\"2.08\" rx=\"5.20\" ry=\"6.24\" fill=\"#a9713f\" transform=\"rotate(-12 -12.48 2.08)\"/><ellipse cx=\"12.48\" cy=\"3.12\" rx=\"4.16\" ry=\"5.72\" fill=\"#a9713f\" transform=\"rotate(10 12.48 3.12)\"/><path d=\"M14.80 2.17 L22.51 -11.14 A3.64 3.64 0 0 1 17.01 -15.90 L4.96 -6.33 Z\" fill=\"#a9713f\"/><ellipse cx=\"21.32\" cy=\"-14.04\" rx=\"4.94\" ry=\"5.20\" fill=\"#a9713f\" transform=\"rotate(22 21.32 -14.04)\"/><path d=\"M19.71 -10.66 L28.05 -5.05 A2.34 2.34 0 0 1 31.23 -8.47 L25.01 -16.38 Z\" fill=\"#a9713f\"/><ellipse cx=\"30.16\" cy=\"-6.24\" rx=\"2.81\" ry=\"2.50\" fill=\"#a9713f\" transform=\"rotate(40 30.16 -6.24)\"/><path d=\"M20.08 -16.98 L17.82 -21.94 A0.42 0.42 0 0 1 17.02 -21.74 L17.36 -16.30 Z\" fill=\"#a9713f\"/><path d=\"M22.20 -17.16 L21.22 -22.36 A0.42 0.42 0 0 1 20.38 -22.36 L19.40 -17.16 Z\" fill=\"#a9713f\"/><path d=\"M-12.99 5.38 L-14.87 15.15 A1.42 1.42 0 0 1 -12.17 16.05 L-7.81 7.10 Z\" fill=\"#a9713f\"/><path d=\"M-14.88 15.99 L-12.33 23.13 A0.93 0.93 0 0 1 -10.55 22.63 L-12.16 15.21 Z\" fill=\"#a9713f\"/><path d=\"M-11.17 5.34 L-12.92 15.65 A1.55 1.55 0 0 1 -9.96 16.59 L-5.47 7.14 Z\" fill=\"#a9713f\"/><path d=\"M-12.94 16.52 L-10.34 24.18 A1.02 1.02 0 0 1 -8.38 23.66 L-9.94 15.72 Z\" fill=\"#a9713f\"/><path d=\"M6.89 5.32 L8.60 15.66 A1.28 1.28 0 0 1 11.16 15.54 L11.83 5.08 Z\" fill=\"#a9713f\"/><path d=\"M8.60 15.60 L9.04 22.88 A0.84 0.84 0 0 1 10.72 22.88 L11.16 15.60 Z\" fill=\"#a9713f\"/><path d=\"M8.71 5.33 L10.54 16.19 A1.42 1.42 0 0 1 13.38 16.05 L14.17 5.07 Z\" fill=\"#a9713f\"/><path d=\"M10.54 16.12 L11.03 23.92 A0.93 0.93 0 0 1 12.89 23.92 L13.38 16.12 Z\" fill=\"#a9713f\"/></g><path d=\"M-12.6412 22.880000000000003 L-10.1296 22.880000000000003 L-9.9112 24.44 L-12.8596 24.44 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.468\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-10.675600000000001 23.92 L-7.9248 23.92 L-7.6856 25.48 L-10.914800000000001 25.48 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.468\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8.7932 22.880000000000003 L11.065600000000002 22.880000000000003 L11.263200000000001 24.44 L8.595600000000001 24.44 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.468\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M10.7588 23.92 L13.2704 23.92 L13.488800000000001 25.48 L10.5404 25.48 Z\" fill=\"#3a2e24\" stroke=\"#241c14\" stroke-width=\"0.468\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M19.240000000000002 -18.72 C17.16 -16.12 14.56 -12.48 12.48 -8.84 C10.92 -5.720000000000001 8.84 -4.16 6.76 -4.16 C8.32 -6.76 9.36 -10.4 11.440000000000001 -14.040000000000001 C13.52 -17.68 16.64 -19.76 19.240000000000002 -18.72 Z\" fill=\"#4a382a\"/><path d=\"M19.5 -19.240000000000002 C21.32 -18.2 22.880000000000003 -16.64 23.400000000000002 -14.56 C21.84 -15.600000000000001 20.28 -17.16 19.5 -19.240000000000002 Z\" fill=\"#4a382a\"/><path d=\"M-15.08 -1.04 C-18.72 2.08 -19.76 8.32 -17.68 15.600000000000001 C-16.12 10.4 -15.600000000000001 5.2 -13.52 1.04 Z\" fill=\"#4a382a\"/><path d=\"M23.92 -14.040000000000001 C26.0 -12.48 28.6 -9.36 30.16 -7.28 C28.6 -7.28 26.0 -9.88 23.400000000000002 -12.48 Z\" fill=\"#f0e2cf\"/><ellipse cx=\"22.1\" cy=\"-15.600000000000001\" rx=\"1.196\" ry=\"1.04\" fill=\"#2a211a\" stroke=\"#15100c\" stroke-width=\"0.41600000000000004\"/><circle cx=\"22.412000000000003\" cy=\"-15.964\" r=\"0.364\" fill=\"#ffffff\"/><ellipse cx=\"30.42\" cy=\"-7.0200000000000005\" rx=\"0.8320000000000001\" ry=\"0.676\" fill=\"#4a3628\"/><path d=\"M31.46 -5.98 C30.42 -4.992 28.86 -4.68 27.82 -5.096000000000001\" fill=\"none\" stroke=\"#6d4520\" stroke-width=\"0.468\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M18.408 -17.68 L17.628 -21.060000000000002 L19.032 -18.2 Z\" fill=\"#4a382a\"/><path d=\"M20.488 -18.2 L20.8 -21.580000000000002 L21.424000000000003 -18.72 Z\" fill=\"#4a382a\"/><path d=\"M18.2 -10.4 C20.28 -9.88 22.36 -10.14 23.92 -10.92\" fill=\"none\" stroke=\"#8a5a2e\" stroke-width=\"0.52\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M10.4 -3.12 C8.32 1.04 7.800000000000001 5.2 8.84 8.32\" fill=\"none\" stroke=\"#8a5a2e\" stroke-width=\"0.5720000000000001\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-10.4 -3.12 C-8.32 1.04 -8.32 5.2 -9.88 8.32\" fill=\"none\" stroke=\"#8a5a2e\" stroke-width=\"0.5720000000000001\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
    },
    {
     "id": "traktor",
@@ -6365,7 +6378,8 @@ window.DMA_SZENEN = [
     "en": "tree",
     "x": 34,
     "y": 42,
-    "kunst": "<path d=\"M0 18 L0 -2\" fill=\"none\" stroke=\"#8b6a3a\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"0\" cy=\"-10\" r=\"13\" fill=\"#4d9459\" stroke=\"#3e7a48\" stroke-width=\"1.3\"/><circle cx=\"-9\" cy=\"-4\" r=\"8\" fill=\"#5aa86b\"/><circle cx=\"9\" cy=\"-4\" r=\"8\" fill=\"#5aa86b\"/><circle cx=\"0\" cy=\"-18\" r=\"8\" fill=\"#5aa86b\"/><circle cx=\"-4\" cy=\"-12\" r=\"2\" fill=\"#d9654f\"/><circle cx=\"5\" cy=\"-8\" r=\"2\" fill=\"#d9654f\"/>"
+    "kunst": "<path d=\"M0 18 L0 -2\" fill=\"none\" stroke=\"#8b6a3a\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"0\" cy=\"-10\" r=\"13\" fill=\"#4d9459\" stroke=\"#3e7a48\" stroke-width=\"1.3\"/><circle cx=\"-9\" cy=\"-4\" r=\"8\" fill=\"#5aa86b\"/><circle cx=\"9\" cy=\"-4\" r=\"8\" fill=\"#5aa86b\"/><circle cx=\"0\" cy=\"-18\" r=\"8\" fill=\"#5aa86b\"/><circle cx=\"-4\" cy=\"-12\" r=\"2\" fill=\"#d9654f\"/><circle cx=\"5\" cy=\"-8\" r=\"2\" fill=\"#d9654f\"/>",
+    "lupe": "baum_detail"
    },
    {
     "id": "tanne",
@@ -6398,7 +6412,8 @@ window.DMA_SZENEN = [
     "en": "leaf",
     "x": 223,
     "y": 42,
-    "kunst": "<path d=\"M0 14 Q-16 2 -10 -10 Q-4 -18 0 -16 Q4 -18 10 -10 Q16 2 0 14 Z\" fill=\"#6fa85c\" stroke=\"#47773a\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"14\" x2=\"0\" y2=\"-15\" stroke=\"#47773a\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><path d=\"M0 8 L-8 2\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 3 L8 -3\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -2 L-8 -8\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -7 L8 -13\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -12 L-8 -18\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<path d=\"M0 14 Q-16 2 -10 -10 Q-4 -18 0 -16 Q4 -18 10 -10 Q16 2 0 14 Z\" fill=\"#6fa85c\" stroke=\"#47773a\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"0\" y1=\"14\" x2=\"0\" y2=\"-15\" stroke=\"#47773a\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><path d=\"M0 8 L-8 2\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 3 L8 -3\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -2 L-8 -8\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -7 L8 -13\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -12 L-8 -18\" fill=\"none\" stroke=\"#47773a\" stroke-width=\"0.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "baum_detail"
    },
    {
     "id": "ast",
@@ -6409,7 +6424,8 @@ window.DMA_SZENEN = [
     "en": "branch",
     "x": 286,
     "y": 42,
-    "kunst": "<path d=\"M-22 8 Q-6 4 6 -6 Q14 -12 22 -14\" fill=\"none\" stroke=\"#8b6a3a\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-6 5 L-10 -6 M6 -6 L4 -16 M14 -11 L18 -2\" fill=\"none\" stroke=\"#8b6a3a\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-11\" cy=\"-8\" rx=\"4\" ry=\"3\" fill=\"#5f9a4c\"/><ellipse cx=\"3\" cy=\"-18\" rx=\"4\" ry=\"3\" fill=\"#5f9a4c\"/><ellipse cx=\"19\" cy=\"0\" rx=\"4\" ry=\"3\" fill=\"#5f9a4c\"/>"
+    "kunst": "<path d=\"M-22 8 Q-6 4 6 -6 Q14 -12 22 -14\" fill=\"none\" stroke=\"#8b6a3a\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-6 5 L-10 -6 M6 -6 L4 -16 M14 -11 L18 -2\" fill=\"none\" stroke=\"#8b6a3a\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><ellipse cx=\"-11\" cy=\"-8\" rx=\"4\" ry=\"3\" fill=\"#5f9a4c\"/><ellipse cx=\"3\" cy=\"-18\" rx=\"4\" ry=\"3\" fill=\"#5f9a4c\"/><ellipse cx=\"19\" cy=\"0\" rx=\"4\" ry=\"3\" fill=\"#5f9a4c\"/>",
+    "lupe": "baum_detail"
    },
    {
     "id": "wurzel",
@@ -6420,7 +6436,8 @@ window.DMA_SZENEN = [
     "en": "root",
     "x": 34,
     "y": 86,
-    "kunst": "<rect x=\"-5\" y=\"-18\" width=\"10\" height=\"14\" rx=\"2\" fill=\"#8b6a3a\"/><rect x=\"-24\" y=\"-4\" width=\"48\" height=\"6\" rx=\"0\" fill=\"#a08c60\"/><path d=\"M0 -4 Q-6 4 -16 8 M0 -4 Q2 6 10 12 M0 -4 Q-2 8 -4 16 M0 -4 Q8 2 20 4\" fill=\"none\" stroke=\"#7a5a3a\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+    "kunst": "<rect x=\"-5\" y=\"-18\" width=\"10\" height=\"14\" rx=\"2\" fill=\"#8b6a3a\"/><rect x=\"-24\" y=\"-4\" width=\"48\" height=\"6\" rx=\"0\" fill=\"#a08c60\"/><path d=\"M0 -4 Q-6 4 -16 8 M0 -4 Q2 6 10 12 M0 -4 Q-2 8 -4 16 M0 -4 Q8 2 20 4\" fill=\"none\" stroke=\"#7a5a3a\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "lupe": "baum_detail"
    },
    {
     "id": "pilz",
@@ -7834,7 +7851,7 @@ window.DMA_SZENEN = [
   "detail": true,
   "breite": 320,
   "hoehe": 200,
-  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#e6ddcb\"/><path d=\"M22 30 L155 24 L155 182 L22 176 Z\" fill=\"#fdfaf0\" stroke=\"#cfc2a4\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M298 30 L165 24 L165 182 L298 176 Z\" fill=\"#fdfaf0\" stroke=\"#cfc2a4\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M155 24 L160 28 L165 24 L165 182 L160 178 L155 182 Z\" fill=\"#e4d9c0\"/>",
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#e6ddcb\"/><g transform=\"translate(22,18)\"><path d=\"M0 10 C69.0 -2 207.0 -2 276 10 L276 166 C207.0 174 69.0 174 0 166 Z\" fill=\"#9a3a2c\" stroke=\"#6e2418\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M6 14 C70.0 6 134.0 -1 134.0 2 L134.0 160 C134.0 164 70.0 170 6 162 Z\" fill=\"#e8e0cc\" stroke=\"#cfc2a4\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M270 14 C206.0 6 142.0 -1 142.0 2 L142.0 160 C142.0 164 206.0 170 270 162 Z\" fill=\"#e8e0cc\" stroke=\"#cfc2a4\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8 9 C62.1 1 128.0 2 134.0 6 L134.0 156 C128.0 160 62.1 164 8 156 Z\" fill=\"#fdfcf6\" stroke=\"#cfc2a4\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M268 9 C213.9 1 148.0 2 142.0 6 L142.0 156 C148.0 160 213.9 164 268 156 Z\" fill=\"#fdfcf6\" stroke=\"#cfc2a4\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M133.0 6 C136.0 5 140.0 5 143.0 6 L143.0 156 C140.0 157 136.0 157 133.0 156 Z\" fill=\"#ded3ba\"/><path d=\"M133.0 7 C136.0 6 140.0 6 143.0 7\" fill=\"none\" stroke=\"#c9bb9c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M138.0 7 L138.0 156\" fill=\"none\" stroke=\"#c9bb9c\" stroke-width=\"1.0\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g>",
   "teile": [
    {
     "id": "buchdeckel",
@@ -8133,6 +8150,594 @@ window.DMA_SZENEN = [
     "x": 96,
     "y": 190,
     "kunst": "<rect x=\"-22\" y=\"-8\" width=\"44\" height=\"16\" rx=\"3\" fill=\"#f2d3ba\" stroke=\"#d8ab8c\" stroke-width=\"1.3\"/><circle cx=\"-16\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"-8\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"0\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"8\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/><circle cx=\"16\" cy=\"-1\" r=\"1.2\" fill=\"#dfb493\"/>"
+   }
+  ]
+ },
+ {
+  "id": "bett_detail",
+  "titel": "Das Bett ganz nah",
+  "emoji": "🔍",
+  "thema": "Alltag & Zuhause",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 220,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"220\" rx=\"0\" fill=\"#efe7d8\"/><rect x=\"16\" y=\"60\" width=\"288\" height=\"116\" rx=\"6\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"10\" y=\"40\" width=\"20\" height=\"150\" rx=\"5\" fill=\"#a06c3c\"/><rect x=\"290\" y=\"56\" width=\"20\" height=\"134\" rx=\"5\" fill=\"#a06c3c\"/><rect x=\"26\" y=\"70\" width=\"268\" height=\"96\" rx=\"4\" fill=\"#e8dcc6\"/>",
+  "teile": [
+   {
+    "id": "matratze",
+    "de": "die Matratze",
+    "syl": "Ma-TRAT-ze",
+    "it": "il materasso",
+    "itSyl": "ma-te-RAS-so",
+    "en": "mattress",
+    "x": 160,
+    "y": 176,
+    "kunst": "<rect x=\"-120\" y=\"-10\" width=\"240\" height=\"20\" rx=\"5\" fill=\"#f2ece0\" stroke=\"#cfc2a4\" stroke-width=\"1.6\"/><circle cx=\"-100\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"-75\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"-50\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"-25\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"0\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"25\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"50\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"75\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/><circle cx=\"100\" cy=\"0\" r=\"2.2\" fill=\"#cfc2a4\"/>"
+   },
+   {
+    "id": "lattenrost",
+    "de": "der Lattenrost",
+    "syl": "LAT-ten-rost",
+    "it": "la rete del letto",
+    "itSyl": "RE-te del LET-to",
+    "en": "slatted frame",
+    "x": 160,
+    "y": 198,
+    "kunst": "<rect x=\"-116\" y=\"-6\" width=\"232\" height=\"12\" rx=\"3\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.4\"/><rect x=\"-108\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"-86\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"-64\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"-42\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"-20\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"2\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"24\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"46\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"68\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/><rect x=\"90\" y=\"-4\" width=\"14\" height=\"8\" rx=\"2\" fill=\"#dcae7c\"/>"
+   },
+   {
+    "id": "spannbettlaken",
+    "de": "das Spannbettlaken",
+    "syl": "SPANN-bett-la-ken",
+    "it": "il lenzuolo con angoli",
+    "itSyl": "len-ZUO-lo con AN-go-li",
+    "en": "fitted sheet",
+    "x": 60,
+    "y": 152,
+    "kunst": "<path d=\"M-34 -14 L34 -14 L38 10 C20 16 -20 16 -38 10 Z\" fill=\"#fdfcf6\" stroke=\"#e6ddc8\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-30 -8 C-10 -4 10 -4 30 -8\" fill=\"none\" stroke=\"#e6ddc8\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-34 6 C-14 10 14 10 34 6\" fill=\"none\" stroke=\"#e6ddc8\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "bettlaken",
+    "de": "das Bettlaken",
+    "syl": "BETT-la-ken",
+    "it": "il lenzuolo",
+    "itSyl": "len-ZUO-lo",
+    "en": "bed sheet",
+    "x": 160,
+    "y": 108,
+    "kunst": "<path d=\"M-90 -18 L90 -18 L90 18 C40 26 -40 26 -90 18 Z\" fill=\"#fdfcf6\" stroke=\"#e6ddc8\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-80 -10 C-40 -6 40 -6 80 -10\" fill=\"none\" stroke=\"#e6ddc8\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-84 4 C-40 10 40 10 84 4\" fill=\"none\" stroke=\"#e6ddc8\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "bettdecke",
+    "de": "die Bettdecke",
+    "syl": "BETT-de-cke",
+    "it": "la coperta",
+    "itSyl": "co-PER-ta",
+    "en": "duvet",
+    "x": 200,
+    "y": 130,
+    "kunst": "<path d=\"M-70 -26 C-40 -34 40 -34 70 -26 L74 22 C40 30 -40 30 -74 22 Z\" fill=\"#7fb3d8\" stroke=\"#4f86b0\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-54 -30 C-52 -6 -56 6 -54 26\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-27 -30 C-25 -6 -29 6 -27 26\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -30 C2 -6 -2 6 0 26\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M27 -30 C29 -6 25 6 27 26\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M54 -30 C56 -6 52 6 54 26\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-72 -2 C-36 4 36 4 72 -2\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "bettbezug",
+    "de": "der Bettbezug",
+    "syl": "BETT-be-zug",
+    "it": "il copripiumino",
+    "itSyl": "co-pri-piu-MI-no",
+    "en": "duvet cover",
+    "x": 268,
+    "y": 74,
+    "kunst": "<rect x=\"-30\" y=\"-26\" width=\"60\" height=\"52\" rx=\"4\" fill=\"#a8cfe6\" stroke=\"#4f86b0\" stroke-width=\"1.6\"/><rect x=\"-24\" y=\"-20\" width=\"48\" height=\"40\" rx=\"3\" fill=\"#7fb3d8\"/><circle cx=\"-16\" cy=\"22\" r=\"2.4\" fill=\"#fdfcf6\" stroke=\"#4f86b0\" stroke-width=\"1\"/><circle cx=\"-5\" cy=\"22\" r=\"2.4\" fill=\"#fdfcf6\" stroke=\"#4f86b0\" stroke-width=\"1\"/><circle cx=\"6\" cy=\"22\" r=\"2.4\" fill=\"#fdfcf6\" stroke=\"#4f86b0\" stroke-width=\"1\"/><circle cx=\"17\" cy=\"22\" r=\"2.4\" fill=\"#fdfcf6\" stroke=\"#4f86b0\" stroke-width=\"1\"/><path d=\"M-28 18 L28 18\" fill=\"none\" stroke=\"#4f86b0\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "kopfkissen",
+    "de": "das Kopfkissen",
+    "syl": "KOPF-kis-sen",
+    "it": "il cuscino",
+    "itSyl": "cu-SCI-no",
+    "en": "pillow",
+    "x": 62,
+    "y": 84,
+    "kunst": "<path d=\"M-32 -18 C-36 0 -36 10 -30 18 C-10 24 10 24 30 18 C36 10 36 0 32 -18 C10 -24 -10 -24 -32 -18 Z\" fill=\"#e8b4bd\" stroke=\"#c2848f\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-22 -12 C-18 0 -18 8 -22 14\" fill=\"none\" stroke=\"#c2848f\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M22 -12 C18 0 18 8 22 14\" fill=\"none\" stroke=\"#c2848f\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "kissenbezug",
+    "de": "der Kissenbezug",
+    "syl": "KIS-sen-be-zug",
+    "it": "la federa",
+    "itSyl": "FE-de-ra",
+    "en": "pillowcase",
+    "x": 150,
+    "y": 60,
+    "kunst": "<rect x=\"-28\" y=\"-18\" width=\"56\" height=\"36\" rx=\"5\" fill=\"#f2cdd4\" stroke=\"#c2848f\" stroke-width=\"1.6\"/><rect x=\"-22\" y=\"-12\" width=\"44\" height=\"24\" rx=\"4\" fill=\"#e8b4bd\"/><path d=\"M18 -18 L18 18\" fill=\"none\" stroke=\"#c2848f\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M22 -12 C26 -4 26 4 22 12\" fill=\"none\" stroke=\"#c2848f\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "tagesdecke",
+    "de": "die Tagesdecke",
+    "syl": "TA-ges-de-cke",
+    "it": "il copriletto",
+    "itSyl": "co-pri-LET-to",
+    "en": "bedspread",
+    "x": 268,
+    "y": 152,
+    "kunst": "<path d=\"M-34 -16 C-16 -22 16 -22 34 -16 L34 12 L-34 12 Z\" fill=\"#c9a86e\" stroke=\"#a3844c\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-30\" y1=\"-8\" x2=\"30\" y2=\"-8\" stroke=\"#a3844c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"-1\" x2=\"30\" y2=\"-1\" stroke=\"#a3844c\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-30\" y1=\"6\" x2=\"30\" y2=\"6\" stroke=\"#a3844c\" stroke-width=\"1\" stroke-linecap=\"round\"/><path d=\"M-30 12 L-30 18\" fill=\"none\" stroke=\"#a3844c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-15 12 L-15 18\" fill=\"none\" stroke=\"#a3844c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 12 L0 18\" fill=\"none\" stroke=\"#a3844c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M15 12 L15 18\" fill=\"none\" stroke=\"#a3844c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M30 12 L30 18\" fill=\"none\" stroke=\"#a3844c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "bettwaesche",
+    "de": "die Bettwäsche",
+    "syl": "BETT-wä-sche",
+    "it": "la biancheria da letto",
+    "itSyl": "bian-che-RI-a da LET-to",
+    "en": "bed linen",
+    "x": 60,
+    "y": 32,
+    "kunst": "<rect x=\"-26\" y=\"-14\" width=\"52\" height=\"28\" rx=\"3\" fill=\"#fdfcf6\" stroke=\"#e6ddc8\" stroke-width=\"1.4\"/><rect x=\"-22\" y=\"-10\" width=\"44\" height=\"8\" rx=\"2\" fill=\"#7fb3d8\"/><rect x=\"-22\" y=\"0\" width=\"44\" height=\"8\" rx=\"2\" fill=\"#e8b4bd\"/>"
+   },
+   {
+    "id": "nachttisch",
+    "de": "der Nachttisch",
+    "syl": "NACHT-tisch",
+    "it": "il comodino",
+    "itSyl": "co-mo-DI-no",
+    "en": "bedside table",
+    "x": 296,
+    "y": 196,
+    "kunst": "<rect x=\"-18\" y=\"-22\" width=\"36\" height=\"40\" rx=\"3\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"1.5\"/><rect x=\"-14\" y=\"-16\" width=\"28\" height=\"12\" rx=\"2\" fill=\"#dcae7c\"/><circle cx=\"0\" cy=\"-10\" r=\"2\" fill=\"#8a5f2a\"/><rect x=\"-14\" y=\"0\" width=\"28\" height=\"12\" rx=\"2\" fill=\"#dcae7c\"/><circle cx=\"0\" cy=\"6\" r=\"2\" fill=\"#8a5f2a\"/>"
+   },
+   {
+    "id": "wecker",
+    "de": "der Wecker",
+    "syl": "WE-cker",
+    "it": "la sveglia",
+    "itSyl": "SVE-glia",
+    "en": "alarm clock",
+    "x": 296,
+    "y": 150,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"12\" fill=\"#e8e2d2\" stroke=\"#a8a090\" stroke-width=\"1.6\"/><circle cx=\"0\" cy=\"0\" r=\"9\" fill=\"#fdfcf6\"/><path d=\"M0 0 L0 -6\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 0 L5 2\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-9\" cy=\"-9\" r=\"4\" fill=\"#c94f4a\" stroke=\"#94302c\" stroke-width=\"1.2\"/><circle cx=\"9\" cy=\"-9\" r=\"4\" fill=\"#c94f4a\" stroke=\"#94302c\" stroke-width=\"1.2\"/>"
+   }
+  ]
+ },
+ {
+  "id": "fenster_detail",
+  "titel": "Das Fenster ganz nah",
+  "emoji": "🔍",
+  "thema": "Alltag & Zuhause",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 200,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"200\" rx=\"0\" fill=\"#eef4f7\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "fensterrahmen",
+    "de": "der Fensterrahmen",
+    "syl": "FENS-ter-rah-men",
+    "it": "il telaio",
+    "itSyl": "te-LA-io",
+    "en": "window frame",
+    "x": 160,
+    "y": 100,
+    "kunst": "<rect x=\"-96\" y=\"-70\" width=\"192\" height=\"140\" rx=\"4\" fill=\"none\" stroke=\"#c98f5a\" stroke-width=\"9\"/><rect x=\"-92\" y=\"-66\" width=\"184\" height=\"132\" rx=\"3\" fill=\"none\" stroke=\"#a06c3c\" stroke-width=\"2\"/>"
+   },
+   {
+    "id": "fensterscheibe",
+    "de": "die Fensterscheibe",
+    "syl": "FENS-ter-schei-be",
+    "it": "il vetro",
+    "itSyl": "VE-tro",
+    "en": "window pane",
+    "x": 108,
+    "y": 64,
+    "kunst": "<rect x=\"-36\" y=\"-28\" width=\"72\" height=\"56\" rx=\"2\" fill=\"#cfe7f2\" stroke=\"#9dc4d8\" stroke-width=\"1.4\"/><path d=\"M-26 20 L6 -20\" fill=\"none\" stroke=\"#eaf6fb\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-8 20 L14 -8\" fill=\"none\" stroke=\"#eaf6fb\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "fenstergriff",
+    "de": "der Fenstergriff",
+    "syl": "FENS-ter-griff",
+    "it": "la maniglia",
+    "itSyl": "ma-NI-glia",
+    "en": "window handle",
+    "x": 160,
+    "y": 108,
+    "kunst": "<rect x=\"-4\" y=\"-12\" width=\"8\" height=\"24\" rx=\"3\" fill=\"#b9b2a4\" stroke=\"#8b8377\" stroke-width=\"1.3\"/><circle cx=\"0\" cy=\"-12\" r=\"5\" fill=\"#cfc7ba\" stroke=\"#8b8377\" stroke-width=\"1.3\"/>"
+   },
+   {
+    "id": "fensterbrett",
+    "de": "das Fensterbrett",
+    "syl": "FENS-ter-brett",
+    "it": "il davanzale",
+    "itSyl": "da-van-ZA-le",
+    "en": "windowsill",
+    "x": 160,
+    "y": 182,
+    "kunst": "<rect x=\"-104\" y=\"-6\" width=\"208\" height=\"12\" rx=\"3\" fill=\"#e2cdb0\" stroke=\"#c0a785\" stroke-width=\"1.6\"/><path d=\"M-104 6 L104 6\" fill=\"none\" stroke=\"#c0a785\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "rollo",
+    "de": "das Rollo",
+    "syl": "ROL-lo",
+    "it": "la tapparella",
+    "itSyl": "tap-pa-REL-la",
+    "en": "roller blind",
+    "x": 160,
+    "y": 24,
+    "kunst": "<rect x=\"-100\" y=\"-14\" width=\"200\" height=\"14\" rx=\"3\" fill=\"#d8cdb6\" stroke=\"#a89a80\" stroke-width=\"1.5\"/><line x1=\"-96\" y1=\"-10\" x2=\"96\" y2=\"-10\" stroke=\"#a89a80\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-96\" y1=\"-6\" x2=\"96\" y2=\"-6\" stroke=\"#a89a80\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"-96\" y1=\"-2\" x2=\"96\" y2=\"-2\" stroke=\"#a89a80\" stroke-width=\"1\" stroke-linecap=\"round\"/><path d=\"M0 0 L0 10\" fill=\"none\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"0\" cy=\"12\" r=\"2.6\" fill=\"#a89a80\"/>"
+   },
+   {
+    "id": "gardine",
+    "de": "die Gardine",
+    "syl": "Gar-DI-ne",
+    "it": "la tenda",
+    "itSyl": "TEN-da",
+    "en": "curtain",
+    "x": 42,
+    "y": 110,
+    "kunst": "<path d=\"M-18 -76 C-24 -30 -22 20 -16 66 L16 66 C10 20 12 -30 18 -76 Z\" fill=\"#fdfaf0\" stroke=\"#d8cbb4\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-12 -74 C-14 -20 -10 20 -12 64\" fill=\"none\" stroke=\"#d8cbb4\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-4 -74 C-6 -20 -2 20 -4 64\" fill=\"none\" stroke=\"#d8cbb4\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M4 -74 C2 -20 6 20 4 64\" fill=\"none\" stroke=\"#d8cbb4\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M12 -74 C10 -20 14 20 12 64\" fill=\"none\" stroke=\"#d8cbb4\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "dichtung",
+    "de": "die Dichtung",
+    "syl": "DICH-tung",
+    "it": "la guarnizione",
+    "itSyl": "guar-ni-ZIO-ne",
+    "en": "seal",
+    "x": 244,
+    "y": 166,
+    "kunst": "<rect x=\"-22\" y=\"-4\" width=\"44\" height=\"8\" rx=\"4\" fill=\"#5a5248\"/><circle cx=\"-16\" cy=\"0\" r=\"1.6\" fill=\"#7a7268\"/><circle cx=\"-8\" cy=\"0\" r=\"1.6\" fill=\"#7a7268\"/><circle cx=\"0\" cy=\"0\" r=\"1.6\" fill=\"#7a7268\"/><circle cx=\"8\" cy=\"0\" r=\"1.6\" fill=\"#7a7268\"/><circle cx=\"16\" cy=\"0\" r=\"1.6\" fill=\"#7a7268\"/>"
+   },
+   {
+    "id": "fensterkreuz",
+    "de": "das Fensterkreuz",
+    "syl": "FENS-ter-kreuz",
+    "it": "la croce della finestra",
+    "itSyl": "CRO-ce del-la fi-NE-stra",
+    "en": "window bar",
+    "x": 214,
+    "y": 64,
+    "kunst": "<rect x=\"-2\" y=\"-30\" width=\"4\" height=\"60\" rx=\"2\" fill=\"#e8dcc6\" stroke=\"#c0a785\" stroke-width=\"1.2\"/><rect x=\"-30\" y=\"-2\" width=\"60\" height=\"4\" rx=\"2\" fill=\"#e8dcc6\" stroke=\"#c0a785\" stroke-width=\"1.2\"/>"
+   },
+   {
+    "id": "blumentopf",
+    "de": "der Blumentopf",
+    "syl": "BLU-men-topf",
+    "it": "il vaso",
+    "itSyl": "VA-so",
+    "en": "flower pot",
+    "x": 250,
+    "y": 168,
+    "kunst": "<path d=\"M-10 -4 L10 -4 L8 12 L-8 12 Z\" fill=\"#d98a52\" stroke=\"#a85f2c\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-11 -6 L11 -6 L11 -2 L-11 -2 Z\" fill=\"#e8a070\" stroke=\"#a85f2c\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -6 C-8 -14 -6 -24 0 -26 C6 -24 8 -14 0 -6 Z\" fill=\"#5aa86b\"/>"
+   }
+  ]
+ },
+ {
+  "id": "tuer_detail",
+  "titel": "Die Tür ganz nah",
+  "emoji": "🔍",
+  "thema": "Alltag & Zuhause",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 230,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"230\" rx=\"0\" fill=\"#f3ece0\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"200\" x2=\"320\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"220\" x2=\"320\" y2=\"220\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"230\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "tuerblatt",
+    "de": "das Türblatt",
+    "syl": "TÜR-blatt",
+    "it": "il battente",
+    "itSyl": "bat-TEN-te",
+    "en": "door leaf",
+    "x": 118,
+    "y": 104,
+    "kunst": "<rect x=\"-52\" y=\"-84\" width=\"104\" height=\"168\" rx=\"4\" fill=\"#c98f5a\" stroke=\"#a06c3c\" stroke-width=\"2\"/><rect x=\"-40\" y=\"-70\" width=\"80\" height=\"58\" rx=\"3\" fill=\"#b8814e\" stroke=\"#a06c3c\" stroke-width=\"1.4\"/><rect x=\"-40\" y=\"4\" width=\"80\" height=\"58\" rx=\"3\" fill=\"#b8814e\" stroke=\"#a06c3c\" stroke-width=\"1.4\"/>"
+   },
+   {
+    "id": "tuerrahmen",
+    "de": "der Türrahmen",
+    "syl": "TÜR-rah-men",
+    "it": "lo stipite",
+    "itSyl": "STI-pi-te",
+    "en": "door frame",
+    "x": 118,
+    "y": 16,
+    "kunst": "<rect x=\"-62\" y=\"-10\" width=\"124\" height=\"12\" rx=\"3\" fill=\"#e2cdb0\" stroke=\"#c0a785\" stroke-width=\"1.6\"/>"
+   },
+   {
+    "id": "tuerklinke",
+    "de": "die Türklinke",
+    "syl": "TÜR-klin-ke",
+    "it": "la maniglia",
+    "itSyl": "ma-NI-glia",
+    "en": "door handle",
+    "x": 178,
+    "y": 104,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"#cfc7ba\" stroke=\"#8b8377\" stroke-width=\"1.5\"/><path d=\"M0 0 L-22 2 C-26 2 -26 8 -22 8 L0 6 Z\" fill=\"#cfc7ba\" stroke=\"#8b8377\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "schloss",
+    "de": "das Schloss",
+    "syl": "SCHLOSS",
+    "it": "la serratura",
+    "itSyl": "ser-ra-TU-ra",
+    "en": "lock",
+    "x": 178,
+    "y": 134,
+    "kunst": "<rect x=\"-9\" y=\"-14\" width=\"18\" height=\"28\" rx=\"3\" fill=\"#b9b2a4\" stroke=\"#8b8377\" stroke-width=\"1.4\"/><circle cx=\"0\" cy=\"-4\" r=\"3.2\" fill=\"#5a5248\"/><path d=\"M0 -1 L0 7\" fill=\"none\" stroke=\"#5a5248\" stroke-width=\"2.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "schluesselloch",
+    "de": "das Schlüsselloch",
+    "syl": "SCHLÜS-sel-loch",
+    "it": "il buco della serratura",
+    "itSyl": "BU-co del-la ser-ra-TU-ra",
+    "en": "keyhole",
+    "x": 250,
+    "y": 66,
+    "kunst": "<circle cx=\"0\" cy=\"-4\" r=\"5\" fill=\"#3a2b1c\"/><path d=\"M0 0 L0 10\" fill=\"none\" stroke=\"#3a2b1c\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "scharnier",
+    "de": "das Scharnier",
+    "syl": "Schar-NIER",
+    "it": "la cerniera",
+    "itSyl": "cer-NIE-ra",
+    "en": "hinge",
+    "x": 62,
+    "y": 66,
+    "kunst": "<rect x=\"-10\" y=\"-14\" width=\"20\" height=\"28\" rx=\"2\" fill=\"#b9b2a4\" stroke=\"#8b8377\" stroke-width=\"1.4\"/><path d=\"M0 -14 L0 14\" fill=\"none\" stroke=\"#8b8377\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><circle cx=\"-5\" cy=\"-8\" r=\"1.4\" fill=\"#5a5248\"/><circle cx=\"5\" cy=\"-8\" r=\"1.4\" fill=\"#5a5248\"/><circle cx=\"-5\" cy=\"8\" r=\"1.4\" fill=\"#5a5248\"/><circle cx=\"5\" cy=\"8\" r=\"1.4\" fill=\"#5a5248\"/>"
+   },
+   {
+    "id": "tuerschwelle",
+    "de": "die Türschwelle",
+    "syl": "TÜR-schwel-le",
+    "it": "la soglia",
+    "itSyl": "SO-glia",
+    "en": "threshold",
+    "x": 118,
+    "y": 196,
+    "kunst": "<rect x=\"-58\" y=\"-5\" width=\"116\" height=\"10\" rx=\"2\" fill=\"#a89a80\" stroke=\"#8a7c62\" stroke-width=\"1.5\"/>"
+   },
+   {
+    "id": "tuerspion",
+    "de": "der Türspion",
+    "syl": "TÜR-spi-on",
+    "it": "lo spioncino",
+    "itSyl": "spion-CI-no",
+    "en": "peephole",
+    "x": 250,
+    "y": 128,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"8\" fill=\"#cfc7ba\" stroke=\"#8b8377\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"4.4\" fill=\"#3a2b1c\"/><circle cx=\"-1.4\" cy=\"-1.4\" r=\"1.4\" fill=\"#9dc4d8\"/>"
+   },
+   {
+    "id": "klingel",
+    "de": "die Klingel",
+    "syl": "KLIN-gel",
+    "it": "il campanello",
+    "itSyl": "cam-pa-NEL-lo",
+    "en": "doorbell",
+    "x": 250,
+    "y": 172,
+    "kunst": "<rect x=\"-9\" y=\"-9\" width=\"18\" height=\"18\" rx=\"4\" fill=\"#e8e2d2\" stroke=\"#a8a090\" stroke-width=\"1.4\"/><circle cx=\"0\" cy=\"0\" r=\"4.4\" fill=\"#c94f4a\" stroke=\"#94302c\" stroke-width=\"1.3\"/>"
+   },
+   {
+    "id": "fussmatte",
+    "de": "die Fußmatte",
+    "syl": "FUß-mat-te",
+    "it": "lo zerbino",
+    "itSyl": "zer-BI-no",
+    "en": "doormat",
+    "x": 118,
+    "y": 214,
+    "kunst": "<rect x=\"-42\" y=\"-8\" width=\"84\" height=\"16\" rx=\"3\" fill=\"#8a7c62\" stroke=\"#6a5e48\" stroke-width=\"1.5\"/><line x1=\"-36\" y1=\"-6\" x2=\"-36\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"-27\" y1=\"-6\" x2=\"-27\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"-18\" y1=\"-6\" x2=\"-18\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"-9\" y1=\"-6\" x2=\"-9\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"-6\" x2=\"0\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"9\" y1=\"-6\" x2=\"9\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"18\" y1=\"-6\" x2=\"18\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"27\" y1=\"-6\" x2=\"27\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><line x1=\"36\" y1=\"-6\" x2=\"36\" y2=\"6\" stroke=\"#a89a80\" stroke-width=\"1.4\" stroke-linecap=\"round\"/>"
+   }
+  ]
+ },
+ {
+  "id": "schuh_detail",
+  "titel": "Der Schuh ganz nah",
+  "emoji": "🔍",
+  "thema": "Einkaufen",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 210,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"210\" rx=\"0\" fill=\"#f6f0e4\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"200\" x2=\"320\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"210\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "sohle",
+    "de": "die Sohle",
+    "syl": "SOH-le",
+    "it": "la suola",
+    "itSyl": "SUO-la",
+    "en": "sole",
+    "x": 160,
+    "y": 168,
+    "kunst": "<path d=\"M-96 -8 C-88 -20 88 -22 100 -6 C104 4 96 12 80 12 L-84 12 C-96 12 -100 2 -96 -8 Z\" fill=\"#5a5248\" stroke=\"#3a342c\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><line x1=\"-80\" y1=\"-4\" x2=\"-78\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"-58\" y1=\"-4\" x2=\"-56\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"-36\" y1=\"-4\" x2=\"-34\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"-14\" y1=\"-4\" x2=\"-12\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"8\" y1=\"-4\" x2=\"10\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"30\" y1=\"-4\" x2=\"32\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"52\" y1=\"-4\" x2=\"54\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><line x1=\"74\" y1=\"-4\" x2=\"76\" y2=\"8\" stroke=\"#7a7268\" stroke-width=\"1.6\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "absatz",
+    "de": "der Absatz",
+    "syl": "AB-satz",
+    "it": "il tacco",
+    "itSyl": "TAC-co",
+    "en": "heel",
+    "x": 58,
+    "y": 188,
+    "kunst": "<rect x=\"-20\" y=\"-10\" width=\"40\" height=\"20\" rx=\"3\" fill=\"#3a342c\" stroke=\"#221e18\" stroke-width=\"1.5\"/><line x1=\"-16\" y1=\"0\" x2=\"16\" y2=\"0\" stroke=\"#5a5248\" stroke-width=\"1.4\" stroke-linecap=\"round\"/>"
+   },
+   {
+    "id": "schnuersenkel",
+    "de": "der Schnürsenkel",
+    "syl": "SCHNÜR-sen-kel",
+    "it": "il laccio",
+    "itSyl": "LAC-cio",
+    "en": "shoelace",
+    "x": 180,
+    "y": 60,
+    "kunst": "<path d=\"M-34 -14 L34 6\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M34 -14 L-34 6\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"3.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-34 6 C-44 14 -40 24 -30 22\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M34 6 C44 14 40 24 30 22\" fill=\"none\" stroke=\"#fdfcf6\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "oese",
+    "de": "die Öse",
+    "syl": "Ö-se",
+    "it": "l'occhiello",
+    "itSyl": "oc-CHIEL-lo",
+    "en": "eyelet",
+    "x": 268,
+    "y": 56,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"5.5\" fill=\"#cfc7ba\" stroke=\"#8b8377\" stroke-width=\"1.5\"/><circle cx=\"0\" cy=\"0\" r=\"2.6\" fill=\"#f3ece0\"/>"
+   },
+   {
+    "id": "zunge",
+    "de": "die Zunge",
+    "syl": "ZUN-ge",
+    "it": "la linguetta",
+    "itSyl": "lin-GUET-ta",
+    "en": "tongue",
+    "x": 180,
+    "y": 104,
+    "kunst": "<path d=\"M-16 -22 L16 -22 C20 -4 18 12 12 20 L-12 20 C-18 12 -20 -4 -16 -22 Z\" fill=\"#8a6a4a\" stroke=\"#6a4e34\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-10 -14 C-8 -2 -8 8 -10 16\" fill=\"none\" stroke=\"#6a4e34\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "schaft",
+    "de": "der Schaft",
+    "syl": "SCHAFT",
+    "it": "il gambale",
+    "itSyl": "gam-BA-le",
+    "en": "shaft",
+    "x": 72,
+    "y": 96,
+    "kunst": "<path d=\"M-26 -30 C-30 -10 -30 10 -26 26 L26 26 C30 10 30 -10 26 -30 Z\" fill=\"#a8794f\" stroke=\"#7a5432\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-20 -20 C-22 -4 -22 8 -20 20\" fill=\"none\" stroke=\"#7a5432\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "einlegesohle",
+    "de": "die Einlegesohle",
+    "syl": "EIN-le-ge-soh-le",
+    "it": "la soletta",
+    "itSyl": "so-LET-ta",
+    "en": "insole",
+    "x": 268,
+    "y": 148,
+    "kunst": "<path d=\"M-30 -12 C-24 -20 26 -20 32 -10 C34 0 26 8 16 8 L-24 8 C-32 8 -34 -4 -30 -12 Z\" fill=\"#e8dcc6\" stroke=\"#c0a785\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-22 -6 C-6 -10 14 -8 26 -4\" fill=\"none\" stroke=\"#c0a785\" stroke-width=\"1.1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "kappe",
+    "de": "die Schuhkappe",
+    "syl": "SCHUH-kap-pe",
+    "it": "la punta",
+    "itSyl": "PUN-ta",
+    "en": "toe cap",
+    "x": 268,
+    "y": 104,
+    "kunst": "<path d=\"M-22 14 C-24 -6 -8 -16 8 -14 C22 -12 26 2 22 14 Z\" fill=\"#8a6a4a\" stroke=\"#6a4e34\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-16 6 C-6 0 8 -2 18 4\" fill=\"none\" stroke=\"#6a4e34\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   }
+  ]
+ },
+ {
+  "id": "baum_detail",
+  "titel": "Der Baum ganz nah",
+  "emoji": "🔍",
+  "thema": "Natur & Umwelt",
+  "detail": true,
+  "breite": 320,
+  "hoehe": 240,
+  "kulisse": "<rect x=\"0\" y=\"0\" width=\"320\" height=\"240\" rx=\"0\" fill=\"#eef4e8\"/><line x1=\"0\" y1=\"20\" x2=\"320\" y2=\"20\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"40\" x2=\"320\" y2=\"40\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"60\" x2=\"320\" y2=\"60\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"80\" x2=\"320\" y2=\"80\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"100\" x2=\"320\" y2=\"100\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"120\" x2=\"320\" y2=\"120\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"140\" x2=\"320\" y2=\"140\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"160\" x2=\"320\" y2=\"160\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"180\" x2=\"320\" y2=\"180\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"200\" x2=\"320\" y2=\"200\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"0\" y1=\"220\" x2=\"320\" y2=\"220\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"100\" y1=\"0\" x2=\"100\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"120\" y1=\"0\" x2=\"120\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"140\" y1=\"0\" x2=\"140\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"180\" y1=\"0\" x2=\"180\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"200\" y1=\"0\" x2=\"200\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"220\" y1=\"0\" x2=\"220\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"260\" y1=\"0\" x2=\"260\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"280\" y1=\"0\" x2=\"280\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"300\" y1=\"0\" x2=\"300\" y2=\"240\" stroke=\"#e7dfcf\" stroke-width=\"1\" stroke-linecap=\"round\"/>",
+  "teile": [
+   {
+    "id": "stamm",
+    "de": "der Stamm",
+    "syl": "STAMM",
+    "it": "il tronco",
+    "itSyl": "TRON-co",
+    "en": "trunk",
+    "x": 160,
+    "y": 158,
+    "kunst": "<path d=\"M-16 -60 C-20 -20 -22 20 -26 46 L26 46 C22 20 20 -20 16 -60 Z\" fill=\"#8a6a4a\" stroke=\"#5f4630\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-10 -56 C-12 -16 -8 14 -12 42\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -56 C-2 -16 2 14 -2 42\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M10 -56 C8 -16 12 14 8 42\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "rinde",
+    "de": "die Rinde",
+    "syl": "RIN-de",
+    "it": "la corteccia",
+    "itSyl": "cor-TEC-cia",
+    "en": "bark",
+    "x": 62,
+    "y": 88,
+    "kunst": "<rect x=\"-24\" y=\"-26\" width=\"48\" height=\"52\" rx=\"4\" fill=\"#8a6a4a\" stroke=\"#5f4630\" stroke-width=\"1.6\"/><path d=\"M-16 -22 C-18 -6 -14 8 -18 22\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-5 -22 C-7 -6 -3 8 -7 22\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M6 -22 C4 -6 8 8 4 22\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M17 -22 C15 -6 19 8 15 22\" fill=\"none\" stroke=\"#5f4630\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "ast",
+    "de": "der Ast",
+    "syl": "AST",
+    "it": "il ramo",
+    "itSyl": "RA-mo",
+    "en": "branch",
+    "x": 76,
+    "y": 48,
+    "kunst": "<path d=\"M-32 16 C-14 10 2 -2 14 -14\" fill=\"none\" stroke=\"#8a6a4a\" stroke-width=\"8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-2 4 C4 -6 10 -12 20 -16\" fill=\"none\" stroke=\"#8a6a4a\" stroke-width=\"4.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "zweig",
+    "de": "der Zweig",
+    "syl": "ZWEIG",
+    "it": "il ramoscello",
+    "itSyl": "ra-mo-SCEL-lo",
+    "en": "twig",
+    "x": 246,
+    "y": 44,
+    "kunst": "<path d=\"M-20 14 C-8 6 0 -4 8 -14\" fill=\"none\" stroke=\"#7a5c40\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M-4 2 L6 -6\" fill=\"none\" stroke=\"#7a5c40\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2 -4 L-2 -14\" fill=\"none\" stroke=\"#7a5c40\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "blatt",
+    "de": "das Blatt",
+    "syl": "BLATT",
+    "it": "la foglia",
+    "itSyl": "FO-glia",
+    "en": "leaf",
+    "x": 246,
+    "y": 106,
+    "kunst": "<path d=\"M0 -22 C16 -14 18 8 0 22 C-18 8 -16 -14 0 -22 Z\" fill=\"#5aa86b\" stroke=\"#3e7a48\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -20 L0 20\" fill=\"none\" stroke=\"#3e7a48\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -12 L-8 -6\" fill=\"none\" stroke=\"#3e7a48\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -4 L8 2\" fill=\"none\" stroke=\"#3e7a48\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 4 L-8 10\" fill=\"none\" stroke=\"#3e7a48\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 12 L8 18\" fill=\"none\" stroke=\"#3e7a48\" stroke-width=\"1\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "wurzel",
+    "de": "die Wurzel",
+    "syl": "WUR-zel",
+    "it": "la radice",
+    "itSyl": "ra-DI-ce",
+    "en": "root",
+    "x": 160,
+    "y": 212,
+    "kunst": "<path d=\"M0 -12 C-14 -6 -30 2 -46 6\" fill=\"none\" stroke=\"#6a4e34\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -12 C14 -6 30 2 46 6\" fill=\"none\" stroke=\"#6a4e34\" stroke-width=\"6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 -12 C-4 0 -6 8 -8 16\" fill=\"none\" stroke=\"#6a4e34\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "krone",
+    "de": "die Krone",
+    "syl": "KRO-ne",
+    "it": "la chioma",
+    "itSyl": "CHIO-ma",
+    "en": "crown",
+    "x": 160,
+    "y": 44,
+    "kunst": "<circle cx=\"-26\" cy=\"4\" r=\"22\" fill=\"#5aa86b\"/><circle cx=\"24\" cy=\"2\" r=\"24\" fill=\"#4d9459\"/><circle cx=\"0\" cy=\"-14\" r=\"26\" fill=\"#6cb87c\"/><circle cx=\"-8\" cy=\"14\" r=\"20\" fill=\"#4d9459\"/>"
+   },
+   {
+    "id": "knospe",
+    "de": "die Knospe",
+    "syl": "KNOS-pe",
+    "it": "la gemma",
+    "itSyl": "GEM-ma",
+    "en": "bud",
+    "x": 62,
+    "y": 168,
+    "kunst": "<path d=\"M0 10 C-8 2 -8 -12 0 -18 C8 -12 8 2 0 10 Z\" fill=\"#7fc08a\" stroke=\"#3e7a48\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M0 10 L0 20\" fill=\"none\" stroke=\"#7a5c40\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+   },
+   {
+    "id": "jahresring",
+    "de": "der Jahresring",
+    "syl": "JAH-res-ring",
+    "it": "l'anello annuale",
+    "itSyl": "a-NEL-lo an-NUA-le",
+    "en": "annual ring",
+    "x": 268,
+    "y": 168,
+    "kunst": "<circle cx=\"0\" cy=\"0\" r=\"24\" fill=\"#dcae7c\" stroke=\"#a8783c\" stroke-width=\"1.4\"/><circle cx=\"0\" cy=\"0\" r=\"18\" fill=\"#e8c49a\" stroke=\"#a8783c\" stroke-width=\"1.2\"/><circle cx=\"0\" cy=\"0\" r=\"12\" fill=\"#dcae7c\" stroke=\"#a8783c\" stroke-width=\"1.2\"/><circle cx=\"0\" cy=\"0\" r=\"6\" fill=\"#e8c49a\" stroke=\"#a8783c\" stroke-width=\"1.2\"/><circle cx=\"0\" cy=\"0\" r=\"2\" fill=\"#a8783c\"/>"
    }
   ]
  }

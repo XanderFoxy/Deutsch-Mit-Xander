@@ -75,9 +75,43 @@ const Bildverwaltung = (() => {
     bereit = true;
   }
 
-  const hat = (id) => cache.has(id);
-  const bild = (id) => cache.get(id) || null;
-  const anzahl = () => cache.size;
+  /* ============================================================
+     ZWEI EBENEN: ALEX' BILDER FÜR ALLE, EIGENE DARÜBER
+     ------------------------------------------------------------
+     GEWÜNSCHT: „ich möchte, dass die Bild-Uploads von der Webseite aus
+     global für alle sind, dass alle meine Version sehen, die ich
+     gestalte. Jeder kann sich das dann umgestalten mit seinen eigenen
+     Lieblingsfiguren … ich möchte nur, dass ich das global bestimme und
+     dass jeder das aber überschreiben kann mit seiner eigenen
+     persönlichen Note."
+
+     Also zwei Ebenen, und die Reihenfolge ist klar:
+        1. das eigene Bild dieses Geräts   (schlägt alles)
+        2. das globale Bild von Alex       (sehen alle)
+        3. die gezeichnete Fassung         (ist immer da)
+     Die globale Ebene kommt aus der Datenbank und wird hier nur
+     gehalten; geschrieben wird sie in den Einstellungen, und schreiben
+     darf sie nur der Betreiber.
+     ============================================================ */
+  let global = {};
+  function globalSetzen(karte) { global = karte || {}; }
+  function globalKarte() { return global; }
+  const hatGlobal = (id) => Object.prototype.hasOwnProperty.call(global, id);
+
+  const hat = (id) => cache.has(id) || hatGlobal(id);
+  const hatEigenes = (id) => cache.has(id);
+  const bild = (id) => cache.get(id) || global[id] || null;
+  const anzahl = () => new Set([...cache.keys(), ...Object.keys(global)]).size;
+  const anzahlEigene = () => cache.size;
+  const anzahlGlobal = () => Object.keys(global).length;
+  /* Woher kommt das Bild, das gerade zu sehen ist? Die Verwaltung zeigt
+     das an, damit niemand rätselt, warum ein Bild wieder auftaucht,
+     nachdem er sein eigenes entfernt hat. */
+  function herkunft(id) {
+    if (cache.has(id)) return "eigen";
+    if (hatGlobal(id)) return "global";
+    return null;
+  }
 
   async function speichern(id, dataUrl) {
     cache.set(id, dataUrl);
@@ -135,5 +169,7 @@ const Bildverwaltung = (() => {
     });
   }
 
-  return { laden, istBereit: () => bereit, hat, bild, anzahl, speichern, entfernen, entferneAlle, einlesen, MAX_BYTES };
+  return { laden, istBereit: () => bereit, hat, hatEigenes, hatGlobal, herkunft, bild,
+           anzahl, anzahlEigene, anzahlGlobal, globalSetzen, globalKarte,
+           speichern, entfernen, entferneAlle, einlesen, MAX_BYTES };
 })();
