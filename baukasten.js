@@ -135,14 +135,36 @@ function bkSatz(z) {
   const platz = z.platz;
   const saetze = [];
 
-  /* Satz 1: Wer ist wo, und wie? */
-  let eins = bkGross(subj.wort) + " " + (BK_VERB[z.haltung] || "ist");
+  /* Satz 1: Wer ist wo, und wie?
+
+     GEWÜNSCHT: „Die NACKTE Frau sitzt am Küchentisch — und nicht: die
+     Frau sitzt am Küchentisch. Sie ist nackt. Die Frau MIT DEM BLAUEN
+     T-SHIRT steht in der Dusche."
+
+     Das Subjekt trägt also die Beschreibung mit. Zwei Formen:
+       — nichts an  → ein Adjektiv vor dem Nomen („die nackte Frau")
+       — etwas an   → eine Angabe dahinter („die Frau mit dem blauen
+                       T-Shirt"), und zwar mit dem AUFFÄLLIGSTEN Stück:
+                       zuerst das Kleid, dann das Oberteil, dann die
+                       Jacke — das ist die Reihenfolge, in der man einen
+                       Menschen beschreibt.
+     Die vollständige Aufzählung steht weiter im zweiten Satz; hier
+     steht nur das eine Stück, an dem man die Person erkennt. */
+  const anhabe = bkAngezogen(z);
+  let wer;
+  if (!anhabe.length) {
+    wer = bkGross(bkNackt(subj));
+  } else {
+    const merk = bkMerkmal(anhabe);
+    wer = bkGross(subj.wort) + (merk ? " " + merk : "");
+  }
+  let eins = wer + " " + (BK_VERB[z.haltung] || "ist");
   if (platz) eins += " " + platz.wo;
   if (platz && platz.tut) eins += " und " + platz.tut;
   saetze.push(eins + ".");
 
   /* Satz 2: Was hat er an? */
-  const an = bkAngezogen(z);
+  const an = anhabe;
   if (!an.length) {
     saetze.push(bkGross(subj.pron) + " hat nichts an.");
   } else {
@@ -155,9 +177,48 @@ function bkSatz(z) {
       if (g === "p") return (farbe ? farbe[1].p + " " : "") + nomen;
       return BK_UNBESTIMMT[g] + " " + (farbe ? farbe[1][g] + " " : "") + nomen;
     }).filter(Boolean);
-    saetze.push(bkGross(subj.pron) + " trägt " + bkUnd(teile) + ".");
+    /* Absicherung: kennt die Wortliste ein Stück nicht, bleibt die
+       Aufzählung leer — dann stand hier „Sie trägt ." im Bild. */
+    if (!teile.length) saetze.push(bkGross(subj.pron) + " hat nichts an.");
+    else saetze.push(bkGross(subj.pron) + " trägt " + bkUnd(teile) + ".");
   }
   return saetze.join(" ");
+}
+
+/* „die nackte Frau", „der nackte Mann", „das nackte Baby".
+   Nach dem bestimmten Artikel heißt es im Nominativ immer „nackte" —
+   ein Fall, in dem Deutsch einmal einfach ist. Das Adjektiv wird
+   deshalb nur hinter den Artikel geschoben; steht dort schon eines
+   („der kleine Junge"), reihen sie sich: „der nackte kleine Junge". */
+function bkNackt(subj) {
+  const art = subj.artikel;
+  const rest = subj.wort.replace(new RegExp("^" + art + "\\s+"), "");
+  return art + " nackte " + rest;
+}
+
+/* „… mit dem blauen T-Shirt". Genommen wird das auffälligste Stück:
+   erst das Kleid, dann das Oberteil, dann die Jacke, dann die Hose.
+   Nach dem bestimmten Artikel endet das Farbadjektiv im Dativ in
+   JEDEM Geschlecht auf -en („dem blauen", „der blauen") — genau die
+   Form, die in BK_FARBE schon als Maskulinum steht. Stücke im Plural
+   (Schuhe, Socken) bleiben außen vor: sie bräuchten zusätzlich das
+   Dativ-n am Nomen, und ein falsch gebeugter Satz ist schlimmer als
+   ein kürzerer. */
+const BK_MERKMAL_FOLGE = ["kleid", "oberteil", "jacke", "unterteil", "kopf"];
+const BK_DATIV = { m: "dem", f: "der", n: "dem" };
+function bkMerkmal(an) {
+  for (const platz of BK_MERKMAL_FOLGE) {
+    const s = an.find((x) => x.platz === platz);
+    if (!s) continue;
+    const w = BK_STUECK[s.stueck];
+    if (!w) continue;
+    const g = w[1];
+    if (g === "p") continue;                 // Plural: siehe oben
+    const nomen = w[0].replace(/^(der|die|das)\s+/, "");
+    const farbe = s.farbe && BK_FARBE[s.farbe];
+    return "mit " + BK_DATIV[g] + " " + (farbe ? farbe[1].m + " " : "") + nomen;
+  }
+  return "";
 }
 
 function bkUnd(liste) {
@@ -174,7 +235,9 @@ function bkAngezogen(z) {
   folge.forEach((platz) => {
     const w = z.kleidung[platz];
     if (w && w.stueck && w.stueck !== "nichts" && w.stueck !== "barfuss") {
-      raus.push(w);
+      /* Den Platz mitgeben: bkMerkmal() braucht ihn, um das
+         auffälligste Stück auszuwählen. */
+      raus.push(Object.assign({ platz: platz }, w));
     }
   });
   return raus;
@@ -187,6 +250,14 @@ function bkAngezogen(z) {
    in DMA_FIGUR_REIHENFOLGE, die Farben kommen als CSS-Variablen —
    so lässt sich die Hautfarbe wechseln, ohne die Ebene neu zu holen.
    ------------------------------------------------------------ */
+/* Wie viele Bildeinheiten ein Zentimeter ist — der Kehrwert der Zahl
+   aus DMA_PLATZ_MASS. Fehlt die Kulisse dort, gilt der Standardwert. */
+function bkMassstab(szene) {
+  const tafel = window.DMA_PLATZ_MASS || {};
+  const cm = tafel[szene] || tafel._standard || 1.7;
+  return 1 / cm;
+}
+
 function bkFigurSvg(z, hoehe) {
   const bau = (window.DMA_FIGUR || {})[z.alter + "-" + z.geschlecht];
   if (!bau) return null;
@@ -218,14 +289,53 @@ function bkFigurSvg(z, hoehe) {
     ebenen.push('<g style="' + bkStoffStil(w) + '">' + teil + "</g>");
   });
 
-  const k = hoehe / (h.hoehe || 100);
+  /* DER MASSSTAB.
+     GEMELDET: „Wenn jemand sich auf den Stuhl oder auf die Couch setzt
+     … die Größe soll sich dabei nicht ändern. Er soll in Relation zum
+     Stuhl realistisch groß sein, auch wenn man sich auf die Toilette
+     setzt, dann soll es keine Minifigur werden."
+
+     Vorher brachte JEDER Platz seine eigene Wunschhöhe mit — 74 hier,
+     58 dort. Dieselbe Person schrumpfte also beim Hinsetzen, und weil
+     die Zahlen geschätzt waren, stimmte auch das Verhältnis zum Möbel
+     nicht. Jetzt gibt es je Kulisse EINE Zahl: wie viele Zentimeter
+     eine Bildeinheit sind (siehe DMA_PLATZ_MASS). Die Figurendateien
+     sind in Zentimetern gezeichnet, also ist der Maßstab schlicht der
+     Kehrwert. Eine Frau von 166 cm ist damit in jeder Haltung und an
+     jedem Platz dieselbe Frau. */
+  const k = hoehe > 0 ? hoehe / (h.hoehe || 100) : bkMassstab(z.szene);
+  /* GEMELDET: „die Platzierung der Menschen funktioniert nicht. Wenn man
+     sie auf Toilette setzt, dann sitzt sie nicht realistisch, oder wenn
+     sie Fernsehen schaut, dann steht sie auf dem Fernseher."
+
+     Ursache: die Figur wurde IMMER an den Fuessen aufgehaengt. Bei einer
+     stehenden Figur ist das richtig — der Boden ist der Boden. Bei einer
+     SITZENDEN Figur ist der entscheidende Punkt aber nicht der Fuss,
+     sondern das Gesaess: es muss auf der Sitzflaeche liegen, dann fallen
+     die Fuesse von allein dorthin, wo sie hingehoeren. Das Geruest
+     kennt diesen Punkt bereits als „sitz". Er wird hier mitgegeben. */
+  const pk = h.punkte || {};
   return {
     svg: '<g style="' + aussen + '" transform="scale(' + k.toFixed(4) + ')">'
          + ebenen.join("") + "</g>",
     breite: (h.breite || 40) * k,
     hoehe: (h.hoehe || 100) * k,
     fuss: (h.fuss || 0) * k,
+    sitz: pk.sitz ? pk.sitz[1] * k : null,
+    sitzX: pk.sitz ? pk.sitz[0] * k : 0,
   };
+}
+
+/* Wo haengt die Figur? Beim Stehen und Liegen an den Fuessen (der Boden
+   ist der Boden), beim Sitzen am Gesaess (die Sitzflaeche ist die
+   Sitzflaeche). Der Platz sagt mit „sitzY", wo seine Sitzflaeche liegt —
+   fehlt die Angabe, bleibt es beim alten Verhalten. */
+function bkFigurAnker(fig, platz) {
+  if (!fig || !platz) return { x: 0, y: 0 };
+  const sitzend = platz.haltung === "sitzen" && fig.sitz !== null
+    && typeof platz.sitzY === "number";
+  if (sitzend) return { x: platz.x - fig.sitzX, y: platz.sitzY - fig.sitz };
+  return { x: platz.x, y: platz.y - fig.fuss };
 }
 
 /* Die Stoffvariablen eines einzelnen Stuecks: erst die Farben, die das
@@ -360,7 +470,10 @@ const Baukasten = (function () {
       }
     }
     const platz = zustand.platz;
-    const fig = bkFigurSvg(zustand, platz ? platz.hoehe : 74);
+    /* 0 heisst: nicht auf eine Wunschhoehe zwingen, sondern den
+       Massstab der Kulisse nehmen — die Figur ist dann ueberall so
+       gross, wie sie in Wirklichkeit waere. */
+    const fig = bkFigurSvg(zustand, 0);
 
     const marken = plaetze().map((p) => {
       const an = platz && p.id === platz.id;
@@ -371,9 +484,14 @@ const Baukasten = (function () {
         + '<circle r="2.6" fill="#b4553c"/></g>';
     }).join("");
 
+    /* Aufhaengung ueber bkFigurAnker: stehend an den Fuessen, sitzend am
+       Gesaess. Vorher stand hier platz.y - fig.fuss fuer ALLE Haltungen —
+       daher sass die Figur nicht auf der Toilette, sondern stand mit den
+       Fuessen auf deren Rand, und vor dem Fernseher stand sie oben drauf. */
+    const anker = bkFigurAnker(fig, platz);
     const figur = fig && platz
       ? '<g class="bk-figur" data-bk-figur="1" transform="translate('
-        + p2(platz.x) + ',' + p2(platz.y - fig.fuss) + ')">' + fig.svg + "</g>"
+        + p2(anker.x) + ',' + p2(anker.y) + ')">' + fig.svg + "</g>"
       : "";
 
     return '<div class="bk-buehne"><svg viewBox="0 0 ' + sz.breite + " " + sz.hoehe

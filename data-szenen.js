@@ -165,8 +165,8 @@ window.DMA_SZENEN = [
   "emoji": "🧍",
   "thema": "Gesundheit",
   "breite": 320,
-  "hoehe": 320,
-  "zahl": 19,
+  "hoehe": 344,
+  "zahl": 32,
   "lupen": [
    "anatomie",
    "fuss_detail",

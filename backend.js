@@ -1075,6 +1075,7 @@ const Backend = (function () {
      genau dort ging bisher verloren, dass Beta-Tester:innen die noch nicht
      freigegebenen Spiele ausdrücklich sehen SOLLEN. */
   function isBetaTester() {
+    if (rollenBrille) return false;
     return Boolean(demo.profile && demo.profile.isBetaTester);
   }
   /* Für die Spieleliste: sieht die angemeldete Person IRGENDEIN noch nicht
@@ -1088,7 +1089,12 @@ const Backend = (function () {
   }
   function isFeatureOn(key) {
     if (isOwner()) return true;
-    if (demo.profile && demo.profile.isBetaTester) return true;
+    /* WICHTIG — hier lag ein echter Fehler: die Beta-Rolle wurde direkt
+       aus dem Profil gelesen statt über isBetaTester(). Damit rutschte
+       sie an der Nutzer-Brille (siehe unten, rollenBrille) vorbei: mit
+       aufgesetzter Brille sah man trotzdem alle noch nicht freigegebenen
+       Spiele — die Brille wirkte also gar nicht. */
+    if (isBetaTester()) return true;
     if (istBetaFuerSpiel(key)) return true; // ausdrücklich für DIESES Spiel eingeladen
     return Boolean(featureFlagsCache && featureFlagsCache[key]);
   }
@@ -1100,7 +1106,7 @@ const Backend = (function () {
   // Schalter aktiv umgelegt) sperrt das Spiel — bis dahin bleibt es wie gewohnt sichtbar.
   function isFeatureOnDefaultTrue(key) {
     if (isOwner()) return true;
-    if (demo.profile && demo.profile.isBetaTester) return true;
+    if (isBetaTester()) return true;   // wie oben: über die Funktion, damit die Brille wirkt
     if (!featureFlagsCache || featureFlagsCache[key] === undefined) return true;
     return Boolean(featureFlagsCache[key]);
   }
@@ -1130,6 +1136,7 @@ const Backend = (function () {
     return Array.isArray(wert) ? wert : [];
   }
   function istBetaFuerSpiel(flagKey) {
+    if (rollenBrille) return false;
     const ich = myId();
     return Boolean(ich) && betaListeFuerSpiel(flagKey).includes(ich);
   }
@@ -2799,10 +2806,43 @@ const Backend = (function () {
   }
 
   /* ================= VERWALTUNG (nur für Admin-Konten sichtbar) ================= */
+  /* ============================================================
+     „SO SIEHT ES FÜR ALLE ANDEREN AUS"
+     ------------------------------------------------------------
+     GEWÜNSCHT: „dass ich als Administrator auch eine Ansicht habe, wo
+     der normale User das jetzt sieht — ohne meine Einstellungen … damit
+     ich mal schauen kann, wie der normale User es sieht, wenn die Spiele
+     ausgeblendet sind, die nur ich sehe, um sie zu testen. Weil ich
+     müsste mich jetzt sonst in meinen Zweitaccount einloggen."
+
+     Ein einziger Schalter legt alle Rechte für die Anzeige still: keine
+     Betreiber-, Admin-, Moderator- und Beta-Rechte mehr. Am Konto selbst
+     ändert das NICHTS — es ist nur eine Brille. Wer sie aufsetzt, sieht
+     die Seite genau so wie jemand, der frisch dazukommt. Er behält aber
+     den Schalter selbst, um sie wieder abzunehmen.
+     ============================================================ */
+  let rollenBrille = false;
+  function alsNutzerSehen() { return rollenBrille; }
+  function setAlsNutzerSehen(an) {
+    rollenBrille = Boolean(an);
+    try { sessionStorage.setItem("dma_rollenbrille", rollenBrille ? "1" : "0"); } catch (e) {}
+    return rollenBrille;
+  }
+  try { rollenBrille = sessionStorage.getItem("dma_rollenbrille") === "1"; } catch (e) {}
+  /* Die echten Rechte — ohne Brille. Daran hängt der Schalter selbst,
+     damit man ihn nicht aussperren kann. */
+  function istWirklichBetreiber() {
+    return Boolean(demo.profile && demo.profile.isOwner);
+  }
+  function istWirklichVerwaltung() {
+    return Boolean(demo.profile && (demo.profile.isOwner || demo.profile.isAdmin || demo.profile.isModerator));
+  }
   function isAdmin() {
+    if (rollenBrille) return false;
     return Boolean(demo.profile && (demo.profile.isAdmin || demo.profile.isOwner));
   }
   function isOwner() {
+    if (rollenBrille) return false;
     return Boolean(demo.profile && demo.profile.isOwner);
   }
 
@@ -2985,6 +3025,7 @@ const Backend = (function () {
   }
 
   function isModerator() {
+    if (rollenBrille) return false;
     return Boolean(demo.profile && demo.profile.isModerator);
   }
   // Inhalte moderieren (Texte freischalten, Kommentare/Gästebuch löschen) dürfen
@@ -3894,6 +3935,7 @@ const Backend = (function () {
     removeProfileFile,
     getProfileFiles,
     updateChallengeExtra,
+    alsNutzerSehen, setAlsNutzerSehen, istWirklichBetreiber, istWirklichVerwaltung,
     setModeratorStatus, setBetaTesterStatus, submitBetaFeedback, setContributorStatus, setSupporterStatus, getFoxOfTheWeek, applyForBetaTester,
     getBetaRequests, clearBetaRequest,
     getFoxOfTheDay, getDailyActivityScores, claimFoxOfDayBonusIfEligible, recordSiteShare, grantDonationPoints,

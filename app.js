@@ -1826,14 +1826,11 @@
     band.className = "brillen-band";
     band.innerHTML = `<span>👓 Du siehst die Seite gerade wie ein normaler Nutzer</span><button type="button" id="brillenBandAb">Brille absetzen</button>`;
     document.body.insertBefore(band, document.body.firstChild);
-    band.querySelector("#brillenBandAb").addEventListener("click", () => {
-      Backend.setAlsNutzerSehen(false);
-      brillenBandZeigen();
-      showToast("👓 Brille ab — deine eigene Ansicht ist zurück.");
-      if (typeof renderGamesOverview === "function") renderGamesOverview();
-      if (typeof renderKompass === "function") renderKompass();
-      if (typeof renderSettings === "function") renderSettings();
-    });
+    /* Absetzen lädt die Seite neu (brilleUmschalten). Vorher wurden nur
+       drei Bereiche neu gezeichnet — Wissen, Profil, Kalender und die
+       Beiträge blieben in der fremden Ansicht stehen, und man hielt die
+       Brille für abgesetzt, während sie halb noch auf war. */
+    band.querySelector("#brillenBandAb").addEventListener("click", () => brilleUmschalten(false));
   }
   setInterval(brillenBandZeigen, 1200);
   setTimeout(brillenBandZeigen, 800);
@@ -2498,9 +2495,26 @@
         <p class="empty-note" style="margin-bottom:8px;">
           Setzt du die Brille auf, legt die Seite alle deine Rechte für die Anzeige still:
           keine Betreiber-, Admin-, Moderator- oder Beta-Rechte mehr. Du siehst dann genau das,
-          was jemand sieht, der frisch dazukommt — ohne dich in einem zweiten Konto anmelden zu
-          müssen. An deinem Konto ändert das nichts, und der Schalter hier bleibt.
+          was jemand sieht, der frisch dazukommt — die Spieleliste zeigt dann nur die Spiele, die
+          wirklich freigeschaltet sind, und alle Verwaltungssachen sind weg. An deinem Konto
+          ändert das nichts, und dieser Schalter bleibt. Solange die Brille auf ist, steht oben
+          ein Band, mit dem du sie überall wieder absetzen kannst.
         </p>
+        ${/* Schwarz auf weiß, ohne die Brille überhaupt aufzusetzen: wie
+              viele Spiele stehen für andere da, und welche fehlen. Damit
+              sieht man sofort, ob eine Freigabe wirklich draußen ist. */ ""}
+        <p class="empty-note" style="margin-bottom:8px;">${(() => {
+          /* Vorsichtshalber abgesichert: GAMES_OVERVIEW_LIST steht weiter
+             unten in der Datei. Wird die Einstellungsseite ausnahmsweise
+             sehr früh gezeichnet, fehlt die Liste noch — dann bleibt
+             diese Zeile einfach leer, statt die ganze Seite zu stoppen. */
+          try {
+            const gesamt = GAMES_OVERVIEW_LIST.length;
+            const zu = GAMES_OVERVIEW_LIST.filter((g) => g.flagKey && !Backend.getRawFeatureFlag(g.flagKey));
+            return `Gerade stehen für normale Nutzer:innen <strong>${gesamt - zu.length} von ${gesamt}</strong> Spielen in der Liste.`
+              + (zu.length ? ` Nicht freigegeben und für sie unsichtbar: ${zu.map((g) => escapeHtml(g.name)).join(", ")}.` : " Alle sind freigegeben.");
+          } catch (e) { return ""; }
+        })()}</p>
         <button type="button" class="btn ${(Backend.alsNutzerSehen && Backend.alsNutzerSehen()) ? "btn-coffee" : "btn-ghost"}" id="rollenBrilleKnopf">
           ${(Backend.alsNutzerSehen && Backend.alsNutzerSehen()) ? "👓 Brille absetzen — wieder meine Ansicht" : "👓 Brille aufsetzen — als normaler Nutzer sehen"}
         </button>
@@ -2819,18 +2833,7 @@
       liveStandLaden(true).then(() => { liveZeichenZeichnen(); renderSettings(); });
     }
     document.getElementById("rollenBrilleKnopf")?.addEventListener("click", () => {
-      const an = !(Backend.alsNutzerSehen && Backend.alsNutzerSehen());
-      Backend.setAlsNutzerSehen(an);
-      showToast(an
-        ? "👓 Brille auf — du siehst die Seite jetzt wie jemand ohne Rechte."
-        : "👓 Brille ab — deine eigene Ansicht ist zurück.");
-      /* Alles neu zeichnen: Spieleliste, Kompass, Einstellungen hängen an
-         den Rechten. Ein Neuladen wäre gründlicher, würde aber die
-         Scrollstelle verlieren — deshalb die gezielten Neuzeichnungen. */
-      if (typeof renderGamesOverview === "function") renderGamesOverview();
-      if (typeof renderKompass === "function") renderKompass();
-      if (typeof renderSettings === "function") renderSettings();
-      if (typeof renderAccount === "function") renderAccount();
+      brilleUmschalten(!(Backend.alsNutzerSehen && Backend.alsNutzerSehen()));
     });
     document.getElementById("liveAdressenSpeichern")?.addEventListener("click", async () => {
       const karte = {};
@@ -4909,6 +4912,49 @@
       tickerToggle.setAttribute("aria-label", tickerVisible ? "Laufschrift ausblenden" : "Laufschrift einblenden");
     });
   }
+  /* ============================================================
+     DIE NUTZER-BRILLE — überall sichtbar, überall abnehmbar
+     ------------------------------------------------------------
+     GEWÜNSCHT: „ich möchte als Administrator eine Ansicht haben, wo
+     ich sehe, wie die anderen Leute die Seite sehen, zum Beispiel
+     wenn sie die Spiele nur angezeigt bekommen, die tatsächlich
+     freigeschalten sind. Diese Ansicht habe ich noch nicht."
+
+     Den Schalter gab es schon in den Einstellungen — nur fiel er
+     dort niemandem auf, und solange die Brille auf war, stand
+     nirgends, dass sie auf ist. Zwei Dinge sind deshalb neu:
+
+     1. Eine schmale Leiste unter der Laufschrift, solange die Brille
+        auf ist. Sie sagt es und nimmt sie auf einen Tipp wieder ab.
+     2. Umgeschaltet wird jetzt mit einem echten Neuladen. Vorher
+        wurden nur einzelne Bereiche neu gezeichnet — alles andere
+        (Wissen, Profil, Kalender, Beiträge) blieb im alten Zustand
+        stehen und zeigte weiter Admin-Sachen. Genau dann ist die
+        Brille keine verlässliche Ansicht mehr. Die Stelle, an der man
+        gerade steht, wird vorher gemerkt und danach wieder geöffnet.
+     ============================================================ */
+  const BRILLE_RUECKWEG = "dma_brille_rueckweg";
+  function brilleUmschalten(an) {
+    if (!Backend.setAlsNutzerSehen) return;
+    Backend.setAlsNutzerSehen(an);
+    /* Merken, wo wir gerade sind, damit das Neuladen nicht auf der
+       Startseite landet. */
+    try {
+      const reiter = document.querySelector(".tape-tab[aria-selected='true']");
+      sessionStorage.setItem(BRILLE_RUECKWEG, reiter ? reiter.dataset.target : "");
+    } catch (e) { /* egal */ }
+    showToast(an
+      ? "👓 Brille auf — die Seite lädt gleich so, wie andere sie sehen."
+      : "👓 Brille ab — deine eigene Ansicht kommt zurück.");
+    setTimeout(() => location.reload(), 700);
+  }
+  /* Nach dem Neuladen dort weitermachen, wo man war. */
+  try {
+    const ziel = sessionStorage.getItem(BRILLE_RUECKWEG);
+    sessionStorage.removeItem(BRILLE_RUECKWEG);
+    if (ziel) setTimeout(() => document.querySelector(`.tape-tab[data-target="${ziel}"]`)?.click(), 260);
+  } catch (e) { /* egal */ }
+
   updateTicker();
   setInterval(updateTicker, 20000);
   // Begrüßungsnachricht, wenn jemand über einen Empfehlungs-Link landet — zeigt, wer die Person
@@ -27394,22 +27440,30 @@
       </div>` : ""}
       <div class="games-pill-list">
         ${visibleGames.map((g) => {
-          /* Spiele, die man sich verdient, tragen ihr Schloss und ihre
-             Bedingung gleich auf der Kachel — man soll sehen, WAS man
-             sich da erspielt, nicht erst nach dem Antippen. */
+          /* GEMELDET: „die Gestaltung der Kacheln soll sich auch nicht
+             ändern, zum Beispiel wenn da Schlösser dran sind — die
+             sollen im selben Format sein."
+
+             Eine Kachel sieht deshalb jetzt IMMER gleich aus: Zeichen,
+             Name, Persona-Punkt. Ein Schloss ersetzt nur das Zeichen.
+             Die Bedingung stand vorher als zusätzliche Zeile darunter
+             und machte die Kachel höher — sie steht jetzt im Tooltip
+             und ausführlich (mit Fortschrittsbalken) auf dem
+             Schloss-Bildschirm nach dem Antippen. */
           const baustelle = inReparatur(g) && !canSeeGatedGames;
           const zu = !baustelle && !spielFreigeschaltet(g.sub);
           const bed = spielBedingung(g.sub);
           const stand = zu ? spielStandText(g.sub) : "";
           const passtZurListe = listenSubs && listenSubs.has(g.sub);
+          const hinweis = baustelle
+            ? g.name + " — wird gerade überarbeitet"
+            : zu && bed
+            ? g.name + " — noch zu: " + unlockShortText(bed.unlock) + (stand ? " (" + stand + ")" : "")
+            : g.name;
           return `
-          <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}${baustelle ? " games-pill-baustelle" : ""}${passtZurListe ? " games-pill-wortliste" : ""}${listenSubs && !passtZurListe ? " games-pill-blass" : ""}" data-game-sub="${g.sub}">
+          <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}${baustelle ? " games-pill-baustelle" : ""}${passtZurListe ? " games-pill-wortliste" : ""}${listenSubs && !passtZurListe ? " games-pill-blass" : ""}" data-game-sub="${g.sub}" title="${escapeHtml(hinweis)}">
             <span class="games-pill-emoji">${baustelle ? "🚧" : zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
-            <span class="games-pill-name">${g.name}${baustelle
-              ? `<span class="games-pill-bedingung">wird gerade überarbeitet</span>`
-              : zu && bed
-              ? `<span class="games-pill-bedingung">${unlockShortText(bed.unlock)}${stand ? " · " + stand : ""}</span>`
-              : ""}</span>
+            <span class="games-pill-name">${g.name}</span>
             <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}"></span>
           </button>`;
         }).join("")}
@@ -29247,6 +29301,25 @@
     return szenenGeladen;
   }
   function szenenListe() { return (window.DMA_SZENEN || []).filter((s) => !s.detail); }
+  /* ============================================================
+     TAFELN, DIE MAN DIREKT FINDEN MUSS
+     ------------------------------------------------------------
+     GEMELDET: „Die Entstehung des Lebens sieht man nicht."
+
+     Stimmt. Detailbilder (detail: true) stehen absichtlich nicht in
+     der Übersicht — sie sind Ziele der Lupe und gehören in ihr
+     Elternbild: „Der Kopf ganz nah" hat ohne den Kopf keinen Sinn.
+     Vier Tafeln sind aber KEINE Ausschnitte, sondern eigene
+     Nachschlagebilder. Sie lagen nur deshalb versteckt, weil sie
+     technisch als Detailbild geführt werden — man kam an „Wie ein
+     Kind entsteht" nur über Körper → Bauch → Geschlechtsorgane →
+     Kind. Diese vier bekommen jetzt ihre eigene Gruppe.
+     ============================================================ */
+  const BW_EIGENE_TAFELN = ["koerperbau", "koerper_innen", "anatomie", "entstehung"];
+  function bwEigeneTafeln() {
+    const alle = window.DMA_SZENEN || [];
+    return BW_EIGENE_TAFELN.map((id) => alle.find((s) => s.id === id)).filter(Boolean);
+  }
   function szeneMitId(id) { return (window.DMA_SZENEN || []).find((s) => s.id === id) || null; }
 
   /* ============================================================
@@ -29459,6 +29532,26 @@
           </button>
         </div>
       </div>
+
+      ${(() => {
+        /* Die eigenen Nachschlagetafeln — siehe BW_EIGENE_TAFELN. Sie
+           stehen bewusst weit oben: wer den Körper sucht, sucht ihn hier
+           und nicht in einer Lupenkette unter „Zuhause". */
+        const tafeln = bwEigeneTafeln();
+        if (!tafeln.length) return "";
+        return `<div class="question-card" style="margin-top:12px;">
+          <p class="eyebrow" style="margin-top:0;">Der Mensch von innen</p>
+          <p class="empty-note" style="margin:0 0 8px;">Vier Tafeln zum Nachschlagen: Knochen und Gelenke, die Organe, die Geschlechtsorgane und wie ein Kind entsteht — von der Befruchtung bis zur Geburt.</p>
+          <div class="bw-kacheln">
+            ${tafeln.map((s) => `
+              <button type="button" class="bw-kachel" data-bw-szene="${s.id}">
+                <span class="bw-kachel-emoji">${s.emoji}</span>
+                <span class="bw-kachel-name">${escapeHtml(s.titel)}</span>
+                <span class="bw-kachel-zahl">${s.zahl || (s.teile || []).length} Wörter${besucht.has(s.id) ? " · ✓" : ""}</span>
+              </button>`).join("")}
+          </div>
+        </div>`;
+      })()}
 
       ${themen.map((th) => `
         <div class="question-card" style="margin-top:12px;">
@@ -36720,7 +36813,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "169";
+  const APP_VERSION = "170";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -36730,6 +36823,16 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "170": [
+      "🧍 **Die Menschen sind neu gezeichnet.** Echte Kopfgröße, natürlichere Gesichter, richtige Proportionen vom Baby bis zum Großvater.",
+      "🪑 **Im Baukasten sitzt man jetzt wirklich.** Auf dem Stuhl, auf dem Sofa, auf der Toilette — und immer in der richtigen Größe zum Möbel.",
+      "🚿 **Die Dusche** ist eine richtige Kabine. Man kann jemanden hineinstellen.",
+      "💬 Der Satz sagt jetzt, wie jemand aussieht: „Die nackte Frau sitzt am Küchentisch.\u201c",
+      "🫀 **Die Körpertafel** zeigt den Körper unverdeckt — mit 32 Stellen zum Antippen.",
+      "🍼 \u201eWie ein Kind entsteht\u201c steht jetzt in der Bilderwelt und ist ohne Suchen zu finden.",
+      "🔒 Gesperrte Spiele verändern die Kacheln nicht mehr.",
+      "📡 Der Live-Hinweis in der Laufschrift hat wieder die normale Schriftgröße.",
+    ],
     "169": [
       "🧩 **Der Baukasten** — jetzt in der Bilderwelt. Ort wählen, Figur auf einen Platz ziehen, anziehen. Darunter steht der passende deutsche Satz.",
       "🦴 **Der Körperbau** — Mensch und Skelett von vorn und hinten, Wirbelsäule, Schädel, fünf Gelenke. Über 200 Stellen antippbar.",

@@ -3056,6 +3056,14 @@
 .games-pill-emoji {
   font-size: 1.3rem;
   flex-shrink: 0;
+  /* Genau so hoch wie die gezeichneten Spielsymbole (26px). Damit
+     nimmt ein Schloss exakt denselben Platz ein wie ein Symbol — die
+     Kachel bleibt im gleichen Format, ohne dass sich am Aussehen der
+     übrigen Kacheln etwas ändert. */
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .games-pill-name {
   line-height: 1.2;
@@ -4807,10 +4815,20 @@ button.sbk-gruppe {
 }
 
 /* Spiele, die man sich erst verdient: gedämpft, aber nicht versteckt.
-   Man soll sehen, dass es sie gibt, und lesen können, was noch fehlt —
-   ein ausgegrautes Feld ohne Erklärung wäre nur ärgerlich. */
+   Man soll sehen, dass es sie gibt.
+
+   GEMELDET: „die Gestaltung der Kacheln soll sich auch nicht ändern,
+   zum Beispiel wenn da Schlösser dran sind — die sollen im selben
+   Format sein."
+
+   Vorher war eine Schloss-Kachel nachweislich ein anderes Format: das
+   Schloss war kleiner gesetzt (1,2 statt 1,3 rem) und unter dem Namen
+   stand zusätzlich die Bedingung — diese Extra-Zeile machte die Kachel
+   höher und damit gleich die ganze Rasterzeile. Jetzt bleibt das
+   Format gleich: dasselbe Zeichenmaß, keine Zusatzzeile. Was noch
+   fehlt, steht auf dem Schloss-Bildschirm nach dem Antippen (dort ist
+   auch der Fortschrittsbalken) und im Tooltip der Kachel. */
 .games-pill-zu { opacity: 0.72; }
-.games-pill-zu .games-pill-emoji { font-size: 1.2rem; }
 .games-pill-bedingung {
   display: block;
   font-size: 0.68rem;
@@ -6852,9 +6870,8 @@ input[type="checkbox"], input[type="radio"] {
    Fließtextes bleibt wie er war. */
 .ticker-live {
   color: var(--live-farbe, #f2b84b);
-  font-weight: 800;
+  font-weight: 700;
 }
-.ticker-live-tiktok { text-shadow: 0 0 2px rgba(0, 0, 0, 0.8); }
 /* Der Verwaltungsschalter in den Einstellungen — nur Alex sieht ihn. */
 .live-wahl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .live-wahl-knopf {
@@ -7030,9 +7047,36 @@ input[type="checkbox"], input[type="radio"] {
 .live-adresse code { font-size: 0.72rem; }
 /* Die Live-Zeile in der Laufschrift ist anklickbar — aber sie bleibt
    genauso groß wie der übrige Fließtext. Nur Farbe und Strichstärke
-   unterscheiden sie. */
-.ticker-live { cursor: pointer; font-size: inherit; }
+   unterscheiden sie.
+
+   NOCHMALS GEMELDET: „ich möchte nicht, wenn ich live bin, dass dieser
+   Schriftzug für mich so groß ist in dem Newsticker. Das soll genau die
+   selbe Schriftgröße haben … maximal etwas dicker."
+
+   Deshalb ist hier jetzt JEDE Eigenschaft festgenagelt, die eine Zeile
+   optisch größer machen kann — Größe, Zeilenhöhe, Laufweite, Schriftart
+   und die Schriftart-Streckung. Vorher stand nur die Größe hier; dick
+   gezeichnet wirkte die Zeile trotzdem größer als der Rest. Die
+   Strichstärke bleibt als einziger Unterschied neben der Farbe, und
+   zwar nur eine Stufe (700 statt 800) — das reicht, um sie zu
+   erkennen, und lässt die Laufschrift sonst völlig unberührt. */
+.ticker-live {
+  cursor: pointer;
+  font-size: inherit !important;
+  line-height: inherit;
+  letter-spacing: inherit;
+  font-family: inherit;
+  font-stretch: inherit;
+  font-weight: 700;
+  vertical-align: baseline;
+}
 .ticker-live:hover { text-decoration: underline; }
+/* Der Schatten war dazu da, die Zeile auf hellen Themen lesbar zu
+   halten — bei 2px Weichzeichnung machte er die Buchstaben aber
+   sichtbar fetter, und genau das wirkte wie eine größere Schrift.
+   Jetzt ein harter 1px-Saum ohne Weichzeichnung: dieselbe Lesbarkeit,
+   keine Verdickung. */
+.ticker-live-tiktok { text-shadow: 0 0 1px rgba(0, 0, 0, 0.55); }
 
 /* Der Hinweis über dem Freigabe-Schalter für die Kalendertage. Er ist
    absichtlich auffällig: 327 fertige Tage lagen unbemerkt hinter dem
@@ -7380,5 +7424,3 @@ input[type="checkbox"], input[type="radio"] {
   overflow-wrap: anywhere;
   word-break: break-all;
 }
-
-
