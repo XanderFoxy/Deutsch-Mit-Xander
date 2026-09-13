@@ -665,12 +665,28 @@
    dürfen — sonst drängt es das rechte Element (Uhrzeit, Häkchen, Punktestand) aus seiner festen
    Position, sobald der Text mal etwas länger ist. Das rechte Element bleibt dagegen immer in
    seiner vollen, festen Größe an Ort und Stelle. */
+/* GEMELDET: „wenn ich etwas ausfülle, dass es die Kategorie oder den Titel
+   der Kategorie beeinflusst und den dann senkrecht nach unten quetscht."
+
+   Woran es lag: der WERT rechts war auf flex-shrink:0 gesetzt, konnte also
+   nicht schmaler werden. Ein langer Wert schob damit das LABEL links auf
+   fast null Breite — und weil dort word-break:break-word stand, brach das
+   Label Buchstabe für Buchstabe um und stand als senkrechte Säule da.
+
+   Jetzt umgekehrt: das Label darf nicht unter seine Wortbreite gedrückt
+   werden (word-break:normal), der Wert darf schrumpfen und umbrechen. Wird
+   es beiden zusammen zu eng, rutscht der Wert in die nächste Zeile, statt
+   dass eine Seite zerquetscht wird. */
+.breakdown-row { flex-wrap: wrap; }
 .breakdown-row > span:first-child, .breakdown-row > *:first-child {
-  flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; word-break: break-word;
+  flex: 0 1 auto; min-width: 0; max-width: 100%;
+  overflow-wrap: break-word; word-break: normal; hyphens: auto;
 }
 .breakdown-row > span:last-child, .breakdown-row > *:last-child {
-  flex-shrink: 0; text-align: right; overflow-wrap: break-word; word-break: normal; min-width: 0;
+  flex: 1 1 auto; min-width: 0; text-align: right;
+  overflow-wrap: anywhere; word-break: normal;
 }
+.breakdown-row > *:only-child { flex: 1 1 100%; text-align: left; }
 /* Für Zeilen mit potenziell LANGEM Freitext-Wert (z. B. mehrere aufgezählte Reiseziele) — hier
    ist es umgekehrt: das Label links bleibt kurz und fest, der Wert rechts braucht die Freiheit,
    normal umzubrechen, statt in eine feste, schmale Spalte gequetscht zu werden (was sonst zu
@@ -2195,6 +2211,23 @@
 .cal-back button, .cal-back a {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+/* GEMELDET: „Bei der Tagesaufgabe sind die Schaltflächen bei Galaxie nicht
+   mehr lesbar. Vorher waren es blaue Schaltflächen."
+
+   Das Kalenderblatt hat absichtlich IMMER einen hellen Grund und dazu
+   eine fest eingestellte dunkle Schrift (.cal-face, color: #241505) —
+   unabhängig davon, welches Design gerade an ist. Die Antwortknöpfe der
+   Tagesaufgabe sind aber .btn-ghost, und die setzen color: var(--cream-50).
+   In den dunklen Designs ist das ein HELLER Ton: heller Text auf hellem
+   Papier, gemessen 1,05 Kontrast.
+
+   Sie erben hier wieder die Schrift des Kalenderblatts — dieselbe Farbe,
+   die schon oben für die Seite festgelegt ist. Keine neue Farbe, nur die
+   ursprüngliche wieder wirksam. */
+.cal-back button, .cal-back a,
+.cal-front button, .cal-front a {
+  color: inherit;
 }
 /* Echtes Umblättern: beide Seiten drehen sich gemeinsam um dieselbe Achse (obere rechte Ecke,
    diagonal) um 180° — wie ein echtes zweiseitiges Kalenderblatt, das man umdreht, um die
@@ -6990,3 +7023,362 @@ input[type="checkbox"], input[type="radio"] {
    nicht --cream-50. Also bleiben sie, wie sie sind. Nur die Beschriftung
    unter dem Knopf wird etwas kräftiger. */
 .baustein-de { opacity: 0.88; }
+
+/* Die Eingabefelder für die Live-Adressen. Sie stehen eingeklappt in den
+   Einstellungen — man braucht sie selten, aber wenn, dann genau dort. */
+.live-adresse input { width: 100%; box-sizing: border-box; font-size: 0.8rem; }
+.live-adresse code { font-size: 0.72rem; }
+/* Die Live-Zeile in der Laufschrift ist anklickbar — aber sie bleibt
+   genauso groß wie der übrige Fließtext. Nur Farbe und Strichstärke
+   unterscheiden sie. */
+.ticker-live { cursor: pointer; font-size: inherit; }
+.ticker-live:hover { text-decoration: underline; }
+
+/* Der Hinweis über dem Freigabe-Schalter für die Kalendertage. Er ist
+   absichtlich auffällig: 327 fertige Tage lagen unbemerkt hinter dem
+   Schalter, und niemand außer Alex konnte sie sehen. */
+.hist-freigabe-hinweis {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--coral-400, #e8825f);
+  background: rgba(232, 130, 95, 0.12);
+  font-size: 0.84rem;
+}
+
+/* Ein dauerhaft sichtbares Band, solange die „So sieht es für alle
+   anderen aus"-Brille aufgesetzt ist. Ohne das vergisst man sie und
+   wundert sich, warum die eigenen Werkzeuge fehlen. */
+.brillen-band {
+  position: sticky;
+  top: 0;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--teal-400, #4a9d8f);
+  color: #06231f;
+}
+.brillen-band button {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font: inherit;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+}
+
+/* ---------------------------------------------------------------
+   HINEINZOOMEN — der graue Schleier ringsum
+   GEWÜNSCHT: „dann soll man den Hintergrund so ein bisschen ausgegraut
+   sehen, dass man auf den ausgegrauten Hintergrund klicken kann und
+   wieder in das allgemeine Bild kommt — so ähnlich wie das früher bei
+   Flash war."
+   --------------------------------------------------------------- */
+.bw-schleier {
+  fill: rgba(24, 20, 16, 0.62);
+  cursor: zoom-out;
+}
+.bw-zoomrahmen {
+  fill: none;
+  stroke: rgba(242, 184, 75, 0.9);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 5;
+  pointer-events: none;
+}
+/* Die Einzelteile, die erst beim Näherkommen dazukommen, liegen an
+   ihrem richtigen Platz im Bild — sie bekommen nur eine feine
+   Andeutung, damit man merkt, dass man sie antippen kann. */
+.bw-teil-unter { cursor: pointer; }
+.bw-teil-unter:hover { filter: brightness(1.15) drop-shadow(0 0 3px rgba(255, 255, 255, 0.95)); }
+.bw-bild-zoom { cursor: zoom-out; }
+.bw-bild-zoom .bw-teil { cursor: pointer; }
+
+
+/* =========================================================
+   POSTFACH — der Nachrichtentext bleibt im Rahmen
+   ---------------------------------------------------------
+   GEMELDET: „ich hab eine Nachricht bekommen, wo die Klasse fehlt, wo ich
+   am Anfang den Text hab, der aus dem Rahmen rausläuft."
+
+   Der Absatz trug nur `white-space:pre-wrap` als Inline-Stil und gar keine
+   Klasse. Mit pre-wrap bricht ein langes zusammenhängendes Stück Text —
+   eine Adresse, ein langer Dateiname, ein Wort ohne Leerzeichen — NICHT
+   um; es läuft einfach über den Rand hinaus. Diese Klasse holt es zurück.
+   ========================================================= */
+.inbox-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.inbox-text img, .inbox-text svg { max-width: 100%; height: auto; }
+/* Auch die zusammengeklappte Vorschau: in einem Flex-Kind greift
+   text-overflow nur mit min-width:0. */
+.inbox-row-compact { min-width: 0; }
+.inbox-row-compact > * { min-width: 0; max-width: 100%; }
+
+/* ============================================================
+   DER SITUATIONS-BAUKASTEN
+   ------------------------------------------------------------
+   Die Bühne oben, der Satz gleich darunter (er ist das Ergebnis,
+   also gehört er dicht ans Bild), die Schalter unten. Alles in
+   einer Spalte — auf dem Telefon gibt es kein Nebeneinander.
+   ============================================================ */
+.bk-titel { margin: 0 0 6px; }
+.bk-hinweis { margin: 0 0 10px; }
+
+.bk-buehne {
+  background: var(--cream-50);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  overflow: hidden;
+  line-height: 0;
+}
+.bk-svg { width: 100%; height: auto; display: block; touch-action: none; }
+
+.bk-platz { cursor: pointer; opacity: 0.55; transition: opacity 0.15s; }
+.bk-platz:hover, .bk-platz-an { opacity: 1; }
+.bk-platz-an circle:first-child { stroke-dasharray: none; stroke-width: 2; }
+
+.bk-figur { cursor: grab; }
+.bk-figur.bk-zieht { cursor: grabbing; opacity: 0.85; }
+
+.bk-satz {
+  margin: 12px 0 14px;
+  padding: 12px 14px;
+  background: var(--plum-950);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+.bk-satz-text {
+  margin: 0;
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--cream-50);
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
+.bk-hoeren { flex: 0 0 auto; }
+
+.bk-steuerung { display: flex; flex-direction: column; gap: 12px; }
+.bk-wahl { min-width: 0; }
+.bk-wahl-titel {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--plum-800);
+  margin-bottom: 5px;
+}
+.bk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.bk-chip {
+  border: 1px solid var(--card-border);
+  background: var(--cream-50);
+  color: var(--plum-800);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.86rem;
+  line-height: 1.2;
+  cursor: pointer;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+.bk-chip-an {
+  background: var(--plum-800);
+  border-color: var(--plum-800);
+  color: var(--cream-50);
+  font-weight: 700;
+}
+
+/* =========================================================
+   WEGWEISER — DER TEIL FÜR DE, AT UND CH
+   ---------------------------------------------------------
+   Der Wegweiser hat einen dritten Teil bekommen: geprüftes
+   Praxiswissen für Menschen, die neu nach Deutschland,
+   Österreich oder in die Schweiz kommen.
+
+   Drei Dinge sind hier wichtig:
+
+   LÄNDERWAHL — drei Knöpfe, die umbrechen dürfen. Keine
+   feste Breite, damit „Deutschland" und „Schweiz" auf einem
+   schmalen Telefon nebeneinander passen oder sauber
+   untereinander rutschen.
+
+   AUFKLAPPEN — der Kopf eines Bereichs ist ein ganzer Knopf,
+   nicht nur der Titel. Auf dem Telefon trifft man den mit
+   dem Daumen; einen kleinen Pfeil trifft man nicht.
+
+   LINKS — jeder Link zeigt drei Zeilen: wie er heißt, wofür
+   er gut ist, und wohin er führt. Die Adresse steht bewusst
+   darunter: Wer sieht, dass hinter einem Link „bamf.de" oder
+   „admin.ch" steht, klickt mit anderem Vertrauen. Adressen
+   sind lang, deshalb brechen sie überall um — sonst läuft
+   die Karte bei 390 px Breite aus dem Bild.
+   ========================================================= */
+.wg-laender {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.wg-land {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  overflow-wrap: break-word;
+}
+/* Das gewählte Land muss man SEHEN. Mit einer Klasse allein reicht es
+   nicht: .btn-ghost[aria-pressed="true"] ist spezifischer und übermalt
+   sie sonst. Deshalb hier drei Klassen — und die Farbe der Seite für
+   „ausgewählt", dieselbe wie bei den Chips weiter oben. */
+.wg-laender .wg-land.wg-land-an,
+.wg-laender .wg-land.wg-land-an[aria-pressed="true"] {
+  background: var(--amber-400);
+  border-color: var(--amber-400);
+  color: #241505;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(242, 184, 75, 0.35);
+}
+.wg-flagge { font-size: 1.1rem; line-height: 1; }
+
+.wg-hinweis { margin: 0; }
+
+/* --- Ein Bereich: Kopf zum Aufklappen ------------------- */
+.wg-block { margin-bottom: 10px; }
+.wg-kopf {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.wg-kopf-icon { font-size: 1.4rem; line-height: 1.2; flex: 0 0 auto; }
+.wg-kopf-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wg-kopf-bereich {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  overflow-wrap: break-word;
+}
+.wg-kopf-titel {
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.wg-kopf-kurz {
+  font-size: 0.84rem;
+  line-height: 1.4;
+  opacity: 0.82;
+  overflow-wrap: break-word;
+}
+/* Kein eigener Farbton für den offenen Titel: Die Farbtöne der Seite
+   wechseln mit dem Design, und in den hellen Designs verschwand die
+   Überschrift dabei auf dem hellen Grund. Der Titel behält also die
+   normale Schriftfarbe der Karte — sichtbar ist der offene Zustand
+   ohnehin am Pfeil und am aufgeklappten Inhalt. */
+.wg-block-auf .wg-kopf-titel { color: inherit; }
+
+/* --- Schritte und Tipps -------------------------------- */
+.wg-abschnitt { margin-top: 14px; }
+.wg-schritte,
+.wg-tipps {
+  margin: 0;
+  padding-left: 1.3em;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.wg-schritte li,
+.wg-tipps li {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.wg-tipps { list-style: "💡  "; }
+
+/* --- Die geprüften Quellen ------------------------------ */
+.wg-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Aufbau wie bei .weg-ziel weiter oben — dieselbe Kartenform, damit
+   der Wegweiser überall gleich aussieht. Wichtig: --card-border ist
+   hier eine ganze Rahmen-Angabe, nicht nur eine Farbe, und die Schrift
+   erbt die Farbe der Karte. Beides sorgt dafür, dass es in jedem
+   Design lesbar bleibt. */
+.wg-link {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: var(--card-border, 1px solid rgba(128, 128, 128, 0.32));
+  border-radius: 12px;
+  background: var(--plum-700, #fffdf8);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.wg-link:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
+.wg-link:active { transform: scale(0.995); }
+.wg-link-titel {
+  font-weight: 800;
+  font-size: 0.93rem;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.wg-link-pfeil { opacity: 0.55; }
+.wg-link-was {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  opacity: 0.82;
+  overflow-wrap: break-word;
+}
+.wg-link-adresse {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  opacity: 0.55;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+

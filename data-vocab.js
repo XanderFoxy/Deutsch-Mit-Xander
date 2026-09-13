@@ -18,11 +18,17 @@ const VocabData = (function () {
      Wörterbuch, den Vokabeltrainer, den Betonungs-Trainer oder
      ein Wortspiel öffnet.
 
-     Jetzt liegt jedes Thema in vokabeln/<datei>.js (rund 130 kB)
-     und wird bei Bedarf nachgeladen. Wer nur eine Kategorie
-     ansieht, lädt auch nur diese eine Datei; wer den
-     Vokabeltrainer startet, bekommt über ladeWoerter() alle
-     Themen parallel.
+     Jetzt liegt JEDES THEMA in genau einer Datei
+     vokabeln/<thema>.js (141 bis 751 kB) und wird bei Bedarf
+     nachgeladen. Wer nur eine Kategorie ansieht, lädt auch nur
+     diese eine Datei; wer den Vokabeltrainer startet, bekommt
+     über ladeWoerter() alle 26 Themen parallel.
+
+     Vorher lagen fünf Themen zusammen in teil-1 bis teil-5 (je
+     1,2 MB) und teil-9 kam mit 3,7 MB bei JEDEM Thema dazu — ein
+     einziges Thema kostete so rund 5 MB. Der Nutzer arbeitet am
+     Handy, oft über Mobilfunk; deshalb ist alles nach Thema
+     getrennt.
 
      WORDS bleibt dabei dasselbe Array-Objekt — es wird gefüllt,
      nie ersetzt. Wer eine Referenz darauf hält, sieht die Wörter
@@ -30,44 +36,61 @@ const VocabData = (function () {
      aufgebaut werden, merken sich zusätzlich WORDS.length und
      bauen sich nach dem Nachladen neu auf.
      ============================================================ */
-  const VOKABEL_THEMEN = [["Alltag & Zuhause","teil-1"],["Bildung & Lernen","teil-1"],["Denken & Argumentieren","teil-4"],["Essen & Trinken","teil-1"],["Familie & Menschen","teil-2"],["Freizeit & Sport","teil-5"],["Gefühle & Charakter","teil-3"],["Geschichte & Erinnerung","teil-4"],["Gesundheit & Körper","teil-2"],["Grundwörter & Struktur","teil-2"],["Kleidung & Einkaufen","teil-4"],["Kunst & Musik","teil-2"],["Länder & Welt","teil-6"],["Literatur & Schreiben","teil-5"],["Medien & Öffentlichkeit","teil-5"],["Natur & Wetter","teil-5"],["Politik & Gesellschaft","teil-2"],["Recht & Verwaltung","teil-3"],["Reisen & Unterwegs","teil-1"],["Sprache & Kommunikation","teil-4"],["Stadt & Verkehr","teil-3"],["Technik & Erfindung","teil-3"],["Umwelt & Klima","teil-5"],["Wirtschaft & Arbeit","teil-3"],["Wissenschaft & Forschung","teil-4"],["Zeit & Kalender","teil-1"]];
+  const VOKABEL_THEMEN = [["Alltag & Zuhause","alltag"],["Bildung & Lernen","bildung"],["Denken & Argumentieren","denken"],["Essen & Trinken","essen"],["Familie & Menschen","familie"],["Freizeit & Sport","freizeit"],["Gefühle & Charakter","gefuehle"],["Geschichte & Erinnerung","geschichte"],["Gesundheit & Körper","gesundheit"],["Grundwörter & Struktur","grundwoerter"],["Kleidung & Einkaufen","kleidung"],["Kunst & Musik","kunst"],["Literatur & Schreiben","literatur"],["Länder & Welt","laender"],["Medien & Öffentlichkeit","medien"],["Natur & Wetter","natur"],["Politik & Gesellschaft","politik"],["Recht & Verwaltung","recht"],["Reisen & Unterwegs","reisen"],["Sprache & Kommunikation","sprache"],["Stadt & Verkehr","stadt"],["Technik & Erfindung","technik"],["Umwelt & Klima","umwelt"],["Wirtschaft & Arbeit","wirtschaft"],["Wissenschaft & Forschung","wissenschaft"],["Zeit & Kalender","zeit"]];
   const geladeneThemen = {};
   const laufendeThemen = {};
-  /* Ein Thema kann in MEHREREN Dateien stehen. Das ist neu: teil-7
-     ergänzt fünfzehn bestehende Themen um die kleinen Wörter, die
-     Vornamen und die häufigsten Lücken aus den Tagestexten. Solange hier
-     nur EINE Datei je Thema stand, wurde teil-7 nie geladen. */
-  const ZUSATZTEILE = ["teil-7"];
+  /* EINE DATEI JE THEMA. Vorher lag das Wörterbuch in 93 Stücken: fünf
+     Grundteile mit je fünf Themen, dazu die Nachträge teil-7, teil-8 und
+     die 26 Stücke von Teil 9. Für den Mobilfunk war das gut — für den
+     Nutzer nicht: er lädt jede Datei von Hand über die GitHub-Oberfläche
+     hoch, und 93 Dateien sind am Telefon nicht zu schaffen.
+
+     Jetzt steht alles zu einem Thema in vokabeln/<thema>.js: der gepflegte
+     Grundwortschatz, die Nachträge aus den Tagestexten und den Lesetexten
+     (früher teil-7 und teil-8) und die erzeugten Einträge, die die letzte
+     Lücke schließen (Teil 9, hinter einer Marke in derselben Datei).
+     Ein Thema öffnen heißt: genau eine Datei laden, 141 bis 751 kB statt
+     der rund 10 MB des ganzen Wörterbuchs.
+
+     Die Einträge liegen dabei weiter in ZWEI Töpfen: der gepflegte Teil in
+     window.DMA_VOKABELN, der erzeugte in window.DMA_VOKABELN_ZUSATZ. So
+     kann der erzeugte Teil den gepflegten nicht überschreiben, und
+     themaEinfuegen() hängt beide nacheinander ein. */
   function themaDateien(thema) {
     const t = VOKABEL_THEMEN.find((x) => x[0] === thema);
     if (!t) return [];
-    return [t[1], ...ZUSATZTEILE];
+    return [t[1]];
   }
   function themaEinfuegen(thema) {
+    if (geladeneThemen[thema]) return;
     const teil = (window.DMA_VOKABELN || {})[thema];
-    if (!teil || geladeneThemen[thema]) return;
+    const zusatzDa = (window.DMA_VOKABELN_ZUSATZ || {})[thema];
+    // Nichts da, was man einhängen könnte: später noch einmal versuchen.
+    if (!teil && !zusatzDa) return;
     geladeneThemen[thema] = true;
-    for (let i = 0; i < teil.length; i++) WORDS.push(teil[i]);
-    /* Die Nachträge aus teil-7 stehen in einem eigenen Topf und werden
-       hier dazugemischt. Sie ins selbe Objekt zu schreiben ginge schief:
-       die Teile 1 bis 6 SETZEN ihr Thema, und je nach Ladereihenfolge
-       wäre der Nachtrag im nächsten Augenblick wieder weg. */
+    if (teil) for (let i = 0; i < teil.length; i++) WORDS.push(teil[i]);
+    /* Der erzeugte Teil der Themendatei (Teil 9, hinter der Marke) steht in
+       einem eigenen Topf und wird hier dazugemischt. Ins selbe Objekt zu
+       schreiben ginge schief: der gepflegte Teil SETZT sein Thema, und je
+       nach Reihenfolge wäre der Nachtrag im nächsten Augenblick weg. */
     const zusatz = (window.DMA_VOKABELN_ZUSATZ || {})[thema];
     if (zusatz) for (let i = 0; i < zusatz.length; i++) WORDS.push(zusatz[i]);
   }
   /* Jede Datei nur EINMAL laden, auch wenn mehrere Themen sie brauchen. */
   const dateiLaeuft = {};
+  const dateiFertig = {};
   function dateiLaden(datei) {
     if (dateiLaeuft[datei]) return dateiLaeuft[datei];
     dateiLaeuft[datei] = new Promise((fertig) => {
+      const melden = (wert) => { dateiFertig[datei] = true; fertig(wert); };
       const s = document.createElement('script');
       s.src = 'vokabeln/' + datei + '.js?v=' + (window.DMA_VERSION || '1');
       s.async = true;
-      s.onload = () => fertig(true);
+      s.onload = () => melden(true);
       s.onerror = () => {
         // Fehlt eine Datei, bleibt dieses Thema leer statt die App zu brechen.
         console.warn('Vokabelteil fehlt: ' + datei);
-        fertig(false);
+        melden(false);
       };
       document.head.appendChild(s);
     });
@@ -79,10 +102,13 @@ const VocabData = (function () {
     const dateien = themaDateien(thema);
     if (!dateien.length) return Promise.resolve(false);
     laufendeThemen[thema] = Promise.all(dateien.map(dateiLaden)).then((ok) => {
-      // Eine Datei enthält mehrere Themen — alle einhängen, deren Dateien
-      // jetzt da sind, sonst würde dieselbe Datei später erneut geladen.
+      /* Heute hat jedes Thema genau eine Datei. Die Prüfung bleibt aber
+         allgemein: eingehängt wird jedes Thema, dessen Dateien ALLE da
+         sind. Sollte später wieder eine Datei mehrere Themen enthalten
+         oder ein Thema in mehreren Dateien stehen, geht dabei kein Thema
+         verloren und keine Datei wird zweimal geladen. */
       VOKABEL_THEMEN.forEach((t) => {
-        if (dateien.indexOf(t[1]) >= 0) themaEinfuegen(t[0]);
+        if (themaDateien(t[0]).every((d) => dateiFertig[d])) themaEinfuegen(t[0]);
       });
       themaEinfuegen(thema);
       return ok.some(Boolean);

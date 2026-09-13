@@ -1020,7 +1020,7 @@
     { key: "silbenturm_neu", label: "🧱 Silbenturm (neues Spiel)", desc: "Ein Wort aus seinen Silben wieder aufbauen und danach die betonte Silbe bestimmen. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "sortierer_neu", label: "🧺 Wörter-Sortierer (neues Spiel)", desc: "In welches Wortfeld gehört das Wort? Die Wörter kommen aus dem Wörterbuch und richten sich nach dem eingestellten Niveau. Bis zur Freigabe sehen andere eine 'Kommt bald'-Meldung." },
     { key: "stadtlandfluss_neu", label: "🏙️ Stadt · Land · Fluss (neues Spiel)", desc: "Ein Buchstabe, fünf Spalten, zwei Minuten — allein gegen den Fuchs oder zu zweit mit gemeinsamem Start: Beide bekommen denselben Buchstaben, dieselben Spalten und dieselbe Startsekunde, danach werden die Zettel nebeneinandergelegt und klassisch gewertet (20/10/5/0). Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
-    { key: "aussprachekurs_neu", label: "🗣️ Aussprache-Kurs (neuer Bereich)", desc: "Das komplette Alphabet mit Umlauten und ß, die Regeln zur Vokallänge mit ihren Ausnahmen, Konsonanten am Stück (Straße statt Se-tra-ße) und die Tricks für ü, ö, ng und ch — mit Schnittbildern durch Mund und Rachen, auf Deutsch und auf Italienisch. Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
+    { key: "aussprachekurs_neu", label: "🗣️ Aussprache-Kurs (neuer Bereich)", desc: "Das komplette Alphabet mit Umlauten und ß, die Regeln zur Vokallänge mit ihren Ausnahmen, Konsonanten am Stück (Straße statt Se-tra-ße) und die Tricks für ü, ö, ng und ch — mit Schnittbildern durch Mund und Rachen. Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
     { key: "dialoge_neu", label: "💬 Dialoge (neuer Bereich)", desc: "Das Gesprächs-Formular mit fertigen Sätzen für jeden Schritt in der Sie- und in der du-Form, dazu 20 durchspielbare Situationen (Bürgeramt, Arzt, Wohnungsbesichtigung, Vorstellungsgespräch, Nachbarn, Sprachkurs). Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
     { key: "feste_kultur_neu", label: "🎄 Feste & Kultur (neuer Bereich)", desc: "Der Jahreslauf mit allen Festen und dazu das Ungeschriebene: Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, Behörden, Vereine, Zutatenliste. Bis zur Freigabe sehen andere eine Baustellen-Meldung." },
     { key: "musikplayer_update", label: "🎵 Musikplayer-Update", desc: "Wellenform-Anzeige, Schnellliste (☰), MP3-Symbol im Video-Bereich. Bis zur Freigabe sehen andere Nutzer:innen den Player ohne diese neuen Elemente (die eigentlichen Stabilitäts-Fixes — Song hängt sich nicht mehr auf, Layout-Wechsel startet Song nicht neu — gelten unabhängig davon bereits für alle, da das reine Fehlerbehebungen waren)." },
@@ -1813,6 +1813,31 @@
     if (typeof updateTicker === "function") updateTicker();
     dictCache = null; // Wörterbuch gehört jetzt zum anderen Raum
   }
+  /* Das Band zur Nutzer-Brille. Es liegt oben und bleibt stehen, damit
+     man nicht vergisst, dass gerade die fremde Ansicht gilt. */
+  function brillenBandZeigen() {
+    const an = Boolean(Backend.alsNutzerSehen && Backend.alsNutzerSehen())
+      && Boolean(Backend.istWirklichVerwaltung && Backend.istWirklichVerwaltung());
+    let band = document.getElementById("brillenBand");
+    if (!an) { if (band) band.remove(); return; }
+    if (band) return;
+    band = document.createElement("div");
+    band.id = "brillenBand";
+    band.className = "brillen-band";
+    band.innerHTML = `<span>👓 Du siehst die Seite gerade wie ein normaler Nutzer</span><button type="button" id="brillenBandAb">Brille absetzen</button>`;
+    document.body.insertBefore(band, document.body.firstChild);
+    band.querySelector("#brillenBandAb").addEventListener("click", () => {
+      Backend.setAlsNutzerSehen(false);
+      brillenBandZeigen();
+      showToast("👓 Brille ab — deine eigene Ansicht ist zurück.");
+      if (typeof renderGamesOverview === "function") renderGamesOverview();
+      if (typeof renderKompass === "function") renderKompass();
+      if (typeof renderSettings === "function") renderSettings();
+    });
+  }
+  setInterval(brillenBandZeigen, 1200);
+  setTimeout(brillenBandZeigen, 800);
+
   // Ein durchgehend sichtbares Band, solange der Italienisch-Raum aktiv ist —
   // damit nie Zweifel besteht, in welchem Raum man sich gerade befindet.
   function zeigeLernraumBanner() {
@@ -1965,7 +1990,8 @@
          einmal sehen kann. */
       const felder = PROFIL_FELDER
         .filter((f) => f.bereich === bereich.id)
-        .filter((f) => darfItalienischraum() || (f.key !== "lernraum" && f.key !== "uebersetzungAnzeigen"))
+        .filter((f) => darfItalienischraum()
+          || (f.key !== "lernraum" && f.key !== "uebersetzungAnzeigen" && f.key !== "itKurs"))
         .map((f) => {
         const wert = feldWert(f, profile);
         const gesetzt = feldGesetzt(wert, f);
@@ -2092,7 +2118,9 @@
   let bildvSuche = "";
   let bildvStapelBericht = null;
   function bildverwaltungHtml() {
-    const szenen = (window.DMA_SZENEN || []);
+    /* Nur die Bilder, deren Zeichnungen wirklich geladen sind — sonst
+       stuende hier eine Liste mit lauter leeren Bereichen. */
+    const szenen = (window.DMA_SZENEN || []).filter((s) => (s.teile || []).length);
     if (!szenen.length) {
       return `<p class="empty-note">Die Bilder werden geladen, sobald du einmal in der
               <strong>Bilderwelt</strong> warst. Geh einmal auf „Lernen → Bilderwelt" und komm
@@ -2224,7 +2252,7 @@
       laden.addEventListener("click", async () => {
         laden.disabled = true;
         laden.textContent = "⏳ lädt …";
-        await szenenLaden();
+        await alleSzenenLaden();
         neuZeichnen();
       });
     }
@@ -2464,6 +2492,19 @@
           <button type="button" class="trophy-chip lernraum-btn ${imItalienischraum ? "selected" : ""}" data-lernraum="it">🇮🇹 Italiano</button>
         </div>
       </div>` : ""}
+      ${(Backend.istWirklichVerwaltung && Backend.istWirklichVerwaltung()) ? `
+      <div class="question-card" style="margin-top:14px; border:2px dashed var(--teal-400,#4a9d8f);">
+        <h3>👓 So sieht es für alle anderen aus</h3>
+        <p class="empty-note" style="margin-bottom:8px;">
+          Setzt du die Brille auf, legt die Seite alle deine Rechte für die Anzeige still:
+          keine Betreiber-, Admin-, Moderator- oder Beta-Rechte mehr. Du siehst dann genau das,
+          was jemand sieht, der frisch dazukommt — ohne dich in einem zweiten Konto anmelden zu
+          müssen. An deinem Konto ändert das nichts, und der Schalter hier bleibt.
+        </p>
+        <button type="button" class="btn ${(Backend.alsNutzerSehen && Backend.alsNutzerSehen()) ? "btn-coffee" : "btn-ghost"}" id="rollenBrilleKnopf">
+          ${(Backend.alsNutzerSehen && Backend.alsNutzerSehen()) ? "👓 Brille absetzen — wieder meine Ansicht" : "👓 Brille aufsetzen — als normaler Nutzer sehen"}
+        </button>
+      </div>` : ""}
       ${istBetreiber ? `
       <div class="question-card" style="margin-top:14px; border:2px dashed var(--amber-400,#f2b84b);">
         <h3>📡 Ich bin gerade live</h3>
@@ -2475,6 +2516,33 @@
             </button>`).join("")}
           <button type="button" class="live-wahl-knopf ${liveStand ? "" : "selected"}" data-live-setzen="">⚫ Nicht live</button>
         </div>
+        ${/* GEWÜNSCHT: „ich soll aber auch die Möglichkeit haben, diese Adresse
+              selbstständig eintragen zu können … weil ich bei TikTok zwei, drei
+              verschiedene Accounts habe … und dass das dann nicht nur lokal
+              speichert, sondern für mich in den Profil-Einstellungen." */ ""}
+        <details style="margin-top:12px;">
+          <summary style="cursor:pointer; font-size:0.82rem; font-weight:700;">🔗 Wohin die Leute geschickt werden</summary>
+          <p class="empty-note" style="margin:8px 0;">
+            Antippen des Sendezeichens führt direkt hierhin. Auf dem Telefon öffnet sich
+            dabei die App selbst, falls sie installiert ist — Clubhouse und TikTok melden
+            ihre Adressen beim Betriebssystem dafür an. Die zweite Zeile brauchst du nur,
+            wenn du eine eigene App-Adresse hast (z. B. <code>clubhouse://room/j3Ow5SAY</code>);
+            sie wird zuerst versucht, und wenn nichts passiert, geht es zur Webadresse.
+            Die Adressen liegen in deinem Konto, nicht auf einem Gerät.
+          </p>
+          ${Object.entries(LIVE_PLATTFORMEN).map(([k, p]) => {
+            const e = liveAdressen[k] || {};
+            return `
+            <div class="live-adresse" data-live-adresse="${k}">
+              <p class="eyebrow" style="margin:10px 0 4px;"><span class="live-punkt" style="--live-farbe:${p.farbe}; display:inline-block; vertical-align:-1px; margin-right:5px;"></span>${p.name}</p>
+              <input type="url" class="vocab-search" data-live-url="${k}" placeholder="${escapeHtml(p.url)}"
+                     value="${escapeHtml(e.url || "")}" inputmode="url" autocomplete="off" />
+              <input type="text" class="vocab-search" data-live-app="${k}" placeholder="App-Adresse (optional)"
+                     value="${escapeHtml(e.app || "")}" autocomplete="off" style="margin-top:5px;" />
+            </div>`;
+          }).join("")}
+          <button type="button" class="btn btn-coffee" id="liveAdressenSpeichern" style="margin-top:10px;">💾 Adressen speichern</button>
+        </details>
       </div>
       <div class="question-card" style="margin-top:14px; border:2px dashed #2E8B57;">
         <h3>🔑 Wer darf den Italienischkurs benutzen?</h3>
@@ -2750,6 +2818,38 @@
       liveWahlGeladen = true;
       liveStandLaden(true).then(() => { liveZeichenZeichnen(); renderSettings(); });
     }
+    document.getElementById("rollenBrilleKnopf")?.addEventListener("click", () => {
+      const an = !(Backend.alsNutzerSehen && Backend.alsNutzerSehen());
+      Backend.setAlsNutzerSehen(an);
+      showToast(an
+        ? "👓 Brille auf — du siehst die Seite jetzt wie jemand ohne Rechte."
+        : "👓 Brille ab — deine eigene Ansicht ist zurück.");
+      /* Alles neu zeichnen: Spieleliste, Kompass, Einstellungen hängen an
+         den Rechten. Ein Neuladen wäre gründlicher, würde aber die
+         Scrollstelle verlieren — deshalb die gezielten Neuzeichnungen. */
+      if (typeof renderGamesOverview === "function") renderGamesOverview();
+      if (typeof renderKompass === "function") renderKompass();
+      if (typeof renderSettings === "function") renderSettings();
+      if (typeof renderAccount === "function") renderAccount();
+    });
+    document.getElementById("liveAdressenSpeichern")?.addEventListener("click", async () => {
+      const karte = {};
+      area.querySelectorAll("[data-live-url]").forEach((el) => {
+        const k = el.dataset.liveUrl;
+        karte[k] = karte[k] || {};
+        karte[k].url = el.value.trim();
+      });
+      area.querySelectorAll("[data-live-app]").forEach((el) => {
+        const k = el.dataset.liveApp;
+        karte[k] = karte[k] || {};
+        karte[k].app = el.value.trim();
+      });
+      try {
+        await Backend.setSiteContent("live_adressen", karte);
+        liveAdressen = karte;
+        showToast("🔗 Adressen gespeichert — sie gelten ab sofort für alle.");
+      } catch (e) { alert(e.message || "Konnte nicht gespeichert werden."); }
+    });
     area.querySelectorAll("[data-live-setzen]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const wahl = btn.dataset.liveSetzen;
@@ -4581,12 +4681,57 @@
      Freigabeschalter, unter dem Schlüssel „live_status" — also ohne
      neue Tabelle und ohne neue Rechteregel. Schreiben darf nur Alex.
      ============================================================ */
+  /* Die Standardadressen. Sie stehen hier nur als Rückfall — was
+     wirklich gilt, trägt Alex in den Einstellungen ein und liegt im
+     Konto (site_content["live_adressen"]), nicht auf einem Gerät.
+
+     WARUM EINFACH DIE https-ADRESSE?
+     Auf dem Telefon reicht sie: Clubhouse und TikTok melden ihre
+     Adressen beim Betriebssystem als „Universal Link" bzw. „App Link"
+     an. Ist die App installiert, öffnet iOS oder Android sie direkt und
+     ruft gar keinen Browser auf; ist sie es nicht, landet man auf der
+     Webseite. Genau das war gewünscht. Zusätzlich gibt es je Plattform
+     ein Feld für eine App-Adresse (z. B. clubhouse://room/…): steht dort
+     etwas, wird es zuerst versucht und nach einer knappen Sekunde auf
+     die Webadresse zurückgefallen, falls die App nicht reagiert. */
   const LIVE_PLATTFORMEN = {
-    clubhouse: { name: "Clubhouse", farbe: "#f2c40f", wie: "Alex", url: "https://www.clubhouse.com/" },
-    hellotalk: { name: "HelloTalk", farbe: "#8b5cf6", wie: "Xander Fox", url: "https://www.hellotalk.com/" },
-    tandem:    { name: "Tandem",    farbe: "#ff5fa2", zweitfarbe: "#4fd1c5", wie: "Xander Fox", url: "https://www.tandem.net/" },
-    tiktok:    { name: "TikTok",    farbe: "#ffffff", wie: "Xander Fox", url: "https://www.tiktok.com/" },
+    clubhouse: { name: "Clubhouse", farbe: "#f2c40f", wie: "Alex",
+                 url: "https://www.clubhouse.com/I/room/j3Ow5SAY" },
+    hellotalk: { name: "HelloTalk", farbe: "#8b5cf6", wie: "Xander Fox",
+                 url: "https://www.hellotalk.com/" },
+    tandem:    { name: "Tandem",    farbe: "#ff5fa2", zweitfarbe: "#4fd1c5", wie: "Xander Fox",
+                 url: "https://www.tandem.net/" },
+    tiktok:    { name: "TikTok",    farbe: "#ffffff", wie: "Xander Fox",
+                 url: "https://www.tiktok.com/@xander_fox_official" },
   };
+  /* Die eingetragenen Adressen — { plattform: { url, app } }. */
+  let liveAdressen = {};
+  function liveZiel(schluessel) {
+    const p = LIVE_PLATTFORMEN[schluessel] || {};
+    const eigen = liveAdressen[schluessel] || {};
+    return { web: (eigen.url || "").trim() || p.url || "", app: (eigen.app || "").trim() };
+  }
+  /* Hin zur App, wenn es geht — sonst zur Webseite. */
+  function liveOeffnen(schluessel) {
+    const ziel = liveZiel(schluessel);
+    if (!ziel.web && !ziel.app) return;
+    if (ziel.app) {
+      /* Die App-Adresse zuerst. Springt das Betriebssystem in die App,
+         verlässt die Seite den Vordergrund und der Rückfall unten wird
+         durch den Sichtbarkeitswechsel abgebrochen. Passiert nichts,
+         geht es nach 900 ms auf die Webseite weiter. */
+      let gesprungen = false;
+      const merken = () => { if (document.hidden) gesprungen = true; };
+      document.addEventListener("visibilitychange", merken, { once: true });
+      window.location.href = ziel.app;
+      setTimeout(() => {
+        document.removeEventListener("visibilitychange", merken);
+        if (!gesprungen && ziel.web) window.open(ziel.web, "_blank", "noopener");
+      }, 900);
+      return;
+    }
+    window.open(ziel.web, "_blank", "noopener");
+  }
   let liveStand = null;      // { plattform, name, seit } oder null
   let liveGeladen = 0;
   let liveWahlGeladen = false;
@@ -4599,6 +4744,8 @@
     try {
       const wert = await Backend.getSiteContent("live_status", Boolean(frisch));
       liveStand = (wert && wert.plattform && LIVE_PLATTFORMEN[wert.plattform]) ? wert : null;
+      const adr = await Backend.getSiteContent("live_adressen", Boolean(frisch));
+      if (adr && typeof adr === "object") liveAdressen = adr;
     } catch (e) { /* offline oder Tabelle fehlt — dann eben keine Anzeige */ }
     return liveStand;
   }
@@ -4623,36 +4770,39 @@
     knopf.style.setProperty("--live-farbe", p.farbe);
     const wer = liveStand.name || p.wie || "Alex";
     knopf.setAttribute("aria-label", `${wer} ist gerade live bei ${p.name}`);
-    knopf.title = `${wer} ist gerade live bei ${p.name} — antippen für Einzelheiten`;
+    knopf.title = `${wer} ist gerade live bei ${p.name} — antippen und hingehen`;
   }
-  /* Antippen sagt klar, WO gesendet wird — dafür ist die Anzeige da. */
+  /* ============================================================
+     ANTIPPEN FÜHRT DIREKT HIN
+     ------------------------------------------------------------
+     GEWÜNSCHT: „so dass ich die Leute, wenn sie auf dieses Symbol
+     klicken, richtig weiterleite" — und: „ich möchte nicht, dass diese
+     Schrift so riesig ist … das Einzige, was du machen sollst, ist den
+     farblichen Unterschied darzustellen für die einzelne Zeile."
+
+     Hier stand vorher ein großer Erklärkasten mit Überschrift. Der ist
+     weg. Ein Tipp auf das Sendezeichen oder auf die Live-Zeile in der
+     Laufschrift geht unmittelbar in den Raum bzw. auf das Profil — in
+     die App, wenn sie installiert ist.
+     ============================================================ */
   document.addEventListener("click", (ev) => {
-    if (!ev.target.closest("#liveZeichen")) return;
-    const p = liveStand && LIVE_PLATTFORMEN[liveStand.plattform];
-    if (!p) return;
-    const wer = liveStand.name || p.wie || "Alex";
-    const box = document.createElement("div");
-    box.className = "lightbox";
-    box.innerHTML = `
-      <div class="profile-modal-card" style="text-align:center;">
-        <button type="button" class="lightbox-close" data-live-zu="1">✕</button>
-        <p style="font-size:2.2rem; margin:6px 0 0; color:${p.farbe}; text-shadow:0 0 2px rgba(0,0,0,0.6);">◉</p>
-        <h3 style="margin:6px 0 4px;">${escapeHtml(wer)} ist gerade live</h3>
-        <p style="margin:0 0 10px; font-weight:800; color:${p.farbe}; text-shadow:0 0 2px rgba(0,0,0,0.6);">${escapeHtml(p.name)}</p>
-        <p class="empty-note" style="margin:0 0 12px;">Komm gern dazu — dort wird gerade gesprochen, nicht geschrieben. Zuhören reicht auch.</p>
-        <a class="btn btn-coffee" href="${p.url}" target="_blank" rel="noopener">${escapeHtml(p.name)} öffnen</a>
-      </div>`;
-    document.body.appendChild(box);
-    box.querySelector("[data-live-zu]").addEventListener("click", () => box.remove());
-    box.addEventListener("click", (e2) => { if (e2.target === box) box.remove(); });
+    const treffer = ev.target.closest("#liveZeichen, .ticker-live");
+    if (!treffer) return;
+    if (!liveStand || !LIVE_PLATTFORMEN[liveStand.plattform]) return;
+    ev.preventDefault();
+    liveOeffnen(liveStand.plattform);
   });
+
   /* Die Zeile für die Laufschrift — in der Farbe der App, während der
      übrige Fließtext seine eigene Farbe behält. */
   function liveTickerHtml() {
     const p = liveStand && LIVE_PLATTFORMEN[liveStand.plattform];
     if (!p) return "";
     const wer = liveStand.name || p.wie || "Alex";
-    return `<span class="ticker-live${liveStand.plattform === "tiktok" ? " ticker-live-tiktok" : ""}" style="--live-farbe:${p.farbe};">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
+    /* Dieselbe Schriftgröße wie der übrige Fließtext — nur die Farbe und
+       etwas mehr Strichstärke unterscheiden sie. Alles andere läuft
+       weiter wie immer. */
+    return `<span class="ticker-live${liveStand.plattform === "tiktok" ? " ticker-live-tiktok" : ""}" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${p.farbe};">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
   }
   function tickerNeuErzwingen() {
     const track = document.getElementById("tickerTrack");
@@ -5410,44 +5560,17 @@
      erst in die Einstellungen, um beim Vorlesen mit einer Klasse
      die Punkte und Striche zu sehen. Der Schalter wirkt genau in
      der Ansicht, in der er steht. */
+  /* Die Leiste, die sich früher von selbst oben in jede Ansicht setzte,
+     gibt es nicht mehr. GEWÜNSCHT: „nimm dafür diese alten
+     Betonungs-Buttons raus, die dem Nutzer impliziert haben, dass man
+     über die Schaltfläche das an- und ausschaltet — die haben keine
+     Funktion mehr … es soll halt alles intuitiv wie bei iOS sein, dass
+     man einfach darauf klickt und dann bekommt man die Betonung
+     angezeigt."  Die Funktion bleibt als leerer Platzhalter stehen,
+     damit die bestehenden Aufrufe nicht ins Leere greifen. */
   function betonungsSchalterEinhaengen(wurzel) {
-    /* GEMELDET: „dann hat sich irgendwas bei Android verschoben … schau
-       da noch mal nach, ob es irgendwelche Design-Inkonsistenzen gibt."
-
-       Gefunden: dieser Schalter setzte sich von selbst GANZ OBEN in jede
-       Unteransicht mit mehr als 40 Zeichen Text — auch in die
-       Einstellungen, ins Profil, in die Verwaltung. Dort gibt es nichts
-       vorzulesen, und der Kasten schob den ganzen Inhalt um rund neunzig
-       Pixel nach unten. Auf einem Telefon fällt genau das als
-       „verschoben" auf.
-
-       Jetzt steht er nur noch dort, wo es wirklich Lesetext gibt — und
-       auch dort nur, wenn nicht ohnehin schon einer da ist. Für alles
-       andere genügt das Tippen mitten in den Textkasten
-       (siehe betonungTippen). */
     const ziel = wurzel || document;
-    ziel.querySelectorAll(".subview[data-active='true'], .view[data-active='true']").forEach((ansicht) => {
-      /* Eine Hauptansicht mit Unterreitern bekommt KEINEN eigenen
-         Schalter — sonst stand er zweimal untereinander. */
-      if (ansicht.classList.contains("view") && ansicht.querySelector(".subview[data-active='true']")) {
-        ansicht.querySelector(":scope > .sektion-betonung")?.remove();
-        return;
-      }
-      const vorhanden = ansicht.querySelector(":scope > .sektion-betonung");
-      /* Nur Lesebereiche: dort, wo Text zum Vorlesen steht (.sammel-text)
-         oder wo ein Beitrag in einer Karte liegt und wirklich Prosa
-         enthält — nicht in Formularen, Listen und Einstellungen. */
-      const lesestellen = ansicht.querySelectorAll(".sammel-text");
-      const istLesebereich = lesestellen.length > 0;
-      if (!istLesebereich) { vorhanden?.remove(); return; }
-      // Steht schon einer im Inhalt selbst, kommt keiner dazu.
-      if (ansicht.querySelector(".lese-betonung-knopf")) { vorhanden?.remove(); return; }
-      if (vorhanden) return;
-      const leiste = document.createElement("div");
-      leiste.className = "sektion-betonung";
-      leiste.innerHTML = leseBetonungKnopfHtml();
-      ansicht.insertBefore(leiste, ansicht.firstChild);
-    });
+    ziel.querySelectorAll(".sektion-betonung").forEach((el) => el.remove());
   }
   /* Nach jedem Ansichtswechsel und nach jedem Neuzeichnen noch einmal
      nachsehen — die Ansichten bauen sich unterschiedlich spät auf. */
@@ -5478,49 +5601,115 @@
      Tippen, mit dem gerade Text markiert wird.
      ============================================================ */
   const BETONUNG_TIPP_HINWEIS = "dma_betonung_tipp_gesehen";
-  /* Woran ein Kasten erkannt wird: die Textkarten der Seite. Nur
-     Kasten mit genug echtem Lesetext — in einer Kachelreihe oder
-     einer Knopfleiste würde ein Tippen sonst nichts Sichtbares tun
-     und wie ein Fehler wirken. */
-  const BETONUNG_KASTEN = ".question-card, .sammel-text, .kal-karte, .lesetext";
+  /* WELCHE KÄSTEN GERADE BETONT SIND.
+     Gemerkt wird nicht am Element (das überlebt kein Neuzeichnen),
+     sondern an einem Schlüssel, der den Kasten benennt. Genau darum ging
+     es in der Meldung: „wenn man zuletzt auf den Zustand gekriegt hat,
+     dass man die Betonung anzeigt, und dann auf dieser Basis sich Wörter
+     heraussucht, die man in seinen Wortschatz übernehmen will, dann soll
+     das möglich sein und bei dieser Anzeige auch bleiben, ohne dass sich
+     die Anzeige ändert." Beim Umschalten des Sammelmodus wird der Text
+     neu gezeichnet — mit diesem Gedächtnis kommt die Betonung danach von
+     selbst zurück. Die beiden Systeme heben sich also nicht mehr auf. */
+  const betonungOffen = new Set();
+  function betonungSchluessel(kasten) {
+    if (kasten.id) return "#" + kasten.id;
+    const ansicht = kasten.closest(".subview, .view");
+    const geschwister = ansicht ? [...ansicht.querySelectorAll(BETONUNG_KASTEN)] : [];
+    const i = geschwister.indexOf(kasten);
+    return (ansicht ? ansicht.id : "?") + ":" + (i >= 0 ? i : 0);
+  }
+  /* Woran ein Kasten erkannt wird. Bewusst weit gefasst: die Meldung war
+     „bei sämtlichen anderen Texten, zum Beispiel in der Übersicht-Sektion,
+     wenn man da in den Frame klickt, wird das nicht mit der Betonung
+     übersetzt". Deshalb zählt jetzt auch jede Karte, jeder Beitrag und
+     jeder Kasten mit erkennbarem Rahmen. */
+  const BETONUNG_KASTEN = [
+    ".question-card", ".sammel-text", ".kal-karte", ".lesetext",
+    ".about-card", ".profile-modal-card", ".tile-detail", ".kompass-karte",
+    ".bw-wortkarte", ".dlg-satz", ".breakdown-list", ".witz-karte",
+    ".material-card", ".link-card", ".tip-card", ".guestbook-entry",
+    ".inbox-message", ".community-text", ".fst-karte", ".weg-karte",
+  ].join(", ");
   function betonungKastenTaugt(kasten) {
     if (!kasten) return false;
     const text = (kasten.innerText || "").trim();
     if (text.length < 40) return false;
-    // Ein Kasten, der fast nur aus Knöpfen besteht, ist keine Leseflaeche.
+    // Ein Kasten, der fast nur aus Knöpfen besteht, ist keine Lesefläche.
     const knoepfe = kasten.querySelectorAll("button, a, input, select, textarea").length;
     return knoepfe < 12;
   }
+  /* Den passenden Kasten zu einer Berührung finden: den INNERSTEN, der
+     genug Text hat. Sonst fänge die äußerste Karte alles ab und man
+     könnte einzelne Beiträge nicht getrennt anschalten. */
+  function betonungKastenFinden(start) {
+    let n = start;
+    while (n && n !== document.body) {
+      if (n.matches && n.matches(BETONUNG_KASTEN) && betonungKastenTaugt(n)) return n;
+      n = n.parentElement;
+    }
+    return null;
+  }
+  function betonungSetzen(kasten, an) {
+    const schl = betonungSchluessel(kasten);
+    kasten.classList.toggle("betonung-hier", an);
+    if (an) {
+      betonungOffen.add(schl);
+      const setzen = () => { if (kasten.isConnected && kasten.classList.contains("betonung-hier")) applyStressToTree(kasten); };
+      if (wortschatzNachziehen(setzen) && !(VocabData.WORDS && VocabData.WORDS.length)) { /* wird nachgeholt */ }
+      else setzen();
+    } else {
+      betonungOffen.delete(schl);
+      if (!isStressModeOn() && !leseBetonungAn()) removeStressFromTree(kasten);
+    }
+  }
+  /* Nach jedem Neuzeichnen: was vorher betont war, ist es wieder. */
+  function betonungWiederherstellen(wurzel) {
+    if (!betonungOffen.size) return;
+    const ziel = wurzel || document;
+    ziel.querySelectorAll(BETONUNG_KASTEN).forEach((kasten) => {
+      if (!betonungKastenTaugt(kasten)) return;
+      if (!betonungOffen.has(betonungSchluessel(kasten))) return;
+      kasten.classList.add("betonung-hier");
+      const setzen = () => { if (kasten.isConnected) applyStressToTree(kasten); };
+      if (wortschatzNachziehen(setzen) && !(VocabData.WORDS && VocabData.WORDS.length)) { /* später */ }
+      else setzen();
+    });
+  }
   function betonungTippen(ev) {
-    // Alles, was selbst auf Berührung reagiert, bleibt unangetastet.
+    // Alles, was selbst auf Berührung reagiert, bleibt unangetastet —
+    // besonders .sammel-wort: dort sucht man sich Wörter für den eigenen
+    // Wortschatz aus, und das darf die Betonung weder an- noch ausschalten.
     if (ev.target.closest("button, a, input, select, textarea, label, summary, [role='button'], [contenteditable], .sammel-wort, .speak-btn, svg")) return;
     // Wer Text markiert, will lesen, nicht schalten.
     const auswahl = window.getSelection && window.getSelection();
     if (auswahl && String(auswahl).trim().length > 1) return;
-    const kasten = ev.target.closest(BETONUNG_KASTEN);
-    if (!kasten || !betonungKastenTaugt(kasten)) return;
+    const kasten = betonungKastenFinden(ev.target);
+    if (!kasten) return;
     const an = !kasten.classList.contains("betonung-hier");
-    kasten.classList.toggle("betonung-hier", an);
-    /* Die geprüften Betonungen stehen im Wortschatz, und der wird erst
-       beim Wechsel nach „Lernen"/„Wissen" geladen. Ist er noch
-       unterwegs, wäre der Kasten unmarkiert — also nach dem Laden noch
-       einmal drübergehen. */
+    betonungSetzen(kasten, an);
     if (an) {
-      const setzen = () => { if (kasten.classList.contains("betonung-hier")) applyStressToTree(kasten); };
-      if (wortschatzNachziehen(setzen) && !(VocabData.WORDS && VocabData.WORDS.length)) {
-        // wird nachgeholt, sobald der Wortschatz da ist
-      } else setzen();
       let gesehen = false;
       try { gesehen = localStorage.getItem(BETONUNG_TIPP_HINWEIS) === "1"; } catch (e) {}
       if (!gesehen) {
         showToast("🔤 Betonung an — Punkt heißt kurz, Strich heißt lang. Noch einmal in den Kasten tippen macht sie wieder aus.");
         try { localStorage.setItem(BETONUNG_TIPP_HINWEIS, "1"); } catch (e) {}
       }
-    } else if (!isStressModeOn() && !leseBetonungAn()) {
-      removeStressFromTree(kasten);
     }
   }
   document.addEventListener("click", betonungTippen);
+  /* Die Seite zeichnet ständig Teile neu (Sammelmodus, Niveauwechsel,
+     Sprachwechsel). Ein Beobachter stellt die Betonung danach wieder her,
+     ohne dass jede einzelne Render-Stelle daran denken muss. */
+  (() => {
+    let geplant = false;
+    const beobachter = new MutationObserver(() => {
+      if (geplant || !betonungOffen.size) return;
+      geplant = true;
+      setTimeout(() => { geplant = false; betonungWiederherstellen(); }, 120);
+    });
+    beobachter.observe(document.body, { childList: true, subtree: true });
+  })();
 
   /* Ein Klick-Handler für alle drei Bereiche. */
   document.addEventListener("click", (ev) => {
@@ -8574,6 +8763,48 @@
     "Indien": "hi",
     "China": "zh", "Taiwan": "zh", "Singapur": "zh",
     "Israel": "he",
+    /* ============================================================
+       GEMELDET: „wenn jemand im Profil sein Land angegeben hat, zum
+       Beispiel er kommt aus Iran oder Afghanistan, dass da nicht das
+       Persische erkannt wird für die Übersetzung — da ist meistens noch
+       die englische Übersetzung."
+
+       Nachgemessen: Iran und Afghanistan standen schon richtig auf
+       Persisch. Von 198 Ländern in der Auswahlliste hatten aber nur 91
+       überhaupt eine Sprachzuordnung — die übrigen 107 fielen still auf
+       Englisch zurück. Hier kommen sie dazu.
+
+       WICHTIG dabei: eingetragen wird nur, was sprachlich stimmt. Ein
+       Land einer Sprache zuzuordnen, die dort niemand spricht, wäre
+       schlimmer als Englisch. Wo die Landessprache (noch) nicht
+       übersetzt vorliegt — Japanisch, Koreanisch, Griechisch,
+       Vietnamesisch, Bengalisch und andere — steht bewusst nichts, und
+       die Seite sagt das jetzt auch offen, statt Englisch als die
+       eigene Sprache auszugeben.
+       ============================================================ */
+    // Deutschsprachig — dann braucht es gar keine Übersetzung.
+    "Deutschland": "de", "Österreich": "de", "Liechtenstein": "de",
+    // Arabisch
+    "Mauretanien": "ar", "Somalia": "ar", "Dschibuti": "ar", "Komoren": "ar",
+    // Französisch
+    "Benin": "fr", "Burkina Faso": "fr", "Burundi": "fr", "Gabun": "fr",
+    "Kongo, Demokratische Republik": "fr", "Kongo, Republik": "fr", "Madagaskar": "fr",
+    "Monaco": "fr", "Ruanda": "fr", "Seychellen": "fr", "Togo": "fr", "Vanuatu": "fr",
+    "Zentralafrikanische Republik": "fr",
+    // Portugiesisch
+    "São Tomé und Príncipe": "pt", "Timor-Leste": "pt", "Suriname": "pt",
+    // Spanisch
+    "Äquatorialguinea": "es",
+    // Englisch als Amts- oder Verkehrssprache
+    "Antigua und Barbuda": "en", "Bahamas": "en", "Barbados": "en", "Belize": "en",
+    "Botsuana": "en", "Dominica": "en", "Eswatini": "en", "Fidschi": "en", "Gambia": "en",
+    "Grenada": "en", "Guyana": "en", "Jamaika": "en", "Kiribati": "en", "Lesotho": "en",
+    "Liberia": "en", "Malawi": "en", "Malta": "en", "Marshallinseln": "en", "Mauritius": "en",
+    "Mikronesien": "en", "Namibia": "en", "Nauru": "en", "Palau": "en", "Papua-Neuguinea": "en",
+    "Salomonen": "en", "Sambia": "en", "Samoa": "en", "Sierra Leone": "en", "Simbabwe": "en",
+    "St. Kitts und Nevis": "en", "St. Lucia": "en", "St. Vincent und die Grenadinen": "en",
+    "Südsudan": "en", "Tansania": "en", "Tonga": "en", "Trinidad und Tobago": "en",
+    "Tuvalu": "en", "Uganda": "en",
   };
   function firstStepsLangFor(profile) {
     const origin = profile?.origin;
@@ -10121,7 +10352,7 @@
   let akTest = null;
 
   function akAktuelleSprache() {
-    if (akSprache) return akSprache;
+    /* Kein Umschalter mehr im Kurs selbst — der Raum entscheidet. */
     return imItalienischraum() ? "it" : "de";
   }
   function akDaten(feld) {
@@ -10186,10 +10417,15 @@
           Tricks für die Laute, die es in der eigenen Muttersprache nicht gibt.
           Jedes Wort lässt sich antippen und anhören.
         </p>
-        ${darfItalienischraum() ? `<div class="trophy-case" style="margin-bottom:10px;">
-          <button type="button" class="trophy-chip ak-spr-btn ${spr === "de" ? "selected" : ""}" data-ak-spr="de">🇩🇪 Deutsch</button>
-          <button type="button" class="trophy-chip ak-spr-btn ${spr === "it" ? "selected" : ""}" data-ak-spr="it">🇮🇹 Italienisch</button>
-        </div>` : ""}
+        ${/* GEWÜNSCHT: „achte darauf, dass da nicht mehr steht ‚Italienisch'
+              zum Umschalten — das ist ein deutscher Kurs. Im Italienischkurs
+              kannst du die Sachen machen, die zum Italienischkurs gehören, aber
+              im Deutsch-Aussprachekurs hat diese italienische Schaltfläche
+              nichts zu suchen."
+
+              Der Umschalter ist deshalb ganz weg. Welche Sprache der Kurs
+              zeigt, entscheidet allein der Raum, in dem man sich befindet —
+              und den wählt Alex für sich selbst in den Einstellungen. */ ""}
         <div class="trophy-case">
           ${Object.entries(AK_TEILE).map(([k, name]) =>
             `<button type="button" class="trophy-chip ak-teil-btn ${akTeil === k ? "selected" : ""}" data-ak-teil="${k}">${name}</button>`).join("")}
@@ -11211,7 +11447,98 @@
       fuer: "Wenn du etwas an dir oder an der Seite ändern willst." },
   ];
 
-  let wegTeil = "seite";
+  /* ------------------------------------------------------------
+     DRITTER TEIL: DE / AT / CH — geprüftes Praxiswissen
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Tipps und Tricks, die dir niemand verrät" — für
+     Menschen, die nach Deutschland, Österreich oder in die
+     Schweiz kommen.
+
+     Die Inhalte stehen in data-wegweiser.js, nicht hier. Dort
+     steht auch, warum nur bestimmte Tipps aufgenommen wurden:
+     Ansprüche, die man selbst beantragen muss, Fristen,
+     Widerspruchsrechte und kostenlose Beratungsstellen. Nichts,
+     was rechtlich heikel ist — das hält nicht.
+
+     Oben wählt man das Land, darunter klappt man die acht
+     Bereiche auf. Jeder Bereich hat drei Teile: die Schritte der
+     Reihe nach, die Tipps, und die geprüften Quellen als Links.
+     ------------------------------------------------------------ */
+  let wegLand = "DE";
+  let wegBereich = null;
+
+  /* Kaufmännisches Und muss im href geschützt werden — eine der
+     Amtsadressen (ÖGK) hat einen Parameter im Link. */
+  function wegHref(u) { return String(u).replace(/&/g, "&amp;"); }
+
+  /* Zeigt unter dem Link, wohin er führt. Wer die Adresse sieht,
+     klickt mit mehr Vertrauen — und erkennt, dass es eine Behörde ist. */
+  function wegAdresse(u) {
+    const m = String(u).match(/^https?:\/\/([^/]+)/);
+    return m ? m[1].replace(/^www\./, "") : "";
+  }
+
+  function wegLaenderHtml() {
+    const D = window.DMA_WEGWEISER;
+    if (!D || !Array.isArray(D.EINTRAEGE) || !D.EINTRAEGE.length) {
+      return '<p class="empty-note">Dieser Teil konnte gerade nicht geladen werden. Lade die Seite bitte neu.</p>';
+    }
+    const land = D.LAENDER.find((x) => x.id === wegLand) || D.LAENDER[0];
+    const meine = D.EINTRAEGE.filter((e) => e.land === land.id);
+    return `
+      <div class="question-card">
+        <p class="eyebrow">IN WELCHES LAND KOMMST DU?</p>
+        <div class="wg-laender">
+          ${D.LAENDER.map((l) => `
+            <button type="button" class="btn btn-ghost wg-land${l.id === land.id ? " wg-land-an" : ""}"
+                    data-wg-land="${l.id}" aria-pressed="${l.id === land.id}">
+              <span class="wg-flagge" aria-hidden="true">${l.flagge}</span>${l.name}
+            </button>`).join("")}
+        </div>
+        <p class="empty-note wg-hinweis">
+          Alles hier kommt von Behörden, Ministerien und Wohlfahrtsverbänden. Jeder Link wurde geprüft.
+          Beträge und Fristen ändern sich jedes Jahr — schau sie vor dem Antrag noch einmal auf der
+          verlinkten Seite nach. Das ist Orientierung, keine Rechtsberatung. Wer etwas verbindlich
+          wissen muss, geht zu einer Beratungsstelle. Die sind kostenlos, und wo du sie findest,
+          steht unter „Beratung &amp; Hilfe“.
+        </p>
+      </div>
+      ${D.BEREICHE.map((b) => {
+        const e = meine.find((x) => x.bereich === b.id);
+        if (!e) return "";
+        const offen = wegBereich === e.id;
+        return `
+        <div class="question-card wg-block${offen ? " wg-block-auf" : ""}">
+          <button type="button" class="wg-kopf" data-wg-auf="${e.id}" aria-expanded="${offen ? "true" : "false"}">
+            <span class="wg-kopf-icon" aria-hidden="true">${b.icon}</span>
+            <span class="wg-kopf-text">
+              <span class="wg-kopf-bereich">${b.name}</span>
+              <span class="wg-kopf-titel">${e.titel}</span>
+              <span class="wg-kopf-kurz">${e.kurz}</span>
+            </span>
+            <span class="fst-pfeil" aria-hidden="true">${offen ? "▾" : "▸"}</span>
+          </button>
+          ${offen ? `
+            <p class="eyebrow wg-abschnitt">SO GEHT ES, DER REIHE NACH</p>
+            <ol class="wg-schritte">${e.schritte.map((s) => `<li>${s}</li>`).join("")}</ol>
+            <p class="eyebrow wg-abschnitt">WAS KAUM JEMAND SAGT</p>
+            <ul class="wg-tipps">${e.tipps.map((t) => `<li>${t}</li>`).join("")}</ul>
+            ${e.links && e.links.length ? `
+              <p class="eyebrow wg-abschnitt">GEPRÜFTE QUELLEN</p>
+              <div class="wg-links">
+                ${e.links.map((l) => `
+                  <a class="wg-link" href="${wegHref(l.url)}" target="_blank" rel="noopener">
+                    <span class="wg-link-titel">${l.titel}<span class="wg-link-pfeil" aria-hidden="true">&nbsp;↗</span></span>
+                    <span class="wg-link-was">${l.was}</span>
+                    <span class="wg-link-adresse">${wegAdresse(l.url)}</span>
+                  </a>`).join("")}
+              </div>` : ""}
+          ` : ""}
+        </div>`;
+      }).join("")}`;
+  }
+
+  let wegTeil = "laender";
   let wegOffen = null;
 
   function wegErledigt() {
@@ -11320,17 +11647,27 @@
       <div class="question-card">
         <p class="eyebrow">🧭 WEGWEISER</p>
         <p class="empty-note" style="margin-bottom:10px;">
-          Zwei Wege, die beide dieselbe Frage beantworten: Wo muss ich hin?
+          Drei Wege, die alle dieselbe Frage beantworten: Wo muss ich hin?
         </p>
         <div class="trophy-case">
+          <button type="button" class="trophy-chip weg-teil-btn ${wegTeil === "laender" ? "selected" : ""}" data-weg-teil="laender">🧭 Neu in DE, AT oder CH</button>
+          <button type="button" class="trophy-chip weg-teil-btn ${wegTeil === "deutschland" ? "selected" : ""}" data-weg-teil="deutschland">🇩🇪 Die ersten Wochen</button>
           <button type="button" class="trophy-chip weg-teil-btn ${wegTeil === "seite" ? "selected" : ""}" data-weg-teil="seite">🗺️ Auf dieser Seite</button>
-          <button type="button" class="trophy-chip weg-teil-btn ${wegTeil === "deutschland" ? "selected" : ""}" data-weg-teil="deutschland">🇩🇪 In Deutschland</button>
         </div>
       </div>
-      ${wegTeil === "seite" ? wegSeiteHtml() : wegDeutschlandHtml()}`;
+      ${wegTeil === "laender" ? wegLaenderHtml() : wegTeil === "seite" ? wegSeiteHtml() : wegDeutschlandHtml()}`;
 
     area.querySelectorAll(".weg-teil-btn").forEach((b) => b.addEventListener("click", () => {
-      wegTeil = b.dataset.wegTeil; wegOffen = null; renderWegweiser();
+      wegTeil = b.dataset.wegTeil; wegOffen = null; wegBereich = null; renderWegweiser();
+    }));
+    area.querySelectorAll("[data-wg-land]").forEach((b) => b.addEventListener("click", () => {
+      wegLand = b.dataset.wgLand; wegBereich = null; renderWegweiser();
+    }));
+    area.querySelectorAll("[data-wg-auf]").forEach((b) => b.addEventListener("click", () => {
+      const id = b.dataset.wgAuf;
+      wegBereich = wegBereich === id ? null : id;
+      renderWegweiser();
+      if (wegBereich) setTimeout(() => document.querySelector(`[data-wg-auf="${id}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
     }));
     area.querySelectorAll("[data-weg-ziel]").forEach((b) => b.addEventListener("click", () => {
       const e = WEGWEISER_SEITE[Number(b.dataset.wegZiel)];
@@ -17845,7 +18182,7 @@
     dichterLevel = applyDefaultCefrLevel(dichterLevel, (v) => { dichterLevel = v; }, "dichter");
     renderTileGallery(area, DICHTER_ENTRIES, () => kompassDichterOpenId, (v) => { kompassDichterOpenId = v; }, () => dichterLevel, (v) => { dichterLevel = v; }, "✒️",
       "Berühmte deutsche Persönlichkeiten aus Literatur, Wissenschaft und Kultur — mit wählbarem Sprachniveau, genau wie „Es war einmal in Deutschland“.");
-    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml() + textInListeKnopfHtml("Lesetext"));
+    area.insertAdjacentHTML("afterbegin", textInListeKnopfHtml("Lesetext"));
     leseBetonungAnwenden(area);
   }
   function renderSchneeVonGestern() {
@@ -17855,7 +18192,7 @@
     schneeLevel = applyDefaultCefrLevel(schneeLevel, (v) => { schneeLevel = v; }, "schnee");
     renderTileGallery(area, SCHNEE_ENTRIES, () => kompassSchneeOpenId, (v) => { kompassSchneeOpenId = v; }, () => schneeLevel, (v) => { schneeLevel = v; }, "❄️",
       "Dinge, die früher typisch deutsch waren, heute aber nicht mehr dazugehören — mit wählbarem Sprachniveau.");
-    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml() + textInListeKnopfHtml("Lesetext"));
+    area.insertAdjacentHTML("afterbegin", textInListeKnopfHtml("Lesetext"));
     leseBetonungAnwenden(area);
   }
   let kompassBeitragOpenId = null;
@@ -17879,7 +18216,7 @@
     renderTileGallery(area, eintraege, () => kompassBeitragOpenId, (v) => { kompassBeitragOpenId = v; },
       () => beitragLevel, (v) => { beitragLevel = v; }, "🗂️",
       "Menschen, Geräte und Geschichten, über die man auf Deutsch reden kann — jeder Beitrag in sechs Niveaustufen und zehn Sprachen. Zu jedem steht die Quelle dabei.");
-    area.insertAdjacentHTML("afterbegin", leseBetonungKnopfHtml() + textInListeKnopfHtml("Lesetext"));
+    area.insertAdjacentHTML("afterbegin", textInListeKnopfHtml("Lesetext"));
     leseBetonungAnwenden(area);
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-dichter"]')?.addEventListener("click", renderDichterUndDenker);
@@ -28912,7 +29249,62 @@
   function szenenListe() { return (window.DMA_SZENEN || []).filter((s) => !s.detail); }
   function szeneMitId(id) { return (window.DMA_SZENEN || []).find((s) => s.id === id) || null; }
 
+  /* ============================================================
+     EIN BILD EINZELN NACHLADEN
+     ------------------------------------------------------------
+     data-szenen.js ist nur noch das Verzeichnis: Titel, Emoji, Thema,
+     Masse, Wortzahl. Die Zeichnungen liegen je Bild in szenen/<id>.js.
+     Das Telefon laedt also nur das Bild, das gerade geoeffnet wird, und
+     nicht alle neunundvierzig auf einmal.
+
+     Die geladenen Teile werden in den Eintrag des Verzeichnisses
+     HINEINGESCHRIEBEN. So bleibt jede Stelle gueltig, die sich den
+     Eintrag schon gemerkt hat — bwSzene zum Beispiel.
+     ============================================================ */
+  const szeneLaeuft = {};
+  function szeneGeladen(s) { return !!(s && s.teile && s.teile.length); }
+
+  function szeneLaden(id) {
+    const eintrag = szeneMitId(id);
+    if (!eintrag) return Promise.resolve(null);
+    if (szeneGeladen(eintrag)) return Promise.resolve(eintrag);
+    if (szeneLaeuft[id]) return szeneLaeuft[id];
+    szeneLaeuft[id] = new Promise((fertig) => {
+      const fertigmachen = () => {
+        const voll = (window.DMA_SZENE || {})[id];
+        if (voll) { Object.assign(eintrag, voll); fertig(eintrag); }
+        else { szeneLaeuft[id] = null; fertig(null); }
+      };
+      if ((window.DMA_SZENE || {})[id]) { fertigmachen(); return; }
+      const sk = document.createElement("script");
+      sk.src = "szenen/" + id + ".js?v=" + (window.DMA_VERSION || "1");
+      sk.async = true;
+      sk.onload = fertigmachen;
+      sk.onerror = () => { szeneLaeuft[id] = null; fertig(null); };
+      document.head.appendChild(sk);
+    });
+    return szeneLaeuft[id];
+  }
+
+  /* Die Bildverwaltung und die Suche brauchen wirklich JEDES Teil aus
+     JEDEM Bild. Nur dort wird alles geladen — beim normalen Lernen nie. */
+  function alleSzenenLaden() {
+    return szenenLaden().then(() =>
+      Promise.all((window.DMA_SZENEN || []).map((s) => szeneLaden(s.id))));
+  }
+
+  /* Beim Oeffnen eines Bildes werden die Bilder gleich mitgeholt, auf die
+     seine Lupen zeigen — sonst haengt der erste Lupenklick am Netz. */
+  function szeneUndLupenLaden(id) {
+    return szeneLaden(id).then((s) => {
+      const ziele = (szeneMitId(id) || {}).lupen || [];
+      ziele.forEach((z) => { setTimeout(() => szeneLaden(z), 400); });
+      return s;
+    });
+  }
+
   let bwSzene = null;      // die geöffnete Szene (Objekt) oder null = Übersicht
+  let bwBaukastenOffen = false;   // steht der Baukasten offen?
   let bwModus = "entdecken";
   let bwEntdeckt = new Set();   // Teil-Kennungen, die schon angetippt wurden
   let bwGewaehlt = null;        // das gerade angezeigte Teil
@@ -29023,6 +29415,19 @@
     }
     if (typeof Bildverwaltung !== "undefined") await Bildverwaltung.laden();
     await wortSprachenLaden();
+    /* GEWUENSCHT: „Mach den Baukasten bitte in die Bilderwelten und nicht
+       als Einzellink unter Lernen. Der Baukasten gehoert zu den
+       Bilderwelten." Also liegt er hier drin, als eigene Kachel ueber den
+       Bildern — und benutzt denselben Bereich. */
+    if (bwBaukastenOffen) {
+      area.innerHTML = '<button type="button" class="btn btn-ghost bw-zurueck" '
+        + 'id="bwBaukastenZurueck">← Alle Bilder</button><div id="baukastenArea"></div>';
+      document.getElementById("bwBaukastenZurueck").addEventListener("click", () => {
+        bwBaukastenOffen = false; renderBilderwelt();
+      });
+      if (window.Baukasten) Baukasten.render(document.getElementById("baukastenArea"));
+      return;
+    }
     if (!bwSzene) { bwUebersichtZeichnen(area); return; }
     bwSzeneZeichnen(area);
   }
@@ -29041,8 +29446,20 @@
             ? "Im Italienisch-Raum läuft alles auf Italienisch: <em>il letto</em>, <em>la finestra</em>."
             : "Wer will, sieht zu jedem Wort auch gleich das italienische daneben."}
         </p>
-        <p class="empty-note" style="margin-bottom:0;">${szenen.length} Szenen · ${szenen.reduce((n, s) => n + s.teile.length, 0)} Wörter · ${besucht.size} schon besucht</p>
+        <p class="empty-note" style="margin-bottom:0;">${szenen.length} Szenen · ${szenen.reduce((n, s) => n + (s.zahl || (s.teile || []).length), 0)} Wörter · ${besucht.size} schon besucht</p>
       </div>
+
+      <div class="question-card" style="margin-top:12px;">
+        <p class="eyebrow" style="margin-top:0;">Selber bauen</p>
+        <div class="bw-kacheln">
+          <button type="button" class="bw-kachel" id="bwZumBaukasten">
+            <span class="bw-kachel-emoji">🧩</span>
+            <span class="bw-kachel-name">Der Baukasten</span>
+            <span class="bw-kachel-zahl">Figur, Ort und Kleidung selbst wählen</span>
+          </button>
+        </div>
+      </div>
+
       ${themen.map((th) => `
         <div class="question-card" style="margin-top:12px;">
           <p class="eyebrow" style="margin-top:0;">${th}</p>
@@ -29051,15 +29468,24 @@
               <button type="button" class="bw-kachel" data-bw-szene="${s.id}">
                 <span class="bw-kachel-emoji">${s.emoji}</span>
                 <span class="bw-kachel-name">${escapeHtml(s.titel)}</span>
-                <span class="bw-kachel-zahl">${s.teile.length} Wörter${besucht.has(s.id) ? " · ✓" : ""}</span>
+                <span class="bw-kachel-zahl">${s.zahl || (s.teile || []).length} Wörter${besucht.has(s.id) ? " · ✓" : ""}</span>
               </button>`).join("")}
           </div>
         </div>`).join("")}
     `;
-    area.querySelectorAll("[data-bw-szene]").forEach((b) => b.addEventListener("click", () => {
-      bwSzene = szenenListe().find((s) => s.id === b.dataset.bwSzene) || null;
+    document.getElementById("bwZumBaukasten")?.addEventListener("click", () => {
+      bwBaukastenOffen = true;
+      renderBilderwelt();
+      document.getElementById("bilderweltArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    area.querySelectorAll("[data-bw-szene]").forEach((b) => b.addEventListener("click", async () => {
+      b.classList.add("laedt");
+      const s = await szeneUndLupenLaden(b.dataset.bwSzene);
+      b.classList.remove("laedt");
+      if (!s) { toast("Das Bild konnte nicht geladen werden."); return; }
+      bwSzene = s;
       bwEntdeckt = new Set(); bwGewaehlt = null; bwRunde = null; bwModus = "entdecken";
-      if (bwSzene) bwBesuchMerken(bwSzene.id);
+      bwBesuchMerken(bwSzene.id);
       renderBilderwelt();
       const k = document.getElementById("bilderweltArea");
       if (k) k.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -29074,49 +29500,125 @@
      „werkstatt:topf". */
   function bildSchluessel(szeneId, teilId) { return szeneId + ":" + teilId; }
 
+  /* ============================================================
+     HINEINZOOMEN STATT ZERLEGEN
+     ------------------------------------------------------------
+     GEMELDET: „und wenn du die Lupe auf dem Bett machst und du so ein
+     Durcheinander hast, dass du verschiedene Decken da liegen hast, wo
+     man gar nicht erkennen kann: ist das jetzt wirklich die Bettdecke
+     oder das Bettlaken? … oder beim Fenster, dass du das Fenster wie so
+     eine Explosionszeichnung machst, wo der Rahmen gar nicht mehr im
+     Fenster ist — das ist Quatsch. Du sollst nur näher rangehen mit der
+     Lupe, und dann soll es genauso bleiben, wie das Fenster ist: der
+     Rahmen an seinem Platz, die Gardine an ihrem Platz. Man soll die
+     Elemente nur besser anwählen können."
+
+     Und zum Zurückkommen: „dann soll man den Hintergrund so ein bisschen
+     ausgegraut sehen, dass man auf den ausgegrauten Hintergrund klicken
+     kann und wieder in das allgemeine Bild kommt — so ähnlich wie das
+     früher bei Flash war."
+
+     Also kein zweites Bild mehr, sondern DIESELBE Szene, näher heran:
+     der Bildausschnitt wandert auf den Bereich, alles übrige bleibt
+     sichtbar, liegt aber unter einem grauen Schleier. Ein Tipp auf den
+     Schleier geht wieder heraus. Die Einzelteile (Bettdecke, Bettlaken,
+     Kissenbezug …) liegen dabei genau dort, wo sie im Bild auch liegen —
+     sie werden nur erst beim Näherkommen anwählbar.
+     ============================================================ */
+  let bwZoom = null;     // { teil, box: {x,y,w,h} }
+
+  function bwZoomTeile(szene) {
+    if (!bwZoom) return [];
+    const t = (szene.teile || []).find((x) => x.id === bwZoom.teil);
+    return (t && t.unter) || [];
+  }
+
   function bwBildHtml(szene, opt) {
     const o = opt || {};
     const treffer = o.treffer || new Set();
+    const zoom = bwZoom && bwZoom.box;
+    /* Wie stark wird vergrößert? So, dass der Bereich rund drei Viertel
+       des Bildes einnimmt — dann sieht man ihn groß UND erkennt noch,
+       wo im Zimmer man gerade ist. Genau das war der Wunsch. */
+    let rahmen = "";
+    if (zoom) {
+      const k = Math.min(szene.breite / zoom.w, szene.hoehe / zoom.h) * 0.76;
+      const mx = szene.breite / 2 - (zoom.x + zoom.w / 2) * k;
+      const my = szene.hoehe / 2 - (zoom.y + zoom.h / 2) * k;
+      rahmen = `transform="translate(${mx.toFixed(2)},${my.toFixed(2)}) scale(${k.toFixed(3)})"`;
+      bwZoom.k = k; bwZoom.mx = mx; bwZoom.my = my;
+    }
+    const alleTeile = [...(szene.teile || []), ...bwZoomTeile(szene)];
+    const teilHtml = (t, istUnter) => {
+      const klassen = ["bw-teil"];
+      if (istUnter) klassen.push("bw-teil-unter");
+      if (bwGewaehlt && bwGewaehlt.id === t.id) klassen.push("bw-teil-aktiv");
+      if (treffer.has(t.id)) klassen.push("bw-teil-treffer");
+      else if (bwEntdeckt.has(t.id) && bwModus === "entdecken") klassen.push("bw-teil-entdeckt");
+      /* Hat jemand für dieses Ding ein eigenes Bild hochgeladen, wird
+         es darübergelegt — die Zeichnung bleibt in der Datei und kommt
+         zurück, sobald das eigene Bild wieder herausgenommen wird. */
+      const eigen = bildSchluessel(szene.id, t.id);
+      const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(eigen))
+        ? Bildverwaltung.bild(eigen) : null;
+      if (eigenesBild) klassen.push("bw-teil-eigen");
+      const zeigtLupe = t.zoom && !bwZoom;
+      return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"
+                 transform="translate(${t.x},${t.y})"
+                 role="button" tabindex="0"
+                 aria-label="${escapeHtml(bwWort(t))}">
+                <title>${escapeHtml(bwWort(t))}</title>
+                <g class="bw-kunst">${t.kunst || ""}</g>
+                ${zeigtLupe ? `<g class="bw-lupenmarke" role="button" tabindex="0"
+                   data-bw-zoom="${t.id}"
+                   aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
+                   <title>🔍 Antippen: näher an ${escapeHtml(bwWort(t))}</title>
+                   <circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/>
+                   <circle class="bw-lupen-puls" cx="16" cy="-16" r="10" fill="none" stroke="#f2b84b" stroke-width="2"/>
+                   <circle cx="16" cy="-16" r="8.5" fill="rgba(255,253,246,0.96)" stroke="#8a5f2a" stroke-width="2"/>
+                   <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
+                   <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
+                 </g>` : ""}
+                ${t.lupe && !bwZoom ? `<g class="bw-lupenmarke" role="button" tabindex="0"
+                   data-bw-lupe-sofort="${t.lupe}"
+                   aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
+                   <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
+                   <circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/>
+                   <circle class="bw-lupen-puls" cx="16" cy="-16" r="10" fill="none" stroke="#f2b84b" stroke-width="2"/>
+                   <circle cx="16" cy="-16" r="8.5" fill="rgba(255,253,246,0.96)" stroke="#8a5f2a" stroke-width="2"/>
+                   <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
+                   <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
+                 </g>` : ""}
+                ${eigenesBild
+                  ? `<image class="bw-eigenbild" href="${eigenesBild}" x="-22" y="-22"
+                            width="44" height="44" preserveAspectRatio="xMidYMid meet" />`
+                  : ""}
+              </g>`;
+    };
+    /* Der Schleier: ein Rechteck über dem ganzen Bild mit einem Loch an
+       der Stelle, auf die man gerade schaut. Gemacht wird das Loch mit
+       der Nichtnull-Regel (evenodd) — ein Weg, zwei Rechtecke. */
+    let schleier = "";
+    if (zoom) {
+      const k = bwZoom.k, mx = bwZoom.mx, my = bwZoom.my;
+      const lx = zoom.x * k + mx, ly = zoom.y * k + my;
+      const lw = zoom.w * k, lh = zoom.h * k;
+      const r = 10;
+      schleier = `<path class="bw-schleier" data-bw-raus="1" fill-rule="evenodd"
+        d="M0 0 H${szene.breite} V${szene.hoehe} H0 Z
+           M${(lx - 6).toFixed(1)} ${(ly - 6).toFixed(1)}
+           h${(lw + 12).toFixed(1)} v${(lh + 12).toFixed(1)} h${(-lw - 12).toFixed(1)} Z"/>
+        <rect class="bw-zoomrahmen" x="${(lx - 6).toFixed(1)}" y="${(ly - 6).toFixed(1)}"
+              width="${(lw + 12).toFixed(1)}" height="${(lh + 12).toFixed(1)}" rx="${r}"/>`;
+    }
     return `
-      <svg class="bw-bild bw-szene-${szene.id}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
+      <svg class="bw-bild bw-szene-${szene.id}${zoom ? " bw-bild-zoom" : ""}" viewBox="0 0 ${szene.breite} ${szene.hoehe}"
            role="group" aria-label="${escapeHtml(szene.titel)}">
-        <g class="bw-kulisse" aria-hidden="true">${szene.kulisse}</g>
-        ${szene.teile.map((t) => {
-          const klassen = ["bw-teil"];
-          if (bwGewaehlt && bwGewaehlt.id === t.id) klassen.push("bw-teil-aktiv");
-          if (treffer.has(t.id)) klassen.push("bw-teil-treffer");
-          else if (bwEntdeckt.has(t.id) && bwModus === "entdecken") klassen.push("bw-teil-entdeckt");
-          /* Hat jemand für dieses Ding ein eigenes Bild hochgeladen, wird
-             es darübergelegt — die Zeichnung bleibt in der Datei und kommt
-             zurück, sobald das eigene Bild wieder herausgenommen wird. */
-          const eigen = bildSchluessel(szene.id, t.id);
-          const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(eigen))
-            ? Bildverwaltung.bild(eigen) : null;
-          if (eigenesBild) klassen.push("bw-teil-eigen");
-          return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"
-                     transform="translate(${t.x},${t.y})"
-                     role="button" tabindex="0"
-                     aria-label="${escapeHtml(bwWort(t))}">
-                    <title>${escapeHtml(bwWort(t))}</title>
-                    <g class="bw-kunst">${t.kunst}</g>
-                    ${t.lupe ? `<g class="bw-lupenmarke" role="button" tabindex="0"
-                       data-bw-lupe-sofort="${t.lupe}"
-                       aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
-                       <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
-                       ${/* Ein größerer, unsichtbarer Ring als Tippfläche — auf einem
-                            Telefon trifft man 10 Pixel sonst nicht. */ ""}
-                       <circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/>
-                       <circle class="bw-lupen-puls" cx="16" cy="-16" r="10" fill="none" stroke="#f2b84b" stroke-width="2"/>
-                       <circle cx="16" cy="-16" r="8.5" fill="rgba(255,253,246,0.96)" stroke="#8a5f2a" stroke-width="2"/>
-                       <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
-                       <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
-                     </g>` : ""}
-                    ${eigenesBild
-                      ? `<image class="bw-eigenbild" href="${eigenesBild}" x="-22" y="-22"
-                                width="44" height="44" preserveAspectRatio="xMidYMid meet" />`
-                      : ""}
-                  </g>`;
-        }).join("")}
+        <g ${rahmen}>
+          <g class="bw-kulisse" aria-hidden="true">${szene.kulisse}</g>
+          ${alleTeile.map((t) => teilHtml(t, !(szene.teile || []).includes(t))).join("")}
+        </g>
+        ${schleier}
       </svg>`;
   }
 
@@ -29136,9 +29638,10 @@
      ============================================================ */
   let bwSpur = [];                 // die Szenen, durch die man hereingekommen ist
 
-  function bwDetailOeffnen(zielId) {
-    const ziel = szeneMitId(zielId);
+  async function bwDetailOeffnen(zielId) {
+    const ziel = await szeneUndLupenLaden(zielId);
     if (!ziel) return;
+    bwZoom = null;
     if (bwSzene) bwSpur.push(bwSzene.id);
     bwSzene = ziel;
     bwModus = "entdecken";
@@ -29147,9 +29650,10 @@
     renderBilderwelt();
   }
 
-  function bwEinsZurueck() {
+  async function bwEinsZurueck() {
+    bwZoom = null;
     const vorher = bwSpur.pop();
-    bwSzene = vorher ? szeneMitId(vorher) : null;
+    bwSzene = vorher ? await szeneLaden(vorher) : null;
     bwModus = "entdecken";
     bwRunde = null;
     bwGewaehlt = null;
@@ -29165,7 +29669,11 @@
   /* Wie viele Lupen stecken in diesem Bild? Steht im Hinweis darüber,
      damit niemand sie überliest. */
   function bwLupenZahl(szene) {
-    return (szene.teile || []).filter((t) => t.lupe && szeneMitId(t.lupe)).length;
+    // Beide Arten zählen: die Bereiche zum Hineinzoomen UND die wenigen
+    // eigenständigen Nahaufnahmen (Körper, Hand, Fuß), die wirklich ein
+    // anderes Bild sind und keinen Ausschnitt derselben Szene.
+    if (!szeneGeladen(szene)) return szene.stellen || 0;
+    return (szene.teile || []).filter((t) => t.zoom || (t.lupe && szeneMitId(t.lupe))).length;
   }
   function bwSzeneZeichnen(area) {
     const s = bwSzene;
@@ -29191,11 +29699,15 @@
                 Teilbereiche anklicken kann." Deshalb steht hier jetzt
                 ausdrücklich, was die blinkenden Lupen bedeuten — und wie
                 viele es in diesem Bild sind. */ ""}
-          ${bwLupenZahl(s) ? `<p class="bw-lupenhinweis">🔍 ${bwLupenZahl(s) === 1
+          ${bwZoom ? `<p class="bw-lupenhinweis">🔍 Du bist ganz nah dran. Tipp die Einzelteile an — oder auf den grauen Rand, um wieder das ganze Bild zu sehen.
+            <span class="bw-lupenliste"><button type="button" class="bw-lupenchip" id="bwZoomRaus">← Wieder herauszoomen</button></span></p>` : ""}
+          ${!bwZoom && bwLupenZahl(s) ? `<p class="bw-lupenhinweis">🔍 ${bwLupenZahl(s) === 1
               ? "In diesem Bild blinkt eine Lupe. Tipp direkt darauf — dann gehst du hinein und siehst die Einzelteile."
               : `In diesem Bild blinken ${bwLupenZahl(s)} Lupen. Tipp direkt auf eine — dann gehst du hinein und siehst die Einzelteile.`}
-            <span class="bw-lupenliste">${s.teile.filter((t) => t.lupe && szeneMitId(t.lupe))
-              .map((t) => `<button type="button" class="bw-lupenchip" data-bw-lupe="${t.lupe}">🔍 ${escapeHtml(bwArtikelTrennen(bwWort(t)).rest)}</button>`).join("")}</span></p>` : ""}
+            <span class="bw-lupenliste">${s.teile.filter((t) => t.zoom || (t.lupe && szeneMitId(t.lupe)))
+              .map((t) => t.zoom
+                ? `<button type="button" class="bw-lupenchip" data-bw-zoomchip="${t.id}">🔍 ${escapeHtml(bwArtikelTrennen(bwWort(t)).rest)}</button>`
+                : `<button type="button" class="bw-lupenchip" data-bw-lupe="${t.lupe}">🔍 ${escapeHtml(bwArtikelTrennen(bwWort(t)).rest)}</button>`).join("")}</span></p>` : ""}
           <div class="bw-fortschritt"><div class="bw-fortschritt-balken" style="width:${Math.round(100 * bwEntdeckt.size / s.teile.length)}%"></div></div>
         ` : aufgabe ? `
           <p class="bw-auftrag">${bwModus === "finden"
@@ -29285,6 +29797,39 @@
        Also: die Lupe IM BILD führt unmittelbar hinein. Das Antippen des
        Dings selbst zeigt weiterhin erst die Wortkarte — beides
        nebeneinander, jedes mit seiner eigenen Aufgabe. */
+    area.querySelectorAll("[data-bw-zoomchip]").forEach((b) => b.addEventListener("click", () => {
+      const t = bwSzene.teile.find((x) => x.id === b.dataset.bwZoomchip);
+      if (!t || !t.zoom) return;
+      bwZoom = { teil: t.id, box: t.zoom };
+      bwGewaehlt = null;
+      renderBilderwelt();
+    }));
+    /* Hineinzoomen: derselbe Bildausschnitt, nur näher. */
+    area.querySelectorAll("[data-bw-zoom]").forEach((g) => {
+      const hinein = (e) => {
+        e.stopPropagation(); e.preventDefault();
+        const t = bwSzene.teile.find((x) => x.id === g.dataset.bwZoom);
+        if (!t || !t.zoom) return;
+        Core.sound.click?.();
+        bwZoom = { teil: t.id, box: t.zoom };
+        bwGewaehlt = null;
+        renderBilderwelt();
+      };
+      g.addEventListener("click", hinein);
+      g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") hinein(e); });
+    });
+    /* Auf den grauen Schleier tippen führt wieder heraus — wie früher
+       bei Flash, wenn man in eine Szene hineingeklickt hatte. */
+    area.querySelectorAll("[data-bw-raus]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bwZoom = null; bwGewaehlt = null;
+        renderBilderwelt();
+      });
+    });
+    document.getElementById("bwZoomRaus")?.addEventListener("click", () => {
+      bwZoom = null; bwGewaehlt = null; renderBilderwelt();
+    });
     area.querySelectorAll("[data-bw-lupe-sofort]").forEach((g) => {
       const hinein = (e) => {
         e.stopPropagation();
@@ -29301,9 +29846,26 @@
       bwRunde = bwModus === "entdecken" ? null : bwNeueRunde();
       renderBilderwelt();
     }));
+    /* Beim Hineinzoomen kommen Einzelteile dazu (Bettdecke, Bettlaken,
+       Kissenbezug …). Die stehen nicht in szene.teile, sondern hängen am
+       Ding selbst. Gesucht wird deshalb an beiden Stellen. */
+    const bwTeilNach = (id) =>
+      (bwSzene.teile || []).find((x) => x.id === id) ||
+      bwZoomTeile(bwSzene).find((x) => x.id === id) ||
+      null;
+    const istUnterteil = (id) => Boolean(bwZoomTeile(bwSzene).some((x) => x.id === id));
     const teilAntippen = (id) => {
-      const t = bwSzene.teile.find((x) => x.id === id);
+      const t = bwTeilNach(id);
       if (!t) return;
+      /* Ein Einzelteil zählt nicht bei „x von y entdeckt" mit — sonst
+         stimmt die Zahl nicht mehr mit den Dingen im Zimmer überein. */
+      if (istUnterteil(id)) {
+        bwGewaehlt = t;
+        Core.speak(bwWort(t), bwSprache());
+        Core.sound.click?.();
+        renderBilderwelt();
+        return;
+      }
       if (bwModus === "entdecken") {
         bwGewaehlt = t;
         bwEntdeckt.add(t.id);
@@ -29347,9 +29909,13 @@
           ebene.appendChild(feld);
         } catch (e) { /* ohne Trefferfläche geht es auch, nur fummeliger */ }
       });
+      /* Die Trefferflächen müssen in dieselbe Gruppe wie die Kulisse, sonst
+         wandern sie beim Hineinzoomen nicht mit (und insertBefore am <svg>
+         schlägt fehl, weil die Kulisse dann ein Enkel und kein Kind ist). */
       const kulisse = svg.querySelector(".bw-kulisse");
-      if (kulisse && kulisse.nextSibling) svg.insertBefore(ebene, kulisse.nextSibling);
-      else svg.insertBefore(ebene, svg.firstChild);
+      const heim = (kulisse && kulisse.parentNode) || svg;
+      if (kulisse && kulisse.nextSibling) heim.insertBefore(ebene, kulisse.nextSibling);
+      else heim.insertBefore(ebene, heim.firstChild);
     });
     area.querySelectorAll("[data-bw-treff]").forEach((f) => {
       f.addEventListener("click", () => teilAntippen(f.dataset.bwTreff));
@@ -29371,12 +29937,12 @@
     area.querySelectorAll("[data-bw-chip]").forEach((b) => b.addEventListener("click", () => teilAntippen(b.dataset.bwChip)));
     area.querySelectorAll("[data-bw-sprich]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
-      const t = bwSzene.teile.find((x) => x.id === b.dataset.bwSprich);
+      const t = bwTeilNach(b.dataset.bwSprich);
       if (t) Core.speak(bwWort(t), bwSprache());
     }));
     area.querySelectorAll("[data-bw-sprich2]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
-      const t = bwSzene.teile.find((x) => x.id === b.dataset.bwSprich2);
+      const t = bwTeilNach(b.dataset.bwSprich2);
       if (t) Core.speak(bwZweitwort(t), bwZweitCode());
     }));
     area.querySelectorAll("[data-bw-artikel]").forEach((b) => b.addEventListener("click", () => bwArtikelAntwort(b.dataset.bwArtikel)));
@@ -29663,7 +30229,7 @@
     if (schritt.art === "szene") {
       activateTab("view-learn");
       await szenenLaden();
-      bwSzene = szenenListe().find((x) => x.id === schritt.ziel) || null;
+      bwSzene = await szeneUndLupenLaden(schritt.ziel);
       bwModus = "entdecken"; bwRunde = null; bwGewaehlt = null; bwEntdeckt = new Set();
       jumpToSubnavTarget('[data-sub="sub-bilderwelt"]', "#bilderweltArea", 40);
       setTimeout(() => renderBilderwelt(), 120);
@@ -30045,14 +30611,21 @@
           <button type="button" class="btn ${imWortschatz ? "btn-ghost" : "btn-coffee"}" data-sammel-stern="${treffer.word.replace(/"/g, "&quot;")}">
             ${imWortschatz ? "★ Schon in deinem Wortschatz" : "★ In meinen Wortschatz"}
           </button>
+          ${/* GEMELDET: „man kann sich zwar unten aussuchen, in welchem Ziel das
+                landen soll, aber man hat keine Möglichkeit, sich das als NEUE
+                Wortliste abzuspeichern … was passiert, wenn man keine vorhandene
+                Wortliste hat? Dann hat man noch keine Möglichkeit, eine zu
+                erzeugen aus dieser Sektion heraus."  Genau dafür ist der zweite
+                Knopf da — und er steht auch dann da, wenn es schon Listen gibt. */ ""}
+          <label class="empty-note" style="display:block; margin-top:8px; font-size:0.74rem;">In eine Wortliste legen</label>
           ${listen.length ? `
-            <label class="empty-note" style="display:block; margin-top:8px; font-size:0.74rem;">In eine Wortliste legen</label>
             <select class="challenge-select" id="sammelListenWahl">
               <option value="">— Liste wählen —</option>
               ${listen.map((l) => `<option value="${l.id}">📋 ${l.name} (${l.woerter.length})</option>`).join("")}
             </select>
             <button type="button" class="btn btn-ghost" style="margin-top:6px;" data-sammel-liste="${treffer.word.replace(/"/g, "&quot;")}">📋 Hinzufügen</button>
-          ` : `<p class="empty-note" style="margin-top:8px; font-size:0.74rem;">Du hast noch keine Wortliste — im Bereich „Meine Wortlisten“ legst du eine an.</p>`}
+          ` : `<p class="empty-note" style="margin:4px 0 0; font-size:0.74rem;">Du hast noch keine Wortliste — leg hier gleich die erste an.</p>`}
+          <button type="button" class="btn btn-coffee" style="margin-top:6px;" data-sammel-neue-liste="${treffer.word.replace(/"/g, "&quot;")}">➕ Neue Liste mit diesem Wort</button>
         </div>
       ` : `
         <p class="empty-note">Dieses Wort steht so noch nicht im Wörterbuch. Es ist notiert und kommt mit einem der nächsten Updates dazu.</p>
@@ -30069,6 +30642,15 @@
       menge.add(w);
       try { await wortschatzSichern(menge); showToast(`★ „${w}“ in deinen Wortschatz.`); zu(); }
       catch (err) { menge.delete(w); showToast("⚠️ Nicht gespeichert: " + (err.message || "Bitte Verbindung prüfen.")); }
+    });
+    karte.querySelector("[data-sammel-neue-liste]")?.addEventListener("click", async (e) => {
+      const w = e.currentTarget.dataset.sammelNeueListe;
+      const vorschlag = w + " und andere";
+      const name = (window.prompt("Wie soll die neue Wortliste hei\u00dfen?", vorschlag) || "").trim();
+      if (!name) return;
+      const id = await wortlisteSpeichern(name, [w]);
+      if (id) { showToast(`\U0001f4cb Neue Liste \u201e${name}" angelegt \u2014 mit \u201e${w}" darin.`); zu(); }
+      else showToast("Die Liste konnte nicht gespeichert werden.");
     });
     karte.querySelector("[data-sammel-liste]")?.addEventListener("click", async (e) => {
       const w = e.currentTarget.dataset.sammelListe;
@@ -30102,23 +30684,31 @@
     const lang = historyUebersetzungSprache || (imItalienischraum() ? "de" : auto);
     // Zuerst die Fassung, die genau zum gewählten Niveau gehört; sonst die A1-Fassung.
     const nachNiveau = entry.translationsByLevel && entry.translationsByLevel[level];
-    const ausNiveau = nachNiveau && (nachNiveau[lang] || nachNiveau.en);
-    const text = ausNiveau || entry.translationsA1[lang] || entry.translationsA1.en;
+    /* WICHTIG — erst in der gewünschten Sprache suchen, und NUR wenn es
+       sie dort wirklich gibt. Vorher fiel beides still auf Englisch
+       zurück; dadurch stand bei jemandem aus Brasilien, Indien, China
+       oder Israel Englisch da, ohne dass irgendwo stand, warum. */
+    const eigene = (nachNiveau && nachNiveau[lang]) || entry.translationsA1[lang] || "";
+    const ausNiveau = nachNiveau && nachNiveau[lang];
+    const text = eigene || (nachNiveau && nachNiveau.en) || entry.translationsA1.en || "";
     if (!text) return "";
+    const istRueckfall = !eigene && lang !== "en";
     const rtl = lang === "ar" || lang === "fa" || lang === "he";
-    const herkunft = ausNiveau
+    const herkunft = istRueckfall
+      ? "Auf " + (HISTORY_SPRACHEN[lang] || lang) + " gibt es diesen Text noch nicht — hier steht die englische Fassung. Unten kannst du eine andere Sprache wählen."
+      : ausNiveau
       ? "Übersetzung des " + level + "-Textes"
       : "Übersetzung des A1-Textes — für " + level + " ist noch keine eigene Fassung hinterlegt";
     return `
       <details style="margin-top:10px;" open>
-        <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700;">🌍 Übersetzung — ${HISTORY_SPRACHEN[lang] || lang}</summary>
+        <summary style="cursor:pointer; font-size:0.85rem; color:var(--teal-400); font-weight:700;">🌍 Übersetzung — ${istRueckfall ? "Englisch" : (HISTORY_SPRACHEN[lang] || lang)}</summary>
         <label class="empty-note" style="display:block; margin-top:8px; font-size:0.72rem;">Sprache</label>
         <select class="challenge-select hist-lang-select" id="${idPrefix}LangSelect" style="margin-bottom:8px;">
           <option value="">Automatisch (aus dem Herkunftsland)</option>
           ${Object.entries(HISTORY_SPRACHEN).map(([code, name]) => `<option value="${code}" ${historyUebersetzungSprache === code ? "selected" : ""}>${name}</option>`).join("")}
         </select>
         <p class="empty-note" style="margin:0 0 4px; font-size:0.7rem;">${herkunft}</p>
-        <p style="margin-top:4px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${rtl ? "rtl" : "ltr"}">${text}</p>
+        <p style="margin-top:4px; padding-top:6px; border-top:1px dashed rgba(0,0,0,0.12);" dir="${istRueckfall ? "ltr" : (rtl ? "rtl" : "ltr")}">${text}</p>
       </details>`;
   }
 
@@ -30208,7 +30798,6 @@
       </div>
 
       <h3 id="kompass-geschichte" class="kompass-heading">${ExerciseData.activeHistoryTitle ? ExerciseData.activeHistoryTitle() : "📜 Es war einmal in Deutschland …"}</h3>
-      ${leseBetonungKnopfHtml()}
       ${textInListeKnopfHtml("Es war einmal in Deutschland")}
       ${(() => {
         // Sichtbarer Stand der Sammlung — zeigt auf einen Blick, wann zuletzt neue
@@ -30224,6 +30813,26 @@
           : "";
         return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 366 Tagen gefüllt${neuText}</p>`;
       })()}
+      ${/* ============================================================
+            GEFUNDEN BEIM NACHMESSEN: 327 der 366 Tage warten noch auf
+            Freigabe — darunter der heutige. Für normale Leute stand
+            deshalb an den allermeisten Tagen „noch kein geprüfter
+            Eintrag hinterlegt", obwohl der Text längst in der Datei
+            liegt. Das erklärt auch, warum dort weder Betonung noch
+            Übersetzung zu sehen war: es war schlicht kein Text da.
+
+            Freigeben darf das nur Alex — dazu ist der Schalter da. Damit
+            das aber nicht wieder unbemerkt liegen bleibt, steht es jetzt
+            unübersehbar und mit Zahl darüber. */ ""}
+      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen ? `
+        <div class="hist-freigabe-hinweis">
+          <p style="margin:0 0 4px; font-weight:800;">⚠️ ${histNeuKeys.length} von 366 Tagen sind noch nicht freigegeben</p>
+          <p class="empty-note" style="margin:0 0 6px;">
+            Solange sie es nicht sind, steht bei allen anderen an diesen Tagen
+            „noch kein geprüfter Eintrag hinterlegt" — auch heute${histIstNeu(`${mm}-${dd}`) ? " (der heutige Tag ist dabei)" : ""}.
+            Mit dem Schalter darunter gehen alle auf einmal in die Welt.
+          </p>
+        </div>` : ""}
       ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
       ${todayHistory ? `
         <div class="question-card" id="kompass-geschichte-heute" style="margin-bottom:16px; scroll-margin-top:16px;">
@@ -32316,7 +32925,14 @@ An einem Morgen lief ein kleiner Fuchs los…
     { title: "Xander Fox — A Lovers Fairytale", url: "music/One%20Day%20In%20Rome%20-%20A%20Lovers%20Fairytale.mp3" },
     { title: "Xander Fox — Ein Leben Lang", url: "music/One%20Day%20In%20Rome%20-%20Ein%20Leben%20Lang.mp3" },
     { title: "Xander Fox — Mein Stiller Schmerz", url: "music/promised-eden_mein-stiller-schmerz.mp3" },
-    { title: "Second Decay — I Hate Berlin", url: "https://www.youtube.com/watch?v=5fWv1wmsVgs" },
+    { title: "Second Decay — I Hate Berlin", url: "https://www.youtube.com/watch?v=K2PaCbRb1j4" },
+    // Von Alex am 12.09. nachgereicht — die Links kamen von ihm selbst.
+    { title: "Kris Kross Amsterdam x Kati K x Gregor Hägele — Rückwärtsgang", url: "https://www.youtube.com/watch?v=Sb8CnYylSvI" },
+    { title: "Vanessa Mai — 747 (Starchild Remix)", url: "https://www.youtube.com/watch?v=-g-e1teUPm0" },
+    { title: "Purwien und Kowa — Du", url: "https://www.youtube.com/watch?v=bT4gSM943m0" },
+    { title: "Diary of Dreams — Traumtänzer (Live)", url: "https://www.youtube.com/watch?v=0bxAezAF4h0" },
+    { title: "And One — Dein Duft", url: "https://www.youtube.com/watch?v=eLG5qX_e1uY" },
+    { title: "Marian Gold & Kai Hawaii — Für Dich", url: "https://www.youtube.com/watch?v=9lIlZ0b2Hgw" },
   ];
   let ytMusicPlayer = null;
   let ytApiLoading = false;
@@ -32415,11 +33031,31 @@ An einem Morgen lief ein kleiner Fuchs los…
     // müssen, dass es einen extra Knopf zum Befüllen gibt. Ist sie beim allerersten Öffnen noch
     // komplett leer, füllt ein Admin sie automatisch mit den vorbereiteten Vorschlägen, sobald
     // er die Seite besucht — alle anderen Besucher:innen finden sie danach schon fertig vor.
-    if (ownerId === null && musicPlaylist.length === 0 && Backend.canModerate && Backend.canModerate()) {
-      for (const s of MUSIC_SUGGESTIONS) {
-        try { await Backend.addPlaylistSong(s.title, s.url, null); } catch (e) { console.warn("Automatische Erstbefüllung fehlgeschlagen:", e); }
+    /* GEWUENSCHT: „Denk bitte auch an die Lieder, die ich dir genannt habe
+       — die sollen alle mit dem Player sein."
+       Vorher wurde nur befuellt, wenn die Liste GANZ leer war. Kamen
+       spaeter neue Lieder dazu, blieben sie liegen, bis jemand den Knopf
+       fand. Jetzt werden auch einzelne fehlende nachgetragen.
+       Damit ein absichtlich geloeschtes Lied nicht wiederkommt, merkt sich
+       der Browser, welches er schon einmal von selbst eingetragen hat. */
+    if (ownerId === null && Backend.canModerate && Backend.canModerate()) {
+      let schonGetan = [];
+      try { schonGetan = JSON.parse(localStorage.getItem("dma_songs_ergaenzt") || "[]"); }
+      catch (e) { schonGetan = []; }
+      const fehlend = MUSIC_SUGGESTIONS.filter((s) =>
+        !musicPlaylist.some((p) => p.url === s.url)
+        && (musicPlaylist.length === 0 || schonGetan.indexOf(s.url) < 0));
+      if (fehlend.length) {
+        for (const s of fehlend) {
+          try { await Backend.addPlaylistSong(s.title, s.url, null); }
+          catch (e) { console.warn("Lied konnte nicht eingetragen werden:", e); }
+        }
+        try {
+          localStorage.setItem("dma_songs_ergaenzt",
+            JSON.stringify([...new Set([...schonGetan, ...fehlend.map((s) => s.url)])]));
+        } catch (e) { /* ohne Merker wird beim naechsten Mal erneut geprueft */ }
+        musicPlaylist = await Backend.getPlaylist(null);
       }
-      musicPlaylist = await Backend.getPlaylist(null);
     }
     // Den gerade spielenden Song in der neuen Liste wiederfinden (per ID, nicht Index) und
     // musicCurrentIndex korrekt darauf ausrichten — läuft er in der neuen Ansicht gar nicht mit
@@ -33169,7 +33805,7 @@ An einem Morgen lief ein kleiner Fuchs los…
             <button type="button" class="btn btn-coffee" id="musicAddSubmitBtn">Hinzufügen</button>
             <p class="form-error" id="musicAddError" style="display:none;"></p>
           </div>
-          ${MUSIC_SUGGESTIONS.some((s) => !musicPlaylist.some((p) => p.title === s.title)) ? `<button type="button" class="emoji-toggle-link" id="musicSuggestBtn" style="margin-top:10px;">✨ Von dir gewünschte Songs einfügen (${MUSIC_SUGGESTIONS.filter((s) => !musicPlaylist.some((p) => p.title === s.title)).length})</button>` : ""}
+          ${MUSIC_SUGGESTIONS.some((s) => !musicPlaylist.some((p) => p.title === s.title && p.url === s.url)) ? `<button type="button" class="emoji-toggle-link" id="musicSuggestBtn" style="margin-top:10px;">✨ Von dir gewünschte Songs einfügen (${MUSIC_SUGGESTIONS.filter((s) => !musicPlaylist.some((p) => p.title === s.title && p.url === s.url)).length})</button>` : ""}
           ${!isMine ? `<button type="button" class="emoji-toggle-link" id="musicTrashToggle" style="margin-top:10px; display:block;">🗑️ Entfernte Songs wiederherstellen</button>
           <div id="musicTrashBody" style="display:none; margin-top:10px;"></div>` : ""}
         </div>` : (isMine && !user ? `<p class="empty-note" style="margin-bottom:14px;">Bitte zuerst anmelden, um eine eigene Playlist anzulegen.</p>` : "")}
@@ -33257,7 +33893,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       }
     });
     document.getElementById("musicSuggestBtn")?.addEventListener("click", async () => {
-      const missing = MUSIC_SUGGESTIONS.filter((s) => !musicPlaylist.some((p) => p.title === s.title));
+      /* Ein Song gilt nur dann als schon vorhanden, wenn Titel UND Adresse
+         übereinstimmen. Sonst bliebe ein korrigierter Link für immer
+         draußen, weil der alte Titel noch in der Liste steht. */
+      const missing = MUSIC_SUGGESTIONS.filter(
+        (s) => !musicPlaylist.some((p) => p.title === s.title && p.url === s.url));
       for (const s of missing) {
         try { await Backend.addPlaylistSong(s.title, s.url, ownerIdForActions); } catch (e) {}
       }
@@ -34980,7 +35620,7 @@ An einem Morgen lief ein kleiner Fuchs los…
               <strong>${senderLabel}</strong>
               <span class="empty-note">${timeLabel} 🔽</span>
             </button>
-            <p style="white-space:pre-wrap; margin:0;">${shrinkInlineEmojis(m.body
+            <p class="inbox-text">${shrinkInlineEmojis(m.body
               .replace(/^\[BETA_REQUEST\]\s*/, "")
               .replace(/\[FREIGABE:\w+:[\w-]+\]\s*/, "")
               .replace(/\n?\[BETA_JUMP:[\w-]+\]/, ""))
@@ -36080,7 +36720,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "167";
+  const APP_VERSION = "169";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -36090,6 +36730,16 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "169": [
+      "🧩 **Der Baukasten** — jetzt in der Bilderwelt. Ort wählen, Figur auf einen Platz ziehen, anziehen. Darunter steht der passende deutsche Satz.",
+      "🦴 **Der Körperbau** — Mensch und Skelett von vorn und hinten, Wirbelsäule, Schädel, fünf Gelenke. Über 200 Stellen antippbar.",
+      "🍼 **Wie ein Kind entsteht** — neun Tafeln von der Samenzelle bis zur Geburt.",
+      "🐘 **Achtzig neue Tiere** — Zoo, Meer, Kleintiere, Dinosaurier. Die alten sind überarbeitet.",
+      "🥕 **Obst, Gemüse und deutsche Gerichte** — 56 Lebensmittel, jedes einzeln antippbar.",
+      "📖 **Das Wörterbuch ist vollständig.** 40.669 Einträge, keine Lücke mehr — und es lädt zehnmal schneller.",
+      "🧭 **Der Wegweiser** für Deutschland, Österreich und die Schweiz: Ämter, Wohnung, Bewerbung, Zuschüsse, 48 geprüfte Links.",
+      "🗓️ Die Tagesaufgabe ist in allen Designs wieder lesbar.",
+    ],
     "167": [
       "🗣️ **Betonung ohne Knopf.** Der kleine Buchstabe oben in der Kopfzeile ist weg. Stattdessen genügt ein Tippen mitten in einen Textkasten: dann stehen dort die Punkte und Striche, die sagen, welche Silbe betont wird und ob der Vokal lang oder kurz ist. Noch einmal tippen, und sie sind wieder weg.",
       "🔍 **Die Lupe führt sofort hinein.** In vielen Bildern blinken jetzt Lupen. Tippst du eine an, gehst du unmittelbar in den Bereich hinein — keine Erklärung davor. Fünf neue Nahaufnahmen sind dazugekommen: das Bett mit Bettdecke, Bettlaken, Bettbezug und Lattenrost, das Fenster mit Rahmen, Scheibe, Griff und Rollo, die Tür mit Klinke, Schloss und Scharnier, der Schuh mit Sohle, Schnürsenkel und Öse und der Baum mit Rinde, Ast, Knospe und Jahresring. Über der Zeichnung steht, wie viele Lupen dieses Bild hat.",
