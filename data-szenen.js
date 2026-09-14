@@ -53,8 +53,10 @@ window.DMA_SZENEN = [
   "breite": 320,
   "hoehe": 200,
   "zahl": 14,
-  "lupen": [],
-  "stellen": 0
+  "lupen": [
+   "dusche"
+  ],
+  "stellen": 1
  },
  {
   "id": "schlafzimmer",
@@ -96,6 +98,18 @@ window.DMA_SZENEN = [
   "thema": "Draußen",
   "breite": 320,
   "hoehe": 200,
+  "zahl": 15,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "dusche",
+  "titel": "In der Dusche",
+  "emoji": "🚿",
+  "thema": "Körperpflege",
+  "breite": 260,
+  "hoehe": 330,
+  "detail": true,
   "zahl": 15,
   "lupen": [],
   "stellen": 0
@@ -164,8 +178,8 @@ window.DMA_SZENEN = [
   "titel": "Der Körper",
   "emoji": "🧍",
   "thema": "Gesundheit",
-  "breite": 320,
-  "hoehe": 344,
+  "breite": 340,
+  "hoehe": 384,
   "zahl": 32,
   "lupen": [
    "anatomie",
@@ -363,10 +377,24 @@ window.DMA_SZENEN = [
   "emoji": "🏛️",
   "thema": "Landeskunde",
   "breite": 320,
-  "hoehe": 200,
+  "hoehe": 400,
   "zahl": 19,
+  "lupen": [
+   "rom_detail"
+  ],
+  "stellen": 4
+ },
+ {
+  "id": "rom_detail",
+  "titel": "Rom von Nahem",
+  "emoji": "🔍",
+  "thema": "Landeskunde",
+  "breite": 340,
+  "hoehe": 320,
+  "detail": true,
+  "zahl": 4,
   "lupen": [],
-  "stellen": 0
+  "stellen": 4
  },
  {
   "id": "weltstaedte",
@@ -385,8 +413,8 @@ window.DMA_SZENEN = [
   "emoji": "🦁",
   "thema": "Tiere",
   "breite": 320,
-  "hoehe": 200,
-  "zahl": 19,
+  "hoehe": 306,
+  "zahl": 21,
   "lupen": [],
   "stellen": 0
  },
@@ -396,8 +424,8 @@ window.DMA_SZENEN = [
   "emoji": "🌲",
   "thema": "Natur",
   "breite": 320,
-  "hoehe": 200,
-  "zahl": 20,
+  "hoehe": 252,
+  "zahl": 23,
   "lupen": [],
   "stellen": 0
  },
@@ -485,13 +513,13 @@ window.DMA_SZENEN = [
  },
  {
   "id": "buch_detail",
-  "titel": "Das Buch von innen",
-  "emoji": "🔍",
+  "titel": "Das Buch",
+  "emoji": "📖",
   "thema": "Bildung",
   "breite": 320,
   "hoehe": 200,
   "detail": true,
-  "zahl": 12,
+  "zahl": 6,
   "lupen": [],
   "stellen": 0
  },
@@ -617,8 +645,206 @@ window.DMA_SZENEN = [
   "emoji": "🍽️",
   "thema": "Essen & Trinken",
   "breite": 320,
-  "hoehe": 400,
-  "zahl": 25,
+  "hoehe": 834,
+  "zahl": 57,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "weihnachten",
+  "titel": "Weihnachten",
+  "emoji": "🎄",
+  "thema": "Feste",
+  "breite": 340,
+  "hoehe": 240,
+  "zahl": 13,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "ostern",
+  "titel": "Ostern",
+  "emoji": "🐣",
+  "thema": "Feste",
+  "breite": 340,
+  "hoehe": 230,
+  "zahl": 10,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "haustiere",
+  "titel": "Haustiere",
+  "emoji": "🐹",
+  "thema": "Tiere",
+  "breite": 340,
+  "hoehe": 250,
+  "zahl": 8,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "planeten",
+  "titel": "Der Nachthimmel",
+  "emoji": "🪐",
+  "thema": "Natur",
+  "breite": 340,
+  "hoehe": 260,
+  "zahl": 13,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "postamt",
+  "titel": "Das Postamt",
+  "emoji": "📮",
+  "thema": "Unterwegs",
+  "breite": 340,
+  "hoehe": 230,
+  "zahl": 9,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "jahrmarkt",
+  "titel": "Der Jahrmarkt",
+  "emoji": "🎡",
+  "thema": "Freizeit",
+  "breite": 340,
+  "hoehe": 250,
+  "zahl": 7,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "winter",
+  "titel": "Der Winter",
+  "emoji": "⛄",
+  "thema": "Natur",
+  "breite": 340,
+  "hoehe": 230,
+  "zahl": 8,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "halloween",
+  "titel": "Halloween",
+  "emoji": "🎃",
+  "thema": "Feste",
+  "breite": 340,
+  "hoehe": 230,
+  "zahl": 12,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "schwimmbad",
+  "titel": "Das Schwimmbad",
+  "emoji": "🏊",
+  "thema": "Freizeit",
+  "breite": 340,
+  "hoehe": 230,
+  "zahl": 11,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "jobcenter",
+  "titel": "Das Jobcenter",
+  "emoji": "🗂️",
+  "thema": "Arbeit",
+  "breite": 340,
+  "hoehe": 220,
+  "zahl": 12,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "bank",
+  "titel": "Die Bank",
+  "emoji": "🏦",
+  "thema": "Behörden",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 10,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "apotheke",
+  "titel": "Die Apotheke",
+  "emoji": "💊",
+  "thema": "Gesundheit",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 10,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "baeckerei",
+  "titel": "Die Bäckerei",
+  "emoji": "🥐",
+  "thema": "Essen & Trinken",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 9,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "muelltrennung",
+  "titel": "Die Mülltrennung",
+  "emoji": "♻️",
+  "thema": "Alltag",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 8,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "spielplatz",
+  "titel": "Der Spielplatz",
+  "emoji": "🛝",
+  "thema": "Freizeit",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 8,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "hotel",
+  "titel": "Das Hotel",
+  "emoji": "🛎️",
+  "thema": "Reisen",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 8,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "geburtstag",
+  "titel": "Der Geburtstag",
+  "emoji": "🎂",
+  "thema": "Feste",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 10,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
+  "id": "friseur",
+  "titel": "Der Friseur",
+  "emoji": "💇",
+  "thema": "Alltag",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 9,
   "lupen": [],
   "stellen": 0
  }

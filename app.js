@@ -3150,9 +3150,13 @@
     const gesamt = (ExerciseData.historyDayCount && ExerciseData.historyDayCount()) || 0;
     let text;
     if (darfFreigeben && neu.length && !schonFrei) {
-      text = `📦 Neue Inhalte sind eingespielt: ${neu.length} neue Tage bei „Es war einmal in Deutschland" (jetzt ${gesamt} von 365). Sie sind noch NICHT freigegeben — du siehst sie mit rotem Punkt im Archiv und kannst sie dort mit dem Freigabe-Schalter für alle sichtbar machen.`;
+      /* GEMELDET: „Dann steht da immer noch diese Warnung mit 311 von
+         365 Tagen." Die Zahl stimmte zwar, aber sie las sich wie ein
+         Mangel — als fehlten 54 Tage. Die Sammlung wächst einfach;
+         eine Sollzahl gehört da nicht hin. */
+      text = `📦 Neue Inhalte sind eingespielt: ${neu.length} neue ${neu.length === 1 ? "Tag" : "Tage"} bei „Es war einmal in Deutschland" (die Sammlung hat jetzt ${gesamt} ${gesamt === 1 ? "Tag" : "Tage"}). Sie sind noch NICHT freigegeben — du siehst sie mit rotem Punkt im Archiv und kannst sie dort mit dem Freigabe-Schalter für alle sichtbar machen.`;
     } else if (neu.length) {
-      text = `📦 Es gibt neue Inhalte bei „Es war einmal in Deutschland" — die Sammlung umfasst jetzt ${gesamt} von 365 Tagen. Schau im Kompass vorbei!`;
+      text = `📦 Es gibt neue Inhalte bei „Es war einmal in Deutschland" — die Sammlung umfasst jetzt ${gesamt} ${gesamt === 1 ? "Tag" : "Tage"}. Schau im Kompass vorbei!`;
     } else {
       return;
     }
@@ -4805,7 +4809,19 @@
     /* Dieselbe Schriftgröße wie der übrige Fließtext — nur die Farbe und
        etwas mehr Strichstärke unterscheiden sie. Alles andere läuft
        weiter wie immer. */
-    return `<span class="ticker-live${liveStand.plattform === "tiktok" ? " ticker-live-tiktok" : ""}" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${p.farbe};">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
+    /* NOCHMALS GEMELDET: „die Schrift oben im Newsticker ist immer noch
+       gross fuer mich als Betreiber."
+       Gemessen ist sie das nicht — Laufschrift und Live-Zeile sind beide
+       12 px, mit und ohne Live, fuer jede Rolle. Die Regel dafuer steht
+       aber in app-styles.css, und wenn diese Datei nicht mit hochgeladen
+       (oder vom Browser noch aus dem Zwischenspeicher geholt) wird,
+       greift sie nicht. Damit das nicht mehr passieren kann, steht die
+       Groesse jetzt ZUSAETZLICH direkt am Element: font-size:inherit
+       schlaegt jede alte Regel aus einer alten Datei. Dick bleibt sie —
+       das war ausdruecklich erlaubt. */
+    const gleich = "font-size:inherit;line-height:inherit;letter-spacing:inherit;"
+      + "font-family:inherit;vertical-align:baseline;font-weight:700;";
+    return `<span class="ticker-live${liveStand.plattform === "tiktok" ? " ticker-live-tiktok" : ""}" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${p.farbe};${gleich}">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
   }
   function tickerNeuErzwingen() {
     const track = document.getElementById("tickerTrack");
@@ -5563,8 +5579,15 @@
     try { localStorage.setItem(LESE_BETONUNG_SCHLUESSEL, an ? "1" : "0"); } catch (e) {}
   }
   function leseBetonungKnopfHtml() {
-    const an = leseBetonungAn();
-    return `<button type="button" class="btn btn-ghost lese-betonung-knopf" data-lese-betonung="1" style="font-size:0.78rem; padding:5px 10px; margin-bottom:8px;">${an ? "🔊 Betonung an" : "🔈 Betonung anzeigen"}<span class="baustein-de">nur hier, unabhängig von den Einstellungen</span></button>`;
+    /* GEMELDET: „Bei dem Text ‚Es war einmal in Deutschland' steht
+       immer noch der Betonungs-Knopf."
+
+       Zu Recht: die Betonung schaltet man längst durch Tippen in den
+       Textkasten ein — der Knopf sagte dasselbe noch einmal und nahm
+       oben Platz weg. Er gibt jetzt nichts mehr zurück; die Funktion
+       selbst bleibt stehen, damit ältere Aufrufe nicht ins Leere
+       greifen. */
+    return "";
   }
   /* Setzt die Betonung in einem Lesebereich — oder nimmt sie wieder weg. */
   function leseBetonungAnwenden(bereich) {
@@ -5616,7 +5639,8 @@
      damit die bestehenden Aufrufe nicht ins Leere greifen. */
   function betonungsSchalterEinhaengen(wurzel) {
     const ziel = wurzel || document;
-    ziel.querySelectorAll(".sektion-betonung").forEach((el) => el.remove());
+    ziel.querySelectorAll(".sektion-betonung, .lese-betonung-knopf")
+        .forEach((el) => el.remove());
   }
   /* Nach jedem Ansichtswechsel und nach jedem Neuzeichnen noch einmal
      nachsehen — die Ansichten bauen sich unterschiedlich spät auf. */
@@ -21857,6 +21881,7 @@
   let slfFreunde = null;
   let slfAuswahl = new Set();    // wen der Raumgeber gerade eingeladen hat
   let slfAuswahlOffen = false;
+  let slfSuche = "";            // Suchtext in der Einladungsliste
   let slfWahlmodus = "zufall";   // "zufall" | "selbst"
   let slfEigenerBuchstabe = "";
   let slfGesamt = {};            // { spielerId: Punkte } über mehrere Runden
@@ -21890,10 +21915,18 @@
           Gemeinsam heißt wirklich gemeinsam: es geht erst los, wenn alle im Warteraum sind —
           und dann zählt bei allen derselbe Countdown.
         </p>
-        ${slfAuswahlHtml()}
         ${slfEinladungenHtml()}
       </div>`;
   }
+  /* GEMELDET: „bei einer Sache, die ich spielen wollte, waren einfach die
+     ganzen Namen wahllos zum Anklicken, ohne dass ich die Option
+     eingeblendet hab — optional Freunde einladen."
+
+     Auf DIESEM Bildschirm will man zuerst spielen. Die Namensliste stand
+     hier trotzdem mit, sobald irgendwann einmal ein Warteraum offen war —
+     der Schalter dafür wird nämlich nur beim Aufräumen zurückgesetzt.
+     Jetzt steht sie nur noch dort, wo man sie ausdrücklich geholt hat:
+     hinter „👥 Runde mit anderen — Warteraum öffnen". */
 
   function slfEinladungenHtml() {
     if (!slfOffeneEinladungen.length) return "";
@@ -22015,16 +22048,30 @@
     if (!liste.length) {
       return `<p class="empty-note" style="margin-top:10px;">Du hast noch niemanden in deiner Freundesliste. Unter „Profil → Freunde" kannst du jemanden hinzufügen — danach könnt ihr zusammen spielen.</p>`;
     }
-    const online = liste.filter((f) => f.online);
-    const rest = liste.filter((f) => !f.online);
     const pille = (f) => `<button type="button" class="challenge-friend-pill ${f.online ? "" : "offline"} ${slfAuswahl.has(f.id) ? "selected" : ""}" data-slf-wen="${f.id}" data-slf-name="${escapeHtml(f.name)}">
         ${f.online ? '<span class="online-dot"></span>' : ""}${f.name}${f.online ? "" : ' <span class="empty-note">(offline)</span>'}</button>`;
+    /* Kein Namensteppich mehr: gesucht wird über das Feld, gezeigt werden
+       die Online-Leute und ein kurzer Anfang der übrigen. Wer schon
+       ausgewählt ist, bleibt immer sichtbar. */
+    const suche = (slfSuche || "").trim().toLowerCase();
+    const passt = suche ? liste.filter((f) => String(f.name || "").toLowerCase().includes(suche)) : liste;
+    const online = passt.filter((f) => f.online);
+    const rest = passt.filter((f) => !f.online).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
+    const VORSCHAU = 10;
+    const restVorn = suche ? rest : rest.slice(0, VORSCHAU);
+    const restHinten = suche ? [] : rest.slice(VORSCHAU);
+    const gewaehlt = liste.filter((f) => slfAuswahl.has(f.id));
     return `
       <p class="eyebrow" style="margin-top:14px;">WEN LÄDST DU EIN?</p>
       <p class="empty-note" style="margin-bottom:8px;">Mehrere antippen geht — ihr spielt dann alle zusammen dieselbe Runde.</p>
-      <div class="challenge-friend-list">
-        ${online.map(pille).join("")}${rest.map(pille).join("")}
-      </div>
+      ${gewaehlt.length ? `<div class="challenge-friend-list" style="margin-bottom:8px;">${gewaehlt.map(pille).join("")}</div>` : ""}
+      <input type="text" class="vocab-search" id="slfSucheFeld" placeholder="Nach Namen suchen…" value="${escapeHtml(slfSuche || "")}" style="margin-bottom:8px;" />
+      ${online.length ? `<p class="empty-note" style="font-size:0.72rem; margin:0 0 2px;">🟢 Online</p>
+        <div class="challenge-friend-list">${online.map(pille).join("")}</div>` : ""}
+      ${restVorn.length ? `<p class="empty-note" style="font-size:0.72rem; margin:6px 0 2px;">A–Z</p>
+        <div class="challenge-friend-list">${restVorn.map(pille).join("")}</div>` : ""}
+      ${restHinten.length ? `<p class="empty-note" style="margin:6px 0 0; font-size:0.72rem;">… und ${restHinten.length} weitere — such sie über das Feld.</p>` : ""}
+      ${!online.length && !restVorn.length ? '<p class="empty-note">Niemanden gefunden.</p>' : ""}
       ${slfAuswahl.size ? `<button type="button" class="btn btn-coffee" id="slfRaumStarten" style="margin-top:10px;">
         🚪 Warteraum mit ${slfAuswahl.size} ${slfAuswahl.size === 1 ? "Person" : "Personen"} öffnen</button>` : ""}`;
   }
@@ -22337,6 +22384,7 @@
     slfRaum = null;
     slfAuswahl = new Set();
     slfAuswahlOffen = false;
+    slfSuche = "";
     slfGesamt = {};
   }
 
@@ -22381,6 +22429,18 @@
         renderStadtLandFluss();
       }));
       document.getElementById("slfRaumStarten")?.addEventListener("click", () => slfEinladungenVerschicken());
+      /* Das Suchfeld baut die Liste neu — danach steht die Schreibmarke
+         wieder da, wo sie war, sonst tippt man ins Leere. */
+      const slfFeldS = document.getElementById("slfSucheFeld");
+      if (slfFeldS) {
+        slfFeldS.addEventListener("input", (e) => {
+          const pos = e.target.selectionStart;
+          slfSuche = e.target.value;
+          renderStadtLandFluss();
+          const neu = document.getElementById("slfSucheFeld");
+          if (neu) { neu.focus(); try { neu.setSelectionRange(pos, pos); } catch (x) { /* egal */ } }
+        });
+      }
       area.querySelectorAll("[data-slf-wahl]").forEach((b) => b.addEventListener("click", () => {
         slfWahlmodus = b.dataset.slfWahl; renderStadtLandFluss();
       }));
@@ -27401,6 +27461,14 @@
       // statt sich auf die Reihenfolge im Quelltext zu verlassen — die geriet beim
       // Nachtragen neuer Spiele immer wieder durcheinander.
       .sort((a, b) => a.name.localeCompare(b.name, "de"));
+    /* Zwei Listen statt einer: was man SEHEN darf (visibleGames) und
+       was man SPIELEN darf (offeneGames). Verschlossene Kacheln
+       erscheinen nur noch für Moderation/Beta. */
+    const verschlossen = visibleGames.filter(
+      (g) => !inReparatur(g) && !spielFreigeschaltet(g.sub));
+    const offeneGames = canSeeGatedGames
+      ? visibleGames
+      : visibleGames.filter((g) => inReparatur(g) || spielFreigeschaltet(g.sub));
     // WICHTIG — behebt einen echten Bug: vorher wurden hier dieselben .kompass-tile-Klassen wie
     // bei Dichter & Denker/Schnee von gestern verwendet — als das Kachel-Design für JENE Bereiche
     // gebaut wurde, verwandelten sich diese Spiele-Buttons ungewollt gleich mit in Kacheln, obwohl
@@ -27438,8 +27506,18 @@
         ${gesperrte.map((g) => g.name).join(", ")}.
         Wenn dort etwas nicht stimmt, nutze bitte den Fehler-Knopf im Spiel — die Meldung kommt mit dem aktuellen Spielstand direkt an.
       </div>` : ""}
+      ${/* GEMELDET: „Und ich möchte, dass diese Spiele-Kacheln
+            ausgeblendet sind, die nicht freigeschaltet sind."
+
+            Bisher stand ein noch nicht verdientes Spiel als Kachel mit
+            Schloss in der Liste. Für eine neue Person sah die Liste
+            dadurch aus wie eine Wand aus Schlössern. Jetzt sind sie
+            weg — und damit trotzdem niemand denkt, es gäbe nur diese
+            paar Spiele, steht darunter EINE Zeile, wie viele noch
+            warten. Wer Moderator:in ist oder die Rollenbrille abnimmt,
+            sieht weiterhin alles. */ ""}
       <div class="games-pill-list">
-        ${visibleGames.map((g) => {
+        ${offeneGames.map((g) => {
           /* GEMELDET: „die Gestaltung der Kacheln soll sich auch nicht
              ändern, zum Beispiel wenn da Schlösser dran sind — die
              sollen im selben Format sein."
@@ -27462,12 +27540,16 @@
             : g.name;
           return `
           <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}${baustelle ? " games-pill-baustelle" : ""}${passtZurListe ? " games-pill-wortliste" : ""}${listenSubs && !passtZurListe ? " games-pill-blass" : ""}" data-game-sub="${g.sub}" title="${escapeHtml(hinweis)}">
-            <span class="games-pill-emoji">${baustelle ? "🚧" : zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
+            <span class="games-pill-emoji${baustelle || zu ? " games-pill-emoji-ersatz" : ""}">${baustelle ? "🚧" : zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
             <span class="games-pill-name">${g.name}</span>
             <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}"></span>
           </button>`;
         }).join("")}
       </div>
+      ${!canSeeGatedGames && verschlossen.length ? `<p class="empty-note" style="margin-top:12px;">
+        🔒 ${verschlossen.length} ${verschlossen.length === 1 ? "weiteres Spiel wartet" : "weitere Spiele warten"} auf dich.
+        ${verschlossen.length === 1 ? "Es erscheint" : "Sie erscheinen"} hier von selbst, sobald du ${verschlossen.length === 1 ? "es" : "sie"} freigespielt hast.
+      </p>` : ""}
     `;
     document.getElementById("wortlisteBannerWeg")?.addEventListener("click", () => {
       wortlisteImBlick = null;
@@ -29381,6 +29463,61 @@
   let bwModus = "entdecken";
   let bwEntdeckt = new Set();   // Teil-Kennungen, die schon angetippt wurden
   let bwGewaehlt = null;        // das gerade angezeigte Teil
+
+  /* ============================================================
+     ANSICHTEN EINER SZENE
+     ------------------------------------------------------------
+     GEWÜNSCHT, zweimal:
+       „die Frau soll von vorne und von hinten in der Dusche zu sehen
+        sein, der Mann auch — man soll das wechseln können."
+       „Das Buch ist auch nicht gut gemacht, dann mach es lieber zum
+        Zuklappen und zum Aufklappen."
+
+     Beides ist dasselbe: ein Bild, von dem es mehrere Fassungen gibt,
+     und man tippt, um zwischen ihnen zu wechseln. Deshalb kann eine
+     Szene jetzt `ansichten` mitbringen — eine Liste aus
+     { id, titel, kulisse, teile }. Ist sie da, steht über dem Bild
+     eine Knopfreihe, und die gewählte Fassung ersetzt Kulisse und
+     Teile. Ohne `ansichten` ändert sich nichts.
+     ============================================================ */
+  let bwAnsicht = {};           // { szenenId: ansichtId }
+
+  function bwAnsichten(sz) {
+    return (sz && Array.isArray(sz.ansichten) && sz.ansichten.length > 1)
+      ? sz.ansichten : null;
+  }
+
+  /* Die Szene so, wie sie gerade gezeigt wird: mit der gewählten
+     Fassung. Alles andere (Titel, Größe, Lupen) bleibt. */
+  function bwMitAnsicht(sz) {
+    const an = bwAnsichten(sz);
+    if (!an) return sz;
+    const gewaehlt = an.find((a) => a.id === bwAnsicht[sz.id]) || an[0];
+    return Object.assign({}, sz, {
+      kulisse: gewaehlt.kulisse !== undefined ? gewaehlt.kulisse : sz.kulisse,
+      teile: gewaehlt.teile || sz.teile,
+    });
+  }
+
+  function bwAnsichtWaehlen(id) {
+    if (!bwSzene) return;
+    bwAnsicht[bwSzene.id] = id;
+    bwGewaehlt = null;
+    bwZoom = null;
+    renderBilderwelt();
+  }
+
+  /* Die Knopfreihe über dem Bild. Sie steht nur da, wo es wirklich
+     mehrere Fassungen gibt. */
+  function bwAnsichtReiheHtml(sz) {
+    const an = bwAnsichten(sz);
+    if (!an) return "";
+    const jetzt = (an.find((a) => a.id === bwAnsicht[sz.id]) || an[0]).id;
+    return `<div class="order-toggle bw-ansichten">
+      ${an.map((a) => `<button type="button" class="order-pill"
+          data-bw-ansicht="${a.id}" aria-selected="${a.id === jetzt}">${escapeHtml(a.titel)}</button>`).join("")}
+    </div>`;
+  }
   let bwRunde = null;           // laufende Übungsrunde
 
   const BW_RUNDEN = 12;
@@ -29769,7 +29906,7 @@
     return (szene.teile || []).filter((t) => t.zoom || (t.lupe && szeneMitId(t.lupe))).length;
   }
   function bwSzeneZeichnen(area) {
-    const s = bwSzene;
+    const s = bwMitAnsicht(bwSzene);
     const treffer = bwRunde ? new Set(bwRunde.getroffen) : new Set();
     const fertig = bwRunde && bwRunde.index >= bwRunde.plan.length;
     if (fertig) { bwErgebnisZeichnen(area); return; }
@@ -29786,6 +29923,7 @@
           <button type="button" class="order-pill" data-bw-modus="finden" aria-selected="${bwModus === "finden"}">🔍 Finden</button>
           <button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>
         </div>
+        ${bwAnsichtReiheHtml(bwSzene)}
         ${bwModus === "entdecken" ? `
           <p class="empty-note bw-hinweis">Tippe auf die Dinge im Bild — ${bwEntdeckt.size} von ${s.teile.length} entdeckt.</p>
           ${/* GEMELDET: „Man kommt gar nicht darauf, dass man die
@@ -29939,11 +30077,14 @@
       bwRunde = bwModus === "entdecken" ? null : bwNeueRunde();
       renderBilderwelt();
     }));
+    area.querySelectorAll("[data-bw-ansicht]").forEach((b) => b.addEventListener("click", () => {
+      bwAnsichtWaehlen(b.dataset.bwAnsicht);
+    }));
     /* Beim Hineinzoomen kommen Einzelteile dazu (Bettdecke, Bettlaken,
        Kissenbezug …). Die stehen nicht in szene.teile, sondern hängen am
        Ding selbst. Gesucht wird deshalb an beiden Stellen. */
     const bwTeilNach = (id) =>
-      (bwSzene.teile || []).find((x) => x.id === id) ||
+      ((bwMitAnsicht(bwSzene) || {}).teile || []).find((x) => x.id === id) ||
       bwZoomTeile(bwSzene).find((x) => x.id === id) ||
       null;
     const istUnterteil = (id) => Boolean(bwZoomTeile(bwSzene).some((x) => x.id === id));
@@ -36813,7 +36954,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "170";
+  const APP_VERSION = "174";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -36823,6 +36964,58 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "174": [
+      "🧍 **Die Menschen sind neu gebaut.** Das Wichtigste zuerst: drei Fehler haben bisher jede Figur verdorben. Jedes „Licht“ auf Wange, Brust oder Schulter wurde in Wahrheit SCHWARZ gezeichnet; der Kopf bekam einen anderen Lichtverlauf als Hals und Rumpf und stand deshalb als helle Platte darauf; und in den Szenen fehlte der Verlauf ganz, sodass dort flache Scherenschnitte standen. Alle drei sind behoben — deshalb sehen die Menschen jetzt aus wie Körper und nicht mehr wie ausgeschnittene Pappe.",
+      "👶 **Babys und Kinder sehen aus wie Babys und Kinder.** Der Schädel eines Säuglings ist zu zwei Dritteln Hirnschale, das Gesicht sitzt im unteren Drittel, die Wangen sind prall, die Augen groß und weit auseinander. Vorher stand dort ein kleiner Erwachsener mit eingefallenen Wangen. Die Reihe läuft jetzt stufenlos vom Säugling über Kleinkind, Kind und Jugendlichen bis zum alten Menschen.",
+      "👩 **Frau und Mann sind auseinanderzuhalten** — an der Figur (schmalere Schultern, schmalere Taille, breitere Hüfte) und am Gesicht (höherer Kieferwinkel, schmaleres Kinn, feinere Nase, höhere Brauen, vollere Lippen).",
+      "✋ **Hände haben Finger, Füße haben Zehen.** Vorher waren es Paddel mit weißen Punkten. Dazu Kniescheibe, Ellbogenknorren, Halsmuskel und Adamsapfel.",
+      "👕 **Die Kleidung folgt dem Körper.** T-Shirt und Hose waren Kästen; jetzt liegt das Shirt auf der Schulter, zieht sich an der Taille zusammen und wirft Falten aus der Achsel, die Hose sitzt auf dem Beckenkamm und wirft Falten in Leiste, Kniekehle und über dem Schuh.",
+      "🛒 **Der Supermarkt ist ein Supermarkt.** Zwei Regalwände bilden einen Gang, der nach hinten schmaler wird, auf vier Fachböden stehen die Waren in Reihen, an der Regalkante hängen Preisschienen, das Kühlregal hat Glastüren mit Spiegelung, und an der Kasse läuft ein Band.",
+      "🚉 **Der Bahnhof** hat ein Hallendach mit Trägern, Gleis mit Schwellen und Schotter, eine Bahnsteigkante mit Sicherheitsstreifen, Anzeigetafel, Uhr — und einen Zug mit Führerstand statt einer Kiste.",
+      "🎄 **Weihnachten sieht weihnachtlich aus.** Ein richtiger Weihnachtsmann mit Bauch, Pelzbesatz, Gürtel mit Goldschnalle und vollem Rauschebart, ein Baum mit Nadeln, Kugeln und Lichterkette, Kamin mit Feuer und Strümpfen, Schnee auf dem Fensterbrett.",
+      "🧱 **Die Räume haben Wände.** Jeder Raum hat jetzt Tiefe (Rückwand, Seitenwände, Boden nach hinten), Licht von oben, eine richtige Tapete — Raufaser, Streifen, Blümchen, Rauten — und einen Boden aus Dielen, Fliesen oder Laminat.",
+      "🌸 **Ostern, Winter, Jahrmarkt, Schwimmbad, Halloween und die Planeten** genauso: Frühlingswiese mit Halmen, Schnee mit Verwehungen und Fußspuren, Riesenrad mit Gondeln, Wasser mit Lichtbrechung, Mondlicht, Planeten mit Bändern und Hell-Dunkel-Grenze.",
+      "🍽️ **Die deutschen Gerichte.** 32 neue und überarbeitete Teller: Schnitzel mit blasiger Panade, Currywurst mit abzählbaren Scheiben, Weißwurst mit süßem Senf und Brezel, Sauerbraten mit Rotkohl und Klößen, Eisbein, Königsberger Klopse, Labskaus, Maultaschen, Grünkohl mit Pinkel, Gemüsesuppe, Linsensuppe, Rinderbraten — dazu Schwarzwälder Kirschtorte, Apfelstrudel, Bienenstich, Berliner, Käsekuchen, Streuselkuchen, Lebkuchen und Stollen.",
+      "🐾 **Die Tiere bleiben so, wie du sie ausgewählt hast.** Fassung für Fassung einzeln festgelegt — nichts wurde ungefragt ersetzt.",
+    ],
+    "172": [
+      "🦖 **Der Tyrannosaurus nach dem Foto.** Sein Schädel war zu lang und zu flach — das ist ein Allosaurus, kein T. rex. Jetzt stimmt das Verhältnis (1,50 m lang, 1,00 m hoch), der Hals ist kurz und dick, der Kopf wird waagerecht vor dem Körper getragen, und die Farbe ist braun-sandig statt grasgrün.",
+      "🛁 **Das Badezimmer ist neu gebaut.** Im ganzen Raum gilt jetzt EIN Maßstab: die Badewanne ist 150 cm lang, die Waschmaschine 60 × 85 cm, die Toilettenpapier-Rolle 12 cm — und damit endlich kleiner als das Klobecken. Die Waschmaschine hat Blende, Drehwähler, Waschmittel-Schublade, Bullauge mit Trommel und Stellfüße. Nichts schwebt mehr: was auf dem Boden steht, steht auf dem Boden, was an der Wand hängt, hängt an einer Halterung.",
+      "🐘 **Der Elefant ist kein Würfel mehr.** Sein Rumpf war fast so hoch wie lang; jetzt ist er ein Viertel länger als die Schulterhöhe, wie beim lebenden Tier. Der Kopf wird nicht mehr höher getragen als der Widerrist, und das Ohr endet über der Bauchlinie statt darunter.",
+      "🐌 **Das Schneckenhaus sitzt richtig.** Es saß zu weit hinten und zu hoch — wie ein Rucksack. Jetzt ruht es auf der Mitte des Rückens und liegt dem Körper auf.",
+      "🦆 **Die Ente.** Ihr Schnabel saß auf der Stirn und zeigte nach oben — das sah aus wie ein Tukan. Er sitzt jetzt auf halber Kopfhöhe, direkt vor dem Auge.",
+      "🪐 **Der Ring des Saturn läuft hinter dem Planeten weiter.** Vorher lag er komplett davor, als hätte man ihm einen Reifen umgehängt.",
+      "🎮 **Spiele, die du noch nicht freigeschaltet hast, sind ausgeblendet.** Statt einer Wand aus Schlössern steht jetzt eine Zeile darunter, wie viele noch auf dich warten. Sie erscheinen von selbst, sobald du sie freigespielt hast.",
+      "🔤 **Der Betonungs-Knopf ist weg.** Die Betonung schaltet man längst durch Tippen in den Textkasten ein — der Knopf sagte dasselbe noch einmal und nahm oben Platz weg.",
+      "📦 **Die Meldung über neue Inhalte** nennt keine Sollzahl mehr. „311 von 365 Tagen\" las sich wie ein Mangel; die Sammlung wächst einfach.",
+      "🎨 **Die Haut aller Tiere ist feiner** und kostet trotzdem weniger — sie wird jetzt aus einer wiederholbaren Kachel gebaut statt aus Zehntausenden Einzelschuppen.",
+      "🐆 **Leopard, Puma und Katze standen auf Löwenbeinen.** Die Beinstärken waren am Löwen gemessen und galten für alle — ein Leopard ist aber nur zwei Drittel so hoch. Daher das Gedrungene. Dazu: Leopard länger mit kleinerem Kopf, Puma deutlich schlanker.",
+      "✏️ **Die Schraffur ist weg.** Über Flanke und Bauch der Katzen lagen kräftige helle Striche — aus einem Meter Abstand liest man die als Bleistift-Schraffur, nicht als Fell.",
+      "📐 **Die Tiere sind jetzt am Foto ausgemessen, nicht geschätzt.** Aus jedem Referenzfoto wird das Tier freigestellt, sein Umriss nachgefahren und als Schablone abgelegt. Die Schablone liegt beim Zeichnen über der Figur — wo sie abweicht, wird die Figur korrigiert. Dabei kam heraus: die Bauchlinie stimmte bei fast keinem Tier. Nashorn 0,42 statt 0,20 der Körperhöhe, Elefant 0,55 statt 0,38, Fuchs 0,56 statt 0,43. Alle standen zu hoch auf den Beinen und wirkten deshalb wie Spielzeug.",
+      "🐆 **Die Katzenköpfe waren zu groß.** Am Foto liegt der Scheitel einer gehenden Großkatze auf Höhe der Rückenlinie. Gezeichnet saß schon der Kopfmittelpunkt darüber — der Kopf ragte um ein Viertel der Körperhöhe heraus.",
+      "🐋 **Wal, Delfin und Hai waren zu gedrungen.** Am Foto nachgemessen ist ein Buckelwal 4,3-mal so lang wie hoch, ein Delfin sogar 5,5-mal — gezeichnet waren sie nur 2,6- und 3,0-mal. Ein Meerestier, das kürzer ist als es sein soll, liest jeder sofort als Spielzeug.",
+      "🐹 **Hamster und Meerschweinchen neu gezeichnet.** Beide waren eine Ellipse mit einer Kugel davor. Jetzt sind Kopf und Rumpf EINE Form — ein Hamster hat keinen Hals —, der Bauch ist weiß mit klarer Grenze über der Flanke, und das Meerschweinchen hat die drei Farbfelder, die es wirklich hat.",
+      "🦊 **Der Fuchs** hatte eine Schnauze so lang wie der halbe Kopf, spitz wie ein Rüssel — das ist ein Ameisenbär. Jetzt kurz und fein, wie auf dem Foto, mit kleineren Ohren und schwarzen Läufen, die erst unter dem Ellbogen anfangen.",
+      "🦏 **Das Nashorn** trug den Kopf auf Rückenhöhe. Ein Breitmaulnashorn grast — es hält den Kopf tief, fast auf Kniehöhe, und der Schädel ist lang und keilförmig.",
+      "🙂 **Die Gesichter sahen eingefallen aus.** Es lag nicht an einem zu starken Schatten, sondern daran, dass überall Schatten lagen und nirgends ein Licht. Auf einem Foto ist die Wange die hellste Stelle des Gesichts — heller als die Stirn. Dieses eine fehlende Licht hat jedes Gesicht hohl gemacht.",
+      "🐺 **Der Wolf** war so lang wie hoch — das ist die Form eines Terriers. Jetzt ist er ein Drittel länger als hoch, mit tiefem Brustkorb, dunklem Sattel über dem Rücken und einer Rute, die wirklich herabhängt.",
+      "🧒 **Kinder haben endlich Kindergesichter.** Sie hatten Erwachsenengesichter im Kleinformat, weil die Augen mit dem Kopf mitgeschrumpft sind. Ein Kinderauge ist aber fast so groß wie ein Erwachsenenauge — im kleinen Gesicht wirkt es dadurch riesig. Dazu: höhere Stirn, tiefere Augenlinie, kürzere Nase, schmalerer Kiefer.",
+    ],
+    "171": [
+      "🐾 **Alle Tiere neu gebaut.** Katze, Elefant, Nashorn, Zebra, Leopard, Ente, Wellensittich und Wal — jedes nach den echten Körpermaßen. Neu dabei: der **Puma**.",
+      "🦖 **Der Tyrannosaurus** hat den Kopf, den er wirklich hatte: kurzer dicker Hals, waagerechter Schwanz, Beine unter der Mitte. Auch Triceratops, Stegosaurus und Velociraptor erkennt man jetzt auf den ersten Blick.",
+      "🦓 **Keine übereinanderliegenden Streifen mehr.** Beim Zebra grenzen Hals, Rumpf und Keule aneinander, statt sich zu kreuzen; beim Leoparden stehen die Rosetten auf einem Raster.",
+      "🧍 **Frau und Mann sind zu unterscheiden.** Die Frau hat eine Brust und eine Taille, der Mann Brustmuskeln und einen breiteren Kiefer. Die Ohren sind kleiner.",
+      "🍽️ **Im Restaurant schwebt nichts mehr.** Jedes Ding steht auf der Tischplatte — und über die Lupe kommt man an den gedeckten Tisch heran: richtiges Messer, richtige Gabel, richtiger Löffel, jedes Stück einzeln antippbar.",
+      "🚿 **Die Dusche** zeigt Frau und Mann von vorn und von hinten. Antippen wechselt.",
+      "📖 **Das Buch** lässt sich zuklappen und aufklappen.",
+      "🧺 **Waschmaschine und Trockner** sind richtige Geräte geworden — mit Bullauge, Trommel, Programmwahl und Waschmittelschublade.",
+      "🌲 **Neu im Wald:** Hirsch, Wildschwein, Eichhörnchen, Igel, Eule und Wolf. Die alten Kringel-Tiere in den Übersichten sind alle ersetzt.",
+      "🫁 **Die Körpertafel** hat keine schwebenden Markierungen mehr: Kopf, Hand und Fuß stehen groß daneben, und man tippt direkt auf das Körperteil.",
+      "🎃 **Drei neue Bilder:** Halloween, das Schwimmbad und das Jobcenter — mit Antrag, Bescheid, Termin und Wartenummer.",
+      "👵 **An Weihnachten und Ostern stehen jetzt Menschen im Bild** — Opa, Oma, Kinder und die Mutter.",
+      "🏥 **Arztpraxis, Supermarkt und Bahnhof aufgeräumt:** Glasschrank, Regalwand und Bahnsteigkante — nichts hängt mehr in der Luft.",
+    ],
     "170": [
       "🧍 **Die Menschen sind neu gezeichnet.** Echte Kopfgröße, natürlichere Gesichter, richtige Proportionen vom Baby bis zum Großvater.",
       "🪑 **Im Baukasten sitzt man jetzt wirklich.** Auf dem Stuhl, auf dem Sofa, auf der Toilette — und immer in der richtigen Größe zum Möbel.",
@@ -37076,6 +37269,52 @@ An einem Morgen lief ein kleiner Fuchs los…
      dürfen.
      ============================================================ */
   const APP_CHANGELOG_INTERN = {
+    "174": [
+      "**Drei Fehler, die jede Figur verdorben haben — das war die eigentliche Ursache, nicht die Zeichnung.** 1) `_fleck()` benutzte `currentColor` in einem Verlaufsstopp. Der Browser loest das am VERLAUFS-Element in `<defs>` auf, und dort ist es Schwarz: jedes Licht auf Wange, Brustbein, Schulter und Knie war ein schwarzer Schmierfleck. Jetzt ein Verlauf je Farbe. 2) Der Kopf lag im `umriss()`-Formensatz als `<g transform=...>`; der Figurenverlauf ist `userSpaceOnUse`, also verschob das `transform` auch den Verlauf — der Kopf bekam eine andere Stelle des Tonwertbogens und stand als helle Platte mit Naht am Hals. Die Kopfformen werden jetzt gerechnet statt transformiert. 3) `figur()` lieferte die Verlaufs-Defs nur unterhalb voller Feinheit mit; in den Szenen zeigte jeder weiche Schatten ins Leere.",
+      "**Kennungskollision:** `_FIG_LICHT` hiess `fl3`, `fl7` — genauso wie die Verlaeufe von `szenen_kit.formlicht()`. In jeder Szene mit mehreren Figuren bekam jede Figur ab der zweiten einen fremden Verlauf als Fuellung. Jetzt `km<N>`.",
+      "**`umriss()`** liess um jede innere Form einen dunklen Antialias-Saum stehen (der Gliederpuppen-Eindruck) — behoben durch eine haarfeine Kontur in der Fuellfarbe.",
+      "**Schaedel:** `backe` und `kinn_f` waren Faktoren ueber 1,00; der Wangenpunkt lag damit weiter aussen als das Jochbein darueber, und der Umriss lief vom Scheitelbein senkrecht zum Kieferwinkel — der Kopf wurde nach unten breiter. Beide sind jetzt Bauchigkeiten (0 bis 0,45) mit Deckelung an der oberen Landmarke.",
+      "**Saeugling gemessen:** Hirnschaedel 65 % der Kopfhoehe, `augen_y` 0,125 → 0,148, bigonial 5,6 cm (Kiefer 0,740 → 0,600), Augenabstand 2,06 cm bei 1,85 cm Augenbreite. Kleinkind: Kopfumfang 49 cm → Breite 14,8 bei Hoehe 17,6 (1,19 statt 1,27).",
+      "**Neue `_modellierung()`** am Koerper: Licht auf Schulterkuppe, Brustbein, Bauchmitte, Oberschenkelvorderseite, Schienbein, Kniescheibe; Schatten in Drosselgrube, unter dem Rippenbogen, an beiden Flanken, Leiste, Achsel und Innenseite jedes Gliedes, alles am Koerperumriss beschnitten. Drei neue Palettenrollen `form_h/form_s/form_t`, weil zwischen `haut` und `schatten` nur 18 % Helligkeit liegen.",
+      "**`_rumpf_kontur`** nimmt fuer `weite` jetzt auch eine Funktion der Hoehe: Schulter 0,74 · Brustkorb 1,04 · Taille Frau 0,56 / Mann 0,82 · Huefte wieder abstehend. Beim Saeugling auf ein Viertel gedaempft.",
+      "**Kulissen:** neue Helfer in `szenen_kit.py` — `halle_kulisse` (Fluchtpunkt, Bodenfliesen als `<pattern>`, Deckenleuchten, Dachtraeger), `wiesen_kulisse`, `schnee_kulisse`, `wasserflaeche` mit Kaustik-Pattern, dazu `flucht()`. `zimmer_kulisse` mit Tapeten- und Bodenmustern als `<pattern>`.",
+      "**Essen:** neue Werkzeuge `_tellergrund`, `_suppenspiegel`, `_tortenstueck`, `_schmorfleisch`, `_biskuitlage`, `_puderzucker`. Szene `gerichte` 829 kB / 25 Teile → 2216 kB / 57 Teile; dafuer stehen `stroke-linecap`/`-linejoin` jetzt einmal auf der Huelle statt an jedem Pfad (−150 kB).",
+      "**Ein Pfadfehler gefunden:** ein `C`-Befehl im Kartoffelpuerre hatte vier statt sechs Zahlen und loeschte in sieben Szenen den ganzen Pfad.",
+      "**`tiere-zurueck.py`** (neu) setzt nach jedem Bauen jedes Tier auf die vom Nutzer gewaehlte Fassung. Die alten Zeichnungen liegen nicht mehr als Python vor, werden aber aus den ausgelieferten Szenendateien der jeweiligen Fassung geholt (`git show <commit>:szenen/<name>.js`), samt Platz. 62 Eintraege in 9 Szenen.",
+      "**Umfang:** Szenen 20 068 kB, Figuren 12 211 kB. `pruef-pfade.py`: 75 Zeichnungen, 78 Szenen, 0 Fehler. Seitenfehler 0. 10 956 Figurenkombinationen fehlerfrei gerendert.",
+    ],
+    "172": [
+      "\U0001f996 **Tyrannosaurus komplett neu.** tier_dino.tyrannosaurus() von Grund auf: Schaedel hat ein EIGENES Koordinatennetz (K(sx,sy), Nullpunkt = Kiefergelenk, +x zur Schnauze), der Unterkiefer dreht ueber U(sx,sy) um dasselbe Gelenk (Gape 0.275 rad). _KM=1.15 skaliert den ganzen Schaedel um das Gelenk. Verhaeltnis Laenge:Hoehe von 1.9 auf 1.5 (Foto-Referenz). _KY0 von -424 auf -368: der Kopf wird waagerecht getragen statt hoch. Farbpalette von Oliv auf Braun-Sand. Rumpf+Hals+Schaedel+Unterkiefer sind EIN Pfad ueber _polyd(_catmull(...)) statt handgeschriebener C-Befehle.",
+      "\U0001f41b **Gefundener Bug: _schlauch() erwartet HALBE Breiten.** Im T-Rex wurden volle Breiten uebergeben (74/42/34 statt 37/21/17). Das Polygon schlug sich selbst und ergab eine Schleife, die weit ueber das Bein hinausragte — als clipPath benutzt hiess das: das Schuppenfeld war praktisch unbeschnitten und lag als blasses Parallelogramm hinter dem Tier. Drei Aufrufe korrigiert.",
+      "\U0001f3ad **Schuppen als PATTERN statt Einzelellipsen.** Neu: schuppenmuster()/schuppenhaut_fein() in tier_dino.py. Eine Kachel mit 7x8 Schuppen (jede viermal gesetzt, damit sie ueber die Kachelkante laeuft) wird per <pattern patternUnits=userSpaceOnUse> wiederholt. Der T-Rex fiel dadurch von 3114 kB auf 317 kB — und darf jetzt FEINERE Haut haben als vorher. Messwert: 318 kB bei halb so grosser Korngroesse.",
+      "\U0001f6c1 **Badezimmer in szene_badezimmer.py ausgelagert.** Ein Maszstab fuer den ganzen Raum (_m(): 1 Einheit = 1,4 cm), jedes Teil hat seinen Ursprung an der Auflage, alle mit steht=True (auflegen.js laesst sie in Ruhe). Neue Zeichnungen: waschmaschine() mit Blende/Drehwaehler/Schublade/Bullauge mit Trommelloechern/Stellfuessen, badewanne() mit gerolltem Rand und Fuessen, waschbecken() auf Saeule, toilette() mit Sitz und Spuelkasten, dusche(), zahnputzbecher(), klopapier() (12 cm statt 25 cm ⌀).",
+      "\U0001f418 **Elefant nach Foto-Referenz.** Rumpf von 84 auf 106 Einheiten Laenge bei 90 Hoehe (1.18:1 statt 0.94:1), Hinterbeine von x=-37/-30 auf -54/-46, Keule und Brustkorb mitgewandert, Kopf 5-7 Einheiten tiefer (er stand HOEHER als der Widerrist), Ohr-Zipfel von y=34 auf 44 (er reichte unter die Bauchlinie).",
+      "\U0001fa90 **Saturnring.** _planet() zeichnet den Ring jetzt ZWEIMAL: einmal vor dem Planetenkreis (die ferne Haelfte, die der Planet dann verdeckt) und einmal danach, beschnitten auf y>0 in der um -16 Grad gedrehten Ringebene.",
+      "\U0001f40c **Schneckenhaus** HX/HY von (-8,-36) auf (6,-29), Muendungsellipse von 0.52/0.30 auf 0.40/0.22 der Windungsbreite.",
+      "\U0001f986 **Entenschnabel** um 4.3 Einheiten nach unten (er lag auf Stirnhoehe) und um ~10 % gekuerzt; der helle Augenring sass 2.3 Einheiten NEBEN dem Auge.",
+      "\U0001f3ae **Spielekacheln.** renderGamesOverview(): neue Liste offeneGames = visibleGames ohne die noch nicht freigeschalteten, ausser fuer canSeeGatedGames. Darunter eine Zeile mit der Anzahl verschlossener Spiele.",
+      "\U0001f5e3\ufe0f **leseBetonungKnopfHtml() gibt \"\" zurueck**, und betonungsSchalterEinhaengen() raeumt zusaetzlich .lese-betonung-knopf ab.",
+      "\U0001f4d0 **Neues Werkzeug: spur.py + passen.py.** spur.py trennt in jedem Feld eines Referenzblattes das Tier vom Hintergrund — nicht ueber eine feste Farbe (der Hintergrund hat einen Verlauf), sondern ueber den Abstand zu dem Grau, das am jeweiligen Zeilenrand gemessen wird; der Schlagschatten wird ueber die Saettigung abgetrennt, sonst kleben die Beine zusammen. Danach Moore-Randverfolgung, Glaettung, Douglas-Peucker auf ~100 Punkte, Normierung auf Hoehe 100 mit Ursprung am Boden. passen.py legt diese Schablone deckungsgleich ueber die vorhandene Zeichnung. Gemessene Bauchlinien (Anteil der Gesamthoehe): Elefant 0.38, Nashorn 0.20, Nilpferd 0.28, Zebra 0.41, Loewe 0.37, Leopard 0.47, Puma 0.44, Wolf 0.44, Fuchs 0.43, Katze 0.30.",
+      "\U0001f40b **Meerestiere gestreckt.** wal/delfin/hai bekommen einen Faktor _L auf X(): 1.42 / 1.50 / 1.18. Der Trick: nur X() wird gestreckt, nicht der ganze Knoten — dadurch bleiben Kreise (Auge, Tuberkel) RUND, weil sie ueber ihren Radius gezeichnet werden. Ein <g transform=scale(x,1)> haette das Auge zur Ellipse gemacht.",
+      "\U0001f439 **_hamster()/_meerschweinchen() in szenen_k.py neu.** Vorher: el() fuer den Rumpf + c() fuer den Kopf, also zwei Formen mit sichtbarer Fuge. Jetzt eine durchgehende Silhouette als Pfad, formlicht darauf, Bauchfeld als eigener Pfad, Scheckung per clipPath im Koerper.",
+      "\U0001f9d2 **Kindergesichter — der eigentliche Fehler stand in mensch_bau._augen().** Dort stand als Kommentar korrekt, ein Kinderauge sei absolut fast so gross wie ein Erwachsenenauge — die Rechnung setzte das aber nicht um: `cm = kh / 24.45` liess das Auge MIT dem Kopf schrumpfen, es blieb also verhaeltnismaessig gleich gross. Genau das macht ein Gesicht erwachsen. Neu: kinderauge = 1.32/1.22/1.12 auf bw, bh, ir, pu (Pupillenabstand nur zu 45 %). Dazu im Kopfsatz stirn 0.99->1.11, augen_y 0.065->0.145, nase 0.72->0.50, kiefer 0.735->0.706 (Kind), _untergesicht 0.90->0.80.",
+      "\U0001f405 **Katzen — Beinstaerken waren ABSOLUT.** In _raubkatze() standen [25, 13.5, 9.0, 7.8] fest; gemessen am Loewen (H=60). Leopard H=42 bekam damit 60 % seiner Schulterhoehe als Oberschenkel statt 42 %. Neu: BEIN = H/60 skaliert jede Staerke mit, der Loewe bleibt unveraendert. Dazu Leopard LG 1.16->1.28 / KOPF 1.16->0.97, Puma LG 1.10->1.34 / KOPF 1.00->0.86, BAUCH je Art. fein_fell fuer puma/leopard auf 0.22/0.26.",
+      "\U0001f50e **Neues Pruefskript pruef-pfade.py** rechnet fuer JEDEN gezeichneten Pfad die Befehls-Arity nach (C=6, Q=4, A=7). Ein falscher Buchstabe loeschte vorher stillschweigend den ganzen Pfad im Browser. Stand: 75 Zeichnungen, 78 Szenen, 0 Fehler.",
+    ],
+    "171": [
+      "\U0001f43e **Tiere.** Neu: tier_wald.py (hirsch, wildschwein, eichhoernchen, igel, eule, wolf), tier_zoo.leopard/flamingo/puma/katze. Hauskatze und Puma kommen aus _raubkatze() mit eigenen Arten — WICHTIG: der Bauplan rechnet mit Loewenmassen (H um 55) und einige Zahlen darin sind ABSOLUT (Beinstaerken, Rippenbogen). Setzt man H auf 30, bleiben die Beine loewendick. Die Katze wird deshalb in Loewengroesse gebaut und am Ende als Ganzes auf 27/52 skaliert. Neuer Parameter BAUCH hebt die Bauchlinie je Art (Hauskatze +0.115).",
+      "\U0001f984 **Zebra/Leopard — keine Ueberlappung.** Zebra: drei Felder, die ANEINANDERGRENZEN statt sich zu ueberlagern (Rumpf bis x=-8, Keulenfaecher ab x=-9.6). Der Faecher besteht aus GERADEN Strahlen aus einem Punkt unterhalb des Bauches — zwei Strahlen aus einem Punkt treffen sich nur dort, also kann sich nichts kreuzen. Gebogene Baender taten das zwangslaeufig. Leopard: festes Raster mit halbem Zeilenversatz, Radius auf schritt/(rad*3.4) gedeckelt.",
+      "\U0001f996 **Tyrannosaurus.** Hals 148->134 breit und kuerzer, Kopf als GRUPPE um Faktor 1.42 vergroessert und versetzt (t[_kopf_von:] wird am Ende in ein <g transform> gewickelt — so bleiben Fenster, Zaehne und Auge relativ zum Schaedel richtig). Rumpf von 476 auf 300 Einheiten gekuerzt, Huefte von x=-60 auf x=+16, Beine +50, Schwanz waagerecht. Triceratops: Kopfmassstab KX/KY 0.70->0.90, Stirnhoerner laenger. Stegosaurus: Plattenhoehe 15+60 -> 22+98, Breite x1.18. Velociraptor: Federrichtungen von (-0.93,-0.36) auf (-0.985,-0.14) — anliegend statt abstehend, Laengen -35%, Anzahl +40%.",
+      "\U0001f418 **Elefant/Nashorn.** Rueckenlinie mit echtem Widerrist (Elefant y=84.4 ueber Huefte 76.5), Bauch +6 (laengere Beine), Ohr von 46 auf 63 Einheiten Hoehe. Nashorn: Nackenbuckel y=63, Senke y=55, Kopf +8 groesser und tiefer getragen.",
+      "\U0001f433 **Wal.** Die Brustflosse war reinweiss und die Tuberkel lagen als eigene Kreise DANEBEN — das las sich als zweites Objekt unter dem Tier. Jetzt _dunkler(WAL_FLOSS,0.10), Knubbel per _clip IN der Kante, dazu ein Schattensaum am Ansatz.",
+      "\U0001f9cd **mensch_bau.** Busen: von reiner Schattierung auf eine echte FORM (geschlossener Pfad in _heller(haut,0.035), drei Lagen mit abnehmender Deckkraft statt Umrisslinie, starke Unterbrustfalte). _profil() bekommt von vorn einen Busenfaktor auf die Breite (x1.115 auf Brusthoehe) — ohne den bleibt der Umriss ein Rohr. Neu beim Mann: Brustmuskelplatte mit unterem Rand und Mittelfurche. Ohren: ab 0.048 abstehend, Laenge 0.140 kh.",
+      "\U0001f37d\ufe0f **Tisch/Restaurant.** Neue Zeichnungen _gabel()/_messer()/_loeffel() in szenen_g.py (Zinkenblatt mit drei Schlitzen; Klinge mit Anschliff, Backe, Griff; eifoermige Laffe mit Vertiefung). Jedes Ding auf der Tafel bekommt _liegt() — einen Schlagschatten; ohne den schwebt in einer Draufsicht alles. NEU in szenen_kit.teil(): Parameter `steht`, und auflegen.js ueberspringt Teile mit t.steht. Ohne das liess die Schwerkraft-Rechnung das ganze Gedeck vom runden Tisch auf den Fussboden fallen (sie sucht eine Auflage UNTER der Mitte und findet unter einer schraegen Tischplatte nur den Boden).",
+      "\U0001f6bf **Ansichten.** Neu in app.js: bwAnsicht/bwAnsichten/bwMitAnsicht/bwAnsichtWaehlen/bwAnsichtReiheHtml. Eine Szene darf `ansichten: [{id,titel,kulisse,teile}]` tragen; die erste Fassung laesst kulisse/teile weg und erbt sie von der Szene (sonst steht jede Zeichnung doppelt in der Datei). Benutzt von dusche (4 Fassungen) und buch_detail (2).",
+      "\U0001f4cf **tier_tafel.py + mess-tiere.py.** Die Uebersichtstafeln (tiere_welt, wald) benutzen jetzt die ECHTEN Tiere. Dafuer wird jedes Tier einmal im Browser gemessen (tier_mass.py, 58 Eintraege) und per tier_tafel.tier(pfad, anteil) auf Zellengroesse gebracht. `anteil` steuert, wie viel der Zelle es fuellen darf — so bleibt der Groessenunterschied sichtbar, ohne dass die Maus zum Punkt wird.",
+      "\U0001f3ac **Drei neue Szenen** in szenen_k.py: halloween (340x230, Nachtkulisse mit Haus, Mond, Kuerbissen, _kuerbis/_fledermaus/_spinnennetz), schwimmbad (340x230, Becken mit Bahnentrennern) und jobcenter (340x220). Weihnachten und Ostern bekommen Personen aus mensch_bau. Insgesamt 61 -> 64 Szenen.",
+      "\U0001f9f9 **Aufgeraeumt.** Arztpraxis: Glasschrank und Garderobenhaken in die Kulisse, alle Kleinteile mit steht=True hineingelegt. Supermarkt: Rueckwand mit sechs Regalfaechern, Kuehlnische. Bahnhof: Bahnsteigkante mit gelbem Streifen und Treppenpodest. Wichtig dabei: Kulissenteile kann auflegen.js NICHT sehen (es misst nur teile), deshalb muss alles, was auf einer Kulissenflaeche steht, steht=True tragen — sonst faellt es auf den Fussboden.",
+      "\U0001f9ba **Koerpertafel.** Keine Punkte und Zeigerlinien mehr. Drei Ausschnitte derselben Figur (Kopf 2.75x, Hand 2.90x, Fuss 2.90x) plus bereich()-Flaechen auf den Koerperteilen selbst. Die Mittelpunkte der Ausschnitte sind GEMESSEN (_mess_figur.py), nicht geschaetzt: die Marke `fuss` lag im Geruest dort, wo die Fussspitze in der SEITENansicht steht — von vorn also neben dem Fuss. koerpermarken() rechnet Fuss und Zeh fuer blick=vorn/hinten jetzt senkrecht unter den Knoechel.",
+    ],
     "167": [
       "\U0001f3ae **Einladung.** Zwei echte Fehler: (1) renderMiniChallengeBarCached() bekam von spielEinladungEinsetzen() eine LEERE Rerender-Funktion — das Aufklappen merkte sich den Zustand, zeichnete ihn nie. (2) Im Sperr-Zweig bekam der Kasten keine id; nach einer Freigabe fand getElementById(\"\") den Kasten nie wieder. Beides behoben, container ist jetzt der Kasten selbst statt der ganzen Unteransicht.",
       "\U0001f9ea **Beta je Spiel.** Neu in backend.js: updateChallengeExtra(), betaListeFuerSpiel(), istBetaFuerSpiel(), setBetaFuerSpiel(), istBetaFuerIrgendeinSpiel(). Gespeichert unter feature_flags[\"beta:<flagKey>\"] als Liste von Konto-Kennungen — keine neue Tabelle, keine neue Rechteregel. isFeatureOn() prueft die Liste mit.",
