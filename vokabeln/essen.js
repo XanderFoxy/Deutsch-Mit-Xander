@@ -27,6 +27,22 @@
 */
 window.DMA_VOKABELN = window.DMA_VOKABELN || {};
 window.DMA_VOKABELN["Essen & Trinken"] = [
+  {"word": "die Suppennudel", "de": "eine sehr kleine Nudel in Ring- oder Sternform für die Suppe", "syl": "SUP-pen-nu-del", "en": "soup noodle", "example": "In der Brühe schwimmen Suppennudeln.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der Rinderbraten", "de": "ein großes Stück Rindfleisch, im Ofen gebraten", "syl": "RIN-der-bra-ten", "en": "roast beef", "example": "Der Rinderbraten kommt mit Kartoffelklößen auf den Tisch.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der Kartoffelkloß", "de": "ein runder Kloß aus geriebenen oder gekochten Kartoffeln", "syl": "Kar-TOF-fel-kloß", "en": "potato dumpling", "example": "Die Kartoffelklöße ziehen im heißen Wasser, sie kochen nicht.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der süße Senf", "de": "ein milder, bräunlicher Senf mit ganzen Körnern", "syl": "SÜ-ße SENF", "en": "sweet mustard", "example": "Ohne süßen Senf schmeckt die Weißwurst nur halb so gut.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Königsberger Klopse", "de": "helle Fleischklößchen in einer weißen Soße mit Kapern", "syl": "KÖ-nigs-ber-ger KLOP-se", "en": "meatballs in caper sauce", "example": "Königsberger Klopse isst man mit Salzkartoffeln.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Kaper", "de": "die eingelegte Blütenknospe eines Strauchs, klein und würzig", "syl": "KA-per", "en": "caper", "example": "In der hellen Soße schwimmen die Kapern.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "das Apfelmus", "de": "ein weiches Mus aus gekochten Äpfeln", "syl": "AP-fel-mus", "en": "apple sauce", "example": "Das Apfelmus kocht sie selbst ein.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der Semmelknödel", "de": "ein Kloß aus altem Brötchen, Milch und Ei", "syl": "SEM-mel-knö-del", "en": "bread dumpling", "example": "Die Soße schmeckt am besten zum Semmelknödel.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Käsespätzle", "de": "Spätzle mit geschmolzenem Käse und Röstzwiebeln", "syl": "KÄ-se-spätz-le", "en": "cheese spaetzle", "example": "Nach der Wanderung bestellen alle Käsespätzle.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Maultaschen", "de": "große gefüllte Teigtaschen aus Schwaben", "syl": "MAUL-ta-schen", "en": "Swabian pasta pockets", "example": "Maultaschen gibt es in der Brühe oder in der Pfanne.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Pinkel", "de": "eine grobe Grützwurst, die zum Grünkohl gehört", "syl": "PIN-kel", "en": "Pinkel sausage", "example": "Auf den Grünkohl kommt eine Pinkel.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "das Labskaus", "de": "ein rosabrauner Brei aus Kartoffeln, Pökelfleisch und Roter Bete", "syl": "LABS-kaus", "en": "labskaus", "example": "Zum Labskaus gehören Spiegelei, Rollmops und Gurke.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "der Matjes", "de": "ein junger, mild gesalzener Hering", "syl": "MAT-jes", "en": "soused herring", "example": "Im Frühsommer gibt es den ersten Matjes.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "das Fischbrötchen", "de": "ein Brötchen mit Fisch, Zwiebeln und Salat", "syl": "FISCH-bröt-chen", "en": "fish roll", "example": "Am Hafen isst jeder ein Fischbrötchen.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "das Wurstbrot", "de": "ein Butterbrot mit Wurstscheiben darauf", "syl": "WURST-brot", "en": "sausage sandwich", "example": "In der Brotdose liegt ein Wurstbrot.", "level": "A2", "theme": "Essen & Trinken"},
+  {"word": "die Schwarzwälder Kirschtorte", "de": "eine Torte aus Schokoladenböden, Sahne, Kirschen und Kirschwasser", "syl": "SCHWARZ-wäl-der KIRSCH-tor-te", "en": "Black Forest gateau", "example": "Zum Geburtstag wünscht sie sich Schwarzwälder Kirschtorte.", "level": "A2", "theme": "Essen & Trinken"},
   /* Grundwortschatz, von Hand gepflegt (kam aus dem alten Sammelteil teil-1.js) — 1078 Eintraege. */
   {"word": "das Baklava", "de": "ein süßes Gebäck aus dünnen Teigblättern, Nüssen und Sirup", "syl": "Bak-LA-va", "en": "baklava", "example": "Zum Tee gibt es bei uns Baklava.", "level": "B1", "theme": "Essen & Trinken"},
   {"word": "der Halva", "de": "eine feste Süßigkeit aus Sesammus und Zucker", "syl": "HAL-va", "en": "halva", "example": "Halva schmeckt nussig und sehr süß.", "level": "B1", "theme": "Essen & Trinken"},
