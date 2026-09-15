@@ -3056,14 +3056,23 @@
 .games-pill-emoji {
   font-size: 1.3rem;
   flex-shrink: 0;
-  /* Genau so hoch wie die gezeichneten Spielsymbole (26px). Damit
-     nimmt ein Schloss exakt denselben Platz ein wie ein Symbol — die
-     Kachel bleibt im gleichen Format, ohne dass sich am Aussehen der
-     übrigen Kacheln etwas ändert. */
+}
+/* GEMELDET: „bring die alten Kacheln von den Spielen zurück — du hast die
+   in der Form irgendwie geändert. Du solltest nur bei den Schlössern diese
+   Kacheln anpassen an die, die da waren."
+
+   Richtig. Vorher stand hier height/display auf ALLEN Zeichenfeldern, um
+   das Schloss auf Symbolmaß zu bringen — damit wurde aber jede Kachel um
+   die Unterlänge der Zeile flacher, also alle. Dieses Maß gilt jetzt NUR
+   noch für das Schloss (und die Baustelle): ein Kästchen von 26 px, das
+   auf derselben Grundlinie sitzt wie ein gezeichnetes Symbol. An den
+   offenen Kacheln ändert sich dadurch gar nichts mehr. */
+.games-pill-emoji-ersatz {
+  display: inline-block;
+  width: 26px;
   height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  line-height: 26px;
+  text-align: center;
 }
 .games-pill-name {
   line-height: 1.2;
@@ -4828,7 +4837,22 @@ button.sbk-gruppe {
    Format gleich: dasselbe Zeichenmaß, keine Zusatzzeile. Was noch
    fehlt, steht auf dem Schloss-Bildschirm nach dem Antippen (dort ist
    auch der Fortschrittsbalken) und im Tooltip der Kachel. */
-.games-pill-zu { opacity: 0.72; }
+/* GEMELDET: „Ich will das Original haben, wie es erst war."
+   Hier stand opacity 0.72 — zusammen mit dem Schloss-Emoji statt des
+   gezeichneten Symbols machte das aus einer verschlossenen Kachel eine
+   sichtbar ANDERE Kachel. Beides ist zurückgenommen: die Kachel sieht
+   aus wie jede andere, das Schloss sitzt als kleines Zeichen in der
+   Ecke und liegt absolut, ändert also weder Höhe noch Form. */
+.games-pill-zu { position: relative; }
+.games-pill-schloss {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.66rem;
+  line-height: 1;
+  opacity: 0.85;
+  pointer-events: none;
+}
 .games-pill-bedingung {
   display: block;
   font-size: 0.68rem;
@@ -5377,6 +5401,35 @@ button.sbk-gruppe {
    aus — nur die Schrift ist jetzt zu lesen.
    ============================================================ */
 .tape-tab[aria-selected="true"] { color: var(--cream-50); }
+/* ---------------------------------------------------------------
+   KEIN SPRUNG BEIM DESIGNWECHSEL — Flickenteppich
+   ---------------------------------------------------------------
+   NACHGEMESSEN über alle 67 Designs auf derselben Ansicht: alles ist
+   überall gleich hoch — Kopfbereich 64 px, Wetterstreifen 43,8 px,
+   Laufband 35 px, Reiter 36 px, Navigation 61 px — MIT EINER
+   AUSNAHME. Flickenteppich zeichnet den gewählten Reiter mit einem
+   2 px starken Rand statt 1 px (themes.css). Ein Rand zählt zur
+   Höhe: der Reiter wurde dadurch 38 statt 36 px hoch und die
+   Navigation 63 statt 61 px. Wer von einem anderen Design auf
+   Flickenteppich umstellte, sah die ganze Seite darunter um zwei
+   Pixel rutschen — genau so ein Sprung soll es nicht geben.
+   (box-sizing: border-box hilft hier nicht: es greift nur, wenn eine
+   Höhe ausdrücklich gesetzt ist, und die Reiter sind inhaltshoch.)
+
+   Der kräftige dunkle Rand GEHÖRT zum Flickenteppich-Charakter und
+   bleibt deshalb erhalten — er wird nur nach innen verlegt: 1 px
+   echter Rand für die Höhe, 1 px als innen liegender Schatten
+   obendrauf. Sichtbar ist dieselbe Stärke, gemessen dieselben 36 px
+   wie in jedem anderen Design.
+
+   Die Regel steht hier und nicht in themes.css, damit die
+   Design-Datei unberührt bleibt; das vorangestellte html sorgt für
+   die nötige höhere Gewichtung. */
+html[data-theme="flickenteppich"] .tab-active,
+html[data-theme="flickenteppich"] .tape-tab[aria-selected="true"] {
+  border: 1px solid #3A3226;
+  box-shadow: inset 0 0 0 1px #3A3226;
+}
 .speak-btn { color: var(--cream-50); }
 
 /* Flächen, die eine Kartenfarbe setzen, aber keine Schriftfarbe:
@@ -6867,10 +6920,11 @@ input[type="checkbox"], input[type="radio"] {
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.85));
 }
 /* Die Zeile in der Laufschrift: in der Farbe der App, der Rest des
-   Fließtextes bleibt wie er war. */
+   Fließtextes bleibt wie er war. Die Farbe ist hier der EINZIGE
+   Unterschied — zur Schriftgröße und Strichstärke siehe weiter unten
+   bei „.ticker-live". */
 .ticker-live {
   color: var(--live-farbe, #f2b84b);
-  font-weight: 700;
 }
 /* Der Verwaltungsschalter in den Einstellungen — nur Alex sieht ihn. */
 .live-wahl { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -7045,21 +7099,25 @@ input[type="checkbox"], input[type="radio"] {
    Einstellungen — man braucht sie selten, aber wenn, dann genau dort. */
 .live-adresse input { width: 100%; box-sizing: border-box; font-size: 0.8rem; }
 .live-adresse code { font-size: 0.72rem; }
-/* Die Live-Zeile in der Laufschrift ist anklickbar — aber sie bleibt
-   genauso groß wie der übrige Fließtext. Nur Farbe und Strichstärke
-   unterscheiden sie.
+/* ---------------------------------------------------------------
+   DIE LAUFSCHRIFT HAT FÜR ALLE DIESELBE GRÖSSE
+   ---------------------------------------------------------------
+   ZUM DRITTEN MAL GEMELDET: „Die Schrift oben im Newsticker ist immer
+   noch so groß — wahrscheinlich nur für mich als Betreiber … Ich
+   möchte, dass die klein ist, wie der Newsticker generell."
 
-   NOCHMALS GEMELDET: „ich möchte nicht, wenn ich live bin, dass dieser
-   Schriftzug für mich so groß ist in dem Newsticker. Das soll genau die
-   selbe Schriftgröße haben … maximal etwas dicker."
+   Eine rollenabhängige Regel gibt es nicht und gab es nie. Der
+   Unterschied kam von der Live-Zeile: sie erscheint nur, wenn Alex
+   gerade irgendwo live ist, und das ist nur bei ihm je der Fall.
+   Andere Profile sehen die Laufschrift deshalb praktisch immer ohne
+   sie. Und sie war das einzige Stück der Laufschrift, das fett
+   gezeichnet war und einen Schatten trug — beides liest sich größer,
+   obwohl die Schriftgröße identisch ist.
 
-   Deshalb ist hier jetzt JEDE Eigenschaft festgenagelt, die eine Zeile
-   optisch größer machen kann — Größe, Zeilenhöhe, Laufweite, Schriftart
-   und die Schriftart-Streckung. Vorher stand nur die Größe hier; dick
-   gezeichnet wirkte die Zeile trotzdem größer als der Rest. Die
-   Strichstärke bleibt als einziger Unterschied neben der Farbe, und
-   zwar nur eine Stufe (700 statt 800) — das reicht, um sie zu
-   erkennen, und lässt die Laufschrift sonst völlig unberührt. */
+   Jetzt erbt die Zeile wirklich alles: Größe, Zeilenhöhe, Laufweite,
+   Schriftart, Streckung UND Strichstärke. Der einzige Unterschied ist
+   die Farbe — genau so war es ursprünglich gewünscht.
+   --------------------------------------------------------------- */
 .ticker-live {
   cursor: pointer;
   font-size: inherit !important;
@@ -7067,16 +7125,37 @@ input[type="checkbox"], input[type="radio"] {
   letter-spacing: inherit;
   font-family: inherit;
   font-stretch: inherit;
-  font-weight: 700;
+  font-weight: inherit !important;
   vertical-align: baseline;
+  text-shadow: none;
 }
 .ticker-live:hover { text-decoration: underline; }
-/* Der Schatten war dazu da, die Zeile auf hellen Themen lesbar zu
-   halten — bei 2px Weichzeichnung machte er die Buchstaben aber
-   sichtbar fetter, und genau das wirkte wie eine größere Schrift.
-   Jetzt ein harter 1px-Saum ohne Weichzeichnung: dieselbe Lesbarkeit,
-   keine Verdickung. */
-.ticker-live-tiktok { text-shadow: 0 0 1px rgba(0, 0, 0, 0.55); }
+/* FRÜHER stand hier ein hauchdünner Saum für die TikTok-Zeile: ihr
+   Weiß verschwand auf hellen Himmeln. Nachgemessen hat der Saum das
+   Problem nicht gelöst (weiß auf weiß bleibt Kontrast 1,00, der Saum
+   umreißt nur die Buchstaben), und ein kräftigerer Saum verbietet
+   sich — umsäumte Schrift liest sich größer und fetter, und genau das
+   war die Beschwerde.
+
+   Gelöst wird es jetzt dort, wo es hingehört: die Hausfarbe wird in
+   app.js (liveFarbeLesbar) nur in der HELLIGKEIT so weit verschoben,
+   bis sie auf dem wirklichen Laufband-Hintergrund 3:1 erreicht.
+   Farbton und Sättigung bleiben — die Zeile bleibt erkennbar „die
+   TikTok-Farbe". An der Schrift selbst ändert sich dabei nichts.
+
+   Der alte Klassenname bleibt nur noch als ausdrückliches
+   Zurücksetzen stehen: läge beim Nutzer noch eine ältere app.js im
+   Zwischenspeicher, die ihn setzt, bekäme die Zeile sonst wieder
+   einen Saum, den sie nicht mehr braucht. */
+.ticker-live-kante,
+.ticker-live-tiktok { text-shadow: none; }
+/* Letzte Absicherung: NICHTS in der Laufschrift darf größer werden als
+   die Laufschrift selbst — egal, was ein Thema oder eine künftige
+   Regel sonst noch versucht. Und die Größe der Laufschrift selbst
+   steht hier noch einmal, damit sie auch dann stimmt, wenn styles.css
+   beim Nutzer gerade veraltet im Zwischenspeicher liegt. */
+.ticker-track { font-size: 0.75rem; }
+.ticker-track * { font-size: inherit !important; line-height: inherit; }
 
 /* Der Hinweis über dem Freigabe-Schalter für die Kalendertage. Er ist
    absichtlich auffällig: 327 fertige Tage lagen unbemerkt hinter dem
@@ -7219,6 +7298,33 @@ input[type="checkbox"], input[type="radio"] {
 }
 .bk-hoeren { flex: 0 0 auto; }
 
+/* Die vier Fächer unter dem Bild — immer nur eines offen, damit unter
+   dem Bild nicht fünfzehn Knopfreihen übereinander stehen. Die Leiste
+   klebt oben, solange man in einem Fach blättert. */
+.bk-faecher {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 12px 0 10px;
+}
+.bk-fach {
+  border: 1px solid var(--card-border);
+  background: var(--cream-50);
+  color: var(--plum-800);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.15;
+  cursor: pointer;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.bk-fach-an {
+  background: var(--plum-800);
+  border-color: var(--plum-800);
+  color: var(--cream-50);
+}
 .bk-steuerung { display: flex; flex-direction: column; gap: 12px; }
 .bk-wahl { min-width: 0; }
 .bk-wahl-titel {
@@ -7423,4 +7529,1030 @@ input[type="checkbox"], input[type="radio"] {
   opacity: 0.55;
   overflow-wrap: anywhere;
   word-break: break-all;
+}
+
+/* ---------------------------------------------------------------
+   DIE ANWÄHLBAREN FLÄCHEN AUF DEN TAFELN
+   GEMELDET: „Ich habe in manchen Bildern leere Frame-Klammern, die
+   überhaupt keine Funktion haben … ich möchte die Körperteile
+   anklickbar haben."
+   Die Flächen SIND die anklickbaren Körperteile — sie trugen nur
+   einen gestrichelten Rahmen, und dreißig davon nebeneinander sahen
+   aus wie leere Kästchen auf der Haut. Jetzt sind sie unsichtbar und
+   leuchten erst auf, wenn man sie berührt oder auswählt.
+   --------------------------------------------------------------- */
+.bw-flaeche {
+  stroke: transparent;
+  stroke-width: 0.8;
+  transition: stroke 0.12s ease, fill 0.12s ease;
+}
+.bw-teil:hover .bw-flaeche,
+.bw-teil:focus-visible .bw-flaeche {
+  stroke: rgba(242, 184, 75, 0.85);
+  fill: rgba(242, 184, 75, 0.14);
+}
+.bw-teil-aktiv .bw-flaeche {
+  stroke: rgba(232, 182, 76, 0.95);
+  fill: rgba(232, 182, 76, 0.20);
+}
+.bw-teil-treffer .bw-flaeche {
+  stroke: rgba(90, 168, 107, 0.95);
+  fill: rgba(90, 168, 107, 0.18);
+}
+
+/* ===============================================================
+   DIE WETTERSZENE IM KOPFSTREIFEN
+   ---------------------------------------------------------------
+   Regen, Schnee, Hagel, Gewitter, Wolken, Sonnenstrahlen und der
+   Nachthimmel mit Mond — alles nur mit Farbverläufen, ein paar
+   winzigen Elementen und CSS-Bewegung, ohne Bilder und ohne Canvas.
+
+   DREI REGELN, an die sich hier alles hält:
+   1. Bewegt wird ausschließlich transform und opacity. Beides kann
+      der Browser auf der Grafikeinheit erledigen; er muss den
+      Streifen dafür nicht neu zeichnen. Deshalb läuft es auch auf
+      einem älteren Telefon ruhig.
+   2. Wenige Elemente. Jede Wolkenschicht ist EIN Element (die Ballen
+      stecken als weiche Farbverläufe im Hintergrund und wiederholen
+      sich seitlich), jede Niederschlagsart kommt mit höchstens
+      knapp zwei Dutzend Teilchen aus.
+   3. Alle Fallwege rechnen mit --w-hoehe, der wirklichen Höhe des
+      Streifens. Prozentwerte in transform beziehen sich auf das
+      Teilchen selbst — genau daran ist der alte Regen gescheitert,
+      der sich kaum von der Stelle bewegte.
+   =============================================================== */
+.wetter-szene {
+  --w-hoehe: 44px;
+  --w-weiss: rgba(255, 255, 255, 0.92);
+  --w-wolke-hell: rgba(255, 255, 255, 0.82);
+  --w-wolke-schatten: rgba(150, 172, 196, 0.6);
+  --w-kachel: 300px;
+}
+/* Nachts sind die Wolken dunkel und kühl, sonst verschluckt der helle
+   Ballen den Nachthimmel. */
+.wetter-szene.ist-nacht {
+  --w-wolke-hell: rgba(120, 133, 170, 0.55);
+  --w-wolke-schatten: rgba(38, 45, 78, 0.6);
+}
+
+/* ---------------- Wolkenschichten ----------------
+   Jede Schicht ist doppelt so breit wie der Streifen und wandert um
+   genau eine Kachelbreite nach links. Weil sich der Hintergrund alle
+   --w-kachel wiederholt, ist der Übergang dabei nahtlos. Die
+   Schattenseite liegt ein paar Pixel tiefer als die Lichtseite — das
+   gibt den Ballen ihre Unterseite. */
+.w-wolkenband {
+  position: absolute;
+  top: 0; left: 0;
+  width: 200%; height: 100%;
+  background-repeat: repeat-x;
+  background-size: var(--w-kachel) 100%;
+  /* Zuerst die Schattenseite (ein paar Pixel tiefer, kühler), darüber
+     die Lichtseite — genau das gibt einer Wolke ihre Unterseite. Die
+     Ballen sitzen im oberen Drittel des Streifens: darunter soll der
+     Himmel zu sehen bleiben und der Niederschlag fallen können. */
+  background-image:
+    radial-gradient(24px 9px at 40px 16px, var(--w-wolke-schatten) 0 55%, transparent 78%),
+    radial-gradient(31px 11px at 76px 15px, var(--w-wolke-schatten) 0 55%, transparent 78%),
+    radial-gradient(21px 8px at 110px 17px, var(--w-wolke-schatten) 0 55%, transparent 78%),
+    radial-gradient(27px 10px at 198px 16px, var(--w-wolke-schatten) 0 55%, transparent 78%),
+    radial-gradient(18px 7px at 232px 18px, var(--w-wolke-schatten) 0 55%, transparent 78%),
+    radial-gradient(24px 9px at 40px 12px, var(--w-wolke-hell) 0 55%, transparent 80%),
+    radial-gradient(31px 11px at 76px 11px, var(--w-wolke-hell) 0 55%, transparent 80%),
+    radial-gradient(21px 8px at 110px 13px, var(--w-wolke-hell) 0 55%, transparent 80%),
+    radial-gradient(27px 10px at 198px 12px, var(--w-wolke-hell) 0 55%, transparent 80%),
+    radial-gradient(18px 7px at 232px 14px, var(--w-wolke-hell) 0 55%, transparent 80%);
+  animation: wZiehen 64s linear infinite;
+  will-change: transform;
+}
+@keyframes wZiehen {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(-1 * var(--w-kachel)), 0, 0); }
+}
+/* Drei Schichten, drei Tempi und drei Größen — vorn groß und schnell,
+   hinten klein, blass und langsam. Genau daraus entsteht Tiefe. */
+/* WICHTIG: Größe und Höhe dürfen hier NICHT über transform kommen —
+   das Ziehen ist selbst eine transform-Bewegung und würde jeden festen
+   Wert davon überschreiben. Verschoben wird deshalb mit top, skaliert
+   mit height. */
+.w-wb1 { --w-kachel: 250px; opacity: 0.9;  animation-duration: 46s;  animation-delay: -12s; }
+.w-wb2 { --w-kachel: 330px; opacity: 0.62; animation-duration: 78s;  animation-delay: -30s; height: 82%; }
+.w-wb3 { --w-kachel: 410px; opacity: 0.4;  animation-duration: 116s; animation-delay: -55s; height: 66%; }
+/* Bei Regen, Schnee, Hagel und Gewitter kommt der Niederschlag aus der
+   Decke: die Wolken rücken ein Stück höher, damit unter ihnen Platz
+   zum Fallen bleibt. */
+.w-regen .w-wolkenband,
+.w-schnee .w-wolkenband,
+.w-hagel .w-wolkenband { top: -12%; }
+/* Gewitterwolken sind dunkel und schwer. */
+.w-gewitter .w-wolkenband {
+  --w-wolke-hell: rgba(92, 100, 128, 0.9);
+  --w-wolke-schatten: rgba(32, 36, 56, 0.9);
+  top: -12%;
+}
+
+/* ---------------- Nebel ----------------
+   Zwei milchige Schleier, die gegenläufig und sehr langsam ziehen. */
+.w-nebel {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(226, 232, 238, 0.1), rgba(226, 232, 238, 0.42) 55%, rgba(226, 232, 238, 0.14));
+  animation: wNebelAtmen 14s ease-in-out infinite alternate;
+}
+@keyframes wNebelAtmen {
+  from { opacity: 0.55; transform: translateX(-2%); }
+  to   { opacity: 0.95; transform: translateX(2%); }
+}
+
+/* ---------------- Klarer Himmel ----------------
+   AUSDRÜCKLICH KEINE runde Sonne. Stattdessen ein warmer Lichtschein
+   von oben, der langsam atmet, und feine Strahlenbündel, die dabei
+   leicht schwenken — wie Licht, das durch Dunst fällt. */
+.w-schein {
+  position: absolute;
+  left: 50%; top: -190%;
+  width: 150%; height: 340%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side,
+    rgba(255, 244, 206, 0.62) 0%,
+    rgba(255, 228, 160, 0.3) 42%,
+    rgba(255, 214, 140, 0.1) 66%,
+    transparent 82%);
+  animation: wScheinAtmen 9s ease-in-out infinite alternate;
+}
+@keyframes wScheinAtmen {
+  from { opacity: 0.72; transform: translateX(-50%) scale(0.96); }
+  to   { opacity: 1;    transform: translateX(-50%) scale(1.06); }
+}
+.w-strahl {
+  position: absolute;
+  /* BEHOBEN: vorher stand hier nur left:50%. Der Keil ist aber 30%
+     breit, sein Drehpunkt (transform-origin: 50% 0) lag damit bei
+     50% + 15% = 65% der Streifenbreite — nachgemessen fächerten alle
+     fünf Strahlenbündel sichtbar um einen Punkt weit rechts der Mitte
+     auf, während der Lichtschein darüber mittig saß. Licht und
+     Strahlen gingen also von zwei verschiedenen Stellen aus.
+     Mit dem Ausgleich um die halbe Eigenbreite liegt der Drehpunkt
+     genau in der Mitte — dort, wo auch der Schein sitzt. */
+  left: 50%; margin-left: -15%;
+  top: -25%;
+  width: 30%; height: 250%;
+  transform-origin: 50% 0;
+  /* Der Keil: oben schmal, unten breit — dadurch fächern die Strahlen
+     von einem Punkt über dem Streifen nach unten auf. */
+  clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(255, 247, 214, 0.42), rgba(255, 240, 190, 0.16) 55%, transparent 88%);
+  animation: wStrahlSchwenken 17s ease-in-out infinite alternate;
+}
+/* Der Winkel jedes Bündels steckt in --w-winkel: das Schwenken setzt
+   darauf auf, statt ihn zu überschreiben. */
+.w-st1 { --w-winkel: -34deg; animation-duration: 15s; animation-delay: -3s; }
+.w-st2 { --w-winkel: -16deg; animation-duration: 19s; animation-delay: -8s; }
+.w-st3 { --w-winkel: 2deg;   animation-duration: 13s; animation-delay: -5s; }
+.w-st4 { --w-winkel: 19deg;  animation-duration: 21s; animation-delay: -11s; }
+.w-st5 { --w-winkel: 36deg;  animation-duration: 16s; animation-delay: -1s; }
+@keyframes wStrahlSchwenken {
+  from { transform: rotate(var(--w-winkel, 0deg)) scaleX(0.9); opacity: 0.45; }
+  to   { transform: rotate(var(--w-winkel, 0deg)) scaleX(1.15); opacity: 0.95; }
+}
+
+/* ---------------- Regen ----------------
+   Drei Ebenen: hinten dünn, blass und langsam, vorn kräftig und
+   schnell. Die Tropfen fallen schräg — Regen fällt nie senkrecht. */
+.w-ebene { position: absolute; inset: 0; }
+.w-tropfen {
+  position: absolute;
+  top: 0;
+  display: block;
+  width: 1.2px;
+  height: 9px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, transparent, var(--niederschlag-farbe, rgba(255, 255, 255, 0.75)));
+  animation-name: wTropfenFallen;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* SO WIRD DER REGEN DURCHGÄNGIG: Umlaufzeit und Startversatz kommen
+     aus EINER Quelle. --w-dauer setzt die jeweilige Ebene weiter
+     unten, --w-takt (0 bis 1) bringt jeder Tropfen selbst mit. Der
+     Versatz ist das Produkt aus beidem — dadurch sitzt jeder Tropfen
+     an einer anderen Stelle SEINES EIGENEN Umlaufs, und die Ebene ist
+     über den ganzen Umlauf gleichmäßig besetzt.
+     Vorher stand der Versatz in app.js fest bei bis zu 1,7 s, während
+     die Ebenen 0,62 s, 0,88 s und 1,25 s umlaufen: der Versatz faltete
+     sich dann mehrfach um den Umlauf und schob die Tropfen zu Pulks
+     zusammen — mit Pausen dazwischen, in denen nichts fiel. Genau das
+     war das "Stocken". */
+  animation-duration: var(--w-dauer, 0.88s);
+  animation-delay: calc(-1 * var(--w-takt, 0.5) * var(--w-dauer, 0.88s));
+  will-change: transform;
+}
+@keyframes wTropfenFallen {
+  0%   { transform: translate3d(0, -16px, 0) rotate(var(--w-neigung, 14deg)); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translate3d(var(--w-drift, 13px), calc(var(--w-hoehe) + 8px), 0) rotate(var(--w-neigung, 14deg)); opacity: 0; }
+}
+/* Die Umlaufzeit steht als --w-dauer da, NICHT als animation-duration:
+   nur so kann der Startversatz oben mit derselben Zahl rechnen. */
+.w-re1 .w-tropfen { --w-dauer: 0.62s; height: 11px; width: 1.5px; opacity: 1;    --w-drift: 16px; --w-neigung: 16deg; }
+.w-re2 .w-tropfen { --w-dauer: 0.88s; height: 9px;  width: 1.2px; opacity: 0.75; --w-drift: 12px; --w-neigung: 14deg; }
+.w-re3 .w-tropfen { --w-dauer: 1.25s; height: 7px;  width: 1px;   opacity: 0.5;  --w-drift: 9px;  --w-neigung: 12deg; }
+/* Die Pfütze: ein feuchter Streifen ganz unten, in dem die Kringel
+   aufspringen. */
+.w-pfuetze {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 5px;
+  background: linear-gradient(180deg, transparent, var(--niederschlag-farbe, rgba(255, 255, 255, 0.75)));
+  opacity: 0.28;
+}
+.w-pfuetze-hart { opacity: 0.18; height: 3px; }
+.w-kringel {
+  position: absolute;
+  bottom: 1px;
+  display: block;
+  width: 11px; height: 4px;
+  margin-left: -5.5px;
+  border: 1px solid var(--niederschlag-farbe, rgba(255, 255, 255, 0.75));
+  border-radius: 50%;
+  --w-dauer: 1.15s;
+  animation: wKringel var(--w-dauer) linear infinite;
+  animation-delay: calc(-1 * var(--w-takt, 0.5) * var(--w-dauer));
+  will-change: transform;
+}
+@keyframes wKringel {
+  0%   { transform: scale(0.2); opacity: 0; }
+  18%  { opacity: 0.8; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* ---------------- Schnee ----------------
+   Drei Größen. Die großen sind vorn und fallen schneller, die kleinen
+   hinten und langsamer. Alle pendeln beim Fallen seitlich — deshalb
+   stehen im Bewegungsablauf Zwischenschritte, die abwechselnd nach
+   links und nach rechts ausschlagen. */
+.w-flocke {
+  position: absolute;
+  top: 0;
+  display: block;
+  border-radius: 50%;
+  /* Schnee ist weiß — auch am hellen Tag. Für den Regen ist die
+     mitwandernde Tagesfarbe richtig (dunkle Tropfen auf hellem Himmel),
+     für Flocken wäre sie falsch: graue Punkte sehen nicht nach Schnee
+     aus. Damit sie auf einem hellen Himmel trotzdem nicht verschwinden,
+     bekommen sie einen hauchdünnen kühlen Rand. */
+  background: #ffffff;
+  box-shadow: 0 0 0 0.5px rgba(74, 102, 136, 0.35);
+  animation-name: wFlockeFallen;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* Gleiche Rechnung wie beim Regen: Versatz = Platz im Ablauf mal
+     Umlaufzeit DIESER Größenstufe. */
+  animation-duration: var(--w-dauer, 6.6s);
+  animation-delay: calc(-1 * var(--w-takt, 0.5) * var(--w-dauer, 6.6s));
+  will-change: transform;
+}
+@keyframes wFlockeFallen {
+  0%   { transform: translate3d(0, -12px, 0); opacity: 0; }
+  10%  { opacity: 1; }
+  25%  { transform: translate3d(var(--w-pendel, 3px), calc((var(--w-hoehe) + 12px) * 0.25), 0); }
+  50%  { transform: translate3d(0, calc((var(--w-hoehe) + 12px) * 0.5), 0); }
+  75%  { transform: translate3d(calc(var(--w-pendel, 3px) * -1), calc((var(--w-hoehe) + 12px) * 0.75), 0); }
+  90%  { opacity: 0.9; }
+  100% { transform: translate3d(0, calc(var(--w-hoehe) + 12px), 0); opacity: 0; }
+}
+.w-fl1 { width: 5px;   height: 5px;   --w-dauer: 4.2s; opacity: 0.95; }
+.w-fl2 { width: 3.4px; height: 3.4px; --w-dauer: 6.6s; opacity: 0.75; }
+.w-fl3 { width: 2.2px; height: 2.2px; --w-dauer: 9.4s; opacity: 0.55; }
+
+/* ---------------- Hagel ----------------
+   Kleines, hartes weißes Korn: schnell, fast senkrecht — und unten
+   springt es noch einmal auf, statt einfach zu verschwinden. Der
+   Abpraller steckt in den Zwischenschritten kurz vor Schluss, samt
+   der leichten Stauchung im Aufschlag. */
+.w-korn {
+  position: absolute;
+  top: 0;
+  display: block;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 1px rgba(90, 110, 140, 0.65);
+  animation-name: wKornFallen;
+  --w-dauer: 0.72s;
+  animation-duration: var(--w-dauer);
+  animation-delay: calc(-1 * var(--w-takt, 0.5) * var(--w-dauer));
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@keyframes wKornFallen {
+  0%   { transform: translate3d(0, -12px, 0) scale(1, 1); opacity: 0; }
+  8%   { opacity: 1; }
+  60%  { transform: translate3d(var(--w-drift, 2px), calc(var(--w-hoehe) - 4px), 0) scale(1, 1); }
+  64%  { transform: translate3d(var(--w-drift, 2px), calc(var(--w-hoehe) - 2px), 0) scale(1.35, 0.65); }
+  72%  { transform: translate3d(calc(var(--w-drift, 2px) + 2px), calc(var(--w-hoehe) - 11px), 0) scale(0.85, 1.2); }
+  84%  { transform: translate3d(calc(var(--w-drift, 2px) + 4px), calc(var(--w-hoehe) - 2px), 0) scale(1.2, 0.8); }
+  92%  { transform: translate3d(calc(var(--w-drift, 2px) + 6px), calc(var(--w-hoehe) - 6px), 0) scale(1, 1); opacity: 0.8; }
+  100% { transform: translate3d(calc(var(--w-drift, 2px) + 8px), calc(var(--w-hoehe) - 2px), 0) scale(1, 1); opacity: 0; }
+}
+
+/* ---------------- Gewitter ----------------
+   Der Blitz flackert in UNGLEICHEN Abständen: im Ablauf von 8,7
+   Sekunden sitzen drei Entladungen an ungeraden Stellen, zwei davon
+   mit dem typischen Doppelschlag. Dieselbe Uhr treibt die Aufhellung
+   der ganzen Szene an — und ein Stück später das Zittern, denn der
+   Donner kommt dem Licht immer hinterher. */
+.w-blitz {
+  position: absolute;
+  left: 58%; top: 2px;
+  width: auto; height: 78%;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px rgba(255, 244, 170, 1)) drop-shadow(0 0 10px rgba(255, 230, 120, 0.75));
+  animation: wBlitzen 8.7s linear infinite;
+}
+/* Die beiden Abzweigungen der verzweigten Blitzfigur. Sie laufen auf
+   DERSELBEN Uhr wie der Hauptkanal, nur um einen Lidschlag versetzt:
+   dadurch wirkt es, als arbeite sich die Entladung weiter, statt dass
+   eine fertige Figur gleichmäßig auf- und zugeblendet wird. Der
+   Versatz ist NEGATIV und klein — die Äste bleiben damit innerhalb
+   desselben Aufflackerns, sie kommen nicht in der Ruhepause. */
+.w-blitz-ast { opacity: 0.85; }
+.w-blitz-ast1 { animation: wBlitzAst 8.7s linear infinite; animation-delay: -0.06s; }
+.w-blitz-ast2 { animation: wBlitzAst 8.7s linear infinite; animation-delay: -0.13s; }
+@keyframes wBlitzAst {
+  0%, 3.9%    { opacity: 0; }
+  4.3%        { opacity: 0.9; }
+  5.1%        { opacity: 0.05; }
+  5.6%        { opacity: 0.8; }
+  6.4%, 35.5% { opacity: 0; }
+  36.1%       { opacity: 0.75; }
+  37%, 70.7%  { opacity: 0; }
+  71.2%       { opacity: 0.95; }
+  72%         { opacity: 0.1; }
+  72.7%       { opacity: 0.7; }
+  74%, 100%   { opacity: 0; }
+}
+.w-aufhellung {
+  position: absolute; inset: 0;
+  background: rgba(255, 252, 226, 1);
+  opacity: 0;
+  animation: wAufhellen 8.7s linear infinite;
+}
+@keyframes wBlitzen {
+  0%, 3.8%   { opacity: 0; }
+  4.1%       { opacity: 1; }
+  4.9%       { opacity: 0.12; }
+  5.4%       { opacity: 0.95; }
+  6.6%, 35.4% { opacity: 0; }
+  35.9%      { opacity: 0.9; }
+  37.2%, 70.6% { opacity: 0; }
+  71%        { opacity: 1; }
+  71.8%      { opacity: 0.18; }
+  72.5%      { opacity: 0.85; }
+  74.2%, 100% { opacity: 0; }
+}
+@keyframes wAufhellen {
+  0%, 3.8%   { opacity: 0; }
+  4.1%       { opacity: 0.5; }
+  4.9%       { opacity: 0.06; }
+  5.4%       { opacity: 0.42; }
+  6.6%, 35.4% { opacity: 0; }
+  35.9%      { opacity: 0.34; }
+  37.2%, 70.6% { opacity: 0; }
+  71%        { opacity: 0.52; }
+  71.8%      { opacity: 0.08; }
+  72.5%      { opacity: 0.38; }
+  74.2%, 100% { opacity: 0; }
+}
+/* Der Donner: ein kurzes, leichtes Zittern kurz NACH jedem Blitz. */
+.w-gewitter { animation: wDonner 8.7s linear infinite; }
+@keyframes wDonner {
+  0%, 7.4%     { transform: translate3d(0, 0, 0); }
+  8%           { transform: translate3d(0.7px, -0.5px, 0); }
+  8.7%         { transform: translate3d(-0.8px, 0.4px, 0); }
+  9.5%         { transform: translate3d(0.5px, 0.6px, 0); }
+  10.4%        { transform: translate3d(-0.4px, -0.3px, 0); }
+  11.3%, 39%   { transform: translate3d(0, 0, 0); }
+  39.6%        { transform: translate3d(-0.5px, 0.4px, 0); }
+  40.4%        { transform: translate3d(0.5px, -0.4px, 0); }
+  41.4%, 75.4% { transform: translate3d(0, 0, 0); }
+  76%          { transform: translate3d(0.8px, 0.5px, 0); }
+  76.8%        { transform: translate3d(-0.9px, -0.4px, 0); }
+  77.7%        { transform: translate3d(0.6px, 0.3px, 0); }
+  78.8%, 100%  { transform: translate3d(0, 0, 0); }
+}
+
+/* ---------------- Nachthimmel ----------------
+   Unterschiedlich helle Sterne in drei Stufen, ab und zu eine
+   Sternschnuppe — und der Mond in der Phase, die heute wirklich am
+   Himmel steht (gerechnet in app.js, siehe mondPhase()). */
+.w-stern {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: #ffffff;
+  animation-name: wFunkeln;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes wFunkeln {
+  0%, 100% { opacity: 0.18; transform: scale(0.8); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+.w-sh1 { width: 2.4px; height: 2.4px; animation-duration: 5.6s; box-shadow: 0 0 3px 1px rgba(255, 255, 255, 0.45); }
+.w-sh2 { width: 1.7px; height: 1.7px; animation-duration: 4.1s; opacity: 0.85; }
+.w-sh3 { width: 1.2px; height: 1.2px; animation-duration: 2.8s; opacity: 0.6; }
+/* Die Sternschnuppe: der lange Ablauf sorgt dafür, dass sie wirklich
+   nur ab und zu kommt — der sichtbare Streich dauert keine Sekunde,
+   der Rest des Ablaufs ist Warten. */
+.w-schnuppe {
+  position: absolute;
+  display: block;
+  width: 46px; height: 1.4px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95));
+  opacity: 0;
+  animation-name: wSchnuppe;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.w-sp1 { top: 14%; left: 6%;  animation-duration: 13s; animation-delay: -4s; }
+.w-sp2 { top: 42%; left: 46%; animation-duration: 21s; animation-delay: -15s; }
+@keyframes wSchnuppe {
+  0%, 92%  { transform: translate3d(0, 0, 0) rotate(24deg) scaleX(0.2); opacity: 0; }
+  93%      { opacity: 0.95; }
+  98%      { transform: translate3d(120px, 54px, 0) rotate(24deg) scaleX(1); opacity: 0.8; }
+  100%     { transform: translate3d(150px, 68px, 0) rotate(24deg) scaleX(0.3); opacity: 0; }
+}
+.w-mond {
+  position: absolute;
+  right: 14px; top: 50%;
+  width: 19px; height: 19px;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 0 3px rgba(225, 235, 255, 0.3));
+}
+/* Läuft die eigene Nachtszene, würden sich die sieben festen Sterne
+   aus der index.html damit doppeln — sie bleiben so lange aus. */
+.weather-bar.hat-nachtszene .stars { display: none !important; }
+
+/* ---------------------------------------------------------------
+   DAS OSTEREI — VOGEL UND SCHMETTERLING
+   ---------------------------------------------------------------
+   GEWÜNSCHT: „dass realistisch ein Vogel langfliegen kann mit echtem
+   Flügelschlag … Oder ein Schmetterling. Aber nicht ständig, sondern
+   ab und zu mal, so als Easter Egg."
+
+   WAS EINEN FLÜGELSCHLAG AUSMACHT — und warum eine wippende Grafik
+   keiner ist: ein Flügelschlag ist UNSYMMETRISCH. Der Abschlag ist
+   kurz und kräftig, der Flügel dabei voll gespreizt (er soll ja Luft
+   fassen). Der Aufschlag dauert deutlich länger, und der Flügel wird
+   dabei angelegt — sonst drückte der Vogel sich selbst wieder
+   herunter. Genau dieses Verhältnis steht unten im Ablauf: gut ein
+   Drittel herunter mit langem Flügel, zwei Drittel herauf mit
+   verkürztem. Dazu hebt sich der Körper bei jedem Abschlag ein Stück,
+   deshalb fliegt der Vogel in kleinen Bögen statt auf einer Linie.
+
+   Gedreht wird um die SCHULTER, nicht um die Bildmitte: dafür steht an
+   den Flügeln transform-box: fill-box (der Drehpunkt bezieht sich dann
+   auf den Pfad selbst) zusammen mit transform-origin.
+
+   KOSTEN: höchstens ein Gast gleichzeitig, ein Element mit einer
+   Handvoll Pfaden, bewegt nur über transform. Die Schicht wird nach
+   dem Flug wieder entfernt — es bleibt nichts stehen, was weiter
+   rechnen müsste.
+   --------------------------------------------------------------- */
+.wetter-gast { overflow: hidden; }
+.w-gast {
+  position: absolute;
+  left: 0;
+  display: block;
+  width: 22px;
+  will-change: transform;
+  animation-name: wGastZieht;
+  animation-duration: var(--w-gast-dauer, 9s);
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+.w-gast-falter { width: 15px; }
+.w-gast svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* Hin und zurück: dieselbe Bahn, nur gespiegelt. Gespiegelt wird die
+   SCHICHT, nicht der Gast — dadurch bleibt der Flügelschlag im Gast
+   selbst unverändert und muss nicht doppelt beschrieben werden. */
+.w-gast-nach-links { transform: scaleX(-1); }
+@keyframes wGastZieht {
+  /* Der Bogen der Flugbahn steckt hier, der Flügelschlag im Gast: so
+     bleiben Vorwärtsbewegung und Schlag unabhängig voneinander. */
+  0%   { transform: translate3d(-40px, 0, 0); }
+  25%  { transform: translate3d(calc(25vw + 0px), -5px, 0); }
+  50%  { transform: translate3d(calc(50vw + 0px), 3px, 0); }
+  75%  { transform: translate3d(calc(75vw + 0px), -4px, 0); }
+  100% { transform: translate3d(calc(100vw + 50px), 1px, 0); }
+}
+
+/* ---- Der Vogel ---- */
+/* Ein Vogel in der Ferne ist eine SILHOUETTE — er hat keine eigene
+   Farbe, er ist dunkler oder heller als der Himmel hinter ihm. Deshalb
+   nimmt er dieselbe mitwandernde Tagesfarbe wie die Regentropfen
+   (--niederschlag-farbe, wird in niederschlagAnpassen() bei jedem Takt
+   gesetzt): am hellen Tag dunkel, in der Dämmerung hell. Mit einer
+   festen dunklen Farbe war er auf dunklem Himmel schlicht unsichtbar —
+   genau das zeigte die Nahaufnahme. */
+.wetter-gast { --w-gast-farbe: var(--niederschlag-farbe, rgba(40, 60, 90, 0.75)); }
+.w-vogel .w-rumpf {
+  fill: var(--w-gast-farbe);
+  transform-box: view-box;
+  transform-origin: 22px 12px;
+  animation: wVogelHebt 0.34s ease-in-out infinite;
+}
+.w-schwinge {
+  fill: var(--w-gast-farbe);
+  /* view-box, NICHT fill-box: der Drehpunkt ist die Schulter in
+     Bildkoordinaten (21 | 10,5) — genau dort, wo der Flügelpfad am
+     Leib ansetzt. Mit fill-box hinge er am Umriss des Flügels und
+     wäre bei jeder Änderung der Zeichnung still verschoben. */
+  transform-box: view-box;
+  transform-origin: 21px 10.5px;
+  animation: wFluegelschlag 0.34s ease-in-out infinite;
+}
+/* Beide Flügel schlagen gemeinsam — ein Vogel rudert nicht wechselseitig.
+   Der rechte sitzt in einer gespiegelten Elterngruppe, dieselbe Drehung
+   hebt ihn deshalb auf seiner Seite. */
+@keyframes wFluegelschlag {
+  /* Ein Flügelschlag ist UNSYMMETRISCH. Erstes Drittel: ABSCHLAG —
+     kurz, kräftig, Flügel voll ausgestreckt (scaleY groß), weil er
+     Luft fassen soll. Danach zwei Drittel AUFSCHLAG — deutlich
+     langsamer und mit angelegtem Flügel (scaleY klein), sonst
+     drückte der Vogel den eben gewonnenen Auftrieb wieder weg.
+     Positive Drehung hebt die linke Flügelspitze. */
+  0%   { transform: rotate(38deg)  scaleY(0.72); }  /* oben, angelegt */
+  16%  { transform: rotate(8deg)   scaleY(1.06); }  /* Abschlag, voll gespreizt */
+  32%  { transform: rotate(-30deg) scaleY(0.95); }  /* unten */
+  44%  { transform: rotate(-26deg) scaleY(0.7); }   /* Umkehr, Flügel zieht sich zusammen */
+  74%  { transform: rotate(14deg)  scaleY(0.68); }  /* Aufschlag, langsam */
+  100% { transform: rotate(38deg)  scaleY(0.72); }
+}
+/* Der Körper steigt bei jedem Abschlag — im selben Takt wie die
+   Flügel, nur ein Stück später, denn der Auftrieb folgt dem Schlag. */
+@keyframes wVogelHebt {
+  0%   { transform: translateY(0.7px); }
+  34%  { transform: translateY(-0.9px); }
+  70%  { transform: translateY(0.5px); }
+  100% { transform: translateY(0.7px); }
+}
+
+/* ---- Der Schmetterling ----
+   Von vorn gesehen klappen die Flügelpaare zum Körper hin zusammen
+   und wieder auf — deshalb wird in der Breite gestaucht, nicht
+   gedreht. Der Takt ist schneller und ungleichmäßiger als beim Vogel,
+   und der Falter wird dabei sichtbar auf und ab getragen: ein
+   Schmetterling fliegt nicht geradeaus. */
+.w-falterpaar {
+  /* Auch hier view-box: der Klapppunkt ist der LEIB bei x = 13, nicht
+     der Rand des Flügelumrisses. Und die Spiegelung des rechten Paars
+     sitzt an der Elterngruppe — stünde sie am selben Element, würde
+     die Schlagbewegung sie überschreiben und beide Paare lägen
+     übereinander auf einer Seite (genau das war vorher der Fall). */
+  transform-box: view-box;
+  transform-origin: 13px 11px;
+  animation: wFalterschlag 0.22s ease-in-out infinite;
+}
+.w-falterfluegel { fill: rgba(224, 122, 62, 0.92); stroke: rgba(70, 38, 20, 0.5); stroke-width: 0.7; }
+.w-falterleib { fill: rgba(48, 34, 26, 0.92); }
+.w-falterfuehler { fill: none; stroke: rgba(48, 34, 26, 0.8); stroke-width: 0.7; stroke-linecap: round; }
+.w-gast-falter svg { animation: wFalterTaumelt 1.6s ease-in-out infinite; }
+@keyframes wFalterschlag {
+  0%   { transform: scaleX(1); }
+  38%  { transform: scaleX(0.22); }
+  46%  { transform: scaleX(0.3); }
+  100% { transform: scaleX(1); }
+}
+@keyframes wFalterTaumelt {
+  0%   { transform: translateY(0) rotate(-7deg); }
+  30%  { transform: translateY(-5px) rotate(5deg); }
+  55%  { transform: translateY(2px) rotate(-3deg); }
+  80%  { transform: translateY(-3px) rotate(8deg); }
+  100% { transform: translateY(0) rotate(-7deg); }
+}
+
+/* ---------------------------------------------------------------
+   WER BEWEGUNG NICHT MAG
+   ---------------------------------------------------------------
+   Vorher verschwand die Szene komplett. Gewünscht ist aber, dass sie
+   STILLSTEHT — man soll das Wetter weiter sehen, es soll sich nur
+   nichts rühren. Das geht hier ohne einen zweiten Satz Regeln: alle
+   Verzögerungen sind negativ, jede Bewegung ist also schon mittendrin,
+   wenn sie angehalten wird. Angehalten sieht man deshalb ein
+   vollständiges Bild — Tropfen über den ganzen Streifen verteilt,
+   Flocken in der Luft, der Mond an seinem Platz.
+   --------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .weather-bar .niederschlag.wetter-szene { display: block; }
+  /* Die Bewegung wird ganz abgeschaltet, nicht nur angehalten: eine
+     angehaltene Bewegung hält der Browser beim ALLERERSTEN Bild fest,
+     und dort stehen alle Teilchen noch auf einem Haufen über dem
+     Streifen. Stattdessen bekommt jedes Teilchen hier seinen festen
+     Platz — ausgerechnet aus --w-takt, dem Wert, der im Betrieb seine
+     Verzögerung bestimmt. Dadurch steht genau das Bild da, das die
+     Bewegung in diesem Augenblick zeigen würde: ein vollständiger
+     Streifen Regen, Schnee oder Hagel, nur eben ohne Bewegung. */
+  .wetter-szene,
+  .wetter-szene * { animation: none !important; }
+  .wetter-szene .w-tropfen {
+    transform: translate(calc(var(--w-drift) * var(--w-takt, 0.5)),
+                         calc((var(--w-hoehe) + 8px) * var(--w-takt, 0.5) - 16px))
+               rotate(var(--w-neigung));
+  }
+  .wetter-szene .w-flocke {
+    transform: translate(0, calc((var(--w-hoehe) + 12px) * var(--w-takt, 0.5) - 12px));
+  }
+  .wetter-szene .w-korn {
+    transform: translate(calc(var(--w-drift, 2px) * var(--w-takt, 0.5)),
+                         calc((var(--w-hoehe) + 12px) * var(--w-takt, 0.5) - 12px));
+  }
+  .wetter-szene .w-kringel {
+    transform: scale(calc(0.3 + 1.2 * var(--w-takt, 0.5)));
+    opacity: calc(0.7 - 0.5 * var(--w-takt, 0.5));
+  }
+  /* Sterne stehen unterschiedlich hell da, statt alle gleich blass. */
+  .wetter-szene .w-stern { opacity: calc(0.3 + 0.7 * var(--w-takt, 0.5)); }
+  /* Eine stehende Sternschnuppe wäre sinnlos — sie lebt allein von der
+     Bewegung. Der Blitz dagegen soll sichtbar bleiben, sonst wäre dem
+     Gewitter sein Gewitter genommen. */
+  .wetter-szene .w-schnuppe { display: none; }
+  .wetter-szene .w-blitz { opacity: 0.9; }
+  .wetter-szene .w-blitz .w-blitz-ast { opacity: 0.8; }
+  .wetter-szene .w-aufhellung { opacity: 0; }
+  /* Der vorbeifliegende Gast besteht NUR aus Bewegung — ein
+     stillstehender Vogel mitten in der Luft wäre kein Ostereffekt,
+     sondern ein Fehler. Er wird hier gar nicht erst gezeigt; geplant
+     wird er in app.js ohnehin nicht (siehe gastPlanen). */
+  .wetter-gast { display: none !important; }
+}
+
+/* Abgelaufene Herausforderungen sind noch da, aber sichtbar nicht mehr
+   aktuell — sie sollen nicht wie eine Einladung aussehen, auf die man
+   noch antworten könnte. */
+.breakdown-row.duell-abgelaufen { opacity: 0.62; }
+
+/* ==========================================================================
+   UMGANGSSPRACHE-UMSCHALTER, DIALEKT-BEREICH, BILDERRÄTSEL, KOSTENSEITE
+   --------------------------------------------------------------------------
+   Alles, was zu den vier neuen Bereichen gehört. Bewusst am Stück und am
+   Ende, damit man es als Ganzes wiederfindet.
+   ========================================================================== */
+
+/* ---- Der Umschalter formell ↔ umgangssprachlich ------------------------- */
+.umgangs-schalter { display: flex; flex-direction: column; gap: 4px; }
+.umgangs-schalter-titel { font-weight: 800; font-size: 0.86rem; }
+.umgangs-schalter-reihe { margin-top: 4px; }
+.umgangs-schalter-note { font-size: 0.74rem; margin: 2px 0 0; }
+
+.alltags-dialekt-link {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.2);
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.alltags-dialekt-link:hover { background: rgba(127, 127, 127, 0.34); }
+
+/* ---- Dialekt-Bereich ---------------------------------------------------- */
+.dia-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.dia-gitter {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+.dia-zelle {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(127, 127, 127, 0.22);
+  background: rgba(127, 127, 127, 0.08);
+}
+.dia-zelle-anders { border-color: rgba(90, 180, 140, 0.5); background: rgba(90, 180, 140, 0.14); }
+.dia-zelle-gleich { opacity: 0.62; }
+.dia-region { display: block; width: 100%; font-size: 0.7rem; opacity: 0.8; }
+.dia-form { font-weight: 800; font-size: 0.92rem; }
+.dia-hoer {
+  margin-left: auto;
+  border: none; background: transparent; cursor: pointer;
+  font-size: 0.95rem; line-height: 1; padding: 2px 4px;
+  color: inherit;
+}
+.dia-notiz {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(127, 127, 127, 0.12);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.dia-karte-hervor { outline: 2px solid var(--amber-400, #f2b84b); outline-offset: 3px; }
+
+/* ---- Das Bilderrätsel --------------------------------------------------- */
+.br-buehne {
+  margin: 10px 0 6px;
+  border-radius: var(--radius-sm, 10px);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.br-svg { display: block; width: 100%; height: auto; }
+.br-frage { margin: 10px 0 6px; font-weight: 800; }
+.br-saetze { display: flex; flex-direction: column; gap: 8px; }
+.br-satz {
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm, 10px);
+  border: 1.5px solid rgba(127, 127, 127, 0.3);
+  background: rgba(127, 127, 127, 0.1);
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.br-satz:hover:not(:disabled) { border-color: rgba(127, 127, 127, 0.6); }
+.br-satz:disabled { cursor: default; }
+.br-satz-richtig { border-color: #5ab48c; background: rgba(90, 180, 140, 0.22); }
+.br-satz-daneben { border-color: #d97a6c; background: rgba(217, 122, 108, 0.2); }
+
+/* ---- Hinweis zur Sprachausgabe ----------------------------------------- */
+.stimmen-hinweis {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(127, 127, 127, 0.12);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.stimmen-hinweis summary { cursor: pointer; font-weight: 800; }
+.stimmen-hinweis p { margin: 8px 0 0; }
+.stimmen-hinweis ul { margin: 8px 0 0; padding-left: 20px; }
+.stimmen-hinweis li { margin-bottom: 5px; }
+.stimmen-hinweis-kurz { margin-top: 10px; opacity: 0.9; }
+
+/* ---- Kostenseite und Premium-Rechnung ---------------------------------- */
+.kosten-block h3 { margin-top: 0; }
+.kosten-liste { margin: 6px 0 0; padding-left: 20px; font-size: 0.85rem; line-height: 1.6; }
+.kosten-liste li { margin-bottom: 6px; }
+.kosten-tabelle-huelle { overflow-x: auto; margin-top: 6px; }
+.kosten-tabelle { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.kosten-tabelle th,
+.kosten-tabelle td {
+  text-align: left;
+  padding: 7px 9px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.22);
+  vertical-align: top;
+}
+.kosten-tabelle th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.75; }
+.kosten-tabelle tbody tr:last-child td { border-bottom: none; }
+.kosten-gut { color: #5ab48c; font-weight: 700; }
+.kosten-teuer { color: #d97a6c; font-weight: 700; }
+.kosten-summe td { border-top: 2px solid rgba(127, 127, 127, 0.4); }
+.kosten-merksatz {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 4px solid var(--amber-400, #f2b84b);
+  background: rgba(242, 184, 75, 0.12);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+/* Die Premium-Karte ist mittig gesetzt — Tabellen und Listen darin
+   dürfen das nicht erben, sonst steht eine Aufzählung zentriert da. */
+.premium-rechnung { margin-top: 18px; text-align: left; }
+.premium-rechnung h3 { margin: 0 0 6px; }
+.premium-spalten {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.premium-spalte { text-align: left; }
+.premium-spalte h3 { margin: 0 0 4px; font-size: 0.98rem; }
+
+/* =========================================================
+   AUSSPRACHEPRÜFUNG — Laut-Anzeige, Abweichungsprofil,
+   Wellenformen, Shadowing
+   ---------------------------------------------------------
+   Alles so gebaut, dass es bei 400 px Breite noch lesbar ist:
+   das ist die Breite, mit der dieser Nutzer arbeitet.
+   ========================================================= */
+
+/* --- Welche Stufe gerade läuft --- */
+.ausspr-stufe {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.ausspr-stufe-1 { background: rgba(79, 168, 142, 0.18); color: #35806a; border: 1px solid rgba(79, 168, 142, 0.5); }
+.ausspr-stufe-2 { background: rgba(74, 127, 168, 0.18); color: #3a6c91; border: 1px solid rgba(74, 127, 168, 0.5); }
+.ausspr-stufe-3 { background: rgba(154, 160, 166, 0.18); color: #6b7075; border: 1px solid rgba(154, 160, 166, 0.5); }
+
+.ausspr-stufen-erklaerung p { margin: 0 0 8px; font-size: 0.78rem; line-height: 1.5; }
+.ausspr-stufen-erklaerung .ausspr-stufe { margin-right: 6px; }
+
+.ausspr-laeuft {
+  text-align: center;
+  font-weight: 700;
+  color: #E85F6F;
+  animation: ausspr-puls 1.1s ease-in-out infinite;
+}
+@keyframes ausspr-puls { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+/* --- LAUT FÜR LAUT — die Hauptsache --- */
+.ausspr-laute-kasten {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.035);
+}
+.ausspr-wort-zeile { padding: 8px 0; border-bottom: 1px dashed rgba(0, 0, 0, 0.12); }
+.ausspr-wort-zeile:last-of-type { border-bottom: 0; }
+.ausspr-wort-kopf {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap;
+}
+.ausspr-wort-kopf strong { font-size: 1.05rem; }
+.ausspr-wort-note { font-size: 0.72rem; opacity: 0.75; }
+.ausspr-lautreihe { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+/* Ein Laut ist ein eigenes Kästchen: nur so lässt sich EINZELN
+   einfärben, was danebenlag — und genau das ist der Zweck. */
+.ausspr-laut {
+  display: inline-block;
+  min-width: 1.7em;
+  padding: 3px 6px;
+  border: 2px solid currentColor;
+  border-radius: 7px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  cursor: help;
+}
+.ausspr-klartext {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #b04350;
+}
+.ausspr-klartext.ausspr-gut { color: #35806a; }
+.ausspr-teilnoten {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.7rem; opacity: 0.75;
+}
+
+/* --- WO es abweicht (Stufe 2) --- */
+.ausspr-profil-kasten {
+  margin-top: 12px; padding: 10px 12px;
+  border-radius: 12px; background: rgba(74, 127, 168, 0.08);
+}
+.ausspr-profil {
+  display: flex; align-items: flex-end; gap: 1px;
+  height: 56px; margin: 6px 0 8px;
+  padding: 3px; border-radius: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+.ausspr-profil > span { flex: 1 1 0; min-width: 0; border-radius: 1px; }
+.ausspr-p-strich { align-self: flex-end; }
+.ausspr-p-stumm { height: 2px; background: rgba(0, 0, 0, 0.14); align-self: flex-end; }
+
+/* --- Zwei Wellenformen untereinander ---
+   Beide Reihen sind gleich breit und haben gleich viele Striche.
+   Dadurch liegt Anfang über Anfang und Ende über Ende, auch wenn
+   die eine Aufnahme länger ist als die andere. */
+.ausspr-wellen { margin: 8px 0 10px; }
+.ausspr-welle-zeile {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
+}
+.ausspr-welle-schild {
+  flex: 0 0 4.6em; font-size: 0.7rem; font-weight: 700; opacity: 0.8;
+  text-align: right;
+}
+.ausspr-welle {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; align-items: center; gap: 1px;
+  height: 34px; padding: 2px 3px;
+  border-radius: 7px; background: rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+.ausspr-welle > span { flex: 1 1 0; min-width: 0; border-radius: 1px; align-self: center; }
+.ausspr-welle > em { font-size: 0.68rem; white-space: nowrap; }
+.ausspr-welle-dauer { flex: 0 0 3.4em; font-size: 0.66rem; opacity: 0.7; }
+
+.ausspr-shadow {
+  margin-top: 14px; padding: 10px 12px;
+  border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.12);
+}
+.ausspr-shadow-knoepfe { justify-content: center; flex-wrap: wrap; gap: 6px; }
+.ausspr-shadow-knoepfe .btn { font-size: 0.78rem; padding: 6px 10px; }
+.ausspr-tempo {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 6px; margin-top: 8px;
+}
+
+@media (max-width: 420px) {
+  .ausspr-welle-schild { flex-basis: 3.4em; font-size: 0.64rem; }
+  .ausspr-welle-dauer { display: none; }
+  .ausspr-laut { min-width: 1.5em; padding: 2px 4px; font-size: 0.86rem; }
+  .ausspr-shadow-knoepfe .btn { font-size: 0.72rem; padding: 5px 8px; }
+  .ausspr-profil { height: 44px; }
+}
+
+/* =========================================================
+   KLASSENZIMMER — die Leiste, die offen bleibt
+   ---------------------------------------------------------
+   WICHTIG: der <iframe> darin wird NIE versteckt und NIE
+   verschoben. display:none würde Jitsi das Bild abstellen,
+   Verschieben im DOM würde den Rahmen neu laden und die
+   Verbindung abreissen. Darum wird die Leiste beim Blättern
+   nur verschoben (transform) und bleibt gerendert.
+   ========================================================= */
+.kz-leiste {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 900;
+  display: flex; flex-direction: column;
+  background: #1c1c20;
+  color: #f2f2f4;
+  box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s ease, height 0.22s ease;
+  height: 168px;
+}
+/* „Weg" heisst verschoben, NICHT display:none — sonst stellt
+   Jitsi Kamera und Ton ab, und der Raum ist praktisch verlassen. */
+.kz-leiste.kz-aus,
+.kz-leiste.kz-versteckt { transform: translateY(110%); pointer-events: none; }
+.kz-leiste.kz-gross { height: 72vh; }
+
+.kz-kopf {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.07);
+  flex: 0 0 auto;
+}
+.kz-titel { font-size: 0.78rem; font-weight: 700; flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kz-zahl {
+  font-size: 0.7rem; padding: 1px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16); flex: 0 0 auto;
+}
+.kz-knopf {
+  flex: 0 0 auto;
+  min-width: 34px; min-height: 34px;      /* mit dem Finger treffbar */
+  border: 0; border-radius: 9px;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit; font-size: 0.95rem; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.kz-knopf:hover { background: rgba(255, 255, 255, 0.22); }
+.kz-weg { background: rgba(232, 95, 111, 0.35); }
+.kz-leiste.kz-ton-aus [data-kz="ton"] { background: rgba(232, 95, 111, 0.5); }
+.kz-leiste.kz-bild-aus [data-kz="bild"] { background: rgba(232, 95, 111, 0.5); }
+
+.kz-buehne { flex: 1 1 auto; min-height: 0; background: #000; }
+.kz-buehne iframe { display: block; width: 100%; height: 100%; border: 0; }
+.kz-fuss {
+  flex: 0 0 auto;
+  padding: 3px 9px 4px;
+  font-size: 0.68rem; line-height: 1.35;
+  opacity: 0.85;
+  max-height: 2.8em; overflow: hidden;
+}
+.kz-leiste.kz-fehler .kz-fuss { color: #ffb4bd; }
+
+/* Solange die Leiste steht, braucht die Seite unten Luft —
+   sonst liegt der letzte Knopf der Ansicht darunter. */
+body.hat-klassenzimmer { padding-bottom: 172px; }
+
+.kz-raumname {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  padding: 1px 6px; border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  word-break: break-all;
+}
+.kz-liste { margin: 4px 0 0; padding-left: 18px; font-size: 0.82rem; }
+
+@media (max-width: 420px) {
+  .kz-leiste { height: 148px; }
+  .kz-leiste.kz-gross { height: 78vh; }
+  body.hat-klassenzimmer { padding-bottom: 152px; }
+  .kz-titel { font-size: 0.7rem; }
+  .kz-knopf { min-width: 32px; min-height: 32px; font-size: 0.88rem; }
 }

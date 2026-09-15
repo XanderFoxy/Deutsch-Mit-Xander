@@ -49,10 +49,19 @@ const BK_SUBJEKT = {
   "alt-w":       { wort: "die alte Frau", artikel: "die", pron: "sie", syl: "AL-te FRAU" },
 };
 
+/* GEMELDET: „im Baukasten sollen wir diese Positionen auch einnehmen
+   können." Seit die Figurendateien auch Knien, Fersensitz,
+   Schneidersitz, Sitzen am Boden und Krabbeln mitbringen, kann man sie
+   wählen — und dann muss auch ein Verb dazu dastehen. Fehlte es, las
+   der Satz „Die Frau ist in der Küche": bkSatz() greift auf „ist"
+   zurück, wenn die Haltung hier nicht steht. */
 const BK_VERB = {
   stehen: "steht", sitzen: "sitzt", liegen: "liegt",
   gehen: "geht", halten: "hält", winken: "winkt",
   werfen: "wirft", zeigen: "zeigt",
+  knien: "kniet", knien_vor: "kniet", fersensitz: "kniet",
+  schneidersitz: "sitzt", sitzen_boden: "sitzt", sitzen_seit: "sitzt",
+  krabbeln: "krabbelt", hocken: "hockt", knien_halb: "kniet",
 };
 
 /* Kleidungsstücke mit Artikel, Geschlecht und Betonung. Das
@@ -152,21 +161,52 @@ function bkSatz(z) {
      steht nur das eine Stück, an dem man die Person erkennt. */
   const anhabe = bkAngezogen(z);
   let wer;
+  /* Welches Stück im ersten Satz schon genannt wurde — es darf im
+     zweiten nicht noch einmal vorkommen. */
+  let schonGenannt = null;
   if (!anhabe.length) {
     wer = bkGross(bkNackt(subj));
   } else {
+    schonGenannt = bkMerkmalStueck(anhabe);
     const merk = bkMerkmal(anhabe);
     wer = bkGross(subj.wort) + (merk ? " " + merk : "");
   }
   let eins = wer + " " + (BK_VERB[z.haltung] || "ist");
   if (platz) eins += " " + platz.wo;
-  if (platz && platz.tut) eins += " und " + platz.tut;
+  /* GEMELDET: „die nackte Frau sitzt in der Küche, sie ist nackt“ ist
+     doppelt gemoppelt.
+
+     Dasselbe passiert zwischen Ort und Tätigkeit: „steht in der Dusche
+     UND DUSCHT“, „liegt in der Badewanne und badet“, „steht vor dem
+     Spiegel und schaut in den Spiegel“, „sitzt im Wartezimmer und
+     wartet“. Die Ortsangabe sagt die Tätigkeit bereits. Deshalb fällt
+     sie weg, sobald sie dasselbe Wort noch einmal bringt — der Ort
+     bleibt stehen, denn an ihm hängt die eigentliche Lektion (der
+     Dativ nach „wo?“). „Am Herd und kocht“ oder „auf dem Bahnsteig
+     und wartet auf den Zug“ bleiben dagegen: dort sagt die Tätigkeit
+     etwas Neues. */
+  if (platz && platz.tut && !bkTutSagtDasselbe(platz)) eins += " und " + platz.tut;
   saetze.push(eins + ".");
 
-  /* Satz 2: Was hat er an? */
-  const an = anhabe;
+  /* Satz 2: Was hat er an?
+
+     GEMELDET: „Wenn du sagst, die nackte Frau sitzt am Küchentisch —
+     sie ist nackt, das ist doppelt gemoppelt. Du brauchst dann nur
+     sagen: die nackte Frau sitzt am Küchentisch."
+
+     Genau. „Nackt" steht schon im ersten Satz am Subjekt. Ein zweiter
+     Satz „Sie hat nichts an." sagt dasselbe noch einmal — er bleibt
+     deshalb weg. Ein zweiter Satz kommt nur, wenn es auch etwas
+     aufzuzählen gibt. */
+  /* GEMELDET, derselbe Fehler eine Ebene weiter: Stand im ersten Satz
+     schon „die Frau MIT DEM BLAUEN T-SHIRT“, dann las der zweite
+     „Sie trägt EIN BLAUES T-SHIRT und eine rote Hose.“ — das T-Shirt
+     zweimal. Der zweite Satz zählt deshalb nur noch auf, was oben NICHT
+     schon stand. Bleibt danach nichts übrig (die Person trägt genau ein
+     Stück), fällt der zweite Satz ganz weg. */
+  const an = anhabe.filter((st) => st !== schonGenannt);
   if (!an.length) {
-    saetze.push(bkGross(subj.pron) + " hat nichts an.");
+    /* nichts zu ergänzen — der erste Satz sagt es bereits */
   } else {
     const teile = an.map((s) => {
       const w = BK_STUECK[s.stueck];
@@ -206,6 +246,45 @@ function bkNackt(subj) {
    ein kürzerer. */
 const BK_MERKMAL_FOLGE = ["kleid", "oberteil", "jacke", "unterteil", "kopf"];
 const BK_DATIV = { m: "dem", f: "der", n: "dem" };
+/* Genau dasselbe Auswahlverfahren wie in bkMerkmal — aber es gibt das
+   gewählte Stück selbst zurück, damit der zweite Satz es weglassen kann.
+   Bewusst EINE gemeinsame Regel statt zweier, die auseinanderlaufen. */
+function bkMerkmalStueck(an) {
+  for (const platz of BK_MERKMAL_FOLGE) {
+    const s = an.find((x) => x.platz === platz);
+    if (!s) continue;
+    const w = BK_STUECK[s.stueck];
+    if (!w) continue;
+    if (w[1] === "p") continue;              // Plural bleibt aussen vor
+    return s;
+  }
+  return null;
+}
+
+/* Sagt die Tätigkeit dasselbe wie die Ortsangabe?
+   „in der Dusche“ + „ducht“, „am Waschbecken“ + „wäscht sich“,
+   „vor dem Spiegel“ + „schaut in den Spiegel“ — alles doppelt.
+   Verglichen wird das Nomen des Platzes mit den Wörtern der Tätigkeit:
+   gleicher Wortanfang (vier Buchstaben) oder das Nomen taucht wörtlich
+   wieder auf. Umlaute werden vorher geglichen, sonst fände man
+   „wäscht“ nicht in „Waschbecken“. */
+function bkSchlicht(w) {
+  return String(w || "").toLowerCase()
+    .replace(/\u00e4/g, "a").replace(/\u00f6/g, "o").replace(/\u00fc/g, "u").replace(/\u00df/g, "ss");
+}
+function bkTutSagtDasselbe(platz) {
+  if (!platz || !platz.tut || !platz.wort) return false;
+  const nomen = bkSchlicht(String(platz.wort).replace(/^(der|die|das)\s+/, ""));
+  if (!nomen) return false;
+  const woerter = bkSchlicht(platz.tut).split(/[^a-z]+/).filter(Boolean);
+  return woerter.some((w) => {
+    if (w === nomen) return true;                       // „Tafel“ — „an die Tafel“
+    if (w.length >= 4 && nomen.indexOf(w.slice(0, 4)) === 0) return true;  // duscht — Dusche
+    if (w.length >= 4 && nomen.indexOf(w) >= 0) return true;               // Wasser — Wasserkocher
+    return false;
+  });
+}
+
 function bkMerkmal(an) {
   for (const platz of BK_MERKMAL_FOLGE) {
     const s = an.find((x) => x.platz === platz);
@@ -280,8 +359,24 @@ function bkFigurSvg(z, hoehe) {
         "kopf", "zubehoer", "gesicht", "frisur"];
   reihe.forEach((platz) => {
     if (platz === "koerper") { ebenen.push(h.koerper || ""); return; }
-    if (platz === "gesicht") { ebenen.push((h.gesichter || {})[z.gesicht] || ""); return; }
-    if (platz === "frisur") { ebenen.push((h.frisuren || {})[z.frisur] || ""); return; }
+    if (platz === "gesicht") {
+      /* Faellt die gemerkte Auswahl weg (die Figurendateien liefern
+         jetzt vier Gesichter statt acht), wird das erste genommen —
+         sonst stuende die Figur ohne Gesicht da. */
+      const gs = h.gesichter || {};
+      ebenen.push(gs[z.gesicht] || gs[Object.keys(gs)[0]] || "");
+      return;
+    }
+    if (platz === "frisur") {
+      /* Frisur UND Bart sind in den Figurendateien zwei ganz normale
+         Frisur-Ebenen im selben Koordinatensystem. Sie lassen sich
+         deshalb einfach übereinanderlegen — vorher schloss die eine
+         die andere aus, und wer „Vollbart" wählte, bekam einen
+         Glatzkopf mit Bart statt eines Mannes mit Haar und Bart. */
+      ebenen.push((h.frisuren || {})[z.frisur] || "");
+      if (z.bart) ebenen.push((h.frisuren || {})[z.bart] || "");
+      return;
+    }
     const w = z.kleidung[platz];
     if (!w || !w.stueck || w.stueck === "nichts") return;
     const teil = (h.kleidung || {})[w.stueck];
@@ -330,9 +425,16 @@ function bkFigurSvg(z, hoehe) {
    ist der Boden), beim Sitzen am Gesaess (die Sitzflaeche ist die
    Sitzflaeche). Der Platz sagt mit „sitzY", wo seine Sitzflaeche liegt —
    fehlt die Angabe, bleibt es beim alten Verhalten. */
-function bkFigurAnker(fig, platz) {
+/* Welche Haltungen auf einer Sitzfläche aufliegen. Maßgeblich ist die
+   Haltung der FIGUR, nicht die des Platzes: seit man die Haltung selbst
+   wählen kann, kann jemand auf dem Stuhl auch stehen oder knien — dann
+   gehört er an die Füße gehängt und nicht ans Gesäß. */
+const BK_SITZHALTUNG = { sitzen: 1, sitzen_seit: 1, fersensitz: 1,
+                         schneidersitz: 1, sitzen_boden: 1 };
+function bkFigurAnker(fig, platz, haltung) {
   if (!fig || !platz) return { x: 0, y: 0 };
-  const sitzend = platz.haltung === "sitzen" && fig.sitz !== null
+  const h = haltung || platz.haltung;
+  const sitzend = BK_SITZHALTUNG[h] && fig.sitz !== null
     && typeof platz.sitzY === "number";
   if (sitzend) return { x: platz.x - fig.sitzX, y: platz.sitzY - fig.sitz };
   return { x: platz.x, y: platz.y - fig.fuss };
@@ -394,6 +496,7 @@ const Baukasten = (function () {
     haut: "mittel",
     frisur: "lang",
     haarfarbe: "braun",
+    bart: "",
     gesicht: "g1",
     haltung: "stehen",
     kleidung: {
@@ -402,6 +505,67 @@ const Baukasten = (function () {
       schuhe: { stueck: "halbschuh", farbe: "braun" },
     },
   };
+
+  /* ------------------------------------------------------------
+     WAS DIE VORGABE IST — UND WAS DER NUTZER SELBST GEWÄHLT HAT
+     ------------------------------------------------------------
+     GEMELDET: „Wenn man die Frau zum Mann macht, hat der Mann immer
+     noch die langen Haare. Und es macht auch keinen Unterschied, wenn
+     man ihn zum alten Mann macht oder zur alten Frau — da gibt's keine
+     grauen Haare."
+
+     Ursache: `frisur` und `haarfarbe` standen als feste Anfangswerte im
+     Zustand und wurden beim Umschalten von Alter oder Geschlecht nie
+     nachgezogen. Jetzt gibt es je Alter und Geschlecht eine Vorgabe,
+     und beim Umschalten wird sie übernommen.
+
+     ABER NUR, SOLANGE DER NUTZER NICHT SELBST GEWÄHLT HAT. Wer der
+     Frau ausdrücklich einen Dutt gegeben hat, will ihn nicht verlieren,
+     bloß weil er danach das Alter ändert. Deshalb merkt sich `eigen`
+     für jedes betroffene Feld, ob dort noch die Vorgabe steht oder eine
+     eigene Wahl. Nur Felder, die noch auf der Vorgabe stehen, werden
+     nachgezogen. ------------------------------------------------- */
+  const eigen = {};         // Feld -> true, sobald der Nutzer es wählt
+
+  /* Die Vorgaben. Beim Säugling und beim Kleinkind ist das Haar dünn
+     und hell und es gibt keinen Bart; beim alten Menschen ist es grau
+     oder weiß. */
+  const BK_VORGABE = {
+    "saeugling-m":  { frisur: "kurz",   haarfarbe: "hellblond",   bart: "" },
+    "saeugling-w":  { frisur: "kurz",   haarfarbe: "hellblond",   bart: "" },
+    "kleinkind-m":  { frisur: "kurz",   haarfarbe: "hellblond",   bart: "" },
+    "kleinkind-w":  { frisur: "pony",   haarfarbe: "hellblond",   bart: "" },
+    "kind-m":       { frisur: "kurz",   haarfarbe: "hellbraun",   bart: "" },
+    "kind-w":       { frisur: "zopf",   haarfarbe: "hellbraun",   bart: "" },
+    "jugendlich-m": { frisur: "kurz",   haarfarbe: "braun",       bart: "" },
+    "jugendlich-w": { frisur: "lang",   haarfarbe: "braun",       bart: "" },
+    "erwachsen-m":  { frisur: "kurz",   haarfarbe: "dunkelbraun", bart: "" },
+    "erwachsen-w":  { frisur: "lang",   haarfarbe: "braun",       bart: "" },
+    "alt-m":        { frisur: "glatze", haarfarbe: "grau",        bart: "bart_kurz" },
+    "alt-w":        { frisur: "dutt",   haarfarbe: "weiss",       bart: "" },
+  };
+  const BK_NACHGEZOGEN = ["frisur", "haarfarbe", "bart"];
+
+  function bkVorgabe() {
+    return BK_VORGABE[zustand.alter + "-" + zustand.geschlecht]
+      || BK_VORGABE["erwachsen-w"];
+  }
+  /* Nach jedem Wechsel von Alter oder Geschlecht: alles nachziehen, was
+     noch auf der Vorgabe steht. */
+  function bkVorgabenNachziehen() {
+    const v = bkVorgabe();
+    BK_NACHGEZOGEN.forEach((feld) => {
+      if (!eigen[feld]) zustand[feld] = v[feld];
+    });
+    /* Ein Bart am Kind bleibt auch dann weg, wenn ihn jemand vorher
+       ausdrücklich gewählt hat — es gibt für Kinder keine Bartebene,
+       und „Vollbart" stünde dann als Knopf ohne Wirkung da. */
+    if (!bkBartErlaubt()) zustand.bart = "";
+  }
+  function bkBartErlaubt() {
+    return zustand.geschlecht === "m"
+      && ["jugendlich", "erwachsen", "alt"].indexOf(zustand.alter) >= 0;
+  }
 
   /* Womit eine Figur anfaengt, wenn sie wieder etwas anziehen soll. */
   function bkGrundkleidung() {
@@ -446,11 +610,18 @@ const Baukasten = (function () {
     const s = zustand.szene;
     if (!(window.DMA_SZENE || {})[s]) await datei("szenen/" + s + ".js");
     const f = zustand.alter + "-" + zustand.geschlecht;
+    /* Je Figur liegen DREI Dateien vor: Teil 1 stehen und halten,
+       Teil 2 sitzen und liegen, Teil 3 die Haltungen am Boden (knien,
+       Fersensitz, Schneidersitz, auf dem Boden sitzen, krabbeln).
+       Teil 3 wurde hier nie geholt — die Haltungen darin waren damit
+       nicht zu erreichen. */
     if (!(window.DMA_FIGUR || {})[f]) {
       await datei("figuren/" + f + ".js");
       await datei("figuren/" + f + "-teil2.js");
+      await datei("figuren/" + f + "-teil3.js");
     } else if (!((window.DMA_FIGUR[f].haltungen || {})[zustand.haltung])) {
       await datei("figuren/" + f + "-teil2.js");
+      await datei("figuren/" + f + "-teil3.js");
     }
   }
 
@@ -465,8 +636,8 @@ const Baukasten = (function () {
        andere Stelle als das Bild zeigt — deshalb wird er zurueckgeschrieben. */
     if (!zustand.platz || zustand.platz.szene !== zustand.szene) {
       zustand.platz = plaetze().find((p) => p.frei) || plaetze()[0] || null;
-      if (zustand.platz) {
-        zustand.haltung = zustand.platz.haltung === "gehen" ? "stehen" : zustand.platz.haltung;
+      if (zustand.platz && !eigen.haltung) {
+        zustand.haltung = bkHaltungVomPlatz(zustand.platz);
       }
     }
     const platz = zustand.platz;
@@ -488,7 +659,7 @@ const Baukasten = (function () {
        Gesaess. Vorher stand hier platz.y - fig.fuss fuer ALLE Haltungen —
        daher sass die Figur nicht auf der Toilette, sondern stand mit den
        Fuessen auf deren Rand, und vor dem Fernseher stand sie oben drauf. */
-    const anker = bkFigurAnker(fig, platz);
+    const anker = bkFigurAnker(fig, platz, zustand.haltung);
     const figur = fig && platz
       ? '<g class="bk-figur" data-bk-figur="1" transform="translate('
         + p2(anker.x) + ',' + p2(anker.y) + ')">' + fig.svg + "</g>"
@@ -514,48 +685,146 @@ const Baukasten = (function () {
         }).join("") + "</div></div>";
   }
 
+  /* ------------------------------------------------------------
+     GEMELDET: „Das System soll viel lockerer sein und nicht so
+     überladen mit so vielen Möglichkeiten aufgeklappt — das soll man
+     auswählen können. Außerdem habe ich keine Option, sie anzuziehen."
+
+     Beides derselbe Grund: unter dem Bild standen fünfzehn Reihen
+     Knöpfe UNTEREINANDER und alle offen. Was man suchte — das
+     Anziehen — lag weit unterhalb des Bildrandes und war auf dem
+     Telefon praktisch unerreichbar.
+
+     Jetzt vier Fächer, immer nur EINES offen:
+       📍 Wo?      Ort und Platz
+       🧍 Wer?     Alter, Mann/Frau
+       🎨 Aussehen Haut, Frisur, Haarfarbe, Gesicht
+       👕 Anziehen an/aus und jedes Kleidungsstück
+     ------------------------------------------------------------ */
+  const BK_FAECHER = [
+    ["wo", "📍 Wo?"], ["wer", "🧍 Wer?"],
+    ["aussehen", "🎨 Aussehen"], ["kleidung", "👕 Anziehen"],
+  ];
+
+  function faecherHtml() {
+    const offen = zustand.fach || "wo";
+    return '<div class="bk-faecher">' + BK_FAECHER.map(([k, t]) =>
+      '<button type="button" class="bk-fach' + (k === offen ? " bk-fach-an" : "")
+      + '" data-bk-fach="' + k + '">' + t + "</button>").join("") + "</div>";
+  }
+
   function steuerung() {
     const bau = (window.DMA_FIGUR || {})[zustand.alter + "-" + zustand.geschlecht];
+    /* Angeboten wird nur, wofür BK_STUECK ein deutsches Wort kennt.
+       Kommt aus den Figurendateien einmal ein Stück, das hier noch
+       nicht steht, stünde sonst sein interner Name als Knopf da
+       („rock_knie") und der Satz ließe es stillschweigend weg — in
+       einem Werkzeug, dessen ganzer Zweck das deutsche Wort ist, ist
+       ein Knopf ohne Wort schlimmer als gar kein Knopf. */
+    const bekannt = (liste) => liste.filter((s) => BK_STUECK[s]);
     const stuecke = (platz) => {
       const alle = window.DMA_FIGUR_PLATZ && window.DMA_FIGUR_PLATZ[platz];
-      if (alle) return alle;
+      if (alle) return bekannt(alle);
       const h = bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen);
       if (!h) return [];
-      return Object.keys(h.kleidung || {}).filter((k) => (h.platz || {})[k] === platz);
+      return bekannt(Object.keys(h.kleidung || {})
+        .filter((k) => (h.platz || {})[k] === platz));
     };
     const anGezogen = (platz) => (zustand.kleidung[platz] || {}).stueck || "nichts";
 
+    const fach = zustand.fach || "wo";
     const teile = [];
-    teile.push(wahlHtml("szene", "Wo?", szenen().map((s) => [s.id, (s.emoji || "") + " " + s.titel]), zustand.szene));
-    teile.push(wahlHtml("alter", "Wer?", [
-      ["saeugling", "Baby"], ["kleinkind", "Kleinkind"], ["kind", "Kind"],
-      ["jugendlich", "Jugendliche"], ["erwachsen", "Erwachsen"], ["alt", "Alt"]], zustand.alter));
-    teile.push(wahlHtml("geschlecht", "Mann oder Frau?", [["m", "männlich"], ["w", "weiblich"]], zustand.geschlecht));
-    teile.push(wahlHtml("haut", "Hautfarbe",
-      Object.keys(window.DMA_FIGUR_HAUT || {}).map((k) => [k, BK_HAUT_NAME[k] || k]), zustand.haut));
-    const frisuren = Object.keys((bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen) || {}).frisuren || {});
-    teile.push(wahlHtml("frisur", "Frisur",
-      frisuren.map((k) => [k, BK_FRISUR_NAME[k] || k]), zustand.frisur));
-    teile.push(wahlHtml("haarfarbe", "Haarfarbe",
-      Object.keys(window.DMA_FIGUR_HAAR || {}).map((k) => [k, BK_HAAR_NAME[k] || k]), zustand.haarfarbe));
-    teile.push(wahlHtml("gesicht", "Gesicht",
-      ["g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8"].map((k, i) => [k, "Gesicht " + (i + 1)]), zustand.gesicht));
 
-    ["kopf", "oberteil", "kleid", "jacke", "unterteil", "schuhe", "zubehoer"].forEach((platz) => {
-      const liste = stuecke(platz);
-      if (!liste.length) return;
-      const namen = [["nichts", "—"]].concat(liste.map((s) => [s, (BK_STUECK[s] || [s])[0].replace(/^(der|die|das)\s+/, "")]));
-      teile.push(wahlHtml("kl-" + platz, bkPlatzName(platz), namen, anGezogen(platz)));
-    });
-    teile.push(wahlHtml("farbe", "Farbe für das zuletzt Gewählte",
-      Object.keys(BK_FARBE).map((f) => [f, BK_FARBE[f][0]]), zustand.letzteFarbe || "rot"));
-    return '<div class="bk-steuerung">' + teile.join("") + "</div>";
+    if (fach === "wo") {
+      teile.push(wahlHtml("szene", "Der Ort", szenen().map((s) => [s.id, (s.emoji || "") + " " + s.titel]), zustand.szene));
+      /* Die Plätze auch als Knöpfe, nicht nur als Ringe im Bild: mit dem
+         Finger ist ein Knopf leichter zu treffen als ein Ring von neun
+         Punkt Durchmesser. */
+      const pl = plaetze();
+      if (pl.length) {
+        teile.push(wahlHtml("platz", "Der Platz",
+          pl.map((p) => [p.id, p.wo]), (zustand.platz || {}).id));
+      }
+    } else if (fach === "wer") {
+      teile.push(wahlHtml("alter", "Das Alter", [
+        ["saeugling", "Baby"], ["kleinkind", "Kleinkind"], ["kind", "Kind"],
+        ["jugendlich", "Jugendliche"], ["erwachsen", "Erwachsen"], ["alt", "Alt"]], zustand.alter));
+      teile.push(wahlHtml("geschlecht", "Mann oder Frau?",
+        [["m", "♂ männlich"], ["w", "♀ weiblich"]], zustand.geschlecht));
+      /* GEWÜNSCHT: „Diese Positionen sollen alle Menschen immer
+         einnehmen können … und im Baukasten sollen wir diese
+         Positionen auch einnehmen können."
+         Angeboten wird, was die geladenen Figurendateien wirklich
+         mitbringen — eine Haltung ohne Ebenen wäre ein Knopf, der die
+         Figur bloß aufstellt. */
+      const halt = bau ? Object.keys(bau.haltungen || {}) : [];
+      if (halt.length) {
+        /* Der erste Knopf gibt die Entscheidung an den Platz zurück:
+           sonst käme man aus einer einmal gewählten Haltung nie wieder
+           heraus, und wer sich einmal hingekniet hat, kniete auch noch
+           in der Badewanne. */
+        const liste = [[BK_HALTUNG_PLATZ, "📍 wie es der Platz will"]]
+          .concat(halt.map((k) => [k, BK_HALTUNG_NAME[k] || k]));
+        teile.push(wahlHtml("haltung", "Die Haltung", liste,
+          eigen.haltung ? zustand.haltung : BK_HALTUNG_PLATZ));
+      }
+    } else if (fach === "aussehen") {
+      teile.push(wahlHtml("haut", "Hautfarbe",
+        Object.keys(window.DMA_FIGUR_HAUT || {}).map((k) => [k, BK_HAUT_NAME[k] || k]), zustand.haut));
+      const alleF = Object.keys((bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen) || {}).frisuren || {});
+      /* Frisur und Bart sind zwei getrennte Reihen. Vorher standen sie
+         in EINER: wer „Vollbart" wählte, verlor damit die Frisur und
+         bekam einen Glatzkopf mit Bart. */
+      const frisuren = alleF.filter((k) => k.indexOf("bart") !== 0);
+      teile.push(wahlHtml("frisur", "Frisur",
+        frisuren.map((k) => [k, BK_FRISUR_NAME[k] || k]), zustand.frisur));
+      const baerte = bkBartErlaubt() ? alleF.filter((k) => k.indexOf("bart") === 0) : [];
+      if (baerte.length) {
+        teile.push(wahlHtml("bart", "Bart",
+          [["", "— kein Bart"]].concat(baerte.map((k) => [k, BK_FRISUR_NAME[k] || k])),
+          zustand.bart || ""));
+      }
+      teile.push(wahlHtml("haarfarbe", "Haarfarbe",
+        Object.keys(window.DMA_FIGUR_HAAR || {}).map((k) => [k, BK_HAAR_NAME[k] || k]), zustand.haarfarbe));
+      /* Nur die Gesichter anbieten, die es wirklich gibt: die
+         Figurendateien liefern vier statt acht, und die vier fehlenden
+         Knöpfe zeigten alle dasselbe Gesicht. */
+      const ges = Object.keys((bau && (bau.haltungen[zustand.haltung] || bau.haltungen.stehen) || {}).gesichter || {});
+      if (ges.length) {
+        teile.push(wahlHtml("gesicht", "Gesicht",
+          ges.map((k, i) => [k, "Gesicht " + (i + 1)]), zustand.gesicht));
+      }
+    } else {
+      /* Der Schalter, der gefehlt hat: mit einem Griff alles an oder
+         alles aus. Darunter dann jedes Stück einzeln. */
+      const etwasAn = Object.keys(zustand.kleidung).length > 0;
+      teile.push(wahlHtml("anhaben", "Angezogen oder nicht?",
+        [["an", "👕 angezogen"], ["aus", "🚿 nichts an"]], etwasAn ? "an" : "aus"));
+      ["kopf", "oberteil", "kleid", "jacke", "unterteil", "schuhe", "zubehoer"].forEach((platz) => {
+        const liste = stuecke(platz);
+        if (!liste.length) return;
+        const namen = [["nichts", "—"]].concat(liste.map((s) => [s, (BK_STUECK[s] || [s])[0].replace(/^(der|die|das)\s+/, "")]));
+        teile.push(wahlHtml("kl-" + platz, bkPlatzName(platz), namen, anGezogen(platz)));
+      });
+      teile.push(wahlHtml("farbe", "Farbe für das zuletzt Gewählte",
+        Object.keys(BK_FARBE).map((f) => [f, BK_FARBE[f][0]]), zustand.letzteFarbe || "rot"));
+    }
+    return faecherHtml() + '<div class="bk-steuerung">' + teile.join("") + "</div>";
   }
 
   const BK_FRISUR_NAME = {
     kurz: "kurz", lang: "lang", locken: "Locken", zopf: "Zopf",
     dutt: "Dutt", glatze: "Glatze", pony: "Pony", kahl: "kahl",
     bart_kurz: "kurzer Bart", bart_voll: "Vollbart",
+  };
+  const BK_HALTUNG_PLATZ = "_platz";   // „der Platz entscheidet"
+  const BK_HALTUNG_NAME = {
+    stehen: "🧍 stehen", halten: "🤲 etwas halten",
+    sitzen: "🪑 sitzen", liegen: "🛏️ liegen",
+    knien: "🧎 knien", knien_vor: "🧎 vorgebeugt knien",
+    fersensitz: "🧎 Fersensitz", schneidersitz: "🧘 Schneidersitz",
+    sitzen_boden: "🧑‍🦯 am Boden sitzen", krabbeln: "🍼 krabbeln",
+    gehen: "🚶 gehen", hocken: "🧎 hocken",
   };
   const BK_HAUT_NAME = {
     sehrhell: "sehr hell", hell: "hell", mittel: "mittel",
@@ -593,6 +862,32 @@ const Baukasten = (function () {
     binden();
   }
 
+  /* Einen Platz einnehmen — an EINER Stelle, damit Ring, Knopf und
+     Ziehen sich nicht unterschiedlich verhalten.
+
+     An manchen Plätzen ist man nicht angezogen (Dusche, Badewanne). An
+     allen anderen zieht sich die Figur wieder an, wenn sie von so einem
+     Platz kommt — sonst saß sie nackt am Küchentisch, ohne dass das
+     jemand wollte. Wer ausdrücklich „nichts an" gewählt hat, bleibt
+     nackt. */
+  /* Welche Haltung ein Platz nahelegt. „gehen" gibt es als Ebene nicht,
+     dort steht die Figur. */
+  function bkHaltungVomPlatz(p) {
+    return p.haltung === "gehen" ? "stehen" : p.haltung;
+  }
+
+  function bkPlatzNehmen(p) {
+    zustand.platz = p;
+    /* Hat der Nutzer die Haltung selbst gewählt, bleibt sie stehen —
+       sonst hätte er sie hingesetzt und der nächste Platz hätte sie
+       wieder aufgestellt. */
+    if (!eigen.haltung) zustand.haltung = bkHaltungVomPlatz(p);
+    if (!p.an) zustand.kleidung = {};
+    else if (!Object.keys(zustand.kleidung).length && !zustand.nacktGewollt) {
+      zustand.kleidung = bkGrundkleidung();
+    }
+  }
+
   function binden() {
     flaeche.querySelectorAll("[data-bk]").forEach((b) => {
       b.addEventListener("click", async () => {
@@ -600,8 +895,19 @@ const Baukasten = (function () {
         if (was === "szene") {
           zustand.szene = wert;
           zustand.platz = null;
-          /* Wer die Dusche verlaesst, zieht sich wieder an. */
-          if (!Object.keys(zustand.kleidung).length) zustand.kleidung = bkGrundkleidung();
+          /* Wer die Dusche verlaesst, zieht sich wieder an — es sei denn,
+             das Ausziehen war ausdrücklich gewollt. */
+          if (!Object.keys(zustand.kleidung).length && !zustand.nacktGewollt) {
+            zustand.kleidung = bkGrundkleidung();
+          }
+        }
+        else if (was === "platz") {
+          const p = plaetze().find((x) => x.id === wert);
+          if (p) bkPlatzNehmen(p);
+        }
+        else if (was === "anhaben") {
+          zustand.nacktGewollt = wert === "aus";
+          zustand.kleidung = wert === "aus" ? {} : bkGrundkleidung();
         }
         else if (was === "farbe") {
           zustand.letzteFarbe = wert;
@@ -612,21 +918,36 @@ const Baukasten = (function () {
           zustand.letzterPlatz = platz;
           if (wert === "nichts") delete zustand.kleidung[platz];
           else zustand.kleidung[platz] = { stueck: wert, farbe: zustand.letzteFarbe || "rot" };
-        } else zustand[was] = wert;
+          /* Von Hand ausgezogen heißt: so soll es bleiben, auch wenn die
+             Figur den Raum wechselt. */
+          zustand.nacktGewollt = Object.keys(zustand.kleidung).length === 0;
+        } else if (was === "haltung" && wert === BK_HALTUNG_PLATZ) {
+          delete eigen.haltung;
+          if (zustand.platz) zustand.haltung = bkHaltungVomPlatz(zustand.platz);
+        } else if (was === "alter" || was === "geschlecht") {
+          /* Erst umschalten, dann alles nachziehen, was noch auf der
+             Vorgabe steht — daher hatte der Mann vorher die langen
+             Haare der Frau und der Alte keine grauen. */
+          zustand[was] = wert;
+          bkVorgabenNachziehen();
+        } else {
+          /* Eine eigene Wahl. Ab jetzt wird dieses Feld nicht mehr
+             nachgezogen. */
+          eigen[was] = true;
+          zustand[was] = wert;
+        }
         await nachladen();
         zeichnen();
       });
+    });
+    flaeche.querySelectorAll("[data-bk-fach]").forEach((b) => {
+      b.addEventListener("click", () => { zustand.fach = b.dataset.bkFach; zeichnen(); });
     });
     flaeche.querySelectorAll("[data-bk-platz]").forEach((g) => {
       g.addEventListener("click", () => {
         const p = (window.DMA_PLAETZE || []).find((x) => x.id === g.dataset.bkPlatz);
         if (!p) return;
-        zustand.platz = p;
-        zustand.haltung = p.haltung === "gehen" ? "stehen" : p.haltung;
-        /* An manchen Plätzen ist man nicht angezogen — in der Dusche,
-           in der Badewanne. Das gehört zum Kontext, den der Satz
-           beschreiben soll. */
-        if (!p.an) zustand.kleidung = {};
+        bkPlatzNehmen(p);
         nachladen().then(zeichnen);
       });
     });
@@ -675,11 +996,7 @@ const Baukasten = (function () {
       zieht = false;
       figur.classList.remove("bk-zieht");
       const ziel = naechster(punkt(e.changedTouches ? { touches: e.changedTouches } : e));
-      if (ziel) {
-        zustand.platz = ziel;
-        zustand.haltung = ziel.haltung === "gehen" ? "stehen" : ziel.haltung;
-        if (!ziel.an) zustand.kleidung = {};
-      }
+      if (ziel) bkPlatzNehmen(ziel);
       nachladen().then(zeichnen);
     };
     figur.addEventListener("mousedown", los);
@@ -698,7 +1015,9 @@ const Baukasten = (function () {
     if (!zustand.platz) {
       const p = plaetze();
       zustand.platz = p.find((x) => x.frei) || p[0] || null;
-      if (zustand.platz) zustand.haltung = zustand.platz.haltung === "gehen" ? "stehen" : zustand.platz.haltung;
+      if (zustand.platz && !eigen.haltung) {
+        zustand.haltung = bkHaltungVomPlatz(zustand.platz);
+      }
     }
     zeichnen();
   }

@@ -614,6 +614,7 @@
 
     // Genaues Unterscheiden — der Logiker.
     wortpaare: "Logiker", "sinn-trainer": "Logiker", "doppelt-gemoppelt": "Logiker",
+    bilderraetsel: "Logiker", sprachatlas: "Logiker", dialekt: "Logiker",
     homophone: "Logiker", alltagsverben: "Logiker", praefixverben: "Logiker",
 
     // Satzbau und Formenlehre — der Grammatik-Profi.
@@ -847,6 +848,15 @@
       Backend.saveThemePreference(id);
     } else {
       sessionTheme = id;
+    }
+    /* Mit dem Design wechselt der Hintergrund des Laufbands — und davon
+       hängt ab, wie hell die Live-Farbe sein muss, um lesbar zu bleiben
+       (siehe liveFarbeLesbar). Die Zeile wird deshalb neu aufgebaut,
+       sonst behielte sie die Helligkeit des vorigen Designs.
+       Zeitversetzt, damit der neue Hintergrund schon steht, wenn
+       gemessen wird. */
+    if (typeof tickerNeuErzwingen === "function") {
+      setTimeout(() => { tickerNeuErzwingen(); if (typeof updateTicker === "function") updateTicker(); }, 30);
     }
   }
 
@@ -2411,6 +2421,134 @@
         </details>`).join("")}`;
   }
 
+  /* ============================================================
+     AZURE-SCHLÜSSEL — nur für den Betreiber
+     ------------------------------------------------------------
+     Der Schlüssel steht NIE im Quelltext und NIE im Repo. Er wird
+     hier eingetragen und liegt danach ausschliesslich in diesem
+     Gerät (localStorage). Wer die Seite von einem anderen Gerät
+     aufruft, trägt ihn dort erneut ein — das ist Absicht: ein
+     Schlüssel, der über das Konto wandert, läge in der Datenbank
+     und damit an einer Stelle mehr.
+     ============================================================ */
+  function azureEinstellungenHtml() {
+    if (!window.AusspracheP) return "";
+    const e = AusspracheP.azureEinstellungen();
+    const gesperrt = AusspracheP.istGesperrt();
+    const bis = gesperrt ? new Date(AusspracheP.gesperrtBis()) : null;
+    /* Nur die letzten vier Zeichen zeigen: es soll erkennbar sein,
+       DASS ein Schlüssel liegt, ohne ihn auf den Schirm zu
+       schreiben. */
+    const maske = e.schluessel ? "••••••••••••••••••••••••••••" + e.schluessel.slice(-4) : "";
+    return `
+      <div class="question-card" style="margin-top:14px; border:2px solid #4a7fa8;">
+        <h3>🗣️ Laut-Bewertung (Azure) — nur für dich</h3>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Mit einem Azure-Schlüssel bekommt der Aussprache-Trainer eine Note
+          <strong>für jeden einzelnen Laut</strong> und sagt in Klartext, was danebenlag
+          („dein ö klang wie ein o“). Ohne Schlüssel läuft er eine Stufe tiefer weiter.
+        </p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Anlegen: <strong>portal.azure.com</strong> → „Speech service“ → Tarif <strong>F0</strong>
+          (kostenlos) → Region <strong>West Europe</strong>. Dann hier Schlüssel und Region
+          eintragen. Der Schlüssel bleibt <strong>nur in diesem Gerät</strong> und wird nie
+          ins Repo geschrieben.
+        </p>
+        <label class="empty-note" style="display:block; margin-bottom:4px;">Schlüssel</label>
+        <input type="password" id="azureSchluessel" class="challenge-select" autocomplete="off"
+               placeholder="${e.schluessel ? maske : "hier einfügen"}" style="margin-bottom:8px; width:100%;">
+        <label class="empty-note" style="display:block; margin-bottom:4px;">Region</label>
+        <input type="text" id="azureRegion" class="challenge-select" autocomplete="off"
+               value="${e.region || ""}" placeholder="westeurope" style="margin-bottom:10px; width:100%;">
+        <div class="quiz-actions">
+          <button type="button" class="btn btn-coffee" id="azureSpeichern">Speichern</button>
+          <button type="button" class="btn btn-ghost" id="azurePruefen" ${e.schluessel && e.region ? "" : "disabled"}>Verbindung prüfen</button>
+          <button type="button" class="btn btn-ghost" id="azureLoeschen" ${e.schluessel ? "" : "disabled"}>Löschen</button>
+        </div>
+        <div id="azureStand" style="margin-top:10px;">
+          ${e.schluessel && e.region
+            ? `<p class="empty-note">Eingetragen: Region <strong>${e.region}</strong>, Schlüssel liegt in diesem Gerät.</p>`
+            : `<p class="empty-note">Noch kein Schlüssel eingetragen — der Trainer läuft eine Stufe tiefer.</p>`}
+          ${gesperrt ? `<p class="empty-note" style="color:#E8A33D;">
+            Die Monatsmenge ist aufgebraucht. Sie erneuert sich von selbst am
+            ${bis.toLocaleDateString("de-DE")}. Es wird nichts abgerechnet.
+            <button type="button" class="btn btn-ghost" id="azureSperreLoesen" style="margin-left:6px;">Trotzdem noch einmal versuchen</button>
+          </p>` : ""}
+        </div>
+        <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">
+          F0 ist dauerhaft kostenlos und hat eine Monatsmenge. Ist sie aufgebraucht,
+          antwortet Azure mit „429“ — die App fängt das ab, sagt es freundlich und
+          rechnet eine Stufe tiefer weiter. Es entstehen keine Kosten, solange der
+          Tarif F0 bleibt.
+        </p>
+      </div>`;
+  }
+
+  function azureEinstellungenBinden(area) {
+    if (!window.AusspracheP) return;
+    const stand = () => area.querySelector("#azureStand");
+    area.querySelector("#azureSpeichern")?.addEventListener("click", () => {
+      const s = area.querySelector("#azureSchluessel").value.trim();
+      const r = area.querySelector("#azureRegion").value.trim().toLowerCase();
+      if (!r) { stand().innerHTML = '<p class="empty-note" style="color:#E85F6F;">Die Region fehlt — bei F0 in West Europe ist das „westeurope“.</p>'; return; }
+      /* Ein leeres Schlüsselfeld heisst „nicht ändern“ — undefined,
+         nicht "". Sonst löschte ein Klick auf Speichern den
+         vorhandenen Schlüssel, nur weil das Feld aus Vorsicht leer
+         angezeigt wird. */
+      AusspracheP.azureEinstellungenSetzen(s ? s : undefined, r);
+      AusspracheP.sperreLoesen();
+      renderSettings();
+    });
+    area.querySelector("#azureLoeschen")?.addEventListener("click", () => {
+      AusspracheP.azureEinstellungenSetzen(null, null);
+      renderSettings();
+    });
+    area.querySelector("#azureSperreLoesen")?.addEventListener("click", () => {
+      AusspracheP.sperreLoesen();
+      renderSettings();
+    });
+    area.querySelector("#azurePruefen")?.addEventListener("click", async (ev) => {
+      const k = ev.currentTarget;
+      k.disabled = true; k.textContent = "Wird geprüft …";
+      /* Geprüft wird mit einer kurzen Stille: das kostet nichts an
+         Erkennung und beantwortet trotzdem die einzige Frage, die
+         zählt — nimmt Azure den Schlüssel an? */
+      const stille = azureStilleWav();
+      const erg = await AusspracheP.azureBewerten({ wav: stille, text: "Probe", zeitgrenze: 15000 });
+      k.disabled = false; k.textContent = "Verbindung prüfen";
+      const t = {
+        "schluessel-falsch": '<p class="empty-note" style="color:#E85F6F;">Azure lehnt den Schlüssel ab. Stimmen Schlüssel UND Region?</p>',
+        "kontingent": '<p class="empty-note" style="color:#E8A33D;">Schlüssel gilt, aber die Monatsmenge ist aufgebraucht.</p>',
+        "netz": '<p class="empty-note" style="color:#E85F6F;">Azure war nicht erreichbar. Netz prüfen.</p>',
+        "zeit-abgelaufen": '<p class="empty-note" style="color:#E85F6F;">Azure hat nicht geantwortet.</p>',
+        "kein-schluessel": '<p class="empty-note" style="color:#E85F6F;">Erst speichern, dann prüfen.</p>'
+      };
+      stand().innerHTML = erg.fehler
+        ? (t[erg.fehler] || `<p class="empty-note" style="color:#E85F6F;">Azure meldet einen Fehler (${erg.fehler}).</p>`)
+        : '<p class="empty-note" style="color:#4FA88E;">Der Schlüssel gilt, die Region stimmt. Die Laut-Bewertung läuft.</p>';
+      /* „nichts-verstanden" heisst hier: Azure hat geantwortet,
+         aber in der Stille kein Wort gefunden. Das ist der
+         ERFOLGSFALL für diese Prüfung. */
+      if (erg.fehler === "nichts-verstanden") {
+        stand().innerHTML = '<p class="empty-note" style="color:#4FA88E;">Der Schlüssel gilt, die Region stimmt. Die Laut-Bewertung läuft.</p>';
+      }
+    });
+  }
+
+  /* Eine halbe Sekunde Stille als WAV — zum Prüfen des Schlüssels. */
+  function azureStilleWav() {
+    const rate = 16000, n = rate / 2;
+    const ab = new ArrayBuffer(44 + n * 2);
+    const d = new DataView(ab);
+    const txt = (p, t) => { for (let i = 0; i < t.length; i++) d.setUint8(p + i, t.charCodeAt(i)); };
+    txt(0, "RIFF"); d.setUint32(4, 36 + n * 2, true); txt(8, "WAVE"); txt(12, "fmt ");
+    d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+    d.setUint32(24, rate, true); d.setUint32(28, rate * 2, true);
+    d.setUint16(32, 2, true); d.setUint16(34, 16, true);
+    txt(36, "data"); d.setUint32(40, n * 2, true);
+    return new Blob([ab], { type: "audio/wav" });
+  }
+
   function renderSettings() {
     const area = document.getElementById("settingsArea");
     if (!area) return;
@@ -2451,6 +2589,8 @@
         <h3>🗂️ Was liegt in meinem Konto?</h3>
         <div id="profilUebersichtBox">${profilUebersichtHtml()}</div>
       </div>
+
+      ${istBetreiber ? azureEinstellungenHtml() : ""}
 
       <div class="question-card" style="margin-top:14px;">
         <h3>🌍 Sprache der Erklärungen</h3>
@@ -2797,12 +2937,12 @@
         errBox.style.display = "block";
       }
     });
-    document.getElementById("umgangsspracheSchalter")?.addEventListener("change", async (e) => {
-      try {
-        const antwort = await Backend.updateExtraProfileField("umgangssprache", e.target.checked);
-        if (antwort && antwort.ok === false) throw new Error(antwort.message || "Nicht gespeichert.");
-        showToast(e.target.checked ? "🗣️ Umgangssprache steht jetzt oben" : "📖 Wörterbuchform steht jetzt oben");
-      } catch (err) { showToast("⚠️ " + (err.message || "Nicht gespeichert.")); e.target.checked = !e.target.checked; }
+    /* Der Schalter geht jetzt auch OHNE Anmeldung — gemerkt wird im
+       Gerät, und wer angemeldet ist, nimmt ihn zusätzlich mit ins
+       Konto. Vorher lief er ins Leere, solange man nicht eingeloggt war. */
+    document.getElementById("umgangsspracheSchalter")?.addEventListener("change", (e) => {
+      umgangsspracheSetzen(e.target.checked);
+      showToast(e.target.checked ? "🗣️ Umgangssprache steht jetzt oben" : "📖 Wörterbuchform steht jetzt oben");
     });
     document.getElementById("hilfsSpracheWahl")?.addEventListener("change", async (e) => {
       try {
@@ -2966,6 +3106,7 @@
     zugangPersonenZeichnen();
     area.querySelector("#itZugangSuchBtn")?.addEventListener("click", zugangSuchen);
     area.querySelector("#itZugangSuche")?.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); zugangSuchen(); } });
+    azureEinstellungenBinden(area);
     area.querySelector("#profilReparierenBtn")?.addEventListener("click", async (e) => {
       const knopf = e.currentTarget;
       const ziel = area.querySelector("#profilReparaturBericht");
@@ -4710,7 +4851,128 @@
                  url: "https://www.tandem.net/" },
     tiktok:    { name: "TikTok",    farbe: "#ffffff", wie: "Xander Fox",
                  url: "https://www.tiktok.com/@xander_fox_official" },
+    /* GEWÜNSCHT: „Und auch für Twitch soll noch dieses typische
+       Twitch-Blau mit dabei sein als Auswahl."
+       #9146FF ist der Hausfarbton von Twitch. Er kommt hier als
+       ganz gewöhnlicher weiterer Eintrag dazu — die Auswahlknöpfe,
+       die Adressfelder und die Laufschriftzeile bauen sich alle aus
+       genau dieser Tafel, es ist also nichts weiter zu tun.
+       Nachgemessen über alle 67 Designs: dieser Ton steht auf jedem
+       Laufband mit mindestens 3:1 zum Grund — er braucht keine
+       Sonderbehandlung. */
+    twitch:    { name: "Twitch",    farbe: "#9146FF", wie: "Xander Fox",
+                 url: "https://www.twitch.tv/" },
   };
+
+  /* ============================================================
+     DIE LIVE-FARBE BLEIBT DIE LIVE-FARBE — SIE MUSS NUR SICHTBAR SEIN
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Es soll nur der farbcodierte Unterschied sein, damit
+     man weiß, in welcher App ich gerade einen Livestream mache."
+
+     NACHGEMESSEN über alle 67 Designs mal alle Plattformen (jeweils
+     getComputedStyle auf der Zeile und auf dem Laufband, Kontrast nach
+     der üblichen Leuchtdichte-Formel): Schriftgröße, Zeilenhöhe und
+     Strichstärke sind überall identisch — 12 px / 18 px / 400. Da gibt
+     es keinen Sprung, auch nicht im Galaxie-Design.
+
+     GEFUNDEN wurde etwas anderes: in den 33 HELLEN Designs stand die
+     TikTok-Zeile mit Kontrast 1,00 auf dem Laufband — weiß auf weiß,
+     also schlicht unsichtbar. Clubhouse-Gelb (1,66) und Tandem-Rosa
+     (2,83) lagen dort ebenfalls unter dem Lesbaren. Bisher sollte ein
+     hauchdünner Saum das auffangen; er reichte nicht, und ein
+     kräftigerer Saum verbietet sich: umsäumte Schrift liest sich
+     größer und fetter — genau die Beschwerde, um die es hier geht.
+
+     DESHALB wird stattdessen die FARBE SELBST angepasst, und zwar nur
+     so weit wie nötig: Farbton und Sättigung der Hausfarbe bleiben
+     unangetastet, allein die Helligkeit wandert in Schritten, bis 3:1
+     gegen den wirklichen Hintergrund des Laufbands erreicht ist. Auf
+     dunklen Designs, wo die Farben ohnehin stehen, ändert sich nichts.
+     Die Zeile bleibt damit erkennbar „die TikTok-Farbe" bzw. „die
+     Twitch-Farbe" — und sie ist überall zu lesen, ohne dass ein
+     einziges Pixel an der Schrift selbst anders wäre.
+     ============================================================ */
+  function farbeZuRgb(wert) {
+    const s = String(wert || "").trim();
+    const kurz = s.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+    if (kurz) return [parseInt(kurz[1] + kurz[1], 16), parseInt(kurz[2] + kurz[2], 16), parseInt(kurz[3] + kurz[3], 16)];
+    const lang = s.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (lang) return [parseInt(lang[1], 16), parseInt(lang[2], 16), parseInt(lang[3], 16)];
+    const zahlen = s.match(/-?\d+(\.\d+)?/g);
+    if (zahlen && zahlen.length >= 3) return zahlen.slice(0, 3).map((x) => Math.round(Number(x)));
+    return null;
+  }
+  /* Relative Leuchtdichte und Kontrastverhältnis — dieselbe Rechnung,
+     die auch der Kopfstreifen für seine Schriftfarbe benutzt. */
+  function liveLeuchtdichte(rgb) {
+    const [r, g, b] = rgb.map((v) => {
+      const x = Math.min(255, Math.max(0, v)) / 255;
+      return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function liveKontrast(a, b) {
+    const l1 = liveLeuchtdichte(a), l2 = liveLeuchtdichte(b);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+  function rgbZuHsl([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0;
+    if (d) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    const l = (max + min) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    return [h, s, l];
+  }
+  function hslZuRgb([h, s, l]) {
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; }
+    else if (h < 180) { g = c; b = x; } else if (h < 240) { g = x; b = c; }
+    else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
+    return [r, g, b].map((v) => Math.round((v + m) * 255));
+  }
+  /* Der Hintergrund, auf dem die Zeile wirklich liegt. Gefragt wird das
+     Laufband selbst — so stimmt der Wert in jedem Design, ohne dass
+     hier eine Liste gepflegt werden müsste. */
+  function liveGrundfarbe() {
+    const bar = document.querySelector(".ticker-bar");
+    if (bar) {
+      const rgb = farbeZuRgb(getComputedStyle(bar).backgroundColor);
+      /* Ein durchsichtiger Grund sagt nichts — dann lieber weiter zum
+         Seitenhintergrund, statt auf Schwarz zu raten. */
+      if (rgb) {
+        const a = String(getComputedStyle(bar).backgroundColor).match(/rgba?\([^)]*,\s*([0-9.]+)\s*\)/);
+        if (!a || Number(a[1]) > 0.5) return rgb;
+      }
+    }
+    return farbeZuRgb(getComputedStyle(document.body).backgroundColor) || [255, 255, 255];
+  }
+  const LIVE_MINDESTKONTRAST = 3;
+  function liveFarbeLesbar(hausfarbe) {
+    const soll = farbeZuRgb(hausfarbe);
+    if (!soll) return hausfarbe;
+    const grund = liveGrundfarbe();
+    if (liveKontrast(soll, grund) >= LIVE_MINDESTKONTRAST) return hausfarbe;
+    const [h, s, l] = rgbZuHsl(soll);
+    /* In die Richtung wandern, in der es überhaupt etwas zu holen gibt:
+       auf hellem Grund abdunkeln, auf dunklem aufhellen. */
+    const richtung = liveLeuchtdichte(grund) > 0.35 ? -1 : 1;
+    let beste = soll, besterWert = liveKontrast(soll, grund);
+    for (let i = 1; i <= 40; i++) {
+      const neu = hslZuRgb([h, s, Math.min(1, Math.max(0, l + richtung * i * 0.025))]);
+      const wert = liveKontrast(neu, grund);
+      if (wert > besterWert) { besterWert = wert; beste = neu; }
+      if (wert >= LIVE_MINDESTKONTRAST) return `rgb(${neu[0]}, ${neu[1]}, ${neu[2]})`;
+    }
+    return `rgb(${beste[0]}, ${beste[1]}, ${beste[2]})`;
+  }
   /* Die eingetragenen Adressen — { plattform: { url, app } }. */
   let liveAdressen = {};
   function liveZiel(schluessel) {
@@ -4806,22 +5068,36 @@
     const p = liveStand && LIVE_PLATTFORMEN[liveStand.plattform];
     if (!p) return "";
     const wer = liveStand.name || p.wie || "Alex";
-    /* Dieselbe Schriftgröße wie der übrige Fließtext — nur die Farbe und
-       etwas mehr Strichstärke unterscheiden sie. Alles andere läuft
-       weiter wie immer. */
-    /* NOCHMALS GEMELDET: „die Schrift oben im Newsticker ist immer noch
-       gross fuer mich als Betreiber."
-       Gemessen ist sie das nicht — Laufschrift und Live-Zeile sind beide
-       12 px, mit und ohne Live, fuer jede Rolle. Die Regel dafuer steht
-       aber in app-styles.css, und wenn diese Datei nicht mit hochgeladen
-       (oder vom Browser noch aus dem Zwischenspeicher geholt) wird,
-       greift sie nicht. Damit das nicht mehr passieren kann, steht die
-       Groesse jetzt ZUSAETZLICH direkt am Element: font-size:inherit
-       schlaegt jede alte Regel aus einer alten Datei. Dick bleibt sie —
-       das war ausdruecklich erlaubt. */
+    /* ZUM DRITTEN MAL GEMELDET: „Die Schrift oben im Newsticker ist
+       immer noch so gross — wahrscheinlich nur fuer mich als
+       Betreiber, denn wenn ich mich auf einem anderen Profil einlogge,
+       ist die Schrift normal. Ich moechte, dass die klein ist, wie der
+       Newsticker generell."
+
+       WO DIE URSACHE LIEGT: eine rollenabhaengige Schriftgroesse gibt
+       es nirgends — nachgemessen sind Laufschrift und Live-Zeile beide
+       12 px. Was die Rollen aber wirklich unterscheidet, ist DIESE
+       ZEILE SELBST: sie steht nur da, wenn Alex gerade live ist, und
+       live geht nur Alex. Andere Profile sehen die Laufschrift also
+       fast immer ohne sie. Und sie war als einziges Stueck der
+       Laufschrift fett (700 gegen die normale Strichstaerke) und trug
+       einen Schatten — fett und umsaeumt liest sich groesser, auch wenn
+       die Schriftgroesse dieselbe ist. Genau das war der „groessere"
+       Eindruck.
+
+       Deshalb ist jetzt ALLES geerbt, die Strichstaerke eingeschlossen.
+       Uebrig bleibt als Unterschied nur noch die Farbe — genau das war
+       urspruenglich gewuenscht. Die Werte stehen zusaetzlich direkt am
+       Element, damit sie auch dann gelten, wenn der Browser noch eine
+       alte app-styles.css aus dem Zwischenspeicher benutzt. */
     const gleich = "font-size:inherit;line-height:inherit;letter-spacing:inherit;"
-      + "font-family:inherit;vertical-align:baseline;font-weight:700;";
-    return `<span class="ticker-live${liveStand.plattform === "tiktok" ? " ticker-live-tiktok" : ""}" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${p.farbe};${gleich}">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
+      + "font-family:inherit;font-weight:inherit;font-stretch:inherit;"
+      + "vertical-align:baseline;";
+    /* Die Hausfarbe, gerade so weit in der Helligkeit verschoben, dass
+       sie auf DIESEM Laufband zu lesen ist — siehe liveFarbeLesbar().
+       Farbton und Sättigung bleiben, die Schrift selbst bleibt
+       unverändert. */
+    return `<span class="ticker-live" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${liveFarbeLesbar(p.farbe)};${gleich}">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
   }
   function tickerNeuErzwingen() {
     const track = document.getElementById("tickerTrack");
@@ -6287,72 +6563,552 @@
     95: "⛈️", 96: "⛈️", 99: "⛈️",
   };
   /* ============================================================
-     ECHTER NIEDERSCHLAG IM KOPFSTREIFEN
+     DER HIMMEL IM KOPFSTREIFEN — er bewegt sich wirklich
      ------------------------------------------------------------
-     GEWÜNSCHT: „ich würde gern, dass wenn es grad Niederschlag gibt,
-     echten Regen tags:über … auch im Winter wenn es schneit, dass
-     wirklich Schnee fällt in dieser Hintergrundanimation."
+     GEWÜNSCHT: „ich hoffe, du hast die Regentropfen auch gefixt, und
+     Schnee, dass er realistisch fällt … und Hagel wenn es hagelt, und
+     auch Gewitteranimation wenn es Gewitter ist, und das mit den
+     Wolken … Und wenn es ein klarer Himmel ist mit schönem
+     Sonnenschein, dann kann das ruhig so eine schöne Strahlenanimation
+     sein, ohne dabei eine runde Sonne hinzustellen. Nur in der Nacht
+     könnte man vielleicht ab und zu eine Sternschnuppe fallen lassen,
+     oder den Mond — je nachdem ob Vollmond ist."
 
-     Also: solange das Wetteramt Regen oder Schnee meldet, fallen im
-     Streifen wirklich Tropfen oder Flocken — hinter Uhr und Symbol,
-     nicht darüber. Gezeichnet wird einmal als CSS-Bewegung mit wenigen
-     Teilchen; das kostet fast nichts und läuft auch auf einem älteren
-     Android-Telefon ruhig. Wer Bewegung nicht mag (Systemeinstellung
-     „Bewegung reduzieren"), bekommt nichts davon zu sehen.
+     WO DIE URSACHE LAG: es gab schon Tropfen und Flocken, aber sie
+     fielen praktisch nicht. Ihr Weg stand als Prozentwert in der
+     Bewegung (translateY(240%)) — und Prozente beziehen sich bei
+     transform auf das TEILCHEN selbst, nicht auf den Streifen. Ein
+     7 px hoher Tropfen legte also 17 px zurück, startete aber schon
+     13 px oberhalb des Streifens: sichtbar bewegte er sich ein paar
+     Pixel und war weg. Deshalb wirkte der Regen wie ein stehendes
+     Muster. Jetzt steht die wirkliche Streifenhöhe als --w-hoehe am
+     Element, und alle Wege rechnen damit.
+
+     WIE ES GEBAUT IST: eine einzige Schicht im Streifen, darin je nach
+     Wetterlage eine Handvoll Teilchen — nie mehr als etwa zwei Dutzend.
+     Bewegt wird ausschließlich mit transform und opacity; das kann der
+     Browser auf der Grafikeinheit erledigen und läuft auch auf einem
+     älteren Telefon ruhig. Alle Verzögerungen sind NEGATIV: dadurch ist
+     die Bewegung schon beim ersten Bild über den ganzen Streifen
+     verteilt — und wer „Bewegung reduzieren" eingestellt hat, sieht
+     genau dieses Bild angehalten stehen (siehe app-styles.css), statt
+     gar nichts.
      ============================================================ */
-  const WETTER_NIEDERSCHLAG = {
-    // Regen: Nieseln, Regen, Schauer, Gewitter
-    51: "regen", 53: "regen", 55: "regen", 56: "regen", 57: "regen",
-    61: "regen", 63: "regen", 65: "regen", 80: "regen", 81: "regen", 82: "regen",
+  /* Die Wetterlage aus dem WMO-Zahlencode des Wetteramts. */
+  const WETTER_LAGE = {
+    0: "klar", 1: "klar", 2: "wolkig", 3: "bewoelkt",
+    45: "nebel", 48: "nebel",
+    // Nieseln, Regen, Schauer
+    51: "regen", 53: "regen", 55: "regen",
+    61: "regen", 63: "regen", 65: "regen",
+    80: "regen", 81: "regen", 82: "regen",
+    // Gefrierender Regen und Graupel sind hartes Korn, kein weicher Schnee
+    56: "hagel", 57: "hagel", 66: "hagel", 67: "hagel", 77: "hagel",
+    // Schneefall und Schneeschauer
+    71: "schnee", 73: "schnee", 75: "schnee", 85: "schnee", 86: "schnee",
+    // Gewitter, auch das mit Hagel
     95: "gewitter", 96: "gewitter", 99: "gewitter",
-    // Schnee: Schneefall, Graupel, Schneeschauer, gefrierender Regen
-    66: "schnee", 67: "schnee", 71: "schnee", 73: "schnee", 75: "schnee",
-    77: "schnee", 85: "schnee", 86: "schnee",
   };
-  let niederschlagArt = null;   // null | "regen" | "schnee" | "gewitter"
-  function niederschlagZeichnen(art) {
+  /* Rückwärtskompatibel: diese Tafel hieß früher so und wurde von außen
+     abgefragt. Sie zeigt jetzt dieselben Lagen. */
+  const WETTER_NIEDERSCHLAG = WETTER_LAGE;
+
+  /* ---------- Der Mond, gerechnet aus dem Datum ----------
+     Zwischen zwei Neumonden liegen im Mittel 29,530588853 Tage (der
+     synodische Monat). Von einem bekannten Neumond aus lässt sich damit
+     für jeden Tag sagen, wie weit der Mond im Zyklus ist: 0 Neumond,
+     0,25 zunehmender Halbmond, 0,5 Vollmond, 0,75 abnehmender
+     Halbmond. Das ist auf ein paar Stunden genau — für eine Zeichnung
+     im Kopfstreifen mehr als ausreichend. */
+  const SYNODISCHER_MONAT = 29.530588853;
+  /* Neumond am 6.1.2000, 18:14 UTC. Veränderlich nur zum Nachprüfen auf
+     dem Testrechner (siehe window.__wetter) — im Betrieb steht er fest. */
+  let neumondBezug = Date.UTC(2000, 0, 6, 18, 14);
+  function mondBezugUeberschreiben(zeit) { neumondBezug = zeit; }
+  function mondPhase(datum) {
+    const tage = ((datum || new Date()).getTime() - neumondBezug) / 86400000;
+    let p = (tage % SYNODISCHER_MONAT) / SYNODISCHER_MONAT;
+    if (p < 0) p += 1;
+    return p;
+  }
+  function mondName(p) {
+    if (p < 0.02 || p >= 0.98) return "Neumond";
+    if (p < 0.23) return "zunehmende Sichel";
+    if (p < 0.28) return "zunehmender Halbmond";
+    if (p < 0.47) return "zunehmender Mond";
+    if (p < 0.53) return "Vollmond";
+    if (p < 0.72) return "abnehmender Mond";
+    if (p < 0.77) return "abnehmender Halbmond";
+    return "abnehmende Sichel";
+  }
+  /* Die Scheibe mit Lichtgrenze und Maria (den dunklen Ebenen).
+     Gezeichnet wird der BELEUCHTETE Teil als Fläche: der äußere Rand
+     ist immer ein Halbkreis, die Lichtgrenze ist eine Ellipse, deren
+     Breite mit dem Phasenwinkel schrumpft und wächst. Ist weniger als
+     die Hälfte beleuchtet, wölbt sie sich nach innen (Sichel), sonst
+     nach außen (fast voll). Beim abnehmenden Mond wird dieselbe Form
+     gespiegelt — die Maria nicht, denn der Mond zeigt uns immer
+     dieselbe Seite. */
+  function mondSvg(p) {
+    const r = 8.6, cx = 11, cy = 11;
+    const winkel = 2 * Math.PI * p;
+    const rx = Math.abs(Math.cos(winkel)) * r;
+    const beleuchtet = (1 - Math.cos(winkel)) / 2;   // 0 = Neumond, 1 = Vollmond
+    const sichel = beleuchtet < 0.5;
+    const abnehmend = p > 0.5;
+    const d = `M ${cx},${cy - r} A ${r},${r} 0 0 1 ${cx},${cy + r}`
+      + ` A ${rx.toFixed(2)},${r} 0 0 ${sichel ? 0 : 1} ${cx},${cy - r} Z`;
+    const spiegel = abnehmend ? ` transform="translate(${cx * 2},0) scale(-1,1)"` : "";
+    const maria = `<ellipse cx="${cx - 2.7}" cy="${cy - 2.5}" rx="2.4" ry="1.8" fill="#b9c2d8" opacity="0.5"/>`
+      + `<ellipse cx="${cx + 2.1}" cy="${cy + 0.7}" rx="1.8" ry="2.3" fill="#b9c2d8" opacity="0.42"/>`
+      + `<ellipse cx="${cx - 0.5}" cy="${cy + 3.3}" rx="2.6" ry="1.3" fill="#b9c2d8" opacity="0.38"/>`
+      + `<circle cx="${cx + 3.5}" cy="${cy - 3.3}" r="1" fill="#b9c2d8" opacity="0.45"/>`;
+    return `<svg class="w-mond" viewBox="0 0 22 22" aria-hidden="true" focusable="false" data-phase="${mondName(p)}">`
+      + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#39406a" opacity="0.5"/>`
+      + `<defs><clipPath id="wMondLicht"><path d="${d}"${spiegel}/></clipPath></defs>`
+      + `<g clip-path="url(#wMondLicht)">`
+      + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#f4efdc"/>${maria}</g></svg>`;
+  }
+
+  /* ---------- Kleine Bausteine der Szene ---------- */
+  /* Gleichmäßig gestreute, aber FESTE Werte statt Zufall: die Szene
+     sieht nach jedem Neuzeichnen gleich aus und flackert nicht.
+
+     Gestreut wird mit dem Bruchteil von i mal dem Goldenen Schnitt.
+     Das füllt eine Strecke so gleichmäßig wie möglich und bildet dabei
+     keine Muster. Der naheliegende Weg (i * n) % m tut das NICHT: er
+     erzeugt arithmetische Reihen, und die sieht man dem Ergebnis an —
+     die Sterne standen damit in sichtbaren Schrägreihen am Himmel. */
+  function wStreu(i, saat, spanne) {
+    const g = (((i + 1) * 0.6180339887498949) + ((saat || 0) * 0.3819660112501051)) % 1;
+    return Number((g * (spanne === undefined ? 100 : spanne)).toFixed(2));
+  }
+  /* ---------- Streuen OHNE Löcher ----------
+     Der Goldene Schnitt füllt eine Strecke auf DAUER gleichmäßig — bei
+     nur fünf oder sechs Teilchen aber noch nicht: nachgemessen blieben
+     im Streifen Lücken von einem Viertel der Breite, während anderswo
+     zwei Tropfen fast aufeinander lagen. Genau das sah aus wie
+     "stockender" Regen.
+
+     Deshalb wird die Breite hier in so viele gleich große Bänder
+     geteilt, wie es Teilchen gibt, und jedes Teilchen bekommt sein
+     eigenes Band. Innerhalb des Bandes sitzt es an einer festen, aber
+     ungleichmäßigen Stelle (wieder über den Goldenen Schnitt), damit
+     keine sichtbare Reihe entsteht. Ergebnis: garantiert kein Loch,
+     und trotzdem kein Muster. */
+  function wStreuBand(i, anzahl, saat, spanne) {
+    const breite = (spanne === undefined ? 100 : spanne) / anzahl;
+    const innen = (((i + 1) * 0.6180339887498949) + ((saat || 0) * 0.3819660112501051)) % 1;
+    /* 0,15 bis 0,85 des Bandes: die Ränder bleiben frei, sonst könnten
+       zwei Nachbarn doch wieder aneinanderstoßen. */
+    return Number(((i + 0.15 + innen * 0.7) * breite).toFixed(2));
+  }
+  function wTeilchen(klasse, anzahl, bauer) {
+    let s = "";
+    for (let i = 0; i < anzahl; i++) s += bauer(i);
+    return s;
+  }
+  function wRegenEbene(klasse, anzahl, saat) {
+    /* WICHTIG für "durchgängig, ohne Stocken": der Startversatz wird
+       NICHT mehr hier in Sekunden ausgerechnet. Er stand vorher fest
+       bei --w-takt mal 1,7 s — die drei Ebenen laufen aber mit 0,62 s,
+       0,88 s und 1,25 s Umlaufzeit. Ein fester Versatz von bis zu 1,7 s
+       verteilt die Tropfen auf so einer Ebene nicht gleichmäßig über
+       ihren Umlauf, sondern faltet sie mehrfach übereinander: es
+       entstanden Pulks und dazwischen Pausen, in denen gar nichts fiel.
+
+       Jetzt trägt jedes Teilchen nur noch seinen Platz im Ablauf
+       (--w-takt, 0 bis 1). Den Versatz in Sekunden rechnet das
+       Stilblatt daraus mit der Umlaufzeit DERSELBEN Ebene aus
+       (--w-dauer). Damit ist jede Ebene über ihren ganzen Umlauf
+       gleichmäßig besetzt — es fällt ununterbrochen, und beim
+       Neubeginn springt nichts, weil Anfang und Ende des Ablaufs
+       beide bei Deckkraft 0 liegen. */
+    return `<div class="w-ebene ${klasse}">` + wTeilchen(klasse, anzahl, (i) => {
+      const links = wStreuBand(i, anzahl, saat, 100);
+      const takt = wStreu(i, saat + 3, 1);   // 0 bis 1: wo im Ablauf dieses Teilchen steht
+      return `<i class="w-tropfen" style="left:${links}%; --w-takt:${takt};"></i>`;
+    }) + `</div>`;
+  }
+  function wWolkenbaender(anzahl) {
+    /* Mehrere Schichten, die unterschiedlich schnell ziehen. Jede ist
+       EIN Element: die Wolkenballen stecken als weiche Farbverläufe im
+       Hintergrund und wiederholen sich seitlich. Bewegt wird die
+       Schicht um genau eine Kachelbreite — dadurch ist der Übergang
+       nahtlos, ohne dass irgendetwas doppelt gezeichnet werden muss. */
+    let s = "";
+    for (let i = 1; i <= anzahl; i++) s += `<span class="w-wolkenband w-wb${i}"></span>`;
+    return s;
+  }
+  function wSternenhimmel() {
+    /* Unterschiedlich helle Sterne: drei Helligkeitsstufen, jede mit
+       eigenem Funkeln. Die hellen sind größer und funkeln langsamer. */
+    return wTeilchen("stern", 22, (i) => {
+      const stufe = i % 4 === 0 ? 1 : (i % 4 === 1 ? 2 : 3);
+      /* Bandweise gestreut — sonst blieb die Mitte des Streifens
+         nachweislich sternenleer, während sich links Sterne häuften. */
+      const links = 2 + wStreuBand(i, 22, 1, 96);
+      const oben = 6 + wStreu(i, 7, 76);
+      const takt = wStreu(i, 11, 1);
+      return `<i class="w-stern w-sh${stufe}" style="left:${links}%; top:${oben}%; animation-delay:-${(takt * 5.6).toFixed(2)}s; --w-takt:${takt};"></i>`;
+    });
+  }
+
+  /* BEWUSST var, nicht let: updateClock() steht WEITER OBEN in dieser
+     Datei und läuft schon beim Laden los. Über updateDaytimeSky() ruft
+     es niederschlagAnpassen() auf — also bevor diese Zeilen an der
+     Reihe sind. Mit let läge die Variable dann noch in der zeitlichen
+     Totzone und der Zugriff würde einen Fehler werfen; var ist zu
+     diesem Zeitpunkt schlicht undefined, und der erste Takt zeichnet
+     einfach noch nichts. */
+  var wetterLage = null;        // was das Wetteramt meldet
+  var wetterIstNacht = false;   // aus der Himmelsrechnung, siehe updateDaytimeSky()
+  var wetterSzeneSchluessel = null; // was gerade wirklich im Streifen steht
+  var niederschlagArt = null;   // bleibt für alte Aufrufer erhalten
+
+  /* Welche Szene gehört zu Wetterlage und Tageszeit?
+     Nachts gibt es bei klarem oder nur leicht bewölktem Himmel den
+     Sternenhimmel mit Mond — bei echtem Wetter gewinnt das Wetter. */
+  function wetterSzeneWaehlen() {
+    if (!wetterLage) return null;
+    if (wetterIstNacht && (wetterLage === "klar" || wetterLage === "wolkig")) return "nacht";
+    return wetterLage;
+  }
+
+  function wetterSzeneZeichnen(erzwingen) {
     const bar = document.getElementById("deckDisplay");
     if (!bar) return;
-    niederschlagArt = art || null;
+    const szene = wetterSzeneWaehlen();
     let schicht = document.getElementById("niederschlagSchicht");
-    if (!niederschlagArt) { if (schicht) schicht.remove(); bar.classList.remove("hat-niederschlag"); return; }
+    /* Liegt noch keine Wetterlage vor (erster Takt, kein Netz), wird
+       hier abgebrochen, BEVOR irgendetwas gerechnet wird. Das ist kein
+       Schönheitsgriff: der allererste Takt kommt aus updateClock(),
+       das weiter oben in der Datei schon läuft — zu diesem Zeitpunkt
+       sind die Konstanten für die Mondrechnung noch gar nicht gesetzt. */
+    if (!szene) {
+      wetterSzeneSchluessel = null;
+      niederschlagArt = null;
+      if (schicht) schicht.remove();
+      bar.classList.remove("hat-niederschlag", "hat-nachtszene");
+      return;
+    }
+    /* Der Mond wandert langsam. Er steckt deshalb im Schlüssel mit
+       drin: ändert sich die Phase um ein Prozent (rund sieben Stunden),
+       wird die Nachtszene neu gezeichnet, sonst bleibt sie ungestört
+       laufen. */
+    const phase = mondPhase();
+    const schluessel = szene + (wetterIstNacht ? "|nacht" : "|tag")
+      + (szene === "nacht" ? "|" + Math.round(phase * 100) : "");
+    if (!erzwingen && schluessel === wetterSzeneSchluessel) return;
+    wetterSzeneSchluessel = schluessel;
+    niederschlagArt = szene;
+
     if (!schicht) {
       schicht = document.createElement("div");
       schicht.id = "niederschlagSchicht";
-      schicht.className = "niederschlag";
       schicht.setAttribute("aria-hidden", "true");
-      /* Vorn in den Streifen, aber hinter allem anderen: die Schicht
-         liegt absolut und ohne eigene Fläche über dem Himmel, Uhr und
-         Symbol bleiben darüber lesbar und bekommen KEINEN Hintergrund. */
+      /* Ganz vorn in den Streifen, aber hinter allem anderen: die
+         Schicht liegt über dem Himmel, Uhr und Symbol bleiben darüber
+         lesbar und bekommen KEINEN Hintergrund. */
       bar.insertBefore(schicht, bar.firstChild);
     }
-    const schnee = niederschlagArt === "schnee";
-    const anzahl = schnee ? 14 : 18;
-    let teile = "";
-    for (let i = 0; i < anzahl; i++) {
-      /* Feste, gleichmäßig verteilte Werte statt Zufall: dadurch sieht
-         es bei jedem Neuzeichnen gleich aus und flackert nicht. */
-      const links = Math.round(((i * 137) % 100));
-      const dauer = (schnee ? 3.4 : 1.1) + ((i % 5) * (schnee ? 0.45 : 0.16));
-      const spaet = ((i * 7) % 20) / 10;
-      const groesse = schnee ? 2 + (i % 3) : 0;
-      teile += schnee
-        ? `<span class="flocke" style="left:${links}%; animation-duration:${dauer}s; animation-delay:-${spaet}s; width:${groesse}px; height:${groesse}px;"></span>`
-        : `<span class="tropfen" style="left:${links}%; animation-duration:${dauer}s; animation-delay:-${spaet}s;"></span>`;
+    /* Die wirkliche Höhe des Streifens — daran hängen alle Fallwege.
+       Ohne sie fielen die Tropfen nur ein paar Pixel weit (der alte
+       Fehler, siehe oben). */
+    schicht.style.setProperty("--w-hoehe", (bar.offsetHeight || 44) + "px");
+
+    let inhalt = "";
+    switch (szene) {
+      case "klar":
+        /* KEINE runde Sonne — ausdrücklich nicht gewünscht. Stattdessen
+           ein warmer Lichtschein von oben, der langsam atmet, und ein
+           paar feine Strahlenbündel, die dabei leicht schwenken. */
+        inhalt = `<span class="w-schein"></span>`
+          + wTeilchen("strahl", 5, (i) => `<span class="w-strahl w-st${i + 1}"></span>`);
+        break;
+      case "wolkig":
+        inhalt = `<span class="w-schein"></span>`
+          + wTeilchen("strahl", 4, (i) => `<span class="w-strahl w-st${i + 1}"></span>`)
+          + wWolkenbaender(2);
+        break;
+      case "bewoelkt":
+        /* Drei Schichten mit verschiedenem Tempo, weichen Rändern und
+           einer Schattenseite unten — so bekommt die Decke Tiefe. */
+        inhalt = wWolkenbaender(3);
+        break;
+      case "nebel":
+        inhalt = wWolkenbaender(2) + `<span class="w-nebel"></span>`;
+        break;
+      case "regen":
+        /* Drei Ebenen: hinten dünn, blass und langsam, vorn kräftig und
+           schnell. Unten die Pfütze mit den Aufschlagkringeln. */
+        /* Etwas mehr Tropfen als vorher (18 → 30): mit fünf bis sieben
+           je Ebene standen auf 420 px Breite sichtbar Lücken, durch die
+           minutenlang nichts fiel. Dreißig kleine, rein per transform
+           bewegte Elemente kosten nichts Messbares und machen den Regen
+           erst durchgängig. */
+        inhalt = wWolkenbaender(2)
+          + wRegenEbene("w-re3", 11, 0) + wRegenEbene("w-re2", 10, 5) + wRegenEbene("w-re1", 9, 11)
+          + `<span class="w-pfuetze"></span>`
+          + wTeilchen("kringel", 6, (i) => {
+              const links = 8 + wStreuBand(i, 6, 5, 84);
+              const takt = wStreu(i, 13, 1);
+              return `<i class="w-kringel" style="left:${links}%; --w-takt:${takt};"></i>`;
+            });
+        break;
+      case "schnee":
+        /* Drei Größen. Die großen sind vorn und fallen schneller, die
+           kleinen hinten und langsamer — dadurch entsteht Tiefe. Alle
+           pendeln beim Fallen seitlich. */
+        inhalt = wWolkenbaender(2) + wTeilchen("flocke", 22, (i) => {
+          const stufe = i % 3 === 0 ? 1 : (i % 3 === 1 ? 2 : 3);
+          const links = wStreuBand(i, 22, 2, 98);
+          const takt = wStreu(i, 9, 1);
+          const pendel = (2.5 + wStreu(i, 17, 3)).toFixed(1);
+          /* Wie beim Regen: nur der Platz im Ablauf steht hier, die
+             Sekunden rechnet das Stilblatt mit der Umlaufzeit der
+             jeweiligen Größenstufe aus. Sonst fielen die kleinen,
+             langsamen Flocken (9,4 s Umlauf) in Pulks. */
+          return `<i class="w-flocke w-fl${stufe}" style="left:${links}%; --w-pendel:${pendel}px; --w-takt:${takt};"></i>`;
+        });
+        break;
+      case "hagel":
+        /* Hartes, kleines Korn: schnell, fast senkrecht — und unten
+           springt es noch einmal auf. */
+        inhalt = wWolkenbaender(2) + wTeilchen("korn", 20, (i) => {
+          const links = wStreuBand(i, 20, 4, 98);
+          const takt = wStreu(i, 19, 1);
+          const drift = (1 + wStreu(i, 23, 2)).toFixed(1);
+          return `<i class="w-korn" style="left:${links}%; --w-drift:${drift}px; --w-takt:${takt};"></i>`;
+        }) + `<span class="w-pfuetze w-pfuetze-hart"></span>`;
+        break;
+      case "gewitter":
+        /* Dunkle Wolken, Regen — und ein Blitz, der in ungleichen
+           Abständen aufflackert und dabei kurz die ganze Szene erhellt.
+           Danach folgt der Donner als leichtes Zittern; er sitzt im
+           selben Takt, nur ein Stück später, so wie der Schall dem
+           Licht hinterherkommt. */
+        inhalt = wWolkenbaender(2)
+          + wRegenEbene("w-re3", 10, 0) + wRegenEbene("w-re1", 10, 7)
+          /* Reihenfolge ist wichtig: erst die Aufhellung der ganzen
+             Szene, DANN der Blitz. Andersherum läge der weiße Schleier
+             über dem Blitz und würde ihn ausbleichen — genau dort, wo
+             er am kräftigsten sein soll. */
+          + `<span class="w-aufhellung"></span>`
+          /* GEWÜNSCHT: „verzweigte Blitzfigur". Vorher war es ein
+             einzelner Zickzack. Jetzt ein Hauptkanal, der sich zweimal
+             gabelt: eine kurze Abzweigung oben rechts, eine längere
+             unten links. Die Äste sind dünner als der Hauptkanal und
+             flackern einen Lidschlag SPÄTER als er — so entsteht der
+             Eindruck, dass sich die Entladung nach unten fortsetzt,
+             statt dass eine fertige Figur ein- und ausgeblendet wird. */
+          + `<svg class="w-blitz" viewBox="0 0 22 34" aria-hidden="true" focusable="false">`
+          + `<path class="w-blitz-ast w-blitz-ast1" d="M12.1 8.5 17.6 9.1 14.2 14.6 18.4 13.9" fill="none" stroke="#fffdf0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`
+          + `<path class="w-blitz-ast w-blitz-ast2" d="M8.1 19.6 3.4 22.9 6.2 24.1 1.6 30.4" fill="none" stroke="#fffdf0" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>`
+          + `<path class="w-blitz-kanal" d="M12.6 0 6.2 18.4h4.3L7.9 34 16 14.4h-4.6L14.6 0Z" fill="#fffdf0"/></svg>`
+          + `<span class="w-pfuetze"></span>`;
+        break;
+      case "nacht":
+        /* Sternenhimmel, ab und zu eine Sternschnuppe — und der Mond in
+           der Phase, die heute wirklich am Himmel steht. */
+        inhalt = wSternenhimmel()
+          + `<i class="w-schnuppe w-sp1"></i><i class="w-schnuppe w-sp2"></i>`
+          + mondSvg(phase);
+        break;
+      default:
+        inhalt = "";
     }
-    schicht.className = "niederschlag " + (schnee ? "niederschlag-schnee" : "niederschlag-regen");
-    schicht.innerHTML = teile;
+    schicht.className = "niederschlag wetter-szene w-" + szene + (wetterIstNacht ? " ist-nacht" : "");
+    schicht.innerHTML = inhalt;
     bar.classList.add("hat-niederschlag");
+    /* Die sieben festen Sterne aus der index.html würden sich mit dem
+       eigenen Sternenhimmel doppeln — solange die Nachtszene läuft,
+       bleiben sie aus. */
+    bar.classList.toggle("hat-nachtszene", szene === "nacht");
+  }
+
+  /* ============================================================
+     DAS OSTEREI — AB UND ZU FLIEGT ETWAS DURCHS BILD
+     ------------------------------------------------------------
+     GEWÜNSCHT: „am Tag, wenn es geht, dass realistisch ein Vogel
+     langfliegen kann mit echtem Flügelschlag — nur wenn das möglich
+     ist. Oder ein Schmetterling. Aber nicht ständig, sondern ab und zu
+     mal, so als Easter Egg."
+
+     ZWEI DINGE MACHEN DEN UNTERSCHIED:
+
+     1. ECHTER FLÜGELSCHLAG, keine wippende Grafik. Ein Flügelschlag
+        ist nicht symmetrisch: der Abschlag ist kurz und kräftig, der
+        Flügel dabei voll gespreizt; der Aufschlag dauert länger und
+        der Flügel wird dabei angelegt, sonst würde der Vogel sich
+        selbst wieder herunterdrücken. Genau so ist der Ablauf gebaut
+        (siehe @keyframes wFluegelschlag): in gut einem Drittel des
+        Takts geht der Flügel herunter und ist dabei am längsten, die
+        restlichen zwei Drittel braucht er zurück nach oben und ist
+        dabei zusammengezogen. Der Körper steigt bei jedem Abschlag ein
+        Stück — deshalb fliegt der Vogel nicht auf einer Linie, sondern
+        in kleinen Bögen. Der zweite, weiter entfernte Flügel läuft
+        minimal versetzt, das gibt Tiefe.
+
+     2. SELTEN. Ein Ostereffekt, den man jede Minute sieht, ist keiner.
+        Der nächste Gast wird jeweils auf einen zufälligen Zeitpunkt in
+        11 bis 24 Minuten gelegt — im Mittel also gut zweimal pro
+        Stunde, nie öfter. Er kommt außerdem nur, wenn das Fenster
+        wirklich im Vordergrund ist (sonst würde die Wartezeit
+        verstreichen, ohne dass jemand hinsieht) und nur bei
+        Tageslicht ohne Niederschlag: bei Regen, Hagel, Schnee,
+        Gewitter, Nebel und nachts fliegt nichts.
+
+     Wer „Bewegung reduzieren" eingestellt hat, bekommt gar keinen
+     Gast — ein Tier, das vorbeifliegt, besteht nur aus Bewegung; es
+     stillstehen zu lassen wäre sinnlos, es gehört dann schlicht nicht
+     dazu. Die Planung startet in dem Fall erst gar nicht.
+     ============================================================ */
+  /* In diesen Lagen fliegt etwas — Schönwetter am Tag. */
+  const GAST_LAGEN = { klar: true, wolkig: true, bewoelkt: true };
+  const GAST_MIN_MS = 11 * 60 * 1000;
+  const GAST_MAX_MS = 24 * 60 * 1000;
+  let gastTimer = null;
+  /* Ob gerade ein Gast unterwegs ist, wird NICHT in einer eigenen
+     Merkvariablen geführt, sondern direkt am Baum abgelesen: eine
+     Variable kann hängen bleiben, wenn die Schicht von außen
+     verschwindet (Wetterwechsel, Neuaufbau des Streifens) — dann
+     käme nie wieder ein Gast. Das Vorhandensein des Elements ist die
+     einzige Wahrheit, die nicht auseinanderlaufen kann. */
+  function gastUnterwegs() { return Boolean(document.getElementById("wetterGast")); }
+
+  function bewegungUnerwuenscht() {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+    catch (e) { return false; }
+  }
+
+  /* ---------- Der Vogel ----------
+     Gezeichnet ist er von SCHRÄG HINTEN, so wie man einen Vogel sieht,
+     der davonfliegt: ein kleiner Leib in der Mitte, links und rechts
+     ein Flügel. Das ist bei zwanzig Pixeln Breite die einzige Ansicht,
+     die sofort als Vogel gelesen wird — eine Seitenansicht wird bei
+     dieser Größe zu einem Strich mit Zacken.
+
+     ZWEI DINGE, die beim Bauen leicht schiefgehen und hier ausdrücklich
+     berücksichtigt sind:
+
+     1. Der rechte Flügel ist der gespiegelte linke. Die Spiegelung
+        steht an einer ÄUSSEREN Gruppe, der Flügelschlag läuft auf
+        einer INNEREN. Das ist kein Schönheitsgriff: eine
+        transform-Eigenschaft aus dem Stilblatt ersetzt das
+        transform-ATTRIBUT am selben Element vollständig. Lägen beide
+        am selben <g>, würde die Schlagbewegung die Spiegelung
+        auslöschen — nachgemessen lagen dann beide Flügel
+        übereinander auf derselben Seite. Getrennte Ebenen, getrennte
+        Zuständigkeiten.
+
+     2. Gedreht wird um die SCHULTER, in Koordinaten des viewBox
+        (transform-box: view-box, siehe app-styles.css). Mit
+        fill-box bezöge sich der Drehpunkt auf den Umriss des
+        Flügels — der ändert sich aber mit jedem Entwurf, und der
+        Drehpunkt wäre stillschweigend falsch. */
+  function gastVogelSvg() {
+    /* Der linke Flügel, Schulter bei (21 | 10.5), Spitze nach links
+       außen. Leicht sichelförmig, wie ein echter Flügel. */
+    const fluegel = `M21 10.5 C16.6 6.1 10.2 4.3 3.2 6.1 C9.3 8.3 15.1 10.3 20.4 13.1 Z`;
+    const schwinge = (klasse) => `<path class="w-schwinge ${klasse || ""}" d="${fluegel}"/>`;
+    return `<svg class="w-vogel" viewBox="0 0 44 24" aria-hidden="true" focusable="false">`
+      + `<g class="w-seite-links">${schwinge()}</g>`
+      /* Äußere Gruppe spiegelt, innere schlägt — siehe oben. */
+      + `<g transform="translate(44,0) scale(-1,1)"><g class="w-seite-rechts">${schwinge()}</g></g>`
+      + `<ellipse class="w-rumpf" cx="22" cy="12" rx="2.5" ry="4.6"/>`
+      + `<circle class="w-rumpf" cx="22" cy="8.2" r="1.9"/>`
+      + `</svg>`;
+  }
+
+  /* ---------- Der Schmetterling ----------
+     Von vorn gesehen: zwei Flügelpaare, die zum Leib hin zusammen-
+     klappen und wieder aufgehen. Genau dieselbe Spiegel-Falle wie beim
+     Vogel — außen spiegeln, innen flattern. */
+  function gastFalterSvg() {
+    const oben = `M13 11 C10.6 5.2 6.2 2.2 3 3.4 C0.6 4.4 0.8 8.6 3.4 11 C5.6 13 9.6 13 13 11 Z`;
+    const unten = `M13 11.6 C10.8 15.4 7.6 18.4 5 18 C2.9 17.6 2.6 14.6 4.4 12.8 C6.2 11 9.8 10.6 13 11.6 Z`;
+    const paar = `<path class="w-falterfluegel" d="${oben}"/><path class="w-falterfluegel" d="${unten}"/>`;
+    return `<svg class="w-falter" viewBox="0 0 26 22" aria-hidden="true" focusable="false">`
+      + `<g class="w-falterpaar">${paar}</g>`
+      + `<g transform="translate(26,0) scale(-1,1)"><g class="w-falterpaar">${paar}</g></g>`
+      + `<path class="w-falterleib" d="M13 5.6 C13.9 5.6 14.3 6.6 14.3 10.6 C14.3 14.4 13.8 16.4 13 16.4 C12.2 16.4 11.7 14.4 11.7 10.6 C11.7 6.6 12.1 5.6 13 5.6 Z"/>`
+      + `<path class="w-falterfuehler" d="M12.6 5.8 C11.6 4 10.2 3 8.8 2.8 M13.4 5.8 C14.4 4 15.8 3 17.2 2.8"/>`
+      + `</svg>`;
+  }
+
+  /* Einmal durchs Bild fliegen lassen. Der Gast bekommt eine EIGENE
+     Schicht neben der Wetterszene: die Szene wird beim Wetterwechsel
+     komplett neu geschrieben, ein Gast darin wäre mittendrin weg. */
+  function gastFliegen(art, dauerMs) {
+    const bar = document.getElementById("deckDisplay");
+    if (!bar || gastUnterwegs()) return null;
+    const welche = art || (Math.random() < 0.6 ? "vogel" : "falter");
+    const schicht = document.createElement("div");
+    schicht.id = "wetterGast";
+    /* Die Klasse „niederschlag" ist hier kein Niederschlag, sondern
+       trägt die Anordnung: dadurch liegt der Gast wie die Wetterszene
+       UNTER Uhr und Wettersymbol und fängt keine Klicks ab. */
+    schicht.className = "niederschlag wetter-gast";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Von welcher Seite, in welcher Höhe, wie schnell — bei jedem
+       Besuch anders, sonst wäre es beim zweiten Mal kein Fund mehr. */
+    const vonLinks = Math.random() < 0.5;
+    const hoehe = 16 + Math.random() * 46;          // Prozent der Streifenhöhe
+    const dauer = dauerMs || (welche === "falter" ? 11000 + Math.random() * 5000
+                                                  : 7000 + Math.random() * 4000);
+    schicht.style.setProperty("--w-gast-dauer", dauer + "ms");
+    schicht.classList.add(vonLinks ? "w-gast-nach-rechts" : "w-gast-nach-links");
+    schicht.innerHTML = `<span class="w-gast w-gast-${welche}" style="top:${hoehe.toFixed(1)}%;">`
+      + (welche === "falter" ? gastFalterSvg() : gastVogelSvg()) + `</span>`;
+    bar.insertBefore(schicht, bar.firstChild);
+    const weg = () => { if (schicht.parentNode) schicht.remove(); };
+    /* Aufräumen sowohl über das Ende der Bewegung als auch über eine
+       Notbremse: läuft der Tab im Hintergrund, feuert animationend
+       unter Umständen gar nicht, und die Schicht bliebe für immer
+       stehen. */
+    schicht.addEventListener("animationend", weg, { once: true });
+    setTimeout(weg, dauer + 1500);
+    return welche;
+  }
+
+  function gastPlanen() {
+    if (gastTimer) { clearTimeout(gastTimer); gastTimer = null; }
+    if (bewegungUnerwuenscht()) return;
+    const wartezeit = GAST_MIN_MS + Math.random() * (GAST_MAX_MS - GAST_MIN_MS);
+    gastTimer = setTimeout(() => {
+      gastTimer = null;
+      /* Nur bei Tageslicht ohne Niederschlag, nur wenn jemand hinsieht
+         — sonst wird einfach neu geplant, ohne dass etwas fliegt. */
+      if (!wetterIstNacht && GAST_LAGEN[wetterLage] && !document.hidden && !bewegungUnerwuenscht()) {
+        gastFliegen();
+      }
+      gastPlanen();
+    }, wartezeit);
+  }
+
+  /* Der alte Name bleibt bestehen: er wird an mehreren Stellen und vom
+     Prüfhaken window.__niederschlag aufgerufen. */
+  function niederschlagZeichnen(art) {
+    wetterLage = art || null;
+    wetterSzeneZeichnen();
   }
   /* Nachts sind Tropfen hell, tagsüber dunkel — sonst verschwinden sie
      jeweils im Himmel. Wird von updateDaytimeSky() bei jedem Takt
-     mitgesetzt, kostet nur eine Variable. */
+     mitgesetzt und sagt der Szene außerdem, ob gerade Nacht ist. */
   function niederschlagAnpassen(dark) {
     const bar = document.getElementById("deckDisplay");
     if (!bar) return;
     bar.style.setProperty("--niederschlag-farbe", dark > 0.5
-      ? "rgba(255,255,255,0.75)"
-      : "rgba(40,60,90,0.5)");
+      ? "rgba(255,255,255,0.78)"
+      : "rgba(40,60,90,0.55)");
+    /* Ab dieser Dunkelheit ist der Himmel im Streifen wirklich Nacht —
+       erst dann lohnen Sterne und Mond. */
+    const nacht = dark > 0.62;
+    if (nacht !== wetterIstNacht) {
+      wetterIstNacht = nacht;
+      wetterSzeneZeichnen();
+    }
   }
   async function updateWeather() {
     if (!weatherOut) return;
@@ -6373,6 +7129,9 @@
   }
   updateWeather();
   setInterval(updateWeather, 15 * 60 * 1000);
+  /* Ab jetzt kann ab und zu etwas durchs Bild fliegen — frühestens in
+     elf Minuten, und nur bei Tageslicht ohne Niederschlag. */
+  gastPlanen();
 
   /* ============================================================
      ÜBUNGEN — Setup / Spiel / Auswertung
@@ -8943,65 +9702,121 @@
      bleibt das Wort, wie es ist — das ist kein Loch, sondern die
      Wahrheit über das Wort.
      ============================================================ */
-  const UMGANGSSPRACHE = {
-    "das Toilettenpapier": { wort: "das Klopapier", syl: "KLO-pa-pier", stil: "ugs." },
-    "der Kugelschreiber": { wort: "der Kuli", syl: "KU-li", stil: "ugs." },
-    "das Spülmittel": { wort: "das Spüli", syl: "SPÜ-li", stil: "ugs." },
-    "die Geschirrspülmaschine": { wort: "die Spülmaschine", syl: "SPÜL-ma-schi-ne", stil: "kurz" },
-    "das Federmäppchen": { wort: "das Mäppchen", syl: "MÄPP-chen", stil: "kurz" },
-    "das Smartphone": { wort: "das Handy", syl: "HAN-dy", stil: "ugs." },
-    "das Mobiltelefon": { wort: "das Handy", syl: "HAN-dy", stil: "ugs." },
-    "das Fahrrad": { wort: "das Rad", syl: "RAD", stil: "kurz" },
-    "die Universität": { wort: "die Uni", syl: "U-ni", stil: "kurz" },
-    "der Personalausweis": { wort: "der Perso", syl: "PER-so", stil: "ugs." },
-    "die Limonade": { wort: "die Limo", syl: "LI-mo", stil: "kurz" },
-    "die Schokolade": { wort: "die Schoki", syl: "SCHO-ki", stil: "ugs." },
-    "das Deodorant": { wort: "das Deo", syl: "DE-o", stil: "kurz" },
-    "der Regenschirm": { wort: "der Schirm", syl: "SCHIRM", stil: "kurz" },
-    "die Lokomotive": { wort: "die Lok", syl: "LOK", stil: "kurz" },
-    "die Fahrkarte": { wort: "das Ticket", syl: "TI-cket", stil: "ugs." },
-    "die Mathematik": { wort: "Mathe", syl: "MA-the", stil: "kurz" },
-    "der Pullover": { wort: "der Pulli", syl: "PUL-li", stil: "ugs." },
-    "das Sofa": { wort: "die Couch", syl: "COUCH", stil: "ugs." },
-    "das Motorrad": { wort: "die Maschine", syl: "Ma-SCHI-ne", stil: "ugs." },
-    "der Schraubendreher": { wort: "der Schraubenzieher", syl: "SCHRAU-ben-zie-her", stil: "ugs." },
-    "die Turnschuhe": { wort: "die Sneaker", syl: "SNEA-ker", stil: "ugs." },
-    "die Mülltonne": { wort: "die Tonne", syl: "TON-ne", stil: "kurz" },
-    "das Geld": { wort: "die Kohle", syl: "KOH-le", stil: "salopp" },
-    "der Fernseher": { wort: "die Glotze", syl: "GLOT-ze", stil: "salopp" },
-    "die Arbeit": { wort: "der Job", syl: "JOB", stil: "ugs." },
-    "der Großvater": { wort: "der Opa", syl: "O-pa", stil: "ugs." },
-    "die Großmutter": { wort: "die Oma", syl: "O-ma", stil: "ugs." },
-    "der Vater": { wort: "der Papa", syl: "PA-pa", stil: "ugs." },
-    "die Mutter": { wort: "die Mama", syl: "MA-ma", stil: "ugs." },
-    "der Taschenrechner": { wort: "der Taschenrechner", syl: "TA-schen-rech-ner", stil: "" },
-    "die Straßenbahn": { wort: "die Tram", syl: "TRAM", stil: "regional", wo: "Süddeutschland, Österreich, Schweiz" },
-    "das Brötchen": { wort: "die Semmel", syl: "SEM-mel", stil: "regional", wo: "Bayern, Österreich; im Norden „Schrippe“, im Südwesten „Weck“" },
-    "die Kartoffel": { wort: "der Erdapfel", syl: "ERD-ap-fel", stil: "regional", wo: "Österreich, Teile Süddeutschlands" },
-    "das Mineralwasser": { wort: "der Sprudel", syl: "SPRU-del", stil: "regional", wo: "Südwestdeutschland" },
-    "die Semmelbrösel": { wort: "das Paniermehl", syl: "Pa-NIER-mehl", stil: "regional", wo: "Norddeutschland" },
-  };
+  /* Die Wortliste selbst steht in data-umgangssprache.js — eine eigene
+     Datei, damit Szenen, Spiele und Wörterbuch unberührt bleiben und
+     man neue Wörter nachtragen kann, ohne app.js anzufassen. */
+  const UMGANGSSPRACHE = Object.assign({}, window.DMA_UMGANGSSPRACHE || {});
   // Einträge ohne echtes Alltagswort fliegen raus — sie stünden nur im Weg.
+  // (Sie stehen dort bewusst mit leerem Stil: „für dieses Wort gibt es
+  // keine zweite Form" ist eine dokumentierte Entscheidung, kein Loch.)
   Object.keys(UMGANGSSPRACHE).forEach((k) => {
     if (!UMGANGSSPRACHE[k].stil) delete UMGANGSSPRACHE[k];
   });
 
-  function alltagsWort(standard) { return UMGANGSSPRACHE[standard] || null; }
+  /* Nachschlagen mit und ohne Artikel: in den Bildern steht „das
+     Toilettenpapier“, im Wörterbuch manchmal nur „Toilettenpapier“.
+     Beides muss denselben Eintrag finden. */
+  const UMGANGS_OHNE_ARTIKEL = {};
+  Object.keys(UMGANGSSPRACHE).forEach((k) => {
+    const ohne = k.replace(/^(der|die|das)\s+/i, "").toLowerCase();
+    if (ohne && !UMGANGS_OHNE_ARTIKEL[ohne]) UMGANGS_OHNE_ARTIKEL[ohne] = UMGANGSSPRACHE[k];
+  });
+  function alltagsWort(standard) {
+    const roh = String(standard || "").trim();
+    if (!roh) return null;
+    if (UMGANGSSPRACHE[roh]) return UMGANGSSPRACHE[roh];
+    return UMGANGS_OHNE_ARTIKEL[roh.replace(/^(der|die|das)\s+/i, "").toLowerCase()] || null;
+  }
+
+  /* ------------------------------------------------------------
+     DER SCHALTER SELBST
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Ein Umschalter formell ↔ umgangssprachlich, auch in
+     der Anatomie … Der Umschalter gehört sichtbar in die Oberfläche
+     und muss seinen Zustand behalten."
+
+     Er muss ZWEI Dinge können, die er vorher nicht konnte:
+       1. Er muss auch OHNE Anmeldung gehen. Vorher hing er allein am
+          Profil — wer nicht eingeloggt war, konnte ihn zwar sehen,
+          aber nichts bewirken.
+       2. Er muss dort stehen, wo die Wörter stehen, nicht nur tief in
+          den Einstellungen.
+     Deshalb: gemerkt wird im Gerät (localStorage), und wer angemeldet
+     ist, nimmt seine Einstellung zusätzlich mit aufs nächste Gerät.
+     ------------------------------------------------------------ */
+  const UMGANGS_SCHLUESSEL = "dma_umgangssprache";
   function umgangsspracheAn() {
     const p = Backend.currentProfile();
-    return Boolean(p && p.extraProfileData && p.extraProfileData.umgangssprache);
+    const imKonto = p && p.extraProfileData ? p.extraProfileData.umgangssprache : undefined;
+    if (typeof imKonto === "boolean") return imKonto;
+    try { return localStorage.getItem(UMGANGS_SCHLUESSEL) === "1"; } catch (e) { return false; }
   }
+  function umgangsspracheSetzen(an) {
+    try { localStorage.setItem(UMGANGS_SCHLUESSEL, an ? "1" : "0"); } catch (e) { /* dann eben nur diese Sitzung */ }
+    if (Backend.currentUser()) {
+      Promise.resolve(Backend.updateExtraProfileField("umgangssprache", an)).catch(() => { /* lokal reicht */ });
+    }
+  }
+  /* Der sichtbare Umschalter — dieselbe Bedienung überall, wo Wörter
+     stehen: Bilderwelt, Dialekt-Bereich, Einstellungen. */
+  function umgangsSchalterHtml(id) {
+    const an = umgangsspracheAn();
+    return `<div class="umgangs-schalter" id="${id}">
+      <span class="umgangs-schalter-titel">🗣️ Wie soll das Wort heißen?</span>
+      <div class="order-toggle umgangs-schalter-reihe">
+        <button type="button" class="order-pill" data-umgangs="aus" aria-selected="${!an}">📖 Wörterbuch</button>
+        <button type="button" class="order-pill" data-umgangs="an" aria-selected="${an}">🗣️ Alltag</button>
+      </div>
+      <span class="empty-note umgangs-schalter-note">${an
+        ? "Oben steht das Wort, das man wirklich sagt — die Wörterbuchform steht daneben."
+        : "Oben steht die Wörterbuchform — das Alltagswort steht daneben."}</span>
+    </div>`;
+  }
+  function umgangsSchalterBinden(wurzel, danach) {
+    (wurzel || document).querySelectorAll("[data-umgangs]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const an = b.dataset.umgangs === "an";
+        if (an === umgangsspracheAn()) return;
+        umgangsspracheSetzen(an);
+        showToast(an ? "🗣️ Umgangssprache steht jetzt oben" : "📖 Wörterbuchform steht jetzt oben");
+        if (typeof danach === "function") danach();
+      });
+    });
+  }
+
   const STIL_TEXT = {
     "ugs.": "umgangssprachlich", "salopp": "salopp — unter Freunden",
     "kurz": "übliche Kurzform", "regional": "regional",
+    "derb": "derb — verstehen ja, sagen lieber nicht",
+    "ugs., Kindersprache": "umgangssprachlich, in Familien und mit Kindern",
+    "ugs., verhüllend": "umgangssprachlich, verhüllend",
+    "salopp, abwertend": "salopp und abwertend — eine Herabsetzung",
+    "salopp, meist Mehrzahl": "salopp, meist in der Mehrzahl",
   };
   /* Die kleine Zeile „so sagt man es im Alltag". Sie steht IMMER da —
      auch wenn der Schalter aus ist. Wer Deutsch lernt, soll beides
      kennen: das Wort aus dem Wörterbuch und das Wort von der Straße. */
-  function alltagsZeileHtml(standard) {
+  /* `obenGetauscht` sagt, ob die Überschrift darüber dem Umschalter
+     folgt. In der Bilderwelt tut sie das (dort steht bei
+     eingeschaltetem Schalter „die Glotze“ groß oben). Im Wörterbuch
+     steht IMMER die Wörterbuchform oben — dort dürfte die Zeile also
+     nie behaupten, oben stünde die Alltagsform. Genau das tat sie beim
+     ersten Anlauf, und die Karte widersprach sich selbst. */
+  function alltagsZeileHtml(standard, opt) {
+    const obenGetauscht = !opt || opt.obenGetauscht !== false;
     const a = alltagsWort(standard);
-    if (!a) return "";
-    const an = umgangsspracheAn();
+    /* Kein Alltagswort, aber das Wort heißt von Gegend zu Gegend
+       anders? Dann führt die Zeile in den Dialekt-Bereich — dort
+       stehen Semmel, Schrippe und Weck nebeneinander, statt dass hier
+       eine einzelne regionale Form die anderen sechs verdeckt. */
+    if (!a) {
+      const d = dialektEintrag(standard);
+      if (!d) return "";
+      return `<p class="alltags-zeile">🗺️ Dieses Wort heißt nicht überall gleich —
+        z. B. <strong>${escapeHtml(dialektBeispielform(d))}</strong>.
+        <button type="button" class="alltags-dialekt-link" data-zum-dialekt="${escapeHtml(d.hoch)}">Alle Regionen ansehen</button></p>`;
+    }
+    const an = umgangsspracheAn() && obenGetauscht;
     const stil = (STIL_TEXT[a.stil] || a.stil) + (a.wo ? " · " + a.wo : "");
     /* Die Stilangabe gehört immer zum Alltagswort — steht das oben,
        sagt die Zeile das, statt die Angabe an die Wörterbuchform zu
@@ -9579,6 +10394,12 @@
       }
     });
   }
+  /* Wird eine empfangene Herausforderung weggeräumt, muss auch ihre
+     mitgebrachte Wortliste weg — sonst bliebe sie im Speicher liegen
+     und könnte beim nächsten Spiel ungefragt wieder auftauchen. */
+  function herausforderungVergessen(id) {
+    delete herausforderungListen[id];
+  }
 
   const geliehenListe = {};   // { spielKuerzel: { name, woerter, von } }
   function geliehenSetzen(spielKuerzel, liste) {
@@ -9758,7 +10579,11 @@
               <div class="vocab-word">${e.word}${e.level ? ` <span class="empty-note" style="font-size:0.7rem;">${e.level}</span>` : ""}</div>
               <div class="vocab-syl">${betonungAnzeigen(e.syl)}</div>
               <div class="vocab-en">${e.meaning || (e.verified ? "" : "aus dem Übungsinhalt — Bedeutung nicht hinterlegt")}</div>
-              ${e.example ? `<div class="vocab-example">„${e.example}"</div>` : ""}
+              ${e.example ? `<div class="vocab-example">„${e.example}“</div>` : ""}
+              ${/* Auch im Wörterbuch: die Alltagsform und der Hinweis auf
+                    den Dialekt-Bereich — dieselbe Quelle wie in der
+                    Bilderwelt, damit beides nie auseinanderläuft. */ ""}
+              ${alltagsZeileHtml(e.word, { obenGetauscht: false })}
             </div>
             <div class="vocab-karte-knoepfe">
               <button type="button" class="speak-btn" data-word="${e.word.replace(/"/g, "&quot;")}" aria-label="Aussprache anhören">🔊</button>
@@ -10029,6 +10854,229 @@
     return "Nichts verstanden — war das Mikrofon an, und war es ruhig genug?";
   }
 
+  /* ============================================================
+     AUSSPRACHEPRÜFUNG — ZWEISTUFIG
+     ------------------------------------------------------------
+     Der Auftrag war eindeutig, und die Begründung ist der Maßstab:
+     „Da stimmt was nicht“ bringt niemanden weiter. „Dein ö war
+     ein o“ bringt ihn weiter.
+
+     STUFE 1  Azure Aussprachebewertung. Note je LAUT, je Wort,
+              je Satz. Nur damit lässt sich sagen, WAS falsch war.
+     STUFE 2  Eigenes Verfahren (MFCC + DTW) gegen die
+              Originalaufnahme. Zeigt, WO im Wort es abweicht,
+              nicht WAS falsch war. Auffangnetz, kein Ersatz.
+     STUFE 3  Die alte Verständlichkeitsprüfung über die
+              Spracherkennung des Geräts — wenn es weder Schlüssel
+              noch Originalaufnahme gibt.
+
+     Welche Stufe gerade läuft, steht IMMER auf dem Schirm. Ein
+     Prozentwert, der nicht sagt, woher er kommt, ist Blendwerk.
+     ============================================================ */
+  let aussprAufnahme = null;      // laufender Aufnahmegriff
+  let aussprLetzteEigene = null;  // { blob, puffer, huelle }
+  let aussprLetztesOriginal = null; // { puffer, huelle, art }
+  let aussprTempo = 1;
+
+  function aussprStufe() {
+    if (!window.AusspracheP) return "verstaendlich";
+    if (AusspracheP.azureDa() && !AusspracheP.istGesperrt()) return "azure";
+    if (aussprLetztesOriginal && aussprLetztesOriginal.art === "sprite") return "frei";
+    return "verstaendlich";
+  }
+
+  /* Der Bereichsname, unter dem die Tondatei des Wortes liegt.
+     Dieselbe Rechnung wie im Erzeuger — sie MUSS dieselbe sein,
+     sonst findet die App die Stücke nicht, die erzeugt wurden. */
+  function aussprBereich(w) {
+    return window.TonListe ? TonListe.bereichName(w.category || w.theme) : "";
+  }
+  function aussprStueckId(text) {
+    return window.TonListe ? TonListe.schluessel(text) : "";
+  }
+
+  /* Die Originalaufnahme holen. Gibt es keine vorproduzierte,
+     wird das ehrlich gemeldet — dann gibt es kein Shadowing mit
+     zwei Wellenformen, weil die Gerätestimme keine Tondatei
+     liefert, die man nebeneinanderlegen könnte. */
+  function aussprOriginalLaden(w) {
+    if (!window.TonListe || !window.AusspracheP) return Promise.resolve(null);
+    const bereich = aussprBereich(w), id = aussprStueckId(w.word);
+    if (!bereich || !id) return Promise.resolve(null);
+    return TonListe.stueckAdresse(bereich, id).then((s) => {
+      if (!s) return null;
+      /* Das Stück aus der Sammeldatei herausschneiden: die
+         Prüfung braucht GENAU das Wort, nicht die ganze Datei. */
+      return AusspracheP.tonLesen(s.datei).then((puffer) => {
+        const von = Math.floor(s.startMs / 1000 * puffer.sampleRate);
+        const bis = Math.min(puffer.length, Math.floor((s.startMs + s.dauerMs) / 1000 * puffer.sampleRate));
+        const kanal = puffer.getChannelData(0).slice(von, bis);
+        const k = new (window.AudioContext || window.webkitAudioContext)();
+        const schnitt = k.createBuffer(1, Math.max(1, bis - von), puffer.sampleRate);
+        schnitt.copyToChannel ? schnitt.copyToChannel(kanal, 0) : schnitt.getChannelData(0).set(kanal);
+        return { puffer: schnitt, art: "sprite", huelle: AusspracheP.huellkurve(schnitt, 150) };
+      }).catch(() => null);
+    }).catch(() => null);
+  }
+
+  /* --- Die Laut-Anzeige. Das ist der Kern der ganzen Sache. ---
+     Wort für Wort, und in jedem Wort Laut für Laut. Eingefärbt,
+     und darunter in Klartext, was danebenlag. Der Gesamtwert
+     steht dabei, aber klein — er ist nicht die Botschaft. */
+  function aussprLauteHtml(b) {
+    if (!b || !b.woerter || !b.woerter.length) return "";
+    const woerter = b.woerter.map((w) => {
+      const laute = (w.laute || []).map((l) => {
+        const farbe = AusspracheP.noteFarbe(l.note);
+        const name = AusspracheP.lautName(l.laut);
+        return `<span class="ausspr-laut" style="border-color:${farbe}; color:${farbe};"
+                 title="${name}${l.note !== null ? " · " + l.note + " von 100" : ""}">${l.laut}</span>`;
+      }).join("");
+      /* Nur die Laute, die wirklich danebenlagen, bekommen einen
+         Satz. Sonst steht unter jedem Wort eine Wand aus Text. */
+      const schlecht = (w.laute || []).filter((l) => l.note !== null && l.note < 60);
+      const saetze = schlecht.slice(0, 3).map((l) => AusspracheP.lautKlartext(l)).join(" · ");
+      const fehlt = w.fehlerart === "Omission" ? " — nicht gesprochen"
+                  : w.fehlerart === "Insertion" ? " — zu viel gesprochen" : "";
+      return `<div class="ausspr-wort-zeile">
+          <div class="ausspr-wort-kopf">
+            <strong style="color:${AusspracheP.noteFarbe(w.note)};">${w.wort}</strong>
+            <span class="ausspr-wort-note">${w.note !== null ? w.note + " / 100" : "—"}${fehlt}</span>
+          </div>
+          <div class="ausspr-lautreihe">${laute || '<span class="empty-note">keine Laute gemeldet</span>'}</div>
+          ${saetze ? `<p class="ausspr-klartext">${saetze}</p>`
+                   : (w.note !== null && w.note >= 80 ? `<p class="ausspr-klartext ausspr-gut">sitzt</p>` : "")}
+        </div>`;
+    }).join("");
+    return `
+      <div class="ausspr-laute-kasten">
+        <p class="eyebrow">LAUT FÜR LAUT</p>
+        ${woerter}
+        <div class="ausspr-teilnoten">
+          <span>Genauigkeit ${b.genauigkeit ?? "—"}</span>
+          <span>Flüssigkeit ${b.fluessigkeit ?? "—"}</span>
+          <span>Vollständigkeit ${b.vollstaendigkeit ?? "—"}</span>
+        </div>
+      </div>`;
+  }
+
+  /* --- WO weicht es ab (Stufe 2) ---
+     Ein Streifen über das Wort: hoch = stark abweichend. Mehr
+     kann das freie Verfahren nicht sagen, und mehr behauptet die
+     Anzeige auch nicht. */
+  function aussprProfilHtml(profil) {
+    if (!profil || !profil.length) return "";
+    const balken = profil.map((p) => {
+      if (!p.gesprochen) return `<span class="ausspr-p-stumm"></span>`;
+      const h = Math.max(6, Math.round(p.wert * 100));
+      const farbe = p.wert > 0.7 ? "#E85F6F" : p.wert > 0.45 ? "#E8A33D" : "#4FA88E";
+      return `<span class="ausspr-p-strich" style="height:${h}%; background:${farbe};"></span>`;
+    }).join("");
+    return `
+      <div class="ausspr-profil-kasten">
+        <p class="eyebrow">WO ES ABWEICHT</p>
+        <div class="ausspr-profil">${balken}</div>
+        <p class="empty-note" style="font-size:0.7rem;">
+          Links ist der Anfang des Wortes, rechts das Ende. Hohe rote Striche
+          heissen: hier klingt deine Aufnahme anders als das Original.
+          <strong>Was</strong> anders ist, kann diese Prüfung nicht sagen —
+          dafür braucht es die Laut-Bewertung.
+        </p>
+      </div>`;
+  }
+
+  /* --- Zwei Wellenformen untereinander, auf dieselbe Länge ---
+     Beide haben genau so viele Striche, wie gezeichnet werden:
+     die Streckung steckt in der Hüllkurve, nicht im CSS. So liegen
+     Anfang über Anfang und Ende über Ende, auch wenn eine Aufnahme
+     länger ist als die andere. */
+  function aussprWellenHtml() {
+    const zeichne = (huelle, farbe) => (huelle || []).map((v) =>
+      `<span style="height:${Math.max(4, Math.round(v * 100))}%; background:${farbe};"></span>`).join("");
+    const o = aussprLetztesOriginal, e = aussprLetzteEigene;
+    if (!o && !e) return "";
+    const dauer = (x) => x && x.puffer ? (x.puffer.length / x.puffer.sampleRate).toFixed(2).replace(".", ",") + " s" : "—";
+    return `
+      <div class="ausspr-wellen">
+        <div class="ausspr-welle-zeile">
+          <span class="ausspr-welle-schild">Original</span>
+          <span class="ausspr-welle">${o ? zeichne(o.huelle, "#4FA88E") : '<em class="empty-note">keine Aufnahme</em>'}</span>
+          <span class="ausspr-welle-dauer">${dauer(o)}</span>
+        </div>
+        <div class="ausspr-welle-zeile">
+          <span class="ausspr-welle-schild">Du</span>
+          <span class="ausspr-welle">${e ? zeichne(e.huelle, "#E8A33D") : '<em class="empty-note">noch nichts aufgenommen</em>'}</span>
+          <span class="ausspr-welle-dauer">${dauer(e)}</span>
+        </div>
+      </div>`;
+  }
+
+  /* --- Shadowing: hören, nachsprechen, beide hintereinander ---
+     Alles über EINEN Weg, damit „im Wechsel“ nicht in zwei
+     Abspielern gleichzeitig endet. */
+  let aussprSpielt = false;
+  function aussprPufferSpielen(puffer, tempo) {
+    return new Promise((fertig) => {
+      if (!puffer) { fertig(); return; }
+      const K = window.AudioContext || window.webkitAudioContext;
+      if (!K) { fertig(); return; }
+      const k = new K();
+      const q = k.createBufferSource();
+      q.buffer = puffer;
+      q.playbackRate.value = tempo || 1;
+      q.connect(k.destination);
+      q.onended = () => { try { k.close(); } catch (e) {} fertig(); };
+      q.start();
+    });
+  }
+  async function aussprSpielen(was, w) {
+    if (aussprSpielt) return;
+    aussprSpielt = true;
+    const knoepfe = document.querySelectorAll("[data-ausspr-spiel]");
+    knoepfe.forEach((b) => { b.disabled = true; });
+    const original = () => aussprLetztesOriginal
+      ? aussprPufferSpielen(aussprLetztesOriginal.puffer, aussprTempo)
+      : new Promise((f) => { Core.speak(w.word, imItalienischraum() ? "it" : "de"); setTimeout(f, 1200); });
+    const eigene = () => aussprLetzteEigene
+      ? aussprPufferSpielen(aussprLetzteEigene.puffer, aussprTempo)
+      : Promise.resolve();
+    const pause = (ms) => new Promise((f) => setTimeout(f, ms));
+    try {
+      if (was === "original") await original();
+      else if (was === "eigene") await eigene();
+      else if (was === "beide") { await original(); await pause(320); await eigene(); }
+      else if (was === "wechsel") {
+        for (let i = 0; i < 2; i++) { await original(); await pause(280); await eigene(); await pause(280); }
+      }
+    } catch (e) {}
+    aussprSpielt = false;
+    document.querySelectorAll("[data-ausspr-spiel]").forEach((b) => { b.disabled = false; });
+  }
+
+  function aussprShadowingHtml(w) {
+    const hatEigene = Boolean(aussprLetzteEigene);
+    return `
+      <div class="ausspr-shadow">
+        <p class="eyebrow">NACHSPRECHEN (SHADOWING)</p>
+        ${aussprWellenHtml()}
+        <div class="quiz-actions ausspr-shadow-knoepfe">
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Original</button>
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="eigene" ${hatEigene ? "" : "disabled"}>🎧 Deine</button>
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="beide" ${hatEigene ? "" : "disabled"}>⇄ Beide</button>
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="wechsel" ${hatEigene ? "" : "disabled"}>🔁 Im Wechsel</button>
+        </div>
+        <div class="ausspr-tempo">
+          <span class="empty-note">Tempo:</span>
+          ${[[1, "normal"], [0.75, "langsam"], [0.5, "ganz langsam"]].map(([t, n]) =>
+            `<button type="button" class="trophy-chip ${aussprTempo === t ? "selected" : ""}" data-ausspr-tempo="${t}">${n}</button>`).join("")}
+        </div>
+        ${!aussprLetztesOriginal ? `<p class="empty-note" style="font-size:0.7rem;">
+          Für dieses Wort gibt es noch keine vorproduzierte Aufnahme. „Original“ nimmt
+          darum die Stimme deines Geräts — die lässt sich nicht als Wellenform zeigen
+          und nicht mit deiner Aufnahme vergleichen.</p>` : ""}
+      </div>`;
+  }
+
   function renderAussprache() {
     const area = document.getElementById("ausspracheArea");
     if (!area) return;
@@ -10069,11 +11117,31 @@
             <button type="button" class="btn btn-ghost" id="ausspracheZumWoerterbuch" style="margin-top:8px;">📖 Zum Wörterbuch</button>`
           : `<p class="empty-note" style="margin-bottom:12px;">${liste.length.toLocaleString("de-DE")} Wörter stehen bereit — eine Runde geht über ${Math.min(AUSSPRACHE_RUNDEN, liste.length)}.</p>
              <button type="button" class="btn btn-coffee" id="ausspracheStart" ${liste.length ? "" : "disabled"}>🎤 Runde starten</button>`}
-          <p class="empty-note" style="margin-top:16px; font-size:0.72rem;">
-            Was hier gemessen wird: ob die Spracherkennung deines Geräts das Wort erkennt — also deine <strong>Verständlichkeit</strong>.
-            Ob ein einzelner Laut ganz genau sitzt, kann diese Prüfung nicht sagen; das können nur eigene Aussprache-Dienste.
-            Deine Aufnahme wird nicht gespeichert und verlässt dein Gerät nur zur Erkennung durch den Browser.
-          </p>
+          <p class="eyebrow" style="margin-top:16px;">WAS HIER GEMESSEN WIRD</p>
+          <div class="ausspr-stufen-erklaerung">
+            <p><span class="ausspr-stufe ausspr-stufe-1">Stufe 1</span>
+              <strong>Laut für Laut.</strong> Jeder einzelne Laut bekommt eine Note, und
+              dazu steht in Klartext, was danebenlag — „dein ö klang wie ein o“. Das ist
+              die Auskunft, die weiterbringt. Dafür braucht es einen Azure-Schlüssel
+              in den Einstellungen.</p>
+            <p><span class="ausspr-stufe ausspr-stufe-2">Stufe 2</span>
+              <strong>Vergleich mit der Originalaufnahme.</strong> Läuft ganz in deinem
+              Gerät, auch ohne Netz. Sie zeigt, <strong>wo</strong> im Wort du abweichst —
+              aber nicht, <strong>was</strong> falsch war. Braucht eine vorproduzierte
+              Aufnahme des Wortes.</p>
+            <p><span class="ausspr-stufe ausspr-stufe-3">Stufe 3</span>
+              <strong>Nur Verständlichkeit.</strong> Ob die Spracherkennung des Geräts das
+              Wort überhaupt erkennt. Sagt nichts über einzelne Laute. Das ist die
+              Rückfallebene, wenn Stufe 1 und 2 nicht zur Verfügung stehen.</p>
+            <p class="empty-note" style="font-size:0.72rem;">
+              Gerade möglich: <strong>${{ azure: "Stufe 1 — Laut für Laut", frei: "Stufe 2 — Vergleich mit dem Original", verstaendlich: "Stufe 3 — nur Verständlichkeit" }[aussprStufe()]}</strong>.
+              Welche Stufe eine Bewertung geliefert hat, steht immer daneben.
+            </p>
+            <p class="empty-note" style="font-size:0.72rem;">
+              Deine Aufnahme bleibt in deinem Gerät. Nur in Stufe 1 geht sie zur Bewertung
+              an Azure; gespeichert wird sie nirgends.
+            </p>
+          </div>
         </div>`;
       area.querySelectorAll("[data-ausspr-quelle]").forEach((b) => b.addEventListener("click", () => { ausspracheQuelle = b.dataset.aussprQuelle; renderAussprache(); }));
       area.querySelectorAll("[data-ausspr-niveau]").forEach((b) => b.addEventListener("click", () => { ausspracheNiveau = b.dataset.aussprNiveau; renderAussprache(); }));
@@ -10088,83 +11156,251 @@
     const s = ausspracheSitzung;
     if (s.index >= s.woerter.length) { renderAusspracheErgebnis(); return; }
     const w = s.woerter[s.index];
+    const stufe = aussprStufe();
+    const mikro = window.AusspracheP && AusspracheP.mikrofonDa();
+    const gesperrt = window.AusspracheP && AusspracheP.istGesperrt();
+    const b = s.letztes;
+
+    const stufenSchild = {
+      azure: `<span class="ausspr-stufe ausspr-stufe-1">Stufe 1 · Laut für Laut (Azure)</span>`,
+      frei: `<span class="ausspr-stufe ausspr-stufe-2">Stufe 2 · Vergleich mit der Originalaufnahme</span>`,
+      verstaendlich: `<span class="ausspr-stufe ausspr-stufe-3">Stufe 3 · nur Verständlichkeit</span>`
+    }[stufe];
+
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🎤 AUSSPRACHE · WORT ${s.index + 1} / ${s.woerter.length}</p>
         <div class="aussprache-wort">${w.word}</div>
         <div class="vocab-syl" style="text-align:center; font-size:1.1rem;">${betonungAnzeigen(w.syl)}</div>
         ${w.meaning ? `<p class="empty-note" style="text-align:center;">${w.meaning}</p>` : ""}
-        <div class="quiz-actions" style="justify-content:center; margin:14px 0 6px;">
-          <button type="button" class="btn btn-ghost" id="ausspracheHoeren">🔊 Vorsprechen lassen</button>
-          <button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${kannHoeren ? "" : "disabled"}>${s.laeuft ? "🎙️ Ich höre zu …" : "🎙️ Jetzt sprechen"}</button>
+        <div style="text-align:center; margin:8px 0 4px;">${stufenSchild}</div>
+        ${gesperrt ? `<div class="beta-hinweis" style="border-color:rgba(232,163,61,0.6); background:rgba(232,163,61,0.08);">
+          <strong>Die Laut-Bewertung ruht bis zum Monatsanfang.</strong>
+          Die kostenlose Monatsmenge bei Azure ist aufgebraucht. Sie erneuert sich
+          am ersten Tag des nächsten Monats von selbst — es wird nichts abgerechnet
+          und es ist nichts kaputt. Bis dahin läuft die Prüfung eine Stufe tiefer weiter.
+        </div>` : ""}
+        <div class="quiz-actions" style="justify-content:center; margin:12px 0 6px;">
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Vorsprechen lassen</button>
+          ${s.laeuft
+            ? `<button type="button" class="btn btn-coffee" id="ausspracheStop">⏹️ Fertig — auswerten</button>`
+            : `<button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${(mikro || kannHoeren) ? "" : "disabled"}>🎙️ Jetzt sprechen</button>`}
         </div>
         <div id="ausspracheRueckmeldung">
-          ${s.letztes ? `
-            ${ausspracheBalken(s.letztes.prozent)}
-            <p class="aussprache-prozent">${s.letztes.prozent} % verständlich</p>
-            <p class="empty-note" style="text-align:center;">${ausspracheUrteil(s.letztes.prozent)}</p>
-            ${s.letztes.beste && s.letztes.prozent < 90 ? `<p class="empty-note" style="text-align:center;">Verstanden wurde: „${s.letztes.beste}“</p>` : ""}`
-          : '<p class="empty-note" style="text-align:center;">Tippe auf „Jetzt sprechen“ und sag das Wort deutlich.</p>'}
+          ${s.laeuft ? `<p class="ausspr-laeuft">🎙️ Ich höre zu … sprich das Wort und tippe dann auf „Fertig“.</p>` : ""}
+          ${b && b.fehlertext ? `<p class="empty-note" style="text-align:center;">${b.fehlertext}</p>` : ""}
+          ${b && !b.fehlertext ? `
+            ${ausspracheBalken(b.prozent)}
+            <p class="aussprache-prozent">${b.prozent} %${b.quelle === "azure" ? " Aussprache" : b.quelle === "frei" ? " Übereinstimmung" : " verständlich"}</p>
+            ${b.quelle === "azure" ? aussprLauteHtml(b) : ""}
+            ${b.quelle === "frei" ? aussprProfilHtml(b.profil) : ""}
+            ${b.quelle === "verstaendlich" ? `
+              <p class="empty-note" style="text-align:center;">${ausspracheUrteil(b.prozent)}</p>
+              ${b.beste && b.prozent < 90 ? `<p class="empty-note" style="text-align:center;">Verstanden wurde: „${b.beste}“</p>` : ""}` : ""}`
+          : (!s.laeuft ? '<p class="empty-note" style="text-align:center;">Tippe auf „Jetzt sprechen“ und sag das Wort deutlich.</p>' : "")}
         </div>
+        ${aussprShadowingHtml(w)}
         <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
-          <button type="button" class="btn btn-ghost" id="ausspracheWeiter">${s.letztes ? "Weiter ▸" : "Überspringen ▸"}</button>
+          <button type="button" class="btn btn-ghost" id="ausspracheWeiter">${b ? "Weiter ▸" : "Überspringen ▸"}</button>
           <button type="button" class="btn btn-ghost" id="ausspracheAbbrechen">Runde beenden</button>
         </div>
-        ${miniBugReportBtnHtml(`Aussprache-Trainer, Wort „${w.word}“`)}
+        <p class="empty-note" style="margin-top:14px; font-size:0.7rem;">
+          ${stufe === "azure"
+            ? "Für die Laut-Bewertung geht deine Aufnahme an Azure und wird dort bewertet. Sie wird nicht gespeichert — weder dort noch hier."
+            : "Deine Aufnahme bleibt <strong>in diesem Gerät</strong>. Sie wird hier gerechnet und nirgends hochgeladen."}
+        </p>
+        ${miniBugReportBtnHtml(`Aussprache-Trainer, Wort „${w.word}“ (${stufe})`)}
       </div>`;
-    document.getElementById("ausspracheHoeren").addEventListener("click", () => Core.speak(w.word, imItalienischraum() ? "it" : "de"));
-    document.getElementById("ausspracheAufnehmen").addEventListener("click", async () => {
+
+    /* --- Shadowing und Tempo --- */
+    area.querySelectorAll("[data-ausspr-spiel]").forEach((k) =>
+      k.addEventListener("click", () => aussprSpielen(k.dataset.aussprSpiel, w)));
+    area.querySelectorAll("[data-ausspr-tempo]").forEach((k) =>
+      k.addEventListener("click", () => { aussprTempo = Number(k.dataset.aussprTempo); renderAussprache(); }));
+
+    /* --- Die Originalaufnahme im Hintergrund holen ---
+       Erst danach steht fest, ob Stufe 2 möglich ist. Darum wird
+       neu gezeichnet, wenn sie eintrifft — aber nur, wenn der
+       Nutzer noch beim selben Wort steht. */
+    if (!aussprLetztesOriginal || aussprLetztesOriginal.fuer !== w.word) {
+      aussprLetztesOriginal = null;
+      aussprOriginalLaden(w).then((o) => {
+        if (!o) return;
+        if (!ausspracheSitzung || ausspracheSitzung.woerter[ausspracheSitzung.index] !== w) return;
+        o.fuer = w.word;
+        aussprLetztesOriginal = o;
+        renderAussprache();
+      });
+    }
+
+    /* --- Aufnehmen --- */
+    document.getElementById("ausspracheAufnehmen")?.addEventListener("click", async () => {
       if (s.laeuft) return;
-      s.laeuft = true;
-      const knopf = document.getElementById("ausspracheAufnehmen");
-      knopf.textContent = "🎙️ Ich höre zu …";
-      knopf.disabled = true;
-      /* Ohne Sprachangabe hört der Browser auf Deutsch zu — ein
-         italienisches Wort käme dann immer als „nicht verstanden"
-         zurück, ganz gleich wie gut es gesprochen war. */
-      const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
-      s.laeuft = false;
-      if (gehoert.fehler) {
-        const texte = {
-          "not-allowed": "Das Mikrofon ist nicht freigegeben. In den Browser-Einstellungen für diese Seite den Zugriff erlauben.",
-          "nicht-verfuegbar": "Dieser Browser hat keine Spracherkennung.",
-          "nichts-verstanden": "Ich habe nichts gehört. Näher ans Mikrofon und noch einmal.",
-          "zeit-abgelaufen": "Die Aufnahme hat zu lange gedauert — noch einmal, kürzer.",
-          "no-speech": "Ich habe nichts gehört. Näher ans Mikrofon und noch einmal.",
-          "network": "Die Erkennung braucht gerade eine Internetverbindung.",
-        };
-        document.getElementById("ausspracheRueckmeldung").innerHTML =
-          `<p class="empty-note" style="text-align:center;">${texte[gehoert.fehler] || "Das hat gerade nicht geklappt — bitte noch einmal."}</p>`;
-        knopf.textContent = "🎙️ Noch einmal";
-        knopf.disabled = false;
+      /* Ohne Mikrofonaufnahme bleibt nur die alte
+         Verständlichkeitsprüfung — die braucht kein MediaRecorder. */
+      if (!mikro) { await aussprVerstaendlichkeit(w, s); return; }
+      s.letztes = null;
+      try {
+        aussprAufnahme = await AusspracheP.aufnahmeStarten({
+          hoechstdauer: 12000,
+          beiZeitablauf: () => { document.getElementById("ausspracheStop")?.click(); }
+        });
+      } catch (e) {
+        s.letztes = { fehlertext: "Das Mikrofon ist nicht freigegeben. In den Einstellungen des Browsers für diese Seite den Zugriff erlauben." };
+        renderAussprache();
         return;
       }
-      const bewertung = Core.bewerteAussprache(w.word, gehoert);
-      s.letztes = bewertung;
-      if (bewertung.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
+      s.laeuft = true;
       renderAussprache();
-      /* GEWÜNSCHT: „dass das automatisch alleine weitergeht und man nicht
-         erst auf den Knopf drücken muss." Nach einem bewerteten Versuch
-         geht es von selbst zum nächsten Wort — der Knopf bleibt für alle,
-         die es schneller wollen. */
-      autoWeiter(bewertung.prozent >= 75, () => {
-        const knopf = document.getElementById("ausspracheWeiter");
-        if (knopf) knopf.click();
-      });
     });
+
+    /* --- Auswerten --- */
+    document.getElementById("ausspracheStop")?.addEventListener("click", async () => {
+      if (!s.laeuft || !aussprAufnahme) return;
+      const knopf = document.getElementById("ausspracheStop");
+      if (knopf) { knopf.disabled = true; knopf.textContent = "⏳ Wird ausgewertet …"; }
+      const auf = await aussprAufnahme.stoppen();
+      aussprAufnahme = null;
+      s.laeuft = false;
+      if (!auf || !auf.blob || auf.blob.size < 400) {
+        s.letztes = { fehlertext: "Die Aufnahme ist leer geblieben. War das Mikrofon an?" };
+        renderAussprache();
+        return;
+      }
+      let puffer = null;
+      try { puffer = await AusspracheP.tonLesen(auf.blob); } catch (e) {}
+      aussprLetzteEigene = puffer
+        ? { blob: auf.blob, puffer: puffer, huelle: AusspracheP.huellkurve(puffer, 150) }
+        : { blob: auf.blob, puffer: null, huelle: null };
+
+      s.letztes = await aussprBewerten(w, puffer, auf.blob);
+      if (s.letztes && !s.letztes.fehlertext) {
+        if (s.letztes.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
+      }
+      renderAussprache();
+    });
+
     document.getElementById("ausspracheWeiter").addEventListener("click", () => {
-      if (s.letztes) {
-        s.ergebnisse.push({ wort: w.word, prozent: s.letztes.prozent, gehoert: s.letztes.beste });
-        spielNotiz(s.letztes.prozent >= 75, `${w.word} — ${s.letztes.prozent} % verständlich${s.letztes.beste && s.letztes.prozent < 90 ? ` (verstanden: „${s.letztes.beste}“)` : ""}`);
+      if (s.letztes && !s.letztes.fehlertext) {
+        const bb = s.letztes;
+        s.ergebnisse.push({ wort: w.word, prozent: bb.prozent, gehoert: bb.beste || "", quelle: bb.quelle });
+        /* In der Notiz steht mit, WORAN gemessen wurde. Ohne das
+           stünden später Werte aus drei verschiedenen Verfahren
+           unbeschriftet nebeneinander. */
+        const woran = bb.quelle === "azure" ? "Aussprache (Laut für Laut)"
+                    : bb.quelle === "frei" ? "Übereinstimmung mit dem Original" : "Verständlichkeit";
+        const schlimmste = bb.quelle === "azure" ? aussprSchlimmsterLaut(bb) : "";
+        spielNotiz(bb.prozent >= 75,
+          `${w.word} — ${bb.prozent} % ${woran}${schlimmste ? ` · ${schlimmste}` : ""}${bb.beste && bb.prozent < 90 ? ` (verstanden: „${bb.beste}“)` : ""}`);
       } else {
         s.ergebnisse.push({ wort: w.word, prozent: null, gehoert: "" });
         spielNotiz(null, `${w.word} — übersprungen`);
       }
       s.letztes = null;
+      aussprLetzteEigene = null;
+      aussprLetztesOriginal = null;
       s.index += 1;
       renderAussprache();
     });
-    document.getElementById("ausspracheAbbrechen").addEventListener("click", () => { s.index = s.woerter.length; renderAussprache(); });
+    document.getElementById("ausspracheAbbrechen").addEventListener("click", () => {
+      if (aussprAufnahme) { aussprAufnahme.abbrechen(); aussprAufnahme = null; }
+      s.laeuft = false;
+      aussprLetzteEigene = null;
+      aussprLetztesOriginal = null;
+      s.index = s.woerter.length;
+      renderAussprache();
+    });
+  }
+
+  /* Der Laut, der am schlechtesten saß — für die Notiz im Verlauf.
+     Das ist die eine Zeile, die später noch etwas sagt. */
+  function aussprSchlimmsterLaut(b) {
+    let schlecht = null;
+    (b.woerter || []).forEach((w) => (w.laute || []).forEach((l) => {
+      if (l.note === null) return;
+      if (!schlecht || l.note < schlecht.note) schlecht = l;
+    }));
+    if (!schlecht || schlecht.note >= 60) return "";
+    return AusspracheP.lautKlartext(schlecht);
+  }
+
+  /* ------------------------------------------------------------
+     BEWERTEN — nimmt die beste Stufe, die gerade möglich ist,
+     und fällt nach unten durch, ohne dem Nutzer etwas vorzumachen.
+     ------------------------------------------------------------ */
+  async function aussprBewerten(w, puffer, blob) {
+    /* --- Stufe 1: Azure --- */
+    if (AusspracheP.azureDa() && !AusspracheP.istGesperrt() && puffer) {
+      const wav = AusspracheP.alsWav(puffer);
+      const erg = await AusspracheP.azureBewerten({
+        wav: wav, text: w.word, sprache: imItalienischraum() ? "it-IT" : "de-DE"
+      });
+      if (!erg.fehler) return erg;
+      if (erg.fehler === "kontingent") {
+        /* Kein roter Absturz, keine Abrechnung: eine Stufe tiefer
+           weitermachen und beim nächsten Wort gleich dort bleiben. */
+        const tiefer = await aussprFreiOderVerstaendlich(w, puffer, blob);
+        if (tiefer) tiefer.hinweis = "Die Monatsmenge bei Azure ist aufgebraucht — gemessen wurde eine Stufe tiefer.";
+        return tiefer;
+      }
+      if (erg.fehler === "schluessel-falsch") {
+        return { fehlertext: "Der Azure-Schlüssel wird abgelehnt. Schlüssel und Region in den Einstellungen prüfen." };
+      }
+      if (erg.fehler === "nichts-verstanden") {
+        return { fehlertext: "Azure hat kein Wort erkannt. Näher ans Mikrofon, und noch einmal." };
+      }
+      /* Netz weg, Dienst hakt: das ist genau der Fall, für den es
+         das Auffangnetz gibt. */
+      const tiefer = await aussprFreiOderVerstaendlich(w, puffer, blob);
+      if (tiefer) tiefer.hinweis = "Azure war nicht erreichbar — gemessen wurde eine Stufe tiefer.";
+      return tiefer;
+    }
+    return aussprFreiOderVerstaendlich(w, puffer, blob);
+  }
+
+  async function aussprFreiOderVerstaendlich(w, puffer, blob) {
+    /* --- Stufe 2: gegen die Originalaufnahme --- */
+    if (puffer && aussprLetztesOriginal && aussprLetztesOriginal.puffer) {
+      try {
+        const erg = AusspracheP.freieBewertungAusPuffern(puffer, aussprLetztesOriginal.puffer);
+        if (!erg.fehler) return erg;
+      } catch (e) {}
+    }
+    /* --- Stufe 3: die alte Verständlichkeitsprüfung --- */
+    if (!Core.spracherkennungDa()) {
+      return { fehlertext: "Für dieses Wort gibt es noch keine Originalaufnahme, und dieser Browser hat keine Spracherkennung. Es lässt sich hier also nichts messen — Vorsprechen und Nachsprechen geht trotzdem." };
+    }
+    const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
+    if (gehoert.fehler) return { fehlertext: aussprFehlertext(gehoert.fehler) };
+    const bew = Core.bewerteAussprache(w.word, gehoert);
+    bew.quelle = "verstaendlich";
+    return bew;
+  }
+
+  /* Die alte Prüfung allein — für Geräte ohne MediaRecorder.
+     Da wird gar nicht erst aufgenommen, sondern direkt zugehört. */
+  async function aussprVerstaendlichkeit(w, s) {
+    s.laeuft = true;
+    renderAussprache();
+    const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
+    s.laeuft = false;
+    if (gehoert.fehler) { s.letztes = { fehlertext: aussprFehlertext(gehoert.fehler) }; renderAussprache(); return; }
+    const bew = Core.bewerteAussprache(w.word, gehoert);
+    bew.quelle = "verstaendlich";
+    s.letztes = bew;
+    if (bew.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
+    renderAussprache();
+  }
+
+  function aussprFehlertext(art) {
+    return ({
+      "not-allowed": "Das Mikrofon ist nicht freigegeben. In den Browser-Einstellungen für diese Seite den Zugriff erlauben.",
+      "nicht-verfuegbar": "Dieser Browser hat keine Spracherkennung.",
+      "nichts-verstanden": "Ich habe nichts gehört. Näher ans Mikrofon und noch einmal.",
+      "zeit-abgelaufen": "Die Aufnahme hat zu lange gedauert — noch einmal, kürzer.",
+      "no-speech": "Ich habe nichts gehört. Näher ans Mikrofon und noch einmal.",
+      "network": "Die Erkennung braucht gerade eine Internetverbindung."
+    })[art] || "Das hat gerade nicht geklappt — bitte noch einmal.";
   }
 
   function renderAusspracheErgebnis() {
@@ -10188,6 +11424,141 @@
     document.getElementById("ausspracheZurueck").addEventListener("click", () => { ausspracheSitzung = null; renderAussprache(); });
   }
   document.querySelector('#learnSubnav [data-sub="sub-aussprache"]')?.addEventListener("click", () => renderAussprache());
+
+  /* ============================================================
+     KLASSENZIMMER
+     ------------------------------------------------------------
+     „Der Livestream ist dann praktisch unser Klassenzimmer."
+
+     Diese Ansicht ist nur die SCHALTZENTRALE. Der Rahmen selbst
+     lebt in klassenzimmer.js und hängt direkt unter <body>, nicht
+     hier — sonst wäre er weg, sobald jemand weiterblättert
+     (die Ansichten werden per innerHTML geleert). Beim Blättern
+     ändert sich nur eine CSS-Klasse, und die Verbindung hält.
+     ============================================================ */
+  let klassenzimmerAbmelden = null;
+
+  function renderKlassenzimmer() {
+    const area = document.getElementById("klassenzimmerArea");
+    if (!area) return;
+    if (!window.Klassenzimmer) {
+      area.innerHTML = '<p class="empty-note">Das Klassenzimmer ist auf diesem Gerät nicht geladen.</p>';
+      return;
+    }
+    const istBetreiber = Boolean(Backend.isOwner && Backend.isOwner());
+    const l = Klassenzimmer.lage();
+    const ausLink = Klassenzimmer.raumAusAdresse();
+    const raum = l.raum || ausLink || Klassenzimmer.gemerkterRaum();
+
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow">🎓 KLASSENZIMMER</p>
+        <p class="empty-note" style="margin-bottom:12px;">
+          Ton und Bild zusammen — und dabei in der App weiterblättern. Der Raum bleibt
+          als <strong>kleine Leiste am unteren Rand</strong> offen, während du übst.
+          Tippe auf ⤢ in der Leiste, um sie groß zu machen, und noch einmal, um sie
+          wieder klein zu legen.
+        </p>
+
+        ${l.zustand === "fehler" ? `<div class="beta-hinweis" style="border-color:rgba(232,95,111,0.6); background:rgba(232,95,111,0.08);">
+          <strong>Das hat nicht geklappt.</strong> ${l.fehler}
+        </div>` : ""}
+
+        ${l.zustand === "drin" || l.zustand === "laedt" ? `
+          <p class="empty-note"><strong>Du bist ${l.zustand === "laedt" ? "gerade auf dem Weg in den Raum" : "im Raum"}:</strong>
+            <code class="kz-raumname">${l.raum}</code></p>
+          <div class="quiz-actions" style="margin:10px 0;">
+            <button type="button" class="btn btn-ghost" id="kzTon">${l.tonAn ? "🎤 Mikrofon aus" : "🔇 Mikrofon an"}</button>
+            <button type="button" class="btn btn-ghost" id="kzBild">${l.bildAn ? "📷 Kamera aus" : "🚫 Kamera an"}</button>
+            <button type="button" class="btn btn-ghost" id="kzGross">${l.gross ? "▫️ Klein legen" : "⤢ Groß machen"}</button>
+            <button type="button" class="btn btn-ghost" id="kzWeg">✕ Raum verlassen</button>
+          </div>
+          <p class="eyebrow" style="margin-top:12px;">WER IST DA (${l.teilnehmer.length || 1})</p>
+          <ul class="kz-liste">
+            ${l.teilnehmer.length
+              ? l.teilnehmer.map((t) => `<li>${t.name || "Gast"}</li>`).join("")
+              : "<li>nur du — teile den Link, damit jemand dazukommt</li>"}
+          </ul>
+          <p class="eyebrow" style="margin-top:12px;">LINK ZUM TEILEN</p>
+          <input type="text" class="challenge-select" readonly id="kzLink" style="width:100%;"
+                 value="${location.origin + location.pathname}#klasse=${l.raum}">
+          <div class="quiz-actions" style="margin-top:8px;">
+            <button type="button" class="btn btn-ghost" id="kzLinkKopieren">📋 Link kopieren</button>
+          </div>
+        ` : `
+          ${raum ? `
+            <p class="empty-note">Raum: <code class="kz-raumname">${raum}</code></p>
+            <div class="quiz-actions" style="margin:10px 0;">
+              <button type="button" class="btn btn-coffee" id="kzBeitreten">🎓 Raum betreten</button>
+              ${istBetreiber ? `<button type="button" class="btn btn-ghost" id="kzNeu">🔄 Neuen Raum öffnen</button>` : ""}
+            </div>`
+          : `
+            ${istBetreiber
+              ? `<p class="empty-note">Noch kein Raum. Du als Betreiber öffnest ihn, dann teilst du den Link.</p>
+                 <button type="button" class="btn btn-coffee" id="kzNeu">🎓 Raum öffnen</button>`
+              : `<p class="empty-note">Es ist noch kein Raum offen. Du brauchst den Link von Alex —
+                 oder trage den Raumnamen hier ein, wenn du ihn hast.</p>
+                 <input type="text" id="kzRaumEingabe" class="challenge-select" placeholder="dma-…" style="width:100%; margin:8px 0;">
+                 <button type="button" class="btn btn-coffee" id="kzBeitretenEingabe">🎓 Raum betreten</button>`}
+          `}
+        `}
+
+        <p class="empty-note" style="margin-top:16px; font-size:0.72rem;">
+          <strong>Was das kostet:</strong> gar nichts. Es läuft über
+          <strong>${Klassenzimmer.HAUSHERR}</strong>, den freien Jitsi-Dienst — kein Konto,
+          keine Anmeldung, keine Zeitbegrenzung. Dafür ist ein Raum für jeden offen,
+          der den Namen kennt; deshalb ist der Name lang und zufällig, und der Link
+          gehört nur in die Runde, die dazugehört.
+          Ein eigener Server wäre später ab etwa 10 € im Monat möglich — dann unter
+          eigener Adresse und mit Passwort. Dafür ändert sich in der App eine Zeile.
+        </p>
+        <p class="empty-note" style="font-size:0.72rem;">
+          In manchen Firmen- und Schulnetzen ist ${Klassenzimmer.HAUSHERR} gesperrt.
+          Über Mobilfunk klappt es dann meistens.
+        </p>
+      </div>`;
+
+    const beitreten = (name) => {
+      const eigenerName = (Backend.currentProfile && Backend.currentProfile()?.display_name) || "Gast";
+      Klassenzimmer.beitreten(name, { name: eigenerName }).then(() => renderKlassenzimmer());
+      renderKlassenzimmer();
+    };
+
+    area.querySelector("#kzBeitreten")?.addEventListener("click", () => beitreten(raum));
+    area.querySelector("#kzBeitretenEingabe")?.addEventListener("click", () => {
+      const n = area.querySelector("#kzRaumEingabe").value.trim();
+      if (n) beitreten(n);
+    });
+    area.querySelector("#kzNeu")?.addEventListener("click", () => beitreten(Klassenzimmer.neuerRaumName()));
+    area.querySelector("#kzTon")?.addEventListener("click", () => Klassenzimmer.tonUmschalten());
+    area.querySelector("#kzBild")?.addEventListener("click", () => Klassenzimmer.bildUmschalten());
+    area.querySelector("#kzGross")?.addEventListener("click", () => Klassenzimmer.groesseUmschalten());
+    area.querySelector("#kzWeg")?.addEventListener("click", () => { Klassenzimmer.verlassen(); renderKlassenzimmer(); });
+    area.querySelector("#kzLinkKopieren")?.addEventListener("click", async (e) => {
+      const feld = area.querySelector("#kzLink");
+      try {
+        await navigator.clipboard.writeText(feld.value);
+        e.currentTarget.textContent = "✓ Kopiert";
+      } catch (err) {
+        /* Ohne Clipboard-Erlaubnis: markieren, dann kann der Nutzer
+           selbst kopieren. Auf dem Telefon ist das der Normalfall. */
+        feld.select();
+        e.currentTarget.textContent = "Markiert — jetzt kopieren";
+      }
+      setTimeout(() => { const k = area.querySelector("#kzLinkKopieren"); if (k) k.textContent = "📋 Link kopieren"; }, 2500);
+    });
+
+    /* Der Rahmen meldet sich, wenn jemand kommt oder geht — dann
+       muss die Teilnehmerliste hier nachziehen. Nur EINE Anmeldung,
+       sonst sammeln sich bei jedem Zeichnen neue an. */
+    if (!klassenzimmerAbmelden) {
+      klassenzimmerAbmelden = Klassenzimmer.beiAenderung(() => {
+        const sichtbar = document.getElementById("sub-klassenzimmer")?.dataset.active === "true";
+        if (sichtbar) renderKlassenzimmer();
+      });
+    }
+  }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.addEventListener("click", () => renderKlassenzimmer());
 
   /* ============================================================
      LOGIK-TRAINER
@@ -10500,6 +11871,12 @@
           ${Object.entries(AK_TEILE).map(([k, name]) =>
             `<button type="button" class="trophy-chip ak-teil-btn ${akTeil === k ? "selected" : ""}" data-ak-teil="${k}">${name}</button>`).join("")}
         </div>
+        ${/* GEMELDET: „Die eingebaute Stimme spricht manches falsch —
+              ‚Bonbons‘, das Z.“ Hier ist die richtige Stelle dafür: wer
+              gerade Aussprache lernt, muss wissen, dass die Maschine, die
+              ihm vorliest, selbst raten muss. Die ausführliche Fassung —
+              eingeklappt, damit sie den Kurs nicht zudeckt. */ ""}
+        ${stimmenHinweisHtml(false)}
       </div>`;
   }
 
@@ -27212,6 +28589,7 @@
     { sub: "sub-zwillinge", emoji: "👂", name: "Die Zwillinge", persona: "Sprachkünstler" },
     { sub: "sub-wortbaum", emoji: "🌳", name: "Der Wortbaum", persona: "Sprachkünstler" },
     { sub: "sub-sprachatlas", emoji: "🗺️", name: "Der Sprachatlas", persona: "Logiker" },
+    { sub: "sub-bilderraetsel", emoji: "🖼️", name: "Das Bilderrätsel", persona: "Logiker" },
     { sub: "sub-maskenball", emoji: "🎭", name: "Der Maskenball", persona: "Sprachkünstler" },
     { sub: "sub-wortwaage", emoji: "⚖️", name: "Die Wortwaage", persona: "Sprachkünstler" },
     { sub: "sub-marktstand", emoji: "🥕", name: "Der Marktstand", persona: "Logiker" },
@@ -27540,7 +28918,27 @@
             : g.name;
           return `
           <button type="button" class="games-pill${zu ? " games-pill-zu" : ""}${baustelle ? " games-pill-baustelle" : ""}${passtZurListe ? " games-pill-wortliste" : ""}${listenSubs && !passtZurListe ? " games-pill-blass" : ""}" data-game-sub="${g.sub}" title="${escapeHtml(hinweis)}">
-            <span class="games-pill-emoji${baustelle || zu ? " games-pill-emoji-ersatz" : ""}">${baustelle ? "🚧" : zu ? "🔒" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
+            ${/* GEMELDET: „Schau im Verlauf nach dem alten Zustand der
+                  Spielkacheln … bevor du die Schlösser da reingemacht
+                  hast und ich das beanstanden musste, weil die
+                  Schlösser die Optik beeinflusst haben. Ich will das
+                  Original haben, wie es erst war."
+
+                  Nachgesehen: Fassung 160 (f4484c2) hat es eingeführt.
+                  Eine verschlossene Kachel bekam damals statt ihres
+                  GEZEICHNETEN Symbols ein Schloss-Emoji und dazu
+                  opacity 0.72. Damit sah die halbe Kachelwand anders
+                  aus als die andere Hälfte — genau der Bruch, der
+                  gemeldet wurde.
+
+                  Jede Kachel trägt jetzt wieder ihr eigenes Symbol, in
+                  voller Deckkraft. Dass ein Spiel noch zu ist, sagt ein
+                  kleines Schloss in der Ecke, das ABSOLUT liegt und
+                  deshalb an Größe und Form der Kachel nichts ändert —
+                  dazu der Tooltip und der Schloss-Bildschirm nach dem
+                  Antippen, den es ohnehin schon gibt. */ ""}
+            <span class="games-pill-emoji${baustelle ? " games-pill-emoji-ersatz" : ""}">${baustelle ? "🚧" : gameIconSvg(g.sub.replace("sub-", ""))}</span>
+            ${zu && !baustelle ? `<span class="games-pill-schloss" aria-hidden="true">🔒</span>` : ""}
             <span class="games-pill-name">${g.name}</span>
             <span class="subnav-cat-tag" data-persona="${g.persona}" title="${g.persona}"></span>
           </button>`;
@@ -29183,6 +30581,7 @@
     "sub-zwillinge": { bauart: "spiegelpaar", text: "Zwillinge" },
     "sub-wortbaum": { bauart: "baumschrift", text: "Wortbaum" },
     "sub-sprachatlas": { bauart: "atlas", text: "Sprachatlas" },
+    "sub-bilderraetsel": { bauart: "bilderrahmen", text: "Bilderrätsel" },
     "sub-maskenball": { bauart: "maske", text: "Maskenball" },
     "sub-wortwaage": { bauart: "treppe", text: "Wortwaage" },
     "sub-marktstand": { bauart: "preisschild", text: "Marktstand" },
@@ -29287,6 +30686,7 @@
     "sub-wortwaage": "Dieselbe Bedeutung, verschiedene Stärke. Sortiere die Wörter von schwach nach stark.",
     "sub-maskenball": "Diese Wörter sehen aus wie Englisch und heißen etwas anderes. Was steckt wirklich dahinter?",
     "sub-sprachatlas": "Semmel, Schrippe, Erdapfel: tipp auf der Karte an, wo dieses Wort zu Hause ist.",
+    "sub-bilderraetsel": "Ein Mensch, ein Ort, drei Sätze — nur einer beschreibt das Bild. Die anderen beiden sind grammatisch tadellos und trotzdem falsch.",
     "sub-wortbaum": "Gehört das Wort zu diesem Stamm? Bei jedem Treffer wächst ein Ast.",
     "sub-zwillinge": "Zwei Wörter, ein Laut Unterschied. Nur eines passt in den Satz.",
   };
@@ -29659,6 +31059,18 @@
         <p class="empty-note" style="margin-bottom:0;">${szenen.length} Szenen · ${szenen.reduce((n, s) => n + (s.zahl || (s.teile || []).length), 0)} Wörter · ${besucht.size} schon besucht</p>
       </div>
 
+      ${/* GEWÜNSCHT: „Ein Umschalter formell ↔ umgangssprachlich, auch
+            in der Anatomie.“ Er steht hier, wo die Wörter sind — nicht
+            nur tief in den Einstellungen — und behaelt seinen Zustand. */ ""}
+      <div class="question-card" style="margin-top:12px;">
+        ${umgangsSchalterHtml("bwUmgangsUebersicht")}
+        <p class="empty-note" style="margin:8px 0 0;">
+          Zu ${Object.keys(UMGANGSSPRACHE).length} Wörtern ist eine zweite, alltägliche Form
+          hinterlegt — auch in den Tafeln zum Körper. Beide stehen immer auf der Wortkarte;
+          der Schalter entscheidet nur, welche oben steht.
+        </p>
+      </div>
+
       <div class="question-card" style="margin-top:12px;">
         <p class="eyebrow" style="margin-top:0;">Selber bauen</p>
         <div class="bw-kacheln">
@@ -29703,6 +31115,7 @@
           </div>
         </div>`).join("")}
     `;
+    umgangsSchalterBinden(area, renderBilderwelt);
     document.getElementById("bwZumBaukasten")?.addEventListener("click", () => {
       bwBaukastenOffen = true;
       renderBilderwelt();
@@ -29712,7 +31125,7 @@
       b.classList.add("laedt");
       const s = await szeneUndLupenLaden(b.dataset.bwSzene);
       b.classList.remove("laedt");
-      if (!s) { toast("Das Bild konnte nicht geladen werden."); return; }
+      if (!s) { showToast("Das Bild konnte nicht geladen werden."); return; }
       bwSzene = s;
       bwEntdeckt = new Set(); bwGewaehlt = null; bwRunde = null; bwModus = "entdecken";
       bwBesuchMerken(bwSzene.id);
@@ -29763,10 +31176,29 @@
     return (t && t.unter) || [];
   }
 
+  /* GEMELDET: „manche Szenen öffnen in der Voreinstellung im Lupenbereich
+     statt im ganzen Raum."
+     Der Grund: die Lupenstellung blieb stehen, wenn man die Szene wechselte.
+     Wer in der Küche auf den Tisch gezoomt hatte, zurückging und den Garten
+     öffnete, bekam den Garten im Ausschnitt der Küche — mit grauem Schleier.
+     Es traf deshalb nur „manche" Szenen: genau die, die man nach einer
+     Lupe geöffnet hat.
+     Statt an jeder Stelle, die eine Szene öffnet, ans Zurücksetzen zu
+     denken (vier gibt es heute, morgen sind es fünf), wird die Lupe HIER
+     geprüft: sie gilt nur, wenn das Ding, auf das sie zeigt, in DIESER
+     Szene steht und dort auch wirklich einen Lupenbereich hat. Sonst geht
+     die Szene im ganzen Raum auf, so wie es sein soll. */
+  function bwZoomGilt(szene) {
+    if (!bwZoom || !bwZoom.box) return null;
+    const t = (szene.teile || []).find((x) => x.id === bwZoom.teil);
+    if (!t || !t.zoom) { bwZoom = null; return null; }
+    return t.zoom;
+  }
+
   function bwBildHtml(szene, opt) {
     const o = opt || {};
     const treffer = o.treffer || new Set();
-    const zoom = bwZoom && bwZoom.box;
+    const zoom = bwZoomGilt(szene);
     /* Wie stark wird vergrößert? So, dass der Bereich rund drei Viertel
        des Bildes einnimmt — dann sieht man ihn groß UND erkennt noch,
        wo im Zimmer man gerade ist. Genau das war der Wunsch. */
@@ -29907,6 +31339,11 @@
   }
   function bwSzeneZeichnen(area) {
     const s = bwMitAnsicht(bwSzene);
+    /* Erst prüfen, dann zeichnen: gehört die Lupenstellung gar nicht zu
+       dieser Szene, wird sie hier verworfen — sonst stünde unten der
+       Hinweis „Du bist ganz nah dran", während das Bild längst wieder
+       den ganzen Raum zeigt. */
+    bwZoomGilt(s);
     const treffer = bwRunde ? new Set(bwRunde.getroffen) : new Set();
     const fertig = bwRunde && bwRunde.index >= bwRunde.plan.length;
     if (fertig) { bwErgebnisZeichnen(area); return; }
@@ -29924,6 +31361,7 @@
           <button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>
         </div>
         ${bwAnsichtReiheHtml(bwSzene)}
+        ${bwModus === "entdecken" ? umgangsSchalterHtml("bwUmgangsSzene") : ""}
         ${bwModus === "entdecken" ? `
           <p class="empty-note bw-hinweis">Tippe auf die Dinge im Bild — ${bwEntdeckt.size} von ${s.teile.length} entdeckt.</p>
           ${/* GEMELDET: „Man kommt gar nicht darauf, dass man die
@@ -29965,6 +31403,7 @@
             <button type="button" class="btn btn-ghost" id="bwAlleHoeren">🔊 Alle nacheinander vorlesen</button>
             <button type="button" class="btn btn-ghost" id="bwAlsListe">📋 Als Wortliste speichern</button>
           </div>` : ""}
+        ${bwModus === "entdecken" ? stimmenHinweisHtml(true) : ""}
         ${miniBugReportBtnHtml("Bilderwelt: " + s.titel)}
       </div>`;
     bwBinden(area);
@@ -30014,6 +31453,7 @@
   function bwMerkwort(t) { return bwWort(t); }
 
   function bwBinden(area) {
+    umgangsSchalterBinden(area, renderBilderwelt);
     document.getElementById("bwZurueck")?.addEventListener("click", () => {
       if (bwSpur.length) { bwEinsZurueck(); return; }
       bwSzene = null; bwRunde = null; bwGewaehlt = null; renderBilderwelt();
@@ -30639,6 +32079,7 @@
     "sub-wortwaage": "wortwaage",
     "sub-maskenball": "maskenball",
     "sub-sprachatlas": "sprachatlas",
+    "sub-bilderraetsel": "bilderraetsel",
     "sub-wortbaum": "wortbaum",
     "sub-zwillinge": "zwillinge",
   };
@@ -36198,6 +37639,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     ]);
     /* Nur die Duelle des Raums, in dem man gerade ist. */
     const incomingChallenges = challengesFuerRaum(alleDuelle.incoming);
+    /* Für die Liste wird ALLES Empfangene gezeigt — auch das längst
+       Angenommene und das Abgelaufene. Sonst gäbe es für genau die
+       hängengebliebenen Einladungen, um die es geht, gar keine Zeile
+       mit einem Knopf zum Wegräumen. */
+    const incomingAlle = challengesFuerRaum(alleDuelle.incomingAlle || alleDuelle.incoming);
+    const abgelaufeneEingehend = incomingAlle.filter((c) => c.abgelaufen);
     const outgoingChallenges = challengesFuerRaum(alleDuelle.outgoing);
     herausforderungenMerken(incomingChallenges);
 
@@ -36221,18 +37668,35 @@ An einem Morgen lief ein kleiner Fuchs los…
         ${incoming.map((r) => `<div class="breakdown-row"><span>${r.name}</span><div style="display:flex; gap:6px;"><button type="button" class="btn btn-coffee" data-accept="${r.id}">Annehmen</button><button type="button" class="btn btn-ghost" data-decline="${r.id}">Ablehnen</button></div></div>`).join("")}
       </div>` : ""}
 
-      ${incomingChallenges.length ? `<div class="question-card" style="margin-top:14px;">
+      ${incomingAlle.length ? `<div class="question-card" style="margin-top:14px;">
         <h3>🎮 Herausforderungen an dich</h3>
-        ${incomingChallenges.map((c) => {
+        ${incomingAlle.map((c) => {
           const specialLabels = { memory: "🧠 Gehirnjogger", wortbaustelle: "🔤 Wortbaustelle", buchstabensalat: "🔍 Buchstabensalat", kreuzwortraetsel: "✏️ Kreuzworträtsel", betonungstrainer: "🎯 Betonungs-Trainer" };
           const label = specialLabels[c.categories[0]] || c.categories.map((id) => ExerciseData.activeGetCategory(id)?.icon || "❓").join(" ");
           /* Bringt die Herausforderung eine Wortliste mit, steht das
              gleich hier — man soll vorher wissen, womit man übt. */
           const mitListe = c.extra && c.extra.wortliste;
-          return `<div class="breakdown-row" style="flex-wrap:wrap; gap:6px;">
-            <span>${c.fromName} · ${label}${mitListe ? `<span class="empty-note" style="display:block; font-size:0.72rem;">📋 mit der Liste „${mitListe.name}“ — ${mitListe.woerter.length} Wörter</span>` : ""}</span>
-            <button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button></div>`;
+          /* Annehmen geht nur bei dem, was wirklich noch offen ist.
+             Entfernen geht IMMER — genau darum ging es: auch das schon
+             Angenommene, das nie zu Ende gespielt wurde, muss weg
+             können. */
+          const offen = c.status === "pending" && !c.toResult && !c.abgelaufen;
+          const stand = c.abgelaufen
+            ? `⌛ Abgelaufen — seit über ${Backend.challengeFristTage ? Backend.challengeFristTage() : 14} Tagen keine Antwort`
+            : c.status === "completed"
+              ? "✔ Beendet"
+              : c.toResult
+                ? "▶ Du hast gespielt — es fehlt noch das Ergebnis des Gegenübers"
+                : "⏳ Offen";
+          return `<div class="breakdown-row${c.abgelaufen ? " duell-abgelaufen" : ""}" style="flex-wrap:wrap; gap:6px;" data-challenge-row="${c.id}">
+            <span>${c.fromName} · ${label}${mitListe ? `<span class="empty-note" style="display:block; font-size:0.72rem;">📋 mit der Liste „${mitListe.name}“ — ${mitListe.woerter.length} Wörter</span>` : ""}<span class="empty-note" style="display:block; font-size:0.72rem;">${stand}</span></span>
+            <span style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${offen ? `<button type="button" class="btn btn-coffee" data-accept-challenge="${c.id}" data-cats="${c.categories.join(",")}" data-from-name="${c.fromName}">Annehmen</button>` : ""}
+              <button type="button" class="btn btn-ghost" data-remove-challenge="${c.id}" data-remove-name="${c.fromName}">🗑️ Entfernen</button>
+            </span></div>`;
         }).join("")}
+        ${abgelaufeneEingehend.length ? `<button type="button" class="btn btn-ghost" id="removeExpiredChallengesBtn" style="margin-top:10px;">🧹 Alle abgelaufenen entfernen (${abgelaufeneEingehend.length})</button>` : ""}
+        <p class="empty-note" style="margin-top:8px; font-size:0.72rem;">Entfernen betrifft nur, was du BEKOMMEN hast. Deine eigenen, noch wartenden Herausforderungen stehen weiter unten unter „Deine Duelle" und bleiben unangetastet.</p>
       </div>` : ""}
 
       <div class="question-card" style="margin-top:14px;">
@@ -36267,7 +37731,13 @@ An einem Morgen lief ein kleiner Fuchs los…
         <h3>📤 Deine Duelle</h3>
         ${outgoingChallenges.map((c) => `<div class="breakdown-row">
           <span>${c.status !== "completed" ? `<input type="checkbox" class="cancel-challenge-check" data-cancel-id="${c.id}" style="margin-right:8px;" />` : ""}vs. ${c.toName}</span>
-          <span class="empty-note">${c.status === "completed" ? (c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden") : "Warte auf Gegner…"}</span>
+          <span class="empty-note">${c.status === "completed"
+            ? (c.winner ? (c.winner === c.from ? "🏆 Gewonnen" : "Verloren") : "🤝 Unentschieden")
+            /* Hat das Gegenüber die Einladung weggeräumt, steht das hier
+               ehrlich — statt für immer „Warte auf Gegner…". */
+            : c.status === "entfernt" ? "🚫 Vom Gegenüber entfernt"
+            : c.abgelaufen ? "⌛ Abgelaufen — keine Antwort"
+            : "Warte auf Gegner…"}</span>
         </div>`).join("")}
         ${outgoingChallenges.some((c) => c.status !== "completed") ? `<button type="button" class="btn btn-ghost" id="cancelSelectedChallengesBtn" style="margin-top:10px;">Ausgewählte zurückrufen</button>` : ""}
       </div>` : ""}
@@ -36289,6 +37759,51 @@ An einem Morgen lief ein kleiner Fuchs los…
         window.scrollTo(0, scrollY);
       });
     }
+
+    /* ------------------------------------------------------------
+       EMPFANGENE HERAUSFORDERUNGEN WEGRÄUMEN
+       ------------------------------------------------------------
+       Der Knopf sitzt an JEDER empfangenen Zeile, unabhängig vom
+       Stand. Vor dem Entfernen wird nachgefragt — weggeräumt ist
+       weggeräumt, und die Zeile kommt nicht von allein zurück.
+       Danach werden die Benachrichtigungen neu gezählt, damit der
+       Punkt am Profilbild sofort verschwindet statt erst beim
+       nächsten Takt.
+       ------------------------------------------------------------ */
+    area.querySelectorAll("[data-remove-challenge]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.removeChallenge;
+        const von = btn.dataset.removeName || "dieser Person";
+        if (!confirm(`Herausforderung von ${von} wirklich entfernen?\n\nSie verschwindet aus deiner Liste und meldet sich nicht mehr. Deine eigenen, noch wartenden Herausforderungen bleiben davon unberührt.`)) return;
+        const scrollY = window.scrollY;
+        btn.disabled = true;
+        try {
+          await Backend.entferneEmpfangeneChallenge(id);
+        } catch (err) {
+          btn.disabled = false;
+          alert(err.message || "Die Herausforderung konnte nicht entfernt werden.");
+          return;
+        }
+        herausforderungVergessen(id);
+        await checkNotifications();
+        await renderFriends();
+        window.scrollTo(0, scrollY);
+      });
+    });
+
+    document.getElementById("removeExpiredChallengesBtn")?.addEventListener("click", async () => {
+      const anzahl = abgelaufeneEingehend.length;
+      if (!confirm(`${anzahl} abgelaufene ${anzahl === 1 ? "Herausforderung" : "Herausforderungen"} entfernen?\n\nDas sind die, auf die seit über ${Backend.challengeFristTage ? Backend.challengeFristTage() : 14} Tagen niemand reagiert hat. Nur Empfangenes wird weggeräumt.`)) return;
+      const scrollY = window.scrollY;
+      abgelaufeneEingehend.forEach((c) => herausforderungVergessen(c.id));
+      let weg = 0;
+      try { weg = await Backend.entferneAbgelaufeneChallenges(); }
+      catch (err) { console.warn(err); }
+      await checkNotifications();
+      await renderFriends();
+      window.scrollTo(0, scrollY);
+      if (weg) showToast(`🧹 ${weg} abgelaufene ${weg === 1 ? "Herausforderung" : "Herausforderungen"} entfernt.`);
+    });
 
     document.getElementById("friendsShareBtn")?.addEventListener("click", shareReferralLink);
     let searchTimer = null;
@@ -36870,37 +38385,925 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
 
+  /* ============================================================
+     HINWEIS ZUR SPRACHAUSGABE
+     ------------------------------------------------------------
+     GEMELDET: „Die eingebaute Stimme spricht manches falsch —
+     ‚Bonbons', das Z.“
+
+     Stimmt, und das lässt sich von hier aus auch nicht reparieren:
+     Die Stimme kommt nicht aus dieser Seite, sondern aus dem Gerät
+     (Android, iPhone, Windows, Mac bringen jeweils eigene mit). Was
+     die Seite schickt, ist Text; wie er klingt, entscheidet das
+     Telefon. Bei Fremdwörtern („Bonbon“ wird französisch nasal
+     gesprochen, nicht „Bon-bons“), bei der Aussprache von z am
+     Wortanfang und bei zusammengesetzten Wörtern liegen die
+     eingebauten Stimmen regelmäßig daneben.
+
+     Statt das zu verschweigen, steht es dort, wo die Lautsprecher-
+     Knöpfe sind. Wer weiß, dass die Maschine raten muss, verlernt
+     sich nichts.
+     ============================================================ */
+  function stimmenHinweisHtml(kurz) {
+    if (kurz) {
+      return `<p class="stimmen-hinweis stimmen-hinweis-kurz">🔊 Die Stimme kommt aus deinem Gerät und betont manche Wörter falsch — die Silbenschrift darüber ist im Zweifel richtig, nicht die Stimme.</p>`;
+    }
+    return `<details class="stimmen-hinweis">
+      <summary>🔊 Warum klingt die Stimme manchmal falsch?</summary>
+      <p>Diese Seite hat keine eigene Stimme. Wenn du auf 🔊 tippst, gibt sie den Text an dein
+      Gerät weiter — Android, iPhone, Windows und Mac bringen jeweils ihre eigene Vorlesestimme
+      mit. Wie das Wort dann klingt, entscheidet also dein Telefon, nicht diese Seite.</p>
+      <p>Diese eingebauten Stimmen sind gut bei normalen deutschen Wörtern und schlecht bei allem
+      anderen. Sie verlesen sich zuverlässig bei:</p>
+      <ul>
+        <li><strong>Fremdwörtern.</strong> „Bonbon“ spricht man im Deutschen französisch-nasal
+            („Bong-Bong“); viele Stimmen sagen „Bon-bons“, Buchstabe für Buchstabe.</li>
+        <li><strong>dem Z.</strong> Deutsches z ist immer <em>ts</em> — Zeit heißt „Tsait“.
+            Manche Stimmen sprechen es englisch als weiches s.</li>
+        <li><strong>zusammengesetzten Wörtern.</strong> Die Betonung liegt im Deutschen fast
+            immer auf dem ERSTEN Teil: <em>HAUS·tür</em>, nicht <em>haus·TÜR</em>. Stimmen
+            verschieben das gern.</li>
+        <li><strong>Namen und Abkürzungen.</strong> Die rät die Maschine schlicht.</li>
+      </ul>
+      <p><strong>Was das für dich heißt:</strong> Nimm die Stimme als Hilfe, nicht als Vorbild.
+      Wo auf dieser Seite eine Silbenschrift steht (<em>BON-bon</em>, <em>Ta-BLETT</em>), ist
+      sie von Hand geprüft — sie hat recht, auch wenn die Stimme etwas anderes sagt. Und wenn du
+      ein Wort wirklich sicher brauchst, hör es dir von einem Menschen an.</p>
+      <p class="empty-note">Woran wir arbeiten: echte, einmal aufgenommene Audiodateien statt
+      der Gerätestimme. Was das kostet, steht offen unter „Wissen → Was die App kostet“.</p>
+    </details>`;
+  }
+
+  /* ============================================================
+     DIALEKT-BEREICH — wie heißt etwas in welcher Region
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Wie heißt etwas in welcher Region.“ Ein Wort, und
+     dazu, wie es in Bayern, Schwaben, Sachsen, im Ruhrgebiet, in
+     Berlin, in Österreich und in der Schweiz heißt.
+
+     Das ist bewusst ein NACHSCHLAGEWERK, kein Spiel — das Spiel dazu
+     gibt es schon („Der Sprachatlas“), und dort fragt man ab, was
+     man hier gelernt hat. Beide verlinken aufeinander.
+
+     Die Wörter stehen in data-dialekt.js, damit die Szenen-Dateien
+     unberührt bleiben.
+     ============================================================ */
+  function diaListe() { return window.DMA_DIALEKT || []; }
+  function diaRegionen() { return window.DMA_DIALEKT_REGIONEN || []; }
+  let diaSuche = "";
+  let diaRegionFilter = "alle";
+  let diaGruppeFilter = "alle";
+  let diaHervor = null;          // Wort, zu dem gesprungen wurde
+
+  function diaOhneArtikel(w) {
+    return String(w || "").replace(/^(der|die|das)\s+/i, "").trim();
+  }
+  /* Gibt es zu diesem hochdeutschen Wort einen Regionaleintrag?
+     Gesucht wird mit und ohne Artikel — in den Bildern steht „das
+     Brötchen“, in einer Übung vielleicht nur „Brötchen“. */
+  function dialektEintrag(wort) {
+    const roh = String(wort || "").trim();
+    if (!roh) return null;
+    const ohne = diaOhneArtikel(roh).toLowerCase();
+    if (!ohne) return null;
+    return diaListe().find((e) => diaOhneArtikel(e.hoch).toLowerCase() === ohne) || null;
+  }
+  /* Eine einzelne Beispielform für die Vorschauzeile — die erste
+     Region, die überhaupt ein eigenes Wort hat. */
+  function dialektBeispielform(e) {
+    const r = diaRegionen().find((x) => e.formen && e.formen[x.id]);
+    if (!r) return e.hoch;
+    return e.formen[r.id] + " (" + r.name + ")";
+  }
+  /* Wie viele Regionen sagen es anders als im Wörterbuch? */
+  function diaAbweichungen(e) {
+    return diaRegionen().filter((r) => e.formen && e.formen[r.id]).length;
+  }
+  function diaGefiltert() {
+    const such = diaSuche.trim().toLowerCase();
+    return diaListe().filter((e) => {
+      if (diaGruppeFilter !== "alle" && e.gruppe !== diaGruppeFilter) return false;
+      if (diaRegionFilter !== "alle" && !(e.formen && e.formen[diaRegionFilter])) return false;
+      if (!such) return true;
+      if (e.hoch.toLowerCase().includes(such)) return true;
+      if ((e.was || "").toLowerCase().includes(such)) return true;
+      return diaRegionen().some((r) => String((e.formen || {})[r.id] || "").toLowerCase().includes(such));
+    });
+  }
+
+  function renderDialekt() {
+    const area = document.getElementById("dialektArea");
+    if (!area) return;
+    const alle = diaListe();
+    if (!alle.length) {
+      area.innerHTML = '<p class="empty-note">Die Wörterliste wird geladen …</p>';
+      return;
+    }
+    const regionen = diaRegionen();
+    const gruppen = [...new Set(alle.map((e) => e.gruppe))];
+    const treffer = diaGefiltert();
+    const nurEine = diaRegionFilter !== "alle"
+      ? regionen.find((r) => r.id === diaRegionFilter) : null;
+
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow" style="margin-top:0;">🗺️ Dialekte und Regionen</p>
+        <h3 style="margin:4px 0 8px;">Dasselbe Ding, sieben Namen</h3>
+        <p class="empty-note" style="margin-bottom:8px;">
+          Hochdeutsch ist überall richtig — aber gehört wird oft etwas anderes. Wer in München
+          „Brötchen“ sagt, wird verstanden; wer die Frau vor sich verstehen will, muss „Semmel“
+          kennen. Hier steht zu ${alle.length} Alltagswörtern, wie sie in den großen Sprachräumen
+          heißen.
+        </p>
+        <p class="empty-note" style="margin-bottom:0;">
+          <strong>Wichtig:</strong> Die Grenzen der Wörter laufen quer durch die Landkarte, nicht
+          entlang der Bundesländer. Die Angaben sind Schwerpunkte — in jeder größeren Stadt hört
+          man beides. Steht bei einer Region nichts, sagt man dort schlicht das hochdeutsche Wort.
+        </p>
+      </div>
+
+      <div class="question-card" style="margin-top:12px;">
+        <div class="vocab-toolbar">
+          <input type="text" class="vocab-search" id="diaSuche" placeholder="Wort suchen — z. B. Brötchen, Semmel, Sahne …" value="${escapeHtml(diaSuche)}" />
+        </div>
+        <label class="empty-note" style="display:block; margin:10px 0 4px;">Region</label>
+        <div class="trophy-case">
+          <button type="button" class="trophy-chip ${diaRegionFilter === "alle" ? "selected" : ""}" data-dia-region="alle">Alle Regionen</button>
+          ${regionen.map((r) => `<button type="button" class="trophy-chip ${diaRegionFilter === r.id ? "selected" : ""}" data-dia-region="${r.id}">${r.emoji} ${escapeHtml(r.name)}</button>`).join("")}
+        </div>
+        ${nurEine ? `<p class="empty-note" style="margin:8px 0 0;">${nurEine.emoji} <strong>${escapeHtml(nurEine.name)}</strong> — ${escapeHtml(nurEine.raum)}. Gezeigt werden nur die Wörter, die dort anders heißen.</p>` : ""}
+        <label class="empty-note" style="display:block; margin:10px 0 4px;">Thema</label>
+        <div class="trophy-case">
+          <button type="button" class="trophy-chip ${diaGruppeFilter === "alle" ? "selected" : ""}" data-dia-gruppe="alle">Alle Themen</button>
+          ${gruppen.map((g) => `<button type="button" class="trophy-chip ${diaGruppeFilter === g ? "selected" : ""}" data-dia-gruppe="${escapeHtml(g)}">${escapeHtml(g)}</button>`).join("")}
+        </div>
+        <p class="empty-note" style="margin:10px 0 0;">${treffer.length} ${treffer.length === 1 ? "Wort" : "Wörter"}</p>
+      </div>
+
+      ${treffer.length ? treffer.map((e) => diaKarteHtml(e)).join("") : '<p class="empty-note" style="margin-top:12px;">Kein Treffer. Vielleicht ein anderes Wort probieren?</p>'}
+
+      <div class="question-card" style="margin-top:12px;">
+        <p class="eyebrow" style="margin-top:0;">Und jetzt abfragen</p>
+        <p class="empty-note" style="margin:0 0 10px;">
+          Im Spiel „Der Sprachatlas“ tippst du auf einer Karte an, wo ein Wort zu Hause ist —
+          dieselben Wörter, andere Richtung.
+        </p>
+        <button type="button" class="btn btn-coffee" id="diaZumAtlas">🗺️ Zum Sprachatlas</button>
+      </div>
+      ${miniBugReportBtnHtml("Dialekt-Bereich")}
+    `;
+
+    const feld = document.getElementById("diaSuche");
+    if (feld) {
+      feld.addEventListener("input", (ev) => {
+        diaSuche = ev.target.value;
+        clearTimeout(diaTippUhr);
+        diaTippUhr = setTimeout(() => {
+          const stelle = ev.target.selectionStart;
+          renderDialekt();
+          const neu = document.getElementById("diaSuche");
+          if (neu) { neu.focus(); try { neu.setSelectionRange(stelle, stelle); } catch (x) { /* egal */ } }
+        }, 180);
+      });
+    }
+    area.querySelectorAll("[data-dia-region]").forEach((b) => b.addEventListener("click", () => {
+      diaRegionFilter = b.dataset.diaRegion; renderDialekt();
+    }));
+    area.querySelectorAll("[data-dia-gruppe]").forEach((b) => b.addEventListener("click", () => {
+      diaGruppeFilter = b.dataset.diaGruppe; renderDialekt();
+    }));
+    area.querySelectorAll("[data-dia-sprich]").forEach((b) => b.addEventListener("click", () => {
+      Core.speak(b.dataset.diaSprich, "de");
+    }));
+    document.getElementById("diaZumAtlas")?.addEventListener("click", () => {
+      jumpToSubnavTarget('#learnSubnav [data-sub="sub-sprachatlas"]', "#sprachatlasArea", 40);
+      document.querySelector('.tape-tab[data-target="view-learn"]')?.click();
+      setTimeout(() => jumpToSubnavTarget('#learnSubnav [data-sub="sub-sprachatlas"]', "#sprachatlasArea", 40), 60);
+    });
+    /* Nach einem Sprung aus der Bilderwelt: das gesuchte Wort kurz
+       hervorheben, damit man es in der Liste findet. */
+    if (diaHervor) {
+      const karte = area.querySelector(`[data-dia-wort="${cssEscapeWert(diaHervor)}"]`);
+      if (karte) {
+        karte.classList.add("dia-karte-hervor");
+        requestAnimationFrame(() => karte.scrollIntoView({ behavior: "smooth", block: "center" }));
+      }
+      diaHervor = null;
+    }
+  }
+  let diaTippUhr = null;
+  /* Ein Wert, der gefahrlos in einen Attributselektor darf. */
+  function cssEscapeWert(w) { return String(w || "").replace(/["\\]/g, "\\$&"); }
+
+  function diaKarteHtml(e) {
+    const regionen = diaRegionen();
+    const anders = diaAbweichungen(e);
+    return `
+      <div class="question-card dia-karte" data-dia-wort="${escapeHtml(e.hoch)}" style="margin-top:12px;">
+        <div class="dia-kopf">
+          <div>
+            <p class="eyebrow" style="margin:0;">Hochdeutsch</p>
+            <h3 style="margin:2px 0 0;">${escapeHtml(e.hoch)}</h3>
+          </div>
+          <button type="button" class="btn btn-ghost bw-hoerknopf" data-dia-sprich="${escapeHtml(diaOhneArtikel(e.hoch))}" aria-label="Wort vorlesen">🔊</button>
+        </div>
+        <p class="empty-note" style="margin:6px 0 0;">${escapeHtml(e.was || "")}</p>
+        <p class="empty-note" style="margin:4px 0 10px;">${anders} von ${regionen.length} Regionen sagen etwas anderes.</p>
+        <div class="dia-gitter">
+          ${regionen.map((r) => {
+            const form = (e.formen || {})[r.id];
+            return `<div class="dia-zelle ${form ? "dia-zelle-anders" : "dia-zelle-gleich"}">
+              <span class="dia-region">${r.emoji} ${escapeHtml(r.name)}</span>
+              <span class="dia-form">${form ? escapeHtml(form) : "wie hochdeutsch"}</span>
+              ${form ? `<button type="button" class="dia-hoer" data-dia-sprich="${escapeHtml(diaOhneArtikel(form.split(" / ")[0]))}" aria-label="${escapeHtml(r.name)}: vorlesen">🔊</button>` : ""}
+            </div>`;
+          }).join("")}
+        </div>
+        ${e.notiz ? `<p class="dia-notiz">💡 ${escapeHtml(e.notiz)}</p>` : ""}
+      </div>`;
+  }
+
+  /* Der Sprung aus der Bilderwelt/dem Wörterbuch in den Dialekt-Bereich. */
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest && ev.target.closest("[data-zum-dialekt]");
+    if (!b) return;
+    diaHervor = b.dataset.zumDialekt;
+    diaSuche = ""; diaRegionFilter = "alle"; diaGruppeFilter = "alle";
+    document.querySelector('.tape-tab[data-target="view-knowledge"]')?.click();
+    setTimeout(() => {
+      jumpToSubnavTarget('#knowledgeSubnav [data-sub="sub-dialekt"]', "#dialektArea", 40);
+      renderDialekt();
+    }, 60);
+  });
+  document.querySelector('#knowledgeSubnav [data-sub="sub-dialekt"]')?.addEventListener("click", renderDialekt);
+
+  /* ============================================================
+     DAS BILDERRÄTSEL
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Ein Bild aus zwei Elementen (Mensch + Ort/Ding),
+     drei Sätze zur Auswahl, der richtige beschreibt das Bild. Die
+     beiden falschen müssen PLAUSIBEL falsch sein (falsches Verb,
+     falsche Präposition, falscher Kasus) — nicht offensichtlicher
+     Unsinn, sonst lernt man nichts.“
+
+     Das Bild wird bei jeder Aufgabe NEU zusammengesetzt: eine Kulisse
+     aus der Bilderwelt (szenen/<id>.js), ein Platz darin aus
+     data-plaetze.js, und eine Figur aus figuren/<alter>-<geschlecht>.js
+     — dieselben Bausteine wie im Baukasten. Deshalb gibt es keine
+     Liste fertiger Aufgaben, die irgendwann durch wäre.
+
+     UND DIE FALSCHEN SÄTZE werden aus demselben Zustand gebaut, mit
+     GENAU EINEM verdrehten Bestandteil:
+       Verb        sitzt → steht        (das Bild widerlegt es)
+       Kasus       auf der Toilette → auf die Toilette
+                   („wo?“ verlangt den Dativ, nicht den Akkusativ)
+       Präposition auf dem Teppich → unter dem Teppich
+       Kleidung    mit dem roten T-Shirt → mit dem blauen T-Shirt
+     Jeder falsche Satz ist für sich grammatisch tadellos; falsch ist
+     er erst gegenüber dem Bild. Genau daran lernt man etwas.
+     ============================================================ */
+  let brZustand = null;      // die laufende Aufgabe
+  let brRunde = null;        // { nummer, richtig, gesamt, letzte }
+  const BR_RUNDEN = 8;
+  const brDateien = {};
+  function brDatei(weg) {
+    if (brDateien[weg]) return brDateien[weg];
+    brDateien[weg] = new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = weg + "?v=" + (window.DMA_VERSION || "1");
+      s.async = true;
+      s.onload = () => fertig(true);
+      s.onerror = () => { brDateien[weg] = null; fertig(false); };
+      document.head.appendChild(s);
+    });
+    return brDateien[weg];
+  }
+
+  /* Nur Plätze, an denen eine bekleidete Person in einer eindeutigen
+     Haltung steht, sitzt oder liegt — das Rätsel soll den Kasus üben,
+     nicht Verlegenheit erzeugen. */
+  function brPlaetze() {
+    return (window.DMA_PLAETZE || []).filter((p) =>
+      p.an !== false
+      && ["stehen", "sitzen", "liegen"].indexOf(p.haltung) >= 0
+      && brPraeposition(p.wo)
+      && p.wort);
+  }
+  /* Die Präposition aus der fertigen Ortsangabe. „im Bett“ und „in der
+     Dusche“ gehören beide zu „in“; „am Tisch“ zu „an“. */
+  function brPraeposition(wo) {
+    const w = String(wo || "");
+    if (/^im\s|^in\s/.test(w)) return "in";
+    if (/^am\s|^an\s/.test(w)) return "an";
+    if (/^auf\s/.test(w)) return "auf";
+    if (/^vor\s/.test(w)) return "vor";
+    return null;
+  }
+  const BR_DATIV = { m: "dem", f: "der", n: "dem" };
+  const BR_AKKUSATIV = { m: "den", f: "die", n: "das" };
+  const BR_ZUSAMMEN_DAT = { "in-m": "im", "in-n": "im", "an-m": "am", "an-n": "am" };
+  const BR_ZUSAMMEN_AKK = { "in-n": "ins", "an-n": "ans", "auf-n": "aufs", "vor-n": "vors" };
+  function brGeschlecht(wortMitArtikel) {
+    const a = String(wortMitArtikel || "").trim().split(/\s+/)[0].toLowerCase();
+    return a === "der" ? "m" : a === "die" ? "f" : "n";
+  }
+  function brNomen(wortMitArtikel) {
+    return String(wortMitArtikel || "").replace(/^(der|die|das)\s+/i, "");
+  }
+  /* Ortsangabe bauen: Präposition + Artikel im gewünschten Fall +
+     Nomen, mit den üblichen Verschmelzungen (in dem → im). */
+  /* WICHTIG, und beim ersten Anlauf falsch gewesen: Das Nomen wird NICHT
+     aus „der Automat“ genommen, sondern so, wie es in der geprüften
+     Ortsangabe steht („am Automaten“, nicht „am Automat“). Schwache Nomen
+     (Automat, Kunde, Junge) tragen im Dativ UND im Akkusativ ein -n —
+     aus dem Grundwort gebaut wäre der falsche Satz „an den Automat“
+     nicht plausibel falsch, sondern schlicht kaputt. Und ein kaputter
+     Satz bringt niemandem etwas bei. */
+  function brOrtsNomen(platz) {
+    const ausWo = String(platz.wo || "").trim().split(/\s+/).pop();
+    return ausWo || brNomen(platz.wort);
+  }
+  function brOrt(prep, platz, fall) {
+    const wortMitArtikel = platz.wort;
+    const g = brGeschlecht(wortMitArtikel);
+    const nomen = brOrtsNomen(platz);
+    const schluessel = prep + "-" + g;
+    if (fall === "akk") {
+      if (BR_ZUSAMMEN_AKK[schluessel]) return BR_ZUSAMMEN_AKK[schluessel] + " " + nomen;
+      return prep + " " + BR_AKKUSATIV[g] + " " + nomen;
+    }
+    if (BR_ZUSAMMEN_DAT[schluessel]) return BR_ZUSAMMEN_DAT[schluessel] + " " + nomen;
+    return prep + " " + BR_DATIV[g] + " " + nomen;
+  }
+  /* Eine Präposition, die grammatisch genauso geht, das Bild aber
+     widerlegt. Kein Unsinn, sondern eine echte Verwechslung.
+
+     BEIM ERSTEN ANLAUF FALSCH: Der Tausch ging überall auf „unter“ —
+     und erzeugte damit „unter der Küche“ und „unter dem Kühlschrank“.
+     Das ist kein plausibler Fehler, sondern Unsinn, und wer Unsinn
+     ausschließt, lernt nichts über Präpositionen. Getauscht wird
+     deshalb gegen „neben“ und „hinter“: beide ergeben an JEDEM Platz
+     eine Lage, die es geben könnte — man muss also wirklich ins Bild
+     schauen, um sie auszuschließen. Beide stehen nach „wo?“ ebenfalls
+     im Dativ, der Satz bleibt also tadellos gebaut. */
+  const BR_PRAEP_TAUSCH = { in: "neben", an: "hinter", auf: "neben", vor: "hinter" };
+
+  const BR_FIGUREN = ["erwachsen-w", "erwachsen-m", "jugendlich-w", "jugendlich-m", "alt-w", "alt-m", "kind-w", "kind-m"];
+  /* Bluse und Rock nur dort, wo sie im Bild auch gezeichnet werden —
+     „der Mann mit der grauen Bluse“ war zwar grammatisch richtig, sah
+     im Bild aber nicht danach aus, und ein Rätsel, dessen richtige
+     Antwort dem Bild widerspricht, ist kaputt. */
+  const BR_OBERTEIL_W = ["tshirt", "hemd", "pullover", "bluse"];
+  const BR_OBERTEIL_M = ["tshirt", "hemd", "pullover"];
+  const BR_UNTERTEIL_W = ["jeans", "hose", "rock"];
+  const BR_UNTERTEIL_M = ["jeans", "hose"];
+  const BR_SCHUHE = ["halbschuh", "turnschuh", "stiefel"];
+  const BR_FARBEN = ["rot", "blau", "gruen", "gelb", "schwarz", "weiss", "grau", "braun"];
+  const BR_HAUT = ["sehrhell", "hell", "mittel", "oliv", "dunkel", "sehrdunkel"];
+  const BR_HAAR = ["schwarz", "dunkelbraun", "braun", "blond", "rot", "grau"];
+  const BR_FRISUR_W = ["lang", "zopf", "dutt", "locken", "kurz", "pony"];
+  /* Ohne „glatze“: ein kahlköpfiges Kind sieht im Bild nach einem
+     Zeichenfehler aus, und um das Haar geht es hier nicht. */
+  const BR_FRISUR_M = ["kurz", "locken", "bart_kurz", "pony"];
+
+  function brZufall(liste) { return liste[Math.floor(Math.random() * liste.length)]; }
+
+  async function brNeueAufgabe() {
+    if (!window.DMA_PLAETZE) await brDatei("data-plaetze.js");
+    await szenenLaden();
+    const plaetze = brPlaetze();
+    if (!plaetze.length) return null;
+    const platz = brZufall(plaetze);
+    await szeneLaden(platz.szene);
+    const fig = brZufall(BR_FIGUREN);
+    if (!(window.DMA_FIGUR || {})[fig]) {
+      await brDatei("figuren/" + fig + ".js");
+      await brDatei("figuren/" + fig + "-teil2.js");
+    } else if (!((window.DMA_FIGUR[fig].haltungen || {})[platz.haltung])) {
+      await brDatei("figuren/" + fig + "-teil2.js");
+    }
+    const bau = (window.DMA_FIGUR || {})[fig];
+    if (!bau || !(bau.haltungen || {})[platz.haltung]) return null;
+    const [alter, geschlecht] = fig.split("-");
+    const frisuren = Object.keys((bau.haltungen[platz.haltung].frisuren) || {});
+    const wunsch = geschlecht === "w" ? BR_FRISUR_W : BR_FRISUR_M;
+    const moegliche = wunsch.filter((f) => frisuren.indexOf(f) >= 0);
+    const gesichter = Object.keys((bau.haltungen[platz.haltung].gesichter) || {});
+    return {
+      szene: platz.szene,
+      platz: platz,
+      alter: alter,
+      geschlecht: geschlecht,
+      haut: brZufall(BR_HAUT),
+      haarfarbe: brZufall(BR_HAAR),
+      frisur: moegliche.length ? brZufall(moegliche) : (frisuren[0] || "kurz"),
+      gesicht: gesichter.length ? brZufall(gesichter) : "g1",
+      haltung: platz.haltung,
+      kleidung: {
+        oberteil: { stueck: brZufall(geschlecht === "w" ? BR_OBERTEIL_W : BR_OBERTEIL_M), farbe: brZufall(BR_FARBEN) },
+        unterteil: { stueck: brZufall(geschlecht === "w" ? BR_UNTERTEIL_W : BR_UNTERTEIL_M), farbe: brZufall(BR_FARBEN) },
+        schuhe: { stueck: brZufall(BR_SCHUHE), farbe: brZufall(BR_FARBEN) },
+      },
+    };
+  }
+
+  /* Das Bild: Kulisse + Figur, genau wie im Baukasten — nur ohne die
+     Platzmarken, die hier die Antwort verraten würden. */
+  function brBildHtml(z) {
+    const sz = (window.DMA_SZENE || {})[z.szene];
+    if (!sz || typeof bkFigurSvg !== "function") {
+      return '<p class="empty-note">Das Bild wird geladen …</p>';
+    }
+    const fig = bkFigurSvg(z, 0);
+    if (!fig) return '<p class="empty-note">Das Bild wird geladen …</p>';
+    const anker = bkFigurAnker(fig, z.platz);
+    const r = (v) => Math.round(v * 10) / 10;
+    return `<div class="br-buehne"><svg viewBox="0 0 ${sz.breite} ${sz.hoehe}" class="br-svg"
+        role="img" aria-label="Ein Mensch an einem Ort — welcher Satz beschreibt das Bild?">
+      ${window.DMA_FIGUR_DEFS || ""}
+      <g class="br-kulisse">${sz.kulisse}</g>
+      ${(sz.teile || []).map((t) => `<g transform="translate(${t.x},${t.y})">${t.kunst}</g>`).join("")}
+      <g transform="translate(${r(anker.x)},${r(anker.y)})">${fig.svg}</g>
+    </svg></div>`;
+  }
+
+  /* ---- Die Sätze ------------------------------------------------ */
+  function brSubjekt(z) {
+    const s = (typeof BK_SUBJEKT !== "undefined" ? BK_SUBJEKT : {})[z.alter + "-" + z.geschlecht];
+    return s || { wort: "die Person", artikel: "die", pron: "sie" };
+  }
+  function brVerb(haltung) {
+    return (typeof BK_VERB !== "undefined" ? BK_VERB : {})[haltung] || "ist";
+  }
+  /* Das auffälligste Kleidungsstück, an dem man die Person erkennt —
+     dasselbe Prinzip wie im Baukasten: „die Frau mit dem roten
+     T-Shirt“. Nach dem bestimmten Artikel endet das Farbadjektiv im
+     Dativ in jedem Geschlecht auf -en. */
+  function brMerkmal(z, farbeUeberschreiben) {
+    const w = z.kleidung.oberteil;
+    const stueck = (typeof BK_STUECK !== "undefined" ? BK_STUECK : {})[w.stueck];
+    if (!stueck) return "";
+    const g = stueck[1];
+    if (g === "p") return "";
+    const farbname = farbeUeberschreiben || w.farbe;
+    const farbe = (typeof BK_FARBE !== "undefined" ? BK_FARBE : {})[farbname];
+    const nomen = stueck[0].replace(/^(der|die|das)\s+/, "");
+    return "mit " + BR_DATIV[g] + " " + (farbe ? farbe[1].m + " " : "") + nomen;
+  }
+  function brGross(w) { return String(w).charAt(0).toUpperCase() + String(w).slice(1); }
+
+  function brRichtigerSatz(z) {
+    const subj = brSubjekt(z);
+    const merk = brMerkmal(z);
+    return brGross(subj.wort) + (merk ? " " + merk : "") + " " + brVerb(z.haltung) + " " + z.platz.wo + ".";
+  }
+  /* Die falschen Sätze — je EIN verdrehter Bestandteil, sonst nichts. */
+  function brFalscheSaetze(z) {
+    const subj = brSubjekt(z);
+    const merk = brMerkmal(z);
+    const kopf = brGross(subj.wort) + (merk ? " " + merk : "");
+    const prep = brPraeposition(z.platz.wo);
+    const raus = [];
+
+    /* 1 — falsches Verb: das Bild zeigt eine andere Haltung.
+       Getauscht wird nicht beliebig: „liegt an der Tafel“ wäre so
+       offensichtlich absurd, dass man es ohne Hinsehen ausschließt.
+       Stehen und Sitzen dagegen verwechselt man wirklich — und beim
+       Liegen ist Sitzen der naheliegende Irrtum. */
+    const BR_VERB_TAUSCH = { stehen: "sitzen", sitzen: "stehen", liegen: "sitzen" };
+    const falscheHaltung = BR_VERB_TAUSCH[z.haltung] || "stehen";
+    raus.push({
+      text: kopf + " " + brVerb(falscheHaltung) + " " + z.platz.wo + ".",
+      art: "verb",
+      warum: `Falsches Verb. Schau ins Bild: ${subj.pron === "er" ? "er" : subj.pron === "es" ? "es" : "sie"} <strong>${brVerb(z.haltung)}</strong>, nicht ${brVerb(falscheHaltung)}.`,
+    });
+
+    /* 2 — falscher Kasus: „wo?“ verlangt den Dativ */
+    if (prep) {
+      raus.push({
+        text: kopf + " " + brVerb(z.haltung) + " " + brOrt(prep, z.platz, "akk") + ".",
+        art: "kasus",
+        warum: `Falscher Fall. <em>${escapeHtml(prep)}</em> kann Dativ oder Akkusativ — der Akkusativ antwortet auf <strong>wohin?</strong> (eine Bewegung), der Dativ auf <strong>wo?</strong> (ein Ort). Hier bewegt sich niemand irgendwohin, also: <strong>${escapeHtml(z.platz.wo)}</strong>.`,
+      });
+      /* 3 — falsche Präposition: grammatisch tadellos, im Bild falsch */
+      const tausch = BR_PRAEP_TAUSCH[prep];
+      if (tausch) {
+        raus.push({
+          text: kopf + " " + brVerb(z.haltung) + " " + brOrt(tausch, z.platz, "dat") + ".",
+          art: "praeposition",
+          warum: `Falsche Präposition. <em>${escapeHtml(tausch)}</em> ist ein anderer Ort als <em>${escapeHtml(prep)}</em> — im Bild ist es <strong>${escapeHtml(z.platz.wo)}</strong>.`,
+        });
+      }
+    }
+
+    /* 4 — falsche Farbe: nur, wenn es überhaupt ein Merkmal gibt */
+    if (merk) {
+      const andereFarbe = brZufall(BR_FARBEN.filter((f) => f !== z.kleidung.oberteil.farbe));
+      raus.push({
+        text: brGross(subj.wort) + " " + brMerkmal(z, andereFarbe) + " " + brVerb(z.haltung) + " " + z.platz.wo + ".",
+        art: "kleidung",
+        warum: "Falsche Farbe. Der Satz stimmt grammatisch — er beschreibt nur eine andere Person als die im Bild.",
+      });
+    }
+    return raus;
+  }
+
+  function brAufgabeBauen(z) {
+    const richtig = { text: brRichtigerSatz(z), ok: true };
+    const falsch = Core.shuffle(brFalscheSaetze(z));
+    /* Zwei falsche, und zwar aus VERSCHIEDENEN Fehlerarten — sonst
+       stünden zweimal fast dieselben zwei Wörter zur Wahl. */
+    /* GEWÜNSCHT waren ausdrücklich „falsches Verb, falsche Präposition,
+       falscher Kasus“. Die falsche Farbe ist nur der Notnagel für den
+       Fall, dass ein Platz keine brauchbare Präposition hergibt — sonst
+       unterschieden sich zwei der drei Sätze bloss in einem Farbwort,
+       und man rät nach Mehrheit statt zu lesen. */
+    const grammatik = falsch.filter((f) => f.art !== "kleidung");
+    const rest = falsch.filter((f) => f.art === "kleidung");
+    const reihe = grammatik.concat(rest);
+    const genommen = [];
+    const arten = new Set();
+    reihe.forEach((f) => {
+      if (genommen.length >= 2 || arten.has(f.art)) return;
+      arten.add(f.art); genommen.push(f);
+    });
+    while (genommen.length < 2 && falsch.length > genommen.length) {
+      const rest = falsch.find((f) => genommen.indexOf(f) < 0);
+      if (!rest) break;
+      genommen.push(rest);
+    }
+    return Core.shuffle([richtig].concat(genommen.map((f) => Object.assign({ ok: false }, f))));
+  }
+
+  async function renderBilderraetsel() {
+    const area = document.getElementById("bilderraetselArea");
+    if (!area) return;
+    autoWeiterAbbrechen();
+    if (!brRunde) brRunde = { nummer: 0, richtig: 0, letzte: null };
+    if (brRunde.nummer >= BR_RUNDEN) { brErgebnisZeichnen(area); return; }
+    if (!brZustand) {
+      area.innerHTML = '<div class="question-card"><p class="empty-note">Das Bild wird zusammengesetzt …</p></div>';
+      brZustand = await brNeueAufgabe();
+      if (!brZustand) {
+        area.innerHTML = '<div class="question-card"><p class="empty-note">Die Bilder konnten nicht geladen werden. Seite neu laden und noch einmal versuchen.</p></div>';
+        return;
+      }
+      brZustand.saetze = brAufgabeBauen(brZustand);
+    }
+    const z = brZustand;
+    const l = brRunde.letzte;
+    area.innerHTML = `
+      <div class="question-card">
+        ${miniBugReportBtnHtml("Bilderrätsel: " + z.platz.id)}
+        <p class="eyebrow">🖼️ DAS BILDERRÄTSEL · BILD ${brRunde.nummer + 1} / ${BR_RUNDEN}
+          <span class="subnav-info-icon" data-info="Jedes Bild wird neu zusammengesetzt: ein Mensch und ein Ort. Von den drei Sätzen beschreibt genau einer das Bild. Die beiden anderen sind grammatisch richtig gebaut — sie sagen nur etwas anderes, als zu sehen ist.">ⓘ</span></p>
+        ${fortschrittHtml(brRunde.nummer, BR_RUNDEN)}
+        ${brBildHtml(z)}
+        <p class="br-frage">Welcher Satz beschreibt das Bild?</p>
+        <div class="br-saetze">
+          ${z.saetze.map((s, i) => {
+            let klasse = "";
+            if (l) klasse = s.ok ? " br-satz-richtig" : (l.gewaehlt === i ? " br-satz-daneben" : "");
+            return `<button type="button" class="br-satz${klasse}" data-br-satz="${i}" ${l ? "disabled" : ""}>${escapeHtml(s.text)}</button>`;
+          }).join("")}
+        </div>
+        ${l ? `<p class="bw-rueckmeldung ${l.ok ? "bw-ok" : "bw-falsch"}">
+            ${l.ok ? "✅ Richtig." : "❌ " + (z.saetze[l.gewaehlt].warum || "")}
+            ${l.ok ? "" : "<br>Richtig wäre: <strong>" + escapeHtml(z.saetze.find((s) => s.ok).text) + "</strong>"}
+          </p>` : `<p class="empty-note" style="margin-top:8px;">Zwei der drei Sätze sind grammatisch völlig in Ordnung — sie beschreiben nur ein anderes Bild. Schau genau hin.</p>`}
+        <div class="quiz-actions" style="justify-content:flex-start; flex-wrap:wrap; margin-top:12px;">
+          <button type="button" class="btn btn-ghost" id="brUeberspringen">↷ Anderes Bild</button>
+        </div>
+      </div>`;
+    area.querySelectorAll("[data-br-satz]").forEach((b) => b.addEventListener("click", () => {
+      brAntwort(Number(b.dataset.brSatz));
+    }));
+    document.getElementById("brUeberspringen")?.addEventListener("click", () => {
+      brZustand = null; brRunde.letzte = null; renderBilderraetsel();
+    });
+  }
+
+  function brAntwort(i) {
+    if (!brZustand || brRunde.letzte) return;
+    const s = brZustand.saetze[i];
+    const ok = Boolean(s && s.ok);
+    brRunde.letzte = { gewaehlt: i, ok: ok };
+    if (ok) { brRunde.richtig += 1; Core.sound.correct(); } else { Core.sound.wrong(); }
+    spielNotiz(ok, brZustand.saetze.find((x) => x.ok).text);
+    renderBilderraetsel();
+    autoWeiter(ok, () => {
+      brRunde.nummer += 1; brRunde.letzte = null; brZustand = null;
+      renderBilderraetsel();
+    });
+  }
+
+  function brErgebnisZeichnen(area) {
+    const prozent = Math.round((brRunde.richtig / Math.max(1, BR_RUNDEN)) * 100);
+    area.innerHTML = ergebnisSchirmHtml({
+      punkte: brRunde.richtig * 2, prozent, tier: "Bildleser:in", charakter: "Das Bilderrätsel",
+      zeilen: [{ name: "🖼️ Richtig gelesen", anteil: prozent, wert: brRunde.richtig + "/" + BR_RUNDEN }],
+      knoepfe: '<button type="button" class="btn btn-coffee" id="brNochmal">🔄 Neue Runde</button>',
+    });
+    document.getElementById("brNochmal")?.addEventListener("click", () => {
+      brRunde = null; brZustand = null; renderBilderraetsel();
+    });
+    if (Backend.currentUser()) {
+      saveResultAndCheck({ categories: ["bilderraetsel"], points: brRunde.richtig * 2, bonus: 0,
+        percent: prozent, character: "Bildleser:in", badges: [], playedAt: new Date().toISOString() });
+      if (activeGameChallengeId) {
+        Backend.submitChallengeResult(activeGameChallengeId, { percent: prozent });
+        activeGameChallengeId = null; geliehenAlleWeg();
+      }
+    }
+  }
+  document.querySelector('#learnSubnav [data-sub="sub-bilderraetsel"]')?.addEventListener("click", () => {
+    if (!brRunde) { brRunde = null; brZustand = null; }
+    renderBilderraetsel();
+  });
+
+
+  /* ============================================================
+     WAS DIE APP KOSTET — offen aufgeschrieben
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Der Nutzer will offenlegen, was der Betrieb kostet
+     und wofür Premium gut ist.“
+
+     Deshalb steht hier keine Tabellenwand, sondern die vier Fragen,
+     die man wirklich hat: Was kostet heute nichts? Was kostet etwas?
+     Ab wann? Und warum ist das trotzdem so wenig?
+
+     Alle Zahlen sind Listenpreise der Anbieter (Google Cloud
+     Text-to-Speech, ElevenLabs, Supabase) und der gemessene Umfang
+     dieser Seite. Umgerechnet wird mit 1 $ ≈ 0,92 € — grob, aber
+     ehrlich gerundet.
+     ============================================================ */
+  const KOSTEN_ZEICHEN = 1570000;      // gemessener Wortschatz in Zeichen
+  const KOSTEN_EINTRAEGE = 36199;      // verschiedene deutsche Einträge
+  const KOSTEN_KURS = 0.92;            // $ → €, grob
+  function kostenEuro(dollar) {
+    return (dollar * KOSTEN_KURS).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderKosten() {
+    const area = document.getElementById("kostenArea");
+    if (!area) return;
+    area.innerHTML = `
+      <div class="question-card">
+        <p class="eyebrow" style="margin-top:0;">💶 Was diese Seite kostet</p>
+        <h3 style="margin:4px 0 8px;">Offen gerechnet, nicht geschätzt</h3>
+        <p class="empty-note" style="margin-bottom:6px;">
+          Diese Seite hat keine Werbung, verkauft keine Daten und gehört keiner Firma. Sie kostet
+          trotzdem Geld — nur eben sehr wenig, und das lässt sich nachrechnen. Hier steht jede
+          Zahl, mit der gerechnet wurde.
+        </p>
+        <p class="empty-note" style="margin:0;">
+          Gemessen wurde der Wortschatz dieser Seite:
+          <strong>${KOSTEN_EINTRAEGE.toLocaleString("de-DE")} verschiedene deutsche Einträge</strong>
+          mit zusammen rund <strong>${(KOSTEN_ZEICHEN / 1000000).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Millionen Zeichen</strong>. Das ist die Menge, um die es
+          bei der Sprachausgabe geht.
+        </p>
+      </div>
+
+      <div class="question-card kosten-block" style="margin-top:12px;">
+        <h3 style="margin:0 0 4px;">✅ Was heute nichts kostet</h3>
+        <ul class="kosten-liste">
+          <li><strong>Die Seite selbst.</strong> Sie besteht aus Dateien, die dein Browser lädt —
+            kein Server rechnet dabei etwas aus. Solche Dateien kann man kostenlos ausliefern lassen.</li>
+          <li><strong>Die Sprachausgabe, so wie sie jetzt ist.</strong> Sie kommt aus deinem eigenen
+            Gerät. Das kostet uns nichts — und klingt genau deshalb manchmal schief
+            (siehe „Warum klingt die Stimme manchmal falsch?“ weiter unten).</li>
+          <li><strong>Konten, Punkte, Freunde, Beiträge.</strong> Dafür läuft eine Datenbank
+            (Supabase). Deren kostenlose Stufe reicht bis
+            <strong>50 000 aktive Nutzer:innen im Monat</strong>, 500 MB Datenbank, 1 GB Speicher
+            und 5 GB Datenverkehr.</li>
+        </ul>
+        <p class="empty-note" style="margin:8px 0 0;">
+          Ein Haken hat die kostenlose Stufe: Wird eine Woche lang gar nicht zugegriffen, legt
+          Supabase das Projekt schlafen und man muss es von Hand wecken. Solange hier jemand lernt,
+          passiert das nicht.
+        </p>
+      </div>
+
+      <div class="question-card kosten-block" style="margin-top:12px;">
+        <h3 style="margin:0 0 4px;">🎙️ Was eine gute Stimme kostet</h3>
+        <p class="empty-note" style="margin:0 0 10px;">
+          Der einzige Posten, der wirklich ins Geld gehen könnte, ist eine richtige Sprachausgabe:
+          Jedes Wort einmal von einer guten Computerstimme sprechen lassen, statt es dem Telefon zu
+          überlassen. Abgerechnet wird nach Zeichen — deshalb war die Messung oben der erste
+          Schritt.
+        </p>
+        <div class="kosten-tabelle-huelle">
+          <table class="kosten-tabelle">
+            <thead><tr><th>Stimme</th><th>Kostenlos</th><th>Danach je 1 Mio. Zeichen</th><th>Diese Seite einmal komplett</th></tr></thead>
+            <tbody>
+              <tr><td>Google <strong>Standard</strong></td><td>4 Mio. Zeichen</td><td>4 $</td><td class="kosten-gut">0 $ — passt ins Freikontingent</td></tr>
+              <tr><td>Google <strong>WaveNet</strong></td><td>1 Mio. Zeichen</td><td>4 $</td><td class="kosten-gut">≈ 2,28 $ (${kostenEuro(2.28)} €)</td></tr>
+              <tr><td>Google <strong>Neural2</strong></td><td>1 Mio. Zeichen</td><td>16 $</td><td>≈ 9 $ (${kostenEuro(9)} €)</td></tr>
+              <tr><td>Google <strong>Chirp 3 HD</strong></td><td>—</td><td>30 $</td><td>≈ 47 $ (${kostenEuro(47)} €)</td></tr>
+              <tr><td>Google <strong>Studio</strong></td><td>—</td><td>160 $</td><td class="kosten-teuer">≈ 251 $ (${kostenEuro(251)} €)</td></tr>
+              <tr><td>ElevenLabs <strong>Flash / Turbo v2.5</strong></td><td>—</td><td>60 $ (0,06 $ je 1000 Zeichen)</td><td>≈ 94 $ (${kostenEuro(94)} €)</td></tr>
+              <tr><td>ElevenLabs <strong>Multilingual</strong></td><td>—</td><td>120 $ (0,12 $ je 1000 Zeichen)</td><td class="kosten-teuer">≈ 188 $ (${kostenEuro(188)} €)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-note" style="margin:10px 0 0;">
+          ElevenLabs verkauft außerdem Pakete: 5 $ für 30 000 Zeichen, 22 $ für 100 000,
+          99 $ für 500 000, 330 $ für 2 Millionen. Für 1,57 Millionen Zeichen bräuchte man
+          das große Paket — mehr als hundertmal so viel wie der Weg darüber.
+        </p>
+        <div class="kosten-merksatz">
+          <strong>Der entscheidende Punkt:</strong> Das ist eine EINMALIGE Rechnung, keine
+          monatliche. Jedes Wort wird ein einziges Mal gesprochen und als Tondatei abgelegt.
+          Danach hört jede Person auf der Welt dieselbe Datei — und das kostet
+          <strong>0 € im Monat</strong>. Nur wenn man jedes Wort bei jedem Antippen neu erzeugen
+          ließe, liefe der Zähler immer weiter.
+        </div>
+        <p class="empty-note" style="margin:10px 0 0;">
+          Gewählt wäre also <strong>Google WaveNet für rund ${kostenEuro(2.28)} €</strong> — einmal,
+          für alle ${KOSTEN_EINTRAEGE.toLocaleString("de-DE")} Wörter. Das ist weniger als ein Kaffee.
+        </p>
+      </div>
+
+      <div class="question-card kosten-block" style="margin-top:12px;">
+        <h3 style="margin:0 0 4px;">🗄️ Ab wann die Datenbank Geld kostet</h3>
+        <p class="empty-note" style="margin:0 0 10px;">
+          Solange die Seite in die kostenlose Stufe passt, kostet sie null. Die Grenze ist klar
+          benannt — und sie ist weit weg:
+        </p>
+        <div class="kosten-tabelle-huelle">
+          <table class="kosten-tabelle">
+            <thead><tr><th></th><th>Kostenlos</th><th>Pro — 25 $ im Monat</th></tr></thead>
+            <tbody>
+              <tr><td>Aktive Nutzer:innen / Monat</td><td>50 000</td><td>100 000</td></tr>
+              <tr><td>Datenbank</td><td>500 MB</td><td>8 GB</td></tr>
+              <tr><td>Dateispeicher</td><td>1 GB</td><td>100 GB</td></tr>
+              <tr><td>Datenverkehr</td><td>5 GB</td><td>250 GB</td></tr>
+              <tr><td>Pausiert ohne Zugriff</td><td>nach einer Woche</td><td>nie</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-note" style="margin:10px 0 0;">
+          Der erste Posten, an den man stößt, ist meistens nicht die Nutzerzahl, sondern der
+          Datenverkehr: Profilbilder, eigene Bilder, Beiträge. 5 GB im Monat sind schnell voll,
+          wenn viele Leute Fotos hochladen. Dann — und erst dann — werden aus 0 € die
+          <strong>25 $ im Monat (${kostenEuro(25)} €)</strong> für die Pro-Stufe.
+        </p>
+      </div>
+
+      <div class="question-card kosten-block" style="margin-top:12px;">
+        <h3 style="margin:0 0 4px;">🧮 Die ganze Rechnung auf einen Blick</h3>
+        <div class="kosten-tabelle-huelle">
+          <table class="kosten-tabelle">
+            <thead><tr><th>Posten</th><th>Einmalig</th><th>Jeden Monat</th></tr></thead>
+            <tbody>
+              <tr><td>Seite ausliefern</td><td>—</td><td class="kosten-gut">0 €</td></tr>
+              <tr><td>Stimme aus dem Gerät</td><td>—</td><td class="kosten-gut">0 €</td></tr>
+              <tr><td>Alle Wörter einmal aufnehmen (WaveNet)</td><td>${kostenEuro(2.28)} €</td><td class="kosten-gut">0 €</td></tr>
+              <tr><td>Datenbank, solange sie in die kostenlose Stufe passt</td><td>—</td><td class="kosten-gut">0 €</td></tr>
+              <tr><td>Datenbank Pro, sobald sie nicht mehr passt</td><td>—</td><td>${kostenEuro(25)} €</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="empty-note" style="margin:10px 0 0;">
+          Heute: nahezu null. Später, mit vielen Menschen auf der Seite: rund
+          <strong>${kostenEuro(25)} € im Monat</strong>. Genau diese Lücke soll Premium schließen —
+          und keinen Cent mehr. Wie das gerechnet ist, steht unter
+          <strong>Profil &amp; Rang → ✨ Premium</strong>.
+        </p>
+      </div>
+
+      <div class="question-card kosten-block" style="margin-top:12px;">
+        <h3 style="margin:0 0 8px;">🔊 Die Sache mit der Stimme</h3>
+        ${stimmenHinweisHtml(false)}
+      </div>
+      ${miniBugReportBtnHtml("Kostenseite")}
+    `;
+  }
+  document.querySelector('#knowledgeSubnav [data-sub="sub-kosten"]')?.addEventListener("click", renderKosten);
+
+
+  /* ============================================================
+     PREMIUM — ein Preis, der die Kosten deckt und einen Euro
+     ------------------------------------------------------------
+     GEWÜNSCHT: „Ein kleiner Preis, der nur die Kosten und einen Euro
+     deckt, kein teures Abo.“
+
+     Also wird der Preis nicht gegriffen, sondern gerechnet — aus
+     denselben Zahlen, die auf der Kostenseite stehen:
+
+       Supabase Pro, sobald die kostenlose Stufe nicht mehr reicht
+                                        25 $  ≈ 23,00 € im Monat
+       Sprachausgabe (einmal vorproduziert)    0,00 € im Monat
+       Seite ausliefern                        0,00 € im Monat
+       Für Alex, wie gewünscht: ein Euro       1,00 € im Monat
+       ------------------------------------------------------------
+       Zusammen                               24,00 € im Monat
+
+     Bei 2 € im Monat sind das ZWÖLF Menschen, die alles tragen. Mehr
+     braucht es nicht, und mehr wird auch nicht genommen: Wer den
+     Betrag nachrechnen will, findet hier jede Zahl.
+     ============================================================ */
+  const PREMIUM_MONAT = 2;         // € im Monat
+  const PREMIUM_JAHR = 20;         // € im Jahr (zwei Monate geschenkt)
+  const PREMIUM_BEDARF = 24;       // € im Monat, die gedeckt sein müssen
+  function premiumTraeger() { return Math.ceil(PREMIUM_BEDARF / PREMIUM_MONAT); }
+
   function renderPremium() {
     const area = document.getElementById("premiumArea");
     const user = Backend.currentUser();
     const isPremium = Backend.isPremium();
     area.innerHTML = `
       <div class="premium-card">
-        <h2>✨ Premium-Inhalte</h2>
-        <p class="empty-note">Zusätzliche Materialien für alle, die noch tiefer einsteigen wollen — finanziert über einen kleinen Beitrag statt Werbung.</p>
+        <h2>✨ Premium — ${PREMIUM_MONAT} € im Monat</h2>
+        <p class="empty-note" style="margin-top:6px;">
+          Kein Abo mit Kleingedrucktem, keine Werbung, kein Datenverkauf. Der Preis ist so
+          gerechnet, dass er die tatsächlichen Kosten deckt — und einen Euro für die Arbeit.
+          Wer will, rechnet unten nach.
+        </p>
         ${isPremium
-          ? '<p style="margin-top:12px; color: var(--teal-400); font-weight:700;">✓ Freigeschaltet — danke für deine Unterstützung!</p>'
-          : `<div class="quiz-actions" style="justify-content:center; margin-top:16px;">
-              <a class="btn btn-coffee" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener">Premium unterstützen (PayPal)</a>
+          ? '<p style="margin-top:12px; color: var(--teal-400); font-weight:700;">✓ Freigeschaltet — danke, dass du das hier trägst.</p>'
+          : `<div class="quiz-actions" style="justify-content:center; margin-top:16px; flex-wrap:wrap;">
+              <a class="btn btn-coffee" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener">${PREMIUM_MONAT} € im Monat unterstützen</a>
+              <a class="btn btn-ghost" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener">Lieber ${PREMIUM_JAHR} € im Jahr</a>
               ${user ? '<button type="button" class="btn btn-ghost" id="demoUnlock">Im Demo-Modus freischalten</button>' : ""}
             </div>
-            <p class="empty-note" style="margin-top:10px;">Hinweis: Die echte Freischaltung nach Zahlung braucht eine kleine Server-Funktion (z. B. Supabase Edge Function + PayPal-Webhook) — siehe README. Der Demo-Button simuliert das Ergebnis lokal zum Testen.</p>`
+            <p class="empty-note" style="margin-top:10px;">
+              ${PREMIUM_JAHR} € im Jahr sind zwei Monate geschenkt. Die echte Freischaltung nach
+              Zahlung braucht noch eine kleine Server-Funktion (Supabase Edge Function +
+              PayPal-Webhook, siehe README) — bis dahin schaltet Alex von Hand frei. Der
+              Demo-Knopf probiert das Ergebnis nur örtlich aus.
+            </p>`
         }
-        <div class="premium-locked-list">
-          <div class="premium-item"><span>📘 Erweiterte Grammatik-PDFs</span><span class="${isPremium ? "unlock-tag" : "lock-tag"}">${isPremium ? "freigeschaltet" : "gesperrt"}</span></div>
-          <div class="premium-item"><span>🎧 Alex' Aussprache-Aufnahmen</span><span class="${isPremium ? "unlock-tag" : "lock-tag"}">${isPremium ? "freigeschaltet" : "gesperrt"}</span></div>
-          <div class="premium-item"><span>🗓️ Wöchentliche Bonus-Quizrunde</span><span class="${isPremium ? "unlock-tag" : "lock-tag"}">${isPremium ? "freigeschaltet" : "gesperrt"}</span></div>
+
+        <div class="premium-rechnung">
+          <h3>Woher die ${PREMIUM_MONAT} € kommen</h3>
+          <div class="kosten-tabelle-huelle">
+            <table class="kosten-tabelle">
+              <tbody>
+                <tr><td>Datenbank (Supabase Pro), sobald die kostenlose Stufe nicht mehr reicht</td><td>25 $ ≈ ${kostenEuro(25)} €</td></tr>
+                <tr><td>Sprachausgabe — einmal vorproduziert, danach nie wieder</td><td class="kosten-gut">0,00 €</td></tr>
+                <tr><td>Die Seite ausliefern</td><td class="kosten-gut">0,00 €</td></tr>
+                <tr><td>Für die Arbeit daran — ein Euro, wie besprochen</td><td>1,00 €</td></tr>
+                <tr class="kosten-summe"><td><strong>Zusammen im Monat</strong></td><td><strong>${PREMIUM_BEDARF},00 €</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="kosten-merksatz" style="margin-top:10px;">
+            ${PREMIUM_BEDARF} € geteilt durch ${PREMIUM_MONAT} € macht <strong>${premiumTraeger()} Menschen</strong>.
+            So viele mit Premium, und die Seite trägt sich vollständig. Alles darüber hinaus geht
+            in das, was noch fehlt — zuerst in die echten Sprachaufnahmen.
+          </p>
+          <p class="empty-note" style="margin:8px 0 0;">
+            Zum Vergleich: Alle ${KOSTEN_EINTRAEGE.toLocaleString("de-DE")} Wörter EINMAL von einer
+            guten Stimme aufnehmen zu lassen kostet rund ${kostenEuro(2.28)} € — einmalig, für
+            immer. Das ist ein Monatsbeitrag von einer einzigen Person.
+          </p>
+          <button type="button" class="btn btn-ghost" id="premiumZurKostenseite" style="margin-top:10px;">💶 Die ganze Rechnung ansehen</button>
         </div>
-        <p class="empty-note" style="margin-top:14px;">
-          ⚠️ Diese drei Punkte sind aktuell nur Platzhalter-Beispiele, noch keine echten Dateien.
-          Um z. B. ein PDF anzubieten: Datei im Repo in einen neuen Ordner <code>/materials/</code> hochladen
-          und hier im Code (<code>app.js</code>, Funktion <code>renderPremium</code>) mit
-          <code>&lt;a href="materials/deine-datei.pdf"&gt;</code> verlinken.
-        </p>
+
+        <div class="premium-spalten">
+          <div class="premium-spalte">
+            <h3>🆓 Das bleibt für immer kostenlos</h3>
+            <p class="empty-note" style="margin:0 0 8px;">Nichts davon wird jemals hinter Premium wandern. Es war kostenlos, es bleibt kostenlos.</p>
+            <ul class="kosten-liste">
+              <li>Alle Übungen, alle Spiele, der Lernweg</li>
+              <li>Die Bilderwelt mit allen Szenen und dem Baukasten</li>
+              <li>Das Wörterbuch, der Aussprache- und der Betonungs-Trainer</li>
+              <li>Der Dialekt-Bereich und der Umgangssprache-Umschalter</li>
+              <li>Konto, Punkte, Ranking, Freunde, Postfach, eigene Beiträge</li>
+              <li>Die Sprachausgabe aus deinem Gerät</li>
+            </ul>
+          </div>
+          <div class="premium-spalte">
+            <h3>✨ Was Premium dazugibt</h3>
+            <p class="empty-note" style="margin:0 0 8px;">Ehrlich getrennt: was es schon gibt, und was erst daraus entstehen soll.</p>
+            <div class="premium-locked-list">
+              <div class="premium-item"><span>🙏 Du trägst die laufenden Kosten mit</span><span class="unlock-tag">sofort</span></div>
+              <div class="premium-item"><span>📔 Dein Name in der Danke-Liste (wenn du magst)</span><span class="unlock-tag">sofort</span></div>
+              <div class="premium-item"><span>🧪 Neue Spiele vorab testen</span><span class="unlock-tag">sofort</span></div>
+              <div class="premium-item"><span>🎧 Echte Sprachaufnahmen statt Gerätestimme</span><span class="lock-tag">in Arbeit</span></div>
+              <div class="premium-item"><span>📘 Grammatik-Hefte zum Ausdrucken</span><span class="lock-tag">geplant</span></div>
+              <div class="premium-item"><span>🖼️ Mehr Speicherplatz für eigene Bilder</span><span class="lock-tag">geplant</span></div>
+            </div>
+            <p class="empty-note" style="margin-top:10px;">
+              „In Arbeit“ und „geplant“ heißt: Es gibt sie noch nicht. Wer heute Premium nimmt,
+              bezahlt den Betrieb — nicht ein Versprechen. Sobald etwas fertig ist, steht es hier
+              ohne Sternchen.
+            </p>
+          </div>
+        </div>
+        ${miniBugReportBtnHtml("Premium-Seite")}
       </div>
     `;
     const demoBtn = document.getElementById("demoUnlock");
     if (demoBtn) demoBtn.addEventListener("click", () => { Backend.unlockPremiumDemo(); renderPremium(); });
+    document.getElementById("premiumZurKostenseite")?.addEventListener("click", () => {
+      document.querySelector('.tape-tab[data-target="view-knowledge"]')?.click();
+      setTimeout(() => {
+        jumpToSubnavTarget('#knowledgeSubnav [data-sub="sub-kosten"]', "#kostenArea", 40);
+        renderKosten();
+      }, 60);
+    });
   }
 
   renderAccount();
@@ -36954,7 +39357,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // nächsten Besuch EINMALIG eine kurze Postfach-Nachricht mit den wichtigsten Neuerungen —
   // nicht jeder kleine Bugfix, nur was für Schüler:innen wirklich zählt. Um eine neue Version
   // anzukündigen: APP_VERSION hochzählen und einen neuen Eintrag in APP_CHANGELOG ergänzen.
-  const APP_VERSION = "174";
+  const APP_VERSION = "175";
   /* ============================================================
      WAS ALLE LESEN
      ------------------------------------------------------------
@@ -36964,6 +39367,32 @@ An einem Morgen lief ein kleiner Fuchs los…
      APP_CHANGELOG_INTERN und geht nur an die Betreiberseite.
      ============================================================ */
   const APP_CHANGELOG = {
+    "175": [
+      "🧍‍♂️ **Die Menschen sitzen jetzt richtig.** Wer auf dem Sofa oder auf der Toilette sitzt, sitzt mit den Knien zur Kamera — nicht mehr seitlich weggedreht. Das ging vorher nicht, weil ein Oberschenkel, der auf den Betrachter zeigt, fast keine Länge hat; jetzt zeigt er am Knie seinen vollen Querschnitt, mit eigener Kontur, Licht auf der Kuppe und Schlagschatten auf das Bein darunter. Genau daran erkennt das Auge, dass da jemand sitzt.",
+      "🧎 **Elf neue Körperhaltungen.** Fersensitz, aufrechtes Knien, vorgebeugtes Knien, Krabbeln, Vierfüßlerstand, Bodensitz, Seitsitz, Schneidersitz, Spagat, Baden mit angewinkelten Beinen — jede von vorn, von der Seite und von hinten, in jedem Alter, mit und ohne Kleidung. Ein Kind kann jetzt auf dem Teppich knien und mit dem Auto spielen.",
+      "💇 **Frisuren im Profil.** Die Haare lagen in der Seitenansicht über Auge und Wange. Drei getrennte Fehler steckten dahinter: der Bart hatte gar keine Seitenansicht und wurde als Vorderansicht auf den Profilkopf gemalt, die vordere Strähne lag auf dem Ohr, und der Haarkranz der Glatze zog quer über die Stirn. Alles neu gezeichnet.",
+      "👴 **Wer alt wird, bekommt graue Haare.** Und wer vom Mann zur Frau wechselt, bekommt eine passende Frisur. Der Baukasten hatte beides nie nachgezogen — eine selbst gewählte Frisur bleibt aber stehen. Bart und Frisur sind jetzt getrennt wählbar; vorher ersetzte der Vollbart die Frisur und man bekam einen Glatzkopf.",
+      "🛋️ **Und im Baukasten kann man die Haltung selbst wählen.** Bisher gab nur der Ort sie vor. Nebenbei kam heraus, dass Sitzen und Liegen in den ausgelieferten Figuren überhaupt fehlten — deshalb stand die Figur auf der Toilette.",
+      "👩 **Die weibliche Figur stimmt.** Die Taille war ein Korsett (21 cm), die breiteste Stelle der Hüfte saß zu hoch und lief geradlinig darauf zu — daher der dreieckige Unterleib. Jetzt Schulter zu Taille zu Hüfte wie 1,00 zu 0,71 zu 1,04, mit einer S-Kurve statt einer Geraden. Die Brust hat Volumen und tritt seitlich hervor; die Flecken darüber waren ein Schatten an der falschen Stelle und ein Schlüsselbein, das wie eine Kette quer lag.",
+      "🌞 **Der Körper hat Licht.** Ein Gegenlichtsaum an der Schattenseite trennt die Figur vom Hintergrund, ohne irgendetwas abzudunkeln. Dazu sind vier Linien verschwunden, die als Narben quer über Bauch und Brust liefen.",
+      "🦴 **Hände und Füße.** Der Daumen sitzt seitlich an der Handwurzel und hat zwei Glieder, die Finger drei, die Kuppen liegen auf einem Bogen, Handrücken und Handteller sind zwei verschiedene Bilder. Der Fuß hat Fersenblock, Gewölbe, Ballen und fünf echte Zehen statt Nöppchen.",
+      "🏛️ **Über vierzig neue Orte** — Bürgeramt, Zahnarzt, Krankenhaus, Flughafen, Bibliothek, Fitnessstudio, Umzug, Café, Wochenmarkt, Bewerbungsgespräch, Sprachschule, Wohnungsbesichtigung, Elternabend, Kino, Theater, Universität, Gericht, Polizeiwache, Feuerwache, Fahrschule, Kindergarten, Mensa, Tierarzt, Tierheim, Tankstelle, Waschsalon, Baumarkt, Metzgerei, Biergarten, Eisdiele, Museum, Reisebüro, Friedhof, Kirche von innen, Weihnachtsmarkt, U-Bahn, Parkhaus und mehr.",
+      "🗺️ **Die Stadt ist begehbar.** Eine Übersicht führt in sieben Stadtviertel, von dort in jeden einzelnen Ort. 183 Verknüpfungen, keine davon ins Leere, keine Szene unerreichbar.",
+      "🏞️ **Tiefe in den Bildern.** 765 Bodenschatten in 65 Szenen, Luftperspektive nach hinten, ein heller Saum an der Kante des Vorderen. Die Menschen vor dem Weihnachtsbaum sind jetzt Menschen vor dem Baum und keine Aufkleber darauf.",
+      "📏 **Die Größen stimmen zueinander.** Der Krebs am Strand war so groß wie die Sandburg, die Libelle so groß wie die Ente, der Hamster fast so groß wie die Katze. Jedes Tier hat jetzt seine wirkliche Höhe in Zentimetern, und jede Szene rechnet damit.",
+      "🦁 **Jedes Tier an seinem Platz.** Reh, Fuchs und Hundewelpe standen im Zoo, der Feldhase auch, der Wellensittich ebenfalls, und im Meer schwamm ein Flusskrebs. Acht Bereiche sind jetzt sauber getrennt, und der Bau bricht ab, wenn ein Tier am falschen Ort landet.",
+      "🦖 **Der T. rex hat ein richtiges Gebiss.** Die Kieferkanten waren verkehrt herum übergeben: die längsten Reißzähne saßen in der Mitte, vorn standen Stummel. Die Zähne waren außerdem doppelt so lang wie in Wirklichkeit und griffen deshalb nicht ineinander. Dazu Schädelfenster, Brauenwulst und ein Unterkiefer mit Winkel.",
+      "🦣 **Eiszeit und Urzeit sind zwei Bilder.** Mammut und Höhlenmensch gehören nicht zu den Sauriern — dazwischen liegen 65 Millionen Jahre. Eine Zeitleiste in beiden Bildern führt hin und zurück.",
+      "🎤 **Der Aussprache-Trainer misst jetzt wirklich die Aussprache.** Bisher prüfte er nur, OB ein Wort erkannt wurde. Jetzt wird deine Aufnahme mit der Vorlage verglichen — Laut für Laut, wo die genaue Prüfung eingeschaltet ist, sonst über den Klangverlauf. Und es steht dabei, welche Stufe gerade läuft.",
+      "🎧 **Nachsprechen im Wechsel.** Hör das Original, sprich nach, hör beides direkt hintereinander — beliebig oft, auch im Wechsel, auf Wunsch langsamer. Beide Tonkurven liegen untereinander, da sieht man Länge, Betonung und Pausen auf einen Blick. Deine Aufnahme bleibt in deinem Gerät.",
+      "🏫 **Das Klassenzimmer.** Ton und Bild in einer Leiste, die offen bleibt, während man in der App weiterblättert — man kann zusammen dieselbe Bilderwelt ansehen und dabei reden.",
+      "🌧️ **Das Wetter.** Der Regen stockte, weil die Tropfen sich zu Pulks falteten; jetzt fällt er durchgehend. Der Blitz ist verzweigt, bei klarem Wetter spielt das Licht ohne gemalte Sonne, nachts fällt ab und zu eine Sternschnuppe, und sehr selten fliegt ein Vogel mit echtem Flügelschlag durchs Bild.",
+      "🗣️ **Umgangssprache und Dialekte.** Ein Umschalter zwischen formell und Alltagssprache, 109 Einträge mit Stilangabe. Dazu ein Dialekt-Bereich: 51 Wörter in sieben Regionen — Brötchen, Semmel, Schrippe, Weck, Rundstück.",
+      "🎲 **Das Bilderrätsel.** Ein Bild aus Mensch und Ort, drei Sätze zur Auswahl. Die falschen sind grammatisch tadellos und nur gegenüber dem Bild falsch — falsches Verb, falscher Kasus, falsche Präposition.",
+      "💶 **Eine Kostenseite.** Was der Betrieb wirklich kostet, was kostenlos bleibt und wofür Premium gedacht ist — offen aufgeschrieben, mit Zahlen.",
+      "🔒 **Die Spielkacheln sehen wieder aus wie früher.** Eine verschlossene Kachel zeigte statt ihres eigenen Symbols ein Schloss und war abgedunkelt — damit sah die halbe Kachelwand anders aus als die andere. Jetzt trägt jede Kachel ihr Symbol, das Schloss sitzt klein in der Ecke.",
+      "🔍 **Die Lupe.** Eine Szene ging manchmal im Ausschnitt der vorigen auf, samt grauem Schleier. Die Lupenstellung wird jetzt geprüft, bevor gezeichnet wird.",
+    ],
     "174": [
       "🧍 **Die Menschen sind neu gebaut.** Das Wichtigste zuerst: drei Fehler haben bisher jede Figur verdorben. Jedes „Licht“ auf Wange, Brust oder Schulter wurde in Wahrheit SCHWARZ gezeichnet; der Kopf bekam einen anderen Lichtverlauf als Hals und Rumpf und stand deshalb als helle Platte darauf; und in den Szenen fehlte der Verlauf ganz, sodass dort flache Scherenschnitte standen. Alle drei sind behoben — deshalb sehen die Menschen jetzt aus wie Körper und nicht mehr wie ausgeschnittene Pappe.",
       "👶 **Babys und Kinder sehen aus wie Babys und Kinder.** Der Schädel eines Säuglings ist zu zwei Dritteln Hirnschale, das Gesicht sitzt im unteren Drittel, die Wangen sind prall, die Augen groß und weit auseinander. Vorher stand dort ein kleiner Erwachsener mit eingefallenen Wangen. Die Reihe läuft jetzt stufenlos vom Säugling über Kleinkind, Kind und Jugendlichen bis zum alten Menschen.",
@@ -37269,6 +39698,29 @@ An einem Morgen lief ein kleiner Fuchs los…
      dürfen.
      ============================================================ */
   const APP_CHANGELOG_INTERN = {
+    "175": [
+      "**Die Knie-Scheibe (`_knie_scheibe`)** ist der Kern der Sitz-Vorderansicht: ein Glied, das auf den Betrachter zeigt, wird nicht kürzer gezeichnet, sondern zeigt sein ENDE. Radius 0,66 der Oberschenkeldicke (war 0,56 — damit war die Scheibe kaum breiter als der Unterschenkel), Schlagschatten von 0,40 auf 0,58. Die Schwelle ist jetzt ein Übergang 0,46–0,18 statt einer harten Kante bei 0,35, greift also auch bei `hocken` und `fersensitz`.",
+      "**`rumpf_kurz`** staucht alle Landmarken zwischen Schulter und Schritt — die Querschnitt-Scheibe für den RUMPF. Ohne sie war Krabbeln von vorn und hinten nicht zeichenbar. `bp[\"hals_kopf\"]` merkt sich die Halslänge vor der Stauchung, sonst wächst der Hals, weil `bp[\"y\"]` vom Scheitel misst.",
+      "**`bau-figuren.py` schrieb Teil 3 über den Dateinamen von Teil 2.** `sitzen` und `liegen` fehlten dadurch komplett in den ausgelieferten Figuren, und `bkFigurSvg` fällt stillschweigend auf `stehen` zurück — daher stand die Figur auf der Toilette. `baukasten.js` lädt jetzt auch `-teil3.js`.",
+      "**`_bart()` hatte keinen Profilzweig.** Der symmetrische Vorderansichtsbart (±0,95 halbe Kopfbreiten um x=0) wurde auf den Profilkopf gemalt: eine Hälfte quer über die Wange, die andere in der Luft vor dem Gesicht. Neu `_bart_profil()` entlang der echten Kiefermarken.",
+      "**Ringschluss behoben:** `szenen_kit` trug `rock_knie` per `_MB._UNTERTEIL.setdefault(...)` auf Modulebene ein. Wer `mensch_bau` zuerst importierte, bekam `partially initialized module`. Der Eintrag steht jetzt in `mensch_bau._UNTERTEIL` neben `\"rock\"`.",
+      "**`bwZoomGilt()`** prüft die Lupenstellung gegen die aktuelle Szene, statt an jeder Stelle, die eine Szene öffnet, ans Zurücksetzen zu denken (vier gab es, morgen sind es fünf).",
+      "**`pruef-pfade.py` prüfte nur `szenen_a` bis `szenen_l`**, während die Bilderwelt längst bis `szenen_r` ging — ein Drittel der Szenen wurde ungeprüft ausgeliefert, und die Prüfung meldete trotzdem zufrieden 0 Fehler.",
+      "**Zwei Bereichstabellen liefen auseinander:** `tier_groesse.BEREICHE` führte den Krebs nur unter `teich`, `szenen_kit.TIER_BEREICH` auch unter `meer` — geprüft wurde gegen die zweite. `bereiche_vergleichen()` rechnet sie jetzt gegeneinander, `bau-szenen.py` bricht bei Abweichung ab.",
+      "**`zahnreihe`** bekam die Kieferkanten von hinten nach vorn statt umgekehrt; die Längenliste stand damit spiegelverkehrt auf dem Kiefer. Dazu Kronen von 34 auf 20 Einheiten (bei „Sue“ ragen aus 150 cm Schädel rund 12 cm Krone), Platzierung nach Bogenlänge statt nach Stützpunkt-Index, Zahnfleisch als gefülltes Band ZULETZT über Wurzel und Kronenfuß.",
+      "**Drei Fehler in `vogel_bau`, die alle Vögel auf einmal trafen:** der Schwanz landete als EIN Pfad im fernen `umriss()` und wurde zu einer Fläche mit einem Rand (Paddel statt Fächer); das Streiflicht stand fest auf 4 Einheiten Breite — auf einer 15 Einheiten hohen Amsel ein weißer Balken quer über die Flanke; und `_heller()` mischt zu Weiß, was auf `#1a1714` schon bei einem Achtel ein deutliches Grau ergibt.",
+      "**`getBBox()` rechnet die Beschneidung nicht mit** und misst eine gedrehte Ellipse als das gedrehte Rechteck um sie herum. Ein weicher Fleck, der über den Umriss hinausragt, vergrößert das gemessene Maß, ohne dass im Bild etwas größer wird — das Tier wird danach überall zu klein gezeichnet. Steht jetzt als Warnung in `ANLEITUNG-TIERBAU.md`.",
+      "**Der Regen stockte**, weil der Startversatz fest bei bis zu 1,7 s lag, die drei Ebenen aber mit 0,62 / 0,88 / 1,25 s umlaufen: der Versatz faltete sich mehrfach um den Umlauf und schob die Tropfen zu Pulks. Der Versatz wird jetzt aus der Umlaufzeit derselben Ebene gerechnet. Gemessen: über 120 Proben in 3 s durchgehend 17–22 Tropfen sichtbar, keine leere Probe.",
+      "**Eine CSS-`transform`-Animation ersetzt das SVG-`transform`-Attribut.** Spiegelung und Flügelschlag am selben Element löschten sich deshalb aus, und beide Flügel lagen auf einer Seite. Jetzt außen spiegeln, innen schlagen.",
+      "**Ein Design war zwei Pixel höher als alle anderen** (2 px Rand statt 1 px am gewählten Reiter): beim Wechsel rutschte die ganze Seite darunter. Nachgemessen über 67 Designs × 5 Plattformen × 9 Breiten — die Live-Zeile ist überall 12 px, eine Schriftvergrößerung gab es nie; was größer WIRKTE, war ein Textsaum auf der TikTok-Zeile. Der ist weg, Twitch ist als Farbe dazugekommen, und 99 von 335 Farbkombinationen lagen unter 3:1 Kontrast — jetzt keine.",
+      "**Ausspracheerkennung, drei Stufen:** Azure-Lautbewertung, wenn ein Schlüssel da ist; sonst MFCC + Dynamic Time Warping im Browser; sonst die alte Verständlichkeitsprüfung. Die zweite Stufe ist geeicht und die Messwerte stehen in `hoerprobe/MESSUNG.md`: dieselbe Aufnahme 100 %, dieselben Wörter zweite Darbietung 75 %, andere Wörter 0 %. Wichtig: gleiche Stimme/andere Wörter (4,41) und andere Stimme/andere Wörter (4,60) liegen nur 0,19 auseinander — gemessen wird Inhalt, nicht Stimme.",
+      "**`noiseSuppression` und `autoGainControl` schneiden die Reibelaute weg**, um die es bei der Aussprache geht. Beide aus, Echounterdrückung bleibt an. Gemessen über die ganze Kette: gleiche Tonquelle 57 % auf 65 %, andere 7 % auf 4 %.",
+      "**Die Ersatzschreibung für die Aussprache ist ABGESCHALTET, und zwar nach Messung.** Hypothese war, dass „Bonbon“ als „Bongbong“ geschrieben besser klingt. Beide Fassungen wurden erzeugt und von einer Spracherkennung zurückgeschrieben, die den Eingabetext nicht sieht: bei allen zehn Prüfwörtern war die ROHE Schreibung richtig, die Ersatzschreibung verschlechterte sieben und verbesserte keines. Die Tabelle mit 80 Regeln steht bereit, alle Gruppen auf `an: false`.",
+      "**Zeichenzählung berichtigt:** das Wortfeld heißt `word`, nicht `de` — `de` ist die Erklärung. Wortschatz 40 691 Einträge / 522 249 Zeichen, Beispielsätze 30 973 / 1 461 967, zusammen 1 984 216. Aussortiert: 9 708 Grammatik-Notizen (630 010 Zeichen) und die Lesetexte „Es war einmal in Deutschland“ (2 196 Texte / 547 102 Zeichen).",
+      "**Hier läuft keine freie Stimme.** `piper-tts`, `piper-phonemize`, Coqui `TTS`, `kokoro`, `mimic3` sind im Paketspiegel nicht vorhanden, `espeak-ng` per apt gibt 403, huggingface und raw.githubusercontent sind gesperrt, Chromium hat keine `speechSynthesis`-Stimme. Nur `onnxruntime` liess sich installieren — ohne Modell nutzlos.",
+      "**Der Jitsi-Rahmen überlebt den Ansichtswechsel nachweislich:** durch 5 Ansichten und 2 Unteransichten geblättert, `__JITSI_BAUTEN === 1`, derselbe iframe per Marke geprüft, Elternknoten bleibt `BODY`, `display` nie `none` — aus- und eingeblendet wird über `transform`, weil `display:none` Jitsi das Bild abstellt.",
+      "Stand: 166 Szenen, 2327 Teile, 96 Zeichnungen. `pruef-pfade.py` 0 Fehler, `pruef-stadt.py` 183 Verknüpfungen / 0 ins Leere / 0 unerreichbar, Tierprüfung 106 Tiere alle am richtigen Platz, Seitenaufruf 0 echte JS-Fehler.",
+    ],
     "174": [
       "**Drei Fehler, die jede Figur verdorben haben — das war die eigentliche Ursache, nicht die Zeichnung.** 1) `_fleck()` benutzte `currentColor` in einem Verlaufsstopp. Der Browser loest das am VERLAUFS-Element in `<defs>` auf, und dort ist es Schwarz: jedes Licht auf Wange, Brustbein, Schulter und Knie war ein schwarzer Schmierfleck. Jetzt ein Verlauf je Farbe. 2) Der Kopf lag im `umriss()`-Formensatz als `<g transform=...>`; der Figurenverlauf ist `userSpaceOnUse`, also verschob das `transform` auch den Verlauf — der Kopf bekam eine andere Stelle des Tonwertbogens und stand als helle Platte mit Naht am Hals. Die Kopfformen werden jetzt gerechnet statt transformiert. 3) `figur()` lieferte die Verlaufs-Defs nur unterhalb voller Feinheit mit; in den Szenen zeigte jeder weiche Schatten ins Leere.",
       "**Kennungskollision:** `_FIG_LICHT` hiess `fl3`, `fl7` — genauso wie die Verlaeufe von `szenen_kit.formlicht()`. In jeder Szene mit mehreren Figuren bekam jede Figur ab der zweiten einen fremden Verlauf als Fuellung. Jetzt `km<N>`.",
@@ -37467,6 +39919,27 @@ An einem Morgen lief ein kleiner Fuchs los…
                kontrast: Number(((hoch + 0.05) / (tief + 0.05)).toFixed(2)) };
     };
     window.__niederschlag = (art) => { niederschlagZeichnen(art); return document.querySelectorAll("#niederschlagSchicht > *").length; };
+    /* Zum Nachsehen: eine Wetterlage, wahlweise Nacht und wahlweise
+       eine Mondphase (0 bis 1) erzwingen.
+       __wetter("regen"), __wetter("nacht"), __wetter("nacht", true, 0.5). */
+    window.__wetter = (lage, nacht, phase) => {
+      wetterLage = lage || null;
+      if (typeof nacht === "boolean") wetterIstNacht = nacht;
+      if (lage === "nacht") { wetterLage = "klar"; wetterIstNacht = true; }
+      if (typeof phase === "number") {
+        /* Der Bezugs-Neumond wird so weit zurückverlegt, dass heute
+           genau die gewünschte Phase herauskommt. */
+        mondBezugUeberschreiben(Date.now() - phase * SYNODISCHER_MONAT * 86400000);
+      }
+      wetterSzeneZeichnen(true);
+      return { szene: niederschlagArt, nacht: wetterIstNacht,
+               phase: Number(mondPhase().toFixed(3)), mond: mondName(mondPhase()),
+               teile: document.querySelectorAll("#niederschlagSchicht *").length };
+    };
+    /* Das Osterei von Hand auslösen — im Betrieb kommt es nur alle elf
+       bis vierundzwanzig Minuten, das wäre zum Ansehen unbrauchbar.
+       __gast("vogel"), __gast("falter"), __gast("vogel", 3000). */
+    window.__gast = (art, dauer) => gastFliegen(art, dauer);
     window.__liveSetzen = (pf) => { liveStand = pf ? { plattform: pf, name: "Alex" } : null; liveGeladen = Date.now(); liveZeichenZeichnen(); tickerNeuErzwingen(); return updateTicker(); };
     /* Wie viele Wörter aus einem Text kennt das Wörterbuch wirklich —
        gemessen mit derselben Nachschlagelogik wie im Sammelmodus,

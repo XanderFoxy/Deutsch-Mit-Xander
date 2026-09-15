@@ -2252,37 +2252,148 @@ const Backend = (function () {
     demo.challenges = demo.challenges.filter((c) => !(c.id === challengeId && c.from === demo.user.email && c.status === "pending"));
   }
 
+  /* ============================================================
+     HERAUSFORDERUNGEN, DIE FÜR IMMER HÄNGEN BLEIBEN
+     ------------------------------------------------------------
+     GEMELDET: „Herausforderungs-Anfragen, auch wenn ich sie schon
+     angenommen habe und sie reagieren nicht — das ist nämlich oft der
+     Fall —, … Sie hängen und bleiben noch da, und ich kriege immer
+     wieder Benachrichtigungen für diese alten Spiele."
+
+     WO DIE URSACHE LIEGT: eine Einladung wird erst dann „completed",
+     wenn BEIDE Seiten ein Ergebnis eingetragen haben (siehe
+     submitChallengeResult). Nimmt man an und der Gegner spielt nie,
+     bleibt die Zeile auf „pending" stehen — und damit bis in alle
+     Ewigkeit in der Liste „incoming", aus der auch der
+     Benachrichtigungszähler gespeist wird. Annehmen allein ändert am
+     Stand in der Datenbank nichts.
+
+     Zwei Auswege, und beide fassen ausschließlich die EMPFANGENE
+     Seite an (to_user = ich). Die eigenen, noch wartenden
+     Herausforderungen bleiben davon unberührt:
+
+     1. Von Hand entfernen — entferneEmpfangeneChallenge() setzt den
+        Stand auf „entfernt". Die Zeile verschwindet aus der Liste und
+        meldet sich nie wieder.
+     2. Von selbst ablaufen — hat seit CHALLENGE_FRIST_TAGE Tagen
+        niemand reagiert, gilt die Einladung als abgelaufen. Das wird
+        hier nur GERECHNET und nicht in die Datenbank geschrieben:
+        dadurch hören die Benachrichtigungen sofort auf, auch wenn das
+        Schreiben gerade gar nicht erlaubt oder möglich ist.
+     ============================================================ */
+  const CHALLENGE_FRIST_TAGE = 14;
+  function challengeFristTage() { return CHALLENGE_FRIST_TAGE; }
+  /* Das Alter einer Einladung in Tagen. Fehlt der Zeitstempel (sehr
+     alte Demo-Einträge), gilt sie als frisch — lieber einmal zu viel
+     anzeigen als etwas Gültiges wegräumen. */
+  function challengeAlterTage(c) {
+    const roh = c && (c.createdAt || c.created_at);
+    if (!roh) return 0;
+    const t = new Date(roh).getTime();
+    if (!isFinite(t)) return 0;
+    return (Date.now() - t) / 86400000;
+  }
+  function challengeAbgelaufen(c) {
+    if (!c || c.status === "completed" || c.status === "entfernt") return false;
+    return challengeAlterTage(c) > CHALLENGE_FRIST_TAGE;
+  }
+
   async function getMyChallenges() {
-    if (!demo.user) return { incoming: [], outgoing: [] };
+    if (!demo.user) return { incoming: [], incomingAlle: [], outgoing: [] };
     if (client) {
       const { data, error } = await client.from("challenges").select("*").or(`from_user.eq.${myId()},to_user.eq.${myId()}`);
-      if (error || !data) return { incoming: [], outgoing: [] };
+      if (error || !data) return { incoming: [], incomingAlle: [], outgoing: [] };
       const ids = [...new Set(data.flatMap((c) => [c.from_user, c.to_user]))];
       const names = await namesFor(ids);
-      const withNames = (c) => ({
-        id: c.id, from: c.from_user, to: c.to_user, categories: c.categories, status: c.status, winner: c.winner,
-        // Die mitgereiste Wortliste (falls die Spalte da ist und eine
-        // Liste angehängt war) — damit beide mit denselben Wörtern üben.
-        extra: c.extra || null,
-        fromResult: c.from_result, toResult: c.to_result,
-        fromName: (names[c.from_user] && names[c.from_user].name) || c.from_user,
-        toName: (names[c.to_user] && names[c.to_user].name) || c.to_user,
-      });
+      const withNames = (c) => {
+        const fertig = {
+          id: c.id, from: c.from_user, to: c.to_user, categories: c.categories, status: c.status, winner: c.winner,
+          // Die mitgereiste Wortliste (falls die Spalte da ist und eine
+          // Liste angehängt war) — damit beide mit denselben Wörtern üben.
+          extra: c.extra || null,
+          fromResult: c.from_result, toResult: c.to_result,
+          // Der Zeitstempel wird jetzt mitgereicht: ohne ihn lässt sich
+          // gar nicht feststellen, welche Einladung längst tot ist.
+          createdAt: c.created_at || null,
+          fromName: (names[c.from_user] && names[c.from_user].name) || c.from_user,
+          toName: (names[c.to_user] && names[c.to_user].name) || c.to_user,
+        };
+        fertig.abgelaufen = challengeAbgelaufen(fertig);
+        return fertig;
+      };
+      /* „entfernt" ist der Stand, den die empfangende Seite selbst
+         setzt. Solche Zeilen tauchen bei ihr nicht mehr auf — die
+         absendende Seite sieht sie weiterhin, dort steht dann aber
+         ehrlich, dass das Gegenüber sie weggeräumt hat. */
+      const eingehend = data
+        .filter((c) => c.to_user === myId() && c.status !== "entfernt")
+        .map(withNames)
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
       return {
-        incoming: data.filter((c) => c.to_user === myId() && c.status === "pending" && !c.to_result).map(withNames),
+        // Nur diese Liste treibt Zähler und Benachrichtigungen an —
+        // abgelaufene und weggeräumte melden sich also nicht mehr.
+        incoming: eingehend.filter((c) => c.status === "pending" && !c.toResult && !c.abgelaufen),
+        // Alles Empfangene, egal in welchem Stand — daraus baut die
+        // Oberfläche die Liste mit dem „Entfernen"-Knopf.
+        incomingAlle: eingehend,
         outgoing: data.filter((c) => c.from_user === myId()).map(withNames),
       };
     }
     const me = demo.user.email;
-    const withNames = (c) => ({
-      ...c,
-      fromName: (demo.users[c.from] && demo.users[c.from].profile.name) || c.from,
-      toName: (demo.users[c.to] && demo.users[c.to].profile.name) || c.to,
-    });
+    const withNames = (c) => {
+      const fertig = {
+        ...c,
+        fromName: (demo.users[c.from] && demo.users[c.from].profile.name) || c.from,
+        toName: (demo.users[c.to] && demo.users[c.to].profile.name) || c.to,
+      };
+      fertig.abgelaufen = challengeAbgelaufen(fertig);
+      return fertig;
+    };
+    const eingehend = demo.challenges
+      .filter((c) => c.to === me && c.status !== "entfernt")
+      .map(withNames)
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
     return {
-      incoming: demo.challenges.filter((c) => c.to === me && c.status === "pending" && !c.toResult).map(withNames),
+      incoming: eingehend.filter((c) => c.status === "pending" && !c.toResult && !c.abgelaufen),
+      incomingAlle: eingehend,
       outgoing: demo.challenges.filter((c) => c.from === me).map(withNames),
     };
+  }
+
+  /* Eine EMPFANGENE Herausforderung wegräumen — in jedem Stand, auch
+     eine längst angenommene, die nie zu Ende gespielt wurde.
+     Die Einschränkung eq("to_user", myId()) ist die eigentliche
+     Sicherung: damit kann dieser Weg niemals eine selbst verschickte
+     Einladung treffen (die gehört in cancelChallenge). */
+  async function entferneEmpfangeneChallenge(challengeId) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("challenges")
+        .update({ status: "entfernt" }).eq("id", challengeId).eq("to_user", myId());
+      if (!error) return true;
+      /* Darf die Empfängerseite die Zeile nicht ändern (strengere
+         Regeln in der Datenbank), wird ersatzweise gelöscht. Eins von
+         beidem geht praktisch immer — und nur so verschwindet die
+         Zeile wirklich, statt still liegen zu bleiben. */
+      const { error: e2 } = await client.from("challenges").delete().eq("id", challengeId).eq("to_user", myId());
+      if (e2) throw new Error(friendlyDbError(e2.message));
+      return true;
+    }
+    const c = demo.challenges.find((x) => x.id === challengeId && x.to === demo.user.email);
+    if (c) c.status = "entfernt";
+    return true;
+  }
+
+  /* Alles auf einmal wegräumen, worauf seit über 14 Tagen niemand
+     reagiert hat — wieder ausschließlich Empfangenes. */
+  async function entferneAbgelaufeneChallenges() {
+    const { incomingAlle } = await getMyChallenges();
+    const alte = (incomingAlle || []).filter((c) => c.abgelaufen);
+    let weg = 0;
+    for (const c of alte) {
+      try { await entferneEmpfangeneChallenge(c.id); weg++; } catch (e) { console.warn(e); }
+    }
+    return weg;
   }
 
   /* ============================================================
@@ -3895,6 +4006,9 @@ const Backend = (function () {
     getFriends,
     createChallenge, challengeListeMoeglich,
     cancelChallenge,
+    entferneEmpfangeneChallenge,
+    entferneAbgelaufeneChallenges,
+    challengeFristTage,
     getMyChallenges,
     submitChallengeResult,
     addActivity,
