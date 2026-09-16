@@ -108,101 +108,22 @@ window.AusspracheP = (function () {
       };
       rec.start();
 
-      /* --- Mithören, WIE LAUT es gerade ist ---
-         Zwei Dinge hängen daran:
-           * die Aussteuerungsanzeige, damit man sieht, dass das
-             Mikrofon wirklich etwas hört (sonst spricht man gegen
-             ein stummes Gerät und wundert sich über die Note);
-           * das Erkennen der Sprechpause: wer fertig ist, soll
-             nicht noch einen Knopf suchen müssen.
-         Das läuft an der Aufnahme VORBEI — der Analyser hängt am
-         selben Strom, verändert ihn aber nicht. Die Aufnahme, die
-         zu Azure geht, ist unangetastet. */
-      var pegelJetzt = 0;
-      var lauschKontext = null, lauschUhr = null;
-      var hatGesprochen = false;
-      var stillSeit = 0;
-
-      var STILLE_MS = typeof o.stilleMs === "number" ? o.stilleMs : 900;
-      var MINDESTENS_MS = typeof o.mindestdauerMs === "number" ? o.mindestdauerMs : 700;
-      /* Schwelle relativ zur lautesten Stelle: ein leises Mikrofon
-         und ein lautes Zimmer brauchen verschiedene Grenzen, und
-         ein fester Wert wäre auf einem der beiden Geräte falsch. */
-      var lautestes = 0;
-
-      function lauschenStarten() {
-        var K = window.AudioContext || window.webkitAudioContext;
-        if (!K) return;
-        try {
-          lauschKontext = new K();
-          var quelle = lauschKontext.createMediaStreamSource(strom);
-          var messer = lauschKontext.createAnalyser();
-          messer.fftSize = 1024;
-          quelle.connect(messer);
-          var feld = new Uint8Array(messer.fftSize);
-          lauschUhr = setInterval(function () {
-            if (!griff.laeuft) return;
-            messer.getByteTimeDomainData(feld);
-            var summe = 0;
-            for (var i = 0; i < feld.length; i++) {
-              var v = (feld[i] - 128) / 128;
-              summe += v * v;
-            }
-            var pegel = Math.sqrt(summe / feld.length);
-            pegelJetzt = pegel;
-            if (pegel > lautestes) lautestes = pegel;
-            if (o.beiPegel) { try { o.beiPegel(pegel); } catch (e) {} }
-
-            /* Erst ab hier gilt jemand als „spricht gerade":
-               deutlich über dem Grundrauschen UND über einem
-               absoluten Mindestwert, damit ein stilles Zimmer
-               nicht sein eigenes Rauschen für Sprache hält. */
-            var grenze = Math.max(0.035, lautestes * 0.22);
-            var jetzt = Date.now();
-            if (pegel > grenze) {
-              hatGesprochen = true;
-              stillSeit = 0;
-            } else if (hatGesprochen) {
-              if (!stillSeit) stillSeit = jetzt;
-              else if (jetzt - stillSeit >= STILLE_MS && jetzt - start >= MINDESTENS_MS) {
-                /* Fertig gesprochen. Einmal melden, dann nie wieder. */
-                stillSeit = 0;
-                hatGesprochen = false;
-                if (o.beiStille) { try { o.beiStille(); } catch (e) {} }
-              }
-            }
-          }, 60);
-        } catch (e) { /* ohne Aussteuerung geht es auch, nur ohne Komfort */ }
-      }
-      function lauschenBeenden() {
-        if (lauschUhr) { clearInterval(lauschUhr); lauschUhr = null; }
-        if (lauschKontext) { try { lauschKontext.close(); } catch (e) {} lauschKontext = null; }
-      }
-
       var griff = {
         laeuft: true,
-        pegel: function () { return pegelJetzt; },
-        /* Hat überhaupt jemand gesprochen? Der automatische Ablauf
-           soll bei völliger Stille nicht so tun, als hätte er
-           etwas gemessen. */
-        etwasGehoert: function () { return lautestes > 0.035; },
         stoppen: function () {
           return new Promise(function (loesen) {
-            lauschenBeenden();
             fertigMelden = loesen;
             griff.laeuft = false;
             try { rec.stop(); } catch (e) { loesen({ fehler: "stopp-fehlgeschlagen" }); }
           });
         },
         abbrechen: function () {
-          lauschenBeenden();
           abgebrochen = true;
           griff.laeuft = false;
           try { rec.stop(); } catch (e) {}
           try { strom.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
         }
       };
-      if (o.beiStille || o.beiPegel) lauschenStarten();
       /* Notbremse: wer den Stopp-Knopf nicht findet, soll nicht
          eine Stunde lang aufnehmen. */
       uhr = setTimeout(function () {
@@ -830,38 +751,6 @@ window.AusspracheP = (function () {
     return undefined;
   }
 
-  /* --- Die Noten herausholen, EGAL in welcher Schreibweise ---
-     DAS war der Grund für „0 % Aussprache".
-     Azure legt die Noten je nach Fassung des Dienstes an zwei
-     verschiedene Stellen:
-
-       A) im Unterobjekt:  NBest[0].PronunciationAssessment.PronScore
-       B) flach daneben:   NBest[0].PronScore
-
-     Gelesen wurde nur A. Kam eine Antwort in Schreibweise B —
-     und das ist die, die die REST-Schnittstelle in mehreren
-     Regionen zurückgibt — war das Unterobjekt leer. Der Wert
-     landete als „nichts" in der Anzeige und wurde dort zu einer
-     0. Nicht Azure hat 0 gemeldet: es stand gar nichts da.
-
-     Darum wird ab jetzt an BEIDEN Stellen nachgesehen, und zwar
-     auf jeder Ebene — Gesamtnote, Wort, Silbe, Laut. */
-  function note(o, name) {
-    if (!o) return null;
-    var unter = hole(o, "PronunciationAssessment");
-    var v = unter ? hole(unter, name) : undefined;
-    if (v === undefined || v === null) v = hole(o, name);
-    return zahl(v);
-  }
-  /* Textfelder (ErrorType) liegen genauso mal hier, mal dort. */
-  function feld(o, name) {
-    if (!o) return undefined;
-    var unter = hole(o, "PronunciationAssessment");
-    var v = unter ? hole(unter, name) : undefined;
-    if (v === undefined || v === null) v = hole(o, name);
-    return v;
-  }
-
   function azureAuswerten(j, zielText) {
     if (hole(j, "RecognitionStatus") === "NoMatch" || hole(j, "RecognitionStatus") === "InitialSilenceTimeout") {
       return { fehler: "nichts-verstanden" };
@@ -869,22 +758,25 @@ window.AusspracheP = (function () {
     var nbest = hole(j, "NBest");
     if (!nbest || !nbest.length) return { fehler: "nichts-verstanden" };
     var b = nbest[0];
+    var pa = hole(b, "PronunciationAssessment") || {};
     var woerter = (hole(b, "Words") || []).map(function (w) {
+      var wpa = hole(w, "PronunciationAssessment") || {};
       var silben = (hole(w, "Syllables") || []).map(function (sy) {
+        var spa = hole(sy, "PronunciationAssessment") || {};
         return {
           silbe: hole(sy, "Syllable") || "",
           gradient: hole(sy, "Grapheme") || "",
-          note: note(sy, "AccuracyScore")
+          note: zahl(hole(spa, "AccuracyScore"))
         };
       });
       var laute = (hole(w, "Phonemes") || []).map(function (ph) {
-        var ppa = hole(ph, "PronunciationAssessment") || ph;
-        var andere = (hole(ppa, "NBestPhonemes") || hole(ph, "NBestPhonemes") || []).map(function (n) {
+        var ppa = hole(ph, "PronunciationAssessment") || {};
+        var andere = (hole(ppa, "NBestPhonemes") || []).map(function (n) {
           return { laut: hole(n, "Phoneme") || "", note: zahl(hole(n, "Score")) };
         });
         return {
           laut: hole(ph, "Phoneme") || "",
-          note: note(ph, "AccuracyScore"),
+          note: zahl(hole(ppa, "AccuracyScore")),
           /* Das ist der Kern: Azure sagt nicht nur „schlecht",
              sondern welchen Laut es STATTDESSEN gehört hat.
              Daraus wird „dein ö klang wie ein o". */
@@ -893,58 +785,22 @@ window.AusspracheP = (function () {
       });
       return {
         wort: hole(w, "Word") || "",
-        note: note(w, "AccuracyScore"),
-        fehlerart: feld(w, "ErrorType") || "None",
+        note: zahl(hole(wpa, "AccuracyScore")),
+        fehlerart: hole(wpa, "ErrorType") || "None",
         silben: silben,
         laute: laute
       };
     });
-
-    var gesamt = note(b, "PronScore");
-    var genauigkeit = note(b, "AccuracyScore");
-    var fluessigkeit = note(b, "FluencyScore");
-    var vollstaendigkeit = note(b, "CompletenessScore");
-
-    /* Zweites Auffangnetz: steht die Gesamtnote auch flach nicht
-       da, aber die Wörter haben Noten, wird sie daraus gemittelt.
-       Lieber ein aus den Wortnoten gerechneter Wert mit Hinweis
-       als eine erfundene 0. */
-    var ausWoertern = mittelNote(woerter);
-    if (gesamt === null) gesamt = genauigkeit !== null ? genauigkeit : ausWoertern;
-    if (genauigkeit === null) genauigkeit = ausWoertern;
-
-    /* Und wenn wirklich NIRGENDS eine Zahl steht: dann ist das
-       keine 0, sondern eine Antwort ohne Bewertung. Das muss die
-       Oberfläche auch so sagen dürfen. */
-    if (gesamt === null) {
-      return {
-        fehler: "keine-bewertung",
-        erkannt: hole(b, "Display") || hole(b, "Lexical") || "",
-        ziel: zielText || ""
-      };
-    }
-
     return {
       quelle: "azure",
-      prozent: gesamt,
-      genauigkeit: genauigkeit,
-      fluessigkeit: fluessigkeit,
-      vollstaendigkeit: vollstaendigkeit,
+      prozent: zahl(hole(pa, "PronScore")),
+      genauigkeit: zahl(hole(pa, "AccuracyScore")),
+      fluessigkeit: zahl(hole(pa, "FluencyScore")),
+      vollstaendigkeit: zahl(hole(pa, "CompletenessScore")),
       erkannt: hole(b, "Display") || hole(b, "Lexical") || "",
       ziel: zielText || "",
       woerter: woerter
     };
-  }
-
-  /* Mittel über die Wortnoten — nur über die, die wirklich eine
-     Zahl haben. Ein Wort ohne Note darf den Schnitt nicht nach
-     unten ziehen, als wäre es eine 0. */
-  function mittelNote(woerter) {
-    var summe = 0, zaehler = 0;
-    (woerter || []).forEach(function (w) {
-      if (typeof w.note === "number" && isFinite(w.note)) { summe += w.note; zaehler++; }
-    });
-    return zaehler ? Math.round(summe / zaehler) : null;
   }
 
   function zahl(v) {

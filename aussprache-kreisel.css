@@ -1,0 +1,229 @@
+/* =========================================================
+   KREISELANZEIGE + AUTOMATISCHER ABLAUF — Aussehen
+   ---------------------------------------------------------
+   Gehört zu aussprache-kreisel.js und zum Aussprache-Trainer.
+   Die Farben kommen aus den Tokens der Seite, damit die Anzeige
+   in jedem Thema mitzieht; nur die Ampelfarben des Rings stehen
+   fest — die kommen aus dem Javascript, weil dieselbe Note an
+   jeder Stelle dieselbe Farbe haben muss.
+   ========================================================= */
+
+/* ---------- Der Ring ---------- */
+.kreisel {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+.kreisel svg { display: block; overflow: visible; }
+
+.kreisel-bahn { stroke: rgba(122, 115, 100, 0.18); }
+.kreisel-marke { stroke: rgba(122, 115, 100, 0.55); }
+
+/* Der gefüllte Teil wächst hinein, statt zu springen. Dieselbe
+   Bewegung wie bei einer Tachonadel: man sieht, WOHIN es geht. */
+.kreisel-fuellung {
+  transition: stroke-dashoffset 700ms cubic-bezier(0.22, 1, 0.36, 1),
+              stroke 500ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kreisel-fuellung { transition: none; }
+}
+
+.kreisel-mitte {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+.kreisel-zahl {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.kreisel-prozentzeichen { font-size: 0.5em; margin-left: 1px; font-weight: 700; }
+.kreisel-noch { color: var(--cream-200); }
+.kreisel-schild {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cream-200);
+  font-weight: 700;
+  max-width: 82%;
+}
+.kreisel-klein .kreisel-schild { display: none; }
+
+/* Geschafft: ein kurzer, ruhiger Puls. Kein Konfetti — das Wort
+   ist ja noch nicht die Runde. */
+.kreisel-geschafft .kreisel-fuellung { filter: drop-shadow(0 0 6px rgba(79, 168, 142, 0.55)); }
+.kreisel-geschafft { animation: kreiselGeschafft 620ms ease-out 1; }
+@keyframes kreiselGeschafft {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+/* Während gemessen wird, dreht sich nichts — es atmet nur. */
+.kreisel-misst .kreisel-bahn { animation: kreiselAtmen 1.4s ease-in-out infinite; }
+@keyframes kreiselAtmen {
+  0%, 100% { stroke: rgba(122, 115, 100, 0.18); }
+  50%      { stroke: rgba(255, 138, 101, 0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kreisel-geschafft, .kreisel-misst .kreisel-bahn { animation: none; }
+}
+
+/* ---------- Der Block um den Ring herum ---------- */
+.kreisel-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.kreisel-urteil {
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--cream-50);
+  max-width: 34ch;
+  margin: 0;
+}
+.kreisel-herkunft {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cream-200);
+  font-weight: 700;
+}
+
+/* ---------- Reihe kleiner Kreisel (Ergebnisschirm) ---------- */
+.kreisel-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin: 10px 0;
+}
+.kreisel-reihe-eintrag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 104px;
+}
+.kreisel-reihe-wort {
+  font-size: 0.72rem;
+  color: var(--cream-200);
+  text-align: center;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Aussteuerung: sieht man, dass das Mikrofon hört? ----------
+   Ohne diese Anzeige spricht man gegen ein stummes Gerät und
+   sucht den Fehler bei sich. */
+.ausspr-pegel {
+  width: min(260px, 80%);
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(122, 115, 100, 0.18);
+  overflow: hidden;
+  margin: 2px auto;
+}
+.ausspr-pegel-balken {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal-400), var(--amber-400));
+  transition: width 90ms linear;
+}
+.ausspr-pegel-still .ausspr-pegel-balken { background: rgba(232, 95, 111, 0.6); }
+
+/* ---------- Die Statuszeile des automatischen Ablaufs ---------- */
+.ausspr-lauf {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin: 6px 0 2px;
+  min-height: 1.4em;
+  color: var(--cream-50);
+}
+.ausspr-lauf-hoeren  { color: var(--teal-400); }
+.ausspr-lauf-sprich  { color: var(--amber-400); }
+.ausspr-lauf-rechnet { color: var(--cream-200); }
+
+/* Der Countdown-Streifen bis zum nächsten Wort. Damit das
+   „es geht gleich weiter" sichtbar ist und nicht überrascht. */
+.ausspr-weiterbalken {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(79, 168, 142, 0.25);
+  overflow: hidden;
+  margin: 8px auto 0;
+  width: min(280px, 86%);
+}
+.ausspr-weiterbalken > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--teal-400);
+  animation: ausprWeiter var(--weiter-dauer, 1400ms) linear forwards;
+}
+@keyframes ausprWeiter { from { width: 0%; } to { width: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .ausspr-weiterbalken > span { animation: none; width: 100%; }
+}
+
+/* ---------- Die Laut-Pellets: nur noch auf Wunsch ----------
+   „Ich möchte nicht diese komischen Pellets wie bei einer
+    HiFi-Anlage." — Sie sind nicht weg (bei einem schiefen Laut
+   sind sie die einzige Stelle, die WIRKLICH sagt, was los war),
+   aber sie sind zugeklappt. Wer sie will, klappt sie auf; das
+   merkt sich die Seite. */
+.ausspr-lupe {
+  margin-top: 10px;
+  border-top: 1px dashed rgba(122, 115, 100, 0.3);
+  padding-top: 8px;
+}
+.ausspr-lupe > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cream-200);
+  padding: 4px 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ausspr-lupe > summary::-webkit-details-marker { display: none; }
+.ausspr-lupe > summary::before { content: "▸"; transition: transform 160ms ease; }
+.ausspr-lupe[open] > summary::before { transform: rotate(90deg); }
+.ausspr-lupe > summary:hover { color: var(--cream-50); }
+
+/* Der eine Satz, der bei einem schiefen Laut WIRKLICH etwas sagt —
+   der steht auch ohne Aufklappen da. */
+.ausspr-hinweis-laut {
+  text-align: center;
+  font-size: 0.88rem;
+  margin: 4px 0 0;
+  color: var(--coral-400);
+  font-weight: 600;
+}
+
+/* ---------- Einstellzeile (automatisch an/aus, Schwelle) ---------- */
+.ausspr-automatik {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 2px;
+}
+.ausspr-automatik .empty-note { margin: 0; }

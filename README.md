@@ -489,3 +489,129 @@ create table if not exists community_tips (
 );
 alter table community_tips disable row level security;
 ```
+
+## 14. Aussprache-Trainer — Kreiselanzeige und automatischer Ablauf
+
+### Was sich geändert hat
+
+**Die Note steht jetzt in einem Ring**, nicht mehr in einem Balken: eine Prozentzahl in
+der Mitte, der Ring füllt sich von Rot über Bernstein nach Grün, und ein kleiner Strich
+auf dem Ring zeigt die Schwelle, ab der es weitergeht. Ohne diese Marke wäre die
+Prozentzahl eine Zahl ohne Ziel.
+
+**Es läuft von selbst.** Das Wort wird vorgesprochen, das Mikrofon geht an, und sobald
+jemand aufhört zu sprechen, wird ausgewertet — ohne Knopfdruck. Ab der eingestellten
+Schwelle (60 / 70 / 80 / 90 %, voreingestellt 80) geht es zum nächsten Wort; darunter
+kommt dasselbe Wort noch einmal. Nach drei erfolglosen Anläufen hört das Automatische
+auf und überlässt die Entscheidung dem Menschen — an einem Wort hängenzubleiben bringt
+niemandem etwas.
+
+Das Automatische lässt sich jederzeit abschalten (der Knopf steht unter der Anzeige, und
+die Einstellung wird gemerkt). Alle Knöpfe von früher funktionieren weiter.
+
+**Die Laut-Anzeige ("Laut für Laut") ist zugeklappt**, nicht weg. Sie ist die einzige
+Stelle, die wirklich sagt, WAS schiefging — aber sie soll nicht als Erstes ins Auge
+springen. Der eine wichtige Satz („dein ö klang wie ein o") steht auch ohne Aufklappen
+unter dem Ring.
+
+### Der Fehler, der „0 % Aussprache" verursacht hat
+
+Azure liefert die Noten je nach Fassung des Dienstes an zwei verschiedenen Stellen:
+
+```
+A)  NBest[0].PronunciationAssessment.PronScore     ← wurde gelesen
+B)  NBest[0].PronScore                             ← wurde NICHT gelesen
+```
+
+Kam eine Antwort in Schreibweise B, war das gesuchte Unterobjekt leer. Es stand also
+gar kein Wert da — in der Anzeige wurde daraus eine 0. Nicht Azure hat null gemeldet,
+es fehlte nur die Stelle zum Nachsehen.
+
+Jetzt wird an beiden Stellen nachgesehen, auf jeder Ebene (Gesamtnote, Wort, Silbe,
+Laut). Fehlt die Gesamtnote trotzdem, wird sie aus den Wortnoten gemittelt. Und steht
+wirklich nirgends eine Zahl, heißt das „keine Bewertung" — dann misst die App eine
+Stufe tiefer weiter, statt eine Null zu erfinden.
+
+**Einrichtung:** unverändert. Schlüssel und Region trägt der Betreiber weiterhin unter
+Profil → Einstellungen ein (Tarif F0 ist kostenlos). Ohne Schlüssel läuft alles wie
+bisher auf Stufe 2 oder 3.
+
+**Kein SQL nötig.** Am Aussprache-Trainer ändert sich nichts an der Datenbank.
+
+## 15. Live-Chat — acht runde Plätze mit Video und Chat
+
+### Was es ist
+
+Ein neuer Bereich unter **Wissen → 💬 Live-Chat**: acht runde Plätze (vier oben, vier
+darunter, durchnummeriert), mit dem Gesicht darin. Ein Platz angetippt zeigt ihn groß in
+einem runden Pop-up. Darunter ein ganz normaler Chat zum Schreiben. Ein Einladungslink
+holt andere in denselben Raum.
+
+Das **Klassenzimmer bleibt unverändert daneben bestehen.** Es geht einen anderen Weg
+(Jitsi) und kommt dadurch auch durch Netze, in denen Direktverbindungen gesperrt sind.
+Der Live-Chat ist der schöne Weg, das Klassenzimmer der sichere.
+
+### Warum das nicht im Klassenzimmer eingebaut werden konnte
+
+Das Klassenzimmer zeigt einen Jitsi-Rahmen — eine fremde Seite innerhalb unserer Seite.
+Was darin gezeichnet wird, gehört nicht uns: man kann es nicht in Kreise schneiden, nicht
+numerieren und keinen eigenen Chat daneben setzen. Der Browser lässt niemanden über diese
+Grenze greifen, und das ist auch richtig so. Für runde, anklickbare, numerierte Plätze
+müssen die Bilder in **eigenen** Videofeldern liegen — deshalb `livechat.js`.
+
+### Einrichtung in Supabase
+
+**Es ist nichts einzurichten.** Das ist keine Nachlässigkeit, sondern folgt aus dem
+Aufbau:
+
+* Ton und Bild gehen **direkt von Gerät zu Gerät** (WebRTC) und laufen überhaupt nicht
+  über Supabase.
+* Supabase überträgt nur den Zettelaustausch „so erreichst du mich" und die
+  Chat-Nachrichten — über **Realtime Broadcast**. Broadcast braucht keine Tabelle, keine
+  Spalte und keine RLS-Regel; es ist ein reiner Nachrichtenkanal über die schon
+  bestehende WebSocket-Verbindung.
+* Der Chat lebt deshalb, solange der Raum lebt. Wird er geschlossen, ist er weg. Das
+  steht auch in der Oberfläche, damit niemand glaubt, dort stünde später noch etwas.
+
+Voraussetzung ist nur, dass `supabase-config.js` ausgefüllt ist — das ist es bereits.
+Fehlt sie oder kann der Browser kein WebRTC, sagt der Bereich das in einem Satz und
+verweist aufs Klassenzimmer, statt leere Kreise zu zeigen.
+
+Wer den Chat **dauerhaft** speichern möchte (Verlauf nach dem Schließen), braucht dafür
+eine Tabelle. Das ist bewusst NICHT eingebaut — ein mitgeschriebenes Gespräch ist etwas
+anderes als ein flüchtiger Chat, und das sollte eine bewusste Entscheidung sein, keine
+Nebenwirkung. Falls gewünscht, wäre das der Ansatz:
+
+```sql
+-- NUR nötig, wenn der Chatverlauf dauerhaft gespeichert werden soll.
+create table if not exists livechat_nachrichten (
+  id uuid default gen_random_uuid() primary key,
+  raum text not null,
+  user_id uuid references auth.users,
+  autor text,
+  text text,
+  created_at timestamptz default now()
+);
+create index if not exists livechat_raum_idx on livechat_nachrichten (raum, created_at);
+alter table livechat_nachrichten enable row level security;
+
+-- Lesen und schreiben darf jeder, der den Raumnamen kennt — genau wie beim Raum selbst.
+create policy "livechat lesen"    on livechat_nachrichten for select using (true);
+create policy "livechat schreiben" on livechat_nachrichten for insert with check (true);
+```
+
+### Grenzen, ehrlich
+
+* **Acht Plätze sind die Obergrenze des Verfahrens, keine Zierde.** Bei „jeder mit
+  jedem" hat jeder so viele Verbindungen, wie andere da sind — bei acht Leuten sieben
+  pro Gerät. Das trägt ein normales Telefon; bei zwanzig wäre es vorbei. Wer als
+  Neunter kommt, kann mitlesen und schreiben.
+* **Hinter manchen Firmen- und Schulnetzen** kommt eine Direktverbindung nicht zustande
+  (dafür bräuchte es einen sogenannten TURN-Server, und der kostet Geld). Dann bleibt
+  das Klassenzimmer.
+* **Nichts wird aufgezeichnet.** Weder Ton noch Bild noch Chat.
+
+### Sicherungskopien
+
+Vor dem Umbau wurden Kopien aller angefassten Dateien abgelegt — siehe `sicherung/`.
+Dort steht auch, wie man den alten Stand zurückholt.
