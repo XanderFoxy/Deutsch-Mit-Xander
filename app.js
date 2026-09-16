@@ -32797,6 +32797,63 @@
      steht, ist eine Anzeige; was gespeichert wird, muss zum
      Wörterbuch passen, sonst findet es nie wieder jemand.
      ============================================================ */
+  /* ============================================================
+     DIE GUTE STIMME — AUCH IN DER BILDERWELT
+     ------------------------------------------------------------
+     GEMELDET: „Das Azure greift nicht bei den Bilderwelten. Würden
+     wir Credits verschwenden, wenn wir das als normale
+     Sprachausgabe benutzen?"
+
+     Nein. Nachgerechnet:
+       Azure F0 (kostenlos) = 500.000 Zeichen neuronale Stimme je Monat
+       ein deutsches Wort mit Artikel ≈ 15 Zeichen
+       → rund 33.000 Wörter im Monat
+     Ein sehr fleissiger Mensch tippt 200 Wörter am Tag an: 6.000
+     Wörter im Monat. Es passen also etwa fünf solcher Menschen in
+     das kostenlose Kontingent — und das OHNE die Sparmassnahmen
+     unten. Mit ihnen deutlich mehr.
+
+     DREI SPARMASSNAHMEN, die hier eingebaut sind:
+       1. Vorproduziertes zuerst. Wo es eine fertige Aufnahme gibt
+          (TonListe), kostet das Wort gar nichts.
+       2. Gemerkt für die Sitzung. Wer ein Wort dreimal antippt,
+          holt es einmal. Das ist in der Praxis der grösste Posten:
+          in der Bilderwelt tippt man dasselbe Ding gern mehrmals an.
+       3. Nur für Angemeldete. Die Funktion verlangt eine Anmeldung,
+          also kann niemand von aussen das Kontingent leeren.
+
+     Und wenn nichts davon geht, spricht wie bisher das Gerät. Die
+     Stimme ist dann schlechter, aber sie ist da.
+     ============================================================ */
+  let bwStimmeLaeuft = false;
+  async function bwSprich(text, sprache) {
+    const wort = String(text || "").trim();
+    if (!wort || bwStimmeLaeuft) return;
+    bwStimmeLaeuft = true;
+    try {
+      const puffer = (window.AusspracheP && AusspracheP.zentralDa())
+        ? await AusspracheP.zentralVorlesen({ text: wort, sprache: sprache === "it" ? "it-IT" : "de-DE" })
+        : null;
+      if (puffer) {
+        await new Promise((fertig) => {
+          const K = window.AudioContext || window.webkitAudioContext;
+          if (!K) { fertig(); return; }
+          const k = new K();
+          const q = k.createBufferSource();
+          q.buffer = puffer;
+          q.connect(k.destination);
+          q.onended = () => { try { k.close(); } catch (e) {} fertig(); };
+          q.start();
+        });
+      } else {
+        Core.speak(wort, sprache);
+      }
+    } catch (e) {
+      Core.speak(wort, sprache);
+    }
+    bwStimmeLaeuft = false;
+  }
+
   function bwMerkwort(t) {
     if (!t) return "";
     return imItalienischraum() ? (t.it || "") : (t.de || "");
@@ -32962,7 +33019,9 @@
     area.querySelectorAll("[data-bw-sprich]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
       const t = bwTeilNach(b.dataset.bwSprich);
-      if (t) Core.speak(bwWort(t), bwSprache());
+      /* Die neuronale Stimme, wo sie da ist — sonst das Gerät.
+         bwSprich() entscheidet das und merkt sich Geholtes. */
+      if (t) bwSprich(bwWort(t), bwSprache());
     }));
     area.querySelectorAll("[data-bw-sprich2]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -32986,13 +33045,17 @@
     if (bwFuehrungTimer) { clearTimeout(bwFuehrungTimer); bwFuehrungTimer = null; showToast("Vorlesen beendet."); return; }
     const teile = bwSzene.teile.slice();
     let i = 0;
-    const weiter = () => {
+    const weiter = async () => {
       if (i >= teile.length || !bwSzene) { bwFuehrungTimer = null; return; }
       const t = teile[i]; i += 1;
       bwGewaehlt = t; bwEntdeckt.add(t.id);
       renderBilderwelt();
-      Core.speak(bwWort(t), bwSprache());
-      bwFuehrungTimer = setTimeout(weiter, 2100);
+      /* Erst sprechen lassen, DANN die Pause zählen. Mit der
+         neuronalen Stimme dauert das Holen einen Augenblick; mit
+         einem festen Zeitgeber fielen die Wörter übereinander. */
+      await bwSprich(bwWort(t), bwSprache());
+      if (!bwSzene) { bwFuehrungTimer = null; return; }
+      bwFuehrungTimer = setTimeout(weiter, 900);
     };
     weiter();
   }
@@ -39755,8 +39818,15 @@ An einem Morgen lief ein kleiner Fuchs los…
      sich nichts.
      ============================================================ */
   function stimmenHinweisHtml(kurz) {
+    /* Der Hinweis muss sagen, was gerade STIMMT. Seit die neuronale
+       Stimme auch in der Bilderwelt spricht, wäre „die Stimme kommt
+       aus deinem Gerät" für Angemeldete schlicht falsch — und ein
+       Hinweis, der nicht stimmt, ist schlimmer als keiner. */
+    const gut = Boolean(window.AusspracheP && AusspracheP.zentralDa());
     if (kurz) {
-      return `<p class="stimmen-hinweis stimmen-hinweis-kurz">🔊 Die Stimme kommt aus deinem Gerät und betont manche Wörter falsch — die Silbenschrift darüber ist im Zweifel richtig, nicht die Stimme.</p>`;
+      return gut
+        ? `<p class="stimmen-hinweis stimmen-hinweis-kurz">🔊 Vorgelesen wird von einer neuronalen Stimme — dieselbe Technik, mit der Wörterbücher ihre Aussprachebeispiele erzeugen.</p>`
+        : `<p class="stimmen-hinweis stimmen-hinweis-kurz">🔊 Die Stimme kommt aus deinem Gerät und betont manche Wörter falsch — die Silbenschrift darüber ist im Zweifel richtig, nicht die Stimme. Angemeldet bekommst du die bessere Stimme.</p>`;
     }
     return `<details class="stimmen-hinweis">
       <summary>🔊 Warum klingt die Stimme manchmal falsch?</summary>

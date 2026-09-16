@@ -162,7 +162,15 @@ window.DMA_UMGANGSSPRACHE = {
   "der Blinddarm": { wort: "der Blinddarm", syl: "BLIND-darm", stil: "" },
   "die Menstruation": { wort: "die Periode", syl: "Pe-ri-O-de", stil: "ugs.", wo: "Ebenso üblich: „die Tage“ — „ich habe meine Tage“." },
   "die Klitoris": { wort: "der Kitzler", syl: "KITZ-ler", stil: "ugs.", wo: "„Kitzler“ ist das deutsche Wort, „Klitoris“ das lateinische Fachwort." },
-  "die Vagina": { wort: "die Scheide", syl: "SCHEI-de", stil: "", wo: "„Scheide“ ist das normale deutsche Wort; im Alltag sagen viele verhüllend „die Muschi“ (ugs.)." },
+  /* NACHGESCHÄRFT: „Wenn man allgemein auf die Vagina geht, kommt in
+     der Umgangssprache nicht die Muschi."
+     Stimmt — und der Einwand ist berechtigt, weil im Alltag genau das
+     passiert: die meisten sagen „Vagina" für den ganzen sichtbaren
+     Bereich, und das Alltagswort dazu ist „die Muschi". Streng
+     anatomisch ist die Vagina der Kanal und die Muschi das Äussere;
+     das steht im Hinweis, damit beides stimmt — die Erwartung des
+     Sprechers UND die Anatomie. */
+  "die Vagina": { wort: "die Muschi", syl: "MU-schi", stil: "ugs., verhüllend", wo: "Streng genommen ist „die Vagina“ (= die Scheide) der Kanal im Inneren und „die Muschi“ das, was man von außen sieht. Im Alltag wird beides durcheinander benutzt. Beim Arzt sagt man „die Scheide“." },
   /* KORRIGIERT nach einem berechtigten Einwand: „Ich weiß nicht, ob
      dieser Schlauch im Inneren so bezeichnet werden kann — ob man da
      überhaupt von der Muschi reden kann."
@@ -186,7 +194,15 @@ window.DMA_UMGANGSSPRACHE = {
      ohne anzuecken. Die anderen beiden stehen jetzt daneben, mit
      der Angabe, wo sie hingehören. Wer „Schwanz" sagt, wo „Pimmel"
      hingehört, merkt es sonst erst am Gesicht des Gegenübers. */
-  "der Penis": { wort: "der Pimmel", syl: "PIM-mel", stil: "ugs., familiär", wo: "Drei Stufen: „der Pullermann“ sagen kleine Kinder, „der Pimmel“ sagt man in der Familie und unter Freunden, „der Schwanz“ ist derb und gehört nicht in ein Gespräch mit Fremden. Beim Arzt heißt es „der Penis“." },
+  /* NACHGESCHÄRFT: „Bei Penis hätte ich eigentlich Schwanz erwartet."
+     Zweimal gefragt, also zweimal nachgedacht — und die Erwartung
+     stimmt: unter Erwachsenen ist „der Schwanz" das mit Abstand
+     häufigste Wort. Es ist derb, und genau DAS muss dabeistehen.
+     Ein Lernender, der es benutzt, ohne das zu wissen, tritt ins
+     Fettnäpfchen; einer, der es nie hört, versteht die halbe Serie
+     nicht. Beides wäre ein Fehler der Seite. */
+  "der Penis": { wort: "der Schwanz", syl: "SCHWANZ", stil: "derb", wo: "Das häufigste Wort unter Erwachsenen — aber derb: nicht beim Arzt, nicht bei Fremden, nicht vor Kindern. Dazwischen liegen „der Pimmel“ (in der Familie, unter Freunden) und „der Pullermann“ (Kindersprache). Beim Arzt heißt es „der Penis“." },
+  "der Pimmel": { wort: "der Penis", syl: "PE-nis", stil: "", wo: "Das Wort für den Arztbesuch und für alles Geschriebene." },
   "der Hoden": { wort: "die Eier", syl: "EI-er", stil: "salopp, meist Mehrzahl", wo: "Beim Arzt heißt es „der Hoden“." },
   "die Brustwarze": { wort: "der Nippel", syl: "NIP-pel", stil: "ugs." },
   "der Geschlechtsverkehr": { wort: "der Sex", syl: "SEX", stil: "ugs." },

@@ -31,6 +31,8 @@ window.DMA_WERKSTATT = {
 
   inArbeit: [
     { text: "Die Menschen in der Bilderwelt werden überarbeitet — Körperbau, Haltung und die Stellen, an denen Figuren neben statt in den Möbeln sitzen.", nurBetreiber: false },
+    { text: "Der Hund, der Welpe und der Tyrannosaurus bekommen wieder mehr Form und Schattierung.", nurBetreiber: false },
+    { text: "Im Aussprache-Trainer werden „noch einmal sprechen“ und „nebeneinander anhören“ sauber getrennt.", nurBetreiber: false },
     { text: "Blockierte Stellen in den Szenen: Dinge, die hinter einem Regalbrett liegen und sich nicht antippen lassen.", nurBetreiber: false },
     { text: "Die Wolken im Kopf der Seite: weicher, mit mehr Struktur — und ohne den Sprung beim Laden.", nurBetreiber: false },
     { text: "Bilder im Klassenzimmer-Chat verschicken, und Platzhalter-Bilder für alle ohne Kamera.", nurBetreiber: false },
@@ -38,6 +40,9 @@ window.DMA_WERKSTATT = {
   ],
 
   fertig: [
+    { datum: "2026-09-17", text: "🖼️ Die Geschlechtsteile werden jetzt auf den ORIGINALZEICHNUNGEN beschriftet — den detailreichen aus dem Übersichtsbild, nicht auf vereinfachten Nachbauten." },
+    { datum: "2026-09-17", text: "🔊 Die neuronale Stimme liest jetzt auch in der Bilderwelt vor, nicht nur im Aussprache-Trainer. Geholtes bleibt für die Sitzung im Speicher." },
+    { datum: "2026-09-17", text: "🗣️ „Der Schwanz“ und „die Muschi“ stehen jetzt da, wo man sie erwartet — mit der Angabe, wie derb sie sind und wo man sie besser nicht sagt." },
     { datum: "2026-09-17", text: "🎓 Das Klassenzimmer hat einen Hauptraum: einmal tippen, und du bist drin — kein Link nötig. Wer gerade da ist, siehst du sofort." },
     { datum: "2026-09-17", text: "🟢 Solange du im Klassenzimmer bist, bleibt unten ein Streifen sichtbar. Ein Tipp darauf bringt dich zurück — du kannst also in Ruhe weiterblättern." },
     { datum: "2026-09-17", text: "★ Gemerkte Wörter landen jetzt richtig in „Mein Wortschatz“. Bisher wurde die Alltagsform gespeichert („der Kitzler“ statt „die Klitoris“), und die Spiele fanden sie deshalb nie wieder." },

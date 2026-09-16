@@ -57,6 +57,44 @@ sie schon.
 """
 import json, io, math, os
 
+
+# =========================================================
+# DIE ORIGINALZEICHNUNGEN
+# ---------------------------------------------------------
+# GEMELDET: „Du hattest schon die alten Bilder für die
+# Geschlechtsorgane, und intern hast du neue erzeugt. Die
+# Vorschaubilder waren die eigentlichen Bilder, und die sollten
+# detailreich benannt sein."
+#
+# Das war ein berechtigter Einwand, und er ist in Zahlen
+# nachweisbar: die Originale in szenen/anatomie.js haben je
+# 48.000 bis 54.000 Zeichen SVG — mit Hauttönen, Schattierung,
+# einzeln gezeichneten Haaren. Meine eigenen Zeichnungen hatten
+# rund 4.000. Das ist kein Unterschied im Geschmack, das ist ein
+# Unterschied um den Faktor zwölf.
+#
+# Also andersherum: die Originalzeichnung wird die Kulisse, und
+# nur die BESCHRIFTUNG kommt von hier. Vergrössert auf das
+# Zweieinhalbfache, damit die Einzelteile gross genug sind, um
+# sie zu benennen.
+#
+# Wichtig dabei: benannt wird nur, was in der Zeichnung auch zu
+# SEHEN ist. Das Vorhautbändchen und der Nebenhoden sind von
+# vorn nicht sichtbar — ein Zeiger darauf zeigte ins Nichts.
+# Sie stehen im Innenbild, wo sie hingehören.
+# =========================================================
+def original(teil_id):
+    q = io.open(os.path.join("szenen", "anatomie.js"), encoding="utf-8").read()
+    d = json.loads(q[q.index('{"id"'):q.rindex('}') + 1])
+    for t in d["teile"]:
+        if t["id"] == teil_id:
+            return t["kunst"]
+    raise SystemExit("Teil nicht gefunden: " + teil_id)
+
+
+def originalKulisse(teil_id, skala=2.6, cx=170, cy=150):
+    return f'<g transform="translate({cx},{cy}) scale({skala})">{original(teil_id)}</g>'
+
 PAPIER = "#f6f0ec"
 GITTER = "#e7dfcf"
 
@@ -319,43 +357,48 @@ VULVA = {
     "hoehe": 300,
 }
 ZEIGER = []
+# Die Stellen sind an der vergrösserten Originalzeichnung abgelesen
+# (Gitterabzug in werkzeug/, scale 2.6 um 170/150).
 VULVA["teile"] = [
-    teil("v_schamhuegel", "der Schamhügel", "SCHAM-hü-gel",
-         "il monte di Venere", "MON-te di VE-ne-re", "mons pubis",
-         46, 44, 1, 154, 60),
     teil("v_schamhaar", "das Schamhaar", "SCHAM-haar",
          "i peli pubici", "PE-li PU-bi-ci", "pubic hair",
-         294, 44, 2, 206, 78),
+         46, 60, 1, 150, 78),
+    teil("v_schamhuegel", "der Schamhügel", "SCHAM-hü-gel",
+         "il monte di Venere", "MON-te di VE-ne-re", "mons pubis",
+         294, 60, 2, 196, 108),
     teil("v_klitorisvorhaut", "die Klitorisvorhaut", "KLI-to-ris-vor-haut",
          "il cappuccio clitorideo", "cap-PUC-cio cli-to-RI-de-o", "clitoral hood",
-         46, 86, 3, 159, 96),
+         46, 98, 3, 156, 120),
     teil("v_klitoris", "die Klitoris", "KLI-to-ris",
          "la clitoride", "cli-TO-ri-de", "clitoris",
-         46, 126, 4, 170, 110),
+         46, 136, 4, 165, 129),
     teil("v_harnroehre", "die Harnröhrenöffnung", "HARN-röh-ren-öff-nung",
          "il meato uretrale", "me-A-to u-re-TRA-le", "urethral opening",
-         46, 166, 5, 170, 134),
+         46, 174, 5, 165, 148),
     teil("v_scheideneingang", "der Scheideneingang", "SCHEI-den-ein-gang",
          "l'ingresso vaginale", "in-GRES-so va-gi-NA-le", "vaginal opening",
-         46, 206, 6, 166, 176),
+         46, 212, 6, 165, 170),
     teil("v_schamlippen_aussen", "die äußeren Schamlippen", "ÄU-ße-re SCHAM-lip-pen",
          "le grandi labbra", "GRAN-di LAB-bra", "outer labia",
-         294, 96, 7, 124, 150),
+         294, 104, 7, 192, 168),
     teil("v_schamlippen_innen", "die inneren Schamlippen", "IN-ne-re SCHAM-lip-pen",
          "le piccole labbra", "PIC-co-le LAB-bra", "inner labia",
-         294, 140, 8, 188, 150),
+         294, 146, 8, 178, 162),
     teil("v_jungfernhaeutchen", "das Jungfernhäutchen", "JUNG-fern-häut-chen",
          "l'imene", "I-me-ne", "hymen",
-         294, 184, 9, 181, 192),
+         294, 188, 9, 172, 182),
     teil("v_damm", "der Damm", "DAMM",
          "il perineo", "pe-ri-NE-o", "perineum",
-         294, 232, 10, 176, 240),
+         294, 228, 10, 172, 226),
+    teil("v_after", "der After", "AF-ter",
+         "l'ano", "A-no", "anus",
+         294, 266, 11, 172, 246),
     teil("v_innen", "die weiblichen Geschlechtsorgane", "WEIB-li-che Ge-SCHLECHTS-or-ga-ne",
          "gli organi genitali femminili", "OR-ga-ni ge-ni-TA-li fem-mi-NI-li",
          "female reproductive organs",
-         170, 286, 11, 170, 212, lupe="frau_innen"),
+         46, 262, 12, 140, 210, lupe="frau_innen"),
 ]
-VULVA["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + vulva_zeichnung() + "".join(ZEIGER)
+VULVA["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + originalKulisse("frauaussen") + "".join(ZEIGER)
 
 
 # =========================================================
@@ -461,45 +504,36 @@ PENIS = {
 }
 ZEIGER = []
 PENIS["teile"] = [
-    teil("p_harnroehre", "die Harnröhrenöffnung", "HARN-röh-ren-öff-nung",
-         "il meato uretrale", "me-A-to u-re-TRA-le", "urethral opening",
-         46, 30, 1, 170, 43),
-    teil("p_eichel", "die Eichel", "EI-chel",
-         "il glande", "GLAN-de", "glans",
-         46, 68, 2, 154, 58),
-    teil("p_kranzfurche", "die Kranzfurche", "KRANZ-fur-che",
-         "il solco coronale", "SOL-co co-ro-NA-le", "coronal sulcus",
-         294, 44, 3, 194, 76),
-    teil("p_baendchen", "das Vorhautbändchen", "VOR-haut-bänd-chen",
-         "il frenulo", "FRE-nu-lo", "frenulum",
-         294, 86, 4, 172, 85),
-    teil("p_vorhaut", "die Vorhaut", "VOR-haut",
-         "il prepuzio", "pre-PU-zio", "foreskin",
-         46, 108, 5, 146, 99),
-    teil("p_schaft", "der Penisschaft", "PE-nis-schaft",
-         "l'asta del pene", "A-sta del PE-ne", "penile shaft",
-         46, 150, 6, 158, 145),
     teil("p_schamhaar", "das Schamhaar", "SCHAM-haar",
          "i peli pubici", "PE-li PU-bi-ci", "pubic hair",
-         294, 130, 7, 226, 180),
-    teil("p_samenleiter", "der Samenleiter", "SA-men-lei-ter",
-         "il dotto deferente", "DOT-to de-fe-REN-te", "vas deferens",
-         294, 176, 8, 215, 197),
+         46, 62, 1, 150, 76),
+    teil("p_schaft", "der Penisschaft", "PE-nis-schaft",
+         "l'asta del pene", "A-sta del PE-ne", "penile shaft",
+         46, 110, 2, 164, 134),
+    teil("p_vorhaut", "die Vorhaut", "VOR-haut",
+         "il prepuzio", "pre-PU-zio", "foreskin",
+         46, 156, 3, 166, 169),
+    teil("p_kranzfurche", "die Kranzfurche", "KRANZ-fur-che",
+         "il solco coronale", "SOL-co co-ro-NA-le", "coronal sulcus",
+         294, 156, 4, 186, 181),
+    teil("p_eichel", "die Eichel", "EI-chel",
+         "il glande", "GLAN-de", "glans",
+         46, 200, 5, 160, 199),
+    teil("p_harnroehre", "die Harnröhrenöffnung", "HARN-röh-ren-öff-nung",
+         "il meato uretrale", "me-A-to u-re-TRA-le", "urethral opening",
+         294, 196, 6, 170, 200),
     teil("p_hodensack", "der Hodensack", "HO-den-sack",
          "lo scroto", "SCRO-to", "scrotum",
-         46, 196, 9, 118, 262),
+         46, 242, 7, 146, 214),
     teil("p_hoden", "der Hoden", "HO-den",
          "il testicolo", "te-STI-co-lo", "testicle",
-         46, 244, 10, 139, 240),
-    teil("p_nebenhoden", "der Nebenhoden", "NE-ben-ho-den",
-         "l'epididimo", "e-pi-DI-di-mo", "epididymis",
-         294, 226, 11, 220, 230),
+         294, 236, 8, 186, 216),
     teil("p_innen", "die männlichen Geschlechtsorgane", "MÄNN-li-che Ge-SCHLECHTS-or-ga-ne",
          "gli organi genitali maschili", "OR-ga-ni ge-ni-TA-li ma-SCHI-li",
          "male reproductive organs",
-         294, 272, 12, 205, 258, lupe="mann_innen"),
+         170, 280, 9, 170, 232, lupe="mann_innen"),
 ]
-PENIS["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + penis_zeichnung() + "".join(ZEIGER)
+PENIS["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + originalKulisse("mannaussen") + "".join(ZEIGER)
 
 
 # =========================================================
