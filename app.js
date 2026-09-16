@@ -9974,7 +9974,12 @@
   Object.keys(UMGANGSSPRACHE).forEach((k) => {
     const e = UMGANGSSPRACHE[k];
     if (!e || !e.wort) { delete UMGANGSSPRACHE[k]; return; }
-    if (!e.stil && e.wort === k) delete UMGANGSSPRACHE[k];
+    /* Steht dasselbe Wort zweimal UND gibt es nichts dazu zu sagen,
+       ist der Eintrag leer und fliegt raus. Steht aber ein Hinweis
+       dabei, ist er der ganze Zweck: „die Scheide" hat keine
+       lockerere Form, aber die Verwechslung mit „die Muschi" (das ist
+       die Vulva, also aussen) muss gesagt werden. */
+    if (!e.stil && e.wort === k && !e.wo) delete UMGANGSSPRACHE[k];
   });
 
   /* Nachschlagen mit und ohne Artikel: in den Bildern steht „das
@@ -10091,6 +10096,12 @@
        Hymen" neben „das Jungfernhäutchen". Da wäre „im Alltag sagt
        man" schlicht falsch — beide sagt man überall, auch beim Arzt. */
     const gleichrangig = !a.stil;
+    /* Kein zweites Wort, nur ein Hinweis: dann wäre „genauso
+       gebräuchlich: die Scheide" unter dem Wort „die Scheide" glatter
+       Unsinn. Es steht dann nur der Hinweis da. */
+    if (a.wort === standard) {
+      return a.wo ? `<p class="alltags-zeile">🗣️ <span class="alltags-stil">${escapeHtml(a.wo)}</span></p>` : "";
+    }
     return an
       ? `<p class="alltags-zeile">🗣️ Oben steht ${gleichrangig ? "die andere gebräuchliche Form" : "die Alltagsform"} <span class="alltags-stil">${escapeHtml(stil)}</span>
            <br>Im Wörterbuch: <strong>${escapeHtml(standard)}</strong></p>`
@@ -11315,6 +11326,7 @@
       }
 
       aussprStand = "rechnet";
+      Core.sound.aufnahmeEnde?.();
       aussprStandZeigen("⏳ Wird ausgewertet …", "rechnet");
       let puffer = null;
       try { puffer = await AusspracheP.tonLesen(auf.blob); } catch (e) {}
@@ -11355,6 +11367,10 @@
     aussprStand = "sprich";
     renderAussprache();
     aussprStandZeigen("🎙️ Jetzt du — sprich das Wort.", "sprich");
+    /* Der Ton sagt dasselbe wie die Farbe — aber er erreicht auch,
+       wer gerade nicht auf den Schirm sieht. Und beim Nachsprechen
+       sieht man nun einmal nicht auf den Schirm. */
+    Core.sound.sprichJetzt?.();
   }
 
   /* ------------------------------------------------------------
@@ -11859,7 +11875,25 @@
       document.getElementById("ausspracheZumWoerterbuch")?.addEventListener("click", () => {
         document.querySelector('#learnSubnav [data-sub="sub-dictionary"]')?.click();
       });
-      document.getElementById("ausspracheStart")?.addEventListener("click", () => { neueAusspracheSitzung(); renderAussprache(); });
+      document.getElementById("ausspracheStart")?.addEventListener("click", () => {
+        neueAusspracheSitzung();
+        renderAussprache();
+        /* GEWÜNSCHT: „Wenn man Runde starten macht, egal wo man hin
+           gescrollt hat, soll es so in Position rutschen, dass man
+           die Anzeige sieht."
+           Das ist kein Schönheitswunsch: der Erklärkasten unter dem
+           Startknopf ist lang. Wer ihn gelesen hat und dann startet,
+           steht danach mitten im Text — und der Kreisel, auf den es
+           ankommt, liegt ausserhalb des Bildes. Der Ablauf beginnt
+           aber sofort zu sprechen. Man hört also etwas und sieht
+           nichts.
+           requestAnimationFrame: erst wenn die neue Karte wirklich
+           gezeichnet ist, steht ihre Position fest. */
+        requestAnimationFrame(() => {
+          document.getElementById("ausspracheArea")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
       return;
     }
 
@@ -11992,6 +12026,7 @@
       }
       s.laeuft = true;
       renderAussprache();
+      Core.sound.sprichJetzt?.();
     });
 
     /* --- Auswerten --- */
@@ -12146,6 +12181,7 @@
     s.letztes = null;
     renderAussprache();
     aussprStandZeigen("\u{1F399}\uFE0F Jetzt du \u2014 sprich das Wort.", "sprich");
+    Core.sound.sprichJetzt?.();
     const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
     s.laeuft = false;
     aussprStand = "";
@@ -12191,7 +12227,13 @@
         percent: schnitt, character: "Deutlichsprecher:in", badges: [], playedAt: new Date().toISOString(),
       });
     }
-    document.getElementById("ausspracheNochmal").addEventListener("click", () => { neueAusspracheSitzung(); renderAussprache(); });
+    document.getElementById("ausspracheNochmal").addEventListener("click", () => {
+      neueAusspracheSitzung();
+      renderAussprache();
+      requestAnimationFrame(() => {
+        document.getElementById("ausspracheArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
     document.getElementById("ausspracheZurueck").addEventListener("click", () => { ausspracheSitzung = null; renderAussprache(); });
   }
   document.querySelector('#learnSubnav [data-sub="sub-aussprache"]')?.addEventListener("click", () => renderAussprache());
@@ -31960,16 +32002,16 @@
      den Themen, weil sie Detailbilder sind — die blendet szenenListe()
      aus, damit die Übersicht nicht mit Lupenbildern vollläuft.
 
-     GEWÜNSCHT und hier der Grund für die vier neuen Einträge:
-     „Die Einzeldetails von Penis und Vagina sind nicht anklickbar
-      oder auffindbar." Über die Lupenkette waren sie zwar zu
-     erreichen, aber wer „Schamlippe" lernen wollte, musste erst
-     wissen, dass er im Körper auf den Bauch, dann auf die Frau und
-     dann auf eine Lupe tippen muss. Das ist kein Auffinden, das ist
-     Raten. Jetzt stehen sie als eigene Tafeln da. */
-  const BW_EIGENE_TAFELN = ["koerperbau", "koerper_innen", "anatomie",
-                            "vulva", "frau_innen", "penis", "mann_innen",
-                            "entstehung"];
+     NACHGESCHÄRFT: Die vier Bilder zu den Geschlechtsteilen standen
+     hier kurzzeitig als eigene Kacheln. Das war zu viel des Guten —
+     „das soll an seinem Platz in der Bilderwelt sein, wo sowieso
+     schon über die Geschlechtsorgane gesprochen wird". Sie hängen
+     deshalb wieder dort, wo sie hingehören: in der Tafel „Die
+     Geschlechtsorgane". Von dort führt jede Fläche direkt hinein
+     (die Frau von vorn → die äusseren Teile, die weiblichen
+     Geschlechtsorgane → innen, beim Mann ebenso), und das Bild sagt
+     mit einer blinkenden Lupe, dass es weitergeht. */
+  const BW_EIGENE_TAFELN = ["koerperbau", "koerper_innen", "anatomie", "entstehung"];
   function bwEigeneTafeln() {
     const alle = window.DMA_SZENEN || [];
     return BW_EIGENE_TAFELN.map((id) => alle.find((s) => s.id === id)).filter(Boolean);
@@ -32262,7 +32304,7 @@
         if (!tafeln.length) return "";
         return `<div class="question-card" style="margin-top:12px;">
           <p class="eyebrow" style="margin-top:0;">Der Mensch von innen</p>
-          <p class="empty-note" style="margin:0 0 8px;">Tafeln zum Nachschlagen: Knochen und Gelenke, die Organe, die Geschlechtsorgane — außen wie innen, jedes Einzelteil einzeln benannt — und wie ein Kind entsteht, von der Befruchtung bis zur Geburt.</p>
+          <p class="empty-note" style="margin:0 0 8px;">Vier Tafeln zum Nachschlagen: Knochen und Gelenke, die Organe, die Geschlechtsorgane — dort führt jede Fläche weiter zu den Einzelteilen, außen wie innen — und wie ein Kind entsteht, von der Befruchtung bis zur Geburt.</p>
           <div class="bw-kacheln">
             ${tafeln.map((s) => `
               <button type="button" class="bw-kachel" data-bw-szene="${s.id}">

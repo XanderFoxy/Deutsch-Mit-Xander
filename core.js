@@ -788,6 +788,34 @@ const Core = (function () {
     // Ein kurzer, leiser Tipp-Ton — für die Bilderwelt, wo man viel antippt
     // und ein „richtig/falsch" gar nicht gemeint ist.
     click() { tone(1046, 0, 0.05, "sine", 0.06); },
+    /* ============================================================
+       DAS SIGNAL VOR DEM SPRECHEN
+       ------------------------------------------------------------
+       GEMELDET: „Ich glaube, in der ersten Version war so ein
+       Blink-Geräusch, dass nicht nur die Optik von der Farbe
+       signalisiert, dass man auf die Eingabe wartet, sondern auch
+       dieser Ton, nach dem man sprechen kann."
+
+       Genau dafür gibt es diesen Ton. Zwei steigende Töne, kurz —
+       die Tonfolge, die jeder von Anrufbeantwortern und
+       Diktiergeräten kennt und die ohne Erklärung heisst: JETZT.
+
+       Warum STEIGEND und nicht fallend: fallende Tonfolgen hört das
+       Ohr als Abschluss („fertig"), steigende als Aufforderung.
+       Und darum ist er auch kurz — wer ihn abwartet, verpasst
+       sonst den Anfang des eigenen Wortes.
+       ============================================================ */
+    sprichJetzt() {
+      tone(784, 0, 0.09, "sine", 0.10);
+      tone(1175, 0.09, 0.13, "sine", 0.11);
+    },
+    /* Und das Gegenstück: die Aufnahme ist zu Ende. Fallend, leise —
+       es soll bestätigen, nicht bewerten; die Note kommt gleich
+       danach und hat ihren eigenen Ton. */
+    aufnahmeEnde() {
+      tone(880, 0, 0.07, "sine", 0.07);
+      tone(587, 0.07, 0.10, "sine", 0.07);
+    },
     fail() {
       // "Sad trombone" — absteigende Töne
       [400, 360, 320, 260].forEach((f, i) => tone(f, i * 0.18, 0.24, "sawtooth", 0.12));

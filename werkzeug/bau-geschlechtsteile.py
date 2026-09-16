@@ -71,6 +71,79 @@ MARKE      = "#8a5f2a"
 MARKE_BG   = "#fffdf6"
 
 
+# =========================================================
+# LICHT UND SCHATTEN
+# ---------------------------------------------------------
+# GEMELDET: „Die Zeichnungen waren früher viel mehr detailreich
+# mit Licht und Schatten. Die sahen viel besser aus, viel
+# realistischer."
+#
+# Eine flache Fläche mit einem Strich drumherum sieht aus wie
+# ein Schnittmuster. Plastisch wird sie erst durch drei Dinge,
+# und zwar in dieser Reihenfolge der Wirkung:
+#
+#   1. EIN VERLAUF über die ganze Form. Licht kommt von links
+#      oben (so wird es seit der Renaissance gezeichnet, und
+#      das Auge erwartet es), Schatten sammelt sich rechts
+#      unten. Das allein macht aus einer Scheibe eine Kugel.
+#   2. EIN WEICHER SCHLAGSCHATTEN unter der Form. Er sagt dem
+#      Auge, dass etwas VOR etwas anderem liegt.
+#   3. EIN SCHMALES GLANZLICHT an der Oberkante. Es sitzt dort,
+#      wo die Wölbung am stärksten zum Licht zeigt.
+#
+# Die Verläufe stehen EINMAL in den defs und werden über die
+# Kennung wiederverwendet — jede Form ihren eigenen Verlauf zu
+# geben, blähte die Datei auf das Dreifache.
+# =========================================================
+def licht_defs():
+    return (
+        '<defs>'
+        # Haut: hell nach links oben, satt nach rechts unten
+        '<linearGradient id="gLicht" x1="0.15" y1="0.05" x2="0.85" y2="0.95">'
+        '<stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>'
+        '<stop offset="0.45" stop-color="#ffffff" stop-opacity="0.05"/>'
+        '<stop offset="1" stop-color="#8a6a4e" stop-opacity="0.28"/>'
+        '</linearGradient>'
+        # Schleimhaut: etwas kühler im Schatten, damit sie sich von Haut abhebt
+        '<linearGradient id="gSchleim" x1="0.2" y1="0.05" x2="0.8" y2="0.95">'
+        '<stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>'
+        '<stop offset="0.5" stop-color="#ffffff" stop-opacity="0.02"/>'
+        '<stop offset="1" stop-color="#8d4a45" stop-opacity="0.32"/>'
+        '</linearGradient>'
+        # Vertiefung: dunkel an den Rändern, hell in der Mitte — für Höhlungen
+        '<radialGradient id="gTiefe" cx="0.5" cy="0.42" r="0.62">'
+        '<stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>'
+        '<stop offset="0.7" stop-color="#7c4038" stop-opacity="0.10"/>'
+        '<stop offset="1" stop-color="#5e2b25" stop-opacity="0.42"/>'
+        '</radialGradient>'
+        '<filter id="fWeich" x="-30%" y="-30%" width="160%" height="160%">'
+        '<feGaussianBlur stdDeviation="3.2"/>'
+        '</filter>'
+        '<filter id="fWeichFein" x="-30%" y="-30%" width="160%" height="160%">'
+        '<feGaussianBlur stdDeviation="1.5"/>'
+        '</filter>'
+        '</defs>'
+    )
+
+
+def licht(d, verlauf="gLicht"):
+    """Dieselbe Form noch einmal, nur als Verlauf darüber."""
+    return f'<path d="{d}" fill="url(#{verlauf})"/>'
+
+
+def schlagschatten(d, dx=2.5, dy=3.5, staerke=0.20, weich="fWeich"):
+    """Die Form als dunkler, weicher Fleck darunter — darum wird sie
+       VOR der eigentlichen Form gezeichnet."""
+    return (f'<g transform="translate({dx},{dy})" opacity="{staerke}" filter="url(#{weich})">'
+            f'<path d="{d}" fill="#4a3320"/></g>')
+
+
+def glanz(d, staerke=0.5):
+    """Ein schmales Glanzlicht — als Linie entlang der Oberkante."""
+    return (f'<path d="{d}" fill="none" stroke="#ffffff" stroke-width="2.6" '
+            f'stroke-linecap="round" opacity="{staerke}" filter="url(#fWeichFein)"/>')
+
+
 def kulisse_rahmen(b, h):
     """Papier und Gitter — genau wie in den anderen Detailbildern,
        damit die neuen Bilder nicht wie Fremdkörper wirken."""
@@ -167,16 +240,21 @@ def vulva_zeichnung():
     # --- Schamhügel: die gewölbte Fläche über dem Schambein ---
     # Unten abgerundet, nicht abgeschnitten: eine gerade Kante sähe aus
     # wie ein Fehler in der Zeichnung, nicht wie ein Körperteil.
-    s += (f'<path d="M120 112 C116 66 140 34 170 34 C200 34 224 66 220 112 '
-          'C206 122 134 122 120 112 Z" '
-          f'fill="{HAUT}" stroke="{RAND}" stroke-width="1.4" stroke-linejoin="round"/>')
+    D_HUEGEL = ("M120 112 C116 66 140 34 170 34 C200 34 224 66 220 112 "
+                "C206 122 134 122 120 112 Z")
+    s += schlagschatten(D_HUEGEL, 2, 3, 0.16)
+    s += (f'<path d="{D_HUEGEL}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.4" stroke-linejoin="round"/>')
+    s += licht(D_HUEGEL)
+    s += glanz("M140 56 C152 44 188 44 200 56", 0.42)
     s += haare([(128 + i * 9, 52 + (i % 3) * 7, 250 + (i % 5) * 12) for i in range(10)])
     s += haare([(134 + i * 10, 74 + (i % 2) * 6, 255 + (i % 4) * 14) for i in range(9)])
 
     # --- Äussere Schamlippen: zwei lange Wülste, die alles umschliessen ---
-    aussen = ('<path d="M162 84 C138 88 120 112 116 148 C112 184 126 218 152 240 '
-              'C160 247 166 248 170 248 L170 84 Z" '
-              f'fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
+    D_AUSSEN = ("M162 84 C138 88 120 112 116 148 C112 184 126 218 152 240 "
+                "C160 247 166 248 170 248 L170 84 Z")
+    s += schlagschatten(D_AUSSEN, 2, 3, 0.18) + gespiegelt(schlagschatten(D_AUSSEN, 2, 3, 0.18))
+    aussen = (f'<path d="{D_AUSSEN}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>'
+              + licht(D_AUSSEN))
     s += aussen + gespiegelt(aussen)
     # eine angedeutete Falte, damit der Wulst als Wulst zu erkennen ist
     falte = (f'<path d="M150 106 C136 130 134 176 146 214" fill="none" '
@@ -184,20 +262,25 @@ def vulva_zeichnung():
     s += falte + gespiegelt(falte)
 
     # --- Der Vorhof: die Fläche zwischen den inneren Schamlippen ---
-    s += (f'<path d="M170 96 C156 100 148 124 148 156 C148 190 158 214 170 226 '
-          'C182 214 192 190 192 156 C192 124 184 100 170 96 Z" '
-          f'fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.2"/>')
+    D_VORHOF = ("M170 96 C156 100 148 124 148 156 C148 190 158 214 170 226 "
+                "C182 214 192 190 192 156 C192 124 184 100 170 96 Z")
+    s += (f'<path d="{D_VORHOF}" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.2"/>')
+    # Eine Höhlung wird nach innen dunkler, nicht heller — darum gTiefe.
+    s += f'<path d="{D_VORHOF}" fill="url(#gTiefe)"/>' 
 
     # --- Innere Schamlippen: die zarteren Falten darin ---
-    innen = ('<path d="M170 98 C158 104 152 128 153 158 C154 188 162 210 170 222 '
-             'C168 206 162 184 162 158 C162 132 166 112 170 98 Z" '
-             f'fill="{SCHLEIM_D}" stroke="{OEFFNUNG}" stroke-width="1.0" opacity="0.92"/>')
+    D_INNEN = ("M170 98 C158 104 152 128 153 158 C154 188 162 210 170 222 "
+               "C168 206 162 184 162 158 C162 132 166 112 170 98 Z")
+    innen = (f'<path d="{D_INNEN}" fill="{SCHLEIM_D}" stroke="{OEFFNUNG}" stroke-width="1.0" opacity="0.92"/>'
+             + licht(D_INNEN, "gSchleim"))
     s += innen + gespiegelt(innen)
 
     # --- Klitorisvorhaut: die kleine Kapuze ganz oben ---
-    s += (f'<path d="M158 100 C158 90 163 85 170 85 C177 85 182 90 182 100 '
-          'C178 104 174 106 170 106 C166 106 162 104 158 100 Z" '
-          f'fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.2" stroke-linejoin="round"/>')
+    D_KAPUZE = ("M158 100 C158 90 163 85 170 85 C177 85 182 90 182 100 "
+                "C178 104 174 106 170 106 C166 106 162 104 158 100 Z")
+    s += schlagschatten(D_KAPUZE, 1, 2, 0.22, "fWeichFein")
+    s += (f'<path d="{D_KAPUZE}" fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.2" stroke-linejoin="round"/>')
+    s += licht(D_KAPUZE)
 
     # --- Klitoris (Kitzler): nur die Spitze ist von aussen zu sehen ---
     s += (f'<circle cx="170" cy="110" r="5.2" fill="{SCHLEIM_D}" stroke="{OEFFNUNG}" stroke-width="1.3"/>'
@@ -208,9 +291,10 @@ def vulva_zeichnung():
           f'stroke="{SCHLEIM_D}" stroke-width="0.9"/>')
 
     # --- Scheideneingang ---
-    s += ('<path d="M170 148 C178 154 182 166 182 178 C182 190 177 200 170 206 '
-          'C163 200 158 190 158 178 C158 166 162 154 170 148 Z" '
-          f'fill="{OEFFNUNG}" stroke="{SCHLEIM_D}" stroke-width="1.1"/>')
+    D_EINGANG = ("M170 148 C178 154 182 166 182 178 C182 190 177 200 170 206 "
+                 "C163 200 158 190 158 178 C158 166 162 154 170 148 Z")
+    s += (f'<path d="{D_EINGANG}" fill="{OEFFNUNG}" stroke="{SCHLEIM_D}" stroke-width="1.1"/>')
+    s += f'<path d="{D_EINGANG}" fill="url(#gTiefe)"/>' 
 
     # --- Jungfernhäutchen: der schmale Saum am Rand des Eingangs ---
     s += ('<path d="M170 149 C177 155 181 166 181 178 C181 189 176 199 170 205" '
@@ -271,7 +355,7 @@ VULVA["teile"] = [
          "female reproductive organs",
          170, 286, 11, 170, 212, lupe="frau_innen"),
 ]
-VULVA["kulisse"] = kulisse_rahmen(340, 300) + vulva_zeichnung() + "".join(ZEIGER)
+VULVA["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + vulva_zeichnung() + "".join(ZEIGER)
 
 
 # =========================================================
@@ -290,9 +374,12 @@ def penis_zeichnung():
     # ersten Anlauf endete er bei y=84, und weil sowohl Eichel als auch
     # Vorhautkragen an den Seiten höher liegen, klaffte dort eine Lücke:
     # die Eichel sah aus wie ein Pilz, der über dem Schaft schwebt.
-    s += (f'<path d="M142 78 C142 70 146 66 170 66 C194 66 198 70 198 78 '
-          'L198 178 C198 188 186 194 170 194 C154 194 142 188 142 178 Z" '
-          f'fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
+    D_SCHAFT = ("M142 78 C142 70 146 66 170 66 C194 66 198 70 198 78 "
+                "L198 178 C198 188 186 194 170 194 C154 194 142 188 142 178 Z")
+    s += schlagschatten(D_SCHAFT, 2.5, 3, 0.18)
+    s += (f'<path d="{D_SCHAFT}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
+    s += licht(D_SCHAFT)
+    s += glanz("M156 86 C154 116 154 152 157 180", 0.38)
     # eine Längsschattierung, damit der Schaft rund wirkt
     s += (f'<path d="M152 92 C150 120 150 160 154 188" fill="none" '
           f'stroke="{HAUT_DUNK}" stroke-width="3" stroke-linecap="round" opacity="0.5"/>')
@@ -305,9 +392,10 @@ def penis_zeichnung():
           f'stroke="{RAND}" stroke-width="1" stroke-linecap="round" opacity="0.7"/>')
 
     # --- Eichel ---
-    s += ('<path d="M170 28 C186 28 200 42 200 60 C200 72 194 80 170 80 '
-          'C146 80 140 72 140 60 C140 42 154 28 170 28 Z" '
-          f'fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.5" stroke-linejoin="round"/>')
+    D_EICHEL = ("M170 28 C186 28 200 42 200 60 C200 72 194 80 170 80 "
+                "C146 80 140 72 140 60 C140 42 154 28 170 28 Z")
+    s += (f'<path d="{D_EICHEL}" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.5" stroke-linejoin="round"/>')
+    s += licht(D_EICHEL, "gSchleim")
     s += (f'<path d="M156 40 C152 48 151 58 152 68" fill="none" stroke="#ffffff" '
           'stroke-width="3" stroke-linecap="round" opacity="0.28"/>')
 
@@ -323,18 +411,23 @@ def penis_zeichnung():
           f'fill="{SCHLEIM_D}" stroke="{OEFFNUNG}" stroke-width="0.9"/>')
 
     # --- Hodensack ---
-    s += ('<path d="M142 180 C118 186 104 208 104 232 C104 258 126 278 152 278 '
-          'C162 278 168 275 170 272 C172 275 178 278 188 278 C214 278 236 258 236 232 '
-          'C236 208 222 186 198 180 Z" '
-          f'fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
+    D_SACK = ("M142 180 C118 186 104 208 104 232 C104 258 126 278 152 278 "
+              "C162 278 168 275 170 272 C172 275 178 278 188 278 C214 278 236 258 236 232 "
+              "C236 208 222 186 198 180 Z")
+    s += schlagschatten(D_SACK, 2.5, 4, 0.18)
+    s += (f'<path d="{D_SACK}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
+    s += licht(D_SACK)
     # die Naht in der Mitte — sie teilt den Sack sichtbar in zwei Kammern
     s += (f'<path d="M170 194 L170 276" stroke="{HAUT_DUNK}" stroke-width="2" '
           'stroke-linecap="round" opacity="0.8"/>')
 
     # --- Hoden: durchscheinend gezeichnet, sonst wäre nichts zu benennen ---
     for cx in (139, 201):
-        s += (f'<ellipse cx="{cx}" cy="234" rx="23" ry="27" fill="{HAUT_DUNK}" '
-              f'stroke="{RAND}" stroke-width="1.3" opacity="0.9"/>')
+        d = (f"M{cx} 207 C{cx+13} 207 {cx+23} 219 {cx+23} 234 "
+             f"C{cx+23} 249 {cx+13} 261 {cx} 261 C{cx-13} 261 {cx-23} 249 {cx-23} 234 "
+             f"C{cx-23} 219 {cx-13} 207 {cx} 207 Z")
+        s += (f'<path d="{d}" fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.3" opacity="0.92"/>')
+        s += licht(d)
 
     # --- Nebenhoden: die Kappe, die aussen oben auf dem Hoden sitzt ---
     s += (f'<path d="M120 246 C112 236 113 220 121 210 C126 204 131 203 133 207 '
@@ -406,7 +499,7 @@ PENIS["teile"] = [
          "male reproductive organs",
          294, 272, 12, 205, 258, lupe="mann_innen"),
 ]
-PENIS["kulisse"] = kulisse_rahmen(340, 300) + penis_zeichnung() + "".join(ZEIGER)
+PENIS["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + penis_zeichnung() + "".join(ZEIGER)
 
 
 # =========================================================
@@ -419,9 +512,11 @@ def frau_innen_zeichnung():
     s = ""
 
     # --- Gebärmutter: der birnenförmige Körper ---
-    s += ('<path d="M132 88 C132 76 146 70 170 70 C194 70 208 76 208 88 '
-          'C208 126 196 156 186 172 L154 172 C144 156 132 126 132 88 Z" '
-          f'fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.6" stroke-linejoin="round"/>')
+    D_GEBAER = ("M132 88 C132 76 146 70 170 70 C194 70 208 76 208 88 "
+                "C208 126 196 156 186 172 L154 172 C144 156 132 126 132 88 Z")
+    s += schlagschatten(D_GEBAER, 2.5, 3.5, 0.18)
+    s += (f'<path d="{D_GEBAER}" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.6" stroke-linejoin="round"/>')
+    s += licht(D_GEBAER, "gSchleim")
     # die Höhle darin, angedeutet
     s += (f'<path d="M148 92 C150 118 158 142 164 158 L176 158 C182 142 190 118 192 92 '
           f'C182 88 158 88 148 92 Z" fill="{HAUT}" stroke="{RAND}" stroke-width="1" opacity="0.75"/>')
@@ -456,8 +551,12 @@ def frau_innen_zeichnung():
 
     # --- Eierstöcke ---
     for cx in (82, 258):
-        s += (f'<ellipse cx="{cx}" cy="116" rx="20" ry="14" fill="{HAUT_DUNK}" '
-              f'stroke="{RAND}" stroke-width="1.4"/>')
+        d = (f"M{cx} 102 C{cx+11} 102 {cx+20} 108 {cx+20} 116 "
+             f"C{cx+20} 124 {cx+11} 130 {cx} 130 C{cx-11} 130 {cx-20} 124 {cx-20} 116 "
+             f"C{cx-20} 108 {cx-11} 102 {cx} 102 Z")
+        s += schlagschatten(d, 1.5, 2.5, 0.16, "fWeichFein")
+        s += (f'<path d="{d}" fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.4"/>')
+        s += licht(d)
         for dx, dy in ((-7, -3), (4, 2), (9, -4), (-2, 4)):
             s += f'<circle cx="{cx + dx}" cy="{116 + dy}" r="2.6" fill="{SCHLEIM}" opacity="0.85"/>'
 
@@ -489,7 +588,7 @@ FRAU_INNEN["teile"] = [
          "i genitali esterni", "ge-ni-TA-li e-STER-ni", "external genitals",
          298, 268, 7, 186, 264, lupe="vulva"),
 ]
-FRAU_INNEN["kulisse"] = kulisse_rahmen(340, 300) + frau_innen_zeichnung() + "".join(ZEIGER)
+FRAU_INNEN["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + frau_innen_zeichnung() + "".join(ZEIGER)
 
 
 # =========================================================
@@ -500,12 +599,18 @@ def mann_innen_zeichnung():
 
     # --- Harnblase --- etwas kleiner als im ersten Anlauf, sonst
     # beherrscht sie ein Bild, in dem sie nur Nachbarin ist.
-    s += (f'<ellipse cx="170" cy="64" rx="40" ry="29" fill="{HAUT}" '
-          f'stroke="{RAND}" stroke-width="1.5"/>')
+    D_BLASE = ("M170 35 C192 35 210 48 210 64 C210 80 192 93 170 93 "
+               "C148 93 130 80 130 64 C130 48 148 35 170 35 Z")
+    s += schlagschatten(D_BLASE, 2.5, 3.5, 0.16)
+    s += (f'<path d="{D_BLASE}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5"/>')
+    s += licht(D_BLASE)
+    s += glanz("M146 48 C154 42 178 41 190 46", 0.40)
 
     # --- Prostata: sitzt wie ein Ring unter der Blase ---
-    s += (f'<path d="M144 104 C144 96 196 96 196 104 C198 122 188 132 170 132 '
-          f'C152 132 142 122 144 104 Z" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.5"/>')
+    D_PROSTATA = ("M144 104 C144 96 196 96 196 104 C198 122 188 132 170 132 "
+                  "C152 132 142 122 144 104 Z")
+    s += (f'<path d="{D_PROSTATA}" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.5"/>')
+    s += licht(D_PROSTATA, "gSchleim")
 
     # --- Samenbläschen: die beiden Säckchen hinten oben ---
     # Sie sitzen HINTER und ÜBER der Prostata, nicht seitlich an der
@@ -535,8 +640,12 @@ def mann_innen_zeichnung():
 
     # --- Hoden und Nebenhoden ---
     for cx, seite in ((92, -1), (248, 1)):
-        s += (f'<ellipse cx="{cx}" cy="244" rx="26" ry="30" fill="{HAUT_DUNK}" '
-              f'stroke="{RAND}" stroke-width="1.4"/>')
+        d = (f"M{cx} 214 C{cx+14} 214 {cx+26} 227 {cx+26} 244 "
+             f"C{cx+26} 261 {cx+14} 274 {cx} 274 C{cx-14} 274 {cx-26} 261 {cx-26} 244 "
+             f"C{cx-26} 227 {cx-14} 214 {cx} 214 Z")
+        s += schlagschatten(d, 2, 3, 0.16)
+        s += (f'<path d="{d}" fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.4"/>')
+        s += licht(d)
         rx = cx - seite * 24
         s += (f'<path d="M{rx} 262 C{rx - seite * 10} 250 {rx - seite * 9} 228 {rx + seite * 1} 216 '
               f'C{rx + seite * 6} 212 {rx + seite * 9} 216 {rx + seite * 6} 222 '
@@ -572,7 +681,7 @@ MANN_INNEN["teile"] = [
          "il pene e lo scroto", "PE-ne e SCRO-to", "penis and scrotum",
          298, 246, 8, 250, 250, lupe="penis"),
 ]
-MANN_INNEN["kulisse"] = kulisse_rahmen(340, 300) + mann_innen_zeichnung() + "".join(ZEIGER)
+MANN_INNEN["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + mann_innen_zeichnung() + "".join(ZEIGER)
 
 
 # =========================================================

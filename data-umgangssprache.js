@@ -163,8 +163,30 @@ window.DMA_UMGANGSSPRACHE = {
   "die Menstruation": { wort: "die Periode", syl: "Pe-ri-O-de", stil: "ugs.", wo: "Ebenso üblich: „die Tage“ — „ich habe meine Tage“." },
   "die Klitoris": { wort: "der Kitzler", syl: "KITZ-ler", stil: "ugs.", wo: "„Kitzler“ ist das deutsche Wort, „Klitoris“ das lateinische Fachwort." },
   "die Vagina": { wort: "die Scheide", syl: "SCHEI-de", stil: "", wo: "„Scheide“ ist das normale deutsche Wort; im Alltag sagen viele verhüllend „die Muschi“ (ugs.)." },
-  "die Scheide": { wort: "die Muschi", syl: "MU-schi", stil: "ugs., verhüllend", wo: "Zu Hause und unter Freundinnen üblich; beim Arzt sagt man „die Scheide“." },
-  "der Penis": { wort: "der Pimmel", syl: "PIM-mel", stil: "ugs., Kindersprache", wo: "Kinder und Familien sagen „Pimmel“; beim Arzt heißt es „Penis“. „Der Schwanz“ ist derb." },
+  /* KORRIGIERT nach einem berechtigten Einwand: „Ich weiß nicht, ob
+     dieser Schlauch im Inneren so bezeichnet werden kann — ob man da
+     überhaupt von der Muschi reden kann."
+     Nein, kann man nicht, und das war hier falsch verknüpft.
+     „Die Scheide" ist der Kanal INNEN. „Die Muschi" meint im Alltag
+     das, was man von AUSSEN sieht — also die Vulva. Wer im Bild
+     „Innen: die weiblichen Geschlechtsorgane" auf den Kanal tippte,
+     bekam bisher „die Muschi" angeboten. Das ist keine lockerere
+     Form desselben Dings, das ist ein anderes Ding.
+     Darum hängt „die Muschi" jetzt an der Vulva, und bei der Scheide
+     steht, worin der Unterschied besteht. */
+  "die Scheide": { wort: "die Scheide", syl: "SCHEI-de", stil: "", wo: "Das ist der Kanal im Inneren. Im Alltag sagen viele „die Muschi“ — das meint aber das, was man von außen sieht (die Vulva), nicht den Kanal." },
+  "die Vulva": { wort: "die Muschi", syl: "MU-schi", stil: "ugs., verhüllend", wo: "Zu Hause und unter Freundinnen üblich; beim Arzt sagt man „die Vulva“ für außen und „die Scheide“ für innen." },
+  "die äußeren weiblichen Geschlechtsteile": { wort: "die Vulva", syl: "VUL-va", stil: "", wo: "„Vulva“ ist das Fachwort für alles, was von außen zu sehen ist; umgangssprachlich sagt man „die Muschi“." },
+  /* NACHGESCHÄRFT: „Bei Penis hätte ich eigentlich Schwanz erwartet,
+     beziehungsweise Pullermann. Ist Pimmel wirklich das
+     allgegenwärtige Wort?"
+     Ehrliche Antwort: es gibt nicht EIN Wort, es gibt eine Leiter,
+     und genau die ist der Lernwert. Getauscht wird weiterhin gegen
+     „der Pimmel" — das ist die Stufe, die man überall sagen kann,
+     ohne anzuecken. Die anderen beiden stehen jetzt daneben, mit
+     der Angabe, wo sie hingehören. Wer „Schwanz" sagt, wo „Pimmel"
+     hingehört, merkt es sonst erst am Gesicht des Gegenübers. */
+  "der Penis": { wort: "der Pimmel", syl: "PIM-mel", stil: "ugs., familiär", wo: "Drei Stufen: „der Pullermann“ sagen kleine Kinder, „der Pimmel“ sagt man in der Familie und unter Freunden, „der Schwanz“ ist derb und gehört nicht in ein Gespräch mit Fremden. Beim Arzt heißt es „der Penis“." },
   "der Hoden": { wort: "die Eier", syl: "EI-er", stil: "salopp, meist Mehrzahl", wo: "Beim Arzt heißt es „der Hoden“." },
   "die Brustwarze": { wort: "der Nippel", syl: "NIP-pel", stil: "ugs." },
   "der Geschlechtsverkehr": { wort: "der Sex", syl: "SEX", stil: "ugs." },
