@@ -2431,107 +2431,194 @@
      Schlüssel, der über das Konto wandert, läge in der Datenbank
      und damit an einer Stelle mehr.
      ============================================================ */
+  /* ============================================================
+     DER AZURE-SCHLÜSSEL — EINMAL EINTRAGEN, FÜR ALLE
+     ------------------------------------------------------------
+     „Ich möchte es so, dass dieser Aussprache-Trainer für jeden,
+      der auf der Seite angemeldet ist, benutzbar ist, dass der
+      Schlüssel einmal eingetragen wird und jeder kann ihn
+      benutzen. Ich kann nicht von ihnen abverlangen, dass sie
+      dieses technische Know-how besitzen."
+
+     Genau das war vorher NICHT so, und der Grund ist wichtig:
+     der Schlüssel lag im localStorage des Browsers, also in
+     EINEM Gerät. Auf jedem anderen Telefon — auch auf einem
+     zweiten eigenen — war er nicht da, und der Trainer fiel
+     stillschweigend auf Stufe 3 zurück. Genau das ist
+     aufgefallen.
+
+     Jetzt geht der Schlüssel in die Datenbank, in eine Tabelle
+     ohne jede Zugriffsregel: aus dem Browser kommt niemand
+     heran, auch nicht der Betreiber. Nur die Funktion auf dem
+     Server liest ihn, und die gibt ihn nie heraus.
+
+     Der alte Weg (Schlüssel im Gerät) bleibt als Rückfallebene
+     bestehen — er wird genommen, wenn der Server hakt.
+     ============================================================ */
   function azureEinstellungenHtml() {
     if (!window.AusspracheP) return "";
+    const z = AusspracheP.zentralStandJetzt();
     const e = AusspracheP.azureEinstellungen();
     const gesperrt = AusspracheP.istGesperrt();
     const bis = gesperrt ? new Date(AusspracheP.gesperrtBis()) : null;
-    /* Nur die letzten vier Zeichen zeigen: es soll erkennbar sein,
-       DASS ein Schlüssel liegt, ohne ihn auf den Schirm zu
-       schreiben. */
-    const maske = e.schluessel ? "••••••••••••••••••••••••••••" + e.schluessel.slice(-4) : "";
+
+    const zentralDa = Boolean(z && z.zentralDa);
+    const darfSetzen = Boolean(z && z.betreiber);
+
     return `
       <div class="question-card" style="margin-top:14px; border:2px solid #4a7fa8;">
-        <h3>🗣️ Laut-Bewertung (Azure) — nur für dich</h3>
-        <p class="empty-note" style="margin-bottom:10px;">
-          Mit einem Azure-Schlüssel bekommt der Aussprache-Trainer eine Note
-          <strong>für jeden einzelnen Laut</strong> und sagt in Klartext, was danebenlag
-          („dein ö klang wie ein o“). Ohne Schlüssel läuft er eine Stufe tiefer weiter.
-        </p>
-        <p class="empty-note" style="margin-bottom:10px;">
-          Anlegen: <strong>portal.azure.com</strong> → „Speech service“ → Tarif <strong>F0</strong>
-          (kostenlos) → Region <strong>West Europe</strong>. Dann hier Schlüssel und Region
-          eintragen. Der Schlüssel bleibt <strong>nur in diesem Gerät</strong> und wird nie
-          ins Repo geschrieben.
-        </p>
-        <label class="empty-note" style="display:block; margin-bottom:4px;">Schlüssel</label>
-        <input type="password" id="azureSchluessel" class="challenge-select" autocomplete="off"
-               placeholder="${e.schluessel ? maske : "hier einfügen"}" style="margin-bottom:8px; width:100%;">
-        <label class="empty-note" style="display:block; margin-bottom:4px;">Region</label>
-        <input type="text" id="azureRegion" class="challenge-select" autocomplete="off"
-               value="${e.region || ""}" placeholder="westeurope" style="margin-bottom:10px; width:100%;">
-        <div class="quiz-actions">
-          <button type="button" class="btn btn-coffee" id="azureSpeichern">Speichern</button>
-          <button type="button" class="btn btn-ghost" id="azurePruefen" ${e.schluessel && e.region ? "" : "disabled"}>Verbindung prüfen</button>
-          <button type="button" class="btn btn-ghost" id="azureLoeschen" ${e.schluessel ? "" : "disabled"}>Löschen</button>
+        <h3>🗣️ Laut-Bewertung &amp; Vorlese-Stimme (Azure)</h3>
+
+        <div class="beta-hinweis" style="${zentralDa
+            ? "border-color:rgba(79,168,142,0.6); background:rgba(79,168,142,0.08);"
+            : "border-color:rgba(232,163,61,0.6); background:rgba(232,163,61,0.08);"}">
+          ${zentralDa
+            ? `<strong>✅ Für alle eingeschaltet.</strong> Jede und jeder, der auf der Seite
+               angemeldet ist, bekommt die Bewertung Laut für Laut und die neuronale
+               Vorlese-Stimme — ohne selbst etwas einzurichten.
+               ${z && z.region ? `Region <strong>${z.region}</strong>.` : ""}`
+            : `<strong>Noch nicht eingeschaltet.</strong> Solange hier kein Schlüssel liegt,
+               läuft der Trainer für alle eine Stufe tiefer und liest mit der Stimme des
+               jeweiligen Geräts vor.`}
         </div>
-        <div id="azureStand" style="margin-top:10px;">
-          ${e.schluessel && e.region
-            ? `<p class="empty-note">Eingetragen: Region <strong>${e.region}</strong>, Schlüssel liegt in diesem Gerät.</p>`
-            : `<p class="empty-note">Noch kein Schlüssel eingetragen — der Trainer läuft eine Stufe tiefer.</p>`}
-          ${gesperrt ? `<p class="empty-note" style="color:#E8A33D;">
-            Die Monatsmenge ist aufgebraucht. Sie erneuert sich von selbst am
-            ${bis.toLocaleDateString("de-DE")}. Es wird nichts abgerechnet.
-            <button type="button" class="btn btn-ghost" id="azureSperreLoesen" style="margin-left:6px;">Trotzdem noch einmal versuchen</button>
-          </p>` : ""}
-        </div>
+
+        ${z && z.tagesgrenze ? `<p class="empty-note" style="font-size:0.72rem;">
+          Je Person sind ${z.tagesgrenze} Bewertungen am Tag möglich — damit die kostenlose
+          Monatsmenge nicht von einem Einzelnen aufgebraucht wird.
+          Du hast heute ${z.heuteVerbraucht || 0} verbraucht.</p>` : ""}
+
+        ${darfSetzen ? `
+          <p class="empty-note" style="margin:12px 0 10px;">
+            Anlegen: <strong>portal.azure.com</strong> → „Speech service“ → Tarif <strong>F0</strong>
+            (kostenlos) → Region <strong>West Europe</strong>. Dann hier eintragen.
+            Der Schlüssel wandert in die Datenbank, <strong>nicht</strong> in dieses Gerät und
+            <strong>nicht</strong> ins Repo. Die Webseite bekommt ihn nie zu sehen — sie schickt
+            die Aufnahme an den Server, und der spricht mit Azure.
+          </p>
+          <label class="empty-note" style="display:block; margin-bottom:4px;">Schlüssel</label>
+          <input type="password" id="azureSchluessel" class="challenge-select" autocomplete="off"
+                 placeholder="${zentralDa ? "liegt bereits — nur ausfüllen zum Ersetzen" : "hier einfügen"}" style="margin-bottom:8px; width:100%;">
+          <label class="empty-note" style="display:block; margin-bottom:4px;">Region</label>
+          <input type="text" id="azureRegion" class="challenge-select" autocomplete="off"
+                 value="${(z && z.region) || e.region || ""}" placeholder="westeurope" style="margin-bottom:10px; width:100%;">
+          <div class="quiz-actions">
+            <button type="button" class="btn btn-coffee" id="azureSpeichern">Für alle eintragen</button>
+            <button type="button" class="btn btn-ghost" id="azureProbe" ${zentralDa ? "" : "disabled"}>Stimme anhören</button>
+            <button type="button" class="btn btn-ghost" id="azureLoeschen" ${zentralDa ? "" : "disabled"}>Für alle abschalten</button>
+          </div>
+          <div id="azureStand" style="margin-top:10px;"></div>
+
+          <details class="ausspr-lupe" style="margin-top:12px;">
+            <summary>Der alte Weg: Schlüssel nur in diesem Gerät</summary>
+            <p class="empty-note" style="font-size:0.76rem;">
+              ${e.schluessel
+                ? `In diesem Gerät liegt noch ein eigener Schlüssel (Region ${e.region || "—"}).
+                   Er wird nur benutzt, wenn der Server einmal nicht antwortet. Du kannst ihn
+                   löschen — der zentrale reicht.`
+                : `In diesem Gerät liegt kein eigener Schlüssel. Das ist richtig so: der
+                   zentrale gilt für alle, auch für dich.`}
+            </p>
+            ${e.schluessel ? `<button type="button" class="btn btn-ghost" id="azureGeraetLoeschen">Aus diesem Gerät löschen</button>` : ""}
+            ${gesperrt ? `<p class="empty-note" style="color:#E8A33D;">
+              Für den Geräte-Schlüssel ist die Monatsmenge aufgebraucht; sie erneuert sich am
+              ${bis.toLocaleDateString("de-DE")}.
+              <button type="button" class="btn btn-ghost" id="azureSperreLoesen" style="margin-left:6px;">Trotzdem versuchen</button>
+            </p>` : ""}
+          </details>
+        ` : `
+          <p class="empty-note" style="margin-top:10px;">
+            Eintragen darf den Schlüssel nur der Betreiber der Seite. Für dich ist nichts zu tun.
+          </p>
+        `}
+
         <p class="empty-note" style="margin-top:10px; font-size:0.7rem;">
-          F0 ist dauerhaft kostenlos und hat eine Monatsmenge. Ist sie aufgebraucht,
-          antwortet Azure mit „429“ — die App fängt das ab, sagt es freundlich und
-          rechnet eine Stufe tiefer weiter. Es entstehen keine Kosten, solange der
-          Tarif F0 bleibt.
+          F0 ist dauerhaft kostenlos und hat eine Monatsmenge. Ist sie aufgebraucht, sagt die
+          App das freundlich und rechnet eine Stufe tiefer weiter. Es entstehen keine Kosten,
+          solange der Tarif F0 bleibt.
         </p>
       </div>`;
   }
 
   function azureEinstellungenBinden(area) {
     if (!window.AusspracheP) return;
+    /* Beim ersten Öffnen ist noch nicht bekannt, ob zentral ein
+       Schlüssel liegt. Ihn NICHT zu holen hiesse: „noch nicht
+       eingeschaltet" anzeigen, obwohl er da ist — und der
+       Betreiber trägt ihn ein zweites Mal ein. */
+    if (!AusspracheP.zentralStandJetzt()) {
+      AusspracheP.zentralStand().then(() => {
+        if (document.getElementById("settingsArea")?.contains(area) || document.getElementById("settingsArea") === area) renderSettings();
+      });
+    }
     const stand = () => area.querySelector("#azureStand");
-    area.querySelector("#azureSpeichern")?.addEventListener("click", () => {
-      const s = area.querySelector("#azureSchluessel").value.trim();
-      const r = area.querySelector("#azureRegion").value.trim().toLowerCase();
-      if (!r) { stand().innerHTML = '<p class="empty-note" style="color:#E85F6F;">Die Region fehlt — bei F0 in West Europe ist das „westeurope“.</p>'; return; }
-      /* Ein leeres Schlüsselfeld heisst „nicht ändern“ — undefined,
-         nicht "". Sonst löschte ein Klick auf Speichern den
-         vorhandenen Schlüssel, nur weil das Feld aus Vorsicht leer
-         angezeigt wird. */
-      AusspracheP.azureEinstellungenSetzen(s ? s : undefined, r);
-      AusspracheP.sperreLoesen();
+    const sagen = (html) => { const k = stand(); if (k) k.innerHTML = html; };
+
+    area.querySelector("#azureSpeichern")?.addEventListener("click", async (ev) => {
+      const k = ev.currentTarget;
+      const sch = area.querySelector("#azureSchluessel").value.trim();
+      const reg = area.querySelector("#azureRegion").value.trim().toLowerCase();
+      if (!reg) { sagen('<p class="empty-note" style="color:#E85F6F;">Die Region fehlt — bei F0 in West Europe ist das „westeurope“.</p>'); return; }
+      if (!sch) { sagen('<p class="empty-note" style="color:#E85F6F;">Bitte den Schlüssel einfügen. Aus Sicherheitsgründen steht der alte nie im Feld — er lässt sich nur ersetzen, nicht ansehen.</p>'); return; }
+      k.disabled = true; k.textContent = "Wird geprüft …";
+      const erg = await AusspracheP.zentralSchluesselSetzen(sch, reg);
+      k.disabled = false; k.textContent = "Für alle eintragen";
+      const texte = {
+        "schluessel-falsch": "Azure lehnt den Schlüssel ab. Stimmen Schlüssel UND Region?",
+        "region-unbekannt": "Diese Region kennt Azure nicht. Bei F0 in West Europe heisst sie „westeurope“.",
+        "azure-antwortet-nicht": "Azure hat nicht geantwortet. Gleich noch einmal versuchen.",
+        "nicht-erlaubt": "Eintragen darf nur der Betreiber.",
+        "nicht-angemeldet": "Dafür musst du angemeldet sein.",
+        "unvollstaendig": "Schlüssel oder Region fehlt.",
+        "netz": "Der Server war nicht erreichbar.",
+      };
+      if (erg && erg.fehler) {
+        sagen(`<p class="empty-note" style="color:#E85F6F;">${texte[erg.fehler] || ("Das hat nicht geklappt (" + erg.fehler + ").")}</p>`);
+        return;
+      }
+      /* Der gemerkte Stand ist jetzt falsch — er wird neu geholt,
+         sonst zeigt die Seite bis zum Neuladen den alten an. */
+      await AusspracheP.zentralStand(true);
       renderSettings();
     });
-    area.querySelector("#azureLoeschen")?.addEventListener("click", () => {
+
+    area.querySelector("#azureLoeschen")?.addEventListener("click", async () => {
+      await AusspracheP.zentralSchluesselLoeschen();
+      await AusspracheP.zentralStand(true);
+      renderSettings();
+    });
+
+    /* Anhören statt „prüfen": beantwortet dieselbe Frage — kommt
+       Azure durch? — und man hört gleich, wie es für die Lernenden
+       klingt. Eine grüne Meldung sagt das nicht. */
+    area.querySelector("#azureProbe")?.addEventListener("click", async (ev) => {
+      const k = ev.currentTarget;
+      k.disabled = true; k.textContent = "Wird geholt …";
+      const puffer = await AusspracheP.zentralVorlesen({
+        text: "Die Aussprache sitzt.", sprache: imItalienischraum() ? "it-IT" : "de-DE"
+      });
+      k.disabled = false; k.textContent = "Stimme anhören";
+      if (!puffer) {
+        sagen('<p class="empty-note" style="color:#E85F6F;">Die Stimme kam nicht an. Schlüssel und Region prüfen.</p>');
+        return;
+      }
+      sagen('<p class="empty-note" style="color:#4FA88E;">Der Schlüssel gilt. So klingt es für alle.</p>');
+      const K = window.AudioContext || window.webkitAudioContext;
+      if (!K) return;
+      const kontext = new K();
+      const quelle = kontext.createBufferSource();
+      quelle.buffer = puffer;
+      quelle.connect(kontext.destination);
+      quelle.onended = () => { try { kontext.close(); } catch (e) {} };
+      quelle.start();
+    });
+
+    area.querySelector("#azureGeraetLoeschen")?.addEventListener("click", () => {
       AusspracheP.azureEinstellungenSetzen(null, null);
       renderSettings();
     });
     area.querySelector("#azureSperreLoesen")?.addEventListener("click", () => {
       AusspracheP.sperreLoesen();
       renderSettings();
-    });
-    area.querySelector("#azurePruefen")?.addEventListener("click", async (ev) => {
-      const k = ev.currentTarget;
-      k.disabled = true; k.textContent = "Wird geprüft …";
-      /* Geprüft wird mit einer kurzen Stille: das kostet nichts an
-         Erkennung und beantwortet trotzdem die einzige Frage, die
-         zählt — nimmt Azure den Schlüssel an? */
-      const stille = azureStilleWav();
-      const erg = await AusspracheP.azureBewerten({ wav: stille, text: "Probe", zeitgrenze: 15000 });
-      k.disabled = false; k.textContent = "Verbindung prüfen";
-      const t = {
-        "schluessel-falsch": '<p class="empty-note" style="color:#E85F6F;">Azure lehnt den Schlüssel ab. Stimmen Schlüssel UND Region?</p>',
-        "kontingent": '<p class="empty-note" style="color:#E8A33D;">Schlüssel gilt, aber die Monatsmenge ist aufgebraucht.</p>',
-        "netz": '<p class="empty-note" style="color:#E85F6F;">Azure war nicht erreichbar. Netz prüfen.</p>',
-        "zeit-abgelaufen": '<p class="empty-note" style="color:#E85F6F;">Azure hat nicht geantwortet.</p>',
-        "kein-schluessel": '<p class="empty-note" style="color:#E85F6F;">Erst speichern, dann prüfen.</p>'
-      };
-      stand().innerHTML = erg.fehler
-        ? (t[erg.fehler] || `<p class="empty-note" style="color:#E85F6F;">Azure meldet einen Fehler (${erg.fehler}).</p>`)
-        : '<p class="empty-note" style="color:#4FA88E;">Der Schlüssel gilt, die Region stimmt. Die Laut-Bewertung läuft.</p>';
-      /* „nichts-verstanden" heisst hier: Azure hat geantwortet,
-         aber in der Stille kein Wort gefunden. Das ist der
-         ERFOLGSFALL für diese Prüfung. */
-      if (erg.fehler === "nichts-verstanden") {
-        stand().innerHTML = '<p class="empty-note" style="color:#4FA88E;">Der Schlüssel gilt, die Region stimmt. Die Laut-Bewertung läuft.</p>';
-      }
     });
   }
 
@@ -11255,9 +11342,21 @@
 
   function aussprStufe() {
     if (!window.AusspracheP) return "verstaendlich";
-    if (AusspracheP.azureDa() && !AusspracheP.istGesperrt()) return "azure";
-    if (aussprLetztesOriginal && aussprLetztesOriginal.art === "sprite") return "frei";
+    /* stufe1Da() heisst: entweder liegt der Schlüssel zentral
+       (dann gilt er für ALLE Angemeldeten) oder der Betreiber hat
+       einen eigenen im Gerät. Die Oberfläche muss den Unterschied
+       nicht kennen. */
+    if (AusspracheP.stufe1Da()) return "azure";
+    if (aussprLetztesOriginal && (aussprLetztesOriginal.art === "sprite" || aussprLetztesOriginal.art === "azure")) return "frei";
     return "verstaendlich";
+  }
+
+  /* Woher kommt Stufe 1 gerade? Nur für die Anzeige. */
+  function aussprStufe1Herkunft() {
+    if (!window.AusspracheP) return "";
+    if (AusspracheP.zentralDa()) return "zentral";
+    if (AusspracheP.azureDa() && !AusspracheP.istGesperrt()) return "eigener";
+    return "";
   }
 
   /* Der Bereichsname, unter dem die Tondatei des Wortes liegt.
@@ -11274,7 +11373,38 @@
      wird das ehrlich gemeldet — dann gibt es kein Shadowing mit
      zwei Wellenformen, weil die Gerätestimme keine Tondatei
      liefert, die man nebeneinanderlegen könnte. */
+  /* Die Stimme, die vorspricht — in dieser Reihenfolge:
+
+       1. Die VORPRODUZIERTE Aufnahme, wenn es eine gibt. Sie ist
+          schon da, kostet nichts und ist für dieses Wort gemacht.
+       2. Die NEURONALE STIMME VON AZURE. Das ist die, die
+          „natürlich klingt wie beim Duden" — dieselbe Technik,
+          mit der Wörterbücher ihre Aussprachebeispiele erzeugen.
+          Sie kommt über dieselbe Funktion wie die Bewertung, also
+          ohne dass jemand einen Schlüssel eintragen müsste.
+       3. Die Stimme des GERÄTS. Sie klingt je nach Telefon sehr
+          verschieden und manchmal falsch — aber sie ist immer da,
+          auch ohne Netz.
+
+     Punkt 2 bringt nebenbei etwas Zweites: mit einer Aufnahme des
+     Wortes lassen sich die beiden Wellenformen nebeneinander
+     legen. Vorher ging das nur bei den wenigen vorproduzierten
+     Wörtern. */
   function aussprOriginalLaden(w) {
+    if (!window.AusspracheP) return Promise.resolve(null);
+    return aussprSpriteLaden(w).then((s) => {
+      if (s) return s;
+      if (!AusspracheP.zentralDa()) return null;
+      return AusspracheP.zentralVorlesen({
+        text: w.word, sprache: imItalienischraum() ? "it-IT" : "de-DE"
+      }).then((puffer) => {
+        if (!puffer) return null;
+        return { puffer: puffer, art: "azure", huelle: AusspracheP.huellkurve(puffer, 150) };
+      }).catch(() => null);
+    });
+  }
+
+  function aussprSpriteLaden(w) {
     if (!window.TonListe || !window.AusspracheP) return Promise.resolve(null);
     const bereich = aussprBereich(w), id = aussprStueckId(w.word);
     if (!bereich || !id) return Promise.resolve(null);
@@ -11446,15 +11576,27 @@
             `<button type="button" class="trophy-chip ${aussprTempo === t ? "selected" : ""}" data-ausspr-tempo="${t}">${n}</button>`).join("")}
         </div>
         ${!aussprLetztesOriginal ? `<p class="empty-note" style="font-size:0.7rem;">
-          Für dieses Wort gibt es noch keine vorproduzierte Aufnahme. „Original“ nimmt
+          Für dieses Wort gibt es gerade keine Aufnahme zum Vergleichen. „Original“ nimmt
           darum die Stimme deines Geräts — die lässt sich nicht als Wellenform zeigen
-          und nicht mit deiner Aufnahme vergleichen.</p>` : ""}
+          und nicht mit deiner Aufnahme vergleichen.</p>`
+        : aussprLetztesOriginal.art === "azure" ? `<p class="empty-note" style="font-size:0.7rem;">
+          Vorgesprochen wird von der neuronalen Stimme — dieselbe Technik, mit der
+          Wörterbücher ihre Aussprachebeispiele erzeugen.</p>` : ""}
       </div>`;
   }
 
   function renderAussprache() {
     const area = document.getElementById("ausspracheArea");
     if (!area) return;
+    /* Steht der zentrale Schlüssel zur Verfügung? Das entscheidet,
+       welche Stufe angezeigt wird und mit welcher Stimme
+       vorgesprochen wird — also wird es EINMAL geholt und die
+       Karte danach neu gezeichnet. */
+    if (window.AusspracheP && AusspracheP.zentralMoeglich() && !AusspracheP.zentralStandJetzt()) {
+      AusspracheP.zentralStand().then(() => {
+        if (document.getElementById("sub-aussprache")?.dataset.active === "true") renderAussprache();
+      });
+    }
     const kannHoeren = Core.spracherkennungDa();
     const alle = buildDictionaryEntries();
     const kategorien = ["alle", ...new Set(alle.map((e) => e.category).filter(Boolean))].sort((a, b) => a === "alle" ? -1 : b === "alle" ? 1 : a.localeCompare(b, "de"));
@@ -11508,8 +11650,8 @@
             <p><span class="ausspr-stufe ausspr-stufe-1">Stufe 1</span>
               <strong>Laut für Laut.</strong> Jeder einzelne Laut bekommt eine Note, und
               dazu steht in Klartext, was danebenlag — „dein ö klang wie ein o“. Das ist
-              die Auskunft, die weiterbringt. Dafür braucht es einen Azure-Schlüssel
-              in den Einstellungen.</p>
+              die Auskunft, die weiterbringt. Sie ist für alle Angemeldeten da — du musst
+              dafür nichts einrichten.</p>
             <p><span class="ausspr-stufe ausspr-stufe-2">Stufe 2</span>
               <strong>Vergleich mit der Originalaufnahme.</strong> Läuft ganz in deinem
               Gerät, auch ohne Netz. Sie zeigt, <strong>wo</strong> im Wort du abweichst —
@@ -11525,7 +11667,8 @@
             </p>
             <p class="empty-note" style="font-size:0.72rem;">
               Deine Aufnahme bleibt in deinem Gerät. Nur in Stufe 1 geht sie zur Bewertung
-              an Azure; gespeichert wird sie nirgends.
+              über unseren Server an Azure und kommt als Noten zurück — sie wird weder
+              unterwegs noch bei uns noch dort gespeichert.
             </p>
           </div>
         </div>`;
@@ -11591,7 +11734,7 @@
         </div>
         <p class="empty-note" style="margin-top:14px; font-size:0.7rem;">
           ${stufe === "azure"
-            ? "Für die Laut-Bewertung geht deine Aufnahme an Azure und wird dort bewertet. Sie wird nicht gespeichert — weder dort noch hier."
+            ? "Für die Laut-Bewertung geht deine Aufnahme über unseren Server an Azure und wird dort bewertet. Gespeichert wird sie nirgends."
             : "Deine Aufnahme bleibt <strong>in diesem Gerät</strong>. Sie wird hier gerechnet und nirgends hochgeladen."}
         </p>
         ${miniBugReportBtnHtml(`Aussprache-Trainer, Wort „${w.word}“ (${stufe})`)}
@@ -11746,10 +11889,10 @@
      und fällt nach unten durch, ohne dem Nutzer etwas vorzumachen.
      ------------------------------------------------------------ */
   async function aussprBewerten(w, puffer, blob) {
-    /* --- Stufe 1: Azure --- */
-    if (AusspracheP.azureDa() && !AusspracheP.istGesperrt() && puffer) {
+    /* --- Stufe 1: Azure, zentral oder mit eigenem Schlüssel --- */
+    if (AusspracheP.stufe1Da() && puffer) {
       const wav = AusspracheP.alsWav(puffer);
-      const erg = await AusspracheP.azureBewerten({
+      const erg = await AusspracheP.stufe1Bewerten({
         wav: wav, text: w.word, sprache: imItalienischraum() ? "it-IT" : "de-DE"
       });
       if (!erg.fehler) return erg;
@@ -11761,7 +11904,18 @@
         return tiefer;
       }
       if (erg.fehler === "schluessel-falsch") {
-        return { fehlertext: "Der Azure-Schlüssel wird abgelehnt. Schlüssel und Region in den Einstellungen prüfen." };
+        return { fehlertext: "Der Azure-Schlüssel wird abgelehnt. Der Betreiber muss ihn in den Einstellungen neu eintragen." };
+      }
+      /* Die Fälle, die es nur auf dem zentralen Weg gibt. Jeder
+         bekommt einen eigenen Satz — „hat nicht geklappt" schickt
+         den Lernenden auf die Suche nach einem Fehler bei sich. */
+      if (erg.fehler === "tagesgrenze") {
+        return { fehlertext: "Für heute ist die Laut-Bewertung aufgebraucht — sie ist je Person begrenzt, damit die kostenlose Menge für alle reicht. Morgen geht es weiter; bis dahin läuft die Prüfung eine Stufe tiefer." };
+      }
+      if (erg.fehler === "nicht-angemeldet") {
+        const tiefer = await aussprFreiOderVerstaendlich(w, puffer, blob);
+        if (tiefer) tiefer.hinweis = "Die Laut-Bewertung gibt es für angemeldete Lernende. Melde dich an, dann wird Laut für Laut gemessen.";
+        return tiefer;
       }
       if (erg.fehler === "nichts-verstanden") {
         return { fehlertext: "Azure hat kein Wort erkannt. Näher ans Mikrofon, und noch einmal." };

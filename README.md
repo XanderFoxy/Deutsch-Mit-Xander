@@ -615,3 +615,105 @@ create policy "livechat schreiben" on livechat_nachrichten for insert with check
 
 Vor dem Umbau wurden Kopien aller angefassten Dateien abgelegt — siehe `sicherung/`.
 Dort steht auch, wie man den alten Stand zurückholt.
+
+## 16. Der Azure-Schlüssel gilt jetzt für alle (Fassung 177)
+
+### Das Problem
+
+Der Schlüssel lag im `localStorage` des Browsers — also in **einem** Gerät. Auf jedem
+anderen Telefon, auch auf einem zweiten eigenen, war er nicht da, und der
+Aussprache-Trainer fiel stillschweigend auf Stufe 3 zurück. Im Umkehrschluss heißt das:
+für **niemanden** außer auf dem einen Gerät lief die Laut-Bewertung.
+
+Von Lernenden zu verlangen, sich selbst bei Azure ein Konto anzulegen, ist keine Lösung.
+
+### Warum der Schlüssel nicht einfach in die Webseite kann
+
+Ein Schlüssel, den die Webseite kennt, ist ein öffentlicher Schlüssel. Die Webseite läuft
+im Browser jedes Besuchers — man kann ihn dort weder verstecken noch verschlüsseln: was
+der Browser entschlüsseln kann, kann auch der Besucher entschlüsseln. Wer ihn findet,
+kann ihn auf deine Rechnung benutzen.
+
+Dasselbe gilt für eine normale Supabase-Tabelle: alles, was die Webseite mit dem
+öffentlichen `anonKey` lesen darf, darf jeder lesen.
+
+### Wie es jetzt aufgebaut ist
+
+```
+Browser                     Supabase (Server)              Azure
+   │                              │                          │
+   │ Aufnahme + Anmeldung         │                          │
+   ├─────────────────────────────►│                          │
+   │                              │ liest den Schlüssel      │
+   │                              │ aus der gesperrten       │
+   │                              │ Tabelle                  │
+   │                              ├─────────────────────────►│
+   │                              │◄─────────────────────────┤
+   │◄─────────────────────────────┤   Noten, Laut für Laut   │
+   │   Noten (kein Schlüssel)     │                          │
+```
+
+* **Edge-Function `aussprache`** (`supabase/functions/aussprache/index.ts`): der einzige
+  Ort, der den Schlüssel kennt. Sie ist bereits im Projekt bereitgestellt.
+* **Tabelle `betreiber_geheimnisse`**: RLS ist an und es gibt **absichtlich keine einzige
+  Policy**. Damit kommt aus dem Browser niemand heran — auch der Betreiber nicht. Nur die
+  Edge-Function liest sie, weil sie mit dem `service_role`-Schlüssel arbeitet.
+* **Tabelle `azure_nutzung`**: zählt je Person und Tag mit. Bei 300 Bewertungen am Tag
+  macht die Funktion zu, damit nicht ein Einzelner die kostenlose Monatsmenge für alle
+  aufbraucht.
+* Nur **angemeldete** Lernende kommen durch (`verify_jwt`, und die Funktion prüft es
+  zusätzlich selbst). Den Schlüssel **eintragen** darf nur, wer in `profiles.is_owner`
+  steht — geprüft an der Datenbank, nicht an etwas, das der Browser mitschickt.
+
+### Was zu tun ist — einmal, in der App
+
+1. Als Betreiber anmelden → **Profil → Einstellungen**
+2. Kasten „🗣️ Laut-Bewertung & Vorlese-Stimme (Azure)"
+3. Schlüssel und Region (`westeurope`) eintragen → **„Für alle eintragen"**
+4. **„Stimme anhören"** — dann hörst du genau das, was deine Lernenden hören werden.
+
+Die App prüft den Schlüssel bei Azure, **bevor** sie ihn speichert. Ein falscher
+Schlüssel wird nicht angenommen — sonst fiele er erst dem nächsten Lernenden auf, und der
+hielte es für seinen eigenen Fehler.
+
+Danach hat **jede angemeldete Person** ohne eigenes Zutun:
+
+* die Bewertung **Laut für Laut** (Stufe 1),
+* und die **neuronale Vorlese-Stimme** von Azure (`de-DE-KatjaNeural`, italienisch
+  `it-IT-ElsaNeural`) — dieselbe Technik, mit der Wörterbücher ihre Aussprachebeispiele
+  erzeugen.
+
+Der alte Weg (Schlüssel im eigenen Gerät) bleibt als Rückfallebene bestehen und wird nur
+noch genommen, wenn der Server einmal nicht antwortet.
+
+### Die Vorlese-Stimme
+
+Vorgesprochen wird in dieser Reihenfolge:
+
+1. die **vorproduzierte** Aufnahme, wenn es für das Wort eine gibt (kostet nichts),
+2. die **neuronale Stimme von Azure**,
+3. die Stimme des **Geräts** (klingt je nach Telefon sehr verschieden, ist aber immer da
+   — auch ohne Netz).
+
+Was einmal geholt wurde, bleibt für die Sitzung im Speicher. Ohne das kostete jedes
+„noch einmal vorsprechen" eine neue Anfrage.
+
+Nebeneffekt: weil jetzt für **jedes** Wort eine Aufnahme da ist, lassen sich die beiden
+Wellenformen (Original und eigene) nebeneinanderlegen. Vorher ging das nur bei den
+wenigen vorproduzierten Wörtern.
+
+### Der Ablauf im Trainer
+
+„Runde starten" drücken — und dann nichts mehr:
+
+```
+Wort wird vorgesprochen  →  Mikrofon geht an  →  du sprichst nach
+                                                       │
+                          Sprechpause wird erkannt  ◄──┘
+                                   │
+                               bewerten
+                                   │
+              ≥ Schwelle ──────────┴────────── < Schwelle
+                  │                                 │
+           nächstes Wort                    dasselbe Wort noch einmal
+```
