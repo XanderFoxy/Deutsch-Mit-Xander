@@ -34,11 +34,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=179" />
-<link rel="stylesheet" href="app-styles.css?v=179" />
-<link rel="stylesheet" href="themes.css?v=179" />
-<link rel="stylesheet" href="aussprache-kreisel.css?v=179" />
-<link rel="stylesheet" href="livechat.css?v=179" />
+<link rel="stylesheet" href="styles.css?v=180" />
+<link rel="stylesheet" href="app-styles.css?v=180" />
+<link rel="stylesheet" href="themes.css?v=180" />
+<link rel="stylesheet" href="aussprache-kreisel.css?v=180" />
+<link rel="stylesheet" href="livechat.css?v=180" />
+<link rel="stylesheet" href="werkstatt.css?v=180" />
+<link rel="stylesheet" href="korrekturen.css?v=180" />
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -582,8 +584,8 @@
       <button class="subnav-pill" data-sub="sub-dialekt" aria-selected="false">🗺️ Dialekte<span class="subnav-info-icon" data-info="Dasselbe Ding heißt nicht überall gleich: Brötchen, Semmel, Schrippe, Weck. Hier steht zu über fünfzig Alltagswörtern, wie sie in Bayern, Schwaben, Sachsen, im Ruhrgebiet, in Berlin, in Österreich und in der Schweiz heißen.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-kosten" aria-selected="false">💶 Was die App kostet<span class="subnav-info-icon" data-info="Offen gerechnet: was der Betrieb dieser Seite kostet, was eine gute Sprachausgabe kostet, ab wann die Datenbank Geld kostet — und warum Premium so wenig ist.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-witze" aria-selected="false">😄 Witze<span class="subnav-info-icon" data-info="Deutsche Witze mit Erklärung: zu jedem steht dabei, an welchem Wort er hängt und welche zwei Bedeutungen dieses Wort hat. Humor ist das Letzte, was man in einer fremden Sprache versteht — hier kann man es üben.">ⓘ</span></button>
-      <button class="subnav-pill" data-sub="sub-livechat" aria-selected="false">💬 Live-Chat<span class="subnav-info-icon" data-info="Acht runde Plätze mit Gesichtern und ein Chat zum Schreiben. Antippen, Kamera erlauben, drin. Ein Gesicht anklicken zeigt es größer. Der Link lädt andere in denselben Raum ein.">ⓘ</span></button>
-      <button class="subnav-pill" data-sub="sub-klassenzimmer" aria-selected="false">🎓 Klassenzimmer<span class="subnav-info-icon" data-info="Ton und Bild zusammen, während du in der App weiterblätterst. Der Raum bleibt als kleine Leiste am Rand offen — du kannst gleichzeitig üben und reden. Der Betreiber öffnet den Raum, du kommst per Link oder Knopf dazu.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-livechat" aria-selected="false">🎓 Klassenzimmer<span class="subnav-info-icon" data-info="Acht runde Plätze mit Gesichtern und ein Chat zum Schreiben. Antippen, Kamera erlauben, drin. Ein Gesicht anklicken zeigt es größer. Der Link lädt andere in denselben Raum ein.">ⓘ</span></button>
+      <button class="subnav-pill" style="display:none;" data-sub="sub-klassenzimmer" aria-selected="false">🎓 Klassenzimmer<span class="subnav-info-icon" data-info="Ton und Bild zusammen, während du in der App weiterblätterst. Der Raum bleibt als kleine Leiste am Rand offen — du kannst gleichzeitig üben und reden. Der Betreiber öffnet den Raum, du kommst per Link oder Knopf dazu.">ⓘ</span></button>
       <button class="subnav-pill" data-sub="sub-music" aria-selected="false">🎵 Musik</button>
       <button class="subnav-pill" data-sub="sub-news" aria-selected="false">📰 Nachrichten</button>
     </div>
@@ -672,7 +674,7 @@
 <!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
      nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
      Fassung aus dem Zwischenspeicher des Browsers. -->
-<script>window.DMA_VERSION = "179";</script>
+<script>window.DMA_VERSION = "180";</script>
 <script>
 /* Fassungs-Wächter: liegt auf dem Server eine neuere Seite als die hier
    geladene, sagt die App Bescheid, statt still eine alte Fassung zu
@@ -697,24 +699,26 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) pruefen(); });
 })();
 </script>
-<script src="core.js?v=179"></script>
-<script src="ton-liste.js?v=179"></script>
-<script src="aussprache-tabelle.js?v=179"></script>
-<script src="aussprache-pruefung.js?v=179"></script>
-<script src="aussprache-kreisel.js?v=179"></script>
-<script src="klassenzimmer.js?v=179"></script>
-<script src="livechat.js?v=179"></script>
-<script src="bildverwaltung.js?v=179"></script>
-<script src="supabase-config.js?v=179"></script>
-<script src="satzbau.js?v=179"></script>
-<script src="data-exercises.js?v=179"></script>
-<script src="data-vocab.js?v=179"></script>
-<script src="data-wegweiser.js?v=179"></script>
-<script src="data-umgangssprache.js?v=179"></script>
-<script src="data-dialekt.js?v=179"></script>
-<script src="backend.js?v=179"></script>
-<script src="quiz.js?v=179"></script>
-<script src="baukasten.js?v=179" defer></script>
-<script src="app.js?v=179"></script>
+<script src="core.js?v=180"></script>
+<script src="ton-liste.js?v=180"></script>
+<script src="aussprache-tabelle.js?v=180"></script>
+<script src="aussprache-pruefung.js?v=180"></script>
+<script src="aussprache-kreisel.js?v=180"></script>
+<script src="klassenzimmer.js?v=180"></script>
+<script src="livechat.js?v=180"></script>
+<script src="data-werkstatt.js?v=180"></script>
+<script src="werkstatt.js?v=180"></script>
+<script src="bildverwaltung.js?v=180"></script>
+<script src="supabase-config.js?v=180"></script>
+<script src="satzbau.js?v=180"></script>
+<script src="data-exercises.js?v=180"></script>
+<script src="data-vocab.js?v=180"></script>
+<script src="data-wegweiser.js?v=180"></script>
+<script src="data-umgangssprache.js?v=180"></script>
+<script src="data-dialekt.js?v=180"></script>
+<script src="backend.js?v=180"></script>
+<script src="quiz.js?v=180"></script>
+<script src="baukasten.js?v=180" defer></script>
+<script src="app.js?v=180"></script>
 </body>
 </html>

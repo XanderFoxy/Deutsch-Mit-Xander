@@ -1,0 +1,159 @@
+/* =========================================================
+   DIE WERKSTATT-BLASE — Aussehen
+   ---------------------------------------------------------
+   Unten rechts, weil dort der Daumen ist und nichts Wichtiges
+   steht. Zugeklappt ein Knopf, aufgeklappt eine Tafel, die
+   höchstens halb so hoch wie das Bild wird — sie soll etwas
+   sagen, nicht die Seite übernehmen.
+   ========================================================= */
+.wk-blase {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 880;               /* unter Lightboxen (999), über allem anderen */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;       /* nur die Kinder fangen Klicks */
+}
+.wk-blase > * { pointer-events: auto; }
+
+/* Ist das Klassenzimmer offen, rückt die Blase darüber. */
+body.hat-klassenzimmer .wk-blase { bottom: 96px; }
+
+.wk-knopf {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 2px solid rgba(122, 115, 100, 0.25);
+  background: var(--plum-800);
+  color: var(--cream-50);
+  border-radius: 999px;
+  padding: 9px 15px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-deck);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.wk-knopf:hover { transform: translateY(-2px); }
+@media (max-width: 560px) {
+  /* Auf dem Telefon nur das Werkzeug — der Text frisst sonst die
+     halbe Breite und deckt zu, was darunter liegt. */
+  .wk-knopf-text { display: none; }
+  .wk-knopf { padding: 11px; font-size: 1rem; }
+}
+
+/* Der Punkt: es gibt etwas Ungelesenes. */
+.wk-punkt {
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #E85F6F;
+  border: 2px solid var(--plum-800);
+  animation: wkPochen 2.2s ease-in-out infinite;
+}
+@keyframes wkPochen {
+  0%, 70%, 100% { transform: scale(1); }
+  80%           { transform: scale(1.35); }
+}
+@media (prefers-reduced-motion: reduce) { .wk-punkt { animation: none; } }
+
+.wk-tafel {
+  display: none;
+  width: min(340px, calc(100vw - 28px));
+  max-height: min(56vh, 460px);
+  overflow-y: auto;
+  background: var(--plum-800);
+  border: 1px solid rgba(122, 115, 100, 0.25);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 44px rgba(46, 42, 37, 0.22);
+  padding: 12px 14px 10px;
+}
+.wk-tafel.wk-offen { display: block; }
+
+.wk-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.wk-kopf strong { font-family: var(--font-display); font-size: 1rem; }
+.wk-zu {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--cream-200);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.wk-zu:hover { background: var(--plum-700); color: var(--cream-50); }
+
+.wk-abschnitt {
+  margin: 10px 0 4px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cream-200);
+}
+.wk-liste {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.wk-liste li {
+  font-size: 0.82rem;
+  line-height: 1.42;
+  padding-left: 14px;
+  position: relative;
+}
+.wk-liste li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.55em;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--teal-400);
+}
+/* Was gebaut wird, ist noch nicht fertig — ein offener Ring statt
+   eines vollen Punktes sagt das ohne ein einziges Wort. */
+.wk-liste-bau li::before {
+  background: none;
+  border: 2px solid var(--amber-400);
+  width: 8px; height: 8px;
+  top: 0.45em;
+}
+.wk-datum {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--cream-200);
+}
+.wk-nurdu {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--amber-400);
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 7px;
+  vertical-align: 1px;
+}
+.wk-fuss {
+  margin: 10px 0 0;
+  font-size: 0.68rem;
+  color: var(--cream-200);
+  border-top: 1px dashed rgba(122, 115, 100, 0.25);
+  padding-top: 7px;
+}

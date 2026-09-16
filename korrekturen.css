@@ -1,0 +1,195 @@
+/* =========================================================
+   KORREKTUREN
+   ---------------------------------------------------------
+   Gezielte Nachbesserungen am Aussehen. Sie stehen ABSICHTLICH
+   in einer eigenen Datei und wird als LETZTE geladen:
+
+     * app-styles.css ist 339 KB und gewachsen. Wer dort mitten
+       hinein greift, ändert leicht etwas mit, das er nicht
+       gesehen hat.
+     * Hier steht zu jeder Zeile, welche Meldung sie behebt.
+       Wer später aufräumt, weiss, was er anfasst.
+     * Zurücknehmen heisst: den Block löschen. Kein Suchen.
+
+   Wird eine Korrektur dauerhaft, wandert sie irgendwann nach
+   app-styles.css. Bis dahin steht sie hier.
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   1. DIE STEINE BEI „FUCHS AM FLUSS" AUF SCHMALEN GERÄTEN
+   ---------------------------------------------------------
+   GEMELDET: „Beim Android sind das keine schönen Steine wie beim
+   iPhone. Die Steine sind dann so breite Ellipsen, die nicht wie
+   Steine aussehen, nur weil es bei Android nicht nebeneinander
+   passt."
+
+   Die Ursache stand in app-styles.css:
+       @media (max-width: 360px) { .fluss-stein { flex:1 1 100%; max-width:none; } }
+   Volle Breite heisst auf einem 360er Gerät: ein 340 Pixel
+   breiter und 44 Pixel hoher Kasten. Die runden Ecken machen
+   daraus genau die flache Ellipse.
+
+   Ein Stein sieht wie ein Stein aus, wenn das Verhältnis von
+   Breite zu Höhe stimmt — nicht, wenn er in einer Reihe steht.
+   Also darf er untereinander stehen, aber er behält seine Breite
+   und rückt in die Mitte. Dieselbe Form wie auf dem iPhone, nur
+   gestapelt.
+   --------------------------------------------------------- */
+@media (max-width: 430px) {
+  /* Zwei nebeneinander statt drei gequetscht — und alle gleich breit.
+     „flex: 1 1 46%" liess den letzten Stein einer Reihe auf die volle
+     Breite wachsen; dann lagen unterschiedlich grosse Steine
+     untereinander. „0 0" wächst nicht. */
+  .fluss-stein { flex: 0 0 46%; min-width: 0; max-width: 170px; }
+}
+@media (max-width: 360px) {
+  /* Untereinander — aber MIT Steinform.
+     Gemessen: bei voller Breite war ein Stein 340 x 44, also 7,7 mal
+     so breit wie hoch. Selbst mit 220 Pixeln Breite blieb es bei
+     4,6:1 — immer noch eine Ellipse.
+     Ein Kiesel liegt bei ungefähr 3:1. Darum BEIDES: schmaler UND
+     höher. 170 x 58 ergibt 2,9:1, und damit sieht er aus wie auf dem
+     breiten Schirm, nur gestapelt. */
+  .fluss-stein {
+    flex: 0 0 auto;
+    width: 170px;
+    max-width: 170px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 19px 14px;
+    font-size: 0.88rem;
+  }
+  .fluss-steine { gap: 10px; }
+}
+
+/* ---------------------------------------------------------
+   2. „★ MEIN WORTSCHATZ" PASST NICHT AUF DEN KNOPF
+   ---------------------------------------------------------
+   GEMELDET: „Bei Fuchs am Fluss passt ,mein Wortschatz` gar nicht
+   auf den Button drauf. Das geht über den Button hinaus."
+
+   Die Chip-Reihe steht auf flex-wrap:nowrap mit waagerechtem
+   Scrollen. Auf einem breiten Schirm ist das richtig. Auf einem
+   schmalen ist es zweimal falsch: der lange Text („★ Mein
+   Wortschatz (137)") wird nicht umgebrochen, weil trophy-chip auf
+   white-space:nowrap steht, und dass man seitlich schieben kann,
+   sieht man nicht.
+
+   Darum auf schmalen Geräten: umbrechen statt schieben, und der
+   Text darf zweizeilig werden.
+   --------------------------------------------------------- */
+@media (max-width: 520px) {
+  .wortquelle-chips {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+  .wortquelle-chips .trophy-chip {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+}
+/* Und überall: ein Chip darf nie über seinen Rand hinauslaufen.
+   Das ist die eigentliche Regel — der Rest oben ist nur die
+   Feinabstimmung fürs Telefon. */
+.trophy-chip { max-width: 100%; overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------
+   3. „DU BIST NOCH IM KLASSENZIMMER"
+   ---------------------------------------------------------
+   GEWÜNSCHT: „Wenn man im Klassenzimmer ist und sich
+   weiterführende Inhalte anguckt — wie können wir dann wissen,
+   dass wir noch im Klassenzimmer sind? Kann das ein schwebendes
+   Menü sein, oder so ein kleines Icon, was wieder dahin springt?
+   Ich weiß nicht, wie das professionell gelöst werden würde."
+
+   So, wie es jede App löst, die dasselbe Problem hat (Telefonie,
+   Sprachräume, Musik): ein schmaler Streifen, der IMMER sichtbar
+   bleibt, solange die Verbindung steht.
+
+   Drei Regeln, an denen sich alle halten und die hier auch gelten:
+     * Er sagt den ZUSTAND („du bist drin"), nicht nur dass es
+       etwas gibt. Ein grüner Punkt, der pocht.
+     * Ein Tipp darauf bringt zurück. Nicht zwei Tipps, nicht ein
+       Menü — ein Tipp.
+     * Auflegen ist von dort aus möglich, aber deutlich kleiner
+       als das Zurück. Wer versehentlich trifft, soll nicht aus
+       dem Gespräch fliegen.
+
+   Er sitzt unten, weil dort der Daumen ist, und er schiebt die
+   Werkstatt-Blase nach oben statt sie zu verdecken.
+   --------------------------------------------------------- */
+.kz-streifen {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 890;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border-radius: 999px;
+  background: var(--plum-800);
+  border: 2px solid #4FA88E;
+  box-shadow: 0 10px 30px rgba(46, 42, 37, 0.24);
+  max-width: calc(100vw - 24px);
+}
+.kz-streifen.kz-an { display: flex; }
+
+.kz-streifen-punkt {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #4FA88E; flex: none;
+  box-shadow: 0 0 0 0 rgba(79, 168, 142, 0.6);
+  animation: kzLebt 2s ease-out infinite;
+}
+@keyframes kzLebt {
+  0%   { box-shadow: 0 0 0 0 rgba(79, 168, 142, 0.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(79, 168, 142, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 168, 142, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .kz-streifen-punkt { animation: none; } }
+
+.kz-streifen-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kz-streifen-text small { display: block; font-weight: 500; font-size: 0.68rem; color: var(--cream-200); }
+
+.kz-streifen-zurueck {
+  border: none;
+  background: #4FA88E;
+  color: #fff;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex: none;
+}
+.kz-streifen-zurueck:hover { filter: brightness(1.08); }
+/* Auflegen: klein, unauffällig, am Rand — man soll es finden, wenn
+   man es sucht, und nicht treffen, wenn man es nicht sucht. */
+.kz-streifen-weg {
+  border: none;
+  background: none;
+  color: var(--cream-200);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 50%;
+  flex: none;
+}
+.kz-streifen-weg:hover { background: rgba(232, 95, 111, 0.15); color: #E85F6F; }
+
+/* Die Werkstatt-Blase rückt darüber, statt sich zu überlagern. */
+body.im-klassenzimmer .wk-blase { bottom: 74px; }
+@media (max-width: 560px) {
+  .kz-streifen-text { max-width: 38vw; }
+}

@@ -52,6 +52,26 @@
 window.LiveChat = (function () {
   "use strict";
 
+  /* =========================================================
+     DER HAUPTRAUM
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Der Hauptraum soll für jeden direkt zugänglich
+     sein. Wenn ich gerade im Klassenzimmer bin, sollen die Leute
+     wissen, wo sie mich finden — dazu muss man jetzt nicht
+     unbedingt den Schlüssel haben."
+
+     Also ein FESTER Name. Wer auf „Klassenzimmer betreten" tippt,
+     landet dort, ohne Link und ohne Verabredung.
+
+     WAS DAS KOSTET, ehrlich gesagt: ein fester Name ist bekannt.
+     Wer die Seite kennt, kann hinein. Das ist bei einem
+     Klassenzimmer gewollt — es ist ein öffentlicher Raum, kein
+     Gespräch unter vier Augen. Für alles andere gibt es weiterhin
+     eigene Räume mit langem Zufallsnamen, die nur über den Link
+     erreichbar sind.
+     ========================================================= */
+  var HAUPTRAUM = "klassenzimmer";
+
   var PLAETZE = 8;                    // 4 oben, 4 unten
   var CHAT_LAENGE = 300;              // Zeichen je Nachricht
   var CHAT_VERLAUF = 60;              // so viele Nachrichten bleiben sichtbar
@@ -159,6 +179,45 @@ window.LiveChat = (function () {
     return "raum-" + s;
   }
   function raumMerken(n) { try { localStorage.setItem("dma_livechat_raum", n); } catch (e) {} }
+
+  /* --- Nach dem Neuladen zurück in den Raum ---
+     GEWÜNSCHT: „Manchmal muss ich die Webseite aktualisieren, um
+     irgendwas zurückzusetzen — bleibt man dann auch im
+     Klassenzimmer?"
+
+     Technisch: nein. Eine Direktverbindung überlebt das Neuladen
+     nicht, sie muss neu aufgebaut werden — daran führt kein Weg
+     vorbei, das ist so gebaut und bei jedem Dienst so.
+
+     Was geht: es SOFORT und OHNE Nachfrage wieder aufzubauen.
+     Beim Verlassen der Seite wird vermerkt, dass man drin war.
+     Kommt die Seite innerhalb von zwei Minuten zurück, geht die
+     App von selbst wieder hinein — die Kameraerlaubnis hat der
+     Browser noch, es fragt also nichts. Nach zwei Minuten war es
+     kein Neuladen mehr, sondern ein Weggehen; dann bleibt der
+     Raum zu. */
+  var RUECK_SCHLUESSEL = "dma_livechat_zurueck";
+  var RUECK_FRIST_MS = 120000;
+  function rueckkehrMerken() {
+    try {
+      sessionStorage.setItem(RUECK_SCHLUESSEL, JSON.stringify({
+        raum: zustand.raum, name: zustand.ichName,
+        mitBild: Boolean(zustand.eigenerStrom && zustand.eigenerStrom.getVideoTracks().length),
+        zeit: Date.now()
+      }));
+    } catch (e) {}
+  }
+  function rueckkehrVergessen() {
+    try { sessionStorage.removeItem(RUECK_SCHLUESSEL); } catch (e) {}
+  }
+  function rueckkehrOffen() {
+    try {
+      var r = JSON.parse(sessionStorage.getItem(RUECK_SCHLUESSEL) || "null");
+      if (!r || !r.raum) return null;
+      if (Date.now() - (r.zeit || 0) > RUECK_FRIST_MS) { rueckkehrVergessen(); return null; }
+      return r;
+    } catch (e) { return null; }
+  }
   function gemerkterRaum() { try { return localStorage.getItem("dma_livechat_raum") || ""; } catch (e) { return ""; } }
   function raumAusAdresse() {
     var t = "";
@@ -481,7 +540,16 @@ window.LiveChat = (function () {
     });
   }
 
+  /* Die Seite geht weg (Neuladen, Tab zu, Telefon gesperrt).
+     pagehide statt unload: unload wird auf dem Telefon oft gar
+     nicht mehr ausgelöst. */
+  window.addEventListener("pagehide", function () {
+    if (zustand.lage === "drin") rueckkehrMerken();
+  });
+
   function verlassen() {
+    /* Ausdrücklich gegangen heisst: nicht zurückholen. */
+    rueckkehrVergessen();
     if (kanal) {
       senden({ art: "tschuess" });
       try { kanal.unsubscribe(); } catch (e) {}
@@ -531,6 +599,9 @@ window.LiveChat = (function () {
   }
 
   return {
+    HAUPTRAUM: HAUPTRAUM,
+    rueckkehrOffen: rueckkehrOffen,
+    rueckkehrVergessen: rueckkehrVergessen,
     PLAETZE: PLAETZE,
     CHAT_LAENGE: CHAT_LAENGE,
     betreten: betreten,

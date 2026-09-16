@@ -10539,6 +10539,18 @@
     return true;
   }
   function imWortschatz(wort) { return meinWortschatz().has(wort); }
+  /* Nachsichtig nachsehen — für die Wörter, die vor der Korrektur
+     oben in der Alltagsform gespeichert wurden. „der Kitzler" im
+     Wortschatz soll den Wörterbucheintrag „die Klitoris" weiterhin
+     treffen; sonst wäre der Wortschatz von gestern heute leer.
+     Das kostet nichts: geprüft wird nur, wenn das Wort selbst nicht
+     gefunden wurde. */
+  function wortIstGemerkt(wort) {
+    const menge = meinWortschatz();
+    if (menge.has(wort)) return true;
+    const a = alltagsWort(wort);
+    return Boolean(a && a.wort && menge.has(a.wort));
+  }
   async function wortschatzUmschalten(wort) {
     if (!Backend.currentUser()) { showToast("Zum Merken bitte zuerst anmelden."); return false; }
     const menge = meinWortschatz();
@@ -10808,8 +10820,7 @@
     }
     const wahl = wortQuelleAktiv(spiel);
     if (wahl === "wortschatz") {
-      const menge = meinWortschatz();
-      return eintraege.filter((e) => menge.has(e.word));
+      return eintraege.filter((e) => wortIstGemerkt(e.word));
     }
     if (wahl.startsWith("liste:")) {
       const l = wortlisteMitId(wahl.slice(6));
@@ -12424,22 +12435,27 @@
     return `
       <div class="question-card">
         <div class="lc-start">
-          <span class="lc-start-gross">💬</span>
-          <h3>Live-Chat</h3>
+          <span class="lc-start-gross">🎓</span>
+          <h3>Klassenzimmer</h3>
           <p>Acht Plätze, Gesichter in Kreisen, und ein Chat zum Schreiben.
-             Du brauchst kein Konto und musst nichts einrichten — tippe auf den Knopf,
+             Du brauchst nichts einzurichten — tippe auf den Knopf,
              erlaube Kamera und Mikrofon, und du bist drin.</p>
           ${l.fehler ? `<p class="empty-note" style="color:#E85F6F;">${l.fehler}</p>` : ""}
           <button type="button" class="btn btn-coffee" id="lcBetreten" style="font-size:1.05rem; padding:12px 26px;">
-            ${ausLink ? "🚪 Dem Raum beitreten" : "🚪 Raum betreten"}
+            ${ausLink ? "🚪 Dem Raum beitreten" : "🎓 Klassenzimmer betreten"}
           </button>
           <p class="empty-note" style="font-size:0.74rem;">
             ${ausLink
               ? "Du bist über einen Einladungslink hier — du landest im selben Raum wie die anderen."
-              : raum
-                ? "Du kommst in deinen letzten Raum zurück. Den Link zum Teilen findest du drinnen."
-                : "Es wird ein neuer Raum geöffnet. Den Link zum Einladen findest du drinnen."}
+              : "Das ist der <strong>Hauptraum</strong>: alle landen hier, ohne Link und ohne Verabredung. Wenn jemand da ist, siehst du ihn sofort."}
           </p>
+          ${!ausLink ? `<button type="button" class="btn btn-ghost" id="lcEigenerRaum" style="font-size:0.82rem;">
+            🔒 Lieber einen eigenen Raum öffnen
+          </button>
+          <p class="empty-note" style="font-size:0.7rem; max-width:44ch;">
+            Ein eigener Raum bekommt einen langen Zufallsnamen und ist nur über den Link
+            erreichbar — für ein Gespräch, das nicht jeder mithören soll.
+          </p>` : ""}
           <p class="empty-note" style="font-size:0.7rem; max-width:44ch;">
             Ohne Kamera geht es auch: dann steht dein Anfangsbuchstabe im Kreis, und du
             kannst reden und schreiben wie alle anderen.
@@ -12568,10 +12584,12 @@
     }
     if (unter) {
       const da = LiveChat.PLAETZE - l.frei;
+      const haupt = l.raum === LiveChat.HAUPTRAUM;
       unter.textContent = l.lage === "verbindet"
         ? "verbindet …"
-        : da === 1 ? "Du bist als Erste:r da — teile den Link."
-        : `${da} von ${LiveChat.PLAETZE} Plätzen besetzt`;
+        : da === 1 ? (haupt ? "Du bist als Erste:r da — die anderen finden dich hier von selbst."
+                            : "Du bist als Erste:r da — teile den Link.")
+        : `${da} von ${LiveChat.PLAETZE} Plätzen besetzt${haupt ? " · Hauptraum" : ""}`;
     }
     if (link && l.link && link.value !== l.link) link.value = l.link;
 
@@ -12694,11 +12712,21 @@
       livechatGeruest = false;
       livechatGezeigt = new Set();
       area.innerHTML = livechatStartHtml(l);
-      area.querySelector("#lcBetreten")?.addEventListener("click", () => {
-        const raum = LiveChat.raumAusAdresse() || LiveChat.gemerkterRaum() || LiveChat.neuerRaumName();
-        LiveChat.betreten(raum, { name: livechatName(), mitBild: true }).then(() => renderLiveChat());
+      const hinein = (raum) => {
+        LiveChat.betreten(raum, { name: livechatName(), mitBild: true })
+          .then(() => { renderLiveChat(); klassenzimmerStreifen(); });
         renderLiveChat();
+      };
+      area.querySelector("#lcBetreten")?.addEventListener("click", () => {
+        /* Ein Link schlägt alles — wer eingeladen wurde, will dorthin.
+           Sonst IMMER der Hauptraum: „Der Hauptraum soll für jeden
+           direkt zugänglich sein." Der zuletzt benutzte Raum wird
+           ausdrücklich NICHT mehr genommen; sonst landete man nach
+           einem privaten Gespräch wieder dort und wunderte sich,
+           warum niemand da ist. */
+        hinein(LiveChat.raumAusAdresse() || LiveChat.HAUPTRAUM);
       });
+      area.querySelector("#lcEigenerRaum")?.addEventListener("click", () => hinein(LiveChat.neuerRaumName()));
       area.querySelector("#lcZumKlassenzimmer")?.addEventListener("click", () => {
         document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.click();
       });
@@ -12748,6 +12776,64 @@
     livechatGrossAuffrischen(l);
   }
 
+  /* ============================================================
+     DER STREIFEN: „DU BIST NOCH IM KLASSENZIMMER"
+     ------------------------------------------------------------
+     „Wie können wir wissen, dass wir noch im Klassenzimmer sind,
+      wenn man sich weiterführende Inhalte anguckt?"
+
+     Der Streifen hängt an <body>, nicht in einer Ansicht — er
+     muss jeden Ansichtswechsel überleben. Gezeichnet wird er nur,
+     wenn sich die Lage ändert; er hört auf denselben Zuhörer wie
+     die Bilder im Raum.
+     ============================================================ */
+  let kzStreifen = null;
+  function klassenzimmerStreifen() {
+    if (!window.LiveChat) return;
+    const l = LiveChat.lage();
+    const drin = l.lage === "drin" || l.lage === "verbindet";
+    document.body.classList.toggle("im-klassenzimmer", drin);
+
+    if (!kzStreifen) {
+      kzStreifen = document.createElement("div");
+      kzStreifen.className = "kz-streifen";
+      kzStreifen.innerHTML =
+        '<span class="kz-streifen-punkt" aria-hidden="true"></span>' +
+        '<span class="kz-streifen-text" id="kzStreifenText"></span>' +
+        '<button type="button" class="kz-streifen-zurueck" id="kzStreifenZurueck">Zurück</button>' +
+        '<button type="button" class="kz-streifen-weg" id="kzStreifenWeg" aria-label="Klassenzimmer verlassen" title="Klassenzimmer verlassen">✕</button>';
+      document.body.appendChild(kzStreifen);
+      /* EIN Tipp bringt zurück — nicht zwei, nicht über ein Menü. */
+      kzStreifen.querySelector("#kzStreifenZurueck").addEventListener("click", () => {
+        document.querySelector('[data-target="view-knowledge"]')?.click();
+        setTimeout(() => {
+          document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.click();
+          document.getElementById("livechatArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
+      });
+      kzStreifen.querySelector("#kzStreifenWeg").addEventListener("click", () => {
+        LiveChat.verlassen();
+        renderLiveChat();
+        klassenzimmerStreifen();
+      });
+    }
+
+    kzStreifen.classList.toggle("kz-an", drin);
+    if (!drin) return;
+    /* Nicht anzeigen, während man ohnehin darin steht — sonst
+       verdeckt der Streifen das Chatfeld, in das man gerade
+       schreibt. */
+    const offen = document.getElementById("sub-livechat")?.dataset.active === "true"
+               && document.getElementById("view-knowledge")?.dataset.active === "true";
+    kzStreifen.classList.toggle("kz-an", drin && !offen);
+
+    const da = LiveChat.PLAETZE - l.frei;
+    document.getElementById("kzStreifenText").innerHTML =
+      '<strong>Im Klassenzimmer</strong>' +
+      '<small>' + (l.lage === "verbindet" ? "verbindet …"
+        : da === 1 ? "du bist allein da" : da + " Leute da") + '</small>';
+  }
+
   /* Ein einziger Zuhörer für das ganze Leben der Seite. Die
      Anzeige wird nur aufgefrischt, wenn der Bereich auch offen
      ist — sonst rechnet die Seite im Hintergrund an einer
@@ -12756,7 +12842,23 @@
   if (window.LiveChat && !livechatAbmelden) {
     livechatAbmelden = LiveChat.beiAenderung(() => {
       if (document.getElementById("sub-livechat")?.dataset.active === "true") renderLiveChat();
+      klassenzimmerStreifen();
     });
+    /* Jeder Ansichtswechsel entscheidet neu, ob der Streifen zu
+       sehen ist: im Klassenzimmer selbst wäre er nur im Weg. */
+    document.addEventListener("click", (e) => {
+      if (e.target.closest(".subnav-pill, .tape-tab")) setTimeout(klassenzimmerStreifen, 60);
+    }, true);
+    klassenzimmerStreifen();
+
+    /* Nach dem Neuladen zurück in den Raum — ohne Nachfrage, weil
+       der Browser die Kameraerlaubnis noch hat und weil genau das
+       gewünscht war: „bleibt man dann auch im Klassenzimmer?" */
+    const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
+    if (zurueck) {
+      LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(), mitBild: zurueck.mitBild !== false })
+        .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
+    }
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => renderLiveChat());
 
@@ -22486,6 +22588,10 @@
      ============================================================ */
   let flussLevel = null;
   let flussSession = null;
+  /* Womit gerade gespielt wird und wie viel der eigene Wortschatz
+     dazu beiträgt — damit die Karte es sagen kann, statt die Wahl
+     stillschweigend zu übergehen. */
+  let flussQuelleStand = null;
   const FLUSS_STEINE = 5;           // Steine je Überquerung
   const FLUSS_UEBERQUERUNGEN = 4;   // Überquerungen je Runde
   const FLUSS_LEBEN = 3;            // Fehltritte je Überquerung
@@ -22593,6 +22699,12 @@
        für die Gegenproben braucht es weiterhin den ganzen Wortschatz,
        sonst gäbe es keine drei Steine mehr. */
     const eigene = wortQuelleFilter("flussfuchs", pool);
+    /* Unter 30 eigenen Wörtern gäbe es keine drei Steine mehr — das
+       Spiel braucht für jede Regel genug Ja- UND Nein-Fälle. Bisher
+       wurde die eigene Wahl dann stillschweigend übergangen, und es
+       sah aus, als würde der Wortschatz nicht benutzt. Jetzt steht
+       es dabei (flussQuelleStand). */
+    flussQuelleStand = { eigene: eigene.length, noetig: 30 };
     if (eigene.length >= 30 && eigene.length < pool.length) pool = eigene.concat(pool.filter((e) => !eigene.includes(e)));
     const regeln = flussRegelnFuer(pool).filter((r) => pool.filter(r.passt).length >= 20 && pool.filter(r.gegen).length >= 20);
     flussSession = {
@@ -22859,6 +22971,7 @@
           ${["A1", "A2", "B1", "B2", "C1", "C2"].map((lvl) => `<button type="button" class="trophy-chip fluss-level-btn ${flussLevel === lvl ? "selected" : ""}" data-fluss-level="${lvl}">${lvl}</button>`).join("")}
         </div>
         ${wortQuelleChipsHtml("flussfuchs")}
+        ${flussQuelleStand ? wortQuelleHinweisHtml("flussfuchs", flussQuelleStand.eigene, flussQuelleStand.noetig) : ""}
         <p class="fluss-regel">${r ? r.text : ""}</p>
         ${flussSzeneSvg(s)}
         <div class="fluss-pfoten">${ruht ? "" : pfoten + " <span class=\"empty-note\">trockene Pfoten</span>"}</div>
@@ -32664,7 +32777,30 @@
   /* Welches Wort wandert in den eigenen Wortschatz? Im deutschen Raum das
      deutsche, im italienischen das italienische — dasselbe Wort, das oben
      groß auf der Karte steht. */
-  function bwMerkwort(t) { return bwWort(t); }
+  /* ============================================================
+     WELCHE FORM WANDERT IN „MEIN WORTSCHATZ"?
+     ------------------------------------------------------------
+     GEMELDET: „Meistens ist mein Wortschatz gar nicht angezeigt,
+     das was ich in meinem Wortschatz habe — da ist immer irgendwas
+     Zufälliges."
+
+     Hier war die Ursache, und sie ist unscheinbar:
+     bwMerkwort() gab bwWort() zurück — also das, was gerade im Bild
+     STEHT. Steht der Umschalter auf „Alltag", ist das die
+     Alltagsform: wer „die Klitoris" mit dem Stern merkte, bekam
+     „der Kitzler" gespeichert. Im Wörterbuch heisst der Eintrag
+     aber „die Klitoris". Die Spiele vergleichen mit e.word, finden
+     nichts, und spielen mit allem — genau das beschriebene
+     Verhalten.
+
+     Gemerkt wird deshalb IMMER die Wörterbuchform. Was im Bild
+     steht, ist eine Anzeige; was gespeichert wird, muss zum
+     Wörterbuch passen, sonst findet es nie wieder jemand.
+     ============================================================ */
+  function bwMerkwort(t) {
+    if (!t) return "";
+    return imItalienischraum() ? (t.it || "") : (t.de || "");
+  }
 
   function bwBinden(area) {
     umgangsSchalterBinden(area, renderBilderwelt);
