@@ -3490,12 +3490,7 @@
   /* Verlässt man den Bereich, darf kein Zeitgeber mehr nachfeuern und
      eine Runde im Hintergrund weiterdrehen. */
   document.addEventListener("click", (e) => {
-    if (!e.target.closest(".subnav-pill, .tab-btn, [data-zur-spieleliste]")) return;
-    autoWeiterAbbrechen();
-    /* Dasselbe für den Aussprache-Trainer: sein automatischer
-       Ablauf hält ein Mikrofon offen. Wer wegblättert, soll nicht
-       aus einer anderen Ansicht heraus weiter aufgenommen werden. */
-    if (typeof aussprLaufAbbrechen === "function") aussprLaufAbbrechen();
+    if (e.target.closest(".subnav-pill, .tab-btn, [data-zur-spieleliste]")) autoWeiterAbbrechen();
   }, true);
   function auswertungsText(result) {
     const namen = (result.categories || []).map((c) => spielTitelFuer(c)).filter(Boolean);
@@ -3557,11 +3552,6 @@
           ${e.beschreibung ? `<p class="empty-note">${e.beschreibung}</p>` : ""}
           ${e.abzeichen && e.abzeichen.length ? `<div class="badge-row">${e.abzeichen.map((b) => `<div class="badge-chip"><span class="emoji">${b.emoji || "🏅"}</span><span>${b.name || b}</span></div>`).join("")}</div>` : ""}
         </div>` : ""}
-        ${/* Platz für eine spieleigene Anzeige zwischen Kopf und
-              Aufschlüsselung — der Aussprache-Trainer stellt hier
-              seine Kreiselreihe hin. Fehlt das Feld, ändert sich
-              für die anderen 44 Spiele nichts. */ ""}
-        ${e.extraHtml || ""}
         ${zeilen ? `<div class="breakdown-list">${zeilen}</div>` : ""}
         <div class="quiz-actions" style="justify-content:center; margin-top:24px; flex-wrap:wrap;">
           <button type="button" class="btn btn-ghost" data-zur-auswertung="1">✉️ Ergebnis im Postfach</button>
@@ -10888,371 +10878,6 @@
   let aussprLetztesOriginal = null; // { puffer, huelle, art }
   let aussprTempo = 1;
 
-  /* ============================================================
-     DER AUTOMATISCHE ABLAUF
-     ------------------------------------------------------------
-     DER WUNSCH
-     „Ich möchte, dass automatisch Vokabeln vorgelesen werden, ich
-      spreche nach, und es geht dann automatisch weiter — ich will
-      nicht erst auf einen Knopf drücken. Ab einem gewissen
-      Schwellwert. Ansonsten muss man so lange nachsprechen, bis
-      das System das Okay gibt."
-
-     DER ABLAUF, EINMAL RUND
-       1. Das Wort wird vorgesprochen.
-       2. Das Mikrofon geht von selbst an.
-       3. Wer aufhört zu sprechen, hat aufgehört — die Aufnahme
-          merkt die Pause selbst (stilleMs in der Prüfung) und
-          endet. Kein Knopf.
-       4. Bewertung. Ab der Schwelle: kurzer Blick auf die Note,
-          dann das nächste Wort.
-       5. Darunter: dasselbe Wort noch einmal, mit dem Hinweis,
-          woran es lag. So oft, wie nötig.
-
-     DIE AUSSTIEGE — und warum es sie geben MUSS
-     Ein Ablauf, aus dem man nicht herauskommt, ist eine Falle.
-     Darum:
-       * „Automatisch" lässt sich ausschalten, und das merkt sich
-         die Seite.
-       * Jeder Knopf bleibt zusätzlich bedienbar.
-       * Nach VERSUCHE_BIS_HILFE erfolglosen Anläufen bietet der
-         Trainer von selbst an, weiterzugehen. Wer an einem Wort
-         hängen bleibt, lernt nichts mehr — der ärgert sich nur.
-       * Hört das Mikrofon gar nichts, wird das gesagt, statt eine
-         Note für Stille zu erfinden.
-     ============================================================ */
-  const AUSSPR_SCHWELLEN = [60, 70, 80, 90];
-  const VERSUCHE_BIS_HILFE = 3;
-
-  function aussprAutoAn() {
-    try { return localStorage.getItem("dma_ausspr_auto") !== "aus"; } catch (e) { return true; }
-  }
-  function aussprAutoSetzen(an) {
-    try { localStorage.setItem("dma_ausspr_auto", an ? "an" : "aus"); } catch (e) {}
-  }
-  function aussprSchwelle() {
-    try {
-      const v = Number(localStorage.getItem("dma_ausspr_schwelle"));
-      return AUSSPR_SCHWELLEN.indexOf(v) >= 0 ? v : 80;
-    } catch (e) { return 80; }
-  }
-  function aussprSchwelleSetzen(v) {
-    try { localStorage.setItem("dma_ausspr_schwelle", String(v)); } catch (e) {}
-  }
-  /* Die Laut-Pellets waren zugeklappt gewünscht — wer sie
-     aufklappt, soll sie beim nächsten Wort wieder offen haben. */
-  function aussprLupeOffen() {
-    try { return localStorage.getItem("dma_ausspr_lupe") === "offen"; } catch (e) { return false; }
-  }
-  function aussprLupeSetzen(offen) {
-    try { localStorage.setItem("dma_ausspr_lupe", offen ? "offen" : "zu"); } catch (e) {}
-  }
-
-  /* Ein laufender Durchgang. Die Marke verhindert, dass ein
-     Durchgang weiterarbeitet, den längst niemand mehr sehen will
-     (Wort gewechselt, Runde beendet, Bereich verlassen). */
-  let aussprLaufMarke = 0;
-  let aussprStand = "";        // "" | "hoert" | "sprich" | "rechnet" | "weiter"
-  let aussprVersuche = 0;
-  let aussprWeiterUhr = null;
-
-  function aussprLaufAbbrechen() {
-    aussprLaufMarke++;
-    aussprStand = "";
-    if (aussprWeiterUhr) { clearTimeout(aussprWeiterUhr); aussprWeiterUhr = null; }
-    if (aussprAufnahme) { try { aussprAufnahme.abbrechen(); } catch (e) {} aussprAufnahme = null; }
-    /* Die Marke „für dieses Wort ist schon einer gelaufen" wird
-       mit zurückgesetzt. Sonst stünde der Trainer nach dem
-       Zurückkommen still: der alte Durchgang ist abgeräumt, ein
-       neuer dürfte aber nicht starten. */
-    if (ausspracheSitzung) ausspracheSitzung.autoFuer = null;
-  }
-
-  /* Statuszeile und Aussteuerung werden DIREKT im DOM
-     nachgezogen, nicht über renderAussprache(). Ein Neuaufbau
-     der ganzen Karte 16-mal je Sekunde würde jeden Klick
-     verschlucken und das Aufklappen wieder zuklappen. */
-  function aussprStandZeigen(text, art) {
-    const z = document.getElementById("ausspracheLauf");
-    if (!z) return;
-    z.textContent = text || "";
-    z.className = "ausspr-lauf" + (art ? " ausspr-lauf-" + art : "");
-  }
-  function aussprPegelZeigen(pegel) {
-    const b = document.querySelector("#ausspracheRueckmeldung .ausspr-pegel-balken");
-    if (!b) return;
-    /* Der Rohwert ist klein (0–0,3 bei normaler Sprache). Wurzel
-       statt linear, damit auch leises Sprechen sichtbar ausschlägt. */
-    const p = Math.min(100, Math.round(Math.sqrt(Math.min(1, pegel * 3.2)) * 100));
-    b.style.width = p + "%";
-    b.parentElement.classList.toggle("ausspr-pegel-still", p < 8);
-  }
-
-  /* ------------------------------------------------------------
-     EIN DURCHGANG: vorsprechen -> aufnehmen -> bewerten -> weiter
-     ------------------------------------------------------------ */
-  async function aussprDurchgang(w, s) {
-    const marke = ++aussprLaufMarke;
-    const gueltig = () => marke === aussprLaufMarke
-                       && ausspracheSitzung === s
-                       && s.woerter[s.index] === w;
-
-    /* --- 1. Vorsprechen --- */
-    aussprStand = "hoert";
-    aussprStandZeigen("🔊 Hör zu …", "hoeren");
-    await aussprSpielen("original", w);
-    if (!gueltig()) return;
-    await new Promise((f) => setTimeout(f, 260));
-    if (!gueltig()) return;
-
-    /* --- 2. Aufnehmen --- */
-    const mikro = window.AusspracheP && AusspracheP.mikrofonDa();
-
-    /* WICHTIG, und hier lag ein echter Fehler im Ablauf:
-       Stufe 3 misst über die Spracherkennung des Geräts, und die
-       hört SELBST zu — sie kann mit einer fertigen Aufnahme nichts
-       anfangen. Wer erst aufnimmt und dann Stufe 3 aufruft, lässt
-       den Lernenden zweimal dasselbe Wort sprechen: einmal ins
-       Leere, einmal in die Erkennung. Das ist im automatischen
-       Ablauf besonders schlimm, weil er nur EINMAL „jetzt du"
-       sagt.
-       Darum: steht ohnehin fest, dass nur Stufe 3 möglich ist
-       (kein Azure-Schlüssel, keine Originalaufnahme), wird gar
-       nicht erst aufgenommen — es wird direkt zugehört. */
-    if (!mikro || aussprStufe() === "verstaendlich") {
-      aussprStand = "sprich";
-      await aussprVerstaendlichkeit(w, s);
-      if (gueltig()) aussprNachBewertung(w, s);
-      return;
-    }
-
-    let fertig = false;
-    const abschliessen = async () => {
-      if (fertig) return;
-      fertig = true;
-      const griff = aussprAufnahme;
-      aussprAufnahme = null;
-      if (!griff) return;
-      const etwasGehoert = griff.etwasGehoert ? griff.etwasGehoert() : true;
-      const auf = await griff.stoppen();
-      s.laeuft = false;
-      if (!gueltig()) return;
-
-      if (!etwasGehoert || !auf || !auf.blob || auf.blob.size < 400) {
-        aussprStand = "";
-        s.letztes = { fehlertext: "Ich habe nichts gehört. Sprich etwas lauter oder geh näher ans Mikrofon." };
-        aussprVersuche++;
-        renderAussprache();
-        return;
-      }
-
-      aussprStand = "rechnet";
-      aussprStandZeigen("⏳ Wird ausgewertet …", "rechnet");
-      let puffer = null;
-      try { puffer = await AusspracheP.tonLesen(auf.blob); } catch (e) {}
-      if (!gueltig()) return;
-      aussprLetzteEigene = puffer
-        ? { blob: auf.blob, puffer: puffer, huelle: AusspracheP.huellkurve(puffer, 150) }
-        : { blob: auf.blob, puffer: null, huelle: null };
-
-      s.letztes = await aussprBewerten(w, puffer, auf.blob);
-      if (!gueltig()) return;
-      aussprStand = "";
-      if (s.letztes && !s.letztes.fehlertext) {
-        if (s.letztes.prozent >= aussprSchwelle()) Core.sound.correct(); else Core.sound.okay();
-      }
-      renderAussprache();
-      aussprNachBewertung(w, s);
-    };
-
-    try {
-      aussprAufnahme = await AusspracheP.aufnahmeStarten({
-        hoechstdauer: 9000,
-        /* Kurze Wörter, kurze Pause: 700 ms Stille reichen als
-           „fertig". Bei 1,5 s wartet man nach jedem Wort spürbar. */
-        stilleMs: 700,
-        mindestdauerMs: 600,
-        beiPegel: (p) => { if (gueltig()) aussprPegelZeigen(p); },
-        beiStille: () => { if (gueltig()) abschliessen(); },
-        beiZeitablauf: () => { if (gueltig()) abschliessen(); }
-      });
-    } catch (e) {
-      aussprStand = "";
-      s.letztes = { fehlertext: "Das Mikrofon ist nicht freigegeben. In den Einstellungen des Browsers für diese Seite den Zugriff erlauben." };
-      renderAussprache();
-      return;
-    }
-    if (!gueltig()) { try { aussprAufnahme.abbrechen(); } catch (e) {} aussprAufnahme = null; return; }
-    s.laeuft = true;
-    aussprStand = "sprich";
-    renderAussprache();
-    aussprStandZeigen("🎙️ Jetzt du — sprich das Wort.", "sprich");
-  }
-
-  /* ------------------------------------------------------------
-     NACH DER BEWERTUNG: weitergehen oder noch einmal
-     ------------------------------------------------------------ */
-  function aussprNachBewertung(w, s) {
-    const b = s.letztes;
-    if (!aussprAutoAn()) return;               // von Hand: nichts tut sich von selbst
-    if (!b || b.fehlertext) { aussprVersuche++; return; }
-
-    const marke = aussprLaufMarke;
-    const schwelle = aussprSchwelle();
-
-    if (b.prozent >= schwelle) {
-      /* Geschafft. Kurz stehen lassen — der Kreisel füllt sich,
-         und das will man sehen —, dann das nächste Wort. */
-      aussprVersuche = 0;
-      aussprStand = "weiter";
-      if (aussprWeiterUhr) clearTimeout(aussprWeiterUhr);
-      aussprWeiterUhr = setTimeout(() => {
-        aussprWeiterUhr = null;
-        if (marke !== aussprLaufMarke || ausspracheSitzung !== s || s.woerter[s.index] !== w) return;
-        aussprWeiterGehen(w, s);
-      }, 1700);
-      return;
-    }
-
-    /* Nicht geschafft: noch einmal dasselbe Wort. Nach mehreren
-       Anläufen hört das Automatische auf — dann entscheidet der
-       Mensch, ob er weiterübt oder weitergeht. */
-    aussprVersuche++;
-    if (aussprVersuche >= VERSUCHE_BIS_HILFE) return;
-    if (aussprWeiterUhr) clearTimeout(aussprWeiterUhr);
-    aussprWeiterUhr = setTimeout(() => {
-      aussprWeiterUhr = null;
-      if (marke !== aussprLaufMarke || ausspracheSitzung !== s || s.woerter[s.index] !== w) return;
-      aussprDurchgang(w, s);
-    }, 2200);
-  }
-
-  /* Das Wort abhaken und zum nächsten. Genau EINE Stelle, die das
-     tut — der Knopf und der automatische Ablauf nehmen dieselbe. */
-  function aussprWeiterGehen(w, s) {
-    if (aussprWeiterUhr) { clearTimeout(aussprWeiterUhr); aussprWeiterUhr = null; }
-    const bb = s.letztes;
-    if (bb && !bb.fehlertext) {
-      s.ergebnisse.push({ wort: w.word, prozent: bb.prozent, gehoert: bb.beste || "", quelle: bb.quelle });
-      /* In der Notiz steht mit, WORAN gemessen wurde. Ohne das
-         stünden später Werte aus drei verschiedenen Verfahren
-         unbeschriftet nebeneinander. */
-      const woran = bb.quelle === "azure" ? "Aussprache (Laut für Laut)"
-                  : bb.quelle === "frei" ? "Übereinstimmung mit dem Original" : "Verständlichkeit";
-      const schlimmste = bb.quelle === "azure" ? aussprSchlimmsterLaut(bb) : "";
-      spielNotiz(bb.prozent >= aussprSchwelle(),
-        `${w.word} — ${bb.prozent} % ${woran}${schlimmste ? ` · ${schlimmste}` : ""}${bb.beste && bb.prozent < 90 ? ` (verstanden: „${bb.beste}“)` : ""}`);
-    } else {
-      s.ergebnisse.push({ wort: w.word, prozent: null, gehoert: "" });
-      spielNotiz(null, `${w.word} — übersprungen`);
-    }
-    aussprLaufAbbrechen();
-    aussprVersuche = 0;
-    s.letztes = null;
-    s.laeuft = false;
-    aussprLetzteEigene = null;
-    aussprLetztesOriginal = null;
-    s.index += 1;
-    renderAussprache();
-  }
-
-  /* ------------------------------------------------------------
-     DIE RÜCKMELDUNG — Kreisel statt Balken
-     ------------------------------------------------------------
-     „Ich möchte das als Kreiselanzeige haben, so wie bei Rosetta
-      Stone." Und: die Laut-Pellets sollen nicht als erstes ins
-     Auge springen. Beides steckt hier.
-
-     Was OBEN steht, ist die Antwort auf „wie war ich?":
-     der Ring, die Zahl, ein Satz. Was DARUNTER zugeklappt liegt,
-     ist die Antwort auf „und warum?" — für den, der es wissen
-     will.
-     ------------------------------------------------------------ */
-  function aussprRueckmeldungHtml(s, b) {
-    const schwelle = aussprSchwelle();
-
-    /* Auffangnetz: wenn aussprache-kreisel.js aus irgendeinem
-       Grund nicht geladen ist (altes Lesezeichen, hängender
-       Zwischenspeicher, gesperrtes Netz), fällt der Trainer auf
-       die alte Balkenanzeige zurück, statt gar nichts zu zeigen. */
-    if (!window.Kreisel) {
-      if (s.laeuft) return `<p class="ausspr-laeuft">\u{1F399}\uFE0F Ich höre zu …</p>`;
-      if (b && b.fehlertext) return `<p class="empty-note" style="text-align:center;">${b.fehlertext}</p>`;
-      if (!b) return '<p class="empty-note" style="text-align:center;">Tippe auf „Jetzt sprechen\u201c und sag das Wort deutlich.</p>';
-      return `${ausspracheBalken(b.prozent)}
-        <p class="aussprache-prozent">${b.prozent} %</p>
-        <p class="empty-note" style="text-align:center;">${ausspracheUrteil(b.prozent)}</p>`;
-    }
-
-    if (s.laeuft) {
-      return `
-        <div class="kreisel-block">
-          ${Kreisel.html({ prozent: null, schwelle: schwelle, gross: true, beschriftung: "hört zu", stand: "misst" })}
-          <div class="ausspr-pegel"><div class="ausspr-pegel-balken"></div></div>
-          <p class="empty-note" style="text-align:center; font-size:0.74rem;">
-            ${aussprAutoAn()
-              ? "Sobald du fertig bist, wertet die Seite von selbst aus — du musst nichts drücken."
-              : "Tippe auf „Fertig“, wenn du das Wort gesagt hast."}
-          </p>
-        </div>`;
-    }
-
-    if (b && b.fehlertext) {
-      return `<p class="empty-note" style="text-align:center;">${b.fehlertext}</p>`;
-    }
-
-    if (!b) {
-      return `
-        <div class="kreisel-block">
-          ${Kreisel.html({ prozent: null, schwelle: schwelle, gross: true, beschriftung: "noch nichts gemessen" })}
-          <p class="empty-note" style="text-align:center;">
-            ${aussprAutoAn()
-              ? "Das Wort wird gleich vorgesprochen — danach sprichst du es einfach nach."
-              : "Tippe auf „Jetzt sprechen“ und sag das Wort deutlich."}
-          </p>
-        </div>`;
-    }
-
-    const woran = b.quelle === "azure" ? "Aussprache"
-                : b.quelle === "frei" ? "Übereinstimmung" : "Verständlichkeit";
-    const geschafft = b.prozent >= schwelle;
-
-    /* Der EINE Satz, der bei Stufe 1 wirklich weiterhilft — der
-       steht oben, auch ohne die Pellets aufzuklappen. */
-    const schlimmster = b.quelle === "azure" ? aussprSchlimmsterLaut(b) : "";
-
-    /* Das Kleingedruckte: dieselben Anzeigen wie vorher, nur
-       zugeklappt. Weg ist nichts. */
-    const lupeInhalt = b.quelle === "azure" ? aussprLauteHtml(b)
-                     : b.quelle === "frei" ? aussprProfilHtml(b.profil)
-                     : (b.beste ? `<p class="empty-note">Verstanden wurde: „${b.beste}“</p>` : "");
-
-    return `
-      <div class="kreisel-block">
-        ${Kreisel.html({ prozent: b.prozent, schwelle: schwelle, gross: true, beschriftung: woran })}
-        <p class="kreisel-urteil">${Kreisel.urteil(b.prozent, schwelle)}</p>
-        ${schlimmster ? `<p class="ausspr-hinweis-laut">${schlimmster}</p>` : ""}
-        ${b.hinweis ? `<p class="empty-note" style="text-align:center; font-size:0.72rem;">${b.hinweis}</p>` : ""}
-        ${geschafft && aussprAutoAn()
-          ? `<div class="ausspr-weiterbalken" style="--weiter-dauer:1700ms;"><span></span></div>`
-          : ""}
-        ${!geschafft && aussprAutoAn() && aussprVersuche < VERSUCHE_BIS_HILFE
-          ? `<p class="empty-note" style="text-align:center; font-size:0.74rem;">Noch einmal — ab ${schwelle} % geht es weiter.</p>`
-          : ""}
-        ${!geschafft && aussprVersuche >= VERSUCHE_BIS_HILFE
-          ? `<p class="empty-note" style="text-align:center; font-size:0.78rem;">
-               Das Wort ist zäh. Das liegt nicht an dir — manche Laute brauchen Wochen.
-               Geh ruhig weiter, das Wort kommt wieder.</p>`
-          : ""}
-      </div>
-      ${lupeInhalt ? `
-        <details class="ausspr-lupe" id="ausspracheLupe" ${aussprLupeOffen() ? "open" : ""}>
-          <summary>${b.quelle === "azure" ? "Laut für Laut ansehen" : b.quelle === "frei" ? "Wo es abweicht" : "Was verstanden wurde"}</summary>
-          ${lupeInhalt}
-        </details>` : ""}`;
-  }
-
-
   function aussprStufe() {
     if (!window.AusspracheP) return "verstaendlich";
     if (AusspracheP.azureDa() && !AusspracheP.istGesperrt()) return "azure";
@@ -11461,22 +11086,11 @@
     const gemerkt = meinWortschatz().size;
 
     if (!ausspracheSitzung) {
-      /* Zurück auf dem Auswahlschirm: was noch lief, hört auf.
-         Sonst spricht das Mikrofon einer beendeten Runde weiter. */
-      aussprLaufAbbrechen();
-      aussprVersuche = 0;
       const liste = ausspracheWortliste();
       area.innerHTML = `
         <div class="question-card">
           <p class="eyebrow">🎤 AUSSPRACHE-TRAINER</p>
           <p class="empty-note" style="margin-bottom:12px;">Du hörst ein Wort, sprichst es nach, und bekommst zurück, wie gut es angekommen ist.</p>
-          <p class="empty-note" style="margin-bottom:12px;">
-            <strong>Es läuft von selbst:</strong> das Wort wird vorgesprochen, das Mikrofon geht an,
-            und sobald du fertig bist, wird ausgewertet — ohne Knopfdruck. Ab
-            <strong>${aussprSchwelle()} %</strong> geht es zum nächsten Wort, darunter kommt dasselbe
-            Wort noch einmal. Die Schwelle und das Automatische kannst du während der Runde
-            jederzeit umstellen.
-          </p>
           ${!kannHoeren ? `<div class="beta-hinweis" style="border-color:rgba(232,95,111,0.6); background:rgba(232,95,111,0.08);">
             <strong>Dieser Browser kann nicht zuhören.</strong> Die Spracherkennung ist hier nicht eingebaut.
             Am besten klappt es in Chrome auf Android oder am Rechner; auf dem iPhone braucht es Safari ab iOS 14.5.
@@ -11566,23 +11180,24 @@
           am ersten Tag des nächsten Monats von selbst — es wird nichts abgerechnet
           und es ist nichts kaputt. Bis dahin läuft die Prüfung eine Stufe tiefer weiter.
         </div>` : ""}
-        <p class="ausspr-lauf" id="ausspracheLauf"></p>
-        <div class="quiz-actions" style="justify-content:center; margin:8px 0 6px;">
-          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Noch einmal vorsprechen</button>
+        <div class="quiz-actions" style="justify-content:center; margin:12px 0 6px;">
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Vorsprechen lassen</button>
           ${s.laeuft
             ? `<button type="button" class="btn btn-coffee" id="ausspracheStop">⏹️ Fertig — auswerten</button>`
-            : `<button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${(mikro || kannHoeren) ? "" : "disabled"}>🎙️ ${b ? "Noch einmal sprechen" : "Jetzt sprechen"}</button>`}
+            : `<button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${(mikro || kannHoeren) ? "" : "disabled"}>🎙️ Jetzt sprechen</button>`}
         </div>
         <div id="ausspracheRueckmeldung">
-          ${aussprRueckmeldungHtml(s, b)}
-        </div>
-        <div class="ausspr-automatik">
-          <button type="button" class="trophy-chip ${aussprAutoAn() ? "selected" : ""}" id="ausspracheAutoKnopf"
-                  title="Vorsprechen, aufnehmen und weiterblättern ohne Knopfdruck">
-            ${aussprAutoAn() ? "⏯️ Automatisch: an" : "✋ Automatisch: aus"}
-          </button>
-          <span class="empty-note" style="font-size:0.72rem;">weiter ab</span>
-          ${AUSSPR_SCHWELLEN.map((v) => `<button type="button" class="trophy-chip ${aussprSchwelle() === v ? "selected" : ""}" data-ausspr-schwelle="${v}">${v} %</button>`).join("")}
+          ${s.laeuft ? `<p class="ausspr-laeuft">🎙️ Ich höre zu … sprich das Wort und tippe dann auf „Fertig“.</p>` : ""}
+          ${b && b.fehlertext ? `<p class="empty-note" style="text-align:center;">${b.fehlertext}</p>` : ""}
+          ${b && !b.fehlertext ? `
+            ${ausspracheBalken(b.prozent)}
+            <p class="aussprache-prozent">${b.prozent} %${b.quelle === "azure" ? " Aussprache" : b.quelle === "frei" ? " Übereinstimmung" : " verständlich"}</p>
+            ${b.quelle === "azure" ? aussprLauteHtml(b) : ""}
+            ${b.quelle === "frei" ? aussprProfilHtml(b.profil) : ""}
+            ${b.quelle === "verstaendlich" ? `
+              <p class="empty-note" style="text-align:center;">${ausspracheUrteil(b.prozent)}</p>
+              ${b.beste && b.prozent < 90 ? `<p class="empty-note" style="text-align:center;">Verstanden wurde: „${b.beste}“</p>` : ""}` : ""}`
+          : (!s.laeuft ? '<p class="empty-note" style="text-align:center;">Tippe auf „Jetzt sprechen“ und sag das Wort deutlich.</p>' : "")}
         </div>
         ${aussprShadowingHtml(w)}
         <div class="quiz-actions" style="justify-content:center; margin-top:12px;">
@@ -11603,62 +11218,31 @@
     area.querySelectorAll("[data-ausspr-tempo]").forEach((k) =>
       k.addEventListener("click", () => { aussprTempo = Number(k.dataset.aussprTempo); renderAussprache(); }));
 
-    /* --- Automatisch an/aus und die Schwelle --- */
-    document.getElementById("ausspracheAutoKnopf")?.addEventListener("click", () => {
-      const neuerStand = !aussprAutoAn();
-      aussprAutoSetzen(neuerStand);
-      if (!neuerStand) aussprLaufAbbrechen();
-      else s.autoFuer = null;              // damit es sofort losgeht
-      renderAussprache();
-    });
-    area.querySelectorAll("[data-ausspr-schwelle]").forEach((k) =>
-      k.addEventListener("click", () => { aussprSchwelleSetzen(Number(k.dataset.aussprSchwelle)); renderAussprache(); }));
-
-    /* Das Aufklappen der Laut-Pellets merken. */
-    document.getElementById("ausspracheLupe")?.addEventListener("toggle", (e) => {
-      aussprLupeSetzen(e.target.open);
-    });
-
     /* --- Die Originalaufnahme im Hintergrund holen ---
-       Erst danach steht fest, ob Stufe 2 möglich ist, UND erst
-       danach kann „Vorsprechen" die echte Aufnahme nehmen statt
-       der Gerätestimme. Der automatische Ablauf wartet deshalb
-       darauf — sonst hörte man beim ersten Wort jeder Runde die
-       falsche Stimme. */
+       Erst danach steht fest, ob Stufe 2 möglich ist. Darum wird
+       neu gezeichnet, wenn sie eintrifft — aber nur, wenn der
+       Nutzer noch beim selben Wort steht. */
     if (!aussprLetztesOriginal || aussprLetztesOriginal.fuer !== w.word) {
       aussprLetztesOriginal = null;
       aussprOriginalLaden(w).then((o) => {
+        if (!o) return;
         if (!ausspracheSitzung || ausspracheSitzung.woerter[ausspracheSitzung.index] !== w) return;
-        if (o) {
-          o.fuer = w.word;
-          aussprLetztesOriginal = o;
-          renderAussprache();
-        }
-        aussprAutoStarten(w, s);
+        o.fuer = w.word;
+        aussprLetztesOriginal = o;
+        renderAussprache();
       });
-    } else {
-      aussprAutoStarten(w, s);
     }
 
     /* --- Aufnehmen --- */
     document.getElementById("ausspracheAufnehmen")?.addEventListener("click", async () => {
       if (s.laeuft) return;
-      /* Von Hand gedrückt heisst: der Mensch übernimmt. Ein noch
-         laufender automatischer Durchgang wird abgeräumt, sonst
-         reden zwei Abläufe in dieselbe Aufnahme hinein. */
-      aussprLaufAbbrechen();
-      s.autoFuer = w;
       /* Ohne Mikrofonaufnahme bleibt nur die alte
          Verständlichkeitsprüfung — die braucht kein MediaRecorder. */
-      if (!mikro) { await aussprVerstaendlichkeit(w, s); aussprNachBewertung(w, s); return; }
+      if (!mikro) { await aussprVerstaendlichkeit(w, s); return; }
       s.letztes = null;
       try {
         aussprAufnahme = await AusspracheP.aufnahmeStarten({
           hoechstdauer: 12000,
-          /* Auch von Hand: die Aussteuerung zeigen, damit man
-             sieht, dass das Mikrofon etwas hört. Automatisch
-             beendet wird hier NICHT — der Knopf entscheidet. */
-          beiPegel: (pg) => aussprPegelZeigen(pg),
           beiZeitablauf: () => { document.getElementById("ausspracheStop")?.click(); }
         });
       } catch (e) {
@@ -11691,42 +11275,41 @@
 
       s.letztes = await aussprBewerten(w, puffer, auf.blob);
       if (s.letztes && !s.letztes.fehlertext) {
-        if (s.letztes.prozent >= aussprSchwelle()) Core.sound.correct(); else Core.sound.okay();
+        if (s.letztes.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
       }
       renderAussprache();
-      /* Auch ein von Hand ausgelöster Versuch zählt für das
-         automatische Weitergehen — sonst müsste man nach einem
-         einzigen Handgriff den Rest der Runde selbst blättern. */
-      aussprNachBewertung(w, s);
     });
 
     document.getElementById("ausspracheWeiter").addEventListener("click", () => {
-      aussprWeiterGehen(w, s);
+      if (s.letztes && !s.letztes.fehlertext) {
+        const bb = s.letztes;
+        s.ergebnisse.push({ wort: w.word, prozent: bb.prozent, gehoert: bb.beste || "", quelle: bb.quelle });
+        /* In der Notiz steht mit, WORAN gemessen wurde. Ohne das
+           stünden später Werte aus drei verschiedenen Verfahren
+           unbeschriftet nebeneinander. */
+        const woran = bb.quelle === "azure" ? "Aussprache (Laut für Laut)"
+                    : bb.quelle === "frei" ? "Übereinstimmung mit dem Original" : "Verständlichkeit";
+        const schlimmste = bb.quelle === "azure" ? aussprSchlimmsterLaut(bb) : "";
+        spielNotiz(bb.prozent >= 75,
+          `${w.word} — ${bb.prozent} % ${woran}${schlimmste ? ` · ${schlimmste}` : ""}${bb.beste && bb.prozent < 90 ? ` (verstanden: „${bb.beste}“)` : ""}`);
+      } else {
+        s.ergebnisse.push({ wort: w.word, prozent: null, gehoert: "" });
+        spielNotiz(null, `${w.word} — übersprungen`);
+      }
+      s.letztes = null;
+      aussprLetzteEigene = null;
+      aussprLetztesOriginal = null;
+      s.index += 1;
+      renderAussprache();
     });
     document.getElementById("ausspracheAbbrechen").addEventListener("click", () => {
-      aussprLaufAbbrechen();
-      aussprVersuche = 0;
+      if (aussprAufnahme) { aussprAufnahme.abbrechen(); aussprAufnahme = null; }
       s.laeuft = false;
       aussprLetzteEigene = null;
       aussprLetztesOriginal = null;
       s.index = s.woerter.length;
       renderAussprache();
     });
-  }
-
-  /* Den automatischen Ablauf für DIESES Wort anstossen — genau
-     einmal. Ohne diese Marke würde jedes Neuzeichnen der Karte
-     (und davon gibt es viele: Tempo, Aufklappen, die
-     eintreffende Originalaufnahme) einen weiteren Durchgang
-     starten, und dann reden drei Abläufe gleichzeitig ins
-     Mikrofon. */
-  function aussprAutoStarten(w, s) {
-    if (!aussprAutoAn()) return;
-    if (s.autoFuer === w) return;
-    if (s.laeuft || s.letztes) return;
-    if (document.getElementById("sub-aussprache")?.dataset.active !== "true") return;
-    s.autoFuer = w;
-    aussprDurchgang(w, s);
   }
 
   /* Der Laut, der am schlechtesten saß — für die Notiz im Verlauf.
@@ -11766,16 +11349,6 @@
       if (erg.fehler === "nichts-verstanden") {
         return { fehlertext: "Azure hat kein Wort erkannt. Näher ans Mikrofon, und noch einmal." };
       }
-      /* Azure hat geantwortet, aber ohne Noten. Das ist NICHT
-         null Prozent — das ist „keine Bewertung". Der Unterschied
-         war genau der Fehler, der im Trainer als „0 % Aussprache"
-         stand. Statt eine Null zu erfinden, wird eine Stufe
-         tiefer wirklich gemessen. */
-      if (erg.fehler === "keine-bewertung") {
-        const tiefer = await aussprFreiOderVerstaendlich(w, puffer, blob);
-        if (tiefer) tiefer.hinweis = "Azure hat diesmal keine Noten mitgeschickt — gemessen wurde eine Stufe tiefer.";
-        return tiefer;
-      }
       /* Netz weg, Dienst hakt: das ist genau der Fall, für den es
          das Auffangnetz gibt. */
       const tiefer = await aussprFreiOderVerstaendlich(w, puffer, blob);
@@ -11808,17 +11381,14 @@
      Da wird gar nicht erst aufgenommen, sondern direkt zugehört. */
   async function aussprVerstaendlichkeit(w, s) {
     s.laeuft = true;
-    s.letztes = null;
     renderAussprache();
-    aussprStandZeigen("\u{1F399}\uFE0F Jetzt du \u2014 sprich das Wort.", "sprich");
     const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
     s.laeuft = false;
-    aussprStand = "";
     if (gehoert.fehler) { s.letztes = { fehlertext: aussprFehlertext(gehoert.fehler) }; renderAussprache(); return; }
     const bew = Core.bewerteAussprache(w.word, gehoert);
     bew.quelle = "verstaendlich";
     s.letztes = bew;
-    if (bew.prozent >= aussprSchwelle()) Core.sound.correct(); else Core.sound.okay();
+    if (bew.prozent >= 75) Core.sound.correct(); else Core.sound.okay();
     renderAussprache();
   }
 
@@ -11836,23 +11406,17 @@
   function renderAusspracheErgebnis() {
     const area = document.getElementById("ausspracheArea");
     const s = ausspracheSitzung;
-    aussprLaufAbbrechen();
-    aussprVersuche = 0;
-    const schwelle = aussprSchwelle();
     const gewertet = s.ergebnisse.filter((e) => typeof e.prozent === "number");
     const schnitt = gewertet.length ? Math.round(gewertet.reduce((a, e) => a + e.prozent, 0) / gewertet.length) : 0;
     area.innerHTML = ergebnisSchirmHtml({
-      punkte: gewertet.filter((e) => e.prozent >= schwelle).length, prozent: schnitt, tier: "Deutlichsprecher:in",
+      punkte: gewertet.filter((e) => e.prozent >= 75).length, prozent: schnitt, tier: "Deutlichsprecher:in",
       charakter: "Aussprache-Trainer", zeilen: s.ergebnisse.map((e) => ({ name: e.wort, anteil: typeof e.prozent === "number" ? e.prozent : 0, wert: typeof e.prozent === "number" ? e.prozent + " %" : "—" })),
-      /* Die ganze Runde als Kreiselreihe: man sieht auf einen
-         Blick, welches Wort hakte und welches sass. */
-      extraHtml: window.Kreisel ? Kreisel.reiheHtml(s.ergebnisse, schwelle) : "",
       knoepfe: `<button type="button" class="btn btn-coffee" id="ausspracheNochmal">🔄 Noch eine Runde</button><button type="button" class="btn btn-ghost" id="ausspracheZurueck">Andere Wörter wählen</button>`,
     });
     if (gewertet.length) {
       saveResultAndCheck({
         categories: ["aussprache"], titelText: "Aussprache-Trainer",
-        points: gewertet.filter((e) => e.prozent >= schwelle).length, bonus: schnitt >= 90 ? 3 : 0,
+        points: gewertet.filter((e) => e.prozent >= 75).length, bonus: schnitt >= 90 ? 3 : 0,
         percent: schnitt, character: "Deutlichsprecher:in", badges: [], playedAt: new Date().toISOString(),
       });
     }
@@ -11995,394 +11559,6 @@
     }
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.addEventListener("click", () => renderKlassenzimmer());
-
-  /* ============================================================
-     LIVE-CHAT — acht runde Plätze, Gesichter, Chat
-     ------------------------------------------------------------
-     „Acht Plätze, 1–4 oben und 1–4 darunter, mit Video, rund wie
-      bei Audioräumen. Eins anklicken, dann sieht man es größer.
-      Dazu ein Chat, wo man einfach nur schreiben kann. Und eine
-      Oberfläche, wo die Leute wissen, wo sie hinklicken — nicht
-      wie ein technischer Software-Bastelladen."
-
-     WARUM DIESER TEIL NICHT BEI JEDER ÄNDERUNG NEU GEZEICHNET
-     WIRD — das ist die eine Stelle, an der es hier hakt, wenn man
-     es falsch macht:
-     Ein <video> verliert sein Bild, sobald das Element neu
-     erzeugt wird. Bei acht Plätzen, die sich ständig ändern
-     (jemand kommt, jemand schaltet stumm, eine Nachricht kommt
-     an), würde ein innerHTML = … das Bild achtmal je Minute
-     abreissen lassen. Es flackert nicht nur — die Verbindung
-     muss das Bild jedes Mal neu aufbauen.
-
-     Darum: das Gerüst wird EINMAL gebaut, und danach werden nur
-     noch Inhalte in die vorhandenen Felder geschrieben. Die acht
-     <video>-Elemente bleiben von Anfang bis Ende dieselben.
-     ============================================================ */
-  let livechatAbmelden = null;
-  let livechatGeruest = false;
-
-  function livechatName() {
-    const p = Backend.currentProfile();
-    return (p && p.name) || (Backend.currentUser() ? "Ich" : "Gast");
-  }
-
-  /* --- Der Startschirm: ein Satz, ein Knopf --- */
-  function livechatStartHtml(l) {
-    const ausLink = LiveChat.raumAusAdresse();
-    const raum = ausLink || LiveChat.gemerkterRaum();
-    if (!LiveChat.moeglich()) {
-      return `
-        <div class="question-card">
-          <div class="lc-start">
-            <span class="lc-start-gross">💬</span>
-            <h3>Der Live-Chat kann hier nicht starten</h3>
-            <p>Dieser Browser kann keine Direktverbindung aufbauen, oder die Datenbank
-               ist nicht eingerichtet. Das <strong>Klassenzimmer</strong> funktioniert trotzdem —
-               es geht einen anderen Weg.</p>
-            <button type="button" class="btn btn-ghost" id="lcZumKlassenzimmer">🎓 Zum Klassenzimmer</button>
-          </div>
-        </div>`;
-    }
-    return `
-      <div class="question-card">
-        <div class="lc-start">
-          <span class="lc-start-gross">💬</span>
-          <h3>Live-Chat</h3>
-          <p>Acht Plätze, Gesichter in Kreisen, und ein Chat zum Schreiben.
-             Du brauchst kein Konto und musst nichts einrichten — tippe auf den Knopf,
-             erlaube Kamera und Mikrofon, und du bist drin.</p>
-          ${l.fehler ? `<p class="empty-note" style="color:#E85F6F;">${l.fehler}</p>` : ""}
-          <button type="button" class="btn btn-coffee" id="lcBetreten" style="font-size:1.05rem; padding:12px 26px;">
-            ${ausLink ? "🚪 Dem Raum beitreten" : "🚪 Raum betreten"}
-          </button>
-          <p class="empty-note" style="font-size:0.74rem;">
-            ${ausLink
-              ? "Du bist über einen Einladungslink hier — du landest im selben Raum wie die anderen."
-              : raum
-                ? "Du kommst in deinen letzten Raum zurück. Den Link zum Teilen findest du drinnen."
-                : "Es wird ein neuer Raum geöffnet. Den Link zum Einladen findest du drinnen."}
-          </p>
-          <p class="empty-note" style="font-size:0.7rem; max-width:44ch;">
-            Ohne Kamera geht es auch: dann steht dein Anfangsbuchstabe im Kreis, und du
-            kannst reden und schreiben wie alle anderen.
-          </p>
-          <details class="ausspr-lupe" style="width:100%; max-width:46ch; text-align:left;">
-            <summary>Wer kann mithören?</summary>
-            <p class="empty-note" style="font-size:0.78rem;">
-              Ton und Bild gehen <strong>direkt von Gerät zu Gerät</strong> und laufen nicht
-              über unseren Server — dort wird nur ausgetauscht, wie ihr euch findet.
-              Der Raum hat einen langen, zufälligen Namen: wer den Link nicht hat, kommt
-              nicht hinein. Nichts davon wird aufgezeichnet oder gespeichert.
-              Der Chat lebt, solange der Raum lebt — geschlossen ist er weg.
-            </p>
-          </details>
-        </div>
-      </div>`;
-  }
-
-  /* --- Das Gerüst: wird genau einmal gebaut --- */
-  function livechatGeruestHtml() {
-    const plaetze = [];
-    for (let i = 1; i <= LiveChat.PLAETZE; i++) {
-      plaetze.push(`
-        <button type="button" class="lc-platz lc-platz-frei" data-lc-platz="${i}" tabindex="-1" aria-label="Platz ${i}, frei">
-          <span class="lc-kreis">
-            <span class="lc-nummer">${i}</span>
-            <video data-lc-video="${i}" autoplay playsinline muted style="display:none;"></video>
-            <span class="lc-initial" data-lc-initial="${i}">·</span>
-            <span class="lc-stumm" data-lc-stumm="${i}" style="display:none;" aria-hidden="true">🔇</span>
-          </span>
-          <span class="lc-platz-name" data-lc-name="${i}">frei</span>
-        </button>`);
-    }
-    return `
-      <div class="question-card livechat" id="livechatKarte">
-        <div class="lc-kopf" id="lcKopf">
-          <div class="lc-kopf-links">
-            <span class="lc-punkt"></span>
-            <span>
-              <span class="lc-kopf-titel">Live-Chat</span><br>
-              <span class="lc-kopf-unter" id="lcKopfUnter">verbindet …</span>
-            </span>
-          </div>
-        </div>
-
-        <div class="lc-plaetze" id="lcPlaetze">${plaetze.join("")}</div>
-
-        <div class="lc-leiste" id="lcLeiste">
-          <button type="button" class="lc-rundknopf" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus">🎤</button>
-          <button type="button" class="lc-rundknopf" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus">📷</button>
-          <button type="button" class="lc-rundknopf lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen">✕</button>
-        </div>
-
-        <div class="lc-chat">
-          <div class="lc-chat-kopf">💬 Chat — alle im Raum lesen mit</div>
-          <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
-          <form class="lc-chat-fuss" id="lcForm" autocomplete="off">
-            <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
-                   placeholder="Schreib etwas …" aria-label="Nachricht schreiben">
-            <button type="submit" class="lc-chat-senden" id="lcSenden" aria-label="Senden" disabled>➤</button>
-          </form>
-        </div>
-
-        <div class="lc-einladung">
-          <input type="text" class="lc-link-feld" id="lcLink" readonly aria-label="Einladungslink">
-          <button type="button" class="btn btn-ghost" id="lcLinkKopieren">🔗 Link kopieren</button>
-        </div>
-        <p class="empty-note" style="font-size:0.72rem; text-align:center;">
-          Wer diesen Link bekommt, landet direkt in diesem Raum. Acht Plätze —
-          wer als Neunter kommt, kann mitlesen und schreiben.
-        </p>
-      </div>
-      <div id="lcGross"></div>`;
-  }
-
-  /* --- Die acht Plätze auffrischen: nur Inhalte, keine Elemente --- */
-  function livechatPlaetzeAuffrischen(l) {
-    l.plaetze.forEach((p) => {
-      const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
-      if (!knopf) return;
-      const video = knopf.querySelector(`[data-lc-video="${p.nummer}"]`);
-      const initial = knopf.querySelector(`[data-lc-initial="${p.nummer}"]`);
-      const stumm = knopf.querySelector(`[data-lc-stumm="${p.nummer}"]`);
-      const name = knopf.querySelector(`[data-lc-name="${p.nummer}"]`);
-
-      knopf.classList.toggle("lc-platz-frei", Boolean(p.leer));
-      knopf.classList.toggle("lc-platz-belegt", !p.leer);
-      knopf.classList.toggle("lc-platz-ich", Boolean(p.ich));
-      knopf.tabIndex = p.leer ? -1 : 0;
-      knopf.setAttribute("aria-label", p.leer
-        ? `Platz ${p.nummer}, frei`
-        : `Platz ${p.nummer}, ${p.name} — antippen, um größer zu sehen`);
-
-      name.textContent = p.leer ? "frei" : (p.ich ? p.name + " (du)" : p.name);
-
-      /* Das eigene Bild bleibt stumm — sonst hört man sich selbst
-         mit Verzögerung, und das macht jedes Gespräch kaputt. */
-      video.muted = Boolean(p.ich);
-
-      const zeigeBild = Boolean(p.strom && p.bildAn !== false);
-      if (zeigeBild) {
-        if (video.srcObject !== p.strom) video.srcObject = p.strom;
-        video.style.display = "block";
-        initial.style.display = "none";
-        const spiel = video.play();
-        if (spiel && spiel.catch) spiel.catch(() => {});
-      } else {
-        /* Ton weiterlaufen lassen, auch wenn die Kamera aus ist —
-           das Element bleibt, nur unsichtbar. */
-        if (p.strom && video.srcObject !== p.strom) video.srcObject = p.strom;
-        video.style.display = "none";
-        initial.style.display = "grid";
-        initial.textContent = p.leer ? "·" : (p.name || "?").trim().charAt(0).toUpperCase();
-      }
-      stumm.style.display = (!p.leer && p.tonAn === false) ? "grid" : "none";
-    });
-  }
-
-  function livechatKopfAuffrischen(l) {
-    const karte = document.getElementById("livechatKarte");
-    const unter = document.getElementById("lcKopfUnter");
-    const link = document.getElementById("lcLink");
-    if (karte) {
-      karte.classList.toggle("lc-drin", l.lage === "drin");
-      karte.classList.toggle("lc-verbindet", l.lage === "verbindet");
-    }
-    if (unter) {
-      const da = LiveChat.PLAETZE - l.frei;
-      unter.textContent = l.lage === "verbindet"
-        ? "verbindet …"
-        : da === 1 ? "Du bist als Erste:r da — teile den Link."
-        : `${da} von ${LiveChat.PLAETZE} Plätzen besetzt`;
-    }
-    if (link && l.link && link.value !== l.link) link.value = l.link;
-
-    const tonK = document.querySelector('[data-lc="ton"]');
-    const bildK = document.querySelector('[data-lc="bild"]');
-    if (tonK) {
-      tonK.classList.toggle("lc-aus", !l.tonAn);
-      tonK.textContent = l.tonAn ? "🎤" : "🔇";
-      tonK.disabled = !l.hatBild && !l.tonAn;
-    }
-    if (bildK) {
-      bildK.classList.toggle("lc-aus", !l.bildAn);
-      bildK.textContent = l.bildAn ? "📷" : "🚫";
-    }
-  }
-
-  /* --- Der Chat: nur neue Blasen anhängen ---
-     Alles neu zu zeichnen würde beim Tippen den Text im Feld
-     verlieren und den Verlauf nach oben springen lassen. */
-  let livechatGezeigt = new Set();
-  function livechatChatAuffrischen(l) {
-    const v = document.getElementById("lcVerlauf");
-    if (!v) return;
-    if (!l.nachrichten.length) {
-      if (!v.querySelector(".lc-chat-leer")) {
-        v.innerHTML = `<p class="lc-chat-leer">Noch nichts geschrieben.<br>Schreib einfach unten los — alle im Raum lesen mit.</p>`;
-      }
-      return;
-    }
-    const leer = v.querySelector(".lc-chat-leer");
-    if (leer) { leer.remove(); livechatGezeigt = new Set(); }
-
-    const amEnde = v.scrollHeight - v.scrollTop - v.clientHeight < 60;
-    l.nachrichten.forEach((n) => {
-      if (livechatGezeigt.has(n.id)) return;
-      livechatGezeigt.add(n.id);
-      const b = document.createElement("div");
-      b.className = "lc-blase" + (n.eigen ? " lc-blase-eigen" : "");
-      /* ACHTUNG, und das ist kein Formalismus:
-         Name und Text kommen von einem FREMDEN Gerät im Raum.
-         Würden sie über innerHTML eingesetzt, könnte jeder, der
-         den Raumlink hat, den anderen beliebiges HTML — und damit
-         beliebiges Javascript — in die Seite schreiben. Darum
-         wird hier Element für Element gebaut und der Text über
-         textContent gesetzt: so ist „<script>" ein Wort und kein
-         Befehl. */
-      if (!n.eigen) {
-        const nameZeile = document.createElement("span");
-        nameZeile.className = "lc-blase-name";
-        nameZeile.textContent = n.name;
-        b.appendChild(nameZeile);
-      }
-      const textZeile = document.createElement("span");
-      textZeile.textContent = n.text;
-      b.appendChild(textZeile);
-      const zeitZeile = document.createElement("span");
-      zeitZeile.className = "lc-blase-zeit";
-      zeitZeile.textContent = new Date(n.zeit).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-      b.appendChild(zeitZeile);
-      v.appendChild(b);
-    });
-    if (amEnde) v.scrollTop = v.scrollHeight;
-  }
-
-  /* --- Das Pop-up: ein Gesicht gross ---
-     Es bekommt seinen EIGENEN Videostrom-Anschluss; das kleine
-     Bild bleibt dabei bestehen. Zwei <video> am selben Strom sind
-     erlaubt und kosten nichts. */
-  function livechatGrossAuffrischen(l) {
-    const halter = document.getElementById("lcGross");
-    if (!halter) return;
-    if (!l.gross) { halter.innerHTML = ""; return; }
-    const p = l.plaetze.find((x) => x.id === l.gross);
-    if (!p || p.leer) { halter.innerHTML = ""; return; }
-
-    if (halter.dataset.fuer !== l.gross) {
-      halter.dataset.fuer = l.gross;
-      /* Der Name kommt vom anderen Gerät — er wird deshalb NICHT
-         in die Zeichenkette gesetzt, sondern danach über
-         textContent eingetragen. Dasselbe Argument wie beim
-         Chat: fremder Text ist Text, nie Auszeichnung. */
-      const zeigeBild = Boolean(p.strom && p.bildAn !== false);
-      halter.innerHTML = `
-        <div class="lc-gross-hinter" id="lcGrossHinter" role="dialog" aria-modal="true" aria-label="Teilnehmer groß">
-          <div class="lc-gross-kasten">
-            <div class="lc-gross-kreis">
-              <video id="lcGrossVideo" autoplay playsinline ${p.ich ? "muted" : ""}
-                     style="${zeigeBild ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
-              ${zeigeBild ? "" : `<span class="lc-initial" id="lcGrossInitial"></span>`}
-            </div>
-            <span class="lc-gross-name" id="lcGrossName"></span>
-            <button type="button" class="btn btn-ghost" id="lcGrossZu">Schließen</button>
-          </div>
-        </div>`;
-      const nameFeld = document.getElementById("lcGrossName");
-      if (nameFeld) nameFeld.textContent = p.ich ? p.name + " (du)" : p.name;
-      const initialFeld = document.getElementById("lcGrossInitial");
-      if (initialFeld) initialFeld.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
-      const gv = document.getElementById("lcGrossVideo");
-      if (gv && p.strom) { gv.srcObject = p.strom; const sp = gv.play(); if (sp && sp.catch) sp.catch(() => {}); }
-      document.getElementById("lcGrossZu")?.addEventListener("click", () => LiveChat.grossZeigen(null));
-      document.getElementById("lcGrossHinter")?.addEventListener("click", (e) => {
-        if (e.target.id === "lcGrossHinter") LiveChat.grossZeigen(null);
-      });
-    }
-  }
-
-  function renderLiveChat() {
-    const area = document.getElementById("livechatArea");
-    if (!area) return;
-    if (!window.LiveChat) {
-      area.innerHTML = '<p class="empty-note">Der Live-Chat ist auf diesem Gerät nicht geladen.</p>';
-      return;
-    }
-    const l = LiveChat.lage();
-
-    /* Draussen: Startschirm. Das Gerüst wird dabei vergessen,
-       damit es beim nächsten Betreten frisch gebaut wird. */
-    if (l.lage === "aus" || l.lage === "fehler") {
-      livechatGeruest = false;
-      livechatGezeigt = new Set();
-      area.innerHTML = livechatStartHtml(l);
-      area.querySelector("#lcBetreten")?.addEventListener("click", () => {
-        const raum = LiveChat.raumAusAdresse() || LiveChat.gemerkterRaum() || LiveChat.neuerRaumName();
-        LiveChat.betreten(raum, { name: livechatName(), mitBild: true }).then(() => renderLiveChat());
-        renderLiveChat();
-      });
-      area.querySelector("#lcZumKlassenzimmer")?.addEventListener("click", () => {
-        document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.click();
-      });
-      return;
-    }
-
-    /* Drinnen: Gerüst einmal bauen, danach nur noch auffrischen. */
-    if (!livechatGeruest || !document.getElementById("livechatKarte")) {
-      area.innerHTML = livechatGeruestHtml();
-      livechatGeruest = true;
-      livechatGezeigt = new Set();
-
-      area.querySelectorAll("[data-lc-platz]").forEach((k) => {
-        k.addEventListener("click", () => {
-          const nr = Number(k.dataset.lcPlatz);
-          const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
-          if (p && !p.leer) LiveChat.grossZeigen(p.id);
-        });
-      });
-      area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());
-      area.querySelector('[data-lc="bild"]')?.addEventListener("click", () => LiveChat.bildUmschalten());
-      area.querySelector('[data-lc="weg"]')?.addEventListener("click", () => { LiveChat.verlassen(); renderLiveChat(); });
-
-      const feld = area.querySelector("#lcFeld");
-      const senden = area.querySelector("#lcSenden");
-      feld?.addEventListener("input", () => { senden.disabled = !feld.value.trim(); });
-      area.querySelector("#lcForm")?.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const t = feld.value.trim();
-        if (!t) return;
-        LiveChat.schreiben(t);
-        feld.value = "";
-        senden.disabled = true;
-        feld.focus();
-      });
-      area.querySelector("#lcLinkKopieren")?.addEventListener("click", async (e) => {
-        const link = LiveChat.lage().link;
-        try { await navigator.clipboard.writeText(link); e.target.textContent = "✅ Kopiert"; }
-        catch (x) { document.getElementById("lcLink")?.select(); e.target.textContent = "Markiert — jetzt kopieren"; }
-        setTimeout(() => { e.target.textContent = "🔗 Link kopieren"; }, 2200);
-      });
-    }
-
-    livechatKopfAuffrischen(l);
-    livechatPlaetzeAuffrischen(l);
-    livechatChatAuffrischen(l);
-    livechatGrossAuffrischen(l);
-  }
-
-  /* Ein einziger Zuhörer für das ganze Leben der Seite. Die
-     Anzeige wird nur aufgefrischt, wenn der Bereich auch offen
-     ist — sonst rechnet die Seite im Hintergrund an einer
-     Ansicht, die niemand sieht. Die VERBINDUNG bleibt bestehen:
-     wer weiterblättert, bleibt im Raum. */
-  if (window.LiveChat && !livechatAbmelden) {
-    livechatAbmelden = LiveChat.beiAenderung(() => {
-      if (document.getElementById("sub-livechat")?.dataset.active === "true") renderLiveChat();
-    });
-  }
-  document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => renderLiveChat());
-
 
   /* ============================================================
      LOGIK-TRAINER
