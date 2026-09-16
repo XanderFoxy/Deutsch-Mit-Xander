@@ -172,6 +172,55 @@ window.DMA_UMGANGSSPRACHE = {
   "der Mutterkuchen": { wort: "die Plazenta", syl: "Pla-ZEN-ta", stil: "", wo: "Hier ist es umgekehrt: das Fachwort „Plazenta“ hört man häufiger als „Mutterkuchen“." },
   "das Ungeborene": { wort: "das Baby", syl: "BA-by", stil: "ugs." },
   "der Fötus": { wort: "das Baby", syl: "BA-by", stil: "ugs.", wo: "Im Mutterpass steht „Fötus“, die Eltern sagen „Baby“." },
+  /* ================================================================
+     DIE GESCHLECHTSTEILE IM EINZELNEN
+     ----------------------------------------------------------------
+     Hier klafft die Lücke zwischen Arztzimmer und Küchentisch am
+     weitesten, und hier ist sie am unangenehmsten: wer beim Arzt das
+     Wort nicht hat, beschreibt mit Händen. Darum steht zu jedem
+     Einzelteil, das im Bild anwählbar ist, die zweite Form — wo es
+     eine gibt.
+
+     ZWEI SORTEN VON EINTRÄGEN, und der Unterschied ist wichtig:
+       * Gleichwertige Doppelformen („äußere" / „große Schamlippen").
+         Beide stehen so im Wörterbuch, beide sind korrekt, beide
+         hört man beim Arzt. Stilebene bleibt leer.
+       * Umgekehrte Fälle, wo das FACHWORT das geläufigere ist
+         („das Hymen", „die Prostata"). Genau wie bei Plazenta /
+         Mutterkuchen.
+
+     Was hier NICHT steht: derbe Wörter ohne Nutzen. „Der Sack" ist
+     aufgenommen, WEIL man ihn täglich hört und wissen muss, dass man
+     ihn nicht beim Arzt sagt. Ein Wort, das man nur als Beleidigung
+     hört, hilft beim Deutschlernen nicht und steht deshalb nicht da.
+     ================================================================ */
+  "die äußeren Schamlippen": { wort: "die großen Schamlippen", syl: "GRO-ße SCHAM-lip-pen", stil: "", wo: "Beide Formen sind richtig und gleich üblich; das Fachwort heißt „Labia majora“." },
+  "die inneren Schamlippen": { wort: "die kleinen Schamlippen", syl: "KLEI-ne SCHAM-lip-pen", stil: "", wo: "Beide Formen sind richtig und gleich üblich; das Fachwort heißt „Labia minora“." },
+  "der Schamhügel": { wort: "der Venushügel", syl: "VE-nus-hü-gel", stil: "", wo: "„Venushügel“ klingt gehobener, meint aber dasselbe." },
+  "das Jungfernhäutchen": { wort: "das Hymen", syl: "HY-men", stil: "", wo: "Hier ist es umgekehrt: das Fachwort „Hymen“ hört man heute häufiger — „Jungfernhäutchen“ gilt vielen als irreführend, weil es nichts über Jungfräulichkeit aussagt." },
+  "das Vorhautbändchen": { wort: "das Bändchen", syl: "BÄND-chen", stil: "kurz", wo: "Beim Arzt fällt oft das lateinische „Frenulum“." },
+  "der Hodensack": { wort: "der Sack", syl: "SACK", stil: "derb", wo: "Sehr verbreitet, aber grob — beim Arzt heißt es „der Hodensack“, im Fachwort „das Skrotum“." },
+  "das Schamhaar": { wort: "die Schamhaare", syl: "SCHAM-haa-re", stil: "", wo: "Im Alltag fast immer in der Mehrzahl: „die Schamhaare“." },
+  "die Gebärmutter": { wort: "der Uterus", syl: "U-te-rus", stil: "", wo: "„Gebärmutter“ ist das deutsche Wort; im Krankenhaus hört man „Uterus“." },
+  "die Prostata": { wort: "die Vorsteherdrüse", syl: "VOR-ste-her-drü-se", stil: "", wo: "Umgekehrter Fall: das Fachwort „Prostata“ ist das geläufige, „Vorsteherdrüse“ steht fast nur noch in Büchern." },
+  "der Eileiter": { wort: "die Tube", syl: "TU-be", stil: "", wo: "„Tube“ sagen Ärztinnen und Ärzte; „Eileiter“ versteht jeder." },
+  "die Samenzelle": { wort: "das Spermium", syl: "SPER-mi-um", stil: "", wo: "Mehrzahl „die Spermien“; umgangssprachlich auch „die Spermien“ für den ganzen Samen." },
+  "der Damm": { wort: "der Damm", syl: "DAMM", stil: "", wo: "Achtung, ein Wort mit zwei Welten: „der Damm“ ist auch der Erdwall am Fluss. Rund um die Geburt hört man „der Dammschnitt“ und „der Dammriss“." },
+  "der Scheideneingang": { wort: "der Scheideneingang", syl: "SCHEI-den-ein-gang", stil: "" },
+  "die Klitorisvorhaut": { wort: "die Klitorisvorhaut", syl: "KLI-to-ris-vor-haut", stil: "" },
+  "die Harnröhrenöffnung": { wort: "die Harnröhrenöffnung", syl: "HARN-röh-ren-öff-nung", stil: "" },
+  "der Penisschaft": { wort: "der Penisschaft", syl: "PE-nis-schaft", stil: "" },
+  "die Eichel": { wort: "die Eichel", syl: "EI-chel", stil: "", wo: "Dasselbe Wort wie die Frucht der Eiche — daher der Name." },
+  "die Vorhaut": { wort: "die Vorhaut", syl: "VOR-haut", stil: "" },
+  "die Kranzfurche": { wort: "die Kranzfurche", syl: "KRANZ-fur-che", stil: "" },
+  "der Nebenhoden": { wort: "der Nebenhoden", syl: "NE-ben-ho-den", stil: "" },
+  "der Samenleiter": { wort: "der Samenleiter", syl: "SA-men-lei-ter", stil: "" },
+  "das Samenbläschen": { wort: "das Samenbläschen", syl: "SA-men-bläs-chen", stil: "" },
+  "der Muttermund": { wort: "der Muttermund", syl: "MUT-ter-mund", stil: "" },
+  "der Gebärmutterhals": { wort: "die Zervix", syl: "ZER-vix", stil: "", wo: "Im Krankenhaus und im Mutterpass steht „Zervix“." },
+  "der Eierstock": { wort: "das Ovar", syl: "O-var", stil: "", wo: "„Eierstock“ ist das normale Wort; „Ovar“ steht im Befund." },
+  "die Harnröhre": { wort: "die Harnröhre", syl: "HARN-röh-re", stil: "" },
+
   "der Schnupfen": { wort: "die Erkältung", syl: "Er-KÄL-tung", stil: "", wo: "Streng genommen ist Schnupfen nur die laufende Nase, Erkältung das Ganze." },
 };
 

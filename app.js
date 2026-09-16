@@ -9803,11 +9803,28 @@
      Datei, damit Szenen, Spiele und Wörterbuch unberührt bleiben und
      man neue Wörter nachtragen kann, ohne app.js anzufassen. */
   const UMGANGSSPRACHE = Object.assign({}, window.DMA_UMGANGSSPRACHE || {});
-  // Einträge ohne echtes Alltagswort fliegen raus — sie stünden nur im Weg.
-  // (Sie stehen dort bewusst mit leerem Stil: „für dieses Wort gibt es
-  // keine zweite Form" ist eine dokumentierte Entscheidung, kein Loch.)
+  /* Einträge ohne echtes zweites Wort fliegen raus — sie stünden nur im
+     Weg. (Sie stehen in der Datei bewusst mit leerem Stil: „für dieses
+     Wort gibt es keine zweite Form" ist eine dokumentierte Entscheidung,
+     kein Loch.)
+
+     WORAN MAN SIE ERKENNT — und hier lag ein Fehler:
+     Geprüft wurde nur auf die Stilebene. Damit flogen auch die
+     GLEICHWERTIGEN DOPPELFORMEN heraus, die zu Recht keine Stilebene
+     haben, weil keine der beiden lockerer ist als die andere:
+       die Vagina / die Scheide · der Mutterkuchen / die Plazenta
+       der Krankenwagen / der Rettungswagen · die Kantine / die Mensa
+       das Jungfernhäutchen / das Hymen · die Gebärmutter / der Uterus
+     Sechzehn Wörter, bei denen die Seite etwas wusste und es für sich
+     behielt.
+
+     Das richtige Merkmal ist nicht die Stilebene, sondern ob überhaupt
+     ein ANDERES Wort dasteht. Steht dort dasselbe Wort noch einmal,
+     heisst das „es gibt keine zweite Form" — nur die fliegen raus. */
   Object.keys(UMGANGSSPRACHE).forEach((k) => {
-    if (!UMGANGSSPRACHE[k].stil) delete UMGANGSSPRACHE[k];
+    const e = UMGANGSSPRACHE[k];
+    if (!e || !e.wort) { delete UMGANGSSPRACHE[k]; return; }
+    if (!e.stil && e.wort === k) delete UMGANGSSPRACHE[k];
   });
 
   /* Nachschlagen mit und ohne Artikel: in den Bildern steht „das
@@ -9914,14 +9931,20 @@
         <button type="button" class="alltags-dialekt-link" data-zum-dialekt="${escapeHtml(d.hoch)}">Alle Regionen ansehen</button></p>`;
     }
     const an = umgangsspracheAn() && obenGetauscht;
-    const stil = (STIL_TEXT[a.stil] || a.stil) + (a.wo ? " · " + a.wo : "");
     /* Die Stilangabe gehört immer zum Alltagswort — steht das oben,
        sagt die Zeile das, statt die Angabe an die Wörterbuchform zu
        hängen, wo sie nicht hingehört. */
+    const stilWort = STIL_TEXT[a.stil] || a.stil;
+    const stil = stilWort + (a.wo ? (stilWort ? " · " : "") + a.wo : "");
+    /* OHNE Stilebene ist es keine lockerere Form, sondern eine
+       gleichwertige zweite: „die Scheide" neben „die Vagina", „das
+       Hymen" neben „das Jungfernhäutchen". Da wäre „im Alltag sagt
+       man" schlicht falsch — beide sagt man überall, auch beim Arzt. */
+    const gleichrangig = !a.stil;
     return an
-      ? `<p class="alltags-zeile">🗣️ Oben steht die Alltagsform <span class="alltags-stil">${escapeHtml(stil)}</span>
+      ? `<p class="alltags-zeile">🗣️ Oben steht ${gleichrangig ? "die andere gebräuchliche Form" : "die Alltagsform"} <span class="alltags-stil">${escapeHtml(stil)}</span>
            <br>Im Wörterbuch: <strong>${escapeHtml(standard)}</strong></p>`
-      : `<p class="alltags-zeile">🗣️ Im Alltag sagt man: <strong>${escapeHtml(a.wort)}</strong>
+      : `<p class="alltags-zeile">🗣️ ${gleichrangig ? "Genauso gebräuchlich" : "Im Alltag sagt man"}: <strong>${escapeHtml(a.wort)}</strong>
            <span class="alltags-stil">${escapeHtml(stil)}</span></p>`;
   }
 
@@ -31775,7 +31798,20 @@
      Kind entsteht" nur über Körper → Bauch → Geschlechtsorgane →
      Kind. Diese vier bekommen jetzt ihre eigene Gruppe.
      ============================================================ */
-  const BW_EIGENE_TAFELN = ["koerperbau", "koerper_innen", "anatomie", "entstehung"];
+  /* Die Tafeln zum Nachschlagen. Sie stehen EIGENS hier und nicht bei
+     den Themen, weil sie Detailbilder sind — die blendet szenenListe()
+     aus, damit die Übersicht nicht mit Lupenbildern vollläuft.
+
+     GEWÜNSCHT und hier der Grund für die vier neuen Einträge:
+     „Die Einzeldetails von Penis und Vagina sind nicht anklickbar
+      oder auffindbar." Über die Lupenkette waren sie zwar zu
+     erreichen, aber wer „Schamlippe" lernen wollte, musste erst
+     wissen, dass er im Körper auf den Bauch, dann auf die Frau und
+     dann auf eine Lupe tippen muss. Das ist kein Auffinden, das ist
+     Raten. Jetzt stehen sie als eigene Tafeln da. */
+  const BW_EIGENE_TAFELN = ["koerperbau", "koerper_innen", "anatomie",
+                            "vulva", "frau_innen", "penis", "mann_innen",
+                            "entstehung"];
   function bwEigeneTafeln() {
     const alle = window.DMA_SZENEN || [];
     return BW_EIGENE_TAFELN.map((id) => alle.find((s) => s.id === id)).filter(Boolean);
@@ -32068,7 +32104,7 @@
         if (!tafeln.length) return "";
         return `<div class="question-card" style="margin-top:12px;">
           <p class="eyebrow" style="margin-top:0;">Der Mensch von innen</p>
-          <p class="empty-note" style="margin:0 0 8px;">Vier Tafeln zum Nachschlagen: Knochen und Gelenke, die Organe, die Geschlechtsorgane und wie ein Kind entsteht — von der Befruchtung bis zur Geburt.</p>
+          <p class="empty-note" style="margin:0 0 8px;">Tafeln zum Nachschlagen: Knochen und Gelenke, die Organe, die Geschlechtsorgane — außen wie innen, jedes Einzelteil einzeln benannt — und wie ein Kind entsteht, von der Befruchtung bis zur Geburt.</p>
           <div class="bw-kacheln">
             ${tafeln.map((s) => `
               <button type="button" class="bw-kachel" data-bw-szene="${s.id}">

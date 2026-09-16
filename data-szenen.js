@@ -556,9 +556,69 @@ window.DMA_SZENEN = [
   "detail": true,
   "zahl": 6,
   "lupen": [
-   "entstehung"
+   "entstehung",
+   "frau_innen",
+   "mann_innen",
+   "penis",
+   "vulva"
   ],
   "stellen": 6
+ },
+ {
+  "id": "vulva",
+  "titel": "Die äußeren weiblichen Geschlechtsteile",
+  "emoji": "🌸",
+  "thema": "Körper",
+  "breite": 340,
+  "hoehe": 300,
+  "detail": true,
+  "zahl": 11,
+  "lupen": [
+   "frau_innen"
+  ],
+  "stellen": 11
+ },
+ {
+  "id": "penis",
+  "titel": "Der Penis und der Hodensack",
+  "emoji": "🔎",
+  "thema": "Körper",
+  "breite": 340,
+  "hoehe": 300,
+  "detail": true,
+  "zahl": 12,
+  "lupen": [
+   "mann_innen"
+  ],
+  "stellen": 12
+ },
+ {
+  "id": "frau_innen",
+  "titel": "Innen: die weiblichen Geschlechtsorgane",
+  "emoji": "🔬",
+  "thema": "Körper",
+  "breite": 340,
+  "hoehe": 300,
+  "detail": true,
+  "zahl": 7,
+  "lupen": [
+   "vulva"
+  ],
+  "stellen": 7
+ },
+ {
+  "id": "mann_innen",
+  "titel": "Innen: die männlichen Geschlechtsorgane",
+  "emoji": "🔬",
+  "thema": "Körper",
+  "breite": 340,
+  "hoehe": 300,
+  "detail": true,
+  "zahl": 8,
+  "lupen": [
+   "penis"
+  ],
+  "stellen": 8
  },
  {
   "id": "entstehung",

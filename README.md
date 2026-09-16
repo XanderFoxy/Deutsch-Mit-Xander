@@ -717,3 +717,89 @@ Wort wird vorgesprochen  →  Mikrofon geht an  →  du sprichst nach
                   │                                 │
            nächstes Wort                    dasselbe Wort noch einmal
 ```
+
+## 17. Die Geschlechtsteile im Einzelnen (Fassung 178)
+
+### Das Problem
+
+Im Bild „Die Geschlechtsorgane" gab es sechs anwählbare Flächen, und davon waren nur
+zwei überhaupt Geschlechtsteile: „die männlichen Geschlechtsorgane" und „die weiblichen
+Geschlechtsorgane" — zwei Klümpchen ohne ein einziges benanntes Einzelteil. Wer
+„Schamlippe", „Eichel" oder „Vorhaut" lernen wollte, fand das Wort auf der ganzen Seite
+nicht.
+
+### Vier neue Tafeln, 38 Wörter
+
+| Bild | Wörter |
+|---|---|
+| 🌸 Die äußeren weiblichen Geschlechtsteile | Schamhügel, Schamhaar, Klitorisvorhaut, Klitoris, Harnröhrenöffnung, Scheideneingang, äußere Schamlippen, innere Schamlippen, Jungfernhäutchen, Damm |
+| 🔎 Der Penis und der Hodensack | Harnröhrenöffnung, Eichel, Kranzfurche, Vorhautbändchen, Vorhaut, Penisschaft, Schamhaar, Samenleiter, Hodensack, Hoden, Nebenhoden |
+| 🔬 Innen: die weiblichen Geschlechtsorgane | Eierstock, Eileiter, Gebärmutter, Gebärmutterhals, Muttermund, Scheide |
+| 🔬 Innen: die männlichen Geschlechtsorgane | Harnblase, Samenbläschen, Prostata, Samenleiter, Harnröhre, Nebenhoden, Hoden |
+
+Sie stehen unter **Lernen → Bilderwelt → „Der Mensch von innen"** direkt als eigene
+Kacheln — nicht versteckt hinter einer Lupenkette. Zusätzlich führt jede Fläche im
+Übersichtsbild dorthin: „die Frau von vorn" → die äußeren Teile, „die weiblichen
+Geschlechtsorgane" → innen, und ebenso beim Mann.
+
+### Warum diese Bilder anders gebaut sind als alle anderen
+
+In der Bilderwelt **ist** die Zeichnung eines Dings zugleich seine Schaltfläche. Im
+Kinderzimmer geht das gut: der Teddy ist groß und liegt allein. Hier geht es nicht — die
+inneren Schamlippen liegen unter den äußeren, die Klitoris ist wenige Millimeter groß,
+die Harnröhrenöffnung noch kleiner. Zeichnung-als-Schaltfläche hieße hier:
+übereinanderliegende Trefferflächen, von denen man auf dem Telefon keine sicher trifft.
+Genau das war die Klage.
+
+Darum sind diese vier Bilder wie im Biologiebuch aufgebaut:
+
+* Die **Zeichnung ist Kulisse** — sie wird nicht angetippt.
+* Jedes Teil bekommt einen eigenen **nummerierten Punkt am Bildrand**, mit einer
+  gestrichelten Linie, die genau auf die Stelle zeigt.
+* Der Punkt hat eine unsichtbare Trefferfläche von 34 × 34 und **überlappt mit keinem
+  anderen**.
+
+Zahlen und keine Wörter auf den Punkten, weil die Bilderwelt ein Suchspiel hat: stünde
+das Wort in der Zeichnung, wäre das Spiel kaputt.
+
+Die Linien liegen dabei **in der Kulisse, nicht im Teil**. Das ist kein Schönheitsdetail:
+die App legt hinter jedes Teil eine unsichtbare Trefferfläche in Größe seiner
+Bounding-Box. Steckte die lange Zeigerlinie im Teil, wäre diese Box hundert Pixel breit,
+ihre Mitte läge im Leeren, und die Boxen benachbarter Punkte überlappten sich dort, wo
+sich ihre Linien kreuzen — man träfe beim Danebentippen den Nachbarn.
+
+Gebaut von `werkzeug/bau-geschlechtsteile.py`; dort steht der Bauplan mit der Begründung
+für jede Entscheidung.
+
+### Umgangssprache
+
+Zu jedem Einzelteil steht auf der Wortkarte die zweite Form, wo es eine gibt — der
+Umschalter „Wörterbuch ↔ Alltag" bedient sie bereits:
+
+```
+die äußeren Schamlippen  ↔  die großen Schamlippen
+die inneren Schamlippen  ↔  die kleinen Schamlippen
+die Klitoris             ↔  der Kitzler
+der Schamhügel           ↔  der Venushügel
+das Jungfernhäutchen     ↔  das Hymen
+die Gebärmutter          ↔  der Uterus
+der Hodensack            ↔  der Sack  (derb — beim Arzt sagt man das nicht)
+```
+
+### Ein Fehler, der dabei aufgefallen ist
+
+Die App warf **alle** Einträge der Umgangssprache weg, deren Stilebene leer war. Gemeint
+waren damit die Einträge „für dieses Wort gibt es keine zweite Form" (dort steht dasselbe
+Wort zweimal). Mitgerissen wurden aber auch die **gleichwertigen Doppelformen**, die zu
+Recht keine Stilebene haben, weil keine von beiden lockerer ist als die andere:
+
+```
+die Vagina / die Scheide        der Mutterkuchen / die Plazenta
+der Krankenwagen / der Rettungswagen    die Kantine / die Mensa
+der Schnupfen / die Erkältung
+```
+
+Sechzehn Wörter, bei denen die Seite etwas wusste und es für sich behielt. Das richtige
+Merkmal ist nicht die Stilebene, sondern ob überhaupt ein **anderes** Wort dasteht — so
+wird jetzt geprüft. Auf der Wortkarte heißt es bei diesen Paaren „Genauso gebräuchlich"
+statt „Im Alltag sagt man", denn beide sagt man überall, auch beim Arzt.
