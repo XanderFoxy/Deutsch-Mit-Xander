@@ -9566,6 +9566,139 @@
     return `${h.emoji} ${it.article}${it.article.endsWith("'") ? "" : " "}${it.noun} <span class="empty-note" style="font-size:0.68rem;">(${h.article} ${h.noun})</span>`;
   }
 
+  /* ============================================================
+     WAS IST ÜBERHAUPT EIN ÜBUNGSWORT?
+     ------------------------------------------------------------
+     GEMELDET: „Bei den Ausspracheübungen sind total unsinnige
+     Sachen drin, zum Beispiel falsche Antworten aus den Übungen
+     oder Sachen, wo man sich fragt, ob es diese Worte überhaupt
+     gibt."
+
+     Beides stimmte, und beides hat eine klare Ursache.
+
+     A) FEHLERFORMEN AUS DEN ÜBUNGEN
+     Im Wortschatz stehen 1.102 Einträge, die AUSDRÜCKLICH als
+     falsche Antwort gekennzeichnet sind — „Baad", „Blumesstopf",
+     „geschiesst", „Fön". Sie stehen dort mit Absicht und zu
+     Recht: wer in einer Übung über „Blumesstopf" stolpert, soll
+     nachschlagen können, warum das falsch ist. Im WÖRTERBUCH ist
+     das richtig.
+     Im AUSSPRACHE-TRAINER ist es das Gegenteil von richtig. Dort
+     spricht man das Wort nach und bekommt eine Note dafür — man
+     übt also ein, was man gerade nicht können soll.
+
+     B) GEBEUGTE FORMEN OHNE ZUSAMMENHANG
+     „langjährigere", „intensiveren", „geschossene" — das sind
+     keine Stichwörter, sondern Formen. Einzeln vorgelegt, ohne
+     Satz, sind sie sinnlos: niemand spricht „intensiveren" für
+     sich allein aus. Gemeldet war genau das: „ob es sinnvoll ist,
+     wenn da ein Wort ohne Kontext dazwischenkommt."
+
+     Erkannt wird beides an der Erklärung, die der Wortschatz
+     ohnehin mitbringt — kein neues Datenfeld, keine Pflege.
+     ============================================================ */
+  const WORT_FEHLERFORM = /(als falsche Antwort|falsch geschrieben\s*—\s*richtig ist)/;
+  const WORT_GEBEUGT = new RegExp("^(" + [
+    "Mehrzahl von", "Mehrzahl \\(",
+    "Steigerungsform", "höchste Steigerungsform",
+    "Befehlsform", "Imperativ",
+    "(groß|klein)?geschriebenes Partizip", "gebeugtes Partizip", "gesteigertes Partizip", "Partizip",
+    "gebeugte Form", "Gebeugte Form",
+    "Form von", "eine Form von", "Grundform von",
+    "\\d\\.\\s*Person", "Präsens von", "Präteritum", "Konjunktiv",
+    "Infinitiv mit", "substantivierte",
+  ].join("|") + ")");
+
+  /* Nicht jede gebeugte Form sagt es in ihrer Erklärung. „scheidenden"
+     steht dort als „zusammengesetzt aus ,Scheiden` und ,enden`" — eine
+     erfundene Zerlegung, die das Wort wie ein Stichwort aussehen lässt.
+     (Die englische Zeile dazu lautete „vagina end". So etwas darf kein
+     Aussprache-Trainer vorlegen.)
+
+     Solche Fälle verraten sich an der Endung, WENN die Grundform
+     ebenfalls im Wortschatz steht:
+       marktbeherrschenden → marktbeherrschend  (beides da → gebeugt)
+       zurücksenden        → zurücksend          (nicht da → Stichwort)
+
+     Zwei Bedingungen halten die Regel eng:
+       * Substantive sind ausgenommen. „die Piste", „die Blutspende",
+         „der Wandkalender" enden genauso — bei ihnen gehört die
+         Endung zum Wort. Erkennbar am Artikel oder am grossen
+         Anfangsbuchstaben.
+       * Die Endungen -e/-en/-er zählen nur, wenn die Grundform auf
+         „end" ausgeht (also ein Partizip I ist). Sonst verlöre man
+         jeden Infinitiv: „ziehen" wäre sonst eine Beugung von „zieh". */
+  const WORT_ADJEKTIV_ENDUNGEN = ["eren", "erem", "erer", "eres", "sten", "stem", "ster", "stes", "ere", "ste", "em", "es"];
+  const WORT_ALLE_ENDUNGEN = WORT_ADJEKTIV_ENDUNGEN.concat(["en", "er", "e"]);
+  function wortIstNomen(w) {
+    return /^(der|die|das)\s/.test(w) || /^[A-ZÄÖÜ]/.test(w);
+  }
+  /* Die dritte Sorte Unsinn: eine ERFUNDENE ZERLEGUNG.
+     Ein Erzeuger hat gebeugte Formen als Wortzusammensetzung erklärt
+     und dabei Teile behauptet, die es nicht gibt:
+       riesenhaftes      = „Riesen" + „Haftes"      (giant custody)
+       tausendjährigeln  = „tausend" + „Jähr" + …   (thousand year hedgehog)
+       leidigeln         = „das Leid" + „Igel"      (suffering hedgehog)
+     Erkennbar daran, dass ein genannter Teil selbst kein Wort ist.
+
+     ABER — und daran wäre die Regel fast gescheitert: das allein
+     genügt nicht. „die Kriegserklärung" wird als „Kriegs" + „die
+     Erklärung" erklärt, und „Kriegs" ist auch kein Wort — es ist
+     das Fugen-s. Das WORT ist trotzdem tadellos.
+     Der Unterschied ist der Artikel: ein Substantiv mit „der/die/das"
+     ist ein Stichwort und bleibt. Nur artikellose Einträge, deren
+     Zerlegung erfundene Teile nennt, fliegen aus dem Üben. */
+  function wortZerlegungErfunden(wort, meaning, bekannt) {
+    if (/^(der|die|das)\s/.test(wort)) return false;
+    const m = String(meaning || "");
+    if (!m.startsWith("zusammengesetzt aus")) return false;
+    const teile = m.match(/„([^„“"]+)[“"]/g);
+    if (!teile || !teile.length) return false;
+    for (let i = 0; i < teile.length; i++) {
+      const t = teile[i].slice(1, -1).trim();
+      if (!t) continue;
+      if (bekannt.has(t)) continue;
+      if (bekannt.has(t.toLowerCase())) continue;
+      if (bekannt.has(t.charAt(0).toUpperCase() + t.slice(1))) continue;
+      return true;
+    }
+    return false;
+  }
+
+  /* Letzter Rest: „das Gegenteil von ,gestellte`" — die Erklärung
+     nennt selbst eine gebeugte Form, also ist auch das Stichwort
+     eine. Billig zu prüfen und fängt die Un-Wörter ab
+     („ungestellte", „unnötigem", „unbefriedigende"). */
+  function wortGegenteilGebeugt(wort, meaning) {
+    if (/^(der|die|das)\s/.test(wort)) return false;
+    const m = String(meaning || "");
+    if (!/^das Gegenteil von/.test(m)) return false;
+    const t = m.match(/„([^„“"]+)[“"]/);
+    return Boolean(t && /[a-zäöüß](e|en|em|er|es)$/.test(t[1]) && t[1].length > 5);
+  }
+
+  function wortIstBeugung(wort, bekannt) {
+    if (!wort || wortIstNomen(wort)) return false;
+    for (let i = 0; i < WORT_ALLE_ENDUNGEN.length; i++) {
+      const end = WORT_ALLE_ENDUNGEN[i];
+      if (!wort.endsWith(end)) continue;
+      const stamm = wort.slice(0, -end.length);
+      if (stamm.length < 4 || !bekannt.has(stamm)) continue;
+      if (WORT_ADJEKTIV_ENDUNGEN.indexOf(end) >= 0 || stamm.endsWith("end")) return true;
+    }
+    return false;
+  }
+
+  /* Taugt das Wort zum LAUT ÜBEN? Nur Stichwörter mit einer
+     Erklärung — alles andere schickt den Lernenden in die Irre. */
+  function wortZumUeben(e) {
+    if (!e || !e.word || !e.syl) return false;
+    if (e.uebungsfehler) return false;
+    if (e.abgeleitet) return false;
+    if (!e.meaning) return false;      // ohne Bedeutung kein Zusammenhang
+    return true;
+  }
+
   let dictCacheWoerter = -1;
   function buildDictionaryEntries() {
     const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
@@ -9654,6 +9787,23 @@
       if (schonDa(word)) return;
       belegen(word);
       entries.push({ word, syl: kompositumSylString(word) || ruleSylString(word), meaning: "", example: "", level: null, verified: false, category: "Sonstiges" });
+    });
+    /* Jeder Eintrag bekommt zwei Marken mit auf den Weg. Sie werden
+       EINMAL hier gesetzt und nicht in jedem Spiel neu gerechnet —
+       sonst steht die Regel an fünfzehn Stellen und läuft
+       auseinander. */
+    const bekannt = new Set();
+    entries.forEach((e) => {
+      bekannt.add(e.word);
+      bekannt.add(e.word.replace(/^(der|die|das)\s+/i, ""));
+    });
+    entries.forEach((e) => {
+      const m = String(e.meaning || "");
+      e.uebungsfehler = WORT_FEHLERFORM.test(m);
+      e.abgeleitet = WORT_GEBEUGT.test(m.trim())
+                  || wortIstBeugung(e.word, bekannt)
+                  || wortZerlegungErfunden(e.word, m, bekannt)
+                  || wortGegenteilGebeugt(e.word, m);
     });
     return entries.sort((a, b) => a.word.localeCompare(b.word, "de"));
   }
@@ -10656,7 +10806,12 @@
       const menge = new Set(l.woerter);
       return eintraege.filter((e) => menge.has(e.word));
     }
-    return eintraege;
+    /* „Alle Wörter" heisst alle ECHTEN Wörter. Die Fehlerformen aus
+       den Übungen gehören ins Wörterbuch zum Nachschlagen, aber in
+       kein Spiel: dort übte man ein, was man nicht können soll.
+       Eine selbst gemerkte Liste bleibt unangetastet — was jemand
+       ausdrücklich gewählt hat, nimmt ihm die App nicht weg. */
+    return eintraege.filter((e) => !e.uebungsfehler);
   }
   function wortQuelleChipsHtml(spiel) {
     /* Läuft ein Duell mit fremder Liste, wird die eigene Auswahl gar
@@ -10949,7 +11104,10 @@
   const AUSSPRACHE_RUNDEN = 10;
 
   function ausspracheWortliste() {
-    const alle = buildDictionaryEntries().filter((e) => e.syl && e.word);
+    /* wortZumUeben() wirft die Fehlerformen aus den Übungen und die
+       gebeugten Formen heraus. Ohne diesen Filter legte der Trainer
+       „Baad" und „intensiveren" zum Nachsprechen vor. */
+    const alle = buildDictionaryEntries().filter(wortZumUeben);
     if (ausspracheQuelle === "wortschatz") return alle.filter((e) => imWortschatz(e.word));
     if (ausspracheQuelle === "kategorie") return ausspracheKategorie === "alle" ? alle : alle.filter((e) => e.category === ausspracheKategorie);
     if (ausspracheQuelle === "niveau") return ausspracheNiveau === "alle" ? alle : alle.filter((e) => e.level === ausspracheNiveau);
