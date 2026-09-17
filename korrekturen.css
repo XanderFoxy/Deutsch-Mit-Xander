@@ -5005,15 +5005,27 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   inset: 0;
   pointer-events: none;
   z-index: 5;
-  color: #f0b49a;   /* Hautton — als currentColor an beide Arme */
   overflow: visible;
 }
+/* Die Arme sitzen GENAU auf dem Platz, nicht darüber hinaus.
+   Vorher ragten sie 14 % nach links und rechts hinaus und schwebten
+   neben der Karte in der Luft; ein Arm muss aber von HINTER dem Platz
+   herumkommen, und das heisst: er beginnt an der Kante.
+   Die Farben stehen jetzt im SVG (Verläufe), nicht mehr als
+   currentColor — ein Arm in einem einzigen flachen Ton sieht aus wie
+   ein Schlauch. */
 .lc-arm {
   position: absolute;
-  inset: -6% -14%;
-  width: 128%;
-  height: 112%;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.42));
+}
+/* Die rechte Hand liegt ÜBER der linken. Ohne Schatten verschmelzen
+   die beiden zu einem Klumpen — erst der Schatten macht daraus zwei
+   Hände, von denen eine oben liegt. */
+.lc-arm-rechts .lc-hand {
+  filter: drop-shadow(-2px 2px 2px rgba(60, 20, 10, 0.45));
 }
 .lc-arm-links {
   transform-origin: 0% 40%;
@@ -5026,14 +5038,14 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   animation: lcArmRechts 1.5s cubic-bezier(0.34, 1.3, 0.5, 1) 0.12s both;
 }
 @keyframes lcArmLinks {
-  0%   { opacity: 0; transform: translateX(-46%) rotate(-16deg); }
+  0%   { opacity: 0; transform: translateX(-34%) rotate(-13deg); }
   22%  { opacity: 1; }
   46%  { transform: translateX(0) rotate(0deg); }
   70%  { transform: translateX(2%) rotate(1.5deg); }
   100% { opacity: 1; transform: translateX(0) rotate(0deg); }
 }
 @keyframes lcArmRechts {
-  0%   { opacity: 0; transform: translateX(46%) rotate(16deg); }
+  0%   { opacity: 0; transform: translateX(34%) rotate(13deg); }
   22%  { opacity: 1; }
   46%  { transform: translateX(0) rotate(0deg); }
   70%  { transform: translateX(-2%) rotate(-1.5deg); }
@@ -5051,10 +5063,15 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   58%  { transform: scale(0.91, 0.96) translateY(2px); }
   100% { transform: none; }
 }
+/* Die Herzen steigen ÜBER den Armen auf, nicht durch sie hindurch.
+   Vorher standen sie bei 16 % und stiegen 46 px — genau auf Höhe der
+   Hände, die sie damit verdeckten. Jetzt starten sie knapp oberhalb
+   der Armlinie (die liegt bei 40 % von unten) und ziehen am Kopf
+   vorbei. */
 .lc-drueckherz {
   position: absolute;
-  bottom: 16%;
-  font-size: 0.86rem;
+  bottom: 47%;
+  font-size: 0.8rem;
   font-style: normal;
   color: #e05a72;
   opacity: 0;
@@ -5062,9 +5079,9 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 @keyframes lcDrueckHerz {
-  0%   { opacity: 0; transform: translateY(0) scale(0.5); }
-  22%  { opacity: 1; transform: translateY(-10px) scale(1); }
-  100% { opacity: 0; transform: translateY(-46px) scale(0.8); }
+  0%   { opacity: 0; transform: translateY(4px) scale(0.45); }
+  24%  { opacity: 0.92; transform: translateY(-6px) scale(1); }
+  100% { opacity: 0; transform: translateY(-34px) scale(0.75); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-arm, .lc-platz.lc-wird-gedrueckt, .lc-drueckherz { animation: none; }

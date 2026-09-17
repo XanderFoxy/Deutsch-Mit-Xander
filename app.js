@@ -1127,26 +1127,54 @@
   /* Beta-Einladung für GENAU EIN Spiel — steht direkt im noch nicht
      freigegebenen Spiel selbst, dort wo sonst die Einladungsleiste wäre.
      Die eingeladene Person sieht danach dieses eine Spiel, sonst nichts. */
+  /* GEMELDET: „Bei der Blitzrunde steht da ‚noch niemand eingeladen‘,
+     und dann kommt die lange Liste von Leuten. Die Liste ist sogar
+     abgehackt."
+
+     Beides stimmte. Das Suchfeld hat sich beim Aufbauen selbst die
+     acht zuletzt Aktiven geholt und untereinander gestellt — ohne
+     dass jemand danach gefragt hätte. Und bei acht war Schluss, ohne
+     ein Wort darüber, dass es mehr gibt.
+
+     Jetzt: eingeklappt und freiwillig. Es steht nur eine Zeile da,
+     wer schon dabei ist, und ein Knopf. Erst wer den drückt, bekommt
+     das Suchfeld — und dort steht dann auch, wie viele Leute es
+     insgesamt gibt und dass man tippen muss, um die anderen zu
+     finden. */
   function betaSpielEinladungHtml(flagKey, spielName) {
     const drin = Backend.betaListeFuerSpiel ? Backend.betaListeFuerSpiel(flagKey) : [];
     return `<div class="beta-spiel-einladung" data-beta-spiel="${flagKey}">
-      <p class="empty-note" style="font-size:0.78rem; margin:0 0 6px;">🧪 Dieses Spiel ist noch nicht freigegeben. Du kannst einzelne Leute ausdrücklich für <strong>${spielName}</strong> zum Mittesten einladen — sie sehen dann nur dieses Spiel, sonst nichts Neues. Punkte zählen dabei wie immer.</p>
-      <p class="empty-note" style="font-size:0.74rem; margin:0 0 6px;">${drin.length ? `✅ Schon eingeladen: ${drin.length} ${drin.length === 1 ? "Person" : "Personen"}` : "Noch niemand eingeladen."}</p>
-      <input type="text" class="vocab-search beta-spiel-suche" placeholder="Name suchen …" style="width:100%;" />
-      <div class="beta-spiel-treffer" style="margin-top:6px;"></div>
+      <p class="empty-note" style="font-size:0.78rem; margin:0 0 6px;">🧪 Noch nicht freigegeben. Du kannst einzelne Leute für <strong>${spielName}</strong> zum Mittesten einladen — sie sehen dann nur dieses Spiel. Punkte zählen wie immer.</p>
+      <p class="empty-note beta-spiel-stand" style="font-size:0.74rem; margin:0 0 6px;">${drin.length ? `✅ ${drin.length} ${drin.length === 1 ? "Person testet" : "Personen testen"} schon mit` : "Noch niemand eingeladen."}</p>
+      <button type="button" class="btn btn-ghost beta-spiel-auf" style="font-size:0.76rem; padding:5px 11px;">➕ Jemanden einladen</button>
+      <div class="beta-spiel-koerper" style="display:none; margin-top:8px;">
+        <input type="text" class="vocab-search beta-spiel-suche" placeholder="Name eintippen …" style="width:100%;" />
+        <div class="beta-spiel-treffer" style="margin-top:6px;"></div>
+      </div>
     </div>`;
   }
-  function betaSpielEinladungBinden(kasten, flagKey, spielName) {
+  function betaSpielEinladungBinden(kasten, flagKey, spielName, holen) {
     const feld = kasten.querySelector(".beta-spiel-suche");
     const treffer = kasten.querySelector(".beta-spiel-treffer");
     if (!feld || !treffer) return;
-    const zeichnen = (liste) => {
+    const koerper = kasten.querySelector(".beta-spiel-koerper");
+    const stand = kasten.querySelector(".beta-spiel-stand");
+    const zeichnen = (liste, gesamt, woher) => {
       const drin = Backend.betaListeFuerSpiel ? Backend.betaListeFuerSpiel(flagKey) : [];
+      if (stand) {
+        stand.textContent = drin.length
+          ? "\u2705 " + drin.length + (drin.length === 1 ? " Person testet" : " Personen testen") + " schon mit"
+          : "Noch niemand eingeladen.";
+      }
+      const rest = (gesamt || liste.length) - liste.length;
+      const mehr = rest > 0
+        ? `<p class="empty-note" style="margin:6px 0 0; font-size:0.72rem;">… und ${rest} weitere (${woher || ""}). Tipp einen Namen ein, um jemand Bestimmtes zu finden.</p>`
+        : "";
       treffer.innerHTML = liste.length ? liste.map((u) => `
         <button type="button" class="breakdown-row beta-spiel-pick" data-uid="${u.id}" data-uname="${u.name}" style="width:100%; text-align:left; cursor:pointer; background:none; border:none; font:inherit; color:inherit;">
           <span>${u.name}</span>
           <span class="empty-note">${drin.includes(u.id) ? "✅ dabei — antippen zum Entfernen" : "einladen →"}</span>
-        </button>`).join("") : `<p class="empty-note">Niemanden gefunden.</p>`;
+        </button>`).join("") + mehr : `<p class="empty-note">Niemanden gefunden.</p>`;
       treffer.querySelectorAll(".beta-spiel-pick").forEach((zeile) => {
         zeile.addEventListener("click", async () => {
           const id = zeile.dataset.uid;
@@ -1159,25 +1187,46 @@
             } else {
               showToast(`${zeile.dataset.uname} ist nicht mehr dabei.`);
             }
-            zeichnen(liste);
+            zeichnen(liste, gesamt, woher);
           } catch (e) { alert(e.message || "Konnte nicht gespeichert werden."); }
         });
       });
     };
+    /* EINE Naht für beide Wege — Vorschläge wie Suche. Vorher lief die
+       Suche an der Prüfung vorbei, und was nicht geprüft wird, geht
+       irgendwann kaputt. */
+    const leuteHolen = holen || (async (wort) => wort
+      ? await Backend.searchUsers(wort)
+      : await Backend.getAllUsers());
+    /* Wie viele es insgesamt gibt, wird GESAGT statt verschwiegen —
+       eine Liste, die stumm bei acht aufhört, sieht kaputt aus. */
     const vorschlaege = async () => {
       treffer.innerHTML = `<p class="empty-note">Lade …</p>`;
-      const alle = await Backend.getAllUsers();
-      zeichnen([...alle].sort((a, b) => new Date(b.last_active || 0) - new Date(a.last_active || 0)).slice(0, 8));
+      const alle = await leuteHolen("");
+      const sortiert = [...alle].sort(
+        (a, b) => new Date(b.last_active || 0) - new Date(a.last_active || 0));
+      zeichnen(sortiert.slice(0, 8), sortiert.length, "zuletzt aktiv");
     };
-    vorschlaege();
+    const auf = kasten.querySelector(".beta-spiel-auf");
+    if (auf) {
+      auf.addEventListener("click", () => {
+        const offen = koerper.style.display !== "none";
+        koerper.style.display = offen ? "none" : "block";
+        auf.textContent = offen ? "➕ Jemanden einladen" : "▲ Schließen";
+        if (!offen) {
+          if (!koerper.dataset.geladen) { koerper.dataset.geladen = "1"; vorschlaege(); }
+          feld.focus();
+        }
+      });
+    }
     let uhr = null;
     feld.addEventListener("input", () => {
       clearTimeout(uhr);
       uhr = setTimeout(async () => {
         const wort = feld.value.trim();
         if (!wort) { vorschlaege(); return; }
-        const gefunden = await Backend.searchUsers(wort);
-        zeichnen(gefunden.slice(0, 8));
+        const gefunden = await leuteHolen(wort);
+        zeichnen(gefunden.slice(0, 8), gefunden.length, "passen zu „" + wort + "\u201c");
       }, 300);
     });
   }
@@ -18687,6 +18736,84 @@
     return true;
   }
 
+  /* -----------------------------------------------------------------
+     EIN ARM — GEMELDET: „Der Emoji fuer die Umarmung sieht nicht
+     realistisch aus. Sieht nicht gut aus."
+
+     Er hatte recht, und der Grund war handwerklich: der alte Arm war
+     EIN STRICH mit einer Kugel am Ende. Ein Strich hat ueberall
+     dieselbe Dicke — ein Arm nicht. An der Schulter ist er doppelt so
+     dick wie am Handgelenk. Und eine Kugel ist keine Hand.
+
+     Darum jetzt:
+       * eine GEFUELLTE Silhouette statt eines Strichs, breit an der
+         Schulter (11 Einheiten), schmal am Gelenk (7,8) — die
+         Verjuengung ist das, was einen Arm zum Arm macht;
+       * eine echte Hand mit Handruecken, vier getrennten Fingern und
+         einem Daumen;
+       * ein Aermel an der Kante, sonst waechst der Arm aus dem Nichts;
+       * ein Verlauf im Hautton, damit die Rundung sichtbar wird.
+
+     Die Arme beginnen bei x = 0 und x = 120, also GENAU an der Kante
+     des Platzes. Vorher ragten sie 14 % darueber hinaus und schwebten
+     neben der Karte in der Luft; jetzt kommen sie von hinten um sie
+     herum. Und sie treffen sich bei y = 72 von 120 — ueber dem Namen,
+     der vorher von den Haenden verdeckt wurde.
+
+     Die beiden Haende liegen versetzt (Gelenk bei 46 bzw. 74), damit
+     man ZWEI Haende sieht. Liegen sie genau aufeinander, wird daraus
+     ein Klumpen. Die rechte kommt spaeter und liegt damit oben; ihren
+     Schatten gibt das Stylesheet.
+     ----------------------------------------------------------------- */
+  let lcArmZaehler = 0;
+
+  function lcArmSvg(seite) {
+    const links = seite === "links";
+    /* Der rechte Arm ist der gespiegelte linke — einmal rechnen. */
+    const x = (v) => (links ? v : 120 - v).toFixed(1);
+    const g = "lcarm" + (++lcArmZaehler);
+    const hgx = 46;   /* Handgelenk, im (ggf. gespiegelten) Raum */
+
+    const koerper =
+      "M " + x(0) + " 48 C " + x(12) + " 48.6 " + x(26) + " 54 " + x(37) + " 62"
+      + " C " + x(41) + " 65 " + x(44) + " 67.5 " + x(hgx) + " 68.6"
+      + " L " + x(hgx) + " 76.4 C " + x(42) + " 75.4 " + x(38) + " 72.6 " + x(33) + " 69"
+      + " C " + x(22) + " 61.5 " + x(11) + " 58.4 " + x(0) + " 58.6 Z";
+
+    const aermel =
+      "M " + x(0) + " 47 C " + x(7) + " 47.2 " + x(13) + " 48.4 " + x(18) + " 50.6"
+      + " L " + x(14.8) + " 58.4 C " + x(10) + " 57 " + x(5) + " 56.6 " + x(0) + " 56.7 Z";
+
+    return '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-' + seite + '">'
+      + '<defs>'
+      + '<linearGradient id="' + g + 'h" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0" stop-color="#f8cbb0"/>'
+      + '<stop offset="0.5" stop-color="#eeb193"/>'
+      + '<stop offset="1" stop-color="#d28d6b"/></linearGradient>'
+      + '<linearGradient id="' + g + 's" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0" stop-color="#8878b4"/>'
+      + '<stop offset="1" stop-color="#584a7c"/></linearGradient>'
+      + '</defs>'
+      + '<path d="' + koerper + '" fill="url(#' + g + 'h)"/>'
+      + '<path d="' + aermel + '" fill="url(#' + g + 's)"/>'
+      + '<g class="lc-hand" transform="translate(' + x(hgx) + ' 72.4) '
+      + (links ? "" : "scale(-1,1) ") + 'rotate(11)">'
+      /* Handruecken */
+      + '<path d="M -1 -4.6 q 10.6 -1.6 15.2 1.6 q 3.6 2.5 3 5.8'
+      + ' q -0.8 4.2 -5.8 5.2 q -7 1.5 -12.4 0 z" fill="url(#' + g + 'h)"/>'
+      /* Vier Finger — nicht gemalt, nur getrennt. Bei 40 Pixeln
+         Handbreite reichen drei Kerben. */
+      + '<path d="M 4 -3.6 v 8.2 M 8.2 -3 v 8.4 M 12.2 -1.8 v 7.2"'
+      + ' stroke="#c9865f" stroke-width="0.7" stroke-linecap="round" opacity="0.6"/>'
+      /* Ein Lichtstreifen auf den Knoecheln */
+      + '<path d="M 1.6 -4.2 q 7.4 -0.8 11.8 1.2" fill="none" stroke="#fbdcc7"'
+      + ' stroke-width="1.1" stroke-linecap="round" opacity="0.55"/>'
+      /* Daumen */
+      + '<path d="M -1 -3.9 q -4.9 0.8 -5.7 4 q -0.7 3.2 3.2 3.2'
+      + ' q 3.2 0 4.7 -2.4 z" fill="#f4c3a7"/>'
+      + '</g></svg>';
+  }
+
   function lcUmarmungAnPlatz(platz, verzug) {
     setTimeout(() => {
       if (!platz.isConnected) return;
@@ -18697,17 +18824,7 @@
       const arme = document.createElement("div");
       arme.className = "lc-arme";
       arme.setAttribute("aria-hidden", "true");
-      /* Die Arme als zwei Bogen. Ein Arm ist kein Strich: er hat eine
-         Schulter, einen Bogen und eine Hand am Ende. */
-      arme.innerHTML =
-        '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-links">'
-        + '<path d="M-8 44 q26 4 40 26 q10 16 30 18" fill="none"'
-        + ' stroke="currentColor" stroke-width="11" stroke-linecap="round"/>'
-        + '<circle cx="64" cy="89" r="8.5" fill="currentColor"/></svg>'
-        + '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-rechts">'
-        + '<path d="M128 40 q-26 4 -40 26 q-10 16 -30 18" fill="none"'
-        + ' stroke="currentColor" stroke-width="11" stroke-linecap="round"/>'
-        + '<circle cx="56" cy="86" r="8.5" fill="currentColor"/></svg>';
+      arme.innerHTML = lcArmSvg("links") + lcArmSvg("rechts");
       platz.appendChild(arme);
 
       /* Drei Herzen. Wenige und klein — viele wären Kitsch. */
@@ -18715,7 +18832,7 @@
         const z = document.createElement("i");
         z.className = "lc-drueckherz";
         z.textContent = "❤";
-        z.style.left = (28 + h * 22) + "%";
+        z.style.left = (16 + h * 34) + "%";
         z.style.animationDelay = (0.5 + h * 0.18).toFixed(2) + "s";
         arme.appendChild(z);
       }
@@ -18999,6 +19116,42 @@
      und nichts weiter. Sie verändern nichts, sie öffnen nur, was ein
      Mensch mit einem Tipp auch öffnen würde. */
   window.DMA_PRUEF = Object.assign(window.DMA_PRUEF || {}, {
+    /* GEFRAGT: „Hast du schon das bei der Online-Anzeige gemacht, dass
+       wenn jemand sein Land angegeben hat, dort seine Flagge zu sehen
+       ist — und auch, ob er gerade im Klassenzimmer ist?"
+       Ja. Damit das nicht nur behauptet ist, lässt sich die Liste hier
+       mit ausgedachten Leuten zeichnen und nachsehen. */
+    /* Die Einladungsliste eines noch nicht freigegebenen Spiels —
+       mit ausgedachten Leuten, damit sich das Auf- und Zuklappen und
+       die Zählung ohne echte Konten nachprüfen lassen. */
+    betaEinladung: function (flagKey, spielName, leute) {
+      document.getElementById("pruefBetaEinladung")?.remove();
+      const d = document.createElement("div");
+      d.id = "pruefBetaEinladung";
+      d.innerHTML = betaSpielEinladungHtml(flagKey, spielName || "Blitzrunde");
+      document.body.appendChild(d);
+      betaSpielEinladungBinden(d.querySelector(".beta-spiel-einladung"),
+        flagKey, spielName || "Blitzrunde", async (wort) => {
+          const alle = leute || [];
+          if (!wort) return alle;
+          const w = String(wort).toLowerCase();
+          return alle.filter((u) => String(u.name || "").toLowerCase().includes(w));
+        });
+      return true;
+    },
+    onlineKlappe: function (leute, imKlassenzimmerIds) {
+      if (!document.getElementById("onlineJetztBtn")) {
+        const b = document.createElement("button");
+        b.id = "onlineJetztBtn";
+        document.body.appendChild(b);
+      }
+      onlineListe = leute || [];
+      kzDaJetzt = {};
+      (imKlassenzimmerIds || []).forEach((id) => { kzDaJetzt[id] = { name: id }; });
+      onlineKlappeZeichnen();
+      const k = document.getElementById("onlineKlappe");
+      return k ? k.innerHTML : "";
+    },
     hintergrundFenster: function () { return lcHintergrundFenster(); },
     hintergrundWert: function () { return lcHintergrundBild(); },
     platzZiel: function () { return lcPlatzZiel(); },
@@ -41120,7 +41273,7 @@
         const neuText = histNeuKeys.length && !histBatchFreigegeben && histDarfNeuesSehen
           ? ` · <strong style="color:var(--coral-400,#E8825F);">${histNeuKeys.length} neu</strong>`
           : "";
-        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 366 Tagen gefüllt${neuText}</p>`;
+        return `<p class="empty-note" style="margin:-6px 0 12px;">🕓 ${standText ? `Zuletzt aktualisiert: <strong>${standText}</strong> · ` : ""}<strong>${anzahl}</strong> von 366 Tagen gefüllt${anzahl >= 366 ? " — das ganze Jahr" : ""}${neuText}</p>`;
       })()}
       ${/* ============================================================
             GEFUNDEN BEIM NACHMESSEN: 327 der 366 Tage warten noch auf
@@ -41142,13 +41295,34 @@
             das Freigeben nicht kürzer; der Schalter
             (histBatchFreigegeben) ist das, was zählt. Die Prüfung
             darauf fehlte schlicht. */ ""}
+      ${/* GEFRAGT: „Schau mal was mit ‚Es war einmal in Deutschland‘ los
+            ist, da steht 315 Tage — wieso 315, sind doch 365 Tage? Und
+            wieso einzeln?"
+
+            Beides war nur die Formulierung, nicht die Sammlung.
+            Nachgezählt:
+              366  Tage liegen in kalender/ — das ganze Jahr, mit dem
+                   29. Februar, deshalb 366 und nicht 365
+               51  davon sind in früheren Runden freigegeben worden
+              315  sind die letzte Lieferung und warten auf den Schalter
+            „315 von 366 sind noch nicht freigegeben" las sich, als
+            fehlten 51 Tage. Es fehlt keiner. Und einzeln freigeben muss
+            er auch nichts: EIN Schalter macht alle 315 auf einmal auf.
+            Das steht jetzt so da. */ ""}
       ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen && !histBatchFreigegeben ? `
         <div class="hist-freigabe-hinweis">
-          <p style="margin:0 0 4px; font-weight:800;">⚠️ ${histNeuKeys.length} von 366 Tagen sind noch nicht freigegeben</p>
+          <p style="margin:0 0 4px; font-weight:800;">⚠️ ${histNeuKeys.length} Tage warten auf deine Freigabe</p>
           <p class="empty-note" style="margin:0 0 6px;">
-            Solange sie es nicht sind, steht bei allen anderen an diesen Tagen
+            <strong>Die Sammlung selbst ist vollständig</strong> — alle 366 Tage des Jahres
+            sind geschrieben (366, weil der 29. Februar dazugehört).
+            ${366 - histNeuKeys.length} davon hast du früher schon freigegeben; diese
+            ${histNeuKeys.length} kamen mit der letzten Lieferung dazu.
+          </p>
+          <p class="empty-note" style="margin:0 0 6px;">
+            Solange sie warten, steht bei allen anderen an diesen Tagen
             „noch kein geprüfter Eintrag hinterlegt" — auch heute${histIstNeu(`${mm}-${dd}`) ? " (der heutige Tag ist dabei)" : ""}.
-            Mit dem Schalter darunter gehen alle auf einmal in die Welt.
+            Du musst sie <strong>nicht einzeln</strong> durchgehen: der eine Schalter
+            darunter gibt alle ${histNeuKeys.length} auf einmal frei.
           </p>
         </div>` : ""}
       ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen && histBatchFreigegeben ? `
