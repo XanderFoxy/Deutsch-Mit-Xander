@@ -17662,6 +17662,168 @@
     setTimeout(() => schicht.remove(), 9000);
   }
 
+  /* =================================================================
+     ROUTE 66 — DER WAGEN KOMMT AUS DER FERNE AUF DICH ZU
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Dann kannst du ne Animation mit einem geilen Wagen
+     machen, der auf einen zu fahren kommt, auf so einer Route 66."
+
+     Der Unterschied zu /kitt ist nicht das Auto, sondern die STRASSE:
+     hier gibt es eine Fluchtpunkt-Perspektive. Die Fahrbahn läuft auf
+     den Horizont zu, die Mittelstreifen laufen auf einen zu, und die
+     Kakteen rechts und links wachsen, während sie vorbeiziehen. Erst
+     dadurch fährt das Auto wirklich — sonst wird es nur grösser.
+     ================================================================= */
+  function lcRoute66Auto() {
+    return '<svg viewBox="-60 -34 120 68" width="240" height="136">'
+      /* Schatten auf dem Asphalt */
+      + '<ellipse cx="0" cy="30" rx="52" ry="5" fill="rgba(0,0,0,0.45)"/>'
+      /* Karosserie: breit unten, Dach schmaler — Frontansicht */
+      + '<path d="M-46 24 L-44 4 Q-40 -6 -28 -10 L-18 -22 Q-16 -25 -10 -25 L10 -25 Q16 -25 18 -22 L28 -10 Q40 -6 44 4 L46 24 Z" fill="#c02a22" stroke="rgba(40,10,6,.6)" stroke-width="2" stroke-linejoin="round"/>'
+      /* Windschutzscheibe */
+      + '<path d="M-17 -10 L-9 -21 L9 -21 L17 -10 Z" fill="#2b3a46" opacity=".9"/>'
+      + '<path d="M-15 -11 L-8 -19 L-2 -19 L-12 -11 Z" fill="rgba(255,255,255,.18)"/>'
+      /* Motorhaube mit Lufthutze */
+      + '<rect x="-12" y="-4" width="24" height="7" rx="3" fill="#8f1d17"/>'
+      /* Kühlergrill */
+      + '<rect x="-30" y="8" width="60" height="9" rx="3" fill="#1b1f24"/>'
+      + '<path d="M-26 10 L26 10 M-26 13 L26 13 M-26 16 L26 16" stroke="#3a4149" stroke-width="1.2"/>'
+      /* Scheinwerfer — sie blenden */
+      + '<g class="r66-licht"><ellipse cx="-33" cy="2" rx="9" ry="7" fill="#ffe9a8"/>'
+      + '<ellipse cx="33" cy="2" rx="9" ry="7" fill="#ffe9a8"/>'
+      + '<ellipse cx="-33" cy="2" rx="4" ry="3" fill="#fffdf2"/>'
+      + '<ellipse cx="33" cy="2" rx="4" ry="3" fill="#fffdf2"/></g>'
+      /* Stossstange und Nummernschild */
+      + '<rect x="-40" y="18" width="80" height="6" rx="3" fill="#c9ced4"/>'
+      + '<rect x="-11" y="17" width="22" height="8" rx="2" fill="#f2ead6" stroke="#6b6357" stroke-width="1"/>'
+      + '<text x="0" y="23.5" font-size="6" text-anchor="middle" fill="#3a3630" font-family="monospace">66</text>'
+      /* Räder, die man von vorn sieht */
+      + '<rect x="-48" y="16" width="10" height="12" rx="3" fill="#15181c"/>'
+      + '<rect x="38" y="16" width="10" height="12" rx="3" fill="#15181c"/>'
+      + "</svg>";
+  }
+  function lcRoute66() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcRoute66")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcRoute66";
+    schicht.className = "lc-route66";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Himmel, Wüste und Fahrbahn stehen im Hintergrund der Schicht
+       selbst (CSS) — hier kommen nur die Dinge dazu, die sich bewegen. */
+    const strasse = document.createElement("u");
+    strasse.className = "lc-r66-fahrbahn";
+    schicht.appendChild(strasse);
+    /* Mittelstreifen: sie laufen auf einen zu und werden dabei
+       grösser — das ist die ganze Perspektive. */
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElement("s");
+      s.style.animationDelay = (i * 0.5).toFixed(2) + "s";
+      schicht.appendChild(s);
+    }
+    /* Kakteen links und rechts, abwechselnd. */
+    for (let i = 0; i < 6; i++) {
+      const k = document.createElement("b");
+      k.className = i % 2 ? "lc-r66-rechts" : "lc-r66-links";
+      k.style.animationDelay = (i * 0.72).toFixed(2) + "s";
+      k.innerHTML = '<svg viewBox="-12 -24 24 26" width="60" height="65">'
+        + '<path d="M-3 2 L-3 -16 Q-3 -20 0 -20 Q3 -20 3 -16 L3 2 Z" fill="#3f6b3a"/>'
+        + '<path d="M-3 -8 L-8 -8 Q-11 -8 -11 -12 L-11 -15" stroke="#3f6b3a" stroke-width="4" fill="none" stroke-linecap="round"/>'
+        + '<path d="M3 -12 L8 -12 Q11 -12 11 -16 L11 -18" stroke="#3f6b3a" stroke-width="4" fill="none" stroke-linecap="round"/>'
+        + "</svg>";
+      schicht.appendChild(k);
+    }
+    const auto = document.createElement("i");
+    auto.innerHTML = lcRoute66Auto();
+    schicht.appendChild(auto);
+    /* Der Staub hinter dem Wagen. */
+    const staub = document.createElement("em");
+    schicht.appendChild(staub);
+    document.body.appendChild(schicht);
+    lcTonZu("rennauto");
+    setTimeout(() => schicht.remove(), 10000);
+  }
+
+  /* =================================================================
+     DAS GROSSE GESCHENK — WIE BEI TIKTOK
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Wie diese geilen Grafiken — bei TikTok kommen da
+     manchmal so Grafiken bei den Geschenken."
+
+     Was diese Grafiken ausmacht, ist nicht das Bild, sondern die
+     INSZENIERUNG: etwas kommt gross herein, dahinter drehen sich
+     Strahlen, ein Glanz wischt darüber, Funken springen weg, und am
+     Ende regnet es Münzen. Genau diese fünf Sachen stecken hier drin.
+     ================================================================= */
+  function lcGeschenkGross(wer) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcGeschenkGross")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcGeschenkGross";
+    schicht.className = "lc-geschenkgross";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Die Strahlen dahinter */
+    const strahlen = document.createElement("u");
+    strahlen.innerHTML = '<svg viewBox="-60 -60 120 120" width="100%" height="100%">'
+      + Array.from({ length: 12 }, (_, i) =>
+          '<path d="M0 0 L' + (Math.cos((i * 30 - 8) * Math.PI / 180) * 90).toFixed(1)
+          + ' ' + (Math.sin((i * 30 - 8) * Math.PI / 180) * 90).toFixed(1)
+          + ' L' + (Math.cos((i * 30 + 8) * Math.PI / 180) * 90).toFixed(1)
+          + ' ' + (Math.sin((i * 30 + 8) * Math.PI / 180) * 90).toFixed(1)
+          + ' Z" fill="rgba(255,214,102,0.28)"/>').join("")
+      + "</svg>";
+    schicht.appendChild(strahlen);
+    /* Das Geschenk selbst */
+    const kiste = document.createElement("i");
+    kiste.innerHTML = '<svg viewBox="-50 -52 100 100" width="180" height="180">'
+      + '<defs><linearGradient id="lcGgold" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#ffd76a"/><stop offset="55%" stop-color="#f0a92b"/>'
+      + '<stop offset="100%" stop-color="#c97f13"/></linearGradient>'
+      + '<linearGradient id="lcGrot" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0%" stop-color="#ef5f6d"/><stop offset="100%" stop-color="#c02a4a"/></linearGradient></defs>'
+      /* Deckel */
+      + '<path d="M-42 -14 L42 -14 L42 0 L-42 0 Z" fill="url(#lcGgold)" stroke="rgba(90,50,0,.45)" stroke-width="2" stroke-linejoin="round"/>'
+      /* Korpus */
+      + '<path d="M-36 0 L36 0 L36 40 L-36 40 Z" fill="url(#lcGrot)" stroke="rgba(90,10,30,.45)" stroke-width="2" stroke-linejoin="round"/>'
+      /* Band */
+      + '<rect x="-6" y="0" width="12" height="40" fill="url(#lcGgold)"/>'
+      + '<rect x="-6" y="-14" width="12" height="14" fill="#ffe08a"/>'
+      /* Schleife */
+      + '<path d="M-6 -14 Q-26 -30 -14 -38 Q-4 -42 -2 -16 Z" fill="url(#lcGgold)" stroke="rgba(90,50,0,.4)" stroke-width="1.6"/>'
+      + '<path d="M6 -14 Q26 -30 14 -38 Q4 -42 2 -16 Z" fill="url(#lcGgold)" stroke="rgba(90,50,0,.4)" stroke-width="1.6"/>'
+      + '<circle cx="0" cy="-15" r="5" fill="#ffe9a8" stroke="rgba(90,50,0,.4)" stroke-width="1.4"/>'
+      + "</svg>";
+    schicht.appendChild(kiste);
+    /* Der Glanz, der darüberwischt */
+    const glanz = document.createElement("s");
+    schicht.appendChild(glanz);
+    /* Funken */
+    for (let i = 0; i < 16; i++) {
+      const f = document.createElement("b");
+      const winkel = (i / 16) * Math.PI * 2;
+      f.style.setProperty("--wx", (Math.cos(winkel) * 46).toFixed(1) + "vmin");
+      f.style.setProperty("--wy", (Math.sin(winkel) * 46).toFixed(1) + "vmin");
+      f.style.animationDelay = (0.35 + (i % 4) * 0.08).toFixed(2) + "s";
+      schicht.appendChild(f);
+    }
+    /* Münzen */
+    for (let i = 0; i < 18; i++) {
+      const m = document.createElement("em");
+      m.style.left = (4 + Math.random() * 92).toFixed(1) + "%";
+      m.style.animationDelay = (0.6 + Math.random() * 1.4).toFixed(2) + "s";
+      m.style.animationDuration = (2.2 + Math.random() * 1.4).toFixed(2) + "s";
+      schicht.appendChild(m);
+    }
+    if (wer) {
+      const zeile = document.createElement("p");
+      zeile.textContent = wer;
+      schicht.appendChild(zeile);
+    }
+    document.body.appendChild(schicht);
+    lcTonZu("geschenk");
+    setTimeout(() => schicht.remove(), 6200);
+  }
+
   function lcSternschnuppen() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcSchnuppe")?.remove();
@@ -18812,6 +18974,32 @@
     ["aussehen", "🎨 Aussehen"],
     ["hilfe",    "❓ Hilfe"],
   ];
+  /* -------------------------------------------------------------------
+     DEINE HÄUFIGSTEN BEFEHLE, GANZ OBEN
+     GEWÜNSCHT: „Ich möchte auch, dass meine häufigsten Befehle oder
+     meine häufigsten Animationen — dass ich mir Befehle als Favoriten
+     dort abspeichern kann."
+
+     Statt eine Favoritenliste von Hand pflegen zu lassen (die pflegt
+     am Ende niemand), zählt die Seite mit, was man WIRKLICH benutzt,
+     und legt die sechs häufigsten nach oben. Antippen setzt den Befehl
+     ins Feld — bei Befehlen ohne Zusatz gleich mit Leerzeichen
+     dahinter, damit man nur noch den Namen tippen muss.
+     Gezählt wird nur im eigenen Gerät.
+     ------------------------------------------------------------------- */
+  function lcHaeufigHtml() {
+    const oft = (window.LiveChat && LiveChat.haeufigsteBefehle)
+      ? LiveChat.haeufigsteBefehle(6) : [];
+    if (!oft.length) return "";
+    return `
+      <div class="lc-haeufig">
+        <span class="lc-haeufig-wort">⭐ Deine häufigsten</span>
+        ${oft.map((b) => `
+          <button type="button" class="lc-haeufig-knopf" data-lc-haeufig="${escapeHtml(b.w)}"
+                  title="${escapeHtml(b.was)} — ${b.mal}× benutzt">/${escapeHtml(b.w)}</button>`).join("")}
+      </div>`;
+  }
+
   function lcBefehleGruppenHtml() {
     const alle = (window.LiveChat && LiveChat.befehlsliste) ? LiveChat.befehlsliste() : [];
     if (!alle.length) return "";
@@ -18936,6 +19124,7 @@
                  Tapete. Sie stehen jetzt in zehn Gruppen, jede für sich
                  aufklappbar — wer den Wettereffekt sucht, macht „Wetter
                  und Himmel" auf und sieht acht Zeilen statt sechzig. -->
+            ${lcHaeufigHtml()}
             ${lcBefehleGruppenHtml()}
             <p class="lc-befehle-vor">
               <strong>Einladen</strong> ist keine Frage mit Ja und Nein — das gab es damals nicht.
@@ -20095,6 +20284,9 @@
     strudel: { ganzeSeite: true, wie: "strudel" },
     schwamm: { ganzeSeite: true, wie: "schwamm" },
     schuss:  { ganzeSeite: true, wie: "schuss" },
+    /* Der Wagen auf der Route 66 und das grosse Geschenk. */
+    route66: { ganzeSeite: true, wie: "route66" },
+    prunk:   { ganzeSeite: true, wie: "prunk" },
     lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
@@ -20428,6 +20620,8 @@
       else if (e.wie === "aegypten") lcAegypten();
       else if (e.wie === "ostern") lcOstern();
       else if (e.wie === "augen") lcAugen();
+      else if (e.wie === "route66") lcRoute66();
+      else if (e.wie === "prunk") lcGeschenkGross(nachricht && nachricht.an ? nachricht.an : "");
       else if (e.wie === "enten") lcEnten();
       else if (e.wie === "katze") lcKatze();
       else if (e.wie === "pirat") lcPirat();
@@ -20697,6 +20891,7 @@
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
     /* Die beiden Bildfaecher — damit sich nachsehen laesst, ob die
        GIPHY-Bibliothek wirklich gefuellt aufgeht und nachlaedt. */
+    haeufigHtml: function () { return lcHaeufigHtml(); },
     bildWaehler: function () { return livechatBildWaehler(); },
     sendeWaehler: function () { return livechatSendeWaehler(); },
     effekt: function (name) {
@@ -21511,6 +21706,21 @@
          dabei zuklappen. Deshalb wird gemerkt, dass er offen war, und
          er wird danach wieder aufgemacht — sonst fällt einem die
          Auswahl unter den Fingern weg. */
+      /* Ein Favorit legt den Befehl ins Feld. Befehle, die einen Namen
+         oder einen Text brauchen, bekommen gleich das Leerzeichen
+         dahinter — sonst müsste man es selbst tippen. */
+      area.querySelectorAll("[data-lc-haeufig]").forEach((b) =>
+        b.addEventListener("click", () => {
+          const wort = b.dataset.lcHaeufig;
+          const feld = document.getElementById("lcFeld");
+          if (!feld) return;
+          const liste = (window.LiveChat && LiveChat.befehlsliste) ? LiveChat.befehlsliste() : [];
+          const eintrag = liste.filter((x) => x.w === wort)[0];
+          const brauchtMehr = Boolean(eintrag && /<[^>]+>/.test(eintrag.nutzt));
+          feld.value = "/" + wort + (brauchtMehr ? " " : "");
+          feld.focus();
+          try { feld.setSelectionRange(feld.value.length, feld.value.length); } catch (e) {}
+        }));
       area.querySelectorAll("[data-lc-schrift]").forEach((b) =>
         b.addEventListener("click", () => {
           const war = document.getElementById("lcBefehleKasten")?.open;

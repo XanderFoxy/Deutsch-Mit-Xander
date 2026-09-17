@@ -49,32 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 41 — einladen, tauschen, alle sehen",
+  stand: "Runde 42 — Route 66, Prunkgeschenk und Favoriten",
 
   inArbeit: [
-    { seit: "2026-09-17T23:13",
+    { seit: "2026-09-17T23:17",
       text: "Sounds fuer die Animationen — dafuer brauche ich einen Schluessel, sag Bescheid" },
-    { seit: "2026-09-17T23:13",
-      text: "Route 66: Wagen kommt aus der Ferne auf einen zu" },
-    { seit: "2026-09-17T23:13",
-      text: "TikTok-artige Geschenk-Grafiken" },
-    { seit: "2026-09-17T23:13",
-      text: "Lieblingsbefehle als Favoriten in der Tipphilfe" },
-    { seit: "2026-09-17T23:13",
+    { seit: "2026-09-17T23:17",
       text: "Sitzende Seitenansicht fuer die Figuren" },
+    { seit: "2026-09-17T23:17",
+      text: "Bilderwelten: Groessen und verdeckte Dinge" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-17T23:13",
-      text: "Online-Liste: Briefknopf neben jedem Namen — Einladung geht ins Postfach" },
-    { seit: "2026-09-17T23:13",
-      text: "Im Postfach wird daraus ein Knopf 'In den Raum gehen', nicht nur eine Adresse" },
-    { seit: "2026-09-17T23:13",
-      text: "/tausch <name> — Plaetze spontan wechseln, und alle sehen dieselbe Sitzordnung" },
-    { seit: "2026-09-17T23:13",
-      text: "Die Sitzordnung faehrt im Puls mit, damit auch Spaeterkommende sie sehen" },
-    { seit: "2026-09-17T23:13",
-      text: "Raumfenster: 'Alle, die gerade da sind' mit Fluester- und Holknopf" },
+    { seit: "2026-09-17T23:17",
+      text: "/route66 — Wagen kommt aus der Ferne, mit Fluchtpunkt, Kakteen und Staub" },
+    { seit: "2026-09-17T23:17",
+      text: "/prunk — grosses Geschenk wie bei TikTok: Strahlen, Glanz, Funken, Muenzregen" },
+    { seit: "2026-09-17T23:17",
+      text: "Tipphilfe: deine sechs haeufigsten Befehle stehen oben und legen sich ins Feld" },
+    { seit: "2026-09-17T23:17",
+      text: "Gezaehlt wird nur im Geraet — es geht niemanden an, was du tippst" },
   ],
 };

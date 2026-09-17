@@ -445,7 +445,9 @@ window.LiveChat = (function () {
     pirat:       " schickt das Piratenschiff los  \ud83c\udff4\u200d\u2620\ufe0f",
     strudel:     " zieht den Chat in den Strudel  \ud83c\udf00",
     schwamm:     " wischt den Chat mit dem Schwamm  \ud83e\uddfd",
-    schuss:      " ballert L\u00f6cher in den Chat  \ud83d\udca5"
+    schuss:      " ballert L\u00f6cher in den Chat  \ud83d\udca5",
+    route66:     " braust ueber die Route 66 heran  \ud83d\ude98",
+    prunk:       " laesst ein grosses Geschenk aufgehen  \ud83c\udf81"
   };
 
   var SCHRIFTEN = {
@@ -3023,6 +3025,8 @@ window.LiveChat = (function () {
     { gr: "welt", w: "paintball", kurz: "farbe",  nutzt: "/paintball", was: "Farbkugeln schlagen ein, spritzen und laufen herunter" },
     { gr: "tiere", w: "enten",     kurz: "ente",   nutzt: "/enten",     was: "Die Entenmama watschelt mit ihren Küken durchs Bild" },
     { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Ein Katzenbaby läuft zur Scheibe und tappt mit den Pfoten dagegen" },
+    { gr: "welt", w: "route66",    kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu — Wüste, Kakteen, Staub" },
+    { gr: "feier", w: "prunk",     kurz: "gift",   nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
     { gr: "welt", w: "pirat",      kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff segelt über die Wellen, mit Totenkopfflagge" },
     { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen, die Schrift wird kleiner" },
     { gr: "welt", w: "schwamm",    kurz: "wischen", nutzt: "/schwamm",  was: "Ein Schwamm wischt den Chat wie eine Tafel" },
@@ -3111,6 +3115,10 @@ window.LiveChat = (function () {
                 boxen: "box", schlag: "box", faust: "box",
                 ente: "enten", entchen: "enten", kueken: "enten", entenmama: "enten",
                 kaetzchen: "katze", katzenbaby: "katze", kitten: "katze", miau: "katze",
+                highway: "route66", route: "route66", wueste: "route66",
+                strasse: "route66", trans: "route66", muscle: "route66",
+                gift: "prunk", tiktok: "prunk", prunkgeschenk: "prunk",
+                muenzen: "prunk", gold: "prunk",
                 schiff: "pirat", piraten: "pirat", segel: "pirat", totenkopf: "pirat",
                 sog: "strudel", wirbel: "strudel", ertrinken: "strudel", wirbeln: "strudel",
                 wischen: "schwamm", tafel: "schwamm", putzen: "schwamm",
@@ -3383,6 +3391,48 @@ window.LiveChat = (function () {
   /* =========================================================
      DIE BEFEHLE AUSFÜHREN
      ========================================================= */
+  /* =========================================================
+     DEINE HAEUFIGSTEN BEFEHLE
+     ---------------------------------------------------------
+     GEWUENSCHT: „Ich moechte auch, dass meine haeufigsten Befehle
+     oder meine haeufigsten Animationen — dass ich mir Befehle als
+     Favoriten dort abspeichern kann."
+
+     Gezaehlt wird im Geraet, nicht auf dem Server: es geht niemanden
+     an, wie oft jemand /konfetti tippt, und ohne Konto soll es auch
+     gehen. Gespeichert wird nur das Befehlswort und eine Zahl.
+     ========================================================= */
+  var ZAEHLER_SCHLUESSEL = "dma_livechat_befehlszaehler";
+  function zaehlerLesen() {
+    try { return JSON.parse(localStorage.getItem(ZAEHLER_SCHLUESSEL) || "{}") || {}; }
+    catch (e) { return {}; }
+  }
+  function zaehlerMerken(wort) {
+    if (!wort) return;
+    try {
+      var z = zaehlerLesen();
+      z[wort] = (z[wort] || 0) + 1;
+      localStorage.setItem(ZAEHLER_SCHLUESSEL, JSON.stringify(z));
+    } catch (e) {}
+  }
+  /* Die haeufigsten zuerst, hoechstens so viele wie gewuenscht. Ein
+     Befehl, den es nicht mehr gibt, faellt dabei heraus. */
+  function haeufigsteBefehle(wieviele) {
+    var z = zaehlerLesen();
+    var bekannt = {};
+    BEFEHLE.forEach(function (b) { bekannt[b.w] = b; });
+    return Object.keys(z)
+      .filter(function (w) { return bekannt[w] && z[w] > 0; })
+      .sort(function (a, b) { return z[b] - z[a] || (a < b ? -1 : 1); })
+      .slice(0, wieviele || 6)
+      .map(function (w) {
+        return { w: w, mal: z[w], nutzt: bekannt[w].nutzt, was: bekannt[w].was };
+      });
+  }
+  function befehlZaehlerLeeren() {
+    try { localStorage.removeItem(ZAEHLER_SCHLUESSEL); } catch (e) {}
+  }
+
   function befehlAusfuehren(roh) {
     /* „/me/" ist KEIN Befehl, sondern der alte Trick: der eigene Name
        mitten im Satz. Ein Befehl ist es nur, wenn KEIN Schrägstrich
@@ -3403,6 +3453,9 @@ window.LiveChat = (function () {
       art = gleich[wort] || null;
     }
     if (!art) return false;
+    /* Ab hier steht fest, dass es wirklich ein Befehl ist — erst jetzt
+       wird gezaehlt, damit Tippfehler die Favoriten nicht verstopfen. */
+    zaehlerMerken(art);
 
     /* ---- Reden ---- */
     if (art === "me") {
@@ -4082,6 +4135,9 @@ window.LiveChat = (function () {
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
+    /* Die haeufigsten Befehle — fuer die Tipphilfe. */
+    haeufigsteBefehle: haeufigsteBefehle,
+    befehlZaehlerLeeren: befehlZaehlerLeeren,
     pruefEmpfangen: function (n) { return empfangen(n); },
     raumSchluessel: raumSchluessel,
     gemerkterRaum: gemerkterRaum,
