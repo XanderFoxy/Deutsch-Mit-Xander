@@ -16528,7 +16528,6 @@
   let livechatEffekteAb = 0;
   /* Beim ersten Zeichnen eines Raums ganz nach unten springen. */
   let livechatSchonUnten = false;
-      lcHaeltUnten = true;
 
   /* =================================================================
      DEN CHAT INS BILD RÜCKEN — MIT DEM UNTEREN ENDE
