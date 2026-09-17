@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .fr { animation: kipp 1.5s ease-in-out infinite; }
+  @keyframes kipp { 0%,100%{transform:rotate(-12deg) scale(.95)} 50%{transform:rotate(12deg) scale(1.06)} }
+</style>
+<g class="fr"><text x="60" y="92" font-size="96" font-family="Georgia,serif" font-weight="bold" fill="#4a86c9" text-anchor="middle">?</text></g>
+</svg>

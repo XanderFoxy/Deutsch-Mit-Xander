@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .kopf { animation: schau 2.4s ease-in-out infinite; }
+  @keyframes schau { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
+</style>
+<g class="kopf"><path d="M22 40 L30 12 L50 28 Z" fill="#e0642a"/><path d="M98 40 L90 12 L70 28 Z" fill="#e0642a"/><path d="M60 26 C90 26 100 48 100 64 C100 86 82 102 60 102 C38 102 20 86 20 64 C20 48 30 26 60 26 Z" fill="#e8763a"/><path d="M60 62 C74 62 86 70 86 80 C86 92 74 102 60 102 C46 102 34 92 34 80 C34 70 46 62 60 62 Z" fill="#fdf1e2"/><circle cx="46" cy="58" r="5.5" fill="#2b2118"/><circle cx="74" cy="58" r="5.5" fill="#2b2118"/><path d="M60 76 l-7 -6 h14 z" fill="#2b2118"/></g>
+</svg>

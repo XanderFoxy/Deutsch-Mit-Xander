@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .k1,.k2,.k3,.k4 { animation: flieg 1.25s ease-out infinite; }
+  .k2 { animation-delay:.2s } .k3 { animation-delay:.42s } .k4 { animation-delay:.62s }
+  @keyframes flieg { 0%{opacity:0;transform:translate(-22px,26px) rotate(0)} 22%{opacity:1} 100%{opacity:0;transform:translate(14px,-22px) rotate(220deg)} }
+</style>
+<path d="M18 104 L46 40 L82 76 Z" fill="#e0964a" stroke="rgba(0,0,0,.16)" stroke-width="2.5" stroke-linejoin="round"/><g class="k1"><rect x="62" y="20" width="9" height="13" rx="2" fill="#e0546a"/></g><g class="k2"><rect x="84" y="34" width="8" height="12" rx="2" fill="#4a86c9"/></g><g class="k3"><circle cx="96" cy="18" r="5" fill="#5aa86b"/></g><g class="k4"><rect x="74" y="52" width="8" height="11" rx="2" fill="#9a5ac9"/></g>
+</svg>

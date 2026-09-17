@@ -592,6 +592,19 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   line-height: 1.5;
   padding: 8px 10px;
   position: relative;
+  /* GEMELDET: „Der Chat verschiebt sich jetzt nach links und rechts,
+     das soll so nicht sein."
+
+     Zwei Dinge liefen seitlich aus dem Kasten heraus und schoben ihn
+     dadurch hin und her: der animierte Hintergrund (er liegt
+     absichtlich zwanzig Prozent über den Rand hinaus, damit man beim
+     Wandern keine Kante sieht) und die strahlenden Kopien der
+     gerufenen Wörter, die auf das Zweieinhalbfache aufgehen. Beides
+     ist gewollt — es darf nur nicht nach aussen wirken. Deshalb wird
+     hier quer abgeschnitten: senkrecht wird gescrollt, waagerecht
+     nie. */
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 .lc-zeile {
   display: grid;
@@ -634,15 +647,23 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   margin: 3px 0;
   cursor: zoom-in;
 }
-/* Aktion (/me): kursiv, ohne Namensspalte — „* Emmy lacht laut" */
+/* Aktion (/me): KEINE Namensspalte, kein Doppelpunkt, kein Sternchen.
+   GEMELDET, wörtlich: „Sobald man den /me-Befehl benutzt, funktioniert
+   dieses ‚Xander Fox:' nicht mehr … es muss wirklich beginnen mit
+   ‚Wusstet ihr, dass …'. Und dann sollte die Schrift dieselbe Dicke
+   haben wie der Nickname im Chat, und die /me-Zeilen auch so dick wie
+   die normalen Chatzeilen."
+
+   Also: die Zeile sieht aus wie jede andere Zeile — gleiche Schrift,
+   gleiche Dicke, nicht kursiv, nicht blasser. Der einzige Unterschied
+   ist, dass vorne nichts steht und der Name mittendrin so kräftig
+   gesetzt ist wie ein Nick. Genau daran funktioniert der alte Trick. */
 .lc-zeile-aktion { grid-template-columns: 3.1em 1fr; }
-/* GEWÜNSCHT: „Dazu muss die Schrift aber auch ein bisschen dicker sein,
-   dass sie ungefähr so dick ist wie der Name selber." Die Aktionszeile
-   war blasser und dünner als alles andere — sie ist jetzt genauso
-   kräftig wie eine normale Zeile, nur weiterhin kursiv, damit man sie
-   als Aktion erkennt. Der eingesetzte Eigenname steht so fett da wie
-   ein Nick. */
-.lc-zeile-aktion .lc-zeilentext { font-style: italic; opacity: 1; font-weight: 600; }
+.lc-zeile-aktion .lc-zeilentext {
+  font-style: normal;
+  opacity: 1;
+  font-weight: inherit;
+}
 .lc-eigenname { font-weight: 800; font-style: normal; }
 /* System: eine abgesetzte Zeile über die ganze Breite */
 .lc-zeile-system,
@@ -710,6 +731,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   z-index: 1;
 }
 .lc-zeile-ruf .lc-zeilentext { white-space: pre-wrap; }
+.lc-zeile-ruf .lc-zeilentext { contain: layout; }
 .lc-ruf-wort {
   position: relative;
   display: inline-block;
@@ -760,6 +782,15 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   .lc-ruf-wort::before,
   .lc-ruf-wort::after { display: none; }
 }
+/* Vergangenheit: was vor dem Betreten geschrieben wurde, steht einfach
+   da. Es baut sich nicht noch einmal auf, es strahlt nicht, es wirft
+   kein Konfetti. Ein Tipp darauf spielt es trotzdem ab — aber nur fuer
+   den, der tippt. GEWUENSCHT: „Das ist dann schon Vergangenheit, er
+   sieht sie nur, wenn er sie antippt." */
+.lc-alt .lc-ruf-wort { animation: none; opacity: 1; transform: none; }
+.lc-alt .lc-ruf-wort::before,
+.lc-alt .lc-ruf-wort::after { display: none; }
+.lc-alt.lc-zeile-wirkt:hover .lc-ruf-wort::after { display: none; }
 
 /* Kommen und Gehen — wie im IRC, unaufdringlich */
 .lc-zeile-kommen { grid-template-columns: 3.1em 1fr; }
@@ -1120,11 +1151,21 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   width: calc(34px * var(--lc-b-gross, 1));
   height: calc(43px * var(--lc-b-gross, 1));
   border-radius: 50% 50% 48% 48% / 56% 56% 44% 44%;
-  background: radial-gradient(ellipse at 32% 28%,
-              rgba(255, 255, 255, 0.72) 0%,
-              rgba(255, 255, 255, 0.18) 22%,
-              var(--lc-b-farbe, #e0546a) 58%,
-              color-mix(in srgb, var(--lc-b-farbe, #e0546a) 72%, #000) 100%);
+  /* GEMELDET: „Die Luftballons haben irgendeine Art Transparenz. Im
+     dunklen Design sieht es aus, als haetten sie schwarze Flecken auf
+     ihrem Gummi, wobei das eigentlich Licht symbolisieren soll."
+
+     Genau das: der Rand war mit Schwarz gemischt, um Rundung
+     anzudeuten. Auf hellem Grund liest sich das als Schatten, auf
+     dunklem als Loch. Jetzt wird nichts mehr abgedunkelt — die Rundung
+     kommt allein aus dem Glanzlicht, das nach aussen hin ausklingt,
+     und die Ballonfarbe bleibt bis zum Rand dieselbe. */
+  background: radial-gradient(ellipse at 34% 27%,
+              rgba(255, 255, 255, 0.85) 0%,
+              rgba(255, 255, 255, 0.34) 14%,
+              rgba(255, 255, 255, 0.08) 30%,
+              var(--lc-b-farbe, #e0546a) 52%,
+              var(--lc-b-farbe, #e0546a) 100%);
   animation-name: lcBallonSteigt;
   animation-timing-function: ease-in-out;
   animation-fill-mode: forwards;
@@ -1149,7 +1190,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   height: 5px;
   margin-left: -2.5px;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--lc-b-farbe, #e0546a) 78%, #000);
+  background: var(--lc-b-farbe, #e0546a);
 }
 @keyframes lcBallonSteigt {
   0%   { transform: translate3d(0, 0, 0) rotate(-3deg); opacity: 0; }
@@ -1167,25 +1208,28 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    die anderen. ASCII-Bilder bleiben immer in Schreibmaschinenschrift,
    sonst zerfallen sie.
    ================================================================= */
-.lc-chat-verlauf[data-schrift="2"] .lc-zeile,
-.lc-chat-verlauf[data-schrift="2"] .lc-chat-leer {
+/* Die Schrift haengt am Behaelter selbst, damit sie wirklich ALLES
+   darin erfasst — auch die Zeilen, die erst spaeter dazukommen, und
+   auch das, was der Browser sonst von weiter oben erbt. Frueher stand
+   sie nur an den Zeilen; die Groesse am Behaelter (.lc-chat-verlauf,
+   0.86rem) hat dann dagegengehalten, und man sah keinen Unterschied. */
+.lc-chat-verlauf[data-schrift="2"] {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.79rem;
   letter-spacing: -0.01em;
 }
-.lc-chat-verlauf[data-schrift="3"] .lc-zeile,
-.lc-chat-verlauf[data-schrift="3"] .lc-chat-leer {
-  font-family: "Trebuchet MS", "Segoe UI", Verdana, system-ui, sans-serif;
-  font-size: 0.87rem;
+.lc-chat-verlauf[data-schrift="3"] {
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, Tahoma, system-ui, sans-serif;
+  font-size: 0.9rem;
   letter-spacing: 0.012em;
 }
-.lc-chat-verlauf[data-schrift="4"] .lc-zeile,
-.lc-chat-verlauf[data-schrift="4"] .lc-chat-leer {
+.lc-chat-verlauf[data-schrift="4"] {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   font-size: 1.0rem;
   line-height: 1.62;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.01em;
 }
-.lc-chat-verlauf[data-schrift="4"] .lc-zeit { font-size: 0.74rem; }
+.lc-chat-verlauf[data-schrift="4"] .lc-zeit { font-size: 0.78rem; }
 .lc-chat-verlauf .lc-ascii { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace !important; }
 
 /* =================================================================
@@ -1201,25 +1245,35 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   position: relative;
   isolation: isolate;
 }
+/* WICHTIG — das war die Ursache fuer „der Chat verschiebt sich nach
+   links und rechts": diese Schicht lag zwanzig Prozent ueber den Rand
+   hinaus und wanderte zusaetzlich per transform. Beides laesst den
+   Kasten breiter werden, als er ist, und der Browser schiebt dann hin
+   und her. Jetzt liegt sie genau im Kasten, und die Bewegung entsteht
+   allein daraus, dass die Farbflecken selbst wandern
+   (background-position) — das kann nichts ueberlaufen lassen. */
 .lc-chat-verlauf::before {
   content: "";
   position: absolute;
-  inset: -20%;
+  inset: 0;
   z-index: -1;
   pointer-events: none;
   opacity: 0.5;
-  background:
-    radial-gradient(38% 30% at 22% 26%, rgba(224, 150, 74, 0.20), transparent 70%),
-    radial-gradient(32% 26% at 78% 72%, rgba(90, 168, 107, 0.17), transparent 70%),
-    radial-gradient(30% 24% at 62% 18%, rgba(154, 90, 201, 0.12), transparent 70%);
+  border-radius: inherit;
+  background-image:
+    radial-gradient(38% 30% at 50% 50%, rgba(224, 150, 74, 0.22), transparent 70%),
+    radial-gradient(32% 26% at 50% 50%, rgba(90, 168, 107, 0.19), transparent 70%),
+    radial-gradient(30% 24% at 50% 50%, rgba(154, 90, 201, 0.14), transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 150% 150%, 140% 140%, 130% 130%;
+  background-position: 10% 20%, 85% 75%, 60% 12%;
   filter: blur(14px);
-  animation: lcHintergrund 38s ease-in-out infinite alternate;
+  animation: lcHintergrund 42s ease-in-out infinite alternate;
 }
 @keyframes lcHintergrund {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  33%  { transform: translate3d(3%, -2%, 0) scale(1.07); }
-  66%  { transform: translate3d(-3%, 2%, 0) scale(1.03); }
-  100% { transform: translate3d(2%, 3%, 0) scale(1.09); }
+  0%   { background-position: 10% 20%, 85% 75%, 60% 12%; }
+  50%  { background-position: 28% 40%, 62% 55%, 40% 30%; }
+  100% { background-position:  4% 62%, 94% 34%, 74% 46%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-chat-verlauf::before { animation: none; }
@@ -1343,3 +1397,219 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   background: rgba(90, 168, 107, 0.16);
   box-shadow: 0 0 0 1px rgba(90, 168, 107, 0.3) inset;
 }
+
+/* =================================================================
+   DIE AUFKLEBERREIHE
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Man soll schon diese Vorschaubilder angezeigt bekommen
+   und von denen welche auswaehlen koennen." Sie stehen deshalb ganz
+   oben in beiden Waehlern und bewegen sich auch schon in der Vorschau
+   — es sind ja dieselben Dateien.
+   ================================================================= */
+.lc-waehler-aufkleber {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 6px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.lc-waehler-aufkleb {
+  aspect-ratio: 1 / 1;
+  padding: 4px;
+  border: 1px solid rgba(160, 120, 80, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.lc-waehler-aufkleb:hover {
+  transform: scale(1.1);
+  border-color: rgba(224, 150, 74, 0.95);
+  background: rgba(224, 150, 74, 0.14);
+}
+.lc-waehler-aufkleb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Ein Aufkleber im Chat steht kleiner da als ein Foto — er ist eine
+   Geste, kein Bild, das man sich ansehen soll. */
+.lc-zeilenfoto-aufkleber {
+  max-width: 88px;
+  max-height: 88px;
+  border-radius: 0;
+  background: none;
+}
+
+/* =================================================================
+   WETTER IM RAUM — Schnee und Regen
+   ================================================================= */
+.lc-wetter {
+  position: fixed;
+  inset: 0;
+  z-index: 9340;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-wetter-schnee i {
+  position: absolute;
+  top: -6vh;
+  width: calc(7px * var(--lc-w-gross, 1));
+  height: calc(7px * var(--lc-w-gross, 1));
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+  animation-name: lcSchneit;
+  animation-timing-function: linear;
+  animation-iteration-count: 2;
+  animation-fill-mode: forwards;
+}
+@keyframes lcSchneit {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(var(--lc-w-drift, 0px), 112vh, 0); }
+}
+.lc-wetter-regen i {
+  position: absolute;
+  top: -8vh;
+  width: 1.5px;
+  height: var(--lc-w-lang, 16px);
+  border-radius: 1px;
+  background: linear-gradient(to bottom, rgba(180, 214, 240, 0), rgba(180, 214, 240, 0.95));
+  animation-name: lcRegnet;
+  animation-timing-function: linear;
+  animation-iteration-count: 12;
+  animation-fill-mode: forwards;
+}
+@keyframes lcRegnet {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-22px, 114vh, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-wetter { display: none; } }
+
+/* =================================================================
+   FEUERWERK
+   ================================================================= */
+.lc-feuerwerk {
+  position: fixed;
+  inset: 0;
+  z-index: 9380;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-knall { position: absolute; width: 0; height: 0; }
+.lc-knall i {
+  position: absolute;
+  left: 0; top: 0;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  opacity: 0;
+  animation-name: lcFunke;
+  animation-duration: 1.5s;
+  animation-timing-function: cubic-bezier(.12, .75, .3, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes lcFunke {
+  0%   { opacity: 0;   transform: translate3d(0, 0, 0) scale(.4); }
+  6%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: translate3d(var(--lc-fx, 0), calc(var(--lc-fy, 0) + 34px), 0) scale(.85); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-feuerwerk { display: none; } }
+
+/* =================================================================
+   WER SPRICHT, BEKOMMT EINEN RING
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Wenn jemand spricht, dann soll eine Animation sein,
+   die fuer die anderen erkennbar zeigt, dass derjenige gerade
+   spricht — also um sein Profilbild herum."
+   ================================================================= */
+.lc-platz .lc-kreis { position: relative; }
+.lc-platz-spricht .lc-kreis {
+  border-color: #5aa86b !important;
+  box-shadow: 0 0 0 3px rgba(90, 168, 107, 0.34);
+  animation: lcSprichtKreis 1.1s ease-in-out infinite;
+}
+.lc-platz-spricht .lc-kreis::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(90, 168, 107, 0.75);
+  pointer-events: none;
+  animation: lcSprichtRing 1.1s ease-out infinite;
+}
+@keyframes lcSprichtKreis {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(90, 168, 107, 0.3); }
+  50%      { box-shadow: 0 0 0 6px rgba(90, 168, 107, 0.18); }
+}
+@keyframes lcSprichtRing {
+  0%   { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 0;    transform: scale(1.42); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-platz-spricht .lc-kreis { animation: none; }
+  .lc-platz-spricht .lc-kreis::after { animation: none; opacity: .8; }
+}
+/* Ein freier Platz laedt ein: „antippen, um auf die Buehne zu gehen" */
+.lc-platz-frei { cursor: pointer; }
+.lc-platz-frei:hover .lc-kreis {
+  border-color: rgba(224, 150, 74, 0.8);
+  background: rgba(224, 150, 74, 0.08);
+}
+
+/* =================================================================
+   DER CHATHINTERGRUND
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Ein schoener Chathintergrund, der ein bisschen
+   animiert ist — wo die kleinen Vorschaubilder der Personen im
+   Hintergrund sind. Ansonsten moechte ich, dass man da alternativ
+   auch ein Bild einladen kann als Hintergrundbild."
+
+   Die Gesichter treiben sehr schwach und sehr langsam; der Text bleibt
+   das Wichtigste auf der Flaeche. Ein eigenes Bild liegt darunter und
+   wird abgedunkelt, damit man weiterhin lesen kann.
+   ================================================================= */
+.lc-chat-hg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.lc-hg-bild {
+  position: absolute;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.075;
+  filter: saturate(0.65);
+  animation-name: lcHgTreiben;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes lcHgTreiben {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(22px, -16px, 0) scale(1.14); }
+  100% { transform: translate3d(-14px, 20px, 0) scale(0.94); }
+}
+/* Ein eigenes Bild: es liegt ganz hinten und wird abgedunkelt. */
+.lc-chat-verlauf.hat-eigenes-bild::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: var(--lc-hg-bild);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.2;
+}
+.lc-chat-verlauf.hat-eigenes-bild .lc-hg-bild { opacity: 0.06; }
+@media (prefers-reduced-motion: reduce) { .lc-hg-bild { animation: none; } }
+/* Der Rahmen des Chats laesst sich antippen, um ihn wieder mittig zu
+   ruecken — siehe renderLiveChat(). */
+.lc-chat { cursor: default; }

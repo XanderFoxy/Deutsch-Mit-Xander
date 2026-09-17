@@ -12709,6 +12709,7 @@
           Solange deine Kamera aus ist, steht dieses Bild auf deinem Platz — und im Chat
           neben allem, was du schreibst.
         </p>
+        ${lcAufkleberReihe("lc-bildaufkleb")}
         <div class="lc-waehler-reihe">
           <button type="button" class="btn btn-ghost" id="lcBildKonto">👤 Bild aus meinem Profil</button>
           <button type="button" class="btn btn-ghost" id="lcBildFotoKnopf">📷 Foto vom Gerät</button>
@@ -12776,6 +12777,9 @@
         setzen(daten, "📷 Foto als Profilbild gesetzt");
       } catch (x) { showToast("📷 " + (x && x.message ? x.message : "Das Bild ging nicht.")); }
     });
+    kasten.querySelectorAll("[data-lc-bildaufkleb]").forEach((b) =>
+      b.addEventListener("click", () =>
+        setzen("aufkleber:" + b.dataset.lcBildaufkleb, "🖼️ Bewegtes Bild gesetzt")));
     const letztBilder = (window.LiveChat && LiveChat.letzteBilder) ? LiveChat.letzteBilder() : [];
     kasten.querySelectorAll("[data-lc-letztbild]").forEach((b) =>
       b.addEventListener("click", () => {
@@ -12926,10 +12930,11 @@
           if (n.bildImChat) {
             const b = document.createElement("img");
             b.className = "lc-zeilenfoto";
-            b.src = n.bildImChat;
+            const q = lcBildQuelle(n.bildImChat);
+            b.src = q;
             b.alt = n.text || "Bild";
             b.loading = "lazy";
-            b.addEventListener("click", () => lcBildGross(n.bildImChat, n.text || ""));
+            b.addEventListener("click", () => lcBildGross(q, n.text || ""));
             t2.appendChild(b);
           }
           if (n.text) lcTextEinfaerben(t2, n.text, n);
@@ -12960,6 +12965,29 @@
     zeichnen(offenerRaum);
   }
 
+  /* Die Aufkleberreihe — dieselbe in beiden Wählern.
+     GEWÜNSCHT: „Das soll so funktionieren wie bei Clubhouse: man hält
+     sein eigenes Profilbild gedrückt, und dann kommt eine Auswahl an
+     animierten Bildern — nicht erst, dass man die Suche eintragen
+     muss, sondern es ist schon eine Auswahl da. Die hat dann zwar noch
+     eine eigene Suche, aber man soll schon diese Vorschaubilder
+     angezeigt bekommen."
+
+     Also stehen sie ganz oben, sofort sichtbar, und bewegen sich auch
+     schon in der Vorschau — es sind ja dieselben Dateien. */
+  function lcAufkleberReihe(marke) {
+    const liste = (window.LiveChat && LiveChat.aufkleber) ? LiveChat.aufkleber() : [];
+    if (!liste.length) return "";
+    return `
+      <p class="eyebrow" style="margin-top:6px;">BEWEGTE BILDER</p>
+      <div class="lc-waehler-aufkleber">
+        ${liste.map((k) => `
+          <button type="button" class="lc-waehler-aufkleb" data-${marke}="${k}" title="${k}">
+            <img src="sticker/${k}.svg" alt="${k}" loading="lazy">
+          </button>`).join("")}
+      </div>`;
+  }
+
   /* =================================================================
      BILDER IN DEN CHAT — der Wähler zum SCHICKEN
      -----------------------------------------------------------------
@@ -12988,6 +13016,7 @@
     kasten.innerHTML = `
       <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Bild in den Chat schicken">
         <p class="eyebrow">IN DEN CHAT SCHICKEN</p>
+        ${lcAufkleberReihe("lc-aufkleb")}
         ${letzte.length ? `
           <p class="eyebrow" style="margin-top:6px;">ZULETZT BENUTZT</p>
           <div class="lc-waehler-gifs" id="lcLetzteReihe">
@@ -13052,6 +13081,19 @@
 
     kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
     kasten.querySelector("#lcSendeZu")?.addEventListener("click", zu);
+
+    /* Ein Tipp auf einen Aufkleber schickt ihn sofort. */
+    kasten.querySelectorAll("[data-lc-aufkleb]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const f = textFeld();
+        if (!LiveChat.aufkleberSenden(b.dataset.lcAufkleb, f ? f.value.trim() : "")) {
+          showToast("Das Bild ging nicht.");
+          return;
+        }
+        textLeeren();
+        zu();
+      });
+    });
 
     /* Zuletzt benutzt — Fotos liegen als Datenadresse vor, GIFs als
        Netzadresse. Beides geht denselben Weg wieder hinaus. */
@@ -13290,6 +13332,85 @@
     setTimeout(() => schicht.remove(), 11500);
   }
 
+  /* =================================================================
+     WETTER IM RAUM: SCHNEE UND REGEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht kann man es auch schneien lassen oder ein
+     Feuerwerk veranstalten im Chat … Sachen, die man animiert über das
+     ganze Zeitfenster zeigen kann."
+     ================================================================= */
+  function lcWetter(art) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcWetter")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcWetter";
+    schicht.className = "lc-wetter lc-wetter-" + art;
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = art === "regen"
+      ? (window.innerWidth < 560 ? 70 : 130)
+      : (window.innerWidth < 560 ? 45 : 85);
+    for (let i = 0; i < wieviel; i++) {
+      const t = document.createElement("i");
+      t.style.left = (Math.random() * 100).toFixed(2) + "%";
+      t.style.animationDelay = (Math.random() * 3.2).toFixed(2) + "s";
+      if (art === "schnee") {
+        const g = (0.5 + Math.random() * 0.9).toFixed(2);
+        t.style.setProperty("--lc-w-gross", g);
+        t.style.setProperty("--lc-w-drift", (Math.random() * 130 - 65).toFixed(0) + "px");
+        t.style.animationDuration = (5.5 + Math.random() * 5).toFixed(2) + "s";
+        t.style.opacity = (0.45 + Math.random() * 0.5).toFixed(2);
+      } else {
+        t.style.setProperty("--lc-w-lang", (10 + Math.random() * 16).toFixed(0) + "px");
+        t.style.animationDuration = (0.55 + Math.random() * 0.5).toFixed(2) + "s";
+        t.style.opacity = (0.25 + Math.random() * 0.4).toFixed(2);
+      }
+      schicht.appendChild(t);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), art === "regen" ? 9000 : 13000);
+  }
+
+  /* =================================================================
+     FEUERWERK
+     -----------------------------------------------------------------
+     Sechs Raketen, die nacheinander aufsteigen und oben in einen Kranz
+     aus Funken zerplatzen. Die Funken sind einzelne Elemente mit je
+     einem eigenen Winkel — deshalb sieht jeder Knall anders aus.
+     ================================================================= */
+  const LC_FEUER_FARBEN = ["#ffd166", "#e0546a", "#6aa6ee", "#7fb069",
+                           "#b48ce8", "#ef9ec4", "#5fc9c2"];
+  function lcFeuerwerk() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcFeuerwerk")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcFeuerwerk";
+    schicht.className = "lc-feuerwerk";
+    schicht.setAttribute("aria-hidden", "true");
+    const raketen = window.innerWidth < 560 ? 4 : 6;
+    for (let r = 0; r < raketen; r++) {
+      const knall = document.createElement("div");
+      knall.className = "lc-knall";
+      knall.style.left = (12 + Math.random() * 76).toFixed(1) + "%";
+      knall.style.top = (14 + Math.random() * 38).toFixed(1) + "%";
+      knall.style.animationDelay = (r * 0.55 + Math.random() * 0.3).toFixed(2) + "s";
+      const farbe = LC_FEUER_FARBEN[r % LC_FEUER_FARBEN.length];
+      const funken = 22;
+      for (let f = 0; f < funken; f++) {
+        const i = document.createElement("i");
+        const winkel = (360 / funken) * f + Math.random() * 8;
+        const weite = 60 + Math.random() * 70;
+        i.style.setProperty("--lc-fx", Math.cos(winkel * Math.PI / 180) * weite + "px");
+        i.style.setProperty("--lc-fy", Math.sin(winkel * Math.PI / 180) * weite + "px");
+        i.style.background = farbe;
+        i.style.animationDelay = knall.style.animationDelay;
+        knall.appendChild(i);
+      }
+      schicht.appendChild(knall);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 6500);
+  }
+
   /* --- Der Startschirm: ein Satz, ein Knopf --- */
   function livechatStartHtml(l) {
     const ausLink = LiveChat.raumAusAdresse();
@@ -13361,7 +13482,7 @@
     const plaetze = [];
     for (let i = 1; i <= LiveChat.PLAETZE; i++) {
       plaetze.push(`
-        <button type="button" class="lc-platz lc-platz-frei" data-lc-platz="${i}" tabindex="-1" aria-label="Platz ${i}, frei">
+        <button type="button" class="lc-platz lc-platz-frei" data-lc-platz="${i}" aria-label="Platz ${i}, frei — antippen, um auf die Bühne zu gehen">
           <span class="lc-kreis">
             <span class="lc-nummer">${i}</span>
             <video data-lc-video="${i}" autoplay playsinline muted style="display:none;"></video>
@@ -13392,6 +13513,9 @@
           <button type="button" class="lc-rundknopf" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus">🎤</button>
           <button type="button" class="lc-rundknopf" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus">📷</button>
           <button type="button" class="lc-rundknopf" data-lc="profilbild" title="Profilbild oder GIF" aria-label="Profilbild oder GIF setzen">🖼️</button>
+          <button type="button" class="lc-rundknopf" data-lc="buehne"
+                  title="Auf die Bühne oder wieder herunter"
+                  aria-label="Auf die Bühne oder wieder herunter">🎤</button>
           <button type="button" class="lc-rundknopf lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen">✕</button>
         </div>
         <div id="lcGrund"></div>
@@ -13402,6 +13526,8 @@
             <span class="lc-chat-kopf-rechts">
               <button type="button" class="lc-chat-raeumen" id="lcBefehle"
                       title="Was man im Chat tippen kann">ⓘ Befehle</button>
+              <button type="button" class="lc-chat-raeumen" id="lcSchrift"
+                      title="Die Schrift im Chat wechseln">🔤 Schrift</button>
               <button type="button" class="lc-chat-raeumen" id="lcArchiv"
                       title="Ältere Gespräche nachlesen">📜 Nachlesen</button>
               <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
@@ -13472,6 +13598,13 @@
       knopf.classList.toggle("lc-platz-frei", Boolean(p.leer));
       knopf.classList.toggle("lc-platz-belegt", !p.leer);
       knopf.classList.toggle("lc-platz-ich", Boolean(p.ich));
+      /* GEWÜNSCHT: „Wenn jemand spricht, dann soll eine Animation sein,
+         die für die anderen erkennbar zeigt, dass derjenige gerade
+         spricht — also um sein Profilbild herum." Gemessen wird das
+         im jeweiligen Gerät (siehe lautstaerkeVerfolgen in
+         livechat.js); hierher kommt nur noch das Ja oder Nein. */
+      knopf.classList.toggle("lc-platz-spricht", Boolean(p.spricht) && !p.leer);
+      if (p.leer) knopf.title = "Freier Platz — antippen, um auf die Bühne zu gehen";
       knopf.tabIndex = p.leer ? -1 : 0;
       knopf.setAttribute("aria-label", p.leer
         ? `Platz ${p.nummer}, frei`
@@ -13509,7 +13642,8 @@
           initial.textContent = emoji;
           initial.classList.add("lc-initial-emoji");
         } else if (avatar && !p.leer && p.bild) {
-          if (avatar.getAttribute("src") !== p.bild) avatar.setAttribute("src", p.bild);
+          const q = lcBildQuelle(p.bild);
+          if (avatar.getAttribute("src") !== q) avatar.setAttribute("src", q);
           avatar.style.display = "block";
           initial.style.display = "none";
           initial.classList.remove("lc-initial-emoji");
@@ -13659,6 +13793,10 @@
     }
   }
   let livechatRaumAbmelden = null;
+  /* Ab wann gilt eine Zeile als „gerade eben"? Ab dem Moment, in dem
+     man den Raum betreten hat. Alles davor ist Vergangenheit und löst
+     keine Animation mehr aus — siehe livechatChatAuffrischen(). */
+  let livechatEffekteAb = 0;
 
   /* --- Der Chat sieht aus wie damals -------------------------
      GEWÜNSCHT: „Der Chat muss so aussehen wie früher, nicht mit
@@ -13722,6 +13860,16 @@
 
      Das „nur die eigenen" wird dort durchgesetzt, wo es hingehört: im
      Wähler. Angeboten werden ausschliesslich freigeschaltete Füchse. */
+  /* Aus einer Bildangabe eine Adresse machen. „aufkleber:lachen" wird
+     zu sticker/lachen.svg — der Name kommt über die Leitung, das Bild
+     sucht sich jedes Gerät selbst aus seiner eigenen Liste. */
+  function lcBildQuelle(wert) {
+    const w = String(wert || "");
+    if (!w) return "";
+    const auf = (window.LiveChat && LiveChat.aufkleberPfad) ? LiveChat.aufkleberPfad(w) : "";
+    return auf || w;
+  }
+
   function lcFuchsBild(id) {
     const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id);
     if (!fig) return null;
@@ -13767,6 +13915,10 @@
   /* Noch einmal — ohne die Zeile neu zu bauen: die Animationen kurz
      abschalten, einen Bildaufbau abwarten, wieder anschalten. */
   function lcRufNochmal(zeile) {
+    /* Auch eine alte Zeile darf noch einmal — aber nur, weil jemand sie
+       ausdrücklich angetippt hat. Dafür fällt die Marke „Vergangenheit"
+       weg, sonst hielte die CSS die Animation weiterhin an. */
+    zeile.classList.remove("lc-alt");
     zeile.querySelectorAll(".lc-ruf-wort").forEach((w) => {
       const takt = w.style.getPropertyValue("--lc-ruf-takt") || "0s";
       w.style.animation = "none";
@@ -13858,6 +14010,9 @@
        eine Rufzeile spielt die Animation noch einmal ab. */
     konfetti:{ ganzeSeite: true },
     ballon:  { ganzeSeite: true, wie: "ballon" },
+    schnee:  { ganzeSeite: true, wie: "schnee" },
+    regen:   { ganzeSeite: true, wie: "regen" },
+    feuerwerk:{ ganzeSeite: true, wie: "feuerwerk" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   function lcWirkung(art, anZeile) {
@@ -13865,7 +14020,14 @@
     if (!e) return;
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
-    if (e.ganzeSeite) { if (e.wie === "ballon") lcBallons(); else lcKonfetti(); return; }
+    if (e.ganzeSeite) {
+      if (e.wie === "ballon") lcBallons();
+      else if (e.wie === "schnee") lcWetter("schnee");
+      else if (e.wie === "regen") lcWetter("regen");
+      else if (e.wie === "feuerwerk") lcFeuerwerk();
+      else lcKonfetti();
+      return;
+    }
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
     const schicht = document.createElement("div");
@@ -13895,6 +14057,102 @@
     setTimeout(() => schicht.remove(), 3400);
   }
 
+  /* =================================================================
+     DER CHATHINTERGRUND
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Du hast vergessen, einen schönen Chathintergrund
+     einzustellen, der ein bisschen animiert ist — also wo die kleinen
+     Vorschaubilder sind der Personen, da im Hintergrund für den Chat
+     irgendwie so. Ansonsten möchte ich, dass man da alternativ auch
+     ein Bild einladen kann als Hintergrundbild."
+
+     Beides ist da. Die Vorschaubilder der Leute treiben ganz schwach
+     und sehr langsam hinter dem Text — man erkennt, wer im Raum ist,
+     ohne dass es vom Lesen ablenkt. Wer lieber sein eigenes Bild
+     hinterlegt, tippt /hintergrund; das Bild wird verkleinert und
+     bleibt im Gerät.
+     ================================================================= */
+  const LC_HG_SCHLUESSEL = "dma_livechat_hintergrund";
+  function lcHintergrundBild() {
+    try { return localStorage.getItem(LC_HG_SCHLUESSEL) || ""; } catch (e) { return ""; }
+  }
+  function lcHintergrundSetzen(daten) {
+    try {
+      if (daten) localStorage.setItem(LC_HG_SCHLUESSEL, daten);
+      else localStorage.removeItem(LC_HG_SCHLUESSEL);
+    } catch (e) { showToast("Das Bild ist zu gross für den Speicher."); return false; }
+    renderLiveChat();
+    return true;
+  }
+
+  /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
+     Dateiwähler, livechat.js nicht. */
+  let lcHintergrundFeld = null;
+  function lcHintergrundWaehlen(weg) {
+    if (weg) { lcHintergrundSetzen(""); showToast("🖼️ Hintergrund entfernt."); return; }
+    if (!lcHintergrundFeld) {
+      lcHintergrundFeld = document.createElement("input");
+      lcHintergrundFeld.type = "file";
+      lcHintergrundFeld.accept = "image/*";
+      lcHintergrundFeld.style.display = "none";
+      document.body.appendChild(lcHintergrundFeld);
+      lcHintergrundFeld.addEventListener("change", async () => {
+        const datei = lcHintergrundFeld.files && lcHintergrundFeld.files[0];
+        lcHintergrundFeld.value = "";
+        if (!datei) return;
+        try {
+          /* Kräftig verkleinern: ein Hintergrund darf unscharf sein,
+             er liegt ohnehin hinter Text und ist stark abgedunkelt. */
+          const daten = await LiveChat.bildVerkleinern(datei, 720);
+          if (lcHintergrundSetzen(daten)) showToast("🖼️ Hintergrund gesetzt.");
+        } catch (x) {
+          showToast("🖼️ " + (x && x.message ? x.message : "Das Bild ging nicht."));
+        }
+      });
+    }
+    lcHintergrundFeld.click();
+  }
+
+  function livechatHintergrundAuffrischen(l) {
+    const v = document.getElementById("lcVerlauf");
+    if (!v) return;
+
+    /* Ein eigenes Bild schlägt alles andere. */
+    const eigenes = lcHintergrundBild();
+    v.classList.toggle("hat-eigenes-bild", Boolean(eigenes));
+    if (eigenes) v.style.setProperty("--lc-hg-bild", 'url("' + eigenes + '")');
+    else v.style.removeProperty("--lc-hg-bild");
+
+    let schicht = v.querySelector(".lc-chat-hg");
+    if (!schicht) {
+      schicht = document.createElement("div");
+      schicht.className = "lc-chat-hg";
+      schicht.setAttribute("aria-hidden", "true");
+      v.insertBefore(schicht, v.firstChild);
+    }
+    /* Die Gesichter im Raum — nur die, die wirklich ein Bild haben. */
+    const bilder = l.plaetze
+      .filter((p) => !p.leer && p.bild)
+      .map((p) => lcBildQuelle(p.bild))
+      .filter((q) => q && q.indexOf("emoji:") !== 0);
+    const marke = bilder.join("|");
+    if (schicht.dataset.marke === marke) return;
+    schicht.dataset.marke = marke;
+    schicht.innerHTML = "";
+    bilder.slice(0, 8).forEach((q, i) => {
+      const b = document.createElement("img");
+      b.src = q;
+      b.alt = "";
+      b.loading = "lazy";
+      b.className = "lc-hg-bild";
+      b.style.left = (6 + (i * 13) % 82) + "%";
+      b.style.top = (8 + (i * 29) % 74) + "%";
+      b.style.animationDelay = (i * 1.7).toFixed(1) + "s";
+      b.style.animationDuration = (22 + (i % 4) * 6) + "s";
+      schicht.appendChild(b);
+    });
+  }
+
   function livechatChatAuffrischen(l) {
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
@@ -13904,14 +14162,27 @@
     if (v.dataset.schrift !== schrift) v.dataset.schrift = schrift;
     if (!l.nachrichten.length) {
       if (!v.querySelector(".lc-chat-leer")) {
-        v.innerHTML = `<p class="lc-chat-leer">Noch nichts geschrieben.<br>
+        /* Die Hintergrundschicht bleibt stehen — sie ist keine Zeile. */
+        v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
+        v.insertAdjacentHTML("beforeend", `<p class="lc-chat-leer">Noch nichts geschrieben.<br>
           Schreib einfach unten los — alle im Raum lesen mit.<br>
-          <span style="opacity:.7">Tippe <code>/h</code> für die alten Chatbefehle.</span></p>`;
+          <span style="opacity:.7">Tippe <code>/h</code> für die alten Chatbefehle.</span></p>`);
       }
       return;
     }
     const leer = v.querySelector(".lc-chat-leer");
     if (leer) { leer.remove(); livechatGezeigt = new Set(); }
+
+    /* GEWÜNSCHT: „Wenn jemand neu in den Chat kommt, dann darf er die
+       Animationen, die vorher da waren, nicht komplett auslösen — das
+       ist dann schon Vergangenheit. Er sieht sie nur, wenn er sie
+       antippt."
+
+       Alles, was VOR dem Betreten geschrieben wurde, gilt deshalb als
+       Vergangenheit: kein Konfetti, keine Ballons, kein aufbauender
+       Ruf. Die Zeile bekommt nur die Marke „lc-alt" — antippen spielt
+       sie trotzdem ab, aber eben nur für einen selbst. */
+    if (!livechatEffekteAb) livechatEffekteAb = Date.now();
 
     const amEnde = v.scrollHeight - v.scrollTop - v.clientHeight < 70;
     l.nachrichten.forEach((n) => {
@@ -13964,13 +14235,20 @@
         if (farbe) vor.style.color = farbe;
         z.appendChild(vor);
       } else if (art === "aktion") {
-        /* „* Emmy lacht laut" — ohne Doppelpunkt, kursiv. Genau so
-           gab der /me-Befehl es seit jeher aus. */
+        /* GEMELDET, zum dritten Mal — und diesmal steht genau da, was
+           fehlte: „Sobald man den /me-Befehl benutzt, funktioniert
+           dieses ‚Xander Fox:' nicht mehr … es muss wirklich beginnen
+           mit ‚Wusstet ihr, dass …'."
+
+           Also steht hier NICHTS mehr vor dem Satz: kein Name, kein
+           Doppelpunkt — und auch kein Sternchen. Das Sternchen war der
+           letzte Rest, der übrig war; es hat die Zeile immer noch mit
+           einem Vorzeichen anfangen lassen, statt mit dem ersten Wort.
+           Jetzt fängt die Zeile mit dem ersten Wort an. Zu erkennen ist
+           sie an dem, was drinsteht: der Name, so kräftig gesetzt wie
+           ein Nick, an der Stelle, an die man ihn geschoben hat. */
         const t = document.createElement("span");
         t.className = "lc-zeilentext";
-        const stern = document.createElement("span");
-        stern.textContent = "* ";
-        t.appendChild(stern);
         lcTextEinfaerben(t, n.text, n);
         if (farbe) t.style.color = farbe;
         z.appendChild(t);
@@ -13988,7 +14266,7 @@
         } else if (n.bild) {
           const i = document.createElement("img");
           i.className = "lc-zeilenbild";
-          i.alt = ""; i.loading = "lazy"; i.src = n.bild;
+          i.alt = ""; i.loading = "lazy"; i.src = lcBildQuelle(n.bild);
           kopf.appendChild(i);
         }
         const nm = document.createElement("b");
@@ -14003,11 +14281,15 @@
           bild.className = "lc-zeilenfoto";
           bild.alt = n.text || "Bild im Chat";
           bild.loading = "lazy";
-          bild.src = n.bildImChat;
+          const quelle = lcBildQuelle(n.bildImChat);
+          bild.src = quelle;
+          if (LiveChat.aufkleberPfad && LiveChat.aufkleberPfad(n.bildImChat)) {
+            bild.classList.add("lc-zeilenfoto-aufkleber");
+          }
           bild.title = "Antippen — größer ansehen";
           bild.addEventListener("click", (e) => {
             e.stopPropagation();          // nicht den Zeileneffekt auslösen
-            lcBildGross(n.bildImChat, n.text || "");
+            lcBildGross(quelle, n.text || "");
           });
           t.appendChild(bild);
         } else if (n.bildWeg) {
@@ -14033,6 +14315,10 @@
       v.appendChild(z);
 
       /* Welcher Effekt gehört zu dieser Zeile? */
+      /* Vergangenheit? Dann still — siehe oben. */
+      const alt = (n.zeit || 0) < livechatEffekteAb - 1500;
+      if (alt) z.classList.add("lc-alt");
+
       const eff = n.wirkung || (art === "fluester" ? "fluester" : "");
       if (art === "ruf" && !n.wirkung) {
         z.classList.add("lc-zeile-wirkt");
@@ -14049,7 +14335,9 @@
           void z.offsetWidth;
           z.classList.add("lc-neu");
         });
-        lcWirkung(eff, z);
+        /* NUR wenn die Zeile gerade eben entstanden ist. Alles Ältere
+           ist Vergangenheit und wartet darauf, angetippt zu werden. */
+        if (!alt) lcWirkung(eff, z);
       }
     });
     if (amEnde) v.scrollTop = v.scrollHeight;
@@ -14103,7 +14391,7 @@
       const initialFeld = document.getElementById("lcGrossInitial");
       if (initialFeld) initialFeld.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
       const avatarGross = document.getElementById("lcGrossAvatar");
-      if (avatarGross && p.bild) avatarGross.setAttribute("src", p.bild);
+      if (avatarGross && p.bild) avatarGross.setAttribute("src", lcBildQuelle(p.bild));
       const gv = document.getElementById("lcGrossVideo");
       if (gv && p.strom) { gv.srcObject = p.strom; const sp = gv.play(); if (sp && sp.catch) sp.catch(() => {}); }
       /* GEWÜNSCHT: „Kein Schliessen-Knopf — man klickt es einfach
@@ -14132,6 +14420,7 @@
     if (l.lage === "aus" || l.lage === "fehler") {
       livechatGeruest = false;
       livechatGezeigt = new Set();
+      livechatEffekteAb = 0;          // beim nächsten Betreten neu stellen
       area.innerHTML = livechatStartHtml(l);
       const hinein = (raum) => {
         /* mitBild: false — das Bild geht NICHT von selbst an.
@@ -14174,12 +14463,24 @@
       area.innerHTML = livechatGeruestHtml();
       livechatGeruest = true;
       livechatGezeigt = new Set();
+      /* Ab JETZT ist etwas „gerade eben" — alles Ältere ist
+         Vergangenheit und bleibt still. */
+      livechatEffekteAb = Date.now();
 
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
         k.addEventListener("click", () => {
           const nr = Number(k.dataset.lcPlatz);
           const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
-          if (!p || p.leer) return;
+          /* GEWÜNSCHT: „Man soll einfach durch Klicken auf den freien
+             Platz selbstständig auf die Bühne kommen können." */
+          if (!p || p.leer) {
+            if (LiveChat.aufDerBuehne && !LiveChat.aufDerBuehne()) {
+              LiveChat.buehneSetzen(true);
+              renderLiveChat();
+              showToast("🎤 Du bist auf der Bühne.");
+            }
+            return;
+          }
           /* GEWÜNSCHT: „Wenn man den Kreis anklickt, geht er gross auf;
              klickt man ihn noch einmal an, geht er wieder zu — einen
              Schliessen-Knopf braucht es dafür nicht." */
@@ -14188,6 +14489,15 @@
       });
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());
       area.querySelector('[data-lc="bild"]')?.addEventListener("click", () => LiveChat.bildUmschalten());
+      /* GEWÜNSCHT: „Es soll auch eine Möglichkeit geben, wieder von der
+         Bühne runterzugehen, wenn man lieber nur im Chat bleiben will." */
+      area.querySelector('[data-lc="buehne"]')?.addEventListener("click", () => {
+        const drauf = LiveChat.buehneSetzen(!LiveChat.aufDerBuehne());
+        renderLiveChat();
+        showToast(drauf
+          ? "🎤 Du bist auf der Bühne — Ton und Bild gehen wieder hinaus."
+          : "💬 Du bist von der Bühne herunter. Mitschreiben geht weiter.");
+      });
       /* GEWÜNSCHT: „Wenn man auf das Schliessen des Raumes geht, soll
          man in die allgemeine Raumübersicht kommen." */
       area.querySelector('[data-lc="weg"]')?.addEventListener("click", () => {
@@ -14247,13 +14557,42 @@
         const k = document.getElementById("lcBefehleKasten");
         if (k) k.open = !k.open;
       });
+      /* Die Schrift durchschalten — dasselbe wie /schrift 1 … 4, nur
+         ohne dass man den Befehl kennen muss. */
+      area.querySelector("#lcSchrift")?.addEventListener("click", () => {
+        const liste = LiveChat.schriften ? LiveChat.schriften() : [];
+        if (!liste.length) return;
+        const jetzt = LiveChat.gemerkteSchrift();
+        const i = liste.findIndex((x) => x.nummer === jetzt);
+        const naechste = liste[(i + 1) % liste.length];
+        LiveChat.schriftSetzen(naechste.nummer);
+        renderLiveChat();
+        showToast("🔤 Schrift: " + naechste.was);
+      });
       area.querySelector("#lcArchiv")?.addEventListener("click", () => livechatArchiv());
+      if (LiveChat.beiHintergrund) LiveChat.beiHintergrund(lcHintergrundWaehlen);
+
+      /* GEWÜNSCHT: „Wenn man ein bisschen scrollt — nicht innerhalb des
+         Chats, sondern auf der Hauptseite nach oben und unten — und
+         will dann wieder zurück zum Chat, dann springt ja nichts.
+         Man zentriert sich das dann so zurecht. Hier könnte man zum
+         Beispiel in den Rahmen von dem allgemeinen Chatpanel klicken,
+         und es zentriert sich wieder, wie es vorher war."
+
+         Also: ein Tipp auf den RAHMEN — nicht auf eine Zeile, nicht auf
+         das Eingabefeld, nicht auf einen Knopf — rückt das Klassen-
+         zimmer wieder in die Mitte des Bildschirms. */
+      const karte = area.querySelector("#livechatKarte") || area.firstElementChild;
+      area.querySelector(".lc-chat")?.addEventListener("click", (e) => {
+        if (e.target.closest(".lc-zeile, .lc-chat-fuss, button, input, a, details, pre, img")) return;
+        karte?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
       area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
         if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
         LiveChat.chatLeeren();
         livechatGezeigt = new Set();
         const v = document.getElementById("lcVerlauf");
-        if (v) v.innerHTML = "";
+        if (v) v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
         renderLiveChat();
       });
 
@@ -14279,6 +14618,7 @@
 
     livechatKopfAuffrischen(l);
     livechatPlaetzeAuffrischen(l);
+    livechatHintergrundAuffrischen(l);
     livechatChatAuffrischen(l);
     livechatGrossAuffrischen(l);
   }

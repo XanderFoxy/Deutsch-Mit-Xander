@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .li { animation: kli 0.42s ease-in-out infinite; }
+  .re { animation: kre 0.42s ease-in-out infinite; }
+  .fz { animation: fz 0.42s ease-out infinite; }
+  @keyframes kli { 0%,100%{transform:translateX(-13px) rotate(-12deg)} 50%{transform:translateX(3px) rotate(0)} }
+  @keyframes kre { 0%,100%{transform:translateX(13px) rotate(12deg)} 50%{transform:translateX(-3px) rotate(0)} }
+  @keyframes fz { 0%,44%{opacity:0} 56%{opacity:.95} 100%{opacity:0} }
+</style>
+<g class="li"><path d="M40 96 L40 56 Q40 46 48 46 Q56 46 56 56 L56 96 Z" fill="#f3b57b"/><path d="M24 96 L24 62 Q24 52 32 52 Q40 52 40 62 L40 96 Z" fill="#e8a768"/><path d="M22 92 q-8 -10 -2 -18 q6 -6 10 2" fill="#e8a768"/><rect x="20" y="90" width="38" height="16" rx="7" fill="#f3b57b"/></g><g class="re"><path d="M80 96 L80 56 Q80 46 72 46 Q64 46 64 56 L64 96 Z" fill="#e8a768"/><path d="M96 96 L96 62 Q96 52 88 52 Q80 52 80 62 L80 96 Z" fill="#d9975c"/><path d="M98 92 q8 -10 2 -18 q-6 -6 -10 2" fill="#d9975c"/><rect x="62" y="90" width="38" height="16" rx="7" fill="#e8a768"/></g><g class="fz" opacity="0"><path d="M60 34 L60 18 M40 40 L30 28 M80 40 L90 28 M26 58 L12 54 M94 58 L108 54" stroke="#f7c948" stroke-width="4" stroke-linecap="round"/></g>
+</svg>

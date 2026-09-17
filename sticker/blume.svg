@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .bl { animation: wiegen 2.8s ease-in-out infinite; transform-origin: 50% 95%; }
+  .kopf { animation: drehen 5.5s linear infinite; }
+  @keyframes wiegen { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+  @keyframes drehen { to { transform: rotate(360deg) } }
+</style>
+<g class="bl"><path d="M60 108 L60 56" stroke="#5aa86b" stroke-width="6" stroke-linecap="round"/><path d="M60 82 q-20 -6 -24 -20 q18 -2 24 14" fill="#5aa86b"/><g class="kopf"><circle cx="60" cy="32" r="13" fill="#f7c948"/><circle cx="60" cy="10" r="12" fill="#e8848a"/><circle cx="82" cy="32" r="12" fill="#e8848a"/><circle cx="60" cy="54" r="12" fill="#e8848a"/><circle cx="38" cy="32" r="12" fill="#e8848a"/><circle cx="60" cy="32" r="10" fill="#f7c948"/></g></g>
+</svg>

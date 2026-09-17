@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .hk { animation: malen 1.8s ease-in-out infinite; }
+  .ri { animation: atmen 1.8s ease-in-out infinite; }
+  @keyframes malen { 0%{stroke-dashoffset:90} 35%,100%{stroke-dashoffset:0} }
+  @keyframes atmen { 0%,100%{transform:scale(1)} 35%{transform:scale(1.07)} }
+</style>
+<circle class="ri" cx="60" cy="60" r="44" fill="none" stroke="#5aa86b" stroke-width="7"/><path class="hk" d="M36 62 L54 80 L86 42" fill="none" stroke="#5aa86b" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="90" stroke-dashoffset="0"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .p1,.p2,.p3 { animation: tupf 1.3s ease-in-out infinite; }
+  .p2 { animation-delay: .18s } .p3 { animation-delay: .36s }
+  @keyframes tupf { 0%,100%{opacity:.25;transform:translateY(0)} 45%{opacity:1;transform:translateY(-5px)} }
+</style>
+<ellipse cx="66" cy="46" rx="42" ry="28" fill="#fdf8f0" stroke="rgba(0,0,0,.18)" stroke-width="2.5"/><circle cx="34" cy="82" r="9" fill="#fdf8f0" stroke="rgba(0,0,0,.18)" stroke-width="2.5"/><circle cx="21" cy="98" r="5" fill="#fdf8f0" stroke="rgba(0,0,0,.18)" stroke-width="2.5"/><circle class="p1" cx="48" cy="46" r="5.5" fill="#8a7a66"/><circle class="p2" cx="66" cy="46" r="5.5" fill="#8a7a66"/><circle class="p3" cx="84" cy="46" r="5.5" fill="#8a7a66"/>
+</svg>

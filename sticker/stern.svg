@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .st { animation: dreh 2.6s ease-in-out infinite; }
+  .fk { animation: funkel 1.3s ease-in-out infinite; }
+  @keyframes dreh { 0%,100%{transform:rotate(-10deg) scale(.96)} 50%{transform:rotate(10deg) scale(1.05)} }
+  @keyframes funkel { 0%,100%{opacity:0;transform:scale(.5)} 50%{opacity:1;transform:scale(1.2)} }
+</style>
+<g class="st"><path d="M60 12 L72 46 L108 48 L79 69 L90 104 L60 83 L30 104 L41 69 L12 48 L48 46 Z" fill="#f7c948" stroke="rgba(0,0,0,.14)" stroke-width="2.5" stroke-linejoin="round"/></g><g class="fk"><path d="M100 22 L100 34 M94 28 L106 28" stroke="#fff3c4" stroke-width="3" stroke-linecap="round"/></g>
+</svg>

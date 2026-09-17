@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .fl { animation: lodern 0.66s ease-in-out infinite; }
+  .fl2 { animation: lodern2 0.48s ease-in-out infinite; }
+  @keyframes lodern { 0%,100%{transform:scaleY(1) scaleX(1)} 50%{transform:scaleY(1.08) scaleX(.94)} }
+  @keyframes lodern2 { 0%,100%{transform:scaleY(.92) translateY(2px)} 50%{transform:scaleY(1.1) translateY(-2px)} }
+</style>
+<g class="fl"><path d="M60 104 C28 96 24 68 42 48 C44 60 52 62 54 54 C58 36 50 28 60 14 C72 30 92 42 92 68 C92 90 78 100 60 104 Z" fill="#e0642a"/></g><g class="fl2"><path d="M60 100 C44 94 42 76 54 64 C56 74 62 74 64 68 C68 56 62 52 68 42 C78 54 80 66 80 76 C80 90 72 98 60 100 Z" fill="#f7c948"/></g>
+</svg>

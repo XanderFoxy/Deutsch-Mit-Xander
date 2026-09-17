@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .dm { animation: hoch 0.85s ease-in-out infinite; }
+  @keyframes hoch { 0%,100%{transform:translateY(5px) rotate(-4deg)} 50%{transform:translateY(-6px) rotate(4deg)} }
+</style>
+<g class="dm"><rect x="26" y="56" width="20" height="44" rx="5" fill="#e0a06a" stroke="rgba(0,0,0,.16)" stroke-width="2.5"/><path d="M50 100 L50 58 Q50 50 58 44 Q66 38 64 26 Q63 18 70 18 Q78 18 80 28 Q82 40 76 52 L92 52 Q100 52 100 60 L96 92 Q95 100 87 100 Z" fill="#f3b57b" stroke="rgba(0,0,0,.16)" stroke-width="2.5" stroke-linejoin="round"/></g>
+</svg>

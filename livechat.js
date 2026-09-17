@@ -126,6 +126,9 @@ window.LiveChat = (function () {
     ichBild: "",        // Profilbild oder GIF, wenn die Kamera aus ist
     farbe: "",          // eigene Schriftfarbe (/c)
     schrift: "1",       // die Schrift im Chat, nur auf diesem Geraet (/schrift)
+    buehne: true,       // sitzt man auf einem Platz oder schaut man nur zu?
+    seit: 0,            // wann man hereingekommen ist — bestimmt die Sitzordnung
+    spricht: false,     // redet man gerade? (fuer den Ring ums Bild)
     thema: "",          // Thema des Raums (/t)
     haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
     abgeschlossen: false,
@@ -160,6 +163,7 @@ window.LiveChat = (function () {
       ichBild: zustand.ichBild,
       farbe: zustand.farbe,
       schrift: zustand.schrift,
+      buehne: zustand.buehne,
       thema: zustand.thema,
       haeuptling: zustand.haeuptling,
       abgeschlossen: zustand.abgeschlossen,
@@ -182,29 +186,53 @@ window.LiveChat = (function () {
      man sucht sich sonst bei jedem Dazukommen neu. Die anderen
      rücken in der Reihenfolge nach, in der sie gekommen sind,
      und behalten ihren Platz, solange sie da sind. */
+  /* GEWÜNSCHT: „Die Sitzplatzordnung soll nicht verändert werden. Wenn
+     jemand Neues in den Raum kommt, soll der Betreiber immer noch auf
+     Platz 1 sein — beziehungsweise derjenige, der den Raum überhaupt
+     zuerst betreten hat."
+
+     Bisher war Platz 1 immer DER EIGENE. Das heisst: auf jedem Gerät
+     sass jemand anderes vorn, und jedes Mal, wenn jemand dazukam,
+     verschob sich alles. Jetzt entscheidet allein, WANN jemand
+     hereingekommen ist — dieselbe Zahl auf allen Geräten, also
+     überall dieselbe Reihenfolge. Wer zuerst da war, sitzt auf
+     Platz 1 und bleibt dort, bis er geht.
+
+     Wer nur zuschaut (nicht auf der Bühne), belegt keinen Platz und
+     kann trotzdem mitschreiben. */
   function plaetzeBauen() {
-    var raus = [];
-    raus.push({
-      nummer: 1,
-      id: zustand.ichId,
-      name: zustand.ichName || "Du",
-      ich: true,
-      strom: zustand.eigenerStrom,
-      tonAn: zustand.tonAn,
-      bildAn: zustand.bildAn,
-      bild: zustand.ichBild,
-      leer: zustand.lage !== "drin"
-    });
-    var ids = Object.keys(zustand.leute).sort(function (a, b) {
-      return (zustand.leute[a].seit || 0) - (zustand.leute[b].seit || 0);
-    });
-    for (var i = 0; i < PLAETZE - 1; i++) {
-      var p = ids[i] ? zustand.leute[ids[i]] : null;
-      raus.push(p ? {
-        nummer: i + 2, id: p.id, name: p.name || "Gast", ich: false,
+    var wer = [];
+    if (zustand.lage === "drin" && zustand.buehne) {
+      wer.push({
+        id: zustand.ichId, seit: zustand.seit || Date.now(),
+        name: zustand.ichName || "Du", ich: true,
+        strom: zustand.eigenerStrom, tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+        bild: zustand.ichBild, spricht: Boolean(zustand.spricht)
+      });
+    }
+    Object.keys(zustand.leute).forEach(function (id) {
+      var p = zustand.leute[id];
+      if (p.buehne === false) return;          // schaut nur zu
+      wer.push({
+        id: p.id, seit: p.seit || 0, name: p.name || "Gast", ich: false,
         strom: p.strom || null, tonAn: p.tonAn !== false, bildAn: p.bildAn === true,
-        bild: p.bild || "", leer: false
-      } : { nummer: i + 2, id: "", name: "", ich: false, strom: null, bild: "", leer: true });
+        bild: p.bild || "", spricht: Boolean(p.spricht)
+      });
+    });
+    /* Nach Ankunftszeit, bei Gleichstand nach der Kennung — damit die
+       Reihenfolge auf allen Geräten wirklich dieselbe ist. */
+    wer.sort(function (a, b) {
+      return (a.seit || 0) - (b.seit || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    });
+
+    var raus = [];
+    for (var i = 0; i < PLAETZE; i++) {
+      var p = wer[i];
+      raus.push(p ? {
+        nummer: i + 1, id: p.id, name: p.name, ich: p.ich, strom: p.strom,
+        tonAn: p.tonAn, bildAn: p.bildAn, bild: p.bild, spricht: p.spricht, leer: false
+      } : { nummer: i + 1, id: "", name: "", ich: false, strom: null,
+            bild: "", spricht: false, leer: true });
     }
     return raus;
   }
@@ -713,13 +741,13 @@ window.LiveChat = (function () {
        Datenadressen bekommen deshalb ihr eigenes, grosszügiges Mass. */
     var istDaten = /^data:image\//i.test(roh);
     var a = roh.slice(0, istDaten ? BILD_HOECHST : 600);
-    if (a && !/^(https?:|data:image\/|emoji:)/i.test(a)) return false;
+    if (a && !/^(https?:|data:image\/|emoji:)/i.test(a) && !aufkleberPfad(a)) return false;
     zustand.ichBild = a;
     try {
       if (a) localStorage.setItem(BILD_SCHLUESSEL, a);
       else localStorage.removeItem(BILD_SCHLUESSEL);
     } catch (e) {}
-    if (a && !/^emoji:/i.test(a)) bildGemerkt(a);   // „zuletzt benutzt"
+    if (a && !/^emoji:/i.test(a) && !aufkleberPfad(a)) bildGemerkt(a);
     senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: a });
     melden();
     return true;
@@ -1057,12 +1085,14 @@ window.LiveChat = (function () {
       personMerken(n.von, n.name, n.bild);
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
+      personEintragen(n);
       /* Steht noch keine Leitung zu ihm, wird sie jetzt aufgebaut —
          so findet man auch jemanden, dessen Gruss man verpasst hat. */
       if (neuDa || !brueckeJe[n.von]) {
         if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
         else senden({ art: "auch-da", an: n.von, name: zustand.ichName,
-                      tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild });
+                      tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild,
+                      seit: zustand.seit, buehne: zustand.buehne });
       }
       melden();
       return;
@@ -1089,10 +1119,12 @@ window.LiveChat = (function () {
          kennt — der Gruss allein sagt ihm nur, dass wir da sind. */
       var warSchonDa = Boolean(zustand.leute[n.von]);
       personMerken(n.von, n.name, n.bild);
+      personEintragen(n);
       if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe,
                haeuptling: zustand.haeuptling, thema: zustand.thema,
+               seit: zustand.seit, buehne: zustand.buehne,
                abgeschlossen: zustand.abgeschlossen });
       /* DEN VERLAUF NACHREICHEN.
          ---------------------------------------------------------
@@ -1124,6 +1156,7 @@ window.LiveChat = (function () {
       if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
+      personEintragen(n);
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
       melden();
       return;
@@ -1205,12 +1238,20 @@ window.LiveChat = (function () {
       }
       return;
     }
+    if (n.art === "redet") {
+      if (zustand.leute[n.von]) {
+        zustand.leute[n.von].spricht = Boolean(n.spricht);
+        melden();
+      }
+      return;
+    }
     if (n.art === "stumm") {
       if (zustand.leute[n.von]) {
         if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
         if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
         if (typeof n.bild === "string") zustand.leute[n.von].bild = n.bild;
         if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
+        personEintragen(n);
         melden();
       }
       return;
@@ -1277,6 +1318,17 @@ window.LiveChat = (function () {
   }
   var verlaufSchonGeschickt = {};
 
+  /* Was ein Anwesenheitspaket ueber jemanden sagt: wann er gekommen
+     ist (bestimmt die Sitzordnung, ueberall gleich), ob er auf der
+     Buehne sitzt oder nur zuschaut, und ob er gerade redet. */
+  function personEintragen(n) {
+    var p = zustand.leute[n.von];
+    if (!p) return;
+    if (typeof n.seit === "number" && n.seit > 0) p.seit = n.seit;
+    if (typeof n.buehne === "boolean") p.buehne = n.buehne;
+    if (typeof n.spricht === "boolean") p.spricht = n.spricht;
+  }
+
   function personMerken(id, name, bild) {
     if (!zustand.leute[id]) {
       zustand.leute[id] = { id: id, name: name || "Gast", strom: null, seit: Date.now(),
@@ -1305,7 +1357,8 @@ window.LiveChat = (function () {
     pulsUhr = setInterval(function () {
       if (zustand.lage !== "drin") return;
       senden({ art: "puls", name: zustand.ichName, tonAn: zustand.tonAn,
-               bildAn: zustand.bildAn, bild: zustand.ichBild });
+               bildAn: zustand.bildAn, bild: zustand.ichBild,
+               seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht });
       var jetzt = Date.now(), weg = false;
       Object.keys(zustand.leute).forEach(function (id) {
         if (jetzt - (zustand.leute[id].gesehen || 0) > VERFALL_MS) {
@@ -1420,7 +1473,8 @@ window.LiveChat = (function () {
         } else {
           /* Die andere Seite ruft an — ihr sagen, dass sie es soll. */
           senden({ art: "hallo", name: zustand.ichName, tonAn: zustand.tonAn,
-                   bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe });
+                   bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe,
+                   seit: zustand.seit, buehne: zustand.buehne });
         }
       });
     }, WACHE_MS);
@@ -1563,6 +1617,9 @@ window.LiveChat = (function () {
     zustand.ichBild = o.bild || bildLaden();
     zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
     zustand.schrift = gemerkteSchrift();
+    zustand.buehne = o.buehne !== false;
+    zustand.seit = Date.now();
+    zustand.spricht = false;
     zustand.thema = "";
     zustand.haeuptling = false;
     zustand.abgeschlossen = false;
@@ -1608,6 +1665,7 @@ window.LiveChat = (function () {
       zustand.eigenerStrom = strom;
       zustand.bildAn = Boolean(strom && strom.getVideoTracks().length);
       zustand.tonAn = Boolean(strom && strom.getAudioTracks().length);
+      lautstaerkeVerfolgen(strom);        // wer redet, bekommt einen Ring
 
       var k = klient();
       kanal = k.channel("dma-raum-" + zustand.raum, {
@@ -1622,7 +1680,8 @@ window.LiveChat = (function () {
           if (stand === "SUBSCRIBED") {
             zustand.lage = "drin";
             senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
-                     tonAn: zustand.tonAn, bildAn: zustand.bildAn });
+                     tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+                     seit: zustand.seit, buehne: zustand.buehne });
             pulsStarten();
             wacheStarten();          // die Leitungen im Auge behalten
             postKanalOeffnen();
@@ -1690,6 +1749,7 @@ window.LiveChat = (function () {
       setTimeout(function () { try { alterKanal.unsubscribe(); } catch (e) {} }, 350);
     }
     Object.keys(brueckeJe).forEach(brueckeAbbauen);
+    lautstaerkeStoppen();
     if (zustand.eigenerStrom) {
       try { zustand.eigenerStrom.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
     }
@@ -1731,6 +1791,7 @@ window.LiveChat = (function () {
       zustand.eigenerStrom.addTrack(spur);
       zustand.tonAn = true;
       zustand.kameraFehler = "";
+      lautstaerkeVerfolgen(zustand.eigenerStrom);
       spurTauschen("ton", spur);
       senden({ art: "stumm", tonAn: true, bildAn: zustand.bildAn, bild: zustand.ichBild });
       melden();
@@ -1815,6 +1876,42 @@ window.LiveChat = (function () {
      Ein GIF wird NICHT verkleinert — es wird als Adresse verschickt.
      Das ist der Grund, warum es sich überhaupt bewegt: als Standbild
      durch die Verkleinerung wäre es keins mehr. */
+  /* =========================================================
+     DIE BEWEGTEN AUFKLEBER
+     ---------------------------------------------------------
+     GEMELDET: „Die GIPHY-Bilder gehen immer noch nicht auszusuchen.
+     Man kann irgendwas reinschreiben, aber ich möchte, dass man
+     anhand von Bildern irgendwas auswählt … es ist schon eine
+     Auswahl da."
+
+     Warum da nie etwas war: die Suche lief über den öffentlichen
+     Beta-Schlüssel von GIPHY. Den gibt es seit Jahren nur noch dem
+     Namen nach — er antwortet mit einem Fehler, und der Kasten blieb
+     leer, egal was man eingetippt hat.
+
+     Diese Auswahl gehört deshalb zum Haus. Es sind gezeichnete,
+     bewegte Bilder (SVG mit Animation), sie liegen im Ordner
+     sticker/, sie wiegen ein bis anderthalb Kilobyte und sie brauchen
+     niemanden um Erlaubnis. Verschickt wird nur der NAME —
+     „aufkleber:lachen" —, nicht das Bild; das Bild sucht sich die
+     Gegenseite aus derselben Liste. Steht dort ein Name, den es nicht
+     gibt, passiert nichts. Die GIPHY-Suche bleibt daneben bestehen
+     für alle, die einen eigenen Schlüssel eintragen.
+     ========================================================= */
+  var AUFKLEBER = ["lachen", "winken", "daumen", "herz", "klatschen", "denken",
+                   "schlafen", "weinen", "feuer", "stern", "fuchs", "kaffee",
+                   "party", "frage", "fertig", "blume", "regenbogen", "schnee"];
+  function aufkleberPfad(wert) {
+    var m = /^aufkleber:([a-z]+)$/.exec(String(wert || ""));
+    if (!m || AUFKLEBER.indexOf(m[1]) < 0) return "";
+    return "sticker/" + m[1] + ".svg";
+  }
+  function aufkleberSenden(name, text) {
+    var marke = "aufkleber:" + String(name || "").toLowerCase();
+    if (!aufkleberPfad(marke)) return false;
+    return bildSenden(marke, text);
+  }
+
   var BILD_KANTE = 640;
   var BILD_HOECHST = 140000;      // Zeichen der Datenadresse
 
@@ -2037,7 +2134,11 @@ window.LiveChat = (function () {
     { w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
     { w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <name>", was: "Luftballons steigen auf — zum Geburtstag" },
+    { w: "schnee",  kurz: "",     nutzt: "/schnee",             was: "Es schneit im ganzen Raum" },
+    { w: "regen",   kurz: "",     nutzt: "/regen",              was: "Es regnet im ganzen Raum" },
+    { w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
     { w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
+    { w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",       was: "Ein eigenes Bild hinter den Chat legen (/hintergrund weg nimmt es wieder)" },
     { w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
     { w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
@@ -2286,7 +2387,11 @@ window.LiveChat = (function () {
                      party: "konfetti", konfetty: "konfetti", feier: "konfetti",
                      confetti: "konfetti",
                      geburtstag: "ballon", ballons: "ballon", luftballon: "ballon",
+                     schneien: "schnee", flocken: "schnee",
+                     regnen: "regen", nieseln: "regen",
+                     raketen: "feuerwerk", silvester: "feuerwerk",
                      font: "schrift", schriftart: "schrift",
+                     bg: "hintergrund", tapete: "hintergrund",
                      help: "h", hilfe: "h", "?": "h",
                      part: "leave", exit: "leave", quit: "leave" };
       art = gleich[wort] || null;
@@ -2478,6 +2583,23 @@ window.LiveChat = (function () {
         { wirkung: "ballon" });
     }
 
+    /* ---- Wetter im Raum ----
+       GEWÜNSCHT: „Vielleicht kann man es auch schneien lassen oder ein
+       Feuerwerk veranstalten im Chat, dass man dementsprechende
+       Befehle hat, oder es regnet — Sachen, die man animiert über das
+       ganze Zeitfenster zeigen kann. Nur für die Leute, die neu
+       reinkommen, soll das nicht auslösen."
+
+       Das Letzte ist schon geregelt: alles, was vor dem Betreten
+       geschrieben wurde, gilt als Vergangenheit und bleibt still —
+       antippen spielt es trotzdem ab, aber nur für einen selbst. */
+    if (art === "schnee" || art === "regen" || art === "feuerwerk") {
+      var sagt = { schnee: " lässt es schneien  \u2744",
+                   regen:  " lässt es regnen  \u2614",
+                   feuerwerk: " zündet ein Feuerwerk  \ud83c\udf86" };
+      return anAlle("aktion", zustand.ichName + sagt[art], { wirkung: art });
+    }
+
     /* ---- Die Schrift im Chat ----
        GEWÜNSCHT: „Drei, vier Schriftarten zum Auswählen." Sie gilt nur
        auf DIESEM Gerät — es ist eine Lesehilfe, keine Nachricht an die
@@ -2494,6 +2616,18 @@ window.LiveChat = (function () {
       schriftMerken(welche);
       melden();
       return systemZeile("Die Schrift steht jetzt auf „" + SCHRIFTEN[welche].was + "“.");
+    }
+
+    /* ---- Der eigene Chathintergrund ----
+       Nur auf diesem Gerät — wie die Schrift eine Ansichtssache, keine
+       Nachricht an die anderen. Die Oberfläche macht die Arbeit (sie
+       hat den Dateiwähler), hier steht nur der Anstoss. */
+    if (art === "hintergrund") {
+      var weg = /^(weg|aus|raus|nichts|none)$/i.test(rest);
+      if (typeof zustand.hintergrundRuf === "function") zustand.hintergrundRuf(weg);
+      return systemZeile(weg
+        ? "Der eigene Hintergrund ist weg — es treiben wieder die Gesichter aus dem Raum dahinter."
+        : "Such ein Bild aus. Es bleibt nur auf diesem Gerät.");
     }
 
     /* ---- Farbe ---- */
@@ -2519,6 +2653,122 @@ window.LiveChat = (function () {
         + BEFEHLE.map(function (b) { return "  " + b.nutzt + "   " + b.was; }).join("\n"));
     }
     return false;
+  }
+
+  /* =========================================================
+     AUF DIE BÜHNE UND WIEDER HERUNTER
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Man soll einfach durch Klicken auf den freien Platz
+     selbstständig auf die Bühne kommen können, und es soll auch eine
+     Möglichkeit geben, wieder von der Bühne runterzugehen, wenn man
+     lieber nur im Chat bleiben will."
+
+     Wer nicht auf der Bühne ist, belegt keinen Platz und schickt
+     weder Ton noch Bild — er liest und schreibt mit. Für die anderen
+     ändert sich nur, dass ein Platz frei wird; die Reihenfolge der
+     übrigen bleibt, weil sie an der Ankunftszeit hängt und nicht an
+     der Platznummer.
+     ========================================================= */
+  function buehneSetzen(drauf) {
+    var soll = Boolean(drauf);
+    if (zustand.buehne === soll) return soll;
+    zustand.buehne = soll;
+    if (!soll) {
+      /* Herunter: Ton und Bild aus, damit auch wirklich nichts mehr
+         hinausgeht — nicht nur das Bildchen verschwindet. */
+      spurTauschen("ton", null);
+      spurTauschen("bild", null);
+      if (zustand.eigenerStrom) {
+        try {
+          zustand.eigenerStrom.getTracks().forEach(function (t) { t.enabled = false; });
+        } catch (e) {}
+      }
+      zustand.spricht = false;
+    } else {
+      /* Hinauf: man ist wieder da — mit der Ankunftszeit von JETZT,
+         damit man sich hinten anstellt und niemandem den Platz
+         wegnimmt, der die ganze Zeit oben sass. */
+      zustand.seit = Date.now();
+      if (zustand.eigenerStrom) {
+        try {
+          zustand.eigenerStrom.getTracks().forEach(function (t) {
+            t.enabled = t.kind === "audio" ? zustand.tonAn : zustand.bildAn;
+          });
+        } catch (e) {}
+        var ts = zustand.eigenerStrom.getAudioTracks()[0] || null;
+        var vs = zustand.eigenerStrom.getVideoTracks()[0] || null;
+        spurTauschen("ton", zustand.tonAn ? ts : null);
+        spurTauschen("bild", zustand.bildAn ? vs : null);
+      }
+    }
+    senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+             bild: zustand.ichBild, farbe: zustand.farbe,
+             seit: zustand.seit, buehne: zustand.buehne });
+    praesenzSetzen(true, zustand.ichName);
+    melden();
+    return zustand.buehne;
+  }
+
+  /* =========================================================
+     WER REDET GERADE?
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Wenn jemand spricht, dann soll eine Animation sein,
+     die für die anderen erkennbar zeigt, dass derjenige gerade
+     spricht — also um sein Profilbild herum."
+
+     Gemessen wird das im Gerät, aus dem eigenen Mikrofon: ein
+     Analysator liest zwanzigmal in der Sekunde die Lautstärke. Wird
+     eine Schwelle überschritten, gilt man als sprechend; nach einer
+     halben Sekunde Ruhe hört es wieder auf. Das Ergebnis — ein
+     einziges Ja/Nein — geht mit dem Pulsschlag hinaus. So braucht
+     niemand den fremden Ton zu analysieren, und es kostet fast
+     nichts.
+     ========================================================= */
+  var hoerRaum = null, hoerKnoten = null, hoerUhr = null, stillSeit = 0;
+  var LAUT_SCHWELLE = 0.028;
+  var STILL_MS = 550;
+
+  function lautstaerkeVerfolgen(strom) {
+    lautstaerkeStoppen();
+    if (!strom || !strom.getAudioTracks || !strom.getAudioTracks().length) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      hoerRaum = new AC();
+      var quelle = hoerRaum.createMediaStreamSource(strom);
+      hoerKnoten = hoerRaum.createAnalyser();
+      hoerKnoten.fftSize = 512;
+      hoerKnoten.smoothingTimeConstant = 0.6;
+      quelle.connect(hoerKnoten);
+      var werte = new Uint8Array(hoerKnoten.fftSize);
+      hoerUhr = setInterval(function () {
+        if (!hoerKnoten) return;
+        hoerKnoten.getByteTimeDomainData(werte);
+        var summe = 0;
+        for (var i = 0; i < werte.length; i++) {
+          var x = (werte[i] - 128) / 128;
+          summe += x * x;
+        }
+        var laut = Math.sqrt(summe / werte.length);
+        var redet = laut > LAUT_SCHWELLE && zustand.tonAn && zustand.buehne;
+        if (redet) stillSeit = 0;
+        else if (!stillSeit) stillSeit = Date.now();
+        var neu = redet || (stillSeit && Date.now() - stillSeit < STILL_MS);
+        neu = Boolean(neu);
+        if (neu !== zustand.spricht) {
+          zustand.spricht = neu;
+          senden({ art: "redet", spricht: neu });
+          melden();
+        }
+      }, 120);
+    } catch (e) { lautstaerkeStoppen(); }
+  }
+  function lautstaerkeStoppen() {
+    if (hoerUhr) { clearInterval(hoerUhr); hoerUhr = null; }
+    hoerKnoten = null;
+    if (hoerRaum) { try { hoerRaum.close(); } catch (e) {} hoerRaum = null; }
+    stillSeit = 0;
+    if (zustand.spricht) { zustand.spricht = false; senden({ art: "redet", spricht: false }); }
   }
 
   /* Den Raum wechseln — und dabei alles mitnehmen, was zu einem gehört. */
@@ -2676,9 +2926,14 @@ window.LiveChat = (function () {
     tonUmschalten: tonUmschalten,
     bildUmschalten: bildUmschalten,
     grossZeigen: grossZeigen,
+    buehneSetzen: buehneSetzen,
+    aufDerBuehne: function () { return zustand.buehne; },
     schreiben: schreiben,
     bildSetzen: bildSetzen,
     fotoSenden: fotoSenden,
+    aufkleber: function () { return AUFKLEBER.slice(); },
+    aufkleberPfad: aufkleberPfad,
+    aufkleberSenden: aufkleberSenden,
     bildVerkleinern: bildVerkleinern,
     gifSenden: gifSenden,
     eigenesBild: function () { return zustand.ichBild; },
@@ -2706,6 +2961,7 @@ window.LiveChat = (function () {
     /* Farbe, zuletzt benutzte Bilder, Archiv */
     gemerkteFarbe: gemerkteFarbe,
     gemerkteSchrift: gemerkteSchrift,
+    beiHintergrund: function (f) { zustand.hintergrundRuf = f; },
     schriftSetzen: function (x) {
       if (!SCHRIFTEN[x]) return false;
       zustand.schrift = x; schriftMerken(x); melden(); return true;

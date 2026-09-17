@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .tr { animation: faellt 1.6s ease-in infinite; }
+  @keyframes faellt { 0%{opacity:0;transform:translateY(0)} 18%{opacity:1} 100%{opacity:0;transform:translateY(42px)} }
+</style>
+<g class="kopf"><circle cx="60" cy="60" r="46" fill="#8fc4e8"/><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="3"/><circle cx="44" cy="50" r="6" fill="#2b2118"/><circle cx="76" cy="50" r="6" fill="#2b2118"/><path d="M40 82 Q60 66 80 82" stroke="#2b2118" stroke-width="4.5" fill="none" stroke-linecap="round"/><path class="tr" d="M44 60 q-5 9 0 13 q6 4 6-3 q0-5-6-10 z" fill="#4a9fd8"/></g>
+</svg>

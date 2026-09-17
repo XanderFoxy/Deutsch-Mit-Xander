@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .kopf { animation: wack 0.7s ease-in-out infinite; }
+  .mund { animation: mund 0.7s ease-in-out infinite; }
+  @keyframes wack { 0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(7deg)} }
+  @keyframes mund { 0%,100%{transform:scaleY(.6)} 50%{transform:scaleY(1.15)} }
+</style>
+<g class="kopf"><circle cx="60" cy="60" r="46" fill="#f7c948"/><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="3"/><circle cx="44" cy="50" r="6" fill="#2b2118"/><circle cx="76" cy="50" r="6" fill="#2b2118"/><path class="mund" d="M38 68 Q60 96 82 68 Z" fill="#8c3b2e"/><ellipse class="mund" cx="60" cy="70" rx="10" ry="4" fill="#e8848a"/></g>
+</svg>

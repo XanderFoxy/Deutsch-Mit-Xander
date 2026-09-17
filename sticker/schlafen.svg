@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .z1,.z2 { animation: steigt 2.1s ease-in-out infinite; }
+  .z2 { animation-delay: .7s }
+  @keyframes steigt { 0%{opacity:0;transform:translateY(6px) scale(.7)} 35%{opacity:1} 100%{opacity:0;transform:translateY(-16px) scale(1.15)} }
+</style>
+<g class="kopf"><circle cx="60" cy="60" r="46" fill="#b8a6d6"/><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="3"/><path d="M36 50 Q44 44 52 50" stroke="#2b2118" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M68 50 Q76 44 84 50" stroke="#2b2118" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="60" cy="76" rx="9" ry="7" fill="#6b4a3f"/><text class="z1" x="92" y="36" font-size="22" font-family="Georgia,serif" fill="#6b5a86" font-weight="bold">z</text><text class="z2" x="100" y="22" font-size="16" font-family="Georgia,serif" fill="#6b5a86" font-weight="bold">z</text></g>
+</svg>
