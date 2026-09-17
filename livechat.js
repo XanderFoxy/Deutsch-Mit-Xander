@@ -2882,6 +2882,8 @@ window.LiveChat = (function () {
     { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild <was>",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
     { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
     { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
+    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
+    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <name>",       was: "Jemandem einen Boxhandschuh verpassen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <name>", was: "Luftballons steigen auf — zum Geburtstag" },
     { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk <name>",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
@@ -2913,6 +2915,14 @@ window.LiveChat = (function () {
     { gr: "welt", w: "herbst",    kurz: "laub",   nutzt: "/herbst",    was: "Buntes Herbstlaub taumelt herunter" },
     { gr: "welt", w: "aquarium",  kurz: "fische", nutzt: "/aquarium",  was: "Fische ziehen durchs Bild, Luftblasen steigen auf" },
     { gr: "welt", w: "pinguine",  kurz: "pinguin", nutzt: "/pinguine", was: "Eine Reihe Pinguine watschelt durchs Bild" },
+    { gr: "welt", w: "fratze",    kurz: "daemon", nutzt: "/fratze",    was: "Eine dämonische Fratze taucht aus dem Dunkel auf" },
+    { gr: "welt", w: "blut",      kurz: "horror", nutzt: "/blut",      was: "Blut läuft von oben herunter" },
+    { gr: "welt", w: "schloss",   kurz: "hollow", nutzt: "/schloss",   was: "Das Tor geht auf, dahinter ein Schloss — und ein eiskalter Wind" },
+    { gr: "welt", w: "kitt",      kurz: "rider",  nutzt: "/kitt",      was: "Der schwarze Wagen kommt frontal an, mit dem roten Lauflicht" },
+    { gr: "welt", w: "dino",      kurz: "rex",    nutzt: "/dino",      was: "Ein Tyrannosaurus kommt näher und brüllt — der Boden bebt" },
+    { gr: "welt", w: "jalousie",  kurz: "rollo",  nutzt: "/jalousie",  was: "Die Jalousie kippt auf — dahinter eine andere Welt" },
+    { gr: "welt", w: "handdurch", kurz: "zombie", nutzt: "/handdurch", was: "Eine Hand reisst von unten durch den Chat und greift nach dir" },
+    { gr: "welt", w: "tore",      kurz: "riegel", nutzt: "/tore",      was: "Zwei Tore knallen zu und das Schloss legt sich vor" },
     { gr: "wetter", w: "wolken",    kurz: "wolke",  nutzt: "/wolken",    was: "Wolken ziehen über den Raum" },
     { gr: "welt", w: "glasbruch", kurz: "sprung", nutzt: "/glasbruch", was: "Das Display zerspringt — mit echten Rissen" },
     { gr: "tiere", w: "spinnen",   kurz: "spinne", nutzt: "/spinnen",   was: "Spinnen krabbeln über den Chat" },
@@ -2982,6 +2992,16 @@ window.LiveChat = (function () {
                 fische: "aquarium", fisch: "aquarium", wasser: "aquarium",
                 meer: "aquarium", unterwasser: "aquarium",
                 pinguin: "pinguine", antarktis: "pinguine",
+                daemon: "fratze", teufel: "fratze", gruselig: "fratze",
+                horror: "blut", blutig: "blut",
+                hollow: "schloss", burg: "schloss", gruft: "schloss",
+                rider: "kitt", knightrider: "kitt", pontiac: "kitt", firebird: "kitt",
+                rex: "dino", trex: "dino", saurier: "dino", tyrannosaurus: "dino",
+                rollo: "jalousie", lamellen: "jalousie",
+                zombie: "handdurch", griff: "handdurch",
+                riegel: "tore", abschliessen: "tore", zusperren: "tore",
+                lecken: "leck", schlecken: "leck", ablecken: "leck",
+                boxen: "box", schlag: "box", faust: "box",
                 wolke: "wolken", bewoelkt: "wolken",
                 sprung: "glasbruch", display: "glasbruch",
                 kaputt: "glasbruch", riss: "glasbruch",
@@ -3444,6 +3464,22 @@ window.LiveChat = (function () {
       var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " drückt " + (wen2 ? wen2.name : "alle"),
                     { wirkung: "umarmen", an: wen2 ? wen2.name : "" });
+    }
+    /* GEWÜNSCHT: „eine Animation, wo jemand abgeleckt wird, so dass man
+       nachher sagen kann: Alex leckt Amy ab" und „zwei Boxhandschuhe,
+       dass ich denjenigen boxen kann, der nicht nett war".
+       Beide gehen denselben Weg wie das Drücken: die Zeile sagt WER
+       WEN, und die Wirkung trägt den Namen mit, damit sie auf allen
+       Geräten am selben Platz spielt. */
+    if (art === "leck") {
+      var wen3 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      return anAlle("aktion", zustand.ichName + " leckt " + (wen3 ? wen3.name : "alle") + " ab",
+                    { wirkung: "lecken", an: wen3 ? wen3.name : "" });
+    }
+    if (art === "box") {
+      var wen4 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      return anAlle("aktion", zustand.ichName + " boxt " + (wen4 ? wen4.name : "alle"),
+                    { wirkung: "boxen", an: wen4 ? wen4.name : "" });
     }
     if (art === "herz") {
       var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;

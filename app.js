@@ -16511,6 +16511,328 @@
      selbst wieder ab.
      ================================================================= */
 
+  /* =================================================================
+     DIE GRUSELREIHE UND DIE ZWEI GEZIELTEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT, wörtlich: „so ne dämonische Fratze, die in der Mitte
+     auftaucht, die total gruselig das Bild noch mal so in Dunkelheit
+     taucht … Sleepy Hollow … wo Tore aufgehen zu so einem grossen
+     Schloss und dann so ein unangenehmer Wind hochkommt … eine
+     Animation, wo Blut von oben runterläuft … Knight Rider, wo KITT
+     angefahren kommt, dieser Pontiac Firebird mit diesen roten
+     Lauflichtern, wo der frontal ins Bild gefahren kommt … aus der
+     Ferne so ein Tyrannosaurus Rex, der auf uns zukommt und uns
+     anbrüllt … eine Jalousie, wo man dahinter eine andere Welt sieht
+     … eine Hand, die von unten durch die Buchstaben reisst und nach
+     dem Gesicht greift … und zwei Tore, die zuknallen und der Chat
+     wird abgeschlossen."
+
+     Dazu zwei GEZIELTE (sie meinen eine Person, wie die Umarmung):
+     „/me leckt Amy ab" und „/me boxt Amy".
+     ================================================================= */
+
+  /* --- Die dämonische Fratze ---------------------------------------
+     Der Schrecken liegt nicht in der Fratze, sondern im TIMING: erst
+     wird es dunkel, dann ist ganz kurz nichts, und DANN steht sie da.
+     Käme sie sofort, wäre sie nur ein Bild. */
+  function lcFratze() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcFratze")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcFratze";
+    schicht.className = "lc-fratze";
+    schicht.setAttribute("aria-hidden", "true");
+    schicht.innerHTML =
+      '<div class="lc-fratze-dunkel"></div>'
+      + '<svg class="lc-fratze-kopf" viewBox="-100 -110 200 220">'
+      + '<defs><radialGradient id="frglut" cx="0.5" cy="0.4" r="0.6">'
+      + '<stop offset="0" stop-color="#ff6b2b"/><stop offset="0.55" stop-color="#8c1206"/>'
+      + '<stop offset="1" stop-color="#2a0502"/></radialGradient>'
+      + '<filter id="frweich"><feGaussianBlur stdDeviation="2.5"/></filter></defs>'
+      /* Schädel: unten schmal, oben breit — das liest man als Raubtier */
+      + '<path d="M0 -96 C54 -96 84 -58 84 -14 C84 30 56 70 22 92 '
+      + 'C12 98 -12 98 -22 92 C-56 70 -84 30 -84 -14 C-84 -58 -54 -96 0 -96 Z"'
+      + ' fill="url(#frglut)"/>'
+      /* Hörner */
+      + '<path d="M-56 -70 C-84 -96 -96 -84 -92 -60 C-80 -72 -68 -74 -56 -70 Z" fill="#2a0502"/>'
+      + '<path d="M56 -70 C84 -96 96 -84 92 -60 C80 -72 68 -74 56 -70 Z" fill="#2a0502"/>'
+      /* Augen: schräg nach innen, das macht den Zorn */
+      + '<g class="lc-fratze-augen">'
+      + '<path d="M-58 -30 L-16 -12 L-22 8 L-60 -8 Z" fill="#ffe27a"/>'
+      + '<path d="M58 -30 L16 -12 L22 8 L60 -8 Z" fill="#ffe27a"/>'
+      + '<ellipse cx="-38" cy="-12" rx="7" ry="11" fill="#140200"/>'
+      + '<ellipse cx="38" cy="-12" rx="7" ry="11" fill="#140200"/>'
+      + "</g>"
+      /* Maul mit Zähnen: die Zähne sind ein Zickzack, kein Kamm */
+      + '<path d="M-52 34 C-24 26 24 26 52 34 C40 74 -40 74 -52 34 Z" fill="#180301"/>'
+      + '<path d="M-46 36 L-38 52 L-30 36 L-22 54 L-14 36 L-6 54 L2 36 L10 54 '
+      + 'L18 36 L26 52 L34 36 L42 50 L46 36 Z" fill="#f0e6d2"/>'
+      + '<path d="M-44 64 L-36 50 L-28 64 L-18 50 L-8 64 L2 50 L12 64 L22 50 '
+      + 'L32 64 L40 52 Z" fill="#f0e6d2" opacity="0.92"/>'
+      + "</svg>";
+    document.body.appendChild(schicht);
+    lcTonZu("fratze");
+    setTimeout(() => schicht.remove(), 5200);
+  }
+
+  /* --- Blut, das von oben herunterläuft ----------------------------
+     Ein Tropfen allein ist kein Blut. Es braucht drei Dinge: eine
+     Nase, die vorläuft, eine Spur, die stehen bleibt, und einen
+     Tropfen, der sich am Ende löst. */
+  function lcBlut() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcBlut")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcBlut";
+    schicht.className = "lc-blut";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 12 : 20;
+    for (let i = 0; i < wieviel; i++) {
+      const b = document.createElement("i");
+      b.style.left = (Math.random() * 99).toFixed(1) + "%";
+      b.style.width = (5 + Math.random() * 16).toFixed(0) + "px";
+      b.style.setProperty("--weit", (35 + Math.random() * 60).toFixed(0) + "vh");
+      b.style.animationDuration = (2.6 + Math.random() * 3.4).toFixed(2) + "s";
+      b.style.animationDelay = (Math.random() * 2.6).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    for (let i = 0; i < 10; i++) {
+      const t = document.createElement("b");
+      t.style.left = (Math.random() * 98).toFixed(1) + "%";
+      t.style.animationDuration = (1.6 + Math.random() * 1.6).toFixed(2) + "s";
+      t.style.animationDelay = (1.2 + Math.random() * 4).toFixed(2) + "s";
+      schicht.appendChild(t);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 11000);
+  }
+
+  /* --- Sleepy Hollow: das Tor geht auf, der Wind kommt --------------
+     Die Kälte macht nicht das Schloss, sondern der Wind: Nebelschwaden,
+     die AUS dem Tor herauskommen, auf den Betrachter zu. */
+  function lcTorSchloss() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcSchloss")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcSchloss";
+    schicht.className = "lc-schloss";
+    schicht.setAttribute("aria-hidden", "true");
+    let schwaden = "";
+    for (let i = 0; i < 14; i++) {
+      schwaden += '<span style="left:' + (8 + Math.random() * 84).toFixed(1)
+        + '%;animation-duration:' + (3.4 + Math.random() * 3).toFixed(2)
+        + 's;animation-delay:' + (1.1 + Math.random() * 3.4).toFixed(2)
+        + 's;width:' + (60 + Math.random() * 160).toFixed(0) + 'px"></span>';
+    }
+    schicht.innerHTML =
+      '<div class="lc-schloss-himmel"></div>'
+      + '<svg class="lc-schloss-bild" viewBox="0 0 320 200" preserveAspectRatio="xMidYMax slice">'
+      + '<circle cx="252" cy="36" r="20" fill="#e8e4cf" opacity="0.85"/>'
+      + '<circle cx="246" cy="31" r="20" fill="#0d1018" opacity="0.9"/>'
+      /* Das Schloss dahinter — Silhouette, keine Zeichnung. Mehr sieht
+         man in einer Nacht auch nicht. */
+      + '<path d="M60 130 L60 74 L70 74 L70 64 L80 64 L80 74 L90 74 L90 96 L112 96 '
+      + 'L112 54 L124 54 L124 42 L136 42 L136 54 L148 54 L148 96 L170 96 L170 66 '
+      + 'L180 66 L180 56 L190 56 L190 66 L200 66 L200 130 Z" fill="#0a0d14"/>'
+      + '<rect x="118" y="70" width="8" height="12" fill="#e8b04a" opacity="0.9"/>'
+      + '<rect x="134" y="70" width="8" height="12" fill="#e8b04a" opacity="0.7"/>'
+      + '<rect x="74" y="88" width="7" height="10" fill="#e8b04a" opacity="0.55"/>'
+      /* Die Mauer im Vordergrund mit dem Torbogen */
+      + '<path d="M0 200 L0 118 L104 118 L104 200 Z" fill="#141821"/>'
+      + '<path d="M320 200 L320 118 L216 118 L216 200 Z" fill="#141821"/>'
+      + '<path d="M104 200 L104 150 C104 122 216 122 216 150 L216 200 Z" fill="#05070b"/>'
+      + "</svg>"
+      /* Zwei Torfluegel, die nach aussen aufgehen */
+      + '<div class="lc-schloss-tor lc-schloss-tor-l"></div>'
+      + '<div class="lc-schloss-tor lc-schloss-tor-r"></div>'
+      + '<div class="lc-schloss-wind">' + schwaden + "</div>";
+    document.body.appendChild(schicht);
+    lcTonZu("wind");
+    setTimeout(() => schicht.remove(), 12000);
+  }
+
+  /* --- KITT: frontal, mit dem Lauflicht ----------------------------
+     Das Erkennungszeichen ist nicht das Auto, sondern der rote Balken,
+     der HIN UND HER wandert. Deshalb sind es echte Einzelkammern, die
+     nacheinander glühen — ein durchlaufender Verlauf sähe falsch aus. */
+  function lcKitt() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcKitt")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcKitt";
+    schicht.className = "lc-kitt";
+    schicht.setAttribute("aria-hidden", "true");
+    let kammern = "";
+    for (let i = 0; i < 9; i++) {
+      kammern += '<rect x="' + (-72 + i * 16) + '" y="-6" width="13" height="12" rx="2.5"'
+        + ' fill="#ff2a18" style="animation-delay:' + (i * 0.075).toFixed(3) + 's"/>';
+    }
+    schicht.innerHTML =
+      '<div class="lc-kitt-strasse"></div>'
+      + '<div class="lc-kitt-wagen">'
+      + '<svg viewBox="-110 -70 220 140" width="100%" height="100%">'
+      /* Von vorn gesehen: breit, flach, die Nase spitz nach unten */
+      + '<ellipse cx="0" cy="62" rx="104" ry="10" fill="#000" opacity="0.45"/>'
+      + '<path d="M-96 46 L-88 6 C-84 -12 -60 -24 0 -24 C60 -24 84 -12 88 6 '
+      + 'L96 46 C96 54 88 58 78 58 L-78 58 C-88 58 -96 54 -96 46 Z" fill="#14161a"/>'
+      /* Windschutzscheibe */
+      + '<path d="M-68 -24 C-62 -48 -40 -58 0 -58 C40 -58 62 -48 68 -24 Z" fill="#23282e"/>'
+      + '<path d="M-60 -27 C-55 -45 -36 -53 0 -53 C36 -53 55 -45 60 -27 Z" fill="#39434d"/>'
+      + '<path d="M-58 -27 C-50 -44 -34 -51 -8 -52 L-30 -27 Z" fill="#6d7c8a" opacity="0.5"/>'
+      /* Die Kühlerhaube mit den Lauflichtern */
+      + '<rect x="-80" y="-10" width="160" height="20" rx="6" fill="#0a0c0f"/>'
+      + '<g class="lc-kitt-scanner">' + kammern + "</g>"
+      /* Scheinwerfer */
+      + '<rect x="-86" y="18" width="30" height="13" rx="4" fill="#fdf3c8"/>'
+      + '<rect x="56" y="18" width="30" height="13" rx="4" fill="#fdf3c8"/>'
+      + '<rect x="-20" y="40" width="40" height="12" rx="3" fill="#2a2f35"/>'
+      + "</svg></div>";
+    document.body.appendChild(schicht);
+    lcTonZu("kitt");
+    setTimeout(() => schicht.remove(), 7000);
+  }
+
+  /* --- Der Tyrannosaurus, der näher kommt ---------------------------
+     Näherkommen heisst wachsen UND tiefer treten: jeder Schritt lässt
+     das ganze Bild zucken, und die Zuckung wird stärker. Ohne die
+     Erschütterung ist es nur ein Zoom. */
+  function lcDino() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcDino")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcDino";
+    schicht.className = "lc-dino";
+    schicht.setAttribute("aria-hidden", "true");
+    schicht.innerHTML =
+      '<div class="lc-dino-himmel"></div>'
+      + '<div class="lc-dino-tier">'
+      + '<svg viewBox="-90 -80 180 160" width="100%" height="100%">'
+      + '<ellipse cx="0" cy="74" rx="62" ry="8" fill="#000" opacity="0.4"/>'
+      /* Schwanz, Körper, Beine — eine Silhouette, aus der Ferne sieht
+         man nichts anderes */
+      + '<path d="M56 6 C74 -2 86 6 88 16 C76 14 66 18 56 24 Z" fill="#2d4230"/>'
+      + '<path d="M-42 -6 C-46 -30 -26 -44 -2 -44 C28 -44 48 -28 50 -4 '
+      + 'C52 20 36 36 8 38 C-22 40 -40 24 -42 -6 Z" fill="#3a5540"/>'
+      + '<path d="M-14 36 L-22 66 L-6 66 L-2 40 Z" fill="#2d4230"/>'
+      + '<path d="M18 36 L14 66 L30 66 L30 38 Z" fill="#334b37"/>'
+      /* Kopf mit offenem Maul */
+      + '<g class="lc-dino-kopf">'
+      + '<path d="M-38 -34 C-56 -40 -78 -34 -84 -24 C-78 -20 -60 -18 -42 -20 Z" fill="#3a5540"/>'
+      + '<path d="M-40 -18 C-58 -12 -76 -12 -82 -18 C-74 -6 -54 -2 -38 -6 Z" fill="#2d4230"/>'
+      + '<path d="M-82 -24 L-76 -22 L-70 -25 L-64 -22 L-58 -25 L-52 -22 L-46 -25" '
+      + 'stroke="#f2ead6" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+      + '<path d="M-80 -17 L-74 -19 L-68 -16 L-62 -19 L-56 -16 L-50 -19" '
+      + 'stroke="#f2ead6" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      + '<circle cx="-40" cy="-32" r="4.4" fill="#f4d23c"/>'
+      + '<circle cx="-41" cy="-32" r="2.1" fill="#160f05"/>'
+      + "</g></svg></div>";
+    document.body.appendChild(schicht);
+    document.documentElement.classList.add("lc-dino-beben");
+    lcTonZu("dino");
+    setTimeout(() => {
+      schicht.remove();
+      document.documentElement.classList.remove("lc-dino-beben");
+    }, 8000);
+  }
+
+  /* --- Die Jalousie: dahinter eine andere Welt ----------------------
+     Die Lamellen kippen auf, und in den Spalten sieht man einen
+     anderen Ort. Wichtig ist, dass sie NICHT alle zugleich kippen —
+     eine echte Jalousie läuft von oben nach unten durch. */
+  function lcJalousie() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcJalousie")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcJalousie";
+    schicht.className = "lc-jalousie";
+    schicht.setAttribute("aria-hidden", "true");
+    const lamellen = 16;
+    let html = '<div class="lc-jalousie-welt"></div>';
+    for (let i = 0; i < lamellen; i++) {
+      html += '<span style="top:' + (i * (100 / lamellen)).toFixed(3) + "%;height:"
+        + (100 / lamellen).toFixed(3) + "%;animation-delay:"
+        + (i * 0.07).toFixed(2) + 's"></span>';
+    }
+    schicht.innerHTML = html;
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 9000);
+  }
+
+  /* --- Die Hand, die durchbricht ------------------------------------
+     Sie kommt VON UNTEN durch den Chat und greift nach vorn. Der
+     Schrecken steckt in der Grösse: erst klein und weit weg, dann
+     plötzlich über dem ganzen Bild. */
+  function lcHand() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcHand")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcHand";
+    schicht.className = "lc-hand";
+    schicht.setAttribute("aria-hidden", "true");
+    schicht.innerHTML =
+      '<div class="lc-hand-riss"></div>'
+      + '<div class="lc-hand-arm">'
+      + '<svg viewBox="-60 -110 120 220" width="100%" height="100%">'
+      + '<defs><linearGradient id="hdhaut" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0" stop-color="#9aa38c"/><stop offset="0.6" stop-color="#6f7a63"/>'
+      + '<stop offset="1" stop-color="#48513f"/></linearGradient></defs>'
+      + '<path d="M-20 104 L-24 20 C-26 4 -18 -6 -6 -8 L10 -8 C22 -6 28 4 26 20 L22 104 Z"'
+      + ' fill="url(#hdhaut)"/>'
+      /* Handfläche und fünf Finger, die sich krümmen */
+      + '<path d="M-26 6 C-32 -14 -26 -30 -10 -34 C6 -38 24 -30 28 -12 '
+      + 'C32 4 26 18 10 22 C-6 26 -20 22 -26 6 Z" fill="url(#hdhaut)"/>'
+      + '<g class="lc-hand-finger">'
+      + '<path d="M-24 -18 C-34 -44 -30 -66 -22 -68 C-14 -70 -10 -50 -10 -24 Z" fill="#7b8670"/>'
+      + '<path d="M-8 -24 C-12 -56 -8 -82 0 -83 C8 -84 12 -58 10 -26 Z" fill="#87927b"/>'
+      + '<path d="M10 -24 C10 -54 16 -78 24 -76 C32 -74 30 -50 24 -20 Z" fill="#7b8670"/>'
+      + '<path d="M24 -16 C28 -40 36 -56 42 -52 C48 -48 42 -26 34 -8 Z" fill="#6f7a63"/>'
+      + '<path d="M-26 0 C-44 -10 -54 -24 -48 -30 C-42 -36 -28 -24 -20 -12 Z" fill="#6f7a63"/>'
+      + "</g>"
+      /* Nägel — ohne sie ist es ein Handschuh */
+      + '<path d="M-24 -64 q4 -6 6 0 q-3 4 -6 0 Z" fill="#c8b8a0"/>'
+      + '<path d="M-2 -80 q4 -6 6 0 q-3 4 -6 0 Z" fill="#c8b8a0"/>'
+      + '<path d="M20 -74 q4 -6 6 0 q-3 4 -6 0 Z" fill="#c8b8a0"/>'
+      + "</svg></div>";
+    document.body.appendChild(schicht);
+    lcTonZu("hand");
+    setTimeout(() => schicht.remove(), 6500);
+  }
+
+  /* --- Die Tore, die zuknallen --------------------------------------
+     Zwei schwere Flügel fahren von beiden Seiten herein, knallen in
+     der Mitte zusammen — und ERST DANN legt sich der Riegel vor. Die
+     Reihenfolge ist das Ganze: Knall, kurze Ruhe, Schloss. */
+  function lcTore() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcTore")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcTore";
+    schicht.className = "lc-tore";
+    schicht.setAttribute("aria-hidden", "true");
+    const fluegel = (seite) =>
+      '<div class="lc-tor-fluegel lc-tor-' + seite + '">'
+      + '<svg viewBox="0 0 100 200" preserveAspectRatio="none" width="100%" height="100%">'
+      + '<rect width="100" height="200" fill="#3a2a1c"/>'
+      + '<rect x="6" y="6" width="88" height="188" fill="#4a3624"/>'
+      + '<path d="M0 34 H100 M0 78 H100 M0 122 H100 M0 166 H100" stroke="#2b1d12" stroke-width="4"/>'
+      + '<circle cx="84" cy="100" r="7" fill="#8a7a52"/>'
+      + '<circle cx="16" cy="20" r="3" fill="#6b5c3c"/><circle cx="84" cy="20" r="3" fill="#6b5c3c"/>'
+      + '<circle cx="16" cy="180" r="3" fill="#6b5c3c"/><circle cx="84" cy="180" r="3" fill="#6b5c3c"/>'
+      + "</svg></div>";
+    schicht.innerHTML = fluegel("l") + fluegel("r")
+      + '<div class="lc-tor-riegel"></div>'
+      + '<svg class="lc-tor-schloss" viewBox="-40 -40 80 80">'
+      + '<path d="M-16 -4 V-18 C-16 -30 16 -30 16 -18 V-4" stroke="#c8b273" stroke-width="7"'
+      + ' fill="none" stroke-linecap="round"/>'
+      + '<rect x="-24" y="-6" width="48" height="40" rx="6" fill="#d8bf7c"/>'
+      + '<circle cx="0" cy="10" r="6" fill="#4a3624"/>'
+      + '<rect x="-3" y="10" width="6" height="14" rx="2" fill="#4a3624"/>'
+      + "</svg>";
+    document.body.appendChild(schicht);
+    lcTonZu("tore");
+    setTimeout(() => schicht.remove(), 6000);
+  }
+
   /* --- Seifenblasen: das einzige, was nach oben geht ---------------- */
   function lcSeifenblasen() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -18982,11 +19304,32 @@
     teile.forEach((teil) => {
       if (!teil) return;
       if (teil.charAt(0) === "\u0001") {
+        /* GEMELDET: „Wenn ich den /me-Befehl mache und ich habe bunte
+           Farbe, dann ist das in der Ausgabe weiss. Das soll aber auch
+           bunt sein … sonst kann ich die Leute nicht austricksen, die
+           auch bunt schreiben, um ihnen etwas in den Mund zu legen."
+
+           Er hatte recht, und es lag an einer einzigen Stelle:
+           lcNickFarbe() gibt bei „bunt" absichtlich LEER zurück (die
+           Farbe macht dann ja der Regenbogen, Buchstabe für
+           Buchstabe). Hier wurde aber nur „if (f)" gefragt — und bei
+           leer blieb der Name ohne Farbe, also weiss. Der Text
+           drumherum war längst bunt; nur der eingesetzte Name nicht.
+           Jetzt bekommt er denselben Regenbogen wie der Rest. */
         const b = document.createElement("b");
         b.className = "lc-eigenname";
-        b.textContent = teil.slice(1, -1);
-        const f = lcNickFarbe(n);
-        if (f) b.style.color = f;
+        if (n.farbe === "bunt") {
+          Array.from(teil.slice(1, -1)).forEach((z, i) => {
+            const t = document.createElement("span");
+            t.textContent = z;
+            if (z.trim()) t.style.color = LC_REGENBOGEN[i % LC_REGENBOGEN.length];
+            b.appendChild(t);
+          });
+        } else {
+          b.textContent = teil.slice(1, -1);
+          const f = lcNickFarbe(n);
+          if (f) b.style.color = f;
+        }
         ziel.appendChild(b);
         return;
       }
@@ -19074,6 +19417,17 @@
     herbst:  { ganzeSeite: true, wie: "herbst" },
     aquarium:{ ganzeSeite: true, wie: "aquarium" },
     pinguine:{ ganzeSeite: true, wie: "pinguine" },
+    /* Die Gruselreihe und die zwei Gezielten — auf Wunsch. */
+    fratze:  { ganzeSeite: true, wie: "fratze" },
+    blut:    { ganzeSeite: true, wie: "blut" },
+    schloss: { ganzeSeite: true, wie: "schloss" },
+    kitt:    { ganzeSeite: true, wie: "kitt" },
+    dino:    { ganzeSeite: true, wie: "dino" },
+    jalousie:{ ganzeSeite: true, wie: "jalousie" },
+    handdurch:{ ganzeSeite: true, wie: "handdurch" },
+    tore:    { ganzeSeite: true, wie: "tore" },
+    lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
+    boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   /* =================================================================
@@ -19211,6 +19565,135 @@
       + '</g></svg>';
   }
 
+  /* =================================================================
+     ZWEI WEITERE, DIE JEMANDEN MEINEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „eine Animation, wo jemand abgeleckt wird, so dass man
+     nachher sagen kann: Alex leckt Amy ab" und „zwei Boxhandschuhe,
+     dass ich den boxen kann, der nicht nett war".
+
+     Beide funktionieren wie die Umarmung: sie suchen den PLATZ der
+     genannten Person — auf allen Geräten denselben — und spielen
+     dort. Ein Effekt, der jemanden meint, muss man sehen können; ein
+     paar Zeichen über der Zeile meinen niemanden.
+
+     Findet sich die Person nicht, sagen sie NEIN (false), und
+     lcWirkung() macht weiter wie bei allen anderen. Lieber ein
+     kleiner Effekt als gar keiner.
+     ================================================================= */
+  function lcZielPlaetze(wen) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return [];
+    let ziele = [];
+    if (wen) {
+      const suche = String(wen).trim().toLowerCase();
+      ziele = [...karte.querySelectorAll(".lc-platz")].filter((pl) => {
+        const nm = pl.querySelector(".lc-platz-name");
+        return nm && nm.textContent.trim().toLowerCase() === suche;
+      });
+    }
+    if (!ziele.length) {
+      ziele = [...karte.querySelectorAll(".lc-platz")]
+        .filter((pl) => !pl.classList.contains("lc-platz-frei"));
+    }
+    return ziele;
+  }
+
+  /* --- Ablecken ----------------------------------------------------
+     Die Zunge fährt in einem BOGEN hoch, nicht gerade: so leckt man.
+     Danach bleibt eine feuchte Spur stehen, und die Person schüttelt
+     sich — ohne die Reaktion ist es nur eine Zunge im Bild. */
+  function lcLecken(wen) {
+    const ziele = lcZielPlaetze(wen);
+    if (!ziele.length) return false;
+    ziele.forEach((platz, i) => setTimeout(() => {
+      if (!platz.isConnected) return;
+      platz.classList.remove("lc-wird-geleckt");
+      void platz.offsetWidth;
+      platz.classList.add("lc-wird-geleckt");
+      const schicht = document.createElement("div");
+      schicht.className = "lc-leck";
+      schicht.setAttribute("aria-hidden", "true");
+      schicht.innerHTML =
+        '<svg class="lc-leck-zunge" viewBox="0 0 120 120">'
+        + '<defs><linearGradient id="lz' + i + '" x1="0" y1="1" x2="0" y2="0">'
+        + '<stop offset="0" stop-color="#c94f6d"/><stop offset="1" stop-color="#f08ba6"/>'
+        + "</linearGradient></defs>"
+        /* Breit unten, schmal oben, mit einer Rinne in der Mitte */
+        + '<path d="M44 118 C36 88 40 52 52 30 C58 18 70 18 76 30 '
+        + 'C88 52 92 88 84 118 Z" fill="url(#lz' + i + ')"/>'
+        + '<path d="M64 112 C60 86 62 54 64 34" stroke="#a83c56" stroke-width="2.6"'
+        + ' fill="none" opacity="0.55" stroke-linecap="round"/>'
+        + '<path d="M52 34 C58 22 70 22 76 34 C70 28 58 28 52 34 Z" fill="#f7b2c4"/>'
+        + "</svg>"
+        + '<span class="lc-leck-spur"></span>';
+      for (let t = 0; t < 5; t++) {
+        const tr = document.createElement("i");
+        tr.className = "lc-leck-tropfen";
+        tr.style.left = (24 + t * 13 + Math.random() * 6).toFixed(0) + "%";
+        tr.style.animationDelay = (0.5 + t * 0.09).toFixed(2) + "s";
+        schicht.appendChild(tr);
+      }
+      platz.appendChild(schicht);
+      setTimeout(() => {
+        schicht.remove();
+        platz.classList.remove("lc-wird-geleckt");
+      }, 2600);
+    }, i * 90));
+    lcTonZu("lecken");
+    return true;
+  }
+
+  /* --- Boxen -------------------------------------------------------
+     Ein Schlag ist nicht der Handschuh, sondern was er ANRICHTET: der
+     Platz wird weggeschlagen, kippt und kommt zurück. Und der
+     Handschuh kommt aus der TIEFE auf den Betrachter zu, deshalb
+     wächst er beim Zuschlagen. */
+  function lcBoxen(wen) {
+    const ziele = lcZielPlaetze(wen);
+    if (!ziele.length) return false;
+    ziele.forEach((platz, i) => setTimeout(() => {
+      if (!platz.isConnected) return;
+      platz.classList.remove("lc-wird-geboxt");
+      void platz.offsetWidth;
+      platz.classList.add("lc-wird-geboxt");
+      const schicht = document.createElement("div");
+      schicht.className = "lc-box";
+      schicht.setAttribute("aria-hidden", "true");
+      const handschuh = (seite) =>
+        '<svg class="lc-box-handschuh lc-box-' + seite + '" viewBox="0 0 120 120">'
+        + '<defs><radialGradient id="bx' + seite + i + '" cx="0.38" cy="0.32" r="0.75">'
+        + '<stop offset="0" stop-color="#e8504a"/><stop offset="1" stop-color="#96241f"/>'
+        + "</radialGradient></defs>"
+        /* Faust: rund, mit abgesetztem Daumen und einer Manschette */
+        + '<path d="M28 62 C28 34 48 20 68 20 C90 20 102 36 102 58 '
+        + 'C102 80 88 94 66 94 C44 94 28 84 28 62 Z" fill="url(#bx' + seite + i + ')"/>'
+        + '<path d="M30 70 C20 70 14 62 18 54 C22 46 32 46 34 54 Z" fill="#b8302a"/>'
+        + '<path d="M40 92 L96 92 L92 108 C90 114 46 114 44 108 Z" fill="#f0e2c8"/>'
+        + '<path d="M44 100 H92" stroke="#c9b48e" stroke-width="2.6"/>'
+        + '<path d="M50 34 C62 28 80 30 90 40" stroke="#f2837c" stroke-width="4"'
+        + ' fill="none" stroke-linecap="round" opacity="0.6"/>'
+        + "</svg>";
+      schicht.innerHTML = handschuh("l") + handschuh("r")
+        + '<span class="lc-box-treffer"></span>';
+      for (let t = 0; t < 6; t++) {
+        const st = document.createElement("i");
+        st.className = "lc-box-stern";
+        st.style.setProperty("--wo", (t * 60) + "deg");
+        st.style.animationDelay = (0.42 + t * 0.045).toFixed(2) + "s";
+        st.textContent = t % 2 ? "✦" : "✧";
+        schicht.appendChild(st);
+      }
+      platz.appendChild(schicht);
+      setTimeout(() => {
+        schicht.remove();
+        platz.classList.remove("lc-wird-geboxt");
+      }, 2400);
+    }, i * 90));
+    lcTonZu("boxen");
+    return true;
+  }
+
   function lcUmarmungAnPlatz(platz, verzug) {
     setTimeout(() => {
       if (!platz.isConnected) return;
@@ -19246,6 +19729,8 @@
     /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
     if (art === "umarmen" && lcUmarmung(nachricht && nachricht.an)) return;
+    if (art === "lecken" && lcLecken(nachricht && nachricht.an)) return;
+    if (art === "boxen" && lcBoxen(nachricht && nachricht.an)) return;
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
@@ -19285,6 +19770,14 @@
       else if (e.wie === "herbst") lcHerbst();
       else if (e.wie === "aquarium") lcAquarium();
       else if (e.wie === "pinguine") lcPinguine();
+      else if (e.wie === "fratze") lcFratze();
+      else if (e.wie === "blut") lcBlut();
+      else if (e.wie === "schloss") lcTorSchloss();
+      else if (e.wie === "kitt") lcKitt();
+      else if (e.wie === "dino") lcDino();
+      else if (e.wie === "jalousie") lcJalousie();
+      else if (e.wie === "handdurch") lcHand();
+      else if (e.wie === "tore") lcTore();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
       else lcKonfetti();
@@ -19604,6 +20097,8 @@
     bonbon: function (sorte, farbe) { return lcBonbonSvg(sorte, farbe); },
     auto: function () { return lcRennautoSvg(); },
     umarmung: function (wen) { return lcUmarmung(wen); },
+    lecken: function (wen) { return lcLecken(wen); },
+    boxen: function (wen) { return lcBoxen(wen); },
     ausspracheListe: function () { return buildDictionaryEntries().filter(wortZumUeben).filter(aussprUebbar); },
     ausspracheAlle: function () { return buildDictionaryEntries(); },
     geruest: function () { return livechatGeruestHtml(); },
