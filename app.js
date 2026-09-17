@@ -14152,6 +14152,38 @@
                 : "hineingehen"}</span>
             </button>`).join("")}
         </div>
+        ${(() => {
+          /* -----------------------------------------------------------
+             GEWÜNSCHT: „Und dann möchte ich wirklich, dass, wenn man in
+             einem anderen Raum ist, wo kein anderer drin ist, trotzdem
+             alle Personen angezeigt werden" — damit man flüstern oder
+             einladen kann, ohne erst zu suchen.
+
+             Die Räume oben zeigen schon, WER WO ist. Was gefehlt hat,
+             war das Handeln: hier steht jetzt jede Person einzeln, mit
+             ihrem Raum daneben und zwei Knöpfen. Flüstern geht über
+             Räume hinweg, Einladen holt sie zu einem herüber.
+             ----------------------------------------------------------- */
+          const alleLeute = [];
+          liste.forEach((r) => (r.leute || []).forEach((n) => {
+            if (n && n !== (l.ichName || "")) alleLeute.push({ name: n, raum: r.raum, raumName: r.name });
+          }));
+          if (!alleLeute.length) return "";
+          return `
+            <p class="eyebrow" style="margin-top:14px;">ALLE, DIE GERADE DA SIND</p>
+            <div class="lc-leuteliste">
+              ${alleLeute.map((p) => `
+                <div class="lc-leutezeile">
+                  <span class="lc-leutezeile-name">${escapeHtml(p.name)}</span>
+                  <span class="lc-leutezeile-wo">${p.raum === hier ? "hier bei dir" : escapeHtml(p.raumName)}</span>
+                  <button type="button" class="lc-leutezeile-knopf" data-lc-fluester="${escapeHtml(p.name)}"
+                          title="${escapeHtml(p.name)} etwas zuflüstern">💬</button>
+                  ${hier && p.raum !== hier ? `
+                    <button type="button" class="lc-leutezeile-knopf" data-lc-holen="${escapeHtml(p.name)}"
+                            title="${escapeHtml(p.name)} zu dir einladen">✉️</button>` : ""}
+                </div>`).join("")}
+            </div>`;
+        })()}
         <p class="empty-note" style="font-size:0.7rem; margin:10px 0 0;">
           Einen eigenen Raum machst du mit <code>/j Name</code> auf — gibt es ihn
           noch nicht, entsteht er in dem Augenblick.
@@ -14160,6 +14192,26 @@
           <button type="button" class="btn btn-coffee" id="lcRaumZu">Fertig</button>
         </div>`;
       ziel.querySelector("#lcRaumZu")?.addEventListener("click", zu);
+      /* Flüstern: das Fenster geht zu und der Befehl steht schon im
+         Feld — man muss nur noch schreiben, was man sagen will. */
+      ziel.querySelectorAll("[data-lc-fluester]").forEach((b) =>
+        b.addEventListener("click", () => {
+          zu();
+          const feld = document.getElementById("lcFeld");
+          if (!feld) return;
+          feld.value = "/w " + b.dataset.lcFluester + " ";
+          feld.focus();
+          try { feld.setSelectionRange(feld.value.length, feld.value.length); } catch (e) {}
+        }));
+      /* Einladen: /i schickt der Person eine Zeile in ihren Raum, mit
+         der sie herüberkommt. */
+      ziel.querySelectorAll("[data-lc-holen]").forEach((b) =>
+        b.addEventListener("click", () => {
+          const wen = b.dataset.lcHolen;
+          zu();
+          if (window.LiveChat && LiveChat.schreiben) LiveChat.schreiben("/i " + wen);
+          showToast("✉️ Einladung an " + wen + " ist raus.");
+        }));
       ziel.querySelectorAll("[data-lc-hin]").forEach((b) =>
         b.addEventListener("click", () => {
           const wohin = b.dataset.lcHin;
@@ -46799,6 +46851,27 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.getElementById("onlineJetztBtn")?.setAttribute("aria-expanded", "false");
   }
 
+  /* Die Einladung ins Postfach. Bewusst eine ganz normale Nachricht:
+     sie kommt auch an, wenn die Person gerade weggeht, sie bleibt
+     nachlesbar, und sie braucht keine neue Tabelle. Der Link ist der
+     echte Raumlink — antippen und man steht drin. */
+  async function lcEinladungSchicken(empfaengerId, empfaengerName) {
+    const stand = (window.LiveChat && LiveChat.stand && LiveChat.stand()) || {};
+    if (!stand.raum) throw new Error("Du bist gerade in keinem Raum.");
+    const wer = (Backend.currentProfile() || {}).name || "Jemand";
+    const wo = stand.raumName || "im Klassenzimmer";
+    const link = stand.link || (window.LiveChat && LiveChat.adresseMitRaum
+      ? LiveChat.adresseMitRaum(stand.raum) : location.href);
+    /* Die Marke [RAUM:…] macht aus der Nachricht im Postfach einen
+       KNOPF, der direkt hineinführt — wie es [BETA_JUMP:…] für die
+       Testbereiche schon tut. Der Link darunter bleibt trotzdem
+       stehen: er funktioniert auch dann, wenn jemand die Nachricht
+       weiterleitet oder an einem anderen Gerät öffnet. */
+    const text = `🎧 ${wer} lädt dich ein: komm doch ${wo.startsWith("im ") || wo.startsWith("in ") ? wo : "in " + wo} dazu.\n\n${link}\n\nEinfach antippen — Mikrofon und Kamera werden vorher gefragt.\n[RAUM:${stand.raum}]`;
+    await Backend.sendPrivateMessage(empfaengerId, text, null);
+    showToast("✉️ Einladung an " + (empfaengerName || "die Person") + " ist im Postfach.");
+  }
+
   function onlineKlappeZeichnen() {
     const knopf = document.getElementById("onlineJetztBtn");
     if (!knopf) return;
@@ -46809,17 +46882,36 @@ An einem Morgen lief ein kleiner Fuchs los…
       klappe.className = "online-klappe";
       document.body.appendChild(klappe);
     }
+    /* -----------------------------------------------------------------
+       GEWÜNSCHT: „Wenn jemand online ist — zum Beispiel ich sehe Emmi
+       online —, dann möchte ich sie aus dem Livestream heraus einfach
+       in den Raum einladen können, über ihr Postfach."
+
+       Genau das ist dieser zweite Knopf. Er steht nur da, wenn man
+       selbst gerade in einem Raum sitzt (sonst gäbe es nichts, wozu
+       man einladen könnte), und er schickt eine ganz normale Nachricht
+       ins Postfach — mit dem Link, der direkt in den Raum führt.
+       ----------------------------------------------------------------- */
+    const stand = (window.LiveChat && LiveChat.stand && LiveChat.stand()) || {};
+    const kannEinladen = Boolean(stand.raum && Backend.currentUser());
     klappe.innerHTML = `
       <p class="online-klappe-kopf">
         <span class="online-dot" aria-hidden="true"></span>
         ${onlineListe.length === 1 ? "Eine Person ist da" : onlineListe.length + " sind da"}
       </p>
       ${onlineListe.slice(0, 8).map((m) => `
-        <button type="button" class="online-klappe-zeile" data-online-profil="${m.id}">
-          ${tinyAvatar(m)}<span class="name">${escapeHtml(m.name || "")}</span>
-          ${landFlagge(m.origin) ? `<span class="online-flagge" title="${escapeHtml(m.origin)}" aria-label="${escapeHtml(m.origin)}">${landFlagge(m.origin)}</span>` : ""}
-          ${imKlassenzimmer(m.id) ? `<span class="online-kz" title="sitzt gerade im Klassenzimmer" aria-label="sitzt gerade im Klassenzimmer">🏫</span>` : ""}
-        </button>`).join("")}
+        <div class="online-klappe-reihe">
+          <button type="button" class="online-klappe-zeile" data-online-profil="${m.id}">
+            ${tinyAvatar(m)}<span class="name">${escapeHtml(m.name || "")}</span>
+            ${landFlagge(m.origin) ? `<span class="online-flagge" title="${escapeHtml(m.origin)}" aria-label="${escapeHtml(m.origin)}">${landFlagge(m.origin)}</span>` : ""}
+            ${imKlassenzimmer(m.id) ? `<span class="online-kz" title="sitzt gerade im Klassenzimmer" aria-label="sitzt gerade im Klassenzimmer">🏫</span>` : ""}
+          </button>
+          ${kannEinladen && !imKlassenzimmer(m.id) ? `
+            <button type="button" class="online-klappe-laden" data-online-laden="${m.id}"
+                    data-online-name="${escapeHtml(m.name || "")}"
+                    title="${escapeHtml(m.name || "")} in deinen Raum einladen"
+                    aria-label="${escapeHtml(m.name || "")} in deinen Raum einladen">✉️</button>` : ""}
+        </div>`).join("")}
       ${onlineListe.length > 8 ? `<p class="online-klappe-mehr">… und ${onlineListe.length - 8} weitere</p>` : ""}`;
     // Unter der Pille aufhängen, aber nie über den Bildschirmrand hinaus.
     const r = knopf.getBoundingClientRect();
@@ -46829,6 +46921,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     klappe.style.left = Math.round(Math.max(8, Math.min(r.right - breite, window.innerWidth - breite - 8))) + "px";
     klappe.querySelectorAll("[data-online-profil]").forEach((b) => {
       b.addEventListener("click", () => { onlineKlappeZu(); openProfileModal(b.dataset.onlineProfil); });
+    });
+    klappe.querySelectorAll("[data-online-laden]").forEach((b) => {
+      b.addEventListener("click", async (ev) => {
+        ev.stopPropagation();
+        b.disabled = true;
+        try {
+          await lcEinladungSchicken(b.dataset.onlineLaden, b.dataset.onlineName);
+          b.textContent = "✅";
+        } catch (e) {
+          b.disabled = false;
+          showToast("⚠️ " + (e && e.message ? e.message : "Die Einladung ging nicht raus."));
+        }
+      });
     });
     knopf.setAttribute("aria-expanded", "true");
   }
@@ -47737,11 +47842,18 @@ An einem Morgen lief ein kleiner Fuchs los…
             <p class="inbox-text">${shrinkInlineEmojis(m.body
               .replace(/^\[BETA_REQUEST\]\s*/, "")
               .replace(/\[FREIGABE:\w+:[\w-]+\]\s*/, "")
+              .replace(/\n?\[RAUM:[\w-]+\]/, "")
               .replace(/\n?\[BETA_JUMP:[\w-]+\]/, ""))
               .replace(/\[sticker:(\w+)\]/g, (_, key) => DMA_STICKERS[key] ? `<span style="display:inline-block; vertical-align:middle;">${DMA_STICKERS[key]}</span>` : "")
               .replace(/\[fox:([\w-]+)\]/g, (_, id) => { const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id); return fig ? `<img src="${fig.img}" alt="${fig.name}" style="width:44px; height:44px; object-fit:contain; vertical-align:middle; display:inline-block;" />` : ""; })
             }</p>
             ${m.image_url ? `<img src="${m.image_url}" style="max-width:200px; border-radius:10px; margin-top:4px; cursor:pointer;" data-modal-view-photo="${m.image_url}" />` : ""}
+            ${(() => {
+              /* Die Einladung in einen Raum: ein Knopf, der wirklich
+                 hineinführt, statt einer Adresse zum Abtippen. */
+              const raumMatch = m.body.match(/\[RAUM:([\w-]+)\]/);
+              return raumMatch ? `<button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem; margin-top:2px;" data-raum-rein="${raumMatch[1]}">🎧 In den Raum gehen</button>` : "";
+            })()}
             ${(() => {
               const jumpMatch = m.body.match(/\[BETA_JUMP:([\w-]+)\]/);
               return jumpMatch ? `<button type="button" class="btn btn-coffee" style="padding:6px 14px; font-size:0.8rem; margin-top:2px;" data-jump-to="${jumpMatch[1]}">🧪 Direkt hinspringen und mittesten</button>` : "";
@@ -47956,6 +48068,18 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
     area.querySelectorAll("[data-toggle-important]").forEach((btn) => {
       btn.addEventListener("click", () => { toggleImportantMsg(btn.dataset.toggleImportant); renderInbox(false, true); });
+    });
+    area.querySelectorAll("[data-raum-rein]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const raum = btn.dataset.raumRein;
+        document.querySelector('[data-target="view-learn"]')?.click();
+        document.querySelector('#learnSubnav [data-sub="sub-livechat"]')?.click();
+        /* Erst wenn der Bereich wirklich gezeichnet ist, hat das Tor
+           etwas, woran es sich aufhängen kann. */
+        setTimeout(() => {
+          if (typeof livechatHinein === "function") livechatHinein(raum);
+        }, 260);
+      });
     });
     area.querySelectorAll("[data-jump-to]").forEach((btn) => {
       btn.addEventListener("click", () => {

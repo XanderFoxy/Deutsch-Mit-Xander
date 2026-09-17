@@ -6338,3 +6338,67 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   0%, 100% { transform: translateX(0); }
   50%      { transform: translateX(3px); }
 }
+
+/* ===================================================================
+   EINLADEN AUS DER ONLINE-LISTE
+   -------------------------------------------------------------------
+   GEWÜNSCHT: „Wenn ich Emmi online sehe, möchte ich sie aus dem
+   Livestream heraus einfach in den Raum einladen können, über ihr
+   Postfach." Der Briefknopf steht rechts neben dem Namen und nur
+   dann, wenn man selbst in einem Raum sitzt.
+   =================================================================== */
+.online-klappe-reihe { display: flex; align-items: center; gap: 2px; }
+.online-klappe-reihe .online-klappe-zeile { flex: 1 1 auto; min-width: 0; }
+.online-klappe-laden {
+  flex: none;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  border-radius: 8px;
+  padding: 5px 7px;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.online-klappe-laden:hover { background: rgba(255, 255, 255, 0.2); }
+.online-klappe-laden:disabled { opacity: 0.75; cursor: default; }
+
+/* ===================================================================
+   ALLE, DIE GERADE DA SIND — raumübergreifend, mit Knöpfen
+   -------------------------------------------------------------------
+   GEWÜNSCHT: „Wenn man in einem anderen Raum ist, wo kein anderer
+   drin ist, sollen trotzdem alle Personen angezeigt werden."
+   Die Räume zeigten schon, wer wo sitzt. Was fehlte, war das
+   Handeln: flüstern und herüberholen, ohne erst zu suchen.
+   =================================================================== */
+.lc-leuteliste { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.lc-leutezeile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.lc-leutezeile-name { font-weight: 600; font-size: 0.82rem; }
+.lc-leutezeile-wo {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.7;
+  font-size: 0.72rem;
+}
+.lc-leutezeile-knopf {
+  flex: none;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  border-radius: 8px;
+  padding: 4px 7px;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.lc-leutezeile-knopf:hover { background: rgba(255, 255, 255, 0.22); }

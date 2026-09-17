@@ -224,6 +224,23 @@ window.LiveChat = (function () {
   /* Wer sitzt auf welchem Platz? Einmal vergeben, bleibt es so,
      solange die Person im Raum ist — siehe unten. */
   var platzJe = {};
+  /* =========================================================
+     PLAETZE TAUSCHEN
+     ---------------------------------------------------------
+     GEWUENSCHT: „Ausserdem moechte ich, dass wir Plaetze wechseln
+     koennen, spontan."
+
+     Die Nummern werden sonst in jedem Geraet selbst ausgerechnet
+     (nach Ankunftszeit) — das ergibt ueberall dieselbe Reihenfolge,
+     aber es laesst sich nicht verschieben. Ein Tausch muss deshalb
+     ALLEN gesagt werden, sonst sitzt derselbe Mensch auf jedem
+     Bildschirm woanders.
+
+     Darum diese zweite Tabelle: sie enthaelt nur, was ausdruecklich
+     getauscht wurde, sie wird bei jedem Tausch an alle geschickt,
+     und sie faehrt im Puls mit — damit auch der, der spaeter
+     dazukommt, dieselbe Sitzordnung sieht. */
+  var sitzTausch = {};
 
   function plaetzeBauen() {
     var wer = [];
@@ -262,6 +279,10 @@ window.LiveChat = (function () {
        hinterlässt eine Lücke; wer kommt, bekommt die niedrigste freie.
        So steht der, der zuerst da war, auf Platz 1 und bleibt dort —
        und niemand rutscht mehr herum, nur weil ein anderer aufsteht. */
+    /* Ein abgesprochener Tausch schlaegt die eigene Rechnung. */
+    wer.forEach(function (p) {
+      if (sitzTausch[p.id] != null) platzJe[p.id] = sitzTausch[p.id];
+    });
     var vergeben = {};
     wer.forEach(function (p) {
       if (platzJe[p.id] != null) vergeben[platzJe[p.id]] = p.id;
@@ -1350,6 +1371,19 @@ window.LiveChat = (function () {
     if (zustand.leute[n.von]) zustand.leute[n.von].gesehen = Date.now();
 
     if (n.art === "puls") {
+      /* Die Sitzordnung der anderen uebernehmen, aber nur, was man
+         nicht selbst schon weiss — sonst wuerde ein alter Puls einen
+         frischen Tausch wieder umwerfen. */
+      if (n.sitz && typeof n.sitz === "object") {
+        var neuerSitz = false;
+        Object.keys(n.sitz).forEach(function (id) {
+          if (sitzTausch[id] == null && typeof n.sitz[id] === "number") {
+            sitzTausch[id] = n.sitz[id];
+            neuerSitz = true;
+          }
+        });
+        if (neuerSitz) melden();
+      }
       var neuDa = !zustand.leute[n.von];
       personMerken(n.von, n.name, n.bild);
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
@@ -1445,6 +1479,19 @@ window.LiveChat = (function () {
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       personEintragen(n);
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
+      melden();
+      return;
+    }
+    if (n.art === "sitzplatz") {
+      /* Zwei Leute haben die Plaetze getauscht. Alle uebernehmen
+         dieselbe Zuordnung — sonst sitzt man auf jedem Bildschirm
+         woanders. */
+      if (n.ordnung && typeof n.ordnung === "object") {
+        Object.keys(n.ordnung).forEach(function (id) {
+          if (typeof n.ordnung[id] === "number") sitzTausch[id] = n.ordnung[id];
+        });
+      }
+      if (n.text) systemZeile(n.text);
       melden();
       return;
     }
@@ -1658,7 +1705,9 @@ window.LiveChat = (function () {
       if (zustand.lage !== "drin") return;
       senden({ art: "puls", name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild,
-               seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht });
+               seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht,
+               /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
+               sitz: sitzTausch });
       var jetzt = Date.now(), weg = false;
       Object.keys(zustand.leute).forEach(function (id) {
         if (jetzt - (zustand.leute[id].gesehen || 0) > VERFALL_MS) {
@@ -1920,6 +1969,7 @@ window.LiveChat = (function () {
     zustand.schrift = gemerkteSchrift();
     zustand.buehne = o.buehne !== false;
     platzJe = {};                 // neuer Raum, neue Sitzordnung
+    sitzTausch = {};              // und kein Tausch aus dem alten Raum
     zustand.seit = Date.now();
     zustand.spricht = false;
     zustand.thema = "";
@@ -2928,6 +2978,7 @@ window.LiveChat = (function () {
     { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild <was>",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
     { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
     { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
+    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch <name>",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
     { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
     { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <name>",       was: "Jemandem einen Boxhandschuh verpassen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
@@ -3054,6 +3105,8 @@ window.LiveChat = (function () {
                 zombie: "handdurch", griff: "handdurch",
                 riegel: "tore", abschliessen: "tore", zusperren: "tore",
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
+                platz: "tausch", platzwechsel: "tausch", umsetzen: "tausch",
+                sitzen: "tausch", setz: "tausch",
                 lecken: "leck", schlecken: "leck", ablecken: "leck",
                 boxen: "box", schlag: "box", faust: "box",
                 ente: "enten", entchen: "enten", kueken: "enten", entenmama: "enten",
@@ -3542,6 +3595,41 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " boxt " + (wen4 ? wen4.name : "alle"),
                     { wirkung: "boxen", an: wen4 ? wen4.name : "" });
     }
+    /* GEWUENSCHT: „Ausserdem moechte ich, dass wir Plaetze wechseln
+       koennen, spontan." /tausch <name> setzt einen selbst auf den
+       Platz der genannten Person und sie auf den eigenen. Ohne Namen
+       rueckt man einfach auf den naechsten freien Platz. */
+    if (art === "tausch") {
+      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+      var plaetzeJetzt = plaetzeBauen();
+      var meiner = null;
+      plaetzeJetzt.forEach(function (pl) { if (pl.id === zustand.ichId) meiner = pl; });
+      if (!meiner) return systemZeile("Du sitzt gerade auf keinem Platz — geh erst auf die Buehne.");
+      if (!rest) {
+        /* Ohne Namen: auf den naechsten freien Platz rutschen. */
+        var frei = null;
+        plaetzeJetzt.forEach(function (pl) { if (frei === null && pl.leer) frei = pl.nummer - 1; });
+        if (frei === null) return systemZeile("Es ist kein Platz frei.");
+        sitzTausch[zustand.ichId] = frei;
+        senden({ art: "sitzplatz", ordnung: sitzTausch,
+                 text: zustand.ichName + " setzt sich auf Platz " + (frei + 1) + "." });
+        systemZeile("Du sitzt jetzt auf Platz " + (frei + 1) + ".");
+        melden();
+        return;
+      }
+      var wenT = personNachName(rest);
+      if (!wenT) return systemZeile("Ich finde niemanden mit dem Namen \u201e" + rest + "\u201c im Raum.");
+      var seiner = null;
+      plaetzeJetzt.forEach(function (pl) { if (pl.id === wenT.id) seiner = pl; });
+      if (!seiner) return systemZeile(wenT.name + " sitzt gerade auf keinem Platz.");
+      sitzTausch[zustand.ichId] = seiner.nummer - 1;
+      sitzTausch[wenT.id] = meiner.nummer - 1;
+      var satz = zustand.ichName + " und " + wenT.name + " haben die Plaetze getauscht.";
+      senden({ art: "sitzplatz", ordnung: sitzTausch, text: satz });
+      systemZeile(satz);
+      melden();
+      return;
+    }
     if (art === "herz") {
       var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " schickt "
@@ -3979,6 +4067,22 @@ window.LiveChat = (function () {
       return Object.keys(WETTER).concat(["konfetti", "ballon", "geschenk",
                                          "lecken", "boxen", "herz", "umarmen"]);
     },
+    /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und
+       einen Tausch ausloesen, ohne dass ein echter Raum noetig ist. */
+    pruefSitz: function (lage) {
+      if (lage) {
+        zustand.lage = lage.lage || zustand.lage;
+        if (lage.ichId) zustand.ichId = lage.ichId;
+        if (lage.ichName) zustand.ichName = lage.ichName;
+        if (typeof lage.buehne === "boolean") zustand.buehne = lage.buehne;
+        if (lage.leute) zustand.leute = lage.leute;
+        if (lage.seit) zustand.seit = lage.seit;
+        if (lage.zuruecksetzen) { platzJe = {}; sitzTausch = {}; }
+      }
+      return { plaetze: plaetzeBauen(), tausch: sitzTausch };
+    },
+    pruefBefehl: function (text) { return befehlAusfuehren(text); },
+    pruefEmpfangen: function (n) { return empfangen(n); },
     raumSchluessel: raumSchluessel,
     gemerkterRaum: gemerkterRaum,
     raumAusAdresse: raumAusAdresse,
