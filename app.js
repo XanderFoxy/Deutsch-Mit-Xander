@@ -17732,7 +17732,32 @@
     schlitten: lcTonGlocke,
     weihnachten: lcTonGlocke,
     ostern: lcTonFroh,
+    /* Die Umarmung bekommt einen eigenen Ton: zwei weiche, tiefe
+       Töne, die ineinander laufen — kein Klingeln, kein Knall. Ein
+       heller Ton würde sie zu einem Ereignis machen; sie ist aber eine
+       Zuwendung. */
+    umarmen: lcTonWarm,
   };
+  /* Zwei weiche Sinustöne, der zweite eine Quinte darüber und leicht
+     versetzt — zusammen ergeben sie etwas, das nach Zuwendung klingt
+     und nicht nach Benachrichtigung. Lang eingeblendet, lang
+     ausgeblendet: ein harter Einsatz klingt wie ein Piepser. */
+  function lcTonWarm() {
+    lcTon((a, t0) => {
+      [220, 330].forEach((hz, i) => {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = "sine";
+        o.frequency.value = hz;
+        const t = t0 + i * 0.13;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.085, t + 0.16);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+        o.connect(g); g.connect(a.destination);
+        o.start(t); o.stop(t + 1);
+      });
+    });
+  }
+
   function lcTonZu(was) {
     const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
     if (f) f();
@@ -18225,9 +18250,108 @@
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
-  function lcWirkung(art, anZeile) {
+  /* =================================================================
+     EINE ECHTE UMARMUNG — GEZIELT AN EINE PERSON
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „/drückt alle …" und dann: das Drücken soll eine echte
+     Umarmungs-Animation sein, gezielt an eine Person.
+
+     Bisher stiegen nur ein paar Zeichen über der Chatzeile auf. Das
+     ist keine Umarmung, das ist Konfetti mit anderem Bild. Eine
+     Umarmung hat einen EMPFÄNGER, und man muss sehen, WEN es trifft.
+
+     Deshalb wird der Platz der genannten Person gesucht — auf allen
+     Geräten derselbe — und dort geschieht dreierlei zugleich, denn
+     genau daraus besteht eine Umarmung:
+
+       1. ZWEI ARME kommen von links und rechts herein und schliessen
+          sich. Sie sind nicht symmetrisch: der eine liegt über dem
+          anderen, wie bei echten Armen.
+       2. DER PLATZ WIRD GEDRÜCKT — kurz schmaler und ein wenig
+          zusammengesunken, dann zurück. Ohne dieses Nachgeben sieht es
+          aus, als lege jemand Arme UM eine Statue.
+       3. HERZEN steigen auf, aber wenige und klein. Viele Herzen sind
+          Kitsch; drei sind Zuneigung.
+
+     Steht die Person gerade nicht im Raum (oder gilt es „allen"),
+     werden alle besetzten Plätze zugleich gedrückt — „Xander drückt
+     alle" soll auch alle treffen.
+     ================================================================= */
+  function lcUmarmung(wen) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return;
+    let ziele = [];
+    if (wen) {
+      /* Den Platz an seiner Beschriftung finden. Gross- und
+         Kleinschreibung ist egal — wer „/drück emmy" tippt, meint
+         Emmy. */
+      const suche = String(wen).trim().toLowerCase();
+      ziele = [...karte.querySelectorAll(".lc-platz")].filter((pl) => {
+        const nm = pl.querySelector(".lc-platz-name");
+        return nm && nm.textContent.trim().toLowerCase() === suche;
+      });
+    }
+    if (!ziele.length) {
+      /* Niemand genannt oder nicht gefunden: dann gilt es allen, die
+         wirklich da sind. Leere Plätze zu drücken wäre albern. */
+      ziele = [...karte.querySelectorAll(".lc-platz")]
+        .filter((pl) => !pl.classList.contains("lc-platz-frei"));
+    }
+    /* Gar keine Plätze sichtbar — zum Beispiel, weil man den Chat von
+       aussen liest. Dann sagt diese Funktion NEIN, und lcWirkung()
+       macht weiter wie bisher: ein paar Zeichen über der Zeile. Besser
+       ein kleiner Effekt als gar keiner. */
+    if (!ziele.length) return false;
+    ziele.forEach((pl, i) => lcUmarmungAnPlatz(pl, i * 90));
+    lcTonZu("umarmen");
+    return true;
+  }
+
+  function lcUmarmungAnPlatz(platz, verzug) {
+    setTimeout(() => {
+      if (!platz.isConnected) return;
+      platz.classList.remove("lc-wird-gedrueckt");
+      void platz.offsetWidth;
+      platz.classList.add("lc-wird-gedrueckt");
+
+      const arme = document.createElement("div");
+      arme.className = "lc-arme";
+      arme.setAttribute("aria-hidden", "true");
+      /* Die Arme als zwei Bogen. Ein Arm ist kein Strich: er hat eine
+         Schulter, einen Bogen und eine Hand am Ende. */
+      arme.innerHTML =
+        '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-links">'
+        + '<path d="M-8 44 q26 4 40 26 q10 16 30 18" fill="none"'
+        + ' stroke="currentColor" stroke-width="11" stroke-linecap="round"/>'
+        + '<circle cx="64" cy="89" r="8.5" fill="currentColor"/></svg>'
+        + '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-rechts">'
+        + '<path d="M128 40 q-26 4 -40 26 q-10 16 -30 18" fill="none"'
+        + ' stroke="currentColor" stroke-width="11" stroke-linecap="round"/>'
+        + '<circle cx="56" cy="86" r="8.5" fill="currentColor"/></svg>';
+      platz.appendChild(arme);
+
+      /* Drei Herzen. Wenige und klein — viele wären Kitsch. */
+      for (let h = 0; h < 3; h++) {
+        const z = document.createElement("i");
+        z.className = "lc-drueckherz";
+        z.textContent = "❤";
+        z.style.left = (28 + h * 22) + "%";
+        z.style.animationDelay = (0.5 + h * 0.18).toFixed(2) + "s";
+        arme.appendChild(z);
+      }
+      setTimeout(() => {
+        arme.remove();
+        platz.classList.remove("lc-wird-gedrueckt");
+      }, 2400);
+    }, verzug || 0);
+  }
+
+  function lcWirkung(art, anZeile, nachricht) {
     const e = LC_EFFEKTE[art];
     if (!e) return;
+    /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
+       braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
+    if (art === "umarmen" && lcUmarmung(nachricht && nachricht.an)) return;
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
@@ -18507,6 +18631,7 @@
     orkan: function () { return lcOrkan(); },
     bonbon: function (sorte, farbe) { return lcBonbonSvg(sorte, farbe); },
     auto: function () { return lcRennautoSvg(); },
+    umarmung: function (wen) { return lcUmarmung(wen); },
   });
 
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
@@ -18873,14 +18998,14 @@
         z.classList.add("lc-zeile-wirkt");
         z.title = "Antippen — noch einmal";
         z.addEventListener("click", () => {
-          lcWirkung(eff, z);
+          lcWirkung(eff, z, n);
           z.classList.remove("lc-neu");
           void z.offsetWidth;
           z.classList.add("lc-neu");
         });
         /* NUR wenn die Zeile gerade eben entstanden ist. Alles Ältere
            ist Vergangenheit und wartet darauf, angetippt zu werden. */
-        if (!alt) lcWirkung(eff, z);
+        if (!alt) lcWirkung(eff, z, n);
       }
     });
     /* GEMELDET, mehrfach: „Wenn man in den Raum kommt, wird immer oben
@@ -18937,63 +19062,102 @@
      Es bekommt seinen EIGENEN Videostrom-Anschluss; das kleine
      Bild bleibt dabei bestehen. Zwei <video> am selben Strom sind
      erlaubt und kosten nichts. */
+  /* =================================================================
+     MEHRERE GESICHTER GROSS — RECHTS GESTAPELT
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Man soll sich rechts am Rand auch mehrere Videos
+     übereinander stapeln können."
+
+     Vorher ging genau EINES. Wer ein zweites gross machte, verlor das
+     erste — und in einem Gespräch zu dritt will man nun einmal beide
+     sehen, mit denen man redet.
+
+     Drei Entscheidungen stecken darin:
+
+       1. GESTAPELT, NICHT GESCHICHTET. Sie liegen untereinander am
+          rechten Rand, nicht übereinander. „Stapeln" heißt hier: man
+          sieht alle gleichzeitig.
+       2. SIE SCHRUMPFEN GEMEINSAM. Bei einem ist die Kachel gross,
+          bei vier sind alle kleiner. Würde jede ihre Grösse behalten,
+          liefe der Stapel unten aus dem Bild.
+       3. JEDE KACHEL SCHLIESST SICH SELBST. Ein Tipp darauf nimmt
+          genau diese heraus — dasselbe Antippen, das sie geholt hat.
+          Kein Schliessen-Knopf: „man klickt es einfach wieder an."
+
+     Der Strom wird an jedes <video> eigens gehängt. Mehrere <video>
+     am selben Strom sind erlaubt und kosten nichts — es wird nichts
+     zweimal übertragen.
+     ================================================================= */
   function livechatGrossAuffrischen(l) {
     const halter = document.getElementById("lcGross");
     if (!halter) return;
-    if (!l.gross) { halter.innerHTML = ""; return; }
-    const p = l.plaetze.find((x) => x.id === l.gross);
-    if (!p || p.leer) { halter.innerHTML = ""; return; }
+    const ids = (l.grosse && l.grosse.length ? l.grosse
+                 : (l.gross ? [l.gross] : []));
+    /* Nur die, die es wirklich noch gibt. */
+    const leute = ids.map((id) => l.plaetze.find((x) => x.id === id))
+                     .filter((p) => p && !p.leer);
+    if (!leute.length) { halter.innerHTML = ""; halter.dataset.fuer = ""; return; }
 
-    if (halter.dataset.fuer !== l.gross) {
-      halter.dataset.fuer = l.gross;
-      /* Der Name kommt vom anderen Gerät — er wird deshalb NICHT
-         in die Zeichenkette gesetzt, sondern danach über
-         textContent eingetragen. Dasselbe Argument wie beim
-         Chat: fremder Text ist Text, nie Auszeichnung. */
-      /* Der Kreis bleibt ein KREIS — nur größer.
-         GEMELDET: „wenn ich ein Bild großklicke, versucht er immer
-         noch eine Ellipse zu machen." Ursache war, dass das Bild
-         `position: absolute` trug und sich am nächsten positionierten
-         Vorfahren aufgehängt hat: dem Überzug über den ganzen
-         Bildschirm. Hier steht deshalb ein eigenes Element mit
-         eigener Klasse, das den Kreis genau ausfüllt — und der Kreis
-         hat eine feste, quadratische Größe. */
-      const hatVideoGross = Boolean(p.strom && p.strom.getVideoTracks
+    /* Neu bauen nur, wenn sich die Zusammenstellung ändert — sonst
+       reisst jedes Auffrischen die laufenden Videos ab. */
+    const marke = leute.map((p) => p.id).join("|");
+    if (halter.dataset.fuer === marke) return;
+    halter.dataset.fuer = marke;
+
+    const stapel = document.createElement("div");
+    stapel.className = "lc-gross-stapel";
+    stapel.dataset.wieviele = String(leute.length);
+    stapel.setAttribute("role", "group");
+    stapel.setAttribute("aria-label", "Teilnehmer gross");
+
+    leute.forEach((p) => {
+      const hatVideo = Boolean(p.strom && p.strom.getVideoTracks
         && p.strom.getVideoTracks().length && p.bildAn !== false);
-      const emojiGross = p.bild && p.bild.indexOf("emoji:") === 0 ? p.bild.slice(6) : "";
-      halter.innerHTML = `
-        <div class="lc-gross-hinter lc-gross-schwebt" id="lcGrossHinter" role="group" aria-label="Teilnehmer groß">
-          <div class="lc-gross-kasten">
-            <div class="lc-gross-kreis">
-              <video id="lcGrossVideo" autoplay playsinline ${p.ich ? "muted" : ""}
-                     style="${hatVideoGross ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
-              ${hatVideoGross ? "" : (emojiGross
-                ? `<span class="lc-gross-emoji">${escapeHtml(emojiGross)}</span>`
-                : p.bild
-                ? `<img class="lc-gross-bild" id="lcGrossAvatar" alt="">`
-                : `<span class="lc-initial" id="lcGrossInitial"></span>`)}
-            </div>
-            <span class="lc-gross-name" id="lcGrossName"></span>
+      const emoji = p.bild && p.bild.indexOf("emoji:") === 0 ? p.bild.slice(6) : "";
+      const kachel = document.createElement("div");
+      kachel.className = "lc-gross-hinter lc-gross-schwebt";
+      /* Der Kreis bleibt ein KREIS — nur grösser.
+         GEMELDET: „wenn ich ein Bild grossklicke, versucht er immer
+         noch eine Ellipse zu machen." Ursache war, dass das Bild
+         position: absolute trug und sich am nächsten positionierten
+         Vorfahren aufgehängt hat: dem Überzug über den ganzen
+         Bildschirm. Deshalb ein eigenes Element mit eigener Klasse,
+         das den Kreis genau ausfüllt — und der Kreis hat eine feste,
+         quadratische Grösse. */
+      kachel.innerHTML = `
+        <div class="lc-gross-kasten">
+          <div class="lc-gross-kreis">
+            <video autoplay playsinline ${p.ich ? "muted" : ""}
+                   style="${hatVideo ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
+            ${hatVideo ? "" : (emoji
+              ? `<span class="lc-gross-emoji">${escapeHtml(emoji)}</span>`
+              : p.bild
+              ? `<img class="lc-gross-bild" alt="">`
+              : `<span class="lc-initial"></span>`)}
           </div>
+          <span class="lc-gross-name"></span>
         </div>`;
-      const nameFeld = document.getElementById("lcGrossName");
+      /* Der Name kommt vom anderen Gerät — er wird deshalb NICHT in
+         die Zeichenkette gesetzt, sondern danach über textContent
+         eingetragen. Fremder Text ist Text, nie Auszeichnung. */
+      const nameFeld = kachel.querySelector(".lc-gross-name");
       if (nameFeld) nameFeld.textContent = p.ich ? p.name + " (du)" : p.name;
-      const initialFeld = document.getElementById("lcGrossInitial");
-      if (initialFeld) initialFeld.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
-      const avatarGross = document.getElementById("lcGrossAvatar");
-      if (avatarGross && p.bild) avatarGross.setAttribute("src", lcBildQuelle(p.bild));
-      const gv = document.getElementById("lcGrossVideo");
-      if (gv && p.strom) { gv.srcObject = p.strom; const sp = gv.play(); if (sp && sp.catch) sp.catch(() => {}); }
-      /* GEWÜNSCHT: „Kein Schliessen-Knopf — man klickt es einfach
-         wieder an." Also: ein Tipp auf das schwebende Bild selbst
-         macht es zu, und der Raum darunter bleibt die ganze Zeit
-         bedienbar; der Chat läuft weiter, ohne verdeckt zu sein. */
-      const schwebt = document.getElementById("lcGrossHinter");
-      if (schwebt) {
-        schwebt.title = "Antippen — wieder klein";
-        schwebt.addEventListener("click", () => LiveChat.grossZeigen(null));
+      const initial = kachel.querySelector(".lc-initial");
+      if (initial) initial.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
+      const avatar = kachel.querySelector(".lc-gross-bild");
+      if (avatar && p.bild) avatar.setAttribute("src", lcBildQuelle(p.bild));
+      const v = kachel.querySelector("video");
+      if (v && p.strom) {
+        v.srcObject = p.strom;
+        const sp = v.play(); if (sp && sp.catch) sp.catch(() => {});
       }
-    }
+      kachel.title = "Antippen — wieder klein";
+      kachel.addEventListener("click", () => LiveChat.grossZeigen(p.id));
+      stapel.appendChild(kachel);
+    });
+
+    halter.innerHTML = "";
+    halter.appendChild(stapel);
   }
 
   function renderLiveChat() {
@@ -19095,7 +19259,12 @@
           /* GEWÜNSCHT: „Wenn man den Kreis anklickt, geht er gross auf;
              klickt man ihn noch einmal an, geht er wieder zu — einen
              Schliessen-Knopf braucht es dafür nicht." */
-          LiveChat.grossZeigen(LiveChat.lage().gross === p.id ? null : p.id);
+          /* Ein Tipp holt den Platz in den Stapel oder nimmt ihn wieder
+             heraus — das entscheidet grossZeigen() selbst. Früher stand
+             hier ein Vergleich mit dem EINEN gross gezeigten Platz; mit
+             einem Stapel wäre das falsch, weil dann ein Tipp auf den
+             zweiten den ersten gelöscht hätte. */
+          LiveChat.grossZeigen(p.id);
         });
       });
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());

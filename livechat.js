@@ -154,7 +154,8 @@ window.LiveChat = (function () {
     kameraFehler: "",   // im Klartext, warum kein Bild/Ton da ist
     leute: {},          // id -> { id, name, strom, gesehen, tonAn, bildAn, bild }
     nachrichten: [],    // { id, von, name, text, zeit, eigen, bild }
-    gross: null         // id des gross gezeigten Platzes, oder null
+    gross: null,        // id des ERSTEN gross gezeigten Platzes (alt)
+    grosse: []          // alle gross gezeigten Kennungen, höchstens vier
   };
 
   var kanal = null;
@@ -190,6 +191,7 @@ window.LiveChat = (function () {
       hatKamera: Boolean(zustand.eigenerStrom && zustand.eigenerStrom.getVideoTracks().length),
       hatBild: Boolean(zustand.eigenerStrom),
       gross: zustand.gross,
+      grosse: zustand.grosse.slice(),
       plaetze: plaetzeBauen(),
       nachrichten: zustand.nachrichten.slice(),
       frei: PLAETZE - belegt(),
@@ -1415,7 +1417,7 @@ window.LiveChat = (function () {
       if (zustand.leute[n.von]) kommtUndGeht(zustand.leute[n.von].name || "Jemand", false);
       brueckeAbbauen(n.von);
       delete zustand.leute[n.von];
-      if (zustand.gross === n.von) zustand.gross = null;
+      grossVergessen(n.von);
       melden();
       return;
     }
@@ -1515,6 +1517,7 @@ window.LiveChat = (function () {
         zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
         art: n.chatArt || "text",
         wirkung: n.wirkung || "",
+        an: n.an || "",
         farbe: n.farbe || (zustand.leute[n.von] && zustand.leute[n.von].farbe) || "",
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : ""
       });
@@ -1554,7 +1557,7 @@ window.LiveChat = (function () {
       var paket = liste.map(function (n) {
         return { id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
                  bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
-                 wirkung: n.wirkung || "", zeit: n.zeit };
+                 wirkung: n.wirkung || "", an: n.an || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -1614,7 +1617,7 @@ window.LiveChat = (function () {
         if (jetzt - (zustand.leute[id].gesehen || 0) > VERFALL_MS) {
           brueckeAbbauen(id);
           delete zustand.leute[id];
-          if (zustand.gross === id) zustand.gross = null;
+          grossVergessen(id);
           weg = true;
         }
       });
@@ -2008,6 +2011,7 @@ window.LiveChat = (function () {
     zustand.eigenerStrom = null;
     zustand.leute = {};
     zustand.gross = null;
+    zustand.grosse = [];
     zustand.lage = "aus";
     melden();
   }
@@ -2113,7 +2117,43 @@ window.LiveChat = (function () {
       return false;
     });
   }
-  function grossZeigen(id) { zustand.gross = id || null; melden(); }
+  /* =========================================================
+     MEHRERE GROSS — GESTAPELT STATT EINZELN
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Man soll sich rechts am Rand auch mehrere Videos
+     übereinander stapeln koennen."
+
+     Vorher war „gross" EINE Kennung: wer ein zweites Gesicht
+     gross machte, verlor das erste. Jetzt ist es eine Liste,
+     und ein zweiter Tipp auf dieselbe Person nimmt sie wieder
+     heraus — dasselbe Antippen, das sie hereingeholt hat.
+
+     Höchstens vier. Nicht aus Sparsamkeit: auf einem Telefon
+     ist rechts Platz für vier Kacheln, und die fünfte würde
+     entweder unten herausragen oder alle so klein machen, dass
+     man niemanden mehr erkennt.
+
+     zustand.gross bleibt als ERSTE Kennung erhalten, damit
+     nichts bricht, was bisher danach gefragt hat. */
+  var GROSS_HOECHSTENS = 4;
+  function grossZeigen(id) {
+    if (!id) { zustand.grosse = []; zustand.gross = null; melden(); return; }
+    var i = zustand.grosse.indexOf(id);
+    if (i >= 0) zustand.grosse.splice(i, 1);
+    else {
+      zustand.grosse.push(id);
+      /* Die älteste weicht, nicht die neueste — wer gerade angetippt
+         hat, will das Ergebnis sehen. */
+      while (zustand.grosse.length > GROSS_HOECHSTENS) zustand.grosse.shift();
+    }
+    zustand.gross = zustand.grosse.length ? zustand.grosse[0] : null;
+    melden();
+  }
+  function grossVergessen(id) {
+    var i = zustand.grosse.indexOf(id);
+    if (i >= 0) zustand.grosse.splice(i, 1);
+    zustand.gross = zustand.grosse.length ? zustand.grosse[0] : null;
+  }
 
   /* --- Bilder und GIFs im Chat ----------------------------------
      GEWÜNSCHT: „dass man Bilder im Chat senden kann, Fotos — oder
@@ -2973,6 +3013,11 @@ window.LiveChat = (function () {
   function anAlle(art, text, zusatz) {
     var n = eigeneZeile(art, text);
     if (zusatz && zusatz.wirkung) n.wirkung = zusatz.wirkung;
+    /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
+       Sonst sieht der Absender die Umarmung nicht, die er gerade
+       verschickt hat: seine eigene Zeile entsteht nämlich hier und
+       nicht über den Empfang. */
+    if (zusatz && zusatz.an) n.an = zusatz.an;
     serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
                  bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe };
@@ -3255,10 +3300,16 @@ window.LiveChat = (function () {
       }
       return anAlle("emojibild", EMOJIBILD[welches2].split("%NAME%").join(zustand.ichName));
     }
+    /* GEWÜNSCHT: „/drückt alle …" und später: eine echte Umarmung,
+       gezielt an eine Person.
+
+       Der Name des Ziels fährt deshalb als „an" mit. Ohne ihn wüssten
+       die anderen Geräte nur, DASS gedrückt wurde, aber nicht WEN —
+       und könnten den richtigen Platz nicht in den Arm nehmen. */
     if (art === "drueck") {
       var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " drückt " + (wen2 ? wen2.name : "alle"),
-                    { wirkung: "umarmen" });
+                    { wirkung: "umarmen", an: wen2 ? wen2.name : "" });
     }
     if (art === "herz") {
       var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;

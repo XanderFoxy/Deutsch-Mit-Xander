@@ -4984,3 +4984,158 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 @media (prefers-reduced-motion: reduce) {
   .lc-o-wort { animation: none; }
 }
+
+/* =========================================================
+   DIE UMARMUNG
+   ---------------------------------------------------------
+   GEWÜNSCHT: Das Drücken soll eine echte Umarmungs-Animation
+   sein, gezielt an eine Person.
+
+   Drei Dinge zugleich, denn genau daraus besteht eine
+   Umarmung — fehlt eines, sieht man es sofort:
+     1. Zwei Arme schliessen sich, und zwar NICHT gleichzeitig.
+        Ein Mensch legt einen Arm zuerst; kommen beide im
+        selben Augenblick, sieht es aus wie eine Zange.
+     2. Der Platz gibt NACH. Ohne dieses Nachgeben legt man
+        Arme um eine Statue.
+     3. Ein paar Herzen. Drei, nicht dreissig.
+   ========================================================= */
+.lc-arme {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  color: #f0b49a;   /* Hautton — als currentColor an beide Arme */
+  overflow: visible;
+}
+.lc-arm {
+  position: absolute;
+  inset: -6% -14%;
+  width: 128%;
+  height: 112%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+.lc-arm-links {
+  transform-origin: 0% 40%;
+  animation: lcArmLinks 1.5s cubic-bezier(0.34, 1.3, 0.5, 1) both;
+}
+/* Der rechte Arm kommt eine Zehntelsekunde später und legt sich
+   damit ÜBER den linken — so macht es ein Mensch auch. */
+.lc-arm-rechts {
+  transform-origin: 100% 40%;
+  animation: lcArmRechts 1.5s cubic-bezier(0.34, 1.3, 0.5, 1) 0.12s both;
+}
+@keyframes lcArmLinks {
+  0%   { opacity: 0; transform: translateX(-46%) rotate(-16deg); }
+  22%  { opacity: 1; }
+  46%  { transform: translateX(0) rotate(0deg); }
+  70%  { transform: translateX(2%) rotate(1.5deg); }
+  100% { opacity: 1; transform: translateX(0) rotate(0deg); }
+}
+@keyframes lcArmRechts {
+  0%   { opacity: 0; transform: translateX(46%) rotate(16deg); }
+  22%  { opacity: 1; }
+  46%  { transform: translateX(0) rotate(0deg); }
+  70%  { transform: translateX(-2%) rotate(-1.5deg); }
+  100% { opacity: 1; transform: translateX(0) rotate(0deg); }
+}
+/* Das Nachgeben. Kurz schmaler und ein wenig zusammengesunken —
+   zwei Stösse, wie beim Drücken und Nachfassen. */
+.lc-platz.lc-wird-gedrueckt {
+  animation: lcGedrueckt 1.6s cubic-bezier(0.34, 1.2, 0.5, 1) 0.28s both;
+}
+@keyframes lcGedrueckt {
+  0%   { transform: none; }
+  26%  { transform: scale(0.9, 0.95) translateY(2px); }
+  44%  { transform: scale(0.96, 0.99); }
+  58%  { transform: scale(0.91, 0.96) translateY(2px); }
+  100% { transform: none; }
+}
+.lc-drueckherz {
+  position: absolute;
+  bottom: 16%;
+  font-size: 0.86rem;
+  font-style: normal;
+  color: #e05a72;
+  opacity: 0;
+  animation: lcDrueckHerz 1.5s ease-out both;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+@keyframes lcDrueckHerz {
+  0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+  22%  { opacity: 1; transform: translateY(-10px) scale(1); }
+  100% { opacity: 0; transform: translateY(-46px) scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-arm, .lc-platz.lc-wird-gedrueckt, .lc-drueckherz { animation: none; }
+  .lc-arme { display: none; }
+}
+
+/* =========================================================
+   MEHRERE GESICHTER GROSS — RECHTS GESTAPELT
+   ---------------------------------------------------------
+   GEWÜNSCHT: „Man soll sich rechts am Rand auch mehrere Videos
+   übereinander stapeln können."
+
+   Bisher war die eine vergrösserte Kachel selbst am Fenster
+   festgemacht. Mit mehreren geht das nicht: jede stünde an
+   derselben Stelle. Jetzt hängt der STAPEL am Fenster, und die
+   Kacheln liegen darin untereinander.
+
+   Der entscheidende Teil ist, dass sie GEMEINSAM schrumpfen.
+   Behielte jede ihre Grösse, liefe der Stapel bei drei oder
+   vier unten aus dem Bild — und man hätte genau das Gegenteil
+   von „mehrere sehen".
+   ========================================================= */
+.lc-gross-stapel {
+  position: fixed;
+  right: 14px;
+  bottom: 92px;
+  z-index: 880;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  /* Nie höher als der Platz zwischen Kopfleiste und Chatzeile. */
+  max-height: calc(100vh - 190px);
+}
+/* Die Kacheln sitzen jetzt IM Stapel, nicht mehr am Fenster. */
+.lc-gross-stapel .lc-gross-hinter.lc-gross-schwebt {
+  position: relative;
+  inset: auto;
+}
+/* Je mehr, desto kleiner. Die Zahl steht am Stapel (data-wieviele),
+   damit die Regel hier steht und nicht im Javascript verstreut. */
+.lc-gross-stapel[data-wieviele="2"] .lc-gross-schwebt .lc-gross-kreis {
+  width: min(30vw, 150px); height: min(30vw, 150px);
+}
+.lc-gross-stapel[data-wieviele="3"] .lc-gross-schwebt .lc-gross-kreis {
+  width: min(24vw, 116px); height: min(24vw, 116px);
+}
+.lc-gross-stapel[data-wieviele="4"] .lc-gross-schwebt .lc-gross-kreis {
+  width: min(20vw, 96px); height: min(20vw, 96px);
+}
+/* Ab zwei Kacheln ist für den Hinweistext kein Platz mehr, und er
+   wäre auch überflüssig: wer zwei gestapelt hat, weiss, wie es geht. */
+.lc-gross-stapel[data-wieviele="2"] .lc-gross-schwebt .lc-gross-kasten::after,
+.lc-gross-stapel[data-wieviele="3"] .lc-gross-schwebt .lc-gross-kasten::after,
+.lc-gross-stapel[data-wieviele="4"] .lc-gross-schwebt .lc-gross-kasten::after {
+  display: none;
+}
+.lc-gross-stapel[data-wieviele="3"] .lc-gross-schwebt .lc-gross-name,
+.lc-gross-stapel[data-wieviele="4"] .lc-gross-schwebt .lc-gross-name {
+  font-size: 0.72rem;
+}
+@media (max-width: 520px) {
+  .lc-gross-stapel { right: 8px; bottom: 82px; gap: 6px; }
+  .lc-gross-stapel[data-wieviele="2"] .lc-gross-schwebt .lc-gross-kreis {
+    width: 22vw; height: 22vw; max-width: 96px; max-height: 96px;
+  }
+  .lc-gross-stapel[data-wieviele="3"] .lc-gross-schwebt .lc-gross-kreis {
+    width: 18vw; height: 18vw; max-width: 78px; max-height: 78px;
+  }
+  .lc-gross-stapel[data-wieviele="4"] .lc-gross-schwebt .lc-gross-kreis {
+    width: 15vw; height: 15vw; max-width: 64px; max-height: 64px;
+  }
+  .lc-gross-stapel[data-wieviele="4"] .lc-gross-schwebt .lc-gross-name { display: none; }
+}

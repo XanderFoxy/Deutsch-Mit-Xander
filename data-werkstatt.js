@@ -49,28 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 23 — Orkan, Bonbons, Rennwagen",
+  stand: "Runde 24 — Umarmung und gestapelte Videos",
 
   inArbeit: [
-    { seit: "2026-09-17T16:37",
-      text: "Druecken als echte Umarmung, gezielt an eine Person." },
-    { seit: "2026-09-17T16:37",
-      text: "Mehrere Videos rechts stapeln." },
-    { seit: "2026-09-17T16:37",
-      text: "Wolkendecke ohne lange Luecken." },
-    { seit: "2026-09-17T16:37", nurBetreiber: true,
+    { seit: "2026-09-17T16:45",
+      text: "Wolkendecke ohne lange Luecken, Wetter realistisch abgedeckt." },
+    { seit: "2026-09-17T16:45", nurBetreiber: true,
       text: "Woerterbuch saeubern, dann A1 mit deiner Stimme." },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-17T16:37",
-      text: "Der Orkan wirbelt jetzt die einzelnen WOERTER durcheinander, nicht nur ganze Zeilen — und mitten im Sturm stehen sie wirklich an anderer Stelle im Satz. Danach steht der Satz wieder genau da." },
-    { seit: "2026-09-17T16:37",
-      text: "Bonbons neu: sechs Sorten statt drei (Wickelbonbon, Lolli, Zuckerstange, Karamell, Gummibaer, Schokolinse), alle mit Glanz, und sie taumeln beim Fallen statt sich flach zu drehen." },
-    { seit: "2026-09-17T16:37",
-      text: "Der Rennwagen ist ein richtiger Formelwagen geworden: zwei Fluegel mit Endscheiben, Seitenkasten mit Lufteinlass, offenes Cockpit mit Helm und Buegel, Airbox, Startnummer." },
-    { seit: "2026-09-17T16:37",
-      text: "Nachgemessen: alle 22 grossen Effekte liegen im sichtbaren Fenster, auch weit heruntergescrollt. Der kleine Effekt an einer Zeile wird jetzt in den sichtbaren Ausschnitt gezogen, wenn die Zeile weggescrollt ist." },
+    { seit: "2026-09-17T16:45",
+      text: "/drueck ist jetzt eine echte Umarmung und trifft GEZIELT die genannte Person: zwei Arme schliessen sich um ihren Platz, der Platz gibt nach, drei Herzen steigen auf. Ohne Namen gilt es allen Besetzten." },
+    { seit: "2026-09-17T16:45",
+      text: "Rechts am Rand lassen sich jetzt bis zu VIER Videos uebereinander stapeln. Sie schrumpfen gemeinsam, damit der Stapel nicht aus dem Bild laeuft; ein Tipp auf eine Kachel nimmt genau sie wieder heraus." },
   ],
 };
