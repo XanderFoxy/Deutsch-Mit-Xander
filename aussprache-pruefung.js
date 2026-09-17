@@ -924,12 +924,36 @@ window.AusspracheP = (function () {
       };
     }
 
+    /* WELCHE ZAHL OBEN STEHT — und warum nicht die von Azure.
+       GEMELDET: „Manchmal zeigt die Korrektur 33 %, obwohl man das
+       Wort ganz sauber ausspricht."
+
+       Azures „PronScore" ist ein Mischwert aus drei Dingen:
+       Genauigkeit der Laute, Flüssigkeit UND Vollständigkeit. Die
+       Vollständigkeit misst, ob ALLE Wörter des Vorlagetextes
+       gesprochen wurden. Im Trainer steht als Vorlage aber „der
+       Hund" — wer nur „Hund" sagt (und das tun die meisten), hat
+       eines von zwei Wörtern gesagt: Vollständigkeit 50 %. Damit
+       stürzt der Mischwert ab, obwohl jeder einzelne Laut sitzt.
+       Genau das war die 33 %.
+
+       Für eine Übung mit EINEM Wort ist die Genauigkeit die
+       ehrliche Zahl — sie misst, was die Übung übt. Vollständigkeit
+       und Flüssigkeit bleiben erhalten und stehen im Kleingedruckten;
+       fehlt ein Wort, sagt der Trainer das als Satz, statt die Note
+       heimlich zu drücken. */
+    var ausgelassen = woerter.filter(function (w) { return w.fehlerart === "Omission"; })
+                             .map(function (w) { return w.wort; });
+    var angezeigt = (genauigkeit !== null) ? genauigkeit : gesamt;
+
     return {
       quelle: "azure",
-      prozent: gesamt,
+      prozent: angezeigt,
+      azureGesamt: gesamt,
       genauigkeit: genauigkeit,
       fluessigkeit: fluessigkeit,
       vollstaendigkeit: vollstaendigkeit,
+      ausgelassen: ausgelassen,
       erkannt: hole(b, "Display") || hole(b, "Lexical") || "",
       ziel: zielText || "",
       woerter: woerter
@@ -1246,6 +1270,10 @@ window.AusspracheP = (function () {
     abstandZuProzent: abstandZuProzent,
     EICHUNG: EICHUNG,
     /* Stufe 1 — der gemeinsame Eingang */
+    /* Nach aussen gegeben, damit sich die Auswertung MESSEN laesst:
+       eine Azure-Antwort hinein, die angezeigte Zahl heraus. Ohne das
+       liesse sich nicht pruefen, ob die Note stimmt. */
+    azureAuswerten: azureAuswerten,
     stufe1Da: stufe1Da,
     stufe1Bewerten: stufe1Bewerten,
     /* Stufe 1 — zentral */

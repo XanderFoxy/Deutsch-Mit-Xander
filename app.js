@@ -11002,9 +11002,53 @@
      ------------------------------------------------------------ */
   let dictFilterText = "";
   let dictTippUhr = null;
+  /* --- Was im Wörterbuch NICHTS zu suchen hat -------------------
+     GEMELDET: „Im Wörterbuch steht totaler Unsinn. Da steht einmal aa
+     oder aaaa oder a-ähnlich und dann irgendwie gebeugte Wörter, was
+     wir eigentlich vermeiden wollen."
+
+     Zu Recht. Drei Sorten stehen dort, die niemand nachschlägt:
+
+     1. Gedehnte Laute als Wort: „aa", „aaaa", „eeee". Das sind
+        Schreibhilfen aus dem Aussprachekurs, keine Vokabeln.
+     2. Kunstwörter wie „a-ähnlich" — im Kurs als Beschreibung
+        entstanden, im Wörterbuch sinnlos.
+     3. Gebeugte Formen: „gewohnheitsmäßigen", „schlafend",
+        „abbauend". Ein Wörterbuch führt das Grundwort, nicht jede
+        seiner Formen.
+
+     Sie werden NICHT gelöscht, sondern nur aus dem Blättern
+     genommen. Wer eine gebeugte Form eintippt, WILL sie ja finden —
+     und findet sie weiterhin. Man sieht sie also nur dann, wenn man
+     sie ausdrücklich sucht. Der Schalter „auch Formen zeigen"
+     blendet sie zusätzlich wieder ein. */
+  const DICT_GEDEHNT = /^([a-zäöüß])\1{1,}$/i;      // aa, aaaa, eeee
+  const DICT_KUNSTWORT = /-ähnlich|-laut$|^[a-zäöüß]-/i;
+  function dictUnsinn(e) {
+    const w = String(e.word || "").trim();
+    const de = String(e.meaning || "");
+    if (DICT_GEDEHNT.test(w)) return true;
+    if (DICT_KUNSTWORT.test(w) && w.length <= 14) return true;
+    if (/so schreibt der Kurs/i.test(de)) return true;
+    return false;
+  }
+  function dictNurGrundformen(e) {
+    return !(e.abgeleitet || e.uebungsfehler || dictUnsinn(e));
+  }
+  let dictMitFormen = false;
+
   function dictGefiltert(filter) {
     const suchtext = String(filter || "").toLowerCase().trim();
     let list = buildDictionaryEntries();
+    if (!dictMitFormen) {
+      /* Beim Blättern nur Grundformen. Wird gesucht, bleiben die
+         Formen dabei — aber nur, wenn das Suchwort wirklich auf sie
+         passt, nicht bloss auf ihre Erklärung. */
+      list = suchtext
+        ? list.filter((e) => dictNurGrundformen(e)
+            || String(e.word || "").toLowerCase().includes(suchtext))
+        : list.filter(dictNurGrundformen);
+    }
     if (suchtext) {
       /* Reihenfolge der Treffer, und das ist der eigentliche Punkt:
          wer „au" eintippt, will Auge, Augenblick, Auster, außen sehen
@@ -11124,6 +11168,8 @@
       </select>
       <div class="wortschatz-leiste">
         <button type="button" class="trophy-chip ${dictNurGemerkte ? "selected" : ""}" id="dictNurGemerkt">★ Nur mein Wortschatz (${gemerkteGesamt})</button>
+        <button type="button" class="trophy-chip ${dictMitFormen ? "selected" : ""}" id="dictFormen"
+                title="Gebeugte Formen wie „schlafend“ oder „gewohnheitsmäßigen“ mit anzeigen">🔤 Auch Formen</button>
         ${gemerkteGesamt ? '<button type="button" class="trophy-chip" id="dictZurAussprache">🎤 Damit die Aussprache üben</button>' : ""}
         ${/* GEWÜNSCHT: „Es soll auch im Wörterbuch diese Schaltfläche sein,
               seine Wörter nicht nur mit dem Aussprache-Trainer zu
@@ -11192,6 +11238,14 @@
       dictNurGemerkte = !dictNurGemerkte;
       dictGezeigt = DICT_SEITE;
       renderDictionary(filter);
+    });
+    document.getElementById("dictFormen")?.addEventListener("click", () => {
+      dictMitFormen = !dictMitFormen;
+      dictGezeigt = DICT_SEITE;
+      renderDictionary(filter);
+      showToast(dictMitFormen
+        ? "🔤 Gebeugte Formen werden mit angezeigt"
+        : "Nur Grundformen — Formen findest du weiterhin über die Suche");
     });
     document.getElementById("dictZurAussprache")?.addEventListener("click", () => {
       ausspracheQuelle = "wortschatz";
@@ -11622,15 +11676,43 @@
 
     /* Das Kleingedruckte: dieselben Anzeigen wie vorher, nur
        zugeklappt. Weg ist nichts. */
-    const lupeInhalt = b.quelle === "azure" ? aussprLauteHtml(b)
+    const teilnoten = (b.quelle === "azure" && (b.azureGesamt !== null || b.vollstaendigkeit !== null))
+      ? `<p class="empty-note" style="font-size:0.72rem;">
+           Genauigkeit der Laute: <strong>${b.genauigkeit ?? "–"} %</strong> ·
+           Vollständigkeit: <strong>${b.vollstaendigkeit ?? "–"} %</strong> ·
+           Flüssigkeit: <strong>${b.fluessigkeit ?? "–"} %</strong> ·
+           Azures Mischwert: <strong>${b.azureGesamt ?? "–"} %</strong>.
+           Oben steht die Genauigkeit — sie misst, was diese Übung übt.
+         </p>` : "";
+    const lupeInhalt = b.quelle === "azure" ? (teilnoten + aussprLauteHtml(b))
                      : b.quelle === "frei" ? aussprProfilHtml(b.profil)
                      : (b.beste ? `<p class="empty-note">Verstanden wurde: „${b.beste}“</p>` : "");
+
+    /* Wurde ein Wort der Vorlage ausgelassen (meistens der Artikel),
+       wird das GESAGT — statt die Note heimlich zu drücken. */
+    const fehlt = (b.ausgelassen || []).filter(Boolean);
+    const fehltText = fehlt.length
+      ? `Du hast ${fehlt.length === 1 ? "„" + escapeHtml(fehlt[0]) + "“" : escapeHtml(fehlt.join("“, „"))} nicht mitgesprochen.
+         Die Note oben misst nur die Laute, die du gesagt hast — sag beim nächsten Mal das ganze Wort mit Artikel.`
+      : "";
 
     return `
       <div class="kreisel-block">
         ${Kreisel.html({ prozent: b.prozent, schwelle: schwelle, gross: true, beschriftung: woran })}
         <p class="kreisel-urteil">${Kreisel.urteil(b.prozent, schwelle)}</p>
         ${schlimmster ? `<p class="ausspr-hinweis-laut">${schlimmster}</p>` : ""}
+        ${fehltText ? `<p class="empty-note" style="text-align:center; font-size:0.74rem;">🗣️ ${fehltText}</p>` : ""}
+        <div class="quiz-actions" style="justify-content:center; margin-top:8px;">
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 So klingt es richtig</button>
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="eigene" ${aussprLetzteEigene ? "" : "disabled"}>🎧 So hast du es gesagt</button>
+        </div>
+        <p class="empty-note" style="text-align:center; font-size:0.7rem;">
+          ${b.quelle === "azure"
+            ? "Gemessen mit der Laut-Bewertung von Azure. Vorgesprochen wird mit derselben neuronalen Stimme."
+            : b.quelle === "frei"
+            ? "Verglichen mit der Originalaufnahme — im Gerät gerechnet, ohne Netz."
+            : "Gemessen mit der Spracherkennung deines Geräts: ob das Wort ankommt, nicht wie sauber die Laute sind."}
+        </p>
         ${b.hinweis ? `<p class="empty-note" style="text-align:center; font-size:0.72rem;">${b.hinweis}</p>` : ""}
         ${geschafft && aussprAutoAn()
           ? `<div class="ausspr-weiterbalken" style="--weiter-dauer:1700ms;"><span></span></div>`
@@ -33051,7 +33133,22 @@
      Also wird guteStimme() nur dort aufgerufen, wo es gewollt ist:
        * aussprache: der Trainer (über AusspracheP.zentralVorlesen)
        * bilderwelt: bwSprich()
-     Überall sonst spricht das Gerät, wie vorher. */
+     Überall sonst spricht das Gerät, wie vorher.
+
+     EINE AUSNAHME, und die ist keine Aufweichung:
+     „Meine Freundin aus Ägypten kann keinen Ton hören, auch am
+      Laptop nicht — und die Bilderwelten auch nicht."
+
+     Auf vielen Geräten ausserhalb Europas ist ÜBERHAUPT KEINE
+     deutsche Stimme installiert. Dort passiert dann nichts: kein
+     Ton, keine Meldung. Für genau diesen Fall ist guteStimme() als
+     NOTSTIMME angemeldet. Sie springt nur ein, wenn das Gerät
+     nachweislich nicht gesprochen hat — wer eine deutsche Stimme
+     hat, löst sie nie aus. Das Kontingent belastet also nur, wer
+     sonst gar nichts hören würde, und das ist es wert. */
+  if (Core.notstimmeAnmelden) {
+    Core.notstimmeAnmelden((text, sprache) => guteStimme(text, sprache));
+  }
 
   /* Für Abläufe, die auf das ENDE warten müssen („alle nacheinander
      vorlesen"). Core.speak() kehrt sofort zurück; hier wird gewartet. */

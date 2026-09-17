@@ -69,7 +69,80 @@ const Core = (function () {
   let bessereStimme = null;
   function stimmeAnmelden(f) { bessereStimme = typeof f === "function" ? f : null; }
 
+  /* --- DIE NOTSTIMME ---------------------------------------------
+     GEMELDET: „Sie kann keinen Ton hören, auch am Laptop nicht. Und
+     ich hatte das auch schon, dass ich beim Wörterbuch manchmal
+     keinen Ton höre."
+
+     Die Stimme kommt normalerweise vom GERÄT. Das ist gratis und
+     schnell — aber sie ist nicht überall da. Auf vielen Telefonen
+     ausserhalb Europas ist keine deutsche Stimme installiert, und
+     dann passiert schlicht nichts: kein Ton, keine Meldung, nichts.
+
+     Deshalb gibt es jetzt eine ZWEITE Weiche. Sie wird NUR dann
+     benutzt, wenn das Gerät nachweislich nicht gesprochen hat —
+     nicht bei jedem Wort. So kostet sie nichts bei denen, deren
+     Gerät sprechen kann, und rettet die, deren Gerät es nicht kann. */
+  let notStimme = null;
+  function notstimmeAnmelden(f) { notStimme = typeof f === "function" ? f : null; }
+
+  /* --- Stimmen kommen verzögert ----------------------------------
+     getVoices() liefert beim ersten Aufruf fast überall eine LEERE
+     Liste; erst danach meldet der Browser „voiceschanged". Wer
+     sofort danach fragt, bekommt nichts, nimmt die Standardstimme —
+     und wenn es für die Sprache gar keine gibt, bleibt es still.
+     Genau das ist der Grund für „manchmal kommt kein Ton". */
+  let stimmenVersprechen = null;
+  function stimmenHolen() {
+    if (stimmenVersprechen) return stimmenVersprechen;
+    stimmenVersprechen = new Promise((fertig) => {
+      if (!("speechSynthesis" in window)) { fertig([]); return; }
+      const da = window.speechSynthesis.getVoices();
+      if (da && da.length) { fertig(da); return; }
+      let erledigt = false;
+      const nimm = () => {
+        if (erledigt) return;
+        erledigt = true;
+        fertig(window.speechSynthesis.getVoices() || []);
+      };
+      try { window.speechSynthesis.addEventListener("voiceschanged", nimm, { once: true }); }
+      catch (e) { window.speechSynthesis.onvoiceschanged = nimm; }
+      /* Manche Browser melden „voiceschanged" nie. Nach einer Sekunde
+         wird deshalb genommen, was da ist — notfalls nichts. */
+      setTimeout(nimm, 1000);
+    });
+    return stimmenVersprechen;
+  }
+
+  /* --- Die Sprachausgabe einmal „anstossen" -----------------------
+     Safari und iOS lassen speechSynthesis nur laufen, wenn sie
+     wenigstens einmal aus einer echten Berührung heraus gestartet
+     wurde. Darum wird beim ersten Antippen irgendwo auf der Seite
+     ein leerer Satz gesprochen. Man hört nichts; danach geht es. */
+  let angestossen = false;
+  function anstossen() {
+    if (angestossen || !("speechSynthesis" in window)) return;
+    angestossen = true;
+    try {
+      const leer = new SpeechSynthesisUtterance(" ");
+      leer.volume = 0;
+      window.speechSynthesis.speak(leer);
+    } catch (e) {}
+    stimmenHolen();
+  }
+  if (typeof document !== "undefined") {
+    ["pointerdown", "touchstart", "keydown"].forEach((art) => {
+      document.addEventListener(art, anstossen, { once: true, capture: true, passive: true });
+    });
+  }
+
+  /* Was das Gerät kann — für die Oberfläche, damit sie es sagen kann,
+     statt den Nutzer raten zu lassen. */
+  let letzteLage = { geprueft: false, stimmen: 0, deutsch: 0 };
+  function stimmeLage() { return letzteLage; }
+
   function speak(text, sprache) {
+    anstossen();
     if (bessereStimme) {
       try {
         const versuch = bessereStimme(text, sprache);
@@ -84,21 +157,63 @@ const Core = (function () {
     geraetSpricht(text, sprache);
   }
 
+  /* Wenn das Gerät nicht sprechen konnte: die Notstimme. */
+  function notfalls(text, sprache) {
+    if (!notStimme) return;
+    try { Promise.resolve(notStimme(text, sprache)).catch(() => {}); } catch (e) {}
+  }
+
   function geraetSpricht(text, sprache) {
-    if (!("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window)) { notfalls(text, sprache); return; }
     const kurz = (sprache || "de").slice(0, 2).toLowerCase();
     const voll = { de: "de-DE", it: "it-IT", en: "en-GB", fr: "fr-FR", es: "es-ES" }[kurz] || "de-DE";
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = voll;
-    utter.rate = 0.92;
-    // Viele Geräte (besonders iPhone) bieten mehrere Stimmen je Sprache an — eine "Standard"-
-    // Stimme, die oft roboterhaft klingt, und daneben oft bessere "Enhanced"/"Premium"-Stimmen.
-    // Wenn eine davon verfügbar ist, wird sie bevorzugt statt der ersten besten Stimme.
-    const voices = window.speechSynthesis.getVoices().filter((v) => v.lang && v.lang.startsWith(kurz));
-    const preferred = voices.find((v) => /enhanced|premium|natural/i.test(v.name)) || voices[0];
-    if (preferred) utter.voice = preferred;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utter);
+
+    stimmenHolen().then((alle) => {
+      const passend = (alle || []).filter((v) => v.lang && v.lang.toLowerCase().startsWith(kurz));
+      letzteLage = { geprueft: true, stimmen: (alle || []).length, deutsch: passend.length };
+
+      /* Keine Stimme für diese Sprache? Dann hilft das Gerät nicht
+         weiter — und die Notstimme übernimmt. Vorher blieb es hier
+         einfach still. */
+      if (!passend.length) { notfalls(text, sprache); return; }
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = voll;
+      utter.rate = 0.92;
+      // Viele Geräte (besonders iPhone) bieten mehrere Stimmen je Sprache an — eine "Standard"-
+      // Stimme, die oft roboterhaft klingt, und daneben oft bessere "Enhanced"/"Premium"-Stimmen.
+      // Wenn eine davon verfügbar ist, wird sie bevorzugt statt der ersten besten Stimme.
+      utter.voice = passend.find((v) => /enhanced|premium|natural|siri/i.test(v.name)) || passend[0];
+
+      /* Hat der Browser ihn wirklich angenommen? Beginnt binnen
+         anderthalb Sekunden nichts, greift die Notstimme. Das deckt
+         den bekannten Fall ab, in dem speak() klaglos nichts tut. */
+      let losgegangen = false;
+      utter.onstart = () => { losgegangen = true; };
+      utter.onerror = () => { if (!losgegangen) notfalls(text, sprache); };
+      setTimeout(() => { if (!losgegangen) notfalls(text, sprache); }, 1500);
+
+      /* cancel() und speak() unmittelbar hintereinander verschluckt
+         Chrome gelegentlich — deshalb ein Atemzug dazwischen. */
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      setTimeout(() => {
+        try { window.speechSynthesis.speak(utter); } catch (e) { notfalls(text, sprache); }
+      }, 60);
+    });
+  }
+
+  /* Chrome stellt die Sprachausgabe nach etwa 15 Sekunden von selbst
+     ab (ein alter, bis heute offener Fehler). Ein regelmässiges
+     Anstupsen hält sie am Leben; es tut nichts, wenn nichts läuft. */
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    setInterval(() => {
+      try {
+        if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        }
+      } catch (e) {}
+    }, 9000);
   }
 
   /* ============================================================
@@ -929,7 +1044,7 @@ const Core = (function () {
     },
   };
 
-  return { shuffle, drawUnique, el, speak, stimmeAnmelden, clamp, uid, formatStress, sound,
+  return { shuffle, drawUnique, el, speak, stimmeAnmelden, notstimmeAnmelden, stimmeLage, clamp, uid, formatStress, sound,
     silbeIstGross, betonteSilbenIndex,
     /* Italienisch: eigene Silbentrennung, eigene Betonungsregel, eigene Anzeige. */
     italienischeSilben, betonungItAuto, formatStressIt, betonungItErklaerung,
