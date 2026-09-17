@@ -13198,6 +13198,230 @@
      Das Fenster frischt sich selbst auf, solange es offen ist: kommt
      jemand herein oder wechselt den Raum, sieht man es sofort.
      ================================================================= */
+  /* =================================================================
+     DAS TOR: ERST TON UND BILD, DANN HINEIN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Kannst du gewährleisten, dass das zwischen Deutschland
+     und Ägypten und zwischen jedem Browser immer läuft mit Video und
+     Ton — dass diese Video- und Tonabfrage immer erzwungen kommt, dass
+     die Leute, bevor sie den Chat betreten, auch wirklich das
+     anschalten müssen, damit es überall klappt und überall
+     gleichzeitig gleichmässig aktualisiert ist und niemand den anderen
+     nicht hört."
+
+     DAS IST EINE KEHRTWENDE, und sie steht hier, damit später niemand
+     rätselt. Vorher galt ausdrücklich das Gegenteil: „dass das nicht
+     sofort zum Video springt — dass man sich entscheiden kann, ob man
+     das Video anschalten will." Deshalb ging die Kamera nie von selbst
+     an. Die neue Ansage gilt; die alte steht noch in betreten() in
+     livechat.js und wird von hier überstimmt, indem mitBild: true
+     übergeben wird.
+
+     WAS DIESES FENSTER WIRKLICH LEISTET — und was nicht:
+
+     Es kann erzwingen, dass die FRAGE kommt und dass man nicht
+     weiterkommt, ohne geantwortet zu haben. Das ist der grösste
+     einzelne Grund für „ich höre den anderen nicht": jemand ist
+     hereingekommen, ohne je gefragt worden zu sein.
+
+     Es zeigt ausserdem einen AUSSCHLAG des Mikrofons. Eine Erlaubnis
+     allein sagt nämlich nur, dass der Browser darf — nicht, dass
+     wirklich Ton ankommt. Ein stummgeschaltetes Headset, ein falsch
+     gewähltes Gerät, eine tote Buchse: alles davon gibt eine
+     erteilte Erlaubnis und trotzdem Stille. Der Balken ist der
+     Unterschied zwischen „darf" und „geht".
+
+     Es kann NICHT erzwingen, dass ein Gerät eine Kamera hat. Wer
+     keine hat, käme sonst nie herein — deshalb gibt es den zweiten
+     Weg, aber erst, nachdem die Kamera wirklich abgelehnt oder nicht
+     gefunden wurde, und mit Begründung im Klartext.
+     ================================================================= */
+  let lcTorStrom = null;
+  let lcTorMesser = null;
+  function lcTorAufraeumen() {
+    try { if (lcTorMesser) { lcTorMesser.uhr && clearInterval(lcTorMesser.uhr);
+      lcTorMesser.raum && lcTorMesser.raum.close(); } } catch (e) {}
+    lcTorMesser = null;
+    try { if (lcTorStrom) lcTorStrom.getTracks().forEach((t) => t.stop()); } catch (e) {}
+    lcTorStrom = null;
+  }
+
+  /* EIN EINGANG FUER ALLE WEGE.
+     Es gibt mehrere Knöpfe, die in einen Raum führen: der Startschirm,
+     die Raumliste, ein Einladungslink, das Laufband. Würde jeder
+     einzeln das Tor aufrufen, würde ich früher oder später einen
+     vergessen — und genau dort käme dann wieder jemand ohne Ton
+     herein. Deshalb gehen alle durch diese eine Funktion. */
+  function livechatHinein(raum, danach) {
+    livechatTor(raum, (wahl) => {
+      LiveChat.betreten(raum, {
+        name: livechatName(),
+        konto: (Backend.currentUser() || {}).id || "",
+        bild: livechatBild(),
+        mitBild: wahl.mitBild === true
+      }).then(() => {
+        renderLiveChat();
+        klassenzimmerStreifen();
+        if (typeof danach === "function") danach();
+      });
+      renderLiveChat();
+    });
+  }
+
+  function livechatTor(raum, weiter) {
+    document.getElementById("lcTor")?.remove();
+    const kasten = document.createElement("div");
+    kasten.id = "lcTor";
+    kasten.className = "lc-waehler-hinter";
+    kasten.innerHTML = `
+      <div class="lc-waehler lc-tor" role="dialog" aria-modal="true" aria-label="Ton und Bild einschalten">
+        <p class="eyebrow">ERST TON UND BILD, DANN HINEIN</p>
+        <p class="empty-note" style="margin:0 0 12px; font-size:0.78rem;">
+          Im Klassenzimmer wird geredet. Damit dich alle hören und sehen —
+          egal ob in Deutschland oder in Ägypten — werden Mikrofon und Kamera
+          eingeschaltet, bevor du hineingehst.
+        </p>
+        <div class="lc-tor-bild">
+          <video id="lcTorVideo" autoplay muted playsinline></video>
+          <p class="lc-tor-wartet" id="lcTorWartet">Der Browser fragt gleich nach Mikrofon und Kamera …</p>
+        </div>
+        <div class="lc-tor-pegelzeile">
+          <span class="lc-tor-pegelwort">🎤 Sag mal etwas</span>
+          <div class="lc-tor-pegel" aria-hidden="true"><span id="lcTorPegelBalken"></span></div>
+        </div>
+        <ul class="lc-tor-stand">
+          <li id="lcTorTon"><span class="lc-tor-zeichen">⏳</span> Mikrofon …</li>
+          <li id="lcTorBild"><span class="lc-tor-zeichen">⏳</span> Kamera …</li>
+        </ul>
+        <p class="lc-tor-grund" id="lcTorGrund" hidden></p>
+        <div class="lc-waehler-reihe" style="margin-top:12px;">
+          <button type="button" class="btn btn-coffee" id="lcTorRein" disabled>Hineingehen</button>
+          <button type="button" class="btn btn-ghost" id="lcTorNurTon" hidden>Nur mit Ton hineingehen</button>
+          <button type="button" class="btn btn-ghost" id="lcTorAb">Doch nicht</button>
+        </div>
+      </div>`;
+    document.body.appendChild(kasten);
+
+    const zu = () => { lcTorAufraeumen(); kasten.remove(); };
+    kasten.querySelector("#lcTorAb").addEventListener("click", zu);
+    kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
+
+    const setzen = (id, zeichen, text, klasse) => {
+      const el = kasten.querySelector(id);
+      if (!el) return;
+      el.className = klasse || "";
+      el.innerHTML = '<span class="lc-tor-zeichen">' + zeichen + "</span> " + escapeHtml(text);
+    };
+    const grundZeigen = (text) => {
+      const g = kasten.querySelector("#lcTorGrund");
+      if (!g) return;
+      g.hidden = false;
+      g.textContent = text;
+    };
+
+    let tonOk = false, bildOk = false;
+    const pruefen = () => {
+      const rein = kasten.querySelector("#lcTorRein");
+      if (rein) rein.disabled = !(tonOk && bildOk);
+    };
+
+    /* Warum zweimal fragen statt einmal? Weil ein einziger Aufruf mit
+       Ton UND Bild ganz fehlschlägt, sobald eines von beidem fehlt —
+       und dann wüsste man nicht, welches. Getrennt gefragt, kann man
+       genau sagen, was klemmt, und das ist der Unterschied zwischen
+       einer Fehlermeldung und einer Hilfe. */
+    const holen = async () => {
+      let strom = null;
+      try {
+        strom = await navigator.mediaDevices.getUserMedia({ audio: true });
+        tonOk = strom.getAudioTracks().length > 0;
+        setzen("#lcTorTon", tonOk ? "✅" : "❌",
+               tonOk ? "Mikrofon ist an — sag mal etwas, der Balken muss ausschlagen"
+                     : "Mikrofon liefert keinen Ton", tonOk ? "gut" : "schlecht");
+      } catch (e) {
+        tonOk = false;
+        setzen("#lcTorTon", "❌", "Mikrofon: " + lcMedienGrund(e), "schlecht");
+      }
+      let video = null;
+      try {
+        video = await navigator.mediaDevices.getUserMedia({ video: true });
+        bildOk = video.getVideoTracks().length > 0;
+        setzen("#lcTorBild", bildOk ? "✅" : "❌",
+               bildOk ? "Kamera ist an" : "Kamera liefert kein Bild", bildOk ? "gut" : "schlecht");
+      } catch (e) {
+        bildOk = false;
+        setzen("#lcTorBild", "❌", "Kamera: " + lcMedienGrund(e), "schlecht");
+        grundZeigen("Ohne Kamera sehen dich die anderen nicht — hören aber schon. "
+          + "Wenn dein Gerät keine hat oder du sie nicht freigeben willst, "
+          + "kannst du trotzdem hinein.");
+        const nur = kasten.querySelector("#lcTorNurTon");
+        if (nur && tonOk) nur.hidden = false;
+      }
+      /* Beide Ströme zu einem zusammenlegen — der eine für die
+         Vorschau, der andere für den Ausschlag. */
+      const alle = new MediaStream();
+      if (strom) strom.getTracks().forEach((t) => alle.addTrack(t));
+      if (video) video.getTracks().forEach((t) => alle.addTrack(t));
+      lcTorStrom = alle;
+      const v = kasten.querySelector("#lcTorVideo");
+      const wartet = kasten.querySelector("#lcTorWartet");
+      if (v && bildOk) { v.srcObject = alle; if (wartet) wartet.hidden = true; }
+      else if (wartet) wartet.textContent = bildOk ? "" : "Kein Bild — siehe oben.";
+      if (tonOk) lcTorPegelZeigen(alle, kasten.querySelector("#lcTorPegelBalken"));
+      pruefen();
+    };
+
+    const hinein = (mitBild) => {
+      lcTorAufraeumen();
+      kasten.remove();
+      weiter({ mitBild: mitBild });
+    };
+    kasten.querySelector("#lcTorRein").addEventListener("click", () => hinein(true));
+    kasten.querySelector("#lcTorNurTon").addEventListener("click", () => hinein(false));
+    holen();
+  }
+
+  /* Warum ging es nicht? Der Browser sagt es — aber in Namen, die
+     niemandem helfen. Hier stehen sie auf Deutsch, mit dem, was man
+     tun kann. */
+  function lcMedienGrund(e) {
+    const n = (e && e.name) || "";
+    if (n === "NotAllowedError") return "du hast nein gesagt oder der Browser hat es gesperrt. "
+      + "Im Schloss-Symbol neben der Adresse kannst du es wieder erlauben.";
+    if (n === "NotFoundError" || n === "OverconstrainedError") return "dein Gerät hat keine gefunden.";
+    if (n === "NotReadableError") return "ein anderes Programm benutzt es gerade — "
+      + "andere Fenster oder Apps schliessen, die Kamera oder Mikrofon haben.";
+    if (n === "SecurityError") return "die Seite läuft nicht über eine sichere Verbindung.";
+    return (e && e.message) ? e.message : "unbekannter Grund.";
+  }
+
+  /* DER AUSSCHLAG — das eigentlich Nützliche an diesem Fenster.
+     Eine erteilte Erlaubnis sagt nur, dass der Browser DARF. Ob wirklich
+     Ton ankommt, sieht man erst hier. */
+  function lcTorPegelZeigen(strom, balken) {
+    if (!balken || !window.AudioContext && !window.webkitAudioContext) return;
+    try {
+      const Raum = window.AudioContext || window.webkitAudioContext;
+      const raum = new Raum();
+      const quelle = raum.createMediaStreamSource(strom);
+      const messer = raum.createAnalyser();
+      messer.fftSize = 512;
+      quelle.connect(messer);
+      const werte = new Uint8Array(messer.fftSize);
+      const uhr = setInterval(() => {
+        messer.getByteTimeDomainData(werte);
+        let summe = 0;
+        for (let i = 0; i < werte.length; i++) {
+          const d = (werte[i] - 128) / 128;
+          summe += d * d;
+        }
+        const laut = Math.sqrt(summe / werte.length);
+        balken.style.width = Math.min(100, Math.round(laut * 420)) + "%";
+      }, 90);
+      lcTorMesser = { raum: raum, uhr: uhr };
+    } catch (e) {}
+  }
+
   function livechatRaumFenster() {
     document.getElementById("lcRaumWaehler")?.remove();
     const kasten = document.createElement("div");
@@ -13274,13 +13498,7 @@
             return;
           }
           zu();
-          LiveChat.betreten(wohin, {
-            name: livechatName(),
-            konto: (Backend.currentUser() || {}).id || "",
-            bild: livechatBild(),
-            mitBild: false
-          }).then(() => { renderLiveChat(); klassenzimmerStreifen(); });
-          renderLiveChat();
+          livechatHinein(wohin);
         }));
     };
 
@@ -16882,15 +17100,7 @@
           eingeladen wurde. Bitte jemanden im Raum um  <code>/i deinName</code>.
         </p>`;
       feld.querySelectorAll("[data-lc-raum]").forEach((b) => {
-        b.addEventListener("click", () => {
-          LiveChat.betreten(b.dataset.lcRaum, {
-            name: livechatName(),
-            konto: (Backend.currentUser() || {}).id || "",
-            bild: livechatBild(),
-            mitBild: false
-          }).then(() => { renderLiveChat(); klassenzimmerStreifen(); });
-          renderLiveChat();
-        });
+        b.addEventListener("click", () => livechatHinein(b.dataset.lcRaum));
       });
     };
     zeichnen();
@@ -17960,6 +18170,7 @@
        herausbekommen — genau das, was das Laufband tut. */
     kzEreignisse: function (aufnahme) { kzEreignisseAbleiten(aufnahme); return kzEreignisText(); },
     kzZeile: function () { return kzTickerHtml(); },
+    tor: function (raum, weiter) { return livechatTor(raum, weiter || function () {}); },
   });
 
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
@@ -18467,21 +18678,16 @@
       livechatSchonUnten = false;
       lcHaeltUnten = true;
       area.innerHTML = livechatStartHtml(l);
-      const hinein = (raum) => {
-        /* mitBild: false — das Bild geht NICHT von selbst an.
-           „dass das nicht sofort zum Video springt, dass man sich
-           entscheiden kann, ob man das Video anschalten will."
-           Der Browser fragt deshalb erst einmal nur nach dem
-           Mikrofon; die Kamera kommt auf Knopfdruck dazu. */
-        LiveChat.betreten(raum, {
-          name: livechatName(),
-          konto: (Backend.currentUser() || {}).id || "",
-          bild: livechatBild(),
-          mitBild: false
-        })
-          .then(() => { renderLiveChat(); klassenzimmerStreifen(); });
-        renderLiveChat();
-      };
+      /* NACHGEBESSERT, und es ist eine Kehrtwende gegenüber früher:
+         Vorher stand hier ausdrücklich mitBild: false, mit der
+         Begründung „dass das nicht sofort zum Video springt, dass man
+         sich entscheiden kann, ob man das Video anschalten will."
+         Jetzt gilt: „dass diese Video- und Tonabfrage immer erzwungen
+         kommt, dass die Leute, bevor sie den Chat betreten, auch
+         wirklich das anschalten müssen, damit es überall klappt und
+         niemand den anderen nicht hört." Das Tor macht genau das —
+         siehe livechatTor(). */
+      const hinein = (raum) => livechatHinein(raum);
       area.querySelector("#lcBetreten")?.addEventListener("click", () => {
         /* Ein Link schlägt alles — wer eingeladen wurde, will dorthin.
            Sonst IMMER der Hauptraum: „Der Hauptraum soll für jeden
