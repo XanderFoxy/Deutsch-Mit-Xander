@@ -4,12 +4,12 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; }
   }
-  .li { animation: kli 0.42s ease-in-out infinite; }
-  .re { animation: kre 0.42s ease-in-out infinite; }
-  .fz { animation: fz 0.42s ease-out infinite; }
-  @keyframes kli { 0%,100%{transform:translateX(-13px) rotate(-12deg)} 50%{transform:translateX(3px) rotate(0)} }
-  @keyframes kre { 0%,100%{transform:translateX(13px) rotate(12deg)} 50%{transform:translateX(-3px) rotate(0)} }
-  @keyframes fz { 0%,44%{opacity:0} 56%{opacity:.95} 100%{opacity:0} }
+  .li { animation: kli 0.4s ease-in-out infinite; }
+  .re { animation: kre 0.4s ease-in-out infinite; }
+  .fz { animation: fz 0.4s ease-out infinite; }
+  @keyframes kli { 0%,100%{transform:translateX(-17px) rotate(-14deg)} 50%{transform:translateX(1px) rotate(0)} }
+  @keyframes kre { 0%,100%{transform:translateX(17px) rotate(14deg)} 50%{transform:translateX(-1px) rotate(0)} }
+  @keyframes fz { 0%,42%{opacity:0} 54%{opacity:.95} 100%{opacity:0} }
 </style>
-<g class="li"><path d="M40 96 L40 56 Q40 46 48 46 Q56 46 56 56 L56 96 Z" fill="#f3b57b"/><path d="M24 96 L24 62 Q24 52 32 52 Q40 52 40 62 L40 96 Z" fill="#e8a768"/><path d="M22 92 q-8 -10 -2 -18 q6 -6 10 2" fill="#e8a768"/><rect x="20" y="90" width="38" height="16" rx="7" fill="#f3b57b"/></g><g class="re"><path d="M80 96 L80 56 Q80 46 72 46 Q64 46 64 56 L64 96 Z" fill="#e8a768"/><path d="M96 96 L96 62 Q96 52 88 52 Q80 52 80 62 L80 96 Z" fill="#d9975c"/><path d="M98 92 q8 -10 2 -18 q-6 -6 -10 2" fill="#d9975c"/><rect x="62" y="90" width="38" height="16" rx="7" fill="#e8a768"/></g><g class="fz" opacity="0"><path d="M60 34 L60 18 M40 40 L30 28 M80 40 L90 28 M26 58 L12 54 M94 58 L108 54" stroke="#f7c948" stroke-width="4" stroke-linecap="round"/></g>
+<g class="li"><g transform="translate(60 0) scale(-1 1)"><path d="M2 108 L2 86 Q2 78 12 78 L24 78 L24 108 Z" fill="#f3b57b" stroke="rgba(120,70,30,.42)" stroke-width="2.4" stroke-linejoin="round"/><path d="M2 84 Q2 54 14 44 Q24 36 34 44 Q42 51 42 66 L42 84 Q42 94 32 94 L12 94 Q2 94 2 84 Z" fill="#f3b57b" stroke="rgba(120,70,30,.42)" stroke-width="2.4" stroke-linejoin="round"/><path d="M8 52 L8 76 M16 46 L16 76 M24 45 L24 76 M32 50 L32 76" stroke="rgba(120,70,30,.42)" stroke-width="1.7" opacity=".55"/></g></g><g class="re"><g transform="translate(60 0) scale(1 1)"><path d="M2 108 L2 86 Q2 78 12 78 L24 78 L24 108 Z" fill="#e8a768" stroke="rgba(120,70,30,.42)" stroke-width="2.4" stroke-linejoin="round"/><path d="M2 84 Q2 54 14 44 Q24 36 34 44 Q42 51 42 66 L42 84 Q42 94 32 94 L12 94 Q2 94 2 84 Z" fill="#e8a768" stroke="rgba(120,70,30,.42)" stroke-width="2.4" stroke-linejoin="round"/><path d="M8 52 L8 76 M16 46 L16 76 M24 45 L24 76 M32 50 L32 76" stroke="rgba(120,70,30,.42)" stroke-width="1.7" opacity=".55"/></g></g><g class="fz" opacity="0"><path d="M60 30 L60 14 M42 36 L32 22 M78 36 L88 22 M28 56 L12 50 M92 56 L108 50" stroke="#f7c948" stroke-width="4" stroke-linecap="round"/></g>
 </svg>

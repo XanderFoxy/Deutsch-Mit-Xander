@@ -1913,9 +1913,11 @@ window.LiveChat = (function () {
      gibt, passiert nichts. Die GIPHY-Suche bleibt daneben bestehen
      für alle, die einen eigenen Schlüssel eintragen.
      ========================================================= */
-  var AUFKLEBER = ["lachen", "winken", "daumen", "herz", "klatschen", "denken",
-                   "schlafen", "weinen", "feuer", "stern", "fuchs", "kaffee",
-                   "party", "frage", "fertig", "blume", "regenbogen", "schnee"];
+  var AUFKLEBER = ["lachen", "zwinkern", "staunen", "traurig", "weinen",
+                   "winken", "klatschen", "daumen", "herz", "denken", "idee",
+                   "schlafen", "feuer", "stern", "pokal", "fuchs", "katze",
+                   "kaffee", "party", "glocke", "musik", "schreiben", "warten",
+                   "wachsen", "blume", "frage", "fertig", "regenbogen", "schnee"];
   function aufkleberPfad(wert) {
     var m = /^aufkleber:([a-z]+)$/.exec(String(wert || ""));
     if (!m || AUFKLEBER.indexOf(m[1]) < 0) return "";

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .n1 { animation: tanz 1.5s ease-in-out infinite; }
+  .n2 { animation: schweb 2.4s ease-in-out infinite; }
+  @keyframes tanz { 0%,100%{transform:rotate(-5deg) translateY(0)} 50%{transform:rotate(5deg) translateY(-4px)} }
+  @keyframes schweb { 0%{opacity:0;transform:translateY(14px) scale(.7)} 30%{opacity:1} 100%{opacity:0;transform:translateY(-22px) scale(1.15)} }
+</style>
+<g class="n1"><path d="M40 84 v-40 l22 -6 v40" stroke="#9a5ac9" stroke-width="4" fill="none"/><ellipse cx="34" cy="86" rx="10" ry="7" fill="#9a5ac9" transform="rotate(-18 34 86)"/><ellipse cx="56" cy="80" rx="10" ry="7" fill="#9a5ac9" transform="rotate(-18 56 80)"/></g><g class="n2"><ellipse cx="88" cy="46" rx="8" ry="6" fill="#4a86c9" transform="rotate(-18 88 46)"/><path d="M95 46 v-28 q12 4 10 14" stroke="#4a86c9" stroke-width="3.5" fill="none"/></g>
+</svg>

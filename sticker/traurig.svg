@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .kopf { animation: senkt 3s ease-in-out infinite; }
+  .mu { animation: zuck 3s ease-in-out infinite; }
+  @keyframes senkt { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(4px) rotate(-3deg)} }
+  @keyframes zuck { 0%,100%{transform:translateY(0)} 50%{transform:translateY(2px)} }
+</style>
+<g class="kopf"><circle cx="60" cy="60" r="46" fill="#e8c07a"/><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="3"/><path class="br" d="M34 42 Q44 36 54 42" stroke="#2b2118" stroke-width="4" fill="none" stroke-linecap="round"/><path class="br" d="M66 42 Q76 36 86 42" stroke="#2b2118" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="44" cy="56" r="5.5" fill="#2b2118"/><circle cx="76" cy="56" r="5.5" fill="#2b2118"/><path class="mu" d="M42 84 Q60 74 78 84" stroke="#2b2118" stroke-width="4.5" fill="none" stroke-linecap="round"/></g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .au { animation: gross 1.4s ease-in-out infinite; }
+  .mu { animation: gross2 1.4s ease-in-out infinite; }
+  @keyframes gross { 0%,100%{transform:scale(1)} 45%{transform:scale(1.35)} }
+  @keyframes gross2 { 0%,100%{transform:scale(1)} 45%{transform:scale(1.25)} }
+</style>
+<g class="kopf"><circle cx="60" cy="60" r="46" fill="#f6a96b"/><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(0,0,0,.14)" stroke-width="3"/><circle class="au" cx="44" cy="48" r="7" fill="#2b2118"/><circle class="au" cx="76" cy="48" r="7" fill="#2b2118"/><ellipse class="mu" cx="60" cy="78" rx="11" ry="14" fill="#8c3b2e"/></g>
+</svg>

@@ -82,18 +82,37 @@ AUFKLEBER["lachen"] = gesicht(
     ),
 )
 
-# --- winken: eine Hand, die winkt --------------------------------
+# --- winken: eine Hand mit vier Fingern und Daumen, die wedelt ----
 AUFKLEBER["winken"] = huelle(
     '<g class="hand">'
-    '<path d="M46 104 L46 62 Q46 54 53 54 Q60 54 60 62 L60 44 Q60 36 67 36 '
-    "Q74 36 74 44 L74 40 Q74 32 81 32 Q88 32 88 40 L88 60 Q88 90 70 104 Z\" "
-    'fill="#f3b57b" stroke="rgba(0,0,0,.16)" stroke-width="2.5" stroke-linejoin="round"/>'
-    '<path d="M46 74 Q34 66 30 74 Q28 82 40 88" fill="#f3b57b" '
-    'stroke="rgba(0,0,0,.16)" stroke-width="2.5"/>'
-    "</g>",
+    # Handflaeche
+    '<path d="M36 108 L36 64 Q36 52 48 52 L82 52 Q94 52 94 64 L94 84 '
+    'Q94 104 76 112 L52 112 Q40 110 36 108 Z" fill="#f3b57b" '
+    'stroke="rgba(120,70,30,.4)" stroke-width="2.5" stroke-linejoin="round"/>'
+    # vier Finger
+    '<rect x="40" y="30" width="12" height="34" rx="6" fill="#f6c090" '
+    'stroke="rgba(120,70,30,.4)" stroke-width="2.2"/>'
+    '<rect x="54" y="22" width="12" height="42" rx="6" fill="#f6c090" '
+    'stroke="rgba(120,70,30,.4)" stroke-width="2.2"/>'
+    '<rect x="68" y="26" width="12" height="38" rx="6" fill="#f6c090" '
+    'stroke="rgba(120,70,30,.4)" stroke-width="2.2"/>'
+    '<rect x="82" y="34" width="11" height="30" rx="5.5" fill="#f6c090" '
+    'stroke="rgba(120,70,30,.4)" stroke-width="2.2"/>'
+    # Daumen
+    '<path d="M36 74 Q22 68 18 78 Q15 90 30 96" fill="#f3b57b" '
+    'stroke="rgba(120,70,30,.4)" stroke-width="2.5" stroke-linecap="round"/>'
+    '</g>'
+    # Bewegungsstriche
+    '<g class="str"><path d="M104 46 q8 6 0 14 M108 36 q14 12 0 30" '
+    'stroke="#e0964a" stroke-width="3" fill="none" stroke-linecap="round"/></g>',
     stil=(
-        "  .hand { animation: winken 0.9s ease-in-out infinite; transform-origin: 50% 90%; }\n"
-        "  @keyframes winken { 0%,100%{transform:rotate(-16deg)} 50%{transform:rotate(16deg)} }\n"
+        "  .hand { animation: winken 0.8s ease-in-out infinite; "
+        "transform-origin: 50% 92%; }\n"
+        "  .str { animation: strich 0.8s ease-in-out infinite; }\n"
+        "  @keyframes winken { 0%,100%{transform:rotate(-18deg)} "
+        "50%{transform:rotate(18deg)} }\n"
+        "  @keyframes strich { 0%,100%{opacity:.15;transform:translateX(-4px)} "
+        "50%{opacity:.9;transform:translateX(3px)} }\n"
     ),
 )
 
@@ -128,32 +147,43 @@ AUFKLEBER["herz"] = huelle(
     ),
 )
 
-# --- klatschen: zwei Hände, die zusammenschlagen ----------------
+# --- klatschen: zwei Haende von der Seite, die zusammenschlagen ---
+def _hand(seite, haut, saum):
+    """Eine Hand im Profil. seite = -1 links, +1 rechts."""
+    sp = 1 if seite > 0 else -1
+    x = 60
+    return (
+        '<g transform="translate(%d 0) scale(%d 1)">' % (x, sp)
+        # Unterarm
+        + '<path d="M2 108 L2 86 Q2 78 12 78 L24 78 L24 108 Z" fill="%s" '
+          'stroke="%s" stroke-width="2.4" stroke-linejoin="round"/>' % (haut, saum)
+        # Handflaeche
+        + '<path d="M2 84 Q2 54 14 44 Q24 36 34 44 Q42 51 42 66 '
+          'L42 84 Q42 94 32 94 L12 94 Q2 94 2 84 Z" fill="%s" '
+          'stroke="%s" stroke-width="2.4" stroke-linejoin="round"/>' % (haut, saum)
+        # Finger, angedeutet
+        + '<path d="M8 52 L8 76 M16 46 L16 76 M24 45 L24 76 M32 50 L32 76" '
+          'stroke="%s" stroke-width="1.7" opacity=".55"/>' % saum
+        + '</g>'
+    )
+
+
 AUFKLEBER["klatschen"] = huelle(
-    '<g class="li">'
-    '<path d="M40 96 L40 56 Q40 46 48 46 Q56 46 56 56 L56 96 Z" fill="#f3b57b"/>'
-    '<path d="M24 96 L24 62 Q24 52 32 52 Q40 52 40 62 L40 96 Z" fill="#e8a768"/>'
-    '<path d="M22 92 q-8 -10 -2 -18 q6 -6 10 2" fill="#e8a768"/>'
-    '<rect x="20" y="90" width="38" height="16" rx="7" fill="#f3b57b"/>'
-    '</g>'
-    '<g class="re">'
-    '<path d="M80 96 L80 56 Q80 46 72 46 Q64 46 64 56 L64 96 Z" fill="#e8a768"/>'
-    '<path d="M96 96 L96 62 Q96 52 88 52 Q80 52 80 62 L80 96 Z" fill="#d9975c"/>'
-    '<path d="M98 92 q8 -10 2 -18 q-6 -6 -10 2" fill="#d9975c"/>'
-    '<rect x="62" y="90" width="38" height="16" rx="7" fill="#e8a768"/>'
-    '</g>'
+    '<g class="li">' + _hand(-1, "#f3b57b", "rgba(120,70,30,.42)") + '</g>'
+    '<g class="re">' + _hand(1, "#e8a768", "rgba(120,70,30,.42)") + '</g>'
     '<g class="fz" opacity="0">'
-    '<path d="M60 34 L60 18 M40 40 L30 28 M80 40 L90 28 M26 58 L12 54 M94 58 L108 54" '
+    '<path d="M60 30 L60 14 M42 36 L32 22 M78 36 L88 22 '
+    'M28 56 L12 50 M92 56 L108 50" '
     'stroke="#f7c948" stroke-width="4" stroke-linecap="round"/></g>',
     stil=(
-        "  .li { animation: kli 0.42s ease-in-out infinite; }\n"
-        "  .re { animation: kre 0.42s ease-in-out infinite; }\n"
-        "  .fz { animation: fz 0.42s ease-out infinite; }\n"
-        "  @keyframes kli { 0%,100%{transform:translateX(-13px) rotate(-12deg)} "
-        "50%{transform:translateX(3px) rotate(0)} }\n"
-        "  @keyframes kre { 0%,100%{transform:translateX(13px) rotate(12deg)} "
-        "50%{transform:translateX(-3px) rotate(0)} }\n"
-        "  @keyframes fz { 0%,44%{opacity:0} 56%{opacity:.95} 100%{opacity:0} }\n"
+        "  .li { animation: kli 0.4s ease-in-out infinite; }\n"
+        "  .re { animation: kre 0.4s ease-in-out infinite; }\n"
+        "  .fz { animation: fz 0.4s ease-out infinite; }\n"
+        "  @keyframes kli { 0%,100%{transform:translateX(-17px) rotate(-14deg)} "
+        "50%{transform:translateX(1px) rotate(0)} }\n"
+        "  @keyframes kre { 0%,100%{transform:translateX(17px) rotate(14deg)} "
+        "50%{transform:translateX(-1px) rotate(0)} }\n"
+        "  @keyframes fz { 0%,42%{opacity:0} 54%{opacity:.95} 100%{opacity:0} }\n"
     ),
 )
 
@@ -378,6 +408,236 @@ AUFKLEBER["schnee"] = huelle(
     ),
 )
 
+
+# ===============================================================
+# NOCH MEHR AUSWAHL
+# ---------------------------------------------------------------
+# GEWUENSCHT: „Da koennen auch noch andere Sachen passieren."
+# ===============================================================
+
+# --- zwinkern -----------------------------------------------------
+AUFKLEBER["zwinkern"] = gesicht(
+    GELB,
+    '<circle cx="44" cy="50" r="6" fill="#2b2118"/>'
+    '<path class="lid" d="M68 50 Q76 44 84 50" stroke="#2b2118" stroke-width="4.5" '
+    'fill="none" stroke-linecap="round"/>'
+    '<path d="M42 72 Q60 86 78 72" stroke="#2b2118" stroke-width="4.5" '
+    'fill="none" stroke-linecap="round"/>',
+    stil=(
+        "  .lid { animation: zwink 1.7s ease-in-out infinite; }\n"
+        "  @keyframes zwink { 0%,72%,100%{transform:scaleY(1)} "
+        "80%{transform:scaleY(.15)} 88%{transform:scaleY(1)} }\n"
+    ),
+)
+
+# --- staunen ------------------------------------------------------
+AUFKLEBER["staunen"] = gesicht(
+    "#f6a96b",
+    '<circle class="au" cx="44" cy="48" r="7" fill="#2b2118"/>'
+    '<circle class="au" cx="76" cy="48" r="7" fill="#2b2118"/>'
+    '<ellipse class="mu" cx="60" cy="78" rx="11" ry="14" fill="#8c3b2e"/>',
+    stil=(
+        "  .au { animation: gross 1.4s ease-in-out infinite; }\n"
+        "  .mu { animation: gross2 1.4s ease-in-out infinite; }\n"
+        "  @keyframes gross { 0%,100%{transform:scale(1)} 45%{transform:scale(1.35)} }\n"
+        "  @keyframes gross2 { 0%,100%{transform:scale(1)} 45%{transform:scale(1.25)} }\n"
+    ),
+)
+
+# --- nachdenken: eine Gluehbirne geht an --------------------------
+AUFKLEBER["idee"] = huelle(
+    '<g class="bi">'
+    '<path d="M60 14 a26 26 0 0 1 16 46 q-4 4 -4 10 h-24 q0 -6 -4 -10 '
+    'a26 26 0 0 1 16 -46 z" fill="#f7c948" '
+    'stroke="rgba(120,90,20,.4)" stroke-width="2.5" stroke-linejoin="round"/>'
+    '<path d="M48 78 h24 M50 86 h20 M54 94 h12" stroke="#a08050" '
+    'stroke-width="4" stroke-linecap="round"/>'
+    '</g>'
+    '<g class="sk"><path d="M60 4 L60 -2 M28 22 L20 16 M92 22 L100 16 '
+    'M16 52 L6 52 M104 52 L114 52" stroke="#f7c948" stroke-width="3.5" '
+    'stroke-linecap="round"/></g>',
+    stil=(
+        "  .bi { animation: anaus 1.6s ease-in-out infinite; }\n"
+        "  .sk { animation: strahlen 1.6s ease-in-out infinite; }\n"
+        "  @keyframes anaus { 0%,100%{opacity:.45;filter:none} "
+        "50%{opacity:1;filter:drop-shadow(0 0 10px rgba(247,201,72,.9))} }\n"
+        "  @keyframes strahlen { 0%,100%{opacity:0;transform:scale(.8)} "
+        "50%{opacity:.95;transform:scale(1.1)} }\n"
+    ),
+)
+
+# --- schreiben: ein Stift, der schreibt ---------------------------
+AUFKLEBER["schreiben"] = huelle(
+    '<g class="st">'
+    '<path d="M24 96 L34 66 L86 14 L100 28 L48 80 Z" fill="#e0964a" '
+    'stroke="rgba(100,60,20,.4)" stroke-width="2.5" stroke-linejoin="round"/>'
+    '<path d="M34 66 L48 80 L24 96 Z" fill="#f6dfc0" '
+    'stroke="rgba(100,60,20,.4)" stroke-width="2.2"/>'
+    '<path d="M24 96 L30 84 L36 90 Z" fill="#2b2118"/>'
+    '</g>'
+    '<g class="li"><path d="M16 108 h88" stroke="#4a86c9" stroke-width="3.5" '
+    'stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="88"/></g>',
+    stil=(
+        "  .st { animation: wandern 2.1s ease-in-out infinite; }\n"
+        "  .li line, .li path { animation: malen 2.1s ease-in-out infinite; }\n"
+        "  @keyframes wandern { 0%{transform:translateX(-32px)} "
+        "50%{transform:translateX(26px)} 100%{transform:translateX(-32px)} }\n"
+        "  @keyframes malen { 0%{stroke-dashoffset:88} 50%{stroke-dashoffset:0} "
+        "100%{stroke-dashoffset:88} }\n"
+    ),
+)
+
+# --- musik: Noten steigen auf -------------------------------------
+AUFKLEBER["musik"] = huelle(
+    '<g class="n1"><path d="M40 84 v-40 l22 -6 v40" stroke="#9a5ac9" '
+    'stroke-width="4" fill="none"/>'
+    '<ellipse cx="34" cy="86" rx="10" ry="7" fill="#9a5ac9" '
+    'transform="rotate(-18 34 86)"/>'
+    '<ellipse cx="56" cy="80" rx="10" ry="7" fill="#9a5ac9" '
+    'transform="rotate(-18 56 80)"/></g>'
+    '<g class="n2"><ellipse cx="88" cy="46" rx="8" ry="6" fill="#4a86c9" '
+    'transform="rotate(-18 88 46)"/>'
+    '<path d="M95 46 v-28 q12 4 10 14" stroke="#4a86c9" stroke-width="3.5" '
+    'fill="none"/></g>',
+    stil=(
+        "  .n1 { animation: tanz 1.5s ease-in-out infinite; }\n"
+        "  .n2 { animation: schweb 2.4s ease-in-out infinite; }\n"
+        "  @keyframes tanz { 0%,100%{transform:rotate(-5deg) translateY(0)} "
+        "50%{transform:rotate(5deg) translateY(-4px)} }\n"
+        "  @keyframes schweb { 0%{opacity:0;transform:translateY(14px) scale(.7)} "
+        "30%{opacity:1} 100%{opacity:0;transform:translateY(-22px) scale(1.15)} }\n"
+    ),
+)
+
+# --- sanduhr: die Zeit laeuft -------------------------------------
+AUFKLEBER["warten"] = huelle(
+    '<g class="su">'
+    '<path d="M32 16 h56 M32 104 h56" stroke="#a0784a" stroke-width="6" '
+    'stroke-linecap="round"/>'
+    '<path d="M36 18 q0 28 24 42 q-24 14 -24 42 h48 q0 -28 -24 -42 '
+    'q24 -14 24 -42 z" fill="rgba(255,255,255,.22)" '
+    'stroke="#a0784a" stroke-width="3" stroke-linejoin="round"/>'
+    '<path class="ob" d="M40 22 q0 20 20 34 q20 -14 20 -34 z" fill="#e0964a"/>'
+    '<path class="un" d="M44 100 q0 -14 16 -22 q16 8 16 22 z" fill="#e0964a"/>'
+    '</g>',
+    stil=(
+        "  .su { animation: kipp 4s ease-in-out infinite; }\n"
+        "  .ob { animation: leer 4s linear infinite; transform-origin: 50% 0; }\n"
+        "  .un { animation: voll 4s linear infinite; transform-origin: 50% 100%; }\n"
+        "  @keyframes kipp { 0%,88%{transform:rotate(0)} 96%,100%{transform:rotate(180deg)} }\n"
+        "  @keyframes leer { 0%{transform:scaleY(1)} 85%,100%{transform:scaleY(.05)} }\n"
+        "  @keyframes voll { 0%{transform:scaleY(.05)} 85%,100%{transform:scaleY(1)} }\n"
+    ),
+)
+
+# --- pflanze waechst ----------------------------------------------
+AUFKLEBER["wachsen"] = huelle(
+    '<path d="M28 108 q32 -10 64 0 z" fill="#8a6a43"/>'
+    '<g class="pf">'
+    '<path d="M60 104 L60 44" stroke="#5aa86b" stroke-width="5" stroke-linecap="round"/>'
+    '<path d="M60 82 q-22 -8 -26 -24 q20 -2 26 16" fill="#5aa86b"/>'
+    '<path d="M60 66 q22 -8 26 -24 q-20 -2 -26 16" fill="#6fbd80"/>'
+    '<circle cx="60" cy="40" r="9" fill="#f7c948"/>'
+    '</g>',
+    stil=(
+        "  .pf { animation: waechst 3.4s ease-in-out infinite; "
+        "transform-origin: 50% 92%; }\n"
+        "  @keyframes waechst { 0%{transform:scale(.25)} 55%{transform:scale(1.05)} "
+        "70%{transform:scale(1)} 100%{transform:scale(1)} }\n"
+    ),
+)
+
+# --- glocke laeutet -----------------------------------------------
+AUFKLEBER["glocke"] = huelle(
+    '<g class="gl">'
+    '<path d="M60 16 a8 8 0 0 1 8 8 q22 10 22 42 q0 14 8 22 h-76 '
+    'q8 -8 8 -22 q0 -32 22 -42 a8 8 0 0 1 8 -8 z" fill="#f0b040" '
+    'stroke="rgba(110,70,10,.4)" stroke-width="2.5" stroke-linejoin="round"/>'
+    '<circle cx="60" cy="98" r="8" fill="#c98f2c"/>'
+    '</g>'
+    '<g class="kl"><path d="M14 44 q-8 6 0 14 M106 44 q8 6 0 14" '
+    'stroke="#e0964a" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>',
+    stil=(
+        "  .gl { animation: laeutet 0.7s ease-in-out infinite; "
+        "transform-origin: 50% 12%; }\n"
+        "  .kl { animation: klang 0.7s ease-in-out infinite; }\n"
+        "  @keyframes laeutet { 0%,100%{transform:rotate(-13deg)} "
+        "50%{transform:rotate(13deg)} }\n"
+        "  @keyframes klang { 0%,100%{opacity:.2} 50%{opacity:1} }\n"
+    ),
+)
+
+# --- pokal --------------------------------------------------------
+AUFKLEBER["pokal"] = huelle(
+    '<g class="pk">'
+    '<path d="M34 20 h52 v22 a26 26 0 0 1 -52 0 z" fill="#f0b040" '
+    'stroke="rgba(110,70,10,.4)" stroke-width="2.5" stroke-linejoin="round"/>'
+    '<path d="M34 26 h-12 a14 14 0 0 0 14 22 M86 26 h12 a14 14 0 0 1 -14 22" '
+    'fill="none" stroke="#f0b040" stroke-width="5"/>'
+    '<rect x="54" y="66" width="12" height="18" fill="#c98f2c"/>'
+    '<rect x="38" y="84" width="44" height="12" rx="3" fill="#c98f2c"/>'
+    '<rect x="32" y="96" width="56" height="10" rx="3" fill="#a0784a"/>'
+    '</g>'
+    '<g class="gz"><path d="M96 14 L96 26 M90 20 L102 20" stroke="#fff3c4" '
+    'stroke-width="3.5" stroke-linecap="round"/></g>',
+    stil=(
+        "  .pk { animation: stolz 2.2s ease-in-out infinite; }\n"
+        "  .gz { animation: glitzer 1.5s ease-in-out infinite; }\n"
+        "  @keyframes stolz { 0%,100%{transform:translateY(0) rotate(-2deg)} "
+        "50%{transform:translateY(-5px) rotate(2deg)} }\n"
+        "  @keyframes glitzer { 0%,100%{opacity:0;transform:scale(.5)} "
+        "50%{opacity:1;transform:scale(1.25)} }\n"
+    ),
+)
+
+# --- traurig: enttaeuscht, ohne Traene (die hat „weinen") ---------
+AUFKLEBER["traurig"] = gesicht(
+    "#e8c07a",
+    '<path class="br" d="M34 42 Q44 36 54 42" stroke="#2b2118" stroke-width="4" '
+    'fill="none" stroke-linecap="round"/>'
+    '<path class="br" d="M66 42 Q76 36 86 42" stroke="#2b2118" stroke-width="4" '
+    'fill="none" stroke-linecap="round"/>'
+    '<circle cx="44" cy="56" r="5.5" fill="#2b2118"/>'
+    '<circle cx="76" cy="56" r="5.5" fill="#2b2118"/>'
+    '<path class="mu" d="M42 84 Q60 74 78 84" stroke="#2b2118" stroke-width="4.5" '
+    'fill="none" stroke-linecap="round"/>',
+    stil=(
+        "  .kopf { animation: senkt 3s ease-in-out infinite; }\n"
+        "  .mu { animation: zuck 3s ease-in-out infinite; }\n"
+        "  @keyframes senkt { 0%,100%{transform:translateY(0) rotate(0)} "
+        "50%{transform:translateY(4px) rotate(-3deg)} }\n"
+        "  @keyframes zuck { 0%,100%{transform:translateY(0)} "
+        "50%{transform:translateY(2px)} }\n"
+    ),
+)
+
+# --- katze --------------------------------------------------------
+AUFKLEBER["katze"] = huelle(
+    '<g class="kp">'
+    '<path d="M24 46 L30 14 L52 32 Z" fill="#8a8f98"/>'
+    '<path d="M24 46 L32 22 L48 34 Z" fill="#e8a0b0"/>'
+    '<path d="M96 46 L90 14 L68 32 Z" fill="#8a8f98"/>'
+    '<path d="M96 46 L88 22 L72 34 Z" fill="#e8a0b0"/>'
+    '<ellipse cx="60" cy="66" rx="38" ry="34" fill="#9aa0aa"/>'
+    '<ellipse class="au" cx="45" cy="60" rx="7" ry="9" fill="#5aa86b"/>'
+    '<ellipse class="au" cx="75" cy="60" rx="7" ry="9" fill="#5aa86b"/>'
+    '<ellipse cx="45" cy="60" rx="2.5" ry="8" fill="#20281f"/>'
+    '<ellipse cx="75" cy="60" rx="2.5" ry="8" fill="#20281f"/>'
+    '<path d="M60 76 l-6 -5 h12 z" fill="#e8848a"/>'
+    '<path d="M60 80 q-6 6 -12 2 M60 80 q6 6 12 2" stroke="#20281f" '
+    'stroke-width="2.2" fill="none" stroke-linecap="round"/>'
+    '<path d="M18 62 h-14 M18 70 h-15 M102 62 h14 M102 70 h15" '
+    'stroke="#e8edf2" stroke-width="2" stroke-linecap="round"/>'
+    '</g>',
+    stil=(
+        "  .kp { animation: schnurr 2.6s ease-in-out infinite; }\n"
+        "  .au { animation: blinzel 4.2s ease-in-out infinite; }\n"
+        "  @keyframes schnurr { 0%,100%{transform:rotate(-4deg)} "
+        "50%{transform:rotate(4deg)} }\n"
+        "  @keyframes blinzel { 0%,92%,100%{transform:scaleY(1)} "
+        "96%{transform:scaleY(.1)} }\n"
+    ),
+)
 
 def main():
     os.makedirs(ZIEL, exist_ok=True)

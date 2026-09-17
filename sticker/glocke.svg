@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .gl { animation: laeutet 0.7s ease-in-out infinite; transform-origin: 50% 12%; }
+  .kl { animation: klang 0.7s ease-in-out infinite; }
+  @keyframes laeutet { 0%,100%{transform:rotate(-13deg)} 50%{transform:rotate(13deg)} }
+  @keyframes klang { 0%,100%{opacity:.2} 50%{opacity:1} }
+</style>
+<g class="gl"><path d="M60 16 a8 8 0 0 1 8 8 q22 10 22 42 q0 14 8 22 h-76 q8 -8 8 -22 q0 -32 22 -42 a8 8 0 0 1 8 -8 z" fill="#f0b040" stroke="rgba(110,70,10,.4)" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="98" r="8" fill="#c98f2c"/></g><g class="kl"><path d="M14 44 q-8 6 0 14 M106 44 q8 6 0 14" stroke="#e0964a" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>
+</svg>
