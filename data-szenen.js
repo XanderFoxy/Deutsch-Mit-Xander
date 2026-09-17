@@ -572,11 +572,11 @@ window.DMA_SZENEN = [
   "breite": 340,
   "hoehe": 300,
   "detail": true,
-  "zahl": 11,
+  "zahl": 13,
   "lupen": [
    "frau_innen"
   ],
-  "stellen": 11
+  "stellen": 1
  },
  {
   "id": "penis",
@@ -586,11 +586,11 @@ window.DMA_SZENEN = [
   "breite": 340,
   "hoehe": 300,
   "detail": true,
-  "zahl": 12,
+  "zahl": 10,
   "lupen": [
    "mann_innen"
   ],
-  "stellen": 12
+  "stellen": 1
  },
  {
   "id": "frau_innen",
@@ -604,7 +604,7 @@ window.DMA_SZENEN = [
   "lupen": [
    "vulva"
   ],
-  "stellen": 7
+  "stellen": 1
  },
  {
   "id": "mann_innen",
@@ -618,7 +618,7 @@ window.DMA_SZENEN = [
   "lupen": [
    "penis"
   ],
-  "stellen": 8
+  "stellen": 1
  },
  {
   "id": "entstehung",

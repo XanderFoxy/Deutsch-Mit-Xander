@@ -237,6 +237,38 @@ def marke(nummer):
 ZEIGER = []          # sammelt die Linien des gerade gebauten Bildes
 
 
+def ganzes_organ(tid, de, syl, it, itsyl, en, mx, my, nummer, zx, zy,
+                 bx=118.0, by=204.0, bcx=170.0, bcy=154.0):
+    """Das GANZE Geschlechtsorgan als eigener, anwaehlbarer Bereich.
+
+       GEMELDET: „Man hat gar keinen Bereich, wo das Wort gesucht werden
+       kann. Das komplette Geschlechtsorgan konnte man frueher anklicken
+       und hat dann das umgangssprachliche Wort gehoert. Das geht jetzt
+       gar nicht mehr, weil da gar kein Bereich ist."
+
+       Stimmt: benannt waren nur die Einzelteile — Schamlippen, Eichel,
+       Hodensack. Das Ganze selbst hatte keinen Punkt, und damit gab es
+       auch kein „die Muschi" und kein „der Schwanz", denn die
+       Umgangssprache haengt am Wort „die Vulva" bzw. „der Penis".
+
+       Dieser Bereich ist eine fast durchsichtige Flaeche ueber der
+       ganzen Zeichnung. Sie faengt selbst NICHTS (.bw-flaeche hat
+       pointer-events: none) — sie legt nur ihre Groesse fest. Ueber die
+       Trefferebene der App gewinnt sie deshalb genau dort, wo KEIN
+       kleinerer Punkt liegt: tippt man auf ein Detail, kommt das
+       Detail; tippt man daneben aufs Organ, kommt das Ganze.
+
+       Dazu wie bei allen anderen ein nummerierter Punkt am Rand, damit
+       das Wort auch in der Liste steht und gesucht werden kann."""
+    ZEIGER.append(zeiger(mx, my, zx, zy))
+    kunst = (marke(nummer)
+             + f'<rect class="bw-flaeche" x="{bcx - mx - bx/2:.1f}" '
+               f'y="{bcy - my - by/2:.1f}" width="{bx:.1f}" height="{by:.1f}" '
+               f'rx="14" fill="rgba(255,255,255,0.001)"/>')
+    return {"id": tid, "de": de, "syl": syl, "it": it, "itSyl": itsyl, "en": en,
+            "x": mx, "y": my, "kunst": kunst}
+
+
 def teil(tid, de, syl, it, itsyl, en, mx, my, nummer, zx, zy, lupe=None):
     ZEIGER.append(zeiger(mx, my, zx, zy))
     t = {"id": tid, "de": de, "syl": syl, "it": it, "itSyl": itsyl, "en": en,
@@ -360,43 +392,46 @@ ZEIGER = []
 # Die Stellen sind an der vergrösserten Originalzeichnung abgelesen
 # (Gitterabzug in werkzeug/, scale 2.6 um 170/150).
 VULVA["teile"] = [
+    ganzes_organ("v_vulva", "die Vulva", "VUL-va",
+                 "la vulva", "VUL-va", "vulva",
+                 170, 26, 1, 170, 62),
     teil("v_schamhaar", "das Schamhaar", "SCHAM-haar",
          "i peli pubici", "PE-li PU-bi-ci", "pubic hair",
-         46, 60, 1, 150, 78),
+         46, 60, 2, 150, 78),
     teil("v_schamhuegel", "der Schamhügel", "SCHAM-hü-gel",
          "il monte di Venere", "MON-te di VE-ne-re", "mons pubis",
-         294, 60, 2, 196, 108),
+         294, 60, 3, 196, 108),
     teil("v_klitorisvorhaut", "die Klitorisvorhaut", "KLI-to-ris-vor-haut",
          "il cappuccio clitorideo", "cap-PUC-cio cli-to-RI-de-o", "clitoral hood",
-         46, 98, 3, 156, 120),
+         46, 98, 4, 156, 120),
     teil("v_klitoris", "die Klitoris", "KLI-to-ris",
          "la clitoride", "cli-TO-ri-de", "clitoris",
-         46, 136, 4, 165, 129),
+         46, 136, 5, 165, 129),
     teil("v_harnroehre", "die Harnröhrenöffnung", "HARN-röh-ren-öff-nung",
          "il meato uretrale", "me-A-to u-re-TRA-le", "urethral opening",
-         46, 174, 5, 165, 148),
+         46, 174, 6, 165, 148),
     teil("v_scheideneingang", "der Scheideneingang", "SCHEI-den-ein-gang",
          "l'ingresso vaginale", "in-GRES-so va-gi-NA-le", "vaginal opening",
-         46, 212, 6, 165, 170),
+         46, 212, 7, 165, 170),
     teil("v_schamlippen_aussen", "die äußeren Schamlippen", "ÄU-ße-re SCHAM-lip-pen",
          "le grandi labbra", "GRAN-di LAB-bra", "outer labia",
-         294, 104, 7, 192, 168),
+         294, 104, 8, 192, 168),
     teil("v_schamlippen_innen", "die inneren Schamlippen", "IN-ne-re SCHAM-lip-pen",
          "le piccole labbra", "PIC-co-le LAB-bra", "inner labia",
-         294, 146, 8, 178, 162),
+         294, 146, 9, 178, 162),
     teil("v_jungfernhaeutchen", "das Jungfernhäutchen", "JUNG-fern-häut-chen",
          "l'imene", "I-me-ne", "hymen",
-         294, 188, 9, 172, 182),
+         294, 188, 10, 172, 182),
     teil("v_damm", "der Damm", "DAMM",
          "il perineo", "pe-ri-NE-o", "perineum",
-         294, 228, 10, 172, 226),
+         294, 228, 11, 172, 226),
     teil("v_after", "der After", "AF-ter",
          "l'ano", "A-no", "anus",
-         294, 266, 11, 172, 246),
+         294, 266, 12, 172, 246),
     teil("v_innen", "die weiblichen Geschlechtsorgane", "WEIB-li-che Ge-SCHLECHTS-or-ga-ne",
          "gli organi genitali femminili", "OR-ga-ni ge-ni-TA-li fem-mi-NI-li",
          "female reproductive organs",
-         46, 262, 12, 140, 210, lupe="frau_innen"),
+         46, 262, 13, 140, 210, lupe="frau_innen"),
 ]
 VULVA["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + originalKulisse("frauaussen") + "".join(ZEIGER)
 
@@ -410,85 +445,128 @@ VULVA["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + originalKulisse("fr
 # die sollen ja benennbar werden.
 # =========================================================
 def penis_zeichnung():
+    """VERFEINERT, nachdem die Rueckmeldung kam:
+       „Den Penis des Mannes kannst du entsprechend der Vagina der Frau
+        anpassen, dass er auch professionell gezeichnet ist und nicht
+        nur so eine Strichmaennchenzeichnung."
+
+       Zu Recht. Im Bild stand bis eben der Ausschnitt aus der
+       Ganzkoerperzeichnung, 2,6-fach vergroessert — bei dieser
+       Vergroesserung ist von Modellierung nichts mehr uebrig, der
+       Schaft besteht aus zwei Strichen. Die Vulva daneben ist
+       ausgearbeitet; der Unterschied sprang ins Auge.
+
+       Was hier anders ist als beim ersten Anlauf dieser Zeichnung:
+       * Hoden und Nebenhoden scheinen nur noch ANGEDEUTET durch (0.2
+         statt 0.92). Vorher sah die Aussenansicht aus wie eine
+         Roentgenaufnahme; das Innere hat seine eigene Szene.
+       * Der Schaft ist leicht verjuengt statt eine gerade Roehre, mit
+         zwei weichen Schattenbaendern und einer angedeuteten Vene.
+       * Die Eichel ist keine Kugel mehr: sie ist unten breiter als
+         oben und hat einen warmen Randsaum statt eines harten
+         weissen Streifens.
+       * Der Hodensack haengt links tiefer als rechts — das ist
+         anatomisch so und nimmt der Form das Symmetrisch-Gemalte.
+       * Ein weicher Auflageschatten unter allem.
+    """
     s = ""
 
-    # --- Schaft ---
-    # Er reicht absichtlich HINTER die Eichel hinauf (bis y=66). Beim
-    # ersten Anlauf endete er bei y=84, und weil sowohl Eichel als auch
-    # Vorhautkragen an den Seiten höher liegen, klaffte dort eine Lücke:
-    # die Eichel sah aus wie ein Pilz, der über dem Schaft schwebt.
-    D_SCHAFT = ("M142 78 C142 70 146 66 170 66 C194 66 198 70 198 78 "
-                "L198 178 C198 188 186 194 170 194 C154 194 142 188 142 178 Z")
-    s += schlagschatten(D_SCHAFT, 2.5, 3, 0.18)
-    s += (f'<path d="{D_SCHAFT}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
-    s += licht(D_SCHAFT)
-    s += glanz("M156 86 C154 116 154 152 157 180", 0.38)
-    # eine Längsschattierung, damit der Schaft rund wirkt
-    s += (f'<path d="M152 92 C150 120 150 160 154 188" fill="none" '
-          f'stroke="{HAUT_DUNK}" stroke-width="3" stroke-linecap="round" opacity="0.5"/>')
+    # --- Ein weicher Hautgrund dahinter -------------------------------
+    #     Die Vulva-Seite hat ihn (er kommt dort aus der Originalzeichnung).
+    #     Ohne ihn schwebt die Form auf dem Papier.
+    s += ('<rect x="96" y="40" width="148" height="248" rx="26" '
+          f'fill="{HAUT}" opacity="0.4"/>')
 
-    # --- Vorhaut: der zurückgestreifte Kragen ---
-    s += (f'<path d="M140 96 C140 86 152 80 170 80 C188 80 200 86 200 96 '
-          'C200 104 188 109 170 109 C152 109 140 104 140 96 Z" '
-          f'fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.4"/>')
-    s += (f'<path d="M146 99 C156 103 184 103 194 99" fill="none" '
-          f'stroke="{RAND}" stroke-width="1" stroke-linecap="round" opacity="0.7"/>')
+    # --- Schamhaar: am ANSATZ, nicht neben dem Hodensack --------------
+    #     Beim ersten Anlauf lag es so weit aussen, dass es aussah wie
+    #     Kratzer im Papier. Es gehoert dorthin, wo der Schaft aus dem
+    #     Schamhuegel tritt.
+    s += haare([(128 + i * 6, 188 - (i % 3) * 5, 250 + (i % 4) * 14) for i in range(8)])
+    s += haare([(180 + i * 6, 186 - (i % 3) * 5, 270 + (i % 4) * 14) for i in range(8)])
+    s += haare([(112 + i * 7, 206 + (i % 2) * 6, 232 + (i % 3) * 16) for i in range(5)])
+    s += haare([(200 + i * 7, 206 + (i % 2) * 6, 288 + (i % 3) * 16) for i in range(5)])
 
-    # --- Eichel ---
-    D_EICHEL = ("M170 28 C186 28 200 42 200 60 C200 72 194 80 170 80 "
-                "C146 80 140 72 140 60 C140 42 154 28 170 28 Z")
-    s += (f'<path d="{D_EICHEL}" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.5" stroke-linejoin="round"/>')
-    s += licht(D_EICHEL, "gSchleim")
-    s += (f'<path d="M156 40 C152 48 151 58 152 68" fill="none" stroke="#ffffff" '
-          'stroke-width="3" stroke-linecap="round" opacity="0.28"/>')
-
-    # --- Kranzfurche: der Wulstrand am unteren Ende der Eichel ---
-    s += (f'<path d="M141 73 C152 80 188 80 199 73" fill="none" '
-          f'stroke="{SCHLEIM_D}" stroke-width="2.6" stroke-linecap="round"/>')
-
-    # --- Harnröhrenöffnung: der senkrechte Schlitz in der Eichel ---
-    s += (f'<path d="M170 38 L170 48" stroke="{OEFFNUNG}" stroke-width="3.2" stroke-linecap="round"/>')
-
-    # --- Vorhautbändchen: das Hautbändchen unter der Eichel ---
-    s += (f'<path d="M170 76 C167 82 167 88 170 93 C173 88 173 82 170 76 Z" '
-          f'fill="{SCHLEIM_D}" stroke="{OEFFNUNG}" stroke-width="0.9"/>')
-
-    # --- Hodensack ---
-    D_SACK = ("M142 180 C118 186 104 208 104 232 C104 258 126 278 152 278 "
-              "C162 278 168 275 170 272 C172 275 178 278 188 278 C214 278 236 258 236 232 "
-              "C236 208 222 186 198 180 Z")
-    s += schlagschatten(D_SACK, 2.5, 4, 0.18)
+    # --- Hodensack ----------------------------------------------------
+    # Links tiefer als rechts. Die Naht laeuft dadurch leicht schraeg,
+    # und genau das nimmt der Form das Gemalte.
+    D_SACK = ("M142 182 C116 190 102 212 104 238 C106 266 128 284 154 282 "
+              "C163 281 168 278 170 274 C173 277 179 280 189 280 C215 279 235 258 234 232 "
+              "C233 208 220 188 198 182 Z")
+    s += schlagschatten(D_SACK, 3, 5, 0.2)
     s += (f'<path d="{D_SACK}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
     s += licht(D_SACK)
-    # die Naht in der Mitte — sie teilt den Sack sichtbar in zwei Kammern
-    s += (f'<path d="M170 194 L170 276" stroke="{HAUT_DUNK}" stroke-width="2" '
-          'stroke-linecap="round" opacity="0.8"/>')
 
-    # --- Hoden: durchscheinend gezeichnet, sonst wäre nichts zu benennen ---
-    for cx in (139, 201):
-        d = (f"M{cx} 207 C{cx+13} 207 {cx+23} 219 {cx+23} 234 "
-             f"C{cx+23} 249 {cx+13} 261 {cx} 261 C{cx-13} 261 {cx-23} 249 {cx-23} 234 "
-             f"C{cx-23} 219 {cx-13} 207 {cx} 207 Z")
-        s += (f'<path d="{d}" fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.3" opacity="0.92"/>')
-        s += licht(d)
+    # Die Hoden nur ANGEDEUTET — die Aussenansicht ist kein Roentgenbild.
+    for cx, cy in ((141, 238), (200, 232)):
+        d = (f"M{cx} {cy-28} C{cx+14} {cy-28} {cx+24} {cy-15} {cx+24} {cy} "
+             f"C{cx+24} {cy+16} {cx+14} {cy+28} {cx} {cy+28} "
+             f"C{cx-14} {cy+28} {cx-24} {cy+16} {cx-24} {cy} "
+             f"C{cx-24} {cy-15} {cx-14} {cy-28} {cx} {cy-28} Z")
+        s += (f'<path d="{d}" fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1" '
+              f'opacity="0.22"/>')
 
-    # --- Nebenhoden: die Kappe, die aussen oben auf dem Hoden sitzt ---
-    s += (f'<path d="M120 246 C112 236 113 220 121 210 C126 204 131 203 133 207 '
-          f'C127 216 125 234 128 246 Z" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.1"/>')
-    s += (f'<path d="M220 246 C228 236 227 220 219 210 C214 204 209 203 207 207 '
-          f'C213 216 215 234 212 246 Z" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.1"/>')
+    # Die Naht: eine Rinne, kein Strich — dunkel mit hellem Rand daneben.
+    s += (f'<path d="M170 196 C171 226 170 254 167 278" fill="none" '
+          f'stroke="{HAUT_DUNK}" stroke-width="3" stroke-linecap="round" opacity="0.55"/>')
+    s += (f'<path d="M172.4 198 C173.4 226 172.4 252 169.6 276" fill="none" '
+          'stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.3"/>')
+    # Falten
+    for x0, y0, x1, y1 in ((122, 214, 136, 222), (118, 240, 134, 244),
+                           (206, 212, 220, 220), (208, 240, 222, 242)):
+        s += (f'<path d="M{x0} {y0} Q{(x0+x1)/2:.0f} {(y0+y1)/2 - 4:.0f} {x1} {y1}" '
+              f'fill="none" stroke="{HAUT_DUNK}" stroke-width="1.1" '
+              'stroke-linecap="round" opacity="0.4"/>')
 
-    # --- Samenleiter: die Röhre, die vom Nebenhoden nach oben zieht ---
-    s += (f'<path d="M126 208 C124 196 130 188 140 183" fill="none" '
-          f'stroke="{SCHLEIM_D}" stroke-width="3.2" stroke-linecap="round"/>')
-    s += (f'<path d="M214 208 C216 196 210 188 200 183" fill="none" '
-          f'stroke="{SCHLEIM_D}" stroke-width="3.2" stroke-linecap="round"/>')
+    # --- Schaft: leicht verjuengt, nicht zylindrisch ------------------
+    D_SCHAFT = ("M146 74 C146 66 150 62 170 62 C190 62 196 66 196 74 "
+                "C197 110 197 150 194 182 C193 190 182 196 170 196 "
+                "C158 196 147 190 146 182 C143 150 145 110 146 74 Z")
+    s += schlagschatten(D_SCHAFT, 2.5, 3, 0.16)
+    s += (f'<path d="{D_SCHAFT}" fill="{HAUT}" stroke="{RAND}" stroke-width="1.5" stroke-linejoin="round"/>')
+    s += licht(D_SCHAFT)
+    # zwei weiche Schattenbaender rechts, ein Glanz links — das macht rund
+    s += (f'<path d="M188 84 C190 118 190 156 187 186" fill="none" '
+          f'stroke="{HAUT_DUNK}" stroke-width="7" stroke-linecap="round" opacity="0.3"/>')
+    s += (f'<path d="M181 88 C183 120 183 154 180 184" fill="none" '
+          f'stroke="{HAUT_DUNK}" stroke-width="3" stroke-linecap="round" opacity="0.22"/>')
+    s += glanz("M157 86 C155 118 155 154 158 184", 0.34)
+    # eine angedeutete Vene auf dem Ruecken des Schafts
+    s += (f'<path d="M163 96 C168 116 165 140 169 164" fill="none" '
+          f'stroke="{RAND}" stroke-width="1.3" stroke-linecap="round" opacity="0.3"/>')
 
-    # --- Schamhaar am Ansatz ---
-    # Weiter nach aussen als beim ersten Anlauf: dort lagen die Striche
-    # auf dem Schaft und sahen aus wie Kratzer in der Zeichnung.
-    s += haare([(100 + i * 7, 176 + (i % 3) * 6, 245 + (i % 4) * 14) for i in range(6)])
-    s += haare([(206 + i * 7, 176 + (i % 3) * 6, 265 + (i % 4) * 14) for i in range(6)])
+    # --- Vorhaut: der zurueckgestreifte Kragen ------------------------
+    s += (f'<path d="M144 92 C144 82 155 76 170 76 C185 76 198 82 198 92 '
+          'C198 101 185 106 170 106 C155 106 144 101 144 92 Z" '
+          f'fill="{HAUT_DUNK}" stroke="{RAND}" stroke-width="1.4"/>')
+    s += (f'<path d="M150 96 C159 100 182 100 192 96" fill="none" '
+          f'stroke="{RAND}" stroke-width="1" stroke-linecap="round" opacity="0.6"/>')
+    s += (f'<path d="M152 88 C160 84 181 84 190 88" fill="none" '
+          'stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" opacity="0.28"/>')
+
+    # --- Eichel: unten breiter als oben, mit warmem Randsaum ----------
+    D_EICHEL = ("M170 26 C184 26 197 38 199 54 C200 66 196 76 170 76 "
+                "C144 76 140 66 141 54 C143 38 156 26 170 26 Z")
+    s += (f'<path d="{D_EICHEL}" fill="{SCHLEIM}" stroke="{SCHLEIM_D}" stroke-width="1.5" stroke-linejoin="round"/>')
+    s += licht(D_EICHEL, "gSchleim")
+    s += (f'<path d="M156 38 C151 46 150 58 152 68" fill="none" stroke="#ffffff" '
+          'stroke-width="5" stroke-linecap="round" opacity="0.18"/>')
+    s += (f'<path d="M188 40 C193 48 194 60 192 70" fill="none" stroke="{SCHLEIM_D}" '
+          'stroke-width="5" stroke-linecap="round" opacity="0.28"/>')
+
+    # --- Kranzfurche: der Wulstrand am unteren Ende der Eichel --------
+    s += (f'<path d="M142 69 C153 77 187 77 198 69" fill="none" '
+          f'stroke="{SCHLEIM_D}" stroke-width="2.8" stroke-linecap="round"/>')
+    s += (f'<path d="M144 73 C155 81 185 81 196 73" fill="none" '
+          f'stroke="{RAND}" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>')
+
+    # --- Harnroehrenoeffnung: der senkrechte Schlitz ------------------
+    s += (f'<path d="M170 36 L170 47" stroke="{OEFFNUNG}" stroke-width="3" stroke-linecap="round"/>')
+    s += (f'<path d="M170 36 L170 47" stroke="{SCHLEIM_D}" stroke-width="6" '
+          'stroke-linecap="round" opacity="0.25"/>')
+
+    # --- Vorhautbaendchen unter der Eichel ----------------------------
+    s += (f'<path d="M170 72 C166 79 166 85 170 90 C174 85 174 79 170 72 Z" '
+          f'fill="{SCHLEIM_D}" stroke="{OEFFNUNG}" stroke-width="0.8" opacity="0.9"/>')
 
     return s
 
@@ -504,36 +582,39 @@ PENIS = {
 }
 ZEIGER = []
 PENIS["teile"] = [
-    teil("p_schamhaar", "das Schamhaar", "SCHAM-haar",
-         "i peli pubici", "PE-li PU-bi-ci", "pubic hair",
-         46, 62, 1, 150, 76),
-    teil("p_schaft", "der Penisschaft", "PE-nis-schaft",
-         "l'asta del pene", "A-sta del PE-ne", "penile shaft",
-         46, 110, 2, 164, 134),
+    ganzes_organ("p_penis", "der Penis", "PE-nis",
+                 "il pene", "PE-ne", "penis",
+                 46, 40, 1, 146, 120, bx=146.0, by=262.0, bcx=170.0, bcy=152.0),
     teil("p_vorhaut", "die Vorhaut", "VOR-haut",
          "il prepuzio", "pre-PU-zio", "foreskin",
-         46, 156, 3, 166, 169),
-    teil("p_kranzfurche", "die Kranzfurche", "KRANZ-fur-che",
-         "il solco coronale", "SOL-co co-ro-NA-le", "coronal sulcus",
-         294, 156, 4, 186, 181),
-    teil("p_eichel", "die Eichel", "EI-chel",
-         "il glande", "GLAN-de", "glans",
-         46, 200, 5, 160, 199),
-    teil("p_harnroehre", "die Harnröhrenöffnung", "HARN-röh-ren-öff-nung",
-         "il meato uretrale", "me-A-to u-re-TRA-le", "urethral opening",
-         294, 196, 6, 170, 200),
+         46, 96, 2, 145, 95),
+    teil("p_schaft", "der Penisschaft", "PE-nis-schaft",
+         "l'asta del pene", "A-sta del PE-ne", "penile shaft",
+         46, 150, 3, 150, 148),
     teil("p_hodensack", "der Hodensack", "HO-den-sack",
          "lo scroto", "SCRO-to", "scrotum",
-         46, 242, 7, 146, 214),
+         46, 206, 4, 112, 224),
+    teil("p_schamhaar", "das Schamhaar", "SCHAM-haar",
+         "i peli pubici", "PE-li PU-bi-ci", "pubic hair",
+         46, 260, 5, 132, 186),
+    teil("p_eichel", "die Eichel", "EI-chel",
+         "il glande", "GLAN-de", "glans",
+         294, 44, 6, 194, 48),
+    teil("p_harnroehre", "die Harnröhrenöffnung", "HARN-röh-ren-öff-nung",
+         "il meato uretrale", "me-A-to u-re-TRA-le", "urethral opening",
+         294, 96, 7, 173, 41),
+    teil("p_kranzfurche", "die Kranzfurche", "KRANZ-fur-che",
+         "il solco coronale", "SOL-co co-ro-NA-le", "coronal sulcus",
+         294, 150, 8, 194, 72),
     teil("p_hoden", "der Hoden", "HO-den",
          "il testicolo", "te-STI-co-lo", "testicle",
-         294, 236, 8, 186, 216),
+         294, 206, 9, 204, 230),
     teil("p_innen", "die männlichen Geschlechtsorgane", "MÄNN-li-che Ge-SCHLECHTS-or-ga-ne",
          "gli organi genitali maschili", "OR-ga-ni ge-ni-TA-li ma-SCHI-li",
          "male reproductive organs",
-         170, 280, 9, 170, 232, lupe="mann_innen"),
+         294, 260, 10, 224, 262, lupe="mann_innen"),
 ]
-PENIS["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + originalKulisse("mannaussen") + "".join(ZEIGER)
+PENIS["kulisse"] = kulisse_rahmen(340, 300) + licht_defs() + penis_zeichnung() + "".join(ZEIGER)
 
 
 # =========================================================
