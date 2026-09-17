@@ -12700,6 +12700,50 @@
     });
   }
 
+  /* =================================================================
+     DEINE STIMME AN JEDER STELLE, NICHT NUR IM TRAINER
+     -----------------------------------------------------------------
+     GEMELDET: „Sage mir bitte, wo ich meine Aufnahmen finde. Ich kann
+     das im Wörterbuch nicht hören. Wenn ich auf A1 klicke und mich
+     durchklicke, ist das alles noch die alte Stimme, und bei dem Spiel
+     hört man es sowieso nicht."
+
+     Er hatte recht, und der Grund war wieder eine geschlossene Tür:
+     die 2239 Aufnahmen wurden NUR in aussprSpielen() gesucht. Das
+     Wörterbuch, der Vokabeltrainer und die Spiele rufen aber
+     Core.speak() auf — und das wusste von den Dateien nichts.
+
+     Statt fünfundzwanzig Aufrufstellen einzeln umzustellen (und die
+     sechsundzwanzigste beim nächsten Mal zu vergessen), wird die
+     Suche EINMAL an der Weiche in core.js angemeldet. Von da an gilt
+     überall: gibt es die Aufnahme, spricht Alex; gibt es sie nicht,
+     spricht wie bisher das Geraet.
+
+     Kosten: null. Die Dateien liegen fertig im Repo, es wird nichts
+     erzeugt und nichts abgerechnet.
+
+     Drei Bremsen, damit nichts Falsches abgespielt wird:
+       * nur Deutsch — im Italienischraum spricht weiter das Geraet;
+       * höchstens drei Woerter und 40 Zeichen, damit ein ganzer
+         Dialogsatz nicht versehentlich auf einen Dateinamen
+         zusammenschrumpft;
+       * die Liste wird erst beim ersten deutschen Vorlesen geladen,
+         nicht beim Start.
+     ================================================================= */
+  function eigeneStimme(text, sprache) {
+    const kurz = String(sprache || "de").slice(0, 2).toLowerCase();
+    if (kurz !== "de") return Promise.resolve(false);
+    const roh = String(text || "").trim();
+    if (!roh || roh.length > 40 || roh.split(/\s+/).length > 3) return Promise.resolve(false);
+    const stamm = aussprTonStamm(aussprSprechtext(roh));
+    if (!stamm) return Promise.resolve(false);
+    return aussprTonLaden().then((liste) => {
+      if (!liste || !liste.has(stamm)) return false;
+      return aussprTonSpielen("aussprache/a1/" + stamm + ".mp3", 1);
+    }).catch(() => false);
+  }
+  if (Core.stimmeAnmelden) Core.stimmeAnmelden(eigeneStimme);
+
   function aussprPufferSpielen(puffer, tempo) {
     return new Promise((fertig) => {
       if (!puffer) { fertig(); return; }
