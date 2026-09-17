@@ -5196,43 +5196,6 @@
        unverändert. */
     return `<span class="ticker-live" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${liveFarbeLesbar(p.farbe)};${gleich}">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
   }
-  /* ============================================================
-     DAS KLASSENZIMMER IM LAUFBAND
-     ------------------------------------------------------------
-     GEWUENSCHT: „Wenn ich im Klassenzimmer bin, wird das oben im
-     Newsticker angezeigt — vielleicht auch anders hervorgehoben,
-     damit man eine Idee davon hat, dass das gerade wichtiger ist
-     als die anderen News, ohne das Design gross zu veraendern."
-
-     Also dieselbe Bauweise wie die Live-Zeile: sie laeuft VORNEWEG
-     mit, in derselben Schriftgroesse wie der Rest, und hebt sich nur
-     durch Farbe und eine ruhige, kaum merkliche Atmung ab. Ein Tipp
-     darauf geht direkt in den Raum. Steht niemand im Klassenzimmer,
-     ist die Zeile gar nicht da und das Laufband sieht aus wie immer.
-     ============================================================ */
-  let kzTickerNamen = [];
-  function kzTickerHtml() {
-    if (!kzTickerNamen.length) return "";
-    const n = kzTickerNamen.length;
-    const drei = kzTickerNamen.slice(0, 3).join(", ");
-    const wer = n === 1
-      ? `${drei} ist gerade im Klassenzimmer`
-      : n <= 3
-        ? `${drei} sind gerade im Klassenzimmer`
-        : `${drei} und ${n - 3} weitere sind gerade im Klassenzimmer`;
-    return `<span class="ticker-kz" role="link" tabindex="0" title="Ins Klassenzimmer gehen">🏫 ${escapeHtml(wer)}</span>`;
-  }
-  /* Ein Tipp auf die Klassenzimmer-Zeile fuehrt in den Raum. */
-  document.addEventListener("click", (ev) => {
-    if (!ev.target.closest(".ticker-kz")) return;
-    ev.preventDefault();
-    document.querySelector('.tape-tab[data-target="view-knowledge"]')?.click();
-    setTimeout(() => {
-      document.querySelector('.subnav-pill[data-sub="sub-livechat"]')?.click();
-      document.getElementById("livechatArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
-  });
-
   function tickerNeuErzwingen() {
     const track = document.getElementById("tickerTrack");
     if (track) delete track.dataset.lastTickerText;
@@ -5281,17 +5244,14 @@
       await liveStandLaden();
       liveZeichenZeichnen();
       const liveHtml = liveTickerHtml();
-      /* Das Klassenzimmer geht VOR der Live-Zeile — wer gerade
-         Unterricht hat, ist die dringendste Meldung, die es hier gibt. */
-      const kzHtml = kzTickerHtml();
       // WICHTIG: Ist der Text UNVERÄNDERT gegenüber dem letzten Durchlauf, die laufende Animation
       // gar nicht erst anfassen — sonst würde sie bei jedem der vielen Auslöser (alle 20 Sekunden
       // per Intervall, plus mehrere weitere Ereignisse im Code) komplett neu gestartet, selbst
       // wenn es gar nichts Neues gibt. Der Text lief dadurch nie vollständig durch, sondern begann
       // ständig von vorn — genau das erzeugte den "rasenden", gehetzten Eindruck, nicht die
       // eigentliche Scroll-Geschwindigkeit selbst (die korrekt bei ~55px/s lag).
-      if ((kzHtml + "|" + liveHtml + "|" + text) === track.dataset.lastTickerText) return;
-      track.dataset.lastTickerText = kzHtml + "|" + liveHtml + "|" + text;
+      if ((liveHtml + "|" + text) === track.dataset.lastTickerText) return;
+      track.dataset.lastTickerText = liveHtml + "|" + text;
       // Animation zuerst abschalten, damit scrollWidth die NEUE Textlänge korrekt misst
       // (nicht noch die alte, gerade laufende Animation beeinflusst die Messung).
       track.style.animation = "none";
@@ -5300,8 +5260,7 @@
          Textes wieder mitgelesen und stände doppelt da. */
       const basis = items.length ? text : (track.dataset.basisText || track.textContent || "");
       track.dataset.basisText = basis;
-      track.innerHTML = [kzHtml, liveHtml, escapeHtml(basis)]
-        .filter((x) => x).join("   ");
+      track.innerHTML = liveHtml ? `${liveHtml}   ${escapeHtml(basis)}` : escapeHtml(basis);
       void track.offsetHeight; // Reflow erzwingen, damit die neue Breite feststeht
       // Feste Geschwindigkeit statt fester Dauer: läuft der Text nach mehreren Aktionen länger,
       // wurde die Animation vorher trotzdem in derselben festen Zeit durchgezogen — dadurch wirkte
@@ -12714,14 +12673,6 @@
           <button type="button" class="btn btn-ghost" id="lcBildFotoKnopf">📷 Foto vom Gerät</button>
         </div>
         <input type="file" id="lcBildFoto" accept="image/*" hidden>
-        ${(window.LiveChat && LiveChat.letzteBilder ? LiveChat.letzteBilder() : []).length ? `
-          <p class="eyebrow" style="margin-top:12px;">ZULETZT BENUTZT</p>
-          <div class="lc-waehler-gifs">
-            ${LiveChat.letzteBilder().map((q, i) => `
-              <button type="button" class="lc-waehler-gif" data-lc-letztbild="${i}" title="Wieder nehmen">
-                <img src="${escapeHtml(q)}" alt="" loading="lazy">
-              </button>`).join("")}
-          </div>` : ""}
         <p class="eyebrow" style="margin-top:12px;">EMOJI</p>
         <div class="lc-waehler-emojis">
           ${LC_EMOJIS.map((e) => `<button type="button" class="lc-waehler-emoji" data-lc-emoji="${e}">${e}</button>`).join("")}
@@ -12776,12 +12727,6 @@
         setzen(daten, "📷 Foto als Profilbild gesetzt");
       } catch (x) { showToast("📷 " + (x && x.message ? x.message : "Das Bild ging nicht.")); }
     });
-    const letztBilder = (window.LiveChat && LiveChat.letzteBilder) ? LiveChat.letzteBilder() : [];
-    kasten.querySelectorAll("[data-lc-letztbild]").forEach((b) =>
-      b.addEventListener("click", () => {
-        const q = letztBilder[Number(b.dataset.lcLetztbild)];
-        if (q) setzen(q, "🖼️ Bild gesetzt");
-      }));
     kasten.querySelectorAll("[data-lc-emoji]").forEach((b) =>
       b.addEventListener("click", () => setzen("emoji:" + b.dataset.lcEmoji, b.dataset.lcEmoji + " gesetzt")));
     kasten.querySelector("#lcGifNehmen")?.addEventListener("click", () => {
@@ -12825,438 +12770,6 @@
     });
   }
 
-  /* =================================================================
-     NACHLESEN — das Chatarchiv
-     -----------------------------------------------------------------
-     GEWÜNSCHT: „Eine Möglichkeit, den Chat zu speichern, wäre auch noch
-     schön — dass man diese Erinnerung behält, oder dass sich das
-     automatisch irgendwo sammelt, sodass man den Chat noch mal
-     nachlesen kann."
-
-     Gesammelt wird längst: der Text im Gerät, die Bilder im Lager, und
-     seit die Tabelle in der Datenbank steht auch geräteübergreifend.
-     Gefehlt hat der Weg dahin. Hier ist er: links die Räume, in denen
-     etwas steht, rechts das Gespräch mit allen Bildern — und ein Knopf,
-     der das Ganze als Textdatei mitgibt, zum Aufheben.
-     ================================================================= */
-  async function livechatArchiv(vorgabe) {
-    document.getElementById("lcArchivKasten")?.remove();
-    const raeume = LiveChat.archivRaeume ? LiveChat.archivRaeume() : [];
-    const kasten = document.createElement("div");
-    kasten.id = "lcArchivKasten";
-    kasten.className = "lc-waehler-hinter";
-    kasten.innerHTML = `
-      <div class="lc-waehler lc-archiv" role="dialog" aria-modal="true" aria-label="Chat nachlesen">
-        <p class="eyebrow">NACHLESEN</p>
-        ${raeume.length ? `
-          <div class="lc-archiv-raeume" id="lcArchivRaeume">
-            ${raeume.map((r, i) => `
-              <button type="button" class="lc-archiv-raum${i === 0 ? " ist-da" : ""}" data-lc-archiv="${escapeHtml(r.raum)}">
-                <span class="lc-archiv-name">${escapeHtml(r.name)}</span>
-                <span class="lc-archiv-zahl">${r.wieviel} Zeilen${r.bilder ? " · " + r.bilder + " 🖼️" : ""}</span>
-                <span class="lc-archiv-wann">${r.zuletzt ? new Date(r.zuletzt).toLocaleDateString("de-DE",
-                  { day: "2-digit", month: "2-digit", year: "2-digit" }) : ""}</span>
-              </button>`).join("")}
-          </div>
-          <div class="lc-archiv-verlauf" id="lcArchivVerlauf"><p class="empty-note">lädt …</p></div>
-          <div class="lc-waehler-reihe" style="margin-top:10px;">
-            <button type="button" class="btn btn-ghost" id="lcArchivSichern">💾 Als Textdatei sichern</button>
-            <button type="button" class="btn btn-coffee" id="lcArchivZu">Schließen</button>
-          </div>
-        ` : `
-          <p class="empty-note" style="margin:10px 0 16px;">Hier ist noch nichts zum Nachlesen.
-            Sobald im Klassenzimmer geschrieben wird, sammelt es sich von selbst an dieser Stelle.</p>
-          <div class="lc-waehler-reihe"><button type="button" class="btn btn-coffee" id="lcArchivZu">Schließen</button></div>
-        `}
-      </div>`;
-    document.body.appendChild(kasten);
-
-    const zu = () => kasten.remove();
-    kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
-    kasten.querySelector("#lcArchivZu")?.addEventListener("click", zu);
-    if (!raeume.length) return;
-
-    let offenerRaum = vorgabe || raeume[0].raum;
-    let offeneListe = [];
-
-    const zeichnen = async (raum) => {
-      offenerRaum = raum;
-      kasten.querySelectorAll("[data-lc-archiv]").forEach((b) =>
-        b.classList.toggle("ist-da", b.dataset.lcArchiv === raum));
-      const ziel = kasten.querySelector("#lcArchivVerlauf");
-      if (!ziel) return;
-      ziel.innerHTML = '<p class="empty-note">lädt …</p>';
-      let liste = [];
-      try { liste = await LiveChat.archivLaden(raum); } catch (e) { liste = []; }
-      offeneListe = liste;
-      if (!liste.length) { ziel.innerHTML = '<p class="empty-note">In diesem Raum steht nichts mehr.</p>'; return; }
-      ziel.innerHTML = "";
-      let letzterTag = "";
-      liste.forEach((n) => {
-        const tag = new Date(n.zeit || 0).toLocaleDateString("de-DE",
-          { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
-        if (tag !== letzterTag) {
-          letzterTag = tag;
-          const t = document.createElement("p");
-          t.className = "lc-archiv-tag";
-          t.textContent = tag;
-          ziel.appendChild(t);
-        }
-        /* Genau wie im Chat: Element für Element, Text über
-           textContent — die Zeilen kommen von fremden Geräten. */
-        const z = document.createElement("div");
-        z.className = "lc-zeile lc-zeile-" + (n.art || "text");
-        const uhr = document.createElement("span");
-        uhr.className = "lc-zeit";
-        uhr.textContent = new Date(n.zeit || 0).toLocaleTimeString("de-DE",
-          { hour: "2-digit", minute: "2-digit" });
-        z.appendChild(uhr);
-        if ((n.art || "text") === "aktion") {
-          const t2 = document.createElement("i");
-          t2.className = "lc-zeilentext";
-          lcTextEinfaerben(t2, n.text || "", n);
-          z.appendChild(t2);
-        } else {
-          const nm = document.createElement("b");
-          nm.className = "lc-nick";
-          nm.textContent = n.name || "?";
-          z.appendChild(nm);
-          const t2 = document.createElement("span");
-          t2.className = "lc-zeilentext";
-          if (n.bildImChat) {
-            const b = document.createElement("img");
-            b.className = "lc-zeilenfoto";
-            b.src = n.bildImChat;
-            b.alt = n.text || "Bild";
-            b.loading = "lazy";
-            b.addEventListener("click", () => lcBildGross(n.bildImChat, n.text || ""));
-            t2.appendChild(b);
-          }
-          if (n.text) lcTextEinfaerben(t2, n.text, n);
-          const farbe = lcNickFarbe(n);
-          if (farbe) t2.style.color = farbe;
-          z.appendChild(t2);
-        }
-        ziel.appendChild(z);
-      });
-      ziel.scrollTop = 0;
-    };
-
-    kasten.querySelectorAll("[data-lc-archiv]").forEach((b) =>
-      b.addEventListener("click", () => zeichnen(b.dataset.lcArchiv)));
-
-    kasten.querySelector("#lcArchivSichern")?.addEventListener("click", () => {
-      const text = LiveChat.archivAlsText(offenerRaum, offeneListe);
-      const tuete = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(tuete);
-      a.download = "klassenzimmer-" + String(offenerRaum).replace(/[^a-z0-9-]/gi, "") + ".txt";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-      showToast("💾 Gespeichert.");
-    });
-
-    zeichnen(offenerRaum);
-  }
-
-  /* =================================================================
-     BILDER IN DEN CHAT — der Wähler zum SCHICKEN
-     -----------------------------------------------------------------
-     Bisher war das ein window.prompt() mit der Bitte, eine GIF-Adresse
-     einzutippen. Genau daran ist „die GIFs gehen immer noch nicht"
-     gescheitert: auf dem Telefon gibt es keinen Rechtsklick, also auch
-     keine Bildadresse zum Kopieren.
-
-     Hier ist stattdessen alles an einem Ort:
-       • zuletzt benutzt  — GEWÜNSCHT: „damit man die nicht immer wieder
-         neu raussuchen muss"
-       • die eigenen Sammelfüchse — nur die freigeschalteten
-       • ein Foto vom Gerät
-       • die GIPHY-Suche
-       • und, für alle Fälle, ein Feld für eine Adresse
-     ================================================================= */
-  function livechatSendeWaehler() {
-    document.getElementById("lcSendeWaehler")?.remove();
-    const gifSchluessel = window.GIPHY_KEY || "dc6zaTOxFJmzC";
-    const letzte = (window.LiveChat && LiveChat.letzteBilder) ? LiveChat.letzteBilder() : [];
-    const fuechse = lcMeineFuechse();
-
-    const kasten = document.createElement("div");
-    kasten.id = "lcSendeWaehler";
-    kasten.className = "lc-waehler-hinter";
-    kasten.innerHTML = `
-      <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Bild in den Chat schicken">
-        <p class="eyebrow">IN DEN CHAT SCHICKEN</p>
-        ${letzte.length ? `
-          <p class="eyebrow" style="margin-top:6px;">ZULETZT BENUTZT</p>
-          <div class="lc-waehler-gifs" id="lcLetzteReihe">
-            ${letzte.map((q, i) => `
-              <button type="button" class="lc-waehler-gif" data-lc-letzt="${i}" title="Noch einmal schicken">
-                <img src="${escapeHtml(q)}" alt="" loading="lazy">
-              </button>`).join("")}
-          </div>
-          <button type="button" class="btn btn-ghost" id="lcLetzteWeg"
-                  style="font-size:0.7rem; padding:3px 9px; margin-bottom:4px;">Liste leeren</button>
-        ` : ""}
-        ${fuechse.length ? `
-          <p class="eyebrow" style="margin-top:10px;">MEINE SAMMELFÜCHSE
-            <span class="empty-note" style="font-weight:400;">(${fuechse.length} von ${COLLECTIBLE_FIGURES.length})</span></p>
-          <div class="lc-waehler-fuechse">
-            ${fuechse.map((f) => `
-              <button type="button" class="lc-waehler-fuchs" data-lc-fuchs="${f.id}" title="${escapeHtml(f.name)}">
-                <img src="${f.img}" alt="${escapeHtml(f.name)}" loading="lazy">
-              </button>`).join("")}
-          </div>
-          <p class="empty-note" style="font-size:0.68rem; margin:2px 0 0;">
-            Es stehen nur die Füchse hier, die du dir selbst erspielt hast.
-          </p>
-        ` : `
-          <p class="empty-note" style="font-size:0.72rem; margin:8px 0 0;">
-            🦊 Sammelfüchse kannst du mitschicken, sobald du den ersten freigespielt hast.
-          </p>`}
-        <p class="eyebrow" style="margin-top:12px;">FOTO</p>
-        <div class="lc-waehler-reihe">
-          <button type="button" class="btn btn-ghost" id="lcSendeFotoKnopf">📷 Foto vom Gerät</button>
-        </div>
-        <input type="file" id="lcSendeFoto" accept="image/*" hidden>
-        <p class="eyebrow" style="margin-top:12px;">BEWEGTES GIF</p>
-        <div class="lc-waehler-reihe">
-          <input type="text" class="lc-chat-feld" id="lcSendeGifSuche" placeholder="Suchen, z. B. „lachen“ oder „daumen hoch“">
-          <button type="button" class="btn btn-ghost" id="lcSendeGifSuchen">Suchen</button>
-        </div>
-        <div class="lc-waehler-gifs" id="lcSendeGifTreffer"></div>
-        <div class="lc-waehler-reihe" style="margin-top:6px;">
-          <input type="text" class="lc-chat-feld" id="lcSendeGifAdresse" placeholder="… oder eine Bildadresse einsetzen">
-          <button type="button" class="btn btn-ghost" id="lcSendeGifNehmen">Nehmen</button>
-        </div>
-        <div class="lc-waehler-reihe" style="margin-top:14px;">
-          <button type="button" class="btn btn-coffee" id="lcSendeZu">Schließen</button>
-        </div>
-      </div>`;
-    document.body.appendChild(kasten);
-
-    const zu = () => kasten.remove();
-    const textFeld = () => document.getElementById("lcFeld");
-    const textLeeren = () => {
-      const f = textFeld();
-      if (f) { f.value = ""; const k = document.getElementById("lcSenden"); if (k) k.disabled = true; }
-    };
-    const schicken = (adresse) => {
-      const f = textFeld();
-      const ok = LiveChat.gifSenden(adresse, f ? f.value.trim() : "");
-      if (!ok) { showToast("Das war keine Adresse — sie muss mit https:// anfangen."); return; }
-      textLeeren();
-      zu();
-    };
-
-    kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
-    kasten.querySelector("#lcSendeZu")?.addEventListener("click", zu);
-
-    /* Zuletzt benutzt — Fotos liegen als Datenadresse vor, GIFs als
-       Netzadresse. Beides geht denselben Weg wieder hinaus. */
-    kasten.querySelectorAll("[data-lc-letzt]").forEach((b) => {
-      b.addEventListener("click", () => {
-        const q = letzte[Number(b.dataset.lcLetzt)];
-        if (!q) return;
-        const f = textFeld();
-        const text = f ? f.value.trim() : "";
-        const ok = /^data:/.test(q)
-          ? lcDatenBildSchicken(q, text)
-          : LiveChat.gifSenden(q, text);
-        if (!ok) { showToast("Das Bild ging nicht mehr."); return; }
-        textLeeren();
-        zu();
-      });
-    });
-    kasten.querySelector("#lcLetzteWeg")?.addEventListener("click", () => {
-      LiveChat.letzteBilderVergessen();
-      zu();
-      showToast("Die Liste ist leer.");
-    });
-
-    /* Sammelfüchse kommen als Marke mitten in den Text — so kann man
-       schreiben „schau mal [fox:lesefuchs] das bin ich". */
-    kasten.querySelectorAll("[data-lc-fuchs]").forEach((b) => {
-      b.addEventListener("click", () => {
-        const f = textFeld();
-        if (!f) return;
-        const marke = `[fox:${b.dataset.lcFuchs}]`;
-        const a = f.selectionStart ?? f.value.length;
-        const e = f.selectionEnd ?? f.value.length;
-        f.value = f.value.slice(0, a) + marke + f.value.slice(e);
-        const k = document.getElementById("lcSenden");
-        if (k) k.disabled = !f.value.trim();
-        f.focus();
-        try { f.setSelectionRange(a + marke.length, a + marke.length); } catch (x) {}
-        zu();
-      });
-    });
-
-    const fotoFeld = kasten.querySelector("#lcSendeFoto");
-    kasten.querySelector("#lcSendeFotoKnopf")?.addEventListener("click", () => fotoFeld?.click());
-    fotoFeld?.addEventListener("change", async () => {
-      const datei = fotoFeld.files && fotoFeld.files[0];
-      fotoFeld.value = "";
-      if (!datei) return;
-      const f = textFeld();
-      try {
-        await LiveChat.fotoSenden(datei, f ? f.value.trim() : "");
-        textLeeren();
-        zu();
-      } catch (x) {
-        showToast("📎 " + (x && x.message ? x.message : "Das Bild ging nicht."));
-      }
-    });
-
-    kasten.querySelector("#lcSendeGifNehmen")?.addEventListener("click", () => {
-      const a = kasten.querySelector("#lcSendeGifAdresse")?.value.trim();
-      if (a) schicken(a);
-    });
-    const suchen = async () => {
-      const wort = kasten.querySelector("#lcSendeGifSuche")?.value.trim();
-      const ziel = kasten.querySelector("#lcSendeGifTreffer");
-      if (!wort || !ziel) return;
-      ziel.innerHTML = '<p class="empty-note">sucht …</p>';
-      try {
-        const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key="
-          + encodeURIComponent(gifSchluessel) + "&limit=18&rating=g&lang=de&q="
-          + encodeURIComponent(wort));
-        const j = await r.json();
-        const liste = (j && j.data) || [];
-        if (!liste.length) { ziel.innerHTML = '<p class="empty-note">Nichts gefunden.</p>'; return; }
-        ziel.innerHTML = "";
-        liste.forEach((g) => {
-          const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width);
-          if (!adr || !adr.url) return;
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "lc-waehler-gif";
-          const i = document.createElement("img");
-          i.src = adr.url; i.alt = g.title || "GIF"; i.loading = "lazy";
-          b.appendChild(i);
-          b.addEventListener("click", () => schicken(adr.url));
-          ziel.appendChild(b);
-        });
-      } catch (x) {
-        ziel.innerHTML = '<p class="empty-note">Die Suche ging nicht — Netz oder Schlüssel prüfen.</p>';
-      }
-    };
-    kasten.querySelector("#lcSendeGifSuchen")?.addEventListener("click", suchen);
-    kasten.querySelector("#lcSendeGifSuche")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); suchen(); }
-    });
-  }
-
-  /* Ein schon verkleinertes Foto (Datenadresse) noch einmal schicken —
-     ohne es erneut durch die Verkleinerung zu jagen. */
-  function lcDatenBildSchicken(daten, text) {
-    if (!/^data:image\//.test(String(daten || ""))) return false;
-    /* gifSenden() verlangt http(s). Für Datenadressen geht der Weg
-       über fotoSenden(), also erst zurück in eine Datei. */
-    try {
-      const teile = String(daten).split(",");
-      const art = (/data:([^;]+)/.exec(teile[0]) || [])[1] || "image/jpeg";
-      const roh = atob(teile[1]);
-      const zahlen = new Uint8Array(roh.length);
-      for (let i = 0; i < roh.length; i++) zahlen[i] = roh.charCodeAt(i);
-      const datei = new File([zahlen], "bild.jpg", { type: art });
-      LiveChat.fotoSenden(datei, text).catch(() => showToast("Das Bild ging nicht."));
-      return true;
-    } catch (e) { return false; }
-  }
-
-  /* =================================================================
-     BILDER GROSS ANSEHEN — IN DER SEITE
-     -----------------------------------------------------------------
-     GEMELDET: „Immer wenn man die anklickt, wird man weitergeleitet und
-     verlässt die Webseite. Das soll nicht mehr passieren."
-     window.open() ist ersetzt: das Bild geht über der Seite auf, und ein
-     Tipp daneben, ✕ oder Escape macht es wieder zu. Der Raum läuft
-     derweil weiter — man geht ja nirgendwo hin.
-     ================================================================= */
-  function lcBildGross(quelle, beschriftung) {
-    document.getElementById("lcBildGross")?.remove();
-    const kasten = document.createElement("div");
-    kasten.id = "lcBildGross";
-    kasten.className = "lc-bild-gross-hinter";
-    kasten.setAttribute("role", "dialog");
-    kasten.setAttribute("aria-modal", "true");
-    kasten.setAttribute("aria-label", beschriftung || "Bild");
-
-    const knopf = document.createElement("button");
-    knopf.type = "button";
-    knopf.className = "lc-bild-gross-zu";
-    knopf.setAttribute("aria-label", "Schließen");
-    knopf.textContent = "✕";
-
-    const bild = document.createElement("img");
-    bild.className = "lc-bild-gross";
-    bild.src = quelle;
-    bild.alt = beschriftung || "";
-
-    kasten.appendChild(knopf);
-    kasten.appendChild(bild);
-    if (beschriftung) {
-      const u = document.createElement("p");
-      u.className = "lc-bild-gross-text";
-      u.textContent = beschriftung;
-      kasten.appendChild(u);
-    }
-    document.body.appendChild(kasten);
-
-    const zu = () => {
-      kasten.remove();
-      document.removeEventListener("keydown", aufTaste);
-    };
-    const aufTaste = (e) => { if (e.key === "Escape") zu(); };
-    knopf.addEventListener("click", zu);
-    kasten.addEventListener("click", (e) => { if (e.target !== bild) zu(); });
-    document.addEventListener("keydown", aufTaste);
-    knopf.focus();
-  }
-
-  /* =================================================================
-     KONFETTI
-     -----------------------------------------------------------------
-     GEWÜNSCHT: „Einen Befehl für Konfetti, sodass da wirklich Konfetti
-     durch den ganzen Raum fliegt … aber der muss halt funktionieren,
-     dass das so eine Animation auslöst, die wirklich sichtbar ist."
-
-     Alle anderen Effekte steigen im Chatfenster auf — das ist ein
-     Kästchen von ein paar hundert Pixeln, und darin sieht Konfetti nach
-     nichts aus. Dieser eine geht deshalb über die GANZE SEITE: 90
-     Schnipsel, jeder mit eigener Farbe, eigener Größe, eigenem Tempo,
-     eigener Drehachse und eigenem seitlichen Versatz. Nach sechs
-     Sekunden räumt sich die Schicht selbst wieder weg.
-     ================================================================= */
-  const LC_KONFETTI_FARBEN = ["#e0964a", "#c9455a", "#4a86c9", "#5aa86b",
-                              "#e3c34a", "#9a5ac9", "#e07aa8", "#4ac9bd"];
-  function lcKonfetti() {
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    document.getElementById("lcKonfetti")?.remove();
-    const schicht = document.createElement("div");
-    schicht.id = "lcKonfetti";
-    schicht.className = "lc-konfetti";
-    schicht.setAttribute("aria-hidden", "true");
-    const wieviel = window.innerWidth < 560 ? 55 : 90;
-    for (let i = 0; i < wieviel; i++) {
-      const f = document.createElement("i");
-      f.style.left = (Math.random() * 100).toFixed(2) + "%";
-      f.style.background = LC_KONFETTI_FARBEN[i % LC_KONFETTI_FARBEN.length];
-      f.style.width = (5 + Math.random() * 7).toFixed(1) + "px";
-      f.style.height = (8 + Math.random() * 12).toFixed(1) + "px";
-      f.style.animationDelay = (Math.random() * 1.6).toFixed(2) + "s";
-      f.style.animationDuration = (2.6 + Math.random() * 2.4).toFixed(2) + "s";
-      f.style.setProperty("--lc-k-drift", (Math.random() * 260 - 130).toFixed(0) + "px");
-      f.style.setProperty("--lc-k-dreh", (360 + Math.random() * 900).toFixed(0) + "deg");
-      if (Math.random() < 0.35) f.style.borderRadius = "50%";
-      schicht.appendChild(f);
-    }
-    document.body.appendChild(schicht);
-    setTimeout(() => schicht.remove(), 6400);
-  }
-
   /* --- Der Startschirm: ein Satz, ein Knopf --- */
   function livechatStartHtml(l) {
     const ausLink = LiveChat.raumAusAdresse();
@@ -13287,9 +12800,6 @@
             ${ausLink ? "🚪 Dem Raum beitreten" : "🎓 Klassenzimmer betreten"}
           </button>
           <div id="lcRaumListe"></div>
-          <button type="button" class="btn btn-ghost" id="lcArchivStart" style="font-size:0.78rem;">
-            📜 Ältere Gespräche nachlesen
-          </button>
           <p class="empty-note" style="font-size:0.74rem;">
             ${ausLink
               ? "Du bist über einen Einladungslink hier — du landest im selben Raum wie die anderen."
@@ -13312,11 +12822,8 @@
               Ton und Bild gehen <strong>direkt von Gerät zu Gerät</strong> und laufen nicht
               über unseren Server — dort wird nur ausgetauscht, wie ihr euch findet.
               Der Raum hat einen langen, zufälligen Namen: wer den Link nicht hat, kommt
-              nicht hinein. <strong>Ton und Bild werden nicht aufgezeichnet.</strong>
-              Der <strong>geschriebene Chat</strong> dagegen wird aufgehoben — damit jemand,
-              der später dazukommt, den Zusammenhang sieht, und damit man unter
-              „📜 Nachlesen" später noch einmal hineinschauen kann. Geflüstertes
-              (<code>/w</code>) wird nie gespeichert.
+              nicht hinein. Nichts davon wird aufgezeichnet oder gespeichert.
+              Der Chat lebt, solange der Raum lebt — geschlossen ist er weg.
             </p>
           </details>
         </div>
@@ -13369,8 +12876,6 @@
             <span class="lc-chat-kopf-rechts">
               <button type="button" class="lc-chat-raeumen" id="lcBefehle"
                       title="Was man im Chat tippen kann">ⓘ Befehle</button>
-              <button type="button" class="lc-chat-raeumen" id="lcArchiv"
-                      title="Ältere Gespräche nachlesen">📜 Nachlesen</button>
               <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
                       title="Verlauf auf diesem Gerät löschen">Verlauf löschen</button>
             </span>
@@ -13399,8 +12904,7 @@
             <button type="button" class="lc-chat-anhang" id="lcFotoKnopf"
                     title="Ein Foto schicken" aria-label="Ein Foto schicken">📎</button>
             <button type="button" class="lc-chat-anhang" id="lcGifKnopf"
-                    title="GIF, Sammelfuchs oder ein zuletzt benutztes Bild schicken"
-                    aria-label="Bild, GIF oder Sammelfuchs schicken">🖼️</button>
+                    title="Ein GIF schicken (Adresse von giphy.com)" aria-label="Ein GIF schicken">GIF</button>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben">
             <button type="submit" class="lc-chat-senden" id="lcSenden" aria-label="Senden" disabled>➤</button>
@@ -13640,60 +13144,19 @@
      haben jeden Buchstaben anders eingefärbt. Genau das macht /c bunt. */
   const LC_REGENBOGEN = ["#ff6b6b", "#ffa45c", "#ffd166", "#7ede8a",
                          "#6fe3d6", "#6fb3ff", "#c99bff", "#ff9ecb"];
-  /* --- Sammelfüchse im Chat --------------------------------------
-     GEWÜNSCHT: „Die verdienten Sammelfüchse soll man auch im Chat
-     schicken können — aber nur die, die man selber gesammelt hat."
-
-     Verschickt wird nicht das Bild, sondern eine Marke: [fox:lesefuchs].
-     Das ist dieselbe Schreibweise wie im Postfach, sie wiegt zwanzig
-     Zeichen statt achtzig Kilobyte, und sie kann nichts Fremdes in die
-     Seite bringen: das Bild wird aus COLLECTIBLE_FIGURES herausgesucht,
-     nicht aus der Nachricht. Steht in der Marke ein Fuchs, den es gar
-     nicht gibt, bleibt die Marke einfach als Text stehen.
-
-     Das „nur die eigenen" wird dort durchgesetzt, wo es hingehört: im
-     Wähler. Angeboten werden ausschliesslich freigeschaltete Füchse. */
-  function lcFuchsBild(id) {
-    const fig = COLLECTIBLE_FIGURES.find((f) => f.id === id);
-    if (!fig) return null;
-    const i = document.createElement("img");
-    i.className = "lc-fuchs";
-    i.src = fig.img;
-    i.alt = fig.name;
-    i.title = fig.name;
-    i.loading = "lazy";
-    return i;
-  }
-  function lcMeineFuechse() {
-    const profil = Backend.currentProfile();
-    if (!profil) return [];
-    return COLLECTIBLE_FIGURES.filter((fig) => isFigureUnlocked(fig, profil));
-  }
-
   function lcTextEinfaerben(ziel, text, n) {
-    /* Erst die Fuchs-Marken heraustrennen, dann den Rest einfärben. */
-    const teile = String(text).split(/(\[fox:[\w-]+\])/g);
-    teile.forEach((teil) => {
-      if (!teil) return;
-      const marke = /^\[fox:([\w-]+)\]$/.exec(teil);
-      if (marke) {
-        const bild = lcFuchsBild(marke[1]);
-        if (bild) { ziel.appendChild(bild); return; }
-        /* Unbekannter Fuchs — dann bleibt die Marke schlicht stehen. */
-      }
-      if (n.farbe === "bunt") {
-        Array.from(teil).forEach((z, i) => {
-          const b = document.createElement("span");
-          b.textContent = z;
-          if (z.trim()) b.style.color = LC_REGENBOGEN[i % LC_REGENBOGEN.length];
-          ziel.appendChild(b);
-        });
-        return;
-      }
-      const w = document.createElement("span");
-      w.textContent = teil;
-      ziel.appendChild(w);
-    });
+    if (n.farbe === "bunt") {
+      Array.from(String(text)).forEach((z, i) => {
+        const b = document.createElement("span");
+        b.textContent = z;
+        if (z.trim()) b.style.color = LC_REGENBOGEN[i % LC_REGENBOGEN.length];
+        ziel.appendChild(b);
+      });
+      return;
+    }
+    const w = document.createElement("span");
+    w.textContent = text;
+    ziel.appendChild(w);
   }
 
   /* Ein kurzer Effekt über dem Verlauf — Herzen, die aufsteigen,
@@ -13711,17 +13174,12 @@
     lachen: { zeichen: ["(\u25d5\u203f\u25d5)", "\u0028\u02d8\u203f\u02d8\u0029", "haha"], wie: 7, klasse: "lachen" },
     umarmen:{ zeichen: ["\u0028\u3065\uff61\u25d5\u203f\u25d5\uff61\u0029\u3065", "\u2764"], wie: 8, klasse: "umarmen" },
     ruf:    { zeichen: ["\u2757", "\u203c"], wie: 10, klasse: "ruf" },
-    konfetti:{ ganzeSeite: true },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   function lcWirkung(art, anZeile) {
     const e = LC_EFFEKTE[art];
-    if (!e) return;
-    /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
-       Seite — sonst sieht man es kaum. */
-    if (e.ganzeSeite) { lcKonfetti(); return; }
     const v = document.getElementById("lcVerlauf");
-    if (!v) return;
+    if (!e || !v) return;
     const schicht = document.createElement("div");
     schicht.className = "lc-wirkung lc-wirkung-" + e.klasse;
     /* Die Teilchen steigen dort auf, wo die Zeile steht — nicht
@@ -13841,11 +13299,7 @@
           bild.alt = n.text || "Bild im Chat";
           bild.loading = "lazy";
           bild.src = n.bildImChat;
-          bild.title = "Antippen — größer ansehen";
-          bild.addEventListener("click", (e) => {
-            e.stopPropagation();          // nicht den Zeileneffekt auslösen
-            lcBildGross(n.bildImChat, n.text || "");
-          });
+          bild.addEventListener("click", () => window.open(n.bildImChat, "_blank", "noopener"));
           t.appendChild(bild);
         } else if (n.bildWeg) {
           const w = document.createElement("span");
@@ -13983,7 +13437,6 @@
         hinein(LiveChat.raumAusAdresse() || LiveChat.HAUPTRAUM);
       });
       area.querySelector("#lcEigenerRaum")?.addEventListener("click", () => hinein(LiveChat.neuerRaumName()));
-      area.querySelector("#lcArchivStart")?.addEventListener("click", () => livechatArchiv());
       area.querySelector("#lcZumKlassenzimmer")?.addEventListener("click", () => {
         document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.click();
       });
@@ -14048,18 +13501,20 @@
           showToast("📎 " + (e && e.message ? e.message : "Das Bild ging nicht."));
         }
       });
-      /* Früher stand hier ein window.prompt(), das nach einer
-         GIF-Adresse gefragt hat. Auf dem Telefon gibt es keinen
-         Rechtsklick und damit keine Adresse zum Kopieren — genau
-         deshalb „gingen die GIFs nicht". Jetzt öffnet der Knopf den
-         Wähler mit Suche, Sammelfüchsen und der Liste „zuletzt
-         benutzt". */
-      area.querySelector("#lcGifKnopf")?.addEventListener("click", () => livechatSendeWaehler());
+      area.querySelector("#lcGifKnopf")?.addEventListener("click", () => {
+        const a = window.prompt(
+          "Adresse eines GIFs (auf giphy.com das Bild mit Rechtsklick „Bildadresse kopieren“ —\n"
+          + "die Adresse endet auf .gif).");
+        if (!a) return;
+        const feld = document.getElementById("lcFeld");
+        const ok = LiveChat.gifSenden(a, feld ? feld.value.trim() : "");
+        if (!ok) { showToast("Das war keine Adresse — sie muss mit https:// anfangen."); return; }
+        if (feld) { feld.value = ""; document.getElementById("lcSenden").disabled = true; }
+      });
       area.querySelector("#lcBefehle")?.addEventListener("click", () => {
         const k = document.getElementById("lcBefehleKasten");
         if (k) k.open = !k.open;
       });
-      area.querySelector("#lcArchiv")?.addEventListener("click", () => livechatArchiv());
       area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
         if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
         LiveChat.chatLeeren();
@@ -39286,7 +38741,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         <button type="button" class="online-klappe-zeile" data-online-profil="${m.id}">
           ${tinyAvatar(m)}<span class="name">${escapeHtml(m.name || "")}</span>
           ${landFlagge(m.origin) ? `<span class="online-flagge" title="${escapeHtml(m.origin)}" aria-label="${escapeHtml(m.origin)}">${landFlagge(m.origin)}</span>` : ""}
-          ${imKlassenzimmer(m.id) ? `<span class="online-kz" title="sitzt gerade im Klassenzimmer" aria-label="sitzt gerade im Klassenzimmer">🏫</span>` : ""}
+          ${imKlassenzimmer(m.id) ? `<span class="online-kz" title="ist gerade im Klassenzimmer" aria-label="ist gerade im Klassenzimmer">🎓</span>` : ""}
         </button>`).join("")}
       ${onlineListe.length > 8 ? `<p class="online-klappe-mehr">… und ${onlineListe.length - 8} weitere</p>` : ""}`;
     // Unter der Pille aufhängen, aber nie über den Bildschirmrand hinaus.
@@ -42812,17 +42267,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     LiveChat.praesenzZuhoeren(u ? u.id : "");
     LiveChat.beiPraesenz((da) => {
       kzDaJetzt = da || {};
-      /* GEWUENSCHT: „Die allgemeine Online-Anzeige soll ein gruenes Licht
-         bleiben ohne weiteres Symbol. Nur wenn man auf das gruene Licht
-         klickt, soll bei den Leuten die Flagge stehen und, wenn sie
-         gerade im Klassenzimmer sind, ein Zeichen fuer Unterricht."
-         Die Pille wird deshalb NICHT mehr angefasst. Das Schulhaus steht
-         drinnen in der Liste — und im Laufband oben, wo es hingehoert. */
-      kzTickerNamen = Object.keys(kzDaJetzt)
-        .map((k) => (kzDaJetzt[k] && kzDaJetzt[k].name) || "")
-        .filter((x) => x);
-      tickerNeuErzwingen();
-      updateTicker();
+      const pille = document.getElementById("onlineJetztBtn");
+      const wieViele = Object.keys(kzDaJetzt).length;
+      if (pille) {
+        pille.classList.toggle("hat-klassenzimmer", wieViele > 0);
+        pille.dataset.kz = wieViele ? String(wieViele) : "";
+      }
       if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();
     });
   }, 4000);

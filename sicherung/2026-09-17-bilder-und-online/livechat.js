@@ -242,23 +242,6 @@ window.LiveChat = (function () {
   }
   function raumMerken(n) { try { localStorage.setItem("dma_livechat_raum", n); } catch (e) {} }
 
-  /* --- Die eigene Schriftfarbe ---------------------------------
-     GEMELDET: „Wenn man einen Raum verlaesst und aktualisiert, dann
-     hat man wieder eine Standardfarbe, wenn man reinkommt. Ich will
-     das so haben, dass er sich die letzte gewaehlte Farbe merkt."
-     Die Farbe lag bisher nur in zustand.farbe — und der ist nach dem
-     Neuladen leer. Also gehoert sie ins Geraet. */
-  var FARB_SCHLUESSEL = "dma_livechat_farbe";
-  function farbeMerken(f) {
-    try {
-      if (f) localStorage.setItem(FARB_SCHLUESSEL, f);
-      else localStorage.removeItem(FARB_SCHLUESSEL);
-    } catch (e) {}
-  }
-  function gemerkteFarbe() {
-    try { return localStorage.getItem(FARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
-  }
-
   /* --- Nach dem Neuladen zurück in den Raum ---
      GEWÜNSCHT: „Manchmal muss ich die Webseite aktualisieren, um
      irgendwas zurückzusetzen — bleibt man dann auch im
@@ -384,7 +367,7 @@ window.LiveChat = (function () {
     var z = angemeldeterZugang();
     if (!z) return Promise.resolve([]);
     return z.from(TISCH)
-      .select("id,raum,autor,name,bild,text,bild_im_chat,art,farbe,erstellt")
+      .select("id,raum,autor,name,bild,text,bild_im_chat,art,erstellt")
       .eq("raum", raum)
       .order("erstellt", { ascending: false })
       .limit(CHAT_VERLAUF)
@@ -398,7 +381,6 @@ window.LiveChat = (function () {
             text: r.text || "",
             bild: r.bild || "",
             bildImChat: r.bild_im_chat || "",
-            farbe: r.farbe || "",
             art: r.art || "text",
             zeit: new Date(r.erstellt).getTime(),
             eigen: false
@@ -422,7 +404,6 @@ window.LiveChat = (function () {
         bild: n.bild || "",
         text: n.text || "",
         bild_im_chat: n.bildImChat || "",
-        farbe: n.farbe || zustand.farbe || "",
         art: n.art || "text"
       }).then(function () {}, function () {});
     } catch (e) {}
@@ -449,173 +430,6 @@ window.LiveChat = (function () {
     return raus.slice(-CHAT_VERLAUF);
   }
 
-  /* =========================================================
-     DAS BILDERLAGER
-     ---------------------------------------------------------
-     GEMELDET: „Wenn man sich Bilder aus seiner Galerie reinmachen
-     will, dann kriegt man nur diese Vorschaugrafiken angezeigt,
-     dass da ein Bild sein soll, aber nicht das Bild selber."
-
-     WO DIE URSACHE LAG — und es waren zwei:
-
-     1. Die gemeinsame Tabelle in der Datenbank gab es nicht. Das
-        SQL lag zwar im Ordner supabase/, war aber nie ausgefuehrt.
-        Also konnte kein Bild ueber Geraete hinweg ankommen.
-
-     2. Im Geraet selbst lagen die Bilder im localStorage. Der ist
-        auf wenige Megabyte begrenzt, und ein einziges Foto wiegt
-        achtzig Kilobyte. Deshalb hat chatSichern() alles ausser den
-        letzten sechs Bildern durch den Vermerk „Bild — nicht mehr
-        gespeichert" ersetzt. GENAU DIESER VERMERK war die
-        „Vorschaugrafik", die zu sehen war.
-
-     Die Loesung ist nicht, den Vermerk huebscher zu machen, sondern
-     ihn ueberfluessig. Bilder gehoeren nicht in den localStorage,
-     sondern in die IndexedDB: dort liegen hunderte Megabyte bereit,
-     und sie ueberlebt das Neuladen genauso. Im localStorage steht
-     ab jetzt nur noch der Text, und am Bild ein Haken, dass eines
-     dazugehoert. Beim Betreten des Raums werden die Bilder aus dem
-     Lager nachgereicht.
-
-     GEWUENSCHT ausserdem: „Das System kann sich das gerne merken,
-     diese Bilder, damit man die nicht immer wieder neu raussuchen
-     muss." — siehe letzteBilder() weiter unten. */
-  var LAGER_NAME = "dma_klassenzimmer";
-  var LAGER_FACH = "bilder";
-  var lagerOffen = null;
-
-  function lager() {
-    if (lagerOffen) return lagerOffen;
-    lagerOffen = new Promise(function (fertig) {
-      var idb = null;
-      try { idb = window.indexedDB; } catch (e) {}
-      if (!idb) { fertig(null); return; }
-      var a;
-      try { a = idb.open(LAGER_NAME, 1); } catch (e) { fertig(null); return; }
-      a.onupgradeneeded = function () {
-        var db = a.result;
-        if (!db.objectStoreNames.contains(LAGER_FACH)) {
-          var f = db.createObjectStore(LAGER_FACH, { keyPath: "id" });
-          f.createIndex("zeit", "zeit");
-        }
-      };
-      a.onsuccess = function () { fertig(a.result); };
-      a.onerror = function () { fertig(null); };
-      a.onblocked = function () { fertig(null); };
-    });
-    return lagerOffen;
-  }
-
-  function lagerLegen(id, raum, daten) {
-    if (!id || !daten) return Promise.resolve(false);
-    return lager().then(function (db) {
-      if (!db) return false;
-      return new Promise(function (fertig) {
-        try {
-          var t = db.transaction(LAGER_FACH, "readwrite");
-          t.objectStore(LAGER_FACH).put({ id: String(id), raum: raum || "",
-                                          daten: String(daten), zeit: Date.now() });
-          t.oncomplete = function () { fertig(true); };
-          t.onerror = function () { fertig(false); };
-          t.onabort = function () { fertig(false); };
-        } catch (e) { fertig(false); }
-      });
-    });
-  }
-
-  /* Alles holen, was zu einer Liste von Kennungen im Lager liegt. */
-  function lagerHolen(ids) {
-    if (!ids || !ids.length) return Promise.resolve({});
-    return lager().then(function (db) {
-      if (!db) return {};
-      return new Promise(function (fertig) {
-        var raus = {};
-        try {
-          var t = db.transaction(LAGER_FACH, "readonly");
-          var f = t.objectStore(LAGER_FACH);
-          ids.forEach(function (id) {
-            var a = f.get(String(id));
-            a.onsuccess = function () { if (a.result && a.result.daten) raus[String(id)] = a.result.daten; };
-          });
-          t.oncomplete = function () { fertig(raus); };
-          t.onerror = function () { fertig(raus); };
-          t.onabort = function () { fertig(raus); };
-        } catch (e) { fertig(raus); }
-      });
-    });
-  }
-
-  /* Das Lager darf nicht unbegrenzt wachsen. Was aelter ist als
-     sechzig Tage, fliegt beim naechsten Betreten heraus. */
-  var LAGER_FRIST_MS = 60 * 24 * 3600 * 1000;
-  function lagerAufraeumen() {
-    return lager().then(function (db) {
-      if (!db) return;
-      try {
-        var t = db.transaction(LAGER_FACH, "readwrite");
-        var i = t.objectStore(LAGER_FACH).index("zeit");
-        var grenze = Date.now() - LAGER_FRIST_MS;
-        var a = i.openCursor(IDBKeyRange.upperBound(grenze));
-        a.onsuccess = function () {
-          var c = a.result;
-          if (!c) return;
-          try { c.delete(); } catch (e) {}
-          c.continue();
-        };
-      } catch (e) {}
-    });
-  }
-
-  /* Die Bilder einer frisch geladenen Liste nachreichen. Liefert
-     true, wenn wirklich etwas dazugekommen ist — dann lohnt ein
-     neues Zeichnen. */
-  function bilderNachreichen(liste) {
-    var fehlen = (liste || []).filter(function (n) {
-      return !n.bildImChat && (n.bildImLager || n.bildWeg);
-    }).map(function (n) { return n.id; }).filter(function (x) { return x; });
-    if (!fehlen.length) return Promise.resolve(false);
-    return lagerHolen(fehlen).then(function (gefunden) {
-      var etwas = false;
-      liste.forEach(function (n) {
-        var d = gefunden[String(n.id)];
-        if (!d) return;
-        n.bildImChat = d;
-        n.bildWeg = false;
-        etwas = true;
-      });
-      return etwas;
-    });
-  }
-
-  /* --- Zuletzt benutzte Bilder ---------------------------------
-     GEWUENSCHT: „Das System kann sich das gerne merken, diese
-     Bilder, damit man die nicht immer wieder neu raussuchen muss."
-     Gemerkt werden die letzten zwoelf — GIF-Adressen vollstaendig,
-     Fotos als Datenadresse. Sie stehen im Bildwaehler ganz oben. */
-  var LETZTE_SCHLUESSEL = "dma_livechat_letzte_bilder";
-  var LETZTE_WIEVIEL = 12;
-  function letzteBilder() {
-    try {
-      var l = JSON.parse(localStorage.getItem(LETZTE_SCHLUESSEL) || "[]");
-      return Array.isArray(l) ? l.filter(function (x) { return typeof x === "string" && x; }) : [];
-    } catch (e) { return []; }
-  }
-  function bildGemerkt(quelle) {
-    var q = String(quelle || "");
-    if (!q) return;
-    var l = letzteBilder().filter(function (x) { return x !== q; });
-    l.unshift(q);
-    l = l.slice(0, LETZTE_WIEVIEL);
-    try { localStorage.setItem(LETZTE_SCHLUESSEL, JSON.stringify(l)); }
-    catch (e) {
-      /* Kein Platz? Dann eben weniger merken, aber nicht gar nichts. */
-      try { localStorage.setItem(LETZTE_SCHLUESSEL, JSON.stringify(l.slice(0, 4))); } catch (e2) {}
-    }
-  }
-  function letzteBilderVergessen() {
-    try { localStorage.removeItem(LETZTE_SCHLUESSEL); } catch (e) {}
-  }
-
   function chatSchluessel(raum) { return "dma_livechat_chat_" + (raum || "-"); }
   function chatLaden(raum) {
     try {
@@ -623,39 +437,36 @@ window.LiveChat = (function () {
       return Array.isArray(l) ? l.slice(-CHAT_VERLAUF) : [];
     } catch (e) { return []; }
   }
-  /* Gesichert wird ZWEIGLEISIG: der Text in den localStorage, die
-     Bilder ins Lager (IndexedDB). Im localStorage steht statt des
-     Bildes nur noch der Haken bildImLager — beim naechsten Betreten
-     holt bilderNachreichen() das Bild zurueck.
-
-     Frueher stand hier ein Sparprogramm, das alles ausser den letzten
-     sechs Bildern durch „Bild — nicht mehr gespeichert" ersetzt hat.
-     Das war der gemeldete Fehler. Es gibt kein Sparprogramm mehr:
-     das Lager hat Platz. */
+  /* Beim Sichern werden ALTE Bilder herausgenommen: der Platz im
+     Gerät ist auf wenige Megabyte begrenzt, und sechzig Fotos zu je
+     achtzig Kilobyte sprengen ihn. Die letzten sechs Bilder bleiben,
+     ältere werden zu einem Vermerk — der Text bleibt vollständig. */
+  var BILDER_BEHALTEN = 6;
   function chatSichern() {
     if (!zustand.raum) return;
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
-    var raum = zustand.raum;
-    var schlank = liste.map(function (n) {
+    var bilderGesehen = 0;
+    var sparsam = liste.slice().reverse().map(function (n) {
       if (!n.bildImChat) return n;
-      /* Ins Lager damit — und zwar jedes Mal, auch wenn es schon
-         drinliegt: put() ueberschreibt, das kostet nichts. */
-      lagerLegen(n.id, raum, n.bildImChat);
+      bilderGesehen++;
+      if (bilderGesehen <= BILDER_BEHALTEN) return n;
       var kopie = {};
       Object.keys(n).forEach(function (k) { kopie[k] = n[k]; });
       kopie.bildImChat = "";
-      kopie.bildImLager = true;
-      kopie.bildWeg = false;
+      kopie.bildWeg = true;
       return kopie;
-    });
+    }).reverse();
     try {
-      localStorage.setItem(chatSchluessel(raum), JSON.stringify(schlank));
+      localStorage.setItem(chatSchluessel(zustand.raum), JSON.stringify(sparsam));
     } catch (e) {
-      /* Selbst ohne Bilder kein Platz mehr? Dann die Haelfte opfern,
-         statt den ganzen Verlauf zu verlieren. */
+      /* Kein Platz mehr? Dann wenigstens den Text retten. */
       try {
-        localStorage.setItem(chatSchluessel(raum),
-          JSON.stringify(schlank.slice(-Math.ceil(CHAT_VERLAUF / 2))));
+        localStorage.setItem(chatSchluessel(zustand.raum), JSON.stringify(
+          sparsam.map(function (n) {
+            var k = {}; Object.keys(n).forEach(function (x) { k[x] = n[x]; });
+            k.bildImChat = ""; if (n.bildImChat) k.bildWeg = true;
+            return k;
+          })));
       } catch (e2) {}
     }
   }
@@ -679,24 +490,13 @@ window.LiveChat = (function () {
     try { return localStorage.getItem(BILD_SCHLUESSEL) || ""; } catch (e) { return ""; }
   }
   function bildSetzen(adresse) {
-    var roh = String(adresse || "").trim();
-    /* ACHTUNG, HIER LAG EIN FEHLER: hier stand slice(0, 600) für ALLES.
-       Eine Netzadresse ist nie länger als das — eine Datenadresse
-       dagegen IMMER. Ein Foto aus der Galerie wurde also brav
-       verkleinert und dann nach 600 Zeichen abgeschnitten. Übrig blieb
-       ein kaputtes Bild, und der Browser zeigte dafür sein
-       Ersatzsymbol: „man kriegt nur diese Vorschaugrafiken angezeigt,
-       dass da ein Bild sein soll, aber nicht das Bild selber."
-       Datenadressen bekommen deshalb ihr eigenes, grosszügiges Mass. */
-    var istDaten = /^data:image\//i.test(roh);
-    var a = roh.slice(0, istDaten ? BILD_HOECHST : 600);
+    var a = String(adresse || "").trim().slice(0, 600);
     if (a && !/^(https?:|data:image\/|emoji:)/i.test(a)) return false;
     zustand.ichBild = a;
     try {
       if (a) localStorage.setItem(BILD_SCHLUESSEL, a);
       else localStorage.removeItem(BILD_SCHLUESSEL);
     } catch (e) {}
-    if (a && !/^emoji:/i.test(a)) bildGemerkt(a);   // „zuletzt benutzt"
     senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: a });
     melden();
     return true;
@@ -1409,7 +1209,7 @@ window.LiveChat = (function () {
     zustand.lage = "verbindet";
     zustand.fehler = "";
     zustand.ichBild = o.bild || bildLaden();
-    zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
+    zustand.farbe = o.farbe || zustand.farbe || "";
     zustand.thema = "";
     zustand.haeuptling = false;
     zustand.abgeschlossen = false;
@@ -1422,12 +1222,6 @@ window.LiveChat = (function () {
        wurde, auch nach dem Neuladen und nach dem Wiederkommen. */
     zustand.nachrichten = chatLaden(zustand.raum);
     melden();
-    /* Die Bilder liegen nicht im localStorage, sondern im Lager.
-       Sie kommen gleich hinterher — ohne dass das Betreten wartet. */
-    bilderNachreichen(zustand.nachrichten).then(function (etwas) {
-      if (etwas) melden();
-    });
-    lagerAufraeumen();
     /* Den gemeinsamen Verlauf nachladen — er kommt gleich dazu, ohne
        dass das Betreten darauf warten muss. */
     serverLaden(zustand.raum).then(function (vomServer) {
@@ -1436,12 +1230,6 @@ window.LiveChat = (function () {
       zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
       chatSichern();
       melden();
-      /* Was vom Server kam, kann Bilder haben, die hier noch fehlen —
-         und was hier lag, kann Bilder haben, die der Server nicht
-         kennt. Beides zusammenfuehren, dann ist der Verlauf komplett. */
-      bilderNachreichen(zustand.nachrichten).then(function (etwas) {
-        if (etwas) melden();
-      });
     });
 
     /* WICHTIG: die Kamera geht NICHT von selbst an.
@@ -1711,7 +1499,6 @@ window.LiveChat = (function () {
       zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
     };
     if (!n.bildImChat) return false;
-    bildGemerkt(n.bildImChat);          // fuer „zuletzt benutzt" im Waehler
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
@@ -1798,7 +1585,6 @@ window.LiveChat = (function () {
     { w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit Gesicht im Chat" },
     { w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
     { w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
-    { w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
     { w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
@@ -2021,8 +1807,6 @@ window.LiveChat = (function () {
                      topic: "t", thema: "t",
                      kick: "k", rausschmeissen: "k",
                      color: "c", farbe: "c",
-                     party: "konfetti", konfetty: "konfetti", feier: "konfetti",
-                     confetti: "konfetti",
                      help: "h", hilfe: "h", "?": "h",
                      part: "leave", exit: "leave", quit: "leave" };
       art = gleich[wort] || null;
@@ -2173,20 +1957,6 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " schickt "
         + (wem ? wem.name : "allen") + " ein \u2665", { wirkung: "herz" });
     }
-    /* GEWÜNSCHT: „Einen Befehl für Konfetti, sodass da wirklich Konfetti
-       durch den ganzen Raum fliegt. Zum Beispiel: Xander Fox schmeißt
-       Konfetti. Aber der muss halt funktionieren, dass das so eine
-       Animation auslöst, die wirklich sichtbar ist."
-
-       Deshalb geht dieser Effekt als einziger NICHT über dem Chatfenster
-       nieder, sondern über der ganzen Seite — siehe lcKonfetti() in
-       app.js. Die Zeile selbst ist eine ganz normale Aktion, damit auch
-       im Verlauf steht, wer geworfen hat. */
-    if (art === "konfetti") {
-      var anWen = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
-      return anAlle("aktion", zustand.ichName + " schmeißt Konfetti"
-        + (anWen ? " für " + anWen.name : ""), { wirkung: "konfetti" });
-    }
 
     /* ---- Farbe ---- */
     if (art === "c") {
@@ -2198,7 +1968,6 @@ window.LiveChat = (function () {
           + "weiss, bunt — oder  /c  ohne Wort für die Standardfarbe.");
       }
       zustand.farbe = f.replace("ü", "ue").replace("ß", "ss");
-      farbeMerken(zustand.farbe);          // ueberlebt das Neuladen
       senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                bild: zustand.ichBild, farbe: zustand.farbe });
       melden();
@@ -2280,76 +2049,6 @@ window.LiveChat = (function () {
     melden();
   }
 
-  /* =========================================================
-     DAS ARCHIV — den Chat spaeter nachlesen
-     ---------------------------------------------------------
-     GEWUENSCHT: „Eine Moeglichkeit, den Chat zu speichern, waere auch
-     noch schoen — dass man diese Erinnerung behaelt, oder dass sich das
-     automatisch irgendwo sammelt, sodass man den Chat noch mal
-     nachlesen kann."
-
-     Gesammelt wird ohnehin schon: der Text im localStorage, die Bilder
-     im Lager, und seit die Tabelle steht auch geraeteuebergreifend in
-     der Datenbank. Was gefehlt hat, war der WEG DAHIN — ein Ort, an dem
-     man das wieder aufschlagen kann, ohne im Raum zu sein. Genau das
-     sind diese drei Funktionen. */
-  function archivRaeume() {
-    var raeume = [];
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (!k || k.indexOf("dma_livechat_chat_") !== 0) continue;
-        var raum = k.slice("dma_livechat_chat_".length);
-        var liste = [];
-        try { liste = JSON.parse(localStorage.getItem(k) || "[]"); } catch (e) {}
-        if (!Array.isArray(liste) || !liste.length) continue;
-        var letzte = liste[liste.length - 1] || {};
-        raeume.push({
-          raum: raum,
-          name: raumKlartext(raum),
-          wieviel: liste.length,
-          zuletzt: letzte.zeit || 0,
-          bilder: liste.filter(function (n) { return n.bildImChat || n.bildImLager; }).length
-        });
-      }
-    } catch (e) {}
-    return raeume.sort(function (a, b) { return (b.zuletzt || 0) - (a.zuletzt || 0); });
-  }
-
-  /* Den Verlauf eines Raums zum Nachlesen holen: erst das, was im
-     Geraet liegt, dann die Bilder aus dem Lager dazu, und — wenn eine
-     Verbindung da ist — der gemeinsame Verlauf aus der Datenbank
-     obendrauf. Flüstereien bleiben draussen; die gehen niemanden
-     etwas an, der spaeter nachliest. */
-  function archivLaden(raum) {
-    var r = raum || zustand.raum || HAUPTRAUM;
-    var hier = chatLaden(r);
-    return serverLaden(r).then(function (dort) {
-      var alles = dort.length ? verschmelzen(dort, hier) : hier;
-      return bilderNachreichen(alles).then(function () {
-        return alles.filter(function (n) {
-          return n.art !== "fluester" && n.art !== "system";
-        });
-      });
-    });
-  }
-
-  /* Derselbe Verlauf als schlichter Text — zum Herunterladen und
-     Aufheben, ohne dass irgendein Programm dafuer noetig waere. */
-  function archivAlsText(raum, liste) {
-    var kopf = "Klassenzimmer — " + raumKlartext(raum || "") + "\n"
-             + "Nachgelesen am " + new Date().toLocaleString("de-DE") + "\n"
-             + "----------------------------------------\n\n";
-    return kopf + (liste || []).map(function (n) {
-      var uhr = new Date(n.zeit || 0).toLocaleString("de-DE",
-        { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-      var bild = (n.bildImChat || n.bildImLager) ? "  [Bild]" : "";
-      if (n.art === "aktion") return "[" + uhr + "] * " + n.text + bild;
-      if (n.art === "ruf")    return "[" + uhr + "] " + n.name + " ruft: " + n.text + bild;
-      return "[" + uhr + "] " + (n.name || "?") + ": " + (n.text || "") + bild;
-    }).join("\n") + "\n";
-  }
-
   return {
     HAUPTRAUM: HAUPTRAUM,
     rueckkehrOffen: rueckkehrOffen,
@@ -2386,14 +2085,6 @@ window.LiveChat = (function () {
     gemerkterRaum: gemerkterRaum,
     raumAusAdresse: raumAusAdresse,
     adresseMitRaum: adresseMitRaum,
-    istDrin: function () { return zustand.lage === "drin"; },
-    /* Farbe, zuletzt benutzte Bilder, Archiv */
-    gemerkteFarbe: gemerkteFarbe,
-    letzteBilder: letzteBilder,
-    bildGemerkt: bildGemerkt,
-    letzteBilderVergessen: letzteBilderVergessen,
-    archivRaeume: archivRaeume,
-    archivLaden: archivLaden,
-    archivAlsText: archivAlsText
+    istDrin: function () { return zustand.lage === "drin"; }
   };
 })();
