@@ -378,7 +378,47 @@ window.LiveChat = (function () {
     ostern:      " versteckt Ostereier  \ud83d\udc23",
     augen:       " guckt ganz neugierig  \ud83d\udc40",
     halloween:   " macht es gruselig  \ud83c\udf83",
-    weihnachten: " bringt Weihnachten mit  \ud83c\udf84"
+    weihnachten: " bringt Weihnachten mit  \ud83c\udf84",
+    /* GEMELDET, mehrfach: „Die Keks-Animation fehlt noch. Die
+       Cash-Animation fehlt noch." Und spaeter: „Das mit dem
+       zerbrochenen Glas geht noch nicht." Und: „Die Animationen, die
+       du neu gemacht hast, sind noch nicht aufrufbar."
+
+       Er hatte jedes Mal recht, und ich habe jedes Mal das Falsche
+       geprueft. Die Zeichnungen gab es alle — ich habe sie einzeln
+       ausgeloest, gezaehlt und fotografiert, und sie liefen. Nur
+       kommt ein Effekt ueberhaupt erst hierher, wenn sein Name in
+       DIESER Tabelle steht: eine Zeile weiter unten fragt
+       „if (WETTER[art])", und was hier fehlt, faellt durch und tut
+       gar nichts.
+
+       Neunzehn Stueck fehlten. Geld und Keks von Anfang an, Glasbruch
+       auch, dazu alles, was seither dazugekommen ist. Die Tuer war
+       zu, und ich habe immer nur nachgesehen, ob das Zimmer dahinter
+       moebliert ist.
+
+       Damit das nicht wieder passiert, prueft effektetuer.js jetzt
+       BEIDE Listen gegeneinander: jeder Ganzseiten-Effekt muss auch
+       aufrufbar sein. */
+    geld:        " l\u00e4sst Geld regnen  \ud83d\udcb8",
+    keks:        " isst einen Keks  \ud83c\udf6a",
+    wolken:      " l\u00e4sst Wolken ziehen  \u2601\ufe0f",
+    glasbruch:   " zerbricht den Bildschirm  \ud83d\udca5",
+    spinnen:     " l\u00e4sst Spinnen krabbeln  \ud83d\udd77\ufe0f",
+    noten:       " macht Musik  \ud83c\udfb5",
+    seifenblasen:" pustet Seifenblasen  \ud83e\udee7",
+    herbst:      " l\u00e4sst das Laub fallen  \ud83c\udf42",
+    aquarium:    " taucht alles unter Wasser  \ud83d\udc1f",
+    pinguine:    " schickt die Pinguine los  \ud83d\udc27",
+    fratze:      " ruft etwas Boeses herbei  \ud83d\udc79",
+    blut:        " l\u00e4sst Blut herunterlaufen  \ud83e\ude78",
+    schloss:     " oeffnet das Tor zum Schloss  \ud83c\udff0",
+    kitt:        " l\u00e4sst den schwarzen Wagen kommen  \ud83d\ude97",
+    dino:        " weckt einen Tyrannosaurus  \ud83e\udd96",
+    jalousie:    " zieht die Jalousie hoch  \ud83e\ude9f",
+    handdurch:   " l\u00e4sst eine Hand durchbrechen  \ud83e\udec5",
+    tore:        " schliesst die Tore  \ud83d\udd12",
+    paintball:   " er\u00f6ffnet das Farbfeuer  \ud83c\udfaf"
   };
 
   var SCHRIFTEN = {
@@ -3909,6 +3949,17 @@ window.LiveChat = (function () {
     beiAenderung: beiAenderung,
     moeglich: moeglich,
     neuerRaumName: neuerRaumName,
+    /* Welche Effekte per BEFEHL erreichbar sind. Nicht welche
+       gezeichnet werden koennen — genau dieser Unterschied hat
+       neunzehn Animationen monatelang unerreichbar gemacht.
+       effektetuer.js haelt beide Listen gegeneinander. */
+    effektBefehle: function () {
+      /* Genannt ist hier die WIRKUNG, nicht das Befehlswort: „/leck"
+         loest die Wirkung „lecken" aus, „/drueck" die Wirkung
+         „umarmen". Verglichen wird ja mit den Wirkungen in app.js. */
+      return Object.keys(WETTER).concat(["konfetti", "ballon", "geschenk",
+                                         "lecken", "boxen", "herz", "umarmen"]);
+    },
     raumSchluessel: raumSchluessel,
     gemerkterRaum: gemerkterRaum,
     raumAusAdresse: raumAusAdresse,

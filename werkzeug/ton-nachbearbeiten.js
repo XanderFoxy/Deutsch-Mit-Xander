@@ -44,11 +44,27 @@ function bearbeiten(rein, raus) {
   execFileSync(FFMPEG, [
     "-hide_banner", "-loglevel", "error", "-y", "-i", rein,
     "-af", [
-      /* Stille vorn: alles unter -45 dB wegschneiden, bis 0,03 s Ton kommt */
-      "silenceremove=start_periods=1:start_duration=0.03:start_threshold=-45dB",
+      /* NACHGEMESSEN UND BERICHTIGT: die erste Fassung hat die Woerter
+         ANGESCHNITTEN. „Fluss" ist im Rohstueck von 0,079 s bis 0,517 s
+         gesprochen, also 0,44 s lang — herausgekommen sind 0,16 s Ton.
+         Mehr als die Haelfte weg.
+
+         Der Grund steckt in „start_duration": silenceremove schneidet
+         so lange weiter, BIS es eine ununterbrochene Strecke von
+         dieser Laenge ueber der Schwelle findet. Bei 0,05 s und
+         -45 dB frisst es rueckwaerts in das Wort hinein, denn das
+         Ende eines Wortes verklingt allmaehlich, und ein auslautendes
+         „-ss" oder „-t" liegt leise unter dieser Schwelle.
+
+         Jetzt wird nur noch echte Stille entfernt: -58 dB ist der
+         Pegel von Nichts, nicht von einem leisen Laut, und 0,01 s
+         reicht als Beweis, dass wieder Ton da ist. Lieber ein
+         Sekundenbruchteil Stille zu viel als ein abgeschnittenes
+         Wort — man uebt schliesslich die Aussprache. */
+      "silenceremove=start_periods=1:start_duration=0.01:start_threshold=-58dB",
       /* Dasselbe hinten — dafuer das Stueck umdrehen, schneiden, zurueckdrehen */
       "areverse",
-      "silenceremove=start_periods=1:start_duration=0.05:start_threshold=-45dB",
+      "silenceremove=start_periods=1:start_duration=0.01:start_threshold=-58dB",
       "areverse",
       /* Ein Hauch Luft am Ende, sonst klingt es abgehackt */
       "apad=pad_dur=0.06",

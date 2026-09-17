@@ -13,8 +13,13 @@
       abgeschnittener Download ist schlimmer als gar keiner: er sieht
       aus wie Erfolg und fehlt dann still im Trainer.
    3. NACHBEARBEITET wird sofort (ton-nachbearbeiten.js): Stille weg,
-      Lautheit angleichen, kleiner machen. Die Rohdatei wird nicht
-      behalten — 2239 mal 30 KB waeren 68 MB fuer nichts.
+      entrauschen, Lautheit angleichen, kleiner machen.
+   4. DIE ROHDATEI BLEIBT LIEGEN, ausserhalb des Repos (/tmp/roh-a1).
+      Beim ersten Durchgang habe ich sie weggeworfen — und als
+      auffiel, dass der Abschneider die Woerter ankratzt, musste
+      alles noch einmal heruntergeladen werden. 68 MB Platz sind
+      billiger als 2239 Aufnahmen zum zweiten Mal. Mit neu-schleifen.js
+      laesst sich damit jede Feineinstellung kostenlos wiederholen.
 */
 const fs = require("fs");
 const path = require("path");
@@ -30,7 +35,9 @@ const HOECHSTENS = Number(process.argv[2] || 0) || Infinity;
 const GLEICHZEITIG = 4;
 
 if (!SCHLUESSEL) { console.error("ELEVENLABS_API_KEY fehlt."); process.exit(2); }
+const ROH = "/tmp/roh-a1";
 fs.mkdirSync(ZIEL, { recursive: true });
+fs.mkdirSync(ROH, { recursive: true });
 
 /* Die Liste kommt aus demselben Werkzeug, das auch die Dateinamen
    festlegt — zwei getrennte Regeln waeren zwei Fehlerquellen. */
@@ -60,11 +67,10 @@ async function holen(wort) {
   if (kopf !== "ID3" && !(bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0)) {
     throw new Error("kein MP3 (" + kopf + ")");
   }
-  const roh = path.join("/tmp", "roh-" + wort.datei);
+  const roh = path.join(ROH, wort.datei);
   fs.writeFileSync(roh, bytes);
   execFileSync("node", [path.join(WURZEL, "werkzeug", "ton-nachbearbeiten.js"),
                         roh, path.join(ZIEL, wort.datei)], { stdio: ["ignore", "ignore", "pipe"] });
-  fs.unlinkSync(roh);
   const gross = fs.statSync(path.join(ZIEL, wort.datei)).size;
   if (gross < 400) { fs.unlinkSync(path.join(ZIEL, wort.datei)); throw new Error("nachher leer"); }
 }
