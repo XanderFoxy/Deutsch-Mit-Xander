@@ -5304,3 +5304,57 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 @media (prefers-reduced-motion: reduce) {
   .w-wolken-svg { animation: none; }
 }
+
+/* =========================================================
+   DIE EIGENE BILDERSAMMLUNG
+   ---------------------------------------------------------
+   GEWÜNSCHT: „Transparente PNG-Files oder GIF-Files … genormt
+   ist auf eine Größe, so ähnlich wie die Füchse."
+
+   Zwei Dinge macht erst das Stylesheet richtig:
+
+   1. `object-fit: cover` (wie bei den GIPHY-Treffern) würde ein
+      durchsichtiges Bild anschneiden — bei einem Fuchs wäre der
+      Schwanz weg. In der eigenen Sammlung steht deshalb
+      `contain`: das ganze Bild ist zu sehen, nur eben kleiner.
+   2. Ein durchsichtiges Bild braucht einen Untergrund, auf dem
+      man es überhaupt sieht. Ein kariertes Feld — wie in jedem
+      Bildprogramm — sagt zugleich: hier ist wirklich nichts,
+      das ist kein weisser Klotz.
+   ========================================================= */
+.lc-bib-stueck img {
+  object-fit: contain;
+  background-image:
+    linear-gradient(45deg, rgba(255,255,255,0.16) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.16) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.16) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.16) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+/* Der Knopf zum Hinzufügen steht in derselben Reihe wie die Bilder
+   und ist genauso gross — sonst reisst er die Zeile auseinander. */
+.lc-bib-plus {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--cream-100, #fff);
+  border: 2px dashed rgba(255, 255, 255, 0.4) !important;
+  border-radius: 8px;
+  opacity: 0.8;
+}
+.lc-bib-plus:hover { opacity: 1; border-color: rgba(255, 255, 255, 0.7) !important; }
+/* Der Haken „auch als Profilbild" — er gehört zum Fuss des Menüs
+   und darf nicht wie eine weitere Bildreihe aussehen. */
+.lc-bib-auch {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.lc-bib-auch input { margin-top: 2px; flex: 0 0 auto; }

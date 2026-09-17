@@ -13600,6 +13600,33 @@
      Ohne Schlüssel bleibt die Suche aus und man kann stattdessen eine
      GIF-Adresse einsetzen — das geht immer, ganz ohne Konto.
      ============================================================ */
+  /* =================================================================
+     DIE EIGENE BILDERSAMMLUNG — im KONTO, nicht im Gerät
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Ich möchte, dass Leute Sachen zu ihrer eigenen
+     Bibliothek hinzufügen können. So transparente PNG-Files oder
+     GIF-Files … genormt ist auf eine Größe, so ähnlich wie die Füchse."
+
+     Sie steht im Konto (extraProfileData), nicht im Gerät. Wer seine
+     Sammlung angelegt hat, soll sie auch am Telefon haben und nicht
+     nur an dem Rechner, an dem er sie zusammengesucht hat.
+
+     Begrenzt auf 24 Stück: das ist eine Spalte in der Datenbank, die
+     bei jedem Anmelden mitgeladen wird. Bei einem GIF von 230 KB wären
+     24 Stück schon 5 MB — mehr wäre unhöflich gegenüber dem eigenen
+     Handy. Wer voll ist, wirft etwas raus; das sagt die App auch so.
+     ================================================================= */
+  const LC_BIB_HOECHST = 24;
+
+  function lcBibliothek() {
+    const p = Backend.currentProfile() || {};
+    const l = (p.extraProfileData || {}).bildbibliothek;
+    return Array.isArray(l) ? l : [];
+  }
+  async function lcBibliothekSetzen(liste) {
+    await Backend.updateExtraProfileField("bildbibliothek", liste.slice(0, LC_BIB_HOECHST));
+  }
+
   const LC_EMOJIS = ["🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐸", "🐙", "🦉", "🐝",
                      "🌻", "🌙", "⭐", "🎈", "🎧", "📚", "☕", "🍀", "🌈", "🔥"];
 
@@ -14024,6 +14051,20 @@
                 <img src="${escapeHtml(q)}" alt="" loading="lazy">
               </button>`).join("")}
           </div>` : ""}
+        <p class="eyebrow" style="margin-top:12px;">MEINE SAMMLUNG
+          <span class="subnav-info-icon" data-info="Eigene Bilder: durchsichtige PNG und bewegte GIF. Jedes wird auf 120 × 120 gebracht — dieselbe Größe wie die Füchse. Die Sammlung steht in deinem Konto, du hast sie also auf jedem Gerät.">ⓘ</span></p>
+        <div class="lc-waehler-gifs" id="lcBibFach">
+          ${lcBibliothek().map((q, i) => `
+            <button type="button" class="lc-waehler-gif lc-bib-stueck" data-lc-bib="${i}" title="Nehmen — langes Drücken wirft es raus">
+              <img src="${escapeHtml(q)}" alt="" loading="lazy">
+            </button>`).join("")}
+          <button type="button" class="lc-waehler-gif lc-bib-plus" id="lcBibPlus"
+            title="Bild hinzufügen">＋</button>
+        </div>
+        <input type="file" id="lcBibDatei" accept="image/png,image/gif,image/webp,image/svg+xml" hidden>
+        <p class="empty-note" style="font-size:0.7rem; margin:4px 0 0;">
+          Durchsichtige PNG und bewegte GIF. Langes Drücken wirft eines wieder raus.
+        </p>
         <p class="eyebrow" style="margin-top:12px;">EMOJI</p>
         <div class="lc-waehler-emojis">
           ${LC_EMOJIS.map((e) => `<button type="button" class="lc-waehler-emoji" data-lc-emoji="${e}">${e}</button>`).join("")}
@@ -14045,6 +14086,10 @@
           <input type="text" class="lc-chat-feld" id="lcGifAdresse" placeholder="… oder eine GIF-Adresse einsetzen">
           <button type="button" class="btn btn-ghost" id="lcGifNehmen">Nehmen</button>
         </div>
+        <label class="lc-bib-auch" style="margin-top:12px;">
+          <input type="checkbox" id="lcAuchProfil">
+          <span>Auch als Profilbild übernehmen — dann sehen es alle überall, nicht nur auf deinem Platz</span>
+        </label>
         <div class="lc-waehler-reihe" style="margin-top:14px;">
           <button type="button" class="btn btn-ghost" id="lcBildWeg">Bild entfernen</button>
           <button type="button" class="btn btn-coffee" id="lcWaehlerZu">Fertig</button>
@@ -14074,6 +14119,22 @@
       if (!LiveChat.bildSetzen(wert)) { showToast("Das war keine Bildadresse."); return; }
       showToast(wort);
       renderLiveChat();
+      /* GEWÜNSCHT: „dass ich das im Profilbild anzeigen lassen kann.
+         So ein bewegtes GIF, wie das bei Clubhouse möglich ist."
+         Bisher stand das gewählte Bild nur im GERÄT und galt nur auf
+         dem eigenen Platz im Klassenzimmer. Mit dem Haken wandert es
+         ins Konto — dann steht es überall, wo dein Bild steht, und
+         alle sehen es. Ein GIF bleibt dabei ein GIF und bewegt sich. */
+      const auch = kasten.querySelector("#lcAuchProfil");
+      if (auch && auch.checked && wert) {
+        (String(wert).startsWith("emoji:")
+          ? Backend.saveAvatarEmoji(String(wert).slice(6))
+          : Backend.saveAvatarFromGallery(wert)
+        ).then(
+          () => showToast("👤 Auch als Profilbild gespeichert."),
+          () => showToast("Das Profilbild liess sich nicht speichern — auf deinem Platz steht es trotzdem.")
+        );
+      }
       zu();
     };
     kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
@@ -14083,6 +14144,70 @@
     kasten.querySelector("#lcBwHintergrund")?.addEventListener("click", () => { zu(); lcHintergrundUmschalten(); });
     kasten.querySelector("#lcBwArchiv")?.addEventListener("click", () => { zu(); livechatArchiv(); });
     kasten.querySelector("#lcBwLeeren")?.addEventListener("click", () => { zu(); lcVerlaufLeerenFragen(); });
+    /* ---- Die eigene Sammlung ---------------------------------- */
+    const bibFach = kasten.querySelector("#lcBibFach");
+    const bibDatei = kasten.querySelector("#lcBibDatei");
+    const bibNeuZeichnen = () => {
+      if (!bibFach) return;
+      const l = lcBibliothek();
+      bibFach.innerHTML = l.map((q, i) => `
+        <button type="button" class="lc-waehler-gif lc-bib-stueck" data-lc-bib="${i}" title="Nehmen — langes Drücken wirft es raus">
+          <img src="${escapeHtml(q)}" alt="" loading="lazy">
+        </button>`).join("")
+        + `<button type="button" class="lc-waehler-gif lc-bib-plus" id="lcBibPlus" title="Bild hinzufügen">＋</button>`;
+      bibBinden();
+    };
+    /* Kurz antippen nimmt das Bild, langes Drücken wirft es raus. Ein
+       eigenes Kreuzchen an jedem Stück wäre bei 24 Bildern ein Gewimmel
+       aus Knöpfen — und man löscht selten. */
+    const bibBinden = () => {
+      kasten.querySelector("#lcBibPlus")?.addEventListener("click", () => {
+        if (lcBibliothek().length >= LC_BIB_HOECHST) {
+          showToast("Deine Sammlung ist voll (" + LC_BIB_HOECHST
+            + "). Wirf erst eins raus — langes Drücken darauf.");
+          return;
+        }
+        bibDatei?.click();
+      });
+      kasten.querySelectorAll("[data-lc-bib]").forEach((b) => {
+        const nr = Number(b.dataset.lcBib);
+        let uhr = null, lang = false;
+        const start = () => { lang = false; uhr = setTimeout(async () => {
+          lang = true;
+          const l = lcBibliothek();
+          if (!l[nr]) return;
+          if (!confirm("Dieses Bild aus deiner Sammlung werfen?")) return;
+          l.splice(nr, 1);
+          try { await lcBibliothekSetzen(l); bibNeuZeichnen(); showToast("Aus der Sammlung geworfen."); }
+          catch (e) { showToast("Ging nicht: " + (e && e.message ? e.message : "unbekannt")); }
+        }, 600); };
+        const stopp = () => { clearTimeout(uhr); };
+        b.addEventListener("pointerdown", start);
+        b.addEventListener("pointerup", stopp);
+        b.addEventListener("pointerleave", stopp);
+        b.addEventListener("click", () => {
+          if (lang) return;               /* war ein langes Drücken */
+          const q = lcBibliothek()[nr];
+          if (q) setzen(q, "🖼️ Aus deiner Sammlung gesetzt");
+        });
+      });
+    };
+    bibBinden();
+    bibDatei?.addEventListener("change", async () => {
+      const d = bibDatei.files && bibDatei.files[0];
+      bibDatei.value = "";
+      if (!d) return;
+      try {
+        const daten = await LiveChat.bibliothekNormen(d);
+        const l = lcBibliothek();
+        if (l.indexOf(daten) >= 0) { showToast("Das hast du schon."); return; }
+        l.unshift(daten);
+        await lcBibliothekSetzen(l);
+        bibNeuZeichnen();
+        showToast("🖼️ In deine Sammlung gelegt.");
+      } catch (x) { showToast("🖼️ " + (x && x.message ? x.message : "Das Bild ging nicht.")); }
+    });
+
     kasten.querySelector("#lcBildWeg")?.addEventListener("click", () => setzen("", "Bild entfernt"));
     kasten.querySelector("#lcBildKonto")?.addEventListener("click", () => {
       const k = livechatKontoBild();

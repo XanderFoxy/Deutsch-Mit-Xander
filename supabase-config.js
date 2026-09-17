@@ -20,4 +20,4 @@ window.SUPABASE_CONFIG = {
    Platz). Bleibt er leer, geht weiterhin eine GIF-Adresse von
    Hand — nur eben ohne Suche.
    ========================================================= */
-window.GIPHY_KEY = "";
+window.GIPHY_KEY = "1aNDofwVwXDyKZRoNpew7goPAOgpZqIK";

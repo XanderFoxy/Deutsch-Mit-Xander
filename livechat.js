@@ -2247,6 +2247,80 @@ window.LiveChat = (function () {
   var BILD_KANTE = 640;
   var BILD_HOECHST = 140000;      // Zeichen der Datenadresse
 
+  /* =================================================================
+     DIE EIGENE BILDERSAMMLUNG
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Ich moechte, dass Leute Sachen zu ihrer eigenen
+     Bibliothek hinzufuegen koennen. So transparente PNG-Files oder
+     GIF-Files … genormt ist auf eine Groesse, so aehnlich wie die
+     Fuechse."
+
+     Zwei Dinge, die bildVerkleinern() NICHT kann und weshalb es hier
+     eine eigene Funktion braucht:
+
+       1. bildVerkleinern() gibt JPEG aus. JPEG kennt keine
+          Durchsichtigkeit — ein transparentes PNG bekaeme dort einen
+          schwarzen Klotz als Hintergrund. Hier wird PNG ausgegeben,
+          die Durchsichtigkeit bleibt.
+       2. Genormt heisst hier wirklich genormt: jedes Bild landet in
+          einem Feld von 120 x 120, so gross wie die Aufkleber in
+          sticker/ (die Fuechse). Es wird HINEINGEPASST, nicht
+          beschnitten und nicht verzerrt, und mittig gesetzt — sonst
+          haengen in der Sammlung lauter verschieden grosse Sachen
+          nebeneinander.
+
+     Ein bewegtes GIF kann man nicht ueber eine Leinwand schicken: es
+     waere danach ein Standbild. Es geht deshalb unveraendert in die
+     Sammlung, und die Norm macht der Rahmen beim Anzeigen. Dafuer ist
+     es in der Groesse begrenzt — ein GIF von zwei Megabyte gehoert
+     nicht in ein Profil, das auf jedem Handy geladen wird.
+     ================================================================= */
+  var BIB_KANTE = 120;            /* wie sticker/*.svg */
+  var BIB_GIF_HOECHST = 320000;   /* Zeichen der Datenadresse, rund 240 KB */
+
+  function bibliothekNormen(datei) {
+    return new Promise(function (fertig, scheitern) {
+      if (!datei || !/^image\//.test(datei.type || "")) {
+        scheitern(new Error("Das ist kein Bild.")); return;
+      }
+      var leser = new FileReader();
+      leser.onerror = function () { scheitern(new Error("Die Datei liess sich nicht lesen.")); };
+      /* Der bewegte Weg: unveraendert uebernehmen, nur nicht zu gross. */
+      if (/gif$/i.test(datei.type)) {
+        leser.onload = function () {
+          var d = String(leser.result || "");
+          if (d.length > BIB_GIF_HOECHST) {
+            scheitern(new Error("Das GIF ist zu gross (" + Math.round(d.length / 1400)
+              + " KB). Bis etwa 230 KB geht es — sonst laedt es auf dem Handy zu lange."));
+            return;
+          }
+          fertig(d);
+        };
+        leser.readAsDataURL(datei);
+        return;
+      }
+      /* Der stehende Weg: auf 120 x 120 einpassen, Durchsichtigkeit behalten. */
+      leser.onload = function () {
+        var bild = new Image();
+        bild.onerror = function () { scheitern(new Error("Das Bild liess sich nicht oeffnen.")); };
+        bild.onload = function () {
+          var tafel = document.createElement("canvas");
+          tafel.width = BIB_KANTE; tafel.height = BIB_KANTE;
+          var stift = tafel.getContext("2d");
+          /* Kein Fuellen: was durchsichtig war, bleibt durchsichtig. */
+          var k = Math.min(BIB_KANTE / bild.width, BIB_KANTE / bild.height);
+          var b = Math.round(bild.width * k), h = Math.round(bild.height * k);
+          stift.imageSmoothingQuality = "high";
+          stift.drawImage(bild, Math.round((BIB_KANTE - b) / 2),
+                                Math.round((BIB_KANTE - h) / 2), b, h);
+          fertig(tafel.toDataURL("image/png"));
+        };
+        bild.src = String(leser.result || "");
+      };
+      leser.readAsDataURL(datei);
+    });
+  }
+
   function bildVerkleinern(datei, kante, hoechst) {
     return new Promise(function (fertig, scheitern) {
       if (!datei || !/^image\//.test(datei.type || "")) {
@@ -3741,6 +3815,7 @@ window.LiveChat = (function () {
     aufkleberPfad: aufkleberPfad,
     aufkleberSenden: aufkleberSenden,
     bildVerkleinern: bildVerkleinern,
+    bibliothekNormen: bibliothekNormen,
     gifSenden: gifSenden,
     eigenesBild: function () { return zustand.ichBild; },
     kameraDazuholen: kameraDazuholen,
