@@ -548,3 +548,164 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   border-radius: 5px;
   font-size: 0.72rem;
 }
+
+/* --- Die Großansicht war plötzlich riesig und verzerrt -----------
+   GEMELDET: „wenn man die Profilbilder anklickt, werden die plötzlich
+   riesig — solche komischen lang gezogenen Ellipsen."
+
+   Ursache: das eingesetzte Bild hat `position: absolute; inset: 0`,
+   aber der Kreis drumherum war NICHT positioniert. Damit hat sich das
+   Bild am nächsten positionierten Vorfahren aufgehängt — dem Überzug
+   über den ganzen Bildschirm — und sich über diesen gespannt.
+   Der Kreis ist jetzt positioniert, und er ist kleiner: etwas größer
+   als der Platz, damit man das Video besser sieht, mehr nicht. */
+.lc-gross-kreis { position: relative; width: min(58vw, 250px); }
+.lc-gross-kreis .lc-avatar { position: static; width: 100%; height: 100%; }
+.lc-gross-kreis .lc-initial.lc-initial-emoji { font-size: 4rem; }
+
+/* ==================================================================
+   DER CHAT SIEHT AUS WIE DAMALS
+   ------------------------------------------------------------------
+   Keine Sprechblasen, keine Seiten — Uhrzeit, Name, Text in einer
+   Zeile, für alle gleich. Nur so funktioniert der alte /me/-Trick:
+   man schreibt einen Satz mit dem eigenen Namen mittendrin, und die
+   anderen halten ihn für den Satz einer anderen Person. Mit Blasen
+   ginge das nicht — da sieht man sofort, von welcher Seite es kommt.
+   ================================================================== */
+.lc-chat-verlauf {
+  display: block !important;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  padding: 8px 10px;
+  position: relative;
+}
+.lc-zeile {
+  display: grid;
+  grid-template-columns: 3.1em auto 1fr;
+  gap: 0 8px;
+  align-items: baseline;
+  padding: 1px 0;
+  overflow-wrap: anywhere;
+}
+.lc-zeit {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  opacity: 0.45;
+}
+.lc-nick {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.lc-nick b { font-weight: 800; }
+.lc-zeilenbild {
+  width: 17px; height: 17px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.16);
+  flex: 0 0 auto;
+}
+.lc-zeilenbild-emoji {
+  display: grid; place-items: center;
+  font-size: 0.8rem; line-height: 1;
+}
+.lc-zeilentext { min-width: 0; }
+.lc-zeilenfoto {
+  display: block;
+  max-width: min(100%, 260px);
+  max-height: 200px;
+  border-radius: 8px;
+  margin: 3px 0;
+  cursor: zoom-in;
+}
+/* Aktion (/me): kursiv, ohne Namensspalte — „* Emmy lacht laut" */
+.lc-zeile-aktion { grid-template-columns: 3.1em 1fr; }
+.lc-zeile-aktion .lc-zeilentext { font-style: italic; opacity: 0.92; }
+/* System: eine abgesetzte Zeile über die ganze Breite */
+.lc-zeile-system,
+.lc-zeile-einladung {
+  grid-template-columns: 3.1em 1fr;
+  margin: 3px 0;
+}
+.lc-zeile-system .lc-zeilentext,
+.lc-zeile-einladung .lc-zeilentext {
+  white-space: pre-line;
+  font-size: 0.78rem;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: rgba(127, 176, 105, 0.13);
+  border-left: 3px solid rgba(127, 176, 105, 0.75);
+}
+.lc-zeile-klickbar { cursor: pointer; }
+.lc-zeile-klickbar:hover .lc-zeilentext { background: rgba(127, 176, 105, 0.26); }
+/* Flüstern: gedämpft, und es kommt kurz aus dem Unscharfen */
+.lc-zeile-fluester .lc-nick,
+.lc-zeile-fluester .lc-zeilentext {
+  color: #cbb5ff;
+  font-style: italic;
+}
+.lc-zeile-fluester { animation: lcGeheim 620ms ease-out; }
+@keyframes lcGeheim {
+  from { filter: blur(4px); opacity: 0; transform: translateX(-6px); }
+  to   { filter: blur(0);   opacity: 1; transform: none; }
+}
+.lc-woher { opacity: 0.6; font-size: 0.74rem; }
+/* Rufen: GROSS, mit Wucht */
+.lc-zeile-ruf .lc-zeilentext,
+.lc-zeile-ruf .lc-nick {
+  font-size: 1.06rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #ffce55;
+  text-shadow: 0 0 10px rgba(255, 190, 60, 0.55);
+}
+.lc-zeile-ruf { animation: lcWucht 560ms cubic-bezier(.36,.07,.19,.97); }
+@keyframes lcWucht {
+  0%   { transform: scale(1.14); }
+  18%  { transform: translateX(-7px) scale(1.06); }
+  34%  { transform: translateX(6px)  scale(1.04); }
+  52%  { transform: translateX(-4px); }
+  70%  { transform: translateX(3px); }
+  100% { transform: none; }
+}
+/* Die kurzen Effekte: Herzen, Gesichter, Ausrufezeichen steigen auf */
+.lc-wirkung {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-wirkung span {
+  position: absolute;
+  bottom: 4px;
+  opacity: 0;
+  animation: lcSteigt 2.3s ease-out forwards;
+  will-change: transform, opacity;
+}
+.lc-wirkung-herz span { color: #ff6b8a; text-shadow: 0 0 8px rgba(255,107,138,.6); }
+.lc-wirkung-lachen span { color: #ffd166; font-weight: 700; }
+.lc-wirkung-ruf span { color: #ffce55; }
+@keyframes lcSteigt {
+  0%   { opacity: 0; transform: translateY(0) scale(.6) rotate(-8deg); }
+  16%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-160px) scale(1.15) rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-zeile-ruf, .lc-zeile-fluester { animation: none; }
+  .lc-wirkung { display: none; }
+}
+/* Das Thema des Raums */
+.lc-thema {
+  margin: 2px 12px 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  border-left: 3px solid var(--amber-400, #e8b64c);
+  font-size: 0.8rem;
+}
+.lc-befehle-vor { margin: 6px 0; line-height: 1.55; opacity: 0.92; }
+.lc-befehle-lang { opacity: 0.6; }
+.lc-befehle ul { list-style: none; padding-left: 0; }
+.lc-befehle li { margin-bottom: 2px; }

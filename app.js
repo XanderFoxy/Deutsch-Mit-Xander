@@ -12845,11 +12845,13 @@
           <div class="lc-kopf-links">
             <span class="lc-punkt"></span>
             <span>
-              <span class="lc-kopf-titel">Klassenzimmer</span><br>
+              <span class="lc-kopf-titel" id="lcKopfTitel">Klassenzimmer</span><br>
               <span class="lc-kopf-unter" id="lcKopfUnter">verbindet …</span>
             </span>
           </div>
         </div>
+
+        <p class="lc-thema" id="lcThema" style="display:none;"></p>
 
         <div class="lc-plaetze" id="lcPlaetze">${plaetze.join("")}</div>
 
@@ -12873,9 +12875,21 @@
           </div>
           <details class="lc-befehle" id="lcBefehleKasten">
             <summary>Was man tippen kann</summary>
+            <p class="lc-befehle-vor">Das sind die <strong>Slash-Befehle</strong> aus dem IRC
+              (1988, RFC 1459) — dieselbe Kurzsprache, die Kilahu, Webkicks und spin.de
+              benutzt haben. <code>Nickname</code> heißt: der Name der Person im Raum.</p>
             <ul>${(window.LiveChat && LiveChat.befehlsliste ? LiveChat.befehlsliste() : [])
-              .map((z) => `<li><code>${escapeHtml(z.split("  →  ")[0])}</code>${
-                z.includes("  →  ") ? " — " + escapeHtml(z.split("  →  ")[1]) : ""}</li>`).join("")}</ul>
+              .map((b) => `<li><code>${escapeHtml(b.nutzt)}</code>${
+                b.kurz ? ` <span class="lc-befehle-lang">(lang: /${escapeHtml(b.kurz)})</span>` : ""
+              } — ${escapeHtml(b.was)}</li>`).join("")}</ul>
+            <p class="lc-befehle-vor">
+              <strong>Einladen</strong> ist keine Frage mit Ja und Nein — das gab es damals nicht.
+              <code>/i Nickname</code> macht den Raum für die Person auf und schickt ihr eine
+              Zeile; hereinkommen muss sie selbst (antippen oder <code>/j Raumname</code>).
+              <br><strong>Zeichen:</strong> <code>&amp;hearts;</code> wird ♥,
+              <code>&amp;star;</code> wird ☆, <code>&amp;note;</code> wird ♪ — das sind
+              HTML-Entitäten, keine Emojis. Deshalb sahen sie damals überall gleich aus.
+            </p>
           </details>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           <form class="lc-chat-fuss" id="lcForm" autocomplete="off">
@@ -12975,14 +12989,28 @@
       karte.classList.toggle("lc-drin", l.lage === "drin");
       karte.classList.toggle("lc-verbindet", l.lage === "verbindet");
     }
+    /* Oben steht der Name des Raums, in dem man WIRKLICH ist —
+       „es steht einfach immer noch Klassenzimmer da". */
+    const titel = document.getElementById("lcKopfTitel");
+    if (titel) {
+      titel.textContent = l.raumName || "Klassenzimmer";
+      titel.title = l.abgeschlossen ? "Abgeschlossen — nur Eingeladene kommen herein" : "";
+    }
+    const thema = document.getElementById("lcThema");
+    if (thema) {
+      thema.textContent = l.thema || "";
+      thema.style.display = l.thema ? "" : "none";
+    }
     if (unter) {
       const da = LiveChat.PLAETZE - l.frei;
       const haupt = l.raum === LiveChat.HAUPTRAUM;
+      const rang = l.haeuptling ? " · du bist Häuptling ★" : "";
+      const zu = l.abgeschlossen ? " · 🔒 abgeschlossen" : "";
       unter.textContent = l.lage === "verbindet"
         ? "verbindet …"
         : da === 1 ? (haupt ? "Du bist als Erste:r da — die anderen finden dich hier von selbst."
                             : "Du bist als Erste:r da — teile den Link.")
-        : `${da} von ${LiveChat.PLAETZE} Plätzen besetzt${haupt ? " · Hauptraum" : ""}`;
+        : `${da} von ${LiveChat.PLAETZE} Plätzen besetzt${haupt ? " · Hauptraum" : ""}${rang}${zu}`;
     }
     if (link && l.link && link.value !== l.link) link.value = l.link;
 
@@ -13010,95 +13038,178 @@
     }
   }
 
-  /* --- Der Chat: nur neue Blasen anhängen ---
-     Alles neu zu zeichnen würde beim Tippen den Text im Feld
-     verlieren und den Verlauf nach oben springen lassen. */
+  /* --- Der Chat sieht aus wie damals -------------------------
+     GEWÜNSCHT: „Der Chat muss so aussehen wie früher, nicht mit
+     diesen Sprechblasen wie bei WhatsApp — sonst funktioniert die
+     Verarsche nicht."
+
+     Gemeint ist der /me/-Trick: man schreibt einen Satz, in dem
+     mitten drin der eigene Name auftaucht, und die anderen halten
+     ihn für den Satz einer anderen Person. Das kann nur gehen,
+     wenn ALLE Zeilen gleich aussehen — Uhrzeit, Name, Text, in
+     einer Zeile, ohne Blase und ohne Seite. Genau so war es.
+
+     Gezeichnet wird deshalb Zeile für Zeile:
+        19:42  Emmy      Hallo zusammen
+        19:42  * Emmy lacht laut                    (Aktion, kursiv)
+        19:42  »Emmy flüstert«  psst                (nur ihr beide)
+        19:42  EMMY: HALLO!                         (Ruf, mit Wucht)
+        ── Emmy hat den Raum abgeschlossen ──       (System)
+
+     Nur neue Zeilen werden angehängt — alles neu zu zeichnen würde
+     beim Tippen den Text im Feld verlieren. */
   let livechatGezeigt = new Set();
+
+  /* Jede Person bekommt ihre eigene Farbe — wie in den alten Chats.
+     Ohne eigene Wahl (/c) wird sie aus dem Namen gerechnet, damit
+     dieselbe Person immer dieselbe Farbe hat. */
+  const LC_FARBEN = {
+    rot: "#ff6b6b", blau: "#6fb3ff", gruen: "#7ede8a", gelb: "#ffd166",
+    lila: "#c99bff", tuerkis: "#6fe3d6", orange: "#ffa45c", rosa: "#ff9ecb",
+    weiss: "#f4f4f4",
+  };
+  function lcNickFarbe(n) {
+    if (n.farbe === "bunt") return "";
+    if (n.farbe && LC_FARBEN[n.farbe]) return LC_FARBEN[n.farbe];
+    const name = String(n.name || "?");
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    return `hsl(${h}, 62%, 70%)`;
+  }
+
+  /* Ein kurzer Effekt über dem Verlauf — Herzen, die aufsteigen,
+     oder ein Gesicht, das auftaucht. Er ist absichtlich kurz und
+     nimmt keine Bedienung weg. */
+  function lcWirkung(art, zeichen) {
+    const v = document.getElementById("lcVerlauf");
+    if (!v) return;
+    const schicht = document.createElement("div");
+    schicht.className = "lc-wirkung lc-wirkung-" + art;
+    const wie = art === "herz" ? 9 : art === "lachen" ? 6 : 12;
+    for (let i = 0; i < wie; i++) {
+      const t = document.createElement("span");
+      t.textContent = zeichen;
+      t.style.left = Math.round(6 + Math.random() * 88) + "%";
+      t.style.animationDelay = (Math.random() * 0.5).toFixed(2) + "s";
+      t.style.fontSize = (0.9 + Math.random() * 1.1).toFixed(2) + "rem";
+      schicht.appendChild(t);
+    }
+    v.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 2600);
+  }
+
   function livechatChatAuffrischen(l) {
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
     if (!l.nachrichten.length) {
       if (!v.querySelector(".lc-chat-leer")) {
-        v.innerHTML = `<p class="lc-chat-leer">Noch nichts geschrieben.<br>Schreib einfach unten los — alle im Raum lesen mit.</p>`;
+        v.innerHTML = `<p class="lc-chat-leer">Noch nichts geschrieben.<br>
+          Schreib einfach unten los — alle im Raum lesen mit.<br>
+          <span style="opacity:.7">Tippe <code>/h</code> für die alten Chatbefehle.</span></p>`;
       }
       return;
     }
     const leer = v.querySelector(".lc-chat-leer");
     if (leer) { leer.remove(); livechatGezeigt = new Set(); }
 
-    const amEnde = v.scrollHeight - v.scrollTop - v.clientHeight < 60;
+    const amEnde = v.scrollHeight - v.scrollTop - v.clientHeight < 70;
     l.nachrichten.forEach((n) => {
       if (livechatGezeigt.has(n.id)) return;
       livechatGezeigt.add(n.id);
-      const b = document.createElement("div");
-      const art = n.art && n.art !== "text" ? " lc-blase-" + n.art : "";
-      b.className = "lc-blase" + (n.eigen ? " lc-blase-eigen" : "") + art;
-      /* ACHTUNG, und das ist kein Formalismus:
-         Name und Text kommen von einem FREMDEN Gerät im Raum.
-         Würden sie über innerHTML eingesetzt, könnte jeder, der
-         den Raumlink hat, den anderen beliebiges HTML — und damit
-         beliebiges Javascript — in die Seite schreiben. Darum
-         wird hier Element für Element gebaut und der Text über
-         textContent gesetzt: so ist „<script>" ein Wort und kein
-         Befehl. */
-      if (!n.eigen && n.art !== "aktion" && n.art !== "system") {
-        /* „auch unten im Chat, wenn man etwas schreibt, soll das
-           Profilbild von demjenigen angezeigt werden." */
+      const art = n.art || "text";
+      const z = document.createElement("div");
+      z.className = "lc-zeile lc-zeile-" + art;
+
+      /* ACHTUNG, und das ist kein Formalismus: Name und Text kommen
+         von einem FREMDEN Gerät im Raum. Würden sie über innerHTML
+         eingesetzt, könnte jeder, der den Raumlink hat, den anderen
+         beliebiges HTML — und damit beliebiges Javascript — in die
+         Seite schreiben. Darum wird Element für Element gebaut und
+         der Text über textContent gesetzt. */
+      const uhr = document.createElement("span");
+      uhr.className = "lc-zeit";
+      uhr.textContent = new Date(n.zeit).toLocaleTimeString("de-DE",
+        { hour: "2-digit", minute: "2-digit" });
+      z.appendChild(uhr);
+
+      const farbe = lcNickFarbe(n);
+
+      if (art === "system" || art === "einladung") {
+        const t = document.createElement("span");
+        t.className = "lc-zeilentext";
+        t.textContent = n.text;
+        z.appendChild(t);
+        if (art === "einladung" && n.raum) {
+          z.classList.add("lc-zeile-klickbar");
+          z.addEventListener("click", () => {
+            LiveChat.raumWechseln(n.raum, false);
+            renderLiveChat();
+          });
+        }
+      } else if (art === "aktion") {
+        /* „* Emmy lacht laut" — ohne Doppelpunkt, kursiv. Genau so
+           gab der /me-Befehl es seit jeher aus. */
+        const t = document.createElement("span");
+        t.className = "lc-zeilentext";
+        t.textContent = "* " + n.text;
+        if (farbe) t.style.color = farbe;
+        z.appendChild(t);
+      } else {
+        /* Bild, Name, Text — in einer Zeile, für alle gleich. */
         const kopf = document.createElement("span");
-        kopf.className = "lc-blase-kopf";
+        kopf.className = "lc-nick";
+        if (farbe) kopf.style.color = farbe;
         const emoji = n.bild && n.bild.indexOf("emoji:") === 0 ? n.bild.slice(6) : "";
         if (emoji) {
           const e = document.createElement("span");
-          e.className = "lc-blase-avatar lc-blase-avatar-emoji";
+          e.className = "lc-zeilenbild lc-zeilenbild-emoji";
           e.textContent = emoji;
           kopf.appendChild(e);
         } else if (n.bild) {
           const i = document.createElement("img");
-          i.className = "lc-blase-avatar";
-          i.alt = "";
-          i.loading = "lazy";
-          i.src = n.bild;
+          i.className = "lc-zeilenbild";
+          i.alt = ""; i.loading = "lazy"; i.src = n.bild;
           kopf.appendChild(i);
-        } else {
-          const e = document.createElement("span");
-          e.className = "lc-blase-avatar lc-blase-avatar-emoji";
-          e.textContent = (n.name || "?").trim().charAt(0).toUpperCase();
-          kopf.appendChild(e);
         }
-        const nameZeile = document.createElement("span");
-        nameZeile.className = "lc-blase-name";
-        nameZeile.textContent = n.name;
-        kopf.appendChild(nameZeile);
-        b.appendChild(kopf);
+        const nm = document.createElement("b");
+        nm.textContent = art === "fluester" ? "»" + n.name + "«" : n.name;
+        kopf.appendChild(nm);
+        z.appendChild(kopf);
+
+        const t = document.createElement("span");
+        t.className = "lc-zeilentext";
+        if (n.bildImChat) {
+          const bild = document.createElement("img");
+          bild.className = "lc-zeilenfoto";
+          bild.alt = n.text || "Bild im Chat";
+          bild.loading = "lazy";
+          bild.src = n.bildImChat;
+          bild.addEventListener("click", () => window.open(n.bildImChat, "_blank", "noopener"));
+          t.appendChild(bild);
+        } else if (n.bildWeg) {
+          const w = document.createElement("span");
+          w.className = "lc-blase-bildweg";
+          w.textContent = "🖼️ Bild — nicht mehr gespeichert";
+          t.appendChild(w);
+        }
+        if (n.text) {
+          const w = document.createElement("span");
+          w.textContent = n.text;
+          t.appendChild(w);
+        }
+        if (art === "fluester" && n.woher) {
+          const q = document.createElement("i");
+          q.className = "lc-woher";
+          q.textContent = " (aus " + n.woher + ")";
+          t.appendChild(q);
+        }
+        z.appendChild(t);
       }
-      /* Ein Bild wird als <img> gebaut und seine Adresse gesetzt —
-         NIE über innerHTML. Die Adresse kommt von einem fremden Gerät;
-         als Zeichenkette eingesetzt liesse sich damit Fremdes in die
-         Seite schreiben. Als Attribut ist sie nur eine Adresse. */
-      if (n.bildImChat) {
-        const bild = document.createElement("img");
-        bild.className = "lc-blase-bild";
-        bild.alt = n.text || "Bild im Chat";
-        bild.loading = "lazy";
-        bild.src = n.bildImChat;
-        bild.addEventListener("click", () => window.open(n.bildImChat, "_blank", "noopener"));
-        b.appendChild(bild);
-      } else if (n.bildWeg) {
-        const weg = document.createElement("span");
-        weg.className = "lc-blase-bildweg";
-        weg.textContent = "🖼️ Bild — nicht mehr gespeichert";
-        b.appendChild(weg);
-      }
-      if (n.text) {
-        const textZeile = document.createElement("span");
-        textZeile.textContent = n.text;
-        b.appendChild(textZeile);
-      }
-      const zeitZeile = document.createElement("span");
-      zeitZeile.className = "lc-blase-zeit";
-      zeitZeile.textContent = new Date(n.zeit).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-      b.appendChild(zeitZeile);
-      v.appendChild(b);
+      v.appendChild(z);
+
+      if (n.wirkung === "herz") lcWirkung("herz", "\u2665");
+      else if (n.wirkung === "lachen") lcWirkung("lachen", "\u0028\u25d5\u203f\u25d5\u0029");
+      else if (art === "ruf") lcWirkung("ruf", "\u2757");
     });
     if (amEnde) v.scrollTop = v.scrollHeight;
   }

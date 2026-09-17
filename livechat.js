@@ -124,6 +124,12 @@ window.LiveChat = (function () {
     bildAn: true,
     eigenerStrom: null,
     ichBild: "",        // Profilbild oder GIF, wenn die Kamera aus ist
+    farbe: "",          // eigene Schriftfarbe (/c)
+    thema: "",          // Thema des Raums (/t)
+    haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
+    abgeschlossen: false,
+    eingeladen: {},     // Kennung -> true, fuer den abgeschlossenen Raum
+    geknebelt: {},      // Kennung -> true
     kameraFehler: "",   // im Klartext, warum kein Bild/Ton da ist
     leute: {},          // id -> { id, name, strom, gesehen, tonAn, bildAn, bild }
     nachrichten: [],    // { id, von, name, text, zeit, eigen, bild }
@@ -151,6 +157,11 @@ window.LiveChat = (function () {
       tonAn: zustand.tonAn,
       bildAn: zustand.bildAn,
       ichBild: zustand.ichBild,
+      farbe: zustand.farbe,
+      thema: zustand.thema,
+      haeuptling: zustand.haeuptling,
+      abgeschlossen: zustand.abgeschlossen,
+      raumName: raumKlartext(zustand.raum),
       kameraFehler: zustand.kameraFehler,
       hatKamera: Boolean(zustand.eigenerStrom && zustand.eigenerStrom.getVideoTracks().length),
       hatBild: Boolean(zustand.eigenerStrom),
@@ -205,6 +216,21 @@ window.LiveChat = (function () {
   /* --- Raumname ---
      Derselbe Gedanke wie im Klassenzimmer: wer den Namen kennt,
      kommt herein. Also lang und zufällig, nicht „deutschkurs". */
+  /* Aus „ecke-leseecke" wird wieder „Leseecke". Oben im Kopf soll der
+     Name stehen, den man eingetippt hat — nicht der interne. */
+  function raumKlartext(r) {
+    var x = String(r || "");
+    if (!x || x === HAUPTRAUM) return "Klassenzimmer";
+    x = x.replace(/^ecke-/, "").replace(/-/g, " ");
+    return x.charAt(0).toUpperCase() + x.slice(1);
+  }
+  function raumSchluessel(name) {
+    var x = String(name || "").toLowerCase()
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
+    return x ? "ecke-" + x : "";
+  }
+
   function neuerRaumName() {
     var zeichen = "abcdefghijkmnopqrstuvwxyz23456789";
     var zufall = new Uint8Array(14);
@@ -842,11 +868,27 @@ window.LiveChat = (function () {
       }
       return;
     }
+    if (n.art === "thema") {
+      zustand.thema = String(n.thema || "").slice(0, 120);
+      melden();
+      return;
+    }
+    if (n.art === "rang") {
+      if (n.an === zustand.ichId) {
+        zustand.haeuptling = Boolean(n.haeuptling);
+        melden();
+      } else if (zustand.leute[n.an]) {
+        zustand.leute[n.an].haeuptling = Boolean(n.haeuptling);
+        melden();
+      }
+      return;
+    }
     if (n.art === "stumm") {
       if (zustand.leute[n.von]) {
         if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
         if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
         if (typeof n.bild === "string") zustand.leute[n.von].bild = n.bild;
+        if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
         melden();
       }
       return;
@@ -859,6 +901,8 @@ window.LiveChat = (function () {
         text: String(n.text || "").slice(0, CHAT_LAENGE),
         zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
         art: n.chatArt || "text",
+        wirkung: n.wirkung || "",
+        farbe: n.farbe || (zustand.leute[n.von] && zustand.leute[n.von].farbe) || "",
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : ""
       });
       melden();
@@ -959,7 +1003,7 @@ window.LiveChat = (function () {
     Object.keys(roh).forEach(function (schluessel) {
       var eintraege = roh[schluessel] || [];
       var e = eintraege[eintraege.length - 1] || {};
-      neu[schluessel] = { name: e.name || "", seit: e.seit || 0 };
+      neu[schluessel] = { name: e.name || "", raum: e.raum || "", seit: e.seit || 0 };
     });
     praesenzDa = neu;
     praesenzMelden();
@@ -983,10 +1027,16 @@ window.LiveChat = (function () {
     praesenzKanal.subscribe(function (st) { if (st === "SUBSCRIBED") praesenzLesen(); });
   }
 
+  /* Die Präsenz trägt den RAUM mit. Nur so kann „/f Nickname" dorthin
+     führen, wo die Person GERADE ist — und nicht in einen leeren Raum,
+     den sie vor zehn Minuten einmal aufgemacht hat. Genau das war
+     gemeldet: „dann komme ich in ihren alten Raum und nicht in meinen,
+     wo sie auf mich wartet." */
   function praesenzSetzen(drin, name) {
     if (!praesenzKanal) return;
     try {
-      if (drin) praesenzKanal.track({ name: name || "", seit: Date.now() });
+      if (drin) praesenzKanal.track({ name: name || zustand.ichName || "",
+                                      raum: zustand.raum || "", seit: Date.now() });
       else praesenzKanal.untrack();
     } catch (e) {}
   }
@@ -1012,6 +1062,12 @@ window.LiveChat = (function () {
     zustand.lage = "verbindet";
     zustand.fehler = "";
     zustand.ichBild = o.bild || bildLaden();
+    zustand.farbe = o.farbe || zustand.farbe || "";
+    zustand.thema = "";
+    zustand.haeuptling = false;
+    zustand.abgeschlossen = false;
+    zustand.eingeladen = {};
+    zustand.geknebelt = {};
     /* Der Verlauf aus diesem Raum wird MITGEBRACHT, nicht
        weggeworfen — man soll nachlesen können, was geschrieben
        wurde, auch nach dem Neuladen und nach dem Wiederkommen. */
@@ -1054,6 +1110,8 @@ window.LiveChat = (function () {
             senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn });
             pulsStarten();
+            postKanalOeffnen();
+            praesenzZuhoeren(kontoId || zustand.ichId);
             praesenzSetzen(true, zustand.ichName);
             melden();
             fertig(lage());
@@ -1305,22 +1363,108 @@ window.LiveChat = (function () {
      Nachricht raus — so verschwindet nichts, nur weil jemand
      einen Schrägstrich tippt.
      ========================================================= */
-  var BEFEHLE = [
-    { wort: "me",       hat: "text", hilfe: "/me lacht laut  →  „Emmy lacht laut“" },
-    { wort: "schrei",   hat: "text", hilfe: "/schrei Hallo!  →  in Großbuchstaben, für alle" },
-    { wort: "fluester", hat: "wer+text", hilfe: "/fluester Alex Na du?  →  nur ihr beide seht es" },
-    { wort: "herz",     hat: "wer",  hilfe: "/herz Alex  →  schickt ein Herz" },
-    { wort: "winke",    hat: "wer?", hilfe: "/winke  oder  /winke Alex" },
-    { wort: "knuddel",  hat: "wer",  hilfe: "/knuddel Alex" },
-    { wort: "lach",     hat: "",     hilfe: "/lach" },
-    { wort: "raum",     hat: "text", hilfe: "/raum Leseecke  →  macht einen eigenen Raum auf" },
-    { wort: "folge",    hat: "wer",  hilfe: "/folge Alex  →  geht in den Raum, den Alex aufgemacht hat" },
-    { wort: "hilfe",    hat: "",     hilfe: "/hilfe  →  diese Liste" }
-  ];
-  function befehlsliste() { return BEFEHLE.map(function (b) { return b.hilfe; }); }
+  /* -------------------------------------------------------------
+     DIE BEFEHLE — so kurz wie damals
+     -------------------------------------------------------------
+     Das System heisst SLASH-BEFEHLE und kommt aus dem IRC (Internet
+     Relay Chat, 1988; festgeschrieben in RFC 1459 und RFC 2812).
+     Die deutschen Webchats der Neunziger und Zweitausender — Kilahu,
+     Webkicks, spin.de, Knuddels, Chatterzone — haben diesen Satz
+     uebernommen und um eigene Sachen ergaenzt.
 
-  /* Wer heisst wie? Die Namen im Raum, damit /fluester Alex den
-     richtigen findet — gross oder klein geschrieben, egal. */
+     Belegt und hier uebernommen:
+       /me   Aktion, kursiv, ohne Doppelpunkt hinter dem Namen
+       /s    schreien: der Text wird in Grossbuchstaben ausgegeben
+       /w    fluestern (auch /msg, /m) — nur der Empfaenger sieht es
+       /j    einen Raum betreten oder anlegen (join)
+       /i    jemanden einladen (invite). WICHTIG, und so war es im
+             IRC auch: eine Einladung ist KEINE Anfrage mit Ja/Nein.
+             Sie schaltet den Raum fuer die Person frei und schickt
+             ihr eine Nachricht — hineingehen muss sie selbst.
+       /k    rausschmeissen (kick), /op und /deop fuer die Rechte
+       /n    wer ist hier (names), /l welche Raeume es gibt (list)
+       /t    das Thema des Raums (topic)
+       /h    die Hilfe
+     Von Kilahu: jeder, der einen Raum aufmacht, ist dort HAEUPTLING
+     und darf knebeln, rausschmeissen und den Raum abschliessen.
+
+     Und: Zeichen wie &hearts; sind keine Befehle, sondern
+     HTML-Entitaeten. In den alten Chats lief der Text durch den
+     HTML-Aufbereiter, deshalb wurde daraus ein echtes Zeichen — ein
+     Unicode-Herz, kein Emoji. Genau so ist es hier wieder.
+     ------------------------------------------------------------- */
+  var BEFEHLE = [
+    { w: "me",      kurz: "",     nutzt: "/me <was du tust>",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
+    { w: "me/",     kurz: "",     nutzt: "… /me/ …",            was: "Mitten im Satz: wird durch deinen Namen ersetzt" },
+    { w: "s",       kurz: "shout",nutzt: "/s <text>",           was: "Schreien — GROSS, mit Wucht" },
+    { w: "w",       kurz: "msg",  nutzt: "/w <name> <text>",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
+    { w: "j",       kurz: "join", nutzt: "/j <raum>",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
+    { w: "i",       kurz: "invite", nutzt: "/i <name>",         was: "Einladen — die Person bekommt eine Zeile und kommt selbst" },
+    { w: "f",       kurz: "follow", nutzt: "/f <name>",         was: "Folgen — dorthin, wo die Person GERADE ist" },
+    { w: "n",       kurz: "names",nutzt: "/n",                  was: "Wer ist hier?" },
+    { w: "l",       kurz: "list", nutzt: "/l",                  was: "Welche Räume sind gerade offen?" },
+    { w: "t",       kurz: "topic",nutzt: "/t <text>",           was: "Thema des Raums setzen" },
+    { w: "lock",    kurz: "",     nutzt: "/lock",               was: "Raum abschließen — nur Eingeladene kommen herein" },
+    { w: "unlock",  kurz: "",     nutzt: "/unlock",             was: "Raum wieder öffnen" },
+    { w: "op",      kurz: "",     nutzt: "/op <name>",          was: "Macht die Person zum Häuptling" },
+    { w: "deop",    kurz: "",     nutzt: "/deop <name>",        was: "Nimmt die Häuptlingsrechte wieder" },
+    { w: "k",       kurz: "kick", nutzt: "/k <name>",           was: "Rausschmeißen (nur Häuptling)" },
+    { w: "knebel",  kurz: "",     nutzt: "/knebel <name>",      was: "Stummschalten (nur Häuptling)" },
+    { w: "entknebel", kurz: "",   nutzt: "/entknebel <name>",   was: "Wieder sprechen lassen" },
+    { w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit Gesicht im Chat" },
+    { w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
+    { w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
+    { w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
+    { w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
+  ];
+  function befehlsliste() {
+    return BEFEHLE.map(function (b) {
+      return { nutzt: b.nutzt, was: b.was, kurz: b.kurz };
+    });
+  }
+
+  /* --- HTML-Entitäten wie damals -------------------------------
+     &hearts; wird ♥, nicht ❤️. Das ist der Unterschied, um den es
+     geht: ein Schriftzeichen, kein Bild. */
+  var ENTITAETEN = {
+    hearts: "\u2665", heart: "\u2665", diams: "\u2666", clubs: "\u2663", spades: "\u2660",
+    star: "\u2606", starf: "\u2605", sun: "\u263c", moon: "\u263d", phone: "\u260e",
+    smile: "\u263a", frown: "\u2639", note: "\u266a", notes: "\u266b", flat: "\u266d",
+    sharp: "\u266f", check: "\u2713", cross: "\u2717", larr: "\u2190", rarr: "\u2192",
+    uarr: "\u2191", darr: "\u2193", harr: "\u2194", infin: "\u221e", ne: "\u2260",
+    le: "\u2264", ge: "\u2265", plusmn: "\u00b1", times: "\u00d7", divide: "\u00f7",
+    deg: "\u00b0", sect: "\u00a7", para: "\u00b6", dagger: "\u2020", Dagger: "\u2021",
+    bull: "\u2022", hellip: "\u2026", trade: "\u2122", copy: "\u00a9", reg: "\u00ae",
+    euro: "\u20ac", laquo: "\u00ab", raquo: "\u00bb", mdash: "\u2014", ndash: "\u2013",
+    frac12: "\u00bd", frac14: "\u00bc", micro: "\u00b5", permil: "\u2030", lozf: "\u29eb",
+    loz: "\u25ca", squf: "\u25aa", male: "\u2642", female: "\u2640", umbrella: "\u2602",
+    snowman: "\u2603", coffee: "\u2615", scissors: "\u2702", pencil: "\u270e",
+    hand: "\u261e", peace: "\u262e", yinyang: "\u262f", anchor: "\u2693",
+    flag: "\u2691", crown: "\u265b", chess: "\u265e", dice: "\u2680"
+  };
+  function entitaetenSetzen(text) {
+    return String(text).replace(/&([A-Za-z][A-Za-z0-9]{1,10});/g, function (ganz, name) {
+      if (Object.prototype.hasOwnProperty.call(ENTITAETEN, name)) return ENTITAETEN[name];
+      return ganz;
+    });
+  }
+
+  /* --- Der alte Trick: /me/ mitten im Satz ----------------------
+     „Wir haben den Namen von Emmy benutzt und dann geschrieben
+      ‚denkt, dass /me/ cool ist‘ — die anderen dachten, sie hätte
+      das selbst geschrieben."
+     Dafür muss /me/ IM Text stehen bleiben dürfen und durch den
+     eigenen Namen ersetzt werden. */
+  function eigennamenSetzen(text) {
+    return String(text).replace(/\/me\//g, zustand.ichName);
+  }
+
+  function textAufbereiten(text) {
+    return entitaetenSetzen(eigennamenSetzen(text));
+  }
+
+  /* Wer heisst wie? Die Namen im Raum, damit /w Alex den richtigen
+     findet — gross oder klein geschrieben, egal. */
   function personNachName(name) {
     var k = String(name || "").trim().toLowerCase();
     if (!k) return null;
@@ -1335,8 +1479,6 @@ window.LiveChat = (function () {
     }
     return null;
   }
-
-  var raeumeVonAnderen = {};        // Name (klein) -> Raumname
 
   /* Die Kennung MUSS eindeutig sein. Aus Zeit + eigener Kennung
      allein war sie das nicht: zwei Zeilen in derselben Millisekunde
@@ -1354,121 +1496,333 @@ window.LiveChat = (function () {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
       text: text, art: art, zeit: Date.now(), eigen: true,
-      bild: zustand.ichBild, an: an || ""
+      bild: zustand.ichBild, farbe: zustand.farbe, an: an || ""
     };
     nachrichtAnhaengen(n);
     return n;
   }
 
-  function befehlAusfuehren(roh) {
-    var m = /^\/([a-zäöüß]+)\s*([\s\S]*)$/i.exec(roh.trim());
-    if (!m) return false;
-    var wort = m[1].toLowerCase(), rest = (m[2] || "").trim();
-    var art = null;
-    for (var i = 0; i < BEFEHLE.length; i++) if (BEFEHLE[i].wort === wort) art = BEFEHLE[i];
-    /* Kurzformen, wie man sie von früher kennt. */
-    if (!art && (wort === "w" || wort === "whisper" || wort === "flüster")) art = { wort: "fluester" };
-    if (!art && (wort === "shout" || wort === "schreien")) art = { wort: "schrei" };
-    if (!art && wort === "help") art = { wort: "hilfe" };
-    if (!art) return false;
+  /* Eine Zeile, die nur ich sehe (Antworten des Systems). */
+  function systemZeile(text) {
+    eigeneZeile("system", text);
+    melden();
+    return true;
+  }
 
-    if (art.wort === "hilfe") {
-      eigeneZeile("system", "Das kannst du tippen:\n" + befehlsliste().join("\n"));
+  function anAlle(art, text, zusatz) {
+    var n = eigeneZeile(art, text);
+    if (zusatz && zusatz.wirkung) n.wirkung = zusatz.wirkung;
+    serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
+    var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
+                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe };
+    if (zusatz) Object.keys(zusatz).forEach(function (k) { post[k] = zusatz[k]; });
+    senden(post);
+    melden();
+    return true;
+  }
+
+  /* =========================================================
+     DER FLÜSTERKANAL
+     ---------------------------------------------------------
+     Flüstern soll RAUMÜBERGREIFEND gehen: „Emmy ist mit jemand
+     anderem in einem anderen Raum, und ich möchte ihr etwas
+     zuflüstern."
+
+     Der Raumkanal reicht dafür nicht — er endet am Raum. Jede
+     Person hat deshalb einen EIGENEN Kanal, dessen Name ihre
+     Kennung trägt. Wer flüstert, schickt auf den Kanal des
+     Empfängers; niemand sonst hört dort mit. Dasselbe gilt für
+     Einladungen, die ja auch in einen anderen Raum gehen.
+     ========================================================= */
+  var postKanal = null;
+  function postKanalOeffnen() {
+    if (postKanal || !zustand.ichId) return;
+    var k = klient();
+    if (!k) return;
+    postKanal = k.channel("dma-post-" + zustand.ichId, { config: { broadcast: { self: false } } });
+    postKanal.on("broadcast", { event: "post" }, function (m) { postEmpfangen(m && m.payload); });
+    postKanal.subscribe(function () {});
+  }
+  function postSenden(anId, nutzlast) {
+    var k = klient();
+    if (!k || !anId) return;
+    nutzlast.von = zustand.ichId;
+    nutzlast.vonName = zustand.ichName;
+    nutzlast.vonBild = zustand.ichBild;
+    nutzlast.vonFarbe = zustand.farbe;
+    var ziel = k.channel("dma-post-" + anId);
+    ziel.subscribe(function (st) {
+      if (st !== "SUBSCRIBED") return;
+      try { ziel.send({ type: "broadcast", event: "post", payload: nutzlast }); } catch (e) {}
+      setTimeout(function () { try { ziel.unsubscribe(); } catch (e) {} }, 800);
+    });
+  }
+  function postEmpfangen(n) {
+    if (!n) return;
+    if (n.art === "fluester") {
+      nachrichtAnhaengen({
+        id: n.id || neueNachrichtId(), von: n.von, name: n.vonName || "Jemand",
+        text: String(n.text || "").slice(0, CHAT_LAENGE), art: "fluester",
+        bild: n.vonBild || "", farbe: n.vonFarbe || "",
+        woher: n.raum && n.raum !== zustand.raum ? raumKlartext(n.raum) : "",
+        zeit: n.zeit || Date.now(), eigen: false
+      });
       melden();
-      return true;
+      return;
     }
-    if (art.wort === "me") {
-      if (!rest) return true;
-      var n1 = eigeneZeile("aktion", zustand.ichName + " " + rest);
-      serverSichern({ name: n1.name, bild: n1.bild, text: n1.text, art: "aktion" });
-      senden({ art: "text", id: n1.id, name: n1.name, text: n1.text, zeit: n1.zeit,
-               bild: zustand.ichBild, chatArt: "aktion" });
+    if (n.art === "einladung") {
+      einladungen[String(n.raum)] = true;
+      nachrichtAnhaengen({
+        id: n.id || neueNachrichtId(), von: n.von, name: n.vonName || "Jemand",
+        art: "einladung", raum: n.raum,
+        text: (n.vonName || "Jemand") + " lädt dich in „" + raumKlartext(n.raum) + "“ ein. "
+            + "Tippe  /j " + raumKlartext(n.raum) + "  — oder tippe die Zeile an.",
+        zeit: Date.now(), eigen: false, bild: n.vonBild || ""
+      });
       melden();
-      return true;
+      return;
     }
-    if (art.wort === "schrei") {
-      if (!rest) return true;
-      var laut = rest.toUpperCase();
-      var n2 = eigeneZeile("ruf", laut);
-      serverSichern({ name: n2.name, bild: n2.bild, text: laut, art: "ruf" });
-      senden({ art: "text", id: n2.id, name: n2.name, text: laut, zeit: n2.zeit,
-               bild: zustand.ichBild, chatArt: "ruf" });
-      melden();
-      return true;
-    }
-    if (art.wort === "fluester") {
-      var t = /^(\S+)\s+([\s\S]+)$/.exec(rest);
-      if (!t) { eigeneZeile("system", "So geht es: /fluester Alex Na du?"); melden(); return true; }
-      var ziel = personNachName(t[1]);
-      if (!ziel) {
-        eigeneZeile("system", "„" + t[1] + "“ ist gerade nicht im Raum.");
-        melden(); return true;
-      }
-      /* Geflüstertes geht NICHT in die Tabelle — es sollen wirklich
-         nur die beiden sehen, auch später. */
-      var n3 = eigeneZeile("fluester", "an " + ziel.name + ": " + t[2], ziel.id);
-      senden({ art: "text", an: ziel.id, id: n3.id, name: n3.name, text: t[2],
-               zeit: n3.zeit, bild: zustand.ichBild, chatArt: "fluester" });
-      melden();
-      return true;
-    }
-    if (art.wort === "herz" || art.wort === "knuddel" || art.wort === "winke" || art.wort === "lach") {
-      var satz = { herz: "schickt %s ein Herz \u2764\ufe0f",
-                   knuddel: "knuddelt %s",
-                   winke: "winkt %s",
-                   lach: "lacht" }[art.wort];
-      var wem = rest ? (personNachName(rest) || { name: rest }) : null;
-      var text = zustand.ichName + " " + satz.replace("%s", wem ? wem.name : "in die Runde").trim();
-      var n4 = eigeneZeile("aktion", text);
-      serverSichern({ name: n4.name, bild: n4.bild, text: text, art: "aktion" });
-      senden({ art: "text", id: n4.id, name: n4.name, text: text, zeit: n4.zeit,
-               bild: zustand.ichBild, chatArt: "aktion" });
-      melden();
-      return true;
-    }
-    if (art.wort === "raum") {
-      if (!rest) { eigeneZeile("system", "So geht es: /raum Leseecke"); melden(); return true; }
-      var sauber = rest.toLowerCase().replace(/[^a-z0-9äöüß]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
-      if (!sauber) { eigeneZeile("system", "Der Name geht nicht. Nimm Buchstaben und Zahlen."); melden(); return true; }
-      var neuerRaum = "ecke-" + sauber;
-      /* Den anderen sagen, wohin man geht — sonst kann niemand folgen. */
-      senden({ art: "umzug", name: zustand.ichName, raum: neuerRaum, wie: rest });
-      var merkName = zustand.ichName, merkBild = zustand.ichBild, merkKonto = kontoId;
-      verlassen();
-      betreten(neuerRaum, { name: merkName, bild: merkBild, konto: merkKonto, mitBild: false })
-        .then(function () {
-          eigeneZeile("system", "Du hast die Ecke „" + rest + "“ aufgemacht. "
-            + "Die anderen kommen mit  /folge " + merkName);
-          melden();
-        });
-      return true;
-    }
-    if (art.wort === "folge") {
-      var wohin = raeumeVonAnderen[String(rest).trim().toLowerCase()];
-      if (!wohin) {
-        eigeneZeile("system", "„" + rest + "“ hat hier keine eigene Ecke aufgemacht.");
-        melden(); return true;
-      }
+    if (n.art === "rausschmiss" && n.raum === zustand.raum) {
+      systemZeile((n.vonName || "Der Häuptling") + " hat dich aus dem Raum geschickt.");
       var nm = zustand.ichName, bd = zustand.ichBild, kt = kontoId;
       verlassen();
-      betreten(wohin, { name: nm, bild: bd, konto: kt, mitBild: false });
+      betreten(HAUPTRAUM, { name: nm, bild: bd, konto: kt, mitBild: false });
+      return;
+    }
+    if (n.art === "knebel") { geknebeltVon[n.von] = Boolean(n.an_); melden(); return; }
+  }
+  var einladungen = {};        // Raum -> true (wohin man eingeladen wurde)
+  var geknebeltVon = {};
+
+  /* =========================================================
+     DIE BEFEHLE AUSFÜHREN
+     ========================================================= */
+  function befehlAusfuehren(roh) {
+    var m = /^\/([a-zäöüß?]+)\s*([\s\S]*)$/i.exec(roh.trim());
+    if (!m) return false;
+    var wort = m[1].toLowerCase(), rest = (m[2] || "").trim();
+
+    /* Kurzform oder Langform — beides gilt, wie damals auch. */
+    var art = null;
+    BEFEHLE.forEach(function (b) {
+      if (b.w === wort || (b.kurz && b.kurz === wort)) art = b.w;
+    });
+    if (!art) {
+      var gleich = { msg: "w", m: "w", query: "w", fluester: "w", whisper: "w",
+                     shout: "s", schrei: "s", schreien: "s",
+                     join: "j", raum: "j", room: "j",
+                     invite: "i", einladen: "i",
+                     follow: "f", folge: "f", folgen: "f",
+                     names: "n", who: "n", wer: "n",
+                     list: "l", raeume: "l",
+                     topic: "t", thema: "t",
+                     kick: "k", rausschmeissen: "k",
+                     color: "c", farbe: "c",
+                     help: "h", hilfe: "h", "?": "h",
+                     part: "leave", exit: "leave", quit: "leave" };
+      art = gleich[wort] || null;
+    }
+    if (!art) return false;
+
+    /* ---- Reden ---- */
+    if (art === "me") {
+      if (!rest) return systemZeile("So geht es:  /me lacht laut");
+      return anAlle("aktion", zustand.ichName + " " + textAufbereiten(rest));
+    }
+    if (art === "s") {
+      if (!rest) return systemZeile("So geht es:  /s Hallo alle zusammen");
+      return anAlle("ruf", textAufbereiten(rest).toUpperCase());
+    }
+    if (art === "w") {
+      var t = /^(\S+)\s+([\s\S]+)$/.exec(rest);
+      if (!t) return systemZeile("So geht es:  /w Nickname Dein Text");
+      var ziel = personNachName(t[1]) || praesenzNachName(t[1]);
+      if (!ziel) return systemZeile("„" + t[1] + "“ ist gerade nirgends zu finden.");
+      var txt = textAufbereiten(t[2]);
+      var n = eigeneZeile("fluester", "an " + ziel.name + ": " + txt, ziel.id);
+      postSenden(ziel.id, { art: "fluester", id: n.id, text: txt,
+                            raum: zustand.raum, zeit: n.zeit });
+      melden();
       return true;
     }
+
+    /* ---- Räume ---- */
+    if (art === "j") {
+      if (!rest) return systemZeile("So geht es:  /j Leseecke");
+      var neu = raumSchluessel(rest);
+      if (!neu) return systemZeile("Der Name geht nicht. Nimm Buchstaben und Zahlen.");
+      if (neu === zustand.raum) return systemZeile("Da bist du schon.");
+      raumWechseln(neu, true);
+      return true;
+    }
+    if (art === "leave") { raumWechseln(HAUPTRAUM, false); return true; }
+    if (art === "i") {
+      if (!rest) return systemZeile("So geht es:  /i Nickname");
+      var wen = personNachName(rest) || praesenzNachName(rest);
+      if (!wen) return systemZeile("„" + rest + "“ ist gerade nirgends zu finden.");
+      zustand.eingeladen[wen.id] = true;
+      postSenden(wen.id, { art: "einladung", raum: zustand.raum, zeit: Date.now() });
+      return systemZeile("Eingeladen: " + wen.name + ". Eine Einladung ist keine Frage mit "
+        + "Ja und Nein — sie macht den Raum für " + wen.name + " auf. Hereinkommen "
+        + wen.name + " muss selbst.");
+    }
+    if (art === "f") {
+      if (!rest) return systemZeile("So geht es:  /f Nickname");
+      var p = praesenzNachName(rest);
+      if (!p || !p.raum) return systemZeile("„" + rest + "“ ist gerade in keinem Raum.");
+      if (p.raum === zustand.raum) return systemZeile(p.name + " ist hier bei dir.");
+      raumWechseln(p.raum, false);
+      return true;
+    }
+    if (art === "n") {
+      var hier = [zustand.ichName + " (du)"].concat(Object.keys(zustand.leute).map(function (id) {
+        return zustand.leute[id].name + (zustand.leute[id].haeuptling ? " ★" : "");
+      }));
+      return systemZeile("Hier im Raum „" + raumKlartext(zustand.raum) + "“: " + hier.join(", "));
+    }
+    if (art === "l") {
+      var raeume = {};
+      Object.keys(praesenzDa).forEach(function (id) {
+        var e = praesenzDa[id];
+        if (!e.raum) return;
+        (raeume[e.raum] = raeume[e.raum] || []).push(e.name || "?");
+      });
+      var zeilen = Object.keys(raeume).map(function (r) {
+        return "  " + raumKlartext(r) + " — " + raeume[r].join(", ");
+      });
+      return systemZeile(zeilen.length ? "Offene Räume:\n" + zeilen.join("\n")
+                                       : "Gerade ist nur das Klassenzimmer offen.");
+    }
+    if (art === "t") {
+      if (!zustand.haeuptling && zustand.raum !== HAUPTRAUM) {
+        return systemZeile("Das Thema setzt der Häuptling des Raums.");
+      }
+      zustand.thema = textAufbereiten(rest).slice(0, 120);
+      senden({ art: "thema", thema: zustand.thema });
+      melden();
+      return systemZeile(zustand.thema ? "Thema: " + zustand.thema : "Thema gelöscht.");
+    }
+    if (art === "lock" || art === "unlock") {
+      if (!zustand.haeuptling) return systemZeile("Abschließen darf nur, wer den Raum aufgemacht hat.");
+      zustand.abgeschlossen = (art === "lock");
+      melden();
+      return anAlle("system", zustand.ichName + (zustand.abgeschlossen
+        ? " hat den Raum abgeschlossen — jetzt kommt nur noch herein, wer eingeladen ist."
+        : " hat den Raum wieder geöffnet."));
+    }
+
+    /* ---- Rechte, wie bei Kilahu ---- */
+    if (art === "op" || art === "deop") {
+      if (!zustand.haeuptling) return systemZeile("Das darf nur der Häuptling dieses Raums.");
+      var z2 = personNachName(rest);
+      if (!z2) return systemZeile("„" + rest + "“ ist nicht hier.");
+      senden({ art: "rang", an: z2.id, haeuptling: art === "op" });
+      z2.haeuptling = (art === "op");
+      melden();
+      return anAlle("system", z2.name + (art === "op"
+        ? " ist jetzt Häuptling in diesem Raum."
+        : " ist nicht mehr Häuptling."));
+    }
+    if (art === "k") {
+      if (!zustand.haeuptling) return systemZeile("Rausschmeißen darf nur der Häuptling.");
+      var z3 = personNachName(rest);
+      if (!z3) return systemZeile("„" + rest + "“ ist nicht hier.");
+      postSenden(z3.id, { art: "rausschmiss", raum: zustand.raum });
+      return anAlle("system", z3.name + " wurde von " + zustand.ichName + " hinausgeschickt.");
+    }
+    if (art === "knebel" || art === "entknebel") {
+      if (!zustand.haeuptling) return systemZeile("Knebeln darf nur der Häuptling.");
+      var z4 = personNachName(rest);
+      if (!z4) return systemZeile("„" + rest + "“ ist nicht hier.");
+      zustand.geknebelt[z4.id] = (art === "knebel");
+      postSenden(z4.id, { art: "knebel", an_: art === "knebel", raum: zustand.raum });
+      return anAlle("system", z4.name + (art === "knebel"
+        ? " ist geknebelt und kann gerade nichts sagen."
+        : " darf wieder sprechen."));
+    }
+
+    /* ---- Zwei Gesten mit Bild ---- */
+    if (art === "lach") {
+      return anAlle("aktion", zustand.ichName + " lacht", { wirkung: "lachen" });
+    }
+    if (art === "herz") {
+      var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      return anAlle("aktion", zustand.ichName + " schickt "
+        + (wem ? wem.name : "allen") + " ein \u2665", { wirkung: "herz" });
+    }
+
+    /* ---- Farbe ---- */
+    if (art === "c") {
+      var erlaubt = ["rot", "blau", "gruen", "grün", "gelb", "lila", "tuerkis", "türkis",
+                     "orange", "rosa", "weiss", "weiß", "bunt", ""];
+      var f = rest.toLowerCase();
+      if (erlaubt.indexOf(f) < 0) {
+        return systemZeile("Farben: rot, blau, gruen, gelb, lila, tuerkis, orange, rosa, "
+          + "weiss, bunt — oder  /c  ohne Wort für die Standardfarbe.");
+      }
+      zustand.farbe = f.replace("ü", "ue").replace("ß", "ss");
+      senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+               bild: zustand.ichBild, farbe: zustand.farbe });
+      melden();
+      return systemZeile(zustand.farbe ? "Du schreibst jetzt " + rest + "." : "Wieder normale Farbe.");
+    }
+
+    /* ---- Hilfe ---- */
+    if (art === "h") {
+      return systemZeile("Das kannst du tippen:\n"
+        + BEFEHLE.map(function (b) { return "  " + b.nutzt + "   " + b.was; }).join("\n"));
+    }
     return false;
+  }
+
+  /* Den Raum wechseln — und dabei alles mitnehmen, was zu einem gehört. */
+  function raumWechseln(neuerRaum, alsHaeuptling) {
+    var nm = zustand.ichName, bd = zustand.ichBild, kt = kontoId, fb = zustand.farbe;
+    verlassen();
+    betreten(neuerRaum, { name: nm, bild: bd, konto: kt, farbe: fb, mitBild: false })
+      .then(function () {
+        if (alsHaeuptling) {
+          zustand.haeuptling = true;
+          systemZeile("Du bist hier Häuptling. Du kannst  /t Thema  setzen, "
+            + "/i Nickname  einladen, /lock  abschließen und  /k Nickname  hinausschicken.");
+        }
+        melden();
+      });
+  }
+
+  function praesenzNachName(name) {
+    var k = String(name || "").trim().toLowerCase();
+    var ids = Object.keys(praesenzDa);
+    for (var i = 0; i < ids.length; i++) {
+      var e = praesenzDa[ids[i]];
+      if (String(e.name || "").toLowerCase() === k) return { id: ids[i], name: e.name, raum: e.raum };
+    }
+    for (var j = 0; j < ids.length; j++) {
+      var f = praesenzDa[ids[j]];
+      if (String(f.name || "").toLowerCase().indexOf(k) === 0) return { id: ids[j], name: f.name, raum: f.raum };
+    }
+    return null;
+  }
+
+  function geknebelt() {
+    return Object.keys(geknebeltVon).some(function (k) { return geknebeltVon[k]; });
   }
 
   function schreiben(text) {
     var t = String(text || "").trim().slice(0, CHAT_LAENGE);
     if (!t) return;
     if (t.charAt(0) === "/" && befehlAusfuehren(t)) return;
+    if (geknebelt()) { systemZeile("Du bist gerade geknebelt und kannst nichts sagen."); return; }
+    t = textAufbereiten(t);
     var n = {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
-      text: t, zeit: Date.now(), eigen: true, bild: zustand.ichBild
+      text: t, zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
     };
     nachrichtAnhaengen(n);
     serverSichern(n);
-    senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit, bild: zustand.ichBild });
+    senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
+             bild: zustand.ichBild, farbe: zustand.farbe });
     melden();
   }
 
@@ -1493,6 +1847,8 @@ window.LiveChat = (function () {
     mikrofonDazuholen: mikrofonDazuholen,
     chatLeeren: chatLeeren,
     befehlsliste: befehlsliste,
+    raumKlartext: raumKlartext,
+    raumWechseln: raumWechseln,
     praesenzZuhoeren: praesenzZuhoeren,
     praesenzDa: function () { return praesenzDa; },
     beiPraesenz: beiPraesenz,
