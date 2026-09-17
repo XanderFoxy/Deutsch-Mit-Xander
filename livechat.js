@@ -141,6 +141,12 @@ window.LiveChat = (function () {
     seit: 0,            // wann man hereingekommen ist — bestimmt die Sitzordnung
     spricht: false,     // redet man gerade? (fuer den Ring ums Bild)
     thema: "",          // Thema des Raums (/t)
+    /* Der Hintergrund gehört dem RAUM, nicht dem Geraet — gewuenscht:
+       „wenn ich den Hintergrund einstelle, dass der fuer alle sichtbar
+       ist." Entweder ein kurzes Wort wie „animiert:sterne" oder ein
+       klein gerechnetes Bild. */
+    raumHg: "",
+    raumHgRuf: null,    // die Oberflaeche horcht hier, wenn er sich aendert
     haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
     abgeschlossen: false,
     eingeladen: {},     // Kennung -> true, fuer den abgeschlossenen Raum
@@ -176,6 +182,7 @@ window.LiveChat = (function () {
       schrift: zustand.schrift,
       buehne: zustand.buehne,
       thema: zustand.thema,
+      raumHg: zustand.raumHg,
       haeuptling: zustand.haeuptling,
       abgeschlossen: zustand.abgeschlossen,
       raumName: raumKlartext(zustand.raum),
@@ -297,7 +304,17 @@ window.LiveChat = (function () {
     var x = String(r || "");
     if (!x || x === HAUPTRAUM) return "Klassenzimmer";
     x = x.replace(/^ecke-/, "").replace(/-/g, " ");
-    return x.charAt(0).toUpperCase() + x.slice(1);
+    /* JEDES Wort gross — nicht nur das erste. Aus „emmys-raum" wurde
+       vorher „Emmys raum", und ein Raumname ist ein Name: wenn er im
+       Laufband oder in der Raumliste steht, soll er aussehen wie einer
+       und nicht wie ein halber Satz. Zahlen und kurze Bindewörter
+       bleiben klein, sonst liest sich „Raum Der Fuechse" falsch. */
+    var KLEIN = { der: 1, die: 1, das: 1, und: 1, von: 1, im: 1, in: 1, am: 1, zu: 1, mit: 1 };
+    return x.split(" ").map(function (w, i) {
+      if (!w) return w;
+      if (i > 0 && KLEIN[w]) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(" ");
   }
   function raumSchluessel(name) {
     var x = String(name || "").toLowerCase()
@@ -1324,10 +1341,21 @@ window.LiveChat = (function () {
       personMerken(n.von, n.name, n.bild);
       personEintragen(n);
       if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
+      /* GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für
+         alle sichtbar ist."
+
+         Der Hintergrund gehört damit zum RAUM, nicht zum Gerät — genau
+         wie das Thema. Er fährt deshalb im Willkommensgruss mit: wer
+         hereinkommt, sieht ihn sofort, ohne dass ihn jemand neu setzen
+         muss. Es gibt keinen Server, der ihn aufheben könnte; die
+         Leute im Raum SIND das Gedächtnis des Raums. Ist der Raum
+         leer, fängt er wieder beim Standard an — das ist ehrlicher
+         als ein Hintergrund, der jemandem gehört, der längst weg ist. */
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe,
                haeuptling: zustand.haeuptling, thema: zustand.thema,
                seit: zustand.seit, buehne: zustand.buehne,
+               raumHg: zustand.raumHg || "",
                abgeschlossen: zustand.abgeschlossen });
       /* DEN VERLAUF NACHREICHEN.
          ---------------------------------------------------------
@@ -1355,12 +1383,31 @@ window.LiveChat = (function () {
       if (neuHier) kommtUndGeht(n.name || "Jemand", true);
       if (typeof n.haeuptling === "boolean") zustand.leute[n.von].haeuptling = n.haeuptling;
       if (typeof n.thema === "string" && n.thema) zustand.thema = n.thema;
+      /* Den Hintergrund des Raums übernehmen — aber nur, wenn man noch
+         keinen hat. Sonst überschreiben sich zwei Leute, die
+         gleichzeitig hereinkommen, gegenseitig. */
+      if (typeof n.raumHg === "string" && n.raumHg && !zustand.raumHg) {
+        zustand.raumHg = n.raumHg;
+        if (typeof zustand.raumHgRuf === "function") zustand.raumHgRuf(zustand.raumHg);
+      }
       if (typeof n.abgeschlossen === "boolean") zustand.abgeschlossen = n.abgeschlossen;
       if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       personEintragen(n);
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
+      melden();
+      return;
+    }
+    if (n.art === "hintergrund") {
+      /* Jemand hat den Hintergrund des Raums gewechselt. Alle sehen
+         ihn, und im Chat steht, wer es war — ein Raum, der sich ohne
+         Erklärung umfärbt, ist unheimlich. */
+      zustand.raumHg = typeof n.hg === "string" ? n.hg : "";
+      if (typeof zustand.raumHgRuf === "function") zustand.raumHgRuf(zustand.raumHg);
+      systemZeile((n.name || "Jemand") + (zustand.raumHg
+        ? " hat den Hintergrund gewechselt."
+        : " hat den Hintergrund auf den Standard zurückgesetzt."));
       melden();
       return;
     }
@@ -3647,6 +3694,32 @@ window.LiveChat = (function () {
     gemerkteFarbe: gemerkteFarbe,
     gemerkteSchrift: gemerkteSchrift,
     beiHintergrund: function (f) { zustand.hintergrundRuf = f; },
+    /* DER HINTERGRUND DES RAUMS — für alle, nicht nur für mich.
+       GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für alle
+       sichtbar ist."
+
+       Geschickt wird entweder ein kurzes Wort („animiert:sterne") oder
+       ein klein gerechnetes Bild. Gross gerechnete Bilder gehen NICHT:
+       ein Rundruf hat eine Obergrenze, und ein Bild mit
+       neunhunderttausend Zeichen kommt nirgends an — es würde
+       stillschweigend verschwinden, und niemand wüsste warum. Deshalb
+       wird hier ausdrücklich geprüft und ehrlich „nein" gesagt. */
+    RAUM_HG_GRENZE: 150000,
+    raumHintergrundSetzen: function (wert) {
+      var w = String(wert || "");
+      if (w.length > 150000) return { ok: false,
+        warum: "Das Bild ist zu gross, um es an alle im Raum zu schicken." };
+      zustand.raumHg = w;
+      if (zustand.lage === "drin") {
+        senden({ art: "hintergrund", hg: w, name: zustand.ichName });
+        systemZeile(w ? "Du hast den Hintergrund für alle im Raum gewechselt."
+                      : "Du hast den Hintergrund für alle auf den Standard zurückgesetzt.");
+      }
+      melden();
+      return { ok: true };
+    },
+    raumHintergrund: function () { return zustand.raumHg || ""; },
+    beiRaumHintergrund: function (f) { zustand.raumHgRuf = f; },
     schriftSetzen: function (x) {
       if (!SCHRIFTEN[x]) return false;
       zustand.schrift = x; schriftMerken(x); melden(); return true;

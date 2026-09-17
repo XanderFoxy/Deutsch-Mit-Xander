@@ -5233,8 +5233,102 @@
      ============================================================ */
   let kzTickerNamen = [];
   let kzTickerRaeume = {};      // Raum -> [Namen]
+
+  /* =================================================================
+     WAS GERADE IM KLASSENZIMMER GESCHIEHT
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Die anderen, die im Klassenzimmer sind, sollen auch
+     oben im Newsfeed erwähnt werden, wenn die irgendwas machen. Zum
+     Beispiel Emmy ist gerade im Raum Emmys Raum, oder macht gerade
+     einen Raum auf."
+
+     Dafür braucht es keine neuen Nachrichten und keine Tabelle. Die
+     Anwesenheit sagt bei jeder Änderung, WER gerade WO ist. Vergleicht
+     man zwei aufeinanderfolgende Aufnahmen, steht das Ereignis
+     dazwischen: ein Name, der neu ist, ist gekommen; ein Name in einem
+     anderen Raum ist gewechselt; ein Raum, den es vorher nicht gab,
+     wurde gerade aufgemacht.
+
+     Ereignisse sind flüchtig: nach zwei Minuten sind sie keine
+     Nachricht mehr, sondern Vergangenheit, und verschwinden von
+     selbst. Das Laufband soll erzählen, was gerade los ist, und kein
+     Protokoll führen.
+     ================================================================= */
+  const KZ_EREIGNIS_DAUER = 120000;        // zwei Minuten
+  let kzVorher = null;                     // die letzte Aufnahme
+  let kzEreignisse = [];                   // { text, zeit }
+  /* Deutsch hat hier zwei Fälle, und beide klingen falsch, wenn man den
+     anderen nimmt:
+        WO bin ich?     — Dativ:     „im Klassenzimmer"
+        WOHIN gehe ich? — Akkusativ: „ins Klassenzimmer"
+     Deshalb gibt es beide getrennt. Vorher stand da „Xander ist gerade
+     IM Klassenzimmer gekommen", und das ist schlicht falsch. */
+  function kzWoText(raum) {
+    if (!raum || !window.LiveChat) return "im Klassenzimmer";
+    if (raum === LiveChat.HAUPTRAUM) return "im Klassenzimmer";
+    return "in „" + LiveChat.raumKlartext(raum) + "“";
+  }
+  function kzWohinText(raum) {
+    if (!raum || !window.LiveChat) return "ins Klassenzimmer";
+    if (raum === LiveChat.HAUPTRAUM) return "ins Klassenzimmer";
+    return "in „" + LiveChat.raumKlartext(raum) + "“";
+  }
+  function kzNurName(raum) {
+    if (!raum || !window.LiveChat) return "das Klassenzimmer";
+    if (raum === LiveChat.HAUPTRAUM) return "das Klassenzimmer";
+    return "„" + LiveChat.raumKlartext(raum) + "“";
+  }
+  function kzEreignisSetzen(text) {
+    /* Dasselbe zweimal hintereinander ist kein zweites Ereignis. */
+    if (kzEreignisse.some((e) => e.text === text)) return;
+    kzEreignisse.push({ text: text, zeit: Date.now() });
+    if (kzEreignisse.length > 6) kzEreignisse.shift();
+  }
+  function kzEreignisseAbleiten(jetzt) {
+    const alt = kzVorher;
+    kzVorher = {};
+    Object.keys(jetzt || {}).forEach((k) => {
+      const e = jetzt[k] || {};
+      if (e.name) kzVorher[k] = { name: e.name, raum: e.raum || "", zu: Boolean(e.zu) };
+    });
+    /* Die allererste Aufnahme ergibt kein Ereignis — sonst meldete das
+       Laufband beim Laden der Seite, alle seien gerade hereingekommen. */
+    if (!alt) return;
+    const raeumeVorher = {};
+    Object.keys(alt).forEach((k) => { if (alt[k].raum) raeumeVorher[alt[k].raum] = true; });
+
+    Object.keys(kzVorher).forEach((k) => {
+      const neu = kzVorher[k];
+      const frueher = alt[k];
+      if (!neu.raum) return;
+      if (!frueher || !frueher.raum) {
+        if (!raeumeVorher[neu.raum] && neu.raum !== (LiveChat && LiveChat.HAUPTRAUM)) {
+          kzEreignisSetzen(neu.name + " macht gerade " + kzNurName(neu.raum) + " auf");
+        } else {
+          kzEreignisSetzen(neu.name + " ist gerade " + kzWohinText(neu.raum) + " gekommen");
+        }
+        return;
+      }
+      if (frueher.raum !== neu.raum) {
+        if (!raeumeVorher[neu.raum] && neu.raum !== (LiveChat && LiveChat.HAUPTRAUM)) {
+          kzEreignisSetzen(neu.name + " macht gerade " + kzNurName(neu.raum) + " auf");
+        } else {
+          kzEreignisSetzen(neu.name + " ist " + kzWohinText(neu.raum) + " gewechselt");
+        }
+        return;
+      }
+      if (!frueher.zu && neu.zu) {
+        kzEreignisSetzen(kzNurName(neu.raum) + " ist jetzt abgeschlossen");
+      }
+    });
+  }
+  function kzEreignisText() {
+    const grenze = Date.now() - KZ_EREIGNIS_DAUER;
+    kzEreignisse = kzEreignisse.filter((e) => e.zeit > grenze);
+    return kzEreignisse.map((e) => e.text);
+  }
   function kzTickerHtml() {
-    if (!kzTickerNamen.length) return "";
+    if (!kzTickerNamen.length && !kzEreignisText().length) return "";
     /* GEMELDET: „Wenn ich einen eigenen Raum mit einem eigenen
        Raumnamen habe und irgendwo etwas suche, dann kann sich das
        nicht als ‚im Klassenzimmer' ablegen. Da muss der Raum stehen."
@@ -5254,6 +5348,10 @@
         : "im Raum \u201e" + LiveChat.raumKlartext(raum) + "\u201c";
       teile.push(`${drei}${rest} ${leute.length === 1 && !rest ? "ist" : "sind"} gerade ${wo}`);
     });
+    /* Was GERADE geschieht, steht vorneweg — es ist die Nachricht;
+       wer wo sitzt, ist der Zustand. */
+    const ereignisse = kzEreignisText();
+    if (ereignisse.length) teile.unshift.apply(teile, ereignisse);
     if (!teile.length) return "";
     return `<span class="ticker-kz" role="link" tabindex="0" title="Ins Klassenzimmer gehen">`
       + `<span class="ticker-kz-kreide">${escapeHtml(teile.join("  \u00b7  "))}</span></span>`;
@@ -13078,6 +13176,122 @@
     renderLiveChat();
   }
 
+  /* =================================================================
+     WELCHE RÄUME SIND DA — UND WER IST WO?
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht kannst du es auch so machen, dass vorhandene
+     Räume auch schneller sichtbar sind … dass man mit einem Klick
+     irgendwie sieht, welche Räume da sind und man dort jeweils
+     hinspringen kann, je nachdem ob sie verschlossen oder offen sind,
+     und wer von den Leuten sich gerade wo befindet."
+
+     Die Angaben kommen aus der Anwesenheit (Supabase Presence), nicht
+     aus einer Liste, die jemand pflegt: wer den Tab zumacht, ist
+     sofort weg, auch beim Absturz. Deshalb steht hier nie ein Raum,
+     in dem in Wahrheit niemand mehr ist.
+
+     Ein abgeschlossener Raum wird GEZEIGT, aber nicht geöffnet — man
+     soll sehen, dass die Leute da sind und dass man eine Einladung
+     braucht. Ein Raum, den man gar nicht sieht, fühlt sich an wie ein
+     Fehler; ein Raum mit Schloss erklärt sich selbst.
+
+     Das Fenster frischt sich selbst auf, solange es offen ist: kommt
+     jemand herein oder wechselt den Raum, sieht man es sofort.
+     ================================================================= */
+  function livechatRaumFenster() {
+    document.getElementById("lcRaumWaehler")?.remove();
+    const kasten = document.createElement("div");
+    kasten.id = "lcRaumWaehler";
+    kasten.className = "lc-waehler-hinter";
+    kasten.innerHTML = '<div class="lc-waehler" role="dialog" aria-modal="true"'
+      + ' aria-label="R\u00e4ume und wer wo ist"><div id="lcRaumInhalt"></div></div>';
+    document.body.appendChild(kasten);
+
+    const zeichnen = () => {
+      const ziel = kasten.querySelector("#lcRaumInhalt");
+      if (!ziel) return;
+      const l = (window.LiveChat && LiveChat.lage) ? LiveChat.lage() : {};
+      const hier = l.raum || "";
+      const alle = (window.LiveChat && LiveChat.raeumeOffen) ? LiveChat.raeumeOffen() : [];
+      /* Der Hauptraum steht immer oben — auch wenn niemand darin ist.
+         Er ist die Adresse, zu der alle zurückfinden. */
+      const haupt = (window.LiveChat && LiveChat.HAUPTRAUM) || "klassenzimmer";
+      const liste = alle.slice();
+      if (!liste.some((r) => r.raum === haupt)) {
+        liste.unshift({ raum: haupt, name: (LiveChat.raumKlartext
+          ? LiveChat.raumKlartext(haupt) : "Klassenzimmer"), leute: [], zu: false });
+      } else {
+        liste.sort((a, b) => (a.raum === haupt ? -1 : b.raum === haupt ? 1 : 0));
+      }
+      const leute = liste.reduce((n, r) => n + r.leute.length, 0);
+      ziel.innerHTML = `
+        <p class="eyebrow">RÄUME UND WER WO IST</p>
+        <p class="empty-note" style="margin:0 0 12px; font-size:0.76rem;">
+          ${(() => {
+            /* Kein „Raum/Räume" — entweder das eine oder das andere. Ein
+               Schrägstrich ist eine Ausrede dafür, dass man nicht
+               nachgesehen hat, welcher Fall vorliegt. */
+            const wieviele = liste.filter((r) => r.leute.length).length;
+            if (leute === 0) return "Gerade ist niemand da — geh ruhig hinein, dann sehen es die anderen.";
+            if (leute === 1) return "Eine Person ist gerade da.";
+            if (wieviele === 1) return leute + " Leute sind gerade da, alle im selben Raum.";
+            return leute + " Leute sind gerade da, verteilt auf " + wieviele + " Räume.";
+          })()}
+        </p>
+        <div class="lc-raumliste">
+          ${liste.map((r) => `
+            <button type="button" class="lc-raumzeile${r.raum === hier ? " ist-hier" : ""}${r.zu && r.raum !== hier ? " ist-zu" : ""}"
+                    data-lc-hin="${escapeHtml(r.raum)}"
+                    ${r.zu && r.raum !== hier ? 'data-zu="1"' : ""}>
+              <span class="lc-raumzeile-kopf">
+                <span class="lc-raumzeile-name">${r.zu ? "🔒 " : ""}${escapeHtml(r.name)}</span>
+                <span class="lc-raumzeile-zahl">${r.leute.length === 0 ? "leer"
+                  : r.leute.length === 1 ? "1 Person" : r.leute.length + " Leute"}</span>
+              </span>
+              <span class="lc-raumzeile-leute">${r.leute.length
+                ? escapeHtml(r.leute.join(", "))
+                : "noch niemand"}</span>
+              <span class="lc-raumzeile-tun">${r.raum === hier ? "hier bist du"
+                : r.zu ? "abgeschlossen — du brauchst eine Einladung"
+                : "hineingehen"}</span>
+            </button>`).join("")}
+        </div>
+        <p class="empty-note" style="font-size:0.7rem; margin:10px 0 0;">
+          Einen eigenen Raum machst du mit <code>/j Name</code> auf — gibt es ihn
+          noch nicht, entsteht er in dem Augenblick.
+        </p>
+        <div class="lc-waehler-reihe" style="margin-top:12px;">
+          <button type="button" class="btn btn-coffee" id="lcRaumZu">Fertig</button>
+        </div>`;
+      ziel.querySelector("#lcRaumZu")?.addEventListener("click", zu);
+      ziel.querySelectorAll("[data-lc-hin]").forEach((b) =>
+        b.addEventListener("click", () => {
+          const wohin = b.dataset.lcHin;
+          if (wohin === hier) { zu(); return; }
+          if (b.dataset.zu) {
+            showToast("🔒 Dieser Raum ist abgeschlossen. Bitte jemanden darin um "
+              + "/i " + livechatName());
+            return;
+          }
+          zu();
+          LiveChat.betreten(wohin, {
+            name: livechatName(),
+            konto: (Backend.currentUser() || {}).id || "",
+            bild: livechatBild(),
+            mitBild: false
+          }).then(() => { renderLiveChat(); klassenzimmerStreifen(); });
+          renderLiveChat();
+        }));
+    };
+
+    const zu = () => { if (abmelden) abmelden(); kasten.remove(); };
+    kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
+    zeichnen();
+    /* Solange das Fenster offen ist, bleibt es auf dem Laufenden. */
+    const abmelden = (window.LiveChat && LiveChat.beiPraesenz)
+      ? LiveChat.beiPraesenz(zeichnen) : null;
+  }
+
   function livechatBildWaehler() {
     document.getElementById("lcBildWaehler")?.remove();
     const kasten = document.createElement("div");
@@ -16346,6 +16560,18 @@
           <button type="button" class="lc-rundknopf" data-lc="profilbild"
                   title="Bild und Raum: eigenes Bild, Hintergrund, Nachlesen"
                   aria-label="Bildmenü: eigenes Bild, Hintergrundbild, Nachlesen, Verlauf löschen">🖼️</button>
+          <!-- GEWÜNSCHT: „Vielleicht kannst du es auch so machen, dass
+               vorhandene Räume auch schneller sichtbar sind … dass man mit
+               einem Klick irgendwie sieht, welche Räume da sind und man
+               dort jeweils hinspringen kann, je nachdem ob sie
+               verschlossen oder offen sind, und wer von den Leuten sich
+               gerade wo befindet."
+
+               Bisher ging das nur über /l — also nur, wenn man den
+               Befehl kennt. Jetzt ist es ein Knopf. -->
+          <button type="button" class="lc-rundknopf" data-lc="raeume"
+                  title="Welche Räume sind offen und wer ist wo?"
+                  aria-label="Räume und wer wo ist">🚪</button>
           <button type="button" class="lc-rundknopf lc-buehnenknopf" data-lc="buehne"
                   title="Auf die Bühne oder wieder herunter"
                   aria-label="Auf die Bühne oder wieder herunter"></button>
@@ -17571,7 +17797,23 @@
      geholt und dann gemerkt, damit das Zeichnen nicht jedes Mal auf
      die Datenbank warten muss. */
   let lcHgGemerkt = null;          // null = noch nicht geholt
-  function lcHintergrundBild() { return lcHgGemerkt || ""; }
+  /* IM RAUM GILT DER HINTERGRUND DES RAUMS.
+     GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für alle
+     sichtbar ist."
+
+     Damit kann es nicht zwei Wahrheiten geben: solange man in einem
+     Raum ist, zählt nur, was der Raum sagt — sonst sähe jeder etwas
+     anderes und niemand wüsste, welches das richtige ist. Die eigene
+     Einstellung bleibt im Gerät und gilt wieder, sobald man
+     hinausgeht; und wer einen leeren Raum betritt, bringt sie mit. */
+  function lcImRaum() {
+    try { return Boolean(window.LiveChat && LiveChat.lage && LiveChat.lage().lage === "drin"); }
+    catch (e) { return false; }
+  }
+  function lcHintergrundBild() {
+    if (lcImRaum() && LiveChat.raumHintergrund) return LiveChat.raumHintergrund() || "";
+    return lcHgGemerkt || "";
+  }
   function lcHintergrundHolen() {
     if (lcHgGemerkt !== null) return Promise.resolve(lcHgGemerkt);
     if (!(window.LiveChat && LiveChat.hintergrundHolen)) { lcHgGemerkt = ""; return Promise.resolve(""); }
@@ -17582,12 +17824,41 @@
     }).catch(() => { lcHgGemerkt = ""; return ""; });
   }
   function lcHintergrundSetzen(daten) {
-    lcHgGemerkt = daten || "";
+    const wert = daten || "";
+    /* Im Gerät bleibt er immer stehen — das ist die eigene Vorliebe,
+       und sie gilt wieder, sobald man keinen Raum mehr betritt. */
+    lcHgGemerkt = wert;
     if (window.LiveChat && LiveChat.hintergrundSichern) {
-      LiveChat.hintergrundSichern(daten || "").catch(() => {});
+      LiveChat.hintergrundSichern(wert).catch(() => {});
+    }
+    /* Und im Raum gilt er für alle. Sagt der Raum nein — weil das Bild
+       zu gross ist, um es an alle zu schicken — dann wird das gesagt und
+       nicht stillschweigend nur bei mir gesetzt. Genau so ein
+       stillschweigendes Halbergebnis wäre nämlich das, was aussieht wie
+       „geht nicht", ohne dass jemand erfährt warum. */
+    if (lcImRaum() && LiveChat.raumHintergrundSetzen) {
+      const antwort = LiveChat.raumHintergrundSetzen(wert);
+      if (antwort && antwort.ok === false) {
+        showToast("🖼️ " + antwort.warum);
+        renderLiveChat();
+        return false;
+      }
     }
     renderLiveChat();
     return true;
+  }
+
+  /* Wer einen leeren Raum betritt, bringt seinen eigenen Hintergrund
+     mit — er ist ja allein, es wird niemand überrascht. Ist schon
+     jemand da, gilt weiter, was der Raum hat. */
+  function lcHintergrundInDenRaumBringen() {
+    if (!lcImRaum() || !LiveChat.raumHintergrundSetzen) return;
+    if (LiveChat.raumHintergrund && LiveChat.raumHintergrund()) return;
+    if (!lcHgGemerkt) return;
+    const l = LiveChat.lage();
+    const andere = (l.plaetze || []).filter((p) => !p.leer && !p.ich).length;
+    if (andere > 0) return;
+    LiveChat.raumHintergrundSetzen(lcHgGemerkt);
   }
 
   /* =================================================================
@@ -17684,6 +17955,11 @@
     hintergrundFenster: function () { return lcHintergrundFenster(); },
     hintergrundWert: function () { return lcHintergrundBild(); },
     platzZiel: function () { return lcPlatzZiel(); },
+    raumFenster: function () { return livechatRaumFenster(); },
+    /* Zwei Aufnahmen der Anwesenheit hineingeben, die Meldungen
+       herausbekommen — genau das, was das Laufband tut. */
+    kzEreignisse: function (aufnahme) { kzEreignisseAbleiten(aufnahme); return kzEreignisText(); },
+    kzZeile: function () { return kzTickerHtml(); },
   });
 
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
@@ -17712,8 +17988,14 @@
              er liegt ohnehin hinter Text und ist stark abgedunkelt.
              Sein Höchstmass ist eigens grösser als das eines Fotos im
              Chat — genau daran ist es vorher gescheitert. */
-          const daten = await LiveChat.bildVerkleinern(datei, 900, 900000);
-          if (lcHintergrundSetzen(daten)) showToast("🖼️ Hintergrund gesetzt.");
+          /* 760 Pixel und höchstens 140 000 Zeichen — nicht aus
+             Sparsamkeit, sondern weil der Hintergrund jetzt an ALLE im
+             Raum geht und ein Rundruf eine Obergrenze hat. Er liegt
+             ohnehin weichgezeichnet und halb durchsichtig hinter Text;
+             an dieser Stelle sieht man den Unterschied nicht, am
+             Ankommen dagegen schon. */
+          const daten = await LiveChat.bildVerkleinern(datei, 760, 140000);
+          if (lcHintergrundSetzen(daten)) showToast("🖼️ Hintergrund gesetzt — alle im Raum sehen ihn.");
         } catch (x) {
           showToast("🖼️ " + (x && x.message ? x.message : "Das Bild ging nicht."));
         }
@@ -18249,6 +18531,10 @@
       /* Und der Chat steht mit seinem unteren Ende im Bild, nicht mit
          seinem Anfang — dort steht das Neueste. */
       setTimeout(() => livechatInsBild(), 220);
+      /* Nach der Begrüssungsrunde: ist der Raum leer und ich habe einen
+         eigenen Hintergrund, bringe ich ihn mit. Vorher wäre es falsch —
+         da weiß man noch nicht, ob jemand da ist. */
+      setTimeout(lcHintergrundInDenRaumBringen, 1800);
 
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
         k.addEventListener("click", () => {
@@ -18319,6 +18605,7 @@
         eigenerPlatz.addEventListener("contextmenu", (e) => { e.preventDefault(); livechatBildWaehler(); });
       }
       area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
+      area.querySelector('[data-lc="raeume"]')?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");
       area.querySelector("#lcFotoKnopf")?.addEventListener("click", () => fotoFeld?.click());
       fotoFeld?.addEventListener("change", async () => {
@@ -18372,6 +18659,9 @@
         }));
       livechatTippsBinden(area);
       if (LiveChat.beiHintergrund) LiveChat.beiHintergrund(lcHintergrundWaehlen);
+      /* Wechselt jemand anders den Hintergrund des Raums, wird hier neu
+         gezeichnet — sonst sähe man es erst beim nächsten Anlass. */
+      if (LiveChat.beiRaumHintergrund) LiveChat.beiRaumHintergrund(() => renderLiveChat());
       /* GEMELDET: „Man soll den Hintergrund nicht nur durch den Code
          ändern, sondern auch als Bild einladen können." Also ein
          Knopf, nicht nur der Befehl /hintergrund. Ist schon eines
@@ -47229,6 +47519,13 @@ An einem Morgen lief ein kleiner Fuchs los…
         const raum = e.raum || "";
         (kzTickerRaeume[raum] = kzTickerRaeume[raum] || []).push(name);
       });
+      /* GEWÜNSCHT: „Und natürlich sollen die anderen, die im
+         Klassenzimmer sind, auch oben im Newsfeed erwähnt werden, wenn
+         die irgendwas machen. Zum Beispiel Emmy ist gerade im Raum
+         Emmys Raum, oder macht gerade einen Raum auf."
+
+         Wer wo IST, stand schon da. Was jemand TUT, nicht. */
+      kzEreignisseAbleiten(kzDaJetzt);
       tickerNeuErzwingen();
       updateTicker();
       if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();

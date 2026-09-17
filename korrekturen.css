@@ -4698,3 +4698,55 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   font-size: 1rem;
   opacity: 0.45;
 }
+
+/* =========================================================
+   DIE RAUMÜBERSICHT
+   ---------------------------------------------------------
+   GEWÜNSCHT: „Dass man mit einem Klick irgendwie sieht, welche
+   Räume da sind und man dort jeweils hinspringen kann, je
+   nachdem ob sie verschlossen oder offen sind, und wer von den
+   Leuten sich gerade wo befindet."
+
+   Drei Zeilen pro Raum, in fester Reihenfolge: Name und Anzahl,
+   die Namen der Leute, und was ein Tipp bewirkt. Immer dieselbe
+   Reihenfolge — man soll nicht suchen müssen.
+   ========================================================= */
+.lc-raumliste { display: flex; flex-direction: column; gap: 8px; }
+.lc-raumzeile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: #1d1622;
+  color: #f4ece4;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s, transform 0.16s, background 0.16s;
+}
+.lc-raumzeile:hover { border-color: rgba(255, 255, 255, 0.4); transform: translateY(-1px); }
+.lc-raumzeile-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.lc-raumzeile-name { font-weight: 700; font-size: 0.9rem; }
+.lc-raumzeile-zahl { font-size: 0.7rem; opacity: 0.65; white-space: nowrap; }
+.lc-raumzeile-leute {
+  font-size: 0.74rem;
+  opacity: 0.82;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lc-raumzeile-tun { font-size: 0.68rem; opacity: 0.55; }
+/* Wo man selbst ist: kein Ziel, sondern eine Ortsangabe. */
+.lc-raumzeile.ist-hier {
+  border-color: var(--teal-400, #58c0b0);
+  background: #1b2a2a;
+  cursor: default;
+}
+.lc-raumzeile.ist-hier:hover { transform: none; }
+/* Abgeschlossen: sichtbar, aber erkennbar nicht zu betreten. Ein Raum,
+   den man gar nicht sieht, fühlt sich an wie ein Fehler; einer mit
+   Schloss erklärt sich selbst. */
+.lc-raumzeile.ist-zu { opacity: 0.66; }
+.lc-raumzeile.ist-zu .lc-raumzeile-tun { color: #e8b06a; opacity: 0.9; }
