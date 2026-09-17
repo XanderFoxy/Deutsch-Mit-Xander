@@ -1958,6 +1958,35 @@ window.LiveChat = (function () {
             praesenzZuhoeren(kontoId || zustand.ichId);
             praesenzSetzen(true, zustand.ichName);
             melden();
+            /* GEWÜNSCHT: „Wichtig ist, dass in dem Moment, wo man
+               reingeht, alles aktualisiert ist und synchronisiert mit
+               den anderen."
+
+               Der Gruss „hallo" geht genau einmal hinaus, und die
+               anderen antworten mit „auch-da". Geht dieser eine Gruss
+               verloren — und im Mobilfunk geht der erste Rundruf nach
+               dem Verbinden erfahrungsgemäss am ehesten verloren —,
+               sitzt man in einem Raum, in dem scheinbar niemand ist,
+               während die anderen einen nicht sehen.
+
+               Deshalb wird nachgefasst: sagt die Anwesenheit, dass
+               noch jemand in diesem Raum ist, wir aber nach zwei
+               Sekunden von niemandem gehört haben, geht der Gruss
+               noch einmal. Das kostet einen Rundruf und erspart das
+               „ich sehe die anderen nicht". */
+            setTimeout(function () {
+              if (zustand.lage !== "drin") return;
+              if (Object.keys(zustand.leute).length) return;
+              var andereDa = false;
+              Object.keys(praesenzDa).forEach(function (k) {
+                var e = praesenzDa[k];
+                if (e && e.raum === zustand.raum && k !== praesenzIch) andereDa = true;
+              });
+              if (!andereDa) return;
+              senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
+                       tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+                       seit: zustand.seit, buehne: zustand.buehne });
+            }, 2200);
             fertig(lage());
           } else if (stand === "CHANNEL_ERROR" || stand === "TIMED_OUT") {
             zustand.lage = "fehler";

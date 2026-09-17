@@ -10027,11 +10027,41 @@
 
   /* Taugt das Wort zum LAUT ÜBEN? Nur Stichwörter mit einer
      Erklärung — alles andere schickt den Lernenden in die Irre. */
+  /* =================================================================
+     WAS DER AUSSPRACHE-TRAINER NICHT VORSPRECHEN SOLL
+     -----------------------------------------------------------------
+     GEMELDET: „Schau mal bitte im Wörterbuch, da gibt es bei der
+     Aussprache so viel Quatsch … Ich will nicht, dass wir dann Credits
+     verwenden, indem wir sowas einsprechen lassen."
+
+     Ein Teil des Wörterbuchs ist maschinell erzeugt worden, und dieser
+     Erzeuger verrät sich in der Erklärung selbst:
+
+        „der Eckenerum"   — „zusammengesetzt aus ‚Ecken' und ‚der Rum'"
+        „abbrachte"       — „Präteritum von ‚abbringen'"
+        „die Backofentür" — „zusammengesetzt aus ‚Backofen' und ‚Tür'"
+
+     Die frei erfundenen darunter sind aus den Vokabeldateien entfernt
+     (siehe sicherung/2026-09-17-woerterbuch). Die übrigen sind
+     richtige Wörter — aber als ÜBUNGSWORT taugen sie nichts: eine
+     Erklärung, die nur sagt „X plus Y", bringt niemandem etwas bei,
+     und jedes Vorsprechen davon kostet Credits.
+
+     Sie bleiben deshalb im Wörterbuch zum Nachschlagen und fallen nur
+     aus dem Aussprache-Trainer heraus. Das ist der Unterschied
+     zwischen „falsch" und „hier fehl am Platz".
+     ================================================================= */
+  const AUSSPR_ERZEUGER = new RegExp(
+    "^zusammengesetzt aus |mit der Vorsilbe .+ gebildet|^Mehrzahl (von|im) "
+    + "|^(Pr\u00e4teritum|Partizip|Konjunktiv|Imperativ|Genitiv|Dativ|Akkusativ"
+    + "|Infinitiv mit|Steigerung|gro\u00dfgeschriebenes|[123]\\. Person)\\b");
+
   function wortZumUeben(e) {
     if (!e || !e.word || !e.syl) return false;
     if (e.uebungsfehler) return false;
     if (e.abgeleitet) return false;
     if (!e.meaning) return false;      // ohne Bedeutung kein Zusammenhang
+    if (AUSSPR_ERZEUGER.test(String(e.meaning))) return false;
     return true;
   }
 
@@ -13209,13 +13239,23 @@
      gleichzeitig gleichmässig aktualisiert ist und niemand den anderen
      nicht hört."
 
-     DAS IST EINE KEHRTWENDE, und sie steht hier, damit später niemand
-     rätselt. Vorher galt ausdrücklich das Gegenteil: „dass das nicht
-     sofort zum Video springt — dass man sich entscheiden kann, ob man
-     das Video anschalten will." Deshalb ging die Kamera nie von selbst
-     an. Die neue Ansage gilt; die alte steht noch in betreten() in
-     livechat.js und wird von hier überstimmt, indem mitBild: true
-     übergeben wird.
+     NACHGEBESSERT, und zwar zurück: „Ich möchte nicht, dass du das
+     Klassenzimmer betrittst und da steht: egal ob in Deutschland oder
+     in Ägypten werden Mikrofon und Kamera eingeschaltet. Ich möchte,
+     dass das für niemanden ein Zwang ist. Man kann auch ohne das Video
+     reingehen. Wichtig ist die Stimme in erster Linie."
+
+     Ich hatte zu weit gedreht. Aus „die Frage soll immer kommen" war
+     bei mir „ohne Kamera kommt niemand herein" geworden — und das ist
+     etwas anderes. Eine Kamera ist für viele Menschen eine Hürde: das
+     Zimmer im Hintergrund, das Gesicht am Morgen, das langsame Netz.
+     Wer das nicht will, soll trotzdem dabei sein können.
+
+     Was BLEIBT, weil es der eigentliche Zweck war: die Frage kommt
+     immer, man sieht am Ausschlag, ob das Mikrofon wirklich Ton
+     liefert, und beide Wege in den Raum stehen gleichberechtigt
+     nebeneinander — „Mit Ton und Bild" und „Nur mit Ton". Keiner ist
+     versteckt, keiner ist gesperrt.
 
      WAS DIESES FENSTER WIRKLICH LEISTET — und was nicht:
 
@@ -13231,10 +13271,9 @@
      erteilte Erlaubnis und trotzdem Stille. Der Balken ist der
      Unterschied zwischen „darf" und „geht".
 
-     Es kann NICHT erzwingen, dass ein Gerät eine Kamera hat. Wer
-     keine hat, käme sonst nie herein — deshalb gibt es den zweiten
-     Weg, aber erst, nachdem die Kamera wirklich abgelehnt oder nicht
-     gefunden wurde, und mit Begründung im Klartext.
+     Was es NICHT tut: jemanden aussperren. Der Weg „nur mit Ton" steht
+     von Anfang an offen und ist kein Notausgang, sondern eine
+     gleichwertige Tür.
      ================================================================= */
   let lcTorStrom = null;
   let lcTorMesser = null;
@@ -13275,11 +13314,11 @@
     kasten.className = "lc-waehler-hinter";
     kasten.innerHTML = `
       <div class="lc-waehler lc-tor" role="dialog" aria-modal="true" aria-label="Ton und Bild einschalten">
-        <p class="eyebrow">ERST TON UND BILD, DANN HINEIN</p>
+        <p class="eyebrow">KURZ PRÜFEN, DANN HINEIN</p>
         <p class="empty-note" style="margin:0 0 12px; font-size:0.78rem;">
-          Im Klassenzimmer wird geredet. Damit dich alle hören und sehen —
-          egal ob in Deutschland oder in Ägypten — werden Mikrofon und Kamera
-          eingeschaltet, bevor du hineingehst.
+          Im Klassenzimmer wird geredet — auf das <strong>Mikrofon</strong> kommt es an.
+          Die Kamera ist freiwillig: viele sind lieber nur zu hören, und das ist
+          völlig in Ordnung.
         </p>
         <div class="lc-tor-bild">
           <video id="lcTorVideo" autoplay muted playsinline></video>
@@ -13295,8 +13334,8 @@
         </ul>
         <p class="lc-tor-grund" id="lcTorGrund" hidden></p>
         <div class="lc-waehler-reihe" style="margin-top:12px;">
-          <button type="button" class="btn btn-coffee" id="lcTorRein" disabled>Hineingehen</button>
-          <button type="button" class="btn btn-ghost" id="lcTorNurTon" hidden>Nur mit Ton hineingehen</button>
+          <button type="button" class="btn btn-coffee" id="lcTorRein">Mit Ton und Bild hinein</button>
+          <button type="button" class="btn btn-ghost" id="lcTorNurTon">Nur mit Ton hinein</button>
           <button type="button" class="btn btn-ghost" id="lcTorAb">Doch nicht</button>
         </div>
       </div>`;
@@ -13321,8 +13360,18 @@
 
     let tonOk = false, bildOk = false;
     const pruefen = () => {
-      const rein = kasten.querySelector("#lcTorRein");
-      if (rein) rein.disabled = !(tonOk && bildOk);
+      /* Beide Türen stehen offen. Der Knopf mit Bild wird nur dann
+         zurückgenommen, wenn es gar keine Kamera gibt — dann wäre er
+         eine leere Zusage. Gesperrt wird hier NIEMAND. */
+      const mitBild = kasten.querySelector("#lcTorRein");
+      const nurTon = kasten.querySelector("#lcTorNurTon");
+      if (mitBild) mitBild.hidden = !bildOk;
+      if (nurTon) nurTon.hidden = false;
+      /* Ohne Ton UND ohne Bild gibt es nichts zu senden — hereingehen
+         darf man trotzdem, man liest dann eben mit. */
+      if (nurTon) {
+        nurTon.textContent = tonOk ? "Nur mit Ton hinein" : "Ohne Ton und Bild hinein";
+      }
     };
 
     /* Warum zweimal fragen statt einmal? Weil ein einziger Aufruf mit
@@ -13351,11 +13400,13 @@
       } catch (e) {
         bildOk = false;
         setzen("#lcTorBild", "❌", "Kamera: " + lcMedienGrund(e), "schlecht");
-        grundZeigen("Ohne Kamera sehen dich die anderen nicht — hören aber schon. "
-          + "Wenn dein Gerät keine hat oder du sie nicht freigeben willst, "
-          + "kannst du trotzdem hinein.");
-        const nur = kasten.querySelector("#lcTorNurTon");
-        if (nur && tonOk) nur.hidden = false;
+        /* Der Trost stimmt nur, wenn der Ton geht. Sonst wäre er eine
+           Unwahrheit — und dann muss dastehen, was wirklich Sache ist. */
+        grundZeigen(tonOk
+          ? "Kein Bild — macht nichts. Die anderen hören dich trotzdem, "
+            + "und darauf kommt es an."
+          : "Weder Ton noch Bild. Hereingehen und mitlesen kannst du trotzdem — "
+            + "schreiben auch. Reden geht erst, wenn das Mikrofon frei ist.");
       }
       /* Beide Ströme zu einem zusammenlegen — der eine für die
          Vorschau, der andere für den Ausschlag. */
@@ -17088,18 +17139,12 @@
           <button type="button" class="lc-rundknopf" data-lc="profilbild"
                   title="Bild und Raum: eigenes Bild, Hintergrund, Nachlesen"
                   aria-label="Bildmenü: eigenes Bild, Hintergrundbild, Nachlesen, Verlauf löschen">🖼️</button>
-          <!-- GEWÜNSCHT: „Vielleicht kannst du es auch so machen, dass
-               vorhandene Räume auch schneller sichtbar sind … dass man mit
-               einem Klick irgendwie sieht, welche Räume da sind und man
-               dort jeweils hinspringen kann, je nachdem ob sie
-               verschlossen oder offen sind, und wer von den Leuten sich
-               gerade wo befindet."
-
-               Bisher ging das nur über /l — also nur, wenn man den
-               Befehl kennt. Jetzt ist es ein Knopf. -->
-          <button type="button" class="lc-rundknopf" data-lc="raeume"
-                  title="Welche Räume sind offen und wer ist wo?"
-                  aria-label="Räume und wer wo ist">🚪</button>
+          <!-- Das Räume-Symbol stand hier und ist weiter unten in die
+               Kopfzeile des Chats gewandert, neben „Befehle & Schrift".
+               GEMELDET: „Das Räume-Symbol kannst du da rausnehmen und
+               lieber bei Befehle und Schrift mit reinmachen." Die
+               Rundknopfreihe ist damit wieder das, was sie sein soll:
+               Mikrofon, Kamera, Bild, Bühne, Hinaus. -->
           <button type="button" class="lc-rundknopf lc-buehnenknopf" data-lc="buehne"
                   title="Auf die Bühne oder wieder herunter"
                   aria-label="Auf die Bühne oder wieder herunter"></button>
@@ -17126,8 +17171,10 @@
                      Bildmenü oben am 🖼️-Rundknopf, wo auch das eigene
                      Bild eingestellt wird. -->
             <span class="lc-chat-kopf-rechts">
+              <button type="button" class="lc-chat-raeumen" id="lcRaeume"
+                      title="Welche Räume sind offen und wer ist wo?">🚪 Räume</button>
               <button type="button" class="lc-chat-raeumen" id="lcBefehle"
-                      title="Was man im Chat tippen kann, und die Schrift">ⓘ Befehle &amp; Schrift</button>
+                      title="Was man im Chat tippen kann, und die Schrift">ⓘ Befehle</button>
             </span>
           </div>
           <details class="lc-befehle" id="lcBefehleKasten">
@@ -17195,14 +17242,23 @@
           </form>
         </div>
 
-        <div class="lc-einladung">
-          <input type="text" class="lc-link-feld" id="lcLink" readonly aria-label="Einladungslink">
-          <button type="button" class="btn btn-ghost" id="lcLinkKopieren">🔗 Link kopieren</button>
-        </div>
-        <p class="empty-note" style="font-size:0.72rem; text-align:center;">
-          Wer diesen Link bekommt, landet direkt in diesem Raum. Acht Plätze —
-          wer als Neunter kommt, kann mitlesen und schreiben.
-        </p>
+        <!-- GEMELDET: „Das mit dem Link kopieren muss nicht unbedingt
+             sichtbar sein, aber so dass die Schreibzeile da ist … Du
+             musst auch nicht so viel Text, wo man keinen Text braucht."
+
+             Das Feld und der Absatz darunter nahmen zusammen rund 190
+             Pixel — auf einem Telefon ist das ein Drittel des Chats,
+             und beides braucht man höchstens einmal. Jetzt ist es ein
+             Knopf, der das Feld bei Bedarf herausklappt. -->
+        <details class="lc-einladung">
+          <summary>🔗 Jemanden einladen</summary>
+          <div class="lc-einladung-inhalt">
+            <input type="text" class="lc-link-feld" id="lcLink" readonly aria-label="Einladungslink">
+            <button type="button" class="btn btn-ghost" id="lcLinkKopieren">Link kopieren</button>
+            <p class="empty-note">Wer diesen Link bekommt, landet direkt hier.
+              Acht Plätze — wer als Neunter kommt, liest mit und schreibt mit.</p>
+          </div>
+        </details>
       </div>
       <div id="lcGross"></div>`;
   }
@@ -17496,7 +17552,18 @@
                || document.getElementById("livechatArea");
     if (!karte) return null;
     const kleb = lcKlebeHoehe();
-    const luft = 10;
+    /* NACHGEBESSERT: „Wenn man drin ist und sich das Klassenzimmer
+       zurechtschiebt, könnte es theoretisch noch ein bisschen höher,
+       damit wir die Eingabeleiste sehen. Es kann bestimmt noch 5 mm
+       nach oben, denn dann ist es genau im Bild und man kann den Chat
+       gut erreichen."
+
+       Fünf Millimeter sind auf einem Telefon rund 28 Pixel — bei den
+       üblichen 150 Bildpunkten je Zoll. Vorher standen hier zehn, und
+       damit klebte die Eingabezeile fast am unteren Rand: sichtbar,
+       aber nicht bequem zu treffen, und auf manchen Telefonen halb
+       unter der Systemleiste. */
+    const luft = 28;
     const schirm = window.innerHeight;
     const frei = schirm - kleb - luft * 2;
     const kr = karte.getBoundingClientRect();
@@ -18632,6 +18699,9 @@
     bonbon: function (sorte, farbe) { return lcBonbonSvg(sorte, farbe); },
     auto: function () { return lcRennautoSvg(); },
     umarmung: function (wen) { return lcUmarmung(wen); },
+    ausspracheListe: function () { return buildDictionaryEntries().filter(wortZumUeben).filter(aussprUebbar); },
+    ausspracheAlle: function () { return buildDictionaryEntries(); },
+    geruest: function () { return livechatGeruestHtml(); },
   });
 
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
@@ -19316,7 +19386,7 @@
         eigenerPlatz.addEventListener("contextmenu", (e) => { e.preventDefault(); livechatBildWaehler(); });
       }
       area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
-      area.querySelector('[data-lc="raeume"]')?.addEventListener("click", () => livechatRaumFenster());
+      area.querySelector("#lcRaeume")?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");
       area.querySelector("#lcFotoKnopf")?.addEventListener("click", () => fotoFeld?.click());
       fotoFeld?.addEventListener("change", async () => {

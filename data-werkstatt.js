@@ -49,18 +49,40 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 25 — der Himmel",
+  stand: "Runde 26 — kein Zwang, mehr Platz, Woerterbuch",
 
   inArbeit: [
-    { seit: "2026-09-17T17:00", nurBetreiber: true,
-      text: "Woerterbuch saeubern, dann A1 mit deiner Stimme." },
+    { seit: "2026-09-17T17:20",
+      text: "Wolken: harte Kanten, sichtbare Wiederholung, echtes Zerlaufen." },
+    { seit: "2026-09-17T17:20",
+      text: "Himmelfarbe: Uebergang zur Nacht dezent statt zu frueh dunkel." },
+    { seit: "2026-09-17T17:20",
+      text: "Umarmung neu zeichnen." },
+    { seit: "2026-09-17T17:20",
+      text: "Eigene Bildsammlung: transparente PNG und GIF." },
+    { seit: "2026-09-17T17:20",
+      text: "Spiele: nur freigegebene sichtbar, Freundesliste eingeklappt." },
+    { seit: "2026-09-17T17:20",
+      text: "Bilderraetsel: Figuren stehen und sitzen physikalisch falsch." },
+    { seit: "2026-09-17T17:20",
+      text: "Online-Anzeige: Flagge nach Land, besseres Klassenzimmer-Zeichen." },
+    { seit: "2026-09-17T17:20", nurBetreiber: true,
+      text: "A1 mit deiner Stimme ueber ElevenLabs." },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-17T17:00",
-      text: "Die Wolkendecke hat keine langen Luecken mehr: die laengste Strecke ohne Wolke ist von 104 auf 43 von 600 Einheiten gefallen (17 Prozent auf 7). Das Werkzeug MISST das jetzt bei jedem Bauen und bricht ab, statt einen loechrigen Himmel hochzuladen." },
-    { seit: "2026-09-17T17:00",
-      text: "Nachgeprueft statt angenommen: alle 28 WMO-Codes, die das Wetteramt schicken kann, haben eine Lage, werden wirklich gezeichnet, und keine zwei Lagen sehen gleich aus." },
+    { seit: "2026-09-17T17:20",
+      text: "KAMERA IST KEIN ZWANG MEHR. Der Satz mit Deutschland und Aegypten ist weg. Beide Wege stehen gleichberechtigt nebeneinander: mit Ton und Bild, oder nur mit Ton. Niemand wird gesperrt." },
+    { seit: "2026-09-17T17:20",
+      text: "Beim Betreten wird nachgefasst: hoert man nach zwei Sekunden niemanden, obwohl jemand da ist, geht der Gruss noch einmal hinaus. Damit ist man wirklich synchron, wenn man hereinkommt." },
+    { seit: "2026-09-17T17:20",
+      text: "Klassenzimmer auf schmalem Android gemessen und verdichtet: Hoehe 983 auf 774 Pixel, Inhaltsbreite 262 auf 310. Einladungslink klappt sich weg, Raeume-Symbol steht jetzt bei den Befehlen." },
+    { seit: "2026-09-17T17:20",
+      text: "Das Panel springt 5 mm hoeher, damit die Eingabeleiste bequem zu treffen ist." },
+    { seit: "2026-09-17T17:20",
+      text: "45 erfundene Woerter aus dem Woerterbuch entfernt, darunter der Eckenerum, das Gefroreis, der Papstee. Kein gutes Wort verloren: Backofentuer, Farbpapier und wehren stehen noch drin." },
+    { seit: "2026-09-17T17:20",
+      text: "Der Aussprache-Trainer spricht keine maschinell erzeugten Eintraege mehr vor — das spart Credits fuer das, was wirklich zaehlt." },
   ],
 };
