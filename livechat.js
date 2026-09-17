@@ -591,7 +591,7 @@ window.LiveChat = (function () {
   /* Je Leitung die beiden Spurplätze — einer für Ton, einer für Bild. */
   var spurenJe = {};
 
-  function bruecke(anderId) {
+  function bruecke(anderId, alsAnrufer) {
     if (brueckeJe[anderId]) return brueckeJe[anderId];
     var pc = new RTCPeerConnection({ iceServers: VERMITTLER });
     brueckeJe[anderId] = pc;
@@ -624,23 +624,22 @@ window.LiveChat = (function () {
        Kommt später eine Kamera dazu, wird die Spur in den
        vorhandenen Platz gelegt (replaceTrack) — ohne neue
        Aushandlung, ohne Abriss, und auf jedem Gerät gleich. */
-    var strom = zustand.eigenerStrom;
-    var tonSpur = (strom && strom.getAudioTracks()[0]) || null;
-    var bildSpur = (strom && strom.getVideoTracks()[0]) || null;
-    var stroeme = strom ? [strom] : [];
-    try {
-      spurenJe[anderId] = {
-        ton: pc.addTransceiver(tonSpur || "audio", { direction: "sendrecv", streams: stroeme }),
-        bild: pc.addTransceiver(bildSpur || "video", { direction: "sendrecv", streams: stroeme })
-      };
-    } catch (e) {
-      /* Sehr alte Browser können addTransceiver nicht. Dann wenigstens
-         das, was da ist — besser als gar keine Verbindung. */
-      spurenJe[anderId] = null;
-      if (strom) strom.getTracks().forEach(function (t) {
-        try { pc.addTrack(t, strom); } catch (x) {}
-      });
-    }
+    /* NUR DER ANRUFER legt die Plätze an.
+       ---------------------------------------------------------
+       Und das ist der zweite Fehler, der die Verbindung zwischen
+       verschiedenen Geräten zerlegt hat: die annehmende Seite hat
+       ihre Plätze AUCH angelegt, und zwar BEVOR sie das Angebot
+       gelesen hat. Dann standen dort vier Plätze — zwei eigene und
+       zwei aus dem Angebot —, die nicht zusammenpassten. Der
+       Browser hat die Aushandlung dann abgebrochen oder eine
+       Verbindung gebaut, in der die Spuren aneinander vorbeilaufen.
+       Zwischen zwei gleichen Browsern fiel das nicht auf, zwischen
+       Safari und Chrome sofort.
+
+       Richtig ist: der Anrufer legt zwei Plätze an, der Angerufene
+       übernimmt die Plätze aus dem Angebot und legt seine Spuren
+       hinein (siehe spurenNachtragen unten). */
+    if (alsAnrufer) plaetzeAnlegen(anderId, pc);
 
     pc.onicecandidate = function (e) {
       if (e.candidate) senden({ art: "kerze", an: anderId, kerze: alsDaten(e.candidate) });
@@ -677,6 +676,59 @@ window.LiveChat = (function () {
       }
     };
     return pc;
+  }
+
+  /* Zwei Plätze anlegen: einer für Ton, einer für Bild — auch wenn
+     wir gerade nichts zu senden haben. Ein Platz, den es im Angebot
+     nicht gibt, lässt sich später nicht mehr befüllen. */
+  function plaetzeAnlegen(anderId, pc) {
+    var strom = zustand.eigenerStrom;
+    var tonSpur = (strom && strom.getAudioTracks()[0]) || null;
+    var bildSpur = (strom && strom.getVideoTracks()[0]) || null;
+    var stroeme = strom ? [strom] : [];
+    try {
+      spurenJe[anderId] = {
+        ton: tonSpur ? pc.addTransceiver(tonSpur, { direction: "sendrecv", streams: stroeme })
+                     : pc.addTransceiver("audio", { direction: "sendrecv" }),
+        bild: bildSpur ? pc.addTransceiver(bildSpur, { direction: "sendrecv", streams: stroeme })
+                       : pc.addTransceiver("video", { direction: "sendrecv" })
+      };
+    } catch (e) {
+      spurenJe[anderId] = null;
+      if (strom) strom.getTracks().forEach(function (t) {
+        try { pc.addTrack(t, strom); } catch (x) {}
+      });
+    }
+  }
+
+  /* Die annehmende Seite: das Angebot hat die Plätze mitgebracht.
+     Hier werden nur noch die eigenen Spuren hineingelegt und die
+     Richtung auf „senden und empfangen" gestellt. */
+  function spurenNachtragen(anderId, pc) {
+    var strom = zustand.eigenerStrom;
+    var tonSpur = (strom && strom.getAudioTracks()[0]) || null;
+    var bildSpur = (strom && strom.getVideoTracks()[0]) || null;
+    var satz = { ton: null, bild: null };
+    try {
+      pc.getTransceivers().forEach(function (tr) {
+        var kind = (tr.receiver && tr.receiver.track && tr.receiver.track.kind)
+                || (tr.sender && tr.sender.track && tr.sender.track.kind) || "";
+        if (!kind && tr.mid !== null && tr.mid !== undefined) {
+          /* Manche Browser sagen die Art erst nach dem Aushandeln.
+             Dann hilft die Reihenfolge: erst Ton, dann Bild. */
+          kind = satz.ton ? "video" : "audio";
+        }
+        if (kind === "audio" && !satz.ton) {
+          satz.ton = tr;
+          if (tonSpur) { try { tr.sender.replaceTrack(tonSpur); } catch (e) {} }
+        } else if (kind === "video" && !satz.bild) {
+          satz.bild = tr;
+          if (bildSpur) { try { tr.sender.replaceTrack(bildSpur); } catch (e) {} }
+        }
+        try { tr.direction = "sendrecv"; } catch (e) {}
+      });
+    } catch (e) {}
+    spurenJe[anderId] = satz;
   }
 
   /* Eine neue Spur in den vorhandenen Platz legen — für alle Leitungen.
@@ -726,7 +778,7 @@ window.LiveChat = (function () {
   }
 
   function anrufen(anderId) {
-    var pc = bruecke(anderId);
+    var pc = bruecke(anderId, true);
     return pc.createOffer().then(function (angebot) {
       return pc.setLocalDescription(angebot).then(function () {
         senden({ art: "angebot", an: anderId, name: zustand.ichName, beschreibung: alsDaten(pc.localDescription) });
@@ -735,9 +787,9 @@ window.LiveChat = (function () {
   }
 
   function angebotAnnehmen(vonId, beschreibung) {
-    var pc = bruecke(vonId);
+    var pc = bruecke(vonId, false);
     return pc.setRemoteDescription(new RTCSessionDescription(beschreibung))
-      .then(function () { return pc.createAnswer(); })
+      .then(function () { spurenNachtragen(vonId, pc); return pc.createAnswer(); })
       .then(function (antwort) {
         return pc.setLocalDescription(antwort).then(function () {
           senden({ art: "antwort", an: vonId, beschreibung: alsDaten(pc.localDescription) });
@@ -801,18 +853,37 @@ window.LiveChat = (function () {
          nie wieder zustande. Genau daran hing das „ich höre die
          beiden nicht". */
       if (brueckeJe[n.von]) brueckeAbbauen(n.von);
+      /* Abgeschlossener Raum: wer nicht auf der Einladungsliste steht,
+         kommt nicht herein. So steht es in RFC 2811 für +i — „new
+         members are only accepted if they have been invited by a
+         channel operator". Ohne Server muss der Häuptling das
+         durchsetzen; er ist die einzige Stelle, die die Liste kennt. */
+      if (zustand.haeuptling && zustand.abgeschlossen && !zustand.eingeladen[n.von]) {
+        postSenden(n.von, { art: "abgewiesen", raum: zustand.raum });
+        return;
+      }
       /* Jemand ist gekommen. Zurückgrüssen, damit er uns auch
          kennt — der Gruss allein sagt ihm nur, dass wir da sind. */
+      var warSchonDa = Boolean(zustand.leute[n.von]);
       personMerken(n.von, n.name, n.bild);
+      if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
-               bildAn: zustand.bildAn, bild: zustand.ichBild });
+               bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe,
+               haeuptling: zustand.haeuptling, thema: zustand.thema,
+               abgeschlossen: zustand.abgeschlossen });
       /* Wer die kleinere Kennung hat, ruft an. */
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
       melden();
       return;
     }
     if (n.art === "auch-da") {
+      var neuHier = !zustand.leute[n.von];
       personMerken(n.von, n.name, n.bild);
+      if (neuHier) kommtUndGeht(n.name || "Jemand", true);
+      if (typeof n.haeuptling === "boolean") zustand.leute[n.von].haeuptling = n.haeuptling;
+      if (typeof n.thema === "string" && n.thema) zustand.thema = n.thema;
+      if (typeof n.abgeschlossen === "boolean") zustand.abgeschlossen = n.abgeschlossen;
+      if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
@@ -820,6 +891,7 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "tschuess") {
+      if (zustand.leute[n.von]) kommtUndGeht(zustand.leute[n.von].name || "Jemand", false);
       brueckeAbbauen(n.von);
       delete zustand.leute[n.von];
       if (zustand.gross === n.von) zustand.gross = null;
@@ -908,6 +980,18 @@ window.LiveChat = (function () {
       melden();
       return;
     }
+  }
+
+  /* „XanderFox betritt den Raum" / „… hat den Raum verlassen".
+     So war es im IRC (JOIN und PART sehen alle im Raum) und so war es
+     in jedem Webchat der Zeit. */
+  function kommtUndGeht(name, kommt) {
+    nachrichtAnhaengen({
+      id: "kg" + Date.now() + "-" + (laufendeNummer += 1),
+      von: "", name: name, art: "kommen",
+      text: name + (kommt ? " betritt den Raum." : " hat den Raum verlassen."),
+      zeit: Date.now(), eigen: false, kommt: Boolean(kommt)
+    });
   }
 
   function personMerken(id, name, bild) {
@@ -1003,7 +1087,8 @@ window.LiveChat = (function () {
     Object.keys(roh).forEach(function (schluessel) {
       var eintraege = roh[schluessel] || [];
       var e = eintraege[eintraege.length - 1] || {};
-      neu[schluessel] = { name: e.name || "", raum: e.raum || "", seit: e.seit || 0 };
+      neu[schluessel] = { name: e.name || "", raum: e.raum || "",
+                          zu: Boolean(e.zu), seit: e.seit || 0 };
     });
     praesenzDa = neu;
     praesenzMelden();
@@ -1036,7 +1121,9 @@ window.LiveChat = (function () {
     if (!praesenzKanal) return;
     try {
       if (drin) praesenzKanal.track({ name: name || zustand.ichName || "",
-                                      raum: zustand.raum || "", seit: Date.now() });
+                                      raum: zustand.raum || "",
+                                      zu: Boolean(zustand.abgeschlossen),
+                                      seit: Date.now() });
       else praesenzKanal.untrack();
     } catch (e) {}
   }
@@ -1111,6 +1198,22 @@ window.LiveChat = (function () {
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn });
             pulsStarten();
             postKanalOeffnen();
+            /* WER IST HÄUPTLING?
+               Nach RFC 2811 „besitzen" die Operatoren den Kanal, und
+               der Rang gilt nur, solange man drin ist: wer geht,
+               verliert ihn; wer einen leeren Kanal betritt, bekommt
+               ihn. Genau so ist es hier. Deshalb wird erst nach der
+               Begrüssungsrunde entschieden — vorher weiss man ja
+               nicht, ob schon jemand da ist. */
+            setTimeout(function () {
+              if (zustand.lage !== "drin") return;
+              if (zustand.raum === HAUPTRAUM) return;
+              if (Object.keys(zustand.leute).length === 0 && !zustand.haeuptling) {
+                zustand.haeuptling = true;
+                systemZeile("Der Raum war leer — du bist hier Häuptling. "
+                  + "/t Thema · /i Nickname einladen · /lock abschließen · /k Nickname");
+              }
+            }, 1600);
             praesenzZuhoeren(kontoId || zustand.ichId);
             praesenzSetzen(true, zustand.ichName);
             melden();
@@ -1147,9 +1250,15 @@ window.LiveChat = (function () {
     pulsStoppen();
     praesenzSetzen(false);
     if (kanal) {
+      /* Erst abmelden, DANN den Kanal schliessen — und zwar mit einem
+         Atemzug dazwischen. Vorher wurde der Kanal sofort geschlossen,
+         das „tschüss" ging dabei manchmal verloren, und man stand für
+         die anderen weiter im alten Raum herum. Genau das war die
+         gemeldete Karteileiche im Klassenzimmer. */
+      var alterKanal = kanal;
       senden({ art: "tschuess" });
-      try { kanal.unsubscribe(); } catch (e) {}
       kanal = null;
+      setTimeout(function () { try { alterKanal.unsubscribe(); } catch (e) {} }, 350);
     }
     Object.keys(brueckeJe).forEach(brueckeAbbauen);
     if (zustand.eigenerStrom) {
@@ -1325,13 +1434,13 @@ window.LiveChat = (function () {
       von: zustand.ichId, name: zustand.ichName,
       text: String(text || "").slice(0, CHAT_LAENGE),
       bildImChat: String(quelle || ""),
-      zeit: Date.now(), eigen: true, bild: zustand.ichBild
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
     };
     if (!n.bildImChat) return false;
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
-             bild: zustand.ichBild, bildImChat: n.bildImChat });
+             bild: zustand.ichBild, farbe: zustand.farbe, bildImChat: n.bildImChat });
     melden();
     return true;
   }
@@ -1413,6 +1522,7 @@ window.LiveChat = (function () {
     { w: "entknebel", kurz: "",   nutzt: "/entknebel <name>",   was: "Wieder sprechen lassen" },
     { w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit Gesicht im Chat" },
     { w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
+    { w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
     { w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
     { w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
@@ -1590,6 +1700,17 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "knebel") { geknebeltVon[n.von] = Boolean(n.an_); melden(); return; }
+    if (n.art === "abgewiesen" && n.raum === zustand.raum) {
+      var nm2 = zustand.ichName, bd2 = zustand.ichBild, kt2 = kontoId, fb2 = zustand.farbe;
+      verlassen();
+      betreten(HAUPTRAUM, { name: nm2, bild: bd2, konto: kt2, farbe: fb2, mitBild: false })
+        .then(function () {
+          systemZeile("Der Raum „" + raumKlartext(n.raum) + "“ ist abgeschlossen \ud83d\udd12 — "
+            + "dort kommt nur herein, wer eingeladen wurde. Bitte " + (n.vonName || "den Häuptling")
+            + " um eine Einladung  (/i deinName).");
+        });
+      return;
+    }
   }
   var einladungen = {};        // Raum -> true (wohin man eingeladen wurde)
   var geknebeltVon = {};
@@ -1598,9 +1719,14 @@ window.LiveChat = (function () {
      DIE BEFEHLE AUSFÜHREN
      ========================================================= */
   function befehlAusfuehren(roh) {
-    var m = /^\/([a-zäöüß?]+)\s*([\s\S]*)$/i.exec(roh.trim());
+    /* „/me/" ist KEIN Befehl, sondern der alte Trick: der eigene Name
+       mitten im Satz. Ein Befehl ist es nur, wenn KEIN Schrägstrich
+       folgt. Genau daran ist es bisher gescheitert — „/me/ denkt …"
+       wurde als Aktion gelesen statt als ganz normale Zeile. */
+    if (/^\/me\//i.test(roh.trim())) return false;
+    var m = /^\/([a-zäöüß?]+)\s+([\s\S]*)$|^\/([a-zäöüß?]+)\s*$/i.exec(roh.trim());
     if (!m) return false;
-    var wort = m[1].toLowerCase(), rest = (m[2] || "").trim();
+    var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
 
     /* Kurzform oder Langform — beides gilt, wie damals auch. */
     var art = null;
@@ -1652,10 +1778,14 @@ window.LiveChat = (function () {
       var neu = raumSchluessel(rest);
       if (!neu) return systemZeile("Der Name geht nicht. Nimm Buchstaben und Zahlen.");
       if (neu === zustand.raum) return systemZeile("Da bist du schon.");
-      raumWechseln(neu, true);
+      if (raumIstZu(neu) && !einladungen[neu]) {
+        return systemZeile("„" + raumKlartext(neu) + "“ ist abgeschlossen \ud83d\udd12 — "
+          + "dort kommt nur herein, wer eingeladen wurde.");
+      }
+      raumWechseln(neu);
       return true;
     }
-    if (art === "leave") { raumWechseln(HAUPTRAUM, false); return true; }
+    if (art === "leave") { raumWechseln(HAUPTRAUM); return true; }
     if (art === "i") {
       if (!rest) return systemZeile("So geht es:  /i Nickname");
       var wen = personNachName(rest) || praesenzNachName(rest);
@@ -1671,7 +1801,11 @@ window.LiveChat = (function () {
       var p = praesenzNachName(rest);
       if (!p || !p.raum) return systemZeile("„" + rest + "“ ist gerade in keinem Raum.");
       if (p.raum === zustand.raum) return systemZeile(p.name + " ist hier bei dir.");
-      raumWechseln(p.raum, false);
+      if (raumIstZu(p.raum) && !einladungen[p.raum]) {
+        return systemZeile(p.name + " ist in „" + raumKlartext(p.raum) + "“, und der Raum ist "
+          + "abgeschlossen \ud83d\udd12. Bitte " + p.name + " um eine Einladung.");
+      }
+      raumWechseln(p.raum);
       return true;
     }
     if (art === "n") {
@@ -1704,11 +1838,16 @@ window.LiveChat = (function () {
     }
     if (art === "lock" || art === "unlock") {
       if (!zustand.haeuptling) return systemZeile("Abschließen darf nur, wer den Raum aufgemacht hat.");
+      if (zustand.abgeschlossen === (art === "lock")) {
+        return systemZeile(zustand.abgeschlossen ? "Der Raum ist schon abgeschlossen."
+                                                 : "Der Raum ist schon offen.");
+      }
       zustand.abgeschlossen = (art === "lock");
+      praesenzSetzen(true, zustand.ichName);
       melden();
       return anAlle("system", zustand.ichName + (zustand.abgeschlossen
-        ? " hat den Raum abgeschlossen — jetzt kommt nur noch herein, wer eingeladen ist."
-        : " hat den Raum wieder geöffnet."));
+        ? " schließt den Raum ab \ud83d\udd12"
+        : " öffnet den Raum wieder"));
     }
 
     /* ---- Rechte, wie bei Kilahu ---- */
@@ -1745,6 +1884,11 @@ window.LiveChat = (function () {
     if (art === "lach") {
       return anAlle("aktion", zustand.ichName + " lacht", { wirkung: "lachen" });
     }
+    if (art === "drueck") {
+      var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      return anAlle("aktion", zustand.ichName + " drückt " + (wen2 ? wen2.name : "alle"),
+                    { wirkung: "umarmen" });
+    }
     if (art === "herz") {
       var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " schickt "
@@ -1776,18 +1920,34 @@ window.LiveChat = (function () {
   }
 
   /* Den Raum wechseln — und dabei alles mitnehmen, was zu einem gehört. */
-  function raumWechseln(neuerRaum, alsHaeuptling) {
+  function raumWechseln(neuerRaum) {
     var nm = zustand.ichName, bd = zustand.ichBild, kt = kontoId, fb = zustand.farbe;
     verlassen();
-    betreten(neuerRaum, { name: nm, bild: bd, konto: kt, farbe: fb, mitBild: false })
-      .then(function () {
-        if (alsHaeuptling) {
-          zustand.haeuptling = true;
-          systemZeile("Du bist hier Häuptling. Du kannst  /t Thema  setzen, "
-            + "/i Nickname  einladen, /lock  abschließen und  /k Nickname  hinausschicken.");
-        }
-        melden();
-      });
+    return betreten(neuerRaum, { name: nm, bild: bd, konto: kt, farbe: fb, mitBild: false })
+      .then(function () { melden(); });
+  }
+
+  /* Ist dieser Raum gerade abgeschlossen? Das sagt die Präsenz —
+     jeder darin trägt es mit. */
+  function raumIstZu(raum) {
+    var ids = Object.keys(praesenzDa);
+    for (var i = 0; i < ids.length; i++) {
+      if (praesenzDa[ids[i]].raum === raum && praesenzDa[ids[i]].zu) return true;
+    }
+    return false;
+  }
+  function raeumeOffen() {
+    var raeume = {};
+    Object.keys(praesenzDa).forEach(function (id) {
+      var e = praesenzDa[id];
+      if (!e.raum) return;
+      if (!raeume[e.raum]) raeume[e.raum] = { raum: e.raum, name: raumKlartext(e.raum),
+                                              leute: [], zu: false };
+      raeume[e.raum].leute.push(e.name || "?");
+      if (e.zu) raeume[e.raum].zu = true;
+    });
+    return Object.keys(raeume).map(function (r) { return raeume[r]; })
+      .sort(function (a, b) { return b.leute.length - a.leute.length; });
   }
 
   function praesenzNachName(name) {
@@ -1849,6 +2009,8 @@ window.LiveChat = (function () {
     befehlsliste: befehlsliste,
     raumKlartext: raumKlartext,
     raumWechseln: raumWechseln,
+    raeumeOffen: raeumeOffen,
+    raumIstZu: raumIstZu,
     praesenzZuhoeren: praesenzZuhoeren,
     praesenzDa: function () { return praesenzDa; },
     beiPraesenz: beiPraesenz,

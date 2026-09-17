@@ -559,9 +559,24 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    über den ganzen Bildschirm — und sich über diesen gespannt.
    Der Kreis ist jetzt positioniert, und er ist kleiner: etwas größer
    als der Platz, damit man das Video besser sieht, mehr nicht. */
-.lc-gross-kreis { position: relative; width: min(58vw, 250px); }
-.lc-gross-kreis .lc-avatar { position: static; width: 100%; height: 100%; }
-.lc-gross-kreis .lc-initial.lc-initial-emoji { font-size: 4rem; }
+.lc-gross-kreis {
+  position: relative;
+  width: min(62vw, 260px);
+  height: min(62vw, 260px);   /* fest quadratisch — nicht über aspect-ratio,
+                                 die kennen ältere Safari-Fassungen nicht */
+  aspect-ratio: auto;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.lc-gross-bild {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* derselbe kreisrunde Ausschnitt wie klein */
+  border-radius: 50%;
+}
+.lc-gross-emoji { font-size: 6rem; line-height: 1; }
+.lc-gross-kreis .lc-initial.lc-initial-emoji { font-size: 5rem; }
 
 /* ==================================================================
    DER CHAT SIEHT AUS WIE DAMALS
@@ -646,56 +661,92 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: #cbb5ff;
   font-style: italic;
 }
-.lc-zeile-fluester { animation: lcGeheim 620ms ease-out; }
+.lc-zeile-fluester {
+  animation: lcGeheim 1500ms ease-out;
+  background: linear-gradient(90deg, rgba(150, 120, 255, 0.16), transparent 70%);
+  border-radius: 6px;
+}
+.lc-zeile-fluester .lc-zeilentext { opacity: 0.92; }
 @keyframes lcGeheim {
-  from { filter: blur(4px); opacity: 0; transform: translateX(-6px); }
-  to   { filter: blur(0);   opacity: 1; transform: none; }
+  0%   { filter: blur(7px);   opacity: 0;   transform: translateX(-10px) scale(.98); }
+  22%  { filter: blur(3.5px); opacity: .55; }
+  48%  { filter: blur(1.2px); opacity: .85; transform: none; }
+  64%  { filter: blur(2.6px); opacity: .7;  }
+  100% { filter: blur(0);     opacity: 1;   transform: none; }
 }
 .lc-woher { opacity: 0.6; font-size: 0.74rem; }
-/* Rufen: GROSS, mit Wucht */
+/* Rufen: GROSS, mit Wucht — und in DEINER Farbe, nicht immer gelb.
+   Die Schrift pumpt sich auf, wird wieder kleiner, pumpt sich auf und
+   wackelt dazwischen wie bei einem kleinen Erdbeben. Das läuft drei
+   Runden, dann ist Ruhe: dauerhaftes Zappeln macht den Chat
+   unlesbar. Antippen spielt es noch einmal ab. */
 .lc-zeile-ruf .lc-zeilentext,
 .lc-zeile-ruf .lc-nick {
-  font-size: 1.06rem;
+  font-size: 1.1rem;
   font-weight: 900;
   letter-spacing: 0.03em;
-  color: #ffce55;
-  text-shadow: 0 0 10px rgba(255, 190, 60, 0.55);
+  color: var(--lc-ruf, #ffce55);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--lc-ruf, #ffce55) 70%, transparent);
 }
-.lc-zeile-ruf { animation: lcWucht 560ms cubic-bezier(.36,.07,.19,.97); }
-@keyframes lcWucht {
-  0%   { transform: scale(1.14); }
-  18%  { transform: translateX(-7px) scale(1.06); }
-  34%  { transform: translateX(6px)  scale(1.04); }
-  52%  { transform: translateX(-4px); }
-  70%  { transform: translateX(3px); }
-  100% { transform: none; }
+.lc-zeile-ruf .lc-zeilentext > span { display: inline-block; }
+.lc-zeile-ruf.lc-neu,
+.lc-zeile-ruf { animation: lcBeben 900ms cubic-bezier(.36,.07,.19,.97) 3; }
+@keyframes lcBeben {
+  0%   { transform: none;                         }
+  8%   { transform: scale(1.16) translateX(-8px); }
+  16%  { transform: scale(1.04) translateX(8px);  }
+  24%  { transform: scale(1.12) translateX(-6px); }
+  32%  { transform: scale(1.0)  translateX(5px);  }
+  40%  { transform: scale(1.08) translateX(-4px); }
+  48%  { transform: scale(1.0)  translateX(3px);  }
+  56%  { transform: scale(1.05) translateX(-2px); }
+  70%  { transform: scale(1.0);                   }
+  100% { transform: none;                         }
 }
-/* Die kurzen Effekte: Herzen, Gesichter, Ausrufezeichen steigen auf */
+
+/* Kommen und Gehen — wie im IRC, unaufdringlich */
+.lc-zeile-kommen { grid-template-columns: 3.1em 1fr; }
+.lc-zeile-kommen .lc-zeilentext {
+  opacity: 0.62;
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+/* Die Effekte: Teilchen steigen dort auf, wo die Zeile steht */
 .lc-wirkung {
   position: absolute;
-  inset: 0;
+  left: 0; right: 0;
+  height: 190px;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 2;
 }
 .lc-wirkung span {
   position: absolute;
-  bottom: 4px;
+  bottom: 0;
   opacity: 0;
-  animation: lcSteigt 2.3s ease-out forwards;
+  white-space: nowrap;
+  animation: lcSteigt 2.9s cubic-bezier(.22,.7,.3,1) forwards;
   will-change: transform, opacity;
 }
-.lc-wirkung-herz span { color: #ff6b8a; text-shadow: 0 0 8px rgba(255,107,138,.6); }
-.lc-wirkung-lachen span { color: #ffd166; font-weight: 700; }
-.lc-wirkung-ruf span { color: #ffce55; }
+.lc-wirkung-herz span {
+  color: #ff6b8a;
+  text-shadow: 0 0 10px rgba(255, 107, 138, 0.75);
+  animation-duration: 3.2s;
+}
+.lc-wirkung-lachen span { color: #ffd166; font-weight: 800; }
+.lc-wirkung-umarmen span { color: #ffb3c9; }
+.lc-wirkung-ruf span { color: var(--lc-ruf, #ffce55); font-weight: 900; }
+.lc-wirkung-fluester span { color: #cbb5ff; }
 @keyframes lcSteigt {
-  0%   { opacity: 0; transform: translateY(0) scale(.6) rotate(-8deg); }
-  16%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-160px) scale(1.15) rotate(10deg); }
+  0%   { opacity: 0; transform: translate(0, 10px) scale(.5) rotate(-10deg); }
+  14%  { opacity: 1; }
+  70%  { opacity: .85; }
+  100% { opacity: 0;
+         transform: translate(var(--lc-drift, 0), -170px) scale(1.25) rotate(12deg); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .lc-zeile-ruf, .lc-zeile-fluester { animation: none; }
-  .lc-wirkung { display: none; }
-}
+.lc-zeile-wirkt { cursor: pointer; }
+
 /* Das Thema des Raums */
 .lc-thema {
   margin: 2px 12px 8px;
@@ -709,3 +760,25 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 .lc-befehle-lang { opacity: 0.6; }
 .lc-befehle ul { list-style: none; padding-left: 0; }
 .lc-befehle li { margin-bottom: 2px; }
+
+/* --- Die offenen Räume auf dem Startschirm ----------------------- */
+.lc-raumliste { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.lc-raumknopf {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 130px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(122, 115, 100, 0.34);
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-raumknopf:hover { background: rgba(255, 255, 255, 0.18); }
+.lc-raumknopf-name { font-weight: 800; font-size: 0.9rem; }
+.lc-raumknopf-leute { font-size: 0.72rem; opacity: 0.7; }
+.lc-raumknopf-zu { opacity: 0.55; cursor: not-allowed; border-style: dashed; }
+.lc-raumknopf-zu:hover { background: rgba(255, 255, 255, 0.07); }

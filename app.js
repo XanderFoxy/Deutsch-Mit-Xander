@@ -12653,7 +12653,14 @@
     const kasten = document.createElement("div");
     kasten.id = "lcBildWaehler";
     kasten.className = "lc-waehler-hinter";
-    const gifSchluessel = window.GIPHY_KEY || "";
+    /* Ohne eigenen Schlüssel läuft die Suche über den öffentlichen
+       Beta-Schlüssel von GIPHY. Der ist seit jeher in deren Beispielen
+       und Anleitungen zu finden, aber streng begrenzt — bei viel
+       Betrieb antwortet er irgendwann nicht mehr. Ein eigener
+       (kostenlos, developers.giphy.com) gehört in supabase-config.js
+       als window.GIPHY_KEY und wird dann bevorzugt. */
+    const gifSchluessel = window.GIPHY_KEY || "dc6zaTOxFJmzC";
+    const eigenerSchluessel = Boolean(window.GIPHY_KEY);
     kasten.innerHTML = `
       <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Profilbild wählen">
         <p class="eyebrow">DEIN BILD IM KLASSENZIMMER</p>
@@ -12671,23 +12678,22 @@
           ${LC_EMOJIS.map((e) => `<button type="button" class="lc-waehler-emoji" data-lc-emoji="${e}">${e}</button>`).join("")}
         </div>
         <p class="eyebrow" style="margin-top:12px;">BEWEGTES GIF</p>
-        ${gifSchluessel ? `
-          <div class="lc-waehler-reihe">
-            <input type="text" class="lc-chat-feld" id="lcGifSuche" placeholder="Suchen, z. B. „hallo“ oder „katze“">
-            <button type="button" class="btn btn-ghost" id="lcGifSuchen">Suchen</button>
-          </div>
-          <div class="lc-waehler-gifs" id="lcGifTreffer"></div>`
-        : `
-          <p class="empty-note" style="font-size:0.74rem; margin:0 0 8px;">
-            Für die Suche fehlt noch ein GIPHY-Schlüssel. Er ist kostenlos
-            (developers.giphy.com → „Create an App" → API Key) und gehört in
-            <code>supabase-config.js</code> als <code>window.GIPHY_KEY = "…";</code>.
-            Bis dahin geht eine GIF-Adresse auch so:
-          </p>
-          <div class="lc-waehler-reihe">
-            <input type="text" class="lc-chat-feld" id="lcGifAdresse" placeholder="https://…/bild.gif">
-            <button type="button" class="btn btn-ghost" id="lcGifNehmen">Nehmen</button>
-          </div>`}
+        <div class="lc-waehler-reihe">
+          <input type="text" class="lc-chat-feld" id="lcGifSuche" placeholder="Suchen, z. B. „hallo“ oder „katze“">
+          <button type="button" class="btn btn-ghost" id="lcGifSuchen">Suchen</button>
+        </div>
+        <div class="lc-waehler-gifs" id="lcGifTreffer"></div>
+        ${eigenerSchluessel ? "" : `
+          <p class="empty-note" style="font-size:0.7rem; margin:6px 0 0;">
+            Die Suche läuft über den öffentlichen Beta-Schlüssel von GIPHY — der ist
+            begrenzt. Ein eigener ist kostenlos (developers.giphy.com → „Create an App“)
+            und gehört in <code>supabase-config.js</code> als
+            <code>window.GIPHY_KEY = "…";</code>.
+          </p>`}
+        <div class="lc-waehler-reihe" style="margin-top:6px;">
+          <input type="text" class="lc-chat-feld" id="lcGifAdresse" placeholder="… oder eine GIF-Adresse einsetzen">
+          <button type="button" class="btn btn-ghost" id="lcGifNehmen">Nehmen</button>
+        </div>
         <div class="lc-waehler-reihe" style="margin-top:14px;">
           <button type="button" class="btn btn-ghost" id="lcBildWeg">Bild entfernen</button>
           <button type="button" class="btn btn-coffee" id="lcWaehlerZu">Fertig</button>
@@ -12793,6 +12799,7 @@
           <button type="button" class="btn btn-coffee" id="lcBetreten" style="font-size:1.05rem; padding:12px 26px;">
             ${ausLink ? "🚪 Dem Raum beitreten" : "🎓 Klassenzimmer betreten"}
           </button>
+          <div id="lcRaumListe"></div>
           <p class="empty-note" style="font-size:0.74rem;">
             ${ausLink
               ? "Du bist über einen Einladungslink hier — du landest im selben Raum wie die anderen."
@@ -13038,6 +13045,56 @@
     }
   }
 
+  /* --- Welche Räume sind gerade offen? --------------------------
+     GEWÜNSCHT: „In der Übersicht müssten eigentlich alternative Räume
+     angezeigt werden, die erstellt wurden — und die geschlossenen
+     dürften dort nicht begehbar sein, die müssten ein kleines Schloss
+     tragen."
+     Genau so. Die Liste frischt sich mit dem Präsenzkanal auf. */
+  function livechatRaumListe() {
+    const ziel = document.getElementById("lcRaumListe");
+    if (!ziel || !window.LiveChat || !LiveChat.raeumeOffen) return;
+    const zeichnen = () => {
+      const feld = document.getElementById("lcRaumListe");
+      if (!feld) return;
+      const raeume = LiveChat.raeumeOffen().filter((r) => r.raum !== LiveChat.HAUPTRAUM);
+      if (!raeume.length) { feld.innerHTML = ""; return; }
+      feld.innerHTML = `
+        <p class="eyebrow" style="margin:14px 0 6px;">AUCH OFFEN GERADE</p>
+        <div class="lc-raumliste">
+          ${raeume.map((r) => `
+            <button type="button" class="lc-raumknopf${r.zu ? " lc-raumknopf-zu" : ""}"
+                    data-lc-raum="${escapeHtml(r.raum)}" ${r.zu ? "disabled" : ""}
+                    title="${r.zu ? "Abgeschlossen — nur mit Einladung" : "Hineingehen"}">
+              <span class="lc-raumknopf-name">${r.zu ? "🔒 " : ""}${escapeHtml(r.name)}</span>
+              <span class="lc-raumknopf-leute">${escapeHtml(r.leute.slice(0, 4).join(", "))}${
+                r.leute.length > 4 ? " …" : ""}</span>
+            </button>`).join("")}
+        </div>
+        <p class="empty-note" style="font-size:0.72rem;">
+          Abgeschlossene Räume 🔒 kannst du nicht betreten — dort kommt nur herein, wer
+          eingeladen wurde. Bitte jemanden im Raum um  <code>/i deinName</code>.
+        </p>`;
+      feld.querySelectorAll("[data-lc-raum]").forEach((b) => {
+        b.addEventListener("click", () => {
+          LiveChat.betreten(b.dataset.lcRaum, {
+            name: livechatName(),
+            konto: (Backend.currentUser() || {}).id || "",
+            bild: livechatBild(),
+            mitBild: false
+          }).then(() => { renderLiveChat(); klassenzimmerStreifen(); });
+          renderLiveChat();
+        });
+      });
+    };
+    zeichnen();
+    if (LiveChat.beiPraesenz) {
+      if (livechatRaumAbmelden) livechatRaumAbmelden();
+      livechatRaumAbmelden = LiveChat.beiPraesenz(zeichnen);
+    }
+  }
+  let livechatRaumAbmelden = null;
+
   /* --- Der Chat sieht aus wie damals -------------------------
      GEWÜNSCHT: „Der Chat muss so aussehen wie früher, nicht mit
      diesen Sprechblasen wie bei WhatsApp — sonst funktioniert die
@@ -13077,25 +13134,74 @@
     return `hsl(${h}, 62%, 70%)`;
   }
 
+  /* --- Bunte Buchstaben ------------------------------------------
+     In mIRC färbte Strg+K den TEXT ab dieser Stelle — die Farbe des
+     Namens machte dagegen der eigene Chatprogramm, für jeden anders.
+     Deshalb ist hier beides eingefärbt: der Name UND die Zeile. Das
+     ist das Bild, das man von damals im Kopf hat.
+
+     „Bunt" gab es auch: die sogenannten Rainbow-Skripte für mIRC
+     haben jeden Buchstaben anders eingefärbt. Genau das macht /c bunt. */
+  const LC_REGENBOGEN = ["#ff6b6b", "#ffa45c", "#ffd166", "#7ede8a",
+                         "#6fe3d6", "#6fb3ff", "#c99bff", "#ff9ecb"];
+  function lcTextEinfaerben(ziel, text, n) {
+    if (n.farbe === "bunt") {
+      Array.from(String(text)).forEach((z, i) => {
+        const b = document.createElement("span");
+        b.textContent = z;
+        if (z.trim()) b.style.color = LC_REGENBOGEN[i % LC_REGENBOGEN.length];
+        ziel.appendChild(b);
+      });
+      return;
+    }
+    const w = document.createElement("span");
+    w.textContent = text;
+    ziel.appendChild(w);
+  }
+
   /* Ein kurzer Effekt über dem Verlauf — Herzen, die aufsteigen,
      oder ein Gesicht, das auftaucht. Er ist absichtlich kurz und
      nimmt keine Bedienung weg. */
-  function lcWirkung(art, zeichen) {
+  /* --- Die Effekte --------------------------------------------
+     Sie laufen EINMAL, wenn die Zeile kommt — und noch einmal, wenn
+     man die Zeile antippt. Damit sieht auch jemand, der später
+     dazukommt, was da los war, ohne dass der Chat dauernd zappelt.
+
+     Wer im Betriebssystem „Bewegung reduzieren" eingestellt hat,
+     bekommt gar keine (siehe Stilblatt). */
+  const LC_EFFEKTE = {
+    herz:   { zeichen: ["\u2665", "\u2764", "\u2661"], wie: 14, klasse: "herz" },
+    lachen: { zeichen: ["(\u25d5\u203f\u25d5)", "\u0028\u02d8\u203f\u02d8\u0029", "haha"], wie: 7, klasse: "lachen" },
+    umarmen:{ zeichen: ["\u0028\u3065\uff61\u25d5\u203f\u25d5\uff61\u0029\u3065", "\u2764"], wie: 8, klasse: "umarmen" },
+    ruf:    { zeichen: ["\u2757", "\u203c"], wie: 10, klasse: "ruf" },
+    fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
+  };
+  function lcWirkung(art, anZeile) {
+    const e = LC_EFFEKTE[art];
     const v = document.getElementById("lcVerlauf");
-    if (!v) return;
+    if (!e || !v) return;
     const schicht = document.createElement("div");
-    schicht.className = "lc-wirkung lc-wirkung-" + art;
-    const wie = art === "herz" ? 9 : art === "lachen" ? 6 : 12;
-    for (let i = 0; i < wie; i++) {
+    schicht.className = "lc-wirkung lc-wirkung-" + e.klasse;
+    /* Die Teilchen steigen dort auf, wo die Zeile steht — nicht
+       irgendwo im Fenster. */
+    if (anZeile) {
+      const r = anZeile.getBoundingClientRect();
+      const rv = v.getBoundingClientRect();
+      schicht.style.top = Math.max(0, r.top - rv.top + v.scrollTop - 150) + "px";
+      schicht.style.height = "190px";
+    }
+    for (let i = 0; i < e.wie; i++) {
       const t = document.createElement("span");
-      t.textContent = zeichen;
-      t.style.left = Math.round(6 + Math.random() * 88) + "%";
-      t.style.animationDelay = (Math.random() * 0.5).toFixed(2) + "s";
-      t.style.fontSize = (0.9 + Math.random() * 1.1).toFixed(2) + "rem";
+      t.textContent = e.zeichen[i % e.zeichen.length];
+      t.style.left = Math.round(4 + Math.random() * 90) + "%";
+      t.style.animationDelay = (Math.random() * 0.7).toFixed(2) + "s";
+      t.style.fontSize = (0.85 + Math.random() * 1.3).toFixed(2) + "rem";
+      t.style.opacity = (0.35 + Math.random() * 0.5).toFixed(2);
+      t.style.setProperty("--lc-drift", (Math.random() * 60 - 30).toFixed(0) + "px");
       schicht.appendChild(t);
     }
     v.appendChild(schicht);
-    setTimeout(() => schicht.remove(), 2600);
+    setTimeout(() => schicht.remove(), 3400);
   }
 
   function livechatChatAuffrischen(l) {
@@ -13133,6 +13239,7 @@
       z.appendChild(uhr);
 
       const farbe = lcNickFarbe(n);
+      if (farbe && art === "ruf") z.style.setProperty("--lc-ruf", farbe);
 
       if (art === "system" || art === "einladung") {
         const t = document.createElement("span");
@@ -13146,12 +13253,20 @@
             renderLiveChat();
           });
         }
+      } else if (art === "kommen") {
+        const t = document.createElement("span");
+        t.className = "lc-zeilentext";
+        t.textContent = (n.kommt ? "\u2192 " : "\u2190 ") + n.text;
+        z.appendChild(t);
       } else if (art === "aktion") {
         /* „* Emmy lacht laut" — ohne Doppelpunkt, kursiv. Genau so
            gab der /me-Befehl es seit jeher aus. */
         const t = document.createElement("span");
         t.className = "lc-zeilentext";
-        t.textContent = "* " + n.text;
+        const stern = document.createElement("span");
+        stern.textContent = "* ";
+        t.appendChild(stern);
+        lcTextEinfaerben(t, n.text, n);
         if (farbe) t.style.color = farbe;
         z.appendChild(t);
       } else {
@@ -13192,11 +13307,9 @@
           w.textContent = "🖼️ Bild — nicht mehr gespeichert";
           t.appendChild(w);
         }
-        if (n.text) {
-          const w = document.createElement("span");
-          w.textContent = n.text;
-          t.appendChild(w);
-        }
+        if (n.text) lcTextEinfaerben(t, n.text, n);
+        /* Die ganze ZEILE trägt die Farbe — nicht nur der Name. */
+        if (farbe) t.style.color = farbe;
         if (art === "fluester" && n.woher) {
           const q = document.createElement("i");
           q.className = "lc-woher";
@@ -13207,9 +13320,20 @@
       }
       v.appendChild(z);
 
-      if (n.wirkung === "herz") lcWirkung("herz", "\u2665");
-      else if (n.wirkung === "lachen") lcWirkung("lachen", "\u0028\u25d5\u203f\u25d5\u0029");
-      else if (art === "ruf") lcWirkung("ruf", "\u2757");
+      /* Welcher Effekt gehört zu dieser Zeile? */
+      const eff = n.wirkung || (art === "ruf" ? "ruf" : art === "fluester" ? "fluester" : "");
+      if (eff) {
+        z.dataset.wirkung = eff;
+        z.classList.add("lc-zeile-wirkt");
+        z.title = "Antippen — noch einmal";
+        z.addEventListener("click", () => {
+          lcWirkung(eff, z);
+          z.classList.remove("lc-neu");
+          void z.offsetWidth;
+          z.classList.add("lc-neu");
+        });
+        lcWirkung(eff, z);
+      }
     });
     if (amEnde) v.scrollTop = v.scrollHeight;
   }
@@ -13231,15 +13355,27 @@
          in die Zeichenkette gesetzt, sondern danach über
          textContent eingetragen. Dasselbe Argument wie beim
          Chat: fremder Text ist Text, nie Auszeichnung. */
-      const zeigeBild = Boolean(p.strom && p.bildAn !== false);
+      /* Der Kreis bleibt ein KREIS — nur größer.
+         GEMELDET: „wenn ich ein Bild großklicke, versucht er immer
+         noch eine Ellipse zu machen." Ursache war, dass das Bild
+         `position: absolute` trug und sich am nächsten positionierten
+         Vorfahren aufgehängt hat: dem Überzug über den ganzen
+         Bildschirm. Hier steht deshalb ein eigenes Element mit
+         eigener Klasse, das den Kreis genau ausfüllt — und der Kreis
+         hat eine feste, quadratische Größe. */
+      const hatVideoGross = Boolean(p.strom && p.strom.getVideoTracks
+        && p.strom.getVideoTracks().length && p.bildAn !== false);
+      const emojiGross = p.bild && p.bild.indexOf("emoji:") === 0 ? p.bild.slice(6) : "";
       halter.innerHTML = `
         <div class="lc-gross-hinter" id="lcGrossHinter" role="dialog" aria-modal="true" aria-label="Teilnehmer groß">
           <div class="lc-gross-kasten">
             <div class="lc-gross-kreis">
               <video id="lcGrossVideo" autoplay playsinline ${p.ich ? "muted" : ""}
-                     style="${zeigeBild ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
-              ${zeigeBild ? "" : (p.bild
-                ? `<img class="lc-avatar" id="lcGrossAvatar" alt="">`
+                     style="${hatVideoGross ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
+              ${hatVideoGross ? "" : (emojiGross
+                ? `<span class="lc-gross-emoji">${escapeHtml(emojiGross)}</span>`
+                : p.bild
+                ? `<img class="lc-gross-bild" id="lcGrossAvatar" alt="">`
                 : `<span class="lc-initial" id="lcGrossInitial"></span>`)}
             </div>
             <span class="lc-gross-name" id="lcGrossName"></span>
@@ -13304,6 +13440,10 @@
       area.querySelector("#lcZumKlassenzimmer")?.addEventListener("click", () => {
         document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.click();
       });
+      /* Die Räume, die gerade offen sind — mit Schloss bei den
+         abgeschlossenen. Sie kommen aus dem Präsenzkanal, den die
+         Seite ohnehin mithört; man muss dafür nirgends hineingehen. */
+      livechatRaumListe();
       return;
     }
 
