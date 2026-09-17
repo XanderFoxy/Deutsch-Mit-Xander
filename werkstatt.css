@@ -173,3 +173,48 @@ body.hat-klassenzimmer .wk-blase { bottom: 96px; }
   border-top: 1px dashed rgba(122, 115, 100, 0.25);
   padding-top: 7px;
 }
+
+/* =================================================================
+   ZWEI LISTEN: OFFEN UND FERTIG
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Du sollst mir zeigen, an was du gerade arbeitest, dass
+   du einzelne Sachen schon hochlaedst und dass ich sehe, welche
+   Sachen gerade fertig sind — Schritt fuer Schritt, damit ich es
+   direkt ueberpruefen kann."
+
+   Die fertigen Zeilen stehen deshalb NICHT wie die offenen aus: sie
+   tragen einen gruenen Haken und sind etwas zurueckgenommen. Man soll
+   auf einen Blick sehen, was noch laeuft und was schon oben ist.
+   ================================================================= */
+.wk-stand {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(224, 150, 74, 0.14);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.wk-abschnitt {
+  margin: 10px 0 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.wk-abschnitt-fertig { color: #8fd6a2; opacity: 0.85; }
+.wk-liste-fertig li {
+  opacity: 0.86;
+  border-left-color: rgba(90, 168, 107, 0.65);
+}
+/* Der Haken macht ohne Worte klar: das ist schon oben. */
+.wk-liste-fertig li::before {
+  content: "\2713\00a0";
+  color: #7fc98f;
+  font-weight: 700;
+}
+.wk-liste-bau li::before {
+  content: "\2022\00a0";
+  color: #e0964a;
+  font-weight: 700;
+}

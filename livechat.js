@@ -74,7 +74,18 @@ window.LiveChat = (function () {
 
   var PLAETZE = 8;                    // 4 oben, 4 unten
   var CHAT_LAENGE = 300;              // Zeichen je Nachricht
-  var CHAT_VERLAUF = 60;              // so viele Nachrichten bleiben sichtbar
+  var CHAT_VERLAUF = 60;              // so viele legt das GERAET ab
+  /* GEWÜNSCHT: „Einer, der zum ersten Mal auf die Seite kommt, soll
+     trotzdem den heutigen kompletten Tagesverlauf aus dem Chat sehen,
+     ohne dass ihm irgendetwas fehlt."
+
+     Sechzig Zeilen sind dafür zu wenig — ein lebhafter Tag hat mehr.
+     Die beiden Zahlen trennen deshalb, was sie vorher vermischt
+     haben: CHAT_VERLAUF ist, was im GERÄT abgelegt wird (der
+     localStorage ist knapp, und diese Abschrift ist nur die Notlösung
+     für „kein Netz"), CHAT_SICHT ist, was aus der gemeinsamen Tabelle
+     geholt und angezeigt wird. */
+  var CHAT_SICHT = 400;               // so viele kommen vom Server
 
   /* Die Vermittler.
      ---------------------------------------------------------
@@ -341,6 +352,11 @@ window.LiveChat = (function () {
     sternschnuppe: " zeigt auf eine Sternschnuppe  \ud83c\udf20",
     matrix:      " \u00f6ffnet die Matrix  \ud83d\udfe9",
     falten:      " faltet den Raum  \ud83d\udd2e",
+    armageddon:  " l\u00e4utet den Weltuntergang ein  \u2604\ufe0f",
+    sintflut:    " ruft die Sintflut herbei  \ud83c\udf0a",
+    aegypten:    " reist nach \u00c4gypten  \ud83d\udc0e",
+    ostern:      " versteckt Ostereier  \ud83d\udc23",
+    augen:       " guckt ganz neugierig  \ud83d\udc40",
     halloween:   " macht es gruselig  \ud83c\udf83",
     weihnachten: " bringt Weihnachten mit  \ud83c\udf84"
   };
@@ -501,7 +517,7 @@ window.LiveChat = (function () {
       .select("id,raum,autor,name,bild,text,bild_im_chat,art,farbe,erstellt")
       .eq("raum", raum)
       .order("erstellt", { ascending: false })
-      .limit(CHAT_VERLAUF)
+      .limit(CHAT_SICHT)
       .then(function (a) {
         if (!a || a.error || !a.data) return [];
         return a.data.slice().reverse().map(function (r) {
@@ -587,7 +603,7 @@ window.LiveChat = (function () {
       if (!zwilling.wirkung && n.wirkung) zwilling.wirkung = n.wirkung;
       if (!zwilling.farbe && n.farbe) zwilling.farbe = n.farbe;
     });
-    return raus.slice(-CHAT_VERLAUF);
+    return raus.slice(-CHAT_SICHT);
   }
 
   /* =========================================================
@@ -808,7 +824,7 @@ window.LiveChat = (function () {
   function chatLaden(raum) {
     try {
       var l = JSON.parse(localStorage.getItem(chatSchluessel(raum)) || "[]");
-      return Array.isArray(l) ? l.slice(-CHAT_VERLAUF) : [];
+      return Array.isArray(l) ? l.slice(-CHAT_SICHT) : [];
     } catch (e) { return []; }
   }
   /* Gesichert wird ZWEIGLEISIG: der Text in den localStorage, die
@@ -1695,8 +1711,8 @@ window.LiveChat = (function () {
        Sie hat eine Kennung — damit lässt sich das ausschliessen. */
     if (n.id && zustand.nachrichten.some(function (a) { return a.id === n.id; })) return;
     zustand.nachrichten.push(n);
-    if (zustand.nachrichten.length > CHAT_VERLAUF) {
-      zustand.nachrichten = zustand.nachrichten.slice(-CHAT_VERLAUF);
+    if (zustand.nachrichten.length > CHAT_SICHT) {
+      zustand.nachrichten = zustand.nachrichten.slice(-CHAT_SICHT);
     }
     chatSichern();
   }
@@ -2675,6 +2691,11 @@ window.LiveChat = (function () {
     { w: "sternschnuppe", kurz: "wunsch", nutzt: "/sternschnuppe", was: "Sternschnuppen ziehen über den Himmel" },
     { w: "matrix",  kurz: "", nutzt: "/matrix",                   was: "Der grüne Code rieselt herunter" },
     { w: "falten",  kurz: "spiegel", nutzt: "/falten",            was: "Der Raum faltet sich — mit Spiegelschrift" },
+    { w: "armageddon", kurz: "weltuntergang", nutzt: "/armageddon", was: "Meteoriten, Risse und roter Himmel" },
+    { w: "sintflut", kurz: "zorn", nutzt: "/sintflut",             was: "Gottes Zorn — Wassermassen steigen" },
+    { w: "aegypten", kurz: "wueste", nutzt: "/aegypten",           was: "Pyramiden, Sphinx und Sandsturm" },
+    { w: "ostern",  kurz: "osterhase", nutzt: "/ostern",           was: "Ostereier, Hase und Frühling" },
+    { w: "augen",   kurz: "gucken", nutzt: "/augen",               was: "Neugierige Augen schauen dir zu" },
     { w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
@@ -2683,10 +2704,108 @@ window.LiveChat = (function () {
     { w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
   ];
+  /* DIE KURZWOERTER — eine Tabelle, zwei Benutzer.
+     Sie stand frueher als „var gleich" mitten in der Befehlsauswertung
+     und war damit nur dort zu sehen. Die Tipphilfe unter dem
+     Eingabefeld braucht sie aber auch: wer „flock" tippt, soll
+     /schnee vorgeschlagen bekommen. Also steht sie jetzt aussen. */
+  var KURZ = { msg: "w", m: "w", query: "w", fluester: "w", whisper: "w",
+                shout: "s", schrei: "s", schreien: "s",
+                join: "j", raum: "j", room: "j",
+                invite: "i", einladen: "i",
+                follow: "f", folge: "f", folgen: "f",
+                names: "n", who: "n", wer: "n",
+                list: "l", raeume: "l",
+                topic: "t", thema: "t",
+                kick: "k", rausschmeissen: "k",
+                color: "c", farbe: "c",
+                party: "konfetti", konfetty: "konfetti", feier: "konfetti",
+                confetti: "konfetti",
+                geburtstag: "ballon", ballons: "ballon", luftballon: "ballon",
+                gift: "geschenk", praesent: "geschenk", ueberraschung: "geschenk",
+                schneien: "schnee", flocken: "schnee",
+                regnen: "regen", nieseln: "regen",
+                raketen: "feuerwerk", silvester: "feuerwerk",
+                sturm: "gewitter", blitz: "gewitter", donner: "gewitter",
+                beben: "erdbeben", wackeln: "erdbeben",
+                ausbruch: "vulkan", lava: "vulkan", eruption: "vulkan",
+                falter: "schmetterling", schmetterlinge: "schmetterling",
+                zugvoegel: "voegel", vogel: "voegel", schwarm: "voegel",
+                santa: "schlitten", weihnachtsmann: "schlitten",
+                rentier: "schlitten", schlittenfahrt: "schlitten",
+                auto: "rennauto", rennen: "rennauto", gas: "rennauto",
+                heimfahrt: "rennauto", tschuess: "rennauto",
+                lolli: "bonbon", bonbons: "bonbon", suessigkeiten: "bonbon",
+                wind: "orkan", sturmwind: "orkan", hurrikan: "orkan",
+                stromausfall: "finsternis", dunkelheit: "finsternis",
+                blackout: "finsternis", lichtaus: "finsternis",
+                feuer: "lagerfeuer", gluehwuermchen: "lagerfeuer",
+                wunsch: "sternschnuppe", sternschnuppen: "sternschnuppe",
+                meteor: "sternschnuppe",
+                code: "matrix", gruen: "matrix",
+                spiegel: "falten", dimension: "falten", faltung: "falten",
+                weltuntergang: "armageddon", meteor2: "armageddon",
+                apokalypse: "armageddon", endzeit: "armageddon",
+                zorn: "sintflut", flut: "sintflut", gotteszorn: "sintflut",
+                ueberschwemmung: "sintflut", welle: "sintflut",
+                wueste: "aegypten", pyramide: "aegypten", sphinx: "aegypten",
+                sandsturm: "aegypten", aegypt: "aegypten",
+                osterhase: "ostern", osterei: "ostern", ostereier: "ostern",
+                gucken: "augen", neugierig: "augen", schauen: "augen",
+                cash: "geld", money: "geld", scheine: "geld",
+                reich: "geld", kohle: "geld", moneten: "geld",
+                cookie: "keks", kekse: "keks", knabbern: "keks",
+                wolke: "wolken", bewoelkt: "wolken",
+                sprung: "glasbruch", display: "glasbruch",
+                kaputt: "glasbruch", riss: "glasbruch",
+                spinne: "spinnen", krabbeln: "spinnen",
+                melodie: "noten", klingen: "noten",
+                kuerbis: "halloween", geist: "halloween",
+                advent: "weihnachten", nikolaus: "weihnachten",
+                weihnacht: "weihnachten",
+                font: "schrift", schriftart: "schrift",
+                bg: "hintergrund", tapete: "hintergrund",
+                emoji: "bild", bilder: "bild", kunst: "bild",
+                help: "h", hilfe: "h", "?": "h",
+                part: "leave", exit: "leave", quit: "leave" };
+
   function befehlsliste() {
     return BEFEHLE.map(function (b) {
-      return { nutzt: b.nutzt, was: b.was, kurz: b.kurz };
+      /* w ist das Wort selbst — die Tipphilfe braucht es, um den
+         Befehl einsetzen zu koennen, und „nutzt" allein reicht dafuer
+         nicht (dort steht auch noch der Platzhalter <name>). */
+      return { w: b.w, nutzt: b.nutzt, was: b.was, kurz: b.kurz,
+               brauchtName: /<name>/.test(b.nutzt || ""),
+               brauchtText: /<(text|was|nummer|farbe)>/.test(b.nutzt || "") };
     });
+  }
+
+  /* Welche Befehle fangen so an? Fuer die Vorschlagsliste unter dem
+     Eingabefeld. Kurzformen zaehlen mit: wer „par" tippt, soll auch
+     /konfetti finden, das unter „party" laeuft. */
+  function befehlsVorschlaege(anfang) {
+    var a = String(anfang || "").toLowerCase().replace(/^\//, "");
+    var alle = befehlsliste();
+    if (!a) return alle;
+    var treffer = [];
+    /* Erst die, die WIRKLICH so anfangen — sie sind die wahrscheinlichste
+       Absicht und stehen deshalb oben. */
+    alle.forEach(function (b) {
+      if (b.w.indexOf(a) === 0) treffer.push(b);
+    });
+    alle.forEach(function (b) {
+      if (treffer.indexOf(b) < 0 && b.kurz && b.kurz.indexOf(a) === 0) treffer.push(b);
+    });
+    /* Dann die Kurzwoerter aus der Aliastabelle — „schnee" findet so
+       auch „flocken". */
+    Object.keys(KURZ).forEach(function (k) {
+      if (k.indexOf(a) !== 0) return;
+      var ziel = KURZ[k];
+      alle.forEach(function (b) {
+        if (b.w === ziel && treffer.indexOf(b) < 0) treffer.push(b);
+      });
+    });
+    return treffer;
   }
 
   /* --- HTML-Entitäten wie damals -------------------------------
@@ -2914,49 +3033,7 @@ window.LiveChat = (function () {
       if (b.w === wort || (b.kurz && b.kurz === wort)) art = b.w;
     });
     if (!art) {
-      var gleich = { msg: "w", m: "w", query: "w", fluester: "w", whisper: "w",
-                     shout: "s", schrei: "s", schreien: "s",
-                     join: "j", raum: "j", room: "j",
-                     invite: "i", einladen: "i",
-                     follow: "f", folge: "f", folgen: "f",
-                     names: "n", who: "n", wer: "n",
-                     list: "l", raeume: "l",
-                     topic: "t", thema: "t",
-                     kick: "k", rausschmeissen: "k",
-                     color: "c", farbe: "c",
-                     party: "konfetti", konfetty: "konfetti", feier: "konfetti",
-                     confetti: "konfetti",
-                     geburtstag: "ballon", ballons: "ballon", luftballon: "ballon",
-                     gift: "geschenk", praesent: "geschenk", ueberraschung: "geschenk",
-                     schneien: "schnee", flocken: "schnee",
-                     regnen: "regen", nieseln: "regen",
-                     raketen: "feuerwerk", silvester: "feuerwerk",
-                     sturm: "gewitter", blitz: "gewitter", donner: "gewitter",
-                     beben: "erdbeben", wackeln: "erdbeben",
-                     ausbruch: "vulkan", lava: "vulkan", eruption: "vulkan",
-                     falter: "schmetterling", schmetterlinge: "schmetterling",
-                     zugvoegel: "voegel", vogel: "voegel", schwarm: "voegel",
-                     santa: "schlitten", weihnachtsmann: "schlitten",
-                     rentier: "schlitten", schlittenfahrt: "schlitten",
-                     auto: "rennauto", rennen: "rennauto", gas: "rennauto",
-                     heimfahrt: "rennauto", tschuess: "rennauto",
-                     lolli: "bonbon", bonbons: "bonbon", suessigkeiten: "bonbon",
-                     wind: "orkan", sturmwind: "orkan", hurrikan: "orkan",
-                     stromausfall: "finsternis", dunkelheit: "finsternis",
-                     blackout: "finsternis", lichtaus: "finsternis",
-                     feuer: "lagerfeuer", gluehwuermchen: "lagerfeuer",
-                     wunsch: "sternschnuppe", sternschnuppen: "sternschnuppe",
-                     meteor: "sternschnuppe",
-                     code: "matrix", gruen: "matrix",
-                     spiegel: "falten", dimension: "falten", faltung: "falten",
-                     kuerbis: "halloween", geist: "halloween",
-                     advent: "weihnachten", nikolaus: "weihnachten",
-                     weihnacht: "weihnachten",
-                     font: "schrift", schriftart: "schrift",
-                     bg: "hintergrund", tapete: "hintergrund",
-                     emoji: "bild", bilder: "bild", kunst: "bild",
-                     help: "h", hilfe: "h", "?": "h",
-                     part: "leave", exit: "leave", quit: "leave" };
+      var gleich = KURZ;
       art = gleich[wort] || null;
     }
     if (!art) return false;
@@ -3537,6 +3614,11 @@ window.LiveChat = (function () {
     mikrofonDazuholen: mikrofonDazuholen,
     chatLeeren: chatLeeren,
     befehlsliste: befehlsliste,
+    befehlsVorschlaege: befehlsVorschlaege,
+    /* Fuer die Tipphilfe: welche Bilder gibt es zur Auswahl? */
+    asciiNamen: function () { return Object.keys(ASCII).sort(); },
+    emojibildNamen: function () { return Object.keys(EMOJIBILD).sort(); },
+    aufkleberNamen: function () { return AUFKLEBER.slice().sort(); },
     raumKlartext: raumKlartext,
     raumWechseln: raumWechseln,
     raeumeOffen: raeumeOffen,

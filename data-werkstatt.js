@@ -35,6 +35,12 @@
    4. NUR DER BETREIBER SIEHT SIE.
       nurBetreiber steht fest auf true. Eine Baustellenliste geht
       niemanden etwas an, der die Seite benutzen will.
+
+   5. ZWEI LISTEN: OFFEN UND FERTIG.
+      „Dass ich sehe, welche Sachen gerade fertig sind, Schritt für
+      Schritt, damit ich es direkt überprüfen kann." Unter „fertig"
+      steht deshalb, was mit dem letzten Hochladen oben angekommen
+      ist — mit Uhrzeit, damit man weiss, was man sich ansehen kann.
    ========================================================= */
 window.DMA_WERKSTATT = {
   /* true = nur der Betreiber sieht die Blase. Ausdrücklich so
@@ -42,22 +48,53 @@ window.DMA_WERKSTATT = {
      sein, nur für mich als Betreiber." */
   nurBetreiber: true,
 
+  /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
+  stand: "Runde 18 — neue Animationen und die Tipphilfe",
+
   inArbeit: [
-    { seit: "2026-09-17T13:11",
-      text: "Noch fehlende Animationen: Armageddon, Gottes Zorn / Sintflut, Ägypten mit Pyramiden und Sandsturm, Ostern und die neugierig guckenden Comic-Augen." },
-    { seit: "2026-09-17T13:11",
-      text: "Der Chat soll für jeden gleich sein: wer sich neu anmeldet, sieht den ganzen Tagesverlauf — nicht nur das, was auf seinem Gerät liegt." },
-    { seit: "2026-09-17T13:11",
-      text: "Beim Betreten soll das Ende des Chats im Bild stehen, nicht der Anfang." },
-    { seit: "2026-09-17T13:11",
-      text: "Hilfe beim Tippen der Befehle: Vorschläge ab dem Schrägstrich, Themen und Namen aus einem kleinen Menü." },
-    { seit: "2026-09-17T13:11",
-      text: "Kurze Töne, wo sie passen — Glocke, Katze, Regen — abschaltbar durch nochmaliges Antippen." },
-    { seit: "2026-09-17T13:11",
-      text: "Das Wörterbuch wird durchgesehen: erfundene Stichwörter wie „das Probier“ oder „der Eckenerum“ fliegen raus, echte Wörter bleiben." },
-    { seit: "2026-09-17T13:11",
-      text: "Bilderwelten: Grössen, verdeckte Dinge und Auswahlrahmen, die sich gegenseitig blockieren." },
-    { seit: "2026-09-17T13:11", nurBetreiber: true,
-      text: "Das Wörterbuch mit deiner eigenen Stimme über ElevenLabs, Niveau für Niveau ab A1." },
+    { seit: "2026-09-17T13:41",
+      text: "Cash Horizon, Keks mit Bissen und Krümeln, Wolkenzug — geschrieben, noch nicht geprüft." },
+    { seit: "2026-09-17T13:41",
+      text: "Glasbruch, krabbelnde Spinnen und die klingende Noten-Animation." },
+    { seit: "2026-09-17T13:41",
+      text: "Der Orkan soll die Wörter viel deutlicher durcheinanderwirbeln." },
+    { seit: "2026-09-17T13:41",
+      text: "Die Befehlsliste ist zu lang — sie soll gruppiert werden, damit man den Chat nicht aus den Augen verliert." },
+    { seit: "2026-09-17T13:41",
+      text: "Bonbons und Rennauto aufwerten." },
+    { seit: "2026-09-17T13:41",
+      text: "Effekte dort zeigen, wo man gerade hinsieht." },
+    { seit: "2026-09-17T13:41",
+      text: "Mehrere Videos rechts am Rand stapeln." },
+    { seit: "2026-09-17T13:41", nurBetreiber: true,
+      text: "Wörterbuch säubern, dann A1 mit deiner Stimme über ElevenLabs." },
+  ],
+
+  /* Was mit dem letzten Hochladen fertig geworden ist. */
+  fertig: [
+    { seit: "2026-09-17T13:41",
+      text: "Hintergrund am Panel verankert: er scrollt mit dem Panel mit, statt wie Glas darüber zu liegen." },
+    { seit: "2026-09-17T13:41",
+      text: "Weihnachtsschlitten neu: Rentiere VOR dem Schlitten, in Fahrtrichtung, im Galopp, mit Rudolfs Nase, Mond, Sternen und Sternenstaub auf der Schleife." },
+    { seit: "2026-09-17T13:41",
+      text: "Sternschnuppen fallen jetzt wirklich — vorher war keine einzige zu sehen." },
+    { seit: "2026-09-17T13:41",
+      text: "Lagerfeuer aus sieben übereinanderliegenden Flammenzungen, deutlich grösser, mit Lichtschein am Boden." },
+    { seit: "2026-09-17T13:41",
+      text: "Sphinx in Ägypten: richtige Silhouette, maßstäblich vor den Pyramiden." },
+    { seit: "2026-09-17T13:41",
+      text: "Sintflut: das Treibgut schwimmt auf dem Wasser statt darunter." },
+    { seit: "2026-09-17T13:41",
+      text: "Armageddon: Einschlag als Lichtblitz statt als Kasten, Risse glühen." },
+    { seit: "2026-09-17T13:41",
+      text: "Tipphilfe beim Schrägstrich: Befehle, Namen aus dem Raum, Bilder — mit Tabulator zum Übernehmen." },
+    { seit: "2026-09-17T13:41",
+      text: "Kurze Töne zu Glocke, Katze, Regen, Feuer und Party — zweites Antippen schaltet sie ab." },
+    { seit: "2026-09-17T13:41",
+      text: "Der Chat bleibt unten, bis man selbst hochscrollt." },
+    { seit: "2026-09-17T13:41",
+      text: "Gäste sehen den gemeinsamen Verlauf jetzt auch, und er reicht 400 Zeilen weit statt 60." },
+    { seit: "2026-09-17T13:41",
+      text: "Beim Wetter steht die Quelle im Hinweistext: Ort, WMO-Code, Lage und Messzeit." },
   ],
 };

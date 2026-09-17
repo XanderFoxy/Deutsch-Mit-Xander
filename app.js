@@ -7381,9 +7381,38 @@
       if (!res.ok) throw new Error("Wetter nicht verfügbar");
       const data = await res.json();
       weatherOut.textContent = `${Math.round(data.current.temperature_2m)}°`;
-      weatherOut.title = ort.name;
-      if (weatherIcon) weatherIcon.textContent = WEATHER_ICONS[data.current.weather_code] || "🌡️";
-      niederschlagZeichnen(WETTER_NIEDERSCHLAG[data.current.weather_code] || null);
+      /* GEFRAGT: „Bist du dir sicher, dass das Wetter korrekt abgehoben
+         wird? Es war die ganze Zeit nur bewölkt, und jetzt steht da
+         plötzlich Regen. Ich weiss nicht, ob das für heute wirklich
+         angesagt wurde."
+
+         Eine berechtigte Frage, und sie lässt sich nicht mit „vertrau
+         mir" beantworten. Deshalb steht jetzt im Hinweistext, WORAUF
+         die Anzeige beruht: der Ort, der amtliche WMO-Zahlencode, die
+         Lage, die daraus folgt, und der Zeitpunkt der Messung. Damit
+         kann man es gegen jede Wetterseite halten.
+
+         Zur Sache selbst: die Zahl kommt von api.open-meteo.com für
+         genau diesen Ort, und zwar als „current weather_code" — also
+         das, was JETZT gemeldet wird, nicht die Tagesvorhersage. Ein
+         Schauer, der durchzieht, taucht dadurch auf und verschwindet
+         wieder. „Bewölkt" (Code 2 und 3) kann keinen Regen auslösen;
+         Regen kommt allein aus 51–65 und 80–82. */
+      const code = data.current.weather_code;
+      const lage = WETTER_NIEDERSCHLAG[code] || "";
+      const gemessen = data.current.time
+        ? String(data.current.time).replace("T", " ").slice(0, 16) + " Uhr"
+        : "";
+      weatherOut.title = ort.name
+        + (lage ? " · " + lage : "")
+        + " · WMO-Code " + code
+        + (gemessen ? " · gemessen " + gemessen : "")
+        + " · Quelle: open-meteo.com";
+      if (weatherIcon) {
+        weatherIcon.textContent = WEATHER_ICONS[code] || "🌡️";
+        weatherIcon.title = weatherOut.title;
+      }
+      niederschlagZeichnen(lage || null);
     } catch (e) {
       weatherOut.textContent = "—";
       niederschlagZeichnen(null);
@@ -14068,6 +14097,942 @@
   }
 
   /* =================================================================
+     CASH HORIZON — ES REGNET GELD
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Eine Geldanimation fehlt noch, die könnten wir
+     vielleicht Cash Horizon nennen."
+
+     Ein Schein fällt nicht wie ein Stein: er ist leicht und gross,
+     fängt Luft und TAUMELT deshalb um seine Längsachse, während er
+     sinkt. Genau das macht den Unterschied — ein Rechteck, das gerade
+     herunterfällt, sieht aus wie ein Ziegel. Münzen dagegen fallen
+     schnell und drehen sich um die Hochachse (deshalb werden sie
+     zwischendurch zu einem Strich).
+     ================================================================= */
+  function lcScheinSvg(farbe, wert) {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 90 42");
+    const r = document.createElementNS(NS_SVG, "rect");
+    r.setAttribute("x", 1); r.setAttribute("y", 1);
+    r.setAttribute("width", 88); r.setAttribute("height", 40);
+    r.setAttribute("rx", 3); r.setAttribute("fill", farbe);
+    r.setAttribute("stroke", "rgba(20,50,30,.45)");
+    r.setAttribute("stroke-width", 1.6);
+    svg.appendChild(r);
+    const ring = document.createElementNS(NS_SVG, "ellipse");
+    ring.setAttribute("cx", 45); ring.setAttribute("cy", 21);
+    ring.setAttribute("rx", 15); ring.setAttribute("ry", 13);
+    ring.setAttribute("fill", "rgba(255,255,255,.3)");
+    svg.appendChild(ring);
+    const t = document.createElementNS(NS_SVG, "text");
+    t.setAttribute("x", 45); t.setAttribute("y", 27);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("font-size", "16");
+    t.setAttribute("font-family", "system-ui, sans-serif");
+    t.setAttribute("font-weight", "700");
+    t.setAttribute("fill", "rgba(20,60,35,.8)");
+    t.textContent = wert;
+    svg.appendChild(t);
+    /* Die Zierlinien am Rand — ohne sie ist es ein farbiges Kärtchen. */
+    const z = document.createElementNS(NS_SVG, "path");
+    z.setAttribute("d", "M6 6 h14 M6 36 h14 M70 6 h14 M70 36 h14 M6 10 v22 M84 10 v22");
+    z.setAttribute("stroke", "rgba(20,60,35,.35)");
+    z.setAttribute("stroke-width", 1.4);
+    z.setAttribute("fill", "none");
+    svg.appendChild(z);
+    return svg;
+  }
+  function lcGeldregen() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcGeld")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcGeld";
+    schicht.className = "lc-geld";
+    schicht.setAttribute("aria-hidden", "true");
+
+    /* Der Schriftzug — er gehört zum Namen der Sache. */
+    const zug = document.createElement("span");
+    zug.className = "lc-cash-zug";
+    zug.textContent = "CASH HORIZON";
+    schicht.appendChild(zug);
+
+    const SCHEINE = [["#a8d5a2", "50"], ["#c9b7e8", "500"],
+                     ["#f2c98a", "100"], ["#9fc9e8", "20"]];
+    const wieviel = window.innerWidth < 560 ? 26 : 46;
+    for (let i = 0; i < wieviel; i++) {
+      const g = document.createElement("div");
+      g.className = "lc-schein";
+      const [f, w] = SCHEINE[i % SCHEINE.length];
+      g.appendChild(lcScheinSvg(f, w));
+      g.style.width = (52 + Math.random() * 46).toFixed(0) + "px";
+      g.style.left = (Math.random() * 100).toFixed(2) + "%";
+      g.style.animationDuration = (3.4 + Math.random() * 2.8).toFixed(2) + "s";
+      g.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
+      g.style.setProperty("--lc-g-seit", ((Math.random() - 0.5) * 180).toFixed(0) + "px");
+      g.style.setProperty("--lc-g-kipp", (28 + Math.random() * 34).toFixed(0) + "deg");
+      schicht.appendChild(g);
+    }
+    /* Münzen: kleiner, schneller, drehen sich um die Hochachse. */
+    const muenzen = window.innerWidth < 560 ? 16 : 30;
+    for (let i = 0; i < muenzen; i++) {
+      const m = document.createElement("b");
+      m.style.left = (Math.random() * 100).toFixed(2) + "%";
+      const gr = 14 + Math.random() * 16;
+      m.style.width = gr.toFixed(0) + "px";
+      m.style.height = gr.toFixed(0) + "px";
+      m.style.animationDuration = (2.2 + Math.random() * 1.6).toFixed(2) + "s";
+      m.style.animationDelay = (Math.random() * 3.4).toFixed(2) + "s";
+      m.style.setProperty("--lc-g-seit", ((Math.random() - 0.5) * 90).toFixed(0) + "px");
+      schicht.appendChild(m);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 9500);
+  }
+
+  /* =================================================================
+     DER KEKS WIRD AUFGEGESSEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht noch so eine Essensanimation von dem Keks,
+     wo dann so Bisse kommen, die den Keks immer kleiner machen, wenn
+     man den aufisst, und dann krümelt das so im Chat."
+
+     Der Biss ist das Ganze: nicht der Keks schrumpft, sondern es wird
+     STÜCKWEISE etwas herausgenommen — ein runder Ausschnitt am Rand,
+     und beim nächsten Biss ein grösserer daneben. Dafür gibt es in SVG
+     eine Maske: der Keks ist weiss (sichtbar), die Bisse sind schwarz
+     (unsichtbar). Jeder Biss schaltet einen weiteren Kreis dazu, und
+     bei jedem rieseln Krümel herunter.
+     ================================================================= */
+  function lcKeks() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcKeks")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcKeks";
+    schicht.className = "lc-keks";
+    schicht.setAttribute("aria-hidden", "true");
+
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 200 200");
+    svg.setAttribute("class", "lc-keks-svg");
+    const defs = document.createElementNS(NS_SVG, "defs");
+    const maske = document.createElementNS(NS_SVG, "mask");
+    maske.setAttribute("id", "lcKeksBisse");
+    const weiss = document.createElementNS(NS_SVG, "rect");
+    weiss.setAttribute("x", 0); weiss.setAttribute("y", 0);
+    weiss.setAttribute("width", 200); weiss.setAttribute("height", 200);
+    weiss.setAttribute("fill", "#fff");
+    maske.appendChild(weiss);
+    /* Vier Bisse, gegen den Uhrzeigersinn am Rand entlang. Jeder
+       erscheint später als der vorige. */
+    const BISSE = [[168, 74, 30], [150, 132, 34], [92, 166, 36], [40, 130, 40]];
+    BISSE.forEach(([cx, cy, r], i) => {
+      const k = document.createElementNS(NS_SVG, "circle");
+      k.setAttribute("cx", cx); k.setAttribute("cy", cy); k.setAttribute("r", r);
+      k.setAttribute("fill", "#000");
+      k.setAttribute("class", "lc-biss lc-biss-" + i);
+      maske.appendChild(k);
+    });
+    defs.appendChild(maske);
+    svg.appendChild(defs);
+
+    const g = document.createElementNS(NS_SVG, "g");
+    g.setAttribute("mask", "url(#lcKeksBisse)");
+    const teig = document.createElementNS(NS_SVG, "circle");
+    teig.setAttribute("cx", 100); teig.setAttribute("cy", 100);
+    teig.setAttribute("r", 78); teig.setAttribute("fill", "#d9a14f");
+    g.appendChild(teig);
+    const rand = document.createElementNS(NS_SVG, "circle");
+    rand.setAttribute("cx", 100); rand.setAttribute("cy", 100);
+    rand.setAttribute("r", 78); rand.setAttribute("fill", "none");
+    rand.setAttribute("stroke", "#b8833a"); rand.setAttribute("stroke-width", 6);
+    g.appendChild(rand);
+    /* Die Schokostücke */
+    [[72, 66, 13], [128, 78, 11], [86, 118, 14], [134, 126, 10],
+     [58, 104, 9], [108, 48, 8], [152, 104, 9]].forEach(([x, y, r]) => {
+      const s2 = document.createElementNS(NS_SVG, "circle");
+      s2.setAttribute("cx", x); s2.setAttribute("cy", y); s2.setAttribute("r", r);
+      s2.setAttribute("fill", "#5a3a22");
+      g.appendChild(s2);
+    });
+    svg.appendChild(g);
+    schicht.appendChild(svg);
+
+    /* Die Krümel — sie fallen im Takt der Bisse. */
+    const kruemel = window.innerWidth < 560 ? 26 : 46;
+    for (let i = 0; i < kruemel; i++) {
+      const k = document.createElement("i");
+      const gr = 3 + Math.random() * 6;
+      k.style.width = gr.toFixed(1) + "px";
+      k.style.height = (gr * (0.6 + Math.random() * 0.5)).toFixed(1) + "px";
+      k.style.left = (38 + Math.random() * 24).toFixed(1) + "%";
+      k.style.top = (36 + Math.random() * 22).toFixed(1) + "%";
+      k.style.background = Math.random() < 0.25 ? "#5a3a22" : "#c99348";
+      k.style.setProperty("--lc-kr-seit", ((Math.random() - 0.5) * 200).toFixed(0) + "px");
+      /* Vier Bisse bei 1,0 / 1,9 / 2,8 / 3,7 Sekunden — die Krümel
+         verteilen sich darauf. */
+      k.style.animationDelay = (1 + Math.floor(i / (kruemel / 4)) * 0.9
+        + Math.random() * 0.25).toFixed(2) + "s";
+      k.style.animationDuration = (1.1 + Math.random() * 0.9).toFixed(2) + "s";
+      schicht.appendChild(k);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 7200);
+  }
+
+  /* =================================================================
+     WOLKEN ZIEHEN DURCH
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Eine Wolkenanimation kannst du auch noch machen."
+
+     Sie benutzt dieselbe Machart wie die Wolken im Kopf der Seite:
+     eine weiche Form, deren Rand von einer Rauschmaske zerfranst
+     wird — deshalb sehen sie aus wie Watte und nicht wie Kreise.
+     Hier ziehen sie langsam quer durch und werden dabei grösser, als
+     kämen sie näher.
+     ================================================================= */
+  function lcWolkenzug() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcWolken")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcWolken";
+    schicht.className = "lc-wolkenzug";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 5 : 9;
+    for (let i = 0; i < wieviel; i++) {
+      const w = document.createElement("i");
+      w.style.top = (4 + Math.random() * 68).toFixed(1) + "%";
+      const breit = 160 + Math.random() * 280;
+      w.style.width = breit.toFixed(0) + "px";
+      w.style.height = (breit * (0.34 + Math.random() * 0.16)).toFixed(0) + "px";
+      w.style.animationDuration = (14 + Math.random() * 16).toFixed(1) + "s";
+      w.style.animationDelay = (-Math.random() * 12).toFixed(2) + "s";
+      w.style.opacity = (0.4 + Math.random() * 0.45).toFixed(2);
+      /* Jede Wolke bekommt ihre eigene Stelle im Rauschen — sonst
+         sehen alle gleich aus. */
+      w.style.setProperty("--lc-wz-versatz", (Math.random() * 400).toFixed(0) + "px");
+      schicht.appendChild(w);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 24000);
+  }
+
+  /* =================================================================
+     DAS DISPLAY SPRINGT
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht kannst du noch Broken Glass machen, also
+     dass man simuliert, als würde bei den Leuten das Handy-Display
+     kaputt gehen — aber es muss realistisch aussehen."
+
+     Ein gesprungenes Display sieht immer gleich aus, und zwar so:
+     vom EINSCHLAGPUNKT laufen gerade Strahlen nach aussen, und quer
+     dazu liegen RINGE, die die Strahlen verbinden — wie ein Spinnnetz.
+     Dazwischen bleiben Scherbenfelder stehen, die das Licht anders
+     brechen als das übrige Glas. Genau diese drei Lagen werden hier
+     gezeichnet; ein Haufen zufälliger Linien sieht dagegen nach
+     Kratzern aus, nicht nach Bruch.
+
+     Der Einschlag sitzt nicht in der Mitte — das tut er nie.
+     ================================================================= */
+  function lcGlasbruch() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcGlas")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcGlas";
+    schicht.className = "lc-glasbruch";
+    schicht.setAttribute("aria-hidden", "true");
+
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("class", "lc-glas-svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "none");
+    const mx = 32 + Math.random() * 36;
+    const my = 26 + Math.random() * 40;
+
+    /* 1. Die Strahlen — vom Einschlag nach aussen, mit unregelmässigen
+       Winkeln und kleinen Knicken unterwegs. */
+    const STRAHLEN = 13;
+    const enden = [];
+    for (let i = 0; i < STRAHLEN; i++) {
+      const w = (360 / STRAHLEN) * i + (Math.random() - 0.5) * 16;
+      const r = w * Math.PI / 180;
+      let x = mx, y = my;
+      const punkte = ["M" + mx.toFixed(1) + " " + my.toFixed(1)];
+      const schritte = 3 + Math.floor(Math.random() * 2);
+      for (let k = 1; k <= schritte; k++) {
+        const laenge = (k / schritte) * (52 + Math.random() * 60);
+        x = mx + Math.cos(r) * laenge + (Math.random() - 0.5) * 5;
+        y = my + Math.sin(r) * laenge + (Math.random() - 0.5) * 5;
+        punkte.push("L" + x.toFixed(1) + " " + y.toFixed(1));
+      }
+      enden.push({ w: r, punkte: punkte });
+      const pf = document.createElementNS(NS_SVG, "path");
+      pf.setAttribute("d", punkte.join(" "));
+      pf.setAttribute("class", "lc-riss-strahl");
+      pf.style.animationDelay = (Math.random() * 0.12).toFixed(3) + "s";
+      svg.appendChild(pf);
+    }
+    /* 2. Die Ringe — sie verbinden benachbarte Strahlen. */
+    [0.28, 0.5, 0.74].forEach((anteil, r2) => {
+      const d = [];
+      enden.forEach((e, i) => {
+        const laenge = anteil * (60 + (i % 3) * 14);
+        const x = mx + Math.cos(e.w) * laenge;
+        const y = my + Math.sin(e.w) * laenge;
+        d.push((i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1));
+      });
+      d.push("Z");
+      const pf = document.createElementNS(NS_SVG, "path");
+      pf.setAttribute("d", d.join(" "));
+      pf.setAttribute("class", "lc-riss-ring");
+      pf.style.animationDelay = (0.06 + r2 * 0.05).toFixed(3) + "s";
+      svg.appendChild(pf);
+    });
+    /* 3. Der zersplitterte Kern am Einschlagpunkt */
+    const kern = document.createElementNS(NS_SVG, "circle");
+    kern.setAttribute("cx", mx); kern.setAttribute("cy", my);
+    kern.setAttribute("r", 2.6);
+    kern.setAttribute("class", "lc-riss-kern");
+    svg.appendChild(kern);
+    schicht.appendChild(svg);
+
+    /* Ein kurzer weisser Schlag im Augenblick des Bruchs. */
+    const schlag = document.createElement("b");
+    schlag.className = "lc-glas-schlag";
+    schlag.style.left = mx + "%";
+    schlag.style.top = my + "%";
+    schicht.appendChild(schlag);
+
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 7000);
+    /* Ein Ruck dazu — ein Display springt nicht lautlos und still. */
+    lcErdbeben();
+  }
+
+  /* =================================================================
+     SPINNEN KRABBELN ÜBER DEN BILDSCHIRM
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Oder irgendwelche Spinnen über den Bildschirm
+     krabbeln — aber es muss realistisch aussehen."
+
+     Realistisch heisst bei einer Spinne vor allem zweierlei:
+       * ACHT Beine, in zwei Vierergruppen, und sie bewegen sich
+         WECHSELSEITIG — wenn links vorn hebt, steht rechts vorn.
+         Krabbeln alle acht gleichzeitig, sieht es aus wie Zappeln.
+       * Sie läuft nicht gleichmässig, sondern in Schüben: ein Stück
+         schnell, dann stehen bleiben, dann weiter. Genau daran erkennt
+         das Auge ein Insekt und nicht ein Fahrzeug.
+     Dazu kommt der Faden, an dem manche sich herunterlassen.
+     ================================================================= */
+  function lcSpinneSvg() {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 100 90");
+    svg.setAttribute("class", "lc-spinne-svg");
+    const p = (d, kl, w) => {
+      const e = document.createElementNS(NS_SVG, "path");
+      e.setAttribute("d", d);
+      e.setAttribute("fill", "none");
+      e.setAttribute("stroke", "#1d1a18");
+      e.setAttribute("stroke-width", w || 3.4);
+      e.setAttribute("stroke-linecap", "round");
+      if (kl) e.setAttribute("class", kl);
+      return e;
+    };
+    /* Die Beine — vier links, vier rechts, in zwei Takten. */
+    const BEINE = [
+      ["M44 46 C 30 34, 20 26, 8 24",  "a"], ["M44 50 C 28 44, 18 42, 6 40",  "b"],
+      ["M44 54 C 28 58, 18 62, 6 66",  "a"], ["M44 58 C 30 68, 22 76, 12 84", "b"],
+      ["M56 46 C 70 34, 80 26, 92 24", "b"], ["M56 50 C 72 44, 82 42, 94 40", "a"],
+      ["M56 54 C 72 58, 82 62, 94 66", "b"], ["M56 58 C 70 68, 78 76, 88 84", "a"],
+    ];
+    BEINE.forEach(([d, takt]) => svg.appendChild(p(d, "lc-spinnenbein lc-takt-" + takt)));
+    /* Hinterleib und Kopf */
+    const leib = document.createElementNS(NS_SVG, "ellipse");
+    leib.setAttribute("cx", 50); leib.setAttribute("cy", 58);
+    leib.setAttribute("rx", 15); leib.setAttribute("ry", 18);
+    leib.setAttribute("fill", "#1d1a18");
+    svg.appendChild(leib);
+    const kopf = document.createElementNS(NS_SVG, "ellipse");
+    kopf.setAttribute("cx", 50); kopf.setAttribute("cy", 38);
+    kopf.setAttribute("rx", 9); kopf.setAttribute("ry", 8);
+    kopf.setAttribute("fill", "#2a2624");
+    svg.appendChild(kopf);
+    /* Zwei winzige helle Augen — sie machen aus dem Klecks ein Tier. */
+    [[47, 35], [53, 35]].forEach(([x, y]) => {
+      const a = document.createElementNS(NS_SVG, "circle");
+      a.setAttribute("cx", x); a.setAttribute("cy", y);
+      a.setAttribute("r", 1.6); a.setAttribute("fill", "#c9c2ba");
+      svg.appendChild(a);
+    });
+    return svg;
+  }
+  function lcSpinnen() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcSpinnen")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcSpinnen";
+    schicht.className = "lc-spinnen";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 4 : 7;
+    for (let i = 0; i < wieviel; i++) {
+      const s2 = document.createElement("div");
+      /* Etwa jede dritte seilt sich an einem Faden ab, die anderen
+         krabbeln quer. */
+      const seilt = i % 3 === 0;
+      s2.className = "lc-spinne" + (seilt ? " lc-spinne-faden" : "");
+      s2.appendChild(lcSpinneSvg());
+      const gross = 26 + Math.random() * 34;
+      s2.style.width = gross.toFixed(0) + "px";
+      if (seilt) {
+        s2.style.left = (10 + Math.random() * 80).toFixed(1) + "%";
+        s2.style.setProperty("--lc-sp-tief", (28 + Math.random() * 44).toFixed(0) + "vh");
+        s2.style.animationDuration = (5 + Math.random() * 4).toFixed(1) + "s";
+      } else {
+        s2.style.top = (8 + Math.random() * 78).toFixed(1) + "%";
+        s2.style.setProperty("--lc-sp-hoch", ((Math.random() - 0.5) * 30).toFixed(0) + "vh");
+        s2.style.animationDuration = (6 + Math.random() * 5).toFixed(1) + "s";
+        /* Die Hälfte läuft von rechts nach links — dann gespiegelt. */
+        if (i % 2) s2.classList.add("lc-spinne-links");
+      }
+      s2.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
+      schicht.appendChild(s2);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 14000);
+  }
+
+  /* =================================================================
+     NOTEN, DIE WIRKLICH KLINGEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Und dann noch eine Animation mit Noten, die halt Musik
+     macht."
+
+     Der Reiz liegt darin, dass Bild und Ton DASSELBE sind: jede Note,
+     die aufsteigt, erklingt in dem Augenblick, in dem sie erscheint —
+     und ihre Höhe im Bild ist ihre Tonhöhe. Eine Note weiter oben
+     klingt also wirklich höher. Gespielt wird eine Dur-Tonleiter, weil
+     die in jeder Reihenfolge freundlich klingt.
+     ================================================================= */
+  const LC_NOTEN_TONLEITER = [261.63, 293.66, 329.63, 349.23,
+                              392.00, 440.00, 493.88, 523.25];
+  function lcNotenSvg(farbe, art) {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 60 80");
+    const kopf = document.createElementNS(NS_SVG, "ellipse");
+    kopf.setAttribute("cx", 20); kopf.setAttribute("cy", 62);
+    kopf.setAttribute("rx", 13); kopf.setAttribute("ry", 10);
+    kopf.setAttribute("fill", farbe);
+    kopf.setAttribute("transform", "rotate(-20 20 62)");
+    svg.appendChild(kopf);
+    const hals = document.createElementNS(NS_SVG, "rect");
+    hals.setAttribute("x", 30); hals.setAttribute("y", 8);
+    hals.setAttribute("width", 4.5); hals.setAttribute("height", 56);
+    hals.setAttribute("fill", farbe);
+    svg.appendChild(hals);
+    if (art > 0) {
+      const f = document.createElementNS(NS_SVG, "path");
+      f.setAttribute("d", art === 1
+        ? "M34.5 8 q16 6 15 20 q-1 -10 -15 -12 z"
+        : "M34.5 8 q16 6 15 20 q-1 -10 -15 -12 z M34.5 24 q16 6 15 20 q-1 -10 -15 -12 z");
+      f.setAttribute("fill", farbe);
+      svg.appendChild(f);
+    }
+    return svg;
+  }
+  function lcNoten() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcNoten")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcNoten";
+    schicht.className = "lc-noten";
+    schicht.setAttribute("aria-hidden", "true");
+
+    /* Fünf Notenlinien im Hintergrund — sie machen aus schwebenden
+       Zeichen eine Musik. */
+    for (let i = 0; i < 5; i++) {
+      const l = document.createElement("u");
+      l.style.top = (30 + i * 6) + "%";
+      l.style.animationDelay = (i * 0.09).toFixed(2) + "s";
+      schicht.appendChild(l);
+    }
+
+    const FARBEN = ["#9a5ac9", "#4a86c9", "#e0546a", "#5aa86b", "#e0964a"];
+    const wieviel = window.innerWidth < 560 ? 12 : 20;
+    for (let i = 0; i < wieviel; i++) {
+      const n = document.createElement("div");
+      n.className = "lc-note";
+      /* Die Tonhöhe bestimmt die HÖHE im Bild — eine hohe Note steht
+         oben und klingt hoch. */
+      const stufe = i % LC_NOTEN_TONLEITER.length;
+      const hoehe = 16 + (7 - stufe) * 8;
+      n.appendChild(lcNotenSvg(FARBEN[i % FARBEN.length], i % 3));
+      n.style.width = (26 + Math.random() * 18).toFixed(0) + "px";
+      n.style.left = (4 + (i / wieviel) * 88 + Math.random() * 4).toFixed(1) + "%";
+      n.style.top = hoehe.toFixed(1) + "%";
+      n.style.setProperty("--lc-no-seit", ((Math.random() - 0.5) * 90).toFixed(0) + "px");
+      const wann = 0.25 + i * 0.28;
+      n.style.animationDelay = wann.toFixed(2) + "s";
+      n.style.animationDuration = (2.4 + Math.random() * 1.1).toFixed(2) + "s";
+      schicht.appendChild(n);
+      /* Und genau dann erklingt sie auch. */
+      const hz = LC_NOTEN_TONLEITER[stufe];
+      setTimeout(() => lcTon((a, t) => {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = "triangle";
+        o.frequency.value = hz;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.09, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+        o.connect(g); g.connect(a.destination);
+        o.start(t); o.stop(t + 0.6);
+      }), wann * 1000);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 10000);
+  }
+
+  /* =================================================================
+     ARMAGEDDON
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Die Armageddon-Animation fehlt noch."
+
+     Weltuntergang heisst hier: der Himmel färbt sich rot, Meteoriten
+     schlagen ein, und der Boden reisst auf. Die Reihenfolge ist das
+     Wichtige — erst wird es rot (man ahnt etwas), dann kommen die
+     Brocken, dann kommen die Risse. Kämen die Risse zuerst, sähe es
+     aus wie ein Erdbeben mit Feuerwerk.
+     ================================================================= */
+  function lcArmageddon() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcEnde")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcEnde";
+    schicht.className = "lc-armageddon";
+    schicht.setAttribute("aria-hidden", "true");
+
+    /* Der rote Himmel liegt ganz hinten und bleibt am längsten. */
+    const himmel = document.createElement("b");
+    himmel.className = "lc-ende-himmel";
+    schicht.appendChild(himmel);
+
+    /* Die Meteoriten: schräg von oben, mit Feuerschweif, und jeder
+       endet in einem Aufschlagblitz. */
+    const brocken = window.innerWidth < 560 ? 9 : 16;
+    for (let i = 0; i < brocken; i++) {
+      const m = document.createElement("i");
+      m.style.left = (-10 + Math.random() * 105).toFixed(1) + "%";
+      m.style.setProperty("--lc-me-weit", (18 + Math.random() * 34).toFixed(0) + "vw");
+      m.style.setProperty("--lc-me-gross", (0.7 + Math.random() * 0.9).toFixed(2));
+      m.style.animationDelay = (0.7 + i * 0.32 + Math.random() * 0.3).toFixed(2) + "s";
+      m.style.animationDuration = (1.1 + Math.random() * 0.6).toFixed(2) + "s";
+      schicht.appendChild(m);
+    }
+    /* Die Einschläge am unteren Rand */
+    const knall = window.innerWidth < 560 ? 5 : 9;
+    for (let i = 0; i < knall; i++) {
+      const k = document.createElement("s");
+      k.style.left = (8 + Math.random() * 84).toFixed(1) + "%";
+      k.style.animationDelay = (1.6 + i * 0.52 + Math.random() * 0.3).toFixed(2) + "s";
+      schicht.appendChild(k);
+    }
+    /* Die Risse — als gezackte Linien, die sich aufziehen. */
+    const risse = document.createElementNS(NS_SVG, "svg");
+    risse.setAttribute("class", "lc-ende-risse");
+    risse.setAttribute("viewBox", "0 0 100 100");
+    risse.setAttribute("preserveAspectRatio", "none");
+    for (let r = 0; r < 5; r++) {
+      let x = 10 + r * 20, y = 100;
+      const punkte = ["M" + x + " " + y];
+      for (let i = 0; i < 7; i++) {
+        x += (Math.random() - 0.5) * 16;
+        y -= 8 + Math.random() * 9;
+        punkte.push("L" + x.toFixed(1) + " " + y.toFixed(1));
+      }
+      const pf = document.createElementNS(NS_SVG, "path");
+      pf.setAttribute("d", punkte.join(" "));
+      pf.style.animationDelay = (2.1 + r * 0.22).toFixed(2) + "s";
+      risse.appendChild(pf);
+    }
+    schicht.appendChild(risse);
+
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 8600);
+    /* Und der Raum bebt dazu — ein Einschlag ohne Beben wäre still. */
+    setTimeout(() => lcErdbeben(), 1500);
+  }
+
+  /* =================================================================
+     SINTFLUT — GOTTES ZORN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht kannst du noch eine Animation machen, die
+     Gottes Zorn heisst oder Sintflut, was dann realistisch aussieht."
+
+     Realistisch heisst bei steigendem Wasser vor allem: es steigt
+     LANGSAM und gleichmässig, und seine Oberfläche ist nicht gerade.
+     Deshalb drei Wellenbänder übereinander, die mit verschiedenen
+     Geschwindigkeiten seitlich wandern — erst dadurch entsteht der
+     Eindruck einer bewegten Fläche statt eines steigenden Balkens.
+     Dazu Regen von oben, Blitze und Dinge, die auf dem Wasser treiben.
+     ================================================================= */
+  function lcSintflut() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcFlut")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcFlut";
+    schicht.className = "lc-sintflut";
+    schicht.setAttribute("aria-hidden", "true");
+
+    /* Das steigende Wasser mit drei Wellenbändern */
+    const wasser = document.createElement("div");
+    wasser.className = "lc-flut-wasser";
+    for (let i = 0; i < 3; i++) {
+      const welle = document.createElementNS(NS_SVG, "svg");
+      welle.setAttribute("class", "lc-flut-welle lc-flut-welle-" + i);
+      welle.setAttribute("viewBox", "0 0 1200 120");
+      welle.setAttribute("preserveAspectRatio", "none");
+      const pf = document.createElementNS(NS_SVG, "path");
+      /* Zwei gleiche Bögen hintereinander — so kann das Band endlos
+         seitlich laufen, ohne dass man den Ansatz sieht. */
+      const bogen = "q150 -40 300 0 t300 0";
+      pf.setAttribute("d", "M0 40 " + bogen + " " + bogen + " V120 H0 Z");
+      welle.appendChild(pf);
+      wasser.appendChild(welle);
+    }
+    /* Treibgut auf der Wasseroberfläche — und zwar WIRKLICH darauf.
+       Beim ersten Versuch hingen die Stücke in der Schicht darüber und
+       stiegen nach eigener Rechnung auf; sie trieben dadurch mitten im
+       Wasser statt oben. Jetzt sitzen sie IM Wasserkasten, an seiner
+       Oberkante — damit steigen sie von selbst mit dem Pegel und
+       müssen nur noch schaukeln. */
+    const treibgut = ["🪵", "🚢", "🧳", "🌳", "🛢️"];
+    const wieviel = window.innerWidth < 560 ? 5 : 9;
+    for (let i = 0; i < wieviel; i++) {
+      const t = document.createElement("span");
+      t.className = "lc-flut-treibt";
+      t.textContent = treibgut[i % treibgut.length];
+      t.style.left = (4 + Math.random() * 90).toFixed(1) + "%";
+      t.style.animationDelay = (Math.random() * 2.2).toFixed(2) + "s";
+      t.style.animationDuration = (2.6 + Math.random() * 2.2).toFixed(1) + "s";
+      wasser.appendChild(t);
+    }
+    schicht.appendChild(wasser);
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 13000);
+    /* Der Regen und die Blitze kommen aus den vorhandenen Mitteln —
+       eine Sintflut ist ja Regen, nur mehr davon. */
+    lcWetter("sturm");
+    lcGewitter();
+  }
+
+  /* =================================================================
+     ÄGYPTEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Eine Animation, die Ägypten heisst, wo Pyramiden und
+     die Sphinx sind, und dann so ein Sandsturm — so ein bisschen
+     leicht angedeutet — und das Gleissen der warmen Sonne in der
+     Wüste."
+
+     „Leicht angedeutet" ist hier die eigentliche Vorgabe: der Sand
+     zieht in dünnen Schlieren waagerecht durch, er verdeckt nichts.
+     Das Gleissen entsteht aus zwei Dingen — einem sehr weichen
+     Hitzeschleier über dem Boden und einer Sonne, die atmet.
+     ================================================================= */
+  function lcAegypten() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcWueste")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcWueste";
+    schicht.className = "lc-aegypten";
+    schicht.setAttribute("aria-hidden", "true");
+
+    const bild = document.createElementNS(NS_SVG, "svg");
+    bild.setAttribute("class", "lc-wueste-bild");
+    bild.setAttribute("viewBox", "0 0 400 200");
+    bild.setAttribute("preserveAspectRatio", "xMidYMax slice");
+    const pf = (d, f, kl) => {
+      const e = document.createElementNS(NS_SVG, "path");
+      e.setAttribute("d", d);
+      e.setAttribute("fill", f);
+      /* fill="none" heisst hier: das ist eine LINIE, kein Umriss —
+         Fugen im Mauerwerk, Streifen im Kopftuch, Zehen an den
+         Pranken. Ohne Strichfarbe waere sie unsichtbar. */
+      if (f === "none") {
+        e.setAttribute("stroke", "rgba(140, 100, 46, .5)");
+        e.setAttribute("stroke-width", "1.6");
+        e.setAttribute("stroke-linecap", "round");
+      }
+      if (kl) e.setAttribute("class", kl);
+      bild.appendChild(e);
+      return e;
+    };
+    /* Der Himmel als Verlauf */
+    const defs = document.createElementNS(NS_SVG, "defs");
+    defs.innerHTML = '<linearGradient id="lcHimmelWueste" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#e9b46a"/><stop offset="55%" stop-color="#f2cf8e"/>'
+      + '<stop offset="100%" stop-color="#f7e2b4"/></linearGradient>';
+    bild.appendChild(defs);
+    pf("M0 0 H400 V150 H0 Z", "url(#lcHimmelWueste)");
+    /* Die Sonne, tief und gleissend */
+    /* ACHTUNG BEI DEN X-WERTEN: preserveAspectRatio „slice" schneidet
+       links und rechts ab, sobald das Fenster breiter ist als das
+       Bild. Alles Wichtige muss deshalb in der Mitte stehen, etwa
+       zwischen 80 und 320 — beim ersten Versuch stand die Sphinx bei
+       282 bis 342 und wurde am Rand abgeschnitten. */
+    const sonne = document.createElementNS(NS_SVG, "circle");
+    sonne.setAttribute("cx", 288); sonne.setAttribute("cy", 56);
+    sonne.setAttribute("r", 26); sonne.setAttribute("fill", "#fff3c4");
+    sonne.setAttribute("class", "lc-wueste-sonne");
+    bild.appendChild(sonne);
+    /* Drei Pyramiden, die hinterste am blassesten — so entsteht Tiefe */
+    pf("M74 150 L126 62 L178 150 Z", "#c9964e");
+    pf("M126 62 L178 150 L152 150 Z", "#b07f3d");
+    pf("M168 150 L202 92 L236 150 Z", "#d2a25c");
+    pf("M202 92 L236 150 L219 150 Z", "#bb8a45");
+    pf("M228 150 L250 112 L272 150 Z", "#dcb173");
+    /* Die Sphinx: liegender Körper, davor die ausgestreckten
+       Vorderpranken, darüber der Kopf mit dem Nemes-Kopftuch. Die
+       Pranken sind das Merkmal, an dem man sie überhaupt von einem
+       Sandhügel unterscheidet. */
+    /* Woran man eine Sphinx erkennt, ist die SILHOUETTE, nicht das
+       Gesicht — bei dieser Grösse sieht man vom Gesicht ohnehin kaum
+       etwas. Drei Dinge machen sie aus, und alle drei fehlten beim
+       ersten Versuch (da sass ein Kopf auf einer Kuppel, das las sich
+       als Gestalt mit Kapuze):
+         1. ein LANGER, NIEDRIGER Leib, der waagerecht liegt,
+         2. zwei VORDERPRANKEN, die weit nach vorn gestreckt sind und
+            zwischen denen eine Lücke bleibt,
+         3. das NEMES-KOPFTUCH, das nach unten deutlich BREITER wird
+            als der Hals — daher die typische Dreiecksform des Kopfes.
+       Sie steht vor den Pyramiden und schaut nach links. */
+    /* Alles Folgende gehört zur Sphinx und wird gemeinsam verkleinert.
+       Beim ersten Versuch war sie so hoch wie die grosse Pyramide —
+       in Wirklichkeit ist sie ein Bruchteil davon und steht DAVOR.
+       Der Maßstab ist deshalb kein Schönheitsfehler, sondern das,
+       woran man die Szene als Gizeh erkennt. */
+    const sph = document.createElementNS(NS_SVG, "g");
+    /* Die Verschiebung ist ausgerechnet, nicht geschätzt: die Sphinx
+       misst im Entwurf x 206…316 und y 72…150. Bei Faktor 0,56 soll
+       ihre linke Kante auf 250 liegen und ihr Fuss auf der Grundlinie
+       150 — also 250 − 206·0,56 = 135 und 150 − 150·0,56 = 66. Beim
+       ersten Versuch stand dort 186, und sie rutschte aus dem
+       sichtbaren Mittelfeld heraus. */
+    sph.setAttribute("transform", "translate(135 66) scale(0.56)");
+    const altesZiel = bild;
+    const pfS = (d, f) => {
+      const e = document.createElementNS(NS_SVG, "path");
+      e.setAttribute("d", d);
+      e.setAttribute("fill", f);
+      if (f === "none") {
+        e.setAttribute("stroke", "rgba(140, 100, 46, .5)");
+        e.setAttribute("stroke-width", "2.6");
+        e.setAttribute("stroke-linecap", "round");
+      }
+      sph.appendChild(e);
+    };
+    /* Die beiden Vorderpranken, weit nach vorn */
+    pfS("M206 150 q0 -9 10 -9 h58 v9 z", "#c9964e");
+    pfS("M206 143 q0 -7 10 -7 h56", "none");
+    pfS("M214 150 v-8 M232 150 v-7 M250 150 v-7", "none");
+    /* Der liegende Leib mit ansteigender Brust */
+    /* Der Leib setzt WEITER LINKS an als die Pranken enden — sonst
+       klafft zwischen beiden eine Lücke und die Pranken sehen aus wie
+       ein Balken, der daneben liegt. */
+    pfS("M214 150 q6 -20 46 -26 q10 -2 18 -14 l30 0 q20 6 22 40 z", "#cf9f58");
+    /* Die Schattenseite des Leibes — sie gibt ihm Rundung */
+    pfS("M278 110 q22 8 24 40 h-18 q0 -30 -14 -38 z", "#bd8e3e");
+    /* Das Nemes-Kopftuch: oben schmal, unten breit ausgestellt */
+    pfS("M268 118 L276 82 q6 -10 16 -10 q10 0 16 10 l8 36 z", "#ddb475");
+    /* Die Streifen im Kopftuch */
+    pfS("M272 104 h40 M270 112 h44", "none");
+    /* Das Gesicht sitzt in der Mitte des Tuches */
+    pfS("M280 88 q12 0 24 0 q0 22 -12 26 q-12 -4 -12 -26 z", "#e8c48d");
+    pfS("M285 98 q7 5 14 0", "#8a6531");
+    /* Der abgebrochene Bart unter dem Kinn — auch das gehört dazu */
+    pfS("M288 112 h8 l-2 10 h-4 z", "#c9964e");
+    bild.appendChild(sph);
+
+    /* Der Boden */
+    pf("M0 150 q100 -14 200 0 t200 0 V200 H0 Z", "#e6c489");
+    /* Ein Hitzeschleier knapp über dem Boden */
+    const flirr = document.createElementNS(NS_SVG, "rect");
+    flirr.setAttribute("x", 0); flirr.setAttribute("y", 138);
+    flirr.setAttribute("width", 400); flirr.setAttribute("height", 26);
+    flirr.setAttribute("fill", "rgba(255,255,255,.34)");
+    flirr.setAttribute("class", "lc-wueste-flirr");
+    bild.appendChild(flirr);
+    schicht.appendChild(bild);
+
+    /* Der Sandsturm: dünne Schlieren, die waagerecht durchziehen. */
+    const schlieren = window.innerWidth < 560 ? 16 : 30;
+    for (let i = 0; i < schlieren; i++) {
+      const sc = document.createElement("i");
+      sc.style.top = (30 + Math.random() * 66).toFixed(1) + "%";
+      sc.style.width = (80 + Math.random() * 260).toFixed(0) + "px";
+      sc.style.height = (1.5 + Math.random() * 4).toFixed(1) + "px";
+      sc.style.animationDuration = (1.5 + Math.random() * 2.2).toFixed(2) + "s";
+      sc.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+      sc.style.opacity = (0.16 + Math.random() * 0.3).toFixed(2);
+      schicht.appendChild(sc);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 12000);
+  }
+
+  /* =================================================================
+     OSTERN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Eine Osteranimation fehlt auch noch."
+
+     Ostern ist Frühling: bunte Eier, die vom Himmel purzeln und unten
+     leicht aufhüpfen (ein Ei rollt, es bleibt nicht liegen), Blüten,
+     die durchs Bild treiben, und ein Hase, der zweimal hoppelt und
+     wieder verschwindet.
+     ================================================================= */
+  const LC_EIERFARBEN = ["#e0546a", "#f2c14e", "#5fc9c2", "#b48ce8", "#7fb069", "#ef9ec4"];
+  function lcOsterEi(farbe, muster) {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 40 52");
+    const ei = document.createElementNS(NS_SVG, "path");
+    /* Ein Ei ist oben schmaler als unten — eine Ellipse wäre ein Ball. */
+    ei.setAttribute("d", "M20 2 C31 2 38 20 38 32 C38 43 30 50 20 50 "
+                       + "C10 50 2 43 2 32 C2 20 9 2 20 2 Z");
+    ei.setAttribute("fill", farbe);
+    svg.appendChild(ei);
+    const m = document.createElementNS(NS_SVG, "path");
+    m.setAttribute("fill", "none");
+    m.setAttribute("stroke", "rgba(255,255,255,.8)");
+    m.setAttribute("stroke-width", "3");
+    m.setAttribute("stroke-linecap", "round");
+    if (muster === 0) m.setAttribute("d", "M4 24 h32 M5 34 h30");
+    else if (muster === 1) m.setAttribute("d", "M6 20 q7 6 14 0 t14 0 M5 34 q7 6 14 0 t14 0");
+    else m.setAttribute("d", "M13 16 v4 M27 16 v4 M20 27 v4 M13 38 v4 M27 38 v4");
+    svg.appendChild(m);
+    return svg;
+  }
+  function lcOstern() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcOstern")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcOstern";
+    schicht.className = "lc-ostern";
+    schicht.setAttribute("aria-hidden", "true");
+
+    const eier = window.innerWidth < 560 ? 16 : 28;
+    for (let i = 0; i < eier; i++) {
+      const e = document.createElement("div");
+      e.className = "lc-ei";
+      e.appendChild(lcOsterEi(LC_EIERFARBEN[i % LC_EIERFARBEN.length], i % 3));
+      e.style.width = (22 + Math.random() * 18).toFixed(0) + "px";
+      e.style.left = (Math.random() * 96).toFixed(1) + "%";
+      e.style.animationDuration = (3.2 + Math.random() * 2).toFixed(2) + "s";
+      e.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
+      e.style.setProperty("--lc-ei-dreh", ((Math.random() < 0.5 ? -1 : 1)
+        * (140 + Math.random() * 300)).toFixed(0) + "deg");
+      schicht.appendChild(e);
+    }
+    /* Blüten, die treiben */
+    const blueten = window.innerWidth < 560 ? 10 : 18;
+    for (let i = 0; i < blueten; i++) {
+      const b = document.createElement("span");
+      b.className = "lc-bluete";
+      b.textContent = i % 2 ? "🌸" : "🌷";
+      b.style.left = (Math.random() * 100).toFixed(1) + "%";
+      b.style.fontSize = (12 + Math.random() * 14).toFixed(0) + "px";
+      b.style.animationDuration = (5 + Math.random() * 4).toFixed(1) + "s";
+      b.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+      b.style.setProperty("--lc-bl-seit", ((Math.random() - 0.5) * 220).toFixed(0) + "px");
+      schicht.appendChild(b);
+    }
+    /* Der Hase hoppelt einmal durch */
+    const hase = document.createElement("b");
+    hase.className = "lc-hase";
+    hase.textContent = "🐇";
+    schicht.appendChild(hase);
+
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 11000);
+  }
+
+  /* =================================================================
+     NEUGIERIGE AUGEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht machen wir noch so eine Animation bei den
+     animierten Bildern, wo so Augen sind, die so neugierig gucken —
+     solche Comic-Augen. Das gibt's auch als Emoji bei uns, soll aber
+     animiert sein."
+
+     Neugierig ist eine Frage der BEWEGUNG, nicht der Form. Drei Dinge
+     machen es aus: die Pupillen wandern gemeinsam in eine Richtung und
+     halten dort kurz an (ein Blick geht irgendwohin, er schwimmt
+     nicht), dazwischen wird geblinzelt, und zwar mit beiden Lidern
+     gleichzeitig und schnell. Die Augen selbst wackeln dabei leicht —
+     jemand, der neugierig ist, hält nicht still.
+     ================================================================= */
+  function lcAugenPaar(gross) {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 120 70");
+    svg.setAttribute("class", "lc-augen-svg");
+    [[34, 35], [86, 35]].forEach(([cx, cy], i) => {
+      const g = document.createElementNS(NS_SVG, "g");
+      /* Der Augapfel */
+      const weiss = document.createElementNS(NS_SVG, "ellipse");
+      weiss.setAttribute("cx", cx); weiss.setAttribute("cy", cy);
+      weiss.setAttribute("rx", 26); weiss.setAttribute("ry", 30);
+      weiss.setAttribute("fill", "#fdfdfd");
+      weiss.setAttribute("stroke", "rgba(40,30,20,.5)");
+      weiss.setAttribute("stroke-width", "2.5");
+      g.appendChild(weiss);
+      /* Die Pupille wandert — sie sitzt in einer eigenen Gruppe. */
+      const p = document.createElementNS(NS_SVG, "g");
+      p.setAttribute("class", "lc-pupille raum");
+      const iris = document.createElementNS(NS_SVG, "circle");
+      iris.setAttribute("cx", cx); iris.setAttribute("cy", cy);
+      iris.setAttribute("r", 13); iris.setAttribute("fill", "#4a86c9");
+      const kern = document.createElementNS(NS_SVG, "circle");
+      kern.setAttribute("cx", cx); kern.setAttribute("cy", cy);
+      kern.setAttribute("r", 7); kern.setAttribute("fill", "#1b1b22");
+      const glanz = document.createElementNS(NS_SVG, "circle");
+      glanz.setAttribute("cx", cx - 5); glanz.setAttribute("cy", cy - 6);
+      glanz.setAttribute("r", 3.4); glanz.setAttribute("fill", "rgba(255,255,255,.92)");
+      p.appendChild(iris); p.appendChild(kern); p.appendChild(glanz);
+      g.appendChild(p);
+      /* Das Lid: eine Fläche, die von oben herunterklappt. */
+      const lid = document.createElementNS(NS_SVG, "ellipse");
+      lid.setAttribute("cx", cx); lid.setAttribute("cy", cy);
+      lid.setAttribute("rx", 27); lid.setAttribute("ry", 31);
+      lid.setAttribute("fill", "#f3b57b");
+      lid.setAttribute("class", "lc-lid");
+      g.appendChild(lid);
+      svg.appendChild(g);
+    });
+    return svg;
+  }
+  function lcAugen() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcAugen")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcAugen";
+    schicht.className = "lc-augen";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Mehrere Paare an verschiedenen Stellen, verschieden gross —
+       als schaute der halbe Raum herüber. */
+    const paare = window.innerWidth < 560 ? 3 : 5;
+    for (let i = 0; i < paare; i++) {
+      const a = document.createElement("div");
+      a.className = "lc-augenpaar";
+      a.appendChild(lcAugenPaar());
+      a.style.width = (70 + Math.random() * 90).toFixed(0) + "px";
+      a.style.left = (6 + (i * 88 / paare) + Math.random() * 8).toFixed(1) + "%";
+      a.style.top = (12 + Math.random() * 62).toFixed(1) + "%";
+      a.style.animationDelay = (i * 0.28).toFixed(2) + "s";
+      /* Jedes Paar guckt in seinem eigenen Takt. */
+      a.style.setProperty("--lc-au-takt", (2.6 + Math.random() * 1.8).toFixed(2) + "s");
+      schicht.appendChild(a);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 9000);
+  }
+
+  /* =================================================================
      ORKAN — DIE BUCHSTABEN WERDEN DURCHEINANDERGEPUSTET
      -----------------------------------------------------------------
      GEWÜNSCHT: „Vielleicht könnte noch eine Wind-Animation dabei sein,
@@ -14189,24 +15154,59 @@
     feuer.className = "lc-feuerstelle";
     const NS = NS_SVG;
     const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("viewBox", "0 0 160 150");
+    svg.setAttribute("viewBox", "0 0 200 220");
     const p = (d, f, kl) => {
       const e = document.createElementNS(NS, "path");
       e.setAttribute("d", d); e.setAttribute("fill", f);
       if (kl) e.setAttribute("class", kl);
       return e;
     };
-    /* Die Scheite liegen gekreuzt — das ist das Zeichen für ein
-       Lagerfeuer, auch wenn man nur die Silhouette sieht. */
-    svg.appendChild(p("M22 132 L138 108 L142 122 L26 146 Z", "#6b4526"));
-    svg.appendChild(p("M22 108 L138 132 L134 146 L18 122 Z", "#7d5330"));
-    /* Drei Flammenzungen, von aussen nach innen heller */
-    svg.appendChild(p("M80 116 q-36 -22 -26 -54 q4 18 16 24 q-10 -34 14 -56 "
-                    + "q-4 26 12 38 q10 8 8 22 q-2 18 -24 26 z", "#d64b1e", "fl fl1"));
-    svg.appendChild(p("M80 116 q-24 -16 -18 -40 q3 13 11 17 q-7 -24 10 -40 "
-                    + "q-3 19 8 27 q7 6 6 16 q-2 13 -17 20 z", "#f2871e", "fl fl2"));
-    svg.appendChild(p("M80 116 q-13 -9 -10 -23 q2 8 6 10 q-4 -14 6 -23 "
-                    + "q-2 11 5 16 q4 3 3 9 q-1 8 -10 11 z", "#ffd45e", "fl fl3"));
+    /* GEMELDET: „Das Lagerfeuer ist ziemlich schwach. Ich weiss nicht,
+       ob man das nicht realistischer machen könnte mit den Flammen,
+       nach dem Prinzip von diesen Luft-Dispensern, die mehrere Lagen
+       haben, die so ein bisschen wie Feuer wirken durch die Lagen, die
+       immer flackern und die Transparenzen verändern."
+
+       Genau so ist es jetzt gebaut, und das ist der ganze Trick: NICHT
+       eine Flammenform, die sich bewegt, sondern SIEBEN halb
+       durchsichtige Zungen übereinander, jede mit eigenem Takt, eigener
+       Breite und eigener Höhe. Wo zwei sich überlagern, wird es heller
+       — dafür sorgt mix-blend-mode: screen. Dadurch entstehen von
+       selbst die hellen Kerne und dunklen Ränder, die echtes Feuer hat,
+       ohne dass irgendwo ein Kern gezeichnet wäre.
+
+       Sieben ist die Zahl, ab der das Auge kein Muster mehr findet:
+       bei drei sieht man noch, dass sich etwas wiederholt. */
+    /* Die Scheite, gekreuzt — das Zeichen für ein Lagerfeuer. */
+    svg.appendChild(p("M22 196 L178 164 L184 184 L28 216 Z", "#6b4526"));
+    svg.appendChild(p("M22 164 L178 196 L172 216 L16 184 Z", "#7d5330"));
+    /* Die Glut zwischen den Scheiten */
+    svg.appendChild(p("M60 192 q40 -14 80 0 q-40 14 -80 0 z", "#ff7b2e", "glut"));
+
+    const ZUNGEN = [
+      { d: "M100 190 q-46 -30 -34 -78 q6 26 22 34 q-18 -48 16 -80 "
+         + "q-6 34 16 52 q14 12 12 32 q-2 26 -32 40 z", f: "#d63d12", t: ".72s" },
+      { d: "M100 190 q-38 -26 -28 -66 q5 22 18 29 q-15 -40 13 -68 "
+         + "q-5 29 13 44 q12 10 10 27 q-2 22 -26 34 z", f: "#e8571a", t: ".58s" },
+      { d: "M100 190 q-30 -22 -22 -54 q4 18 14 24 q-12 -33 11 -56 "
+         + "q-4 24 11 36 q10 8 8 22 q-2 18 -22 28 z", f: "#f4761f", t: ".47s" },
+      { d: "M100 190 q-24 -18 -18 -44 q3 15 11 19 q-10 -27 9 -46 "
+         + "q-3 20 9 30 q8 6 6 18 q-2 15 -17 23 z", f: "#f99b24", t: ".39s" },
+      { d: "M100 190 q-18 -14 -13 -34 q2 12 8 15 q-8 -21 7 -36 "
+         + "q-2 16 7 23 q6 5 5 14 q-1 12 -14 18 z", f: "#fdbc3a", t: ".33s" },
+      { d: "M100 190 q-13 -10 -9 -25 q2 9 6 11 q-6 -16 5 -27 "
+         + "q-2 12 5 17 q5 4 4 11 q-1 9 -11 13 z", f: "#ffd76b", t: ".28s" },
+      { d: "M100 190 q-8 -7 -6 -17 q1 6 4 7 q-4 -11 3 -18 "
+         + "q-1 8 4 12 q3 3 2 8 q-1 6 -7 8 z", f: "#fff0b8", t: ".23s" },
+    ];
+    ZUNGEN.forEach((z, i) => {
+      const e = p(z.d, z.f, "fl fl" + i);
+      e.style.animationDuration = z.t;
+      /* Jede Zunge startet an einer anderen Stelle ihres Taktes —
+         sonst zucken alle sieben im Gleichschritt. */
+      e.style.animationDelay = "-" + (i * 0.11).toFixed(2) + "s";
+      svg.appendChild(e);
+    });
     feuer.appendChild(svg);
     schicht.appendChild(feuer);
 
@@ -14270,16 +15270,44 @@
       st.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
       schicht.appendChild(st);
     }
-    /* Die Schnuppen selbst */
-    const wieviel = window.innerWidth < 560 ? 6 : 10;
+    /* GEMELDET: „Bei dem Thema Sternschnuppen sieht man so gut wie
+       nichts, es fallen gar keine Sternschnuppen."
+
+       Das stimmte, und es lag an der Geometrie. Der Streifen wurde
+       gedreht UND danach entlang seiner eigenen, mitgedrehten Achse
+       verschoben (rotate … translateX), mit transform-origin am
+       rechten Rand und einem scaleX von 0,2 am Anfang. Drei
+       verschachtelte Umrechnungen — und wo der Streifen am Ende
+       wirklich landete, liess sich kaum noch vorhersagen; meist
+       ausserhalb des Bildes.
+
+       Jetzt ganz einfach: jede Schnuppe bekommt einen Start- und einen
+       Zielpunkt in Prozent des Fensters, und dazwischen wird gerade
+       verschoben. Der Streifen selbst ist einmal gedreht, und zwar so,
+       wie die Bahn verläuft — ausgerechnet, nicht geraten. Dadurch
+       zeigt der Schweif immer genau nach hinten.
+
+       Ausserdem fliegen sie WIEDERHOLT: eine Schnuppe alle paar
+       Sekunden ist ein Sternenhimmel, zehn auf einmal ein Feuerwerk. */
+    const wieviel = window.innerWidth < 560 ? 7 : 12;
     for (let i = 0; i < wieviel; i++) {
+      const vonX = 10 + Math.random() * 70;
+      const vonY = 2 + Math.random() * 26;
+      /* Sie fallen schräg nach rechts unten — flach, wie echte
+         Schnuppen, nicht senkrecht wie Regen. */
+      const weit = 22 + Math.random() * 30;
+      const tief = weit * (0.42 + Math.random() * 0.34);
+      const winkel = Math.atan2(tief * window.innerHeight / 100,
+                                weit * window.innerWidth / 100) * 180 / Math.PI;
       const s2 = document.createElement("i");
-      s2.style.left = (18 + Math.random() * 74).toFixed(1) + "%";
-      s2.style.top = (2 + Math.random() * 34).toFixed(1) + "%";
-      s2.style.setProperty("--lc-ss-lang", (120 + Math.random() * 190).toFixed(0) + "px");
-      s2.style.setProperty("--lc-ss-neig", (26 + Math.random() * 22).toFixed(0) + "deg");
-      s2.style.animationDelay = (i * 1.15 + Math.random() * 0.7).toFixed(2) + "s";
-      s2.style.animationDuration = (0.85 + Math.random() * 0.5).toFixed(2) + "s";
+      s2.style.left = vonX.toFixed(1) + "%";
+      s2.style.top = vonY.toFixed(1) + "%";
+      s2.style.width = (110 + Math.random() * 130).toFixed(0) + "px";
+      s2.style.setProperty("--lc-ss-dreh", winkel.toFixed(1) + "deg");
+      s2.style.setProperty("--lc-ss-x", weit.toFixed(1) + "vw");
+      s2.style.setProperty("--lc-ss-y", tief.toFixed(1) + "vh");
+      s2.style.animationDelay = (i * 0.9 + Math.random() * 0.6).toFixed(2) + "s";
+      s2.style.animationDuration = (1 + Math.random() * 0.5).toFixed(2) + "s";
       schicht.appendChild(s2);
     }
     document.body.appendChild(schicht);
@@ -14415,78 +15443,178 @@
 
   function lcSchlittenSvg() {
     const svg = document.createElementNS(NS_SVG, "svg");
-    svg.setAttribute("viewBox", "0 0 300 120");
+    svg.setAttribute("viewBox", "0 0 460 160");
     svg.setAttribute("class", "lc-schlitten-svg");
-    const p = (d, f, s2, w) => {
+    const p = (d, f, s2, w, kl) => {
       const e = document.createElementNS(NS_SVG, "path");
       e.setAttribute("d", d);
       e.setAttribute("fill", f || "none");
       if (s2) { e.setAttribute("stroke", s2); e.setAttribute("stroke-width", w || 3); }
       e.setAttribute("stroke-linejoin", "round");
       e.setAttribute("stroke-linecap", "round");
+      if (kl) e.setAttribute("class", kl);
       return e;
     };
-    /* Zwei Rentiere vorn — im Profil, mit Geweih und laufenden Beinen. */
-    [0, 1].forEach((i) => {
+
+    /* GEMELDET: „Da sind die Rentiere HINTER dem Schlitten und zeigen
+       in die andere Richtung, als wenn sie nach links wollen, und der
+       Weihnachtsmann fährt mit seinem Schlitten nach rechts. Die
+       sollen eigentlich VOR den Schlitten gespannt sein und dieselbe
+       Richtung gucken wie der Schlitten."
+
+       Beides stimmte, und beides hatte dieselbe Ursache: die Tiere
+       waren bei x = 18 und 72 gezeichnet, der Schlitten bei x = 150
+       bis 260 — also standen sie LINKS davon. Das wäre richtig, wenn
+       das Gespann nach links führe; es fährt aber nach rechts. Und
+       ihre Köpfe zeigten nach rechts oben aus dem Körper heraus, was
+       bei einem nach links laufenden Tier passt, nicht bei einem nach
+       rechts laufenden.
+
+       Jetzt ist die Fahrtrichtung durchgehend NACH RECHTS: der
+       Schlitten steht links (x 20…170), das Gespann rechts davon
+       (x 190…440), alle Tiere schauen nach rechts, und die Zugleine
+       läuft vom Schlittenbug nach vorn zu den Geschirren. */
+
+    /* ---------- Der Schlitten, links ---------- */
+    /* Die Kufe: vorn hochgebogen, das ist die Form, an der man einen
+       Schlitten erkennt. */
+    svg.appendChild(p("M26 138 q-10 -2 -8 -12 M26 138 h120 q16 0 22 -12",
+                      "", "#8c5a1e", 6));
+    svg.appendChild(p("M40 120 v18 M92 120 v18 M138 120 v16", "", "#8c5a1e", 5));
+    /* Die Wanne, hinten hoch geschwungen */
+    svg.appendChild(p("M24 118 q-8 -44 14 -54 h92 q22 4 26 30 l4 24 z", "#b3312a"));
+    svg.appendChild(p("M24 118 q-8 -44 14 -54 h20 q-14 16 -10 54 z", "#8f231e"));
+    /* Goldene Zierleiste */
+    svg.appendChild(p("M30 96 q54 -10 122 -4", "", "#e8b64a", 4));
+    /* Der hoch geschwungene Bug hinten */
+    svg.appendChild(p("M26 66 q-16 -10 -14 -28 q1 -12 13 -9 q10 3 8 17", "", "#b3312a", 9));
+
+    /* Die Geschenke im Schlitten */
+    [[46, 40, "#f2c14e", 26], [80, 34, "#5fc9c2", 30], [116, 42, "#b48ce8", 24]].forEach(
+      ([gx, gy, f, gr]) => {
+        const r = document.createElementNS(NS_SVG, "rect");
+        r.setAttribute("x", gx); r.setAttribute("y", gy);
+        r.setAttribute("width", gr); r.setAttribute("height", gr - 4);
+        r.setAttribute("rx", 3); r.setAttribute("fill", f);
+        svg.appendChild(r);
+        svg.appendChild(p("M" + (gx + gr / 2) + " " + gy + " v" + (gr - 4)
+                        + " M" + gx + " " + (gy + gr / 2 - 2) + " h" + gr,
+                          "", "rgba(255,255,255,.85)", 3));
+      });
+
+    /* ---------- Der Weihnachtsmann ---------- */
+    /* Er sitzt vorn im Schlitten und schaut nach rechts, also in die
+       Fahrtrichtung. Mantel, Gürtel, Bart, Mütze, und die Zügel in
+       der Hand. */
+    const wm = document.createElementNS(NS_SVG, "g");
+    const pw = (d, f, s2, w) => wm.appendChild(p(d, f, s2, w));
+    pw("M118 110 q-6 -40 14 -48 q20 -8 30 6 q8 12 6 42 z", "#c0392b");   // Mantel
+    pw("M116 92 h56", "", "#3a2b1c", 7);                                  // Guertel
+    pw("M140 88 h10 v10 h-10 z", "#e8b64a");                              // Schnalle
+    pw("M150 70 q16 -4 24 4 q6 6 0 12 q-12 -2 -22 -6 z", "#c0392b");      // Arm nach vorn
+    pw("M170 78 q10 -2 14 4", "", "#f3d5b5", 7);                          // Hand
+    pw("M134 56 q0 -18 16 -18 q16 0 16 18 q0 16 -16 18 q-16 -2 -16 -18 z", "#f3d5b5"); // Gesicht
+    pw("M132 60 q4 26 20 24 q14 -2 14 -16 q-16 8 -34 -8 z", "#fdfdfd");   // Bart
+    pw("M144 52 q6 4 12 0", "", "#8a5a3a", 2.4);                          // Augen/Mund
+    pw("M132 40 q10 -16 28 -10 q10 4 6 12 q-18 -8 -34 -2 z", "#c0392b");  // Muetze
+    const bommel = document.createElementNS(NS_SVG, "circle");
+    bommel.setAttribute("cx", 128); bommel.setAttribute("cy", 44);
+    bommel.setAttribute("r", 7); bommel.setAttribute("fill", "#fdfdfd");
+    wm.appendChild(bommel);
+    svg.appendChild(wm);
+
+    /* ---------- Die Zugleine ---------- */
+    svg.appendChild(p("M182 82 q40 6 70 2 M252 84 q40 6 70 2 M322 86 q36 6 68 0",
+                      "", "#6b4526", 3));
+
+    /* ---------- Drei Rentiere, VOR dem Schlitten, nach rechts ---------- */
+    /* Ein Rentier im Profil: Rumpf, Hals nach VORN OBEN, Kopf mit
+       Schnauze nach rechts, Geweih, vier Beine im Galopp. Die
+       Beinpaare bewegen sich gegenläufig — ein Galopp, bei dem alle
+       vier gleichzeitig ausschlagen, sieht aus wie ein Sprung auf der
+       Stelle. */
+    [200, 276, 352].forEach((x, i) => {
       const g = document.createElementNS(NS_SVG, "g");
       g.setAttribute("class", "lc-rentier lc-rentier-" + i);
-      const x = 18 + i * 54;
-      g.appendChild(p("M" + x + " 62 q14 -10 30 -2 q8 4 8 12 l-2 14 "
-                    + "q-16 6 -34 0 q-6 -12 -2 -24 z", "#8a5a34"));
-      /* Kopf und Hals */
-      g.appendChild(p("M" + (x + 30) + " 52 q10 -12 16 -12 q6 0 6 8 "
-                    + "q0 8 -8 12 q-8 4 -14 0 z", "#9a6a3e"));
-      /* Geweih — das macht ein Reh zum Rentier */
-      g.appendChild(p("M" + (x + 40) + " 40 l-3 -14 m0 0 l-7 -5 m7 5 l6 -7 "
-                    + "M" + (x + 46) + " 40 l4 -13 m0 0 l7 -4 m-7 4 l-5 -8",
-                      "", "#6b4526", 2.6));
-      /* Beine, die im Galopp stehen */
-      g.appendChild(p("M" + (x + 6) + " 84 l-4 16 M" + (x + 16) + " 86 l3 15 "
-                    + "M" + (x + 28) + " 84 l-3 16 M" + (x + 38) + " 84 l5 15",
-                      "", "#6b4526", 3.4));
+      const pr = (d, f, s2, w, kl) => g.appendChild(p(d, f, s2, w, kl));
+      /* Hinterbeine (hinter dem Rumpf) */
+      pr("M" + (x + 8) + " 96 q-4 16 -8 24 M" + (x + 18) + " 98 q2 16 6 22",
+         "", "#6b4526", 4.5, "lc-bein lc-bein-h");
+      /* Rumpf */
+      pr("M" + x + " 78 q6 -12 24 -12 q16 0 22 10 q4 8 2 20 q-2 10 -14 12 "
+       + "q-18 2 -30 -6 q-8 -8 -4 -24 z", "#8a5a34");
+      /* Brust und Hals nach vorn oben */
+      pr("M" + (x + 40) + " 76 q10 -12 16 -22 q4 -8 12 -6 q8 2 6 12 "
+       + "q-2 10 -12 18 q-8 6 -20 4 z", "#9a6a3e");
+      /* Kopf mit Schnauze nach RECHTS */
+      pr("M" + (x + 60) + " 48 q12 -6 18 2 q4 6 -2 10 q-8 6 -18 2 z", "#9a6a3e");
+      pr("M" + (x + 76) + " 52 q6 0 7 4 q-3 4 -8 3 z", "#5f3d20");      // Nase
+      /* Auge */
+      const au = document.createElementNS(NS_SVG, "circle");
+      au.setAttribute("cx", x + 66); au.setAttribute("cy", 52);
+      au.setAttribute("r", 2); au.setAttribute("fill", "#2b1c10");
+      g.appendChild(au);
+      /* Geweih — zwei Stangen mit Enden, nach hinten oben */
+      pr("M" + (x + 62) + " 44 l-4 -16 m0 0 l-8 -6 m8 6 l6 -9 "
+       + "M" + (x + 70) + " 42 l3 -15 m0 0 l8 -5 m-8 5 l-6 -9",
+         "", "#6b4526", 3);
+      /* Vorderbeine */
+      pr("M" + (x + 40) + " 92 q4 16 10 22 M" + (x + 50) + " 90 q-2 16 -8 22",
+         "", "#6b4526", 4.5, "lc-bein lc-bein-v");
+      /* Das Geschirr */
+      pr("M" + (x + 36) + " 74 q6 8 4 16", "", "#b3312a", 3.5);
       svg.appendChild(g);
     });
-    /* Die Zugleine */
-    svg.appendChild(p("M96 70 L150 74 M42 70 L96 72", "", "#5a4632", 2.2));
-    /* Der Schlitten: Kufe, Wanne, Lehne */
-    svg.appendChild(p("M150 96 q-6 8 4 10 h96 q10 -2 6 -12", "", "#b5762e", 5));
-    svg.appendChild(p("M150 62 q-4 30 8 34 h84 q14 -4 12 -22 l-2 -12 z", "#c0392b"));
-    svg.appendChild(p("M244 62 q14 -6 14 -22 q0 -10 -12 -8 q-8 2 -10 14 z", "#c0392b"));
-    /* Geschenke im Schlitten */
-    [[176, 44, "#f2c14e"], [204, 40, "#5fc9c2"], [228, 46, "#b48ce8"]].forEach(([gx, gy, f]) => {
-      const r = document.createElementNS(NS_SVG, "rect");
-      r.setAttribute("x", gx); r.setAttribute("y", gy);
-      r.setAttribute("width", 22); r.setAttribute("height", 20);
-      r.setAttribute("rx", 3); r.setAttribute("fill", f);
-      svg.appendChild(r);
-      svg.appendChild(p("M" + (gx + 11) + " " + gy + " v20 M" + gx + " "
-                      + (gy + 10) + " h22", "", "rgba(255,255,255,.8)", 3));
-    });
-    /* Der Weihnachtsmann: roter Mantel, weisser Bart, Mütze */
-    svg.appendChild(p("M160 34 q10 -14 24 -10 q12 4 10 20 l-2 20 h-32 z", "#c0392b"));
-    svg.appendChild(p("M166 30 q8 16 20 12 q6 -2 6 -10 q0 -14 -12 -16 q-14 -2 -14 14 z", "#f3d5b5"));
-    svg.appendChild(p("M164 32 q4 22 20 18 q10 -4 8 -14 q-14 8 -28 -4 z", "#fdfdfd"));
-    svg.appendChild(p("M160 18 q14 -14 28 -6 q6 4 2 10 q-16 -8 -30 -4 z", "#c0392b"));
-    const bommel = document.createElementNS(NS_SVG, "circle");
-    bommel.setAttribute("cx", 156); bommel.setAttribute("cy", 22);
-    bommel.setAttribute("r", 6); bommel.setAttribute("fill", "#fdfdfd");
-    svg.appendChild(bommel);
+    /* Die rote Nase beim vordersten Tier — Rudolph gehört dazu. */
+    const nase = document.createElementNS(NS_SVG, "circle");
+    nase.setAttribute("cx", 434); nase.setAttribute("cy", 55);
+    nase.setAttribute("r", 5.5); nase.setAttribute("fill", "#e83b32");
+    nase.setAttribute("class", "lc-rudolf");
+    svg.appendChild(nase);
     return svg;
   }
 
   function lcSchlitten() {
-    const schicht = lcFahrzeug("schlitten", lcSchlittenSvg, 7200);
+    /* GEWÜNSCHT: „Die können ruhig eine Schleife drehen, und die
+       fahren dann so ins Bild rein und verschwinden wieder mit Schwung
+       in die Nacht. Vielleicht kann man dann auch in dem Moment den
+       Mond und die Sterne aufblinken lassen." */
+    const schicht = lcFahrzeug("schlitten", lcSchlittenSvg, 9800);
     if (!schicht) return;
-    /* Funkelnde Spur: Sterne, die hinter dem Schlitten liegen bleiben
-       und langsam verglimmen. Sie erscheinen nacheinander über die
-       Breite — so sieht man, wo er entlanggefahren ist. */
-    const wieviel = window.innerWidth < 560 ? 22 : 40;
+
+    /* Der Nachthimmel dahinter: Mond und Sterne, die im Moment des
+       Vorbeifahrens aufleuchten. */
+    const mond = document.createElement("b");
+    mond.className = "lc-schlitten-mond";
+    schicht.appendChild(mond);
+    const sterne = window.innerWidth < 560 ? 26 : 48;
+    for (let i = 0; i < sterne; i++) {
+      const st = document.createElement("s");
+      st.style.left = (Math.random() * 100).toFixed(2) + "%";
+      st.style.top = (Math.random() * 62).toFixed(2) + "%";
+      const g = 2 + Math.random() * 2.6;
+      st.style.width = g.toFixed(1) + "px";
+      st.style.height = g.toFixed(1) + "px";
+      st.style.animationDelay = (0.5 + Math.random() * 3.2).toFixed(2) + "s";
+      st.style.animationDuration = (1.2 + Math.random() * 1.6).toFixed(2) + "s";
+      schicht.appendChild(st);
+    }
+
+    /* Sternenstaub: er liegt DORT, wo das Gespann vorbeikam, und
+       verglimmt langsam. Die Bahn ist dieselbe wie die des Schlittens
+       (siehe lcSchlittenFaehrt) — deshalb steigt er in der Mitte an
+       und fällt am Ende wieder ab, statt auf einer geraden Linie zu
+       liegen. */
+    const wieviel = window.innerWidth < 560 ? 40 : 76;
     for (let i = 0; i < wieviel; i++) {
+      const anteil = i / wieviel;
       const f = document.createElement("i");
-      f.style.left = (98 - (i / wieviel) * 108).toFixed(1) + "%";
-      f.style.top = (12 + Math.random() * 30).toFixed(1) + "%";
-      f.style.animationDelay = (0.25 + (i / wieviel) * 3.6 + Math.random() * 0.25).toFixed(2) + "s";
-      f.style.setProperty("--lc-fk", (3 + Math.random() * 5).toFixed(1) + "px");
+      f.style.left = (anteil * 104 - 6).toFixed(1) + "%";
+      /* Die Höhe folgt der Schleife: hinunter, hinauf, hinaus. */
+      const bahn = 52 - Math.sin(anteil * Math.PI) * 26 - anteil * 18;
+      f.style.top = (bahn + (Math.random() - 0.5) * 9).toFixed(1) + "%";
+      f.style.animationDelay = (0.55 + anteil * 4.6 + Math.random() * 0.25).toFixed(2) + "s";
+      f.style.setProperty("--lc-fk", (2.5 + Math.random() * 5).toFixed(1) + "px");
       schicht.appendChild(f);
     }
   }
@@ -15148,8 +16276,16 @@
                     title="GIF, Sammelfuchs oder ein zuletzt benutztes Bild schicken"
                     aria-label="Bild, GIF oder Sammelfuchs schicken">🖼️</button>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
-                   placeholder="Schreib etwas …" aria-label="Nachricht schreiben">
+                   placeholder="Schreib etwas …" aria-label="Nachricht schreiben"
+                   autocomplete="off" autocorrect="off" spellcheck="false">
             <button type="submit" class="lc-chat-senden" id="lcSenden" aria-label="Senden" disabled>➤</button>
+            <!-- GEWÜNSCHT: „Wenn man unten den Code schreibt, könnte das per
+                 Dropdown-Menü schon vorangezeigt werden, dass man einfach eine
+                 Auswahl easy treffen kann … und wenn man den Schrägstrich
+                 schreibt und es hat vielleicht zwei Funktionen, dass diese zwei
+                 als Vorschläge kommen." Gebaut wird der Inhalt in
+                 livechatTippsAuffrischen(). -->
+            <div class="lc-tipps" id="lcTipps" role="listbox" aria-label="Vorschläge" hidden></div>
           </form>
         </div>
 
@@ -15392,6 +16528,7 @@
   let livechatEffekteAb = 0;
   /* Beim ersten Zeichnen eines Raums ganz nach unten springen. */
   let livechatSchonUnten = false;
+      lcHaeltUnten = true;
 
   /* =================================================================
      DEN CHAT INS BILD RÜCKEN — MIT DEM UNTEREN ENDE
@@ -15429,6 +16566,350 @@
        damit die Eingabezeile nicht am Rand klebt. */
     fuss.scrollIntoView({ behavior: verhalten, block: "end" });
     setTimeout(() => { try { window.scrollBy({ top: 18, behavior: verhalten }); } catch (e) {} }, 60);
+  }
+
+  /* =================================================================
+     KURZE TÖNE ZU DEN AUFKLEBERN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht kannst du bei manchen Sachen auch
+     Soundeffekte mit dazumachen, wo es passt — bei der Glocke zum
+     Beispiel. Aber wenn man die dann noch mal anklickt, dass sie quasi
+     den Ton ausschaltet. Ich weiss ja nicht, ob du die Katze auch
+     mauen lassen kannst oder ob du so ein Glissando machen kannst für
+     die Wolke, die den Regen gibt. Und wenn, dann muss der Sound auch
+     nicht ewig an sein, aber die Animation."
+
+     Drei Entscheidungen stecken darin:
+
+     1. KEINE TONDATEIEN. Jede Datei wäre ein zusätzlicher Download,
+        und für ein Glöckchen lohnt das nicht. Die Töne werden im
+        Browser gerechnet (Web Audio) — das kostet nichts, klingt
+        überall gleich und geht auch ohne Netz.
+     2. KURZ. Kein Ton läuft länger als eine knappe Sekunde, die
+        Animation dagegen weiter. Ein Geräusch, das über einem Chat
+        stehen bleibt, nervt beim zweiten Mal.
+     3. ZWEITES ANTIPPEN SCHALTET AUS. Nicht etwa leiser — aus. Und
+        zwar gemerkt, sodass es auch beim nächsten Mal still bleibt,
+        bis man es wieder einschaltet.
+     ================================================================= */
+  const LC_TON_SCHLUESSEL = "dma_livechat_toene";
+  let lcTonWerk = null;
+  /* Der Schalter steht im GERÄT, damit er das Neuladen übersteht —
+     aber er steht AUCH hier im Speicher. Der Grund ist nicht Tempo:
+     in einem privaten Fenster wirft localStorage, und dann wäre der
+     Ausschalter wirkungslos gewesen — man hätte den Ton nicht mehr
+     abstellen können. Das Gerät ist die Erinnerung, diese Zahl ist
+     die Wahrheit. */
+  let lcToeneMerker = null;           // null = noch nicht nachgesehen
+  function lcToeneAn() {
+    if (lcToeneMerker !== null) return lcToeneMerker;
+    try { lcToeneMerker = localStorage.getItem(LC_TON_SCHLUESSEL) !== "aus"; }
+    catch (e) { lcToeneMerker = true; }
+    return lcToeneMerker;
+  }
+  function lcToeneSetzen(an) {
+    lcToeneMerker = Boolean(an);
+    try {
+      if (an) localStorage.removeItem(LC_TON_SCHLUESSEL);
+      else localStorage.setItem(LC_TON_SCHLUESSEL, "aus");
+    } catch (e) {}
+  }
+  function lcTonAnlage() {
+    if (lcTonWerk) return lcTonWerk;
+    const W = window.AudioContext || window.webkitAudioContext;
+    if (!W) return null;
+    try { lcTonWerk = new W(); } catch (e) { return null; }
+    return lcTonWerk;
+  }
+
+  /* Ein einzelner Ton. „art" bestimmt die Klangfarbe: eine Glocke
+     klingt nach Sinus, ein Miauen braucht eine gleitende Tonhöhe. */
+  function lcTon(bau) {
+    if (!lcToeneAn()) return;
+    const a = lcTonAnlage();
+    if (!a) return;
+    /* Browser starten die Tonanlage erst nach einer Berührung. Läuft
+       sie noch nicht, wird sie hier geweckt — das ist erlaubt, weil
+       dieser Aufruf immer aus einem Antippen kommt. */
+    /* resume() gibt ein Versprechen zurück. Ohne das catch daran
+       landet eine Ablehnung als unbehandelter Fehler in der Konsole —
+       und das passiert regelmässig, etwa wenn die Anlage gerade
+       geschlossen wird. */
+    if (a.state === "suspended" && a.resume) {
+      try { const v = a.resume(); if (v && v.catch) v.catch(() => {}); } catch (e) {}
+    }
+    try { bau(a, a.currentTime); } catch (e) {}
+  }
+
+  /* Eine Glocke: zwei Teiltöne, die zusammen anschlagen und getrennt
+     ausklingen — daher klingt sie nach Metall und nicht nach Piepton.
+     Der obere Teilton ist NICHT das Doppelte des unteren (das wäre
+     eine Oktave und klänge weich), sondern etwas daneben. */
+  function lcTonGlocke() {
+    lcTon((a, t) => {
+      [[880, 1], [2640, 0.42], [3520, 0.2]].forEach(([hz, laut], i) => {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = "sine";
+        o.frequency.value = hz;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.16 * laut, t + 0.006);
+        /* Hohe Teiltöne verklingen schneller als tiefe — genau daran
+           erkennt das Ohr eine Glocke. */
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5 - i * 0.42);
+        o.connect(g); g.connect(a.destination);
+        o.start(t); o.stop(t + 1.6);
+      });
+    });
+  }
+
+  /* Ein Miauen: eine Stimme, die hinaufgleitet und wieder herunter.
+     Ein Dreieck klingt dabei näher am Tier als ein Sinus. */
+  function lcTonKatze() {
+    lcTon((a, t) => {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = "triangle";
+      o.frequency.setValueAtTime(520, t);
+      o.frequency.linearRampToValueAtTime(880, t + 0.14);
+      o.frequency.linearRampToValueAtTime(700, t + 0.34);
+      o.frequency.linearRampToValueAtTime(420, t + 0.62);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.13, t + 0.05);
+      g.gain.setValueAtTime(0.13, t + 0.4);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      /* Ein leichtes Vibrato macht aus dem Pfeifen eine Stimme. */
+      const v = a.createOscillator(), vg = a.createGain();
+      v.frequency.value = 14; vg.gain.value = 26;
+      v.connect(vg); vg.connect(o.frequency);
+      o.connect(g); g.connect(a.destination);
+      o.start(t); v.start(t); o.stop(t + 0.75); v.stop(t + 0.75);
+    });
+  }
+
+  /* Das Glissando zur Regenwolke: ein Rauschen, dessen Filter von
+     oben nach unten fährt — so klingt einsetzender Regen. */
+  function lcTonRegen() {
+    lcTon((a, t) => {
+      const laenge = Math.floor(a.sampleRate * 0.9);
+      const puffer = a.createBuffer(1, laenge, a.sampleRate);
+      const d = puffer.getChannelData(0);
+      for (let i = 0; i < laenge; i++) d[i] = Math.random() * 2 - 1;
+      const q = a.createBufferSource();
+      q.buffer = puffer;
+      const f = a.createBiquadFilter();
+      f.type = "bandpass";
+      f.Q.value = 1.1;
+      f.frequency.setValueAtTime(3200, t);
+      f.frequency.exponentialRampToValueAtTime(420, t + 0.85);
+      const g = a.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.1, t + 0.09);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      q.connect(f); f.connect(g); g.connect(a.destination);
+      q.start(t); q.stop(t + 0.92);
+    });
+  }
+
+  /* Ein kurzes Aufblitzen für Feuer und Funken. */
+  function lcTonFunke() {
+    lcTon((a, t) => {
+      const laenge = Math.floor(a.sampleRate * 0.35);
+      const puffer = a.createBuffer(1, laenge, a.sampleRate);
+      const d = puffer.getChannelData(0);
+      for (let i = 0; i < laenge; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / laenge);
+      const q = a.createBufferSource();
+      q.buffer = puffer;
+      const f = a.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.setValueAtTime(1800, t);
+      f.frequency.exponentialRampToValueAtTime(300, t + 0.3);
+      const g = a.createGain();
+      g.gain.setValueAtTime(0.1, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+      q.connect(f); f.connect(g); g.connect(a.destination);
+      q.start(t); q.stop(t + 0.36);
+    });
+  }
+
+  /* Ein aufsteigender Dreiklang — für Party, Herz und Sonne. */
+  function lcTonFroh() {
+    lcTon((a, t) => {
+      [523.25, 659.25, 783.99].forEach((hz, i) => {
+        const o = a.createOscillator(), g = a.createGain();
+        o.type = "triangle";
+        o.frequency.value = hz;
+        const start = t + i * 0.085;
+        g.gain.setValueAtTime(0, start);
+        g.gain.linearRampToValueAtTime(0.11, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.42);
+        o.connect(g); g.connect(a.destination);
+        o.start(start); o.stop(start + 0.45);
+      });
+    });
+  }
+
+  /* WELCHER AUFKLEBER KLINGT WIE — und zwar nur dort, wo es auch
+     wirklich passt. Ein Ton zu einem Aufkleber, der keinen hat, wäre
+     Beiwerk; die Liste bleibt deshalb kurz. */
+  const LC_AUFKLEBER_TON = {
+    glocke: lcTonGlocke,
+    katze: lcTonKatze,
+    regen: lcTonRegen,
+    schnee: lcTonRegen,
+    feuer: lcTonFunke,
+    party: lcTonFroh,
+    herz: lcTonFroh,
+    sonne: lcTonFroh,
+    pokal: lcTonFroh,
+    musik: lcTonFroh,
+  };
+  /* Und zu welchen Wirkungen? Auch hier nur, wo es trägt. */
+  const LC_WIRKUNG_TON = {
+    gewitter: lcTonRegen,
+    regen: lcTonRegen,
+    sintflut: lcTonRegen,
+    lagerfeuer: lcTonFunke,
+    vulkan: lcTonFunke,
+    armageddon: lcTonFunke,
+    konfetti: lcTonFroh,
+    geschenk: lcTonFroh,
+    ballon: lcTonFroh,
+    schlitten: lcTonGlocke,
+    weihnachten: lcTonGlocke,
+    ostern: lcTonFroh,
+  };
+  function lcTonZu(was) {
+    const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
+    if (f) f();
+  }
+
+  /* =================================================================
+     HILFE BEIM TIPPEN DER BEFEHLE
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Wenn man unten den Code schreibt, wo man jetzt ein
+     Thema auswählen kann, dann könnte das per Dropdown-Menü schon
+     vorangezeigt werden, dass man einfach eine Auswahl easy treffen
+     kann. Oder wenn man das mit einem Namen in Verbindung schicken
+     möchte, dass man den Namen einfach anwählen kann von den Leuten,
+     die sowieso gerade im Chat sind … und wenn man den Schrägstrich
+     schreibt und es hat vielleicht zwei Funktionen, weil es auch noch
+     Schnee bedeuten kann, dass diese zwei als Vorschläge kommen, wo
+     man dann schauen kann, ob man weiterschreibt oder einfach auf
+     Schnee drückt, damit es schneller geht."
+
+     Die Hilfe hat deshalb DREI Stufen, und welche gilt, entscheidet
+     allein der Stand der Eingabe:
+
+       1. „/" oder „/schn"  → welche BEFEHLE fangen so an? Auch über
+          die Kurzwörter: „flock" findet /schnee.
+       2. „/w " (ein Befehl, der einen Namen braucht, und ein
+          Leerzeichen dahinter) → wer ist gerade im Raum? Anklicken
+          setzt den Namen ein.
+       3. „/ascii " oder „/bild " → welche Bilder gibt es?
+
+     Angeklickt wird eingesetzt, nicht abgeschickt: man soll noch etwas
+     dahinter schreiben können. Nur bei Befehlen, die für sich allein
+     stehen (/konfetti), ist der Befehl danach fertig — dann steht der
+     Cursor am Ende und Enter genügt.
+     ================================================================= */
+  function livechatTippsBinden(area) {
+    const feld = area.querySelector("#lcFeld");
+    const kasten = area.querySelector("#lcTipps");
+    if (!feld || !kasten) return;
+
+    const zu = () => { kasten.hidden = true; kasten.innerHTML = ""; };
+    const einsetzen = (neuerText, ansEnde) => {
+      feld.value = neuerText;
+      feld.focus();
+      const p = ansEnde ? neuerText.length : neuerText.length;
+      try { feld.setSelectionRange(p, p); } catch (e) {}
+      /* Der Senden-Knopf hängt am input-Ereignis — es muss also
+         ausgelöst werden, sonst bleibt er grau. */
+      feld.dispatchEvent(new Event("input", { bubbles: true }));
+      auffrischen();
+    };
+
+    function chip(beschriftung, hinweis, beiKlick, klasse) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-tipp" + (klasse ? " " + klasse : "");
+      b.setAttribute("role", "option");
+      const stark = document.createElement("strong");
+      stark.textContent = beschriftung;
+      b.appendChild(stark);
+      if (hinweis) {
+        const kl = document.createElement("small");
+        kl.textContent = hinweis;
+        b.appendChild(kl);
+      }
+      /* mousedown statt click: ein Klick würde erst nach dem
+         Fokusverlust des Feldes kommen, und dann wäre die Liste
+         schon wieder zu. */
+      b.addEventListener("mousedown", (e) => { e.preventDefault(); beiKlick(); });
+      return b;
+    }
+
+    function zeigen(kinder) {
+      kasten.innerHTML = "";
+      if (!kinder.length) { zu(); return; }
+      kinder.slice(0, 12).forEach((k) => kasten.appendChild(k));
+      kasten.hidden = false;
+    }
+
+    function auffrischen() {
+      const wert = feld.value;
+      if (wert.indexOf("/") !== 0) return zu();
+      const bis = wert.indexOf(" ");
+      /* --- Stufe 1: der Befehl selbst wird noch getippt --- */
+      if (bis < 0) {
+        const vor = LiveChat.befehlsVorschlaege(wert.slice(1));
+        if (!vor.length) return zu();
+        return zeigen(vor.map((b) => chip(
+          "/" + b.w,
+          b.was,
+          () => einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true)
+        )));
+      }
+      /* --- Stufe 2 und 3: der Befehl steht, jetzt kommt sein Inhalt --- */
+      const wort = wert.slice(1, bis).toLowerCase();
+      const rest = wert.slice(bis + 1);
+      const befehl = LiveChat.befehlsliste().find((b) => b.w === wort || b.kurz === wort);
+      if (!befehl) return zu();
+
+      if (wort === "ascii" || wort === "bild" || wort === "emoji") {
+        const namen = wort === "ascii" ? LiveChat.asciiNamen() : LiveChat.emojibildNamen();
+        const passend = namen.filter((n) => n.indexOf(rest.toLowerCase()) === 0);
+        return zeigen(passend.map((n) => chip(n, "", () => einsetzen("/" + wort + " " + n, true))));
+      }
+      if (befehl.brauchtName) {
+        /* Die Leute im Raum — „das werden ja nicht so viele sein".
+           Wer schon geschrieben steht, wird nicht noch einmal
+           angeboten. */
+        const l = LiveChat.lage();
+        const namen = (l.plaetze || []).filter((p) => !p.leer && p.name && !p.ich)
+          .map((p) => p.name);
+        const passend = namen.filter((n) => n.toLowerCase().indexOf(rest.toLowerCase()) === 0);
+        if (!passend.length) return zu();
+        return zeigen(passend.map((n) => chip(n, "im Raum",
+          () => einsetzen("/" + wort + " " + n + " ", true), "lc-tipp-name")));
+      }
+      zu();
+    }
+
+    feld.addEventListener("input", auffrischen);
+    feld.addEventListener("focus", auffrischen);
+    feld.addEventListener("blur", () => setTimeout(zu, 120));
+    feld.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { zu(); return; }
+      /* Die Tabulatortaste nimmt den ersten Vorschlag — wie in einer
+         Kommandozeile. */
+      if (e.key === "Tab" && !kasten.hidden) {
+        const erster = kasten.querySelector(".lc-tipp");
+        if (erster) {
+          e.preventDefault();
+          erster.dispatchEvent(new MouseEvent("mousedown"));
+        }
+      }
+    });
   }
 
   /* =================================================================
@@ -15719,6 +17200,17 @@
     sternschnuppe: { ganzeSeite: true, wie: "sternschnuppe" },
     matrix:  { ganzeSeite: true, wie: "matrix" },
     falten:  { ganzeSeite: true, wie: "falten" },
+    armageddon: { ganzeSeite: true, wie: "armageddon" },
+    sintflut:{ ganzeSeite: true, wie: "sintflut" },
+    aegypten:{ ganzeSeite: true, wie: "aegypten" },
+    ostern:  { ganzeSeite: true, wie: "ostern" },
+    augen:   { ganzeSeite: true, wie: "augen" },
+    geld:    { ganzeSeite: true, wie: "geld" },
+    keks:    { ganzeSeite: true, wie: "keks" },
+    wolken:  { ganzeSeite: true, wie: "wolken" },
+    glasbruch: { ganzeSeite: true, wie: "glasbruch" },
+    spinnen: { ganzeSeite: true, wie: "spinnen" },
+    noten:   { ganzeSeite: true, wie: "noten" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -15730,6 +17222,9 @@
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
+      /* Ein kurzer Ton dazu, wo er passt — nicht länger als eine
+         knappe Sekunde, die Animation läuft weiter. */
+      lcTonZu(e.wie || art);
       if (e.wie === "ballon") lcBallons();
       else if (e.wie === "schnee" || e.wie === "regen") lcWetter(e.wie);
       else if (e.wie === "feuerwerk") lcFeuerwerk();
@@ -15747,6 +17242,17 @@
       else if (e.wie === "sternschnuppe") lcSternschnuppen();
       else if (e.wie === "matrix") lcMatrix();
       else if (e.wie === "falten") lcFalten();
+      else if (e.wie === "armageddon") lcArmageddon();
+      else if (e.wie === "sintflut") lcSintflut();
+      else if (e.wie === "aegypten") lcAegypten();
+      else if (e.wie === "ostern") lcOstern();
+      else if (e.wie === "augen") lcAugen();
+      else if (e.wie === "geld") lcGeldregen();
+      else if (e.wie === "keks") lcKeks();
+      else if (e.wie === "wolken") lcWolkenzug();
+      else if (e.wie === "glasbruch") lcGlasbruch();
+      else if (e.wie === "spinnen") lcSpinnen();
+      else if (e.wie === "noten") lcNoten();
       else if (e.wie === "geschenk") lcGeschenk();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
@@ -15930,7 +17436,6 @@
        sie trotzdem ab, aber eben nur für einen selbst. */
     if (!livechatEffekteAb) livechatEffekteAb = Date.now();
 
-    const amEnde = v.scrollHeight - v.scrollTop - v.clientHeight < 70;
     l.nachrichten.forEach((n) => {
       /* GEMELDET: „Jetzt bin ich in den anderen Raum gegangen und bin
          zurück ins Klassenzimmer und sehe bei vielen Nachrichten, die
@@ -16083,9 +17588,41 @@
           if (LiveChat.aufkleberPfad && LiveChat.aufkleberPfad(n.bildImChat)) {
             bild.classList.add("lc-zeilenfoto-aufkleber");
           }
-          bild.title = "Antippen — größer ansehen";
+          /* GEWÜNSCHT: „Bei der Glocke zum Beispiel — aber wenn man
+             die dann noch mal anklickt, dass sie quasi den Ton
+             ausschaltet." Also: erstes Antippen klingt, zweites
+             Antippen desselben Aufklebers schaltet die Töne ab. Das
+             gilt dann für alle, bis man einen Aufkleber mit Ton
+             wieder antippt. */
+          const klebername = (String(n.bildImChat).match(/^aufkleber:([a-z]+)$/) || [])[1] || "";
+          const hatTon = klebername && LC_AUFKLEBER_TON[klebername];
+          bild.title = hatTon
+            ? (lcToeneAn() ? "Antippen — größer ansehen und hören (nochmal: Ton aus)"
+                           : "Antippen — größer ansehen (Ton ist aus, nochmal: an)")
+            : "Antippen — größer ansehen";
+          if (hatTon) bild.classList.add("lc-klingt");
           bild.addEventListener("click", (e) => {
             e.stopPropagation();          // nicht den Zeileneffekt auslösen
+            if (hatTon) {
+              if (bild.dataset.lcGehoert === "1") {
+                /* Zweites Antippen: aus. */
+                lcToeneSetzen(false);
+                bild.dataset.lcGehoert = "";
+                showToast("🔇 Töne sind aus. Noch einmal antippen schaltet sie wieder an.");
+              } else {
+                if (!lcToeneAn()) {
+                  lcToeneSetzen(true);
+                  showToast("🔊 Töne sind wieder an.");
+                }
+                lcTonZu(klebername);
+                bild.dataset.lcGehoert = "1";
+                /* Nach kurzer Zeit zählt der nächste Tipp wieder als
+                   „einmal" — sonst müsste man sich merken, ob man vor
+                   zehn Minuten schon einmal getippt hat. */
+                setTimeout(() => { bild.dataset.lcGehoert = ""; }, 4000);
+              }
+              return;
+            }
             lcBildGross(quelle, n.text || "");
           });
           t.appendChild(bild);
@@ -16143,23 +17680,54 @@
         if (!alt) lcWirkung(eff, z);
       }
     });
-    /* GEMELDET: „Wenn man den Chat betritt, dann soll er nicht oben
-       anfangen, sondern man soll unten das lesen, was gerade aktuell
-       geschrieben wird."
-       Beim ERSTEN Zeichnen also immer ganz nach unten, und zwar ohne
-       sanftes Rollen — man soll sofort beim Neuesten stehen. */
-    if (!livechatSchonUnten) {
-      livechatSchonUnten = true;
-      const altesRollen = v.style.scrollBehavior;
-      v.style.scrollBehavior = "auto";
-      v.scrollTop = v.scrollHeight;
-      requestAnimationFrame(() => {
-        v.scrollTop = v.scrollHeight;
-        v.style.scrollBehavior = altesRollen;
-      });
-      return;
+    /* GEMELDET, mehrfach: „Wenn man in den Raum kommt, wird immer oben
+       zuerst angezeigt, und da muss man immer ganz runterscrollen. Er
+       soll aber unten angezeigt werden, da wo man aktuell schreibt."
+
+       Hier stand vorher „beim ERSTEN Zeichnen ganz nach unten", und
+       genau das reichte nicht. Zum Zeitpunkt des ersten Zeichnens ist
+       der Kasten nämlich noch nicht so hoch, wie er gleich sein wird:
+       die Bilder sind noch nicht geladen, die Bilder aus dem Lager
+       noch nicht nachgereicht, die Schrift womöglich noch nicht da.
+       Jedes dieser Dinge macht den Inhalt hinterher länger — und der
+       einmal gesetzte Stand steht dann wieder mitten drin.
+
+       Statt EINMAL zu springen, wird jetzt so lange unten
+       FESTGEHALTEN, bis der Mensch selbst hochscrollt. Wer liest,
+       bleibt dabei ungestört: sobald er sich vom unteren Rand
+       entfernt, lässt der Griff los und kommt erst wieder, wenn er
+       von selbst zurückkehrt. */
+    lcAmEndeHalten(v);
+  }
+
+  /* Hält den Verlauf unten, bis jemand selbst hochscrollt. */
+  let lcHaeltUnten = true;
+  function lcAmEndeHalten(v) {
+    if (!v) return;
+    if (!v.dataset.lcHorcht) {
+      v.dataset.lcHorcht = "1";
+      v.addEventListener("scroll", () => {
+        /* 70 Pixel Spielraum: kleine Stösse beim Tippen sollen den
+           Griff nicht lösen. */
+        lcHaeltUnten = v.scrollHeight - v.scrollTop - v.clientHeight < 70;
+      }, { passive: true });
+      /* Jedes Bild, das fertig lädt, macht den Inhalt länger — danach
+         muss der Stand nachgezogen werden, sonst rutscht das Neueste
+         wieder aus dem Bild. */
+      v.addEventListener("load", () => { if (lcHaeltUnten) lcNachUnten(v); }, true);
     }
-    if (amEnde) v.scrollTop = v.scrollHeight;
+    if (lcHaeltUnten) lcNachUnten(v);
+  }
+  function lcNachUnten(v) {
+    const altesRollen = v.style.scrollBehavior;
+    v.style.scrollBehavior = "auto";
+    v.scrollTop = v.scrollHeight;
+    /* Zweimal: einmal sofort, einmal nach dem nächsten Bildaufbau —
+       dazwischen kann sich die Höhe noch ändern. */
+    requestAnimationFrame(() => {
+      v.scrollTop = v.scrollHeight;
+      v.style.scrollBehavior = altesRollen;
+    });
   }
 
   /* --- Das Pop-up: ein Gesicht gross ---
@@ -16241,6 +17809,7 @@
       livechatGezeigt = new Map();
       livechatEffekteAb = 0;          // beim nächsten Betreten neu stellen
       livechatSchonUnten = false;
+      lcHaeltUnten = true;
       area.innerHTML = livechatStartHtml(l);
       const hinein = (raum) => {
         /* mitBild: false — das Bild geht NICHT von selbst an.
@@ -16302,6 +17871,7 @@
          Vergangenheit und bleibt still. */
       livechatEffekteAb = Date.now();
       livechatSchonUnten = false;
+      lcHaeltUnten = true;
       /* Und der Chat steht mit seinem unteren Ende im Bild, nicht mit
          seinem Anfang — dort steht das Neueste. */
       setTimeout(() => livechatInsBild(), 220);
@@ -16414,6 +17984,7 @@
         showToast("🔤 Schrift: " + naechste.was);
       });
       area.querySelector("#lcArchiv")?.addEventListener("click", () => livechatArchiv());
+      livechatTippsBinden(area);
       if (LiveChat.beiHintergrund) LiveChat.beiHintergrund(lcHintergrundWaehlen);
       /* GEMELDET: „Man soll den Hintergrund nicht nur durch den Code
          ändern, sondern auch als Bild einladen können." Also ein
