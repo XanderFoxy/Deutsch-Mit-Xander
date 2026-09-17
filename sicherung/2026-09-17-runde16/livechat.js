@@ -327,7 +327,6 @@ window.LiveChat = (function () {
     feuerwerk:   " z\u00fcndet ein Feuerwerk  \ud83c\udf86",
     gewitter:    " holt ein Gewitter herein  \u26c8\ufe0f",
     erdbeben:    " bringt alles zum Wackeln  \ud83c\udf0b",
-    vulkan:      " l\u00e4sst einen Vulkan ausbrechen  \ud83c\udf0b",
     halloween:   " macht es gruselig  \ud83c\udf83",
     weihnachten: " bringt Weihnachten mit  \ud83c\udf84"
   };
@@ -2614,7 +2613,6 @@ window.LiveChat = (function () {
     { w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
     { w: "gewitter", kurz: "sturm", nutzt: "/gewitter",          was: "Blitz, Donner und Sturm" },
     { w: "erdbeben", kurz: "beben", nutzt: "/erdbeben",          was: "Der ganze Chat fängt an zu wackeln" },
-    { w: "vulkan",  kurz: "ausbruch", nutzt: "/vulkan",          was: "Ein Vulkan bricht aus — Lava, Funken und Asche" },
     { w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
@@ -2873,7 +2871,6 @@ window.LiveChat = (function () {
                      raketen: "feuerwerk", silvester: "feuerwerk",
                      sturm: "gewitter", blitz: "gewitter", donner: "gewitter",
                      beben: "erdbeben", wackeln: "erdbeben",
-                     ausbruch: "vulkan", lava: "vulkan", eruption: "vulkan",
                      kuerbis: "halloween", geist: "halloween",
                      advent: "weihnachten", nikolaus: "weihnachten",
                      weihnacht: "weihnachten",
@@ -3091,20 +3088,15 @@ window.LiveChat = (function () {
        /gift Emmy oder so, und dann ist das mit einer schönen Animation
        wieder."
 
-       NACHGEBESSERT: „Wenn man jemandem ein Geschenk gibt, soll kein
-       ASCII-Code im Chat übrig bleiben, sondern das soll genauso sein
-       wie bei den anderen: Xander schenkt Emmy etwas — je nachdem,
-       welchen Namen man wählt."
-
-       Also eine gewöhnliche Aktionszeile wie bei Konfetti und
-       Luftballons. Der Kasten aus Buchstaben blieb im Verlauf stehen
-       und verstopfte ihn; die Animation trägt den Auftritt allein.
-       Über /ascii geschenk gibt es das Bild weiterhin, wer es will. */
+       Es geht als Bild aus Buchstaben hinaus — damit steht das
+       Geschenk wirklich im Chat und ist nicht nur ein Satz — und
+       nimmt dazu die Wirkung „geschenk" mit, die es über der ganzen
+       Seite auspacken lässt. */
     if (art === "geschenk") {
       var wemGe = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
-      return anAlle("aktion", zustand.ichName + " schenkt "
-        + (wemGe ? wemGe.name : "allen") + " etwas  \ud83c\udf81",
-        { wirkung: "geschenk" });
+      var bild = ASCII.geschenk
+        .split("%NAME%").join(zustand.ichName + (wemGe ? " f\u00fcr " + wemGe.name : ""));
+      return anAlle("ascii", bild, { wirkung: "geschenk" });
     }
 
     /* ---- Wetter im Raum ----
@@ -3475,7 +3467,6 @@ window.LiveChat = (function () {
     beiAenderung: beiAenderung,
     moeglich: moeglich,
     neuerRaumName: neuerRaumName,
-    raumSchluessel: raumSchluessel,
     gemerkterRaum: gemerkterRaum,
     raumAusAdresse: raumAusAdresse,
     adresseMitRaum: adresseMitRaum,

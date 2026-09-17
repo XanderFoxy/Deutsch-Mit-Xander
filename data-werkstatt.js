@@ -1,6 +1,11 @@
 /* =========================================================
    DIE WERKSTATT — woran GERADE gebaut wird
    ---------------------------------------------------------
+   DIESE DATEI WIRD GESCHRIEBEN, NICHT GEPFLEGT.
+   Sie entsteht bei jedem Hochladen neu aus
+   werkzeug/werkstatt-setzen.py. Von Hand geänderte Zeilen sind
+   beim nächsten Mal weg.
+
    GEWÜNSCHT, und zwar genau so:
    „Zeige in der Werkstatt, woran du jetzt zuletzt gearbeitet
     hast — nicht nur das Datum, sondern auch die Uhrzeit. Dabei
@@ -8,8 +13,12 @@
     jetzt gerade geupdatet wird, ist relevant. Und wenn Updates
     nicht mehr in Arbeit sind, verschwindet das Zeichen auch
     wieder."
+   „Mit jedem einzelnen Ding, was du hochlädst, soll sich die
+    Werkstatt auch aktualisieren. Und sie soll für normale
+    Benutzer gar nicht sichtbar sein, nur für mich als
+    Betreiber."
 
-   Daraus folgen drei harte Regeln, und die Datei kann gar nichts
+   Daraus folgen vier harte Regeln, und die Datei kann gar nichts
    anderes:
 
    1. HIER STEHT NUR, WAS OFFEN IST.
@@ -19,34 +28,28 @@
 
    2. JEDE ZEILE TRÄGT TAG UND UHRZEIT.
       „seit" ist der Zeitpunkt, an dem die Arbeit begonnen hat.
-      Format: "2026-09-17T23:40" (Ortszeit). Damit sieht man
-      nicht nur DASS gebaut wird, sondern WIE FRISCH die Baustelle
-      ist.
 
    3. IST DIE LISTE LEER, IST DAS ZEICHEN WEG.
-      Kein leerer Knopf, kein „zurzeit nichts". Das Symbol
-      erscheint, wenn gebaut wird, und verschwindet, wenn nicht.
+      Kein leerer Knopf, kein „zurzeit nichts".
 
-   nurBetreiber (oben, für alles): true = nur du siehst die Blase.
-   nurBetreiber (an einer Zeile): diese eine Zeile nur für dich.
+   4. NUR DER BETREIBER SIEHT SIE.
+      nurBetreiber steht fest auf true. Eine Baustellenliste geht
+      niemanden etwas an, der die Seite benutzen will.
    ========================================================= */
 window.DMA_WERKSTATT = {
-  /* false = alle sehen, dass gerade gebaut wird. Auf true
-     umstellen, wenn es dich allein angehen soll. */
-  nurBetreiber: false,
+  /* true = nur der Betreiber sieht die Blase. Ausdrücklich so
+     gewünscht: „sie soll für normale Benutzer gar nicht sichtbar
+     sein, nur für mich als Betreiber." */
+  nurBetreiber: true,
 
   inArbeit: [
-    { seit: "2026-09-18T00:20",
-      text: "Der Aussprache-Trainer bekommt getrennte Knöpfe: „noch einmal sprechen“ und „nebeneinander anhören“ sind zweierlei und dürfen nicht dasselbe auslösen." },
-    { seit: "2026-09-18T00:20",
-      text: "Blockierte Stellen in den Szenen — Dinge, die hinter einem Regalbrett liegen und sich nicht antippen lassen (Arztpraxis, Apotheke)." },
-    { seit: "2026-09-18T00:20",
-      text: "Die Menschen in der Bilderwelt: Körperbau, Haltung und die Stellen, an denen Figuren neben statt in den Möbeln sitzen." },
-    { seit: "2026-09-18T00:20",
-      text: "Der Hund, der Welpe und der Tyrannosaurus bekommen wieder mehr Form und Schattierung." },
-    { seit: "2026-09-18T00:20",
-      text: "Die Wolken im Kopf der Seite: weicher, mit mehr Struktur — und ohne den Sprung beim Laden." },
-    { seit: "2026-09-18T00:20", nurBetreiber: true,
+    { seit: "2026-09-17T12:33",
+      text: "Das Wörterbuch wird durchgesehen: erfundene Stichwörter wie „das Probier“ oder „der Eckenerum“ fliegen raus, echte Wörter bleiben — geprüft gegen eine Wortdatenbank, nicht geraten." },
+    { seit: "2026-09-17T12:33",
+      text: "Die Wolkendecke: keine langen Strecken ohne Wolke, und jedes Wetter der Vorhersage wird stimmig dargestellt." },
+    { seit: "2026-09-17T12:33",
+      text: "Bilderwelten: Grössen, die nicht stimmen (die Schaukel kleiner als ein Kind), verdeckte Dinge und Auswahlrahmen, die sich gegenseitig blockieren." },
+    { seit: "2026-09-17T12:33", nurBetreiber: true,
       text: "Das Wörterbuch mit deiner eigenen Stimme über ElevenLabs, Niveau für Niveau ab A1." },
   ],
 };

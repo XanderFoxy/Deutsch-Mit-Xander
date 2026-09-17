@@ -8763,7 +8763,7 @@
        bleibt. */
     const ganz = stressTrainerWordPool();
     const eigenQuelle = wortQuelleAktiv("stresstrainer") !== "alle";
-    const eigene = eigenQuelle ? wortQuelleUndNiveau("stresstrainer", ganz, 4) : [];
+    const eigene = eigenQuelle ? wortQuelleFilter("stresstrainer", ganz) : [];
     let pool;
     if (eigene.length >= 4) {
       const nachGrad = stTrainerDifficulty === "alle" ? eigene : eigene.filter((e) => stressWordDifficulty(e) === stTrainerDifficulty);
@@ -8835,7 +8835,7 @@
           ${[["leicht", "🟢 Kurze Wörter"], ["mittel", "🟡 Drei Silben"], ["schwer", "🔴 Lange Wörter"], ["alle", "🎲 Gemischt"]].map(([key, label]) => `<button type="button" class="trophy-chip st-diff-btn ${stTrainerDifficulty === key ? "selected" : ""}" data-diff="${key}">${label}</button>`).join("")}
         </div>
         ${wortQuelleChipsHtml("stresstrainer")}
-        ${wortQuelleHinweisHtml("stresstrainer", wortQuelleUndNiveau("stresstrainer", stressTrainerWordPool(), 4).length, 4)}
+        ${wortQuelleHinweisHtml("stresstrainer", wortQuelleFilter("stresstrainer", stressTrainerWordPool()).length, 4)}
         <p class="empty-note" style="margin-bottom:12px;">Welche Silbe wird bei diesem Wort betont? Antippen zum Wählen.<br>
           <em>${imItalienischraum()
             ? "Vorsicht: Die vorletzte Silbe ist im Italienischen zwar der Normalfall — hier liegt die Betonung aber in etwa jedem zweiten Wort woanders."
@@ -10979,22 +10979,6 @@
   const WORTQUELLE_SPIELE = ["stresstrainer", "silbenturm", "flussfuchs",
     "setzerei", "wortkette", "augenblick", "wordbuild", "meinesaetze"];
   const wortQuelleWahl = {};
-  /* GEWÜNSCHT: „Man soll, wenn man eine Kategorie aus dem Wörterbuch
-     auswählt, auch gleichzeitig das Niveau festlegen können von der
-     Runde, die man spielt."
-
-     Das Niveau ist deshalb KEINE eigene Quelle, sondern ein Filter
-     über der gewählten Quelle: „Mein Wortschatz, aber nur A1" oder
-     „Alle Wörter auf B2". Wäre es eine Quelle, müsste man sich
-     wieder zwischen beidem entscheiden — genau das war das Problem.
-     Je Spiel gemerkt, weil jemand den Silbenturm auf A1 und die
-     Wortkette auf B1 spielen können soll. */
-  const wortNiveauWahl = {};
-  const WORT_NIVEAUS = ["alle", "A1", "A2", "B1", "B2", "C1", "C2"];
-  function wortNiveauAktiv(spiel) {
-    const n = wortNiveauWahl[spiel] || "alle";
-    return WORT_NIVEAUS.indexOf(n) >= 0 ? n : "alle";
-  }
   function wortQuelleAktiv(spiel) {
     const wahl = wortQuelleWahl[spiel] || "alle";
     if (wahl.startsWith("liste:") && !wortlisteMitId(wahl.slice(6))) return "alle";
@@ -11039,20 +11023,6 @@
        ausdrücklich gewählt hat, nimmt ihm die App nicht weg. */
     return eintraege.filter((e) => !e.uebungsfehler);
   }
-  /* Quelle UND Niveau zusammen. Der Niveaufilter greift zuletzt,
-     damit er auch auf den eigenen Wortschatz und auf geliehene
-     Listen wirkt.
-
-     Bleibt zu wenig übrig, gilt der Filter für diese Runde NICHT.
-     Ein Spiel mit drei Wörtern ist kein Spiel, und wortQuelleHinweis
-     sagt ohnehin schon, womit gerade geübt wird. */
-  function wortQuelleUndNiveau(spiel, eintraege, mindestens) {
-    const roh = wortQuelleFilter(spiel, eintraege);
-    const n = wortNiveauAktiv(spiel);
-    if (n === "alle") return roh;
-    const eng = roh.filter((e) => e.level === n);
-    return eng.length >= (mindestens || 4) ? eng : roh;
-  }
   function wortQuelleChipsHtml(spiel) {
     /* Läuft ein Duell mit fremder Liste, wird die eigene Auswahl gar
        nicht erst angeboten: Es gibt gerade nichts zu wählen, und eine
@@ -11068,25 +11038,11 @@
       <button type="button" class="trophy-chip ${wahl === "alle" ? "selected" : ""}" data-wortquelle="alle">Alle Wörter</button>
       ${gemerkt ? `<button type="button" class="trophy-chip ${wahl === "wortschatz" ? "selected" : ""}" data-wortquelle="wortschatz">★ Mein Wortschatz (${gemerkt})</button>` : ""}
       ${listen.map((l) => `<button type="button" class="trophy-chip ${wahl === "liste:" + l.id ? "selected" : ""}" data-wortquelle="liste:${l.id}">📋 ${l.name} (${l.woerter.length})</button>`).join("")}
-    </div>` + wortNiveauChipsHtml(spiel);
-  }
-  /* Die Niveaureihe steht unter der Quelle und gilt für jede von
-     ihnen — auch dann, wenn es (mangels gemerkter Wörter) gar keine
-     Quellenreihe gibt. Deshalb wird sie getrennt gebaut. */
-  function wortNiveauChipsHtml(spiel) {
-    if (geliehenAktiv(spiel)) return "";
-    const n = wortNiveauAktiv(spiel);
-    return `<div class="trophy-case wsm-chips wortniveau-chips">
-      ${WORT_NIVEAUS.map((l) => `<button type="button" class="trophy-chip ${n === l ? "selected" : ""}" data-wortniveau="${l}">${l === "alle" ? "Jedes Niveau" : l}</button>`).join("")}
     </div>`;
   }
   function wortQuelleBinden(area, spiel, neuAnfangen) {
     area.querySelectorAll("[data-wortquelle]").forEach((b) => b.addEventListener("click", () => {
       wortQuelleWahl[spiel] = b.dataset.wortquelle;
-      neuAnfangen();
-    }));
-    area.querySelectorAll("[data-wortniveau]").forEach((b) => b.addEventListener("click", () => {
-      wortNiveauWahl[spiel] = b.dataset.wortniveau;
       neuAnfangen();
     }));
   }
@@ -11405,12 +11361,7 @@
      angebunden: aus dem Wörterbuch heraus kann man mit einem Knopf mit
      genau den gemerkten Wörtern weiterüben.
      ============================================================ */
-  /* wortschatz | kategorie | alle — „niveau" ist KEIN Ausgangspunkt
-     mehr: das Niveau liegt als eigener Filter über jeder dieser drei
-     Auswahlen („Essen & Trinken auf A1"). Alte gemerkte Werte
-     „niveau" fallen unten auf „alles" zurück und werden dann vom
-     Niveaufilter behandelt — sie brechen nichts. */
-  let ausspracheQuelle = "wortschatz";
+  let ausspracheQuelle = "wortschatz";   // wortschatz | kategorie | niveau | alle
   let ausspracheKategorie = "alle";
   let ausspracheNiveau = "alle";
   let ausspracheSitzung = null;
@@ -11419,27 +11370,11 @@
   function ausspracheWortliste() {
     /* wortZumUeben() wirft die Fehlerformen aus den Übungen und die
        gebeugten Formen heraus. Ohne diesen Filter legte der Trainer
-       „Baad" und „intensiveren" zum Nachsprechen vor.
-
-       aussprUebbar() kam dazu: „Man muss in der Aussprache keine
-       Artikel stehen haben." Ein Eintrag, von dem nach dem Abziehen
-       des Artikels nur noch „die" übrig bliebe, ist kein Übungswort. */
-    let alle = buildDictionaryEntries().filter(wortZumUeben).filter(aussprUebbar);
-    if (ausspracheQuelle === "wortschatz") alle = alle.filter((e) => imWortschatz(e.word));
-    else if (ausspracheQuelle === "kategorie" && ausspracheKategorie !== "alle") {
-      alle = alle.filter((e) => e.category === ausspracheKategorie);
-    }
-    /* GEWÜNSCHT: „Man soll, wenn man eine Kategorie aus dem Wörterbuch
-       auswählt, auch gleichzeitig das Niveau festlegen können von der
-       Runde, die man spielt."
-
-       Vorher schlossen sich beide aus: es gab einen Knopf „Ein
-       Themenbereich" UND einen Knopf „Ein Niveau", und wer den einen
-       wählte, verlor den anderen. „Essen & Trinken auf A1" liess sich
-       gar nicht einstellen. Das Niveau ist deshalb kein eigener
-       Ausgangspunkt mehr, sondern ein Filter, der über JEDER Auswahl
-       liegt — auch über dem eigenen Wortschatz. */
-    if (ausspracheNiveau !== "alle") alle = alle.filter((e) => e.level === ausspracheNiveau);
+       „Baad" und „intensiveren" zum Nachsprechen vor. */
+    const alle = buildDictionaryEntries().filter(wortZumUeben);
+    if (ausspracheQuelle === "wortschatz") return alle.filter((e) => imWortschatz(e.word));
+    if (ausspracheQuelle === "kategorie") return ausspracheKategorie === "alle" ? alle : alle.filter((e) => e.category === ausspracheKategorie);
+    if (ausspracheQuelle === "niveau") return ausspracheNiveau === "alle" ? alle : alle.filter((e) => e.level === ausspracheNiveau);
     return alle;
   }
   function neueAusspracheSitzung() {
@@ -11912,43 +11847,6 @@
     return window.TonListe ? TonListe.schluessel(text) : "";
   }
 
-  /* =================================================================
-     WAS GESPROCHEN WIRD — OHNE ARTIKEL
-     -----------------------------------------------------------------
-     GEMELDET: „Man muss in der Aussprache keine Artikel stehen haben,
-     dass man jetzt ‚die‘ aussprechen soll. Das ist Zeichenverschwendung.
-     So etwas muss man nicht üben, einzelne Artikel auszusprechen."
-
-     Zwei Dinge hingen daran. Erstens die Übung selbst: „die Küche"
-     laut vorzulesen übt zu zwei Dritteln den Artikel, und der ist bei
-     jedem Wort derselbe. Geübt gehört „Küche". Zweitens der Preis:
-     die Bewertung wird nach ZEICHEN abgerechnet. „die " sind vier
-     Zeichen je Wort — bei einem Durchgang von fünfzig Wörtern
-     zweihundert Zeichen für nichts, und das jedes Mal wieder.
-
-     Der Artikel verschwindet deshalb nicht aus dem Wörterbuch — dort
-     gehört er hin, er ist das Geschlecht. Er verschwindet aus dem,
-     was zum Sprechen und zum Bewerten geschickt wird. Angezeigt wird
-     er weiter, aber klein und ausdrücklich als „nicht mitsprechen".
-     ================================================================= */
-  function aussprSprechtext(w) {
-    const roh = String((w && w.word) || w || "").trim();
-    return roh.replace(/^(der|die|das)\s+/i, "").trim() || roh;
-  }
-  function aussprArtikel(w) {
-    const m = String((w && w.word) || w || "").trim().match(/^(der|die|das)\s+/i);
-    return m ? m[1].toLowerCase() : "";
-  }
-  /* Ein blosser Artikel ist kein Übungswort. Solche Einträge gibt es
-     im Wörterbuch (es sind ja Wörter), aber „sprich: die" ist keine
-     Aufgabe. */
-  const AUSSPR_NICHT_UEBEN = new Set(["der", "die", "das", "den", "dem", "des",
-                                      "ein", "eine", "einen", "einem", "einer", "eines"]);
-  function aussprUebbar(w) {
-    const t = aussprSprechtext(w);
-    return Boolean(t) && !AUSSPR_NICHT_UEBEN.has(t.toLowerCase());
-  }
-
   /* Die Originalaufnahme holen. Gibt es keine vorproduzierte,
      wird das ehrlich gemeldet — dann gibt es kein Shadowing mit
      zwei Wellenformen, weil die Gerätestimme keine Tondatei
@@ -11976,9 +11874,7 @@
       if (s) return s;
       if (!AusspracheP.zentralDa()) return null;
       return AusspracheP.zentralVorlesen({
-        /* Ohne Artikel: er wird nicht geübt und kostet sonst bei
-           jedem Wort vier Zeichen. */
-        text: aussprSprechtext(w), sprache: imItalienischraum() ? "it-IT" : "de-DE"
+        text: w.word, sprache: imItalienischraum() ? "it-IT" : "de-DE"
       }).then((puffer) => {
         if (!puffer) return null;
         return { puffer: puffer, art: "azure", huelle: AusspracheP.huellkurve(puffer, 150) };
@@ -11988,7 +11884,7 @@
 
   function aussprSpriteLaden(w) {
     if (!window.TonListe || !window.AusspracheP) return Promise.resolve(null);
-    const bereich = aussprBereich(w), id = aussprStueckId(aussprSprechtext(w));
+    const bereich = aussprBereich(w), id = aussprStueckId(w.word);
     if (!bereich || !id) return Promise.resolve(null);
     return TonListe.stueckAdresse(bereich, id).then((s) => {
       if (!s) return null;
@@ -12123,7 +12019,7 @@
     knoepfe.forEach((b) => { b.disabled = true; });
     const original = () => aussprLetztesOriginal
       ? aussprPufferSpielen(aussprLetztesOriginal.puffer, aussprTempo)
-      : new Promise((f) => { Core.speak(aussprSprechtext(w), imItalienischraum() ? "it" : "de"); setTimeout(f, 1200); });
+      : new Promise((f) => { Core.speak(w.word, imItalienischraum() ? "it" : "de"); setTimeout(f, 1200); });
     const eigene = () => aussprLetzteEigene
       ? aussprPufferSpielen(aussprLetzteEigene.puffer, aussprTempo)
       : Promise.resolve();
@@ -12216,6 +12112,7 @@
           <div class="trophy-case" style="margin-bottom:10px;">
             <button type="button" class="trophy-chip ${ausspracheQuelle === "wortschatz" ? "selected" : ""}" data-ausspr-quelle="wortschatz">★ Mein Wortschatz (${gemerkt})</button>
             <button type="button" class="trophy-chip ${ausspracheQuelle === "kategorie" ? "selected" : ""}" data-ausspr-quelle="kategorie">🗂️ Ein Themenbereich</button>
+            <button type="button" class="trophy-chip ${ausspracheQuelle === "niveau" ? "selected" : ""}" data-ausspr-quelle="niveau">📶 Ein Niveau</button>
             <button type="button" class="trophy-chip ${ausspracheQuelle === "alle" ? "selected" : ""}" data-ausspr-quelle="alle">🎲 Zufällig aus allem</button>
           </div>
           ${ausspracheQuelle === "kategorie" ? `
@@ -12223,10 +12120,10 @@
             <select id="ausspracheKatSelect" class="challenge-select" style="margin-bottom:12px;">
               ${kategorien.map((c) => `<option value="${c}" ${ausspracheKategorie === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
             </select>` : ""}
-          <p class="eyebrow" style="margin-top:2px;">UND AUF WELCHEM NIVEAU?</p>
-          <div class="trophy-case" style="margin-bottom:12px;">
-            ${["alle", "A1", "A2", "B1", "B2", "C1", "C2"].map((l) => `<button type="button" class="trophy-chip ${ausspracheNiveau === l ? "selected" : ""}" data-ausspr-niveau="${l}">${l === "alle" ? "Alle Niveaus" : l}</button>`).join("")}
-          </div>
+          ${ausspracheQuelle === "niveau" ? `
+            <div class="trophy-case" style="margin-bottom:12px;">
+              ${["alle", "A1", "A2", "B1", "B2", "C1", "C2"].map((l) => `<button type="button" class="trophy-chip ${ausspracheNiveau === l ? "selected" : ""}" data-ausspr-niveau="${l}">${l === "alle" ? "Alle" : l}</button>`).join("")}
+            </div>` : ""}
           ${ausspracheQuelle === "wortschatz" && !gemerkt ? `
             <p class="empty-note">Du hast dir noch keine Wörter gemerkt. Geh ins Wörterbuch und tippe bei den Wörtern, die du gerade lernst, auf den Stern ☆ — dann kannst du hier genau mit diesen üben.</p>
             <button type="button" class="btn btn-ghost" id="ausspracheZumWoerterbuch" style="margin-top:8px;">📖 Zum Wörterbuch</button>`
@@ -12304,9 +12201,7 @@
     area.innerHTML = `
       <div class="question-card">
         <p class="eyebrow">🎤 AUSSPRACHE · WORT ${s.index + 1} / ${s.woerter.length}</p>
-        <div class="aussprache-wort">${aussprArtikel(w)
-            ? `<span class="ausspr-artikel" title="Der Artikel wird nicht mitgesprochen">${aussprArtikel(w)}</span> `
-            : ""}${escapeHtml(aussprSprechtext(w))}</div>
+        <div class="aussprache-wort">${w.word}</div>
         <div class="vocab-syl" style="text-align:center; font-size:1.1rem;">${betonungAnzeigen(w.syl)}</div>
         ${w.meaning ? `<p class="empty-note" style="text-align:center;">${w.meaning}</p>` : ""}
         <div style="text-align:center; margin:8px 0 4px;">${stufenSchild}</div>
@@ -12501,8 +12396,7 @@
     if (AusspracheP.stufe1Da() && puffer) {
       const wav = AusspracheP.alsWav(puffer);
       const erg = await AusspracheP.stufe1Bewerten({
-        /* Bewertet wird das Wort, nicht der Artikel davor. */
-        wav: wav, text: aussprSprechtext(w), sprache: imItalienischraum() ? "it-IT" : "de-DE"
+        wav: wav, text: w.word, sprache: imItalienischraum() ? "it-IT" : "de-DE"
       });
       if (!erg.fehler) return erg;
       if (erg.fehler === "kontingent") {
@@ -12562,7 +12456,7 @@
     }
     const gehoert = await Core.hoereZu({ hoechstdauer: 8000, sprache: imItalienischraum() ? "it-IT" : "de-DE" });
     if (gehoert.fehler) return { fehlertext: aussprFehlertext(gehoert.fehler) };
-    const bew = Core.bewerteAussprache(aussprSprechtext(w), gehoert);
+    const bew = Core.bewerteAussprache(w.word, gehoert);
     bew.quelle = "verstaendlich";
     return bew;
   }
@@ -12579,7 +12473,7 @@
     s.laeuft = false;
     aussprStand = "";
     if (gehoert.fehler) { s.letztes = { fehlertext: aussprFehlertext(gehoert.fehler) }; renderAussprache(); return; }
-    const bew = Core.bewerteAussprache(aussprSprechtext(w), gehoert);
+    const bew = Core.bewerteAussprache(w.word, gehoert);
     bew.quelle = "verstaendlich";
     s.letztes = bew;
     if (bew.prozent >= aussprSchwelle()) Core.sound.correct(); else Core.sound.okay();
@@ -12795,162 +12689,6 @@
   function livechatName() {
     const p = Backend.currentProfile();
     return (p && p.name) || (Backend.currentUser() ? "Ich" : "Gast");
-  }
-
-  /* =================================================================
-     DEN EIGENEN RAUM TAUFEN
-     -----------------------------------------------------------------
-     GEWÜNSCHT: „Der Raum, den man selber anlegt — wenn man zum ersten
-     Mal reingeht, soll man ihn auch mit einem Namen benennen können,
-     nicht dass da nur so ein Buchstabenwurm steht."
-
-     Ein kleiner Kasten statt prompt(): prompt() sieht auf dem Telefon
-     nach Systemfehler aus und lässt sich nicht gestalten. Hier steht
-     auch gleich der Hinweis mit dem Artikel — wer „die Küche"
-     schreibt, bekommt später „in der Küche" statt „in Küche".
-     ================================================================= */
-  function livechatRaumTaufen() {
-    return new Promise((fertig) => {
-      const kasten = document.createElement("div");
-      kasten.className = "lc-taufe";
-      kasten.innerHTML = `
-        <div class="lc-taufe-karte" role="dialog" aria-modal="true" aria-label="Raum benennen">
-          <h3>Wie soll dein Raum heißen?</h3>
-          <p>Mit einem Namen können Freunde mit <code>/j name</code> dazukommen.
-             Ohne Namen bleibt der Raum privat — dann führt nur dein Link hinein.</p>
-          <input type="text" id="lcTaufeFeld" maxlength="32" autocomplete="off"
-                 placeholder="zum Beispiel: die Küche" aria-label="Name des Raums">
-          <small>Schreib den Artikel ruhig mit — „die Küche“, „der Fuchsbau“.
-                 Dann steht später „in der Küche“ da und nicht „in Küche“.</small>
-          <div class="lc-taufe-knoepfe">
-            <button type="button" class="btn btn-ghost" data-taufe="ohne">Ohne Namen</button>
-            <button type="button" class="btn btn-primary" data-taufe="ja">Raum aufmachen</button>
-          </div>
-        </div>`;
-      const weg = (wert) => { kasten.remove(); fertig(wert); };
-      const feld = () => kasten.querySelector("#lcTaufeFeld");
-      const nehmen = () => {
-        const roh = (feld().value || "").trim();
-        if (!roh) return weg(LiveChat.neuerRaumName());
-        const schluessel = LiveChat.raumSchluessel(roh);
-        /* Ein Name, aus dem sich keine Adresse bilden lässt (nur
-           Satzzeichen, nur Emojis), führt zum Zufallsnamen zurück —
-           sonst entstünde ein Raum ohne Adresse. */
-        if (!schluessel) return weg(LiveChat.neuerRaumName());
-        livechatRaumNameMerken(schluessel, roh);
-        weg(schluessel);
-      };
-      kasten.addEventListener("click", (e) => {
-        if (e.target === kasten) return weg("");
-        const was = e.target.closest("[data-taufe]")?.dataset.taufe;
-        if (was === "ohne") return weg(LiveChat.neuerRaumName());
-        if (was === "ja") return nehmen();
-      });
-      kasten.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") { e.preventDefault(); nehmen(); }
-        if (e.key === "Escape") weg("");
-      });
-      document.body.appendChild(kasten);
-      setTimeout(() => feld()?.focus(), 30);
-    });
-  }
-
-  /* Der eingetippte Name mit Artikel wird im Gerät behalten. Die
-     Adresse selbst kann ihn nicht tragen: sie ist kleingeschrieben
-     und ohne Umlaute, damit sie durch den Kanal passt. */
-  const LC_RAUMNAMEN = "dma_livechat_raumnamen";
-  function livechatRaumNameMerken(schluessel, name) {
-    try {
-      const alle = JSON.parse(localStorage.getItem(LC_RAUMNAMEN) || "{}");
-      alle[schluessel] = name;
-      localStorage.setItem(LC_RAUMNAMEN, JSON.stringify(alle));
-    } catch (e) {}
-  }
-  function livechatRaumNameHolen(schluessel) {
-    try {
-      return (JSON.parse(localStorage.getItem(LC_RAUMNAMEN) || "{}"))[schluessel] || "";
-    } catch (e) { return ""; }
-  }
-
-  /* =================================================================
-     „IM“ ODER „IN“ — DER ARTIKEL VOR DEM RAUMNAMEN
-     -----------------------------------------------------------------
-     GEMELDET: „Wenn ein Raum abgelegt wird, dann soll da nicht stehen
-     ‚im Raum‘, weil es bei Klassenzimmer ja auch nicht steht. Und je
-     nach Wort — nennt man den Raum Weihnachten, soll der richtige
-     Artikel erkannt werden, dass man nicht ‚im Weihnachten‘ sagt,
-     sondern ‚in Weihnachten‘."
-
-     Die Regel dahinter ist die Frage, ob das Wort einen bestimmten
-     Artikel verlangt:
-       der Fuchsbau  -> in DEM Fuchsbau  -> „im Fuchsbau“
-       die Küche     -> in DER Küche     -> „in der Küche“
-       das Labor     -> in DEM Labor     -> „im Labor“
-       Weihnachten   -> kein Artikel     -> „in Weihnachten“
-     Feste, Eigennamen und Vornamen stehen ohne Artikel. Ein
-     ausgedachter Raumname ist im Zweifel auch ein Eigenname — deshalb
-     ist „in“ ohne Artikel die sichere Vorgabe, und „im“ steht nur da,
-     wo der Artikel wirklich bekannt ist.
-     ================================================================= */
-  const LC_OHNE_ARTIKEL = new Set([
-    "weihnachten", "ostern", "pfingsten", "silvester", "neujahr", "nikolaus",
-    "karneval", "fasching", "advent", "halloween", "chanukka", "ramadan",
-    "deutschland", "österreich", "berlin", "wien", "zürich", "hamburg",
-    "europa", "afrika", "asien", "amerika", "australien"
-  ]);
-  const LC_ARTIKEL_BEKANNT = {
-    küche: "die", kueche: "die", garten: "der", keller: "der", dachboden: "der",
-    wohnzimmer: "das", schlafzimmer: "das", badezimmer: "das", bad: "das",
-    labor: "das", büro: "das", buero: "das", werkstatt: "die", bibliothek: "die",
-    turnhalle: "die", mensa: "die", aula: "die", pausenhof: "der", flur: "der",
-    fuchsbau: "der", höhle: "die", hoehle: "die", bau: "der", nest: "das",
-    klassenzimmer: "das", raum: "der", ecke: "die", zimmer: "das", saal: "der",
-    park: "der", wald: "der", strand: "der", see: "der", stadt: "die"
-  };
-  /* Dativ: der/das -> dem („im“), die -> der („in der“). */
-  function lcArtikelDativ(artikel) {
-    return artikel === "die" ? "in der" : "im";
-  }
-  function lcRaumOrt(raum, raumName) {
-    if (!raum || raum === LiveChat.HAUPTRAUM) return "Im Klassenzimmer";
-    /* Erstens: der selbst eingetippte Name — er kann den Artikel
-       schon mitbringen. */
-    const eigen = livechatRaumNameHolen(raum);
-    const roh = (eigen || raumName || LiveChat.raumKlartext(raum) || "").trim();
-    if (!roh) return "Im Klassenzimmer";
-    const mitArtikel = roh.match(/^(der|die|das)\s+(.+)$/i);
-    if (mitArtikel) {
-      return lcArtikelDativ(mitArtikel[1].toLowerCase()) + " " + mitArtikel[2];
-    }
-    const wort = roh.replace(/\s+/g, " ").trim();
-    const klein = wort.toLowerCase();
-    if (LC_OHNE_ARTIKEL.has(klein)) return "in " + wort;
-    /* Zweitens: das Wörterbuch, wenn es ohnehin schon geladen ist.
-       Nachladen wäre hier falsch — es geht um eine Zeile Text, dafür
-       lädt man keine halbe Megabyte. */
-    const ausBuch = lcArtikelAusWoerterbuch(klein);
-    if (ausBuch) return lcArtikelDativ(ausBuch) + " " + wort;
-    const bekannt = LC_ARTIKEL_BEKANNT[klein];
-    if (bekannt) return lcArtikelDativ(bekannt) + " " + wort;
-    /* Sonst: Eigenname. Ohne Artikel ist hier die sichere Wahl —
-       „in Weihnachten“ klingt umständlich, „im Weihnachten“ ist
-       falsch. */
-    return "in " + wort;
-  }
-  function lcArtikelAusWoerterbuch(klein) {
-    const toepfe = [window.DMA_VOKABELN, window.DMA_VOKABELN_ZUSATZ];
-    for (const topf of toepfe) {
-      if (!topf) continue;
-      for (const thema of Object.keys(topf)) {
-        const liste = topf[thema];
-        if (!Array.isArray(liste)) continue;
-        for (const e of liste) {
-          const m = String(e && e.word || "").match(/^(der|die|das)\s+(.+)$/i);
-          if (m && m[2].toLowerCase() === klein) return m[1].toLowerCase();
-        }
-      }
-    }
-    return "";
   }
 
   /* --- Das Profilbild fürs Klassenzimmer ------------------------
@@ -13726,78 +13464,19 @@
         t.style.animationDuration = (5.5 + Math.random() * 5).toFixed(2) + "s";
         t.style.opacity = (0.45 + Math.random() * 0.5).toFixed(2);
       } else {
-        /* GEMELDET: „Den Regen sieht man auf hellen Designs kaum." —
-           und danach: „Der Regen ist ein bisschen zu kantig, die
-           Tropfen koennen weicher und fluessiger sein, natuerlicher
-           fallen."
-
-           Die Form macht das CSS. Hier entsteht die TIEFE, und die
-           ist der halbe Realismus: ein Regenvorhang besteht nicht aus
-           gleichen Tropfen. Nahe Tropfen (tiefe nahe 1) sind breit,
-           lang, kraeftig und fallen schnell; ferne sind schmal, kurz,
-           blass und brauchen laenger. Ohne das sieht Regen aus wie
-           eine Tapete, die nach unten laeuft.
-
-           Auch die Neigung kommt von hier und nicht mehr fest aus dem
-           CSS: kein Tropfen faellt genau so wie der neben ihm. */
-        const tiefe = Math.pow(Math.random(), 1.4);
-        const lang = (art === "sturm" ? 20 : 15) + tiefe * (art === "sturm" ? 30 : 24);
-        t.style.setProperty("--lc-w-tiefe", tiefe.toFixed(2));
-        t.style.setProperty("--lc-w-lang", lang.toFixed(0) + "px");
-        t.style.setProperty("--lc-w-breit", (1.5 + tiefe * 2.4).toFixed(2) + "px");
-        t.style.setProperty("--lc-w-neig",
-          (art === "sturm" ? 19 + Math.random() * 7 : 3 + Math.random() * 5).toFixed(1) + "deg");
-        t.style.setProperty("--lc-w-seit",
-          (art === "sturm" ? -(150 + Math.random() * 80) : -(22 + Math.random() * 30)).toFixed(0) + "px");
-        /* Nahe Tropfen sind schneller: weniger Sekunden fuer dieselbe Strecke. */
-        const grund = art === "sturm" ? 0.62 : 0.85;
-        t.style.animationDuration = (grund - tiefe * 0.3 + Math.random() * 0.14).toFixed(2) + "s";
-        t.style.opacity = (0.3 + tiefe * 0.6).toFixed(2);
+        /* GEMELDET: „Den Regen sieht man auf hellen Designs kaum."
+           Die Tropfen sind jetzt länger, deutlicher und haben einen
+           hellen Kern mit dunklem Saum — so stehen sie auf hellem wie
+           auf dunklem Grund. */
+        t.style.setProperty("--lc-w-lang", (16 + Math.random() * 22).toFixed(0) + "px");
+        t.style.animationDuration = (art === "sturm" ? 0.38 : 0.5)
+          + (Math.random() * 0.35).toFixed(2) * 1 + "s";
+        t.style.opacity = (0.5 + Math.random() * 0.45).toFixed(2);
       }
       schicht.appendChild(t);
     }
-
-    /* --- Aufschlaege ---
-       Regen, der unten ins Nichts laeuft, wirkt wie fallender Staub.
-       Erst das Aufkommen macht ihn zu Regen. Die Ringe stehen knapp
-       ueber dem unteren Rand, jeder mit eigenem Takt, damit kein
-       Rhythmus entsteht. Beim Schnee gibt es sie nicht — Schnee
-       spritzt nicht. */
-    if (art !== "schnee") {
-      const spritzer = window.innerWidth < 560 ? 14 : 26;
-      for (let i = 0; i < spritzer; i++) {
-        const u = document.createElement("u");
-        u.style.left = (Math.random() * 100).toFixed(2) + "%";
-        u.style.setProperty("--lc-s-hoch", (1 + Math.random() * 7).toFixed(1) + "vh");
-        u.style.animationDelay = (Math.random() * 1.8).toFixed(2) + "s";
-        u.style.animationDuration = (0.65 + Math.random() * 0.45).toFixed(2) + "s";
-        schicht.appendChild(u);
-      }
-    }
     document.body.appendChild(schicht);
     setTimeout(() => schicht.remove(), art === "schnee" ? 13000 : 10000);
-
-    /* GEWUENSCHT: „Da kann auch Blitz mit dabei sein." Beim reinen
-       Regen aber kein Gewitterblitz, der die Seite weiss macht,
-       sondern ein fernes Wetterleuchten: selten, schwach, ohne
-       Donnerzucken. Das Gewitter behaelt seine vollen Blitze. */
-    if (art === "regen") lcWetterleuchten();
-  }
-
-  /* Fernes Wetterleuchten zum Regen: zwei schwache Aufheller. */
-  function lcWetterleuchten() {
-    document.getElementById("lcFern")?.remove();
-    const schicht = document.createElement("div");
-    schicht.id = "lcFern";
-    schicht.className = "lc-blitz lc-blitz-fern";
-    schicht.setAttribute("aria-hidden", "true");
-    for (let i = 0; i < 2; i++) {
-      const b = document.createElement("i");
-      b.style.animationDelay = (1.8 + i * 3.6 + Math.random() * 1.4).toFixed(2) + "s";
-      schicht.appendChild(b);
-    }
-    document.body.appendChild(schicht);
-    setTimeout(() => schicht.remove(), 10000);
   }
 
   /* =================================================================
@@ -13893,83 +13572,13 @@
     schicht.id = "lcBlitz";
     schicht.className = "lc-blitz";
     schicht.setAttribute("aria-hidden", "true");
-    const takte = [];
     for (let i = 0; i < 5; i++) {
-      const wann = 0.6 + i * 1.7 + Math.random() * 0.7;
-      takte.push(wann);
       const b = document.createElement("i");
-      b.style.animationDelay = wann.toFixed(2) + "s";
+      b.style.animationDelay = (0.6 + i * 1.7 + Math.random() * 0.7).toFixed(2) + "s";
       schicht.appendChild(b);
     }
     document.body.appendChild(schicht);
     setTimeout(() => schicht.remove(), 11000);
-
-    /* GEMELDET: „Das Gewitter kann ein bisschen schoener aussehen."
-       Bisher wurde nur die ganze Seite kurz weiss — das ist der
-       Widerschein, nicht der Blitz. Der Blitz selbst fehlte. Er kommt
-       jetzt als gezackte Linie dazu, im selben Augenblick wie der
-       Aufheller, damit beides als ein Ereignis gelesen wird. */
-    document.getElementById("lcStrahl")?.remove();
-    const strahlen = document.createElement("div");
-    strahlen.id = "lcStrahl";
-    strahlen.className = "lc-strahl";
-    strahlen.setAttribute("aria-hidden", "true");
-    /* Nicht jeder Aufheller bekommt einen sichtbaren Blitz: manche
-       Gewitter schlagen ausserhalb des Bildes ein. Drei von fuenf. */
-    takte.filter((_, i) => i % 2 === 0 || i === 3).forEach((wann) => {
-      strahlen.appendChild(lcBlitzStrahl(wann));
-    });
-    document.body.appendChild(strahlen);
-    setTimeout(() => strahlen.remove(), 11000);
-  }
-
-  /* Ein Blitz ist eine Zickzacklinie, die nach unten schmaler wird
-     und sich ein- bis zweimal gabelt. Beides wird hier ausgewuerfelt,
-     damit kein Blitz wie der vorige aussieht. */
-  function lcBlitzStrahl(wann) {
-    const NS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("viewBox", "0 0 190 620");
-    svg.setAttribute("preserveAspectRatio", "none");
-    svg.style.left = (6 + Math.random() * 74).toFixed(1) + "%";
-    svg.style.animationDelay = wann.toFixed(2) + "s";
-
-    /* Der Hauptstrang: acht Knicke von oben nach unten, jeder
-       zufaellig nach links oder rechts versetzt. */
-    const knicke = [];
-    let x = 95;
-    for (let i = 0; i <= 8; i++) {
-      knicke.push([x, (620 / 8) * i]);
-      x += (Math.random() - 0.48) * 58;
-      x = Math.max(18, Math.min(172, x));
-    }
-    const zug = (p) => p.map((k, i) => (i ? "L" : "M") + k[0].toFixed(0) + " " + k[1].toFixed(0)).join(" ");
-    const haupt = document.createElementNS(NS, "path");
-    haupt.setAttribute("d", zug(knicke));
-    haupt.style.animationDelay = wann.toFixed(2) + "s";
-    svg.appendChild(haupt);
-
-    /* Eine Gabelung, die auf halber Hoehe abzweigt und duenner ist.
-       Die SEITE wird einmal ausgewuerfelt und dann beibehalten: wuerde
-       sie bei jedem Knick neu entschieden, liefe der Zweig zum
-       Hauptstrang zurueck und beide schlossen eine Raute ein — genau
-       das war beim ersten Versuch zu sehen. Ein Blitz gabelt sich
-       weg, nicht zurueck. */
-    const ab = 3 + Math.floor(Math.random() * 3);
-    const seite = Math.random() < 0.5 ? -1 : 1;
-    const gabel = [knicke[ab]];
-    let gx = knicke[ab][0], gy = knicke[ab][1];
-    for (let i = 0; i < 3; i++) {
-      gx += seite * (20 + Math.random() * 30);
-      gy += 60 + Math.random() * 40;
-      gabel.push([Math.max(8, Math.min(182, gx)), Math.min(620, gy)]);
-    }
-    const zweig = document.createElementNS(NS, "path");
-    zweig.setAttribute("d", zug(gabel));
-    zweig.setAttribute("stroke-width", "1.7");
-    zweig.style.animationDelay = wann.toFixed(2) + "s";
-    svg.appendChild(zweig);
-    return svg;
   }
 
   /* =================================================================
@@ -14001,95 +13610,6 @@
         z.style.removeProperty("--lc-beb-weit");
       });
     }, 3600);
-  }
-
-  /* =================================================================
-     VULKANAUSBRUCH
-     -----------------------------------------------------------------
-     GEWÜNSCHT: „Einen Vulkanausbruch kannst du noch reinmachen, zu den
-     Sachen wie Erdbeben und Gewitter."
-
-     Ein Ausbruch besteht aus vier Schichten, die zusammen erst den
-     Eindruck machen:
-       1. der ROTE SCHEIN von unten — er kommt zuerst und bleibt am
-          längsten; ohne ihn wirken die Brocken wie Feuerwerk;
-       2. die LAVABROCKEN, die schräg hochgeschleudert werden und auf
-          einer Wurfbahn wieder herunterfallen (nicht geradeaus — das
-          ist der Unterschied zur Rakete);
-       3. die FUNKEN, klein und schnell, die den Brocken folgen;
-       4. die ASCHE, die zuletzt kommt, langsam ist und seitlich
-          wegtreibt.
-     Dazu bebt der Raum kurz — ein Ausbruch ist ja auch ein Beben.
-     ================================================================= */
-  function lcVulkan() {
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    document.getElementById("lcVulkan")?.remove();
-    const schicht = document.createElement("div");
-    schicht.id = "lcVulkan";
-    schicht.className = "lc-vulkan";
-    schicht.setAttribute("aria-hidden", "true");
-
-    /* 1. Der Schein von unten */
-    const schein = document.createElement("b");
-    schein.className = "lc-vulkan-schein";
-    schicht.appendChild(schein);
-
-    /* Der Schlund sitzt nicht immer in der Mitte — sonst sieht jeder
-       Ausbruch gleich aus. */
-    const mitte = 32 + Math.random() * 36;
-    schicht.style.setProperty("--lc-v-mitte", mitte.toFixed(1) + "%");
-
-    /* 2. Die Lavabrocken auf ihrer Wurfbahn */
-    const brocken = window.innerWidth < 560 ? 26 : 44;
-    for (let i = 0; i < brocken; i++) {
-      const l = document.createElement("i");
-      /* Der Winkel streut um die Senkrechte; je flacher, desto weiter
-         fliegt der Brocken zur Seite. */
-      const weg = (Math.random() - 0.5) * 2;
-      const hoch = 34 + Math.pow(Math.random(), 0.7) * 48;
-      l.style.left = (mitte + weg * 4).toFixed(1) + "%";
-      l.style.setProperty("--lc-v-weit", (weg * (30 + Math.random() * 46)).toFixed(0) + "vw");
-      l.style.setProperty("--lc-v-hoch", hoch.toFixed(0) + "vh");
-      const gross = 4 + Math.random() * 9;
-      l.style.width = gross.toFixed(1) + "px";
-      l.style.height = gross.toFixed(1) + "px";
-      l.style.animationDelay = (Math.random() * 2.4).toFixed(2) + "s";
-      l.style.animationDuration = (1.6 + Math.random() * 1.3).toFixed(2) + "s";
-      schicht.appendChild(l);
-    }
-
-    /* 3. Die Funken — klein, hell, schnell */
-    const funken = window.innerWidth < 560 ? 30 : 55;
-    for (let i = 0; i < funken; i++) {
-      const f = document.createElement("s");
-      const weg = (Math.random() - 0.5) * 2;
-      f.style.left = (mitte + weg * 3).toFixed(1) + "%";
-      f.style.setProperty("--lc-v-weit", (weg * (20 + Math.random() * 40)).toFixed(0) + "vw");
-      f.style.setProperty("--lc-v-hoch", (40 + Math.random() * 46).toFixed(0) + "vh");
-      f.style.animationDelay = (Math.random() * 2.8).toFixed(2) + "s";
-      f.style.animationDuration = (1.1 + Math.random() * 0.9).toFixed(2) + "s";
-      schicht.appendChild(f);
-    }
-
-    /* 4. Die Asche treibt zuletzt und am langsamsten */
-    const asche = window.innerWidth < 560 ? 16 : 28;
-    for (let i = 0; i < asche; i++) {
-      const a = document.createElement("u");
-      a.style.left = (mitte + (Math.random() - 0.5) * 50).toFixed(1) + "%";
-      a.style.setProperty("--lc-v-weit", ((Math.random() - 0.5) * 40).toFixed(0) + "vw");
-      const gross = 3 + Math.random() * 6;
-      a.style.width = gross.toFixed(1) + "px";
-      a.style.height = gross.toFixed(1) + "px";
-      a.style.animationDelay = (0.7 + Math.random() * 3).toFixed(2) + "s";
-      a.style.animationDuration = (3.4 + Math.random() * 2.6).toFixed(2) + "s";
-      schicht.appendChild(a);
-    }
-
-    document.body.appendChild(schicht);
-    setTimeout(() => schicht.remove(), 8200);
-    /* Ein Ausbruch ist auch ein Beben — aber ein kurzes, damit es die
-       Brocken nicht überdeckt. */
-    lcErdbeben();
   }
 
   /* =================================================================
@@ -14859,7 +14379,6 @@
     feuerwerk:{ ganzeSeite: true, wie: "feuerwerk" },
     gewitter:{ ganzeSeite: true, wie: "gewitter" },
     erdbeben:{ ganzeSeite: true, wie: "erdbeben" },
-    vulkan:  { ganzeSeite: true, wie: "vulkan" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -14876,7 +14395,6 @@
       else if (e.wie === "feuerwerk") lcFeuerwerk();
       else if (e.wie === "gewitter") lcGewitter();
       else if (e.wie === "erdbeben") lcErdbeben();
-      else if (e.wie === "vulkan") lcVulkan();
       else if (e.wie === "geschenk") lcGeschenk();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
@@ -15356,22 +14874,7 @@
            warum niemand da ist. */
         hinein(LiveChat.raumAusAdresse() || LiveChat.HAUPTRAUM);
       });
-      /* GEWÜNSCHT: „Der Raum, den man selber anlegt — wenn man zum
-         ersten Mal reingeht, soll man ihn auch mit einem Namen
-         benennen können, nicht dass da nur so ein Buchstabenwurm
-         steht."
-
-         Der Buchstabenwurm kam aus neuerRaumName(): vierzehn
-         zufällige Zeichen, damit niemand den Raum errät. Als
-         Adresse ist das richtig, als Überschrift unbrauchbar.
-         Jetzt wird zuerst gefragt. Wer einen Namen eingibt, bekommt
-         ihn auch als Adresse (raumSchluessel) — dann können Freunde
-         mit /j <name> dazukommen, ohne einen Link zu brauchen. Wer
-         abbricht, bekommt wie bisher den zufälligen Namen; der Raum
-         ist dann privat und nur über den Link erreichbar. */
-      area.querySelector("#lcEigenerRaum")?.addEventListener("click", () => {
-        livechatRaumTaufen().then((raum) => { if (raum) hinein(raum); });
-      });
+      area.querySelector("#lcEigenerRaum")?.addEventListener("click", () => hinein(LiveChat.neuerRaumName()));
       area.querySelector("#lcArchivStart")?.addEventListener("click", () => livechatArchiv());
       area.querySelector("#lcZumKlassenzimmer")?.addEventListener("click", () => {
         document.querySelector('#knowledgeSubnav [data-sub="sub-klassenzimmer"]')?.click();
@@ -15639,18 +15142,10 @@
 
        Hier stand der Text fest im Code. Jetzt steht da, wo man
        wirklich ist: im Hauptraum „Im Klassenzimmer", sonst der Name
-       des Raums.
-
-       NACHGEBESSERT: „Da soll nicht stehen ‚im Raum‘, weil es bei
-       Klassenzimmer ja auch nicht steht — sondern ‚im‘ und der Name
-       des Raums. Und je nach Wort: nennt man den Raum Weihnachten,
-       soll der richtige Artikel erkannt werden, dass man nicht ‚im
-       Weihnachten‘ sagt, sondern ‚in Weihnachten‘."
-
-       Das Wort „Raum" und die Anführungszeichen sind also weg, und
-       ob „im", „in der" oder ein blosses „in" davorsteht, entscheidet
-       lcRaumOrt() am Artikel des Namens. */
-    const wo = lcRaumOrt(l.raum, l.raumName);
+       des Raums. */
+    const wo = (l.raum && l.raum !== LiveChat.HAUPTRAUM)
+      ? "Im Raum \u201e" + (l.raumName || l.raum) + "\u201c"
+      : "Im Klassenzimmer";
     const kopf = document.getElementById("kzStreifenText");
     kopf.textContent = "";
     const fett = document.createElement("strong");
@@ -20757,7 +20252,7 @@
         return true;
       });
       let pool = entries.length ? entries : Object.entries(ExerciseData.WORD_MEANINGS);
-      const eigene = wortQuelleUndNiveau("wordbuild", pool.map(([w, c]) => ({ word: w, clue: c })), 4);
+      const eigene = wortQuelleFilter("wordbuild", pool.map(([w, c]) => ({ word: w, clue: c })));
       if (eigene.length >= 4) pool = eigene.map((e) => [e.word, e.clue]);
       [word, clue] = pool[Math.floor(Math.random() * pool.length)];
     }
@@ -25283,7 +24778,7 @@
   const TURM_RUNDEN = 10;
   function turmWortpool() {
     const alle = buildDictionaryEntries().filter((e) => e.verified && e.syl && e.syl.includes("-") && !e.syl.includes(" ") && e.syl.split("-").length >= 2 && e.syl.split("-").length <= 5 && e.level);
-    const eigene = wortQuelleUndNiveau("silbenturm", alle, 4);
+    const eigene = wortQuelleFilter("silbenturm", alle);
     return eigene.length >= TURM_RUNDEN ? eigene : alle;
   }
   function neueTurmSession() {
@@ -25532,7 +25027,7 @@
     /* Eine eigene Wortliste kann hier nur die RICHTIGEN Steine stellen —
        für die Gegenproben braucht es weiterhin den ganzen Wortschatz,
        sonst gäbe es keine drei Steine mehr. */
-    const eigene = wortQuelleUndNiveau("flussfuchs", pool, 4);
+    const eigene = wortQuelleFilter("flussfuchs", pool);
     /* Unter 30 eigenen Wörtern gäbe es keine drei Steine mehr — das
        Spiel braucht für jede Regel genug Ja- UND Nein-Fälle. Bisher
        wurde die eigene Wahl dann stillschweigend übergangen, und es
@@ -26378,7 +25873,7 @@
     const alle = buildDictionaryEntries().filter((e) =>
       e.verified && e.example && e.example.length >= 22 && e.example.length <= 130
       && e.example.split(/\s+/).length >= 5 && !/\d/.test(e.example));
-    const eigene = wortQuelleUndNiveau("setzerei", alle, 4);
+    const eigene = wortQuelleFilter("setzerei", alle);
     return eigene.length >= SETZ_RUNDEN ? eigene : alle;
   }
   function neueSetzSession() {
@@ -26586,7 +26081,7 @@
   function neueKetteSession() {
     ketteLevel = applyDefaultCefrLevel(ketteLevel, (v) => { ketteLevel = v; }, "wortkette");
     const idx = kettenIndex();
-    const eigene = wortQuelleUndNiveau("wortkette", idx.woerter.map((w) => ({ word: w.wort, ...w })), 4);
+    const eigene = wortQuelleFilter("wortkette", idx.woerter.map((w) => ({ word: w.wort, ...w })));
     const nachNiveau = idx.woerter.filter((w) => w.level === ketteLevel);
     let start = eigene.length >= 5 ? eigene : (nachNiveau.length >= 30 ? nachNiveau : idx.woerter);
     start = start.filter((w) => ketteFortsetzungen(w.schwanz).some((x) => x.wort !== w.wort));
@@ -26774,7 +26269,7 @@
       const n = e.example.split(/\s+/).filter(Boolean).length;
       return n >= stufe.woerter[0] && n <= stufe.woerter[1];
     });
-    const eigene = wortQuelleUndNiveau("augenblick", alle, 4);
+    const eigene = wortQuelleFilter("augenblick", alle);
     return eigene.length >= AUG_RUNDEN ? eigene : alle;
   }
   function neueAugSession() {
@@ -26972,7 +26467,7 @@
 
   function msPool() {
     const alle = buildDictionaryEntries().filter((e) => e.verified && e.example && e.word);
-    const eigene = wortQuelleUndNiveau("meinesaetze", alle, 4);
+    const eigene = wortQuelleFilter("meinesaetze", alle);
     const quelle = eigene.length >= MS_RUNDEN ? eigene : alle;
     const stufen = ["A1", "A2", "B1", "B2", "C1", "C2"];
     const grenze = stufen.indexOf(msLevel);

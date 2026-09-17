@@ -1399,46 +1399,24 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    vergroesserte Gesicht deckt nichts mehr zu — es schwebt rechts
    oben, ueber allem, aber neben dem Chat.
    ================================================================= */
-/* NACHGEBESSERT: „Wenn man unten ist, soll die Buehne nicht ploetzlich
-   kleiner werden und so Miniaturplaetze haben, sondern die Plaetze
-   sollen original so sein, wie sie sind."
-
-   Gemessen war der Kreis 44 Pixel breit — auf einem Bildschirm von
-   1200 Pixeln. Das kam aus dieser Stelle: vier Spalten in einem
-   Raster von hoechstens 420 Pixeln, jeder Platz zusaetzlich auf 82
-   Pixel gedeckelt, auf dem Telefon auf 64. Gedacht war das fuer den
-   Wunsch „das koennte alles kompakter sein" — aber kompakt heisst
-   dicht beieinander, nicht winzig.
-
-   Die Formation bleibt deshalb, wie sie ist: VIER Spalten, auf jeder
-   Breite, damit die Sitzordnung beim Drehen des Telefons nicht
-   umspringt. Nur die Deckel steigen — und zwar so, dass ein Gesicht
-   im Kreis auch zu erkennen ist. min-width haelt die Untergrenze:
-   unter 64 Pixel geht kein Platz mehr, egal wie schmal das Geraet
-   ist; dann rueckt lieber der Abstand zusammen. */
 .lc-plaetze {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px 8px;
-  /* width: 100% ist noetig, nicht nur max-width: das Raster sitzt in
-     einem Flex-Eltern und waere sonst nur so breit wie sein Inhalt —
-     dann bestimmte die Laenge des laengsten Namens die Groesse der
-     Kreise. Gemessen waren es dadurch 70 statt der erlaubten 124 px. */
-  width: 100%;
-  max-width: 580px;
+  gap: 8px 6px;
+  max-width: 420px;
   margin: 0 auto;
 }
-.lc-platz { max-width: 124px; min-width: 64px; gap: 4px; }
+.lc-platz { max-width: 82px; gap: 3px; }
 .lc-platz .lc-kreis { width: 100%; }
-.lc-platz-name { font-size: 0.78rem; }
-.lc-platz-frei .lc-nummer { font-size: 1.35rem; }
+.lc-platz-name { font-size: 0.7rem; }
+.lc-platz-frei .lc-nummer { font-size: 1.15rem; }
 @media (max-width: 760px) {
-  .lc-plaetze { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 480px; }
-  .lc-platz { max-width: 108px; }
+  .lc-plaetze { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 340px; }
+  .lc-platz { max-width: 72px; }
 }
 @media (max-width: 420px) {
-  .lc-plaetze { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 5px; max-width: 360px; }
-  .lc-platz { max-width: 84px; }
-  .lc-platz-name { font-size: 0.7rem; }
+  .lc-plaetze { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px 4px; max-width: 300px; }
+  .lc-platz { max-width: 64px; }
+  .lc-platz-name { font-size: 0.64rem; }
 }
 /* Die Chatüberschrift darf auf schmalen Geräten nicht zu einer
    einspaltigen Buchstabensäule zerfallen. */
@@ -1584,51 +1562,22 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   0%   { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(var(--lc-w-drift, 0px), 112vh, 0); }
 }
-/* GEMELDET: „Den Regen sieht man auf hellen Designs kaum." — und
-   dann: „Der Regen ist so ein bisschen zu kantig. Die Regentropfen
-   koennen ein bisschen weicher und fluessig sein, natuerlicher
-   fallen."
-
-   Vorher war ein Tropfen ein Rechteck von 2,5 px Breite mit
-   border-radius: 2px. Genau daher kamen die Kanten: unten und oben
-   eine gerade Abbruchkante, links und rechts eine harte Linie.
-
-   Jetzt ist er ein Tropfen: oben laeuft er ueber den Farbverlauf ins
-   Nichts aus, unten sitzt der schwere, runde Kopf mit dem hellen
-   Glanzpunkt, den man an echten Tropfen sieht. Ein halbes Pixel
-   Weichzeichner nimmt den Rest der Kante — mehr wuerde ihn
-   verwaschen. Die Groesse kommt aus --lc-w-tiefe: nahe Tropfen sind
-   breiter, dunkler und schneller, ferne schmal und blass. Das ist
-   der eigentliche Grund, warum echter Regen nicht flach wirkt.
-
-   Gefallen wird nicht mehr gleichfoermig, sondern beschleunigt
-   (cubic-bezier) — ein Tropfen faellt, er faehrt nicht. */
+/* GEMELDET: „Den Regen sieht man auf hellen Designs kaum."
+   Die Tropfen sind laenger und breiter, haben einen hellen Kern und
+   einen dunklen Saum — so stehen sie auf hellem wie auf dunklem
+   Grund. Der Sturm peitscht sie zusaetzlich schraeg. */
 .lc-wetter-regen i,
 .lc-wetter-sturm i {
   position: absolute;
-  top: -12vh;
-  width: var(--lc-w-breit, 3px);
+  top: -10vh;
+  width: 2.5px;
   height: var(--lc-w-lang, 22px);
-  border-radius: 46% 46% 50% 50% / 58% 58% 42% 42%;
-  /* Die Farbe muss auf BEIDEN Untergruenden stehen. Ein echter
-     Tropfen ist vor hellem Himmel dunkler als der Himmel und vor
-     dunklem Grund heller — deshalb hat er hier beides: einen
-     blaugrauen Koerper, der auf Creme sichtbar ist, und einen weissen
-     Glanzpunkt im schweren unteren Ende, der auf Schwarz sichtbar
-     ist. Nur weiss war zu blass (gemessen auf hellem Design), nur
-     blau waere auf dunklem Design verschwunden. */
-  background:
-    radial-gradient(ellipse 50% 24% at 50% 82%,
-                    rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0) 74%),
-    linear-gradient(to bottom,
-                    rgba(96, 134, 170, 0) 0%,
-                    rgba(96, 134, 170, 0.42) 34%,
-                    rgba(118, 158, 194, 0.78) 66%,
-                    rgba(150, 192, 226, 0.95) 100%);
-  box-shadow: 0 0 2px rgba(30, 62, 96, 0.5), 0 0 7px rgba(255, 255, 255, 0.34);
-  filter: blur(0.45px);
+  border-radius: 2px;
+  background: linear-gradient(to bottom,
+              rgba(150, 190, 225, 0), rgba(215, 238, 255, 0.98));
+  box-shadow: 0 0 3px rgba(40, 80, 120, 0.55), 0 0 7px rgba(255, 255, 255, 0.35);
   animation-name: lcRegnet;
-  animation-timing-function: cubic-bezier(0.34, 0.12, 0.62, 0.58);
+  animation-timing-function: linear;
   animation-iteration-count: 16;
   animation-fill-mode: forwards;
 }
@@ -1637,42 +1586,12 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   animation-name: lcSturm;
 }
 @keyframes lcRegnet {
-  0%   { transform: translate3d(0, 0, 0) rotate(var(--lc-w-neig, 5deg)); }
-  100% { transform: translate3d(var(--lc-w-seit, -34px), 122vh, 0)
-                    rotate(var(--lc-w-neig, 5deg)); }
+  0%   { transform: translate3d(0, 0, 0) rotate(6deg); }
+  100% { transform: translate3d(-40px, 118vh, 0) rotate(6deg); }
 }
 @keyframes lcSturm {
-  0%   { transform: translate3d(0, 0, 0) rotate(var(--lc-w-neig, 22deg)); }
-  100% { transform: translate3d(var(--lc-w-seit, -180px), 124vh, 0)
-                    rotate(var(--lc-w-neig, 22deg)); }
-}
-
-/* --- Der Aufschlag ----------------------------------------------
-   Regen, der unten einfach verschwindet, sieht aus wie fallender
-   Staub. Was ihn zu Regen macht, ist das Aufkommen: ein flacher
-   Ring, der sich einmal aufweitet und dabei verblasst. Er sitzt
-   knapp ueber dem unteren Rand und ist bewusst schwach — sichtbar,
-   wenn man hinsieht, nicht aufdringlich, wenn man liest. */
-.lc-wetter-regen u,
-.lc-wetter-sturm u {
-  position: absolute;
-  bottom: var(--lc-s-hoch, 2vh);
-  width: 13px;
-  height: 4px;
-  /* Zweifarbig aus demselben Grund wie der Tropfen: der helle Ring
-     steht auf Dunkel, der dunkle Schatten darunter auf Hell. */
-  border: 1px solid rgba(232, 246, 255, 0.9);
-  border-top-color: transparent;
-  box-shadow: 0 1px 2px rgba(40, 78, 112, 0.55);
-  border-radius: 50%;
-  opacity: 0;
-  transform: scale(0.25);
-  animation: lcSpritzt 0.85s ease-out infinite;
-}
-@keyframes lcSpritzt {
-  0%   { opacity: 0;    transform: scale(0.2)  translateY(2px); }
-  22%  { opacity: 0.75; transform: scale(0.55) translateY(0); }
-  100% { opacity: 0;    transform: scale(1.5)  translateY(-2px); }
+  0%   { transform: translate3d(0, 0, 0) rotate(22deg); }
+  100% { transform: translate3d(-180px, 120vh, 0) rotate(22deg); }
 }
 
 /* --- Der Blitz: hellt kurz die ganze Seite auf ------------------- */
@@ -1699,188 +1618,6 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   18%  { opacity: 0.34; }
   30%  { opacity: 0; }
   100% { opacity: 0; }
-}
-
-/* --- Wetterleuchten zum Regen -----------------------------------
-   GEWUENSCHT: „Da kann auch Blitz mit dabei sein." Beim blossen
-   Regen aber nicht der grelle Gewitterblitz — ein Gewitter ist ein
-   eigener Befehl. Hier nur ein fernes Aufhellen des Himmels: kein
-   Zucken, kein Weiss, ein Achtel der Helligkeit. */
-.lc-blitz-fern i {
-  background: linear-gradient(to bottom,
-              rgba(226, 240, 255, 0.9), rgba(226, 240, 255, 0) 55%);
-  animation: lcLeuchtet 2.2s ease-out both;
-}
-@keyframes lcLeuchtet {
-  0%   { opacity: 0; }
-  12%  { opacity: 0.22; }
-  34%  { opacity: 0.05; }
-  46%  { opacity: 0.14; }
-  100% { opacity: 0; }
-}
-
-/* --- Der gezeichnete Blitz --------------------------------------
-   GEMELDET: „Das Gewitter kann ein bisschen schoener aussehen."
-   Bisher war ein Gewitter nur eine Seite, die kurz weiss wird. Was
-   fehlte, war der Blitz selbst. Er faehrt jetzt als gezackte Linie
-   vom oberen Rand herunter: der Strich wird in zwei Zehntelsekunden
-   gezeichnet (stroke-dashoffset), steht einen Wimpernschlag und
-   verglueht. Das Leuchten aussen herum macht ihn auch auf hellem
-   Grund sichtbar. */
-.lc-strahl {
-  position: fixed;
-  inset: 0;
-  z-index: 9346;
-  pointer-events: none;
-  overflow: hidden;
-}
-.lc-strahl svg {
-  position: absolute;
-  top: -2vh;
-  width: 190px;
-  height: 62vh;
-  overflow: visible;
-  opacity: 0;
-  animation: lcStrahlt 1.5s ease-out both;
-}
-.lc-strahl path {
-  fill: none;
-  stroke: #fdfeff;
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  /* Zwei Sorten Schein uebereinander. Der enge, DUNKLE zeichnet den
-     Blitz auf hellem Grund nach — ohne ihn ist er weiss auf Creme
-     und praktisch unsichtbar (gemessen am hellen Design). Der weite,
-     HELLE ist der Widerschein, der ihn auf dunklem Grund traegt. */
-  filter: drop-shadow(0 0 2px rgba(64, 42, 120, 0.95))
-          drop-shadow(0 0 5px rgba(96, 70, 168, 0.8))
-          drop-shadow(0 0 14px rgba(150, 195, 255, 0.85))
-          drop-shadow(0 0 30px rgba(120, 170, 255, 0.6));
-  stroke-dasharray: 1400;
-  stroke-dashoffset: 1400;
-  animation: lcStrahlZieht 1.5s ease-out both;
-  animation-delay: inherit;
-}
-@keyframes lcStrahlt {
-  0%   { opacity: 0; }
-  6%   { opacity: 1; }
-  16%  { opacity: 0.35; }
-  22%  { opacity: 1; }
-  40%  { opacity: 0.15; }
-  60%  { opacity: 0; }
-  100% { opacity: 0; }
-}
-@keyframes lcStrahlZieht {
-  0%   { stroke-dashoffset: 1400; }
-  9%   { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 0; }
-}
-
-/* --- Vulkanausbruch ----------------------------------------------
-   GEWUENSCHT: „Einen Vulkanausbruch kannst du noch reinmachen, zu den
-   Sachen wie Erdbeben und Gewitter."
-
-   Die Wurfbahn ist das Entscheidende. Ein Brocken, der geradeaus
-   hochfliegt und verschwindet, ist eine Rakete. Ein Brocken, der
-   hochfliegt, oben langsamer wird und wieder herunterfaellt, ist
-   Lava. Darum zwei Haelften in den Keyframes: bis 45 % hinauf mit
-   ease-out (er wird langsamer), danach hinunter mit ease-in (er wird
-   schneller) — das ist der Wurf. */
-.lc-vulkan {
-  position: fixed;
-  inset: 0;
-  z-index: 9342;
-  pointer-events: none;
-  overflow: hidden;
-}
-/* Der Schein von unten: ohne ihn wirkt alles wie Feuerwerk. */
-.lc-vulkan-schein {
-  position: absolute;
-  left: var(--lc-v-mitte, 50%);
-  bottom: -26vh;
-  width: 120vw;
-  height: 52vh;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 100%,
-              rgba(255, 186, 78, 0.75) 0%,
-              rgba(240, 104, 36, 0.46) 32%,
-              rgba(170, 36, 20, 0.2) 60%,
-              rgba(170, 36, 20, 0) 100%);
-  /* Ohne den Weichzeichner sieht man den Rand der Ellipse als Bogen
-     ueber dem Bild stehen — ein Glutschein hat keine Kante. */
-  filter: blur(22px);
-  opacity: 0;
-  animation: lcGlut 8s ease-out both;
-}
-@keyframes lcGlut {
-  0%   { opacity: 0;    transform: translateX(-50%) scaleY(0.5); }
-  8%   { opacity: 1;    transform: translateX(-50%) scaleY(1.08); }
-  26%  { opacity: 0.86; transform: translateX(-50%) scaleY(0.96); }
-  55%  { opacity: 0.6;  transform: translateX(-50%) scaleY(1.02); }
-  100% { opacity: 0;    transform: translateX(-50%) scaleY(0.72); }
-}
-/* Die Lavabrocken */
-.lc-vulkan i {
-  position: absolute;
-  bottom: 0;
-  border-radius: 50% 50% 46% 54% / 54% 46% 50% 50%;
-  background: radial-gradient(circle at 34% 30%,
-              #fff3c4 0%, #ffcf4d 22%, #ff8a2b 52%, #d53a12 82%, #8d1f0c 100%);
-  box-shadow: 0 0 7px rgba(255, 150, 50, 0.9), 0 0 16px rgba(255, 90, 20, 0.5);
-  opacity: 0;
-  animation-name: lcLava;
-  animation-fill-mode: both;
-}
-@keyframes lcLava {
-  0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(0.5); }
-  6%   { opacity: 1; }
-  45%  { opacity: 1;
-         transform: translate3d(calc(var(--lc-v-weit, 0vw) * 0.62),
-                                calc(var(--lc-v-hoch, 50vh) * -1), 0) scale(1);
-         animation-timing-function: ease-in; }
-  100% { opacity: 0;
-         transform: translate3d(var(--lc-v-weit, 0vw), 14vh, 0) scale(0.8); }
-}
-.lc-vulkan i { animation-timing-function: ease-out; }
-/* Die Funken */
-.lc-vulkan s {
-  position: absolute;
-  bottom: 0;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #ffe9a8;
-  box-shadow: 0 0 6px rgba(255, 210, 120, 0.95);
-  opacity: 0;
-  animation-name: lcFunke;
-  animation-timing-function: ease-out;
-  animation-fill-mode: both;
-}
-@keyframes lcFunke {
-  0%   { opacity: 0;   transform: translate3d(0, 0, 0) scale(0.4); }
-  10%  { opacity: 1; }
-  100% { opacity: 0;
-         transform: translate3d(var(--lc-v-weit, 0vw),
-                                calc(var(--lc-v-hoch, 60vh) * -1), 0) scale(0.2); }
-}
-/* Die Asche — langsam, grau, treibt zur Seite */
-.lc-vulkan u {
-  position: absolute;
-  bottom: 0;
-  border-radius: 50%;
-  background: rgba(96, 88, 88, 0.55);
-  filter: blur(1.2px);
-  opacity: 0;
-  animation-name: lcAsche;
-  animation-timing-function: ease-out;
-  animation-fill-mode: both;
-}
-@keyframes lcAsche {
-  0%   { opacity: 0;    transform: translate3d(0, 0, 0) scale(0.6); }
-  14%  { opacity: 0.75; }
-  100% { opacity: 0;    transform: translate3d(var(--lc-v-weit, 0vw), -92vh, 0) scale(2.2); }
 }
 
 /* --- Erdbeben: das Klassenzimmer selbst wackelt ------------------
@@ -2198,9 +1935,11 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 
 /* Der Buehnenknopf: zwei Pfeile im Wechsel, weil das Mikrofon schon
    fuer Ton an/aus vergeben ist. */
-/* Farbe und Pfeilform stehen weiter unten bei „Die Buehnenpfeile" —
-   hier stuende sonst zweimal dasselbe mit verschiedenen Werten. */
-.lc-buehnenknopf { letter-spacing: -0.06em; }
+.lc-buehnenknopf { font-size: 1rem; letter-spacing: -0.06em; }
+.lc-buehnenknopf.ist-unten {
+  background: rgba(224, 150, 74, 0.2);
+  box-shadow: 0 0 0 2px rgba(224, 150, 74, 0.55) inset;
+}
 
 /* =================================================================
    DIE BEDIENLEISTE BLEIBT EINE ZEILE
@@ -2241,50 +1980,15 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    und eine breite Spitze, die den Kreis fast ausfuellen. Als Zeichen
    im Text war er so duenn, wie die jeweilige Schrift ihn eben malt —
    darauf hat man keinen Einfluss. */
-/* NACHGEBESSERT: „Der Pfeil zum Runtergehen und zum Hochgehen kann
-   immer deutlich sein, zum Beispiel auf dem dunklen Hintergrund —
-   wenn er dann schwarz ist, kann man ihn nicht so gut erkennen."
-
-   Der Grund stand hier: background: currentColor. Der Pfeil nahm
-   damit die Schriftfarbe des Designs an. Auf einem dunklen Design
-   ist die hell, auf einem hellen dunkel — und der Knopf darunter
-   wechselt genauso mit. Zweimal dunkel oder zweimal hell, und der
-   Pfeil verschwindet. Dazu kommt, dass hinter dem Knopf ein
-   selbst gewaehltes Hintergrundbild liegen kann, von dem niemand
-   weiss, ob es hell oder dunkel ist.
-
-   Also bekommt dieser eine Knopf ein festes Paar, das mit keinem
-   Design mitwandert: eine volle Bernsteinscheibe und ein weisser
-   Pfeil darauf. Beides steht fuer sich. Der dunkle Rand und der
-   Schlagschatten am Pfeil sorgen dafuer, dass auch die Scheibe
-   selbst auf hellem Grund noch eine Kante hat. */
-.lc-buehnenknopf {
-  font-size: 0;
-  background: #C97B2E;
-  border-color: rgba(28, 20, 10, 0.55);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-}
+.lc-buehnenknopf { font-size: 0; }
 .lc-buehnenknopf::before {
   content: "";
   display: block;
   width: 62%;
   height: 62%;
-  background: #fff;
+  background: currentColor;
   /* Ein Pfeil nach unten: breiter Schaft, breite Spitze. */
   clip-path: polygon(38% 0%, 62% 0%, 62% 46%, 86% 46%, 50% 100%, 14% 46%, 38% 46%);
-  /* drop-shadow folgt der ausgeschnittenen Form, nicht dem Kasten —
-     der Pfeil bekommt dadurch einen dunklen Saum statt eines
-     rechteckigen Schattens. */
-  filter: drop-shadow(0 0 1px rgba(30, 18, 6, 0.9))
-          drop-shadow(0 1px 2px rgba(30, 18, 6, 0.55));
-}
-.lc-buehnenknopf.ist-unten {
-  /* Auf der Buehne: umgekehrtes Paar, damit man den Zustand auch
-     ohne die Pfeilrichtung sieht. */
-  background: #2F6D4F;
-  border-color: rgba(10, 30, 20, 0.6);
-  box-shadow: 0 0 0 2px rgba(224, 150, 74, 0.55) inset,
-              0 1px 3px rgba(0, 0, 0, 0.35);
 }
 .lc-buehnenknopf.ist-unten::before {
   /* Nach oben: dieselbe Form, gespiegelt. */
@@ -2375,89 +2079,3 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
                               calc(-50% + var(--lc-gy, 0) + 120px)) scale(1) rotate(160deg); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-geschenk { display: none; } }
-
-/* =================================================================
-   DEN EIGENEN RAUM TAUFEN
-   -----------------------------------------------------------------
-   GEWUENSCHT: „Der Raum, den man selber anlegt — wenn man zum ersten
-   Mal reingeht, soll man ihn auch mit einem Namen benennen koennen,
-   nicht dass da nur so ein Buchstabenwurm steht."
-   ================================================================= */
-.lc-taufe {
-  position: fixed;
-  inset: 0;
-  z-index: 9400;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(18, 14, 12, 0.58);
-  backdrop-filter: blur(3px);
-}
-.lc-taufe-karte {
-  width: min(420px, 100%);
-  padding: 20px 20px 16px;
-  border-radius: 16px;
-  background: var(--plum-900, #221c1a);
-  border: 1px solid rgba(224, 150, 74, 0.4);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
-}
-.lc-taufe-karte h3 { margin: 0 0 8px; font-size: 1.1rem; }
-.lc-taufe-karte p { margin: 0 0 12px; font-size: 0.86rem; opacity: 0.85; line-height: 1.5; }
-.lc-taufe-karte code {
-  padding: 1px 5px;
-  border-radius: 5px;
-  background: rgba(224, 150, 74, 0.16);
-  font-size: 0.92em;
-}
-.lc-taufe-karte input {
-  width: 100%;
-  padding: 11px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(122, 115, 100, 0.4);
-  background: rgba(0, 0, 0, 0.22);
-  color: inherit;
-  font: inherit;
-  font-size: 1rem;
-}
-.lc-taufe-karte input:focus {
-  outline: none;
-  border-color: rgba(224, 150, 74, 0.9);
-  box-shadow: 0 0 0 3px rgba(224, 150, 74, 0.18);
-}
-.lc-taufe-karte small {
-  display: block;
-  margin: 8px 2px 0;
-  font-size: 0.76rem;
-  opacity: 0.7;
-  line-height: 1.5;
-}
-.lc-taufe-knoepfe {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 14px;
-  flex-wrap: wrap;
-}
-
-/* =================================================================
-   DER ARTIKEL IN DER AUSSPRACHE
-   -----------------------------------------------------------------
-   GEMELDET: „Man muss in der Aussprache keine Artikel stehen haben,
-   dass man jetzt ‚die‘ aussprechen soll."
-
-   Er steht weiter da — das Geschlecht gehoert zum Wort. Aber er
-   steht kleiner, blasser und tiefer, damit auf einen Blick klar ist,
-   was gesprochen werden soll und was nicht. Gesprochen und bewertet
-   wird nur das Wort dahinter (siehe aussprSprechtext in app.js).
-   ================================================================= */
-.ausspr-artikel {
-  font-size: 0.52em;
-  font-weight: 500;
-  opacity: 0.45;
-  vertical-align: 0.42em;
-  letter-spacing: 0.02em;
-}
-/* Die Niveaureihe unter der Wortquelle — dieselbe Optik wie die
-   Quellenreihe, aber mit etwas Luft dazwischen, damit man sieht:
-   das sind zwei Entscheidungen, nicht eine. */
-.wortniveau-chips { margin-top: 6px; }
