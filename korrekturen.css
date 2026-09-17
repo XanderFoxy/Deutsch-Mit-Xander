@@ -5236,3 +5236,54 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   margin: 2px 0 0;
   line-height: 1.45;
 }
+
+/* =========================================================
+   DAS WOLKENFELD — statt der alten Kachel
+   ---------------------------------------------------------
+   Die Wolken bestehen jetzt aus einem Rauschfeld, das sich
+   selbst verändert (siehe wWolkenbaender() in app.js). Hier
+   steht nur noch, WO es liegt, WIE SCHNELL es zieht und WELCHE
+   FARBE es hat.
+
+   Das Ziehen: die Fläche ist dreimal so breit wie der Streifen
+   und wandert um genau ein Drittel nach links. Danach steht sie
+   wieder am Anfang — aber weil sich die Wolkenform in der
+   Zwischenzeit verändert hat, sieht man keine Wiederholung.
+   Genau das war die Beschwerde: „kopiergestempelte Wolken, die
+   sich hinten exakt wiederholen."
+   ========================================================= */
+.w-wolkenfeld {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--w-deckung, 0.9);
+  /* Die Farbe der Wolke kommt aus der Tageszeit — das <rect> im
+     SVG nimmt sie über currentColor auf. */
+  color: var(--w-wolke-hell, rgba(255, 255, 255, 0.9));
+}
+.w-wolken-svg {
+  display: block;
+  width: 300%;
+  height: 100%;
+  animation-name: wFeldZieht;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+.w-wolken-svg rect { fill: currentColor; }
+@keyframes wFeldZieht {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-33.3333%, 0, 0); }
+}
+/* Die hinteren Lagen sitzen etwas tiefer und kühler — das gibt
+   Luftperspektive: was weiter weg ist, wird blasser und geht
+   zur Himmelsfarbe hin. */
+.w-wf2 { color: color-mix(in srgb, var(--w-wolke-hell, #fff) 78%, var(--w-wolke-schatten, #9eb2ca)); }
+.w-wf3 { color: color-mix(in srgb, var(--w-wolke-hell, #fff) 58%, var(--w-wolke-schatten, #9eb2ca)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .w-wolken-svg { animation: none; }
+}

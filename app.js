@@ -3978,6 +3978,107 @@
   }
 
   // Tageszeiten-Himmel: verläuft fließend über den ganzen Tag statt harter Umschaltpunkte
+  /* =================================================================
+     DER HIMMEL FOLGT DER SONNE, NICHT DER UHR
+     -----------------------------------------------------------------
+     GEMELDET: „Ob der Himmel, den du gestaltest, wirklich so stark
+     gefärbt wird — zu einer Zeit wie jetzt ist draußen noch Licht und
+     der Himmel ist bei dir schon ziemlich dunkel. Wie man den
+     Übergang ganz realistisch, ganz dezent und fein gestalten kann, so
+     dass es immer passt."
+
+     DIE URSACHE: die Farben hingen an festen Uhrzeiten — Tag bis
+     17:00, Dämmerung um 19:00, Nacht ab 21:30. Das ganze Jahr
+     dieselben Zahlen, an jedem Ort der Erde dieselben Zahlen.
+
+     Mitte September geht die Sonne in Berlin erst gegen 19:20 unter,
+     und hell ist es bis nach 20 Uhr. Um 17:00 war der Himmel hier aber
+     schon auf dem Weg in die Dämmerung. Im Juni wäre es noch krasser,
+     und in Ägypten stimmt es sowieso nie: dort ist der Sonnenuntergang
+     im Sommer eine Stunde früher als in Deutschland, im Winter eine
+     Stunde später.
+
+     Eine Tabelle mit Uhrzeiten kann das nicht leisten. Man müsste für
+     jeden Tag und jeden Ort eine eigene haben.
+
+     DESHALB WIRD GERECHNET. Der Sonnenstand lässt sich aus Datum,
+     Uhrzeit und Standort geschlossen ausrechnen — das ist Astronomie
+     aus dem 19. Jahrhundert und auf eine Bogenminute genau, mehr als
+     genug für eine Himmelsfarbe. Kein Netz, kein Dienst, keine
+     Schlüssel.
+
+     Und der HÖHENWINKEL der Sonne ist genau die Grösse, an der das
+     Auge die Tageszeit festmacht — nicht die Uhr:
+
+        über  +6°   voller Tag
+        +6° bis  0°   die goldene Stunde, alles wird warm
+         0° bis –6°   bürgerliche Dämmerung — man liest noch draußen
+        –6° bis –12°   nautische Dämmerung, der Horizont glüht noch
+        unter –12°   Nacht
+
+     Zwischen diesen Punkten wird stufenlos gemischt. Damit ist der
+     Übergang von selbst dezent: er dauert genau so lange, wie die
+     Dämmerung an diesem Tag und an diesem Ort wirklich dauert.
+     ================================================================= */
+  const GRAD = Math.PI / 180;
+
+  function sonnenHoehe(datum, breite, laenge) {
+    /* Tage seit dem 1. Januar 2000, 12:00 Weltzeit. */
+    const d = (datum.getTime() / 86400000) + 2440587.5 - 2451545.0;
+    const L = (280.460 + 0.9856474 * d) % 360;          // mittlere Länge
+    const g = ((357.528 + 0.9856003 * d) % 360) * GRAD; // mittlere Anomalie
+    /* Die Mittelpunktsgleichung: die Erdbahn ist eine Ellipse, die
+       Sonne läuft deshalb nicht gleichmässig. */
+    const lam = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * GRAD;
+    const eps = (23.439 - 0.0000004 * d) * GRAD;        // Schiefe der Ekliptik
+    const rekt = Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam));
+    const dekl = Math.asin(Math.sin(eps) * Math.sin(lam));
+    /* Sternzeit in Greenwich, daraus die örtliche Sternzeit. */
+    let gmst = (18.697374558 + 24.06570982441908 * d) % 24;
+    if (gmst < 0) gmst += 24;
+    const lst = (gmst * 15 + laenge) * GRAD;
+    const stundenwinkel = lst - rekt;
+    const phi = breite * GRAD;
+    const hoehe = Math.asin(Math.sin(phi) * Math.sin(dekl)
+                          + Math.cos(phi) * Math.cos(dekl) * Math.cos(stundenwinkel));
+    return hoehe / GRAD;
+  }
+
+  /* Die Farben, gestaffelt nach HÖHENWINKEL statt nach Uhrzeit.
+     „dark" ist die Dunkelheit von 0 (Tag) bis 1 (tiefe Nacht) — daran
+     hängen Sterne, Mond und die Farbe der Regentropfen. */
+  const SONNEN_STUFEN = [
+    { h:  60, top: [126,188,238], bottom: [222,240,253], dark: 0    },  // Mittagshoch
+    { h:  12, top: [143,197,240], bottom: [234,246,255], dark: 0    },  // heller Tag
+    { h:   6, top: [163,203,236], bottom: [245,240,230], dark: 0.06 },  // die Sonne wird tief
+    { h:   2, top: [206,180,196], bottom: [252,222,186], dark: 0.18 },  // goldene Stunde
+    { h:   0, top: [196,140,160], bottom: [250,196,150], dark: 0.28 },  // Sonnenuntergang
+    { h:  -3, top: [120,84,132],  bottom: [226,134,102], dark: 0.45 },  // Abendrot
+    { h:  -6, top: [70,58,110],   bottom: [150,86,104],  dark: 0.62 },  // bürgerliche Dämmerung zu Ende
+    { h: -12, top: [32,36,76],    bottom: [62,52,96],    dark: 0.86 },  // nautische Dämmerung zu Ende
+    { h: -18, top: [12,16,36],    bottom: [27,32,68],    dark: 1    },  // astronomische Nacht
+    { h: -90, top: [12,16,36],    bottom: [27,32,68],    dark: 1    },
+  ];
+
+  function himmelAusSonne(hoehe) {
+    let a = SONNEN_STUFEN[0], b = SONNEN_STUFEN[0];
+    for (let i = 0; i < SONNEN_STUFEN.length - 1; i++) {
+      if (hoehe <= SONNEN_STUFEN[i].h && hoehe >= SONNEN_STUFEN[i + 1].h) {
+        a = SONNEN_STUFEN[i]; b = SONNEN_STUFEN[i + 1];
+        break;
+      }
+    }
+    if (hoehe > SONNEN_STUFEN[0].h) return SONNEN_STUFEN[0];
+    const spanne = a.h - b.h || 1;
+    const f = Core.clamp((a.h - hoehe) / spanne, 0, 1);
+    return { top: lerpColor(a.top, b.top, f),
+             bottom: lerpColor(a.bottom, b.bottom, f),
+             dark: lerp(a.dark, b.dark, f) };
+  }
+
+  /* Die alte Tabelle bleibt als Notnagel stehen: sollte der Standort
+     einmal unbekannt sein, ist ein Himmel nach der Uhr immer noch
+     besser als gar keiner. */
   const SKY_STOPS = [
     { t: 0,    top: [12,16,36],  bottom: [27,32,68],   text: [207,224,255], dark: 1 },
     { t: 330,  top: [12,16,36],  bottom: [27,32,68],   text: [207,224,255], dark: 1 },   // 05:30 noch Nacht
@@ -4001,22 +4102,48 @@
   function lerpColor(a, b, f) {
     return [Math.round(lerp(a[0], b[0], f)), Math.round(lerp(a[1], b[1], f)), Math.round(lerp(a[2], b[2], f))];
   }
+  /* Der zuletzt gerechnete Sonnenstand — damit man nachsehen kann,
+     worauf die Farbe beruht (siehe window.__himmel). */
+  let sonnenHoeheZuletzt = null;
+
   function updateDaytimeSky(minutes) {
     const bar = document.getElementById("deckDisplay");
     if (!bar) return;
-    let a = SKY_STOPS[0], b = SKY_STOPS[SKY_STOPS.length - 1];
-    for (let i = 0; i < SKY_STOPS.length - 1; i++) {
-      if (minutes >= SKY_STOPS[i].t && minutes <= SKY_STOPS[i + 1].t) {
-        a = SKY_STOPS[i]; b = SKY_STOPS[i + 1];
-        break;
+    let top, bottom, text, dark;
+    /* DER SONNENSTAND FÜHRT. Die Uhrzeittabelle gilt nur noch, wenn
+       die Rechnung aus irgendeinem Grund nicht geht — besser ein
+       Himmel nach der Uhr als gar keiner. */
+    let ausSonne = null;
+    try {
+      const ort = ortFuerLernraum();
+      const hoehe = sonnenHoehe(new Date(), ort.breite, ort.laenge);
+      sonnenHoeheZuletzt = hoehe;
+      ausSonne = himmelAusSonne(hoehe);
+    } catch (e) { ausSonne = null; }
+
+    if (ausSonne) {
+      top = ausSonne.top;
+      bottom = ausSonne.bottom;
+      dark = ausSonne.dark;
+      /* Die Schriftfarbe wird ohnehin gleich aus der Helligkeit des
+         Himmels gerechnet (siehe unten) — dieser Wert ist nur noch der
+         Ausgangspunkt. */
+      text = dark > 0.5 ? [207, 224, 255] : [12, 74, 114];
+    } else {
+      let a = SKY_STOPS[0], b = SKY_STOPS[SKY_STOPS.length - 1];
+      for (let i = 0; i < SKY_STOPS.length - 1; i++) {
+        if (minutes >= SKY_STOPS[i].t && minutes <= SKY_STOPS[i + 1].t) {
+          a = SKY_STOPS[i]; b = SKY_STOPS[i + 1];
+          break;
+        }
       }
+      const span = b.t - a.t || 1;
+      const f = Core.clamp((minutes - a.t) / span, 0, 1);
+      top = lerpColor(a.top, b.top, f);
+      bottom = lerpColor(a.bottom, b.bottom, f);
+      text = lerpColor(a.text, b.text, f);
+      dark = lerp(a.dark, b.dark, f);
     }
-    const span = b.t - a.t || 1;
-    const f = Core.clamp((minutes - a.t) / span, 0, 1);
-    const top = lerpColor(a.top, b.top, f);
-    const bottom = lerpColor(a.bottom, b.bottom, f);
-    const text = lerpColor(a.text, b.text, f);
-    const dark = lerp(a.dark, b.dark, f);
     bar.style.background = `linear-gradient(180deg, rgb(${top.join(",")}), rgb(${bottom.join(",")}))`;
     bar.style.color = `rgb(${text.join(",")})`;
     const stars = document.getElementById("starsLayer");
@@ -7077,27 +7204,209 @@
     return "tag";
   }
 
+  /* =================================================================
+     DER HIMMEL — KEINE KACHEL MEHR, SONDERN EIN FELD
+     -----------------------------------------------------------------
+     GEMELDET: „Bei einer Wolke sind so harte Kanten drin … die Wolken
+     sollen sich so langsam verteilen, wie sie das in der echten Natur
+     tun, ein bisschen zerlaufen mit der Zeit und sich verbinden … Bei
+     den reparierten Wolken sind immer noch Lücken und abgehackte
+     Wolken, und du hast kopiergestempelte Wolken, die sich hinten
+     exakt wiederholen. Das soll nicht nach Trick 17 aussehen."
+
+     DA HATTE ER RECHT, UND ZWAR GRUNDSÄTZLICH. Es WAR ein
+     Kopierstempel. Die alte Bauweise war ein festes Bild, das sich
+     alle 460 Pixel wiederholte. Daraus folgt alles, was er sieht:
+
+       • Die Wiederholung ist keine Panne, sie ist die Bauweise.
+       • Die harten Kanten stehen an der Naht, wo die Kachel
+         abgeschnitten wird.
+       • Die Lücken sind der Rand, der frei bleiben MUSS, damit die
+         Naht nicht mitten durch eine Wolke geht.
+       • Und zerlaufen kann ein festes Bild überhaupt nicht.
+
+     Man kann eine Kachel beliebig verbessern — eine Kachel bleibt sie.
+     Deshalb ist sie weg.
+
+     WAS JETZT DASTEHT: ein RAUSCHFELD, das sich selbst bewegt.
+     feTurbulence erzeugt fraktales Rauschen — dieselbe Mathematik, die
+     hinter Bergketten, Marmor und echten Wolken steckt. Daraus wird
+     über eine weiche Kennlinie (feComponentTransfer) eine Dichte: viel
+     Rauschen = dichte Wolke, wenig = klarer Himmel. Weil die Kennlinie
+     WEICH ist und kein Schwellwert, gibt es keine harte Kante — die
+     Wolke franst aus, wie sie es soll.
+
+     Und zwei Bewegungen laufen gleichzeitig:
+
+       1. ZIEHEN. Das Feld wandert waagerecht durchs Bild.
+       2. ZERLAUFEN. Die Grundfrequenz des Rauschens ändert sich
+          langsam. Dadurch wachsen Wolken zusammen, ziehen sich in die
+          Länge und lösen sich auf — genau das, was eine Wolke in der
+          Natur tut.
+
+     Und DAS ist der eigentliche Grund, warum die Wiederholung
+     verschwindet: selbst wenn dieselbe Stelle nach einer Weile wieder
+     vorbeikommt, hat sie inzwischen eine andere Form. Die beiden
+     Bewegungen haben ausserdem teilerfremde Zeiten, sodass sie nie
+     gleichzeitig von vorn anfangen.
+
+     WARUM INLINE UND NICHT ALS BILD: ein SVG, das als mask-image oder
+     background-image eingebunden ist, wird von Browsern als Standbild
+     behandelt — jedes <animate> darin bleibt stehen. Nur ein SVG, das
+     wirklich im Dokument steht, bewegt sich. Genau deshalb konnte die
+     alte Fassung gar nicht zerlaufen.
+     ================================================================= */
+  const W_WOLKENLAGEN = [
+    /* vorn: gross, langsam großräumig, deutlich */
+    { saat: 11, frequenz: ["0.0062 0.020", "0.0052 0.017", "0.0071 0.024"],
+      oktaven: 5, ziehen: 168, leben: 97, deckung: 0.95, hoch: 100, weich: 1.1,
+      kennlinie: "0 0 0 0.04 0.30 0.72 0.94 1" },
+    /* Mitte */
+    { saat: 29, frequenz: ["0.0098 0.032", "0.0085 0.027", "0.0112 0.038"],
+      oktaven: 5, ziehen: 251, leben: 143, deckung: 0.58, hoch: 86, weich: 0.9,
+      kennlinie: "0 0 0 0 0.18 0.55 0.85 1" },
+    /* hinten: fein, blass, sehr langsam — das gibt Tiefe */
+    { saat: 47, frequenz: ["0.0155 0.048", "0.0138 0.042", "0.0172 0.055"],
+      oktaven: 4, ziehen: 389, leben: 211, deckung: 0.32, hoch: 70, weich: 0.7,
+      kennlinie: "0 0 0 0 0.10 0.42 0.78 1" },
+  ];
+
+  /* =================================================================
+     DAS ZERLAUFEN — VON HAND ANGETRIEBEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Die Wolken sollen sich so langsam verteilen, wie sie
+     das in der echten Natur tun — ein bisschen zerlaufen mit der Zeit
+     und sich verbinden."
+
+     Eine echte Wolke verändert sich in Minuten: Ballen wachsen
+     zusammen, ziehen sich in die Länge, lösen sich an den Rändern auf.
+     Genau das macht eine langsam wandernde Grundfrequenz im Rauschen.
+
+     ZWEIMAL DIE SEKUNDE reicht dafür völlig. Eine Wolke, die sich in
+     zwei Minuten merklich ändert, braucht keine sechzig Bilder je
+     Sekunde — das wäre verschwendete Rechenzeit auf einem Telefon,
+     und der Filter ist das Teuerste am ganzen Himmel.
+
+     Die Zeit kommt aus der UHR, nicht aus einem Zähler: wird die
+     Wetterecke neu gezeichnet, läuft der Himmel dort weiter, wo er
+     war, statt zurückzuspringen.
+     ================================================================= */
+  let wLebenUhr = null;
+  function wWolkenLeben() {
+    if (wLebenUhr) return;
+    const schlag = () => {
+      const felder = document.querySelectorAll("feTurbulence[data-w-leben]");
+      if (!felder.length) {
+        clearInterval(wLebenUhr);
+        wLebenUhr = null;
+        return;
+      }
+      const jetzt = Date.now() / 1000;
+      felder.forEach((f) => {
+        const dauer = Number(f.dataset.wLeben) || 120;
+        const von = String(f.dataset.wVon || "").split(" ").map(Number);
+        const bis = String(f.dataset.wBis || "").split(" ").map(Number);
+        const weit = String(f.dataset.wWeit || "").split(" ").map(Number);
+        if (von.length < 2) return;
+        /* Zwei Schwingungen mit unterschiedlicher Länge übereinander.
+           Eine einzige wäre ein Pendel und käme regelmässig zurück —
+           zwei teilerfremde ergeben ein Muster, das sich erst nach
+           Stunden wiederholt. Genau darum geht es: „das soll nicht
+           nach Trick 17 aussehen." */
+        const a = (Math.sin((jetzt / dauer) * Math.PI * 2) + 1) / 2;
+        const b = (Math.sin((jetzt / (dauer * 0.617)) * Math.PI * 2 + 1.7) + 1) / 2;
+        const mische = (p, q, r) => p + (q - p) * a + (r - p) * (b - 0.5) * 0.55;
+        const x = mische(von[0], bis[0], weit[0]);
+        const y = mische(von[1], bis[1], weit[1]);
+        f.setAttribute("baseFrequency",
+          Math.max(0.001, x).toFixed(6) + " " + Math.max(0.004, y).toFixed(6));
+      });
+    };
+    schlag();
+    wLebenUhr = setInterval(schlag, 500);
+  }
+
   function wWolkenbaender(anzahl) {
-    /* Mehrere Schichten, die unterschiedlich schnell ziehen. Jede ist
-       EIN Element: die Wolkenballen stecken als weiche Farbverläufe im
-       Hintergrund und wiederholen sich seitlich. Bewegt wird die
-       Schicht um genau eine Kachelbreite — dadurch ist der Übergang
-       nahtlos, ohne dass irgendetwas doppelt gezeichnet werden muss. */
-    /* Der Versatz kommt aus der UHRZEIT, nicht aus einer festen Zahl im
-       Stilblatt. Wird die Wetterecke neu gezeichnet — und das passiert
-       bei jedem Wechsel der Ansicht —, entstehen die Bänder neu und
-       begannen bisher wieder bei ihrer festen Verzögerung: der Himmel
-       sprang sichtbar zurück. Aus der Uhrzeit gerechnet laufen sie
-       dagegen genau dort weiter, wo sie eben waren. */
-    const DAUER = [46, 78, 116];
+    /* Der Versatz kommt aus der UHRZEIT, nicht aus einer festen Zahl.
+       Wird die Wetterecke neu gezeichnet — und das passiert bei jedem
+       Ansichtswechsel —, entstünden die Bänder sonst neu und füngen
+       wieder bei null an: der Himmel spränge sichtbar zurück. */
+    const jetzt = Date.now() / 1000;
     let s = "";
-    for (let i = 1; i <= anzahl; i++) {
-      const dauer = DAUER[i - 1] || 64;
-      const versatz = -((Date.now() / 1000) % dauer);
-      s += `<span class="w-wolkenband w-wb${i}" style="animation-delay:${versatz.toFixed(2)}s"></span>`;
+    for (let i = 0; i < Math.min(anzahl, W_WOLKENLAGEN.length); i++) {
+      const L = W_WOLKENLAGEN[i];
+      const id = "wwf" + i + "-" + (L.saat);
+      const versatzZiehen = -(jetzt % L.ziehen);
+      const versatzLeben = -(jetzt % L.leben);
+      s += `
+      <span class="w-wolkenfeld w-wf${i + 1}" style="--w-deckung:${L.deckung}; height:${L.hoch}%;"
+            aria-hidden="true">
+        <!-- KEIN viewBox. Das ist wichtig und war der erste Fehler:
+             mit viewBox="0 0 300 100" und preserveAspectRatio="none"
+             wird das Feld auf die dreifache Streifenbreite gestreckt —
+             waagerecht neunfach, senkrecht kaum. Aus dem Rauschen
+             werden dadurch waagerechte Schlieren, und der Himmel sah
+             aus wie ein Wischbild. Ohne viewBox rechnet der Filter in
+             Bildschirmpunkten, und das Rauschen bleibt rund. -->
+        <svg class="w-wolken-svg"
+             style="animation-duration:${L.ziehen}s; animation-delay:${versatzZiehen.toFixed(1)}s;">
+          <defs>
+            <filter id="${id}" x="-2%" y="-25%" width="104%" height="150%"
+                    color-interpolation-filters="sRGB">
+              <!-- KEIN <animate>. Ich hatte es zuerst mit SMIL versucht,
+                   und es läuft NICHT: die Uhr des SVG geht (getCurrentTime
+                   zählt), aber baseFrequency bleibt auf dem Wert stehen,
+                   der beim ersten Bild berechnet wurde. Gemessen, nicht
+                   vermutet — über vier Sekunden keine einzige
+                   Veränderung.
+
+                   Angetrieben wird deshalb von Hand, siehe
+                   wWolkenLeben(). Das hat nebenbei zwei Vorteile: es
+                   läuft in jedem Browser gleich, und die Zeit kommt aus
+                   der Uhr statt aus dem Dokument — beim Neuzeichnen
+                   macht der Himmel dadurch keinen Sprung. -->
+              <feTurbulence type="fractalNoise" baseFrequency="${L.frequenz[0]}"
+                            numOctaves="${L.oktaven}" seed="${L.saat}"
+                            stitchTiles="stitch" result="rau"
+                            data-w-leben="${L.leben}"
+                            data-w-von="${L.frequenz[0]}"
+                            data-w-bis="${L.frequenz[1]}"
+                            data-w-weit="${L.frequenz[2]}"></feTurbulence>
+              <!-- Aus dem Rauschen wird Dichte: der rote Kanal wandert in
+                   die Deckkraft. -->
+              <feColorMatrix in="rau" type="matrix" result="grau"
+                             values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1 0 0 0 0"/>
+              <!-- Die Kennlinie macht die Wolke. WEICH, nicht als
+                   Schwellwert: ein Schwellwert gibt genau die harte
+                   Kante, die gemeldet war. -->
+              <feComponentTransfer in="grau" result="dicht">
+                <feFuncA type="table" tableValues="${L.kennlinie}"/>
+              </feComponentTransfer>
+              <feGaussianBlur in="dicht" stdDeviation="${L.weich}" result="weich"/>
+            </filter>
+            <!-- Oben dichter, unten offen: eine Wolkendecke sitzt oben
+                 im Bild und franst nach unten aus. Ohne das klebt sie
+                 wie ein Balken über dem ganzen Streifen. -->
+            <linearGradient id="${id}-v" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#fff" stop-opacity="0.35"/>
+              <stop offset="26%"  stop-color="#fff" stop-opacity="1"/>
+              <stop offset="66%"  stop-color="#fff" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+            <mask id="${id}-m" maskUnits="objectBoundingBox"
+                  x="0" y="0" width="1" height="1">
+              <rect x="0" y="0" width="100%" height="100%" fill="url(#${id}-v)"/>
+            </mask>
+          </defs>
+          <g mask="url(#${id}-m)">
+            <rect x="0" y="0" width="100%" height="100%" filter="url(#${id})"/>
+          </g>
+        </svg>
+      </span>`;
     }
     return s;
   }
+
   function wSternenhimmel() {
     /* Unterschiedlich helle Sterne: drei Helligkeitsstufen, jede mit
        eigenem Funkeln. Die hellen sind größer und funkeln langsamer.
@@ -7296,6 +7605,10 @@
     schicht.className = "niederschlag wetter-szene w-" + szene
       + (wetterIstNacht ? " ist-nacht" : "") + " tz-" + tageszeit();
     schicht.innerHTML = inhalt;
+    /* Sobald Wolkenfelder im Bild sind, läuft ihr Zerlaufen. Die
+       Funktion merkt selbst, wenn keine mehr da sind, und hört dann
+       auf — sie läuft also nie ins Leere. */
+    wWolkenLeben();
     bar.classList.add("hat-niederschlag");
     /* Die sieben festen Sterne aus der index.html würden sich mit dem
        eigenen Sternenhimmel doppeln — solange die Nachtszene läuft,
@@ -18702,6 +19015,15 @@
     ausspracheListe: function () { return buildDictionaryEntries().filter(wortZumUeben).filter(aussprUebbar); },
     ausspracheAlle: function () { return buildDictionaryEntries(); },
     geruest: function () { return livechatGeruestHtml(); },
+    wolken: function (n) { return wWolkenbaender(n || 3); },
+    wolkenLeben: function () { return wWolkenLeben(); },
+    /* Worauf beruht die Himmelsfarbe gerade? Hoehe der Sonne in Grad
+       und die daraus gemischte Farbe. */
+    himmel: function (datum) {
+      const ort = ortFuerLernraum();
+      const h = sonnenHoehe(datum ? new Date(datum) : new Date(), ort.breite, ort.laenge);
+      return Object.assign({ hoehe: Number(h.toFixed(2)), ort: ort.name }, himmelAusSonne(h));
+    },
   });
 
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
