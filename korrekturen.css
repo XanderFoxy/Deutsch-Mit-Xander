@@ -636,7 +636,14 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 /* Aktion (/me): kursiv, ohne Namensspalte — „* Emmy lacht laut" */
 .lc-zeile-aktion { grid-template-columns: 3.1em 1fr; }
-.lc-zeile-aktion .lc-zeilentext { font-style: italic; opacity: 0.92; }
+/* GEWÜNSCHT: „Dazu muss die Schrift aber auch ein bisschen dicker sein,
+   dass sie ungefähr so dick ist wie der Name selber." Die Aktionszeile
+   war blasser und dünner als alles andere — sie ist jetzt genauso
+   kräftig wie eine normale Zeile, nur weiterhin kursiv, damit man sie
+   als Aktion erkennt. Der eingesetzte Eigenname steht so fett da wie
+   ein Nick. */
+.lc-zeile-aktion .lc-zeilentext { font-style: italic; opacity: 1; font-weight: 600; }
+.lc-eigenname { font-weight: 800; font-style: normal; }
 /* System: eine abgesetzte Zeile über die ganze Breite */
 .lc-zeile-system,
 .lc-zeile-einladung {
@@ -687,20 +694,71 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: var(--lc-ruf, #ffce55);
   text-shadow: 0 0 12px color-mix(in srgb, var(--lc-ruf, #ffce55) 70%, transparent);
 }
-.lc-zeile-ruf .lc-zeilentext > span { display: inline-block; }
-.lc-zeile-ruf.lc-neu,
-.lc-zeile-ruf { animation: lcBeben 900ms cubic-bezier(.36,.07,.19,.97) 3; }
-@keyframes lcBeben {
-  0%   { transform: none;                         }
-  8%   { transform: scale(1.16) translateX(-8px); }
-  16%  { transform: scale(1.04) translateX(8px);  }
-  24%  { transform: scale(1.12) translateX(-6px); }
-  32%  { transform: scale(1.0)  translateX(5px);  }
-  40%  { transform: scale(1.08) translateX(-4px); }
-  48%  { transform: scale(1.0)  translateX(3px);  }
-  56%  { transform: scale(1.05) translateX(-2px); }
-  70%  { transform: scale(1.0);                   }
-  100% { transform: none;                         }
+/* GEMELDET: „Der Schrei soll langsam aufgebaut werden und von den
+   Buchstaben selbst ausstrahlen, an Ort und Stelle — nicht nach oben
+   wegfliegen. Er darf die Wörter nicht zusammenkleben und die älteren
+   Zeilen nicht überdecken."
+
+   Die ganze Zeile zu schütteln hat genau das getan: sie ist über ihre
+   Nachbarn gewandert. Jetzt bleibt die Zeile stehen, und die einzelnen
+   WÖRTER arbeiten — eines nach dem anderen, damit sich der Ruf
+   aufbaut. Die Leerzeichen dazwischen sind gewöhnlicher Text und
+   fallen deshalb nicht mehr auf null zusammen. */
+.lc-zeile-ruf {
+  margin: 9px 0;                /* Luft, damit nichts verdeckt wird */
+  position: relative;
+  z-index: 1;
+}
+.lc-zeile-ruf .lc-zeilentext { white-space: pre-wrap; }
+.lc-ruf-wort {
+  position: relative;
+  display: inline-block;
+  transform-origin: 50% 55%;
+  animation: lcRufAn 1100ms cubic-bezier(.2, .9, .25, 1.05) both;
+}
+/* Die strahlende Kopie: dasselbe Wort, an derselben Stelle, geht nach
+   aussen auf und verblasst. Nichts fliegt weg — es strahlt. */
+.lc-ruf-wort::after {
+  content: attr(data-wort);
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: pre;
+  pointer-events: none;
+  color: inherit;
+  text-shadow: none;
+  transform-origin: 50% 55%;
+  animation: lcRufStrahl 1700ms ease-out both;
+  animation-delay: inherit;
+}
+.lc-ruf-wort::before {
+  content: attr(data-wort);
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: pre;
+  pointer-events: none;
+  color: inherit;
+  text-shadow: none;
+  transform-origin: 50% 55%;
+  animation: lcRufStrahl 1700ms ease-out 260ms both;
+}
+@keyframes lcRufAn {
+  0%   { opacity: 0; transform: scale(.55); letter-spacing: -0.06em; }
+  38%  { opacity: 1; transform: scale(1.22); letter-spacing: 0.06em; }
+  58%  { transform: scale(0.97); letter-spacing: 0.02em; }
+  76%  { transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); letter-spacing: 0.03em; }
+}
+@keyframes lcRufStrahl {
+  0%   { opacity: 0;   transform: scale(1);   filter: blur(0); }
+  18%  { opacity: 0.5; }
+  100% { opacity: 0;   transform: scale(2.3); filter: blur(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-ruf-wort { animation: none; }
+  .lc-ruf-wort::before,
+  .lc-ruf-wort::after { display: none; }
 }
 
 /* Kommen und Gehen — wie im IRC, unaufdringlich */
@@ -728,10 +786,49 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   animation: lcSteigt 2.9s cubic-bezier(.22,.7,.3,1) forwards;
   will-change: transform, opacity;
 }
+/* GEWÜNSCHT: „Das Herz soll pulsieren und strahlen wie ein
+   Herzschlag." Es ist deshalb das einzige Zeichen, das nicht
+   wegsteigt: es bleibt stehen und schlägt — zweimal kurz
+   hintereinander (lub-dub), dazwischen die Pause, wie ein echter
+   Puls. Dazu geht bei jedem Schlag ein Ring nach aussen. */
 .lc-wirkung-herz span {
   color: #ff6b8a;
+  bottom: auto;
+  top: 42%;
   text-shadow: 0 0 10px rgba(255, 107, 138, 0.75);
-  animation-duration: 3.2s;
+  animation: lcHerzschlag 1.15s cubic-bezier(.35, 0, .3, 1) 3 both;
+  transform-origin: 50% 55%;
+}
+.lc-wirkung-herz span::after {
+  content: "\2665";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: inherit;
+  text-shadow: none;
+  pointer-events: none;
+  transform-origin: 50% 55%;
+  animation: lcHerzRing 1.15s ease-out 3 both;
+  animation-delay: inherit;
+}
+@keyframes lcHerzschlag {
+  0%   { opacity: 0;    transform: scale(.55); }
+  9%   { opacity: 1;    transform: scale(1.32); }   /* lub */
+  17%  {                transform: scale(1.02); }
+  26%  {                transform: scale(1.19); }   /* dub */
+  38%  {                transform: scale(1.0);  }
+  88%  { opacity: 0.95; transform: scale(1.0);  }
+  100% { opacity: 0.95; transform: scale(1.0);  }
+}
+@keyframes lcHerzRing {
+  0%   { opacity: 0;   transform: scale(1);   filter: blur(0); }
+  10%  { opacity: .55; }
+  55%  { opacity: 0;   transform: scale(2.6); filter: blur(4px); }
+  100% { opacity: 0;   transform: scale(2.6); filter: blur(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-wirkung-herz span { animation: none; opacity: 1; }
+  .lc-wirkung-herz span::after { display: none; }
 }
 .lc-wirkung-lachen span { color: #ffd166; font-weight: 800; }
 .lc-wirkung-umarmen span { color: #ffb3c9; }
@@ -982,3 +1079,147 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   text-align: center;
 }
 .lc-archiv-tag:first-child { margin-top: 0; }
+
+/* =================================================================
+   BILDER AUS BUCHSTABEN
+   -----------------------------------------------------------------
+   GEWUENSCHT: „/lach soll richtige ASCII-Kunst benutzen."
+   Ein solches Bild steht nur dann, wenn jedes Zeichen gleich breit
+   ist und die Leerzeichen erhalten bleiben. Beides macht <pre> in
+   einer Schreibmaschinenschrift — sonst zerfaellt es.
+   ================================================================= */
+.lc-zeile-ascii { grid-template-columns: 3.1em 1fr; }
+.lc-ascii {
+  margin: 2px 0;
+  padding: 6px 9px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.7rem;
+  line-height: 1.12;
+  white-space: pre;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  letter-spacing: 0;
+  tab-size: 8;
+}
+
+/* =================================================================
+   LUFTBALLONS — zum Geburtstag
+   ================================================================= */
+.lc-ballons {
+  position: fixed;
+  inset: 0;
+  z-index: 9350;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-ballons i {
+  position: absolute;
+  bottom: -18vh;
+  width: calc(34px * var(--lc-b-gross, 1));
+  height: calc(43px * var(--lc-b-gross, 1));
+  border-radius: 50% 50% 48% 48% / 56% 56% 44% 44%;
+  background: radial-gradient(ellipse at 32% 28%,
+              rgba(255, 255, 255, 0.72) 0%,
+              rgba(255, 255, 255, 0.18) 22%,
+              var(--lc-b-farbe, #e0546a) 58%,
+              color-mix(in srgb, var(--lc-b-farbe, #e0546a) 72%, #000) 100%);
+  animation-name: lcBallonSteigt;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+}
+/* Die Schnur */
+.lc-ballons i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: calc(30px * var(--lc-b-gross, 1));
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+}
+/* Das Knötchen unten */
+.lc-ballons i::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 99%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--lc-b-farbe, #e0546a) 78%, #000);
+}
+@keyframes lcBallonSteigt {
+  0%   { transform: translate3d(0, 0, 0) rotate(-3deg); opacity: 0; }
+  7%   { opacity: 1; }
+  50%  { transform: translate3d(var(--lc-b-pendel, 0px), -62vh, 0) rotate(4deg); }
+  88%  { opacity: 1; }
+  100% { transform: translate3d(calc(var(--lc-b-pendel, 0px) * -0.6), -126vh, 0) rotate(-4deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .lc-ballons { display: none; } }
+
+/* =================================================================
+   DIE SCHRIFT IM CHAT — vier zur Auswahl (/schrift 1 … 4)
+   -----------------------------------------------------------------
+   Sie gilt nur auf DIESEM Geraet: eine Lesehilfe, keine Nachricht an
+   die anderen. ASCII-Bilder bleiben immer in Schreibmaschinenschrift,
+   sonst zerfallen sie.
+   ================================================================= */
+.lc-chat-verlauf[data-schrift="2"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="2"] .lc-chat-leer {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.79rem;
+  letter-spacing: -0.01em;
+}
+.lc-chat-verlauf[data-schrift="3"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="3"] .lc-chat-leer {
+  font-family: "Trebuchet MS", "Segoe UI", Verdana, system-ui, sans-serif;
+  font-size: 0.87rem;
+  letter-spacing: 0.012em;
+}
+.lc-chat-verlauf[data-schrift="4"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="4"] .lc-chat-leer {
+  font-size: 1.0rem;
+  line-height: 1.62;
+  letter-spacing: 0.015em;
+}
+.lc-chat-verlauf[data-schrift="4"] .lc-zeit { font-size: 0.74rem; }
+.lc-chat-verlauf .lc-ascii { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace !important; }
+
+/* =================================================================
+   DER CHAT BEKOMMT EINEN RUHIGEN, LEBENDIGEN HINTERGRUND
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Ein animierter Hintergrund im Chat." Aber er darf die
+   Schrift nicht schlechter lesbar machen — deshalb: zwei sehr weiche,
+   sehr langsam wandernde Lichtflecken in den Hausfarben, mehr nicht.
+   Sie liegen HINTER dem Text, nehmen keine Klicks an und stehen bei
+   „weniger Bewegung" still.
+   ================================================================= */
+.lc-chat-verlauf {
+  position: relative;
+  isolation: isolate;
+}
+.lc-chat-verlauf::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    radial-gradient(38% 30% at 22% 26%, rgba(224, 150, 74, 0.20), transparent 70%),
+    radial-gradient(32% 26% at 78% 72%, rgba(90, 168, 107, 0.17), transparent 70%),
+    radial-gradient(30% 24% at 62% 18%, rgba(154, 90, 201, 0.12), transparent 70%);
+  filter: blur(14px);
+  animation: lcHintergrund 38s ease-in-out infinite alternate;
+}
+@keyframes lcHintergrund {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  33%  { transform: translate3d(3%, -2%, 0) scale(1.07); }
+  66%  { transform: translate3d(-3%, 2%, 0) scale(1.03); }
+  100% { transform: translate3d(2%, 3%, 0) scale(1.09); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-chat-verlauf::before { animation: none; }
+}

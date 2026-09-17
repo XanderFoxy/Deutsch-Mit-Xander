@@ -13257,6 +13257,39 @@
     setTimeout(() => schicht.remove(), 6400);
   }
 
+  /* =================================================================
+     LUFTBALLONS
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Luftballons zum Geburtstag."
+     Sie steigen, anders als das Konfetti, von unten nach oben — mit
+     Schnur, mit leichtem Pendeln und in unterschiedlichem Tempo, damit
+     es nicht nach Stanzform aussieht.
+     ================================================================= */
+  const LC_BALLON_FARBEN = ["#e0546a", "#4a86c9", "#5aa86b", "#e3c34a",
+                            "#9a5ac9", "#e07aa8", "#e0964a"];
+  function lcBallons() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcBallons")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcBallons";
+    schicht.className = "lc-ballons";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 12 : 20;
+    for (let i = 0; i < wieviel; i++) {
+      const b = document.createElement("i");
+      b.style.left = (Math.random() * 96).toFixed(2) + "%";
+      b.style.setProperty("--lc-b-farbe", LC_BALLON_FARBEN[i % LC_BALLON_FARBEN.length]);
+      b.style.setProperty("--lc-b-pendel", (Math.random() * 70 - 35).toFixed(0) + "px");
+      const gross = (0.7 + Math.random() * 0.75).toFixed(2);
+      b.style.setProperty("--lc-b-gross", gross);
+      b.style.animationDelay = (Math.random() * 2.2).toFixed(2) + "s";
+      b.style.animationDuration = (5.5 + Math.random() * 3.5).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 11500);
+  }
+
   /* --- Der Startschirm: ein Satz, ein Knopf --- */
   function livechatStartHtml(l) {
     const ausLink = LiveChat.raumAusAdresse();
@@ -13553,18 +13586,28 @@
     const zeichnen = () => {
       const feld = document.getElementById("lcRaumListe");
       if (!feld) return;
-      const raeume = LiveChat.raeumeOffen().filter((r) => r.raum !== LiveChat.HAUPTRAUM);
-      if (!raeume.length) { feld.innerHTML = ""; return; }
+      /* GEWÜNSCHT: „Wenn man auf das Schliessen des Raumes geht, soll
+         man in die allgemeine Raumübersicht kommen." Die Übersicht
+         steht deshalb IMMER da, auch wenn gerade nur der Hauptraum
+         besetzt ist — sonst landet man nach dem Verlassen auf einer
+         leeren Seite und weiss nicht, wohin. */
+      const alle = LiveChat.raeumeOffen();
+      const haupt = alle.find((r) => r.raum === LiveChat.HAUPTRAUM);
+      const raeume = [
+        { raum: LiveChat.HAUPTRAUM, name: "Hauptraum", zu: false,
+          leute: haupt ? haupt.leute : [] }
+      ].concat(alle.filter((r) => r.raum !== LiveChat.HAUPTRAUM));
       feld.innerHTML = `
-        <p class="eyebrow" style="margin:14px 0 6px;">AUCH OFFEN GERADE</p>
+        <p class="eyebrow" style="margin:14px 0 6px;">DIE RÄUME</p>
         <div class="lc-raumliste">
           ${raeume.map((r) => `
             <button type="button" class="lc-raumknopf${r.zu ? " lc-raumknopf-zu" : ""}"
                     data-lc-raum="${escapeHtml(r.raum)}" ${r.zu ? "disabled" : ""}
                     title="${r.zu ? "Abgeschlossen — nur mit Einladung" : "Hineingehen"}">
               <span class="lc-raumknopf-name">${r.zu ? "🔒 " : ""}${escapeHtml(r.name)}</span>
-              <span class="lc-raumknopf-leute">${escapeHtml(r.leute.slice(0, 4).join(", "))}${
-                r.leute.length > 4 ? " …" : ""}</span>
+              <span class="lc-raumknopf-leute">${r.leute.length
+                ? escapeHtml(r.leute.slice(0, 4).join(", ")) + (r.leute.length > 4 ? " …" : "")
+                : "leer — geh ruhig hinein"}</span>
             </button>`).join("")}
         </div>
         <p class="empty-note" style="font-size:0.72rem;">
@@ -13670,11 +13713,82 @@
     return COLLECTIBLE_FIGURES.filter((fig) => isFigureUnlocked(fig, profil));
   }
 
+  /* =================================================================
+     SCHREIEN
+     -----------------------------------------------------------------
+     GEMELDET, dreierlei auf einmal:
+       „Der Schrei soll langsam aufgebaut werden und von den Buchstaben
+        selbst ausstrahlen, an Ort und Stelle — nicht nach oben
+        wegfliegen. Er darf die Wörter nicht zusammenkleben (aus
+        „guten Tag" wurde „gutenTag"), und er darf die älteren Zeilen
+        nicht überdecken."
+
+     Alle drei hatten dieselbe Ursache: die Zeile wurde Buchstabe für
+     Buchstabe in <span>-Kästchen gelegt, und ein Kästchen, in dem nur
+     ein Leerzeichen steht, fällt im Satz auf die Breite null zusammen —
+     daher das Zusammenkleben. Dazu stiegen Teilchen auf, die über die
+     Zeilen darüber hinwegzogen.
+
+     Jetzt wird WORTWEISE gesetzt, mit den Leerzeichen dazwischen als
+     ganz normalem Text. Jedes Wort strahlt an Ort und Stelle: eine
+     vergrösserte, durchsichtige Kopie seiner selbst geht nach aussen
+     auf und verblasst — wie bei einem Lautmalwort im Comic. Die Wörter
+     kommen nacheinander, nicht alle auf einmal; so baut sich der Ruf
+     auf, statt einfach dazustehen. Fliegende Teilchen gibt es keine
+     mehr, und die Zeile bekommt oben und unten Luft, damit nichts
+     Älteres verdeckt wird.
+     ================================================================= */
+  /* Noch einmal — ohne die Zeile neu zu bauen: die Animationen kurz
+     abschalten, einen Bildaufbau abwarten, wieder anschalten. */
+  function lcRufNochmal(zeile) {
+    zeile.querySelectorAll(".lc-ruf-wort").forEach((w) => {
+      const takt = w.style.getPropertyValue("--lc-ruf-takt") || "0s";
+      w.style.animation = "none";
+      void w.offsetWidth;
+      w.style.animation = "";
+      w.style.animationDelay = takt;
+    });
+  }
+
+  function lcRufSetzen(ziel, text, n) {
+    const stuecke = String(text).split(/(\s+)/);
+    let nr = 0;
+    stuecke.forEach((stueck) => {
+      if (!stueck) return;
+      if (/^\s+$/.test(stueck)) {
+        /* Das Leerzeichen bleibt gewöhnlicher Text — nur so bleibt der
+           Abstand zwischen den Wörtern erhalten. */
+        ziel.appendChild(document.createTextNode(stueck));
+        return;
+      }
+      const w = document.createElement("span");
+      w.className = "lc-ruf-wort";
+      w.textContent = stueck;
+      w.dataset.wort = stueck;               // die strahlende Kopie
+      w.style.animationDelay = (nr * 0.13).toFixed(2) + "s";
+      w.style.setProperty("--lc-ruf-takt", (nr * 0.13).toFixed(2) + "s");
+      nr++;
+      ziel.appendChild(w);
+    });
+  }
+
   function lcTextEinfaerben(ziel, text, n) {
-    /* Erst die Fuchs-Marken heraustrennen, dann den Rest einfärben. */
-    const teile = String(text).split(/(\[fox:[\w-]+\])/g);
+    /* Erst die Fuchs-Marken und die eingesetzten Eigennamen
+       heraustrennen, dann den Rest einfärben. \u0001…\u0002 umschliesst
+       den Namen, den „/me/" mitten im Satz eingesetzt hat — er wird so
+       kräftig gesetzt wie ein Nick, genau wie gewünscht. */
+    const teile = String(text).split(/(\[fox:[\w-]+\]|\u0001[^\u0002]*\u0002)/g);
     teile.forEach((teil) => {
       if (!teil) return;
+      if (teil.charAt(0) === "\u0001") {
+        const b = document.createElement("b");
+        b.className = "lc-eigenname";
+        b.textContent = teil.slice(1, -1);
+        const f = lcNickFarbe(n);
+        if (f) b.style.color = f;
+        ziel.appendChild(b);
+        return;
+      }
       const marke = /^\[fox:([\w-]+)\]$/.exec(teil);
       if (marke) {
         const bild = lcFuchsBild(marke[1]);
@@ -13707,11 +13821,17 @@
      Wer im Betriebssystem „Bewegung reduzieren" eingestellt hat,
      bekommt gar keine (siehe Stilblatt). */
   const LC_EFFEKTE = {
-    herz:   { zeichen: ["\u2665", "\u2764", "\u2661"], wie: 14, klasse: "herz" },
+    /* Das Herz schlägt, statt wegzufliegen — deshalb weniger davon:
+       sieben, die pulsieren, sind mehr als vierzehn, die verschwinden. */
+    herz:   { zeichen: ["\u2665"], wie: 7, klasse: "herz", schlaegt: true },
     lachen: { zeichen: ["(\u25d5\u203f\u25d5)", "\u0028\u02d8\u203f\u02d8\u0029", "haha"], wie: 7, klasse: "lachen" },
     umarmen:{ zeichen: ["\u0028\u3065\uff61\u25d5\u203f\u25d5\uff61\u0029\u3065", "\u2764"], wie: 8, klasse: "umarmen" },
-    ruf:    { zeichen: ["\u2757", "\u203c"], wie: 10, klasse: "ruf" },
+    /* „ruf" taucht hier absichtlich NICHT mehr auf: das Schreien
+       strahlt jetzt aus den Buchstaben selbst, statt Teilchen über die
+       älteren Zeilen zu schicken — siehe lcRufSetzen(). Ein Tipp auf
+       eine Rufzeile spielt die Animation noch einmal ab. */
     konfetti:{ ganzeSeite: true },
+    ballon:  { ganzeSeite: true, wie: "ballon" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   function lcWirkung(art, anZeile) {
@@ -13719,7 +13839,7 @@
     if (!e) return;
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
-    if (e.ganzeSeite) { lcKonfetti(); return; }
+    if (e.ganzeSeite) { if (e.wie === "ballon") lcBallons(); else lcKonfetti(); return; }
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
     const schicht = document.createElement("div");
@@ -13736,6 +13856,9 @@
       const t = document.createElement("span");
       t.textContent = e.zeichen[i % e.zeichen.length];
       t.style.left = Math.round(4 + Math.random() * 90) + "%";
+      /* Herzen stehen verteilt und schlagen an Ort und Stelle; alle
+         anderen Zeichen steigen wie bisher vom unteren Rand auf. */
+      if (e.schlaegt) t.style.top = Math.round(12 + Math.random() * 64) + "%";
       t.style.animationDelay = (Math.random() * 0.7).toFixed(2) + "s";
       t.style.fontSize = (0.85 + Math.random() * 1.3).toFixed(2) + "rem";
       t.style.opacity = (0.35 + Math.random() * 0.5).toFixed(2);
@@ -13749,6 +13872,10 @@
   function livechatChatAuffrischen(l) {
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
+    /* Die gewählte Schrift (/schrift 1 … 4) hängt am Verlauf selbst —
+       so gilt sie für alles darin, ohne dass jede Zeile sie mitträgt. */
+    const schrift = l.schrift || (LiveChat.gemerkteSchrift ? LiveChat.gemerkteSchrift() : "1");
+    if (v.dataset.schrift !== schrift) v.dataset.schrift = schrift;
     if (!l.nachrichten.length) {
       if (!v.querySelector(".lc-chat-leer")) {
         v.innerHTML = `<p class="lc-chat-leer">Noch nichts geschrieben.<br>
@@ -13800,6 +13927,16 @@
         t.className = "lc-zeilentext";
         t.textContent = (n.kommt ? "\u2192 " : "\u2190 ") + n.text;
         z.appendChild(t);
+      } else if (art === "ascii") {
+        /* Ein Bild aus Buchstaben. Es steht nur dann richtig da, wenn
+           jedes Zeichen gleich breit ist und die Leerzeichen erhalten
+           bleiben — dafür sorgen <pre> und die CSS-Klasse. Der Text
+           kommt über textContent hinein, wie überall hier. */
+        const vor = document.createElement("pre");
+        vor.className = "lc-ascii";
+        vor.textContent = n.text;
+        if (farbe) vor.style.color = farbe;
+        z.appendChild(vor);
       } else if (art === "aktion") {
         /* „* Emmy lacht laut" — ohne Doppelpunkt, kursiv. Genau so
            gab der /me-Befehl es seit jeher aus. */
@@ -13853,7 +13990,10 @@
           w.textContent = "🖼️ Bild — nicht mehr gespeichert";
           t.appendChild(w);
         }
-        if (n.text) lcTextEinfaerben(t, n.text, n);
+        if (n.text) {
+          if (art === "ruf") lcRufSetzen(t, n.text, n);
+          else lcTextEinfaerben(t, n.text, n);
+        }
         /* Die ganze ZEILE trägt die Farbe — nicht nur der Name. */
         if (farbe) t.style.color = farbe;
         if (art === "fluester" && n.woher) {
@@ -13867,7 +14007,12 @@
       v.appendChild(z);
 
       /* Welcher Effekt gehört zu dieser Zeile? */
-      const eff = n.wirkung || (art === "ruf" ? "ruf" : art === "fluester" ? "fluester" : "");
+      const eff = n.wirkung || (art === "fluester" ? "fluester" : "");
+      if (art === "ruf" && !n.wirkung) {
+        z.classList.add("lc-zeile-wirkt");
+        z.title = "Antippen — noch einmal";
+        z.addEventListener("click", () => lcRufNochmal(z));
+      }
       if (eff) {
         z.dataset.wirkung = eff;
         z.classList.add("lc-zeile-wirkt");
@@ -14009,7 +14154,16 @@
       });
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());
       area.querySelector('[data-lc="bild"]')?.addEventListener("click", () => LiveChat.bildUmschalten());
-      area.querySelector('[data-lc="weg"]')?.addEventListener("click", () => { LiveChat.verlassen(); renderLiveChat(); });
+      /* GEWÜNSCHT: „Wenn man auf das Schliessen des Raumes geht, soll
+         man in die allgemeine Raumübersicht kommen." */
+      area.querySelector('[data-lc="weg"]')?.addEventListener("click", () => {
+        LiveChat.verlassen();
+        renderLiveChat();
+        setTimeout(() => {
+          document.getElementById("lcRaumListe")
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 120);
+      });
       /* LANGES DRÜCKEN auf den eigenen Platz öffnet die Bildauswahl —
          „im Prinzip hält man mit dem Finger auf seinem eigenen
          Profilbild gedrückt und kann dann so ein animiertes Bild

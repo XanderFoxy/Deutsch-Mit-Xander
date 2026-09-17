@@ -125,6 +125,7 @@ window.LiveChat = (function () {
     eigenerStrom: null,
     ichBild: "",        // Profilbild oder GIF, wenn die Kamera aus ist
     farbe: "",          // eigene Schriftfarbe (/c)
+    schrift: "1",       // die Schrift im Chat, nur auf diesem Geraet (/schrift)
     thema: "",          // Thema des Raums (/t)
     haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
     abgeschlossen: false,
@@ -158,6 +159,7 @@ window.LiveChat = (function () {
       bildAn: zustand.bildAn,
       ichBild: zustand.ichBild,
       farbe: zustand.farbe,
+      schrift: zustand.schrift,
       thema: zustand.thema,
       haeuptling: zustand.haeuptling,
       abgeschlossen: zustand.abgeschlossen,
@@ -248,6 +250,27 @@ window.LiveChat = (function () {
      das so haben, dass er sich die letzte gewaehlte Farbe merkt."
      Die Farbe lag bisher nur in zustand.farbe — und der ist nach dem
      Neuladen leer. Also gehoert sie ins Geraet. */
+  /* --- Die Schrift im Chat -------------------------------------
+     GEWÜNSCHT: „Drei, vier Schriftarten, die man auswählen kann."
+     Die Auswahl ist eine Lesehilfe und gilt nur auf diesem Gerät —
+     wie eine Brille, nicht wie eine Nachricht. */
+  var SCHRIFTEN = {
+    "1": { was: "klassisch" },
+    "2": { was: "Schreibmaschine" },
+    "3": { was: "rund und weich" },
+    "4": { was: "gross und ruhig" }
+  };
+  var SCHRIFT_SCHLUESSEL = "dma_livechat_schrift";
+  function schriftMerken(x) {
+    try {
+      if (x) localStorage.setItem(SCHRIFT_SCHLUESSEL, x);
+      else localStorage.removeItem(SCHRIFT_SCHLUESSEL);
+    } catch (e) {}
+  }
+  function gemerkteSchrift() {
+    try { return localStorage.getItem(SCHRIFT_SCHLUESSEL) || "1"; } catch (e) { return "1"; }
+  }
+
   var FARB_SCHLUESSEL = "dma_livechat_farbe";
   function farbeMerken(f) {
     try {
@@ -1410,6 +1433,7 @@ window.LiveChat = (function () {
     zustand.fehler = "";
     zustand.ichBild = o.bild || bildLaden();
     zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
+    zustand.schrift = gemerkteSchrift();
     zustand.thema = "";
     zustand.haeuptling = false;
     zustand.abgeschlossen = false;
@@ -1777,6 +1801,87 @@ window.LiveChat = (function () {
      HTML-Aufbereiter, deshalb wurde daraus ein echtes Zeichen — ein
      Unicode-Herz, kein Emoji. Genau so ist es hier wieder.
      ------------------------------------------------------------- */
+  /* =========================================================
+     ASCII-KUNST
+     ---------------------------------------------------------
+     Bilder aus Buchstaben, wie sie in den Neunzigern durch jeden
+     Chat gingen. Sie stehen hier als gewöhnlicher Text — beim
+     Zeichnen kommen sie in eine Schreibmaschinenschrift, in der
+     jedes Zeichen gleich breit ist. Ohne das zerfallen sie.
+     ========================================================= */
+  /* =========================================================
+     ASCII-KUNST
+     ---------------------------------------------------------
+     GEWÜNSCHT: „/lach soll richtige ASCII-Kunst benutzen."
+
+     Damals war das der ganze Zauber: der Chat konnte nur Buchstaben,
+     also hat man Bilder AUS Buchstaben gebaut. Sie stehen hier
+     zeilenweise, damit man beim Nachbessern sieht, was man tut; beim
+     Zeichnen kommen sie in eine Schrift, in der jedes Zeichen gleich
+     breit ist. Ohne die zerfaellt jedes dieser Bilder.
+     ========================================================= */
+  var ASCII = {
+    lachen:
+      ["   .-\"\"\"\"\"-.",
+       "  /  ^   ^  \\",
+       " |     v     |",
+       " |  \\_____/  |",
+       "  \\         /",
+       "   '-.....-'",
+       "    HA HA HA!   %NAME%"].join("\n"),
+    herz:
+      ["   ,d88b.d88b,",
+       "   88888888888",
+       "   `Y8888888Y'",
+       "     `Y888Y'",
+       "       `Y'      von %NAME%"].join("\n"),
+    daumen:
+      ["      _",
+       "     | |",
+       "     | |__",
+       "     |    |",
+       "  ___|    |",
+       " |        |",
+       " |        |   %NAME% findet das gut",
+       " |________|"].join("\n"),
+    blume:
+      ["      .--.",
+       "     ( () )",
+       "      `--'",
+       "        |",
+       "       \\|/      f\u00fcr dich, von %NAME%",
+       "        |"].join("\n"),
+    kaffee:
+      ["      ) )",
+       "     ( (",
+       "   .-------.",
+       "   |       |]",
+       "   \\       /     %NAME% kocht Kaffee",
+       "    `-----'"].join("\n"),
+    achtung:
+      ["     /\\",
+       "    /  \\",
+       "   /  ! \\",
+       "  /______\\    sagt %NAME%"].join("\n"),
+    katze:
+      ["  /\\_/\\",
+       " ( o.o )",
+       "  > ^ <      miau, sagt %NAME%"].join("\n"),
+    fuchs:
+      ["  |\\   /|",
+       "  | \\_/ |",
+       " ( o   o )",
+       "  \\  ^  /     %NAME%",
+       "   '''''"].join("\n"),
+    traurig:
+      ["   .-\"\"\"\"\"-.",
+       "  /  .   .  \\",
+       " |     v     |",
+       " |   .---.   |",
+       "  \\  \\___/  /    hmpf, sagt %NAME%",
+       "   '-.....-'"].join("\n")
+  };
+
   var BEFEHLE = [
     { w: "me",      kurz: "",     nutzt: "/me <was du tust>",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
     { w: "me/",     kurz: "",     nutzt: "… /me/ …",            was: "Mitten im Satz: wird durch deinen Namen ersetzt" },
@@ -1795,10 +1900,13 @@ window.LiveChat = (function () {
     { w: "k",       kurz: "kick", nutzt: "/k <name>",           was: "Rausschmeißen (nur Häuptling)" },
     { w: "knebel",  kurz: "",     nutzt: "/knebel <name>",      was: "Stummschalten (nur Häuptling)" },
     { w: "entknebel", kurz: "",   nutzt: "/entknebel <name>",   was: "Wieder sprechen lassen" },
-    { w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit Gesicht im Chat" },
+    { w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit einem Gesicht aus Buchstaben" },
+    { w: "ascii",   kurz: "",     nutzt: "/ascii <was>",        was: "Ein Bild aus Buchstaben: lachen, herz, daumen, blume, kaffee, achtung, katze, fuchs" },
     { w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
     { w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
     { w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
+    { w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <name>", was: "Luftballons steigen auf — zum Geburtstag" },
+    { w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
     { w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
     { w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
@@ -1841,8 +1949,31 @@ window.LiveChat = (function () {
       das selbst geschrieben."
      Dafür muss /me/ IM Text stehen bleiben dürfen und durch den
      eigenen Namen ersetzt werden. */
+  /* --- „/me/" mitten im Satz ------------------------------------
+     GEWÜNSCHT, wörtlich: „Das /me hat meinen Namen genommen und ihn
+     einfach an eine Stelle meiner Wahl gerückt … also könnte man rein
+     technisch gesehen schreiben: Emmy: /me/ ist cool … Dazu muss die
+     Schrift aber auch ein bisschen dicker sein, dass sie ungefähr so
+     dick ist wie der Name selber."
+
+     Zwei Dinge gehören also dazu, und beide haben gefehlt:
+       • die Zeile bekommt KEIN „Name:" davor — der Name steht ja
+         schon mittendrin, sonst stünde er zweimal da;
+       • der eingesetzte Name ist so kräftig gesetzt wie ein Nick.
+
+     Markiert wird er mit zwei Steuerzeichen, die in keiner Tastatur
+     vorkommen (U+0001 und U+0002). Sie tragen keine Auszeichnung mit
+     sich — die Zeile wird beim Zeichnen weiterhin Stück für Stück
+     über textContent gebaut, es kann also nichts Fremdes in die Seite
+     gelangen. Sie sagen nur: hier steht ein Name. */
+  var NAME_AUF = "\u0001", NAME_ZU = "\u0002";
   function eigennamenSetzen(text) {
-    return String(text).replace(/\/me\//g, zustand.ichName);
+    return String(text).replace(/\/me\//g, NAME_AUF + zustand.ichName + NAME_ZU);
+  }
+  /* Enthält eine Zeile den alten Trick? Dann ist sie eine Aktion und
+     bekommt keinen Absender vorangestellt. */
+  function hatEigennamen(text) {
+    return /\/me\//.test(String(text || ""));
   }
 
   function textAufbereiten(text) {
@@ -2023,6 +2154,8 @@ window.LiveChat = (function () {
                      color: "c", farbe: "c",
                      party: "konfetti", konfetty: "konfetti", feier: "konfetti",
                      confetti: "konfetti",
+                     geburtstag: "ballon", ballons: "ballon", luftballon: "ballon",
+                     font: "schrift", schriftart: "schrift",
                      help: "h", hilfe: "h", "?": "h",
                      part: "leave", exit: "leave", quit: "leave" };
       art = gleich[wort] || null;
@@ -2032,7 +2165,7 @@ window.LiveChat = (function () {
     /* ---- Reden ---- */
     if (art === "me") {
       if (!rest) return systemZeile("So geht es:  /me lacht laut");
-      return anAlle("aktion", zustand.ichName + " " + textAufbereiten(rest));
+      return anAlle("aktion", NAME_AUF + zustand.ichName + NAME_ZU + " " + textAufbereiten(rest));
     }
     if (art === "s") {
       if (!rest) return systemZeile("So geht es:  /s Hallo alle zusammen");
@@ -2159,9 +2292,25 @@ window.LiveChat = (function () {
         : " darf wieder sprechen."));
     }
 
-    /* ---- Zwei Gesten mit Bild ---- */
+    /* ---- Gesten mit Bild ----
+       GEWÜNSCHT: „/lach soll richtige ASCII-Kunst benutzen."
+
+       Damals war das der ganze Zauber: der Chat konnte nur Buchstaben,
+       also hat man Bilder AUS Buchstaben gebaut. Das geht nur in einer
+       Schrift, in der jedes Zeichen gleich breit ist — sonst zerfällt
+       das Bild. Diese Blöcke gehen deshalb als eigene Art „ascii"
+       hinaus und werden drüben in Schreibmaschinenschrift gesetzt. */
     if (art === "lach") {
-      return anAlle("aktion", zustand.ichName + " lacht", { wirkung: "lachen" });
+      return anAlle("ascii", ASCII.lachen.replace("%NAME%", zustand.ichName),
+                    { wirkung: "lachen" });
+    }
+    if (art === "ascii") {
+      var welches = rest.toLowerCase();
+      if (!ASCII[welches]) {
+        return systemZeile("Es gibt: " + Object.keys(ASCII).join(", ")
+          + "   —   zum Beispiel  /ascii daumen");
+      }
+      return anAlle("ascii", ASCII[welches].replace("%NAME%", zustand.ichName));
     }
     if (art === "drueck") {
       var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
@@ -2186,6 +2335,34 @@ window.LiveChat = (function () {
       var anWen = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " schmeißt Konfetti"
         + (anWen ? " für " + anWen.name : ""), { wirkung: "konfetti" });
+    }
+
+    /* ---- Luftballons ----
+       GEWÜNSCHT: „Luftballons zum Geburtstag." Sie steigen bei allen im
+       Raum auf, nicht nur bei dem, der sie geschickt hat. */
+    if (art === "ballon") {
+      var fuerWen = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      return anAlle("aktion", zustand.ichName + " l\u00e4sst Luftballons steigen"
+        + (fuerWen ? " f\u00fcr " + fuerWen.name : "") + "  \ud83c\udf88",
+        { wirkung: "ballon" });
+    }
+
+    /* ---- Die Schrift im Chat ----
+       GEWÜNSCHT: „Drei, vier Schriftarten zum Auswählen." Sie gilt nur
+       auf DIESEM Gerät — es ist eine Lesehilfe, keine Nachricht an die
+       anderen. Deshalb geht nichts davon über den Kanal hinaus. */
+    if (art === "schrift") {
+      var welche = SCHRIFTEN[rest.toLowerCase()] ? rest.toLowerCase() : "";
+      if (!welche) {
+        return systemZeile("Schriften:\n"
+          + Object.keys(SCHRIFTEN).map(function (k) {
+              return "  /schrift " + k + "   " + SCHRIFTEN[k].was;
+            }).join("\n"));
+      }
+      zustand.schrift = welche;
+      schriftMerken(welche);
+      melden();
+      return systemZeile("Die Schrift steht jetzt auf „" + SCHRIFTEN[welche].was + "“.");
     }
 
     /* ---- Farbe ---- */
@@ -2267,16 +2444,20 @@ window.LiveChat = (function () {
     if (!t) return;
     if (t.charAt(0) === "/" && befehlAusfuehren(t)) return;
     if (geknebelt()) { systemZeile("Du bist gerade geknebelt und kannst nichts sagen."); return; }
+    /* Steht „/me/" im Satz, ist es eine AKTION: der Name steht dann
+       mitten in der Zeile und darf nicht zusätzlich davor stehen. */
+    var alsAktion = hatEigennamen(t);
     t = textAufbereiten(t);
     var n = {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
-      text: t, zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
+      text: t, art: alsAktion ? "aktion" : "text",
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
     };
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
-             bild: zustand.ichBild, farbe: zustand.farbe });
+             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe });
     melden();
   }
 
@@ -2340,13 +2521,16 @@ window.LiveChat = (function () {
     var kopf = "Klassenzimmer — " + raumKlartext(raum || "") + "\n"
              + "Nachgelesen am " + new Date().toLocaleString("de-DE") + "\n"
              + "----------------------------------------\n\n";
+    var klar = function (x) {
+      return String(x || "").split(NAME_AUF).join("").split(NAME_ZU).join("");
+    };
     return kopf + (liste || []).map(function (n) {
       var uhr = new Date(n.zeit || 0).toLocaleString("de-DE",
         { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
       var bild = (n.bildImChat || n.bildImLager) ? "  [Bild]" : "";
-      if (n.art === "aktion") return "[" + uhr + "] * " + n.text + bild;
-      if (n.art === "ruf")    return "[" + uhr + "] " + n.name + " ruft: " + n.text + bild;
-      return "[" + uhr + "] " + (n.name || "?") + ": " + (n.text || "") + bild;
+      if (n.art === "aktion") return "[" + uhr + "] * " + klar(n.text) + bild;
+      if (n.art === "ruf")    return "[" + uhr + "] " + n.name + " ruft: " + klar(n.text) + bild;
+      return "[" + uhr + "] " + (n.name || "?") + ": " + klar(n.text) + bild;
     }).join("\n") + "\n";
   }
 
@@ -2389,6 +2573,16 @@ window.LiveChat = (function () {
     istDrin: function () { return zustand.lage === "drin"; },
     /* Farbe, zuletzt benutzte Bilder, Archiv */
     gemerkteFarbe: gemerkteFarbe,
+    gemerkteSchrift: gemerkteSchrift,
+    schriftSetzen: function (x) {
+      if (!SCHRIFTEN[x]) return false;
+      zustand.schrift = x; schriftMerken(x); melden(); return true;
+    },
+    schriften: function () {
+      return Object.keys(SCHRIFTEN).map(function (k) {
+        return { nummer: k, was: SCHRIFTEN[k].was };
+      });
+    },
     letzteBilder: letzteBilder,
     bildGemerkt: bildGemerkt,
     letzteBilderVergessen: letzteBilderVergessen,
