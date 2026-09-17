@@ -13755,6 +13755,12 @@
         name: livechatName(),
         konto: (Backend.currentUser() || {}).id || "",
         bild: livechatBild(),
+        /* GEMELDET: „Ich muss OP sein, wenn ich das Klassenzimmer
+           betrete." Der Betreiber ist überall Häuptling, auch im
+           Hauptraum — es ist seine Seite. Für alle anderen bleibt es
+           wie bisher: Häuptling wird nur, wer einen leeren Nebenraum
+           aufmacht. */
+        betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
         mitBild: wahl.mitBild === true
       }).then(() => {
         renderLiveChat();
@@ -16485,6 +16491,195 @@
      schräg, unterschiedlich lang und mit deutlichen Pausen dazwischen.
      Darunter steht ein ruhiger Sternenhimmel, der leise funkelt.
      ================================================================= */
+  /* =================================================================
+     VIER NEUE ANIMATIONEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Du kannst auch noch mehr dazu machen. Ich freu mich
+     immer über neue Animationen."
+
+     Beim Aussuchen war eine Frage wichtiger als „was wäre hübsch":
+     BEWEGT es sich anders als alles, was schon da ist? Noch ein Regen
+     aus anderen Zeichen ist keine neue Animation, sondern dieselbe mit
+     neuem Anstrich. Deshalb vier verschiedene Bewegungsarten:
+
+       Seifenblasen  steigen AUF und zerplatzen — als einzige nach oben
+       Herbstlaub    fällt taumelnd, mit Drehung um zwei Achsen
+       Aquarium      schwimmt WAAGERECHT durch, in mehreren Tiefen
+       Pinguine      watscheln am Boden entlang, mit Gewichtsverlagerung
+
+     Alle vier halten sich an prefers-reduced-motion und räumen sich
+     selbst wieder ab.
+     ================================================================= */
+
+  /* --- Seifenblasen: das einzige, was nach oben geht ---------------- */
+  function lcSeifenblasen() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcBlasen")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcBlasen";
+    schicht.className = "lc-blasen";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 18 : 30;
+    for (let i = 0; i < wieviel; i++) {
+      const b = document.createElement("i");
+      /* Grosse Blasen steigen langsamer — so ist es auch in Wirklichkeit,
+         und man sieht es sofort, wenn es falsch herum ist. */
+      const gr = 12 + Math.random() * 46;
+      b.style.width = gr.toFixed(0) + "px";
+      b.style.height = gr.toFixed(0) + "px";
+      b.style.left = (Math.random() * 96).toFixed(1) + "%";
+      b.style.setProperty("--wandern", ((Math.random() - 0.5) * 90).toFixed(0) + "px");
+      b.style.animationDuration = (4.5 + gr / 12 + Math.random() * 2).toFixed(2) + "s";
+      b.style.animationDelay = (Math.random() * 3.2).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 11000);
+  }
+
+  /* --- Herbstlaub: taumelt, dreht sich um zwei Achsen --------------- */
+  const LC_BLATT = [
+    /* Ahorn */
+    "M0 -13 L4 -5 L11 -8 L8 -1 L14 2 L7 4 L9 11 L2 7 L0 13 L-2 7 L-9 11 L-7 4 L-14 2 L-8 -1 L-11 -8 L-4 -5 Z",
+    /* Eiche — rundgelappt statt spitz, sonst sieht alles gleich aus */
+    "M0 -13 C6 -11 9 -6 6 -3 C11 -2 11 3 6 4 C10 8 6 12 0 13 C-6 12 -10 8 -6 4 C-11 3 -11 -2 -6 -3 C-9 -6 -6 -11 0 -13 Z",
+    /* Birke — klein und rundlich */
+    "M0 -11 C7 -8 10 0 0 12 C-10 0 -7 -8 0 -11 Z",
+  ];
+  const LC_LAUBFARBE = ["#c8551f", "#d98324", "#b8860b", "#8c3b12", "#e0a030", "#7c4a1e"];
+
+  function lcHerbst() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcHerbst")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcHerbst";
+    schicht.className = "lc-herbst";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 22 : 38;
+    for (let i = 0; i < wieviel; i++) {
+      const b = document.createElement("i");
+      const gr = 0.6 + Math.random() * 0.9;
+      const f = LC_LAUBFARBE[Math.floor(Math.random() * LC_LAUBFARBE.length)];
+      const d = LC_BLATT[Math.floor(Math.random() * LC_BLATT.length)];
+      b.innerHTML = '<svg viewBox="-16 -16 32 32" width="30" height="30">'
+        + '<path d="' + d + '" fill="' + f + '"/>'
+        /* Die Mittelrippe: ohne sie ist es ein Farbfleck, mit ihr ein Blatt */
+        + '<path d="M0 -12 L0 12" stroke="rgba(0,0,0,0.22)" stroke-width="1.1"/>'
+        + '</svg>';
+      b.style.left = (Math.random() * 100).toFixed(1) + "%";
+      b.style.transform = "scale(" + gr.toFixed(2) + ")";
+      b.style.setProperty("--seit", ((Math.random() - 0.5) * 150).toFixed(0) + "px");
+      b.style.setProperty("--dreh", (360 + Math.random() * 720).toFixed(0) + "deg");
+      b.style.animationDuration = (5 + Math.random() * 4).toFixed(2) + "s";
+      b.style.animationDelay = (Math.random() * 3.5).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 12000);
+  }
+
+  /* --- Aquarium: waagerecht, in mehreren Tiefen --------------------- */
+  function lcFischSvg(farbe, dunkel) {
+    return '<svg viewBox="-30 -16 60 32" width="58" height="31">'
+      /* Schwanz zuerst, damit der Koerper darueber liegt */
+      + '<path d="M13 0 C20 -9 26 -12 28 -11 C26 -6 26 6 28 11 C26 12 20 9 13 0 Z" fill="' + dunkel + '"/>'
+      + '<path d="M-26 0 C-20 -11 -2 -14 8 -8 C14 -5 16 -2 16 0 C16 2 14 5 8 8 C-2 14 -20 11 -26 0 Z" fill="' + farbe + '"/>'
+      /* Bauch heller — ohne Licht von oben sieht ein Fisch aus wie ein Blatt */
+      + '<path d="M-24 3 C-16 10 -2 12 7 7 C11 5 13 2 13 1 C6 6 -12 8 -24 3 Z" fill="rgba(255,255,255,0.3)"/>'
+      + '<path d="M-6 -9 C-2 -14 5 -13 6 -8 C2 -10 -2 -10 -6 -9 Z" fill="' + dunkel + '"/>'
+      + '<circle cx="-18" cy="-2" r="3.1" fill="#fff"/>'
+      + '<circle cx="-18.6" cy="-2" r="1.6" fill="#1d2326"/>'
+      + '<path d="M-9 -1 C-4 -4 2 -4 7 -1" stroke="' + dunkel + '" stroke-width="1" fill="none" opacity="0.5"/>'
+      + "</svg>";
+  }
+  function lcAquarium() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcAquarium")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcAquarium";
+    schicht.className = "lc-aquarium";
+    schicht.setAttribute("aria-hidden", "true");
+    const farben = [["#e8833a", "#b8541c"], ["#4fa6c8", "#2b6f8c"], ["#e0c341", "#a88a12"],
+                    ["#c86ba8", "#8d3f72"], ["#6fbf7a", "#3d8a49"]];
+    const wieviel = window.innerWidth < 560 ? 7 : 12;
+    for (let i = 0; i < wieviel; i++) {
+      const f = farben[i % farben.length];
+      const fisch = document.createElement("i");
+      /* Tiefe: weiter hinten heisst kleiner, blasser und langsamer.
+         Erst dadurch wird aus einer Reihe Fische ein Becken. */
+      const tiefe = Math.random();
+      const gr = 0.45 + (1 - tiefe) * 0.75;
+      fisch.innerHTML = lcFischSvg(f[0], f[1]);
+      fisch.style.top = (6 + Math.random() * 80).toFixed(1) + "%";
+      fisch.style.setProperty("--gross", gr.toFixed(2));
+      fisch.style.opacity = (0.45 + (1 - tiefe) * 0.5).toFixed(2);
+      fisch.style.animationDuration = (7 + tiefe * 9 + Math.random() * 3).toFixed(2) + "s";
+      fisch.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+      if (Math.random() < 0.45) fisch.classList.add("lc-fisch-rueck");
+      schicht.appendChild(fisch);
+    }
+    /* Luftblasen aus dem Boden — ohne sie ist es kein Wasser */
+    for (let i = 0; i < 16; i++) {
+      const b = document.createElement("b");
+      const gr = 4 + Math.random() * 9;
+      b.style.width = gr.toFixed(0) + "px";
+      b.style.height = gr.toFixed(0) + "px";
+      b.style.left = (Math.random() * 98).toFixed(1) + "%";
+      b.style.animationDuration = (3.5 + Math.random() * 3).toFixed(2) + "s";
+      b.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 13000);
+  }
+
+  /* --- Pinguine: watscheln, also Gewicht von links nach rechts ------ */
+  function lcPinguinSvg() {
+    return '<svg viewBox="-18 -26 36 52" width="46" height="66">'
+      + '<ellipse cx="0" cy="24" rx="12" ry="2.6" fill="rgba(0,0,0,0.2)"/>'
+      /* Fuesse — sie wechseln sich ab, das macht das Watscheln */
+      + '<path class="pg-f1" d="M-8 18 L-2 18 L-3 24 L-11 24 Z" fill="#e8a020"/>'
+      + '<path class="pg-f2" d="M2 18 L8 18 L11 24 L3 24 Z" fill="#e8a020"/>'
+      + '<path d="M0 -22 C10 -22 14 -12 14 -2 C14 12 8 20 0 20 C-8 20 -14 12 -14 -2 C-14 -12 -10 -22 0 -22 Z" fill="#20262b"/>'
+      + '<path d="M0 -14 C7 -14 9 -7 9 0 C9 10 5 16 0 16 C-5 16 -9 10 -9 0 C-9 -7 -7 -14 0 -14 Z" fill="#f4f2ec"/>'
+      /* Fluegel schwingen gegengleich zu den Fuessen */
+      + '<path class="pg-w1" d="M-13 -6 C-17 0 -17 8 -13 11 C-11 6 -11 -1 -13 -6 Z" fill="#161b1f"/>'
+      + '<path class="pg-w2" d="M13 -6 C17 0 17 8 13 11 C11 6 11 -1 13 -6 Z" fill="#161b1f"/>'
+      + '<circle cx="-4.4" cy="-13" r="2.2" fill="#fff"/><circle cx="-4.4" cy="-13" r="1.1" fill="#12171a"/>'
+      + '<circle cx="4.4" cy="-13" r="2.2" fill="#fff"/><circle cx="4.4" cy="-13" r="1.1" fill="#12171a"/>'
+      + '<path d="M-3 -9 L3 -9 L0 -4 Z" fill="#e8a020"/>'
+      + "</svg>";
+  }
+  function lcPinguine() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcPinguine")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcPinguine";
+    schicht.className = "lc-pinguine";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 4 : 6;
+    for (let i = 0; i < wieviel; i++) {
+      const p = document.createElement("i");
+      p.innerHTML = lcPinguinSvg();
+      /* Eine Reihe, nicht ein Haufen: fester Abstand, kleine Streuung.
+         Pinguine laufen hintereinander, das ist das halbe Bild. */
+      p.style.setProperty("--verzug", (i * 0.55 + Math.random() * 0.15).toFixed(2) + "s");
+      p.style.setProperty("--gross", (0.8 + Math.random() * 0.35).toFixed(2));
+      p.style.bottom = (4 + Math.random() * 7).toFixed(1) + "%";
+      schicht.appendChild(p);
+    }
+    /* Ein paar Schneeflocken, damit klar ist, wo sie herkommen */
+    for (let i = 0; i < 20; i++) {
+      const f = document.createElement("b");
+      f.style.left = (Math.random() * 100).toFixed(1) + "%";
+      f.style.animationDuration = (4 + Math.random() * 4).toFixed(2) + "s";
+      f.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+      schicht.appendChild(f);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 13000);
+  }
+
   function lcSternschnuppen() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcSchnuppe")?.remove();
@@ -18871,6 +19066,14 @@
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
+    /* GEWÜNSCHT: „Du kannst auch noch mehr dazu machen. Ich freu mich
+       immer über neue Animationen." Vier neue — und zwar vier
+       verschiedene BEWEGUNGSARTEN, nicht viermal dasselbe in anderer
+       Farbe: auf, taumelnd herab, waagerecht hindurch, am Boden entlang. */
+    seifenblasen: { ganzeSeite: true, wie: "seifenblasen" },
+    herbst:  { ganzeSeite: true, wie: "herbst" },
+    aquarium:{ ganzeSeite: true, wie: "aquarium" },
+    pinguine:{ ganzeSeite: true, wie: "pinguine" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   /* =================================================================
@@ -19078,6 +19281,10 @@
       else if (e.wie === "spinnen") lcSpinnen();
       else if (e.wie === "noten") lcNoten();
       else if (e.wie === "geschenk") lcGeschenk();
+      else if (e.wie === "seifenblasen") lcSeifenblasen();
+      else if (e.wie === "herbst") lcHerbst();
+      else if (e.wie === "aquarium") lcAquarium();
+      else if (e.wie === "pinguine") lcPinguine();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
       else lcKonfetti();
@@ -19315,6 +19522,24 @@
        ist — und auch, ob er gerade im Klassenzimmer ist?"
        Ja. Damit das nicht nur behauptet ist, lässt sich die Liste hier
        mit ausgedachten Leuten zeichnen und nachsehen. */
+    /* GEMELDET: „Einige Animationen gehen noch nicht." Damit sich das
+       nachsehen laesst und nicht geraten werden muss: jeden Effekt
+       einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
+    effektNamen: function () { return Object.keys(LC_EFFEKTE); },
+    effekt: function (name) {
+      const vorher = document.body.childElementCount;
+      try { lcWirkung(name, null, {}); }
+      catch (e) { return { name, fehler: String(e && e.message || e) }; }
+      /* Was ein Ganzseiten-Effekt anlegt, haengt an body und traegt
+         eine Klasse, die mit lc- anfaengt. */
+      const neu = [...document.body.children].filter(
+        (el) => /^lc-/.test(el.className || "") || (el.className || "").indexOf("lc-") === 0);
+      const letzte = neu[neu.length - 1];
+      return { name,
+        angelegt: document.body.childElementCount - vorher,
+        klasse: letzte ? String(letzte.className) : "",
+        teile: letzte ? letzte.querySelectorAll("*").length : 0 };
+    },
     /* Die eigene Stimme: Name aus dem Wort, Liste nachladen, abspielen. */
     tonStamm: function (w) { return aussprTonStamm(aussprSprechtext(w)); },
     tonLaden: function () { return aussprTonLaden(); },
@@ -20299,7 +20524,9 @@
        gewünscht war: „bleibt man dann auch im Klassenzimmer?" */
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
-      LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(), mitBild: zurueck.mitBild !== false })
+      LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
+        betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
+        mitBild: zurueck.mitBild !== false })
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
     }
   }

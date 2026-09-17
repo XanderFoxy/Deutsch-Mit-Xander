@@ -148,6 +148,7 @@ window.LiveChat = (function () {
     raumHg: "",
     raumHgRuf: null,    // die Oberflaeche horcht hier, wenn er sich aendert
     haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
+    betreiber: false,   // Alex selbst — dann immer Haeuptling
     abgeschlossen: false,
     eingeladen: {},     // Kennung -> true, fuer den abgeschlossenen Raum
     geknebelt: {},      // Kennung -> true
@@ -1863,6 +1864,7 @@ window.LiveChat = (function () {
     zustand.raum = String(raumName || "").trim() || gemerkterRaum() || neuerRaumName();
     raumMerken(zustand.raum);
     kontoId = String(o.konto || "");
+    zustand.betreiber = Boolean(o.betreiber);
     zustand.ichId = eigeneId();
     zustand.ichName = o.name || "Gast";
     zustand.lage = "verbindet";
@@ -1946,10 +1948,29 @@ window.LiveChat = (function () {
                ihn. Genau so ist es hier. Deshalb wird erst nach der
                Begrüssungsrunde entschieden — vorher weiss man ja
                nicht, ob schon jemand da ist. */
+            /* GEMELDET: „Ich muss OP sein, wenn ich das Klassenzimmer
+               betrete."
+               Er hatte recht, und der Grund stand eine Zeile weiter
+               oben: „if (zustand.raum === HAUPTRAUM) return" — im
+               HAUPTKLASSENZIMMER wurde nie jemand Häuptling, auch der
+               Betreiber nicht. Das war für einen offenen Raum gedacht,
+               in dem nicht der Erste alle anderen rauswerfen können
+               soll. Für den Betreiber gilt das nicht: es ist seine
+               Seite.
+               Deshalb jetzt zwei Wege zum Häuptling:
+                 * Betreiber: immer und überall, sofort;
+                 * alle anderen: wie bisher, wer einen leeren Raum
+                   aufmacht — und im Hauptraum weiterhin niemand. */
+            if (zustand.betreiber && !zustand.haeuptling) {
+              zustand.haeuptling = true;
+              systemZeile("\ud83e\udd8a Du bist hier Häuptling — als Betreiber in jedem Raum. "
+                + "/t Thema · /i einladen · /lock abschließen · /k rauswerfen");
+            }
             setTimeout(function () {
               if (zustand.lage !== "drin") return;
+              if (zustand.haeuptling) return;
               if (zustand.raum === HAUPTRAUM) return;
-              if (Object.keys(zustand.leute).length === 0 && !zustand.haeuptling) {
+              if (Object.keys(zustand.leute).length === 0) {
                 zustand.haeuptling = true;
                 systemZeile("Der Raum war leer — du bist hier Häuptling. "
                   + "/t Thema · /i Nickname einladen · /lock abschließen · /k Nickname");
@@ -2888,6 +2909,10 @@ window.LiveChat = (function () {
     { gr: "welt", w: "augen",   kurz: "gucken", nutzt: "/augen",               was: "Neugierige Augen schauen dir zu" },
     { gr: "welt", w: "geld",      kurz: "cash",   nutzt: "/geld",      was: "Cash Horizon — Geldscheine regnen herunter" },
     { gr: "welt", w: "keks",      kurz: "cookie", nutzt: "/keks",      was: "Ein Keks wird aufgegessen — mit Bissen und Krümeln" },
+    { gr: "welt", w: "seifenblasen", kurz: "blasen", nutzt: "/seifenblasen", was: "Seifenblasen steigen auf und zerplatzen" },
+    { gr: "welt", w: "herbst",    kurz: "laub",   nutzt: "/herbst",    was: "Buntes Herbstlaub taumelt herunter" },
+    { gr: "welt", w: "aquarium",  kurz: "fische", nutzt: "/aquarium",  was: "Fische ziehen durchs Bild, Luftblasen steigen auf" },
+    { gr: "welt", w: "pinguine",  kurz: "pinguin", nutzt: "/pinguine", was: "Eine Reihe Pinguine watschelt durchs Bild" },
     { gr: "wetter", w: "wolken",    kurz: "wolke",  nutzt: "/wolken",    was: "Wolken ziehen über den Raum" },
     { gr: "welt", w: "glasbruch", kurz: "sprung", nutzt: "/glasbruch", was: "Das Display zerspringt — mit echten Rissen" },
     { gr: "tiere", w: "spinnen",   kurz: "spinne", nutzt: "/spinnen",   was: "Spinnen krabbeln über den Chat" },
@@ -2951,6 +2976,12 @@ window.LiveChat = (function () {
                 cash: "geld", money: "geld", scheine: "geld",
                 reich: "geld", kohle: "geld", moneten: "geld",
                 cookie: "keks", kekse: "keks", knabbern: "keks",
+                blasen: "seifenblasen", seife: "seifenblasen",
+                bubbles: "seifenblasen", blubber: "seifenblasen",
+                laub: "herbst", blaetter: "herbst", herbstlaub: "herbst",
+                fische: "aquarium", fisch: "aquarium", wasser: "aquarium",
+                meer: "aquarium", unterwasser: "aquarium",
+                pinguin: "pinguine", antarktis: "pinguine",
                 wolke: "wolken", bewoelkt: "wolken",
                 sprung: "glasbruch", display: "glasbruch",
                 kaputt: "glasbruch", riss: "glasbruch",

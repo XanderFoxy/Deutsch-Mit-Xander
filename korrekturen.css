@@ -5358,3 +5358,150 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   cursor: pointer;
 }
 .lc-bib-auch input { margin-top: 2px; flex: 0 0 auto; }
+
+/* =========================================================
+   VIER NEUE ANIMATIONEN
+   ---------------------------------------------------------
+   GEWÜNSCHT: „Du kannst auch noch mehr dazu machen. Ich freu
+   mich immer über neue Animationen."
+
+   Vier verschiedene BEWEGUNGSARTEN, nicht viermal dasselbe in
+   anderer Farbe — sonst hat man keine neue Animation, sondern
+   dieselbe mit neuem Anstrich:
+     Seifenblasen  steigen AUF        (als einzige nach oben)
+     Herbstlaub    fällt taumelnd     (Drehung um zwei Achsen)
+     Aquarium      zieht WAAGERECHT   (in mehreren Tiefen)
+     Pinguine      laufen am BODEN    (mit Gewichtsverlagerung)
+   ========================================================= */
+.lc-blasen, .lc-herbst, .lc-aquarium, .lc-pinguine {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  overflow: hidden;
+}
+
+/* --- Seifenblasen ---------------------------------------- */
+.lc-blasen i {
+  position: absolute;
+  bottom: -70px;
+  border-radius: 50%;
+  /* Eine Seifenblase ist fast durchsichtig und hat EINEN hellen
+     Punkt — ohne den Lichtpunkt ist es ein Kreis, kein Glas. */
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.92) 0 7%, rgba(255,255,255,0) 26%),
+    radial-gradient(circle at 70% 74%, rgba(180,235,255,0.5) 0 12%, rgba(255,255,255,0) 40%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04) 60%, rgba(190,220,255,0.28) 88%, rgba(255,255,255,0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  animation: lcBlaseAuf linear both;
+}
+@keyframes lcBlaseAuf {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  8%   { opacity: 0.95; }
+  /* Kurz vor dem Ende dehnt sie sich und ist dann weg — zerplatzt. */
+  92%  { opacity: 0.85; transform: translate(var(--wandern, 0px), -104vh) scale(1); }
+  97%  { opacity: 0.5;  transform: translate(var(--wandern, 0px), -107vh) scale(1.35); }
+  100% { opacity: 0;    transform: translate(var(--wandern, 0px), -108vh) scale(1.5); }
+}
+
+/* --- Herbstlaub ------------------------------------------ */
+.lc-herbst i {
+  position: absolute;
+  top: -50px;
+  line-height: 0;
+  animation: lcBlattFaellt linear both;
+}
+/* Zwei Drehungen übereinander: das Blatt dreht sich um die eigene
+   Achse UND kippt dabei — erst dadurch taumelt es, statt zu rieseln. */
+.lc-herbst i svg { animation: lcBlattKippt 1.6s ease-in-out infinite; }
+@keyframes lcBlattFaellt {
+  0%   { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  7%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--seit, 0px), 104vh) rotate(var(--dreh, 540deg)); }
+}
+@keyframes lcBlattKippt {
+  0%, 100% { transform: rotateY(0deg) rotateX(0deg); }
+  50%      { transform: rotateY(160deg) rotateX(24deg); }
+}
+
+/* --- Aquarium -------------------------------------------- */
+.lc-aquarium {
+  background: linear-gradient(180deg, rgba(30,110,150,0.22) 0%, rgba(10,50,80,0.35) 100%);
+}
+.lc-aquarium i {
+  position: absolute;
+  left: -90px;
+  line-height: 0;
+  animation: lcFischZieht linear both;
+}
+/* Wer nach links schwimmt, muss auch nach links GUCKEN. */
+.lc-aquarium i.lc-fisch-rueck { left: auto; right: -90px; animation-name: lcFischZurueck; }
+@keyframes lcFischZieht {
+  from { transform: translateX(0) scale(var(--gross, 1)); }
+  to   { transform: translateX(calc(100vw + 180px)) scale(var(--gross, 1)); }
+}
+@keyframes lcFischZurueck {
+  from { transform: translateX(0) scaleX(calc(var(--gross, 1) * -1)) scaleY(var(--gross, 1)); }
+  to   { transform: translateX(calc(-100vw - 180px)) scaleX(calc(var(--gross, 1) * -1)) scaleY(var(--gross, 1)); }
+}
+.lc-aquarium b {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.8) 0 18%, rgba(200,235,255,0.28) 60%, rgba(255,255,255,0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  animation: lcWasserblase linear infinite;
+}
+@keyframes lcWasserblase {
+  0%   { opacity: 0; transform: translateY(0) translateX(0); }
+  10%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-102vh) translateX(18px); }
+}
+
+/* --- Pinguine -------------------------------------------- */
+.lc-pinguine i {
+  position: absolute;
+  left: -70px;
+  line-height: 0;
+  transform-origin: 50% 100%;
+  animation: lcPinguinLaeuft 11s linear both var(--verzug, 0s);
+}
+/* Watscheln heisst: das GEWICHT wandert. Der ganze Körper kippt
+   leicht hin und her, und die Füsse wechseln sich damit ab —
+   nicht bloss ein Auf und Ab, das wäre Hüpfen. */
+.lc-pinguine i svg { animation: lcPinguinWatschelt 0.62s ease-in-out infinite; }
+.lc-pinguine .pg-f1, .lc-pinguine .pg-w2 { animation: lcPinguinFuss1 0.62s ease-in-out infinite; }
+.lc-pinguine .pg-f2, .lc-pinguine .pg-w1 { animation: lcPinguinFuss2 0.62s ease-in-out infinite; }
+@keyframes lcPinguinLaeuft {
+  from { transform: translateX(0) scale(var(--gross, 1)); }
+  to   { transform: translateX(calc(100vw + 140px)) scale(var(--gross, 1)); }
+}
+@keyframes lcPinguinWatschelt {
+  0%, 100% { transform: rotate(-5deg) translateY(0); }
+  50%      { transform: rotate(5deg) translateY(-1.5px); }
+}
+@keyframes lcPinguinFuss1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-3px) rotate(-9deg); }
+}
+@keyframes lcPinguinFuss2 {
+  0%, 100% { transform: translateY(-3px) rotate(9deg); }
+  50%      { transform: translateY(0) rotate(0deg); }
+}
+.lc-pinguine b {
+  position: absolute;
+  top: -12px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  animation: lcPinguinSchnee linear infinite;
+}
+@keyframes lcPinguinSchnee {
+  0%   { opacity: 0; transform: translateY(0); }
+  10%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(104vh) translateX(26px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-blasen, .lc-herbst, .lc-aquarium, .lc-pinguine { display: none; }
+}
