@@ -15556,6 +15556,53 @@
      Zeile einen eigenen Verzug: die Bö läuft von oben nach unten durch
      den Verlauf, statt alles auf einmal zu erwischen.
      ================================================================= */
+  /* =================================================================
+     DER ORKAN WIRBELT DIE WÖRTER WIRKLICH DURCHEINANDER
+     -----------------------------------------------------------------
+     GEMELDET: „Der Orkan kann auch deutlicher — der soll direkt die
+     Wörter verwirren."
+
+     Vorher kippten und zitterten ganze ZEILEN. Das sieht aus, als
+     würde jemand am Bildschirm rütteln, nicht als bläst ein Sturm
+     hinein. Der Unterschied ist, dass ein Sturm die einzelnen Wörter
+     erfasst — und dass sie danach an der falschen Stelle liegen.
+
+     Also wird jede Zeile in Wörter zerlegt, jedes Wort bekommt seinen
+     eigenen Wurf, und mitten im Sturm werden sie TATSÄCHLICH
+     vertauscht. Danach finden sie zurück.
+
+     Zwei Dinge sind dabei heikel, und beide kosten sonst etwas:
+     1. Bilder, Füchse und Aufkleber dürfen nicht angefasst werden.
+        Deshalb läuft der Zerleger nur über echte TEXTknoten.
+     2. Wiederherstellen über innerHTML wäre bequem — und würde die
+        Klick-Handler an den Bildern im Chat zerstören. Deshalb wird
+        die ursprüngliche Reihenfolge der Knoten gemerkt und danach
+        genau diese Knoten wieder eingehängt; kein Knoten wird
+        neu erzeugt, ausser den Wörtern selbst.
+     ================================================================= */
+  function lcOrkanZerlegen(el) {
+    const knoten = [];
+    const lauf = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    let k;
+    while ((k = lauf.nextNode())) { if (k.nodeValue && k.nodeValue.trim()) knoten.push(k); }
+    const woerter = [];
+    knoten.forEach((tk) => {
+      const teile = tk.nodeValue.split(/(\s+)/);
+      const haufen = document.createDocumentFragment();
+      teile.forEach((t) => {
+        if (!t) return;
+        if (/^\s+$/.test(t)) { haufen.appendChild(document.createTextNode(t)); return; }
+        const w = document.createElement("span");
+        w.className = "lc-o-wort";
+        w.textContent = t;
+        haufen.appendChild(w);
+        woerter.push(w);
+      });
+      if (tk.parentNode) tk.parentNode.replaceChild(haufen, tk);
+    });
+    return woerter;
+  }
+
   function lcOrkan() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const karte = document.getElementById("livechatKarte")
@@ -15571,6 +15618,60 @@
       z.style.setProperty("--lc-o-weit", (0.55 + Math.random() * 0.9).toFixed(2));
       z.style.setProperty("--lc-o-neig", (Math.random() * 7 - 1.5).toFixed(1) + "deg");
     });
+
+    /* Die Wörter selbst. Nur die letzten Zeilen — bei zweihundert
+       Zeilen wären es tausende Elemente, und der Sturm würde ruckeln
+       statt zu blasen. Man sieht ohnehin nur das untere Ende. */
+    const textfelder = [...karte.querySelectorAll(".lc-zeilentext")].slice(-40);
+    const zurueck = [];
+    textfelder.forEach((feld) => {
+      const woerter = lcOrkanZerlegen(feld);
+      if (!woerter.length) return;
+      /* Die Reihenfolge ALLER Kinder merken, nicht nur der Wörter —
+         sonst landen Bilder und Leerzeichen hinterher falsch. */
+      zurueck.push({ feld: feld, ordnung: [...feld.childNodes], woerter: woerter,
+                     urtext: woerter.map((w) => w.textContent) });
+      woerter.forEach((w, i) => {
+        const weit = 26 + Math.random() * 70;
+        w.style.setProperty("--lc-ow-x", (weit * (Math.random() < 0.82 ? 1 : -0.6)).toFixed(0) + "px");
+        w.style.setProperty("--lc-ow-y", ((Math.random() - 0.55) * 46).toFixed(0) + "px");
+        w.style.setProperty("--lc-ow-dreh", ((Math.random() - 0.5) * 70).toFixed(0) + "deg");
+        w.style.setProperty("--lc-ow-verzug", (Math.random() * 0.5 + i * 0.012).toFixed(2) + "s");
+        w.style.setProperty("--lc-ow-zeit", (3.4 + Math.random() * 0.7).toFixed(2) + "s");
+      });
+    });
+
+    /* MITTEN IM STURM WERDEN SIE WIRKLICH VERTAUSCHT.
+       Das ist der Kern von „der soll direkt die Wörter verwirren": ein
+       Wort, das nur zittert, ist nicht verwirrt — eines, das an der
+       falschen Stelle im Satz steht, schon. */
+    const mischen = setTimeout(() => {
+      zurueck.forEach((e) => {
+        if (e.woerter.length < 2) return;
+        const gemischt = e.woerter.slice();
+        for (let i = gemischt.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const h = gemischt[i]; gemischt[i] = gemischt[j]; gemischt[j] = h;
+        }
+        /* An Ort und Stelle tauschen: jedes Wort bekommt den Platz
+           eines anderen. Die Leerzeichen dazwischen bleiben liegen. */
+        e.woerter.forEach((w, i) => {
+          const anderes = gemischt[i];
+          if (w === anderes) return;
+          const text = w.textContent;
+          w.textContent = anderes.textContent;
+          anderes.textContent = text;
+        });
+      });
+    }, 1100);
+
+    /* Und zurück. Erst die richtigen Wörter an die richtige Stelle,
+       dann die Umhüllung wieder auflösen. */
+    const heilen = setTimeout(() => {
+      zurueck.forEach((e) => {
+        e.woerter.forEach((w, i) => { w.textContent = e.urtext[i]; });
+      });
+    }, 3900);
     /* Das, was der Wind mitträgt: Blätter und Papierfetzen, quer
        durchs Bild. Ohne sie sieht man nur zappelnde Schrift. */
     document.getElementById("lcWind")?.remove();
@@ -15601,6 +15702,24 @@
         z.style.removeProperty("--lc-o-verzug");
         z.style.removeProperty("--lc-o-weit");
         z.style.removeProperty("--lc-o-neig");
+      });
+      /* Die Wörter wieder zu gewöhnlichem Text machen. Jeder
+         Wort-Behälter wird durch einen Textknoten ERSETZT — nicht das
+         ganze Feld neu geschrieben. Ein neu geschriebenes Feld hätte
+         keine Klick-Handler mehr an den Bildern, und man käme nicht
+         mehr heran, um sie gross anzusehen. */
+      clearTimeout(mischen);
+      clearTimeout(heilen);
+      zurueck.forEach((e) => {
+        /* Sicherheitsnetz: hat inzwischen jemand geschrieben und die
+           Zeile wurde neu gezeichnet, hängt das Feld nicht mehr im
+           Dokument. Dann gibt es nichts zu heilen. */
+        if (!e.feld.isConnected) return;
+        e.woerter.forEach((w, i) => {
+          w.textContent = e.urtext[i];
+          if (w.parentNode) w.parentNode.replaceChild(document.createTextNode(e.urtext[i]), w);
+        });
+        e.feld.normalize();
       });
     }, 5200);
   }
@@ -16128,43 +16247,146 @@
     }
   }
 
+  /* =================================================================
+     DER RENNWAGEN
+     -----------------------------------------------------------------
+     GEMELDET: „Das Auto könnte auch ein bisschen raffinierter sein."
+
+     Der erste Versuch war ein roter Klumpen mit einem T am Heck. Was
+     einen Formelwagen ausmacht, sind Teile, die jeder kennt, auch
+     ohne es zu wissen — und die fehlten alle:
+
+       • Ein langer, flacher BUG, der vorn fast den Boden berührt.
+       • Zwei FLÜGEL mit senkrechten Endscheiben, vorn und hinten.
+       • SEITENKÄSTEN mit Lufteinlass zwischen den Rädern.
+       • Ein offenes COCKPIT mit Helm und dem Bügel darüber.
+       • Der AIRBOX-Buckel hinter dem Kopf des Fahrers.
+       • Eine STARTNUMMER.
+
+     Dazu Licht: ein heller Streifen oben, wo das Licht auftrifft, und
+     ein dunkler unten. Ein einfarbiger Körper sieht flach aus, ganz
+     gleich wie gut die Umrisslinie ist — dasselbe galt schon für die
+     Bonbons.
+
+     Er fährt nach RECHTS: der Bug liegt bei x 290, das Heck bei x 10.
+     ================================================================= */
   function lcRennautoSvg() {
     const svg = document.createElementNS(NS_SVG, "svg");
     svg.setAttribute("viewBox", "0 0 300 120");
     svg.setAttribute("class", "lc-auto-svg");
-    const p = (d, f, s2, w) => {
+    const p = (d, f, s2, w, deck) => {
       const e = document.createElementNS(NS_SVG, "path");
       e.setAttribute("d", d); e.setAttribute("fill", f || "none");
       if (s2) { e.setAttribute("stroke", s2); e.setAttribute("stroke-width", w || 3); }
+      if (deck !== undefined) e.setAttribute("opacity", deck);
       e.setAttribute("stroke-linejoin", "round");
+      e.setAttribute("stroke-linecap", "round");
       return e;
     };
-    /* Ein flacher Rennwagen im Profil: langer Bug, Cockpit in der
-       Mitte, Heckflügel. Die Form ist niedrig — das ist es, was einen
-       Rennwagen von einem Auto unterscheidet. */
-    svg.appendChild(p("M16 86 L36 86 q6 -20 26 -22 l70 -4 q22 -18 50 -18 "
-                    + "q26 0 38 18 l34 4 q18 4 18 22 h-24 z", "#d64545"));
-    svg.appendChild(p("M136 60 q16 -14 36 -14 q20 0 30 14 z", "#2b2b32"));
-    /* Heckflügel */
-    svg.appendChild(p("M18 50 h54 v9 h-54 z", "#b03030"));
-    svg.appendChild(p("M40 50 v36", "", "#b03030", 6));
-    /* Frontflügel */
-    svg.appendChild(p("M256 84 h34 v8 h-40 z", "#b03030"));
-    [[74, 88, 22], [222, 88, 22]].forEach(([cx, cy, r]) => {
+    const form = (name, werte, f, deck) => {
+      const e = document.createElementNS(NS_SVG, name);
+      Object.keys(werte).forEach((k) => e.setAttribute(k, werte[k]));
+      if (f) e.setAttribute("fill", f);
+      if (deck !== undefined) e.setAttribute("opacity", deck);
+      return e;
+    };
+    const ROT = "#d94a48", DUNKEL = "#a32e2e", TIEF = "#7a1f1f",
+          HELL = "#f2908c", KOHLE = "#25252c", FELGE = "#cbced4";
+
+    /* --- Hinter dem Wagen: Flügel und Boden --------------------- */
+    /* Heckflügel: Hauptebene, zweite Ebene und die Endscheibe. Zwei
+       Ebenen statt einer — daran erkennt man ihn überhaupt erst. */
+    svg.appendChild(p("M12 38 h52 q4 0 4 4 v5 q0 4 -4 4 h-52 z", DUNKEL));
+    svg.appendChild(p("M20 54 h40 q3 0 3 3 v3 q0 3 -3 3 h-40 z", TIEF));
+    svg.appendChild(form("rect", { x: 8, y: 32, width: 7, height: 38, rx: 3 }, KOHLE));
+    svg.appendChild(p("M40 64 v22", "", TIEF, 7));
+
+    /* Der Unterboden mit Diffusor am Heck. */
+    svg.appendChild(p("M50 86 h232 q6 0 6 5 v3 h-244 q0 -8 6 -8 z", KOHLE));
+    svg.appendChild(p("M50 86 q-8 0 -10 -8 l0 8 z", KOHLE));
+
+    /* --- Der Körper ---------------------------------------------
+       Eine einzige Linie vom Heck bis zur Bugspitze. Flach über den
+       Seitenkästen, ein Buckel beim Cockpit, dann lang und tief nach
+       vorn. Genau diese Silhouette ist der Wagen. */
+    const KOERPER = "M52 86 L52 66 Q54 56 66 54 L92 52 "
+                  + "Q100 38 112 38 L124 38 Q132 38 134 50 "
+                  + "L148 52 L188 52 Q204 52 214 58 "
+                  + "L268 74 Q286 78 290 84 L290 88 L52 88 Z";
+    svg.appendChild(p(KOERPER, ROT));
+    /* Der helle Streifen oben: das Licht kommt von schräg vorn. */
+    svg.appendChild(p("M136 52 L188 52 Q202 52 211 57 L262 72 L262 76 L208 61 "
+                    + "Q200 57 188 57 L136 57 Z", HELL, "", 0, 0.55));
+    /* Und der dunkle Saum unten, wo nichts hinkommt. */
+    svg.appendChild(p("M52 80 L290 84 L290 88 L52 88 Z", TIEF, "", 0, 0.75));
+
+    /* --- Seitenkasten mit Lufteinlass ---------------------------- */
+    svg.appendChild(p("M118 62 Q150 60 176 66 L184 84 L114 84 Z", DUNKEL));
+    svg.appendChild(p("M120 64 q6 -2 10 0 v10 q-6 2 -10 0 z", KOHLE));
+    /* Die Startnummer auf dem Seitenkasten. */
+    svg.appendChild(form("circle", { cx: 150, cy: 73, r: 8.5 }, "#f6f1e7", 0.94));
+    const nr = document.createElementNS(NS_SVG, "text");
+    nr.setAttribute("x", 150); nr.setAttribute("y", 78);
+    nr.setAttribute("text-anchor", "middle");
+    nr.setAttribute("font-size", "13");
+    nr.setAttribute("font-weight", "700");
+    nr.setAttribute("font-family", "system-ui, sans-serif");
+    nr.setAttribute("fill", TIEF);
+    nr.textContent = "1";
+    svg.appendChild(nr);
+
+    /* --- Cockpit, Helm und Bügel -------------------------------- */
+    svg.appendChild(p("M136 50 q14 -4 26 0 l-2 8 q-11 -3 -22 0 z", KOHLE));
+    /* Der Helm: Kugel mit Visier. Er macht aus dem Ding ein Fahrzeug,
+       in dem jemand sitzt. */
+    svg.appendChild(form("circle", { cx: 150, cy: 45, r: 7.6 }, "#f0e9dc"));
+    /* Das Visier ist ein BAND, kein Tortenstück. Ein Viertelkreis
+       sieht aus wie eine Kapuze; erst das schmale, nach vorn offene
+       Band macht daraus einen Helm. */
+    svg.appendChild(p("M150.5 40.4 q6.6 0.6 7 4.6 q0.2 2.6 -3.4 3.2 "
+                    + "q-4 0.6 -4.2 -3.2 z", "#1d2a3a"));
+    svg.appendChild(p("M151.5 41.6 q4.6 0.8 5 3", "", "#6aa8e0", 1.2, 0.8));
+    /* Ein farbiger Streifen über die Helmkuppe — jeder Fahrer hat
+       einen, und er hebt den Helm vom hellen Cockpitrand ab. */
+    svg.appendChild(p("M144.2 41.4 q5.8 -3.6 11.6 0", "", "#d94a48", 2.4));
+    /* Der Bügel über dem Cockpit — seit 2018 an jedem Formelwagen. */
+    svg.appendChild(p("M134 50 q3 -15 19 -15 q14 0 18 12", "", KOHLE, 3.4));
+    svg.appendChild(p("M153 35 v-2.5", "", KOHLE, 3));
+    /* Airbox: der Buckel hinter dem Kopf. */
+    svg.appendChild(p("M112 38 q2 -12 12 -12 q10 0 10 12 z", DUNKEL));
+
+    /* --- Frontflügel --------------------------------------------- */
+    svg.appendChild(p("M252 82 h42 q4 0 4 3 v3 q0 3 -4 3 h-42 z", DUNKEL));
+    svg.appendChild(form("rect", { x: 288, y: 74, width: 6, height: 22, rx: 2 }, KOHLE));
+
+    /* --- Räder ---------------------------------------------------
+       Breite Slicks: der äussere Ring ist der Reifen, die Felge sitzt
+       innen, und die Speichen zeigen das Drehen. Ein Reifen ohne
+       sichtbare Struktur dreht sich unsichtbar. */
+    [[86, 84, 24], [238, 84, 24]].forEach(([cx, cy, r]) => {
+      /* Der Radkasten-Schatten dahinter, damit das Rad im Körper
+         steckt statt davorzukleben. */
+      svg.appendChild(form("circle", { cx: cx, cy: cy, r: r + 2 }, "#000", 0.22));
       const rad = document.createElementNS(NS_SVG, "g");
       rad.setAttribute("class", "lc-rad");
-      const a = document.createElementNS(NS_SVG, "circle");
-      a.setAttribute("cx", cx); a.setAttribute("cy", cy); a.setAttribute("r", r);
-      a.setAttribute("fill", "#23232a");
-      const b = document.createElementNS(NS_SVG, "circle");
-      b.setAttribute("cx", cx); b.setAttribute("cy", cy); b.setAttribute("r", r * 0.46);
-      b.setAttribute("fill", "#c9ccd2");
-      rad.appendChild(a); rad.appendChild(b);
-      /* Speichen, damit man das Drehen sieht */
-      rad.appendChild(p("M" + (cx - r * 0.44) + " " + cy + " h" + (r * 0.88)
-                      + " M" + cx + " " + (cy - r * 0.44) + " v" + (r * 0.88),
-                        "", "#8f939c", 2.6));
+      rad.appendChild(form("circle", { cx: cx, cy: cy, r: r }, "#1e1e24"));
+      rad.appendChild(form("circle", { cx: cx, cy: cy, r: r * 0.84 }, "#2e2e37"));
+      rad.appendChild(form("circle", { cx: cx, cy: cy, r: r * 0.5 }, FELGE));
+      rad.appendChild(form("circle", { cx: cx, cy: cy, r: r * 0.17 }, "#8f939c"));
+      /* Fünf Speichen — eine ungerade Zahl, damit die Drehung nicht
+         schon nach einer Vierteldrehung wieder gleich aussieht. */
+      for (let i = 0; i < 5; i++) {
+        const w = (i * 72) * Math.PI / 180;
+        const x1 = cx + Math.cos(w) * r * 0.2, y1 = cy + Math.sin(w) * r * 0.2;
+        const x2 = cx + Math.cos(w) * r * 0.47, y2 = cy + Math.sin(w) * r * 0.47;
+        rad.appendChild(p("M" + x1.toFixed(1) + " " + y1.toFixed(1)
+                        + " L" + x2.toFixed(1) + " " + y2.toFixed(1), "", "#9aa0aa", 3.2));
+      }
       svg.appendChild(rad);
+      /* Ein Lichtstreifen auf der Reifenflanke, oben. */
+      svg.appendChild(p("M" + (cx - r * 0.55) + " " + (cy - r * 0.72)
+                      + " a" + r + " " + r + " 0 0 1 " + (r * 1.1) + " 0",
+                        "", "#fff", 2.4, 0.16));
     });
     return svg;
   }
@@ -16207,41 +16429,119 @@
      und zwar unterschiedlich schnell.
      ================================================================= */
   const LC_ZUCKER = ["#e0546a", "#f2c14e", "#5fc9c2", "#b48ce8", "#7fb069", "#ef9ec4"];
+  /* =================================================================
+     DIE BONBONS
+     -----------------------------------------------------------------
+     GEMELDET: „Die Bonbons … sind auch ein bisschen lieblos."
+
+     Sie waren es. Drei Sorten in flachen Farben, die gerade
+     herunterfielen. Was einem Süssigkeit ansieht, sind drei Dinge,
+     und alle drei fehlten:
+
+       1. GLANZ. Ein Bonbon ist glänzend. Ohne Lichtpunkt sieht jede
+          Form aus wie ein ausgeschnittenes Stück Papier, egal wie
+          sauber sie gezeichnet ist. Jede Sorte bekommt deshalb einen
+          hellen Streifen oben und einen dunkleren Rand unten — das
+          ist der ganze Unterschied zwischen Pappe und Zucker.
+       2. AUSWAHL. Drei Sorten wiederholen sich bei fünfzig Stück
+          sechzehnmal, und das sieht man. Jetzt sind es sechs:
+          Wickelbonbon, Lolli, Zuckerstange, Karamell im Papier,
+          Gummibär und Schokolinse.
+       3. TAUMELN. Etwas Leichtes fällt nicht senkrecht und dreht sich
+          nicht um eine einzige Achse. Sie kippen deshalb auch nach
+          vorn und hinten (rotate3d) und schwingen dabei seitwärts.
+     ================================================================= */
   function lcBonbonSvg(sorte, farbe) {
     const svg = document.createElementNS(NS_SVG, "svg");
     svg.setAttribute("viewBox", "0 0 40 40");
-    const p = (d, f, s2, w) => {
+    const p = (d, f, s2, w, deck) => {
       const e = document.createElementNS(NS_SVG, "path");
       e.setAttribute("d", d); e.setAttribute("fill", f || "none");
       if (s2) { e.setAttribute("stroke", s2); e.setAttribute("stroke-width", w || 2); }
+      if (deck !== undefined) e.setAttribute("opacity", deck);
       e.setAttribute("stroke-linejoin", "round");
       e.setAttribute("stroke-linecap", "round");
       return e;
     };
+    const form = (name, werte, f, deck) => {
+      const e = document.createElementNS(NS_SVG, name);
+      Object.keys(werte).forEach((k) => e.setAttribute(k, werte[k]));
+      if (f) e.setAttribute("fill", f);
+      if (deck !== undefined) e.setAttribute("opacity", deck);
+      return e;
+    };
+    /* Der Glanz. Ein heller Fleck oben links, wie ihn eine einzelne
+       Lichtquelle macht — immer dieselbe Richtung, sonst sieht die
+       Handvoll Bonbons aus, als lägen sie in verschiedenen Räumen. */
+    const glanz = (cx, cy, rx, ry, dreh) => {
+      const e = form("ellipse", { cx: cx, cy: cy, rx: rx, ry: ry }, "#fff", 0.55);
+      if (dreh) e.setAttribute("transform", "rotate(" + dreh + " " + cx + " " + cy + ")");
+      return e;
+    };
+    /* Und der Schatten unten: dieselbe Farbe, nur dunkler gelegt. */
+    const schatten = (d) => p(d, "#000", "", 0, 0.16);
+
     if (sorte === 0) {
-      /* Bonbon im Papier: Kern und zwei gefältelte Zipfel. */
-      const k = document.createElementNS(NS_SVG, "ellipse");
-      k.setAttribute("cx", 20); k.setAttribute("cy", 20);
-      k.setAttribute("rx", 9); k.setAttribute("ry", 7.5);
-      k.setAttribute("fill", farbe);
+      /* Wickelbonbon: Kern und zwei gefältelte Zipfel. */
       svg.appendChild(p("M11 20 L2 13 q3 7 0 14 z", farbe));
       svg.appendChild(p("M29 20 L38 13 q-3 7 0 14 z", farbe));
-      svg.appendChild(k);
-      svg.appendChild(p("M14 16 q6 4 0 8 M26 16 q-6 4 0 8", "", "rgba(255,255,255,.65)", 1.8));
+      svg.appendChild(form("ellipse", { cx: 20, cy: 20, rx: 9, ry: 7.5 }, farbe));
+      svg.appendChild(schatten("M11.5 22 q8.5 7 17 0 q-8.5 4 -17 0 z"));
+      svg.appendChild(glanz(17, 16.5, 4.2, 2.2, -24));
+      svg.appendChild(p("M14 16 q6 4 0 8 M26 16 q-6 4 0 8", "", "rgba(255,255,255,.5)", 1.6));
     } else if (sorte === 1) {
       /* Lolli: Stiel und Scheibe mit Spirale. */
       svg.appendChild(p("M20 26 v13", "", "#f0e6d2", 3));
-      const k = document.createElementNS(NS_SVG, "circle");
-      k.setAttribute("cx", 20); k.setAttribute("cy", 16);
-      k.setAttribute("r", 11); k.setAttribute("fill", farbe);
-      svg.appendChild(k);
+      svg.appendChild(form("circle", { cx: 20, cy: 16, r: 11 }, farbe));
+      svg.appendChild(schatten("M9.4 18.5 a11 11 0 0 0 21.2 0 a11 11 0 0 1 -21.2 0 z"));
       svg.appendChild(p("M20 16 q0 -4 4 -4 q6 0 6 6 q0 8 -10 8 q-12 0 -12 -12",
-                        "", "rgba(255,255,255,.8)", 2.4));
-    } else {
+                        "", "rgba(255,255,255,.75)", 2.4));
+      svg.appendChild(glanz(15.5, 11, 3.6, 2, -30));
+    } else if (sorte === 2) {
       /* Zuckerstange: heller Stab mit farbiger Wendel. */
       svg.appendChild(p("M20 36 V14 q0 -8 7 -8 q7 0 7 7", "", "#fdfaf3", 7));
       svg.appendChild(p("M20 34 l6 -3 M20 27 l6 -3 M20 20 l6 -3 M21 14 l6 -3 "
                       + "M25 8 l5 2", "", farbe, 2.6));
+      svg.appendChild(p("M18 34 V14 q0 -6 5 -6", "", "rgba(255,255,255,.7)", 1.4));
+    } else if (sorte === 3) {
+      /* Karamell im Papier: Kissen mit eingedrehten Enden. */
+      svg.appendChild(p("M12 13 h16 q3 0 3 3 v8 q0 3 -3 3 h-16 q-3 0 -3 -3 v-8 q0 -3 3 -3 z", farbe));
+      svg.appendChild(p("M9 16 l-6 -4 v16 l6 -4 z", farbe, "", 0, 0.85));
+      svg.appendChild(p("M31 16 l6 -4 v16 l-6 -4 z", farbe, "", 0, 0.85));
+      svg.appendChild(schatten("M9 24 h22 v3 q0 3 -3 3 h-16 q-3 0 -3 -3 z"));
+      svg.appendChild(glanz(16, 16.5, 5.5, 1.8, -8));
+    } else if (sorte === 4) {
+      /* Gummibär. Ein Gummibär ist an seiner UMRISSLINIE zu erkennen,
+         nicht an Einzelheiten: zwei Ohren, ein runder Kopf, zwei Arme
+         seitlich abgespreizt, ein runder Bauch, zwei Stümpfe. Der
+         erste Versuch hatte einen spitz zulaufenden Bauch — und
+         damit sah er aus wie ein Herz. Alles rund, nichts spitz.
+
+         Reihenfolge von hinten nach vorn: Arme und Beine zuerst,
+         damit Körper und Kopf davorliegen und die Überlappungen
+         stimmen. */
+      svg.appendChild(form("ellipse", { cx: 10.5, cy: 21.5, rx: 3.4, ry: 2.8 }, farbe));
+      svg.appendChild(form("ellipse", { cx: 29.5, cy: 21.5, rx: 3.4, ry: 2.8 }, farbe));
+      svg.appendChild(form("ellipse", { cx: 15.6, cy: 32.5, rx: 3.6, ry: 3.1 }, farbe));
+      svg.appendChild(form("ellipse", { cx: 24.4, cy: 32.5, rx: 3.6, ry: 3.1 }, farbe));
+      svg.appendChild(form("ellipse", { cx: 20, cy: 24.5, rx: 7.4, ry: 8 }, farbe));
+      svg.appendChild(form("circle", { cx: 14.6, cy: 10.4, r: 2.9 }, farbe));
+      svg.appendChild(form("circle", { cx: 25.4, cy: 10.4, r: 2.9 }, farbe));
+      svg.appendChild(form("circle", { cx: 20, cy: 13.6, r: 6.4 }, farbe));
+      /* Die Schnauze: ein helleres Oval, das den Kopf erst zu einem
+         Gesicht macht. Ohne sie ist es eine Kugel mit zwei Punkten. */
+      svg.appendChild(form("ellipse", { cx: 20, cy: 16.6, rx: 3.2, ry: 2.4 }, "#fff", 0.28));
+      svg.appendChild(form("circle", { cx: 20, cy: 15.6, r: 0.95 }, "#2a1a20", 0.55));
+      svg.appendChild(form("circle", { cx: 17.5, cy: 12.2, r: 0.95 }, "#2a1a20", 0.55));
+      svg.appendChild(form("circle", { cx: 22.5, cy: 12.2, r: 0.95 }, "#2a1a20", 0.55));
+      svg.appendChild(glanz(16.6, 10.6, 2.2, 1.4, -30));
+      svg.appendChild(glanz(16.4, 21, 2.6, 3.4, -18));
+    } else {
+      /* Schokolinse: gewölbte Scheibe mit hartem Glanzstrich. */
+      svg.appendChild(form("ellipse", { cx: 20, cy: 20, rx: 12, ry: 9.5 }, farbe));
+      svg.appendChild(schatten("M8.2 21.5 a12 9.5 0 0 0 23.6 0 a12 9.5 0 0 1 -23.6 0 z"));
+      svg.appendChild(glanz(16, 16, 5.4, 2.4, -20));
+      svg.appendChild(form("ellipse", { cx: 24, cy: 24, rx: 2.4, ry: 1.2 }, "#fff", 0.22));
     }
     return svg;
   }
@@ -16256,7 +16556,11 @@
     for (let i = 0; i < wieviel; i++) {
       const st = document.createElement("div");
       st.className = "lc-zucker";
-      st.appendChild(lcBonbonSvg(i % 3, LC_ZUCKER[i % LC_ZUCKER.length]));
+      /* Sechs Sorten und sechs Farben teilerfremd durchlaufen lassen:
+         6 und 6 hätten denselben Takt, und man sähe immer dieselbe
+         Sorte in derselben Farbe. Mit einem Versatz auf der Farbe
+         ergeben sich alle 36 Kombinationen. */
+      st.appendChild(lcBonbonSvg(i % 6, LC_ZUCKER[(i * 5 + 1) % LC_ZUCKER.length]));
       const gross = 22 + Math.random() * 20;
       st.style.width = gross.toFixed(0) + "px";
       st.style.left = (Math.random() * 100).toFixed(2) + "%";
@@ -16265,6 +16569,12 @@
       st.style.setProperty("--lc-z-dreh", ((Math.random() < 0.5 ? -1 : 1)
         * (220 + Math.random() * 420)).toFixed(0) + "deg");
       st.style.setProperty("--lc-z-seit", ((Math.random() - 0.5) * 120).toFixed(0) + "px");
+      /* Auch nach vorn und hinten kippen. Etwas Leichtes dreht sich
+         nicht um eine einzige Achse — ohne das fällt es wie ein
+         ausgeschnittenes Papier, und genau so sah es aus. */
+      st.style.setProperty("--lc-z-kipp", ((Math.random() < 0.5 ? -1 : 1)
+        * (180 + Math.random() * 540)).toFixed(0) + "deg");
+      st.style.setProperty("--lc-z-schwung", (2.2 + Math.random() * 2).toFixed(2) + "s");
       schicht.appendChild(st);
     }
     document.body.appendChild(schicht);
@@ -17963,12 +18273,35 @@
     const schicht = document.createElement("div");
     schicht.className = "lc-wirkung lc-wirkung-" + e.klasse;
     /* Die Teilchen steigen dort auf, wo die Zeile steht — nicht
-       irgendwo im Fenster. */
+       irgendwo im Fenster.
+
+       NACHGEBESSERT: „Schau, wo man sich im Chat befindet und wo der
+       Effekt, den man sendet, am besten wirkt."
+
+       Die grossen Effekte liegen alle fest am Fenster und sind deshalb
+       immer zu sehen — nachgemessen, bei weit heruntergescrollter
+       Seite. Dieser kleine hier klebte dagegen an SEINER Zeile: hatte
+       man im Verlauf hochgescrollt, stieg er zweihundert Pixel
+       ausserhalb des Sichtbaren auf und niemand sah etwas.
+
+       Jetzt wird er in den sichtbaren Ausschnitt des Verlaufs
+       hineingezogen, wenn er sonst daneben läge. Er bleibt an seiner
+       Zeile, solange die zu sehen ist — und wird sichtbar, wenn nicht.
+       Ein Effekt, den niemand sieht, ist kein Effekt. */
+    const HOCH = 190;
     if (anZeile) {
       const r = anZeile.getBoundingClientRect();
       const rv = v.getBoundingClientRect();
-      schicht.style.top = Math.max(0, r.top - rv.top + v.scrollTop - 150) + "px";
-      schicht.style.height = "190px";
+      let oben = r.top - rv.top + v.scrollTop - 150;
+      const sichtbarVon = v.scrollTop;
+      const sichtbarBis = v.scrollTop + v.clientHeight - HOCH;
+      if (sichtbarBis > sichtbarVon) {
+        oben = Math.min(Math.max(oben, sichtbarVon), sichtbarBis);
+      } else {
+        oben = sichtbarVon;
+      }
+      schicht.style.top = Math.max(0, Math.round(oben)) + "px";
+      schicht.style.height = HOCH + "px";
     }
     for (let i = 0; i < e.wie; i++) {
       const t = document.createElement("span");
@@ -18171,6 +18504,9 @@
     kzEreignisse: function (aufnahme) { kzEreignisseAbleiten(aufnahme); return kzEreignisText(); },
     kzZeile: function () { return kzTickerHtml(); },
     tor: function (raum, weiter) { return livechatTor(raum, weiter || function () {}); },
+    orkan: function () { return lcOrkan(); },
+    bonbon: function (sorte, farbe) { return lcBonbonSvg(sorte, farbe); },
+    auto: function () { return lcRennautoSvg(); },
   });
 
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den

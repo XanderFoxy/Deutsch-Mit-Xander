@@ -2849,15 +2849,35 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   pointer-events: none;
   overflow: hidden;
 }
+/* NACHGEBESSERT: „Die Bonbons … sind auch ein bisschen lieblos."
+   Sie fielen senkrecht und drehten sich um eine einzige Achse. So
+   fällt ausgeschnittenes Papier, nicht ein Stück Zucker.
+
+   Jetzt sind es zwei Bewegungen übereinander: die AUSSENHÜLLE trägt
+   das Fallen und das seitliche Schwingen, der INNERE Behälter das
+   Taumeln um zwei Achsen. Zwei getrennte Bewegungen mit
+   unterschiedlicher Dauer ergeben ein Muster, das sich nie
+   wiederholt — eine einzige, so kompliziert sie auch ist, wiederholt
+   sich immer. */
 .lc-zucker {
   position: absolute;
   top: -12vh;
-  animation-name: lcZuckerFaellt;
-  animation-timing-function: cubic-bezier(.36, .12, .64, .6);
-  animation-fill-mode: both;
+  animation-name: lcZuckerFaellt, lcZuckerSchwingt;
+  animation-duration: inherit, var(--lc-z-schwung, 3s);
+  animation-timing-function: cubic-bezier(.36, .12, .64, .6), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-direction: normal, alternate;
+  animation-fill-mode: both, both;
   filter: drop-shadow(0 2px 3px rgba(60, 30, 10, .3));
+  transform-style: preserve-3d;
+  perspective: 300px;
 }
-.lc-zucker svg { display: block; width: 100%; height: auto; }
+.lc-zucker svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: lcZuckerTaumelt var(--lc-z-schwung, 3s) linear infinite;
+}
 @keyframes lcZuckerFaellt {
   0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
   8%   { opacity: 1; }
@@ -2865,6 +2885,20 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   100% { opacity: 0;
          transform: translate3d(var(--lc-z-seit, 0px), 124vh, 0)
                     rotate(var(--lc-z-dreh, 360deg)); }
+}
+/* Das seitliche Pendeln eines fallenden Blatts — klein, sonst sieht
+   es nach Wind aus statt nach Schwere. */
+@keyframes lcZuckerSchwingt {
+  from { margin-left: -9px; }
+  to   { margin-left: 9px; }
+}
+/* Und das Kippen nach vorn und hinten. */
+@keyframes lcZuckerTaumelt {
+  from { transform: rotate3d(1, 0.35, 0, 0deg); }
+  to   { transform: rotate3d(1, 0.35, 0, var(--lc-z-kipp, 360deg)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-zucker, .lc-zucker svg { animation: none; }
 }
 
 /* =================================================================
@@ -4897,4 +4931,56 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   margin: 0;
   background: rgba(128, 128, 128, 0.42);
   border: 0;
+}
+
+/* =========================================================
+   DER ORKAN ERFASST DIE EINZELNEN WÖRTER
+   ---------------------------------------------------------
+   GEMELDET: „Der Orkan kann auch deutlicher — der soll direkt
+   die Wörter verwirren."
+
+   Vorher kippten ganze Zeilen. Das sieht aus, als rüttelte
+   jemand am Bildschirm. Ein Sturm packt die einzelnen Wörter,
+   und die liegen danach kurz an der falschen Stelle — genau
+   das macht lcOrkan() jetzt auch wirklich im Text, nicht nur
+   in der Bewegung.
+
+   Die Bahn hat vier Punkte statt zwei: Anfassen, Wegreissen,
+   Zurückschlagen, Heimfinden. Ein Wort, das nur hin und her
+   geht, sieht nach Pendel aus, nicht nach Wind.
+   ========================================================= */
+.lc-o-wort {
+  display: inline-block;
+  will-change: transform;
+  animation: lcOrkanWort var(--lc-ow-zeit, 3.6s) cubic-bezier(0.36, 0, 0.28, 1)
+             var(--lc-ow-verzug, 0s) both;
+}
+@keyframes lcOrkanWort {
+  0% { transform: none; }
+  /* Der Wind fasst an: noch am Platz, aber schon schief. */
+  10% {
+    transform: translate(calc(var(--lc-ow-x, 40px) * 0.14),
+                         calc(var(--lc-ow-y, 0px) * 0.35))
+               rotate(calc(var(--lc-ow-dreh, 0deg) * 0.22));
+  }
+  /* Weggerissen. */
+  38% {
+    transform: translate(var(--lc-ow-x, 40px), var(--lc-ow-y, 0px))
+               rotate(var(--lc-ow-dreh, 0deg));
+  }
+  /* Zurückgeschlagen — eine Böe dreht auch mal um. */
+  64% {
+    transform: translate(calc(var(--lc-ow-x, 40px) * -0.42),
+                         calc(var(--lc-ow-y, 0px) * 0.75))
+               rotate(calc(var(--lc-ow-dreh, 0deg) * -0.55));
+  }
+  84% {
+    transform: translate(calc(var(--lc-ow-x, 40px) * 0.12),
+                         calc(var(--lc-ow-y, 0px) * -0.2))
+               rotate(calc(var(--lc-ow-dreh, 0deg) * 0.14));
+  }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-o-wort { animation: none; }
 }
