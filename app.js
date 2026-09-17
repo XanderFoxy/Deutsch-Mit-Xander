@@ -13427,7 +13427,14 @@
             </p>
           </details>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
-          <form class="lc-chat-fuss" id="lcForm" autocomplete="off">
+          ${!Backend.currentUser() ? `
+          <p class="lc-gast-hinweis">
+            👀 Du schaust als <strong>Gast</strong> zu — mitlesen kannst du alles.
+            Zum Mitschreiben, für Ton und Bild brauchst du ein Konto; es ist kostenlos
+            und dauert eine Minute.
+          </p>` : ""}
+          <form class="lc-chat-fuss" id="lcForm" autocomplete="off"
+                ${!Backend.currentUser() ? 'style="display:none;"' : ""}>
             <input type="file" id="lcFoto" accept="image/*" hidden>
             <button type="button" class="lc-chat-anhang" id="lcFotoKnopf"
                     title="Ein Foto schicken" aria-label="Ein Foto schicken">📎</button>
@@ -13569,8 +13576,27 @@
        vorher blieb der Kreis einfach leer und niemand wusste, warum. */
     const grund = document.getElementById("lcGrund");
     if (grund) {
-      grund.innerHTML = l.kameraFehler
-        ? `<p class="lc-grund">⚠️ ${escapeHtml(l.kameraFehler)}</p>` : "";
+      /* GEMELDET: „Das mit dem Video und der Stimme geht zum Teil …
+         das soll stabiler laufen, dass das nicht mehr so eine
+         Glückssache ist. Und ich glaube, Emmy aus Ägypten sieht uns
+         immer noch nicht."
+
+         Der Wächter in livechat.js baut hakende Leitungen jetzt von
+         selbst neu auf. Damit man aber nicht rät, ob es gerade an
+         einem selbst liegt, steht hier im Klartext, zu wem die
+         Leitung noch nicht steht — und dass daran gearbeitet wird.
+         Sobald alles steht, verschwindet die Zeile wieder. */
+      const stockt = (LiveChat.leitungen ? LiveChat.leitungen() : [])
+        .filter((v) => !v.steht);
+      grund.innerHTML =
+        (l.kameraFehler ? `<p class="lc-grund">⚠️ ${escapeHtml(l.kameraFehler)}</p>` : "")
+        + (stockt.length ? `<p class="lc-grund lc-grund-leitung">🔄 Die Leitung zu ${
+            escapeHtml(stockt.map((v) => v.name || "jemandem").join(", "))
+          } steht noch nicht — es wird weiter versucht.${
+            stockt.some((v) => v.anlaeufe >= 3)
+              ? " Wenn es gar nicht will: Seite neu laden, oder es liegt am Netz auf einer der beiden Seiten."
+              : ""
+          }</p>` : "");
     }
   }
 
@@ -14058,7 +14084,7 @@
         && p.strom.getVideoTracks().length && p.bildAn !== false);
       const emojiGross = p.bild && p.bild.indexOf("emoji:") === 0 ? p.bild.slice(6) : "";
       halter.innerHTML = `
-        <div class="lc-gross-hinter" id="lcGrossHinter" role="dialog" aria-modal="true" aria-label="Teilnehmer groß">
+        <div class="lc-gross-hinter lc-gross-schwebt" id="lcGrossHinter" role="group" aria-label="Teilnehmer groß">
           <div class="lc-gross-kasten">
             <div class="lc-gross-kreis">
               <video id="lcGrossVideo" autoplay playsinline ${p.ich ? "muted" : ""}
@@ -14070,7 +14096,6 @@
                 : `<span class="lc-initial" id="lcGrossInitial"></span>`)}
             </div>
             <span class="lc-gross-name" id="lcGrossName"></span>
-            <button type="button" class="btn btn-ghost" id="lcGrossZu">Schließen</button>
           </div>
         </div>`;
       const nameFeld = document.getElementById("lcGrossName");
@@ -14081,10 +14106,15 @@
       if (avatarGross && p.bild) avatarGross.setAttribute("src", p.bild);
       const gv = document.getElementById("lcGrossVideo");
       if (gv && p.strom) { gv.srcObject = p.strom; const sp = gv.play(); if (sp && sp.catch) sp.catch(() => {}); }
-      document.getElementById("lcGrossZu")?.addEventListener("click", () => LiveChat.grossZeigen(null));
-      document.getElementById("lcGrossHinter")?.addEventListener("click", (e) => {
-        if (e.target.id === "lcGrossHinter") LiveChat.grossZeigen(null);
-      });
+      /* GEWÜNSCHT: „Kein Schliessen-Knopf — man klickt es einfach
+         wieder an." Also: ein Tipp auf das schwebende Bild selbst
+         macht es zu, und der Raum darunter bleibt die ganze Zeit
+         bedienbar; der Chat läuft weiter, ohne verdeckt zu sein. */
+      const schwebt = document.getElementById("lcGrossHinter");
+      if (schwebt) {
+        schwebt.title = "Antippen — wieder klein";
+        schwebt.addEventListener("click", () => LiveChat.grossZeigen(null));
+      }
     }
   }
 
@@ -14149,7 +14179,11 @@
         k.addEventListener("click", () => {
           const nr = Number(k.dataset.lcPlatz);
           const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
-          if (p && !p.leer) LiveChat.grossZeigen(p.id);
+          if (!p || p.leer) return;
+          /* GEWÜNSCHT: „Wenn man den Kreis anklickt, geht er gross auf;
+             klickt man ihn noch einmal an, geht er wieder zu — einen
+             Schliessen-Knopf braucht es dafür nicht." */
+          LiveChat.grossZeigen(LiveChat.lage().gross === p.id ? null : p.id);
         });
       });
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());

@@ -920,8 +920,8 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    SAMMELFUECHSE IM CHAT
    ================================================================= */
 .lc-fuchs {
-  width: 1.6em;
-  height: 1.6em;
+  width: 1.45em;
+  height: 1.45em;
   object-fit: contain;
   vertical-align: -0.45em;
   margin: 0 1px;
@@ -1098,7 +1098,8 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   white-space: pre;
   overflow-x: auto;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 0 0 1px rgba(128, 100, 70, 0.16) inset;
   letter-spacing: 0;
   tab-size: 8;
 }
@@ -1222,4 +1223,123 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-chat-verlauf::before { animation: none; }
+}
+
+/* Die Leitungsmeldung: sichtbar, aber nicht alarmierend. */
+.lc-grund-leitung {
+  color: rgba(255, 233, 200, 0.82);
+  background: rgba(224, 150, 74, 0.14);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.74rem;
+}
+
+/* =================================================================
+   DAS KOMPAKTE KLASSENZIMMER
+   -----------------------------------------------------------------
+   GEWUENSCHT, woertlich: „Das koennte alles kompakter sein, dass da
+   kleine Kreise sind, drei mal drei oder vier mal vier, und dass man
+   den Chat gleichzeitig sieht. Die vergroesserten Kreise sollen rechts
+   schweben, und man klickt sie einfach wieder an — einen
+   Schliessen-Knopf braucht es nicht."
+
+   Also: die Plaetze werden kleiner und ruecken in ein enges Raster,
+   der Chat bekommt den Platz, der dadurch frei wird, und das
+   vergroesserte Gesicht deckt nichts mehr zu — es schwebt rechts
+   oben, ueber allem, aber neben dem Chat.
+   ================================================================= */
+.lc-plaetze {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 6px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.lc-platz { max-width: 82px; gap: 3px; }
+.lc-platz .lc-kreis { width: 100%; }
+.lc-platz-name { font-size: 0.7rem; }
+.lc-platz-frei .lc-nummer { font-size: 1.15rem; }
+@media (max-width: 760px) {
+  .lc-plaetze { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 340px; }
+  .lc-platz { max-width: 72px; }
+}
+@media (max-width: 420px) {
+  .lc-plaetze { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px 4px; max-width: 300px; }
+  .lc-platz { max-width: 64px; }
+  .lc-platz-name { font-size: 0.64rem; }
+}
+/* Die Chatüberschrift darf auf schmalen Geräten nicht zu einer
+   einspaltigen Buchstabensäule zerfallen. */
+.lc-chat-kopf { flex-wrap: wrap; row-gap: 4px; }
+.lc-chat-kopf > span:first-child { flex: 1 1 100%; min-width: 0; }
+.lc-chat-kopf-rechts { flex: 1 1 100%; display: flex; gap: 8px; flex-wrap: wrap; }
+@media (min-width: 560px) {
+  .lc-chat-kopf > span:first-child { flex: 1 1 auto; }
+  .lc-chat-kopf-rechts { flex: 0 0 auto; justify-content: flex-end; }
+}
+/* Der Chat bekommt den gewonnenen Platz — er ist ab jetzt das
+   Hauptstueck und nicht mehr ein Streifen unter den Kreisen. */
+.lc-chat-verlauf { min-height: 240px; }
+@media (min-width: 761px) {
+  .lc-chat-verlauf { min-height: 320px; }
+}
+
+/* Das vergroesserte Gesicht: schwebt, deckt nichts zu, kein Knopf. */
+.lc-gross-hinter.lc-gross-schwebt {
+  position: fixed;
+  inset: auto 14px 92px auto;      /* rechts unten, ueber der Leiste */
+  width: auto;
+  height: auto;
+  padding: 0;
+  display: block;
+  background: none;
+  backdrop-filter: none;
+  z-index: 880;
+  cursor: pointer;
+  animation: lcGrossAuf 0.2s ease-out;
+}
+@keyframes lcGrossAuf {
+  from { opacity: 0; transform: scale(.86) translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.lc-gross-schwebt .lc-gross-kasten {
+  gap: 5px;
+  padding: 8px;
+  border-radius: 18px;
+  background: rgba(20, 16, 12, 0.72);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
+}
+.lc-gross-schwebt .lc-gross-kreis {
+  width: min(42vw, 210px);
+  height: min(42vw, 210px);
+}
+.lc-gross-schwebt .lc-gross-name { font-size: 0.95rem; }
+/* Ein kleiner Hinweis statt eines Knopfes. */
+.lc-gross-schwebt .lc-gross-kasten::after {
+  content: "antippen — wieder klein";
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  color: #fff3e3;
+}
+@media (max-width: 520px) {
+  /* Auf dem Telefon klein genug, dass der Chat daneben lesbar bleibt —
+     GEWÜNSCHT war ausdrücklich, dass man beides gleichzeitig sieht. */
+  .lc-gross-hinter.lc-gross-schwebt { inset: auto 8px 82px auto; }
+  .lc-gross-schwebt .lc-gross-kreis { width: 27vw; height: 27vw; max-width: 118px; max-height: 118px; }
+  .lc-gross-schwebt .lc-gross-kasten { padding: 6px; }
+  .lc-gross-schwebt .lc-gross-name { font-size: 0.8rem; }
+  .lc-gross-schwebt .lc-gross-kasten::after { font-size: 0.56rem; }
+}
+
+/* GEWUENSCHT: „Gaeste koennen zuschauen, wer angemeldet ist, macht mit." */
+.lc-gast-hinweis {
+  margin: 8px 10px 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: rgba(255, 244, 230, 0.9);
+  background: rgba(90, 168, 107, 0.16);
+  box-shadow: 0 0 0 1px rgba(90, 168, 107, 0.3) inset;
 }

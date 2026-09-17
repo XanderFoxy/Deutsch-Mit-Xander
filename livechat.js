@@ -1320,6 +1320,135 @@ window.LiveChat = (function () {
   }
   function pulsStoppen() { if (pulsUhr) { clearInterval(pulsUhr); pulsUhr = null; } }
 
+  /* =========================================================
+     DER WÄCHTER
+     ---------------------------------------------------------
+     GEMELDET: „Das mit dem Video und der Stimme geht zum Teil …
+     Das soll aber stabiler laufen, dass das nicht mehr so eine
+     Glückssache ist. Und ich glaube, Emmy aus Ägypten sieht uns
+     immer noch nicht."
+
+     Warum es eine Glückssache war: eine Direktverbindung wird EINMAL
+     aufgebaut. Klappt das nicht — weil die erste Wegesuche in ein
+     strenges Netz läuft, weil ein Angebot im falschen Moment ankommt,
+     weil zwei Seiten gleichzeitig anrufen —, dann bleibt es dabei.
+     Niemand versucht es noch einmal. Der Chat lief, die Leitung nicht,
+     und man sass da und wartete.
+
+     Der Wächter schaut deshalb alle vier Sekunden nach:
+
+       1. Steht jemand in der Anwesenheit, ohne dass es überhaupt eine
+          Leitung zu ihm gibt? Dann wird angerufen. (Das ist Emmys
+          Fall: ihr „hallo" ist verlorengegangen, und danach hat es
+          niemand mehr versucht.)
+       2. Gibt es eine Leitung, die nach sechs Sekunden noch nicht
+          steht? Dann erst die Wegesuche neu starten (billig, reisst
+          nichts ab).
+       3. Steht sie nach weiteren sechs Sekunden immer noch nicht?
+          Dann wird die Leitung abgerissen und von vorn aufgebaut.
+
+     Angerufen wird dabei immer nur von EINER Seite — von der mit der
+     kleineren Kennung. Sonst rufen sich beide gleichzeitig an, und
+     genau daran geht eine Aushandlung kaputt.
+
+     Aufgegeben wird nach dem vierten Anlauf nicht; nur der Abstand
+     wächst, damit ein Gerät, das wirklich nicht durchkommt (sehr
+     strenge Firmen- oder Landesnetze), nicht ununterbrochen probiert.
+     ========================================================= */
+  var WACHE_MS = 4000;
+  var GEDULD_MS = 6000;        // so lange darf eine Leitung brauchen
+  var wacheUhr = null;
+  var versuchJe = {};          // Kennung -> { seit, stufe, anlaeufe }
+  var letzterLeitungsstand = "";
+
+  function steht(pc) {
+    return pc && (pc.connectionState === "connected"
+               || pc.iceConnectionState === "connected"
+               || pc.iceConnectionState === "completed");
+  }
+
+  function wacheStarten() {
+    wacheStoppen();
+    versuchJe = {};
+    wacheUhr = setInterval(function () {
+      if (zustand.lage !== "drin") return;
+      var jetzt = Date.now();
+      /* Hat sich am Stand der Leitungen etwas geaendert? Dann muss die
+         Oberflaeche es erfahren — sie zeigt ihn an. */
+      var stand = leitungen().map(function (v) {
+        return v.id + ":" + (v.steht ? "1" : "0");
+      }).join(",");
+      if (stand !== letzterLeitungsstand) { letzterLeitungsstand = stand; melden(); }
+
+      /* 1. Wer ist da, hat aber keine Leitung? */
+      Object.keys(zustand.leute).forEach(function (id) {
+        if (id === zustand.ichId) return;
+        if (brueckeJe[id]) return;
+        /* Nur die Seite mit der kleineren Kennung ruft an — sonst
+           rufen beide gleichzeitig, und die Aushandlung zerbricht. */
+        if (zustand.ichId >= id) return;
+        var v = versuchJe[id] || (versuchJe[id] = { seit: 0, stufe: 0, anlaeufe: 0 });
+        var wartezeit = Math.min(30000, GEDULD_MS * (1 + v.anlaeufe));
+        if (jetzt - v.seit < wartezeit) return;
+        v.seit = jetzt; v.stufe = 0; v.anlaeufe++;
+        anrufen(id);
+      });
+
+      /* 2. und 3. Leitungen, die nicht zustande kommen. */
+      Object.keys(brueckeJe).forEach(function (id) {
+        var pc = brueckeJe[id];
+        if (steht(pc)) { delete versuchJe[id]; return; }
+        var v = versuchJe[id] || (versuchJe[id] = { seit: jetzt, stufe: 0, anlaeufe: 0 });
+        if (!v.seit) v.seit = jetzt;
+        if (jetzt - v.seit < GEDULD_MS) return;
+        v.seit = jetzt;
+        if (v.stufe === 0) {
+          /* Erst das Billige: die Wegesuche neu starten. */
+          v.stufe = 1;
+          try { if (pc.restartIce) pc.restartIce(); } catch (e) {}
+          if (zustand.ichId < id) anrufen(id);
+          return;
+        }
+        /* Dann das Gründliche: abreissen und neu aufbauen. */
+        v.stufe = 0;
+        v.anlaeufe++;
+        brueckeAbbauen(id);
+        if (zustand.ichId < id) {
+          setTimeout(function () {
+            if (zustand.lage === "drin" && !brueckeJe[id]) anrufen(id);
+          }, 400);
+        } else {
+          /* Die andere Seite ruft an — ihr sagen, dass sie es soll. */
+          senden({ art: "hallo", name: zustand.ichName, tonAn: zustand.tonAn,
+                   bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe });
+        }
+      });
+    }, WACHE_MS);
+  }
+  function wacheStoppen() {
+    if (wacheUhr) { clearInterval(wacheUhr); wacheUhr = null; }
+    versuchJe = {};
+    letzterLeitungsstand = "";
+  }
+
+  /* Wie steht es gerade um die Leitungen? Das zeigt die Oberfläche an,
+     damit man nicht rät, ob es an einem selbst liegt. */
+  function leitungen() {
+    var raus = [];
+    Object.keys(zustand.leute).forEach(function (id) {
+      if (id === zustand.ichId) return;
+      var pc = brueckeJe[id];
+      raus.push({
+        id: id,
+        name: zustand.leute[id].name || "",
+        steht: steht(pc),
+        lage: pc ? (pc.connectionState || pc.iceConnectionState || "?") : "keine",
+        anlaeufe: (versuchJe[id] || {}).anlaeufe || 0
+      });
+    });
+    return raus;
+  }
+
   function nachrichtAnhaengen(n) {
     /* Dieselbe Nachricht kann zweimal ankommen (Neuladen, Puls).
        Sie hat eine Kennung — damit lässt sich das ausschliessen. */
@@ -1495,6 +1624,7 @@ window.LiveChat = (function () {
             senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn });
             pulsStarten();
+            wacheStarten();          // die Leitungen im Auge behalten
             postKanalOeffnen();
             /* WER IST HÄUPTLING?
                Nach RFC 2811 „besitzen" die Operatoren den Kanal, und
@@ -1546,6 +1676,7 @@ window.LiveChat = (function () {
        Weg ist er erst, wenn man ihn selbst löscht. */
     rueckkehrVergessen();
     pulsStoppen();
+    wacheStoppen();
     praesenzSetzen(false);
     if (kanal) {
       /* Erst abmelden, DANN den Kanal schliessen — und zwar mit einem
@@ -2561,6 +2692,7 @@ window.LiveChat = (function () {
     raumIstZu: raumIstZu,
     praesenzZuhoeren: praesenzZuhoeren,
     praesenzDa: function () { return praesenzDa; },
+    leitungen: leitungen,
     beiPraesenz: beiPraesenz,
     chatLesen: function (raum) { return chatLaden(raum || zustand.raum || HAUPTRAUM); },
     lage: lage,
