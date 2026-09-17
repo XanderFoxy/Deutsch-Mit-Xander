@@ -6942,6 +6942,22 @@
       return `<i class="w-tropfen" style="left:${links}%; --w-takt:${takt};"></i>`;
     }) + `</div>`;
   }
+  /* Welche Tageszeit ist gerade? Das steht nicht in einer Tabelle mit
+     festen Uhrzeiten, sondern ergibt sich aus derselben Himmelsrechnung,
+     die auch den Farbverlauf des Streifens bestimmt (updateDaytimeSky):
+     wetterDunkel läuft von 0 (heller Mittag) bis 1 (tiefe Nacht). Ob
+     die Dämmerung eine Morgen- oder eine Abenddämmerung ist, sagt die
+     Tageshälfte. So passt es überall auf der Welt und zu jeder
+     Jahreszeit, ohne eine einzige Uhrzeit im Code. */
+  var wetterDunkel = 0.2;
+  function tageszeit() {
+    if (wetterDunkel > 0.62) return "nacht";
+    if (wetterDunkel > 0.2) {
+      return new Date().getHours() < 12 ? "morgen" : "abend";
+    }
+    return "tag";
+  }
+
   function wWolkenbaender(anzahl) {
     /* Mehrere Schichten, die unterschiedlich schnell ziehen. Jede ist
        EIN Element: die Wolkenballen stecken als weiche Farbverläufe im
@@ -7152,7 +7168,14 @@
       default:
         inhalt = "";
     }
-    schicht.className = "niederschlag wetter-szene w-" + szene + (wetterIstNacht ? " ist-nacht" : "");
+    /* GEWUENSCHT: „richtig schoene Wattewolken — je nach Tageszeit,
+       dass sie dann ein bisschen angepasst sind." Am Morgen steht die
+       Sonne flach und faerbt die Oberseiten warm, am Tag ist das Licht
+       weiss, am Abend golden, nachts gibt es keines mehr. Welche
+       Stunde wozu gehoert, haengt nicht an festen Zahlen, sondern an
+       Sonnenauf- und -untergang, soweit sie bekannt sind. */
+    schicht.className = "niederschlag wetter-szene w-" + szene
+      + (wetterIstNacht ? " ist-nacht" : "") + " tz-" + tageszeit();
     schicht.innerHTML = inhalt;
     bar.classList.add("hat-niederschlag");
     /* Die sieben festen Sterne aus der index.html würden sich mit dem
@@ -7339,7 +7362,12 @@
     /* Ab dieser Dunkelheit ist der Himmel im Streifen wirklich Nacht —
        erst dann lohnen Sterne und Mond. */
     const nacht = dark > 0.62;
-    if (nacht !== wetterIstNacht) {
+    /* Die Tageszeit der Wolken hängt an derselben Zahl. Neu gezeichnet
+       wird nur, wenn sich wirklich etwas ändert — sonst würde der
+       Himmel bei jedem Takt neu aufgebaut. */
+    const vorher = tageszeit();
+    wetterDunkel = dark;
+    if (nacht !== wetterIstNacht || tageszeit() !== vorher) {
       wetterIstNacht = nacht;
       wetterSzeneZeichnen();
     }

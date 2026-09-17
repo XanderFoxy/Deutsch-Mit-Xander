@@ -7584,181 +7584,75 @@ input[type="checkbox"], input[type="radio"] {
 .wetter-szene {
   --w-hoehe: 44px;
   --w-weiss: rgba(255, 255, 255, 0.92);
-  /* Der Körper der Wolke, ihre Unterseite, ihr Lichtrand oben und der
-     Schleier, der die Haufen verbindet. Vier Werte — mehr braucht es
-     nicht, um aus einem Fleck eine Wattewolke zu machen. */
-  --w-wolke-hell: rgba(255, 255, 255, 0.90);
-  --w-wolke-schatten: rgba(158, 178, 202, 0.55);
-  --w-wolke-oben: rgba(255, 255, 255, 0.98);
-  --w-wolke-schleier: rgba(255, 255, 255, 0.24);
+  --w-wolke-hell: rgba(255, 255, 255, 0.82);
+  --w-wolke-schatten: rgba(150, 172, 196, 0.6);
   --w-kachel: 300px;
-}
-
-/* ---------------- Die Tageszeit färbt die Wolken -----------------
-   GEWUENSCHT: „richtig schoene Wattewolken — klare weisse Wattewolken,
-   je nach Tageszeit, dass sie dann ein bisschen angepasst sind."
-
-   Am MORGEN steht die Sonne flach: die Oberseiten sind warm
-   angeleuchtet, die Unterseiten noch kuehl und blaeulich. Am TAG steht
-   sie hoch, das Licht ist weiss und der Schatten grau. Am ABEND wird
-   das Licht golden und der Schatten violett. NACHTS gibt es kein
-   Sonnenlicht mehr — dann sind die Ballen selbst dunkel und nur die
-   Kanten schimmern. */
-.wetter-szene.tz-morgen {
-  --w-wolke-hell: rgba(255, 244, 232, 0.90);
-  --w-wolke-schatten: rgba(176, 168, 200, 0.55);
-  --w-wolke-oben: rgba(255, 228, 196, 0.98);
-  --w-wolke-schleier: rgba(255, 236, 214, 0.26);
-}
-.wetter-szene.tz-tag {
-  --w-wolke-hell: rgba(255, 255, 255, 0.92);
-  --w-wolke-schatten: rgba(152, 176, 202, 0.55);
-  --w-wolke-oben: rgba(255, 255, 255, 1);
-  --w-wolke-schleier: rgba(255, 255, 255, 0.24);
-}
-.wetter-szene.tz-abend {
-  --w-wolke-hell: rgba(255, 238, 222, 0.88);
-  --w-wolke-schatten: rgba(150, 120, 160, 0.58);
-  --w-wolke-oben: rgba(255, 206, 150, 0.98);
-  --w-wolke-schleier: rgba(255, 216, 180, 0.24);
 }
 /* Nachts sind die Wolken dunkel und kühl, sonst verschluckt der helle
    Ballen den Nachthimmel. */
-.wetter-szene.ist-nacht,
-.wetter-szene.tz-nacht {
-  --w-wolke-hell: rgba(112, 126, 166, 0.52);
-  --w-wolke-schatten: rgba(34, 40, 72, 0.62);
-  --w-wolke-oben: rgba(176, 190, 226, 0.7);
-  --w-wolke-schleier: rgba(120, 136, 180, 0.16);
+.wetter-szene.ist-nacht {
+  --w-wolke-hell: rgba(120, 133, 170, 0.55);
+  --w-wolke-schatten: rgba(38, 45, 78, 0.6);
 }
 
-/* WOLKEN-ANFANG — erzeugt von werkzeug/bau-wolken.py */
-/* 33 Ballen in drei Haufen, je drei Lagen (Schatten, Körper,
-   Lichtrand) plus drei Schleier — siehe werkzeug/bau-wolken.py. */
+/* ---------------- Wolkenschichten ----------------
+   Jede Schicht ist doppelt so breit wie der Streifen und wandert um
+   genau eine Kachelbreite nach links. Weil sich der Hintergrund alle
+   --w-kachel wiederholt, ist der Übergang dabei nahtlos. Die
+   Schattenseite liegt ein paar Pixel tiefer als die Lichtseite — das
+   gibt den Ballen ihre Unterseite. */
 .w-wolkenband {
   position: absolute;
   top: 0; left: 0;
   width: 200%; height: 100%;
   background-repeat: repeat-x;
   background-size: var(--w-kachel) 100%;
+  /* Zuerst die Schattenseite (ein paar Pixel tiefer, kühler), darüber
+     die Lichtseite — genau das gibt einer Wolke ihre Unterseite. Die
+     Ballen sitzen im oberen Drittel des Streifens: darunter soll der
+     Himmel zu sehen bleiben und der Niederschlag fallen können. */
+  /* Zwei Haufen und ein Schleier je Kachel statt fuenf gleich grosser
+     Ballen: ungleiche Groessen, weichere Raender (Abfall erst bei 48 %
+     statt 55 %) und ein Schleier ganz hinten. Vorher lag der Himmel
+     wie eine dicke Wattedecke ueber der Seite. */
   background-image:
-    radial-gradient(2.94px 3.57px at 271.5px 24.2px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.36px 4.13px at 264.6px 22.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.99px 4.83px at 256.4px 20.4px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(4.76px 5.81px at 252.7px 19px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.99px 4.9px at 246.1px 19.5px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(4.34px 5.32px at 240.9px 19.4px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(4.2px 5.11px at 236.2px 20.2px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.92px 4.83px at 229.3px 21.6px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(2.03px 2.52px at 223.8px 25.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.43px 4.13px at 203.7px 20.5px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.78px 4.55px at 193.9px 18.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(6.02px 7.28px at 188.3px 14.5px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(6.02px 7.21px at 183px 13.5px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(5.53px 6.58px at 171.2px 13.3px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(6.58px 7.91px at 165.9px 12px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(6.44px 7.77px at 159px 12.4px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(5.25px 6.37px at 154.8px 14.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(5.39px 6.44px at 148.5px 15.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.85px 4.62px at 144px 18.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.92px 4.69px at 137.5px 20.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(3.71px 4.27px at 103.3px 22.2px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(4.62px 5.32px at 99.2px 19.2px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(5.46px 6.23px at 88.3px 16.7px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(7.98px 9.1px at 85.6px 13.1px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(9.73px 11.2px at 81.4px 10.5px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(7px 8.05px at 71.2px 12.4px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(9.8px 11.27px at 58.1px 9.7px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(7.91px 9.1px at 50.7px 11.6px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(9.17px 10.57px at 48.5px 11px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(7.63px 8.75px at 36.8px 13.4px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(7px 7.98px at 32.5px 15.3px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(5.53px 6.37px at 29.1px 18.3px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(4.27px 4.9px at 17.2px 21.8px, var(--w-wolke-oben) 0 62%, transparent 94%),
-    radial-gradient(4.2px 5.1px at 271.5px 26.8px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(4.8px 5.9px at 264.6px 24.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.7px 6.9px at 256.4px 23px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(6.8px 8.3px at 252.7px 21.6px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.7px 7px at 246.1px 22.1px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(6.2px 7.6px at 240.9px 22px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(6px 7.3px at 236.2px 22.8px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.6px 6.9px at 229.3px 24.2px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(2.9px 3.6px at 223.8px 27.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(4.9px 5.9px at 203.7px 23.1px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.4px 6.5px at 193.9px 20.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(8.6px 10.4px at 188.3px 17.1px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(8.6px 10.3px at 183px 16.1px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(7.9px 9.4px at 171.2px 15.9px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(9.4px 11.3px at 165.9px 14.6px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(9.2px 11.1px at 159px 15px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(7.5px 9.1px at 154.8px 16.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(7.7px 9.2px at 148.5px 17.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.5px 6.6px at 144px 20.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.6px 6.7px at 137.5px 22.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(5.3px 6.1px at 103.3px 24.8px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(6.6px 7.6px at 99.2px 21.8px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(7.8px 8.9px at 88.3px 19.3px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(11.4px 13px at 85.6px 15.7px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(13.9px 16px at 81.4px 13.1px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(10px 11.5px at 71.2px 15px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(14px 16.1px at 58.1px 12.3px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(11.3px 13px at 50.7px 14.2px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(13.1px 15.1px at 48.5px 13.6px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(10.9px 12.5px at 36.8px 16px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(10px 11.4px at 32.5px 17.9px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(7.9px 9.1px at 29.1px 20.9px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(6.1px 7px at 17.2px 24.4px, var(--w-wolke-hell) 0 76%, transparent 97%),
-    radial-gradient(4.2px 5.1px at 271.5px 31px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(4.8px 5.9px at 264.6px 28.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.7px 6.9px at 256.4px 27.2px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(6.8px 8.3px at 252.7px 25.8px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.7px 7px at 246.1px 26.3px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(6.2px 7.6px at 240.9px 26.2px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(6px 7.3px at 236.2px 27px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.6px 6.9px at 229.3px 28.4px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(2.9px 3.6px at 223.8px 31.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(4.9px 5.9px at 203.7px 27.3px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.4px 6.5px at 193.9px 24.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(8.6px 10.4px at 188.3px 21.3px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(8.6px 10.3px at 183px 20.3px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(7.9px 9.4px at 171.2px 20.1px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(9.4px 11.3px at 165.9px 18.8px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(9.2px 11.1px at 159px 19.2px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(7.5px 9.1px at 154.8px 20.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(7.7px 9.2px at 148.5px 21.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.5px 6.6px at 144px 24.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.6px 6.7px at 137.5px 26.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(5.3px 6.1px at 103.3px 29px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(6.6px 7.6px at 99.2px 26px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(7.8px 8.9px at 88.3px 23.5px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(11.4px 13px at 85.6px 19.9px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(13.9px 16px at 81.4px 17.3px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(10px 11.5px at 71.2px 19.2px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(14px 16.1px at 58.1px 16.5px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(11.3px 13px at 50.7px 18.4px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(13.1px 15.1px at 48.5px 17.8px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(10.9px 12.5px at 36.8px 20.2px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(10px 11.4px at 32.5px 22.1px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(7.9px 9.1px at 29.1px 25.1px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(6.1px 7px at 17.2px 28.6px, var(--w-wolke-schatten) 0 72%, transparent 95%),
-    radial-gradient(36px 4px at 24px 35px, var(--w-wolke-schleier) 0 58%, transparent 94%),
-    radial-gradient(42px 4px at 206px 33px, var(--w-wolke-schleier) 0 58%, transparent 94%),
-    radial-gradient(54px 5px at 110px 34px, var(--w-wolke-schleier) 0 58%, transparent 94%);
-  animation: wZiehen 96s linear infinite;
+    radial-gradient(34px 13px at 58px 23px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(23px 10px at 36px 27px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(26px 11px at 80px 27px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(16px 7px at 96px 24px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(29px 11px at 170px 21px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(19px 8px at 152px 25px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(21px 9px at 188px 25px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(13px 5px at 236px 19px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(10px 4px at 248px 21px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(34px 13px at 58px 19px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(23px 10px at 36px 23px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(26px 11px at 80px 23px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(16px 7px at 96px 20px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(29px 11px at 170px 17px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(19px 8px at 152px 21px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(21px 9px at 188px 21px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(13px 5px at 236px 15px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(10px 4px at 248px 17px, var(--w-wolke-hell) 0 48%, transparent 86%);
+  animation: wZiehen 64s linear infinite;
   will-change: transform;
 }
 @keyframes wZiehen {
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(calc(-1 * var(--w-kachel)), 0, 0); }
 }
-/* Drei Schichten, drei Tempi, drei Größen — vorn groß und etwas
-   schneller, hinten klein, blass und sehr langsam. Daraus entsteht
-   Tiefe. GEWÜNSCHT war „schön langsam und gemütlich": die Tempi sind
-   deshalb rund doppelt so ruhig wie vorher. */
-.w-wb1 { --w-kachel: 300px; opacity: 0.86; animation-duration: 96s; }
-.w-wb2 { --w-kachel: 392px; opacity: 0.55; animation-duration: 158s; height: 84%; }
-.w-wb3 { --w-kachel: 486px; opacity: 0.32; animation-duration: 232s; height: 68%; }
-/* WOLKEN-ENDE */
+/* Drei Schichten, drei Tempi und drei Größen — vorn groß und schnell,
+   hinten klein, blass und langsam. Genau daraus entsteht Tiefe. */
+/* WICHTIG: Größe und Höhe dürfen hier NICHT über transform kommen —
+   das Ziehen ist selbst eine transform-Bewegung und würde jeden festen
+   Wert davon überschreiben. Verschoben wird deshalb mit top, skaliert
+   mit height. */
+/* Der Versatz steht NICHT mehr hier, sondern kommt aus der Uhrzeit
+   (siehe wWolkenbaender in app.js): sonst sprang der Himmel bei jedem
+   Neuzeichnen an dieselbe feste Stelle zurueck. */
+.w-wb1 { --w-kachel: 260px; opacity: 0.78; animation-duration: 46s; }
+.w-wb2 { --w-kachel: 340px; opacity: 0.5;  animation-duration: 78s;  height: 82%; }
+.w-wb3 { --w-kachel: 420px; opacity: 0.3;  animation-duration: 116s; height: 66%; }
 /* Bei Regen, Schnee, Hagel und Gewitter kommt der Niederschlag aus der
    Decke: die Wolken rücken ein Stück höher, damit unter ihnen Platz
    zum Fallen bleibt. */
@@ -7768,19 +7662,8 @@ input[type="checkbox"], input[type="radio"] {
 /* Gewitterwolken sind dunkel und schwer. */
 .w-gewitter .w-wolkenband {
   --w-wolke-hell: rgba(92, 100, 128, 0.9);
-  --w-wolke-schatten: rgba(32, 36, 56, 0.92);
-  --w-wolke-oben: rgba(150, 160, 190, 0.85);
-  --w-wolke-schleier: rgba(70, 78, 104, 0.3);
+  --w-wolke-schatten: rgba(32, 36, 56, 0.9);
   top: -12%;
-}
-/* Bei Regen und Schnee bleiben sie hell, werden aber grauer — es sind
-   ja immer noch Wolken, nur eben nasse. */
-.w-regen .w-wolkenband,
-.w-schnee .w-wolkenband,
-.w-hagel .w-wolkenband {
-  --w-wolke-hell: rgba(214, 222, 232, 0.9);
-  --w-wolke-schatten: rgba(110, 128, 152, 0.62);
-  --w-wolke-oben: rgba(244, 248, 252, 0.95);
 }
 
 /* ---------------- Nebel ----------------
