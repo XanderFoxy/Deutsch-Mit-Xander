@@ -282,11 +282,26 @@ window.LiveChat = (function () {
      GEWÜNSCHT: „Drei, vier Schriftarten, die man auswählen kann."
      Die Auswahl ist eine Lesehilfe und gilt nur auf diesem Gerät —
      wie eine Brille, nicht wie eine Nachricht. */
+  /* Was einer sagt, der das Wetter macht. GEWÜNSCHT: „Du kannst auch
+     noch Gewitter machen als Animation, beziehungsweise Sturm oder
+     Erdbeben, wo der ganze Chat dann zu wackeln anfängt … eine
+     Animation für Halloween mit typischen Halloween-Elementen, eine
+     Animation für Weihnachten mit typischen Weihnachtselementen." */
+  var WETTER = {
+    schnee:      " l\u00e4sst es schneien  \u2744\ufe0f",
+    regen:       " l\u00e4sst es regnen  \u2614",
+    feuerwerk:   " z\u00fcndet ein Feuerwerk  \ud83c\udf86",
+    gewitter:    " holt ein Gewitter herein  \u26c8\ufe0f",
+    erdbeben:    " bringt alles zum Wackeln  \ud83c\udf0b",
+    halloween:   " macht es gruselig  \ud83c\udf83",
+    weihnachten: " bringt Weihnachten mit  \ud83c\udf84"
+  };
+
   var SCHRIFTEN = {
     "1": { was: "klassisch" },
     "2": { was: "Schreibmaschine" },
-    "3": { was: "rund und weich" },
-    "4": { was: "gross und ruhig" }
+    "3": { was: "breit und klar" },
+    "4": { was: "Zeitung" }
   };
   var SCHRIFT_SCHLUESSEL = "dma_livechat_schrift";
   function schriftMerken(x) {
@@ -2038,76 +2053,377 @@ window.LiveChat = (function () {
      jedes Zeichen gleich breit ist. Ohne das zerfallen sie.
      ========================================================= */
   /* =========================================================
-     ASCII-KUNST
+     BILDER AUS BUCHSTABEN UND AUS EMOJIS
      ---------------------------------------------------------
-     GEWÜNSCHT: „/lach soll richtige ASCII-Kunst benutzen."
+     GEWÜNSCHT: „Die ASCII-Codes können noch ein bisschen
+     umfangreicher sein, nicht so einfach und billig. Der Fuchs kann
+     zum Beispiel ein richtig schöner, realistischer Fuchs sein …
+     und dann so etwas mit Emojis, wie bei einem ASCII-Code aus
+     Emojis mit Sternen, Rakete, Planeten — so verschiedene
+     Bilderthemen, die kleine Geschichten erzählen."
 
-     Damals war das der ganze Zauber: der Chat konnte nur Buchstaben,
-     also hat man Bilder AUS Buchstaben gebaut. Sie stehen hier
-     zeilenweise, damit man beim Nachbessern sieht, was man tut; beim
-     Zeichnen kommen sie in eine Schrift, in der jedes Zeichen gleich
-     breit ist. Ohne die zerfaellt jedes dieser Bilder.
+     Deshalb zweierlei:
+
+       /ascii <name>   Bilder aus Buchstaben, wie sie damals durch
+         die Chats gingen. Sie stehen nur richtig da, wenn jede
+         Stelle gleich breit ist — beim Zeichnen kommen sie deshalb
+         in Schreibmaschinenschrift.
+
+       /bild <name>    Bilder aus Emojis: bunt, ohne feste Breite,
+         und sie erzählen etwas. Ein Sternenhimmel mit Lagerfeuer,
+         eine Rakete, die vor einem Planeten abhebt, ein
+         Sonnenaufgang über dem Dorf. Als Abstand steht zwischen
+         den Zeichen ein Geviertleerzeichen (U+3000) — genauso
+         breit wie ein Emoji; mit einem gewöhnlichen Leerzeichen
+         verrutscht jede Anordnung.
+
+     Beide Sammlungen stehen in werkzeug/bau-chatbilder.py und
+     werden von dort hierher geschrieben. Wer etwas ändern will,
+     ändert es DORT und lässt das Werkzeug laufen.
      ========================================================= */
+
   var ASCII = {
-    lachen:
-      ["   .-\"\"\"\"\"-.",
-       "  /  ^   ^  \\",
-       " |     v     |",
-       " |  \\_____/  |",
-       "  \\         /",
-       "   '-.....-'",
-       "    HA HA HA!   %NAME%"].join("\n"),
-    herz:
-      ["   ,d88b.d88b,",
-       "   88888888888",
-       "   `Y8888888Y'",
-       "     `Y888Y'",
-       "       `Y'      von %NAME%"].join("\n"),
-    daumen:
-      ["      _",
-       "     | |",
-       "     | |__",
-       "     |    |",
-       "  ___|    |",
-       " |        |",
-       " |        |   %NAME% findet das gut",
-       " |________|"].join("\n"),
-    blume:
-      ["      .--.",
-       "     ( () )",
-       "      `--'",
-       "        |",
-       "       \\|/      f\u00fcr dich, von %NAME%",
-       "        |"].join("\n"),
-    kaffee:
-      ["      ) )",
-       "     ( (",
-       "   .-------.",
-       "   |       |]",
-       "   \\       /     %NAME% kocht Kaffee",
-       "    `-----'"].join("\n"),
     achtung:
-      ["     /\\",
-       "    /  \\",
-       "   /  ! \\",
-       "  /______\\    sagt %NAME%"].join("\n"),
-    katze:
-      ["  /\\_/\\",
-       " ( o.o )",
-       "  > ^ <      miau, sagt %NAME%"].join("\n"),
+      ["          /\\               ",
+       "         /  \\              ",
+       "        /    \\             ",
+       "       /  /\\  \\            ",
+       "      /   ||   \\           ",
+       "     /    ||    \\          ",
+       "    /     ||     \\         ",
+       "   /      ()      \\        ",
+       "  /________________\\       ",
+       "                           ",
+       "      sagt %NAME%          "].join("\n"),
+    baum:
+      ["         &&&&&&&&&         ",
+       "       &&&&&&&&&&&&&       ",
+       "     &&&&&&&&&&&&&&&&&     ",
+       "    &&&&&&&&&&&&&&&&&&&    ",
+       "     &&&&&&&&&&&&&&&&&     ",
+       "       &&&&&&&&&&&&&       ",
+       "          &&&&&&&          ",
+       "            |||            ",
+       "            |||            ",
+       "           /|||\\           ",
+       "    ______/_____\\______    ",
+       "                           ",
+       "    %NAME% steht im Wald   "].join("\n"),
+    blume:
+      ["        _(_)_              ",
+       "    @@@@(_)@@@@            ",
+       "   @@@@@(_)@@@@@           ",
+       "    @@@@(_)@@@@            ",
+       "        (_)                ",
+       "         |                 ",
+       "      \\  |                 ",
+       "       \\ |   /             ",
+       "        \\|  /              ",
+       "         | /               ",
+       "     ____|/____            ",
+       "                           ",
+       "  fuer dich, von %NAME%    "].join("\n"),
+    daumen:
+      ["           ____            ",
+       "          /    |           ",
+       "         /  /| |           ",
+       "        |  / | |           ",
+       "        | |  | |           ",
+       "   _____| |__| |_____      ",
+       "  |                  |     ",
+       "  |   das findet      |    ",
+       "  |   %NAME% gut      |    ",
+       "  |__________________|     "].join("\n"),
+    fertig:
+      ["       .-----------.       ",
+       "     .'             '.     ",
+       "    /                 \\    ",
+       "   |              /    |   ",
+       "   |             /     |   ",
+       "   |   \\        /      |   ",
+       "   |    \\      /       |   ",
+       "    \\    \\    /       /    ",
+       "     '.   \\  /      .'     ",
+       "       '---\\/------'       ",
+       "                           ",
+       "     %NAME%: erledigt      "].join("\n"),
     fuchs:
-      ["  |\\   /|",
-       "  | \\_/ |",
-       " ( o   o )",
-       "  \\  ^  /     %NAME%",
-       "   '''''"].join("\n"),
+      ["       /\\             /\\       ",
+       "      /  \\___________/  \\      ",
+       "     /   /           \\   \\     ",
+       "    /   /   \\     /   \\   \\    ",
+       "   |   |  (@) \\   / (@)  |   | ",
+       "   |   |       \\ /       |   | ",
+       "    \\   \\       v       /   /  ",
+       "     \\   \\    .---.    /   /   ",
+       "      \\   \\  ( o o )  /   /    ",
+       "       \\   \\  `-.-`  /   /     ",
+       "        \\   `--- ---`   /      ",
+       "         \\_____________/       ",
+       "        /               \\      ",
+       "       /   \\_________/   \\     ",
+       "      |                   |    ",
+       "       \\                 /     ",
+       "        `\\__/`-----`\\__/`      ",
+       "          ||         ||        ",
+       "         (__)       (__)       ",
+       "                               ",
+       "    %NAME% schleicht vorbei    "].join("\n"),
+    haus:
+      ["            /\\             ",
+       "           /  \\            ",
+       "          /    \\           ",
+       "         /      \\          ",
+       "        /________\\         ",
+       "        | __  __ |         ",
+       "        ||  ||  ||         ",
+       "        ||__||__||         ",
+       "        |   ____ |         ",
+       "        |  | o  ||         ",
+       "    ____|__|____||____     ",
+       "                           ",
+       "   willkommen bei %NAME%   "].join("\n"),
+    herz:
+      ["     ,d8888b.  ,d8888b.    ",
+       "   ,88888888888888888888,  ",
+       "  d8888888888888888888888b ",
+       "  888888888888888888888888 ",
+       "  `8888888888888888888888' ",
+       "   `Y88888888888888888Y'   ",
+       "     `Y888888888888Y'      ",
+       "       `Y8888888Y'         ",
+       "         `Y888Y'           ",
+       "           `Y'             ",
+       "                           ",
+       "        von %NAME%         "].join("\n"),
+    hund:
+      ["     ,--.        ,--.      ",
+       "    /    \\______/    \\     ",
+       "   |                  |    ",
+       "   |    (o)    (o)    |    ",
+       "   |        __        |    ",
+       "    \\      (__)      /     ",
+       "     \\    '----'    /      ",
+       "      `.__________.'       ",
+       "       /          \\        ",
+       "      |   \\    /   |       ",
+       "       \\   '--'   /        ",
+       "        `--------'         ",
+       "                           ",
+       "     wuff, sagt %NAME%     "].join("\n"),
+    kaffee:
+      ["         )  (  )           ",
+       "        (   )  (           ",
+       "         )  (  )           ",
+       "     .----------.          ",
+       "     |          |___       ",
+       "     |          |   \\      ",
+       "     |  ~~~~~~  |    |     ",
+       "     |          |   /      ",
+       "     |          |__/       ",
+       "      \\        /           ",
+       "       `------'            ",
+       "    ________________       ",
+       "                           ",
+       "    %NAME% kocht Kaffee    "].join("\n"),
+    katze:
+      ["       /\\_____/\\           ",
+       "      /  o   o  \\          ",
+       "     ( ==  ^  == )         ",
+       "      )         (          ",
+       "     (           )         ",
+       "    ( (  )   (  ) )        ",
+       "   (__(__)___(__)__)       ",
+       "                           ",
+       "     miau, sagt %NAME%     "].join("\n"),
+    lachen:
+      ["        .-'''''''''-.       ",
+       "      .'             '.     ",
+       "     /   \\       /     \\    ",
+       "    :     o     o       :   ",
+       "    |          ^        |   ",
+       "    :   \\             / :   ",
+       "     \\   '.         .'  /   ",
+       "      '.   '-.....-'  .'    ",
+       "        '-...........-'     ",
+       "                            ",
+       "     H A   H A   H A !      ",
+       "            %NAME%          "].join("\n"),
+    rakete:
+      ["            /\\             ",
+       "           /  \\            ",
+       "          /    \\           ",
+       "         |      |          ",
+       "         |  ()  |          ",
+       "         |      |          ",
+       "        /|      |\\         ",
+       "       / |      | \\        ",
+       "      /__|______|__\\       ",
+       "          \\    /           ",
+       "           \\  /            ",
+       "            \\/             ",
+       "            **             ",
+       "           ****            ",
+       "                           ",
+       "      %NAME% hebt ab       "].join("\n"),
+    schiff:
+      ["                |             ",
+       "               /|\\            ",
+       "              / | \\           ",
+       "             /  |  \\          ",
+       "            /___|___\\         ",
+       "                |             ",
+       "   \\____________|___________/ ",
+       "    \\                      /  ",
+       "     \\____________________/   ",
+       "  ~~~~~~~~~~~~~~~~~~~~~~~~~~  ",
+       "   ~~~~~~~~~~~~~~~~~~~~~~~~   ",
+       "                              ",
+       "    %NAME% sticht in See      "].join("\n"),
+    stern:
+      ["             *             ",
+       "            ***            ",
+       "           *****           ",
+       " ************************* ",
+       "  ***********************  ",
+       "    *******************    ",
+       "      ***************      ",
+       "       *************       ",
+       "      ****     ****        ",
+       "     ***         ***       ",
+       "    **             **      ",
+       "                           ",
+       "   %NAME% wuenscht was     "].join("\n"),
     traurig:
-      ["   .-\"\"\"\"\"-.",
-       "  /  .   .  \\",
-       " |     v     |",
-       " |   .---.   |",
-       "  \\  \\___/  /    hmpf, sagt %NAME%",
-       "   '-.....-'"].join("\n")
+      ["        .-'''''''''-.      ",
+       "      .'             '.    ",
+       "     /   .         .   \\   ",
+       "    :   (')       (')   :  ",
+       "    |          v         | ",
+       "    :     .-------.      : ",
+       "     \\   /         \\    /  ",
+       "      '.             .'    ",
+       "        '-.........-'      ",
+       "                           ",
+       "     hmpf, sagt %NAME%     "].join("\n"),
+    winken:
+      ["        _   _   _          ",
+       "   _   | | | | | |         ",
+       "  | |  | | | | | |  _      ",
+       "  | |  | | | | | | | |     ",
+       "  | |__| |_| |_| |_| |     ",
+       "   \\                 |     ",
+       "    \\                |     ",
+       "     \\              /      ",
+       "      |            |       ",
+       "      |            |       ",
+       "      |____________|       ",
+       "                           ",
+       "   %NAME% winkt euch zu    "].join("\n")
+  };
+
+  var EMOJIBILD = {
+    fussball:
+      ["\ud83e\udd45\u3000\u3000\u3000\u3000\u3000\u3000\ud83e\udd45",
+       "\u3000\u3000\ud83c\udfc3\u3000\u26bd\u3000\u3000\u3000",
+       "\ud83d\udfe9\ud83d\udfe9\ud83d\udfe9\ud83d\udfe9\ud83d\udfe9\ud83d\udfe9\ud83d\udfe9\ud83d\udfe9",
+       "\u3000\ud83d\udce3\u3000\ud83d\udce3\u3000\ud83d\udce3\u3000\ud83d\udce3",
+       "%NAME% schiesst ein Tor"].join("\n"),
+    geburtstag:
+      ["\ud83c\udf88\u3000\ud83c\udf89\u3000\ud83c\udf88\u3000\ud83c\udf89\u3000\ud83c\udf88",
+       "\u3000\u2728\u3000\u3000\u3000\u3000\u2728\u3000",
+       "\u3000\u3000\ud83d\udd6f\ufe0f\ud83d\udd6f\ufe0f\ud83d\udd6f\ufe0f\u3000\u3000",
+       "\u3000\u3000\ud83c\udf82\ud83c\udf82\ud83c\udf82\u3000\u3000",
+       "\ud83c\udf8a\u3000\ud83c\udf81\u3000\ud83e\udd73\u3000\ud83c\udf81\u3000\ud83c\udf8a",
+       "Herzlichen Glueckwunsch von %NAME%"].join("\n"),
+    gewitter:
+      ["\u2601\ufe0f\u26c8\ufe0f\u2601\ufe0f\u3000\u26c8\ufe0f\u2601\ufe0f\u3000",
+       "\u3000\u26a1\u3000\u3000\u26a1\u3000\u3000\u26a1",
+       "\ud83c\udf27\ufe0f\ud83c\udf27\ufe0f\ud83c\udf27\ufe0f\ud83c\udf27\ufe0f\ud83c\udf27\ufe0f\ud83c\udf27\ufe0f",
+       "\u2602\ufe0f\u3000\u3000\ud83c\udfe0\u3000\u3000\u2602\ufe0f",
+       "%NAME% bleibt lieber drinnen"].join("\n"),
+    halloween:
+      ["\ud83c\udf19\u3000\ud83e\udd87\u3000\u3000\ud83e\udd87\u3000\ud83c\udf19",
+       "\u3000\ud83d\udc7b\u3000\u3000\ud83d\udc7b\u3000\u3000",
+       "\ud83c\udf83\u3000\ud83d\udd78\ufe0f\u3000\ud83d\udd77\ufe0f\u3000\ud83c\udf83",
+       "\ud83e\udea6\ud83c\udf32\ud83e\udea6\ud83c\udfda\ufe0f\ud83e\udea6\ud83c\udf32\ud83e\udea6",
+       "Buh! sagt %NAME%"].join("\n"),
+    herz:
+      ["\u3000\u2764\ufe0f\u2764\ufe0f\u3000\u3000\u2764\ufe0f\u2764\ufe0f\u3000",
+       "\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f",
+       "\u3000\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u3000",
+       "\u3000\u3000\u2764\ufe0f\u2764\ufe0f\u2764\ufe0f\u3000\u3000",
+       "\u3000\u3000\u3000\u2764\ufe0f\u3000\u3000\u3000",
+       "von %NAME%"].join("\n"),
+    kaffeepause:
+      ["\u3000\u2668\ufe0f\u3000\u2668\ufe0f\u3000\u2668\ufe0f\u3000",
+       "\u3000\u2615\u3000\ud83e\udd50\u3000\u2615\u3000",
+       "\u3000\ud83d\udcd6\u3000\u3000\u3000\ud83d\udcd6\u3000",
+       "%NAME% macht Pause"].join("\n"),
+    katze:
+      ["\u3000\ud83d\udd3a\u3000\u3000\u3000\ud83d\udd3a\u3000",
+       "\u3000\u3000\ud83d\udc31\u3000\u3000\u3000\u3000",
+       "\u3000\ud83d\udc3e\u3000\u3000\ud83d\udc3e\u3000\u3000",
+       "\u3000\u3000\ud83e\uddf6\u3000\u3000\u3000\u3000",
+       "%NAME% hat eine Katze"].join("\n"),
+    klassenzimmer:
+      ["\ud83d\udcda\ud83d\udcd6\u270f\ufe0f\u3000\ud83e\uddd1\u200d\ud83c\udfeb\u3000\u270f\ufe0f\ud83d\udcd6\ud83d\udcda",
+       "\u3000\u3000\u3000\u2b1b\u2b1b\u2b1b\u3000\u3000\u3000",
+       "\ud83e\uddd1\u3000\ud83d\udc69\u3000\ud83d\udc68\u3000\ud83e\uddd2\u3000\ud83d\udc71",
+       "\ud83e\ude91\ud83e\ude91\ud83e\ude91\ud83e\ude91\ud83e\ude91\ud83e\ude91\ud83e\ude91",
+       "%NAME% ist im Unterricht"].join("\n"),
+    meer:
+      ["\u2600\ufe0f\u3000\u3000\u2601\ufe0f\u3000\u3000\ud83d\udd4a\ufe0f\u3000",
+       "\u3000\u3000\u26f5\u3000\u3000\u3000\u3000\u3000",
+       "\ud83c\udf0a\ud83c\udf0a\ud83c\udf0a\ud83c\udf0a\ud83c\udf0a\ud83c\udf0a\ud83c\udf0a\ud83c\udf0a",
+       "\ud83d\udc1f\u3000\ud83d\udc20\u3000\u3000\ud83d\udc21\u3000\ud83d\udc1f",
+       "\ud83c\udfd6\ufe0f\ud83c\udf34\ud83c\udfd6\ufe0f\u3000\ud83d\udc1a\u3000\ud83c\udfd6\ufe0f\ud83c\udf34",
+       "%NAME% macht Urlaub"].join("\n"),
+    musik:
+      ["\ud83c\udfb5\u3000\ud83c\udfb6\u3000\u3000\ud83c\udfb5\u3000\ud83c\udfb6",
+       "\u3000\ud83c\udfb8\u3000\ud83e\udd41\u3000\ud83c\udfb9\u3000",
+       "\u3000\u3000\u3000\ud83e\uddd1\u200d\ud83c\udfa4\u3000\u3000\u3000",
+       "\ud83d\udc4f\ud83d\udc4f\ud83d\udc4f\ud83d\udc4f\ud83d\udc4f\ud83d\udc4f\ud83d\udc4f",
+       "%NAME% macht Musik"].join("\n"),
+    rakete:
+      ["\u3000\u3000\u3000\u3000\ud83e\ude90\u3000\u3000\u2b50",
+       "\u3000\u2b50\u3000\u3000\u3000\u3000\ud83d\udef8\u3000",
+       "\u3000\u3000\u3000\ud83d\ude80\u3000\u3000\u3000\u3000",
+       "\u3000\u3000\ud83d\udd25\ud83d\udd25\u3000\u3000\u2728\u3000",
+       "\u3000\u3000\u3000\ud83c\udf0d\u3000\u3000\u3000\u3000",
+       "%NAME% hebt ab"].join("\n"),
+    sonnenaufgang:
+      ["\u3000\u3000\u3000\u3000\u2600\ufe0f\u3000\u3000\u3000",
+       "\u3000\u3000\u2601\ufe0f\u3000\u3000\u3000\u2601\ufe0f\u3000",
+       "\ud83d\udc26\u3000\u3000\u3000\u3000\u3000\u3000\ud83d\udc26",
+       "\ud83c\udf32\ud83c\udf33\ud83c\udfe0\ud83c\udf33\ud83c\udf32\ud83c\udf33\ud83c\udf32\ud83c\udf33",
+       "\ud83c\udf3f\ud83c\udf3c\ud83c\udf3f\ud83c\udf3c\ud83c\udf3f\ud83c\udf3c\ud83c\udf3f\ud83c\udf3c",
+       "Guten Morgen von %NAME%"].join("\n"),
+    sternenhimmel:
+      ["\u2b50\ud83c\udf19\u2728\u3000\u3000\u2b50\u3000\u2728\ud83c\udf1f",
+       "\u3000\u2728\u3000\u3000\ud83c\udf0c\u3000\u3000\u2b50\u3000",
+       "\ud83c\udf1f\u3000\u2b50\u3000\u2728\u3000\ud83c\udf20\u3000\u3000",
+       "\u3000\u3000\u2728\u3000\u3000\u2b50\u3000\u3000\u2728",
+       "\ud83c\udf33\ud83c\udf32\ud83c\udfd5\ufe0f\ud83d\udd25\ud83c\udfd5\ufe0f\ud83c\udf32\ud83c\udf33\ud83c\udf32",
+       "gute Nacht, sagt %NAME%"].join("\n"),
+    wald:
+      ["\u3000\u3000\u2600\ufe0f\u3000\u3000\u3000\u2601\ufe0f\u3000",
+       "\ud83c\udf32\ud83c\udf33\ud83c\udf32\ud83c\udf33\ud83c\udf32\ud83c\udf33\ud83c\udf32\ud83c\udf33",
+       "\ud83c\udf33\ud83e\udd8a\ud83c\udf33\u3000\ud83e\udd8c\u3000\ud83c\udf33\ud83c\udf32",
+       "\ud83c\udf3f\ud83c\udf44\ud83c\udf3f\ud83c\udf3f\ud83c\udf44\ud83c\udf3f\ud83c\udf3f\ud83c\udf44",
+       "%NAME% geht spazieren"].join("\n"),
+    weihnachten:
+      ["\u2b50\u3000\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2b50",
+       "\u3000\u3000\u3000\ud83c\udf84\u3000\u3000\u3000",
+       "\u3000\u3000\ud83c\udf81\ud83c\udf81\ud83c\udf81\u3000\u3000",
+       "\ud83e\udd8c\ud83d\udef7\u3000\u3000\u3000\ud83c\udf85\ud83d\udd14",
+       "Frohe Weihnachten von %NAME%"].join("\n"),
+    winter:
+      ["\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2744\ufe0f",
+       "\u3000\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2744\ufe0f\u3000\u2744\ufe0f",
+       "\ud83c\udf84\u3000\u26c4\u3000\u3000\ud83c\udfe0\u3000\ud83c\udf84",
+       "\u2b1c\u2b1c\u2b1c\u2b1c\u2b1c\u2b1c\u2b1c\u2b1c",
+       "%NAME% friert ein bisschen"].join("\n")
   };
 
   var BEFEHLE = [
@@ -2129,7 +2445,8 @@ window.LiveChat = (function () {
     { w: "knebel",  kurz: "",     nutzt: "/knebel <name>",      was: "Stummschalten (nur Häuptling)" },
     { w: "entknebel", kurz: "",   nutzt: "/entknebel <name>",   was: "Wieder sprechen lassen" },
     { w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit einem Gesicht aus Buchstaben" },
-    { w: "ascii",   kurz: "",     nutzt: "/ascii <was>",        was: "Ein Bild aus Buchstaben: lachen, herz, daumen, blume, kaffee, achtung, katze, fuchs" },
+    { w: "ascii",   kurz: "",     nutzt: "/ascii <was>",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
+    { w: "bild",    kurz: "emoji",nutzt: "/bild <was>",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
     { w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
     { w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
     { w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
@@ -2137,6 +2454,10 @@ window.LiveChat = (function () {
     { w: "schnee",  kurz: "",     nutzt: "/schnee",             was: "Es schneit im ganzen Raum" },
     { w: "regen",   kurz: "",     nutzt: "/regen",              was: "Es regnet im ganzen Raum" },
     { w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
+    { w: "gewitter", kurz: "sturm", nutzt: "/gewitter",          was: "Blitz, Donner und Sturm" },
+    { w: "erdbeben", kurz: "beben", nutzt: "/erdbeben",          was: "Der ganze Chat fängt an zu wackeln" },
+    { w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
+    { w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
     { w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",       was: "Ein eigenes Bild hinter den Chat legen (/hintergrund weg nimmt es wieder)" },
     { w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
@@ -2390,8 +2711,14 @@ window.LiveChat = (function () {
                      schneien: "schnee", flocken: "schnee",
                      regnen: "regen", nieseln: "regen",
                      raketen: "feuerwerk", silvester: "feuerwerk",
+                     sturm: "gewitter", blitz: "gewitter", donner: "gewitter",
+                     beben: "erdbeben", wackeln: "erdbeben",
+                     kuerbis: "halloween", geist: "halloween",
+                     advent: "weihnachten", nikolaus: "weihnachten",
+                     weihnacht: "weihnachten",
                      font: "schrift", schriftart: "schrift",
                      bg: "hintergrund", tapete: "hintergrund",
+                     emoji: "bild", bilder: "bild", kunst: "bild",
                      help: "h", hilfe: "h", "?": "h",
                      part: "leave", exit: "leave", quit: "leave" };
       art = gleich[wort] || null;
@@ -2537,16 +2864,30 @@ window.LiveChat = (function () {
        das Bild. Diese Blöcke gehen deshalb als eigene Art „ascii"
        hinaus und werden drüben in Schreibmaschinenschrift gesetzt. */
     if (art === "lach") {
-      return anAlle("ascii", ASCII.lachen.replace("%NAME%", zustand.ichName),
+      return anAlle("ascii", ASCII.lachen.split("%NAME%").join(zustand.ichName),
                     { wirkung: "lachen" });
     }
     if (art === "ascii") {
       var welches = rest.toLowerCase();
       if (!ASCII[welches]) {
-        return systemZeile("Es gibt: " + Object.keys(ASCII).join(", ")
-          + "   —   zum Beispiel  /ascii daumen");
+        return systemZeile("Bilder aus Buchstaben:\n  "
+          + Object.keys(ASCII).sort().join(", ")
+          + "\n\nZum Beispiel:  /ascii fuchs");
       }
-      return anAlle("ascii", ASCII[welches].replace("%NAME%", zustand.ichName));
+      return anAlle("ascii", ASCII[welches].split("%NAME%").join(zustand.ichName));
+    }
+    /* Bilder aus Emojis — bunt, und sie erzählen etwas. Sie gehen als
+       eigene Art hinaus, weil sie KEINE Schreibmaschinenschrift
+       brauchen: Emojis sind ohnehin alle gleich breit, und in einer
+       Schreibmaschinenschrift sähen sie kleiner und blasser aus. */
+    if (art === "bild") {
+      var welches2 = rest.toLowerCase();
+      if (!EMOJIBILD[welches2]) {
+        return systemZeile("Bilder aus Emojis:\n  "
+          + Object.keys(EMOJIBILD).sort().join(", ")
+          + "\n\nZum Beispiel:  /bild sternenhimmel");
+      }
+      return anAlle("emojibild", EMOJIBILD[welches2].split("%NAME%").join(zustand.ichName));
     }
     if (art === "drueck") {
       var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
@@ -2593,11 +2934,8 @@ window.LiveChat = (function () {
        Das Letzte ist schon geregelt: alles, was vor dem Betreten
        geschrieben wurde, gilt als Vergangenheit und bleibt still —
        antippen spielt es trotzdem ab, aber nur für einen selbst. */
-    if (art === "schnee" || art === "regen" || art === "feuerwerk") {
-      var sagt = { schnee: " lässt es schneien  \u2744",
-                   regen:  " lässt es regnen  \u2614",
-                   feuerwerk: " zündet ein Feuerwerk  \ud83c\udf86" };
-      return anAlle("aktion", zustand.ichName + sagt[art], { wirkung: art });
+    if (WETTER[art]) {
+      return anAlle("aktion", zustand.ichName + WETTER[art], { wirkung: art });
     }
 
     /* ---- Die Schrift im Chat ----

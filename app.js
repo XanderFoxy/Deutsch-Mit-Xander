@@ -5211,16 +5211,31 @@
      ist die Zeile gar nicht da und das Laufband sieht aus wie immer.
      ============================================================ */
   let kzTickerNamen = [];
+  let kzTickerRaeume = {};      // Raum -> [Namen]
   function kzTickerHtml() {
     if (!kzTickerNamen.length) return "";
-    const n = kzTickerNamen.length;
-    const drei = kzTickerNamen.slice(0, 3).join(", ");
-    const wer = n === 1
-      ? `${drei} ist gerade im Klassenzimmer`
-      : n <= 3
-        ? `${drei} sind gerade im Klassenzimmer`
-        : `${drei} und ${n - 3} weitere sind gerade im Klassenzimmer`;
-    return `<span class="ticker-kz" role="link" tabindex="0" title="Ins Klassenzimmer gehen">🏫 ${escapeHtml(wer)}</span>`;
+    /* GEMELDET: „Wenn ich einen eigenen Raum mit einem eigenen
+       Raumnamen habe und irgendwo etwas suche, dann kann sich das
+       nicht als ‚im Klassenzimmer' ablegen. Da muss der Raum stehen."
+
+       Also wird nach Räumen getrennt: wer im Hauptraum sitzt, ist „im
+       Klassenzimmer"; wer sich einen eigenen Raum aufgemacht hat,
+       steht mit dessen Namen da. Mehrere Räume gleichzeitig werden
+       hintereinander aufgezählt. */
+    const teile = [];
+    Object.keys(kzTickerRaeume).forEach((raum) => {
+      const leute = kzTickerRaeume[raum] || [];
+      if (!leute.length) return;
+      const drei = leute.slice(0, 3).join(", ");
+      const rest = leute.length > 3 ? ` und ${leute.length - 3} weitere` : "";
+      const wo = (raum === LiveChat.HAUPTRAUM || !raum)
+        ? "im Klassenzimmer"
+        : "im Raum \u201e" + LiveChat.raumKlartext(raum) + "\u201c";
+      teile.push(`${drei}${rest} ${leute.length === 1 && !rest ? "ist" : "sind"} gerade ${wo}`);
+    });
+    if (!teile.length) return "";
+    return `<span class="ticker-kz" role="link" tabindex="0" title="Ins Klassenzimmer gehen">`
+      + `<span class="ticker-kz-kreide">${escapeHtml(teile.join("  \u00b7  "))}</span></span>`;
   }
   /* Ein Tipp auf die Klassenzimmer-Zeile fuehrt in den Raum. */
   document.addEventListener("click", (ev) => {
@@ -13004,6 +13019,23 @@
        • die GIPHY-Suche
        • und, für alle Fälle, ein Feld für eine Adresse
      ================================================================= */
+  /* Ein paar Themen, damit im GIPHY-Fach immer sofort etwas steht.
+     Das erste wird beim Öffnen geladen. */
+  const LC_GIF_THEMEN = [
+    { name: "Beliebt",  wort: "" },
+    { name: "Lachen",   wort: "lachen" },
+    { name: "Daumen",   wort: "daumen hoch" },
+    { name: "Applaus",  wort: "applaus" },
+    { name: "Herz",     wort: "herz liebe" },
+    { name: "Tanzen",   wort: "tanzen" },
+    { name: "Katze",    wort: "katze" },
+    { name: "Hund",     wort: "hund" },
+    { name: "Party",    wort: "party feiern" },
+    { name: "Hallo",    wort: "hallo winken" },
+    { name: "Tschüss",  wort: "tschuess winken" },
+    { name: "Ups",      wort: "ups peinlich" }
+  ];
+
   function livechatSendeWaehler() {
     document.getElementById("lcSendeWaehler")?.remove();
     const gifSchluessel = window.GIPHY_KEY || "dc6zaTOxFJmzC";
@@ -13049,12 +13081,17 @@
           <button type="button" class="btn btn-ghost" id="lcSendeFotoKnopf">📷 Foto vom Gerät</button>
         </div>
         <input type="file" id="lcSendeFoto" accept="image/*" hidden>
-        <p class="eyebrow" style="margin-top:12px;">BEWEGTES GIF</p>
+        <p class="eyebrow" style="margin-top:12px;">GIFs VON GIPHY</p>
+        <div class="lc-gif-fach" id="lcGifFach">
+          ${LC_GIF_THEMEN.map((t, i) => `
+            <button type="button" class="lc-gif-thema${i === 0 ? " ist-da" : ""}"
+                    data-lc-gifthema="${escapeHtml(t.wort)}">${escapeHtml(t.name)}</button>`).join("")}
+        </div>
         <div class="lc-waehler-reihe">
-          <input type="text" class="lc-chat-feld" id="lcSendeGifSuche" placeholder="Suchen, z. B. „lachen“ oder „daumen hoch“">
+          <input type="text" class="lc-chat-feld" id="lcSendeGifSuche" placeholder="Weitersuchen …">
           <button type="button" class="btn btn-ghost" id="lcSendeGifSuchen">Suchen</button>
         </div>
-        <div class="lc-waehler-gifs" id="lcSendeGifTreffer"></div>
+        <div class="lc-waehler-gifs" id="lcSendeGifTreffer"><p class="empty-note">lädt …</p></div>
         <div class="lc-waehler-reihe" style="margin-top:6px;">
           <input type="text" class="lc-chat-feld" id="lcSendeGifAdresse" placeholder="… oder eine Bildadresse einsetzen">
           <button type="button" class="btn btn-ghost" id="lcSendeGifNehmen">Nehmen</button>
@@ -13155,21 +13192,38 @@
       const a = kasten.querySelector("#lcSendeGifAdresse")?.value.trim();
       if (a) schicken(a);
     });
-    const suchen = async () => {
-      const wort = kasten.querySelector("#lcSendeGifSuche")?.value.trim();
+    /* GEMELDET: „Ein GIF von GIPHY findet man immer noch nicht zur
+       Auswahl. Man muss immer noch einen Namen eingeben als Suche. Es
+       soll sich eigentlich das Panel von GIPHY öffnen, damit man dort
+       weitersuchen kann — aber da ist schon eine Vorschau von den GIFs
+       vorhanden, die es auf GIPHY gibt."
+
+       Also: das Fach ist NIE leer. Es öffnet sich mit den Bildern zum
+       ersten Thema (oben eine Reihe Themen zum Durchtippen), und das
+       Suchfeld ist nur noch für alles darüber hinaus da. Antwortet
+       GIPHY nicht — was ohne eigenen Schlüssel schnell passiert —,
+       stehen statt eines leeren Kastens die hauseigenen bewegten
+       Bilder da, die immer gehen. */
+    const zeigen = async (wort) => {
       const ziel = kasten.querySelector("#lcSendeGifTreffer");
-      if (!wort || !ziel) return;
-      ziel.innerHTML = '<p class="empty-note">sucht …</p>';
+      if (!ziel) return;
+      ziel.innerHTML = '<p class="empty-note">lädt …</p>';
       try {
-        const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key="
-          + encodeURIComponent(gifSchluessel) + "&limit=18&rating=g&lang=de&q="
-          + encodeURIComponent(wort));
+        const adresse = wort
+          ? "https://api.giphy.com/v1/gifs/search?api_key="
+            + encodeURIComponent(gifSchluessel)
+            + "&limit=24&rating=g&lang=de&q=" + encodeURIComponent(wort)
+          : "https://api.giphy.com/v1/gifs/trending?api_key="
+            + encodeURIComponent(gifSchluessel) + "&limit=24&rating=g";
+        const r = await fetch(adresse);
+        if (!r.ok) throw new Error("giphy " + r.status);
         const j = await r.json();
         const liste = (j && j.data) || [];
-        if (!liste.length) { ziel.innerHTML = '<p class="empty-note">Nichts gefunden.</p>'; return; }
+        if (!liste.length) throw new Error("leer");
         ziel.innerHTML = "";
         liste.forEach((g) => {
-          const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width);
+          const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width
+                                   || g.images.preview_gif);
           if (!adr || !adr.url) return;
           const b = document.createElement("button");
           b.type = "button";
@@ -13180,14 +13234,36 @@
           b.addEventListener("click", () => schicken(adr.url));
           ziel.appendChild(b);
         });
+        if (!ziel.children.length) throw new Error("keine Bilder");
       } catch (x) {
-        ziel.innerHTML = '<p class="empty-note">Die Suche ging nicht — Netz oder Schlüssel prüfen.</p>';
+        ziel.innerHTML = `
+          <p class="empty-note" style="grid-column:1/-1; margin:0 0 6px;">
+            GIPHY antwortet gerade nicht${eigenerSchluessel ? "" : " — ohne eigenen Schlüssel "
+              + "ist das die Regel, der öffentliche Beta-Schlüssel ist seit Jahren tot"}.
+            Die Bilder hier oben gehen immer.
+          </p>`;
       }
     };
+    const suchen = () => {
+      const wort = kasten.querySelector("#lcSendeGifSuche")?.value.trim();
+      kasten.querySelectorAll("[data-lc-gifthema]").forEach((b) => b.classList.remove("ist-da"));
+      zeigen(wort);
+    };
+    kasten.querySelectorAll("[data-lc-gifthema]").forEach((b) => {
+      b.addEventListener("click", () => {
+        kasten.querySelectorAll("[data-lc-gifthema]").forEach((x) => x.classList.remove("ist-da"));
+        b.classList.add("ist-da");
+        const f = kasten.querySelector("#lcSendeGifSuche");
+        if (f) f.value = "";
+        zeigen(b.dataset.lcGifthema);
+      });
+    });
     kasten.querySelector("#lcSendeGifSuchen")?.addEventListener("click", suchen);
     kasten.querySelector("#lcSendeGifSuche")?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); suchen(); }
     });
+    /* Sofort etwas zeigen — nicht erst, wenn jemand etwas eintippt. */
+    zeigen(LC_GIF_THEMEN[0].wort);
   }
 
   /* Ein schon verkleinertes Foto (Datenadresse) noch einmal schicken —
@@ -13346,9 +13422,9 @@
     schicht.id = "lcWetter";
     schicht.className = "lc-wetter lc-wetter-" + art;
     schicht.setAttribute("aria-hidden", "true");
-    const wieviel = art === "regen"
-      ? (window.innerWidth < 560 ? 70 : 130)
-      : (window.innerWidth < 560 ? 45 : 85);
+    const wieviel = art === "schnee"
+      ? (window.innerWidth < 560 ? 45 : 85)
+      : (window.innerWidth < 560 ? 90 : 170);
     for (let i = 0; i < wieviel; i++) {
       const t = document.createElement("i");
       t.style.left = (Math.random() * 100).toFixed(2) + "%";
@@ -13360,14 +13436,19 @@
         t.style.animationDuration = (5.5 + Math.random() * 5).toFixed(2) + "s";
         t.style.opacity = (0.45 + Math.random() * 0.5).toFixed(2);
       } else {
-        t.style.setProperty("--lc-w-lang", (10 + Math.random() * 16).toFixed(0) + "px");
-        t.style.animationDuration = (0.55 + Math.random() * 0.5).toFixed(2) + "s";
-        t.style.opacity = (0.25 + Math.random() * 0.4).toFixed(2);
+        /* GEMELDET: „Den Regen sieht man auf hellen Designs kaum."
+           Die Tropfen sind jetzt länger, deutlicher und haben einen
+           hellen Kern mit dunklem Saum — so stehen sie auf hellem wie
+           auf dunklem Grund. */
+        t.style.setProperty("--lc-w-lang", (16 + Math.random() * 22).toFixed(0) + "px");
+        t.style.animationDuration = (art === "sturm" ? 0.38 : 0.5)
+          + (Math.random() * 0.35).toFixed(2) * 1 + "s";
+        t.style.opacity = (0.5 + Math.random() * 0.45).toFixed(2);
       }
       schicht.appendChild(t);
     }
     document.body.appendChild(schicht);
-    setTimeout(() => schicht.remove(), art === "regen" ? 9000 : 13000);
+    setTimeout(() => schicht.remove(), art === "schnee" ? 13000 : 10000);
   }
 
   /* =================================================================
@@ -13386,29 +13467,172 @@
     schicht.id = "lcFeuerwerk";
     schicht.className = "lc-feuerwerk";
     schicht.setAttribute("aria-hidden", "true");
-    const raketen = window.innerWidth < 560 ? 4 : 6;
+    /* GEMELDET: „Bei der Feuerwerk-Animation kannst du sie ein
+       bisschen intensiver machen, dass sie ein bisschen realistischer
+       nach Feuerwerk aussieht."
+
+       Was gefehlt hat, war dreierlei. Erstens die AUFSTEIGENDE
+       Rakete — vorher erschien der Knall aus dem Nichts. Zweitens
+       mehr und unterschiedlich weit fliegende Funken: ein echter
+       Knall ist keine gleichmässige Blume, sondern eine Kugel, von
+       der manche Funken weit und manche kaum fliegen. Drittens der
+       nachglimmende Schweif, der jedem Funken folgt und langsam
+       heruntersinkt, statt einfach zu verschwinden. */
+    const raketen = window.innerWidth < 560 ? 7 : 12;
     for (let r = 0; r < raketen; r++) {
+      const x = (8 + Math.random() * 84).toFixed(1);
+      const y = (10 + Math.random() * 42).toFixed(1);
+      const takt = (r * 0.42 + Math.random() * 0.35).toFixed(2);
+      const farbe = LC_FEUER_FARBEN[r % LC_FEUER_FARBEN.length];
+      const zweitfarbe = LC_FEUER_FARBEN[(r + 3) % LC_FEUER_FARBEN.length];
+
+      /* Die aufsteigende Rakete */
+      const auf = document.createElement("div");
+      auf.className = "lc-rakete";
+      auf.style.left = x + "%";
+      auf.style.setProperty("--lc-hoch", y + "vh");
+      auf.style.background = farbe;
+      auf.style.animationDelay = takt + "s";
+      schicht.appendChild(auf);
+
+      /* Der Knall */
       const knall = document.createElement("div");
       knall.className = "lc-knall";
-      knall.style.left = (12 + Math.random() * 76).toFixed(1) + "%";
-      knall.style.top = (14 + Math.random() * 38).toFixed(1) + "%";
-      knall.style.animationDelay = (r * 0.55 + Math.random() * 0.3).toFixed(2) + "s";
-      const farbe = LC_FEUER_FARBEN[r % LC_FEUER_FARBEN.length];
-      const funken = 22;
+      knall.style.left = x + "%";
+      knall.style.top = y + "%";
+      const nachKnall = (Number(takt) + 0.85).toFixed(2) + "s";
+      knall.style.animationDelay = nachKnall;
+      const funken = window.innerWidth < 560 ? 28 : 44;
       for (let f = 0; f < funken; f++) {
         const i = document.createElement("i");
-        const winkel = (360 / funken) * f + Math.random() * 8;
-        const weite = 60 + Math.random() * 70;
-        i.style.setProperty("--lc-fx", Math.cos(winkel * Math.PI / 180) * weite + "px");
-        i.style.setProperty("--lc-fy", Math.sin(winkel * Math.PI / 180) * weite + "px");
-        i.style.background = farbe;
-        i.style.animationDelay = knall.style.animationDelay;
+        const winkel = (360 / funken) * f + Math.random() * 14;
+        /* Nicht alle gleich weit: eine Kugel, keine Blume. */
+        const weite = 45 + Math.pow(Math.random(), 0.6) * 120;
+        i.style.setProperty("--lc-fx", (Math.cos(winkel * Math.PI / 180) * weite).toFixed(1) + "px");
+        i.style.setProperty("--lc-fy", (Math.sin(winkel * Math.PI / 180) * weite).toFixed(1) + "px");
+        i.style.background = f % 5 === 0 ? zweitfarbe : farbe;
+        i.style.boxShadow = "0 0 8px " + (f % 5 === 0 ? zweitfarbe : farbe);
+        i.style.animationDelay = nachKnall;
+        i.style.animationDuration = (1.5 + Math.random() * 1.1).toFixed(2) + "s";
         knall.appendChild(i);
       }
+      /* Der helle Kern im Augenblick des Knalls */
+      const kern = document.createElement("b");
+      kern.style.background = farbe;
+      kern.style.animationDelay = nachKnall;
+      knall.appendChild(kern);
       schicht.appendChild(knall);
     }
     document.body.appendChild(schicht);
-    setTimeout(() => schicht.remove(), 6500);
+    setTimeout(() => schicht.remove(), 9500);
+  }
+
+  /* =================================================================
+     GEWITTER
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Du kannst auch noch Gewitter machen als Animation,
+     beziehungsweise Sturm."
+     Drei Dinge zusammen: der schräg gepeitschte Regen, ein paar Blitze,
+     die kurz die ganze Seite aufhellen, und ein Zucken des
+     Hintergrunds — mehr braucht ein Gewitter nicht, um eines zu sein.
+     ================================================================= */
+  function lcGewitter() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    lcWetter("sturm");
+    document.getElementById("lcBlitz")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcBlitz";
+    schicht.className = "lc-blitz";
+    schicht.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < 5; i++) {
+      const b = document.createElement("i");
+      b.style.animationDelay = (0.6 + i * 1.7 + Math.random() * 0.7).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 11000);
+  }
+
+  /* =================================================================
+     ERDBEBEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Erdbeben, wo der ganze Chat dann — also die Schrift
+     von dem Chat, jeder Inhalt — so ein bisschen zu wackeln anfängt,
+     von allem, was man im Chat gelesen hat, was man geschrieben hat."
+
+     Es wackelt deshalb nicht die Seite, sondern das Klassenzimmer
+     selbst: die Plätze, die Zeilen, das Eingabefeld. Die Zeilen
+     wackeln dabei leicht verschieden — sonst sähe es aus, als
+     verschiebe sich ein Bild, statt dass etwas bebt.
+     ================================================================= */
+  function lcErdbeben() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    if (!karte) return;
+    karte.classList.add("lc-bebt");
+    karte.querySelectorAll(".lc-zeile, .lc-platz").forEach((z, i) => {
+      z.style.setProperty("--lc-beb-takt", (i % 7 * 0.045).toFixed(3) + "s");
+      z.style.setProperty("--lc-beb-weit", (0.6 + (i % 5) * 0.28).toFixed(2));
+    });
+    setTimeout(() => {
+      karte.classList.remove("lc-bebt");
+      karte.querySelectorAll(".lc-zeile, .lc-platz").forEach((z) => {
+        z.style.removeProperty("--lc-beb-takt");
+        z.style.removeProperty("--lc-beb-weit");
+      });
+    }, 3600);
+  }
+
+  /* =================================================================
+     HALLOWEEN UND WEIHNACHTEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Eine Animation für Halloween mit typischen
+     Halloween-Elementen. Eine Animation für Weihnachten mit typischen
+     Weihnachtselementen."
+
+     Beide gehen denselben Weg: Zeichen, die von unten oder von oben
+     durch das Fenster ziehen, jedes mit eigenem Tempo und eigener
+     Bahn. Der Unterschied liegt nur in den Zeichen und in der
+     Richtung — Fledermäuse und Geister steigen und schwanken,
+     Schneeflocken und Sterne fallen.
+     ================================================================= */
+  const LC_JAHRESZEIT = {
+    halloween: {
+      zeichen: ["\ud83e\udd87", "\ud83d\udc7b", "\ud83c\udf83", "\ud83d\udd77\ufe0f",
+                "\ud83c\udf1a", "\ud83d\udc80", "\ud83e\uddd9", "\ud83c\udf83"],
+      wieviel: 26, klasse: "halloween", dauer: 11000
+    },
+    weihnachten: {
+      zeichen: ["\u2744\ufe0f", "\u2b50", "\ud83c\udf84", "\ud83c\udf81",
+                "\ud83d\udd14", "\u26c4", "\ud83e\udd8c", "\u2744\ufe0f"],
+      wieviel: 30, klasse: "weihnachten", dauer: 12000
+    }
+  };
+  function lcJahreszeit(art) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const e = LC_JAHRESZEIT[art];
+    if (!e) return;
+    document.getElementById("lcJahreszeit")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcJahreszeit";
+    schicht.className = "lc-jahreszeit lc-jahreszeit-" + e.klasse;
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? Math.round(e.wieviel * 0.6) : e.wieviel;
+    for (let i = 0; i < wieviel; i++) {
+      const t = document.createElement("i");
+      t.textContent = e.zeichen[i % e.zeichen.length];
+      t.style.left = (Math.random() * 96).toFixed(1) + "%";
+      t.style.fontSize = (1.1 + Math.random() * 1.6).toFixed(2) + "rem";
+      t.style.animationDelay = (Math.random() * 4.5).toFixed(2) + "s";
+      t.style.animationDuration = (6 + Math.random() * 5).toFixed(2) + "s";
+      t.style.setProperty("--lc-j-drift", (Math.random() * 180 - 90).toFixed(0) + "px");
+      t.style.setProperty("--lc-j-dreh", (Math.random() * 60 - 30).toFixed(0) + "deg");
+      t.style.opacity = (0.55 + Math.random() * 0.45).toFixed(2);
+      schicht.appendChild(t);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), e.dauer);
   }
 
   /* --- Der Startschirm: ein Satz, ein Knopf --- */
@@ -13513,9 +13737,9 @@
           <button type="button" class="lc-rundknopf" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus">🎤</button>
           <button type="button" class="lc-rundknopf" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus">📷</button>
           <button type="button" class="lc-rundknopf" data-lc="profilbild" title="Profilbild oder GIF" aria-label="Profilbild oder GIF setzen">🖼️</button>
-          <button type="button" class="lc-rundknopf" data-lc="buehne"
+          <button type="button" class="lc-rundknopf lc-buehnenknopf" data-lc="buehne"
                   title="Auf die Bühne oder wieder herunter"
-                  aria-label="Auf die Bühne oder wieder herunter">🎤</button>
+                  aria-label="Auf die Bühne oder wieder herunter">⬆︎⬇︎</button>
           <button type="button" class="lc-rundknopf lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen">✕</button>
         </div>
         <div id="lcGrund"></div>
@@ -13528,6 +13752,8 @@
                       title="Was man im Chat tippen kann">ⓘ Befehle</button>
               <button type="button" class="lc-chat-raeumen" id="lcSchrift"
                       title="Die Schrift im Chat wechseln">🔤 Schrift</button>
+              <button type="button" class="lc-chat-raeumen" id="lcHintergrundKnopf"
+                      title="Ein eigenes Bild hinter den Chat legen">🖼️ Hintergrund</button>
               <button type="button" class="lc-chat-raeumen" id="lcArchiv"
                       title="Ältere Gespräche nachlesen">📜 Nachlesen</button>
               <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
@@ -13659,6 +13885,16 @@
   }
 
   function livechatKopfAuffrischen(l) {
+    /* Der Bühnenknopf zeigt, wohin es geht: hinauf oder hinunter. */
+    const bk = document.querySelector('[data-lc="buehne"]');
+    if (bk) {
+      const drauf = l.buehne !== false;
+      bk.textContent = drauf ? "\u2b07\ufe0e" : "\u2b06\ufe0e";
+      bk.title = drauf ? "Von der Bühne herunter — nur noch mitschreiben"
+                       : "Auf die Bühne — Ton und Bild wieder hinaus";
+      bk.setAttribute("aria-label", bk.title);
+      bk.classList.toggle("ist-unten", !drauf);
+    }
     const karte = document.getElementById("livechatKarte");
     const unter = document.getElementById("lcKopfUnter");
     const link = document.getElementById("lcLink");
@@ -13797,6 +14033,8 @@
      man den Raum betreten hat. Alles davor ist Vergangenheit und löst
      keine Animation mehr aus — siehe livechatChatAuffrischen(). */
   let livechatEffekteAb = 0;
+  /* Beim ersten Zeichnen eines Raums ganz nach unten springen. */
+  let livechatSchonUnten = false;
 
   /* --- Der Chat sieht aus wie damals -------------------------
      GEWÜNSCHT: „Der Chat muss so aussehen wie früher, nicht mit
@@ -13931,6 +14169,18 @@
   function lcRufSetzen(ziel, text, n) {
     const stuecke = String(text).split(/(\s+)/);
     let nr = 0;
+    /* GEMELDET: „Beim Schreien sieht man immer noch nicht das Schreien
+       in der Farbe, die man gewählt hat … und wenn man vorher eine
+       bunte Schrift eingestellt hat, soll die Schrift auch bunt sein,
+       wenn man schreit."
+
+       Die Farbe steht deshalb direkt an jedem Wort — nicht nur als
+       Erbe von der Zeile, wo eine andere Regel sie überschreiben
+       konnte. Bei „bunt" bekommt jedes Wort seine eigene Farbe aus dem
+       Regenbogen; buchstabenweise ginge es hier nicht, weil die
+       strahlende Kopie am ganzen Wort hängt. */
+    const bunt = n.farbe === "bunt";
+    const feste = bunt ? "" : lcNickFarbe(n);
     stuecke.forEach((stueck) => {
       if (!stueck) return;
       if (/^\s+$/.test(stueck)) {
@@ -13943,8 +14193,10 @@
       w.className = "lc-ruf-wort";
       w.textContent = stueck;
       w.dataset.wort = stueck;               // die strahlende Kopie
-      w.style.animationDelay = (nr * 0.13).toFixed(2) + "s";
-      w.style.setProperty("--lc-ruf-takt", (nr * 0.13).toFixed(2) + "s");
+      const f = bunt ? LC_REGENBOGEN[nr % LC_REGENBOGEN.length] : feste;
+      if (f) { w.style.color = f; w.style.setProperty("--lc-ruf", f); }
+      w.style.animationDelay = (nr * 0.22).toFixed(2) + "s";
+      w.style.setProperty("--lc-ruf-takt", (nr * 0.22).toFixed(2) + "s");
       nr++;
       ziel.appendChild(w);
     });
@@ -14013,6 +14265,10 @@
     schnee:  { ganzeSeite: true, wie: "schnee" },
     regen:   { ganzeSeite: true, wie: "regen" },
     feuerwerk:{ ganzeSeite: true, wie: "feuerwerk" },
+    gewitter:{ ganzeSeite: true, wie: "gewitter" },
+    erdbeben:{ ganzeSeite: true, wie: "erdbeben" },
+    halloween:{ ganzeSeite: true, wie: "halloween" },
+    weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   function lcWirkung(art, anZeile) {
@@ -14022,9 +14278,12 @@
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
       if (e.wie === "ballon") lcBallons();
-      else if (e.wie === "schnee") lcWetter("schnee");
-      else if (e.wie === "regen") lcWetter("regen");
+      else if (e.wie === "schnee" || e.wie === "regen") lcWetter(e.wie);
       else if (e.wie === "feuerwerk") lcFeuerwerk();
+      else if (e.wie === "gewitter") lcGewitter();
+      else if (e.wie === "erdbeben") lcErdbeben();
+      else if (e.wie === "halloween") lcJahreszeit("halloween");
+      else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
       else lcKonfetti();
       return;
     }
@@ -14224,6 +14483,15 @@
         t.className = "lc-zeilentext";
         t.textContent = (n.kommt ? "\u2192 " : "\u2190 ") + n.text;
         z.appendChild(t);
+      } else if (art === "emojibild") {
+        /* Ein Bild aus Emojis. Es braucht KEINE Schreibmaschinenschrift
+           — Emojis sind ohnehin alle gleich breit —, aber es braucht
+           erhaltene Leerzeichen und eine enge Zeilenhöhe, sonst
+           zerfällt die Anordnung. */
+        const vor = document.createElement("pre");
+        vor.className = "lc-emojibild";
+        vor.textContent = n.text;
+        z.appendChild(vor);
       } else if (art === "ascii") {
         /* Ein Bild aus Buchstaben. Es steht nur dann richtig da, wenn
            jedes Zeichen gleich breit ist und die Leerzeichen erhalten
@@ -14270,7 +14538,20 @@
           kopf.appendChild(i);
         }
         const nm = document.createElement("b");
-        nm.textContent = art === "fluester" ? "»" + n.name + "«" : n.name;
+        const nameText = art === "fluester" ? "\u00bb" + n.name + "\u00ab" : String(n.name || "");
+        if (n.farbe === "bunt") {
+          /* GEMELDET: „Wenn man die Farbe ändert bei bunt, dann soll der
+             Name auch bunt sein." Vorher blieb er in seiner
+             Zufallsfarbe stehen — nur die Zeile war bunt. */
+          Array.from(nameText).forEach((z, i) => {
+            const b = document.createElement("span");
+            b.textContent = z;
+            if (z.trim()) b.style.color = LC_REGENBOGEN[i % LC_REGENBOGEN.length];
+            nm.appendChild(b);
+          });
+        } else {
+          nm.textContent = nameText;
+        }
         kopf.appendChild(nm);
         z.appendChild(kopf);
 
@@ -14302,8 +14583,10 @@
           if (art === "ruf") lcRufSetzen(t, n.text, n);
           else lcTextEinfaerben(t, n.text, n);
         }
-        /* Die ganze ZEILE trägt die Farbe — nicht nur der Name. */
-        if (farbe) t.style.color = farbe;
+        /* Die ganze ZEILE trägt die Farbe — nicht nur der Name.
+           Beim Rufen steht die Farbe schon an jedem Wort (siehe
+           lcRufSetzen), deshalb hier nicht noch einmal darüber. */
+        if (farbe && art !== "ruf") t.style.color = farbe;
         if (art === "fluester" && n.woher) {
           const q = document.createElement("i");
           q.className = "lc-woher";
@@ -14340,6 +14623,22 @@
         if (!alt) lcWirkung(eff, z);
       }
     });
+    /* GEMELDET: „Wenn man den Chat betritt, dann soll er nicht oben
+       anfangen, sondern man soll unten das lesen, was gerade aktuell
+       geschrieben wird."
+       Beim ERSTEN Zeichnen also immer ganz nach unten, und zwar ohne
+       sanftes Rollen — man soll sofort beim Neuesten stehen. */
+    if (!livechatSchonUnten) {
+      livechatSchonUnten = true;
+      const altesRollen = v.style.scrollBehavior;
+      v.style.scrollBehavior = "auto";
+      v.scrollTop = v.scrollHeight;
+      requestAnimationFrame(() => {
+        v.scrollTop = v.scrollHeight;
+        v.style.scrollBehavior = altesRollen;
+      });
+      return;
+    }
     if (amEnde) v.scrollTop = v.scrollHeight;
   }
 
@@ -14421,6 +14720,7 @@
       livechatGeruest = false;
       livechatGezeigt = new Set();
       livechatEffekteAb = 0;          // beim nächsten Betreten neu stellen
+      livechatSchonUnten = false;
       area.innerHTML = livechatStartHtml(l);
       const hinein = (raum) => {
         /* mitBild: false — das Bild geht NICHT von selbst an.
@@ -14466,6 +14766,7 @@
       /* Ab JETZT ist etwas „gerade eben" — alles Ältere ist
          Vergangenheit und bleibt still. */
       livechatEffekteAb = Date.now();
+      livechatSchonUnten = false;
 
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
         k.addEventListener("click", () => {
@@ -14493,6 +14794,17 @@
          Bühne runterzugehen, wenn man lieber nur im Chat bleiben will." */
       area.querySelector('[data-lc="buehne"]')?.addEventListener("click", () => {
         const drauf = LiveChat.buehneSetzen(!LiveChat.aufDerBuehne());
+        /* GEMELDET: „Das Zeichen zum Runtergehen und Hochgehen kann auch
+           ein Mikrofon sein — wenn das Mikrofonzeichen schon vergeben
+           ist, musst du dann zwei Pfeile im Wechsel nehmen."
+           Das Mikrofon IST schon vergeben (Ton an/aus). Also zwei
+           Pfeile: der Knopf zeigt, wohin es geht. */
+        const k = area.querySelector('[data-lc="buehne"]');
+        if (k) {
+          k.textContent = drauf ? "\u2b07\ufe0e" : "\u2b06\ufe0e";
+          k.title = drauf ? "Von der Bühne herunter" : "Auf die Bühne";
+          k.setAttribute("aria-label", k.title);
+        }
         renderLiveChat();
         showToast(drauf
           ? "🎤 Du bist auf der Bühne — Ton und Bild gehen wieder hinaus."
@@ -14571,6 +14883,22 @@
       });
       area.querySelector("#lcArchiv")?.addEventListener("click", () => livechatArchiv());
       if (LiveChat.beiHintergrund) LiveChat.beiHintergrund(lcHintergrundWaehlen);
+      /* GEMELDET: „Man soll den Hintergrund nicht nur durch den Code
+         ändern, sondern auch als Bild einladen können." Also ein
+         Knopf, nicht nur der Befehl /hintergrund. Ist schon eines
+         gesetzt, fragt er, ob es weg soll. */
+      area.querySelector("#lcHintergrundKnopf")?.addEventListener("click", () => {
+        if (lcHintergrundBild()) {
+          if (window.confirm("Es liegt schon ein Bild hinter dem Chat.\n\n"
+              + "OK = ein anderes aussuchen,  Abbrechen = das jetzige entfernen.")) {
+            lcHintergrundWaehlen(false);
+          } else {
+            lcHintergrundWaehlen(true);
+          }
+          return;
+        }
+        lcHintergrundWaehlen(false);
+      });
 
       /* GEWÜNSCHT: „Wenn man ein bisschen scrollt — nicht innerhalb des
          Chats, sondern auf der Hauptseite nach oben und unten — und
@@ -43346,9 +43674,16 @@ An einem Morgen lief ein kleiner Fuchs los…
          gerade im Klassenzimmer sind, ein Zeichen fuer Unterricht."
          Die Pille wird deshalb NICHT mehr angefasst. Das Schulhaus steht
          drinnen in der Liste — und im Laufband oben, wo es hingehoert. */
-      kzTickerNamen = Object.keys(kzDaJetzt)
-        .map((k) => (kzDaJetzt[k] && kzDaJetzt[k].name) || "")
-        .filter((x) => x);
+      kzTickerNamen = [];
+      kzTickerRaeume = {};
+      Object.keys(kzDaJetzt).forEach((k) => {
+        const e = kzDaJetzt[k] || {};
+        const name = e.name || "";
+        if (!name) return;
+        kzTickerNamen.push(name);
+        const raum = e.raum || "";
+        (kzTickerRaeume[raum] = kzTickerRaeume[raum] || []).push(name);
+      });
       tickerNeuErzwingen();
       updateTicker();
       if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();

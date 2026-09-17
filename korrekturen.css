@@ -616,7 +616,11 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 .lc-zeit {
   font-variant-numeric: tabular-nums;
-  font-size: 0.72rem;
+  /* em statt rem: so waechst die Uhrzeit mit der gewaehlten Schrift mit,
+     statt stur bei ihrer Groesse zu bleiben. Genau daran lag es, dass
+     der Wechsel „keinen Unterschied" machte — die halbe Zeile hat sich
+     gar nicht bewegt. */
+  font-size: 0.84em;
   opacity: 0.45;
 }
 .lc-nick {
@@ -707,14 +711,33 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    wackelt dazwischen wie bei einem kleinen Erdbeben. Das läuft drei
    Runden, dann ist Ruhe: dauerhaftes Zappeln macht den Chat
    unlesbar. Antippen spielt es noch einmal ab. */
-.lc-zeile-ruf .lc-zeilentext,
+/* GEMELDET: „Wenn man schreit, soll es auch auf einer Höhe sein. Der
+   Name bleibt eigentlich auch normal klein, wie er sonst auch ist, aber
+   das Schreien ist gross — und das bleibt auf der Zeilenhöhe."
+
+   Also: der NAME behält seine gewöhnliche Grösse, nur der gerufene
+   TEXT wird gross. Damit die Zeile dabei nicht aufgeht und alles
+   darunter wegschiebt, steht die Zeilenhöhe fest (line-height: 1) und
+   der Text richtet sich an derselben Grundlinie aus wie die Uhrzeit
+   und der Name daneben. */
 .lc-zeile-ruf .lc-nick {
-  font-size: 1.1rem;
+  font-size: inherit;
+  font-weight: 800;
+  color: var(--lc-ruf, #ffce55);
+}
+.lc-zeile-ruf .lc-zeilentext {
+  font-size: 1.3em;
   font-weight: 900;
+  line-height: 1;
   letter-spacing: 0.03em;
+}
+/* Die Farbe sitzt am WORT, nicht an der Zeile — so ueberschreibt sie
+   nichts und „bunt" kann Wort fuer Wort wechseln. */
+.lc-ruf-wort {
   color: var(--lc-ruf, #ffce55);
   text-shadow: 0 0 12px color-mix(in srgb, var(--lc-ruf, #ffce55) 70%, transparent);
 }
+.lc-zeile-ruf { align-items: baseline; }
 /* GEMELDET: „Der Schrei soll langsam aufgebaut werden und von den
    Buchstaben selbst ausstrahlen, an Ort und Stelle — nicht nach oben
    wegfliegen. Er darf die Wörter nicht zusammenkleben und die älteren
@@ -736,7 +759,10 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   position: relative;
   display: inline-block;
   transform-origin: 50% 55%;
-  animation: lcRufAn 1100ms cubic-bezier(.2, .9, .25, 1.05) both;
+  /* GEMELDET: „Es soll langsamer sein, die Animation, und länger
+     anhalten." Also doppelt so lang, und die Wörter kommen in
+     grösseren Abständen — der Ruf baut sich auf, statt dazustehen. */
+  animation: lcRufAn 2300ms cubic-bezier(.2, .9, .25, 1.02) both;
 }
 /* Die strahlende Kopie: dasselbe Wort, an derselben Stelle, geht nach
    aussen auf und verblasst. Nichts fliegt weg — es strahlt. */
@@ -750,7 +776,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: inherit;
   text-shadow: none;
   transform-origin: 50% 55%;
-  animation: lcRufStrahl 1700ms ease-out both;
+  animation: lcRufStrahl 3200ms ease-out both;
   animation-delay: inherit;
 }
 .lc-ruf-wort::before {
@@ -763,19 +789,22 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: inherit;
   text-shadow: none;
   transform-origin: 50% 55%;
-  animation: lcRufStrahl 1700ms ease-out 260ms both;
+  animation: lcRufStrahl 3200ms ease-out 620ms both;
 }
 @keyframes lcRufAn {
   0%   { opacity: 0; transform: scale(.55); letter-spacing: -0.06em; }
-  38%  { opacity: 1; transform: scale(1.22); letter-spacing: 0.06em; }
-  58%  { transform: scale(0.97); letter-spacing: 0.02em; }
-  76%  { transform: scale(1.06); }
+  22%  { opacity: 1; transform: scale(1.20); letter-spacing: 0.06em; }
+  40%  { transform: scale(0.98); letter-spacing: 0.02em; }
+  56%  { transform: scale(1.08); }
+  72%  { transform: scale(1.0); }
+  86%  { transform: scale(1.04); }
   100% { opacity: 1; transform: scale(1); letter-spacing: 0.03em; }
 }
 @keyframes lcRufStrahl {
   0%   { opacity: 0;   transform: scale(1);   filter: blur(0); }
-  18%  { opacity: 0.5; }
-  100% { opacity: 0;   transform: scale(2.3); filter: blur(5px); }
+  12%  { opacity: 0.55; }
+  55%  { opacity: 0.28; }
+  100% { opacity: 0;   transform: scale(2.6); filter: blur(6px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-ruf-wort { animation: none; }
@@ -923,6 +952,17 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    drumherum und ein ruhiges Atmen. Das faellt auf, ohne dass das
    Laufband anders aussieht.
    ================================================================= */
+/* GEWUENSCHT: „Die Hinterlegung dafuer, dass ich im Klassenzimmer bin,
+   im Newsticker kann ein bisschen anders sein — vielleicht eine gruene
+   Tafel und dann mit weisser Kreide diese Information drauf. Also eben
+   auch in derselben Schriftgroesse wie die anderen Sachen, nur anders
+   hervorgehoben."
+
+   Genau das: eine kleine Schultafel. Dunkelgruen, ein Holzrahmen
+   ringsherum, die Schrift in Kreideweiss mit dem leichten Staub, den
+   Kreide auf Schiefer macht. Groesse, Schriftart und Strichstaerke
+   bleiben die des Laufbands — hervorgehoben wird ueber die Tafel,
+   nicht ueber die Schrift. */
 .ticker-kz {
   font-size: inherit;
   line-height: inherit;
@@ -931,31 +971,44 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   font-weight: inherit;
   vertical-align: baseline;
   cursor: pointer;
-  padding: 1px 8px;
-  border-radius: 999px;
-  color: #fff8ec;
-  background: linear-gradient(100deg, rgba(196, 122, 58, 0.95), rgba(150, 86, 36, 0.95));
-  box-shadow: 0 0 0 1px rgba(255, 233, 200, 0.35) inset;
-  animation: tickerKzAtmen 2.6s ease-in-out infinite;
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: 3px;
+  background:
+    radial-gradient(120% 140% at 30% 20%, rgba(255,255,255,.07), transparent 60%),
+    linear-gradient(180deg, #2f5d43 0%, #244934 100%);
+  border: 2px solid #8a6a43;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.35),
+    inset 0 0 12px rgba(0,0,0,.35);
 }
-.ticker-kz:hover { text-decoration: underline; }
-@keyframes tickerKzAtmen {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 233, 200, 0.35) inset, 0 0 0 rgba(224, 150, 74, 0); }
-  50%      { box-shadow: 0 0 0 1px rgba(255, 233, 200, 0.65) inset, 0 0 9px rgba(224, 150, 74, 0.75); }
+.ticker-kz-kreide {
+  color: #f3f7f2;
+  text-shadow:
+    0 0 1px rgba(255,255,255,.75),
+    0 1px 2px rgba(255,255,255,.18);
+  opacity: .96;
 }
-@media (prefers-reduced-motion: reduce) {
-  .ticker-kz { animation: none; }
-}
+.ticker-kz:hover .ticker-kz-kreide { text-decoration: underline; }
 
 /* =================================================================
    SAMMELFUECHSE IM CHAT
    ================================================================= */
+/* GEMELDET: „Die Füchse sind zum Beispiel auch noch zu klein."
+   Sie sind jetzt so hoch wie zwei Zeilen — gut zu erkennen, ohne dass
+   die Zeile dadurch aufgeht: der negative Rand oben und unten hält die
+   Zeilenhöhe fest, das Bild ragt nur ein wenig darüber hinaus. */
 .lc-fuchs {
-  width: 1.45em;
-  height: 1.45em;
+  width: 1.95em;
+  height: 1.95em;
   object-fit: contain;
-  vertical-align: -0.45em;
-  margin: 0 1px;
+  vertical-align: -0.62em;
+  /* Der negative Rand oben und unten haelt die Zeilenhoehe fest — das
+   Bild ragt nur ein wenig darueber hinaus, statt die Zeile
+   aufzublasen. GEWUENSCHT: „Achte mal darauf, dass die Schrift in
+   jeder Variante auf der Zeile bleibt." */
+  margin: -0.42em 2px;
+  position: relative;
 }
 .lc-waehler-fuechse {
   display: flex;
@@ -1213,23 +1266,42 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    auch das, was der Browser sonst von weiter oben erbt. Frueher stand
    sie nur an den Zeilen; die Groesse am Behaelter (.lc-chat-verlauf,
    0.86rem) hat dann dagegengehalten, und man sah keinen Unterschied. */
-.lc-chat-verlauf[data-schrift="2"] {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.79rem;
-  letter-spacing: -0.01em;
+/* Die vier Schriften unterscheiden sich deutlich — sonst merkt man den
+   Wechsel nicht. !important, weil andere Blaetter (livechat.css,
+   app-styles.css) fuer einzelne Teile eigene Schriften setzen. */
+.lc-chat-verlauf[data-schrift="2"],
+.lc-chat-verlauf[data-schrift="2"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="2"] .lc-nick,
+.lc-chat-verlauf[data-schrift="2"] .lc-chat-leer {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace !important;
+  font-size: 0.82rem;
+  letter-spacing: -0.012em;
 }
-.lc-chat-verlauf[data-schrift="3"] {
-  font-family: "Trebuchet MS", "Segoe UI", Verdana, Tahoma, system-ui, sans-serif;
-  font-size: 0.9rem;
-  letter-spacing: 0.012em;
+.lc-chat-verlauf[data-schrift="2"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="2"] .lc-nick { font-size: inherit; }
+
+.lc-chat-verlauf[data-schrift="3"],
+.lc-chat-verlauf[data-schrift="3"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="3"] .lc-nick,
+.lc-chat-verlauf[data-schrift="3"] .lc-chat-leer {
+  font-family: Verdana, "Trebuchet MS", Tahoma, "Segoe UI", system-ui, sans-serif !important;
+  font-size: 0.94rem;
+  letter-spacing: 0.014em;
 }
-.lc-chat-verlauf[data-schrift="4"] {
-  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-  font-size: 1.0rem;
-  line-height: 1.62;
-  letter-spacing: 0.01em;
+.lc-chat-verlauf[data-schrift="3"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="3"] .lc-nick { font-size: inherit; }
+
+.lc-chat-verlauf[data-schrift="4"],
+.lc-chat-verlauf[data-schrift="4"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="4"] .lc-nick,
+.lc-chat-verlauf[data-schrift="4"] .lc-chat-leer {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif !important;
+  font-size: 1.04rem;
+  line-height: 1.66;
+  letter-spacing: 0.008em;
 }
-.lc-chat-verlauf[data-schrift="4"] .lc-zeit { font-size: 0.78rem; }
+.lc-chat-verlauf[data-schrift="4"] .lc-zeile,
+.lc-chat-verlauf[data-schrift="4"] .lc-nick { font-size: inherit; }
 .lc-chat-verlauf .lc-ascii { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace !important; }
 
 /* =================================================================
@@ -1465,22 +1537,140 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   0%   { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(var(--lc-w-drift, 0px), 112vh, 0); }
 }
-.lc-wetter-regen i {
+/* GEMELDET: „Den Regen sieht man auf hellen Designs kaum."
+   Die Tropfen sind laenger und breiter, haben einen hellen Kern und
+   einen dunklen Saum — so stehen sie auf hellem wie auf dunklem
+   Grund. Der Sturm peitscht sie zusaetzlich schraeg. */
+.lc-wetter-regen i,
+.lc-wetter-sturm i {
   position: absolute;
-  top: -8vh;
-  width: 1.5px;
-  height: var(--lc-w-lang, 16px);
-  border-radius: 1px;
-  background: linear-gradient(to bottom, rgba(180, 214, 240, 0), rgba(180, 214, 240, 0.95));
+  top: -10vh;
+  width: 2.5px;
+  height: var(--lc-w-lang, 22px);
+  border-radius: 2px;
+  background: linear-gradient(to bottom,
+              rgba(150, 190, 225, 0), rgba(215, 238, 255, 0.98));
+  box-shadow: 0 0 3px rgba(40, 80, 120, 0.55), 0 0 7px rgba(255, 255, 255, 0.35);
   animation-name: lcRegnet;
   animation-timing-function: linear;
-  animation-iteration-count: 12;
+  animation-iteration-count: 16;
   animation-fill-mode: forwards;
 }
-@keyframes lcRegnet {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-22px, 114vh, 0); }
+.lc-wetter-sturm i {
+  height: calc(var(--lc-w-lang, 22px) * 1.5);
+  animation-name: lcSturm;
 }
+@keyframes lcRegnet {
+  0%   { transform: translate3d(0, 0, 0) rotate(6deg); }
+  100% { transform: translate3d(-40px, 118vh, 0) rotate(6deg); }
+}
+@keyframes lcSturm {
+  0%   { transform: translate3d(0, 0, 0) rotate(22deg); }
+  100% { transform: translate3d(-180px, 120vh, 0) rotate(22deg); }
+}
+
+/* --- Der Blitz: hellt kurz die ganze Seite auf ------------------- */
+.lc-blitz {
+  position: fixed;
+  inset: 0;
+  z-index: 9345;
+  pointer-events: none;
+}
+.lc-blitz i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: #fff;
+  opacity: 0;
+  animation: lcBlitzt 1.1s ease-out both;
+}
+@keyframes lcBlitzt {
+  0%   { opacity: 0; }
+  2%   { opacity: 0.72; }
+  5%   { opacity: 0.1; }
+  8%   { opacity: 0.6; }
+  14%  { opacity: 0.04; }
+  18%  { opacity: 0.34; }
+  30%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* --- Erdbeben: das Klassenzimmer selbst wackelt ------------------
+   GEWUENSCHT: „Erdbeben, wo der ganze Chat dann — also die Schrift
+   von dem Chat, jeder Inhalt — so ein bisschen zu wackeln anfaengt."
+   Die Zeilen wackeln leicht verschieden, sonst saehe es aus, als
+   verschoebe sich ein Bild, statt dass etwas bebt. */
+.lc-bebt { animation: lcBebtKarte 0.14s linear 26; }
+.lc-bebt .lc-zeile,
+.lc-bebt .lc-platz {
+  animation: lcBebtZeile 0.13s linear 28;
+  animation-delay: var(--lc-beb-takt, 0s);
+}
+@keyframes lcBebtKarte {
+  0%   { transform: translate(0, 0) rotate(0); }
+  25%  { transform: translate(-3px, 1px) rotate(-0.16deg); }
+  50%  { transform: translate(2px, -2px) rotate(0.12deg); }
+  75%  { transform: translate(-1px, 2px) rotate(-0.08deg); }
+  100% { transform: translate(0, 0) rotate(0); }
+}
+@keyframes lcBebtZeile {
+  0%   { transform: translateX(0); }
+  30%  { transform: translateX(calc(-2.2px * var(--lc-beb-weit, 1))); }
+  60%  { transform: translateX(calc(2.6px * var(--lc-beb-weit, 1))); }
+  100% { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-bebt, .lc-bebt .lc-zeile, .lc-bebt .lc-platz { animation: none; }
+  .lc-blitz { display: none; }
+}
+
+/* --- Halloween und Weihnachten ----------------------------------- */
+.lc-jahreszeit {
+  position: fixed;
+  inset: 0;
+  z-index: 9360;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-jahreszeit i {
+  position: absolute;
+  font-style: normal;
+  line-height: 1;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35));
+}
+/* Fledermaeuse und Geister steigen und schwanken. */
+.lc-jahreszeit-halloween i {
+  bottom: -12vh;
+  animation-name: lcGeistert;
+}
+@keyframes lcGeistert {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  10%  { opacity: 1; }
+  35%  { transform: translate3d(calc(var(--lc-j-drift, 0px) * 0.5), -34vh, 0)
+                    rotate(var(--lc-j-dreh, 0deg)); }
+  65%  { transform: translate3d(calc(var(--lc-j-drift, 0px) * -0.4), -68vh, 0)
+                    rotate(calc(var(--lc-j-dreh, 0deg) * -1)); }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--lc-j-drift, 0px), -116vh, 0)
+                    rotate(var(--lc-j-dreh, 0deg)); }
+}
+/* Schnee, Sterne und Geschenke fallen. */
+.lc-jahreszeit-weihnachten i {
+  top: -12vh;
+  animation-name: lcWeihnachtet;
+}
+@keyframes lcWeihnachtet {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  10%  { opacity: 1; }
+  50%  { transform: translate3d(calc(var(--lc-j-drift, 0px) * 0.6), 56vh, 0)
+                    rotate(var(--lc-j-dreh, 0deg)); }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--lc-j-drift, 0px), 118vh, 0)
+                    rotate(calc(var(--lc-j-dreh, 0deg) * 2)); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-jahreszeit { display: none; } }
 @media (prefers-reduced-motion: reduce) { .lc-wetter { display: none; } }
 
 /* =================================================================
@@ -1494,25 +1684,72 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   overflow: hidden;
 }
 .lc-knall { position: absolute; width: 0; height: 0; }
+/* Die aufsteigende Rakete — vorher erschien der Knall aus dem Nichts. */
+.lc-rakete {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: lcSteigtAuf 0.9s cubic-bezier(.2, .5, .5, 1) both;
+  box-shadow: 0 0 10px currentColor;
+}
+@keyframes lcSteigtAuf {
+  0%   { opacity: 0;   transform: translateY(0) scaleY(1); }
+  12%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0;   transform: translateY(calc(-100vh + var(--lc-hoch, 30vh))) scaleY(2.2); }
+}
+/* Der helle Kern im Augenblick des Knalls */
+.lc-knall b {
+  position: absolute;
+  left: 0; top: 0;
+  width: 16px; height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: lcKern 0.55s ease-out both;
+}
+@keyframes lcKern {
+  0%   { opacity: 0;   transform: scale(.2); }
+  8%   { opacity: 1;   transform: scale(2.4); filter: blur(2px); }
+  100% { opacity: 0;   transform: scale(5);   filter: blur(10px); }
+}
 .lc-knall i {
   position: absolute;
   left: 0; top: 0;
-  width: 5px;
-  height: 5px;
-  margin: -2.5px 0 0 -2.5px;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
   border-radius: 50%;
   opacity: 0;
   animation-name: lcFunke;
-  animation-duration: 1.5s;
-  animation-timing-function: cubic-bezier(.12, .75, .3, 1);
+  animation-duration: 1.7s;
+  animation-timing-function: cubic-bezier(.08, .72, .26, 1);
   animation-fill-mode: forwards;
 }
+/* Der nachglimmende Schweif: jeder Funke zieht einen kurzen Strich
+   hinter sich her, statt einfach ein Punkt zu sein. */
+.lc-knall i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 14px;
+  margin: -7px 0 0 -1.5px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, currentColor, transparent);
+  opacity: 0.45;
+}
 @keyframes lcFunke {
-  0%   { opacity: 0;   transform: translate3d(0, 0, 0) scale(.4); }
-  6%   { opacity: 1; }
-  70%  { opacity: 1; }
+  0%   { opacity: 0;   transform: translate3d(0, 0, 0) scale(.3); }
+  5%   { opacity: 1;   transform: translate3d(0, 0, 0) scale(1.4); }
+  45%  { opacity: 1; }
+  78%  { opacity: 0.8; }
   100% { opacity: 0;
-         transform: translate3d(var(--lc-fx, 0), calc(var(--lc-fy, 0) + 34px), 0) scale(.85); }
+         transform: translate3d(var(--lc-fx, 0), calc(var(--lc-fy, 0) + 68px), 0) scale(.5); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-feuerwerk { display: none; } }
 
@@ -1613,3 +1850,68 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 /* Der Rahmen des Chats laesst sich antippen, um ihn wieder mittig zu
    ruecken — siehe renderLiveChat(). */
 .lc-chat { cursor: default; }
+
+/* =================================================================
+   BILDER AUS EMOJIS
+   -----------------------------------------------------------------
+   GEWUENSCHT: „So etwas mit Emojis, wie bei einem ASCII-Code — mit
+   Sternen, Rakete, Planeten — verschiedene Bilderthemen, die kleine
+   Geschichten erzaehlen."
+
+   Keine Schreibmaschinenschrift: Emojis sind ohnehin alle gleich
+   breit, und in einer Schreibmaschinenschrift saehen sie kleiner und
+   blasser aus. Was sie brauchen, sind erhaltene Leerzeichen und eine
+   enge Zeilenhoehe — sonst zerfaellt die Anordnung.
+   ================================================================= */
+.lc-zeile-emojibild { grid-template-columns: 3.1em 1fr; }
+.lc-emojibild {
+  margin: 3px 0;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 1.18rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+  white-space: pre;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 0 1px rgba(128, 100, 70, 0.14) inset;
+}
+.lc-emojibild::-webkit-scrollbar { height: 5px; }
+@media (max-width: 480px) { .lc-emojibild { font-size: 1rem; } }
+
+/* =================================================================
+   DAS GIPHY-FACH — es ist nie leer
+   ================================================================= */
+.lc-gif-fach {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 2px 2px 7px;
+  scrollbar-width: thin;
+}
+.lc-gif-thema {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border: 1px solid rgba(160, 120, 80, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-gif-thema.ist-da {
+  border-color: rgba(224, 150, 74, 0.95);
+  background: rgba(224, 150, 74, 0.18);
+  font-weight: 700;
+}
+.lc-waehler-gifs { min-height: 64px; }
+
+/* Der Buehnenknopf: zwei Pfeile im Wechsel, weil das Mikrofon schon
+   fuer Ton an/aus vergeben ist. */
+.lc-buehnenknopf { font-size: 1rem; letter-spacing: -0.06em; }
+.lc-buehnenknopf.ist-unten {
+  background: rgba(224, 150, 74, 0.2);
+  box-shadow: 0 0 0 2px rgba(224, 150, 74, 0.55) inset;
+}
