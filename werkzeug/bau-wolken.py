@@ -99,26 +99,117 @@ def wolkensvg(lage, saat):
     """
     r = random.Random(saat)
 
-    # Drei bis vier Wolken je Kachel, alle verschieden gross und
-    # verschieden weit oben — nichts soll sich wiederholen.
-    # WICHTIG: die Kachel bleibt an ihren Raendern LEER. Eine Wolke,
-    # die ueber den Rand hinausragt, muesste drueben nahtlos wieder
-    # hereinkommen — und genau das kann das Rauschen nicht: es haengt
-    # an der Stelle im Bild, nicht an der Form. An der Nahtstelle
-    # entstuende ein sichtbarer Schnitt. Bleibt der Rand frei, faellt
-    # die Naht in leeren Himmel und ist unsichtbar.
-    RAND = 70
+    # NACHGEBESSERT: „Bei den Wolken gibt es zu lange Strecken ohne
+    # Wolken." Das stimmte, und es waren zwei Ursachen zugleich:
+    #
+    #   1. Der Schritt war x += breite * uniform(0.9, 1.6). Bei 1.6
+    #      bleibt hinter einer Wolke eine Luecke von 0.6 ihrer Breite
+    #      stehen — bei 220 Einheiten Breite also 130 Einheiten blauer
+    #      Himmel am Stueck.
+    #   2. Beide Raender blieben 70 Einheiten frei, zusammen 140 von
+    #      600. Fast ein Viertel der Kachel war von vornherein leer.
+    #
+    # Der freie Rand hat einen echten Grund, und er gilt weiter: eine
+    # Wolke, die ueber den Rand hinausragt, muesste drueben nahtlos
+    # wieder hereinkommen. Das Rauschen haengt aber an der STELLE im
+    # Bild, nicht an der Form — an der Naht entstuende ein sichtbarer
+    # Schnitt. Bleibt der Rand frei, faellt die Naht in leeren Himmel.
+    #
+    # Also wird der Rand nur SCHMALER (30 statt 70), und dafuer wird
+    # der Rest dicht gefuellt: Schritte, die sich ueberlappen, und in
+    # die verbleibenden Luecken kommen kleine Fetzen. Ein Himmel ohne
+    # jede Luecke waere kein Himmel, sondern eine Decke — es geht um
+    # LANGE Luecken, nicht um alle.
+    # 34 Einheiten Rand. Das Rauschen schiebt die Kanten um bis zu 26
+    # nach aussen und der Weichzeichner noch ein Stueck — weniger
+    # Rand, und die Franse wuerde am Kachelrand abgeschnitten.
+    RAND = 34
     wolken = []
-    x = RAND + r.uniform(10, 50)
+    belegt = []          # (von, bis) je Wolke, aus den ECHTEN Ballen
+
+    def weite(ballen):
+        """Wie weit reicht diese Wolke wirklich?
+
+        NICHT die nominelle Breite nehmen. Genau daran lag es beim
+        ersten Versuch: haufen() verteilt die Ballen mit
+        unterschiedlicher Groesse, und die aeusseren sind die
+        kleinsten — die Wolke ist also deutlich SCHMALER als ihre
+        Breite angibt. Gerechnet wurde aber mit der Breite, und
+        deshalb hielt der Fueller eine Luecke fuer geschlossen, in der
+        in Wahrheit 90 Einheiten blauer Himmel standen."""
+        return (min(bx - brx for (bx, by, brx, bry) in ballen),
+                max(bx + brx for (bx, by, brx, bry) in ballen))
+
+    x = RAND + r.uniform(4, 18)
     while x < BREIT - RAND:
         breite = r.uniform(90, 220)
-        if x + breite / 2 > BREIT - RAND:
-            break
         hoehe = r.uniform(26, 52)
         boden = r.uniform(HOCH * 0.52, HOCH * 0.78)
         wieviel = r.randint(9, 16)
-        wolken.append(haufen(r, x, boden, breite, hoehe, wieviel))
-        x += breite * r.uniform(0.9, 1.6)
+        ballen = haufen(r, x, boden, breite, hoehe, wieviel)
+        von, bis = weite(ballen)
+        # Wer ueber den Rand ragt, kommt nicht hinein. Ein Stueck
+        # Wolke, das an der Naht abgeschnitten wird, sieht man sofort.
+        if von < RAND or bis > BREIT - RAND:
+            x += breite * 0.4
+            if x > BREIT - RAND:
+                break
+            continue
+        wolken.append(ballen)
+        belegt.append((von, bis))
+        # 0.62 bis 1.05: die Wolken beruehren sich meist oder ueber-
+        # lappen leicht. Ueber 1.0 gibt es noch Luecken, aber kurze.
+        x += breite * r.uniform(0.62, 1.05)
+
+    # Und jetzt die Luecken schliessen, die trotzdem geblieben sind.
+    # Nicht mit weiteren Haufenwolken — dann saehe der Himmel aus wie
+    # eine Reihe gleicher Ballen. Mit FETZEN: flach, klein, tiefer
+    # haengend. So sieht es aus wie abgerissene Wolkenreste zwischen
+    # den grossen, und das ist genau das, was zwischen Haufenwolken
+    # wirklich steht.
+    LUECKE_MAX = 40      # laenger darf kein Stueck blanker Himmel sein
+    # So lange fuellen, bis nichts mehr zu fuellen ist. Ein einziger
+    # Durchgang reicht nicht: ein Fetzen ist selbst schmaler, als er
+    # aussieht, und hinterlaesst wieder eine kleine Luecke.
+    for durchgang in range(4):
+        belegt.sort()
+        kante = RAND
+        luecken = []
+        for (von, bis) in belegt + [(BREIT - RAND, BREIT - RAND)]:
+            if von - kante > LUECKE_MAX:
+                luecken.append((kante, von))
+            kante = max(kante, bis)
+        if not luecken:
+            break
+        for (von, bis) in luecken:
+            stelle = von
+            steckt = 0
+            while bis - stelle > LUECKE_MAX and steckt < 6:
+                # Der Fetzen wird so breit gemacht, wie die Luecke es
+                # zulaesst — aber nie breiter als 110, sonst ist es
+                # kein Fetzen mehr, sondern wieder eine Haufenwolke.
+                #
+                # WICHTIG: passt er nicht, wird er KLEINER versucht und
+                # nicht aufgegeben. Genau daran scheiterte der Versuch
+                # davor: am rechten Rand passte der erste Vorschlag
+                # nicht, die Schleife brach ab — und hundert Einheiten
+                # Himmel blieben leer.
+                gelegt = False
+                for fb in (min(110, max(50, (bis - stelle) * 1.5)), 86, 68, 54, 44):
+                    ballen = haufen(r, stelle + fb * 0.32,
+                                    r.uniform(HOCH * 0.56, HOCH * 0.80),
+                                    fb, r.uniform(14, 26), r.randint(6, 10))
+                    fvon, fbis = weite(ballen)
+                    if fvon < RAND or fbis > BREIT - RAND or fbis <= stelle:
+                        continue
+                    wolken.append(ballen)
+                    belegt.append((fvon, fbis))
+                    stelle = fbis
+                    gelegt = True
+                    break
+                if not gelegt:
+                    steckt += 1
+                    stelle += 18
 
     # Die Krone ist kleiner und sitzt hoeher, die Unterseite groesser
     # und tiefer.
@@ -172,10 +263,64 @@ def alsUrl(svg):
     return 'url("data:image/svg+xml,%s")' % urllib.parse.quote(svg, safe="")
 
 
+def luecke_messen(svg):
+    """Wie lang ist die laengste Strecke ohne Wolke?
+
+    GEMELDET: „Bei den Wolken gibt es zu lange Strecken ohne Wolken."
+
+    Das ist eine ZAHL, keine Geschmacksfrage — also wird sie gemessen
+    statt beurteilt. Aus der fertigen Maske werden alle Ellipsen
+    gelesen und ihre waagerechten Ausdehnungen zusammengelegt; was
+    dazwischen frei bleibt, ist blauer Himmel am Stueck.
+
+    Das Rauschen schiebt die Raender noch einmal um bis zu 26
+    Einheiten nach aussen, die Luecke ist in Wirklichkeit also eher
+    kleiner. Hier wird bewusst die STRENGERE Zahl genommen: lieber zu
+    dicht gerechnet als zu grosszuegig.
+    """
+    import re
+    stuecke = []
+    for m in re.finditer(r'cx="([\d.]+)" cy="[\d.]+" rx="([\d.]+)"', svg):
+        cx, rx = float(m.group(1)), float(m.group(2))
+        stuecke.append((cx - rx, cx + rx))
+    if not stuecke:
+        return BREIT, 0
+    stuecke.sort()
+    laengste = stuecke[0][0]          # vom linken Rand bis zur ersten Wolke
+    kante = stuecke[0][1]
+    for (von, bis) in stuecke[1:]:
+        if von > kante:
+            laengste = max(laengste, von - kante)
+        kante = max(kante, bis)
+    laengste = max(laengste, BREIT - kante)   # und bis zum rechten Rand
+    return laengste, len(stuecke)
+
+
 def bauen():
-    unten = alsUrl(wolkensvg(0, 20260917))
-    koerper = alsUrl(wolkensvg(1, 20260917))
-    krone = alsUrl(wolkensvg(2, 20260917))
+    roh_unten = wolkensvg(0, 20260917)
+    roh_koerper = wolkensvg(1, 20260917)
+    roh_krone = wolkensvg(2, 20260917)
+
+    # Die Probe aufs Exempel, bei JEDEM Bauen. Reisst die laengste
+    # Luecke wieder auf, bricht das Werkzeug ab, statt einen luechrigen
+    # Himmel hochzuladen. Grenze: 70 von 600 Einheiten. Auf dem
+    # vordersten Band (460 Pixel breit) sind das rund 54 Pixel — eine
+    # Luecke zwischen zwei Wolken, kein Loch.
+    GRENZE = 70
+    schlimm = []
+    for name, roh in (("Unterseite", roh_unten), ("Koerper", roh_koerper),
+                      ("Krone", roh_krone)):
+        luecke, wieviele = luecke_messen(roh)
+        print("  %-11s %3d Ballen, laengste Luecke %5.1f von %d"
+              % (name, wieviele, luecke, BREIT))
+        if luecke > GRENZE:
+            schlimm.append("%s: %.1f" % (name, luecke))
+    if schlimm:
+        raise SystemExit("ZU LANGE LUECKEN — nichts geschrieben: " + ", ".join(schlimm))
+
+    unten = alsUrl(roh_unten)
+    koerper = alsUrl(roh_koerper)
+    krone = alsUrl(roh_krone)
 
     css = [MARKE_AUF, """/* Drei Lagen, jede eine eigene Maske aus fraktalem Rauschen:
    ::before  die Unterseite (tiefer, kuehler)

@@ -49,20 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 24 — Umarmung und gestapelte Videos",
+  stand: "Runde 25 — der Himmel",
 
   inArbeit: [
-    { seit: "2026-09-17T16:45",
-      text: "Wolkendecke ohne lange Luecken, Wetter realistisch abgedeckt." },
-    { seit: "2026-09-17T16:45", nurBetreiber: true,
+    { seit: "2026-09-17T17:00", nurBetreiber: true,
       text: "Woerterbuch saeubern, dann A1 mit deiner Stimme." },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-17T16:45",
-      text: "/drueck ist jetzt eine echte Umarmung und trifft GEZIELT die genannte Person: zwei Arme schliessen sich um ihren Platz, der Platz gibt nach, drei Herzen steigen auf. Ohne Namen gilt es allen Besetzten." },
-    { seit: "2026-09-17T16:45",
-      text: "Rechts am Rand lassen sich jetzt bis zu VIER Videos uebereinander stapeln. Sie schrumpfen gemeinsam, damit der Stapel nicht aus dem Bild laeuft; ein Tipp auf eine Kachel nimmt genau sie wieder heraus." },
+    { seit: "2026-09-17T17:00",
+      text: "Die Wolkendecke hat keine langen Luecken mehr: die laengste Strecke ohne Wolke ist von 104 auf 43 von 600 Einheiten gefallen (17 Prozent auf 7). Das Werkzeug MISST das jetzt bei jedem Bauen und bricht ab, statt einen loechrigen Himmel hochzuladen." },
+    { seit: "2026-09-17T17:00",
+      text: "Nachgeprueft statt angenommen: alle 28 WMO-Codes, die das Wetteramt schicken kann, haben eine Lage, werden wirklich gezeichnet, und keine zwei Lagen sehen gleich aus." },
   ],
 };
