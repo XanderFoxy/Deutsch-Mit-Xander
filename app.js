@@ -13061,16 +13061,13 @@
      steht hier, damit es egal ist, von wo aus sie aufgerufen wird.
      ================================================================= */
   function lcHintergrundUmschalten() {
-    if (lcHintergrundBild()) {
-      if (window.confirm("Es liegt schon ein Bild hinter dem Chat.\n\n"
-          + "OK = ein anderes aussuchen,  Abbrechen = das jetzige entfernen.")) {
-        lcHintergrundWaehlen(false);
-      } else {
-        lcHintergrundWaehlen(true);
-      }
-      return;
-    }
-    lcHintergrundWaehlen(false);
+    /* Früher stand hier eine Ja-Nein-Frage: „ein anderes aussuchen" oder
+       „das jetzige entfernen". Damit gab es keinen Weg zu einem fertigen
+       Hintergrund und keinen erkennbaren zurück zum Standard — genau
+       das war gemeldet. Jetzt öffnet der Knopf das Fenster, in dem alle
+       Möglichkeiten nebeneinander stehen und man sieht, welche gerade
+       gilt. */
+    lcHintergrundFenster();
   }
   function lcVerlaufLeerenFragen() {
     if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
@@ -17593,11 +17590,113 @@
     return true;
   }
 
+  /* =================================================================
+     FERTIGE HINTERGRÜNDE — OHNE DASS MAN EIN BILD HAT
+     -----------------------------------------------------------------
+     GEMELDET: „Du solltest grundlegend auch ohne meinen gewählten
+     Hintergrund eigene Animationen haben, die finde ich noch nicht.
+     Beziehungsweise weiß ich auch nicht, wie ich den Hintergrund
+     wieder ausschalten kann und dann auf den Standard zu wechseln.
+     Das müsste auch noch da sein."
+
+     Zwei Dinge fehlten also: fertige Hintergründe, und ein Weg zurück.
+     Beides steckt jetzt in EINEM Fenster, in dem man sieht, was man
+     bekommt — mit dem Standard als erstem Feld.
+
+     Diese Hintergründe sind KEINE Bilder. Sie bestehen aus ein paar
+     Formen und Bewegungen im Stylesheet. Das hat drei Vorteile, die
+     alle zählen: sie kosten kein Byte Speicher, sie sind auf jedem
+     Bildschirm scharf, und sie lassen sich später mit einem einzigen
+     kurzen Wort an alle im Raum weitergeben — ein hochgeladenes Foto
+     müsste man mit neunhunderttausend Zeichen verschicken.
+     ================================================================= */
+  const LC_HG_FERTIG = [
+    { schl: "sterne",    was: "Sternenhimmel",    hinweis: "Funkelnde Sterne in der Nacht" },
+    { schl: "funken",    was: "Glühwürmchen",     hinweis: "Warme Lichter in der Dämmerung" },
+    { schl: "wellen",    was: "Weiche Wellen",    hinweis: "Langsam wanderndes Wasserlicht" },
+    { schl: "nordlicht", was: "Nordlicht",        hinweis: "Grüne Schleier am Polarhimmel" },
+    { schl: "bokeh",     was: "Lichterspiel",     hinweis: "Treibende, unscharfe Lichtpunkte" },
+    { schl: "tafel",     was: "Schultafel",       hinweis: "Grüne Tafel mit Kreidestaub" },
+  ];
+  function lcHgIstFertig(wert) { return String(wert || "").indexOf("animiert:") === 0; }
+  function lcHgFertigName(wert) { return String(wert || "").slice("animiert:".length); }
+
+  /* Das Fenster, in dem man den Hintergrund aussucht. Der Standard steht
+     an erster Stelle — „ich weiß auch nicht, wie ich den Hintergrund
+     wieder ausschalten kann". Er ist jetzt nicht versteckt, sondern das
+     erste, was man sieht. */
+  function lcHintergrundFenster() {
+    document.getElementById("lcHgWaehler")?.remove();
+    const jetzt = lcHintergrundBild();
+    const kasten = document.createElement("div");
+    kasten.id = "lcHgWaehler";
+    kasten.className = "lc-waehler-hinter";
+    const feld = (schl, titel, hinweis, aktiv, inhalt) => `
+      <button type="button" class="lc-hgfeld${aktiv ? " ist-an" : ""}" data-lc-hg="${escapeHtml(schl)}">
+        <span class="lc-hgfeld-bild" data-hg="${escapeHtml(schl)}" aria-hidden="true">${inhalt || ""}</span>
+        <span class="lc-hgfeld-wort">${escapeHtml(titel)}</span>
+        <span class="lc-hgfeld-klein">${escapeHtml(hinweis)}</span>
+      </button>`;
+    kasten.innerHTML = `
+      <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Hintergrund im Chat">
+        <p class="eyebrow">DER HINTERGRUND IM CHAT</p>
+        <p class="empty-note" style="margin:0 0 12px; font-size:0.76rem;">
+          Such dir einen aus. Das erste Feld ist der Standard — damit ist jeder
+          eigene Hintergrund wieder weg.
+        </p>
+        <div class="lc-hgfelder">
+          ${feld("", "Standard", "Die Gesichter aus dem Raum treiben leise", !jetzt, "")}
+          ${LC_HG_FERTIG.map((h) => feld("animiert:" + h.schl, h.was, h.hinweis,
+              jetzt === "animiert:" + h.schl, "")).join("")}
+          ${feld("eigenes", "Eigenes Bild", "Ein Foto vom Gerät hinterlegen",
+              Boolean(jetzt) && !lcHgIstFertig(jetzt),
+              jetzt && !lcHgIstFertig(jetzt)
+                ? `<img src="${escapeHtml(jetzt)}" alt="" class="lc-hgfeld-foto">` : "➕")}
+        </div>
+        <div class="lc-waehler-reihe" style="margin-top:14px;">
+          <button type="button" class="btn btn-coffee" id="lcHgZu">Fertig</button>
+        </div>
+      </div>`;
+    document.body.appendChild(kasten);
+    const zu = () => kasten.remove();
+    kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
+    kasten.querySelector("#lcHgZu")?.addEventListener("click", zu);
+    kasten.querySelectorAll("[data-lc-hg]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const wahl = b.dataset.lcHg;
+        if (wahl === "eigenes") { zu(); lcHintergrundDateiWaehlen(); return; }
+        lcHintergrundSetzen(wahl);
+        showToast(wahl ? "🖼️ Hintergrund gesetzt." : "🖼️ Zurück auf den Standard.");
+        zu();
+      }));
+  }
+
+  /* EIN SCHMALES FENSTER FUER DIE PRUEFUNGEN.
+     Alles in dieser Datei liegt in einer geschlossenen Funktion — das
+     ist richtig so, sonst kann jedes Skript alles anfassen. Nur: was
+     niemand von aussen aufrufen kann, kann auch kein Test messen, und
+     dann bleibt mir nur zu BEHAUPTEN, dass etwas geht.
+
+     Deshalb liegen hier genau die paar Sachen, die geprüft werden,
+     und nichts weiter. Sie verändern nichts, sie öffnen nur, was ein
+     Mensch mit einem Tipp auch öffnen würde. */
+  window.DMA_PRUEF = Object.assign(window.DMA_PRUEF || {}, {
+    hintergrundFenster: function () { return lcHintergrundFenster(); },
+    hintergrundWert: function () { return lcHintergrundBild(); },
+    platzZiel: function () { return lcPlatzZiel(); },
+  });
+
   /* Der Befehl /hintergrund meldet sich hier — die Oberfläche hat den
      Dateiwähler, livechat.js nicht. */
   let lcHintergrundFeld = null;
   function lcHintergrundWaehlen(weg) {
-    if (weg) { lcHintergrundSetzen(""); showToast("🖼️ Hintergrund entfernt."); return; }
+    if (weg) { lcHintergrundSetzen(""); showToast("🖼️ Zurück auf den Standard."); return; }
+    /* Ohne ausdrückliches „weg" wird nicht mehr sofort der Dateiwähler
+       aufgerissen, sondern erst gefragt — sonst gab es gar keinen Weg
+       zu einem fertigen Hintergrund oder zurück zum Standard. */
+    lcHintergrundFenster();
+  }
+  function lcHintergrundDateiWaehlen() {
     if (!lcHintergrundFeld) {
       lcHintergrundFeld = document.createElement("input");
       lcHintergrundFeld.type = "file";
@@ -17632,11 +17731,20 @@
        Verlauf, sondern auch an der ganzen Karte — „der soll sich
        hinter dem Chat und hinter allen Elementen aufziehen, also
        komplett durch das ganze Klassenzimmer". */
-    const eigenes = lcHintergrundBild();
+    const gewaehlt = lcHintergrundBild();
+    const fertig = lcHgIstFertig(gewaehlt);
+    const eigenes = fertig ? "" : gewaehlt;
     const karte = document.getElementById("livechatKarte");
     [v, karte].forEach((el) => {
       if (!el) return;
       el.classList.toggle("hat-eigenes-bild", Boolean(eigenes));
+      /* Ein fertiger Hintergrund ist kein Bild, sondern ein Name. Er
+         steht als data-hg am Element, und das Stylesheet malt ihn —
+         siehe LC_HG_FERTIG und den Abschnitt „FERTIGE HINTERGRÜNDE"
+         in korrekturen.css. */
+      el.classList.toggle("hat-fertigen-hg", fertig);
+      if (fertig) el.dataset.hg = lcHgFertigName(gewaehlt);
+      else delete el.dataset.hg;
       if (eigenes) el.style.setProperty("--lc-hg-bild", 'url("' + eigenes + '")');
       else el.style.removeProperty("--lc-hg-bild");
     });

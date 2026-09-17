@@ -4283,3 +4283,418 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   gap: 8px;
 }
 .lc-waehler-raum .btn { flex: 1 1 auto; }
+
+/* =========================================================
+   DER BEFEHLSKASTEN LEGT SICH ÜBER DEN CHAT,
+   STATT IHN AUSEINANDERZUSCHIEBEN
+   ---------------------------------------------------------
+   GEMELDET: „Im Übrigen verändert sich auch der Hintergrund,
+   wenn man auf Befehle geht — da wird der Hintergrund plötzlich
+   größer in dem Panel."
+
+   Das war kein Fehler im Hintergrund, sondern eine Folge davon.
+   Der Hintergrund liegt als ::before über dem ganzen Panel und
+   wird mit background-size: cover aufgezogen. „cover" rechnet
+   bei JEDER Größenänderung neu — klappt man die Befehle auf,
+   wird das Panel rund 300 Pixel höher, und das Bild wird
+   entsprechend größer skaliert. Sichtbar als Sprung.
+
+   Man könnte am Bild herumrechnen. Besser ist, die Ursache
+   wegzunehmen: der Befehlskasten legt sich jetzt ÜBER den
+   Verlauf, statt ihn nach unten zu schieben. Damit ändert sich
+   die Höhe des Panels überhaupt nicht mehr —
+     • der Hintergrund springt nicht,
+     • der Chat rutscht nicht weg,
+     • und man ist mit einem Tipp wieder da, wo man war.
+   Eine Ursache, drei Ärgernisse weniger.
+   ========================================================= */
+.lc-chat {
+  /* Bezugsrahmen für den überlagerten Kasten. */
+  position: relative;
+}
+/* Zugeklappt ist der Kasten GANZ weg, nicht nur klein. Sonst nimmt die
+   Zusammenfassung „Was man tippen kann" in der zugeklappten Lage 24
+   Pixel ein, die beim Aufklappen wegfallen — dann schrumpft das Panel
+   um 24 Pixel, und der Hintergrund springt wieder, nur andersherum.
+   Aufgemacht wird er ohnehin über den Knopf in der Kopfzeile. */
+.lc-chat > .lc-befehle:not([open]) { display: none; }
+.lc-chat > .lc-befehle[open] {
+  position: absolute;
+  z-index: 8;
+  left: 8px;
+  right: 8px;
+  /* Unter der Kopfzeile beginnen, damit der Knopf zum Zumachen
+     erreichbar bleibt; über der Eingabezeile enden, damit man
+     weiterschreiben kann, während man nachschaut. */
+  top: 2.3rem;
+  bottom: 3.2rem;
+  margin: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 12px 12px;
+  border-radius: 12px;
+  background: rgba(26, 19, 24, 0.975);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+}
+.lc-chat > .lc-befehle[open] > summary {
+  position: sticky;
+  top: -10px;
+  margin: -10px -12px 8px;
+  padding: 9px 12px;
+  background: rgba(26, 19, 24, 0.99);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  opacity: 1;
+  font-weight: 600;
+}
+.lc-chat > .lc-befehle[open] > summary::after {
+  content: "  ✕ zumachen";
+  font-weight: 400;
+  opacity: 0.6;
+  font-size: 0.72rem;
+}
+
+/* =========================================================
+   FERTIGE HINTERGRÜNDE — OHNE EIGENES BILD
+   ---------------------------------------------------------
+   GEMELDET: „Du solltest grundlegend auch ohne meinen
+   gewählten Hintergrund eigene Animationen haben, die finde
+   ich noch nicht. Beziehungsweise weiß ich auch nicht, wie
+   ich den Hintergrund wieder ausschalten kann und dann auf
+   den Standard zu wechseln."
+
+   Sechs Stück, alle aus Verläufen und Bewegung gebaut — kein
+   Bild, keine Datei, kein Speicher. Das ist nicht Sparsamkeit
+   um ihrer selbst willen: ein kurzer Name wie „animiert:sterne"
+   lässt sich an alle im Raum weitergeben, ein hochgeladenes
+   Foto mit neunhunderttausend Zeichen nicht.
+
+   Alle liegen hinter dem Inhalt (z-index: -1) und sind
+   gedämpft — ein Hintergrund, der um Aufmerksamkeit kämpft,
+   ist ein Fehler, kein Schmuck.
+   ========================================================= */
+.livechat.hat-fertigen-hg {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.livechat.hat-fertigen-hg::before,
+.livechat.hat-fertigen-hg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+/* Chat und Verlauf werden durchsichtig, damit der Hintergrund durch
+   das ganze Panel geht — genau wie beim eigenen Bild. */
+.livechat.hat-fertigen-hg .lc-chat,
+.livechat.hat-fertigen-hg .lc-chat-verlauf { background: transparent; }
+.livechat.hat-fertigen-hg .lc-chat-verlauf::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: rgba(20, 16, 14, 0.30);
+}
+/* Die treibenden Gesichter treten zurück, sonst liegen zwei
+   Bewegungen übereinander und keine ist mehr zu erkennen. */
+.livechat.hat-fertigen-hg .lc-hg-bild { opacity: 0.05; }
+
+/* --- 1. Sternenhimmel --------------------------------------
+   Die Sterne sind radiale Verläufe in einer einzigen Fläche,
+   die sehr langsam wandert; die zweite Schicht funkelt
+   versetzt dazu. Zwei Schichten genügen für den Eindruck von
+   Tiefe — mehr kostet nur Rechenzeit. */
+.livechat.hat-fertigen-hg[data-hg="sterne"]::before {
+  background:
+    radial-gradient(1.6px 1.6px at 12% 18%, #fff 50%, transparent 55%),
+    radial-gradient(1.4px 1.4px at 34% 62%, #ffe9c4 50%, transparent 55%),
+    radial-gradient(1.8px 1.8px at 58% 24%, #fff 50%, transparent 55%),
+    radial-gradient(1.2px 1.2px at 77% 71%, #cfe4ff 50%, transparent 55%),
+    radial-gradient(1.5px 1.5px at 89% 36%, #fff 50%, transparent 55%),
+    radial-gradient(1.3px 1.3px at 22% 84%, #fff 50%, transparent 55%),
+    radial-gradient(1.7px 1.7px at 66% 90%, #ffe9c4 50%, transparent 55%),
+    radial-gradient(1.2px 1.2px at 45% 44%, #fff 50%, transparent 55%),
+    linear-gradient(180deg, #131a3a 0%, #1d1430 55%, #120e22 100%);
+  /* Die Kachel ist bewusst KLEINER als das Panel. War sie groesser,
+     lag der groesste Teil der Sterne ausserhalb und man sah drei
+     Stueck — genau so sah es vorher aus. */
+  background-size: 118px 118px, 118px 118px, 118px 118px, 118px 118px,
+                   118px 118px, 118px 118px, 118px 118px, 118px 118px, 100% 100%;
+  animation: lcHgSterne 120s linear infinite;
+  opacity: 0.85;
+}
+.livechat.hat-fertigen-hg[data-hg="sterne"]::after {
+  background:
+    radial-gradient(2.2px 2.2px at 28% 30%, #fff 50%, transparent 55%),
+    radial-gradient(2px 2px at 72% 58%, #fff 50%, transparent 55%),
+    radial-gradient(1.8px 1.8px at 50% 82%, #ffe9c4 50%, transparent 55%);
+  background-size: 150px 150px;
+  animation: lcHgFunkeln 4.5s ease-in-out infinite;
+}
+@keyframes lcHgSterne {
+  from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  to   { background-position: 118px 0, -118px 0, 118px 0, -118px 0,
+                              118px 0, -118px 0, 118px 0, -118px 0, 0 0; }
+}
+@keyframes lcHgFunkeln {
+  0%, 100% { opacity: 0.22; }
+  50%      { opacity: 0.8; }
+}
+
+/* --- 2. Glühwürmchen ---------------------------------------
+   Warme Punkte, die auf und ab treiben. Die zweite Schicht
+   läuft langsamer und in die andere Richtung — dadurch sieht
+   es nach vielen einzelnen Tieren aus und nicht nach einem
+   Muster, das sich verschiebt. */
+.livechat.hat-fertigen-hg[data-hg="funken"]::before {
+  background: linear-gradient(180deg, #1b2418 0%, #14211c 60%, #0e1714 100%);
+  opacity: 0.95;
+}
+.livechat.hat-fertigen-hg[data-hg="funken"]::after {
+  background:
+    radial-gradient(3.2px 3.2px at 16% 30%, rgba(255, 228, 140, 1) 40%, transparent 62%),
+    radial-gradient(2.6px 2.6px at 42% 66%, rgba(255, 210, 115, 1) 40%, transparent 62%),
+    radial-gradient(3.6px 3.6px at 68% 22%, rgba(255, 238, 160, 1) 40%, transparent 62%),
+    radial-gradient(2.4px 2.4px at 88% 74%, rgba(255, 218, 125, 1) 40%, transparent 62%),
+    radial-gradient(3px 3px at 30% 88%, rgba(255, 232, 145, 1) 40%, transparent 62%),
+    radial-gradient(2.2px 2.2px at 58% 44%, rgba(255, 224, 130, 1) 40%, transparent 62%),
+    radial-gradient(2.8px 2.8px at 8% 62%, rgba(255, 240, 170, 1) 40%, transparent 62%),
+    radial-gradient(2.4px 2.4px at 76% 52%, rgba(255, 214, 120, 1) 40%, transparent 62%);
+  /* 132 Pixel: so passen auf ein Telefonpanel rund zwoelf Tiere statt
+     zwei. Vorher war die Kachel groesser als das Panel. */
+  background-size: 132px 132px;
+  filter: blur(0.5px);
+  animation: lcHgFunken 26s ease-in-out infinite alternate,
+             lcHgFunkeln 3.2s ease-in-out infinite;
+}
+@keyframes lcHgFunken {
+  from { background-position: 0 100%; }
+  to   { background-position: 60px 0%; }
+}
+
+/* --- 3. Weiche Wellen --------------------------------------
+   Zwei sehr breite, halbdurchsichtige Bögen, die sich
+   gegeneinander verschieben. Wo sie sich überlagern, entsteht
+   das Flirren von Licht auf Wasser — genau das, was ein
+   einzelner Verlauf nicht kann. */
+.livechat.hat-fertigen-hg[data-hg="wellen"]::before {
+  background:
+    radial-gradient(120% 60% at 50% 120%, rgba(120, 200, 230, 0.28) 0%, transparent 60%),
+    linear-gradient(180deg, #10283a 0%, #123044 55%, #0c1e2c 100%);
+  animation: lcHgWelle1 28s ease-in-out infinite alternate;
+}
+.livechat.hat-fertigen-hg[data-hg="wellen"]::after {
+  background:
+    radial-gradient(90% 40% at 30% 100%, rgba(160, 230, 245, 0.22) 0%, transparent 65%),
+    radial-gradient(90% 40% at 78% 110%, rgba(90, 180, 215, 0.24) 0%, transparent 65%);
+  animation: lcHgWelle2 21s ease-in-out infinite alternate;
+}
+@keyframes lcHgWelle1 {
+  from { transform: translate3d(-4%, 0, 0) scaleY(1); }
+  to   { transform: translate3d(4%, 0, 0) scaleY(1.08); }
+}
+@keyframes lcHgWelle2 {
+  from { transform: translate3d(5%, 1%, 0); }
+  to   { transform: translate3d(-5%, -2%, 0); }
+}
+
+/* --- 4. Nordlicht ------------------------------------------
+   Schräge, weiche Bänder, die wandern UND dabei ihre Form
+   ändern. Ein Nordlicht, das nur wandert, sieht aus wie eine
+   Tapete, die vorbeigezogen wird. */
+.livechat.hat-fertigen-hg[data-hg="nordlicht"]::before {
+  background: linear-gradient(180deg, #071226 0%, #0a1a2e 60%, #050d1c 100%);
+}
+.livechat.hat-fertigen-hg[data-hg="nordlicht"]::after {
+  background:
+    linear-gradient(104deg, transparent 10%, rgba(90, 250, 185, 0.50) 24%,
+                    rgba(120, 210, 255, 0.34) 37%, transparent 50%),
+    linear-gradient(72deg, transparent 38%, rgba(160, 255, 205, 0.38) 56%,
+                    rgba(200, 145, 255, 0.28) 70%, transparent 84%);
+  filter: blur(11px);
+  animation: lcHgAurora 34s ease-in-out infinite alternate;
+}
+@keyframes lcHgAurora {
+  from { transform: translate3d(-6%, -2%, 0) skewX(-4deg) scaleY(1); }
+  to   { transform: translate3d(6%, 3%, 0) skewX(5deg) scaleY(1.18); }
+}
+
+/* --- 5. Lichterspiel ---------------------------------------
+   Unscharfe Punkte in verschiedenen Grössen — je grösser,
+   desto unschärfer, so wie eine offene Blende es macht. */
+.livechat.hat-fertigen-hg[data-hg="bokeh"]::before {
+  background: linear-gradient(150deg, #2a1430 0%, #1b1026 55%, #120a1c 100%);
+}
+.livechat.hat-fertigen-hg[data-hg="bokeh"]::after {
+  background:
+    radial-gradient(20px 20px at 18% 26%, rgba(255, 190, 120, 0.34) 40%, transparent 70%),
+    radial-gradient(12px 12px at 46% 70%, rgba(190, 160, 255, 0.36) 40%, transparent 70%),
+    radial-gradient(26px 26px at 74% 34%, rgba(255, 140, 190, 0.28) 40%, transparent 70%),
+    radial-gradient(9px 9px at 88% 78%, rgba(140, 220, 255, 0.38) 40%, transparent 70%),
+    radial-gradient(16px 16px at 30% 90%, rgba(255, 220, 140, 0.30) 40%, transparent 70%),
+    radial-gradient(11px 11px at 62% 12%, rgba(255, 255, 200, 0.30) 40%, transparent 70%);
+  background-size: 185px 185px;
+  filter: blur(2px);
+  animation: lcHgBokeh 40s linear infinite;
+}
+@keyframes lcHgBokeh {
+  from { background-position: 0 0; }
+  to   { background-position: 185px -185px; }
+}
+
+/* --- 6. Schultafel -----------------------------------------
+   Für den Fall, dass es einfach nach Unterricht aussehen soll.
+   Der Kreidestaub wandert kaum merklich — eine Tafel bewegt
+   sich schliesslich nicht, aber das Licht darauf schon. */
+.livechat.hat-fertigen-hg[data-hg="tafel"]::before {
+  background:
+    radial-gradient(60% 40% at 30% 20%, rgba(255, 255, 255, 0.055) 0%, transparent 70%),
+    radial-gradient(50% 40% at 78% 74%, rgba(255, 255, 255, 0.04) 0%, transparent 70%),
+    linear-gradient(170deg, #25402f 0%, #1c3325 60%, #16291e 100%);
+  animation: lcHgTafel 46s ease-in-out infinite alternate;
+}
+.livechat.hat-fertigen-hg[data-hg="tafel"]::after {
+  background:
+    repeating-linear-gradient(96deg, rgba(255, 255, 255, 0.035) 0 1px,
+                              transparent 1px 34px);
+  opacity: 0.7;
+}
+@keyframes lcHgTafel {
+  from { transform: translate3d(-2%, 0, 0); }
+  to   { transform: translate3d(2%, 0, 0); }
+}
+
+/* Wer Bewegung nicht verträgt, bekommt das Bild ohne Bewegung —
+   nicht „keinen Hintergrund", sondern einen stehenden. */
+@media (prefers-reduced-motion: reduce) {
+  .livechat.hat-fertigen-hg::before,
+  .livechat.hat-fertigen-hg::after { animation: none !important; }
+}
+
+/* --- Die Auswahl selbst ------------------------------------
+   Jedes Feld zeigt den Hintergrund, den es einstellt. Ein Name
+   allein („Nordlicht") sagt niemandem, wie es aussieht. */
+.lc-hgfelder {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px;
+}
+.lc-hgfeld {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 0 8px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  /* Ausdrücklich dunkel mit hellem Text, nicht geerbt: das Fenster
+     drumherum ist hell, und geerbte helle Schrift auf hellem Grund war
+     nicht zu lesen. Die Vorschauen sind ohnehin alle dunkel — so
+     passt der Fuss dazu. */
+  background: #1d1622;
+  color: #f4ece4;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition: border-color 0.16s, transform 0.16s;
+}
+.lc-hgfeld:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.34); }
+.lc-hgfeld.ist-an { border-color: var(--teal-400, #58c0b0); }
+.lc-hgfeld.ist-an .lc-hgfeld-wort::after { content: " ✓"; }
+.lc-hgfeld-bild {
+  display: block;
+  height: 62px;
+  position: relative;
+  overflow: hidden;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #3a2b3e, #221a26);
+}
+.lc-hgfeld-foto { width: 100%; height: 100%; object-fit: cover; }
+.lc-hgfeld-wort { font-size: 0.78rem; font-weight: 600; padding: 0 8px; }
+.lc-hgfeld-klein { font-size: 0.66rem; opacity: 0.72; padding: 0 8px; line-height: 1.35; }
+/* Die Vorschau benutzt DIESELBEN Regeln wie der echte Hintergrund —
+   sonst verspricht sie etwas anderes, als man bekommt. */
+.lc-hgfeld-bild[data-hg^="animiert:"]::before,
+.lc-hgfeld-bild[data-hg^="animiert:"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.lc-hgfeld-bild[data-hg="animiert:sterne"]::before {
+  background: linear-gradient(180deg, #131a3a 0%, #1d1430 55%, #120e22 100%);
+}
+.lc-hgfeld-bild[data-hg="animiert:sterne"]::after {
+  background:
+    radial-gradient(1.6px 1.6px at 20% 30%, #fff 50%, transparent 55%),
+    radial-gradient(1.4px 1.4px at 58% 62%, #ffe9c4 50%, transparent 55%),
+    radial-gradient(1.8px 1.8px at 78% 24%, #fff 50%, transparent 55%),
+    radial-gradient(1.3px 1.3px at 36% 80%, #fff 50%, transparent 55%);
+  background-size: 100px 100px;
+  animation: lcHgFunkeln 4.5s ease-in-out infinite;
+}
+.lc-hgfeld-bild[data-hg="animiert:funken"]::before {
+  background: linear-gradient(180deg, #1b2418 0%, #0e1714 100%);
+}
+.lc-hgfeld-bild[data-hg="animiert:funken"]::after {
+  background:
+    radial-gradient(3px 3px at 28% 38%, rgba(255, 224, 130, 0.95) 40%, transparent 60%),
+    radial-gradient(2.4px 2.4px at 62% 66%, rgba(255, 206, 110, 0.9) 40%, transparent 60%),
+    radial-gradient(3.4px 3.4px at 80% 28%, rgba(255, 233, 150, 0.9) 40%, transparent 60%);
+  background-size: 110px 110px;
+  animation: lcHgFunkeln 3.2s ease-in-out infinite;
+}
+.lc-hgfeld-bild[data-hg="animiert:wellen"]::before {
+  background:
+    radial-gradient(120% 60% at 50% 120%, rgba(120, 200, 230, 0.4) 0%, transparent 60%),
+    linear-gradient(180deg, #10283a 0%, #0c1e2c 100%);
+}
+.lc-hgfeld-bild[data-hg="animiert:wellen"]::after {
+  background: radial-gradient(90% 40% at 30% 100%, rgba(160, 230, 245, 0.3) 0%, transparent 65%);
+  animation: lcHgWelle2 21s ease-in-out infinite alternate;
+}
+.lc-hgfeld-bild[data-hg="animiert:nordlicht"]::before {
+  background: linear-gradient(180deg, #071226 0%, #050d1c 100%);
+}
+.lc-hgfeld-bild[data-hg="animiert:nordlicht"]::after {
+  background: linear-gradient(104deg, transparent 12%, rgba(90, 240, 180, 0.45) 30%,
+              rgba(120, 200, 255, 0.3) 45%, transparent 62%);
+  filter: blur(7px);
+  animation: lcHgAurora 34s ease-in-out infinite alternate;
+}
+.lc-hgfeld-bild[data-hg="animiert:bokeh"]::before {
+  background: linear-gradient(150deg, #2a1430 0%, #120a1c 100%);
+}
+.lc-hgfeld-bild[data-hg="animiert:bokeh"]::after {
+  background:
+    radial-gradient(14px 14px at 28% 36%, rgba(255, 190, 120, 0.38) 40%, transparent 70%),
+    radial-gradient(9px 9px at 62% 68%, rgba(190, 160, 255, 0.4) 40%, transparent 70%),
+    radial-gradient(18px 18px at 80% 26%, rgba(255, 140, 190, 0.3) 40%, transparent 70%);
+  filter: blur(1.4px);
+}
+.lc-hgfeld-bild[data-hg="animiert:tafel"]::before {
+  background: linear-gradient(170deg, #25402f 0%, #16291e 100%);
+}
+.lc-hgfeld-bild[data-hg="animiert:tafel"]::after {
+  background: repeating-linear-gradient(96deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 22px);
+}
+/* Der Standard: genau das, was er ist — zwei treibende Gesichter. */
+.lc-hgfeld-bild[data-hg=""]::before {
+  content: "🙂";
+  position: absolute;
+  left: 22%; top: 26%;
+  font-size: 1.1rem;
+  opacity: 0.55;
+}
+.lc-hgfeld-bild[data-hg=""]::after {
+  content: "🦊";
+  position: absolute;
+  right: 20%; bottom: 22%;
+  font-size: 1rem;
+  opacity: 0.45;
+}
