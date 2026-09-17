@@ -12607,6 +12607,163 @@
     return (p && p.name) || (Backend.currentUser() ? "Ich" : "Gast");
   }
 
+  /* --- Das Profilbild fürs Klassenzimmer ------------------------
+     GEWÜNSCHT: „wenn standardmäßig die Kamera aus ist, soll wenigstens
+     das Profilbild von demjenigen angezeigt werden — und unten im Chat
+     auch, wenn man etwas schreibt: entweder der Sticker-Fuchs, den man
+     eingestellt hat, oder ein echtes Profilbild oder ein Emoji."
+
+     Es kommt also aus dem KONTO und muss nirgends noch einmal gesetzt
+     werden. Nur wer möchte, legt über den Bilderknopf ein anderes
+     darüber (ein GIF zum Beispiel) — das steht dann im Gerät und
+     schlägt das Kontobild. */
+  function livechatKontoBild() {
+    const p = Backend.currentProfile() || {};
+    if (p.avatarUrl) return p.avatarUrl;
+    if (p.avatarEmoji) return "emoji:" + p.avatarEmoji;
+    return "";
+  }
+  function livechatBild() {
+    const eigenes = (window.LiveChat && LiveChat.eigenesBild) ? LiveChat.eigenesBild() : "";
+    return eigenes || livechatKontoBild();
+  }
+
+  /* ============================================================
+     DIE BILDAUSWAHL FÜRS KLASSENZIMMER
+     ------------------------------------------------------------
+     Vier Wege zu einem Bild, und zwar in dieser Reihenfolge:
+       1. das Bild aus dem Konto (der Sticker-Fuchs oder das eigene
+          Foto) — das ist der Normalfall und steht ganz oben,
+       2. ein Foto vom Gerät (wird im Gerät verkleinert),
+       3. ein Emoji,
+       4. ein bewegtes GIF aus GIPHY.
+
+     Für die GIF-Suche braucht es einen Schlüssel von GIPHY. Er ist
+     kostenlos (developers.giphy.com, „Create an App" → API Key) und
+     gehört in supabase-config.js als
+        window.GIPHY_KEY = "…";
+     Ohne Schlüssel bleibt die Suche aus und man kann stattdessen eine
+     GIF-Adresse einsetzen — das geht immer, ganz ohne Konto.
+     ============================================================ */
+  const LC_EMOJIS = ["🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐸", "🐙", "🦉", "🐝",
+                     "🌻", "🌙", "⭐", "🎈", "🎧", "📚", "☕", "🍀", "🌈", "🔥"];
+
+  function livechatBildWaehler() {
+    document.getElementById("lcBildWaehler")?.remove();
+    const kasten = document.createElement("div");
+    kasten.id = "lcBildWaehler";
+    kasten.className = "lc-waehler-hinter";
+    const gifSchluessel = window.GIPHY_KEY || "";
+    kasten.innerHTML = `
+      <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Profilbild wählen">
+        <p class="eyebrow">DEIN BILD IM KLASSENZIMMER</p>
+        <p class="empty-note" style="margin:0 0 10px; font-size:0.76rem;">
+          Solange deine Kamera aus ist, steht dieses Bild auf deinem Platz — und im Chat
+          neben allem, was du schreibst.
+        </p>
+        <div class="lc-waehler-reihe">
+          <button type="button" class="btn btn-ghost" id="lcBildKonto">👤 Bild aus meinem Profil</button>
+          <button type="button" class="btn btn-ghost" id="lcBildFotoKnopf">📷 Foto vom Gerät</button>
+        </div>
+        <input type="file" id="lcBildFoto" accept="image/*" hidden>
+        <p class="eyebrow" style="margin-top:12px;">EMOJI</p>
+        <div class="lc-waehler-emojis">
+          ${LC_EMOJIS.map((e) => `<button type="button" class="lc-waehler-emoji" data-lc-emoji="${e}">${e}</button>`).join("")}
+        </div>
+        <p class="eyebrow" style="margin-top:12px;">BEWEGTES GIF</p>
+        ${gifSchluessel ? `
+          <div class="lc-waehler-reihe">
+            <input type="text" class="lc-chat-feld" id="lcGifSuche" placeholder="Suchen, z. B. „hallo“ oder „katze“">
+            <button type="button" class="btn btn-ghost" id="lcGifSuchen">Suchen</button>
+          </div>
+          <div class="lc-waehler-gifs" id="lcGifTreffer"></div>`
+        : `
+          <p class="empty-note" style="font-size:0.74rem; margin:0 0 8px;">
+            Für die Suche fehlt noch ein GIPHY-Schlüssel. Er ist kostenlos
+            (developers.giphy.com → „Create an App" → API Key) und gehört in
+            <code>supabase-config.js</code> als <code>window.GIPHY_KEY = "…";</code>.
+            Bis dahin geht eine GIF-Adresse auch so:
+          </p>
+          <div class="lc-waehler-reihe">
+            <input type="text" class="lc-chat-feld" id="lcGifAdresse" placeholder="https://…/bild.gif">
+            <button type="button" class="btn btn-ghost" id="lcGifNehmen">Nehmen</button>
+          </div>`}
+        <div class="lc-waehler-reihe" style="margin-top:14px;">
+          <button type="button" class="btn btn-ghost" id="lcBildWeg">Bild entfernen</button>
+          <button type="button" class="btn btn-coffee" id="lcWaehlerZu">Fertig</button>
+        </div>
+      </div>`;
+    document.body.appendChild(kasten);
+
+    const zu = () => kasten.remove();
+    const setzen = (wert, wort) => {
+      if (!LiveChat.bildSetzen(wert)) { showToast("Das war keine Bildadresse."); return; }
+      showToast(wort);
+      renderLiveChat();
+      zu();
+    };
+    kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
+    kasten.querySelector("#lcWaehlerZu")?.addEventListener("click", zu);
+    kasten.querySelector("#lcBildWeg")?.addEventListener("click", () => setzen("", "Bild entfernt"));
+    kasten.querySelector("#lcBildKonto")?.addEventListener("click", () => {
+      const k = livechatKontoBild();
+      if (!k) { showToast("In deinem Profil ist noch kein Bild hinterlegt."); return; }
+      setzen(k, "👤 Profilbild übernommen");
+    });
+    const feld = kasten.querySelector("#lcBildFoto");
+    kasten.querySelector("#lcBildFotoKnopf")?.addEventListener("click", () => feld?.click());
+    feld?.addEventListener("change", async () => {
+      const datei = feld.files && feld.files[0];
+      feld.value = "";
+      if (!datei) return;
+      try {
+        const daten = await LiveChat.bildVerkleinern(datei, 220);
+        setzen(daten, "📷 Foto als Profilbild gesetzt");
+      } catch (x) { showToast("📷 " + (x && x.message ? x.message : "Das Bild ging nicht.")); }
+    });
+    kasten.querySelectorAll("[data-lc-emoji]").forEach((b) =>
+      b.addEventListener("click", () => setzen("emoji:" + b.dataset.lcEmoji, b.dataset.lcEmoji + " gesetzt")));
+    kasten.querySelector("#lcGifNehmen")?.addEventListener("click", () => {
+      const a = kasten.querySelector("#lcGifAdresse")?.value.trim();
+      if (a) setzen(a, "🖼️ GIF gesetzt");
+    });
+    const suchen = async () => {
+      const wort = kasten.querySelector("#lcGifSuche")?.value.trim();
+      const ziel = kasten.querySelector("#lcGifTreffer");
+      if (!wort || !ziel) return;
+      ziel.innerHTML = '<p class="empty-note">sucht …</p>';
+      try {
+        const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key="
+          + encodeURIComponent(gifSchluessel) + "&limit=18&rating=g&lang=de&q="
+          + encodeURIComponent(wort));
+        const j = await r.json();
+        const liste = (j && j.data) || [];
+        if (!liste.length) { ziel.innerHTML = '<p class="empty-note">Nichts gefunden.</p>'; return; }
+        ziel.innerHTML = "";
+        liste.forEach((g) => {
+          const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width);
+          if (!adr || !adr.url) return;
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "lc-waehler-gif";
+          const i = document.createElement("img");
+          i.src = adr.url;
+          i.alt = g.title || "GIF";
+          i.loading = "lazy";
+          b.appendChild(i);
+          b.addEventListener("click", () => setzen(adr.url, "🖼️ GIF gesetzt"));
+          ziel.appendChild(b);
+        });
+      } catch (x) {
+        ziel.innerHTML = '<p class="empty-note">Die Suche ging nicht — Netz oder Schlüssel prüfen.</p>';
+      }
+    };
+    kasten.querySelector("#lcGifSuchen")?.addEventListener("click", suchen);
+    kasten.querySelector("#lcGifSuche")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); suchen(); }
+    });
+  }
+
   /* --- Der Startschirm: ein Satz, ein Knopf --- */
   function livechatStartHtml(l) {
     const ausLink = LiveChat.raumAusAdresse();
@@ -12707,9 +12864,19 @@
         <div class="lc-chat">
           <div class="lc-chat-kopf">
             <span>💬 Chat — alle im Raum lesen mit</span>
-            <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
-                    title="Verlauf auf diesem Gerät löschen">Verlauf löschen</button>
+            <span class="lc-chat-kopf-rechts">
+              <button type="button" class="lc-chat-raeumen" id="lcBefehle"
+                      title="Was man im Chat tippen kann">ⓘ Befehle</button>
+              <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
+                      title="Verlauf auf diesem Gerät löschen">Verlauf löschen</button>
+            </span>
           </div>
+          <details class="lc-befehle" id="lcBefehleKasten">
+            <summary>Was man tippen kann</summary>
+            <ul>${(window.LiveChat && LiveChat.befehlsliste ? LiveChat.befehlsliste() : [])
+              .map((z) => `<li><code>${escapeHtml(z.split("  →  ")[0])}</code>${
+                z.includes("  →  ") ? " — " + escapeHtml(z.split("  →  ")[1]) : ""}</li>`).join("")}</ul>
+          </details>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           <form class="lc-chat-fuss" id="lcForm" autocomplete="off">
             <input type="file" id="lcFoto" accept="image/*" hidden>
@@ -12778,11 +12945,19 @@
            das Bild, das man von sich zeigen möchte. */
         if (p.strom && video.srcObject !== p.strom) video.srcObject = p.strom;
         video.style.display = "none";
-        if (avatar && !p.leer && p.bild) {
+        const emoji = p.bild && p.bild.indexOf("emoji:") === 0 ? p.bild.slice(6) : "";
+        if (!p.leer && emoji) {
+          if (avatar) avatar.style.display = "none";
+          initial.style.display = "grid";
+          initial.textContent = emoji;
+          initial.classList.add("lc-initial-emoji");
+        } else if (avatar && !p.leer && p.bild) {
           if (avatar.getAttribute("src") !== p.bild) avatar.setAttribute("src", p.bild);
           avatar.style.display = "block";
           initial.style.display = "none";
+          initial.classList.remove("lc-initial-emoji");
         } else {
+          initial.classList.remove("lc-initial-emoji");
           if (avatar) avatar.style.display = "none";
           initial.style.display = "grid";
           initial.textContent = p.leer ? "·" : (p.name || "?").trim().charAt(0).toUpperCase();
@@ -12856,7 +13031,8 @@
       if (livechatGezeigt.has(n.id)) return;
       livechatGezeigt.add(n.id);
       const b = document.createElement("div");
-      b.className = "lc-blase" + (n.eigen ? " lc-blase-eigen" : "");
+      const art = n.art && n.art !== "text" ? " lc-blase-" + n.art : "";
+      b.className = "lc-blase" + (n.eigen ? " lc-blase-eigen" : "") + art;
       /* ACHTUNG, und das ist kein Formalismus:
          Name und Text kommen von einem FREMDEN Gerät im Raum.
          Würden sie über innerHTML eingesetzt, könnte jeder, der
@@ -12865,11 +13041,35 @@
          wird hier Element für Element gebaut und der Text über
          textContent gesetzt: so ist „<script>" ein Wort und kein
          Befehl. */
-      if (!n.eigen) {
+      if (!n.eigen && n.art !== "aktion" && n.art !== "system") {
+        /* „auch unten im Chat, wenn man etwas schreibt, soll das
+           Profilbild von demjenigen angezeigt werden." */
+        const kopf = document.createElement("span");
+        kopf.className = "lc-blase-kopf";
+        const emoji = n.bild && n.bild.indexOf("emoji:") === 0 ? n.bild.slice(6) : "";
+        if (emoji) {
+          const e = document.createElement("span");
+          e.className = "lc-blase-avatar lc-blase-avatar-emoji";
+          e.textContent = emoji;
+          kopf.appendChild(e);
+        } else if (n.bild) {
+          const i = document.createElement("img");
+          i.className = "lc-blase-avatar";
+          i.alt = "";
+          i.loading = "lazy";
+          i.src = n.bild;
+          kopf.appendChild(i);
+        } else {
+          const e = document.createElement("span");
+          e.className = "lc-blase-avatar lc-blase-avatar-emoji";
+          e.textContent = (n.name || "?").trim().charAt(0).toUpperCase();
+          kopf.appendChild(e);
+        }
         const nameZeile = document.createElement("span");
         nameZeile.className = "lc-blase-name";
         nameZeile.textContent = n.name;
-        b.appendChild(nameZeile);
+        kopf.appendChild(nameZeile);
+        b.appendChild(kopf);
       }
       /* Ein Bild wird als <img> gebaut und seine Adresse gesetzt —
          NIE über innerHTML. Die Adresse kommt von einem fremden Gerät;
@@ -12971,7 +13171,12 @@
            entscheiden kann, ob man das Video anschalten will."
            Der Browser fragt deshalb erst einmal nur nach dem
            Mikrofon; die Kamera kommt auf Knopfdruck dazu. */
-        LiveChat.betreten(raum, { name: livechatName(), mitBild: false })
+        LiveChat.betreten(raum, {
+          name: livechatName(),
+          konto: (Backend.currentUser() || {}).id || "",
+          bild: livechatBild(),
+          mitBild: false
+        })
           .then(() => { renderLiveChat(); klassenzimmerStreifen(); });
         renderLiveChat();
       };
@@ -13007,21 +13212,29 @@
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());
       area.querySelector('[data-lc="bild"]')?.addEventListener("click", () => LiveChat.bildUmschalten());
       area.querySelector('[data-lc="weg"]')?.addEventListener("click", () => { LiveChat.verlassen(); renderLiveChat(); });
-      area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => {
-        /* Ein Bild statt eines Buchstabens — und wer mag, ein
-           bewegtes GIF wie bei Clubhouse. Es genügt die Adresse
-           eines Bildes; sie bleibt auf dem Gerät und wird den
-           anderen im Raum mitgeschickt. */
-        const jetzt = LiveChat.eigenesBild ? LiveChat.eigenesBild() : "";
-        const eingabe = window.prompt(
-          "Adresse eines Bildes oder GIFs (https://… oder auf giphy.com das Bild "
-          + "mit Rechtsklick „Bildadresse kopieren“).\nLeer lassen und OK drücken "
-          + "entfernt das Bild wieder.", jetzt || "");
-        if (eingabe === null) return;
-        const ok = LiveChat.bildSetzen(eingabe);
-        if (!ok) showToast("Das war keine Bildadresse — sie muss mit https:// anfangen.");
-        else showToast(eingabe.trim() ? "🖼️ Profilbild gesetzt" : "Profilbild entfernt");
-      });
+      /* LANGES DRÜCKEN auf den eigenen Platz öffnet die Bildauswahl —
+         „im Prinzip hält man mit dem Finger auf seinem eigenen
+         Profilbild gedrückt und kann dann so ein animiertes Bild
+         auswählen", wie bei Clubhouse. Der Bilderknopf in der Leiste
+         macht dasselbe, für alle, die lieber tippen. */
+      const eigenerPlatz = area.querySelector('[data-lc-platz="1"]');
+      if (eigenerPlatz) {
+        let halteUhr = null;
+        let langGedrueckt = false;
+        const los = () => {
+          langGedrueckt = false;
+          halteUhr = setTimeout(() => { langGedrueckt = true; livechatBildWaehler(); }, 500);
+        };
+        const stopp = () => { if (halteUhr) { clearTimeout(halteUhr); halteUhr = null; } };
+        eigenerPlatz.addEventListener("pointerdown", los);
+        ["pointerup", "pointerleave", "pointercancel"].forEach((e) =>
+          eigenerPlatz.addEventListener(e, stopp));
+        eigenerPlatz.addEventListener("click", (e) => {
+          if (langGedrueckt) { e.preventDefault(); e.stopImmediatePropagation(); langGedrueckt = false; }
+        }, true);
+        eigenerPlatz.addEventListener("contextmenu", (e) => { e.preventDefault(); livechatBildWaehler(); });
+      }
+      area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
       const fotoFeld = area.querySelector("#lcFoto");
       area.querySelector("#lcFotoKnopf")?.addEventListener("click", () => fotoFeld?.click());
       fotoFeld?.addEventListener("change", async () => {
@@ -13046,6 +13259,10 @@
         const ok = LiveChat.gifSenden(a, feld ? feld.value.trim() : "");
         if (!ok) { showToast("Das war keine Adresse — sie muss mit https:// anfangen."); return; }
         if (feld) { feld.value = ""; document.getElementById("lcSenden").disabled = true; }
+      });
+      area.querySelector("#lcBefehle")?.addEventListener("click", () => {
+        const k = document.getElementById("lcBefehleKasten");
+        if (k) k.open = !k.open;
       });
       area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
         if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;

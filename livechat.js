@@ -283,7 +283,17 @@ window.LiveChat = (function () {
      unten Karteileichen weg, falls doch einmal eine entsteht —
      zum Beispiel bei einem Absturz.) */
   var ICH_SCHLUESSEL = "dma_livechat_ich";
+  /* Wird beim Betreten gesetzt: die Kennung des ANGEMELDETEN KONTOS.
+     GEWÜNSCHT: „auch wenn er sich vom Handy gleichzeitig im Laptop
+     einloggt, soll er nicht doppelt da sein."
+     Mit einer Kennung je Gerät ginge das nicht — zwei Geräte, zwei
+     Kennungen, zwei Plätze. Mit der Kontokennung ist es dieselbe
+     Person, egal auf welchem Gerät, und der zweite Platz entsteht gar
+     nicht erst. Nur wer NICHT angemeldet ist, bekommt weiterhin eine
+     Kennung je Gerät — etwas anderes gibt es dann nicht. */
+  var kontoId = "";
   function eigeneId() {
+    if (kontoId) return "k" + kontoId.replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase();
     try {
       var da = localStorage.getItem(ICH_SCHLUESSEL);
       if (da && /^[a-z0-9]{8,24}$/.test(da)) return da;
@@ -304,6 +314,96 @@ window.LiveChat = (function () {
      Der Verlauf liegt deshalb NUR auf dem eigenen Gerät (nichts
      davon geht an einen Server) und bleibt dort, bis man ihn selbst
      löscht. Je Raum ein eigener Eintrag. */
+  /* --- DER GEMEINSAME VERLAUF ----------------------------------
+     GEWÜNSCHT: „Jemand, der komplett neu reinkommt, hat keinen
+     Kontext. Und wer sich vom Handy ausloggt und auf dem Laptop mit
+     demselben Profil einloggt, sieht den Chat auch nicht. Der Chat
+     soll immer sichtbar sein für jeden, der neu reinkommt, mit allen
+     Bildern, und systemübergreifend."
+
+     Bis hierher lag der Verlauf NUR im jeweiligen Gerät. Das konnte
+     genau das nicht. Er liegt jetzt zusätzlich in einer Tabelle
+     (siehe supabase/klassenzimmer-chat.sql) und wird beim Betreten
+     von dort geholt — vollständig, mit Bildern, auf jedem Gerät.
+
+     Das Gerät behält trotzdem eine Abschrift: wer nicht angemeldet
+     ist oder gerade kein Netz hat, sieht dann wenigstens das, was er
+     selbst schon gesehen hat. Beide Quellen werden über die Kennung
+     zusammengeführt, doppelt kann also nichts erscheinen. */
+  var TISCH = "klassenzimmer_chat";
+  function angemeldeterZugang() {
+    try {
+      return (window.Backend && Backend.zugang && Backend.zugang()) || null;
+    } catch (e) { return null; }
+  }
+
+  function serverLaden(raum) {
+    var z = angemeldeterZugang();
+    if (!z) return Promise.resolve([]);
+    return z.from(TISCH)
+      .select("id,raum,autor,name,bild,text,bild_im_chat,art,erstellt")
+      .eq("raum", raum)
+      .order("erstellt", { ascending: false })
+      .limit(CHAT_VERLAUF)
+      .then(function (a) {
+        if (!a || a.error || !a.data) return [];
+        return a.data.slice().reverse().map(function (r) {
+          return {
+            id: "s" + r.id,
+            von: r.autor ? "k" + String(r.autor).replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase() : "",
+            name: r.name || "Gast",
+            text: r.text || "",
+            bild: r.bild || "",
+            bildImChat: r.bild_im_chat || "",
+            art: r.art || "text",
+            zeit: new Date(r.erstellt).getTime(),
+            eigen: false
+          };
+        });
+      })
+      .catch(function () { return []; });
+  }
+
+  function serverSichern(n) {
+    var z = angemeldeterZugang();
+    if (!z) return;
+    var nutzer = null;
+    try { nutzer = window.Backend && Backend.currentUser && Backend.currentUser(); } catch (e) {}
+    if (!nutzer || !nutzer.id) return;          // ohne Anmeldung kein Eintrag
+    try {
+      z.from(TISCH).insert({
+        raum: zustand.raum,
+        autor: nutzer.id,
+        name: n.name || "Gast",
+        bild: n.bild || "",
+        text: n.text || "",
+        bild_im_chat: n.bildImChat || "",
+        art: n.art || "text"
+      }).then(function () {}, function () {});
+    } catch (e) {}
+  }
+
+  /* Zwei Listen zu einer: nach Zeit sortiert, ohne Doppelte.
+     Dieselbe Nachricht kommt einmal über den Kanal (sofort) und
+     einmal aus der Tabelle (beim nächsten Betreten). Erkannt wird
+     sie an Absender, Zeit und Text — die Kennungen sind verschieden,
+     weil die Tabelle ihre eigene vergibt. */
+  function verschmelzen(a, b) {
+    var alles = (a || []).concat(b || []);
+    var raus = [];
+    alles.sort(function (x, y) { return (x.zeit || 0) - (y.zeit || 0); });
+    alles.forEach(function (n) {
+      var doppelt = raus.some(function (m) {
+        if (m.id && n.id && m.id === n.id) return true;
+        return m.name === n.name && m.text === n.text
+            && Math.abs((m.zeit || 0) - (n.zeit || 0)) < 4000
+            && Boolean(m.bildImChat) === Boolean(n.bildImChat);
+      });
+      if (!doppelt) raus.push(n);
+    });
+    return raus.slice(-CHAT_VERLAUF);
+  }
+
   function chatSchluessel(raum) { return "dma_livechat_chat_" + (raum || "-"); }
   function chatLaden(raum) {
     try {
@@ -365,7 +465,7 @@ window.LiveChat = (function () {
   }
   function bildSetzen(adresse) {
     var a = String(adresse || "").trim().slice(0, 600);
-    if (a && !/^(https?:|data:image\/)/i.test(a)) return false;
+    if (a && !/^(https?:|data:image\/|emoji:)/i.test(a)) return false;
     zustand.ichBild = a;
     try {
       if (a) localStorage.setItem(BILD_SCHLUESSEL, a);
@@ -462,6 +562,9 @@ window.LiveChat = (function () {
      ist stumpf und darum zuverlässig: wer die kleinere Kennung
      hat, ruft an.
      ========================================================= */
+  /* Je Leitung die beiden Spurplätze — einer für Ton, einer für Bild. */
+  var spurenJe = {};
+
   function bruecke(anderId) {
     if (brueckeJe[anderId]) return brueckeJe[anderId];
     var pc = new RTCPeerConnection({ iceServers: VERMITTLER });
@@ -472,31 +575,74 @@ window.LiveChat = (function () {
        steht. */
     personMerken(anderId);
 
-    if (zustand.eigenerStrom) {
-      zustand.eigenerStrom.getTracks().forEach(function (t) {
-        try { pc.addTrack(t, zustand.eigenerStrom); } catch (e) {}
+    /* HIER LAG DER FEHLER, DER DIE GRUPPE ZERLEGT HAT.
+       ---------------------------------------------------------
+       GEMELDET: „Zwei andere im Raum hören sich gegenseitig, mich
+       hören sie nicht und ich sie nicht. Und sehen tut niemand
+       jemanden."
+
+       Vorher wurden nur die Spuren angemeldet, die man GERADE hat.
+       Seit die Kamera nicht mehr von selbst angeht, hat beim
+       Betreten niemand eine Bildspur — also enthielt das Angebot
+       gar keinen Platz für Bild. Und ein Platz, den es im Angebot
+       nicht gibt, lässt sich nachträglich nicht befüllen: die
+       Kamera einzuschalten blieb wirkungslos, bei allen, auf jedem
+       Gerät. Genau deshalb sah niemand jemanden.
+
+       Wer ganz ohne Mikrofon hereinkam, hatte auch keinen Tonplatz —
+       und weil zwei Leute mit Mikrofon ihn untereinander sehr wohl
+       hatten, hörten sich genau die beiden, und der Dritte war
+       stumm. Auch das passt genau zur Beobachtung.
+
+       Jetzt werden BEIDE Plätze immer angelegt, leer oder nicht.
+       Kommt später eine Kamera dazu, wird die Spur in den
+       vorhandenen Platz gelegt (replaceTrack) — ohne neue
+       Aushandlung, ohne Abriss, und auf jedem Gerät gleich. */
+    var strom = zustand.eigenerStrom;
+    var tonSpur = (strom && strom.getAudioTracks()[0]) || null;
+    var bildSpur = (strom && strom.getVideoTracks()[0]) || null;
+    var stroeme = strom ? [strom] : [];
+    try {
+      spurenJe[anderId] = {
+        ton: pc.addTransceiver(tonSpur || "audio", { direction: "sendrecv", streams: stroeme }),
+        bild: pc.addTransceiver(bildSpur || "video", { direction: "sendrecv", streams: stroeme })
+      };
+    } catch (e) {
+      /* Sehr alte Browser können addTransceiver nicht. Dann wenigstens
+         das, was da ist — besser als gar keine Verbindung. */
+      spurenJe[anderId] = null;
+      if (strom) strom.getTracks().forEach(function (t) {
+        try { pc.addTrack(t, strom); } catch (x) {}
       });
-    } else {
-      /* Wer keine Kamera und kein Mikrofon hat (oder beides
-         abgelehnt hat), muss trotzdem EMPFANGEN können. Ohne
-         diese zwei Zeilen enthält das Angebot keine Spur für Ton
-         und Bild — der andere schickt dann auch nichts, und der
-         Zuhörer sitzt in einem stummen, schwarzen Raum und hält
-         es für einen Fehler. */
-      try {
-        pc.addTransceiver("audio", { direction: "recvonly" });
-        pc.addTransceiver("video", { direction: "recvonly" });
-      } catch (e) {}
     }
 
     pc.onicecandidate = function (e) {
       if (e.candidate) senden({ art: "kerze", an: anderId, kerze: alsDaten(e.candidate) });
     };
+    /* Der Strom wird SELBST zusammengesetzt, Spur für Spur.
+       Sich auf e.streams[0] zu verlassen geht schief, sobald die
+       Gegenseite mit leeren Plätzen anfängt: dann gehört die Spur
+       zu gar keinem Strom, und der Kreis bliebe leer. */
     pc.ontrack = function (e) {
       var p = zustand.leute[anderId];
       if (!p) return;
-      p.strom = e.streams && e.streams[0] ? e.streams[0] : null;
+      if (!p.strom || !p.strom.addTrack) p.strom = new MediaStream();
+      try {
+        if (!p.strom.getTracks().some(function (t) { return t.id === e.track.id; })) {
+          p.strom.addTrack(e.track);
+        }
+      } catch (x) {}
+      e.track.onunmute = function () { melden(); };
+      e.track.onended = function () { melden(); };
       melden();
+    };
+    pc.oniceconnectionstatechange = function () {
+      /* „disconnected" ist oft nur ein Netzwechsel (WLAN auf Mobilfunk).
+         Ein Neustart der Wegesuche holt die Leitung zurück, ohne alles
+         abzureissen. */
+      if (pc.iceConnectionState === "disconnected" && pc.restartIce) {
+        try { pc.restartIce(); } catch (e) {}
+      }
     };
     pc.onconnectionstatechange = function () {
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
@@ -505,6 +651,16 @@ window.LiveChat = (function () {
       }
     };
     return pc;
+  }
+
+  /* Eine neue Spur in den vorhandenen Platz legen — für alle Leitungen.
+     Das ist der ganze Trick, mit dem die Kamera später dazukommt. */
+  function spurTauschen(art, spur) {
+    Object.keys(brueckeJe).forEach(function (id) {
+      var s = spurenJe[id];
+      if (!s || !s[art] || !s[art].sender) return;
+      try { s[art].sender.replaceTrack(spur || null); } catch (e) {}
+    });
   }
 
   var kerzenLager = {};
@@ -521,6 +677,7 @@ window.LiveChat = (function () {
     var pc = brueckeJe[id];
     if (pc) { try { pc.close(); } catch (e) {} delete brueckeJe[id]; }
     delete kerzenLager[id];
+    delete spurenJe[id];
   }
 
   /* --- Alles, was über die Leitung geht, muss EINFACHE Daten sein ---
@@ -611,6 +768,13 @@ window.LiveChat = (function () {
     }
 
     if (n.art === "hallo") {
+      /* Ein „hallo" von jemandem, den wir schon kennen, heisst: der
+         hat gerade neu angefangen (Neuladen, Gerätewechsel). Seine
+         alte Leitung ist damit tot — sie muss weg, sonst antwortet
+         bruecke() gleich mit der Leiche, und die Verbindung kommt
+         nie wieder zustande. Genau daran hing das „ich höre die
+         beiden nicht". */
+      if (brueckeJe[n.von]) brueckeAbbauen(n.von);
       /* Jemand ist gekommen. Zurückgrüssen, damit er uns auch
          kennt — der Gruss allein sagt ihm nur, dass wir da sind. */
       personMerken(n.von, n.name, n.bild);
@@ -662,6 +826,22 @@ window.LiveChat = (function () {
       pk.addIceCandidate(new RTCIceCandidate(n.kerze)).catch(function () {});
       return;
     }
+    if (n.art === "umzug") {
+      /* Jemand hat eine eigene Ecke aufgemacht. Merken, damit
+         „/folge Name" weiss, wohin. */
+      if (n.name && n.raum) {
+        raeumeVonAnderen[String(n.name).toLowerCase()] = String(n.raum);
+        nachrichtAnhaengen({
+          id: "u" + n.raum + n.von,
+          von: n.von, name: n.name, art: "system",
+          text: n.name + " hat die Ecke „" + (n.wie || n.raum) + "“ aufgemacht — "
+              + "mit  /folge " + n.name + "  kommst du mit.",
+          zeit: Date.now(), eigen: false, bild: n.bild || ""
+        });
+        melden();
+      }
+      return;
+    }
     if (n.art === "stumm") {
       if (zustand.leute[n.von]) {
         if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
@@ -678,6 +858,7 @@ window.LiveChat = (function () {
         von: n.von, name: n.name || "Gast",
         text: String(n.text || "").slice(0, CHAT_LAENGE),
         zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
+        art: n.chatArt || "text",
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : ""
       });
       melden();
@@ -825,6 +1006,7 @@ window.LiveChat = (function () {
 
     zustand.raum = String(raumName || "").trim() || gemerkterRaum() || neuerRaumName();
     raumMerken(zustand.raum);
+    kontoId = String(o.konto || "");
     zustand.ichId = eigeneId();
     zustand.ichName = o.name || "Gast";
     zustand.lage = "verbindet";
@@ -835,6 +1017,15 @@ window.LiveChat = (function () {
        wurde, auch nach dem Neuladen und nach dem Wiederkommen. */
     zustand.nachrichten = chatLaden(zustand.raum);
     melden();
+    /* Den gemeinsamen Verlauf nachladen — er kommt gleich dazu, ohne
+       dass das Betreten darauf warten muss. */
+    serverLaden(zustand.raum).then(function (vomServer) {
+      if (!vomServer.length) return;
+      vomServer.forEach(function (n) { n.eigen = n.von && n.von === zustand.ichId; });
+      zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
+      chatSichern();
+      melden();
+    });
 
     /* WICHTIG: die Kamera geht NICHT von selbst an.
        GEWÜNSCHT: „dass das nicht sofort zum Video springt — dass man
@@ -917,11 +1108,42 @@ window.LiveChat = (function () {
      BEDIENUNG
      ========================================================= */
   function tonUmschalten() {
-    if (!zustand.eigenerStrom) return;
+    var spuren = zustand.eigenerStrom ? zustand.eigenerStrom.getAudioTracks() : [];
+    if (!spuren.length) return mikrofonDazuholen();
     zustand.tonAn = !zustand.tonAn;
-    zustand.eigenerStrom.getAudioTracks().forEach(function (t) { t.enabled = zustand.tonAn; });
-    senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn });
+    spuren.forEach(function (t) { t.enabled = zustand.tonAn; });
+    senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild });
     melden();
+    return Promise.resolve(true);
+  }
+
+  /* Wer beim Betreten kein Mikrofon erlaubt hat, kann es hier
+     nachholen — derselbe Weg wie bei der Kamera, ohne Abriss. */
+  function mikrofonDazuholen() {
+    if (zustand.lage !== "drin") return Promise.resolve(false);
+    return navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    }).then(function (nurTon) {
+      var spur = nurTon.getAudioTracks()[0];
+      if (!spur) return false;
+      if (!zustand.eigenerStrom || !zustand.eigenerStrom.addTrack) {
+        zustand.eigenerStrom = new MediaStream();
+      }
+      zustand.eigenerStrom.getAudioTracks().forEach(function (t) {
+        try { t.stop(); zustand.eigenerStrom.removeTrack(t); } catch (e) {}
+      });
+      zustand.eigenerStrom.addTrack(spur);
+      zustand.tonAn = true;
+      zustand.kameraFehler = "";
+      spurTauschen("ton", spur);
+      senden({ art: "stumm", tonAn: true, bildAn: zustand.bildAn, bild: zustand.ichBild });
+      melden();
+      return true;
+    }).catch(function (e) {
+      zustand.kameraFehler = medienFehler(e);
+      melden();
+      return false;
+    });
   }
   /* Kamera an- und ausschalten.
      Hat man den Raum ohne Bild betreten, gibt es noch gar keine
@@ -932,31 +1154,54 @@ window.LiveChat = (function () {
      das dauert eine Sekunde und geht IMMER. Der Chat läuft
      derweil weiter, er hängt nicht an diesen Leitungen. */
   function bildUmschalten() {
-    if (zustand.eigenerStrom && zustand.eigenerStrom.getVideoTracks().length) {
-      zustand.bildAn = !zustand.bildAn;
-      zustand.eigenerStrom.getVideoTracks().forEach(function (t) { t.enabled = zustand.bildAn; });
-      senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild });
+    var spuren = zustand.eigenerStrom ? zustand.eigenerStrom.getVideoTracks() : [];
+    if (spuren.length) {
+      /* AUS heisst wirklich aus: die Spur wird abgegeben und die
+         Kamera abgeschaltet (das Lämpchen geht aus). Nur „enabled =
+         false" liesse die Kamera weiterlaufen, und der andere sähe
+         ein schwarzes Bild statt des Profilbilds. */
+      spuren.forEach(function (t) {
+        try { t.stop(); zustand.eigenerStrom.removeTrack(t); } catch (e) {}
+      });
+      spurTauschen("bild", null);
+      zustand.bildAn = false;
+      senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: false, bild: zustand.ichBild });
       melden();
       return Promise.resolve(true);
     }
     return kameraDazuholen();
   }
 
+  /* Die Kamera kommt dazu, OHNE die Leitungen abzureissen.
+     Der Platz für Bild ist von Anfang an da (siehe bruecke()); hier
+     wird nur die Spur hineingelegt. Das geht auf jedem Gerät gleich
+     und dauert keine Sekunde — vorher wurde alles neu aufgebaut, und
+     bei drei Leuten im Raum ging dabei regelmässig etwas verloren. */
   function kameraDazuholen() {
     if (zustand.lage !== "drin") return Promise.resolve(false);
-    return stromHolen(true).then(function (strom) {
-      if (!strom || !strom.getVideoTracks().length) { melden(); return false; }
-      if (zustand.eigenerStrom) {
-        try { zustand.eigenerStrom.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    return navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 480 }, height: { ideal: 480 }, facingMode: "user" }
+    }).then(function (nurBild) {
+      var spur = nurBild.getVideoTracks()[0];
+      if (!spur) return false;
+      if (!zustand.eigenerStrom || !zustand.eigenerStrom.addTrack) {
+        zustand.eigenerStrom = new MediaStream();
       }
-      zustand.eigenerStrom = strom;
+      /* eine eventuell vorhandene alte Bildspur ablösen */
+      zustand.eigenerStrom.getVideoTracks().forEach(function (t) {
+        try { t.stop(); zustand.eigenerStrom.removeTrack(t); } catch (e) {}
+      });
+      zustand.eigenerStrom.addTrack(spur);
       zustand.bildAn = true;
-      zustand.tonAn = Boolean(strom.getAudioTracks().length);
-      Object.keys(brueckeJe).forEach(brueckeAbbauen);
-      senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
-               tonAn: zustand.tonAn, bildAn: zustand.bildAn });
+      zustand.kameraFehler = "";
+      spurTauschen("bild", spur);
+      senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: true, bild: zustand.ichBild });
       melden();
       return true;
+    }).catch(function (e) {
+      zustand.kameraFehler = medienFehler(e);
+      melden();
+      return false;
     });
   }
   function grossZeigen(id) { zustand.gross = id || null; melden(); }
@@ -977,7 +1222,7 @@ window.LiveChat = (function () {
   var BILD_KANTE = 640;
   var BILD_HOECHST = 140000;      // Zeichen der Datenadresse
 
-  function bildVerkleinern(datei) {
+  function bildVerkleinern(datei, kante) {
     return new Promise(function (fertig, scheitern) {
       if (!datei || !/^image\//.test(datei.type || "")) {
         scheitern(new Error("Das ist kein Bild.")); return;
@@ -994,7 +1239,7 @@ window.LiveChat = (function () {
         var bild = new Image();
         bild.onerror = function () { scheitern(new Error("Das Bild liess sich nicht öffnen.")); };
         bild.onload = function () {
-          var k = Math.min(1, BILD_KANTE / Math.max(bild.width, bild.height));
+          var k = Math.min(1, (kante || BILD_KANTE) / Math.max(bild.width, bild.height));
           var b = Math.round(bild.width * k), h = Math.round(bild.height * k);
           var tafel = document.createElement("canvas");
           tafel.width = b; tafel.height = h;
@@ -1018,7 +1263,7 @@ window.LiveChat = (function () {
 
   function bildSenden(quelle, text) {
     var n = {
-      id: String(Date.now()) + zustand.ichId,
+      id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
       text: String(text || "").slice(0, CHAT_LAENGE),
       bildImChat: String(quelle || ""),
@@ -1026,6 +1271,7 @@ window.LiveChat = (function () {
     };
     if (!n.bildImChat) return false;
     nachrichtAnhaengen(n);
+    serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
              bild: zustand.ichBild, bildImChat: n.bildImChat });
     melden();
@@ -1044,15 +1290,184 @@ window.LiveChat = (function () {
     return bildSenden(a, text);
   }
 
+  /* =========================================================
+     DIE CHATBEFEHLE
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Ich möchte solche Funktionen haben wie früher im
+     Chat üblich waren. /me, dass man schreien kann, dass man eine
+     einzelne Person anflüstern kann und das sehen nur die beiden.
+     Und dass man aus dem Raum heraus einen eigenen Raum erzeugt
+     und jemand anders dieser Person folgen kann — so wie früher
+     bei Kieler Hut."
+
+     Alles mit demselben Muster: ein Schrägstrich, ein Wort, der
+     Rest ist Text. Was nicht erkannt wird, geht als ganz normale
+     Nachricht raus — so verschwindet nichts, nur weil jemand
+     einen Schrägstrich tippt.
+     ========================================================= */
+  var BEFEHLE = [
+    { wort: "me",       hat: "text", hilfe: "/me lacht laut  →  „Emmy lacht laut“" },
+    { wort: "schrei",   hat: "text", hilfe: "/schrei Hallo!  →  in Großbuchstaben, für alle" },
+    { wort: "fluester", hat: "wer+text", hilfe: "/fluester Alex Na du?  →  nur ihr beide seht es" },
+    { wort: "herz",     hat: "wer",  hilfe: "/herz Alex  →  schickt ein Herz" },
+    { wort: "winke",    hat: "wer?", hilfe: "/winke  oder  /winke Alex" },
+    { wort: "knuddel",  hat: "wer",  hilfe: "/knuddel Alex" },
+    { wort: "lach",     hat: "",     hilfe: "/lach" },
+    { wort: "raum",     hat: "text", hilfe: "/raum Leseecke  →  macht einen eigenen Raum auf" },
+    { wort: "folge",    hat: "wer",  hilfe: "/folge Alex  →  geht in den Raum, den Alex aufgemacht hat" },
+    { wort: "hilfe",    hat: "",     hilfe: "/hilfe  →  diese Liste" }
+  ];
+  function befehlsliste() { return BEFEHLE.map(function (b) { return b.hilfe; }); }
+
+  /* Wer heisst wie? Die Namen im Raum, damit /fluester Alex den
+     richtigen findet — gross oder klein geschrieben, egal. */
+  function personNachName(name) {
+    var k = String(name || "").trim().toLowerCase();
+    if (!k) return null;
+    var ids = Object.keys(zustand.leute);
+    for (var i = 0; i < ids.length; i++) {
+      var p = zustand.leute[ids[i]];
+      if (String(p.name || "").toLowerCase() === k) return p;
+    }
+    for (var j = 0; j < ids.length; j++) {
+      var q = zustand.leute[ids[j]];
+      if (String(q.name || "").toLowerCase().indexOf(k) === 0) return q;
+    }
+    return null;
+  }
+
+  var raeumeVonAnderen = {};        // Name (klein) -> Raumname
+
+  /* Die Kennung MUSS eindeutig sein. Aus Zeit + eigener Kennung
+     allein war sie das nicht: zwei Zeilen in derselben Millisekunde
+     bekamen dieselbe, und die zweite wurde als Doppelte verworfen.
+     Beim schnellen Tippen und bei Befehlen hintereinander verschwand
+     dadurch stillschweigend Text. */
+  var laufendeNummer = 0;
+  function neueNachrichtId() {
+    laufendeNummer += 1;
+    return String(Date.now()) + "-" + laufendeNummer + "-" + zustand.ichId;
+  }
+
+  function eigeneZeile(art, text, an) {
+    var n = {
+      id: neueNachrichtId(),
+      von: zustand.ichId, name: zustand.ichName,
+      text: text, art: art, zeit: Date.now(), eigen: true,
+      bild: zustand.ichBild, an: an || ""
+    };
+    nachrichtAnhaengen(n);
+    return n;
+  }
+
+  function befehlAusfuehren(roh) {
+    var m = /^\/([a-zäöüß]+)\s*([\s\S]*)$/i.exec(roh.trim());
+    if (!m) return false;
+    var wort = m[1].toLowerCase(), rest = (m[2] || "").trim();
+    var art = null;
+    for (var i = 0; i < BEFEHLE.length; i++) if (BEFEHLE[i].wort === wort) art = BEFEHLE[i];
+    /* Kurzformen, wie man sie von früher kennt. */
+    if (!art && (wort === "w" || wort === "whisper" || wort === "flüster")) art = { wort: "fluester" };
+    if (!art && (wort === "shout" || wort === "schreien")) art = { wort: "schrei" };
+    if (!art && wort === "help") art = { wort: "hilfe" };
+    if (!art) return false;
+
+    if (art.wort === "hilfe") {
+      eigeneZeile("system", "Das kannst du tippen:\n" + befehlsliste().join("\n"));
+      melden();
+      return true;
+    }
+    if (art.wort === "me") {
+      if (!rest) return true;
+      var n1 = eigeneZeile("aktion", zustand.ichName + " " + rest);
+      serverSichern({ name: n1.name, bild: n1.bild, text: n1.text, art: "aktion" });
+      senden({ art: "text", id: n1.id, name: n1.name, text: n1.text, zeit: n1.zeit,
+               bild: zustand.ichBild, chatArt: "aktion" });
+      melden();
+      return true;
+    }
+    if (art.wort === "schrei") {
+      if (!rest) return true;
+      var laut = rest.toUpperCase();
+      var n2 = eigeneZeile("ruf", laut);
+      serverSichern({ name: n2.name, bild: n2.bild, text: laut, art: "ruf" });
+      senden({ art: "text", id: n2.id, name: n2.name, text: laut, zeit: n2.zeit,
+               bild: zustand.ichBild, chatArt: "ruf" });
+      melden();
+      return true;
+    }
+    if (art.wort === "fluester") {
+      var t = /^(\S+)\s+([\s\S]+)$/.exec(rest);
+      if (!t) { eigeneZeile("system", "So geht es: /fluester Alex Na du?"); melden(); return true; }
+      var ziel = personNachName(t[1]);
+      if (!ziel) {
+        eigeneZeile("system", "„" + t[1] + "“ ist gerade nicht im Raum.");
+        melden(); return true;
+      }
+      /* Geflüstertes geht NICHT in die Tabelle — es sollen wirklich
+         nur die beiden sehen, auch später. */
+      var n3 = eigeneZeile("fluester", "an " + ziel.name + ": " + t[2], ziel.id);
+      senden({ art: "text", an: ziel.id, id: n3.id, name: n3.name, text: t[2],
+               zeit: n3.zeit, bild: zustand.ichBild, chatArt: "fluester" });
+      melden();
+      return true;
+    }
+    if (art.wort === "herz" || art.wort === "knuddel" || art.wort === "winke" || art.wort === "lach") {
+      var satz = { herz: "schickt %s ein Herz \u2764\ufe0f",
+                   knuddel: "knuddelt %s",
+                   winke: "winkt %s",
+                   lach: "lacht" }[art.wort];
+      var wem = rest ? (personNachName(rest) || { name: rest }) : null;
+      var text = zustand.ichName + " " + satz.replace("%s", wem ? wem.name : "in die Runde").trim();
+      var n4 = eigeneZeile("aktion", text);
+      serverSichern({ name: n4.name, bild: n4.bild, text: text, art: "aktion" });
+      senden({ art: "text", id: n4.id, name: n4.name, text: text, zeit: n4.zeit,
+               bild: zustand.ichBild, chatArt: "aktion" });
+      melden();
+      return true;
+    }
+    if (art.wort === "raum") {
+      if (!rest) { eigeneZeile("system", "So geht es: /raum Leseecke"); melden(); return true; }
+      var sauber = rest.toLowerCase().replace(/[^a-z0-9äöüß]+/g, "-").replace(/^-|-$/g, "").slice(0, 32);
+      if (!sauber) { eigeneZeile("system", "Der Name geht nicht. Nimm Buchstaben und Zahlen."); melden(); return true; }
+      var neuerRaum = "ecke-" + sauber;
+      /* Den anderen sagen, wohin man geht — sonst kann niemand folgen. */
+      senden({ art: "umzug", name: zustand.ichName, raum: neuerRaum, wie: rest });
+      var merkName = zustand.ichName, merkBild = zustand.ichBild, merkKonto = kontoId;
+      verlassen();
+      betreten(neuerRaum, { name: merkName, bild: merkBild, konto: merkKonto, mitBild: false })
+        .then(function () {
+          eigeneZeile("system", "Du hast die Ecke „" + rest + "“ aufgemacht. "
+            + "Die anderen kommen mit  /folge " + merkName);
+          melden();
+        });
+      return true;
+    }
+    if (art.wort === "folge") {
+      var wohin = raeumeVonAnderen[String(rest).trim().toLowerCase()];
+      if (!wohin) {
+        eigeneZeile("system", "„" + rest + "“ hat hier keine eigene Ecke aufgemacht.");
+        melden(); return true;
+      }
+      var nm = zustand.ichName, bd = zustand.ichBild, kt = kontoId;
+      verlassen();
+      betreten(wohin, { name: nm, bild: bd, konto: kt, mitBild: false });
+      return true;
+    }
+    return false;
+  }
+
   function schreiben(text) {
     var t = String(text || "").trim().slice(0, CHAT_LAENGE);
     if (!t) return;
+    if (t.charAt(0) === "/" && befehlAusfuehren(t)) return;
     var n = {
-      id: String(Date.now()) + zustand.ichId,
+      id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
       text: t, zeit: Date.now(), eigen: true, bild: zustand.ichBild
     };
     nachrichtAnhaengen(n);
+    serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit, bild: zustand.ichBild });
     melden();
   }
@@ -1071,10 +1486,13 @@ window.LiveChat = (function () {
     schreiben: schreiben,
     bildSetzen: bildSetzen,
     fotoSenden: fotoSenden,
+    bildVerkleinern: bildVerkleinern,
     gifSenden: gifSenden,
     eigenesBild: function () { return zustand.ichBild; },
     kameraDazuholen: kameraDazuholen,
+    mikrofonDazuholen: mikrofonDazuholen,
     chatLeeren: chatLeeren,
+    befehlsliste: befehlsliste,
     praesenzZuhoeren: praesenzZuhoeren,
     praesenzDa: function () { return praesenzDa; },
     beiPraesenz: beiPraesenz,

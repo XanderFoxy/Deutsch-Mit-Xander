@@ -3986,6 +3986,12 @@ const Backend = (function () {
   }
 
   return {
+    /* Der ANGEMELDETE Zugang. Das Klassenzimmer braucht ihn, um den
+       gemeinsamen Chatverlauf zu lesen und zu schreiben: der eigene
+       Zugang im Livechat traegt keine Anmeldung, und ohne Anmeldung
+       laesst die Datenbank (Zeilenschutz) niemanden an die Tabelle.
+       Nur lesen — nie ueberschreiben. */
+    zugang: () => client,
     isConfigured,
     restoreSession,
     signUp,
