@@ -12712,6 +12712,11 @@
           </div>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           <form class="lc-chat-fuss" id="lcForm" autocomplete="off">
+            <input type="file" id="lcFoto" accept="image/*" hidden>
+            <button type="button" class="lc-chat-anhang" id="lcFotoKnopf"
+                    title="Ein Foto schicken" aria-label="Ein Foto schicken">📎</button>
+            <button type="button" class="lc-chat-anhang" id="lcGifKnopf"
+                    title="Ein GIF schicken (Adresse von giphy.com)" aria-label="Ein GIF schicken">GIF</button>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben">
             <button type="submit" class="lc-chat-senden" id="lcSenden" aria-label="Senden" disabled>➤</button>
@@ -12866,9 +12871,29 @@
         nameZeile.textContent = n.name;
         b.appendChild(nameZeile);
       }
-      const textZeile = document.createElement("span");
-      textZeile.textContent = n.text;
-      b.appendChild(textZeile);
+      /* Ein Bild wird als <img> gebaut und seine Adresse gesetzt —
+         NIE über innerHTML. Die Adresse kommt von einem fremden Gerät;
+         als Zeichenkette eingesetzt liesse sich damit Fremdes in die
+         Seite schreiben. Als Attribut ist sie nur eine Adresse. */
+      if (n.bildImChat) {
+        const bild = document.createElement("img");
+        bild.className = "lc-blase-bild";
+        bild.alt = n.text || "Bild im Chat";
+        bild.loading = "lazy";
+        bild.src = n.bildImChat;
+        bild.addEventListener("click", () => window.open(n.bildImChat, "_blank", "noopener"));
+        b.appendChild(bild);
+      } else if (n.bildWeg) {
+        const weg = document.createElement("span");
+        weg.className = "lc-blase-bildweg";
+        weg.textContent = "🖼️ Bild — nicht mehr gespeichert";
+        b.appendChild(weg);
+      }
+      if (n.text) {
+        const textZeile = document.createElement("span");
+        textZeile.textContent = n.text;
+        b.appendChild(textZeile);
+      }
       const zeitZeile = document.createElement("span");
       zeitZeile.className = "lc-blase-zeit";
       zeitZeile.textContent = new Date(n.zeit).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -12996,6 +13021,31 @@
         const ok = LiveChat.bildSetzen(eingabe);
         if (!ok) showToast("Das war keine Bildadresse — sie muss mit https:// anfangen.");
         else showToast(eingabe.trim() ? "🖼️ Profilbild gesetzt" : "Profilbild entfernt");
+      });
+      const fotoFeld = area.querySelector("#lcFoto");
+      area.querySelector("#lcFotoKnopf")?.addEventListener("click", () => fotoFeld?.click());
+      fotoFeld?.addEventListener("change", async () => {
+        const datei = fotoFeld.files && fotoFeld.files[0];
+        fotoFeld.value = "";
+        if (!datei) return;
+        const feld = document.getElementById("lcFeld");
+        const text = feld ? feld.value.trim() : "";
+        try {
+          await LiveChat.fotoSenden(datei, text);
+          if (feld) { feld.value = ""; document.getElementById("lcSenden").disabled = true; }
+        } catch (e) {
+          showToast("📎 " + (e && e.message ? e.message : "Das Bild ging nicht."));
+        }
+      });
+      area.querySelector("#lcGifKnopf")?.addEventListener("click", () => {
+        const a = window.prompt(
+          "Adresse eines GIFs (auf giphy.com das Bild mit Rechtsklick „Bildadresse kopieren“ —\n"
+          + "die Adresse endet auf .gif).");
+        if (!a) return;
+        const feld = document.getElementById("lcFeld");
+        const ok = LiveChat.gifSenden(a, feld ? feld.value.trim() : "");
+        if (!ok) { showToast("Das war keine Adresse — sie muss mit https:// anfangen."); return; }
+        if (feld) { feld.value = ""; document.getElementById("lcSenden").disabled = true; }
       });
       area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
         if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;

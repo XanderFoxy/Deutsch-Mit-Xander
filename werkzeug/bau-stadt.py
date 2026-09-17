@@ -138,14 +138,17 @@ def schild(sx, sy, text, breite=None):
 
 # ------------------------------------------------------------- Die Viertel
 VIERTEL = [
-    # id, deutsch, italienisch, englisch, weltmitte, lupe
-    ("sv_innenstadt", "die Innenstadt",  ( 7.2,  7.2)),
-    ("sv_behoerden",  "das Behördenviertel", ( 1.0, 27.4)),
-    ("sv_kultur",     "das Kulturviertel",   (27.4,  1.0)),
-    ("sv_wohnen",     "das Wohnviertel",     (13.4, 43.0)),
-    ("sv_gewerbe",    "das Gewerbegebiet",   (42.0, 12.4)),
-    ("sv_rand",       "der Stadtrand",       (22.2, 22.2)),
-    ("sv_gruen",      "am Wasser und im Grünen", (38.2, 38.2)),
+    # id, deutsch, Weltmitte
+    # Die Innenstadt liegt in der MITTE — dorthin laufen alle Strassen
+    # zusammen, so ist eine Stadt gebaut. Der Stadtrand liegt oben am
+    # Bildrand, wo die Stadt aufhoert, und „im Gruenen" unten am Fluss.
+    ("sv_innenstadt", "die Innenstadt",        (20.2, 20.2)),
+    ("sv_rand",       "der Stadtrand",         ( 4.8,  4.8)),
+    ("sv_behoerden",  "das Behördenviertel",   (-1.2, 26.8)),
+    ("sv_kultur",     "das Kulturviertel",     (26.8, -1.2)),
+    ("sv_wohnen",     "das Wohnviertel",       (13.9, 44.5)),
+    ("sv_gewerbe",    "das Gewerbegebiet",     (44.5, 13.9)),
+    ("sv_gruen",      "am Wasser und im Grünen", (30.2, 52.2)),
 ]
 
 def bau_innenstadt(cx, cy):
@@ -304,17 +307,17 @@ def kulisse():
     s = []
     s.append('<rect x="0" y="0" width="%d" height="%d" fill="#bfe0ef"/>' % (BREITE, HOEHE))
     # Der Boden als grosse Raute
-    rand = [P(-4, -4), P(46, -4), P(46, 47), P(-4, 47)]
+    rand = [P(-3, -3), P(50, -3), P(50, 52), P(-3, 52)]
     s.append('<path d="%s" fill="%s"/>' % (pfad(rand), G["wiese"]))
     s.append('<path d="%s" fill="none" stroke="%s" stroke-width="1.6" '
              'opacity="0.55"/>' % (pfad(rand), G["wiese_d"]))
     # Ein paar hellere Wiesenfelder, damit der Boden nicht tot wirkt
-    for x0, y0, bx, by, f in [(-2, 10, 9, 9, G["wiese_h"]), (30, -2, 10, 8, G["wiese_h"]),
-                              (8, 30, 11, 10, G["wiese_h"]), (33, 26, 9, 12, G["wiese_h"])]:
+    for x0, y0, bx, by, f in [(-1, 12, 9, 9, G["wiese_h"]), (33, -1, 10, 8, G["wiese_h"]),
+                              (6, 34, 11, 10, G["wiese_h"]), (37, 28, 9, 12, G["wiese_h"])]:
         s.append('<path d="%s" fill="%s" opacity="0.5"/>' % (
             pfad([P(x0, y0), P(x0+bx, y0), P(x0+bx, y0+by), P(x0, y0+by)]), f))
     # Der Fluss laeuft quer durch — er trennt das Gruene vom Rest
-    fluss = [P(-4, 33), P(8, 31), P(18, 33.6), P(28, 37), P(40, 38), P(46, 40)]
+    fluss = [P(-3, 38), P(9, 37), P(20, 40), P(30, 45), P(41, 46), P(50, 47)]
     s.append('<path d="%s" fill="none" stroke="%s" stroke-width="13" '
              'stroke-linejoin="round" stroke-linecap="round"/>'
              % (pfad(fluss, zu=False), G["wasser_d"]))
@@ -324,35 +327,39 @@ def kulisse():
 
     # Die Strassen. Sie verbinden die Viertel WIRKLICH miteinander —
     # vorher war die Fahrbahn ein Muster ohne Ziel.
-    mitte = (22.2, 22.2)
-    for ziel in [(7.2, 7.2), (1.0, 27.4), (27.4, 1.0), (13.4, 43.0),
-                 (42.0, 12.4), (38.2, 38.2)]:
+    mitte = (20.2, 20.2)
+    for ziel in [(4.8, 4.8), (-1.2, 26.8), (26.8, -1.2), (13.9, 44.5),
+                 (44.5, 13.9), (30.2, 52.2)]:
         s.append(strasse([mitte, ziel], 1.1))
-    s.append(strasse([(22.2, 22.2), (24.0, 46.5)], 1.3))   # Zufahrt von unten
-    s.append(strasse([(1.0, 27.4), (13.4, 43.0)], 0.9))
-    s.append(strasse([(27.4, 1.0), (42.0, 12.4)], 0.9))
-    s.append(strasse([(7.2, 7.2), (1.0, 27.4)], 0.9))
+    s.append(strasse([(30.2, 52.2), (46.0, 40.0)], 1.2))    # Zufahrt zum Wegweiser
+    s.append(strasse([(-1.2, 26.8), (13.9, 44.5)], 0.9))    # Ring aussen herum
+    s.append(strasse([(26.8, -1.2), (44.5, 13.9)], 0.9))
+    s.append(strasse([(4.8, 4.8), (-1.2, 26.8)], 0.9))
+    s.append(strasse([(4.8, 4.8), (26.8, -1.2)], 0.9))
+    s.append(strasse([(13.9, 44.5), (30.2, 52.2)], 0.9))
+    s.append(strasse([(44.5, 13.9), (46.0, 40.0)], 0.9))
 
     # Ein paar Baeume als Strassengruen
-    for wx, wy, g in [(14, 2, 0.8), (33, 6, 0.75), (3, 16, 0.8), (36, 20, 0.75),
-                      (10, 34, 0.7), (30, 30, 0.75), (44, 30, 0.8), (18, 12, 0.7)]:
+    for wx, wy, g in [(12, 1, 0.8), (36, 5, 0.75), (1, 14, 0.8), (39, 22, 0.75),
+                      (8, 36, 0.7), (25, 33, 0.75), (47, 32, 0.8), (16, 10, 0.7),
+                      (33, 8, 0.7), (6, 26, 0.72), (42, 44, 0.75)]:
         s.append(baum(wx, wy, g, "#5a9a4e"))
 
     # Ueberschrift
-    s.append('<rect x="14" y="12" width="150" height="30" rx="8" fill="%s" '
+    s.append('<rect x="10" y="8" width="118" height="24" rx="7" fill="%s" '
              'opacity="0.94"/>' % G["schild"])
-    s.append('<text x="30" y="33" font-family="system-ui,-apple-system,Segoe UI,'
-             'Roboto,sans-serif" font-size="18" font-weight="800" fill="#fff" '
-             'letter-spacing="0.6">DIE STADT</text>')
-    s.append('<text x="200" y="30" font-family="system-ui,-apple-system,Segoe UI,'
-             'Roboto,sans-serif" font-size="9.4" font-weight="700" fill="#2d4356">'
+    s.append('<text x="22" y="25" font-family="system-ui,-apple-system,Segoe UI,'
+             'Roboto,sans-serif" font-size="14" font-weight="800" fill="#fff" '
+             'letter-spacing="0.5">DIE STADT</text>')
+    s.append('<text x="136" y="24" font-family="system-ui,-apple-system,Segoe UI,'
+             'Roboto,sans-serif" font-size="8.6" font-weight="700" fill="#2d4356">'
              'Tippe ein Viertel an — du gehst hinein.</text>')
     return "".join(s)
 
 def wegweiser():
     """Der hoelzerne Wegweiser am Eingang der Stadt, mit sieben Armen.
     Er steht dort, wo die Zufahrt die Karte betritt."""
-    sx, sy = P(25.6, 45.4, 0)
+    sx, sy = P(47.5, 38.5, 0)
     s = ['<ellipse cx="%s" cy="%s" rx="7" ry="2.6" fill="#000" opacity="0.14"/>'
          % (z(sx), z(sy))]
     s.append('<path d="M%s %s L%s %s" stroke="%s" stroke-width="2.6" '
@@ -418,7 +425,7 @@ def einbauen():
             t["y"] = round(oy, 1)
             t["kunst"] = teile[t["id"]]
     if not any(t["id"] == "wegweiser" for t in d["teile"]):
-        wx, wy = 25.6, 45.4
+        wx, wy = 47.5, 38.5
         ox, oy = P(wx, wy, 0)
         d["teile"].append({
             "id": "wegweiser", "de": "der Wegweiser", "syl": "der Weg-wei-ser",

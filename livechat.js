@@ -311,12 +311,38 @@ window.LiveChat = (function () {
       return Array.isArray(l) ? l.slice(-CHAT_VERLAUF) : [];
     } catch (e) { return []; }
   }
+  /* Beim Sichern werden ALTE Bilder herausgenommen: der Platz im
+     Gerät ist auf wenige Megabyte begrenzt, und sechzig Fotos zu je
+     achtzig Kilobyte sprengen ihn. Die letzten sechs Bilder bleiben,
+     ältere werden zu einem Vermerk — der Text bleibt vollständig. */
+  var BILDER_BEHALTEN = 6;
   function chatSichern() {
     if (!zustand.raum) return;
+    var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
+    var bilderGesehen = 0;
+    var sparsam = liste.slice().reverse().map(function (n) {
+      if (!n.bildImChat) return n;
+      bilderGesehen++;
+      if (bilderGesehen <= BILDER_BEHALTEN) return n;
+      var kopie = {};
+      Object.keys(n).forEach(function (k) { kopie[k] = n[k]; });
+      kopie.bildImChat = "";
+      kopie.bildWeg = true;
+      return kopie;
+    }).reverse();
     try {
-      localStorage.setItem(chatSchluessel(zustand.raum),
-        JSON.stringify(zustand.nachrichten.slice(-CHAT_VERLAUF)));
-    } catch (e) {}
+      localStorage.setItem(chatSchluessel(zustand.raum), JSON.stringify(sparsam));
+    } catch (e) {
+      /* Kein Platz mehr? Dann wenigstens den Text retten. */
+      try {
+        localStorage.setItem(chatSchluessel(zustand.raum), JSON.stringify(
+          sparsam.map(function (n) {
+            var k = {}; Object.keys(n).forEach(function (x) { k[x] = n[x]; });
+            k.bildImChat = ""; if (n.bildImChat) k.bildWeg = true;
+            return k;
+          })));
+      } catch (e2) {}
+    }
   }
   function chatLeeren() {
     zustand.nachrichten = [];
@@ -646,11 +672,13 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "text") {
+      if (!n.text && !n.bildImChat) return;
       nachrichtAnhaengen({
         id: n.id || String(Date.now()) + n.von,
         von: n.von, name: n.name || "Gast",
         text: String(n.text || "").slice(0, CHAT_LAENGE),
-        zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || ""
+        zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
+        bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : ""
       });
       melden();
       return;
@@ -933,6 +961,89 @@ window.LiveChat = (function () {
   }
   function grossZeigen(id) { zustand.gross = id || null; melden(); }
 
+  /* --- Bilder und GIFs im Chat ----------------------------------
+     GEWÜNSCHT: „dass man Bilder im Chat senden kann, Fotos — oder
+     das mit den GIFs."
+
+     Ein Foto geht denselben Weg wie ein Satz: über den Kanal, an alle
+     im Raum. Damit das gutgeht, wird es vorher im Gerät verkleinert —
+     ein Kanalpaket darf nicht beliebig gross sein, und ein Foto vom
+     Telefon hat schnell vier Megabyte. 640 Pixel lange Kante und
+     JPEG-Qualität 0,6 ergeben in aller Regel 30 bis 80 Kilobyte.
+
+     Ein GIF wird NICHT verkleinert — es wird als Adresse verschickt.
+     Das ist der Grund, warum es sich überhaupt bewegt: als Standbild
+     durch die Verkleinerung wäre es keins mehr. */
+  var BILD_KANTE = 640;
+  var BILD_HOECHST = 140000;      // Zeichen der Datenadresse
+
+  function bildVerkleinern(datei) {
+    return new Promise(function (fertig, scheitern) {
+      if (!datei || !/^image\//.test(datei.type || "")) {
+        scheitern(new Error("Das ist kein Bild.")); return;
+      }
+      /* Ein bewegtes GIF wuerde beim Verkleinern zum Standbild.
+         Es geht deshalb nur als Adresse — siehe bildSetzen(). */
+      if (/gif$/i.test(datei.type)) {
+        scheitern(new Error("Bewegte GIFs bitte über den GIF-Knopf als Adresse schicken — "
+                          + "beim Verkleinern würden sie zum Standbild.")); return;
+      }
+      var leser = new FileReader();
+      leser.onerror = function () { scheitern(new Error("Die Datei liess sich nicht lesen.")); };
+      leser.onload = function () {
+        var bild = new Image();
+        bild.onerror = function () { scheitern(new Error("Das Bild liess sich nicht öffnen.")); };
+        bild.onload = function () {
+          var k = Math.min(1, BILD_KANTE / Math.max(bild.width, bild.height));
+          var b = Math.round(bild.width * k), h = Math.round(bild.height * k);
+          var tafel = document.createElement("canvas");
+          tafel.width = b; tafel.height = h;
+          tafel.getContext("2d").drawImage(bild, 0, 0, b, h);
+          var guete = 0.62, daten = tafel.toDataURL("image/jpeg", guete);
+          while (daten.length > BILD_HOECHST && guete > 0.3) {
+            guete -= 0.1;
+            daten = tafel.toDataURL("image/jpeg", guete);
+          }
+          if (daten.length > BILD_HOECHST) {
+            scheitern(new Error("Das Bild ist selbst verkleinert noch zu gross."));
+            return;
+          }
+          fertig(daten);
+        };
+        bild.src = leser.result;
+      };
+      leser.readAsDataURL(datei);
+    });
+  }
+
+  function bildSenden(quelle, text) {
+    var n = {
+      id: String(Date.now()) + zustand.ichId,
+      von: zustand.ichId, name: zustand.ichName,
+      text: String(text || "").slice(0, CHAT_LAENGE),
+      bildImChat: String(quelle || ""),
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild
+    };
+    if (!n.bildImChat) return false;
+    nachrichtAnhaengen(n);
+    senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
+             bild: zustand.ichBild, bildImChat: n.bildImChat });
+    melden();
+    return true;
+  }
+
+  function fotoSenden(datei, text) {
+    return bildVerkleinern(datei).then(function (daten) {
+      return bildSenden(daten, text);
+    });
+  }
+
+  function gifSenden(adresse, text) {
+    var a = String(adresse || "").trim().slice(0, 600);
+    if (!/^https?:\/\//i.test(a)) return false;
+    return bildSenden(a, text);
+  }
+
   function schreiben(text) {
     var t = String(text || "").trim().slice(0, CHAT_LAENGE);
     if (!t) return;
@@ -959,6 +1070,8 @@ window.LiveChat = (function () {
     grossZeigen: grossZeigen,
     schreiben: schreiben,
     bildSetzen: bildSetzen,
+    fotoSenden: fotoSenden,
+    gifSenden: gifSenden,
     eigenesBild: function () { return zustand.ichBild; },
     kameraDazuholen: kameraDazuholen,
     chatLeeren: chatLeeren,

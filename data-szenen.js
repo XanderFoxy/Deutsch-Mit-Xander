@@ -1126,7 +1126,7 @@ window.DMA_SZENEN = [
   "thema": "Alltag",
   "breite": 380,
   "hoehe": 290,
-  "zahl": 7,
+  "zahl": 8,
   "lupen": [
    "viertel_behoerden",
    "viertel_gewerbe",
