@@ -12642,6 +12642,64 @@
      Alles über EINEN Weg, damit „im Wechsel“ nicht in zwei
      Abspielern gleichzeitig endet. */
   let aussprSpielt = false;
+  /* =================================================================
+     DIE AUFNAHMEN MIT ALEX' EIGENER STIMME
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Dass du das Wörterbuch mit dem ersten Niveau mal
+     anfangen kannst" — mit seiner Stimme statt der Maschinenstimme.
+
+     Die A1-Wörter liegen als fertige MP3 im Ordner aussprache/a1/.
+     Der Dateiname folgt AUS DEM WORT: „die Tasse" wird gesprochen als
+     „Tasse" und liegt als tasse.mp3. Deshalb braucht es keine
+     Zuordnungstabelle — nur eine Liste, WELCHE Wörter schon
+     aufgenommen sind, und die wird erst geladen, wenn jemand den
+     Aussprache-Trainer öffnet. Wer nur Vokabeln anschaut, lädt sie nie.
+
+     Ist ein Wort nicht dabei, spricht wie bisher die Maschinenstimme.
+     Es geht also nie etwas kaputt, solange die Sammlung wächst.
+     ================================================================= */
+  let aussprTonListe = null;     /* Set der vorhandenen Dateinamen */
+  let aussprTonRuf = null;
+
+  function aussprTonStamm(t) {
+    return String(t || "").toLowerCase()
+      .replace(/\u00e4/g, "ae").replace(/\u00f6/g, "oe").replace(/\u00fc/g, "ue")
+      .replace(/\u00df/g, "ss")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 34);
+  }
+  /* Genau dieselbe Rechnung steht in werkzeug/a1-wortliste.js. Ändert
+     sich eine, muss die andere mit — deshalb steht es hier dabei. */
+  function aussprTonLaden() {
+    if (aussprTonRuf) return aussprTonRuf;
+    aussprTonRuf = brDatei("data-aussprache-ton.js").then(() => {
+      const roh = window.DMA_TON_A1;
+      aussprTonListe = new Set(roh ? String(roh).split("|").filter(Boolean) : []);
+      return aussprTonListe;
+    }).catch(() => { aussprTonListe = new Set(); return aussprTonListe; });
+    return aussprTonRuf;
+  }
+  function aussprTonWeg(w) {
+    const stamm = aussprTonStamm(aussprSprechtext(w));
+    if (!stamm || !aussprTonListe || !aussprTonListe.has(stamm)) return null;
+    return "aussprache/a1/" + stamm + ".mp3";
+  }
+  /* Spielt die Datei ab und sagt ehrlich NEIN, wenn sie nicht kommt —
+     dann übernimmt die Maschinenstimme. Ein stiller Knopf wäre das
+     Schlimmste von beidem. */
+  function aussprTonSpielen(weg, tempo) {
+    return new Promise((fertig) => {
+      const a = new Audio(weg + "?v=" + (window.DMA_VERSION || "1"));
+      a.playbackRate = tempo || 1;
+      let erledigt = false;
+      const schluss = (ok) => { if (erledigt) return; erledigt = true; fertig(ok); };
+      a.onended = () => schluss(true);
+      a.onerror = () => schluss(false);
+      /* Kommt binnen vier Sekunden nichts, gilt sie als nicht da. */
+      setTimeout(() => schluss(erledigt), 4000);
+      a.play().catch(() => schluss(false));
+    });
+  }
+
   function aussprPufferSpielen(puffer, tempo) {
     return new Promise((fertig) => {
       if (!puffer) { fertig(); return; }
@@ -12661,9 +12719,20 @@
     aussprSpielt = true;
     const knoepfe = document.querySelectorAll("[data-ausspr-spiel]");
     knoepfe.forEach((b) => { b.disabled = true; });
-    const original = () => aussprLetztesOriginal
-      ? aussprPufferSpielen(aussprLetztesOriginal.puffer, aussprTempo)
-      : new Promise((f) => { Core.speak(aussprSprechtext(w), imItalienischraum() ? "it" : "de"); setTimeout(f, 1200); });
+    /* Erst die eigene Aufnahme, dann der Puffer aus dieser Sitzung,
+       zuletzt die Maschinenstimme. */
+    const original = async () => {
+      if (aussprLetztesOriginal) return aussprPufferSpielen(aussprLetztesOriginal.puffer, aussprTempo);
+      if (!imItalienischraum()) {
+        await aussprTonLaden();
+        const weg = aussprTonWeg(w);
+        if (weg && await aussprTonSpielen(weg, aussprTempo)) return;
+      }
+      return new Promise((f) => {
+        Core.speak(aussprSprechtext(w), imItalienischraum() ? "it" : "de");
+        setTimeout(f, 1200);
+      });
+    };
     const eigene = () => aussprLetzteEigene
       ? aussprPufferSpielen(aussprLetzteEigene.puffer, aussprTempo)
       : Promise.resolve();
@@ -19121,6 +19190,15 @@
        ist — und auch, ob er gerade im Klassenzimmer ist?"
        Ja. Damit das nicht nur behauptet ist, lässt sich die Liste hier
        mit ausgedachten Leuten zeichnen und nachsehen. */
+    /* Die eigene Stimme: Name aus dem Wort, Liste nachladen, abspielen. */
+    tonStamm: function (w) { return aussprTonStamm(aussprSprechtext(w)); },
+    tonLaden: function () { return aussprTonLaden(); },
+    tonWeg: function (w) { return aussprTonWeg(w); },
+    tonSpielen: async function (w) {
+      await aussprTonLaden();
+      const weg = aussprTonWeg(w);
+      return weg ? aussprTonSpielen(weg, 1) : false;
+    },
     /* Ein einzelnes Bilderrätsel-Bild, an einem bestimmten Platz, mit
        fester Figur — damit sich nachsehen lässt, OB die Figur wirklich
        dort steht, wo der Satz behauptet. */
