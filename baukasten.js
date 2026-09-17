@@ -669,7 +669,13 @@ const Baukasten = (function () {
       + '" class="bk-svg" role="img" aria-label="Die gebaute Situation">'
       + (window.DMA_FIGUR_DEFS || "")
       + '<g class="bk-kulisse">' + sz.kulisse + "</g>"
-      + (sz.teile || []).map((t) =>
+      /* Derselbe Grund wie im Bilderraetsel: auf dem Stuhl sass schon
+         ein gemalter Gast, und die eigene Figur wurde einfach
+         darueberglegt — zwei Koerper auf einem Fleck. Der Platz sagt
+         mit „verdeckt", wen er einnimmt; der tritt dann zur Seite. */
+      + (sz.teile || []).filter((t) =>
+          !platz || (platz.verdeckt || []).indexOf(t.id) < 0)
+        .map((t) =>
           '<g transform="translate(' + t.x + "," + t.y + ')">' + t.kunst + "</g>").join("")
       + marken + figur + "</svg></div>";
   }

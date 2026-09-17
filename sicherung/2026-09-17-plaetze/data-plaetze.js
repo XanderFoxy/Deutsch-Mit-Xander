@@ -54,33 +54,27 @@ window.DMA_PLAETZE = [
   "id": "badezimmer-waschbecken",
   "szene": "badezimmer",
   "teil": "waschbecken",
-  "x": 212,
-  "y": 168,
+  "x": 144,
+  "y": 168.0,
   "wo": "am Waschbecken",
   "wort": "das Waschbecken",
   "haltung": "stehen",
   "tut": "wäscht sich",
   "an": true,
-  "hoehe": 74,
-  "verdeckt": [
-   "frau"
-  ]
+  "hoehe": 74
  },
  {
   "id": "badezimmer-spiegel",
   "szene": "badezimmer",
   "teil": "spiegel",
-  "x": 200,
+  "x": 170,
   "y": 170,
   "wo": "vor dem Spiegel",
   "wort": "der Spiegel",
   "haltung": "stehen",
   "tut": "schaut in den Spiegel",
   "an": true,
-  "hoehe": 74,
-  "verdeckt": [
-   "frau"
-  ]
+  "hoehe": 74
  },
  {
   "id": "schlafzimmer-bett",
@@ -93,17 +87,14 @@ window.DMA_PLAETZE = [
   "haltung": "liegen",
   "tut": "schläft",
   "an": true,
-  "hoehe": 66,
-  "verdeckt": [
-   "frau"
-  ]
+  "hoehe": 66
  },
  {
   "id": "schlafzimmer-nachttisch",
   "szene": "schlafzimmer",
   "teil": "nachttisch",
-  "x": 99,
-  "y": 178,
+  "x": 50,
+  "y": 170,
   "wo": "am Nachttisch",
   "wort": "der Nachttisch",
   "haltung": "stehen",
@@ -143,7 +134,7 @@ window.DMA_PLAETZE = [
   "szene": "kueche",
   "teil": "herd",
   "x": 22,
-  "y": 178,
+  "y": 178.0,
   "wo": "am Herd",
   "wort": "der Herd",
   "haltung": "stehen",
@@ -162,16 +153,13 @@ window.DMA_PLAETZE = [
   "haltung": "stehen",
   "tut": "spült",
   "an": true,
-  "hoehe": 74,
-  "verdeckt": [
-   "koch"
-  ]
+  "hoehe": 74
  },
  {
   "id": "kueche-kuehlschrank",
   "szene": "kueche",
   "teil": "kuehlschrank",
-  "x": 242,
+  "x": 218,
   "y": 180,
   "wo": "am Kühlschrank",
   "wort": "der Kühlschrank",
@@ -219,10 +207,7 @@ window.DMA_PLAETZE = [
   "tut": null,
   "an": true,
   "hoehe": 66,
-  "sitzY": 137,
-  "verdeckt": [
-   "vater"
-  ]
+  "sitzY": 137
  },
  {
   "id": "wohnzimmer-sessel",
@@ -250,10 +235,7 @@ window.DMA_PLAETZE = [
   "tut": "sieht fern",
   "an": true,
   "hoehe": 66,
-  "sitzY": 137,
-  "verdeckt": [
-   "tochter"
-  ]
+  "sitzY": 137
  },
  {
   "id": "kinderzimmer-bett",
@@ -280,10 +262,7 @@ window.DMA_PLAETZE = [
   "tut": "spielt",
   "an": true,
   "hoehe": 50,
-  "sitzY": 172,
-  "verdeckt": [
-   "junge"
-  ]
+  "sitzY": 172
  },
  {
   "id": "kinderzimmer-schreibtisch",
@@ -310,10 +289,7 @@ window.DMA_PLAETZE = [
   "haltung": "stehen",
   "tut": "schreibt an die Tafel",
   "an": true,
-  "hoehe": 72,
-  "verdeckt": [
-   "schuelerin"
-  ]
+  "hoehe": 72
  },
  {
   "id": "klassenzimmer-schulbank",
@@ -333,21 +309,21 @@ window.DMA_PLAETZE = [
   "id": "restaurant-tisch",
   "szene": "restaurant",
   "teil": "tisch",
-  "x": 57,
-  "y": 142,
+  "x": 52,
+  "y": 122,
   "wo": "am Tisch",
   "wort": "der Tisch",
   "haltung": "sitzen",
   "tut": "isst",
   "an": true,
   "hoehe": 58,
-  "sitzY": 152
+  "sitzY": 147
  },
  {
   "id": "restaurant-stuhl",
   "szene": "restaurant",
   "teil": "stuhl",
-  "x": 28,
+  "x": 52,
   "y": 142,
   "wo": "auf dem Stuhl",
   "wort": "der Stuhl",
@@ -355,17 +331,14 @@ window.DMA_PLAETZE = [
   "tut": "isst",
   "an": true,
   "hoehe": 58,
-  "sitzY": 152,
-  "verdeckt": [
-   "gast"
-  ]
+  "sitzY": 147
  },
  {
   "id": "restaurant-speisekarte",
   "szene": "restaurant",
   "teil": "speisekarte",
-  "x": 133,
-  "y": 190,
+  "x": 204,
+  "y": 166,
   "wo": "an der Speisekarte",
   "wort": "die Speisekarte",
   "haltung": "stehen",
@@ -443,8 +416,8 @@ window.DMA_PLAETZE = [
   "id": "supermarkt-regal",
   "szene": "supermarkt",
   "teil": "regal",
-  "x": 46,
-  "y": 176,
+  "x": 52,
+  "y": 124,
   "wo": "vor dem Regal",
   "wort": "das Regal",
   "haltung": "stehen",
@@ -469,17 +442,14 @@ window.DMA_PLAETZE = [
   "id": "strasse-ampel",
   "szene": "strasse",
   "teil": "ampel",
-  "x": 44,
-  "y": 176,
+  "x": 142,
+  "y": 142,
   "wo": "an der Ampel",
   "wort": "die Ampel",
   "haltung": "stehen",
   "tut": "wartet",
   "an": true,
-  "hoehe": 70,
-  "verdeckt": [
-   "fussgaenger"
-  ]
+  "hoehe": 70
  },
  {
   "id": "strasse-bus",
@@ -498,24 +468,21 @@ window.DMA_PLAETZE = [
   "id": "strasse-fahrrad",
   "szene": "strasse",
   "teil": "fahrrad",
-  "x": 76,
-  "y": 206,
+  "x": 198,
+  "y": 180,
   "wo": "am Fahrrad",
   "wort": "das Fahrrad",
   "haltung": "stehen",
   "tut": null,
   "an": true,
-  "hoehe": 70,
-  "verdeckt": [
-   "fussgaenger"
-  ]
+  "hoehe": 70
  },
  {
   "id": "bahnhof-bahnsteig",
   "szene": "bahnhof",
   "teil": "bahnsteig",
-  "x": 146,
-  "y": 188,
+  "x": 250,
+  "y": 178,
   "wo": "auf dem Bahnsteig",
   "wort": "der Bahnsteig",
   "haltung": "stehen",
@@ -527,8 +494,8 @@ window.DMA_PLAETZE = [
   "id": "bahnhof-automat",
   "szene": "bahnhof",
   "teil": "automat",
-  "x": 290,
-  "y": 185,
+  "x": 74,
+  "y": 108,
   "wo": "am Automaten",
   "wort": "der Automat",
   "haltung": "stehen",
@@ -547,24 +514,21 @@ window.DMA_PLAETZE = [
   "haltung": "liegen",
   "tut": null,
   "an": true,
-  "hoehe": 58,
-  "verdeckt": [
-   "patient"
-  ]
+  "hoehe": 58
  },
  {
   "id": "arztpraxis-wartezimmer",
   "szene": "arztpraxis",
   "teil": "wartezimmer",
-  "x": 94,
-  "y": 190,
+  "x": 296,
+  "y": 154,
   "wo": "im Wartezimmer",
   "wort": "das Wartezimmer",
   "haltung": "sitzen",
   "tut": "wartet",
   "an": true,
   "hoehe": 56,
-  "sitzY": 164
+  "sitzY": 156
  },
  {
   "id": "badezimmer-raum",
@@ -749,3 +713,7 @@ window.DMA_PLAETZE = [
   "frei": true
  }
 ];
+/* Wie viele Zentimeter eine Bildeinheit sind — je
+   Kulisse eine Zahl. Damit ist eine Figur in jeder
+   Haltung und an jedem Platz gleich gross. */
+window.DMA_PLATZ_MASS = {"badezimmer": 1.85, "wohnzimmer": 2.05, "kueche": 1.6, "schlafzimmer": 1.5, "kinderzimmer": 1.55, "klassenzimmer": 1.6, "restaurant": 1.75, "garten": 2.1, "supermarkt": 1.9, "strasse": 2.6, "bahnhof": 2.6, "arztpraxis": 1.75, "flur": 1.7, "_standard": 1.7};

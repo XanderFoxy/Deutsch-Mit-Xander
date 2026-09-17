@@ -19121,6 +19121,17 @@
        ist — und auch, ob er gerade im Klassenzimmer ist?"
        Ja. Damit das nicht nur behauptet ist, lässt sich die Liste hier
        mit ausgedachten Leuten zeichnen und nachsehen. */
+    /* Ein einzelnes Bilderrätsel-Bild, an einem bestimmten Platz, mit
+       fester Figur — damit sich nachsehen lässt, OB die Figur wirklich
+       dort steht, wo der Satz behauptet. */
+    brBild: async function (platzId) {
+      const z = await brNeueAufgabe(platzId);
+      if (!z) return null;
+      return { html: brBildHtml(z), satz: brRichtigerSatz(z), platz: z.platz };
+    },
+    brPlaetze: function () { return (window.DMA_PLAETZE || []).map((p) => p.id); },
+    /* Nur die Plätze, die das Spiel wirklich benutzt. */
+    brSpielPlaetze: function () { return brPlaetze().map((p) => p.id); },
     /* Die Einladungsliste eines noch nicht freigegebenen Spiels —
        mit ausgedachten Leuten, damit sich das Auf- und Zuklappen und
        die Zählung ohne echte Konten nachprüfen lassen. */
@@ -47650,12 +47661,13 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   function brZufall(liste) { return liste[Math.floor(Math.random() * liste.length)]; }
 
-  async function brNeueAufgabe() {
+  async function brNeueAufgabe(platzId) {
     if (!window.DMA_PLAETZE) await brDatei("data-plaetze.js");
     await szenenLaden();
     const plaetze = brPlaetze();
     if (!plaetze.length) return null;
-    const platz = brZufall(plaetze);
+    const platz = platzId ? plaetze.find((p) => p.id === platzId) : brZufall(plaetze);
+    if (!platz) return null;
     await szeneLaden(platz.szene);
     const fig = brZufall(BR_FIGUREN);
     if (!(window.DMA_FIGUR || {})[fig]) {
@@ -47704,7 +47716,15 @@ An einem Morgen lief ein kleiner Fuchs los…
         role="img" aria-label="Ein Mensch an einem Ort — welcher Satz beschreibt das Bild?">
       ${window.DMA_FIGUR_DEFS || ""}
       <g class="br-kulisse">${sz.kulisse}</g>
-      ${(sz.teile || []).map((t) => `<g transform="translate(${t.x},${t.y})">${t.kunst}</g>`).join("")}
+      ${/* GEMELDET: „Die Frau mit dem weissen Hemd sitzt auf dem Stuhl —
+            aber offenbar ist es die falsche Antwort." Der Grund: auf
+            demselben Stuhl sass schon ein GEMALTER Gast, und die Figur
+            wurde einfach darübergelegt. Zwei Körper an einer Stelle —
+            da kann man nichts mehr richtig lesen.
+            Ein Platz sagt jetzt mit „verdeckt", welche gemalte Person
+            er einnimmt; die tritt für dieses Bild zur Seite. */ ""}
+      ${(sz.teile || []).filter((t) => (z.platz.verdeckt || []).indexOf(t.id) < 0)
+        .map((t) => `<g transform="translate(${t.x},${t.y})">${t.kunst}</g>`).join("")}
       <g transform="translate(${r(anker.x)},${r(anker.y)})">${fig.svg}</g>
     </svg></div>`;
   }
