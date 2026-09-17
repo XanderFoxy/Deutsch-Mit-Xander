@@ -328,6 +328,19 @@ window.LiveChat = (function () {
     gewitter:    " holt ein Gewitter herein  \u26c8\ufe0f",
     erdbeben:    " bringt alles zum Wackeln  \ud83c\udf0b",
     vulkan:      " l\u00e4sst einen Vulkan ausbrechen  \ud83c\udf0b",
+    /* GEWÜNSCHT: „Alles, was man da an Animationen noch machen kann,
+       was witzig und unterhaltsam und abwechslungsreich ist." */
+    schmetterling: " l\u00e4sst Schmetterlinge fliegen  \ud83e\udd8b",
+    voegel:      " schickt die V\u00f6gel in den S\u00fcden  \ud83e\udebf",
+    schlitten:   " h\u00f6rt Schlittenglocken  \ud83c\udf85",
+    rennauto:    " gibt Gas  \ud83c\udfce\ufe0f",
+    bonbon:      " l\u00e4sst Bonbons regnen  \ud83c\udf6c",
+    orkan:       " l\u00e4sst einen Orkan los  \ud83c\udf2c\ufe0f",
+    finsternis:  " macht das Licht aus  \ud83d\udd0c",
+    lagerfeuer:  " macht ein Lagerfeuer  \ud83d\udd25",
+    sternschnuppe: " zeigt auf eine Sternschnuppe  \ud83c\udf20",
+    matrix:      " \u00f6ffnet die Matrix  \ud83d\udfe9",
+    falten:      " faltet den Raum  \ud83d\udd2e",
     halloween:   " macht es gruselig  \ud83c\udf83",
     weihnachten: " bringt Weihnachten mit  \ud83c\udf84"
   };
@@ -538,14 +551,41 @@ window.LiveChat = (function () {
     var alles = (a || []).concat(b || []);
     var raus = [];
     alles.sort(function (x, y) { return (x.zeit || 0) - (y.zeit || 0); });
+    /* HIER LAG EIN FEHLER, und er hat jede Bildnachricht verdoppelt.
+       Die Prüfung verglich
+           Boolean(m.bildImChat) === Boolean(n.bildImChat)
+       also: „tragen beide gerade Bilddaten bei sich?" Das ist aber
+       kein Merkmal der Nachricht, sondern eine Frage des Augenblicks.
+       Die Kopie aus dem Gerät hat ihre Bilddaten nämlich NICHT bei
+       sich — sie liegen im Lager, und bildImChat ist leer, bis
+       bilderNachreichen() sie geholt hat. Die Kopie vom Server trägt
+       sie dagegen mit. Damit galten dieselben zwei Zeilen als
+       verschieden, und beide blieben stehen.
+
+       Verglichen wird jetzt, OB die Nachricht überhaupt ein Bild hat
+       — ganz gleich, wo es gerade liegt. */
+    var hatBild = function (n) {
+      return Boolean(n.bildImChat || n.bildImLager || n.bildWeg);
+    };
     alles.forEach(function (n) {
-      var doppelt = raus.some(function (m) {
-        if (m.id && n.id && m.id === n.id) return true;
-        return m.name === n.name && m.text === n.text
+      var zwilling = null;
+      raus.some(function (m) {
+        if (m.id && n.id && m.id === n.id) { zwilling = m; return true; }
+        if (m.name === n.name && m.text === n.text
             && Math.abs((m.zeit || 0) - (n.zeit || 0)) < 4000
-            && Boolean(m.bildImChat) === Boolean(n.bildImChat);
+            && hatBild(m) === hatBild(n)) { zwilling = m; return true; }
+        return false;
       });
-      if (!doppelt) raus.push(n);
+      if (!zwilling) { raus.push(n); return; }
+      /* Von zwei Ausfertigungen derselben Zeile gewinnt die, die das
+         Bild wirklich dabei hat — sonst ginge es beim Verschmelzen
+         verloren, je nachdem welche zufällig zuerst kam. */
+      if (!zwilling.bildImChat && n.bildImChat) {
+        zwilling.bildImChat = n.bildImChat;
+        zwilling.bildWeg = false;
+      }
+      if (!zwilling.wirkung && n.wirkung) zwilling.wirkung = n.wirkung;
+      if (!zwilling.farbe && n.farbe) zwilling.farbe = n.farbe;
     });
     return raus.slice(-CHAT_VERLAUF);
   }
@@ -2051,7 +2091,16 @@ window.LiveChat = (function () {
                    "winken", "klatschen", "daumen", "herz", "denken", "idee",
                    "schlafen", "feuer", "stern", "pokal", "fuchs", "katze",
                    "kaffee", "party", "glocke", "musik", "schreiben", "warten",
-                   "wachsen", "blume", "frage", "fertig", "regenbogen", "schnee"];
+                   "wachsen", "blume", "frage", "fertig", "regenbogen", "schnee",
+                   /* NEU: „Aus der Wolke fallen Sterne — sollen das
+                      eigentlich Regentropfen sein?" Der Schnee hat jetzt
+                      richtige Kristalle, und der Regen ist ein eigener
+                      Aufkleber mit richtigen Tropfen. */
+                   "regen",
+                   /* NEU: „Eine strahlende Sonne wuerde in die Emojis auch
+                      noch passen oder eine Umarmung, was realistisch
+                      aussieht." */
+                   "sonne", "umarmung"];
   function aufkleberPfad(wert) {
     var m = /^aufkleber:([a-z]+)$/.exec(String(wert || ""));
     if (!m || AUFKLEBER.indexOf(m[1]) < 0) return "";
@@ -2615,6 +2664,17 @@ window.LiveChat = (function () {
     { w: "gewitter", kurz: "sturm", nutzt: "/gewitter",          was: "Blitz, Donner und Sturm" },
     { w: "erdbeben", kurz: "beben", nutzt: "/erdbeben",          was: "Der ganze Chat fängt an zu wackeln" },
     { w: "vulkan",  kurz: "ausbruch", nutzt: "/vulkan",          was: "Ein Vulkan bricht aus — Lava, Funken und Asche" },
+    { w: "schmetterling", kurz: "falter", nutzt: "/schmetterling", was: "Schmetterlinge flattern durch den Raum" },
+    { w: "voegel",  kurz: "zugvoegel", nutzt: "/voegel",          was: "Ein Schwarm zieht in den Süden — in Keilformation" },
+    { w: "schlitten", kurz: "santa", nutzt: "/schlitten",         was: "Der Weihnachtsmann rauscht mit dem Schlitten durchs Bild" },
+    { w: "rennauto", kurz: "auto", nutzt: "/rennauto",            was: "Ein Rennwagen fährt durchs Bild — zum Abschied" },
+    { w: "bonbon",  kurz: "lolli", nutzt: "/bonbon",              was: "Es regnet Bonbons und Lollis" },
+    { w: "orkan",   kurz: "wind", nutzt: "/orkan",                was: "Ein Orkan pustet die Buchstaben durcheinander" },
+    { w: "finsternis", kurz: "stromausfall", nutzt: "/finsternis", was: "Das Licht geht aus — nur noch Taschenlampen" },
+    { w: "lagerfeuer", kurz: "feuer", nutzt: "/lagerfeuer",       was: "Ein Lagerfeuer mit Funken und Glühwürmchen" },
+    { w: "sternschnuppe", kurz: "wunsch", nutzt: "/sternschnuppe", was: "Sternschnuppen ziehen über den Himmel" },
+    { w: "matrix",  kurz: "", nutzt: "/matrix",                   was: "Der grüne Code rieselt herunter" },
+    { w: "falten",  kurz: "spiegel", nutzt: "/falten",            was: "Der Raum faltet sich — mit Spiegelschrift" },
     { w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
@@ -2874,6 +2934,21 @@ window.LiveChat = (function () {
                      sturm: "gewitter", blitz: "gewitter", donner: "gewitter",
                      beben: "erdbeben", wackeln: "erdbeben",
                      ausbruch: "vulkan", lava: "vulkan", eruption: "vulkan",
+                     falter: "schmetterling", schmetterlinge: "schmetterling",
+                     zugvoegel: "voegel", vogel: "voegel", schwarm: "voegel",
+                     santa: "schlitten", weihnachtsmann: "schlitten",
+                     rentier: "schlitten", schlittenfahrt: "schlitten",
+                     auto: "rennauto", rennen: "rennauto", gas: "rennauto",
+                     heimfahrt: "rennauto", tschuess: "rennauto",
+                     lolli: "bonbon", bonbons: "bonbon", suessigkeiten: "bonbon",
+                     wind: "orkan", sturmwind: "orkan", hurrikan: "orkan",
+                     stromausfall: "finsternis", dunkelheit: "finsternis",
+                     blackout: "finsternis", lichtaus: "finsternis",
+                     feuer: "lagerfeuer", gluehwuermchen: "lagerfeuer",
+                     wunsch: "sternschnuppe", sternschnuppen: "sternschnuppe",
+                     meteor: "sternschnuppe",
+                     code: "matrix", gruen: "matrix",
+                     spiegel: "falten", dimension: "falten", faltung: "falten",
                      kuerbis: "halloween", geist: "halloween",
                      advent: "weihnachten", nikolaus: "weihnachten",
                      weihnacht: "weihnachten",

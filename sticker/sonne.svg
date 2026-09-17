@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .str { animation: dreh 22s linear infinite; }
+  .hof { animation: atmen 3.2s ease-in-out infinite; }
+  @keyframes dreh { to { transform: rotate(360deg); } }
+  @keyframes atmen { 0%,100%{transform:scale(1);opacity:.55} 50%{transform:scale(1.13);opacity:.95} }
+</style>
+<circle class="hof" cx="60" cy="60" r="40" fill="rgba(247,201,72,.28)"/><g class="str" stroke="#f5b731" stroke-width="5" stroke-linecap="round"><line x1="60.0" y1="24.0" x2="60.0" y2="7.0"/><line x1="73.8" y1="26.7" x2="77.6" y2="17.5"/><line x1="85.5" y1="34.5" x2="97.5" y2="22.5"/><line x1="93.3" y1="46.2" x2="102.5" y2="42.4"/><line x1="96.0" y1="60.0" x2="113.0" y2="60.0"/><line x1="93.3" y1="73.8" x2="102.5" y2="77.6"/><line x1="85.5" y1="85.5" x2="97.5" y2="97.5"/><line x1="73.8" y1="93.3" x2="77.6" y2="102.5"/><line x1="60.0" y1="96.0" x2="60.0" y2="113.0"/><line x1="46.2" y1="93.3" x2="42.4" y2="102.5"/><line x1="34.5" y1="85.5" x2="22.5" y2="97.5"/><line x1="26.7" y1="73.8" x2="17.5" y2="77.6"/><line x1="24.0" y1="60.0" x2="7.0" y2="60.0"/><line x1="26.7" y1="46.2" x2="17.5" y2="42.4"/><line x1="34.5" y1="34.5" x2="22.5" y2="22.5"/><line x1="46.2" y1="26.7" x2="42.4" y2="17.5"/></g><circle cx="60" cy="60" r="30" fill="#f7c948"/><circle cx="60" cy="60" r="30" fill="none" stroke="rgba(180,120,20,.25)" stroke-width="2.5"/><circle cx="52" cy="52" r="17" fill="rgba(255,240,180,.55)"/>
+</svg>

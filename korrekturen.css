@@ -1018,16 +1018,22 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    Sie sind jetzt so hoch wie zwei Zeilen — gut zu erkennen, ohne dass
    die Zeile dadurch aufgeht: der negative Rand oben und unten hält die
    Zeilenhöhe fest, das Bild ragt nur ein wenig darüber hinaus. */
+/* NACHGEBESSERT: „Mach die Fuechse im Chat auch ein kleines bisschen
+   groesser." Von 1,95 auf 2,35 Zeilenhoehen — ein deutlicher Schritt,
+   aber kein Sprung: der negative Rand waechst mit, damit die Zeile
+   trotzdem nicht aufgeht. */
 .lc-fuchs {
-  width: 1.95em;
-  height: 1.95em;
+  /* Zum dritten Mal gewachsen: 1,95 -> 2,35 -> 2,8 Zeilenhoehen.
+     „Die Fuchs-Emojis koennen etwas groesser noch sein." */
+  width: 2.8em;
+  height: 2.8em;
   object-fit: contain;
-  vertical-align: -0.62em;
+  vertical-align: -0.95em;
   /* Der negative Rand oben und unten haelt die Zeilenhoehe fest — das
    Bild ragt nur ein wenig darueber hinaus, statt die Zeile
    aufzublasen. GEWUENSCHT: „Achte mal darauf, dass die Schrift in
    jeder Variante auf der Zeile bleibt." */
-  margin: -0.42em 2px;
+  margin: -0.82em 2px;
   position: relative;
 }
 .lc-waehler-fuechse {
@@ -2120,20 +2126,83 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   50%  { transform: translate3d(22px, -16px, 0) scale(1.14); }
   100% { transform: translate3d(-14px, 20px, 0) scale(0.94); }
 }
-/* Ein eigenes Bild: es liegt ganz hinten und wird abgedunkelt. */
+/* Ein eigenes Bild: es liegt ganz hinten und wird gedaempft.
+
+   GEMELDET, dreimal: „Hintergrundbild kann ich bis jetzt immer noch
+   nicht sehen."
+
+   Gemessen wurde die ganze Kette im Browser — Bild verkleinern, ins
+   Lager legen, wieder holen, als CSS-Eigenschaft setzen: alles
+   richtig, das Bild WAR da. Der Fehler stand allein hier:
+   opacity: 0.2. Ein Zwanzigstel-Bild hinter einer dunklen Flaeche
+   ist kein Hintergrund, das ist ein Hauch.
+
+   Jetzt 0.5. Das ist gleichzeitig der Grund, warum es KEINEN
+   getrennten Abdunkler braucht: was durch die halbdurchsichtige
+   Schicht schimmert, ist die Farbe des Chatkastens selbst — bei
+   einem hellen Design hellt sie das Bild auf, bei einem dunklen
+   dunkelt sie es ab. Der Schleier passt sich also von selbst an
+   jedes Design an, ohne dass irgendwo eine zweite Farbe gepflegt
+   werden muss.
+
+   Der leichte Weichzeichner ist fuer die Lesbarkeit: ein scharfes
+   Foto hinter Text macht unruhige Kanten genau dort, wo das Auge
+   Buchstaben sucht. Anderthalb Pixel nehmen das weg und lassen das
+   Bild trotzdem klar erkennbar. */
 .lc-chat-verlauf.hat-eigenes-bild::after {
   content: "";
-  position: absolute;
+  /* NACHGEBESSERT: „Jetzt sehe ich den Hintergrund im Chat — der soll
+     aber nicht mitscrollen. Der soll sich hinter dem Chat und hinter
+     allen Elementen aufziehen, so dass er transparent durchscheint,
+     also komplett durch das ganze Klassenzimmer, entsprechend gross
+     aufgezoomt, egal ob er abgeschnitten wird."
+
+     Deshalb position: fixed statt absolute. Ein fester Kasten haengt
+     am Fenster, nicht am Verlauf: er bleibt stehen, waehrend der Text
+     darueber laeuft, und er ist so gross wie der Bildschirm — das ist
+     genau das „egal ob er abgeschnitten wird". background-size: cover
+     zieht das Bild dabei auf, bis es die Flaeche fuellt.
+
+     inset: 0 mit position: fixed bezieht sich auf das Fenster. Damit
+     der Hintergrund trotzdem NUR im Klassenzimmer zu sehen ist und
+     nicht ueber der ganzen Seite liegt, schneidet der Verlauf ihn mit
+     clip-path auf seine eigene Flaeche zurueck. */
+  position: fixed;
   inset: 0;
   z-index: -2;
   pointer-events: none;
-  border-radius: inherit;
   background-image: var(--lc-hg-bild);
   background-size: cover;
   background-position: center;
-  opacity: 0.2;
+  filter: blur(1.4px) saturate(0.88);
+  opacity: 0.5;
 }
-.lc-chat-verlauf.hat-eigenes-bild .lc-hg-bild { opacity: 0.06; }
+/* Der Verlauf schneidet den festen Hintergrund auf seine Flaeche zu.
+   Ohne das laege das Bild ueber der ganzen Seite. */
+.lc-chat-verlauf.hat-eigenes-bild { clip-path: inset(0 round 10px); }
+
+/* Und dasselbe Bild liegt hinter dem GANZEN Klassenzimmer, nicht nur
+   hinter dem Chatfenster: hinter den Plaetzen, hinter der Leiste,
+   hinter allem. Es steht ebenfalls fest und wird von der Karte auf
+   ihre Flaeche beschnitten. */
+.livechat.hat-eigenes-bild { position: relative; isolation: isolate; clip-path: inset(0 round 16px); }
+.livechat.hat-eigenes-bild::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--lc-hg-bild);
+  background-size: cover;
+  background-position: center;
+  filter: blur(2.2px) saturate(0.8);
+  opacity: 0.34;
+}
+/* Die treibenden Gesichter und die wandernden Farbflecken treten
+   zurueck, sobald ein eigenes Bild da ist — sonst liegen drei
+   Schichten uebereinander und keine ist mehr zu erkennen. */
+.lc-chat-verlauf.hat-eigenes-bild .lc-hg-bild { opacity: 0.05; }
+.lc-chat-verlauf.hat-eigenes-bild::before { opacity: 0.18; }
 @media (prefers-reduced-motion: reduce) { .lc-hg-bild { animation: none; } }
 /* Der Rahmen des Chats laesst sich antippen, um ihn wieder mittig zu
    ruecken — siehe renderLiveChat(). */
@@ -2461,3 +2530,608 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    Quellenreihe, aber mit etwas Luft dazwischen, damit man sieht:
    das sind zwei Entscheidungen, nicht eine. */
 .wortniveau-chips { margin-top: 6px; }
+
+/* =================================================================
+   FLIEGENDES — SCHMETTERLINGE UND ZUGVOEGEL
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Echte fliegende Schmetterlinge oder Voegel, die in den
+   Sueden ziehen, mit richtigem realistischem Fluegelschlag."
+
+   Der Fluegelschlag entsteht durch scaleX auf den Fluegelgruppen: die
+   Flaeche wird schmal, wenn der Fluegel zum Betrachter zeigt. Der
+   transform-origin sitzt dabei am LEIB (50 %), nicht in der Mitte des
+   Kastens — sonst rutschte der Fluegel beim Schlagen zur Seite weg,
+   statt sich zu drehen.
+   ================================================================= */
+.lc-flieger {
+  position: fixed;
+  inset: 0;
+  z-index: 9344;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* --- Der Schmetterling --- */
+.lc-falter {
+  position: absolute;
+  animation-name: lcFalterBahn;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+.lc-falter-svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* Der Schlag. Die beiden Seiten laufen GEGENGLEICH (eine mit
+   negativem scaleX), damit sich der Falter nicht verdreht. */
+.lc-falter .lc-fluegel {
+  transform-origin: 50% 40%;
+  animation: lcFalterSchlag var(--lc-f-schlag, 0.2s) ease-in-out infinite;
+}
+.lc-falter .lc-fluegel-rechts { animation-name: lcFalterSchlagR; }
+@keyframes lcFalterSchlag {
+  0%, 100% { transform: scaleX(1); }
+  50%      { transform: scaleX(0.16); }
+}
+@keyframes lcFalterSchlagR {
+  0%, 100% { transform: scaleX(1); }
+  50%      { transform: scaleX(0.16); }
+}
+/* Die Bahn: quer durchs Bild, dabei auf und ab taumelnd. Die
+   Drehung am Ende der Wegmarken laesst ihn sich in die Kurve legen. */
+@keyframes lcFalterBahn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  6%  { opacity: 1; }
+  25% { transform: translate3d(calc(var(--lc-f-weit, 110vw) * 0.25),
+                               calc(var(--lc-f-hoch, 0vh) * 0.3 - var(--lc-f-taumel, 26px)), 0)
+                   rotate(9deg); }
+  50% { transform: translate3d(calc(var(--lc-f-weit, 110vw) * 0.5),
+                               calc(var(--lc-f-hoch, 0vh) * 0.6 + var(--lc-f-taumel, 26px)), 0)
+                   rotate(-11deg); }
+  75% { transform: translate3d(calc(var(--lc-f-weit, 110vw) * 0.75),
+                               calc(var(--lc-f-hoch, 0vh) * 0.85 - var(--lc-f-taumel, 26px)), 0)
+                   rotate(7deg); }
+  92% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--lc-f-weit, 110vw), var(--lc-f-hoch, 0vh), 0) rotate(-4deg);
+  }
+}
+
+/* --- Die Zugvoegel --- */
+.lc-keil {
+  position: absolute;
+  left: 0;
+  top: 14%;
+  width: 0;
+  height: 0;
+  color: #3a3330;
+  animation: lcKeilZieht 13s linear both;
+}
+/* Auf dunklen Designs ist ein dunkler Vogel unsichtbar. Silhouetten
+   gegen den Himmel sind dunkel — also bekommt der Vogel auf dunklem
+   Grund einen hellen Saum statt einer anderen Farbe. */
+.lc-vogel-svg { filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.55)); }
+.lc-vogel {
+  position: absolute;
+  animation: lcVogelHebt 0.62s ease-in-out infinite;
+  animation-delay: var(--lc-v-verzug, 0s);
+}
+.lc-vogel-svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* Die Schwingen: transform-origin am Leib, sonst schwimmt der
+   Fluegel beim Schlag davon. */
+.lc-vogel .lc-schwinge {
+  transform-origin: 50% 30%;
+  animation: lcSchwingt 0.62s ease-in-out infinite;
+  animation-delay: var(--lc-v-verzug, 0s);
+}
+@keyframes lcSchwingt {
+  0%, 100% { transform: scaleY(1)    translateY(0); }
+  30%      { transform: scaleY(-0.55) translateY(3px); }
+  60%      { transform: scaleY(1.25)  translateY(-2px); }
+}
+/* Der Koerper steigt beim Abschlag und sinkt beim Aufschlag — ohne
+   das wirkt der Fluegelschlag wie ein Zappeln an Ort und Stelle. */
+@keyframes lcVogelHebt {
+  0%, 100% { transform: translateY(0); }
+  30%      { transform: translateY(4px); }
+  60%      { transform: translateY(-4px); }
+}
+/* Nach rechts unten: in den Sueden. */
+@keyframes lcKeilZieht {
+  0%   { opacity: 0; transform: translate3d(-24vw, -14vh, 0); }
+  7%   { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(118vw, 34vh, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-flieger { display: none; } }
+
+/* =================================================================
+   EIN FAHRZEUG QUER DURCHS BILD — SCHLITTEN UND RENNWAGEN
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Dass ein Santa Claus im Schlitten mit Geschenken
+   angerauscht kommt und durchs Bild faehrt. Oder dass ein Rennauto
+   durchs Bild faehrt — dass man praktisch nach Hause faehrt."
+   ================================================================= */
+.lc-fahrt {
+  position: fixed;
+  inset: 0;
+  z-index: 9348;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-wagen {
+  position: absolute;
+  left: 0;
+  width: clamp(220px, 44vw, 420px);
+}
+.lc-wagen svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* Der Schlitten kommt von links, steigt dabei leicht an und faehrt
+   oben hinaus — ein Schlitten am Himmel faehrt nicht waagerecht. */
+.lc-fahrt-schlitten .lc-wagen {
+  top: 46%;
+  animation: lcSchlittenFaehrt 6.4s cubic-bezier(.32, .1, .62, .92) both;
+}
+@keyframes lcSchlittenFaehrt {
+  0%   { transform: translate3d(-46vw, 8vh, 0) rotate(3deg) scale(.86); opacity: 0; }
+  10%  { opacity: 1; }
+  50%  { transform: translate3d(34vw, -6vh, 0) rotate(-2deg) scale(1); }
+  88%  { opacity: 1; }
+  100% { transform: translate3d(118vw, -26vh, 0) rotate(-7deg) scale(.82); opacity: 0; }
+}
+/* Die Rentiere galoppieren: auf und ab, das zweite leicht versetzt. */
+.lc-rentier { animation: lcGalopp 0.42s ease-in-out infinite; transform-origin: 50% 90%; }
+.lc-rentier-1 { animation-delay: 0.21s; }
+@keyframes lcGalopp {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-5px) rotate(-3deg); }
+}
+/* Die funkelnde Spur */
+.lc-fahrt-schlitten i {
+  position: absolute;
+  width: var(--lc-fk, 5px);
+  height: var(--lc-fk, 5px);
+  border-radius: 50%;
+  background: #fff6d5;
+  box-shadow: 0 0 8px rgba(255, 228, 150, 0.95);
+  opacity: 0;
+  animation: lcFunkelt 1.9s ease-out both;
+}
+@keyframes lcFunkelt {
+  0%   { opacity: 0; transform: scale(.4); }
+  16%  { opacity: 1; transform: scale(1.3); }
+  100% { opacity: 0; transform: scale(.3) translateY(14px); }
+}
+
+/* Der Rennwagen faehrt waagerecht und schnell — er ist ein Auto,
+   kein Flugzeug. */
+.lc-fahrt-rennauto .lc-wagen {
+  top: 58%;
+  animation: lcAutoFaehrt 2.6s cubic-bezier(.5, 0, .5, 1) both;
+  animation-delay: .25s;
+}
+@keyframes lcAutoFaehrt {
+  0%   { transform: translate3d(-48vw, 0, 0); }
+  100% { transform: translate3d(122vw, 0, 0); }
+}
+.lc-rad { transform-box: fill-box; transform-origin: 50% 50%;
+          animation: lcRadDreht .18s linear infinite; }
+@keyframes lcRadDreht { to { transform: rotate(360deg); } }
+/* Geschwindigkeitsstriche */
+.lc-fahrt-rennauto b {
+  position: absolute;
+  left: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0), rgba(200, 220, 240, .85));
+  opacity: 0;
+  animation: lcStrich .7s linear both;
+}
+@keyframes lcStrich {
+  0%   { opacity: 0; transform: translateX(0); }
+  14%  { opacity: .9; }
+  100% { opacity: 0; transform: translateX(-140vw); }
+}
+/* Staub hinter den Raedern */
+.lc-fahrt-rennauto u {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(150, 136, 118, .5);
+  filter: blur(2px);
+  opacity: 0;
+  animation: lcStaub 1.4s ease-out both;
+}
+@keyframes lcStaub {
+  0%   { opacity: 0; transform: scale(.4); }
+  18%  { opacity: .8; }
+  100% { opacity: 0; transform: scale(2.4) translate(-40px, -18px); }
+}
+
+/* =================================================================
+   BONBONREGEN
+   ================================================================= */
+.lc-bonbon {
+  position: fixed;
+  inset: 0;
+  z-index: 9343;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-zucker {
+  position: absolute;
+  top: -12vh;
+  animation-name: lcZuckerFaellt;
+  animation-timing-function: cubic-bezier(.36, .12, .64, .6);
+  animation-fill-mode: both;
+  filter: drop-shadow(0 2px 3px rgba(60, 30, 10, .3));
+}
+.lc-zucker svg { display: block; width: 100%; height: auto; }
+@keyframes lcZuckerFaellt {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: translate3d(var(--lc-z-seit, 0px), 124vh, 0)
+                    rotate(var(--lc-z-dreh, 360deg)); }
+}
+
+/* =================================================================
+   ORKAN — DIE ZEILEN WERDEN UMGELEGT
+   -----------------------------------------------------------------
+   Der Unterschied zum Beben: ein Beben ruettelt gleichzeitig, ein
+   Orkan DRUECKT von einer Seite und laesst dann zurueckfedern. Die
+   Boe laeuft deshalb mit Verzug durch die Zeilen.
+   ================================================================= */
+.lc-orkant .lc-zeile,
+.lc-orkant .lc-platz {
+  animation: lcBoe 1.5s cubic-bezier(.3, .8, .4, 1) 3;
+  animation-delay: var(--lc-o-verzug, 0s);
+  transform-origin: 0% 50%;
+}
+@keyframes lcBoe {
+  0%   { transform: none; }
+  18%  { transform: translateX(calc(-13px * var(--lc-o-weit, 1)))
+                    skewX(calc(-7deg * var(--lc-o-weit, 1)))
+                    rotate(var(--lc-o-neig, 0deg)); }
+  34%  { transform: translateX(calc(-22px * var(--lc-o-weit, 1)))
+                    skewX(calc(-11deg * var(--lc-o-weit, 1)))
+                    rotate(var(--lc-o-neig, 0deg)) scaleX(1.05); }
+  62%  { transform: translateX(calc(5px * var(--lc-o-weit, 1))) skewX(3deg); }
+  100% { transform: none; }
+}
+.lc-wind {
+  position: fixed;
+  inset: 0;
+  z-index: 9347;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-wind i {
+  position: absolute;
+  right: -8vw;
+  border-radius: 60% 20% 60% 20%;
+  opacity: 0;
+  animation-name: lcWeht;
+  animation-timing-function: cubic-bezier(.4, .05, .7, .6);
+  animation-fill-mode: both;
+}
+@keyframes lcWeht {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  10%  { opacity: .95; }
+  90%  { opacity: .95; }
+  100% { opacity: 0;
+         transform: translate3d(-120vw, var(--lc-w-hoch, 0vh), 0)
+                    rotate(var(--lc-w-dreh, 600deg)); }
+}
+
+/* =================================================================
+   STROMAUSFALL
+   ================================================================= */
+.lc-dunkel {
+  position: fixed;
+  inset: 0;
+  z-index: 9392;
+  pointer-events: none;
+  background: #05050a;
+  opacity: 0;
+  animation: lcStromAus 6.2s ease-in-out both;
+}
+/* Erst zweimal flackern, dann schwarz, am Ende mit einem Ruck
+   zurueck — so faellt der Strom wirklich aus. */
+@keyframes lcStromAus {
+  0%   { opacity: 0; }
+  4%   { opacity: .92; }
+  7%   { opacity: .05; }
+  10%  { opacity: .88; }
+  13%  { opacity: 0; }
+  17%  { opacity: .97; }
+  86%  { opacity: .97; }
+  90%  { opacity: .2; }
+  93%  { opacity: .8; }
+  100% { opacity: 0; }
+}
+.lc-lampe {
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  margin: -115px 0 0 -115px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+              rgba(255, 244, 200, .5) 0%, rgba(255, 240, 180, .16) 42%,
+              rgba(255, 240, 180, 0) 72%);
+  opacity: 0;
+  animation: lcLampeSucht 6.2s ease-in-out both;
+}
+.lc-lampe-1 { animation-name: lcLampeSucht2; width: 180px; height: 180px;
+              margin: -90px 0 0 -90px; }
+@keyframes lcLampeSucht {
+  0%, 18%  { opacity: 0; top: 30%; left: 22%; }
+  26%      { opacity: 1; }
+  45%      { top: 62%; left: 44%; }
+  64%      { top: 34%; left: 70%; }
+  82%      { opacity: 1; top: 56%; left: 30%; }
+  90%, 100% { opacity: 0; }
+}
+@keyframes lcLampeSucht2 {
+  0%, 22%  { opacity: 0; top: 66%; left: 76%; }
+  30%      { opacity: 1; }
+  50%      { top: 28%; left: 58%; }
+  70%      { top: 68%; left: 20%; }
+  82%      { opacity: 1; top: 40%; left: 62%; }
+  90%, 100% { opacity: 0; }
+}
+.lc-dunkel-wort {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 238, 200, .78);
+  font-size: clamp(0.95rem, 3.6vw, 1.3rem);
+  letter-spacing: 0.04em;
+  opacity: 0;
+  animation: lcDunkelWort 6.2s ease-in-out both;
+}
+@keyframes lcDunkelWort {
+  0%, 30% { opacity: 0; }
+  44%     { opacity: 1; }
+  74%     { opacity: 1; }
+  86%, 100% { opacity: 0; }
+}
+
+/* =================================================================
+   LAGERFEUER MIT GLUEHWUERMCHEN
+   ================================================================= */
+.lc-lagerfeuer {
+  position: fixed;
+  inset: 0;
+  z-index: 9341;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-feuerstelle {
+  position: absolute;
+  left: 50%;
+  bottom: 2vh;
+  width: clamp(130px, 26vw, 230px);
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 26px rgba(255, 140, 40, .55));
+  animation: lcFeuerAuf 12s ease-out both;
+}
+.lc-feuerstelle svg { display: block; width: 100%; height: auto; }
+@keyframes lcFeuerAuf {
+  0%   { opacity: 0; transform: translateX(-50%) scale(.7); }
+  8%   { opacity: 1; transform: translateX(-50%) scale(1); }
+  88%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) scale(.9); }
+}
+/* Drei Zungen mit EIGENEN Takten — gleichzeitig zuckend saehe es aus
+   wie ein pulsierender Klecks, nicht wie Feuer. */
+.lc-feuerstelle .fl { transform-box: fill-box; transform-origin: 50% 100%; }
+.lc-feuerstelle .fl1 { animation: lcZunge1 .62s ease-in-out infinite; }
+.lc-feuerstelle .fl2 { animation: lcZunge2 .47s ease-in-out infinite; }
+.lc-feuerstelle .fl3 { animation: lcZunge3 .35s ease-in-out infinite; }
+@keyframes lcZunge1 {
+  0%, 100% { transform: scale(1, 1)      skewX(0); }
+  35%      { transform: scale(.93, 1.09) skewX(-4deg); }
+  68%      { transform: scale(1.05, .95) skewX(3deg); }
+}
+@keyframes lcZunge2 {
+  0%, 100% { transform: scale(1, 1)      skewX(2deg); }
+  40%      { transform: scale(1.08, .92) skewX(-5deg); }
+  75%      { transform: scale(.92, 1.12) skewX(4deg); }
+}
+@keyframes lcZunge3 {
+  0%, 100% { transform: scale(1, 1)      skewX(-3deg); }
+  45%      { transform: scale(.88, 1.16) skewX(6deg); }
+}
+/* Funken */
+.lc-lagerfeuer i {
+  position: absolute;
+  bottom: 12vh;
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: #ffcf6a;
+  box-shadow: 0 0 7px rgba(255, 180, 70, .9);
+  opacity: 0;
+  animation-name: lcFunkeAuf;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+}
+@keyframes lcFunkeAuf {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(1); }
+  12%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: translate3d(var(--lc-lf-weit, 0vw),
+                                calc(var(--lc-lf-hoch, 40vh) * -1), 0) scale(.2); }
+}
+/* Glühwürmchen: zwei Animationen zugleich — treiben und blinken. */
+.lc-lagerfeuer b {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d6f07a;
+  box-shadow: 0 0 10px rgba(198, 240, 110, .9), 0 0 22px rgba(160, 220, 80, .55);
+  animation-name: lcTreibt, lcBlinkt;
+  animation-timing-function: ease-in-out, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, normal;
+}
+@keyframes lcTreibt {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(var(--lc-gw-x, 60px), var(--lc-gw-y, -40px), 0); }
+}
+@keyframes lcBlinkt {
+  0%, 100% { opacity: .15; }
+  46%      { opacity: 1; }
+}
+
+/* =================================================================
+   STERNSCHNUPPEN
+   ================================================================= */
+.lc-schnuppen {
+  position: fixed;
+  inset: 0;
+  z-index: 9341;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lc-schnuppen b {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 4px rgba(255, 255, 255, .8);
+  animation-name: lcSternFunkelt;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes lcSternFunkelt {
+  from { opacity: .2; }
+  to   { opacity: .95; }
+}
+/* Die Schnuppe selbst ist fast nur Schweif: der Kopf sitzt am rechten
+   Ende des Streifens, dahinter laeuft er ins Nichts aus. */
+.lc-schnuppen i {
+  position: absolute;
+  width: var(--lc-ss-lang, 200px);
+  height: 2.6px;
+  border-radius: 2px;
+  transform-origin: 100% 50%;
+  background: linear-gradient(to right,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(214, 235, 255, .5) 62%,
+              rgba(255, 255, 255, 1) 100%);
+  box-shadow: 0 0 10px rgba(200, 228, 255, .85);
+  opacity: 0;
+  animation-name: lcSchnuppeZieht;
+  animation-timing-function: cubic-bezier(.24, .6, .5, 1);
+  animation-fill-mode: both;
+}
+@keyframes lcSchnuppeZieht {
+  0%   { opacity: 0;
+         transform: rotate(var(--lc-ss-neig, 34deg)) translateX(-30%) scaleX(.2); }
+  14%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: rotate(var(--lc-ss-neig, 34deg)) translateX(330%) scaleX(1); }
+}
+
+/* =================================================================
+   DIE MATRIX
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Die Matrix, dass dann so dieser gruene Code so
+   runterkommt und teilweise die Wahrheit zeigt."
+   ================================================================= */
+.lc-matrix {
+  position: fixed;
+  inset: 0;
+  z-index: 9350;
+  pointer-events: none;
+  overflow: hidden;
+  background: rgba(0, 8, 2, .82);
+  animation: lcMatrixAuf 10s ease-in-out both;
+}
+@keyframes lcMatrixAuf {
+  0%   { opacity: 0; }
+  7%   { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.lc-mx-spalte {
+  position: absolute;
+  top: 0;
+  width: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 15px;
+  line-height: 1.12;
+  color: rgba(70, 230, 120, .62);
+  text-shadow: 0 0 6px rgba(60, 220, 110, .5);
+  animation-name: lcMatrixFaellt;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes lcMatrixFaellt {
+  0%   { transform: translateY(-105%); }
+  100% { transform: translateY(105vh); }
+}
+/* Die vorderste Zeile jeder Spalte leuchtet — daran erkennt man, wo
+   der Strang gerade ankommt. */
+.lc-mx-kopf { color: #dffbe6; text-shadow: 0 0 10px rgba(180, 255, 200, .95); }
+/* Und hier steht die Wahrheit. */
+.lc-mx-wahr {
+  color: #fff6c9;
+  text-shadow: 0 0 10px rgba(255, 240, 160, .95);
+  font-weight: 700;
+}
+
+/* =================================================================
+   DIE DRITTE DIMENSION — DER RAUM FALTET SICH
+   -----------------------------------------------------------------
+   GEWUENSCHT: „Wo der Chat sich vielleicht irgendwie insgesamt faltet,
+   und irgendwie Spiegelschriften oder Spiegeleffekte in der Schrift."
+   ================================================================= */
+.lc-faltet {
+  perspective: 900px;
+  transform-style: preserve-3d;
+  animation: lcKippt 4.2s ease-in-out both;
+}
+@keyframes lcKippt {
+  0%   { transform: none; }
+  22%  { transform: perspective(900px) rotateY(-16deg) rotateX(7deg) scale(.95); }
+  50%  { transform: perspective(900px) rotateY(15deg) rotateX(-6deg) scale(.93); }
+  78%  { transform: perspective(900px) rotateY(-7deg) rotateX(3deg) scale(.97); }
+  100% { transform: none; }
+}
+/* Jede Zeile klappt einzeln nach hinten und wieder vor — das ist die
+   Faltung. Der Verzug laesst sie wie eine Welle durchlaufen. */
+.lc-faltet .lc-zeile {
+  animation: lcKlappt 1.5s ease-in-out 2;
+  animation-delay: var(--lc-fa-verzug, 0s);
+  transform-origin: 50% 0%;
+  backface-visibility: visible;
+}
+@keyframes lcKlappt {
+  0%, 100% { transform: none; }
+  30%      { transform: perspective(600px) rotateX(58deg) translateZ(-14px); }
+  62%      { transform: perspective(600px) rotateX(-34deg) translateZ(10px); }
+}
+/* Die Spiegelschrift haelt nur kurz an — man soll den Chat waehrend
+   des Effekts noch lesen koennen. */
+.lc-faltet .lc-spiegel { animation-name: lcKlappt, lcSpiegelt; }
+@keyframes lcSpiegelt {
+  0%, 34%  { transform: none; }
+  46%, 68% { transform: scaleX(-1); }
+  80%, 100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-fahrt, .lc-bonbon, .lc-wind, .lc-dunkel, .lc-lagerfeuer,
+  .lc-schnuppen, .lc-matrix { display: none; }
+  .lc-faltet, .lc-faltet .lc-zeile, .lc-orkant .lc-zeile,
+  .lc-orkant .lc-platz { animation: none; }
+}

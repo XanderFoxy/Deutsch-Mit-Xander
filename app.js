@@ -12999,14 +12999,12 @@
     const kasten = document.createElement("div");
     kasten.id = "lcBildWaehler";
     kasten.className = "lc-waehler-hinter";
-    /* Ohne eigenen Schlüssel läuft die Suche über den öffentlichen
-       Beta-Schlüssel von GIPHY. Der ist seit jeher in deren Beispielen
-       und Anleitungen zu finden, aber streng begrenzt — bei viel
-       Betrieb antwortet er irgendwann nicht mehr. Ein eigener
-       (kostenlos, developers.giphy.com) gehört in supabase-config.js
-       als window.GIPHY_KEY und wird dann bevorzugt. */
-    const gifSchluessel = window.GIPHY_KEY || "dc6zaTOxFJmzC";
-    const eigenerSchluessel = Boolean(window.GIPHY_KEY);
+    /* Ohne Schlüssel läuft hier gar nichts: GIPHY hat den öffentlichen
+       Probe-Schlüssel längst abgeschaltet. Er kommt entweder aus
+       supabase-config.js (window.GIPHY_KEY) oder aus dem Gerät, wo ihn
+       der Sende-Wähler entgegennimmt — siehe giphySchluessel(). */
+    const gifSchluessel = giphySchluessel();
+    let eigenerSchluessel = Boolean(gifSchluessel);
     kasten.innerHTML = `
       <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Profilbild wählen">
         <p class="eyebrow">DEIN BILD IM KLASSENZIMMER</p>
@@ -13309,6 +13307,37 @@
        • die GIPHY-Suche
        • und, für alle Fälle, ein Feld für eine Adresse
      ================================================================= */
+  /* =================================================================
+     DER GIPHY-SCHLÜSSEL
+     -----------------------------------------------------------------
+     GEMELDET: „Die Bilder von GIPHY laden nicht."
+
+     Das stimmt, und es liegt nicht am Code. Der Aufruf war richtig —
+     nur der Schlüssel war der öffentliche Beta-Schlüssel
+     „dc6zaTOxFJmzC", den GIPHY vor Jahren abgeschaltet hat. Jede
+     Anfrage damit endet mit 401 oder 403, und der Kasten bleibt leer.
+     supabase-config.js hat zwar ein window.GIPHY_KEY, aber es steht
+     dort auf "".
+
+     Ein Schlüssel ist bei GIPHY kostenlos (developers.giphy.com →
+     „Create an App" → „API Key"). Damit man dafür aber keine Datei
+     im Netz bearbeiten muss — was am Telefon kaum geht —, nimmt der
+     Wähler ihn jetzt auch direkt entgegen und legt ihn im Gerät ab.
+     Er wandert nirgendwohin sonst: er bleibt auf diesem Gerät. */
+  const GIPHY_SCHLUESSEL_SPEICHER = "dma_giphy_key";
+  function giphySchluessel() {
+    if (window.GIPHY_KEY) return String(window.GIPHY_KEY);
+    try { return localStorage.getItem(GIPHY_SCHLUESSEL_SPEICHER) || ""; } catch (e) { return ""; }
+  }
+  function giphySchluesselSetzen(k) {
+    const sauber = String(k || "").trim();
+    try {
+      if (sauber) localStorage.setItem(GIPHY_SCHLUESSEL_SPEICHER, sauber);
+      else localStorage.removeItem(GIPHY_SCHLUESSEL_SPEICHER);
+    } catch (e) {}
+    return sauber;
+  }
+
   /* Ein paar Themen, damit im GIPHY-Fach immer sofort etwas steht.
      Das erste wird beim Öffnen geladen. */
   const LC_GIF_THEMEN = [
@@ -13328,7 +13357,12 @@
 
   function livechatSendeWaehler() {
     document.getElementById("lcSendeWaehler")?.remove();
-    const gifSchluessel = window.GIPHY_KEY || "dc6zaTOxFJmzC";
+    /* Der Schlüssel kann aus supabase-config.js kommen ODER hier im
+       Gerät liegen — siehe giphySchluessel(). Er wird bei jedem
+       Öffnen frisch geholt, damit ein eben eingesetzter Schlüssel
+       sofort greift. */
+    let gifSchluessel = giphySchluessel();
+    let eigenerSchluessel = Boolean(gifSchluessel);
     const letzte = (window.LiveChat && LiveChat.letzteBilder) ? LiveChat.letzteBilder() : [];
     const fuechse = lcMeineFuechse();
 
@@ -13381,6 +13415,20 @@
           <input type="text" class="lc-chat-feld" id="lcSendeGifSuche" placeholder="Weitersuchen …">
           <button type="button" class="btn btn-ghost" id="lcSendeGifSuchen">Suchen</button>
         </div>
+        ${giphySchluessel() ? "" : `
+        <div class="lc-gif-schluessel" id="lcGifSchluesselKasten">
+          <p><strong>Für GIFs fehlt noch ein Schlüssel.</strong>
+             GIPHY hat den öffentlichen Probe-Schlüssel vor Jahren abgeschaltet —
+             ohne eigenen bleibt das Fach leer. Ein eigener ist kostenlos:
+             <a href="https://developers.giphy.com/dashboard/" target="_blank" rel="noopener">developers.giphy.com</a>
+             → „Create an App“ → „API Key“. Hier einsetzen, und es geht sofort.
+             Der Schlüssel bleibt auf diesem Gerät.</p>
+          <div class="lc-waehler-reihe">
+            <input type="text" class="lc-chat-feld" id="lcGifSchluesselFeld"
+                   placeholder="GIPHY API Key" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn btn-coffee" id="lcGifSchluesselNehmen">Einsetzen</button>
+          </div>
+        </div>`}
         <div class="lc-waehler-gifs" id="lcSendeGifTreffer"><p class="empty-note">lädt …</p></div>
         <div class="lc-waehler-reihe" style="margin-top:6px;">
           <input type="text" class="lc-chat-feld" id="lcSendeGifAdresse" placeholder="… oder eine Bildadresse einsetzen">
@@ -13526,14 +13574,30 @@
         });
         if (!ziel.children.length) throw new Error("keine Bilder");
       } catch (x) {
-        ziel.innerHTML = `
-          <p class="empty-note" style="grid-column:1/-1; margin:0 0 6px;">
-            GIPHY antwortet gerade nicht${eigenerSchluessel ? "" : " — ohne eigenen Schlüssel "
-              + "ist das die Regel, der öffentliche Beta-Schlüssel ist seit Jahren tot"}.
-            Die Bilder hier oben gehen immer.
-          </p>`;
+        ziel.innerHTML = eigenerSchluessel
+          ? `<p class="empty-note" style="grid-column:1/-1; margin:0 0 6px;">
+               GIPHY antwortet gerade nicht (${escapeHtml(String(x && x.message || "Fehler"))}).
+               Entweder ist der Dienst gerade gestört oder der Schlüssel stimmt nicht mehr.
+               Die Aufkleber und die Füchse hier oben gehen immer.
+             </p>`
+          : `<p class="empty-note" style="grid-column:1/-1; margin:0 0 6px;">
+               <strong>Hier fehlt der GIPHY-Schlüssel.</strong> Ohne ihn lädt GIPHY nichts —
+               der alte öffentliche Probe-Schlüssel ist seit Jahren abgeschaltet.
+               Setz ihn oben ein, dann sind die GIFs sofort da.
+             </p>`;
       }
     };
+    /* Der eingesetzte Schlüssel greift sofort, ohne Neuladen. */
+    kasten.querySelector("#lcGifSchluesselNehmen")?.addEventListener("click", () => {
+      const feld = kasten.querySelector("#lcGifSchluesselFeld");
+      const neu = giphySchluesselSetzen(feld && feld.value);
+      if (!neu) { showToast("Da stand nichts drin."); return; }
+      gifSchluessel = neu;
+      eigenerSchluessel = true;
+      kasten.querySelector("#lcGifSchluesselKasten")?.remove();
+      showToast("🎞️ Schlüssel eingesetzt — die GIFs kommen.");
+      zeigen(LC_GIF_THEMEN[0].wort);
+    });
     const suchen = () => {
       const wort = kasten.querySelector("#lcSendeGifSuche")?.value.trim();
       kasten.querySelectorAll("[data-lc-gifthema]").forEach((b) => b.classList.remove("ist-da"));
@@ -14001,6 +14065,745 @@
         z.style.removeProperty("--lc-beb-weit");
       });
     }, 3600);
+  }
+
+  /* =================================================================
+     ORKAN — DIE BUCHSTABEN WERDEN DURCHEINANDERGEPUSTET
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Vielleicht könnte noch eine Wind-Animation dabei sein,
+     die so ähnlich wie beim Erdbeben den Chat beeinflusst, und das
+     sieht so aus, als wenn die Buchstaben so durcheinandergepustet
+     werden. So orkanmässig."
+
+     Der Unterschied zum Erdbeben ist wichtig: ein Beben RÜTTELT alles
+     gleichzeitig hin und her. Ein Orkan DRÜCKT — er kommt von einer
+     Seite, legt die Zeilen um, zerrt sie in die Länge und lässt sie
+     wieder zurückfedern, wenn die Bö durch ist. Deshalb bekommt jede
+     Zeile einen eigenen Verzug: die Bö läuft von oben nach unten durch
+     den Verlauf, statt alles auf einmal zu erwischen.
+     ================================================================= */
+  function lcOrkan() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    if (!karte) return;
+    karte.classList.add("lc-orkant");
+    const zeilen = [...karte.querySelectorAll(".lc-zeile, .lc-platz")];
+    zeilen.forEach((z, i) => {
+      z.style.setProperty("--lc-o-verzug", (i * 0.055).toFixed(3) + "s");
+      /* Nicht jede Zeile wird gleich stark erfasst — sonst bewegt
+         sich der Block als Ganzes und es sieht nach Verschieben aus,
+         nicht nach Wind. */
+      z.style.setProperty("--lc-o-weit", (0.55 + Math.random() * 0.9).toFixed(2));
+      z.style.setProperty("--lc-o-neig", (Math.random() * 7 - 1.5).toFixed(1) + "deg");
+    });
+    /* Das, was der Wind mitträgt: Blätter und Papierfetzen, quer
+       durchs Bild. Ohne sie sieht man nur zappelnde Schrift. */
+    document.getElementById("lcWind")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcWind";
+    schicht.className = "lc-wind";
+    schicht.setAttribute("aria-hidden", "true");
+    const LAUB = ["#b5762e", "#c0392b", "#7fb069", "#d9a441", "#8a5a34"];
+    const wieviel = window.innerWidth < 560 ? 26 : 46;
+    for (let i = 0; i < wieviel; i++) {
+      const b = document.createElement("i");
+      b.style.top = (Math.random() * 100).toFixed(1) + "%";
+      const g = 7 + Math.random() * 13;
+      b.style.width = g.toFixed(0) + "px";
+      b.style.height = (g * 0.66).toFixed(0) + "px";
+      b.style.background = LAUB[i % LAUB.length];
+      b.style.animationDuration = (1.1 + Math.random() * 1.4).toFixed(2) + "s";
+      b.style.animationDelay = (Math.random() * 3.4).toFixed(2) + "s";
+      b.style.setProperty("--lc-w-hoch", ((Math.random() - 0.5) * 40).toFixed(0) + "vh");
+      b.style.setProperty("--lc-w-dreh", (400 + Math.random() * 700).toFixed(0) + "deg");
+      schicht.appendChild(b);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => {
+      schicht.remove();
+      karte.classList.remove("lc-orkant");
+      zeilen.forEach((z) => {
+        z.style.removeProperty("--lc-o-verzug");
+        z.style.removeProperty("--lc-o-weit");
+        z.style.removeProperty("--lc-o-neig");
+      });
+    }, 5200);
+  }
+
+  /* =================================================================
+     STROMAUSFALL
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Irgendwas, das totale Finsternis bedeutet oder
+     Stromausfall, wäre auch noch eine coole Animation. Vielleicht
+     kannst du dir da was Witziges einfallen lassen."
+
+     Das Witzige daran ist der Ablauf, nicht die Dunkelheit: erst
+     flackert das Licht zweimal, wie es das vor einem Ausfall wirklich
+     tut, dann ist es SCHWARZ — und in dem Schwarz tasten sich zwei
+     Taschenlampenkegel suchend über den Bildschirm. Zum Schluss kommt
+     das Licht mit einem Ruck zurück.
+     ================================================================= */
+  function lcFinsternis() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcDunkel")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcDunkel";
+    schicht.className = "lc-dunkel";
+    schicht.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < 2; i++) {
+      const k = document.createElement("i");
+      k.className = "lc-lampe lc-lampe-" + i;
+      schicht.appendChild(k);
+    }
+    const wort = document.createElement("span");
+    wort.className = "lc-dunkel-wort";
+    wort.textContent = "… und dann war es dunkel.";
+    schicht.appendChild(wort);
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 6400);
+  }
+
+  /* =================================================================
+     LAGERFEUER MIT GLÜHWÜRMCHEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Und Lagerfeuer auch noch schön, mit Glühwürmchen."
+
+     Eine Flamme ist keine Form, die sich bewegt, sondern mehrere
+     Zungen, die UNABHÄNGIG voneinander zucken — deshalb drei Zungen
+     mit eigenen Takten übereinander. Die Glühwürmchen haben damit
+     nichts zu tun: sie treiben ruhig und weit ausserhalb des Feuers
+     umher und blinken in ihrem eigenen, langsamen Rhythmus. Gerade
+     der Gegensatz zwischen dem hektischen Feuer und den ruhigen
+     Lichtern macht das Bild.
+     ================================================================= */
+  function lcLagerfeuer() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcFeuer")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcFeuer";
+    schicht.className = "lc-lagerfeuer";
+    schicht.setAttribute("aria-hidden", "true");
+
+    const feuer = document.createElement("div");
+    feuer.className = "lc-feuerstelle";
+    const NS = NS_SVG;
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 160 150");
+    const p = (d, f, kl) => {
+      const e = document.createElementNS(NS, "path");
+      e.setAttribute("d", d); e.setAttribute("fill", f);
+      if (kl) e.setAttribute("class", kl);
+      return e;
+    };
+    /* Die Scheite liegen gekreuzt — das ist das Zeichen für ein
+       Lagerfeuer, auch wenn man nur die Silhouette sieht. */
+    svg.appendChild(p("M22 132 L138 108 L142 122 L26 146 Z", "#6b4526"));
+    svg.appendChild(p("M22 108 L138 132 L134 146 L18 122 Z", "#7d5330"));
+    /* Drei Flammenzungen, von aussen nach innen heller */
+    svg.appendChild(p("M80 116 q-36 -22 -26 -54 q4 18 16 24 q-10 -34 14 -56 "
+                    + "q-4 26 12 38 q10 8 8 22 q-2 18 -24 26 z", "#d64b1e", "fl fl1"));
+    svg.appendChild(p("M80 116 q-24 -16 -18 -40 q3 13 11 17 q-7 -24 10 -40 "
+                    + "q-3 19 8 27 q7 6 6 16 q-2 13 -17 20 z", "#f2871e", "fl fl2"));
+    svg.appendChild(p("M80 116 q-13 -9 -10 -23 q2 8 6 10 q-4 -14 6 -23 "
+                    + "q-2 11 5 16 q4 3 3 9 q-1 8 -10 11 z", "#ffd45e", "fl fl3"));
+    feuer.appendChild(svg);
+    schicht.appendChild(feuer);
+
+    /* Funken steigen aus dem Feuer auf und verglühen. */
+    const funken = window.innerWidth < 560 ? 22 : 38;
+    for (let i = 0; i < funken; i++) {
+      const f = document.createElement("i");
+      f.style.left = (46 + Math.random() * 8).toFixed(1) + "%";
+      f.style.setProperty("--lc-lf-weit", ((Math.random() - 0.5) * 34).toFixed(0) + "vw");
+      f.style.setProperty("--lc-lf-hoch", (28 + Math.random() * 44).toFixed(0) + "vh");
+      f.style.animationDuration = (1.7 + Math.random() * 1.6).toFixed(2) + "s";
+      f.style.animationDelay = (Math.random() * 3.6).toFixed(2) + "s";
+      schicht.appendChild(f);
+    }
+    /* Die Glühwürmchen — ruhig, weit verteilt, eigener Takt. */
+    const kaefer = window.innerWidth < 560 ? 12 : 22;
+    for (let i = 0; i < kaefer; i++) {
+      const g = document.createElement("b");
+      g.style.left = (4 + Math.random() * 92).toFixed(1) + "%";
+      g.style.top = (10 + Math.random() * 70).toFixed(1) + "%";
+      g.style.setProperty("--lc-gw-x", ((Math.random() - 0.5) * 140).toFixed(0) + "px");
+      g.style.setProperty("--lc-gw-y", ((Math.random() - 0.5) * 110).toFixed(0) + "px");
+      g.style.animationDuration = (5.5 + Math.random() * 5).toFixed(1) + "s, "
+        + (1.5 + Math.random() * 1.8).toFixed(2) + "s";
+      g.style.animationDelay = (Math.random() * 3).toFixed(2) + "s, "
+        + (Math.random() * 2).toFixed(2) + "s";
+      schicht.appendChild(g);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 12000);
+  }
+
+  /* =================================================================
+     STERNSCHNUPPEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Sternschnuppen wären auch noch eine schöne Animation."
+
+     Eine Sternschnuppe ist fast nur Schweif: ein heller Punkt, hinter
+     dem ein langer, schnell verblassender Strich herzieht. Sie kommt
+     selten, ist schnell vorbei und läuft NICHT senkrecht — deshalb
+     schräg, unterschiedlich lang und mit deutlichen Pausen dazwischen.
+     Darunter steht ein ruhiger Sternenhimmel, der leise funkelt.
+     ================================================================= */
+  function lcSternschnuppen() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcSchnuppe")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcSchnuppe";
+    schicht.className = "lc-schnuppen";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Der Himmel dahinter */
+    const sterne = window.innerWidth < 560 ? 40 : 80;
+    for (let i = 0; i < sterne; i++) {
+      const st = document.createElement("b");
+      st.style.left = (Math.random() * 100).toFixed(2) + "%";
+      st.style.top = (Math.random() * 78).toFixed(2) + "%";
+      const g = 1.5 + Math.random() * 2.4;
+      st.style.width = g.toFixed(1) + "px";
+      st.style.height = g.toFixed(1) + "px";
+      st.style.animationDuration = (1.8 + Math.random() * 3).toFixed(2) + "s";
+      st.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
+      schicht.appendChild(st);
+    }
+    /* Die Schnuppen selbst */
+    const wieviel = window.innerWidth < 560 ? 6 : 10;
+    for (let i = 0; i < wieviel; i++) {
+      const s2 = document.createElement("i");
+      s2.style.left = (18 + Math.random() * 74).toFixed(1) + "%";
+      s2.style.top = (2 + Math.random() * 34).toFixed(1) + "%";
+      s2.style.setProperty("--lc-ss-lang", (120 + Math.random() * 190).toFixed(0) + "px");
+      s2.style.setProperty("--lc-ss-neig", (26 + Math.random() * 22).toFixed(0) + "deg");
+      s2.style.animationDelay = (i * 1.15 + Math.random() * 0.7).toFixed(2) + "s";
+      s2.style.animationDuration = (0.85 + Math.random() * 0.5).toFixed(2) + "s";
+      schicht.appendChild(s2);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 13500);
+  }
+
+  /* =================================================================
+     DIE MATRIX
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Oder die Matrix, dass dann so dieser grüne Code so
+     runterkommt und teilweise die Wahrheit zeigt."
+
+     Das Zweite ist der eigentliche Einfall und der Grund, warum es
+     nicht nur hübsch, sondern lustig ist: zwischen den Zeichen stehen
+     immer wieder LESBARE Wörter — und zwar deutsche. Wer hinsieht,
+     liest im Code plötzlich „der Akkusativ" oder „du schaffst das".
+     Die Spalten laufen unterschiedlich schnell; die vorderste Zeile
+     jeder Spalte leuchtet heller als der Rest, wie es sich gehört.
+     ================================================================= */
+  const LC_MATRIX_WAHRHEIT = [
+    "der Akkusativ", "du schaffst das", "trennbare Verben", "der Dativ",
+    "Konjunktiv II", "immer weiter", "das Perfekt", "die Wahrheit",
+    "kein Zufall", "der Genitiv", "aufwachen", "Deutsch mit Alex",
+    "es gibt kein Loeffel", "folge dem Fuchs", "Nebensatz am Ende"
+  ];
+  const LC_MATRIX_ZEICHEN = "アイウエオカキクケ"
+    + "コサシスセソ0123456789ÄÖÜß";
+  function lcMatrix() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcMatrix")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcMatrix";
+    schicht.className = "lc-matrix";
+    schicht.setAttribute("aria-hidden", "true");
+    const spaltenBreite = 18;
+    const spalten = Math.ceil(window.innerWidth / spaltenBreite);
+    for (let i = 0; i < spalten; i++) {
+      const sp = document.createElement("div");
+      sp.className = "lc-mx-spalte";
+      sp.style.left = (i * spaltenBreite) + "px";
+      sp.style.animationDuration = (2.6 + Math.random() * 4.2).toFixed(2) + "s";
+      sp.style.animationDelay = (Math.random() * 3.4).toFixed(2) + "s";
+      /* Etwa jede fünfte Spalte trägt ein lesbares Wort, senkrecht
+         geschrieben. Öfter wäre es kein Fund mehr, sondern ein Text. */
+      const wahr = Math.random() < 0.2
+        ? LC_MATRIX_WAHRHEIT[Math.floor(Math.random() * LC_MATRIX_WAHRHEIT.length)]
+        : "";
+      const wo = wahr ? Math.floor(Math.random() * 10) + 4 : -1;
+      const laenge = 18 + Math.floor(Math.random() * 14);
+      for (let z = 0; z < laenge; z++) {
+        const t = document.createElement("span");
+        if (wahr && z >= wo && z < wo + wahr.length) {
+          t.textContent = wahr[z - wo];
+          t.className = "lc-mx-wahr";
+        } else {
+          t.textContent = LC_MATRIX_ZEICHEN[Math.floor(Math.random() * LC_MATRIX_ZEICHEN.length)];
+        }
+        if (z === laenge - 1) t.classList.add("lc-mx-kopf");
+        sp.appendChild(t);
+      }
+      schicht.appendChild(sp);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 10000);
+  }
+
+  /* =================================================================
+     DIE DRITTE DIMENSION — DER RAUM FALTET SICH
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Oder die dritte Dimension, wo der Chat sich vielleicht
+     irgendwie insgesamt faltet, und irgendwie Spiegelschriften oder
+     Spiegeleffekte in der Schrift."
+
+     Beides in einem Ablauf: erst kippt das Klassenzimmer in die Tiefe
+     (perspective + rotateY), dabei klappt es in der Mitte ein wie eine
+     Landkarte; dann steht jede zweite Zeile kurz seitenverkehrt, und
+     zum Schluss faltet sich alles wieder auf.
+
+     Wichtig war dabei, dass der Text NICHT dauerhaft gespiegelt bleibt
+     — man soll den Chat auch während des Effekts noch lesen können.
+     Die Spiegelung hält deshalb nur gut eine Sekunde.
+     ================================================================= */
+  function lcFalten() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    if (!karte) return;
+    karte.classList.add("lc-faltet");
+    const zeilen = [...karte.querySelectorAll(".lc-zeile")];
+    zeilen.forEach((z, i) => {
+      z.style.setProperty("--lc-fa-verzug", (i * 0.04).toFixed(3) + "s");
+      if (i % 2) z.classList.add("lc-spiegel");
+    });
+    setTimeout(() => {
+      karte.classList.remove("lc-faltet");
+      zeilen.forEach((z) => {
+        z.style.removeProperty("--lc-fa-verzug");
+        z.classList.remove("lc-spiegel");
+      });
+    }, 4200);
+  }
+
+  /* =================================================================
+     EIN FAHRZEUG QUER DURCHS BILD
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Bei den Weihnachtssachen möchte ich, dass eher so ein
+     Santa Claus im Schlitten mit Geschenken angerauscht kommt und
+     durchs Bild fährt. Oder dass irgendwie ein Rennauto durchs Bild
+     fährt — dass man praktisch nach Hause fährt oder den Chat
+     verlässt, als Abschiedsanimation."
+
+     Beides ist dieselbe Bewegung: etwas kommt von der einen Seite,
+     rauscht durch und ist weg. Was den Unterschied macht, ist nicht
+     die Bahn, sondern die SPUR: hinter dem Schlitten funkelt es, hinter
+     dem Rennwagen wirbelt Staub und stehen Geschwindigkeitsstriche.
+     Deshalb eine gemeinsame Bühne und zwei Fahrzeuge darauf.
+     ================================================================= */
+  function lcFahrzeug(art, bauen, dauer) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcFahrt")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcFahrt";
+    schicht.className = "lc-fahrt lc-fahrt-" + art;
+    schicht.setAttribute("aria-hidden", "true");
+    const wagen = document.createElement("div");
+    wagen.className = "lc-wagen";
+    wagen.appendChild(bauen());
+    schicht.appendChild(wagen);
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), dauer);
+    return schicht;
+  }
+
+  function lcSchlittenSvg() {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 300 120");
+    svg.setAttribute("class", "lc-schlitten-svg");
+    const p = (d, f, s2, w) => {
+      const e = document.createElementNS(NS_SVG, "path");
+      e.setAttribute("d", d);
+      e.setAttribute("fill", f || "none");
+      if (s2) { e.setAttribute("stroke", s2); e.setAttribute("stroke-width", w || 3); }
+      e.setAttribute("stroke-linejoin", "round");
+      e.setAttribute("stroke-linecap", "round");
+      return e;
+    };
+    /* Zwei Rentiere vorn — im Profil, mit Geweih und laufenden Beinen. */
+    [0, 1].forEach((i) => {
+      const g = document.createElementNS(NS_SVG, "g");
+      g.setAttribute("class", "lc-rentier lc-rentier-" + i);
+      const x = 18 + i * 54;
+      g.appendChild(p("M" + x + " 62 q14 -10 30 -2 q8 4 8 12 l-2 14 "
+                    + "q-16 6 -34 0 q-6 -12 -2 -24 z", "#8a5a34"));
+      /* Kopf und Hals */
+      g.appendChild(p("M" + (x + 30) + " 52 q10 -12 16 -12 q6 0 6 8 "
+                    + "q0 8 -8 12 q-8 4 -14 0 z", "#9a6a3e"));
+      /* Geweih — das macht ein Reh zum Rentier */
+      g.appendChild(p("M" + (x + 40) + " 40 l-3 -14 m0 0 l-7 -5 m7 5 l6 -7 "
+                    + "M" + (x + 46) + " 40 l4 -13 m0 0 l7 -4 m-7 4 l-5 -8",
+                      "", "#6b4526", 2.6));
+      /* Beine, die im Galopp stehen */
+      g.appendChild(p("M" + (x + 6) + " 84 l-4 16 M" + (x + 16) + " 86 l3 15 "
+                    + "M" + (x + 28) + " 84 l-3 16 M" + (x + 38) + " 84 l5 15",
+                      "", "#6b4526", 3.4));
+      svg.appendChild(g);
+    });
+    /* Die Zugleine */
+    svg.appendChild(p("M96 70 L150 74 M42 70 L96 72", "", "#5a4632", 2.2));
+    /* Der Schlitten: Kufe, Wanne, Lehne */
+    svg.appendChild(p("M150 96 q-6 8 4 10 h96 q10 -2 6 -12", "", "#b5762e", 5));
+    svg.appendChild(p("M150 62 q-4 30 8 34 h84 q14 -4 12 -22 l-2 -12 z", "#c0392b"));
+    svg.appendChild(p("M244 62 q14 -6 14 -22 q0 -10 -12 -8 q-8 2 -10 14 z", "#c0392b"));
+    /* Geschenke im Schlitten */
+    [[176, 44, "#f2c14e"], [204, 40, "#5fc9c2"], [228, 46, "#b48ce8"]].forEach(([gx, gy, f]) => {
+      const r = document.createElementNS(NS_SVG, "rect");
+      r.setAttribute("x", gx); r.setAttribute("y", gy);
+      r.setAttribute("width", 22); r.setAttribute("height", 20);
+      r.setAttribute("rx", 3); r.setAttribute("fill", f);
+      svg.appendChild(r);
+      svg.appendChild(p("M" + (gx + 11) + " " + gy + " v20 M" + gx + " "
+                      + (gy + 10) + " h22", "", "rgba(255,255,255,.8)", 3));
+    });
+    /* Der Weihnachtsmann: roter Mantel, weisser Bart, Mütze */
+    svg.appendChild(p("M160 34 q10 -14 24 -10 q12 4 10 20 l-2 20 h-32 z", "#c0392b"));
+    svg.appendChild(p("M166 30 q8 16 20 12 q6 -2 6 -10 q0 -14 -12 -16 q-14 -2 -14 14 z", "#f3d5b5"));
+    svg.appendChild(p("M164 32 q4 22 20 18 q10 -4 8 -14 q-14 8 -28 -4 z", "#fdfdfd"));
+    svg.appendChild(p("M160 18 q14 -14 28 -6 q6 4 2 10 q-16 -8 -30 -4 z", "#c0392b"));
+    const bommel = document.createElementNS(NS_SVG, "circle");
+    bommel.setAttribute("cx", 156); bommel.setAttribute("cy", 22);
+    bommel.setAttribute("r", 6); bommel.setAttribute("fill", "#fdfdfd");
+    svg.appendChild(bommel);
+    return svg;
+  }
+
+  function lcSchlitten() {
+    const schicht = lcFahrzeug("schlitten", lcSchlittenSvg, 7200);
+    if (!schicht) return;
+    /* Funkelnde Spur: Sterne, die hinter dem Schlitten liegen bleiben
+       und langsam verglimmen. Sie erscheinen nacheinander über die
+       Breite — so sieht man, wo er entlanggefahren ist. */
+    const wieviel = window.innerWidth < 560 ? 22 : 40;
+    for (let i = 0; i < wieviel; i++) {
+      const f = document.createElement("i");
+      f.style.left = (98 - (i / wieviel) * 108).toFixed(1) + "%";
+      f.style.top = (12 + Math.random() * 30).toFixed(1) + "%";
+      f.style.animationDelay = (0.25 + (i / wieviel) * 3.6 + Math.random() * 0.25).toFixed(2) + "s";
+      f.style.setProperty("--lc-fk", (3 + Math.random() * 5).toFixed(1) + "px");
+      schicht.appendChild(f);
+    }
+  }
+
+  function lcRennautoSvg() {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 300 120");
+    svg.setAttribute("class", "lc-auto-svg");
+    const p = (d, f, s2, w) => {
+      const e = document.createElementNS(NS_SVG, "path");
+      e.setAttribute("d", d); e.setAttribute("fill", f || "none");
+      if (s2) { e.setAttribute("stroke", s2); e.setAttribute("stroke-width", w || 3); }
+      e.setAttribute("stroke-linejoin", "round");
+      return e;
+    };
+    /* Ein flacher Rennwagen im Profil: langer Bug, Cockpit in der
+       Mitte, Heckflügel. Die Form ist niedrig — das ist es, was einen
+       Rennwagen von einem Auto unterscheidet. */
+    svg.appendChild(p("M16 86 L36 86 q6 -20 26 -22 l70 -4 q22 -18 50 -18 "
+                    + "q26 0 38 18 l34 4 q18 4 18 22 h-24 z", "#d64545"));
+    svg.appendChild(p("M136 60 q16 -14 36 -14 q20 0 30 14 z", "#2b2b32"));
+    /* Heckflügel */
+    svg.appendChild(p("M18 50 h54 v9 h-54 z", "#b03030"));
+    svg.appendChild(p("M40 50 v36", "", "#b03030", 6));
+    /* Frontflügel */
+    svg.appendChild(p("M256 84 h34 v8 h-40 z", "#b03030"));
+    [[74, 88, 22], [222, 88, 22]].forEach(([cx, cy, r]) => {
+      const rad = document.createElementNS(NS_SVG, "g");
+      rad.setAttribute("class", "lc-rad");
+      const a = document.createElementNS(NS_SVG, "circle");
+      a.setAttribute("cx", cx); a.setAttribute("cy", cy); a.setAttribute("r", r);
+      a.setAttribute("fill", "#23232a");
+      const b = document.createElementNS(NS_SVG, "circle");
+      b.setAttribute("cx", cx); b.setAttribute("cy", cy); b.setAttribute("r", r * 0.46);
+      b.setAttribute("fill", "#c9ccd2");
+      rad.appendChild(a); rad.appendChild(b);
+      /* Speichen, damit man das Drehen sieht */
+      rad.appendChild(p("M" + (cx - r * 0.44) + " " + cy + " h" + (r * 0.88)
+                      + " M" + cx + " " + (cy - r * 0.44) + " v" + (r * 0.88),
+                        "", "#8f939c", 2.6));
+      svg.appendChild(rad);
+    });
+    return svg;
+  }
+
+  function lcRennauto() {
+    const schicht = lcFahrzeug("rennauto", lcRennautoSvg, 5200);
+    if (!schicht) return;
+    /* Geschwindigkeitsstriche und Staub hinter dem Wagen. */
+    const striche = window.innerWidth < 560 ? 14 : 24;
+    for (let i = 0; i < striche; i++) {
+      const l = document.createElement("b");
+      l.style.top = (30 + Math.random() * 40).toFixed(1) + "%";
+      l.style.width = (40 + Math.random() * 130).toFixed(0) + "px";
+      l.style.animationDelay = (Math.random() * 1.9).toFixed(2) + "s";
+      schicht.appendChild(l);
+    }
+    const staub = window.innerWidth < 560 ? 16 : 28;
+    for (let i = 0; i < staub; i++) {
+      const u = document.createElement("u");
+      u.style.left = (100 - (i / staub) * 104).toFixed(1) + "%";
+      u.style.bottom = (16 + Math.random() * 16).toFixed(1) + "%";
+      const g = 8 + Math.random() * 20;
+      u.style.width = g.toFixed(0) + "px";
+      u.style.height = g.toFixed(0) + "px";
+      u.style.animationDelay = (0.2 + (i / staub) * 2.1).toFixed(2) + "s";
+      schicht.appendChild(u);
+    }
+  }
+
+  /* =================================================================
+     BONBONREGEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Dann können auch Bonbons regnen und diese bunten
+     Zuckerlollis."
+
+     Drei Sorten, weil eine Sorte in zwanzigfacher Ausfertigung nach
+     Tapete aussieht: das gewickelte Bonbon mit den beiden Zipfeln,
+     der runde Lolli am Stiel mit der Spirale, und die gedrehte
+     Zuckerstange. Jedes Stück dreht sich beim Fallen um sich selbst,
+     und zwar unterschiedlich schnell.
+     ================================================================= */
+  const LC_ZUCKER = ["#e0546a", "#f2c14e", "#5fc9c2", "#b48ce8", "#7fb069", "#ef9ec4"];
+  function lcBonbonSvg(sorte, farbe) {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 40 40");
+    const p = (d, f, s2, w) => {
+      const e = document.createElementNS(NS_SVG, "path");
+      e.setAttribute("d", d); e.setAttribute("fill", f || "none");
+      if (s2) { e.setAttribute("stroke", s2); e.setAttribute("stroke-width", w || 2); }
+      e.setAttribute("stroke-linejoin", "round");
+      e.setAttribute("stroke-linecap", "round");
+      return e;
+    };
+    if (sorte === 0) {
+      /* Bonbon im Papier: Kern und zwei gefältelte Zipfel. */
+      const k = document.createElementNS(NS_SVG, "ellipse");
+      k.setAttribute("cx", 20); k.setAttribute("cy", 20);
+      k.setAttribute("rx", 9); k.setAttribute("ry", 7.5);
+      k.setAttribute("fill", farbe);
+      svg.appendChild(p("M11 20 L2 13 q3 7 0 14 z", farbe));
+      svg.appendChild(p("M29 20 L38 13 q-3 7 0 14 z", farbe));
+      svg.appendChild(k);
+      svg.appendChild(p("M14 16 q6 4 0 8 M26 16 q-6 4 0 8", "", "rgba(255,255,255,.65)", 1.8));
+    } else if (sorte === 1) {
+      /* Lolli: Stiel und Scheibe mit Spirale. */
+      svg.appendChild(p("M20 26 v13", "", "#f0e6d2", 3));
+      const k = document.createElementNS(NS_SVG, "circle");
+      k.setAttribute("cx", 20); k.setAttribute("cy", 16);
+      k.setAttribute("r", 11); k.setAttribute("fill", farbe);
+      svg.appendChild(k);
+      svg.appendChild(p("M20 16 q0 -4 4 -4 q6 0 6 6 q0 8 -10 8 q-12 0 -12 -12",
+                        "", "rgba(255,255,255,.8)", 2.4));
+    } else {
+      /* Zuckerstange: heller Stab mit farbiger Wendel. */
+      svg.appendChild(p("M20 36 V14 q0 -8 7 -8 q7 0 7 7", "", "#fdfaf3", 7));
+      svg.appendChild(p("M20 34 l6 -3 M20 27 l6 -3 M20 20 l6 -3 M21 14 l6 -3 "
+                      + "M25 8 l5 2", "", farbe, 2.6));
+    }
+    return svg;
+  }
+  function lcBonbonregen() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcBonbon")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcBonbon";
+    schicht.className = "lc-bonbon";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 30 : 54;
+    for (let i = 0; i < wieviel; i++) {
+      const st = document.createElement("div");
+      st.className = "lc-zucker";
+      st.appendChild(lcBonbonSvg(i % 3, LC_ZUCKER[i % LC_ZUCKER.length]));
+      const gross = 22 + Math.random() * 20;
+      st.style.width = gross.toFixed(0) + "px";
+      st.style.left = (Math.random() * 100).toFixed(2) + "%";
+      st.style.animationDuration = (3.4 + Math.random() * 2.6).toFixed(2) + "s";
+      st.style.animationDelay = (Math.random() * 2.6).toFixed(2) + "s";
+      st.style.setProperty("--lc-z-dreh", ((Math.random() < 0.5 ? -1 : 1)
+        * (220 + Math.random() * 420)).toFixed(0) + "deg");
+      st.style.setProperty("--lc-z-seit", ((Math.random() - 0.5) * 120).toFixed(0) + "px");
+      schicht.appendChild(st);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 9000);
+  }
+
+  /* =================================================================
+     FLIEGENDES — SCHMETTERLINGE UND ZUGVÖGEL
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Ich möchte auch noch echte fliegende Schmetterlinge
+     oder Vögel, die in den Süden ziehen, mit richtigem realistischem
+     Flügelschlag."
+
+     Der Flügelschlag ist der ganze Punkt. Ein Emoji, das über den
+     Bildschirm geschoben wird, sieht aus wie ein Aufkleber auf einer
+     Schnur. Was ein Tier fliegen lässt, sind drei Dinge zugleich:
+
+       1. DIE FLÜGEL BEWEGEN SICH. Sie werden hier in der Waagerechten
+          gestaucht (scaleX) — dieselbe Form, von der Seite gesehen.
+          Das ist der billigste und zugleich überzeugendste Weg, einen
+          Schlag zu zeigen: die Fläche wird schmal, wenn der Flügel
+          zum Betrachter zeigt.
+       2. DER KÖRPER STEIGT UND SINKT im Takt des Schlags. Ein Vogel
+          gewinnt beim Abschlag Höhe und verliert sie beim Aufschlag.
+          Ohne das wirkt der Flügelschlag wie ein Zappeln.
+       3. DIE BAHN IST NICHT GERADE. Der Schmetterling taumelt stark
+          und unregelmässig, der Zugvogel nur sanft — genau darin
+          unterscheiden sich die beiden Flugbilder.
+
+     Die Zugvögel fliegen ausserdem in KEILFORMATION nach rechts unten
+     (Süden), und die hinteren sind kleiner und blasser: so sieht ein
+     Schwarm aus, der sich entfernt.
+     ================================================================= */
+  const NS_SVG = "http://www.w3.org/2000/svg";
+  const LC_FALTER_FARBEN = [
+    ["#e8734a", "#f7b267"], ["#6aa6ee", "#a5cdf5"], ["#b48ce8", "#d8c2f2"],
+    ["#e05f8f", "#f5a8c4"], ["#f2c14e", "#f9e3a2"], ["#5fc9c2", "#a8e6e2"]
+  ];
+  function lcSchmetterlingSvg(farbe) {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 100 80");
+    svg.setAttribute("class", "lc-falter-svg");
+    /* Zwei Flügelpaare je Seite — das obere gross und rund, das
+       untere kleiner und spitz. So sieht ein Schmetterling aus; ein
+       einzelnes Oval sieht aus wie ein Blatt. */
+    const fluegel = (d, seite, unten) => {
+      const g = document.createElementNS(NS_SVG, "g");
+      g.setAttribute("class", "lc-fluegel lc-fluegel-" + seite);
+      const pfad = document.createElementNS(NS_SVG, "path");
+      pfad.setAttribute("d", d);
+      pfad.setAttribute("fill", unten ? farbe[1] : farbe[0]);
+      pfad.setAttribute("stroke", "rgba(40,24,12,0.45)");
+      pfad.setAttribute("stroke-width", "1.4");
+      g.appendChild(pfad);
+      /* Die helle Zeichnung auf dem Flügel — ohne sie ist es eine
+         Farbfläche, mit ihr ein Schmetterling. */
+      const fleck = document.createElementNS(NS_SVG, "circle");
+      fleck.setAttribute("cx", seite === "links" ? "30" : "70");
+      fleck.setAttribute("cy", unten ? "56" : "30");
+      fleck.setAttribute("r", unten ? "3.6" : "5.2");
+      fleck.setAttribute("fill", "rgba(255,255,255,0.72)");
+      g.appendChild(fleck);
+      return g;
+    };
+    svg.appendChild(fluegel("M50 34 C 30 8, 6 12, 10 30 C 13 44, 34 44, 50 38 Z", "links", false));
+    svg.appendChild(fluegel("M50 34 C 70 8, 94 12, 90 30 C 87 44, 66 44, 50 38 Z", "rechts", false));
+    svg.appendChild(fluegel("M50 40 C 36 52, 18 62, 24 70 C 30 77, 46 58, 50 46 Z", "links", true));
+    svg.appendChild(fluegel("M50 40 C 64 52, 82 62, 76 70 C 70 77, 54 58, 50 46 Z", "rechts", true));
+    /* Leib und Fühler */
+    const leib = document.createElementNS(NS_SVG, "ellipse");
+    leib.setAttribute("cx", "50"); leib.setAttribute("cy", "40");
+    leib.setAttribute("rx", "3.2"); leib.setAttribute("ry", "13");
+    leib.setAttribute("fill", "#3b2a1c");
+    svg.appendChild(leib);
+    const fuehler = document.createElementNS(NS_SVG, "path");
+    fuehler.setAttribute("d", "M48 28 C 43 18, 39 14, 36 13 M52 28 C 57 18, 61 14, 64 13");
+    fuehler.setAttribute("stroke", "#3b2a1c");
+    fuehler.setAttribute("stroke-width", "1.5");
+    fuehler.setAttribute("fill", "none");
+    fuehler.setAttribute("stroke-linecap", "round");
+    svg.appendChild(fuehler);
+    return svg;
+  }
+  function lcVogelSvg() {
+    const svg = document.createElementNS(NS_SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 100 60");
+    svg.setAttribute("class", "lc-vogel-svg");
+    /* Ein Zugvogel von unten gesehen: schmaler Leib, lange spitze
+       Schwingen, gefächerter Stoss. Die Schwingen sitzen in eigenen
+       Gruppen, damit sie einzeln schlagen können. */
+    const schwinge = (d, seite) => {
+      const g = document.createElementNS(NS_SVG, "g");
+      g.setAttribute("class", "lc-schwinge lc-schwinge-" + seite);
+      const pfad = document.createElementNS(NS_SVG, "path");
+      pfad.setAttribute("d", d);
+      pfad.setAttribute("fill", "currentColor");
+      g.appendChild(pfad);
+      return g;
+    };
+    svg.appendChild(schwinge("M50 30 C 38 22, 20 16, 4 20 C 16 28, 30 32, 50 34 Z", "links"));
+    svg.appendChild(schwinge("M50 30 C 62 22, 80 16, 96 20 C 84 28, 70 32, 50 34 Z", "rechts"));
+    const leib = document.createElementNS(NS_SVG, "path");
+    leib.setAttribute("d", "M50 18 C 54 22, 55 34, 52 46 L50 52 L48 46 C 45 34, 46 22, 50 18 Z");
+    leib.setAttribute("fill", "currentColor");
+    svg.appendChild(leib);
+    return svg;
+  }
+
+  function lcFlieger(art) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcFlieger")?.remove();
+    const schicht = document.createElementNS ? document.createElement("div") : null;
+    if (!schicht) return;
+    schicht.id = "lcFlieger";
+    schicht.className = "lc-flieger lc-flieger-" + art;
+    schicht.setAttribute("aria-hidden", "true");
+
+    if (art === "schmetterling") {
+      const wieviel = window.innerWidth < 560 ? 9 : 16;
+      for (let i = 0; i < wieviel; i++) {
+        const tier = document.createElement("div");
+        tier.className = "lc-falter";
+        const farbe = LC_FALTER_FARBEN[i % LC_FALTER_FARBEN.length];
+        tier.appendChild(lcSchmetterlingSvg(farbe));
+        const gross = 26 + Math.random() * 26;
+        tier.style.width = gross.toFixed(0) + "px";
+        tier.style.left = (-12 + Math.random() * 12).toFixed(1) + "%";
+        tier.style.top = (8 + Math.random() * 74).toFixed(1) + "%";
+        /* Jeder taumelt anders: Weite, Höhe und Takt des Taumelns
+           sind eigene Werte. Gleiche Werte ergäben einen Schwarm,
+           der wie ein Vorhang zieht. */
+        tier.style.setProperty("--lc-f-weit", (108 + Math.random() * 28).toFixed(0) + "vw");
+        tier.style.setProperty("--lc-f-hoch", ((Math.random() - 0.5) * 46).toFixed(0) + "vh");
+        tier.style.setProperty("--lc-f-taumel", (18 + Math.random() * 34).toFixed(0) + "px");
+        tier.style.animationDuration = (7 + Math.random() * 7).toFixed(1) + "s";
+        tier.style.animationDelay = (Math.random() * 3.4).toFixed(2) + "s";
+        /* Der Flügelschlag: schnell und unregelmässig. */
+        tier.style.setProperty("--lc-f-schlag", (0.16 + Math.random() * 0.12).toFixed(3) + "s");
+        schicht.appendChild(tier);
+      }
+      document.body.appendChild(schicht);
+      setTimeout(() => schicht.remove(), 15000);
+      return;
+    }
+
+    /* --- Die Zugvögel: ein Keil, der nach rechts unten zieht --- */
+    const keil = document.createElement("div");
+    keil.className = "lc-keil";
+    const anzahl = window.innerWidth < 560 ? 9 : 13;
+    for (let i = 0; i < anzahl; i++) {
+      const tier = document.createElement("div");
+      tier.className = "lc-vogel";
+      tier.appendChild(lcVogelSvg());
+      /* Die Keilformation: einer an der Spitze, dahinter zwei
+         Schenkel. Wer weiter hinten fliegt, sitzt tiefer und weiter
+         aussen — und wird kleiner und blasser, weil er ferner ist. */
+      const reihe = Math.ceil(i / 2);
+      const seite = i === 0 ? 0 : (i % 2 ? -1 : 1);
+      const ferne = reihe / (anzahl / 2 + 1);
+      const breit = 40 - ferne * 13;
+      /* In PIXELN, nicht in Prozent: der Keil ist ein Punkt ohne
+         Ausdehnung (width: 0), und Prozente eines Nullkastens sind
+         null — dann sassen alle Vögel aufeinander. Genau das war beim
+         ersten Versuch im Bild zu sehen: ein einziger Vogel. */
+      tier.style.left = (-reihe * (breit * 1.16)).toFixed(0) + "px";
+      tier.style.top = (seite * reihe * (breit * 0.74)).toFixed(0) + "px";
+      tier.style.width = breit.toFixed(0) + "px";
+      tier.style.opacity = (0.92 - ferne * 0.34).toFixed(2);
+      /* Der Schlag läuft durch den Schwarm, er ist nicht gleichzeitig:
+         die hinteren folgen dem Führungsvogel mit Verzug. */
+      tier.style.setProperty("--lc-v-verzug", (reihe * 0.075).toFixed(3) + "s");
+      schicht.appendChild(keil);
+      keil.appendChild(tier);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 14000);
   }
 
   /* =================================================================
@@ -14628,6 +15431,46 @@
     setTimeout(() => { try { window.scrollBy({ top: 18, behavior: verhalten }); } catch (e) {} }, 60);
   }
 
+  /* =================================================================
+     ZURÜCK AN DEN PLATZ — GENAU WIE EIN KLICK AUF DEN REITER
+     -----------------------------------------------------------------
+     GEMELDET: „Wenn man durch die Sektion Wissen scrollt, kann man,
+     wenn man ins Innere des Chatpanels klickt, das immer nur um ein
+     paar Tipps ausrichten. Das ist aber nicht das, was ich meine.
+     Wenn man auf Klassenzimmer klickt, positioniert sich das
+     Klassenzimmer in der Bildmitte — so soll es auch sein, wenn man
+     in den Frame klickt. Das soll nicht hängen."
+
+     livechatInsBild() rechnete selbst aus, wohin gescrollt werden
+     soll, und traf dabei je nach Höhe des Kastens etwas anderes als
+     der Reiter — mal die Mitte, mal das untere Ende, mal ein
+     nachträgliches scrollBy von 18 Pixeln. Genau dieses Nachrücken
+     war das „immer nur um ein paar Tipps".
+
+     Statt es nachzubauen, wird jetzt GENAU DASSELBE getan wie beim
+     Reiter (siehe wireSubnav): die Unteransicht mit block: "start"
+     ins Bild. Eine Regel, ein Ergebnis — und keine zweite Stelle, die
+     auseinanderlaufen kann.
+
+     Das „darf nicht hängen" ist der zweite Teil: ein zweiter Aufruf
+     während einer noch laufenden weichen Bewegung bringt manche
+     Browser zum Stocken. Deshalb wird ein angefangener Sprung für
+     eine halbe Sekunde gemerkt und ein weiterer Tipp ignoriert.
+     ================================================================= */
+  let lcSprungLaeuft = 0;
+  function livechatAnSeinenPlatz() {
+    const jetzt = Date.now();
+    if (jetzt - lcSprungLaeuft < 520) return;
+    lcSprungLaeuft = jetzt;
+    const ansicht = document.getElementById("sub-livechat");
+    if (!ansicht) return livechatInsBild();
+    try {
+      ansicht.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {
+      ansicht.scrollIntoView(true);
+    }
+  }
+
   /* --- Der Chat sieht aus wie damals -------------------------
      GEWÜNSCHT: „Der Chat muss so aussehen wie früher, nicht mit
      diesen Sprechblasen wie bei WhatsApp — sonst funktioniert die
@@ -14648,7 +15491,10 @@
 
      Nur neue Zeilen werden angehängt — alles neu zu zeichnen würde
      beim Tippen den Text im Feld verlieren. */
-  let livechatGezeigt = new Set();
+  /* id -> Marke dessen, was gezeichnet wurde. Eine Map, kein Set:
+     eine Zeile kann sich noch ändern, nachdem sie stand (das Bild
+     kommt aus dem Lager nach). Siehe livechatChatAuffrischen(). */
+  let livechatGezeigt = new Map();
 
   /* Jede Person bekommt ihre eigene Farbe — wie in den alten Chats.
      Ohne eigene Wahl (/c) wird sie aus dem Namen gerechnet, damit
@@ -14860,6 +15706,19 @@
     gewitter:{ ganzeSeite: true, wie: "gewitter" },
     erdbeben:{ ganzeSeite: true, wie: "erdbeben" },
     vulkan:  { ganzeSeite: true, wie: "vulkan" },
+    /* GEWÜNSCHT: „Alles, was man da an Animationen noch machen kann,
+       was witzig, unterhaltsam und abwechslungsreich ist." */
+    schmetterling: { ganzeSeite: true, wie: "schmetterling" },
+    voegel:  { ganzeSeite: true, wie: "voegel" },
+    schlitten: { ganzeSeite: true, wie: "schlitten" },
+    rennauto:{ ganzeSeite: true, wie: "rennauto" },
+    bonbon:  { ganzeSeite: true, wie: "bonbon" },
+    orkan:   { ganzeSeite: true, wie: "orkan" },
+    finsternis: { ganzeSeite: true, wie: "finsternis" },
+    lagerfeuer: { ganzeSeite: true, wie: "lagerfeuer" },
+    sternschnuppe: { ganzeSeite: true, wie: "sternschnuppe" },
+    matrix:  { ganzeSeite: true, wie: "matrix" },
+    falten:  { ganzeSeite: true, wie: "falten" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -14877,6 +15736,17 @@
       else if (e.wie === "gewitter") lcGewitter();
       else if (e.wie === "erdbeben") lcErdbeben();
       else if (e.wie === "vulkan") lcVulkan();
+      else if (e.wie === "schmetterling") lcFlieger("schmetterling");
+      else if (e.wie === "voegel") lcFlieger("voegel");
+      else if (e.wie === "schlitten") lcSchlitten();
+      else if (e.wie === "rennauto") lcRennauto();
+      else if (e.wie === "bonbon") lcBonbonregen();
+      else if (e.wie === "orkan") lcOrkan();
+      else if (e.wie === "finsternis") lcFinsternis();
+      else if (e.wie === "lagerfeuer") lcLagerfeuer();
+      else if (e.wie === "sternschnuppe") lcSternschnuppen();
+      else if (e.wie === "matrix") lcMatrix();
+      else if (e.wie === "falten") lcFalten();
       else if (e.wie === "geschenk") lcGeschenk();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
@@ -14986,11 +15856,18 @@
     if (!v) return;
     if (lcHgGemerkt === null) lcHintergrundHolen();   // einmal aus dem Lager
 
-    /* Ein eigenes Bild schlägt alles andere. */
+    /* Ein eigenes Bild schlägt alles andere. Es haengt NICHT nur am
+       Verlauf, sondern auch an der ganzen Karte — „der soll sich
+       hinter dem Chat und hinter allen Elementen aufziehen, also
+       komplett durch das ganze Klassenzimmer". */
     const eigenes = lcHintergrundBild();
-    v.classList.toggle("hat-eigenes-bild", Boolean(eigenes));
-    if (eigenes) v.style.setProperty("--lc-hg-bild", 'url("' + eigenes + '")');
-    else v.style.removeProperty("--lc-hg-bild");
+    const karte = document.getElementById("livechatKarte");
+    [v, karte].forEach((el) => {
+      if (!el) return;
+      el.classList.toggle("hat-eigenes-bild", Boolean(eigenes));
+      if (eigenes) el.style.setProperty("--lc-hg-bild", 'url("' + eigenes + '")');
+      else el.style.removeProperty("--lc-hg-bild");
+    });
 
     let schicht = v.querySelector(".lc-chat-hg");
     if (!schicht) {
@@ -15040,7 +15917,7 @@
       return;
     }
     const leer = v.querySelector(".lc-chat-leer");
-    if (leer) { leer.remove(); livechatGezeigt = new Set(); }
+    if (leer) { leer.remove(); livechatGezeigt = new Map(); }
 
     /* GEWÜNSCHT: „Wenn jemand neu in den Chat kommt, dann darf er die
        Animationen, die vorher da waren, nicht komplett auslösen — das
@@ -15055,11 +15932,40 @@
 
     const amEnde = v.scrollHeight - v.scrollTop - v.clientHeight < 70;
     l.nachrichten.forEach((n) => {
-      if (livechatGezeigt.has(n.id)) return;
-      livechatGezeigt.add(n.id);
+      /* GEMELDET: „Jetzt bin ich in den anderen Raum gegangen und bin
+         zurück ins Klassenzimmer und sehe bei vielen Nachrichten, die
+         ich geschrieben habe, nur noch meinen Namen, aber nicht mehr
+         die Nachricht."
+
+         HIER LAG ES. Gemerkt wurde bisher nur die KENNUNG einer
+         gezeichneten Zeile — wer einmal gezeichnet war, wurde nie
+         wieder angefasst. Das ist richtig, solange sich eine Zeile
+         nicht mehr ändert. Bilder ändern sich aber sehr wohl: sie
+         liegen im Lager (IndexedDB) und werden NACHGEREICHT, weil das
+         Betreten nicht auf die Datenbank warten soll. Beim Zeichnen
+         ist bildImChat deshalb oft noch leer.
+
+         Eine Bildnachricht OHNE Bildunterschrift bestand in diesem
+         Augenblick aus nichts als dem Namen — und blieb es für immer,
+         weil bilderNachreichen() zwar melden() ruft, die Zeile aber
+         als „schon gezeichnet" galt. Genau das war zu sehen.
+
+         Jetzt wird nicht die Kennung gemerkt, sondern eine MARKE aus
+         allem, was man sieht. Ändert sie sich, wird die Zeile an Ort
+         und Stelle ersetzt. */
+      const marke = [n.text || "", n.art || "", n.name || "", n.farbe || "",
+                     n.bildImChat ? "B" : (n.bildImLager ? "L" : (n.bildWeg ? "W" : "")),
+                     n.bild || "", n.wirkung || ""].join("\u0001");
+      const schon = livechatGezeigt.get(n.id);
+      if (schon === marke) return;
+      livechatGezeigt.set(n.id, marke);
+      const alteZeile = schon !== undefined
+        ? v.querySelector('[data-lc-id="' + CSS.escape(String(n.id)) + '"]')
+        : null;
       const art = n.art || "text";
       const z = document.createElement("div");
       z.className = "lc-zeile lc-zeile-" + art;
+      z.dataset.lcId = String(n.id);
 
       /* ACHTUNG, und das ist kein Formalismus: Name und Text kommen
          von einem FREMDEN Gerät im Raum. Würden sie über innerHTML
@@ -15205,7 +16111,11 @@
         }
         z.appendChild(t);
       }
-      v.appendChild(z);
+      /* Eine bekannte Zeile wird ERSETZT, keine zweite angehängt —
+         sonst stünde dieselbe Nachricht doppelt da, sobald ihr Bild
+         nachkommt. */
+      if (alteZeile) alteZeile.replaceWith(z);
+      else v.appendChild(z);
 
       /* Welcher Effekt gehört zu dieser Zeile? */
       /* Vergangenheit? Dann still — siehe oben. */
@@ -15328,7 +16238,7 @@
        damit es beim nächsten Betreten frisch gebaut wird. */
     if (l.lage === "aus" || l.lage === "fehler") {
       livechatGeruest = false;
-      livechatGezeigt = new Set();
+      livechatGezeigt = new Map();
       livechatEffekteAb = 0;          // beim nächsten Betreten neu stellen
       livechatSchonUnten = false;
       area.innerHTML = livechatStartHtml(l);
@@ -15387,7 +16297,7 @@
     if (!livechatGeruest || !document.getElementById("livechatKarte")) {
       area.innerHTML = livechatGeruestHtml();
       livechatGeruest = true;
-      livechatGezeigt = new Set();
+      livechatGezeigt = new Map();
       /* Ab JETZT ist etwas „gerade eben" — alles Ältere ist
          Vergangenheit und bleibt still. */
       livechatEffekteAb = Date.now();
@@ -15535,7 +16445,7 @@
       const karte = area.querySelector("#livechatKarte") || area.firstElementChild;
       area.querySelector(".lc-chat")?.addEventListener("click", (e) => {
         if (e.target.closest(".lc-zeile, .lc-chat-fuss, button, input, a, details, pre, img")) return;
-        livechatInsBild();
+        livechatAnSeinenPlatz();
       });
       /* Auch ein Tipp ins Leere DANEBEN — neben den Plätzen, unter der
          Leiste — rückt alles wieder an seinen Ort. GEWÜNSCHT: „dass man
@@ -15543,12 +16453,12 @@
          dann positioniert sich das wieder so ein." */
       area.addEventListener("click", (e) => {
         if (e.target.closest("button, input, a, details, pre, img, .lc-zeile, .lc-platz, .lc-chat")) return;
-        livechatInsBild();
+        livechatAnSeinenPlatz();
       });
       area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
         if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
         LiveChat.chatLeeren();
-        livechatGezeigt = new Set();
+        livechatGezeigt = new Map();
         const v = document.getElementById("lcVerlauf");
         if (v) v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
         renderLiveChat();

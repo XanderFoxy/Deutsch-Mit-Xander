@@ -30,6 +30,7 @@ einträgt (window.GIPHY_KEY in supabase-config.js), bekommt sie zusätzlich.
 """
 
 import os
+import math
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 ZIEL = os.path.join(os.path.dirname(HIER), "sticker")
@@ -137,9 +138,20 @@ AUFKLEBER["herz"] = huelle(
     '<g class="hz">'
     '<path d="M60 100 C20 74 14 48 30 36 C44 26 57 34 60 44 '
     'C63 34 76 26 90 36 C106 48 100 74 60 100 Z" fill="#e0546a"/>'
-    '<ellipse cx="42" cy="46" rx="8" ry="5" fill="rgba(255,255,255,.45)" '
-    'transform="rotate(-30 42 46)"/>'
     "</g>",
+    # GEMELDET: „Bei dem Herz, das schlaegt, ist links ein kleines
+    # weisses Symbol. Ich weiss nicht, was das sein soll — das muss da
+    # gar nicht hin."
+    #
+    # Es war ein GLANZLICHT: eine weisse Ellipse, die eine Spiegelung
+    # auf einer glaenzenden Oberflaeche andeuten sollte. Sie stand
+    # schief im Herz, weil sie ein transform="rotate(-30 42 46)" trug —
+    # und der Drehpunkt darin wird von der Regel
+    # „* { transform-origin: 50% 50% }" im Kopf dieser Datei
+    # ueberschrieben. Statt sich an Ort und Stelle zu neigen, wanderte
+    # sie dabei zur Seite. Ein Fleck, der nicht dort sitzt, wo Licht
+    # auftreffen wuerde, sieht nicht nach Glanz aus, sondern nach
+    # einem fremden Zeichen. Weg damit.
     stil=(
         "  .hz { animation: puls 1.1s cubic-bezier(.35,0,.3,1) infinite; }\n"
         "  @keyframes puls { 0%,38%,100%{transform:scale(1)} "
@@ -147,43 +159,82 @@ AUFKLEBER["herz"] = huelle(
     ),
 )
 
-# --- klatschen: zwei Haende von der Seite, die zusammenschlagen ---
+# --- klatschen: zwei Haende von VORN, die zusammenschlagen --------
+# GEMELDET: „Die klatschenden Haende sind keine richtigen Haende. Das
+# sieht aus, als wenn zwei Wassereis aneinander klatschen."
+#
+# Das traf zu, und der Grund stand in der alten Zeichnung: die Hand war
+# im PROFIL gezeichnet — eine abgerundete Flaeche auf einem Stiel. Von
+# der Seite sieht eine Hand aber immer aus wie ein Eis am Stiel, weil
+# genau das fehlt, woran man eine Hand erkennt: die einzelnen Finger
+# und der abgespreizte Daumen.
+#
+# Jetzt von VORN, leicht schraeg. Vier Finger stehen als getrennte
+# Glieder nebeneinander, unterschiedlich lang (der Mittelfinger am
+# laengsten, der kleine am kuerzesten — sonst wirkt es wie ein Kamm),
+# der Daumen sitzt tiefer und zeigt nach aussen. Die Handflaeche ist
+# unten breit und oben schmaler, wie ein Handballen eben ist.
 def _hand(seite, haut, saum):
-    """Eine Hand im Profil. seite = -1 links, +1 rechts."""
+    """Eine Hand von vorn. seite = -1 links, +1 rechts."""
     sp = 1 if seite > 0 else -1
-    x = 60
+    # Fingerlaengen: klein, Ring, Mittel, Zeige — von aussen nach innen.
+    finger = [(20, 46), (31, 38), (42, 34), (53, 40)]
+    glieder = "".join(
+        '<rect x="%d" y="%d" width="9.5" height="%d" rx="4.75" fill="%s" '
+        'stroke="%s" stroke-width="2"/>' % (x, y, 92 - y, haut, saum)
+        for x, y in finger
+    )
+    # Die Fugen zwischen den Fingern — ohne sie verschmelzen sie zu
+    # einer Flaeche, sobald der Aufkleber klein dargestellt wird.
+    fugen = "".join(
+        '<line x1="%.1f" y1="%d" x2="%.1f" y2="86" stroke="%s" '
+        'stroke-width="1.5" opacity=".5"/>' % (x + 9.5 + 0.9, y + 8, x + 9.5 + 0.9, y)
+        for x, y in finger[:-1]
+    )
     return (
-        '<g transform="translate(%d 0) scale(%d 1)">' % (x, sp)
-        # Unterarm
-        + '<path d="M2 108 L2 86 Q2 78 12 78 L24 78 L24 108 Z" fill="%s" '
-          'stroke="%s" stroke-width="2.4" stroke-linejoin="round"/>' % (haut, saum)
+        '<g class="raum" transform="translate(%d 0) scale(%d 1) rotate(%d 46 76)">'
+        % (60 if sp > 0 else 60, sp, -12)
+        # Handgelenk
+        + '<path d="M26 104 Q26 96 34 95 L58 95 Q66 96 66 104 L66 116 L26 116 Z" '
+          'fill="%s" stroke="%s" stroke-width="2.2" stroke-linejoin="round"/>' % (haut, saum)
+        # Die Finger stehen HINTER der Handflaeche, damit die Flaeche
+        # ihre Wurzeln verdeckt und keine Kanten quer ueber sie laufen.
+        + glieder
+        # Daumen: tiefer angesetzt, nach aussen abgespreizt
+        + '<g class="raum" transform="rotate(-38 18 84)">'
+          '<rect x="8" y="62" width="11" height="26" rx="5.5" fill="%s" '
+          'stroke="%s" stroke-width="2"/></g>' % (haut, saum)
         # Handflaeche
-        + '<path d="M2 84 Q2 54 14 44 Q24 36 34 44 Q42 51 42 66 '
-          'L42 84 Q42 94 32 94 L12 94 Q2 94 2 84 Z" fill="%s" '
-          'stroke="%s" stroke-width="2.4" stroke-linejoin="round"/>' % (haut, saum)
-        # Finger, angedeutet
-        + '<path d="M8 52 L8 76 M16 46 L16 76 M24 45 L24 76 M32 50 L32 76" '
-          'stroke="%s" stroke-width="1.7" opacity=".55"/>' % saum
-        + '</g>'
+        + '<path d="M18 92 Q18 70 24 64 L60 64 Q68 70 68 92 Q68 100 58 100 '
+          'L28 100 Q18 100 18 92 Z" fill="%s" stroke="%s" stroke-width="2.2" '
+          'stroke-linejoin="round"/>' % (haut, saum)
+        + fugen
+        # Die Lebenslinie — eine einzige weiche Falte reicht, damit die
+        # Flaeche nicht leer wirkt.
+        + '<path d="M28 70 Q34 84 46 88" stroke="%s" stroke-width="1.8" '
+          'fill="none" opacity=".45" stroke-linecap="round"/>' % saum
+        + "</g>"
     )
 
 
 AUFKLEBER["klatschen"] = huelle(
-    '<g class="li">' + _hand(-1, "#f3b57b", "rgba(120,70,30,.42)") + '</g>'
-    '<g class="re">' + _hand(1, "#e8a768", "rgba(120,70,30,.42)") + '</g>'
+    '<g class="li">' + _hand(-1, "#f3b57b", "rgba(120,70,30,.5)") + '</g>'
+    '<g class="re">' + _hand(1, "#e8a768", "rgba(120,70,30,.5)") + '</g>'
     '<g class="fz" opacity="0">'
-    '<path d="M60 30 L60 14 M42 36 L32 22 M78 36 L88 22 '
-    'M28 56 L12 50 M92 56 L108 50" '
+    '<path d="M60 26 L60 10 M40 32 L30 18 M80 32 L90 18 '
+    'M26 52 L10 46 M94 52 L110 46" '
     'stroke="#f7c948" stroke-width="4" stroke-linecap="round"/></g>',
     stil=(
-        "  .li { animation: kli 0.4s ease-in-out infinite; }\n"
-        "  .re { animation: kre 0.4s ease-in-out infinite; }\n"
-        "  .fz { animation: fz 0.4s ease-out infinite; }\n"
-        "  @keyframes kli { 0%,100%{transform:translateX(-17px) rotate(-14deg)} "
-        "50%{transform:translateX(1px) rotate(0)} }\n"
-        "  @keyframes kre { 0%,100%{transform:translateX(17px) rotate(14deg)} "
-        "50%{transform:translateX(-1px) rotate(0)} }\n"
-        "  @keyframes fz { 0%,42%{opacity:0} 54%{opacity:.95} 100%{opacity:0} }\n"
+        "  .li { animation: kli 0.42s ease-in-out infinite; }\n"
+        "  .re { animation: kre 0.42s ease-in-out infinite; }\n"
+        "  .fz { animation: fz 0.42s ease-out infinite; }\n"
+        # Beim Zusammenschlagen kippen die Haende leicht nach vorn und
+        # werden einen Hauch schmaler — so sieht man den Aufprall.
+        "  @keyframes kli { 0%,100%{transform:translateX(-19px) rotate(-10deg) scaleX(1)} "
+        "48%{transform:translateX(2px) rotate(2deg) scaleX(.94)} }\n"
+        "  @keyframes kre { 0%,100%{transform:translateX(19px) rotate(10deg) scaleX(1)} "
+        "48%{transform:translateX(-2px) rotate(-2deg) scaleX(.94)} }\n"
+        "  @keyframes fz { 0%,44%{opacity:0} 56%{opacity:.95} 100%{opacity:0} }\n"
     ),
 )
 
@@ -389,22 +440,87 @@ AUFKLEBER["regenbogen"] = huelle(
 )
 
 # --- schnee: eine Wolke, aus der Flocken fallen ------------------
+# GEMELDET: „Aus der Wolke fallen Sterne — sollen das eigentlich
+# Regentropfen sein? Ich weiss es nicht."
+#
+# Genau das war der Fehler: die Flocke war ein Stern aus fuenf geraden
+# Strichen durch einen Punkt. So sieht kein Schneekristall aus, und
+# weil sie sich beim Fallen auch noch drehte, las man sie als
+# funkelnden Stern.
+#
+# Eine echte Flocke hat SECHS Arme (nicht fuenf), und an jedem Arm
+# sitzen zwei kleine Aeste schraeg nach aussen. Erst diese Aeste
+# machen sie unverwechselbar; ohne sie ist jede Flocke ein Stern.
+# Damit die Frage gar nicht erst aufkommt, gibt es den Regen jetzt
+# ausserdem als eigenen Aufkleber mit richtigen Tropfen.
+def _wolke(farbe="#dce9f2", saum="rgba(70,100,130,.25)"):
+    return ('<path d="M32 50 a18 18 0 0 1 17 -17 a22 22 0 0 1 41 6 '
+            'a15 15 0 0 1 -3 29 H36 a15 15 0 0 1 -4 -18 z" fill="%s" '
+            'stroke="%s" stroke-width="2.5" stroke-linejoin="round"/>' % (farbe, saum))
+
+
+def _flocke(x, y, farbe="#8fc4e8"):
+    """Sechs Arme, jeder mit zwei Aesten — daran erkennt man Schnee.
+
+    Die Punkte werden AUSGERECHNET, nicht gedreht. Ein
+    transform="rotate(w x y)" waere hier naemlich wirkungslos bis
+    schaedlich: die Regel „* { transform-origin: 50% 50% }" im Kopf
+    dieser Datei ueberschreibt den Drehpunkt, und dann dreht sich jeder
+    Arm um seine EIGENE Mitte statt um die Mitte der Flocke. Genau so
+    zerfiel die Flocke beim ersten Versuch in drei versprengte Y.
+    """
+    lang, ast_bei, ast_lang = 11.0, 7.5, 4.6
+    striche = []
+    for i in range(6):
+        w = math.radians(i * 60 - 90)
+        dx, dy = math.cos(w), math.sin(w)
+        ex, ey = x + dx * lang, y + dy * lang
+        striche.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (x, y, ex, ey))
+        # Die beiden Aeste sitzen auf dem Arm und stehen 60 Grad ab.
+        gx, gy = x + dx * ast_bei, y + dy * ast_bei
+        for seite in (-60, 60):
+            v = math.radians(i * 60 - 90 + seite)
+            striche.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>'
+                           % (gx, gy, gx + math.cos(v) * ast_lang, gy + math.sin(v) * ast_lang))
+    return ('<g stroke="%s" stroke-width="2" stroke-linecap="round">%s</g>'
+            % (farbe, "".join(striche)))
+
+
 AUFKLEBER["schnee"] = huelle(
-    '<path d="M32 50 a18 18 0 0 1 17 -17 a22 22 0 0 1 41 6 a15 15 0 0 1 -3 29 '
-    'H36 a15 15 0 0 1 -4 -18 z" fill="#dce9f2" '
-    'stroke="rgba(70,100,130,.25)" stroke-width="2.5" stroke-linejoin="round"/>'
+    _wolke()
     + "".join(
-        '<g class="f%d"><path d="M%d 74 v18 M%d 78 l-6 6 M%d 78 l6 6 '
-        'M%d 88 l-6 -6 M%d 88 l6 -6" stroke="#8fc4e8" stroke-width="3" '
-        'stroke-linecap="round"/></g>' % (i, x, x, x, x, x)
+        '<g class="f%d">%s</g>' % (i, _flocke(x, 82))
         for i, x in enumerate([34, 52, 70, 88])
     ),
     stil=(
-        "  .f0,.f1,.f2,.f3 { animation: rieseln 2.4s linear infinite; }\n"
-        "  .f1{animation-delay:.6s} .f2{animation-delay:1.2s} .f3{animation-delay:1.8s}\n"
-        "  @keyframes rieseln { 0%{opacity:0;transform:translateY(-10px) rotate(0)} "
+        "  .f0,.f1,.f2,.f3 { animation: rieseln 2.8s linear infinite; }\n"
+        "  .f1{animation-delay:.7s} .f2{animation-delay:1.4s} .f3{animation-delay:2.1s}\n"
+        # Schnee dreht sich nur SACHTE — eine halbe Umdrehung, nicht
+        # mehr. Bei 180 Grad wie vorher funkelte sie wie ein Stern.
+        "  @keyframes rieseln { 0%{opacity:0;transform:translateY(-12px) rotate(0)} "
         "20%{opacity:1} 80%{opacity:1} "
-        "100%{opacity:0;transform:translateY(32px) rotate(180deg)} }\n"
+        "100%{opacity:0;transform:translateY(30px) rotate(60deg)} }\n"
+    ),
+)
+
+# --- regen: dieselbe Wolke, aber mit richtigen Tropfen ------------
+# Ein Tropfen ist oben spitz und unten rund — das ist der ganze
+# Unterschied zum Stern, und er genuegt vollkommen.
+AUFKLEBER["regen"] = huelle(
+    _wolke("#cfdfe9", "rgba(60,90,120,.3)")
+    + "".join(
+        '<g class="t%d"><path d="M%d 72 q5.5 9 5.5 13.5 a5.5 5.5 0 0 1 -11 0 '
+        'q0 -4.5 5.5 -13.5 z" fill="#5b9bd5" stroke="rgba(30,70,110,.35)" '
+        'stroke-width="1.4"/></g>' % (i, x)
+        for i, x in enumerate([36, 54, 72, 90])
+    ),
+    stil=(
+        "  .t0,.t1,.t2,.t3 { animation: fallen 1.5s ease-in infinite; }\n"
+        "  .t1{animation-delay:.38s} .t2{animation-delay:.75s} .t3{animation-delay:1.12s}\n"
+        "  @keyframes fallen { 0%{opacity:0;transform:translateY(-8px) scaleY(.7)} "
+        "18%{opacity:1;transform:translateY(0) scaleY(1)} "
+        "82%{opacity:1} "
+        "100%{opacity:0;transform:translateY(32px) scaleY(1.25)} }\n"
     ),
 )
 
@@ -467,38 +583,110 @@ AUFKLEBER["idee"] = huelle(
 )
 
 # --- schreiben: ein Stift, der schreibt ---------------------------
+# GEMELDET: „Der Stift sieht nicht aus, als wenn er richtig schreibt."
+#
+# Der Fehler war handfest: die Linie lag bei y=108, die Stiftspitze
+# wanderte aber bei y=96 — zwoelf Pixel darueber. Der Stift schwebte
+# also ueber dem Papier und die Linie erschien von allein. Dazu lief
+# die Linie IMMER von links nach rechts durch, egal wo der Stift gerade
+# war; beim Zurueckwandern schrieb er rueckwaerts weiter.
+#
+# Jetzt liegt die Spitze GENAU auf der Linie (beide y=96), der Stift
+# wandert nur einmal von links nach rechts, und die Linie wird im
+# selben Takt aufgedeckt. Dazu ein Papierblatt, damit klar ist, worauf
+# geschrieben wird, und ein zweiter, schon geschriebener Strich
+# darueber — eine einzelne Linie sieht aus wie ein Unterstrich.
 AUFKLEBER["schreiben"] = huelle(
+    # Das Blatt
+    '<rect x="10" y="20" width="100" height="92" rx="5" fill="#fdf8f0" '
+    'stroke="rgba(90,70,45,.3)" stroke-width="2.2"/>'
+    # Zwei bereits geschriebene Zeilen
+    '<path d="M22 46 h60 M22 66 h72" stroke="rgba(74,134,201,.45)" '
+    'stroke-width="3" stroke-linecap="round"/>'
+    # Die Zeile, die gerade entsteht — sie beginnt und endet dort,
+    # wo die Spitze beginnt und endet.
+    '<g class="li"><path d="M22 96 h62" stroke="#4a86c9" stroke-width="3.6" '
+    'stroke-linecap="round" stroke-dasharray="62" stroke-dashoffset="62"/></g>'
+    # Der Stift. Die Spitze sitzt im Ursprung (0,0) der Gruppe, damit
+    # das Verschieben sie genau auf der Zeile entlangfuehrt.
     '<g class="st">'
-    '<path d="M24 96 L34 66 L86 14 L100 28 L48 80 Z" fill="#e0964a" '
-    'stroke="rgba(100,60,20,.4)" stroke-width="2.5" stroke-linejoin="round"/>'
-    '<path d="M34 66 L48 80 L24 96 Z" fill="#f6dfc0" '
-    'stroke="rgba(100,60,20,.4)" stroke-width="2.2"/>'
-    '<path d="M24 96 L30 84 L36 90 Z" fill="#2b2118"/>'
-    '</g>'
-    '<g class="li"><path d="M16 108 h88" stroke="#4a86c9" stroke-width="3.5" '
-    'stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="88"/></g>',
+    '<g transform="translate(22 96)">'
+    '<path d="M0 0 L6 -14 L34 -70 L48 -62 L20 -6 Z" fill="#e0964a" '
+    'stroke="rgba(100,60,20,.45)" stroke-width="2.4" stroke-linejoin="round"/>'
+    '<path d="M6 -14 L20 -6 L0 0 Z" fill="#f6dfc0" '
+    'stroke="rgba(100,60,20,.45)" stroke-width="2.2" stroke-linejoin="round"/>'
+    '<path d="M0 0 L3.5 -7.5 L10.5 -3.5 Z" fill="#2b2118"/>'
+    '<path d="M34 -70 L48 -62 L52 -70 L38 -78 Z" fill="#c07a34" '
+    'stroke="rgba(100,60,20,.45)" stroke-width="2.2" stroke-linejoin="round"/>'
+    '</g></g>',
     stil=(
-        "  .st { animation: wandern 2.1s ease-in-out infinite; }\n"
-        "  .li line, .li path { animation: malen 2.1s ease-in-out infinite; }\n"
-        "  @keyframes wandern { 0%{transform:translateX(-32px)} "
-        "50%{transform:translateX(26px)} 100%{transform:translateX(-32px)} }\n"
-        "  @keyframes malen { 0%{stroke-dashoffset:88} 50%{stroke-dashoffset:0} "
-        "100%{stroke-dashoffset:88} }\n"
+        # transform-box: fill-box wuerde den Ursprung in die Mitte des
+        # Stiftes legen — hier soll aber in Zeichenkoordinaten
+        # verschoben werden, sonst laeuft die Spitze an der Zeile vorbei.
+        "  .st { transform-box: view-box; transform-origin: 0 0; "
+        "animation: wandern 2.6s ease-in-out infinite; }\n"
+        "  .li path { animation: malen 2.6s ease-in-out infinite; }\n"
+        "  @keyframes wandern { 0%{transform:translateX(0)} "
+        "62%{transform:translateX(62px)} 78%{transform:translateX(62px)} "
+        "100%{transform:translateX(0)} }\n"
+        "  @keyframes malen { 0%{stroke-dashoffset:62} 62%{stroke-dashoffset:0} "
+        "78%{stroke-dashoffset:0} 100%{stroke-dashoffset:62} }\n"
     ),
 )
 
 # --- musik: Noten steigen auf -------------------------------------
+# GEMELDET: „Die Noten gehoeren nicht zusammen, die sind irgendwie
+# ganz eigenartig gebaut, die sehen nicht realistisch aus."
+#
+# Beides stimmte. Die alten Notenkoepfe sassen bei y=86 und y=80, der
+# Balken darueber lief aber von y=84 nach y=78 — die Haelse endeten
+# also NEBEN den Koepfen statt in ihnen, und der Balken hing frei in
+# der Luft. Die einzelne Note hatte ausserdem ihre Faehnchen am
+# falschen Ende und einen Hals, der links vom Kopf stand.
+#
+# So ist eine Note wirklich gebaut:
+#   * der Kopf ist eine SCHRAEG gestellte Ellipse (etwa -20 Grad),
+#   * der Hals sitzt RECHTS am Kopf und geht nach OBEN — er beruehrt
+#     den Kopf an dessen rechtem Rand, nicht in der Mitte,
+#   * bei zwei Achtelnoten verbindet ein BALKEN die oberen Enden
+#     beider Haelse, und beide Haelse sind gleich lang,
+#   * eine einzelne Achtelnote traegt statt des Balkens ein Faehnchen,
+#     das vom oberen Ende des Halses nach rechts unten schwingt.
+# Der Notenkopf bekommt ausserdem ein helles Loch — eine Viertelnote
+# ist ausgefuellt, eine halbe nicht; das Loch macht den Unterschied
+# sichtbar und die Form lesbarer.
+def _note(x, y, farbe, hals_hoch=44, offen=False):
+    """Ein Notenkopf mit Hals. Der Hals steht rechts und geht hinauf."""
+    return (
+        # rotate OHNE Drehpunkt: die Regel „* { transform-origin:
+        # 50% 50% }" setzt den Drehpunkt ohnehin auf die Mitte der
+        # eigenen Form — und das ist bei einer Ellipse genau ihr
+        # Mittelpunkt. Mit einem zusaetzlichen Drehpunkt im Attribut
+        # wird die Verschiebung ZWEIMAL gerechnet, und der Kopf
+        # wandert vom Hals weg. Genau das war zu sehen.
+        '<ellipse cx="%d" cy="%d" rx="11" ry="8" fill="%s" '
+        'transform="rotate(-20)"/>' % (x, y, farbe)
+        + ('<ellipse cx="%d" cy="%d" rx="5" ry="2.6" fill="#fdf8f0" '
+           'transform="rotate(-20)"/>' % (x, y) if offen else "")
+        + '<rect x="%.1f" y="%d" width="3.6" height="%d" fill="%s"/>'
+          % (x + 8.4, y - hals_hoch - 2, hals_hoch + 4, farbe)
+    )
+
+
 AUFKLEBER["musik"] = huelle(
-    '<g class="n1"><path d="M40 84 v-40 l22 -6 v40" stroke="#9a5ac9" '
-    'stroke-width="4" fill="none"/>'
-    '<ellipse cx="34" cy="86" rx="10" ry="7" fill="#9a5ac9" '
-    'transform="rotate(-18 34 86)"/>'
-    '<ellipse cx="56" cy="80" rx="10" ry="7" fill="#9a5ac9" '
-    'transform="rotate(-18 56 80)"/></g>'
-    '<g class="n2"><ellipse cx="88" cy="46" rx="8" ry="6" fill="#4a86c9" '
-    'transform="rotate(-18 88 46)"/>'
-    '<path d="M95 46 v-28 q12 4 10 14" stroke="#4a86c9" stroke-width="3.5" '
-    'fill="none"/></g>',
+    # Zwei Achtelnoten mit gemeinsamem Balken
+    '<g class="n1">'
+    + _note(34, 88, "#9a5ac9", 46)
+    + _note(66, 80, "#9a5ac9", 38)
+    # Der Balken verbindet die OBEREN Enden beider Haelse: von
+    # (34+8.4, 88-46-2) nach (66+8.4, 80-38-2) — also 40 nach 40.
+    + '<path d="M42.4 40 L78 40 L78 51 L42.4 51 Z" fill="#9a5ac9"/>'
+    + '</g>'
+    # Eine einzelne Achtelnote mit Faehnchen
+    '<g class="n2">'
+    + _note(92, 50, "#4a86c9", 32)
+    + '<path d="M100.4 16 q13 5 12 16 q-1 -8 -12 -10 z" fill="#4a86c9"/>'
+    + '</g>',
     stil=(
         "  .n1 { animation: tanz 1.5s ease-in-out infinite; }\n"
         "  .n2 { animation: schweb 2.4s ease-in-out infinite; }\n"
@@ -509,7 +697,135 @@ AUFKLEBER["musik"] = huelle(
     ),
 )
 
-# --- sanduhr: die Zeit laeuft -------------------------------------
+# --- sonne: strahlend ---------------------------------------------
+# GEWUENSCHT: „Eine strahlende Sonne wuerde in die Emojis auch noch
+# passen."
+#
+# Strahlend heisst hier: die Strahlen sind nicht alle gleich. Eine
+# Sonne mit zwoelf identischen Zacken sieht aus wie ein Zahnrad. Also
+# abwechselnd lange und kurze Strahlen, dazu ein zweiter, weiterer
+# Kranz aus Licht, der langsam atmet — das ist das Strahlen.
+def _sonne_strahlen(n, lang_a, lang_b, r, breite, farbe, klasse=""):
+    import math as _m
+    teile = []
+    for i in range(n):
+        w = _m.radians(i * (360.0 / n) - 90)
+        lang = lang_a if i % 2 == 0 else lang_b
+        x1, y1 = 60 + _m.cos(w) * r, 60 + _m.sin(w) * r
+        x2, y2 = 60 + _m.cos(w) * (r + lang), 60 + _m.sin(w) * (r + lang)
+        teile.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (x1, y1, x2, y2))
+    return ('<g%s stroke="%s" stroke-width="%s" stroke-linecap="round">%s</g>'
+            % (' class="%s"' % klasse if klasse else "", farbe, breite, "".join(teile)))
+
+
+AUFKLEBER["sonne"] = huelle(
+    # Der aeussere Lichtkranz — er atmet.
+    '<circle class="hof" cx="60" cy="60" r="40" fill="rgba(247,201,72,.28)"/>'
+    + _sonne_strahlen(16, 17, 10, 36, 5, "#f5b731", "str")
+    + '<circle cx="60" cy="60" r="30" fill="#f7c948"/>'
+    + '<circle cx="60" cy="60" r="30" fill="none" stroke="rgba(180,120,20,.25)" stroke-width="2.5"/>'
+    # Ein warmer Kern, damit die Scheibe nicht flach wirkt
+    + '<circle cx="52" cy="52" r="17" fill="rgba(255,240,180,.55)"/>',
+    stil=(
+        "  .str { animation: dreh 22s linear infinite; }\n"
+        "  .hof { animation: atmen 3.2s ease-in-out infinite; }\n"
+        "  @keyframes dreh { to { transform: rotate(360deg); } }\n"
+        "  @keyframes atmen { 0%,100%{transform:scale(1);opacity:.55} "
+        "50%{transform:scale(1.13);opacity:.95} }\n"
+    ),
+)
+
+# --- umarmung: zwei Menschen, die sich wirklich umarmen -----------
+# GEWUENSCHT: „Oder eine Umarmung, was realistisch aussieht."
+#
+# Realistisch heisst bei einer Umarmung vor allem eines: die Arme
+# gehen UM den anderen HERUM, nicht daneben. Man muss sehen, dass ein
+# Arm hinter dem Ruecken des anderen verschwindet. Deshalb ist die
+# Zeichnung in Schichten gebaut:
+#   1. der hintere Arm der linken Figur (er liegt hinter allem),
+#   2. Koerper und Kopf der rechten Figur,
+#   3. Koerper und Kopf der linken Figur,
+#   4. der vordere Arm der rechten Figur (er liegt ueber allem).
+# Dadurch greifen die Arme sichtbar umeinander. Die Koepfe neigen sich
+# ausserdem gegeneinander — zwei gerade Koepfe nebeneinander sehen aus
+# wie zwei Leute, die auf denselben Bus warten.
+def _figur(mx, kopf_x, haut, kleid, neigung):
+    """Eine Figur von vorn: Rumpf und Kopf.
+
+    mx      Mitte des Rumpfes
+    kopf_x  Mitte des Kopfes (er darf aus der Rumpfmitte wandern —
+            genau das ist das Anlehnen)
+    neigung Grad, um die sich der Kopf zum anderen hin neigt
+    """
+    return (
+        # Rumpf: unten breit, oben schmaler — ein Oberkoerper, kein Rohr.
+        '<path d="M%d 112 Q%d 74 %d 68 Q%d 74 %d 112 Z" fill="%s" '
+        'stroke="rgba(60,40,20,.3)" stroke-width="2" stroke-linejoin="round"/>'
+        % (mx - 19, mx - 17, mx, mx + 17, mx + 19, kleid)
+        # Hals
+        + '<rect x="%d" y="56" width="11" height="16" rx="5" fill="%s"/>'
+          % (kopf_x - 5.5, haut)
+        # Kopf, zum anderen hin geneigt
+        + '<g class="raum" transform="rotate(%d %d 46)">'
+          '<circle cx="%d" cy="46" r="16" fill="%s" '
+          'stroke="rgba(60,40,20,.3)" stroke-width="2"/>'
+          '<circle cx="%.1f" cy="44" r="2" fill="#4a3526"/>'
+          '<circle cx="%.1f" cy="44" r="2" fill="#4a3526"/>'
+          '<path d="M%.1f 52 q%.1f 4 %.1f 0" stroke="#4a3526" stroke-width="1.8" '
+          'fill="none" stroke-linecap="round"/>'
+          '</g>'
+          % (neigung, kopf_x, kopf_x, haut,
+             kopf_x - 5.5, kopf_x + 5.5,
+             kopf_x - 4.5, 4.5, 9.0)
+    )
+
+
+# GEMELDET beim ersten Versuch: die beiden Koepfe verschmolzen zu einem
+# Klumpen und die Arme lasen sich als Kragen. Beides hatte denselben
+# Grund — alles sass auf derselben Hoehe und zu dicht beieinander.
+#
+# Was eine Umarmung erkennbar macht, sind drei Dinge:
+#   * die Koepfe stehen GETRENNT und neigen sich zueinander (nicht
+#     uebereinander — sonst ist es ein Kopf),
+#   * die Arme laufen UM den anderen HERUM, und man sieht am Ende jedes
+#     Armes eine HAND auf der fremden Schulter; ohne Hand ist ein Arm
+#     nur ein Balken,
+#   * ein Arm liegt VORN, der andere HINTEN. Erst dadurch greifen die
+#     beiden ineinander, statt nebeneinander zu stehen.
+AUFKLEBER["umarmung"] = huelle(
+    # 1. Der Arm der linken Figur — er liegt HINTEN, um den anderen herum.
+    '<g class="um">'
+    '<path d="M34 80 Q60 66 92 82" stroke="#f3b57b" stroke-width="10" '
+    'fill="none" stroke-linecap="round"/>'
+    '<ellipse cx="93" cy="83" rx="7" ry="5.5" fill="#f3b57b" '
+    'stroke="rgba(60,40,20,.28)" stroke-width="1.6"/>'
+    # 2. Die rechte Figur
+    + _figur(76, 80, "#e8a768", "#6aa6ee", -11)
+    # 3. Die linke Figur — sie steht vorn
+    + _figur(46, 40, "#f3b57b", "#e0546a", 11)
+    # 4. Der Arm der rechten Figur — er liegt VORN.
+    + '<path d="M88 80 Q60 66 30 84" stroke="#e8a768" stroke-width="10" '
+      'fill="none" stroke-linecap="round"/>'
+      '<ellipse cx="29" cy="85" rx="7" ry="5.5" fill="#e8a768" '
+      'stroke="rgba(60,40,20,.28)" stroke-width="1.6"/>'
+      '</g>'
+    # Ein Herz, das ueber den beiden aufsteigt
+      '<g class="hz"><path d="M60 18 C50 10 44 16 48 23 C51 28 60 32 60 32 '
+      'C60 32 69 28 72 23 C76 16 70 10 60 18 Z" fill="#e0546a"/></g>',
+    stil=(
+        # Das Druecken: beide zusammen werden kurz schmaler und hoeher.
+        "  .um { animation: druecken 2.6s ease-in-out infinite; "
+        "transform-origin: 50% 90%; }\n"
+        "  .hz { animation: hoch 2.6s ease-in-out infinite; }\n"
+        "  @keyframes druecken { 0%,100%{transform:scale(1,1)} "
+        "44%{transform:scale(.95,1.035)} 62%{transform:scale(.985,1.01)} }\n"
+        "  @keyframes hoch { 0%,20%{opacity:0;transform:translateY(10px) scale(.6)} "
+        "50%{opacity:1;transform:translateY(-2px) scale(1.1)} "
+        "100%{opacity:0;transform:translateY(-16px) scale(.9)} }\n"
+    ),
+)
+
+# --- sanduhr: die Zeit laeuft -------------------------------------# --- sanduhr: die Zeit laeuft -------------------------------------
 AUFKLEBER["warten"] = huelle(
     '<g class="su">'
     '<path d="M32 16 h56 M32 104 h56" stroke="#a0784a" stroke-width="6" '
@@ -518,15 +834,37 @@ AUFKLEBER["warten"] = huelle(
     'q24 -14 24 -42 z" fill="rgba(255,255,255,.22)" '
     'stroke="#a0784a" stroke-width="3" stroke-linejoin="round"/>'
     '<path class="ob" d="M40 22 q0 20 20 34 q20 -14 20 -34 z" fill="#e0964a"/>'
+    # Der Rinnsal durch die Enge — ohne ihn sieht man nur zwei Haufen,
+    # die sich veraendern, aber nichts, was hindurchlaeuft.
+    '<rect class="ri" x="58.4" y="56" width="3.2" height="26" fill="#e0964a"/>'
     '<path class="un" d="M44 100 q0 -14 16 -22 q16 8 16 22 z" fill="#e0964a"/>'
     '</g>',
     stil=(
         "  .su { animation: kipp 4s ease-in-out infinite; }\n"
-        "  .ob { animation: leer 4s linear infinite; transform-origin: 50% 0; }\n"
+        # GEMELDET: „Die Animation der Sanduhr macht keinen Sinn, weil
+        # sich unten zwar der Haufen fuellt, aber oben rutscht ja nicht
+        # nach unten durch, sondern wird zur Decke hin kleiner."
+        #
+        # Genau daran lag es: transform-origin stand auf 50% 0, also am
+        # OBEREN Rand des Sandes. Beim Schrumpfen blieb damit die
+        # Oberkante stehen und die Unterkante wanderte hinauf — der
+        # Sand loeste sich von der Enge nach oben auf.
+        #
+        # In einer echten Sanduhr laeuft der Sand unten durch die Enge
+        # ab, und der SANDSPIEGEL SINKT. Die Unterkante bleibt also an
+        # der Enge stehen, die Oberkante kommt herunter. Das ist
+        # transform-origin: 50% 100% — derselbe Wert wie beim Haufen
+        # unten, der von seiner Grundflaeche aus waechst.
+        "  .ob { animation: leer 4s linear infinite; transform-origin: 50% 100%; }\n"
         "  .un { animation: voll 4s linear infinite; transform-origin: 50% 100%; }\n"
+        "  .ri { animation: rinnt 4s linear infinite; transform-origin: 50% 0; }\n"
         "  @keyframes kipp { 0%,88%{transform:rotate(0)} 96%,100%{transform:rotate(180deg)} }\n"
-        "  @keyframes leer { 0%{transform:scaleY(1)} 85%,100%{transform:scaleY(.05)} }\n"
+        "  @keyframes leer { 0%{transform:scaleY(1)} 85%,100%{transform:scaleY(.04)} }\n"
         "  @keyframes voll { 0%{transform:scaleY(.05)} 85%,100%{transform:scaleY(1)} }\n"
+        # Der Rinnsal laeuft, solange oben noch Sand ist, und hoert auf,
+        # wenn die Uhr durch ist — sonst rinnt sie aus dem Nichts weiter.
+        "  @keyframes rinnt { 0%,84%{opacity:.95;transform:scaleY(1)} "
+        "86%,100%{opacity:0;transform:scaleY(0)} }\n"
     ),
 )
 
