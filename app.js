@@ -17249,6 +17249,279 @@
     setTimeout(() => schicht.remove(), 13000);
   }
 
+  /* =================================================================
+     SECHS NEUE ANIMATIONEN AUS SEINER LISTE
+     -----------------------------------------------------------------
+     WÖRTLICH GEWÜNSCHT:
+       „Vielleicht kannst du noch ne Animation mit einer Entenmama mit
+        ihren kleinen Entenküken, das wäre mega süß."
+       „Oder ein Katzenbaby, das plötzlich so zum Bildschirm läuft und
+        mit seinen Tatzen so an den Bildschirm."
+       „Und dann vielleicht noch eine Animation mit dem Piratenschiff."
+       „Auch so ein paar Animationseffekte, die den Chat durchwirbeln,
+        irgendwas im Strudel, dass wir irgendwie in dem Chat ertrinken.
+        Die Schrift wird immer kleiner."
+       „Oder in den Schwamm nehmen und die ganzen Sachen wegwischen,
+        die im Chat stehen, wie von der Tafel wischen."
+       „Oder kannst du so ein Erschießen machen, in den Chat ballern,
+        so Schusslöcher, und dann kommen aus den Buchstaben so Blut
+        raus."
+
+     Alle sechs halten sich an dieselben Regeln wie die 52 davor:
+     eine feste Schicht über der Seite, kein Eingriff in den Text,
+     Ende nach wenigen Sekunden, und bei „weniger Bewegung" im System
+     passiert gar nichts.
+     ================================================================= */
+
+  /* --- Die Entenfamilie ------------------------------------------- */
+  function lcEntenSvg(gross) {
+    const k = gross ? 1 : 0.58;
+    return `<svg viewBox="-20 -20 40 40" width="${Math.round(52 * k)}" height="${Math.round(52 * k)}">`
+      + '<ellipse cx="0" cy="17" rx="11" ry="2.2" fill="rgba(0,0,0,0.18)"/>'
+      + '<path class="et-f1" d="M-6 12 L0 12 L-1 18 L-8 18 Z" fill="#e79a20"/>'
+      + '<path class="et-f2" d="M2 12 L8 12 L9 18 L2 18 Z" fill="#e79a20"/>'
+      /* Körper: hinten hoch, vorn rund — das ist die Entenform */
+      + '<path d="M-14 2 C-14 -6 -6 -10 2 -9 C11 -8 15 -2 13 5 C11 11 2 14 -4 13 C-11 12 -14 8 -14 2 Z" fill="#f2d24a" stroke="rgba(120,90,20,.35)" stroke-width="1.4"/>'
+      /* Schwanz */
+      + '<path d="M-13 0 L-19 -4 L-15 4 Z" fill="#e7c23c"/>'
+      /* Hals und Kopf */
+      + '<path d="M7 -7 C7 -13 9 -16 12 -16 C15 -16 17 -13 16 -8 Z" fill="#f2d24a"/>'
+      + '<circle cx="13" cy="-15" r="6" fill="#f2d24a" stroke="rgba(120,90,20,.35)" stroke-width="1.3"/>'
+      + '<path d="M18 -15 L25 -13.5 L18 -12 Z" fill="#e79a20"/>'
+      + '<circle cx="14.5" cy="-16.5" r="1.4" fill="#3b2a12"/>'
+      /* Flügel */
+      + '<path class="et-w" d="M-3 -2 C2 -5 8 -4 9 1 C6 4 0 4 -3 -2 Z" fill="#e7c23c"/>'
+      + "</svg>";
+  }
+  function lcEnten() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcEnten")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcEnten";
+    schicht.className = "lc-enten";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Eine Mutter, dann die Küken — in EINER Reihe und mit gleichem
+       Abstand. Genau das macht das Bild: sie folgen ihr. */
+    const wieviel = window.innerWidth < 560 ? 3 : 4;
+    for (let i = 0; i <= wieviel; i++) {
+      const e = document.createElement("i");
+      e.innerHTML = lcEntenSvg(i === 0);
+      e.style.setProperty("--verzug", (i * 0.42).toFixed(2) + "s");
+      e.style.bottom = (5 + (i === 0 ? 0 : 1)) + "%";
+      schicht.appendChild(e);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 15000);
+  }
+
+  /* --- Das Katzenbaby am Bildschirm -------------------------------- */
+  function lcKatzeSvg() {
+    return '<svg viewBox="-26 -30 52 58" width="120" height="134">'
+      + '<ellipse cx="0" cy="26" rx="16" ry="3" fill="rgba(0,0,0,0.18)"/>'
+      /* Schwanz, er wedelt */
+      + '<path class="kz-schwanz" d="M14 14 C22 12 24 2 20 -4" stroke="#c9873f" stroke-width="5" fill="none" stroke-linecap="round"/>'
+      /* Körper */
+      + '<ellipse cx="0" cy="10" rx="15" ry="15" fill="#d99a4e"/>'
+      + '<ellipse cx="0" cy="14" rx="9" ry="10" fill="#f0d5ac"/>'
+      /* Kopf */
+      + '<path d="M-13 -14 L-9 -24 L-3 -18 Z" fill="#d99a4e"/><path d="M13 -14 L9 -24 L3 -18 Z" fill="#d99a4e"/>'
+      + '<path d="M-11.5 -15 L-9 -21 L-5 -17 Z" fill="#e8b0a0"/><path d="M11.5 -15 L9 -21 L5 -17 Z" fill="#e8b0a0"/>'
+      + '<ellipse cx="0" cy="-10" rx="14" ry="12" fill="#e3ab63"/>'
+      + '<g class="kz-augen"><ellipse cx="-5" cy="-11" rx="3.2" ry="3.6" fill="#2c2117"/><ellipse cx="5" cy="-11" rx="3.2" ry="3.6" fill="#2c2117"/>'
+      + '<circle cx="-4" cy="-12.4" r="1.1" fill="#fff"/><circle cx="6" cy="-12.4" r="1.1" fill="#fff"/></g>'
+      + '<path d="M-2.6 -5 L2.6 -5 L0 -2.6 Z" fill="#c9736a"/>'
+      + '<path d="M0 -2.6 L0 -0.6 M0 -0.6 Q-2.6 0.8 -4.4 -0.8 M0 -0.6 Q2.6 0.8 4.4 -0.8" stroke="#8d6338" stroke-width="1.1" fill="none" stroke-linecap="round"/>'
+      + '<path d="M-8 -4 L-19 -6 M-8 -2 L-19 -1 M8 -4 L19 -6 M8 -2 L19 -1" stroke="#f3e4cd" stroke-width="1" opacity=".85"/>'
+      /* Die Tatzen kommen ZULETZT — im ersten Anlauf standen sie vor
+         dem Koerper im Quelltext und lagen deshalb dahinter. Man sah
+         sie gar nicht. */
+      + '<g class="kz-tatze-l"><ellipse cx="-11" cy="2" rx="5.5" ry="4.5" fill="#e3ab63" stroke="rgba(120,80,40,.35)" stroke-width="1"/>'
+      + '<circle cx="-14" cy="-0.6" r="1.5" fill="#c98a52"/><circle cx="-10.6" cy="-1.4" r="1.5" fill="#c98a52"/><circle cx="-7.4" cy="-0.2" r="1.5" fill="#c98a52"/></g>'
+      + '<g class="kz-tatze-r"><ellipse cx="11" cy="2" rx="5.5" ry="4.5" fill="#e3ab63" stroke="rgba(120,80,40,.35)" stroke-width="1"/>'
+      + '<circle cx="7.4" cy="-0.2" r="1.5" fill="#c98a52"/><circle cx="10.6" cy="-1.4" r="1.5" fill="#c98a52"/><circle cx="14" cy="-0.6" r="1.5" fill="#c98a52"/></g>'
+      + "</svg>";
+  }
+  function lcKatze() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcKatze")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcKatze";
+    schicht.className = "lc-katze";
+    schicht.setAttribute("aria-hidden", "true");
+    const tier = document.createElement("i");
+    tier.innerHTML = lcKatzeSvg();
+    schicht.appendChild(tier);
+    /* Die Spuren an der Scheibe: sie erscheinen erst, wenn die Tatzen
+       oben sind — sonst wischt die Katze in der Luft. */
+    for (let i = 0; i < 4; i++) {
+      const s = document.createElement("b");
+      s.style.left = (44 + i * 3.4) + "%";
+      s.style.animationDelay = (2.4 + i * 0.12).toFixed(2) + "s";
+      schicht.appendChild(s);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 9000);
+  }
+
+  /* --- Das Piratenschiff ------------------------------------------- */
+  function lcPiratSvg() {
+    return '<svg viewBox="-60 -80 120 110" width="200" height="184">'
+      /* Masten und Takelage */
+      + '<path d="M-22 6 L-22 -70 M14 6 L14 -54" stroke="#6b4a2a" stroke-width="3.4" stroke-linecap="round"/>'
+      + '<path d="M-22 -70 L14 -54" stroke="rgba(90,66,40,.6)" stroke-width="1"/>'
+      /* Segel, sie bauschen sich */
+      + '<path class="pr-segel" d="M-20 -64 C2 -60 4 -42 -20 -36 Z" fill="#f2ead6" stroke="rgba(90,66,40,.45)" stroke-width="1.4"/>'
+      + '<path class="pr-segel2" d="M-20 -30 C6 -26 8 -6 -20 0 Z" fill="#efe5cd" stroke="rgba(90,66,40,.45)" stroke-width="1.4"/>'
+      + '<path class="pr-segel" d="M16 -48 C32 -44 32 -28 16 -24 Z" fill="#f2ead6" stroke="rgba(90,66,40,.45)" stroke-width="1.4"/>'
+      /* Flagge mit Totenkopf */
+      + '<g class="pr-flagge"><path d="M-22 -72 L2 -66 L-22 -60 Z" fill="#20242a"/>'
+      + '<circle cx="-13" cy="-66" r="2.6" fill="#f3f0e6"/><rect x="-14.6" y="-64" width="3.2" height="1.6" fill="#f3f0e6"/></g>'
+      /* Rumpf */
+      + '<path d="M-42 2 L40 2 L30 20 L-32 20 Z" fill="#7a5130" stroke="rgba(50,32,16,.5)" stroke-width="2" stroke-linejoin="round"/>'
+      + '<path d="M-40 6 L38 6" stroke="#e0c07a" stroke-width="2.4"/>'
+      + '<circle cx="-22" cy="12" r="2.4" fill="#3a2716"/><circle cx="-8" cy="12" r="2.4" fill="#3a2716"/>'
+      + '<circle cx="6" cy="12" r="2.4" fill="#3a2716"/><circle cx="20" cy="12" r="2.4" fill="#3a2716"/>'
+      /* Galionsfigur vorn */
+      + '<path d="M40 2 L50 -2 L40 -6 Z" fill="#8a5c36"/>'
+      + "</svg>";
+  }
+  function lcPirat() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcPirat")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcPirat";
+    schicht.className = "lc-pirat";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Drei Wellenreihen in verschiedenen Tiefen — eine einzige Welle
+       sieht aus wie ein Zaun. */
+    for (let i = 0; i < 3; i++) {
+      const w = document.createElement("u");
+      w.className = "lc-pirat-welle lc-pirat-welle-" + (i + 1);
+      schicht.appendChild(w);
+    }
+    const schiff = document.createElement("i");
+    schiff.innerHTML = lcPiratSvg();
+    schicht.appendChild(schiff);
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 15000);
+  }
+
+  /* --- Der Strudel: der Chat geht unter ---------------------------- */
+  function lcStrudel() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const karte = document.getElementById("livechatKarte");
+    const verlauf = document.getElementById("lcVerlauf");
+    document.getElementById("lcStrudel")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcStrudel";
+    schicht.className = "lc-strudel";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Fünf Ringe, die sich verschieden schnell drehen — daraus wird
+       für das Auge ein Sog. Ein einzelner Kreis dreht sich nur. */
+    for (let i = 0; i < 5; i++) {
+      const r = document.createElement("u");
+      r.style.setProperty("--ring", String(i));
+      schicht.appendChild(r);
+    }
+    document.body.appendChild(schicht);
+    /* Und der Chat selbst wird hineingezogen: er dreht sich, wird
+       kleiner und kommt wieder hoch. Der Text schrumpft mit — genau
+       das war gewünscht. */
+    if (verlauf) verlauf.classList.add("lc-ertrinkt");
+    if (karte) karte.classList.add("lc-saugt");
+    setTimeout(() => {
+      schicht.remove();
+      verlauf?.classList.remove("lc-ertrinkt");
+      karte?.classList.remove("lc-saugt");
+    }, 6200);
+  }
+
+  /* --- Der Schwamm wischt den Chat wie eine Tafel ------------------- */
+  function lcSchwamm() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    /* Auch ausserhalb des Chats soll etwas passieren — sonst tippt man
+       /schwamm und es geschieht nichts, und das ist der Fehler, den ich
+       schon einmal gemacht habe. Ohne Chat wischt er ueber die Seite. */
+    const verlauf = document.getElementById("lcVerlauf");
+    document.getElementById("lcSchwamm")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcSchwamm";
+    schicht.className = "lc-schwamm";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Der Schwamm fährt ÜBER dem Chat, nicht über der ganzen Seite —
+       sonst wischt er Dinge weg, die gar nicht zum Chat gehören. */
+    const r = (verlauf || document.getElementById("livechatKarte"))?.getBoundingClientRect();
+    if (r && r.width > 40) {
+      schicht.style.left = r.left + "px";
+      schicht.style.top = r.top + "px";
+      schicht.style.width = r.width + "px";
+      schicht.style.height = r.height + "px";
+    } else {
+      schicht.style.inset = "0";
+    }
+    const s = document.createElement("i");
+    s.innerHTML = '<svg viewBox="0 0 60 40" width="64" height="44">'
+      + '<rect x="2" y="12" width="56" height="26" rx="5" fill="#f3e07a" stroke="rgba(120,100,20,.45)" stroke-width="2"/>'
+      + '<rect x="2" y="2" width="56" height="14" rx="5" fill="#63b9c9" stroke="rgba(20,80,90,.45)" stroke-width="2"/>'
+      + '<circle cx="14" cy="26" r="2" fill="rgba(150,120,20,.35)"/><circle cx="26" cy="31" r="1.6" fill="rgba(150,120,20,.35)"/>'
+      + '<circle cx="38" cy="24" r="2.2" fill="rgba(150,120,20,.35)"/><circle cx="48" cy="30" r="1.5" fill="rgba(150,120,20,.35)"/>'
+      + "</svg>";
+    schicht.appendChild(s);
+    /* Die Schliere, die er hinterlässt. */
+    const schliere = document.createElement("u");
+    schicht.appendChild(schliere);
+    document.body.appendChild(schicht);
+    verlauf?.classList.add("lc-gewischt");
+    setTimeout(() => { schicht.remove(); verlauf?.classList.remove("lc-gewischt"); }, 4200);
+  }
+
+  /* --- Schüsse in den Chat, und die Buchstaben bluten -------------- */
+  function lcSchuesse() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const verlauf = document.getElementById("lcVerlauf");
+    const raum = verlauf || document.getElementById("livechatKarte");
+    document.getElementById("lcSchuesse")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcSchuesse";
+    schicht.className = "lc-schuesse";
+    schicht.setAttribute("aria-hidden", "true");
+    const r = raum && raum.getBoundingClientRect();
+    if (r && r.width > 40) {
+      schicht.style.left = r.left + "px";
+      schicht.style.top = r.top + "px";
+      schicht.style.width = r.width + "px";
+      schicht.style.height = r.height + "px";
+    } else {
+      /* Kein Chat sichtbar: dann wird eben in die ganze Seite
+         geschossen. Ein Befehl, der nichts tut, ist schlimmer. */
+      schicht.style.inset = "0";
+    }
+    const wieviel = window.innerWidth < 560 ? 5 : 7;
+    for (let i = 0; i < wieviel; i++) {
+      const loch = document.createElement("i");
+      loch.style.left = (8 + Math.random() * 78).toFixed(1) + "%";
+      loch.style.top = (10 + Math.random() * 70).toFixed(1) + "%";
+      loch.style.animationDelay = (i * 0.38).toFixed(2) + "s";
+      /* Das Loch selbst: dunkler Kern, Splitterkranz, und darunter
+         die Spur, die herunterläuft. */
+      loch.innerHTML = '<svg viewBox="-16 -16 32 32" width="34" height="34">'
+        + '<path d="M0 -15 L3.4 -6 L12 -9 L6 -2 L15 2 L5 3 L8 12 L0 5 L-7 13 L-5 3 L-14 3 L-6 -2 L-12 -10 L-3.6 -6 Z" fill="rgba(20,16,14,.82)"/>'
+        + '<circle cx="0" cy="0" r="4.4" fill="#0d0b0a"/>'
+        + '<circle cx="-1.2" cy="-1.2" r="1.4" fill="rgba(255,255,255,.18)"/>'
+        + "</svg>";
+      const tropfen = document.createElement("u");
+      tropfen.style.animationDelay = (i * 0.38 + 0.3).toFixed(2) + "s";
+      loch.appendChild(tropfen);
+      schicht.appendChild(loch);
+    }
+    document.body.appendChild(schicht);
+    if (verlauf) {
+      verlauf.classList.add("lc-getroffen");
+      setTimeout(() => verlauf.classList.remove("lc-getroffen"), 900);
+    }
+    setTimeout(() => schicht.remove(), 9000);
+  }
+
   function lcSternschnuppen() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcSchnuppe")?.remove();
@@ -19674,6 +19947,14 @@
     handdurch:{ ganzeSeite: true, wie: "handdurch" },
     tore:    { ganzeSeite: true, wie: "tore" },
     paintball:{ ganzeSeite: true, wie: "paintball" },
+    /* Sechs aus seiner Wunschliste: Entenfamilie, Katzenbaby an der
+       Scheibe, Piratenschiff, Strudel, Schwamm, Schuesse. */
+    enten:   { ganzeSeite: true, wie: "enten" },
+    katze:   { ganzeSeite: true, wie: "katze" },
+    pirat:   { ganzeSeite: true, wie: "pirat" },
+    strudel: { ganzeSeite: true, wie: "strudel" },
+    schwamm: { ganzeSeite: true, wie: "schwamm" },
+    schuss:  { ganzeSeite: true, wie: "schuss" },
     lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
@@ -20007,6 +20288,12 @@
       else if (e.wie === "aegypten") lcAegypten();
       else if (e.wie === "ostern") lcOstern();
       else if (e.wie === "augen") lcAugen();
+      else if (e.wie === "enten") lcEnten();
+      else if (e.wie === "katze") lcKatze();
+      else if (e.wie === "pirat") lcPirat();
+      else if (e.wie === "strudel") lcStrudel();
+      else if (e.wie === "schwamm") lcSchwamm();
+      else if (e.wie === "schuss") lcSchuesse();
       else if (e.wie === "geld") lcGeldregen();
       else if (e.wie === "keks") lcKeks();
       else if (e.wie === "wolken") lcWolkenzug();

@@ -418,7 +418,13 @@ window.LiveChat = (function () {
     jalousie:    " zieht die Jalousie hoch  \ud83e\ude9f",
     handdurch:   " l\u00e4sst eine Hand durchbrechen  \ud83e\udec5",
     tore:        " schliesst die Tore  \ud83d\udd12",
-    paintball:   " er\u00f6ffnet das Farbfeuer  \ud83c\udfaf"
+    paintball:   " er\u00f6ffnet das Farbfeuer  \ud83c\udfaf",
+    enten:       " f\u00fchrt die Entenfamilie spazieren  \ud83e\udd86",
+    katze:       " l\u00e4sst ein Katzenbaby an die Scheibe  \ud83d\udc31",
+    pirat:       " schickt das Piratenschiff los  \ud83c\udff4\u200d\u2620\ufe0f",
+    strudel:     " zieht den Chat in den Strudel  \ud83c\udf00",
+    schwamm:     " wischt den Chat mit dem Schwamm  \ud83e\uddfd",
+    schuss:      " ballert L\u00f6cher in den Chat  \ud83d\udca5"
   };
 
   var SCHRIFTEN = {
@@ -2964,6 +2970,12 @@ window.LiveChat = (function () {
     { gr: "welt", w: "handdurch", kurz: "zombie", nutzt: "/handdurch", was: "Eine Hand reisst von unten durch den Chat und greift nach dir" },
     { gr: "welt", w: "tore",      kurz: "riegel", nutzt: "/tore",      was: "Zwei Tore knallen zu und das Schloss legt sich vor" },
     { gr: "welt", w: "paintball", kurz: "farbe",  nutzt: "/paintball", was: "Farbkugeln schlagen ein, spritzen und laufen herunter" },
+    { gr: "tiere", w: "enten",     kurz: "ente",   nutzt: "/enten",     was: "Die Entenmama watschelt mit ihren Küken durchs Bild" },
+    { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Ein Katzenbaby läuft zur Scheibe und tappt mit den Pfoten dagegen" },
+    { gr: "welt", w: "pirat",      kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff segelt über die Wellen, mit Totenkopfflagge" },
+    { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen, die Schrift wird kleiner" },
+    { gr: "welt", w: "schwamm",    kurz: "wischen", nutzt: "/schwamm",  was: "Ein Schwamm wischt den Chat wie eine Tafel" },
+    { gr: "welt", w: "schuss",     kurz: "ballern", nutzt: "/schuss",   was: "Schusslöcher schlagen in den Chat, und es läuft herunter" },
     { gr: "wetter", w: "wolken",    kurz: "wolke",  nutzt: "/wolken",    was: "Wolken ziehen über den Raum" },
     { gr: "welt", w: "glasbruch", kurz: "sprung", nutzt: "/glasbruch", was: "Das Display zerspringt — mit echten Rissen" },
     { gr: "tiere", w: "spinnen",   kurz: "spinne", nutzt: "/spinnen",   was: "Spinnen krabbeln über den Chat" },
@@ -3044,6 +3056,13 @@ window.LiveChat = (function () {
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
                 lecken: "leck", schlecken: "leck", ablecken: "leck",
                 boxen: "box", schlag: "box", faust: "box",
+                ente: "enten", entchen: "enten", kueken: "enten", entenmama: "enten",
+                kaetzchen: "katze", katzenbaby: "katze", kitten: "katze", miau: "katze",
+                schiff: "pirat", piraten: "pirat", segel: "pirat", totenkopf: "pirat",
+                sog: "strudel", wirbel: "strudel", ertrinken: "strudel", wirbeln: "strudel",
+                wischen: "schwamm", tafel: "schwamm", putzen: "schwamm",
+                ballern: "schuss", schuesse: "schuss", schiessen: "schuss",
+                schussloch: "schuss", knarre: "schuss",
                 wolke: "wolken", bewoelkt: "wolken",
                 sprung: "glasbruch", display: "glasbruch",
                 kaputt: "glasbruch", riss: "glasbruch",
