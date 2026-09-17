@@ -3205,11 +3205,15 @@ const Backend = (function () {
     if (client) {
       try {
         const { data, error } = await client.from("profiles")
-          .select("id,name,avatar_url,avatar_emoji,points,created_at,last_active,is_admin,is_owner,is_moderator")
+          /* "origin" ist das Herkunftsland. Es steht laengst in der
+             Tabelle; es fehlte hier nur in der Auswahl — deshalb
+             konnte die Online-Liste keine Flagge zeigen. */
+          .select("id,name,avatar_url,avatar_emoji,points,created_at,last_active,is_admin,is_owner,is_moderator,origin")
           .order("name", { ascending: true });
         if (error) { console.warn("Mitgliederliste nicht abrufbar:", error.message); return []; }
         return (data || []).map((p) => ({
           id: p.id, name: p.name, avatar_url: p.avatar_url, avatar_emoji: p.avatar_emoji,
+          origin: p.origin || "",
           points: p.points || 0, created_at: p.created_at, last_active: p.last_active,
           online: isRecentlyActive(p.last_active),
           is_admin: Boolean(p.is_admin), is_owner: Boolean(p.is_owner), is_moderator: Boolean(p.is_moderator),
@@ -3218,6 +3222,7 @@ const Backend = (function () {
     }
     return Object.entries(demo.users || {}).map(([email, u]) => ({
       id: email, name: u.profile.name, avatar_url: u.profile.avatarUrl, avatar_emoji: u.profile.avatarEmoji,
+      origin: u.profile.origin || "",
       points: u.profile.points || 0, created_at: null, last_active: null, online: false,
       is_admin: Boolean(u.profile.isAdmin), is_owner: Boolean(u.profile.isOwner), is_moderator: Boolean(u.profile.isModerator),
     })).sort((a, b) => a.name.localeCompare(b.name, "de"));

@@ -12593,6 +12593,7 @@
           <span class="lc-kreis">
             <span class="lc-nummer">${i}</span>
             <video data-lc-video="${i}" autoplay playsinline muted style="display:none;"></video>
+            <img class="lc-avatar" data-lc-avatar="${i}" alt="" style="display:none;">
             <span class="lc-initial" data-lc-initial="${i}">·</span>
             <span class="lc-stumm" data-lc-stumm="${i}" style="display:none;" aria-hidden="true">🔇</span>
           </span>
@@ -12605,7 +12606,7 @@
           <div class="lc-kopf-links">
             <span class="lc-punkt"></span>
             <span>
-              <span class="lc-kopf-titel">Live-Chat</span><br>
+              <span class="lc-kopf-titel">Klassenzimmer</span><br>
               <span class="lc-kopf-unter" id="lcKopfUnter">verbindet …</span>
             </span>
           </div>
@@ -12616,11 +12617,17 @@
         <div class="lc-leiste" id="lcLeiste">
           <button type="button" class="lc-rundknopf" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus">🎤</button>
           <button type="button" class="lc-rundknopf" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus">📷</button>
+          <button type="button" class="lc-rundknopf" data-lc="profilbild" title="Profilbild oder GIF" aria-label="Profilbild oder GIF setzen">🖼️</button>
           <button type="button" class="lc-rundknopf lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen">✕</button>
         </div>
+        <div id="lcGrund"></div>
 
         <div class="lc-chat">
-          <div class="lc-chat-kopf">💬 Chat — alle im Raum lesen mit</div>
+          <div class="lc-chat-kopf">
+            <span>💬 Chat — alle im Raum lesen mit</span>
+            <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
+                    title="Verlauf auf diesem Gerät löschen">Verlauf löschen</button>
+          </div>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           <form class="lc-chat-fuss" id="lcForm" autocomplete="off">
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
@@ -12665,20 +12672,34 @@
          mit Verzögerung, und das macht jedes Gespräch kaputt. */
       video.muted = Boolean(p.ich);
 
-      const zeigeBild = Boolean(p.strom && p.bildAn !== false);
-      if (zeigeBild) {
+      const avatar = knopf.querySelector(`[data-lc-avatar="${p.nummer}"]`);
+      const hatVideo = Boolean(p.strom && p.strom.getVideoTracks
+        && p.strom.getVideoTracks().length && p.bildAn !== false);
+      if (hatVideo) {
         if (video.srcObject !== p.strom) video.srcObject = p.strom;
         video.style.display = "block";
+        if (avatar) avatar.style.display = "none";
         initial.style.display = "none";
         const spiel = video.play();
         if (spiel && spiel.catch) spiel.catch(() => {});
       } else {
         /* Ton weiterlaufen lassen, auch wenn die Kamera aus ist —
-           das Element bleibt, nur unsichtbar. */
+           das Element bleibt, nur unsichtbar.
+           Ist die Kamera aus, steht hier das PROFILBILD, und erst
+           wenn es keines gibt, der Anfangsbuchstabe. Genau so war
+           es gewünscht: nicht sofort Video, sondern erst einmal
+           das Bild, das man von sich zeigen möchte. */
         if (p.strom && video.srcObject !== p.strom) video.srcObject = p.strom;
         video.style.display = "none";
-        initial.style.display = "grid";
-        initial.textContent = p.leer ? "·" : (p.name || "?").trim().charAt(0).toUpperCase();
+        if (avatar && !p.leer && p.bild) {
+          if (avatar.getAttribute("src") !== p.bild) avatar.setAttribute("src", p.bild);
+          avatar.style.display = "block";
+          initial.style.display = "none";
+        } else {
+          if (avatar) avatar.style.display = "none";
+          initial.style.display = "grid";
+          initial.textContent = p.leer ? "·" : (p.name || "?").trim().charAt(0).toUpperCase();
+        }
       }
       stumm.style.display = (!p.leer && p.tonAn === false) ? "grid" : "none";
     });
@@ -12713,6 +12734,17 @@
     if (bildK) {
       bildK.classList.toggle("lc-aus", !l.bildAn);
       bildK.textContent = l.bildAn ? "📷" : "🚫";
+      bildK.title = l.hatKamera
+        ? (l.bildAn ? "Kamera ausschalten" : "Kamera einschalten")
+        : "Kamera einschalten — der Browser fragt dann danach";
+      bildK.setAttribute("aria-label", bildK.title);
+    }
+    /* Warum kein Bild und kein Ton da ist, steht im Klartext da —
+       vorher blieb der Kreis einfach leer und niemand wusste, warum. */
+    const grund = document.getElementById("lcGrund");
+    if (grund) {
+      grund.innerHTML = l.kameraFehler
+        ? `<p class="lc-grund">⚠️ ${escapeHtml(l.kameraFehler)}</p>` : "";
     }
   }
 
@@ -12788,7 +12820,9 @@
             <div class="lc-gross-kreis">
               <video id="lcGrossVideo" autoplay playsinline ${p.ich ? "muted" : ""}
                      style="${zeigeBild ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
-              ${zeigeBild ? "" : `<span class="lc-initial" id="lcGrossInitial"></span>`}
+              ${zeigeBild ? "" : (p.bild
+                ? `<img class="lc-avatar" id="lcGrossAvatar" alt="">`
+                : `<span class="lc-initial" id="lcGrossInitial"></span>`)}
             </div>
             <span class="lc-gross-name" id="lcGrossName"></span>
             <button type="button" class="btn btn-ghost" id="lcGrossZu">Schließen</button>
@@ -12798,6 +12832,8 @@
       if (nameFeld) nameFeld.textContent = p.ich ? p.name + " (du)" : p.name;
       const initialFeld = document.getElementById("lcGrossInitial");
       if (initialFeld) initialFeld.textContent = (p.name || "?").trim().charAt(0).toUpperCase();
+      const avatarGross = document.getElementById("lcGrossAvatar");
+      if (avatarGross && p.bild) avatarGross.setAttribute("src", p.bild);
       const gv = document.getElementById("lcGrossVideo");
       if (gv && p.strom) { gv.srcObject = p.strom; const sp = gv.play(); if (sp && sp.catch) sp.catch(() => {}); }
       document.getElementById("lcGrossZu")?.addEventListener("click", () => LiveChat.grossZeigen(null));
@@ -12823,7 +12859,12 @@
       livechatGezeigt = new Set();
       area.innerHTML = livechatStartHtml(l);
       const hinein = (raum) => {
-        LiveChat.betreten(raum, { name: livechatName(), mitBild: true })
+        /* mitBild: false — das Bild geht NICHT von selbst an.
+           „dass das nicht sofort zum Video springt, dass man sich
+           entscheiden kann, ob man das Video anschalten will."
+           Der Browser fragt deshalb erst einmal nur nach dem
+           Mikrofon; die Kamera kommt auf Knopfdruck dazu. */
+        LiveChat.betreten(raum, { name: livechatName(), mitBild: false })
           .then(() => { renderLiveChat(); klassenzimmerStreifen(); });
         renderLiveChat();
       };
@@ -12859,6 +12900,29 @@
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());
       area.querySelector('[data-lc="bild"]')?.addEventListener("click", () => LiveChat.bildUmschalten());
       area.querySelector('[data-lc="weg"]')?.addEventListener("click", () => { LiveChat.verlassen(); renderLiveChat(); });
+      area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => {
+        /* Ein Bild statt eines Buchstabens — und wer mag, ein
+           bewegtes GIF wie bei Clubhouse. Es genügt die Adresse
+           eines Bildes; sie bleibt auf dem Gerät und wird den
+           anderen im Raum mitgeschickt. */
+        const jetzt = LiveChat.eigenesBild ? LiveChat.eigenesBild() : "";
+        const eingabe = window.prompt(
+          "Adresse eines Bildes oder GIFs (https://… oder auf giphy.com das Bild "
+          + "mit Rechtsklick „Bildadresse kopieren“).\nLeer lassen und OK drücken "
+          + "entfernt das Bild wieder.", jetzt || "");
+        if (eingabe === null) return;
+        const ok = LiveChat.bildSetzen(eingabe);
+        if (!ok) showToast("Das war keine Bildadresse — sie muss mit https:// anfangen.");
+        else showToast(eingabe.trim() ? "🖼️ Profilbild gesetzt" : "Profilbild entfernt");
+      });
+      area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
+        if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
+        LiveChat.chatLeeren();
+        livechatGezeigt = new Set();
+        const v = document.getElementById("lcVerlauf");
+        if (v) v.innerHTML = "";
+        renderLiveChat();
+      });
 
       const feld = area.querySelector("#lcFeld");
       const senden = area.querySelector("#lcSenden");
@@ -37968,6 +38032,58 @@ An einem Morgen lief ein kleiner Fuchs los…
      Also: Antippen klappt eine kleine schwebende Liste mit den Namen
      auf, noch einmal antippen schließt sie wieder. Wer mehr will,
      tippt auf einen Namen — dann öffnet sich dessen Profil. */
+  /* --- Die kleine Flagge des Herkunftslandes --------------------
+     GEWÜNSCHT: „bei den Leuten, die aus verschiedenen Ländern
+     kommen, die kleine Flagge ihres Landes."
+
+     Das Land steht als deutscher Ländername im Profil (origin). Aus
+     ihm wird hier das Flaggenzeichen. Es gibt keine Flagge zu
+     erfinden: steht dort etwas, das nicht in der Liste ist, bleibt
+     der Platz leer statt falsch. */
+  const LAND_FLAGGE = {
+    "Deutschland": "🇩🇪", "Österreich": "🇦🇹", "Schweiz": "🇨🇭", "Liechtenstein": "🇱🇮",
+    "Ägypten": "🇪🇬", "Saudi-Arabien": "🇸🇦", "Vereinigte Arabische Emirate": "🇦🇪",
+    "Irak": "🇮🇶", "Syrien": "🇸🇾", "Jordanien": "🇯🇴", "Marokko": "🇲🇦", "Tunesien": "🇹🇳",
+    "Algerien": "🇩🇿", "Libanon": "🇱🇧", "Palästina": "🇵🇸", "Sudan": "🇸🇩", "Libyen": "🇱🇾",
+    "Jemen": "🇾🇪", "Katar": "🇶🇦", "Kuwait": "🇰🇼", "Bahrain": "🇧🇭", "Oman": "🇴🇲",
+    "Türkei": "🇹🇷", "Russland": "🇷🇺", "Weißrussland": "🇧🇾", "Kasachstan": "🇰🇿",
+    "Kirgisistan": "🇰🇬", "Usbekistan": "🇺🇿", "Tadschikistan": "🇹🇯", "Turkmenistan": "🇹🇲",
+    "Aserbaidschan": "🇦🇿", "Armenien": "🇦🇲", "Georgien": "🇬🇪", "Moldau": "🇲🇩",
+    "Ukraine": "🇺🇦", "Iran": "🇮🇷", "Afghanistan": "🇦🇫", "Pakistan": "🇵🇰", "Indien": "🇮🇳",
+    "Bangladesch": "🇧🇩", "Sri Lanka": "🇱🇰", "Nepal": "🇳🇵",
+    "Spanien": "🇪🇸", "Mexiko": "🇲🇽", "Argentinien": "🇦🇷", "Kolumbien": "🇨🇴", "Chile": "🇨🇱",
+    "Peru": "🇵🇪", "Venezuela": "🇻🇪", "Ecuador": "🇪🇨", "Bolivien": "🇧🇴", "Uruguay": "🇺🇾",
+    "Paraguay": "🇵🇾", "Kuba": "🇨🇺", "Dominikanische Republik": "🇩🇴", "Guatemala": "🇬🇹",
+    "Honduras": "🇭🇳", "El Salvador": "🇸🇻", "Nicaragua": "🇳🇮", "Costa Rica": "🇨🇷", "Panama": "🇵🇦",
+    "Frankreich": "🇫🇷", "Belgien": "🇧🇪", "Senegal": "🇸🇳", "Elfenbeinküste": "🇨🇮",
+    "Kamerun": "🇨🇲", "Kongo": "🇨🇬", "Mali": "🇲🇱", "Niger": "🇳🇪", "Burkina Faso": "🇧🇫",
+    "Italien": "🇮🇹", "Portugal": "🇵🇹", "Brasilien": "🇧🇷", "Angola": "🇦🇴", "Mosambik": "🇲🇿",
+    "Polen": "🇵🇱", "Tschechien": "🇨🇿", "Slowakei": "🇸🇰", "Ungarn": "🇭🇺", "Rumänien": "🇷🇴",
+    "Bulgarien": "🇧🇬", "Griechenland": "🇬🇷", "Kroatien": "🇭🇷", "Serbien": "🇷🇸",
+    "Bosnien und Herzegowina": "🇧🇦", "Albanien": "🇦🇱", "Kosovo": "🇽🇰", "Nordmazedonien": "🇲🇰",
+    "Slowenien": "🇸🇮", "Montenegro": "🇲🇪",
+    "Niederlande": "🇳🇱", "Dänemark": "🇩🇰", "Schweden": "🇸🇪", "Norwegen": "🇳🇴",
+    "Finnland": "🇫🇮", "Island": "🇮🇸", "Irland": "🇮🇪", "Vereinigtes Königreich": "🇬🇧",
+    "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Estland": "🇪🇪", "Lettland": "🇱🇻", "Litauen": "🇱🇹",
+    "USA": "🇺🇸", "Vereinigte Staaten": "🇺🇸", "Kanada": "🇨🇦", "Australien": "🇦🇺",
+    "Neuseeland": "🇳🇿", "China": "🇨🇳", "Japan": "🇯🇵", "Südkorea": "🇰🇷", "Vietnam": "🇻🇳",
+    "Thailand": "🇹🇭", "Philippinen": "🇵🇭", "Indonesien": "🇮🇩", "Malaysia": "🇲🇾",
+    "Nigeria": "🇳🇬", "Ghana": "🇬🇭", "Kenia": "🇰🇪", "Äthiopien": "🇪🇹", "Eritrea": "🇪🇷",
+    "Somalia": "🇸🇴", "Südafrika": "🇿🇦", "Tansania": "🇹🇿", "Uganda": "🇺🇬",
+    "Israel": "🇮🇱", "Zypern": "🇨🇾", "Malta": "🇲🇹", "Luxemburg": "🇱🇺",
+  };
+  function landFlagge(land) {
+    const l = String(land || "").trim();
+    return LAND_FLAGGE[l] || "";
+  }
+
+  /* Wer gerade im Klassenzimmer sitzt — kommt über den
+     Präsenz-Kanal, nicht über die Datenbank. */
+  let kzDaJetzt = {};
+  function imKlassenzimmer(profilId) {
+    return Boolean(profilId && kzDaJetzt[profilId]);
+  }
+
   let onlineListe = [];
   async function onlineZaehlerAuffrischen() {
     const knopf = document.getElementById("onlineJetztBtn");
@@ -38009,6 +38125,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       ${onlineListe.slice(0, 8).map((m) => `
         <button type="button" class="online-klappe-zeile" data-online-profil="${m.id}">
           ${tinyAvatar(m)}<span class="name">${escapeHtml(m.name || "")}</span>
+          ${landFlagge(m.origin) ? `<span class="online-flagge" title="${escapeHtml(m.origin)}" aria-label="${escapeHtml(m.origin)}">${landFlagge(m.origin)}</span>` : ""}
+          ${imKlassenzimmer(m.id) ? `<span class="online-kz" title="ist gerade im Klassenzimmer" aria-label="ist gerade im Klassenzimmer">🎓</span>` : ""}
         </button>`).join("")}
       ${onlineListe.length > 8 ? `<p class="online-klappe-mehr">… und ${onlineListe.length - 8} weitere</p>` : ""}`;
     // Unter der Pille aufhängen, aber nie über den Bildschirmrand hinaus.
@@ -41524,6 +41642,25 @@ An einem Morgen lief ein kleiner Fuchs los…
     onlineZaehlerAuffrischen();
   }, 60000);
   setTimeout(onlineZaehlerAuffrischen, 3500);
+
+  /* Den Klassenzimmer-Kanal mithören — auch ohne selbst hineinzugehen.
+     Nur so kann in der Online-Liste stehen, wer gerade Unterricht hat.
+     Zuhören kostet nichts und schickt nichts. */
+  setTimeout(() => {
+    if (!window.LiveChat || !LiveChat.praesenzZuhoeren) return;
+    const u = Backend.currentUser();
+    LiveChat.praesenzZuhoeren(u ? u.id : "");
+    LiveChat.beiPraesenz((da) => {
+      kzDaJetzt = da || {};
+      const pille = document.getElementById("onlineJetztBtn");
+      const wieViele = Object.keys(kzDaJetzt).length;
+      if (pille) {
+        pille.classList.toggle("hat-klassenzimmer", wieViele > 0);
+        pille.dataset.kz = wieViele ? String(wieViele) : "";
+      }
+      if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();
+    });
+  }, 4000);
   /* Das Postfach im Hintergrund vorwärmen: so ist auch der allererste
      Sprung „✉️ Ergebnis im Postfach" sofort da und nicht erst nach zwei
      Datenbankabfragen. */
