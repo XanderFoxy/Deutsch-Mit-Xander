@@ -34,13 +34,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<link rel="stylesheet" href="styles.css?v=182" />
-<link rel="stylesheet" href="app-styles.css?v=182" />
-<link rel="stylesheet" href="themes.css?v=182" />
-<link rel="stylesheet" href="aussprache-kreisel.css?v=182" />
-<link rel="stylesheet" href="livechat.css?v=182" />
-<link rel="stylesheet" href="werkstatt.css?v=182" />
-<link rel="stylesheet" href="korrekturen.css?v=182" />
+<script>window.DMA_VERSION = "194";</script>
+<script>
+/* Auch die Stilblätter hängen an der laufenden Fassung — sonst
+   kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
+   bei den Skripten weiter unten: EINE Zahl, nicht zwei. */
+(function () {
+  var v = "?v=" + (window.DMA_VERSION || "1");
+  [
+    "styles.css",
+    "app-styles.css",
+    "themes.css",
+    "aussprache-kreisel.css",
+    "livechat.css",
+    "werkstatt.css",
+    "korrekturen.css"
+  ].forEach(function (d) {
+    document.write('<link rel="stylesheet" href="' + d + v + '" />');
+  });
+})();
+</script>
 
 <!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -674,7 +687,6 @@
 <!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
      nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
      Fassung aus dem Zwischenspeicher des Browsers. -->
-<script>window.DMA_VERSION = "193";</script>
 <script>
 /* Fassungs-Wächter: liegt auf dem Server eine neuere Seite als die hier
    geladene, sagt die App Bescheid, statt still eine alte Fassung zu
@@ -699,26 +711,60 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) pruefen(); });
 })();
 </script>
-<script src="core.js?v=182"></script>
-<script src="ton-liste.js?v=182"></script>
-<script src="aussprache-tabelle.js?v=182"></script>
-<script src="aussprache-pruefung.js?v=182"></script>
-<script src="aussprache-kreisel.js?v=182"></script>
-<script src="klassenzimmer.js?v=182"></script>
-<script src="livechat.js?v=182"></script>
-<script src="data-werkstatt.js?v=182"></script>
-<script src="werkstatt.js?v=182"></script>
-<script src="bildverwaltung.js?v=182"></script>
-<script src="supabase-config.js?v=182"></script>
-<script src="satzbau.js?v=182"></script>
-<script src="data-exercises.js?v=182"></script>
-<script src="data-vocab.js?v=182"></script>
-<script src="data-wegweiser.js?v=182"></script>
-<script src="data-umgangssprache.js?v=182"></script>
-<script src="data-dialekt.js?v=182"></script>
-<script src="backend.js?v=182"></script>
-<script src="quiz.js?v=182"></script>
-<script src="baukasten.js?v=182" defer></script>
-<script src="app.js?v=182"></script>
+<script>
+/* =====================================================================
+   DIE SKRIPTE WERDEN MIT DER LAUFENDEN FASSUNG GELADEN
+   ---------------------------------------------------------------------
+   GEMELDET, und lange nicht gefunden: „Ich sehe auf meinem iPhone noch
+   das alte Update."
+
+   HIER LAG ES. Die Fassungsnummer oben (DMA_VERSION) wurde bei jeder
+   Änderung hochgezählt, die Zahl an den Skripten aber NICHT — sie stand
+   fest bei 182. Der Fassungs-Wächter meldete also richtig „es gibt was
+   Neues", und der Browser holte trotzdem dieselben alten Dateien aus
+   seinem Zwischenspeicher, weil sich deren Adresse nicht geändert hatte.
+   Zwei Zahlen, die dasselbe bedeuten sollen, laufen früher oder später
+   auseinander — und genau das war passiert.
+
+   Jetzt gibt es nur noch EINE Zahl. Die Adressen werden hier aus
+   DMA_VERSION gebaut, also kann nichts mehr auseinanderlaufen.
+
+   document.write ist hier kein Notbehelf, sondern das Richtige: es
+   behält die Reihenfolge bei. Die Dateien bauen aufeinander auf
+   (core vor app, backend vor app), und ein nachträglich eingehängtes
+   <script> liefe in beliebiger Reihenfolge.
+   ===================================================================== */
+(function () {
+  var v = "?v=" + (window.DMA_VERSION || "1");
+  var dateien = [
+    "core.js",
+    "ton-liste.js",
+    "aussprache-tabelle.js",
+    "aussprache-pruefung.js",
+    "aussprache-kreisel.js",
+    "klassenzimmer.js",
+    "livechat.js",
+    "data-werkstatt.js",
+    "werkstatt.js",
+    "bildverwaltung.js",
+    "supabase-config.js",
+    "satzbau.js",
+    "data-exercises.js",
+    "data-vocab.js",
+    "data-wegweiser.js",
+    "data-umgangssprache.js",
+    "data-dialekt.js",
+    "backend.js",
+    "quiz.js",
+    ["baukasten.js", true],
+    "app.js"
+  ];
+  dateien.forEach(function (d) {
+    var name = Array.isArray(d) ? d[0] : d;
+    var spaeter = Array.isArray(d) && d[1] ? " defer" : "";
+    document.write('<scr' + 'ipt src="' + name + v + '"' + spaeter + '><\/scr' + 'ipt>');
+  });
+})();
+</script>
 </body>
 </html>
