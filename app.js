@@ -14232,12 +14232,17 @@
         <div class="lc-waehler-emojis">
           ${LC_EMOJIS.map((e) => `<button type="button" class="lc-waehler-emoji" data-lc-emoji="${e}">${e}</button>`).join("")}
         </div>
-        <p class="eyebrow" style="margin-top:12px;">BEWEGTES GIF</p>
+        <p class="eyebrow" style="margin-top:12px;">BEWEGTES GIF — DIE GANZE GIPHY-BIBLIOTHEK</p>
+        <div class="lc-gif-themen">
+          ${LC_GIF_THEMEN.map((t, i) => `
+            <button type="button" class="lc-gif-thema${i === 0 ? " ist-da" : ""}"
+                    data-lc-bildthema="${escapeHtml(t.wort)}">${escapeHtml(t.name)}</button>`).join("")}
+        </div>
         <div class="lc-waehler-reihe">
-          <input type="text" class="lc-chat-feld" id="lcGifSuche" placeholder="Suchen, z. B. „hallo“ oder „katze“">
+          <input type="text" class="lc-chat-feld" id="lcGifSuche" placeholder="Weitersuchen …">
           <button type="button" class="btn btn-ghost" id="lcGifSuchen">Suchen</button>
         </div>
-        <div class="lc-waehler-gifs" id="lcGifTreffer"></div>
+        <div class="lc-waehler-gifs" id="lcGifTreffer"><p class="empty-note">lädt …</p></div>
         ${eigenerSchluessel ? "" : `
           <p class="empty-note" style="font-size:0.7rem; margin:6px 0 0;">
             Die Suche läuft über den öffentlichen Beta-Schlüssel von GIPHY — der ist
@@ -14403,19 +14408,39 @@
       const a = kasten.querySelector("#lcGifAdresse")?.value.trim();
       if (a) setzen(a, "🖼️ GIF gesetzt");
     });
-    const suchen = async () => {
-      const wort = kasten.querySelector("#lcGifSuche")?.value.trim();
+    /* -----------------------------------------------------------------
+       GEWÜNSCHT: „Wenn man das Profilbild gedrückt hält, soll die
+       GIPHY-Bibliothek direkt aufgehen — mit Presets plus echter
+       Suche. Und ich will, dass man da mehr scrollen kann."
+
+       Vorher stand hier ein leeres Feld mit einem Suchknopf: wer nichts
+       eintippte, sah nichts. Jetzt ist es dieselbe Bibliothek wie beim
+       Verschicken — oben die Themen, darunter sofort Bilder, und beim
+       Herunterscrollen kommen immer weitere nach.
+       ----------------------------------------------------------------- */
+    let bildWort = "", bildVersatz = 0, bildLaedt = false, bildEnde = false;
+    const bibliothek = async (wort, anhaengen) => {
       const ziel = kasten.querySelector("#lcGifTreffer");
-      if (!wort || !ziel) return;
-      ziel.innerHTML = '<p class="empty-note">sucht …</p>';
+      if (!ziel || bildLaedt) return;
+      if (!anhaengen) { bildWort = wort || ""; bildVersatz = 0; bildEnde = false; }
+      else if (bildEnde) return;
+      bildLaedt = true;
+      let gleichWeiter = false;
+      if (!anhaengen) ziel.innerHTML = '<p class="empty-note">lädt …</p>';
       try {
-        const r = await fetch("https://api.giphy.com/v1/gifs/search?api_key="
-          + encodeURIComponent(gifSchluessel) + "&limit=18&rating=g&lang=de&q="
-          + encodeURIComponent(wort));
+        const adresse = bildWort
+          ? "https://api.giphy.com/v1/gifs/search?api_key="
+            + encodeURIComponent(gifSchluessel) + "&limit=24&offset=" + bildVersatz
+            + "&rating=g&lang=de&q=" + encodeURIComponent(bildWort)
+          : "https://api.giphy.com/v1/gifs/trending?api_key="
+            + encodeURIComponent(gifSchluessel) + "&limit=24&offset=" + bildVersatz + "&rating=g";
+        const r = await fetch(adresse);
         const j = await r.json();
         const liste = (j && j.data) || [];
-        if (!liste.length) { ziel.innerHTML = '<p class="empty-note">Nichts gefunden.</p>'; return; }
-        ziel.innerHTML = "";
+        if (liste.length < 24) bildEnde = true;
+        bildVersatz += liste.length;
+        if (!liste.length && !anhaengen) { ziel.innerHTML = '<p class="empty-note">Nichts gefunden.</p>'; return; }
+        if (!anhaengen) ziel.innerHTML = "";
         liste.forEach((g) => {
           const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width);
           if (!adr || !adr.url) return;
@@ -14430,14 +14455,41 @@
           b.addEventListener("click", () => setzen(adr.url, "🖼️ GIF gesetzt"));
           ziel.appendChild(b);
         });
+        if (!bildEnde && ziel.scrollHeight <= ziel.clientHeight + 10) gleichWeiter = true;
       } catch (x) {
-        ziel.innerHTML = '<p class="empty-note">Die Suche ging nicht — Netz oder Schlüssel prüfen.</p>';
+        if (!anhaengen) {
+          ziel.innerHTML = '<p class="empty-note">GIPHY antwortet gerade nicht — Netz oder Schlüssel prüfen.</p>';
+        }
+        bildEnde = true;
+      } finally {
+        bildLaedt = false;
+        if (gleichWeiter) bibliothek(bildWort, true);
       }
     };
+    const suchen = () => bibliothek(kasten.querySelector("#lcGifSuche")?.value.trim() || "");
     kasten.querySelector("#lcGifSuchen")?.addEventListener("click", suchen);
     kasten.querySelector("#lcGifSuche")?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); suchen(); }
     });
+    kasten.querySelectorAll("[data-lc-bildthema]").forEach((b) => {
+      b.addEventListener("click", () => {
+        kasten.querySelectorAll("[data-lc-bildthema]").forEach((x) => x.classList.remove("ist-da"));
+        b.classList.add("ist-da");
+        const feld = kasten.querySelector("#lcGifSuche");
+        if (feld) feld.value = "";
+        bibliothek(b.dataset.lcBildthema);
+      });
+    });
+    kasten.querySelector("#lcGifTreffer")?.addEventListener("scroll", (ev) => {
+      const z = ev.currentTarget;
+      if (z.scrollTop + z.clientHeight >= z.scrollHeight - 90) bibliothek(bildWort, true);
+    });
+    /* Das Fach ist nie leer: beim Aufmachen steht das erste Thema da. */
+    if (gifSchluessel) bibliothek(LC_GIF_THEMEN[0].wort);
+    else {
+      const z = kasten.querySelector("#lcGifTreffer");
+      if (z) z.innerHTML = '<p class="empty-note">Hier fehlt der GIPHY-Schlüssel — ohne ihn lädt GIPHY nichts.</p>';
+    }
   }
 
   /* =================================================================
@@ -14850,23 +14902,43 @@
        GIPHY nicht — was ohne eigenen Schlüssel schnell passiert —,
        stehen statt eines leeren Kastens die hauseigenen bewegten
        Bilder da, die immer gehen. */
-    const zeigen = async (wort) => {
+    /* -----------------------------------------------------------------
+       GEMELDET: „Und ich will, dass man in der GIPHY-Bibliothek mehr
+       scrollen kann."
+
+       Vorher holte das Fach 24 Bilder und dann war Schluss — wer nach
+       unten wischte, kam ans Ende einer sehr kurzen Liste. Jetzt wird
+       nachgeladen, sobald man unten ankommt: dieselbe Suche, nur mit
+       Versatz, jeweils 24 weitere, bis GIPHY nichts mehr hat. Das ist
+       das, was man von einer Bibliothek erwartet.
+       ----------------------------------------------------------------- */
+    let gifWort = "", gifVersatz = 0, gifLaedt = false, gifEnde = false;
+    const zeigen = async (wort, anhaengen) => {
       const ziel = kasten.querySelector("#lcSendeGifTreffer");
       if (!ziel) return;
-      ziel.innerHTML = '<p class="empty-note">lädt …</p>';
+      if (gifLaedt) return;
+      if (!anhaengen) { gifWort = wort || ""; gifVersatz = 0; gifEnde = false; }
+      else if (gifEnde) return;
+      gifLaedt = true;
+      let gleichWeiter = false;
+      if (!anhaengen) ziel.innerHTML = '<p class="empty-note">lädt …</p>';
+      else ziel.insertAdjacentHTML("beforeend", '<p class="empty-note lc-gif-mehr" style="grid-column:1/-1;">lädt weiter …</p>');
       try {
-        const adresse = wort
+        const adresse = gifWort
           ? "https://api.giphy.com/v1/gifs/search?api_key="
             + encodeURIComponent(gifSchluessel)
-            + "&limit=24&rating=g&lang=de&q=" + encodeURIComponent(wort)
+            + "&limit=24&offset=" + gifVersatz + "&rating=g&lang=de&q=" + encodeURIComponent(gifWort)
           : "https://api.giphy.com/v1/gifs/trending?api_key="
-            + encodeURIComponent(gifSchluessel) + "&limit=24&rating=g";
+            + encodeURIComponent(gifSchluessel) + "&limit=24&offset=" + gifVersatz + "&rating=g";
         const r = await fetch(adresse);
         if (!r.ok) throw new Error("giphy " + r.status);
         const j = await r.json();
         const liste = (j && j.data) || [];
-        if (!liste.length) throw new Error("leer");
-        ziel.innerHTML = "";
+        ziel.querySelectorAll(".lc-gif-mehr").forEach((e) => e.remove());
+        if (!liste.length && !anhaengen) throw new Error("leer");
+        if (liste.length < 24) gifEnde = true;
+        gifVersatz += liste.length;
+        if (!anhaengen) ziel.innerHTML = "";
         liste.forEach((g) => {
           const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width
                                    || g.images.preview_gif);
@@ -14881,7 +14953,13 @@
           ziel.appendChild(b);
         });
         if (!ziel.children.length) throw new Error("keine Bilder");
+        /* Hat der erste Schwung das Fach noch nicht gefüllt, kommt der
+           nächste gleich hinterher — sonst gäbe es nichts zu scrollen
+           und das Nachladen käme nie in Gang. */
+        if (!gifEnde && ziel.scrollHeight <= ziel.clientHeight + 10) gleichWeiter = true;
       } catch (x) {
+        ziel.querySelectorAll(".lc-gif-mehr").forEach((e) => e.remove());
+        if (anhaengen) { gifEnde = true; return; }
         ziel.innerHTML = eigenerSchluessel
           ? `<p class="empty-note" style="grid-column:1/-1; margin:0 0 6px;">
                GIPHY antwortet gerade nicht (${escapeHtml(String(x && x.message || "Fehler"))}).
@@ -14893,8 +14971,18 @@
                der alte öffentliche Probe-Schlüssel ist seit Jahren abgeschaltet.
                Setz ihn oben ein, dann sind die GIFs sofort da.
              </p>`;
+      } finally {
+        gifLaedt = false;
+        /* Erst hier nachlegen, nicht mitten im Versuch — sonst liefen
+           zwei Abfragen gleichzeitig und die Bilder kämen doppelt. */
+        if (gleichWeiter) zeigen(gifWort, true);
       }
     };
+    /* Nachladen, sobald man unten ankommt. */
+    kasten.querySelector("#lcSendeGifTreffer")?.addEventListener("scroll", (ev) => {
+      const z = ev.currentTarget;
+      if (z.scrollTop + z.clientHeight >= z.scrollHeight - 90) zeigen(gifWort, true);
+    });
     /* Der eingesetzte Schlüssel greift sofort, ohne Neuladen. */
     kasten.querySelector("#lcGifSchluesselNehmen")?.addEventListener("click", () => {
       const feld = kasten.querySelector("#lcGifSchluesselFeld");
@@ -20555,6 +20643,10 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
+    /* Die beiden Bildfaecher — damit sich nachsehen laesst, ob die
+       GIPHY-Bibliothek wirklich gefuellt aufgeht und nachlaedt. */
+    bildWaehler: function () { return livechatBildWaehler(); },
+    sendeWaehler: function () { return livechatSendeWaehler(); },
     effekt: function (name) {
       const vorher = document.body.childElementCount;
       try { lcWirkung(name, null, {}); }
