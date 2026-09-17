@@ -5356,6 +5356,42 @@
     liveOeffnen(liveStand.plattform);
   });
 
+  /* --- NACHMESSEN AUF SEINEM EIGENEN GERÄT -----------------------
+     Dreimal habe ich hier etwas „behoben", das ich nicht sehen kann:
+     der Prüfbrowser misst 12 px gegen 12 px, sein Telefon zeigt etwas
+     anderes. Statt ein viertes Mal zu raten, kann die Seite sich jetzt
+     selbst vermessen — auf dem Gerät, auf dem es auftritt.
+
+     Laufschrift eine Sekunde lang gedrückt halten (nur als Betreiber):
+     dann steht da, wie groß die Laufschrift wirklich ist, wie groß die
+     Live-Zeile, wie dick beide sind und welche Schrift der Punkt
+     bekommen hat. Damit ist es messbar statt strittig. */
+  (function tickerNachmessen() {
+    const wrap = () => document.querySelector(".ticker-track-wrap") || document.querySelector(".ticker-track");
+    let uhr = null;
+    const messen = () => {
+      const spur = document.querySelector(".ticker-track");
+      const zeile = document.querySelector(".ticker-live");
+      if (!spur) return;
+      const c = (el) => { const g = getComputedStyle(el); return Math.round(parseFloat(g.fontSize) * 10) / 10 + " px / " + g.fontWeight; };
+      const punkt = document.querySelector(".ticker-live-punkt");
+      const teile = ["Laufschrift: " + c(spur)];
+      teile.push(zeile ? "Live-Zeile: " + c(zeile) : "Live-Zeile: gerade nicht da");
+      if (punkt) { const r = punkt.getBoundingClientRect(); teile.push("Punkt: " + Math.round(r.width * 10) / 10 + " px breit"); }
+      if (typeof showToast === "function") showToast("📏 " + teile.join(" · "));
+    };
+    document.addEventListener("pointerdown", (ev) => {
+      if (!ev.target.closest(".ticker-track-wrap, .ticker-track")) return;
+      if (!(Backend.canModerate && Backend.canModerate())) return;
+      clearTimeout(uhr);
+      uhr = setTimeout(messen, 900);
+    }, true);
+    ["pointerup", "pointercancel", "pointerleave"].forEach((art) => {
+      document.addEventListener(art, () => clearTimeout(uhr), true);
+    });
+    void wrap;
+  })();
+
   /* Die Zeile für die Laufschrift — in der Farbe der App, während der
      übrige Fließtext seine eigene Farbe behält. */
   function liveTickerHtml() {
@@ -5384,6 +5420,19 @@
        urspruenglich gewuenscht. Die Werte stehen zusaetzlich direkt am
        Element, damit sie auch dann gelten, wenn der Browser noch eine
        alte app-styles.css aus dem Zwischenspeicher benutzt. */
+    /* ZUM VIERTEN MAL GEMELDET — und diesmal am einzigen Stück, das
+       die Messung im Prüfbrowser gar nicht erfassen kann: dem Zeichen
+       „◉" davor. Nachgemessen sind in Chromium Laufschrift und
+       Live-Zeile beide 12 px, gleich dick, ohne Schatten. Ein Zeichen
+       aber, das die Hausschrift (JetBrains Mono) NICHT enthält, holt
+       sich der Browser aus einer Ersatzschrift — und Ersatzschriften
+       zeichnen genau solche Symbole regelmäßig deutlich größer und
+       fetter. Auf iPhone und Android passiert das, im Prüfbrowser
+       nicht; das erklärt, warum er es sieht und die Messung nicht.
+
+       Deshalb steht da jetzt kein Schriftzeichen mehr, sondern ein
+       gezeichneter Punkt in em — er kann gar nicht mehr aus einer
+       anderen Schrift kommen und wächst immer nur mit der Zeile mit. */
     const gleich = "font-size:inherit;line-height:inherit;letter-spacing:inherit;"
       + "font-family:inherit;font-weight:inherit;font-stretch:inherit;"
       + "vertical-align:baseline;";
@@ -5391,7 +5440,7 @@
        sie auf DIESEM Laufband zu lesen ist — siehe liveFarbeLesbar().
        Farbton und Sättigung bleiben, die Schrift selbst bleibt
        unverändert. */
-    return `<span class="ticker-live" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${liveFarbeLesbar(p.farbe)};${gleich}">◉ ${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
+    return `<span class="ticker-live" role="link" tabindex="0" title="${escapeHtml(p.name)} öffnen" style="--live-farbe:${liveFarbeLesbar(p.farbe)};${gleich}"><i class="ticker-live-punkt" aria-hidden="true"></i>${escapeHtml(wer)} ist gerade live bei ${escapeHtml(p.name)}</span>`;
   }
   /* ============================================================
      DAS KLASSENZIMMER IM LAUFBAND
@@ -11965,7 +12014,21 @@
        Artikel stehen haben." Ein Eintrag, von dem nach dem Abziehen
        des Artikels nur noch „die" übrig bliebe, ist kein Übungswort. */
     let alle = buildDictionaryEntries().filter(wortZumUeben).filter(aussprUebbar);
-    if (ausspracheQuelle === "wortschatz") alle = alle.filter((e) => imWortschatz(e.word));
+    /* SEINE IDEE, wörtlich: „Können wir es da so einstellen, dass ich
+       das vorlese und die Leute mich nachsprechen? Aber die Bewertung
+       macht Azure — das wäre cool."
+
+       Genau das ist diese Quelle. Sie lässt nur Wörter übrig, von denen
+       eine Aufnahme mit SEINER Stimme da ist. Vorgesprochen wird dann
+       nicht die Maschine, sondern er; gemessen wird wie immer, in der
+       besten Stufe, die gerade geht — also bei Angemeldeten Azure, Laut
+       für Laut. Es kostet nichts zusätzlich: die Aufnahmen liegen
+       fertig im Haus, und bewertet wurde vorher auch schon. */
+    if (ausspracheQuelle === "alex") {
+      alle = alle.filter((e) => aussprTonListe
+        && aussprTonListe.has(aussprTonStamm(aussprSprechtext(e))));
+    }
+    else if (ausspracheQuelle === "wortschatz") alle = alle.filter((e) => imWortschatz(e.word));
     else if (ausspracheQuelle === "kategorie" && ausspracheKategorie !== "alle") {
       alle = alle.filter((e) => e.category === ausspracheKategorie);
     }
@@ -12430,7 +12493,9 @@
        einen eigenen im Gerät. Die Oberfläche muss den Unterschied
        nicht kennen. */
     if (AusspracheP.stufe1Da()) return "azure";
-    if (aussprLetztesOriginal && (aussprLetztesOriginal.art === "sprite" || aussprLetztesOriginal.art === "azure")) return "frei";
+    if (aussprLetztesOriginal && (aussprLetztesOriginal.art === "alex"
+        || aussprLetztesOriginal.art === "sprite"
+        || aussprLetztesOriginal.art === "azure")) return "frei";
     return "verstaendlich";
   }
 
@@ -12510,8 +12575,34 @@
      Wortes lassen sich die beiden Wellenformen nebeneinander
      legen. Vorher ging das nur bei den wenigen vorproduzierten
      Wörtern. */
+  /* Alex' eigene Aufnahme als VERGLEICHSORIGINAL.
+     -----------------------------------------------------------------
+     Bisher kam das Original entweder aus einer Sammeldatei oder von
+     der neuronalen Stimme. Seit die 2239 A1-Wörter mit seiner Stimme
+     im Haus liegen, ist die bessere Quelle offensichtlich: die echte
+     Stimme des Lehrers. Das bringt zweierlei auf einmal — vorgesprochen
+     wird er, und Stufe 2 (die Wellenform daneben) misst gegen ihn
+     statt gegen eine Maschine. Kosten: keine. */
+  function aussprAlexLaden(w) {
+    if (!window.AusspracheP || imItalienischraum()) return Promise.resolve(null);
+    return aussprTonLaden().then(() => {
+      const weg = aussprTonWeg(w);
+      if (!weg) return null;
+      return AusspracheP.tonLesen(weg + "?v=" + (window.DMA_VERSION || "1")).then((puffer) => {
+        if (!puffer || !puffer.length) return null;
+        return { puffer: puffer, art: "alex", huelle: AusspracheP.huellkurve(puffer, 150) };
+      }).catch(() => null);
+    }).catch(() => null);
+  }
+
   function aussprOriginalLaden(w) {
     if (!window.AusspracheP) return Promise.resolve(null);
+    return aussprAlexLaden(w).then((eigen) => {
+      if (eigen) return eigen;
+      return aussprSpriteLadenOderAzure(w);
+    });
+  }
+  function aussprSpriteLadenOderAzure(w) {
     return aussprSpriteLaden(w).then((s) => {
       if (s) return s;
       if (!AusspracheP.zentralDa()) return null;
@@ -12820,6 +12911,9 @@
           Für dieses Wort gibt es gerade keine Aufnahme zum Vergleichen. „Original“ nimmt
           darum die Stimme deines Geräts — die lässt sich nicht als Wellenform zeigen
           und nicht mit deiner Aufnahme vergleichen.</p>`
+        : aussprLetztesOriginal.art === "alex" ? `<p class="empty-note" style="font-size:0.7rem;">
+          Vorgesprochen wird von <strong>Alex selbst</strong> — eine echte Aufnahme, keine
+          Maschinenstimme. Deine Aufnahme wird daneben gegen genau diese gemessen.</p>`
         : aussprLetztesOriginal.art === "azure" ? `<p class="empty-note" style="font-size:0.7rem;">
           Vorgesprochen wird von der neuronalen Stimme — dieselbe Technik, mit der
           Wörterbücher ihre Aussprachebeispiele erzeugen.</p>` : ""}
@@ -12870,12 +12964,20 @@
             <button type="button" class="trophy-chip ${ausspracheQuelle === "wortschatz" ? "selected" : ""}" data-ausspr-quelle="wortschatz">★ Mein Wortschatz (${gemerkt})</button>
             <button type="button" class="trophy-chip ${ausspracheQuelle === "kategorie" ? "selected" : ""}" data-ausspr-quelle="kategorie">🗂️ Ein Themenbereich</button>
             <button type="button" class="trophy-chip ${ausspracheQuelle === "alle" ? "selected" : ""}" data-ausspr-quelle="alle">🎲 Zufällig aus allem</button>
+            <button type="button" class="trophy-chip ${ausspracheQuelle === "alex" ? "selected" : ""}" data-ausspr-quelle="alex">🗣️ Sprich mir nach</button>
           </div>
           ${ausspracheQuelle === "kategorie" ? `
             <label class="empty-note" style="display:block; margin-bottom:4px;">Themenbereich</label>
             <select id="ausspracheKatSelect" class="challenge-select" style="margin-bottom:12px;">
               ${kategorien.map((c) => `<option value="${c}" ${ausspracheKategorie === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
             </select>` : ""}
+          ${ausspracheQuelle === "alex" ? `
+            <p class="empty-note" style="margin-bottom:12px;">
+              <strong>Alex spricht vor, du sprichst nach.</strong> Hier kommen nur Wörter dran,
+              von denen eine Aufnahme mit seiner eigenen Stimme da ist — keine Maschinenstimme.
+              Bewertet wird wie sonst auch, in der besten Stufe, die gerade geht.
+              ${aussprTonListe ? "" : "Die Liste der Aufnahmen wird gerade geholt …"}
+            </p>` : ""}
           <p class="eyebrow" style="margin-top:2px;">UND AUF WELCHEM NIVEAU?</p>
           <div class="trophy-case" style="margin-bottom:12px;">
             ${["alle", "A1", "A2", "B1", "B2", "C1", "C2"].map((l) => `<button type="button" class="trophy-chip ${ausspracheNiveau === l ? "selected" : ""}" data-ausspr-niveau="${l}">${l === "alle" ? "Alle Niveaus" : l}</button>`).join("")}
@@ -12912,7 +13014,18 @@
             </p>
           </div>
         </div>`;
-      area.querySelectorAll("[data-ausspr-quelle]").forEach((b) => b.addEventListener("click", () => { ausspracheQuelle = b.dataset.aussprQuelle; renderAussprache(); }));
+      area.querySelectorAll("[data-ausspr-quelle]").forEach((b) => b.addEventListener("click", () => {
+        ausspracheQuelle = b.dataset.aussprQuelle;
+        /* Ohne die Liste der Aufnahmen wäre „Sprich mir nach" leer —
+           also erst holen, dann noch einmal zeichnen. Geholt wird sie
+           nur einmal und nur, wenn jemand sie wirklich braucht. */
+        if (ausspracheQuelle === "alex" && !aussprTonListe) {
+          renderAussprache();
+          aussprTonLaden().then(() => { if (ausspracheQuelle === "alex") renderAussprache(); });
+          return;
+        }
+        renderAussprache();
+      }));
       area.querySelectorAll("[data-ausspr-niveau]").forEach((b) => b.addEventListener("click", () => { ausspracheNiveau = b.dataset.aussprNiveau; renderAussprache(); }));
       document.getElementById("ausspracheKatSelect")?.addEventListener("change", (e) => { ausspracheKategorie = e.target.value; renderAussprache(); });
       document.getElementById("ausspracheZumWoerterbuch")?.addEventListener("click", () => {

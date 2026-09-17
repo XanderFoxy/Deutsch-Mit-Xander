@@ -6030,3 +6030,38 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   100%    { height: var(--lauf, 90px); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .lc-paint { display: none; } }
+
+/* ===================================================================
+   DER PUNKT VOR DER LIVE-ZEILE — GEZEICHNET, NICHT GESCHRIEBEN
+   -------------------------------------------------------------------
+   ZUM VIERTEN MAL GEMELDET: „Diese Zeile, dass ich irgendwo live bin,
+   ist im Newsticker plötzlich so gross im Gegensatz zum Rest — auf
+   einem anderen Profil ist sie ganz normal klein."
+
+   Nachgemessen ist an der SCHRIFT nichts mehr zu finden: Laufschrift
+   und Live-Zeile sind beide 12 px, gleich dick, ohne Schatten. Was die
+   Messung nicht erfassen konnte, war das Zeichen „◉" davor. Es steht
+   nicht in JetBrains Mono; der Browser holt es sich also aus einer
+   Ersatzschrift, und die zeichnet solche Symbole regelmässig grösser
+   und fetter als die Zeile, in der sie stehen. Auf dem iPhone und auf
+   Android passiert das, im Prüfbrowser nicht — genau deshalb sah er
+   es und die Messung nicht.
+
+   Jetzt ist es kein Schriftzeichen mehr, sondern ein Kreis aus CSS,
+   in em gerechnet. Er kann aus keiner fremden Schrift mehr kommen und
+   wächst nur noch mit seiner eigenen Zeile mit.
+   =================================================================== */
+.ticker-live-punkt {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  border: 0.13em solid currentColor;
+  background: radial-gradient(circle, currentColor 0 42%, transparent 43%);
+  vertical-align: -0.03em;
+  /* Damit ihn auch keine Regel für Schrift mehr vergrössern kann. */
+  font-size: inherit;
+  line-height: 0;
+  flex: none;
+}
