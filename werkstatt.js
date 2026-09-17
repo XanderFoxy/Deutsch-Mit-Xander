@@ -62,10 +62,48 @@ window.Werkstatt = (function () {
       return localStorage.getItem(SCHALTER) === "1";
     } catch (e) { return false; }
   }
+  /* HIER LAG DER EIGENTLICHE FEHLER, und er war die ganze Zeit da.
+
+     GEMELDET: „Ich sehe den Werkzeugkasten nicht mehr. Du bist doch
+     gerade am Updaten, da muss doch wenigstens Schritt für Schritt für
+     mich als Betreiber die Übersicht sein."
+
+     Gefragt wurde nach window.Backend. In backend.js steht aber
+
+         const Backend = (function () { … })();
+
+     und ein const auf oberster Ebene eines gewöhnlichen Skripts ist
+     KEINE Eigenschaft von window — es ist eine Skriptvariable. Der
+     blosse Name Backend ist von anderen Skripten aus erreichbar,
+     window.Backend dagegen ist IMMER undefined. Die Prüfung konnte
+     also gar nichts anderes als „nein" ergeben, und die Blase blieb
+     unsichtbar, ganz gleich wer angemeldet war.
+
+     Deshalb wird jetzt der blosse Name benutzt. Das try ist nötig:
+     werkstatt.js kann laufen, bevor backend.js sein const überhaupt
+     angelegt hat — dann wirft schon das typeof, und das fängt es ab. */
   function istBetreiber() {
     if (handSchalter()) return true;
-    try { return Boolean(window.Backend && Backend.isOwner && Backend.isOwner()); }
-    catch (e) { return false; }
+    try {
+      /* eslint-disable-next-line no-undef */
+      return typeof Backend !== "undefined" && Boolean(Backend.isOwner && Backend.isOwner());
+    } catch (e) { return false; }
+  }
+
+  /* GEWÜNSCHT: „Solange wie temporär gerade Updates gemacht werden.
+     Wenn eine Weile keine Updates mehr gemacht werden, verschwindet es
+     auch wieder."
+
+     Das soll nicht daran hängen, dass ich daran denke, die Liste zu
+     leeren — woran ich denken muss, vergesse ich. Es hängt an der
+     Uhrzeit: ist der jüngste Eintrag älter als das hier, ist die
+     Baustelle kalt und das Zeichen verschwindet von selbst.
+     Zwanzig Stunden, damit eine Nacht dazwischenpasst. */
+  var FRISCH_STUNDEN = 20;
+  function nochFrisch(liste) {
+    if (!liste.length) return false;
+    var j = juengste(liste);
+    return j > 0 && (Date.now() - j) < FRISCH_STUNDEN * 3600 * 1000;
   }
 
   /* Welche Zeilen darf dieser Mensch sehen? */
@@ -170,7 +208,10 @@ window.Werkstatt = (function () {
 
     /* Nichts offen UND nichts frisch fertig? Dann gibt es das Zeichen
        nicht — nicht versteckt, sondern weg. */
-    if (!liste.length && !fertig.length) {
+    /* Nichts offen UND nichts frisch fertig — oder alles zusammen schon
+       kalt? Dann gibt es das Zeichen nicht: nicht versteckt, sondern
+       weg. Genau so gewünscht. */
+    if ((!liste.length && !fertig.length) || !nochFrisch(liste.concat(fertig))) {
       if (blase) { blase.remove(); blase = null; }
       offen = false;
       return;
@@ -206,9 +247,15 @@ window.Werkstatt = (function () {
     var versuche = 0;
     var uhr = setInterval(function () {
       versuche++;
-      if (blase || versuche > 15) { clearInterval(uhr); return; }
+      if (blase || versuche > 90) { clearInterval(uhr); return; }
       zeichnen();
     }, 2000);
+    /* Und bei jedem Klick noch einmal — wer sich gerade erst anmeldet,
+       klickt dabei ohnehin. Das kostet nichts und fängt den Fall ab,
+       dass die Anmeldung länger dauert als drei Minuten. */
+    document.addEventListener("click", function () {
+      if (!blase) zeichnen();
+    }, true);
     /* Und auf alles horchen, was eine Anmeldung bedeuten kann. */
     ["dma-anmeldung", "dma-profil", "dma-login"].forEach(function (e) {
       document.addEventListener(e, zeichnen);

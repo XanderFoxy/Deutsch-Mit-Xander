@@ -407,7 +407,28 @@
         if (!suppressNextSubnavScroll) {
           const activeView = parent.querySelector(`.subview[id="${pill.dataset.sub}"]`);
           if (activeView) {
-            requestAnimationFrame(() => activeView.scrollIntoView({ behavior: "smooth", block: "start" }));
+            /* AUSNAHME KLASSENZIMMER — und zwar eine nötige.
+               GEMELDET: „Das Klassenzimmer springt nicht mehr in den
+               Platz … es wackelt auf der Stelle herum, und wenn man das
+               mehrmals betätigt, rutscht es immer ein paar Millimeter
+               weiter runter."
+
+               Genau hier lag der Streit: dieser Sprung wollte den
+               ANFANG der Unteransicht oben haben, ein zweiter Sprung im
+               Klassenzimmer selbst wollte das ENDE des Chats unten
+               haben. Zwei weiche Bewegungen gleichzeitig, jede vom
+               augenblicklichen Stand aus gerechnet — das Ergebnis war
+               jedes Mal ein anderes.
+
+               Das Klassenzimmer richtet sich deshalb selbst aus, und
+               nur noch es allein (livechatAnSeinenPlatz). Alles andere
+               bleibt beim einfachen Sprung an den Anfang. */
+            if (pill.dataset.sub === "sub-livechat"
+                && typeof livechatAnSeinenPlatz === "function") {
+              livechatAnSeinenPlatz();
+            } else {
+              requestAnimationFrame(() => activeView.scrollIntoView({ behavior: "smooth", block: "start" }));
+            }
           }
         }
         suppressNextSubnavScroll = false;
@@ -13023,6 +13044,43 @@
   const LC_EMOJIS = ["🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐸", "🐙", "🦉", "🐝",
                      "🌻", "🌙", "⭐", "🎈", "🎧", "📚", "☕", "🍀", "🌈", "🔥"];
 
+  /* =================================================================
+     DREI KNÖPFE, DIE UMGEZOGEN SIND
+     -----------------------------------------------------------------
+     GEMELDET: „Diese ganzen Befehle, Schrift, Hintergrund, Nachlesen,
+     Verlauf löschen — dass die nicht den Chat nach unten zwingen …
+     Hintergrund könnte man doch in dieses normale Bildpanel mit
+     einbauen. Oben ist ja die globale Sache, und darüber ist ja auch
+     ein Symbol, was wir als global behandeln könnten: dass man einmal
+     das Profilbild wechseln kann, aber in dem Menü auch das
+     Hintergrundbild festlegen — und das Nachlesen oder Verlauf
+     löschen."
+
+     Genau so. Was mit BILDERN und mit dem VERLAUF zu tun hat, gehört in
+     ein Menü, nicht in eine Knopfleiste über dem Chatfenster. Die Arbeit
+     steht hier, damit es egal ist, von wo aus sie aufgerufen wird.
+     ================================================================= */
+  function lcHintergrundUmschalten() {
+    if (lcHintergrundBild()) {
+      if (window.confirm("Es liegt schon ein Bild hinter dem Chat.\n\n"
+          + "OK = ein anderes aussuchen,  Abbrechen = das jetzige entfernen.")) {
+        lcHintergrundWaehlen(false);
+      } else {
+        lcHintergrundWaehlen(true);
+      }
+      return;
+    }
+    lcHintergrundWaehlen(false);
+  }
+  function lcVerlaufLeerenFragen() {
+    if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
+    LiveChat.chatLeeren();
+    livechatGezeigt = new Map();
+    const v = document.getElementById("lcVerlauf");
+    if (v) v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
+    renderLiveChat();
+  }
+
   function livechatBildWaehler() {
     document.getElementById("lcBildWaehler")?.remove();
     const kasten = document.createElement("div");
@@ -13080,6 +13138,23 @@
           <button type="button" class="btn btn-ghost" id="lcBildWeg">Bild entfernen</button>
           <button type="button" class="btn btn-coffee" id="lcWaehlerZu">Fertig</button>
         </div>
+
+        <!-- UMGEZOGEN, und zwar auf Ansage: „Hintergrund könnte man doch
+             in dieses normale Bildpanel mit einbauen … und das Nachlesen
+             oder Verlauf löschen." Das Hintergrundbild ist ein Bild, das
+             Nachlesen und das Löschen gehören zum Raum — beides gehört in
+             ein Menü und nicht in eine Knopfleiste, die dem Chat den Platz
+             wegnimmt. -->
+        <hr class="lc-waehler-strich">
+        <p class="eyebrow">DER RAUM</p>
+        <div class="lc-waehler-reihe lc-waehler-raum">
+          <button type="button" class="btn btn-ghost" id="lcBwHintergrund"
+                  title="Ein eigenes Bild hinter den Chat legen">🖼️ Hintergrundbild</button>
+          <button type="button" class="btn btn-ghost" id="lcBwArchiv"
+                  title="Ältere Gespräche nachlesen">📜 Nachlesen</button>
+          <button type="button" class="btn btn-ghost" id="lcBwLeeren"
+                  title="Verlauf auf diesem Gerät löschen">🧹 Verlauf löschen</button>
+        </div>
       </div>`;
     document.body.appendChild(kasten);
 
@@ -13092,6 +13167,11 @@
     };
     kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
     kasten.querySelector("#lcWaehlerZu")?.addEventListener("click", zu);
+    /* Die drei umgezogenen Knöpfe. Jeder schließt erst das Menü — sonst
+       liegt es über dem Fenster, das er aufmacht. */
+    kasten.querySelector("#lcBwHintergrund")?.addEventListener("click", () => { zu(); lcHintergrundUmschalten(); });
+    kasten.querySelector("#lcBwArchiv")?.addEventListener("click", () => { zu(); livechatArchiv(); });
+    kasten.querySelector("#lcBwLeeren")?.addEventListener("click", () => { zu(); lcVerlaufLeerenFragen(); });
     kasten.querySelector("#lcBildWeg")?.addEventListener("click", () => setzen("", "Bild entfernt"));
     kasten.querySelector("#lcBildKonto")?.addEventListener("click", () => {
       const k = livechatKontoBild();
@@ -16184,6 +16264,54 @@
   }
 
   /* --- Das Gerüst: wird genau einmal gebaut --- */
+  /* =================================================================
+     DIE BEFEHLE IN GRUPPEN
+     -----------------------------------------------------------------
+     GEMELDET: „Die Befehle könnten dann vielleicht etwas sauberer
+     strukturiert sein, weil wenn man die aufgeklappt hat, hat man dann
+     diese riesen lange Liste."
+
+     Die Gruppe steht am Befehl selbst (gr in der Tabelle BEFEHLE in
+     livechat.js), nicht hier — sonst vergisst man beim nächsten neuen
+     Effekt, ihn einzusortieren, und er fällt hinten heraus. Kommt eine
+     unbekannte Gruppe an, bekommt sie trotzdem einen Kasten; nichts
+     verschwindet stillschweigend.
+     ================================================================= */
+  const LC_BEFEHLSGRUPPEN = [
+    ["reden",    "💬 Reden und schreiben"],
+    ["raum",     "🚪 Räume und Leute"],
+    ["chef",     "👑 Häuptling"],
+    ["zeichen",  "⌨️ Bilder aus Zeichen"],
+    ["feier",    "🎉 Feiern"],
+    ["wetter",   "☔ Wetter und Himmel"],
+    ["tiere",    "🦋 Tiere und Fahrzeuge"],
+    ["welt",     "🌋 Große Effekte"],
+    ["aussehen", "🎨 Aussehen"],
+    ["hilfe",    "❓ Hilfe"],
+  ];
+  function lcBefehleGruppenHtml() {
+    const alle = (window.LiveChat && LiveChat.befehlsliste) ? LiveChat.befehlsliste() : [];
+    if (!alle.length) return "";
+    const nach = new Map();
+    alle.forEach((b) => {
+      const g = b.gr || "welt";
+      if (!nach.has(g)) nach.set(g, []);
+      nach.get(g).push(b);
+    });
+    /* Erst die bekannte Reihenfolge, dann alles, was noch übrig ist. */
+    const reihe = LC_BEFEHLSGRUPPEN.filter(([k]) => nach.has(k));
+    [...nach.keys()].forEach((k) => {
+      if (!LC_BEFEHLSGRUPPEN.some(([x]) => x === k)) reihe.push([k, k]);
+    });
+    return reihe.map(([k, titel]) => `
+      <details class="lc-befehlsgruppe">
+        <summary>${escapeHtml(titel)} <span class="lc-befehlszahl">${nach.get(k).length}</span></summary>
+        <ul>${nach.get(k).map((b) => `<li><code>${escapeHtml(b.nutzt)}</code>${
+          b.kurz ? ` <span class="lc-befehle-lang">(lang: /${escapeHtml(b.kurz)})</span>` : ""
+        } — ${escapeHtml(b.was)}</li>`).join("")}</ul>
+      </details>`).join("");
+  }
+
   function livechatGeruestHtml() {
     const plaetze = [];
     for (let i = 1; i <= LiveChat.PLAETZE; i++) {
@@ -16218,7 +16346,9 @@
         <div class="lc-leiste" id="lcLeiste">
           <button type="button" class="lc-rundknopf" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus">🎤</button>
           <button type="button" class="lc-rundknopf" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus">📷</button>
-          <button type="button" class="lc-rundknopf" data-lc="profilbild" title="Profilbild oder GIF" aria-label="Profilbild oder GIF setzen">🖼️</button>
+          <button type="button" class="lc-rundknopf" data-lc="profilbild"
+                  title="Bild und Raum: eigenes Bild, Hintergrund, Nachlesen"
+                  aria-label="Bildmenü: eigenes Bild, Hintergrundbild, Nachlesen, Verlauf löschen">🖼️</button>
           <button type="button" class="lc-rundknopf lc-buehnenknopf" data-lc="buehne"
                   title="Auf die Bühne oder wieder herunter"
                   aria-label="Auf die Bühne oder wieder herunter"></button>
@@ -16229,28 +16359,53 @@
         <div class="lc-chat">
           <div class="lc-chat-kopf">
             <span>💬 Chat — alle im Raum lesen mit</span>
+            <!-- GEMELDET: „Diese ganzen Befehle, Schrift, Hintergrund,
+                 Nachlesen, Verlauf löschen — die sollen den Chat nicht
+                 nach unten zwingen, sondern ein bisschen kompakt und
+                 aufgeräumt vom Layout sein. Die Schrift ist ja eigentlich
+                 Teil von den Befehlen mit, und Hintergrund könnte man doch
+                 in dieses normale Bildpanel mit einbauen."
+
+                 Genau das ist geschehen. Fünf Knöpfe brachen auf dem
+                 Telefon in drei Zeilen um und schoben den Chat jedes Mal
+                 weiter nach unten. Jetzt steht hier EIN Knopf:
+                   • Schrift  → in den Befehlskasten (dorthin gehört sie,
+                     es gibt ja auch /schrift)
+                   • Hintergrund, Nachlesen, Verlauf löschen → in das
+                     Bildmenü oben am 🖼️-Rundknopf, wo auch das eigene
+                     Bild eingestellt wird. -->
             <span class="lc-chat-kopf-rechts">
               <button type="button" class="lc-chat-raeumen" id="lcBefehle"
-                      title="Was man im Chat tippen kann">ⓘ Befehle</button>
-              <button type="button" class="lc-chat-raeumen" id="lcSchrift"
-                      title="Die Schrift im Chat wechseln">🔤 Schrift</button>
-              <button type="button" class="lc-chat-raeumen" id="lcHintergrundKnopf"
-                      title="Ein eigenes Bild hinter den Chat legen">🖼️ Hintergrund</button>
-              <button type="button" class="lc-chat-raeumen" id="lcArchiv"
-                      title="Ältere Gespräche nachlesen">📜 Nachlesen</button>
-              <button type="button" class="lc-chat-raeumen" id="lcVerlaufLeeren"
-                      title="Verlauf auf diesem Gerät löschen">Verlauf löschen</button>
+                      title="Was man im Chat tippen kann, und die Schrift">ⓘ Befehle &amp; Schrift</button>
             </span>
           </div>
           <details class="lc-befehle" id="lcBefehleKasten">
             <summary>Was man tippen kann</summary>
+            <!-- Die Schrift stand bisher als eigener Knopf in der Leiste
+                 darüber. GEMELDET: „Die Schrift ist ja eigentlich Teil von
+                 den Befehlen mit." Stimmt — es gibt /schrift 1…4. Hier
+                 kann man sie direkt antippen statt sie durchzuschalten,
+                 und man sieht sofort, welche gerade steht. -->
+            <div class="lc-schriftwahl" id="lcSchriftWahl">
+              <span class="lc-schriftwahl-wort">🔤 Schrift</span>
+              ${(window.LiveChat && LiveChat.schriften ? LiveChat.schriften() : [])
+                .map((f) => `<button type="button" class="lc-schriftknopf lc-schrift-${escapeHtml(f.nummer)}"
+                        data-lc-schrift="${escapeHtml(f.nummer)}"
+                        aria-pressed="${String(LiveChat.gemerkteSchrift() === f.nummer)}"
+                        title="/schrift ${escapeHtml(f.nummer)}">${escapeHtml(f.was)}</button>`).join("")}
+            </div>
             <p class="lc-befehle-vor">Das sind die <strong>Slash-Befehle</strong> aus dem IRC
               (1988, RFC 1459) — dieselbe Kurzsprache, die Kilahu, Webkicks und spin.de
               benutzt haben. <code>Nickname</code> heißt: der Name der Person im Raum.</p>
-            <ul>${(window.LiveChat && LiveChat.befehlsliste ? LiveChat.befehlsliste() : [])
-              .map((b) => `<li><code>${escapeHtml(b.nutzt)}</code>${
-                b.kurz ? ` <span class="lc-befehle-lang">(lang: /${escapeHtml(b.kurz)})</span>` : ""
-              } — ${escapeHtml(b.was)}</li>`).join("")}</ul>
+            <!-- GEMELDET: „Die Befehle könnten dann vielleicht etwas
+                 sauberer strukturiert sein, weil wenn man die aufgeklappt
+                 hat, hat man dann diese riesen lange Liste."
+
+                 Sechzig Befehle am Stück sind keine Liste, das ist eine
+                 Tapete. Sie stehen jetzt in zehn Gruppen, jede für sich
+                 aufklappbar — wer den Wettereffekt sucht, macht „Wetter
+                 und Himmel" auf und sieht acht Zeilen statt sechzig. -->
+            ${lcBefehleGruppenHtml()}
             <p class="lc-befehle-vor">
               <strong>Einladen</strong> ist keine Frage mit Ja und Nein — das gab es damals nicht.
               <code>/i Nickname</code> macht den Raum für die Person auf und schickt ihr eine
@@ -16548,23 +16703,82 @@
      die ganze Karte auf den Schirm, steht sie mittig — dann sieht man
      ohnehin alles.
      ================================================================= */
-  function livechatInsBild(sanft) {
+  /* -----------------------------------------------------------------
+     NACHGEBESSERT, und das war der eigentliche Fehler:
+     „Das Klassenzimmer springt nicht mehr in den Platz. Wenn man bei
+     Wissen auf Klassenzimmer geht, dann wackelt es auf der Stelle
+     herum, und wenn man das mehrmals betätigt, rutscht es immer ein
+     paar Millimeter weiter runter."
+
+     Der Grund war nicht die Rechnung, sondern die ANZAHL. Ein Klick
+     auf den Reiter hat DREI Bewegungen ausgelöst:
+        1. wireSubnav:      scrollIntoView(block: "start")
+        2. livechatInsBild: scrollIntoView(block: "end")
+        3. und danach:      scrollBy(top: 18)
+     Zwei davon ziehen an verschiedene Ziele, und scrollIntoView rechnet
+     immer vom AUGENBLICKLICHEN Stand aus. Trifft der zweite Aufruf die
+     noch laufende weiche Bewegung des ersten, kommt jedes Mal etwas
+     anderes heraus — das ist das Wackeln. Und die 18 Pixel kamen bei
+     jedem Klick oben drauf — das ist das Weiterrutschen.
+
+     Deshalb gibt es jetzt GENAU EINE Stelle, die rechnet, und sie
+     rechnet ABSOLUT: lcPlatzZiel() liefert eine Zahl, window.scrollTo
+     fährt sie an. Zweimal dieselbe Lage ergibt zweimal dieselbe Zahl —
+     da kann sich nichts aufaddieren.
+     ----------------------------------------------------------------- */
+
+  /* Wie hoch ist der Teil, der oben festklebt? Der ganze Kopfbereich
+     ist sticky (.sticky-head-group) — was dahintergerät, sieht man
+     nicht. scrollIntoView weiß davon nichts, deshalb wird es hier
+     selbst abgezogen. */
+  function lcKlebeHoehe() {
+    const k = document.querySelector(".sticky-head-group");
+    if (!k) return 0;
+    const h = k.getBoundingClientRect().height;
+    /* Sicherheitsnetz: wäre die Leiste mehr als halb so hoch wie der
+       Schirm, würde das Abziehen mehr schaden als helfen. */
+    return h > 0 && h < window.innerHeight * 0.55 ? h : 0;
+  }
+
+  /* Wohin genau soll die Seite rollen, damit das Klassenzimmer richtig
+     steht? GEWÜNSCHT: „dass man den Chat unten komplett sieht … er ist
+     nämlich immer noch nicht am Ende sichtbar, wenn man reinkommt in
+     den Raum, sondern immer noch oben."
+
+     Also: passt die Karte ganz auf den freien Schirm, steht sie mittig
+     darin. Passt sie nicht, wird die EINGABEZEILE an den unteren Rand
+     gelegt — darüber liegt der Chat, darüber die Plätze. */
+  function lcPlatzZiel() {
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
-    if (!karte) return;
-    const fuss = karte.querySelector(".lc-chat-fuss")
-              || karte.querySelector(".lc-chat")
-              || karte;
-    const verhalten = sanft === false ? "auto" : "smooth";
-    const hoch = karte.getBoundingClientRect().height;
-    if (hoch <= window.innerHeight - 24) {
-      karte.scrollIntoView({ behavior: verhalten, block: "center" });
-      return;
+    if (!karte) return null;
+    const kleb = lcKlebeHoehe();
+    const luft = 10;
+    const schirm = window.innerHeight;
+    const frei = schirm - kleb - luft * 2;
+    const kr = karte.getBoundingClientRect();
+    const obenAbs = kr.top + window.scrollY;
+    let ziel;
+    if (kr.height > 0 && kr.height <= frei) {
+      ziel = obenAbs - kleb - luft - (frei - kr.height) / 2;
+    } else {
+      const fuss = karte.querySelector(".lc-chat-fuss")
+                || karte.querySelector(".lc-chat-verlauf")
+                || karte.querySelector(".lc-chat")
+                || karte;
+      const fr = fuss.getBoundingClientRect();
+      ziel = fr.bottom + window.scrollY - schirm + luft;
+      /* Aber nie so weit, dass der Kopf der Karte hinter der Leiste
+         verschwindet — sonst weiß man nicht mehr, wo man ist. */
+      const hoechstens = obenAbs - kleb - luft;
+      if (ziel < hoechstens) ziel = hoechstens;
     }
-    /* Das untere Ende ans untere Fensterende — mit ein wenig Luft,
-       damit die Eingabezeile nicht am Rand klebt. */
-    fuss.scrollIntoView({ behavior: verhalten, block: "end" });
-    setTimeout(() => { try { window.scrollBy({ top: 18, behavior: verhalten }); } catch (e) {} }, 60);
+    const max = Math.max(0, document.documentElement.scrollHeight - schirm);
+    return Math.max(0, Math.min(Math.round(ziel), max));
+  }
+
+  function livechatInsBild(sanft) {
+    livechatAnSeinenPlatz(sanft);
   }
 
   /* =================================================================
@@ -16938,17 +17152,70 @@
      eine halbe Sekunde gemerkt und ein weiterer Tipp ignoriert.
      ================================================================= */
   let lcSprungLaeuft = 0;
-  function livechatAnSeinenPlatz() {
+  let lcSprungTimer = 0;
+  function livechatAnSeinenPlatz(sanft) {
     const jetzt = Date.now();
-    if (jetzt - lcSprungLaeuft < 520) return;
+    /* Der Verlauf gehört ans ENDE — das ist das zweite, was gemeldet
+       war: „er ist nämlich immer noch nicht am Ende sichtbar, wenn man
+       reinkommt in den Raum, sondern immer noch oben."
+
+       Das steht mit Absicht VOR der Sperre unten: die Sperre soll
+       doppelte Rollbewegungen der Seite verhindern, nicht das
+       Festhalten des Verlaufs. Stand es dahinter, blieb der Chat genau
+       dann oben, wenn zwei Wege gleichzeitig hereinführten — und das
+       ist der Normalfall beim Betreten eines Raums. */
+    lcHaeltUnten = true;
+    lcEndeNachziehen();
+    /* Ein zweiter Aufruf während einer noch laufenden Bewegung bringt
+       manche Browser zum Stocken — und genau dieses Doppeln war das
+       Wackeln. Ein angefangener Sprung sperrt deshalb kurz. */
+    if (jetzt - lcSprungLaeuft < 420) return;
     lcSprungLaeuft = jetzt;
-    const ansicht = document.getElementById("sub-livechat");
-    if (!ansicht) return livechatInsBild();
-    try {
-      ansicht.scrollIntoView({ behavior: "smooth", block: "start" });
-    } catch (e) {
-      ansicht.scrollIntoView(true);
-    }
+    const wie = sanft === false ? "auto" : "smooth";
+    const fahren = (verhalten) => {
+      const ziel = lcPlatzZiel();
+      if (ziel === null) return null;
+      try { window.scrollTo({ top: ziel, behavior: verhalten }); }
+      catch (e) { window.scrollTo(0, ziel); }
+      return ziel;
+    };
+    /* Erst zeichnen lassen, dann messen: im selben Herzschlag steht
+       die Höhe der Karte noch gar nicht fest. */
+    requestAnimationFrame(() => fahren(wie));
+    /* Und danach EINMAL nachziehen, falls Bilder fertig geladen sind
+       und die Karte dadurch höher wurde. Das ist kein zweiter Sprung
+       mit eigener Rechnung, sondern dieselbe Rechnung mit den dann
+       richtigen Zahlen — und sie fährt nur, wenn es sich lohnt. */
+    clearTimeout(lcSprungTimer);
+    lcSprungTimer = setTimeout(() => {
+      const ziel = lcPlatzZiel();
+      if (ziel !== null && Math.abs(window.scrollY - ziel) > 26) fahren("smooth");
+    }, 460);
+  }
+
+  /* =================================================================
+     DEN VERLAUF ANS ENDE ZIEHEN — UND DORT HALTEN
+     -----------------------------------------------------------------
+     Einmal scrollTop setzen reicht nicht. Nach dem Zeichnen ändert
+     sich die Höhe noch mehrfach: Bilder kommen an, Schriften werden
+     ersetzt, Aufkleber fangen an sich zu bewegen. Jedes Mal rutscht
+     das Neueste wieder aus dem Bild.
+
+     Deshalb wird über gut eine Sekunde nachgezogen — aber nur so
+     lange, wie niemand selbst hochscrollt. Wer liest, wird nicht
+     angefasst.
+     ================================================================= */
+  let lcEndeTakt = 0;
+  function lcEndeNachziehen() {
+    clearInterval(lcEndeTakt);
+    let n = 0;
+    const zieh = () => {
+      const v = document.getElementById("lcVerlauf");
+      if (v && lcHaeltUnten) lcNachUnten(v);
+      if (++n >= 12 || !lcHaeltUnten) clearInterval(lcEndeTakt);
+    };
+    zieh();
+    lcEndeTakt = setInterval(zieh, 110);
   }
 
   /* --- Der Chat sieht aus wie damals -------------------------
@@ -17970,37 +18237,43 @@
         const k = document.getElementById("lcBefehleKasten");
         if (k) k.open = !k.open;
       });
-      /* Die Schrift durchschalten — dasselbe wie /schrift 1 … 4, nur
-         ohne dass man den Befehl kennen muss. */
-      area.querySelector("#lcSchrift")?.addEventListener("click", () => {
-        const liste = LiveChat.schriften ? LiveChat.schriften() : [];
-        if (!liste.length) return;
-        const jetzt = LiveChat.gemerkteSchrift();
-        const i = liste.findIndex((x) => x.nummer === jetzt);
-        const naechste = liste[(i + 1) % liste.length];
-        LiveChat.schriftSetzen(naechste.nummer);
-        renderLiveChat();
-        showToast("🔤 Schrift: " + naechste.was);
-      });
-      area.querySelector("#lcArchiv")?.addEventListener("click", () => livechatArchiv());
+      /* Die Schrift steht jetzt IM Befehlskasten und wird direkt
+         angetippt, nicht mehr durchgeschaltet — man sieht dabei auch,
+         welche gerade steht. GEMELDET: „Die Schrift ist ja eigentlich
+         Teil von den Befehlen mit."
+
+         Wichtig: renderLiveChat() zeichnet den Kasten neu und würde ihn
+         dabei zuklappen. Deshalb wird gemerkt, dass er offen war, und
+         er wird danach wieder aufgemacht — sonst fällt einem die
+         Auswahl unter den Fingern weg. */
+      area.querySelectorAll("[data-lc-schrift]").forEach((b) =>
+        b.addEventListener("click", () => {
+          const war = document.getElementById("lcBefehleKasten")?.open;
+          const offeneGruppen = [...area.querySelectorAll(".lc-befehlsgruppe[open] > summary")]
+            .map((x) => x.textContent.trim());
+          LiveChat.schriftSetzen(b.dataset.lcSchrift);
+          renderLiveChat();
+          const k = document.getElementById("lcBefehleKasten");
+          if (k && war) {
+            k.open = true;
+            k.querySelectorAll(".lc-befehlsgruppe").forEach((g) => {
+              if (offeneGruppen.includes(g.querySelector("summary").textContent.trim())) g.open = true;
+            });
+          }
+          showToast("🔤 Schrift: " + b.textContent.trim());
+        }));
       livechatTippsBinden(area);
       if (LiveChat.beiHintergrund) LiveChat.beiHintergrund(lcHintergrundWaehlen);
       /* GEMELDET: „Man soll den Hintergrund nicht nur durch den Code
          ändern, sondern auch als Bild einladen können." Also ein
          Knopf, nicht nur der Befehl /hintergrund. Ist schon eines
          gesetzt, fragt er, ob es weg soll. */
-      area.querySelector("#lcHintergrundKnopf")?.addEventListener("click", () => {
-        if (lcHintergrundBild()) {
-          if (window.confirm("Es liegt schon ein Bild hinter dem Chat.\n\n"
-              + "OK = ein anderes aussuchen,  Abbrechen = das jetzige entfernen.")) {
-            lcHintergrundWaehlen(false);
-          } else {
-            lcHintergrundWaehlen(true);
-          }
-          return;
-        }
-        lcHintergrundWaehlen(false);
-      });
+      /* Der Hintergrund-Knopf steht nicht mehr hier, sondern im Bildmenü
+         oben (🖼️-Rundknopf) — GEMELDET: „Hintergrund könnte man doch in
+         dieses normale Bildpanel mit einbauen … dass man einmal das
+         Profilbild wechseln kann, aber in dem Menü auch das
+         Hintergrundbild festlegen." Die Arbeit selbst steht deshalb in
+         lcHintergrundUmschalten(), damit beide Wege dasselbe tun. */
 
       /* GEWÜNSCHT: „Wenn man ein bisschen scrollt — nicht innerhalb des
          Chats, sondern auf der Hauptseite nach oben und unten — und
@@ -18025,14 +18298,8 @@
         if (e.target.closest("button, input, a, details, pre, img, .lc-zeile, .lc-platz, .lc-chat")) return;
         livechatAnSeinenPlatz();
       });
-      area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
-        if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
-        LiveChat.chatLeeren();
-        livechatGezeigt = new Map();
-        const v = document.getElementById("lcVerlauf");
-        if (v) v.querySelectorAll(".lc-zeile, .lc-chat-leer").forEach((x) => x.remove());
-        renderLiveChat();
-      });
+      /* Auch „Verlauf löschen" ist ins Bildmenü gezogen — siehe
+         lcVerlaufLeerenFragen(). */
 
       const feld = area.querySelector("#lcFeld");
       const senden = area.querySelector("#lcSenden");
@@ -18173,7 +18440,11 @@
      sein." */
   document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => {
     renderLiveChat();
-    setTimeout(() => livechatInsBild(), 140);
+    /* Das Ausrichten der Karte macht wireSubnav — EINE Stelle, ein
+       Ergebnis. Hier wird nur noch der Verlauf selbst ans Ende
+       gezogen, damit man beim Hereinkommen das Neueste sieht. */
+    lcHaeltUnten = true;
+    lcEndeNachziehen();
   });
 
 

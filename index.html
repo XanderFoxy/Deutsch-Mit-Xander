@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<script>window.DMA_VERSION = "210";</script>
+<script>window.DMA_VERSION = "211";</script>
 <script>
 /* Auch die Stilblätter hängen an der laufenden Fassung — sonst
    kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
@@ -744,8 +744,6 @@
     "aussprache-kreisel.js",
     "klassenzimmer.js",
     "livechat.js",
-    "data-werkstatt.js",
-    "werkstatt.js",
     "bildverwaltung.js",
     "supabase-config.js",
     "satzbau.js",
@@ -757,7 +755,12 @@
     "backend.js",
     "quiz.js",
     ["baukasten.js", true],
-    "app.js"
+    "app.js",
+    /* Die Werkstatt zuletzt — sie fragt backend.js, ob hier der
+       Betreiber sitzt. Stand sie davor, gab es diese Antwort beim
+       ersten Zeichnen noch gar nicht. */
+    "data-werkstatt.js",
+    "werkstatt.js"
   ];
   dateien.forEach(function (d) {
     var name = Array.isArray(d) ? d[0] : d;

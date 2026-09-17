@@ -4128,3 +4128,158 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   .lc-geld, .lc-keks, .lc-wolkenzug, .lc-glasbruch,
   .lc-spinnen, .lc-noten { display: none; }
 }
+
+/* =========================================================
+   DIE WERKZEUGLEISTE ÜBER DEM CHAT — AUFGERÄUMT
+   ---------------------------------------------------------
+   GEMELDET: „Diese ganzen Befehle, Schrift, Hintergrund,
+   nachlesen, Verlauf löschen — dass die nicht den Chat nach
+   unten zwingen, sondern bisschen kompakt und aufgeräumt vom
+   Layout sind. Also die Schrift ist ja eigentlich Teil von den
+   Befehlen mit, und Hintergrund könnte man doch in dieses
+   normale Bildpanel mit einbauen."
+
+   Fünf Knöpfe brachen auf einem 390 Pixel breiten Telefon in
+   drei Zeilen um. Drei Zeilen Knöpfe sind rund 100 Pixel, und
+   um genau die rutschte der Chat nach unten aus dem Bild.
+
+   Jetzt steht dort EIN Knopf. Die Schrift ist in den
+   Befehlskasten gezogen, Hintergrund, Nachlesen und Verlauf
+   löschen ins Bildmenü am 🖼️-Rundknopf.
+   ========================================================= */
+.lc-chat-kopf {
+  /* Eine Zeile, und sie bleibt eine Zeile. */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-height: 0;
+}
+.lc-chat-kopf > span:first-child {
+  /* Der Titel darf schrumpfen, damit der Knopf nie umbricht. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lc-chat-kopf-rechts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+/* --- Die Schriftwahl, jetzt im Befehlskasten ---------------
+   Jeder Knopf ist in der Schrift beschriftet, die er einstellt
+   — man sieht also, was man bekommt, statt es durchzuschalten
+   und zu raten. */
+.lc-schriftwahl {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 0 10px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.lc-schriftwahl-wort {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  opacity: 0.78;
+  margin-right: 2px;
+}
+.lc-schriftknopf {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.16s, border-color 0.16s;
+}
+.lc-schriftknopf:hover { background: rgba(255, 255, 255, 0.13); }
+.lc-schriftknopf[aria-pressed="true"] {
+  background: rgba(255, 214, 122, 0.22);
+  border-color: rgba(255, 214, 122, 0.65);
+  font-weight: 600;
+}
+/* Dieselben Schriften wie im Verlauf — sonst wäre die Vorschau
+   gelogen. Die Werte stehen bewusst doppelt und nicht in einer
+   Variablen: wer oben etwas ändert, soll hier darüber
+   stolpern. */
+.lc-schriftknopf.lc-schrift-2 {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+.lc-schriftknopf.lc-schrift-3 {
+  font-family: Verdana, "Trebuchet MS", Tahoma, "Segoe UI", system-ui, sans-serif;
+}
+.lc-schriftknopf.lc-schrift-4 {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+}
+
+/* --- Sechzig Befehle in zehn Kästen ------------------------
+   GEMELDET: „Die Befehle könnten dann vielleicht etwas sauberer
+   strukturiert sein, weil wenn man die aufgeklappt hat, hat man
+   dann diese riesen lange Liste."
+
+   Zugeklappt sind das zehn Zeilen statt sechzig — der Chat
+   bleibt im Bild, auch wenn man nachschaut. */
+.lc-befehlsgruppe {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  margin: 0 0 6px;
+  background: rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+.lc-befehlsgruppe > summary {
+  cursor: pointer;
+  padding: 7px 11px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.lc-befehlsgruppe > summary::-webkit-details-marker { display: none; }
+.lc-befehlsgruppe > summary::after {
+  content: "▾";
+  font-size: 0.8rem;
+  opacity: 0.6;
+  transition: transform 0.18s;
+}
+.lc-befehlsgruppe[open] > summary::after { transform: rotate(180deg); }
+.lc-befehlsgruppe > summary:hover { background: rgba(255, 255, 255, 0.06); }
+.lc-befehlszahl {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 500;
+  opacity: 0.6;
+  padding-right: 4px;
+}
+.lc-befehlsgruppe ul {
+  margin: 0;
+  padding: 2px 11px 9px 24px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.lc-befehlsgruppe li { margin: 0 0 3px; }
+
+/* --- Der Raumteil im Bildmenü ------------------------------
+   „Hintergrund könnte man doch in dieses normale Bildpanel mit
+   einbauen … und das nachlesen oder Verlauf löschen." */
+.lc-waehler-strich {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  margin: 16px 0 10px;
+}
+.lc-waehler-raum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lc-waehler-raum .btn { flex: 1 1 auto; }
