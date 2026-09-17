@@ -32634,7 +32634,7 @@
         ? Bildverwaltung.bild(eigen) : null;
       if (eigenesBild) klassen.push("bw-teil-eigen");
       const zeigtLupe = t.zoom && !bwZoom;
-      return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"
+      return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"${t.oben ? ' data-bw-oben="1"' : ""}
                  transform="translate(${t.x},${t.y})"
                  role="button" tabindex="0"
                  aria-label="${escapeHtml(bwWort(t))}">
@@ -32941,7 +32941,25 @@
     });
     return true;
   }
-  if (Core.stimmeAnmelden) Core.stimmeAnmelden(guteStimme);
+  /* ABSICHTLICH NICHT an Core.speak angemeldet.
+     ------------------------------------------------------------
+     Kurz war die neuronale Stimme überall eingehängt. Das war
+     falsch, und die Korrektur kam zu Recht:
+     „Ich möchte nicht, dass wir Credits verlieren durch das
+      Vorlesen. Mach es nur im Aussprache-Trainer und in den
+      Bilderwelten."
+
+     Der Unterschied ist echt: im Trainer und in der Bilderwelt
+     tippt man EIN Wort an und will genau dieses eine hören — das
+     sind wenige, kurze Stücke. An Core.speak hängen dagegen auch
+     Dialoge, Vorlese-Abläufe und Spiele, die ganze Sätze und
+     Listen sprechen; dort läuft das Kontingent schnell leer, ohne
+     dass jemand es merkt.
+
+     Also wird guteStimme() nur dort aufgerufen, wo es gewollt ist:
+       * aussprache: der Trainer (über AusspracheP.zentralVorlesen)
+       * bilderwelt: bwSprich()
+     Überall sonst spricht das Gerät, wie vorher. */
 
   /* Für Abläufe, die auf das ENDE warten müssen („alle nacheinander
      vorlesen"). Core.speak() kehrt sofort zurück; hier wird gewartet. */
@@ -33078,22 +33096,32 @@
       const ebene = document.createElementNS(ns, "g");
       ebene.setAttribute("class", "bw-treffer-ebene");
       ebene.setAttribute("aria-hidden", "true");
+      /* Innerhalb der Ebene liegt das GRÖSSTE Rechteck zuunterst. Sonst
+         deckte die Vitrine der Metzgerei das Hackfleisch darin zu und der
+         Kinosaal seine eigene Leinwand: beides große Dinge, die nach ihrem
+         Inhalt gezeichnet werden. Das Kleinere ist immer das Gemeinte. */
+      const kaesten = [];
       svg.querySelectorAll("[data-bw-teil]").forEach((g) => {
         try {
           const k = g.getBBox();
           if (!(k.width > 0 && k.height > 0)) return;
           const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
           const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
-          const feld = document.createElementNS(ns, "rect");
-          feld.setAttribute("class", "bw-treffflaeche");
-          feld.setAttribute("data-bw-treff", g.dataset.bwTeil);
-          feld.setAttribute("x", vx + k.x);
-          feld.setAttribute("y", vy + k.y);
-          feld.setAttribute("width", k.width);
-          feld.setAttribute("height", k.height);
-          feld.setAttribute("fill", "transparent");
-          ebene.appendChild(feld);
+          kaesten.push({ id: g.dataset.bwTeil, x: vx + k.x, y: vy + k.y,
+                         w: k.width, h: k.height, gross: k.width * k.height });
         } catch (e) { /* ohne Trefferfläche geht es auch, nur fummeliger */ }
+      });
+      kaesten.sort((a, b) => b.gross - a.gross);
+      kaesten.forEach((o) => {
+        const feld = document.createElementNS(ns, "rect");
+        feld.setAttribute("class", "bw-treffflaeche");
+        feld.setAttribute("data-bw-treff", o.id);
+        feld.setAttribute("x", o.x);
+        feld.setAttribute("y", o.y);
+        feld.setAttribute("width", o.w);
+        feld.setAttribute("height", o.h);
+        feld.setAttribute("fill", "transparent");
+        ebene.appendChild(feld);
       });
       /* Die Trefferflächen müssen in dieselbe Gruppe wie die Kulisse, sonst
          wandern sie beim Hineinzoomen nicht mit (und insertBefore am <svg>
@@ -33102,6 +33130,48 @@
       const heim = (kulisse && kulisse.parentNode) || svg;
       if (kulisse && kulisse.nextSibling) heim.insertBefore(ebene, kulisse.nextSibling);
       else heim.insertBefore(ebene, heim.firstChild);
+
+      /* Die OBERE Trefferebene — nur für die wenigen Dinge, die wirklich
+         unter einem anderen liegen: der Stuhl unter dem Mädchen, das
+         Hackfleisch in der Vitrine, das Gleis unter der Lok. Sie sind im
+         Bild von einer größeren Zeichnung zugedeckt; ohne diese Ebene
+         ließen sie sich nirgendwo antippen.
+
+         Welche das sind, steht als "oben": true in der Szene — ermittelt
+         mit einem Testlauf, der jedes Ding an sechsunddreißig Stellen
+         antippt. Deshalb bekommt nicht jedes Ding ein Rechteck darüber:
+         alle anderen behalten ihre genaue Form als Fangfläche.
+
+         Das Kleinste liegt zuoberst, sonst schluckte die Zuschauerbank
+         das Publikum, das vor ihr sitzt. */
+      const obenTeile = [];
+      svg.querySelectorAll("[data-bw-teil][data-bw-oben]").forEach((g) => {
+        try {
+          const k = g.getBBox();
+          if (!(k.width > 0 && k.height > 0)) return;
+          const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
+          const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
+          obenTeile.push({ id: g.dataset.bwTeil, x: vx + k.x, y: vy + k.y,
+                           w: k.width, h: k.height, gross: k.width * k.height });
+        } catch (e) { /* ohne Rechteck bleibt es beim Antippen der Zeichnung */ }
+      });
+      if (obenTeile.length) {
+        obenTeile.sort((a, b) => b.gross - a.gross);   // groß zuerst, klein zuoberst
+        const dach = document.createElementNS(ns, "g");
+        dach.setAttribute("class", "bw-treffer-oben");
+        dach.setAttribute("aria-hidden", "true");
+        obenTeile.forEach((o) => {
+          const feld = document.createElementNS(ns, "rect");
+          feld.setAttribute("data-bw-treff", o.id);
+          feld.setAttribute("x", o.x);
+          feld.setAttribute("y", o.y);
+          feld.setAttribute("width", o.w);
+          feld.setAttribute("height", o.h);
+          feld.setAttribute("fill", "transparent");
+          dach.appendChild(feld);
+        });
+        heim.appendChild(dach);
+      }
     });
     area.querySelectorAll("[data-bw-treff]").forEach((f) => {
       f.addEventListener("click", () => teilAntippen(f.dataset.bwTreff));
@@ -34017,7 +34087,16 @@
             Freigeben darf das nur Alex — dazu ist der Schalter da. Damit
             das aber nicht wieder unbemerkt liegen bleibt, steht es jetzt
             unübersehbar und mit Zahl darüber. */ ""}
-      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen ? `
+      ${/* GEMELDET: „Ich habe dieses Update ja schon freigegeben, es
+            steht aber trotzdem 315 von 366 Tagen sind noch nicht
+            freigegeben."
+            Zu Recht. Die Bedingung fragte nur, OB es wartende Tage in
+            der Liste gibt — nicht, ob der Schalter längst umgelegt ist.
+            HISTORY_NEU ist eine feste Liste in der Datei und wird durch
+            das Freigeben nicht kürzer; der Schalter
+            (histBatchFreigegeben) ist das, was zählt. Die Prüfung
+            darauf fehlte schlicht. */ ""}
+      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen && !histBatchFreigegeben ? `
         <div class="hist-freigabe-hinweis">
           <p style="margin:0 0 4px; font-weight:800;">⚠️ ${histNeuKeys.length} von 366 Tagen sind noch nicht freigegeben</p>
           <p class="empty-note" style="margin:0 0 6px;">
@@ -34026,7 +34105,11 @@
             Mit dem Schalter darunter gehen alle auf einmal in die Welt.
           </p>
         </div>` : ""}
-      ${histBatchKey && histNeuKeys.length ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
+      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen && histBatchFreigegeben ? `
+        <p class="empty-note" style="margin:-6px 0 12px; color:#4FA88E; font-weight:700;">
+          ✅ Alle ${histNeuKeys.length} Tage sind freigegeben — jede und jeder sieht sie.
+        </p>` : ""}
+      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
       ${todayHistory ? `
         <div class="question-card" id="kompass-geschichte-heute" style="margin-bottom:16px; scroll-margin-top:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>

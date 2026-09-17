@@ -224,3 +224,28 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 @media (prefers-reduced-motion: reduce) {
   .betonung-laedt::before { animation: none; background: var(--amber-400); }
 }
+
+/* ------------------------------------------------------------------
+   VERDECKTE ANTIPPPUNKTE IN DEN BILDERWELTEN
+   „beim Arzt möchte man nach der Tablette suchen und kann den Schrank
+   nicht öffnen … da ist das Regal drüber und lässt einen nicht
+   durchklicken zu der Tablette."
+
+   Große Dinge wie der Medizinschrank sind gar nicht gezeichnet — ihr
+   Bild steht in der Kulisse, das Ding selbst ist nur eine fast
+   durchsichtige Fangfläche (.bw-flaeche). Weil sie NACH ihrem Inhalt
+   gezeichnet wurde, lag sie über Tablette, Spritze und Pflaster und
+   schluckte jeden Tipp. Dasselbe gilt für die Bodenschatten.
+
+   Beide fangen jetzt nichts mehr. Das große Ding bleibt trotzdem
+   antippbar: die Trefferebene unter den Zeichnungen hält weiter ein
+   Rechteck für es bereit — es gewinnt nur dann, wenn an der Stelle
+   nichts Kleineres liegt.
+   ------------------------------------------------------------------ */
+.bw-teil .bw-flaeche,
+.bw-teil .bw-bodenschatten { pointer-events: none; }
+
+/* Die obere Trefferebene: Rechtecke für die wenigen Dinge, die wirklich
+   unter einem anderen liegen (der Stuhl unter dem Mädchen, das Fleisch
+   in der Vitrine). Sie liegen über allem, das Kleinste zuoberst. */
+.bw-treffer-oben rect { cursor: pointer; }
