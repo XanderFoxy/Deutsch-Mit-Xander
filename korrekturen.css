@@ -193,3 +193,34 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 @media (max-width: 560px) {
   .kz-streifen-text { max-width: 38vw; }
 }
+
+/* ---------------------------------------------------------
+   4. „DIE BETONUNG LÄDT NOCH"
+   ---------------------------------------------------------
+   Der Wortschatz wiegt einige Megabyte und wird erst geholt,
+   wenn ihn jemand braucht. Wer in einen Text tippt, wartet also
+   einen Augenblick. Ohne ein Zeichen dafür sieht es aus, als
+   hätte der Tipp nicht gewirkt — und man tippt noch einmal,
+   wodurch man es wieder ausschaltet.
+   Ein ruhiger Streifen am linken Rand sagt: es kommt gleich.
+   --------------------------------------------------------- */
+.betonung-laedt {
+  position: relative;
+}
+.betonung-laedt::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, transparent, var(--amber-400), transparent);
+  background-size: 100% 200%;
+  animation: betonungLaedt 1.1s ease-in-out infinite;
+}
+@keyframes betonungLaedt {
+  0%   { background-position: 0 -100%; }
+  100% { background-position: 0 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .betonung-laedt::before { animation: none; background: var(--amber-400); }
+}

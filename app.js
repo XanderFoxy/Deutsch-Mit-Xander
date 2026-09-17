@@ -5887,6 +5887,10 @@
         // Bereits handgeprüft markierte Bereiche (Vokabeltrainer-Silben, Sternzeichen/Geschlecht-Badges)
         // dürfen vom groben, regelbasierten Algorithmus nicht noch einmal angefasst werden.
         if (parent.closest(".vocab-syl, .zodiac-badge, .stress-mark")) return NodeFilter.FILTER_REJECT;
+        /* Hat jemand DIESEN Kasten ausdrücklich ausgeschaltet, bleibt
+           er aus — auch wenn „Betonung überall anzeigen" an ist. Die
+           ausdrückliche Handlung schlägt die allgemeine Einstellung. */
+        if (parent.closest(".betonung-aus")) return NodeFilter.FILTER_REJECT;
         /* Nur der gelesene Text, nicht die Umgebung. Überschriften,
            Schaltflächen, Reiter, Marken und Hinweiszeilen liest niemand
            vor — dort ist die Betonungsmarkierung nur Unruhe. Vorher
@@ -5894,9 +5898,21 @@
            unter jedem betonten Vokal. */
         if (parent.closest(
           "h1, h2, h3, h4, h5, h6, button, a, label, summary, select, "
-          + ".eyebrow, .empty-note, .subnav-pill, .tape-tab, .trophy-chip, .level-badge, "
+          + ".eyebrow, .subnav-pill, .tape-tab, .trophy-chip, .level-badge, "
           + ".wegweiser, .games-pill, .btn, .badge, .chip, .site-banner, .toast-popup"
         )) return NodeFilter.FILTER_REJECT;
+        /* .empty-note war bisher PAUSCHAL ausgenommen — als „Hinweiszeile".
+           Gemessen an einer Karte im Kompass: von zehn Textknoten kamen
+           NULL durch, weil der ganze Fliesstext dort in .empty-note steht.
+           Wer in so einen Kasten tippte, sah nichts und hielt den Tipp für
+           kaputt. Genau das war gemeldet.
+
+           Auf dieser Seite ist .empty-note zweierlei: eine kurze
+           Hinweiszeile („noch nichts gemerkt") UND ganze Absätze
+           Erklärtext. Die Länge trennt beides zuverlässig — ein Hinweis
+           ist kurz, eine Erklärung nicht. */
+        const hinweis = parent.closest(".empty-note");
+        if (hinweis && (hinweis.textContent || "").trim().length < 60) return NodeFilter.FILTER_REJECT;
         if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       },
@@ -6093,21 +6109,64 @@
     }
     return null;
   }
+  /* Kästen, die jemand AUSDRÜCKLICH ausgeschaltet hat.
+     ------------------------------------------------------------
+     GEMELDET: „Wenn sie einmal da ist, kann man sie nicht wieder
+     abwählen. Erst wenn man die Seite aktualisiert."
+
+     Hier stand die Ursache:
+         if (!isStressModeOn() && !leseBetonungAn()) removeStressFromTree(kasten);
+     Das Ausschalten wurde also ÜBERSPRUNGEN, sobald irgendein
+     globaler Betonungsmodus an war — und in „Es war einmal in
+     Deutschland" ist er an. Der Klick tat dann sichtbar nichts.
+
+     Die Regel muss andersherum lauten: ein Tipp auf den Kasten ist
+     eine ausdrückliche Ansage für DIESEN Kasten und schlägt jede
+     allgemeine Einstellung. Wer hier nichts sehen will, sieht hier
+     nichts — auch wenn „überall anzeigen" an ist.
+
+     Damit das ein Neuzeichnen überlebt (die Seite baut Ansichten
+     ständig neu), wird es doppelt festgehalten: als Klasse am
+     Kasten, damit applyStressToTree() ihn überspringt, und im
+     Verzeichnis betonungAus, damit betonungWiederherstellen() die
+     Klasse nach dem Neuzeichnen wieder anbringt. */
+  const betonungAus = new Set();
+
   function betonungSetzen(kasten, an) {
     const schl = betonungSchluessel(kasten);
     kasten.classList.toggle("betonung-hier", an);
+    kasten.classList.toggle("betonung-aus", !an);
     if (an) {
+      betonungAus.delete(schl);
       betonungOffen.add(schl);
       const setzen = () => { if (kasten.isConnected && kasten.classList.contains("betonung-hier")) applyStressToTree(kasten); };
-      if (wortschatzNachziehen(setzen) && !(VocabData.WORDS && VocabData.WORDS.length)) { /* wird nachgeholt */ }
-      else setzen();
+      /* holenFuer statt nachziehen: hier wird der Wortschatz auch
+         angestossen, wenn er noch gar nicht lädt. */
+      if (wortschatzHolenFuer(setzen) && !(VocabData.WORDS && VocabData.WORDS.length)) {
+        kasten.classList.add("betonung-laedt");
+        wortschatzBereit().then(() => kasten.classList.remove("betonung-laedt"))
+                          .catch(() => kasten.classList.remove("betonung-laedt"));
+      } else setzen();
     } else {
       betonungOffen.delete(schl);
-      if (!isStressModeOn() && !leseBetonungAn()) removeStressFromTree(kasten);
+      betonungAus.add(schl);
+      /* IMMER entfernen. Ohne Bedingung — das war der Fehler. */
+      removeStressFromTree(kasten);
     }
   }
   /* Nach jedem Neuzeichnen: was vorher betont war, ist es wieder. */
   function betonungWiederherstellen(wurzel) {
+    const ziel0 = wurzel || document;
+    /* Zuerst das Ausgeschaltete: sonst legt ein globaler Modus die
+       Betonung im selben Augenblick wieder darüber. */
+    if (betonungAus.size) {
+      ziel0.querySelectorAll(BETONUNG_KASTEN).forEach((kasten) => {
+        if (!betonungAus.has(betonungSchluessel(kasten))) return;
+        kasten.classList.add("betonung-aus");
+        kasten.classList.remove("betonung-hier");
+        removeStressFromTree(kasten);
+      });
+    }
     if (!betonungOffen.size) return;
     const ziel = wurzel || document;
     ziel.querySelectorAll(BETONUNG_KASTEN).forEach((kasten) => {
@@ -6147,7 +6206,7 @@
   (() => {
     let geplant = false;
     const beobachter = new MutationObserver(() => {
-      if (geplant || !betonungOffen.size) return;
+      if (geplant || (!betonungOffen.size && !betonungAus.size)) return;
       geplant = true;
       setTimeout(() => { geplant = false; betonungWiederherstellen(); }, 120);
     });
@@ -8305,6 +8364,29 @@
   function wortschatzBereit() {
     return (VocabData.ladeWoerter ? VocabData.ladeWoerter() : Promise.resolve(true));
   }
+  /* Wie wortschatzNachziehen(), aber MIT Anstoss.
+     ------------------------------------------------------------
+     GEMELDET: „Dass man in den Text klicken kann und die
+     Betonungsanzeige sieht, klappt gerade irgendwie nicht."
+
+     Nachgemessen: der Klick kam an, die Klasse wurde gesetzt — und
+     dann passierte nichts, weil der Wortschatz nicht geladen war.
+     wortschatzNachziehen() meldet in dem Fall brav „wird nachgeholt"
+     und stösst das Laden NICHT an; das tut sonst nur der Wechsel
+     nach „Lernen" oder „Wissen". Wer also in „Es war einmal in
+     Deutschland" in den Text tippte, wartete auf etwas, das nie kam.
+
+     Der Vorbehalt dahinter ist richtig: den ganzen Wortschatz beim
+     Seitenaufbau zu ziehen wäre Verschwendung. Aber hier hat jemand
+     AUSDRÜCKLICH danach gefragt — und dann ist es keine
+     Verschwendung, sondern genau das, was er will. Darum eine
+     eigene Funktion, die nur der Tipp benutzt. */
+  function wortschatzHolenFuer(nachzeichnen) {
+    if (VocabData.alleThemenDa && VocabData.alleThemenDa()) return false;
+    wortschatzBereit().then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
+    return true;
+  }
+
   function wortschatzNachziehen(nachzeichnen) {
     if (VocabData.alleThemenDa && VocabData.alleThemenDa()) return false;
     // Nicht selbst anstoßen: sonst würde schon der allererste Aufbau der Seite
@@ -32825,32 +32907,55 @@
      Und wenn nichts davon geht, spricht wie bisher das Gerät. Die
      Stimme ist dann schlechter, aber sie ist da.
      ============================================================ */
+  /* Wie lang darf ein Stück sein, das die neuronale Stimme spricht?
+     Ein einzelnes Wort hat 15 Zeichen, ein Beispielsatz 60. Ein
+     ganzer Dialog hat 400 — und den schneidet der Server bei 300
+     ab, also spräche er ihn halb. Lange Stücke bleiben deshalb
+     beim Gerät. Das schont nebenbei das Kontingent an genau der
+     Stelle, an der es am schnellsten leerliefe. */
+  const STIMME_HOECHSTLAENGE = 90;
+
+  /* Die bessere Stimme, angemeldet an Core.speak. Rückgabe sagt:
+     habe ich gesprochen? Ein „nein" lässt das Gerät übernehmen. */
+  async function guteStimme(text, sprache) {
+    const wort = String(text || "").trim();
+    if (!wort || wort.length > STIMME_HOECHSTLAENGE) return false;
+    if (!window.AusspracheP || !AusspracheP.zentralDa()) return false;
+    let puffer = null;
+    try {
+      puffer = await AusspracheP.zentralVorlesen({
+        text: wort,
+        sprache: String(sprache || "de").slice(0, 2) === "it" ? "it-IT" : "de-DE",
+      });
+    } catch (e) { return false; }
+    if (!puffer) return false;
+    await new Promise((fertig) => {
+      const K = window.AudioContext || window.webkitAudioContext;
+      if (!K) { fertig(); return; }
+      const k = new K();
+      const q = k.createBufferSource();
+      q.buffer = puffer;
+      q.connect(k.destination);
+      q.onended = () => { try { k.close(); } catch (e) {} fertig(); };
+      q.start();
+    });
+    return true;
+  }
+  if (Core.stimmeAnmelden) Core.stimmeAnmelden(guteStimme);
+
+  /* Für Abläufe, die auf das ENDE warten müssen („alle nacheinander
+     vorlesen"). Core.speak() kehrt sofort zurück; hier wird gewartet. */
   let bwStimmeLaeuft = false;
   async function bwSprich(text, sprache) {
     const wort = String(text || "").trim();
     if (!wort || bwStimmeLaeuft) return;
     bwStimmeLaeuft = true;
     try {
-      const puffer = (window.AusspracheP && AusspracheP.zentralDa())
-        ? await AusspracheP.zentralVorlesen({ text: wort, sprache: sprache === "it" ? "it-IT" : "de-DE" })
-        : null;
-      if (puffer) {
-        await new Promise((fertig) => {
-          const K = window.AudioContext || window.webkitAudioContext;
-          if (!K) { fertig(); return; }
-          const k = new K();
-          const q = k.createBufferSource();
-          q.buffer = puffer;
-          q.connect(k.destination);
-          q.onended = () => { try { k.close(); } catch (e) {} fertig(); };
-          q.start();
-        });
-      } else {
-        Core.speak(wort, sprache);
+      const gesprochen = await guteStimme(wort, sprache);
+      if (!gesprochen) {
+        await new Promise((f) => { Core.speak(wort, sprache); setTimeout(f, 1100); });
       }
-    } catch (e) {
-      Core.speak(wort, sprache);
-    }
+    } catch (e) { Core.speak(wort, sprache); }
     bwStimmeLaeuft = false;
   }
 

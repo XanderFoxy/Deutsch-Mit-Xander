@@ -44,7 +44,47 @@ const Core = (function () {
      Angabe bleibt es bei Deutsch. Gebraucht wird das vom Lernraum
      Italienisch — ein italienisches Wort mit deutscher Stimme
      vorgelesen ist als Aussprachehilfe wertlos. */
+  /* =========================================================
+     EINE WEICHE FÜR DIE STIMME
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Wenn wir das Azure verwenden können, um die
+     Sachen vorzulesen, dann kannst du auch das komplette
+     Wörterbuch vorlesen lassen — sobald jemand die Vokabeln
+     anhören möchte."
+
+     Es gibt einundzwanzig Stellen in der App, die vorlesen
+     lassen: Wörterbuch, Vokabeltrainer, Aussprache-Kurs,
+     Dialoge, Bilderwelt, Wortspiele. Jede einzeln umzustellen
+     hiesse, einundzwanzigmal dieselbe Entscheidung zu treffen —
+     und beim zweiundzwanzigsten Mal wird sie vergessen.
+
+     Darum eine Weiche HIER, an der einen Stelle, durch die alle
+     gehen: wer eine bessere Stimme anmeldet, wird gefragt; sagt
+     sie nein oder gibt es keine, spricht wie immer das Gerät.
+     Kein Aufrufer muss davon wissen.
+
+     stimmeAnmelden(f) erwartet f(text, sprache) -> Promise<bool>
+     („habe ich gesprochen?").
+     ========================================================= */
+  let bessereStimme = null;
+  function stimmeAnmelden(f) { bessereStimme = typeof f === "function" ? f : null; }
+
   function speak(text, sprache) {
+    if (bessereStimme) {
+      try {
+        const versuch = bessereStimme(text, sprache);
+        if (versuch && versuch.then) {
+          versuch.then((gesprochen) => { if (!gesprochen) geraetSpricht(text, sprache); })
+                 .catch(() => geraetSpricht(text, sprache));
+          return;
+        }
+        if (versuch === true) return;
+      } catch (e) { /* dann eben das Gerät */ }
+    }
+    geraetSpricht(text, sprache);
+  }
+
+  function geraetSpricht(text, sprache) {
     if (!("speechSynthesis" in window)) return;
     const kurz = (sprache || "de").slice(0, 2).toLowerCase();
     const voll = { de: "de-DE", it: "it-IT", en: "en-GB", fr: "fr-FR", es: "es-ES" }[kurz] || "de-DE";
@@ -889,7 +929,7 @@ const Core = (function () {
     },
   };
 
-  return { shuffle, drawUnique, el, speak, clamp, uid, formatStress, sound,
+  return { shuffle, drawUnique, el, speak, stimmeAnmelden, clamp, uid, formatStress, sound,
     silbeIstGross, betonteSilbenIndex,
     /* Italienisch: eigene Silbentrennung, eigene Betonungsregel, eigene Anzeige. */
     italienischeSilben, betonungItAuto, formatStressIt, betonungItErklaerung,

@@ -47,21 +47,37 @@ body.hat-klassenzimmer .wk-blase { bottom: 96px; }
   .wk-knopf { padding: 11px; font-size: 1rem; }
 }
 
-/* Der Punkt: es gibt etwas Ungelesenes. */
-.wk-punkt {
-  position: absolute;
-  top: -3px; right: -3px;
-  width: 11px; height: 11px;
-  border-radius: 50%;
-  background: #E85F6F;
-  border: 2px solid var(--plum-800);
-  animation: wkPochen 2.2s ease-in-out infinite;
+/* Das Werkzeug klopft leise — es wird ja gerade gearbeitet.
+   Kein roter Punkt mehr: der stand für „ungelesen", und es gibt
+   nichts mehr zu lesen. Es gibt nur noch „offen" oder „weg". */
+.wk-bau {
+  display: inline-block;
+  animation: wkKlopfen 2.6s ease-in-out infinite;
+  transform-origin: 70% 70%;
 }
-@keyframes wkPochen {
-  0%, 70%, 100% { transform: scale(1); }
-  80%           { transform: scale(1.35); }
+@keyframes wkKlopfen {
+  0%, 82%, 100% { transform: rotate(0deg); }
+  86%           { transform: rotate(-16deg); }
+  92%           { transform: rotate(10deg); }
 }
-@media (prefers-reduced-motion: reduce) { .wk-punkt { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .wk-bau { animation: none; } }
+
+/* Zwei Zeilen im Knopf: was los ist, und wie viel. */
+.wk-knopf-text small {
+  display: block;
+  font-weight: 500;
+  font-size: 0.68rem;
+  color: var(--cream-200);
+}
+/* Seit wann diese Baustelle offen ist — eigene Zeile, damit sie
+   den Text nicht zerreisst. */
+.wk-seit {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--cream-200);
+}
 
 .wk-tafel {
   display: none;
