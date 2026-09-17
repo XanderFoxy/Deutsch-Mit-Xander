@@ -1,37 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-WATTEWOLKEN FÜR DIE WETTERECKE
-==============================
+ECHTE WATTEWOLKEN FÜR DIE WETTERECKE
+====================================
 
-GEWÜNSCHT: „Die Wolkenanimation im Header kann noch realistischer sein.
-Die sehen zwar schon deutlich besser aus als vorher, aber die können
-noch filigranere Struktur haben und wirklich schön langsam und gemütlich
-richtig schöne Wattewolken sein — klare weisse Wattewolken, je nach
-Tageszeit, dass sie dann ein bisschen angepasst sind."
+GEMELDET: „Die Wolken sind nicht realistisch. Die sind viel zu
+comicartig. Bring da wieder absoluten Realismus rein. Weiche schöne
+Wattewolken, die so Strukturen haben, dass man im Himmel so Sachen
+erkennen kann, wie das im Original auch ist. Die sind nicht alle so
+gleich, die sind eher zufällig und haben unterschiedliche Formen, sind
+interessant, haben manchmal Spitzen, manchmal weiche Züge und wirken
+eher wie rauchige Nebel manchmal. Die sind ziemlich unberechenbar."
 
-WAS EINE WATTEWOLKE AUSMACHT — und was bisher fehlte:
+WARUM DER ERSTE VERSUCH COMICARTIG BLIEB — und es auch bleiben MUSSTE:
+er bestand aus radialen Farbverläufen. Ein Farbverlauf ist ein Kreis
+oder eine Ellipse, sonst nichts. Man kann dreissig davon nebeneinander
+legen und sie ineinander laufen lassen — es bleiben dreissig Ellipsen,
+und der Rand bleibt eine Kette von Bögen. Genau daran erkennt das Auge
+eine gezeichnete Wolke.
 
-  1. VIELE Ballen, nicht drei. Eine Haufenwolke ist ein Gedränge aus
-     zwölf bis zwanzig Buckeln unterschiedlicher Grösse. Vorher waren
-     es drei grosse Ellipsen je Wolke; das liest sich als Schleier,
-     nicht als Watte.
+Eine echte Wolke hat einen ZERFRANSTEN Rand: hier eine Spitze, dort
+eine ausgefranste Kante, da ein Stück, das sich schon in Dunst
+auflöst. Diese Unregelmässigkeit ist nicht hübsches Beiwerk — sie IST
+das, was eine Wolke ausmacht.
 
-  2. EIN LICHTRAND OBEN. Die Sonne steht über der Wolke, also ist die
-     Oberseite jedes Buckels heller als seine Unterseite. Genau dieser
-     Rand macht aus einem Fleck einen Körper.
+DER WEG DAHIN: ein Rauschfilter. feTurbulence erzeugt fraktales
+Rauschen, wie es in der Natur vorkommt (dieselbe Mathematik steckt
+hinter gezeichneten Bergketten, Feuer und Marmor). feDisplacementMap
+schiebt damit jeden Punkt der Wolkenform ein Stück beiseite — viel an
+manchen Stellen, wenig an anderen. Aus einer glatten Ellipsenkette wird
+so ein Rand, der sich nicht vorhersagen lässt: an einer Stelle spitz,
+an der nächsten weich, an der dritten in Fetzen.
 
-  3. EINE FLACHE UNTERSEITE. Haufenwolken schweben auf einer
-     gemeinsamen Höhe — dort, wo der Wasserdampf kondensiert. Sie sind
-     oben bauschig und unten fast waagerecht abgeschnitten.
-
-  4. LANGSAM. Wolken ziehen, sie rennen nicht.
-
-Der Aufbau je Ballen: drei Lagen übereinander — Schatten (tief,
-kühl), Körper (die eigentliche Wolke), Lichtrand (oben, schmal,
-hell). Alles als radiale Farbverläufe in EINEM Element, das sich
-seitlich wiederholt; bewegt wird es um genau eine Kachelbreite, dann
-ist der Übergang nahtlos.
+WIE ES IN DIE SEITE KOMMT: die Farbe darf nicht im Bild stecken,
+sonst liessen sich die Wolken nicht mehr nach der Tageszeit einfärben.
+Deshalb ist das Erzeugte kein Bild, sondern eine MASKE — schwarz, wo
+Wolke ist, durchsichtig, wo Himmel ist. Die Farbe kommt weiterhin aus
+den CSS-Werten (--w-wolke-hell und so fort). Drei Lagen übereinander:
+Unterseite, Körper, beleuchtete Krone — jede mit ihrer eigenen Maske,
+ihrem eigenen Rauschen und ihrem eigenen Versatz.
 
     python3 werkzeug/bau-wolken.py
 """
@@ -40,7 +47,7 @@ import io
 import math
 import os
 import random
-import sys
+import urllib.parse
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 ZIEL = os.path.join(os.path.dirname(HIER), "app-styles.css")
@@ -48,135 +55,194 @@ ZIEL = os.path.join(os.path.dirname(HIER), "app-styles.css")
 MARKE_AUF = "/* WOLKEN-ANFANG — erzeugt von werkzeug/bau-wolken.py */"
 MARKE_ZU = "/* WOLKEN-ENDE */"
 
+# Die Kachel. Sie wiederholt sich seitlich, also muss alles, was am
+# rechten Rand hinausragt, links wieder hereinkommen — darum wird jede
+# Wolke, die den Rand berührt, ein zweites Mal um eine Kachelbreite
+# versetzt gezeichnet.
+BREIT = 600
+HOCH = 100
 
-def haufen(mitte_x, mitte_y, breite, hoehe, wieviel, saat):
-    """Ein Wolkenhaufen: viele Buckel, oben bauschig, unten flach."""
-    r = random.Random(saat)
+
+def haufen(r, mitte_x, boden, breite, hoehe, wieviel):
+    """Eine Haufenwolke: viele Buckel, oben bauschig, unten flach.
+
+    Das ist nur die GROBFORM. Das Rauschen macht daraus gleich etwas,
+    das nicht mehr nach Ellipsen aussieht.
+    """
     ballen = []
     for i in range(wieviel):
-        # Waagerecht gleichmaessig verteilt, mit etwas Unruhe
         t = (i + 0.5) / wieviel
-        x = mitte_x + (t - 0.5) * breite + r.uniform(-breite * 0.05, breite * 0.05)
-        # Die Kuppe ist in der Mitte am hoechsten (eine flache Glocke)
-        kuppe = math.sin(t * math.pi) ** 0.75
-        gross = (0.34 + 0.66 * kuppe) * (0.8 + r.uniform(0, 0.4))
-        rx = breite * 0.13 * gross
-        ry = hoehe * 0.55 * gross
-        # Unten flach: alle Ballen sitzen mit ihrer Unterkante auf
-        # derselben Hoehe, nur die Oberkante wandert.
-        y = mitte_y - ry * 0.55 - hoehe * 0.34 * kuppe
-        ballen.append((round(x, 1), round(y, 1), round(rx, 1), round(ry, 1)))
+        # Die Kuppe ist in der Mitte am hoechsten, aber nicht symmetrisch:
+        # eine echte Wolke hat ihren Gipfel selten in der Mitte.
+        schief = 0.35 + r.random() * 0.3
+        kuppe = math.sin(min(1.0, t / schief if t < schief else
+                             (1 - t) / (1 - schief)) * math.pi / 2) ** 0.8
+        x = mitte_x + (t - 0.5) * breite + r.uniform(-breite * 0.04, breite * 0.04)
+        gross = (0.3 + 0.7 * kuppe) * (0.75 + r.random() * 0.5)
+        rx = breite * 0.15 * gross
+        ry = hoehe * 0.6 * gross
+        y = boden - ry * 0.5 - hoehe * 0.38 * kuppe
+        ballen.append((x, y, rx, ry))
     return ballen
 
 
-def wolke(x, y, breite, hoehe, wieviel, saat):
-    return haufen(x, y, breite, hoehe, wieviel, saat)
+def form(ballen):
+    return "".join(
+        '<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f"/>' % b for b in ballen
+    )
 
 
-# Drei Haufen und ein feiner Schleier je Kachel (300 px breit, 44 px hoch).
-# Unterschiedlich gross, damit sich kein Muster einprägt.
-KACHEL = [
-    wolke(x=62, y=30, breite=96, hoehe=26, wieviel=13, saat=11),
-    wolke(x=168, y=28, breite=74, hoehe=21, wieviel=11, saat=23),
-    wolke(x=246, y=31, breite=52, hoehe=15, wieviel=9, saat=37),
-]
-SCHLEIER = [
-    (110, 34, 54, 5),
-    (206, 33, 42, 4),
-    (24, 35, 36, 4),
-]
+def wolkensvg(lage, saat):
+    """Eine Maske: schwarz, wo Wolke ist. Die Farbe kommt aus der CSS.
 
-
-def lage(ballen, farbe, dy=0.0, gross=1.0, voll=74, weg=96):
-    """Eine Lage aller Ballen als Farbverlauf-Liste.
-
-    voll = bis wohin die Farbe deckt, weg = wo sie ganz verschwunden
-    ist. Je hoeher `voll`, desto fester der Ballen — und desto mehr
-    verschmelzen die Nachbarn zu EINER Wolke. Genau daran lag es, dass
-    die Wolke vorher wie ein Haufen einzelner Kreise aussah: der Abfall
-    begann schon bei der Haelfte, also blieb jeder Ballen fuer sich.
+    lage: 0 = Unterseite, 1 = Koerper, 2 = Krone
     """
-    aus = []
-    for (x, y, rx, ry) in ballen:
-        aus.append(
-            "radial-gradient(%gpx %gpx at %gpx %gpx, %s 0 %d%%, transparent %d%%)"
-            % (round(rx * gross, 2), round(ry * gross, 2), x, round(y + dy, 2),
-               farbe, voll, weg)
-        )
-    return aus
+    r = random.Random(saat)
+
+    # Drei bis vier Wolken je Kachel, alle verschieden gross und
+    # verschieden weit oben — nichts soll sich wiederholen.
+    # WICHTIG: die Kachel bleibt an ihren Raendern LEER. Eine Wolke,
+    # die ueber den Rand hinausragt, muesste drueben nahtlos wieder
+    # hereinkommen — und genau das kann das Rauschen nicht: es haengt
+    # an der Stelle im Bild, nicht an der Form. An der Nahtstelle
+    # entstuende ein sichtbarer Schnitt. Bleibt der Rand frei, faellt
+    # die Naht in leeren Himmel und ist unsichtbar.
+    RAND = 70
+    wolken = []
+    x = RAND + r.uniform(10, 50)
+    while x < BREIT - RAND:
+        breite = r.uniform(90, 220)
+        if x + breite / 2 > BREIT - RAND:
+            break
+        hoehe = r.uniform(26, 52)
+        boden = r.uniform(HOCH * 0.52, HOCH * 0.78)
+        wieviel = r.randint(9, 16)
+        wolken.append(haufen(r, x, boden, breite, hoehe, wieviel))
+        x += breite * r.uniform(0.9, 1.6)
+
+    # Die Krone ist kleiner und sitzt hoeher, die Unterseite groesser
+    # und tiefer.
+    hoch = {0: 4.0, 1: 0.0, 2: -3.2}[lage]
+    weit = {0: 1.03, 1: 1.0, 2: 0.74}[lage]
+
+    inhalt = []
+    for ballen in wolken:
+        verschoben = [(bx, by + hoch, brx * weit, bry * weit) for (bx, by, brx, bry) in ballen]
+        inhalt.append(form(verschoben))
+
+    # Das Rauschen. Grobe Frequenz = grosse Ausbuchtungen, feine =
+    # ausgefranste Kanten. Beides zusammen ergibt eine Wolke, die von
+    # Weitem eine Form hat und von Nahem zerfasert ist.
+    grob = 0.006 + r.random() * 0.004
+    fein = 0.03 + r.random() * 0.02
+    staerke = {0: 22, 1: 26, 2: 18}[lage]
+    weich = {0: 2.4, 1: 1.6, 2: 1.1}[lage]
+
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" '
+        'viewBox="0 0 %d %d">'
+        # Der Filterbereich muss WEIT groesser sein als die Form:
+        # das Rauschen schiebt Punkte nach aussen, und was ausserhalb
+        # des Bereichs landet, wird abgeschnitten — als schnurgerade
+        # Kante mitten in der Wolke. Genau die war beim ersten Versuch
+        # zu sehen.
+        '<filter id="f" x="-80%%" y="-200%%" width="260%%" height="500%%" '
+        'color-interpolation-filters="sRGB">'
+        '<feTurbulence type="fractalNoise" baseFrequency="%.4f %.4f" '
+        'numOctaves="5" seed="%d" stitchTiles="stitch" result="rau"/>'
+        # ERST WEICHZEICHNEN, DANN VERZERREN. Sonst stehen an den
+        # Raendern kleine harte Quadrate: die Verzerrung greift eine
+        # scharfe Kante und schiebt sie als Block beiseite. Eine
+        # weiche Kante dagegen zerfliesst dabei — und genau das soll
+        # eine Wolke tun.
+        '<feGaussianBlur in="SourceGraphic" stdDeviation="5" result="weich"/>'
+        '<feDisplacementMap in="weich" in2="rau" scale="%d" '
+        'xChannelSelector="R" yChannelSelector="G" result="verzerrt"/>'
+        '<feGaussianBlur in="verzerrt" stdDeviation="%.1f"/>'
+        '</filter>'
+        '<g filter="url(#f)" fill="#000">%s</g>'
+        '</svg>'
+        % (BREIT, HOCH, BREIT, HOCH, grob, fein, saat % 900,
+           staerke, weich, "".join(inhalt))
+    )
+    return svg
+
+
+def alsUrl(svg):
+    return 'url("data:image/svg+xml,%s")' % urllib.parse.quote(svg, safe="")
 
 
 def bauen():
-    alle = [b for w in KACHEL for b in w]
+    unten = alsUrl(wolkensvg(0, 20260917))
+    koerper = alsUrl(wolkensvg(1, 20260917))
+    krone = alsUrl(wolkensvg(2, 20260917))
 
-    lagen = []
-    # 1. Schleier ganz hinten — ein Hauch, der die Haufen verbindet
-    for (x, y, rx, ry) in SCHLEIER:
-        lagen.append(
-            "radial-gradient(%gpx %gpx at %gpx %gpx, var(--w-wolke-schleier) 0 58%%, "
-            "transparent 94%%)" % (rx, ry, x, y)
-        )
-    # 2. Schatten: dieselben Ballen, ein Stueck tiefer und kuehler
-    lagen += lage(alle, "var(--w-wolke-schatten)", dy=4.2, voll=72, weg=95)
-    # 3. Der Koerper — fest genug, dass die Nachbarn verschmelzen
-    lagen += lage(alle, "var(--w-wolke-hell)", dy=0, voll=76, weg=97)
-    # 4. Die beleuchtete Krone: ein KLEINERER Ballen, nach oben
-    #    versetzt. Kein Ring — ein Ring zeichnet Donuts, und genau die
-    #    waren vorher zu sehen.
-    lagen += lage(alle, "var(--w-wolke-oben)", dy=-2.6, gross=0.7, voll=62, weg=94)
+    css = [MARKE_AUF, """/* Drei Lagen, jede eine eigene Maske aus fraktalem Rauschen:
+   ::before  die Unterseite (tiefer, kuehler)
+   der Kern  der Koerper der Wolke
+   ::after   die beleuchtete Krone (hoeher, kleiner, heller)
 
-    # Zuletzt gezeichnet steht in CSS ZUERST in der Liste.
-    lagen = list(reversed(lagen))
-
-    css = [MARKE_AUF]
-    css.append("/* %d Ballen in drei Haufen, je drei Lagen (Schatten, Körper," % len(alle))
-    css.append("   Lichtrand) plus drei Schleier — siehe werkzeug/bau-wolken.py. */")
-    css.append(".w-wolkenband {")
-    css.append("  position: absolute;")
-    css.append("  top: 0; left: 0;")
-    css.append("  width: 200%; height: 100%;")
-    css.append("  background-repeat: repeat-x;")
-    css.append("  background-size: var(--w-kachel) 100%;")
-    css.append("  background-image:")
-    css.append(",\n".join("    " + l for l in lagen) + ";")
-    css.append("  animation: wZiehen 96s linear infinite;")
-    css.append("  will-change: transform;")
-    css.append("}")
-    css.append("@keyframes wZiehen {")
-    css.append("  from { transform: translate3d(0, 0, 0); }")
-    css.append("  to   { transform: translate3d(calc(-1 * var(--w-kachel)), 0, 0); }")
-    css.append("}")
-    css.append("""/* Drei Schichten, drei Tempi, drei Größen — vorn groß und etwas
+   Die Masken sind schwarzweiss — die FARBE kommt aus den CSS-Werten,
+   damit die Tageszeit sie weiterhin einfaerben kann. */""",
+".w-wolkenband {",
+"  position: absolute;",
+"  top: 0; left: 0;",
+"  width: 200%; height: 100%;",
+"  background-color: var(--w-wolke-hell);",
+"  -webkit-mask-image: " + koerper + ";",
+"          mask-image: " + koerper + ";",
+"  -webkit-mask-repeat: repeat-x;",
+"          mask-repeat: repeat-x;",
+"  -webkit-mask-size: var(--w-kachel) 100%;",
+"          mask-size: var(--w-kachel) 100%;",
+"  animation: wZiehen 96s linear infinite;",
+"  will-change: transform;",
+"}",
+".w-wolkenband::before,",
+".w-wolkenband::after {",
+"  content: \"\";",
+"  position: absolute;",
+"  inset: 0;",
+"  pointer-events: none;",
+"  -webkit-mask-repeat: repeat-x;",
+"          mask-repeat: repeat-x;",
+"  -webkit-mask-size: var(--w-kachel) 100%;",
+"          mask-size: var(--w-kachel) 100%;",
+"}",
+".w-wolkenband::before {",
+"  z-index: -1;",
+"  background-color: var(--w-wolke-schatten);",
+"  -webkit-mask-image: " + unten + ";",
+"          mask-image: " + unten + ";",
+"}",
+".w-wolkenband::after {",
+"  background-color: var(--w-wolke-oben);",
+"  -webkit-mask-image: " + krone + ";",
+"          mask-image: " + krone + ";",
+"}",
+"@keyframes wZiehen {",
+"  from { transform: translate3d(0, 0, 0); }",
+"  to   { transform: translate3d(calc(-1 * var(--w-kachel)), 0, 0); }",
+"}",
+"""/* Drei Schichten, drei Tempi, drei Größen — vorn groß und etwas
    schneller, hinten klein, blass und sehr langsam. Daraus entsteht
-   Tiefe. GEWÜNSCHT war „schön langsam und gemütlich": die Tempi sind
-   deshalb rund doppelt so ruhig wie vorher. */
-.w-wb1 { --w-kachel: 300px; opacity: 0.86; animation-duration: 96s; }
-.w-wb2 { --w-kachel: 392px; opacity: 0.55; animation-duration: 158s; height: 84%; }
-.w-wb3 { --w-kachel: 486px; opacity: 0.32; animation-duration: 232s; height: 68%; }""")
-    css.append(MARKE_ZU)
+   Tiefe. Und sie ziehen langsam: Wolken rennen nicht. */
+.w-wb1 { --w-kachel: 460px; opacity: 0.92; animation-duration: 104s; }
+.w-wb2 { --w-kachel: 600px; opacity: 0.6;  animation-duration: 172s; height: 86%; }
+.w-wb3 { --w-kachel: 760px; opacity: 0.34; animation-duration: 248s; height: 70%; }""",
+MARKE_ZU]
     return "\n".join(css)
 
 
 def main():
     s = io.open(ZIEL, encoding="utf-8").read()
     neu = bauen()
-    if MARKE_AUF in s and MARKE_ZU in s:
-        a = s.index(MARKE_AUF)
-        b = s.index(MARKE_ZU) + len(MARKE_ZU)
-        s = s[:a] + neu + s[b:]
-    else:
-        # Beim ersten Mal den alten Block ersetzen
-        a = s.index(".w-wolkenband {")
-        # Kommentar davor mitnehmen
-        k = s.rfind("/* ---------------- Wolkenschichten", 0, a)
-        if k < 0:
-            k = a
-        b = s.index(".w-wb3 {", a)
-        b = s.index("\n", b) + 1
-        s = s[:k] + neu + "\n" + s[b:]
-    io.open(ZIEL, "w", encoding="utf-8").write(s)
-    anzahl = sum(len(w) for w in KACHEL)
-    print("%d Wolkenballen in drei Haufen geschrieben" % anzahl)
+    if MARKE_AUF not in s or MARKE_ZU not in s:
+        raise SystemExit("Marken nicht gefunden — nichts geändert.")
+    a = s.index(MARKE_AUF)
+    b = s.index(MARKE_ZU) + len(MARKE_ZU)
+    io.open(ZIEL, "w", encoding="utf-8").write(s[:a] + neu + s[b:])
+    print("Wolken neu geschrieben (%d Zeichen CSS)" % len(neu))
 
 
 if __name__ == "__main__":
