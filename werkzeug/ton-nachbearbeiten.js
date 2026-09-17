@@ -13,7 +13,21 @@
      2. LAUTHEIT ANGLEICHEN (EBU R128, -16 LUFS). Einzeln erzeugte
         Aufnahmen schwanken; wer zehn Woerter hintereinander uebt,
         soll nicht dauernd am Regler drehen.
-     3. KLEINER MACHEN: 24 kHz, mono, 32 kb/s. Fuer ein gesprochenes
+     3. ENTRAUSCHEN. Auch eine erzeugte Stimme bringt einen leisen
+        Grundschleier mit, und bei EINEM kurzen Wort faellt er auf:
+        man hoert das Rauschen anschwellen und wieder weggehen, weil
+        die Lautheitsanpassung es mit hochzieht. Zwei Schritte:
+          * ein Hochpass bei 70 Hz — darunter ist bei einer Stimme
+            nichts ausser Netzbrummen und Trittschall;
+          * afftdn, ein Entrauscher, der sich das Rauschprofil aus
+            dem Anfang der Aufnahme selbst holt. Vorsichtig
+            eingestellt (nm=-28 dB, nr=10 dB): kraeftiger entrauscht
+            klingt eine Stimme blechern, und das waere schlimmer als
+            ein bisschen Grundrauschen.
+        Entrauscht wird VOR dem Angleichen — sonst hebt das
+        Angleichen das Rauschen erst an und der Entrauscher muss
+        gegen seine eigene Vorarbeit anrechnen.
+     4. KLEINER MACHEN: 24 kHz, mono, 32 kb/s. Fuer ein gesprochenes
         Wort hoert man keinen Unterschied, die Datei ist aber ein
         Zehntel so gross.
 
@@ -38,6 +52,9 @@ function bearbeiten(rein, raus) {
       "areverse",
       /* Ein Hauch Luft am Ende, sonst klingt es abgehackt */
       "apad=pad_dur=0.06",
+      /* Entrauschen — VOR dem Angleichen, siehe oben */
+      "highpass=f=70",
+      "afftdn=nf=-28:nr=10:tn=1",
       /* Lautheit angleichen */
       "loudnorm=I=-16:TP=-1.5:LRA=11",
     ].join(","),

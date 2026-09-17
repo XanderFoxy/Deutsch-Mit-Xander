@@ -15869,7 +15869,14 @@
     const bild = document.createElementNS(NS_SVG, "svg");
     bild.setAttribute("class", "lc-wueste-bild");
     bild.setAttribute("viewBox", "0 0 400 200");
-    bild.setAttribute("preserveAspectRatio", "xMidYMax slice");
+    /* GEMELDET: „Die Sphinx ist rechts ausserhalb des Bildschirms."
+       „slice" fuellt die Flaeche und schneidet dafuer ab, was nicht
+       hineinpasst — auf einem breiten Schirm links und rechts, auf
+       einem Telefon im Hochformat oben und unten. Mit „meet" ist
+       IMMER das ganze Bild zu sehen. Dafuer bleibt oben und unten
+       etwas Luft, und genau die brauchen wir ohnehin: das Ganze soll
+       ja durchsichtig ueber dem Chat liegen und ihn nicht zudecken. */
+    bild.setAttribute("preserveAspectRatio", "xMidYMid meet");
     const pf = (d, f, kl) => {
       const e = document.createElementNS(NS_SVG, "path");
       e.setAttribute("d", d);
@@ -15883,8 +15890,20 @@
         e.setAttribute("stroke-linecap", "round");
       }
       if (kl) e.setAttribute("class", kl);
-      bild.appendChild(e);
+      (ebene || bild).appendChild(e);
       return e;
+    };
+    /* Die Tiefenstaffelung: alles, was gezeichnet wird, landet in der
+       gerade offenen EBENE. Die drei Ebenen bewegen sich verschieden
+       schnell (siehe korrekturen.css) — Nahes zieht schneller vorbei
+       als Fernes. Das ist der ganze Trick, und es ist derselbe, den
+       ein Kameramann benutzt. */
+    let ebene = null;
+    const neueEbene = (klasse) => {
+      ebene = document.createElementNS(NS_SVG, "g");
+      ebene.setAttribute("class", klasse);
+      bild.appendChild(ebene);
+      return ebene;
     };
     /* Der Himmel als Verlauf */
     const defs = document.createElementNS(NS_SVG, "defs");
@@ -15902,9 +15921,10 @@
     const sonne = document.createElementNS(NS_SVG, "circle");
     sonne.setAttribute("cx", 288); sonne.setAttribute("cy", 56);
     sonne.setAttribute("r", 26); sonne.setAttribute("fill", "#fff3c4");
-    sonne.setAttribute("class", "lc-wueste-sonne");
+    sonne.setAttribute("class", "lc-wueste-sonne lc-wueste-fern");
     bild.appendChild(sonne);
     /* Drei Pyramiden, die hinterste am blassesten — so entsteht Tiefe */
+    neueEbene("lc-wueste-mitte");
     pf("M74 150 L126 62 L178 150 Z", "#c9964e");
     pf("M126 62 L178 150 L152 150 Z", "#b07f3d");
     pf("M168 150 L202 92 L236 150 Z", "#d2a25c");
@@ -15925,6 +15945,7 @@
          3. das NEMES-KOPFTUCH, das nach unten deutlich BREITER wird
             als der Hals — daher die typische Dreiecksform des Kopfes.
        Sie steht vor den Pyramiden und schaut nach links. */
+    neueEbene("lc-wueste-nah");
     /* Alles Folgende gehört zur Sphinx und wird gemeinsam verkleinert.
        Beim ersten Versuch war sie so hoch wie die grosse Pyramide —
        in Wirklichkeit ist sie ein Bruchteil davon und steht DAVOR.
@@ -16831,6 +16852,75 @@
     document.body.appendChild(schicht);
     lcTonZu("tore");
     setTimeout(() => schicht.remove(), 6000);
+  }
+
+  /* --- Paintball ---------------------------------------------------
+     GEWÜNSCHT: „Vielleicht noch eins paintballmässig, wo auf den
+     Bildschirm geschossen wird und dann diese Flecken so kommen und
+     spritzen, und dann laufen die Farbspritzer am Bild runter."
+
+     Ein Farbklecks besteht aus DREI Dingen, und ohne alle drei sieht
+     er aus wie ein Kreis:
+       1. der Aufschlag selbst — kein Kreis, sondern ein unrunder
+          Fleck mit ausgefransten Rändern;
+       2. die Spritzer, die im Augenblick des Aufpralls wegfliegen —
+          sie machen den Unterschied zwischen „geworfen" und „geklebt";
+       3. die Nase, die danach langsam herunterläuft. Nasse Farbe
+          bleibt nicht stehen.
+     Die Treffer kommen NACHEINANDER, nicht alle auf einmal: sonst ist
+     es ein Muster und kein Beschuss.
+     ----------------------------------------------------------------- */
+  const LC_PAINT = ["#e03e3e", "#f2a03d", "#f5d93c", "#5fbf5f", "#3f8fd8",
+                    "#8b5fd8", "#e85fa8", "#2fc4bd"];
+
+  function lcPaintball() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcPaint")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcPaint";
+    schicht.className = "lc-paint";
+    schicht.setAttribute("aria-hidden", "true");
+    const wieviel = window.innerWidth < 560 ? 9 : 15;
+    for (let i = 0; i < wieviel; i++) {
+      const f = LC_PAINT[Math.floor(Math.random() * LC_PAINT.length)];
+      const gr = 52 + Math.random() * 86;
+      const treffer = document.createElement("i");
+      treffer.style.left = (4 + Math.random() * 88).toFixed(1) + "%";
+      treffer.style.top = (4 + Math.random() * 62).toFixed(1) + "%";
+      treffer.style.width = gr.toFixed(0) + "px";
+      treffer.style.height = gr.toFixed(0) + "px";
+      treffer.style.animationDelay = (i * 0.17 + Math.random() * 0.08).toFixed(2) + "s";
+      /* Der Fleck: ein unrunder Umriss aus acht Radien. Ein Kreis mit
+         border-radius:50% sähe aus wie ein Aufkleber. */
+      const r = () => (34 + Math.random() * 32).toFixed(0) + "%";
+      treffer.style.borderRadius = r() + " " + r() + " " + r() + " " + r()
+        + " / " + r() + " " + r() + " " + r() + " " + r();
+      treffer.style.background = f;
+      /* Die Spritzer: kleine Tropfen, die im Aufprall wegfliegen. */
+      for (let t = 0; t < 7; t++) {
+        const sp = document.createElement("s");
+        const winkel = (t / 7) * 360 + Math.random() * 30;
+        const weit = 26 + Math.random() * 44;
+        const dick = 4 + Math.random() * 8;
+        sp.style.width = dick.toFixed(0) + "px";
+        sp.style.height = dick.toFixed(0) + "px";
+        sp.style.background = f;
+        sp.style.setProperty("--winkel", winkel.toFixed(0) + "deg");
+        sp.style.setProperty("--weit", weit.toFixed(0) + "px");
+        treffer.appendChild(sp);
+      }
+      /* Die Nase, die herunterläuft — erst nach dem Aufschlag. */
+      const nase = document.createElement("u");
+      nase.style.background = "linear-gradient(180deg, " + f + ", " + f + "cc)";
+      nase.style.left = (28 + Math.random() * 40).toFixed(0) + "%";
+      nase.style.width = (7 + Math.random() * 9).toFixed(0) + "px";
+      nase.style.setProperty("--lauf", (50 + Math.random() * 160).toFixed(0) + "px");
+      treffer.appendChild(nase);
+      schicht.appendChild(treffer);
+    }
+    document.body.appendChild(schicht);
+    lcTonZu("paintball");
+    setTimeout(() => schicht.remove(), 11000);
   }
 
   /* --- Seifenblasen: das einzige, was nach oben geht ---------------- */
@@ -19426,6 +19516,7 @@
     jalousie:{ ganzeSeite: true, wie: "jalousie" },
     handdurch:{ ganzeSeite: true, wie: "handdurch" },
     tore:    { ganzeSeite: true, wie: "tore" },
+    paintball:{ ganzeSeite: true, wie: "paintball" },
     lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
@@ -19778,6 +19869,7 @@
       else if (e.wie === "jalousie") lcJalousie();
       else if (e.wie === "handdurch") lcHand();
       else if (e.wie === "tore") lcTore();
+      else if (e.wie === "paintball") lcPaintball();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
       else lcKonfetti();

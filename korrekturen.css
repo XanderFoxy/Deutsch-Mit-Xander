@@ -3532,6 +3532,16 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   z-index: 9345;
   pointer-events: none;
   overflow: hidden;
+  /* Seit das ganze Bild sichtbar ist (preserveAspectRatio „meet"),
+     bleibt oben und unten Platz. Ohne Untergrund saehe man dort eine
+     harte Kante und das Ganze wirkte wie ein aufgeklebtes Foto.
+     Dieser Verlauf setzt die Wuestenfarbe nach unten fort — durch-
+     sichtig genug, dass der Chat darunter lesbar bleibt. */
+  background: linear-gradient(180deg,
+              rgba(233, 180, 106, 0.55) 0%,
+              rgba(242, 207, 142, 0.42) 38%,
+              rgba(214, 170, 110, 0.50) 72%,
+              rgba(176, 132, 74, 0.55) 100%);
   animation: lcWuesteAuf 12s ease-in-out both;
 }
 @keyframes lcWuesteAuf {
@@ -3540,13 +3550,48 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   86%  { opacity: 1; }
   100% { opacity: 0; }
 }
+/* GEMELDET: „Die Sphinx ist rechts ausserhalb des Bildschirms …
+   das soll auch nicht einfach nur ein Bild sein, das andere
+   verdeckt, das soll schon transparent bleiben … vielleicht so,
+   dass sich das ein bisschen verschiebt, als wenn man so eine
+   Tiefenstaffelung vermittelt bekommt — hinter die Pyramiden
+   schauen, und dann baut sich das alles so auf, mit Kamerafahrt."
+
+   Drei Aenderungen, und jede loest genau eines davon:
+
+   1. SICHTBAR STATT ABGESCHNITTEN. „slice" schneidet links und
+      rechts ab, sobald das Fenster breiter als 2:1 ist — und ein
+      Telefon im Hochformat ist SCHMALER, da schneidet es oben und
+      unten. Beides ist falsch. Mit „meet" ist immer das ganze Bild
+      zu sehen, und die Sphinx bleibt drin, egal welches Geraet.
+   2. DURCHSICHTIG. Von 0,88 auf 0,72: man sieht den Chat noch, es
+      legt sich davor statt ihn zuzudecken.
+   3. KAMERAFAHRT. Eine langsame Bewegung nach vorn und leicht zur
+      Seite. Zusammen mit den Ebenen, die sich VERSCHIEDEN schnell
+      mitbewegen (siehe unten), entsteht die Tiefe: Nahes zieht
+      schneller vorbei als Fernes. Das ist der ganze Trick, und er
+      ist derselbe, den ein Kameramann benutzt. */
 .lc-wueste-bild {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: .88;
+  opacity: .72;
+  animation: lcWuesteFahrt 12s ease-in-out both;
 }
+@keyframes lcWuesteFahrt {
+  0%   { transform: scale(1.02) translateX(1.5%); }
+  100% { transform: scale(1.16) translateX(-2.5%); }
+}
+/* Die Tiefenstaffelung: drei Ebenen, drei Geschwindigkeiten.
+   Ganz hinten die Sonne (fast unbewegt), dann die Pyramiden, ganz
+   vorn die Sphinx und der Boden. */
+.lc-wueste-fern { animation: lcWuesteFern 12s linear both; }
+.lc-wueste-mitte { animation: lcWuesteMitte 12s linear both; }
+.lc-wueste-nah { animation: lcWuesteNah 12s linear both; }
+@keyframes lcWuesteFern  { 0% { transform: translateX(0); } 100% { transform: translateX(6px); } }
+@keyframes lcWuesteMitte { 0% { transform: translateX(0); } 100% { transform: translateX(-14px); } }
+@keyframes lcWuesteNah   { 0% { transform: translateX(0); } 100% { transform: translateX(-38px); } }
 /* Das Gleissen: die Sonne atmet, und ueber dem Boden steht ein
    weicher Hitzeschleier, der leicht wandert. */
 .lc-wueste-sonne {
@@ -5927,3 +5972,61 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   .lc-jalousie, .lc-hand, .lc-tore, .lc-leck, .lc-box { display: none; }
   html.lc-dino-beben body { animation: none; }
 }
+
+/* =========================================================
+   PAINTBALL
+   ---------------------------------------------------------
+   Ein Farbklecks besteht aus DREI Dingen, und ohne alle drei
+   sieht er aus wie ein Kreis: der unrunde Aufschlag, die
+   Spritzer im Augenblick des Aufpralls, und die Nase, die
+   danach herunterläuft. Nasse Farbe bleibt nicht stehen.
+   ========================================================= */
+.lc-paint { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
+.lc-paint i {
+  position: absolute;
+  display: block;
+  transform: scale(0);
+  box-shadow: inset -3px -4px 10px rgba(0, 0, 0, 0.22);
+  animation: lcPaintKlatscht 10s cubic-bezier(0.2, 1.7, 0.4, 1) both;
+}
+/* Der Aufschlag ist SCHNELL und schiesst kurz über die Endgrösse
+   hinaus — so klatscht Farbe auf, so wächst sie nicht. */
+@keyframes lcPaintKlatscht {
+  0%   { transform: scale(0); opacity: 0; }
+  4%   { transform: scale(1.22); opacity: 1; }
+  9%   { transform: scale(1); }
+  88%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+.lc-paint s {
+  position: absolute;
+  left: 50%; top: 50%;
+  border-radius: 50%;
+  text-decoration: none;
+  transform: rotate(var(--winkel, 0deg)) translateX(0) scale(0);
+  animation: lcPaintSpritzt 10s cubic-bezier(0.15, 0.9, 0.3, 1) both;
+}
+@keyframes lcPaintSpritzt {
+  0%   { transform: rotate(var(--winkel, 0deg)) translateX(0) scale(0); opacity: 0; }
+  4%   { opacity: 1; }
+  14%  { transform: rotate(var(--winkel, 0deg)) translateX(var(--weit, 40px)) scale(1); }
+  88%  { transform: rotate(var(--winkel, 0deg)) translateX(var(--weit, 40px)) scale(1); opacity: 1; }
+  100% { opacity: 0; }
+}
+/* Die Nase läuft ERST NACH dem Aufschlag los — Farbe braucht einen
+   Moment, bis sie sich löst. */
+.lc-paint u {
+  position: absolute;
+  top: 62%;
+  height: 0;
+  border-radius: 0 0 50% 50% / 0 0 14px 14px;
+  text-decoration: none;
+  animation: lcPaintLaeuft 10s ease-in both;
+}
+@keyframes lcPaintLaeuft {
+  0%, 12% { height: 0; opacity: 0; }
+  16%     { opacity: 1; }
+  80%     { height: var(--lauf, 90px); opacity: 1; }
+  100%    { height: var(--lauf, 90px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .lc-paint { display: none; } }
