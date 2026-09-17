@@ -1259,9 +1259,60 @@ window.LiveChat = (function () {
     }
     if (a.srcObject !== strom) {
       a.srcObject = strom;
-      var v = a.play();
-      if (v && v.catch) v.catch(function () {});
+      tonAbspielenVersuchen(a);
     }
+  }
+
+  /* =========================================================
+     WENN DER BROWSER DEN TON VERWEIGERT
+     ---------------------------------------------------------
+     GEMELDET, immer wieder: „Man hoert die anderen nicht" — und zwar
+     auf iPhone und auf Android im Safari.
+
+     Der Grund ist fast nie die Leitung, sondern die Autoplay-Sperre:
+     a.play() gibt ein Versprechen zurueck, das ABGELEHNT wird, wenn
+     der Browser gerade keine Berechtigung sieht, von sich aus Ton zu
+     machen. Bisher wurde diese Ablehnung verschluckt — dann ist es
+     einfach still, ohne Meldung, ohne Erklaerung. Genau das ist der
+     schlimmste Fall: man sitzt da und weiss nicht, woran es liegt.
+
+     Jetzt wird die Ablehnung gemerkt: das Element kommt auf einen
+     Stapel, beim naechsten Antippen IRGENDWO auf der Seite wird es
+     nachgeholt, und im Chat steht einmal eine Zeile, die sagt, was zu
+     tun ist. Ein Tipp genuegt, weil danach eine echte Nutzergeste
+     vorliegt — genau das verlangen die Browser. */
+  var tonWartet = [];
+  var tonHorcherDa = false;
+  var tonHinweisGezeigt = false;
+  function tonAbspielenVersuchen(a) {
+    var v;
+    try { v = a.play(); } catch (e) { v = null; }
+    if (v && v.catch) {
+      v.catch(function () {
+        if (tonWartet.indexOf(a) < 0) tonWartet.push(a);
+        tonNachholenAnmelden();
+        if (!tonHinweisGezeigt) {
+          tonHinweisGezeigt = true;
+          systemZeile("Dein Browser l\u00e4sst den Ton noch nicht durch \u2014 tipp einmal irgendwo auf die Seite, dann h\u00f6rst du die anderen.");
+        }
+      });
+    }
+  }
+  function tonNachholenAnmelden() {
+    if (tonHorcherDa || typeof document === "undefined") return;
+    tonHorcherDa = true;
+    var arten = ["pointerdown", "touchend", "keydown"];
+    var nachholen = function () {
+      arten.forEach(function (art) { document.removeEventListener(art, nachholen, true); });
+      tonHorcherDa = false;
+      var warten = tonWartet.splice(0);
+      warten.forEach(function (a) {
+        try { var v = a.play(); if (v && v.catch) v.catch(function () {}); } catch (e) {}
+      });
+    };
+    arten.forEach(function (art) {
+      document.addEventListener(art, nachholen, { capture: true, passive: true });
+    });
   }
   function tonAbklemmen(id) {
     var a = tonJe[id];
@@ -1271,6 +1322,8 @@ window.LiveChat = (function () {
   }
   function tonAlleAbklemmen() {
     Object.keys(tonJe).forEach(tonAbklemmen);
+    tonWartet = [];
+    tonHinweisGezeigt = false;
   }
 
   /* Eine neue Spur in den vorhandenen Platz legen — für alle Leitungen.
@@ -4135,6 +4188,12 @@ window.LiveChat = (function () {
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
+    /* Einen Tonanschluss nachstellen — damit sich pruefen laesst, was
+       passiert, wenn der Browser das Abspielen verweigert. */
+    pruefTon: function (id) {
+      var k = typeof MediaStream === "function" ? new MediaStream() : {};
+      return tonAnschliessen(id || "probe", k);
+    },
     /* Die haeufigsten Befehle — fuer die Tipphilfe. */
     haeufigsteBefehle: haeufigsteBefehle,
     befehlZaehlerLeeren: befehlZaehlerLeeren,

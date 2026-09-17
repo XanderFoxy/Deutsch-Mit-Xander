@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 42 — Route 66, Prunkgeschenk und Favoriten",
+  stand: "Runde 43 — der haeufigste Grund fuer 'ich hoere nichts'",
 
   inArbeit: [
-    { seit: "2026-09-17T23:17",
+    { seit: "2026-09-17T23:20",
       text: "Sounds fuer die Animationen — dafuer brauche ich einen Schluessel, sag Bescheid" },
-    { seit: "2026-09-17T23:17",
+    { seit: "2026-09-17T23:20",
       text: "Sitzende Seitenansicht fuer die Figuren" },
-    { seit: "2026-09-17T23:17",
+    { seit: "2026-09-17T23:20",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-17T23:17",
-      text: "/route66 — Wagen kommt aus der Ferne, mit Fluchtpunkt, Kakteen und Staub" },
-    { seit: "2026-09-17T23:17",
-      text: "/prunk — grosses Geschenk wie bei TikTok: Strahlen, Glanz, Funken, Muenzregen" },
-    { seit: "2026-09-17T23:17",
-      text: "Tipphilfe: deine sechs haeufigsten Befehle stehen oben und legen sich ins Feld" },
-    { seit: "2026-09-17T23:17",
-      text: "Gezaehlt wird nur im Geraet — es geht niemanden an, was du tippst" },
+    { seit: "2026-09-17T23:20",
+      text: "Tonsperre auf iPhone und Android: der Browser lehnt das Abspielen ab — das war bisher einfach still" },
+    { seit: "2026-09-17T23:20",
+      text: "Jetzt steht im Chat, was zu tun ist, und ein Antippen holt den Ton sofort nach" },
+    { seit: "2026-09-17T23:20",
+      text: "Nachgestellt im Pruefbrowser wie auf einem iPhone: abgelehnt, gemeldet, nachgeholt" },
   ],
 };
