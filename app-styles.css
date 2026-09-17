@@ -7611,17 +7611,29 @@ input[type="checkbox"], input[type="radio"] {
      die Lichtseite — genau das gibt einer Wolke ihre Unterseite. Die
      Ballen sitzen im oberen Drittel des Streifens: darunter soll der
      Himmel zu sehen bleiben und der Niederschlag fallen können. */
+  /* Zwei Haufen und ein Schleier je Kachel statt fuenf gleich grosser
+     Ballen: ungleiche Groessen, weichere Raender (Abfall erst bei 48 %
+     statt 55 %) und ein Schleier ganz hinten. Vorher lag der Himmel
+     wie eine dicke Wattedecke ueber der Seite. */
   background-image:
-    radial-gradient(24px 9px at 40px 16px, var(--w-wolke-schatten) 0 55%, transparent 78%),
-    radial-gradient(31px 11px at 76px 15px, var(--w-wolke-schatten) 0 55%, transparent 78%),
-    radial-gradient(21px 8px at 110px 17px, var(--w-wolke-schatten) 0 55%, transparent 78%),
-    radial-gradient(27px 10px at 198px 16px, var(--w-wolke-schatten) 0 55%, transparent 78%),
-    radial-gradient(18px 7px at 232px 18px, var(--w-wolke-schatten) 0 55%, transparent 78%),
-    radial-gradient(24px 9px at 40px 12px, var(--w-wolke-hell) 0 55%, transparent 80%),
-    radial-gradient(31px 11px at 76px 11px, var(--w-wolke-hell) 0 55%, transparent 80%),
-    radial-gradient(21px 8px at 110px 13px, var(--w-wolke-hell) 0 55%, transparent 80%),
-    radial-gradient(27px 10px at 198px 12px, var(--w-wolke-hell) 0 55%, transparent 80%),
-    radial-gradient(18px 7px at 232px 14px, var(--w-wolke-hell) 0 55%, transparent 80%);
+    radial-gradient(34px 13px at 58px 23px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(23px 10px at 36px 27px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(26px 11px at 80px 27px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(16px 7px at 96px 24px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(29px 11px at 170px 21px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(19px 8px at 152px 25px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(21px 9px at 188px 25px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(13px 5px at 236px 19px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(10px 4px at 248px 21px, var(--w-wolke-schatten) 0 48%, transparent 84%),
+    radial-gradient(34px 13px at 58px 19px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(23px 10px at 36px 23px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(26px 11px at 80px 23px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(16px 7px at 96px 20px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(29px 11px at 170px 17px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(19px 8px at 152px 21px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(21px 9px at 188px 21px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(13px 5px at 236px 15px, var(--w-wolke-hell) 0 48%, transparent 86%),
+    radial-gradient(10px 4px at 248px 17px, var(--w-wolke-hell) 0 48%, transparent 86%);
   animation: wZiehen 64s linear infinite;
   will-change: transform;
 }
@@ -7635,9 +7647,12 @@ input[type="checkbox"], input[type="radio"] {
    das Ziehen ist selbst eine transform-Bewegung und würde jeden festen
    Wert davon überschreiben. Verschoben wird deshalb mit top, skaliert
    mit height. */
-.w-wb1 { --w-kachel: 250px; opacity: 0.9;  animation-duration: 46s;  animation-delay: -12s; }
-.w-wb2 { --w-kachel: 330px; opacity: 0.62; animation-duration: 78s;  animation-delay: -30s; height: 82%; }
-.w-wb3 { --w-kachel: 410px; opacity: 0.4;  animation-duration: 116s; animation-delay: -55s; height: 66%; }
+/* Der Versatz steht NICHT mehr hier, sondern kommt aus der Uhrzeit
+   (siehe wWolkenbaender in app.js): sonst sprang der Himmel bei jedem
+   Neuzeichnen an dieselbe feste Stelle zurueck. */
+.w-wb1 { --w-kachel: 260px; opacity: 0.78; animation-duration: 46s; }
+.w-wb2 { --w-kachel: 340px; opacity: 0.5;  animation-duration: 78s;  height: 82%; }
+.w-wb3 { --w-kachel: 420px; opacity: 0.3;  animation-duration: 116s; height: 66%; }
 /* Bei Regen, Schnee, Hagel und Gewitter kommt der Niederschlag aus der
    Decke: die Wolken rücken ein Stück höher, damit unter ihnen Platz
    zum Fallen bleibt. */

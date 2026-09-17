@@ -249,3 +249,54 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    unter einem anderen liegen (der Stuhl unter dem Mädchen, das Fleisch
    in der Vitrine). Sie liegen über allem, das Kleinste zuoberst. */
 .bw-treffer-oben rect { cursor: pointer; }
+
+/* ------------------------------------------------------------------
+   DIE MILCHSTRASSE — ein blasses Band hinter den Sternen.
+   Ein Nachthimmel aus lauter gleich verteilten Punkten sieht aus wie
+   ein Aufkleber; was ihn echt macht, ist die ungleiche Dichte.
+   ------------------------------------------------------------------ */
+.w-milchstrasse {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(104deg, transparent 32%,
+      rgba(206, 216, 244, 0.13) 43%,
+      rgba(226, 232, 250, 0.2) 50%,
+      rgba(206, 216, 244, 0.13) 57%, transparent 68%);
+  filter: blur(3px);
+}
+
+/* ------------------------------------------------------------------
+   DER GEZEICHNETE SPIELNAME steht mittig über dem Spiel.
+   Er hing bisher am linken Rand, weil .spiel-titel keine Ausrichtung
+   hatte — bei einem breiten Schriftzug fiel das nicht auf, bei einem
+   kurzen wie „Fuchsuhr" stand er verloren in der Ecke.
+   ------------------------------------------------------------------ */
+.spiel-titel { text-align: center; }
+.spiel-titel .wortlogo { display: inline-block; vertical-align: top; }
+
+/* ------------------------------------------------------------------
+   PRÜFEN UND ÜBEN SIND ZWEIERLEI.
+   Im Aussprache-Trainer standen „Noch einmal vorsprechen", „Noch einmal
+   sprechen" und der Shadowing-Block mit „Original" dicht untereinander —
+   drei fast gleich klingende Knöpfe, von denen einer aufnimmt, einer
+   bewertet und einer gar nichts tut. Der Übungsteil steht jetzt als
+   eigene, abgesetzte Karte darunter und sagt in einem Satz, was er ist.
+   ------------------------------------------------------------------ */
+.ausspr-shadow {
+  margin-top: 18px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(138, 90, 30, 0.22);
+  border-radius: 14px;
+  background: rgba(138, 90, 30, 0.045);
+}
+.ausspr-shadow-titel {
+  margin: 2px 0 4px;
+  font-size: 1rem;
+}
+.ausspr-shadow-was {
+  margin: 0 0 10px;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}

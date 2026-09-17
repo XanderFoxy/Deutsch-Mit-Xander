@@ -6892,19 +6892,41 @@
        Hintergrund und wiederholen sich seitlich. Bewegt wird die
        Schicht um genau eine Kachelbreite — dadurch ist der Übergang
        nahtlos, ohne dass irgendetwas doppelt gezeichnet werden muss. */
+    /* Der Versatz kommt aus der UHRZEIT, nicht aus einer festen Zahl im
+       Stilblatt. Wird die Wetterecke neu gezeichnet — und das passiert
+       bei jedem Wechsel der Ansicht —, entstehen die Bänder neu und
+       begannen bisher wieder bei ihrer festen Verzögerung: der Himmel
+       sprang sichtbar zurück. Aus der Uhrzeit gerechnet laufen sie
+       dagegen genau dort weiter, wo sie eben waren. */
+    const DAUER = [46, 78, 116];
     let s = "";
-    for (let i = 1; i <= anzahl; i++) s += `<span class="w-wolkenband w-wb${i}"></span>`;
+    for (let i = 1; i <= anzahl; i++) {
+      const dauer = DAUER[i - 1] || 64;
+      const versatz = -((Date.now() / 1000) % dauer);
+      s += `<span class="w-wolkenband w-wb${i}" style="animation-delay:${versatz.toFixed(2)}s"></span>`;
+    }
     return s;
   }
   function wSternenhimmel() {
     /* Unterschiedlich helle Sterne: drei Helligkeitsstufen, jede mit
-       eigenem Funkeln. Die hellen sind größer und funkeln langsamer. */
-    return wTeilchen("stern", 22, (i) => {
-      const stufe = i % 4 === 0 ? 1 : (i % 4 === 1 ? 2 : 3);
+       eigenem Funkeln. Die hellen sind größer und funkeln langsamer.
+
+       ZAHL: 22 Sterne auf der ganzen Breite waren zu wenige — ein
+       echter Nachthimmel ist dicht, und die wenigen standen so weit
+       auseinander, dass sie wie aufgeklebte Punkte wirkten. Jetzt 48,
+       davon aber nur jeder vierte hell: die Tiefe entsteht durch die
+       vielen schwachen dahinter, nicht durch mehr helle.
+
+       Dazu ein blasses Band quer über den Streifen — die Milchstraße.
+       Sie steht im Stilblatt als .w-milchstrasse und liegt hinter den
+       Sternen. */
+    const ANZAHL = 48;
+    return '<i class="w-milchstrasse"></i>' + wTeilchen("stern", ANZAHL, (i) => {
+      const stufe = i % 6 === 0 ? 1 : (i % 3 === 0 ? 2 : 3);
       /* Bandweise gestreut — sonst blieb die Mitte des Streifens
          nachweislich sternenleer, während sich links Sterne häuften. */
-      const links = 2 + wStreuBand(i, 22, 1, 96);
-      const oben = 6 + wStreu(i, 7, 76);
+      const links = 2 + wStreuBand(i, ANZAHL, 1, 96);
+      const oben = 4 + wStreu(i, 7, 80);
       const takt = wStreu(i, 11, 1);
       return `<i class="w-stern w-sh${stufe}" style="left:${links}%; top:${oben}%; animation-delay:-${(takt * 5.6).toFixed(2)}s; --w-takt:${takt};"></i>`;
     });
@@ -11852,7 +11874,13 @@
     const hatEigene = Boolean(aussprLetzteEigene);
     return `
       <div class="ausspr-shadow">
-        <p class="eyebrow">NACHSPRECHEN (SHADOWING)</p>
+        <p class="eyebrow">ZUM ÜBEN — HIER WIRD NICHTS BEWERTET</p>
+        <h4 class="ausspr-shadow-titel">Hören und nachsprechen</h4>
+        <p class="empty-note ausspr-shadow-was">
+          Oben wird geprüft, hier wird geübt: Du hörst das Original und deine
+          eigene Aufnahme direkt nacheinander und merkst selbst, wo der
+          Unterschied liegt. Nichts davon geht in deine Bewertung ein.
+        </p>
         ${aussprWellenHtml()}
         <div class="quiz-actions ausspr-shadow-knoepfe">
           <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Original</button>
@@ -12019,10 +12047,10 @@
         </div>` : ""}
         <p class="ausspr-lauf" id="ausspracheLauf"></p>
         <div class="quiz-actions" style="justify-content:center; margin:8px 0 6px;">
-          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Noch einmal vorsprechen</button>
+          <button type="button" class="btn btn-ghost" data-ausspr-spiel="original">🔊 Wort noch einmal hören</button>
           ${s.laeuft
             ? `<button type="button" class="btn btn-coffee" id="ausspracheStop">⏹️ Fertig — auswerten</button>`
-            : `<button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${(mikro || kannHoeren) ? "" : "disabled"}>🎙️ ${b ? "Noch einmal sprechen" : "Jetzt sprechen"}</button>`}
+            : `<button type="button" class="btn btn-coffee" id="ausspracheAufnehmen" ${(mikro || kannHoeren) ? "" : "disabled"}>🎙️ ${b ? "Noch einmal aufnehmen" : "Jetzt sprechen"}</button>`}
         </div>
         <div id="ausspracheRueckmeldung">
           ${aussprRueckmeldungHtml(s, b)}
