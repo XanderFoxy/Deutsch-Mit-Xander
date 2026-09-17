@@ -200,6 +200,10 @@ window.LiveChat = (function () {
 
      Wer nur zuschaut (nicht auf der Bühne), belegt keinen Platz und
      kann trotzdem mitschreiben. */
+  /* Wer sitzt auf welchem Platz? Einmal vergeben, bleibt es so,
+     solange die Person im Raum ist — siehe unten. */
+  var platzJe = {};
+
   function plaetzeBauen() {
     var wer = [];
     if (zustand.lage === "drin" && zustand.buehne) {
@@ -225,9 +229,39 @@ window.LiveChat = (function () {
       return (a.seit || 0) - (b.seit || 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
     });
 
+    /* DIE FORMATION BLEIBT STEHEN.
+       ---------------------------------------------------------
+       GEMELDET: „Die Plätze oben, diese Kreise, wo man rein kann,
+       sollen immer in der Formation bleiben, wie sie sind."
+
+       Bisher wurden die Plätze bei jedem Zeichnen neu durchnummeriert.
+       Ging einer von der Bühne, rückten alle dahinter auf — für die
+       anderen sprang das ganze Bild. Jetzt bekommt jeder EINMAL seine
+       Nummer und behält sie, solange er im Raum ist. Wer geht,
+       hinterlässt eine Lücke; wer kommt, bekommt die niedrigste freie.
+       So steht der, der zuerst da war, auf Platz 1 und bleibt dort —
+       und niemand rutscht mehr herum, nur weil ein anderer aufsteht. */
+    var vergeben = {};
+    wer.forEach(function (p) {
+      if (platzJe[p.id] != null) vergeben[platzJe[p.id]] = p.id;
+    });
+    wer.forEach(function (p) {
+      if (platzJe[p.id] != null) return;
+      for (var n = 0; n < PLAETZE; n++) {
+        if (vergeben[n] == null) { platzJe[p.id] = n; vergeben[n] = p.id; return; }
+      }
+    });
+    /* Wer nicht mehr da ist, gibt seinen Platz wieder frei. */
+    var nochDa = {};
+    wer.forEach(function (p) { nochDa[p.id] = true; });
+    Object.keys(platzJe).forEach(function (id) {
+      if (!nochDa[id]) delete platzJe[id];
+    });
+
     var raus = [];
     for (var i = 0; i < PLAETZE; i++) {
-      var p = wer[i];
+      var id = vergeben[i];
+      var p = id ? wer.filter(function (x) { return x.id === id; })[0] : null;
       raus.push(p ? {
         nummer: i + 1, id: p.id, name: p.name, ich: p.ich, strom: p.strom,
         tonAn: p.tonAn, bildAn: p.bildAn, bild: p.bild, spricht: p.spricht, leer: false
@@ -625,7 +659,11 @@ window.LiveChat = (function () {
         a.onsuccess = function () {
           var c = a.result;
           if (!c) return;
-          try { c.delete(); } catch (e) {}
+          /* Der eigene Hintergrund altert nicht — er bleibt, bis man
+             ihn selbst wieder wegnimmt. */
+          if (!c.value || c.value.id !== HINTERGRUND_ID) {
+            try { c.delete(); } catch (e) {}
+          }
           c.continue();
         };
       } catch (e) {}
@@ -650,6 +688,49 @@ window.LiveChat = (function () {
         etwas = true;
       });
       return etwas;
+    });
+  }
+
+  /* --- Das eigene Hintergrundbild ------------------------------
+     GEMELDET: „Hintergründe lassen sich immer noch nicht einbinden.
+     Ich bin dabei rausgeschmissen worden."
+
+     Zwei Ursachen, beide hausgemacht:
+
+     1. Das Verkleinern hatte EIN festes Höchstmass — 140 000 Zeichen,
+        gedacht für ein Foto im Chat. Ein Hintergrund ist 720 Pixel
+        breit und reisst das mühelos; also flog er mit „zu gross"
+        heraus, bevor er überhaupt irgendwo ankam.
+
+     2. Gespeichert werden sollte er im localStorage. Der fasst
+        insgesamt wenige Megabyte — und teilt sie sich mit dem ganzen
+        Chatverlauf. Ein halbes Megabyte Hintergrund hat ihn gesprengt;
+        danach schlug jedes weitere Sichern fehl, der Verlauf ging
+        verloren, und es sah aus, als wäre man hinausgeworfen worden.
+
+     Der Hintergrund liegt deshalb jetzt dort, wo auch die Chatbilder
+     liegen: im Lager (IndexedDB). Dort ist Platz, und der localStorage
+     bleibt dem Text vorbehalten. */
+  var HINTERGRUND_ID = "hintergrund-eigen";
+  function hintergrundSichern(daten) {
+    if (!daten) {
+      return lager().then(function (db) {
+        if (!db) return false;
+        return new Promise(function (fertig) {
+          try {
+            var t = db.transaction(LAGER_FACH, "readwrite");
+            t.objectStore(LAGER_FACH).delete(HINTERGRUND_ID);
+            t.oncomplete = function () { fertig(true); };
+            t.onerror = function () { fertig(false); };
+          } catch (e) { fertig(false); }
+        });
+      });
+    }
+    return lagerLegen(HINTERGRUND_ID, "", daten);
+  }
+  function hintergrundHolen() {
+    return lagerHolen([HINTERGRUND_ID]).then(function (g) {
+      return g[HINTERGRUND_ID] || "";
     });
   }
 
@@ -925,6 +1006,7 @@ window.LiveChat = (function () {
       } catch (x) {}
       e.track.onunmute = function () { melden(); };
       e.track.onended = function () { melden(); };
+      tonAnschliessen(anderId, p.strom);
       melden();
     };
     pc.oniceconnectionstatechange = function () {
@@ -997,6 +1079,54 @@ window.LiveChat = (function () {
     spurenJe[anderId] = satz;
   }
 
+  /* =========================================================
+     DER TON HÄNGT NICHT AM BILDSCHIRM
+     ---------------------------------------------------------
+     GEMELDET: „Achte auch darauf, wenn ich mit jemandem spreche und
+     der Chat ist abgelegt, dass ich den anderen noch höre, er mich
+     auch noch, sieht in der Kamera."
+
+     Der Ton lief bisher über die <video>-Elemente im Klassenzimmer.
+     Wer den Bereich verlässt und die Seite weiterblättert, bekommt
+     diese Elemente aber nicht mehr neu gesetzt — und wer WÄHREND
+     dieser Zeit dazukam, hatte nie eines. Dann steht die Leitung, und
+     trotzdem hört man nichts.
+
+     Deshalb hängt zu jeder Person zusätzlich ein <audio> DIREKT am
+     Seitenkörper. Es ist unsichtbar, es hat nichts mit der Ansicht zu
+     tun, und es lebt genau so lange wie die Leitung. Das Bild bleibt
+     Sache der Oberfläche; der TON hört nie auf, nur weil man
+     weiterblättert. */
+  var tonJe = {};
+  function tonAnschliessen(id, strom) {
+    if (!strom || typeof document === "undefined") return;
+    var a = tonJe[id];
+    if (!a) {
+      try {
+        a = document.createElement("audio");
+        a.autoplay = true;
+        a.setAttribute("playsinline", "");
+        a.style.display = "none";
+        document.body.appendChild(a);
+        tonJe[id] = a;
+      } catch (e) { return; }
+    }
+    if (a.srcObject !== strom) {
+      a.srcObject = strom;
+      var v = a.play();
+      if (v && v.catch) v.catch(function () {});
+    }
+  }
+  function tonAbklemmen(id) {
+    var a = tonJe[id];
+    if (!a) return;
+    try { a.srcObject = null; a.remove(); } catch (e) {}
+    delete tonJe[id];
+  }
+  function tonAlleAbklemmen() {
+    Object.keys(tonJe).forEach(tonAbklemmen);
+  }
+
   /* Eine neue Spur in den vorhandenen Platz legen — für alle Leitungen.
      Das ist der ganze Trick, mit dem die Kamera später dazukommt. */
   function spurTauschen(art, spur) {
@@ -1018,6 +1148,7 @@ window.LiveChat = (function () {
   }
 
   function brueckeAbbauen(id) {
+    tonAbklemmen(id);
     var pc = brueckeJe[id];
     if (pc) { try { pc.close(); } catch (e) {} delete brueckeJe[id]; }
     delete kerzenLager[id];
@@ -1633,6 +1764,7 @@ window.LiveChat = (function () {
     zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
     zustand.schrift = gemerkteSchrift();
     zustand.buehne = o.buehne !== false;
+    platzJe = {};                 // neuer Raum, neue Sitzordnung
     zustand.seit = Date.now();
     zustand.spricht = false;
     zustand.thema = "";
@@ -1764,6 +1896,7 @@ window.LiveChat = (function () {
       setTimeout(function () { try { alterKanal.unsubscribe(); } catch (e) {} }, 350);
     }
     Object.keys(brueckeJe).forEach(brueckeAbbauen);
+    tonAlleAbklemmen();
     lautstaerkeStoppen();
     if (zustand.eigenerStrom) {
       try { zustand.eigenerStrom.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
@@ -1932,7 +2065,7 @@ window.LiveChat = (function () {
   var BILD_KANTE = 640;
   var BILD_HOECHST = 140000;      // Zeichen der Datenadresse
 
-  function bildVerkleinern(datei, kante) {
+  function bildVerkleinern(datei, kante, hoechst) {
     return new Promise(function (fertig, scheitern) {
       if (!datei || !/^image\//.test(datei.type || "")) {
         scheitern(new Error("Das ist kein Bild.")); return;
@@ -1954,12 +2087,13 @@ window.LiveChat = (function () {
           var tafel = document.createElement("canvas");
           tafel.width = b; tafel.height = h;
           tafel.getContext("2d").drawImage(bild, 0, 0, b, h);
+          var grenze = hoechst || BILD_HOECHST;
           var guete = 0.62, daten = tafel.toDataURL("image/jpeg", guete);
-          while (daten.length > BILD_HOECHST && guete > 0.3) {
+          while (daten.length > grenze && guete > 0.3) {
             guete -= 0.1;
             daten = tafel.toDataURL("image/jpeg", guete);
           }
-          if (daten.length > BILD_HOECHST) {
+          if (daten.length > grenze) {
             scheitern(new Error("Das Bild ist selbst verkleinert noch zu gross."));
             return;
           }
@@ -2096,7 +2230,7 @@ window.LiveChat = (function () {
        "   /      ()      \\        ",
        "  /________________\\       ",
        "                           ",
-       "      sagt %NAME%          "].join("\n"),
+       "        \u2014 %NAME%         "].join("\n"),
     baum:
       ["         &&&&&&&&&         ",
        "       &&&&&&&&&&&&&       ",
@@ -2110,7 +2244,7 @@ window.LiveChat = (function () {
        "           /|||\\           ",
        "    ______/_____\\______    ",
        "                           ",
-       "    %NAME% steht im Wald   "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     blume:
       ["        _(_)_              ",
        "    @@@@(_)@@@@            ",
@@ -2124,7 +2258,7 @@ window.LiveChat = (function () {
        "         | /               ",
        "     ____|/____            ",
        "                           ",
-       "  fuer dich, von %NAME%    "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     daumen:
       ["           ____            ",
        "          /    |           ",
@@ -2148,29 +2282,32 @@ window.LiveChat = (function () {
        "     '.   \\  /      .'     ",
        "       '---\\/------'       ",
        "                           ",
-       "     %NAME%: erledigt      "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     fuchs:
-      ["       /\\             /\\       ",
-       "      /  \\___________/  \\      ",
-       "     /   /           \\   \\     ",
-       "    /   /   \\     /   \\   \\    ",
-       "   |   |  (@) \\   / (@)  |   | ",
-       "   |   |       \\ /       |   | ",
-       "    \\   \\       v       /   /  ",
-       "     \\   \\    .---.    /   /   ",
-       "      \\   \\  ( o o )  /   /    ",
-       "       \\   \\  `-.-`  /   /     ",
-       "        \\   `--- ---`   /      ",
-       "         \\_____________/       ",
-       "        /               \\      ",
-       "       /   \\_________/   \\     ",
-       "      |                   |    ",
-       "       \\                 /     ",
-       "        `\\__/`-----`\\__/`      ",
-       "          ||         ||        ",
-       "         (__)       (__)       ",
-       "                               ",
-       "    %NAME% schleicht vorbei    "].join("\n"),
+      ["    /\\     /\\    ",
+       "   /  \\___/  \\   ",
+       "  /  o     o  \\  ",
+       " |      w      | ",
+       "  \\    ___    /  ",
+       "   \\  \\___/  /   ",
+       "    \\_______/    ",
+       "   /         \\   ",
+       "  /  \\_____/  \\  ",
+       " (_/         \\_) ",
+       "   ~~~~~~~~~~~   ",
+       "      \u2014 %NAME%   "].join("\n"),
+    geschenk:
+      ["       \\  |  /       ",
+       "       .-----.       ",
+       "   ---(  * *  )---   ",
+       "       `--+--`       ",
+       "   .-----------.     ",
+       "   |     ||    |     ",
+       "   |=====||====|     ",
+       "   |     ||    |     ",
+       "   |     ||    |     ",
+       "   `-----------`     ",
+       "      \u2014 %NAME%      "].join("\n"),
     haus:
       ["            /\\             ",
        "           /  \\            ",
@@ -2184,7 +2321,7 @@ window.LiveChat = (function () {
        "        |  | o  ||         ",
        "    ____|__|____||____     ",
        "                           ",
-       "   willkommen bei %NAME%   "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     herz:
       ["     ,d8888b.  ,d8888b.    ",
        "   ,88888888888888888888,  ",
@@ -2197,7 +2334,7 @@ window.LiveChat = (function () {
        "         `Y888Y'           ",
        "           `Y'             ",
        "                           ",
-       "        von %NAME%         "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     hund:
       ["     ,--.        ,--.      ",
        "    /    \\______/    \\     ",
@@ -2212,7 +2349,7 @@ window.LiveChat = (function () {
        "       \\   '--'   /        ",
        "        `--------'         ",
        "                           ",
-       "     wuff, sagt %NAME%     "].join("\n"),
+       "        \u2014 %NAME%         "].join("\n"),
     kaffee:
       ["         )  (  )           ",
        "        (   )  (           ",
@@ -2227,7 +2364,7 @@ window.LiveChat = (function () {
        "       `------'            ",
        "    ________________       ",
        "                           ",
-       "    %NAME% kocht Kaffee    "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     katze:
       ["       /\\_____/\\           ",
        "      /  o   o  \\          ",
@@ -2237,7 +2374,7 @@ window.LiveChat = (function () {
        "    ( (  )   (  ) )        ",
        "   (__(__)___(__)__)       ",
        "                           ",
-       "     miau, sagt %NAME%     "].join("\n"),
+       "        \u2014 %NAME%         "].join("\n"),
     lachen:
       ["        .-'''''''''-.       ",
        "      .'             '.     ",
@@ -2250,7 +2387,7 @@ window.LiveChat = (function () {
        "        '-...........-'     ",
        "                            ",
        "     H A   H A   H A !      ",
-       "            %NAME%          "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     rakete:
       ["            /\\             ",
        "           /  \\            ",
@@ -2267,7 +2404,7 @@ window.LiveChat = (function () {
        "            **             ",
        "           ****            ",
        "                           ",
-       "      %NAME% hebt ab       "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     schiff:
       ["                |             ",
        "               /|\\            ",
@@ -2281,7 +2418,7 @@ window.LiveChat = (function () {
        "  ~~~~~~~~~~~~~~~~~~~~~~~~~~  ",
        "   ~~~~~~~~~~~~~~~~~~~~~~~~   ",
        "                              ",
-       "    %NAME% sticht in See      "].join("\n"),
+       "          \u2014 %NAME%           "].join("\n"),
     stern:
       ["             *             ",
        "            ***            ",
@@ -2295,7 +2432,7 @@ window.LiveChat = (function () {
        "     ***         ***       ",
        "    **             **      ",
        "                           ",
-       "   %NAME% wuenscht was     "].join("\n"),
+       "        \u2014 %NAME%          "].join("\n"),
     traurig:
       ["        .-'''''''''-.      ",
        "      .'             '.    ",
@@ -2307,7 +2444,18 @@ window.LiveChat = (function () {
        "      '.             .'    ",
        "        '-.........-'      ",
        "                           ",
-       "     hmpf, sagt %NAME%     "].join("\n"),
+       "        \u2014 %NAME%         "].join("\n"),
+    ueberraschung:
+      ["     *   .   *       ",
+       "   .   \\ | /   .     ",
+       "      --( )--        ",
+       "   *   / | \\   *     ",
+       "      .-----.        ",
+       "     /       \\       ",
+       "    |  !!!!!  |      ",
+       "     \\       /       ",
+       "      `-----`        ",
+       "      \u2014 %NAME%      "].join("\n"),
     winken:
       ["        _   _   _          ",
        "   _   | | | | | |         ",
@@ -2321,7 +2469,7 @@ window.LiveChat = (function () {
        "      |            |       ",
        "      |____________|       ",
        "                           ",
-       "   %NAME% winkt euch zu    "].join("\n")
+       "        \u2014 %NAME%          "].join("\n")
   };
 
   var EMOJIBILD = {
@@ -2338,6 +2486,12 @@ window.LiveChat = (function () {
        "\u3000\u3000\ud83c\udf82\ud83c\udf82\ud83c\udf82\u3000\u3000",
        "\ud83c\udf8a\u3000\ud83c\udf81\u3000\ud83e\udd73\u3000\ud83c\udf81\u3000\ud83c\udf8a",
        "Herzlichen Glueckwunsch von %NAME%"].join("\n"),
+    geschenk:
+      ["\u2728\u3000\ud83c\udf88\u3000\u2728\u3000\ud83c\udf88\u3000\u2728",
+       "\u3000\u3000\ud83c\udf81\ud83c\udf81\ud83c\udf81\u3000\u3000",
+       "\u3000\ud83c\udf80\u3000\ud83c\udf80\u3000\ud83c\udf80\u3000",
+       "\ud83e\udd73\u3000\u3000\u2764\ufe0f\u3000\u3000\ud83e\udd70",
+       "%NAME%"].join("\n"),
     gewitter:
       ["\u2601\ufe0f\u26c8\ufe0f\u2601\ufe0f\u3000\u26c8\ufe0f\u2601\ufe0f\u3000",
        "\u3000\u26a1\u3000\u3000\u26a1\u3000\u3000\u26a1",
@@ -2453,6 +2607,7 @@ window.LiveChat = (function () {
     { w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
     { w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <name>", was: "Luftballons steigen auf — zum Geburtstag" },
+    { w: "geschenk", kurz: "gift", nutzt: "/geschenk <name>",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
     { w: "schnee",  kurz: "",     nutzt: "/schnee",             was: "Es schneit im ganzen Raum" },
     { w: "regen",   kurz: "",     nutzt: "/regen",              was: "Es regnet im ganzen Raum" },
     { w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
@@ -2710,6 +2865,7 @@ window.LiveChat = (function () {
                      party: "konfetti", konfetty: "konfetti", feier: "konfetti",
                      confetti: "konfetti",
                      geburtstag: "ballon", ballons: "ballon", luftballon: "ballon",
+                     gift: "geschenk", praesent: "geschenk", ueberraschung: "geschenk",
                      schneien: "schnee", flocken: "schnee",
                      regnen: "regen", nieseln: "regen",
                      raketen: "feuerwerk", silvester: "feuerwerk",
@@ -2924,6 +3080,23 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " l\u00e4sst Luftballons steigen"
         + (fuerWen ? " f\u00fcr " + fuerWen.name : "") + "  \ud83c\udf88",
         { wirkung: "ballon" });
+    }
+
+    /* ---- Ein Geschenk überreichen ----
+       GEWÜNSCHT: „Du kannst auch noch einen Code für ein Geschenk
+       machen, oder Überraschung — Xander gibt Emmy ein Geschenk, also
+       /gift Emmy oder so, und dann ist das mit einer schönen Animation
+       wieder."
+
+       Es geht als Bild aus Buchstaben hinaus — damit steht das
+       Geschenk wirklich im Chat und ist nicht nur ein Satz — und
+       nimmt dazu die Wirkung „geschenk" mit, die es über der ganzen
+       Seite auspacken lässt. */
+    if (art === "geschenk") {
+      var wemGe = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      var bild = ASCII.geschenk
+        .split("%NAME%").join(zustand.ichName + (wemGe ? " f\u00fcr " + wemGe.name : ""));
+      return anAlle("ascii", bild, { wirkung: "geschenk" });
     }
 
     /* ---- Wetter im Raum ----
@@ -3314,6 +3487,8 @@ window.LiveChat = (function () {
     letzteBilder: letzteBilder,
     bildGemerkt: bildGemerkt,
     letzteBilderVergessen: letzteBilderVergessen,
+    hintergrundSichern: hintergrundSichern,
+    hintergrundHolen: hintergrundHolen,
     archivRaeume: archivRaeume,
     archivLaden: archivLaden,
     archivAlsText: archivAlsText

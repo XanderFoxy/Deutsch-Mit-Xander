@@ -5244,7 +5244,7 @@
     document.querySelector('.tape-tab[data-target="view-knowledge"]')?.click();
     setTimeout(() => {
       document.querySelector('.subnav-pill[data-sub="sub-livechat"]')?.click();
-      document.getElementById("livechatArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => livechatInsBild(), 120);
     }, 80);
   });
 
@@ -13663,6 +13663,49 @@
     setTimeout(() => schicht.remove(), e.dauer);
   }
 
+  /* =================================================================
+     EIN GESCHENK WIRD AUSGEPACKT
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Ein Code für ein Geschenk oder Überraschung … und dann
+     ist das mit einer schönen Animation wieder."
+
+     Ein Paket schwebt herein, wackelt zweimal — als hielte es etwas
+     kaum noch —, dann springt der Deckel ab und heraus fliegt, was
+     drin war: Bänder, Herzen, Sterne. Danach ist die Seite wieder
+     leer, als wäre nichts gewesen.
+     ================================================================= */
+  const LC_GESCHENK_INHALT = ["\u2764\ufe0f", "\u2b50", "\u2728", "\ud83c\udf80",
+                              "\ud83c\udf88", "\ud83c\udf1f", "\ud83d\udc96"];
+  function lcGeschenk() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcGeschenk")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcGeschenk";
+    schicht.className = "lc-geschenk";
+    schicht.setAttribute("aria-hidden", "true");
+
+    const paket = document.createElement("div");
+    paket.className = "lc-paket";
+    paket.innerHTML = '<i class="lc-paket-deckel"></i><i class="lc-paket-kasten"></i>'
+      + '<i class="lc-paket-band"></i><i class="lc-paket-schleife"></i>';
+    schicht.appendChild(paket);
+
+    const wieviel = window.innerWidth < 560 ? 18 : 30;
+    for (let i = 0; i < wieviel; i++) {
+      const t = document.createElement("span");
+      t.textContent = LC_GESCHENK_INHALT[i % LC_GESCHENK_INHALT.length];
+      const winkel = (360 / wieviel) * i + Math.random() * 12;
+      const weite = 90 + Math.random() * 160;
+      t.style.setProperty("--lc-gx", (Math.cos(winkel * Math.PI / 180) * weite).toFixed(1) + "px");
+      t.style.setProperty("--lc-gy", (Math.sin(winkel * Math.PI / 180) * weite - 60).toFixed(1) + "px");
+      t.style.fontSize = (0.9 + Math.random() * 1.3).toFixed(2) + "rem";
+      t.style.animationDelay = (1.55 + Math.random() * 0.25).toFixed(2) + "s";
+      schicht.appendChild(t);
+    }
+    document.body.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 4600);
+  }
+
   /* --- Der Startschirm: ein Satz, ein Knopf --- */
   function livechatStartHtml(l) {
     const ausLink = LiveChat.raumAusAdresse();
@@ -13767,7 +13810,7 @@
           <button type="button" class="lc-rundknopf" data-lc="profilbild" title="Profilbild oder GIF" aria-label="Profilbild oder GIF setzen">🖼️</button>
           <button type="button" class="lc-rundknopf lc-buehnenknopf" data-lc="buehne"
                   title="Auf die Bühne oder wieder herunter"
-                  aria-label="Auf die Bühne oder wieder herunter">⬆︎⬇︎</button>
+                  aria-label="Auf die Bühne oder wieder herunter"></button>
           <button type="button" class="lc-rundknopf lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen">✕</button>
         </div>
         <div id="lcGrund"></div>
@@ -13917,7 +13960,10 @@
     const bk = document.querySelector('[data-lc="buehne"]');
     if (bk) {
       const drauf = l.buehne !== false;
-      bk.textContent = drauf ? "\u2b07\ufe0e" : "\u2b06\ufe0e";
+      /* Der Pfeil selbst wird gezeichnet (siehe .lc-buehnenknopf in
+         korrekturen.css) — als Schriftzeichen war er je nach Schrift
+         ein duenner Strich, den man nicht erkennen konnte. */
+      bk.textContent = "";
       bk.title = drauf ? "Von der Bühne herunter — nur noch mitschreiben"
                        : "Auf die Bühne — Ton und Bild wieder hinaus";
       bk.setAttribute("aria-label", bk.title);
@@ -14063,6 +14109,44 @@
   let livechatEffekteAb = 0;
   /* Beim ersten Zeichnen eines Raums ganz nach unten springen. */
   let livechatSchonUnten = false;
+
+  /* =================================================================
+     DEN CHAT INS BILD RÜCKEN — MIT DEM UNTEREN ENDE
+     -----------------------------------------------------------------
+     GEMELDET: „Wenn man einen Raum betritt, soll das Ende vom Chat
+     unten sichtbar sein, da wo gerade der aktuelle Kontext ist, und
+     nicht oben, dass man erst runterscrollen muss … der Chat mit
+     seinem unteren Ende soll in einem Bild auf dem Bildschirm zu sehen
+     sein, wenn man wieder in Position klickt — entweder durch den
+     Klassenzimmer-Knopf oder ins Leere vom Klassenzimmer-Bereich."
+
+     Bisher wurde scrollIntoView mit block:"start" oder "center" auf
+     die KARTE angewandt — das rückt ihren Anfang ins Bild, und auf
+     einem Telefon liegt der Chat dann unterhalb des Randes.
+
+     Jetzt wird die EINGABEZEILE ins Bild gerückt, und zwar an den
+     unteren Rand: darüber steht der Chat, darüber die Plätze. Passt
+     die ganze Karte auf den Schirm, steht sie mittig — dann sieht man
+     ohnehin alles.
+     ================================================================= */
+  function livechatInsBild(sanft) {
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    if (!karte) return;
+    const fuss = karte.querySelector(".lc-chat-fuss")
+              || karte.querySelector(".lc-chat")
+              || karte;
+    const verhalten = sanft === false ? "auto" : "smooth";
+    const hoch = karte.getBoundingClientRect().height;
+    if (hoch <= window.innerHeight - 24) {
+      karte.scrollIntoView({ behavior: verhalten, block: "center" });
+      return;
+    }
+    /* Das untere Ende ans untere Fensterende — mit ein wenig Luft,
+       damit die Eingabezeile nicht am Rand klebt. */
+    fuss.scrollIntoView({ behavior: verhalten, block: "end" });
+    setTimeout(() => { try { window.scrollBy({ top: 18, behavior: verhalten }); } catch (e) {} }, 60);
+  }
 
   /* --- Der Chat sieht aus wie damals -------------------------
      GEWÜNSCHT: „Der Chat muss so aussehen wie früher, nicht mit
@@ -14297,6 +14381,7 @@
     erdbeben:{ ganzeSeite: true, wie: "erdbeben" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
+    geschenk:{ ganzeSeite: true, wie: "geschenk" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
   function lcWirkung(art, anZeile) {
@@ -14310,6 +14395,7 @@
       else if (e.wie === "feuerwerk") lcFeuerwerk();
       else if (e.wie === "gewitter") lcGewitter();
       else if (e.wie === "erdbeben") lcErdbeben();
+      else if (e.wie === "geschenk") lcGeschenk();
       else if (e.wie === "halloween") lcJahreszeit("halloween");
       else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
       else lcKonfetti();
@@ -14359,15 +14445,26 @@
      hinterlegt, tippt /hintergrund; das Bild wird verkleinert und
      bleibt im Gerät.
      ================================================================= */
-  const LC_HG_SCHLUESSEL = "dma_livechat_hintergrund";
-  function lcHintergrundBild() {
-    try { return localStorage.getItem(LC_HG_SCHLUESSEL) || ""; } catch (e) { return ""; }
+  /* Der Hintergrund liegt im Lager (IndexedDB), nicht im localStorage —
+     siehe hintergrundSichern() in livechat.js. Hier wird er einmal
+     geholt und dann gemerkt, damit das Zeichnen nicht jedes Mal auf
+     die Datenbank warten muss. */
+  let lcHgGemerkt = null;          // null = noch nicht geholt
+  function lcHintergrundBild() { return lcHgGemerkt || ""; }
+  function lcHintergrundHolen() {
+    if (lcHgGemerkt !== null) return Promise.resolve(lcHgGemerkt);
+    if (!(window.LiveChat && LiveChat.hintergrundHolen)) { lcHgGemerkt = ""; return Promise.resolve(""); }
+    return LiveChat.hintergrundHolen().then((d) => {
+      lcHgGemerkt = d || "";
+      if (lcHgGemerkt) renderLiveChat();
+      return lcHgGemerkt;
+    }).catch(() => { lcHgGemerkt = ""; return ""; });
   }
   function lcHintergrundSetzen(daten) {
-    try {
-      if (daten) localStorage.setItem(LC_HG_SCHLUESSEL, daten);
-      else localStorage.removeItem(LC_HG_SCHLUESSEL);
-    } catch (e) { showToast("Das Bild ist zu gross für den Speicher."); return false; }
+    lcHgGemerkt = daten || "";
+    if (window.LiveChat && LiveChat.hintergrundSichern) {
+      LiveChat.hintergrundSichern(daten || "").catch(() => {});
+    }
     renderLiveChat();
     return true;
   }
@@ -14389,8 +14486,10 @@
         if (!datei) return;
         try {
           /* Kräftig verkleinern: ein Hintergrund darf unscharf sein,
-             er liegt ohnehin hinter Text und ist stark abgedunkelt. */
-          const daten = await LiveChat.bildVerkleinern(datei, 720);
+             er liegt ohnehin hinter Text und ist stark abgedunkelt.
+             Sein Höchstmass ist eigens grösser als das eines Fotos im
+             Chat — genau daran ist es vorher gescheitert. */
+          const daten = await LiveChat.bildVerkleinern(datei, 900, 900000);
           if (lcHintergrundSetzen(daten)) showToast("🖼️ Hintergrund gesetzt.");
         } catch (x) {
           showToast("🖼️ " + (x && x.message ? x.message : "Das Bild ging nicht."));
@@ -14403,6 +14502,7 @@
   function livechatHintergrundAuffrischen(l) {
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
+    if (lcHgGemerkt === null) lcHintergrundHolen();   // einmal aus dem Lager
 
     /* Ein eigenes Bild schlägt alles andere. */
     const eigenes = lcHintergrundBild();
@@ -14795,6 +14895,9 @@
          Vergangenheit und bleibt still. */
       livechatEffekteAb = Date.now();
       livechatSchonUnten = false;
+      /* Und der Chat steht mit seinem unteren Ende im Bild, nicht mit
+         seinem Anfang — dort steht das Neueste. */
+      setTimeout(() => livechatInsBild(), 220);
 
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
         k.addEventListener("click", () => {
@@ -14827,12 +14930,6 @@
            ist, musst du dann zwei Pfeile im Wechsel nehmen."
            Das Mikrofon IST schon vergeben (Ton an/aus). Also zwei
            Pfeile: der Knopf zeigt, wohin es geht. */
-        const k = area.querySelector('[data-lc="buehne"]');
-        if (k) {
-          k.textContent = drauf ? "\u2b07\ufe0e" : "\u2b06\ufe0e";
-          k.title = drauf ? "Von der Bühne herunter" : "Auf die Bühne";
-          k.setAttribute("aria-label", k.title);
-        }
         renderLiveChat();
         showToast(drauf
           ? "🎤 Du bist auf der Bühne — Ton und Bild gehen wieder hinaus."
@@ -14941,7 +15038,15 @@
       const karte = area.querySelector("#livechatKarte") || area.firstElementChild;
       area.querySelector(".lc-chat")?.addEventListener("click", (e) => {
         if (e.target.closest(".lc-zeile, .lc-chat-fuss, button, input, a, details, pre, img")) return;
-        karte?.scrollIntoView({ behavior: "smooth", block: "center" });
+        livechatInsBild();
+      });
+      /* Auch ein Tipp ins Leere DANEBEN — neben den Plätzen, unter der
+         Leiste — rückt alles wieder an seinen Ort. GEWÜNSCHT: „dass man
+         einfach nur in den leeren Bereich des Chatpanels klickt und
+         dann positioniert sich das wieder so ein." */
+      area.addEventListener("click", (e) => {
+        if (e.target.closest("button, input, a, details, pre, img, .lc-zeile, .lc-platz, .lc-chat")) return;
+        livechatInsBild();
       });
       area.querySelector("#lcVerlaufLeeren")?.addEventListener("click", () => {
         if (!window.confirm("Den Chatverlauf dieses Raums auf diesem Gerät löschen?")) return;
@@ -15011,7 +15116,7 @@
         document.querySelector('[data-target="view-knowledge"]')?.click();
         setTimeout(() => {
           document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.click();
-          document.getElementById("livechatArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          livechatInsBild();
         }, 80);
       });
       kzStreifen.querySelector("#kzStreifenWeg").addEventListener("click", () => {
@@ -15031,10 +15136,25 @@
     kzStreifen.classList.toggle("kz-an", drin && !offen);
 
     const da = LiveChat.PLAETZE - l.frei;
-    document.getElementById("kzStreifenText").innerHTML =
-      '<strong>Im Klassenzimmer</strong>' +
-      '<small>' + (l.lage === "verbindet" ? "verbindet …"
-        : da === 1 ? "du bist allein da" : da + " Leute da") + '</small>';
+    /* GEMELDET: „Wenn ich einen eigenen Raum aufgemacht habe, steht
+       unten in der Miniaturpille nicht der Name von meinem eigenen
+       Raum, sondern immer noch, dass ich im Klassenzimmer bin."
+
+       Hier stand der Text fest im Code. Jetzt steht da, wo man
+       wirklich ist: im Hauptraum „Im Klassenzimmer", sonst der Name
+       des Raums. */
+    const wo = (l.raum && l.raum !== LiveChat.HAUPTRAUM)
+      ? "Im Raum \u201e" + (l.raumName || l.raum) + "\u201c"
+      : "Im Klassenzimmer";
+    const kopf = document.getElementById("kzStreifenText");
+    kopf.textContent = "";
+    const fett = document.createElement("strong");
+    fett.textContent = wo;
+    const klein = document.createElement("small");
+    klein.textContent = l.lage === "verbindet" ? "verbindet \u2026"
+      : da === 1 ? "du bist allein da" : da + " Leute da";
+    kopf.appendChild(fett);
+    kopf.appendChild(klein);
   }
 
   /* Ein einziger Zuhörer für das ganze Leben der Seite. Die
@@ -15063,7 +15183,13 @@
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
     }
   }
-  document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => renderLiveChat());
+  /* GEWÜNSCHT: „wenn man oben auf Klassenzimmer klickt … der Chat mit
+     seinem unteren Ende soll in einem Bild auf dem Bildschirm zu sehen
+     sein." */
+  document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => {
+    renderLiveChat();
+    setTimeout(() => livechatInsBild(), 140);
+  });
 
 
   /* ============================================================

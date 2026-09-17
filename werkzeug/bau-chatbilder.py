@@ -47,27 +47,18 @@ ZIEL = os.path.join(os.path.dirname(HIER), "livechat.js")
 ASCII = {}
 
 ASCII["fuchs"] = [
-    r'       /\             /\       ',
-    r'      /  \___________/  \      ',
-    r'     /   /           \   \     ',
-    r'    /   /   \     /   \   \    ',
-    r'   |   |  (@) \   / (@)  |   | ',
-    r'   |   |       \ /       |   | ',
-    r'    \   \       v       /   /  ',
-    r'     \   \    .---.    /   /   ',
-    r'      \   \  ( o o )  /   /    ',
-    r'       \   \  `-.-`  /   /     ',
-    r'        \   `--- ---`   /      ',
-    r'         \_____________/       ',
-    r'        /               \      ',
-    r'       /   \_________/   \     ',
-    r'      |                   |    ',
-    r'       \                 /     ',
-    r'        `\__/`-----`\__/`      ',
-    r'          ||         ||        ',
-    r'         (__)       (__)       ',
-    r'                               ',
-    r'    %NAME% schleicht vorbei    ',
+    r'    /\     /\    ',
+    r'   /  \___/  \   ',
+    r'  /  o     o  \  ',
+    r' |      w      | ',
+    r'  \    ___    /  ',
+    r'   \  \___/  /   ',
+    r'    \_______/    ',
+    r'   /         \   ',
+    r'  /  \_____/  \  ',
+    r' (_/         \_) ',
+    r'   ~~~~~~~~~~~   ',
+    r'      — %NAME%   ',
 ]
 
 ASCII["lachen"] = [
@@ -82,7 +73,7 @@ ASCII["lachen"] = [
     r"        '-...........-'     ",
     r"                            ",
     r"     H A   H A   H A !      ",
-    r"            %NAME%          ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["herz"] = [
@@ -97,7 +88,7 @@ ASCII["herz"] = [
     r"         `Y888Y'           ",
     r"           `Y'             ",
     r"                           ",
-    r"        von %NAME%         ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["kaffee"] = [
@@ -114,7 +105,7 @@ ASCII["kaffee"] = [
     r"       `------'            ",
     r"    ________________       ",
     r"                           ",
-    r"    %NAME% kocht Kaffee    ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["katze"] = [
@@ -126,7 +117,7 @@ ASCII["katze"] = [
     r"    ( (  )   (  ) )        ",
     r"   (__(__)___(__)__)       ",
     r"                           ",
-    r"     miau, sagt %NAME%     ",
+    r"        — %NAME%         ",
 ]
 
 ASCII["hund"] = [
@@ -143,7 +134,7 @@ ASCII["hund"] = [
     r"       \   '--'   /        ",
     r"        `--------'         ",
     r"                           ",
-    r"     wuff, sagt %NAME%     ",
+    r"        — %NAME%         ",
 ]
 
 ASCII["daumen"] = [
@@ -172,7 +163,7 @@ ASCII["schiff"] = [
     r"  ~~~~~~~~~~~~~~~~~~~~~~~~~~  ",
     r"   ~~~~~~~~~~~~~~~~~~~~~~~~   ",
     r"                              ",
-    r"    %NAME% sticht in See      ",
+    r"          — %NAME%           ",
 ]
 
 ASCII["haus"] = [
@@ -188,7 +179,7 @@ ASCII["haus"] = [
     r"        |  | o  ||         ",
     r"    ____|__|____||____     ",
     r"                           ",
-    r"   willkommen bei %NAME%   ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["baum"] = [
@@ -204,7 +195,7 @@ ASCII["baum"] = [
     r"           /|||\           ",
     r"    ______/_____\______    ",
     r"                           ",
-    r"    %NAME% steht im Wald   ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["achtung"] = [
@@ -218,7 +209,7 @@ ASCII["achtung"] = [
     r"   /      ()      \        ",
     r"  /________________\       ",
     r"                           ",
-    r"      sagt %NAME%          ",
+    r"        — %NAME%         ",
 ]
 
 ASCII["fertig"] = [
@@ -233,7 +224,7 @@ ASCII["fertig"] = [
     r"     '.   \  /      .'     ",
     r"       '---\/------'       ",
     r"                           ",
-    r"     %NAME%: erledigt      ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["blume"] = [
@@ -249,7 +240,7 @@ ASCII["blume"] = [
     r"         | /               ",
     r"     ____|/____            ",
     r"                           ",
-    r"  fuer dich, von %NAME%    ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["traurig"] = [
@@ -263,7 +254,7 @@ ASCII["traurig"] = [
     r"      '.             .'    ",
     r"        '-.........-'      ",
     r"                           ",
-    r"     hmpf, sagt %NAME%     ",
+    r"        — %NAME%         ",
 ]
 
 ASCII["stern"] = [
@@ -279,7 +270,7 @@ ASCII["stern"] = [
     r"     ***         ***       ",
     r"    **             **      ",
     r"                           ",
-    r"   %NAME% wuenscht was     ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["winken"] = [
@@ -295,7 +286,7 @@ ASCII["winken"] = [
     r"      |            |       ",
     r"      |____________|       ",
     r"                           ",
-    r"   %NAME% winkt euch zu    ",
+    r"        — %NAME%          ",
 ]
 
 ASCII["rakete"] = [
@@ -314,7 +305,34 @@ ASCII["rakete"] = [
     r"            **             ",
     r"           ****            ",
     r"                           ",
-    r"      %NAME% hebt ab       ",
+    r"        — %NAME%          ",
+]
+
+ASCII["geschenk"] = [
+    r'       \  |  /       ',
+    r'       .-----.       ',
+    r'   ---(  * *  )---   ',
+    r'       `--+--`       ',
+    r'   .-----------.     ',
+    r'   |     ||    |     ',
+    r'   |=====||====|     ',
+    r'   |     ||    |     ',
+    r'   |     ||    |     ',
+    r'   `-----------`     ',
+    r'      — %NAME%      ',
+]
+
+ASCII["ueberraschung"] = [
+    r'     *   .   *       ',
+    r'   .   \ | /   .     ',
+    r'      --( )--        ',
+    r'   *   / | \   *     ',
+    r'      .-----.        ',
+    r'     /       \       ',
+    r'    |  !!!!!  |      ',
+    r'     \       /       ',
+    r'      `-----`        ',
+    r'      — %NAME%      ',
 ]
 
 # ===============================================================
@@ -432,6 +450,14 @@ EMOJI["kaffeepause"] = [
     z(L, "☕", L, "🥐", L, "☕", L),
     z(L, "📖", L, L, L, "📖", L),
     "%NAME% macht Pause",
+]
+
+EMOJI["geschenk"] = [
+    z("\u2728", L, "\U0001f388", L, "\u2728", L, "\U0001f388", L, "\u2728"),
+    z(L, L, "\U0001f381", "\U0001f381", "\U0001f381", L, L),
+    z(L, "\U0001f380", L, "\U0001f380", L, "\U0001f380", L),
+    z("\U0001f973", L, L, "\u2764\ufe0f", L, L, "\U0001f970"),
+    "%NAME%",
 ]
 
 EMOJI["fussball"] = [

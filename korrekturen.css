@@ -608,20 +608,30 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 .lc-zeile {
   display: grid;
-  grid-template-columns: 3.1em auto 1fr;
-  gap: 0 8px;
+  /* GEMELDET: „Vielleicht kannst du mehr Platz schaffen, wenn der
+     Textinhalt etwas mehr nach links ran ist und die Uhrzeit vielleicht
+     etwas kleiner — sodass wir mehr Platz haben und bei den Bildern aus
+     Buchstaben nicht nach links und rechts scrollen müssen."
+
+     Die Uhrzeitspalte war 3,1 Zeichen breit plus 8 Pixel Abstand. Sie
+     ist jetzt 2,6 Zeichen schmal, der Abstand 5 Pixel — das sind rund
+     dreissig Pixel mehr für den Text, ohne dass die Uhrzeit umbricht
+     (sie hat Ziffern gleicher Breite). */
+  grid-template-columns: 2.6em auto 1fr;
+  gap: 0 5px;
   align-items: baseline;
   padding: 1px 0;
   overflow-wrap: anywhere;
 }
 .lc-zeit {
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   /* em statt rem: so waechst die Uhrzeit mit der gewaehlten Schrift mit,
      statt stur bei ihrer Groesse zu bleiben. Genau daran lag es, dass
      der Wechsel „keinen Unterschied" machte — die halbe Zeile hat sich
      gar nicht bewegt. */
-  font-size: 0.84em;
-  opacity: 0.45;
+  font-size: 0.76em;
+  opacity: 0.4;
 }
 .lc-nick {
   display: inline-flex;
@@ -662,7 +672,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    gleiche Dicke, nicht kursiv, nicht blasser. Der einzige Unterschied
    ist, dass vorne nichts steht und der Name mittendrin so kräftig
    gesetzt ist wie ein Nick. Genau daran funktioniert der alte Trick. */
-.lc-zeile-aktion { grid-template-columns: 3.1em 1fr; }
+.lc-zeile-aktion { grid-template-columns: 2.6em 1fr; }
 .lc-zeile-aktion .lc-zeilentext {
   font-style: normal;
   opacity: 1;
@@ -672,7 +682,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 /* System: eine abgesetzte Zeile über die ganze Breite */
 .lc-zeile-system,
 .lc-zeile-einladung {
-  grid-template-columns: 3.1em 1fr;
+  grid-template-columns: 2.6em 1fr;
   margin: 3px 0;
 }
 .lc-zeile-system .lc-zeilentext,
@@ -726,10 +736,17 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: var(--lc-ruf, #ffce55);
 }
 .lc-zeile-ruf .lc-zeilentext {
-  font-size: 1.3em;
-  font-weight: 900;
+  /* GEMELDET: „Die Schrift beim Schreien sollte ungefähr genauso dick
+     sein wie die Namensschrift, und sie soll immer auf derselben Höhe
+     stehen wie der Name."
+     Also dieselbe Strichstärke wie ein Nick (800 statt 900) und eine
+     feste Zeilenhöhe; die Grundlinie ist dieselbe wie bei Uhrzeit und
+     Name, weil die Zeile an der Grundlinie ausgerichtet ist. */
+  font-size: 1.28em;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0.03em;
+  vertical-align: baseline;
 }
 /* Die Farbe sitzt am WORT, nicht an der Zeile — so ueberschreibt sie
    nichts und „bunt" kann Wort fuer Wort wechseln. */
@@ -758,11 +775,14 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 .lc-ruf-wort {
   position: relative;
   display: inline-block;
+  /* Ohne das setzt ein inline-block seine UNTERKANTE auf die
+     Grundlinie — der Ruf saesse dann tiefer als der Name daneben. */
+  vertical-align: baseline;
   transform-origin: 50% 55%;
   /* GEMELDET: „Es soll langsamer sein, die Animation, und länger
      anhalten." Also doppelt so lang, und die Wörter kommen in
      grösseren Abständen — der Ruf baut sich auf, statt dazustehen. */
-  animation: lcRufAn 2300ms cubic-bezier(.2, .9, .25, 1.02) both;
+  animation: lcRufAn 3400ms cubic-bezier(.2, .9, .25, 1.02) both;
 }
 /* Die strahlende Kopie: dasselbe Wort, an derselben Stelle, geht nach
    aussen auf und verblasst. Nichts fliegt weg — es strahlt. */
@@ -776,7 +796,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: inherit;
   text-shadow: none;
   transform-origin: 50% 55%;
-  animation: lcRufStrahl 3200ms ease-out both;
+  animation: lcRufStrahl 4600ms ease-out both;
   animation-delay: inherit;
 }
 .lc-ruf-wort::before {
@@ -789,7 +809,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   color: inherit;
   text-shadow: none;
   transform-origin: 50% 55%;
-  animation: lcRufStrahl 3200ms ease-out 620ms both;
+  animation: lcRufStrahl 4600ms ease-out 900ms both;
 }
 @keyframes lcRufAn {
   0%   { opacity: 0; transform: scale(.55); letter-spacing: -0.06em; }
@@ -822,7 +842,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 .lc-alt.lc-zeile-wirkt:hover .lc-ruf-wort::after { display: none; }
 
 /* Kommen und Gehen — wie im IRC, unaufdringlich */
-.lc-zeile-kommen { grid-template-columns: 3.1em 1fr; }
+.lc-zeile-kommen { grid-template-columns: 2.6em 1fr; }
 .lc-zeile-kommen .lc-zeilentext {
   opacity: 0.62;
   font-size: 0.78rem;
@@ -1172,13 +1192,18 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    ist und die Leerzeichen erhalten bleiben. Beides macht <pre> in
    einer Schreibmaschinenschrift — sonst zerfaellt es.
    ================================================================= */
-.lc-zeile-ascii { grid-template-columns: 3.1em 1fr; }
+.lc-zeile-ascii { grid-template-columns: 2.6em 1fr; }
 .lc-ascii {
   margin: 2px 0;
-  padding: 6px 9px;
+  padding: 5px 7px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.7rem;
-  line-height: 1.12;
+  /* Die Schrift richtet sich nach der Breite, die da ist: auf einem
+     Telefon schrumpft sie so weit, dass ein Bild von dreissig Zeichen
+     Breite ohne Scrollen hineinpasst; auf dem grossen Schirm bleibt
+     sie gut lesbar. GEMELDET war genau das: „dass wir nicht in den
+     Bildern nach links und rechts scrollen müssen". */
+  font-size: clamp(0.5rem, 2.55vw, 0.72rem);
+  line-height: 1.1;
   white-space: pre;
   overflow-x: auto;
   border-radius: 8px;
@@ -1863,7 +1888,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    blasser aus. Was sie brauchen, sind erhaltene Leerzeichen und eine
    enge Zeilenhoehe — sonst zerfaellt die Anordnung.
    ================================================================= */
-.lc-zeile-emojibild { grid-template-columns: 3.1em 1fr; }
+.lc-zeile-emojibild { grid-template-columns: 2.6em 1fr; }
 .lc-emojibild {
   margin: 3px 0;
   padding: 7px 10px;
@@ -1915,3 +1940,142 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   background: rgba(224, 150, 74, 0.2);
   box-shadow: 0 0 0 2px rgba(224, 150, 74, 0.55) inset;
 }
+
+/* =================================================================
+   DIE BEDIENLEISTE BLEIBT EINE ZEILE
+   -----------------------------------------------------------------
+   GEMELDET: „Dadurch, dass das Schliessen-Kreuz eine Zeile unter die
+   Symbole gerutscht ist, ist beim Android der Chat nicht mehr unten
+   zu lesen. Das soll alles aus einem Guss sein."
+
+   Der Buehnenknopf ist dazugekommen, damit waren es fuenf Knoepfe zu
+   48 Pixeln plus Abstaende — auf einem schmalen Telefon passte das
+   nicht mehr nebeneinander, und das Kreuz fiel in eine zweite Zeile.
+   Jede zweite Zeile hier schiebt den Chat um sechzig Pixel nach
+   unten, aus dem Bild heraus.
+
+   Also: die Leiste umbricht NICHT mehr. Stattdessen werden die
+   Knoepfe schmaler, wenn der Platz knapp wird — lieber fuenf etwas
+   kleinere Knoepfe in einer Reihe als vier grosse und eines darunter.
+   ================================================================= */
+.lc-leiste {
+  flex-wrap: nowrap;
+  gap: clamp(5px, 2vw, 10px);
+  padding: 0 4px;
+}
+.lc-leiste .lc-rundknopf {
+  flex: 0 1 auto;
+  width: clamp(38px, 12vw, 48px);
+  height: clamp(38px, 12vw, 48px);
+  font-size: clamp(0.95rem, 3.6vw, 1.15rem);
+}
+
+/* --- Die Bühnenpfeile ---------------------------------------------
+   GEMELDET: „Die Pfeile sollen etwas dicker und deutlicher sein, denn
+   wir haben Platz in diesem kleinen Kreis. Von der Ferne sieht er wie
+   ein schmaler duenner Strich aus, den man nicht identifizieren
+   kann."
+
+   Der Pfeil ist jetzt gezeichnet statt getippt: ein kraeftiger Schaft
+   und eine breite Spitze, die den Kreis fast ausfuellen. Als Zeichen
+   im Text war er so duenn, wie die jeweilige Schrift ihn eben malt —
+   darauf hat man keinen Einfluss. */
+.lc-buehnenknopf { font-size: 0; }
+.lc-buehnenknopf::before {
+  content: "";
+  display: block;
+  width: 62%;
+  height: 62%;
+  background: currentColor;
+  /* Ein Pfeil nach unten: breiter Schaft, breite Spitze. */
+  clip-path: polygon(38% 0%, 62% 0%, 62% 46%, 86% 46%, 50% 100%, 14% 46%, 38% 46%);
+}
+.lc-buehnenknopf.ist-unten::before {
+  /* Nach oben: dieselbe Form, gespiegelt. */
+  clip-path: polygon(38% 100%, 62% 100%, 62% 54%, 86% 54%, 50% 0%, 14% 54%, 38% 54%);
+}
+
+/* =================================================================
+   DAS GESCHENK
+   -----------------------------------------------------------------
+   Ein Paket schwebt herein, wackelt zweimal, dann springt der Deckel
+   ab und heraus fliegt, was drin war.
+   ================================================================= */
+.lc-geschenk {
+  position: fixed;
+  inset: 0;
+  z-index: 9390;
+  pointer-events: none;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.lc-paket {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  animation: lcPaket 3.4s cubic-bezier(.3, .7, .3, 1) both;
+}
+.lc-paket i { position: absolute; display: block; }
+.lc-paket-kasten {
+  left: 6px; top: 34px; width: 96px; height: 70px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #e0546a, #b83a52);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.lc-paket-deckel {
+  left: 0; top: 18px; width: 108px; height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #ef7186, #c9465f);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.3);
+  transform-origin: 50% 100%;
+  animation: lcDeckel 3.4s cubic-bezier(.2, .8, .3, 1) both;
+}
+.lc-paket-band {
+  left: 48px; top: 34px; width: 12px; height: 70px;
+  background: #f7c948;
+}
+.lc-paket-schleife {
+  left: 38px; top: 2px; width: 32px; height: 22px;
+  border-radius: 50% 50% 46% 46%;
+  background: #f7c948;
+  box-shadow: -16px 4px 0 -4px #f7c948, 16px 4px 0 -4px #f7c948;
+  transform-origin: 50% 100%;
+  animation: lcSchleife 3.4s ease-in-out both;
+}
+@keyframes lcPaket {
+  0%   { opacity: 0; transform: translateY(70px) scale(.6); }
+  14%  { opacity: 1; transform: translateY(0) scale(1); }
+  26%  { transform: translateY(0) rotate(-7deg); }
+  34%  { transform: translateY(0) rotate(7deg); }
+  42%  { transform: translateY(0) rotate(-5deg); }
+  48%  { transform: translateY(0) rotate(0); }
+  55%  { transform: translateY(-8px) scale(1.06); }
+  70%  { opacity: 1; transform: translateY(6px) scale(.98); }
+  100% { opacity: 0; transform: translateY(40px) scale(.9); }
+}
+@keyframes lcDeckel {
+  0%, 52%  { transform: translateY(0) rotate(0); opacity: 1; }
+  60%      { transform: translateY(-64px) rotate(-22deg); }
+  100%     { transform: translateY(-190px) rotate(-70deg); opacity: 0; }
+}
+@keyframes lcSchleife {
+  0%, 52%  { transform: translateY(0) rotate(0); opacity: 1; }
+  60%      { transform: translateY(-64px) rotate(16deg); }
+  100%     { transform: translateY(-210px) rotate(60deg); opacity: 0; }
+}
+.lc-geschenk span {
+  position: absolute;
+  left: 50%; top: 50%;
+  opacity: 0;
+  animation: lcGeschenkFlug 2.6s cubic-bezier(.1, .7, .3, 1) both;
+}
+@keyframes lcGeschenkFlug {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+  8%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: translate(calc(-50% + var(--lc-gx, 0)),
+                              calc(-50% + var(--lc-gy, 0) + 120px)) scale(1) rotate(160deg); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-geschenk { display: none; } }
