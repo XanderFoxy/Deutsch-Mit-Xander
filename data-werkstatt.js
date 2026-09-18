@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19x — kein Platzhalter, und der Verlauf reicht weit zurueck",
+  stand: "Runde 67 — Wer spricht, ist nicht immer ein „er“",
 
   inArbeit: [
-    { seit: "2026-09-18T21:54",
-      text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:54",
-      text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:54",
-      text: "Favoriten im Befehlspanel selbst anheften" },
+    { seit: "2026-09-18T22:08",
+      text: "Leerer Name bei fremden Sprachnachrichten" },
+    { seit: "2026-09-18T22:08",
+      text: "Sprachnachrichten sollen im Hintergrund laden und nicht im Text stehen" },
+    { seit: "2026-09-18T22:08",
+      text: "Ganz nach oben scrollen bis zum ersten Rätsel" },
+    { seit: "2026-09-18T22:08",
+      text: "Alte „Du bist hier Häuptling“-Zeilen nachträglich aus dem Verlauf nehmen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:54",
-      text: "Die Pille belegt keinen Platz mehr, wenn niemand spricht — sie schwebt wieder und verdeckt nichts als das, was sie selbst bedeckt" },
-    { seit: "2026-09-18T21:54",
-      text: "Ihre Grundfarbe wird zur Laufzeit AUSGELESEN statt geraten: die tatsaechliche Flaeche, auf der sie liegt, in jedem Thema" },
-    { seit: "2026-09-18T21:54",
-      text: "Der Verlauf haelt jetzt 20.000 Zeilen im Speicher und im Lager — die Aufgabe von ganz oben ist wieder erreichbar" },
-    { seit: "2026-09-18T21:54",
-      text: "Der Speicher-Deckel beim Zusammenfuehren war bisher dieselbe Zahl wie die Server-Abfrage; jetzt sind das zwei verschiedene Grenzen" },
+    { seit: "2026-09-18T22:08",
+      text: "Die Wartemeldung erkennt das Geschlechtszeichen aus dem Profil: „bis sie fertig ist“ bei Emmi, „bis er fertig ist“ bei einem Mann, „bis die Person fertig ist“ ohne Angabe" },
+    { seit: "2026-09-18T22:08",
+      text: "Das Zeichen reist in jedem Anwesenheits- und Sprachpaket mit — es muss niemand erst etwas schreiben" },
+    { seit: "2026-09-18T22:08",
+      text: "Die grüne Pille sitzt fest unter dem Chat-Kopf und verschiebt den Verlauf nicht mehr" },
   ],
 };

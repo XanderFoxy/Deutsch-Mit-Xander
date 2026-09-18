@@ -2122,6 +2122,9 @@ window.LiveChat = (function () {
     /* Jedes Lebenszeichen zählt — auch eine Kerze oder ein Satz im
        Chat sagt: der ist noch da. */
     if (zustand.leute[n.von]) zustand.leute[n.von].gesehen = Date.now();
+    /* Und jedes Paket sagt nebenbei, ob da eine Frau oder ein Mann
+       sitzt — das Zeichen aus dem Profil reist mit. */
+    geschlechtMerken(n.von, n.geschlecht);
 
     if (n.art === "puls") {
       /* Die Sitzordnung der anderen uebernehmen, aber nur, was man
@@ -2147,6 +2150,7 @@ window.LiveChat = (function () {
       if (neuDa || !brueckeJe[n.von]) {
         if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
         else senden({ art: "auch-da", an: n.von, name: zustand.ichName,
+                      geschlecht: zustand.geschlecht || "",
                       tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild,
                       seit: zustand.seit, buehne: zustand.buehne });
       }
@@ -2189,6 +2193,7 @@ window.LiveChat = (function () {
          als ein Hintergrund, der jemandem gehört, der längst weg ist. */
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+               geschlecht: zustand.geschlecht || "",
                haeuptling: zustand.haeuptling, thema: zustand.thema,
                fokus: zustand.fokus,
                seit: zustand.seit, buehne: zustand.buehne,
@@ -2443,7 +2448,7 @@ window.LiveChat = (function () {
       n = { art: "text", id: n.id, von: n.von, name: n.name, text: "",
             zeit: n.zeit, bild: n.bild, farbe: n.farbe, farbeName: n.farbeName, chatArt: n.chatArt,
             sprach: ganz, sprachSek: n.sprachSek, sprachAb: n.sprachAb,
-            sprachDauer: n.sprachDauer };
+            sprachDauer: n.sprachDauer, geschlecht: n.geschlecht || geschlechtVon(n.von) };
     }
     if (n.art === "text") {
       /* Eine Sprachnachricht hat weder Text noch Bild — ohne diese
@@ -2644,6 +2649,9 @@ window.LiveChat = (function () {
       senden({ art: "puls", name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild,
                seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht,
+               /* Damit die anderen wissen, ob sie „sie" oder „er"
+                  schreiben muessen, wenn dieser Mensch spricht. */
+               geschlecht: zustand.geschlecht || "",
                /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
                sitz: sitzTausch });
       var jetzt = Date.now(), weg = false;
@@ -2761,7 +2769,8 @@ window.LiveChat = (function () {
           /* Die andere Seite ruft an — ihr sagen, dass sie es soll. */
           senden({ art: "hallo", name: zustand.ichName, tonAn: zustand.tonAn,
                    bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-                   seit: zustand.seit, buehne: zustand.buehne });
+                   seit: zustand.seit, buehne: zustand.buehne,
+                   geschlecht: zustand.geschlecht || "" });
         }
       });
     }, WACHE_MS);
@@ -3031,7 +3040,8 @@ window.LiveChat = (function () {
             zustand.lage = "drin";
             senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-                     seit: zustand.seit, buehne: zustand.buehne });
+                     seit: zustand.seit, buehne: zustand.buehne,
+                     geschlecht: zustand.geschlecht || "" });
             pulsStarten();
             wacheStarten();          // die Leitungen im Auge behalten
             postKanalOeffnen();
@@ -3100,7 +3110,8 @@ window.LiveChat = (function () {
               if (!andereDa) return;
               senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                        tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-                       seit: zustand.seit, buehne: zustand.buehne });
+                       seit: zustand.seit, buehne: zustand.buehne,
+                       geschlecht: zustand.geschlecht || "" });
             }, 2200);
             fertig(lage());
           } else if (stand === "CHANNEL_ERROR" || stand === "TIMED_OUT") {
@@ -3674,8 +3685,11 @@ window.LiveChat = (function () {
          oben sagt bereits, wer spricht. Hier bleibt nur die eine
          Erklaerung, warum gerade nichts aufgenommen wird — und die
          auch nur beim allerersten Mal. */
-      hinweisZeigen("🎧 Solange jemand spricht, wartet dein Mikrofon — dann bist du dran. "
-        + "Schreiben geht jederzeit.", "wartet");
+      hinweisZeigen(frei_.wer
+        ? "🎧 " + frei_.wer + " spricht gerade — dein Mikrofon wartet, "
+          + bisFertig(frei_.geschlecht) + ". Schreiben geht jederzeit."
+        : "🎧 Solange jemand spricht, wartet dein Mikrofon — dann bist du dran. "
+          + "Schreiben geht jederzeit.", "wartet");
       return Promise.resolve(false);
     }
     einsatzPing();
@@ -4224,7 +4238,7 @@ window.LiveChat = (function () {
     var fokus_ = darfSprechen();
     if (!fokus_.ja) {
       hinweisZeigen("🎧 " + fokus_.wer + " spricht gerade — das hier wurde nicht geschickt. "
-        + "Sag es gleich noch einmal, wenn er fertig ist.", "fokus-wartet");
+        + "Sag es gleich noch einmal, " + wennFertig(fokus_.geschlecht) + ".", "fokus-wartet");
       return false;
     }
     var id = neueNachrichtId();
@@ -4504,7 +4518,10 @@ window.LiveChat = (function () {
                   name: k.name, zeit: k.zeit, bild: k.bild,
                   farbe: k.farbe, chatArt: k.chatArt,
                   sprachSek: k.sprachSek, sprachAb: k.sprachAb,
-                  sprachDauer: k.sprachDauer };
+                  sprachDauer: k.sprachDauer,
+                  /* Auch eine Wortmeldung sagt, wer da spricht — damit
+                     die Wartemeldung drueben „sie" schreiben kann. */
+                  geschlecht: zustand.geschlecht || "" };
     /* Nachgereichtes geht nur an DEN EINEN, der gerade gekommen ist —
        alle anderen haben es laengst gehoert. */
     if (a.an) { paket.an = a.an; paket.nachhol = true; }
@@ -4973,13 +4990,45 @@ window.LiveChat = (function () {
     }
     melden();
   }
+  /* WER SPRICHT, IST NICHT IMMER EIN „ER"
+     -----------------------------------------------------------
+     GEWUENSCHT: „Wenn die Blase mich erinnert, dass ich noch warten
+     soll, weil jemand spricht, dann soll sie korrekt erkennen, wenn
+     Emmi spricht, dass es eine Frau ist. Sie hat ja in ihrem Profil
+     dieses Geschlechtszeichen — das soll auch erkannt werden."
+
+     Das Zeichen steht im Profil (maennlich / weiblich / divers) und
+     reist seit jetzt in jedem Anwesenheitspaket mit. Hier wird daraus
+     ein Fuerwort. Wer nichts angegeben hat, bekommt keine Erfindung,
+     sondern eine Form, die ohne Fuerwort auskommt — „die Person".
+     Lieber unbestimmt als falsch. */
+  var geschlechter = {};     // Kennung -> „weiblich" | „maennlich" | „divers"
+  function geschlechtMerken(id, g) {
+    if (!id || typeof g !== "string" || !g) return;
+    geschlechter[id] = g;
+    if (zustand.leute[id]) zustand.leute[id].geschlecht = g;
+  }
+  function geschlechtVon(id) {
+    var p = id && zustand.leute[id];
+    return (p && p.geschlecht) || (id && geschlechter[id]) || "";
+  }
+  function istFrau(g) { return /^(w|weiblich|frau|female|\u2640)/i.test(String(g || "")); }
+  function istMann(g) { return /^(m|maennlich|m\u00e4nnlich|mann|male|\u2642)/i.test(String(g || "")); }
+  /* „sie" / „er" / „die Person" — im Nominativ. */
+  function fuerwort(g) { return istFrau(g) ? "sie" : istMann(g) ? "er" : "die Person"; }
+  /* „bis sie fertig ist" / „bis er fertig ist" / „bis die Person fertig ist" */
+  function bisFertig(g) { return "bis " + fuerwort(g) + " fertig ist"; }
+  function wennFertig(g) { return "wenn " + fuerwort(g) + " fertig ist"; }
+
   /* Darf ich jetzt aufnehmen? Gibt einen Grund zurueck, keinen
      nackten Wahrheitswert — man soll lesen koennen, WARUM. */
   function darfSprechen() {
     if (!fokusAn()) return { ja: true };
     if (!liveLaeuftGerade) return { ja: true };
     if (liveLaeuftGerade.von === zustand.ichId) return { ja: true };
-    return { ja: false, wer: liveLaeuftGerade.name || "Jemand" };
+    var g = geschlechtVon(liveLaeuftGerade.von) || liveLaeuftGerade.geschlecht || "";
+    return { ja: false, wer: liveLaeuftGerade.name || "Jemand", geschlecht: g,
+             fuerwort: fuerwort(g) };
   }
 
   /* Eine Sprachnachricht wieder einsammeln: aus der Warteschlange
@@ -7880,6 +7929,9 @@ window.LiveChat = (function () {
     sprachZurueckrufen: sprachZurueckrufen,
     liveLaeuft: liveLaeuft,
     darfSprechen: darfSprechen,
+    /* Damit die Oberflaeche „sie" oder „er" schreiben kann. */
+    geschlechtVon: geschlechtVon,
+    fuerwort: function (id) { return fuerwort(geschlechtVon(id)); },
     fokusAn: fokusAn,
     fokusSetzen: fokusSetzen,
     darfFokusSchalten: darfFokusSchalten,

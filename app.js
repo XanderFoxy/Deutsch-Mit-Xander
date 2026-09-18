@@ -20403,7 +20403,7 @@
                  er ist gegen Markieren und gegen das Lupenmenü
                  gesperrt (siehe .lc-sprach-knopf in korrekturen.css). -->
             <button type="button" class="lc-chat-anhang lc-sprach-knopf" id="lcSprachKnopf"
-                    title="Melden: gedrückt halten und sprechen — du wirst gehört, sobald der vor dir fertig ist"
+                    title="Melden: gedrückt halten und sprechen — du wirst gehört, sobald die Person vor dir fertig ist"
                     aria-label="Melden und sprechen">
               <!-- DIE MELDEN-HAND. Eine gezeichnete Hand mit
                    ausgestrecktem Zeigefinger, wie im Unterricht.
@@ -22031,7 +22031,7 @@
     /* FOKUS-MODUS: solange das hier laeuft, nimmt niemand sonst auf.
        Die Regel selbst steht in livechat.js (darfSprechen) — hier
        wird nur angesagt, wer gerade spricht und wann er fertig ist. */
-    if (LiveChat.liveLaeuft) LiveChat.liveLaeuft({ von: w.von, name: w.name });
+    if (LiveChat.liveLaeuft) LiveChat.liveLaeuft({ von: w.von, name: w.name, geschlecht: w.geschlecht || "" });
     /* GEWUENSCHT: „Damit ich abschaetzen kann, wann die andere Seite
        die Nachricht zu Ende gehoert hat." Also sagen wir es ihr —
        beim Anfangen und beim Aufhoeren. */
@@ -22197,6 +22197,35 @@
         el = el.parentElement;
       }
       if (grund) leiste.style.setProperty("--lc-grund", grund);
+
+      /* UND SIE WIRD FESTGENAGELT — NICHT AUSGERECHNET.
+         GEMELDET, zum wiederholten Mal: „Warum legst du die Bubble
+         schon wieder ueber den Chat-Kopf? Das sollst du doch nicht
+         machen, wie oft soll ich das denn noch sagen?"
+
+         Er hat recht, und mein Fehler war, mich auf die „statische
+         Position" zu verlassen: ein schwebender Kasten ohne
+         Hoehenangabe landet dort, wo er ohne das Schweben gestanden
+         haette. Das stimmt im Grundsatz — haengt aber davon ab,
+         welcher Vorfahr gerade als Bezugspunkt gilt, und der kann
+         sich aendern (aufgeklappte Befehle, ein Hintergrundbild, ein
+         anderes Thema). Dann rutscht sie nach oben, ueber den Kopf.
+
+         Jetzt wird sie nicht mehr ausgerechnet, sondern gemessen und
+         gesetzt: genau an die Oberkante des Chatverlaufs. Weiter oben
+         kann sie damit gar nicht landen. */
+      const verlauf = document.getElementById("lcVerlauf");
+      if (verlauf && verlauf.offsetParent === leiste.offsetParent) {
+        leiste.style.top = (verlauf.offsetTop + 3) + "px";
+      } else if (verlauf) {
+        /* Verschiedene Bezugspunkte: dann ueber die Bildschirmlage
+           rechnen — auch das ist gemessen, nicht geraten. */
+        const bezug = leiste.offsetParent || verlauf.parentElement;
+        if (bezug) {
+          const a = bezug.getBoundingClientRect(), b = verlauf.getBoundingClientRect();
+          leiste.style.top = Math.round(b.top - a.top + 3) + "px";
+        }
+      }
     } catch (e) {}
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
@@ -25181,7 +25210,7 @@
           sprachKnopfEl.classList.toggle("lc-spricht-dauernd", Boolean(an));
           sprachKnopfEl.title = an
             ? "Dauernd an — sprich einfach los, du kommst der Reihe nach dran"
-            : "Melden: gedrückt halten und sprechen — du wirst gehört, sobald der vor dir fertig ist";
+            : "Melden: gedrückt halten und sprechen — du wirst gehört, sobald die Person vor dir fertig ist";
           sprachKnopfEl.setAttribute("aria-label", an ? "Dauerhaft sprechen ist an" : "Melden und sprechen");
         }
       }
