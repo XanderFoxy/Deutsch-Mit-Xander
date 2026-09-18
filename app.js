@@ -374,6 +374,16 @@
            erst beim nächsten Zwanzig-Sekunden-Takt. */
         if (typeof imItalienischraum === "function" && imItalienischraum()
             && typeof updateTicker === "function") setTimeout(updateTicker, 60);
+        /* Alex erklaert den EINZELNEN Bereich, den man gerade
+           aufgemacht hat. „Wenn man auf Spiele klickt oder auf Erste
+           Schritte oder Grammatik, dass dieser Bereich noch mal kurz
+           erklaert wird im Einzelnen."
+           Erst nach einem Moment, damit der Bereich zuerst steht —
+           und nur, wenn kein programmierter Klick dahintersteckt
+           (siehe suppressNextSubnavScroll weiter unten). */
+        setTimeout(() => {
+          try { tutorBereichRufen(pill.dataset.sub); } catch (e) { /* nie den Wechsel aufhalten */ }
+        }, 800);
         /* GEWÜNSCHT: „Jede Übung und jedes Spiel soll für eine
            Herausforderung nutzbar sein."
 
@@ -21306,7 +21316,7 @@
          eine Person. */
       setTimeout(lcLiveWeiter, 220);
     };
-    if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(w.sprach, fertig, w.sprachAb || 0)) return;
+    if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(w.sprach, fertig, w.sprachAb || 0, w.sprachDauer || 0)) return;
     /* Der Vorrat ist voll oder kaputt — dann eben direkt, mit
        demselben Sprung ueber den Vorlauf. */
     try {
@@ -21315,6 +21325,10 @@
       a.onerror = fertig;
       if (w.sprachAb > 0) {
         a.onloadedmetadata = () => { try { a.currentTime = w.sprachAb; } catch (e) {} };
+      }
+      if (w.sprachDauer > 0) {
+        const ende = (w.sprachAb || 0) + w.sprachDauer;
+        a.ontimeupdate = () => { if (a.currentTime >= ende) { a.ontimeupdate = null; a.pause(); fertig(); } };
       }
       a.play().catch(fertig);
     } catch (e) { fertig(); }
@@ -22745,7 +22759,7 @@
               /* „ab" ueberspringt die Stille vor dem ersten Wort —
                  beim Freisprechen laeuft der Rekorder ja schon,
                  bevor jemand redet (siehe FREI_LUFT in livechat.js). */
-              if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(n.sprach, fertig, vorlauf)) return;
+              if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(n.sprach, fertig, vorlauf, Number(n.sprachDauer) || 0)) return;
               const a = new Audio(n.sprach);
               if (vorlauf > 0) a.onloadedmetadata = () => { try { a.currentTime = vorlauf; } catch (x) {} };
               a.play().catch(() => {
@@ -43416,7 +43430,16 @@
           <button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>
         </div>
         ${bwAnsichtReiheHtml(bwSzene)}
-        ${bwModus === "entdecken" ? umgangsSchalterHtml("bwUmgangsSzene") : ""}
+        ${/* GEWUENSCHT: „…und mit dem Baukasten der Bilderwelt, dass
+              man das flexibel austauschen kann mit Woerterbuch und
+              Umgangssprache."
+
+              Der Schalter gab es schon — aber NUR im Entdecken-Modus.
+              Wer im Finden- oder Artikel-Modus uebte, sah ihn nie und
+              musste dafuer bis in die Einstellungen. Jetzt steht er in
+              allen drei Modi, und er wirkt sofort auf die Wortkarten,
+              auf die Aufgabenstellung und auf die Aussprache. */ ""}
+        ${umgangsSchalterHtml("bwUmgangsSzene")}
         ${bwModus === "entdecken" ? `
           <p class="empty-note bw-hinweis">Tippe auf die Dinge im Bild — ${bwEntdeckt.size} von ${s.teile.length} entdeckt.</p>
           ${/* GEMELDET: „Man kommt gar nicht darauf, dass man die
@@ -53180,6 +53203,55 @@ An einem Morgen lief ein kleiner Fuchs los…
       kasten.appendChild(auf);
       kasten.appendChild(text);
     }
+  }
+
+  /* =============================================================
+     DER EINZELNE BEREICH — beim Anklicken eines Unterreiters
+     -------------------------------------------------------------
+     GEWUENSCHT: „…dass dieser Bereich noch mal kurz erklaert wird
+     im Einzelnen, dass speziell zur Bilderwelt noch mal eine
+     Erklaerung kommt, was man da genau machen kann."
+
+     Einmal je Besuch und Bereich. Wer den Tutor abgeschaltet hat,
+     bekommt auch das nicht. Und wenn Alex gerade den ganzen
+     Bereich durchspricht, faellt er sich nicht selbst ins Wort:
+     dann passiert hier nichts.
+     ============================================================= */
+  const tutorBereichGezeigt = new Set();
+
+  function tutorBereichRufen(sub, nochmal) {
+    if (!sub || !tutorAn()) return;
+    if (!nochmal && tutorBereichGezeigt.has(sub)) return;
+    /* Laeuft gerade die grosse Runde durch den ganzen Bereich?
+       Dann hat der Mensch eben BEWUSST auf einen Unterreiter
+       getippt — das ist eine Ansage. Die Runde wird abgebrochen
+       und stattdessen genau das erklaert, was er sehen wollte.
+       (Beim Messen kam sonst beim Profil die Bereichsrunde
+       dazwischen und die Einstellungen wurden nie erklaert.) */
+    if (tutorLauf) {
+      if (tutorLauf.bereich === sub) return;      // laeuft schon
+      tutorSchliessen(true);
+    }
+    tutorTexteHolen().then((da) => {
+      if (!da) return;
+      const st = (window.DMA_TUTOR_BEREICHE || {})[sub];
+      if (!st) return;
+      /* Ist der Unterreiter ueberhaupt noch offen? */
+      const pille = document.querySelector(`.subnav-pill[data-sub="${sub}"]`);
+      if (!nochmal && (!pille || pille.getAttribute("aria-selected") !== "true")) return;
+      tutorBereichGezeigt.add(sub);
+      const b = tutorBuehne();
+      const bild = b.querySelector("#tutorFigur");
+      const neuBild = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
+      if (bild.getAttribute("src") !== neuBild) bild.setAttribute("src", neuBild);
+      b.classList.toggle("tutor-comic", tutorArt() === "comic");
+      requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add("tutor-da")));
+      /* Ein einzelnes Stueck ist nichts anderes als eine Runde mit
+         genau einem Eintrag — dieselbe Maschinerie, kein zweiter Weg,
+         der auseinanderlaufen koennte. */
+      tutorLauf = { bereich: sub, stuecke: [{ ton: st.ton, text: st.text, ziel: "", hilfe: st.hilfe || "" }], nr: 0 };
+      tutorStueckSpielen();
+    });
   }
 
   /* „nochmal" = ein bewusster Tastendruck; dann darf er auch dann

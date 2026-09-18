@@ -1705,7 +1705,7 @@ window.LiveChat = (function () {
      ist — deshalb wird auf loadedmetadata gewartet und nicht blind
      gesetzt. Blind gesetzt wird currentTime naemlich still verworfen,
      und dann hoert man doch wieder die Stille vorne. */
-  function tonAusVorrat(quelle, beiEnde, ab) {
+  function tonAusVorrat(quelle, beiEnde, ab, dauer) {
     if (typeof document === "undefined" || !quelle) return false;
     var frei = null;
     for (var i = 0; i < tonVorrat.length; i++) {
@@ -1727,8 +1727,11 @@ window.LiveChat = (function () {
     frei.src = quelle;
     frei.currentTime = 0;
     frei.volume = 1;
+    var fertigSchon = false;
     var aufraeumen = function () {
-      frei.onended = null; frei.onerror = null;
+      if (fertigSchon) return;
+      fertigSchon = true;
+      frei.onended = null; frei.onerror = null; frei.ontimeupdate = null;
       frei.dataset.belegt = "";
       try { frei.removeAttribute("src"); frei.load(); } catch (e) {}
       if (neu && frei.parentNode) frei.parentNode.removeChild(frei);
@@ -1742,6 +1745,14 @@ window.LiveChat = (function () {
           var ziel = Math.min(ab, Math.max(0, (frei.duration || 0) - 0.3));
           if (ziel > 0) frei.currentTime = ziel;
         } catch (e) {}
+      }
+      /* Hinten kappen: bei einer Wortmeldung stehen zwei Sekunden
+         Pause am Ende, die niemand hoeren will. */
+      if (dauer > 0) {
+        var ende = (ab > 0 ? ab : 0) + dauer;
+        frei.ontimeupdate = function () {
+          if (frei.currentTime >= ende) { frei.ontimeupdate = null; try { frei.pause(); } catch (e) {} aufraeumen(); }
+        };
       }
       tonAbspielenVersuchen(frei);
     };
@@ -2146,7 +2157,8 @@ window.LiveChat = (function () {
       if (!ganz) return;
       n = { art: "text", id: n.id, von: n.von, name: n.name, text: "",
             zeit: n.zeit, bild: n.bild, farbe: n.farbe, chatArt: n.chatArt,
-            sprach: ganz, sprachSek: n.sprachSek, sprachAb: n.sprachAb };
+            sprach: ganz, sprachSek: n.sprachSek, sprachAb: n.sprachAb,
+            sprachDauer: n.sprachDauer };
     }
     if (n.art === "text") {
       /* Eine Sprachnachricht hat weder Text noch Bild — ohne diese
@@ -2167,6 +2179,7 @@ window.LiveChat = (function () {
           bild: n.bild || "", farbe: n.farbe || "",
           sprach: n.sprach, sprachSek: Number(n.sprachSek) || 0,
           sprachAb: Number(n.sprachAb) || 0,
+          sprachDauer: Number(n.sprachDauer) || 0,
           zeit: n.zeit || Date.now(), art: "live"
         };
         liveWarteschlange.push(w);
@@ -2191,7 +2204,8 @@ window.LiveChat = (function () {
            abgespielt (app.js). Sie wird nirgends gesichert. */
         sprach: typeof n.sprach === "string" ? n.sprach : "",
         sprachSek: Number(n.sprachSek) || 0,
-        sprachAb: Number(n.sprachAb) || 0
+        sprachAb: Number(n.sprachAb) || 0,
+        sprachDauer: Number(n.sprachDauer) || 0
       });
       melden();
       return;
@@ -3335,11 +3349,78 @@ window.LiveChat = (function () {
     takt: 0, grundpegel: 0, proben: 0, lautSeit: 0, stillSeit: 0,
     nimmtAuf: false, melden: null,
     segAb: 0,          // wann das laufende Rekorder-Stueck begonnen hat
-    sprachAb: 0        // wann darin das Sprechen angefangen hat
+    sprachAb: 0,       // wann darin das Sprechen angefangen hat
+    sprachBis: 0,      // und wann es zuletzt noch eine Stimme war
+    spektrum: null, verlauf: [], letztesUrteil: null
   };
   var FREI_ABSTAND = 0.012;     // wie weit ueber dem Grundpegel es „laut" ist
-  var FREI_STILLE = 900;        // so lange Stille beendet eine Aufnahme
+  /* GEWUENSCHT: „…nachdem man fertig ist, eine Pause gemacht hat und
+     die Pause mindestens laenger als 2 Sekunden ist, dass es dann
+     einfach geschickt wird." Genau zwei Sekunden. Kuerzere Pausen
+     sind Atemholen mitten im Satz und duerfen nicht trennen. */
+  var FREI_STILLE = 2000;
   var FREI_MINDEST = 350;       // kuerzere Schnipsel sind kein Satz
+
+  /* ===========================================================
+     IST DAS EINE STIMME ODER NUR GERAEUSCH?
+     -----------------------------------------------------------
+     GEWUENSCHT: „…dass wir praktisch unterscheiden, ob es einfach
+     nur Stille ist, ob eine menschliche Stimme erkannt wird oder
+     nicht … und dann kann es so gekappt werden, dass es ab dem
+     Moment kurz bevor man angefangen hat zu sprechen genau sendet
+     mit dem Inhalt von dem, was man gesagt hat."
+
+     Ein reiner Lautstaerke-Schwellwert kann das nicht. Ein
+     Ventilator, ein Kuehlschrank, ein vorbeifahrendes Auto, ein
+     Tuerknall — alles ist „laut". Deshalb werden jetzt DREI
+     Eigenschaften zusammen geprueft, und eine Stimme muss alle
+     drei haben:
+
+     1. LAUTSTAERKE ueber dem Grundpegel des Raums. Notwendig,
+        aber alleine nichts wert.
+
+     2. WO LIEGT DIE ENERGIE? Das Telefon uebertraegt seit hundert
+        Jahren 300 bis 3400 Hz, und man versteht darin jedes Wort —
+        weil genau dort die Formanten liegen, also das, was einen
+        Vokal zu einem A oder einem I macht. Der Grundton einer
+        Stimme liegt zwar tiefer (85–180 Hz), aber den braucht man
+        nicht: das Ohr denkt ihn sich aus den Obertoenen dazu.
+
+        HIER LAG EIN MESSFEHLER: erst stand 100 Hz als untere
+        Grenze. Damit galt ein Ventilatorbrummen bei 120 Hz als
+        „Sprachband" und wurde gesendet — gemessen mit einem
+        erzeugten 120-Hz-Ton: Bandanteil 0,79, also durchgewinkt.
+        Mit 300 Hz als Grenze faellt genau dieser Fall heraus,
+        ebenso das Netzbrummen bei 50 und 100 Hz.
+
+     3. IST DAS BREIT ODER EIN EINZELNER ZACKEN? Ein Brummen, ein
+        Pfeifen, ein Klingelton — das ist EIN Ton, also ein
+        einzelner schmaler Zacken im Spektrum. Sprache dagegen ist
+        immer breit: Grundton, Obertoene und mehrere Formanten
+        gleichzeitig. Gezaehlt wird deshalb, ueber wie viele
+        Frequenzstellen sich die Energie im Sprachband verteilt.
+        Das ist das Merkmal, das einen Sinuston sicher aussortiert,
+        auch wenn er mitten im Sprachband liegt.
+
+     4. BEWEGT SICH DAS? Sprache schwingt: Silben kommen vier- bis
+        achtmal in der Sekunde, dazwischen wird es leiser. Ein
+        Ventilator dagegen brummt gleichmaessig weiter. Ueber eine
+        knappe Sekunde wird deshalb gemessen, wie stark der Pegel
+        schwankt. Ein gleichbleibender Ton faellt hier durch —
+        egal wie laut er ist.
+
+     Was hier NICHT passiert: es wird nicht erkannt, WAS jemand
+     sagt, und auch nicht, WER spricht. Das waere ein Sprachmodell;
+     hier geht es nur um die Frage „Mensch oder Maschine".
+     =========================================================== */
+  /* Die Werte sind gemessen, nicht geraten — siehe den Messlauf in
+     werkzeug/stimme-messen.js. Mit 0,50 fiel eine tiefe Maennerstimme
+     durch, weil sie viel Energie unter 300 Hz hat; 0,25 laesst sie
+     durch und haelt Brummen (Bandanteil nahe null) trotzdem drauss. */
+  var STIMME_BAND_MIN = 0.25;   // so viel Energie muss im Sprachband liegen
+  var STIMME_BREITE = 12;       // ueber so viele Frequenzstellen muss sie sich verteilen
+  var STIMME_SCHWUNG = 0.22;    // so stark muss der Pegel schwanken
+  var STIMME_FENSTER = 16;      // ueber so viele Messungen (rund 1 Sekunde)
 
   /* ===========================================================
      WARUM VORNE IMMER ETWAS FEHLTE — UND WAS JETZT ANDERS IST
@@ -3396,10 +3477,14 @@ window.LiveChat = (function () {
       frei.kontext = new K();
       if (frei.kontext.state === "suspended" && frei.kontext.resume) frei.kontext.resume();
       var quelle = frei.kontext.createMediaStreamSource(spur);
+      frei.quelle = quelle;          // zum Abklemmen beim Nachmessen
       frei.messer = frei.kontext.createAnalyser();
-      frei.messer.fftSize = 1024;
+      frei.messer.fftSize = 2048;          // feiner, damit die Baender sauber trennen
+      frei.messer.smoothingTimeConstant = 0.3;
       quelle.connect(frei.messer);
       frei.daten = new Uint8Array(frei.messer.fftSize);
+      frei.spektrum = new Uint8Array(frei.messer.frequencyBinCount);
+      frei.verlauf = [];                   // die letzten Pegel, fuer den Schwung
       frei.an = true;
       frei.grundpegel = 0; frei.proben = 0;
       frei.lautSeit = 0; frei.stillSeit = 0; frei.nimmtAuf = false;
@@ -3472,10 +3557,75 @@ window.LiveChat = (function () {
     sprachStart = frei.segAb;
   }
 
+  /* Wie viel der Energie liegt im Sprachband (100–3400 Hz)?
+     Zurueck kommt ein Wert zwischen 0 und 1. */
+  function freiSpektrumMessen() {
+    if (!frei.messer || !frei.spektrum) return { anteil: 1, breite: 99 };
+    frei.messer.getByteFrequencyData(frei.spektrum);
+    var rate = (frei.kontext && frei.kontext.sampleRate) || 48000;
+    var proTopf = rate / 2 / frei.spektrum.length;
+    var gesamt = 0, drin = 0, spitze = 0;
+    var vonI = Math.ceil(300 / proTopf), bisI = Math.floor(3400 / proTopf);
+    var obenI = Math.floor(8000 / proTopf);
+    for (var i = 1; i < frei.spektrum.length && i <= obenI; i++) {
+      var e = frei.spektrum[i];
+      gesamt += e;
+      if (i >= vonI && i <= bisI) { drin += e; if (e > spitze) spitze = e; }
+    }
+    if (gesamt < 1) return { anteil: 0, breite: 0 };
+    /* Ueber wie viele Stellen verteilt sich die Energie im Sprachband?
+       Ein einzelner Sinuston kommt hier auf zwei, drei Stellen;
+       Sprache auf viele Dutzend. */
+    var breite = 0;
+    if (spitze > 0) {
+      for (var j = vonI; j <= bisI && j < frei.spektrum.length; j++) {
+        if (frei.spektrum[j] >= spitze * 0.4) breite++;
+      }
+    }
+    return { anteil: drin / gesamt, breite: breite };
+  }
+
+  /* Wie stark schwankt der Pegel ueber die letzte Sekunde?
+     Sprache schwankt, ein Brummen nicht. */
+  function freiSchwung() {
+    var v = frei.verlauf;
+    if (v.length < 6) return 1;           // noch zu wenig gemessen: nicht blockieren
+    var max = 0, min = Infinity;
+    for (var i = 0; i < v.length; i++) { if (v[i] > max) max = v[i]; if (v[i] < min) min = v[i]; }
+    if (max <= 0) return 0;
+    return (max - min) / max;
+  }
+
+  /* Die eigentliche Frage. „warum" sagt bei Bedarf, woran es lag —
+     das steht in der Betreiber-Diagnose und hat beim Einstellen
+     der Werte sehr geholfen. */
+  function stimmeErkannt(pegel) {
+    var laut = pegel > frei.grundpegel + FREI_ABSTAND;
+    if (!laut) return { ja: false, warum: "zu leise", band: 0, breite: 0, schwung: 0 };
+    var sp = freiSpektrumMessen();
+    if (sp.anteil < STIMME_BAND_MIN) {
+      return { ja: false, warum: "falsches Band", band: sp.anteil, breite: sp.breite, schwung: 0 };
+    }
+    if (sp.breite < STIMME_BREITE) {
+      return { ja: false, warum: "einzelner Ton", band: sp.anteil, breite: sp.breite, schwung: 0 };
+    }
+    var schwung = freiSchwung();
+    /* Der Schwung wird nur geprueft, solange NICHT aufgenommen wird.
+       Waehrend eines Satzes haelt jemand auch mal einen Ton — das
+       darf ihn nicht mitten im Wort abschneiden. */
+    if (!frei.nimmtAuf && schwung < STIMME_SCHWUNG) {
+      return { ja: false, warum: "gleichbleibend", band: sp.anteil, breite: sp.breite, schwung: schwung };
+    }
+    return { ja: true, warum: "", band: sp.anteil, breite: sp.breite, schwung: schwung };
+  }
+
   function freiHorchen() {
     if (!frei.an) return;
     var pegel = freiPegel();
     var jetzt = Date.now();
+    /* Den Pegelverlauf mitschreiben — daraus kommt der Schwung. */
+    frei.verlauf.push(pegel);
+    if (frei.verlauf.length > STIMME_FENSTER) frei.verlauf.shift();
     /* Erst zuhoeren, dann urteilen: die ersten Proben sind der
        Grundpegel des Raums. */
     if (frei.proben < 13) {
@@ -3489,7 +3639,9 @@ window.LiveChat = (function () {
     if (!frei.nimmtAuf && pegel < frei.grundpegel + FREI_ABSTAND) {
       frei.grundpegel = frei.grundpegel * 0.97 + pegel * 0.03;
     }
-    var laut = pegel > frei.grundpegel + FREI_ABSTAND;
+    var urteil = stimmeErkannt(pegel);
+    var laut = urteil.ja;
+    frei.letztesUrteil = urteil;
     if (!frei.nimmtAuf) {
       if (laut) {
         /* Der ZEITPUNKT des ersten lauten Messwerts wird gemerkt,
@@ -3511,7 +3663,7 @@ window.LiveChat = (function () {
       }
       return;
     }
-    if (laut) { frei.stillSeit = 0; return; }
+    if (laut) { frei.stillSeit = 0; frei.sprachBis = jetzt; return; }
     if (!frei.stillSeit) frei.stillSeit = jetzt;
     if (jetzt - frei.stillSeit >= FREI_STILLE) freiAufnahmeAus();
   }
@@ -3523,6 +3675,7 @@ window.LiveChat = (function () {
     if (frei.nimmtAuf || !sprachRekorder) return;
     frei.nimmtAuf = true;
     frei.sprachAb = abWann || Date.now();
+    frei.sprachBis = Date.now();
     frei.stillSeit = 0;
     freisagen("nimmt");
     clearTimeout(sprachEndeTakt);
@@ -3546,7 +3699,16 @@ window.LiveChat = (function () {
        viel springt der Abspieler weiter — bis auf ein Viertel
        Sekunde Luft, damit das Wort nicht hart einsetzt. */
     var vorlauf = Math.max(0, (frei.sprachAb - frei.segAb - FREI_LUFT) / 1000);
-    sprachAufnahmeStoppen({ ab: vorlauf, live: true }).then(function () {
+    /* HINTEN GENAUSO KAPPEN WIE VORNE.
+       „…dass es dann gekappt geschickt wird auf diesen Inhalt, der
+       wirklich als menschliche Stimme erkannt wird."
+       Zwei Sekunden Pause stehen am Ende jeder Aufnahme — die will
+       niemand hoeren. Mitgeschickt wird deshalb auch, wie lange
+       wirklich gesprochen wurde; der Abspieler haelt dort an.
+       Ein Viertel Sekunde Luft bleibt, damit das letzte Wort nicht
+       abgehackt klingt. */
+    var dauer = Math.max(0.3, (frei.sprachBis - frei.sprachAb + FREI_LUFT + 250) / 1000);
+    sprachAufnahmeStoppen({ ab: vorlauf, dauer: dauer, live: true }).then(function () {
       if (frei.an) { freiSegmentNeu(); freisagen("hoert"); }
     });
   }
@@ -3577,7 +3739,8 @@ window.LiveChat = (function () {
       id: id,
       von: zustand.ichId, name: zustand.ichName,
       text: "", art: o.live ? "live" : "sprach",
-      sprach: daten, sprachSek: sekunden, sprachAb: o.ab || 0,
+      sprach: daten, sprachSek: sekunden,
+      sprachAb: o.ab || 0, sprachDauer: o.dauer || 0,
       zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
     };
     /* Die eigene Wortmeldung haengt nur dann im Chat, wenn der
@@ -3589,12 +3752,14 @@ window.LiveChat = (function () {
 
     var kopf = { id: id, name: n.name, zeit: n.zeit, bild: zustand.ichBild,
                  farbe: zustand.farbe, chatArt: n.art,
-                 sprachSek: sekunden, sprachAb: n.sprachAb };
+                 sprachSek: sekunden, sprachAb: n.sprachAb,
+                 sprachDauer: n.sprachDauer };
     if (daten.length <= PAKET_BYTES) {
       senden({ art: "text", text: "", sprach: daten,
                id: kopf.id, name: kopf.name, zeit: kopf.zeit, bild: kopf.bild,
                farbe: kopf.farbe, chatArt: kopf.chatArt,
-               sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb });
+               sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb,
+               sprachDauer: kopf.sprachDauer });
     } else {
       var anzahl = Math.ceil(daten.length / PAKET_BYTES);
       for (var i = 0; i < anzahl; i++) {
@@ -3602,7 +3767,8 @@ window.LiveChat = (function () {
                  teil: daten.slice(i * PAKET_BYTES, (i + 1) * PAKET_BYTES),
                  name: kopf.name, zeit: kopf.zeit, bild: kopf.bild,
                  farbe: kopf.farbe, chatArt: kopf.chatArt,
-                 sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb });
+                 sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb,
+               sprachDauer: kopf.sprachDauer });
       }
     }
     melden();
@@ -5451,6 +5617,33 @@ window.LiveChat = (function () {
                neustart: FREI_NEUSTART, luft: FREI_LUFT };
     },
     freiAusloesen: function (abWann) { freiAufnahmeAn(abWann || Date.now()); },
+    /* Nur zum Nachmessen: was sagt die Stimmerkennung gerade? */
+    stimmeUrteil: function () {
+      var p = freiPegel();
+      var u = stimmeErkannt(p);
+      return { pegel: p, grund: frei.grundpegel, ja: u.ja, warum: u.warum,
+               band: u.band, breite: u.breite, schwung: u.schwung,
+               bandMin: STIMME_BAND_MIN, breiteMin: STIMME_BREITE, schwungMin: STIMME_SCHWUNG };
+    },
+    freiStille: function () { return FREI_STILLE; },
+    pruefVerlaufLeeren: function () { frei.verlauf = []; },
+    /* Nur zum Nachmessen: eine andere Tonquelle an die laufende
+       Messung haengen, damit man mit bekannten Signalen pruefen kann,
+       ob die Stimmerkennung wirklich unterscheidet. */
+    pruefQuelle: function (strom) {
+      if (!frei.kontext || !frei.messer) return false;
+      try {
+        /* Die echte Mikrofonquelle ABKLEMMEN — sonst mischt sie sich
+           dazu und die Messung sagt nichts aus. Genau daran ist der
+           erste Messversuch gescheitert. */
+        if (frei.quelle) { try { frei.quelle.disconnect(); } catch (e) {} }
+        if (frei.pruefKnoten) { try { frei.pruefKnoten.disconnect(); } catch (e) {} }
+        frei.pruefKnoten = frei.kontext.createMediaStreamSource(strom);
+        frei.pruefKnoten.connect(frei.messer);
+        frei.verlauf = [];
+        return true;
+      } catch (e) { return false; }
+    },
     freiBeenden: function () { return freiAufnahmeAus(); },
     sprachLagerStand: sprachLagerStand,
     sprachLagerLeeren: sprachLagerLeeren,
