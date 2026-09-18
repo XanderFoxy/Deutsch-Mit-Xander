@@ -49,28 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19i — die Reihe ist wieder ein Gespraech",
+  stand: "Runde 19j — ein Rueckruf darf ein Irrtum sein",
 
   inArbeit: [
-    { seit: "2026-09-18T20:33",
-      text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen" },
-    { seit: "2026-09-18T20:33",
+    { seit: "2026-09-18T20:37",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:33",
+    { seit: "2026-09-18T20:37",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:33",
+    { seit: "2026-09-18T20:37",
       text: "Favoriten im Befehlspanel selbst anheften" },
+    { seit: "2026-09-18T20:37",
+      text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:33",
-      text: "Hoechstens drei wartende Wortmeldungen — bei Emmy standen 20, und sie konnte deshalb nicht sprechen" },
-    { seit: "2026-09-18T20:33",
-      text: "Was aelter als anderthalb Minuten ist, kommt gar nicht erst in die Reihe. Es steht weiterhin im Chat zum Antippen" },
-    { seit: "2026-09-18T20:33",
-      text: "Uebersprungenes wird einmal gesagt, nicht zwanzigmal" },
-    { seit: "2026-09-18T20:33",
-      text: "Das unsichtbare Wort „Halten\" ist raus — es konnte sichtbar werden, sobald ein Stilblatt nicht mitkam" },
+    { seit: "2026-09-18T20:37",
+      text: "Eine zurueckgerufene Sprachnachricht laesst sich anderthalb Minuten lang wiederherstellen — mit sichtbarem Countdown unter dem Chat" },
+    { seit: "2026-09-18T20:37",
+      text: "Nach Ablauf sagt es ehrlich nein, statt etwas zu versprechen, das es nicht mehr halten kann" },
   ],
 };

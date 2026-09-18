@@ -4765,18 +4765,77 @@ window.LiveChat = (function () {
   /* Mit „auchSenden" ruft es die Nachricht auch bei den anderen
      zurueck — das braucht der Knopf an der Zeile, der Befehl /weg
      schickt selbst. */
+  /* EIN RUECKRUF DARF EIN IRRTUM SEIN.
+     -----------------------------------------------------------
+     GEWUENSCHT: „Das Rueckruf-Symbol soll man wieder rueckgaengig
+     machen koennen … wenn es aber zu lange ignoriert wurde, dann
+     kann es nicht mehr wiederhergestellt werden."
+
+     Also ein Papierkorb mit Frist. Was zurueckgerufen wird, liegt
+     anderthalb Minuten dort und laesst sich mit einem Tipp
+     zurueckholen; danach ist es endgueltig weg. Die Frist ist kein
+     Schikane, sondern Ehrlichkeit: die Stuecke der Aufnahme haelt
+     der Ausgang zwei Minuten bereit (sprachAusgang), laenger koennte
+     man sie gar nicht mehr verschicken. Was man nicht mehr halten
+     kann, soll man auch nicht versprechen. */
+  var RUECKHOL_MS = 90000;
+  var sprachPapierkorb = {};
+
   function sprachZurueckrufen(id, auchSenden) {
     var wars = false;
     for (var i = liveWarteschlange.length - 1; i >= 0; i--) {
       var w = liveWarteschlange[i];
       if (w && String(w.id).indexOf(id) === 0) { liveWarteschlange.splice(i, 1); wars = true; }
     }
+    /* Erst aufheben, dann wegnehmen — sonst gibt es nichts
+       zurueckzuholen. Nur die eigenen: fremde Wortmeldungen
+       wiederherzustellen waere nicht mein Recht. */
+    var geholt = zustand.nachrichten.filter(function (n) {
+      return n && n.id && String(n.id).indexOf(id) === 0;
+    });
+    var eigene = geholt.filter(function (n) { return n.eigen; });
+    if (eigene.length) {
+      sprachPapierkorb[id] = { zeilen: eigene, wann: Date.now() };
+      setTimeout(function () { delete sprachPapierkorb[id]; melden(); }, RUECKHOL_MS);
+    }
     zustand.nachrichten = zustand.nachrichten.filter(function (n) {
       return !(n && n.id && String(n.id).indexOf(id) === 0);
     });
     if (auchSenden) { try { senden({ art: "zurueck", id: String(id) }); } catch (e) {} }
     melden();
-    return { ungehoert: wars };
+    return { ungehoert: wars, ruecknahmeBis: eigene.length ? Date.now() + RUECKHOL_MS : 0 };
+  }
+
+  /* Was liegt gerade im Papierkorb und wie lange noch? */
+  function sprachRuecknahmen() {
+    var jetzt = Date.now();
+    return Object.keys(sprachPapierkorb).map(function (id) {
+      var p = sprachPapierkorb[id];
+      return { id: id, restMs: Math.max(0, RUECKHOL_MS - (jetzt - p.wann)),
+               sekunden: (p.zeilen[0] && p.zeilen[0].sprachSek) || 0 };
+    }).filter(function (x) { return x.restMs > 0; });
+  }
+
+  function sprachWiederherstellen(id) {
+    var p = sprachPapierkorb[id];
+    if (!p) return { ok: false, warum: "Die Frist ist abgelaufen — das lässt sich nicht mehr zurückholen." };
+    delete sprachPapierkorb[id];
+    p.zeilen.forEach(function (n) { nachrichtAnhaengen(n); });
+    /* Und wieder hinaus zu den anderen. Liegen die Stuecke noch im
+       Ausgang, gehen sie denselben Weg wie beim ersten Mal; sonst
+       reicht ein einzelnes Paket, wenn die Aufnahme klein genug ist. */
+    var mitTon = p.zeilen.filter(function (n) { return n.sprach; })[0];
+    if (sprachAusgang[id]) {
+      sprachTeilSchicken(id, 0);
+    } else if (mitTon && mitTon.sprach && mitTon.sprach.length <= PAKET_BYTES) {
+      senden({ art: "text", text: "", sprach: mitTon.sprach,
+               id: id, name: mitTon.name, zeit: mitTon.zeit, bild: mitTon.bild,
+               farbe: mitTon.farbe, chatArt: "live",
+               sprachSek: mitTon.sprachSek, sprachAb: mitTon.sprachAb,
+               sprachDauer: mitTon.sprachDauer });
+    }
+    melden();
+    return { ok: true };
   }
 
   function liveMelden(f) { liveMelder = typeof f === "function" ? f : null; }
@@ -7456,6 +7515,8 @@ window.LiveChat = (function () {
     /* Nur zum Nachmessen: eine Wortmeldung in Stuecken empfangen,
        dabei eines verlieren, und sehen, ob danach gefragt wird und
        ob sie am Ende vollstaendig ist. Fasst nichts Echtes an. */
+    sprachRuecknahmen: sprachRuecknahmen,
+    sprachWiederherstellen: sprachWiederherstellen,
     pruefSprachVerlust: function (anzahl, verliere) {
       var id = "pruef-" + Date.now();
       var gefragt = [];

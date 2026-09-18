@@ -8387,6 +8387,31 @@ body.lc-schreibt .tutor-reiter {
   border-radius: 8px;
 }
 
+/* --- Ein Rueckruf darf ein Irrtum sein ---
+   GEWUENSCHT: „Das Rueckruf-Symbol soll man wieder rueckgaengig
+   machen koennen … wenn es aber zu lange ignoriert wurde, dann kann
+   es nicht mehr wiederhergestellt werden."
+   Deshalb eine schmale Zeile unter dem Chat, die die Frist sichtbar
+   herunterzaehlt. Eine Frist, die man nicht sehen kann, ist eine
+   Falle. */
+.lc-ruecknahmen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 12px 0;
+}
+.lc-ruecknahme {
+  border: 1px dashed rgba(224, 150, 74, 0.55);
+  border-radius: 999px;
+  background: rgba(224, 150, 74, 0.10);
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 3px 11px;
+  cursor: pointer;
+}
+.lc-ruecknahme:hover { background: rgba(224, 150, 74, 0.2); }
+
 /* --- Der Herunterladen-Pfeil sitzt IN der Blase --- */
 .lc-sprachblase {
   display: inline-flex;

@@ -21407,6 +21407,57 @@
     } catch (e) { return false; }
   }
 
+  /* DER PAPIERKORB MIT FRIST — SICHTBAR.
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Das Rueckruf-Symbol soll man wieder rueckgaengig
+     machen koennen … wenn es aber zu lange ignoriert wurde, dann kann
+     es nicht mehr wiederhergestellt werden."
+
+     Also eine schmale Zeile unter dem Chat, solange die Frist laeuft,
+     mit der verbleibenden Zeit darin. Sie zaehlt sichtbar herunter —
+     eine Frist, die man nicht sehen kann, ist eine Falle. Ist sie
+     abgelaufen, verschwindet die Zeile von selbst. */
+  let lcRuecknahmeUhr = 0;
+  function lcRuecknahmenZeichnen(bereich) {
+    const wo = (bereich || document).querySelector("#lcVerlauf");
+    if (!wo || !wo.parentNode || !window.LiveChat || !LiveChat.sprachRuecknahmen) return;
+    clearInterval(lcRuecknahmeUhr);
+    const male = () => {
+      const alt = document.getElementById("lcRuecknahmen");
+      let liste = [];
+      try { liste = LiveChat.sprachRuecknahmen() || []; } catch (e) { liste = []; }
+      if (!liste.length) { if (alt) alt.remove(); return; }
+      const kasten = alt || document.createElement("div");
+      kasten.id = "lcRuecknahmen";
+      kasten.className = "lc-ruecknahmen";
+      kasten.textContent = "";
+      liste.forEach((r) => {
+        const s = Math.ceil(r.restMs / 1000);
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-ruecknahme";
+        b.textContent = "↺ Zurückgeholte Wortmeldung"
+          + (r.sekunden ? " (" + Math.round(r.sekunden) + " s)" : "")
+          + " wiederherstellen · noch " + s + " s";
+        b.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const erg = LiveChat.sprachWiederherstellen(r.id);
+          showToast(erg && erg.ok
+            ? "↺ Wieder da — sie ist erneut bei allen im Raum."
+            : (erg && erg.warum) || "Das ging nicht mehr.");
+          renderLiveChat();
+        });
+        kasten.appendChild(b);
+      });
+      if (!alt) wo.parentNode.insertBefore(kasten, wo.nextSibling);
+    };
+    male();
+    lcRuecknahmeUhr = setInterval(() => {
+      if (!document.getElementById("lcVerlauf")) { clearInterval(lcRuecknahmeUhr); return; }
+      male();
+    }, 1000);
+  }
+
   function lcStimmenUmschalten(verlauf) {
     const an = verlauf.classList.toggle("lc-stimmen-offen");
     const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
@@ -24095,10 +24146,13 @@
                 const id = String(n.id).replace(/-quittung$/, "").replace(/-selbst$/, "");
                 const wars = LiveChat.sprachZurueckrufen
                   ? LiveChat.sprachZurueckrufen(id, true) : null;
-                showToast(wars && wars.ungehoert
+                showToast((wars && wars.ungehoert
                   ? "↩️ Zurückgerufen — sie war noch nicht dran und ist jetzt weg."
                   : "↩️ Entfernt. Wer sie schon gehört hat, hat sie gehört — "
-                    + "das lässt sich nicht zurückholen.");
+                    + "das lässt sich nicht zurückholen.")
+                  + (wars && wars.ruecknahmeBis
+                      ? " Anderthalb Minuten lang kannst du sie zurückholen."
+                      : ""));
                 renderLiveChat();
               });
               knopf.appendChild(rein);
@@ -24737,6 +24791,7 @@
           showToast("🔤 Schrift: " + b.textContent.trim());
         }));
       livechatTippsBinden(area);
+      lcRuecknahmenZeichnen(area);
       /* Der Fokusschalter wird bei JEDEM Zeichnen nachgezogen — nicht
          nur dann, wenn die Sprachleiste gerade gebaut wird. Sonst
          fehlte er ueberall dort, wo es keine Sprachnachrichten gibt,
