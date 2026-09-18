@@ -17982,6 +17982,193 @@
   }
 
   /* --- Der Schwamm wischt den Chat wie eine Tafel ------------------- */
+  /* ============================================================
+     DIE ACHTZIGER
+     ------------------------------------------------------------
+     GEWUENSCHT: Nostalgie aus den Achtzigern.
+
+     Vier Sachen, die jeder kennt, der damals gelebt hat:
+       /kassette  eine Musikkassette, die sich zurueckspult
+       /pacman    ein gelber Kreis frisst sich durch den Chat
+       /vhs       das Bild verreisst wie bei einem alten Videoband
+       /disko     eine Spiegelkugel wirft Lichtflecken durch den Raum
+
+     Alle vier liegen UEBER dem Chat, wenn einer da ist, und sonst
+     ueber der Seite. Das ist derselbe Riegel wie beim Schwamm: ein
+     Befehl, der ausserhalb des Chats nichts tut, sieht aus wie ein
+     kaputter Befehl.
+     ============================================================ */
+  /* Die Schicht dorthin legen, wo man gerade hinsieht. */
+  function lc80Schicht(id, klasse) {
+    document.getElementById(id)?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = id;
+    schicht.className = klasse;
+    schicht.setAttribute("aria-hidden", "true");
+    const ziel = document.getElementById("lcVerlauf") || document.getElementById("livechatKarte");
+    const r = ziel && ziel.getBoundingClientRect();
+    if (r && r.width > 40) {
+      schicht.style.left = r.left + "px";
+      schicht.style.top = r.top + "px";
+      schicht.style.width = r.width + "px";
+      schicht.style.height = r.height + "px";
+    } else {
+      schicht.style.inset = "0";
+    }
+    document.body.appendChild(schicht);
+    return schicht;
+  }
+
+  /* --- Die Musikkassette ---
+     Zwei Wickel, und der Bandvorrat wandert von rechts nach links:
+     der rechte Wickel wird kleiner, der linke groesser. Genau daran
+     hat man frueher gesehen, wie weit die Seite noch ist. */
+  function lcKassette() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const schicht = lc80Schicht("lcKassette", "lc-kassette");
+    const k = document.createElement("i");
+    k.innerHTML = '<svg viewBox="0 0 120 76" width="100%" height="100%">'
+      + '<defs><linearGradient id="lc80kg" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#4a4f57"/><stop offset="100%" stop-color="#22262c"/></linearGradient></defs>'
+      /* Gehaeuse */
+      + '<rect x="2" y="2" width="116" height="72" rx="5" fill="url(#lc80kg)" stroke="#12151a" stroke-width="2"/>'
+      /* Etikett */
+      + '<rect x="9" y="8" width="102" height="26" rx="2" fill="#efe6cf" stroke="#b9ab86" stroke-width="1"/>'
+      + '<line x1="14" y1="16" x2="106" y2="16" stroke="#c2b28c" stroke-width="1"/>'
+      + '<line x1="14" y1="22" x2="106" y2="22" stroke="#c2b28c" stroke-width="1"/>'
+      + '<line x1="14" y1="28" x2="80" y2="28" stroke="#c2b28c" stroke-width="1"/>'
+      /* Sichtfenster */
+      + '<rect x="24" y="38" width="72" height="26" rx="3" fill="rgba(20,24,30,.85)" stroke="#12151a" stroke-width="1.5"/>'
+      /* Bandwickel: links waechst, rechts schrumpft */
+      + '<circle class="lc-k-band-l" cx="42" cy="51" r="7" fill="#3a2a1c"/>'
+      + '<circle class="lc-k-band-r" cx="78" cy="51" r="12" fill="#3a2a1c"/>'
+      /* Wickeldorne, sie drehen sich */
+      + '<g class="lc-k-rad-l" style="transform-origin:42px 51px">'
+      + '<circle cx="42" cy="51" r="6.5" fill="#d9d3c4" stroke="#8d8676" stroke-width="1"/>'
+      + Array.from({ length: 6 }, (_, i) => '<rect x="41.1" y="45.6" width="1.8" height="4" fill="#8d8676"'
+          + ' transform="rotate(' + (i * 60) + ' 42 51)"/>').join("")
+      + '</g>'
+      + '<g class="lc-k-rad-r" style="transform-origin:78px 51px">'
+      + '<circle cx="78" cy="51" r="6.5" fill="#d9d3c4" stroke="#8d8676" stroke-width="1"/>'
+      + Array.from({ length: 6 }, (_, i) => '<rect x="77.1" y="45.6" width="1.8" height="4" fill="#8d8676"'
+          + ' transform="rotate(' + (i * 60) + ' 78 51)"/>').join("")
+      + '</g>'
+      /* Das Band zwischen den Wickeln */
+      + '<path d="M42 62 Q60 66 78 62" fill="none" stroke="#3a2a1c" stroke-width="2.4"/>'
+      /* Die fuenf Schrauben */
+      + [[8, 68], [112, 68], [8, 8], [112, 8], [60, 70]].map(([x, y]) =>
+          '<circle cx="' + x + '" cy="' + y + '" r="2" fill="#6d737c" stroke="#12151a" stroke-width=".8"/>').join("")
+      + "</svg>";
+    schicht.appendChild(k);
+    const zaehler = document.createElement("s");
+    zaehler.textContent = "◀◀ REWIND";
+    schicht.appendChild(zaehler);
+    lcGeraeusch("kitt");
+    setTimeout(() => schicht.remove(), 5400);
+  }
+
+  /* --- Pac-Man ---
+     Er frisst sich von links nach rechts durch und laesst eine Reihe
+     Punkte hinter sich verschwinden. Der Mund geht auf und zu, das
+     ist die ganze Kunst daran. */
+  function lcPacman() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const schicht = lc80Schicht("lcPacman", "lc-pacman");
+    /* Die Punkte, die er frisst — sie verschwinden der Reihe nach. */
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement("b");
+      p.style.left = (6 + i * 6.6).toFixed(1) + "%";
+      p.style.animationDelay = (0.35 + i * 0.26).toFixed(2) + "s";
+      schicht.appendChild(p);
+    }
+    const pac = document.createElement("i");
+    pac.innerHTML = '<svg viewBox="-12 -12 24 24" width="100%" height="100%">'
+      + '<path class="lc-pac-maul" fill="#ffd429"'
+      + ' d="M0 0 L10 -5.5 A11 11 0 1 0 10 5.5 Z"/>'
+      + '<circle cx="1.5" cy="-5" r="1.3" fill="#2a2a2a"/></svg>';
+    schicht.appendChild(pac);
+    /* Und die drei Gespenster hinterher. */
+    ["#ff5d5d", "#ffb4e0", "#7de3ff"].forEach((farbe, i) => {
+      const g = document.createElement("em");
+      g.style.animationDelay = (0.5 + i * 0.32).toFixed(2) + "s";
+      g.innerHTML = '<svg viewBox="-11 -12 22 24" width="100%" height="100%">'
+        + '<path fill="' + farbe + '" d="M-9 8 L-9 -2 A9 9 0 0 1 9 -2 L9 8 L6 5.4 L3 8 L0 5.4 L-3 8 L-6 5.4 Z"/>'
+        + '<circle cx="-3.6" cy="-2.6" r="3" fill="#fff"/><circle cx="3.6" cy="-2.6" r="3" fill="#fff"/>'
+        + '<circle cx="-2.6" cy="-2.6" r="1.5" fill="#2a3a8a"/><circle cx="4.6" cy="-2.6" r="1.5" fill="#2a3a8a"/></svg>';
+      schicht.appendChild(g);
+    });
+    lcGeraeusch("konfetti");
+    setTimeout(() => schicht.remove(), 6000);
+  }
+
+  /* --- Das Videoband ---
+     Ein altes Band verreisst nicht gleichmaessig: es laufen Streifen
+     durchs Bild, die Farben verschieben sich gegeneinander, und
+     zwischendurch steht kurz Rauschen da. Deshalb sind es drei
+     Schichten und nicht eine. */
+  function lcVhs() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const schicht = lc80Schicht("lcVhs", "lc-vhs");
+    for (let i = 0; i < 5; i++) {
+      const b = document.createElement("b");
+      b.style.setProperty("--h", (2 + Math.random() * 7).toFixed(1) + "%");
+      b.style.animationDelay = (Math.random() * 2.2).toFixed(2) + "s";
+      b.style.animationDuration = (1.1 + Math.random() * 1.6).toFixed(2) + "s";
+      schicht.appendChild(b);
+    }
+    const rauschen = document.createElement("u");
+    schicht.appendChild(rauschen);
+    const schrift = document.createElement("s");
+    schrift.textContent = "▶ PLAY   SP   00:0" + (1 + Math.floor(Math.random() * 9));
+    schicht.appendChild(schrift);
+    lcGeraeusch("glasbruch");
+    setTimeout(() => schicht.remove(), 5200);
+  }
+
+  /* --- Die Spiegelkugel ---
+     Sie dreht sich, und ihre Lichtflecken wandern mit. Die Flecken
+     sind nicht zufaellig verteilt, sondern liegen auf Ringen um die
+     Kugel — sonst sieht es aus wie Konfetti, nicht wie Licht. */
+  function lcDisko() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const schicht = lc80Schicht("lcDisko", "lc-disko");
+    const kugel = document.createElement("i");
+    const facetten = [];
+    for (let ring = -3; ring <= 3; ring++) {
+      const y = ring * 6.4;
+      const rr = Math.sqrt(Math.max(0, 484 - y * y));      // Kugelradius 22
+      const wieViele = Math.max(4, Math.round(rr / 3.2));
+      for (let j = 0; j < wieViele; j++) {
+        const x = -rr + (j + 0.5) * (2 * rr / wieViele);
+        facetten.push('<rect x="' + (x - 1.7).toFixed(1) + '" y="' + (y - 2.6).toFixed(1)
+          + '" width="3.4" height="5.2" rx=".6" fill="rgba(226,240,255,'
+          + (0.18 + Math.random() * 0.5).toFixed(2) + ')"/>');
+      }
+    }
+    kugel.innerHTML = '<svg viewBox="-26 -34 52 60" width="100%" height="100%">'
+      + '<line x1="0" y1="-34" x2="0" y2="-22" stroke="#8a8f99" stroke-width="1.6"/>'
+      + '<defs><radialGradient id="lc80dk" cx="36%" cy="30%">'
+      + '<stop offset="0%" stop-color="#cfe4ff"/><stop offset="70%" stop-color="#7d90a8"/>'
+      + '<stop offset="100%" stop-color="#39424f"/></radialGradient></defs>'
+      + '<circle cx="0" cy="0" r="22" fill="url(#lc80dk)"/>'
+      + '<g class="lc-disko-facetten">' + facetten.join("") + "</g>"
+      + '<circle cx="0" cy="0" r="22" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1"/>'
+      + "</svg>";
+    schicht.appendChild(kugel);
+    const farben = ["#ff6ec7", "#6ee7ff", "#ffe66e", "#8dff6e", "#c06eff"];
+    for (let i = 0; i < 26; i++) {
+      const f = document.createElement("b");
+      f.style.left = (Math.random() * 100).toFixed(1) + "%";
+      f.style.top = (Math.random() * 100).toFixed(1) + "%";
+      f.style.background = farben[i % farben.length];
+      f.style.animationDelay = (Math.random() * 2.4).toFixed(2) + "s";
+      f.style.animationDuration = (1.8 + Math.random() * 1.8).toFixed(2) + "s";
+      schicht.appendChild(f);
+    }
+    lcGeraeusch("konfetti");
+    setTimeout(() => schicht.remove(), 7000);
+  }
+
   function lcSchwamm() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     /* Auch ausserhalb des Chats soll etwas passieren — sonst tippt man
@@ -20897,6 +21084,11 @@
     ggadler:   { ganzeSeite: true, wie: "gg", tier: "adler" },
     gghai:     { ganzeSeite: true, wie: "gg", tier: "haifisch" },
     ggbaer:    { ganzeSeite: true, wie: "gg", tier: "baer" },
+    /* Die Achtziger. */
+    kassette: { ganzeSeite: true, wie: "kassette" },
+    pacman:   { ganzeSeite: true, wie: "pacman" },
+    vhs:      { ganzeSeite: true, wie: "vhs" },
+    disko:    { ganzeSeite: true, wie: "disko" },
     lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
@@ -21232,6 +21424,10 @@
       else if (e.wie === "augen") lcAugen();
       else if (e.wie === "route66") lcRoute66();
       else if (e.wie === "prunk") lcGeschenkGross(nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
+      else if (e.wie === "kassette") lcKassette();
+      else if (e.wie === "pacman") lcPacman();
+      else if (e.wie === "vhs") lcVhs();
+      else if (e.wie === "disko") lcDisko();
       else if (e.wie === "gg") lcGrossGeschenk(e.tier, nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
       else if (e.wie === "enten") lcEnten();
       else if (e.wie === "katze") lcKatze();
@@ -50837,6 +51033,7 @@ An einem Morgen lief ein kleiner Fuchs los…
      ============================================================ */
   const APP_CHANGELOG = {
     "175": [
+      "📼 **Die Achtziger.** Vier neue Befehle im Klassenzimmer, für alle, die dabei waren: „/kassette“ spult eine Musikkassette zurück — die Wickeldorne drehen sich rückwärts, und der Bandvorrat wandert wirklich vom rechten auf den linken Wickel, so wie man früher daran gesehen hat, wie weit die Seite noch ist. „/pacman“ lässt einen gelben Kreis durch den Chat fressen, die Punkte verschwinden der Reihe nach, und drei Gespenster jagen hinterher. „/vhs“ lässt das Bild verreissen wie bei einem alten Videoband, mit Farbsäumen und „▶ PLAY SP“ oben links. „/disko“ hängt eine Spiegelkugel auf, deren Facetten wandern und bunte Lichtflecken durch den Raum werfen.",
       "🦁 **Grosse Geschenke wie bei TikTok.** Im Klassenzimmer kannst du jemandem jetzt etwas Grosses schenken: „/loewe Emmi“, und die Geschenkkiste wackelt, der Deckel fliegt weg, ein Löwe steigt heraus und füllt den halben Bildschirm — mit Strahlen, Funken und Münzregen. Sechs gibt es: Löwe, Tyrannosaurus, Elefant, Adler, Hai und Bär. Ohne Namen dahinter gilt das Geschenk dem ganzen Raum. Die Tiere sind NICHT neu gezeichnet — es sind genau die, die in den Bilderwelten stehen, am Foto nachgemessen und Fassung für Fassung abgenommen. Sie noch einmal zu zeichnen hiesse, gute Arbeit wegzuwerfen. Die Datei mit den Tieren fährt beim Start nicht mit; sie wird erst geholt, wenn wirklich jemand ein Geschenk schickt.",
       "★ **Deine eigenen Wörter im Vokabeltrainer.** Gemeldet: „die eigene Vokabelliste scheint man auch nicht nehmen zu können.“ Das stimmte — die mit dem Stern ☆ gemerkten Wörter und die selbst angelegten Listen gab es nur in acht Spielen, ausgerechnet im Vokabeltrainer nicht. Jetzt steht dort die Kategorie „★ Meine Wörter“. Auf der Karte wählst du, ob mit allem, nur mit dem gemerkten Wortschatz oder nur mit einer bestimmten Liste geübt wird, und darunter steht, wie viele Wörter das gerade sind. Die Fragen werden aus deinen Wörtern gebaut, nicht aus einer Datei — was du heute markierst, kommt in der nächsten Runde dran. Drei Arten im Wechsel: der Artikel, die Bedeutung und umgekehrt „welches Wort bedeutet …?“.",
       "🧍‍♂️ **Die Menschen sitzen jetzt richtig.** Wer auf dem Sofa oder auf der Toilette sitzt, sitzt mit den Knien zur Kamera — nicht mehr seitlich weggedreht. Das ging vorher nicht, weil ein Oberschenkel, der auf den Betrachter zeigt, fast keine Länge hat; jetzt zeigt er am Knie seinen vollen Querschnitt, mit eigener Kontur, Licht auf der Kuppe und Schlagschatten auf das Bein darunter. Genau daran erkennt das Auge, dass da jemand sitzt.",

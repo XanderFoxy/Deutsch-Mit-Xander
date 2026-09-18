@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 54 — grosse Geschenke wie bei TikTok",
+  stand: "Runde 55 — die Achtziger",
 
   inArbeit: [
-    { seit: "2026-09-18T01:51",
-      text: "B2 laeuft (3861 von 4600 dieser Runde)" },
-    { seit: "2026-09-18T01:51",
-      text: "Bilderwelten: Groessen und verdeckte Dinge" },
-    { seit: "2026-09-18T01:51",
+    { seit: "2026-09-18T02:05",
+      text: "Bilderwelten: meine erste Messung war falsch, wird neu gemacht" },
+    { seit: "2026-09-18T02:05",
+      text: "B2 laeuft (7288 von 7600)" },
+    { seit: "2026-09-18T02:05",
       text: "Sitzende Seitenansicht fuer die Figuren" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T01:51",
-      text: "/loewe /trex /elefant /adler /hai /baer — sechs grosse Geschenke" },
-    { seit: "2026-09-18T01:51",
-      text: "Die Tiere kommen aus den Bilderwelten, nichts neu gezeichnet" },
-    { seit: "2026-09-18T01:51",
-      text: "Verlauf kommt vollstaendig beim Nachzuegler an" },
+    { seit: "2026-09-18T02:05",
+      text: "/kassette /pacman /vhs /disko — vier Achtziger-Animationen" },
+    { seit: "2026-09-18T02:05",
+      text: "Das Videoband war zu blass, jetzt mit Toenung und dunkler Einblendung" },
+    { seit: "2026-09-18T02:05",
+      text: "Sechs grosse Geschenke wie bei TikTok" },
   ],
 };

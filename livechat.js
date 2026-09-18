@@ -456,7 +456,12 @@ window.LiveChat = (function () {
     ggelefant:   " schenkt allen einen Elefanten  \ud83d\udc18",
     ggadler:     " schenkt allen einen Adler  \ud83e\udd85",
     gghai:       " schenkt allen einen Hai  \ud83e\udd88",
-    ggbaer:      " schenkt allen einen B\u00e4ren  \ud83d\udc3b"
+    ggbaer:      " schenkt allen einen B\u00e4ren  \ud83d\udc3b",
+    /* Die Achtziger. */
+    kassette:    " spult die Kassette zur\u00fcck  \ud83d\udcfc",
+    pacman:      " l\u00e4sst Pac-Man durch den Chat fressen  \ud83d\udc7e",
+    vhs:         " legt ein altes Videoband ein  \ud83d\udcfa",
+    disko:       " l\u00e4sst die Spiegelkugel an  \ud83e\udea9"
   };
 
   /* Welche Wirkung welches grosse Geschenk ist — und wie der Satz
@@ -3298,6 +3303,10 @@ window.LiveChat = (function () {
     { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler <Name>",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
     { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai <Name>",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
     { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
+    { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
+    { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
+    { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
+    { gr: "feier", w: "disko",     kurz: "kugel",  nutzt: "/disko",     was: "Achtziger: die Spiegelkugel dreht sich und wirft Lichtflecken" },
     { gr: "welt", w: "pirat",      kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff segelt über die Wellen, mit Totenkopfflagge" },
     { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen, die Schrift wird kleiner" },
     { gr: "welt", w: "schwamm",    kurz: "wischen", nutzt: "/schwamm",  was: "Ein Schwamm wischt den Chat wie eine Tafel" },
@@ -3402,6 +3411,13 @@ window.LiveChat = (function () {
                 elefant: "ggelefant", elefantt: "ggelefant", ruessel: "ggelefant",
                 adler: "ggadler", greif: "ggadler",
                 hai: "gghai", haifisch: "gghai", weisshai: "gghai",
+                /* Die Achtziger. */
+                tape: "kassette", musikkassette: "kassette", spulen: "kassette",
+                walkman: "kassette", mixtape: "kassette",
+                pac: "pacman", pacmann: "pacman", arcade: "pacman",
+                video: "vhs", videoband: "vhs", videorekorder: "vhs", tracking: "vhs",
+                kugel: "disko", spiegelkugel: "disko", discokugel: "disko",
+                disco: "disko", achtziger: "disko",
                 baer: "ggbaer", baerchen: "ggbaer", grizzly: "ggbaer",
                 schiff: "pirat", piraten: "pirat", segel: "pirat", totenkopf: "pirat",
                 sog: "strudel", wirbel: "strudel", ertrinken: "strudel", wirbeln: "strudel",
