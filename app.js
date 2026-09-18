@@ -22175,7 +22175,15 @@
          ABSPIELEN  -> der gruene Balken mit dem roten Punkt, ueber
                        die ganze Zeile gezogen, mit dem Namen.
        Der Balken erscheint deshalb NICHT mehr beim Aufnehmen. */
-    if (!lcLiveJetzt && !lauscher) { leiste.hidden = true; leiste.innerHTML = ""; return; }
+    if (!lcLiveJetzt && !lauscher) {
+      /* Der Inhalt bleibt stehen, er wird nur unsichtbar. Leerte man
+         ihn, waere der Kasten im Ruhezustand ein paar Pixel flacher
+         als mit Text — gemessen vier — und genau diese vier Pixel
+         haetten den Chat wieder verschoben. Unsichtbar ist nicht
+         dasselbe wie leer. */
+      leiste.hidden = true;
+      return;
+    }
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich

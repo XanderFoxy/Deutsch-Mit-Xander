@@ -7612,33 +7612,38 @@ body.lc-schreibt .tutor-reiter {
    Verzoegerung fuer einen Ausfall — man hoert nichts und weiss
    nicht, ob noch etwas kommt.
    ============================================================= */
-/* DIE PILLE SCHWEBT — SIE SCHIEBT NICHT.
-   GEMELDET: „Kannst du es so machen, dass diese Bubble, die
-   symbolisiert, dass ich gerade spreche, den Chat nicht beeinflusst?
-   Sie drueckt den Chat immer so ein bisschen nach unten … Sie liegt
-   ja sowieso ueber dem Chat von der Ebene her, deswegen macht dieses
-   Runterdruecken keinen Sinn. Vielleicht kannst du sie eine Ebene
-   hoeher machen, dass sie das Format nicht beeinflusst."
+/* DIE PILLE STEHT WIEDER GENAU DA, WO SIE IMMER STAND —
+   UND SIE SCHIEBT TROTZDEM NICHTS.
+   -----------------------------------------------------------------
+   Zwei Wuensche, die sich zu widersprechen schienen:
+     „Sie drueckt den Chat immer so ein bisschen nach unten … sie
+      soll das Format nicht beeinflussen."
+     „Hast du schon wieder die Farbe beeinflusst? … Es wirkt
+      irgendwie gruener als vorher."
 
-   Genau richtig gedacht. Sie stand bisher IM Fluss: ein Kasten wie
-   jeder andere, der Platz braucht — und alles darunter rutschte.
-   position:absolute nimmt sie aus dem Fluss heraus. Ohne top/left
-   bleibt sie dabei genau dort stehen, wo sie ohnehin gestanden
-   haette (ihre „statische Position"), nur eben schwebend. Die
-   Aussenraender links und rechts setze ich, damit sie die Breite
-   des Chats behaelt.
-   Damit aendert ihr Erscheinen an der Hoehe des Chats gar nichts —
-   und weil ueber ihr nichts liegt, verdeckt sie nur ein paar
-   Millimeter der obersten, aeltesten Zeile. */
+   Mein erster Versuch war, sie schweben zu lassen (position:
+   absolute). Damit schob sie nichts mehr — aber sie brauchte einen
+   eigenen Grund, denn ihre 14 % Teal sind durchscheinend und lagen
+   nun ueber dem Text. Und JEDER Grund, den ich dafuer waehle, ist
+   geraten: mal --plum-900, mal --plum-800. Er hat den Unterschied
+   sofort gesehen, und er hatte jedes Mal recht.
+
+   Der Weg ohne Raten: Sie bleibt, wo sie war — im Fluss, auf der
+   Karte, mit ihrer eigenen, unveraenderten Farbe. Was sich aendert,
+   ist nur, dass ihr Platz IMMER reserviert ist: im Ruhezustand wird
+   sie unsichtbar (visibility), nicht entfernt (display). Damit ist
+   die Hoehe des Chats in beiden Faellen dieselbe — es wird nie
+   wieder etwas geschoben, und die Farbe ist Bildpunkt fuer
+   Bildpunkt die alte, weil sie wieder auf demselben Grund liegt wie
+   frueher.
+
+   Der Preis sind rund dreissig Pixel, die immer belegt sind. Das ist
+   ehrlicher als eine Farbe, die ich schaetze. */
 .lc-live-leiste {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  z-index: 26;
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 0;
+  margin: 0 0 6px;
   padding: 5px 10px;
   border-radius: 999px;
   background: rgba(74,157,143,.14);
@@ -7646,22 +7651,10 @@ body.lc-schreibt .tutor-reiter {
   font-size: .76rem;
   color: var(--teal-700, #2b6a60);
   min-height: 26px;
-  /* DIE FARBE BLEIBT DIE ALTE.
-     GEMELDET: „Hast du schon wieder die Farbe beeinflusst von dem
-     Panel, wo steht ‚Xander Fox spricht gerade'?"
-     Ja, hatte ich — ich hatte sie dunkel und deckend gemacht, damit
-     sie ueber dem Text lesbar bleibt. Das geht auch, ohne die Farbe
-     anzufassen: unten der Grund des Chats, darueber genau derselbe
-     Teil-Ton wie vorher. Zusammen sieht es exakt so aus wie im
-     Ursprungszustand, ist aber trotzdem undurchsichtig. */
-  background-color: var(--plum-900, #221c1a);
-  background-image: linear-gradient(rgba(74,157,143,.14), rgba(74,157,143,.14));
-  /* „Das kann ruhig unter dem Chat sein, dass man auf die Sachen
-     noch zugreifen kann." Genau das: sie nimmt keine Klicks an,
-     alles darunter bleibt antippbar. */
-  pointer-events: none;
 }
-.lc-live-leiste[hidden] { display: none; }
+/* NICHT display:none — sonst faellt der Platz weg und der Chat
+   springt. Unsichtbar, aber vorhanden. */
+.lc-live-leiste[hidden] { display: flex; visibility: hidden; }
 /* Wenn ich selbst spreche, ist es meine Zeile — warm statt kühl,
    damit man auf einen Blick sieht, dass man gerade selbst dran ist. */
 /* Hier stand eine Sonderfassung des Sprecherbalkens fuer die

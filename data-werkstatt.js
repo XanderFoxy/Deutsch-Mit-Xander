@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19u — der ganze Verlauf, und der Chat bleibt sauber",
+  stand: "Runde 19v — kein Textmuell, und der Balken laeuft sofort",
 
   inArbeit: [
-    { seit: "2026-09-18T21:41",
+    { seit: "2026-09-18T21:47",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:41",
+    { seit: "2026-09-18T21:47",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:41",
+    { seit: "2026-09-18T21:47",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:41",
-      text: "Die Pille hat wieder ihre alte Farbe — undurchsichtig wird sie jetzt durch den Chat-Grund darunter, nicht durch eine neue Farbe" },
-    { seit: "2026-09-18T21:41",
-      text: "Sie nimmt keine Klicks an: was darunter liegt, bleibt antippbar" },
-    { seit: "2026-09-18T21:41",
-      text: "Der Verlauf ist nicht mehr auf 400 Zeilen begrenzt — bis zu 4000 im Geraet, 2000 vom Server, und wenn der Platz nicht reicht, wird gekuerzt statt alles zu verlieren" },
-    { seit: "2026-09-18T21:41",
-      text: "„Du bist hier Haeuptling\", „X spricht gerade\" und die Klassensprecher-Ansage stehen nicht mehr im Chat, sondern ziehen als Blase vorbei" },
+    { seit: "2026-09-18T21:47",
+      text: "Jede Erklaerung kommt nur noch EINMAL je Geraet — danach nie wieder" },
+    { seit: "2026-09-18T21:47",
+      text: "„Emmy spricht gerade, hoer zu Ende zu\" und „aeltere Wortmeldung uebersprungen\" sind ganz weg" },
+    { seit: "2026-09-18T21:47",
+      text: "Der gruene Balken laeuft ab dem Abschicken, ohne auf eine Rueckmeldung von drueben zu warten" },
+    { seit: "2026-09-18T21:47",
+      text: "Die Pille steht wieder im Fluss mit ihrer alten Farbe — ihr Platz ist immer reserviert, deshalb verschiebt sie nichts (gemessen: y=75 mit und ohne)" },
   ],
 };

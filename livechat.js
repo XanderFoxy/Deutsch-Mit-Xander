@@ -2298,7 +2298,8 @@ window.LiveChat = (function () {
         if (typeof n.klassensprecher === "boolean") {
           zustand.klassensprecher = Boolean(n.klassensprecher);
           if (zustand.klassensprecher) {
-            hinweisZeigen("🎓 Du bist jetzt Klassensprecher:in. Wenn der Lehrer geht, führst du weiter.");
+            hinweisZeigen("🎓 Du bist jetzt Klassensprecher:in. Wenn der Lehrer geht, führst du weiter.",
+              "klassensprecher");
           }
         }
         melden();
@@ -2414,8 +2415,9 @@ window.LiveChat = (function () {
          aber nichts in den Chat. „Die spammt den Chat voll — das soll
          alles nicht ankommen." Der gruene Balken sagt, von wem sie
          ist; mehr braucht es nicht. */
-      if (n.nachhol && n.sprach) hinweisZeigen("\ud83d\udd01 Die letzte Wortmeldung von "
-        + (n.name || "jemandem") + ".");
+      /* Die nachgereichte Wortmeldung wird abgespielt und sonst
+         nichts — wer sie hoert, sieht am gruenen Balken, von wem sie
+         ist. Kein Text, keine Blase. */
       /* EINE WORTMELDUNG AUS DEM PSEUDO-LIVESTREAM.
          -------------------------------------------------------
          GEWUENSCHT: „Dass es gar nicht in den Chat eintraegt,
@@ -3008,7 +3010,7 @@ window.LiveChat = (function () {
             if (binBetreiber() && !zustand.haeuptling) {
               zustand.haeuptling = true;
               hinweisZeigen("\ud83e\udd8a Du bist hier Häuptling — als Betreiber in jedem Raum. "
-                + "/t Thema · /i einladen · /lock abschließen · /k rauswerfen");
+                + "/t Thema · /i einladen · /lock abschließen · /k rauswerfen", "haeuptling");
             }
             setTimeout(function () {
               if (zustand.lage !== "drin") return;
@@ -3017,7 +3019,7 @@ window.LiveChat = (function () {
               if (Object.keys(zustand.leute).length === 0) {
                 zustand.haeuptling = true;
                 hinweisZeigen("Der Raum war leer — du bist hier Häuptling. "
-                  + "/t Thema · /i Nickname einladen · /lock abschließen · /k Nickname");
+                  + "/t Thema · /i Nickname einladen · /lock abschließen · /k Nickname", "haeuptling");
               }
             }, 1600);
             praesenzZuhoeren(kontoId || zustand.ichId);
@@ -3619,8 +3621,13 @@ window.LiveChat = (function () {
     /* FOKUS: wer gerade zuhoert, redet nicht dazwischen. */
     var frei_ = darfSprechen();
     if (!frei_.ja) {
-      hinweisZeigen("🎧 " + frei_.wer + " spricht gerade — hör zu Ende zu, dann bist du dran. "
-        + "Schreiben geht jederzeit.");
+      /* GEMELDET: „Emmy spricht gerade, hoer zu Ende zu, dann bist du
+         dran — das musst du alles nicht schreiben." Der gruene Balken
+         oben sagt bereits, wer spricht. Hier bleibt nur die eine
+         Erklaerung, warum gerade nichts aufgenommen wird — und die
+         auch nur beim allerersten Mal. */
+      hinweisZeigen("🎧 Solange jemand spricht, wartet dein Mikrofon — dann bist du dran. "
+        + "Schreiben geht jederzeit.", "wartet");
       return Promise.resolve(false);
     }
     einsatzPing();
@@ -4169,7 +4176,7 @@ window.LiveChat = (function () {
     var fokus_ = darfSprechen();
     if (!fokus_.ja) {
       hinweisZeigen("🎧 " + fokus_.wer + " spricht gerade — das hier wurde nicht geschickt. "
-        + "Sag es gleich noch einmal, wenn er fertig ist.");
+        + "Sag es gleich noch einmal, wenn er fertig ist.", "fokus-wartet");
       return false;
     }
     var id = neueNachrichtId();
@@ -4284,6 +4291,9 @@ window.LiveChat = (function () {
       sprachTeilSchicken(id, 0);
     }
     sprachWartenAufQuittung(id, zuhoerer);
+    /* Ab jetzt laeuft sie — der gruene Balken oben zeigt das an,
+       ohne auf eine Rueckmeldung von drueben zu warten. */
+    eigeneWortmeldungLaeuft(sekunden);
     melden();
     return true;
   }
@@ -4310,10 +4320,29 @@ window.LiveChat = (function () {
       if (jetzt - (hoerenGerade[id].seit || 0) > 120000) delete hoerenGerade[id];
     });
   }
+  /* MEINE WORTMELDUNG LAEUFT GERADE.
+     GEMELDET: „Ich sehe diese Bubble nicht mehr, wenn ich spreche,
+     dass es gruen ist."
+     Der Balken haengt daran, dass jemand „ich hoere" meldet — und
+     bis diese Meldung zurueckkommt, vergeht ein Moment; ist gerade
+     niemand da, kommt sie nie. Deshalb faengt der Balken jetzt
+     SOFORT nach dem Abschicken an und laeuft mindestens so lange,
+     wie die Aufnahme dauert. Meldet drueben jemand, dass er noch
+     hoert, laeuft er entsprechend weiter. */
+  var eigeneLaeuftBis = 0;
+  function eigeneWortmeldungLaeuft(sekunden) {
+    eigeneLaeuftBis = Date.now() + Math.max(1, Number(sekunden) || 1) * 1000 + 1200;
+    liveSagen();
+    melden();
+    setTimeout(function () { liveSagen(); melden(); },
+               Math.max(1200, eigeneLaeuftBis - Date.now() + 120));
+  }
   function hoertMirZu() {
     hoerenAufraeumen();
     var wer = Object.keys(hoerenGerade).map(function (id) { return hoerenGerade[id].name; });
-    return wer.length ? wer : null;
+    if (wer.length) return wer;
+    if (Date.now() < eigeneLaeuftBis) return [zustand.ichName || "Du"];
+    return null;
   }
   /* Ich spiele die Wortmeldung von jemandem ab — und sage es ihm. */
   function hoereJetzt(vonId, id, los) {
@@ -4406,7 +4435,7 @@ window.LiveChat = (function () {
     if (!q || q.wer[wer]) return;
     q.wer[wer] = true;
     q.wieviel += 1;
-    hinweisZeigen("\u2705 " + wer + " hat deine Wortmeldung bekommen.");
+    hinweisZeigen("\u2705 " + wer + " hat deine Wortmeldung bekommen.", "bekommen");
   }
 
   /* Ein Paket, dann Luft, dann das naechste. Eine Schleife waere
@@ -5144,8 +5173,12 @@ window.LiveChat = (function () {
       var n = liveUebersprungen;
       liveUebersprungen = 0;
       if (!n) return;
-      hinweisZeigen("\u23ed\ufe0f " + n + " ältere Wortmeldung" + (n === 1 ? "" : "en")
-        + " übersprungen — sie stehen weiterhin im Chat zum Anhören.");
+      /* GEMELDET: „Eine aeltere Wortmeldung uebersprungen — das soll
+         mich nicht staendig ueberfluten." Also gar nichts mehr. Die
+         Wortmeldungen SIND ja da: sie stehen im Chat und werden dort
+         angetippt. Nichts wird geloescht, es wird nur nicht mehr
+         darueber geredet. */
+      if (n < 0) hinweisZeigen("");
     }, 1200);
   }
 
@@ -6199,8 +6232,26 @@ window.LiveChat = (function () {
      man spaeter durchliest. Der Chat ist das Gespraech; alles
      andere zieht vorbei. app.js meldet sich mit beiHinweis an. */
   var hinweisRuf = null;
-  function hinweisZeigen(text) {
+  /* EINMAL REICHT.
+     GEMELDET: „Es soll mich nicht staendig ueberfluten mit diesen
+     Blasen-Benachrichtigungen. Das reicht, wenn ich das einmal
+     gesehen habe. Ich kenne das Prinzip mittlerweile."
+     Also bekommt jede Erklaerung einen Namen, und unter diesem Namen
+     wird im Geraet vermerkt, dass sie gezeigt wurde. Danach
+     schweigt sie — fuer immer, nicht nur fuer heute. Wirft der
+     Speicher (privates Fenster), wird sie eben noch einmal gezeigt;
+     das ist der harmlosere Fehler. */
+  function hinweisSchonGesehen(marke) {
+    if (!marke) return false;
+    try {
+      if (localStorage.getItem("dma_lc_hinweis_" + marke) === "1") return true;
+      localStorage.setItem("dma_lc_hinweis_" + marke, "1");
+      return false;
+    } catch (e) { return false; }
+  }
+  function hinweisZeigen(text, marke) {
     if (typeof hinweisRuf !== "function") return;
+    if (marke && hinweisSchonGesehen(marke)) return;
     try { hinweisRuf(String(text || "")); } catch (e) {}
   }
 

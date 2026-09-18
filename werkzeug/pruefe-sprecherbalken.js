@@ -83,6 +83,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     document.body.classList.remove("lc-ich-spreche");
     /* Und die Kernfrage: schiebt die Pille den Chat nach unten? */
     const verlauf = document.getElementById("lcVerlauf");
+    /* Einmal fuellen, dann verstecken — so wie es im Betrieb ist. */
+    window.__balken({ ich: false, jetzt: { von: "e", name: "Emmy" }, lauscher: null });
     window.__balken({ ich: false, jetzt: null, lauscher: null });
     aus.chatOhne = Math.round(verlauf.getBoundingClientRect().top);
     window.__balken({ ich: false, jetzt: { von: "e", name: "Emmy" }, lauscher: null });
