@@ -7612,11 +7612,33 @@ body.lc-schreibt .tutor-reiter {
    Verzoegerung fuer einen Ausfall — man hoert nichts und weiss
    nicht, ob noch etwas kommt.
    ============================================================= */
+/* DIE PILLE SCHWEBT — SIE SCHIEBT NICHT.
+   GEMELDET: „Kannst du es so machen, dass diese Bubble, die
+   symbolisiert, dass ich gerade spreche, den Chat nicht beeinflusst?
+   Sie drueckt den Chat immer so ein bisschen nach unten … Sie liegt
+   ja sowieso ueber dem Chat von der Ebene her, deswegen macht dieses
+   Runterdruecken keinen Sinn. Vielleicht kannst du sie eine Ebene
+   hoeher machen, dass sie das Format nicht beeinflusst."
+
+   Genau richtig gedacht. Sie stand bisher IM Fluss: ein Kasten wie
+   jeder andere, der Platz braucht — und alles darunter rutschte.
+   position:absolute nimmt sie aus dem Fluss heraus. Ohne top/left
+   bleibt sie dabei genau dort stehen, wo sie ohnehin gestanden
+   haette (ihre „statische Position"), nur eben schwebend. Die
+   Aussenraender links und rechts setze ich, damit sie die Breite
+   des Chats behaelt.
+   Damit aendert ihr Erscheinen an der Hoehe des Chats gar nichts —
+   und weil ueber ihr nichts liegt, verdeckt sie nur ein paar
+   Millimeter der obersten, aeltesten Zeile. */
 .lc-live-leiste {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 26;
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 0 0 6px;
+  margin: 0;
   padding: 5px 10px;
   border-radius: 999px;
   background: rgba(74,157,143,.14);
@@ -7624,6 +7646,13 @@ body.lc-schreibt .tutor-reiter {
   font-size: .76rem;
   color: var(--teal-700, #2b6a60);
   min-height: 26px;
+  /* Schwebend heisst: sie liegt ueber dem Chat. Damit man sie dort
+     auch lesen kann, bekommt sie einen eigenen, deckenden Grund —
+     durchscheinender Text uebereinander waere unleserlich. */
+  background-color: #22423e;
+  color: #cdeee6;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32);
+  pointer-events: none;
 }
 .lc-live-leiste[hidden] { display: none; }
 /* Wenn ich selbst spreche, ist es meine Zeile — warm statt kühl,

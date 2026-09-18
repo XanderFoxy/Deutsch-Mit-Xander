@@ -35,7 +35,10 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       + '<button type="button" class="lc-chat-kopf-titel" id="titel">'
       + '<span class="lc-kopf-wort">\ud83d\udcac Chat</span></button>'
       + '<span class="lc-chat-kopf-rechts"><button class="lc-chat-raeumen">\u24d8</button></span></div>'
-      + '<div class="lc-live-leiste" id="lcLiveLeiste" hidden></div>';
+      + '<div class="lc-live-leiste" id="lcLiveLeiste" hidden></div>'
+      + '<div class="lc-chat-verlauf" id="lcVerlauf" style="height:120px">'
+      + '<div class="lc-zeile"><span class="lc-zeit">10:01</span>'
+      + '<span class="lc-zeilentext">eine Zeile</span></div></div>';
     kopf.style.cssText = "position:fixed;left:0;top:0;width:430px;z-index:99999;background:#221c1a";
     document.body.appendChild(kopf);
     const leiste = document.getElementById("lcLiveLeiste");
@@ -78,6 +81,12 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     document.body.classList.add("lc-ich-spreche");
     aus.kopfAufnahme = Math.round(zeile.getBoundingClientRect().height);
     document.body.classList.remove("lc-ich-spreche");
+    /* Und die Kernfrage: schiebt die Pille den Chat nach unten? */
+    const verlauf = document.getElementById("lcVerlauf");
+    window.__balken({ ich: false, jetzt: null, lauscher: null });
+    aus.chatOhne = Math.round(verlauf.getBoundingClientRect().top);
+    window.__balken({ ich: false, jetzt: { von: "e", name: "Emmy" }, lauscher: null });
+    aus.chatMit = Math.round(verlauf.getBoundingClientRect().top);
     return aus;
   });
 
@@ -106,6 +115,11 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       + (erg.kopfRuhig === erg.kopfAufnahme
           ? "   (gleich — der Knopf bleibt liegen)"
           : "   WAECHST UM " + (erg.kopfAufnahme - erg.kopfRuhig) + " px"));
+    console.log("  Chat beginnt ohne Pille bei y=" + erg.chatOhne
+      + "   mit Pille bei y=" + erg.chatMit
+      + (erg.chatOhne === erg.chatMit
+          ? "   (unveraendert — sie schwebt)"
+          : "   GESCHOBEN um " + (erg.chatMit - erg.chatOhne) + " px"));
     console.log("  Titel bleibt beim Sprechen stehen: "
       + (erg.andere.titelWeg ? "NEIN — er weicht noch" : "ja, wie im Ursprungszustand"));
   }

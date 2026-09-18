@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19s — zwei Anzeigen, ein aufgeraeumter Chat",
+  stand: "Runde 19t — die Pille schwebt, der Chat bleibt liegen",
 
   inArbeit: [
-    { seit: "2026-09-18T21:27",
+    { seit: "2026-09-18T21:34",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:27",
+    { seit: "2026-09-18T21:34",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:27",
+    { seit: "2026-09-18T21:34",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:27",
-      text: "Waehrend der AUFNAHME pulsiert wieder die Kopfzeile mit „🔴 du sprichst\" — die Fassung, die dir gefallen hat" },
-    { seit: "2026-09-18T21:27",
-      text: "Sobald abgeschickt ist, uebernimmt die gruene Pille ueber dem Verlauf mit „… spricht gerade\" — der allererste Zustand" },
-    { seit: "2026-09-18T21:27",
-      text: "Die Kopfzeile wird beim Aufnehmen nicht hoeher (38 px so wie so) — der Sprechknopf bleibt liegen" },
-    { seit: "2026-09-18T21:27",
-      text: "Hinweise stehen nicht mehr im Chat: Empfangsbestaetigung, Uebersprungenes und die nachgereichte Wortmeldung ziehen als Blase vorbei" },
-    { seit: "2026-09-18T21:27",
-      text: "Das Geraet merkt sich 400 statt 60 Zeilen — der ganze Verlauf bleibt scrollbar, auch die Aufgabe von vorhin" },
+    { seit: "2026-09-18T21:34",
+      text: "Die gruene Pille schiebt den Chat nicht mehr nach unten — sie liegt jetzt eine Ebene hoeher und schwebt darueber (gemessen: Chat beginnt mit und ohne Pille bei derselben Hoehe)" },
+    { seit: "2026-09-18T21:34",
+      text: "Sie bekommt dafuer einen deckenden Grund, damit sie ueber dem Text lesbar bleibt, und nimmt keine Klicks an" },
+    { seit: "2026-09-18T21:34",
+      text: "Der ganze Verlauf wird gezeichnet — es gibt keine Obergrenze beim Anzeigen, nur beim Speichern, und die steht jetzt auf 400" },
+    { seit: "2026-09-18T21:34",
+      text: "Empfangsbestaetigung, Uebersprungenes und die nachgereichte Wortmeldung stehen nicht mehr im Chat, sondern ziehen als Blase vorbei" },
   ],
 };
