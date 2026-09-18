@@ -8033,6 +8033,18 @@ body.lc-schreibt .tutor-reiter {
    haben (die Klasse setzt app.js), werden schmaler. */
 .lc-zeile { position: relative; }
 .lc-zeile.lc-hat-note { padding-right: 52px; }
+
+/* --- EINE ANTWORT AUF EINE AUFGABE SIEHT AUS WIE EINE ANTWORT ---
+   GEWUENSCHT: „Wenn derjenige ein Wort loest oder einen Satz und das
+   noch nicht richtig ist, soll das als Loesung kommen und nicht
+   einfach nur als geschriebenes Wort."
+   Ein schmaler Streifen links sagt, worum es geht: gruen, wenn es
+   sitzt, amber, solange noch geprobt wird. Die Loesung selbst wird
+   dabei nie verraten — sonst waere die Aufgabe fuer alle anderen
+   vorbei. */
+.lc-versuch { border-left: 3px solid transparent; padding-left: 6px; margin-left: -9px; }
+.lc-versuch-gut   { border-left-color: #7ede8a; background: rgba(126, 222, 138, 0.08); }
+.lc-versuch-offen { border-left-color: #e0964a; background: rgba(224, 150, 74, 0.07); }
 .lc-notenwahl {
   display: flex;
   flex-wrap: wrap;

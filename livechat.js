@@ -2370,7 +2370,7 @@ window.LiveChat = (function () {
           sprachDauer: Number(n.sprachDauer) || 0,
           zeit: n.zeit || Date.now(), art: "live"
         };
-        liveWarteschlange.push(w);
+        liveEinreihen(w);
         liveSagen();
         /* Im Chat steht sie nur, wenn man sie sehen WILL.
            „Diese Sprachnachrichten sollten nicht alle angezeigt
@@ -2396,10 +2396,16 @@ window.LiveChat = (function () {
       /* Ist das die Antwort auf eine Aufgabe, die ICH gestellt habe?
          Geprueft wird nur auf einfachen Text — ein Bild oder ein
          Aufkleber ist keine Antwort. */
+      var versuch_ = null;
       if ((n.chatArt || "text") === "text" && n.text) {
+        try { versuch_ = aufgabeVersuch(n.von, n.text); } catch (e) {}
         try { aufgabeAntwort(n.von, n.name || "Gast", n.text); } catch (e) {}
       }
       nachrichtAnhaengen({
+        /* Nur eine Antwort auf eine gestellte Aufgabe darf benotet
+           werden — siehe aufgabeVersuch(). */
+        versuch: Boolean(versuch_ && versuch_.versuch),
+        richtig: Boolean(versuch_ && versuch_.richtig),
         id: n.id || String(Date.now()) + n.von,
         von: n.von, name: n.name || "Gast",
         text: String(n.text || "").slice(0, CHAT_LAENGE),
@@ -4371,10 +4377,33 @@ window.LiveChat = (function () {
   /* Die Antworten. Nur der, der die Aufgabe gestellt hat, prueft —
      und er prueft jede Person nur einmal, damit nicht jemand die
      richtige Antwort abschreibt, die schon im Chat steht. */
+  /* War das ueberhaupt eine Antwort auf eine Aufgabe?
+     GEWUENSCHT: „Bei normalen Nachrichten soll dieses Zensieren
+     nicht dabeistehen. Das ist nur, wenn Aufgaben geloest werden,
+     die ich schicke." — Also muss man es unterscheiden koennen, und
+     zwar an der Nachricht selbst. Diese Auskunft haengt der Zeile
+     ihre Marke an: „versuch" (geantwortet) und „richtig".
+     Gezaehlt wird als Versuch nur, wer noch nicht geloest hat — wer
+     fertig ist, plaudert wieder ganz normal. */
+  function aufgabeVersuch(von, text) {
+    if (!offeneAufgabe || !von) return null;
+    if (offeneAufgabe.wer[von]) return null;
+    return { versuch: true, richtig: aufgabeGleich(text, offeneAufgabe.loesung) };
+  }
+
   function aufgabeAntwort(von, name, text) {
     if (!offeneAufgabe || !von) return;
     if (offeneAufgabe.wer[von]) return;
-    if (!aufgabeGleich(text, offeneAufgabe.loesung)) return;
+    if (!aufgabeGleich(text, offeneAufgabe.loesung)) {
+      /* GEWUENSCHT: „Wenn derjenige ein Wort loest oder einen Satz
+         und das noch nicht richtig ist, soll das als Loesung kommen
+         und nicht einfach nur als geschriebenes Wort."
+         Die Loesung selbst wird dabei NICHT verraten — sonst waere
+         die Aufgabe fuer alle anderen vorbei. */
+      anAlle("system", "\u270b " + name + " hat geantwortet: \u201e" + String(text).slice(0, 60)
+        + "\u201c \u2014 noch nicht richtig. Weiterprobieren!");
+      return;
+    }
     offeneAufgabe.wer[von] = true;
     var punkte = AUFGABE_PUNKTE[offeneAufgabe.typ] || 4;
     var wievielte = Object.keys(offeneAufgabe.wer).length;
@@ -4595,6 +4624,41 @@ window.LiveChat = (function () {
   function liveSagen() { if (liveMelder) { try { liveMelder(); } catch (e) {} } }
   /* Das naechste Stueck herausgeben — app.js ruft das ab, sobald das
      vorige zu Ende ist. */
+  /* WARUM EMMY KLANG, ALS SPRAECHE SIE RUECKWAERTS.
+     -----------------------------------------------------------
+     GEMELDET: „Emmys Nachrichten sind kaum zu verstehen. Das klingt
+     so, als wenn sie rueckwaerts spricht — kann das sein, dass da
+     irgendwas falsch laeuft?"
+
+     Ja. Beim Freisprechen wird die Rede in kurze Stuecke zerlegt und
+     einzeln verschickt. Grosse Stuecke werden dabei nochmal in
+     Pakete geteilt (siehe sprachTeilEmpfangen) und drueben wieder
+     zusammengesetzt. Ein LANGES Stueck ist also erst dann fertig,
+     wenn sein letztes Paket da ist — und in der Zwischenzeit kann
+     ein kuerzeres, das SPAETER gesprochen wurde, laengst komplett
+     sein.
+
+     Die Reihe hat bisher stur hinten angehaengt: „in der
+     Reihenfolge des Eintreffens". Damit kam der spaetere Satz
+     zuerst und der fruehere danach. Bei zwei, drei Stuecken
+     hintereinander klingt das genau so, wie er es beschreibt —
+     wie rueckwaerts geredet.
+
+     Jetzt wird EINSORTIERT statt angehaengt: ein neues Stueck
+     rutscht vor alle noch wartenden Stuecke DERSELBEN Person, die
+     spaeter gesprochen wurden. Andere Sprecher bleiben unberuehrt —
+     zwischen zwei Personen gilt weiter, wer zuerst da war. */
+  function liveEinreihen(w) {
+    var i = liveWarteschlange.length;
+    while (i > 0) {
+      var v = liveWarteschlange[i - 1];
+      if (!v || v.von !== w.von) break;               // fremder Sprecher: hier ist Schluss
+      if ((v.zeit || 0) <= (w.zeit || 0)) break;      // der davor ist aelter — passt
+      i--;
+    }
+    liveWarteschlange.splice(i, 0, w);
+  }
+
   function liveNaechste() { return liveWarteschlange.shift() || null; }
   function liveOffen() { return liveWarteschlange.length; }
   function liveMitschrieb(an) {
@@ -7098,6 +7162,18 @@ window.LiveChat = (function () {
     /* Was wirklich auf den Kanal ginge — ohne Kanal. */
     pruefAbfangen: function (f) { pruefSenderHaken = typeof f === "function" ? f : null; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },
+    /* Nur zum Nachmessen: Stuecke einsortieren und ansehen, in
+       welcher Reihenfolge sie herauskommen. Fasst die echte Reihe
+       nicht an. */
+    pruefEinreihen: function (liste) {
+      var merk = liveWarteschlange.slice();
+      liveWarteschlange.length = 0;
+      (liste || []).forEach(function (x) { liveEinreihen(x); });
+      var raus = liveWarteschlange.map(function (w) { return w.wort; });
+      liveWarteschlange.length = 0;
+      merk.forEach(function (w) { liveWarteschlange.push(w); });
+      return raus;
+    },
     sprachHoechstdauer: function () { return SPRACH_LANG; },
     freiHoechstdauer: function () { return SPRACH_SEKUNDEN; },
     /* Der Pseudo-Livestream */

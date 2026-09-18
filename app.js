@@ -23686,8 +23686,15 @@
          Ein Tipp klappt die sechs Zahlen auf. Daneben steht ein Feld
          fuer das Fach („Grammatik"), damit im Laufband auch steht,
          WOFUER es die Eins gab. */
-      if (art !== "system" && art !== "kommen" && art !== "note" && art !== "quittung"
-          && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
+      /* NUR AN EINER ANTWORT AUF EINE AUFGABE.
+         GEWUENSCHT: „Bei normalen Nachrichten soll dieses Zensieren
+         nicht dabeistehen. Das ist nur, wenn Aufgaben geloest werden,
+         die ich schicke."
+         Der Knopf hing bisher an JEDER fremden Zeile — also auch an
+         „hallo" und „bis gleich". Ob eine Zeile eine Antwort ist,
+         weiss livechat.js (aufgabeVersuch) und haengt es als Marke an
+         die Nachricht; hier wird nur noch gefragt. */
+      if (n.versuch && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
         const stift = document.createElement("button");
         stift.type = "button";
         stift.className = "lc-benoten";
@@ -23761,6 +23768,14 @@
            Klasse. */
         z.classList.add("lc-hat-note");
         z.appendChild(stift);
+      }
+      /* Und die Zeile SIEHT auch aus wie eine Antwort:
+         „Ja, derjenige hat die Aufgabe gerade aus dem Aufgabenmodul
+         heraus geloest beziehungsweise falsch geloest." */
+      if (n.versuch) {
+        z.classList.add("lc-versuch", n.richtig ? "lc-versuch-gut" : "lc-versuch-offen");
+        z.title = n.richtig ? "Antwort auf die Aufgabe — richtig"
+                            : "Antwort auf die Aufgabe — noch nicht richtig";
       }
 
       if (art === "system" || art === "einladung") {

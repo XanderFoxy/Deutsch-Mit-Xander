@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19e — warum Emmy nichts hoert",
+  stand: "Runde 19f — warum Emmy rueckwaerts klang",
 
   inArbeit: [
-    { seit: "2026-09-18T20:10",
-      text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen, solange sie ungehoert ist" },
-    { seit: "2026-09-18T20:10",
+    { seit: "2026-09-18T20:18",
+      text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen" },
+    { seit: "2026-09-18T20:18",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:10",
+    { seit: "2026-09-18T20:18",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:10",
+    { seit: "2026-09-18T20:18",
       text: "Favoriten im Befehlspanel selbst anheften" },
-    { seit: "2026-09-18T20:10",
-      text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:10",
-      text: "Ein vom Browser geblockter Ton hielt die ganze Sprechreihe an — und damit im Fokus-Modus auch alle Mikrofone. Gemessen: 8024 ms statt nie" },
-    { seit: "2026-09-18T20:10",
-      text: "Der Notweg beim Abspielen verschluckte Wortmeldungen stillschweigend — jetzt kommt ein Hinweis und ein zweiter Versuch bei der ersten Beruehrung" },
-    { seit: "2026-09-18T20:10",
-      text: "Jede Animation klingt genau einmal je Nachricht, nicht bei jedem Neuzeichnen des Chats" },
+    { seit: "2026-09-18T20:18",
+      text: "Sprachstuecke werden nach der SPRECHZEIT abgespielt, nicht nach der Ankunft — das war das Rueckwaertsreden" },
+    { seit: "2026-09-18T20:18",
+      text: "Der Note-Knopf steht nur noch an Antworten auf Aufgaben, nicht an jeder Nachricht" },
+    { seit: "2026-09-18T20:18",
+      text: "Eine falsche Antwort wird als Antwort angesagt („noch nicht richtig\") statt als blosses Wort — ohne die Loesung zu verraten" },
+    { seit: "2026-09-18T20:18",
+      text: "Antworten auf Aufgaben haben einen farbigen Streifen: gruen richtig, amber noch offen" },
   ],
 };
