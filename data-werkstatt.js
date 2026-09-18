@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 55 — die Achtziger",
+  stand: "Runde 56 — Bilderwelten nachgemessen, diesmal richtig",
 
   inArbeit: [
-    { seit: "2026-09-18T02:05",
-      text: "Bilderwelten: meine erste Messung war falsch, wird neu gemacht" },
-    { seit: "2026-09-18T02:05",
-      text: "B2 laeuft (7288 von 7600)" },
-    { seit: "2026-09-18T02:05",
+    { seit: "2026-09-18T02:18",
+      text: "B2 laeuft (10303 von 10547)" },
+    { seit: "2026-09-18T02:18",
       text: "Sitzende Seitenansicht fuer die Figuren" },
+    { seit: "2026-09-18T02:18",
+      text: "teich/te_ufer ist nur an 3 % der Flaeche zu treffen — bleibt offen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T02:05",
-      text: "/kassette /pacman /vhs /disko — vier Achtziger-Animationen" },
-    { seit: "2026-09-18T02:05",
-      text: "Das Videoband war zu blass, jetzt mit Toenung und dunkler Einblendung" },
-    { seit: "2026-09-18T02:05",
-      text: "Sechs grosse Geschenke wie bei TikTok" },
+    { seit: "2026-09-18T02:18",
+      text: "Alle 2366 Dinge in 170 Bilderwelten sind antippbar (vorher: das Messer nicht)" },
+    { seit: "2026-09-18T02:18",
+      text: "Messung laeuft jetzt in der echten App, nicht im Nachbau" },
+    { seit: "2026-09-18T02:18",
+      text: "Vier Achtziger-Animationen" },
   ],
 };

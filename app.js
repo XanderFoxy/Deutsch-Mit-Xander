@@ -51737,6 +51737,34 @@ An einem Morgen lief ein kleiner Fuchs los…
          nachsehen, welche Fragen dabei herauskommen. */
       meineQuelle: (wahl) => { wortQuelleWahl[TRAINER_QUELLE] = wahl || "alle"; return meineWoerterName(); },
       meineWoerter: () => [...meineWoerterMenge()],
+      /* Eine Bilderwelt oeffnen und messen lassen, welches Ding einen
+         Tipp wirklich bekommt. Das muss in der ECHTEN App passieren:
+         die grossen Dinge sind nur fast durchsichtige Fangflaechen,
+         und erst das Stylesheet schaltet sie mit pointer-events: none
+         tot. Wer das Bild nachbaut, misst seinen eigenen Nachbau. */
+      bwOeffnen: (id) => bwDetailOeffnen(id),
+      bwStand: () => {
+        const svg = document.querySelector("#bilderweltArea svg, .bw-bild svg, svg.bw-svg");
+        if (!svg || !bwSzene) return null;
+        const r = svg.getBoundingClientRect();
+        return { szene: bwSzene.id, titel: bwSzene.titel,
+                 breite: bwSzene.breite, hoehe: bwSzene.hoehe,
+                 links: r.left, oben: r.top, b: r.width, h: r.height,
+                 teile: [...svg.querySelectorAll("[data-bw-teil]")].map((g) => g.dataset.bwTeil) };
+      },
+      /* Es gibt ZWEI Wege, ein Ding zu treffen: die Zeichnung selbst
+         ([data-bw-teil]) und die obere Trefferebene ([data-bw-treff]),
+         die Rechtecke fuer die Dinge bereithaelt, die unter einem
+         anderen liegen. Wer nur den ersten Weg prueft, meldet
+         Blockaden, die es nicht gibt — genau das ist mir passiert. */
+      bwTipp: (x, y) => {
+        const el = document.elementFromPoint(x, y);
+        if (!el || !el.closest) return "";
+        const treff = el.closest("[data-bw-treff]");
+        if (treff) return treff.dataset.bwTreff;
+        const g = el.closest("[data-bw-teil]");
+        return g ? g.dataset.bwTeil : "";
+      },
       /* Den Chatverlauf zeichnen und nachsehen, WO er steht. „Wenn man
          in den Raum kommt, wird immer oben zuerst angezeigt" — das
          laesst sich nur messen, wenn man es wirklich zeichnet. */
