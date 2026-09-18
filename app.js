@@ -21512,6 +21512,38 @@
     }, 400);
   }
 
+  /* =================================================================
+     ZURUECKFLUESTERN — DIE FORMATIERUNG STEHT SCHON DA
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Wenn man eine zugefluesterte Zeile antippt, dann soll
+     in dem ,Schreib etwas'-Feld direkt die Formatierung schon so
+     dastehen, dass man diesem Menschen fluestern antworten kann."
+
+     Genau das: ein Tipp auf die Fluesterzeile legt „/w Name " ins
+     Feld, setzt den Schreibzeiger dahinter und macht die Tastatur auf.
+     Man schreibt also nur noch den Satz.
+
+     Der Name wird dabei auf sein erstes Wort gekuerzt — /w liest den
+     Namen bis zum ersten Leerzeichen, und ein Name aus zwei Woertern
+     wuerde den Text sonst zerreissen. Das genuegt: gesucht wird auch
+     nach dem Anfang eines Namens. */
+  function lcZurueckfluestern(name) {
+    const feld = document.getElementById("lcFeld");
+    if (!feld) return false;
+    const ganz = String(name || "").trim();
+    const kurz = ganz.split(/\s+/)[0];
+    if (!kurz) return false;
+    feld.value = "/w " + kurz + " ";
+    /* Der Senden-Knopf und die Befehlstipps haengen am „input"-
+       Ereignis — ohne das bliebe der Knopf grau. */
+    try { feld.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+    feld.focus();
+    try { feld.setSelectionRange(feld.value.length, feld.value.length); } catch (e) {}
+    showToast("\uD83E\uDD2B Fl\u00fcstern an " + ganz + " \u2014 schreib einfach weiter, "
+      + "nur ihr beide seht es.");
+    return true;
+  }
+
   function lcStimmenUmschalten(verlauf) {
     const an = verlauf.classList.toggle("lc-stimmen-offen");
     const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
@@ -24185,6 +24217,16 @@
           nm.textContent = nameText;
         }
         kopf.appendChild(nm);
+        /* Der Name einer Fluesterzeile ist gleichzeitig der Weg
+           zurueck — siehe lcZurueckfluestern(). */
+        if (art === "fluester") {
+          const wem = n.eigen ? (n.wen || "") : (n.name || "");
+          if (wem) {
+            nm.classList.add("lc-fluester-zurueck");
+            nm.title = wem + " zur\u00fcckfl\u00fcstern";
+            nm.dataset.lcFluester = wem;
+          }
+        }
         z.appendChild(kopf);
 
         const t = document.createElement("span");
@@ -24542,10 +24584,18 @@
       if (eff) {
         z.dataset.wirkung = eff;
         z.classList.add("lc-zeile-wirkt");
-        z.title = "Antippen — noch einmal";
+        /* Bei einer Fluesterzeile ist das Antippen zum Antworten da,
+           nicht zum Wiederholen der Animation — so war es gewuenscht.
+           Die Animation laeuft weiterhin einmal, wenn die Zeile
+           ankommt. */
+        const fluesterZu = eff === "fluester"
+          ? (n.eigen ? (n.wen || "") : (n.name || "")) : "";
+        z.title = fluesterZu ? "Antippen — " + fluesterZu + " zurückflüstern"
+                             : "Antippen — noch einmal";
         z.addEventListener("click", (e) => {
           /* Genau wie beim Ruf: die Leere gehoert nicht der Animation. */
           if (lcIstLeere(e.target, null)) return;
+          if (fluesterZu) { lcZurueckfluestern(fluesterZu); return; }
           lcWirkung(eff, z, n);
           z.classList.remove("lc-neu");
           void z.offsetWidth;

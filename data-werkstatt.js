@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 69 — Die Note gehört zur Aufgabe, nicht zum Chat",
+  stand: "Runde 70 — Zurückflüstern mit einem Tipp",
 
   inArbeit: [
-    { seit: "2026-09-18T22:33",
+    { seit: "2026-09-18T22:44",
       text: "Alte „Du bist hier Häuptling“-Zeilen nachträglich aus dem Verlauf nehmen" },
-    { seit: "2026-09-18T22:33",
+    { seit: "2026-09-18T22:44",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T22:33",
+    { seit: "2026-09-18T22:44",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T22:33",
-      text: "Der globale Notenschalter ist wieder raus — der Notenknopf steht nur an einer Zeile, die als Antwort auf eine Aufgabe erkannt wurde" },
-    { seit: "2026-09-18T22:33",
-      text: "Eine gestellte Aufgabe überlebt jetzt das Aktualisieren der Seite (sie lag nur im Arbeitsspeicher — danach war keine Antwort mehr eine Antwort, und genau deshalb fehlte die Note)" },
-    { seit: "2026-09-18T22:33",
-      text: "Neu: /aufgabe Text — eine Aufgabe in eigenen Worten, ohne Puzzle. Was die anderen danach schreiben, gilt als Antwort und kann benotet werden; /aufgabe ohne Text beendet sie wieder" },
-    { seit: "2026-09-18T22:33",
-      text: "Bei einer Aufgabe ohne Musterlösung steht nicht mehr „noch nicht richtig“ — dort urteilt nur noch die Note" },
+    { seit: "2026-09-18T22:44",
+      text: "Ein Tipp auf eine geflüsterte Zeile legt „/w Name “ ins Schreibfeld, setzt den Schreibzeiger dahinter und öffnet die Tastatur — man schreibt nur noch den Satz" },
+    { seit: "2026-09-18T22:44",
+      text: "Auch die eigene Flüsterzeile: dort ist der Empfänger gemeint, damit man weiterflüstern kann" },
+    { seit: "2026-09-18T22:44",
+      text: "Der Name einer Flüsterzeile ist leicht unterpunktet — man sieht, dass da etwas geht" },
   ],
 };

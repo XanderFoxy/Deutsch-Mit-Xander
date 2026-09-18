@@ -8581,6 +8581,18 @@ body.lc-schreibt .tutor-reiter {
    Sie ist selbst voellig durchsichtig und aendert nichts am
    Aufbau: dieselbe Spalte, dieselbe Hoehe, dieselbe Farbe.
    ========================================================= */
+/* DER NAME EINER FLUESTERZEILE IST DER WEG ZURUECK.
+   GEWUENSCHT: „Wenn man eine zugefluesterte Zeile antippt, soll im
+   Schreibfeld direkt die Formatierung schon so dastehen, dass man
+   diesem Menschen fluestern antworten kann."
+   Damit man das auch SIEHT, ist der Name leicht unterpunktet — ein
+   Knopf, den man nicht erkennt, ist keiner. */
+.lc-fluester-zurueck {
+  cursor: pointer;
+  text-decoration: underline dotted currentColor;
+  text-underline-offset: 3px;
+}
+
 /* Die Wortmeldung, deren Aufnahme noch im Lager liegt. Sie ist kein
    Fehler — sie kommt gleich. Also leise, ohne Warnfarbe, mit einem
    ruhigen Pulsieren, damit man sieht, dass etwas unterwegs ist. */

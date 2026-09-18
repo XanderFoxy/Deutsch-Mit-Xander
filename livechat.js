@@ -6811,6 +6811,9 @@ window.LiveChat = (function () {
       if (!ziel) return systemZeile("„" + t[1] + "“ ist gerade nirgends zu finden.");
       var txt = textAufbereiten(t[2]);
       var n = eigeneZeile("fluester", "an " + ziel.name + ": " + txt, ziel.id);
+      /* An WEN es ging, steht damit auch an der Zeile — die Oberflaeche
+         bietet daran das Weiterfluestern an, ohne den Text zu zerlegen. */
+      n.wen = ziel.name;
       postSenden(ziel.id, { art: "fluester", id: n.id, text: txt,
                             raum: zustand.raum, zeit: n.zeit });
       melden();
