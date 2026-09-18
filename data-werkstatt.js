@@ -49,20 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 78 — Jede Nachricht behält ihre Kennung",
+  stand: "Runde 79 — Hängende Leitung, verschluckte Antworten, Favoriten auf dem Telefon",
 
   inArbeit: [
-    { seit: "2026-09-18T23:32",
+    { seit: "2026-09-18T23:43",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:32",
+    { seit: "2026-09-18T23:43",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:32",
-      text: "Jede Zeile trägt ihre Absender-Kennung jetzt auch in die Tabelle: der Live-Zuruf und die gespeicherte Fassung sind damit nachweislich dieselbe Zeile — vorher wurde über Name, Text und Zeit geraten, und bei ungenauen Uhren stand dieselbe Nachricht zweimal da" },
-    { seit: "2026-09-18T23:32",
-      text: "Auch die Bilder finden ihre Zeile über dieselbe Kennung wieder" },
+    { seit: "2026-09-18T23:43",
+      text: "Der grüne Balken hängt nicht mehr fest: eine Wortmeldung hält die Leitung nur noch ihre eigene Länge plus zehn Sekunden (vorher stur fünf Minuten), ein Wächter beendet sie notfalls — und ein Tipp auf den Balken prüft die Leitung und gibt sie frei. Kein Neuladen mehr" },
+    { seit: "2026-09-18T23:43",
+      text: "Eine Zeile, die ohne Verbindung geschrieben wird, wartet jetzt und geht raus, sobald der Raum wieder steht — vorher war sie still verloren (beim Absender sichtbar, bei allen anderen nie angekommen)" },
+    { seit: "2026-09-18T23:43",
+      text: "Eine Aufgabe noch einmal lösen wird wieder angesagt — vorher wurde die zweite richtige Antwort stillschweigend verschluckt; die Punkte gibt es weiterhin nur einmal" },
+    { seit: "2026-09-18T23:43",
+      text: "Lang drücken auf dem Smartphone heftet jetzt richtig an: Android löst dabei zusätzlich das Kontextmenü aus, und das hat sofort wieder abgenommen" },
+    { seit: "2026-09-18T23:43",
+      text: "Die Beispiel-Klammern stehen wieder in der Hilfe: /w <Name> <Text>" },
   ],
 };

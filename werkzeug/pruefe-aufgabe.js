@@ -47,6 +47,9 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     raus.push(["Satzpuzzle, Versuch aus denselben Wörtern", versuch("Der Hund über die Wiese läuft")]);
     raus.push(["Satzpuzzle, richtig gelöst", versuch("der hund läuft über die wiese.")]);
 
+    /* 2b. NOCH EINMAL loesen — das muss auch ankommen. */
+    raus.push(["Satzpuzzle, zum zweiten Mal gelöst", versuch("Der Hund läuft über die Wiese")]);
+
     /* 3. Wortpuzzle */
     LiveChat.pruefAufgabeStellen("wort", "Fahrrad");
     raus.push(["Wortpuzzle, Geplauder", versuch("keine Ahnung ehrlich gesagt")]);
@@ -79,6 +82,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     "Satzpuzzle, Geplauder": null,
     "Satzpuzzle, Versuch aus denselben Wörtern": { versuch: true, richtig: false, frei: false },
     "Satzpuzzle, richtig gelöst": { versuch: true, richtig: true, frei: false },
+    "Satzpuzzle, zum zweiten Mal gelöst": { versuch: true, richtig: true, frei: false },
     "Wortpuzzle, Geplauder": null,
     "Wortpuzzle, Versuch aus denselben Buchstaben": { versuch: true, richtig: false, frei: false },
     "Wortpuzzle, richtig gelöst": { versuch: true, richtig: true, frei: false },

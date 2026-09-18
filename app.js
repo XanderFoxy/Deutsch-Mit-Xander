@@ -21661,37 +21661,56 @@
      einsetzen, sonst schreibt man beim Anheften jedes Mal etwas ins
      Feld. */
   function lcAnheftenBinden(chip, befehl, danach) {
-    let uhr = 0, lang = false;
+    let uhr = 0, schonGetan = false;
+    /* EINMAL IST EINMAL.
+       GEMELDET: „Das geht auf dem Smartphone nicht. Wenn ich lange
+       gedrueckt halte, steht immer ,… ist kein Favorit mehr'."
+
+       Und so war es auch: Android loest beim langen Druck ZUSAETZLICH
+       das Kontextmenue aus. Meine Uhr hat also angeheftet, und das
+       Kontextmenue hat im selben Atemzug wieder abgenommen — uebrig
+       blieb die zweite Meldung. Jetzt schaltet der erste von beiden
+       um, und der zweite laesst es bleiben. */
+    const umschalten = () => {
+      if (schonGetan) return;
+      schonGetan = true;
+      clearTimeout(uhr); uhr = 0;
+      const jetztDrin = lcLieblingUmschalten(befehl.w);
+      try { navigator.vibrate && navigator.vibrate(18); } catch (e) {}
+      showToast(jetztDrin
+        ? "\u2b50 /" + befehl.w + " ist jetzt einer deiner Favoriten \u2014 er steht ganz vorn."
+        : "/" + befehl.w + " ist kein Favorit mehr.");
+      if (typeof danach === "function") danach();
+    };
     const los = () => {
-      lang = false;
+      schonGetan = false;
       clearTimeout(uhr);
-      uhr = setTimeout(() => {
-        lang = true;
-        const jetztDrin = lcLieblingUmschalten(befehl.w);
-        try { navigator.vibrate && navigator.vibrate(18); } catch (e) {}
-        showToast(jetztDrin
-          ? "\u2b50 /" + befehl.w + " ist jetzt einer deiner Favoriten — er steht ganz vorn."
-          : "/" + befehl.w + " ist kein Favorit mehr.");
-        if (typeof danach === "function") danach();
-      }, 600);
+      uhr = setTimeout(umschalten, 600);
     };
     const halt = () => { clearTimeout(uhr); uhr = 0; };
     chip.addEventListener("pointerdown", los);
     chip.addEventListener("pointerup", halt);
-    chip.addEventListener("pointerleave", halt);
     chip.addEventListener("pointercancel", halt);
-    /* Der Chip setzt den Befehl beim „mousedown" ein (siehe chip()).
-       Nach einem langen Druck soll er das nicht tun. */
-    chip.addEventListener("mousedown", (e) => { if (lang) { e.stopPropagation(); } }, true);
-    chip.addEventListener("click", (e) => { if (lang) { e.preventDefault(); e.stopPropagation(); lang = false; } }, true);
-    /* Auf dem Rechner geht auch die rechte Maustaste. */
-    chip.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      const jetztDrin = lcLieblingUmschalten(befehl.w);
-      showToast(jetztDrin ? "\u2b50 /" + befehl.w + " angeheftet." : "/" + befehl.w + " abgenommen.");
-      if (typeof danach === "function") danach();
+    /* pointerleave NICHT: der Finger wandert beim Halten immer ein
+       paar Bildpunkte, und auf dem Telefon galt der Druck damit als
+       abgebrochen, bevor die Uhr durch war. */
+    chip.addEventListener("pointermove", (e) => {
+      /* Nur ein echtes Wischen bricht ab — mehr als zehn Bildpunkte. */
+      if (!uhr) return;
+      if (e.movementX === undefined) return;
+      if (Math.abs(e.movementX) + Math.abs(e.movementY) > 10) halt();
     });
+    /* Nach dem Anheften soll der Befehl NICHT auch noch im Feld
+       landen (der Chip setzt ihn beim „mousedown" ein). */
+    chip.addEventListener("mousedown", (e) => { if (schonGetan) { e.stopPropagation(); e.preventDefault(); } }, true);
+    chip.addEventListener("click", (e) => {
+      if (schonGetan) { e.preventDefault(); e.stopPropagation(); schonGetan = false; }
+    }, true);
+    /* Auf dem Telefon kommt hier der lange Druck an, auf dem Rechner
+       die rechte Maustaste — beides derselbe Griff. */
+    chip.addEventListener("contextmenu", (e) => { e.preventDefault(); umschalten(); });
   }
+
   function lcLieblinge() {
     try {
       const l = JSON.parse(localStorage.getItem(LC_LIEBLINGE) || "[]");
@@ -22164,6 +22183,45 @@
   let lcIchSpreche = false;      // nehme ICH gerade auf?
   let lcLiveJetzt = null;        // wer gerade zu hoeren ist
 
+  /* Nachsehen, ob die Leitung wirklich belegt ist — und sie
+     freigeben, wenn nur die Anzeige haengt. Genau das, wofuer man
+     sonst die Seite neu laden musste. */
+  function lcLeitungPruefen() {
+    if (!window.LiveChat) return false;
+    let rest = 0;
+    try { rest = LiveChat.liveRest ? LiveChat.liveRest() : 0; } catch (e) {}
+    /* Erst der stille Weg: haengt die Frist schon durch, raeumt
+       liveHaengtFest() von selbst auf. */
+    let warHaengen = false;
+    try { warHaengen = LiveChat.liveHaengtFest ? LiveChat.liveHaengtFest() : false; } catch (e) {}
+    if (warHaengen || !lcLiveJetzt) {
+      lcLiveLaeuft = false;
+      lcLiveJetzt = null;
+      lcLiveBalkenZeichnen();
+      setTimeout(lcLiveWeiter, 120);
+      showToast("\u2705 Die Leitung war nur h\u00e4ngengeblieben \u2014 du kannst wieder sprechen.");
+      return true;
+    }
+    /* Laeuft sie noch, sagen wir ehrlich, wie lange — und geben sie
+       auf ausdruecklichen Wunsch trotzdem frei. */
+    if (rest > 1 && Date.now() - lcLeitungGefragt > 8000) {
+      showToast("\uD83C\uDFA7 " + (lcLiveJetzt.name || "Jemand") + " ist noch zu h\u00f6ren \u2014 "
+        + "noch etwa " + rest + " Sekunden. Nochmal antippen gibt die Leitung trotzdem frei.");
+      lcLeitungGefragt = Date.now();
+      return false;
+    }
+    /* Zweiter Tipp innerhalb von acht Sekunden: er will wirklich. */
+    lcLeitungGefragt = 0;
+    try { if (LiveChat.liveFreigeben) LiveChat.liveFreigeben(); } catch (e) {}
+    lcLiveLaeuft = false;
+    lcLiveJetzt = null;
+    lcLiveBalkenZeichnen();
+    setTimeout(lcLiveWeiter, 120);
+    showToast("\u2705 Leitung freigegeben \u2014 du kannst sprechen.");
+    return true;
+  }
+  let lcLeitungGefragt = 0;
+
   function lcLiveWeiter() {
     if (lcLiveLaeuft) return;
     if (!window.LiveChat || !LiveChat.liveNaechste) return;
@@ -22203,12 +22261,41 @@
     /* FOKUS-MODUS: solange das hier laeuft, nimmt niemand sonst auf.
        Die Regel selbst steht in livechat.js (darfSprechen) — hier
        wird nur angesagt, wer gerade spricht und wann er fertig ist. */
-    if (LiveChat.liveLaeuft) LiveChat.liveLaeuft({ von: w.von, name: w.name, geschlecht: w.geschlecht || "" });
+    /* Die LAENGE muss mit: davon haengt ab, wie lange die Leitung
+       gehalten werden darf, bevor sie als haengengeblieben gilt. */
+    if (LiveChat.liveLaeuft) {
+      LiveChat.liveLaeuft({ von: w.von, name: w.name, geschlecht: w.geschlecht || "",
+                            sek: Number(w.sprachDauer || w.sprachSek) || 0 });
+    }
     /* GEWUENSCHT: „Damit ich abschaetzen kann, wann die andere Seite
        die Nachricht zu Ende gehoert hat." Also sagen wir es ihr —
        beim Anfangen und beim Aufhoeren. */
     if (LiveChat.hoereJetzt) { try { LiveChat.hoereJetzt(w.von, w.id, true); } catch (e) {} }
-    const fertig = () => {
+    /* =============================================================
+       EIN WAECHTER UEBER JEDER WORTMELDUNG
+       -------------------------------------------------------------
+       GEMELDET: „Manchmal haengt sich die Sprachnachricht auf, also
+       dieser gruene Balken, und er bleibt dann stehen … ich muss jedes
+       Mal die Seite aktualisieren, damit ich ueberhaupt wieder
+       sprechen kann."
+
+       Das Ende einer Wortmeldung haengt bisher allein daran, dass der
+       Browser „ended" meldet. Tut er das nicht — der Ton bleibt beim
+       Nachladen stehen, das Geraet geht kurz schlafen, der Lautsprecher
+       wird weggenommen —, dann kommt fertig() nie, und die Reihe steht
+       still. Ein Wecker ist der einzige ehrliche Ausweg: er kennt die
+       Laenge der Aufnahme und laesst zehn Sekunden Luft.
+       Ausserdem darf fertig() nur EINMAL wirken; sonst startet der
+       naechste Sprecher doppelt. */
+    let schonFertig = false;
+    let wecker = 0;
+    const fertig = (grund) => {
+      if (schonFertig) return;
+      schonFertig = true;
+      clearTimeout(wecker); wecker = 0;
+      if (grund === "wecker") {
+        try { console.warn("Klassenzimmer: Wortmeldung haengengeblieben — Leitung freigegeben."); } catch (e) {}
+      }
       if (LiveChat.hoereJetzt) { try { LiveChat.hoereJetzt(w.von, w.id, false); } catch (e) {} }
       if (LiveChat.liveLaeuft) LiveChat.liveLaeuft(null);
       platzMarkieren(false);
@@ -22219,6 +22306,9 @@
          eine Person. */
       setTimeout(lcLiveWeiter, 220);
     };
+    const sekunden = Number(w.sprachDauer || w.sprachSek) || 0;
+    wecker = setTimeout(() => fertig("wecker"),
+                        Math.max(15000, Math.min(5 * 60 * 1000, (sekunden + 12) * 1000)));
     if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(w.sprach, fertig, w.sprachAb || 0, w.sprachDauer || 0)) return;
     /* Der Vorrat ist voll oder kaputt — dann eben direkt, mit
        demselben Sprung ueber den Vorlauf. */
@@ -22393,6 +22483,25 @@
       leiste.style.top = "";
     } catch (e) {}
     leiste.hidden = false;
+    /* =============================================================
+       EIN TIPP AUF DEN BALKEN PRUEFT DIE LEITUNG
+       -------------------------------------------------------------
+       GEMELDET: „Gibt es eine Moeglichkeit zu ueberpruefen, ob die
+       Leitung frei ist und ob das nur ein Haengen ist? Ich wuerde
+       gern weitersprechen und muss jedes Mal die Seite aktualisieren."
+
+       Ja. Der Balken selbst ist die Pruefstelle: ein Tipp sagt, ob
+       wirklich noch etwas laeuft — und wenn nicht, gibt er die
+       Leitung im selben Augenblick frei. Niemand muss dafuer die
+       Seite neu laden. */
+    if (!leiste.dataset.pruefbar) {
+      leiste.dataset.pruefbar = "1";
+      leiste.title = "Antippen — nachsehen, ob die Leitung wirklich belegt ist";
+      leiste.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lcLeitungPruefen();
+      });
+    }
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich
        schoen fuer die Uebersicht, dass die Leute den Respekt auch

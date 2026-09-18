@@ -77,9 +77,14 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     const chipName = chip ? (chip.querySelector("strong") || {}).textContent : "";
     let angeheftet = null;
     if (chip) {
+      /* WIE EIN TELEFON ES TUT: Android schickt beim langen Druck
+         zusaetzlich das Kontextmenue. Frueher hat das ein zweites Mal
+         umgeschaltet — und es stand „ist kein Favorit mehr" da. */
       chip.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
       await warte(750);
+      chip.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
       chip.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+      chip.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
       await warte(150);
       tippen("");
       tippen("/");

@@ -7712,9 +7712,14 @@ body.lc-schreibt .tutor-reiter {
   font-size: .76rem;
   color: var(--teal-700, #2b6a60);
   min-height: 26px;
-  /* Sie liegt ueber dem Chat, nimmt aber keine Klicks: alles
-     darunter bleibt antippbar. */
-  pointer-events: none;
+  /* Sie liegt ueber dem Chat — und sie NIMMT einen Tipp an: damit
+     prueft man, ob die Leitung wirklich belegt ist, und gibt sie frei,
+     wenn nur die Anzeige haengt (siehe lcLeitungPruefen in app.js).
+     Frueher stand hier pointer-events: none; dann musste man bei einem
+     haengenden Balken die ganze Seite neu laden. Sie ist schmal genug,
+     dass darunter kaum etwas verdeckt wird. */
+  pointer-events: auto;
+  cursor: pointer;
 }
 .lc-live-leiste[hidden] { display: none; }
 /* Wenn ich selbst spreche, ist es meine Zeile — warm statt kühl,

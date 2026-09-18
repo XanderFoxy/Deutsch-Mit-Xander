@@ -2343,13 +2343,60 @@ window.LiveChat = (function () {
   }
 
   var pruefSenderHaken = null;
+  /* =========================================================
+     WAS NICHT HINAUSGEHT, WARTET — STATT VERLORENZUGEHEN
+     ---------------------------------------------------------
+     GEMELDET: „Wenn Emmy die alte Aufgabe aus dem Verlauf noch mal
+     loest, kommt sie nicht an, sie schickt nicht ab. Ich weiss nicht,
+     woran das liegt."
+
+     Eine Erklaerung dafuer stand hier, in einer einzigen Zeile:
+         if (!kanal) return;
+     Steht die Leitung gerade nicht — das Telefon war kurz im Schlaf,
+     das Netz hat gewechselt, der Kanal wird gerade neu aufgebaut —,
+     dann war die Zeile weg. Beim Absender stand sie im Chat (sie
+     entsteht dort lokal), bei allen anderen kam sie nie an. Genau so
+     sieht das aus: „sie schickt nicht ab."
+
+     Jetzt wartet sie. Was den Chat betrifft (Text, Aufgaben,
+     Ansagen), wird aufgehoben und geht hinaus, sobald der Raum wieder
+     steht. Pulsschlaege und Anwesenheitsmeldungen nicht — die sind im
+     naechsten Augenblick ohnehin ueberholt. */
+  var wartendePakete = [];
+  var WARTEND_MAX = 60;
+  function wartetAufLeitung(nutzlast) {
+    return nutzlast && nutzlast.art === "text";
+  }
+  function paketeNachschicken() {
+    if (!kanal || !wartendePakete.length) return 0;
+    var liste = wartendePakete.slice();
+    wartendePakete = [];
+    var raus = 0;
+    liste.forEach(function (p) {
+      try { kanal.send({ type: "broadcast", event: "raum", payload: p }); raus += 1; } catch (e) {}
+    });
+    if (raus) {
+      systemZeile("\ud83d\udce4 " + (raus === 1 ? "Deine Zeile ist" : raus + " Zeilen sind")
+        + " jetzt rausgegangen \u2014 die Verbindung war kurz weg.");
+    }
+    return raus;
+  }
   function senden(nutzlast) {
     nutzlast.von = zustand.ichId;
     /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
        sein muss. Im Betrieb ist der Haken immer null. */
     if (pruefSenderHaken) { try { pruefSenderHaken(nutzlast); } catch (e) {} }
-    if (!kanal) return;
-    try { kanal.send({ type: "broadcast", event: "raum", payload: nutzlast }); } catch (e) {}
+    if (!kanal) {
+      if (wartetAufLeitung(nutzlast)) {
+        wartendePakete.push(nutzlast);
+        if (wartendePakete.length > WARTEND_MAX) wartendePakete.shift();
+      }
+      return;
+    }
+    try { kanal.send({ type: "broadcast", event: "raum", payload: nutzlast }); }
+    catch (e) {
+      if (wartetAufLeitung(nutzlast)) wartendePakete.push(nutzlast);
+    }
   }
 
   function empfangen(n) {
@@ -3312,6 +3359,9 @@ window.LiveChat = (function () {
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                      seit: zustand.seit, buehne: zustand.buehne,
                      geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
+            /* Und alles, was waehrend der Funkstille geschrieben
+               wurde, geht jetzt hinaus (siehe senden). */
+            paketeNachschicken();
             pulsStarten();
             wacheStarten();          // die Leitungen im Auge behalten
             postKanalOeffnen();
@@ -5211,12 +5261,12 @@ window.LiveChat = (function () {
 
   function aufgabeVersuch(von, text) {
     if (!offeneAufgabe || !von) return null;
-    if (offeneAufgabe.wer[von]) return null;
     /* Eine Aufgabe in eigenen Worten hat keine Musterloesung. Dort ist
        die ERSTE Zeile nach der Aufgabe die Antwort — danach plaudert
        die Person wieder ganz normal, und es steht nicht an jeder
        weiteren Zeile ein Notenknopf. */
     if (offeneAufgabe.typ === "frei") {
+      if (offeneAufgabe.wer[von]) return null;
       offeneAufgabe.wer[von] = true;
       aufgabeMerken();
       return { versuch: true, richtig: false, frei: true,
@@ -5236,7 +5286,15 @@ window.LiveChat = (function () {
     /* Ohne Musterloesung gibt es nichts zu verkuenden — das Urteil
        faellt der Lehrer mit der Note. */
     if (offeneAufgabe.typ === "frei") return;
-    if (offeneAufgabe.wer[von]) return;
+    /* NOCH EINMAL LOESEN DARF MAN.
+       GEMELDET: „Wenn Emmy die alte Aufgabe aus dem Verlauf noch mal
+       loest, kommt sie nicht an."
+       Hier stand  if (offeneAufgabe.wer[von]) return;  — wer die
+       Aufgabe einmal geloest hatte, dessen naechste Antwort wurde
+       stillschweigend verschluckt: keine Zeile, kein Notenknopf,
+       nichts. Gemeint war damit nur, dass es die Punkte nicht zweimal
+       geben soll. Genau das bleibt — angesagt wird es trotzdem. */
+    var schonGeloest = Boolean(offeneAufgabe.wer[von]);
     /* Nur eine ECHTE Antwort wird vermeldet. Frueher rief das Programm
        bei jeder Zeile „noch nicht richtig!" — auch bei „hallo". */
     if (!aufgabeGleich(text, offeneAufgabe.loesung) && !siehtNachVersuchAus(text, offeneAufgabe)) return;
@@ -5248,6 +5306,11 @@ window.LiveChat = (function () {
          die Aufgabe fuer alle anderen vorbei. */
       anAlle("system", "\u270b " + name + " hat geantwortet: \u201e" + String(text).slice(0, 60)
         + "\u201c \u2014 noch nicht richtig. Weiterprobieren!");
+      return;
+    }
+    if (schonGeloest) {
+      anAlle("system", "\u2705 " + name + " hat es noch einmal gel\u00f6st \u2014 richtig! "
+        + "(Die Punkte daf\u00fcr gab es schon.)");
       return;
     }
     offeneAufgabe.wer[von] = true;
@@ -5412,25 +5475,66 @@ window.LiveChat = (function () {
      Oberflaeche (sie spielt ab) — sie sagt es hier an. */
   var liveLaeuftGerade = null;   // { von, name, bis } oder null
   var liveWacht = 0;
+  /* WIE LANGE DARF EINE WORTMELDUNG DIE LEITUNG HALTEN?
+     -----------------------------------------------------------
+     GEMELDET: „Manchmal haengt sich die Sprachnachricht auf, also
+     dieser gruene Balken, und er bleibt dann stehen. Ich muss jedes
+     Mal die Seite aktualisieren, damit ich ueberhaupt wieder sprechen
+     kann."
+
+     Der Riegel loeste sich bisher erst nach FUENF MINUTEN — das ist
+     fuer den Unterricht eine Ewigkeit. Und er war auch nicht noetig:
+     wir wissen, wie lang die Aufnahme ist. Sie bekommt also genau
+     ihre Laenge plus zehn Sekunden Luft (mindestens fuenfzehn
+     Sekunden, hoechstens fuenf Minuten). Laeuft sie darueber hinaus,
+     laeuft sie nicht mehr — sie haengt. Dann ist die Leitung frei. */
+  function liveFristMs(wer) {
+    var sek = Number(wer && (wer.sek || wer.sprachSek || wer.sprachDauer)) || 0;
+    var ms = (sek + 10) * 1000;
+    if (!(ms > 0)) ms = 25000;
+    return Math.max(15000, Math.min(5 * 60 * 1000, ms));
+  }
   function liveLaeuft(wer) {
     liveLaeuftGerade = wer || null;
-    /* EIN ZWEITER BODEN. Wer hier eingetragen wird, sperrt im
-       Fokus-Modus alle anderen Mikrofone — bis er wieder ausgetragen
-       wird. Bleibt dieses Austragen einmal aus (ein Ton, der nie
-       startet, ein Geraet, das in den Schlaf geht), stuende der Raum
-       still, und niemand koennte den Grund sehen. Deshalb traegt sich
-       jeder Sprecher nach spaetestens fuenf Minuten selbst wieder
-       aus. Eine Wortmeldung ist kuerzer als das — es kann also nichts
-       Echtes abschneiden. */
     clearTimeout(liveWacht); liveWacht = 0;
     if (liveLaeuftGerade) {
+      var frist = liveFristMs(liveLaeuftGerade);
+      liveLaeuftGerade.bis = Date.now() + frist;
       liveWacht = setTimeout(function () {
         if (!liveLaeuftGerade) return;
         liveLaeuftGerade = null;
         melden();
-      }, 5 * 60 * 1000);
+      }, frist);
     }
     melden();
+  }
+  /* Ist die Leitung in Wahrheit frei? Das ist keine Vermutung: wenn
+     die Frist der laufenden Wortmeldung abgelaufen ist, spielt nichts
+     mehr — dann haengt nur noch die Anzeige. In dem Fall wird hier
+     aufgeraeumt, still und sofort. Gibt true zurueck, wenn wirklich
+     etwas haengengeblieben war. */
+  function liveHaengtFest() {
+    if (!liveLaeuftGerade) return false;
+    if (Date.now() <= (liveLaeuftGerade.bis || 0) + 1500) return false;
+    liveLaeuftGerade = null;
+    clearTimeout(liveWacht); liveWacht = 0;
+    melden();
+    return true;
+  }
+  /* Die Leitung von Hand freigeben — fuer den Tipp auf den gruenen
+     Balken. Gibt zurueck, ob etwas freizugeben war. */
+  function liveFreigeben() {
+    if (!liveLaeuftGerade) return false;
+    liveLaeuftGerade = null;
+    clearTimeout(liveWacht); liveWacht = 0;
+    melden();
+    return true;
+  }
+  /* Wie lange laeuft die aktuelle Wortmeldung noch? Fuer die Auskunft
+     beim Antippen — „sie laeuft wirklich noch" oder „sie haengt". */
+  function liveRest() {
+    if (!liveLaeuftGerade) return 0;
+    return Math.max(0, Math.round(((liveLaeuftGerade.bis || 0) - Date.now()) / 1000));
   }
   /* WER SPRICHT, IST NICHT IMMER EIN „ER"
      -----------------------------------------------------------
@@ -5480,6 +5584,9 @@ window.LiveChat = (function () {
      nackten Wahrheitswert — man soll lesen koennen, WARUM. */
   function darfSprechen() {
     if (!fokusAn()) return { ja: true };
+    /* Bevor jemandem das Wort verweigert wird: haengt die Anzeige
+       vielleicht nur? Dann ist die Leitung frei, und zwar sofort. */
+    if (liveHaengtFest()) return { ja: true, warHaengen: true };
     if (!liveLaeuftGerade) return { ja: true };
     if (liveLaeuftGerade.von === zustand.ichId) return { ja: true };
     var g = geschlechtVon(liveLaeuftGerade.von) || liveLaeuftGerade.geschlecht || "";
@@ -6271,37 +6378,37 @@ window.LiveChat = (function () {
   };
 
   var BEFEHLE = [
-    { gr: "reden", w: "me",      kurz: "",     nutzt: "/me was du tust",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
+    { gr: "reden", w: "me",      kurz: "",     nutzt: "/me <was du tust>",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
     { gr: "reden", w: "me/",     kurz: "",     nutzt: "… /me/ …",            was: "Mitten im Satz: wird durch deinen Namen ersetzt" },
-    { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s Text",           was: "Schreien — GROSS, mit Wucht" },
-    { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w Name Text",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
-    { gr: "raum", w: "j",       kurz: "join", nutzt: "/j Raum",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
-    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i Name",         was: "Einladen — wer da ist, wird gerufen; wer nicht da ist, bekommt Post. Ohne Namen: deine Freunde" },
-    { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f Name",         was: "Folgen — dorthin, wo die Person GERADE ist" },
+    { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s <Text>",           was: "Schreien — GROSS, mit Wucht" },
+    { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w <Name> <Text>",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
+    { gr: "raum", w: "j",       kurz: "join", nutzt: "/j <Raum>",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
+    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i <Name>",         was: "Einladen — wer da ist, wird gerufen; wer nicht da ist, bekommt Post. Ohne Namen: deine Freunde" },
+    { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f <Name>",         was: "Folgen — dorthin, wo die Person GERADE ist" },
     { gr: "raum", w: "n",       kurz: "names",nutzt: "/n",                  was: "Wer ist hier?" },
     { gr: "raum", w: "l",       kurz: "list", nutzt: "/l",                  was: "Welche Räume sind gerade offen?" },
-    { gr: "raum", w: "t",       kurz: "topic",nutzt: "/t Text",           was: "Thema des Raums setzen" },
+    { gr: "raum", w: "t",       kurz: "topic",nutzt: "/t <Text>",           was: "Thema des Raums setzen" },
     { gr: "raum", w: "lock",    kurz: "",     nutzt: "/lock",               was: "Raum abschließen — nur Eingeladene kommen herein" },
     { gr: "raum", w: "unlock",  kurz: "",     nutzt: "/unlock",             was: "Raum wieder öffnen" },
-    { gr: "chef", w: "op",      kurz: "",     nutzt: "/op Name",          was: "Macht die Person zum Häuptling" },
-    { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop Name",        was: "Nimmt die Häuptlingsrechte wieder" },
-    { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k Name",           was: "Rausschmeißen (nur Häuptling)" },
-    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm Name",       was: "Stimme abschalten — schreiben geht weiter (nur Häuptling)" },
-    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm Name",    was: "Darf wieder sprechen (nur Häuptling)" },
-    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel Name",      was: "Auch das Schreiben abschalten (nur Häuptling)" },
-    { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel Name",   was: "Wieder sprechen lassen" },
+    { gr: "chef", w: "op",      kurz: "",     nutzt: "/op <Name>",          was: "Macht die Person zum Häuptling" },
+    { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop <Name>",        was: "Nimmt die Häuptlingsrechte wieder" },
+    { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k <Name>",           was: "Rausschmeißen (nur Häuptling)" },
+    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm <Name>",       was: "Stimme abschalten — schreiben geht weiter (nur Häuptling)" },
+    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm <Name>",    was: "Darf wieder sprechen (nur Häuptling)" },
+    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel <Name>",      was: "Auch das Schreiben abschalten (nur Häuptling)" },
+    { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel <Name>",   was: "Wieder sprechen lassen" },
     { gr: "reden", w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit einem Gesicht aus Buchstaben" },
-    { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii Was",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
-    { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild Was",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
-    { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz Name",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
-    { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck Name",      was: "Jemanden drücken" },
-    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch Name",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
+    { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii <Was>",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
+    { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild <Was>",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
+    { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz <Name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
+    { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck <Name>",      was: "Jemanden drücken" },
+    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch <Name>",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
     { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",       was: "Warum hört man jemanden nicht? Zeigt den Weg und ob Tonpakete ankommen" },
-    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck Name",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
-    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box Name",       was: "Jemandem einen Boxhandschuh verpassen" },
+    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <Name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
+    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <Name>",       was: "Jemandem einen Boxhandschuh verpassen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
-    { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons steigen auf — zum Geburtstag" },
-    { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk Name",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
+    { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <Name>", was: "Luftballons steigen auf — zum Geburtstag" },
+    { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk <Name>",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
     { gr: "wetter", w: "schnee",  kurz: "",     nutzt: "/schnee",             was: "Es schneit im ganzen Raum" },
     { gr: "wetter", w: "regen",   kurz: "",     nutzt: "/regen",              was: "Es regnet im ganzen Raum" },
     { gr: "wetter", w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
@@ -6343,12 +6450,12 @@ window.LiveChat = (function () {
     { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Ein Katzenbaby läuft zur Scheibe und tappt mit den Pfoten dagegen" },
     { gr: "welt", w: "route66",    kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu — Wüste, Kakteen, Staub" },
     { gr: "feier", w: "prunk",     kurz: "gift",   nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
-    { gr: "feier", w: "ggloewe",   kurz: "loewe",  nutzt: "/loewe Name",   was: "GROSSES GESCHENK: die Kiste springt auf, ein Löwe steigt heraus und wird riesig" },
-    { gr: "feier", w: "ggtrex",    kurz: "trex",   nutzt: "/trex Name",    was: "GROSSES GESCHENK: ein Tyrannosaurus steigt aus der Kiste und brüllt" },
-    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant Name", was: "GROSSES GESCHENK: ein Elefant steigt aus der Kiste" },
-    { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler Name",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
-    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai Name",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
-    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer Name",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
+    { gr: "feier", w: "ggloewe",   kurz: "loewe",  nutzt: "/loewe <Name>",   was: "GROSSES GESCHENK: die Kiste springt auf, ein Löwe steigt heraus und wird riesig" },
+    { gr: "feier", w: "ggtrex",    kurz: "trex",   nutzt: "/trex <Name>",    was: "GROSSES GESCHENK: ein Tyrannosaurus steigt aus der Kiste und brüllt" },
+    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant <Name>", was: "GROSSES GESCHENK: ein Elefant steigt aus der Kiste" },
+    { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler <Name>",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
+    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai <Name>",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
+    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
     { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
@@ -6363,23 +6470,23 @@ window.LiveChat = (function () {
     { gr: "welt", w: "noten",     kurz: "melodie",nutzt: "/noten",     was: "Noten steigen auf und klingen dabei wirklich" },
     { gr: "feier", w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { gr: "feier", w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
-    { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift Nummer",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
+    { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift <Nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
     { gr: "aussehen", w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",       was: "Ein eigenes Bild hinter den Chat legen (/hintergrund weg nimmt es wieder)" },
-    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c Farbe",          was: "Farbe für Name und Schrift: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
-    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name Farbe",  was: "Nur der Name bekommt diese Farbe — die Schrift behält ihre" },
-    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw Text",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
-    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz ganzer Satz", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
-    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort Wort",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
-    { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe Text", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
-    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
-    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher Name", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
+    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c <Farbe>",          was: "Farbe für Name und Schrift: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
+    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name <Farbe>",  was: "Nur der Name bekommt diese Farbe — die Schrift behält ihre" },
+    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw <Text>",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
+    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz <ganzer Satz>", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
+    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
+    { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe <Text>", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
+    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
+    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
     { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
-    { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [Text]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
+    { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [<Text>]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
-    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild Art", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
-    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift Farbe", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
+    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <Art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
+    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <Farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { gr: "hilfe", w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
   ];
@@ -6604,7 +6711,7 @@ window.LiveChat = (function () {
       var hinterDemBefehl = teile.slice(1);
       var willName = hinterDemBefehl.some(function (t) {
         return /^(name|nickname)$/i.test(t);
-      }) || /<name>/.test(b.nutzt || "");
+      }) || /<\s*(name|nickname)\s*>/i.test(b.nutzt || "");
       /* „/c name Farbe" meint die Namensfarbe, keinen Menschen. */
       if (b.w === "cname") willName = false;
       return { w: b.w, gr: b.gr || "welt", nutzt: b.nutzt, was: b.was, kurz: b.kurz,
@@ -8410,6 +8517,22 @@ window.LiveChat = (function () {
     liveMelden: liveMelden,
     sprachZurueckrufen: sprachZurueckrufen,
     liveLaeuft: liveLaeuft,
+    liveFreigeben: liveFreigeben,
+    /* Nur zum Nachpruefen: die Frist der laufenden Wortmeldung um so
+       viele Millisekunden zurueckstellen — damit sich ein Haengen
+       messen laesst, ohne es abzuwarten. Und den Fokus-Modus setzen,
+       denn nur dort sperrt ueberhaupt etwas. */
+    pruefLeitungAltern: function (ms) {
+      if (liveLaeuftGerade) liveLaeuftGerade.bis -= (Number(ms) || 0);
+      return liveLaeuftGerade ? liveLaeuftGerade.bis : 0;
+    },
+    pruefFokus: function (an) { zustand.fokus = Boolean(an); return zustand.fokus; },
+    /* Nur zum Nachpruefen: was gerade auf die Leitung wartet, und das
+       Nachschicken von Hand anstossen. */
+    pruefWartend: function () { return wartendePakete.map(function (p) { return p.text || p.art; }); },
+    pruefNachschicken: function () { return paketeNachschicken(); },
+    liveHaengtFest: liveHaengtFest,
+    liveRest: liveRest,
     darfSprechen: darfSprechen,
     /* Den Ton aus dem Lager nachholen. Die Oberflaeche ruft das, wenn
        sie eine Wortmeldung zeichnet, deren Aufnahme noch im Lager
