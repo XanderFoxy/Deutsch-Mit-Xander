@@ -15329,10 +15329,30 @@
         t.style.setProperty("--lc-w-tiefe", tiefe.toFixed(2));
         t.style.setProperty("--lc-w-lang", lang.toFixed(0) + "px");
         t.style.setProperty("--lc-w-breit", (1.5 + tiefe * 2.4).toFixed(2) + "px");
-        t.style.setProperty("--lc-w-neig",
-          (art === "sturm" ? 19 + Math.random() * 7 : 3 + Math.random() * 5).toFixed(1) + "deg");
-        t.style.setProperty("--lc-w-seit",
-          (art === "sturm" ? -(150 + Math.random() * 80) : -(22 + Math.random() * 30)).toFixed(0) + "px");
+        /* NACHGEBESSERT, und er hat es genau beschrieben: „Das sieht aus,
+           als ob man diese Schräglagen einfach nur mit dem
+           Parallelogramm verschiebt, dass die so parallel schräg
+           fallen — aber nicht von der Physik richtig fallen."
+
+           Der Grund: die NEIGUNG des Tropfens und seine BAHN waren zwei
+           unabhängige Zufallszahlen. Ein Tropfen stand also zum
+           Beispiel 5° schräg, flog dabei aber fast senkrecht — er
+           rutschte quer zu sich selbst. Genau das sieht man als
+           „geschoben" statt „gefallen".
+
+           Jetzt folgt die Neigung AUS der Bahn: seitlicher Weg geteilt
+           durch Fallweg, als Winkel. Damit zeigt jeder Tropfen exakt
+           dorthin, wo er hinfliegt — wie ein echter. */
+        const seit = art === "sturm"
+          ? -(150 + Math.random() * 80)
+          : -(22 + Math.random() * 30);
+        const fall = window.innerHeight * 1.22;
+        /* Der Tropfen ist senkrecht gezeichnet; positiv gedreht neigt
+           er sich nach rechts. Ein Weg nach links braucht also eine
+           negative Drehung — daher das Minus. */
+        const neig = -Math.atan2(seit, fall) * 180 / Math.PI;
+        t.style.setProperty("--lc-w-neig", neig.toFixed(1) + "deg");
+        t.style.setProperty("--lc-w-seit", seit.toFixed(0) + "px");
         /* Nahe Tropfen sind schneller: weniger Sekunden fuer dieselbe Strecke. */
         const grund = art === "sturm" ? 0.62 : 0.85;
         t.style.animationDuration = (grund - tiefe * 0.3 + Math.random() * 0.14).toFixed(2) + "s";
@@ -18045,16 +18065,28 @@
 
        Ausserdem fliegen sie WIEDERHOLT: eine Schnuppe alle paar
        Sekunden ist ein Sternenhimmel, zehn auf einmal ein Feuerwerk. */
+    /* Ein echter Sternschnuppenschwarm hat einen RADIANTEN: alle
+       Bahnen laufen scheinbar von EINEM Punkt am Himmel weg. Ohne den
+       sieht es aus wie geworfene Striche — und genau das war gemeldet.
+       Der Punkt liegt hier oben links ausserhalb des Bildes. */
+    const radiantX = -18 + Math.random() * 16;
+    const radiantY = -24 + Math.random() * 14;
     const wieviel = window.innerWidth < 560 ? 7 : 12;
     for (let i = 0; i < wieviel; i++) {
       const vonX = 10 + Math.random() * 70;
       const vonY = 2 + Math.random() * 26;
       /* Sie fallen schräg nach rechts unten — flach, wie echte
          Schnuppen, nicht senkrecht wie Regen. */
-      const weit = 22 + Math.random() * 30;
-      const tief = weit * (0.42 + Math.random() * 0.34);
-      const winkel = Math.atan2(tief * window.innerHeight / 100,
-                                weit * window.innerWidth / 100) * 180 / Math.PI;
+      /* Die Richtung folgt aus dem Radianten: weg von ihm, also entlang
+         der Verbindungslinie Radiant -> Startpunkt. So zeigen alle
+         Schweife nach hinten auf denselben Punkt. */
+      const rX = (vonX - radiantX) * window.innerWidth / 100;
+      const rY = (vonY - radiantY) * window.innerHeight / 100;
+      const laenge = Math.hypot(rX, rY) || 1;
+      const strecke = 26 + Math.random() * 34;   /* in Prozent der Breite */
+      const weit = strecke * (rX / laenge);
+      const tief = strecke * (rY / laenge) * (window.innerWidth / Math.max(1, window.innerHeight));
+      const winkel = Math.atan2(rY, rX) * 180 / Math.PI;
       const s2 = document.createElement("i");
       s2.style.left = vonX.toFixed(1) + "%";
       s2.style.top = vonY.toFixed(1) + "%";

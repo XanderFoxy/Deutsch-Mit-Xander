@@ -49,24 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 47 — die Fratze kommt aus dem Dunkel",
+  stand: "Runde 48 — Sternschnuppen und Regen nach Physik",
 
   inArbeit: [
-    { seit: "2026-09-18T00:49",
-      text: "A2 laeuft weiter (2078 von 3494), danach B1" },
-    { seit: "2026-09-18T00:49",
-      text: "Sternschnuppen und Regen physikalisch richtig" },
-    { seit: "2026-09-18T00:49",
+    { seit: "2026-09-18T00:52",
+      text: "A2 fast fertig (3043 von 3494), danach B1" },
+    { seit: "2026-09-18T00:52",
       text: "Jalousie und Hand sollen den Chat wirklich aufreissen" },
+    { seit: "2026-09-18T00:52",
+      text: "Winkende Hand neu zeichnen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T00:49",
-      text: "Fratze: Risse in der Haut, glimmende Augen, Zerrfilter, Rauch dahinter, Zucken" },
-    { seit: "2026-09-18T00:49",
-      text: "Gefunden: sie sass unten rechts, weil die Bilder die Mittenverschiebung weggeworfen haben" },
-    { seit: "2026-09-18T00:49",
-      text: "2078 A2-Woerter sind schon eingesprochen" },
+    { seit: "2026-09-18T00:52",
+      text: "Sternschnuppen: Bahn und Schweif zeigten in verschiedene Richtungen — behoben" },
+    { seit: "2026-09-18T00:52",
+      text: "Alle Bahnen laufen jetzt von EINEM Punkt weg, wie bei einem echten Schwarm" },
+    { seit: "2026-09-18T00:52",
+      text: "Regen: Neigung folgt aus der Bahn statt aus einer zweiten Zufallszahl" },
+    { seit: "2026-09-18T00:52",
+      text: "Nachgemessen: bei 40 Tropfen stimmt der Winkel auf unter 0,6 Grad" },
   ],
 };

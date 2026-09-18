@@ -3219,7 +3219,8 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   box-shadow: 0 0 12px rgba(200, 228, 255, .9);
   opacity: 0;
   animation-name: lcSchnuppeZieht;
-  animation-timing-function: cubic-bezier(.3, .5, .6, 1);
+  /* Schneller werdend: eine Schnuppe faellt, sie gleitet nicht. */
+  animation-timing-function: cubic-bezier(.45, .05, .75, .6);
   animation-iteration-count: infinite;
 }
 /* Der gleissende Kopf an der Spitze — daran erkennt man sie. */
@@ -3235,15 +3236,36 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   background: #fff;
   box-shadow: 0 0 10px 3px rgba(220, 240, 255, .95);
 }
+/* GEMELDET: „Die Sternschnuppen-Animation sieht nicht gut aus, das
+   sieht total unrealistisch aus."
+
+   Und wieder lag es an der REIHENFOLGE der Umrechnungen. Hier stand
+   rotate(…) VOR translate3d(…) — dann wird nicht auf dem Bildschirm
+   verschoben, sondern entlang der schon gedrehten Achse. Die Bahn lief
+   also woanders hin als der Schweif zeigte, und genau das sieht man:
+   ein Strich, der quer zu seiner eigenen Richtung rutscht.
+
+   Richtig ist: ERST auf dem Bildschirm verschieben, DANN den Strich
+   in seine Richtung drehen. Dazu drei Dinge, die eine Sternschnuppe
+   ausmachen und vorher fehlten:
+     * sie wird schneller (ease-in), statt gleichmaessig zu gleiten;
+     * sie leuchtet in der Mitte der Bahn am hellsten und verglueht
+       dann — nicht an- und ausknipsen;
+     * der Schweif wird im Flug laenger (scaleX von .35 auf 1,15),
+       weil er dem Kopf hinterherhaengt. */
 @keyframes lcSchnuppeZieht {
   0%   { opacity: 0;
-         transform: rotate(var(--lc-ss-dreh, 30deg)) translate3d(0, 0, 0) scaleX(.3); }
-  8%   { opacity: 1; transform: rotate(var(--lc-ss-dreh, 30deg))
-         translate3d(calc(var(--lc-ss-x, 30vw) * .1), calc(var(--lc-ss-y, 14vh) * .1), 0) scaleX(1); }
-  70%  { opacity: 1; }
+         transform: translate3d(0, 0, 0) rotate(var(--lc-ss-dreh, 30deg)) scaleX(.35); }
+  10%  { opacity: .55;
+         transform: translate3d(calc(var(--lc-ss-x, 30vw) * .08), calc(var(--lc-ss-y, 14vh) * .08), 0)
+                    rotate(var(--lc-ss-dreh, 30deg)) scaleX(.7); }
+  45%  { opacity: 1;
+         transform: translate3d(calc(var(--lc-ss-x, 30vw) * .42), calc(var(--lc-ss-y, 14vh) * .42), 0)
+                    rotate(var(--lc-ss-dreh, 30deg)) scaleX(1.15); }
+  80%  { opacity: .75; }
   100% { opacity: 0;
-         transform: rotate(var(--lc-ss-dreh, 30deg))
-         translate3d(var(--lc-ss-x, 30vw), var(--lc-ss-y, 14vh), 0) scaleX(1); }
+         transform: translate3d(var(--lc-ss-x, 30vw), var(--lc-ss-y, 14vh), 0)
+                    rotate(var(--lc-ss-dreh, 30deg)) scaleX(.9); }
 }
 
 /* =================================================================
