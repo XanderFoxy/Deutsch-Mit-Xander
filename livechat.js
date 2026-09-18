@@ -914,7 +914,21 @@ window.LiveChat = (function () {
       if (!zwilling.wirkung && n.wirkung) zwilling.wirkung = n.wirkung;
       if (!zwilling.farbe && n.farbe) zwilling.farbe = n.farbe;
     });
-    return raus.slice(-CHAT_SICHT);
+    /* DIE OBERGRENZE DARF KEINE AUFNAHME FRESSEN.
+       GEMELDET: „Ich kann meine Sprachnachrichten nicht mehr sehen,
+       das ist, wie als wenn die ausgeloescht sind."
+       Eine Sprachnachricht steht NUR hier im Verlauf — sie wird
+       bewusst nicht in die Tabelle geschrieben (sie ist fluechtig
+       und gross). Faellt sie aus der Liste, ist sie endgueltig weg,
+       waehrend eine Textzeile jederzeit wieder vom Server kommt.
+       Deshalb: was wegen der Obergrenze herausfallen wuerde, aber
+       eine Aufnahme traegt, bleibt trotzdem stehen. */
+    if (raus.length <= CHAT_SICHT) return raus;
+    var behalten = raus.slice(-CHAT_SICHT);
+    var gerettet = raus.slice(0, raus.length - CHAT_SICHT).filter(function (n) {
+      return Boolean(n && (n.sprach || n.sprachImLager));
+    });
+    return gerettet.concat(behalten);
   }
 
   /* =========================================================
@@ -2808,6 +2822,43 @@ window.LiveChat = (function () {
        weggeworfen — man soll nachlesen können, was geschrieben
        wurde, auch nach dem Neuladen und nach dem Wiederkommen. */
     zustand.nachrichten = chatLaden(zustand.raum);
+    /* =====================================================
+       EIN VERLAUF FUER ALLE — UND ER WURDE NIE GELESEN
+       -----------------------------------------------------
+       GEMELDET: „Jetzt ist gerade jemand anderes in den Raum
+       gekommen, und es hat ploetzlich den alten Stand aufgerufen …
+       als wenn sich der Chat mit einer alten Version aktualisiert.
+       In dem Moment, wo jemand anders reinkommt und er diesen
+       Verlauf bei sich hat, weil es sein persoenlicher Chatverlauf
+       war, ueberschreibt es meinen. Das soll fuer alle ein und
+       derselbe Chatverlauf sein, damit so etwas nicht passieren
+       kann."
+
+       Er hat den Finger genau auf die Wunde gelegt. Es GIBT eine
+       gemeinsame Tabelle (klassenzimmer_chat), und jede Zeile wird
+       auch hineingeschrieben — serverSichern() laeuft seit jeher.
+       Nur: serverLaden() stand fertig im Code und wurde von
+       NIEMANDEM aufgerufen. Gelesen wurde also nie vom Server,
+       sondern nur aus dem eigenen Geraet plus dem, was ein
+       Ankoemmling gerade mitbrachte. Damit hatte jeder seinen
+       eigenen Verlauf, und wer zuletzt hereinkam, brachte seinen
+       Stand mit.
+
+       Jetzt wird der gemeinsame Verlauf beim Betreten geholt. Er
+       ist die Wahrheit ueber den Raum; das Geraet und der
+       Ankoemmling steuern nur bei, was der Server nicht hat (zum
+       Beispiel Zeilen von Gaesten ohne Anmeldung). Verloren geht
+       dabei nichts — verschmelzen() nimmt beides auf. */
+    serverLaden(zustand.raum).then(function (vomServer) {
+      if (!vomServer || !vomServer.length) return;
+      vomServer.forEach(function (z) { z.eigen = z.von === zustand.ichId; });
+      zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
+      chatSichern();
+      melden();
+      bilderNachreichen(zustand.nachrichten).then(function (etwas) {
+        if (etwas) melden();
+      });
+    }, function () {});
     melden();
     /* Die Bilder liegen nicht im localStorage, sondern im Lager.
        Sie kommen gleich hinterher — ohne dass das Betreten wartet. */
@@ -4067,9 +4118,21 @@ window.LiveChat = (function () {
        selbst ins Ohr zu reden, waehrend man spricht, ist
        nichts, was man will.
        ===================================================== */
+    /* Wie viele hoeren mit? Gezaehlt wurde bisher nur ueber die
+       Sitzplaetze — die stehen aber erst, wenn die Anwesenheit
+       durchgelaufen ist. In der Zwischenzeit sah es aus, als waere
+       man allein, und dann spielte sich die Aufnahme selbst vor,
+       obwohl jemand da war. Deshalb zaehlt jetzt auch die Liste der
+       Leute mit, und es gilt die groessere der beiden Zahlen. */
     var zuhoerer = 0;
     try {
       plaetzeBauen().forEach(function (p) { if (!p.leer && !p.ich) zuhoerer += 1; });
+    } catch (e) {}
+    try {
+      var ausListe = Object.keys(zustand.leute || {}).filter(function (k) {
+        return k && k !== zustand.ichId;
+      }).length;
+      if (ausListe > zuhoerer) zuhoerer = ausListe;
     } catch (e) {}
     var wielang = Math.max(1, Math.round(Number(sekunden) || 0));
     nachrichtAnhaengen({
@@ -4088,7 +4151,9 @@ window.LiveChat = (function () {
       sprachAb: n.sprachAb, sprachDauer: n.sprachDauer
     });
     if (zuhoerer === 0) {
-      liveWarteschlange.push({
+      /* Auch die eigene Kontrolle geht durch liveEinreihen — sonst
+         griffe die Doppelt-Erkennung genau hier nicht. */
+      liveEinreihen({
         id: id + "-selbst", von: zustand.ichId, name: zustand.ichName,
         bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
         sprach: daten, sprachSek: sekunden,
@@ -4648,7 +4713,40 @@ window.LiveChat = (function () {
      rutscht vor alle noch wartenden Stuecke DERSELBEN Person, die
      spaeter gesprochen wurden. Andere Sprecher bleiben unberuehrt —
      zwischen zwei Personen gilt weiter, wer zuerst da war. */
+  /* WAS SCHON GELAUFEN IST, LAEUFT NICHT NOCH EINMAL.
+     -----------------------------------------------------------
+     GEMELDET: „Manchmal kommt meine Sprachaufnahme doppelt, nachdem
+     ich sie eingesprochen habe."
+     Die Aufnahme kann auf zwei Wegen in die Reihe geraten: einmal
+     lokal (damit man sich selbst hoert, wenn sonst niemand da ist)
+     und einmal, wenn der Rekorder sein Stueck doppelt abliefert —
+     ein MediaRecorder liefert nach dem Stoppen nach, und dabei kann
+     dasselbe Stueck ein zweites Mal durchrutschen. Zwei verschiedene
+     Kennungen, derselbe Ton.
+     Erkannt wird sie deshalb nicht an der Kennung, sondern an dem,
+     was sie IST: derselbe Absender, gleich lange Daten, fast
+     dieselbe Zeit. Gemerkt wird das eine Viertelminute lang, damit
+     ein Nachzuegler auch dann noch auffaellt, wenn die erste
+     Ausfertigung laengst abgespielt wurde. */
+  var liveSchonGehabt = [];
+  function liveFingerabdruck(w) {
+    return String(w.von) + "|" + String((w.sprach || "").length) + "|"
+         + Math.round((Number(w.sprachSek) || 0) * 10);
+  }
+  function liveDoppelt(w) {
+    var jetzt = Date.now();
+    liveSchonGehabt = liveSchonGehabt.filter(function (x) { return jetzt - x.wann < 15000; });
+    var abdruck = liveFingerabdruck(w);
+    var da = liveSchonGehabt.some(function (x) {
+      return x.abdruck === abdruck && Math.abs((x.zeit || 0) - (w.zeit || 0)) < 4000;
+    });
+    if (da) return true;
+    liveSchonGehabt.push({ abdruck: abdruck, zeit: w.zeit || jetzt, wann: jetzt });
+    return false;
+  }
+
   function liveEinreihen(w) {
+    if (w && w.sprach && liveDoppelt(w)) return;
     var i = liveWarteschlange.length;
     while (i > 0) {
       var v = liveWarteschlange[i - 1];

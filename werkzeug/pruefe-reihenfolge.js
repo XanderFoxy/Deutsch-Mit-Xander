@@ -47,5 +47,22 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     console.log("  " + (richtig ? "Richtig — nach der Sprechzeit, nicht nach der Ankunft."
                                 : "FALSCH — es klänge weiter wie rückwärts geredet."));
   }
+  /* Und: dieselbe Aufnahme darf nicht zweimal in die Reihe.
+     GEMELDET: „Manchmal kommt meine Sprachaufnahme doppelt." */
+  const doppelt = await pg.evaluate(() => {
+    if (!window.LiveChat || !LiveChat.pruefEinreihen) return null;
+    const eine = { von: "xander", zeit: 5000, wort: "hallo", sprach: "AAAABBBBCCCC", sprachSek: 2 };
+    /* Zweimal dasselbe, mit anderer Kennung — so wie es passiert,
+       wenn der Rekorder sein Stueck nachliefert. */
+    return LiveChat.pruefEinreihen([
+      Object.assign({}, eine, { id: "a" }),
+      Object.assign({}, eine, { id: "b", zeit: 5300 })
+    ]);
+  });
+  if (doppelt) {
+    console.log("");
+    console.log("  Dieselbe Aufnahme zweimal eingereicht -> in der Reihe: " + doppelt.length
+      + (doppelt.length === 1 ? "  (einmal, richtig)" : "  FALSCH — sie kaeme doppelt"));
+  }
   await br.close(); srv.close();
 })();

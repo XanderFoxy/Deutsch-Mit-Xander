@@ -49,28 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19f — warum Emmy rueckwaerts klang",
+  stand: "Runde 19g — ein Verlauf fuer alle",
 
   inArbeit: [
-    { seit: "2026-09-18T20:18",
+    { seit: "2026-09-18T20:23",
       text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen" },
-    { seit: "2026-09-18T20:18",
+    { seit: "2026-09-18T20:23",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:18",
+    { seit: "2026-09-18T20:23",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:18",
+    { seit: "2026-09-18T20:23",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:18",
-      text: "Sprachstuecke werden nach der SPRECHZEIT abgespielt, nicht nach der Ankunft — das war das Rueckwaertsreden" },
-    { seit: "2026-09-18T20:18",
-      text: "Der Note-Knopf steht nur noch an Antworten auf Aufgaben, nicht an jeder Nachricht" },
-    { seit: "2026-09-18T20:18",
-      text: "Eine falsche Antwort wird als Antwort angesagt („noch nicht richtig\") statt als blosses Wort — ohne die Loesung zu verraten" },
-    { seit: "2026-09-18T20:18",
-      text: "Antworten auf Aufgaben haben einen farbigen Streifen: gruen richtig, amber noch offen" },
+    { seit: "2026-09-18T20:23",
+      text: "Der gemeinsame Chatverlauf aus der Datenbank wurde nie gelesen — serverLaden() stand fertig da und wurde von niemandem aufgerufen. Jetzt wird er beim Betreten geholt" },
+    { seit: "2026-09-18T20:23",
+      text: "Ein Ankoemmling kann deinen Stand nicht mehr ueberschreiben: verschmolzen wird, nie ersetzt" },
+    { seit: "2026-09-18T20:23",
+      text: "Sprachnachrichten fallen nicht mehr aus der Liste, wenn sie voll wird — sie stehen nur hier und waeren sonst endgueltig weg" },
+    { seit: "2026-09-18T20:23",
+      text: "Dieselbe Aufnahme kommt nicht mehr doppelt — erkannt an Absender, Laenge und Sprechzeit, nicht an der Kennung" },
+    { seit: "2026-09-18T20:23",
+      text: "Zuhoerer werden zuverlaessiger gezaehlt: man hoert sich nicht mehr selbst, nur weil die Sitzordnung noch nicht stand" },
   ],
 };
