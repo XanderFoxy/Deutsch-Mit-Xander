@@ -22000,6 +22000,16 @@
      viele noch warten. Ohne das haelt man eine Verzoegerung fuer
      einen Ausfall. */
   function lcLiveBalkenZeichnen() {
+    /* HIER LAG DER FEHLER, UND ER IST SCHLICHT.
+       GEMELDET: „Der Fokus-Schalter ist auch weg … der Fokus-Modus
+       soll immer dastehen, dass ich immer umschalten kann."
+       Der Schalter wurde ganz unten in dieser Funktion gezeichnet —
+       ALSO NACH dem Ausstieg gleich hier, der greift, sobald gerade
+       niemand spricht und niemand sich gemeldet hat. Und das ist der
+       Normalfall. Der Schalter gehoert aber zum RAUM und nicht zur
+       Sprechleiste: er wird deshalb als Erstes gezeichnet, bevor
+       irgendein Ausstieg greifen kann. */
+    lcFokusSchalterZeichnen();
     const leiste = document.getElementById("lcLiveLeiste");
     if (!leiste) return;
     const offen = (window.LiveChat && LiveChat.liveOffen) ? LiveChat.liveOffen() : 0;
@@ -22441,7 +22451,24 @@
   }
 
   function lcRufSetzen(ziel, text, n) {
-    const stuecke = String(text).split(/(\s+)/);
+    /* EIN SCHREI IST AUCH NUR EINE ZEILE — mit denselben Marken drin.
+       GEMELDET: „Dann schreit sie etwas, und da steht ploetzlich in
+       Klammern, als wenn es kodiert hier ankommt."
+       Der Ruf hat den Text stur in Woerter zerlegt und jedes Wort
+       gebruellt — auch „[fox:gold]" und den von /me/ eingesetzten
+       Namen. Beides sind Marken, die gezeichnet werden wollen, nicht
+       gelesen. Sie werden deshalb zuerst herausgetrennt und an
+       lcTextEinfaerben() weitergereicht, das sie laengst kennt;
+       gebruellt wird nur, was wirklich Text ist. */
+    const stuecke = [];
+    String(text).split(/(\[fox:[\w-]+\]|\u0001[^\u0002]*\u0002)/g).forEach((block) => {
+      if (!block) return;
+      if (block.charAt(0) === "\u0001" || /^\[fox:[\w-]+\]$/.test(block)) {
+        stuecke.push({ marke: block });
+        return;
+      }
+      block.split(/(\s+)/).forEach((x) => { if (x) stuecke.push({ wort: x }); });
+    });
     let nr = 0;
     /* GEMELDET: „Beim Schreien sieht man immer noch nicht das Schreien
        in der Farbe, die man gewählt hat … und wenn man vorher eine
@@ -22455,7 +22482,9 @@
        strahlende Kopie am ganzen Wort hängt. */
     const bunt = n.farbe === "bunt";
     const feste = bunt ? "" : lcNickFarbe(n);
-    stuecke.forEach((stueck) => {
+    stuecke.forEach((einheit) => {
+      if (einheit.marke) { lcTextEinfaerben(ziel, einheit.marke, n); return; }
+      const stueck = einheit.wort;
       if (!stueck) return;
       if (/^\s+$/.test(stueck)) {
         /* Das Leerzeichen bleibt gewöhnlicher Text — nur so bleibt der
@@ -23769,7 +23798,10 @@
         z.appendChild(t);
       } else if (art === "note") {
         const t = document.createElement("span");
-        t.className = "lc-zeilentext lc-note";
+        /* NICHT „lc-note" — so heisst die fliegende Musiknote der
+           Animation, und deren Regeln (opacity:0, position:absolute)
+           haben die Zensur unsichtbar gemacht. */
+        t.className = "lc-zeilentext lc-zensur";
         t.textContent = n.text;
         z.appendChild(t);
       } else if (art === "kommen") {
@@ -24628,6 +24660,11 @@
           showToast("🔤 Schrift: " + b.textContent.trim());
         }));
       livechatTippsBinden(area);
+      /* Der Fokusschalter wird bei JEDEM Zeichnen nachgezogen — nicht
+         nur dann, wenn die Sprachleiste gerade gebaut wird. Sonst
+         fehlte er ueberall dort, wo es keine Sprachnachrichten gibt,
+         und genau so war er „weg". */
+      lcFokusSchalterZeichnen();
       if (LiveChat.beiHintergrund) LiveChat.beiHintergrund(lcHintergrundWaehlen);
       /* Wechselt jemand anders den Hintergrund des Raums, wird hier neu
          gezeichnet — sonst sähe man es erst beim nächsten Anlass. */

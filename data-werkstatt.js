@@ -49,26 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19c — Emmys Zeilen wieder heil",
+  stand: "Runde 19d — Zensur sichtbar, Fokus bleibt, Titel bleibt",
 
   inArbeit: [
-    { seit: "2026-09-18T19:54",
+    { seit: "2026-09-18T20:05",
+      text: "Emmy hoert die Sprachnachrichten nicht gut — muss auf beiden Seiten geprueft werden" },
+    { seit: "2026-09-18T20:05",
+      text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen, solange sie noch ungehoert ist" },
+    { seit: "2026-09-18T20:05",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T19:54",
-      text: "Befehlserklaerungen auf dem Telefon sichtbar machen (/t, /f, /l)" },
-    { seit: "2026-09-18T19:54",
+    { seit: "2026-09-18T20:05",
+      text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
+    { seit: "2026-09-18T20:05",
       text: "Favoriten im Befehlspanel selbst anheften" },
-    { seit: "2026-09-18T19:54",
-      text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T19:54",
-      text: "Emmys Nachrichten stehen wieder normal im Chat statt Wort fuer Wort untereinander — mein Fehler vom letzten Mal, behoben" },
-    { seit: "2026-09-18T19:54",
-      text: "Der Note-Knopf steht waagerecht oben rechts, nicht mehr senkrecht in der Uhrzeitspalte" },
-    { seit: "2026-09-18T19:54",
-      text: "Die Hinweisblase beim Aufklappen der Sprachnachrichten kommt genau einmal, danach nie wieder" },
+    { seit: "2026-09-18T20:05",
+      text: "Zensuren stehen jetzt wirklich im Chat — sie waren durchsichtig, weil die Musik-Animation ihre Noten genauso genannt hat" },
+    { seit: "2026-09-18T20:05",
+      text: "Der Fokus-Schalter ist immer da, auch wenn gerade niemand spricht" },
+    { seit: "2026-09-18T20:05",
+      text: "Der Raumtitel ueberlebt das Neuladen — er liegt jetzt je Raum im Geraet" },
+    { seit: "2026-09-18T20:05",
+      text: "Beim Schreien werden Fuchs-Marken gezeichnet statt mitgebruellt (das waren die Klammern)" },
+    { seit: "2026-09-18T20:05",
+      text: "Keine spitzen Klammern mehr in der Befehlshilfe — und wer sie doch tippt, dem werden sie verziehen" },
   ],
 };

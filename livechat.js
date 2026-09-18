@@ -2099,7 +2099,10 @@ window.LiveChat = (function () {
       if (typeof n.haeuptling === "boolean") zustand.leute[n.von].haeuptling = n.haeuptling;
       /* Die Regel des Raums kommt von dem, der ihn fuehrt. */
       if (n.haeuptling && typeof n.fokus === "boolean") zustand.fokus = n.fokus;
-      if (typeof n.thema === "string" && n.thema) zustand.thema = n.thema;
+      if (typeof n.thema === "string" && n.thema) {
+        zustand.thema = n.thema;
+        themaMerken(zustand.raum, zustand.thema);
+      }
       /* Den Hintergrund des Raums übernehmen — aber nur, wenn man noch
          keinen hat. Sonst überschreiben sich zwei Leute, die
          gleichzeitig hereinkommen, gegenseitig. */
@@ -2205,6 +2208,7 @@ window.LiveChat = (function () {
     }
     if (n.art === "thema") {
       zustand.thema = String(n.thema || "").slice(0, 120);
+      themaMerken(zustand.raum, zustand.thema);
       melden();
       return;
     }
@@ -2742,7 +2746,7 @@ window.LiveChat = (function () {
     sitzTausch = {};              // und kein Tausch aus dem alten Raum
     zustand.seit = Date.now();
     zustand.spricht = false;
-    zustand.thema = "";
+    zustand.thema = gemerktesThema(zustand.raum);
     zustand.haeuptling = false;
     zustand.klassensprecher = false;
     zustand.abgeschlossen = false;
@@ -5036,37 +5040,37 @@ window.LiveChat = (function () {
   };
 
   var BEFEHLE = [
-    { gr: "reden", w: "me",      kurz: "",     nutzt: "/me <was du tust>",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
+    { gr: "reden", w: "me",      kurz: "",     nutzt: "/me was du tust",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
     { gr: "reden", w: "me/",     kurz: "",     nutzt: "… /me/ …",            was: "Mitten im Satz: wird durch deinen Namen ersetzt" },
-    { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s <text>",           was: "Schreien — GROSS, mit Wucht" },
-    { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w <name> <text>",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
-    { gr: "raum", w: "j",       kurz: "join", nutzt: "/j <raum>",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
-    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i <name>",         was: "Einladen — wer da ist, wird gerufen; wer nicht da ist, bekommt Post. Ohne Namen: deine Freunde" },
-    { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f <name>",         was: "Folgen — dorthin, wo die Person GERADE ist" },
+    { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s Text",           was: "Schreien — GROSS, mit Wucht" },
+    { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w Name Text",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
+    { gr: "raum", w: "j",       kurz: "join", nutzt: "/j Raum",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
+    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i Name",         was: "Einladen — wer da ist, wird gerufen; wer nicht da ist, bekommt Post. Ohne Namen: deine Freunde" },
+    { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f Name",         was: "Folgen — dorthin, wo die Person GERADE ist" },
     { gr: "raum", w: "n",       kurz: "names",nutzt: "/n",                  was: "Wer ist hier?" },
     { gr: "raum", w: "l",       kurz: "list", nutzt: "/l",                  was: "Welche Räume sind gerade offen?" },
-    { gr: "raum", w: "t",       kurz: "topic",nutzt: "/t <text>",           was: "Thema des Raums setzen" },
+    { gr: "raum", w: "t",       kurz: "topic",nutzt: "/t Text",           was: "Thema des Raums setzen" },
     { gr: "raum", w: "lock",    kurz: "",     nutzt: "/lock",               was: "Raum abschließen — nur Eingeladene kommen herein" },
     { gr: "raum", w: "unlock",  kurz: "",     nutzt: "/unlock",             was: "Raum wieder öffnen" },
-    { gr: "chef", w: "op",      kurz: "",     nutzt: "/op <name>",          was: "Macht die Person zum Häuptling" },
-    { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop <name>",        was: "Nimmt die Häuptlingsrechte wieder" },
-    { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k <name>",           was: "Rausschmeißen (nur Häuptling)" },
-    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm <name>",       was: "Stimme abschalten — schreiben geht weiter (nur Häuptling)" },
-    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm <name>",    was: "Darf wieder sprechen (nur Häuptling)" },
-    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel <name>",      was: "Auch das Schreiben abschalten (nur Häuptling)" },
-    { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel <name>",   was: "Wieder sprechen lassen" },
+    { gr: "chef", w: "op",      kurz: "",     nutzt: "/op Name",          was: "Macht die Person zum Häuptling" },
+    { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop Name",        was: "Nimmt die Häuptlingsrechte wieder" },
+    { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k Name",           was: "Rausschmeißen (nur Häuptling)" },
+    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm Name",       was: "Stimme abschalten — schreiben geht weiter (nur Häuptling)" },
+    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm Name",    was: "Darf wieder sprechen (nur Häuptling)" },
+    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel Name",      was: "Auch das Schreiben abschalten (nur Häuptling)" },
+    { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel Name",   was: "Wieder sprechen lassen" },
     { gr: "reden", w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit einem Gesicht aus Buchstaben" },
-    { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii <was>",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
-    { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild <was>",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
-    { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
-    { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
-    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch <name>",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
+    { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii Was",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
+    { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild Was",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
+    { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz Name",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
+    { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck Name",      was: "Jemanden drücken" },
+    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch Name",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
     { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",       was: "Warum hört man jemanden nicht? Zeigt den Weg und ob Tonpakete ankommen" },
-    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
-    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <name>",       was: "Jemandem einen Boxhandschuh verpassen" },
+    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck Name",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
+    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box Name",       was: "Jemandem einen Boxhandschuh verpassen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
-    { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <name>", was: "Luftballons steigen auf — zum Geburtstag" },
-    { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk <name>",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
+    { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons steigen auf — zum Geburtstag" },
+    { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk Name",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
     { gr: "wetter", w: "schnee",  kurz: "",     nutzt: "/schnee",             was: "Es schneit im ganzen Raum" },
     { gr: "wetter", w: "regen",   kurz: "",     nutzt: "/regen",              was: "Es regnet im ganzen Raum" },
     { gr: "wetter", w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
@@ -5108,12 +5112,12 @@ window.LiveChat = (function () {
     { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Ein Katzenbaby läuft zur Scheibe und tappt mit den Pfoten dagegen" },
     { gr: "welt", w: "route66",    kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu — Wüste, Kakteen, Staub" },
     { gr: "feier", w: "prunk",     kurz: "gift",   nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
-    { gr: "feier", w: "ggloewe",   kurz: "loewe",  nutzt: "/loewe <Name>",   was: "GROSSES GESCHENK: die Kiste springt auf, ein Löwe steigt heraus und wird riesig" },
-    { gr: "feier", w: "ggtrex",    kurz: "trex",   nutzt: "/trex <Name>",    was: "GROSSES GESCHENK: ein Tyrannosaurus steigt aus der Kiste und brüllt" },
-    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant <Name>", was: "GROSSES GESCHENK: ein Elefant steigt aus der Kiste" },
-    { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler <Name>",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
-    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai <Name>",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
-    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
+    { gr: "feier", w: "ggloewe",   kurz: "loewe",  nutzt: "/loewe Name",   was: "GROSSES GESCHENK: die Kiste springt auf, ein Löwe steigt heraus und wird riesig" },
+    { gr: "feier", w: "ggtrex",    kurz: "trex",   nutzt: "/trex Name",    was: "GROSSES GESCHENK: ein Tyrannosaurus steigt aus der Kiste und brüllt" },
+    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant Name", was: "GROSSES GESCHENK: ein Elefant steigt aus der Kiste" },
+    { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler Name",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
+    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai Name",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
+    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer Name",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
     { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
@@ -5128,22 +5132,22 @@ window.LiveChat = (function () {
     { gr: "welt", w: "noten",     kurz: "melodie",nutzt: "/noten",     was: "Noten steigen auf und klingen dabei wirklich" },
     { gr: "feier", w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { gr: "feier", w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
-    { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
+    { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift Nummer",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
     { gr: "aussehen", w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",       was: "Ein eigenes Bild hinter den Chat legen (/hintergrund weg nimmt es wieder)" },
-    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Farbe für Name und Schrift: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
-    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name <farbe>",  was: "Nur der Name bekommt diese Farbe — die Schrift behält ihre" },
-    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw <text>",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
-    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz <ganzer Satz>", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
-    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
-    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
-    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
+    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c Farbe",          was: "Farbe für Name und Schrift: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
+    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name Farbe",  was: "Nur der Name bekommt diese Farbe — die Schrift behält ihre" },
+    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw Text",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
+    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz ganzer Satz", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
+    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort Wort",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
+    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
+    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher Name", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
     { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [Text]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
-    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
-    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
+    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild Art", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
+    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift Farbe", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { gr: "hilfe", w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
   ];
@@ -5436,7 +5440,53 @@ window.LiveChat = (function () {
      sich — die Zeile wird beim Zeichnen weiterhin Stück für Stück
      über textContent gebaut, es kann also nichts Fremdes in die Seite
      gelangen. Sie sagen nur: hier steht ein Name. */
+  /* DER TITEL DARF DAS NEULADEN UEBERLEBEN.
+     -----------------------------------------------------------
+     GEMELDET: „Ich kann es nicht in den Livestream-Modus versetzen,
+     weil der Titel immer rausgeht, wenn ich die Seite aktualisiere.
+     Der Fokus-Modus soll immer dastehen und der Titel, den ich
+     waehle, auch."
+     Das Thema stand bisher nur im Arbeitsspeicher und kam sonst von
+     den anderen im Raum herein. War niemand sonst da, war es nach
+     dem Neuladen weg. Jetzt liegt es je Raum im Geraet — wer den
+     Titel gesetzt hat, findet ihn wieder vor. */
+  var THEMA_SCHLUESSEL = "dma_livechat_thema_";
+  function themaMerken(raum, text) {
+    try {
+      if (text) localStorage.setItem(THEMA_SCHLUESSEL + raum, String(text).slice(0, 120));
+      else localStorage.removeItem(THEMA_SCHLUESSEL + raum);
+    } catch (e) {}
+  }
+  function gemerktesThema(raum) {
+    try { return localStorage.getItem(THEMA_SCHLUESSEL + raum) || ""; } catch (e) { return ""; }
+  }
+
   var NAME_AUF = "\u0001", NAME_ZU = "\u0002";
+  /* GROSS SCHREIBEN — ABER NICHT DIE MARKEN.
+     -----------------------------------------------------------
+     GEMELDET: „Dann schreit sie etwas, und da steht ploetzlich in
+     Klammern, als wenn es kodiert hier ankommt."
+
+     Genau das war es. Ein Text kann Marken enthalten, die kein
+     Mensch schreibt und kein Mensch lesen soll:
+         [fox:gold]        ein Sammelfuchs
+         \u0001Name\u0002    der von /me/ eingesetzte Eigenname
+     Der Schrei hat bisher toUpperCase() ueber den GANZEN Text
+     gelegt. Aus [fox:gold] wurde dabei [FOX:GOLD] — und der
+     Zeichner sucht kleingeschrieben. Die Marke wurde also nicht
+     mehr erkannt und stand als roher Text in der Zeile.
+
+     Deshalb wird jetzt nur das grossgeschrieben, was auch
+     jemand gelesen haben will: der Text ZWISCHEN den Marken. */
+  var MARKEN = /(\[fox:[\w-]+\]|\u0001[^\u0002]*\u0002)/g;
+  function grossOhneMarken(text) {
+    return String(text).split(MARKEN).map(function (teil) {
+      if (!teil) return teil;
+      if (teil.charAt(0) === "\u0001") return teil;
+      if (/^\[fox:[\w-]+\]$/.test(teil)) return teil;
+      return teil.toUpperCase();
+    }).join("");
+  }
   function eigennamenSetzen(text) {
     return String(text).replace(/\/me\//g, NAME_AUF + zustand.ichName + NAME_ZU);
   }
@@ -5718,6 +5768,27 @@ window.LiveChat = (function () {
     if (!m) return false;
     var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
 
+    /* SPITZE KLAMMERN SIND EINE ANLEITUNG, KEIN TEXT.
+       -----------------------------------------------------------
+       GEMELDET: „Ich weiss nicht, ob Emmy einen Fehler macht, aber
+       sie schreibt immer diese komischen spitzen Klammern — oder
+       versucht sie die Nachrichten zu schreiben, wie sie vorgegeben
+       sind, mit dem Beispiel?"
+
+       Genau so ist es, und der Fehler war meiner: in der Hilfe stand
+       „/w <name> <text>". Wer das noch nie gesehen hat, liest die
+       Klammern als Teil des Befehls und tippt sie mit. In der
+       Befehlsliste stehen sie deshalb gar nicht mehr (dort heisst es
+       jetzt „/w Name Text"), und wer sie trotzdem schreibt, soll
+       nicht bestraft werden: eine Klammer, die ein Wort UMSCHLIESST,
+       faellt hier einfach weg.
+
+       Wichtig ist das „umschliesst": „<3" ist ein Herz und hat keine
+       schliessende Klammer — daran wird nichts angefasst. */
+    if (rest.indexOf("<") >= 0 && rest.indexOf(">") > rest.indexOf("<")) {
+      rest = rest.replace(/<([^<>\s][^<>]*)>/g, "$1").trim();
+    }
+
     /* Kurzform oder Langform — beides gilt, wie damals auch. */
     var art = null;
     BEFEHLE.forEach(function (b) {
@@ -5739,7 +5810,7 @@ window.LiveChat = (function () {
     }
     if (art === "s") {
       if (!rest) return systemZeile("So geht es:  /s Hallo alle zusammen");
-      return anAlle("ruf", textAufbereiten(rest).toUpperCase());
+      return anAlle("ruf", grossOhneMarken(textAufbereiten(rest)));
     }
     if (art === "w") {
       var t = /^(\S+)\s+([\s\S]+)$/.exec(rest);
@@ -5858,6 +5929,7 @@ window.LiveChat = (function () {
         return systemZeile("Das Thema setzt der Häuptling des Raums.");
       }
       zustand.thema = textAufbereiten(rest).slice(0, 120);
+      themaMerken(zustand.raum, zustand.thema);
       senden({ art: "thema", thema: zustand.thema });
       melden();
       return systemZeile(zustand.thema ? "Thema: " + zustand.thema : "Thema gelöscht.");
