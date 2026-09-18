@@ -1239,6 +1239,20 @@ window.LiveChat = (function () {
      sechs Bildern durch „Bild — nicht mehr gespeichert" ersetzt hat.
      Das war der gemeldete Fehler. Es gibt kein Sparprogramm mehr:
      das Lager hat Platz. */
+  /* Den vollstaendigen Verlauf aus dem Lager holen — dort liegt er
+     ganz, waehrend im localStorage nur die letzten dreihundert
+     Zeilen Platz haben. */
+  function chatAusLager(raum) {
+    return lagerHolen(["chat:" + raum]).then(function (gefunden) {
+      var roh = gefunden && gefunden["chat:" + raum];
+      if (!roh) return [];
+      try {
+        var liste = JSON.parse(roh);
+        return Array.isArray(liste) ? liste : [];
+      } catch (e) { return []; }
+    }, function () { return []; });
+  }
+
   function chatSichern() {
     if (!zustand.raum) return;
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
@@ -1275,13 +1289,27 @@ window.LiveChat = (function () {
       kopie.bildWeg = false;
       return kopie;
     });
-    /* SO VIEL, WIE HINEINPASST — UND KEIN ALLES-ODER-NICHTS.
-       Der localStorage ist endlich. Passt der Verlauf nicht, wurde
-       frueher EINMAL halbiert und danach aufgegeben; bei einer
-       Obergrenze von 4000 Zeilen reicht das nicht. Jetzt wird so
-       lange gekuerzt, bis es passt — immer die aeltesten zuerst.
-       Lieber ein Teil als nichts, und lieber viel als wenig. */
-    var versuch = schlank;
+    /* DER GANZE VERLAUF GEHOERT INS LAGER, NICHT IN DEN localStorage.
+       -------------------------------------------------------------
+       GEMELDET: „Man kann immer noch nicht nach ganz oben scrollen",
+       und: „bei einigen Sprachnachrichten steht nichts mehr da."
+
+       Beides hat dieselbe Ursache. Der localStorage eines Browsers
+       fasst wenige Megabyte, und in ihm liegt nicht nur der Chat.
+       Passte der Verlauf nicht mehr hinein, wurde er halbiert — und
+       damit fielen die aeltesten Zeilen weg, mitsamt dem Hinweis,
+       WO die dazugehoerige Aufnahme liegt. Die Aufnahme selbst lag
+       noch im Lager, aber niemand wusste mehr von ihr. Genau das
+       sieht man als „da steht nichts mehr".
+
+       Das Lager (IndexedDB) hat dagegen sehr viel Platz — dort
+       liegen ohnehin schon die Bilder und die Aufnahmen. Also kommt
+       der VOLLSTAENDIGE Verlauf jetzt auch dorthin. Der localStorage
+       behaelt nur die letzten dreihundert Zeilen, damit beim Oeffnen
+       sofort etwas dasteht; alles Aeltere kommt einen Wimpernschlag
+       spaeter aus dem Lager nach. */
+    try { lagerLegen("chat:" + raum, raum, JSON.stringify(schlank)); } catch (e) {}
+    var versuch = schlank.slice(-300);
     for (var runde = 0; runde < 8; runde++) {
       try {
         localStorage.setItem(chatSchluessel(raum), JSON.stringify(versuch));
@@ -2915,11 +2943,16 @@ window.LiveChat = (function () {
        Ankoemmling steuern nur bei, was der Server nicht hat (zum
        Beispiel Zeilen von Gaesten ohne Anmeldung). Verloren geht
        dabei nichts — verschmelzen() nimmt beides auf. */
-    serverLaden(zustand.raum).then(function (vomServer) {
-      if (!vomServer || !vomServer.length) return;
-      vomServer.forEach(function (z) { z.eigen = z.von === zustand.ichId; });
-      zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
-      chatSichern();
+    /* HIER STAND DERSELBE AUFRUF ZWEIMAL — einmal von mir
+       hinzugefuegt, einmal war er schon da (weiter unten). Doppelt
+       geladen schadet nichts, ist aber doppelte Arbeit und doppelte
+       Datenmenge. Der eine ist raus.
+       Stattdessen: der VOLLSTAENDIGE Verlauf aus dem Lager. Er ist
+       meist laenger als das, was im localStorage Platz hatte. */
+    chatAusLager(zustand.raum).then(function (ausLager) {
+      if (!ausLager || !ausLager.length) return;
+      ausLager.forEach(function (z) { z.eigen = z.von === zustand.ichId; });
+      zustand.nachrichten = verschmelzen(ausLager, zustand.nachrichten);
       melden();
       bilderNachreichen(zustand.nachrichten).then(function (etwas) {
         if (etwas) melden();

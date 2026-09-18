@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19v — kein Textmuell, und der Balken laeuft sofort",
+  stand: "Runde 19w — der ganze Verlauf liegt jetzt im Lager",
 
   inArbeit: [
-    { seit: "2026-09-18T21:47",
+    { seit: "2026-09-18T21:50",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:47",
+    { seit: "2026-09-18T21:50",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:47",
+    { seit: "2026-09-18T21:50",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:47",
-      text: "Jede Erklaerung kommt nur noch EINMAL je Geraet — danach nie wieder" },
-    { seit: "2026-09-18T21:47",
-      text: "„Emmy spricht gerade, hoer zu Ende zu\" und „aeltere Wortmeldung uebersprungen\" sind ganz weg" },
-    { seit: "2026-09-18T21:47",
-      text: "Der gruene Balken laeuft ab dem Abschicken, ohne auf eine Rueckmeldung von drueben zu warten" },
-    { seit: "2026-09-18T21:47",
-      text: "Die Pille steht wieder im Fluss mit ihrer alten Farbe — ihr Platz ist immer reserviert, deshalb verschiebt sie nichts (gemessen: y=75 mit und ohne)" },
+    { seit: "2026-09-18T21:50",
+      text: "Der vollstaendige Chatverlauf wandert ins Lager (IndexedDB) statt in den localStorage — deshalb fielen alte Zeilen und mit ihnen der Verweis auf ihre Aufnahme weg" },
+    { seit: "2026-09-18T21:50",
+      text: "Der localStorage behaelt nur die letzten 300 Zeilen fuer den schnellen ersten Blick; alles Aeltere kommt aus dem Lager nach" },
+    { seit: "2026-09-18T21:50",
+      text: "Dein eigener Name im gruenen Balken kommt jetzt aus dem Raum, nicht aus der Oberflaeche — er war deshalb manchmal leer" },
+    { seit: "2026-09-18T21:50",
+      text: "Der doppelte Aufruf zum Laden des Serververlaufs ist raus" },
   ],
 };

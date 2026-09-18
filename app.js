@@ -22225,9 +22225,17 @@
        laeuft: bei den anderen der Name des Sprechers, beim Sprecher
        selbst sein eigener — alle lesen denselben Satz. Kein Zusatz,
        keine Zahl, keine Namen von Zuhoerern. */
-    const wer = lcLiveJetzt
-      ? (lcLiveJetzt.name || "Jemand")
-      : (livechatName() || "Du");
+    /* GEMELDET: „Wenn ich eine Sprachnachricht schicke, soll da mein
+       Name stehen" — bei ihm stand nichts.
+       livechatName() liest den Spitznamen aus der Oberflaeche; der
+       ist nicht immer gesetzt (Gast, noch nicht getippt). Der Name,
+       unter dem man WIRKLICH im Raum sitzt, steht in LiveChat
+       selbst — der wird auch an jede Nachricht gehaengt. Also von
+       dort, und die Oberflaeche nur als Rueckfall. */
+    let meinName = "";
+    try { meinName = (LiveChat.lage && LiveChat.lage().ichName) || ""; } catch (e) {}
+    if (!meinName) meinName = livechatName() || "Du";
+    const wer = lcLiveJetzt ? (lcLiveJetzt.name || "Jemand") : meinName;
     leiste.innerHTML = `<span class="lc-live-punkt"></span><strong>${escapeHtml(wer)}</strong> spricht gerade`;
   }
 
