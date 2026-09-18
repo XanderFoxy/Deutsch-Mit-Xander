@@ -27,12 +27,15 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
   const erg = await pg.evaluate(() => {
     document.querySelectorAll(".lightbox").forEach((e) => e.remove());
     /* Wie im echten Chat: der Balken sitzt IN der Kopfzeile. */
+    /* Wie im echten Chat wieder: Kopfzeile, darunter der Balken
+       als eigene kleine Pille ueber dem Verlauf. */
     const kopf = document.createElement("div");
-    kopf.className = "lc-chat-kopf";
-    kopf.innerHTML = '<button type="button" class="lc-chat-kopf-titel" id="titel">'
+    kopf.className = "lc-chat";
+    kopf.innerHTML = '<div class="lc-chat-kopf">'
+      + '<button type="button" class="lc-chat-kopf-titel" id="titel">'
       + '<span class="lc-kopf-wort">\ud83d\udcac Chat</span></button>'
-      + '<div class="lc-live-leiste" id="lcLiveLeiste" hidden></div>'
-      + '<span class="lc-chat-kopf-rechts"><button class="lc-chat-raeumen">\u24d8</button></span>';
+      + '<span class="lc-chat-kopf-rechts"><button class="lc-chat-raeumen">\u24d8</button></span></div>'
+      + '<div class="lc-live-leiste" id="lcLiveLeiste" hidden></div>';
     kopf.style.cssText = "position:fixed;left:0;top:0;width:430px;z-index:99999;background:#221c1a";
     document.body.appendChild(kopf);
     const leiste = document.getElementById("lcLiveLeiste");
@@ -43,7 +46,9 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       meins: leiste.classList.contains("lc-live-ich"),
       /* Steht der Balken WIRKLICH in der Kopfzeile — und tritt der
          Titel dafuer zurueck? */
-      inDerKopfzeile: leiste.parentElement === kopf,
+      breite: Math.round(leiste.getBoundingClientRect().width),
+      hoehe: Math.round(leiste.getBoundingClientRect().height),
+      rund: getComputedStyle(leiste).borderRadius,
       titelWeg: getComputedStyle(document.getElementById("titel")).display === "none"
     });
     const aus = {};
@@ -74,8 +79,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     const z = (name, x) => console.log("  " + name.padEnd(22)
       + (x.sichtbar ? "sichtbar" : "versteckt").padEnd(11)
       + (x.meins ? "[meine Farbe] " : "              ")
-      + (x.sichtbar ? (x.titelWeg ? "[Titel weicht] " : "[TITEL BLEIBT] ") : "               ")
-      + JSON.stringify(x.text));
+      + JSON.stringify(x.text)
+      + (x.sichtbar ? "   " + x.breite + "x" + x.hoehe + " px, Radius " + x.rund : ""));
     z("niemand spricht", erg.still);
     z("ich nehme auf", erg.ichSpreche);
     console.log("      (beim Aufnehmen darf KEIN Balken kommen — nur die blinkende Zeile)");
@@ -88,8 +93,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
           ? "   (gleich — nichts verschiebt sich)"
           : "   VERSCHIEBT SICH UM " + Math.abs(erg.hoeheSpricht - erg.hoeheStill) + " px"));
     console.log("");
-    console.log("  Der Balken sitzt in der Kopfzeile: "
-      + (erg.ichSpreche.inDerKopfzeile ? "ja — nicht darunter" : "NEIN"));
+    console.log("  Titel bleibt beim Sprechen stehen: "
+      + (erg.andere.titelWeg ? "NEIN — er weicht noch" : "ja, wie im Ursprungszustand"));
   }
   await br.close(); srv.close();
 })();

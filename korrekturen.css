@@ -4393,28 +4393,15 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 /* --- „DU SPRICHST" — SICHTBAR, NICHT NUR UNTER DEM FINGER ---
    GEWÜNSCHT: „Wenn ich spreche, möchte ich auch sehen, dass ich
    gerade spreche." */
-/* --- BEIM AUFNEHMEN: DIE ALTE ANIMATION, SONST NICHTS ---
-   GEMELDET: „Wenn ich aufnehme, soll da diese Animation geben, dass
-   ich sehe, ich nehme gerade auf — der soll aber nicht stehen
-   ‚Xander Fox spricht'. Vorher war das so, dass nur diese Chatzeile
-   geblinkt hat und dann dieses kleine Gelbe daneben stand."
-   Genau das: die Zeile pulsiert, und neben „💬 Chat" steht ein
-   kleiner gelber Punkt. Kein Balken, kein Name, kein Text. */
-body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after {
-  content: " ●";
-  color: #ffce55;
-  font-size: 0.9em;
-  animation: lcAufnahmePunkt 1s ease-in-out infinite;
-}
-@keyframes lcAufnahmePunkt { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
-@media (prefers-reduced-motion: reduce) {
-  body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after { animation: none; }
-}
-body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out infinite; }
-@keyframes lcSprichtPuls { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
-@media (prefers-reduced-motion: reduce) {
-  body.lc-ich-spreche .lc-chat-kopf { animation: none; }
-}
+/* Hier hatte ich eine Aufnahme-Animation fuer die Kopfzeile
+   erfunden: die Zeile pulsierte, daneben ein gelber Punkt.
+   GEMELDET: „Du hast es schon wieder anders gemacht, da war nicht
+   nur ein gelber Punkt … Der erste Stand soll es wieder sein."
+   Nachgesehen im Verlauf (edab095): waehrend der Aufnahme wurde
+   ALLEIN der Knopf rot und pulste in Ringen nach aussen
+   (.lc-sprach-knopf.lc-sprach-an, lcSprachPuls), dazu der
+   Mikrofonkopf darin. In der Kopfzeile blinkte nie etwas. Beides
+   hier war meine Erfindung und ist wieder raus. */
 .lc-chat-kopf-rechts {
   display: flex;
   align-items: center;
@@ -7628,44 +7615,18 @@ body.lc-schreibt .tutor-reiter {
 .lc-live-leiste[hidden] { display: none; }
 /* Wenn ich selbst spreche, ist es meine Zeile — warm statt kühl,
    damit man auf einen Blick sieht, dass man gerade selbst dran ist. */
-/* IN der Kopfzeile, nicht darunter.
-   GEMELDET: „Dann soll oben der gruene Balken in der Chatleiste, wo
-   er vorher war, stehen — nicht darunter."
-   Er nimmt dort den Platz des Titels ein, solange jemand spricht:
-   keine zusaetzliche Zeile, keine zusaetzliche Hoehe, und er steht
-   da, wo man hinsieht. */
-.lc-chat-kopf .lc-live-leiste {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  /* FESTE Hoehe, nicht gepolstert: Rahmen und Polsterung haben die
-     Zeile sonst um zwei Pixel wachsen lassen — und zwei Pixel
-     genuegen, damit der Sprechknopf unter dem Finger wegrutscht.
-     Gemessen: 38 gegen 40 Pixel. Jetzt sind beide gleich hoch. */
-  box-sizing: border-box;
-  height: 24px;
-  padding: 0 10px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.lc-chat-kopf .lc-chat-kopf-titel { box-sizing: border-box; height: 24px; }
-/* Der Balken zieht sich ueber die GANZE Zeile — ausdruecklich auch
-   ueber „Räume" und „Befehle": „Du sollst nur diesen alten Balken
-   ueber den Chatbalken komplett ziehen, ueber die Regeln und
-   Befehle." */
-.lc-chat-kopf.lc-kopf-spricht .lc-chat-kopf-titel,
-.lc-chat-kopf.lc-kopf-spricht .lc-chat-kopf-rechts { display: none; }
-/* UND DIE HOEHE DARF SICH NICHT AENDERN.
-   GEMELDET: „Sobald ich die Hand gedrueckt halte, verschiebt sich der
-   Chat nach unten, weil diese zusaetzliche Zeile ihn verlaengert —
-   dadurch rutsche ich von der Sprechtaste ab."
-   Die Kopfzeile hat deshalb eine feste Mindesthoehe, die fuer beides
-   reicht: fuer den Titel und fuer den Balken. Ob gesprochen wird oder
-   nicht, aendert an der Hoehe nun gar nichts, und darunter verschiebt
-   sich kein einziges Pixel. */
-.lc-chat-kopf { min-height: 30px; }
-.lc-chat-kopf .lc-live-leiste { min-height: 0; line-height: 1.25; }
+/* Hier stand eine Sonderfassung des Sprecherbalkens fuer die
+   Kopfzeile: ueber die ganze Breite gestreckt, flachgedrueckt, mit
+   ausgeblendeten Knoepfen daneben.
+   GEMELDET: „Der Balken, der gruen war, der war auch nicht so ewig
+   lang und so breit von seiner Formatierung. Wir hatten das suess
+   und niedlich … Schau bitte nach, wie der Ursprungszustand von der
+   gruenen Bubble war, die sich ueber den Chat gelegt hat."
+   Er hat recht. Die Sonderfassung ist raus; der Balken ist wieder
+   die kleine Pille von oben (.lc-live-leiste) und sitzt wieder
+   UEBER dem Verlauf. Dass er dort Hoehe braucht, stoert nicht mehr:
+   er erscheint nur noch beim Abspielen, nie waehrend man den Knopf
+   haelt — und nur dann rutschte der Knopf weg. */
 
 /* Hier stand eine zweite, amberfarbene Fassung des Balkens.
    GEMELDET: „Jetzt hat der Balken, den du da reingemacht hast, auch

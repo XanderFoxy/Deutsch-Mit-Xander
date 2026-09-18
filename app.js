@@ -20293,7 +20293,6 @@
                    • Hintergrund, Nachlesen, Verlauf löschen → in das
                      Bildmenü oben am 🖼️-Rundknopf, wo auch das eigene
                      Bild eingestellt wird. -->
-            <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
             <span class="lc-chat-kopf-rechts">
               <button type="button" class="lc-chat-raeumen" id="lcRaeume"
                       title="Welche Räume sind offen und wer ist wo?">🚪 Räume</button>
@@ -20351,13 +20350,20 @@
               HTML-Entitäten, keine Emojis. Deshalb sahen sie damals überall gleich aus.
             </p>
           </details>
-          <!-- Der Sprecherbalken stand hier, also UNTER der Kopfzeile
-               und unter dem Befehlskasten. GEMELDET: „Dann soll oben
-               der gruene Balken in der Chatleiste, wo er vorher war,
-               stehen — nicht darunter." Er sitzt jetzt IN der
-               Kopfzeile und nimmt dort den Platz des Titels ein,
-               solange jemand spricht. Kein zusaetzlicher Streifen,
-               keine zusaetzliche Hoehe. -->
+          <!-- ZURUECK AN SEINEN URSPRUENGLICHEN PLATZ.
+               GEMELDET: „Schau bitte nach, wie der Ursprungszustand
+               von der gruenen Bubble war, die sich ueber den Chat
+               gelegt hat, wenn die Nachricht im Chat fuer alle
+               abgespielt wurde … Der gruene Balken war auch nicht so
+               ewig lang und so breit von seiner Formatierung."
+               Er hat recht: ich hatte ihn in die Kopfzeile gezogen
+               und dort ueber die ganze Breite gestreckt. Im
+               Ursprungszustand sass er hier — als eigene kleine
+               Pille UEBER dem Verlauf. Dorthin gehoert er zurueck.
+               Dass er dabei Hoehe braucht, stoert nicht mehr: er
+               erscheint ja nur noch beim ABSPIELEN, nie waehrend man
+               den Knopf haelt. -->
+          <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           ${!Backend.currentUser() ? `
           <p class="lc-gast-hinweis">
@@ -22165,16 +22171,7 @@
          ABSPIELEN  -> der gruene Balken mit dem roten Punkt, ueber
                        die ganze Zeile gezogen, mit dem Namen.
        Der Balken erscheint deshalb NICHT mehr beim Aufnehmen. */
-    const kopf = leiste.closest(".lc-chat-kopf");
-    if (!lcLiveJetzt && !lauscher) {
-      leiste.hidden = true; leiste.innerHTML = "";
-      if (kopf) kopf.classList.remove("lc-kopf-spricht");
-      return;
-    }
-    /* Solange gesprochen wird, gehoert die Zeile dem Balken — Titel
-       und die Knoepfe „Räume/Befehle" treten dahinter zurueck, er
-       zieht sich ueber die ganze Zeile. */
-    if (kopf) kopf.classList.add("lc-kopf-spricht");
+    if (!lcLiveJetzt && !lauscher) { leiste.hidden = true; leiste.innerHTML = ""; return; }
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich
@@ -22207,20 +22204,19 @@
        „Wenn ich spreche, moechte ich auch sehen, dass ich gerade
        spreche", und zwar „so wie das vorher war vom Design", also
        als Zeile mit Punkt und Namen. */
-    /* Laeuft MEINE Aufnahme gerade bei jemandem, steht mein Name da —
-       „damit ich abschaetzen kann, wie lange es dauert, bis der
-       andere das gehoert hat". Sonst der Name dessen, der spricht.
-       Die Farbe bleibt in beiden Faellen dieselbe wie frueher:
-       gruen mit rotem Punkt. */
-    const meins = !lcLiveJetzt && Boolean(lauscher);
-    const wer = meins
-      ? (livechatName() || "Du")
-      : (lcLiveJetzt && lcLiveJetzt.name) || "Jemand";
-    const zusatz = lauscher && meins
-      ? ` <em>· ${escapeHtml(lauscher.join(", "))} hört gerade zu</em>`
-      : (gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "");
-    leiste.innerHTML = `<span class="lc-live-punkt"></span><strong>${escapeHtml(wer)}</strong> spricht gerade`
-      + zusatz;
+    /* NUR DER NAME, SONST NICHTS.
+       GEMELDET: „Ich soll nur das lesen: Xander Fox spricht gerade —
+       und das soll jeder zu dieser Zeit im Balken lesen, waehrend
+       die Nachricht im Chat abgespielt wird. Nicht, dass Emmy
+       gerade mithoert."
+       Also steht dort der Name dessen, dessen Aufnahme gerade
+       laeuft: bei den anderen der Name des Sprechers, beim Sprecher
+       selbst sein eigener — alle lesen denselben Satz. Kein Zusatz,
+       keine Zahl, keine Namen von Zuhoerern. */
+    const wer = lcLiveJetzt
+      ? (lcLiveJetzt.name || "Jemand")
+      : (livechatName() || "Du");
+    leiste.innerHTML = `<span class="lc-live-punkt"></span><strong>${escapeHtml(wer)}</strong> spricht gerade`;
   }
 
   /* Der kleine Schalter im Kopf des Klassenzimmers. Er steht neben
@@ -25025,11 +25021,16 @@
              Seite eine Marke, und die Kopfzeile des Chats zeigt gut
              sichtbar „🔴 Du sprichst". */
           let vonX = 0, vonY = 0;
+          /* WIE ES URSPRUENGLICH WAR — und nichts weiter.
+             GEMELDET: „Schau doch mal, wie vorher die Animation war …
+             Der erste Stand soll es wieder sein."
+             Nachgesehen im Verlauf (edab095): waehrend der Aufnahme
+             wurde ALLEIN der Knopf rot und pulste in Ringen nach
+             aussen, dazu der Mikrofonkopf darin. Im Kopf des Chats
+             blinkte nie etwas, und ein gelber Punkt stand dort auch
+             nie. Beides hatte ich hinzuerfunden; es ist wieder raus. */
           const anzeigen = (an) => {
             sprachKnopf.classList.toggle("lc-sprach-an", an);
-            document.body.classList.toggle("lc-ich-spreche", an);
-            lcIchSpreche = an;
-            lcLiveBalkenZeichnen();
           };
           const los = async (e) => {
             e.preventDefault();

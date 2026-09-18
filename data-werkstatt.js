@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19q — durch den ganzen Verlauf scrollen",
+  stand: "Runde 19r — zurueck auf den Ursprungszustand",
 
   inArbeit: [
-    { seit: "2026-09-18T21:19",
+    { seit: "2026-09-18T21:23",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:19",
+    { seit: "2026-09-18T21:23",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:19",
+    { seit: "2026-09-18T21:23",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:19",
-      text: "Hochscrollen bleibt stehen: der Chat wird nicht mehr nach unten gerissen, auch wenn im Sekundentakt aufgefrischt wird" },
-    { seit: "2026-09-18T21:19",
-      text: "Ein Knopf „↓ Neueste\" bringt zurueck ans Ende, sobald man weiter oben liest" },
-    { seit: "2026-09-18T21:19",
-      text: "Das Geraet merkt sich jetzt 200 statt 60 Zeilen — eine ganze Unterrichtsstunde statt zehn Minuten" },
+    { seit: "2026-09-18T21:23",
+      text: "Waehrend der Aufnahme pulst wieder NUR der Knopf rot in Ringen, wie ganz am Anfang — im Kopf des Chats blinkt nichts mehr" },
+    { seit: "2026-09-18T21:23",
+      text: "Der gruene Balken ist wieder die kleine Pille ueber dem Verlauf, nicht die gestreckte Zeile in der Kopfzeile" },
+    { seit: "2026-09-18T21:23",
+      text: "Im Balken steht nur „… spricht gerade\" — kein Zusatz, keine Zuhoerernamen; alle lesen denselben Satz" },
   ],
 };
