@@ -17233,6 +17233,16 @@
     }
     schicht.innerHTML = html;
     document.body.appendChild(schicht);
+    /* GEWÜNSCHT: „Bei der Jalousie reisst es nicht den Chat auf."
+       Jetzt klappt die Chatkarte selbst in der Mitte auseinander wie
+       zwei Lamellen — man sieht wirklich hindurch, statt nur ein Bild
+       davorzuhängen. Danach schliesst sie sich wieder. */
+    const karteJ = document.getElementById("livechatKarte");
+    if (karteJ) {
+      karteJ.classList.add("lc-lamellen");
+      setTimeout(() => karteJ.classList.remove("lc-lamellen"), 5200);
+    }
+    lcTonZu("jalousie");
     setTimeout(() => schicht.remove(), 9000);
   }
 
@@ -17272,6 +17282,21 @@
       + '<path d="M20 -74 q4 -6 6 0 q-3 4 -6 0 Z" fill="#c8b8a0"/>'
       + "</svg></div>";
     document.body.appendChild(schicht);
+    /* GEWÜNSCHT: „Bei der Hand, die durchgreift — wenn das gehen würde,
+       wäre es geil, wenn es den Chat aufreisst."
+
+       Bisher lag der Riss als Bild ÜBER der Seite; der Chat selbst
+       blieb heil. Jetzt bekommt die Chatkarte einen Schnitt: eine
+       zackige Kerbe frisst sich von unten in sie hinein (clip-path),
+       und genau durch diese Kerbe kommt die Hand. Der Chat ist also
+       wirklich aufgerissen und nicht nur überklebt.
+       Danach wird der Schnitt zurückgenommen — ein Effekt, der die
+       Oberfläche dauerhaft zerschneidet, wäre ein Fehler. */
+    const karte = document.getElementById("livechatKarte");
+    if (karte) {
+      karte.classList.add("lc-aufgerissen");
+      setTimeout(() => karte.classList.remove("lc-aufgerissen"), 6400);
+    }
     lcTonZu("hand");
     setTimeout(() => schicht.remove(), 6500);
   }

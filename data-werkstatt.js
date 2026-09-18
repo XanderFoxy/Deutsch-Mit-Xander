@@ -49,22 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 49 — die winkende Hand ist eine Hand",
+  stand: "Runde 50 — der Chat wird wirklich aufgerissen",
 
   inArbeit: [
-    { seit: "2026-09-18T00:54",
-      text: "A2 laeuft noch durch, danach B1" },
-    { seit: "2026-09-18T00:54",
-      text: "Jalousie und Hand sollen den Chat wirklich aufreissen" },
-    { seit: "2026-09-18T00:54",
+    { seit: "2026-09-18T01:06",
+      text: "B1 laeuft (7254 Woerter), A1 und A2 sind fertig" },
+    { seit: "2026-09-18T01:06",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
+    { seit: "2026-09-18T01:06",
+      text: "Sitzende Seitenansicht fuer die Figuren" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T00:54",
-      text: "Winkende Hand neu: gespreizte Finger mit Gelenkfalten, Daumen aus der Flaeche, Aermel" },
-    { seit: "2026-09-18T00:54",
-      text: "Vorher vier gleich breite Rechtecke — derselbe Faeustling wie beim Klatschen" },
+    { seit: "2026-09-18T01:06",
+      text: "A2 komplett: 3494 Woerter mit deiner Stimme, kein einziger Fehler" },
+    { seit: "2026-09-18T01:06",
+      text: "Die Hand reisst jetzt die Chatkarte selbst auf, nicht nur ein Bild darueber" },
+    { seit: "2026-09-18T01:06",
+      text: "Die Jalousie klappt den Chat in der Mitte auseinander — man sieht hindurch" },
+    { seit: "2026-09-18T01:06",
+      text: "Winkende Hand neu gezeichnet, wie die klatschende" },
   ],
 };

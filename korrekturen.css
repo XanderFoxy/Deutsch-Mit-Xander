@@ -6738,3 +6738,42 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   30%  { opacity: .8; }
   100% { opacity: 0; transform: translateY(-30vh) scale(1.6); }
 }
+
+/* ===================================================================
+   DER CHAT WIRD WIRKLICH AUFGERISSEN
+   -------------------------------------------------------------------
+   GEWÜNSCHT: „Bei der Jalousie reisst es nicht den Chat auf. Wenn das
+   gehen würde, wäre es geil, wenn es den Chat aufreisst —
+   beziehungsweise die Hand, die durchgreift."
+
+   Bisher lag beides als Bild ÜBER der Seite, der Chat blieb heil.
+   Jetzt wird die Chatkarte selbst beschnitten: bei der Hand frisst
+   sich eine zackige Kerbe von unten hinein, bei der Jalousie klappt
+   sie in der Mitte auseinander. Beides über clip-path, also ohne
+   irgendetwas am Inhalt zu ändern — und beides wird danach wieder
+   zurückgenommen.
+
+   WICHTIG für die Bewegung: beide Bilder eines Übergangs brauchen
+   GLEICH VIELE Punkte, sonst springt der Schnitt, statt zu wachsen.
+   Hier sind es überall neun.
+   =================================================================== */
+.lc-aufgerissen {
+  animation: lcRissAuf 6.4s cubic-bezier(.3,.05,.4,1) both;
+}
+@keyframes lcRissAuf {
+  0%   { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 51% 100%, 51% 62%, 50% 58%, 49% 62%, 49% 100%, 0% 100%); }
+  /* Der Ruck, mit dem es aufreisst */
+  18%  { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 58% 100%, 55% 52%, 50% 40%, 45% 52%, 42% 100%, 0% 100%); }
+  30%  { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 64% 100%, 59% 46%, 50% 31%, 41% 47%, 36% 100%, 0% 100%); }
+  70%  { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 66% 100%, 60% 44%, 50% 28%, 40% 45%, 34% 100%, 0% 100%); }
+  100% { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 51% 100%, 51% 62%, 50% 58%, 49% 62%, 49% 100%, 0% 100%); }
+}
+.lc-lamellen {
+  animation: lcLamellenAuf 5.2s cubic-bezier(.25,.6,.3,1) both;
+}
+@keyframes lcLamellenAuf {
+  0%   { clip-path: polygon(0% 0%, 100% 0%, 100% 49.5%, 0% 49.5%, 0% 50.5%, 100% 50.5%, 100% 100%, 0% 100%, 0% 0%); }
+  35%  { clip-path: polygon(0% 0%, 100% 0%, 100% 34%, 0% 34%, 0% 66%, 100% 66%, 100% 100%, 0% 100%, 0% 0%); }
+  65%  { clip-path: polygon(0% 0%, 100% 0%, 100% 30%, 0% 30%, 0% 70%, 100% 70%, 100% 100%, 0% 100%, 0% 0%); }
+  100% { clip-path: polygon(0% 0%, 100% 0%, 100% 49.5%, 0% 49.5%, 0% 50.5%, 100% 50.5%, 100% 100%, 0% 100%, 0% 0%); }
+}
