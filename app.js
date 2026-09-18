@@ -21292,10 +21292,10 @@
     const an = verlauf.classList.toggle("lc-stimmen-offen");
     const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
     showToast(an
-      ? (wieviel ? "🎧 " + wieviel + " Sprachnachricht" + (wieviel === 1 ? "" : "en")
-                   + " zum Nachhören und Herunterladen."
-                 : "🎧 Hier wurde noch nichts gesprochen.")
-      : "🎧 Wieder zugeklappt — gesprochen wird weiter gehört.");
+      ? (wieviel ? wieviel + " Sprachnachricht" + (wieviel === 1 ? "" : "en")
+                   + " — anhören, herunterladen, zurückrufen."
+                 : "Hier wurde noch nichts gesprochen.")
+      : "Wieder zugeklappt — gesprochen wird weiter gehört.");
     return an;
   }
 
@@ -21318,15 +21318,58 @@
             wollte markieren und nicht umschalten. */
     let vonX = 0, vonY = 0;
     verlauf.addEventListener("pointerdown", (e) => { vonX = e.clientX; vonY = e.clientY; });
+    /* WARUM DAS ZUKLAPPEN NICHT GING.
+       -------------------------------------------------------------
+       GEMELDET: „Wenn ich wieder ins Leere klicke, schliesst sich die
+       Anzeige nicht wieder."
+
+       Der Grund liegt auf der Hand, sobald man ihn sieht: beim
+       AUFklappen kommen Zeilen dazu. Die fuellen genau den Platz,
+       auf den man eben getippt hat — danach ist dort keine Leere
+       mehr, sondern eine Zeile, und die faengt den Tipp ab.
+
+       Deshalb gilt beim ZUklappen eine weitere Stelle als „Leere":
+       die Zeile SELBST, also der Platz rechts neben ihrem Inhalt.
+       Dort trifft man die Zeile, aber keines ihrer Kinder — und
+       genau das ist pruefbar (e.target === die Zeile). Damit dabei
+       nicht auch noch eine Animation wiederholt wird, faengt dieser
+       Griff den Tipp in der EINFANGPHASE ab und haelt ihn an.
+
+       Zusaetzlich schliesst die Escape-Taste. Etwas, das aufgeht,
+       muss auch ohne Zielen wieder zugehen. */
     verlauf.addEventListener("click", (e) => {
-      if (e.target !== verlauf) return;
       if (Math.abs(e.clientX - vonX) > 6 || Math.abs(e.clientY - vonY) > 6) return;
       try {
         const sel = window.getSelection();
         if (sel && String(sel).length > 0) return;
       } catch (x) {}
-      const drunter = document.elementFromPoint(e.clientX, e.clientY);
-      if (drunter && drunter.closest && drunter.closest(".lc-zeile")) return;
+      const offen = verlauf.classList.contains("lc-stimmen-offen");
+
+      /* Der freie Grund des Verlaufs — gilt immer, auf und zu. */
+      if (e.target === verlauf) {
+        const drunter = document.elementFromPoint(e.clientX, e.clientY);
+        if (drunter && drunter.closest && drunter.closest(".lc-zeile")) return;
+        lcStimmenUmschalten(verlauf);
+        return;
+      }
+      /* Die Leere NEBEN dem Inhalt einer Zeile — nur zum Zuklappen.
+         Beim Aufklappen bliebe sonst kein Weg mehr, eine Animation
+         zu wiederholen. */
+      if (offen && e.target.classList && e.target.classList.contains("lc-zeile")) {
+        e.stopPropagation();
+        e.preventDefault();
+        lcStimmenUmschalten(verlauf);
+      }
+    }, true);
+    /* Escape klappt zu, egal wo der Finger war. */
+    verlauf.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && verlauf.classList.contains("lc-stimmen-offen")) {
+        lcStimmenUmschalten(verlauf);
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!verlauf.isConnected || !verlauf.classList.contains("lc-stimmen-offen")) return;
       lcStimmenUmschalten(verlauf);
     });
   }
@@ -23667,6 +23710,41 @@
             holen.addEventListener("click", (e) => e.stopPropagation());
             /* IN die Blase, rechts neben die Zeit — nicht darunter. */
             knopf.appendChild(holen);
+
+            /* =========================================================
+               ZURUECKRUFEN, DIREKT AN DER NACHRICHT
+               ---------------------------------------------------------
+               GEMELDET: „Es gibt keine Moeglichkeit, die Nachricht
+               zurueckzurufen oder zu loeschen."
+
+               Den Befehl /weg gab es — aber einen Befehl findet nur,
+               wer ihn kennt. Also steht er jetzt dort, wo man ihn
+               braucht: an der eigenen Nachricht, gleich neben dem
+               Herunterladen.
+
+               Nur an der EIGENEN. Fremde Wortmeldungen loescht
+               niemand — das waere kein Zurueckrufen mehr, sondern
+               Zensur. */
+            if (n.eigen) {
+              const rein = document.createElement("button");
+              rein.type = "button";
+              rein.className = "lc-sprach-weg";
+              rein.title = "Zurückrufen — bei allen entfernen";
+              rein.setAttribute("aria-label", "Sprachnachricht zurückrufen");
+              rein.textContent = "↩";
+              rein.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const id = String(n.id).replace(/-quittung$/, "").replace(/-selbst$/, "");
+                const wars = LiveChat.sprachZurueckrufen
+                  ? LiveChat.sprachZurueckrufen(id, true) : null;
+                showToast(wars && wars.ungehoert
+                  ? "↩️ Zurückgerufen — sie war noch nicht dran und ist jetzt weg."
+                  : "↩️ Entfernt. Wer sie schon gehört hat, hat sie gehört — "
+                    + "das lässt sich nicht zurückholen.");
+                renderLiveChat();
+              });
+              knopf.appendChild(rein);
+            }
             /* Von selbst abspielen — aber nur, wenn die Zeile gerade
                eben entstanden ist. „Alt" heisst hier dasselbe wie bei
                den Animationen: was vor dem Betreten geschrieben wurde,
@@ -51150,13 +51228,29 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-raum-rein]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const raum = btn.dataset.raumRein;
-        document.querySelector('[data-target="view-learn"]')?.click();
-        document.querySelector('#learnSubnav [data-sub="sub-livechat"]')?.click();
-        /* Erst wenn der Bereich wirklich gezeichnet ist, hat das Tor
-           etwas, woran es sich aufhängen kann. */
+        /* GEMELDET: „Im Briefkasten steht nur die Adresszeile … Wir
+           hatten frueher das immer so, dass man das anklicken konnte
+           ueber eine Schaltflaeche."
+
+           Den Knopf gab es — er fuehrte nur ins Leere: gesucht wurde
+           „#learnSubnav [data-sub=sub-livechat]", das Klassenzimmer
+           haengt aber unter WISSEN (knowledgeSubnav). Der Knopf
+           klickte damit auf nichts, und man blieb stehen, wo man war.
+
+           Jetzt wird die Pille dort gesucht, wo sie ist — und zur
+           Sicherheit ueberall, falls sie einmal umzieht. */
+        const pille = document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')
+                   || document.querySelector('.subnav-pill[data-sub="sub-livechat"]');
+        const bereich = pille && pille.closest(".view");
+        if (bereich && bereich.id) activateTab(bereich.id);
         setTimeout(() => {
-          if (typeof livechatHinein === "function") livechatHinein(raum);
-        }, 260);
+          if (pille) pille.click();
+          /* Erst wenn der Bereich wirklich gezeichnet ist, hat das Tor
+             etwas, woran es sich aufhängen kann. */
+          setTimeout(() => {
+            if (typeof livechatHinein === "function") livechatHinein(raum);
+          }, 320);
+        }, 140);
       });
     });
     area.querySelectorAll("[data-jump-to]").forEach((btn) => {

@@ -2332,7 +2332,19 @@ window.LiveChat = (function () {
            sichtbar machen koennen, um sich die entsprechende
            Nachricht herunterladen zu koennen." Die Zeile traegt
            dann den Abspiel- und den Herunterladen-Knopf. */
-        if (liveSichtbar) { nachrichtAnhaengen(w); melden(); }
+        /* IMMER in den Verlauf — aber unsichtbar.
+           GEMELDET: „Wenn ich wieder ins Leere klicke, schliesst sich
+           die Anzeige nicht wieder … und es soll unabhaengig von dem
+           Mitschreib-Befehl passieren."
+
+           Da lag der eigentliche Fehler: die Zeile wurde gar nicht
+           erst angehaengt, solange der Befehl aus war. Ein Tipp ins
+           Leere blendete also etwas ein, was es nicht gab — und man
+           sah nichts, weder beim Auf- noch beim Zuklappen. Jetzt
+           steht jede Wortmeldung im Verlauf, und ob man sie SIEHT,
+           entscheidet allein das Ein- und Ausblenden (CSS). */
+        nachrichtAnhaengen(w);
+        melden();
         return;
       }
       /* Ist das die Antwort auf eine Aufgabe, die ICH gestellt habe?
@@ -3979,7 +3991,10 @@ window.LiveChat = (function () {
     /* Die eigene Wortmeldung haengt nur dann im Chat, wenn der
        Mitschrieb an ist — sonst steht der Chat voll und man liest
        nicht mehr, was die Leute schreiben. */
-    if (liveSichtbar) nachrichtAnhaengen(n);
+    /* Auch die eigene: sie steht im Verlauf und ist nur unsichtbar.
+       Sonst koennte man die eigene Aufnahme nie nachhoeren oder
+       zurueckrufen. */
+    nachrichtAnhaengen(n);
     /* AUSDRUECKLICH KEIN serverSichern: die Aufnahme ist fluechtig. */
 
     /* =====================================================
@@ -4005,7 +4020,11 @@ window.LiveChat = (function () {
     nachrichtAnhaengen({
       id: id + "-quittung",
       von: zustand.ichId, name: zustand.ichName, art: "quittung",
-      text: "🎙️ Abgeschickt · " + wielang + " Sekunden · "
+      /* GEMELDET: „Dieses Mikrofon-Symbol muss ja nicht mehr da sein.
+         Es hat ueberhaupt keine Funktion, weil man ja schon sieht,
+         dass eine Sprachnachricht da ist." Stimmt — die Tonspur
+         daneben sagt es bereits. */
+      text: "Abgeschickt · " + wielang + " Sekunden · "
           + (zuhoerer === 0
               ? "ausser dir ist gerade niemand im Raum — du hörst sie gleich selbst zur Kontrolle"
               : (zuhoerer === 1 ? "eine Person hört mit" : zuhoerer + " Personen hören mit")),
@@ -4483,7 +4502,10 @@ window.LiveChat = (function () {
   /* Eine Sprachnachricht wieder einsammeln: aus der Warteschlange
      und aus dem Verlauf. Gibt zurueck, ob sie noch UNGEHOERT war —
      nur dann ist wirklich nichts passiert. */
-  function sprachZurueckrufen(id) {
+  /* Mit „auchSenden" ruft es die Nachricht auch bei den anderen
+     zurueck — das braucht der Knopf an der Zeile, der Befehl /weg
+     schickt selbst. */
+  function sprachZurueckrufen(id, auchSenden) {
     var wars = false;
     for (var i = liveWarteschlange.length - 1; i >= 0; i--) {
       var w = liveWarteschlange[i];
@@ -4492,8 +4514,9 @@ window.LiveChat = (function () {
     zustand.nachrichten = zustand.nachrichten.filter(function (n) {
       return !(n && n.id && String(n.id).indexOf(id) === 0);
     });
+    if (auchSenden) { try { senden({ art: "zurueck", id: String(id) }); } catch (e) {} }
     melden();
-    return wars;
+    return { ungehoert: wars };
   }
 
   function liveMelden(f) { liveMelder = typeof f === "function" ? f : null; }
@@ -6258,8 +6281,8 @@ window.LiveChat = (function () {
       var satzU = rest.trim()
         || "Ich bin jetzt im Klassenzimmer und mache Unterricht — komm dazu, ich freue mich auf dich!";
       systemZeile("Schicke die Einladung an alle …");
-      B_.sendBroadcastMessage(satzU + "\n\nHier geht es direkt hinein:\n"
-        + adresseMitRaum(zustand.raum)).then(function () {
+      B_.sendBroadcastMessage(satzU + "\n\n" + adresseMitRaum(zustand.raum)
+        + "\n[RAUM:" + zustand.raum + "]").then(function () {
         try { localStorage.setItem("dma_unterricht_glocke", String(Date.now())); } catch (e) {}
         raumEreignis("Der Unterricht beginnt — " + zustand.ichName + " ist im Klassenzimmer");
         anAlle("system", "🔔 Der Unterricht beginnt. Die Einladung liegt in jedem Postfach.");
@@ -6288,8 +6311,7 @@ window.LiveChat = (function () {
       }
       if (!meine) return systemZeile("Du hast hier noch nichts gesprochen.");
       var idW = String(meine.id).replace(/-quittung$/, "").replace(/-selbst$/, "");
-      var nochNichtGehoert = sprachZurueckrufen(idW);
-      senden({ art: "zurueck", id: idW });
+      var nochNichtGehoert = sprachZurueckrufen(idW, true).ungehoert;
       return systemZeile(nochNichtGehoert
         ? "↩️ Zurückgerufen — sie war noch nicht dran und ist jetzt weg."
         : "↩️ Aus dem Chat entfernt. Wer sie schon gehört hat, hat sie gehört — "
@@ -6576,10 +6598,23 @@ window.LiveChat = (function () {
         return;
       }
       var link = adresseMitRaum(zustand.raum);
+      /* GEMELDET: „Im Briefkasten steht nur die Adresszeile … Wir
+         hatten das frueher immer so, dass man das anklicken konnte
+         ueber eine Schaltflaeche, so wie wir das vom Design hatten,
+         auch wenn jemand Beta-Tester wurde."
+
+         Das Postfach kennt diese Marke laengst: aus „[RAUM:name]"
+         baut es einen richtigen Knopf („In den Raum gehen"), genau
+         wie bei der Beta-Einladung. Ich hatte stattdessen die rohe
+         Adresse hineingeschrieben — die muss man abtippen, und
+         niemand tippt eine Adresse ab. Die Adresse bleibt trotzdem
+         darunter stehen, fuer den Fall, dass jemand die Nachricht
+         weiterleitet oder an einem anderen Geraet liest. */
       var text = "🔔 " + zustand.ichName + " lädt dich ins Klassenzimmer ein"
         + (zustand.raum !== HAUPTRAUM ? " — in „" + raumKlartext(zustand.raum) + "“" : "")
-        + ".\n\nHier geht es direkt hinein:\n" + link
-        + "\n\nWenn du gerade keine Zeit hast, ist das auch in Ordnung — die Einladung bleibt stehen.";
+        + ".\n\nWenn du gerade keine Zeit hast, ist das auch in Ordnung — "
+        + "die Einladung bleibt stehen.\n\n" + link
+        + "\n[RAUM:" + zustand.raum + "]";
       return B.sendPrivateMessage(ziel.id, text, null).then(function () {
         systemZeile("✉️ " + ziel.name + " war nicht da — die Einladung liegt jetzt im Postfach, mit Link hierher.");
       });
@@ -6903,6 +6938,7 @@ window.LiveChat = (function () {
     liveNaechste: liveNaechste,
     liveOffen: liveOffen,
     liveMelden: liveMelden,
+    sprachZurueckrufen: sprachZurueckrufen,
     liveLaeuft: liveLaeuft,
     darfSprechen: darfSprechen,
     fokusAn: fokusAn,

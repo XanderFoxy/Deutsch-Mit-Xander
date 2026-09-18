@@ -8331,3 +8331,22 @@ body.lc-schreibt .tutor-reiter {
    nicht." */
 .lc-tipp-fern strong { opacity: 0.8; }
 .lc-tipp-fern { border-left-color: rgba(255, 255, 255, 0.28) !important; }
+
+/* --- ZURÜCKRUFEN, GLEICH NEBEN DEM HERUNTERLADEN ---
+   GEMELDET: „Es gibt keine Möglichkeit, die Nachricht zurückzurufen
+   oder zu löschen." Den Befehl /weg gab es — aber einen Befehl
+   findet nur, wer ihn kennt. Jetzt steht er an der eigenen
+   Nachricht. */
+.lc-sprachblase .lc-sprach-weg {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92em;
+  line-height: 1;
+  padding: 0 2px;
+  margin-left: 1px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.lc-sprachblase .lc-sprach-weg:hover { opacity: 1; color: #ff9184; }
