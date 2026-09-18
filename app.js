@@ -12244,10 +12244,11 @@
        besten Stufe, die gerade geht — also bei Angemeldeten Azure, Laut
        für Laut. Es kostet nichts zusätzlich: die Aufnahmen liegen
        fertig im Haus, und bewertet wurde vorher auch schon. */
-    if (ausspracheQuelle === "alex") {
-      alle = alle.filter((e) => Boolean(aussprTonStufe(aussprTonStamm(aussprSprechtext(e)))));
-    }
-    else if (ausspracheQuelle === "wortschatz") alle = alle.filter((e) => imWortschatz(e.word));
+    /* Die Quelle „Sprich mir nach" (nur Woerter mit eigener Aufnahme)
+       ist zurueckgenommen — siehe eigeneStimme(). Wer sie noch
+       gespeichert hat, landet wieder bei „Alle Woerter". */
+    if (ausspracheQuelle === "alex") ausspracheQuelle = "alle";
+    if (ausspracheQuelle === "wortschatz") alle = alle.filter((e) => imWortschatz(e.word));
     else if (ausspracheQuelle === "kategorie" && ausspracheKategorie !== "alle") {
       alle = alle.filter((e) => e.category === ausspracheKategorie);
     }
@@ -12814,12 +12815,13 @@
     }).catch(() => null);
   }
 
+  /* Das Original zum Vergleichen. Frueher kam hier zuerst seine
+     eigene Aufnahme; das ist zurueckgenommen (siehe oben bei
+     eigeneStimme). Gemessen wird wieder gegen die Sammeldatei und,
+     wenn die das Wort nicht hat, gegen die professionelle Stimme. */
   function aussprOriginalLaden(w) {
     if (!window.AusspracheP) return Promise.resolve(null);
-    return aussprAlexLaden(w).then((eigen) => {
-      if (eigen) return eigen;
-      return aussprSpriteLadenOderAzure(w);
-    });
+    return aussprSpriteLadenOderAzure(w);
   }
   function aussprSpriteLadenOderAzure(w) {
     return aussprSpriteLaden(w).then((s) => {
@@ -13065,6 +13067,28 @@
        * die Liste wird erst beim ersten deutschen Vorlesen geladen,
          nicht beim Start.
      ================================================================= */
+  /* =================================================================
+     ZURUECKGENOMMEN: DIE EIGENEN AUFNAHMEN SPRECHEN NICHT MEHR
+     -----------------------------------------------------------------
+     GEMELDET: „Vergiss das mit meinen Vokabeln. Ich hab mir das
+     angehoert. Manche Sachen spreche ich Englisch, manche Sachen sind
+     abgeschnitten. Geh wieder zu der Azure-Stimme zurueck, dass wir
+     die professionelle Stimme haben, aber nicht meine, auch nicht die
+     Roboterstimme."
+
+     Damit ist die Sache entschieden, und zwar richtig: eine Aufnahme,
+     die ein Wort englisch ausspricht oder mittendrin abbricht, ist
+     schlimmer als gar keine — man lernt sie mit.
+
+     Die 23534 Dateien bleiben liegen. Sie werden nicht geloescht,
+     weil niemand weiss, ob man spaeter einzelne davon doch noch
+     brauchen kann; sie werden nur nicht mehr gesprochen. Wer sie
+     wieder einschalten will, meldet eigeneStimme hier an — mehr ist
+     es nicht.
+
+     An ihre Stelle tritt die professionelle Stimme (Azure), und wenn
+     deren Kontingent leer ist, das Geraet. Das steht in
+     sauberStimme() weiter unten. */
   function eigeneStimme(text, sprache) {
     const kurz = String(sprache || "de").slice(0, 2).toLowerCase();
     if (kurz !== "de") return Promise.resolve(false);
@@ -13078,7 +13102,6 @@
       return aussprTonSpielen("aussprache/" + stufe + "/" + stamm + ".mp3", 1);
     }).catch(() => false);
   }
-  if (Core.stimmeAnmelden) Core.stimmeAnmelden(eigeneStimme);
 
   function aussprPufferSpielen(puffer, tempo) {
     return new Promise((fertig) => {
@@ -13209,20 +13232,12 @@
             <button type="button" class="trophy-chip ${ausspracheQuelle === "wortschatz" ? "selected" : ""}" data-ausspr-quelle="wortschatz">★ Mein Wortschatz (${gemerkt})</button>
             <button type="button" class="trophy-chip ${ausspracheQuelle === "kategorie" ? "selected" : ""}" data-ausspr-quelle="kategorie">🗂️ Ein Themenbereich</button>
             <button type="button" class="trophy-chip ${ausspracheQuelle === "alle" ? "selected" : ""}" data-ausspr-quelle="alle">🎲 Zufällig aus allem</button>
-            <button type="button" class="trophy-chip ${ausspracheQuelle === "alex" ? "selected" : ""}" data-ausspr-quelle="alex">🗣️ Sprich mir nach</button>
           </div>
           ${ausspracheQuelle === "kategorie" ? `
             <label class="empty-note" style="display:block; margin-bottom:4px;">Themenbereich</label>
             <select id="ausspracheKatSelect" class="challenge-select" style="margin-bottom:12px;">
               ${kategorien.map((c) => `<option value="${c}" ${ausspracheKategorie === c ? "selected" : ""}>${c === "alle" ? "Alle Themen" : c}</option>`).join("")}
             </select>` : ""}
-          ${ausspracheQuelle === "alex" ? `
-            <p class="empty-note" style="margin-bottom:12px;">
-              <strong>Alex spricht vor, du sprichst nach.</strong> Hier kommen nur Wörter dran,
-              von denen eine Aufnahme mit seiner eigenen Stimme da ist — keine Maschinenstimme.
-              Bewertet wird wie sonst auch, in der besten Stufe, die gerade geht.
-              ${aussprTonListe ? "" : "Die Liste der Aufnahmen wird gerade geholt …"}
-            </p>` : ""}
           <p class="eyebrow" style="margin-top:2px;">UND AUF WELCHEM NIVEAU?</p>
           <div class="trophy-case" style="margin-bottom:12px;">
             ${["alle", "A1", "A2", "B1", "B2", "C1", "C2"].map((l) => `<button type="button" class="trophy-chip ${ausspracheNiveau === l ? "selected" : ""}" data-ausspr-niveau="${l}">${l === "alle" ? "Alle Niveaus" : l}</button>`).join("")}
@@ -42821,6 +42836,47 @@
     Core.notstimmeAnmelden((text, sprache) => guteStimme(text, sprache));
   }
 
+  /* =================================================================
+     DIE SAUBERE STIMME — ueberall da, wo EIN WORT vorgelesen wird
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Ich will die professionelle Stimme haben, dass wir
+     die im Monat so lange nutzen koennen, bis sie halt aufgebraucht
+     ist, und dann haben wir den Vorwerk zur Roboterstimme. Im
+     Vokabeltrainer und im Woerterbuch und in Bilderwelten immer die
+     saubere Stimme."
+
+     Drei Orte, ein Muster: dort tippt man EIN Wort an und will genau
+     dieses eine hoeren. Genau daran haengt diese Weiche — und NICHT
+     an Dialogen, Vorlese-Ablaeufen und Spielen, die ganze Saetze und
+     Listen sprechen. Die bleiben beim Geraet, sonst ist das
+     Kontingent an einem Nachmittag leer und niemand merkt, woran es
+     lag.
+
+     Der Riegel ist deshalb keine Liste von Aufrufstellen (die
+     sechsundzwanzigste vergisst man), sondern die LAENGE des Textes:
+       * nur Deutsch — der Italienischraum hat seinen eigenen Weg;
+       * hoechstens drei Woerter und 40 Zeichen.
+     Ein Stichwort wie „der Kuehlschrank" passt, ein Beispielsatz
+     nicht. Damit ist „ein Wort antippen" abgedeckt und sonst nichts.
+
+     Was passiert, wenn das Kontingent leer ist? guteStimme() gibt
+     dann false zurueck (der Server antwortet nicht mehr), und
+     Core.speak() laesst das Geraet sprechen. Es gibt also keinen
+     stillen Knopf und keine Fehlermeldung — die Stimme wird nur
+     schlechter. Genau so war es gewuenscht.
+     ================================================================= */
+  function sauberStimme(text, sprache) {
+    const kurz = String(sprache || "de").slice(0, 2).toLowerCase();
+    if (kurz !== "de") return Promise.resolve(false);
+    const roh = String(text || "").trim();
+    if (!roh || roh.length > 40 || roh.split(/\s+/).length > 3) return Promise.resolve(false);
+    /* Ohne Anmeldung gibt es die neuronale Stimme ohnehin nicht —
+       dann gar nicht erst fragen. */
+    if (!window.AusspracheP || !AusspracheP.zentralDa()) return Promise.resolve(false);
+    return guteStimme(roh, sprache).catch(() => false);
+  }
+  if (Core.stimmeAnmelden) Core.stimmeAnmelden(sauberStimme);
+
   /* Für Abläufe, die auf das ENDE warten müssen („alle nacheinander
      vorlesen"). Core.speak() kehrt sofort zurück; hier wird gewartet. */
   let bwStimmeLaeuft = false;
@@ -42832,20 +42888,28 @@
      ist eine Maschine. Erst danach kam das Gerät. Seine eigene
      Aufnahme kam gar nicht vor.
 
-     Jetzt: erst Alex, dann Azure, dann das Gerät. Das ist nicht nur
-     schöner, es ist auch billiger — jedes A1-Wort, das er selbst
-     eingesprochen hat, kostet ab jetzt nichts mehr. */
+     ZURUECKGENOMMEN: kurz stand hier „erst Alex, dann Azure, dann das
+     Geraet". Das ist wieder weg — „geh wieder zu der Azure-Stimme
+     zurueck, dass wir die professionelle Stimme haben, aber nicht
+     meine, auch nicht die Roboterstimme".
+
+     Jetzt: erst die professionelle Stimme, dann das Geraet. Mehr
+     Stufen braucht es nicht. */
   async function bwSprich(text, sprache) {
     const wort = String(text || "").trim();
     if (!wort || bwStimmeLaeuft) return;
     bwStimmeLaeuft = true;
     try {
-      let gesprochen = false;
-      const kurz = String(sprache || "de").slice(0, 2).toLowerCase();
-      if (kurz === "de") gesprochen = await eigeneStimme(wort, "de");
-      if (!gesprochen) gesprochen = await guteStimme(wort, sprache);
+      let gesprochen = await guteStimme(wort, sprache);
       if (!gesprochen) {
-        await new Promise((f) => { Core.speak(wort, sprache); setTimeout(f, 1100); });
+        /* Ausdruecklich NUR das Geraet: die professionelle Stimme ist
+           eine Zeile weiter oben schon gefragt worden und hat nein
+           gesagt. Core.speak() wuerde sie ein zweites Mal fragen. */
+        await new Promise((f) => {
+          if (Core.geraetSprechen) Core.geraetSprechen(wort, sprache);
+          else Core.speak(wort, sprache);
+          setTimeout(f, 1100);
+        });
       }
     } catch (e) { Core.speak(wort, sprache); }
     bwStimmeLaeuft = false;
@@ -51033,6 +51097,7 @@ An einem Morgen lief ein kleiner Fuchs los…
      ============================================================ */
   const APP_CHANGELOG = {
     "175": [
+      "🎙️ **Die professionelle Stimme ist zurück — überall, wo ein Wort vorgelesen wird.** Im Wörterbuch, im Vokabeltrainer und in den Bilderwelten spricht wieder die saubere Studiostimme, so lange das Monatskontingent reicht; danach das Gerät. Kein stiller Knopf, keine Fehlermeldung — die Stimme wird nur schlichter. Ganze Sätze, Dialoge und Vorlese-Abläufe bleiben bewusst beim Gerät: dort wäre das Kontingent an einem Nachmittag leer, ohne dass jemand merkt, woran es lag.",
       "📼 **Die Achtziger.** Vier neue Befehle im Klassenzimmer, für alle, die dabei waren: „/kassette“ spult eine Musikkassette zurück — die Wickeldorne drehen sich rückwärts, und der Bandvorrat wandert wirklich vom rechten auf den linken Wickel, so wie man früher daran gesehen hat, wie weit die Seite noch ist. „/pacman“ lässt einen gelben Kreis durch den Chat fressen, die Punkte verschwinden der Reihe nach, und drei Gespenster jagen hinterher. „/vhs“ lässt das Bild verreissen wie bei einem alten Videoband, mit Farbsäumen und „▶ PLAY SP“ oben links. „/disko“ hängt eine Spiegelkugel auf, deren Facetten wandern und bunte Lichtflecken durch den Raum werfen.",
       "🦁 **Grosse Geschenke wie bei TikTok.** Im Klassenzimmer kannst du jemandem jetzt etwas Grosses schenken: „/loewe Emmi“, und die Geschenkkiste wackelt, der Deckel fliegt weg, ein Löwe steigt heraus und füllt den halben Bildschirm — mit Strahlen, Funken und Münzregen. Sechs gibt es: Löwe, Tyrannosaurus, Elefant, Adler, Hai und Bär. Ohne Namen dahinter gilt das Geschenk dem ganzen Raum. Die Tiere sind NICHT neu gezeichnet — es sind genau die, die in den Bilderwelten stehen, am Foto nachgemessen und Fassung für Fassung abgenommen. Sie noch einmal zu zeichnen hiesse, gute Arbeit wegzuwerfen. Die Datei mit den Tieren fährt beim Start nicht mit; sie wird erst geholt, wenn wirklich jemand ein Geschenk schickt.",
       "★ **Deine eigenen Wörter im Vokabeltrainer.** Gemeldet: „die eigene Vokabelliste scheint man auch nicht nehmen zu können.“ Das stimmte — die mit dem Stern ☆ gemerkten Wörter und die selbst angelegten Listen gab es nur in acht Spielen, ausgerechnet im Vokabeltrainer nicht. Jetzt steht dort die Kategorie „★ Meine Wörter“. Auf der Karte wählst du, ob mit allem, nur mit dem gemerkten Wortschatz oder nur mit einer bestimmten Liste geübt wird, und darunter steht, wie viele Wörter das gerade sind. Die Fragen werden aus deinen Wörtern gebaut, nicht aus einer Datei — was du heute markierst, kommt in der nächsten Runde dran. Drei Arten im Wechsel: der Artikel, die Bedeutung und umgekehrt „welches Wort bedeutet …?“.",

@@ -1044,7 +1044,13 @@ const Core = (function () {
     },
   };
 
-  return { shuffle, drawUnique, el, speak, stimmeAnmelden, notstimmeAnmelden, stimmeLage, clamp, uid, formatStress, sound,
+  /* NUR das Geraet sprechen lassen, ohne die angemeldete bessere
+     Stimme davor. Gebraucht von Stellen, die die bessere Stimme schon
+     selbst gefragt haben — sonst fragen sie sie ein zweites Mal und
+     zahlen im Zweifel doppelt. */
+  function geraetSprechen(text, sprache) { geraetSpricht(text, sprache); }
+
+  return { shuffle, drawUnique, el, speak, geraetSprechen, stimmeAnmelden, notstimmeAnmelden, stimmeLage, clamp, uid, formatStress, sound,
     silbeIstGross, betonteSilbenIndex,
     /* Italienisch: eigene Silbentrennung, eigene Betonungsregel, eigene Anzeige. */
     italienischeSilben, betonungItAuto, formatStressIt, betonungItErklaerung,

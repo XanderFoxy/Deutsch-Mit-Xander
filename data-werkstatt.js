@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 57 — B2 komplett",
+  stand: "Runde 58 — zurueck zur professionellen Stimme",
 
   inArbeit: [
-    { seit: "2026-09-18T02:19",
-      text: "C1 angefangen, Kontingent reicht diesen Monat nur fuer einen Teil" },
-    { seit: "2026-09-18T02:19",
-      text: "Sitzende Seitenansicht fuer die Figuren" },
-    { seit: "2026-09-18T02:19",
-      text: "teich/te_ufer nur an 3 % der Flaeche zu treffen" },
+    { seit: "2026-09-18T02:25",
+      text: "Sprachnachrichten im Klassenzimmer (sofort hoerbar, spaeter privat)" },
+    { seit: "2026-09-18T02:25",
+      text: "Medienserver/SFU aufsetzen, kostenlose Stufe" },
+    { seit: "2026-09-18T02:25",
+      text: "Alle Animationen brauchen Toene in voller Laenge" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T02:19",
-      text: "B2 komplett: 10547 Woerter, 0 Fehler" },
-    { seit: "2026-09-18T02:19",
-      text: "Zusammen 23534 Aufnahmen mit deiner Stimme (A1+A2+B1+B2), 80 MB" },
-    { seit: "2026-09-18T02:19",
-      text: "Alle 2366 Dinge in den Bilderwelten antippbar" },
+    { seit: "2026-09-18T02:25",
+      text: "Eigene Aufnahmen sprechen nicht mehr — Azure zuerst, dann das Geraet" },
+    { seit: "2026-09-18T02:25",
+      text: "Aufnahmelauf gestoppt, C1 bei 446 Woertern abgebrochen" },
+    { seit: "2026-09-18T02:25",
+      text: "Quelle „Sprich mir nach\" aus dem Aussprache-Trainer entfernt" },
   ],
 };
