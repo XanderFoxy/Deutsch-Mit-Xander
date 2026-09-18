@@ -6661,3 +6661,58 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   cursor: pointer;
 }
 .lc-haeufig-knopf:hover { background: rgba(255, 214, 102, 0.3); }
+
+/* ===================================================================
+   DIE FRATZE — AUS DEM DUNKEL, NICHT AUS DEM MALKASTEN
+   -------------------------------------------------------------------
+   GEWÜNSCHT: „Bei der Fratze kannst du die ruhig noch ein bisschen
+   gruseliger machen, damit die nicht so gezeichnet aussieht."
+
+   Was eine Zeichnung harmlos macht, sind klare Kanten. Was Angst
+   macht, ist etwas, das nicht ganz zu fassen ist. Deshalb kommt sie
+   jetzt aus dem Dunkel heran, zuckt zwischendurch kurz weg, und ihre
+   Augen glimmen unregelmässig statt zu leuchten wie eine Lampe.
+   =================================================================== */
+.lc-fratze-kopf { animation: lcFratzeNah 5.2s cubic-bezier(.2,.6,.3,1) both; z-index: 2; }
+.lc-fratze .lc-fratze-augen { animation: lcFratzeGlimmen 0.9s ease-in-out infinite; }
+.lc-fratze-rauch {
+  position: absolute;
+  z-index: 1;
+  bottom: -10%;
+  left: 50%;
+  width: 60vmin;
+  height: 60vmin;
+  margin-left: -30vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(60,10,4,.55), rgba(20,2,1,0) 70%);
+  filter: blur(14px);
+  opacity: 0;
+  animation: lcFratzeRauch 5.2s ease-out both;
+}
+.lc-fratze-rauch:nth-of-type(2) { animation-delay: .5s; margin-left: -46vmin; }
+.lc-fratze-rauch:nth-of-type(3) { animation-delay: .9s; margin-left: -14vmin; }
+/* ACHTUNG, und das war beim ersten Anlauf der Fehler: das Gesicht wird
+   mit translate(-50%,-50%) in die Mitte gerueckt. Wer in den Bildern
+   nur „scale" schreibt, wirft diese Verschiebung weg — dann sitzt die
+   Fratze plotzlich unten rechts in der Ecke. Die Mitte muss in JEDEM
+   Bild mitgeschrieben werden. */
+@keyframes lcFratzeNah {
+  0%   { opacity: 0; transform: translate(-50%, -46%) scale(.35); filter: blur(10px) brightness(.4); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(.9); filter: blur(2px) brightness(.85); }
+  30%  { transform: translate(-48%, -51%) scale(.88); }   /* das Zucken */
+  32%  { transform: translate(-52%, -49%) scale(.92); }
+  60%  { transform: translate(-50%, -50%) scale(1.02); filter: blur(0) brightness(1); }
+  72%  { transform: translate(-51%, -50%) scale(1); }
+  74%  { transform: translate(-49%, -50%) scale(1.03); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); filter: blur(6px) brightness(.5); }
+}
+@keyframes lcFratzeGlimmen {
+  0%, 100% { opacity: .78; filter: drop-shadow(0 0 6px rgba(255,150,40,.5)); }
+  35%      { opacity: 1;   filter: drop-shadow(0 0 16px rgba(255,170,60,.9)); }
+  55%      { opacity: .6;  filter: drop-shadow(0 0 4px rgba(255,120,20,.4)); }
+}
+@keyframes lcFratzeRauch {
+  0%   { opacity: 0; transform: translateY(20vh) scale(.6); }
+  30%  { opacity: .8; }
+  100% { opacity: 0; transform: translateY(-30vh) scale(1.6); }
+}

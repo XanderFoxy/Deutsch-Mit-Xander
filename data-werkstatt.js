@@ -49,28 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 46 — A2 wird eingesprochen, Vokabeltrainer repariert",
+  stand: "Runde 47 — die Fratze kommt aus dem Dunkel",
 
   inArbeit: [
-    { seit: "2026-09-18T00:45",
-      text: "A2 laeuft gerade durch (3494 Woerter), danach B1" },
-    { seit: "2026-09-18T00:45",
-      text: "Fratze gruseliger, Sternschnuppen und Regen physikalisch richtig" },
-    { seit: "2026-09-18T00:45",
+    { seit: "2026-09-18T00:49",
+      text: "A2 laeuft weiter (2078 von 3494), danach B1" },
+    { seit: "2026-09-18T00:49",
+      text: "Sternschnuppen und Regen physikalisch richtig" },
+    { seit: "2026-09-18T00:49",
       text: "Jalousie und Hand sollen den Chat wirklich aufreissen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T00:45",
-      text: "Deine Stimme ist jetzt LIVE — die Seite steht auf 237 statt 227" },
-    { seit: "2026-09-18T00:45",
-      text: "Bilderwelten nehmen jetzt zuerst DEINE Aufnahme, dann erst Azure" },
-    { seit: "2026-09-18T00:45",
-      text: "Aufnahmen koennen aus mehreren Niveaus kommen (a1, a2, ...)" },
-    { seit: "2026-09-18T00:45",
-      text: "Vokabeltrainer: Runde startet nicht mehr, bevor die Woerter da sind" },
-    { seit: "2026-09-18T00:45",
-      text: "Gefunden: 38 von 61 Themen haben vor dem Nachladen weniger als 5 Aufgaben" },
+    { seit: "2026-09-18T00:49",
+      text: "Fratze: Risse in der Haut, glimmende Augen, Zerrfilter, Rauch dahinter, Zucken" },
+    { seit: "2026-09-18T00:49",
+      text: "Gefunden: sie sass unten rechts, weil die Bilder die Mittenverschiebung weggeworfen haben" },
+    { seit: "2026-09-18T00:49",
+      text: "2078 A2-Woerter sind schon eingesprochen" },
   ],
 };

@@ -16939,34 +16939,95 @@
     schicht.id = "lcFratze";
     schicht.className = "lc-fratze";
     schicht.setAttribute("aria-hidden", "true");
+    /* GEWÜNSCHT: „Bei der Fratze kannst du die ruhig noch ein bisschen
+       gruseliger machen, damit die nicht so gezeichnet aussieht, damit
+       die richtig dämonisch wird."
+
+       Was eine Zeichnung harmlos macht, sind klare Kanten und volle
+       Farben. Was Angst macht, ist das Gegenteil: etwas, das AUS DEM
+       DUNKEL kommt und nicht ganz zu fassen ist. Deshalb jetzt:
+         * das Gesicht liegt hinter einem Rauchschleier und kommt erst
+           heran (die Ränder bleiben unscharf, die Mitte wird klar);
+         * die Haut ist nicht mehr glatt orange, sondern hat Risse und
+           Adern, und über allem liegt ein Zerrfilter;
+         * die Augen glimmen und flackern unregelmässig, statt zu
+           leuchten wie eine Lampe;
+         * dazu Rauch, der von unten hochzieht, und ein Zucken, das das
+           ganze Bild kurz versetzt — als hätte das Bild selbst Angst.
+       Der Ton (ein fieses Lachen) kommt aus derselben Runde. */
     schicht.innerHTML =
       '<div class="lc-fratze-dunkel"></div>'
       + '<svg class="lc-fratze-kopf" viewBox="-100 -110 200 220">'
-      + '<defs><radialGradient id="frglut" cx="0.5" cy="0.4" r="0.6">'
-      + '<stop offset="0" stop-color="#ff6b2b"/><stop offset="0.55" stop-color="#8c1206"/>'
-      + '<stop offset="1" stop-color="#2a0502"/></radialGradient>'
-      + '<filter id="frweich"><feGaussianBlur stdDeviation="2.5"/></filter></defs>'
+      + '<defs>'
+      + '<radialGradient id="frglut" cx="0.5" cy="0.38" r="0.62">'
+      + '<stop offset="0" stop-color="#e0491a"/><stop offset="0.5" stop-color="#6d0d04"/>'
+      + '<stop offset="1" stop-color="#160301"/></radialGradient>'
+      + '<radialGradient id="frauge" cx="0.5" cy="0.5" r="0.5">'
+      + '<stop offset="0" stop-color="#fff6c8"/><stop offset="0.45" stop-color="#ffb62e"/>'
+      + '<stop offset="1" stop-color="#7a2a00"/></radialGradient>'
+      /* Ein Zerrfilter: feines Rauschen, das die Kanten aufbricht.
+         Genau daran erkennt das Auge „nicht gezeichnet". */
+      + '<filter id="frzerr" x="-30%" y="-30%" width="160%" height="160%">'
+      + '<feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="rauschen"/>'
+      + '<feDisplacementMap in="SourceGraphic" in2="rauschen" scale="7" xChannelSelector="R" yChannelSelector="G"/>'
+      + '</filter>'
+      /* Und ein weicher Rand: das Gesicht hat keine saubere Kontur,
+         es verliert sich nach aussen im Dunkeln. */
+      + '<filter id="frrand" x="-40%" y="-40%" width="180%" height="180%">'
+      + '<feGaussianBlur stdDeviation="3.5"/></filter>'
+      + '<radialGradient id="frmaske" cx="0.5" cy="0.5" r="0.5">'
+      + '<stop offset="0.74" stop-color="#fff" stop-opacity="1"/>'
+      + '<stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>'
+      + '<mask id="frweg"><rect x="-100" y="-110" width="200" height="220" fill="url(#frmaske)"/></mask>'
+      + '</defs>'
+      + '<g mask="url(#frweg)" filter="url(#frzerr)">'
       /* Schädel: unten schmal, oben breit — das liest man als Raubtier */
       + '<path d="M0 -96 C54 -96 84 -58 84 -14 C84 30 56 70 22 92 '
       + 'C12 98 -12 98 -22 92 C-56 70 -84 30 -84 -14 C-84 -58 -54 -96 0 -96 Z"'
       + ' fill="url(#frglut)"/>'
-      /* Hörner */
-      + '<path d="M-56 -70 C-84 -96 -96 -84 -92 -60 C-80 -72 -68 -74 -56 -70 Z" fill="#2a0502"/>'
-      + '<path d="M56 -70 C84 -96 96 -84 92 -60 C80 -72 68 -74 56 -70 Z" fill="#2a0502"/>'
-      /* Augen: schräg nach innen, das macht den Zorn */
+      /* Risse und Adern in der Haut */
+      + '<path d="M-30 -74 L-22 -52 L-34 -36 M26 -78 L34 -54 L24 -40 '
+      + 'M-66 -6 L-48 4 L-54 22 M64 -4 L48 8 L56 26 M-10 76 L-4 60 L6 74"'
+      + ' stroke="#2b0603" stroke-width="2.4" fill="none" opacity=".75" stroke-linecap="round"/>'
+      + '<path d="M-70 -30 C-50 -24 -40 -10 -44 8 M70 -28 C52 -22 42 -8 46 10"'
+      + ' stroke="#ff8a4a" stroke-width="1.4" fill="none" opacity=".35"/>'
+      /* Hörner — gebogen und spitz, nicht stumpf */
+      + '<path d="M-54 -68 C-78 -84 -98 -104 -96 -78 C-94 -62 -74 -60 -54 -62 Z" fill="#1c0301"/>'
+      + '<path d="M54 -68 C78 -84 98 -104 96 -78 C94 -62 74 -60 54 -62 Z" fill="#1c0301"/>'
+      + '<path d="M-60 -70 C-76 -80 -86 -88 -88 -80" stroke="#5a1a08" stroke-width="1.6" fill="none"/>'
+      + '<path d="M60 -70 C76 -80 86 -88 88 -80" stroke="#5a1a08" stroke-width="1.6" fill="none"/>'
+      /* Augen: schräg nach innen, glimmend statt leuchtend */
       + '<g class="lc-fratze-augen">'
-      + '<path d="M-58 -30 L-16 -12 L-22 8 L-60 -8 Z" fill="#ffe27a"/>'
-      + '<path d="M58 -30 L16 -12 L22 8 L60 -8 Z" fill="#ffe27a"/>'
-      + '<ellipse cx="-38" cy="-12" rx="7" ry="11" fill="#140200"/>'
-      + '<ellipse cx="38" cy="-12" rx="7" ry="11" fill="#140200"/>'
+      + '<path d="M-60 -32 L-14 -12 L-20 10 L-62 -8 Z" fill="url(#frauge)"/>'
+      + '<path d="M60 -32 L14 -12 L20 10 L62 -8 Z" fill="url(#frauge)"/>'
+      + '<ellipse cx="-38" cy="-12" rx="5.5" ry="12" fill="#0d0100"/>'
+      + '<ellipse cx="38" cy="-12" rx="5.5" ry="12" fill="#0d0100"/>'
+      /* Brauen: zwei schwere Balken, die die Augen beschatten */
+      + '<path d="M-66 -40 L-12 -20 L-16 -28 L-64 -50 Z" fill="#1c0301"/>'
+      + '<path d="M66 -40 L12 -20 L16 -28 L64 -50 Z" fill="#1c0301"/>'
       + "</g>"
-      /* Maul mit Zähnen: die Zähne sind ein Zickzack, kein Kamm */
-      + '<path d="M-52 34 C-24 26 24 26 52 34 C40 74 -40 74 -52 34 Z" fill="#180301"/>'
-      + '<path d="M-46 36 L-38 52 L-30 36 L-22 54 L-14 36 L-6 54 L2 36 L10 54 '
-      + 'L18 36 L26 52 L34 36 L42 50 L46 36 Z" fill="#f0e6d2"/>'
-      + '<path d="M-44 64 L-36 50 L-28 64 L-18 50 L-8 64 L2 50 L12 64 L22 50 '
-      + 'L32 64 L40 52 Z" fill="#f0e6d2" opacity="0.92"/>'
+      /* Maul: weiter aufgerissen, Zähne ungleich lang */
+      + '<path d="M-54 30 C-26 20 26 20 54 30 C46 80 -46 80 -54 30 Z" fill="#100200"/>'
+      + '<path d="M-48 32 L-40 54 L-32 34 L-24 58 L-15 33 L-7 56 L2 32 L11 57 '
+      + 'L19 34 L27 53 L35 33 L43 50 L48 32 Z" fill="#e8dcc4"/>'
+      + '<path d="M-46 68 L-37 50 L-28 68 L-18 48 L-8 66 L2 49 L12 67 L22 50 '
+      + 'L32 66 L41 52 Z" fill="#e8dcc4" opacity="0.9"/>'
+      + '<path d="M-54 30 C-26 20 26 20 54 30" stroke="#3a0a04" stroke-width="2" fill="none"/>'
+      + "</g>"
+      /* Ein zweites, unscharfes Abbild dahinter: das macht den Nebel */
+      + '<g filter="url(#frrand)" opacity=".5">'
+      + '<path d="M0 -96 C54 -96 84 -58 84 -14 C84 30 56 70 22 92 '
+      + 'C12 98 -12 98 -22 92 C-56 70 -84 30 -84 -14 C-84 -58 -54 -96 0 -96 Z"'
+      + ' fill="#3b0a03"/></g>'
       + "</svg>";
+    /* Der Rauch gehoert HINTER das Gesicht. Steht er im Text danach,
+       liegt er darueber und macht alles dunkel — genau das war beim
+       ersten Anlauf zu sehen. */
+    ["", "", ""].forEach(() => {
+      const r = document.createElement("i");
+      r.className = "lc-fratze-rauch";
+      schicht.insertBefore(r, schicht.firstChild);
+    });
     document.body.appendChild(schicht);
     lcTonZu("fratze");
     setTimeout(() => schicht.remove(), 5200);
