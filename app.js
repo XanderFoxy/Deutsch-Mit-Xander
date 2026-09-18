@@ -22099,6 +22099,10 @@
   (function lcLiveAnmelden(versuch) {
     if (window.LiveChat && LiveChat.liveMelden) {
       LiveChat.liveMelden(() => { lcLiveBalkenZeichnen(); lcLiveWeiter(); });
+      /* Hinweise, die den Augenblick betreffen, gehen als Blase
+         vorbei und nicht in den Verlauf — „die spammt den Chat
+         voll. Das soll alles nicht ankommen." */
+      if (LiveChat.beiHinweis) LiveChat.beiHinweis((t) => showToast(t));
       if (LiveChat.liveMitschrieb) LiveChat.liveMitschrieb(lcMitschriebAn());
       /* PUNKTE AUS DEM KLASSENZIMMER.
          GEWUENSCHT: „Dass diese Klassenzimmer-Aufgaben, die wir da im
@@ -25021,16 +25025,23 @@
              Seite eine Marke, und die Kopfzeile des Chats zeigt gut
              sichtbar „🔴 Du sprichst". */
           let vonX = 0, vonY = 0;
-          /* WIE ES URSPRUENGLICH WAR — und nichts weiter.
-             GEMELDET: „Schau doch mal, wie vorher die Animation war …
-             Der erste Stand soll es wieder sein."
-             Nachgesehen im Verlauf (edab095): waehrend der Aufnahme
-             wurde ALLEIN der Knopf rot und pulste in Ringen nach
-             aussen, dazu der Mikrofonkopf darin. Im Kopf des Chats
-             blinkte nie etwas, und ein gelber Punkt stand dort auch
-             nie. Beides hatte ich hinzuerfunden; es ist wieder raus. */
+          /* ZWEI PAAR SCHUHE, UND BEIDE BLEIBEN.
+             GEMELDET: „Es gab zwei Zustaende. Der allererste war,
+             dass wir diese gruene Bubble hatten … Danach hast du aus
+             einem Missverstaendnis heraus — was mir aber sehr gut
+             gefallen hat — da, wo Chat steht, bei der Aufnahme das
+             so pulsieren lassen, und da stand etwas. Genau diese
+             erste Version davon soll auch wieder uebernommen werden,
+             naemlich fuer die Aufnahme."
+
+             Also: waehrend der AUFNAHME pulst die Kopfzeile und es
+             steht „du sprichst" daneben (dazu weiterhin der rote
+             Knopf). Sobald losgelassen und abgeschickt ist, uebernimmt
+             die gruene Pille ueber dem Verlauf mit „… spricht
+             gerade". Zwei Zustaende, zwei Anzeigen, keine vermischt. */
           const anzeigen = (an) => {
             sprachKnopf.classList.toggle("lc-sprach-an", an);
+            document.body.classList.toggle("lc-ich-spreche", an);
           };
           const los = async (e) => {
             e.preventDefault();

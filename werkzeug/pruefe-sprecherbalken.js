@@ -70,6 +70,14 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     aus.hoeheStill = Math.round(kopf.getBoundingClientRect().height);
     window.__balken({ ich: true, jetzt: null, lauscher: null });
     aus.hoeheSpricht = Math.round(kopf.getBoundingClientRect().height);
+    /* Und der Fall, der die Aufnahme abgebrochen hat: waehrend der
+       AUFNAHME steht „🔴 du sprichst" in der Kopfzeile. Wird sie
+       dadurch hoeher? Dann rutscht der Knopf wieder weg. */
+    const zeile = kopf.querySelector(".lc-chat-kopf");
+    aus.kopfRuhig = Math.round(zeile.getBoundingClientRect().height);
+    document.body.classList.add("lc-ich-spreche");
+    aus.kopfAufnahme = Math.round(zeile.getBoundingClientRect().height);
+    document.body.classList.remove("lc-ich-spreche");
     return aus;
   });
 
@@ -93,6 +101,11 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
           ? "   (gleich — nichts verschiebt sich)"
           : "   VERSCHIEBT SICH UM " + Math.abs(erg.hoeheSpricht - erg.hoeheStill) + " px"));
     console.log("");
+    console.log("  Kopfzeile ruhig: " + erg.kopfRuhig + " px   waehrend der Aufnahme: "
+      + erg.kopfAufnahme + " px"
+      + (erg.kopfRuhig === erg.kopfAufnahme
+          ? "   (gleich — der Knopf bleibt liegen)"
+          : "   WAECHST UM " + (erg.kopfAufnahme - erg.kopfRuhig) + " px"));
     console.log("  Titel bleibt beim Sprechen stehen: "
       + (erg.andere.titelWeg ? "NEIN — er weicht noch" : "ja, wie im Ursprungszustand"));
   }

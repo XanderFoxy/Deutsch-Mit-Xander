@@ -4393,15 +4393,28 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 /* --- „DU SPRICHST" — SICHTBAR, NICHT NUR UNTER DEM FINGER ---
    GEWÜNSCHT: „Wenn ich spreche, möchte ich auch sehen, dass ich
    gerade spreche." */
-/* Hier hatte ich eine Aufnahme-Animation fuer die Kopfzeile
-   erfunden: die Zeile pulsierte, daneben ein gelber Punkt.
-   GEMELDET: „Du hast es schon wieder anders gemacht, da war nicht
-   nur ein gelber Punkt … Der erste Stand soll es wieder sein."
-   Nachgesehen im Verlauf (edab095): waehrend der Aufnahme wurde
-   ALLEIN der Knopf rot und pulste in Ringen nach aussen
-   (.lc-sprach-knopf.lc-sprach-an, lcSprachPuls), dazu der
-   Mikrofonkopf darin. In der Kopfzeile blinkte nie etwas. Beides
-   hier war meine Erfindung und ist wieder raus. */
+/* --- WAEHREND DER AUFNAHME: DIE PULSIERENDE KOPFZEILE ---
+   GEMELDET: „Danach hast du aus einem Missverstaendnis heraus — was
+   mir aber sehr gut gefallen hat — da, wo Chat steht, bei der
+   Aufnahme das so pulsieren lassen, und da stand etwas. Genau diese
+   erste Version davon soll auch wieder uebernommen werden, naemlich
+   fuer die Aufnahme."
+   Also wieder genau so, wie es beim ersten Mal aussah: die Zeile
+   pulsiert ruhig, und neben „💬 Chat" steht „🔴 du sprichst".
+   Das ist die Anzeige fuers AUFNEHMEN. Fuers ABSPIELEN gibt es die
+   gruene Pille ueber dem Verlauf — zwei Paar Schuhe, zwei
+   Anzeigen. */
+body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after {
+  content: " 🔴 du sprichst";
+  color: #ff8a80;
+  font-size: 0.8em;
+  letter-spacing: 0.01em;
+}
+body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out infinite; }
+@keyframes lcSprichtPuls { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
+@media (prefers-reduced-motion: reduce) {
+  body.lc-ich-spreche .lc-chat-kopf { animation: none; }
+}
 .lc-chat-kopf-rechts {
   display: flex;
   align-items: center;

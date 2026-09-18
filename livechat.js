@@ -82,7 +82,7 @@ window.LiveChat = (function () {
      Aufgabe. Zweihundert reichen fuer eine ganze Stunde. Platz
      kostet das kaum: Bilder und Aufnahmen liegen laengst im Lager,
      im localStorage steht nur der Text. */
-  var CHAT_VERLAUF = 200;             // so viele legt das GERAET ab
+  var CHAT_VERLAUF = 400;             // so viele legt das GERAET ab
   /* GEWÜNSCHT: „Einer, der zum ersten Mal auf die Seite kommt, soll
      trotzdem den heutigen kompletten Tagesverlauf aus dem Chat sehen,
      ohne dass ihm irgendetwas fehlt."
@@ -2395,10 +2395,12 @@ window.LiveChat = (function () {
       }
       /* Nachgereicht beim Hereinkommen — sagen, warum das jetzt
          kommt. Ohne Erklaerung haelt man es fuer eine neue Ansage. */
-      if (n.nachhol && n.sprach) {
-        systemZeile("\ud83d\udd01 Die letzte Wortmeldung von " + (n.name || "jemandem")
-          + " — damit du weisst, worum es gerade geht.");
-      }
+      /* Nachgereicht beim Hereinkommen: sie wird abgespielt, schreibt
+         aber nichts in den Chat. „Die spammt den Chat voll — das soll
+         alles nicht ankommen." Der gruene Balken sagt, von wem sie
+         ist; mehr braucht es nicht. */
+      if (n.nachhol && n.sprach) hinweisZeigen("\ud83d\udd01 Die letzte Wortmeldung von "
+        + (n.name || "jemandem") + ".");
       /* EINE WORTMELDUNG AUS DEM PSEUDO-LIVESTREAM.
          -------------------------------------------------------
          GEWUENSCHT: „Dass es gar nicht in den Chat eintraegt,
@@ -4380,9 +4382,8 @@ window.LiveChat = (function () {
       delete sprachQuittung[id];
       if (!q) return;
       if (q.wieviel > 0) return;
-      systemZeile("\u26a0\ufe0f Deine Wortmeldung ist bei niemandem angekommen. "
-        + "Meistens liegt es an der Leitung \u2014 sprich sie noch einmal ein, "
-        + "sie wird dann erneut verschickt.");
+      hinweisZeigen("\u26a0\ufe0f Deine Wortmeldung ist bei niemandem angekommen \u2014 "
+        + "sprich sie noch einmal ein.");
     }, 15000);
   }
   function sprachAngekommen(id, wer) {
@@ -4390,7 +4391,7 @@ window.LiveChat = (function () {
     if (!q || q.wer[wer]) return;
     q.wer[wer] = true;
     q.wieviel += 1;
-    fluechtigeZeile("\u2705 " + wer + " hat deine Wortmeldung bekommen.", 7000);
+    hinweisZeigen("\u2705 " + wer + " hat deine Wortmeldung bekommen.");
   }
 
   /* Ein Paket, dann Luft, dann das naechste. Eine Schleife waere
@@ -5128,9 +5129,8 @@ window.LiveChat = (function () {
       var n = liveUebersprungen;
       liveUebersprungen = 0;
       if (!n) return;
-      systemZeile("\u23ed\ufe0f " + n + " ältere Wortmeldung" + (n === 1 ? "" : "en")
-        + " übersprungen — du sollst nicht warten müssen. "
-        + "Sie stehen weiterhin im Chat: einmal ins Leere tippen, dann kannst du sie anhören.");
+      hinweisZeigen("\u23ed\ufe0f " + n + " ältere Wortmeldung" + (n === 1 ? "" : "en")
+        + " übersprungen — sie stehen weiterhin im Chat zum Anhören.");
     }, 1200);
   }
 
@@ -6167,6 +6167,26 @@ window.LiveChat = (function () {
     };
     nachrichtAnhaengen(n);
     return n;
+  }
+
+  /* HINWEISE GEHOEREN NICHT IN DEN CHAT.
+     -----------------------------------------------------------
+     GEMELDET: „Die Wortmeldungen von ‚Emmy hat deine Wortmeldung
+     bekommen' sollen sich aufloesen und weg sein, das soll nicht
+     mehr im Chat stehen. Und auch ‚die letzte Wortmeldung von
+     Emmy, damit du weisst, worum es gerade geht' — die sprengt den
+     Chat, oder wie wir frueher gesagt haben: die spammt den Chat
+     voll. Das soll alles nicht ankommen, ich soll das nicht alles
+     lesen."
+
+     Er hat recht: was nur den Augenblick betrifft, gehoert in eine
+     Blase, die von selbst verschwindet — nicht in den Verlauf, den
+     man spaeter durchliest. Der Chat ist das Gespraech; alles
+     andere zieht vorbei. app.js meldet sich mit beiHinweis an. */
+  var hinweisRuf = null;
+  function hinweisZeigen(text) {
+    if (typeof hinweisRuf !== "function") return;
+    try { hinweisRuf(String(text || "")); } catch (e) {}
   }
 
   /* EINE ZEILE, DIE SICH SELBST WIEDER AUFRAEUMT.
@@ -7695,6 +7715,7 @@ window.LiveChat = (function () {
     /* Nur zum Nachmessen: eine Wortmeldung in Stuecken empfangen,
        dabei eines verlieren, und sehen, ob danach gefragt wird und
        ob sie am Ende vollstaendig ist. Fasst nichts Echtes an. */
+    beiHinweis: function (f) { hinweisRuf = typeof f === "function" ? f : null; },
     hoertMirZu: hoertMirZu,
     hoereJetzt: hoereJetzt,
     sprachRuecknahmen: sprachRuecknahmen,

@@ -49,24 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19r — zurueck auf den Ursprungszustand",
+  stand: "Runde 19s — zwei Anzeigen, ein aufgeraeumter Chat",
 
   inArbeit: [
-    { seit: "2026-09-18T21:23",
+    { seit: "2026-09-18T21:27",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:23",
+    { seit: "2026-09-18T21:27",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:23",
+    { seit: "2026-09-18T21:27",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:23",
-      text: "Waehrend der Aufnahme pulst wieder NUR der Knopf rot in Ringen, wie ganz am Anfang — im Kopf des Chats blinkt nichts mehr" },
-    { seit: "2026-09-18T21:23",
-      text: "Der gruene Balken ist wieder die kleine Pille ueber dem Verlauf, nicht die gestreckte Zeile in der Kopfzeile" },
-    { seit: "2026-09-18T21:23",
-      text: "Im Balken steht nur „… spricht gerade\" — kein Zusatz, keine Zuhoerernamen; alle lesen denselben Satz" },
+    { seit: "2026-09-18T21:27",
+      text: "Waehrend der AUFNAHME pulsiert wieder die Kopfzeile mit „🔴 du sprichst\" — die Fassung, die dir gefallen hat" },
+    { seit: "2026-09-18T21:27",
+      text: "Sobald abgeschickt ist, uebernimmt die gruene Pille ueber dem Verlauf mit „… spricht gerade\" — der allererste Zustand" },
+    { seit: "2026-09-18T21:27",
+      text: "Die Kopfzeile wird beim Aufnehmen nicht hoeher (38 px so wie so) — der Sprechknopf bleibt liegen" },
+    { seit: "2026-09-18T21:27",
+      text: "Hinweise stehen nicht mehr im Chat: Empfangsbestaetigung, Uebersprungenes und die nachgereichte Wortmeldung ziehen als Blase vorbei" },
+    { seit: "2026-09-18T21:27",
+      text: "Das Geraet merkt sich 400 statt 60 Zeilen — der ganze Verlauf bleibt scrollbar, auch die Aufgabe von vorhin" },
   ],
 };
