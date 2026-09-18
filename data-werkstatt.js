@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 50 — der Chat wird wirklich aufgerissen",
+  stand: "Runde 51 — eigene Wortlisten im Vokabeltrainer",
 
   inArbeit: [
-    { seit: "2026-09-18T01:06",
-      text: "B1 laeuft (7254 Woerter), A1 und A2 sind fertig" },
-    { seit: "2026-09-18T01:06",
+    { seit: "2026-09-18T01:15",
+      text: "B1 laeuft weiter (bisher 2909 von 7254 Woertern)" },
+    { seit: "2026-09-18T01:15",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
-    { seit: "2026-09-18T01:06",
+    { seit: "2026-09-18T01:15",
       text: "Sitzende Seitenansicht fuer die Figuren" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T01:06",
-      text: "A2 komplett: 3494 Woerter mit deiner Stimme, kein einziger Fehler" },
-    { seit: "2026-09-18T01:06",
-      text: "Die Hand reisst jetzt die Chatkarte selbst auf, nicht nur ein Bild darueber" },
-    { seit: "2026-09-18T01:06",
-      text: "Die Jalousie klappt den Chat in der Mitte auseinander — man sieht hindurch" },
-    { seit: "2026-09-18T01:06",
-      text: "Winkende Hand neu gezeichnet, wie die klatschende" },
+    { seit: "2026-09-18T01:15",
+      text: "★ Meine Woerter: eigene Liste und gemerkte Woerter jetzt auch im Vokabeltrainer" },
+    { seit: "2026-09-18T01:15",
+      text: "Artikel, Bedeutung und Umkehrfrage werden aus deinen eigenen Woertern gebaut" },
+    { seit: "2026-09-18T01:15",
+      text: "B1-Aufnahmen bis jetzt hochgeladen, Tonliste kennt drei Stufen" },
   ],
 };

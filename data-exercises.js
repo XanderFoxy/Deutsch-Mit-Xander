@@ -6282,7 +6282,38 @@ const ExerciseData = (function () {
     return (...args) => fn(...args).concat(zusatzBank(id));
   }
 
+  /* ============================================================
+     ★ MEINE WÖRTER — der eigene Wortschatz als Übungskategorie
+     ------------------------------------------------------------
+     GEMELDET: „die eigene Vokabelliste scheint man auch nicht
+     nehmen zu können."
+
+     Das stimmte. Die im Wörterbuch mit dem Stern markierten Wörter
+     und die selbst angelegten Listen konnte man bisher nur in acht
+     SPIELEN benutzen — im Vokabeltrainer, wo man sie am dringendsten
+     braucht, gab es sie nicht. Grund: der Trainer zieht seine Fragen
+     aus festen Kategorien, und eine Kategorie „meine Wörter" gab es
+     schlicht nicht.
+
+     Jetzt gibt es sie. Die Fragen stehen nicht in einer Datei,
+     sondern werden aus den eigenen Wörtern gebaut — deshalb meldet
+     app.js hier eine Funktion an, statt dass diese Datei eine Bank
+     mitbringt. Ist niemand angemeldet oder hat niemand etwas
+     gemerkt, kommt eine leere Bank zurück; die Kategorie sagt das
+     dann selbst, statt eine Runde ohne Fragen zu starten.
+     ============================================================ */
+  let eigeneFragenQuelle = null;
+  function eigeneFragenAnmelden(fn) { eigeneFragenQuelle = fn; }
+  function eigeneFragen() {
+    if (typeof eigeneFragenQuelle !== "function") return [];
+    try { return eigeneFragenQuelle() || []; }
+    catch (e) { return []; }
+  }
+
   const CATEGORIES = [
+    { id: "meinwortschatz", title: "★ Meine Wörter", icon: "★", group: "wortschatz",
+      info: "Deine eigenen Wörter: alles, was du im Wörterbuch mit dem Stern ☆ markiert hast, und jede Liste, die du selbst angelegt hast. Die Fragen werden daraus gebaut — Artikel, Bedeutung und „welches Wort ist gemeint“. Wähle oben aus, ob mit allem oder nur mit einer bestimmten Liste geübt wird.",
+      getBank: () => eigeneFragen() },
     { id: "zahlen", title: "Zahlen & Zählen", icon: "🔢", group: "wortschatz",
       info: "Von null bis zehntausend: wie die Zahlwörter gebaut sind, warum im Deutschen der Einer vorn steht (einundzwanzig) und wie man Ordnungszahlen bildet.",
       getBank: () => zusatzBank("zahlen") },
@@ -7409,5 +7440,5 @@ const ExerciseData = (function () {
     return monatGeladen(String(new Date().getMonth() + 1).padStart(2, "0"));
   }
 
-  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_GRAMMATIK, IT_WOERTER, IT_KATEGORIEN, IT_TICKER, IT_GESCHICHTE, IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, setLernraum, getLernraum, activeCategories, activeGetCategory, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_GRAMMATIK, IT_WOERTER, IT_KATEGORIEN, IT_TICKER, IT_GESCHICHTE, IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();

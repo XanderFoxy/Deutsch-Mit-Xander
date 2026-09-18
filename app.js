@@ -8172,6 +8172,13 @@
           ${ExerciseData.getWortschatzThemen().map((t) => `<button type="button" class="order-pill wortschatztopic-pill" data-wortschatztopic="${t}" aria-selected="${selectedWortschatzTopic === t}">${WS_THEMA_ICON[t] || "🔹"} ${t}</button>`).join("")}
         </div>
         <p class="cat-pool-note">25 Themen aus dem Wörterbuch, jedes von A1 bis C2 — jedes Wort hier kannst du dort nachschlagen.</p>`;
+      } else if (cat.id === "meinwortschatz" && selectedCategories.has("meinwortschatz")) {
+        /* Dieselbe Bauart wie bei Quiz und Wortschatz: die Wahl steht
+           AUF der Karte, damit man nicht erst starten muss, um zu
+           sehen, womit man übt. Die Zeile liegt in .quiztopic-row,
+           weil der Klick-Wächter der Karte genau darauf hört — sonst
+           würde jeder Knopfdruck die Kategorie wieder abwählen. */
+        topicPicker = `<div class="quiztopic-row">${meineWoerterChipsHtml()}</div>`;
       }
       if (!unlocked) {
         const cond = cat.unlock.type === "points" ? `Ab ${cat.unlock.value} Punkten` : `Pokal „${cat.unlock.match}" nötig`;
@@ -8355,6 +8362,13 @@
     setupEl.querySelectorAll(".wortschatztopic-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedWortschatzTopic = btn.dataset.wortschatztopic;
+        renderSetup();
+      });
+    });
+    setupEl.querySelectorAll("[data-meinequelle]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        wortQuelleWahl[TRAINER_QUELLE] = btn.dataset.meinequelle;
         renderSetup();
       });
     });
@@ -11729,6 +11743,170 @@
     if (wahl === "alle") return "";
     if (vorhanden >= mindestens) return `<p class="empty-note wortquelle-stand">Geübt wird mit: ${wortQuelleName(wahl)} — ${vorhanden} passende Wörter.</p>`;
     return `<p class="empty-note wortquelle-stand">${wortQuelleName(wahl)} hat für dieses Spiel nur ${vorhanden} passende ${vorhanden === 1 ? "Wort" : "Wörter"} (nötig sind ${mindestens}) — deshalb kommen die übrigen aus dem ganzen Wortschatz.</p>`;
+  }
+
+  /* ============================================================
+     ★ MEINE WÖRTER IM VOKABELTRAINER
+     ------------------------------------------------------------
+     GEMELDET: „die eigene Vokabelliste scheint man auch nicht
+     nehmen zu können."
+
+     Bisher konnte man mit dem eigenen Wortschatz nur in acht Spielen
+     üben. Im Vokabeltrainer — dem Ort, an dem man Vokabeln übt —
+     stand die eigene Liste nicht zur Wahl, weil der Trainer seine
+     Fragen aus festen Kategorien zieht. Jetzt gibt es dort die
+     Kategorie „★ Meine Wörter", und die Fragen dafür werden hier
+     gebaut.
+
+     Warum eigene Fragen und keine fertige Bank? Weil sich der eigene
+     Wortschatz jeden Tag ändert. Ein Wort, das heute mit dem Stern
+     markiert wird, muss in der nächsten Runde vorkommen — eine Datei
+     könnte das nie.
+
+     Drei Fragearten, damit eine Runde nicht dreissigmal dasselbe
+     fragt („Da muss mehr kommen als Aufgabe"):
+       1. Der Artikel — nur bei Wörtern, die im Wörterbuch einen
+          haben.
+       2. Die Bedeutung — vier Erklärungen, eine gehört zum Wort.
+       3. Umgekehrt: die Bedeutung steht da, das Wort ist gesucht.
+     Die falschen Antworten kommen aus dem übrigen Wörterbuch und
+     bewusst aus DERSELBEN Wortart-Gegend (Nomen zu Nomen), sonst
+     verrät sich die richtige Lösung von selbst.
+     ============================================================ */
+  /* Welche Quelle der Trainer gerade nimmt. Derselbe Merkspeicher wie
+     bei den Spielen, nur unter einem eigenen Namen — man soll den
+     Silbenturm mit Kapitel 7 und den Trainer mit allem üben können. */
+  const TRAINER_QUELLE = "trainer";
+  /* Alle Wörter, die MIR gehören: gemerkte plus alle eigenen Listen.
+     Das ist die Vorgabe „Alle meine Wörter"; eine einzelne Liste
+     wählt man mit den Knöpfen darüber. */
+  function meineWoerterMenge() {
+    const wahl = wortQuelleWahl[TRAINER_QUELLE] || "alle";
+    if (wahl.startsWith("liste:")) {
+      const l = wortlisteMitId(wahl.slice(6));
+      if (l) return new Set(l.woerter);
+    }
+    if (wahl === "wortschatz") return new Set(meinWortschatz());
+    const menge = new Set(meinWortschatz());
+    meineWortlisten().forEach((l) => (l.woerter || []).forEach((w) => menge.add(w)));
+    return menge;
+  }
+  function meineWoerterName() {
+    const wahl = wortQuelleWahl[TRAINER_QUELLE] || "alle";
+    if (wahl === "alle") return "Alle meine Wörter";
+    return wortQuelleName(wahl);
+  }
+  /* Der Artikel steht im Wörterbuch vorn am Stichwort („die Tasse").
+     Ohne Artikel — Verben, Adjektive, Wörter ohne gepflegten Eintrag —
+     gibt es keine Artikelfrage; raten lassen wäre schlimmer als
+     weglassen. */
+  function eigenArtikel(wort) {
+    const m = /^(der|die|das)\s+/i.exec(String(wort || ""));
+    return m ? m[1].toLowerCase() : "";
+  }
+  function eigenOhneArtikel(wort) {
+    return String(wort || "").replace(/^(der|die|das)\s+/i, "").trim();
+  }
+  function eigenKurz(text, laenge) {
+    const t = String(text || "").replace(/\s+/g, " ").trim();
+    return t.length > (laenge || 90) ? t.slice(0, (laenge || 90) - 1) + "…" : t;
+  }
+  /* Baut die Fragen. Gibt eine LEERE Bank zurück, wenn zu wenig
+     eigene Wörter mit Bedeutung da sind — der Trainer sagt dann von
+     selbst „dafür sind gerade nur … Aufgaben da", statt eine Runde
+     aus zwei Fragen zu starten. */
+  function meineWoerterFragen() {
+    if (!Backend.currentUser()) return [];
+    const menge = meineWoerterMenge();
+    if (!menge.size) return [];
+    const alle = buildDictionaryEntries();
+    /* Nachsichtig nur dort, wo es um den GEMERKTEN Wortschatz geht:
+       „der Kitzler" im Wortschatz soll den Eintrag „die Klitoris"
+       weiterhin treffen (siehe wortIstGemerkt). Bei einer selbst
+       getippten Liste zählt dagegen genau das, was drinsteht. */
+    const wahlJetzt = wortQuelleWahl[TRAINER_QUELLE] || "alle";
+    const nachsichtig = wahlJetzt === "alle" || wahlJetzt === "wortschatz";
+    const meine = alle.filter((e) => menge.has(e.word) || (nachsichtig && wortIstGemerkt(e.word)));
+    if (!meine.length) return [];
+    /* Die Ablenker: echte Wörterbucheinträge mit Bedeutung, aber nicht
+       das gefragte Wort selbst. Einmal vorbereitet, nicht je Frage neu
+       durchsucht — sonst läuft der Aufbau über 11.500 Einträge mal
+       Anzahl der Fragen. */
+    const mitBedeutung = alle.filter((e) => e.meaning && e.meaning.length > 3 && !e.uebungsfehler);
+    const zufall = (liste) => liste[Math.floor(Math.random() * liste.length)];
+    const fragen = [];
+    meine.forEach((e) => {
+      const stufe = e.level || "B1";
+      const artikel = eigenArtikel(e.word);
+      const blank = eigenOhneArtikel(e.word);
+      if (artikel) {
+        const falsch = ["der", "die", "das"].filter((a) => a !== artikel);
+        fragen.push({
+          prompt: `Welcher Artikel gehört zu <strong>${blank}</strong>?`,
+          options: [artikel, ...falsch],
+          correct: [0],
+          explain: `Es heißt <strong>${artikel} ${blank}</strong>${e.meaning ? " — " + eigenKurz(e.meaning, 120) : ""}`,
+          level: stufe,
+        });
+      }
+      if (e.meaning && e.meaning.length > 3 && mitBedeutung.length > 8) {
+        const andere = [];
+        let versuche = 0;
+        while (andere.length < 3 && versuche++ < 40) {
+          const k = zufall(mitBedeutung);
+          if (!k || k.word === e.word) continue;
+          if (andere.some((a) => a.word === k.word || a.meaning === k.meaning)) continue;
+          if (k.meaning === e.meaning) continue;
+          andere.push(k);
+        }
+        if (andere.length === 3) {
+          fragen.push({
+            prompt: `Was bedeutet <strong>${blank}</strong>?`,
+            options: [eigenKurz(e.meaning), ...andere.map((a) => eigenKurz(a.meaning))],
+            correct: [0],
+            explain: `<strong>${e.word}</strong>: ${eigenKurz(e.meaning, 160)}${e.example ? `<br>Beispiel: ${eigenKurz(e.example, 120)}` : ""}`,
+            level: stufe,
+          });
+          fragen.push({
+            prompt: `Welches Wort bedeutet „${eigenKurz(e.meaning, 80)}“?`,
+            options: [blank, ...andere.map((a) => eigenOhneArtikel(a.word))],
+            correct: [0],
+            explain: `<strong>${e.word}</strong> — ${eigenKurz(e.meaning, 160)}`,
+            level: stufe,
+          });
+        }
+      }
+    });
+    /* Gemischt zurück, und die Antworten jeder Frage ebenfalls: sonst
+       stünde die richtige immer an erster Stelle. */
+    return Core.shuffle(fragen).map((f) => {
+      const richtig = f.options[0];
+      const opts = Core.shuffle(f.options.slice());
+      return { ...f, options: opts, correct: [opts.indexOf(richtig)] };
+    });
+  }
+  if (ExerciseData.eigeneFragenAnmelden) ExerciseData.eigeneFragenAnmelden(meineWoerterFragen);
+
+  /* Die Knopfreihe auf der Karte „★ Meine Wörter" im Trainer. Ohne
+     Niveaureihe: das Niveau stellt der Trainer schon selbst ein, zwei
+     Niveauwähler übereinander wären nur verwirrend. */
+  function meineWoerterChipsHtml() {
+    if (!Backend.currentUser()) {
+      return `<p class="cat-pool-note">Melde dich an, dann kannst du hier mit deinen eigenen Wörtern üben.</p>`;
+    }
+    const gemerkt = meinWortschatz().size;
+    const listen = meineWortlisten();
+    if (!gemerkt && !listen.length) {
+      return `<p class="cat-pool-note">Noch keine eigenen Wörter. Markiere im Wörterbuch Wörter mit dem Stern ☆ oder lege dort eine eigene Liste an — sie stehen sofort hier.</p>`;
+    }
+    const wahl = wortQuelleWahl[TRAINER_QUELLE] || "alle";
+    const anzahl = meineWoerterMenge().size;
+    return `<div class="trophy-case wsm-chips wortquelle-chips">
+      <button type="button" class="trophy-chip ${wahl === "alle" ? "selected" : ""}" data-meinequelle="alle">Alle meine Wörter</button>
+      ${gemerkt ? `<button type="button" class="trophy-chip ${wahl === "wortschatz" ? "selected" : ""}" data-meinequelle="wortschatz">★ Mein Wortschatz (${gemerkt})</button>` : ""}
+      ${listen.map((l) => `<button type="button" class="trophy-chip ${wahl === "liste:" + l.id ? "selected" : ""}" data-meinequelle="liste:${l.id}">📋 ${l.name} (${(l.woerter || []).length})</button>`).join("")}
+    </div>
+    <p class="cat-pool-note">Geübt wird mit: ${meineWoerterName()} — ${anzahl} ${anzahl === 1 ? "Wort" : "Wörter"}.</p>`;
   }
 
   function dictKarte(e) {
@@ -50526,6 +50704,7 @@ An einem Morgen lief ein kleiner Fuchs los…
      ============================================================ */
   const APP_CHANGELOG = {
     "175": [
+      "★ **Deine eigenen Wörter im Vokabeltrainer.** Gemeldet: „die eigene Vokabelliste scheint man auch nicht nehmen zu können.“ Das stimmte — die mit dem Stern ☆ gemerkten Wörter und die selbst angelegten Listen gab es nur in acht Spielen, ausgerechnet im Vokabeltrainer nicht. Jetzt steht dort die Kategorie „★ Meine Wörter“. Auf der Karte wählst du, ob mit allem, nur mit dem gemerkten Wortschatz oder nur mit einer bestimmten Liste geübt wird, und darunter steht, wie viele Wörter das gerade sind. Die Fragen werden aus deinen Wörtern gebaut, nicht aus einer Datei — was du heute markierst, kommt in der nächsten Runde dran. Drei Arten im Wechsel: der Artikel, die Bedeutung und umgekehrt „welches Wort bedeutet …?“.",
       "🧍‍♂️ **Die Menschen sitzen jetzt richtig.** Wer auf dem Sofa oder auf der Toilette sitzt, sitzt mit den Knien zur Kamera — nicht mehr seitlich weggedreht. Das ging vorher nicht, weil ein Oberschenkel, der auf den Betrachter zeigt, fast keine Länge hat; jetzt zeigt er am Knie seinen vollen Querschnitt, mit eigener Kontur, Licht auf der Kuppe und Schlagschatten auf das Bein darunter. Genau daran erkennt das Auge, dass da jemand sitzt.",
       "🧎 **Elf neue Körperhaltungen.** Fersensitz, aufrechtes Knien, vorgebeugtes Knien, Krabbeln, Vierfüßlerstand, Bodensitz, Seitsitz, Schneidersitz, Spagat, Baden mit angewinkelten Beinen — jede von vorn, von der Seite und von hinten, in jedem Alter, mit und ohne Kleidung. Ein Kind kann jetzt auf dem Teppich knien und mit dem Auto spielen.",
       "💇 **Frisuren im Profil.** Die Haare lagen in der Seitenansicht über Auge und Wange. Drei getrennte Fehler steckten dahinter: der Bart hatte gar keine Seitenansicht und wurde als Vorderansicht auf den Profilkopf gemalt, die vordere Strähne lag auf dem Ohr, und der Haarkranz der Glatze zog quer über die Stirn. Alles neu gezeichnet.",
@@ -51223,6 +51402,12 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Welche Wörter ein Spiel gerade wirklich benutzt — für die
          Prüfung, ob eine geliehene Duell-Liste greift. */
       wortQuelle: (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word),
+      /* Die eigenen Wörter im Vokabeltrainer: Quelle umstellen und
+         nachsehen, welche Fragen dabei herauskommen. */
+      meineQuelle: (wahl) => { wortQuelleWahl[TRAINER_QUELLE] = wahl || "alle"; return meineWoerterName(); },
+      meineWoerter: () => [...meineWoerterMenge()],
+      meineFragen: () => meineWoerterFragen().map((f) => ({
+        prompt: f.prompt, options: f.options, richtig: f.options[f.correct[0]], level: f.level })),
       /* Alle Zwillingssätze mit eingesetzter Lösung. */
       zwillingProben: () => ZWILLINGE.map((z) => ({
         paar: z.a + " / " + z.b, u: z.u, lvl: z.lvl,
