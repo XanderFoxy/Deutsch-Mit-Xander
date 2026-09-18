@@ -21793,11 +21793,45 @@
      ================================================================= */
   /* Noch einmal — ohne die Zeile neu zu bauen: die Animationen kurz
      abschalten, einen Bildaufbau abwarten, wieder anschalten. */
+  /* =================================================================
+     DER SCHALL GEHT DURCH DEN RAUM
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Dann soll es auch den Chat ein bisschen
+     beeinflussen, dass man merkt: der Schall hat einen Effekt auf den
+     Chatraum."
+
+     Ein Stoss, keine Erschuetterung: der Chat weitet sich um ein
+     Prozent und geht zurueck, und eine Welle laeuft einmal von unten
+     nach oben durch. Zwei Sekunden, dann ist Ruhe — man soll waehrend
+     des Schreiens weiterlesen koennen.
+
+     Dazu der Ton: ton/schrei.opus, gerechnet und nicht aufgenommen
+     (siehe werkzeug/schrei-ton-bauen.sh) — zwei Toene im Quintabstand
+     durch einen Formantfilter, damit es nach Stimme klingt, ohne ein
+     Wort zu sein. Egal, was jemand schreit: es klingt gleich.
+     ================================================================= */
+  let lcSchallLaeuft = 0;
+  function lcSchallStoss() {
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    lcGeraeusch("schrei");
+    if (!karte) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    /* Mehrere Rufe kurz hintereinander sollen nicht uebereinander
+       zappeln — der Stoss faengt dann einfach neu an. */
+    clearTimeout(lcSchallLaeuft);
+    karte.classList.remove("lc-schallt");
+    void karte.offsetWidth;
+    karte.classList.add("lc-schallt");
+    lcSchallLaeuft = setTimeout(() => karte.classList.remove("lc-schallt"), 2100);
+  }
+
   function lcRufNochmal(zeile) {
     /* Auch eine alte Zeile darf noch einmal — aber nur, weil jemand sie
        ausdrücklich angetippt hat. Dafür fällt die Marke „Vergangenheit"
        weg, sonst hielte die CSS die Animation weiterhin an. */
     zeile.classList.remove("lc-alt");
+    lcSchallStoss();
     zeile.querySelectorAll(".lc-ruf-wort").forEach((w) => {
       const takt = w.style.getPropertyValue("--lc-ruf-takt") || "0s";
       w.style.animation = "none";
@@ -21832,9 +21866,33 @@
       }
       const w = document.createElement("span");
       w.className = "lc-ruf-wort";
-      w.textContent = stueck;
       w.dataset.wort = stueck;               // die strahlende Kopie
-      const f = bunt ? LC_REGENBOGEN[nr % LC_REGENBOGEN.length] : feste;
+      let f = bunt ? LC_REGENBOGEN[nr % LC_REGENBOGEN.length] : feste;
+      if (bunt) {
+        /* GEMELDET: „Wenn es bunt eingestellt ist, sollen die
+           Buchstaben durcheinander bunt sein, so wie das vorher auch
+           war."
+
+           Vorher war es WORTweise — im alten Kommentar stand, dass
+           buchstabenweise nicht ginge, weil die strahlende Kopie am
+           ganzen Wort haengt. Sie haengt aber nur an der FARBE des
+           Wortes, und die kann man setzen: jeder Buchstabe bekommt
+           sein eigenes Kaestchen mit eigener Farbe, und das Wort
+           selbst traegt die Farbe seines mittleren Buchstabens —
+           daran richtet sich der Schall aus. Die Animation bleibt
+           am Wort, damit die Woerter nicht auseinanderfallen und
+           der Zeilenumbruch mitten im Wort ausbleibt. */
+        const zeichen = Array.from(stueck);
+        zeichen.forEach((z, i) => {
+          const t = document.createElement("span");
+          t.textContent = z;
+          if (z.trim()) t.style.color = LC_REGENBOGEN[(nr + i) % LC_REGENBOGEN.length];
+          w.appendChild(t);
+        });
+        f = LC_REGENBOGEN[(nr + Math.floor(zeichen.length / 2)) % LC_REGENBOGEN.length];
+      } else {
+        w.textContent = stueck;
+      }
       if (f) { w.style.color = f; w.style.setProperty("--lc-ruf", f); }
       w.style.animationDelay = (nr * 0.22).toFixed(2) + "s";
       w.style.setProperty("--lc-ruf-takt", (nr * 0.22).toFixed(2) + "s");
@@ -23366,6 +23424,16 @@
         z.classList.add("lc-zeile-wirkt");
         z.title = "Antippen — noch einmal";
         z.addEventListener("click", () => lcRufNochmal(z));
+        /* GEWUENSCHT: „Wenn man schreit und das abschickt und die
+           Animation kommt, dann soll es auch den Chat ein bisschen
+           beeinflussen, dass man merkt: der Schall hat einen Effekt
+           auf den Chatraum. Und vielleicht ein Sound-Effekt, der
+           neutral dazu passt, egal was man schreit."
+
+           Beides nur, wenn die Zeile GERADE eben entstanden ist —
+           was vor dem Betreten geschrieben wurde, ist Vergangenheit
+           und bleibt still. Angetippt kommt es wieder. */
+        if (!alt) lcSchallStoss();
       }
       if (eff) {
         z.dataset.wirkung = eff;
@@ -53143,6 +53211,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     /* Damit sich das Befehls-Panel prüfen lässt, ohne sich anmelden zu
        müssen (werkzeug/pruefe-befehlspanel.js). */
     window.__tippsBinden = (bereich) => livechatTippsBinden(bereich);
+    /* Fuer werkzeug/pruefe-schreien.js. */
+    window.__rufSetzen = (ziel, text, n) => lcRufSetzen(ziel, text, n);
+    window.__schallStoss = () => lcSchallStoss();
     window.__dmaTagesaufgabe = () => pickDailyTaskFresh();
     window.__dmaUpdateNachricht = () => notifyAboutAppUpdateIfNeeded();
     window.__wortQuellePruef = (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word);

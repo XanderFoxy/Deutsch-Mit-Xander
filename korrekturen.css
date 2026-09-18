@@ -8146,3 +8146,58 @@ body.lc-schreibt .tutor-reiter {
   .lc-platz-spricht[data-sprechbild] .lc-kreis::after,
   .lc-platz-spricht[data-sprechbild] .lc-kreis::before { animation: none; }
 }
+
+/* =================================================================
+   DER SCHALL GEHT DURCH DEN CHATRAUM
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „Wenn man schreit und das dann abschickt und die
+   Animation kommt, dann soll es auch den Chat ein bisschen
+   beeinflussen, dass man merkt: der Schall hat einen Effekt auf den
+   Chatraum."
+
+   Ein STOSS, keine Erschütterung. Der Chat weitet sich um ein
+   Prozent und geht zurück; eine helle Welle läuft einmal von unten
+   nach oben durch. Nach zwei Sekunden ist Ruhe — man soll während
+   des Schreiens weiterlesen können, und die Zeilen dürfen nicht
+   verrutschen (deshalb scale und nicht translate: eine Skalierung
+   verschiebt nichts im Textfluss).
+   ================================================================= */
+.lc-schallt {
+  animation: lcSchallStoss 900ms cubic-bezier(.22, 1, .36, 1) both;
+  transform-origin: 50% 88%;   /* von der Schreibzeile her, dort entsteht der Ruf */
+}
+@keyframes lcSchallStoss {
+  0%   { transform: scale(1); }
+  16%  { transform: scale(1.012); }
+  38%  { transform: scale(0.997); }
+  62%  { transform: scale(1.004); }
+  100% { transform: scale(1); }
+}
+/* Die Welle. Sie liegt ÜBER dem Chat, nimmt aber keine Klicks an —
+   sonst könnte man zwei Sekunden lang nichts antippen. */
+.lc-schallt::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(120% 60% at 50% 100%,
+              rgba(255, 206, 85, 0.22) 0%,
+              rgba(255, 206, 85, 0.10) 34%,
+              rgba(255, 206, 85, 0) 62%);
+  animation: lcSchallWelle 1800ms ease-out both;
+}
+@keyframes lcSchallWelle {
+  0%   { opacity: 0;   transform: translateY(18%) scaleY(0.25); }
+  14%  { opacity: 1; }
+  100% { opacity: 0;   transform: translateY(-58%) scaleY(1.5); }
+}
+/* Der Chat muss dafür ein Bezugspunkt sein — ohne das säße die
+   Welle am Fenster statt am Klassenzimmer. */
+#livechatKarte { position: relative; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-schallt { animation: none; }
+  .lc-schallt::after { display: none; }
+}
