@@ -26,23 +26,31 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const WURZEL = path.dirname(__dirname);
-const ZIEL = path.join(WURZEL, "aussprache", "a1");
+/* GEWUENSCHT: „Wenn du mit A1 komplett fertig bist, kannst du schon
+   B1 weitermachen. So weit wie du kommst." Deshalb nimmt das Werkzeug
+   jetzt das Niveau entgegen:
+       ELEVENLABS_API_KEY=... node werkzeug/a1-aufnehmen.js A2 [hoechstens]
+   Jedes Niveau bekommt einen eigenen Ordner (aussprache/a2 usw.), und
+   die Seite sucht in allen. Ohne Angabe bleibt es bei A1. */
+const NIVEAU = /^[AB][12]$|^C[12]$/i.test(process.argv[2] || "")
+  ? String(process.argv[2]).toUpperCase() : "A1";
+const ZIEL = path.join(WURZEL, "aussprache", NIVEAU.toLowerCase());
 const FFMPEG = "/tmp/claude-0/node_modules/ffmpeg-static/ffmpeg";
 const STIMME = "2L5tbH2o3nYxHrdksjgA";           // „Alex", der Studio-Klon
 const MODELL = "eleven_multilingual_v2";
 const SCHLUESSEL = process.env.ELEVENLABS_API_KEY || "";
-const HOECHSTENS = Number(process.argv[2] || 0) || Infinity;
+const HOECHSTENS = Number(process.argv[3] || process.argv[2] || 0) || Infinity;
 const GLEICHZEITIG = 4;
 
 if (!SCHLUESSEL) { console.error("ELEVENLABS_API_KEY fehlt."); process.exit(2); }
-const ROH = "/tmp/roh-a1";
+const ROH = "/tmp/roh-" + NIVEAU.toLowerCase();
 fs.mkdirSync(ZIEL, { recursive: true });
 fs.mkdirSync(ROH, { recursive: true });
 
 /* Die Liste kommt aus demselben Werkzeug, das auch die Dateinamen
    festlegt — zwei getrennte Regeln waeren zwei Fehlerquellen. */
 const liste = JSON.parse(execFileSync("node",
-  [path.join(WURZEL, "werkzeug", "a1-wortliste.js")],
+  [path.join(WURZEL, "werkzeug", "a1-wortliste.js"), NIVEAU],
   { maxBuffer: 64 * 1024 * 1024 }).toString("utf8"));
 
 const offen = liste.filter((w) => !fs.existsSync(path.join(ZIEL, w.datei)));

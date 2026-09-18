@@ -49,32 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 45 — 36 Geraeusche, Fische richtig herum, Daumen verbunden",
+  stand: "Runde 46 — A2 wird eingesprochen, Vokabeltrainer repariert",
 
   inArbeit: [
-    { seit: "2026-09-18T00:30", nurBetreiber: true,
-      text: "WICHTIG: die Seite laeuft auf main — meine 10 Runden liegen auf dem Zweig und sind NICHT live" },
-    { seit: "2026-09-18T00:30",
+    { seit: "2026-09-18T00:45",
+      text: "A2 laeuft gerade durch (3494 Woerter), danach B1" },
+    { seit: "2026-09-18T00:45",
       text: "Fratze gruseliger, Sternschnuppen und Regen physikalisch richtig" },
-    { seit: "2026-09-18T00:30",
+    { seit: "2026-09-18T00:45",
       text: "Jalousie und Hand sollen den Chat wirklich aufreissen" },
-    { seit: "2026-09-18T00:30",
-      text: "Vokabeltrainer: nur eine Aufgabe je Runde, eigene Liste nicht waehlbar" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T00:30",
-      text: "24 weitere Geraeusche: Jubel, fieses Lachen, Bratzeln beim Stromausfall, Schlittenglocken, Vulkan, Erdbeben" },
-    { seit: "2026-09-18T00:30",
-      text: "Route 66: der Wagen kommt jetzt wirklich aus dem Fluchtpunkt statt aus der Bildmitte" },
-    { seit: "2026-09-18T00:30",
-      text: "Fische schauen in die Richtung, in die sie schwimmen — und es gibt einen Hai" },
-    { seit: "2026-09-18T00:30",
-      text: "Spinnen von winzig bis handgross, die schweren krabbeln langsamer" },
-    { seit: "2026-09-18T00:30",
-      text: "Daumen waechst aus der Handflaeche heraus statt danebenzukleben" },
-    { seit: "2026-09-18T00:30",
-      text: "Verbindungswache: /verbindung zeigt, ob ueberhaupt Tonpakete ankommen" },
+    { seit: "2026-09-18T00:45",
+      text: "Deine Stimme ist jetzt LIVE — die Seite steht auf 237 statt 227" },
+    { seit: "2026-09-18T00:45",
+      text: "Bilderwelten nehmen jetzt zuerst DEINE Aufnahme, dann erst Azure" },
+    { seit: "2026-09-18T00:45",
+      text: "Aufnahmen koennen aus mehreren Niveaus kommen (a1, a2, ...)" },
+    { seit: "2026-09-18T00:45",
+      text: "Vokabeltrainer: Runde startet nicht mehr, bevor die Woerter da sind" },
+    { seit: "2026-09-18T00:45",
+      text: "Gefunden: 38 von 61 Themen haben vor dem Nachladen weniger als 5 Aufgaben" },
   ],
 };

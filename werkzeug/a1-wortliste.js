@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* ZIEHT DIE A1-WOERTER FUER DIE AUFNAHME HERAUS.
+/* ZIEHT DIE WOERTER EINES NIVEAUS FUER DIE AUFNAHME HERAUS.
    ---------------------------------------------------------------
    Gesprochen wird genau das, was der Aussprache-Trainer abspielt:
    das Wort OHNE Artikel (aussprSprechtext in app.js macht dasselbe).
@@ -30,6 +30,7 @@ const fs = require("fs");
 const path = require("path");
 
 const WURZEL = path.dirname(__dirname);
+const NIVEAU = (process.argv[2] || "A1").toUpperCase();
 global.window = {};
 for (const f of fs.readdirSync(path.join(WURZEL, "vokabeln"))) {
   if (!f.endsWith(".js")) continue;
@@ -69,7 +70,12 @@ sammeln(global.window.DMA_VOKABELN_ZUSATZ);
 const gesehen = new Map();
 let weg = { stufe: 0, ohneSilben: 0, ohneBedeutung: 0, erzeugt: 0, artikel: 0, doppelt: 0 };
 for (const e of alle) {
-  if (e.level !== "A1") { weg.stufe++; continue; }
+  /* GEWUENSCHT: „Wenn du mit A1 komplett fertig bist, kannst du schon
+     B1 weitermachen. So weit wie du kommst — je mehr Wortschatz, desto
+     besser." Deshalb ist das Niveau jetzt ein Aufrufwert:
+         node werkzeug/a1-wortliste.js A2  > /tmp/a2.json
+     Ohne Angabe bleibt es bei A1. */
+  if (e.level !== NIVEAU) { weg.stufe++; continue; }
   if (!e.syl) { weg.ohneSilben++; continue; }
   const bedeutung = e.de || e.meaning || "";
   if (!bedeutung) { weg.ohneBedeutung++; continue; }

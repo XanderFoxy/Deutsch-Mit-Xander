@@ -8394,6 +8394,38 @@
     if (startBtn) startBtn.addEventListener("click", async () => {
       if (startBtn.disabled) return; // Schutz gegen Doppel-Tap auf Mobilgeräten
       startBtn.disabled = true;
+      /* -----------------------------------------------------------------
+         GEMELDET: „Der Vokabeltrainer macht nur noch EIN Wort zur
+         Auswertung und schickt das dann schon ins Postfach. Da muss
+         mehr kommen als Aufgabe."
+
+         Nachgemessen, und es stimmt — mit einer klaren Ursache: die
+         Wörter liegen seit Version 160 nicht mehr in der Startdatei,
+         sondern werden nachgeladen (das spart 3,6 MB beim Start). Wer
+         schnell genug auf „Runde starten" tippt, startet also, BEVOR
+         die Wörter da sind. Dann ist der Vorrat leer, die Runde besteht
+         aus null oder einer Frage, und sie ist sofort vorbei —
+         einschliesslich Auswertung ins Postfach.
+
+         Zwei Riegel dagegen:
+           1. erst warten, bis die Wörter da sind (der Knopf sagt das),
+           2. und wenn danach immer noch zu wenig zusammenkommt, gar
+              nicht erst starten, sondern es sagen. Eine Runde mit einer
+              Frage ist keine Runde.
+         ----------------------------------------------------------------- */
+      const knopfText = startBtn.textContent;
+      startBtn.textContent = "Wörter werden geholt …";
+      try { await wortschatzBereit(); } catch (e) { /* dann eben mit dem, was da ist */ }
+      startBtn.textContent = knopfText;
+      const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
+      const vorrat = Quiz.poolSizeFor
+        ? Quiz.poolSizeFor([...selectedCategories], topicFilterPruef, selectedExerciseLevel) : 99;
+      if (vorrat < 5) {
+        startBtn.disabled = false;
+        showToast("⚠️ Für diese Auswahl sind gerade nur " + vorrat
+          + (vorrat === 1 ? " Aufgabe" : " Aufgaben") + " da — nimm ein anderes Thema oder ein anderes Niveau.");
+        return;
+      }
       const titles = [...selectedCategories].map((id) => ExerciseData.activeGetCategory(id).title).join(", ");
       const topicFilters = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
       if (selectedChallengeFriendIds.size) {
@@ -8412,6 +8444,16 @@
         }
       } else {
         Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters, selectedExerciseLevel);
+      }
+      /* Letzter Riegel: auch nach allem Warten kann die Runde zu kurz
+         ausfallen (etwa wenn ein Thema wirklich nur wenige Aufgaben
+         hat). Dann lieber sagen als starten. */
+      const rundenLaenge = (Quiz.progress && Quiz.progress().total) || 0;
+      if (rundenLaenge < 2) {
+        startBtn.disabled = false;
+        showToast("⚠️ Diese Runde hätte nur " + rundenLaenge
+          + " Aufgabe — such dir bitte ein anderes Thema aus.");
+        return;
       }
       Backend.notifyPracticing(titles);
       showToast(`🦊 Willkommen, ${personaForCategory([...selectedCategories][0])}!`);
@@ -12025,8 +12067,7 @@
        für Laut. Es kostet nichts zusätzlich: die Aufnahmen liegen
        fertig im Haus, und bewertet wurde vorher auch schon. */
     if (ausspracheQuelle === "alex") {
-      alle = alle.filter((e) => aussprTonListe
-        && aussprTonListe.has(aussprTonStamm(aussprSprechtext(e))));
+      alle = alle.filter((e) => Boolean(aussprTonStufe(aussprTonStamm(aussprSprechtext(e)))));
     }
     else if (ausspracheQuelle === "wortschatz") alle = alle.filter((e) => imWortschatz(e.word));
     else if (ausspracheQuelle === "kategorie" && ausspracheKategorie !== "alle") {
@@ -12749,7 +12790,7 @@
      Ist ein Wort nicht dabei, spricht wie bisher die Maschinenstimme.
      Es geht also nie etwas kaputt, solange die Sammlung wächst.
      ================================================================= */
-  let aussprTonListe = null;     /* Set der vorhandenen Dateinamen */
+  let aussprTonListe = null;     /* Map: Dateiname -> Niveau-Ordner */
   let aussprTonRuf = null;
 
   function aussprTonStamm(t) {
@@ -12760,19 +12801,44 @@
   }
   /* Genau dieselbe Rechnung steht in werkzeug/a1-wortliste.js. Ändert
      sich eine, muss die andere mit — deshalb steht es hier dabei. */
+  /* NEU: es gibt mehr als ein Niveau. „Wenn du mit A1 komplett fertig
+     bist, kannst du schon B1 weitermachen." Die Liste ist deshalb
+     keine blosse Sammlung von Namen mehr, sondern eine Zuordnung
+     Name -> Ordner: „tasse" liegt in aussprache/a1, „abteilung" in
+     aussprache/a2. Ohne diese Zuordnung wuesste die Seite zwar, DASS
+     es eine Aufnahme gibt, aber nicht, wo sie liegt. */
   function aussprTonLaden() {
     if (aussprTonRuf) return aussprTonRuf;
     aussprTonRuf = brDatei("data-aussprache-ton.js").then(() => {
-      const roh = window.DMA_TON_A1;
-      aussprTonListe = new Set(roh ? String(roh).split("|").filter(Boolean) : []);
+      aussprTonListe = new Map();
+      const tafel = window.DMA_TON;
+      if (tafel && typeof tafel === "object") {
+        Object.keys(tafel).forEach((stufe) => {
+          String(tafel[stufe] || "").split("|").filter(Boolean).forEach((n) => {
+            /* Das niedrigste Niveau gewinnt: dort steht das Wort, das
+               die meisten Leute brauchen, und die Datei ist dieselbe. */
+            if (!aussprTonListe.has(n)) aussprTonListe.set(n, stufe);
+          });
+        });
+      } else {
+        String(window.DMA_TON_A1 || "").split("|").filter(Boolean)
+          .forEach((n) => aussprTonListe.set(n, "a1"));
+      }
       return aussprTonListe;
-    }).catch(() => { aussprTonListe = new Set(); return aussprTonListe; });
+    }).catch(() => { aussprTonListe = new Map(); return aussprTonListe; });
     return aussprTonRuf;
+  }
+  function aussprTonStufe(stamm) {
+    if (!stamm || !aussprTonListe) return "";
+    /* Set aus einer alten Fassung im Zwischenspeicher? Dann gilt A1. */
+    if (typeof aussprTonListe.get === "function") return aussprTonListe.get(stamm) || "";
+    return aussprTonListe.has && aussprTonListe.has(stamm) ? "a1" : "";
   }
   function aussprTonWeg(w) {
     const stamm = aussprTonStamm(aussprSprechtext(w));
-    if (!stamm || !aussprTonListe || !aussprTonListe.has(stamm)) return null;
-    return "aussprache/a1/" + stamm + ".mp3";
+    const stufe = aussprTonStufe(stamm);
+    if (!stufe) return null;
+    return "aussprache/" + stufe + "/" + stamm + ".mp3";
   }
   /* Spielt die Datei ab und sagt ehrlich NEIN, wenn sie nicht kommt —
      dann übernimmt die Maschinenstimme. Ein stiller Knopf wäre das
@@ -12828,9 +12894,10 @@
     if (!roh || roh.length > 40 || roh.split(/\s+/).length > 3) return Promise.resolve(false);
     const stamm = aussprTonStamm(aussprSprechtext(roh));
     if (!stamm) return Promise.resolve(false);
-    return aussprTonLaden().then((liste) => {
-      if (!liste || !liste.has(stamm)) return false;
-      return aussprTonSpielen("aussprache/a1/" + stamm + ".mp3", 1);
+    return aussprTonLaden().then(() => {
+      const stufe = aussprTonStufe(stamm);
+      if (!stufe) return false;
+      return aussprTonSpielen("aussprache/" + stufe + "/" + stamm + ".mp3", 1);
     }).catch(() => false);
   }
   if (Core.stimmeAnmelden) Core.stimmeAnmelden(eigeneStimme);
@@ -42132,12 +42199,26 @@
   /* Für Abläufe, die auf das ENDE warten müssen („alle nacheinander
      vorlesen"). Core.speak() kehrt sofort zurück; hier wird gewartet. */
   let bwStimmeLaeuft = false;
+  /* GEWÜNSCHT: „In den Bilderwelten kannst du das überall da, wo A1-
+     Vokabular dabei ist, auch benutzen."
+
+     Die Reihenfolge war hier verkehrt herum: Bilderwelten fragte
+     ZUERST die neuronale Stimme (Azure) — die kostet Kontingent und
+     ist eine Maschine. Erst danach kam das Gerät. Seine eigene
+     Aufnahme kam gar nicht vor.
+
+     Jetzt: erst Alex, dann Azure, dann das Gerät. Das ist nicht nur
+     schöner, es ist auch billiger — jedes A1-Wort, das er selbst
+     eingesprochen hat, kostet ab jetzt nichts mehr. */
   async function bwSprich(text, sprache) {
     const wort = String(text || "").trim();
     if (!wort || bwStimmeLaeuft) return;
     bwStimmeLaeuft = true;
     try {
-      const gesprochen = await guteStimme(wort, sprache);
+      let gesprochen = false;
+      const kurz = String(sprache || "de").slice(0, 2).toLowerCase();
+      if (kurz === "de") gesprochen = await eigeneStimme(wort, "de");
+      if (!gesprochen) gesprochen = await guteStimme(wort, sprache);
       if (!gesprochen) {
         await new Promise((f) => { Core.speak(wort, sprache); setTimeout(f, 1100); });
       }
