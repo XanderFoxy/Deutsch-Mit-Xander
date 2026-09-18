@@ -14044,6 +14044,11 @@
     };
 
     const hinein = (mitBild) => {
+      /* ZUERST, noch im Druck auf den Knopf: den Ton freischalten.
+         Danach ist die Beruehrung vorbei und es zaehlt nicht mehr.
+         Genau daran scheitert sonst das Hoeren auf iPhone und im
+         Android-Safari — siehe tonFreischalten() in livechat.js. */
+      try { if (LiveChat.tonFreischalten) LiveChat.tonFreischalten(); } catch (e) {}
       lcTorAufraeumen();
       kasten.remove();
       weiter({ mitBild: mitBild });
@@ -17740,7 +17745,7 @@
     const staub = document.createElement("em");
     schicht.appendChild(staub);
     document.body.appendChild(schicht);
-    lcTonZu("rennauto");
+    lcTonZu("route66");
     setTimeout(() => schicht.remove(), 10000);
   }
 
@@ -19747,7 +19752,68 @@
     });
   }
 
+  /* =================================================================
+     ECHTE GERÄUSCHE STATT SINUSTÖNEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Können wir eigentlich was machen wegen den Sounds,
+     dass wir den Orkan und so — dass wir da realistische Sounds dafür
+     bekommen? Wenn du das Opus Format nimmst, ist es klein."
+
+     Zwölf Geräusche liegen jetzt im Ordner ton/: Orkan, Gewitter,
+     Regen, Feuerwerk, Glasbruch, Dinosaurier, Piratenschiff,
+     Route 66, Schüsse, Prunkgeschenk, Katze, Enten. Zusammen 364 kB,
+     und jedes wird erst geholt, wenn es das erste Mal gebraucht wird.
+
+     ZWEI FASSUNGEN JE GERÄUSCH, und das ist kein Luxus: Safari auf dem
+     iPhone spielt Opus je nach Fassung NICHT. Wer nur Opus ablegt,
+     baut eine Datei, die ausgerechnet auf seinem Gerät stumm bleibt.
+     Deshalb fragt die Seite den Browser (canPlayType) und nimmt Opus
+     oder AAC — was er kann.
+
+     Gibt es zu einem Effekt kein Geräusch, klingt wie bisher der
+     synthetische Ton. Und der Schalter „Töne" gilt für beides. */
+  let lcGeraeuschListe = null;
+  let lcGeraeuschEndung = null;
+  const lcGeraeuschAblage = {};
+  function lcGeraeuschDa(name) {
+    if (lcGeraeuschListe === null) {
+      lcGeraeuschListe = new Set(String(window.DMA_GERAEUSCHE || "")
+        .split("|").filter(Boolean));
+    }
+    return lcGeraeuschListe.has(name);
+  }
+  function lcGeraeuschArt() {
+    if (lcGeraeuschEndung !== null) return lcGeraeuschEndung;
+    let kann = "";
+    try {
+      const probe = document.createElement("audio");
+      if (probe.canPlayType && probe.canPlayType('audio/ogg; codecs="opus"')) kann = ".opus";
+      else if (probe.canPlayType && probe.canPlayType('audio/mp4; codecs="mp4a.40.2"')) kann = ".m4a";
+      else kann = ".m4a";
+    } catch (e) { kann = ".m4a"; }
+    lcGeraeuschEndung = kann;
+    return kann;
+  }
+  function lcGeraeusch(name) {
+    if (!lcToeneAn() || !lcGeraeuschDa(name)) return false;
+    try {
+      let a = lcGeraeuschAblage[name];
+      if (!a) {
+        a = new Audio("ton/" + name + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
+        a.preload = "auto";
+        lcGeraeuschAblage[name] = a;
+      }
+      try { a.currentTime = 0; } catch (e) {}
+      a.volume = 0.5;
+      const v = a.play();
+      if (v && v.catch) v.catch(() => {});
+      return true;
+    } catch (e) { return false; }
+  }
+
   function lcTonZu(was) {
+    /* Erst das echte Geräusch — gibt es keines, der gebaute Ton. */
+    if (lcGeraeusch(was)) return;
     const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
     if (f) f();
   }
@@ -20589,9 +20655,9 @@
     if (!e) return;
     /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
-    if (art === "umarmen" && lcUmarmung(nachricht && nachricht.an)) return;
-    if (art === "lecken" && lcLecken(nachricht && nachricht.an)) return;
-    if (art === "boxen" && lcBoxen(nachricht && nachricht.an)) return;
+    if (art === "umarmen" && lcUmarmung(nachricht && (nachricht.wen || nachricht.an))) return;
+    if (art === "lecken" && lcLecken(nachricht && (nachricht.wen || nachricht.an))) return;
+    if (art === "boxen" && lcBoxen(nachricht && (nachricht.wen || nachricht.an))) return;
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
@@ -20621,7 +20687,7 @@
       else if (e.wie === "ostern") lcOstern();
       else if (e.wie === "augen") lcAugen();
       else if (e.wie === "route66") lcRoute66();
-      else if (e.wie === "prunk") lcGeschenkGross(nachricht && nachricht.an ? nachricht.an : "");
+      else if (e.wie === "prunk") lcGeschenkGross(nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
       else if (e.wie === "enten") lcEnten();
       else if (e.wie === "katze") lcKatze();
       else if (e.wie === "pirat") lcPirat();
@@ -20892,21 +20958,76 @@
     /* Die beiden Bildfaecher — damit sich nachsehen laesst, ob die
        GIPHY-Bibliothek wirklich gefuellt aufgeht und nachlaedt. */
     haeufigHtml: function () { return lcHaeufigHtml(); },
+    tonSchluessel: function () { return LC_TON_SCHLUESSEL; },
     bildWaehler: function () { return livechatBildWaehler(); },
     sendeWaehler: function () { return livechatSendeWaehler(); },
-    effekt: function (name) {
-      const vorher = document.body.childElementCount;
-      try { lcWirkung(name, null, {}); }
+    /* Eine BÜHNE für die Prüfung: ohne Chatverlauf und ohne Plätze
+       zeichnen die kleinen Effekte gar nichts — nicht weil sie kaputt
+       sind, sondern weil sie sich an die Zeile und an den Platz
+       hängen. Genau das hat mich zweimal in die Irre geführt: neun
+       Effekte sahen „leer" aus, obwohl sie im echten Chat laufen.
+       Wer prüfen will, ob ein Effekt wirkt, muss ihm die Umgebung
+       geben, die er im Betrieb hat. */
+    effektBuehne: function () {
+      document.getElementById("lcPruefBuehne")?.remove();
+      const b = document.createElement("div");
+      b.id = "lcPruefBuehne";
+      b.innerHTML = `
+        <div class="question-card livechat" id="livechatKarte">
+          <div class="lc-plaetze" id="lcPlaetze">
+            <button class="lc-platz" data-lc-platz="1"><span class="lc-kreis"></span><span class="lc-platz-name">Alex</span></button>
+            <button class="lc-platz" data-lc-platz="2"><span class="lc-kreis"></span><span class="lc-platz-name">Emmi</span></button>
+          </div>
+          <div class="lc-chat-verlauf" id="lcVerlauf" style="height:220px; overflow:auto;">
+            <p class="lc-zeile" id="lcPruefZeile">Alex drückt Emmi</p>
+          </div>
+        </div>`;
+      document.body.appendChild(b);
+      return true;
+    },
+    effekt: function (name, wen) {
+      /* NACHGEBESSERT, weil die Messung selbst zweimal gelogen hat:
+         1. Die Umarmung, das Lecken und das Boxen haengen sich mit
+            einer Verzoegerung an die Plaetze — wer sofort nachsieht,
+            findet nichts und haelt sie fuer kaputt.
+         2. Gezaehlt wurde nur das ZULETZT angehaengte Element. Beim
+            Regen ist das der Blitz mit zwei Teilen, waehrend der
+            Regenvorhang mit 170 Tropfen daneben haengt.
+         3. Erdbeben und Falten legen gar nichts an, sie setzen eine
+            KLASSE. Auch das ist eine Wirkung.
+         Deshalb merkt sich effekt() nur den Ausgangszustand; gemessen
+         wird in effektNachher(), nach einer Wartezeit. */
+      const karte = document.getElementById("livechatKarte");
+      window.__effektStand = {
+        name: name,
+        koerper: document.body.childElementCount,
+        imChat: karte ? karte.querySelectorAll("*").length : 0,
+        klassen: document.body.className + "|" + (karte ? karte.className : "")
+      };
+      const zeile = document.getElementById("lcPruefZeile");
+      try { lcWirkung(name, zeile || null, wen ? { wen: wen } : {}); }
       catch (e) { return { name, fehler: String(e && e.message || e) }; }
-      /* Was ein Ganzseiten-Effekt anlegt, haengt an body und traegt
-         eine Klasse, die mit lc- anfaengt. */
+      return { name };
+    },
+    effektNachher: function () {
+      const v = window.__effektStand || {};
+      const karte = document.getElementById("livechatKarte");
       const neu = [...document.body.children].filter(
-        (el) => /^lc-/.test(el.className || "") || (el.className || "").indexOf("lc-") === 0);
-      const letzte = neu[neu.length - 1];
-      return { name,
-        angelegt: document.body.childElementCount - vorher,
-        klasse: letzte ? String(letzte.className) : "",
-        teile: letzte ? letzte.querySelectorAll("*").length : 0 };
+        (el) => /(^|\s)lc-/.test(el.className || ""));
+      let teile = 0, klasse = "";
+      neu.forEach((el) => {
+        const t = el.querySelectorAll("*").length;
+        if (t >= teile) { teile = t; klasse = String(el.className); }
+      });
+      const jetztKlassen = document.body.className + "|" + (karte ? karte.className : "");
+      return {
+        name: v.name,
+        angelegt: document.body.childElementCount - (v.koerper || 0),
+        imChat: (karte ? karte.querySelectorAll("*").length : 0) - (v.imChat || 0),
+        klassenNeu: jetztKlassen !== v.klassen,
+        teile: teile,
+        klasse: klasse
+      };
     },
     /* Die eigene Stimme: Name aus dem Wort, Liste nachladen, abspielen. */
     tonStamm: function (w) { return aussprTonStamm(aussprSprechtext(w)); },

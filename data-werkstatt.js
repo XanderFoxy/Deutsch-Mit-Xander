@@ -49,24 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 43 — der haeufigste Grund fuer 'ich hoere nichts'",
+  stand: "Runde 44 — der Umarmungs-Fehler, echte Geraeusche, Ton erzwungen",
 
   inArbeit: [
-    { seit: "2026-09-17T23:20",
-      text: "Sounds fuer die Animationen — dafuer brauche ich einen Schluessel, sag Bescheid" },
-    { seit: "2026-09-17T23:20",
+    { seit: "2026-09-18T00:08",
       text: "Sitzende Seitenansicht fuer die Figuren" },
-    { seit: "2026-09-17T23:20",
+    { seit: "2026-09-18T00:08",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
+    { seit: "2026-09-18T00:08",
+      text: "Mehr Geraeusche, wenn du willst — 12 sind da" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-17T23:20",
-      text: "Tonsperre auf iPhone und Android: der Browser lehnt das Abspielen ab — das war bisher einfach still" },
-    { seit: "2026-09-17T23:20",
-      text: "Jetzt steht im Chat, was zu tun ist, und ein Antippen holt den Ton sofort nach" },
-    { seit: "2026-09-17T23:20",
-      text: "Nachgestellt im Pruefbrowser wie auf einem iPhone: abgelehnt, gemeldet, nachgeholt" },
+    { seit: "2026-09-18T00:08",
+      text: "GEFUNDEN: /drueck, /box und /leck kamen bei den anderen NIE an" },
+    { seit: "2026-09-18T00:08",
+      text: "Grund: das Zielfeld hiess 'an' — genau das Feld, mit dem eine Nachricht an EINE Kennung geht" },
+    { seit: "2026-09-18T00:08",
+      text: "Jedes andere Geraet hat die ganze Nachricht weggeworfen. Jetzt heisst es 'wen'" },
+    { seit: "2026-09-18T00:08",
+      text: "12 echte Geraeusche: Orkan, Gewitter, Regen, Feuerwerk, Glasbruch, Dino, Pirat, Route66, Schuss, Prunk, Katze, Enten" },
+    { seit: "2026-09-18T00:08",
+      text: "Jedes in zwei Fassungen (Opus und AAC), weil iPhone-Safari Opus nicht immer spielt" },
+    { seit: "2026-09-18T00:08",
+      text: "Ton wird jetzt beim Druck auf 'hinein' freigeschaltet — acht Kanaele im Voraus" },
+    { seit: "2026-09-18T00:08",
+      text: "Alle 60 Animationen nachgemessen: keine laeuft mehr leer" },
   ],
 };

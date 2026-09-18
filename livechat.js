@@ -1248,14 +1248,21 @@ window.LiveChat = (function () {
     if (!strom || typeof document === "undefined") return;
     var a = tonJe[id];
     if (!a) {
-      try {
-        a = document.createElement("audio");
-        a.autoplay = true;
-        a.setAttribute("playsinline", "");
-        a.style.display = "none";
-        document.body.appendChild(a);
-        tonJe[id] = a;
-      } catch (e) { return; }
+      /* Erst aus dem freigeschalteten Vorrat nehmen — ein Element, das
+         schon einmal gespielt hat, darf ohne Rueckfrage weiterspielen.
+         Nur wenn der Vorrat leer ist, wird ein neues gebaut (und dann
+         greift notfalls der Nachhol-Horcher). */
+      a = tonVorrat.shift() || null;
+      if (!a) {
+        try {
+          a = document.createElement("audio");
+          a.autoplay = true;
+          a.setAttribute("playsinline", "");
+          a.style.display = "none";
+          document.body.appendChild(a);
+        } catch (e) { return; }
+      }
+      tonJe[id] = a;
     }
     if (a.srcObject !== strom) {
       a.srcObject = strom;
@@ -1284,6 +1291,67 @@ window.LiveChat = (function () {
   var tonWartet = [];
   var tonHorcherDa = false;
   var tonHinweisGezeigt = false;
+
+  /* =========================================================
+     DEN TON IM VORAUS FREISCHALTEN — statt hinterher zu bitten
+     ---------------------------------------------------------
+     GEFRAGT: „Wie koennen wir das erzwingen, dass der Ton trotzdem
+     durchkommt, ohne dass man tippen muss? Ich habe doch sowieso
+     immer irgendwo hingetippt."
+
+     Er hat recht, und der Einwand trifft genau den Punkt: ein
+     Antippen IRGENDWO reicht den Browsern eben NICHT. Was zaehlt,
+     ist, dass ein Ton-Element WAEHREND einer Beruehrung zu spielen
+     beginnt. Danach gilt es als freigeschaltet und darf spaeter von
+     sich aus weiterspielen — auch mit einem ganz anderen Inhalt.
+
+     Deshalb wird jetzt beim Druck auf „hinein" — also in genau dem
+     Augenblick, in dem die Beruehrung noch zaehlt — Folgendes getan:
+       1. der AudioContext geweckt (Safari haelt ihn sonst angehalten);
+       2. ein Vorrat von acht <audio> angelegt, die SOFORT anfangen,
+          eine Stille abzuspielen. Sie sind damit freigeschaltet.
+     Kommt spaeter eine echte Stimme, bekommt sie eines dieser
+     Elemente — es spielt, ohne noch einmal zu fragen.
+
+     Das ist derselbe Weg, den Clubhouse und HelloTalk gehen. Der
+     Nachhol-Horcher von vorher bleibt trotzdem als letztes Netz. */
+  var tonKontext = null;
+  var tonVorrat = [];
+  function tonFreischalten() {
+    if (typeof document === "undefined") return false;
+    var stille = null;
+    try {
+      var K = window.AudioContext || window.webkitAudioContext;
+      if (K) {
+        if (!tonKontext) tonKontext = new K();
+        if (tonKontext.state === "suspended" && tonKontext.resume) tonKontext.resume();
+        /* Ein Hauch von nichts abspielen: das weckt die Tonausgabe. */
+        var q = tonKontext.createBufferSource();
+        q.buffer = tonKontext.createBuffer(1, 1, 22050);
+        q.connect(tonKontext.destination);
+        if (q.start) q.start(0);
+        /* Und eine echte, stille Spur fuer die Vorrats-Elemente. */
+        if (tonKontext.createMediaStreamDestination) {
+          stille = tonKontext.createMediaStreamDestination().stream;
+        }
+      }
+    } catch (e) {}
+    for (var i = tonVorrat.length; i < 8; i++) {
+      try {
+        var a = document.createElement("audio");
+        a.autoplay = true;
+        a.setAttribute("playsinline", "");
+        a.style.display = "none";
+        document.body.appendChild(a);
+        if (stille) a.srcObject = stille;
+        var v = a.play();
+        if (v && v.catch) v.catch(function () {});
+        a.dataset.frei = "1";
+        tonVorrat.push(a);
+      } catch (e) {}
+    }
+    return tonVorrat.length > 0;
+  }
   function tonAbspielenVersuchen(a) {
     var v;
     try { v = a.play(); } catch (e) { v = null; }
@@ -1317,8 +1385,15 @@ window.LiveChat = (function () {
   function tonAbklemmen(id) {
     var a = tonJe[id];
     if (!a) return;
-    try { a.srcObject = null; a.remove(); } catch (e) {}
     delete tonJe[id];
+    try {
+      a.srcObject = null;
+      /* Ein freigeschaltetes Element wegzuwerfen waere Verschwendung —
+         freigeschaltet wird nur bei einer Beruehrung, und die hat man
+         nicht noch einmal. Es geht zurueck in den Vorrat. */
+      if (a.dataset && a.dataset.frei === "1" && tonVorrat.length < 8) tonVorrat.push(a);
+      else a.remove();
+    } catch (e) {}
   }
   function tonAlleAbklemmen() {
     Object.keys(tonJe).forEach(tonAbklemmen);
@@ -1666,6 +1741,9 @@ window.LiveChat = (function () {
         zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
         art: n.chatArt || "text",
         wirkung: n.wirkung || "",
+        /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
+           beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
+        wen: n.wen || "",
         an: n.an || "",
         farbe: n.farbe || (zustand.leute[n.von] && zustand.leute[n.von].farbe) || "",
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : ""
@@ -3343,9 +3421,27 @@ window.LiveChat = (function () {
     var n = eigeneZeile(art, text);
     if (zusatz && zusatz.wirkung) n.wirkung = zusatz.wirkung;
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
-       Sonst sieht der Absender die Umarmung nicht, die er gerade
+       Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
-       nicht über den Empfang. */
+       nicht über den Empfang.
+
+       DER FEHLER, DEN ER GEMELDET HAT — und er ist hässlich:
+       „Auch die Animation, wo man jemanden umarmt: wenn ich sage
+        /drück Emmy, passiert nix. Oder /box Emmy, passiert auch nix."
+
+       Das Feld hiess frueher „an" — UND GENAU SO HEISST das Feld, mit
+       dem eine Nachricht an EINE BESTIMMTE KENNUNG adressiert wird.
+       In empfangen() steht seit jeher:
+            if (n.an && n.an !== zustand.ichId) return;
+       Eine Umarmung an „Emmy" trug also an = "Emmy" — und weil das
+       keine Kennung ist, die zu irgendjemandem passt, hat JEDES andere
+       Geraet die ganze Nachricht weggeworfen. Kein Text, keine
+       Animation, nichts. Nur der Absender sah etwas, weil seine Zeile
+       hier lokal entsteht.
+
+       Das Zielfeld heisst deshalb jetzt „wen". Es ist ein NAME, keine
+       Kennung, und es hat mit der Zustellung nichts zu tun. */
+    if (zusatz && zusatz.wen) n.wen = zusatz.wen;
     if (zusatz && zusatz.an) n.an = zusatz.an;
     serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
@@ -3683,7 +3779,7 @@ window.LiveChat = (function () {
     if (art === "drueck") {
       var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " drückt " + (wen2 ? wen2.name : "alle"),
-                    { wirkung: "umarmen", an: wen2 ? wen2.name : "" });
+                    { wirkung: "umarmen", wen: wen2 ? wen2.name : "" });
     }
     /* GEWÜNSCHT: „eine Animation, wo jemand abgeleckt wird, so dass man
        nachher sagen kann: Alex leckt Amy ab" und „zwei Boxhandschuhe,
@@ -3694,12 +3790,12 @@ window.LiveChat = (function () {
     if (art === "leck") {
       var wen3 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " leckt " + (wen3 ? wen3.name : "alle") + " ab",
-                    { wirkung: "lecken", an: wen3 ? wen3.name : "" });
+                    { wirkung: "lecken", wen: wen3 ? wen3.name : "" });
     }
     if (art === "box") {
       var wen4 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " boxt " + (wen4 ? wen4.name : "alle"),
-                    { wirkung: "boxen", an: wen4 ? wen4.name : "" });
+                    { wirkung: "boxen", wen: wen4 ? wen4.name : "" });
     }
     /* GEWUENSCHT: „Ausserdem moechte ich, dass wir Plaetze wechseln
        koennen, spontan." /tausch <name> setzt einen selbst auf den
@@ -4183,11 +4279,26 @@ window.LiveChat = (function () {
         if (typeof lage.buehne === "boolean") zustand.buehne = lage.buehne;
         if (lage.leute) zustand.leute = lage.leute;
         if (lage.seit) zustand.seit = lage.seit;
-        if (lage.zuruecksetzen) { platzJe = {}; sitzTausch = {}; }
+        if (lage.zuruecksetzen) {
+          platzJe = {}; sitzTausch = {};
+          /* Auch die Zeilen leeren: sonst haelt der Doppel-Schutz eine
+             Nachricht fuer schon dagewesen, nur weil sie in derselben
+             Seite vorher schon einmal entstanden ist. */
+          zustand.nachrichten = [];
+        }
       }
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
+    /* Mithoeren, WAS hinausgeht — der Weg, den ich beim letzten Mal
+       nicht geprueft hatte. Genau dort lag der Fehler mit „/drueck". */
+    /* Wird beim Druck auf „hinein" aufgerufen — also waehrend der
+       Beruehrung, denn nur dann zaehlt es. */
+    tonFreischalten: tonFreischalten,
+    pruefTonVorrat: function () { return tonVorrat.length; },
+    pruefPost: function (f) {
+      kanal = { send: function (p) { try { f(p && p.payload); } catch (e) {} } };
+    },
     /* Einen Tonanschluss nachstellen — damit sich pruefen laesst, was
        passiert, wenn der Browser das Abspielen verweigert. */
     pruefTon: function (id) {
