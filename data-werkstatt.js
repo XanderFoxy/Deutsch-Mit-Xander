@@ -49,26 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 67 — Wer spricht, ist nicht immer ein „er“",
+  stand: "Runde 68 — Der Verlauf war nie gespeichert, die Wortmeldungen hatten einen dritten Zustand",
 
   inArbeit: [
-    { seit: "2026-09-18T22:08",
-      text: "Leerer Name bei fremden Sprachnachrichten" },
-    { seit: "2026-09-18T22:08",
-      text: "Sprachnachrichten sollen im Hintergrund laden und nicht im Text stehen" },
-    { seit: "2026-09-18T22:08",
-      text: "Ganz nach oben scrollen bis zum ersten Rätsel" },
-    { seit: "2026-09-18T22:08",
+    { seit: "2026-09-18T22:24",
       text: "Alte „Du bist hier Häuptling“-Zeilen nachträglich aus dem Verlauf nehmen" },
+    { seit: "2026-09-18T22:24",
+      text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
+    { seit: "2026-09-18T22:24",
+      text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T22:08",
-      text: "Die Wartemeldung erkennt das Geschlechtszeichen aus dem Profil: „bis sie fertig ist“ bei Emmi, „bis er fertig ist“ bei einem Mann, „bis die Person fertig ist“ ohne Angabe" },
-    { seit: "2026-09-18T22:08",
-      text: "Das Zeichen reist in jedem Anwesenheits- und Sprachpaket mit — es muss niemand erst etwas schreiben" },
-    { seit: "2026-09-18T22:08",
-      text: "Die grüne Pille sitzt fest unter dem Chat-Kopf und verschiebt den Verlauf nicht mehr" },
+    { seit: "2026-09-18T22:24",
+      text: "Der Chat wurde seit Wochen NICHT in der gemeinsamen Tabelle abgelegt: eine Spalte hiess „farbeName“, die Tabelle kannte sie nicht, und der Fehler lief ins Leere — die Tabelle war leer, deshalb konnte niemand nach oben scrollen" },
+    { seit: "2026-09-18T22:24",
+      text: "Spalte farbe_name ergänzt; ein fehlgeschlagenes Speichern meldet sich jetzt, statt still zu verschwinden" },
+    { seit: "2026-09-18T22:24",
+      text: "20.000 Zeilen kommen vom Server statt 2.000 — Bilder nur für die letzten 200, damit das Telefon nicht ertrinkt" },
+    { seit: "2026-09-18T22:24",
+      text: "Sprachnachrichten: die Zeile mit Ton im Lager stand als leerer Name im Chat — jetzt „wird geladen“, der Ton wird geholt, und alle Wortmeldungen bleiben hinter dem Tipp ins Leere" },
+    { seit: "2026-09-18T22:24",
+      text: "Benoten: ein Schalter „📋 Noten“ in der Kopfzeile (nur für dich) — dann steht der Notenknopf an jeder geschriebenen Zeile der anderen" },
   ],
 };

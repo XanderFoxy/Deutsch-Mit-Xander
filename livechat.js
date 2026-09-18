@@ -113,7 +113,12 @@ window.LiveChat = (function () {
      localStorage ist knapp, und diese Abschrift ist nur die Notlösung
      für „kein Netz"), CHAT_SICHT ist, was aus der gemeinsamen Tabelle
      geholt und angezeigt wird. */
-  var CHAT_SICHT = 2000;              // so viele kommen vom Server
+  /* GEMELDET, mehrfach: „Ich kann immer noch nicht in die
+     Vergangenheit nach oben scrollen. Mach viel mehr Zeilen,
+     unendlich viele, damit der ganze Verlauf sichtbar wird."
+     Also dieselbe Zahl wie fuer das Geraet: zwanzigtausend Zeilen
+     kommen vom Server zurueck, nicht zweitausend. */
+  var CHAT_SICHT = 20000;             // so viele kommen vom Server
   /* Wie viele Zeilen im Arbeitsspeicher stehen duerfen. Frueher war
      das dieselbe Zahl wie beim Server — und damit war der Verlauf
      genau dort gekappt, wo man hochscrollen wollte. */
@@ -853,30 +858,58 @@ window.LiveChat = (function () {
     } catch (e) { return null; }
   }
 
+  /* WIE MAN ZWANZIGTAUSEND ZEILEN HOLT, OHNE DAS TELEFON ZU FLUTEN
+     -----------------------------------------------------------
+     Eine Zeile kann ein BILD tragen — als Datenadresse, bis zu
+     zweihunderttausend Zeichen. Zwanzigtausend solche Zeilen in einem
+     Zug waeren Hunderte von Megabyte; auf dem Handy waere das keine
+     Geschichte mehr, sondern ein Absturz.
+     Also zwei Abfragen statt einer: erst der ganze Verlauf OHNE
+     Bilder (Text ist winzig, da sind zwanzigtausend Zeilen nichts),
+     dann die Bilder der letzten zweihundert Zeilen. Weiter zurueck
+     liegende Bilder hat, wer dabei war, ohnehin im eigenen Lager —
+     und wer nicht dabei war, liest den Text, um den es geht. */
+  var BILDER_ZURUECK = 200;
   function serverLaden(raum) {
     var z = angemeldeterZugang();
     if (!z) return Promise.resolve([]);
     return z.from(TISCH)
-      .select("id,raum,autor,name,bild,text,bild_im_chat,art,farbe,erstellt")
+      .select("id,raum,autor,name,text,art,farbe,farbe_name,bild,erstellt")
       .eq("raum", raum)
       .order("erstellt", { ascending: false })
       .limit(CHAT_SICHT)
       .then(function (a) {
         if (!a || a.error || !a.data) return [];
-        return a.data.slice().reverse().map(function (r) {
+        var zeilen = a.data.slice().reverse().map(function (r) {
           return {
             id: "s" + r.id,
             von: r.autor ? "k" + String(r.autor).replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase() : "",
             name: r.name || "Gast",
             text: r.text || "",
             bild: r.bild || "",
-            bildImChat: r.bild_im_chat || "",
+            bildImChat: "",
             farbe: r.farbe || "",
+            farbeName: r.farbe_name || "",
             art: r.art || "text",
             zeit: new Date(r.erstellt).getTime(),
             eigen: false
           };
         });
+        /* Und jetzt die Bilder — nur die der juengsten Zeilen. */
+        return z.from(TISCH)
+          .select("id,bild_im_chat")
+          .eq("raum", raum)
+          .neq("bild_im_chat", "")
+          .order("erstellt", { ascending: false })
+          .limit(BILDER_ZURUECK)
+          .then(function (b) {
+            if (b && !b.error && b.data) {
+              var nach = {};
+              b.data.forEach(function (r) { nach["s" + r.id] = r.bild_im_chat || ""; });
+              zeilen.forEach(function (n) { if (nach[n.id]) n.bildImChat = nach[n.id]; });
+            }
+            return zeilen;
+          }, function () { return zeilen; });
       })
       .catch(function () { return []; });
   }
@@ -895,9 +928,36 @@ window.LiveChat = (function () {
         bild: n.bild || "",
         text: n.text || "",
         bild_im_chat: n.bildImChat || "",
-        farbe: n.farbe || zustand.farbe || "", farbeName: n.farbeName || "",
+        /* HIER LAG DER GANZE VERLUST DER VERGANGENHEIT.
+           Diese Zeile hiess „farbeName" — eine Spalte, die es in der
+           Tabelle nicht gibt. PostgREST weist eine Einfuegung mit
+           einer unbekannten Spalte KOMPLETT zurueck, und der Fehler
+           lief hier in ein leeres then(). Also wurde seit dem Tag,
+           an dem diese Spalte dazukam, KEINE EINZIGE Zeile
+           gespeichert: die Tabelle war leer, jeder sah nur seine
+           eigene Abschrift, und „nach oben scrollen" endete nach
+           wenigen Zeilen. Die Spalte heisst farbe_name — wie alle
+           anderen auch. */
+        farbe: n.farbe || zustand.farbe || "", farbe_name: n.farbeName || zustand.farbeName || "",
         art: n.art || "text"
-      }).then(function () {}, function () {});
+      }).then(function (a) {
+        /* EIN FEHLER, DEN NIEMAND SIEHT, IST KEIN FEHLER — ER IST EIN
+           DATENVERLUST. Genau daran ist der gemeinsame Verlauf
+           gescheitert: die Einfuegung schlug fehl, und niemand hat es
+           je erfahren. Ab jetzt steht es in der Konsole, und EINMAL
+           je Sitzung auch im Chat — sonst merkt es wieder keiner. */
+        if (a && a.error) sicherungFehlt(a.error);
+      }, function (f) { sicherungFehlt(f); });
+    } catch (e) { sicherungFehlt(e); }
+  }
+  var sicherungGemeldet = false;
+  function sicherungFehlt(fehler) {
+    try { console.warn("Klassenzimmer: Chatzeile nicht gespeichert —", fehler); } catch (e) {}
+    if (sicherungGemeldet) return;
+    sicherungGemeldet = true;
+    try {
+      systemZeile("\u26a0\ufe0f Diese Zeile konnte nicht im gemeinsamen Verlauf abgelegt werden \u2014 "
+        + "sie steht nur auf deinem Ger\u00e4t. (" + ((fehler && (fehler.message || fehler.hint)) || "unbekannter Grund") + ")");
     } catch (e) {}
   }
 
@@ -2804,8 +2864,12 @@ window.LiveChat = (function () {
        Sie hat eine Kennung — damit lässt sich das ausschliessen. */
     if (n.id && zustand.nachrichten.some(function (a) { return a.id === n.id; })) return;
     zustand.nachrichten.push(n);
-    if (zustand.nachrichten.length > CHAT_SICHT) {
-      zustand.nachrichten = zustand.nachrichten.slice(-CHAT_SICHT);
+    /* HIER wurde der Verlauf gekappt — und zwar auf das SERVER-Fenster,
+       nicht auf das, was der Speicher haelt. Jede neue Zeile schnitt
+       damit hinten etwas ab. Es ist dieselbe Grenze wie ueberall
+       sonst: CHAT_HALTEN. */
+    if (zustand.nachrichten.length > CHAT_HALTEN) {
+      zustand.nachrichten = zustand.nachrichten.slice(-CHAT_HALTEN);
     }
     chatSichern();
   }
@@ -7929,6 +7993,16 @@ window.LiveChat = (function () {
     sprachZurueckrufen: sprachZurueckrufen,
     liveLaeuft: liveLaeuft,
     darfSprechen: darfSprechen,
+    /* Den Ton aus dem Lager nachholen. Die Oberflaeche ruft das, wenn
+       sie eine Wortmeldung zeichnet, deren Aufnahme noch im Lager
+       liegt — sonst stuende sie dort bis zur naechsten Nachricht als
+       „wird geladen". */
+    tonNachreichen: function () {
+      return bilderNachreichen(zustand.nachrichten).then(function (etwas) {
+        if (etwas) melden();
+        return Boolean(etwas);
+      }, function () { return false; });
+    },
     /* Damit die Oberflaeche „sie" oder „er" schreiben kann. */
     geschlechtVon: geschlechtVon,
     fuerwort: function (id) { return fuerwort(geschlechtVon(id)); },

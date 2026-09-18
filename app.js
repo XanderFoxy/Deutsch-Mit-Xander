@@ -20278,6 +20278,12 @@
               <span class="lc-kopf-wort">💬 Chat</span>
               <span class="lc-kopf-stimmen">🎙️ anzeigen</span>
             </button>
+            <!-- NUR DER LEHRER SIEHT DAS. Solange es aus ist, steht an
+                 gewoehnlichen Zeilen kein Notenknopf; ist es an, steht
+                 er an jeder geschriebenen Zeile der anderen. -->
+            <button type="button" class="lc-kopf-noten" id="lcKopfNoten" hidden
+                    title="Benoten: an jeder geschriebenen Zeile der anderen einen Notenknopf zeigen"
+                    aria-pressed="false">📋 Noten</button>
             <!-- GEMELDET: „Diese ganzen Befehle, Schrift, Hintergrund,
                  Nachlesen, Verlauf löschen — die sollen den Chat nicht
                  nach unten zwingen, sondern ein bisschen kompakt und
@@ -20363,8 +20369,26 @@
                Dass er dabei Hoehe braucht, stoert nicht mehr: er
                erscheint ja nur noch beim ABSPIELEN, nie waehrend man
                den Knopf haelt. -->
-          <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
-          <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
+          <!-- EINE HUELLE NUR FUER DEN VERLAUF.
+               GEMELDET, mehrfach: „Diese Sprechblase liegt immer noch
+               ueber dem Chat-Kopf. Sie soll darunter liegen, ohne den
+               Chat zu verschieben."
+               Der Grund, warum sie immer wieder hochrutschte: sie
+               schwebt (absolute) und richtete sich damit an der ganzen
+               Chatkarte aus — also an deren Oberkante, wo der Kopf
+               steht. Ich habe daraufhin ihre Hoehe gemessen und
+               gesetzt; das stimmt aber nur, solange gemessen werden
+               KANN. Steht der Chat beim Zeichnen noch nicht (frisch
+               geoeffnet, anderer Reiter, Karte noch zugeklappt), ist
+               die Messung null — und sie sass wieder oben.
+               Jetzt braucht es keine Messung mehr: diese Huelle ist
+               ihr Bezug, und die Huelle FAENGT beim Verlauf an. Damit
+               kann sie gar nicht mehr ueber dem Kopf liegen, und Platz
+               kostet sie weiterhin keinen. -->
+          <div class="lc-verlauf-huelle">
+            <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
+            <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
+          </div>
           ${!Backend.currentUser() ? `
           <p class="lc-gast-hinweis">
             👀 Du schaust als <strong>Gast</strong> zu — mitlesen kannst du alles.
@@ -21481,6 +21505,31 @@
     }, 1000);
   }
 
+  /* Zeigt oder versteckt den Notenschalter in der Kopfzeile — und
+     faerbt ihn, wenn er an ist. Lehrer ist, wer unterrichtet; alle
+     anderen sollen den Knopf gar nicht erst sehen. */
+  function lcNotenSchalterZeichnen(bereich) {
+    const k = (bereich || document).querySelector("#lcKopfNoten");
+    if (!k) return;
+    let lehrer = false;
+    try { lehrer = Boolean(LiveChat.binLehrer && LiveChat.binLehrer()); } catch (e) {}
+    k.hidden = !lehrer;
+    k.classList.toggle("lc-kopf-noten-an", Boolean(lcNotenModus));
+    k.setAttribute("aria-pressed", lcNotenModus ? "true" : "false");
+  }
+
+  /* Den Ton aus dem Lager nachholen — gebuendelt. Beim Zeichnen
+     koennen zwanzig Zeilen gleichzeitig danach fragen; es soll aber
+     nur EIN Gang ins Lager daraus werden. */
+  let lcTonHolUhr = 0;
+  function lcTonNachreichen() {
+    if (lcTonHolUhr) return;
+    lcTonHolUhr = setTimeout(() => {
+      lcTonHolUhr = 0;
+      try { if (window.LiveChat && LiveChat.tonNachreichen) LiveChat.tonNachreichen(); } catch (e) {}
+    }, 400);
+  }
+
   function lcStimmenUmschalten(verlauf) {
     const an = verlauf.classList.toggle("lc-stimmen-offen");
     const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
@@ -21952,6 +22001,43 @@
      eine Zeile kann sich noch ändern, nachdem sie stand (das Bild
      kommt aus dem Lager nach). Siehe livechatChatAuffrischen(). */
   let livechatGezeigt = new Map();
+  /* =================================================================
+     BENOTEN — EIN SCHALTER STATT EINER VERMUTUNG
+     -----------------------------------------------------------------
+     GEMELDET: „Es gibt keine Notenanzeige, nachdem sie mir den Satz
+     geschickt hat."
+     Und frueher, genauso deutlich: „Bei normalen Nachrichten soll
+     dieses Zensieren nicht dabeistehen. Das ist nur, wenn Aufgaben
+     geloest werden, die ich schicke."
+
+     Beides ist wahr, und mein bisheriger Weg hat nur das zweite
+     erfuellt: der Notenknopf kam ausschliesslich an einer Antwort auf
+     /satz oder /wort. Wer im Unterricht einfach einen Satz schreibt,
+     weil er darum gebeten wurde, bekam keinen — es gab ja keine
+     „Aufgabe" im Sinne des Programms.
+
+     Raten will ich das nicht (welcher Satz ist eine Antwort und
+     welcher Small Talk? Das weiss nur der Lehrer). Also entscheidet
+     der Lehrer: ein Schalter in der Kopfzeile, nur fuer ihn sichtbar.
+     Ist er an, steht der Notenknopf an JEDER geschriebenen Zeile der
+     anderen; ist er aus, bleibt es beim Alten. Die Antworten auf
+     /satz und /wort bekommen ihn weiterhin immer — dort ist es ja
+     eindeutig.
+     Der Schalter bleibt gemerkt, damit man ihn nicht jede Stunde neu
+     sucht. */
+  const LC_NOTEN_SCHLUESSEL = "dma_lc_noten";
+  let lcNotenModus = (() => {
+    try { return localStorage.getItem(LC_NOTEN_SCHLUESSEL) === "1"; } catch (e) { return false; }
+  })();
+  /* Benotbar ist, was jemand GESCHRIEBEN hat. Ein Aufkleber, eine
+     Animation, eine Sprachnachricht und die Systemzeilen sind es
+     nicht — eine Note auf ein Konfetti waere Unsinn. */
+  function lcBenotbar(n) {
+    const art = n.art || "text";
+    if (art !== "text" && art !== "aktion" && art !== "ruf") return false;
+    if (n.sprach || n.sprachImLager) return false;
+    return Boolean(String(n.text || "").trim());
+  }
   /* Welche Sprachnachrichten schon von selbst gelaufen sind. Ohne
      diese Menge liefe dieselbe Aufnahme bei jedem Neuzeichnen des
      Verlaufs wieder los — und der Verlauf wird oft neu gezeichnet. */
@@ -22211,21 +22297,14 @@
          sich aendern (aufgeklappte Befehle, ein Hintergrundbild, ein
          anderes Thema). Dann rutscht sie nach oben, ueber den Kopf.
 
-         Jetzt wird sie nicht mehr ausgerechnet, sondern gemessen und
-         gesetzt: genau an die Oberkante des Chatverlaufs. Weiter oben
-         kann sie damit gar nicht landen. */
-      const verlauf = document.getElementById("lcVerlauf");
-      if (verlauf && verlauf.offsetParent === leiste.offsetParent) {
-        leiste.style.top = (verlauf.offsetTop + 3) + "px";
-      } else if (verlauf) {
-        /* Verschiedene Bezugspunkte: dann ueber die Bildschirmlage
-           rechnen — auch das ist gemessen, nicht geraten. */
-        const bezug = leiste.offsetParent || verlauf.parentElement;
-        if (bezug) {
-          const a = bezug.getBoundingClientRect(), b = verlauf.getBoundingClientRect();
-          leiste.style.top = Math.round(b.top - a.top + 3) + "px";
-        }
-      }
+         Auch das Messen war noch nicht der Weg: gemessen werden kann
+         nur, was schon steht. Beim ersten Zeichnen steht es oft nicht,
+         und dann war die Messung null — also wieder oben.
+         Jetzt liegt sie in einer eigenen Huelle, die genau beim
+         Verlauf anfaengt (.lc-verlauf-huelle). Ueber dem Kopf kann sie
+         damit ueberhaupt nicht mehr landen — ohne Messung, ohne
+         Rechnung, ohne Platzverbrauch. */
+      leiste.style.top = "";
     } catch (e) {}
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
@@ -23782,6 +23861,9 @@
   function livechatChatAuffrischen(l) {
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
+    /* Aus demselben Grund wie beim Fokusschalter: man wird erst im
+       Raum zum Lehrer, und dann muss der Knopf auch erscheinen. */
+    lcNotenSchalterZeichnen();
     /* Die gewählte Schrift (/schrift 1 … 4) hängt am Verlauf selbst —
        so gilt sie für alles darin, ohne dass jede Zeile sie mitträgt. */
     const schrift = l.schrift || (LiveChat.gemerkteSchrift ? LiveChat.gemerkteSchrift() : "1");
@@ -23834,7 +23916,11 @@
          und Stelle ersetzt. */
       const marke = [n.text || "", n.art || "", n.name || "", n.farbe || "",
                      n.bildImChat ? "B" : (n.bildImLager ? "L" : (n.bildWeg ? "W" : "")),
-                     n.bild || "", n.wirkung || ""].join("\u0001");
+                     n.bild || "", n.wirkung || "",
+                     /* Der Notenschalter gehoert mit in die Marke: sonst
+                        bekaemen erst die NAECHSTEN Zeilen ihren Knopf,
+                        und die, um die es gerade geht, nie. */
+                     lcNotenModus ? "N" : ""].join("\u0001");
       const schon = livechatGezeigt.get(n.id);
       if (schon === marke) return;
       livechatGezeigt.set(n.id, marke);
@@ -23884,7 +23970,9 @@
          „hallo" und „bis gleich". Ob eine Zeile eine Antwort ist,
          weiss livechat.js (aufgabeVersuch) und haengt es als Marke an
          die Nachricht; hier wird nur noch gefragt. */
-      if (n.versuch && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
+      const darfBenoten = n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()
+        && (n.versuch || (lcNotenModus && lcBenotbar(n)));
+      if (darfBenoten) {
         const stift = document.createElement("button");
         stift.type = "button";
         stift.className = "lc-benoten";
@@ -24145,9 +24233,40 @@
            wie ein Animationston. Danach steht sie als Knopf da. Ist
            sie vergangen (der Verlauf reicht sie nicht durch, das
            Geraet sichert sie nicht), sagt die Zeile das auch. */
-        if (n.sprach || n.sprachWeg || n.art === "sprach") {
+        /* GEMELDET, und ich habe es nachgemessen — es stimmte:
+           „Bei Personen steht der leere Name, wenn sie eine
+           Sprachnachricht schicken", und: „Die Sprachnachrichten sind
+           nicht mehr aufzurufen."
+
+           Eine Wortmeldung hat DREI Zustaende, nicht zwei:
+             1. der Ton ist da            → Knopf zum Nachhoeren
+             2. der Ton liegt im Lager    → er kommt gleich (IndexedDB)
+             3. der Ton ist wirklich weg  → das sagt die Zeile
+           Zustand 2 kannte diese Stelle nicht. Die Zeile fiel damit
+           durch zur gewoehnlichen Textzeile — und eine Wortmeldung hat
+           keinen Text. Uebrig blieb genau das Gemeldete: Uhrzeit,
+           Name, nichts. Und weil sie nicht als Wortmeldung galt, stand
+           sie auch noch offen im Chat statt hinter dem Tipp ins Leere.
+
+           Der Ton wird dabei nicht nur abgewartet, sondern geholt:
+           lcTonNachreichen() stoesst das Lager an (siehe unten). */
+        const istWortmeldung = Boolean(n.sprach || n.sprachWeg || n.sprachImLager
+          || n.art === "sprach" || n.art === "live" || n.art === "quittung");
+        if (istWortmeldung) {
           const dauer = Number(n.sprachSek) || 0;
-          if (!n.sprach) {
+          /* Die Marke gilt fuer alle drei Zustaende. Frueher stand sie
+             nur am Knopf — eine Zeile ohne Ton stand deshalb offen im
+             Chat, obwohl sie dort gerade nichts zu suchen hat. */
+          z.classList.add("lc-stimme");
+          if (!n.sprach && n.sprachImLager && !n.sprachWeg) {
+            /* Zustand 2: er kommt gleich. Kein Schreckensruf. */
+            const w = document.createElement("span");
+            w.className = "lc-sprach-laedt";
+            w.textContent = "🎤 Sprachnachricht wird geladen …"
+              + (dauer ? " (" + dauer + "″)" : "");
+            t.appendChild(w);
+            lcTonNachreichen();
+          } else if (!n.sprach) {
             const w = document.createElement("span");
             w.className = "lc-blase-bildweg";
             w.textContent = "🎤 Sprachnachricht — nicht mehr da";
@@ -24336,9 +24455,6 @@
 
                Waehrend man spricht, sieht man also gar nichts — oben
                im Kopf steht ja, wer gerade dran ist, und das reicht. */
-            if (art === "quittung" || art === "live" || art === "sprach") {
-              z.classList.add("lc-stimme");
-            }
             if (frisch && !lcSprachGehoert.has(n.id)) {
               lcSprachGehoert.add(n.id);
               /* Eine Sprachnachricht ist kein Effektgeraeusch: sie
@@ -25007,6 +25123,18 @@
         e.stopPropagation();
         const v = area.querySelector("#lcVerlauf");
         if (v) lcStimmenUmschalten(v);
+      });
+      /* Der Notenschalter — und er wird bei jedem Zeichnen nachgezogen,
+         weil man erst spaeter Lehrer wird (oder es nicht mehr ist). */
+      lcNotenSchalterZeichnen(area);
+      area.querySelector("#lcKopfNoten")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lcNotenModus = !lcNotenModus;
+        try { localStorage.setItem(LC_NOTEN_SCHLUESSEL, lcNotenModus ? "1" : "0"); } catch (e2) {}
+        renderLiveChat();
+        showToast(lcNotenModus
+          ? "📋 Benoten ist an — an jeder geschriebenen Zeile der anderen steht jetzt „Note“."
+          : "📋 Benoten ist aus — nur Antworten auf /satz und /wort behalten ihren Notenknopf.");
       });
       /* Der Fokusschalter wird bei JEDEM Zeichnen nachgezogen — nicht
          nur dann, wenn die Sprachleiste gerade gebaut wird. Sonst
@@ -54654,6 +54782,14 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Den Chatverlauf zeichnen und nachsehen, WO er steht. „Wenn man
          in den Raum kommt, wird immer oben zuerst angezeigt" — das
          laesst sich nur messen, wenn man es wirklich zeichnet. */
+      /* Der Notenschalter: umlegen, zeichnen, und dann nachsehen, an
+         welchen Zeilen wirklich ein Notenknopf steht. */
+      notenSchalter: (an) => { lcNotenModus = Boolean(an); return lcNotenModus; },
+      notenKnoepfe: () => [...document.querySelectorAll("#lcVerlauf .lc-zeile")].map((z) => ({
+        text: ((z.querySelector(".lc-zeilentext") || {}).textContent || "").trim(),
+        art: (z.className.match(/lc-zeile-(\w+)/) || [])[1] || "",
+        note: Boolean(z.querySelector(".lc-benoten"))
+      })),
       chatStand: (zeilen, schrift) => {
         livechatGezeigt = new Map();
         livechatEffekteAb = 0;

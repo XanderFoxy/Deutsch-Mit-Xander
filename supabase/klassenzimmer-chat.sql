@@ -62,3 +62,25 @@ create policy "eigenes loeschen" on public.klassenzimmer_chat
 -- belegen Platz. Gelegentlich von Hand ausfuehren oder als
 -- pg_cron-Auftrag einrichten.
 -- delete from public.klassenzimmer_chat where erstellt < now() - interval '30 days';
+
+-- =====================================================================
+-- NACHTRAG: DIE FARBE DES NAMENS
+-- ---------------------------------------------------------------------
+-- Jede:r kann sich im Klassenzimmer eine Namensfarbe geben. Sie besteht
+-- aus zwei Dingen: dem Farbwert selbst und ihrem Namen („Waldgruen").
+-- Der Farbwert kam frueh dazu, der Name nicht — und der Code hat ihn
+-- trotzdem mitgeschickt, unter dem Namen „farbeName".
+--
+-- Das war der Fehler, an dem der gemeinsame Verlauf ZWEI Wochen lang
+-- still gestorben ist: PostgREST weist eine Einfuegung mit einer
+-- unbekannten Spalte komplett zurueck. Es wurde also gar nichts
+-- gespeichert — die Tabelle war leer, und niemand konnte nach oben
+-- scrollen, weil es nichts zu scrollen gab.
+--
+-- Beide Spalten stehen deshalb jetzt hier, wo sie hingehoeren. Die
+-- Anweisungen sind gefahrlos: sie tun nichts, wenn die Spalte schon da
+-- ist.
+alter table public.klassenzimmer_chat
+  add column if not exists farbe      text not null default '';
+alter table public.klassenzimmer_chat
+  add column if not exists farbe_name text not null default '';

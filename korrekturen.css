@@ -7655,6 +7655,11 @@ body.lc-schreibt .tutor-reiter {
      Laufzeit aus und setzt sie hier als --lc-grund. Damit ist es in
      jedem Thema genau die Flaeche, auf der sie frueher lag. */
   position: absolute;
+  /* Ihr Bezug ist die Huelle des Verlaufs, nicht die ganze Chatkarte.
+     Deshalb ist „oben" hier die Oberkante des VERLAUFS — sie liegt
+     also immer unter dem Chat-Kopf, ohne dass jemand etwas messen
+     muss. */
+  top: 3px;
   left: 4px;
   right: 4px;
   z-index: 26;
@@ -8564,6 +8569,80 @@ body.lc-schreibt .tutor-reiter {
 }
 .lc-nach-unten:hover { background: rgba(224, 150, 74, 0.2); }
 .lc-chat { position: relative; }
+
+/* =========================================================
+   DIE HUELLE DES VERLAUFS
+   ---------------------------------------------------------
+   Sie enthaelt nur zwei Dinge: die gruene Pille und den
+   Chatverlauf. Ihr einziger Zweck ist, der Pille einen Bezug zu
+   geben, der GENAU beim Verlauf anfaengt — damit die Pille nie
+   wieder ueber dem Chat-Kopf liegt und trotzdem keine Zeile
+   Platz kostet.
+   Sie ist selbst voellig durchsichtig und aendert nichts am
+   Aufbau: dieselbe Spalte, dieselbe Hoehe, dieselbe Farbe.
+   ========================================================= */
+/* =========================================================
+   DER NOTENSCHALTER IN DER KOPFZEILE
+   ---------------------------------------------------------
+   Nur der Lehrer sieht ihn (app.js setzt „hidden"). Aus sieht er
+   aus wie die anderen kleinen Kopfknoepfe; an ist er warm
+   unterlegt, damit man auf einen Blick weiss, dass an jeder
+   fremden Zeile gerade ein Notenknopf steht.
+   ========================================================= */
+.lc-kopf-noten {
+  border: 1px solid rgba(224, 150, 74, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  margin-left: 6px;
+  opacity: 0.75;
+  cursor: pointer;
+}
+.lc-kopf-noten:hover { opacity: 1; }
+.lc-kopf-noten[hidden] { display: none; }
+.lc-kopf-noten-an {
+  opacity: 1;
+  background: rgba(224, 150, 74, 0.22);
+  border-color: rgba(224, 150, 74, 0.7);
+}
+/* Auf schmalen Geraeten reicht das Zeichen — „Noten" schreibt der
+   Knopf dort nicht mehr aus, sonst bricht die Kopfzeile um. */
+@media (max-width: 380px) {
+  .lc-kopf-noten { font-size: 0; padding: 2px 6px; }
+  .lc-kopf-noten::before { content: "\1F4CB"; font-size: 0.8rem; }
+}
+
+/* Die Wortmeldung, deren Aufnahme noch im Lager liegt. Sie ist kein
+   Fehler — sie kommt gleich. Also leise, ohne Warnfarbe, mit einem
+   ruhigen Pulsieren, damit man sieht, dass etwas unterwegs ist. */
+.lc-sprach-laedt {
+  opacity: 0.6;
+  font-size: 0.82em;
+  animation: lcLaedtPuls 1.6s ease-in-out infinite;
+}
+@keyframes lcLaedtPuls {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.8; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sprach-laedt { animation: none; }
+}
+
+.lc-verlauf-huelle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Der Sprungknopf sitzt jetzt in der Huelle statt in der ganzen
+   Karte — also eine Handbreit ueber dem UNTEREN Rand des
+   Verlaufs, nicht ueber der Schreibzeile. */
+.lc-verlauf-huelle > .lc-nach-unten { bottom: 10px; }
 
 .lc-ruecknahmen {
   display: flex;
