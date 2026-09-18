@@ -2730,9 +2730,6 @@ window.LiveChat = (function () {
     zustand.lage = "verbindet";
     zustand.fehler = "";
     zustand.ichBild = o.bild || bildLaden();
-    /* Nur fuer den Klang eines Schreis: maennlich, weiblich, divers
-       oder leer. Steht im Profil, reist mit der Nachricht mit. */
-    zustand.geschlecht = o.geschlecht || zustand.geschlecht || "";
     zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
     zustand.farbeName = zustand.farbeName || gemerkteNamensfarbe();
     zustand.sprechbild = zustand.sprechbild || gemerktesSprechbild();
@@ -5524,8 +5521,7 @@ window.LiveChat = (function () {
     if (zusatz && zusatz.an) n.an = zusatz.an;
     serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
-                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName,
-                 sprechbild: zustand.sprechbild, geschlecht: zustand.geschlecht || "" };
+                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName, sprechbild: zustand.sprechbild };
     if (zusatz) Object.keys(zusatz).forEach(function (k) { post[k] = zusatz[k]; });
     senden(post);
     melden();
@@ -5801,23 +5797,9 @@ window.LiveChat = (function () {
       if (wen) {
         zustand.eingeladen[wen.id] = true;
         postSenden(wen.id, { art: "einladung", raum: zustand.raum, zeit: Date.now() });
-        systemZeile("Eingeladen: " + wen.name + ". Eine Einladung ist keine Frage mit "
+        return systemZeile("Eingeladen: " + wen.name + ". Eine Einladung ist keine Frage mit "
           + "Ja und Nein — sie macht den Raum für " + wen.name + " auf. Hereinkommen "
           + wen.name + " muss selbst.");
-        /* UND TROTZDEM EIN BRIEF — wenn die Person nicht hier bei
-           mir im Raum sitzt.
-           GEMELDET: „Ich moechte Emmy einladen koennen, unabhaengig
-           davon, ob sie online ist oder nicht", und: „Wir haben ja
-           hier auch ein Problem wegen dem Knopf gehabt — die koennen
-           ja nicht reinfinden."
-           Der Ruf ueber die Leitung ist fluechtig: er blinkt einmal
-           auf, und wer in dem Moment woanders hinsieht, hat ihn
-           verpasst. Der Brief bleibt liegen, mit dem Knopf, der
-           direkt hierher fuehrt. Beides zusammen kostet nichts und
-           verliert niemanden. Wer hier im selben Raum sitzt,
-           bekommt keinen Brief — der sieht mich ja. */
-        if (!personNachName(name_)) einladungInsPostfach(name_, true);
-        return true;
       }
       einladungInsPostfach(name_);
       return true;
@@ -6274,13 +6256,8 @@ window.LiveChat = (function () {
        Denselben Weg wie der Knopf in den Einstellungen, nur von
        hier aus — damit man nicht aus dem Raum gehen muss, um zum
        Unterricht zu rufen. Eine Rundmail geht an ALLE und laesst
-       sich nicht zurueckholen: deshalb nur der Betreiber.
-
-       KEINE Zeitsperre mehr. Hier standen dreissig Minuten, und die
-       sind raus — ausdruecklich: „Das war keine Zeitschaltuhr haben.
-       Das ist totaler Quatsch." Wenn die Leute den Knopf nicht
-       finden, muss man sie noch einmal rufen duerfen. Wer rufen
-       darf, entscheidet der Rang; WANN, entscheidet der Mensch. */
+       sich nicht zurueckholen: deshalb nur der Betreiber, und
+       hoechstens alle 30 Minuten. */
     if (art === "diagnose") return diagnose();
     if (art === "unterricht") {
       if (!binBetreiber()) {
@@ -6293,6 +6270,13 @@ window.LiveChat = (function () {
       }
       if (!B_.sendBroadcastMessage) {
         return systemZeile("Die Rundmail fehlt in dieser Fassung. /diagnose zeigt, was da ist.");
+      }
+      var letzteR = 0;
+      try { letzteR = Number(localStorage.getItem("dma_unterricht_glocke") || 0); } catch (e) {}
+      if (letzteR && Date.now() - letzteR < 30 * 60 * 1000) {
+        var restM = Math.ceil((30 * 60 * 1000 - (Date.now() - letzteR)) / 60000);
+        return systemZeile("Eben erst gerufen — der nächste Ruf geht in " + restM + " Minuten wieder. "
+          + "(Eine Rundmail kommt bei allen an; zweimal kurz hintereinander wäre Belästigung.)");
       }
       var satzU = rest.trim()
         || "Ich bin jetzt im Klassenzimmer und mache Unterricht — komm dazu, ich freue mich auf dich!";
@@ -6558,7 +6542,7 @@ window.LiveChat = (function () {
      ein Tipp im Postfach genau HIERHIN fuehrt und nicht auf
      die Startseite.
      ========================================================= */
-  function einladungInsPostfach(name, still) {
+  function einladungInsPostfach(name) {
     /* EINE ABSAGE MUSS SAGEN, WORAN ES LIEGT.
        GEMELDET: „Einladen kann ich immer noch nicht." Mit einem
        pauschalen „steht nicht zur Verfuegung" kann niemand etwas
@@ -6583,14 +6567,12 @@ window.LiveChat = (function () {
         + "Im Übungsbetrieb kannst du nur einladen, wer gerade da ist.");
       return;
     }
-    if (!still) systemZeile("Suche „" + name + "“ …");
+    systemZeile("Suche „" + name + "“ …");
     B.searchUsers(name).then(function (treffer) {
       var liste = (treffer || []).filter(function (t) { return t && t.id && t.name; });
       if (!liste.length) {
-        if (!still) {
-          systemZeile("Es gibt niemanden mit dem Namen „" + name + "“. "
-            + "Schreib den Namen so, wie er im Profil steht — Gross- und Kleinschreibung ist egal.");
-        }
+        systemZeile("Es gibt niemanden mit dem Namen „" + name + "“. "
+          + "Schreib den Namen so, wie er im Profil steht — Gross- und Kleinschreibung ist egal.");
         return;
       }
       /* Mehrere Treffer: dann erst fragen. Eine Einladung an die
@@ -6604,29 +6586,17 @@ window.LiveChat = (function () {
         return;
       }
       var ziel = genau[0] || liste[0];
-      /* HIER STAND EINE ABSAGE, UND SIE WAR FALSCH.
-         Sie lautete: „ist gerade selbst in einem Raum — da braucht
-         es keinen Brief", und dann passierte gar nichts. Genau das
-         war der Riegel, der sich wie „ich kann das nicht abschicken"
-         angefuehlt hat.
-
-         Ausdruecklich gewuenscht: „Das Einladen von Leuten soll
-         nicht gesperrt sein … ich moechte das selber entscheiden
-         koennen", und frueher schon: „dass ich Emmy einladen kann,
-         unabhaengig davon, ob sie online ist oder nicht."
-
-         Also: der Brief geht IMMER. Dass jemand irgendwo sitzt, ist
-         eine Auskunft, kein Grund, die Einladung zu verschlucken —
-         wer in einem anderen Raum sitzt, sieht meinen Ruf ja gerade
-         nicht. Die Auskunft wird trotzdem gesagt, damit man weiss,
-         dass man auch einfach hingehen koennte. */
-      var woAnders = "";
+      /* Sitzt die Person schon irgendwo? Dann kein Brief. */
+      var drin = false;
       Object.keys(praesenzDa).forEach(function (id) {
         var e = praesenzDa[id];
-        if (e && e.raum && String(e.name || "").toLowerCase() === String(ziel.name).toLowerCase()) {
-          woAnders = e.raum;
-        }
+        if (e && e.raum && String(e.name || "").toLowerCase() === String(ziel.name).toLowerCase()) drin = true;
       });
+      if (drin) {
+        systemZeile(ziel.name + " ist gerade selbst in einem Raum — da braucht es keinen Brief. "
+          + "Mit  /f " + ziel.name + "  gehst du hin.");
+        return;
+      }
       var link = adresseMitRaum(zustand.raum);
       /* GEMELDET: „Im Briefkasten steht nur die Adresszeile … Wir
          hatten das frueher immer so, dass man das anklicken konnte
@@ -6646,15 +6616,7 @@ window.LiveChat = (function () {
         + "die Einladung bleibt stehen.\n\n" + link
         + "\n[RAUM:" + zustand.raum + "]";
       return B.sendPrivateMessage(ziel.id, text, null).then(function () {
-        if (woAnders && woAnders !== zustand.raum) {
-          systemZeile("✉️ Die Einladung liegt in " + ziel.name + "s Postfach, mit Knopf hierher. "
-            + "(" + ziel.name + " sitzt gerade in „" + raumKlartext(woAnders) + "“ — "
-            + "mit  /f " + ziel.name + "  gehst du selbst hin.)");
-        } else if (still) {
-          systemZeile("✉️ Und zur Sicherheit liegt die Einladung auch in " + ziel.name + "s Postfach.");
-        } else {
-          systemZeile("✉️ " + ziel.name + " war nicht da — die Einladung liegt jetzt im Postfach, mit Link hierher.");
-        }
+        systemZeile("✉️ " + ziel.name + " war nicht da — die Einladung liegt jetzt im Postfach, mit Link hierher.");
       });
     }).catch(function (e) {
       systemZeile("Das ging nicht: " + ((e && e.message) || "unbekannter Fehler")
@@ -6767,14 +6729,12 @@ window.LiveChat = (function () {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
       text: t, art: alsAktion ? "aktion" : "text",
-      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-      geschlecht: zustand.geschlecht || ""
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName
     };
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
-             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-             sprechbild: zustand.sprechbild, geschlecht: zustand.geschlecht || "" });
+             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName, sprechbild: zustand.sprechbild });
     melden();
   }
 
@@ -7054,12 +7014,6 @@ window.LiveChat = (function () {
                sprechbild: x });
       melden();
       return true;
-    },
-    /* Das Profil ist beim Betreten nicht immer schon geladen —
-       dann kann app.js die Angabe hier nachreichen. */
-    geschlechtSetzen: function (x) {
-      zustand.geschlecht = String(x || "");
-      return zustand.geschlecht;
     },
     binLehrer: binLehrer,
     binBetreiber: binBetreiber,

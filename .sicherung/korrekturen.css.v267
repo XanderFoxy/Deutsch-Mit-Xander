@@ -8199,56 +8199,25 @@ body.lc-schreibt .tutor-reiter {
   100% { transform: scale(1); }
 }
 /* Die Welle. Sie liegt ÜBER dem Chat, nimmt aber keine Klicks an —
-   sonst könnte man zwei Sekunden lang nichts antippen.
-
-   GEMELDET: „Diese hässliche Animation ist immer noch dabei, die so
-   eine Schachtel-Optik hat, weil sie oben und unten eine Kontrastkante
-   zeigt. Das sieht nicht flüssig aus. Sowas darf nicht sein."
-
-   Er hat recht, und der Grund ist im alten Code mit blossem Auge
-   ablesbar: Der Kasten war genau so hoch wie der Chat (height: 100%,
-   bottom: 0), und die Farbe stand an SEINER UNTERKANTE noch bei 22 %
-   Deckkraft — dort hörte sie nicht auf, dort wurde sie ABGESCHNITTEN.
-   Eine Fläche, die bei 22 % endet, hat eine Kante. Sobald die
-   Animation den Kasten nach oben schob (translateY -58 %), wanderte
-   genau diese Kante als waagerechte Linie durch den Chat. Dazu kam
-   scaleY(0.25 → 1.5): eine Skalierung staucht den Verlauf, wodurch
-   der weiche Teil schmal und die Kante noch härter wurde. Zusammen
-   ergibt das die Schachtel.
-
-   Jetzt anders herum gedacht: Der Kasten ist ABSICHTLICH viel grösser
-   als der Chat (220 % hoch, oben und unten weit darüber hinaus), und
-   die Farbe sitzt als BAND in seiner Mitte — nach oben wie nach unten
-   auf null auslaufend, lange bevor der Kasten endet. Die Ränder des
-   Kastens liegen damit immer im vollständig durchsichtigen Bereich,
-   und was durchsichtig ist, kann keine Kante zeigen. Es wird auch
-   nicht mehr skaliert, nur noch verschoben — so behält das Band auf
-   dem ganzen Weg dieselbe weiche Form. */
+   sonst könnte man zwei Sekunden lang nichts antippen. */
 .lc-schallt::after {
   content: "";
   position: absolute;
-  left: -10%; right: -10%;
-  top: -60%;
-  height: 220%;
+  left: 0; right: 0;
+  bottom: 0;
+  height: 100%;
   pointer-events: none;
   z-index: 4;
-  background: linear-gradient(to top,
-              rgba(255, 206, 85, 0)     0%,
-              rgba(255, 206, 85, 0)     33%,
-              rgba(255, 206, 85, 0.03)  39%,
-              rgba(255, 206, 85, 0.09)  45%,
-              rgba(255, 206, 85, 0.14)  50%,
-              rgba(255, 206, 85, 0.09)  55%,
-              rgba(255, 206, 85, 0.03)  61%,
-              rgba(255, 206, 85, 0)     67%,
-              rgba(255, 206, 85, 0)     100%);
-  animation: lcSchallWelle 1800ms cubic-bezier(.24, .62, .28, 1) both;
+  background: radial-gradient(120% 60% at 50% 100%,
+              rgba(255, 206, 85, 0.22) 0%,
+              rgba(255, 206, 85, 0.10) 34%,
+              rgba(255, 206, 85, 0) 62%);
+  animation: lcSchallWelle 1800ms ease-out both;
 }
 @keyframes lcSchallWelle {
-  0%   { opacity: 0; transform: translateY(46%); }
-  12%  { opacity: 1; }
-  74%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-46%); }
+  0%   { opacity: 0;   transform: translateY(18%) scaleY(0.25); }
+  14%  { opacity: 1; }
+  100% { opacity: 0;   transform: translateY(-58%) scaleY(1.5); }
 }
 /* Der Chat muss dafür ein Bezugspunkt sein — ohne das säße die
    Welle am Fenster statt am Klassenzimmer. */

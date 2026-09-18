@@ -14530,17 +14530,6 @@
      einzeln das Tor aufrufen, würde ich früher oder später einen
      vergessen — und genau dort käme dann wieder jemand ohne Ton
      herein. Deshalb gehen alle durch diese eine Funktion. */
-  /* Was im Profil unter „Geschlechtssymbol" steht — maennlich,
-     weiblich, divers oder nichts. Mehr wird davon nicht benutzt:
-     es entscheidet allein, welche Stimme einen Schrei vorliest. */
-  function livechatGeschlecht() {
-    try {
-      const p = Backend.currentProfile && Backend.currentProfile();
-      const e = (p && (p.extraProfileData || p.extra_profile_data)) || {};
-      return e.genderSymbol || "";
-    } catch (e) { return ""; }
-  }
-
   function livechatHinein(raum, danach) {
     livechatTor(raum, (wahl) => {
       LiveChat.betreten(raum, {
@@ -14553,11 +14542,6 @@
            wie bisher: Häuptling wird nur, wer einen leeren Nebenraum
            aufmacht. */
         betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
-        /* Damit ein Schrei von mir maennlich klingt und einer von
-           Emmy weiblich — die Angabe steht im Profil und reist mit
-           der Nachricht mit. Wer nichts eingetragen hat, bekommt die
-           Standardstimme; niemand wird geraten. */
-        geschlecht: livechatGeschlecht(),
         mitBild: wahl.mitBild === true
       }).then(() => {
         renderLiveChat();
@@ -21203,7 +21187,7 @@
   /* Spielt ein Geraeusch. „wirkung" ist der Name des EFFEKTS — daraus
      kommt der Plan (Dauer und Schleife). Fehlt er, bleibt es beim
      alten Verhalten: einmal abspielen und fertig. */
-  function lcGeraeusch(name, wirkung, laut) {
+  function lcGeraeusch(name, wirkung) {
     if (!lcToeneAn() || !lcGeraeuschDa(name)) return false;
     try {
       let a = lcGeraeuschAblage[name];
@@ -21217,13 +21201,7 @@
       if (a.__lcStop) { clearTimeout(a.__lcStop); a.__lcStop = 0; }
       if (a.__lcBlende) { clearInterval(a.__lcBlende); a.__lcBlende = 0; }
       try { a.currentTime = 0; } catch (e) {}
-      /* Wie laut? Normalerweise die Haelfte. Der Hall unter einem
-         Schrei will aber DEZENT sein: gewuenscht war „es soll auch
-         dezent wie als Nachhall sein" — er traegt die gesprochene
-         Stimme, er uebertoent sie nicht. Deshalb darf der Aufrufer
-         eine eigene Lautstaerke nennen. */
-      const SPITZE = (typeof laut === "number" && laut >= 0 && laut <= 1) ? laut : 0.5;
-      a.volume = SPITZE;
+      a.volume = 0.5;
       const plan = LC_TON_PLAN[wirkung || name];
       a.loop = Boolean(plan && plan.schleife);
       const v = a.play();
@@ -21238,12 +21216,12 @@
           let rest = BLENDE;
           a.__lcBlende = setInterval(() => {
             rest -= schritt;
-            a.volume = Math.max(0, SPITZE * (rest / BLENDE));
+            a.volume = Math.max(0, 0.5 * (rest / BLENDE));
             if (rest <= 0) {
               clearInterval(a.__lcBlende); a.__lcBlende = 0;
               try { a.pause(); a.currentTime = 0; } catch (e) {}
               a.loop = false;
-              a.volume = SPITZE;
+              a.volume = 0.5;
             }
           }, schritt);
         }, Math.max(0, bis - BLENDE));
@@ -22155,129 +22133,27 @@
      Findet sich keine, wird nichts gesprochen — lieber gar nicht als
      falsch. */
   let lcStimmenGeladen = null;
-
-  /* Alle DEUTSCHEN Stimmen des Geraets. Bewusst jedes Mal frisch
-     geholt: bei manchen Browsern ist die Liste beim ersten Aufruf
-     leer und fuellt sich erst, wenn „voiceschanged" gefeuert hat.
-     Wer sie einmal merkt, merkt sich die Leere. */
-  function lcDeutscheStimmen() {
+  function lcDeutscheStimme() {
     try {
-      if (!window.speechSynthesis) return [];
+      if (!window.speechSynthesis) return null;
       const alle = window.speechSynthesis.getVoices() || [];
-      return alle.filter((v) => /^de(-|$)/i.test(v.lang || ""));
-    } catch (e) { return []; }
+      if (!alle.length) return null;
+      const deutsch = alle.filter((v) => /^de(-|$)/i.test(v.lang || ""));
+      if (!deutsch.length) return null;
+      /* Eine maennliche Stimme klingt tiefer und traegt die Drohung
+         besser; gibt es keine, tut es jede deutsche. */
+      return deutsch.find((v) => /male|mann|markus|stefan|conrad|klaus/i.test(v.name || ""))
+          || deutsch[0];
+    } catch (e) { return null; }
   }
 
-  /* WIE MAN EINER STIMME IHR GESCHLECHT ANSIEHT.
-     Die Schnittstelle sagt es NICHT — eine Stimme hat „name" und
-     „lang", mehr nicht. Es bleibt also der Name, und der ist
-     geraeteabhaengig. Deshalb stehen hier die Namen, die die Geraete
-     wirklich vergeben:
-       Apple:     Anna, Helena, Petra · Markus, Martin, Viktor, Yannick
-       Microsoft: Hedda, Katja, Amala, Louisa, Seraphina · Stefan, Conrad, Killian
-       Google:    „Google Deutsch" — eine Frauenstimme
-     Die Wortgrenzen sind wichtig: ohne sie steckt „male" in „female",
-     und jede Frauenstimme waere ein Mann. */
-  const LC_STIMME_FRAU = /\b(frau|female|weiblich|anna|petra|katja|marlene|hedda|helena|vicki|amala|louisa|seraphina|gisela|maja|klara|elke|tanja|steffi)\b|google deutsch/i;
-  const LC_STIMME_MANN = /\b(mann|male|maennlich|m\u00e4nnlich|markus|stefan|conrad|klaus|viktor|yannick|martin|killian|bernd|christoph|jonas|ralf|florian)\b/i;
-
-  /* GEWUENSCHT: „vielleicht je nach Person — wenn es ein Mann
-     geschrieben hat, dass es dann maennlich klingt, und wenn es eine
-     Frau geschrieben hat, dass es dann weiblich klingt."
-     Das Geschlecht kommt aus dem Profil des ABSENDERS und reist mit
-     der Nachricht mit; es haengt nicht am Geraet, auf dem es klingt. */
-  function lcSchreiStimme(geschlecht) {
-    const deutsch = lcDeutscheStimmen();
-    if (!deutsch.length) return null;
-    const will = String(geschlecht || "").trim().toLowerCase();
-    if (will === "weiblich" || will === "w" || will === "\u2640") {
-      const t = deutsch.find((v) => LC_STIMME_FRAU.test(v.name || ""));
-      if (t) return t;
-    }
-    if (will === "maennlich" || will === "m\u00e4nnlich" || will === "m" || will === "\u2642") {
-      const t = deutsch.find((v) => LC_STIMME_MANN.test(v.name || ""));
-      if (t) return t;
-    }
-    /* Kein Wunsch, „divers", oder das Geraet hat die passende nicht:
-       eine tiefe Stimme traegt die Drohung am besten, sonst die
-       erste deutsche, die es ueberhaupt gibt. */
-    return deutsch.find((v) => LC_STIMME_MANN.test(v.name || "")) || deutsch[0];
-  }
-  function lcDeutscheStimme() { return lcSchreiStimme(""); }
-
-  /* =================================================================
-     DER SCHREI, GESPROCHEN — UND WARUM ER SO GEBAUT IST
-     -----------------------------------------------------------------
-     GEFRAGT: „Ob es eine Moeglichkeit gibt, ueber die Vorleser-
-     Funktion das codetechnisch so umzuwandeln, dass daraus dieses
-     Echo erzeugt wird."
-
-     EHRLICHE ANTWORT, nachgeschlagen statt geraten: Die Vorleser-
-     Funktion des Browsers (speechSynthesis) gibt ihren Klang DIREKT
-     an die Lautsprecher. Sie liefert weder Datenstrom noch Datei,
-     die man abgreifen koennte. An sie laesst sich deshalb KEIN Hall
-     und KEIN Echo anhaengen — Web Audio, wo Hall und Verzoegerung
-     zuhause sind, bekommt diesen Ton nie zu fassen. Ein Dienst wie
-     Azure oder ElevenLabs koennte es, weil der eine DATEI
-     zurueckgibt; die liesse sich durch eine Hallkette schicken. Das
-     kostet aber Geld je Zeichen und braucht einen Schluessel auf dem
-     Server.
-
-     WAS HIER STATTDESSEN PASSIERT — und das ist ein echtes Echo,
-     kein Trick: Ein Echo ist dieselbe Sache nochmal, spaeter, leiser
-     und dumpfer. Genau das wird gebaut. Der Satz wird mehrfach
-     gesprochen:
-         1. voll,      Tonhoehe tief,      Pause davor    0 ms
-         2. leise,     tiefer,             Pause davor  130 ms
-         3. fast weg,  am tiefsten,        Pause davor  210 ms
-     Die Wiederholungen laufen NACHEINANDER, nicht uebereinander —
-     uebereinander kann die Schnittstelle nicht, sie hat eine
-     Warteschlange. Es klingt deshalb nach einem Ruf in einer
-     Schlucht (Ruf … ruf … ruf), nicht nach einem Hallenschrei. Das
-     ist die Wahrheit ueber diesen Effekt, damit niemand mehr
-     erwartet, als drinsteckt.
-
-     Und: ein langer Satz dreimal hintereinander waere eine Qual.
-     Deshalb hallt nur, was kurz genug ist. */
-  let lcSchreiKette = [];          // was von diesem Schrei noch kommt
-  let lcSchreiUhr = 0;
-
-  function lcSchreiAbbrechen() {
-    clearTimeout(lcSchreiUhr); lcSchreiUhr = 0;
-    lcSchreiKette = [];
-    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
-  }
-
-  function lcSchreiNaechster() {
-    const s = lcSchreiKette.shift();
-    if (!s) return;
-    try {
-      const a = new SpeechSynthesisUtterance(s.satz);
-      a.voice = s.stimme;
-      a.lang = (s.stimme && s.stimme.lang) || "de-DE";
-      a.pitch = s.hoehe;
-      a.rate = s.tempo;
-      a.volume = s.laut;
-      /* Der naechste Hall erst, wenn der vorige ZU ENDE ist — plus
-         die Pause. Legte man alles auf einmal in die Warteschlange,
-         klebten die Wiederholungen aneinander: das klaenge nach
-         Stottern statt nach Echo. */
-      a.onend = () => {
-        if (!lcSchreiKette.length) return;
-        lcSchreiUhr = setTimeout(lcSchreiNaechster, lcSchreiKette[0].pause);
-      };
-      a.onerror = () => { lcSchreiKette = []; };
-      window.speechSynthesis.speak(a);
-    } catch (e) { lcSchreiKette = []; }
-  }
-
-  function lcSchreiSprechen(text, geschlecht) {
+  function lcSchreiSprechen(text) {
     const satz = String(text || "").trim();
     if (!satz || satz.length > 220) return false;      // ein Schrei ist kurz
     if (!lcToeneAn()) return false;
     try {
       if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
-      const stimme = lcSchreiStimme(geschlecht);
+      const stimme = lcDeutscheStimme();
       if (!stimme) {
         /* Die Stimmenliste kommt bei manchen Browsern erst
            nachtraeglich. Einmal darauf warten und es dann noch
@@ -22293,45 +22169,27 @@
       }
       /* Was noch laeuft, wird abgebrochen: zwei Schreie
          uebereinander sind kein Schrei, sondern Krach. */
-      lcSchreiAbbrechen();
-      /* Eine Frauenstimme auf 0.35 herunterzudrehen macht aus ihr
-         einen Mann — und genau das war NICHT gewuenscht. Sie wird
-         deshalb nur so weit gesenkt, dass sie dunkel und ernst
-         klingt und trotzdem eine Frau bleibt. */
-      const frau = LC_STIMME_FRAU.test(stimme.name || "");
-      const hoehe = frau ? 0.70 : 0.35;
-      const tempo = frau ? 0.82 : 0.78;
-      const echos = satz.length <= 30 ? 2 : satz.length <= 70 ? 1 : 0;
-      lcSchreiKette = [{ satz: satz, stimme: stimme, hoehe: hoehe, tempo: tempo, laut: 1, pause: 0 }];
-      const LAUT = [0.34, 0.14];
-      for (let i = 0; i < echos; i++) {
-        lcSchreiKette.push({
-          satz: satz, stimme: stimme,
-          hoehe: Math.max(0.1, hoehe * (i === 0 ? 0.92 : 0.85)),
-          tempo: Math.min(2, tempo * (i === 0 ? 1.08 : 1.16)),
-          laut: LAUT[i],
-          pause: i === 0 ? 130 : 210
-        });
-      }
-      lcSchreiNaechster();
+      window.speechSynthesis.cancel();
+      const a = new SpeechSynthesisUtterance(satz);
+      a.voice = stimme;
+      a.lang = stimme.lang || "de-DE";
+      a.pitch = 0.35;
+      a.rate = 0.78;
+      a.volume = 1;
+      window.speechSynthesis.speak(a);
       return true;
     } catch (e) { return false; }
   }
 
   let lcSchallLaeuft = 0;
-  function lcSchallStoss(text, geschlecht) {
+  function lcSchallStoss(text) {
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
     /* Erst die Stimme, dann der Hall darunter. Klappt die Stimme
        nicht (kein Deutsch im Geraet, Ton aus), traegt der Hall
-       allein — man soll nie vor einem stummen Schrei sitzen.
-
-       GEWUENSCHT: „Es soll auch dezent wie ein Nachhall sein."
-       Spricht die Stimme, tritt der Hall auf ein knappes Viertel
-       zurueck: er ist die HALLE, nicht der Schrei. Spricht sie
-       nicht, traegt er in voller Lautstaerke. */
-    const gesprochen = lcSchreiSprechen(text, geschlecht);
-    lcGeraeusch("schrei", null, gesprochen ? 0.22 : 0.5);
+       allein — man soll nie vor einem stummen Schrei sitzen. */
+    lcSchreiSprechen(text);
+    lcGeraeusch("schrei");
     if (!karte) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     /* Mehrere Rufe kurz hintereinander sollen nicht uebereinander
@@ -22348,8 +22206,7 @@
        ausdrücklich angetippt hat. Dafür fällt die Marke „Vergangenheit"
        weg, sonst hielte die CSS die Animation weiterhin an. */
     zeile.classList.remove("lc-alt");
-    lcSchallStoss(zeile.querySelector(".lc-zeilentext")?.textContent || "",
-                  zeile.dataset.lcGeschlecht || "");
+    lcSchallStoss(zeile.querySelector(".lc-zeilentext")?.textContent || "");
     zeile.querySelectorAll(".lc-ruf-wort").forEach((w) => {
       const takt = w.style.getPropertyValue("--lc-ruf-takt") || "0s";
       w.style.animation = "none";
@@ -24035,9 +23892,6 @@
       if (art === "ruf" && !n.wirkung) {
         z.classList.add("lc-zeile-wirkt");
         z.title = "Antippen — noch einmal";
-        /* Das Geschlecht des Absenders bleibt AN DER ZEILE haengen —
-           sonst klaenge derselbe Ruf beim zweiten Antippen anders. */
-        if (n.geschlecht) z.dataset.lcGeschlecht = n.geschlecht;
         z.addEventListener("click", () => lcRufNochmal(z));
         /* GEWUENSCHT: „Wenn man schreit und das abschickt und die
            Animation kommt, dann soll es auch den Chat ein bisschen
@@ -24048,7 +23902,7 @@
            Beides nur, wenn die Zeile GERADE eben entstanden ist —
            was vor dem Betreten geschrieben wurde, ist Vergangenheit
            und bleibt still. Angetippt kommt es wieder. */
-        if (!alt) lcSchallStoss(n.text, n.geschlecht || "");
+        if (!alt) lcSchallStoss(n.text);
       }
       if (eff) {
         z.dataset.wirkung = eff;
@@ -24931,7 +24785,6 @@
     if (zurueck) {
       LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
         betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
-        geschlecht: livechatGeschlecht(),
         mitBild: zurueck.mitBild !== false })
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
     }
@@ -53845,9 +53698,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     window.__tippsBinden = (bereich) => livechatTippsBinden(bereich);
     /* Fuer werkzeug/pruefe-schreien.js. */
     window.__rufSetzen = (ziel, text, n) => lcRufSetzen(ziel, text, n);
-    window.__schallStoss = (t, g) => lcSchallStoss(t, g);
-    window.__schreiStimme = (g) => lcSchreiStimme(g);
-    window.__schreiKette = () => lcSchreiKette.slice();
+    window.__schallStoss = () => lcSchallStoss();
     window.__dmaTagesaufgabe = () => pickDailyTaskFresh();
     window.__dmaUpdateNachricht = () => notifyAboutAppUpdateIfNeeded();
     window.__wortQuellePruef = (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word);
@@ -54400,46 +54251,22 @@ An einem Morgen lief ein kleiner Fuchs los…
      eine Rundmail), und der Reiter springt ins Klassenzimmer, damit
      Alex auch wirklich dort ist, wenn die Leute kommen.
 
-     KEINE ZEITSCHALTUHR. Hier stand einmal eine Sperre von dreissig
-     Minuten. Sie ist raus, und zwar aus einem Grund, der schwerer
-     wiegt als die gute Absicht dahinter:
-
-       „Das zum Unterricht einladen und das Einladen von Leuten soll
-        nicht gesperrt sein, aber nicht durch Minuten, weil es
-        unhoeflich waer. Ich moechte das selber entscheiden koennen,
-        denn wir haben ja hier auch ein Problem wegen dem Knopf
-        gehabt — die koennen ja nicht reinfinden, deswegen muss ich
-        ja die Freiheit haben, die einladen zu koennen."
-
-     Das ist richtig. Wer gerade merkt, dass die Leute den Weg nicht
-     finden, darf nicht von einer Uhr daran gehindert werden, es noch
-     einmal zu sagen. Die Entscheidung trifft der Mensch, nicht der
-     Zaehler. Geblieben ist die Rueckfrage vor dem Abschicken — die
-     ist keine Sperre, sondern genau diese Entscheidung.
-
-     Wann zuletzt gerufen wurde, steht trotzdem da. Als AUSKUNFT,
-     damit man es weiss, nicht als Riegel.
+     Eine Sperre gehoert dazu. Eine Rundmail geht an alle und laesst
+     sich nicht zurueckholen; zweimal in fuenf Minuten dasselbe waere
+     kein Unterricht, sondern Belaestigung. Deshalb: hoechstens alle
+     30 Minuten, und vorher wird gefragt.
      ================================================================= */
   const UNTERRICHT_ZULETZT = "dma_unterricht_glocke";
+  const UNTERRICHT_SPERRE_MS = 30 * 60 * 1000;
 
   function unterrichtZuletzt() {
     try { return Number(localStorage.getItem(UNTERRICHT_ZULETZT) || 0); } catch (e) { return 0; }
   }
-  /* „vor 3 Minuten", „vor 2 Stunden" — oder nichts, wenn noch nie. */
-  function unterrichtHerWort() {
-    const zu = unterrichtZuletzt();
-    if (!zu) return "";
-    const min = Math.floor((Date.now() - zu) / 60000);
-    if (min < 1) return "gerade eben";
-    if (min < 60) return "vor " + min + " Minute" + (min === 1 ? "" : "n");
-    const std = Math.floor(min / 60);
-    if (std < 24) return "vor " + std + " Stunde" + (std === 1 ? "" : "n");
-    const tg = Math.floor(std / 24);
-    return "vor " + tg + " Tag" + (tg === 1 ? "" : "en");
-  }
 
   function unterrichtGlockeHtml() {
-    const her = unterrichtHerWort();
+    const her = Date.now() - unterrichtZuletzt();
+    const gesperrt = unterrichtZuletzt() && her < UNTERRICHT_SPERRE_MS;
+    const restMin = gesperrt ? Math.ceil((UNTERRICHT_SPERRE_MS - her) / 60000) : 0;
     return `
       <div class="question-card" style="margin-top:14px;">
         <h3>🔔 Der Unterricht beginnt</h3>
@@ -54454,12 +54281,12 @@ An einem Morgen lief ein kleiner Fuchs los…
                style="width:100%;"
                value="Ich bin jetzt im Klassenzimmer und mache Unterricht — komm dazu, ich freue mich auf dich!">
         <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
-          <button type="button" class="btn btn-coffee" id="unterrichtGlocke">
+          <button type="button" class="btn btn-coffee" id="unterrichtGlocke" ${gesperrt ? "disabled" : ""}>
             🔔 Alle einladen und ins Klassenzimmer
           </button>
         </div>
-        ${her ? `<p class="empty-note" style="margin:8px 0 0; font-size:0.74rem;">
-          Zuletzt gerufen: ${her}. Du entscheidest, wann wieder — hier hält dich nichts auf.
+        ${gesperrt ? `<p class="empty-note" style="margin:8px 0 0; font-size:0.74rem;">
+          Eben erst verschickt — der nächste Ruf geht in ${restMin} Minuten wieder.
         </p>` : ""}
       </div>`;
   }
