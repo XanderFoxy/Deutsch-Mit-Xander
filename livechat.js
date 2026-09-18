@@ -82,7 +82,16 @@ window.LiveChat = (function () {
      Aufgabe. Zweihundert reichen fuer eine ganze Stunde. Platz
      kostet das kaum: Bilder und Aufnahmen liegen laengst im Lager,
      im localStorage steht nur der Text. */
-  var CHAT_VERLAUF = 400;             // so viele legt das GERAET ab
+  /* GEMELDET: „Du sollst den Chat mit seinem kompletten Inhalt
+     anzeigen, nicht nur 400 Zeilen."
+     Also so viele, wie hineinpassen. Eine Zahl braucht es trotzdem,
+     denn der localStorage eines Browsers ist endlich (wenige
+     Megabyte) — und laeuft er ueber, wirft er, und dann waere der
+     GANZE Verlauf weg. Deshalb steht hier eine sehr hohe Grenze und
+     darunter (chatSichern) ein Netz: passt es nicht, wird nicht
+     alles verworfen, sondern so lange gekuerzt, bis es passt. Lieber
+     ein Teil als nichts. */
+  var CHAT_VERLAUF = 4000;            // so viele legt das GERAET hoechstens ab
   /* GEWÜNSCHT: „Einer, der zum ersten Mal auf die Seite kommt, soll
      trotzdem den heutigen kompletten Tagesverlauf aus dem Chat sehen,
      ohne dass ihm irgendetwas fehlt."
@@ -93,7 +102,7 @@ window.LiveChat = (function () {
      localStorage ist knapp, und diese Abschrift ist nur die Notlösung
      für „kein Netz"), CHAT_SICHT ist, was aus der gemeinsamen Tabelle
      geholt und angezeigt wird. */
-  var CHAT_SICHT = 400;               // so viele kommen vom Server
+  var CHAT_SICHT = 2000;              // so viele kommen vom Server
 
   /* Die Vermittler.
      ---------------------------------------------------------
@@ -1266,15 +1275,21 @@ window.LiveChat = (function () {
       kopie.bildWeg = false;
       return kopie;
     });
-    try {
-      localStorage.setItem(chatSchluessel(raum), JSON.stringify(schlank));
-    } catch (e) {
-      /* Selbst ohne Bilder kein Platz mehr? Dann die Haelfte opfern,
-         statt den ganzen Verlauf zu verlieren. */
+    /* SO VIEL, WIE HINEINPASST — UND KEIN ALLES-ODER-NICHTS.
+       Der localStorage ist endlich. Passt der Verlauf nicht, wurde
+       frueher EINMAL halbiert und danach aufgegeben; bei einer
+       Obergrenze von 4000 Zeilen reicht das nicht. Jetzt wird so
+       lange gekuerzt, bis es passt — immer die aeltesten zuerst.
+       Lieber ein Teil als nichts, und lieber viel als wenig. */
+    var versuch = schlank;
+    for (var runde = 0; runde < 8; runde++) {
       try {
-        localStorage.setItem(chatSchluessel(raum),
-          JSON.stringify(schlank.slice(-Math.ceil(CHAT_VERLAUF / 2))));
-      } catch (e2) {}
+        localStorage.setItem(chatSchluessel(raum), JSON.stringify(versuch));
+        return;
+      } catch (e) {
+        if (versuch.length <= 20) return;
+        versuch = versuch.slice(-Math.ceil(versuch.length / 2));
+      }
     }
   }
   function chatLeeren() {
@@ -2283,7 +2298,7 @@ window.LiveChat = (function () {
         if (typeof n.klassensprecher === "boolean") {
           zustand.klassensprecher = Boolean(n.klassensprecher);
           if (zustand.klassensprecher) {
-            systemZeile("🎓 Du bist jetzt Klassensprecher:in. Wenn der Lehrer geht, führst du weiter.");
+            hinweisZeigen("🎓 Du bist jetzt Klassensprecher:in. Wenn der Lehrer geht, führst du weiter.");
           }
         }
         melden();
@@ -2992,7 +3007,7 @@ window.LiveChat = (function () {
                    aufmacht — und im Hauptraum weiterhin niemand. */
             if (binBetreiber() && !zustand.haeuptling) {
               zustand.haeuptling = true;
-              systemZeile("\ud83e\udd8a Du bist hier Häuptling — als Betreiber in jedem Raum. "
+              hinweisZeigen("\ud83e\udd8a Du bist hier Häuptling — als Betreiber in jedem Raum. "
                 + "/t Thema · /i einladen · /lock abschließen · /k rauswerfen");
             }
             setTimeout(function () {
@@ -3001,7 +3016,7 @@ window.LiveChat = (function () {
               if (zustand.raum === HAUPTRAUM) return;
               if (Object.keys(zustand.leute).length === 0) {
                 zustand.haeuptling = true;
-                systemZeile("Der Raum war leer — du bist hier Häuptling. "
+                hinweisZeigen("Der Raum war leer — du bist hier Häuptling. "
                   + "/t Thema · /i Nickname einladen · /lock abschließen · /k Nickname");
               }
             }, 1600);
@@ -3604,7 +3619,7 @@ window.LiveChat = (function () {
     /* FOKUS: wer gerade zuhoert, redet nicht dazwischen. */
     var frei_ = darfSprechen();
     if (!frei_.ja) {
-      systemZeile("🎧 " + frei_.wer + " spricht gerade — hör zu Ende zu, dann bist du dran. "
+      hinweisZeigen("🎧 " + frei_.wer + " spricht gerade — hör zu Ende zu, dann bist du dran. "
         + "Schreiben geht jederzeit.");
       return Promise.resolve(false);
     }
@@ -4153,7 +4168,7 @@ window.LiveChat = (function () {
        heraus und niemand wuesste, worauf es sich bezieht. */
     var fokus_ = darfSprechen();
     if (!fokus_.ja) {
-      systemZeile("🎧 " + fokus_.wer + " spricht gerade — das hier wurde nicht geschickt. "
+      hinweisZeigen("🎧 " + fokus_.wer + " spricht gerade — das hier wurde nicht geschickt. "
         + "Sag es gleich noch einmal, wenn er fertig ist.");
       return false;
     }

@@ -7646,12 +7646,19 @@ body.lc-schreibt .tutor-reiter {
   font-size: .76rem;
   color: var(--teal-700, #2b6a60);
   min-height: 26px;
-  /* Schwebend heisst: sie liegt ueber dem Chat. Damit man sie dort
-     auch lesen kann, bekommt sie einen eigenen, deckenden Grund —
-     durchscheinender Text uebereinander waere unleserlich. */
-  background-color: #22423e;
-  color: #cdeee6;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.32);
+  /* DIE FARBE BLEIBT DIE ALTE.
+     GEMELDET: „Hast du schon wieder die Farbe beeinflusst von dem
+     Panel, wo steht ‚Xander Fox spricht gerade'?"
+     Ja, hatte ich — ich hatte sie dunkel und deckend gemacht, damit
+     sie ueber dem Text lesbar bleibt. Das geht auch, ohne die Farbe
+     anzufassen: unten der Grund des Chats, darueber genau derselbe
+     Teil-Ton wie vorher. Zusammen sieht es exakt so aus wie im
+     Ursprungszustand, ist aber trotzdem undurchsichtig. */
+  background-color: var(--plum-900, #221c1a);
+  background-image: linear-gradient(rgba(74,157,143,.14), rgba(74,157,143,.14));
+  /* „Das kann ruhig unter dem Chat sein, dass man auf die Sachen
+     noch zugreifen kann." Genau das: sie nimmt keine Klicks an,
+     alles darunter bleibt antippbar. */
   pointer-events: none;
 }
 .lc-live-leiste[hidden] { display: none; }
