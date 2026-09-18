@@ -7539,3 +7539,106 @@ body.tutor-offen .tutor-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .subnav-pill.tutor-leuchtet { animation: none; }
 }
+
+/* =============================================================
+   MELDEN STATT MIKROFON
+   -------------------------------------------------------------
+   GEWUENSCHT: „Die Leute sollen sich melden, die was sagen
+   wollen … und dann soll das Symbol auch so eine Melden-Hand
+   sein, ja, also ein SVG-Symbol, nicht dass man das markieren
+   kann. Und wenn man das Haekchen anmacht, dann aendert sich
+   das SVG-Symbol auch zum sprechenden Mund."
+
+   Zwei Zeichnungen liegen uebereinander im selben Knopf; welche
+   zu sehen ist, entscheidet eine Klasse. Kein Nachladen, kein
+   Umbauen, kein Springen.
+   ============================================================= */
+/* HIER LAG EIN FEHLER, den erst das Nachmessen zeigte: weiter oben
+   steht „.lc-sprach-knopf svg { display: block }". Ein einfaches
+   „.lc-zeichen-mund { display:none }" verliert dagegen — zwei
+   Bezeichner schlagen einen. Gemessen: ohne Haekchen waren BEIDE
+   Zeichnungen zu sehen. Deshalb hier derselbe Aufbau. */
+.lc-sprach-knopf .lc-zeichen-mund { display: none; }
+.lc-sprach-knopf.lc-spricht-dauernd .lc-zeichen-hand { display: none; }
+.lc-sprach-knopf.lc-spricht-dauernd .lc-zeichen-mund { display: block; }
+.lc-sprach-knopf.lc-spricht-dauernd {
+  color: var(--teal-700, #2b6a60);
+  background: rgba(74,157,143,.18);
+}
+/* Die Schallwellen am Mund atmen leise mit — man soll sehen,
+   dass das Mikrofon offen ist, ohne dass es blinkt. */
+.lc-mund-wellen { animation: lcMundAtmen 2.2s ease-in-out infinite; transform-origin: 12px 12px; }
+@keyframes lcMundAtmen {
+  0%, 100% { opacity: .35; }
+  50%      { opacity: 1; }
+}
+
+/* Das Haekchen neben dem Melden-Knopf. */
+.lc-dauer-haken {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .66rem;
+  color: var(--teal-700, #2b6a60);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  flex: 0 0 auto;
+}
+.lc-dauer-haken input { width: 14px; height: 14px; margin: 0; cursor: pointer; }
+.lc-dauer-haken input:disabled { cursor: not-allowed; }
+.lc-dauer-text { letter-spacing: .01em; }
+
+/* =============================================================
+   DER MINI-KNOPF IM KLASSENZIMMER-STREIFEN
+   -------------------------------------------------------------
+   GEWUENSCHT: „Zwischen der kleinen Schrift ‚du bist allein da'
+   und dem Zurück so ein ganz kleiner Mini-Knopf … und rechts
+   daneben bleibt dieser Zurückknopf und das Schliessen-Symbol."
+
+   Am Aufbau des Streifens aendert sich sonst nichts — nur zwei
+   kleine Elemente kommen in die Mitte.
+   ============================================================= */
+.kz-melden {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.4);
+  border-radius: 50%;
+  background: rgba(255,255,255,.14);
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+.kz-melden:disabled { opacity: .4; cursor: not-allowed; }
+.kz-melden .kz-melden-mund { display: none; }
+.kz-melden.kz-melden-dauernd .kz-melden-hand { display: none; }
+.kz-melden.kz-melden-dauernd .kz-melden-mund { display: block; }
+.kz-melden.kz-melden-an {
+  background: #e04a4a;
+  border-color: #e04a4a;
+  color: #fff;
+  animation: kzMeldenPuls 1s ease-in-out infinite;
+}
+@keyframes kzMeldenPuls {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,74,74,.55); }
+  70%      { box-shadow: 0 0 0 7px rgba(224,74,74,0); }
+}
+.kz-dauer {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.kz-dauer input { width: 13px; height: 13px; margin: 0; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lc-mund-wellen, .kz-melden.kz-melden-an { animation: none; }
+}

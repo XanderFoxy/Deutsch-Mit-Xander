@@ -37,10 +37,21 @@
 window.DMA_TUTOR = {
   "view-about": {
     stuecke: [
-      { ton: "ueber-01", ziel: "",
-        text: "Schön, dass du da bist! Ich bin Alex — Musiker und Deutschlehrer." },
-      { ton: "ueber-02", ziel: "",
-        text: "Diese Seite baue ich in meiner Freizeit, weil ich glaube, dass man eine Sprache nicht mit trockenem Frontalunterricht lernt, sondern mit kurzen Übungen, die Spaß machen. Schau dich in Ruhe um." },
+      { ton: "ueber-01b", ziel: "",
+        text: "Schön, dass du da bist! Ich bin Alex — Musiker und Deutsch-Helfer. Lehrer nenne ich mich nicht; ich helfe dir einfach beim Deutschlernen." },
+      { ton: "ueber-02b", ziel: "",
+        text: "Diese Seite baue ich in meiner Freizeit, weil ich glaube, dass man eine Sprache nicht mit trockenem Frontalunterricht lernt, sondern mit kurzen Übungen, die Spaß machen." },
+      /* GEWUENSCHT: „Bei Hallo, ich bin Alex kannst du auch erklaeren,
+         was die Sachen im Head bedeuten, damit das dort schon
+         verstanden wird." Von links nach rechts durchgegangen — der
+         Kalender, das Profil, die Tasse — und danach das, was
+         darunter laeuft: Wetter, Uhrzeit, Newsticker. */
+      { ton: "ueber-03", ziel: "",
+        text: "Ganz oben siehst du drei Sachen. Der Kalender links: dort löst du jeden Tag eine Aufgabe, und von da kommst du direkt zur Tagesgeschichte — dem bekanntesten Ereignis in Deutschland an genau diesem Datum, als Leseübung in jedem Sprachniveau und in vielen Sprachen. Das Profilbild daneben bringt dich in deinen Bereich. Und die Tasse rechts ist zum Kaffee ausgeben: wenn dir die Seite gefällt, kannst du mich damit unterstützen. Musst du nicht — es hilft mir aber, die laufenden Kosten zu tragen, zum Beispiel für den Livestream." },
+      { ton: "ueber-04", ziel: "",
+        text: "Darunter läuft das echte deutsche Wetter mit — animiert, je nach Tageszeit: Sonne, Regen, Schnee, Wolken, Gewitter, und nachts ein Sternenhimmel, wenn die Sicht frei ist. Daneben steht die deutsche Uhrzeit. Und der Newsticker zeigt, wer gerade was macht, welche Fortschritte die Leute machen, wer online ist, woher er kommt und wo er sich gerade befindet — ob im Klassenzimmer oder einfach auf der Seite." },
+      { ton: "ueber-05", ziel: "",
+        text: "Noch ein Tipp, der leicht übersehen wird: Klick in einen geschriebenen Text hinein, dann wird dir die Betonung angezeigt. Ein Punkt unter dem Vokal heißt kurz, ein Strich heißt lang. So liest du es gleich richtig und gewöhnst dir keine Aussprachefehler an. Und wenn dich meine Musik interessiert — die Links zu YouTube und TikTok stehen hier auch." },
     ],
   },
 
@@ -96,18 +107,24 @@ window.DMA_TUTOR = {
          Tagesgeschichte, Dichter & Denker, Schnee von gestern,
          Menschen/Dinge/Geschichten, Redewendungen, Umgangssprache
          und die kleinen Wörter. Genau das steht jetzt hier. */
-      { ton: "wiss-01", ziel: "sub-kompass",
-        text: "Im Kompass steht jeden Tag eine Geschichte aus Deutschland — dazu Dichter und Denker, Schnee von gestern, Redewendungen und die kleinen Wörter, die den Unterschied machen.",
-        hilfe: "Jeder Text gibt es in sechs Niveaustufen von A1 bis C2 und in zehn Sprachen. Du liest also immer auf deiner Höhe." },
+      { ton: "wiss-01b", ziel: "sub-kompass",
+        text: "Der Kompass sammelt sieben Sachen zum Lesen: Es war einmal in Deutschland, Dichter und Denker, Schnee von gestern, Menschen und Geschichten, Redewendungen, Umgangssprache und Jugendslang, und kleine Wörter mit großer Wirkung.",
+        hilfe: "Jeden Text gibt es in sechs Niveaustufen von A1 bis C2 und in zehn Sprachen. Du liest also immer auf deiner Höhe." },
       { ton: "wiss-02", ziel: "sub-tips",
         text: "Im Schwarmwissen teilen alle ihr Wissen miteinander.",
         hilfe: "Was einer herausgefunden hat, muss der nächste nicht noch einmal herausfinden." },
       { ton: "wiss-03", ziel: "sub-community",
         text: "Über die eigenen Beiträge kannst du selbst etwas einreichen.",
         hilfe: "Texte, Tipps, Erfahrungen — andere können sie lesen, kommentieren und mögen." },
-      { ton: "wiss-04", ziel: "sub-links",
-        text: "Dazu kommen weiterführende Links.",
-        hilfe: "Geprüfte Anlaufstellen — Ämter, Beratung, Sprachkurse." },
+      /* GEMELDET: „Zum Beispiel sagt er ‚weiterfuehrende Links‘ und
+         macht das so wie eine Aufzaehlung, und dann springt er
+         ploetzlich zum anderen Punkt … das wirkt total aus dem
+         Kontext gerissen, als wenn er Fehler macht."
+         Stimmt: ein Satz, der wie ein Doppelpunkt klingt, muss auch
+         liefern. Jeder Satz steht jetzt fuer sich. */
+      { ton: "wiss-04b", ziel: "sub-links",
+        text: "Unter den weiterführenden Links sind geprüfte Adressen gesammelt, die außerhalb dieser Seite weiterhelfen — und jeder kann eigene dazutun, die er kennt. So liegt alles an einem Ort.",
+        hilfe: "Du kannst selbst Links einreichen. Was anderen geholfen hat, hilft dem Nächsten auch." },
       { ton: "wiss-05", ziel: "sub-dialekt",
         text: "Bei den Dialekten hörst du, wie in den verschiedenen Regionen wirklich gesprochen wird.",
         hilfe: "Hochdeutsch lernt man im Kurs; verstanden wird man erst, wenn man den Rest auch kennt." },
@@ -213,25 +230,38 @@ window.DMA_TUTOR_BEREICHE = {
     ton: "b-wortlisten",
     text: "Hier legst du eigene Wortlisten an — Wort für Wort oder gleich aus einem ganzen Text auf einmal. Die Listen tauchen danach im Vokabeltrainer als eigene Kategorie auf, und du kannst mit ihnen auch die Spiele spielen.",
   },
+  /* DRITTER ANLAUF, und diesmal nach seiner eigenen Beschreibung.
+     Erst hatte ich den Wegweiser beschrieben, dann zu ungenau. Was
+     hier steht, ist Punkt fuer Punkt das, was er gesagt hat —
+     abgeglichen mit den Ueberschriften, die renderKompass wirklich
+     zeichnet. */
   "sub-kompass": {
-    ton: "b-kompass",
-    text: "Der Kompass ist zum Lesen da. Jeden Tag eine Geschichte aus Deutschland, dazu Dichter und Denker, Schnee von gestern — also Dinge, die es mal gab —, Menschen und Geschichten, Redewendungen, Umgangssprache und die kleinen Wörter, die einen Satz erst deutsch klingen lassen. Jeden Text gibt es in sechs Niveaustufen und in zehn Sprachen.",
+    ton: "b-kompass2",
+    text: "Der Kompass ist zum Lesen da, und er hat sieben Bereiche. "
+      + "In „Es war einmal in Deutschland“ findest du jeden Tag eine neue Geschichte, passend zum Datum: das bekannteste historische Ereignis in Deutschland an genau diesem Tag. Das ist deine Leseübung — in jedem Sprachniveau und in viele Sprachen übersetzt. "
+      + "Bei „Dichter und Denker“ geht es um berühmte Deutsche. "
+      + "„Schnee von gestern“ sind Dinge, die in Deutschland einmal bekannt waren und die es heute so nicht mehr gibt — oder die man heute nicht mehr sagt und nicht mehr macht. "
+      + "Die Redewendungen sind typisch deutsch und werden wirklich benutzt, nicht nur im Buch. "
+      + "Umgangssprache und Jugendslang sagt der Name schon: wie man wirklich spricht, wenn man nicht auf dem Amt ist. "
+      + "Und „Kleine Wörter, große Wirkung“ sind die Wörtchen wie doch, mal, eben oder halt — die stehen in keiner Regel, aber ohne sie klingt kein Satz deutsch.",
   },
   "sub-tips": {
-    ton: "b-schwarm",
-    text: "Im Schwarmwissen steht, was bei anderen Lernenden wirklich funktioniert hat. Keine Ratschläge von oben herab, sondern Erfahrungen von Leuten, die denselben Weg gegangen sind.",
+    ton: "b-schwarm2",
+    text: "Das Schwarmwissen ist gesammeltes Wissen von den Leuten selbst. Hier zeigen sie einander, was ihnen beim Lernen geholfen hat oder gerade hilft — damit dieses Wissen in der Gemeinschaft bleibt und nicht jeder bei null anfängt. Keine Ratschläge von oben herab, sondern Erfahrungen von Leuten, die denselben Weg gehen.",
   },
   "sub-community": {
     ton: "b-beitraege",
-    text: "Hier schreibst du selbst etwas und veröffentlichst es. Andere können es lesen, kommentieren und mögen. Wenn du etwas herausgefunden hast, das dir keiner gesagt hat — schreib es auf, dann muss der Nächste nicht suchen.",
+    text: "Bei den eigenen Beiträgen kannst du selbst etwas zur Verfügung stellen, und zwar in allen Sprachniveaus. Andere lesen es, kommentieren und mögen es. Wenn du etwas herausgefunden hast, das dir keiner gesagt hat: schreib es auf, dann muss der Nächste nicht suchen.",
   },
   "sub-dialekt": {
-    ton: "b-dialekt",
-    text: "Hochdeutsch lernt man im Kurs. Verstanden wirst du erst, wenn du auch den Rest kennst. Hier hörst du, wie in den verschiedenen Regionen wirklich gesprochen wird.",
+    ton: "b-dialekt2",
+    text: "Dasselbe Ding, sieben Namen. Hier siehst du, wie ein Wort in Bayern heißt, bei den Schwaben, in Sachsen, im Ruhrgebiet, in Berlin, in Österreich und in der Schweiz. Hochdeutsch lernst du im Kurs — verstanden wirst du erst, wenn du den Rest auch kennst.",
   },
   "sub-livechat": {
     ton: "b-klassenzimmer",
-    text: "Das Klassenzimmer ist der Livestream. Du kommst herein, setzt dich hin und redest mit — per Ton, wenn du willst auch mit Bild, sonst im Chat. Es gibt Sprachnachrichten, und mit dem Freisprechen musst du nicht einmal einen Knopf drücken: sobald du sprichst, wird aufgenommen und der Reihe nach abgespielt.",
+    text: "Das Klassenzimmer ist echter Unterricht, nicht nur ein Livestream. Wer etwas sagen möchte, meldet sich — dann wird er gehört, sobald der vor ihm fertig gesprochen hat. Dadurch redet niemand in jemanden hinein, und man kann wirklich fokussiert lernen, ohne die Störungen, die man aus normalen Livestreams kennt. "
+      + "Du kannst außerdem Animationen schicken, Reaktions-Sticker, bewegte Bilder und Fotos. Der Chat versteht viele Befehle — wenn du sie kennenlernen willst, findest du sie alle unter „Befehle“. "
+      + "Und das Gesagte lässt sich speichern: damit übst du Shadowing an Texten, die wir gerade wirklich besprochen haben — ein echter Mensch liest sie dir vor, und du sprichst sie zu Hause in Ruhe nach, bis es sitzt.",
   },
   "sub-music": {
     ton: "b-musik",
@@ -239,22 +269,22 @@ window.DMA_TUTOR_BEREICHE = {
   },
   "sub-wegweiser": {
     ton: "b-wegweiser",
-    text: "Der Wegweiser ist für die praktischen Dinge: was du regeln musst, wenn du nach Deutschland, Österreich oder in die Schweiz kommst. Acht Bereiche, jeder mit den Schritten der Reihe nach, Tipps und den geprüften Quellen zum Nachlesen.",
+    text: "Der Wegweiser zeigt dir für alle deutschsprachigen Länder, wie du ankommst und dich einlebst — Deutschland, Österreich, die Schweiz. Acht Bereiche, jeder mit den Schritten der Reihe nach, den geprüften Quellen und den Tipps und Tricks, die dir sonst keiner sagt. Zu finden ist das alles auch woanders; hier steht es an einer Stelle und kurz.",
   },
   "sub-feste": {
     ton: "b-feste",
-    text: "Der Jahreslauf mit allen Festen — und dazu das Ungeschriebene: Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, wie man mit Behörden umgeht und was ein Verein ist. Die Dinge, die alle kennen und niemand erklärt.",
+    text: "Wie in Deutschland gefeiert wird und welche Feiertage es gibt — und vor allem: ob ein Tag ein gesetzlicher Feiertag ist, ob es nur Brauch ist, und in welchem Bundesland er überhaupt gilt. Dazu das Ungeschriebene: Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, Behörden und Vereine.",
   },
   "sub-album": {
     ton: "b-album",
-    text: "Im Sticker-Album sammelst du deine Füchse. Jeder Fuchs steht für etwas, das du geschafft hast — und man sieht auf einen Blick, was noch fehlt.",
+    text: "Im Sticker-Album stehen alle Füchse, die du gesammelt hast. Jeder Fuchs ist eine Belohnung für etwas, das du geschafft hast — und man sieht auf einen Blick, was noch fehlt. Das ist der ganze Sinn: fleißig sein lohnt sich sichtbar.",
   },
   "sub-friends": {
     ton: "b-freunde",
-    text: "Freunde hinzufügen und sie zu Duellen herausfordern. Ein Duell ist eine Runde gegen eine andere Person: gleiche Fragen, getrennt gespielt, danach wird verglichen.",
+    text: "Hier findest du Freunde, verbindest dich mit ihnen und forderst sie zu Duellen heraus — gleiche Fragen, getrennt gespielt, danach wird verglichen. Du kannst auch Leute einladen, die noch nicht dabei sind; dafür bekommst du Punkte. Und Punkte bringen dich im Rang weiter.",
   },
   "sub-settings": {
     ton: "b-einstellungen",
-    text: "In den Einstellungen stellst du ein, wie dich die Seite unterstützt: die Sprache der Erklärungen, ob Umgangssprache oder Wörterbuchform oben steht — und ob ich hier auftauche oder nicht. Als Foto oder als Comic, ganz wie du magst.",
+    text: "In den Einstellungen findest du alles, was die Seite an dich anpasst: die Sprache der Erklärungen, ob die Umgangssprache oder die Wörterbuchform oben steht, ob die Betonung auf der ganzen Seite angezeigt wird, ob du Beta-Tester werden möchtest — und ob ich hier überhaupt auftauche. Als Foto oder als Comic, ganz wie du magst.",
   },
 };

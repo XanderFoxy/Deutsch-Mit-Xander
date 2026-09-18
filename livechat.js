@@ -263,7 +263,9 @@ window.LiveChat = (function () {
     betreiber: false,   // Alex selbst — dann immer Haeuptling
     abgeschlossen: false,
     eingeladen: {},     // Kennung -> true, fuer den abgeschlossenen Raum
-    geknebelt: {},      // Kennung -> true
+    geknebelt: {},      // Kennung -> true (darf nicht SCHREIBEN)
+    stumm: {},          // Kennung -> true (darf nicht SPRECHEN, schreiben schon)
+    gemeldet: {},       // Kennung -> Zeitpunkt der Meldung
     kameraFehler: "",   // im Klartext, warum kein Bild/Ton da ist
     leute: {},          // id -> { id, name, strom, gesehen, tonAn, bildAn, bild }
     nachrichten: [],    // { id, von, name, text, zeit, eigen, bild }
@@ -2150,6 +2152,14 @@ window.LiveChat = (function () {
       }
       return;
     }
+    /* SICH MELDEN. Das ist ein Rundruf an alle — jeder im Raum soll
+       sehen, wer sich gemeldet hat und in welcher Reihenfolge.
+       HIER LAG EIN FEHLER: erst stand das beim Postempfang, also
+       dort, wo nur Nachrichten an EINE Person ankommen. Gemessen:
+       drei Meldungen rein, null in der Liste. */
+    if (n.art === "hand") { zustand.gemeldet[n.von] = n.zeit || Date.now(); melden(); return; }
+    if (n.art === "handweg") { delete zustand.gemeldet[n.von]; melden(); return; }
+
     /* Ein Stueck einer langen Aufnahme. Erst wenn alle da sind,
        wird daraus eine Nachricht — vorher passiert nichts. */
     if (n.art === "sprachteil") {
@@ -2575,6 +2585,8 @@ window.LiveChat = (function () {
     zustand.abgeschlossen = false;
     zustand.eingeladen = {};
     zustand.geknebelt = {};
+    zustand.stumm = {};
+    zustand.gemeldet = {};
     verlaufBekommen = false;
     verlaufSchonGeschickt = {};
     /* Der Verlauf aus diesem Raum wird MITGEBRACHT, nicht
@@ -2749,6 +2761,8 @@ window.LiveChat = (function () {
     freisprechenBeenden();
     sprachSpurSchliessen();
     liveWarteschlange.length = 0;
+    stummVon = {};
+    zustand.gemeldet = {};
     if (kanal) {
       /* Erst abmelden, DANN den Kanal schliessen — und zwar mit einem
          Atemzug dazwischen. Vorher wurde der Kanal sofort geschlossen,
@@ -3734,6 +3748,14 @@ window.LiveChat = (function () {
   function sprachSenden(daten, sekunden, wie) {
     if (!daten) return false;
     var o = wie || {};
+    /* STUMMGESCHALTET — gar nicht erst hinausschicken.
+       „Dass das nicht mehr gesendet wird fuer die anderen, so lange,
+       bis er sich wieder benimmt." Die Aufnahme wird verworfen; man
+       hoert sich auch selbst nicht, sonst merkt man es nicht. */
+    if (binStumm()) {
+      systemZeile("Deine Stimme ist stummgeschaltet — das war jetzt nicht zu hören. Schreib im Chat, wenn du wieder mitreden möchtest.");
+      return false;
+    }
     var id = neueNachrichtId();
     var n = {
       id: id,
@@ -3773,6 +3795,73 @@ window.LiveChat = (function () {
     }
     melden();
     return true;
+  }
+
+  /* =========================================================
+     SICH MELDEN — wie frueher, als man die Hand heben musste
+     ---------------------------------------------------------
+     GEWUENSCHT: „Die Leute sollen sich melden, die was sagen
+     wollen. Das gab ja frueher auch, dieses Handheben — heutzutage
+     hebt man die Hand, wenn jemand hoch will, aber frueher war das,
+     um zu sprechen. Und dann machen wir einfach nicht das
+     Handheben, sondern das Melden."
+
+     Zwei Wege, eine Warteschlange:
+
+       MELDEN   — man haelt den Knopf, sagt seinen Satz, laesst los.
+                  Das ist der Normalfall im Unterricht.
+
+       DAUERND  — Haekchen an, dann ist das Mikrofon offen und
+                  alles, was als Stimme erkannt wird, geht in
+                  dieselbe Reihe. Fuer Gespraeche ohne Lehrer.
+
+     In beiden Faellen gilt: der Naechste wird erst gehoert, wenn
+     der Vorige zu Ende gesprochen hat. Niemand redet in jemanden
+     hinein.
+
+     UND WENN JEMAND STOERT
+     „Dann hat der Moderator die Moeglichkeit, seine Sprachausgabe
+     stumm zu schalten, dass das nicht mehr gesendet wird fuer die
+     anderen — so lange, bis er sich wieder benimmt, und dann muss
+     er im Chat schreiben, dass man mit ihm jetzt reden kann."
+
+     Genau so: /stumm nimmt die STIMME, nicht die Tastatur. Wer
+     stumm ist, kann weiter mitlesen und schreiben — und sich damit
+     auch entschuldigen. Das ist der Unterschied zum Knebel, der
+     das Schreiben nimmt.
+     ========================================================= */
+  var stummVon = {};          // wer hat MICH stummgeschaltet
+
+  function binStumm() {
+    return Object.keys(stummVon).some(function (k) { return stummVon[k]; });
+  }
+  /* Die Hand heben — eine Zeile im Chat, die jeder sieht, und ein
+     Merker, damit der Lehrer die Reihenfolge kennt.
+     (Nicht „melden" nennen: so heisst schon die Funktion, die der
+     Oberflaeche sagt, dass sich etwas geaendert hat. Waere mir das
+     nicht gleich aufgefallen, haette ich die halbe Anzeige
+     ueberschrieben.) */
+  function handHeben() {
+    if (zustand.lage !== "drin") return false;
+    senden({ art: "hand", zeit: Date.now(), name: zustand.ichName });
+    zustand.gemeldet[zustand.ichId] = Date.now();
+    anAlle("system", zustand.ichName + " meldet sich.");
+    return true;
+  }
+  function handRunter() {
+    delete zustand.gemeldet[zustand.ichId];
+    senden({ art: "handweg" });
+    return true;
+  }
+  /* Wer hat sich gemeldet, in der Reihenfolge der Meldungen? */
+  function meldungen() {
+    return Object.keys(zustand.gemeldet)
+      .map(function (id) {
+        var p = zustand.leute[id];
+        return { id: id, name: (p && p.name) || (id === zustand.ichId ? zustand.ichName : "Jemand"),
+                 seit: zustand.gemeldet[id] };
+      })
+      .sort(function (a, b) { return a.seit - b.seit; });
   }
 
   /* =========================================================
@@ -4320,7 +4409,9 @@ window.LiveChat = (function () {
     { gr: "chef", w: "op",      kurz: "",     nutzt: "/op <name>",          was: "Macht die Person zum Häuptling" },
     { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop <name>",        was: "Nimmt die Häuptlingsrechte wieder" },
     { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k <name>",           was: "Rausschmeißen (nur Häuptling)" },
-    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel <name>",      was: "Stummschalten (nur Häuptling)" },
+    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm <name>",       was: "Stimme abschalten — schreiben geht weiter (nur Häuptling)" },
+    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm <name>",    was: "Darf wieder sprechen (nur Häuptling)" },
+    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel <name>",      was: "Auch das Schreiben abschalten (nur Häuptling)" },
     { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel <name>",   was: "Wieder sprechen lassen" },
     { gr: "reden", w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit einem Gesicht aus Buchstaben" },
     { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii <was>",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
@@ -4768,6 +4859,19 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "knebel") { geknebeltVon[n.von] = Boolean(n.an_); melden(); return; }
+    /* REDEVERBOT nimmt die Stimme, nicht die Tastatur — wer es hat,
+       kann sich im Chat melden und entschuldigen.
+       NICHT „stumm" nennen: so heisst im Rundruf schon die Meldung,
+       ob jemand sein Mikrofon abgeschaltet hat. Zwei Dinge mit
+       demselben Namen laufen irgendwann auseinander. */
+    if (n.art === "redeverbot") {
+      stummVon[n.von] = Boolean(n.an_);
+      melden();
+      systemZeile(n.an_
+        ? "Deine Stimme ist gerade stummgeschaltet. Schreiben kannst du weiter — sag im Chat Bescheid, wenn du wieder mitreden möchtest."
+        : "Du darfst wieder sprechen.");
+      return;
+    }
     if (n.art === "abgewiesen" && n.raum === zustand.raum) {
       var nm2 = zustand.ichName, bd2 = zustand.ichBild, kt2 = kontoId, fb2 = zustand.farbe;
       verlassen();
@@ -4971,6 +5075,16 @@ window.LiveChat = (function () {
       if (!z3) return systemZeile("„" + rest + "“ ist nicht hier.");
       postSenden(z3.id, { art: "rausschmiss", raum: zustand.raum });
       return anAlle("system", z3.name + " wurde von " + zustand.ichName + " hinausgeschickt.");
+    }
+    if (art === "stumm" || art === "entstumm") {
+      if (!zustand.haeuptling) return systemZeile("Stummschalten darf nur der Häuptling.");
+      var z5 = personNachName(rest);
+      if (!z5) return systemZeile("„" + rest + "“ ist nicht hier.");
+      zustand.stumm[z5.id] = (art === "stumm");
+      postSenden(z5.id, { art: "redeverbot", an_: art === "stumm", raum: zustand.raum });
+      return anAlle("system", z5.name + (art === "stumm"
+        ? " ist stummgeschaltet — schreiben geht weiter, sprechen nicht."
+        : " darf wieder sprechen."));
     }
     if (art === "knebel" || art === "entknebel") {
       if (!zustand.haeuptling) return systemZeile("Knebeln darf nur der Häuptling.");
@@ -5584,6 +5698,7 @@ window.LiveChat = (function () {
     haeufigsteBefehle: haeufigsteBefehle,
     befehlZaehlerLeeren: befehlZaehlerLeeren,
     pruefEmpfangen: function (n) { return empfangen(n); },
+    pruefPostEmpfangen: function (n) { return postEmpfangen(n); },
     /* Sprachnachrichten — nach aussen, damit die Oberflaeche sie
        bedienen kann, und fuer die Pruefung. */
     sprachGehtDas: sprachGehtDas,
@@ -5598,6 +5713,11 @@ window.LiveChat = (function () {
     sprachHoechstdauer: function () { return SPRACH_LANG; },
     freiHoechstdauer: function () { return SPRACH_SEKUNDEN; },
     /* Der Pseudo-Livestream */
+    /* Melden und Stummschalten */
+    handHeben: handHeben,
+    handRunter: handRunter,
+    meldungen: meldungen,
+    binStumm: binStumm,
     liveNaechste: liveNaechste,
     liveOffen: liveOffen,
     liveMelden: liveMelden,

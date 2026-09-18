@@ -20182,20 +20182,64 @@
                  er ist gegen Markieren und gegen das Lupenmenü
                  gesperrt (siehe .lc-sprach-knopf in korrekturen.css). -->
             <button type="button" class="lc-chat-anhang lc-sprach-knopf" id="lcSprachKnopf"
-                    title="Gedrückt halten und sprechen — die Nachricht ist bei allen sofort zu hören"
-                    aria-label="Sprachnachricht aufnehmen">
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                <rect class="lc-mik-kopf" x="9" y="2.5" width="6" height="11" rx="3"
-                      fill="currentColor"/>
-                <path class="lc-mik-buegel" d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none"
-                      stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-                <line x1="12" y1="17.5" x2="12" y2="21" stroke="currentColor"
-                      stroke-width="1.9" stroke-linecap="round"/>
-                <line x1="8.5" y1="21" x2="15.5" y2="21" stroke="currentColor"
-                      stroke-width="1.9" stroke-linecap="round"/>
-                <circle class="lc-mik-punkt" cx="12" cy="8" r="3.2" fill="#fff" opacity="0"/>
+                    title="Melden: gedrückt halten und sprechen — du wirst gehört, sobald der vor dir fertig ist"
+                    aria-label="Melden und sprechen">
+              <!-- DIE MELDEN-HAND. Eine gezeichnete Hand mit
+                   ausgestrecktem Zeigefinger, wie im Unterricht.
+                   Kein Emoji: ein Zeichen ist Text, und langes
+                   Druecken auf Text heisst auf dem Telefon
+                   „markieren und kopieren". -->
+              <svg class="lc-zeichen-hand" viewBox="0 0 24 24" width="21" height="21"
+                   aria-hidden="true" focusable="false">
+                <path d="M10.2 11.4V4.6a1.35 1.35 0 0 1 2.7 0v6.1"
+                      fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                <path d="M12.9 10.9V6.9a1.3 1.3 0 0 1 2.6 0v4.6"
+                      fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                <path d="M15.5 11.5V8.6a1.3 1.3 0 0 1 2.6 0v5.2c0 3.6-2.3 6.2-5.6 6.2
+                         -2.4 0-3.9-1-5.1-2.9L5 13.4a1.35 1.35 0 0 1 2.2-1.6l1.2 1.6"
+                      fill="none" stroke="currentColor" stroke-width="1.7"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8.4 13.4V9.5a1.3 1.3 0 0 1 2.6 0v2"
+                      fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+              <!-- DER SPRECHENDE MUND. Er tritt an die Stelle der
+                   Hand, sobald „dauernd" angehakt ist — dann meldet
+                   man sich ja nicht mehr, man spricht einfach. -->
+              <svg class="lc-zeichen-mund" viewBox="0 0 24 24" width="21" height="21"
+                   aria-hidden="true" focusable="false">
+                <!-- Ein sprechender Mund: Oberlippe gerade, Unterlippe
+                     rund, Zunge angedeutet. Der erste Entwurf war eine
+                     Linsenform — die sah aus wie ein Auge. -->
+                <path d="M3.4 10.2h12c0 4.3-2.7 7.1-6 7.1s-6-2.8-6-7.1z"
+                      fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M3.4 10.2c1.8-1 3.8-1.5 6-1.5s4.2.5 6 1.5"
+                      fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M7.3 14.2c1.3 1.2 2.9 1.2 4.2 0" fill="none"
+                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+                <!-- Der Schall kommt SEITLICH heraus, auf Hoehe des
+                     Mundes. Erst standen die Boegen schraeg darueber —
+                     das sah aus wie ein abgebrochener Haken. -->
+                <g class="lc-mund-wellen">
+                  <path d="M17.6 10.2a3.4 3.4 0 0 1 0 4.4" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M20.4 8.6a6.4 6.4 0 0 1 0 7.6" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round"/>
+                </g>
               </svg>
             </button>
+            <!-- GEWUENSCHT: „Die Leute sollen sich melden, die was
+                 sagen wollen … und dann machen wir einfach nicht das
+                 Handheben, sondern das Melden. Und dann soll das
+                 Symbol auch so eine Melden-Hand sein, ja, also ein
+                 SVG-Symbol, nicht dass man das markieren kann."
+
+                 Der Haken darunter schaltet auf DAUERND — dann wird
+                 aus der Hand ein sprechender Mund. -->
+            <label class="lc-dauer-haken" id="lcDauerHaken"
+                   title="Dauerhaft sprechen — das Mikrofon hört mit und schickt von selbst, sobald du sprichst">
+              <input type="checkbox" id="lcDauerSchalter">
+              <span class="lc-dauer-text">dauernd</span>
+            </label>
             <!-- GEWUENSCHT: „Oder es ist ständig aktiv und hat einen
                  Schwellwert, den es misst, und sobald die Person
                  spricht, wird auch aufgenommen." Das ist dieser
@@ -23401,6 +23445,55 @@
          „Oder es ist staendig aktiv und hat einen Schwellwert … sobald
          die Person spricht, wird auch aufgenommen. Das wird sofort
          abgeschickt." Ein Schalter, kein Halten. */
+      /* =============================================================
+         DAS HAEKCHEN „DAUERND"
+         -------------------------------------------------------------
+         GEWUENSCHT: „Als kleines Haekchen mit einbringen, und zwar
+         fuer den normalen Mikrofonmodus: sobald das Haekchen
+         aktiviert ist, ist es immer an, und was durchkommt, bleibt.
+         Aber wie gesagt immer in der zeitlichen Reihenfolge."
+
+         Es ist derselbe Weg wie beim Halten — nur ohne Halten. Die
+         Warteschlange, das Kappen, die Reihenfolge: alles gleich.
+         Das Symbol wechselt dabei von der Melden-Hand zum
+         sprechenden Mund, damit man auf einen Blick sieht, in
+         welchem Zustand man ist.
+         ============================================================= */
+      const dauerSchalter = area.querySelector("#lcDauerSchalter");
+      const sprachKnopfEl = area.querySelector("#lcSprachKnopf");
+      function dauerZeichnen(an) {
+        if (sprachKnopfEl) {
+          sprachKnopfEl.classList.toggle("lc-spricht-dauernd", Boolean(an));
+          sprachKnopfEl.title = an
+            ? "Dauernd an — sprich einfach los, du kommst der Reihe nach dran"
+            : "Melden: gedrückt halten und sprechen — du wirst gehört, sobald der vor dir fertig ist";
+          sprachKnopfEl.setAttribute("aria-label", an ? "Dauerhaft sprechen ist an" : "Melden und sprechen");
+        }
+      }
+      if (dauerSchalter) {
+        if (!LiveChat.sprachGehtDas || !LiveChat.sprachGehtDas()) {
+          dauerSchalter.disabled = true;
+          const h = area.querySelector("#lcDauerHaken");
+          if (h) h.title = "Dieser Browser kann keine Sprachnachrichten aufnehmen.";
+        } else {
+          dauerSchalter.checked = Boolean(LiveChat.freisprechenAn && LiveChat.freisprechenAn());
+          dauerZeichnen(dauerSchalter.checked);
+          dauerSchalter.addEventListener("change", async () => {
+            if (!dauerSchalter.checked) {
+              LiveChat.freisprechenBeenden();
+              dauerZeichnen(false);
+              showToast("✋ Wieder melden: halte den Knopf, wenn du etwas sagen willst.");
+              return;
+            }
+            if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
+            const ok = await LiveChat.freisprechenStarten();
+            dauerSchalter.checked = Boolean(ok);
+            dauerZeichnen(ok);
+            if (ok) showToast("🗣️ Dauernd an — sprich einfach los. Du kommst der Reihe nach dran.");
+          });
+        }
+      }
+
       const freiKnopf = area.querySelector("#lcFreiKnopf");
       if (freiKnopf) {
         if (!LiveChat.sprachGehtDas || !LiveChat.sprachGehtDas()) {
@@ -23419,6 +23512,12 @@
             freiKnopf.classList.toggle("lc-frei-an", was !== "aus");
             freiKnopf.classList.toggle("lc-frei-nimmt", was === "nimmt");
             freiKnopf.setAttribute("aria-pressed", String(was !== "aus"));
+            /* Haken und Symbol laufen mit — egal, worueber es
+               eingeschaltet wurde. Zwei Anzeigen fuer denselben
+               Zustand, die auseinanderlaufen, sind schlimmer als
+               eine. */
+            if (dauerSchalter) dauerSchalter.checked = (was !== "aus");
+            dauerZeichnen(was !== "aus");
             if (sagen[was]) showToast(sagen[was]);
           });
           let mitGedrueckt = false;   // langes Druecken hat schon gewirkt
@@ -23504,9 +23603,37 @@
     if (!kzStreifen) {
       kzStreifen = document.createElement("div");
       kzStreifen.className = "kz-streifen";
+      /* GEWUENSCHT: „Zwischen der kleinen Schrift ‚du bist allein da'
+         und dem Zurück soll so ein ganz kleiner Mini-Knopf sein fuer
+         das, wenn man was sagen will … und das Haekchen soll da
+         sein, falls der Lehrer erlaubt, dass man frei spricht. Und
+         rechts daneben bleibt dieser Zurückknopf und das
+         Schliessen-Symbol."
+
+         Genau diese Reihenfolge: Punkt, Text, Melden-Knopf, Haken,
+         Zurück, Schliessen. Am Aufbau aendert sich sonst nichts. */
       kzStreifen.innerHTML =
         '<span class="kz-streifen-punkt" aria-hidden="true"></span>' +
         '<span class="kz-streifen-text" id="kzStreifenText"></span>' +
+        '<button type="button" class="kz-melden" id="kzMelden"' +
+        '  title="Gedrückt halten und sprechen — auch von hier aus"' +
+        '  aria-label="Melden und sprechen">' +
+        '  <svg class="kz-melden-hand" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+        '    <path d="M10.2 11.4V4.6a1.35 1.35 0 0 1 2.7 0v6.1" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>' +
+        '    <path d="M12.9 10.9V6.9a1.3 1.3 0 0 1 2.6 0v4.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>' +
+        '    <path d="M15.5 11.5V8.6a1.3 1.3 0 0 1 2.6 0v5.2c0 3.6-2.3 6.2-5.6 6.2-2.4 0-3.9-1-5.1-2.9L5 13.4a1.35 1.35 0 0 1 2.2-1.6l1.2 1.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '    <path d="M8.4 13.4V9.5a1.3 1.3 0 0 1 2.6 0v2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>' +
+        '  </svg>' +
+        '  <svg class="kz-melden-mund" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+        '    <path d="M3.4 10.2h12c0 4.3-2.7 7.1-6 7.1s-6-2.8-6-7.1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
+        '    <path d="M3.4 10.2c1.8-1 3.8-1.5 6-1.5s4.2.5 6 1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+        '    <path d="M17.6 10.2a3.4 3.4 0 0 1 0 4.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' +
+        '    <path d="M20.4 8.6a6.4 6.4 0 0 1 0 7.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' +
+        '  </svg>' +
+        '</button>' +
+        '<label class="kz-dauer" id="kzDauer" title="Dauerhaft sprechen">' +
+        '  <input type="checkbox" id="kzDauerSchalter"><span aria-hidden="true"></span>' +
+        '</label>' +
         '<button type="button" class="kz-streifen-zurueck" id="kzStreifenZurueck">Zurück</button>' +
         '<button type="button" class="kz-streifen-weg" id="kzStreifenWeg" aria-label="Klassenzimmer verlassen" title="Klassenzimmer verlassen">✕</button>';
       document.body.appendChild(kzStreifen);
@@ -23522,6 +23649,38 @@
         LiveChat.verlassen();
         renderLiveChat();
         klassenzimmerStreifen();
+      });
+      /* Melden von unterwegs: halten und sprechen, genau wie im
+         Klassenzimmer. Man muss also nicht erst zurueckspringen,
+         nur um einen Satz zu sagen. */
+      const kzM = kzStreifen.querySelector("#kzMelden");
+      let kzLaeuft = false;
+      const kzAn = async (e) => {
+        if (e) e.preventDefault();
+        if (kzLaeuft || !LiveChat.sprachAufnahmeStarten) return;
+        if (LiveChat.binStumm && LiveChat.binStumm()) {
+          showToast("🤐 Deine Stimme ist gerade stummgeschaltet — schreib im Chat Bescheid.");
+          return;
+        }
+        kzLaeuft = await LiveChat.sprachAufnahmeStarten();
+        kzM.classList.toggle("kz-melden-an", kzLaeuft);
+      };
+      const kzAus = (e) => {
+        if (e) e.preventDefault();
+        if (!kzLaeuft) return;
+        kzLaeuft = false;
+        kzM.classList.remove("kz-melden-an");
+        LiveChat.sprachAufnahmeStoppen({ live: true });
+      };
+      kzM.addEventListener("pointerdown", kzAn);
+      ["pointerup", "pointercancel", "pointerleave"].forEach((a) => kzM.addEventListener(a, kzAus));
+      kzM.addEventListener("contextmenu", (e) => e.preventDefault());
+      const kzD = kzStreifen.querySelector("#kzDauerSchalter");
+      kzD.addEventListener("change", async () => {
+        if (!kzD.checked) { LiveChat.freisprechenBeenden(); return; }
+        if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
+        const ok = await LiveChat.freisprechenStarten();
+        kzD.checked = Boolean(ok);
       });
     }
 
@@ -23562,6 +23721,21 @@
       : da === 1 ? "du bist allein da" : da + " Leute da";
     kopf.appendChild(fett);
     kopf.appendChild(klein);
+
+    /* Melden-Knopf und Haken mitziehen: dauernd an = sprechender
+       Mund, stummgeschaltet = Knopf gesperrt. */
+    const dauerAn = Boolean(LiveChat.freisprechenAn && LiveChat.freisprechenAn());
+    const stumm = Boolean(LiveChat.binStumm && LiveChat.binStumm());
+    const mKnopf = document.getElementById("kzMelden");
+    const mHaken = document.getElementById("kzDauerSchalter");
+    if (mKnopf) {
+      mKnopf.classList.toggle("kz-melden-dauernd", dauerAn);
+      mKnopf.disabled = stumm;
+      mKnopf.title = stumm ? "Deine Stimme ist stummgeschaltet"
+        : dauerAn ? "Dauernd an — sprich einfach los"
+        : "Gedrückt halten und sprechen — auch von hier aus";
+    }
+    if (mHaken && mHaken.checked !== dauerAn) mHaken.checked = dauerAn;
   }
 
   /* Ein einziger Zuhörer für das ganze Leben der Seite. Die
