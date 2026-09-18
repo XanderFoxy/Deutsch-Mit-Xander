@@ -8519,6 +8519,29 @@ body.lc-schreibt .tutor-reiter {
    Deshalb eine schmale Zeile unter dem Chat, die die Frist sichtbar
    herunterzaehlt. Eine Frist, die man nicht sehen kann, ist eine
    Falle. */
+/* --- ZURUECK ZUM ENDE ---
+   GEMELDET: „Man kann im Chatverlauf nicht mehr nach oben scrollen."
+   Jetzt kann man es — und braucht dann einen sichtbaren Weg zurueck.
+   Der Knopf erscheint erst, wenn man wirklich weiter oben liest, und
+   verschwindet wieder, sobald man unten ist. */
+.lc-nach-unten {
+  position: absolute;
+  right: 14px;
+  bottom: 62px;
+  z-index: 30;
+  border: 1px solid rgba(224, 150, 74, 0.5);
+  border-radius: 999px;
+  background: var(--plum-900, #221c1a);
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 4px 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.lc-nach-unten:hover { background: rgba(224, 150, 74, 0.2); }
+.lc-chat { position: relative; }
+
 .lc-ruecknahmen {
   display: flex;
   flex-wrap: wrap;

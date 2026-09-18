@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19p — Aufnehmen und Abspielen sind wieder zweierlei",
+  stand: "Runde 19q — durch den ganzen Verlauf scrollen",
 
   inArbeit: [
-    { seit: "2026-09-18T21:15",
-      text: "Durch den ganzen Chatverlauf scrollen koennen" },
-    { seit: "2026-09-18T21:15",
+    { seit: "2026-09-18T21:19",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:15",
+    { seit: "2026-09-18T21:19",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
+    { seit: "2026-09-18T21:19",
+      text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:15",
-      text: "Beim Aufnehmen gibt es wieder NUR die alte Animation: die Chatzeile pulsiert, daneben der kleine gelbe Punkt. Kein Balken, kein Name" },
-    { seit: "2026-09-18T21:15",
-      text: "Der gruene Balken mit dem roten Punkt kommt erst, wenn die Aufnahme abgespielt wird — und er zieht sich ueber die ganze Zeile, auch ueber Raeume und Befehle" },
-    { seit: "2026-09-18T21:15",
-      text: "Die amberfarbene zweite Fassung des Balkens ist raus — es gibt nur noch das eine, alte Aussehen" },
+    { seit: "2026-09-18T21:19",
+      text: "Hochscrollen bleibt stehen: der Chat wird nicht mehr nach unten gerissen, auch wenn im Sekundentakt aufgefrischt wird" },
+    { seit: "2026-09-18T21:19",
+      text: "Ein Knopf „↓ Neueste\" bringt zurueck ans Ende, sobald man weiter oben liest" },
+    { seit: "2026-09-18T21:19",
+      text: "Das Geraet merkt sich jetzt 200 statt 60 Zeilen — eine ganze Unterrichtsstunde statt zehn Minuten" },
   ],
 };

@@ -74,7 +74,15 @@ window.LiveChat = (function () {
 
   var PLAETZE = 8;                    // 4 oben, 4 unten
   var CHAT_LAENGE = 300;              // Zeichen je Nachricht
-  var CHAT_VERLAUF = 60;              // so viele legt das GERAET ab
+  /* GEMELDET: „Man soll durch den ganzen Chatverlauf scrollen
+     koennen … um das alte Raetsel zu lesen, wenn man den Chat
+     verlassen oder aktualisiert hat."
+     Sechzig Zeilen sind in einer Unterrichtsstunde nach zehn Minuten
+     voll — danach faellt der Anfang weg, und genau dort steht die
+     Aufgabe. Zweihundert reichen fuer eine ganze Stunde. Platz
+     kostet das kaum: Bilder und Aufnahmen liegen laengst im Lager,
+     im localStorage steht nur der Text. */
+  var CHAT_VERLAUF = 200;             // so viele legt das GERAET ab
   /* GEWÜNSCHT: „Einer, der zum ersten Mal auf die Seite kommt, soll
      trotzdem den heutigen kompletten Tagesverlauf aus dem Chat sehen,
      ohne dass ihm irgendetwas fehlt."

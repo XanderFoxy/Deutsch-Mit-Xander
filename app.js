@@ -24440,34 +24440,114 @@
     lcAmEndeHalten(v);
   }
 
-  /* Hält den Verlauf unten, bis jemand selbst hochscrollt. */
+  /* WARUM MAN NICHT MEHR HOCHSCROLLEN KONNTE.
+     -----------------------------------------------------------------
+     GEMELDET: „Man kann im Chatverlauf nicht mehr nach oben scrollen,
+     um das alte Raetsel zu lesen, wenn man den Chat verlassen oder
+     aktualisiert hat. Man soll durch den ganzen Chatverlauf scrollen
+     koennen."
+
+     Der Griff, der den Chat unten haelt, war richtig gedacht und an
+     einer Stelle falsch gebaut. Er sprang ans Ende und zog den Stand
+     im naechsten Bildaufbau (requestAnimationFrame) noch einmal nach,
+     weil sich die Hoehe bis dahin aendern kann. Dieser zweite Sprung
+     fragte aber NICHT nach, ob der Mensch inzwischen selbst gescrollt
+     hat. Und weil ein Sprung seinerseits ein scroll-Ereignis
+     ausloest, setzte der Horcher „ich bin unten" gleich wieder auf
+     wahr — der Griff rastete neu ein.
+
+     Frueher fiel das kaum auf, weil der Chat selten neu gezeichnet
+     wurde. Seit jede Empfangsbestaetigung und jedes „ich hoere
+     gerade zu" ein Auffrischen ausloest, passiert es im Sekundentakt,
+     und damit wird jedes Hochscrollen sofort wieder eingefangen.
+
+     Jetzt zaehlt eine ABSICHT, keine Position: Wer mit Finger, Rad
+     oder Taste scrollt, hat sich entschieden. Der Griff laesst dann
+     los und kommt erst zurueck, wenn der Mensch selbst wieder ganz
+     unten ankommt — oder den Knopf „↓ Neueste" antippt. Und der
+     nachgezogene Sprung prueft vorher, ob seitdem gescrollt wurde. */
   let lcHaeltUnten = true;
+  let lcScrollZaehler = 0;        // steigt bei jeder eigenen Bewegung
   function lcAmEndeHalten(v) {
     if (!v) return;
     if (!v.dataset.lcHorcht) {
       v.dataset.lcHorcht = "1";
+      const selbst = () => { lcScrollZaehler++; lcHaeltUnten = false; lcSprungKnopf(v); };
+      ["wheel", "touchmove"].forEach((art) => {
+        v.addEventListener(art, selbst, { passive: true });
+      });
+      v.addEventListener("keydown", (e) => {
+        if (/^(Arrow|Page|Home|End)/.test(e.key)) selbst();
+      });
+      /* ERST WENN DIE BEWEGUNG ZUR RUHE GEKOMMEN IST.
+         Der Verlauf rollt weich (scroll-behavior: smooth). Eine
+         Wischbewegung nach oben erzeugt deshalb eine ganze Kette von
+         scroll-Ereignissen, und die ERSTEN davon liegen noch dicht
+         am unteren Rand — dort sagte die Regel „du bist ja unten"
+         und rastete den Griff sofort wieder ein. Gemessen: nach dem
+         Wisch stand der Griff wieder auf „haelt", und die naechste
+         Auffrischung riss den Chat nach unten.
+         Deshalb wird erst geurteilt, wenn 160 ms lang nichts mehr
+         passiert ist — also da, wo der Finger wirklich hinwollte. */
+      let ruhe = 0;
       v.addEventListener("scroll", () => {
-        /* 70 Pixel Spielraum: kleine Stösse beim Tippen sollen den
-           Griff nicht lösen. */
-        lcHaeltUnten = v.scrollHeight - v.scrollTop - v.clientHeight < 70;
+        clearTimeout(ruhe);
+        ruhe = setTimeout(() => {
+          /* 70 Pixel Spielraum: kleine Stoesse beim Tippen sollen den
+             Griff nicht loesen. Ganz unten angekommen heisst: ich
+             will wieder mitlaufen. */
+          if (v.scrollHeight - v.scrollTop - v.clientHeight < 70) lcHaeltUnten = true;
+          lcSprungKnopf(v);
+        }, 160);
+        lcSprungKnopf(v);
       }, { passive: true });
-      /* Jedes Bild, das fertig lädt, macht den Inhalt länger — danach
+      /* Jedes Bild, das fertig laedt, macht den Inhalt laenger — danach
          muss der Stand nachgezogen werden, sonst rutscht das Neueste
          wieder aus dem Bild. */
       v.addEventListener("load", () => { if (lcHaeltUnten) lcNachUnten(v); }, true);
     }
     if (lcHaeltUnten) lcNachUnten(v);
+    lcSprungKnopf(v);
   }
   function lcNachUnten(v) {
+    const stand = lcScrollZaehler;
     const altesRollen = v.style.scrollBehavior;
     v.style.scrollBehavior = "auto";
     v.scrollTop = v.scrollHeight;
-    /* Zweimal: einmal sofort, einmal nach dem nächsten Bildaufbau —
-       dazwischen kann sich die Höhe noch ändern. */
+    /* Zweimal: einmal sofort, einmal nach dem naechsten Bildaufbau —
+       dazwischen kann sich die Hoehe noch aendern. Hat der Mensch in
+       der Zwischenzeit selbst gescrollt, unterbleibt der zweite
+       Sprung: sonst reisst er ihn wieder nach unten. */
     requestAnimationFrame(() => {
+      if (lcScrollZaehler !== stand || !lcHaeltUnten) {
+        v.style.scrollBehavior = altesRollen;
+        return;
+      }
       v.scrollTop = v.scrollHeight;
       v.style.scrollBehavior = altesRollen;
     });
+  }
+  /* Wer oben liest, soll mit einem Tipp zurueckkommen — und sehen,
+     dass es ueberhaupt einen Weg zurueck gibt. */
+  function lcSprungKnopf(v) {
+    if (!v || !v.parentNode) return;
+    const weit = v.scrollHeight - v.scrollTop - v.clientHeight;
+    let k = document.getElementById("lcNachUnten");
+    if (weit < 120) { if (k) k.remove(); return; }
+    if (!k) {
+      k = document.createElement("button");
+      k.type = "button";
+      k.id = "lcNachUnten";
+      k.className = "lc-nach-unten";
+      k.textContent = "↓ Neueste";
+      k.title = "Zurück zum Ende des Chats";
+      k.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lcHaeltUnten = true;
+        lcNachUnten(v);
+      });
+      v.parentNode.insertBefore(k, v.nextSibling);
+    }
   }
 
   /* --- Das Pop-up: ein Gesicht gross ---
@@ -54277,6 +54357,10 @@ An einem Morgen lief ein kleiner Fuchs los…
         if (window.LiveChat) LiveChat.hoertMirZu = echt;
       }
     };
+    /* Nur zum Nachmessen: den Griff, der den Chat unten haelt,
+       von aussen anstossen — so wie es jede Auffrischung tut. */
+    window.__amEndeHalten = (v) => lcAmEndeHalten(v);
+    window.__haeltUnten = () => lcHaeltUnten;
     window.__schallStoss = (t, g) => lcSchallStoss(t, g);
     window.__schreiStimme = (g) => lcSchreiStimme(g);
     window.__schreiKette = () => lcSchreiKette.slice();
