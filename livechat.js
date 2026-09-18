@@ -294,7 +294,7 @@ window.LiveChat = (function () {
       tonAn: zustand.tonAn,
       bildAn: zustand.bildAn,
       ichBild: zustand.ichBild,
-      farbe: zustand.farbe,
+      farbe: zustand.farbe, farbeName: zustand.farbeName,
       schrift: zustand.schrift,
       buehne: zustand.buehne,
       thema: zustand.thema,
@@ -608,6 +608,21 @@ window.LiveChat = (function () {
     try { return localStorage.getItem(SCHRIFT_SCHLUESSEL) || "1"; } catch (e) { return "1"; }
   }
 
+  /* Die Namensfarbe liegt getrennt — „/c faerbt immer alles
+     gleichzeitig, mit /c name und /c schrift kann man es
+     spezifischer machen." Leer heisst: der Name nimmt die
+     Schriftfarbe, so wie es immer war. */
+  var NAMENSFARB_SCHLUESSEL = "dma_livechat_namensfarbe";
+  function namensfarbeMerken(f) {
+    try {
+      if (f) localStorage.setItem(NAMENSFARB_SCHLUESSEL, f);
+      else localStorage.removeItem(NAMENSFARB_SCHLUESSEL);
+    } catch (e) {}
+  }
+  function gemerkteNamensfarbe() {
+    try { return localStorage.getItem(NAMENSFARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
+  }
+
   var FARB_SCHLUESSEL = "dma_livechat_farbe";
   function farbeMerken(f) {
     try {
@@ -782,7 +797,7 @@ window.LiveChat = (function () {
         bild: n.bild || "",
         text: n.text || "",
         bild_im_chat: n.bildImChat || "",
-        farbe: n.farbe || zustand.farbe || "",
+        farbe: n.farbe || zustand.farbe || "", farbeName: n.farbeName || "",
         art: n.art || "text"
       }).then(function () {}, function () {});
     } catch (e) {}
@@ -1985,7 +2000,7 @@ window.LiveChat = (function () {
          leer, fängt er wieder beim Standard an — das ist ehrlicher
          als ein Hintergrund, der jemandem gehört, der längst weg ist. */
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
-               bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe,
+               bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                haeuptling: zustand.haeuptling, thema: zustand.thema,
                seit: zustand.seit, buehne: zustand.buehne,
                raumHg: zustand.raumHg || "",
@@ -2147,6 +2162,7 @@ window.LiveChat = (function () {
         if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
         if (typeof n.bild === "string") zustand.leute[n.von].bild = n.bild;
         if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
+        if (typeof n.farbeName === "string") zustand.leute[n.von].farbeName = n.farbeName;
         personEintragen(n);
         melden();
       }
@@ -2166,7 +2182,7 @@ window.LiveChat = (function () {
       var ganz = sprachTeilEmpfangen(n);
       if (!ganz) return;
       n = { art: "text", id: n.id, von: n.von, name: n.name, text: "",
-            zeit: n.zeit, bild: n.bild, farbe: n.farbe, chatArt: n.chatArt,
+            zeit: n.zeit, bild: n.bild, farbe: n.farbe, farbeName: n.farbeName, chatArt: n.chatArt,
             sprach: ganz, sprachSek: n.sprachSek, sprachAb: n.sprachAb,
             sprachDauer: n.sprachDauer };
     }
@@ -2182,11 +2198,23 @@ window.LiveChat = (function () {
          schreiben." Sie geht also in die Warteschlange und wird
          der Reihe nach abgespielt. In den Chat kommt sie nur,
          wenn der Mitschrieb eingeschaltet ist. */
-      if (n.chatArt === "live" && n.sprach) {
+      /* GEMELDET: „Man hoert nicht mehr, was im Klassenzimmer gesagt
+         wird … waehrend ich ausserhalb des Klassenzimmers bin."
+
+         Da lag es: eine Sprachnachricht aus dem Melden (Knopf halten)
+         wurde NUR als Chatzeile zugestellt, und gespielt hat sie erst
+         das Zeichnen dieser Zeile. Wer den Reiter nicht offen hatte,
+         hatte auch keine Zeile — und hoerte nichts. Die Warteschlange
+         dagegen laeuft immer, ganz ohne Oberflaeche.
+
+         Deshalb geht jetzt JEDE Sprachnachricht denselben Weg:
+         hintereinander, in der Reihenfolge des Eintreffens, egal ob
+         gehalten oder freihaendig. */
+      if (n.sprach && (n.chatArt === "live" || n.chatArt === "sprach")) {
         var w = {
           id: n.id || String(Date.now()) + n.von,
           von: n.von, name: n.name || "Gast",
-          bild: n.bild || "", farbe: n.farbe || "",
+          bild: n.bild || "", farbe: n.farbe || "", farbeName: n.farbeName || "",
           sprach: n.sprach, sprachSek: Number(n.sprachSek) || 0,
           sprachAb: Number(n.sprachAb) || 0,
           sprachDauer: Number(n.sprachDauer) || 0,
@@ -2194,8 +2222,20 @@ window.LiveChat = (function () {
         };
         liveWarteschlange.push(w);
         liveSagen();
+        /* Im Chat steht sie nur, wenn man sie sehen WILL.
+           „Diese Sprachnachrichten sollten nicht alle angezeigt
+           werden — nur wenn man etwas braucht, soll man sich das
+           sichtbar machen koennen, um sich die entsprechende
+           Nachricht herunterladen zu koennen." Die Zeile traegt
+           dann den Abspiel- und den Herunterladen-Knopf. */
         if (liveSichtbar) { nachrichtAnhaengen(w); melden(); }
         return;
+      }
+      /* Ist das die Antwort auf eine Aufgabe, die ICH gestellt habe?
+         Geprueft wird nur auf einfachen Text — ein Bild oder ein
+         Aufkleber ist keine Antwort. */
+      if ((n.chatArt || "text") === "text" && n.text) {
+        try { aufgabeAntwort(n.von, n.name || "Gast", n.text); } catch (e) {}
       }
       nachrichtAnhaengen({
         id: n.id || String(Date.now()) + n.von,
@@ -2209,6 +2249,7 @@ window.LiveChat = (function () {
         wen: n.wen || "",
         an: n.an || "",
         farbe: n.farbe || (zustand.leute[n.von] && zustand.leute[n.von].farbe) || "",
+        farbeName: n.farbeName || (zustand.leute[n.von] && zustand.leute[n.von].farbeName) || "",
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : "",
         /* Die Sprachnachricht faehrt mit und wird beim Zeichnen SOFORT
            abgespielt (app.js). Sie wird nirgends gesichert. */
@@ -2430,7 +2471,7 @@ window.LiveChat = (function () {
         } else {
           /* Die andere Seite ruft an — ihr sagen, dass sie es soll. */
           senden({ art: "hallo", name: zustand.ichName, tonAn: zustand.tonAn,
-                   bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe,
+                   bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                    seit: zustand.seit, buehne: zustand.buehne });
         }
       });
@@ -2574,6 +2615,7 @@ window.LiveChat = (function () {
     zustand.fehler = "";
     zustand.ichBild = o.bild || bildLaden();
     zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
+    zustand.farbeName = zustand.farbeName || gemerkteNamensfarbe();
     zustand.schrift = gemerkteSchrift();
     zustand.buehne = o.buehne !== false;
     platzJe = {};                 // neuer Raum, neue Sitzordnung
@@ -3250,7 +3292,10 @@ window.LiveChat = (function () {
     }
     einsatzPing();
     return spurHolen().then(function (spur) {
-      sprachStuecke = [];
+      /* Auch hier das eigene Feld je Aufnahme — aus demselben
+         Grund wie oben in freiSegmentNeu. */
+      var stuecke = [];
+      sprachStuecke = stuecke;
       var art = sprachFormat();
       try {
         sprachRekorder = art ? new MediaRecorder(spur, { mimeType: art, audioBitsPerSecond: 24000 })
@@ -3260,7 +3305,7 @@ window.LiveChat = (function () {
       }
       if (!sprachRekorder) { sprachAufraeumen(); return false; }
       sprachRekorder.ondataavailable = function (e) {
-        if (e.data && e.data.size) sprachStuecke.push(e.data);
+        if (e.data && e.data.size) stuecke.push(e.data);
       };
       sprachRekorder.start();
       sprachStart = Date.now();
@@ -3552,9 +3597,37 @@ window.LiveChat = (function () {
      laeuft — das ist der ganze Trick. */
   function freiSegmentNeu() {
     if (!frei.an || !frei.spur) return;
+    /* HIER LAG DER FEHLER, UND ZWAR EIN BOESER.
+       -------------------------------------------------------
+       GEMELDET: „Das dauernde Sprechen funktioniert offenbar
+       noch nicht so ganz. Es kommt nicht automatisch an."
+
+       Der alte Rekorder wurde gestoppt, und gleich danach wurde
+       „sprachStuecke" auf ein neues, leeres Feld gesetzt. Nur:
+       ein MediaRecorder liefert seine Daten NACH dem Stoppen, in
+       einem eigenen Anlauf. Sein Behandler zeigte aber nicht auf
+       SEIN Feld, sondern auf die Variable — und die enthielt da
+       laengst das Feld des NEUEN Stuecks.
+
+       Folge: vor jedem gesprochenen Satz stand ein Brocken aus
+       dem weggeworfenen Stueck davor. Eine Opus-Datei mit einem
+       fremden Anfang ist keine gueltige Datei mehr; der Browser
+       drueben spielt sie nicht ab. Es kam also wirklich nichts an,
+       und zwar zuverlaessig.
+
+       Jetzt bekommt jedes Stueck sein EIGENES Feld, fest in
+       seinem Behandler verdrahtet. Selbst wenn der alte Rekorder
+       noch etwas nachliefert, landet es in seinem eigenen Feld
+       und stoert niemanden mehr. Zusaetzlich wird sein Behandler
+       vorher abgehaengt. */
     var alt = sprachRekorder;
-    if (alt) { alt.onstop = function () {}; try { alt.stop(); } catch (e) {} }
-    sprachStuecke = [];
+    if (alt) {
+      alt.ondataavailable = null;
+      alt.onstop = null;
+      try { alt.stop(); } catch (e) {}
+    }
+    var stuecke = [];
+    sprachStuecke = stuecke;
     var art = sprachFormat();
     try {
       sprachRekorder = art ? new MediaRecorder(frei.spur, { mimeType: art, audioBitsPerSecond: 24000 })
@@ -3564,7 +3637,7 @@ window.LiveChat = (function () {
     }
     if (!sprachRekorder) return;
     sprachRekorder.ondataavailable = function (e) {
-      if (e.data && e.data.size) sprachStuecke.push(e.data);
+      if (e.data && e.data.size) stuecke.push(e.data);
     };
     try { sprachRekorder.start(); } catch (e) { sprachRekorder = null; return; }
     frei.segAb = Date.now();
@@ -3763,17 +3836,58 @@ window.LiveChat = (function () {
       text: "", art: o.live ? "live" : "sprach",
       sprach: daten, sprachSek: sekunden,
       sprachAb: o.ab || 0, sprachDauer: o.dauer || 0,
-      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName
     };
     /* Die eigene Wortmeldung haengt nur dann im Chat, wenn der
        Mitschrieb an ist — sonst steht der Chat voll und man liest
-       nicht mehr, was die Leute schreiben. Gehoert wird sie bei
-       einem selbst gar nicht: man hat es ja gerade gesagt. */
-    if (!o.live || liveSichtbar) nachrichtAnhaengen(n);
+       nicht mehr, was die Leute schreiben. */
+    if (liveSichtbar) nachrichtAnhaengen(n);
     /* AUSDRUECKLICH KEIN serverSichern: die Aufnahme ist fluechtig. */
 
+    /* =====================================================
+       DIE QUITTUNG — man muss wissen, dass es raus ist
+       -----------------------------------------------------
+       GEMELDET: „Ich kann nicht mehr hoeren, was ich gesagt
+       habe, und ich weiss auch nicht, ob es gesendet wird."
+
+       Beides steht jetzt da: wie lang die Aufnahme war, wer
+       sie hoeren kann — und ein Knopf zum Nachhoeren und
+       Herunterladen. Ist ausser einem selbst niemand im Raum,
+       laeuft sie sofort zurueck; dann ist das Nachhoeren die
+       einzige Moeglichkeit, die Aufnahme ueberhaupt zu
+       pruefen. Sind andere da, bleibt es beim Knopf — sich
+       selbst ins Ohr zu reden, waehrend man spricht, ist
+       nichts, was man will.
+       ===================================================== */
+    var zuhoerer = 0;
+    try {
+      plaetzeBauen().forEach(function (p) { if (!p.leer && !p.ich) zuhoerer += 1; });
+    } catch (e) {}
+    var wielang = Math.max(1, Math.round(Number(sekunden) || 0));
+    nachrichtAnhaengen({
+      id: id + "-quittung",
+      von: zustand.ichId, name: zustand.ichName, art: "quittung",
+      text: "🎙️ Abgeschickt · " + wielang + " Sekunden · "
+          + (zuhoerer === 0
+              ? "ausser dir ist gerade niemand im Raum — du hörst sie gleich selbst zur Kontrolle"
+              : (zuhoerer === 1 ? "eine Person hört mit" : zuhoerer + " Personen hören mit")),
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+      sprach: daten, sprachSek: sekunden,
+      sprachAb: n.sprachAb, sprachDauer: n.sprachDauer
+    });
+    if (zuhoerer === 0) {
+      liveWarteschlange.push({
+        id: id + "-selbst", von: zustand.ichId, name: zustand.ichName,
+        bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+        sprach: daten, sprachSek: sekunden,
+        sprachAb: n.sprachAb, sprachDauer: n.sprachDauer,
+        zeit: Date.now(), art: "live", selbst: true
+      });
+      liveSagen();
+    }
+
     var kopf = { id: id, name: n.name, zeit: n.zeit, bild: zustand.ichBild,
-                 farbe: zustand.farbe, chatArt: n.art,
+                 farbe: zustand.farbe, farbeName: zustand.farbeName, chatArt: n.art,
                  sprachSek: sekunden, sprachAb: n.sprachAb,
                  sprachDauer: n.sprachDauer };
     if (daten.length <= PAKET_BYTES) {
@@ -3795,6 +3909,103 @@ window.LiveChat = (function () {
     }
     melden();
     return true;
+  }
+
+  /* =========================================================
+     KLASSENZIMMER-AUFGABEN
+     ---------------------------------------------------------
+     GEWUENSCHT: „Einmal, dass man die Woerter verdrehen kann,
+     zum Beispiel den ganzen Satz oder ein Wort, und die Leute
+     sollen richtig schreiben, wie es richtig geschrieben wird.
+     … Auch die Schreibweise eines Wortes, dass die Buchstaben
+     total durcheinander sind im Wort — das Gehirn kann noch
+     sehen, was es fuer ein Wort ist, aber die Leute muessen das
+     Wort aus den Buchstaben richtig aufbauen. Und das gibt
+     Punkte. … Und ich kann den Leuten als Lehrer Zensuren
+     geben."
+
+     WER PRUEFT, IST WICHTIG. Die Loesung wird NICHT mitgeschickt.
+     Sie bleibt bei dem, der die Aufgabe gestellt hat; nur sein
+     Geraet vergleicht die Antworten. Stuende sie im Rundruf,
+     koennte jeder sie im Browser nachlesen — dann waere die
+     Aufgabe keine.
+
+     Die Aufgabe selbst faehrt als gewoehnlicher Text mit
+     (Teile durch „ · " getrennt). Das ist Absicht: so kommt sie
+     auch bei jemandem an, dessen Fassung die neuen Felder noch
+     gar nicht kennt — er sieht dann eben eine Zeile statt
+     Knoepfen, kann aber trotzdem mitmachen.
+     ========================================================= */
+  var AUFGABE_PUNKTE = { satz: 6, wort: 4 };
+  var punkteVerlauf = [];     // { t, w } — der Stundendeckel
+  var offeneAufgabe = null;   // { typ, loesung, teile, wer: {}, zeit }
+
+  function mischen(liste) {
+    var a = liste.slice();
+    /* Fisher-Yates. Und: wenn am Ende zufaellig dasselbe
+       herauskommt, noch einmal — eine „verdrehte" Aufgabe, die
+       gar nicht verdreht ist, waere eine Enttaeuschung. */
+    for (var d = 0; d < 6; d++) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var h = a[i]; a[i] = a[j]; a[j] = h;
+      }
+      if (a.join("\u0001") !== liste.join("\u0001")) break;
+    }
+    return a;
+  }
+
+  /* Vergleichen, ohne kleinlich zu sein: Gross- und Kleinschreibung
+     zaehlt nicht, doppelte Leerzeichen auch nicht, und ein Punkt am
+     Ende ist kein Fehler. Die Wortstellung dagegen schon — darum
+     geht es ja. */
+  function aufgabeGleich(a, b) {
+    var f = function (x) {
+      return String(x || "").toLowerCase().replace(/[.!?,;:]/g, "")
+        .replace(/\s+/g, " ").trim();
+    };
+    return f(a) === f(b) && f(a) !== "";
+  }
+
+  function aufgabeStellen(typ, roh) {
+    var text = String(roh || "").trim();
+    if (!text) {
+      return systemZeile(typ === "satz"
+        ? "So geht es:  /satz Der Hund läuft über die Wiese"
+        : "So geht es:  /wort Fahrrad");
+    }
+    var teile = typ === "satz" ? text.split(/\s+/) : Array.from(text.replace(/\s+/g, ""));
+    if (teile.length < 2) {
+      return systemZeile(typ === "satz"
+        ? "Ein einzelnes Wort ist noch kein Satz — schreib ein paar Wörter mehr."
+        : "Ein einzelner Buchstabe ist noch kein Wort.");
+    }
+    if (teile.length > 24) return systemZeile("Das ist zu lang — höchstens 24 Teile.");
+    var gemischt = mischen(teile);
+    offeneAufgabe = { typ: typ, loesung: text, teile: teile, wer: {}, zeit: Date.now() };
+    return anAlle("aufgabe", (typ === "satz"
+        ? "🧩 Bring den Satz in Ordnung: "
+        : "🔤 Bau das Wort richtig auf: ") + gemischt.join(" · "));
+  }
+
+  /* Die Antworten. Nur der, der die Aufgabe gestellt hat, prueft —
+     und er prueft jede Person nur einmal, damit nicht jemand die
+     richtige Antwort abschreibt, die schon im Chat steht. */
+  function aufgabeAntwort(von, name, text) {
+    if (!offeneAufgabe || !von) return;
+    if (offeneAufgabe.wer[von]) return;
+    if (!aufgabeGleich(text, offeneAufgabe.loesung)) return;
+    offeneAufgabe.wer[von] = true;
+    var punkte = AUFGABE_PUNKTE[offeneAufgabe.typ] || 4;
+    var wievielte = Object.keys(offeneAufgabe.wer).length;
+    anAlle("system", "✅ " + name + " hat es richtig: „" + offeneAufgabe.loesung + "“ — "
+      + punkte + " Punkte" + (wievielte === 1 ? " und als Erste:r dran." : "."));
+    /* Punkte bucht jeder auf SEINEM Geraet fuer SICH selbst — ein
+       fremdes Konto kann von hier aus niemand anfassen, und das ist
+       auch gut so. Die Nachricht sagt nur: das war richtig. */
+    postSenden(von, { art: "punkte", wieviel: punkte, raum: zustand.raum,
+                      grund: (offeneAufgabe.typ === "satz" ? "Satzpuzzle" : "Wortpuzzle")
+                             + " im Klassenzimmer" });
   }
 
   /* =========================================================
@@ -3887,6 +4098,12 @@ window.LiveChat = (function () {
   var liveMelder = null;
 
   function liveMelden(f) { liveMelder = typeof f === "function" ? f : null; }
+  /* Was im Raum passiert, darf auch oben im Laufband stehen. app.js
+     meldet sich mit beiEreignis an; ohne Anmeldung passiert nichts. */
+  function raumEreignis(text) {
+    if (typeof zustand.ereignisRuf !== "function") return;
+    try { zustand.ereignisRuf(String(text || "")); } catch (e) {}
+  }
   function liveSagen() { if (liveMelder) { try { liveMelder(); } catch (e) {} } }
   /* Das naechste Stueck herausgeben — app.js ruft das ab, sobald das
      vorige zu Ende ist. */
@@ -3922,14 +4139,14 @@ window.LiveChat = (function () {
       von: zustand.ichId, name: zustand.ichName,
       text: String(text || "").slice(0, CHAT_LAENGE),
       bildImChat: String(quelle || ""),
-      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName
     };
     if (!n.bildImChat) return false;
     bildGemerkt(n.bildImChat);          // fuer „zuletzt benutzt" im Waehler
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
-             bild: zustand.ichBild, farbe: zustand.farbe, bildImChat: n.bildImChat });
+             bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName, bildImChat: n.bildImChat });
     melden();
     return true;
   }
@@ -4488,7 +4705,14 @@ window.LiveChat = (function () {
     { gr: "feier", w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift <nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
     { gr: "aussehen", w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",       was: "Ein eigenes Bild hinter den Chat legen (/hintergrund weg nimmt es wieder)" },
-    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Deine Schriftfarbe: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
+    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c <farbe>",          was: "Farbe für Name und Schrift: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
+    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name <farbe>",  was: "Nur der Name bekommt diese Farbe — die Schrift behält ihre" },
+    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw <text>",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
+    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz <ganzer Satz>", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
+    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
+    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Häuptling: eine Zensur von 1 bis 6 mit einem Wort dazu" },
+    { gr: "schule", w: "mitschrieb", kurz: "sichtbar", nutzt: "/mitschrieb",   was: "Sprachnachrichten im Chat sichtbar machen — zum Nachhören und Herunterladen" },
+    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { gr: "hilfe", w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
   ];
@@ -4742,7 +4966,7 @@ window.LiveChat = (function () {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
       text: text, art: art, zeit: Date.now(), eigen: true,
-      bild: zustand.ichBild, farbe: zustand.farbe, an: an || ""
+      bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName, an: an || ""
     };
     nachrichtAnhaengen(n);
     return n;
@@ -4783,7 +5007,7 @@ window.LiveChat = (function () {
     if (zusatz && zusatz.an) n.an = zusatz.an;
     serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
-                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe };
+                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName };
     if (zusatz) Object.keys(zusatz).forEach(function (k) { post[k] = zusatz[k]; });
     senden(post);
     melden();
@@ -4828,6 +5052,39 @@ window.LiveChat = (function () {
   }
   function postEmpfangen(n) {
     if (!n) return;
+    /* PUNKTE FUER EINE RICHTIGE ANTWORT ODER EINE GUTE ZENSUR.
+       -------------------------------------------------------
+       GEWUENSCHT: „Dass diese Klassenzimmer-Aufgaben, die wir da im
+       Chat haben, auch wirklich in die Bewertung von den Leuten mit
+       eingehen."
+
+       Gebucht wird auf dem EIGENEN Geraet fuer das EIGENE Konto —
+       ueber denselben Weg wie jede Spielrunde (punkteRuf zeigt auf
+       saveResultAndCheck in app.js). Von aussen kann damit niemand
+       ein fremdes Konto anfassen; es kommt nur die Mitteilung „das
+       war richtig", und was daraus wird, entscheidet das Geraet des
+       Empfaengers.
+
+       Ein Deckel gehoert dazu: hoechstens 60 Punkte je Stunde aus
+       dem Klassenzimmer. Sonst koennte jemand mit einem eigenen
+       Raum den ganzen Tag „Aufgaben" an sich selbst stellen. */
+    if (n.art === "punkte") {
+      var wieviel = Math.max(0, Math.min(10, Math.round(Number(n.wieviel) || 0)));
+      if (!wieviel) return;
+      var jetzt = Date.now();
+      punkteVerlauf = punkteVerlauf.filter(function (p) { return jetzt - p.t < 3600000; });
+      var schon = punkteVerlauf.reduce(function (a, p) { return a + p.w; }, 0);
+      if (schon + wieviel > 60) {
+        systemZeile("Für diese Stunde ist die Punktegrenze aus dem Klassenzimmer erreicht — richtig war es trotzdem.");
+        return;
+      }
+      punkteVerlauf.push({ t: jetzt, w: wieviel });
+      if (typeof zustand.punkteRuf === "function") {
+        try { zustand.punkteRuf(wieviel, String(n.grund || "Klassenzimmer")); } catch (e) {}
+      }
+      systemZeile("⭐ " + wieviel + " Punkte für dich — " + String(n.grund || "Klassenzimmer") + ".");
+      return;
+    }
     if (n.art === "fluester") {
       nachrichtAnhaengen({
         id: n.id || neueNachrichtId(), von: n.von, name: n.vonName || "Jemand",
@@ -5071,10 +5328,21 @@ window.LiveChat = (function () {
     }
     if (art === "k") {
       if (!zustand.haeuptling) return systemZeile("Rausschmeißen darf nur der Häuptling.");
-      var z3 = personNachName(rest);
+      var z3 = personNachName(rest.trim().split(/\s+/)[0] || "");
       if (!z3) return systemZeile("„" + rest + "“ ist nicht hier.");
       postSenden(z3.id, { art: "rausschmiss", raum: zustand.raum });
-      return anAlle("system", z3.name + " wurde von " + zustand.ichName + " hinausgeschickt.");
+      /* GEWUENSCHT: „Oben im Newsticker sollen auch solche Sachen
+         stehen — wie ,Emmy wurde aus dem Klassenzimmer geworfen,
+         weil sie den Unterricht stoert, und denkt jetzt ueber ihr
+         Verhalten nach'." Der Grund kommt aus dem, was der Haeuptling
+         dahinterschreibt: /k Emmy stoert den Unterricht. Steht nichts
+         da, bleibt es bei der schlichten Meldung — erfunden wird
+         hier kein Grund. */
+      var grund3 = rest.trim().split(/\s+/).slice(1).join(" ").trim();
+      raumEreignis(z3.name + " wurde aus " + raumKlartext(zustand.raum) + " geschickt"
+        + (grund3 ? " — " + grund3 : "") + " und denkt jetzt über das Verhalten nach");
+      return anAlle("system", z3.name + " wurde von " + zustand.ichName + " hinausgeschickt."
+        + (grund3 ? " Grund: " + grund3 : ""));
     }
     if (art === "stumm" || art === "entstumm") {
       if (!zustand.haeuptling) return systemZeile("Stummschalten darf nur der Häuptling.");
@@ -5309,21 +5577,124 @@ window.LiveChat = (function () {
         : "Such ein Bild aus. Es bleibt nur auf diesem Gerät.");
     }
 
-    /* ---- Farbe ---- */
-    if (art === "c") {
+    /* ---- Farbe ----
+       GEWUENSCHT: „Als weiteren Befehl kannst du /c name machen, dass
+       man nur den Namen einfaerbt — und die Schriftfarbe, die man
+       zuletzt eingestellt hat, ist dann die Schriftfarbe fuer die
+       Schrift. /c generell faerbt immer alles gleichzeitig; mit
+       /c name und /c schrift kann man das spezifischer machen."
+
+       Drei Formen, eine Stelle:
+         /c <farbe>            alles
+         /c name <farbe>       nur der Name
+         /c schrift <farbe>    nur der Text (das ist /c, nur deutlich)
+       „/c name" ohne Farbe nimmt die Sonderfarbe wieder weg. */
+    if (art === "c" || art === "cname" || art === "cschrift") {
       var erlaubt = ["rot", "blau", "gruen", "grün", "gelb", "lila", "tuerkis", "türkis",
                      "orange", "rosa", "weiss", "weiß", "bunt", ""];
-      var f = rest.toLowerCase();
+      var teile = rest.trim().split(/\s+/);
+      var wohin = "alles";
+      /* /cname und /cschrift sind nur kurze Schreibweisen fuer
+         /c name und /c schrift — ein Weg, nicht zwei. */
+      if (art === "cname") wohin = "name";
+      else if (art === "cschrift") wohin = "schrift";
+      else
+      if (/^(name|nick)$/i.test(teile[0] || "")) { wohin = "name"; teile.shift(); }
+      else if (/^(schrift|text|font|front)$/i.test(teile[0] || "")) { wohin = "schrift"; teile.shift(); }
+      var f = (teile.join(" ") || "").toLowerCase();
       if (erlaubt.indexOf(f) < 0) {
         return systemZeile("Farben: rot, blau, gruen, gelb, lila, tuerkis, orange, rosa, "
-          + "weiss, bunt — oder  /c  ohne Wort für die Standardfarbe.");
+          + "weiss, bunt.\n"
+          + "  /c <farbe>           Name und Schrift zusammen\n"
+          + "  /c name <farbe>      nur der Name\n"
+          + "  /c schrift <farbe>   nur die Schrift\n"
+          + "Ohne Farbwort geht es wieder auf normal zurück.");
       }
-      zustand.farbe = f.replace("ü", "ue").replace("ß", "ss");
-      farbeMerken(zustand.farbe);          // ueberlebt das Neuladen
+      var sauber = f.replace("ü", "ue").replace("ß", "ss");
+      if (wohin === "name") {
+        zustand.farbeName = sauber;
+        namensfarbeMerken(sauber);
+      } else {
+        zustand.farbe = sauber;
+        farbeMerken(sauber);
+        /* „/c <farbe>" faerbt ALLES — also faellt die Sonderfarbe
+           des Namens weg, sonst bliebe sie unsichtbar bestehen und
+           der naechste /c schiene wirkungslos. */
+        if (wohin === "alles") { zustand.farbeName = ""; namensfarbeMerken(""); }
+      }
       senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-               bild: zustand.ichBild, farbe: zustand.farbe });
+               bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName, farbeName: zustand.farbeName });
       melden();
-      return systemZeile(zustand.farbe ? "Du schreibst jetzt " + rest + "." : "Wieder normale Farbe.");
+      if (wohin === "name") {
+        return systemZeile(sauber ? "Dein Name steht jetzt in " + f + "." : "Dein Name hat wieder die Schriftfarbe.");
+      }
+      if (wohin === "schrift") {
+        return systemZeile(sauber ? "Deine Schrift ist jetzt " + f + "." : "Wieder normale Schriftfarbe.");
+      }
+      return systemZeile(sauber ? "Du schreibst jetzt " + f + "." : "Wieder normale Farbe.");
+    }
+
+    /* ---- Rückwärts schreiben ----
+       GEMELDET: „Die Schrift, die man schreibt, ist verkehrt herum.
+       Das sieht zwar witzig aus … diesen Fehler kann man einfach so
+       designmässig mit einbauen, dass man bewusst so schreiben
+       kann." Also bitte — aber nur, wenn man es will. */
+    if (art === "rw") {
+      if (!rest.trim()) return systemZeile("So geht es:  /rw Heute lernen wir Deutsch");
+      var rueck = Array.from(rest.trim()).reverse().join("");
+      return anAlle("text", rueck);
+    }
+
+    /* ---- Die zwei Aufgaben ---- */
+    if (art === "satz") return aufgabeStellen("satz", rest);
+    if (art === "wort") return aufgabeStellen("wort", rest);
+
+    /* ---- Zensuren ----
+       „Dass man die Antworten der Leute bewerten kann — die es
+       richtig machen, dass die Zensuren kriegen dafür, von 1 bis 6,
+       ja, also wie man das aus dem Unterricht gewöhnt ist." */
+    if (art === "note") {
+      if (!zustand.haeuptling) return systemZeile("Zensuren gibt nur der Häuptling.");
+      var nt = rest.trim().split(/\s+/);
+      var wem = nt.shift() || "";
+      var zahl = Number(nt.shift());
+      var wofuer = nt.join(" ").trim();
+      var zz = personNachName(wem);
+      if (!zz) return systemZeile("„" + wem + "“ ist nicht hier.");
+      if (!(zahl >= 1 && zahl <= 6)) {
+        return systemZeile("So geht es:  /note " + zz.name + " 2 saubere Satzstellung\n"
+          + "Zensuren gehen von 1 (sehr gut) bis 6 (ungenügend).");
+      }
+      var WORT = { 1: "sehr gut", 2: "gut", 3: "befriedigend",
+                   4: "ausreichend", 5: "mangelhaft", 6: "ungenügend" };
+      zahl = Math.round(zahl);
+      /* Eine Eins ist etwas wert und soll etwas bringen; eine Sechs
+         nimmt nichts weg — Noten sind hier zum Anspornen da, nicht
+         zum Bestrafen. */
+      var gut = { 1: 10, 2: 6, 3: 3, 4: 1, 5: 0, 6: 0 }[zahl];
+      if (gut) {
+        postSenden(zz.id, { art: "punkte", wieviel: gut, raum: zustand.raum,
+                            grund: "Zensur " + zahl + " im Klassenzimmer" });
+      }
+      return anAlle("note", "📋 " + zz.name + " bekommt eine " + zahl
+        + " (" + WORT[zahl] + ")" + (wofuer ? " — " + wofuer : "")
+        + (gut ? "  ·  +" + gut + " Punkte" : ""));
+    }
+
+    /* ---- Sprachnachrichten sichtbar machen ----
+       Derselbe Schalter wie der lange Druck auf das Halte-Zeichen,
+       nur zum Tippen. Der Schlüssel ist bewusst DERSELBE wie in
+       app.js (dma_lc_mitschrieb) — zwei Gedächtnisse für einen
+       Schalter laufen sonst auseinander. */
+    if (art === "mitschrieb") {
+      var anJetzt = !liveSichtbar;
+      if (/^(an|ein|ja)$/i.test(rest.trim())) anJetzt = true;
+      if (/^(aus|nein|weg)$/i.test(rest.trim())) anJetzt = false;
+      liveSichtbar = anJetzt;
+      try { localStorage.setItem("dma_lc_mitschrieb", anJetzt ? "an" : "aus"); } catch (e) {}
+      return systemZeile(anJetzt
+        ? "📝 Sprachnachrichten stehen jetzt auch im Chat — zum Nachhören und Herunterladen."
+        : "📝 Sprachnachrichten sind wieder unsichtbar — gehört werden sie trotzdem.");
     }
 
     /* ---- Hilfe ---- */
@@ -5381,7 +5752,7 @@ window.LiveChat = (function () {
       }
     }
     senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-             bild: zustand.ichBild, farbe: zustand.farbe,
+             bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
              seit: zustand.seit, buehne: zustand.buehne });
     praesenzSetzen(true, zustand.ichName);
     melden();
@@ -5512,12 +5883,12 @@ window.LiveChat = (function () {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
       text: t, art: alsAktion ? "aktion" : "text",
-      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName
     };
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
-             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe });
+             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName });
     melden();
   }
 
@@ -5776,6 +6147,17 @@ window.LiveChat = (function () {
     gemerkteFarbe: gemerkteFarbe,
     gemerkteSchrift: gemerkteSchrift,
     beiHintergrund: function (f) { zustand.hintergrundRuf = f; },
+    /* Punkte aus dem Klassenzimmer gehen durch dieselbe Tuer wie
+       jede Spielrunde — app.js meldet sich hier an. */
+    beiPunkten: function (f) { zustand.punkteRuf = f; },
+    beiEreignis: function (f) { zustand.ereignisRuf = f; },
+    /* Nur fuer die Pruefung: die offene Aufgabe von aussen sehen. */
+    pruefAufgabe: function () {
+      return offeneAufgabe ? { typ: offeneAufgabe.typ, loesung: offeneAufgabe.loesung,
+                               richtige: Object.keys(offeneAufgabe.wer).length } : null;
+    },
+    pruefAufgabeStellen: aufgabeStellen,
+    pruefAufgabeAntwort: aufgabeAntwort,
     /* DER HINTERGRUND DES RAUMS — für alle, nicht nur für mich.
        GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für alle
        sichtbar ist."

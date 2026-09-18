@@ -366,6 +366,17 @@
     if (!nav) return;
     nav.querySelectorAll(".subnav-pill").forEach((pill) => {
       pill.addEventListener("click", () => {
+        /* GEMESSEN (werkzeug/pruefe-tutor.js): beim Betreten eines
+           Hauptreiters klickt die Seite den ersten Unterreiter SELBST
+           an (siehe activePill.click() weiter oben). Alex fing dann
+           gerade den Bereich zu erklaeren an, wurde nach 31 ms
+           abgewuergt und kam mit einem anderen Satz neu herein — das
+           ist das gemeldete „Springen". Ob ein MENSCH getippt hat,
+           steht nur in diesem Augenblick fest: suppressNextSubnavScroll
+           wird noch in diesem Handler zurueckgesetzt (unten), der
+           Tutor wird aber erst 800 ms spaeter gerufen. Also hier
+           festhalten. */
+        const echterKlick = !suppressNextSubnavScroll;
         nav.querySelectorAll(".subnav-pill").forEach((p) => p.setAttribute("aria-selected", String(p === pill)));
         const parent = nav.parentElement;
         parent.querySelectorAll(".subview").forEach((v) => (v.dataset.active = String(v.id === pill.dataset.sub)));
@@ -382,7 +393,7 @@
            und nur, wenn kein programmierter Klick dahintersteckt
            (siehe suppressNextSubnavScroll weiter unten). */
         setTimeout(() => {
-          try { tutorBereichRufen(pill.dataset.sub); } catch (e) { /* nie den Wechsel aufhalten */ }
+          try { tutorBereichRufen(pill.dataset.sub, false, echterKlick); } catch (e) { /* nie den Wechsel aufhalten */ }
         }, 800);
         /* GEWÜNSCHT: „Jede Übung und jedes Spiel soll für eine
            Herausforderung nutzbar sein."
@@ -2898,6 +2909,8 @@
         </select>
       </div>
 
+      ${istBetreiber ? unterrichtGlockeHtml() : ""}
+
       <div class="question-card" style="margin-top:14px;">
         <h3>🎓 Alex als Tutor</h3>
         <p class="empty-note" style="margin-bottom:10px;">
@@ -3288,6 +3301,7 @@
       const a = await LiveChat.relaisRufen({ aktion: "schluessel-loeschen" });
       if (a && a.ok) { relaisStandDaten = null; renderSettings(); showToast("🛰️ Relais entfernt — es laufen wieder die öffentlichen."); }
     });
+    unterrichtGlockeVerdrahten();
     document.getElementById("tutorSchalter")?.addEventListener("change", (e) => {
       tutorAnSetzen(e.target.checked);
       showToast(e.target.checked ? "🎓 Alex erklärt dir die Bereiche wieder." : "🎓 Alex hält sich raus.");
@@ -17099,11 +17113,31 @@
     return woerter;
   }
 
+  /* NUR EIN STURM AUF EINMAL.
+     -----------------------------------------------------------------
+     GEMELDET: „Die Schrift, die man schreibt, ist verkehrt herum. Das
+     sieht zwar witzig aus … aber es ist offenbar ein Fehler."
+
+     Hier lag er. Der Orkan TAUSCHT die Woerter wirklich aus (das war
+     ja der Auftrag: „der soll direkt die Woerter verwirren"), merkt
+     sich den Urtext und setzt ihn nach vier Sekunden zurueck. Lief
+     ein zweiter Sturm los, waehrend der erste noch verwirrt hatte,
+     dann las der zweite den VERWIRRTEN Stand als Urtext ein — und
+     stellte am Ende genau diesen wieder her. Die Verdrehung war
+     damit dauerhaft, und zwar in der Datenansicht, aus der der Chat
+     neu gezeichnet wird.
+
+     Zwei Riegel: ein zweiter Sturm wird abgewiesen, solange einer
+     laeuft, und ein Feld, das schon Wort-Behaelter hat, wird nicht
+     noch einmal zerlegt. */
+  let lcOrkanLaeuft = false;
   function lcOrkan() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (lcOrkanLaeuft) return;
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
     if (!karte) return;
+    lcOrkanLaeuft = true;
     karte.classList.add("lc-orkant");
     const zeilen = [...karte.querySelectorAll(".lc-zeile, .lc-platz")];
     zeilen.forEach((z, i) => {
@@ -17118,7 +17152,9 @@
     /* Die Wörter selbst. Nur die letzten Zeilen — bei zweihundert
        Zeilen wären es tausende Elemente, und der Sturm würde ruckeln
        statt zu blasen. Man sieht ohnehin nur das untere Ende. */
-    const textfelder = [...karte.querySelectorAll(".lc-zeilentext")].slice(-40);
+    const textfelder = [...karte.querySelectorAll(".lc-zeilentext")]
+      .filter((f) => !f.querySelector(".lc-o-wort"))   // nie zweimal zerlegen
+      .slice(-40);
     const zurueck = [];
     textfelder.forEach((feld) => {
       const woerter = lcOrkanZerlegen(feld);
@@ -17192,6 +17228,7 @@
     }
     document.body.appendChild(schicht);
     setTimeout(() => {
+      lcOrkanLaeuft = false;
       schicht.remove();
       karte.classList.remove("lc-orkant");
       zeilen.forEach((z) => {
@@ -19986,6 +20023,7 @@
     ["wetter",   "☔ Wetter und Himmel"],
     ["tiere",    "🦋 Tiere und Fahrzeuge"],
     ["welt",     "🌋 Große Effekte"],
+    ["schule",   "🎒 Unterricht"],
     ["aussehen", "🎨 Aussehen"],
     ["hilfe",    "❓ Hilfe"],
   ];
@@ -20163,12 +20201,23 @@
           </p>` : ""}
           <form class="lc-chat-fuss" id="lcForm" autocomplete="off"
                 ${!Backend.currentUser() ? 'style="display:none;"' : ""}>
+            <!-- EIN ANHANG STATT ZWEIER KNOEPFE.
+                 GEWUENSCHT: „Um Platz zu sparen, koennen wir das
+                 Bildsymbol dort rausnehmen und nur den Anhang und die
+                 Hand haben — und im Anhang koennen wir das Bildsymbol
+                 mit unterbringen, dass man sowohl die Dateien
+                 auswaehlen kann, die auf dem System sind, als auch
+                 ein Bild von den GIFs und die ganzen Sachen, die zum
+                 System gehoeren."
+
+                 Der Waehler kann das laengst alles: Aufkleber,
+                 zuletzt benutzte Bilder, Sammelfuechse, „Foto vom
+                 Geraet" und GIPHY. Es brauchte also keinen zweiten
+                 Knopf, sondern nur einen Weg dorthin. -->
             <input type="file" id="lcFoto" accept="image/*" hidden>
             <button type="button" class="lc-chat-anhang" id="lcFotoKnopf"
-                    title="Ein Foto schicken" aria-label="Ein Foto schicken">📎</button>
-            <button type="button" class="lc-chat-anhang" id="lcGifKnopf"
-                    title="GIF, Sammelfuchs oder ein zuletzt benutztes Bild schicken"
-                    aria-label="Bild, GIF oder Sammelfuchs schicken">🖼️</button>
+                    title="Anhang: Foto vom Gerät, GIF, Aufkleber oder Sammelfuchs"
+                    aria-label="Anhang wählen">📎</button>
             <!-- GEWUENSCHT: „Sprachnachrichten, die einfach direkt abspielen
                  wie die Sounds von den Animationen … so koennen wir einen
                  Pseudo-Livestream machen mit denen, die sich nicht mit mir
@@ -20235,29 +20284,41 @@
 
                  Der Haken darunter schaltet auf DAUERND — dann wird
                  aus der Hand ein sprechender Mund. -->
+            <!-- GEMELDET: „Das ,dauernd' muss nicht ausgeschrieben
+                 dastehen. Es soll einfach nur eine Halten-Funktion
+                 sein — ja, Hold oder irgendwas —, dass du das
+                 einfacher darstellst, dass man weiss, dass es Halten
+                 bedeutet."
+
+                 Also ein Zeichen statt eines Wortes: ein Schloss, das
+                 zu ist, solange gehalten wird. Geschlossenes Schloss =
+                 das Mikrofon bleibt an, man muss den Knopf nicht mehr
+                 halten. Ein langer Druck darauf schaltet den
+                 Mitschrieb um (siehe unten) — dafuer gab es frueher
+                 den Ohr-Knopf. -->
             <label class="lc-dauer-haken" id="lcDauerHaken"
-                   title="Dauerhaft sprechen — das Mikrofon hört mit und schickt von selbst, sobald du sprichst">
+                   title="Halten: das Mikrofon bleibt an und schickt von selbst, sobald du sprichst — langer Druck zeigt das Gesagte im Chat">
               <input type="checkbox" id="lcDauerSchalter">
-              <span class="lc-dauer-text">dauernd</span>
-            </label>
-            <!-- GEWUENSCHT: „Oder es ist ständig aktiv und hat einen
-                 Schwellwert, den es misst, und sobald die Person
-                 spricht, wird auch aufgenommen." Das ist dieser
-                 Schalter: Ohr an = Freisprechen. -->
-            <button type="button" class="lc-chat-anhang lc-frei-knopf" id="lcFreiKnopf"
-                    title="Freisprechen: das Mikrofon hört mit und schickt von selbst, sobald du sprichst"
-                    aria-label="Freisprechen einschalten" aria-pressed="false">
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                <path d="M4 15V9a8 8 0 0 1 16 0v6" fill="none" stroke="currentColor"
-                      stroke-width="1.9" stroke-linecap="round"/>
-                <rect x="2.5" y="13" width="4.5" height="7" rx="2.2" fill="currentColor"/>
-                <rect x="17" y="13" width="4.5" height="7" rx="2.2" fill="currentColor"/>
-                <g class="lc-frei-wellen" opacity="0">
-                  <path d="M9.5 12.5a3.4 3.4 0 0 1 5 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                  <path d="M8 15a5.6 5.6 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </g>
+              <svg class="lc-halt-zeichen" viewBox="0 0 24 24" width="17" height="17"
+                   aria-hidden="true" focusable="false">
+                <!-- Der Buegel: offen, solange man halten muss —
+                     er klappt zu, wenn das Mikrofon offen bleibt. -->
+                <path class="lc-halt-buegel" d="M8.4 10.5V7.9a3.6 3.6 0 0 1 7.2 0v2.6"
+                      fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <rect x="5.6" y="10.4" width="12.8" height="9.2" rx="2.1"
+                      fill="none" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="12" cy="14.6" r="1.25" fill="currentColor"/>
+                <path d="M12 15.6v1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
-            </button>
+              <span class="lc-dauer-text" aria-hidden="true">Halten</span>
+            </label>
+            <!-- Hier stand der Ohr-Knopf (Freisprechen ein/aus).
+                 GEMELDET: „Das eine Symbol ist überflüssig mit dem
+                 Kopfhörer, weil das ja vorher dieselbe Funktion
+                 gehabt hat — das kannst du rausnehmen." Stimmt: der
+                 Haken daneben schaltet dasselbe. Was der Ohr-Knopf
+                 sonst noch konnte (langer Druck = Mitschrieb), sitzt
+                 jetzt auf dem Halte-Zeichen. -->
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben"
                    autocomplete="off" autocorrect="off" spellcheck="false">
@@ -21352,7 +21413,33 @@
     lcLiveLaeuft = true;
     lcLiveJetzt = w;
     lcLiveBalkenZeichnen();
+    /* =========================================================
+       DER PLATZ DES SPRECHERS LEUCHTET — GENAU JETZT
+       ---------------------------------------------------------
+       GEWUENSCHT: „Dass man an der Stelle, in der Zeit, wo das
+       laeuft, wirklich die Animation um den Profilbildrahmen des
+       Platzes der Person sieht — als wenn sie in Echtzeit
+       spricht, in dem Moment, wo die Sprache abgefeuert wird."
+
+       Bewusst eine ANDERE Animation als beim echten Ton
+       (lc-platz-spricht): dort ist es eine gleichmaessige
+       Aura, hier ein Ring, der mit jedem Satz nach aussen
+       geht — man soll die Aufzeichnung vom Direkten
+       unterscheiden koennen. Und es wird nichts geschaetzt:
+       die Markierung steht genau so lange, wie die Aufnahme
+       laeuft, und wird vom Ende des Tons wieder abgenommen. */
+    const platzMarkieren = (an) => {
+      try {
+        const l = LiveChat.lage();
+        const p = (l.plaetze || []).find((x) => !x.leer && x.id === w.von);
+        if (!p) return;
+        const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
+        if (knopf) knopf.classList.toggle("lc-platz-stimme", Boolean(an));
+      } catch (e) {}
+    };
+    platzMarkieren(true);
     const fertig = () => {
+      platzMarkieren(false);
       lcLiveLaeuft = false;
       lcLiveJetzt = null;
       /* Einen Wimpernschlag Luft zwischen zwei Sprechern — sonst
@@ -21390,6 +21477,30 @@
     if (window.LiveChat && LiveChat.liveMelden) {
       LiveChat.liveMelden(() => { lcLiveBalkenZeichnen(); lcLiveWeiter(); });
       if (LiveChat.liveMitschrieb) LiveChat.liveMitschrieb(lcMitschriebAn());
+      /* PUNKTE AUS DEM KLASSENZIMMER.
+         GEWUENSCHT: „Dass diese Klassenzimmer-Aufgaben, die wir da im
+         Chat haben, auch wirklich in die Bewertung von den Leuten mit
+         eingehen." Sie gehen deshalb durch dieselbe Tuer wie jede
+         Spielrunde — saveResultAndCheck —, damit sie in Punkten,
+         Missionen und Rang genauso zaehlen und in der Auswertung
+         auftauchen. Kein zweiter Weg, der auseinanderlaufen koennte. */
+      /* Und was im Klassenzimmer passiert, steht oben im Laufband —
+         „Emmy wurde aus dem Klassenzimmer geschickt, weil sie den
+         Unterricht stoert, und denkt jetzt ueber das Verhalten nach." */
+      if (LiveChat.beiEreignis) {
+        LiveChat.beiEreignis((text) => { try { kzEreignisSetzen(text); } catch (e) {} });
+      }
+      if (LiveChat.beiPunkten) {
+        LiveChat.beiPunkten((wieviel, grund) => {
+          if (!Backend.currentUser()) return;
+          try {
+            saveResultAndCheck({
+              categories: ["klassenzimmer"], points: wieviel, bonus: 0, percent: 100,
+              character: "🎒 " + String(grund || "Klassenzimmer"), badges: []
+            });
+          } catch (e) {}
+        });
+      }
       return;
     }
     if ((versuch || 0) < 40) setTimeout(() => lcLiveAnmelden((versuch || 0) + 1), 120);
@@ -21418,6 +21529,25 @@
     lila: "#c99bff", tuerkis: "#6fe3d6", orange: "#ffa45c", rosa: "#ff9ecb",
     weiss: "#f4f4f4",
   };
+  /* =================================================================
+     ZWEI FARBEN STATT EINER
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Als weiteren Befehl kannst du /c name machen, dass
+     man nur den Namen einfaerbt — und die Schriftfarbe, die man
+     zuletzt eingestellt hat, ist dann die Farbe fuer die Schrift.
+     /c faerbt immer alles gleichzeitig, mit /c name und /c schrift
+     kann man es spezifischer machen."
+
+     Genau so ist es gebaut: „farbe" gilt weiter fuer alles, und wer
+     zusaetzlich eine Namensfarbe setzt, faerbt nur den Namen um. Der
+     Text behaelt dabei seine eigene Farbe — sie wird nicht
+     mitgezogen, sonst waere der Befehl sinnlos.
+     ================================================================= */
+  function lcNamensFarbe(n) {
+    if (n.farbeName === "bunt") return "";
+    if (n.farbeName && LC_FARBEN[n.farbeName]) return LC_FARBEN[n.farbeName];
+    return lcNickFarbe(n);
+  }
   function lcNickFarbe(n) {
     if (n.farbe === "bunt") return "";
     if (n.farbe && LC_FARBEN[n.farbe]) return LC_FARBEN[n.farbe];
@@ -22665,6 +22795,75 @@
             renderLiveChat();
           });
         }
+      } else if (art === "aufgabe") {
+        /* =========================================================
+           DIE AUFGABE IM CHAT
+           ---------------------------------------------------------
+           GEWUENSCHT: „Dass die Leute das richtigstellen koennen,
+           vielleicht sogar aus dem Satz heraus — dass sie ihn also
+           einmal schreiben koennen, aber auch die Worte nacheinander
+           anklicken koennen von der Satzverwurzelung, die ich
+           geschrieben habe, um ihn im Chat richtigzustellen."
+
+           Also beides: man kann tippen wie immer, ODER die Teile der
+           Reihe nach antippen — jedes Antippen haengt das Teil an die
+           Schreibzeile an. Beim Satz mit Leerzeichen dazwischen, beim
+           Wort ohne; sonst baut man das Wort mit Luecken auf und die
+           Antwort waere falsch, obwohl sie richtig gemeint war. */
+        const t = document.createElement("span");
+        t.className = "lc-zeilentext lc-aufgabe";
+        const doppel = String(n.text || "").indexOf(":");
+        const einleitung = doppel > 0 ? n.text.slice(0, doppel + 1) : "";
+        const rest = doppel > 0 ? n.text.slice(doppel + 1) : String(n.text || "");
+        if (einleitung) {
+          const e = document.createElement("strong");
+          e.textContent = einleitung;
+          t.appendChild(e);
+        }
+        const teile = rest.split("·").map((x) => x.trim()).filter(Boolean);
+        /* Ein Wortpuzzle besteht aus einzelnen Buchstaben — daran
+           erkennt man es, ohne dass es extra mitgeschickt werden
+           muss. */
+        const ausBuchstaben = teile.length > 1 && teile.every((x) => Array.from(x).length === 1);
+        const kasten = document.createElement("span");
+        kasten.className = "lc-aufgabe-teile";
+        teile.forEach((teil) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "lc-aufgabe-teil";
+          b.textContent = teil;
+          b.title = "Antippen — hängt es an deine Zeile an";
+          b.addEventListener("click", () => {
+            const f = document.getElementById("lcFeld");
+            if (!f) return;
+            f.value = f.value + (f.value && !ausBuchstaben ? " " : "") + teil;
+            const k = document.getElementById("lcSenden");
+            if (k) k.disabled = !f.value.trim();
+            b.classList.add("lc-aufgabe-genommen");
+            f.focus();
+          });
+          kasten.appendChild(b);
+        });
+        t.appendChild(kasten);
+        const weg = document.createElement("button");
+        weg.type = "button";
+        weg.className = "lc-aufgabe-weg";
+        weg.textContent = "↺ Zeile leeren";
+        weg.addEventListener("click", () => {
+          const f = document.getElementById("lcFeld");
+          if (f) { f.value = ""; f.focus(); }
+          const k = document.getElementById("lcSenden");
+          if (k) k.disabled = true;
+          kasten.querySelectorAll(".lc-aufgabe-genommen")
+                .forEach((x) => x.classList.remove("lc-aufgabe-genommen"));
+        });
+        t.appendChild(weg);
+        z.appendChild(t);
+      } else if (art === "note") {
+        const t = document.createElement("span");
+        t.className = "lc-zeilentext lc-note";
+        t.textContent = n.text;
+        z.appendChild(t);
       } else if (art === "kommen") {
         const t = document.createElement("span");
         t.className = "lc-zeilentext";
@@ -22711,7 +22910,9 @@
         /* Bild, Name, Text — in einer Zeile, für alle gleich. */
         const kopf = document.createElement("span");
         kopf.className = "lc-nick";
-        if (farbe) kopf.style.color = farbe;
+        const namensfarbe = lcNamensFarbe(n);
+        if (namensfarbe) kopf.style.color = namensfarbe;
+        else if (farbe) kopf.style.color = farbe;
         const emoji = n.bild && n.bild.indexOf("emoji:") === 0 ? n.bild.slice(6) : "";
         if (emoji) {
           const e = document.createElement("span");
@@ -22726,7 +22927,9 @@
         }
         const nm = document.createElement("b");
         const nameText = art === "fluester" ? "\u00bb" + n.name + "\u00ab" : String(n.name || "");
-        if (n.farbe === "bunt") {
+        /* Bunt gilt fuer den Namen, wenn es FUER DEN NAMEN gesetzt
+           wurde — und sonst weiter, wenn alles bunt ist. */
+        if (n.farbeName === "bunt" || (!n.farbeName && n.farbe === "bunt")) {
           /* GEMELDET: „Wenn man die Farbe ändert bei bunt, dann soll der
              Name auch bunt sein." Vorher blieb er in seiner
              Zufallsfarbe stehen — nur die Zeile war bunt. */
@@ -22842,6 +23045,15 @@
                den Animationen: was vor dem Betreten geschrieben wurde,
                ist Vergangenheit und bleibt still. */
             const frisch = (n.zeit || 0) >= livechatEffekteAb - 1500;
+            /* WER SPIELT, SPIELT ALLEIN.
+               Seit alle Sprachnachrichten durch die Warteschlange
+               laufen (siehe livechat.js), darf die Chatzeile sie
+               NICHT auch noch starten — sonst hoert man dieselbe
+               Aufnahme zweimal uebereinander. Die Zeile ist ab hier
+               nur noch zum Nachhoeren und Herunterladen da. Das gilt
+               auch fuer die eigene Quittung. */
+            const gehoertDerReihe = (art === "live" || art === "quittung");
+            if (gehoertDerReihe) lcSprachGehoert.add(n.id);
             if (frisch && !lcSprachGehoert.has(n.id)) {
               lcSprachGehoert.add(n.id);
               /* Eine Sprachnachricht ist kein Effektgeraeusch: sie
@@ -23263,7 +23475,14 @@
       area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
       area.querySelector("#lcRaeume")?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");
-      area.querySelector("#lcFotoKnopf")?.addEventListener("click", () => fotoFeld?.click());
+      /* Der Anhang oeffnet jetzt den WAEHLER, nicht mehr direkt den
+         Dateikasten. „Im Anhang koennen wir das Bildsymbol mit
+         unterbringen, dass man sowohl die Dateien auswaehlen kann,
+         die auf dem System sind, als auch ein Bild von den GIFs und
+         die ganzen Sachen, die zum System gehoeren." Im Waehler
+         stehen beide Wege nebeneinander: „Foto vom Geraet" und
+         Aufkleber, Fuechse, zuletzt benutzte Bilder, GIPHY. */
+      area.querySelector("#lcFotoKnopf")?.addEventListener("click", () => livechatSendeWaehler());
       fotoFeld?.addEventListener("change", async () => {
         const datei = fotoFeld.files && fotoFeld.files[0];
         fotoFeld.value = "";
@@ -23283,7 +23502,7 @@
          deshalb „gingen die GIFs nicht". Jetzt öffnet der Knopf den
          Wähler mit Suche, Sammelfüchsen und der Liste „zuletzt
          benutzt". */
-      area.querySelector("#lcGifKnopf")?.addEventListener("click", () => livechatSendeWaehler());
+
       area.querySelector("#lcBefehle")?.addEventListener("click", () => {
         const k = document.getElementById("lcBefehleKasten");
         if (k) k.open = !k.open;
@@ -23494,64 +23713,57 @@
         }
       }
 
-      const freiKnopf = area.querySelector("#lcFreiKnopf");
-      if (freiKnopf) {
-        if (!LiveChat.sprachGehtDas || !LiveChat.sprachGehtDas()) {
-          freiKnopf.disabled = true;
-          freiKnopf.title = "Dieser Browser kann keine Sprachnachrichten aufnehmen.";
-        } else {
-          const sagen = {
-            eicht: "🎚️ Freisprechen an — ich höre kurz zu, wie laut es bei dir ist.",
-            hoert: "", nimmt: "", aus: ""
-          };
-          /* Angemeldet ist die Warteschlange laengst (siehe oben) —
-             hier wird nur noch der Balken einmal nachgezogen. */
-          lcLiveBalkenZeichnen();
-          LiveChat.freisprechenMelden((was) => {
-            freiKnopf.dataset.stand = was;
-            freiKnopf.classList.toggle("lc-frei-an", was !== "aus");
-            freiKnopf.classList.toggle("lc-frei-nimmt", was === "nimmt");
-            freiKnopf.setAttribute("aria-pressed", String(was !== "aus"));
-            /* Haken und Symbol laufen mit — egal, worueber es
-               eingeschaltet wurde. Zwei Anzeigen fuer denselben
-               Zustand, die auseinanderlaufen, sind schlimmer als
-               eine. */
-            if (dauerSchalter) dauerSchalter.checked = (was !== "aus");
-            dauerZeichnen(was !== "aus");
-            if (sagen[was]) showToast(sagen[was]);
-          });
-          let mitGedrueckt = false;   // langes Druecken hat schon gewirkt
-          freiKnopf.addEventListener("click", async () => {
-            /* Der Klick kommt IMMER nach dem langen Druecken hinterher.
-               Ohne diese Sperre wuerde ein langes Druecken beides tun:
-               den Mitschrieb umschalten UND das Freisprechen. */
-            if (mitGedrueckt) { mitGedrueckt = false; return; }
-            if (LiveChat.freisprechenAn()) {
-              LiveChat.freisprechenBeenden();
-              showToast("Freisprechen ist aus.");
-              return;
-            }
-            if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
-            const ok = await LiveChat.freisprechenStarten();
-            if (ok) showToast("🎙️ Freisprechen an — sprich einfach los. Du wirst gehört, sobald der vor dir fertig ist.");
-          });
-          /* Langes Druecken auf den Ohr-Knopf: Mitschrieb an oder aus.
-             Er liegt bewusst NICHT als eigener Knopf in der Leiste —
-             die ist schon voll, und das hier braucht man einmal. */
+      /* =============================================================
+         DER OHR-KNOPF IST WEG — WAS ER KONNTE, KANN JETZT DAS SCHLOSS
+         -------------------------------------------------------------
+         GEMELDET: „Das eine Symbol ist ueberfluessig mit dem
+         Kopfhoerer, weil das ja vorher dieselbe Funktion gehabt hat —
+         das kannst du rausnehmen."
+
+         Er hatte recht: Ohr-Knopf und Haken schalteten dasselbe.
+         Geblieben ist der Haken, jetzt als Schloss. Und das eine, was
+         nur der Ohr-Knopf konnte, sitzt jetzt auf dem Schloss: ein
+         LANGER Druck schaltet den Mitschrieb um — also ob das
+         Gesprochene auch im Chat steht, zum Nachlesen und
+         Herunterladen.
+         ============================================================= */
+      const haltZeichen = area.querySelector("#lcDauerHaken");
+      if (dauerSchalter && LiveChat.sprachGehtDas && LiveChat.sprachGehtDas()) {
+        /* Angemeldet ist die Warteschlange laengst (weiter oben) —
+           hier wird nur noch der Balken einmal nachgezogen. */
+        lcLiveBalkenZeichnen();
+        LiveChat.freisprechenMelden((was) => {
+          /* Zwei Anzeigen fuer denselben Zustand, die auseinander
+             laufen, sind schlimmer als eine: Haken und Symbol ziehen
+             immer mit, egal worueber geschaltet wurde. */
+          dauerSchalter.checked = (was !== "aus");
+          dauerZeichnen(was !== "aus");
+          if (haltZeichen) haltZeichen.classList.toggle("lc-halt-nimmt", was === "nimmt");
+          if (was === "eicht") showToast("🎚️ Halten an — ich höre kurz zu, wie laut es bei dir ist.");
+        });
+        if (haltZeichen) {
           let mitTakt = 0;
+          let lang = false;
           const mitschriebUmschalten = () => {
-            mitGedrueckt = true;
+            lang = true;
             const neu = !lcMitschriebAn();
             lcMitschriebSetzen(neu);
             showToast(neu
-              ? "📝 Mitschrieb an — was gesprochen wird, steht jetzt auch im Chat zum Nachhören."
-              : "📝 Mitschrieb aus — gesprochen wird nur noch gehört, der Chat bleibt lesbar.");
+              ? "📝 Sichtbar — was gesprochen wird, steht jetzt auch im Chat zum Nachhören und Herunterladen."
+              : "📝 Unsichtbar — gesprochen wird nur noch gehört, der Chat bleibt lesbar.");
           };
-          freiKnopf.addEventListener("pointerdown", () => {
+          haltZeichen.addEventListener("pointerdown", () => {
+            lang = false;
             mitTakt = setTimeout(mitschriebUmschalten, 650);
           });
           ["pointerup", "pointerleave", "pointercancel"].forEach((art) =>
-            freiKnopf.addEventListener(art, () => { clearTimeout(mitTakt); }));
+            haltZeichen.addEventListener(art, () => { clearTimeout(mitTakt); }));
+          /* Ein langer Druck darf den Haken NICHT mitschalten — sonst
+             taete ein Druck zwei Dinge auf einmal. Das Klick-Ereignis
+             kommt erst nach dem Loslassen, also greift die Sperre. */
+          haltZeichen.addEventListener("click", (e) => {
+            if (lang) { e.preventDefault(); lang = false; }
+          });
         }
       }
 
@@ -23631,7 +23843,7 @@
         '    <path d="M20.4 8.6a6.4 6.4 0 0 1 0 7.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' +
         '  </svg>' +
         '</button>' +
-        '<label class="kz-dauer" id="kzDauer" title="Dauerhaft sprechen">' +
+        '<label class="kz-dauer" id="kzDauer" title="Halten: das Mikrofon bleibt an">' +
         '  <input type="checkbox" id="kzDauerSchalter"><span aria-hidden="true"></span>' +
         '</label>' +
         '<button type="button" class="kz-streifen-zurueck" id="kzStreifenZurueck">Zurück</button>' +
@@ -23732,7 +23944,7 @@
       mKnopf.classList.toggle("kz-melden-dauernd", dauerAn);
       mKnopf.disabled = stumm;
       mKnopf.title = stumm ? "Deine Stimme ist stummgeschaltet"
-        : dauerAn ? "Dauernd an — sprich einfach los"
+        : dauerAn ? "Halten ist an — sprich einfach los"
         : "Gedrückt halten und sprechen — auch von hier aus";
     }
     if (mHaken && mHaken.checked !== dauerAn) mHaken.checked = dauerAn;
@@ -53131,9 +53343,146 @@ An einem Morgen lief ein kleiner Fuchs los…
      ============================================================= */
   const TUTOR_SCHALTER = "dma_tutor";       // "aus" = abgeschaltet
   const TUTOR_ART = "dma_tutor_art";        // "foto" | "comic"
-  const tutorGezeigt = new Set();           // pro Besuch, pro Bereich
+
+  /* =================================================================
+     EINMAL AM TAG, NICHT EINMAL JE SEITENAUFRUF
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Der Tutor soll nur beim ersten Anzeigen des Bereichs
+     sprechen und da sein. Ansonsten soll er immer in der
+     Wartestellung sein, falls man ihn braucht — aber das System soll
+     wissen, dass man ihn heute schon verwendet hat, auch wenn man
+     die Seite aktualisiert."
+
+     Bisher stand das in zwei Sets im Arbeitsspeicher. Die sind nach
+     jedem Neuladen leer — und genau deshalb kam Alex bei jedem
+     Aktualisieren wieder, obwohl man ihn laengst gehoert hatte.
+
+     Jetzt liegt es im Geraet, mit dem TAGESDATUM davor. Ein neuer
+     Tag faengt von vorne an (dann ist die Erklaerung auch wieder
+     etwas wert); derselbe Tag nicht, egal wie oft man neu laedt.
+     Ein Tastendruck auf den Reiter holt ihn trotzdem jederzeit —
+     das ist ein bewusster Ruf und zaehlt nicht als „von selbst". */
+  const TUTOR_GEZEIGT = "dma_tutor_gezeigt";
+  function tutorHeute() {
+    /* Ortszeit, nicht UTC: „heute" ist der Tag, den der Mensch vor
+       sich hat, nicht der in Greenwich. */
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
+         + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function tutorGezeigtLesen() {
+    try {
+      const roh = JSON.parse(localStorage.getItem(TUTOR_GEZEIGT) || "{}");
+      if (!roh || roh.tag !== tutorHeute()) return new Set();
+      return new Set(Array.isArray(roh.was) ? roh.was : []);
+    } catch (e) { return new Set(); }
+  }
+  function tutorGezeigtSchreiben(menge) {
+    try {
+      localStorage.setItem(TUTOR_GEZEIGT,
+        JSON.stringify({ tag: tutorHeute(), was: Array.from(menge) }));
+    } catch (e) {}
+  }
+  /* Ein Set, das sich selbst merkt. Der uebrige Code bleibt damit
+     genau so stehen, wie er war — tutorGezeigt.has()/.add() lesen
+     und schreiben ab jetzt nur zusaetzlich das Geraet. */
+  function tutorMerker() {
+    const menge = tutorGezeigtLesen();
+    return {
+      has: function (x) { return menge.has(x); },
+      add: function (x) { menge.add(x); tutorGezeigtSchreiben(menge); return this; },
+      clear: function () { menge.clear(); tutorGezeigtSchreiben(menge); }
+    };
+  }
+  /* EINE Ablage, nicht zwei. Zwei Merker mit demselben Schluessel
+     haetten sich gegenseitig ueberschrieben: wer zuletzt schreibt,
+     schreibt seine eigene Liste ueber die des anderen. Die Schluessel
+     koennen sich nicht in die Quere kommen — Hauptbereiche heissen
+     „view-…", Unterbereiche „sub-…". */
+  const tutorGezeigt = tutorMerker();       // Bereiche, einmal am Tag
   let tutorTon = null;                      // laufende Tonspur
   let tutorZeitgeber = 0;
+
+  /* =================================================================
+     DIE SCHULGLOCKE — „der Unterricht faengt an"
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Sobald ich einen Schalter in den Einstellungen
+     anmache, dass der Unterricht beginnt, sollen alle Leute die
+     Nachricht bekommen, dass ich im Klassenzimmer bin und mit den
+     Leuten Unterricht machen moechte — ohne dass ich dazu in mein
+     Postfach gehen muss als Betreiber, sondern dass ich das direkt
+     schicken kann."
+
+     Genau ein Knopf, und er tut genau zwei Dinge: die Ansage geht in
+     JEDES Postfach (Backend.sendBroadcastMessage — derselbe Weg wie
+     eine Rundmail), und der Reiter springt ins Klassenzimmer, damit
+     Alex auch wirklich dort ist, wenn die Leute kommen.
+
+     Eine Sperre gehoert dazu. Eine Rundmail geht an alle und laesst
+     sich nicht zurueckholen; zweimal in fuenf Minuten dasselbe waere
+     kein Unterricht, sondern Belaestigung. Deshalb: hoechstens alle
+     30 Minuten, und vorher wird gefragt.
+     ================================================================= */
+  const UNTERRICHT_ZULETZT = "dma_unterricht_glocke";
+  const UNTERRICHT_SPERRE_MS = 30 * 60 * 1000;
+
+  function unterrichtZuletzt() {
+    try { return Number(localStorage.getItem(UNTERRICHT_ZULETZT) || 0); } catch (e) { return 0; }
+  }
+
+  function unterrichtGlockeHtml() {
+    const her = Date.now() - unterrichtZuletzt();
+    const gesperrt = unterrichtZuletzt() && her < UNTERRICHT_SPERRE_MS;
+    const restMin = gesperrt ? Math.ceil((UNTERRICHT_SPERRE_MS - her) / 60000) : 0;
+    return `
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🔔 Der Unterricht beginnt</h3>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Ein Druck, und jede:r bekommt ins Postfach: du bist jetzt im Klassenzimmer und
+          machst Unterricht. Danach landest du selbst direkt dort. Nur du siehst diesen Knopf.
+        </p>
+        <label style="display:block; font-size:0.78rem; opacity:.8; margin-bottom:4px;">
+          Was in der Nachricht stehen soll:
+        </label>
+        <input type="text" class="challenge-select" id="unterrichtText" maxlength="240"
+               style="width:100%;"
+               value="Ich bin jetzt im Klassenzimmer und mache Unterricht — komm dazu, ich freue mich auf dich!">
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+          <button type="button" class="btn btn-coffee" id="unterrichtGlocke" ${gesperrt ? "disabled" : ""}>
+            🔔 Alle einladen und ins Klassenzimmer
+          </button>
+        </div>
+        ${gesperrt ? `<p class="empty-note" style="margin:8px 0 0; font-size:0.74rem;">
+          Eben erst verschickt — der nächste Ruf geht in ${restMin} Minuten wieder.
+        </p>` : ""}
+      </div>`;
+  }
+
+  function unterrichtGlockeVerdrahten() {
+    const knopf = document.getElementById("unterrichtGlocke");
+    if (!knopf) return;
+    knopf.addEventListener("click", async () => {
+      const feld = document.getElementById("unterrichtText");
+      const text = (feld ? feld.value : "").trim();
+      if (!text) { showToast("Schreib noch dazu, was du sagen möchtest."); return; }
+      if (!confirm("Diese Nachricht geht an ALLE Mitglieder ins Postfach. Abschicken?")) return;
+      knopf.disabled = true;
+      try {
+        await Backend.sendBroadcastMessage(text);
+        try { localStorage.setItem(UNTERRICHT_ZULETZT, String(Date.now())); } catch (e) {}
+        showToast("🔔 Die Einladung liegt in jedem Postfach. Bis gleich im Klassenzimmer!");
+        /* Und gleich hin — eine Einladung ohne Gastgeber ist keine. */
+        activateTab("view-knowledge");
+        setTimeout(() => {
+          const pille = document.querySelector('.subnav-pill[data-sub="sub-livechat"]');
+          if (pille) pille.click();
+        }, 320);
+      } catch (e) {
+        knopf.disabled = false;
+        showToast("Das ging nicht: " + (e && e.message ? e.message : "unbekannter Fehler"));
+      }
+    });
+  }
 
   function tutorAn() {
     try { return localStorage.getItem(TUTOR_SCHALTER) !== "aus"; } catch (e) { return true; }
@@ -53203,7 +53552,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     return b;
   }
 
-  function tutorTonSpielen(name, erzwingen, beiEnde) {
+  function tutorTonSpielen(name, erzwingen, beiEnde, beiFehlstart) {
     tutorTonStoppen();
     if (!name) return false;
     try {
@@ -53213,16 +53562,33 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorTon = a;
       if (typeof beiEnde === "function") {
         a.onended = () => { if (tutorTon === a) beiEnde(); };
-        /* Fehlt die Datei, kommt „error" statt „ended" — dann muss es
-           trotzdem weitergehen, sonst bleibt der Tutor stehen. */
-        a.onerror = () => { if (tutorTon === a) beiEnde(); };
+        /* Fehlt die Datei, kommt „error" statt „ended".
+           GEMESSEN (werkzeug/pruefe-tutor.js): in „Ueber mich" gibt es
+           noch gar keine Aufnahmen — und weil hier frueher direkt
+           weitergeschaltet wurde, rauschten SECHS Saetze in
+           ZWANZIG MILLISEKUNDEN durch. Das ist das gemeldete
+           „Springen". Ein Satz ohne Ton darf nicht schneller
+           vorbeisein als einer mit Ton: fehlt die Aufnahme, bleibt
+           er stehen, bis man ihn gelesen hat. */
+        a.onerror = () => {
+          if (tutorTon !== a) return;
+          if (typeof beiFehlstart === "function") beiFehlstart();
+          else beiEnde();
+        };
       }
       const v = a.play();
       /* Ohne vorherige Berührung darf ein frisches Audio-Element nicht
          spielen — das ist eine Regel des Browsers, kein Fehler. Der
          Text steht dann trotzdem da, und „Noch einmal" (ein echter
          Tastendruck) bringt den Ton. */
-      if (v && v.catch) v.catch(() => { if (erzwingen) showToast("🔇 Der Ton kommt erst nach einer Berührung."); });
+      if (v && v.catch) v.catch(() => {
+        if (erzwingen) showToast("🔇 Der Ton kommt erst nach einer Berührung.");
+        /* Darf der Ton nicht spielen, gibt es auch kein „zu Ende".
+           Ohne diesen Ruf stuende Alex zwanzig Sekunden stumm da und
+           wartete auf ein Ereignis, das nie kommt. Dann eben nach
+           Lesezeit weiter — stumm, aber lesbar. */
+        if (tutorTon === a && typeof beiFehlstart === "function") beiFehlstart();
+      });
       return true;
     } catch (e) { return false; }
   }
@@ -53237,6 +53603,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     tutorTonStoppen();
     if (tutorZeitgeber) { clearTimeout(tutorZeitgeber); tutorZeitgeber = 0; }
     tutorLauf = null;
+    tutorAnfrage++;            // eine noch ladende Runde gilt damit als ueberholt
+    tutorHoltGerade = false;
     tutorLeuchtenAus();
     document.body.classList.remove("tutor-offen");
     if (!b) return;
@@ -53247,6 +53615,51 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   /* Der schmale Reiter am rechten Rand: nur da, wenn der Tutor an ist
      und gerade NICHT im Bild steht. Ein Tippen holt ihn zurück. */
+  /* =================================================================
+     SOLANGE MAN SCHREIBT, IST ALEX WEG
+     -----------------------------------------------------------------
+     GEMELDET: „Wenn man in der Eingabezeile vom Klassenzimmer
+     schreibt, rutscht das Klassenzimmer an die Stelle, wo der kleine
+     Karteireiter vom Tutor ist — und man kann nicht auf Senden
+     druecken, weil man dann den Tutor aufmacht."
+
+     Der Reiter haengt fest am rechten Rand, der Senden-Knopf des
+     Chats liegt dort ebenfalls, sobald das Klassenzimmer an seinen
+     Platz gesprungen ist. Zwei Knoepfe an derselben Stelle — da
+     gewinnt immer der obere, und das war der falsche.
+
+     Die Entscheidung ist seine eigene: „Du blendest ihn einfach aus,
+     wenn man was schreiben will … nachdem die Nachricht gesendet
+     ist, ist er wieder an seinem Platz, falls man ihn braucht."
+
+     Die Zeile wird bei jedem Neuzeichnen des Chats neu gebaut —
+     deshalb haengen die Ohren am DOKUMENT und nicht am Feld, sonst
+     waeren sie nach dem ersten Neuzeichnen taub. Steht Alex gerade
+     im Bild, geht er beim Schreiben ganz hinaus; holen kann man ihn
+     mit dem Reiter, sobald die Nachricht raus ist. */
+  let tutorSchreibTakt = 0;
+  function tutorSchreibzeile(el) {
+    return el && (el.id === "lcFeld" || el.id === "lcSendeGifSuche"
+                  || el.id === "lcSendeGifAdresse" || el.id === "lcLink");
+  }
+  document.addEventListener("focusin", (e) => {
+    if (!tutorSchreibzeile(e.target)) return;
+    clearTimeout(tutorSchreibTakt);
+    document.body.classList.add("lc-schreibt");
+    /* Steht er gerade mitten im Bild, nimmt er auch die Sicht — dann
+       geht er ganz. Der Reiter holt ihn zurueck. */
+    if (document.getElementById("tutorBuehne")) tutorSchliessen();
+  });
+  document.addEventListener("focusout", (e) => {
+    if (!tutorSchreibzeile(e.target)) return;
+    /* Ein Augenblick Luft: der Klick auf „Senden" nimmt dem Feld den
+       Finger, BEVOR er ankommt. Ohne diese Pause waere der Reiter
+       schon wieder da, wenn der Finger landet — und der Fehler
+       genau derselbe. */
+    clearTimeout(tutorSchreibTakt);
+    tutorSchreibTakt = setTimeout(() => document.body.classList.remove("lc-schreibt"), 500);
+  });
+
   function tutorReiterPflegen() {
     const soll = tutorAn();
     let r = document.getElementById("tutorReiter");
@@ -53282,6 +53695,13 @@ An einem Morgen lief ein kleiner Fuchs los…
      auseinanderlaufen.
      ============================================================= */
   let tutorLauf = null;        // { bereich, stuecke, nr }
+  /* Die Texte werden beim ersten Mal nachgeladen. In dieser Zeit darf
+     kein zweiter Auftritt danebenlaufen — sonst stehen am Ende zwei
+     Runden in der Leitung und die zweite ueberschreibt die erste
+     mitten im Satz. Jede Anfrage bekommt eine Nummer; nur die
+     neueste darf zum Zug kommen. */
+  let tutorAnfrage = 0;
+  let tutorHoltGerade = false;
 
   function tutorLeuchtenAus() {
     document.querySelectorAll(".tutor-leuchtet").forEach((e) => e.classList.remove("tutor-leuchtet"));
@@ -53330,13 +53750,17 @@ An einem Morgen lief ein kleiner Fuchs los…
     /* Lesezeit als Notnagel: 15 Zeichen je Sekunde, mindestens drei
        Sekunden. Der Ton uebersteuert das, sobald er zu Ende ist. */
     const lese = Math.max(3000, Math.round((st.text || "").length / 15 * 1000));
+    const notnagel = (ms) => {
+      if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
+      tutorZeitgeber = setTimeout(weiter, ms);
+    };
     if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
-    if (!tutorTonSpielen(st.ton || "", false, weiter)) {
-      tutorZeitgeber = setTimeout(weiter, lese);
+    if (!tutorTonSpielen(st.ton || "", false, weiter, () => { if (tutorLauf === l) notnagel(lese); })) {
+      notnagel(lese);
     } else {
       /* Auch mit Ton eine Reissleine: kommt kein „zu Ende" (Datei
          fehlt, Browser blockt), haengt der Tutor sonst ewig. */
-      tutorZeitgeber = setTimeout(weiter, lese + 20000);
+      notnagel(lese + 20000);
     }
   }
 
@@ -53391,11 +53815,33 @@ An einem Morgen lief ein kleiner Fuchs los…
      Bereich durchspricht, faellt er sich nicht selbst ins Wort:
      dann passiert hier nichts.
      ============================================================= */
-  const tutorBereichGezeigt = new Set();
+  /* Dieselbe Regel und dieselbe Ablage fuer die Unterbereiche. */
+  const tutorBereichGezeigt = tutorGezeigt;
 
-  function tutorBereichRufen(sub, nochmal) {
+  function tutorBereichRufen(sub, nochmal, echterKlick) {
     if (!sub || !tutorAn()) return;
     if (!nochmal && tutorBereichGezeigt.has(sub)) return;
+    /* GEMELDET: „In der Uebersicht-Sektion springt der Tutor. Ich
+       weiss nicht, ob er in einer anderen Sektion auch noch spricht."
+
+       Zwei Stimmen waren es nie (gemessen: nie mehr als eine Spur
+       gleichzeitig) — aber er FIEL SICH SELBST INS WORT. Kam gerade
+       eine Runde herein und klickte die Seite im selben Moment den
+       ersten Unterreiter programmatisch an, wurde die Runde nach
+       wenigen Millisekunden abgeraeumt und durch die
+       Bereichserklaerung ersetzt. Deshalb: was der Mensch nicht
+       selbst angetippt hat, unterbricht nichts — weder eine
+       laufende Runde noch eine, die gerade geholt wird. Der Bereich
+       bleibt dabei ungezeigt und kommt beim naechsten echten Tippen
+       ganz normal. */
+    /* Und zwar IMMER, nicht nur wenn gerade etwas laeuft: beim
+       Betreten eines Hauptreiters klickt die Seite den ersten
+       Unterreiter selbst an (activePill.click()). Davon weiss der
+       Mensch nichts — es ist kein Aufmachen eines Bereichs, sondern
+       Innenleben. GEMESSEN: nach dem Neuladen kam sonst die
+       Bereichserklaerung, obwohl Alex an diesem Tag laengst dran
+       war. Erklaert wird ab jetzt nur, was jemand SELBST antippt. */
+    if (!echterKlick && !nochmal) return;
     /* Laeuft gerade die grosse Runde durch den ganzen Bereich?
        Dann hat der Mensch eben BEWUSST auf einen Unterreiter
        getippt — das ist eine Ansage. Die Runde wird abgebrochen
@@ -53406,8 +53852,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (tutorLauf.bereich === sub) return;      // laeuft schon
       tutorSchliessen(true);
     }
+    const meine = ++tutorAnfrage;
+    tutorHoltGerade = true;
     tutorTexteHolen().then((da) => {
-      if (!da) return;
+      if (meine === tutorAnfrage) tutorHoltGerade = false;
+      if (!da || meine !== tutorAnfrage) return;
       const st = (window.DMA_TUTOR_BEREICHE || {})[sub];
       if (!st) return;
       /* Ist der Unterreiter ueberhaupt noch offen? */
@@ -53433,8 +53882,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   function tutorRufen(bereich, nochmal) {
     if (!tutorAn()) return;
     if (!nochmal && tutorGezeigt.has(bereich)) return;
+    const meine = ++tutorAnfrage;
+    tutorHoltGerade = true;
     tutorTexteHolen().then((da) => {
-      if (!da) return;
+      if (meine === tutorAnfrage) tutorHoltGerade = false;
+      if (!da || meine !== tutorAnfrage) return;
       const eintrag = (window.DMA_TUTOR || {})[bereich];
       const stuecke = eintrag && eintrag.stuecke;
       if (!stuecke || !stuecke.length) return;
