@@ -4393,12 +4393,11 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 /* --- „DU SPRICHST" — SICHTBAR, NICHT NUR UNTER DEM FINGER ---
    GEWÜNSCHT: „Wenn ich spreche, möchte ich auch sehen, dass ich
    gerade spreche." */
-body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after {
-  content: " 🔴 du sprichst";
-  color: #ff8a80;
-  font-size: 0.8em;
-  letter-spacing: 0.01em;
-}
+/* Hier stand zusaetzlich „🔴 du sprichst" in der Kopfzeile. Es ist
+   raus: seit der Sprecherbalken oben wieder „Xander Fox spricht
+   gerade" anzeigt, staende dasselbe zweimal da — und doppelt ist
+   genau das, was hier nicht sein soll. Geblieben ist das ruhige
+   Pulsieren der Zeile. */
 body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out infinite; }
 @keyframes lcSprichtPuls { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
 @media (prefers-reduced-motion: reduce) {
@@ -7615,6 +7614,13 @@ body.lc-schreibt .tutor-reiter {
   min-height: 26px;
 }
 .lc-live-leiste[hidden] { display: none; }
+/* Wenn ich selbst spreche, ist es meine Zeile — warm statt kühl,
+   damit man auf einen Blick sieht, dass man gerade selbst dran ist. */
+.lc-live-leiste.lc-live-ich {
+  background: rgba(224, 150, 74, 0.16);
+  border-color: rgba(224, 150, 74, 0.45);
+  color: var(--amber-700, #8a5a12);
+}
 .lc-live-leiste strong { font-weight: 700; }
 .lc-live-leiste em { opacity: .72; font-style: normal; }
 .lc-live-punkt {

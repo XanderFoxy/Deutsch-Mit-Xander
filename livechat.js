@@ -4187,7 +4187,18 @@ window.LiveChat = (function () {
       if (ausListe > zuhoerer) zuhoerer = ausListe;
     } catch (e) {}
     var wielang = Math.max(1, Math.round(Number(sekunden) || 0));
-    nachrichtAnhaengen({
+    /* HIER STAND EINE ZWEITE ZEILE JE AUFNAHME.
+       GEMELDET: „Ich moechte keine doppelten Nachrichten mehr haben."
+       Eine Wortmeldung erzeugte zwei Eintraege: die Aufnahme selbst
+       und darunter eine Quittung („Abgeschickt · 3 Sekunden · …").
+       Zwei Zeilen fuer eine Sache sehen aus wie eine Dopplung, und
+       genau so hat er es gelesen. Die Quittung ist raus; dass es raus
+       ist, sagt jetzt der Sprecherbalken oben und die Bestaetigung
+       der anderen, und beides verschwindet von selbst wieder.
+       Die Zeile bleibt als Vorlage stehen, damit man sieht, was hier
+       einmal stand — gebaut wird sie nicht mehr. */
+    var quittungAus = true;
+    if (!quittungAus) nachrichtAnhaengen({
       id: id + "-quittung",
       von: zustand.ichId, name: zustand.ichName, art: "quittung",
       /* GEMELDET: „Dieses Mikrofon-Symbol muss ja nicht mehr da sein.
@@ -4325,7 +4336,7 @@ window.LiveChat = (function () {
     if (!q || q.wer[wer]) return;
     q.wer[wer] = true;
     q.wieviel += 1;
-    systemZeile("\u2705 " + wer + " hat deine Wortmeldung bekommen.");
+    fluechtigeZeile("\u2705 " + wer + " hat deine Wortmeldung bekommen.", 7000);
   }
 
   /* Ein Paket, dann Luft, dann das naechste. Eine Schleife waere
@@ -5018,7 +5029,16 @@ window.LiveChat = (function () {
      will. Genau so war es gewuenscht — „sie sollen nur hoeren, was
      sie hoeren moechten, und dann klicken sie das selbststaendig
      an." */
-  var LIVE_REIHE_MAX = 3;
+  /* GEMELDET: „Gerade stand da, ich muss auf drei weitere Nachrichten
+     noch warten, obwohl ich alle gehoert habe. Das soll da gar nicht
+     sein. Die letzte, die gesprochen wird, ist die aktuelle, und nach
+     der kann jeder sprechen."
+     Also EINS. Was gerade laeuft, laeuft zu Ende; was waehrenddessen
+     hereinkommt, ersetzt das Wartende. Eine Reihe, in der man
+     ansteht, gibt es nicht mehr — und deshalb auch keine Zahl, auf
+     die man warten muesste. Alles Uebersprungene steht weiterhin im
+     Chat und laesst sich dort anhoeren. */
+  var LIVE_REIHE_MAX = 1;
   var LIVE_ALTER_MS = 90000;
   var liveUebersprungen = 0;
   var liveSagenUhr = 0;
@@ -6092,6 +6112,26 @@ window.LiveChat = (function () {
       bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName, an: an || ""
     };
     nachrichtAnhaengen(n);
+    return n;
+  }
+
+  /* EINE ZEILE, DIE SICH SELBST WIEDER AUFRAEUMT.
+     GEWUENSCHT: „Wenn da steht, dass Emmy meine Wortmeldung bekommen
+     hat und das wurde wirklich erfolgreich uebermittelt — kann die
+     Nachricht wieder ausgeblendet werden, damit der Chat frei
+     bleibt?"
+     Ja. Eine Quittung ist eine Auskunft fuer den Augenblick, kein
+     Gespraechsbeitrag. Sie steht ein paar Sekunden da und geht dann
+     von selbst. */
+  function fluechtigeZeile(text, wielang) {
+    var n = eigeneZeile("system", text);
+    var weg = String(n && n.id);
+    setTimeout(function () {
+      zustand.nachrichten = zustand.nachrichten.filter(function (m) {
+        return !(m && String(m.id) === weg);
+      });
+      melden();
+    }, wielang || 8000);
     return n;
   }
 

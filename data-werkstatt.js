@@ -49,24 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19l — nichts kommt mehr doppelt, und wer spaeter kommt hoert das Letzte",
+  stand: "Runde 19m — keine Warteschlange, keine Dopplung",
 
   inArbeit: [
-    { seit: "2026-09-18T20:51",
+    { seit: "2026-09-18T20:59",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:51",
+    { seit: "2026-09-18T20:59",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:51",
+    { seit: "2026-09-18T20:59",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:51",
-      text: "Eine Wortmeldung kommt nie mehr doppelt: gemerkt wird jetzt die KENNUNG fuer die ganze Sitzung, nicht nur ein Fingerabdruck fuer 15 Sekunden" },
-    { seit: "2026-09-18T20:51",
-      text: "Wer den Raum betritt, bekommt die letzte Wortmeldung der Anwesenden nachgereicht — nur an ihn, nur wenn sie frisch ist, und mit einer Zeile, die sagt warum" },
-    { seit: "2026-09-18T20:51",
-      text: "Die Antwortstreifen sind dezenter: nur noch ein schmaler Strich links, keine hinterlegte Flaeche mehr" },
+    { seit: "2026-09-18T20:59",
+      text: "Es gibt keine Reihe mehr, auf die man warten muss: die zuletzt gesprochene Nachricht ist die aktuelle, danach darf jeder sprechen" },
+    { seit: "2026-09-18T20:59",
+      text: "Der Sprecherbalken ist zurueck — gruene Zeile mit rotem Punkt, „Xander Fox spricht gerade\", auch wenn du selbst sprichst (dann amber)" },
+    { seit: "2026-09-18T20:59",
+      text: "Eine Aufnahme erzeugt nur noch EINE Zeile: die Quittung „Abgeschickt · 3 Sekunden\" ist raus" },
+    { seit: "2026-09-18T20:59",
+      text: "Die Bestaetigung „hat deine Wortmeldung bekommen\" verschwindet nach sieben Sekunden von selbst" },
   ],
 };

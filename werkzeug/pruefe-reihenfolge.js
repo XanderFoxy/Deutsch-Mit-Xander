@@ -89,7 +89,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
   if (reihe) {
     console.log("");
     console.log("  Zwanzig Wortmeldungen auf einmal -> in der Reihe: " + reihe.vonZwanzig
-      + (reihe.vonZwanzig <= 3 ? "  (hoechstens drei, richtig)" : "  FALSCH"));
+      + (reihe.vonZwanzig === 1 ? "  (nur die aktuelle, richtig)" : "  FALSCH"));
     console.log("  Es bleiben die NEUESTEN            : " + reihe.letzte.join(", "));
     console.log("  Fuenf Minuten alte Wortmeldung    : "
       + (reihe.altDrin === 0 ? "kommt gar nicht erst in die Reihe" : "FALSCH — sie waere drin"));

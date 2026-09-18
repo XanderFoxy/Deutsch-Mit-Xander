@@ -21979,6 +21979,7 @@
 
   let lcLiveLaeuft = false;
   let lcTonHinweis = false;      // der „tipp einmal auf die Seite"-Hinweis
+  let lcIchSpreche = false;      // nehme ICH gerade auf?
   let lcLiveJetzt = null;        // wer gerade zu hoeren ist
 
   function lcLiveWeiter() {
@@ -22129,8 +22130,13 @@
     lcFokusSchalterZeichnen();
     const leiste = document.getElementById("lcLiveLeiste");
     if (!leiste) return;
-    const offen = (window.LiveChat && LiveChat.liveOffen) ? LiveChat.liveOffen() : 0;
-    if (!lcLiveJetzt && !offen) { leiste.hidden = true; leiste.innerHTML = ""; return; }
+    /* GEMELDET: „Gerade stand da, ich muss auf drei weitere
+       Nachrichten noch warten, obwohl ich alle gehoert habe. Das soll
+       da gar nicht stehen. Die letzte, die gesprochen wird, ist die
+       aktuelle, und nach der kann jeder sprechen."
+       Also wird nicht mehr gezaehlt. Der Balken sagt nur noch, WER
+       gerade spricht — und sonst gar nichts. */
+    if (!lcLiveJetzt && !lcIchSpreche) { leiste.hidden = true; leiste.innerHTML = ""; return; }
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich
@@ -22159,11 +22165,16 @@
        selbst liegt im Raum, nicht im Geraet, damit sie niemand fuer
        sich aushebeln kann (siehe livechat.js). */
     lcFokusSchalterZeichnen();
-    leiste.innerHTML = lcLiveJetzt
-      ? `<span class="lc-live-punkt"></span><strong>${escapeHtml(lcLiveJetzt.name || "Jemand")}</strong> spricht`
-        + (offen ? ` <em>· noch ${offen} in der Reihe</em>` : "")
-        + (gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "")
-      : `<em>${offen} Wortmeldung${offen === 1 ? "" : "en"} in der Reihe …</em>`;
+    /* Der eigene Name zuerst: wer selbst spricht, soll das sehen —
+       „Wenn ich spreche, moechte ich auch sehen, dass ich gerade
+       spreche", und zwar „so wie das vorher war vom Design", also
+       als Zeile mit Punkt und Namen. */
+    const wer = lcIchSpreche
+      ? (livechatName() || "Du")
+      : (lcLiveJetzt && lcLiveJetzt.name) || "Jemand";
+    leiste.classList.toggle("lc-live-ich", Boolean(lcIchSpreche));
+    leiste.innerHTML = `<span class="lc-live-punkt"></span><strong>${escapeHtml(wer)}</strong> spricht gerade`
+      + (!lcIchSpreche && gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "");
   }
 
   /* Der kleine Schalter im Kopf des Klassenzimmers. Er steht neben
@@ -24890,6 +24901,8 @@
           const anzeigen = (an) => {
             sprachKnopf.classList.toggle("lc-sprach-an", an);
             document.body.classList.toggle("lc-ich-spreche", an);
+            lcIchSpreche = an;
+            lcLiveBalkenZeichnen();
           };
           const los = async (e) => {
             e.preventDefault();
