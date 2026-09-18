@@ -20140,6 +20140,10 @@
               HTML-Entitäten, keine Emojis. Deshalb sahen sie damals überall gleich aus.
             </p>
           </details>
+          <!-- Der Pseudo-Livestream: wer gerade zu hoeren ist und wie
+               viele noch warten. Steht UEBER dem Verlauf, weil er
+               nichts mit dem Geschriebenen zu tun hat. -->
+          <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           ${!Backend.currentUser() ? `
           <p class="lc-gast-hinweis">
@@ -21252,6 +21256,101 @@
      diese Menge liefe dieselbe Aufnahme bei jedem Neuzeichnen des
      Verlaufs wieder los — und der Verlauf wird oft neu gezeichnet. */
   const lcSprachGehoert = new Set();
+
+  /* =============================================================
+     DER PSEUDO-LIVESTREAM — die Warteschlange abspielen
+     -------------------------------------------------------------
+     GEWUENSCHT: „Wenn viele zur selben Zeit gleichzeitig was sagen,
+     sollen die Nachrichten trotzdem nacheinander abgespielt werden
+     und nicht gleichzeitig. Also in der Reihenfolge, wie sie
+     ankommen, aber im Hintergrund, so dass es nicht alles im Chat
+     steht … und so haben wir auch die Chance, dass niemand mehr in
+     sich reinreden kann. Das muesste doch das Prinzip von diesen
+     alten Livestreams sein, wo man die Hand heben musste."
+
+     Genau. Nur dass niemand die Hand heben muss: wer zuerst zu Ende
+     gesprochen hat, wird zuerst gehoert. Solange etwas laeuft, wird
+     nichts anderes angefangen — deshalb reicht EIN Merker.
+     ============================================================= */
+  /* „Es soll auch eine Funktion geben, wo man das Gesagte sichtbar
+     machen kann — also dass es im Chat auftaucht und man die
+     entsprechende Nachricht anklicken kann, um Shadowing zu ueben,
+     und dass man die temporaere Nachricht auch runterladen kann."
+     Genau dieser Schalter. Standard ist AUS, damit der Chat lesbar
+     bleibt. */
+  const LC_MITSCHRIEB = "dma_lc_mitschrieb";
+  function lcMitschriebAn() {
+    try { return localStorage.getItem(LC_MITSCHRIEB) === "an"; } catch (e) { return false; }
+  }
+  function lcMitschriebSetzen(an) {
+    try { localStorage.setItem(LC_MITSCHRIEB, an ? "an" : "aus"); } catch (e) {}
+    if (window.LiveChat && LiveChat.liveMitschrieb) LiveChat.liveMitschrieb(Boolean(an));
+  }
+
+  let lcLiveLaeuft = false;
+  let lcLiveJetzt = null;        // wer gerade zu hoeren ist
+
+  function lcLiveWeiter() {
+    if (lcLiveLaeuft) return;
+    if (!window.LiveChat || !LiveChat.liveNaechste) return;
+    const w = LiveChat.liveNaechste();
+    if (!w) { lcLiveJetzt = null; lcLiveBalkenZeichnen(); return; }
+    lcLiveLaeuft = true;
+    lcLiveJetzt = w;
+    lcLiveBalkenZeichnen();
+    const fertig = () => {
+      lcLiveLaeuft = false;
+      lcLiveJetzt = null;
+      /* Einen Wimpernschlag Luft zwischen zwei Sprechern — sonst
+         klebt der naechste Satz am vorigen und man haelt es fuer
+         eine Person. */
+      setTimeout(lcLiveWeiter, 220);
+    };
+    if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(w.sprach, fertig, w.sprachAb || 0)) return;
+    /* Der Vorrat ist voll oder kaputt — dann eben direkt, mit
+       demselben Sprung ueber den Vorlauf. */
+    try {
+      const a = new Audio(w.sprach);
+      a.onended = fertig;
+      a.onerror = fertig;
+      if (w.sprachAb > 0) {
+        a.onloadedmetadata = () => { try { a.currentTime = w.sprachAb; } catch (e) {} };
+      }
+      a.play().catch(fertig);
+    } catch (e) { fertig(); }
+  }
+
+  /* HIER LAG EIN ECHTER FEHLER, und zwar einer, der erst beim
+     Nachmessen auffiel: die Warteschlange wurde erst dann
+     angemeldet, wenn die Chat-Oberflaeche gebaut wurde. Kam eine
+     Wortmeldung vorher an — und das ist der Normalfall, wenn man
+     den Reiter noch nicht offen hatte —, landete sie in der Reihe
+     und blieb dort liegen. Gemessen: drei Wortmeldungen rein, null
+     abgespielt. Deshalb wird jetzt SOFORT angemeldet, sobald es
+     LiveChat gibt, unabhaengig von jeder Oberflaeche. */
+  (function lcLiveAnmelden(versuch) {
+    if (window.LiveChat && LiveChat.liveMelden) {
+      LiveChat.liveMelden(() => { lcLiveBalkenZeichnen(); lcLiveWeiter(); });
+      if (LiveChat.liveMitschrieb) LiveChat.liveMitschrieb(lcMitschriebAn());
+      return;
+    }
+    if ((versuch || 0) < 40) setTimeout(() => lcLiveAnmelden((versuch || 0) + 1), 120);
+  })(0);
+
+  /* Ein schmaler Streifen ueber dem Chat: wer gerade spricht und wie
+     viele noch warten. Ohne das haelt man eine Verzoegerung fuer
+     einen Ausfall. */
+  function lcLiveBalkenZeichnen() {
+    const leiste = document.getElementById("lcLiveLeiste");
+    if (!leiste) return;
+    const offen = (window.LiveChat && LiveChat.liveOffen) ? LiveChat.liveOffen() : 0;
+    if (!lcLiveJetzt && !offen) { leiste.hidden = true; leiste.innerHTML = ""; return; }
+    leiste.hidden = false;
+    leiste.innerHTML = lcLiveJetzt
+      ? `<span class="lc-live-punkt"></span><strong>${escapeHtml(lcLiveJetzt.name || "Jemand")}</strong> spricht`
+        + (offen ? ` <em>· noch ${offen} in der Reihe</em>` : "")
+      : `<em>${offen} Wortmeldung${offen === 1 ? "" : "en"} in der Reihe …</em>`;
+  }
 
   /* Jede Person bekommt ihre eigene Farbe — wie in den alten Chats.
      Ohne eigene Wahl (/c) wird sie aus dem Namen gerechnet, damit
@@ -22638,12 +22737,17 @@
                Beruehrung schon einmal gespielt haben und damit
                freigeschaltet sind. Genau derselbe Weg, ueber den auch
                die Stimmen der anderen kommen. */
+            const vorlauf = Number(n.sprachAb) || 0;
             const hoeren = (e) => {
               if (e) e.stopPropagation();
               knopf.classList.add("lc-sprach-spielt");
               const fertig = () => knopf.classList.remove("lc-sprach-spielt");
-              if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(n.sprach, fertig)) return;
+              /* „ab" ueberspringt die Stille vor dem ersten Wort —
+                 beim Freisprechen laeuft der Rekorder ja schon,
+                 bevor jemand redet (siehe FREI_LUFT in livechat.js). */
+              if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(n.sprach, fertig, vorlauf)) return;
               const a = new Audio(n.sprach);
+              if (vorlauf > 0) a.onloadedmetadata = () => { try { a.currentTime = vorlauf; } catch (x) {} };
               a.play().catch(() => {
                 fertig();
                 showToast("Der Browser lässt den Ton noch nicht durch — tipp einmal auf die Seite.");
@@ -22652,6 +22756,29 @@
             };
             knopf.addEventListener("click", hoeren);
             t.appendChild(knopf);
+            /* HERUNTERLADEN.
+               „Ich moechte auch ganze Geschichten vorlesen koennen,
+               dass die Leute sich das runterladen koennen und das
+               hoeren koennen, wie ich das vorlese, um das
+               nachsprechen zu koennen."
+
+               Die Aufnahme steht als Daten-Adresse schon im Browser —
+               fuer den Download braucht es also nichts weiter als
+               einen Verweis mit „download". Kein Server, kein
+               Hochladen, kein Warten. */
+            const holen = document.createElement("a");
+            holen.className = "lc-sprach-holen";
+            holen.href = n.sprach;
+            holen.title = "Diese Aufnahme herunterladen und in Ruhe nachsprechen";
+            holen.setAttribute("aria-label", "Aufnahme herunterladen");
+            const endung = /audio\/mp4|m4a/.test(String(n.sprach).slice(0, 40)) ? "m4a"
+              : /ogg/.test(String(n.sprach).slice(0, 40)) ? "ogg" : "webm";
+            const wann = new Date(n.zeit || Date.now());
+            holen.download = "Klassenzimmer-" + (n.name || "Aufnahme").replace(/[^\wÄÖÜäöüß-]/g, "")
+              + "-" + wann.toISOString().slice(0, 16).replace(/[:T]/g, "-") + "." + endung;
+            holen.textContent = "⤓";
+            holen.addEventListener("click", (e) => e.stopPropagation());
+            t.appendChild(holen);
             /* Von selbst abspielen — aber nur, wenn die Zeile gerade
                eben entstanden ist. „Alt" heisst hier dasselbe wie bei
                den Animationen: was vor dem Betreten geschrieben wurde,
@@ -23270,6 +23397,9 @@
             eicht: "🎚️ Freisprechen an — ich höre kurz zu, wie laut es bei dir ist.",
             hoert: "", nimmt: "", aus: ""
           };
+          /* Angemeldet ist die Warteschlange laengst (siehe oben) —
+             hier wird nur noch der Balken einmal nachgezogen. */
+          lcLiveBalkenZeichnen();
           LiveChat.freisprechenMelden((was) => {
             freiKnopf.dataset.stand = was;
             freiKnopf.classList.toggle("lc-frei-an", was !== "aus");
@@ -23277,7 +23407,12 @@
             freiKnopf.setAttribute("aria-pressed", String(was !== "aus"));
             if (sagen[was]) showToast(sagen[was]);
           });
+          let mitGedrueckt = false;   // langes Druecken hat schon gewirkt
           freiKnopf.addEventListener("click", async () => {
+            /* Der Klick kommt IMMER nach dem langen Druecken hinterher.
+               Ohne diese Sperre wuerde ein langes Druecken beides tun:
+               den Mitschrieb umschalten UND das Freisprechen. */
+            if (mitGedrueckt) { mitGedrueckt = false; return; }
             if (LiveChat.freisprechenAn()) {
               LiveChat.freisprechenBeenden();
               showToast("Freisprechen ist aus.");
@@ -23285,8 +23420,25 @@
             }
             if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
             const ok = await LiveChat.freisprechenStarten();
-            if (ok) showToast("🎙️ Freisprechen an — sprich einfach los, der Rest geht von selbst.");
+            if (ok) showToast("🎙️ Freisprechen an — sprich einfach los. Du wirst gehört, sobald der vor dir fertig ist.");
           });
+          /* Langes Druecken auf den Ohr-Knopf: Mitschrieb an oder aus.
+             Er liegt bewusst NICHT als eigener Knopf in der Leiste —
+             die ist schon voll, und das hier braucht man einmal. */
+          let mitTakt = 0;
+          const mitschriebUmschalten = () => {
+            mitGedrueckt = true;
+            const neu = !lcMitschriebAn();
+            lcMitschriebSetzen(neu);
+            showToast(neu
+              ? "📝 Mitschrieb an — was gesprochen wird, steht jetzt auch im Chat zum Nachhören."
+              : "📝 Mitschrieb aus — gesprochen wird nur noch gehört, der Chat bleibt lesbar.");
+          };
+          freiKnopf.addEventListener("pointerdown", () => {
+            mitTakt = setTimeout(mitschriebUmschalten, 650);
+          });
+          ["pointerup", "pointerleave", "pointercancel"].forEach((art) =>
+            freiKnopf.addEventListener(art, () => { clearTimeout(mitTakt); }));
         }
       }
 
@@ -52364,6 +52516,47 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
       return { verschieden: gesehen.size, gefunden: da, fehlend: fehlt };
     };
+    /* Der Livestream zum Nachmessen — laeuft der Rekorder wirklich
+       durchgehend, und kommt der Vorlauf an? */
+    window.DMA_LIVEPRUEF = {
+      /* Wer laeuft gerade, und laeuft wirklich nur EINER? */
+      reihe: () => ({ laeuft: lcLiveLaeuft, jetzt: lcLiveJetzt ? lcLiveJetzt.id : "",
+                      offen: (window.LiveChat && LiveChat.liveOffen) ? LiveChat.liveOffen() : -1 }),
+      vorlaufMessen: async () => {
+        const warte = (ms) => new Promise((f) => setTimeout(f, ms));
+        const vorher = LiveChat.freiInnen();
+        const gestartet = await LiveChat.freisprechenStarten();
+        if (!gestartet) return { gestartet: false };
+        await warte(400);
+        const gleichDanach = LiveChat.freiInnen();
+        await warte(2400);
+        const nachZweiSek = LiveChat.freiInnen();
+        /* Jetzt so tun, als haette der Pegel JETZT gerissen, und
+           messen, wie lange der Rekorder da schon laeuft. */
+        const segAlterBeimAusloesen = LiveChat.freiInnen().segAlter;
+        let gesendet = null;
+        const alt = LiveChat.pruefSprachSenden;
+        LiveChat.freiAusloesen(Date.now());
+        await warte(900);
+        const waehrend = LiveChat.freiInnen();
+        LiveChat.freiBeenden();
+        await warte(700);
+        const danach = LiveChat.freiInnen();
+        LiveChat.freisprechenBeenden();
+        return {
+          gestartet: true,
+          vorherRekorder: vorher.rekorder,
+          rekorderLaeuftImLeerlauf: gleichDanach.rekorder && gleichDanach.lage === "recording",
+          stueckWirdErneuert: nachZweiSek.segAlter >= 0 && nachZweiSek.segAlter <= gleichDanach.neustart + 400,
+          segAlterBeimAusloesen,
+          nimmtAufWaehrend: waehrend.nimmtAuf,
+          nimmtAufDanach: danach.nimmtAuf,
+          rekorderNachDemSatz: danach.rekorder,
+          luft: gleichDanach.luft,
+        };
+      },
+    };
+
     window.DMA_PRUEFUNG = {
       /* Die Betreiber-Karte fuers Relais — damit sich pruefen laesst,
          dass sie sich ueberhaupt zeichnen laesst, ohne dass man sich
@@ -52782,8 +52975,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       <div class="tutor-blase" id="tutorBlase">
         <button type="button" class="tutor-zu" id="tutorZu" aria-label="Tutor schliessen">×</button>
         <p class="tutor-text" id="tutorText"></p>
+        <div class="tutor-extra" id="tutorExtra"></div>
         <div class="tutor-knoepfe">
           <button type="button" class="tutor-mini" id="tutorNochmal">🔊 Noch einmal</button>
+          <button type="button" class="tutor-mini" id="tutorWeiter">Weiter ›</button>
           <button type="button" class="tutor-mini" id="tutorNie">Nicht mehr zeigen</button>
         </div>
       </div>
@@ -52791,7 +52986,19 @@ An einem Morgen lief ein kleiner Fuchs los…
     document.body.appendChild(b);
     document.body.classList.add("tutor-offen");
     b.querySelector("#tutorZu").addEventListener("click", () => tutorSchliessen());
-    b.querySelector("#tutorNochmal").addEventListener("click", () => tutorTonSpielen(b.dataset.ton || "", true));
+    b.querySelector("#tutorNochmal").addEventListener("click", () => {
+      /* Dasselbe Stueck noch einmal — mit demselben Weiter-Weg, sonst
+         bliebe die Reihe danach stehen. */
+      if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
+      tutorStueckSpielen();
+    });
+    b.querySelector("#tutorWeiter").addEventListener("click", () => {
+      if (!tutorLauf) { tutorSchliessen(); return; }
+      if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
+      tutorLauf.nr++;
+      if (tutorLauf.nr >= tutorLauf.stuecke.length) { tutorSchliessen(); return; }
+      tutorStueckSpielen();
+    });
     b.querySelector("#tutorNie").addEventListener("click", () => {
       tutorAnSetzen(false);
       showToast("🎓 Der Tutor ist aus. In den Einstellungen holst du ihn zurück.");
@@ -52799,7 +53006,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     return b;
   }
 
-  function tutorTonSpielen(name, erzwingen) {
+  function tutorTonSpielen(name, erzwingen, beiEnde) {
     tutorTonStoppen();
     if (!name) return false;
     try {
@@ -52807,6 +53014,12 @@ An einem Morgen lief ein kleiner Fuchs los…
       a.preload = "auto";
       a.volume = 0.95;
       tutorTon = a;
+      if (typeof beiEnde === "function") {
+        a.onended = () => { if (tutorTon === a) beiEnde(); };
+        /* Fehlt die Datei, kommt „error" statt „ended" — dann muss es
+           trotzdem weitergehen, sonst bleibt der Tutor stehen. */
+        a.onerror = () => { if (tutorTon === a) beiEnde(); };
+      }
       const v = a.play();
       /* Ohne vorherige Berührung darf ein frisches Audio-Element nicht
          spielen — das ist eine Regel des Browsers, kein Fehler. Der
@@ -52826,6 +53039,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     const b = document.getElementById("tutorBuehne");
     tutorTonStoppen();
     if (tutorZeitgeber) { clearTimeout(tutorZeitgeber); tutorZeitgeber = 0; }
+    tutorLauf = null;
+    tutorLeuchtenAus();
     document.body.classList.remove("tutor-offen");
     if (!b) return;
     if (sofort) { b.remove(); return; }
@@ -52855,6 +53070,118 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
   }
 
+  /* =============================================================
+     WÄHREND ER SPRICHT, LEUCHTET DER BEREICH, VON DEM ER SPRICHT
+     -------------------------------------------------------------
+     GEWUENSCHT: „Dass die Sektionen, von denen er spricht, kurz
+     hervorgehoben werden in dem Moment, wenn er die anspricht —
+     dass sie so markiert dastehen, dass jeder weiss: okay, wenn ich
+     da drauf klicke, finde ich das."
+
+     Die Zeit ist nicht geschaetzt. Jeder Satz ist eine eigene
+     Aufnahme (siehe data-tutor.js), also gilt: solange DIESE
+     Aufnahme laeuft, leuchtet GENAU dieser Unterreiter. Faengt der
+     naechste Satz an, springt das Leuchten mit. Das kann gar nicht
+     auseinanderlaufen.
+     ============================================================= */
+  let tutorLauf = null;        // { bereich, stuecke, nr }
+
+  function tutorLeuchtenAus() {
+    document.querySelectorAll(".tutor-leuchtet").forEach((e) => e.classList.remove("tutor-leuchtet"));
+  }
+  function tutorLeuchten(ziel) {
+    tutorLeuchtenAus();
+    if (!ziel) return null;
+    const pille = document.querySelector(`.subnav-pill[data-sub="${ziel}"]`);
+    if (!pille) return null;
+    pille.classList.add("tutor-leuchtet");
+    /* Nur ins Bild holen, wenn die Leiste ueberhaupt seitlich rollt —
+       sonst springt die ganze Seite, und das ist schlimmer als ein
+       Knopf, den man nicht sieht. */
+    try {
+      const leiste = pille.parentElement;
+      if (leiste && leiste.scrollWidth > leiste.clientWidth + 8) {
+        leiste.scrollTo({ left: pille.offsetLeft - leiste.clientWidth / 2 + pille.offsetWidth / 2,
+                          behavior: "smooth" });
+      }
+    } catch (e) {}
+    return pille;
+  }
+
+  /* Ein Stueck spielen: Text in die Blase, Bereich zum Leuchten
+     bringen, Ton starten — und wenn der Ton zu Ende ist, das
+     naechste. Fehlt die Tondatei, wird nach Lesezeit weitergegangen;
+     ein stummer Tutor ist besser als ein haengender. */
+  function tutorStueckSpielen() {
+    const l = tutorLauf;
+    if (!l) return;
+    const b = document.getElementById("tutorBuehne");
+    if (!b) return;
+    const st = l.stuecke[l.nr];
+    if (!st) { tutorSchliessen(); return; }
+    b.dataset.ton = st.ton || "";
+    b.dataset.ziel = st.ziel || "";
+    b.querySelector("#tutorText").textContent = st.text || "";
+    tutorLeuchten(st.ziel);
+    tutorHilfeZeichnen(st);
+    const weiter = () => {
+      if (!tutorLauf || tutorLauf !== l) return;
+      l.nr++;
+      if (l.nr >= l.stuecke.length) { tutorSchliessen(); return; }
+      tutorStueckSpielen();
+    };
+    /* Lesezeit als Notnagel: 15 Zeichen je Sekunde, mindestens drei
+       Sekunden. Der Ton uebersteuert das, sobald er zu Ende ist. */
+    const lese = Math.max(3000, Math.round((st.text || "").length / 15 * 1000));
+    if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
+    if (!tutorTonSpielen(st.ton || "", false, weiter)) {
+      tutorZeitgeber = setTimeout(weiter, lese);
+    } else {
+      /* Auch mit Ton eine Reissleine: kommt kein „zu Ende" (Datei
+         fehlt, Browser blockt), haengt der Tutor sonst ewig. */
+      tutorZeitgeber = setTimeout(weiter, lese + 20000);
+    }
+  }
+
+  /* Die kleine Hilfe und der Sprungknopf zum gerade genannten
+     Bereich. „Vielleicht gibt's dann auch so eine kleine Hilfe zu
+     dieser Sektion innerhalb der Sprechblase, die man sich anzeigen
+     lassen kann, und dann kann man aus der einzelnen Sektion noch
+     mal zu dem Punkt springen." */
+  function tutorHilfeZeichnen(st) {
+    const kasten = document.getElementById("tutorExtra");
+    if (!kasten) return;
+    kasten.innerHTML = "";
+    if (!st.ziel) return;
+    const pille = document.querySelector(`.subnav-pill[data-sub="${st.ziel}"]`);
+    const name = pille ? pille.textContent.replace(/ⓘ.*$/, "").trim() : st.ziel;
+    const hin = document.createElement("button");
+    hin.type = "button";
+    hin.className = "tutor-mini tutor-hin";
+    hin.textContent = "→ " + name;
+    hin.addEventListener("click", () => {
+      if (pille) pille.click();
+      tutorSchliessen();
+    });
+    kasten.appendChild(hin);
+    if (st.hilfe) {
+      const auf = document.createElement("button");
+      auf.type = "button";
+      auf.className = "tutor-mini";
+      auf.textContent = "Was ist das?";
+      const text = document.createElement("p");
+      text.className = "tutor-hilfe";
+      text.textContent = st.hilfe;
+      text.hidden = true;
+      auf.addEventListener("click", () => {
+        text.hidden = !text.hidden;
+        auf.textContent = text.hidden ? "Was ist das?" : "Verstanden";
+      });
+      kasten.appendChild(auf);
+      kasten.appendChild(text);
+    }
+  }
+
   /* „nochmal" = ein bewusster Tastendruck; dann darf er auch dann
      kommen, wenn er in diesem Besuch schon da war. */
   function tutorRufen(bereich, nochmal) {
@@ -52862,31 +53189,25 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!nochmal && tutorGezeigt.has(bereich)) return;
     tutorTexteHolen().then((da) => {
       if (!da) return;
-      const stueck = (window.DMA_TUTOR || {})[bereich];
-      if (!stueck) return;
+      const eintrag = (window.DMA_TUTOR || {})[bereich];
+      const stuecke = eintrag && eintrag.stuecke;
+      if (!stuecke || !stuecke.length) return;
       /* Der Bereich kann inzwischen gewechselt haben — dann nicht mehr
          hereinplatzen. */
       const jetzt = document.querySelector(".view[data-active=\"true\"]");
       if (!nochmal && jetzt && jetzt.id !== bereich) return;
       tutorGezeigt.add(bereich);
       const b = tutorBuehne();
-      b.dataset.ton = stueck.ton || "";
       const bild = b.querySelector("#tutorFigur");
       const neu = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
       if (bild.getAttribute("src") !== neu) bild.setAttribute("src", neu);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
-      b.querySelector("#tutorText").textContent = stueck.text || "";
       /* Erst im nächsten Bild anschalten, sonst gibt es keine
          Bewegung — das Element wäre im selben Moment entstanden und
          schon am Ziel. */
       requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add("tutor-da")));
-      tutorTonSpielen(stueck.ton || "", false);
-      /* Lange Texte brauchen länger. Grob: 14 Zeichen je Sekunde,
-         mindestens 12, höchstens 75 Sekunden — danach geht er von
-         allein wieder. */
-      const sek = Math.min(75, Math.max(12, Math.round((stueck.text || "").length / 14)));
-      if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
-      tutorZeitgeber = setTimeout(() => tutorSchliessen(), sek * 1000);
+      tutorLauf = { bereich: bereich, stuecke: stuecke, nr: 0 };
+      tutorStueckSpielen();
     });
   }
 

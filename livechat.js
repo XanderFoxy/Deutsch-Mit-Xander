@@ -1700,7 +1700,12 @@ window.LiveChat = (function () {
      darueber — und faellt, wenn keines frei ist, auf ein neues
      Element zurueck (das dann eben um Erlaubnis bitten muss).
      ========================================================= */
-  function tonAusVorrat(quelle, beiEnde) {
+  /* „ab" springt ueber den Vorlauf hinweg (siehe FREI_LUFT). Der
+     Sprung geht erst, wenn der Browser weiss, wie lang die Aufnahme
+     ist — deshalb wird auf loadedmetadata gewartet und nicht blind
+     gesetzt. Blind gesetzt wird currentTime naemlich still verworfen,
+     und dann hoert man doch wieder die Stille vorne. */
+  function tonAusVorrat(quelle, beiEnde, ab) {
     if (typeof document === "undefined" || !quelle) return false;
     var frei = null;
     for (var i = 0; i < tonVorrat.length; i++) {
@@ -1731,7 +1736,21 @@ window.LiveChat = (function () {
     };
     frei.onended = aufraeumen;
     frei.onerror = aufraeumen;
-    tonAbspielenVersuchen(frei);
+    var los = function () {
+      if (ab > 0) {
+        try {
+          var ziel = Math.min(ab, Math.max(0, (frei.duration || 0) - 0.3));
+          if (ziel > 0) frei.currentTime = ziel;
+        } catch (e) {}
+      }
+      tonAbspielenVersuchen(frei);
+    };
+    if (ab > 0 && !(frei.readyState >= 1)) {
+      frei.onloadedmetadata = function () { frei.onloadedmetadata = null; los(); };
+      /* Kommt kein loadedmetadata (kaputte Aufnahme), trotzdem
+         losspielen statt stumm dazustehen. */
+      setTimeout(function () { if (frei.onloadedmetadata) { frei.onloadedmetadata = null; los(); } }, 900);
+    } else { los(); }
     return true;
   }
 
@@ -1870,9 +1889,13 @@ window.LiveChat = (function () {
     return sbKlient;
   }
 
+  var pruefSenderHaken = null;
   function senden(nutzlast) {
-    if (!kanal) return;
     nutzlast.von = zustand.ichId;
+    /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
+       sein muss. Im Betrieb ist der Haken immer null. */
+    if (pruefSenderHaken) { try { pruefSenderHaken(nutzlast); } catch (e) {} }
+    if (!kanal) return;
     try { kanal.send({ type: "broadcast", event: "raum", payload: nutzlast }); } catch (e) {}
   }
 
@@ -2116,10 +2139,41 @@ window.LiveChat = (function () {
       }
       return;
     }
+    /* Ein Stueck einer langen Aufnahme. Erst wenn alle da sind,
+       wird daraus eine Nachricht — vorher passiert nichts. */
+    if (n.art === "sprachteil") {
+      var ganz = sprachTeilEmpfangen(n);
+      if (!ganz) return;
+      n = { art: "text", id: n.id, von: n.von, name: n.name, text: "",
+            zeit: n.zeit, bild: n.bild, farbe: n.farbe, chatArt: n.chatArt,
+            sprach: ganz, sprachSek: n.sprachSek, sprachAb: n.sprachAb };
+    }
     if (n.art === "text") {
       /* Eine Sprachnachricht hat weder Text noch Bild — ohne diese
          Ausnahme wuerde sie hier stillschweigend weggeworfen. */
       if (!n.text && !n.bildImChat && !n.sprach) return;
+      /* EINE WORTMELDUNG AUS DEM PSEUDO-LIVESTREAM.
+         -------------------------------------------------------
+         GEWUENSCHT: „Dass es gar nicht in den Chat eintraegt,
+         sondern nur hoerbar wird … sonst ist der Chat voll mit
+         Nachrichten und dann liest man nicht mehr, was die Leute
+         schreiben." Sie geht also in die Warteschlange und wird
+         der Reihe nach abgespielt. In den Chat kommt sie nur,
+         wenn der Mitschrieb eingeschaltet ist. */
+      if (n.chatArt === "live" && n.sprach) {
+        var w = {
+          id: n.id || String(Date.now()) + n.von,
+          von: n.von, name: n.name || "Gast",
+          bild: n.bild || "", farbe: n.farbe || "",
+          sprach: n.sprach, sprachSek: Number(n.sprachSek) || 0,
+          sprachAb: Number(n.sprachAb) || 0,
+          zeit: n.zeit || Date.now(), art: "live"
+        };
+        liveWarteschlange.push(w);
+        liveSagen();
+        if (liveSichtbar) { nachrichtAnhaengen(w); melden(); }
+        return;
+      }
       nachrichtAnhaengen({
         id: n.id || String(Date.now()) + n.von,
         von: n.von, name: n.name || "Gast",
@@ -2135,8 +2189,9 @@ window.LiveChat = (function () {
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : "",
         /* Die Sprachnachricht faehrt mit und wird beim Zeichnen SOFORT
            abgespielt (app.js). Sie wird nirgends gesichert. */
-        sprach: typeof n.sprach === "string" ? n.sprach.slice(0, 200000) : "",
-        sprachSek: Number(n.sprachSek) || 0
+        sprach: typeof n.sprach === "string" ? n.sprach : "",
+        sprachSek: Number(n.sprachSek) || 0,
+        sprachAb: Number(n.sprachAb) || 0
       });
       melden();
       return;
@@ -2674,6 +2729,12 @@ window.LiveChat = (function () {
     pulsStoppen();
     wacheStoppen();
     praesenzSetzen(false);
+    /* Raus heisst raus: Mikrofon zu, Warteschlange leer. Sonst
+       bleibt das Lampchen an und der naechste Raum spielt noch
+       Wortmeldungen aus dem alten. */
+    freisprechenBeenden();
+    sprachSpurSchliessen();
+    liveWarteschlange.length = 0;
     if (kanal) {
       /* Erst abmelden, DANN den Kanal schliessen — und zwar mit einem
          Atemzug dazwischen. Vorher wurde der Kanal sofort geschlossen,
@@ -3056,13 +3117,29 @@ window.LiveChat = (function () {
         begrenzt; eine Minute Geschwaetz kaeme gar nicht an, und
         „nichts passiert" ist das Schlimmste von allem.
      ========================================================= */
-  var SPRACH_SEKUNDEN = 20;
-  var SPRACH_BYTES = 120000;
+  /* Beim Gedrueckthalten: fuenf Minuten. „Ich moechte auch ganze
+     Geschichten vorlesen koennen, dass die Leute sich das runterladen
+     koennen und das hoeren koennen, wie ich das vorlese, um das
+     nachsprechen zu koennen." Zwanzig Sekunden waren dafuer nichts. */
+  var SPRACH_LANG = 300;
+  /* Beim Freisprechen bleibt es kurz — das sind einzelne Saetze im
+     Gespraech, keine Vortraege. */
+  var SPRACH_SEKUNDEN = 30;
+
+  /* Ein Kanalpaket ist begrenzt. Frueher hiess das: laenger als 20
+     Sekunden geht gar nicht. Jetzt wird eine lange Aufnahme in
+     Stuecke geschnitten, einzeln verschickt und drueben wieder
+     zusammengesetzt — dann ist die Laenge nur noch eine Frage der
+     Geduld, nicht der Technik. */
+  var PAKET_BYTES = 80000;
+  var SPRACH_BYTES = 8000000;   // rund 5 Minuten bei 24 kbit/s
   var sprachRekorder = null;
   var sprachSpur = null;
   var sprachStuecke = [];
   var sprachStart = 0;
   var sprachEndeTakt = 0;
+  var sprachWarm = 0;           // wann die Spur zuletzt gebraucht wurde
+  var sprachWarmTakt = 0;
 
   function sprachGehtDas() {
     return typeof window !== "undefined" && typeof window.MediaRecorder === "function"
@@ -3081,14 +3158,70 @@ window.LiveChat = (function () {
   }
   function sprachLaeuft() { return Boolean(sprachRekorder); }
 
+  /* DAS MIKROFON BLEIBT WARM.
+     -----------------------------------------------------------
+     GEMELDET: „Es ist immer etwas abgeschnitten."
+
+     Beim allerersten Druecken fragt der Browser das Mikrofon an —
+     das dauert je nach Geraet zwei bis fuenf Zehntelsekunden, und
+     genau die fehlen dann vorne. Deshalb wird die Spur nach der
+     Aufnahme NICHT mehr weggeworfen, sondern eine Minute
+     offengehalten. Das zweite Druecken nimmt sofort auf.
+     (Das Lampchen bleibt so lange an — deshalb nur eine Minute und
+     nicht ewig.) */
+  function spurHolen() {
+    if (sprachSpur && sprachSpur.getTracks().some(function (t) { return t.readyState === "live"; })) {
+      sprachWarm = Date.now();
+      return Promise.resolve(sprachSpur);
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (spur) {
+      sprachSpur = spur;
+      sprachWarm = Date.now();
+      clearInterval(sprachWarmTakt);
+      sprachWarmTakt = setInterval(function () {
+        if (!sprachSpur || sprachRekorder || frei.an) return;
+        if (Date.now() - sprachWarm < 60000) return;
+        try { sprachSpur.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+        sprachSpur = null;
+        clearInterval(sprachWarmTakt);
+        sprachWarmTakt = 0;
+      }, 5000);
+      return spur;
+    });
+  }
+
+  /* DER EINSATZ-PING.
+     „Der Signalton soll diese eine Sekunde vorher sein, damit man
+     weiss, wann man sprechen kann." Ein kurzer, hoher Blip aus dem
+     Tongenerator — keine Datei, also auch keine Ladezeit, die selbst
+     wieder eine Verzoegerung waere. Er klingt AUS, waehrend schon
+     aufgenommen wird; der Vorlauf faengt das ab. */
+  function einsatzPing() {
+    try {
+      var K = window.AudioContext || window.webkitAudioContext;
+      if (!K) return;
+      if (!einsatzPing.kontext) einsatzPing.kontext = new K();
+      var k = einsatzPing.kontext;
+      if (k.state === "suspended" && k.resume) k.resume();
+      var o = k.createOscillator(), g = k.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(1180, k.currentTime);
+      g.gain.setValueAtTime(0.0001, k.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.16, k.currentTime + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, k.currentTime + 0.13);
+      o.connect(g); g.connect(k.destination);
+      o.start(); o.stop(k.currentTime + 0.15);
+    } catch (e) { /* ohne Ping geht es auch */ }
+  }
+
   function sprachAufnahmeStarten() {
     if (sprachRekorder) return Promise.resolve(false);
     if (!sprachGehtDas()) {
       systemZeile("Dein Browser kann keine Sprachnachrichten aufnehmen — schreib es bitte.");
       return Promise.resolve(false);
     }
-    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (spur) {
-      sprachSpur = spur;
+    einsatzPing();
+    return spurHolen().then(function (spur) {
       sprachStuecke = [];
       var art = sprachFormat();
       try {
@@ -3103,11 +3236,11 @@ window.LiveChat = (function () {
       };
       sprachRekorder.start();
       sprachStart = Date.now();
-      /* Harte Grenze: nach 20 Sekunden ist Schluss, auch wenn niemand
-         loslaesst. Sonst entsteht eine Aufnahme, die nicht durch den
-         Kanal passt — und das merkt man erst hinterher. */
+      /* Harte Grenze: fuenf Minuten. Laenger wird auch die
+         geduldigste Zuhoererin nicht — und die Aufnahme wird in
+         Stuecken verschickt, passt also durch den Kanal. */
       clearTimeout(sprachEndeTakt);
-      sprachEndeTakt = setTimeout(function () { sprachAufnahmeStoppen(); }, SPRACH_SEKUNDEN * 1000);
+      sprachEndeTakt = setTimeout(function () { sprachAufnahmeStoppen(); }, SPRACH_LANG * 1000);
       return true;
     }).catch(function () {
       systemZeile("Das Mikrofon ist nicht freigegeben — in den Browsereinstellungen erlauben, dann geht es.");
@@ -3115,18 +3248,30 @@ window.LiveChat = (function () {
     });
   }
 
+  /* Nach der Aufnahme nur den Rekorder wegraeumen — die SPUR bleibt
+     warm (siehe spurHolen), damit das naechste Druecken sofort
+     aufnimmt und vorne nichts fehlt. */
   function sprachAufraeumen() {
     clearTimeout(sprachEndeTakt);
+    sprachRekorder = null;
+    sprachWarm = Date.now();
+  }
+  /* Und wenn wirklich Schluss ist (Raum verlassen), auch die Spur. */
+  function sprachSpurSchliessen() {
+    clearInterval(sprachWarmTakt); sprachWarmTakt = 0;
     if (sprachSpur) {
       try { sprachSpur.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
     }
     sprachSpur = null;
-    sprachRekorder = null;
   }
 
-  /* Gibt zurueck, ob wirklich etwas verschickt wurde. */
-  function sprachAufnahmeStoppen() {
+  /* Gibt zurueck, ob wirklich etwas verschickt wurde.
+     „wie" traegt zwei Angaben: „ab" ist der Vorlauf in Sekunden
+     (siehe FREI_LUFT), „live" heisst: das ist eine Wortmeldung im
+     Pseudo-Livestream, keine Sprachnachricht. */
+  function sprachAufnahmeStoppen(wie) {
     if (!sprachRekorder) return Promise.resolve(false);
+    var o = wie || {};
     var r = sprachRekorder;
     var sekunden = Math.max(1, Math.round((Date.now() - sprachStart) / 1000));
     return new Promise(function (fertig) {
@@ -3140,11 +3285,10 @@ window.LiveChat = (function () {
         leser.onload = function () {
           var daten = String(leser.result || "");
           if (daten.length > SPRACH_BYTES) {
-            systemZeile("Die Aufnahme ist zu lang geworden — nimm sie bitte kürzer auf (höchstens "
-              + SPRACH_SEKUNDEN + " Sekunden).");
+            systemZeile("Die Aufnahme ist zu lang — höchstens fünf Minuten am Stück.");
             fertig(false); return;
           }
-          fertig(sprachSenden(daten, sekunden));
+          fertig(sprachSenden(daten, sekunden, o));
         };
         leser.onerror = function () { fertig(false); };
         leser.readAsDataURL(klumpen);
@@ -3189,11 +3333,51 @@ window.LiveChat = (function () {
   var frei = {
     an: false, spur: null, kontext: null, messer: null, daten: null,
     takt: 0, grundpegel: 0, proben: 0, lautSeit: 0, stillSeit: 0,
-    nimmtAuf: false, melden: null
+    nimmtAuf: false, melden: null,
+    segAb: 0,          // wann das laufende Rekorder-Stueck begonnen hat
+    sprachAb: 0        // wann darin das Sprechen angefangen hat
   };
-  var FREI_ABSTAND = 0.018;     // wie weit ueber dem Grundpegel es „laut" ist
-  var FREI_STILLE = 800;        // so lange Stille beendet eine Aufnahme
-  var FREI_MINDEST = 500;       // kuerzere Schnipsel sind kein Satz
+  var FREI_ABSTAND = 0.012;     // wie weit ueber dem Grundpegel es „laut" ist
+  var FREI_STILLE = 900;        // so lange Stille beendet eine Aufnahme
+  var FREI_MINDEST = 350;       // kuerzere Schnipsel sind kein Satz
+
+  /* ===========================================================
+     WARUM VORNE IMMER ETWAS FEHLTE — UND WAS JETZT ANDERS IST
+     -----------------------------------------------------------
+     GEMELDET: „Entweder eine Latenz oder die Sensibilitaet des
+     Pegels zu hoch oder zu niedrig, so dass immer etwas
+     abgeschnitten ist. Kriegen wir das hin, dass es nicht mehr
+     abgeschnitten ist?"
+
+     Es war keine Frage der Empfindlichkeit. Der Ablauf war:
+
+         still  →  laut gemessen  →  120 ms warten (Tuerknall?)
+                →  JETZT erst MediaRecorder bauen und starten
+                →  aufnehmen
+
+     Der Rekorder existierte also erst, als das Wort schon
+     angefangen hatte. Alles davor war physikalisch nicht da.
+     Man kann keinen Schwellwert so fein einstellen, dass er
+     RUECKWIRKEND aufnimmt — man muss vorher schon laufen.
+
+     Jetzt laeuft der Rekorder DURCHGEHEND, sobald das
+     Freisprechen an ist. Solange es still ist, wird er im
+     Sekundentakt weggeworfen und neu aufgesetzt (das kostet
+     nichts, Stille ist bei Opus fast null Bytes). Faengt jemand
+     an zu sprechen, laeuft der Rekorder also schon seit
+     hoechstens einer Sekunde — der Anfang ist mit drin, samt
+     erster Silbe und dem Atemholen davor.
+
+     Verschickt wird dann nicht nur die Aufnahme, sondern auch
+     der VORLAUF: wie viele Sekunden am Anfang noch Stille sind.
+     Der Abspieler springt an diese Stelle (minus 250 ms Luft) —
+     man hoert also sofort das Wort, nicht die Stille davor.
+
+     Abgeschnitten werden kann damit nichts mehr. Wenn trotzdem
+     etwas fehlt, liegt es am Mikrofon des Geraets, nicht hier.
+     =========================================================== */
+  var FREI_NEUSTART = 1000;     // in der Stille: so oft frisch aufsetzen
+  var FREI_LUFT = 250;          // so viel Stille bleibt vor dem Wort stehen
 
   function freisprechenAn() { return frei.an; }
   function freisprechenMelden(f) { frei.melden = typeof f === "function" ? f : null; }
@@ -3219,7 +3403,9 @@ window.LiveChat = (function () {
       frei.an = true;
       frei.grundpegel = 0; frei.proben = 0;
       frei.lautSeit = 0; frei.stillSeit = 0; frei.nimmtAuf = false;
+      sprachSpur = spur;          // damit sprachAufnahmeStoppen sie findet
       freisagen("eicht");
+      freiSegmentNeu();           // ab jetzt laeuft immer einer mit
       frei.takt = setInterval(freiHorchen, 60);
       return true;
     }).catch(function () {
@@ -3231,10 +3417,11 @@ window.LiveChat = (function () {
   function freisprechenBeenden() {
     if (!frei.an) return false;
     clearInterval(frei.takt);
-    if (frei.nimmtAuf) sprachAbbrechen();
+    frei.an = false;             // vor dem Abbrechen, sonst setzt es neu auf
+    if (sprachRekorder) sprachAbbrechen();
     try { if (frei.spur) frei.spur.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
     try { if (frei.kontext && frei.kontext.close) frei.kontext.close(); } catch (e) {}
-    frei.an = false; frei.spur = null; frei.kontext = null;
+    frei.spur = null; frei.kontext = null; sprachSpur = null;
     frei.messer = null; frei.nimmtAuf = false;
     freisagen("aus");
     return true;
@@ -3261,6 +3448,30 @@ window.LiveChat = (function () {
     return Math.sqrt(s2 / frei.daten.length);
   }
 
+  /* Ein frisches Rekorder-Stueck aufsetzen. Wird in der Stille im
+     Sekundentakt gemacht, damit beim Losreden immer schon einer
+     laeuft — das ist der ganze Trick. */
+  function freiSegmentNeu() {
+    if (!frei.an || !frei.spur) return;
+    var alt = sprachRekorder;
+    if (alt) { alt.onstop = function () {}; try { alt.stop(); } catch (e) {} }
+    sprachStuecke = [];
+    var art = sprachFormat();
+    try {
+      sprachRekorder = art ? new MediaRecorder(frei.spur, { mimeType: art, audioBitsPerSecond: 24000 })
+                           : new MediaRecorder(frei.spur);
+    } catch (e) {
+      try { sprachRekorder = new MediaRecorder(frei.spur); } catch (e2) { sprachRekorder = null; }
+    }
+    if (!sprachRekorder) return;
+    sprachRekorder.ondataavailable = function (e) {
+      if (e.data && e.data.size) sprachStuecke.push(e.data);
+    };
+    try { sprachRekorder.start(); } catch (e) { sprachRekorder = null; return; }
+    frei.segAb = Date.now();
+    sprachStart = frei.segAb;
+  }
+
   function freiHorchen() {
     if (!frei.an) return;
     var pegel = freiPegel();
@@ -3281,13 +3492,23 @@ window.LiveChat = (function () {
     var laut = pegel > frei.grundpegel + FREI_ABSTAND;
     if (!frei.nimmtAuf) {
       if (laut) {
+        /* Der ZEITPUNKT des ersten lauten Messwerts wird gemerkt,
+           BEVOR die Pruefung laeuft — sonst faengt die Aufnahme erst
+           nach der Pruefung an, und genau das war der Fehler. */
         if (!frei.lautSeit) frei.lautSeit = jetzt;
-        /* Zwei Messungen lang laut — ein Tuerknall ist eine. */
+        /* Zwei Messungen lang laut — ein Tuerknall ist eine. Der
+           Rekorder laeuft dabei laengst; hier wird nur entschieden,
+           ob das Stueck behalten wird. */
         if (jetzt - frei.lautSeit >= 120) {
+          freiAufnahmeAn(frei.lautSeit);
           frei.lautSeit = 0;
-          freiAufnahmeAn();
         }
-      } else { frei.lautSeit = 0; }
+      } else {
+        frei.lautSeit = 0;
+        /* Still — dann das laufende Stueck wegwerfen und frisch
+           aufsetzen, damit es nie zu lang wird. */
+        if (jetzt - frei.segAb >= FREI_NEUSTART) freiSegmentNeu();
+      }
       return;
     }
     if (laut) { frei.stillSeit = 0; return; }
@@ -3295,23 +3516,13 @@ window.LiveChat = (function () {
     if (jetzt - frei.stillSeit >= FREI_STILLE) freiAufnahmeAus();
   }
 
-  function freiAufnahmeAn() {
-    if (frei.nimmtAuf || !frei.spur) return;
-    sprachStuecke = [];
-    var art = sprachFormat();
-    try {
-      sprachRekorder = art ? new MediaRecorder(frei.spur, { mimeType: art, audioBitsPerSecond: 24000 })
-                           : new MediaRecorder(frei.spur);
-    } catch (e) {
-      try { sprachRekorder = new MediaRecorder(frei.spur); } catch (e2) { sprachRekorder = null; }
-    }
-    if (!sprachRekorder) return;
-    sprachRekorder.ondataavailable = function (e) {
-      if (e.data && e.data.size) sprachStuecke.push(e.data);
-    };
-    sprachRekorder.start();
-    sprachStart = Date.now();
+  /* HIER WIRD NICHTS MEHR GEBAUT. Der Rekorder laeuft schon; es wird
+     nur entschieden, dass dieses Stueck behalten wird — und gemerkt,
+     ab wann darin wirklich gesprochen wird. */
+  function freiAufnahmeAn(abWann) {
+    if (frei.nimmtAuf || !sprachRekorder) return;
     frei.nimmtAuf = true;
+    frei.sprachAb = abWann || Date.now();
     frei.stillSeit = 0;
     freisagen("nimmt");
     clearTimeout(sprachEndeTakt);
@@ -3323,43 +3534,131 @@ window.LiveChat = (function () {
     frei.nimmtAuf = false;
     frei.stillSeit = 0;
     clearTimeout(sprachEndeTakt);
-    var kurz = Date.now() - sprachStart < FREI_MINDEST;
-    if (kurz) {
-      /* Zu kurz — wegwerfen, aber das Mikrofon bleibt offen. */
-      var r0 = sprachRekorder;
-      if (r0) { r0.onstop = function () {}; try { r0.stop(); } catch (e) {} }
-      sprachRekorder = null;
+    var gesprochen = Date.now() - frei.sprachAb;
+    if (gesprochen < FREI_MINDEST) {
+      /* Zu kurz — wegwerfen und frisch aufsetzen. Das Mikrofon
+         bleibt offen; ein Huesteln ist keine Nachricht. */
+      freiSegmentNeu();
       freisagen("hoert");
       return;
     }
-    /* WICHTIG: sprachAufnahmeStoppen raeumt normalerweise die Spur mit
-       ab. Beim Freisprechen soll das Mikrofon offen BLEIBEN, sonst
-       muesste man es fuer jeden Satz neu freigeben. Deshalb wird die
-       Spur vorher beiseitegelegt und danach zurueckgegeben. */
-    var merk = sprachSpur;
-    sprachSpur = null;
-    sprachAufnahmeStoppen().then(function () {
-      sprachSpur = merk;
-      if (frei.an) freisagen("hoert");
+    /* Der VORLAUF: wie viel Stille steht vorne im Stueck? Genau so
+       viel springt der Abspieler weiter — bis auf ein Viertel
+       Sekunde Luft, damit das Wort nicht hart einsetzt. */
+    var vorlauf = Math.max(0, (frei.sprachAb - frei.segAb - FREI_LUFT) / 1000);
+    sprachAufnahmeStoppen({ ab: vorlauf, live: true }).then(function () {
+      if (frei.an) { freiSegmentNeu(); freisagen("hoert"); }
     });
   }
 
-  function sprachSenden(daten, sekunden) {
+  /* =========================================================
+     VERSCHICKEN — in Stuecken, wenn es lang wird
+     ---------------------------------------------------------
+     GEWUENSCHT: „Die Sprachnachrichten sollen nicht nur auf 20
+     Sekunden limitiert sein. Ich moechte auch ganze Geschichten
+     vorlesen koennen."
+
+     Ein Kanalpaket ist begrenzt — daran aendert sich nichts. Aber
+     eine lange Aufnahme muss ja nicht in EIN Paket. Sie wird in
+     Stuecke von 80 KB geschnitten, durchnummeriert verschickt und
+     drueben wieder zusammengesetzt. Erst wenn das letzte Stueck da
+     ist, entsteht die Nachricht.
+
+     „live" heisst: das ist eine Wortmeldung im Pseudo-Livestream.
+     Sie landet in der Warteschlange, wird der Reihe nach
+     abgespielt und steht nur dann im Chat, wenn man das
+     eingeschaltet hat.
+     ========================================================= */
+  function sprachSenden(daten, sekunden, wie) {
     if (!daten) return false;
+    var o = wie || {};
+    var id = neueNachrichtId();
     var n = {
-      id: neueNachrichtId(),
+      id: id,
       von: zustand.ichId, name: zustand.ichName,
-      text: "", art: "sprach",
-      sprach: daten, sprachSek: sekunden,
+      text: "", art: o.live ? "live" : "sprach",
+      sprach: daten, sprachSek: sekunden, sprachAb: o.ab || 0,
       zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
     };
-    nachrichtAnhaengen(n);
+    /* Die eigene Wortmeldung haengt nur dann im Chat, wenn der
+       Mitschrieb an ist — sonst steht der Chat voll und man liest
+       nicht mehr, was die Leute schreiben. Gehoert wird sie bei
+       einem selbst gar nicht: man hat es ja gerade gesagt. */
+    if (!o.live || liveSichtbar) nachrichtAnhaengen(n);
     /* AUSDRUECKLICH KEIN serverSichern: die Aufnahme ist fluechtig. */
-    senden({ art: "text", id: n.id, name: n.name, text: "", zeit: n.zeit,
-             bild: zustand.ichBild, farbe: zustand.farbe, chatArt: "sprach",
-             sprach: daten, sprachSek: sekunden });
+
+    var kopf = { id: id, name: n.name, zeit: n.zeit, bild: zustand.ichBild,
+                 farbe: zustand.farbe, chatArt: n.art,
+                 sprachSek: sekunden, sprachAb: n.sprachAb };
+    if (daten.length <= PAKET_BYTES) {
+      senden({ art: "text", text: "", sprach: daten,
+               id: kopf.id, name: kopf.name, zeit: kopf.zeit, bild: kopf.bild,
+               farbe: kopf.farbe, chatArt: kopf.chatArt,
+               sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb });
+    } else {
+      var anzahl = Math.ceil(daten.length / PAKET_BYTES);
+      for (var i = 0; i < anzahl; i++) {
+        senden({ art: "sprachteil", id: id, nr: i, anzahl: anzahl,
+                 teil: daten.slice(i * PAKET_BYTES, (i + 1) * PAKET_BYTES),
+                 name: kopf.name, zeit: kopf.zeit, bild: kopf.bild,
+                 farbe: kopf.farbe, chatArt: kopf.chatArt,
+                 sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb });
+      }
+    }
     melden();
     return true;
+  }
+
+  /* =========================================================
+     DER PSEUDO-LIVESTREAM — einer nach dem anderen
+     ---------------------------------------------------------
+     GEWUENSCHT: „Wenn viele zur selben Zeit gleichzeitig was sagen,
+     sollen die Nachrichten trotzdem nacheinander abgespielt werden
+     und nicht gleichzeitig. Also in der Reihenfolge, wie sie
+     ankommen … und so haben wir auch die Chance, dass niemand mehr
+     in sich reinreden kann."
+
+     Genau das ist das alte Prinzip mit dem Handheben, nur ohne
+     Hand: wer zuerst fertig gesprochen hat, wird zuerst gehoert.
+     Dass man den anderen eine halbe Minute spaeter hoert, faellt
+     nicht auf — man sieht ja keine Lippen dazu.
+
+     Die Warteschlange liegt HIER, das Abspielen macht app.js (dort
+     liegt der freigeschaltete Tonvorrat, ohne den ein frisches
+     Audio-Element nicht spielen darf).
+     ========================================================= */
+  var liveWarteschlange = [];
+  var liveSichtbar = false;          // Mitschrieb im Chat
+  var liveMelder = null;
+
+  function liveMelden(f) { liveMelder = typeof f === "function" ? f : null; }
+  function liveSagen() { if (liveMelder) { try { liveMelder(); } catch (e) {} } }
+  /* Das naechste Stueck herausgeben — app.js ruft das ab, sobald das
+     vorige zu Ende ist. */
+  function liveNaechste() { return liveWarteschlange.shift() || null; }
+  function liveOffen() { return liveWarteschlange.length; }
+  function liveMitschrieb(an) {
+    if (an === undefined) return liveSichtbar;
+    liveSichtbar = Boolean(an);
+    return liveSichtbar;
+  }
+
+  /* Die Stuecke, die noch auf ihre Geschwister warten. */
+  var sprachBausteine = {};
+  function sprachTeilEmpfangen(p) {
+    if (!p || !p.id || typeof p.nr !== "number") return null;
+    var b = sprachBausteine[p.id];
+    if (!b) {
+      b = sprachBausteine[p.id] = { teile: [], anzahl: p.anzahl || 1, da: 0, seit: Date.now() };
+      /* Was nach zwei Minuten noch unvollstaendig ist, wird nie
+         mehr vollstaendig — wegwerfen, sonst waechst der Speicher. */
+      setTimeout(function () { delete sprachBausteine[p.id]; }, 120000);
+    }
+    if (b.teile[p.nr] === undefined) { b.teile[p.nr] = p.teil; b.da++; }
+    if (b.da < b.anzahl) return null;
+    var ganz = b.teile.join("");
+    delete sprachBausteine[p.id];
+    return ganz;
   }
 
   function bildSenden(quelle, text) {
@@ -5126,13 +5425,33 @@ window.LiveChat = (function () {
     sprachAufnahmeStarten: sprachAufnahmeStarten,
     sprachAufnahmeStoppen: sprachAufnahmeStoppen,
     sprachAbbrechen: sprachAbbrechen,
-    pruefSprachSenden: function (daten, sek) { return sprachSenden(daten, sek); },
-    sprachHoechstdauer: function () { return SPRACH_SEKUNDEN; },
+    pruefSprachSenden: function (daten, sek, wie) { return sprachSenden(daten, sek, wie); },
+    /* Was wirklich auf den Kanal ginge — ohne Kanal. */
+    pruefAbfangen: function (f) { pruefSenderHaken = typeof f === "function" ? f : null; },
+    pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },
+    sprachHoechstdauer: function () { return SPRACH_LANG; },
+    freiHoechstdauer: function () { return SPRACH_SEKUNDEN; },
+    /* Der Pseudo-Livestream */
+    liveNaechste: liveNaechste,
+    liveOffen: liveOffen,
+    liveMelden: liveMelden,
+    liveMitschrieb: liveMitschrieb,
+    einsatzPing: einsatzPing,
     freisprechenAn: freisprechenAn,
     freisprechenStarten: freisprechenStarten,
     freisprechenBeenden: freisprechenBeenden,
     freisprechenMelden: freisprechenMelden,
     tonAusVorrat: tonAusVorrat,
+    /* Nur zum Nachmessen: laeuft wirklich immer einer mit? */
+    freiInnen: function () {
+      return { an: frei.an, rekorder: Boolean(sprachRekorder),
+               lage: sprachRekorder ? sprachRekorder.state : "",
+               segAlter: frei.segAb ? Date.now() - frei.segAb : -1,
+               nimmtAuf: frei.nimmtAuf,
+               neustart: FREI_NEUSTART, luft: FREI_LUFT };
+    },
+    freiAusloesen: function (abWann) { freiAufnahmeAn(abWann || Date.now()); },
+    freiBeenden: function () { return freiAufnahmeAus(); },
     sprachLagerStand: sprachLagerStand,
     sprachLagerLeeren: sprachLagerLeeren,
     raumSchluessel: raumSchluessel,

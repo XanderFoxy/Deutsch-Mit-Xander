@@ -7425,3 +7425,117 @@ body.tutor-offen .tutor-reiter { display: none; }
   .tutor-buehne { transition: opacity .3s ease; transform: none; }
   .tutor-figur  { animation: none; }
 }
+
+/* =============================================================
+   DER PSEUDO-LIVESTREAM — wer gerade spricht
+   -------------------------------------------------------------
+   GEWUENSCHT: „Dass es gar nicht in den Chat eintraegt, sondern
+   nur hoerbar wird … und dass die Nachrichten trotzdem
+   nacheinander abgespielt werden."
+
+   Eine schmale Zeile ueber dem Verlauf. Ohne sie haelt man eine
+   Verzoegerung fuer einen Ausfall — man hoert nichts und weiss
+   nicht, ob noch etwas kommt.
+   ============================================================= */
+.lc-live-leiste {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(74,157,143,.14);
+  border: 1px solid rgba(74,157,143,.35);
+  font-size: .76rem;
+  color: var(--teal-700, #2b6a60);
+  min-height: 26px;
+}
+.lc-live-leiste[hidden] { display: none; }
+.lc-live-leiste strong { font-weight: 700; }
+.lc-live-leiste em { opacity: .72; font-style: normal; }
+.lc-live-punkt {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #e04a4a;
+  flex: 0 0 auto;
+  animation: lcLivePuls 1.1s ease-in-out infinite;
+}
+@keyframes lcLivePuls {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: .45; transform: scale(.78); }
+}
+
+/* Der Herunterladen-Pfeil an der Sprachblase.
+   „Dass die Leute sich das runterladen koennen und hoeren
+   koennen, wie ich das vorlese, um das nachsprechen zu koennen." */
+.lc-sprach-holen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  margin-left: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(74,157,143,.45);
+  background: rgba(74,157,143,.1);
+  color: var(--teal-700, #2b6a60);
+  font-size: .95rem;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+.lc-sprach-holen:hover { background: rgba(74,157,143,.22); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lc-live-punkt { animation: none; }
+}
+
+/* =============================================================
+   DER TUTOR HEBT HERVOR, WOVON ER GERADE SPRICHT
+   -------------------------------------------------------------
+   GEWUENSCHT: „Dass die Sektionen, von denen er spricht, kurz
+   hervorgehoben werden in dem Moment, wenn er die anspricht —
+   dass sie so markiert dastehen, dass jeder weiss: okay, wenn
+   ich da drauf klicke, finde ich das."
+
+   Ein ruhiges Pulsieren, kein Blinken. Es soll den Blick
+   hinziehen, nicht stoeren, und der Knopf muss dabei lesbar
+   bleiben — deshalb Rahmen und Schein statt Farbwechsel.
+   ============================================================= */
+.subnav-pill.tutor-leuchtet {
+  position: relative;
+  border-color: var(--teal-400, #4a9d8f) !important;
+  box-shadow: 0 0 0 3px rgba(74,157,143,.32), 0 3px 12px rgba(74,157,143,.3);
+  animation: tutorLeuchten 1.5s ease-in-out infinite;
+  z-index: 2;
+}
+@keyframes tutorLeuchten {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(74,157,143,.32), 0 3px 12px rgba(74,157,143,.28); }
+  50%      { box-shadow: 0 0 0 6px rgba(74,157,143,.16), 0 4px 16px rgba(74,157,143,.42); }
+}
+
+/* Der Sprungknopf und die kleine Hilfe in der Sprechblase. */
+.tutor-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  flex: 0 0 auto;
+}
+.tutor-hin {
+  font-weight: 700;
+  background: rgba(74,157,143,.22) !important;
+}
+.tutor-hilfe {
+  flex: 1 1 100%;
+  margin: 2px 0 0;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: rgba(74,157,143,.09);
+  font-size: .76rem;
+  line-height: 1.38;
+  color: #3a4a52;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subnav-pill.tutor-leuchtet { animation: none; }
+}
