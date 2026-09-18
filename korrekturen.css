@@ -7284,3 +7284,144 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+
+/* =============================================================
+   DER TUTOR — Alex kommt von rechts herein
+   -------------------------------------------------------------
+   GEWUENSCHT: „Also ich komme dann animiert von der rechten Seite
+   ins Bild hinein … mit der Moeglichkeit, das abzuschalten."
+
+   Die Figur ist ein freigestelltes PNG (520 Pixel hoch). Auf dem
+   Telefon wird sie kleiner, damit sie nicht die halbe Seite
+   verdeckt, und die Sprechblase rutscht ueber sie statt daneben.
+   Angefasst wird nur, was zum Tutor gehoert — nichts von der
+   uebrigen Seite.
+   ============================================================= */
+.tutor-buehne {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 3200;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;            /* der leere Raum bleibt bedienbar */
+  transform: translateX(112%);
+  opacity: 0;
+  transition: transform .62s cubic-bezier(.22,.9,.28,1.08), opacity .35s ease;
+}
+.tutor-buehne.tutor-da { transform: translateX(0); opacity: 1; }
+
+.tutor-figur {
+  width: auto;
+  height: min(46vh, 300px);
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(-6px 4px 12px rgba(0,0,0,.35));
+  /* Ein winziges Wippen, damit er nicht wie ein Aufkleber wirkt. */
+  animation: tutorAtmen 5.5s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+@keyframes tutorAtmen {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-4px) rotate(-.5deg); }
+}
+
+.tutor-blase {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: min(340px, 62vw);
+  max-height: min(42vh, 330px);
+  margin-bottom: 18px;
+  padding: 14px 16px 10px;
+  border-radius: 16px 16px 4px 16px;
+  background: rgba(255,255,255,.97);
+  color: #23303a;
+  border: 2px solid var(--teal-400, #4a9d8f);
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+  font-size: .86rem;
+  line-height: 1.42;
+}
+.tutor-blase::after {           /* die Spitze zur Figur hin */
+  content: "";
+  position: absolute;
+  right: -10px;
+  bottom: 14px;
+  width: 0; height: 0;
+  border-left: 11px solid var(--teal-400, #4a9d8f);
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+/* Nur der TEXT rollt. Die Knoepfe bleiben unten stehen — sonst muss
+   man erst bis ans Ende des Textes wischen, um ihn abzuschalten. */
+.tutor-text {
+  margin: 0 18px 8px 0;
+  white-space: pre-line;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.tutor-zu {
+  position: absolute; top: 4px; right: 6px;
+  width: 26px; height: 26px; line-height: 22px;
+  border: none; background: transparent;
+  font-size: 1.25rem; color: #7b8790; cursor: pointer;
+}
+.tutor-zu:hover { color: #23303a; }
+.tutor-knoepfe { display: flex; flex-wrap: wrap; gap: 6px; flex: 0 0 auto; padding-top: 4px; }
+.tutor-mini {
+  border: 1px solid rgba(74,157,143,.55);
+  background: rgba(74,157,143,.1);
+  color: #2b6a60;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: .72rem;
+  cursor: pointer;
+}
+.tutor-mini:hover { background: rgba(74,157,143,.2); }
+
+/* Der Reiter am rechten Rand, mit dem man ihn zurueckholt. */
+.tutor-reiter {
+  position: fixed;
+  right: 0;
+  bottom: 22vh;
+  z-index: 3190;
+  width: 34px; height: 40px;
+  border: none;
+  border-radius: 10px 0 0 10px;
+  background: var(--teal-400, #4a9d8f);
+  color: #fff;
+  font-size: 1.05rem;
+  cursor: pointer;
+  opacity: .72;
+  box-shadow: -2px 2px 8px rgba(0,0,0,.25);
+}
+.tutor-reiter:hover { opacity: 1; }
+/* Solange Alex im Bild steht, braucht es den Reiter nicht — er lag
+   sonst als gruener Klotz auf seiner Schulter. */
+body.tutor-offen .tutor-reiter { display: none; }
+
+/* Auf dem Telefon: kleinere Figur, Blase darueber statt daneben —
+   sonst bleibt fuer den Text keine Breite uebrig. */
+@media (max-width: 640px) {
+  .tutor-buehne { flex-direction: column; align-items: flex-end; gap: 0; }
+  .tutor-figur  { height: min(34vh, 220px); }
+  .tutor-blase  {
+    max-width: min(300px, 88vw);
+    max-height: 32vh;
+    margin: 0 8px -6px 0;
+    border-radius: 16px 16px 16px 4px;
+  }
+  .tutor-blase::after { right: 24px; bottom: -10px; border: none;
+    border-top: 11px solid var(--teal-400, #4a9d8f);
+    border-left: 8px solid transparent; border-right: 8px solid transparent; }
+}
+
+/* Wer Bewegung nicht mag, bekommt ihn ohne Anflug. */
+@media (prefers-reduced-motion: reduce) {
+  .tutor-buehne { transition: opacity .3s ease; transform: none; }
+  .tutor-figur  { animation: none; }
+}

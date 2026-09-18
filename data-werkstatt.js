@@ -49,24 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 60 — Toene, Regen, Ticker, Woerterbuch geprueft",
+  stand: "Runde 61 — Tutor Alex und das Livestream-Relais",
 
   inArbeit: [
-    { seit: "2026-09-18T03:58",
-      text: "Medienserver: brauche von dir den Cloudflare-Zugang" },
-    { seit: "2026-09-18T03:58",
-      text: "Tyrannosaurus: mein Neuentwurf war schlechter, Original bleibt" },
-    { seit: "2026-09-18T03:58",
+    { seit: "2026-09-18T14:38",
+      text: "Livestream: es fehlt nur noch dein Cloudflare-Schluessel (Profil - Einstellungen)" },
+    { seit: "2026-09-18T14:38",
       text: "3286 Woerter brauchen ein menschliches Auge (Liste liegt bereit)" },
+    { seit: "2026-09-18T14:38",
+      text: "Sitzende Seitenansicht fuer die Figuren fehlt noch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T03:58",
-      text: "Woerterbuch gegen igerman98 geprueft: 36367 von 39653 belegt" },
-    { seit: "2026-09-18T03:58",
-      text: "14 beweisbare Doppelungen entfernt, sonst nichts angefasst" },
-    { seit: "2026-09-18T03:58",
-      text: "Jede Animation hat einen Ton in voller Laenge" },
+    { seit: "2026-09-18T14:38",
+      text: "Tutor Alex kommt von rechts herein und erklaert jeden Bereich" },
+    { seit: "2026-09-18T14:38",
+      text: "Tutor als Foto ODER Comic, freigestellt, mit deiner ElevenLabs-Stimme" },
+    { seit: "2026-09-18T14:38",
+      text: "Tutor abschaltbar, Reiter am Rand holt ihn zurueck" },
+    { seit: "2026-09-18T14:38",
+      text: "Livestream-Relais: Tabelle und Edge-Function sind schon in Supabase" },
+    { seit: "2026-09-18T14:38",
+      text: "Tyrannosaurus und die anderen Tiere: dein Original war nie ueberschrieben" },
   ],
 };

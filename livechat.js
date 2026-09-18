@@ -113,7 +113,7 @@ window.LiveChat = (function () {
      eigenen hat, trägt ihn in supabase-config.js als
      window.DMA_TURN = [{ urls: "...", username: "...",
      credential: "..." }] ein; dann wird dieser genommen. */
-  var VERMITTLER = (window.DMA_TURN && window.DMA_TURN.length ? window.DMA_TURN : [
+  var NOTVERMITTLER = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:openrelay.metered.ca:80" },
@@ -123,7 +123,119 @@ window.LiveChat = (function () {
       username: "openrelayproject", credential: "openrelayproject" },
     { urls: "turn:openrelay.metered.ca:443?transport=tcp",
       username: "openrelayproject", credential: "openrelayproject" }
-  ]);
+  ];
+  var VERMITTLER = (window.DMA_TURN && window.DMA_TURN.length ? window.DMA_TURN : NOTVERMITTLER);
+
+  /* =========================================================
+     DAS EIGENE RELAIS — Cloudflare Realtime
+     ---------------------------------------------------------
+     GEWUENSCHT: „Bereite schon alles vor fuer den Livestream auf
+     dem Medienserver. Ich soll nur noch den API-Schluessel
+     eintragen muessen."
+
+     Die oeffentlichen Gratis-Relais oben sind der Notnagel: sie
+     sind ueberlastet, und wenn sie ausfallen, bleibt das Bild
+     schwarz, ohne dass irgendwo etwas steht. Ist bei Supabase ein
+     eigenes Relais hinterlegt, holt sich die Seite VOR dem
+     Betreten kurzlebige Zugangsdaten dafuer (zwei Stunden) und
+     benutzt sie.
+
+     Der API-Token steht dabei NIRGENDS im Browser. Er liegt in
+     der Datenbank, und die Edge-Function „klassenzimmer" gibt nur
+     die kurzlebigen Daten heraus. Kommt nichts zurueck — kein
+     Schluessel hinterlegt, kein Netz, Tagesgrenze erreicht —,
+     laeuft alles weiter wie bisher mit den oeffentlichen. Das
+     Klassenzimmer faellt nie aus, weil das Relais fehlt.
+     ========================================================= */
+  var RELAIS_WEG = "/functions/v1/klassenzimmer";
+  var relaisStand = { geholt: 0, server: null, quelle: "oeffentlich", grund: "" };
+  var relaisLaeuft = null;
+
+  function relaisRufen(koerper) {
+    if (!window.supabase || !window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url) {
+      return Promise.resolve({ fehler: "keine-verbindung" });
+    }
+    return marke().then(function (m) {
+      if (!m) return { fehler: "nicht-angemeldet" };
+      var abbruch = new AbortController();
+      var uhr = setTimeout(function () { abbruch.abort(); }, 8000);
+      return fetch(window.SUPABASE_CONFIG.url.replace(/\/+$/, "") + RELAIS_WEG, {
+        method: "POST",
+        signal: abbruch.signal,
+        headers: {
+          "Authorization": "Bearer " + m,
+          "apikey": window.SUPABASE_CONFIG.anonKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(koerper)
+      }).then(function (a) {
+        clearTimeout(uhr);
+        return a.json().catch(function () { return { fehler: "kein-json" }; });
+      }).catch(function () {
+        clearTimeout(uhr);
+        return { fehler: "nicht-erreichbar" };
+      });
+    });
+  }
+
+  /* Die Anmeldemarke der laufenden Sitzung. */
+  function marke() {
+    try {
+      var k = (window.Backend && Backend.zugang && Backend.zugang()) || null;
+      if (!k && window.supabase && window.SUPABASE_CONFIG) {
+        k = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      }
+      if (!k) return Promise.resolve("");
+      return k.auth.getSession().then(function (a) {
+        return (a && a.data && a.data.session && a.data.session.access_token) || "";
+      }).catch(function () { return ""; });
+    } catch (e) { return Promise.resolve(""); }
+  }
+
+  /* Holt die Zugangsdaten — hoechstens einmal je anderthalb
+     Stunden, denn sie gelten zwei. Wartet nie laenger als acht
+     Sekunden; das Betreten darf daran nicht haengenbleiben. */
+  function relaisHolen(neu) {
+    if (window.DMA_TURN && window.DMA_TURN.length) {
+      relaisStand.quelle = "eingetragen";
+      return Promise.resolve(false);
+    }
+    var alter = Date.now() - relaisStand.geholt;
+    if (!neu && relaisStand.server && alter < 90 * 60 * 1000) return Promise.resolve(true);
+    if (relaisLaeuft) return relaisLaeuft;
+    relaisLaeuft = relaisRufen({ aktion: "zugang" }).then(function (a) {
+      relaisLaeuft = null;
+      if (!a || a.fehler || !a.server || !a.server.length) {
+        relaisStand.quelle = "oeffentlich";
+        relaisStand.grund = (a && a.fehler) || "leer";
+        VERMITTLER = NOTVERMITTLER;
+        return false;
+      }
+      relaisStand.server = a.server;
+      relaisStand.geholt = Date.now();
+      relaisStand.quelle = "cloudflare";
+      relaisStand.grund = "";
+      /* Die eigenen Server ZUERST, die oeffentlichen als Reserve
+         dahinter — faellt Cloudflare aus, ist trotzdem noch ein
+         Weg da. */
+      VERMITTLER = a.server.concat(NOTVERMITTLER);
+      return true;
+    }).catch(function () {
+      relaisLaeuft = null;
+      relaisStand.quelle = "oeffentlich";
+      relaisStand.grund = "fehler";
+      return false;
+    });
+    return relaisLaeuft;
+  }
+  function relaisLage() {
+    return {
+      quelle: relaisStand.quelle,
+      grund: relaisStand.grund,
+      anzahl: relaisStand.server ? relaisStand.server.length : 0,
+      geholt: relaisStand.geholt
+    };
+  }
 
   var zustand = {
     lage: "aus",        // aus | verbindet | drin | fehler | voll
@@ -1278,10 +1390,15 @@ window.LiveChat = (function () {
     if (!zeilen.length) zeilen.push("Es besteht gerade keine Leitung zu jemandem.");
     /* Und was ueberhaupt zur Verfuegung steht. */
     var relais = VERMITTLER.filter(function (v) {
-      return String(v.urls || "").indexOf("turn") === 0;
+      var u = v.urls;
+      if (Array.isArray(u)) return u.some(function (e) { return String(e).indexOf("turn") === 0; });
+      return String(u || "").indexOf("turn") === 0;
     }).length;
-    zeilen.push("Relais eingetragen: " + relais
-      + (window.DMA_TURN && window.DMA_TURN.length ? " (eigene)" : " (oeffentliche)"));
+    var woher = relaisStand.quelle === "cloudflare" ? " (eigenes Relais, Cloudflare)"
+      : (window.DMA_TURN && window.DMA_TURN.length) ? " (eigene, fest eingetragen)"
+      : " (oeffentliche)";
+    zeilen.push("Relais eingetragen: " + relais + woher
+      + (relaisStand.grund ? " — Grund: " + relaisStand.grund : ""));
     return zeilen.join("\n");
   }
 
@@ -2425,7 +2542,15 @@ window.LiveChat = (function () {
        nicht wollen."
        Also standardmäßig nur Ton. Wer sein Bild zeigen will, tippt
        auf die Kamera; erst dann fragt der Browser danach. */
-    return stromHolen(o.mitBild === true).then(function (strom) {
+    /* Hier wird auf das Relais gewartet — aber nur so lange, wie
+       das Holen der Kamera ohnehin dauert. Sie laufen nebeneinander,
+       also kostet es keine Sekunde extra. Erst danach wird die erste
+       Bruecke gebaut, und die nimmt dann die richtigen Server. */
+    return Promise.all([
+      stromHolen(o.mitBild === true),
+      relaisHolen(false)
+    ]).then(function (beides) {
+      var strom = beides[0];
       zustand.eigenerStrom = strom;
       zustand.bildAn = Boolean(strom && strom.getVideoTracks().length);
       zustand.tonAn = Boolean(strom && strom.getAudioTracks().length);
@@ -4897,6 +5022,13 @@ window.LiveChat = (function () {
     PLAETZE: PLAETZE,
     CHAT_LAENGE: CHAT_LAENGE,
     betreten: betreten,
+    /* Fuer die Betreiber-Ansicht: wo kommt das Relais gerade her? */
+    relaisLage: relaisLage,
+    /* Die Server, die gerade wirklich benutzt werden — fuer den
+       Test in den Einstellungen. */
+    eisServer: function () { return VERMITTLER; },
+    relaisHolen: relaisHolen,
+    relaisRufen: relaisRufen,
     verlassen: verlassen,
     tonUmschalten: tonUmschalten,
     bildUmschalten: bildUmschalten,

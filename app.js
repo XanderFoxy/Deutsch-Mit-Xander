@@ -265,6 +265,20 @@
     tabs.forEach((t) => t.setAttribute("aria-selected", String(t.dataset.target === targetId)));
     views.forEach((v) => (v.dataset.active = String(v.id === targetId)));
     history.replaceState(null, "", `#${targetId}`);
+    /* Alex kommt herein und erklaert den Bereich — einmal pro Besuch,
+       abschaltbar. Steht er noch vom vorigen Bereich da, geht er erst
+       hinaus; sonst redet er ueber die falsche Seite. Eine halbe
+       Sekunde Vorlauf, damit der Bereich zuerst steht. */
+    setTimeout(() => {
+      /* Erst im Zeitgeber, nicht sofort: activateTab laeuft schon
+         beim allerersten Aufbau der Seite — da sind die Bausteine des
+         Tutors weiter unten in dieser Datei noch gar nicht angelegt. */
+      try {
+        tutorSchliessen(true);
+        tutorReiterPflegen();
+        tutorRufen(targetId, false);
+      } catch (e) { /* der Tutor darf den Wechsel nie aufhalten */ }
+    }, 700);
   }
   // Verhindert, dass der programmatisch simulierte Unterreiter-Klick beim erstmaligen Öffnen
   // eines Hauptreiters (siehe activePill.click() unten) denselben automatischen Scroll auslöst
@@ -2706,6 +2720,106 @@
     return new Blob([ab], { type: "audio/wav" });
   }
 
+
+  /* =============================================================
+     DAS RELAIS FUER DEN LIVESTREAM — nur fuer den Betreiber
+     -------------------------------------------------------------
+     GEWUENSCHT: „Bereite schon alles vor fuer den Livestream. Ich
+     soll nur noch den API-Schluessel eintragen muessen, und das
+     Framework ist schon vorhanden und funktioniert."
+
+     Genau das ist diese Karte: zwei Felder, ein Knopf. Der Token
+     geht von hier direkt an die Edge-Function, wird DORT bei
+     Cloudflare geprueft und liegt danach in der Datenbank. Er
+     kommt nie wieder heraus — auch nicht in dieses Formular.
+     ============================================================= */
+  let relaisStandDaten = null;
+  function relaisEinstellungenHtml() {
+    if (!(Backend.isOwner && Backend.isOwner())) return "";
+    const z = relaisStandDaten;
+    const da = Boolean(z && z.relaisDa);
+    return `
+      <div class="question-card" style="margin-top:14px; border:2px solid #4a7dc9;">
+        <h3>🛰️ Livestream-Relais (Cloudflare Realtime)</h3>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Das Klassenzimmer verbindet alle direkt miteinander. Hinter einem strengen Netz — Mobilfunk,
+          Firmen-WLAN, manche Länder — geht das nicht; dann braucht es ein <strong>Relais</strong>, über
+          das der Ton läuft. Bisher benutzt die Seite die überlasteten Gratis-Relais von Open&nbsp;Relay.
+          Trägst du hier deinen eigenen Zugang ein, nimmt sie ihn — und der Livestream steht auch dort,
+          wo er bisher stumm blieb.
+        </p>
+        <p class="empty-note" style="margin-bottom:10px;">
+          <strong>Stand:</strong> ${z === null ? "wird geprüft …"
+            : da ? `✅ eingerichtet (Kennung beginnt mit <code>${escapeHtml(z.kennungAnfang || "")}</code>), Zugangsdaten gelten ${Math.round((z.gueltigSekunden || 0) / 3600)} Stunden`
+                 : "⚪ noch nicht eingerichtet — es laufen die öffentlichen Relais"}
+        </p>
+        <details style="margin-bottom:10px;">
+          <summary style="cursor:pointer; font-size:0.82rem;">Woher bekomme ich die zwei Werte?</summary>
+          <ol class="empty-note" style="margin:8px 0 0; padding-left:20px; font-size:0.78rem; line-height:1.5;">
+            <li>Bei <strong>dash.cloudflare.com</strong> anmelden (ein kostenloses Konto reicht).</li>
+            <li>Links auf <strong>Realtime</strong> → <strong>TURN</strong> → <strong>Create</strong>.</li>
+            <li>Cloudflare zeigt dir danach <strong>einmal</strong> zwei Werte:
+              die <em>TURN Token ID</em> und den <em>API Token</em>. Beide hier einsetzen.</li>
+            <li>Kosten: Stand September 2026 sind 1.000 GB im Monat frei, danach 0,05 $ je Gigabyte.
+              Eine Stunde Unterricht zu fünft über das Relais liegt grob bei 1&nbsp;GB — und über das
+              Relais läuft nur, was nicht direkt durchkommt.</li>
+          </ol>
+        </details>
+        <input type="text" id="relaisKennung" class="challenge-select" style="margin-bottom:6px;"
+               placeholder="TURN Token ID" autocomplete="off" spellcheck="false" />
+        <input type="password" id="relaisToken" class="challenge-select" style="margin-bottom:8px;"
+               placeholder="API Token" autocomplete="off" spellcheck="false" />
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="btn btn-coffee" id="relaisSpeichernBtn">🛰️ Eintragen und prüfen</button>
+          <button type="button" class="trophy-chip" id="relaisTestBtn">🔍 Verbindung testen</button>
+          ${da ? '<button type="button" class="trophy-chip" id="relaisLoeschenBtn">🗑️ Entfernen</button>' : ""}
+        </div>
+        <div id="relaisBericht" class="empty-note" style="margin-top:10px; white-space:pre-line;"></div>
+      </div>`;
+  }
+
+  /* Ein ECHTER Test: der Browser sammelt Kandidaten und wir schauen
+     nach, ob ein „relay"-Kandidat dabei ist. Nur der beweist, dass
+     das Relais wirklich antwortet — alles andere waere geraten. */
+  function relaisTesten() {
+    const box = document.getElementById("relaisBericht");
+    if (box) box.textContent = "Wird getestet — das dauert ein paar Sekunden …";
+    return LiveChat.relaisHolen(true).then(() => {
+      const lage = LiveChat.relaisLage();
+      return new Promise((fertig) => {
+        let pc;
+        try {
+          pc = new RTCPeerConnection({
+            iceServers: (window.LiveChat && LiveChat.eisServer && LiveChat.eisServer()) || undefined,
+            iceTransportPolicy: "relay",   // NUR ueber das Relais — sonst beweist der Test nichts
+          });
+        } catch (e) { fertig({ lage, relais: 0, fehler: String(e.message || e) }); return; }
+        let relais = 0;
+        const uhr = setTimeout(() => { try { pc.close(); } catch (e) {} fertig({ lage, relais }); }, 8000);
+        pc.onicecandidate = (e) => {
+          if (!e.candidate) { clearTimeout(uhr); try { pc.close(); } catch (x) {} fertig({ lage, relais }); return; }
+          if (/ typ relay /.test(" " + e.candidate.candidate + " ")) relais++;
+        };
+        try {
+          pc.createDataChannel("probe");
+          pc.createOffer().then((a) => pc.setLocalDescription(a)).catch(() => {});
+        } catch (e) { clearTimeout(uhr); fertig({ lage, relais, fehler: String(e.message || e) }); }
+      });
+    }).then((r) => {
+      if (!box) return r;
+      const woher = r.lage.quelle === "cloudflare" ? "dein eigenes Relais (Cloudflare)"
+        : r.lage.quelle === "eingetragen" ? "ein fest eingetragenes Relais"
+        : "die öffentlichen Gratis-Relais";
+      box.textContent = (r.relais > 0
+        ? "✅ Das Relais antwortet. " + r.relais + " Weg" + (r.relais === 1 ? "" : "e") + " über " + woher + " gefunden —\nder Livestream kommt auch durch ein strenges Netz."
+        : "⚠️ Kein Relais-Weg gekommen. Benutzt wurde: " + woher + "."
+          + (r.lage.grund ? "\nGrund: " + r.lage.grund : "")
+          + "\nDirekte Verbindungen im selben WLAN gehen trotzdem.")
+        + (r.fehler ? "\n(" + r.fehler + ")" : "");
+      return r;
+    });
+  }
+
   function renderSettings() {
     const area = document.getElementById("settingsArea");
     if (!area) return;
@@ -2748,6 +2862,7 @@
       </div>
 
       ${istBetreiber ? azureEinstellungenHtml() : ""}
+      ${istBetreiber ? relaisEinstellungenHtml() : ""}
 
       <div class="question-card" style="margin-top:14px;">
         <h3>🌍 Sprache der Erklärungen</h3>
@@ -2771,6 +2886,25 @@
           ${Object.entries(HILFSSPRACHEN).filter(([c]) => c !== "de").map(([c, n]) =>
             `<option value="${c}" ${((profile.extraProfileData || {}).hilfsSprache === c) ? "selected" : ""}>${n}</option>`).join("")}
         </select>
+      </div>
+
+      <div class="question-card" style="margin-top:14px;">
+        <h3>🎓 Alex als Tutor</h3>
+        <p class="empty-note" style="margin-bottom:10px;">
+          Beim Öffnen eines Bereichs kommt Alex von rechts ins Bild und erklärt dir in einem Satz,
+          was dich dort erwartet — einmal pro Besuch. Er redet mit seiner eigenen Stimme.
+          Über den kleinen Reiter 🎓 am rechten Rand kannst du ihn jederzeit wieder rufen.
+        </p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="tutorSchalter" ${tutorAn() ? "checked" : ""} />
+          <span>🎓 Alex erklärt mir die Bereiche</span>
+        </label>
+        <p class="empty-note" style="margin:12px 0 6px; font-size:0.78rem;">Wie soll er aussehen?</p>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button type="button" class="trophy-chip tutor-art-btn ${tutorArt() === "foto" ? "selected" : ""}" data-tutor-art="foto">📷 Foto</button>
+          <button type="button" class="trophy-chip tutor-art-btn ${tutorArt() === "comic" ? "selected" : ""}" data-tutor-art="comic">🎨 Comic</button>
+          <button type="button" class="trophy-chip" id="tutorProbeBtn">▶️ Einmal ansehen</button>
+        </div>
       </div>
 
       <div class="question-card" style="margin-top:14px;">
@@ -3107,6 +3241,55 @@
         showToast("🌍 Erklärungen jetzt auf " + hilfsSpracheName(hilfsSprache()).split(" — ").pop());
         renderSettings();
       } catch (err) { showToast("⚠️ " + (err.message || "Nicht gespeichert.")); }
+    });
+    /* Das Livestream-Relais. Der Stand wird EINMAL geholt und dann
+       nachgezeichnet — sonst fragt jede Neuzeichnung der
+       Einstellungen wieder bei der Datenbank nach. */
+    if (Backend.isOwner && Backend.isOwner() && relaisStandDaten === null && window.LiveChat && LiveChat.relaisRufen) {
+      LiveChat.relaisRufen({ aktion: "stand" }).then((a) => {
+        relaisStandDaten = (a && !a.fehler) ? a : { relaisDa: false, fehler: (a && a.fehler) || "" };
+        const box = document.getElementById("settingsArea");
+        if (box && box.querySelector("#relaisSpeichernBtn")) renderSettings();
+      }).catch(() => {});
+    }
+    document.getElementById("relaisSpeichernBtn")?.addEventListener("click", async () => {
+      const kennung = (document.getElementById("relaisKennung")?.value || "").trim();
+      const token = (document.getElementById("relaisToken")?.value || "").trim();
+      const box = document.getElementById("relaisBericht");
+      if (!kennung || !token) { if (box) box.textContent = "⚠️ Beide Felder werden gebraucht."; return; }
+      if (box) box.textContent = "Wird bei Cloudflare geprüft …";
+      const a = await LiveChat.relaisRufen({ aktion: "schluessel-setzen", kennung, token });
+      if (a && a.ok) {
+        relaisStandDaten = null;
+        if (box) box.textContent = "✅ Eingetragen und geprüft — Cloudflare hat Zugangsdaten herausgegeben.";
+        await LiveChat.relaisHolen(true);
+        renderSettings();
+        showToast("🛰️ Das Relais steht. Der Livestream kann los.");
+      } else if (box) {
+        const gr = (a && a.fehler) || "unbekannt";
+        box.textContent = gr === "schluessel-falsch" ? "⚠️ Cloudflare nimmt diese zwei Werte nicht an. Stimmen Token ID und API Token?"
+          : gr === "nicht-erlaubt" ? "⚠️ Das darf nur der Betreiber."
+          : gr === "kein-json" || gr === "nicht-erreichbar" ? "⚠️ Die Funktion „klassenzimmer“ antwortet nicht. Ist sie in Supabase schon angelegt?"
+          : "⚠️ " + gr;
+      }
+    });
+    document.getElementById("relaisTestBtn")?.addEventListener("click", () => { relaisTesten(); });
+    document.getElementById("relaisLoeschenBtn")?.addEventListener("click", async () => {
+      const a = await LiveChat.relaisRufen({ aktion: "schluessel-loeschen" });
+      if (a && a.ok) { relaisStandDaten = null; renderSettings(); showToast("🛰️ Relais entfernt — es laufen wieder die öffentlichen."); }
+    });
+    document.getElementById("tutorSchalter")?.addEventListener("change", (e) => {
+      tutorAnSetzen(e.target.checked);
+      showToast(e.target.checked ? "🎓 Alex erklärt dir die Bereiche wieder." : "🎓 Alex hält sich raus.");
+    });
+    area.querySelectorAll(".tutor-art-btn").forEach((b) => b.addEventListener("click", () => {
+      tutorArtSetzen(b.dataset.tutorArt);
+      renderSettings();
+      tutorRufen("view-profile", true);
+    }));
+    document.getElementById("tutorProbeBtn")?.addEventListener("click", () => {
+      if (!tutorAn()) { tutorAnSetzen(true); renderSettings(); }
+      tutorRufen("view-profile", true);
     });
     bildverwaltungBinden();
     const premiumToggle = document.getElementById("premiumSelfToggle");
@@ -52182,6 +52365,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       return { verschieden: gesehen.size, gefunden: da, fehlend: fehlt };
     };
     window.DMA_PRUEFUNG = {
+      /* Die Betreiber-Karte fuers Relais — damit sich pruefen laesst,
+         dass sie sich ueberhaupt zeichnen laesst, ohne dass man sich
+         dafuer als Betreiber anmelden muss. */
+      relaisKarte: (stand) => { relaisStandDaten = stand === undefined ? null : stand; return relaisEinstellungenHtml(); },
+      relaisTesten: relaisTesten,
       /* Eine Spielrunde im Italienisch-Raum nachstellen, ohne sich
          erst jedes Spiel freischalten zu müssen — prüft, ob der
          Kursfortschritt wirklich mitzählt. Nur auf localhost. */
@@ -52527,4 +52715,179 @@ An einem Morgen lief ein kleiner Fuchs los…
       },
     };
   }
+
+  /* =============================================================
+     DER TUTOR — Alex kommt von rechts herein und erklaert
+     -------------------------------------------------------------
+     GEWUENSCHT (woertlich): „Ich moechte an der Seite von jedem
+     Bereich beim Aufrufen dieses Bereiches eingeblendet werden, mit
+     der Moeglichkeit, das abzuschalten. Also ich komme dann animiert
+     von der rechten Seite ins Bild hinein und sage dann zum Beispiel:
+     So, willkommen im Lernbereich … das kannst du einmal in der
+     realistischen Fotovariante machen … und dann einmal als
+     Comicvariante von mir, und ich moechte das selber einstellen
+     koennen, um zu ueberpruefen, wie das wirkt."
+
+     Beide Figuren liegen als freigestelltes PNG unter tutor/ —
+     entstanden aus seinem eigenen Profilfoto, sitzend, ohne Gitarre,
+     ohne Hintergrund. Gesprochen wird mit SEINER Stimme (ElevenLabs);
+     fehlt eine Tondatei, steht der Text trotzdem in der Sprechblase.
+     Ein stummer Tutor ist besser als gar keiner.
+
+     Er kommt EINMAL PRO BESUCH und Bereich. Wer ihn wegklickt, hat
+     Ruhe; wer ihn wiederhaben will, tippt auf den kleinen Reiter am
+     rechten Rand. Wer ihn nie wieder sehen will, schaltet ihn in den
+     Einstellungen ab — dann wird auch nichts mehr nachgeladen.
+     ============================================================= */
+  const TUTOR_SCHALTER = "dma_tutor";       // "aus" = abgeschaltet
+  const TUTOR_ART = "dma_tutor_art";        // "foto" | "comic"
+  const tutorGezeigt = new Set();           // pro Besuch, pro Bereich
+  let tutorTon = null;                      // laufende Tonspur
+  let tutorZeitgeber = 0;
+
+  function tutorAn() {
+    try { return localStorage.getItem(TUTOR_SCHALTER) !== "aus"; } catch (e) { return true; }
+  }
+  function tutorAnSetzen(an) {
+    try { localStorage.setItem(TUTOR_SCHALTER, an ? "an" : "aus"); } catch (e) {}
+    if (!an) tutorSchliessen(true);
+    tutorReiterPflegen();
+  }
+  function tutorArt() {
+    try { return localStorage.getItem(TUTOR_ART) === "comic" ? "comic" : "foto"; } catch (e) { return "foto"; }
+  }
+  function tutorArtSetzen(art) {
+    try { localStorage.setItem(TUTOR_ART, art === "comic" ? "comic" : "foto"); } catch (e) {}
+  }
+
+  /* Die Texte liegen in data-tutor.js und werden erst geholt, wenn der
+     Tutor wirklich auftreten soll — abgeschaltet kostet er kein Byte. */
+  function tutorTexteHolen() {
+    if (window.DMA_TUTOR) return Promise.resolve(true);
+    return brDatei("data-tutor.js").then(() => Boolean(window.DMA_TUTOR));
+  }
+
+  /* Endung wie bei den Geraeuschen: Safari auf dem iPhone spielt Opus
+     nicht zuverlaessig, also dort m4a. */
+  function tutorTonArt() { return lcGeraeuschArt(); }
+
+  function tutorBuehne() {
+    let b = document.getElementById("tutorBuehne");
+    if (b) return b;
+    b = document.createElement("div");
+    b.id = "tutorBuehne";
+    b.className = "tutor-buehne";
+    b.setAttribute("aria-live", "polite");
+    b.innerHTML = `
+      <div class="tutor-blase" id="tutorBlase">
+        <button type="button" class="tutor-zu" id="tutorZu" aria-label="Tutor schliessen">×</button>
+        <p class="tutor-text" id="tutorText"></p>
+        <div class="tutor-knoepfe">
+          <button type="button" class="tutor-mini" id="tutorNochmal">🔊 Noch einmal</button>
+          <button type="button" class="tutor-mini" id="tutorNie">Nicht mehr zeigen</button>
+        </div>
+      </div>
+      <img class="tutor-figur" id="tutorFigur" alt="Alex" />`;
+    document.body.appendChild(b);
+    document.body.classList.add("tutor-offen");
+    b.querySelector("#tutorZu").addEventListener("click", () => tutorSchliessen());
+    b.querySelector("#tutorNochmal").addEventListener("click", () => tutorTonSpielen(b.dataset.ton || "", true));
+    b.querySelector("#tutorNie").addEventListener("click", () => {
+      tutorAnSetzen(false);
+      showToast("🎓 Der Tutor ist aus. In den Einstellungen holst du ihn zurück.");
+    });
+    return b;
+  }
+
+  function tutorTonSpielen(name, erzwingen) {
+    tutorTonStoppen();
+    if (!name) return false;
+    try {
+      const a = new Audio("tutor/" + name + tutorTonArt() + "?v=" + (window.DMA_VERSION || "1"));
+      a.preload = "auto";
+      a.volume = 0.95;
+      tutorTon = a;
+      const v = a.play();
+      /* Ohne vorherige Berührung darf ein frisches Audio-Element nicht
+         spielen — das ist eine Regel des Browsers, kein Fehler. Der
+         Text steht dann trotzdem da, und „Noch einmal" (ein echter
+         Tastendruck) bringt den Ton. */
+      if (v && v.catch) v.catch(() => { if (erzwingen) showToast("🔇 Der Ton kommt erst nach einer Berührung."); });
+      return true;
+    } catch (e) { return false; }
+  }
+  function tutorTonStoppen() {
+    if (!tutorTon) return;
+    try { tutorTon.pause(); tutorTon.currentTime = 0; } catch (e) {}
+    tutorTon = null;
+  }
+
+  function tutorSchliessen(sofort) {
+    const b = document.getElementById("tutorBuehne");
+    tutorTonStoppen();
+    if (tutorZeitgeber) { clearTimeout(tutorZeitgeber); tutorZeitgeber = 0; }
+    document.body.classList.remove("tutor-offen");
+    if (!b) return;
+    if (sofort) { b.remove(); return; }
+    b.classList.remove("tutor-da");
+    setTimeout(() => { if (b && !b.classList.contains("tutor-da")) b.remove(); }, 600);
+  }
+
+  /* Der schmale Reiter am rechten Rand: nur da, wenn der Tutor an ist
+     und gerade NICHT im Bild steht. Ein Tippen holt ihn zurück. */
+  function tutorReiterPflegen() {
+    const soll = tutorAn();
+    let r = document.getElementById("tutorReiter");
+    if (!soll) { if (r) r.remove(); return; }
+    if (!r) {
+      r = document.createElement("button");
+      r.type = "button";
+      r.id = "tutorReiter";
+      r.className = "tutor-reiter";
+      r.title = "Alex erklärt dir diesen Bereich";
+      r.setAttribute("aria-label", "Alex erklärt dir diesen Bereich");
+      r.textContent = "🎓";
+      r.addEventListener("click", () => {
+        const jetzt = document.querySelector(".view[data-active=\"true\"]");
+        tutorRufen(jetzt ? jetzt.id : "view-about", true);
+      });
+      document.body.appendChild(r);
+    }
+  }
+
+  /* „nochmal" = ein bewusster Tastendruck; dann darf er auch dann
+     kommen, wenn er in diesem Besuch schon da war. */
+  function tutorRufen(bereich, nochmal) {
+    if (!tutorAn()) return;
+    if (!nochmal && tutorGezeigt.has(bereich)) return;
+    tutorTexteHolen().then((da) => {
+      if (!da) return;
+      const stueck = (window.DMA_TUTOR || {})[bereich];
+      if (!stueck) return;
+      /* Der Bereich kann inzwischen gewechselt haben — dann nicht mehr
+         hereinplatzen. */
+      const jetzt = document.querySelector(".view[data-active=\"true\"]");
+      if (!nochmal && jetzt && jetzt.id !== bereich) return;
+      tutorGezeigt.add(bereich);
+      const b = tutorBuehne();
+      b.dataset.ton = stueck.ton || "";
+      const bild = b.querySelector("#tutorFigur");
+      const neu = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
+      if (bild.getAttribute("src") !== neu) bild.setAttribute("src", neu);
+      b.classList.toggle("tutor-comic", tutorArt() === "comic");
+      b.querySelector("#tutorText").textContent = stueck.text || "";
+      /* Erst im nächsten Bild anschalten, sonst gibt es keine
+         Bewegung — das Element wäre im selben Moment entstanden und
+         schon am Ziel. */
+      requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add("tutor-da")));
+      tutorTonSpielen(stueck.ton || "", false);
+      /* Lange Texte brauchen länger. Grob: 14 Zeichen je Sekunde,
+         mindestens 12, höchstens 75 Sekunden — danach geht er von
+         allein wieder. */
+      const sek = Math.min(75, Math.max(12, Math.round((stueck.text || "").length / 14)));
+      if (tutorZeitgeber) clearTimeout(tutorZeitgeber);
+      tutorZeitgeber = setTimeout(() => tutorSchliessen(), sek * 1000);
+    });
+  }
+
 })();
