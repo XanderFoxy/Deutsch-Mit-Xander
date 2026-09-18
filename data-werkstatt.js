@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 51 — eigene Wortlisten im Vokabeltrainer",
+  stand: "Runde 52 — B1 komplett mit deiner Stimme",
 
   inArbeit: [
-    { seit: "2026-09-18T01:15",
-      text: "B1 laeuft weiter (bisher 2909 von 7254 Woertern)" },
-    { seit: "2026-09-18T01:15",
+    { seit: "2026-09-18T01:34",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
-    { seit: "2026-09-18T01:15",
+    { seit: "2026-09-18T01:34",
       text: "Sitzende Seitenansicht fuer die Figuren" },
+    { seit: "2026-09-18T01:34",
+      text: "Chat beginnt unten und ist fuer jeden vollstaendig" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T01:15",
-      text: "★ Meine Woerter: eigene Liste und gemerkte Woerter jetzt auch im Vokabeltrainer" },
-    { seit: "2026-09-18T01:15",
-      text: "Artikel, Bedeutung und Umkehrfrage werden aus deinen eigenen Woertern gebaut" },
-    { seit: "2026-09-18T01:15",
-      text: "B1-Aufnahmen bis jetzt hochgeladen, Tonliste kennt drei Stufen" },
+    { seit: "2026-09-18T01:34",
+      text: "B1 komplett: 7254 Woerter mit deiner Stimme, 0 Fehler" },
+    { seit: "2026-09-18T01:34",
+      text: "Zusammen 12987 Aufnahmen (A1 + A2 + B1), 42,6 MB" },
+    { seit: "2026-09-18T01:34",
+      text: "★ Meine Woerter im Vokabeltrainer" },
   ],
 };
