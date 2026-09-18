@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 52 — B1 komplett mit deiner Stimme",
+  stand: "Runde 53 — der Verlauf kommt vollstaendig beim Nachzuegler an",
 
   inArbeit: [
-    { seit: "2026-09-18T01:34",
+    { seit: "2026-09-18T01:39",
+      text: "B2 laeuft, so weit das Kontingent reicht (4600 von 10547)" },
+    { seit: "2026-09-18T01:39",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
-    { seit: "2026-09-18T01:34",
+    { seit: "2026-09-18T01:39",
       text: "Sitzende Seitenansicht fuer die Figuren" },
-    { seit: "2026-09-18T01:34",
-      text: "Chat beginnt unten und ist fuer jeden vollstaendig" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T01:34",
-      text: "B1 komplett: 7254 Woerter mit deiner Stimme, 0 Fehler" },
-    { seit: "2026-09-18T01:34",
-      text: "Zusammen 12987 Aufnahmen (A1 + A2 + B1), 42,6 MB" },
-    { seit: "2026-09-18T01:34",
-      text: "★ Meine Woerter im Vokabeltrainer" },
+    { seit: "2026-09-18T01:39",
+      text: "Durchgereichter Verlauf: der Name hinter einer Wirkung geht nicht mehr verloren" },
+    { seit: "2026-09-18T01:39",
+      text: "Nachgemessen: Chat steht beim Betreten wirklich unten (0 Pixel Rest)" },
+    { seit: "2026-09-18T01:39",
+      text: "B1 komplett, 12987 Aufnahmen mit deiner Stimme" },
   ],
 };

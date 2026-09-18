@@ -1887,9 +1887,15 @@ window.LiveChat = (function () {
         return n.art !== "fluester" && n.art !== "system" && n.art !== "kommen";
       }).slice(-CHAT_VERLAUF);
       var paket = liste.map(function (n) {
+        /* „wen" MUSS mit. Es ist der Name dessen, den eine Wirkung
+           trifft — ohne ihn steht beim Nachzuegler zwar „Bert drueckt
+           Emmi" im Text, die Zeile selbst weiss aber nicht mehr, wen.
+           Beim Umbenennen von „an" auf „wen" (weil „an" eine Kennung
+           ist und jedes fremde Geraet die Nachricht deshalb wegwarf)
+           war genau diese eine Stelle uebersehen worden. */
         return { id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
                  bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
-                 wirkung: n.wirkung || "", an: n.an || "", zeit: n.zeit };
+                 wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {

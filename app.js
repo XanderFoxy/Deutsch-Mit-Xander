@@ -51406,6 +51406,19 @@ An einem Morgen lief ein kleiner Fuchs los…
          nachsehen, welche Fragen dabei herauskommen. */
       meineQuelle: (wahl) => { wortQuelleWahl[TRAINER_QUELLE] = wahl || "alle"; return meineWoerterName(); },
       meineWoerter: () => [...meineWoerterMenge()],
+      /* Den Chatverlauf zeichnen und nachsehen, WO er steht. „Wenn man
+         in den Raum kommt, wird immer oben zuerst angezeigt" — das
+         laesst sich nur messen, wenn man es wirklich zeichnet. */
+      chatStand: (zeilen, schrift) => {
+        livechatGezeigt = new Map();
+        livechatEffekteAb = 0;
+        livechatChatAuffrischen({ nachrichten: zeilen || [], leute: {}, ichId: "ich", schrift: schrift || "1" });
+        const v = document.getElementById("lcVerlauf");
+        if (!v) return null;
+        return { oben: Math.round(v.scrollTop), hoehe: v.scrollHeight,
+                 sicht: v.clientHeight, zeilen: v.querySelectorAll(".lc-zeile").length,
+                 rest: Math.round(v.scrollHeight - v.scrollTop - v.clientHeight) };
+      },
       meineFragen: () => meineWoerterFragen().map((f) => ({
         prompt: f.prompt, options: f.options, richtig: f.options[f.correct[0]], level: f.level })),
       /* Alle Zwillingssätze mit eingesetzter Lösung. */
