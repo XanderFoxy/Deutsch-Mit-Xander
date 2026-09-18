@@ -19897,9 +19897,46 @@
                  Pseudo-Livestream machen mit denen, die sich nicht mit mir
                  verbinden koennen." Gedrueckt halten nimmt auf, loslassen
                  schickt — wie man es vom Telefon kennt. -->
+            <!-- GEMELDET: „Da ist ja ein Emoji-Symbol, und wenn man
+                 gedrückt hat, versucht es das immer zu markieren."
+                 Stimmt: ein Emoji ist Text, und langes Drücken auf Text
+                 heisst auf dem Telefon „markieren und kopieren". Der
+                 Knopf ist deshalb eine Zeichnung, kein Zeichen — und
+                 er ist gegen Markieren und gegen das Lupenmenü
+                 gesperrt (siehe .lc-sprach-knopf in korrekturen.css). -->
             <button type="button" class="lc-chat-anhang lc-sprach-knopf" id="lcSprachKnopf"
                     title="Gedrückt halten und sprechen — die Nachricht ist bei allen sofort zu hören"
-                    aria-label="Sprachnachricht aufnehmen">🎤</button>
+                    aria-label="Sprachnachricht aufnehmen">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <rect class="lc-mik-kopf" x="9" y="2.5" width="6" height="11" rx="3"
+                      fill="currentColor"/>
+                <path class="lc-mik-buegel" d="M5.5 11a6.5 6.5 0 0 0 13 0" fill="none"
+                      stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                <line x1="12" y1="17.5" x2="12" y2="21" stroke="currentColor"
+                      stroke-width="1.9" stroke-linecap="round"/>
+                <line x1="8.5" y1="21" x2="15.5" y2="21" stroke="currentColor"
+                      stroke-width="1.9" stroke-linecap="round"/>
+                <circle class="lc-mik-punkt" cx="12" cy="8" r="3.2" fill="#fff" opacity="0"/>
+              </svg>
+            </button>
+            <!-- GEWUENSCHT: „Oder es ist ständig aktiv und hat einen
+                 Schwellwert, den es misst, und sobald die Person
+                 spricht, wird auch aufgenommen." Das ist dieser
+                 Schalter: Ohr an = Freisprechen. -->
+            <button type="button" class="lc-chat-anhang lc-frei-knopf" id="lcFreiKnopf"
+                    title="Freisprechen: das Mikrofon hört mit und schickt von selbst, sobald du sprichst"
+                    aria-label="Freisprechen einschalten" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path d="M4 15V9a8 8 0 0 1 16 0v6" fill="none" stroke="currentColor"
+                      stroke-width="1.9" stroke-linecap="round"/>
+                <rect x="2.5" y="13" width="4.5" height="7" rx="2.2" fill="currentColor"/>
+                <rect x="17" y="13" width="4.5" height="7" rx="2.2" fill="currentColor"/>
+                <g class="lc-frei-wellen" opacity="0">
+                  <path d="M9.5 12.5a3.4 3.4 0 0 1 5 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8 15a5.6 5.6 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </g>
+              </svg>
+            </button>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben"
                    autocomplete="off" autocorrect="off" spellcheck="false">
@@ -22189,12 +22226,28 @@
             const zeit = document.createElement("em");
             zeit.textContent = dauer ? dauer + "″" : "";
             knopf.appendChild(zeit);
+            /* GEMELDET: „Sie sind nicht automatisch von alleine
+               hoerbar … mach eine Programmroutine, die das wie bei den
+               Animationen verarbeitet."
+
+               Der Grund lag genau da: ein FRISCH erzeugtes Ton-Element
+               darf ohne Beruehrung nicht spielen, egal was drin ist.
+               Deshalb laeuft die Sprachnachricht jetzt ueber den
+               VORRAT — acht Elemente, die beim Betreten waehrend der
+               Beruehrung schon einmal gespielt haben und damit
+               freigeschaltet sind. Genau derselbe Weg, ueber den auch
+               die Stimmen der anderen kommen. */
             const hoeren = (e) => {
               if (e) e.stopPropagation();
-              const a = new Audio(n.sprach);
-              a.play().catch(() => showToast("Der Browser lässt den Ton noch nicht durch — tipp einmal auf die Seite."));
               knopf.classList.add("lc-sprach-spielt");
-              a.onended = () => knopf.classList.remove("lc-sprach-spielt");
+              const fertig = () => knopf.classList.remove("lc-sprach-spielt");
+              if (LiveChat.tonAusVorrat && LiveChat.tonAusVorrat(n.sprach, fertig)) return;
+              const a = new Audio(n.sprach);
+              a.play().catch(() => {
+                fertig();
+                showToast("Der Browser lässt den Ton noch nicht durch — tipp einmal auf die Seite.");
+              });
+              a.onended = fertig;
             };
             knopf.addEventListener("click", hoeren);
             t.appendChild(knopf);
@@ -22205,7 +22258,11 @@
             const frisch = (n.zeit || 0) >= livechatEffekteAb - 1500;
             if (frisch && !lcSprachGehoert.has(n.id)) {
               lcSprachGehoert.add(n.id);
-              if (lcToeneAn()) setTimeout(() => hoeren(null), 60);
+              /* Eine Sprachnachricht ist kein Effektgeraeusch: sie
+                 spielt auch dann, wenn die Aufkleber-Toene ausgestellt
+                 sind. Wer die Toene abstellt, will keine Glocke — er
+                 will trotzdem hoeren, was jemand sagt. */
+              setTimeout(() => hoeren(null), 60);
             }
           }
         } else if (n.bildImChat) {
@@ -22745,10 +22802,12 @@
           sprachKnopf.title = "Dieser Browser kann keine Sprachnachrichten aufnehmen.";
         } else {
           let laeuft = false, abgebrochen = false, takt = 0;
-          const anzeigen = (an) => {
-            sprachKnopf.classList.toggle("lc-sprach-an", an);
-            sprachKnopf.textContent = an ? "⏺" : "🎤";
-          };
+          /* NUR eine Klasse umlegen. Frueher wurde hier der Text des
+             Knopfes getauscht — und weil ein Emoji Text ist, hat das
+             lange Druecken auf dem Telefon die Markierung aufgerufen
+             statt aufzunehmen. Die Zeichnung im Knopf bleibt jetzt
+             stehen, die Farbe sagt, was los ist. */
+          const anzeigen = (an) => sprachKnopf.classList.toggle("lc-sprach-an", an);
           const los = async (e) => {
             e.preventDefault();
             if (laeuft) return;
@@ -22789,6 +22848,44 @@
           sprachKnopf.addEventListener("pointerup", fertig);
           sprachKnopf.addEventListener("pointercancel", weg);
           sprachKnopf.addEventListener("pointerleave", weg);
+          /* Und das Markieren/Kopieren-Menue endgueltig abstellen: die
+             CSS-Regeln halten das Meiste ab, dieses hier den Rest. */
+          sprachKnopf.addEventListener("contextmenu", (e) => e.preventDefault());
+          sprachKnopf.addEventListener("selectstart", (e) => e.preventDefault());
+        }
+      }
+
+      /* ---- Freisprechen ----
+         „Oder es ist staendig aktiv und hat einen Schwellwert … sobald
+         die Person spricht, wird auch aufgenommen. Das wird sofort
+         abgeschickt." Ein Schalter, kein Halten. */
+      const freiKnopf = area.querySelector("#lcFreiKnopf");
+      if (freiKnopf) {
+        if (!LiveChat.sprachGehtDas || !LiveChat.sprachGehtDas()) {
+          freiKnopf.disabled = true;
+          freiKnopf.title = "Dieser Browser kann keine Sprachnachrichten aufnehmen.";
+        } else {
+          const sagen = {
+            eicht: "🎚️ Freisprechen an — ich höre kurz zu, wie laut es bei dir ist.",
+            hoert: "", nimmt: "", aus: ""
+          };
+          LiveChat.freisprechenMelden((was) => {
+            freiKnopf.dataset.stand = was;
+            freiKnopf.classList.toggle("lc-frei-an", was !== "aus");
+            freiKnopf.classList.toggle("lc-frei-nimmt", was === "nimmt");
+            freiKnopf.setAttribute("aria-pressed", String(was !== "aus"));
+            if (sagen[was]) showToast(sagen[was]);
+          });
+          freiKnopf.addEventListener("click", async () => {
+            if (LiveChat.freisprechenAn()) {
+              LiveChat.freisprechenBeenden();
+              showToast("Freisprechen ist aus.");
+              return;
+            }
+            if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
+            const ok = await LiveChat.freisprechenStarten();
+            if (ok) showToast("🎙️ Freisprechen an — sprich einfach los, der Rest geht von selbst.");
+          });
         }
       }
 

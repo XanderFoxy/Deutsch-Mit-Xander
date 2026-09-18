@@ -850,17 +850,78 @@ window.LiveChat = (function () {
     var fehlen = (liste || []).filter(function (n) {
       return !n.bildImChat && (n.bildImLager || n.bildWeg);
     }).map(function (n) { return n.id; }).filter(function (x) { return x; });
-    if (!fehlen.length) return Promise.resolve(false);
-    return lagerHolen(fehlen).then(function (gefunden) {
+    /* Und dasselbe fuer die Sprachnachrichten — sie liegen unter
+       „sprach:<id>" im selben Lager. */
+    var tonFehlt = (liste || []).filter(function (n) {
+      return !n.sprach && n.sprachImLager;
+    }).map(function (n) { return "sprach:" + n.id; });
+    if (!fehlen.length && !tonFehlt.length) return Promise.resolve(false);
+    return lagerHolen(fehlen.concat(tonFehlt)).then(function (gefunden) {
       var etwas = false;
       liste.forEach(function (n) {
         var d = gefunden[String(n.id)];
-        if (!d) return;
-        n.bildImChat = d;
-        n.bildWeg = false;
-        etwas = true;
+        if (d) { n.bildImChat = d; n.bildWeg = false; etwas = true; }
+        var t = gefunden["sprach:" + n.id];
+        if (t) { n.sprach = t; n.sprachWeg = false; etwas = true; }
+        else if (n.sprachImLager && !n.sprach) { n.sprachWeg = true; }
       });
       return etwas;
+    });
+  }
+
+  /* =========================================================
+     DAS LAGER SELBST VERWALTEN
+     ---------------------------------------------------------
+     „Vielleicht kann man das auch selber verwalten." Genau: hier
+     steht, wie viel Platz die Sprachnachrichten belegen, und hier
+     lassen sie sich wegwerfen — ohne den uebrigen Verlauf und ohne
+     die Bilder anzuruehren.
+     ========================================================= */
+  function sprachLagerStand() {
+    return lager().then(function (db) {
+      if (!db) return { anzahl: 0, bytes: 0 };
+      return new Promise(function (fertig) {
+        var anzahl = 0, bytes = 0;
+        try {
+          var t = db.transaction(LAGER_FACH, "readonly");
+          var c = t.objectStore(LAGER_FACH).openCursor();
+          c.onsuccess = function (e) {
+            var z = e.target.result;
+            if (!z) { fertig({ anzahl: anzahl, bytes: bytes }); return; }
+            if (String(z.value && z.value.id).indexOf("sprach:") === 0) {
+              anzahl++; bytes += String(z.value.daten || "").length;
+            }
+            z.continue();
+          };
+          t.onerror = function () { fertig({ anzahl: anzahl, bytes: bytes }); };
+        } catch (e) { fertig({ anzahl: 0, bytes: 0 }); }
+      });
+    });
+  }
+  function sprachLagerLeeren(aelterAlsTagen) {
+    var grenze = aelterAlsTagen ? Date.now() - aelterAlsTagen * 86400000 : Infinity;
+    return lager().then(function (db) {
+      if (!db) return 0;
+      return new Promise(function (fertig) {
+        var weg = 0;
+        try {
+          var t = db.transaction(LAGER_FACH, "readwrite");
+          var laden = t.objectStore(LAGER_FACH);
+          var c = laden.openCursor();
+          c.onsuccess = function (e) {
+            var z = e.target.result;
+            if (!z) return;
+            var v = z.value || {};
+            if (String(v.id).indexOf("sprach:") === 0
+                && (grenze === Infinity || (v.zeit || 0) < grenze)) {
+              laden.delete(v.id); weg++;
+            }
+            z.continue();
+          };
+          t.oncomplete = function () { fertig(weg); };
+          t.onerror = function () { fertig(weg); };
+        } catch (e) { fertig(0); }
+      });
     });
   }
 
@@ -957,16 +1018,24 @@ window.LiveChat = (function () {
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
     var raum = zustand.raum;
     var schlank = liste.map(function (n) {
-      /* SPRACHNACHRICHTEN WERDEN NICHT GESICHERT.
-         Sie sind fluechtig — ausdruecklich so gewollt („das ist eher
-         ne temporaere Geschichte"). Zwanzig Sekunden Ton sind ausserdem
-         gut 120 KB; ein Dutzend davon sprengt den Zwischenspeicher des
-         Geraets und riss frueher schon einmal den GANZEN Verlauf mit. */
+      /* SPRACHNACHRICHTEN BLEIBEN — aber nicht im localStorage.
+         NACHGEBESSERT: „Sie sollen sich auch nicht unbedingt alleine
+         loeschen. Sie koennen ja drin sein, nur sie koennen spaeter
+         geloescht werden, wenn sie wirklich viel Platz wegnehmen."
+
+         Also derselbe Weg wie beim Bild: der Ton geht ins Lager
+         (IndexedDB, viel Platz), im Verlauf bleibt nur der Haken.
+         Der localStorage fasst wenige Megabyte und teilt sie sich
+         mit dem ganzen Verlauf — zwanzig Sekunden Ton sind 120 KB,
+         ein Dutzend davon haette ihn gesprengt und frueher schon
+         einmal den GANZEN Verlauf mitgerissen. */
       if (n.sprach) {
+        lagerLegen("sprach:" + n.id, raum, n.sprach);
         var ohneTon = {};
         Object.keys(n).forEach(function (k) { ohneTon[k] = n[k]; });
         ohneTon.sprach = "";
-        ohneTon.sprachWeg = true;
+        ohneTon.sprachImLager = true;
+        ohneTon.sprachWeg = false;
         return ohneTon;
       }
       if (!n.bildImChat) return n;
@@ -1495,6 +1564,60 @@ window.LiveChat = (function () {
     }
     return tonVorrat.length > 0;
   }
+  /* =========================================================
+     EINEN TON AUS DEM FREIGESCHALTETEN VORRAT SPIELEN
+     ---------------------------------------------------------
+     GEMELDET: „Die Sprachnachrichten sind nicht automatisch von
+     alleine hoerbar … vielleicht kannst du eine Programmroutine
+     machen, dass du das Audio abfaengst und genauso behandelst wie
+     die Programmroutine von den Animationen."
+
+     Der Gedanke trifft genau: ein FRISCH erzeugtes Ton-Element darf
+     ohne Beruehrung nicht spielen — egal was drin ist. Ein Element
+     aus dem Vorrat DARF es, weil es waehrend der Beruehrung beim
+     Betreten schon einmal gespielt hat. Danach gilt es als
+     freigeschaltet, auch mit einem ganz anderen Inhalt.
+
+     Genau darum liegen acht Stueck bereit. Sie waren bisher nur fuer
+     die Stimmen der anderen da; jetzt spielt auch die Sprachnachricht
+     darueber — und faellt, wenn keines frei ist, auf ein neues
+     Element zurueck (das dann eben um Erlaubnis bitten muss).
+     ========================================================= */
+  function tonAusVorrat(quelle, beiEnde) {
+    if (typeof document === "undefined" || !quelle) return false;
+    var frei = null;
+    for (var i = 0; i < tonVorrat.length; i++) {
+      var k = tonVorrat[i];
+      if (!k.dataset.belegt) { frei = k; break; }
+    }
+    var neu = false;
+    if (!frei) {
+      try {
+        frei = document.createElement("audio");
+        frei.setAttribute("playsinline", "");
+        frei.style.display = "none";
+        document.body.appendChild(frei);
+        neu = true;
+      } catch (e) { return false; }
+    }
+    frei.dataset.belegt = "1";
+    try { frei.srcObject = null; } catch (e) {}
+    frei.src = quelle;
+    frei.currentTime = 0;
+    frei.volume = 1;
+    var aufraeumen = function () {
+      frei.onended = null; frei.onerror = null;
+      frei.dataset.belegt = "";
+      try { frei.removeAttribute("src"); frei.load(); } catch (e) {}
+      if (neu && frei.parentNode) frei.parentNode.removeChild(frei);
+      if (typeof beiEnde === "function") beiEnde();
+    };
+    frei.onended = aufraeumen;
+    frei.onerror = aufraeumen;
+    tonAbspielenVersuchen(frei);
+    return true;
+  }
+
   function tonAbspielenVersuchen(a) {
     var v;
     try { v = a.play(); } catch (e) { v = null; }
@@ -2912,6 +3035,188 @@ window.LiveChat = (function () {
     try { r.stop(); } catch (e) {}
     sprachAufraeumen();
     return true;
+  }
+
+  /* =========================================================
+     FREISPRECHEN — das Mikrofon hoert zu und schickt von selbst
+     ---------------------------------------------------------
+     GEWUENSCHT: „Oder es ist staendig aktiv und hat einen Schwellwert,
+     den es misst, und sobald die Person spricht, wird auch
+     aufgenommen. Das wird sofort abgeschickt … so aehnlich wie ein
+     Sync-Start am Keyboard: dass, sobald man etwas macht, wirklich
+     erst dann aufgezeichnet wird und nur so lange, wie man spricht."
+
+     Genau so ist es gebaut:
+       * Das Mikrofon bleibt offen, aber es wird NICHTS aufgezeichnet,
+         solange es still ist.
+       * Die ersten acht Zehntelsekunden dienen dem Zuhoeren: daraus
+         wird der Grundpegel des Raums gemessen. Ein fester Schwellwert
+         waere falsch — in einer stillen Wohnung ist etwas anderes
+         „laut" als neben einer Strasse.
+       * Wird es lauter als der Grundpegel plus Abstand, laeuft die
+         Aufnahme an. Wird es wieder still, wartet sie acht
+         Zehntelsekunden (man macht beim Sprechen Pausen) und schickt
+         dann.
+       * Nach 20 Sekunden ist in jedem Fall Schluss.
+       * Aufnahmen unter einer halben Sekunde werden weggeworfen —
+         das ist ein Huesteln, keine Nachricht.
+     ========================================================= */
+  var frei = {
+    an: false, spur: null, kontext: null, messer: null, daten: null,
+    takt: 0, grundpegel: 0, proben: 0, lautSeit: 0, stillSeit: 0,
+    nimmtAuf: false, melden: null
+  };
+  var FREI_ABSTAND = 0.018;     // wie weit ueber dem Grundpegel es „laut" ist
+  var FREI_STILLE = 800;        // so lange Stille beendet eine Aufnahme
+  var FREI_MINDEST = 500;       // kuerzere Schnipsel sind kein Satz
+
+  function freisprechenAn() { return frei.an; }
+  function freisprechenMelden(f) { frei.melden = typeof f === "function" ? f : null; }
+  function freisagen(was) { if (frei.melden) { try { frei.melden(was); } catch (e) {} } }
+
+  function freisprechenStarten() {
+    if (frei.an) return Promise.resolve(true);
+    if (!sprachGehtDas()) {
+      systemZeile("Dein Browser kann keine Sprachnachrichten aufnehmen.");
+      return Promise.resolve(false);
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (spur) {
+      var K = window.AudioContext || window.webkitAudioContext;
+      if (!K) return false;
+      frei.spur = spur;
+      frei.kontext = new K();
+      if (frei.kontext.state === "suspended" && frei.kontext.resume) frei.kontext.resume();
+      var quelle = frei.kontext.createMediaStreamSource(spur);
+      frei.messer = frei.kontext.createAnalyser();
+      frei.messer.fftSize = 1024;
+      quelle.connect(frei.messer);
+      frei.daten = new Uint8Array(frei.messer.fftSize);
+      frei.an = true;
+      frei.grundpegel = 0; frei.proben = 0;
+      frei.lautSeit = 0; frei.stillSeit = 0; frei.nimmtAuf = false;
+      freisagen("eicht");
+      frei.takt = setInterval(freiHorchen, 60);
+      return true;
+    }).catch(function () {
+      systemZeile("Das Mikrofon ist nicht freigegeben — in den Browsereinstellungen erlauben, dann geht es.");
+      return false;
+    });
+  }
+
+  function freisprechenBeenden() {
+    if (!frei.an) return false;
+    clearInterval(frei.takt);
+    if (frei.nimmtAuf) sprachAbbrechen();
+    try { if (frei.spur) frei.spur.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    try { if (frei.kontext && frei.kontext.close) frei.kontext.close(); } catch (e) {}
+    frei.an = false; frei.spur = null; frei.kontext = null;
+    frei.messer = null; frei.nimmtAuf = false;
+    freisagen("aus");
+    return true;
+  }
+
+  /* Der Pegel: quadratischer Mittelwert der Auslenkung. Das ist die
+     ehrliche Lautstaerke — ein einzelner Knacks reisst ihn nicht hoch,
+     eine Stimme schon. */
+  function freiPegel() {
+    if (!frei.messer) return 0;
+    if (frei.messer.getFloatTimeDomainData) {
+      var f = new Float32Array(frei.messer.fftSize);
+      frei.messer.getFloatTimeDomainData(f);
+      var summe = 0;
+      for (var i = 0; i < f.length; i++) summe += f[i] * f[i];
+      return Math.sqrt(summe / f.length);
+    }
+    frei.messer.getByteTimeDomainData(frei.daten);
+    var s2 = 0;
+    for (var j = 0; j < frei.daten.length; j++) {
+      var a = (frei.daten[j] - 128) / 128;
+      s2 += a * a;
+    }
+    return Math.sqrt(s2 / frei.daten.length);
+  }
+
+  function freiHorchen() {
+    if (!frei.an) return;
+    var pegel = freiPegel();
+    var jetzt = Date.now();
+    /* Erst zuhoeren, dann urteilen: die ersten Proben sind der
+       Grundpegel des Raums. */
+    if (frei.proben < 13) {
+      frei.proben++;
+      frei.grundpegel = frei.grundpegel + (pegel - frei.grundpegel) / frei.proben;
+      if (frei.proben === 13) freisagen("hoert");
+      return;
+    }
+    /* In der Stille langsam nachfuehren — ein Ventilator, der
+       angeht, soll nicht dauerhaft als Sprache gelten. */
+    if (!frei.nimmtAuf && pegel < frei.grundpegel + FREI_ABSTAND) {
+      frei.grundpegel = frei.grundpegel * 0.97 + pegel * 0.03;
+    }
+    var laut = pegel > frei.grundpegel + FREI_ABSTAND;
+    if (!frei.nimmtAuf) {
+      if (laut) {
+        if (!frei.lautSeit) frei.lautSeit = jetzt;
+        /* Zwei Messungen lang laut — ein Tuerknall ist eine. */
+        if (jetzt - frei.lautSeit >= 120) {
+          frei.lautSeit = 0;
+          freiAufnahmeAn();
+        }
+      } else { frei.lautSeit = 0; }
+      return;
+    }
+    if (laut) { frei.stillSeit = 0; return; }
+    if (!frei.stillSeit) frei.stillSeit = jetzt;
+    if (jetzt - frei.stillSeit >= FREI_STILLE) freiAufnahmeAus();
+  }
+
+  function freiAufnahmeAn() {
+    if (frei.nimmtAuf || !frei.spur) return;
+    sprachStuecke = [];
+    var art = sprachFormat();
+    try {
+      sprachRekorder = art ? new MediaRecorder(frei.spur, { mimeType: art, audioBitsPerSecond: 24000 })
+                           : new MediaRecorder(frei.spur);
+    } catch (e) {
+      try { sprachRekorder = new MediaRecorder(frei.spur); } catch (e2) { sprachRekorder = null; }
+    }
+    if (!sprachRekorder) return;
+    sprachRekorder.ondataavailable = function (e) {
+      if (e.data && e.data.size) sprachStuecke.push(e.data);
+    };
+    sprachRekorder.start();
+    sprachStart = Date.now();
+    frei.nimmtAuf = true;
+    frei.stillSeit = 0;
+    freisagen("nimmt");
+    clearTimeout(sprachEndeTakt);
+    sprachEndeTakt = setTimeout(function () { freiAufnahmeAus(); }, SPRACH_SEKUNDEN * 1000);
+  }
+
+  function freiAufnahmeAus() {
+    if (!frei.nimmtAuf) return;
+    frei.nimmtAuf = false;
+    frei.stillSeit = 0;
+    clearTimeout(sprachEndeTakt);
+    var kurz = Date.now() - sprachStart < FREI_MINDEST;
+    if (kurz) {
+      /* Zu kurz — wegwerfen, aber das Mikrofon bleibt offen. */
+      var r0 = sprachRekorder;
+      if (r0) { r0.onstop = function () {}; try { r0.stop(); } catch (e) {} }
+      sprachRekorder = null;
+      freisagen("hoert");
+      return;
+    }
+    /* WICHTIG: sprachAufnahmeStoppen raeumt normalerweise die Spur mit
+       ab. Beim Freisprechen soll das Mikrofon offen BLEIBEN, sonst
+       muesste man es fuer jeden Satz neu freigeben. Deshalb wird die
+       Spur vorher beiseitegelegt und danach zurueckgegeben. */
+    var merk = sprachSpur;
+    sprachSpur = null;
+    sprachAufnahmeStoppen().then(function () {
+      sprachSpur = merk;
+      if (frei.an) freisagen("hoert");
+    });
   }
 
   function sprachSenden(daten, sekunden) {
@@ -4691,6 +4996,13 @@ window.LiveChat = (function () {
     sprachAbbrechen: sprachAbbrechen,
     pruefSprachSenden: function (daten, sek) { return sprachSenden(daten, sek); },
     sprachHoechstdauer: function () { return SPRACH_SEKUNDEN; },
+    freisprechenAn: freisprechenAn,
+    freisprechenStarten: freisprechenStarten,
+    freisprechenBeenden: freisprechenBeenden,
+    freisprechenMelden: freisprechenMelden,
+    tonAusVorrat: tonAusVorrat,
+    sprachLagerStand: sprachLagerStand,
+    sprachLagerLeeren: sprachLagerLeeren,
     raumSchluessel: raumSchluessel,
     gemerkterRaum: gemerkterRaum,
     raumAusAdresse: raumAusAdresse,
