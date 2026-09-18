@@ -5,9 +5,13 @@
    Und früher, genauso deutlich: „Bei normalen Nachrichten soll dieses
    Zensieren nicht dabeistehen."
 
-   Beides muss gleichzeitig stimmen. Gemessen wird deshalb an vier
-   Zeilen, jeweils mit ausgeschaltetem und mit eingeschaltetem
-   Notenschalter — in der echten App, nicht an einem Nachbau. */
+   Und, ausdruecklich gegen meinen ersten Weg: „Ich moechte diese
+   Benotung nicht global haben, nur an den Antworten von den
+   Aufgaben."
+
+   Es gilt also genau eine Regel: der Knopf steht an einer Zeile, die
+   als Antwort auf eine gestellte Aufgabe erkannt wurde — und sonst
+   nirgends. Gemessen an vier Zeilen in der echten App. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = "/home/user/Deutsch-Mit-Xander";
@@ -25,14 +29,13 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForTimeout(2300);
 
-  const lauf = async (an) => pg.evaluate((schalterAn) => {
+  const lauf = async () => pg.evaluate(() => {
     LiveChat.binLehrer = () => true;          // wir prüfen die Lehrersicht
     document.querySelectorAll(".lc-chat").forEach((e) => e.remove());
     const chat = document.createElement("div");
     chat.className = "lc-chat";
     chat.innerHTML = '<div class="lc-verlauf-huelle"><div class="lc-chat-verlauf" id="lcVerlauf"></div></div>';
     document.body.appendChild(chat);
-    window.DMA_PRUEFUNG.notenSchalter(schalterAn);
     const t = Date.now();
     window.DMA_PRUEFUNG.chatStand([
       { id: "a", von: "emmy", name: "Emmy", text: "Der Hund läuft über die Wiese", art: "text", zeit: t },
@@ -41,24 +44,23 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       { id: "d", von: "emmy", name: "Emmy", text: "", art: "text", zeit: t, sprach: "data:audio/webm;base64,AA" }
     ]);
     return window.DMA_PRUEFUNG.notenKnoepfe();
-  }, an);
+  });
 
-  let fehler = 0;
   const erwartet = {
-    aus: { "Der Hund läuft über die Wiese": false, "Der Hund läuft": true, "Sehr gut!": false },
-    an:  { "Der Hund läuft über die Wiese": true,  "Der Hund läuft": true, "Sehr gut!": false }
+    "Der Hund läuft über die Wiese": false,   // gewoehnlicher Satz, keine Aufgabe offen
+    "Der Hund läuft": true,                   // als Antwort erkannt
+    "Sehr gut!": false                        // meine eigene Zeile
   };
-  for (const [wie, schalter] of [["SCHALTER AUS", false], ["SCHALTER AN", true]]) {
-    const zeilen = await lauf(schalter);
-    console.log("\n  " + wie);
-    zeilen.forEach((z) => {
-      const name = z.text || "(Sprachnachricht)";
-      const soll = erwartet[schalter ? "an" : "aus"][z.text];
-      const gut = soll === undefined ? !z.note : z.note === soll;
-      if (!gut) fehler++;
-      console.log("    " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ") + name);
-    });
-  }
+  let fehler = 0;
+  const zeilen = await lauf();
+  console.log("");
+  zeilen.forEach((z) => {
+    const name = z.text || "(Sprachnachricht)";
+    const soll = erwartet[z.text];
+    const gut = soll === undefined ? !z.note : z.note === soll;
+    if (!gut) fehler++;
+    console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ") + name);
+  });
   console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Alles wie gewuenscht.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);

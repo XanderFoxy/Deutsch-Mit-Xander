@@ -2592,6 +2592,10 @@ window.LiveChat = (function () {
            werden — siehe aufgabeVersuch(). */
         versuch: Boolean(versuch_ && versuch_.versuch),
         richtig: Boolean(versuch_ && versuch_.richtig),
+        /* Bei einer Aufgabe in eigenen Worten gibt es kein „falsch" —
+           die Zeile soll deshalb auch nicht so aussehen. */
+        aufgabeFrei: Boolean(versuch_ && versuch_.frei),
+        aufgabeFrage: (versuch_ && versuch_.frage) || "",
         id: n.id || String(Date.now()) + n.von,
         von: n.von, name: n.name || "Gast",
         text: String(n.text || "").slice(0, CHAT_LAENGE),
@@ -2969,6 +2973,10 @@ window.LiveChat = (function () {
 
     zustand.raum = String(raumName || "").trim() || gemerkterRaum() || neuerRaumName();
     raumMerken(zustand.raum);
+    /* Eine Aufgabe, die hier schon lief, gilt weiter — auch nach dem
+       Aktualisieren der Seite. Sonst waere keine Antwort mehr eine
+       Antwort, und der Notenknopf bliebe weg. */
+    aufgabeZurueckholen(zustand.raum);
     kontoId = String(o.konto || "");
     zustand.betreiber = Boolean(o.betreiber);
     zustand.ichId = eigeneId();
@@ -4837,10 +4845,85 @@ window.LiveChat = (function () {
     }
     if (teile.length > 24) return systemZeile("Das ist zu lang — höchstens 24 Teile.");
     var gemischt = mischen(teile);
-    offeneAufgabe = { typ: typ, loesung: text, teile: teile, wer: {}, zeit: Date.now() };
+    offeneAufgabe = { typ: typ, loesung: text, frage: "", teile: teile, wer: {}, zeit: Date.now() };
+    aufgabeMerken();
     return anAlle("aufgabe", (typ === "satz"
         ? "🧩 Bring den Satz in Ordnung: "
         : "🔤 Bau das Wort richtig auf: ") + gemischt.join(" · "));
+  }
+
+  /* =========================================================
+     EINE AUFGABE IN EIGENEN WORTEN
+     ---------------------------------------------------------
+     GEWUENSCHT: „Ich moechte diese Benotung nicht global haben, nur
+     an den Antworten von den Aufgaben. Die Stelle, wenn es wirklich
+     als diese Antwort von dieser Aufgabe erkannt wird, soll rechts
+     Note stehen."
+
+     Der Notenknopf haengt an genau einer Auskunft: „diese Zeile ist
+     eine Antwort auf eine Aufgabe". Die gab es bisher nur fuer die
+     beiden Puzzles /satz und /wort. Im Unterricht wird aber meistens
+     anders gefragt — „Schreib einen Satz mit weil". Dafuer ist das
+     hier: die Aufgabe steht im Chat, und ab da gilt, was die anderen
+     schreiben, als Antwort darauf. Es gibt keine Musterloesung, also
+     urteilt das Programm auch nicht — das tut der Lehrer mit der
+     Note.
+     Ohne Text beendet /aufgabe die laufende Aufgabe wieder; sonst
+     bliebe jedes spaetere Wort eine Antwort, und genau das war ja
+     nicht gewuenscht.
+     ========================================================= */
+  function aufgabeFreiStellen(roh) {
+    var text = String(roh || "").trim();
+    if (!text) {
+      if (offeneAufgabe) {
+        var war = offeneAufgabe.frage || offeneAufgabe.loesung || "";
+        offeneAufgabe = null;
+        aufgabeMerken();
+        return systemZeile("✔️ Die Aufgabe ist beendet"
+          + (war ? " („" + String(war).slice(0, 40) + "“)" : "")
+          + " — ab jetzt ist wieder alles ganz gewoehnlicher Chat.");
+      }
+      return systemZeile("So geht es:  /aufgabe Schreib einen Satz mit „weil“"
+        + "  — und  /aufgabe  ohne Text beendet sie wieder.");
+    }
+    offeneAufgabe = { typ: "frei", loesung: "", frage: text.slice(0, 300),
+                      teile: [], wer: {}, zeit: Date.now() };
+    aufgabeMerken();
+    return anAlle("aufgabe", "📝 Aufgabe: " + text);
+  }
+
+  /* EINE AUFGABE UEBERLEBT DAS NEULADEN.
+     -----------------------------------------------------------
+     Sie lag nur im Arbeitsspeicher. Wer die Seite aktualisiert hat —
+     und das passiert im Unterricht staendig —, hatte danach keine
+     offene Aufgabe mehr; damit war keine Antwort mehr eine Antwort,
+     und der Notenknopf blieb weg. Genau das war gemeldet. Jetzt liegt
+     sie im Geraet, beim Raum, und kommt beim Betreten zurueck. */
+  function aufgabeSchluessel(raum) { return "dma_lc_aufgabe_" + (raum || "-"); }
+  var AUFGABE_FRIST = 12 * 60 * 60 * 1000;   // nach zwoelf Stunden ist sie alt
+  function aufgabeMerken() {
+    try {
+      if (offeneAufgabe) {
+        localStorage.setItem(aufgabeSchluessel(zustand.raum), JSON.stringify(offeneAufgabe));
+      } else {
+        localStorage.removeItem(aufgabeSchluessel(zustand.raum));
+      }
+    } catch (e) {}
+  }
+  function aufgabeZurueckholen(raum) {
+    offeneAufgabe = null;
+    try {
+      var roh = localStorage.getItem(aufgabeSchluessel(raum));
+      if (!roh) return;
+      var a = JSON.parse(roh);
+      if (!a || !a.typ) return;
+      if (Date.now() - (a.zeit || 0) > AUFGABE_FRIST) {
+        try { localStorage.removeItem(aufgabeSchluessel(raum)); } catch (e2) {}
+        return;
+      }
+      a.wer = a.wer || {};
+      offeneAufgabe = a;
+    } catch (e) { offeneAufgabe = null; }
   }
 
   /* Die Antworten. Nur der, der die Aufgabe gestellt hat, prueft —
@@ -4857,11 +4940,21 @@ window.LiveChat = (function () {
   function aufgabeVersuch(von, text) {
     if (!offeneAufgabe || !von) return null;
     if (offeneAufgabe.wer[von]) return null;
+    /* Eine Aufgabe in eigenen Worten hat keine Musterloesung. Sie ist
+       trotzdem eine Antwort — sie wird nur nicht bewertet, sondern
+       benotet. */
+    if (offeneAufgabe.typ === "frei") {
+      return { versuch: true, richtig: false, frei: true,
+               frage: offeneAufgabe.frage || "" };
+    }
     return { versuch: true, richtig: aufgabeGleich(text, offeneAufgabe.loesung) };
   }
 
   function aufgabeAntwort(von, name, text) {
     if (!offeneAufgabe || !von) return;
+    /* Ohne Musterloesung gibt es nichts zu verkuenden — das Urteil
+       faellt der Lehrer mit der Note. */
+    if (offeneAufgabe.typ === "frei") return;
     if (offeneAufgabe.wer[von]) return;
     if (!aufgabeGleich(text, offeneAufgabe.loesung)) {
       /* GEWUENSCHT: „Wenn derjenige ein Wort loest oder einen Satz
@@ -4874,6 +4967,7 @@ window.LiveChat = (function () {
       return;
     }
     offeneAufgabe.wer[von] = true;
+    aufgabeMerken();
     var punkte = AUFGABE_PUNKTE[offeneAufgabe.typ] || 4;
     var wievielte = Object.keys(offeneAufgabe.wer).length;
     anAlle("system", "✅ " + name + " hat es richtig: „" + offeneAufgabe.loesung + "“ — "
@@ -5978,6 +6072,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw Text",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
     { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz ganzer Satz", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
     { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort Wort",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
+    { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe Text", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher Name", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
@@ -7181,6 +7276,7 @@ window.LiveChat = (function () {
     /* ---- Die zwei Aufgaben ---- */
     if (art === "satz") return aufgabeStellen("satz", rest);
     if (art === "wort") return aufgabeStellen("wort", rest);
+    if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
 
     /* ---- Zensuren ----
        „Dass man die Antworten der Leute bewerten kann — die es
@@ -8107,6 +8203,14 @@ window.LiveChat = (function () {
                                richtige: Object.keys(offeneAufgabe.wer).length } : null;
     },
     pruefAufgabeStellen: aufgabeStellen,
+    pruefAufgabeFrei: aufgabeFreiStellen,
+    pruefAufgabeVersuch: aufgabeVersuch,
+    /* Fuer die Pruefung, ob eine Aufgabe das Neuladen ueberlebt:
+       merken, vergessen, zurueckholen — genau die Wege, die auch das
+       Betreten geht. */
+    pruefAufgabeMerken: function () { aufgabeMerken(); },
+    pruefAufgabeVergessenImSpeicher: function () { offeneAufgabe = null; },
+    pruefAufgabeZurueckholen: function (raum) { aufgabeZurueckholen(raum || zustand.raum); },
     pruefAufgabeAntwort: aufgabeAntwort,
     /* DER HINTERGRUND DES RAUMS — für alle, nicht nur für mich.
        GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für alle

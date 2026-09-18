@@ -8581,42 +8581,6 @@ body.lc-schreibt .tutor-reiter {
    Sie ist selbst voellig durchsichtig und aendert nichts am
    Aufbau: dieselbe Spalte, dieselbe Hoehe, dieselbe Farbe.
    ========================================================= */
-/* =========================================================
-   DER NOTENSCHALTER IN DER KOPFZEILE
-   ---------------------------------------------------------
-   Nur der Lehrer sieht ihn (app.js setzt „hidden"). Aus sieht er
-   aus wie die anderen kleinen Kopfknoepfe; an ist er warm
-   unterlegt, damit man auf einen Blick weiss, dass an jeder
-   fremden Zeile gerade ein Notenknopf steht.
-   ========================================================= */
-.lc-kopf-noten {
-  border: 1px solid rgba(224, 150, 74, 0.35);
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  padding: 2px 8px;
-  margin-left: 6px;
-  opacity: 0.75;
-  cursor: pointer;
-}
-.lc-kopf-noten:hover { opacity: 1; }
-.lc-kopf-noten[hidden] { display: none; }
-.lc-kopf-noten-an {
-  opacity: 1;
-  background: rgba(224, 150, 74, 0.22);
-  border-color: rgba(224, 150, 74, 0.7);
-}
-/* Auf schmalen Geraeten reicht das Zeichen — „Noten" schreibt der
-   Knopf dort nicht mehr aus, sonst bricht die Kopfzeile um. */
-@media (max-width: 380px) {
-  .lc-kopf-noten { font-size: 0; padding: 2px 6px; }
-  .lc-kopf-noten::before { content: "\1F4CB"; font-size: 0.8rem; }
-}
-
 /* Die Wortmeldung, deren Aufnahme noch im Lager liegt. Sie ist kein
    Fehler — sie kommt gleich. Also leise, ohne Warnfarbe, mit einem
    ruhigen Pulsieren, damit man sieht, dass etwas unterwegs ist. */

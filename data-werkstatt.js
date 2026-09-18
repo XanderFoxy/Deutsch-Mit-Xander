@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 68 — Der Verlauf war nie gespeichert, die Wortmeldungen hatten einen dritten Zustand",
+  stand: "Runde 69 — Die Note gehört zur Aufgabe, nicht zum Chat",
 
   inArbeit: [
-    { seit: "2026-09-18T22:24",
+    { seit: "2026-09-18T22:33",
       text: "Alte „Du bist hier Häuptling“-Zeilen nachträglich aus dem Verlauf nehmen" },
-    { seit: "2026-09-18T22:24",
+    { seit: "2026-09-18T22:33",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T22:24",
+    { seit: "2026-09-18T22:33",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T22:24",
-      text: "Der Chat wurde seit Wochen NICHT in der gemeinsamen Tabelle abgelegt: eine Spalte hiess „farbeName“, die Tabelle kannte sie nicht, und der Fehler lief ins Leere — die Tabelle war leer, deshalb konnte niemand nach oben scrollen" },
-    { seit: "2026-09-18T22:24",
-      text: "Spalte farbe_name ergänzt; ein fehlgeschlagenes Speichern meldet sich jetzt, statt still zu verschwinden" },
-    { seit: "2026-09-18T22:24",
-      text: "20.000 Zeilen kommen vom Server statt 2.000 — Bilder nur für die letzten 200, damit das Telefon nicht ertrinkt" },
-    { seit: "2026-09-18T22:24",
-      text: "Sprachnachrichten: die Zeile mit Ton im Lager stand als leerer Name im Chat — jetzt „wird geladen“, der Ton wird geholt, und alle Wortmeldungen bleiben hinter dem Tipp ins Leere" },
-    { seit: "2026-09-18T22:24",
-      text: "Benoten: ein Schalter „📋 Noten“ in der Kopfzeile (nur für dich) — dann steht der Notenknopf an jeder geschriebenen Zeile der anderen" },
+    { seit: "2026-09-18T22:33",
+      text: "Der globale Notenschalter ist wieder raus — der Notenknopf steht nur an einer Zeile, die als Antwort auf eine Aufgabe erkannt wurde" },
+    { seit: "2026-09-18T22:33",
+      text: "Eine gestellte Aufgabe überlebt jetzt das Aktualisieren der Seite (sie lag nur im Arbeitsspeicher — danach war keine Antwort mehr eine Antwort, und genau deshalb fehlte die Note)" },
+    { seit: "2026-09-18T22:33",
+      text: "Neu: /aufgabe Text — eine Aufgabe in eigenen Worten, ohne Puzzle. Was die anderen danach schreiben, gilt als Antwort und kann benotet werden; /aufgabe ohne Text beendet sie wieder" },
+    { seit: "2026-09-18T22:33",
+      text: "Bei einer Aufgabe ohne Musterlösung steht nicht mehr „noch nicht richtig“ — dort urteilt nur noch die Note" },
   ],
 };

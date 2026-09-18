@@ -20278,12 +20278,7 @@
               <span class="lc-kopf-wort">💬 Chat</span>
               <span class="lc-kopf-stimmen">🎙️ anzeigen</span>
             </button>
-            <!-- NUR DER LEHRER SIEHT DAS. Solange es aus ist, steht an
-                 gewoehnlichen Zeilen kein Notenknopf; ist es an, steht
-                 er an jeder geschriebenen Zeile der anderen. -->
-            <button type="button" class="lc-kopf-noten" id="lcKopfNoten" hidden
-                    title="Benoten: an jeder geschriebenen Zeile der anderen einen Notenknopf zeigen"
-                    aria-pressed="false">📋 Noten</button>
+
             <!-- GEMELDET: „Diese ganzen Befehle, Schrift, Hintergrund,
                  Nachlesen, Verlauf löschen — die sollen den Chat nicht
                  nach unten zwingen, sondern ein bisschen kompakt und
@@ -21505,19 +21500,6 @@
     }, 1000);
   }
 
-  /* Zeigt oder versteckt den Notenschalter in der Kopfzeile — und
-     faerbt ihn, wenn er an ist. Lehrer ist, wer unterrichtet; alle
-     anderen sollen den Knopf gar nicht erst sehen. */
-  function lcNotenSchalterZeichnen(bereich) {
-    const k = (bereich || document).querySelector("#lcKopfNoten");
-    if (!k) return;
-    let lehrer = false;
-    try { lehrer = Boolean(LiveChat.binLehrer && LiveChat.binLehrer()); } catch (e) {}
-    k.hidden = !lehrer;
-    k.classList.toggle("lc-kopf-noten-an", Boolean(lcNotenModus));
-    k.setAttribute("aria-pressed", lcNotenModus ? "true" : "false");
-  }
-
   /* Den Ton aus dem Lager nachholen — gebuendelt. Beim Zeichnen
      koennen zwanzig Zeilen gleichzeitig danach fragen; es soll aber
      nur EIN Gang ins Lager daraus werden. */
@@ -22002,42 +21984,25 @@
      kommt aus dem Lager nach). Siehe livechatChatAuffrischen(). */
   let livechatGezeigt = new Map();
   /* =================================================================
-     BENOTEN — EIN SCHALTER STATT EINER VERMUTUNG
+     BENOTEN — NUR AN EINER ANTWORT AUF EINE AUFGABE
      -----------------------------------------------------------------
-     GEMELDET: „Es gibt keine Notenanzeige, nachdem sie mir den Satz
-     geschickt hat."
-     Und frueher, genauso deutlich: „Bei normalen Nachrichten soll
-     dieses Zensieren nicht dabeistehen. Das ist nur, wenn Aufgaben
-     geloest werden, die ich schicke."
+     GEWUENSCHT, und zwar ausdruecklich gegen meinen ersten Weg:
+     „Ich moechte diese Benotung nicht global haben, nur an den
+     Antworten von den Aufgaben. Die Stelle, wenn es wirklich als
+     diese Antwort von dieser Aufgabe erkannt wird, soll rechts Note
+     stehen. Ich soll auf die Beantwortung der jeweiligen Aufgabe eine
+     Note geben koennen, nicht generell."
 
-     Beides ist wahr, und mein bisheriger Weg hat nur das zweite
-     erfuellt: der Notenknopf kam ausschliesslich an einer Antwort auf
-     /satz oder /wort. Wer im Unterricht einfach einen Satz schreibt,
-     weil er darum gebeten wurde, bekam keinen — es gab ja keine
-     „Aufgabe" im Sinne des Programms.
-
-     Raten will ich das nicht (welcher Satz ist eine Antwort und
-     welcher Small Talk? Das weiss nur der Lehrer). Also entscheidet
-     der Lehrer: ein Schalter in der Kopfzeile, nur fuer ihn sichtbar.
-     Ist er an, steht der Notenknopf an JEDER geschriebenen Zeile der
-     anderen; ist er aus, bleibt es beim Alten. Die Antworten auf
-     /satz und /wort bekommen ihn weiterhin immer — dort ist es ja
-     eindeutig.
-     Der Schalter bleibt gemerkt, damit man ihn nicht jede Stunde neu
-     sucht. */
-  const LC_NOTEN_SCHLUESSEL = "dma_lc_noten";
-  let lcNotenModus = (() => {
-    try { return localStorage.getItem(LC_NOTEN_SCHLUESSEL) === "1"; } catch (e) { return false; }
-  })();
-  /* Benotbar ist, was jemand GESCHRIEBEN hat. Ein Aufkleber, eine
-     Animation, eine Sprachnachricht und die Systemzeilen sind es
-     nicht — eine Note auf ein Konfetti waere Unsinn. */
-  function lcBenotbar(n) {
-    const art = n.art || "text";
-    if (art !== "text" && art !== "aktion" && art !== "ruf") return false;
-    if (n.sprach || n.sprachImLager) return false;
-    return Boolean(String(n.text || "").trim());
-  }
+     Mein Schalter in der Kopfzeile ist deshalb wieder raus. Es bleibt
+     bei der Regel von frueher: der Notenknopf steht an einer Zeile,
+     die als ANTWORT auf eine gestellte Aufgabe erkannt wurde — und
+     sonst nirgends.
+     Damit das auch trifft, ist die Erkennung in livechat.js an zwei
+     Stellen ehrlicher geworden: eine gestellte Aufgabe ueberlebt jetzt
+     das Neuladen der Seite (sie lag nur im Arbeitsspeicher und war
+     nach jedem Aktualisieren weg — dann war keine Antwort mehr eine
+     Antwort), und es gibt /aufgabe fuer eine Aufgabe in eigenen
+     Worten, nicht nur die Puzzles /satz und /wort. */
   /* Welche Sprachnachrichten schon von selbst gelaufen sind. Ohne
      diese Menge liefe dieselbe Aufnahme bei jedem Neuzeichnen des
      Verlaufs wieder los — und der Verlauf wird oft neu gezeichnet. */
@@ -23861,9 +23826,6 @@
   function livechatChatAuffrischen(l) {
     const v = document.getElementById("lcVerlauf");
     if (!v) return;
-    /* Aus demselben Grund wie beim Fokusschalter: man wird erst im
-       Raum zum Lehrer, und dann muss der Knopf auch erscheinen. */
-    lcNotenSchalterZeichnen();
     /* Die gewählte Schrift (/schrift 1 … 4) hängt am Verlauf selbst —
        so gilt sie für alles darin, ohne dass jede Zeile sie mitträgt. */
     const schrift = l.schrift || (LiveChat.gemerkteSchrift ? LiveChat.gemerkteSchrift() : "1");
@@ -23917,10 +23879,10 @@
       const marke = [n.text || "", n.art || "", n.name || "", n.farbe || "",
                      n.bildImChat ? "B" : (n.bildImLager ? "L" : (n.bildWeg ? "W" : "")),
                      n.bild || "", n.wirkung || "",
-                     /* Der Notenschalter gehoert mit in die Marke: sonst
-                        bekaemen erst die NAECHSTEN Zeilen ihren Knopf,
-                        und die, um die es gerade geht, nie. */
-                     lcNotenModus ? "N" : ""].join("\u0001");
+                     /* Ob die Zeile als Antwort gilt, gehoert mit in die
+                        Marke — sonst bekaeme eine Zeile, die erst spaeter
+                        als Antwort erkannt wird, nie ihren Knopf. */
+                     n.versuch ? "A" : ""].join("\u0001");
       const schon = livechatGezeigt.get(n.id);
       if (schon === marke) return;
       livechatGezeigt.set(n.id, marke);
@@ -23970,9 +23932,7 @@
          „hallo" und „bis gleich". Ob eine Zeile eine Antwort ist,
          weiss livechat.js (aufgabeVersuch) und haengt es als Marke an
          die Nachricht; hier wird nur noch gefragt. */
-      const darfBenoten = n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()
-        && (n.versuch || (lcNotenModus && lcBenotbar(n)));
-      if (darfBenoten) {
+      if (n.versuch && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
         const stift = document.createElement("button");
         stift.type = "button";
         stift.className = "lc-benoten";
@@ -23982,7 +23942,9 @@
            Nein, und das war mein Fehler: ein Klemmbrett sieht aus wie
            ein Notizblock, und niemand raet, dass dahinter die Zensur
            steckt. Jetzt steht es einfach da. */
-        stift.title = "Note geben (1 bis 6) — nur du als Lehrer siehst diesen Knopf";
+        stift.title = "Note geben (1 bis 6) für die Antwort auf die Aufgabe"
+          + (n.aufgabeFrage ? " „" + n.aufgabeFrage + "“" : "")
+          + " — nur du als Lehrer siehst diesen Knopf";
         stift.setAttribute("aria-label", "Note geben");
         stift.textContent = "Note";
         stift.addEventListener("click", (e) => {
@@ -24052,8 +24014,12 @@
          heraus geloest beziehungsweise falsch geloest." */
       if (n.versuch) {
         z.classList.add("lc-versuch", n.richtig ? "lc-versuch-gut" : "lc-versuch-offen");
-        z.title = n.richtig ? "Antwort auf die Aufgabe — richtig"
-                            : "Antwort auf die Aufgabe — noch nicht richtig";
+        /* Eine Aufgabe in eigenen Worten hat keine Musterloesung —
+           „noch nicht richtig" waere dort schlicht gelogen. */
+        z.title = n.aufgabeFrei
+          ? "Antwort auf die Aufgabe" + (n.aufgabeFrage ? ": " + n.aufgabeFrage : "")
+          : n.richtig ? "Antwort auf die Aufgabe — richtig"
+                      : "Antwort auf die Aufgabe — noch nicht richtig";
       }
 
       if (art === "system" || art === "einladung") {
@@ -25123,18 +25089,6 @@
         e.stopPropagation();
         const v = area.querySelector("#lcVerlauf");
         if (v) lcStimmenUmschalten(v);
-      });
-      /* Der Notenschalter — und er wird bei jedem Zeichnen nachgezogen,
-         weil man erst spaeter Lehrer wird (oder es nicht mehr ist). */
-      lcNotenSchalterZeichnen(area);
-      area.querySelector("#lcKopfNoten")?.addEventListener("click", (e) => {
-        e.stopPropagation();
-        lcNotenModus = !lcNotenModus;
-        try { localStorage.setItem(LC_NOTEN_SCHLUESSEL, lcNotenModus ? "1" : "0"); } catch (e2) {}
-        renderLiveChat();
-        showToast(lcNotenModus
-          ? "📋 Benoten ist an — an jeder geschriebenen Zeile der anderen steht jetzt „Note“."
-          : "📋 Benoten ist aus — nur Antworten auf /satz und /wort behalten ihren Notenknopf.");
       });
       /* Der Fokusschalter wird bei JEDEM Zeichnen nachgezogen — nicht
          nur dann, wenn die Sprachleiste gerade gebaut wird. Sonst
@@ -54782,9 +54736,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Den Chatverlauf zeichnen und nachsehen, WO er steht. „Wenn man
          in den Raum kommt, wird immer oben zuerst angezeigt" — das
          laesst sich nur messen, wenn man es wirklich zeichnet. */
-      /* Der Notenschalter: umlegen, zeichnen, und dann nachsehen, an
-         welchen Zeilen wirklich ein Notenknopf steht. */
-      notenSchalter: (an) => { lcNotenModus = Boolean(an); return lcNotenModus; },
+      /* Zeichnen und nachsehen, an welchen Zeilen wirklich ein
+         Notenknopf steht. */
       notenKnoepfe: () => [...document.querySelectorAll("#lcVerlauf .lc-zeile")].map((z) => ({
         text: ((z.querySelector(".lc-zeilentext") || {}).textContent || "").trim(),
         art: (z.className.match(/lc-zeile-(\w+)/) || [])[1] || "",
