@@ -63,12 +63,35 @@ function hand(farbe, kante, schatten) {
 
   /* Der Daumen liegt AUSSERHALB der Handflaeche, sonst sieht man ihn
      nicht — das war der Fehler im ersten Anlauf. */
-  /* Der Daumen liegt eng am Ballen und zeigt nach unten — im ersten
-     Anlauf stand er waagerecht ab, dann trafen sich beide Daumen in
-     der Mitte zu einem Klumpen. */
-  const daumen = `<path d="M32 74 Q23 77 19 85 Q16 93 21 97 Q26 100 30 94 Q33 87 34 79 Z"
-      fill="${farbe}" stroke="${kante}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M21 88 Q25 86 29 87" stroke="${kante}" stroke-width="1.1" fill="none" opacity=".5" stroke-linecap="round"/>`;
+  /* DRITTER ANLAUF AM DAUMEN, und diesmal am richtigen Problem:
+     „Da sieht der Daumen noch unmöglich aus. Da ist keine Verbindung."
+
+     Er hat recht, und zwar buchstäblich: der Daumen war eine eigene
+     geschlossene Form NEBEN der Handfläche. Zwischen beiden lief eine
+     durchgehende dunkle Kante — dadurch sah es aus wie ein Ding, das
+     man angeklebt hat.
+
+     Ein echter Daumen wächst AUS dem Ballen heraus. Deshalb ist er
+     jetzt ein Zug, der im Inneren der Handfläche beginnt (bei 36/72,
+     also hinter der Kante), nach aussen schwingt und wieder in die
+     Fläche zurückläuft. Die gemeinsame Kante entfällt damit, weil es
+     gar keine zwei getrennten Formen mehr gibt. Dazu die Falte
+     zwischen Daumen und Zeigefinger — die sitzt bei einer Hand immer
+     da, und ohne sie fehlt die Verbindung auch dann, wenn die Formen
+     sich berühren. */
+  const daumen = `<path d="M36 70
+        Q30 70 25 77
+        Q19 85 18 91
+        Q17 97 22 98
+        Q27 99 31 93
+        Q35 86 37 78 Z"
+      fill="${farbe}" stroke="${kante}" stroke-width="2" stroke-linejoin="round"/>`;
+  /* Die Schwimmhaut zwischen Daumen und Zeigefinger — sie verbindet
+     beide sichtbar, statt sie nur nebeneinanderzulegen. */
+  const daumenFalte = `<path d="M34 71 Q31 76 30 82" stroke="${kante}" stroke-width="1.3"
+      fill="none" opacity=".55" stroke-linecap="round"/>
+    <path d="M22 89 Q26 86 30 86" stroke="${kante}" stroke-width="1.1" fill="none"
+      opacity=".5" stroke-linecap="round"/>`;
 
   const flaeche = `<path d="
       M28 ${knoechel + 2}
@@ -89,7 +112,10 @@ function hand(farbe, kante, schatten) {
     <path d="M34 76 Q42 86 45 98" stroke="${kante}" stroke-width="1.2" fill="none" opacity=".38" stroke-linecap="round"/>
     <path d="M32 78 Q46 82 66 78" stroke="${kante}" stroke-width="1.1" fill="none" opacity=".3" stroke-linecap="round"/>
     <path d="M34 85 Q48 89 64 85" stroke="${kante}" stroke-width="1" fill="none" opacity=".26" stroke-linecap="round"/>`;
-  return gelenk + daumen + flaeche + ballen + finger4 + linien;
+  /* Reihenfolge: der Daumen liegt UNTER der Fläche, damit er aus ihr
+     herauszuwachsen scheint; die Falte darüber, damit man die
+     Verbindung sieht. */
+  return gelenk + daumen + flaeche + ballen + daumenFalte + finger4 + linien;
 }
 
 const KANTE = "rgba(120,70,30,.55)";

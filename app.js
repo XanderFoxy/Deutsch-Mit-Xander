@@ -15896,7 +15896,13 @@
     schicht.id = "lcSpinnen";
     schicht.className = "lc-spinnen";
     schicht.setAttribute("aria-hidden", "true");
-    const wieviel = window.innerWidth < 560 ? 4 : 7;
+    /* GEWÜNSCHT: „Die Spinnen sehen sehr cool aus, die können auch
+       ruhig in der Grösse variieren." Vorher lagen sie zwischen 26 und
+       60 Pixeln — das ist zwar ein Unterschied, aber kein Schreck.
+       Jetzt geht die Spanne von winzig (18) bis handgross (96), und
+       die grossen krabbeln langsamer als die kleinen: schwere Tiere
+       sind langsam, und genau daran erkennt das Auge das Gewicht. */
+    const wieviel = window.innerWidth < 560 ? 6 : 10;
     for (let i = 0; i < wieviel; i++) {
       const s2 = document.createElement("div");
       /* Etwa jede dritte seilt sich an einem Faden ab, die anderen
@@ -15904,16 +15910,17 @@
       const seilt = i % 3 === 0;
       s2.className = "lc-spinne" + (seilt ? " lc-spinne-faden" : "");
       s2.appendChild(lcSpinneSvg());
-      const gross = 26 + Math.random() * 34;
+      const gross = 18 + Math.pow(Math.random(), 1.6) * 78;
       s2.style.width = gross.toFixed(0) + "px";
       if (seilt) {
         s2.style.left = (10 + Math.random() * 80).toFixed(1) + "%";
         s2.style.setProperty("--lc-sp-tief", (28 + Math.random() * 44).toFixed(0) + "vh");
-        s2.style.animationDuration = (5 + Math.random() * 4).toFixed(1) + "s";
+        s2.style.animationDuration = (4.5 + (gross / 96) * 5 + Math.random() * 2).toFixed(1) + "s";
       } else {
         s2.style.top = (8 + Math.random() * 78).toFixed(1) + "%";
         s2.style.setProperty("--lc-sp-hoch", ((Math.random() - 0.5) * 30).toFixed(0) + "vh");
-        s2.style.animationDuration = (6 + Math.random() * 5).toFixed(1) + "s";
+        /* Schwere Tiere sind langsam — daran erkennt das Auge Gewicht. */
+        s2.style.animationDuration = (5 + (gross / 96) * 6 + Math.random() * 2).toFixed(1) + "s";
         /* Die Hälfte läuft von rechts nach links — dann gespiegelt. */
         if (i % 2) s2.classList.add("lc-spinne-links");
       }
@@ -17306,6 +17313,34 @@
       + '<path d="M-9 -1 C-4 -4 2 -4 7 -1" stroke="' + dunkel + '" stroke-width="1" fill="none" opacity="0.5"/>'
       + "</svg>";
   }
+  /* GEWÜNSCHT: „Da kannst du auch mehr Fische machen, grössere und
+     kleine, und vielleicht sogar einen Hai dabei — das wäre richtig
+     geil." Der Hai ist absichtlich anders gebaut: spitze Schnauze,
+     Rückenflosse, Kiemen, und er zieht langsamer und tiefer als die
+     kleinen Fische. Ein grosser Fisch in Fischform wäre nur ein
+     grosser Fisch. */
+  function lcHaiSvg() {
+    return '<svg viewBox="-46 -22 92 44" width="150" height="72">'
+      /* Schwanz */
+      + '<path d="M22 0 C30 -14 40 -18 44 -17 C40 -9 40 9 44 17 C40 18 30 14 22 0 Z" fill="#5a6d78"/>'
+      /* Körper: vorn spitz, hinten schlank */
+      + '<path d="M-44 1 C-34 -9 -14 -15 2 -12 C14 -10 20 -5 22 0 C20 5 14 9 2 11 C-14 14 -34 9 -44 1 Z" fill="#6b7f8c"/>'
+      /* Bauch */
+      + '<path d="M-40 4 C-26 12 -6 13 8 9 C14 7 18 4 20 2 C12 8 -16 11 -40 4 Z" fill="#cfd9de"/>'
+      /* Rückenflosse — das Erkennungszeichen */
+      + '<path d="M-6 -11 C-2 -22 6 -24 8 -11 Z" fill="#5a6d78"/>'
+      /* Brustflosse */
+      + '<path d="M-10 6 C-4 14 4 16 6 10 C0 10 -6 8 -10 6 Z" fill="#5a6d78"/>'
+      /* Kiemen */
+      + '<path d="M-28 -4 C-27 0 -27 2 -28 6 M-24 -5 C-23 0 -23 2 -24 7 M-20 -5 C-19 0 -19 2 -20 7"'
+      + ' stroke="#4d5f6a" stroke-width="1.2" fill="none" opacity=".7"/>'
+      /* Maul mit Zähnen */
+      + '<path d="M-42 5 C-34 9 -24 10 -16 9" stroke="#39474f" stroke-width="1.6" fill="none"/>'
+      + '<path d="M-38 6 l1.6 2.4 1.6 -2.2 M-33 7 l1.6 2.4 1.6 -2.3 M-28 8 l1.6 2.3 1.6 -2.2" fill="#f2f5f6"/>'
+      + '<circle cx="-30" cy="-4" r="2.6" fill="#1d2326"/>'
+      + '<circle cx="-30.7" cy="-4.7" r="0.9" fill="#fff"/>'
+      + "</svg>";
+  }
   function lcAquarium() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcAquarium")?.remove();
@@ -17315,14 +17350,16 @@
     schicht.setAttribute("aria-hidden", "true");
     const farben = [["#e8833a", "#b8541c"], ["#4fa6c8", "#2b6f8c"], ["#e0c341", "#a88a12"],
                     ["#c86ba8", "#8d3f72"], ["#6fbf7a", "#3d8a49"]];
-    const wieviel = window.innerWidth < 560 ? 7 : 12;
+    /* „Da kannst du auch mehr Fische machen." — aus 7/12 wird 12/20. */
+    const wieviel = window.innerWidth < 560 ? 12 : 20;
     for (let i = 0; i < wieviel; i++) {
       const f = farben[i % farben.length];
       const fisch = document.createElement("i");
       /* Tiefe: weiter hinten heisst kleiner, blasser und langsamer.
          Erst dadurch wird aus einer Reihe Fische ein Becken. */
       const tiefe = Math.random();
-      const gr = 0.45 + (1 - tiefe) * 0.75;
+      /* Grössere Spanne als vorher: von winzig bis stattlich. */
+      const gr = 0.3 + (1 - tiefe) * 1.15;
       fisch.innerHTML = lcFischSvg(f[0], f[1]);
       fisch.style.top = (6 + Math.random() * 80).toFixed(1) + "%";
       fisch.style.setProperty("--gross", gr.toFixed(2));
@@ -17332,6 +17369,18 @@
       if (Math.random() < 0.45) fisch.classList.add("lc-fisch-rueck");
       schicht.appendChild(fisch);
     }
+    /* Und einer, vor dem die anderen besser Platz machen. */
+    const hai = document.createElement("i");
+    hai.innerHTML = lcHaiSvg();
+    hai.className = "lc-hai";
+    hai.style.top = (38 + Math.random() * 28).toFixed(1) + "%";
+    hai.style.setProperty("--gross", "1");
+    hai.style.opacity = "0.92";
+    hai.style.animationDuration = (13 + Math.random() * 4).toFixed(2) + "s";
+    hai.style.animationDelay = (2.5 + Math.random() * 3).toFixed(2) + "s";
+    if (Math.random() < 0.5) hai.classList.add("lc-fisch-rueck");
+    schicht.appendChild(hai);
+
     /* Luftblasen aus dem Boden — ohne sie ist es kein Wasser */
     for (let i = 0; i < 16; i++) {
       const b = document.createElement("b");

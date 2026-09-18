@@ -1084,6 +1084,99 @@ window.LiveChat = (function () {
   /* Je Leitung die beiden Spurplätze — einer für Ton, einer für Bild. */
   var spurenJe = {};
 
+  /* =========================================================
+     DIE VERBINDUNGSWACHE — MESSEN STATT RATEN
+     ---------------------------------------------------------
+     GEMELDET, und zwar mit einer sehr genauen Beobachtung:
+     „Man sieht, wenn jemand spricht — aber man hoert ihn nicht.
+      Emmi hat mich ganz kurz am Anfang gehoert, danach nichts mehr.
+      Bei iPhone-Leuten geht es sofort, bei Android nicht."
+
+     Diese Beobachtung ist der Schluessel, und sie sagt etwas sehr
+     Bestimmtes: die SPRECHANZEIGE laeuft ueber Supabase (sie wird im
+     Puls mitgeschickt), der TON dagegen laeuft direkt von Geraet zu
+     Geraet ueber WebRTC. Wer den anderen sprechen SIEHT, aber nicht
+     HOERT, hat also eine funktionierende Vermittlung und eine
+     kaputte Medienstrecke. Das ist kein Tonproblem im Browser,
+     sondern ein Wegeproblem im Netz.
+
+     Der Weg kommt zustande, wenn wenigstens einer der beiden
+     Anschluesse von aussen erreichbar ist. Ueber Mobilfunk (und in
+     vielen Laendern grundsaetzlich) ist das bei KEINEM der beiden so;
+     dann braucht es ein Relais — einen TURN-Server, der die Pakete
+     weiterreicht. Steht keines zur Verfuegung, passiert genau das,
+     was er beschreibt: alles sieht gut aus, nur es kommt nichts an.
+
+     Statt weiter zu raten, misst die Wache jetzt nach:
+       * welcher Weg wurde gewaehlt (direkt, ueber STUN, ueber Relais)?
+       * kommen ueberhaupt Tonpakete an (bytesReceived)?
+     Bleibt es nach acht Sekunden bei null, steht es in klaren Worten
+     im Chat — und /verbindung zeigt den ganzen Befund. */
+  var wache = {};
+  function wacheStarten(anderId, pc) {
+    wacheBeenden(anderId);
+    var w = { bytes: 0, letzte: 0, weg: "", gemeldet: false, neustart: false,
+              seit: Date.now(), zustand: "" };
+    wache[anderId] = w;
+    w.uhr = setInterval(function () {
+      if (!pc || pc.connectionState === "closed") { wacheBeenden(anderId); return; }
+      w.zustand = pc.iceConnectionState || "";
+      if (!pc.getStats) return;
+      pc.getStats(null).then(function (berichte) {
+        var bytes = 0, paare = {}, kandidaten = {};
+        berichte.forEach(function (b) {
+          if (b.type === "inbound-rtp" && b.kind === "audio") bytes += b.bytesReceived || 0;
+          if (b.type === "candidate-pair" && (b.selected || b.state === "succeeded")) paare[b.id] = b;
+          if (b.type === "local-candidate" || b.type === "remote-candidate") kandidaten[b.id] = b;
+        });
+        Object.keys(paare).forEach(function (id) {
+          var p = paare[id];
+          var l = kandidaten[p.localCandidateId], r = kandidaten[p.remoteCandidateId];
+          if (l || r) {
+            w.weg = ((l && l.candidateType) || "?") + " \u2194 " + ((r && r.candidateType) || "?");
+          }
+        });
+        w.bytes = bytes;
+        if (bytes > w.letzte) { w.letzte = bytes; w.tonDa = true; }
+        /* Acht Sekunden ohne ein einziges Tonpaket: das ist kein
+           Zufall mehr, das ist eine tote Strecke. */
+        if (!w.tonDa && !w.gemeldet && Date.now() - w.seit > 8000) {
+          w.gemeldet = true;
+          var p2 = zustand.leute[anderId];
+          var name = (p2 && p2.name) || "Jemand";
+          systemZeile("\u26a0\ufe0f Von " + name + " kommt kein Ton an (Weg: "
+            + (w.weg || "keiner gefunden") + ", Zustand: " + (w.zustand || "?")
+            + "). Das ist eine Netzsperre zwischen euren Anschluessen \u2014 "
+            + "dagegen hilft nur ein Relais. Tippe /verbindung fuer den Befund.");
+        }
+      }).catch(function () {});
+    }, 2500);
+  }
+  function wacheBeenden(id) {
+    var w = wache[id];
+    if (w && w.uhr) clearInterval(w.uhr);
+    delete wache[id];
+  }
+  function verbindungsBericht() {
+    var zeilen = [];
+    Object.keys(brueckeJe).forEach(function (id) {
+      var p = zustand.leute[id], w = wache[id] || {};
+      var pc = brueckeJe[id];
+      zeilen.push(((p && p.name) || id.slice(0, 6))
+        + ": " + (pc ? (pc.connectionState || "?") : "keine Leitung")
+        + " / Weg " + (w.weg || "noch keiner")
+        + " / Ton " + (w.tonDa ? "kommt an (" + Math.round((w.bytes || 0) / 1024) + " kB)" : "KEINER"));
+    });
+    if (!zeilen.length) zeilen.push("Es besteht gerade keine Leitung zu jemandem.");
+    /* Und was ueberhaupt zur Verfuegung steht. */
+    var relais = VERMITTLER.filter(function (v) {
+      return String(v.urls || "").indexOf("turn") === 0;
+    }).length;
+    zeilen.push("Relais eingetragen: " + relais
+      + (window.DMA_TURN && window.DMA_TURN.length ? " (eigene)" : " (oeffentliche)"));
+    return zeilen.join("\n");
+  }
+
   function bruecke(anderId, alsAnrufer) {
     if (brueckeJe[anderId]) return brueckeJe[anderId];
     var pc = new RTCPeerConnection({ iceServers: VERMITTLER });
@@ -1162,7 +1255,18 @@ window.LiveChat = (function () {
       if (pc.iceConnectionState === "disconnected" && pc.restartIce) {
         try { pc.restartIce(); } catch (e) {}
       }
+      /* „failed" heisst: es gibt keinen Weg. Genau dann ist ein Relais
+         noetig — einmal neu suchen, und wenn das auch nichts wird,
+         sagt es die Wache weiter unten in klaren Worten. */
+      if (pc.iceConnectionState === "failed") {
+        var w = wache[anderId];
+        if (w && !w.neustart && pc.restartIce) {
+          w.neustart = true;
+          try { pc.restartIce(); } catch (e) {}
+        }
+      }
     };
+    wacheStarten(anderId, pc);
     pc.onconnectionstatechange = function () {
       if (pc.connectionState === "failed" || pc.connectionState === "closed") {
         brueckeAbbauen(anderId);
@@ -1422,6 +1526,7 @@ window.LiveChat = (function () {
   }
 
   function brueckeAbbauen(id) {
+    wacheBeenden(id);
     tonAbklemmen(id);
     var pc = brueckeJe[id];
     if (pc) { try { pc.close(); } catch (e) {} delete brueckeJe[id]; }
@@ -3112,6 +3217,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz <name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
     { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck <name>",      was: "Jemanden drücken" },
     { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch <name>",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
+    { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",       was: "Warum hört man jemanden nicht? Zeigt den Weg und ob Tonpakete ankommen" },
     { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
     { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <name>",       was: "Jemandem einen Boxhandschuh verpassen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
@@ -3240,6 +3346,8 @@ window.LiveChat = (function () {
                 zombie: "handdurch", griff: "handdurch",
                 riegel: "tore", abschliessen: "tore", zusperren: "tore",
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
+                ton: "verbindung", audio: "verbindung", leitung: "verbindung",
+                stumm: "verbindung", diagnose: "verbindung",
                 platz: "tausch", platzwechsel: "tausch", umsetzen: "tausch",
                 sitzen: "tausch", setz: "tausch",
                 lecken: "leck", schlecken: "leck", ablecken: "leck",
@@ -3801,6 +3909,12 @@ window.LiveChat = (function () {
        koennen, spontan." /tausch <name> setzt einen selbst auf den
        Platz der genannten Person und sie auf den eigenen. Ohne Namen
        rueckt man einfach auf den naechsten freien Platz. */
+    /* GEFRAGT: „Schau mal bitte, woran das liegen koennte." Damit das
+       nicht mehr geraten werden muss, zeigt dieser Befehl den Befund:
+       welcher Weg gefunden wurde und ob ueberhaupt Tonpakete ankommen. */
+    if (art === "verbindung") {
+      return systemZeile("\ud83d\udd0c Verbindungsbefund\n" + verbindungsBericht());
+    }
     if (art === "tausch") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var plaetzeJetzt = plaetzeBauen();
@@ -4295,6 +4409,7 @@ window.LiveChat = (function () {
     /* Wird beim Druck auf „hinein" aufgerufen — also waehrend der
        Beruehrung, denn nur dann zaehlt es. */
     tonFreischalten: tonFreischalten,
+    verbindungsBericht: verbindungsBericht,
     pruefTonVorrat: function () { return tonVorrat.length; },
     pruefPost: function (f) {
       kanal = { send: function (p) { try { f(p && p.payload); } catch (e) {} } };

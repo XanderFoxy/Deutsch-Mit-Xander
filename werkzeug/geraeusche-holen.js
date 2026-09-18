@@ -44,7 +44,37 @@ const GERAEUSCHE = [
   { name: "schuss",    dauer: 2, text: "Two gunshots in an open space with a short echo, no music, no voices" },
   { name: "prunk",     dauer: 3, text: "Magical sparkling chime rising, a soft whoosh and glittering bells, celebratory, no voices" },
   { name: "katze",     dauer: 2, text: "A small kitten meowing twice, close up, soft, no music" },
-  { name: "enten",     dauer: 3, text: "A duck family quacking by a pond, small splashes of water, outdoors, no music" }
+  { name: "enten",     dauer: 3, text: "A duck family quacking by a pond, small splashes of water, outdoors, no music" },
+  /* ZWEITE RUNDE — ausdruecklich gewuenscht: „Mach bitte alle
+     Geraeusche nach eigenem Ermessen: realistisches Rennauto, und wenn
+     man eine Geschenkbox oeffnet, dass so ein Jubel kommt. Bei der
+     Fratze ein fieses Lachen. Beim Stromausfall so ein Bratzeln, wie
+     wenn die Gluehbirne durchbrennt, und dann der Schalter mit der
+     Taschenlampe. Bei Weihnachten etwas Festliches." */
+  { name: "rennauto",  dauer: 3, text: "A race car engine revving hard and accelerating past the listener, tyres on asphalt, no music" },
+  { name: "kitt",      dauer: 3, text: "A powerful 1980s sports car idling then accelerating away, deep V8 rumble, no music" },
+  { name: "jubel",     dauer: 3, text: "A small crowd cheering and applauding warmly, happy voices, short burst, no music" },
+  { name: "geschenk",  dauer: 3, text: "Gift wrapping paper tearing open, a party popper, then a short cheerful cheer, no music" },
+  { name: "konfetti",  dauer: 2, text: "A party popper bursting and confetti fluttering down, no music" },
+  { name: "ballon",    dauer: 2, text: "Several balloons squeaking and rising, one gentle pop, no music" },
+  { name: "fratze",    dauer: 3, text: "An evil demonic laugh, deep and distorted, echoing in a large empty hall, horror, no music" },
+  { name: "halloween", dauer: 3, text: "Creepy horror ambience: a distant creaking door, whispering wind, a single low tone, no music" },
+  { name: "schloss",   dauer: 4, text: "A huge heavy iron gate creaking open slowly, cold wind rushing through a stone hall, no music" },
+  { name: "tore",      dauer: 3, text: "Two massive wooden doors slamming shut and a heavy iron bolt sliding into place, no music" },
+  { name: "finsternis",dauer: 3, text: "An electrical short circuit crackling, a light bulb popping, silence, then a torch switch clicking on, no music" },
+  { name: "erdbeben",  dauer: 4, text: "A deep earthquake rumble with objects rattling and creaking walls, no music" },
+  { name: "vulkan",    dauer: 4, text: "A volcano erupting: deep explosive boom, rumbling ground, falling debris, no music" },
+  { name: "armageddon",dauer: 4, text: "Apocalyptic impact: a huge distant explosion, rolling shockwave, debris raining down, no music" },
+  { name: "weihnachten",dauer: 3, text: "Sleigh bells jingling merrily in the snow, festive and warm, no singing, no music bed" },
+  { name: "lagerfeuer",dauer: 4, text: "A campfire crackling and popping quietly at night, occasional cricket, no music" },
+  { name: "aquarium",  dauer: 4, text: "Underwater ambience with rising air bubbles, calm and muffled, no music" },
+  { name: "handdurch", dauer: 2, text: "Wood splintering and tearing apart violently, a single sharp crack, no music" },
+  { name: "jalousie",  dauer: 2, text: "Venetian window blinds rattling and being pulled up quickly, no music" },
+  { name: "paintball", dauer: 2, text: "Three paintballs splattering wetly against a hard surface in quick succession, no music" },
+  { name: "sternschnuppe", dauer: 2, text: "A soft magical whoosh of a shooting star passing, airy and sparkling, no music" },
+  { name: "spinnen",   dauer: 3, text: "Creepy skittering of many small legs on a hard surface, eerie tension, horror, no music" },
+  { name: "matrix",    dauer: 3, text: "Digital data stream: rapid electronic clicks and low synthetic hum, cyber, no melody" },
+  { name: "sintflut",  dauer: 4, text: "Torrential rain and rushing water flooding, heavy downpour, no music" }
 ];
 
 function schlafen(ms) { return new Promise((f) => setTimeout(f, ms)); }

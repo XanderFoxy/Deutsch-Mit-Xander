@@ -5482,13 +5482,23 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 /* Wer nach links schwimmt, muss auch nach links GUCKEN. */
 .lc-aquarium i.lc-fisch-rueck { left: auto; right: -90px; animation-name: lcFischZurueck; }
+/* GEMELDET: „Bei den Fischen — die Richtung der Animation passt, sie
+   begegnen sich, das macht Sinn. Aber die Fische müssen einmal
+   umgedreht werden, jeder für sich, dass sie in die richtige Richtung
+   dabei gucken."
+
+   Er hat genau hingesehen. Der Fisch ist mit dem KOPF NACH LINKS
+   gezeichnet (das Auge sitzt bei x = −18). Wer nach rechts schwimmt,
+   muss also gespiegelt werden — und wer nach links schwimmt, gerade
+   nicht. Es war genau andersherum: beide schwammen rückwärts.
+   Jetzt bekommt der nach rechts ziehende das Spiegelbild. */
 @keyframes lcFischZieht {
-  from { transform: translateX(0) scale(var(--gross, 1)); }
-  to   { transform: translateX(calc(100vw + 180px)) scale(var(--gross, 1)); }
+  from { transform: translateX(0) scaleX(calc(var(--gross, 1) * -1)) scaleY(var(--gross, 1)); }
+  to   { transform: translateX(calc(100vw + 180px)) scaleX(calc(var(--gross, 1) * -1)) scaleY(var(--gross, 1)); }
 }
 @keyframes lcFischZurueck {
-  from { transform: translateX(0) scaleX(calc(var(--gross, 1) * -1)) scaleY(var(--gross, 1)); }
-  to   { transform: translateX(calc(-100vw - 180px)) scaleX(calc(var(--gross, 1) * -1)) scaleY(var(--gross, 1)); }
+  from { transform: translateX(0) scale(var(--gross, 1)); }
+  to   { transform: translateX(calc(-100vw - 180px)) scale(var(--gross, 1)); }
 }
 .lc-aquarium b {
   position: absolute;
@@ -6459,21 +6469,32 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
 }
 .lc-r66-rechts { --seite: 1; }
 .lc-r66-links  { --seite: -1; }
-/* Der Wagen: aus dem Fluchtpunkt heraus, bis er das Bild füllt. */
+/* Der Wagen: aus dem FLUCHTPUNKT heraus, bis er das Bild füllt.
+   NACHGEBESSERT, und er hat recht: „Da ist ein Auto, was ganz klein
+   ist in der MITTE der Strasse und ploetzlich gross wird. Am Ende der
+   Strasse muesste es klein sein, damit die Illusion entsteht, dass es
+   naeherkommt."
+   Genau so war es: der Wagen stand bei 22vh, also auf halber Strecke,
+   und wuchs dort. Jetzt beginnt er am Horizont (40vh — dort laufen die
+   Fahrbahnkanten zusammen) und kommt von da herunter auf einen zu.
+   Die Groesse waechst dabei nicht gleichmaessig, sondern immer
+   schneller: in der Ferne dauert jeder Meter lange, vorn geht es
+   schlagartig. Das ist der Unterschied zwischen „wird groesser" und
+   „kommt auf mich zu". */
 .lc-route66 i {
   position: absolute;
   left: 50%;
-  bottom: 22vh;
+  bottom: 40vh;
   line-height: 0;
   transform-origin: 50% 100%;
-  animation: lcR66Auto 9s cubic-bezier(.55,.05,.85,.6) both;
+  animation: lcR66Auto 9s cubic-bezier(.75,.02,.9,.55) both;
 }
 .lc-route66 .r66-licht { animation: lcR66Blenden 9s ease-in both; }
 /* Staub hinter dem Wagen. */
 .lc-route66 em {
   position: absolute;
   left: 50%;
-  bottom: 30vh;
+  bottom: 38vh;
   width: 30vw;
   height: 16vh;
   margin-left: -15vw;
@@ -6494,19 +6515,21 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   100% { transform: translate(calc(var(--seite) * 60vw), 26vh) scale(2.4); opacity: 1; }
 }
 @keyframes lcR66Auto {
-  0%   { transform: translate(-50%, 0) scale(.06); }
-  55%  { transform: translate(-50%, 6vh) scale(.42); }
-  85%  { transform: translate(-50%, 16vh) scale(1.1); }
-  100% { transform: translate(-50%, 26vh) scale(2.1); }
+  0%   { transform: translate(-50%, 0) scale(.035); opacity: .75; }
+  10%  { opacity: 1; }
+  45%  { transform: translate(-50%, 9vh) scale(.16); }
+  70%  { transform: translate(-50%, 20vh) scale(.42); }
+  88%  { transform: translate(-50%, 31vh) scale(1.05); }
+  100% { transform: translate(-50%, 40vh) scale(2.3); }
 }
 @keyframes lcR66Blenden {
   0%, 60% { opacity: .75; }
   100%    { opacity: 1; filter: drop-shadow(0 0 22px rgba(255,236,170,.95)); }
 }
 @keyframes lcR66Staub {
-  0%   { opacity: 0; transform: scale(.1); }
-  60%  { opacity: .5; transform: scale(.7); }
-  100% { opacity: .85; transform: scale(2); }
+  0%   { opacity: 0; transform: translateY(0) scale(.08); }
+  60%  { opacity: .4; transform: translateY(16vh) scale(.5); }
+  100% { opacity: .8; transform: translateY(40vh) scale(2.2); }
 }
 
 /* ===================================================================
