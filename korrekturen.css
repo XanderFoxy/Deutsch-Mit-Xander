@@ -7978,8 +7978,16 @@ body.lc-schreibt .tutor-reiter {
    ist kein Knopf. Jetzt steht „Note" darauf, in einer kleinen
    Sprechblase am rechten Rand — man liest es und weiss Bescheid. */
 .lc-benoten {
-  float: right;
-  margin-left: 8px;
+  /* NICHT float, NICHT als Gitterkind: absolut.
+     Eine Chatzeile ist ein Gitter (2.6em | auto | 1fr). Ein float
+     wirkt darin nicht, und als gewoehnliches Kind belegt der Knopf
+     eine Spalte und schiebt alles weiter — genau daher kamen „N o t e"
+     untereinander und der Text, der in der 2,6-em-Spalte jedes Wort
+     auf eine eigene Zeile brach. Absolut positioniert bekommt er gar
+     keine Spalte. */
+  position: absolute;
+  top: 1px;
+  right: 2px;
   border: 1px solid rgba(255, 206, 85, 0.45);
   border-radius: 999px;
   background: rgba(255, 206, 85, 0.12);
@@ -8000,6 +8008,11 @@ body.lc-schreibt .tutor-reiter {
 @media (hover: none) {
   .lc-benoten { opacity: 0.85; }
 }
+/* Die Zeile ist der Bezugspunkt, und sie macht rechts Platz — sonst
+   liefe langer Text unter den Knopf. Nur Zeilen, die wirklich einen
+   haben (die Klasse setzt app.js), werden schmaler. */
+.lc-zeile { position: relative; }
+.lc-zeile.lc-hat-note { padding-right: 52px; }
 .lc-notenwahl {
   display: flex;
   flex-wrap: wrap;
@@ -8327,6 +8340,14 @@ body.lc-schreibt .tutor-reiter {
    ================================================================= */
 .lc-chat-verlauf .lc-stimme { display: none; }
 .lc-chat-verlauf.lc-stimmen-offen .lc-stimme { display: grid; }
+/* Wenn nichts da ist, steht es als ruhige Zeile im Chat — nicht als
+   Blase, die man wegklicken muss. */
+.lc-stimmen-leer {
+  text-align: center;
+  font-size: 0.74rem;
+  opacity: 0.45;
+  padding: 6px 0 2px;
+}
 /* Ein zarter Hinweis, dass hinter dem Leeren etwas liegt — aber nur,
    wenn es wirklich etwas gibt. */
 .lc-chat-verlauf.lc-stimmen-offen {

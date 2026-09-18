@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19b — Titelzeile, Klick ins Leere, Notenknopf",
+  stand: "Runde 19c — Emmys Zeilen wieder heil",
 
   inArbeit: [
-    { seit: "2026-09-18T19:46",
-      text: "Emmys Nachrichten kommen unvollstaendig an — brauche ein konkretes Beispiel" },
-    { seit: "2026-09-18T19:46",
+    { seit: "2026-09-18T19:54",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T19:46",
+    { seit: "2026-09-18T19:54",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen (/t, /f, /l)" },
-    { seit: "2026-09-18T19:46",
+    { seit: "2026-09-18T19:54",
       text: "Favoriten im Befehlspanel selbst anheften" },
-    { seit: "2026-09-18T19:46",
+    { seit: "2026-09-18T19:54",
       text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T19:46",
-      text: "Titel und Fokusschalter teilen sich eine Zeile: Titel links ueber die volle Breite, Schalter rechts" },
-    { seit: "2026-09-18T19:46",
-      text: "Klick ins Leere zeigt die Sprachnachrichten — Grund des Chats, Uhrzeit und der Platz neben dem Text zaehlen jetzt als Leere" },
-    { seit: "2026-09-18T19:46",
-      text: "Der Notizblock war die Zensur: der Knopf heisst jetzt „Note\" und steht oben rechts statt unter der Uhr" },
+    { seit: "2026-09-18T19:54",
+      text: "Emmys Nachrichten stehen wieder normal im Chat statt Wort fuer Wort untereinander — mein Fehler vom letzten Mal, behoben" },
+    { seit: "2026-09-18T19:54",
+      text: "Der Note-Knopf steht waagerecht oben rechts, nicht mehr senkrecht in der Uhrzeitspalte" },
+    { seit: "2026-09-18T19:54",
+      text: "Die Hinweisblase beim Aufklappen der Sprachnachrichten kommt genau einmal, danach nie wieder" },
   ],
 };

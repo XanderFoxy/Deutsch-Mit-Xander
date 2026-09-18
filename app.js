@@ -21358,14 +21358,52 @@
     return false;
   }
 
+  /* EINE ERKLAERUNG IST EINMAL EINE HILFE UND BEIM ZWANZIGSTEN MAL
+     EINE BELAESTIGUNG.
+     GEMELDET: „Das mit den Nachrichten anzeigen funktioniert jetzt,
+     aber wenn ich das anklicke, dann kommt immer die Blase und ich
+     muss die immer wegklicken. Das soll beim ersten Mal als Info
+     kommen, aber nicht fuer die Zukunft."
+     Also genau einmal je Geraet. Der Merker liegt im Geraet und nicht
+     im Raum: die Erklaerung gehoert zur Bedienung, nicht zum
+     Gespraech. Wirft der Speicher (privates Fenster), wird die
+     Erklaerung eben noch einmal gezeigt — das ist der harmlosere
+     Fehler von beiden. */
+  const LC_STIMMEN_HINWEIS = "dma_stimmen_hinweis";
+  function lcStimmenHinweisFaellig() {
+    try {
+      if (localStorage.getItem(LC_STIMMEN_HINWEIS) === "1") return false;
+      localStorage.setItem(LC_STIMMEN_HINWEIS, "1");
+      return true;
+    } catch (e) { return false; }
+  }
+
   function lcStimmenUmschalten(verlauf) {
     const an = verlauf.classList.toggle("lc-stimmen-offen");
     const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
-    showToast(an
-      ? (wieviel ? wieviel + " Sprachnachricht" + (wieviel === 1 ? "" : "en")
-                   + " — anhören, herunterladen, zurückrufen."
-                 : "Hier wurde noch nichts gesprochen.")
-      : "Wieder zugeklappt — gesprochen wird weiter gehört.");
+    /* Beim Zuklappen sagt das Verschwinden alles. Kein Wort dazu. */
+    if (!an) {
+      verlauf.querySelector(".lc-stimmen-leer")?.remove();
+      return an;
+    }
+    /* Ist nichts da, sieht man auch nichts — dann MUSS etwas dastehen,
+       sonst haelt man es fuer kaputt. Aber als ruhige Zeile im Chat,
+       nicht als Blase, die man wegklicken muss. */
+    if (!wieviel) {
+      if (!verlauf.querySelector(".lc-stimmen-leer")) {
+        const leer = document.createElement("div");
+        leer.className = "lc-stimmen-leer";
+        leer.textContent = "— hier wurde noch nichts gesprochen —";
+        verlauf.appendChild(leer);
+      }
+    } else {
+      verlauf.querySelector(".lc-stimmen-leer")?.remove();
+    }
+    if (lcStimmenHinweisFaellig()) {
+      showToast("🎙️ Die Sprachnachrichten sind jetzt sichtbar — anhören, "
+        + "herunterladen, zurückrufen. Nochmal ins Leere tippen klappt sie wieder zu. "
+        + "(Diesen Hinweis bekommst du nur dieses eine Mal.)");
+    }
     return an;
   }
 
@@ -23622,14 +23660,35 @@
           z.appendChild(wahl);
           fach.focus();
         });
-        /* GEMELDET: „Das ist auch nicht auf der rechten Seite, es ist
-           unter der Uhr angezeigt."
-           Genau so war es: ein float:right, der NACH dem Text
-           eingehaengt wird, findet auf der letzten Zeile keinen Platz
-           mehr und rutscht darunter. Ein Float muss VOR dem Inhalt
-           stehen, neben dem er schweben soll — deshalb kommt der Knopf
-           jetzt an den Anfang der Zeile. */
-        z.insertBefore(stift, z.firstChild);
+        /* WARUM DAS ZWEIMAL SCHIEFGING — beide Male dieselbe Ursache,
+           und die habe ich beim ersten Mal falsch geraten.
+
+           Eine Chatzeile ist ein GITTER mit drei Spalten:
+               grid-template-columns: 2.6em auto 1fr
+           also Uhrzeit | Name | Inhalt. Ihre Kinder werden der Reihe
+           nach in diese Spalten gesetzt.
+
+           Erster Versuch: float:right. In einem Gitter wirkt float
+           GAR NICHT — der Knopf wurde also einfach das vierte Kind
+           und landete in der naechsten Gitterzeile, Spalte 1. Das war
+           das „unter der Uhr".
+
+           Zweiter Versuch: als erstes Kind einhaengen, damit der
+           Float traegt. Er trug immer noch nicht, und jetzt sass der
+           Knopf in Spalte 1 — 2,6 Zeichen breit, daher „N o t e"
+           untereinander. Alles andere rutschte eine Spalte weiter,
+           bis der Text in einer neuen Gitterzeile in genau dieser
+           schmalen Spalte landete: jedes Wort auf einer eigenen
+           Zeile, links hinter der Uhrzeit. Genau so gemeldet.
+
+           Die Loesung ist, den Knopf ganz aus dem Gitter zu nehmen:
+           position:absolute. Dann bekommt er keine Spalte mehr,
+           stoert keine Reihenfolge und sitzt schlicht oben rechts an
+           der Zeile. Damit er keinen Text ueberdeckt, bekommt eine
+           Zeile mit Knopf rechts etwas Polsterung — dafuer die
+           Klasse. */
+        z.classList.add("lc-hat-note");
+        z.appendChild(stift);
       }
 
       if (art === "system" || art === "einladung") {

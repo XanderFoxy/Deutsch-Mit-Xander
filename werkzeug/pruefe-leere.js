@@ -84,5 +84,35 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     const t = document.getElementById("t1").getBoundingClientRect();
     return { x: t.left + t.width / 2, y: t.top + t.height / 2 };
   });
+  /* Die Blase darf genau EINMAL kommen.
+     GEMELDET: „Wenn ich das anklicke, dann kommt immer die Blase und
+     ich muss die immer wegklicken. Das soll beim ersten Mal als Info
+     kommen, aber nicht fuer die Zukunft." */
+  console.log("");
+  await pg.evaluate(() => {
+    try { localStorage.removeItem("dma_stimmen_hinweis"); } catch (e) {}
+    document.getElementById("lcVerlauf").classList.remove("lc-stimmen-offen");
+    /* showToast liegt in einer Kapsel, nicht am Fenster — es laesst
+       sich also nicht umleiten. Gezaehlt wird deshalb, was WIRKLICH
+       im Dokument landet: die Blasen selbst. */
+    window.__blasen = 0;
+    document.querySelectorAll(".toast-popup").forEach((t) => t.remove());
+    new MutationObserver((listen) => {
+      listen.forEach((l) => l.addedNodes.forEach((k) => {
+        if (k.classList && k.classList.contains("toast-popup")) window.__blasen++;
+      }));
+    }).observe(document.body, { childList: true });
+  });
+  for (let runde = 1; runde <= 6; runde++) {
+    const punkt = await pg.evaluate(() => {
+      const v = document.getElementById("lcVerlauf").getBoundingClientRect();
+      return { x: v.left + v.width / 2, y: v.bottom - 30 };
+    });
+    await pg.mouse.click(punkt.x, punkt.y);
+    await pg.waitForTimeout(120);
+  }
+  const blasen = await pg.evaluate(() => window.__blasen);
+  console.log("  Sechsmal ins Leere getippt (dreimal auf, dreimal zu) -> Blasen: " + blasen
+    + (blasen === 1 ? "  (genau eine, richtig)" : "  FALSCH — es soll genau eine sein"));
   await br.close(); srv.close();
 })();
