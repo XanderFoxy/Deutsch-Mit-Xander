@@ -3357,6 +3357,13 @@ window.LiveChat = (function () {
       systemZeile("Dein Browser kann keine Sprachnachrichten aufnehmen — schreib es bitte.");
       return Promise.resolve(false);
     }
+    /* FOKUS: wer gerade zuhoert, redet nicht dazwischen. */
+    var frei_ = darfSprechen();
+    if (!frei_.ja) {
+      systemZeile("🎧 " + frei_.wer + " spricht gerade — hör zu Ende zu, dann bist du dran. "
+        + "Schreiben geht jederzeit.");
+      return Promise.resolve(false);
+    }
     einsatzPing();
     return spurHolen().then(function (spur) {
       /* Auch hier das eigene Feld je Aufnahme — aus demselben
@@ -3896,6 +3903,16 @@ window.LiveChat = (function () {
       systemZeile("Deine Stimme ist stummgeschaltet — das war jetzt nicht zu hören. Schreib im Chat, wenn du wieder mitreden möchtest.");
       return false;
     }
+    /* FOKUS, zweiter Riegel: beim Freisprechen laeuft die Aufnahme
+       ja durch. Was waehrend einer fremden Wortmeldung entsteht,
+       wird deshalb hier verworfen — sonst kaeme es gleich danach
+       heraus und niemand wuesste, worauf es sich bezieht. */
+    var fokus_ = darfSprechen();
+    if (!fokus_.ja) {
+      systemZeile("🎧 " + fokus_.wer + " spricht gerade — das hier wurde nicht geschickt. "
+        + "Sag es gleich noch einmal, wenn er fertig ist.");
+      return false;
+    }
     var id = neueNachrichtId();
     var n = {
       id: id,
@@ -4301,6 +4318,50 @@ window.LiveChat = (function () {
   var liveWarteschlange = [];
   var liveSichtbar = false;          // Mitschrieb im Chat
   var liveMelder = null;
+  /* =========================================================
+     DER FOKUS-MODUS
+     ---------------------------------------------------------
+     GEWUENSCHT: „Wenn gerade eine Nachricht laeuft, dann kann
+     kein anderer etwas sagen. Erst wenn derjenige fertig ist,
+     ist fuer die anderen wieder die Freigabe da, selber etwas
+     aufzunehmen. Die muessen sich praktisch konzentrieren und
+     das zu Ende anhoeren … damit der Fokus da bleibt."
+
+     Also: solange eine Wortmeldung laeuft, nimmt niemand auf.
+     Das ist kein Verbot von aussen, sondern eine Regel im
+     eigenen Geraet — jeder haelt sie fuer sich ein, weil jeder
+     dieselbe Warteschlange hat und dieselbe Stelle fragt.
+
+     Geschrieben werden darf weiter. Wer etwas beitragen will,
+     ohne zu warten, tippt es — nur die STIMME wartet, und
+     genau darum geht es beim Zuhoeren.
+
+     Der Modus ist abschaltbar: „den Livestream-Modus nehmen
+     wir nur zum freien Quatschen."
+     ========================================================= */
+  var FOKUS_SCHLUESSEL = "dma_livechat_fokus";
+  function fokusAn() {
+    try { return localStorage.getItem(FOKUS_SCHLUESSEL) !== "aus"; } catch (e) { return true; }
+  }
+  function fokusSetzen(an) {
+    try { localStorage.setItem(FOKUS_SCHLUESSEL, an ? "an" : "aus"); } catch (e) {}
+    return fokusAn();
+  }
+  /* Laeuft gerade eine fremde Wortmeldung? Das weiss die
+     Oberflaeche (sie spielt ab) — sie sagt es hier an. */
+  var liveLaeuftGerade = null;   // { von, name, bis } oder null
+  function liveLaeuft(wer) {
+    liveLaeuftGerade = wer || null;
+    melden();
+  }
+  /* Darf ich jetzt aufnehmen? Gibt einen Grund zurueck, keinen
+     nackten Wahrheitswert — man soll lesen koennen, WARUM. */
+  function darfSprechen() {
+    if (!fokusAn()) return { ja: true };
+    if (!liveLaeuftGerade) return { ja: true };
+    if (liveLaeuftGerade.von === zustand.ichId) return { ja: true };
+    return { ja: false, wer: liveLaeuftGerade.name || "Jemand" };
+  }
 
   function liveMelden(f) { liveMelder = typeof f === "function" ? f : null; }
   /* Was im Raum passiert, darf auch oben im Laufband stehen. app.js
@@ -4821,7 +4882,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s <text>",           was: "Schreien — GROSS, mit Wucht" },
     { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w <name> <text>",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
     { gr: "raum", w: "j",       kurz: "join", nutzt: "/j <raum>",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
-    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i <name>",         was: "Einladen — die Person bekommt eine Zeile und kommt selbst" },
+    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i <name>",         was: "Einladen — wer da ist, wird gerufen; wer nicht da ist, bekommt Post. Ohne Namen: deine Freunde" },
     { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f <name>",         was: "Folgen — dorthin, wo die Person GERADE ist" },
     { gr: "raum", w: "n",       kurz: "names",nutzt: "/n",                  was: "Wer ist hier?" },
     { gr: "raum", w: "l",       kurz: "list", nutzt: "/l",                  was: "Welche Räume sind gerade offen?" },
@@ -4918,6 +4979,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "mitschrieb", kurz: "sichtbar", nutzt: "/mitschrieb",   was: "Sprachnachrichten im Chat sichtbar machen — zum Nachhören und Herunterladen" },
+    { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
     { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
     { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
@@ -5540,15 +5602,45 @@ window.LiveChat = (function () {
       return true;
     }
     if (art === "leave") { raumWechseln(HAUPTRAUM); return true; }
+    /* =====================================================
+       EINLADEN — auch wen gerade gar nicht da ist
+       -----------------------------------------------------
+       GEMELDET: „Ich kann Emmi zum Beispiel immer noch nicht
+       einladen. Da steht immer: Emmi ist gerade nirgends zu
+       finden."
+
+       Genau da lag die Luecke: /i suchte nur unter denen, die
+       in diesem Augenblick offen im Raum oder in der
+       Anwesenheitsliste standen. Wer die Seite nicht offen
+       hatte, war „nirgends zu finden" — obwohl es ihn gibt.
+
+       GEWUENSCHT: „Dann moechte ich sie mit der Einladung in
+       ihrem Postfach erreichen, so dass sie aus ihrem Postfach
+       heraus auf die Einladung klicken kann und direkt in das
+       Klassenzimmer kommt … Wenn sie allerdings selbst
+       irgendwo in einem Raum ist, soll sie das nicht als
+       Postnachricht erreichen."
+
+       Zwei Wege, in dieser Reihenfolge:
+         1. erreichbar (im Raum oder anwesend) → ueber die
+            Leitung, sofort, wie bisher
+         2. sonst → eine Nachricht ins Postfach, mit Link
+       Wer schon in irgendeinem Raum sitzt, bekommt KEINE
+       Postnachricht: der wird ja schon erreicht.
+       ===================================================== */
     if (art === "i") {
-      if (!rest) return systemZeile("So geht es:  /i Nickname");
-      var wen = personNachName(rest) || praesenzNachName(rest);
-      if (!wen) return systemZeile("„" + rest + "“ ist gerade nirgends zu finden.");
-      zustand.eingeladen[wen.id] = true;
-      postSenden(wen.id, { art: "einladung", raum: zustand.raum, zeit: Date.now() });
-      return systemZeile("Eingeladen: " + wen.name + ". Eine Einladung ist keine Frage mit "
-        + "Ja und Nein — sie macht den Raum für " + wen.name + " auf. Hereinkommen "
-        + wen.name + " muss selbst.");
+      if (!rest) { freundeZeigen(); return true; }
+      var name_ = rest.trim();
+      var wen = personNachName(name_) || praesenzNachName(name_);
+      if (wen) {
+        zustand.eingeladen[wen.id] = true;
+        postSenden(wen.id, { art: "einladung", raum: zustand.raum, zeit: Date.now() });
+        return systemZeile("Eingeladen: " + wen.name + ". Eine Einladung ist keine Frage mit "
+          + "Ja und Nein — sie macht den Raum für " + wen.name + " auf. Hereinkommen "
+          + wen.name + " muss selbst.");
+      }
+      einladungInsPostfach(name_);
+      return true;
     }
     if (art === "f") {
       if (!rest) return systemZeile("So geht es:  /f Nickname");
@@ -5993,6 +6085,22 @@ window.LiveChat = (function () {
       return noteGeben(zz.id, zahl, wofuer).ok;
     }
 
+    /* ---- Fokus-Modus an oder aus ----
+       „Der Fokus-Modus … den Livestream-Modus nehmen wir nur zum
+       freien Quatschen." Also zwei Betriebsarten, ein Schalter. */
+    if (art === "fokus") {
+      var willAn = fokusAn();
+      if (/^(an|ein|ja)$/i.test(rest.trim())) willAn = true;
+      else if (/^(aus|nein|weg|frei)$/i.test(rest.trim())) willAn = false;
+      else willAn = !fokusAn();
+      fokusSetzen(willAn);
+      melden();
+      return systemZeile(willAn
+        ? "🎧 Fokus-Modus an — solange jemand spricht, nimmt niemand sonst auf. "
+          + "Geschrieben werden darf jederzeit."
+        : "🗣️ Fokus-Modus aus — alle dürfen durcheinander reden (freies Quatschen).");
+    }
+
     /* ---- Wie der eigene Platz beim Sprechen aussieht ---- */
     if (art === "sprechbild") {
       var wahl = rest.trim().toLowerCase();
@@ -6182,6 +6290,105 @@ window.LiveChat = (function () {
     });
     return Object.keys(raeume).map(function (r) { return raeume[r]; })
       .sort(function (a, b) { return b.leute.length - a.leute.length; });
+  }
+
+  /* =========================================================
+     DIE EINLADUNG INS POSTFACH
+     ---------------------------------------------------------
+     Sie geht ueber das KONTO (Backend), nicht ueber die
+     Leitung — die gibt es fuer eine Person, die gerade nicht
+     da ist, ja nicht. Und sie geht nur an Leute, die wirklich
+     nicht erreichbar sind: wer schon in einem Raum sitzt,
+     bekommt keine Post, sondern wird direkt gerufen.
+
+     Der Link in der Nachricht traegt den Raum (#raum=…), damit
+     ein Tipp im Postfach genau HIERHIN fuehrt und nicht auf
+     die Startseite.
+     ========================================================= */
+  function einladungInsPostfach(name) {
+    var B = window.Backend;
+    if (!B || !B.searchUsers || !B.sendPrivateMessage) {
+      systemZeile("„" + name + "“ ist gerade nirgends zu finden, und das Postfach steht hier nicht zur Verfügung.");
+      return;
+    }
+    if (!B.currentUser || !B.currentUser()) {
+      systemZeile("Zum Einladen per Postfach musst du angemeldet sein.");
+      return;
+    }
+    systemZeile("Suche „" + name + "“ …");
+    B.searchUsers(name).then(function (treffer) {
+      var liste = (treffer || []).filter(function (t) { return t && t.id && t.name; });
+      if (!liste.length) {
+        systemZeile("Es gibt niemanden mit dem Namen „" + name + "“. "
+          + "Schreib den Namen so, wie er im Profil steht — Gross- und Kleinschreibung ist egal.");
+        return;
+      }
+      /* Mehrere Treffer: dann erst fragen. Eine Einladung an die
+         falsche Person kann man nicht zurueckholen. */
+      var genau = liste.filter(function (t) {
+        return String(t.name).toLowerCase() === name.toLowerCase();
+      });
+      if (genau.length !== 1 && liste.length > 1) {
+        systemZeile("Mehrere passen: " + liste.map(function (t) { return t.name; }).join(", ")
+          + "\nSchreib den Namen genau aus:  /i " + liste[0].name);
+        return;
+      }
+      var ziel = genau[0] || liste[0];
+      /* Sitzt die Person schon irgendwo? Dann kein Brief. */
+      var drin = false;
+      Object.keys(praesenzDa).forEach(function (id) {
+        var e = praesenzDa[id];
+        if (e && e.raum && String(e.name || "").toLowerCase() === String(ziel.name).toLowerCase()) drin = true;
+      });
+      if (drin) {
+        systemZeile(ziel.name + " ist gerade selbst in einem Raum — da braucht es keinen Brief. "
+          + "Mit  /f " + ziel.name + "  gehst du hin.");
+        return;
+      }
+      var link = adresseMitRaum(zustand.raum);
+      var text = "🔔 " + zustand.ichName + " lädt dich ins Klassenzimmer ein"
+        + (zustand.raum !== HAUPTRAUM ? " — in „" + raumKlartext(zustand.raum) + "“" : "")
+        + ".\n\nHier geht es direkt hinein:\n" + link
+        + "\n\nWenn du gerade keine Zeit hast, ist das auch in Ordnung — die Einladung bleibt stehen.";
+      return B.sendPrivateMessage(ziel.id, text, null).then(function () {
+        systemZeile("✉️ " + ziel.name + " war nicht da — die Einladung liegt jetzt im Postfach, mit Link hierher.");
+      });
+    }).catch(function (e) {
+      systemZeile("Das ging nicht: " + ((e && e.message) || "unbekannter Fehler"));
+    });
+  }
+
+  /* Wer alles mit einem Tipp eingeladen werden koennte: die
+     Freunde. „Wenn ich /i mache, moechte ich meine Freunde
+     angezeigt bekommen." Wer gerade in einem Raum ist, steht mit
+     einem Punkt da — den lade ich direkt ein, nicht per Post. */
+  function freundeZeigen() {
+    var B = window.Backend;
+    var hier = {};
+    Object.keys(praesenzDa).forEach(function (id) {
+      var e = praesenzDa[id];
+      if (e && e.raum) hier[String(e.name || "").toLowerCase()] = e.raum;
+    });
+    if (!B || !B.getFriends || !B.currentUser || !B.currentUser()) {
+      systemZeile("So geht es:  /i Nickname\n"
+        + "Wer gerade da ist, wird sofort gerufen; wer nicht da ist, bekommt die Einladung ins Postfach.");
+      return;
+    }
+    B.getFriends().then(function (freunde) {
+      var liste = (freunde || []).filter(function (f) { return f && f.name; });
+      if (!liste.length) {
+        systemZeile("Du hast noch niemanden in deiner Freundesliste. "
+          + "Einladen geht trotzdem:  /i Nickname");
+        return;
+      }
+      systemZeile("Deine Freunde — mit  /i Name  einladen:\n"
+        + liste.map(function (f) {
+            var wo = hier[String(f.name).toLowerCase()];
+            return "  /i " + f.name + (wo ? "   \u25cf ist gerade da" : "   ✉️ bekommt Post");
+          }).join("\n"));
+    }).catch(function () {
+      systemZeile("So geht es:  /i Nickname");
+    });
   }
 
   function praesenzNachName(name) {
@@ -6436,6 +6643,10 @@ window.LiveChat = (function () {
     liveNaechste: liveNaechste,
     liveOffen: liveOffen,
     liveMelden: liveMelden,
+    liveLaeuft: liveLaeuft,
+    darfSprechen: darfSprechen,
+    fokusAn: fokusAn,
+    fokusSetzen: fokusSetzen,
     liveMitschrieb: liveMitschrieb,
     einsatzPing: einsatzPing,
     freisprechenAn: freisprechenAn,

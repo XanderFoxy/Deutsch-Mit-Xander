@@ -8201,3 +8201,33 @@ body.lc-schreibt .tutor-reiter {
   .lc-schallt { animation: none; }
   .lc-schallt::after { display: none; }
 }
+
+/* =================================================================
+   SPRACHNACHRICHTEN SIND ZU, BIS MAN SIE BRAUCHT
+   -----------------------------------------------------------------
+   GEMELDET: „Ich finde immer noch nicht den Modus, wie man im Chat
+   die Sprachnachrichten versteckt sieht. Ich sehe immer noch alles,
+   was ich schicke … Das soll nur sichtbar sein, wenn man es
+   aufgeklappt hat, um sich das Gesagte noch mal anzuhören
+   beziehungsweise um es herunterladen zu können."
+
+   Zu = eine schmale Zeile mit einem Pfeil. Auf = Tonbalken und
+   Herunterladen-Pfeil. Der Ton läuft in beiden Fällen über die
+   Warteschlange; das Aufklappen ist nur zum Nachhören da.
+   ================================================================= */
+.lc-zeile.lc-sprach-zu { cursor: pointer; }
+.lc-zeile.lc-sprach-zu .lc-sprachblase,
+.lc-zeile.lc-sprach-zu .lc-sprach-holen { display: none; }
+.lc-zeile.lc-sprach-zu .lc-zeilentext::after {
+  content: " ▸";
+  opacity: 0.55;
+  font-size: 0.8em;
+}
+.lc-zeile:not(.lc-sprach-zu) .lc-zeilentext::after { content: ""; }
+
+/* --- Der Fokus: „zuhören, dann bist du dran" --- */
+.lc-live-leiste.lc-live-fokus {
+  border-left: 3px solid #ffce55;
+  padding-left: 7px;
+}
+.lc-live-warte { opacity: 0.85; }

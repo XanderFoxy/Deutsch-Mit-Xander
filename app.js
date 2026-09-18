@@ -2786,6 +2786,46 @@
               Relais läuft nur, was nicht direkt durchkommt.</li>
           </ol>
         </details>
+        <!-- =========================================================
+             DIE BREMSE — ES DARF NIE ETWAS ABGERECHNET WERDEN
+             ---------------------------------------------------------
+             GEWUENSCHT: „Ich moechte es so haben, dass es niemals die
+             Grenze ueberschreitet, dass mir niemals weitere Gigabyte
+             angerechnet werden koennen … das musst du so einstellen,
+             dass dann wirklich Schluss ist."
+
+             Ehrlich: die Seite SIEHT den echten Verbrauch nicht — den
+             kennt nur Cloudflare. Gerechnet wird deshalb im
+             SCHLIMMSTEN FALL: jede ausgegebene Berechtigung gilt zwei
+             Stunden; liefe sie die ganze Zeit mit voller Sprachrate
+             in beide Richtungen, waeren das 72 MB. So viel wird
+             gebucht. In Wirklichkeit ist es fast immer ein Bruchteil.
+             Die Bremse greift damit immer zu frueh und nie zu spaet.
+             ========================================================= -->
+        ${z && z.budgetGb ? `
+        <div class="question-card" style="margin:0 0 10px; padding:10px;">
+          <p style="margin:0 0 4px; font-weight:700; font-size:0.84rem;">🛑 Deine Bremse</p>
+          <p class="empty-note" style="margin:0 0 6px; font-size:0.76rem;">
+            Höchstens <strong>${z.budgetGb} GB</strong> im Monat. Ist das erreicht, gibt es keine
+            Relais-Daten mehr — das Klassenzimmer verbindet dann direkt weiter (so wie bei den
+            meisten ohnehin) und notfalls im Fokus-Modus mit Sprachnachrichten. Beides kostet nichts.
+          </p>
+          <p class="empty-note" style="margin:0 0 6px; font-size:0.76rem;">
+            Diesen Monat gebucht: <strong>${(z.verbrauchtMbHoechstens || 0).toLocaleString("de-DE")} MB</strong>
+            von ${(z.budgetGb * 1024).toLocaleString("de-DE")} MB
+            (${z.ausgabenDiesenMonat || 0} Ausgaben × ${z.mbJeAusgabe || 72} MB im schlimmsten Fall).
+            Wirklich verbraucht ist fast sicher deutlich weniger.
+          </p>
+          <div class="lc-waehler-reihe" style="gap:6px;">
+            <input type="number" id="relaisBudget" class="challenge-select" min="1" max="900" step="1"
+                   value="${z.budgetGb}" style="max-width:110px;" />
+            <button type="button" class="trophy-chip" id="relaisBudgetBtn">Grenze setzen</button>
+          </div>
+          <p class="empty-note" style="margin:6px 0 0; font-size:0.72rem;">
+            Zur Einordnung: 1 GB reicht rechnerisch für rund 35 Stunden Gespräch zu zweit über das
+            Relais. Cloudflare hat 1.000 GB im Monat frei — mit 1 GB bist du also weit darunter.
+          </p>
+        </div>` : ""}
         <input type="text" id="relaisKennung" class="challenge-select" style="margin-bottom:6px;"
                placeholder="TURN Token ID" autocomplete="off" spellcheck="false" />
         <input type="password" id="relaisToken" class="challenge-select" style="margin-bottom:8px;"
@@ -3294,6 +3334,19 @@
           : gr === "nicht-erlaubt" ? "⚠️ Das darf nur der Betreiber."
           : gr === "kein-json" || gr === "nicht-erreichbar" ? "⚠️ Die Funktion „klassenzimmer“ antwortet nicht. Ist sie in Supabase schon angelegt?"
           : "⚠️ " + gr;
+      }
+    });
+    document.getElementById("relaisBudgetBtn")?.addEventListener("click", async () => {
+      const gb = Number(document.getElementById("relaisBudget")?.value);
+      const box = document.getElementById("relaisBericht");
+      if (!(gb > 0 && gb <= 900)) { if (box) box.textContent = "⚠️ Eine Zahl zwischen 1 und 900."; return; }
+      const a = await LiveChat.relaisRufen({ aktion: "budget-setzen", gb });
+      if (a && a.ok) {
+        relaisStandDaten = null;
+        renderSettings();
+        showToast("🛑 Ab jetzt ist bei " + gb + " GB im Monat Schluss.");
+      } else if (box) {
+        box.textContent = "⚠️ " + ((a && a.fehler) || "ging nicht");
       }
     });
     document.getElementById("relaisTestBtn")?.addEventListener("click", () => { relaisTesten(); });
@@ -21597,7 +21650,12 @@
       } catch (e) {}
     };
     platzMarkieren(true);
+    /* FOKUS-MODUS: solange das hier laeuft, nimmt niemand sonst auf.
+       Die Regel selbst steht in livechat.js (darfSprechen) — hier
+       wird nur angesagt, wer gerade spricht und wann er fertig ist. */
+    if (LiveChat.liveLaeuft) LiveChat.liveLaeuft({ von: w.von, name: w.name });
     const fertig = () => {
+      if (LiveChat.liveLaeuft) LiveChat.liveLaeuft(null);
       platzMarkieren(false);
       lcLiveLaeuft = false;
       lcLiveJetzt = null;
@@ -21674,9 +21732,21 @@
     const offen = (window.LiveChat && LiveChat.liveOffen) ? LiveChat.liveOffen() : 0;
     if (!lcLiveJetzt && !offen) { leiste.hidden = true; leiste.innerHTML = ""; return; }
     leiste.hidden = false;
+    /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
+       Chatzeile stehen hast, wer gerade spricht — das finde ich
+       schoen fuer die Uebersicht, dass die Leute den Respekt auch
+       behalten und sehen, dass da gerade jemand spricht. Sie koennen
+       in dem Moment sowieso nichts machen."
+
+       Deshalb steht jetzt auch DA, dass das Mikrofon so lange
+       wartet — sonst haelt man es fuer einen Fehler. */
+    const gesperrt = lcLiveJetzt && LiveChat.fokusAn && LiveChat.fokusAn()
+      && LiveChat.darfSprechen && !LiveChat.darfSprechen().ja;
+    leiste.classList.toggle("lc-live-fokus", Boolean(gesperrt));
     leiste.innerHTML = lcLiveJetzt
       ? `<span class="lc-live-punkt"></span><strong>${escapeHtml(lcLiveJetzt.name || "Jemand")}</strong> spricht`
         + (offen ? ` <em>· noch ${offen} in der Reihe</em>` : "")
+        + (gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "")
       : `<em>${offen} Wortmeldung${offen === 1 ? "" : "en"} in der Reihe …</em>`;
   }
 
@@ -23329,6 +23399,28 @@
                auch fuer die eigene Quittung. */
             const gehoertDerReihe = (art === "live" || art === "quittung");
             if (gehoertDerReihe) lcSprachGehoert.add(n.id);
+            /* =========================================================
+               ZUGEKLAPPT, BIS MAN SIE BRAUCHT
+               ---------------------------------------------------------
+               GEMELDET: „Ich finde immer noch nicht den Modus, wie man
+               im Chat die Sprachnachrichten versteckt sieht. Ich sehe
+               immer noch alles, was ich schicke … Diese Sachen sollen
+               nicht sichtbar sein, wenn man spricht. Das soll nur
+               sichtbar sein, wenn man es aufgeklappt hat."
+
+               Er hat recht, und es war meine Zeile: die Quittung
+               („Abgeschickt · 2 Sekunden · …") stand mit Tonbalken und
+               Herunterladen-Pfeil voll ausgeschrieben da. Jetzt ist sie
+               zu — eine schmale Zeile, ein Tipp klappt sie auf. Dann
+               erst kommen Abspielen und Herunterladen. */
+            if (art === "quittung" || art === "live") {
+              z.classList.add("lc-sprach-zu");
+              z.title = "Antippen — anhören oder herunterladen";
+              z.addEventListener("click", (e) => {
+                if (e.target.closest(".lc-sprachblase, .lc-sprach-holen, .lc-benoten, .lc-notenwahl")) return;
+                z.classList.toggle("lc-sprach-zu");
+              });
+            }
             if (frisch && !lcSprachGehoert.has(n.id)) {
               lcSprachGehoert.add(n.id);
               /* Eine Sprachnachricht ist kein Effektgeraeusch: sie

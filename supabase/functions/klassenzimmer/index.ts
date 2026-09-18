@@ -58,6 +58,42 @@ const TAGESGRENZE = 60;
    dass ein abgefangener Wert schnell wertlos ist. */
 const GUELTIG_SEKUNDEN = 2 * 60 * 60;
 
+/* =========================================================
+   DIE BREMSE — ES DARF NIE ETWAS ABGERECHNET WERDEN
+   ---------------------------------------------------------
+   GEWUENSCHT: „Ich moechte es so haben, dass es niemals die
+   Grenze ueberschreitet, dass mir niemals weitere Gigabyte
+   angerechnet werden koennen. Ich moechte dafuer nichts
+   bezahlen — das musst du so einstellen, dass dann wirklich
+   Schluss ist."
+
+   Ehrlich gesagt: diese Funktion SIEHT den echten Verbrauch
+   nicht. Wie viele Bytes durch das Relais laufen, weiss
+   Cloudflare, nicht wir. Was wir aber koennen — und was fuer
+   „niemals ueberschreiten" auch das Richtige ist —, ist im
+   SCHLIMMSTEN FALL zu rechnen:
+
+     Jede ausgegebene Zugangsberechtigung gilt zwei Stunden.
+     Liefe sie die ganze Zeit mit voller Sprachrate in beide
+     Richtungen, waeren das
+       40 kbit/s * 2 Richtungen * 7200 s = 72 MB.
+     Mehr kann eine einzelne Ausgabe nicht verursachen.
+
+   Also wird jede Ausgabe mit 72 MB gebucht. In Wirklichkeit
+   ist es fast immer ein Bruchteil davon: die meisten
+   Verbindungen kommen ohne Relais aus, und wer schweigt,
+   sendet fast nichts (DTX). Die Bremse greift damit IMMER zu
+   frueh und nie zu spaet — und genau so ist es gemeint.
+
+   Ist das Monatsbudget aufgebraucht, gibt es keine Relais-
+   Daten mehr. Das Klassenzimmer laeuft dann ohne Relais
+   weiter (direkt, wie bei den meisten ohnehin) und notfalls
+   im Fokus-Modus mit Sprachnachrichten — der kostet nichts,
+   er laeuft ueber Supabase.
+   ========================================================= */
+const MB_JE_AUSGABE = 72;
+const BUDGET_STANDARD_GB = 1;
+
 const KOPF = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -85,10 +121,29 @@ async function geheimnisse() {
   const { data } = await dienst()
     .from("betreiber_geheimnisse")
     .select("schluessel, wert")
-    .in("schluessel", ["cf_turn_id", "cf_turn_token"]);
+    .in("schluessel", ["cf_turn_id", "cf_turn_token", "turn_budget_gb"]);
   const m: Record<string, string> = {};
   (data || []).forEach((z: { schluessel: string; wert: string }) => { m[z.schluessel] = z.wert; });
-  return { kennung: m["cf_turn_id"] || "", token: m["cf_turn_token"] || "" };
+  const budget = Number(m["turn_budget_gb"]);
+  return {
+    kennung: m["cf_turn_id"] || "",
+    token: m["cf_turn_token"] || "",
+    budgetGb: Number.isFinite(budget) && budget > 0 ? budget : BUDGET_STANDARD_GB,
+  };
+}
+
+/* Was im laufenden Monat schon gebucht wurde — im schlimmsten
+   Fall gerechnet (siehe oben). Gezaehlt werden die Ausgaben
+   ALLER Personen zusammen; es ist ja eine Rechnung. */
+async function monatsverbrauch() {
+  const jetzt = new Date();
+  const ab = jetzt.getFullYear() + "-" + String(jetzt.getMonth() + 1).padStart(2, "0") + "-01";
+  const { data } = await dienst()
+    .from("turn_nutzung")
+    .select("anfragen")
+    .gte("tag", ab);
+  const ausgaben = (data || []).reduce((a: number, z: { anfragen: number }) => a + (z.anfragen || 0), 0);
+  return { ausgaben, mb: ausgaben * MB_JE_AUSGABE };
 }
 
 /* Bei Cloudflare kurzlebige Zugangsdaten holen.
@@ -147,7 +202,8 @@ Deno.serve(async (anfrage: Request) => {
      Gibt NIE einen Schluessel zurueck, nur ob einer da ist.
      ======================================================= */
   if (aktion === "stand") {
-    const { kennung, token: tok } = await geheimnisse();
+    const { kennung, token: tok, budgetGb } = await geheimnisse();
+    const verbrauch = await monatsverbrauch();
     const { data: profil } = await sb.from("profiles").select("is_owner").eq("id", nutzer.id).maybeSingle();
     return json({
       relaisDa: Boolean(kennung && tok),
@@ -159,15 +215,39 @@ Deno.serve(async (anfrage: Request) => {
       betreiber: Boolean(profil?.is_owner),
       gueltigSekunden: GUELTIG_SEKUNDEN,
       tagesgrenze: TAGESGRENZE,
+      /* Damit der Betreiber SIEHT, wie weit die Bremse steht.
+         „hoechstens" ist woertlich zu nehmen: mehr kann es nicht
+         geworden sein, weniger fast sicher. */
+      budgetGb: budgetGb,
+      verbrauchtMbHoechstens: verbrauch.mb,
+      ausgabenDiesenMonat: verbrauch.ausgaben,
+      mbJeAusgabe: MB_JE_AUSGABE,
     });
   }
 
   /* =======================================================
      B) SCHLUESSEL EINTRAGEN ODER LOESCHEN — nur der Betreiber
      ======================================================= */
-  if (aktion === "schluessel-setzen" || aktion === "schluessel-loeschen") {
+  if (aktion === "schluessel-setzen" || aktion === "schluessel-loeschen"
+      || aktion === "budget-setzen") {
     const { data: profil } = await sb.from("profiles").select("is_owner").eq("id", nutzer.id).maybeSingle();
     if (!profil?.is_owner) return json({ fehler: "nicht-erlaubt" }, 403);
+
+    /* Die Bremse enger oder weiter stellen. Sie steht bewusst in
+       derselben Tuer wie die Schluessel: beides darf nur der
+       Betreiber, und beides wird an der Datenbank geprueft, nicht
+       an dem, was der Browser behauptet. */
+    if (aktion === "budget-setzen") {
+      const gb = Number(koerper.gb);
+      if (!Number.isFinite(gb) || gb <= 0 || gb > 900) {
+        return json({ fehler: "budget-unsinnig" }, 400);
+      }
+      await sb.from("betreiber_geheimnisse").upsert([
+        { schluessel: "turn_budget_gb", wert: String(gb),
+          geaendert_am: new Date().toISOString(), geaendert_von: nutzer.id },
+      ], { onConflict: "schluessel" });
+      return json({ ok: true, budgetGb: gb });
+    }
 
     if (aktion === "schluessel-loeschen") {
       await sb.from("betreiber_geheimnisse").delete().in("schluessel", ["cf_turn_id", "cf_turn_token"]);
@@ -196,8 +276,21 @@ Deno.serve(async (anfrage: Request) => {
      ======================================================= */
   if (aktion !== "zugang") return json({ fehler: "unbekannte-aktion" }, 400);
 
-  const { kennung, token: tok } = await geheimnisse();
+  const { kennung, token: tok, budgetGb } = await geheimnisse();
   if (!kennung || !tok) return json({ fehler: "kein-relais" }, 503);
+
+  /* DIE BREMSE. Sie steht VOR allem anderen: lieber kein Relais
+     als eine Rechnung. Was danach passiert, entscheidet die Seite —
+     sie verbindet dann direkt oder geht in den Fokus-Modus, und
+     beides kostet nichts. */
+  const verbrauch = await monatsverbrauch();
+  if (verbrauch.mb + MB_JE_AUSGABE > budgetGb * 1024) {
+    return json({
+      fehler: "budget-erschoepft",
+      budgetGb,
+      verbrauchtMbHoechstens: verbrauch.mb,
+    }, 429);
+  }
 
   /* Tagesgrenze — eine eigene Zeile je Tag und Person. */
   const tag = new Date().toISOString().slice(0, 10);
