@@ -49,28 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19k — Blase, Kopfzeile, Sprechmarke",
+  stand: "Runde 19l — nichts kommt mehr doppelt, und wer spaeter kommt hoert das Letzte",
 
   inArbeit: [
-    { seit: "2026-09-18T20:43",
+    { seit: "2026-09-18T20:51",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:43",
+    { seit: "2026-09-18T20:51",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:43",
+    { seit: "2026-09-18T20:51",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:43",
-      text: "Herunterladen und Zurueckrufen bleiben in der Sprechblase — gemessen bei 360 px Android-Breite, beide vollstaendig darin" },
-    { seit: "2026-09-18T20:43",
-      text: "Beide Symbole sind jetzt gleich gross (25 x 25 px statt 18 und 20) und haben einen eigenen runden Grund; das Zurueckrufen ist rot umrandet" },
-    { seit: "2026-09-18T20:43",
-      text: "Die Kopfzeile bricht nicht mehr ab: aus dem langen Satz wurde „Chat\" plus ein kurzer Zusatz, der auf schmalen Geraeten ganz wegfaellt" },
-    { seit: "2026-09-18T20:43",
-      text: "Die Kopfzeile ist jetzt ein Knopf: antippen zeigt die Sprachnachrichten" },
-    { seit: "2026-09-18T20:43",
-      text: "Waehrend du sprichst steht „🔴 du sprichst\" in der Kopfzeile und sie pulsiert" },
+    { seit: "2026-09-18T20:51",
+      text: "Eine Wortmeldung kommt nie mehr doppelt: gemerkt wird jetzt die KENNUNG fuer die ganze Sitzung, nicht nur ein Fingerabdruck fuer 15 Sekunden" },
+    { seit: "2026-09-18T20:51",
+      text: "Wer den Raum betritt, bekommt die letzte Wortmeldung der Anwesenden nachgereicht — nur an ihn, nur wenn sie frisch ist, und mit einer Zeile, die sagt warum" },
+    { seit: "2026-09-18T20:51",
+      text: "Die Antwortstreifen sind dezenter: nur noch ein schmaler Strich links, keine hinterlegte Flaeche mehr" },
   ],
 };

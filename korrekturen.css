@@ -8099,9 +8099,19 @@ body.lc-schreibt .tutor-reiter {
    sitzt, amber, solange noch geprobt wird. Die Loesung selbst wird
    dabei nie verraten — sonst waere die Aufgabe fuer alle anderen
    vorbei. */
+/* GEMELDET, und er hat es sich waehrend des Schreibens selbst
+   beantwortet: „Jetzt sieht das so ein bisschen abgeteilt aus wie in
+   einem WhatsApp-Chat, wenn sie ploetzlich schreibt, dann sind ihre
+   Nachrichten wie Streifen … ach so, nein, da steht: sie hat
+   geantwortet. Das ist das Probieren, was sie macht."
+   Genau das ist es — aber er hat trotzdem recht, dass es zu laut
+   war. Ein flaechig hinterlegter Block sieht aus wie eine
+   Sprechblase aus einer anderen Anwendung. Die Flaeche ist deshalb
+   raus; geblieben ist ein schmaler Strich am linken Rand. Er sagt
+   dasselbe und stoert den Chat nicht. */
 .lc-versuch { border-left: 3px solid transparent; padding-left: 6px; margin-left: -9px; }
-.lc-versuch-gut   { border-left-color: #7ede8a; background: rgba(126, 222, 138, 0.08); }
-.lc-versuch-offen { border-left-color: #e0964a; background: rgba(224, 150, 74, 0.07); }
+.lc-versuch-gut   { border-left-color: #7ede8a; }
+.lc-versuch-offen { border-left-color: rgba(224, 150, 74, 0.75); }
 .lc-notenwahl {
   display: flex;
   flex-wrap: wrap;

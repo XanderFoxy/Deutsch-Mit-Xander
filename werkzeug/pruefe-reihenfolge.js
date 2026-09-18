@@ -94,5 +94,28 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     console.log("  Fuenf Minuten alte Wortmeldung    : "
       + (reihe.altDrin === 0 ? "kommt gar nicht erst in die Reihe" : "FALSCH — sie waere drin"));
   }
+  /* Dieselbe Kennung darf NIE ein zweites Mal in die Reihe —
+     auch nicht Minuten spaeter.
+     GEMELDET: „Ich hoere ihre Sprachnachrichten ploetzlich doppelt." */
+  const spaeter = await pg.evaluate(() => {
+    if (!window.LiveChat || !LiveChat.pruefEinreihen) return null;
+    const t0 = Date.now();
+    const erste = LiveChat.pruefEinreihen([
+      { id: "abc-1", von: "emmy", zeit: t0, wort: "eins", sprach: "QQQQ", sprachSek: 3 }
+    ]);
+    /* Jetzt dieselbe Aufnahme noch einmal — einmal als „…-selbst",
+       einmal nachgereicht. Beide meinen dasselbe. */
+    const zweite = LiveChat.pruefEinreihen([
+      { id: "abc-1-selbst", von: "emmy", zeit: t0, wort: "eins", sprach: "QQQQ", sprachSek: 3 },
+      { id: "abc-1", von: "emmy", zeit: t0, wort: "eins", sprach: "QQQQ", sprachSek: 3 }
+    ]);
+    return { erste: erste.length, zweite: zweite.length };
+  });
+  if (spaeter) {
+    console.log("");
+    console.log("  Erste Zustellung          -> in der Reihe: " + spaeter.erste);
+    console.log("  Dieselbe Kennung nochmal  -> in der Reihe: " + spaeter.zweite
+      + (spaeter.zweite === 0 ? "  (gar nicht — richtig)" : "  FALSCH — sie kaeme doppelt"));
+  }
   await br.close(); srv.close();
 })();

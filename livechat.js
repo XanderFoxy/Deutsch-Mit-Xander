@@ -2143,6 +2143,7 @@ window.LiveChat = (function () {
          ist zuerst dran, und die anderen sehen, dass es schon
          geschehen ist. */
       verlaufNachreichen(n.von);
+      letzteStimmeNachreichen(n.von);
       /* Wer die kleinere Kennung hat, ruft an. */
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
       melden();
@@ -2374,6 +2375,12 @@ window.LiveChat = (function () {
       if (!n.text && !n.bildImChat && !n.sprach) return;
       if (n.sprach && n.id) {
         try { senden({ art: "sprachda", an: n.von, id: n.id, name: zustand.ichName }); } catch (e) {}
+      }
+      /* Nachgereicht beim Hereinkommen — sagen, warum das jetzt
+         kommt. Ohne Erklaerung haelt man es fuer eine neue Ansage. */
+      if (n.nachhol && n.sprach) {
+        systemZeile("\ud83d\udd01 Die letzte Wortmeldung von " + (n.name || "jemandem")
+          + " — damit du weisst, worum es gerade geht.");
       }
       /* EINE WORTMELDUNG AUS DEM PSEUDO-LIVESTREAM.
          -------------------------------------------------------
@@ -2838,6 +2845,7 @@ window.LiveChat = (function () {
     zustand.stumm = {};
     zustand.gemeldet = {};
     verlaufBekommen = false;
+    liveKennungGehabt = {};        // neuer Raum, neues Gedaechtnis
     verlaufSchonGeschickt = {};
     /* Der Verlauf aus diesem Raum wird MITGEBRACHT, nicht
        weggeworfen — man soll nachlesen können, was geschrieben
@@ -4237,6 +4245,59 @@ window.LiveChat = (function () {
   /* Die eigenen Stuecke, solange jemand nachfragen koennte. */
   var sprachAusgang = {};
 
+  /* WER SPAETER KOMMT, SOLL WENIGSTENS DAS LETZTE HOEREN.
+     -----------------------------------------------------------
+     GEWUENSCHT: „Ich moechte, dass Emmy, wenn sie den Raum betritt,
+     die letzte Nachricht, die ich gesprochen habe, noch mal hoert …
+     falls sie nicht im Raum ist und erst reinkommt."
+
+     Also schickt jeder dem Ankoemmling SEINE letzte eigene
+     Wortmeldung — aber nur, wenn sie frisch ist. Was vor einer
+     Viertelstunde gesagt wurde, hilft niemandem mehr beim
+     Hereinkommen; es steht ohnehin im Chat zum Nachhoeren.
+     Doppelt kommen kann dabei nichts: die Kennung bleibt dieselbe,
+     und liveDoppelt() kennt sie (siehe dort). */
+  var STIMME_NACHREICHEN_MS = 10 * 60 * 1000;
+  function letzteStimmeNachreichen(anId) {
+    if (!anId) return;
+    var mein = null;
+    for (var i = zustand.nachrichten.length - 1; i >= 0; i--) {
+      var m = zustand.nachrichten[i];
+      if (!m || !m.eigen || !m.sprach) continue;
+      mein = m; break;
+    }
+    if (!mein) return;
+    if (Date.now() - (mein.zeit || 0) > STIMME_NACHREICHEN_MS) return;
+    var id = liveKern(mein.id);
+    /* Kurz warten: der Ankoemmling baut gerade seine Oberflaeche auf,
+       und der Verlauf ist ihm wichtiger als der Ton. */
+    setTimeout(function () {
+      var daten = mein.sprach;
+      if (!daten) return;
+      var kopf = { id: id, name: zustand.ichName, zeit: mein.zeit, bild: zustand.ichBild,
+                   farbe: zustand.farbe, farbeName: zustand.farbeName, chatArt: "live",
+                   sprachSek: mein.sprachSek, sprachAb: mein.sprachAb,
+                   sprachDauer: mein.sprachDauer };
+      if (daten.length <= PAKET_BYTES) {
+        senden({ art: "text", text: "", sprach: daten, an: anId, nachhol: true,
+                 id: kopf.id, name: kopf.name, zeit: kopf.zeit, bild: kopf.bild,
+                 farbe: kopf.farbe, chatArt: kopf.chatArt,
+                 sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb,
+                 sprachDauer: kopf.sprachDauer });
+        return;
+      }
+      var anzahl = Math.ceil(daten.length / PAKET_BYTES);
+      var teile = [];
+      for (var k = 0; k < anzahl; k++) {
+        teile.push(daten.slice(k * PAKET_BYTES, (k + 1) * PAKET_BYTES));
+      }
+      sprachAusgang[id] = { teile: teile, kopf: kopf, anzahl: anzahl,
+                            wann: Date.now(), an: anId, nachhol: true };
+      setTimeout(function () { delete sprachAusgang[id]; }, 120000);
+      sprachTeilSchicken(id, 0);
+    }, 2200);
+  }
+
   /* KAM ES AN? EINE EHRLICHE ANTWORT STATT EINER FRAGE.
      -----------------------------------------------------------
      GEMELDET: „Emmy fragt mich staendig, ob ich sie hoere."
@@ -4280,12 +4341,16 @@ window.LiveChat = (function () {
     var a = sprachAusgang[id];
     if (!a || !a.teile[nr]) return;
     var k = a.kopf;
-    senden({ art: "sprachteil", id: id, nr: nr, anzahl: a.anzahl,
-             teil: a.teile[nr],
-             name: k.name, zeit: k.zeit, bild: k.bild,
-             farbe: k.farbe, chatArt: k.chatArt,
-             sprachSek: k.sprachSek, sprachAb: k.sprachAb,
-             sprachDauer: k.sprachDauer });
+    var paket = { art: "sprachteil", id: id, nr: nr, anzahl: a.anzahl,
+                  teil: a.teile[nr],
+                  name: k.name, zeit: k.zeit, bild: k.bild,
+                  farbe: k.farbe, chatArt: k.chatArt,
+                  sprachSek: k.sprachSek, sprachAb: k.sprachAb,
+                  sprachDauer: k.sprachDauer };
+    /* Nachgereichtes geht nur an DEN EINEN, der gerade gekommen ist —
+       alle anderen haben es laengst gehoert. */
+    if (a.an) { paket.an = a.an; paket.nachhol = true; }
+    senden(paket);
   }
 
   /* =========================================================
@@ -4888,12 +4953,32 @@ window.LiveChat = (function () {
      ein Nachzuegler auch dann noch auffaellt, wenn die erste
      Ausfertigung laengst abgespielt wurde. */
   var liveSchonGehabt = [];
+  var liveKennungGehabt = {};        // was je in der Reihe war, dauerhaft
   function liveFingerabdruck(w) {
     return String(w.von) + "|" + String((w.sprach || "").length) + "|"
          + Math.round((Number(w.sprachSek) || 0) * 10);
   }
+  /* Die Kennung OHNE die Anhaengsel: dieselbe Aufnahme heisst einmal
+     „…-selbst" (die eigene Kontrolle), einmal „…-quittung" und einmal
+     schlicht so, wie der Absender sie genannt hat. Gemeint ist immer
+     dieselbe. */
+  function liveKern(id) {
+    return String(id || "").replace(/-selbst$/, "").replace(/-quittung$/, "");
+  }
   function liveDoppelt(w) {
     var jetzt = Date.now();
+    /* ZWEI GEDAECHTNISSE, UND BEIDE BRAUCHT ES.
+       GEMELDET: „Ich hoere ihre Sprachnachrichten ploetzlich doppelt
+       … Ich soll das nur einmal hoeren."
+       Der Fingerabdruck (Absender + Laenge + Dauer) faengt das, was
+       zweimal aufgenommen wurde. Er reicht aber nicht, wenn dieselbe
+       Aufnahme SPAETER noch einmal hereinkommt — etwa, weil Pakete
+       nachgeliefert wurden oder weil sie jemandem beim Betreten
+       nachgereicht wird. Dafuer gibt es die Kennung, und die wird
+       fuer die ganze Sitzung gemerkt: was einmal in der Reihe war,
+       kommt nie wieder hinein. */
+    var kern = liveKern(w.id);
+    if (kern && liveKennungGehabt[kern]) return true;
     liveSchonGehabt = liveSchonGehabt.filter(function (x) { return jetzt - x.wann < 15000; });
     var abdruck = liveFingerabdruck(w);
     var da = liveSchonGehabt.some(function (x) {
@@ -4901,6 +4986,7 @@ window.LiveChat = (function () {
     });
     if (da) return true;
     liveSchonGehabt.push({ abdruck: abdruck, zeit: w.zeit || jetzt, wann: jetzt });
+    if (kern) liveKennungGehabt[kern] = true;
     return false;
   }
 
