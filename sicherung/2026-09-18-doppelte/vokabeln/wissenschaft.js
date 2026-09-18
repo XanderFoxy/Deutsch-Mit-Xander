@@ -1099,12 +1099,12 @@ window.DMA_VOKABELN["Wissenschaft & Forschung"] = [
   {"word":"messtechnisch","de":"die Geräte und Verfahren des Messens betreffend","syl":"MESS-tech-nisch","en":"in terms of measurement","example":"Messtechnisch ist das kaum zu erfassen.","level":"C1","theme":"Wissenschaft & Forschung"},
   {"word":"forschungsnah","de":"eng mit der wissenschaftlichen Arbeit verbunden","syl":"FOR-schungs-nah","en":"research-oriented","example":"Der Unterricht ist hier sehr forschungsnah.","level":"C1","theme":"Wissenschaft & Forschung"},
   /* Nachtrag aus den Tagestexten: kleine Woerter, Vornamen, Luecken (alt: teil-7.js) — 6 Eintraege. */
-  
-  
-  
-  
-  
-  
+  {"word": "die Abhandlung", "de": "ein längerer wissenschaftlicher Text über ein Thema", "syl": "AB-hand-lung", "en": "treatise, essay", "example": "Er veröffentlichte eine Abhandlung über das Licht.", "level": "C1", "theme": "Wissenschaft & Forschung"},
+  {"word": "die Anthropologie", "de": "die Wissenschaft vom Menschen", "syl": "An-thro-po-lo-GIE", "en": "anthropology", "example": "Die Anthropologie fragt, was den Menschen ausmacht.", "level": "C1", "theme": "Wissenschaft & Forschung"},
+  {"word": "die Astrophysik", "de": "die Wissenschaft von den Sternen und ihrer Physik", "syl": "As-tro-phy-SIK", "en": "astrophysics", "example": "Die Astrophysik erklärt, wie Sterne entstehen.", "level": "C1", "theme": "Wissenschaft & Forschung"},
+  {"word": "die Astrologie", "de": "die Deutung des Schicksals aus den Sternen — keine Wissenschaft", "syl": "As-tro-lo-GIE", "en": "astrology", "example": "Astrologie und Astronomie sind nicht dasselbe.", "level": "B2", "theme": "Wissenschaft & Forschung"},
+  {"word": "das Germanium", "de": "ein chemisches Element, benannt nach Germania", "syl": "Ger-MA-ni-um", "en": "germanium", "example": "Germanium war das Material der ersten Transistoren.", "level": "C1", "theme": "Wissenschaft & Forschung"},
+  {"word": "die Ammoniaksynthese", "de": "das Herstellen von Ammoniak aus Luftstickstoff — die Grundlage des Kunstdüngers", "syl": "Am-mo-NI-ak-syn-the-se", "en": "ammonia synthesis", "example": "Die Ammoniaksynthese veränderte die Landwirtschaft.", "level": "C1", "theme": "Wissenschaft & Forschung"},
   /* Nachtrag aus den Lesetexten: fehlende Woerter mit Erklaerung (alt: teil-8.js) — 57 Eintraege. */
   {"word": "ableitbar", "de": "so, dass man es aus etwas anderem folgern kann", "syl": "AB-leit-bar", "en": "derivable", "example": "Aus dem Satz ist die Regel direkt ableitbar.", "level": "C1", "theme": "Wissenschaft & Forschung"},
   {"word": "abweichen", "de": "anders sein als das Übliche", "syl": "AB-wei-chen", "en": "to deviate", "example": "Die Zahlen weichen von der Schätzung ab.", "level": "B2", "theme": "Wissenschaft & Forschung"},

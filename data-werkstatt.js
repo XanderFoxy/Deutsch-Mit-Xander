@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 59 — Sprachnachrichten",
+  stand: "Runde 60 — Toene, Regen, Ticker, Woerterbuch geprueft",
 
   inArbeit: [
-    { seit: "2026-09-18T02:31",
-      text: "Medienserver/SFU: brauche von dir einen Cloudflare-Zugang" },
-    { seit: "2026-09-18T02:31",
-      text: "Alle Animationen brauchen Toene in voller Laenge" },
-    { seit: "2026-09-18T02:31",
-      text: "Der Tyrannosaurus sieht aus wie ein Klops — neu zeichnen" },
+    { seit: "2026-09-18T03:58",
+      text: "Medienserver: brauche von dir den Cloudflare-Zugang" },
+    { seit: "2026-09-18T03:58",
+      text: "Tyrannosaurus: mein Neuentwurf war schlechter, Original bleibt" },
+    { seit: "2026-09-18T03:58",
+      text: "3286 Woerter brauchen ein menschliches Auge (Liste liegt bereit)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T02:31",
-      text: "Sprachnachrichten: halten, sprechen, loslassen — sofort bei allen hoerbar" },
-    { seit: "2026-09-18T02:31",
-      text: "Fluechtig: nichts in der Tabelle, nichts im Geraet" },
-    { seit: "2026-09-18T02:31",
-      text: "Professionelle Stimme zurueck im Woerterbuch, Trainer und Bilderwelten" },
+    { seit: "2026-09-18T03:58",
+      text: "Woerterbuch gegen igerman98 geprueft: 36367 von 39653 belegt" },
+    { seit: "2026-09-18T03:58",
+      text: "14 beweisbare Doppelungen entfernt, sonst nichts angefasst" },
+    { seit: "2026-09-18T03:58",
+      text: "Jede Animation hat einen Ton in voller Laenge" },
   ],
 };

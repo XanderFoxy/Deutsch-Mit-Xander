@@ -1056,13 +1056,13 @@ window.DMA_VOKABELN["Wirtschaft & Arbeit"] = [
   {"word":"akquirieren","de":"neue Kunden oder Aufträge gewinnen","syl":"ak-qui-RIE-ren","en":"to acquire clients","example":"Er akquiriert seit Monaten neue Kunden.","level":"C1","theme":"Wirtschaft & Arbeit"},
   {"word":"abbauen","de":"eine Zahl oder einen Bestand schrittweise verringern","syl":"AB-bau-en","en":"to reduce","example":"Der Konzern baut hundert Stellen ab.","level":"B2","theme":"Wirtschaft & Arbeit"},
   /* Nachtrag aus den Tagestexten: kleine Woerter, Vornamen, Luecken (alt: teil-7.js) — 7 Eintraege. */
-  
-  
-  
-  
-  
-  
-  
+  {"word": "der Abbau", "de": "das Abtragen oder Verringern von etwas; auch das Herausholen von Rohstoffen", "syl": "AB-bau", "en": "dismantling; mining", "example": "Der Abbau der Mauer dauerte Monate.", "level": "B1", "theme": "Wirtschaft & Arbeit"},
+  {"word": "die Abwertung", "de": "das Herabsetzen des Werts — von Geld oder von Menschen", "syl": "AB-wer-tung", "en": "devaluation; disparagement", "example": "Die Abwertung der Währung traf die Sparer.", "level": "B2", "theme": "Wirtschaft & Arbeit"},
+  {"word": "die Anwerbung", "de": "das gezielte Gewinnen von Arbeitskräften", "syl": "AN-wer-bung", "en": "recruitment", "example": "Die Anwerbung begann 1955 in Italien.", "level": "B2", "theme": "Wirtschaft & Arbeit"},
+  {"word": "der Achtstundentag", "de": "der Arbeitstag von acht Stunden, ein Ziel der Arbeiterbewegung", "syl": "ACHT-stun-den-tag", "en": "eight-hour day", "example": "Der Achtstundentag kam 1918.", "level": "B2", "theme": "Wirtschaft & Arbeit"},
+  {"word": "die Arbeitswelt", "de": "alles, was mit Arbeit und ihren Bedingungen zu tun hat", "syl": "AR-beits-welt", "en": "world of work", "example": "Die Arbeitswelt verändert sich schnell.", "level": "B1", "theme": "Wirtschaft & Arbeit"},
+  {"word": "die Verflechtung", "de": "das enge Ineinandergreifen von Dingen oder Interessen", "syl": "Ver-FLECH-tung", "en": "interweaving", "example": "Die wirtschaftliche Verflechtung macht Krieg teuer.", "level": "C1", "theme": "Wirtschaft & Arbeit"},
+  {"word": "die Wirtschaftsgemeinschaft", "de": "ein Zusammenschluss von Staaten zum gemeinsamen Wirtschaften", "syl": "WIRT-schafts-ge-mein-schaft", "en": "economic community", "example": "Die Europäische Wirtschaftsgemeinschaft war der Vorläufer der EU.", "level": "C1", "theme": "Wirtschaft & Arbeit"},
   /* Nachtrag aus den Lesetexten: fehlende Woerter mit Erklaerung (alt: teil-8.js) — 97 Eintraege. */
   {"word": "die AEG", "de": "ein früher sehr großer deutscher Elektrokonzern", "syl": "a-e-G", "en": "AEG (German electrical company)", "example": "Die AEG baute in Berlin ganze Fabrikviertel.", "level": "C1", "theme": "Wirtschaft & Arbeit"},
   {"word": "anwerben", "de": "Leute holen, damit sie für einen arbeiten", "syl": "AN-wer-ben", "en": "to recruit", "example": "Deutschland begann, Arbeiter im Ausland anzuwerben.", "level": "B2", "theme": "Wirtschaft & Arbeit"},

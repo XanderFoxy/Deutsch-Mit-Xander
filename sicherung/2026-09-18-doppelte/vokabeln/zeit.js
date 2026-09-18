@@ -1055,7 +1055,7 @@ window.DMA_VOKABELN["Zeit & Kalender"] = [
   {"word":"die Stundenangabe","de":"Angabe darüber, wie viele Stunden etwas dauert","syl":"STUN-den-an-ga-be","en":"time in hours","example":"Ohne Stundenangabe kann ich den Aufwand nicht schätzen.","level":"B2","theme":"Zeit & Kalender"},
   {"word":"die Zeitschiene","de":"festgelegter Ablauf mit Zeitpunkten für jeden Schritt","syl":"ZEIT-schie-ne","en":"timeline","example":"Für den Umbau gibt es eine klare Zeitschiene.","level":"C1","theme":"Zeit & Kalender"},
   /* Nachtrag aus den Tagestexten: kleine Woerter, Vornamen, Luecken (alt: teil-7.js) — 1 Eintraege. */
-  
+  {"word": "die Lebzeiten", "de": "die Zeit, in der jemand lebte", "syl": "LEB-zei-ten", "en": "lifetime", "example": "Zu Lebzeiten wurde er kaum beachtet.", "level": "B2", "theme": "Zeit & Kalender"},
   /* Nachtrag aus den Lesetexten: fehlende Woerter mit Erklaerung (alt: teil-8.js) — 36 Eintraege. */
   {"word": "absehbar", "de": "so, dass man das Ende schon erkennen kann", "syl": "AB-seh-bar", "en": "foreseeable", "example": "In absehbarer Zeit wird sich das ändern.", "level": "B2", "theme": "Zeit & Kalender"},
   {"word": "achtzehnte", "de": "die Nummer achtzehn in einer Reihe", "syl": "ACHT-zehn-te", "en": "eighteenth", "example": "Im achtzehnten Jahrhundert entstanden die ersten Zeitungen.", "level": "A2", "theme": "Zeit & Kalender"},
