@@ -1,13 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <style>
-  * { transform-box: fill-box; transform-origin: 50% 50%; }
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; }
-  }
-  .hand { animation: winken 0.8s ease-in-out infinite; transform-origin: 50% 92%; }
-  .str { animation: strich 0.8s ease-in-out infinite; }
-  @keyframes winken { 0%,100%{transform:rotate(-18deg)} 50%{transform:rotate(18deg)} }
-  @keyframes strich { 0%,100%{opacity:.15;transform:translateX(-4px)} 50%{opacity:.9;transform:translateX(3px)} }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  .hand { animation: winken 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 88%; }
+  .str  { animation: strich 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 50%; }
+  @keyframes winken { 0%,100%{transform:rotate(-16deg)} 50%{transform:rotate(16deg)} }
+  @keyframes strich { 0%,100%{opacity:.15; transform:translateX(-4px)} 50%{opacity:.85; transform:translateX(3px)} }
 </style>
-<g class="hand"><path d="M36 108 L36 64 Q36 52 48 52 L82 52 Q94 52 94 64 L94 84 Q94 104 76 112 L52 112 Q40 110 36 108 Z" fill="#f3b57b" stroke="rgba(120,70,30,.4)" stroke-width="2.5" stroke-linejoin="round"/><rect x="40" y="30" width="12" height="34" rx="6" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><rect x="54" y="22" width="12" height="42" rx="6" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><rect x="68" y="26" width="12" height="38" rx="6" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><rect x="82" y="34" width="11" height="30" rx="5.5" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><path d="M36 74 Q22 68 18 78 Q15 90 30 96" fill="#f3b57b" stroke="rgba(120,70,30,.4)" stroke-width="2.5" stroke-linecap="round"/></g><g class="str"><path d="M104 46 q8 6 0 14 M108 36 q14 12 0 30" stroke="#e0964a" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+<path d="M36 110 L66 110 Q69 118 68 120 L34 120 Q33 116 36 110 Z"
+    fill="#6aa6ee" stroke="rgba(40,70,110,.45)" stroke-width="2" stroke-linejoin="round"/>
+<g class="hand">
+  <path d="M40 96 L62 96 Q64 108 63 120 L39 120 Q38 108 40 96 Z"
+    fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M34 72
+      Q25 68 18 72
+      Q11 77 13 84
+      Q16 91 24 89
+      Q32 86 36 79 Z"
+    fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="
+    M28 72
+    Q27 65 33 65
+    L72 65
+    Q77 66 76 75
+    Q75 86 70 96
+    Q65 104 53 104
+    L46 104
+    Q35 104 32 96
+    Q27 85 28 72 Z"
+  fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M33 76 Q29 86 33 99 Q37 103 42 102 Q37 90 38 78 Z"
+    fill="#d89a63" opacity=".45"/>
+  <path d="M33 71 Q30 75 29 80" stroke="rgba(120,70,30,.5)" stroke-width="1.2"
+    fill="none" opacity=".5" stroke-linecap="round"/>
+  <path d="M17 80 Q22 78 27 79" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none"
+    opacity=".45" stroke-linecap="round"/>
+  <g transform="rotate(-14 34 70)"><path d="M28.8 70 L29.9 44.1 A4.1 4.1 0 0 1 38.1 44.1 L39.2 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M30.4 58 Q34 59.4 37.6 58" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M31 49 Q34 50.4 37 49" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
+  <g transform="rotate(-5 46 70)"><path d="M40.6 70 L41.8 40.2 A4.2 4.2 0 0 1 50.2 40.2 L51.4 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M42.2 56.4 Q46 57.8 49.8 56.4" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M42.9 46.2 Q46 47.6 49.1 46.2" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
+  <g transform="rotate(4 58 70)"><path d="M52.9 70 L54 43 A4 4 0 0 1 62 43 L63.1 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M54.4 57.6 Q58 59 61.6 57.6" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M55 48.3 Q58 49.7 61 48.3" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
+  <g transform="rotate(14 69 70)"><path d="M64.6 70 L65.6 49.4 A3.4 3.4 0 0 1 72.4 49.4 L73.4 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M65.9 60.4 Q69 61.8 72.1 60.4" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M66.4 53.2 Q69 54.6 71.6 53.2" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
+  
+  <path d="M35 78 Q43 88 46 101" stroke="rgba(120,70,30,.5)" stroke-width="1.2" fill="none" opacity=".35" stroke-linecap="round"/>
+  <path d="M33 80 Q48 84 72 80" stroke="rgba(120,70,30,.5)" stroke-width="1.1" fill="none" opacity=".28" stroke-linecap="round"/>
+</g>
+<g class="str">
+  <path d="M14 30 Q20 24 26 30 M94 30 Q100 24 106 30" stroke="#f2b84b" stroke-width="3.4"
+    fill="none" stroke-linecap="round"/>
+  <path d="M10 44 Q17 37 24 44 M96 44 Q103 37 110 44" stroke="#f2b84b" stroke-width="3"
+    fill="none" stroke-linecap="round" opacity=".7"/>
+</g>
 </svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<style>
+  * { transform-box: fill-box; transform-origin: 50% 50%; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+  .hand { animation: winken 0.8s ease-in-out infinite; transform-origin: 50% 92%; }
+  .str { animation: strich 0.8s ease-in-out infinite; }
+  @keyframes winken { 0%,100%{transform:rotate(-18deg)} 50%{transform:rotate(18deg)} }
+  @keyframes strich { 0%,100%{opacity:.15;transform:translateX(-4px)} 50%{opacity:.9;transform:translateX(3px)} }
+</style>
+<g class="hand"><path d="M36 108 L36 64 Q36 52 48 52 L82 52 Q94 52 94 64 L94 84 Q94 104 76 112 L52 112 Q40 110 36 108 Z" fill="#f3b57b" stroke="rgba(120,70,30,.4)" stroke-width="2.5" stroke-linejoin="round"/><rect x="40" y="30" width="12" height="34" rx="6" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><rect x="54" y="22" width="12" height="42" rx="6" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><rect x="68" y="26" width="12" height="38" rx="6" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><rect x="82" y="34" width="11" height="30" rx="5.5" fill="#f6c090" stroke="rgba(120,70,30,.4)" stroke-width="2.2"/><path d="M36 74 Q22 68 18 78 Q15 90 30 96" fill="#f3b57b" stroke="rgba(120,70,30,.4)" stroke-width="2.5" stroke-linecap="round"/></g><g class="str"><path d="M104 46 q8 6 0 14 M108 36 q14 12 0 30" stroke="#e0964a" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+</svg>

@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 48 — Sternschnuppen und Regen nach Physik",
+  stand: "Runde 49 — die winkende Hand ist eine Hand",
 
   inArbeit: [
-    { seit: "2026-09-18T00:52",
-      text: "A2 fast fertig (3043 von 3494), danach B1" },
-    { seit: "2026-09-18T00:52",
+    { seit: "2026-09-18T00:54",
+      text: "A2 laeuft noch durch, danach B1" },
+    { seit: "2026-09-18T00:54",
       text: "Jalousie und Hand sollen den Chat wirklich aufreissen" },
-    { seit: "2026-09-18T00:52",
-      text: "Winkende Hand neu zeichnen" },
+    { seit: "2026-09-18T00:54",
+      text: "Bilderwelten: Groessen und verdeckte Dinge" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T00:52",
-      text: "Sternschnuppen: Bahn und Schweif zeigten in verschiedene Richtungen — behoben" },
-    { seit: "2026-09-18T00:52",
-      text: "Alle Bahnen laufen jetzt von EINEM Punkt weg, wie bei einem echten Schwarm" },
-    { seit: "2026-09-18T00:52",
-      text: "Regen: Neigung folgt aus der Bahn statt aus einer zweiten Zufallszahl" },
-    { seit: "2026-09-18T00:52",
-      text: "Nachgemessen: bei 40 Tropfen stimmt der Winkel auf unter 0,6 Grad" },
+    { seit: "2026-09-18T00:54",
+      text: "Winkende Hand neu: gespreizte Finger mit Gelenkfalten, Daumen aus der Flaeche, Aermel" },
+    { seit: "2026-09-18T00:54",
+      text: "Vorher vier gleich breite Rechtecke — derselbe Faeustling wie beim Klatschen" },
   ],
 };
