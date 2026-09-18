@@ -4112,8 +4112,21 @@ window.LiveChat = (function () {
     } catch (e) {}
     return Boolean(zustand.betreiber);
   }
+  /* DIE ZWEITE URSACHE, und sie war ebenso meine:
+     GEMELDET: „Ich werde nicht mehr als Lehrer erkannt in meinem
+     eigenen Klassenzimmer."
+
+     Hier stand „und der Raum ist der HAUPTRAUM". In einem eigenen
+     Raum — und das ist bei ihm der Normalfall — war der Betreiber
+     damit kein Lehrer, sondern nur Haeuptling, und Zensuren und der
+     Ruf zum Unterricht waren gesperrt.
+
+     Seine Ansage war eindeutig: „Generell ich als Betreiber der
+     Seite, egal ob ich das Klassenzimmer verlasse und wieder
+     hereinkomme, sollte immer die Prioritaet und den Rang haben,
+     der Lehrer zu sein." Also ueberall. Es ist seine Seite. */
   function binLehrer() {
-    return Boolean(binBetreiber() && zustand.raum === HAUPTRAUM);
+    return binBetreiber();
   }
   function rangWort(grossAnfang) {
     var w = binLehrer() ? "Lehrer"
@@ -5099,6 +5112,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
+    { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [Text]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
@@ -5167,6 +5181,7 @@ window.LiveChat = (function () {
     cname: "\ud83c\udff7\ufe0f", cschrift: "\u270f\ufe0f", rw: "\u21a9\ufe0f",
     satz: "\ud83e\udde9", wort: "\ud83d\udd20", note: "\ud83d\udccb",
     klassensprecher: "\ud83c\udf93", nachhoeren: "\ud83c\udfa7", weg: "\u21a9\ufe0f", unterricht: "\ud83d\udd14",
+    diagnose: "\ud83d\udd0c",
     fokus: "\ud83c\udfa7",
     leave: "\ud83d\udc4b",
     h: "\u2753"
@@ -6220,13 +6235,18 @@ window.LiveChat = (function () {
        Unterricht zu rufen. Eine Rundmail geht an ALLE und laesst
        sich nicht zurueckholen: deshalb nur der Betreiber, und
        hoechstens alle 30 Minuten. */
+    if (art === "diagnose") return diagnose();
     if (art === "unterricht") {
       if (!binBetreiber()) {
         return systemZeile("Zum Unterricht rufen darf nur der Betreiber.");
       }
       var B_ = konto();
-      if (!B_ || !B_.sendBroadcastMessage) {
-        return systemZeile("Das Postfach steht hier gerade nicht zur Verfügung.");
+      if (!B_) return systemZeile("Das Konto ist nicht geladen. Lade die Seite einmal neu.");
+      if (!B_.currentUser || !B_.currentUser()) {
+        return systemZeile("Zum Rufen musst du angemeldet sein — /diagnose zeigt den Befund.");
+      }
+      if (!B_.sendBroadcastMessage) {
+        return systemZeile("Die Rundmail fehlt in dieser Fassung. /diagnose zeigt, was da ist.");
       }
       var letzteR = 0;
       try { letzteR = Number(localStorage.getItem("dma_unterricht_glocke") || 0); } catch (e) {}
@@ -6501,13 +6521,28 @@ window.LiveChat = (function () {
      die Startseite.
      ========================================================= */
   function einladungInsPostfach(name) {
+    /* EINE ABSAGE MUSS SAGEN, WORAN ES LIEGT.
+       GEMELDET: „Einladen kann ich immer noch nicht." Mit einem
+       pauschalen „steht nicht zur Verfuegung" kann niemand etwas
+       anfangen — ich auch nicht, wenn er es mir weitergibt. Also
+       wird hier Stueck fuer Stueck geprueft und jedes Mal gesagt,
+       WELCHES Stueck fehlt. */
     var B = konto();
-    if (!B || !B.searchUsers || !B.sendPrivateMessage) {
-      systemZeile("„" + name + "“ ist gerade nirgends zu finden, und das Postfach steht hier nicht zur Verfügung.");
+    if (!B) {
+      systemZeile("Das Konto ist auf dieser Seite gerade nicht geladen (backend.js fehlt). "
+        + "Lade die Seite einmal neu.");
       return;
     }
     if (!B.currentUser || !B.currentUser()) {
-      systemZeile("Zum Einladen per Postfach musst du angemeldet sein.");
+      systemZeile("Zum Einladen per Postfach musst du angemeldet sein — "
+        + "im Chat bist du nur mit einem Spitznamen unterwegs.");
+      return;
+    }
+    if (!B.searchUsers) { systemZeile("Die Mitgliedersuche fehlt in dieser Fassung."); return; }
+    if (!B.sendPrivateMessage) { systemZeile("Das Postfach fehlt in dieser Fassung."); return; }
+    if (B.isConfigured && !B.isConfigured()) {
+      systemZeile("Die Datenbank ist nicht eingerichtet — ohne sie gibt es kein Postfach. "
+        + "Im Übungsbetrieb kannst du nur einladen, wer gerade da ist.");
       return;
     }
     systemZeile("Suche „" + name + "“ …");
@@ -6549,8 +6584,38 @@ window.LiveChat = (function () {
         systemZeile("✉️ " + ziel.name + " war nicht da — die Einladung liegt jetzt im Postfach, mit Link hierher.");
       });
     }).catch(function (e) {
-      systemZeile("Das ging nicht: " + ((e && e.message) || "unbekannter Fehler"));
+      systemZeile("Das ging nicht: " + ((e && e.message) || "unbekannter Fehler")
+        + "\n(Wenn das bleibt: /diagnose zeigt, was hier erreichbar ist.)");
     });
+  }
+
+  /* Was ist von hier aus ueberhaupt erreichbar? Ein Befund statt
+     eines Ratens — damit eine Absage nachpruefbar wird. */
+  function diagnose() {
+    var B = konto();
+    var z = [];
+    z.push("🔌 Befund");
+    z.push("  Konto geladen      : " + (B ? "ja" : "NEIN — backend.js fehlt"));
+    if (B) {
+      var an = false;
+      try { an = Boolean(B.currentUser && B.currentUser()); } catch (e) {}
+      z.push("  angemeldet         : " + (an ? "ja" : "nein"));
+      try {
+        z.push("  Datenbank          : "
+          + (B.isConfigured ? (B.isConfigured() ? "eingerichtet" : "NICHT eingerichtet") : "unbekannt"));
+      } catch (e) {}
+      z.push("  Mitgliedersuche    : " + (B.searchUsers ? "da" : "fehlt"));
+      z.push("  Postfach           : " + (B.sendPrivateMessage ? "da" : "fehlt"));
+      z.push("  Rundmail           : " + (B.sendBroadcastMessage ? "da" : "fehlt"));
+      var ow = false;
+      try { ow = Boolean(B.isOwner && B.isOwner()); } catch (e) {}
+      z.push("  Betreiber          : " + (ow ? "ja" : "nein"));
+    }
+    z.push("  dein Rang hier     : " + rangWort(true));
+    z.push("  Raum               : " + zustand.raum + (zustand.raum === HAUPTRAUM ? " (Hauptraum)" : ""));
+    z.push("  Leute im Raum      : " + Object.keys(zustand.leute).length);
+    z.push("  sonst gerade da    : " + Object.keys(praesenzDa).length);
+    return systemZeile(z.join("\n"));
   }
 
   /* Wer alles mit einem Tipp eingeladen werden koennte: die

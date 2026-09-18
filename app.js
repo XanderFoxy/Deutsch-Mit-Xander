@@ -21303,9 +21303,30 @@
     const verlauf = bereich.querySelector("#lcVerlauf");
     if (!verlauf || verlauf.dataset.stimmen === "ja") return;
     verlauf.dataset.stimmen = "ja";
+    /* NUR DAS LEERE — und wirklich nur das.
+       GEMELDET: „Das soll nicht kollidieren damit, dass man sich eine
+       Animation noch mal angucken will und auf eine Zeile klickt,
+       wenn jemand eine Animation geschickt hat."
+
+       Drei Riegel, und jeder hat seinen Grund:
+         1. das Ziel muss der Verlauf SELBST sein — jede Zeile, jedes
+            Bild, jeder Knopf faengt den Tipp vorher ab;
+         2. es darf keine Zeile darunterliegen (elementFromPoint) —
+            eine Zeile, die schmaler ist als der Chat, laesst rechts
+            daneben Luft, und dort liegt trotzdem ihre Zeile;
+         3. es darf kein Ziehen gewesen sein — wer Text markiert,
+            wollte markieren und nicht umschalten. */
+    let vonX = 0, vonY = 0;
+    verlauf.addEventListener("pointerdown", (e) => { vonX = e.clientX; vonY = e.clientY; });
     verlauf.addEventListener("click", (e) => {
-      /* Nur das Leere. Alles, was ein eigenes Ziel hat, behaelt es. */
       if (e.target !== verlauf) return;
+      if (Math.abs(e.clientX - vonX) > 6 || Math.abs(e.clientY - vonY) > 6) return;
+      try {
+        const sel = window.getSelection();
+        if (sel && String(sel).length > 0) return;
+      } catch (x) {}
+      const drunter = document.elementFromPoint(e.clientX, e.clientY);
+      if (drunter && drunter.closest && drunter.closest(".lc-zeile")) return;
       lcStimmenUmschalten(verlauf);
     });
   }
@@ -22039,10 +22060,92 @@
      durch einen Formantfilter, damit es nach Stimme klingt, ohne ein
      Wort zu sein. Egal, was jemand schreit: es klingt gleich.
      ================================================================= */
+  /* =================================================================
+     DER SCHREI WIRD WIRKLICH GESCHRIEN
+     -----------------------------------------------------------------
+     GEFRAGT: „Oder kriegst du das vielleicht sogar hin, dass das
+     System das Wort erkennt und es vorliest — aber so, dass es
+     bedrohlich und dramatisch ist, als wenn man wirklich schreit?
+     Geht so etwas umzusetzen?"
+
+     Ja, und ohne einen Cent: die Sprachausgabe steckt im Browser
+     selbst (speechSynthesis). Sie kann Deutsch, sie kostet nichts,
+     sie braucht kein Konto und keinen Dienst — und weil sie im
+     Geraet laeuft, verlaesst der Text die Seite nicht.
+
+     Bedrohlich wird sie ueber drei Stellschrauben:
+       pitch 0.35  so tief, wie die Stimme kann — das ist der Kern
+       rate  0.78  langsam; Hast klingt nach Panik, nicht nach Drohung
+       volume 1    ganz vorne
+
+     Was sie NICHT kann, und das gehoert dazu: wirklich brüllen. Eine
+     Sprachausgabe hat keine Kehle, sie uebersteuert nicht. Es klingt
+     nach einer dunklen, sehr langsamen Ansage — dramatisch, aber
+     nicht nach einem Menschen, der schreit. Wem das zu wenig ist,
+     der hat weiterhin den gerechneten Hall (ton/schrei.opus), der
+     unter der Stimme mitlaeuft.
+
+     Deutsch wird bewusst gesucht: eine englische Stimme, die einen
+     deutschen Satz liest, klingt nicht bedrohlich, sondern komisch.
+     Findet sich keine, wird nichts gesprochen — lieber gar nicht als
+     falsch. */
+  let lcStimmenGeladen = null;
+  function lcDeutscheStimme() {
+    try {
+      if (!window.speechSynthesis) return null;
+      const alle = window.speechSynthesis.getVoices() || [];
+      if (!alle.length) return null;
+      const deutsch = alle.filter((v) => /^de(-|$)/i.test(v.lang || ""));
+      if (!deutsch.length) return null;
+      /* Eine maennliche Stimme klingt tiefer und traegt die Drohung
+         besser; gibt es keine, tut es jede deutsche. */
+      return deutsch.find((v) => /male|mann|markus|stefan|conrad|klaus/i.test(v.name || ""))
+          || deutsch[0];
+    } catch (e) { return null; }
+  }
+
+  function lcSchreiSprechen(text) {
+    const satz = String(text || "").trim();
+    if (!satz || satz.length > 220) return false;      // ein Schrei ist kurz
+    if (!lcToeneAn()) return false;
+    try {
+      if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
+      const stimme = lcDeutscheStimme();
+      if (!stimme) {
+        /* Die Stimmenliste kommt bei manchen Browsern erst
+           nachtraeglich. Einmal darauf warten und es dann noch
+           einmal versuchen — aber nur einmal, sonst redet es
+           irgendwann von selbst los. */
+        if (lcStimmenGeladen === null && window.speechSynthesis) {
+          lcStimmenGeladen = false;
+          window.speechSynthesis.addEventListener("voiceschanged", () => {
+            lcStimmenGeladen = true;
+          }, { once: true });
+        }
+        return false;
+      }
+      /* Was noch laeuft, wird abgebrochen: zwei Schreie
+         uebereinander sind kein Schrei, sondern Krach. */
+      window.speechSynthesis.cancel();
+      const a = new SpeechSynthesisUtterance(satz);
+      a.voice = stimme;
+      a.lang = stimme.lang || "de-DE";
+      a.pitch = 0.35;
+      a.rate = 0.78;
+      a.volume = 1;
+      window.speechSynthesis.speak(a);
+      return true;
+    } catch (e) { return false; }
+  }
+
   let lcSchallLaeuft = 0;
-  function lcSchallStoss() {
+  function lcSchallStoss(text) {
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
+    /* Erst die Stimme, dann der Hall darunter. Klappt die Stimme
+       nicht (kein Deutsch im Geraet, Ton aus), traegt der Hall
+       allein — man soll nie vor einem stummen Schrei sitzen. */
+    lcSchreiSprechen(text);
     lcGeraeusch("schrei");
     if (!karte) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -22060,7 +22163,7 @@
        ausdrücklich angetippt hat. Dafür fällt die Marke „Vergangenheit"
        weg, sonst hielte die CSS die Animation weiterhin an. */
     zeile.classList.remove("lc-alt");
-    lcSchallStoss();
+    lcSchallStoss(zeile.querySelector(".lc-zeilentext")?.textContent || "");
     zeile.querySelectorAll(".lc-ruf-wort").forEach((w) => {
       const takt = w.style.getPropertyValue("--lc-ruf-takt") || "0s";
       w.style.animation = "none";
@@ -23721,7 +23824,7 @@
            Beides nur, wenn die Zeile GERADE eben entstanden ist —
            was vor dem Betreten geschrieben wurde, ist Vergangenheit
            und bleibt still. Angetippt kommt es wieder. */
-        if (!alt) lcSchallStoss();
+        if (!alt) lcSchallStoss(n.text);
       }
       if (eff) {
         z.dataset.wirkung = eff;

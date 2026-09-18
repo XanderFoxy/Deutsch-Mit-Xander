@@ -825,54 +825,79 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   /* GEMELDET: „Es soll langsamer sein, die Animation, und länger
      anhalten." Also doppelt so lang, und die Wörter kommen in
      grösseren Abständen — der Ruf baut sich auf, statt dazustehen. */
-  animation: lcRufAn 3400ms cubic-bezier(.2, .9, .25, 1.02) both;
+  /* Weich hinein, weich wieder zurueck. Keine Feder, kein
+     Ueberschwingen — ein Schrei schwillt an und klingt ab. */
+  animation: lcRufAn 2600ms cubic-bezier(.33, 0, .2, 1) both;
+  will-change: transform, text-shadow;
 }
-/* Die strahlende Kopie: dasselbe Wort, an derselben Stelle, geht nach
-   aussen auf und verblasst. Nichts fliegt weg — es strahlt. */
-.lc-ruf-wort::after {
-  content: attr(data-wort);
-  position: absolute;
-  left: 0;
-  top: 0;
-  white-space: pre;
-  pointer-events: none;
-  color: inherit;
-  text-shadow: none;
-  transform-origin: 50% 55%;
-  animation: lcRufStrahl 4600ms ease-out both;
-  animation-delay: inherit;
-}
-.lc-ruf-wort::before {
-  content: attr(data-wort);
-  position: absolute;
-  left: 0;
-  top: 0;
-  white-space: pre;
-  pointer-events: none;
-  color: inherit;
-  text-shadow: none;
-  transform-origin: 50% 55%;
-  animation: lcRufStrahl 4600ms ease-out 900ms both;
-}
+/* =================================================================
+   DER SCHREI, NEU GEZEICHNET
+   -----------------------------------------------------------------
+   GEMELDET: „Der Effekt vom Schreien muss überarbeitet werden. Es
+   wirkt überhaupt nicht realistisch. Ausserdem ist die Animation so
+   verschachtelt, sie sieht nicht sauber aus, nicht flüssig, nicht
+   weich. Man sieht die Kante von der Animation."
+
+   Er hat recht, und die Kante war eingebaut: hier standen ZWEI
+   KOPIEN jedes Wortes (::before und ::after mit content:attr), die
+   vergrössert darüberliefen. Vergrösserte Schrift hat harte Ränder —
+   Buchstaben sind Formen, keine Wolken. Deshalb sah man sie.
+
+   Jetzt gibt es keine Kopien mehr. Der Schrei entsteht aus dem, was
+   weich ist: LICHT. Ein Schein um die Buchstaben geht auf und wieder
+   zurück (text-shadow), das Wort atmet dabei ein Stück (scale) und
+   kommt eines nach dem anderen. Nichts wird dupliziert, nichts
+   überlagert, es gibt keine Kante — weil es keine zweite Form gibt.
+
+   Und das Eigentliche macht jetzt der Ton: der Text wird wirklich
+   vorgelesen, tief und langsam (siehe lcSchreiSprechen in app.js).
+   ================================================================= */
 @keyframes lcRufAn {
-  0%   { opacity: 0; transform: scale(.55); letter-spacing: -0.06em; }
-  22%  { opacity: 1; transform: scale(1.20); letter-spacing: 0.06em; }
-  40%  { transform: scale(0.98); letter-spacing: 0.02em; }
-  56%  { transform: scale(1.08); }
-  72%  { transform: scale(1.0); }
-  86%  { transform: scale(1.04); }
-  100% { opacity: 1; transform: scale(1); letter-spacing: 0.03em; }
+  /* Anlauf: das Wort ist schon da, nur noch ohne Kraft. Kein
+     Hereinfliegen — der Text soll von der ersten Sekunde an lesbar
+     sein, es schwillt nur an. */
+  0% {
+    transform: scale(0.94);
+    text-shadow: 0 0 0 rgba(255, 206, 85, 0);
+    filter: brightness(0.9);
+  }
+  /* Der Ausbruch. Das Licht geht weit auf, das Wort wird gross —
+     aber nur um sechs Prozent: mehr und die Zeile beginnt zu
+     wandern, und dann verdeckt sie ihre Nachbarn. */
+  22% {
+    transform: scale(1.06);
+    text-shadow:
+      0 0 7px  color-mix(in srgb, currentColor 85%, transparent),
+      0 0 22px color-mix(in srgb, currentColor 55%, transparent),
+      0 0 44px color-mix(in srgb, currentColor 28%, transparent);
+    filter: brightness(1.35);
+  }
+  /* Und es klingt ab — langsam, ueber den ganzen Rest. Das ist der
+     Teil, der vorher fehlte: ein Schrei hoert nicht auf, er verhallt. */
+  55% {
+    transform: scale(1.015);
+    text-shadow:
+      0 0 5px  color-mix(in srgb, currentColor 45%, transparent),
+      0 0 16px color-mix(in srgb, currentColor 22%, transparent);
+    filter: brightness(1.12);
+  }
+  100% {
+    transform: scale(1);
+    text-shadow: 0 0 10px color-mix(in srgb, currentColor 30%, transparent);
+    filter: brightness(1);
+  }
 }
-@keyframes lcRufStrahl {
-  0%   { opacity: 0;   transform: scale(1);   filter: blur(0); }
-  12%  { opacity: 0.55; }
-  55%  { opacity: 0.28; }
-  100% { opacity: 0;   transform: scale(2.6); filter: blur(6px); }
+/* Alte Browser ohne color-mix bekommen wenigstens den Schein —
+   ohne diese Reserve stuenden die Woerter voellig ohne Glanz da. */
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  @keyframes lcRufAn {
+    0%   { transform: scale(0.94); text-shadow: none; }
+    22%  { transform: scale(1.06); text-shadow: 0 0 20px currentColor; }
+    100% { transform: scale(1);    text-shadow: 0 0 8px currentColor; }
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lc-ruf-wort { animation: none; }
-  .lc-ruf-wort::before,
-  .lc-ruf-wort::after { display: none; }
+  .lc-ruf-wort { animation: none; text-shadow: 0 0 10px currentColor; }
 }
 /* Vergangenheit: was vor dem Betreten geschrieben wurde, steht einfach
    da. Es baut sich nicht noch einmal auf, es strahlt nicht, es wirft
@@ -880,9 +905,9 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    den, der tippt. GEWUENSCHT: „Das ist dann schon Vergangenheit, er
    sieht sie nur, wenn er sie antippt." */
 .lc-alt .lc-ruf-wort { animation: none; opacity: 1; transform: none; }
-.lc-alt .lc-ruf-wort::before,
-.lc-alt .lc-ruf-wort::after { display: none; }
-.lc-alt.lc-zeile-wirkt:hover .lc-ruf-wort::after { display: none; }
+/* (Die beiden Kopien gibt es nicht mehr — siehe „DER SCHREI, NEU
+   GEZEICHNET" weiter oben. Die Regeln, die sie hier abgeschaltet
+   haben, sind damit gegenstandslos und fallen weg.) */
 
 /* Kommen und Gehen — wie im IRC, unaufdringlich */
 .lc-zeile-kommen { grid-template-columns: 2.6em 1fr; }

@@ -68,8 +68,25 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
     const mitBunt = bauen("1", "bunt");
     const buntSchreib = bauen("2", "bunt");
 
+    /* Gibt es die Sprachausgabe — und findet sie Deutsch? */
+    const sprache = {
+      da: Boolean(window.speechSynthesis && window.SpeechSynthesisUtterance),
+      stimmen: (window.speechSynthesis ? (window.speechSynthesis.getVoices() || []).length : 0),
+      deutsch: (window.speechSynthesis ? (window.speechSynthesis.getVoices() || [])
+        .filter((v) => /^de(-|$)/i.test(v.lang || "")).length : 0)
+    };
+    /* Und: enthaelt der Ruf noch die alten Kopien? Genau die waren
+       die sichtbare Kante. */
+    const kopien = (() => {
+      const w = v.querySelector(".lc-ruf-wort");
+      if (!w) return "keine Wörter";
+      const vor = getComputedStyle(w, "::before").content;
+      const nach = getComputedStyle(w, "::after").content;
+      return "vor=" + vor + " nach=" + nach;
+    })();
+
     /* Der Stoss. */
-    window.__schallStoss();
+    window.__schallStoss("HALLO LEUTE");
     await new Promise((r) => setTimeout(r, 120));
     const stoss = {
       klasse: karte.classList.contains("lc-schallt"),
@@ -100,7 +117,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
         .catch(() => r(-1));
     });
 
-    return { ohneBunt, mitBunt, buntSchreib, stoss, danach,
+    return { ohneBunt, mitBunt, buntSchreib, stoss, danach, sprache, kopien,
              tonDauer: dauer, alterTon: alterTon, tonLaeuft: Math.round(spielt * 100) / 100 };
   });
 
@@ -116,6 +133,12 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
   console.log("  Klasse gesetzt: " + erg.stoss.klasse + "   Animation: " + erg.stoss.animation
     + "   Welle: " + erg.stoss.welle);
   console.log("  nach 2,3 s wieder weg: " + (!erg.danach));
+  console.log("\n=== Die harte Kante ===");
+  console.log("  Kopien am Ruf-Wort: " + erg.kopien + "   (none/normal = keine Kopie mehr)");
+  console.log("\n=== Die Sprachausgabe ===");
+  console.log("  im Browser da     : " + erg.sprache.da);
+  console.log("  Stimmen insgesamt : " + erg.sprache.stimmen);
+  console.log("  davon deutsch     : " + erg.sprache.deutsch);
   console.log("\n=== Der Ton ===");
   console.log("  ton/schrei.opus   Dauer laut Browser: " + erg.tonDauer);
   console.log("  ton/konfetti.opus Dauer laut Browser: " + erg.alterTon + "   (Vergleich)");
