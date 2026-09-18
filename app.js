@@ -7169,6 +7169,37 @@
      abgefragt. Sie zeigt jetzt dieselben Lagen. */
   const WETTER_NIEDERSCHLAG = WETTER_LAGE;
 
+  /* ---------- WIE STARK es regnet, nicht nur DASS es regnet ----------
+     GEMELDET: „Bei dem Head und dem fallenden Regen sieht das noch
+     nicht so realistisch aus. Das sieht irgendwie aus wie Schnee, weil
+     es so kleine Tropfen sind. Schau auch immer nach, was für eine Art
+     von Regen fällt und was für eine Art von Wolken am Himmel sind —
+     du kriegst ja bestimmt auch Details durch diese Wetterdatenbank."
+
+     Er hat recht in beidem. Bisher fielen alle Regenlagen als EIN
+     Regen: 7 bis 11 Pixel kurze Striche — und ein kurzer, langsamer
+     Strich IST optisch eine Schneeflocke. Echter Regen ist ein
+     Strich, weil das Auge (und die Kamera) ihn verwischt sieht.
+
+     Der WMO-Code sagt genau, welche Art es ist, und diese Tafel liest
+     das aus:
+       51/53/55  Nieseln           — feine, fast senkrechte, kurze Striche
+       56/57     gefrierendes Nieseln
+       61/63     Regen             — lange, schraege Striche
+       65        starker Regen     — sehr lange, schnelle Striche
+       80/81     Schauer           — wie Regen, boeig
+       82        heftiger Schauer  — wie Platzregen
+     Dazu passt auch die Wolke darueber: Nieseln kommt aus flacher,
+     grauer Hochnebeldecke, Platzregen aus dunkler, hoher Masse. */
+  const WETTER_STAERKE = {
+    51: "nieseln", 53: "nieseln", 55: "nieseln",
+    56: "nieseln", 57: "nieseln",
+    61: "regen", 63: "regen", 80: "regen", 81: "regen",
+    65: "platzregen", 82: "platzregen",
+    95: "regen", 96: "platzregen", 99: "platzregen",
+    71: "nieseln", 73: "regen", 75: "platzregen", 85: "regen", 86: "platzregen",
+  };
+
   /* ---------- Der Mond, gerechnet aus dem Datum ----------
      Zwischen zwei Neumonden liegen im Mittel 29,530588853 Tage (der
      synodische Monat). Von einem bekannten Neumond aus lässt sich damit
@@ -7574,6 +7605,7 @@
        laufen. */
     const phase = mondPhase();
     const schluessel = szene + (wetterIstNacht ? "|nacht" : "|tag")
+      + "|" + (wetterStaerke || "regen")
       + (szene === "nacht" ? "|" + Math.round(phase * 100) : "");
     if (!erzwingen && schluessel === wetterSzeneSchluessel) return;
     wetterSzeneSchluessel = schluessel;
@@ -7592,6 +7624,10 @@
        Ohne sie fielen die Tropfen nur ein paar Pixel weit (der alte
        Fehler, siehe oben). */
     schicht.style.setProperty("--w-hoehe", (bar.offsetHeight || 44) + "px");
+    /* Die Staerke steht als Klasse an der Schicht — daran haengen im
+       Stilblatt Laenge, Tempo und Neigung der Striche. */
+    schicht.classList.remove("w-stark-nieseln", "w-stark-regen", "w-stark-platzregen");
+    schicht.classList.add("w-stark-" + (wetterStaerke || "regen"));
 
     let inhalt = "";
     switch (szene) {
@@ -7623,14 +7659,32 @@
            minutenlang nichts fiel. Dreißig kleine, rein per transform
            bewegte Elemente kosten nichts Messbares und machen den Regen
            erst durchgängig. */
-        inhalt = wWolkenbaender(2)
-          + wRegenEbene("w-re3", 11, 0) + wRegenEbene("w-re2", 10, 5) + wRegenEbene("w-re1", 9, 11)
-          + `<span class="w-pfuetze"></span>`
-          + wTeilchen("kringel", 6, (i) => {
-              const links = 8 + wStreuBand(i, 6, 5, 84);
-              const takt = wStreu(i, 13, 1);
-              return `<i class="w-kringel" style="left:${links}%; --w-takt:${takt};"></i>`;
-            });
+        /* NACHGEBESSERT: „Das sieht irgendwie aus wie Schnee, weil es
+           so kleine Tropfen sind." Stimmt — und der Grund ist nicht
+           die Farbe, sondern die LAENGE. Ein Regentropfen faellt mit
+           sechs bis neun Metern je Sekunde; das Auge sieht ihn nicht
+           als Punkt, sondern als verwischten Strich. Sieben Pixel
+           kurz und langsam IST optisch eine Schneeflocke.
+           Wie lang der Strich ist, haengt jetzt an der gemeldeten
+           Art: Nieseln fein und fast senkrecht, Regen lang und
+           schraeg, Platzregen sehr lang, sehr schnell und dicht.
+           Auch die Menge und die Wolke darueber richten sich danach. */
+        {
+          const stark = wetterStaerke === "platzregen";
+          const fein = wetterStaerke === "nieseln";
+          const wolken = fein ? 1 : (stark ? 3 : 2);
+          const je = fein ? [14, 12, 10] : (stark ? [16, 15, 13] : [11, 10, 9]);
+          inhalt = wWolkenbaender(wolken)
+            + wRegenEbene("w-re3", je[0], 0) + wRegenEbene("w-re2", je[1], 5)
+            + wRegenEbene("w-re1", je[2], 11)
+            + `<span class="w-pfuetze${stark ? " w-pfuetze-stark" : ""}"></span>`
+            + wTeilchen("kringel", fein ? 3 : (stark ? 9 : 6), (i) => {
+                const n = fein ? 3 : (stark ? 9 : 6);
+                const links = 8 + wStreuBand(i, n, 5, 84);
+                const takt = wStreu(i, 13, 1);
+                return `<i class="w-kringel" style="left:${links}%; --w-takt:${takt};"></i>`;
+              });
+        }
         break;
       case "schnee":
         /* Drei Größen. Die großen sind vorn und fallen schneller, die
@@ -7876,8 +7930,13 @@
 
   /* Der alte Name bleibt bestehen: er wird an mehreren Stellen und vom
      Prüfhaken window.__niederschlag aufgerufen. */
-  function niederschlagZeichnen(art) {
+  /* „staerke" ist „nieseln", „regen" oder „platzregen" — sie steuert,
+     wie lang und wie schnell die Striche sind und wie dicht die Wolke
+     darueber liegt. Fehlt sie, bleibt es beim mittleren Regen. */
+  let wetterStaerke = "regen";
+  function niederschlagZeichnen(art, staerke) {
     wetterLage = art || null;
+    wetterStaerke = staerke || "regen";
     wetterSzeneZeichnen();
   }
   /* Nachts sind Tropfen hell, tagsüber dunkel — sonst verschwinden sie
@@ -7942,7 +8001,7 @@
         weatherIcon.textContent = WEATHER_ICONS[code] || "🌡️";
         weatherIcon.title = weatherOut.title;
       }
-      niederschlagZeichnen(lage || null);
+      niederschlagZeichnen(lage || null, WETTER_STAERKE[code] || "regen");
     } catch (e) {
       weatherOut.textContent = "—";
       niederschlagZeichnen(null);
@@ -8427,9 +8486,30 @@
               nicht erst starten, sondern es sagen. Eine Runde mit einer
               Frage ist keine Runde.
          ----------------------------------------------------------------- */
+      /* NACHGEBESSERT, und hier lag der Rest des Fehlers:
+         „Schau mal bei den Aufgaben im Vokabeltrainer. Es gibt immer
+          nur ein Wort zum Ueben, das ist zu wenig."
+
+         Gewartet wurde bisher nur auf die WOERTER (wortschatzBereit).
+         Die Aufgaben selbst stehen aber in einer ZWEITEN Datei
+         (data-uebungen.js), die ExerciseData.ladeUebungen() holt.
+         Von 62 Kategorien ziehen 39 ihre Fragen ausschliesslich
+         daraus — nachgemessen, das sind genau die, die ohne diese
+         Datei NULL Fragen haben. Wer schnell genug auf „Runde
+         starten" tippt (oder wessen Netz langsam ist), startete also
+         mit einer leeren Sammlung, und die Runde bestand aus einer
+         einzigen Frage.
+
+         Jetzt wird auf BEIDES gewartet. Der Knopf sagt es. */
       const knopfText = startBtn.textContent;
-      startBtn.textContent = "Wörter werden geholt …";
-      try { await wortschatzBereit(); } catch (e) { /* dann eben mit dem, was da ist */ }
+      startBtn.textContent = "Aufgaben werden geholt …";
+      try {
+        await Promise.all([
+          wortschatzBereit(),
+          (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa())
+            ? ExerciseData.ladeUebungen() : Promise.resolve(true),
+        ]);
+      } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
       const vorrat = Quiz.poolSizeFor

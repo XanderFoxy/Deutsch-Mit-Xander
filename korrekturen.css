@@ -7184,3 +7184,103 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
 .lc-frei-knopf.lc-frei-an .lc-frei-wellen { opacity: .95; animation: lcFreiWelle 1.4s ease-in-out infinite; }
 .lc-frei-knopf.lc-frei-nimmt { background: #e8453c; border-color: #b52d26; }
 @keyframes lcFreiWelle { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+
+/* ==================================================================
+   DER REGEN IM KOPFSTREIFEN — ein Strich, kein Punkt
+   ------------------------------------------------------------------
+   GEMELDET: „Bei dem Head und dem fallenden Regen sieht das noch nicht
+   so realistisch aus. Das sieht irgendwie aus wie Schnee, weil es so
+   kleine Tropfen sind. Es wirkt nicht richtig wie Regen. Schau auch
+   immer nach, was für eine Art von Regen fällt und was für eine Art
+   von Wolken am Himmel sind."
+
+   Der Grund ist nicht die Farbe, sondern die LÄNGE. Ein Regentropfen
+   fällt mit sechs bis neun Metern je Sekunde; weder Auge noch Kamera
+   sehen ihn als Punkt, sondern als verwischten Strich. Sieben bis elf
+   Pixel kurz und langsam IST optisch eine Schneeflocke — deshalb sah
+   es aus wie Schnee.
+
+   Jetzt sagt der amtliche WMO-Code, welche Art gerade fällt, und
+   danach richten sich Länge, Tempo, Neigung und Menge:
+
+     Nieseln (51/53/55)     kurz, fein, fast senkrecht, langsam —
+                            Nieseln fällt wirklich fast senkrecht,
+                            weil die Tropfen so klein sind.
+     Regen (61/63, 80/81)   lang und schräg, zügig.
+     Platzregen (65, 82)    sehr lang, sehr schnell, steiler Winkel,
+                            dichter — und eine dunklere Wolkendecke.
+
+   Die Striche sind zusätzlich oben durchsichtig und unten dicht: so
+   sieht ein verwischter Tropfen aus, er hat kein hartes Ende.
+   ================================================================== */
+#niederschlagSchicht .w-tropfen {
+  border-radius: 0 0 1px 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--niederschlag-farbe, rgba(255,255,255,.75)) 35%, transparent) 45%,
+    var(--niederschlag-farbe, rgba(255, 255, 255, 0.75)) 100%);
+}
+
+/* --- Nieseln: fein und fast senkrecht --- */
+.w-stark-nieseln .w-re1 .w-tropfen { --w-dauer: 1.05s; height: 13px; width: 1px;   opacity: .85; --w-drift: 5px; --w-neigung: 5deg; }
+.w-stark-nieseln .w-re2 .w-tropfen { --w-dauer: 1.35s; height: 11px; width: .9px;  opacity: .6;  --w-drift: 4px; --w-neigung: 4deg; }
+.w-stark-nieseln .w-re3 .w-tropfen { --w-dauer: 1.7s;  height: 9px;  width: .8px;  opacity: .4;  --w-drift: 3px; --w-neigung: 3deg; }
+
+/* --- Regen: lange, schräge Striche --- */
+.w-stark-regen .w-re1 .w-tropfen { --w-dauer: 0.44s; height: 30px; width: 1.4px; opacity: 1;   --w-drift: 20px; --w-neigung: 15deg; }
+.w-stark-regen .w-re2 .w-tropfen { --w-dauer: 0.62s; height: 24px; width: 1.2px; opacity: .72; --w-drift: 15px; --w-neigung: 13deg; }
+.w-stark-regen .w-re3 .w-tropfen { --w-dauer: 0.86s; height: 18px; width: 1px;   opacity: .48; --w-drift: 11px; --w-neigung: 11deg; }
+
+/* --- Platzregen: sehr lang, sehr schnell, steiler --- */
+.w-stark-platzregen .w-re1 .w-tropfen { --w-dauer: 0.30s; height: 44px; width: 1.7px; opacity: 1;   --w-drift: 26px; --w-neigung: 21deg; }
+.w-stark-platzregen .w-re2 .w-tropfen { --w-dauer: 0.42s; height: 36px; width: 1.4px; opacity: .78; --w-drift: 20px; --w-neigung: 19deg; }
+.w-stark-platzregen .w-re3 .w-tropfen { --w-dauer: 0.58s; height: 28px; width: 1.2px; opacity: .52; --w-drift: 15px; --w-neigung: 17deg; }
+/* Bei Platzregen steht das Wasser: der Streifen unten wird breiter. */
+.w-pfuetze-stark { opacity: .42; height: 7px; }
+/* Und die Decke darüber ist dunkler und tiefer. */
+.w-stark-platzregen .w-wolkenband { filter: brightness(.72) saturate(.85); }
+.w-stark-nieseln  .w-wolkenband { filter: brightness(1.06) saturate(.7); }
+
+/* ==================================================================
+   DIE RIESIGEN BUCHSTABEN IM NEWSTICKER — auf dem iPhone, nur manchmal
+   ------------------------------------------------------------------
+   GEMELDET, mehrfach und zu Recht hartnäckig:
+   „Ich verstehe nicht, warum er bei meinem iPhone 12 Pro Max immer
+    noch so riesige Buchstaben in dem Newsticker macht, wenn ich
+    irgendwo live bin. Das ist nur dann, wenn ich irgendwo live bin …
+    und woanders sehe ich das manchmal auch nicht. Das ist doch kein
+    Cache-Ding."
+
+   Er hat recht: es war nie der Zwischenspeicher. Es ist eine
+   Eigenheit von Safari auf dem iPhone, die „automatic text size
+   adjustment" heisst. Safari vergroessert die Schrift in einem
+   Element EIGENMAECHTIG, wenn es den Textblock fuer breiter haelt als
+   den Bildschirm — gedacht für alte Seiten ohne mobiles Layout. Die
+   Regel dafür ist nicht dokumentiert und greift je Element.
+
+   Und genau deshalb passiert es NUR beim Live-Sein: die Laufschrift
+   bekommt dann eine zusätzliche, lange Zeile („… ist gerade live bei
+   …"). Damit wird der Textblock breiter, Safari haelt ihn für zu
+   breit und blaest die Schrift auf. Ohne die Live-Zeile bleibt er
+   unter der Schwelle — deshalb sieht man es sonst nicht, und deshalb
+   sieht man es auf einem anderen Geraet nicht.
+
+   In der ganzen Seite stand diese Sperre nirgends. Jetzt steht sie,
+   und zwar zweifach: einmal fuer das ganze Dokument, einmal
+   ausdruecklich fuer die Laufschrift.
+
+   „100%" heisst: genau die Groesse nehmen, die im Stilblatt steht.
+   Es ist NICHT „none" — das schaltet auf manchen Geraeten auch das
+   Vergroessern durch den Menschen ab, und das darf nie passieren.
+   ================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.ticker-bar, .ticker-bar *,
+.ticker-track, .ticker-track *,
+.ticker-live, .ticker-live * {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
