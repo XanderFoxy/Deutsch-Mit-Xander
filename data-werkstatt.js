@@ -49,22 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19n — der Balken bleibt, solange drueben gehoert wird",
+  stand: "Runde 19o — der Knopf rutscht nicht mehr weg",
 
   inArbeit: [
-    { seit: "2026-09-18T21:02",
+    { seit: "2026-09-18T21:09",
+      text: "Durch den ganzen Chatverlauf scrollen koennen" },
+    { seit: "2026-09-18T21:09",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:02",
+    { seit: "2026-09-18T21:09",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:02",
-      text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:02",
-      text: "Solange jemand deine Wortmeldung abspielt, bleibt dein Balken oben stehen — und es steht dabei, WER gerade zuhoert" },
-    { seit: "2026-09-18T21:02",
-      text: "Die andere Seite meldet Anfang und Ende des Abspielens; bricht die Verbindung ab, raeumt sich der Balken nach zwei Minuten selbst weg" },
+    { seit: "2026-09-18T21:09",
+      text: "Der Sprecherbalken sitzt IN der Kopfzeile statt darunter und nimmt dort den Platz des Titels ein" },
+    { seit: "2026-09-18T21:09",
+      text: "Die Kopfzeile behaelt ihre Hoehe — gemessen 41 px mit und ohne Balken, vorher 38 gegen 40" },
+    { seit: "2026-09-18T21:09",
+      text: "Der Zeiger wird an den Sprechknopf gebunden (setPointerCapture): verschiebt sich etwas, bricht die Aufnahme nicht mehr ab" },
+    { seit: "2026-09-18T21:09",
+      text: "Absichtliches Wegziehen geht weiter — es haengt jetzt an der Strecke des Fingers, nicht daran, wer sich bewegt hat" },
   ],
 };

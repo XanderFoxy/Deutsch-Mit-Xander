@@ -20293,6 +20293,7 @@
                    • Hintergrund, Nachlesen, Verlauf löschen → in das
                      Bildmenü oben am 🖼️-Rundknopf, wo auch das eigene
                      Bild eingestellt wird. -->
+            <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
             <span class="lc-chat-kopf-rechts">
               <button type="button" class="lc-chat-raeumen" id="lcRaeume"
                       title="Welche Räume sind offen und wer ist wo?">🚪 Räume</button>
@@ -20350,10 +20351,13 @@
               HTML-Entitäten, keine Emojis. Deshalb sahen sie damals überall gleich aus.
             </p>
           </details>
-          <!-- Der Pseudo-Livestream: wer gerade zu hoeren ist und wie
-               viele noch warten. Steht UEBER dem Verlauf, weil er
-               nichts mit dem Geschriebenen zu tun hat. -->
-          <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
+          <!-- Der Sprecherbalken stand hier, also UNTER der Kopfzeile
+               und unter dem Befehlskasten. GEMELDET: „Dann soll oben
+               der gruene Balken in der Chatleiste, wo er vorher war,
+               stehen — nicht darunter." Er sitzt jetzt IN der
+               Kopfzeile und nimmt dort den Platz des Titels ein,
+               solange jemand spricht. Kein zusaetzlicher Streifen,
+               keine zusaetzliche Hoehe. -->
           <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
           ${!Backend.currentUser() ? `
           <p class="lc-gast-hinweis">
@@ -22145,9 +22149,16 @@
        mein Balken stehen — genau dafuer meldet die andere Seite es. */
     let lauscher = null;
     try { lauscher = (LiveChat.hoertMirZu && LiveChat.hoertMirZu()) || null; } catch (e) {}
+    const kopf = leiste.closest(".lc-chat-kopf");
     if (!lcLiveJetzt && !lcIchSpreche && !lauscher) {
-      leiste.hidden = true; leiste.innerHTML = ""; return;
+      leiste.hidden = true; leiste.innerHTML = "";
+      if (kopf) kopf.classList.remove("lc-kopf-spricht");
+      return;
     }
+    /* Solange jemand spricht, gehoert die Zeile dem Balken — der
+       Titel „💬 Chat" tritt zurueck, damit nichts nach unten
+       gedraengt wird. */
+    if (kopf) kopf.classList.add("lc-kopf-spricht");
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich
@@ -24915,6 +24926,7 @@
              Finger und sieht ihn nicht. Deshalb bekommt die ganze
              Seite eine Marke, und die Kopfzeile des Chats zeigt gut
              sichtbar „🔴 Du sprichst". */
+          let vonX = 0, vonY = 0;
           const anzeigen = (an) => {
             sprachKnopf.classList.toggle("lc-sprach-an", an);
             document.body.classList.toggle("lc-ich-spreche", an);
@@ -24928,8 +24940,30 @@
                um die Tonausgabe freizuschalten. */
             if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
             abgebrochen = false;
+            /* DER FINGER DARF DEN KNOPF NICHT VERLIEREN.
+               ---------------------------------------------------
+               GEMELDET: „Sobald ich die Hand gedrueckt halte,
+               verschiebt sich der Chat nach unten, weil diese
+               zusaetzliche Zeile ihn verlaengert — dadurch rutsche
+               ich von der Sprechtaste ab und meine Aufnahme wird
+               immer abgebrochen."
+
+               Der Abbruch hing an „pointerleave": verlaesst der
+               Zeiger den Knopf, gilt das als Zuruecknehmen. Nur
+               verlaesst er ihn auch dann, wenn nicht der Finger
+               wandert, sondern der KNOPF — und genau das passiert
+               bei jeder Aenderung der Hoehe.
+
+               setPointerCapture bindet den Zeiger an den Knopf:
+               von da an gehen alle seine Ereignisse hierher, ganz
+               gleich, was sich unter dem Finger verschiebt. Das
+               absichtliche Wegziehen bleibt moeglich — es haengt
+               jetzt an der zurueckgelegten STRECKE (siehe bewegt),
+               nicht daran, wer sich bewegt hat. */
+            try { if (e.pointerId != null) sprachKnopf.setPointerCapture(e.pointerId); } catch (x) {}
+            vonX = e.clientX || 0; vonY = e.clientY || 0;
             laeuft = await LiveChat.sprachAufnahmeStarten();
-            if (!laeuft) return;
+            if (!laeuft) { try { sprachKnopf.releasePointerCapture(e.pointerId); } catch (x) {} return; }
             anzeigen(true);
             const start = Date.now();
             clearInterval(takt);
@@ -24939,8 +24973,12 @@
               if (sek >= (LiveChat.sprachHoechstdauer ? LiveChat.sprachHoechstdauer() : 20)) fertig();
             }, 250);
           };
+          const loslassen = (e) => {
+            try { if (e && e.pointerId != null) sprachKnopf.releasePointerCapture(e.pointerId); } catch (x) {}
+          };
           const fertig = async (e) => {
             if (e) e.preventDefault();
+            loslassen(e);
             clearInterval(takt);
             if (!laeuft) return;
             laeuft = false;
@@ -24948,7 +24986,8 @@
             if (abgebrochen) { LiveChat.sprachAbbrechen(); return; }
             await LiveChat.sprachAufnahmeStoppen();
           };
-          const weg = () => {
+          const weg = (e) => {
+            loslassen(e);
             if (!laeuft) return;
             abgebrochen = true;
             clearInterval(takt);
@@ -24957,10 +24996,19 @@
             LiveChat.sprachAbbrechen();
             showToast("Aufnahme abgebrochen — zum Schicken den Finger auf dem Knopf lassen.");
           };
+          /* Absichtlich wegziehen: erst ab elf Millimetern Strecke.
+             Ein Wackeln der Hand oder ein Ruck im Bild sind weniger. */
+          const bewegt = (e) => {
+            if (!laeuft) return;
+            const dx = (e.clientX || 0) - vonX, dy = (e.clientY || 0) - vonY;
+            if (Math.sqrt(dx * dx + dy * dy) > 110) weg(e);
+          };
           sprachKnopf.addEventListener("pointerdown", los);
           sprachKnopf.addEventListener("pointerup", fertig);
           sprachKnopf.addEventListener("pointercancel", weg);
-          sprachKnopf.addEventListener("pointerleave", weg);
+          sprachKnopf.addEventListener("pointermove", bewegt);
+          /* KEIN pointerleave mehr — siehe oben: es hat abgebrochen,
+             wenn sich der Knopf bewegt hat, nicht der Finger. */
           /* Und das Markieren/Kopieren-Menue endgueltig abstellen: die
              CSS-Regeln halten das Meiste ab, dieses hier den Rest. */
           sprachKnopf.addEventListener("contextmenu", (e) => e.preventDefault());

@@ -7616,6 +7616,40 @@ body.lc-schreibt .tutor-reiter {
 .lc-live-leiste[hidden] { display: none; }
 /* Wenn ich selbst spreche, ist es meine Zeile — warm statt kühl,
    damit man auf einen Blick sieht, dass man gerade selbst dran ist. */
+/* IN der Kopfzeile, nicht darunter.
+   GEMELDET: „Dann soll oben der gruene Balken in der Chatleiste, wo
+   er vorher war, stehen — nicht darunter."
+   Er nimmt dort den Platz des Titels ein, solange jemand spricht:
+   keine zusaetzliche Zeile, keine zusaetzliche Hoehe, und er steht
+   da, wo man hinsieht. */
+.lc-chat-kopf .lc-live-leiste {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  /* FESTE Hoehe, nicht gepolstert: Rahmen und Polsterung haben die
+     Zeile sonst um zwei Pixel wachsen lassen — und zwei Pixel
+     genuegen, damit der Sprechknopf unter dem Finger wegrutscht.
+     Gemessen: 38 gegen 40 Pixel. Jetzt sind beide gleich hoch. */
+  box-sizing: border-box;
+  height: 24px;
+  padding: 0 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lc-chat-kopf .lc-chat-kopf-titel { box-sizing: border-box; height: 24px; }
+.lc-chat-kopf.lc-kopf-spricht .lc-chat-kopf-titel { display: none; }
+/* UND DIE HOEHE DARF SICH NICHT AENDERN.
+   GEMELDET: „Sobald ich die Hand gedrueckt halte, verschiebt sich der
+   Chat nach unten, weil diese zusaetzliche Zeile ihn verlaengert —
+   dadurch rutsche ich von der Sprechtaste ab."
+   Die Kopfzeile hat deshalb eine feste Mindesthoehe, die fuer beides
+   reicht: fuer den Titel und fuer den Balken. Ob gesprochen wird oder
+   nicht, aendert an der Hoehe nun gar nichts, und darunter verschiebt
+   sich kein einziges Pixel. */
+.lc-chat-kopf { min-height: 30px; }
+.lc-chat-kopf .lc-live-leiste { min-height: 0; line-height: 1.25; }
+
 .lc-live-leiste.lc-live-ich {
   background: rgba(224, 150, 74, 0.16);
   border-color: rgba(224, 150, 74, 0.45);

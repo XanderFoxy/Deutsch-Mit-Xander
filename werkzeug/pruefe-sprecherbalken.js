@@ -26,16 +26,25 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
 
   const erg = await pg.evaluate(() => {
     document.querySelectorAll(".lightbox").forEach((e) => e.remove());
-    const leiste = document.createElement("div");
-    leiste.className = "lc-live-leiste";
-    leiste.id = "lcLiveLeiste";
-    leiste.hidden = true;
-    document.body.appendChild(leiste);
+    /* Wie im echten Chat: der Balken sitzt IN der Kopfzeile. */
+    const kopf = document.createElement("div");
+    kopf.className = "lc-chat-kopf";
+    kopf.innerHTML = '<button type="button" class="lc-chat-kopf-titel" id="titel">'
+      + '<span class="lc-kopf-wort">\ud83d\udcac Chat</span></button>'
+      + '<div class="lc-live-leiste" id="lcLiveLeiste" hidden></div>'
+      + '<span class="lc-chat-kopf-rechts"><button class="lc-chat-raeumen">\u24d8</button></span>';
+    kopf.style.cssText = "position:fixed;left:0;top:0;width:430px;z-index:99999;background:#221c1a";
+    document.body.appendChild(kopf);
+    const leiste = document.getElementById("lcLiveLeiste");
     if (!window.__balken) return "Prüfnaht __balken fehlt";
     const lies = () => ({
       sichtbar: !leiste.hidden,
       text: leiste.textContent.replace(/\s+/g, " ").trim(),
-      meins: leiste.classList.contains("lc-live-ich")
+      meins: leiste.classList.contains("lc-live-ich"),
+      /* Steht der Balken WIRKLICH in der Kopfzeile — und tritt der
+         Titel dafuer zurueck? */
+      inDerKopfzeile: leiste.parentElement === kopf,
+      titelWeg: getComputedStyle(document.getElementById("titel")).display === "none"
     });
     const aus = {};
     /* 1. Niemand spricht. */
@@ -50,19 +59,36 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     /* 4. Meine Wortmeldung läuft drüben. */
     window.__balken({ ich: false, jetzt: null, lauscher: ["Emmy"] });
     aus.wirdGehoert = lies();
+    /* 5. Und das Entscheidende: aendert sich die HOEHE? Genau daran
+       ist die Aufnahme abgebrochen — der Knopf rutschte weg. */
+    window.__balken({ ich: false, jetzt: null, lauscher: null });
+    aus.hoeheStill = Math.round(kopf.getBoundingClientRect().height);
+    window.__balken({ ich: true, jetzt: null, lauscher: null });
+    aus.hoeheSpricht = Math.round(kopf.getBoundingClientRect().height);
     return aus;
   });
 
   console.log("");
   if (typeof erg === "string") { console.log("  " + erg); }
   else {
-    const z = (name, x) => console.log("  " + name.padEnd(26)
+    const z = (name, x) => console.log("  " + name.padEnd(22)
       + (x.sichtbar ? "sichtbar" : "versteckt").padEnd(11)
-      + (x.meins ? "[meine Farbe] " : "              ") + JSON.stringify(x.text));
+      + (x.meins ? "[meine Farbe] " : "              ")
+      + (x.sichtbar ? (x.titelWeg ? "[Titel weicht] " : "[TITEL BLEIBT] ") : "               ")
+      + JSON.stringify(x.text));
     z("niemand spricht", erg.still);
     z("ich nehme auf", erg.ichSpreche);
     z("Emmy spricht", erg.andere);
     z("drüben läuft meine", erg.wirdGehoert);
+    console.log("");
+    console.log("  Höhe der Kopfzeile   still: " + erg.hoeheStill + " px"
+      + "   beim Sprechen: " + erg.hoeheSpricht + " px"
+      + (erg.hoeheStill === erg.hoeheSpricht
+          ? "   (gleich — nichts verschiebt sich)"
+          : "   VERSCHIEBT SICH UM " + Math.abs(erg.hoeheSpricht - erg.hoeheStill) + " px"));
+    console.log("");
+    console.log("  Der Balken sitzt in der Kopfzeile: "
+      + (erg.ichSpreche.inDerKopfzeile ? "ja — nicht darunter" : "NEIN"));
   }
   await br.close(); srv.close();
 })();
