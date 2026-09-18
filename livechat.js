@@ -2333,7 +2333,10 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "tschuess") {
-      if (zustand.leute[n.von]) kommtUndGeht(zustand.leute[n.von].name || "Jemand", false);
+      if (zustand.leute[n.von]) {
+        kommtUndGeht(zustand.leute[n.von].name || "Jemand", false,
+                     n.wohinName || (n.wohin ? raumKlartext(n.wohin) : ""));
+      }
       brueckeAbbauen(n.von);
       delete zustand.leute[n.von];
       grossVergessen(n.von);
@@ -2624,12 +2627,20 @@ window.LiveChat = (function () {
   /* „XanderFox betritt den Raum" / „… hat den Raum verlassen".
      So war es im IRC (JOIN und PART sehen alle im Raum) und so war es
      in jedem Webchat der Zeit. */
-  function kommtUndGeht(name, kommt) {
+  /* Mit „wohin" steht da, wohin jemand gegangen ist — das ist etwas
+     anderes als Weggehen, und im Unterricht ein Unterschied: wer in
+     einen anderen Raum wechselt, ist ja noch da. */
+  function kommtUndGeht(name, kommt, wohin) {
+    var ziel = String(wohin || "").trim();
     nachrichtAnhaengen({
       id: "kg" + Date.now() + "-" + (laufendeNummer += 1),
       von: "", name: name, art: "kommen",
-      text: name + (kommt ? " betritt den Raum." : " hat den Raum verlassen."),
-      zeit: Date.now(), eigen: false, kommt: Boolean(kommt)
+      text: name + (kommt
+        ? " betritt den Raum."
+        : (ziel ? " ist in den Raum \u201e" + ziel + "\u201c gegangen."
+                : " hat den Raum verlassen.")),
+      zeit: Date.now(), eigen: false, kommt: Boolean(kommt),
+      gegangenNach: ziel
     });
   }
 
@@ -3209,7 +3220,16 @@ window.LiveChat = (function () {
     if (zustand.lage === "drin") rueckkehrMerken();
   });
 
-  function verlassen() {
+  /* GEWUENSCHT: „Wenn man einen Raum verlaesst auf die Art, dass man
+     einen anderen Raum erzeugt, dann soll im Chat stehen: ,Emmi ist in
+     den Raum Langeweile gegangen' — nicht nur ,sie hat den Raum
+     verlassen'. Nur wenn sie wirklich weggeht, soll das dastehen."
+
+     Das Abschiedspaket sagt deshalb jetzt, WOHIN. Es weiss es auch:
+     ein Raumwechsel ruft verlassen() und betritt gleich darauf den
+     naechsten. Fehlt die Angabe, ist es ein echtes Weggehen — und
+     dann bleibt es beim alten Satz. */
+  function verlassen(wohin) {
     /* DER KLASSENSPRECHER MACHT WEITER.
        „Der Klassensprecher macht weiter mit den anderen, wenn ich den
        Raum verlasse." Also: bevor die Leitung zugeht, geht die
@@ -3241,14 +3261,20 @@ window.LiveChat = (function () {
     liveWarteschlange.length = 0;
     stummVon = {};
     zustand.gemeldet = {};
+    /* Erst abmelden, DANN den Kanal schliessen — und zwar mit einem
+       Atemzug dazwischen. Vorher wurde der Kanal sofort geschlossen,
+       das „tschüss" ging dabei manchmal verloren, und man stand für
+       die anderen weiter im alten Raum herum. Genau das war die
+       gemeldete Karteileiche im Klassenzimmer.
+       Das Paket geht dabei immer den gewoehnlichen Weg: senden()
+       prueft selbst, ob eine Leitung steht. So laesst es sich auch
+       nachmessen. */
+    var zielRaum = String(wohin || "").trim();
+    senden(zielRaum
+      ? { art: "tschuess", wohin: zielRaum, wohinName: raumKlartext(zielRaum) }
+      : { art: "tschuess" });
     if (kanal) {
-      /* Erst abmelden, DANN den Kanal schliessen — und zwar mit einem
-         Atemzug dazwischen. Vorher wurde der Kanal sofort geschlossen,
-         das „tschüss" ging dabei manchmal verloren, und man stand für
-         die anderen weiter im alten Raum herum. Genau das war die
-         gemeldete Karteileiche im Klassenzimmer. */
       var alterKanal = kanal;
-      senden({ art: "tschuess" });
       kanal = null;
       setTimeout(function () { try { alterKanal.unsubscribe(); } catch (e) {} }, 350);
     }
@@ -7585,7 +7611,7 @@ window.LiveChat = (function () {
   /* Den Raum wechseln — und dabei alles mitnehmen, was zu einem gehört. */
   function raumWechseln(neuerRaum) {
     var nm = zustand.ichName, bd = zustand.ichBild, kt = kontoId, fb = zustand.farbe;
-    verlassen();
+    verlassen(neuerRaum);
     return betreten(neuerRaum, { name: nm, bild: bd, konto: kt, farbe: fb, mitBild: false })
       .then(function () { melden(); });
   }

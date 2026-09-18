@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 70 — Zurückflüstern mit einem Tipp",
+  stand: "Runde 71 — Wer in einen anderen Raum geht, hat nicht „verlassen“",
 
   inArbeit: [
-    { seit: "2026-09-18T22:44",
+    { seit: "2026-09-18T22:50",
       text: "Alte „Du bist hier Häuptling“-Zeilen nachträglich aus dem Verlauf nehmen" },
-    { seit: "2026-09-18T22:44",
+    { seit: "2026-09-18T22:50",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T22:44",
+    { seit: "2026-09-18T22:50",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T22:44",
-      text: "Ein Tipp auf eine geflüsterte Zeile legt „/w Name “ ins Schreibfeld, setzt den Schreibzeiger dahinter und öffnet die Tastatur — man schreibt nur noch den Satz" },
-    { seit: "2026-09-18T22:44",
-      text: "Auch die eigene Flüsterzeile: dort ist der Empfänger gemeint, damit man weiterflüstern kann" },
-    { seit: "2026-09-18T22:44",
-      text: "Der Name einer Flüsterzeile ist leicht unterpunktet — man sieht, dass da etwas geht" },
+    { seit: "2026-09-18T22:50",
+      text: "Das Abschiedspaket sagt jetzt, WOHIN: im Chat steht „Emmy ist in den Raum ‚Langeweile‘ gegangen“ statt „hat den Raum verlassen“" },
+    { seit: "2026-09-18T22:50",
+      text: "„Hat den Raum verlassen“ bleibt für den Fall, dass wirklich jemand weggeht" },
   ],
 };
