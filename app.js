@@ -20221,7 +20221,25 @@
           </div>
         </div>
 
-        <p class="lc-thema" id="lcThema" style="display:none;"></p>
+        <!-- GEMELDET: „Der Titel ist in meiner Optik mit dem Fokus sehr
+             platt verschwendet. Er drängt sich unter den Fokus. Der Titel
+             soll eigentlich überall stehen — oder du machst es so, dass
+             der Titel der linke Teil ist und rechts daneben der
+             Fokus-Ausschaltknopf. Aber es soll für die anderen da nicht
+             komisch aussehen."
+
+             Vorher hing der Schalter im Kopf und das Thema stand als
+             eigener Absatz darunter: zwei Zeilen für anderthalb
+             Angaben. Jetzt teilen sie sich EINE Zeile — das Thema
+             links über die ganze Breite, der Schalter rechts. Wer den
+             Schalter nicht hat (also alle ausser dem Betreiber), sieht
+             nur das Thema über die volle Breite; wer kein Thema
+             gesetzt hat, sieht nur den Schalter. Die Zeile selbst hat
+             keine eigene Höhe, sie fällt also ganz weg, wenn beides
+             fehlt. -->
+        <div class="lc-themazeile" id="lcThemaZeile">
+          <p class="lc-thema" id="lcThema" style="display:none;"></p>
+        </div>
 
         <div class="lc-plaetze" id="lcPlaetze">${plaetze.join("")}</div>
 
@@ -21310,6 +21328,36 @@
      ueberleben. Beim naechsten Betreten ist wieder Ruhe — genau das
      war ja der Wunsch.
      ================================================================= */
+  /* WAS IN EINER ZEILE „LEERE" IST.
+     -----------------------------------------------------------------
+     GEMELDET, mehrfach und zuletzt wieder: „Das mit den
+     Sprachnachrichten abrufen per Klick in den leeren Bereich des
+     Chats geht immer noch nicht", und davor schon: „bei einer Zeile
+     von den ASCII-Codes … wenn ich da zum Beispiel links daneben
+     klicke, wo die Uhrzeit auch ist."
+
+     Der Grund, warum es nicht ging: Eine Zeile ist ein Gitter aus
+     drei Spalten — Uhrzeit, Name, Inhalt. Sie fuellt die ganze
+     Breite des Chats, und auf ihr lag ein Griff fuer „Animation noch
+     einmal". Damit gab es faktisch KEINE Leere mehr: wo man auch
+     hintippte, traf man eine Zeile.
+
+     Deshalb ist jetzt festgelegt, was als Leere gilt:
+       - der Grund des Verlaufs selbst,
+       - die Zeile selbst (der Platz rechts neben ihrem Inhalt),
+       - die UHRZEIT — sie ist eine Angabe, kein Knopf.
+     Alles andere — Text, Bild, Knopf, Name — bleibt, was es ist.
+     Dieselbe Regel gilt fuer beides: fuer das Aufklappen und fuer
+     das Zuklappen. Eine Regel, kein Sonderfall. */
+  function lcIstLeere(ziel, verlauf) {
+    if (!ziel) return false;
+    if (ziel === verlauf) return true;
+    if (!ziel.classList) return false;
+    if (ziel.classList.contains("lc-zeile")) return true;
+    if (ziel.classList.contains("lc-zeit")) return true;
+    return false;
+  }
+
   function lcStimmenUmschalten(verlauf) {
     const an = verlauf.classList.toggle("lc-stimmen-offen");
     const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
@@ -21365,23 +21413,14 @@
         const sel = window.getSelection();
         if (sel && String(sel).length > 0) return;
       } catch (x) {}
-      const offen = verlauf.classList.contains("lc-stimmen-offen");
-
-      /* Der freie Grund des Verlaufs — gilt immer, auf und zu. */
-      if (e.target === verlauf) {
-        const drunter = document.elementFromPoint(e.clientX, e.clientY);
-        if (drunter && drunter.closest && drunter.closest(".lc-zeile")) return;
-        lcStimmenUmschalten(verlauf);
-        return;
-      }
-      /* Die Leere NEBEN dem Inhalt einer Zeile — nur zum Zuklappen.
-         Beim Aufklappen bliebe sonst kein Weg mehr, eine Animation
-         zu wiederholen. */
-      if (offen && e.target.classList && e.target.classList.contains("lc-zeile")) {
-        e.stopPropagation();
-        e.preventDefault();
-        lcStimmenUmschalten(verlauf);
-      }
+      if (!lcIstLeere(e.target, verlauf)) return;
+      /* Der Griff sitzt in der EINFANGPHASE: er kommt also vor allem,
+         was an der Zeile haengt. Damit auf der Leere wirklich nur
+         umgeschaltet und nicht nebenbei eine Animation wiederholt
+         wird, endet der Tipp hier. */
+      e.stopPropagation();
+      e.preventDefault();
+      lcStimmenUmschalten(verlauf);
     }, true);
     /* Escape klappt zu, egal wo der Finger war. */
     verlauf.addEventListener("keydown", (e) => {
@@ -21966,7 +22005,11 @@
      dem Raumnamen, weil er zum RAUM gehoert und nicht zu einer
      Person — und er ist nur da, wenn man ihn auch benutzen darf. */
   function lcFokusSchalterZeichnen() {
-    const kopf = document.getElementById("lcKopf");
+    /* Der Schalter sitzt jetzt in der Themazeile, nicht mehr im Kopf —
+       damit Titel und Schalter nebeneinander stehen statt
+       untereinander. Gibt es die Zeile (noch) nicht, tut es der Kopf,
+       damit nichts verschwindet. */
+    const kopf = document.getElementById("lcThemaZeile") || document.getElementById("lcKopf");
     if (!kopf || !window.LiveChat || !LiveChat.darfFokusSchalten) return;
     const darf = LiveChat.darfFokusSchalten();
     let k = document.getElementById("lcFokusSchalter");
@@ -23538,9 +23581,15 @@
         const stift = document.createElement("button");
         stift.type = "button";
         stift.className = "lc-benoten";
-        stift.title = "Diese Antwort benoten (1 bis 6)";
-        stift.setAttribute("aria-label", "Benoten");
-        stift.textContent = "📋";
+        /* GEMELDET: „Ich habe so einen kleinen Notizblock, ich weiss
+           nicht, was du damit meinst — soll das ein Zeugnis
+           darstellen? Ist das ueberhaupt die Mitschrift?"
+           Nein, und das war mein Fehler: ein Klemmbrett sieht aus wie
+           ein Notizblock, und niemand raet, dass dahinter die Zensur
+           steckt. Jetzt steht es einfach da. */
+        stift.title = "Note geben (1 bis 6) — nur du als Lehrer siehst diesen Knopf";
+        stift.setAttribute("aria-label", "Note geben");
+        stift.textContent = "Note";
         stift.addEventListener("click", (e) => {
           e.stopPropagation();
           const offen = z.querySelector(".lc-notenwahl");
@@ -23573,7 +23622,14 @@
           z.appendChild(wahl);
           fach.focus();
         });
-        z.appendChild(stift);
+        /* GEMELDET: „Das ist auch nicht auf der rechten Seite, es ist
+           unter der Uhr angezeigt."
+           Genau so war es: ein float:right, der NACH dem Text
+           eingehaengt wird, findet auf der letzten Zeile keinen Platz
+           mehr und rutscht darunter. Ein Float muss VOR dem Inhalt
+           stehen, neben dem er schweben soll — deshalb kommt der Knopf
+           jetzt an den Anfang der Zeile. */
+        z.insertBefore(stift, z.firstChild);
       }
 
       if (art === "system" || art === "einladung") {
@@ -24038,7 +24094,13 @@
         /* Das Geschlecht des Absenders bleibt AN DER ZEILE haengen —
            sonst klaenge derselbe Ruf beim zweiten Antippen anders. */
         if (n.geschlecht) z.dataset.lcGeschlecht = n.geschlecht;
-        z.addEventListener("click", () => lcRufNochmal(z));
+        /* Nur der INHALT wiederholt den Ruf. Der Platz daneben und
+           die Uhrzeit sind Leere und gehoeren den Sprachnachrichten
+           (siehe lcIstLeere). */
+        z.addEventListener("click", (e) => {
+          if (lcIstLeere(e.target, null)) return;
+          lcRufNochmal(z);
+        });
         /* GEWUENSCHT: „Wenn man schreit und das abschickt und die
            Animation kommt, dann soll es auch den Chat ein bisschen
            beeinflussen, dass man merkt: der Schall hat einen Effekt
@@ -24054,7 +24116,9 @@
         z.dataset.wirkung = eff;
         z.classList.add("lc-zeile-wirkt");
         z.title = "Antippen — noch einmal";
-        z.addEventListener("click", () => {
+        z.addEventListener("click", (e) => {
+          /* Genau wie beim Ruf: die Leere gehoert nicht der Animation. */
+          if (lcIstLeere(e.target, null)) return;
           lcWirkung(eff, z, n);
           z.classList.remove("lc-neu");
           void z.offsetWidth;

@@ -991,7 +991,22 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 .lc-zeile-wirkt { cursor: pointer; }
 
-/* Das Thema des Raums */
+/* Das Thema des Raums — LINKS, und rechts daneben der Fokusschalter.
+   GEMELDET: „Er drängt sich unter den Fokus … es verschwendet hier so
+   ein bisschen den Platz, weil es meine Ansicht stört."
+   Die Zeile hat selbst keine Polsterung und keine Mindesthöhe: sind
+   weder Thema noch Schalter da, ist sie null Pixel hoch und fällt
+   damit weg, statt eine leere Zeile zu hinterlassen. */
+.lc-themazeile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+.lc-themazeile .lc-thema { flex: 1 1 auto; min-width: 0; margin: 2px 0 8px; }
+.lc-themazeile .lc-fokus-schalter { margin-left: auto; margin-bottom: 6px; }
+/* Ohne Schalter nimmt das Thema die volle Breite — genau so, wie es
+   für alle anderen aussehen soll. */
 .lc-thema {
   margin: 2px 12px 8px;
   padding: 5px 10px;
@@ -7956,25 +7971,34 @@ body.lc-schreibt .tutor-reiter {
    float rechts, damit die Reihenfolge im Text davon unberührt
    bleibt.
    ================================================================= */
+/* Es stand ein Klemmbrett-Zeichen hier, und das war ein Fehler:
+   GEMELDET: „Ich habe so einen kleinen Notizblock, ich weiss nicht,
+   was du damit meinst — soll das ein Zeugnis darstellen? Ist das
+   ueberhaupt die Mitschrift?" Nein. Ein Zeichen, das man raten muss,
+   ist kein Knopf. Jetzt steht „Note" darauf, in einer kleinen
+   Sprechblase am rechten Rand — man liest es und weiss Bescheid. */
 .lc-benoten {
   float: right;
-  margin-left: 6px;
-  border: none;
-  background: none;
+  margin-left: 8px;
+  border: 1px solid rgba(255, 206, 85, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 206, 85, 0.12);
   color: inherit;
-  font-size: 0.82rem;
-  line-height: 1;
-  padding: 2px 3px;
+  font: inherit;
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  padding: 1px 8px;
   cursor: pointer;
-  opacity: 0.28;
+  opacity: 0.55;
   transition: opacity .15s ease;
 }
 .lc-zeile:hover .lc-benoten,
-.lc-benoten:focus-visible { opacity: 0.95; }
+.lc-benoten:focus-visible { opacity: 1; }
 /* Auf dem Telefon gibt es kein „darüberfahren" — dort steht es
-   dauerhaft sichtbar, sonst fände man es nie. */
+   dauerhaft gut lesbar, sonst fände man es nie. */
 @media (hover: none) {
-  .lc-benoten { opacity: 0.6; }
+  .lc-benoten { opacity: 0.85; }
 }
 .lc-notenwahl {
   display: flex;

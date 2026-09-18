@@ -49,32 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19 — Schrei, Einladen ohne Riegel, Welle ohne Kante",
+  stand: "Runde 19b — Titelzeile, Klick ins Leere, Notenknopf",
 
   inArbeit: [
-    { seit: "2026-09-18T19:37",
+    { seit: "2026-09-18T19:46",
+      text: "Emmys Nachrichten kommen unvollstaendig an — brauche ein konkretes Beispiel" },
+    { seit: "2026-09-18T19:46",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T19:37",
+    { seit: "2026-09-18T19:46",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen (/t, /f, /l)" },
-    { seit: "2026-09-18T19:37",
+    { seit: "2026-09-18T19:46",
       text: "Favoriten im Befehlspanel selbst anheften" },
-    { seit: "2026-09-18T19:37",
+    { seit: "2026-09-18T19:46",
       text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
-    { seit: "2026-09-18T19:37",
-      text: "18 Tutorsaetze ohne Ton" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T19:37",
-      text: "Keine Zeitschaltuhr mehr: zum Unterricht rufen geht, wann du willst — in den Einstellungen und mit /unterricht" },
-    { seit: "2026-09-18T19:37",
-      text: "Einladen ist nicht mehr blockiert: /i Name ruft UND legt die Einladung ins Postfach, auch wenn die Person gerade woanders sitzt" },
-    { seit: "2026-09-18T19:37",
-      text: "Die Schallwelle beim Schreien hat keine Kanten mehr — gemessen: Helligkeitssprung 34,4 auf 1,0 von 255" },
-    { seit: "2026-09-18T19:37",
-      text: "Der Schrei klingt nach dem Absender: maennliche Stimme fuer Maenner, weibliche fuer Frauen (aus dem Profil)" },
-    { seit: "2026-09-18T19:37",
-      text: "Echtes Echo beim Schreien: der Ruf kommt drei Mal, jedes Mal leiser und tiefer; der Hall tritt dahinter zurueck" },
+    { seit: "2026-09-18T19:46",
+      text: "Titel und Fokusschalter teilen sich eine Zeile: Titel links ueber die volle Breite, Schalter rechts" },
+    { seit: "2026-09-18T19:46",
+      text: "Klick ins Leere zeigt die Sprachnachrichten — Grund des Chats, Uhrzeit und der Platz neben dem Text zaehlen jetzt als Leere" },
+    { seit: "2026-09-18T19:46",
+      text: "Der Notizblock war die Zensur: der Knopf heisst jetzt „Note\" und steht oben rechts statt unter der Uhr" },
   ],
 };
