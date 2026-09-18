@@ -15616,6 +15616,31 @@
     kasten.querySelector("#lcSendeGifSuche")?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); suchen(); }
     });
+    /* =============================================================
+       LIVE SUCHEN, WÄHREND MAN TIPPT
+       -------------------------------------------------------------
+       GEWÜNSCHT: „Bei der GIF-Suche hätte ich das gern: sobald man
+       einen Buchstaben schreibt, dass schon zu dem Buchstaben eine
+       Vorauswahl kommt, ohne dass man sie abschickt … je nachdem,
+       was schon drinsteht, wird schon live analysiert."
+
+       Mit einer Bremse von 320 Millisekunden. Ohne sie ginge bei
+       „Katze" eine Anfrage je Buchstabe hinaus — fünf statt einer,
+       und auf einem langsamen Netz käme die Antwort auf „Kat" nach
+       der auf „Katze" und überschriebe sie. Die Bremse wartet, bis
+       man einen Moment stillhält, und fragt dann einmal.
+       Ein einzelner Buchstabe ist noch keine Suche: ab zwei. */
+    let gifBremse = 0;
+    kasten.querySelector("#lcSendeGifSuche")?.addEventListener("input", (e) => {
+      clearTimeout(gifBremse);
+      const wort = e.target.value.trim();
+      gifBremse = setTimeout(() => {
+        kasten.querySelectorAll("[data-lc-gifthema]").forEach((b) => b.classList.remove("ist-da"));
+        /* Leer heisst: wieder das erste Thema, nicht eine leere
+           Fläche — sonst sieht es nach einem Fehler aus. */
+        zeigen(wort.length >= 2 ? wort : LC_GIF_THEMEN[0].wort);
+      }, 320);
+    });
     /* Sofort etwas zeigen — nicht erst, wenn jemand etwas eintippt. */
     zeigen(LC_GIF_THEMEN[0].wort);
   }
@@ -20158,6 +20183,19 @@
                  den Befehlen mit." Stimmt — es gibt /schrift 1…4. Hier
                  kann man sie direkt antippen statt sie durchzuschalten,
                  und man sieht sofort, welche gerade steht. -->
+            <!-- GEMELDET: „Die Animation soll man sich auch einstellen
+                 koennen fuer das Sprechen … Ich weiss nicht, wo man
+                 das einstellt." Also dorthin, wo er die Schrift auch
+                 einstellt: in den Befehlskasten, gleich daneben. -->
+            <div class="lc-schriftwahl" id="lcSprechWahl">
+              <span class="lc-schriftwahl-wort">🗣️ Beim Sprechen</span>
+              ${Object.entries((window.LiveChat && LiveChat.sprechbilder) ? LiveChat.sprechbilder() : {})
+                .map(([k, was]) => `<button type="button" class="lc-schriftknopf lc-sprechknopf"
+                        data-lc-sprechbild="${escapeHtml(k)}"
+                        data-sprechbild="${escapeHtml(k)}"
+                        aria-pressed="${(window.LiveChat && LiveChat.sprechbild && LiveChat.sprechbild()) === k}"
+                        title="${escapeHtml(was)}">${escapeHtml(k)}</button>`).join("")}
+            </div>
             <div class="lc-schriftwahl" id="lcSchriftWahl">
               <span class="lc-schriftwahl-wort">🔤 Schrift</span>
               ${(window.LiveChat && LiveChat.schriften ? LiveChat.schriften() : [])
@@ -20373,6 +20411,13 @@
          im jeweiligen Gerät (siehe lautstaerkeVerfolgen in
          livechat.js); hierher kommt nur noch das Ja oder Nein. */
       knopf.classList.toggle("lc-platz-spricht", Boolean(p.spricht) && !p.leer);
+      /* GEWUENSCHT: „Die Animation soll man sich auch einstellen
+         koennen fuer das Sprechen, dass jeder das individualisieren
+         kann." Welche es ist, entscheidet die PERSON — die Angabe
+         faehrt in ihrer Anwesenheitsmeldung mit (siehe livechat.js),
+         damit alle im Raum dieselbe sehen und nicht jeder eine
+         andere. */
+      knopf.dataset.sprechbild = p.leer ? "ring" : (p.sprechbild || "ring");
       if (p.leer) knopf.title = "Freier Platz — antippen, um auf die Bühne zu gehen";
       knopf.tabIndex = p.leer ? -1 : 0;
       knopf.setAttribute("aria-label", p.leer
@@ -21149,12 +21194,21 @@
      stehen (/konfetti), ist der Befehl danach fertig — dann steht der
      Cursor am Ende und Enter genügt.
      ================================================================= */
+  /* Welche Kategorie gerade gewaehlt ist. Leer heisst: alle. Sie
+     steht ausserhalb, damit sie ein Neuzeichnen des Chats ueberlebt —
+     sonst faellt einem die Auswahl beim naechsten Buchstaben weg. */
+  let lcTippGruppe = "";
+
   function livechatTippsBinden(area) {
     const feld = area.querySelector("#lcFeld");
     const kasten = area.querySelector("#lcTipps");
     if (!feld || !kasten) return;
 
-    const zu = () => { kasten.hidden = true; kasten.innerHTML = ""; };
+    const zu = () => {
+      kasten.hidden = true;
+      kasten.innerHTML = "";
+      lcTippGruppe = "";        // beim naechsten Mal wieder alles zeigen
+    };
     const einsetzen = (neuerText, ansEnde) => {
       feld.value = neuerText;
       feld.focus();
@@ -21197,15 +21251,117 @@
       const wert = feld.value;
       if (wert.indexOf("/") !== 0) return zu();
       const bis = wert.indexOf(" ");
-      /* --- Stufe 1: der Befehl selbst wird noch getippt --- */
+      /* --- Stufe 1: der Befehl selbst wird noch getippt ---
+         =============================================================
+         DAS PANEL, SOBALD MAN DEN SCHRAEGSTRICH TIPPT
+         -------------------------------------------------------------
+         GEWUENSCHT: „Sobald ich den / schreibe, sollen die Kategorien
+         alle da sein — Favoriten und was man so machen moechte — und
+         dann koennte man per Anklicken das jeweilige schon auswaehlen.
+         Oder man schreibt einfach den naechsten Buchstaben, und dann
+         werden die Sachen vorgeschlagen … und da steht dann ein
+         kleiner Hinweis, aus welcher Sektion das kommt, oder die
+         Raendchen um den Befehl sind farbmarkiert und man hat eine
+         Legende daneben."
+
+         Genau so, in drei Zeilen:
+           1. die Kategorien als Knoepfe, mit ⭐ Favoriten ganz vorn
+           2. die passenden Befehle, jeder mit seinem Zeichen und
+              einem farbigen Rand nach seiner Kategorie
+           3. die Legende — dieselben Farben, damit der Rand nicht
+              geraten werden muss
+
+         Die Favoriten sind die, die man WIRKLICH am haeufigsten
+         benutzt (LiveChat.haeufigsteBefehle) — eine Liste, die man
+         von Hand pflegen muesste, pflegt am Ende niemand. Gemeldet
+         war: „die Favoriten, die ich mir selber anlege, sind immer
+         noch nicht dabei" — sie standen nur im Befehlskasten, nicht
+         hier, wo man sie braucht.
+         ============================================================= */
       if (bis < 0) {
-        const vor = LiveChat.befehlsVorschlaege(wert.slice(1));
-        if (!vor.length) return zu();
-        return zeigen(vor.map((b) => chip(
-          "/" + b.w,
-          b.was,
-          () => einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true)
-        )));
+        const suche = wert.slice(1);
+        const alle = LiveChat.befehlsliste ? LiveChat.befehlsliste() : [];
+        const vor = LiveChat.befehlsVorschlaege(suche);
+        const oft = (LiveChat.haeufigsteBefehle ? LiveChat.haeufigsteBefehle(6) : [])
+          .map((b) => alle.find((x) => x.w === b.w)).filter(Boolean);
+
+        /* Die Kategorien, die es unter den Treffern ueberhaupt gibt —
+           eine leere Schublade anzubieten waere eine Luege. */
+        const daGruppen = [];
+        LC_BEFEHLSGRUPPEN.forEach(([k, titel]) => {
+          if (vor.some((b) => (b.gr || "welt") === k)) daGruppen.push([k, titel]);
+        });
+
+        const gefiltert = lcTippGruppe
+          ? vor.filter((b) => (b.gr || "welt") === lcTippGruppe)
+          : vor;
+        if (!gefiltert.length && !oft.length) return zu();
+
+        const teile = [];
+
+        /* Zeile 1: die Kategorien. */
+        const reihe = document.createElement("div");
+        reihe.className = "lc-tipp-kategorien";
+        const katKnopf = (schluessel, beschriftung, an) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "lc-tipp-kat" + (an ? " ist-an" : "");
+          if (schluessel) b.dataset.gr = schluessel;
+          b.textContent = beschriftung;
+          b.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            lcTippGruppe = (lcTippGruppe === schluessel) ? "" : schluessel;
+            auffrischen();
+          });
+          return b;
+        };
+        reihe.appendChild(katKnopf("", "Alle", !lcTippGruppe));
+        daGruppen.forEach(([k, titel]) => reihe.appendChild(katKnopf(k, titel, lcTippGruppe === k)));
+        teile.push(reihe);
+
+        /* Zeile 2: die Favoriten — nur solange man noch nicht filtert
+           und noch nichts weiter getippt hat. Sonst stuenden sie im
+           Weg. */
+        if (!lcTippGruppe && !suche && oft.length) {
+          const fav = document.createElement("div");
+          fav.className = "lc-tipp-favoriten";
+          const wort = document.createElement("span");
+          wort.className = "lc-tipp-favwort";
+          wort.textContent = "\u2b50 Deine häufigsten";
+          fav.appendChild(wort);
+          oft.forEach((b) => {
+            const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, "", () =>
+              einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
+            k.dataset.gr = b.gr || "welt";
+            k.title = b.was;
+            fav.appendChild(k);
+          });
+          teile.push(fav);
+        }
+
+        /* Zeile 3: die Treffer. */
+        gefiltert.slice(0, 18).forEach((b) => {
+          const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, b.was, () =>
+            einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
+          k.dataset.gr = b.gr || "welt";
+          teile.push(k);
+        });
+
+        /* Zeile 4: die Legende. */
+        const legende = document.createElement("div");
+        legende.className = "lc-tipp-legende";
+        (daGruppen.length ? daGruppen : LC_BEFEHLSGRUPPEN).forEach(([k, titel]) => {
+          const e = document.createElement("span");
+          e.dataset.gr = k;
+          e.textContent = titel;
+          legende.appendChild(e);
+        });
+        teile.push(legende);
+
+        kasten.innerHTML = "";
+        teile.forEach((t) => kasten.appendChild(t));
+        kasten.hidden = false;
+        return;
       }
       /* --- Stufe 2 und 3: der Befehl steht, jetzt kommt sein Inhalt --- */
       const wort = wert.slice(1, bis).toLowerCase();
@@ -21434,7 +21590,10 @@
         const p = (l.plaetze || []).find((x) => !x.leer && x.id === w.von);
         if (!p) return;
         const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
-        if (knopf) knopf.classList.toggle("lc-platz-stimme", Boolean(an));
+        if (knopf) {
+          knopf.dataset.sprechbild = p.sprechbild || "ring";
+          knopf.classList.toggle("lc-platz-stimme", Boolean(an));
+        }
       } catch (e) {}
     };
     platzMarkieren(true);
@@ -22783,6 +22942,64 @@
       const farbe = lcNickFarbe(n);
       if (farbe && art === "ruf") z.style.setProperty("--lc-ruf", farbe);
 
+      /* =============================================================
+         DIE ZENSUR DIREKT AN DER NACHRICHT
+         -------------------------------------------------------------
+         GEWUENSCHT: „Die Note moechte ich direkt an der Nachricht
+         geben koennen, und mit der Note, die ich gebe, bekommen die
+         anderen diese Punkte gutgeschrieben."
+
+         Also ein kleines Zeichen an jeder fremden Zeile — aber NUR,
+         wenn man Lehrer ist. Wer keiner ist, sieht es gar nicht
+         erst; ein Knopf, der einem beim Antippen sagt, dass man ihn
+         nicht benutzen darf, ist ein schlechter Knopf.
+
+         Ein Tipp klappt die sechs Zahlen auf. Daneben steht ein Feld
+         fuer das Fach („Grammatik"), damit im Laufband auch steht,
+         WOFUER es die Eins gab. */
+      if (art !== "system" && art !== "kommen" && art !== "note" && art !== "quittung"
+          && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
+        const stift = document.createElement("button");
+        stift.type = "button";
+        stift.className = "lc-benoten";
+        stift.title = "Diese Antwort benoten (1 bis 6)";
+        stift.setAttribute("aria-label", "Benoten");
+        stift.textContent = "📋";
+        stift.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const offen = z.querySelector(".lc-notenwahl");
+          if (offen) { offen.remove(); return; }
+          document.querySelectorAll(".lc-notenwahl").forEach((x) => x.remove());
+          const wahl = document.createElement("span");
+          wahl.className = "lc-notenwahl";
+          const fach = document.createElement("input");
+          fach.type = "text";
+          fach.className = "lc-notenfach";
+          fach.placeholder = "Fach, z. B. Grammatik";
+          fach.maxLength = 30;
+          wahl.appendChild(fach);
+          [1, 2, 3, 4, 5, 6].forEach((zahl) => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "lc-notenzahl lc-note-" + zahl;
+            b.textContent = String(zahl);
+            b.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              const erg = LiveChat.noteGeben(n.von, zahl, fach.value.trim());
+              wahl.remove();
+              if (erg && erg.ok) {
+                showToast("📋 " + erg.name + " bekommt eine " + zahl
+                  + (erg.punkte ? " — " + erg.punkte + " Punkte gutgeschrieben." : "."));
+              }
+            });
+            wahl.appendChild(b);
+          });
+          z.appendChild(wahl);
+          fach.focus();
+        });
+        z.appendChild(stift);
+      }
+
       if (art === "system" || art === "einladung") {
         const t = document.createElement("span");
         t.className = "lc-zeilentext";
@@ -23399,29 +23616,78 @@
          da weiß man noch nicht, ob jemand da ist. */
       setTimeout(lcHintergrundInDenRaumBringen, 1800);
 
+      /* =============================================================
+         EIN TIPP AUF EINEN PLATZ: HINSETZEN ODER TAUSCHEN
+         -------------------------------------------------------------
+         GEMELDET, zum zweiten Mal: „Man kann die Sitzplaetze durch
+         Klicken auf die anderen Sitzplaetze immer noch nicht wechseln
+         oder tauschen."
+
+         Vorher tat ein Tipp auf einen freien Platz nur eines: einen
+         irgendwohin auf die Buehne setzen — nicht auf DIESEN Platz.
+         Und ein Tipp auf einen besetzten Platz vergroesserte nur das
+         Bild. Jetzt:
+
+           freier Platz          → du setzt dich genau dorthin
+           Platz eines anderen   → ihr tauscht die Plaetze
+           dein eigener Platz    → dein Bild gross (wie bisher)
+           LANG druecken         → das Bild gross (fuer alle Plaetze)
+
+         Das Vergroessern ist also nicht weg, es ist nur einen langen
+         Druck weiter — und der eigene Platz macht es weiterhin mit
+         einem Tipp. Ein Hinweis sagt das beim ersten Mal, sonst
+         sucht man es. */
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
-        k.addEventListener("click", () => {
+        let langGesehen = false;
+        let grossUhr = null;
+        const grossMachen = (id) => {
+          langGesehen = true;
+          LiveChat.grossZeigen(id);
+        };
+        k.addEventListener("pointerdown", () => {
+          langGesehen = false;
           const nr = Number(k.dataset.lcPlatz);
           const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
-          /* GEWÜNSCHT: „Man soll einfach durch Klicken auf den freien
-             Platz selbstständig auf die Bühne kommen können." */
+          if (!p || p.leer || p.ich) return;      // eigener Platz: siehe unten
+          clearTimeout(grossUhr);
+          grossUhr = setTimeout(() => grossMachen(p.id), 620);
+        });
+        ["pointerup", "pointerleave", "pointercancel"].forEach((e) =>
+          k.addEventListener(e, () => clearTimeout(grossUhr)));
+        k.addEventListener("click", () => {
+          if (langGesehen) { langGesehen = false; return; }
+          const nr = Number(k.dataset.lcPlatz);
+          const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
+
+          /* Ein freier Platz: genau dorthin. Wer noch nicht auf der
+             Buehne ist, geht zuerst hinauf — sonst gaebe es nichts zu
+             setzen. */
           if (!p || p.leer) {
             if (LiveChat.aufDerBuehne && !LiveChat.aufDerBuehne()) {
               LiveChat.buehneSetzen(true);
-              renderLiveChat();
-              showToast("🎤 Du bist auf der Bühne.");
             }
+            const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(nr) : null;
+            renderLiveChat();
+            showToast(erg && erg.ok ? "🪑 " + erg.text
+              : "🎤 Du bist auf der Bühne." + (erg && erg.warum ? " " + erg.warum : ""));
             return;
           }
-          /* GEWÜNSCHT: „Wenn man den Kreis anklickt, geht er gross auf;
-             klickt man ihn noch einmal an, geht er wieder zu — einen
-             Schliessen-Knopf braucht es dafür nicht." */
-          /* Ein Tipp holt den Platz in den Stapel oder nimmt ihn wieder
-             heraus — das entscheidet grossZeigen() selbst. Früher stand
-             hier ein Vergleich mit dem EINEN gross gezeigten Platz; mit
-             einem Stapel wäre das falsch, weil dann ein Tipp auf den
-             zweiten den ersten gelöscht hätte. */
+
+          /* Der eigene Platz bleibt, wie er war: ein Tipp zeigt dich
+             gross. */
+          if (p.ich) { LiveChat.grossZeigen(p.id); return; }
+
+          /* Und der Platz eines anderen: tauschen. */
+          const erg = LiveChat.platzTauschenMit ? LiveChat.platzTauschenMit(p.id) : null;
+          if (erg && erg.ok) {
+            renderLiveChat();
+            showToast("🔄 " + erg.text + "  (lang drücken zeigt das Bild groß)");
+            return;
+          }
+          /* Geht der Tausch nicht — etwa weil man noch nicht sitzt —,
+             dann wenigstens das, was vorher auch passiert waere. */
           LiveChat.grossZeigen(p.id);
+          if (erg && erg.warum) showToast(erg.warum);
         });
       });
       area.querySelector('[data-lc="ton"]')?.addEventListener("click", () => LiveChat.tonUmschalten());
@@ -23530,6 +23796,14 @@
           feld.value = "/" + wort + (brauchtMehr ? " " : "");
           feld.focus();
           try { feld.setSelectionRange(feld.value.length, feld.value.length); } catch (e) {}
+        }));
+      area.querySelectorAll("[data-lc-sprechbild]").forEach((b) =>
+        b.addEventListener("click", () => {
+          if (!LiveChat.sprechbildSetzen || !LiveChat.sprechbildSetzen(b.dataset.lcSprechbild)) return;
+          area.querySelectorAll("[data-lc-sprechbild]").forEach((x) =>
+            x.setAttribute("aria-pressed", String(x === b)));
+          showToast("🗣️ " + LiveChat.sprechbilder()[b.dataset.lcSprechbild]);
+          renderLiveChat();
         }));
       area.querySelectorAll("[data-lc-schrift]").forEach((b) =>
         b.addEventListener("click", () => {
@@ -52866,6 +53140,9 @@ An einem Morgen lief ein kleiner Fuchs los…
   if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     /* Prüfhaken — nur auf dem Testrechner, siehe Bedingung oben. */
     window.__textProbe = (t) => textAuswerten(t);
+    /* Damit sich das Befehls-Panel prüfen lässt, ohne sich anmelden zu
+       müssen (werkzeug/pruefe-befehlspanel.js). */
+    window.__tippsBinden = (bereich) => livechatTippsBinden(bereich);
     window.__dmaTagesaufgabe = () => pickDailyTaskFresh();
     window.__dmaUpdateNachricht = () => notifyAboutAppUpdateIfNeeded();
     window.__wortQuellePruef = (spiel) => wortQuelleFilter(spiel, buildDictionaryEntries()).map((e) => e.word);

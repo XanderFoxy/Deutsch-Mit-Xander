@@ -260,6 +260,7 @@ window.LiveChat = (function () {
     raumHg: "",
     raumHgRuf: null,    // die Oberflaeche horcht hier, wenn er sich aendert
     haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
+    klassensprecher: false,  // vom Lehrer ernannt — fuehrt weiter, wenn er geht
     betreiber: false,   // Alex selbst — dann immer Haeuptling
     abgeschlossen: false,
     eingeladen: {},     // Kennung -> true, fuer den abgeschlossenen Raum
@@ -420,7 +421,9 @@ window.LiveChat = (function () {
       var p = id ? wer.filter(function (x) { return x.id === id; })[0] : null;
       raus.push(p ? {
         nummer: i + 1, id: p.id, name: p.name, ich: p.ich, strom: p.strom,
-        tonAn: p.tonAn, bildAn: p.bildAn, bild: p.bild, spricht: p.spricht, leer: false
+        tonAn: p.tonAn, bildAn: p.bildAn, bild: p.bild, spricht: p.spricht, leer: false,
+        /* Welche Sprech-Animation DIESE Person fuer sich gewaehlt hat. */
+        sprechbild: p.ich ? (zustand.sprechbild || "ring") : (p.sprechbild || "ring")
       } : { nummer: i + 1, id: "", name: "", ich: false, strom: null,
             bild: "", spricht: false, leer: true });
     }
@@ -621,6 +624,40 @@ window.LiveChat = (function () {
   }
   function gemerkteNamensfarbe() {
     try { return localStorage.getItem(NAMENSFARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
+  }
+
+  /* =========================================================
+     WIE DEIN PLATZ AUSSIEHT, WENN DU SPRICHST
+     ---------------------------------------------------------
+     GEWUENSCHT: „Die Animation soll man sich auch einstellen
+     koennen fuer das Sprechen, dass jeder das individualisieren
+     kann. Ich weiss nicht, wo man das einstellt."
+
+     Er hatte recht: es gab gar keine Einstellung, nur einen
+     festen gruenen Ring. Jetzt gibt es fuenf, sie liegen im
+     eigenen Geraet und fahren in der Anwesenheitsmeldung mit —
+     so sehen die ANDEREN die Animation, die man sich selbst
+     ausgesucht hat, und nicht jeder eine eigene.
+     ========================================================= */
+  var SPRECHBILDER = {
+    ring:       "Grüner Ring — ruhig und deutlich",
+    welle:      "Schallwellen — zwei Ringe laufen nach außen",
+    puls:       "Herzschlag — der Kreis pocht",
+    regenbogen: "Regenbogen — der Rand wandert durch die Farben",
+    aus:        "Nichts — kein Zeichen beim Sprechen"
+  };
+  var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";
+  function sprechbildMerken(x) {
+    try {
+      if (x && SPRECHBILDER[x]) localStorage.setItem(SPRECHBILD_SCHLUESSEL, x);
+      else localStorage.removeItem(SPRECHBILD_SCHLUESSEL);
+    } catch (e) {}
+  }
+  function gemerktesSprechbild() {
+    try {
+      var x = localStorage.getItem(SPRECHBILD_SCHLUESSEL) || "";
+      return SPRECHBILDER[x] ? x : "ring";
+    } catch (e) { return "ring"; }
   }
 
   var FARB_SCHLUESSEL = "dma_livechat_farbe";
@@ -2141,10 +2178,22 @@ window.LiveChat = (function () {
     }
     if (n.art === "rang") {
       if (n.an === zustand.ichId) {
-        zustand.haeuptling = Boolean(n.haeuptling);
+        if (typeof n.haeuptling === "boolean") zustand.haeuptling = Boolean(n.haeuptling);
+        if (typeof n.klassensprecher === "boolean") {
+          zustand.klassensprecher = Boolean(n.klassensprecher);
+          if (zustand.klassensprecher) {
+            systemZeile("🎓 Du bist jetzt Klassensprecher:in. Wenn der Lehrer geht, führst du weiter.");
+          }
+        }
         melden();
       } else if (zustand.leute[n.an]) {
-        zustand.leute[n.an].haeuptling = Boolean(n.haeuptling);
+        if (typeof n.haeuptling === "boolean") zustand.leute[n.an].haeuptling = Boolean(n.haeuptling);
+        if (typeof n.klassensprecher === "boolean") {
+          Object.keys(zustand.leute).forEach(function (id) {
+            if (zustand.leute[id]) zustand.leute[id].klassensprecher = false;
+          });
+          zustand.leute[n.an].klassensprecher = Boolean(n.klassensprecher);
+        }
         melden();
       }
       return;
@@ -2163,6 +2212,7 @@ window.LiveChat = (function () {
         if (typeof n.bild === "string") zustand.leute[n.von].bild = n.bild;
         if (typeof n.farbe === "string") zustand.leute[n.von].farbe = n.farbe;
         if (typeof n.farbeName === "string") zustand.leute[n.von].farbeName = n.farbeName;
+        if (typeof n.sprechbild === "string") zustand.leute[n.von].sprechbild = n.sprechbild;
         personEintragen(n);
         melden();
       }
@@ -2616,6 +2666,7 @@ window.LiveChat = (function () {
     zustand.ichBild = o.bild || bildLaden();
     zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
     zustand.farbeName = zustand.farbeName || gemerkteNamensfarbe();
+    zustand.sprechbild = zustand.sprechbild || gemerktesSprechbild();
     zustand.schrift = gemerkteSchrift();
     zustand.buehne = o.buehne !== false;
     platzJe = {};                 // neuer Raum, neue Sitzordnung
@@ -2624,6 +2675,7 @@ window.LiveChat = (function () {
     zustand.spricht = false;
     zustand.thema = "";
     zustand.haeuptling = false;
+    zustand.klassensprecher = false;
     zustand.abgeschlossen = false;
     zustand.eingeladen = {};
     zustand.geknebelt = {};
@@ -2789,6 +2841,21 @@ window.LiveChat = (function () {
   });
 
   function verlassen() {
+    /* DER KLASSENSPRECHER MACHT WEITER.
+       „Der Klassensprecher macht weiter mit den anderen, wenn ich den
+       Raum verlasse." Also: bevor die Leitung zugeht, geht die
+       Verantwortung hinaus. Danach ist es zu spaet — der Kanal ist
+       weg und niemand hoert es mehr. */
+    try {
+      if ((zustand.haeuptling || binLehrer()) && zustand.lage === "drin") {
+        var nachfolge = klassensprecherId();
+        if (nachfolge) {
+          senden({ art: "rang", an: nachfolge, haeuptling: true });
+          anAlle("system", (zustand.leute[nachfolge] || {}).name
+            + " führt jetzt weiter — " + zustand.ichName + " ist gegangen.");
+        }
+      }
+    } catch (e) {}
     /* Ausdrücklich gegangen heisst: nicht zurückholen.
        Der Chatverlauf bleibt aber liegen — man soll nachlesen
        können, was geschrieben wurde, auch wenn man wiederkommt.
@@ -3912,6 +3979,144 @@ window.LiveChat = (function () {
   }
 
   /* =========================================================
+     PLATZ WECHSELN UND TAUSCHEN — MIT EINEM TIPP
+     ---------------------------------------------------------
+     GEMELDET, und zwar zum zweiten Mal: „Man kann die Sitzplaetze
+     durch Klicken auf die anderen Sitzplaetze immer noch nicht
+     wechseln oder tauschen."
+
+     Er hatte recht. Es gab den Befehl /tausch, aber keinen Weg
+     mit dem Finger: ein Tipp auf einen freien Platz hat einen nur
+     auf die Buehne gesetzt (irgendwohin), ein Tipp auf einen
+     besetzten hat das Bild vergroessert. Beides hier, als zwei
+     benannte Funktionen, damit die Oberflaeche und der Befehl
+     denselben Weg nehmen und nicht auseinanderlaufen koennen.
+     ========================================================= */
+  /* =========================================================
+     WER IST WAS IM RAUM — LEHRER, KLASSENSPRECHER, HAEUPTLING
+     ---------------------------------------------------------
+     GEWUENSCHT: „Im Klassenzimmer ist der Rang von mir als
+     Betreiber automatisch Lehrer. Ich kann noch einen Rang
+     Klassensprecher vergeben, und der Klassensprecher macht
+     weiter mit den anderen, wenn ich den Raum verlasse. Wenn man
+     in einen anderen Raum geht, ist man der Haeuptling — die
+     Bezeichnung, die zu dem Raum dann passt. Zensuren gibt nur
+     der Lehrer; daran sehe ich auch, ob ich ueberhaupt Lehrer
+     bin. Aber ich bin immer automatisch Lehrer im Raum, weil ich
+     der Einzige bin."
+
+     Also drei Woerter fuer eine Sache, und jedes an seinem Platz:
+
+       LEHRER          der Betreiber, aber NUR im Klassenzimmer
+       KLASSENSPRECHER wen der Lehrer dazu macht — er fuehrt
+                       weiter, wenn der Lehrer geht
+       HAEUPTLING      ueberall sonst, wie bisher
+
+     Es sind keine neuen Rechte, nur andere Namen fuer dieselben:
+     wer Haeuptling ist, kann auch als Lehrer alles. Nur das
+     Benoten haengt wirklich am Lehrer — sonst koennte in jedem
+     selbstgemachten Raum jeder Zensuren verteilen, und die
+     zaehlen ja in die Bewertung.
+     ========================================================= */
+  function binLehrer() {
+    return Boolean(zustand.betreiber && zustand.raum === HAUPTRAUM);
+  }
+  function rangWort(grossAnfang) {
+    var w = binLehrer() ? "Lehrer"
+          : (zustand.klassensprecher && zustand.raum === HAUPTRAUM) ? "Klassensprecher"
+          : "Häuptling";
+    return grossAnfang ? w : w.toLowerCase();
+  }
+  /* Wer nach mir weitermacht, wenn ich gehe. */
+  function klassensprecherId() {
+    var raus = "";
+    Object.keys(zustand.leute).forEach(function (id) {
+      if (zustand.leute[id] && zustand.leute[id].klassensprecher) raus = id;
+    });
+    return raus;
+  }
+
+  /* EINE ZENSUR VERGEBEN — ein Weg fuer Befehl und Knopf.
+     GEWUENSCHT: „Die Note moechte ich direkt an der Nachricht geben
+     koennen, und mit der Note, die ich gebe, bekommen die anderen
+     diese Punkte gutgeschrieben." Also liegt die ganze Arbeit hier,
+     und sowohl /note als auch der kleine Knopf an der Zeile rufen
+     dieselbe Stelle. Zwei Wege, die dasselbe tun sollen, laufen
+     sonst irgendwann auseinander. */
+  var NOTE_WORT = { 1: "sehr gut", 2: "gut", 3: "befriedigend",
+                    4: "ausreichend", 5: "mangelhaft", 6: "ungenügend" };
+  /* Eine Eins ist etwas wert und soll etwas bringen; eine Sechs nimmt
+     nichts weg — Noten sind hier zum Anspornen da, nicht zum Strafen. */
+  var NOTE_PUNKTE = { 1: 10, 2: 6, 3: 3, 4: 1, 5: 0, 6: 0 };
+
+  function noteGeben(id, zahl, wofuer) {
+    if (!binLehrer()) {
+      systemZeile("Zensuren gibt nur der Lehrer — das ist der Betreiber im Klassenzimmer.");
+      return { ok: false };
+    }
+    zahl = Math.round(Number(zahl));
+    if (!(zahl >= 1 && zahl <= 6)) { systemZeile("Zensuren gehen von 1 bis 6."); return { ok: false }; }
+    var wer = zustand.leute[id];
+    if (!wer && id !== zustand.ichId) { systemZeile("Die Person ist nicht mehr hier."); return { ok: false }; }
+    var name = wer ? wer.name : zustand.ichName;
+    var gut = NOTE_PUNKTE[zahl];
+    if (gut && id !== zustand.ichId) {
+      postSenden(id, { art: "punkte", wieviel: gut, raum: zustand.raum,
+                       grund: "Zensur " + zahl + (wofuer ? " in " + wofuer : "") + " im Klassenzimmer" });
+    }
+    /* „Dann steht oben im Newsticker, dass derjenige gerade eine Eins
+       in Grammatik bekommen hat." */
+    raumEreignis(name + " hat gerade eine " + zahl
+      + (wofuer ? " in " + wofuer : "") + " bekommen");
+    anAlle("note", "📋 " + name + " bekommt eine " + zahl
+      + " (" + NOTE_WORT[zahl] + ")" + (wofuer ? " — " + wofuer : "")
+      + (gut ? "  ·  +" + gut + " Punkte" : ""));
+    return { ok: true, name: name, punkte: gut };
+  }
+
+  function platzNehmen(nummer) {
+    if (zustand.lage !== "drin") return { ok: false, warum: "Dafür musst du erst im Raum sein." };
+    var n = Number(nummer);
+    if (!(n >= 1 && n <= PLAETZE)) return { ok: false, warum: "Diesen Platz gibt es nicht." };
+    var jetzt = plaetzeBauen();
+    var ziel = jetzt[n - 1];
+    if (!ziel) return { ok: false, warum: "Diesen Platz gibt es nicht." };
+    if (!ziel.leer) {
+      if (ziel.id === zustand.ichId) return { ok: false, warum: "Da sitzt du schon." };
+      return platzTauschenMit(ziel.id);
+    }
+    sitzTausch[zustand.ichId] = n - 1;
+    senden({ art: "sitzplatz", ordnung: sitzTausch,
+             text: zustand.ichName + " setzt sich auf Platz " + n + "." });
+    melden();
+    return { ok: true, text: "Du sitzt jetzt auf Platz " + n + "." };
+  }
+
+  function platzTauschenMit(id) {
+    if (zustand.lage !== "drin") return { ok: false, warum: "Dafür musst du erst im Raum sein." };
+    if (!id || id === zustand.ichId) return { ok: false, warum: "Mit dir selbst geht das nicht." };
+    var jetzt = plaetzeBauen();
+    var meiner = null, seiner = null;
+    jetzt.forEach(function (pl) {
+      if (pl.id === zustand.ichId) meiner = pl;
+      if (pl.id === id) seiner = pl;
+    });
+    if (!seiner) return { ok: false, warum: "Die Person sitzt gerade auf keinem Platz." };
+    if (!meiner) {
+      /* Wer noch nicht sitzt, kann auch nicht tauschen — aber er
+         kann sich daneben setzen. Das ist das, was gemeint ist,
+         wenn jemand von unten auf einen Platz tippt. */
+      return { ok: false, warum: "Geh erst auf die Bühne, dann könnt ihr tauschen." };
+    }
+    sitzTausch[zustand.ichId] = seiner.nummer - 1;
+    sitzTausch[id] = meiner.nummer - 1;
+    var satz = zustand.ichName + " und " + seiner.name + " haben die Plätze getauscht.";
+    senden({ art: "sitzplatz", ordnung: sitzTausch, text: satz });
+    melden();
+    return { ok: true, text: satz };
+  }
+
+  /* =========================================================
      KLASSENZIMMER-AUFGABEN
      ---------------------------------------------------------
      GEWUENSCHT: „Einmal, dass man die Woerter verdrehen kann,
@@ -4710,12 +4915,97 @@ window.LiveChat = (function () {
     { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw <text>",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
     { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz <ganzer Satz>", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
     { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
-    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Häuptling: eine Zensur von 1 bis 6 mit einem Wort dazu" },
+    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
+    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "mitschrieb", kurz: "sichtbar", nutzt: "/mitschrieb",   was: "Sprachnachrichten im Chat sichtbar machen — zum Nachhören und Herunterladen" },
+    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
     { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { gr: "hilfe", w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
   ];
+
+  /* =========================================================
+     JEDER BEFEHL BEKOMMT SEIN ZEICHEN
+     ---------------------------------------------------------
+     GEWUENSCHT: „Ich hatte auch am Anfang gesagt, dass die
+     Animationen — wenn zum Beispiel die Pinguine sind, dass da
+     ein kleines Symbol fuer Pinguine ist, dass man weiss, dass
+     das visuell auch dargestellt ist. Oder eben #pinguin,
+     einfach das Emoji auch moeglich machen, den Pinguin zu
+     schicken, und der ist schon in der Auswahl voreingestellt
+     zu sehen."
+
+     Die Zeichen stehen HIER und nicht in jeder einzelnen Zeile
+     der Tabelle darueber: so bleibt die Tabelle lesbar, und ein
+     neuer Befehl bekommt sein Zeichen mit einem Wort statt mit
+     einer Zeilenaenderung. Was kein eigenes Zeichen hat, bekommt
+     das seiner Gruppe — ein Befehl ohne Zeichen saehe in der
+     Auswahl aus, als fehle etwas.
+
+     Und das Zeichen ist nicht nur Schmuck: man kann es TIPPEN.
+     Wer 🐧 in den Chat schreibt, schickt die Pinguine; wer
+     #pinguine schreibt, auch. Siehe befehlAusZeichen().
+     ========================================================= */
+  var GRUPPEN_ZEICHEN = { reden: "\ud83d\udcac", raum: "\ud83d\udeaa", chef: "\ud83d\udc51",
+                          zeichen: "\u2328\ufe0f", feier: "\ud83c\udf89", wetter: "\u2614",
+                          tiere: "\ud83e\udd8b", welt: "\ud83c\udf0b", aussehen: "\ud83c\udfa8",
+                          hilfe: "\u2753", schule: "\ud83c\udf92" };
+  var BEFEHL_ZEICHEN = {
+    me: "\ud83e\uddcd", s: "\ud83d\udce3", w: "\ud83e\udd2b", j: "\ud83d\udeaa", i: "\u2709\ufe0f",
+    f: "\ud83d\udc63", n: "\ud83d\udc65", l: "\ud83d\uddfa\ufe0f", t: "\ud83d\udcdd",
+    lock: "\ud83d\udd12", unlock: "\ud83d\udd13", op: "\u2b50", deop: "\u2b55",
+    k: "\ud83d\udc62", stumm: "\ud83d\udd07", entstumm: "\ud83d\udd0a",
+    knebel: "\ud83e\udd10", entknebel: "\ud83d\ude42", lach: "\ud83d\ude02",
+    ascii: "\ud83d\udd24", bild: "\ud83d\uddbc\ufe0f", herz: "\u2764\ufe0f",
+    drueck: "\ud83e\udd17", tausch: "\ud83d\udd04", verbindung: "\ud83d\udd0c",
+    leck: "\ud83d\ude1c", box: "\ud83e\udd4a", konfetti: "\ud83c\udf8a", ballon: "\ud83c\udf88",
+    geschenk: "\ud83c\udf81", schnee: "\u2744\ufe0f", regen: "\ud83c\udf27\ufe0f",
+    feuerwerk: "\ud83c\udf86", gewitter: "\u26c8\ufe0f", erdbeben: "\ud83c\udf0d",
+    vulkan: "\ud83c\udf0b", schmetterling: "\ud83e\udd8b", voegel: "\ud83d\udc26",
+    schlitten: "\ud83c\udf85", rennauto: "\ud83c\udfce\ufe0f", bonbon: "\ud83c\udf6d",
+    orkan: "\ud83c\udf2a\ufe0f", finsternis: "\ud83c\udf11", lagerfeuer: "\ud83d\udd25",
+    sternschnuppe: "\ud83c\udf20", matrix: "\ud83d\udfe9", falten: "\ud83d\udcd0",
+    armageddon: "\u2604\ufe0f", sintflut: "\ud83c\udf0a", aegypten: "\ud83d\udc2a",
+    ostern: "\ud83d\udc07", augen: "\ud83d\udc40", geld: "\ud83d\udcb0", keks: "\ud83c\udf6a",
+    seifenblasen: "\ud83e\udee7", herbst: "\ud83c\udf42", aquarium: "\ud83d\udc20",
+    pinguine: "\ud83d\udc27", fratze: "\ud83d\udc79", blut: "\ud83e\ude78",
+    schloss: "\ud83c\udff0", kitt: "\ud83d\ude97", dino: "\ud83e\udd96",
+    jalousie: "\ud83e\ude9f", handdurch: "\ud83d\udd90\ufe0f", tore: "\u26bd",
+    paintball: "\ud83c\udfaf", enten: "\ud83e\udd86", katze: "\ud83d\udc08",
+    route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", ggloewe: "\ud83e\udd81",
+    ggtrex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", ggadler: "\ud83e\udd85",
+    gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b", kassette: "\ud83d\udcfc",
+    pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
+    strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
+    wolken: "\u2601\ufe0f", glasbruch: "\ud83e\ude9e", spinnen: "\ud83d\udd77\ufe0f",
+    noten: "\ud83c\udfb5", halloween: "\ud83c\udf83", weihnachten: "\ud83c\udf84",
+    schrift: "\ud83d\udd24", hintergrund: "\ud83d\uddbc\ufe0f", c: "\ud83c\udfa8",
+    cname: "\ud83c\udff7\ufe0f", cschrift: "\u270f\ufe0f", rw: "\u21a9\ufe0f",
+    satz: "\ud83e\udde9", wort: "\ud83d\udd20", note: "\ud83d\udccb",
+    klassensprecher: "\ud83c\udf93", mitschrieb: "\ud83d\udcdd", leave: "\ud83d\udc4b",
+    h: "\u2753"
+  };
+  BEFEHLE.forEach(function (b) {
+    b.sym = BEFEHL_ZEICHEN[b.w] || GRUPPEN_ZEICHEN[b.gr] || "\u2b50";
+  });
+
+  /* Welcher Befehl steckt hinter einem Zeichen oder hinter
+     „#wort"? Gibt das Befehlswort zurueck oder "" — geraten wird
+     nichts, es zaehlt nur, was wirklich in der Tabelle steht. */
+  function befehlAusZeichen(text) {
+    var t = String(text || "").trim();
+    if (!t) return "";
+    if (t.charAt(0) === "#") {
+      var wort = t.slice(1).split(/\s+/)[0].toLowerCase();
+      var da = BEFEHLE.filter(function (b) { return b.w === wort || b.kurz === wort; })[0];
+      return da ? da.w : "";
+    }
+    /* Genau EIN Zeichen und sonst nichts — „🐧 schau mal" ist ein
+       Satz mit einem Pinguin darin und kein Befehl. */
+    var treffer = BEFEHLE.filter(function (b) { return b.sym && b.sym === t; })[0];
+    return treffer ? treffer.w : "";
+  }
+
   /* DIE KURZWOERTER — eine Tabelle, zwei Benutzer.
      Sie stand frueher als „var gleich" mitten in der Befehlsauswertung
      und war damit nur dort zu sehen. Die Tipphilfe unter dem
@@ -5007,7 +5297,7 @@ window.LiveChat = (function () {
     if (zusatz && zusatz.an) n.an = zusatz.an;
     serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
-                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName };
+                 bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName, sprechbild: zustand.sprechbild };
     if (zusatz) Object.keys(zusatz).forEach(function (k) { post[k] = zusatz[k]; });
     senden(post);
     melden();
@@ -5436,6 +5726,8 @@ window.LiveChat = (function () {
     if (art === "verbindung") {
       return systemZeile("\ud83d\udd0c Verbindungsbefund\n" + verbindungsBericht());
     }
+    /* Dieselbe Arbeit wie /tausch, nur von der Oberflaeche aus —
+       siehe platzNehmen/platzTauschenMit weiter unten. */
     if (art === "tausch") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var plaetzeJetzt = plaetzeBauen();
@@ -5653,8 +5945,41 @@ window.LiveChat = (function () {
        „Dass man die Antworten der Leute bewerten kann — die es
        richtig machen, dass die Zensuren kriegen dafür, von 1 bis 6,
        ja, also wie man das aus dem Unterricht gewöhnt ist." */
+    /* ---- Klassensprecher ernennen ---- */
+    if (art === "klassensprecher") {
+      if (!binLehrer() && !zustand.haeuptling) {
+        return systemZeile("Einen Klassensprecher bestimmt der " + rangWort(true) + ".");
+      }
+      if (!rest.trim()) {
+        var jetztId = klassensprecherId();
+        return systemZeile(jetztId
+          ? "Klassensprecher ist gerade " + (zustand.leute[jetztId] || {}).name + ".\n"
+            + "So wechselst du:  /klassensprecher Nickname"
+          : "Noch niemand. So geht es:  /klassensprecher Nickname");
+      }
+      var zk = personNachName(rest.trim().split(/\s+/)[0] || "");
+      if (!zk) return systemZeile("„" + rest + "“ ist nicht hier.");
+      /* Immer nur einer — der vorige gibt ab. */
+      Object.keys(zustand.leute).forEach(function (id) {
+        if (zustand.leute[id]) zustand.leute[id].klassensprecher = (id === zk.id);
+      });
+      senden({ art: "rang", an: zk.id, klassensprecher: true });
+      raumEreignis(zk.name + " ist jetzt Klassensprecher:in im Klassenzimmer");
+      return anAlle("system", "🎓 " + zk.name + " ist jetzt Klassensprecher:in. "
+        + "Wenn " + zustand.ichName + " geht, führt " + zk.name + " weiter.");
+    }
+
     if (art === "note") {
-      if (!zustand.haeuptling) return systemZeile("Zensuren gibt nur der Häuptling.");
+      /* „Zensuren gibt nur der Lehrer, ja — daran sehe ich auch, ob
+         ich ueberhaupt Lehrer bin." Genau deshalb steht hier die
+         Begruendung und nicht nur ein Nein. */
+      if (!binLehrer()) {
+        return systemZeile("Zensuren gibt nur der Lehrer, und Lehrer ist der Betreiber "
+          + "im Klassenzimmer. Hier bist du " + rangWort(true) + " — "
+          + (zustand.raum !== HAUPTRAUM
+              ? "im Klassenzimmer (nicht in einem eigenen Raum) kannst du benoten."
+              : "Zensuren gibt nur der Betreiber."));
+      }
       var nt = rest.trim().split(/\s+/);
       var wem = nt.shift() || "";
       var zahl = Number(nt.shift());
@@ -5665,20 +5990,27 @@ window.LiveChat = (function () {
         return systemZeile("So geht es:  /note " + zz.name + " 2 saubere Satzstellung\n"
           + "Zensuren gehen von 1 (sehr gut) bis 6 (ungenügend).");
       }
-      var WORT = { 1: "sehr gut", 2: "gut", 3: "befriedigend",
-                   4: "ausreichend", 5: "mangelhaft", 6: "ungenügend" };
-      zahl = Math.round(zahl);
-      /* Eine Eins ist etwas wert und soll etwas bringen; eine Sechs
-         nimmt nichts weg — Noten sind hier zum Anspornen da, nicht
-         zum Bestrafen. */
-      var gut = { 1: 10, 2: 6, 3: 3, 4: 1, 5: 0, 6: 0 }[zahl];
-      if (gut) {
-        postSenden(zz.id, { art: "punkte", wieviel: gut, raum: zustand.raum,
-                            grund: "Zensur " + zahl + " im Klassenzimmer" });
+      return noteGeben(zz.id, zahl, wofuer).ok;
+    }
+
+    /* ---- Wie der eigene Platz beim Sprechen aussieht ---- */
+    if (art === "sprechbild") {
+      var wahl = rest.trim().toLowerCase();
+      if (!SPRECHBILDER[wahl]) {
+        return systemZeile("Deine Sprech-Animation — gerade: „"
+          + SPRECHBILDER[zustand.sprechbild || "ring"] + "“.\n"
+          + Object.keys(SPRECHBILDER).map(function (k) {
+              return "  /sprechbild " + k + (k === (zustand.sprechbild || "ring") ? "  ← jetzt" : "")
+                + "\n      " + SPRECHBILDER[k];
+            }).join("\n"));
       }
-      return anAlle("note", "📋 " + zz.name + " bekommt eine " + zahl
-        + " (" + WORT[zahl] + ")" + (wofuer ? " — " + wofuer : "")
-        + (gut ? "  ·  +" + gut + " Punkte" : ""));
+      zustand.sprechbild = wahl;
+      sprechbildMerken(wahl);
+      senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+               bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+               sprechbild: zustand.sprechbild });
+      melden();
+      return systemZeile("Beim Sprechen zeigt dein Platz jetzt: " + SPRECHBILDER[wahl] + ".");
     }
 
     /* ---- Sprachnachrichten sichtbar machen ----
@@ -5874,6 +6206,18 @@ window.LiveChat = (function () {
     var t = String(text || "").trim().slice(0, CHAT_LAENGE);
     if (!t) return;
     if (t.charAt(0) === "/" && befehlAusfuehren(t)) return;
+    /* GEWUENSCHT: „#pinguin — einfach das Emoji auch moeglich machen,
+       den Pinguin zu schicken." Also: ein Zeichen allein oder ein
+       „#wort" ist derselbe Befehl wie der Schraegstrich. Es ist
+       bewusst DERSELBE Weg (befehlAusfuehren) und keine zweite
+       Maschinerie: sonst koennte das eine irgendwann etwas anderes
+       tun als das andere. Ein Zeichen MITTEN im Satz bleibt ein
+       Zeichen im Satz — siehe befehlAusZeichen(). */
+    var ausZeichen = befehlAusZeichen(t);
+    if (ausZeichen) {
+      var restZ = t.charAt(0) === "#" ? t.slice(1).split(/\s+/).slice(1).join(" ") : "";
+      if (befehlAusfuehren("/" + ausZeichen + (restZ ? " " + restZ : ""))) return;
+    }
     if (geknebelt()) { systemZeile("Du bist gerade geknebelt und kannst nichts sagen."); return; }
     /* Steht „/me/" im Satz, ist es eine AKTION: der Name steht dann
        mitten in der Zeile und darf nicht zusätzlich davor stehen. */
@@ -5888,7 +6232,7 @@ window.LiveChat = (function () {
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
-             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName });
+             chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName, sprechbild: zustand.sprechbild });
     melden();
   }
 
@@ -6149,6 +6493,24 @@ window.LiveChat = (function () {
     beiHintergrund: function (f) { zustand.hintergrundRuf = f; },
     /* Punkte aus dem Klassenzimmer gehen durch dieselbe Tuer wie
        jede Spielrunde — app.js meldet sich hier an. */
+    platzNehmen: platzNehmen,
+    befehlAusZeichen: befehlAusZeichen,
+    sprechbilder: function () { return Object.assign({}, SPRECHBILDER); },
+    sprechbild: function () { return zustand.sprechbild || gemerktesSprechbild(); },
+    sprechbildSetzen: function (x) {
+      if (!SPRECHBILDER[x]) return false;
+      zustand.sprechbild = x;
+      sprechbildMerken(x);
+      senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+               bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+               sprechbild: x });
+      melden();
+      return true;
+    },
+    binLehrer: binLehrer,
+    rangWort: rangWort,
+    noteGeben: noteGeben,
+    platzTauschenMit: platzTauschenMit,
     beiPunkten: function (f) { zustand.punkteRuf = f; },
     beiEreignis: function (f) { zustand.ereignisRuf = f; },
     /* Nur fuer die Pruefung: die offene Aufgabe von aussen sehen. */

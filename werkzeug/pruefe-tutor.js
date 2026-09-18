@@ -135,8 +135,13 @@ const SPITZEL = () => {
     d.ton.forEach((x) => console.log("    " + String(x.t).padStart(6) + " ms  " + (x.was === "an" ? "▶ " : "■ ")
       + x.src.padEnd(18) + (x.was === "aus" ? x.grund + " (nach " + x.bei + " ms Ton)" : "")));
     if (!d.ton.length) console.log("    — kein Ton —");
-    const wuerg = d.ton.filter((x) => x.grund === "ABGEWÜRGT").length;
-    console.log("  abgewürgt:    " + wuerg + "  →  " + (wuerg ? "SPRINGT" : "keiner"));
+    /* Nicht jedes Abwuergen ist ein Springen. Wer den Bereich
+       wechselt, SOLL den vorigen Satz abschneiden — das ist richtig
+       so. Ein Springen ist es erst, wenn ein Satz nach weniger als
+       einer halben Sekunde abgeraeumt wird: dann hat ihn niemand
+       gehoert, und es sah aus, als faenge Alex zweimal an. */
+    const wuerg = d.ton.filter((x) => x.grund === "ABGEWÜRGT" && x.bei < 500).length;
+    console.log("  zu frueh abgewürgt: " + wuerg + "  →  " + (wuerg ? "SPRINGT" : "keiner"));
     console.log("  gleichzeitig: " + d.gleichzeitig + "  →  " + (d.gleichzeitig > 1 ? "ZWEI STIMMEN" : "eine Stimme"));
     console.log("  Sätze (" + d.text.length + "):");
     d.text.forEach((x) => console.log("    " + String(x.t).padStart(5) + " ms  " + (x.tonLief ? "🔊" : "🔇") + "  " + x.s));
