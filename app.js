@@ -20264,7 +20264,20 @@
 
         <div class="lc-chat">
           <div class="lc-chat-kopf">
-            <span>💬 Chat — alle im Raum lesen mit</span>
+            <!-- GEMELDET: „Dieses ‚alle im Raum' oder was da stehen soll,
+                 ist bei Android nicht komplett angezeigt, weil es wieder
+                 abbricht. Es ist hinter dem Räume-Link und hinter dem
+                 Befehle-Link, da steht einfach nur …"
+                 Der Satz war zu lang für ein Telefon und wurde abgeschnitten.
+                 Und gewünscht war ausserdem: „Auf der Zeile Chat soll man
+                 auch draufklicken können, um den Sprachnachrichten-Inhalt
+                 zu sehen." Beides zusammen: ein kurzer Knopf statt eines
+                 langen Satzes, und er tut etwas. -->
+            <button type="button" class="lc-chat-kopf-titel" id="lcKopfStimmen"
+                    title="Antippen: die Sprachnachrichten ein- und ausblenden">
+              <span class="lc-kopf-wort">💬 Chat</span>
+              <span class="lc-kopf-stimmen">🎙️ anzeigen</span>
+            </button>
             <!-- GEMELDET: „Diese ganzen Befehle, Schrift, Hintergrund,
                  Nachlesen, Verlauf löschen — die sollen den Chat nicht
                  nach unten zwingen, sondern ein bisschen kompakt und
@@ -24792,6 +24805,13 @@
         }));
       livechatTippsBinden(area);
       lcRuecknahmenZeichnen(area);
+      /* Die Kopfzeile schaltet die Sprachnachrichten — derselbe Weg
+         wie ein Tipp ins Leere, nur findbar. */
+      area.querySelector("#lcKopfStimmen")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const v = area.querySelector("#lcVerlauf");
+        if (v) lcStimmenUmschalten(v);
+      });
       /* Der Fokusschalter wird bei JEDEM Zeichnen nachgezogen — nicht
          nur dann, wenn die Sprachleiste gerade gebaut wird. Sonst
          fehlte er ueberall dort, wo es keine Sprachnachrichten gibt,
@@ -24861,7 +24881,16 @@
              lange Druecken auf dem Telefon die Markierung aufgerufen
              statt aufzunehmen. Die Zeichnung im Knopf bleibt jetzt
              stehen, die Farbe sagt, was los ist. */
-          const anzeigen = (an) => sprachKnopf.classList.toggle("lc-sprach-an", an);
+          /* GEWUENSCHT: „Wenn ich spreche, moechte ich auch sehen, dass
+             ich gerade spreche."
+             Der Knopf allein reicht nicht — den hat man unter dem
+             Finger und sieht ihn nicht. Deshalb bekommt die ganze
+             Seite eine Marke, und die Kopfzeile des Chats zeigt gut
+             sichtbar „🔴 Du sprichst". */
+          const anzeigen = (an) => {
+            sprachKnopf.classList.toggle("lc-sprach-an", an);
+            document.body.classList.toggle("lc-ich-spreche", an);
+          };
           const los = async (e) => {
             e.preventDefault();
             if (laeuft) return;

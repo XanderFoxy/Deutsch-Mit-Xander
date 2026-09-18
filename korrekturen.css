@@ -4347,6 +4347,63 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* --- DIE KOPFZEILE IST JETZT EIN KNOPF ---
+   GEMELDET: „Dieses ‚alle im Raum' ist bei Android nicht komplett
+   angezeigt, weil es wieder abbricht — da steht einfach nur …", und
+   gewünscht: „Auf der Zeile Chat soll man auch draufklicken können,
+   um den Sprachnachrichten-Inhalt zu sehen."
+   Der alte Satz war zu lang fürs Telefon. Jetzt zwei kurze Teile:
+   „💬 Chat" bleibt immer stehen, „🎙️ anzeigen" verschwindet als
+   Erstes, wenn es eng wird — abgeschnitten wird nie etwas. */
+.lc-chat-kopf-titel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 1 auto;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 2px 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-kopf-wort { flex: 0 0 auto; }
+.lc-kopf-stimmen {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.74em;
+  opacity: 0.68;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.lc-chat-kopf-titel:hover .lc-kopf-stimmen { opacity: 1; }
+.lc-chat-verlauf.lc-stimmen-offen ~ * .lc-kopf-stimmen,
+.lc-chat.lc-stimmen-an .lc-kopf-stimmen { opacity: 1; }
+/* Auf sehr schmalen Geräten fällt der Zusatz ganz weg, statt sich
+   in drei Punkte zu verwandeln. */
+@media (max-width: 360px) {
+  .lc-kopf-stimmen { display: none; }
+}
+
+/* --- „DU SPRICHST" — SICHTBAR, NICHT NUR UNTER DEM FINGER ---
+   GEWÜNSCHT: „Wenn ich spreche, möchte ich auch sehen, dass ich
+   gerade spreche." */
+body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after {
+  content: " 🔴 du sprichst";
+  color: #ff8a80;
+  font-size: 0.8em;
+  letter-spacing: 0.01em;
+}
+body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out infinite; }
+@keyframes lcSprichtPuls { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
+@media (prefers-reduced-motion: reduce) {
+  body.lc-ich-spreche .lc-chat-kopf { animation: none; }
+}
 .lc-chat-kopf-rechts {
   display: flex;
   align-items: center;
@@ -8412,23 +8469,72 @@ body.lc-schreibt .tutor-reiter {
 }
 .lc-ruecknahme:hover { background: rgba(224, 150, 74, 0.2); }
 
-/* --- Der Herunterladen-Pfeil sitzt IN der Blase --- */
+/* --- DIE SYMBOLE SITZEN IN DER BLASE UND BLEIBEN DARIN ---
+   GEMELDET: „Bei Android sind die Symbole immer noch nicht in der
+   Blase. Das muss gesperrt sein innerhalb der Blase, die dürfen
+   nicht darüber hinaus ragen. Und das Herunterladen-Symbol soll
+   erkennbar sein und das Zurückrufen-Symbol auch."
+
+   Zwei Sachen waren falsch:
+   1. Die Blase durfte beliebig breit werden. Reichte der Platz
+      nicht, rutschten die Symbole rechts heraus. Jetzt begrenzt sie
+      sich selbst (max-width) und schneidet ab, was nicht hineinpasst
+      — und das ist die Tonspur, nie die Knöpfe: die Tonspur darf
+      schrumpfen, die Knöpfe nicht.
+   2. Die Symbole waren blasse Zeichen ohne Fläche. Jetzt haben beide
+      einen eigenen runden Grund, sind gleich gross und gross genug
+      für einen Finger. */
 .lc-sprachblase {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
 }
-.lc-sprachblase .lc-sprach-holen {
-  margin: 0 0 0 2px;
-  padding: 0 2px;
-  font-size: 0.92em;
-  line-height: 1;
-  opacity: 0.7;
-  text-decoration: none;
+.lc-sprachblase i {            /* die Tonspur gibt nach, nicht die Knöpfe */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+.lc-sprachblase em { flex: 0 0 auto; }
+.lc-sprachblase .lc-sprach-holen,
+.lc-sprachblase .lc-sprach-weg {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Feste Pixel, keine em: der Verweis und der Knopf erben
+     unterschiedliche Schriftgroessen, und dann waeren die beiden
+     Symbole verschieden gross — gemessen 18 gegen 20 Pixel. Ein
+     Finger braucht ausserdem mehr als 18 Pixel. */
+  width: 25px;
+  height: 25px;
+  min-width: 25px;
+  font-size: 15px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(107, 74, 22, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
   color: inherit;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.92;
+  cursor: pointer;
 }
-.lc-sprachblase .lc-sprach-holen:hover { opacity: 1; }
+.lc-sprachblase .lc-sprach-holen:hover,
+.lc-sprachblase .lc-sprach-weg:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.9);
+}
+/* Das Zurückrufen ist die gefährlichere der beiden Handlungen —
+   es bekommt deshalb einen roten Rand, damit man es nicht mit dem
+   Herunterladen verwechselt. */
+.lc-sprachblase .lc-sprach-weg {
+  border-color: rgba(200, 60, 50, 0.5);
+  color: #a33028;
+}
 
 /* --- DER FOKUS-SCHALTER IM KOPF ---
    GEWÜNSCHT: „Dass ICH das administrativ umschalten kann, niemand

@@ -49,24 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19j — ein Rueckruf darf ein Irrtum sein",
+  stand: "Runde 19k — Blase, Kopfzeile, Sprechmarke",
 
   inArbeit: [
-    { seit: "2026-09-18T20:37",
+    { seit: "2026-09-18T20:43",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:37",
+    { seit: "2026-09-18T20:43",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:37",
+    { seit: "2026-09-18T20:43",
       text: "Favoriten im Befehlspanel selbst anheften" },
-    { seit: "2026-09-18T20:37",
-      text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:37",
-      text: "Eine zurueckgerufene Sprachnachricht laesst sich anderthalb Minuten lang wiederherstellen — mit sichtbarem Countdown unter dem Chat" },
-    { seit: "2026-09-18T20:37",
-      text: "Nach Ablauf sagt es ehrlich nein, statt etwas zu versprechen, das es nicht mehr halten kann" },
+    { seit: "2026-09-18T20:43",
+      text: "Herunterladen und Zurueckrufen bleiben in der Sprechblase — gemessen bei 360 px Android-Breite, beide vollstaendig darin" },
+    { seit: "2026-09-18T20:43",
+      text: "Beide Symbole sind jetzt gleich gross (25 x 25 px statt 18 und 20) und haben einen eigenen runden Grund; das Zurueckrufen ist rot umrandet" },
+    { seit: "2026-09-18T20:43",
+      text: "Die Kopfzeile bricht nicht mehr ab: aus dem langen Satz wurde „Chat\" plus ein kurzer Zusatz, der auf schmalen Geraeten ganz wegfaellt" },
+    { seit: "2026-09-18T20:43",
+      text: "Die Kopfzeile ist jetzt ein Knopf: antippen zeigt die Sprachnachrichten" },
+    { seit: "2026-09-18T20:43",
+      text: "Waehrend du sprichst steht „🔴 du sprichst\" in der Kopfzeile und sie pulsiert" },
   ],
 };
