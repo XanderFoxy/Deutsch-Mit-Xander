@@ -84,3 +84,48 @@ alter table public.klassenzimmer_chat
   add column if not exists farbe      text not null default '';
 alter table public.klassenzimmer_chat
   add column if not exists farbe_name text not null default '';
+
+-- =====================================================================
+-- NACHTRAG: FLUESTERN FOLGT DER PERSON, NICHT DEM RAUM
+-- ---------------------------------------------------------------------
+-- GEWUENSCHT: „Wenn ich jemandem auf sein Fluestern antworte und
+-- derjenige ist im selben Moment dabei zu gehen und kann die Nachricht
+-- nicht mehr lesen — dann moechte ich, dass er sie spaeter trotzdem
+-- sieht. Und dass das Fluestern generell ueberall steht, was an dieser
+-- Person gemacht wurde: egal in welchem Raum sie ist, chronologisch,
+-- unabhaengig vom Raum."
+--
+-- Ein Zuruf von Geraet zu Geraet kann das nicht — wer weg ist, ist weg.
+-- Also bekommt eine gefluesterte Zeile eine ANSCHRIFT: an_id. Beim
+-- Betreten holt sich jeder, was an ihn gerichtet war und was er selbst
+-- gefluestert hat — aus allen Raeumen, chronologisch einsortiert.
+--
+-- quelle_id ist die Kennung, die der Zuruf schon hatte. Ohne sie
+-- stuende dieselbe Zeile zweimal da: einmal live, einmal nachgereicht.
+alter table public.klassenzimmer_chat
+  add column if not exists an_id     uuid references auth.users (id) on delete cascade;
+alter table public.klassenzimmer_chat
+  add column if not exists an_name   text not null default '';
+alter table public.klassenzimmer_chat
+  add column if not exists quelle_id text not null default '';
+
+create index if not exists klassenzimmer_chat_an_zeit
+  on public.klassenzimmer_chat (an_id, erstellt desc);
+create index if not exists klassenzimmer_chat_autor_zeit
+  on public.klassenzimmer_chat (autor, erstellt desc);
+
+-- UND DIE WICHTIGSTE ZEILE DIESER DATEI: gefluestert ist gefluestert.
+-- Die offenen Raumzeilen (an_id ist leer) darf weiterhin jede:r lesen.
+-- Eine Zeile MIT Anschrift bekommt nur heraus, wen sie angeht — der
+-- Absender und der Empfaenger. Sonst waere „nur ihr beide seht es"
+-- eine Luege, sobald jemand die Tabelle direkt abfragt.
+drop policy if exists "chat lesen" on public.klassenzimmer_chat;
+drop policy if exists "chat lesen gast" on public.klassenzimmer_chat;
+
+drop policy if exists "chat lesen offen" on public.klassenzimmer_chat;
+create policy "chat lesen offen" on public.klassenzimmer_chat
+  for select to anon, authenticated using (an_id is null);
+
+drop policy if exists "chat lesen gefluestert" on public.klassenzimmer_chat;
+create policy "chat lesen gefluestert" on public.klassenzimmer_chat
+  for select to authenticated using (an_id = auth.uid() or autor = auth.uid());

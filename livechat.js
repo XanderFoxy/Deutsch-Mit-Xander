@@ -876,6 +876,10 @@ window.LiveChat = (function () {
     return z.from(TISCH)
       .select("id,raum,autor,name,text,art,farbe,farbe_name,bild,erstellt")
       .eq("raum", raum)
+      /* Eine gefluesterte Zeile gehoert nicht in den offenen Verlauf —
+         sie kommt gleich getrennt, und nur bei den beiden, die sie
+         angeht. */
+      .is("an_id", null)
       .order("erstellt", { ascending: false })
       .limit(CHAT_SICHT)
       .then(function (a) {
@@ -909,9 +913,115 @@ window.LiveChat = (function () {
               zeilen.forEach(function (n) { if (nach[n.id]) n.bildImChat = nach[n.id]; });
             }
             return zeilen;
-          }, function () { return zeilen; });
+          }, function () { return zeilen; })
+          .then(function (mitBildern) {
+            return fluesternLaden().then(function (geheim) {
+              return mitBildern.concat(geheim);
+            }, function () { return mitBildern; });
+          });
       })
       .catch(function () { return []; });
+  }
+
+  /* =========================================================
+     FLUESTERN FOLGT DER PERSON, NICHT DEM RAUM
+     ---------------------------------------------------------
+     GEWUENSCHT: „Wenn ich jemandem auf sein Fluestern antworte und
+     derjenige ist im selben Moment dabei zu gehen und kann die
+     Nachricht nicht mehr lesen — dann moechte ich, dass er sie
+     spaeter trotzdem sieht. Und dass das Fluestern generell ueberall
+     steht, was an dieser Person gemacht wurde: egal in welchem Raum
+     sie ist, chronologisch, unabhaengig vom Raum."
+
+     Ein Zuruf von Geraet zu Geraet kann das nicht — wer weg ist, ist
+     weg. Also bekommt eine gefluesterte Zeile eine ANSCHRIFT in der
+     Tabelle: an_id. Beim Betreten holt sich jeder, was an ihn
+     gerichtet war und was er selbst gefluestert hat — aus ALLEN
+     Raeumen. Damit steht es chronologisch zwischen den anderen
+     Zeilen, in jedem Raum, auch Tage spaeter.
+
+     Lesen darf das niemand sonst: die Regel in der Datenbank gibt
+     eine Zeile mit Anschrift nur an den Absender und den Empfaenger
+     heraus (siehe supabase/klassenzimmer-chat.sql). */
+  var FLUESTER_ZURUECK = 400;
+  function meineKontoId() {
+    try {
+      var nutzer = konto() && Backend.currentUser && Backend.currentUser();
+      return (nutzer && nutzer.id) || "";
+    } catch (e) { return ""; }
+  }
+  function fluesternLaden() {
+    var z = angemeldeterZugang();
+    var ich = meineKontoId();
+    if (!z || !ich) return Promise.resolve([]);
+    return z.from(TISCH)
+      .select("id,raum,autor,name,text,farbe,farbe_name,bild,an_id,an_name,quelle_id,erstellt")
+      .not("an_id", "is", null)
+      .or("an_id.eq." + ich + ",autor.eq." + ich)
+      .order("erstellt", { ascending: false })
+      .limit(FLUESTER_ZURUECK)
+      .then(function (a) {
+        if (!a || a.error || !a.data) return [];
+        return a.data.slice().reverse().map(function (r) {
+          var eigen = r.autor === ich;
+          return {
+            /* Die Kennung des Zurufs gewinnt — dann ist es fuer alle
+               dieselbe Zeile, ob sie nun live kam oder nachgereicht
+               wurde. */
+            id: r.quelle_id || ("s" + r.id),
+            von: eigen ? zustand.ichId
+                       : (r.autor ? "k" + String(r.autor).replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase() : ""),
+            name: eigen ? zustand.ichName : (r.name || "Gast"),
+            /* Beim Absender steht, an wen es ging — beim Empfaenger
+               steht der Text allein, wie eh und je. */
+            text: eigen ? ("an " + (r.an_name || "jemanden") + ": " + (r.text || ""))
+                        : (r.text || ""),
+            wen: eigen ? (r.an_name || "") : "",
+            art: "fluester",
+            bild: eigen ? zustand.ichBild : (r.bild || ""),
+            farbe: r.farbe || "",
+            farbeName: r.farbe_name || "",
+            /* Aus welchem Raum es kam — aber nur, wenn es ein anderer
+               war als der, in dem man gerade sitzt. */
+            woher: r.raum && r.raum !== zustand.raum ? raumKlartext(r.raum) : "",
+            zeit: new Date(r.erstellt).getTime(),
+            eigen: eigen
+          };
+        });
+      }, function () { return []; });
+  }
+
+  /* Eine gefluesterte Zeile in die Tabelle legen — das ist das
+     Nachreichen fuer den, der gerade nicht da war. Ohne Konto auf
+     einer der beiden Seiten geht es nicht; dann bleibt es beim Zuruf
+     von Geraet zu Geraet. */
+  function fluesternSichern(ziel, txt, kennung) {
+    var z = angemeldeterZugang();
+    var ich = meineKontoId();
+    var anKonto = ziel && (ziel.konto || kontoVon(ziel.id));
+    if (!z || !ich || !anKonto) return;
+    try {
+      z.from(TISCH).insert({
+        raum: zustand.raum,
+        autor: ich,
+        name: zustand.ichName || "Gast",
+        bild: zustand.ichBild || "",
+        text: String(txt || ""),
+        bild_im_chat: "",
+        farbe: zustand.farbe || "",
+        farbe_name: zustand.farbeName || "",
+        art: "fluester",
+        an_id: anKonto,
+        an_name: ziel.name || "",
+        /* DIESELBE KENNUNG WIE BEIM ZURUF. Ohne sie stuende die Zeile
+           zweimal da: einmal sofort ueber die Leitung, einmal spaeter
+           aus der Tabelle. Mit ihr erkennt verschmelzen() beide als
+           dieselbe. */
+        quelle_id: String(kennung || "")
+      }).then(function (a) {
+        if (a && a.error) sicherungFehlt(a.error);
+      }, function (f) { sicherungFehlt(f); });
+    } catch (e) { sicherungFehlt(e); }
   }
 
   function serverSichern(n) {
@@ -2217,6 +2327,7 @@ window.LiveChat = (function () {
     /* Und jedes Paket sagt nebenbei, ob da eine Frau oder ein Mann
        sitzt — das Zeichen aus dem Profil reist mit. */
     geschlechtMerken(n.von, n.geschlecht);
+    kontoMerken(n.von, n.konto);
 
     if (n.art === "puls") {
       /* Die Sitzordnung der anderen uebernehmen, aber nur, was man
@@ -2242,7 +2353,7 @@ window.LiveChat = (function () {
       if (neuDa || !brueckeJe[n.von]) {
         if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
         else senden({ art: "auch-da", an: n.von, name: zustand.ichName,
-                      geschlecht: zustand.geschlecht || "",
+                      geschlecht: zustand.geschlecht || "", konto: kontoId || "",
                       tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild,
                       seit: zustand.seit, buehne: zustand.buehne });
       }
@@ -2285,7 +2396,7 @@ window.LiveChat = (function () {
          als ein Hintergrund, der jemandem gehört, der längst weg ist. */
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-               geschlecht: zustand.geschlecht || "",
+               geschlecht: zustand.geschlecht || "", konto: kontoId || "",
                haeuptling: zustand.haeuptling, thema: zustand.thema,
                fokus: zustand.fokus,
                seit: zustand.seit, buehne: zustand.buehne,
@@ -2759,6 +2870,9 @@ window.LiveChat = (function () {
                /* Damit die anderen wissen, ob sie „sie" oder „er"
                   schreiben muessen, wenn dieser Mensch spricht. */
                geschlecht: zustand.geschlecht || "",
+               /* Und wem das Konto gehoert: nur damit ein Fluestern in
+                  der Tabelle eine Anschrift bekommt (siehe unten). */
+               konto: kontoId || "",
                /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
                sitz: sitzTausch });
       var jetzt = Date.now(), weg = false;
@@ -2877,7 +2991,7 @@ window.LiveChat = (function () {
           senden({ art: "hallo", name: zustand.ichName, tonAn: zustand.tonAn,
                    bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                    seit: zustand.seit, buehne: zustand.buehne,
-                   geschlecht: zustand.geschlecht || "" });
+                   geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
         }
       });
     }, WACHE_MS);
@@ -3160,7 +3274,7 @@ window.LiveChat = (function () {
             senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                      seit: zustand.seit, buehne: zustand.buehne,
-                     geschlecht: zustand.geschlecht || "" });
+                     geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
             pulsStarten();
             wacheStarten();          // die Leitungen im Auge behalten
             postKanalOeffnen();
@@ -3230,7 +3344,7 @@ window.LiveChat = (function () {
               senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                        tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                        seit: zustand.seit, buehne: zustand.buehne,
-                       geschlecht: zustand.geschlecht || "" });
+                       geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
             }, 2200);
             fertig(lage());
           } else if (stand === "CHANNEL_ERROR" || stand === "TIMED_OUT") {
@@ -3321,6 +3435,13 @@ window.LiveChat = (function () {
       try { zustand.eigenerStrom.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
     }
     zustand.eigenerStrom = null;
+    /* GEWUENSCHT: „Der Verlauf soll in einem verlassenen Raum bleiben —
+       dass man alle Nachrichten dort wieder sieht, wenn man in diesen
+       Raum zurueckkehrt, nachdem man ihn komplett verlassen hat."
+       Gesichert wird sonst nur, wenn eine Zeile dazukommt. Kommt die
+       letzte Zeile kurz vor dem Hinausgehen, fehlte sie. Also noch
+       einmal, bevor die Tuer zugeht. */
+    try { chatSichern(); } catch (e) {}
     zustand.leute = {};
     zustand.gross = null;
     zustand.grosse = [];
@@ -5287,6 +5408,20 @@ window.LiveChat = (function () {
      sondern eine Form, die ohne Fuerwort auskommt — „die Person".
      Lieber unbestimmt als falsch. */
   var geschlechter = {};     // Kennung -> „weiblich" | „maennlich" | „divers"
+  /* Dieselbe Buchhaltung fuer die Kontokennung: sie ist die Anschrift
+     fuer ein Fluestern, das der Tabelle anvertraut wird. Ohne Konto
+     (Gast) geht das nicht — dann bleibt es beim Zuruf von Geraet zu
+     Geraet, wie bisher. */
+  var kontenJe = {};
+  function kontoMerken(id, k) {
+    if (!id || typeof k !== "string" || !k) return;
+    kontenJe[id] = k;
+    if (zustand.leute[id]) zustand.leute[id].konto = k;
+  }
+  function kontoVon(id) {
+    var p = id && zustand.leute[id];
+    return (p && p.konto) || (id && kontenJe[id]) || "";
+  }
   function geschlechtMerken(id, g) {
     if (!id || typeof g !== "string" || !g) return;
     geschlechter[id] = g;
@@ -6937,6 +7072,9 @@ window.LiveChat = (function () {
       if (!ziel) return systemZeile("„" + t[1] + "“ ist gerade nirgends zu finden.");
       var txt = textAufbereiten(t[2]);
       var n = eigeneZeile("fluester", "an " + ziel.name + ": " + txt, ziel.id);
+      /* Und einmal in die Tabelle, damit es ankommt, auch wenn die
+         andere Seite gerade geht (siehe fluesternSichern). */
+      fluesternSichern(ziel, txt, n.id);
       /* An WEN es ging, steht damit auch an der Zeile — die Oberflaeche
          bietet daran das Weiterfluestern an, ohne den Text zu zerlegen. */
       n.wen = ziel.name;
@@ -8334,6 +8472,17 @@ window.LiveChat = (function () {
     /* Nur zum Nachpruefen: raeumt eine Liste so auf, wie es das
        Laden des Verlaufs tut. */
     pruefMuellFiltern: function (liste) { return altenMuellFiltern(liste); },
+    /* Nur zum Nachpruefen: das Nachreichen des Fluesterns von aussen
+       anstossen und ansehen, was dabei herauskommt. */
+    pruefFluesternLaden: function () { return fluesternLaden(); },
+    pruefFluesternSichern: function (ziel, txt, kennung) { return fluesternSichern(ziel, txt, kennung); },
+    /* Nur zum Nachpruefen: den Verlauf eines Raums ablegen und wieder
+       hervorholen — genau die Wege, die das Verlassen und das
+       Wiederkommen gehen. */
+    pruefRaum: function (name) { if (name) zustand.raum = String(name); return zustand.raum; },
+    pruefVerlaufSetzen: function (liste) { zustand.nachrichten = (liste || []).slice(); chatSichern(); },
+    pruefVerlaufAusSpeicher: function (raum) { return chatLaden(raum); },
+    pruefVerlaufAusLager: function (raum) { return chatAusLager(raum); },
     pruefAufgabeStellen: aufgabeStellen,
     pruefAufgabeFrei: aufgabeFreiStellen,
     pruefAufgabeVersuch: aufgabeVersuch,

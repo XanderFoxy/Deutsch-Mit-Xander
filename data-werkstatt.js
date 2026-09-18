@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 75 — Die Note gehört zur Antwort, nicht zur Zeile",
+  stand: "Runde 76 — Flüstern folgt der Person, nicht dem Raum",
 
   inArbeit: [
-    { seit: "2026-09-18T23:09",
+    { seit: "2026-09-18T23:20",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:09",
+    { seit: "2026-09-18T23:20",
       text: "Sitzende Seitenansicht fürs Profil" },
-    { seit: "2026-09-18T23:09",
+    { seit: "2026-09-18T23:20",
       text: "Lieblingsbefehle im Befehlsfenster anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:09",
-      text: "Der Notenknopf steht nur noch an einer Zeile, die wirklich zur Aufgabe gehört: beim Satzpuzzle an einem Versuch aus denselben Wörtern, beim Wortpuzzle aus denselben Buchstaben — „hallo“ zwischendurch bekommt keinen mehr" },
-    { seit: "2026-09-18T23:09",
-      text: "Bei einer Aufgabe in eigenen Worten ist die erste Zeile der Person die Antwort; danach ist wieder normaler Chat" },
-    { seit: "2026-09-18T23:09",
-      text: "Auch die Meldung „noch nicht richtig“ kommt nur noch bei einem echten Versuch" },
-    { seit: "2026-09-18T23:09",
-      text: "Nachgemessen: wer nicht Lehrer ist, sieht nirgends einen Notenknopf — und den globalen Schalter gibt es im Code nicht mehr" },
-    { seit: "2026-09-18T23:09",
-      text: "Die Befehlsliste steht wieder nebeneinander; nur die kurzen Befehle (/w, /s, /i) tragen ihr Wort dazu" },
+    { seit: "2026-09-18T23:20",
+      text: "Eine geflüsterte Zeile bekommt eine Anschrift in der Tabelle: wer gerade geht oder offline ist, sieht sie später trotzdem — in jedem Raum, chronologisch einsortiert" },
+    { seit: "2026-09-18T23:20",
+      text: "Lesen darf das nur, wen es angeht: die Datenbankregel gibt eine geflüsterte Zeile ausschließlich an Absender und Empfänger heraus (an drei Konten und einem Gast nachgemessen)" },
+    { seit: "2026-09-18T23:20",
+      text: "Dieselbe Zeile steht nie doppelt da — der Zuruf und die nachgereichte Fassung tragen dieselbe Kennung" },
+    { seit: "2026-09-18T23:20",
+      text: "Der Verlauf wird auch beim Hinausgehen gesichert, damit die letzte Zeile vor dem Verlassen nicht fehlt" },
   ],
 };
