@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19w — der ganze Verlauf liegt jetzt im Lager",
+  stand: "Runde 19x — kein Platzhalter, und der Verlauf reicht weit zurueck",
 
   inArbeit: [
-    { seit: "2026-09-18T21:50",
+    { seit: "2026-09-18T21:54",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:50",
+    { seit: "2026-09-18T21:54",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T21:50",
+    { seit: "2026-09-18T21:54",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:50",
-      text: "Der vollstaendige Chatverlauf wandert ins Lager (IndexedDB) statt in den localStorage — deshalb fielen alte Zeilen und mit ihnen der Verweis auf ihre Aufnahme weg" },
-    { seit: "2026-09-18T21:50",
-      text: "Der localStorage behaelt nur die letzten 300 Zeilen fuer den schnellen ersten Blick; alles Aeltere kommt aus dem Lager nach" },
-    { seit: "2026-09-18T21:50",
-      text: "Dein eigener Name im gruenen Balken kommt jetzt aus dem Raum, nicht aus der Oberflaeche — er war deshalb manchmal leer" },
-    { seit: "2026-09-18T21:50",
-      text: "Der doppelte Aufruf zum Laden des Serververlaufs ist raus" },
+    { seit: "2026-09-18T21:54",
+      text: "Die Pille belegt keinen Platz mehr, wenn niemand spricht — sie schwebt wieder und verdeckt nichts als das, was sie selbst bedeckt" },
+    { seit: "2026-09-18T21:54",
+      text: "Ihre Grundfarbe wird zur Laufzeit AUSGELESEN statt geraten: die tatsaechliche Flaeche, auf der sie liegt, in jedem Thema" },
+    { seit: "2026-09-18T21:54",
+      text: "Der Verlauf haelt jetzt 20.000 Zeilen im Speicher und im Lager — die Aufgabe von ganz oben ist wieder erreichbar" },
+    { seit: "2026-09-18T21:54",
+      text: "Der Speicher-Deckel beim Zusammenfuehren war bisher dieselbe Zahl wie die Server-Abfrage; jetzt sind das zwei verschiedene Grenzen" },
   ],
 };

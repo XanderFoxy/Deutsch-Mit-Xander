@@ -91,7 +91,18 @@ window.LiveChat = (function () {
      darunter (chatSichern) ein Netz: passt es nicht, wird nicht
      alles verworfen, sondern so lange gekuerzt, bis es passt. Lieber
      ein Teil als nichts. */
-  var CHAT_VERLAUF = 4000;            // so viele legt das GERAET hoechstens ab
+  /* SO ENDLOS WIE MOEGLICH.
+     GEMELDET: „Mach wirklich 5000 Zeichen oder 6000 oder 7000, damit
+     wir oben die Aufgabe endlich wieder lesen koennen. Mach es so
+     endlos wie moeglich."
+     Seit der Verlauf im Lager (IndexedDB) liegt statt im
+     localStorage, ist Platz kein Argument mehr — dort sind es
+     Hunderte von Megabyte statt weniger. Die Zahl steht deshalb auf
+     zwanzigtausend. Sie ganz wegzulassen waere unehrlich: irgendwo
+     muss eine Grenze stehen, sonst waechst die Datei, bis der
+     Browser sie nicht mehr in einem Stueck lesen kann. Zwanzigtausend
+     Zeilen sind viele Unterrichtsstunden. */
+  var CHAT_VERLAUF = 20000;           // so viele legt das GERAET hoechstens ab
   /* GEWÜNSCHT: „Einer, der zum ersten Mal auf die Seite kommt, soll
      trotzdem den heutigen kompletten Tagesverlauf aus dem Chat sehen,
      ohne dass ihm irgendetwas fehlt."
@@ -103,6 +114,10 @@ window.LiveChat = (function () {
      für „kein Netz"), CHAT_SICHT ist, was aus der gemeinsamen Tabelle
      geholt und angezeigt wird. */
   var CHAT_SICHT = 2000;              // so viele kommen vom Server
+  /* Wie viele Zeilen im Arbeitsspeicher stehen duerfen. Frueher war
+     das dieselbe Zahl wie beim Server — und damit war der Verlauf
+     genau dort gekappt, wo man hochscrollen wollte. */
+  var CHAT_HALTEN = 20000;
 
   /* Die Vermittler.
      ---------------------------------------------------------
@@ -940,9 +955,9 @@ window.LiveChat = (function () {
        waehrend eine Textzeile jederzeit wieder vom Server kommt.
        Deshalb: was wegen der Obergrenze herausfallen wuerde, aber
        eine Aufnahme traegt, bleibt trotzdem stehen. */
-    if (raus.length <= CHAT_SICHT) return raus;
-    var behalten = raus.slice(-CHAT_SICHT);
-    var gerettet = raus.slice(0, raus.length - CHAT_SICHT).filter(function (n) {
+    if (raus.length <= CHAT_HALTEN) return raus;
+    var behalten = raus.slice(-CHAT_HALTEN);
+    var gerettet = raus.slice(0, raus.length - CHAT_HALTEN).filter(function (n) {
       return Boolean(n && (n.sprach || n.sprachImLager));
     });
     return gerettet.concat(behalten);
@@ -1227,7 +1242,7 @@ window.LiveChat = (function () {
   function chatLaden(raum) {
     try {
       var l = JSON.parse(localStorage.getItem(chatSchluessel(raum)) || "[]");
-      return Array.isArray(l) ? l.slice(-CHAT_SICHT) : [];
+      return Array.isArray(l) ? l.slice(-CHAT_HALTEN) : [];
     } catch (e) { return []; }
   }
   /* Gesichert wird ZWEIGLEISIG: der Text in den localStorage, die

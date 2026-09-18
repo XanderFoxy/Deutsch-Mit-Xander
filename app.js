@@ -22175,15 +22175,29 @@
          ABSPIELEN  -> der gruene Balken mit dem roten Punkt, ueber
                        die ganze Zeile gezogen, mit dem Namen.
        Der Balken erscheint deshalb NICHT mehr beim Aufnehmen. */
-    if (!lcLiveJetzt && !lauscher) {
-      /* Der Inhalt bleibt stehen, er wird nur unsichtbar. Leerte man
-         ihn, waere der Kasten im Ruhezustand ein paar Pixel flacher
-         als mit Text — gemessen vier — und genau diese vier Pixel
-         haetten den Chat wieder verschoben. Unsichtbar ist nicht
-         dasselbe wie leer. */
-      leiste.hidden = true;
-      return;
-    }
+    if (!lcLiveJetzt && !lauscher) { leiste.hidden = true; return; }
+    /* DIE FARBE WIRD GELESEN, NICHT GERATEN.
+       Die Pille schwebt ueber dem Chat und braucht deshalb einen
+       eigenen, deckenden Grund. Welche Farbe das ist, haengt am
+       gewaehlten Thema — ich habe sie zweimal geschaetzt und zweimal
+       danebengelegen. Jetzt wird sie einfach abgelesen: die
+       tatsaechliche Hintergrundfarbe der Karte, auf der der Chat
+       liegt. Damit ist es in JEDEM Thema genau die Flaeche, auf der
+       die Pille frueher lag — und die Mischung mit ihren 14 % Teal
+       ergibt Bildpunkt fuer Bildpunkt dasselbe Bild wie damals. */
+    try {
+      /* Nach oben laufen, bis eine Flaeche kommt, die WIRKLICH eine
+         Farbe hat. Der naechste Vorfahr ist oft durchsichtig — dann
+         faerbt ihn der darueber, und genau der ist die Flaeche, auf
+         der die Pille frueher lag. Raten muss man dabei nichts. */
+      let el = leiste.parentElement, grund = "";
+      for (let i = 0; i < 8 && el; i++) {
+        const f = getComputedStyle(el).backgroundColor;
+        if (f && f !== "rgba(0, 0, 0, 0)" && f !== "transparent") { grund = f; break; }
+        el = el.parentElement;
+      }
+      if (grund) leiste.style.setProperty("--lc-grund", grund);
+    } catch (e) {}
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich
