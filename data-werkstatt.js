@@ -49,26 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19h — warum von Emmy nichts durchkam",
+  stand: "Runde 19i — die Reihe ist wieder ein Gespraech",
 
   inArbeit: [
-    { seit: "2026-09-18T20:29",
+    { seit: "2026-09-18T20:33",
       text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen" },
-    { seit: "2026-09-18T20:29",
+    { seit: "2026-09-18T20:33",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:29",
+    { seit: "2026-09-18T20:33",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:29",
+    { seit: "2026-09-18T20:33",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:29",
-      text: "Sprachpakete sind jetzt 24 KB statt 80 KB und werden einzeln mit 120 ms Luft verschickt statt in einer Schleife — auf langsamen Leitungen lief der Sendepuffer ueber" },
-    { seit: "2026-09-18T20:29",
-      text: "Wer ein Paket vermisst, fragt beim Absender danach; der schickt es einzeln nach. Dreimal, dann wird es gesagt statt verschwiegen" },
-    { seit: "2026-09-18T20:29",
-      text: "Jede angekommene Wortmeldung wird bestaetigt: „Xander hat deine Wortmeldung bekommen\" — und wenn niemand bestaetigt, steht das auch da" },
+    { seit: "2026-09-18T20:33",
+      text: "Hoechstens drei wartende Wortmeldungen — bei Emmy standen 20, und sie konnte deshalb nicht sprechen" },
+    { seit: "2026-09-18T20:33",
+      text: "Was aelter als anderthalb Minuten ist, kommt gar nicht erst in die Reihe. Es steht weiterhin im Chat zum Antippen" },
+    { seit: "2026-09-18T20:33",
+      text: "Uebersprungenes wird einmal gesagt, nicht zwanzigmal" },
+    { seit: "2026-09-18T20:33",
+      text: "Das unsichtbare Wort „Halten\" ist raus — es konnte sichtbar werden, sobald ein Stilblatt nicht mitkam" },
   ],
 };

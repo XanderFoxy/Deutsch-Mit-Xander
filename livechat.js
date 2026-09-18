@@ -4845,8 +4845,46 @@ window.LiveChat = (function () {
     return false;
   }
 
+  /* EINE REIHE IST EIN GESPRAECH, KEIN BRIEFKASTEN.
+     -----------------------------------------------------------
+     GEMELDET, mit Screenshot: bei Emmy stand „Xander Fox spricht ·
+     noch 20 in der Reihe".
+       „Sie soll sich ja nicht alle 20 Nachrichten anhoeren … Sie
+        sollen nicht dafuer bestraft werden, dass sie mich in der
+        Vergangenheit noch nicht komplett gehoert haben, und auf
+        alles warten muessen. Sie sollen nach der AKTUELLEN
+        Nachricht sprechen koennen."
+
+     Er hat vollkommen recht, und der Fehler war grundsaetzlich: die
+     Reihe hat alles aufgehoben, was je hereinkam. Kam eine Person
+     mit blockiertem Ton oder schlechter Leitung dazu, stapelte sich
+     alles — und weil im Fokus-Modus niemand spricht, solange etwas
+     laeuft, war sie damit auf unbestimmte Zeit stumm. Aus einer
+     Ordnungsregel wurde eine Strafe.
+
+     Zwei Grenzen, und beide folgen derselben Idee: Gesprochenes ist
+     FLUECHTIG. Was vorbei ist, ist vorbei.
+       - Was aelter als anderthalb Minuten ist, kommt gar nicht erst
+         in die Reihe.
+       - Mehr als drei wartende Stuecke gibt es nicht; kommt ein
+         neues dazu, faellt das aelteste heraus.
+     Verloren ist dabei NICHTS: jede Wortmeldung steht weiterhin im
+     Chat und laesst sich dort antippen und anhoeren, wann immer man
+     will. Genau so war es gewuenscht — „sie sollen nur hoeren, was
+     sie hoeren moechten, und dann klicken sie das selbststaendig
+     an." */
+  var LIVE_REIHE_MAX = 3;
+  var LIVE_ALTER_MS = 90000;
+  var liveUebersprungen = 0;
+  var liveSagenUhr = 0;
+
   function liveEinreihen(w) {
     if (w && w.sprach && liveDoppelt(w)) return;
+    /* Vergangenheit bleibt Vergangenheit. */
+    if (w && w.zeit && Date.now() - w.zeit > LIVE_ALTER_MS) {
+      liveUebersprungenMelden(1);
+      return;
+    }
     var i = liveWarteschlange.length;
     while (i > 0) {
       var v = liveWarteschlange[i - 1];
@@ -4855,6 +4893,26 @@ window.LiveChat = (function () {
       i--;
     }
     liveWarteschlange.splice(i, 0, w);
+    if (liveWarteschlange.length > LIVE_REIHE_MAX) {
+      var weg = liveWarteschlange.length - LIVE_REIHE_MAX;
+      liveWarteschlange.splice(0, weg);
+      liveUebersprungenMelden(weg);
+    }
+  }
+
+  /* Einmal sagen, nicht zwanzigmal — sonst steht der Chat voll mit
+     Hinweisen darauf, dass etwas nicht im Chat steht. */
+  function liveUebersprungenMelden(wieviel) {
+    liveUebersprungen += wieviel;
+    clearTimeout(liveSagenUhr);
+    liveSagenUhr = setTimeout(function () {
+      var n = liveUebersprungen;
+      liveUebersprungen = 0;
+      if (!n) return;
+      systemZeile("\u23ed\ufe0f " + n + " ältere Wortmeldung" + (n === 1 ? "" : "en")
+        + " übersprungen — du sollst nicht warten müssen. "
+        + "Sie stehen weiterhin im Chat: einmal ins Leere tippen, dann kannst du sie anhören.");
+    }, 1200);
   }
 
   function liveNaechste() { return liveWarteschlange.shift() || null; }

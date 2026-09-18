@@ -20459,7 +20459,17 @@
                 <circle cx="12" cy="14.6" r="1.25" fill="currentColor"/>
                 <path d="M12 15.6v1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
-              <span class="lc-dauer-text" aria-hidden="true">Halten</span>
+              <!-- Hier stand ein <span class="lc-dauer-text">Halten</span>.
+                   Es war per CSS unsichtbar gemacht (width 1px, clip-path)
+                   und trug wegen aria-hidden nicht einmal fuer Vorleser
+                   etwas bei — ein Wort, das nur darauf wartete, sichtbar
+                   zu werden, sobald ein Stilblatt einmal nicht mitkommt
+                   (alte Fassung im Zwischenspeicher, langsame Leitung).
+                   GEMELDET: „Das letzte Wort, was ich oben noch lese, ist
+                   Halten, und das steht bei mir unter der Uhrzeit."
+                   Ein unsichtbares Wort, das man trotzdem lesen kann, ist
+                   keine Hilfe. Es ist raus; was der Knopf tut, sagt das
+                   Zeichen und der title daran. -->
             </label>
             <!-- Hier stand der Ohr-Knopf (Freisprechen ein/aus).
                  GEMELDET: „Das eine Symbol ist überflüssig mit dem
