@@ -50,7 +50,14 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       fremd: tipp("f1"),
       eigen: tipp("f2"),
       normal: tipp("n1"),
-      unterpunktet: [...document.querySelectorAll(".lc-fluester-zurueck")].length
+      bereit: [...document.querySelectorAll(".lc-fluester-zurueck")].length,
+      /* GEMELDET: „Bitte ohne die Punkte." Die Zeile muss also aussehen
+         wie jede andere — kein Unterstrich, keine Punkte. */
+      verziert: [...document.querySelectorAll(".lc-fluester-zurueck")]
+        .filter((e) => {
+          const d = getComputedStyle(e).textDecorationLine || "";
+          return d && d !== "none";
+        }).length
     };
   });
 
@@ -64,9 +71,12 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       console.log("  " + (gut ? "ok   " : "FEHL ") + was.padEnd(24)
         + "Schreibfeld: „" + erg[k] + "“" + (gut ? "" : "   erwartet: „" + soll[k] + "“"));
     });
-  console.log("\n  Namen mit sichtbarem Hinweis (unterpunktet): " + erg.unterpunktet
-    + (erg.unterpunktet === 2 ? "   (beide Flüsterzeilen — richtig)" : "   FEHL"));
-  if (erg.unterpunktet !== 2) fehler++;
+  console.log("\n  Flüsterzeilen, die auf den Tipp vorbereitet sind: " + erg.bereit
+    + (erg.bereit === 2 ? "   (beide — richtig)" : "   FEHL"));
+  if (erg.bereit !== 2) fehler++;
+  console.log("  davon mit zusätzlicher Verzierung (Punkte, Unterstrich): " + erg.verziert
+    + (erg.verziert === 0 ? "   (keine — die Zeile sieht aus wie jede andere)" : "   FEHL"));
+  if (erg.verziert !== 0) fehler++;
   console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Das Zurückflüstern sitzt.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);

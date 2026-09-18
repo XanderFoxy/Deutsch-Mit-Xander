@@ -8585,13 +8585,16 @@ body.lc-schreibt .tutor-reiter {
    GEWUENSCHT: „Wenn man eine zugefluesterte Zeile antippt, soll im
    Schreibfeld direkt die Formatierung schon so dastehen, dass man
    diesem Menschen fluestern antworten kann."
-   Damit man das auch SIEHT, ist der Name leicht unterpunktet — ein
-   Knopf, den man nicht erkennt, ist keiner. */
-.lc-fluester-zurueck {
-  cursor: pointer;
-  text-decoration: underline dotted currentColor;
-  text-underline-offset: 3px;
-}
+
+   Ich hatte den Namen dafuer unterpunktet. GEMELDET: „Bitte ohne die
+   Punkte. Die Punkte sind nicht notwendig, das Design ist intuitiv.
+   Die Nachricht soll so designt sein, wie sie vorher war. Ich klicke
+   sie einfach nur an, und dann steht dieses vorbereitete Template fuer
+   ihren Namen da."
+   Er hat recht: die Zeile sieht wieder genau so aus wie vorher. Es
+   bleibt nur der Mauszeiger (am Telefon sieht man ihn ohnehin nicht)
+   und der Hinweistext beim Draufhalten. */
+.lc-fluester-zurueck { cursor: pointer; }
 
 /* Die Wortmeldung, deren Aufnahme noch im Lager liegt. Sie ist kein
    Fehler — sie kommt gleich. Also leise, ohne Warnfarbe, mit einem
