@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 53 — der Verlauf kommt vollstaendig beim Nachzuegler an",
+  stand: "Runde 54 — grosse Geschenke wie bei TikTok",
 
   inArbeit: [
-    { seit: "2026-09-18T01:39",
-      text: "B2 laeuft, so weit das Kontingent reicht (4600 von 10547)" },
-    { seit: "2026-09-18T01:39",
+    { seit: "2026-09-18T01:51",
+      text: "B2 laeuft (3861 von 4600 dieser Runde)" },
+    { seit: "2026-09-18T01:51",
       text: "Bilderwelten: Groessen und verdeckte Dinge" },
-    { seit: "2026-09-18T01:39",
+    { seit: "2026-09-18T01:51",
       text: "Sitzende Seitenansicht fuer die Figuren" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T01:39",
-      text: "Durchgereichter Verlauf: der Name hinter einer Wirkung geht nicht mehr verloren" },
-    { seit: "2026-09-18T01:39",
-      text: "Nachgemessen: Chat steht beim Betreten wirklich unten (0 Pixel Rest)" },
-    { seit: "2026-09-18T01:39",
-      text: "B1 komplett, 12987 Aufnahmen mit deiner Stimme" },
+    { seit: "2026-09-18T01:51",
+      text: "/loewe /trex /elefant /adler /hai /baer — sechs grosse Geschenke" },
+    { seit: "2026-09-18T01:51",
+      text: "Die Tiere kommen aus den Bilderwelten, nichts neu gezeichnet" },
+    { seit: "2026-09-18T01:51",
+      text: "Verlauf kommt vollstaendig beim Nachzuegler an" },
   ],
 };

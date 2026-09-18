@@ -6777,3 +6777,171 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   65%  { clip-path: polygon(0% 0%, 100% 0%, 100% 30%, 0% 30%, 0% 70%, 100% 70%, 100% 100%, 0% 100%, 0% 0%); }
   100% { clip-path: polygon(0% 0%, 100% 0%, 100% 49.5%, 0% 49.5%, 0% 50.5%, 100% 50.5%, 100% 100%, 0% 100%, 0% 0%); }
 }
+
+/* =========================================================
+   DIE GROSSEN GESCHENKE — „wie TikTok das macht"
+   ---------------------------------------------------------
+   Ablauf in Sekunden, damit man ihn nachlesen kann:
+     0,00  Strahlen fahren auf und drehen sich
+     0,10  die Kiste kommt und wackelt zweimal
+     0,90  der Deckel fliegt weg, Funken springen
+     1,00  das Tier steigt heraus und wird gross
+     1,10  die Muenzen fallen
+     6,60  alles blendet aus
+     8,20  die Schicht wird entfernt (app.js)
+
+   Zwei Dinge, die frueher schiefgingen und hier absichtlich
+   anders geloest sind:
+     * Jede Bildstufe wiederholt das Mittigstellen. Schreibt man
+       in einem Zwischenbild nur scale(), faellt translate(-50%,-50%)
+       weg — dann sitzt das Tier in der Ecke.
+     * Das Tier sitzt in einem eigenen Kasten mit fester Groesse
+       und preserveAspectRatio. So wird es gross, aber nie
+       verzerrt.
+   ========================================================= */
+.lc-grossgeschenk {
+  position: absolute; inset: 0; z-index: 64; overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 46%, rgba(50,26,0,.30), rgba(0,0,0,.62) 78%);
+  animation: lcGgSchicht 8.2s linear both;
+}
+@keyframes lcGgSchicht { 0%,3% { opacity: 0 } 8%,80% { opacity: 1 } 100% { opacity: 0 } }
+
+/* Die Strahlen */
+.lc-grossgeschenk > u {
+  position: absolute; left: 50%; top: 46%;
+  width: 150vmax; height: 150vmax;
+  transform: translate(-50%, -50%) scale(.2) rotate(0deg);
+  opacity: 0; mix-blend-mode: screen;
+  animation: lcGgStrahlen 8.2s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes lcGgStrahlen {
+  0%   { transform: translate(-50%,-50%) scale(.2)  rotate(0deg);   opacity: 0 }
+  14%  { transform: translate(-50%,-50%) scale(1)   rotate(26deg);  opacity: .85 }
+  80%  { transform: translate(-50%,-50%) scale(1.1) rotate(150deg); opacity: .7 }
+  100% { transform: translate(-50%,-50%) scale(1.2) rotate(190deg); opacity: 0 }
+}
+
+/* Die Kiste */
+.lc-grossgeschenk > i {
+  position: absolute; left: 50%; top: 62%;
+  width: 34vmin; height: 34vmin;
+  transform: translate(-50%, -50%) scale(0);
+  animation: lcGgKiste 8.2s cubic-bezier(.3,1.5,.5,1) both;
+}
+@keyframes lcGgKiste {
+  0%   { transform: translate(-50%,-50%) scale(0)            rotate(0deg) }
+  9%   { transform: translate(-50%,-50%) scale(1)            rotate(0deg) }
+  13%  { transform: translate(-50%,-50%) scale(1.04,.94)     rotate(-7deg) }
+  17%  { transform: translate(-50%,-50%) scale(.96,1.06)     rotate(7deg) }
+  21%  { transform: translate(-50%,-50%) scale(1.05,.93)     rotate(-6deg) }
+  25%  { transform: translate(-50%,-50%) scale(.97,1.05)     rotate(5deg) }
+  29%  { transform: translate(-50%,-50%) scale(1)            rotate(0deg) }
+  80%  { transform: translate(-50%,-50%) scale(1)            rotate(0deg); opacity: 1 }
+  100% { transform: translate(-50%,-50%) scale(.9)           rotate(0deg); opacity: 0 }
+}
+/* Der Deckel fliegt bei 0,9 s weg — und kommt nicht zurueck. */
+.lc-grossgeschenk .lc-gg-deckel {
+  transform-origin: 0 -14px;
+  animation: lcGgDeckel 8.2s cubic-bezier(.25,.9,.4,1) both;
+}
+@keyframes lcGgDeckel {
+  0%, 10%  { transform: translate(0,0) rotate(0deg); opacity: 1 }
+  16%      { transform: translate(-14px,-58px) rotate(-38deg); opacity: 1 }
+  24%      { transform: translate(-34px,-128px) rotate(-96deg); opacity: 0 }
+  100%     { transform: translate(-34px,-128px) rotate(-96deg); opacity: 0 }
+}
+/* Der Korpus duckt sich kurz, wenn der Deckel abgeht. */
+.lc-grossgeschenk .lc-gg-korpus {
+  transform-origin: 0 40px;
+  animation: lcGgKorpus 8.2s ease-out both;
+}
+@keyframes lcGgKorpus {
+  0%, 10% { transform: scale(1,1) }
+  14%     { transform: scale(1.12,.84) }
+  20%     { transform: scale(.96,1.05) }
+  26%,100%{ transform: scale(1,1) }
+}
+
+/* DAS TIER. Es steigt aus der Kiste und wird gross. */
+.lc-grossgeschenk > figure {
+  position: absolute; left: 50%; top: 50%; margin: 0;
+  width: min(86vmin, 94vw); height: min(62vmin, 62vh);
+  transform: translate(-50%, -30%) scale(.06);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: lcGgTier 8.2s cubic-bezier(.22,.9,.3,1) both;
+}
+.lc-grossgeschenk > figure svg { display: block; width: 100%; height: 100%;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.45)); }
+/* Die Bauchbinde oben: der Name des Tieres. Sie liegt AUSSERHALB des
+   Tierkastens — der wird bewegt und vergroessert, und die Schrift
+   darin waere mitgewachsen und genau auf „fuer Emmi" gelandet. */
+.lc-grossgeschenk .lc-gg-name {
+  position: absolute; left: 0; right: 0; top: 6%;
+  margin: 0; text-align: center;
+  font-weight: 800; font-size: clamp(1rem, 4vmin, 2.1rem);
+  color: #ffe9a8; letter-spacing: .03em;
+  text-shadow: 0 2px 12px rgba(0,0,0,.8);
+  animation: lcGgName 8.2s ease-out both;
+}
+@keyframes lcGgName {
+  0%, 13% { opacity: 0; transform: translateY(-16px) scale(.9) }
+  22%, 78% { opacity: 1; transform: translateY(0) scale(1) }
+  100% { opacity: 0; transform: translateY(-12px) scale(1.04) }
+}
+@keyframes lcGgTier {
+  0%, 11% { transform: translate(-50%,-30%) scale(.06); opacity: 0 }
+  13%     { transform: translate(-50%,-38%) scale(.22); opacity: 1 }
+  24%     { transform: translate(-50%,-52%) scale(1.06); opacity: 1 }
+  30%     { transform: translate(-50%,-50%) scale(.98); opacity: 1 }
+  36%     { transform: translate(-50%,-50%) scale(1.01); opacity: 1 }
+  78%     { transform: translate(-50%,-50%) scale(1); opacity: 1 }
+  100%    { transform: translate(-50%,-54%) scale(1.06); opacity: 0 }
+}
+
+/* „für Emmi" */
+.lc-grossgeschenk .lc-gg-fuer {
+  position: absolute; left: 0; right: 0; bottom: 7%;
+  margin: 0; text-align: center;
+  font-weight: 800; font-size: clamp(.95rem, 3.2vmin, 1.7rem);
+  color: #fff3cf; letter-spacing: .04em;
+  text-shadow: 0 2px 10px rgba(0,0,0,.75);
+  animation: lcGgFuer 8.2s ease-out both;
+}
+@keyframes lcGgFuer {
+  0%, 12% { opacity: 0; transform: translateY(14px) }
+  20%, 78% { opacity: 1; transform: translateY(0) }
+  100% { opacity: 0; transform: translateY(-10px) }
+}
+
+/* Funken */
+.lc-grossgeschenk > b {
+  position: absolute; left: 50%; top: 58%;
+  width: 1.1vmin; height: 1.1vmin; border-radius: 50%;
+  background: #fff3cf; box-shadow: 0 0 10px 3px rgba(255,214,102,.75);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: lcGgFunke 1.5s cubic-bezier(.15,.8,.3,1) both;
+}
+@keyframes lcGgFunke {
+  0%   { transform: translate(-50%,-50%) translate(0,0) scale(.4); opacity: 0 }
+  12%  { opacity: 1 }
+  100% { transform: translate(-50%,-50%) translate(var(--wx), var(--wy)) scale(.1); opacity: 0 }
+}
+
+/* Muenzen */
+.lc-grossgeschenk > em {
+  position: absolute; top: -8%;
+  width: 2.4vmin; height: 2.4vmin; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff0b8, #f0a92b 58%, #b9760f);
+  box-shadow: inset 0 0 0 .3vmin rgba(255,240,184,.55);
+  opacity: 0;
+  animation: lcGgMuenze 3s linear both;
+}
+@keyframes lcGgMuenze {
+  0%   { transform: translateY(0) rotateY(0deg); opacity: 0 }
+  8%   { opacity: 1 }
+  92%  { opacity: 1 }
+  100% { transform: translateY(112vh) rotateY(900deg); opacity: 0 }
+}

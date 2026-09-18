@@ -447,7 +447,29 @@ window.LiveChat = (function () {
     schwamm:     " wischt den Chat mit dem Schwamm  \ud83e\uddfd",
     schuss:      " ballert L\u00f6cher in den Chat  \ud83d\udca5",
     route66:     " braust ueber die Route 66 heran  \ud83d\ude98",
-    prunk:       " laesst ein grosses Geschenk aufgehen  \ud83c\udf81"
+    prunk:       " laesst ein grosses Geschenk aufgehen  \ud83c\udf81",
+    /* Die grossen Geschenke. Ohne Namen dahinter gilt es dem ganzen
+       Raum — „schenkt allen einen Loewen". Mit Namen setzt der Zweig
+       in befehlAusfuehren den Satz selbst zusammen. */
+    ggloewe:     " schenkt allen einen L\u00f6wen  \ud83e\udd81",
+    ggtrex:      " schenkt allen einen Tyrannosaurus  \ud83e\udd96",
+    ggelefant:   " schenkt allen einen Elefanten  \ud83d\udc18",
+    ggadler:     " schenkt allen einen Adler  \ud83e\udd85",
+    gghai:       " schenkt allen einen Hai  \ud83e\udd88",
+    ggbaer:      " schenkt allen einen B\u00e4ren  \ud83d\udc3b"
+  };
+
+  /* Welche Wirkung welches grosse Geschenk ist — und wie der Satz
+     heisst, wenn es EINER Person gilt. Ohne diese Tabelle muesste der
+     Satz an zwei Stellen stehen (hier und in WETTER), und eine von
+     beiden waere frueher oder spaeter falsch. */
+  var GROSSGESCHENK = {
+    ggloewe:   { satz: "einen L\u00f6wen",        emoji: "\ud83e\udd81" },
+    ggtrex:    { satz: "einen Tyrannosaurus", emoji: "\ud83e\udd96" },
+    ggelefant: { satz: "einen Elefanten",     emoji: "\ud83d\udc18" },
+    ggadler:   { satz: "einen Adler",         emoji: "\ud83e\udd85" },
+    gghai:     { satz: "einen Hai",           emoji: "\ud83e\udd88" },
+    ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" }
   };
 
   var SCHRIFTEN = {
@@ -3270,6 +3292,12 @@ window.LiveChat = (function () {
     { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Ein Katzenbaby läuft zur Scheibe und tappt mit den Pfoten dagegen" },
     { gr: "welt", w: "route66",    kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu — Wüste, Kakteen, Staub" },
     { gr: "feier", w: "prunk",     kurz: "gift",   nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
+    { gr: "feier", w: "ggloewe",   kurz: "loewe",  nutzt: "/loewe <Name>",   was: "GROSSES GESCHENK: die Kiste springt auf, ein Löwe steigt heraus und wird riesig" },
+    { gr: "feier", w: "ggtrex",    kurz: "trex",   nutzt: "/trex <Name>",    was: "GROSSES GESCHENK: ein Tyrannosaurus steigt aus der Kiste und brüllt" },
+    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant <Name>", was: "GROSSES GESCHENK: ein Elefant steigt aus der Kiste" },
+    { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler <Name>",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
+    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai <Name>",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
+    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
     { gr: "welt", w: "pirat",      kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff segelt über die Wellen, mit Totenkopfflagge" },
     { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen, die Schrift wird kleiner" },
     { gr: "welt", w: "schwamm",    kurz: "wischen", nutzt: "/schwamm",  was: "Ein Schwamm wischt den Chat wie eine Tafel" },
@@ -3364,6 +3392,17 @@ window.LiveChat = (function () {
                 strasse: "route66", trans: "route66", muscle: "route66",
                 gift: "prunk", tiktok: "prunk", prunkgeschenk: "prunk",
                 muenzen: "prunk", gold: "prunk",
+                /* Die grossen Geschenke — man tippt das Tier, nicht
+                   den inneren Namen. */
+                loewe: "ggloewe", loewin: "ggloewe", lion: "ggloewe",
+                /* „dino" bleibt beim alten Dino-Effekt — einen
+                   bestehenden Befehl wegzunehmen waere schlimmer als
+                   eine Abkuerzung weniger. */
+                trex: "ggtrex", tyrannosaurus: "ggtrex",
+                elefant: "ggelefant", elefantt: "ggelefant", ruessel: "ggelefant",
+                adler: "ggadler", greif: "ggadler",
+                hai: "gghai", haifisch: "gghai", weisshai: "gghai",
+                baer: "ggbaer", baerchen: "ggbaer", grizzly: "ggbaer",
                 schiff: "pirat", piraten: "pirat", segel: "pirat", totenkopf: "pirat",
                 sog: "strudel", wirbel: "strudel", ertrinken: "strudel", wirbeln: "strudel",
                 wischen: "schwamm", tafel: "schwamm", putzen: "schwamm",
@@ -4014,6 +4053,20 @@ window.LiveChat = (function () {
        Das Letzte ist schon geregelt: alles, was vor dem Betreten
        geschrieben wurde, gilt als Vergangenheit und bleibt still —
        antippen spielt es trotzdem ab, aber nur für einen selbst. */
+    /* DIE GROSSEN GESCHENKE — „wie TikTok das macht".
+       Sie sind Wetter-Effekte wie die anderen, bekommen aber eine
+       eigene Abzweigung DAVOR: ein Geschenk gilt jemandem. Steht ein
+       Name dahinter, muss er als „wen" mitfahren — sonst schwebt das
+       Tier zwar ueber dem Chat, aber niemand weiss, fuer wen es ist.
+       „an" waere hier falsch: das ist das Feld fuer eine Kennung, und
+       jedes fremde Geraet wuerfe die Nachricht damit weg. */
+    if (GROSSGESCHENK[art]) {
+      var g = GROSSGESCHENK[art];
+      var wemG = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      if (!wemG) return anAlle("aktion", zustand.ichName + WETTER[art], { wirkung: art });
+      return anAlle("aktion", zustand.ichName + " schenkt " + wemG.name + " " + g.satz + "  " + g.emoji,
+                    { wirkung: art, wen: wemG.name });
+    }
     if (WETTER[art]) {
       return anAlle("aktion", zustand.ichName + WETTER[art], { wirkung: art });
     }

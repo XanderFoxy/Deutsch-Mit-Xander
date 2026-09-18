@@ -18160,6 +18160,129 @@
      Strahlen, ein Glanz wischt darüber, Funken springen weg, und am
      Ende regnet es Münzen. Genau diese fünf Sachen stecken hier drin.
      ================================================================= */
+  /* ============================================================
+     DIE GROSSEN GESCHENKE — „wie TikTok das macht"
+     ------------------------------------------------------------
+     GEWUENSCHT: „wie TikTok das macht mit den grossen Geschenken."
+
+     Bei TikTok schickt man jemandem einen Loewen, und der Loewe
+     fuellt den halben Bildschirm. Genau das ist das hier: die Kiste
+     springt auf, und aus ihr steigt ein Tier heraus, das gross wird.
+
+     Gezeichnet wird dafuer NICHTS neu. Die Tiere stehen laengst in
+     den Bilderwelten — nachgemessen, Fassung fuer Fassung
+     abgenommen. Sie noch einmal zu zeichnen hiesse, gute Arbeit
+     wegzuwerfen. werkzeug/grossgeschenke-holen.js schneidet sie
+     heraus, data-grossgeschenke.js haelt sie.
+
+     Die Datei ist schwer (376 KB) und faehrt beim Start NICHT mit.
+     Sie wird erst geholt, wenn wirklich jemand ein Geschenk
+     schickt. Bis sie da ist, laeuft der Rest der Animation schon —
+     die Strahlen und die Kiste brauchen sie nicht.
+     ============================================================ */
+  let lcGgTiere = null;
+  function lcGgLaden() {
+    if (lcGgTiere) return Promise.resolve(lcGgTiere);
+    return brDatei("data-grossgeschenke.js").then(() => {
+      lcGgTiere = window.DMA_GESCHENK_GROSS || {};
+      return lcGgTiere;
+    }).catch(() => { lcGgTiere = {}; return lcGgTiere; });
+  }
+  function lcGrossGeschenk(art, wer) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.getElementById("lcGrossGeschenk")?.remove();
+    const schicht = document.createElement("div");
+    schicht.id = "lcGrossGeschenk";
+    schicht.className = "lc-grossgeschenk";
+    schicht.setAttribute("aria-hidden", "true");
+
+    /* 1. Die Strahlen dahinter — sie drehen sich langsam. */
+    const strahlen = document.createElement("u");
+    strahlen.innerHTML = '<svg viewBox="-60 -60 120 120" width="100%" height="100%">'
+      + Array.from({ length: 16 }, (_, i) =>
+          '<path d="M0 0 L' + (Math.cos((i * 22.5 - 6) * Math.PI / 180) * 92).toFixed(1)
+          + ' ' + (Math.sin((i * 22.5 - 6) * Math.PI / 180) * 92).toFixed(1)
+          + ' L' + (Math.cos((i * 22.5 + 6) * Math.PI / 180) * 92).toFixed(1)
+          + ' ' + (Math.sin((i * 22.5 + 6) * Math.PI / 180) * 92).toFixed(1)
+          + ' Z" fill="rgba(255,216,110,' + (i % 2 ? 0.3 : 0.16) + ')"/>').join("")
+      + "</svg>";
+    schicht.appendChild(strahlen);
+
+    /* 2. Die Kiste. Sie wackelt zweimal, dann fliegt der Deckel weg. */
+    const kiste = document.createElement("i");
+    kiste.innerHTML = '<svg viewBox="-50 -52 100 100" width="100%" height="100%">'
+      + '<defs><linearGradient id="lcGGgold" x1="0" y1="0" x2="0" y2="1">'
+      + '<stop offset="0%" stop-color="#ffd76a"/><stop offset="55%" stop-color="#f0a92b"/>'
+      + '<stop offset="100%" stop-color="#c97f13"/></linearGradient>'
+      + '<linearGradient id="lcGGrot" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0%" stop-color="#ef5f6d"/><stop offset="100%" stop-color="#c02a4a"/></linearGradient></defs>'
+      + '<g class="lc-gg-korpus">'
+      + '<path d="M-36 0 L36 0 L36 40 L-36 40 Z" fill="url(#lcGGrot)" stroke="rgba(90,10,30,.45)" stroke-width="2" stroke-linejoin="round"/>'
+      + '<rect x="-6" y="0" width="12" height="40" fill="url(#lcGGgold)"/>'
+      + '</g>'
+      + '<g class="lc-gg-deckel">'
+      + '<path d="M-42 -14 L42 -14 L42 0 L-42 0 Z" fill="url(#lcGGgold)" stroke="rgba(90,50,0,.45)" stroke-width="2" stroke-linejoin="round"/>'
+      + '<rect x="-6" y="-14" width="12" height="14" fill="#ffe08a"/>'
+      + '<path d="M-6 -14 Q-26 -30 -14 -38 Q-4 -42 -2 -16 Z" fill="url(#lcGGgold)" stroke="rgba(90,50,0,.4)" stroke-width="1.6"/>'
+      + '<path d="M6 -14 Q26 -30 14 -38 Q4 -42 2 -16 Z" fill="url(#lcGGgold)" stroke="rgba(90,50,0,.4)" stroke-width="1.6"/>'
+      + '<circle cx="0" cy="-15" r="5" fill="#ffe9a8" stroke="rgba(90,50,0,.4)" stroke-width="1.4"/>'
+      + '</g></svg>';
+    schicht.appendChild(kiste);
+
+    /* 3. Das Tier — es kommt nach, sobald die Datei da ist. */
+    const buehne = document.createElement("figure");
+    schicht.appendChild(buehne);
+
+    /* 4. Funken und Muenzen, wie beim kleinen Geschenk. */
+    for (let i = 0; i < 20; i++) {
+      const f = document.createElement("b");
+      const winkel = (i / 20) * Math.PI * 2;
+      f.style.setProperty("--wx", (Math.cos(winkel) * 48).toFixed(1) + "vmin");
+      f.style.setProperty("--wy", (Math.sin(winkel) * 48).toFixed(1) + "vmin");
+      f.style.animationDelay = (0.9 + (i % 5) * 0.07).toFixed(2) + "s";
+      schicht.appendChild(f);
+    }
+    for (let i = 0; i < 22; i++) {
+      const m = document.createElement("em");
+      m.style.left = (3 + Math.random() * 94).toFixed(1) + "%";
+      m.style.animationDelay = (1.1 + Math.random() * 1.8).toFixed(2) + "s";
+      m.style.animationDuration = (2.4 + Math.random() * 1.6).toFixed(2) + "s";
+      schicht.appendChild(m);
+    }
+
+    (document.getElementById("livechatKarte") || document.body).appendChild(schicht);
+
+    lcGgLaden().then((tafel) => {
+      const tier = tafel && tafel[art];
+      if (!tier || !document.body.contains(schicht)) return;
+      /* preserveAspectRatio: das Tier soll NICHT verzerrt werden. Der
+         gemessene Rahmen sitzt eng, also wird es so gross wie moeglich
+         gezeigt, ohne die Form anzutasten. */
+      buehne.innerHTML = '<svg viewBox="' + tier.rahmen + '" width="100%" height="100%" '
+        + 'preserveAspectRatio="xMidYMax meet">' + tier.kunst + "</svg>";
+      /* Der Name gehoert NICHT in den Tierkasten. Der wird bewegt und
+         vergroessert; die Schrift darin wuerde mitwachsen und mitrucken
+         — und sie landete genau auf „fuer Emmi". Er haengt deshalb als
+         eigene Zeile oben in der Schicht, wie die Bauchbinde bei
+         TikTok. */
+      const zeile = document.createElement("p");
+      zeile.className = "lc-gg-name";
+      zeile.textContent = tier.emoji + " " + tier.de.replace(/^(der|die|das)\s+/i,
+        (m) => m.charAt(0).toUpperCase() + m.slice(1));
+      schicht.appendChild(zeile);
+    });
+
+    if (wer) {
+      const name = document.createElement("p");
+      name.className = "lc-gg-fuer";
+      name.textContent = "für " + wer;
+      schicht.appendChild(name);
+    }
+    /* Der Tyrannosaurus bruellt, alles andere wird bejubelt. */
+    lcGeraeusch(art === "trex" ? "dino" : "jubel");
+    setTimeout(() => schicht.remove(), 8200);
+  }
+
   function lcGeschenkGross(wer) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcGeschenkGross")?.remove();
@@ -20765,6 +20888,15 @@
     /* Der Wagen auf der Route 66 und das grosse Geschenk. */
     route66: { ganzeSeite: true, wie: "route66" },
     prunk:   { ganzeSeite: true, wie: "prunk" },
+    /* Die grossen Geschenke. Sie tragen alle dieselbe Bauart „gg" und
+       unterscheiden sich nur im Tier — so muss fuer ein siebtes Tier
+       nur EINE Zeile dazu, nicht eine neue Animation. */
+    ggloewe:   { ganzeSeite: true, wie: "gg", tier: "loewe" },
+    ggtrex:    { ganzeSeite: true, wie: "gg", tier: "trex" },
+    ggelefant: { ganzeSeite: true, wie: "gg", tier: "elefant" },
+    ggadler:   { ganzeSeite: true, wie: "gg", tier: "adler" },
+    gghai:     { ganzeSeite: true, wie: "gg", tier: "haifisch" },
+    ggbaer:    { ganzeSeite: true, wie: "gg", tier: "baer" },
     lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
@@ -21100,6 +21232,7 @@
       else if (e.wie === "augen") lcAugen();
       else if (e.wie === "route66") lcRoute66();
       else if (e.wie === "prunk") lcGeschenkGross(nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
+      else if (e.wie === "gg") lcGrossGeschenk(e.tier, nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
       else if (e.wie === "enten") lcEnten();
       else if (e.wie === "katze") lcKatze();
       else if (e.wie === "pirat") lcPirat();
@@ -50704,6 +50837,7 @@ An einem Morgen lief ein kleiner Fuchs los…
      ============================================================ */
   const APP_CHANGELOG = {
     "175": [
+      "🦁 **Grosse Geschenke wie bei TikTok.** Im Klassenzimmer kannst du jemandem jetzt etwas Grosses schenken: „/loewe Emmi“, und die Geschenkkiste wackelt, der Deckel fliegt weg, ein Löwe steigt heraus und füllt den halben Bildschirm — mit Strahlen, Funken und Münzregen. Sechs gibt es: Löwe, Tyrannosaurus, Elefant, Adler, Hai und Bär. Ohne Namen dahinter gilt das Geschenk dem ganzen Raum. Die Tiere sind NICHT neu gezeichnet — es sind genau die, die in den Bilderwelten stehen, am Foto nachgemessen und Fassung für Fassung abgenommen. Sie noch einmal zu zeichnen hiesse, gute Arbeit wegzuwerfen. Die Datei mit den Tieren fährt beim Start nicht mit; sie wird erst geholt, wenn wirklich jemand ein Geschenk schickt.",
       "★ **Deine eigenen Wörter im Vokabeltrainer.** Gemeldet: „die eigene Vokabelliste scheint man auch nicht nehmen zu können.“ Das stimmte — die mit dem Stern ☆ gemerkten Wörter und die selbst angelegten Listen gab es nur in acht Spielen, ausgerechnet im Vokabeltrainer nicht. Jetzt steht dort die Kategorie „★ Meine Wörter“. Auf der Karte wählst du, ob mit allem, nur mit dem gemerkten Wortschatz oder nur mit einer bestimmten Liste geübt wird, und darunter steht, wie viele Wörter das gerade sind. Die Fragen werden aus deinen Wörtern gebaut, nicht aus einer Datei — was du heute markierst, kommt in der nächsten Runde dran. Drei Arten im Wechsel: der Artikel, die Bedeutung und umgekehrt „welches Wort bedeutet …?“.",
       "🧍‍♂️ **Die Menschen sitzen jetzt richtig.** Wer auf dem Sofa oder auf der Toilette sitzt, sitzt mit den Knien zur Kamera — nicht mehr seitlich weggedreht. Das ging vorher nicht, weil ein Oberschenkel, der auf den Betrachter zeigt, fast keine Länge hat; jetzt zeigt er am Knie seinen vollen Querschnitt, mit eigener Kontur, Licht auf der Kuppe und Schlagschatten auf das Bein darunter. Genau daran erkennt das Auge, dass da jemand sitzt.",
       "🧎 **Elf neue Körperhaltungen.** Fersensitz, aufrechtes Knien, vorgebeugtes Knien, Krabbeln, Vierfüßlerstand, Bodensitz, Seitsitz, Schneidersitz, Spagat, Baden mit angewinkelten Beinen — jede von vorn, von der Seite und von hinten, in jedem Alter, mit und ohne Kleidung. Ein Kind kann jetzt auf dem Teppich knien und mit dem Auto spielen.",
