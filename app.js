@@ -20727,6 +20727,25 @@
      man den Raum betreten hat. Alles davor ist Vergangenheit und löst
      keine Animation mehr aus — siehe livechatChatAuffrischen(). */
   let livechatEffekteAb = 0;
+  /* JEDE ANIMATION GENAU EINMAL — je Nachricht, nicht je Zeichnung.
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Wenn Emmy auf ihrer Seite eine Animation ausloest,
+     soll das bei mir nicht zu hoeren sein. Nur wenn sie sie wirklich
+     schreibt, wenn sie sie wirklich zum ersten Mal bringt."
+
+     Das Wiederholen durch Antippen war nie ein Rundruf — es bleibt
+     auf dem Geraet, auf dem getippt wurde. Der Chat wird aber bei
+     jeder Kleinigkeit neu gezeichnet (jemand kommt herein, ein Bild
+     wird nachgereicht, ein Platz wechselt), und bei JEDEM Zeichnen
+     lief die Wirkung einer frischen Zeile erneut los. Derselbe Ruf
+     konnte also drei-, viermal klingen, ohne dass jemand etwas getan
+     hat — und genau so klingt es, als ob drueben jemand herumtippt.
+
+     Deshalb wird die Kennung der Nachricht gemerkt: was einmal
+     geklungen hat, klingt beim naechsten Zeichnen nicht noch einmal.
+     Ein Tipp auf die Zeile spielt es weiterhin ab — der geht ja
+     ausdruecklich an dieser Regel vorbei. */
+  const livechatEffektGespielt = new Set();
   /* Beim ersten Zeichnen eines Raums ganz nach unten springen. */
   let livechatSchonUnten = false;
 
@@ -21885,6 +21904,7 @@
   }
 
   let lcLiveLaeuft = false;
+  let lcTonHinweis = false;      // der „tipp einmal auf die Seite"-Hinweis
   let lcLiveJetzt = null;        // wer gerade zu hoeren ist
 
   function lcLiveWeiter() {
@@ -21951,7 +21971,30 @@
         const ende = (w.sprachAb || 0) + w.sprachDauer;
         a.ontimeupdate = () => { if (a.currentTime >= ende) { a.ontimeupdate = null; a.pause(); fertig(); } };
       }
-      a.play().catch(fertig);
+      /* Wird der Ton vom Browser noch nicht durchgelassen, darf die
+         Wortmeldung NICHT stillschweigend verschwinden — genau das
+         tat das frueher (.catch(fertig)). Stattdessen: einmal sagen,
+         auf die erste Beruehrung noch einmal versuchen, und
+         spaetestens nach acht Sekunden weitermachen, damit die Reihe
+         nicht stehenbleibt. */
+      a.play().catch(() => {
+        let los = false;
+        a.onplaying = () => { los = true; };
+        const nochmal = () => {
+          document.removeEventListener("pointerdown", nochmal, true);
+          try { const v = a.play(); if (v && v.catch) v.catch(() => {}); } catch (e) {}
+        };
+        document.addEventListener("pointerdown", nochmal, { capture: true, passive: true });
+        if (!lcTonHinweis) {
+          lcTonHinweis = true;
+          showToast("🔇 Dein Browser lässt den Ton noch nicht durch — tipp einmal auf die Seite, "
+            + "dann hörst du die anderen.");
+        }
+        setTimeout(() => {
+          document.removeEventListener("pointerdown", nochmal, true);
+          if (!los) fertig();
+        }, 8000);
+      });
     } catch (e) { fertig(); }
   }
 
@@ -24201,7 +24244,10 @@
            Beides nur, wenn die Zeile GERADE eben entstanden ist —
            was vor dem Betreten geschrieben wurde, ist Vergangenheit
            und bleibt still. Angetippt kommt es wieder. */
-        if (!alt) lcSchallStoss(n.text, n.geschlecht || "");
+        if (!alt && !livechatEffektGespielt.has(n.id)) {
+          livechatEffektGespielt.add(n.id);
+          lcSchallStoss(n.text, n.geschlecht || "");
+        }
       }
       if (eff) {
         z.dataset.wirkung = eff;
@@ -24216,8 +24262,13 @@
           z.classList.add("lc-neu");
         });
         /* NUR wenn die Zeile gerade eben entstanden ist. Alles Ältere
-           ist Vergangenheit und wartet darauf, angetippt zu werden. */
-        if (!alt) lcWirkung(eff, z, n);
+           ist Vergangenheit und wartet darauf, angetippt zu werden —
+           und nur EINMAL je Nachricht, nicht bei jedem Neuzeichnen
+           (siehe livechatEffektGespielt). */
+        if (!alt && !livechatEffektGespielt.has(n.id)) {
+          livechatEffektGespielt.add(n.id);
+          lcWirkung(eff, z, n);
+        }
       }
     });
     /* GEMELDET, mehrfach: „Wenn man in den Raum kommt, wird immer oben
@@ -24387,6 +24438,7 @@
       livechatGeruest = false;
       livechatGezeigt = new Map();
       livechatEffekteAb = 0;          // beim nächsten Betreten neu stellen
+      livechatEffektGespielt.clear();
       livechatSchonUnten = false;
       lcHaeltUnten = true;
       area.innerHTML = livechatStartHtml(l);

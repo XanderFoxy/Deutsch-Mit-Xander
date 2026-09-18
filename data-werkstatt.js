@@ -49,32 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19d — Zensur sichtbar, Fokus bleibt, Titel bleibt",
+  stand: "Runde 19e — warum Emmy nichts hoert",
 
   inArbeit: [
-    { seit: "2026-09-18T20:05",
-      text: "Emmy hoert die Sprachnachrichten nicht gut — muss auf beiden Seiten geprueft werden" },
-    { seit: "2026-09-18T20:05",
-      text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen, solange sie noch ungehoert ist" },
-    { seit: "2026-09-18T20:05",
+    { seit: "2026-09-18T20:10",
+      text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen, solange sie ungehoert ist" },
+    { seit: "2026-09-18T20:10",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:05",
+    { seit: "2026-09-18T20:10",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:05",
+    { seit: "2026-09-18T20:10",
       text: "Favoriten im Befehlspanel selbst anheften" },
+    { seit: "2026-09-18T20:10",
+      text: "Kopfzeile „alle im Raum\" wird bei Android abgeschnitten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:05",
-      text: "Zensuren stehen jetzt wirklich im Chat — sie waren durchsichtig, weil die Musik-Animation ihre Noten genauso genannt hat" },
-    { seit: "2026-09-18T20:05",
-      text: "Der Fokus-Schalter ist immer da, auch wenn gerade niemand spricht" },
-    { seit: "2026-09-18T20:05",
-      text: "Der Raumtitel ueberlebt das Neuladen — er liegt jetzt je Raum im Geraet" },
-    { seit: "2026-09-18T20:05",
-      text: "Beim Schreien werden Fuchs-Marken gezeichnet statt mitgebruellt (das waren die Klammern)" },
-    { seit: "2026-09-18T20:05",
-      text: "Keine spitzen Klammern mehr in der Befehlshilfe — und wer sie doch tippt, dem werden sie verziehen" },
+    { seit: "2026-09-18T20:10",
+      text: "Ein vom Browser geblockter Ton hielt die ganze Sprechreihe an — und damit im Fokus-Modus auch alle Mikrofone. Gemessen: 8024 ms statt nie" },
+    { seit: "2026-09-18T20:10",
+      text: "Der Notweg beim Abspielen verschluckte Wortmeldungen stillschweigend — jetzt kommt ein Hinweis und ein zweiter Versuch bei der ersten Beruehrung" },
+    { seit: "2026-09-18T20:10",
+      text: "Jede Animation klingt genau einmal je Nachricht, nicht bei jedem Neuzeichnen des Chats" },
   ],
 };

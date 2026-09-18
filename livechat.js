@@ -1837,7 +1837,7 @@ window.LiveChat = (function () {
           if (frei.currentTime >= ende) { frei.ontimeupdate = null; try { frei.pause(); } catch (e) {} aufraeumen(); }
         };
       }
-      tonAbspielenVersuchen(frei);
+      tonAbspielenVersuchen(frei, aufraeumen);
     };
     if (ab > 0 && !(frei.readyState >= 1)) {
       frei.onloadedmetadata = function () { frei.onloadedmetadata = null; los(); };
@@ -1848,16 +1848,58 @@ window.LiveChat = (function () {
     return true;
   }
 
-  function tonAbspielenVersuchen(a) {
+  /* WENN DER BROWSER DEN TON NICHT DURCHLAESST.
+     -----------------------------------------------------------
+     GEFRAGT: „Bist du sicher, dass Emmy mich hoeren kann mit der
+     Pseudovariante?" — Nein, war ich nicht, und beim Nachsehen fand
+     sich genau hier der Grund.
+
+     Ein Browser spielt Ton erst ab, wenn die Person die Seite
+     einmal beruehrt hat. Wird play() abgelehnt, wurde die Aufnahme
+     bisher in die Warteschlange gelegt und auf eine Beruehrung
+     gewartet — so weit richtig. Nur: „aufraeumen" lief dabei NIE.
+     Und aufraeumen ist es, was der Oberflaeche sagt „fertig, der
+     naechste bitte".
+
+     Die Folge war schlimmer als ein verpasster Satz:
+       - die Warteschlange stand still, ALLE weiteren Wortmeldungen
+         blieben liegen;
+       - liveLaeuftGerade blieb auf dem blockierten Sprecher stehen,
+         und damit sagte darfSprechen() dauerhaft „nein" — im
+         Fokus-Modus konnte die Person also auch selbst nichts mehr
+         aufnehmen.
+     Beides ohne eine einzige Fehlermeldung.
+
+     Jetzt gilt: gewartet wird weiter auf die Beruehrung, aber
+     hoechstens acht Sekunden. Kommt bis dahin keine, wird die
+     Aufnahme freigegeben und die Reihe laeuft weiter. Lieber ein
+     Satz verpasst als ein Raum, in dem nichts mehr geht. */
+  function tonAbspielenVersuchen(a, beiFehlstart) {
     var v;
     try { v = a.play(); } catch (e) { v = null; }
     if (v && v.catch) {
       v.catch(function () {
         if (tonWartet.indexOf(a) < 0) tonWartet.push(a);
         tonNachholenAnmelden();
+        if (typeof beiFehlstart === "function") {
+          var los = false;
+          var merk = a.onplaying;
+          a.onplaying = function () {
+            los = true;
+            a.onplaying = merk;
+            if (typeof merk === "function") merk.apply(this, arguments);
+          };
+          setTimeout(function () {
+            if (los) return;
+            var i = tonWartet.indexOf(a);
+            if (i >= 0) tonWartet.splice(i, 1);
+            beiFehlstart();
+          }, 8000);
+        }
         if (!tonHinweisGezeigt) {
           tonHinweisGezeigt = true;
-          systemZeile("Dein Browser l\u00e4sst den Ton noch nicht durch \u2014 tipp einmal irgendwo auf die Seite, dann h\u00f6rst du die anderen.");
+          systemZeile("\ud83d\udd07 Dein Browser l\u00e4sst den Ton noch nicht durch \u2014 tipp einmal irgendwo auf die Seite, "
+            + "dann h\u00f6rst du die anderen. (Das passiert nur beim ersten Mal.)");
         }
       });
     }
@@ -4493,8 +4535,25 @@ window.LiveChat = (function () {
   /* Laeuft gerade eine fremde Wortmeldung? Das weiss die
      Oberflaeche (sie spielt ab) — sie sagt es hier an. */
   var liveLaeuftGerade = null;   // { von, name, bis } oder null
+  var liveWacht = 0;
   function liveLaeuft(wer) {
     liveLaeuftGerade = wer || null;
+    /* EIN ZWEITER BODEN. Wer hier eingetragen wird, sperrt im
+       Fokus-Modus alle anderen Mikrofone — bis er wieder ausgetragen
+       wird. Bleibt dieses Austragen einmal aus (ein Ton, der nie
+       startet, ein Geraet, das in den Schlaf geht), stuende der Raum
+       still, und niemand koennte den Grund sehen. Deshalb traegt sich
+       jeder Sprecher nach spaetestens fuenf Minuten selbst wieder
+       aus. Eine Wortmeldung ist kuerzer als das — es kann also nichts
+       Echtes abschneiden. */
+    clearTimeout(liveWacht); liveWacht = 0;
+    if (liveLaeuftGerade) {
+      liveWacht = setTimeout(function () {
+        if (!liveLaeuftGerade) return;
+        liveLaeuftGerade = null;
+        melden();
+      }, 5 * 60 * 1000);
+    }
     melden();
   }
   /* Darf ich jetzt aufnehmen? Gibt einen Grund zurueck, keinen
