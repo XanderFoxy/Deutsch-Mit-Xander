@@ -49,26 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 79 — Hängende Leitung, verschluckte Antworten, Favoriten auf dem Telefon",
+  stand: "Runde 80 — Die Tonspur ist wieder da",
 
   inArbeit: [
-    { seit: "2026-09-18T23:43",
+    { seit: "2026-09-18T23:53",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:43",
+    { seit: "2026-09-18T23:53",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:43",
-      text: "Der grüne Balken hängt nicht mehr fest: eine Wortmeldung hält die Leitung nur noch ihre eigene Länge plus zehn Sekunden (vorher stur fünf Minuten), ein Wächter beendet sie notfalls — und ein Tipp auf den Balken prüft die Leitung und gibt sie frei. Kein Neuladen mehr" },
-    { seit: "2026-09-18T23:43",
-      text: "Eine Zeile, die ohne Verbindung geschrieben wird, wartet jetzt und geht raus, sobald der Raum wieder steht — vorher war sie still verloren (beim Absender sichtbar, bei allen anderen nie angekommen)" },
-    { seit: "2026-09-18T23:43",
-      text: "Eine Aufgabe noch einmal lösen wird wieder angesagt — vorher wurde die zweite richtige Antwort stillschweigend verschluckt; die Punkte gibt es weiterhin nur einmal" },
-    { seit: "2026-09-18T23:43",
-      text: "Lang drücken auf dem Smartphone heftet jetzt richtig an: Android löst dabei zusätzlich das Kontextmenü aus, und das hat sofort wieder abgenommen" },
-    { seit: "2026-09-18T23:43",
-      text: "Die Beispiel-Klammern stehen wieder in der Hilfe: /w <Name> <Text>" },
+    { seit: "2026-09-18T23:53",
+      text: "Die kleine Wellenform in der Sprechblase war auf dem Telefon null Bildpunkte breit — sie gab als Erste nach, bis nichts mehr übrig war. Jetzt behält sie mindestens 24 px, die Striche sind schmaler und nach zehn ist Schluss" },
+    { seit: "2026-09-18T23:53",
+      text: "Wird die Zeile richtig eng (langer Name, schmales Display), bekommt die Blase eine eigene Reihe unter dem Namen — gemessen 34 px vorher, 126 px nachher, und das Herunterladen-Symbol bleibt drin" },
   ],
 };

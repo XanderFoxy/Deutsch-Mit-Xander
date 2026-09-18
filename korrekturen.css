@@ -8701,17 +8701,44 @@ body.lc-schreibt .tutor-reiter {
 .lc-sprachblase {
   display: inline-flex;
   align-items: center;
+  /* Wird es wirklich eng, rutscht lieber etwas in eine zweite Reihe
+     INNERHALB der Blase, als dass ein Symbol abgeschnitten wird. */
+  flex-wrap: wrap;
+  row-gap: 3px;
   gap: 6px;
   cursor: pointer;
   max-width: 100%;
   overflow: hidden;
 }
+/* DIE TONSPUR DARF SCHRUMPFEN — ABER NICHT VERSCHWINDEN.
+   GEMELDET: „In den Android-Sprechblasen kann man zwar die Zeit, den
+   Download und das Zurückrufen sehen, allerdings nicht mehr die kleine
+   Wellenform. Die kann ruhig kleiner dargestellt werden oder kürzer,
+   damit die anderen Symbole passen."
+
+   Nachgemessen, und es stimmte: in einer engen Zeile war sie NULL
+   Bildpunkte breit — sie hatte „min-width: 0" und gab als Erste nach,
+   bis nichts mehr da war. Jetzt behält sie einen Rest (24 px), und
+   auf dem Telefon werden die Striche schmaler und weniger. */
 .lc-sprachblase i {            /* die Tonspur gibt nach, nicht die Knöpfe */
   flex: 0 1 auto;
-  min-width: 0;
+  min-width: 24px;
   overflow: hidden;
 }
 .lc-sprachblase em { flex: 0 0 auto; }
+/* Auf dem Telefon: schmalere Striche, und nach zehn ist Schluss. Die
+   Tonspur ist ein Bild von einer Stimme, kein Messgeraet — sie darf
+   kurz sein, damit Zeit, Herunterladen und Zurueckrufen danebenpassen. */
+@media (max-width: 520px) {
+  .lc-sprachblase i { gap: 1px; height: 1em; }
+  .lc-sprachblase i s { width: 2px; }
+  .lc-sprachblase i s:nth-child(n+11) { display: none; }
+  /* Und wenn die Zeile wirklich eng wird (langer Name, schmales
+     Telefon), bekommt die Blase eine eigene Reihe unter dem Namen —
+     sonst bleiben ihr dreissig Bildpunkte, und darin ist nichts mehr
+     unterzubringen. Gemessen: 34 px vorher, volle Breite nachher. */
+  .lc-zeile.lc-stimme > .lc-zeilentext { grid-column: 1 / -1; }
+}
 .lc-sprachblase .lc-sprach-holen,
 .lc-sprachblase .lc-sprach-weg {
   flex: 0 0 auto;

@@ -5,9 +5,16 @@
    nicht darüber hinaus ragen. Und das Herunterladen-Symbol soll
    erkennbar sein und das Zurückrufen-Symbol auch."
 
-   Gemessen wird an einer schmalen Android-Breite (360 px): liegen
-   beide Symbole vollständig innerhalb des Blasen-Rechtecks, und wie
-   gross sind ihre Tippflächen? */
+   GEMELDET, danach: „In den Android-Sprechblasen kann man zwar die
+   Zeit, den Download und das Zurückrufen sehen, allerdings nicht mehr
+   die kleine Wellenform. Die kann ruhig kleiner dargestellt werden
+   oder kürzer, damit die anderen Symbole passen."
+
+   Gemessen wird an einer schmalen Android-Breite (360 px), und zwar
+   zweimal: in einer gewöhnlichen Zeile und in einer richtig engen
+   (ein langer Name frisst den Platz). Liegen beide Symbole vollständig
+   innerhalb der Blase, wie gross sind ihre Tippflächen — und bleibt
+   von der Tonspur überhaupt etwas übrig? */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = "/home/user/Deutsch-Mit-Xander";
@@ -32,7 +39,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     let striche = "";
     for (let i = 0; i < 18; i++) striche += '<s style="height:' + (30 + i * 3) + '%"></s>';
     halter.innerHTML =
-      '<div class="lc-chat-verlauf"><div class="lc-zeile"><span class="lc-zeit">14:07</span>'
+      '<div class="lc-chat-verlauf lc-stimmen-offen"><div class="lc-zeile lc-zeile-live lc-stimme"><span class="lc-zeit">14:07</span>'
       + '<span class="lc-nick">Xander</span><span class="lc-zeilentext">'
       + '<span class="lc-sprachblase" id="blase" role="button">'
       + '<i>' + striche + '</i><em>12″</em>'
@@ -46,12 +53,28 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       + '<button class="lc-chat-raeumen">\ud83d\udeaa R\u00e4ume</button>'
       + '<button class="lc-chat-raeumen">\u24d8 Befehle</button></span></div>';
     document.body.appendChild(halter);
+    /* Und dieselbe Blase noch einmal in einer richtig engen Zelle. */
+    const eng = document.createElement("div");
+    eng.style.cssText = "position:fixed;left:0;top:200px;width:150px;z-index:99999;background:#221c1a;padding:4px";
+    eng.innerHTML = halter.innerHTML.replace(/id="blase"/, 'id="blase2"')
+      .replace(/id="holen"/, 'id="holen2"').replace(/id="weg"/, 'id="weg2"');
+    document.body.appendChild(eng);
     const b = document.getElementById("blase").getBoundingClientRect();
     const h = document.getElementById("holen").getBoundingClientRect();
     const w = document.getElementById("weg").getBoundingClientRect();
     const drin = (r) => r.left >= b.left - 0.5 && r.right <= b.right + 0.5
                      && r.top >= b.top - 0.5 && r.bottom <= b.bottom + 0.5;
+    const welle = document.querySelector("#blase i").getBoundingClientRect();
+    const welle2 = document.querySelector("#blase2 i").getBoundingClientRect();
+    const b2 = document.getElementById("blase2").getBoundingClientRect();
+    const h2 = document.getElementById("holen2").getBoundingClientRect();
+    const drin2 = (r) => r.left >= b2.left - 0.5 && r.right <= b2.right + 0.5;
     return {
+      welle: Math.round(welle.width),
+      welleEng: Math.round(welle2.width),
+      engBlase: Math.round(b2.width),
+      engHolenDrin: drin2(h2),
+      engHolen: Math.round(h2.width),
       blase: { b: Math.round(b.width), h: Math.round(b.height), rechts: Math.round(b.right) },
       holen: { b: Math.round(h.width), h: Math.round(h.height), drin: drin(h) },
       weg:   { b: Math.round(w.width), h: Math.round(w.height), drin: drin(w) },
@@ -64,6 +87,15 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
   console.log("  Blase: " + erg.blase.b + " x " + erg.blase.h + " px, rechter Rand bei " + erg.blase.rechts);
   console.log("  ⤓ Herunterladen: " + erg.holen.b + " x " + erg.holen.h
     + " px   innerhalb der Blase: " + (erg.holen.drin ? "ja" : "NEIN"));
+  console.log("  ~ Tonspur       : " + erg.welle + " px breit"
+    + (erg.welle > 8 ? "   (sichtbar)" : "   VERSCHWUNDEN"));
+  console.log("");
+  console.log("  ENGE ZEILE (150 px Zelle)");
+  console.log("  Blase: " + erg.engBlase + " px   ⤓ " + erg.engHolen + " px, innerhalb: "
+    + (erg.engHolenDrin ? "ja" : "NEIN"));
+  console.log("  ~ Tonspur       : " + erg.welleEng + " px breit"
+    + (erg.welleEng > 8 ? "   (sichtbar)" : "   VERSCHWUNDEN"));
+  console.log("");
   console.log("  ↩ Zurückrufen  : " + erg.weg.b + " x " + erg.weg.h
     + " px   innerhalb der Blase: " + (erg.weg.drin ? "ja" : "NEIN"));
 
@@ -80,5 +112,17 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     console.log("  Kopfzeile: " + JSON.stringify(kopf.text));
     console.log("  abgeschnitten: " + (kopf.abgeschnitten ? "JA" : "nein"));
   }
+  /* Und jetzt das Urteil, damit die Messung auch etwas behauptet. */
+  let fehler = 0;
+  const ok = (b, was) => { if (!b) fehler++; console.log("  " + (b ? "ok   " : "FEHL ") + was); };
+  console.log("");
+  ok(erg.holen.drin && erg.weg.drin, "beide Symbole liegen in der Blase");
+  ok(erg.holen.b >= 24 && erg.weg.b >= 24, "beide sind gross genug für einen Finger (25 px)");
+  ok(erg.welle > 8, "die Tonspur ist sichtbar (" + erg.welle + " px)");
+  ok(erg.welleEng > 8, "auch in einer engen Zeile (" + erg.welleEng + " px)");
+  ok(erg.engHolenDrin, "und auch dort bleibt das Herunterladen-Symbol in der Blase");
+  console.log("");
+  console.log("  " + (fehler ? fehler + " Abweichung(en)" : "Die Blase sitzt — mit Tonspur.") + "\n");
   await br.close(); srv.close();
+  process.exit(fehler ? 1 : 0);
 })();
