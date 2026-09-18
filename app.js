@@ -21492,16 +21492,62 @@
         return zeigen(passend.map((n) => chip(n, "", () => einsetzen("/" + wort + " " + n, true))));
       }
       if (befehl.brauchtName) {
-        /* Die Leute im Raum — „das werden ja nicht so viele sein".
-           Wer schon geschrieben steht, wird nicht noch einmal
-           angeboten. */
+        /* =========================================================
+           WEN KANN ICH MEINEN? ALLE, NICHT NUR DIE IM RAUM
+           ---------------------------------------------------------
+           GEMELDET: „Die Namen sind auch nicht auswaehlbar von den
+           Leuten, die ich waehlen koennte — unabhaengig davon, ob sie
+           online sind oder nicht. Zum Unterricht eingeladen werden
+           sollen auch alle, nicht nur die, die online sind."
+
+           Vorher standen hier nur die acht Plaetze im Raum. Jetzt in
+           drei Stufen, und jede sagt dazu, woher sie kommt:
+             1. wer HIER im Raum sitzt        → „im Raum"
+             2. wer gerade sonst wo offen hat → „ist da"
+             3. alle anderen Mitglieder       → „bekommt Post"
+
+           Stufe 3 fragt das Konto und braucht deshalb einen Moment;
+           sie wird nachgereicht, sobald die Antwort da ist. Die
+           ersten beiden stehen sofort — man soll nicht warten
+           muessen, nur weil jemand offline sein koennte. */
+        const suchwort = rest.toLowerCase();
         const l = LiveChat.lage();
-        const namen = (l.plaetze || []).filter((p) => !p.leer && p.name && !p.ich)
-          .map((p) => p.name);
-        const passend = namen.filter((n) => n.toLowerCase().indexOf(rest.toLowerCase()) === 0);
-        if (!passend.length) return zu();
-        return zeigen(passend.map((n) => chip(n, "im Raum",
-          () => einsetzen("/" + wort + " " + n + " ", true), "lc-tipp-name")));
+        const schon = new Set();
+        const treffer = [];
+        const dazu = (name, woher, klasse) => {
+          const k = String(name || "").toLowerCase();
+          if (!k || schon.has(k)) return;
+          if (suchwort && k.indexOf(suchwort) !== 0) return;
+          schon.add(k);
+          treffer.push({ name, woher, klasse });
+        };
+        (l.plaetze || []).forEach((p) => { if (!p.leer && p.name && !p.ich) dazu(p.name, "im Raum", "lc-tipp-name"); });
+        if (LiveChat.praesenzListe) {
+          (LiveChat.praesenzListe() || []).forEach((e) => {
+            if (e && e.name && e.name !== l.ichName) dazu(e.name, e.raum ? "ist da" : "online", "lc-tipp-name");
+          });
+        }
+        const bauen = () => zeigen(treffer.slice(0, 14).map((t) => chip(t.name, t.woher,
+          () => einsetzen("/" + wort + " " + t.name + " ", true), t.klasse)));
+        if (treffer.length) bauen();
+
+        /* Und die Mitglieder, die gerade gar nicht da sind. Erst ab
+           zwei Buchstaben — eine Suche nach „a" holte die halbe
+           Seite und waere niemandem eine Hilfe. */
+        if (suchwort.length >= 2 && typeof Backend !== "undefined"
+            && Backend.searchUsers && Backend.currentUser && Backend.currentUser()) {
+          const wasIchSuche = wert;
+          Backend.searchUsers(rest).then((leute) => {
+            /* Hat man inzwischen weitergetippt, ist die Antwort
+               veraltet — dann still verwerfen, statt die Liste
+               unter den Fingern zu tauschen. */
+            if (feld.value !== wasIchSuche) return;
+            (leute || []).forEach((u) => { if (u && u.name) dazu(u.name, "bekommt Post", "lc-tipp-fern"); });
+            if (treffer.length) bauen();
+          }).catch(() => {});
+        }
+        if (!treffer.length) return zu();
+        return;
       }
       zu();
     }

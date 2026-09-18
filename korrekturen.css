@@ -8298,3 +8298,11 @@ body.lc-schreibt .tutor-reiter {
   background: rgba(255, 206, 85, 0.18);
   opacity: 1;
 }
+
+/* Wer gerade nicht da ist, wird trotzdem angeboten — nur blasser,
+   damit man den Unterschied sieht, ohne ihn lesen zu müssen.
+   GEMELDET: „Die Namen sind auch nicht auswählbar von den Leuten,
+   die ich wählen könnte, unabhängig davon, ob sie online sind oder
+   nicht." */
+.lc-tipp-fern strong { opacity: 0.8; }
+.lc-tipp-fern { border-left-color: rgba(255, 255, 255, 0.28) !important; }

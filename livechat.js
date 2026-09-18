@@ -181,7 +181,7 @@ window.LiveChat = (function () {
   /* Die Anmeldemarke der laufenden Sitzung. */
   function marke() {
     try {
-      var k = (window.Backend && Backend.zugang && Backend.zugang()) || null;
+      var k = (konto() && Backend.zugang && Backend.zugang()) || null;
       if (!k && window.supabase && window.SUPABASE_CONFIG) {
         k = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
       }
@@ -719,6 +719,34 @@ window.LiveChat = (function () {
     } catch (e) {}
     return /^[a-z0-9-]{4,64}$/i.test(t) ? t : "";
   }
+  /* =========================================================
+     DAS BACKEND HEISST BACKEND — NICHT window.Backend
+     ---------------------------------------------------------
+     GEMELDET: „Zum Unterricht rufen darf nur der Betreiber …
+     Emmi ist gerade nirgends zu finden und das Postfach steht
+     hier nicht zur Verfuegung."
+
+     Der Grund ist eine Kleinigkeit mit grosser Wirkung, und sie
+     war meine: backend.js beginnt mit
+
+         const Backend = (function () { … })();
+
+     Ein „const" auf oberster Ebene erzeugt einen globalen NAMEN,
+     aber KEINE Eigenschaft am Fenster. „Backend" gibt es also,
+     „window.Backend" nicht — und jede Pruefung der Form
+     „window.Backend && Backend.irgendwas" ist damit IMMER falsch.
+     Genau deshalb fand /i niemanden und das Postfach galt als
+     nicht verfuegbar, obwohl beides laengst da war.
+     (Gemessen im Browser: typeof Backend = "object",
+      typeof window.Backend = "undefined".)
+
+     Ab jetzt fragt EINE Stelle, und die fragt richtig. */
+  function konto() {
+    try {
+      return (typeof Backend !== "undefined" && Backend) ? Backend : null;
+    } catch (e) { return null; }
+  }
+
   function adresseMitRaum(n) {
     return location.origin + location.pathname + "#raum=" + n;
   }
@@ -789,7 +817,7 @@ window.LiveChat = (function () {
   var TISCH = "klassenzimmer_chat";
   function angemeldeterZugang() {
     try {
-      return (window.Backend && Backend.zugang && Backend.zugang()) || null;
+      return (konto() && Backend.zugang && Backend.zugang()) || null;
     } catch (e) { return null; }
   }
 
@@ -825,7 +853,7 @@ window.LiveChat = (function () {
     var z = angemeldeterZugang();
     if (!z) return;
     var nutzer = null;
-    try { nutzer = window.Backend && Backend.currentUser && Backend.currentUser(); } catch (e) {}
+    try { nutzer = konto() && Backend.currentUser && Backend.currentUser(); } catch (e) {}
     if (!nutzer || !nutzer.id) return;          // ohne Anmeldung kein Eintrag
     try {
       z.from(TISCH).insert({
@@ -2795,7 +2823,7 @@ window.LiveChat = (function () {
                  * Betreiber: immer und überall, sofort;
                  * alle anderen: wie bisher, wer einen leeren Raum
                    aufmacht — und im Hauptraum weiterhin niemand. */
-            if (zustand.betreiber && !zustand.haeuptling) {
+            if (binBetreiber() && !zustand.haeuptling) {
               zustand.haeuptling = true;
               systemZeile("\ud83e\udd8a Du bist hier Häuptling — als Betreiber in jedem Raum. "
                 + "/t Thema · /i einladen · /lock abschließen · /k rauswerfen");
@@ -4061,8 +4089,31 @@ window.LiveChat = (function () {
      selbstgemachten Raum jeder Zensuren verteilen, und die
      zaehlen ja in die Bewertung.
      ========================================================= */
+  /* BIN ICH DER BETREIBER? Nicht „war ich es, als ich hereinkam" —
+     GEMELDET: „Ich bin die ganze Zeit im Klassenzimmer, ich bin der
+     Betreiber. Egal ob ich das Klassenzimmer verlasse und wieder
+     hereinkomme, sollte ich immer den Rang haben, Lehrer zu sein.
+     Aber ich bekomme immer: zum Unterricht rufen darf nur der
+     Betreiber."
+
+     Der Rang stand in einer Marke, die EINMAL beim Betreten gesetzt
+     wurde (zustand.betreiber). War das Profil in dem Augenblick noch
+     nicht geladen — und beim ersten Aufbau der Seite ist es das oft
+     nicht —, blieb sie falsch und blieb es fuer die ganze Sitzung.
+
+     Jetzt wird im Augenblick der Frage nachgesehen, beim Konto
+     selbst. Die Marke bleibt als Reserve stehen, falls das Konto
+     gerade nicht antwortet. */
+  function binBetreiber() {
+    var B = konto();
+    try {
+      if (B && B.isOwner && B.isOwner()) return true;
+      if (B && B.canModerate && B.canModerate()) return true;
+    } catch (e) {}
+    return Boolean(zustand.betreiber);
+  }
   function binLehrer() {
-    return Boolean(zustand.betreiber && zustand.raum === HAUPTRAUM);
+    return Boolean(binBetreiber() && zustand.raum === HAUPTRAUM);
   }
   function rangWort(grossAnfang) {
     var w = binLehrer() ? "Lehrer"
@@ -6170,10 +6221,10 @@ window.LiveChat = (function () {
        sich nicht zurueckholen: deshalb nur der Betreiber, und
        hoechstens alle 30 Minuten. */
     if (art === "unterricht") {
-      if (!zustand.betreiber) {
+      if (!binBetreiber()) {
         return systemZeile("Zum Unterricht rufen darf nur der Betreiber.");
       }
-      var B_ = window.Backend;
+      var B_ = konto();
       if (!B_ || !B_.sendBroadcastMessage) {
         return systemZeile("Das Postfach steht hier gerade nicht zur Verfügung.");
       }
@@ -6450,7 +6501,7 @@ window.LiveChat = (function () {
      die Startseite.
      ========================================================= */
   function einladungInsPostfach(name) {
-    var B = window.Backend;
+    var B = konto();
     if (!B || !B.searchUsers || !B.sendPrivateMessage) {
       systemZeile("„" + name + "“ ist gerade nirgends zu finden, und das Postfach steht hier nicht zur Verfügung.");
       return;
@@ -6507,7 +6558,7 @@ window.LiveChat = (function () {
      angezeigt bekommen." Wer gerade in einem Raum ist, steht mit
      einem Punkt da — den lade ich direkt ein, nicht per Post. */
   function freundeZeigen() {
-    var B = window.Backend;
+    var B = konto();
     var hier = {};
     Object.keys(praesenzDa).forEach(function (id) {
       var e = praesenzDa[id];
@@ -6864,6 +6915,15 @@ window.LiveChat = (function () {
       return true;
     },
     binLehrer: binLehrer,
+    binBetreiber: binBetreiber,
+    /* Wer gerade irgendwo auf der Seite offen hat — mit Raum, wenn
+       er in einem sitzt. Fuer die Namensvorschlaege. */
+    praesenzListe: function () {
+      return Object.keys(praesenzDa).map(function (id) {
+        var e = praesenzDa[id] || {};
+        return { id: id, name: e.name || "", raum: e.raum || "" };
+      }).filter(function (e) { return e.name; });
+    },
     rangWort: rangWort,
     noteGeben: noteGeben,
     platzTauschenMit: platzTauschenMit,
