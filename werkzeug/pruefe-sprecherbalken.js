@@ -78,6 +78,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       + JSON.stringify(x.text));
     z("niemand spricht", erg.still);
     z("ich nehme auf", erg.ichSpreche);
+    console.log("      (beim Aufnehmen darf KEIN Balken kommen — nur die blinkende Zeile)");
     z("Emmy spricht", erg.andere);
     z("drüben läuft meine", erg.wirdGehoert);
     console.log("");

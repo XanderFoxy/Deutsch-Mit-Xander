@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19o — der Knopf rutscht nicht mehr weg",
+  stand: "Runde 19p — Aufnehmen und Abspielen sind wieder zweierlei",
 
   inArbeit: [
-    { seit: "2026-09-18T21:09",
+    { seit: "2026-09-18T21:15",
       text: "Durch den ganzen Chatverlauf scrollen koennen" },
-    { seit: "2026-09-18T21:09",
+    { seit: "2026-09-18T21:15",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T21:09",
+    { seit: "2026-09-18T21:15",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T21:09",
-      text: "Der Sprecherbalken sitzt IN der Kopfzeile statt darunter und nimmt dort den Platz des Titels ein" },
-    { seit: "2026-09-18T21:09",
-      text: "Die Kopfzeile behaelt ihre Hoehe — gemessen 41 px mit und ohne Balken, vorher 38 gegen 40" },
-    { seit: "2026-09-18T21:09",
-      text: "Der Zeiger wird an den Sprechknopf gebunden (setPointerCapture): verschiebt sich etwas, bricht die Aufnahme nicht mehr ab" },
-    { seit: "2026-09-18T21:09",
-      text: "Absichtliches Wegziehen geht weiter — es haengt jetzt an der Strecke des Fingers, nicht daran, wer sich bewegt hat" },
+    { seit: "2026-09-18T21:15",
+      text: "Beim Aufnehmen gibt es wieder NUR die alte Animation: die Chatzeile pulsiert, daneben der kleine gelbe Punkt. Kein Balken, kein Name" },
+    { seit: "2026-09-18T21:15",
+      text: "Der gruene Balken mit dem roten Punkt kommt erst, wenn die Aufnahme abgespielt wird — und er zieht sich ueber die ganze Zeile, auch ueber Raeume und Befehle" },
+    { seit: "2026-09-18T21:15",
+      text: "Die amberfarbene zweite Fassung des Balkens ist raus — es gibt nur noch das eine, alte Aussehen" },
   ],
 };

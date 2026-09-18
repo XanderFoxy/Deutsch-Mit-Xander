@@ -4393,11 +4393,23 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 /* --- „DU SPRICHST" — SICHTBAR, NICHT NUR UNTER DEM FINGER ---
    GEWÜNSCHT: „Wenn ich spreche, möchte ich auch sehen, dass ich
    gerade spreche." */
-/* Hier stand zusaetzlich „🔴 du sprichst" in der Kopfzeile. Es ist
-   raus: seit der Sprecherbalken oben wieder „Xander Fox spricht
-   gerade" anzeigt, staende dasselbe zweimal da — und doppelt ist
-   genau das, was hier nicht sein soll. Geblieben ist das ruhige
-   Pulsieren der Zeile. */
+/* --- BEIM AUFNEHMEN: DIE ALTE ANIMATION, SONST NICHTS ---
+   GEMELDET: „Wenn ich aufnehme, soll da diese Animation geben, dass
+   ich sehe, ich nehme gerade auf — der soll aber nicht stehen
+   ‚Xander Fox spricht'. Vorher war das so, dass nur diese Chatzeile
+   geblinkt hat und dann dieses kleine Gelbe daneben stand."
+   Genau das: die Zeile pulsiert, und neben „💬 Chat" steht ein
+   kleiner gelber Punkt. Kein Balken, kein Name, kein Text. */
+body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after {
+  content: " ●";
+  color: #ffce55;
+  font-size: 0.9em;
+  animation: lcAufnahmePunkt 1s ease-in-out infinite;
+}
+@keyframes lcAufnahmePunkt { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+@media (prefers-reduced-motion: reduce) {
+  body.lc-ich-spreche .lc-chat-kopf-titel .lc-kopf-wort::after { animation: none; }
+}
 body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out infinite; }
 @keyframes lcSprichtPuls { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
 @media (prefers-reduced-motion: reduce) {
@@ -7638,7 +7650,12 @@ body.lc-schreibt .tutor-reiter {
   text-overflow: ellipsis;
 }
 .lc-chat-kopf .lc-chat-kopf-titel { box-sizing: border-box; height: 24px; }
-.lc-chat-kopf.lc-kopf-spricht .lc-chat-kopf-titel { display: none; }
+/* Der Balken zieht sich ueber die GANZE Zeile — ausdruecklich auch
+   ueber „Räume" und „Befehle": „Du sollst nur diesen alten Balken
+   ueber den Chatbalken komplett ziehen, ueber die Regeln und
+   Befehle." */
+.lc-chat-kopf.lc-kopf-spricht .lc-chat-kopf-titel,
+.lc-chat-kopf.lc-kopf-spricht .lc-chat-kopf-rechts { display: none; }
 /* UND DIE HOEHE DARF SICH NICHT AENDERN.
    GEMELDET: „Sobald ich die Hand gedrueckt halte, verschiebt sich der
    Chat nach unten, weil diese zusaetzliche Zeile ihn verlaengert —
@@ -7650,11 +7667,12 @@ body.lc-schreibt .tutor-reiter {
 .lc-chat-kopf { min-height: 30px; }
 .lc-chat-kopf .lc-live-leiste { min-height: 0; line-height: 1.25; }
 
-.lc-live-leiste.lc-live-ich {
-  background: rgba(224, 150, 74, 0.16);
-  border-color: rgba(224, 150, 74, 0.45);
-  color: var(--amber-700, #8a5a12);
-}
+/* Hier stand eine zweite, amberfarbene Fassung des Balkens.
+   GEMELDET: „Jetzt hat der Balken, den du da reingemacht hast, auch
+   eine andere Farbe. Er soll wie vorher sein — dieser gruene Balken
+   mit dem roten Punkt, so wie er vorher war, und nicht anders."
+   Also nur noch EINE Fassung: gruen, roter Punkt. Kein zweites
+   Aussehen, das man erst deuten muesste. */
 .lc-live-leiste strong { font-weight: 700; }
 .lc-live-leiste em { opacity: .72; font-style: normal; }
 .lc-live-punkt {

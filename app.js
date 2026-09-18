@@ -22149,15 +22149,31 @@
        mein Balken stehen — genau dafuer meldet die andere Seite es. */
     let lauscher = null;
     try { lauscher = (LiveChat.hoertMirZu && LiveChat.hoertMirZu()) || null; } catch (e) {}
+    /* ZWEI VERSCHIEDENE SACHEN, UND ICH HATTE SIE VERMISCHT.
+       -------------------------------------------------------------
+       GEMELDET: „Wenn ich aufnehme, soll da diese Animation geben,
+       dass ich sehe, ich nehme gerade auf — der soll aber nicht
+       stehen ‚Xander Fox spricht'. Und dann, wenn es abgespielt
+       wird zum Nachhoeren, soll stehen ‚Xander Fox spricht gerade'.
+       Erst wenn es geschickt wird. Vorher soll diese alte Animation
+       sein, wo nur diese Chatzeile geblinkt hat und dann dieses
+       kleine Gelbe daneben stand."
+
+       Also:
+         AUFNEHMEN  -> nur die alte Animation: die Chatzeile blinkt,
+                       daneben der kleine gelbe Punkt. Kein Balken.
+         ABSPIELEN  -> der gruene Balken mit dem roten Punkt, ueber
+                       die ganze Zeile gezogen, mit dem Namen.
+       Der Balken erscheint deshalb NICHT mehr beim Aufnehmen. */
     const kopf = leiste.closest(".lc-chat-kopf");
-    if (!lcLiveJetzt && !lcIchSpreche && !lauscher) {
+    if (!lcLiveJetzt && !lauscher) {
       leiste.hidden = true; leiste.innerHTML = "";
       if (kopf) kopf.classList.remove("lc-kopf-spricht");
       return;
     }
-    /* Solange jemand spricht, gehoert die Zeile dem Balken — der
-       Titel „💬 Chat" tritt zurueck, damit nichts nach unten
-       gedraengt wird. */
+    /* Solange gesprochen wird, gehoert die Zeile dem Balken — Titel
+       und die Knoepfe „Räume/Befehle" treten dahinter zurueck, er
+       zieht sich ueber die ganze Zeile. */
     if (kopf) kopf.classList.add("lc-kopf-spricht");
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
@@ -22191,16 +22207,18 @@
        „Wenn ich spreche, moechte ich auch sehen, dass ich gerade
        spreche", und zwar „so wie das vorher war vom Design", also
        als Zeile mit Punkt und Namen. */
-    const meins = Boolean(lcIchSpreche) || (!lcLiveJetzt && Boolean(lauscher));
+    /* Laeuft MEINE Aufnahme gerade bei jemandem, steht mein Name da —
+       „damit ich abschaetzen kann, wie lange es dauert, bis der
+       andere das gehoert hat". Sonst der Name dessen, der spricht.
+       Die Farbe bleibt in beiden Faellen dieselbe wie frueher:
+       gruen mit rotem Punkt. */
+    const meins = !lcLiveJetzt && Boolean(lauscher);
     const wer = meins
       ? (livechatName() || "Du")
       : (lcLiveJetzt && lcLiveJetzt.name) || "Jemand";
-    leiste.classList.toggle("lc-live-ich", meins);
-    /* Steht der Balken, weil drueben jemand zuhoert, soll auch
-       DASTEHEN, wer zuhoert — sonst raet man, worauf man wartet. */
-    const zusatz = (!lcIchSpreche && lauscher)
+    const zusatz = lauscher && meins
       ? ` <em>· ${escapeHtml(lauscher.join(", "))} hört gerade zu</em>`
-      : (!meins && gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "");
+      : (gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "");
     leiste.innerHTML = `<span class="lc-live-punkt"></span><strong>${escapeHtml(wer)}</strong> spricht gerade`
       + zusatz;
   }
