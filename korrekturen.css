@@ -7103,3 +7103,49 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   40%  { opacity: .75; transform: translate(3vmin,-2vmin) scale(1) }
   100% { opacity: 0;   transform: translate(7vmin,-5vmin) scale(.7) }
 }
+
+/* =========================================================
+   SPRACHNACHRICHTEN IM KLASSENZIMMER
+   ---------------------------------------------------------
+   Der Knopf unten: gedrueckt halten und sprechen. Waehrend der
+   Aufnahme pulst er rot — man soll auf einen Blick sehen, dass
+   das Mikrofon offen ist.
+
+   Die Blase in der Zeile sieht aus wie eine Tonspur. Die Striche
+   sind nicht gemessen, sondern aus der Kennung der Nachricht
+   gewuerfelt; gemessen waere ehrlicher, kostet aber eine
+   Analyse je Nachricht, und niemand liest daraus etwas ab.
+   ========================================================= */
+.lc-sprach-knopf.lc-sprach-an {
+  background: #e8453c; color: #fff; border-color: #b52d26;
+  animation: lcSprachPuls 1s ease-in-out infinite;
+}
+@keyframes lcSprachPuls {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232,69,60,.6) }
+  50%      { box-shadow: 0 0 0 .7em rgba(232,69,60,0) }
+}
+
+.lc-sprachblase {
+  display: inline-flex; align-items: center; gap: .5em;
+  padding: .35em .7em; border-radius: 999px;
+  border: 1px solid rgba(120,90,40,.35);
+  background: linear-gradient(180deg, #fff8e8, #f6e7c7);
+  color: #6b4a16; font: inherit; cursor: pointer;
+  max-width: 100%;
+}
+.lc-sprachblase::before { content: "▶"; font-size: .9em; }
+.lc-sprachblase.lc-sprach-spielt::before { content: "⏸"; }
+.lc-sprachblase i {
+  display: inline-flex; align-items: center; gap: 2px; height: 1.2em;
+  font-style: normal;
+}
+.lc-sprachblase i s {
+  display: block; width: 3px; border-radius: 2px;
+  background: currentColor; opacity: .55; text-decoration: none;
+}
+.lc-sprachblase.lc-sprach-spielt i s { animation: lcSprachTanz .9s ease-in-out infinite; }
+.lc-sprachblase i s:nth-child(2n)  { animation-delay: .12s }
+.lc-sprachblase i s:nth-child(3n)  { animation-delay: .24s }
+.lc-sprachblase i s:nth-child(5n)  { animation-delay: .36s }
+@keyframes lcSprachTanz { 0%,100% { transform: scaleY(1) } 50% { transform: scaleY(.45) } }
+.lc-sprachblase em { font-style: normal; font-size: .85em; opacity: .75; }

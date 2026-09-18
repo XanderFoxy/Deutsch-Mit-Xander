@@ -19892,6 +19892,14 @@
             <button type="button" class="lc-chat-anhang" id="lcGifKnopf"
                     title="GIF, Sammelfuchs oder ein zuletzt benutztes Bild schicken"
                     aria-label="Bild, GIF oder Sammelfuchs schicken">🖼️</button>
+            <!-- GEWUENSCHT: „Sprachnachrichten, die einfach direkt abspielen
+                 wie die Sounds von den Animationen … so koennen wir einen
+                 Pseudo-Livestream machen mit denen, die sich nicht mit mir
+                 verbinden koennen." Gedrueckt halten nimmt auf, loslassen
+                 schickt — wie man es vom Telefon kennt. -->
+            <button type="button" class="lc-chat-anhang lc-sprach-knopf" id="lcSprachKnopf"
+                    title="Gedrückt halten und sprechen — die Nachricht ist bei allen sofort zu hören"
+                    aria-label="Sprachnachricht aufnehmen">🎤</button>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben"
                    autocomplete="off" autocorrect="off" spellcheck="false">
@@ -20802,6 +20810,10 @@
      eine Zeile kann sich noch ändern, nachdem sie stand (das Bild
      kommt aus dem Lager nach). Siehe livechatChatAuffrischen(). */
   let livechatGezeigt = new Map();
+  /* Welche Sprachnachrichten schon von selbst gelaufen sind. Ohne
+     diese Menge liefe dieselbe Aufnahme bei jedem Neuzeichnen des
+     Verlaufs wieder los — und der Verlauf wird oft neu gezeichnet. */
+  const lcSprachGehoert = new Set();
 
   /* Jede Person bekommt ihre eigene Farbe — wie in den alten Chats.
      Ohne eigene Wahl (/c) wird sie aus dem Namen gerechnet, damit
@@ -22137,7 +22149,66 @@
 
         const t = document.createElement("span");
         t.className = "lc-zeilentext";
-        if (n.bildImChat) {
+        /* ---- Die Sprachnachricht ----
+           GEWUENSCHT: „in dem Moment, wenn man sie schickt, werden sie
+           hoerbar. Und wenn man sich spaeter noch mal anklickt und
+           noch mal hoeren will, dann hoert man das als einzelner nur
+           noch privat."
+
+           Also: beim ERSTEN Zeichnen laeuft sie von selbst — genau
+           wie ein Animationston. Danach steht sie als Knopf da. Ist
+           sie vergangen (der Verlauf reicht sie nicht durch, das
+           Geraet sichert sie nicht), sagt die Zeile das auch. */
+        if (n.sprach || n.sprachWeg || n.art === "sprach") {
+          const dauer = Number(n.sprachSek) || 0;
+          if (!n.sprach) {
+            const w = document.createElement("span");
+            w.className = "lc-blase-bildweg";
+            w.textContent = "🎤 Sprachnachricht — nicht mehr da";
+            t.appendChild(w);
+          } else {
+            const knopf = document.createElement("button");
+            knopf.type = "button";
+            knopf.className = "lc-sprachblase";
+            knopf.title = "Antippen — noch einmal hören (nur für dich)";
+            const balken = document.createElement("i");
+            /* Ein paar Striche, die aussehen wie eine Tonspur. Sie sind
+               NICHT gemessen, sondern aus der Kennung der Nachricht
+               gewuerfelt — aber immer gleich, damit die Zeile beim
+               naechsten Zeichnen nicht anders aussieht. */
+            let saat = 0;
+            String(n.id || "x").split("").forEach((c) => { saat = (saat * 31 + c.charCodeAt(0)) % 9973; });
+            for (let i = 0; i < 18; i++) {
+              saat = (saat * 1103515245 + 12345) % 2147483648;
+              const h = 22 + (saat % 78);
+              const st = document.createElement("s");
+              st.style.height = h + "%";
+              balken.appendChild(st);
+            }
+            knopf.appendChild(balken);
+            const zeit = document.createElement("em");
+            zeit.textContent = dauer ? dauer + "″" : "";
+            knopf.appendChild(zeit);
+            const hoeren = (e) => {
+              if (e) e.stopPropagation();
+              const a = new Audio(n.sprach);
+              a.play().catch(() => showToast("Der Browser lässt den Ton noch nicht durch — tipp einmal auf die Seite."));
+              knopf.classList.add("lc-sprach-spielt");
+              a.onended = () => knopf.classList.remove("lc-sprach-spielt");
+            };
+            knopf.addEventListener("click", hoeren);
+            t.appendChild(knopf);
+            /* Von selbst abspielen — aber nur, wenn die Zeile gerade
+               eben entstanden ist. „Alt" heisst hier dasselbe wie bei
+               den Animationen: was vor dem Betreten geschrieben wurde,
+               ist Vergangenheit und bleibt still. */
+            const frisch = (n.zeit || 0) >= livechatEffekteAb - 1500;
+            if (frisch && !lcSprachGehoert.has(n.id)) {
+              lcSprachGehoert.add(n.id);
+              if (lcToeneAn()) setTimeout(() => hoeren(null), 60);
+            }
+          }
+        } else if (n.bildImChat) {
           const bild = document.createElement("img");
           bild.className = "lc-zeilenfoto";
           bild.alt = n.text || "Bild im Chat";
@@ -22655,6 +22726,71 @@
       });
       /* Auch „Verlauf löschen" ist ins Bildmenü gezogen — siehe
          lcVerlaufLeerenFragen(). */
+
+      /* ---- Die Sprachnachricht: gedrueckt halten und sprechen ----
+         GEWUENSCHT: „dass sie dort kurz was aufnehmen koennten … und
+         wenn man sie schickt, werden sie sofort hoerbar."
+
+         Gedrueckt halten nimmt auf, loslassen schickt. Das ist die
+         Geste, die jeder vom Telefon kennt, und sie hat einen zweiten
+         Vorteil: Aufnehmen beginnt WAEHREND einer Beruehrung — genau
+         dann laesst ein Telefon den Ton ueberhaupt erst zu.
+
+         Wer wegzieht, statt loszulassen, bricht ab. So kommt keine
+         Aufnahme heraus, die man gar nicht schicken wollte. */
+      const sprachKnopf = area.querySelector("#lcSprachKnopf");
+      if (sprachKnopf) {
+        if (!LiveChat.sprachGehtDas || !LiveChat.sprachGehtDas()) {
+          sprachKnopf.disabled = true;
+          sprachKnopf.title = "Dieser Browser kann keine Sprachnachrichten aufnehmen.";
+        } else {
+          let laeuft = false, abgebrochen = false, takt = 0;
+          const anzeigen = (an) => {
+            sprachKnopf.classList.toggle("lc-sprach-an", an);
+            sprachKnopf.textContent = an ? "⏺" : "🎤";
+          };
+          const los = async (e) => {
+            e.preventDefault();
+            if (laeuft) return;
+            /* Derselbe Griff wie beim Betreten: die Beruehrung nutzen,
+               um die Tonausgabe freizuschalten. */
+            if (LiveChat.tonFreischalten) { try { LiveChat.tonFreischalten(); } catch (x) {} }
+            abgebrochen = false;
+            laeuft = await LiveChat.sprachAufnahmeStarten();
+            if (!laeuft) return;
+            anzeigen(true);
+            const start = Date.now();
+            clearInterval(takt);
+            takt = setInterval(() => {
+              const sek = Math.floor((Date.now() - start) / 1000);
+              sprachKnopf.setAttribute("aria-label", "Aufnahme läuft, " + sek + " Sekunden");
+              if (sek >= (LiveChat.sprachHoechstdauer ? LiveChat.sprachHoechstdauer() : 20)) fertig();
+            }, 250);
+          };
+          const fertig = async (e) => {
+            if (e) e.preventDefault();
+            clearInterval(takt);
+            if (!laeuft) return;
+            laeuft = false;
+            anzeigen(false);
+            if (abgebrochen) { LiveChat.sprachAbbrechen(); return; }
+            await LiveChat.sprachAufnahmeStoppen();
+          };
+          const weg = () => {
+            if (!laeuft) return;
+            abgebrochen = true;
+            clearInterval(takt);
+            laeuft = false;
+            anzeigen(false);
+            LiveChat.sprachAbbrechen();
+            showToast("Aufnahme abgebrochen — zum Schicken den Finger auf dem Knopf lassen.");
+          };
+          sprachKnopf.addEventListener("pointerdown", los);
+          sprachKnopf.addEventListener("pointerup", fertig);
+          sprachKnopf.addEventListener("pointercancel", weg);
+          sprachKnopf.addEventListener("pointerleave", weg);
+        }
+      }
 
       const feld = area.querySelector("#lcFeld");
       const senden = area.querySelector("#lcSenden");
@@ -51097,6 +51233,7 @@ An einem Morgen lief ein kleiner Fuchs los…
      ============================================================ */
   const APP_CHANGELOG = {
     "175": [
+      "🎤 **Sprachnachrichten im Klassenzimmer.** Unten neben dem Bildknopf ist ein Mikrofon: gedrückt halten, sprechen, loslassen — und bei allen im Raum ist die Nachricht **sofort** zu hören, ganz ohne dass jemand etwas antippen muss. Später antippen spielt sie noch einmal ab, aber nur für dich allein. Damit kann auch mitmachen, wer hinter einem Netz sitzt, durch das keine Live-Verbindung kommt: man spricht eben zwanzig Sekunden auf Band, und die anderen antworten genauso. Die Aufnahmen sind flüchtig — sie gehen über die Leitung und liegen danach nur im Arbeitsspeicher der Anwesenden. Nichts davon landet in einer Tabelle oder auf deinem Gerät. Wer später kommt, sieht die Zeile, hört sie aber nicht mehr — das ist ehrlicher, als so zu tun, als wäre sie noch da.",
       "🎙️ **Die professionelle Stimme ist zurück — überall, wo ein Wort vorgelesen wird.** Im Wörterbuch, im Vokabeltrainer und in den Bilderwelten spricht wieder die saubere Studiostimme, so lange das Monatskontingent reicht; danach das Gerät. Kein stiller Knopf, keine Fehlermeldung — die Stimme wird nur schlichter. Ganze Sätze, Dialoge und Vorlese-Abläufe bleiben bewusst beim Gerät: dort wäre das Kontingent an einem Nachmittag leer, ohne dass jemand merkt, woran es lag.",
       "📼 **Die Achtziger.** Vier neue Befehle im Klassenzimmer, für alle, die dabei waren: „/kassette“ spult eine Musikkassette zurück — die Wickeldorne drehen sich rückwärts, und der Bandvorrat wandert wirklich vom rechten auf den linken Wickel, so wie man früher daran gesehen hat, wie weit die Seite noch ist. „/pacman“ lässt einen gelben Kreis durch den Chat fressen, die Punkte verschwinden der Reihe nach, und drei Gespenster jagen hinterher. „/vhs“ lässt das Bild verreissen wie bei einem alten Videoband, mit Farbsäumen und „▶ PLAY SP“ oben links. „/disko“ hängt eine Spiegelkugel auf, deren Facetten wandern und bunte Lichtflecken durch den Raum werfen.",
       "🦁 **Grosse Geschenke wie bei TikTok.** Im Klassenzimmer kannst du jemandem jetzt etwas Grosses schenken: „/loewe Emmi“, und die Geschenkkiste wackelt, der Deckel fliegt weg, ein Löwe steigt heraus und füllt den halben Bildschirm — mit Strahlen, Funken und Münzregen. Sechs gibt es: Löwe, Tyrannosaurus, Elefant, Adler, Hai und Bär. Ohne Namen dahinter gilt das Geschenk dem ganzen Raum. Die Tiere sind NICHT neu gezeichnet — es sind genau die, die in den Bilderwelten stehen, am Foto nachgemessen und Fassung für Fassung abgenommen. Sie noch einmal zu zeichnen hiesse, gute Arbeit wegzuwerfen. Die Datei mit den Tieren fährt beim Start nicht mit; sie wird erst geholt, wenn wirklich jemand ein Geschenk schickt.",

@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 58 — zurueck zur professionellen Stimme",
+  stand: "Runde 59 — Sprachnachrichten",
 
   inArbeit: [
-    { seit: "2026-09-18T02:25",
-      text: "Sprachnachrichten im Klassenzimmer (sofort hoerbar, spaeter privat)" },
-    { seit: "2026-09-18T02:25",
-      text: "Medienserver/SFU aufsetzen, kostenlose Stufe" },
-    { seit: "2026-09-18T02:25",
+    { seit: "2026-09-18T02:31",
+      text: "Medienserver/SFU: brauche von dir einen Cloudflare-Zugang" },
+    { seit: "2026-09-18T02:31",
       text: "Alle Animationen brauchen Toene in voller Laenge" },
+    { seit: "2026-09-18T02:31",
+      text: "Der Tyrannosaurus sieht aus wie ein Klops — neu zeichnen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T02:25",
-      text: "Eigene Aufnahmen sprechen nicht mehr — Azure zuerst, dann das Geraet" },
-    { seit: "2026-09-18T02:25",
-      text: "Aufnahmelauf gestoppt, C1 bei 446 Woertern abgebrochen" },
-    { seit: "2026-09-18T02:25",
-      text: "Quelle „Sprich mir nach\" aus dem Aussprache-Trainer entfernt" },
+    { seit: "2026-09-18T02:31",
+      text: "Sprachnachrichten: halten, sprechen, loslassen — sofort bei allen hoerbar" },
+    { seit: "2026-09-18T02:31",
+      text: "Fluechtig: nichts in der Tabelle, nichts im Geraet" },
+    { seit: "2026-09-18T02:31",
+      text: "Professionelle Stimme zurueck im Woerterbuch, Trainer und Bilderwelten" },
   ],
 };

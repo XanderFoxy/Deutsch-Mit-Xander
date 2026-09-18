@@ -957,6 +957,18 @@ window.LiveChat = (function () {
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
     var raum = zustand.raum;
     var schlank = liste.map(function (n) {
+      /* SPRACHNACHRICHTEN WERDEN NICHT GESICHERT.
+         Sie sind fluechtig — ausdruecklich so gewollt („das ist eher
+         ne temporaere Geschichte"). Zwanzig Sekunden Ton sind ausserdem
+         gut 120 KB; ein Dutzend davon sprengt den Zwischenspeicher des
+         Geraets und riss frueher schon einmal den GANZEN Verlauf mit. */
+      if (n.sprach) {
+        var ohneTon = {};
+        Object.keys(n).forEach(function (k) { ohneTon[k] = n[k]; });
+        ohneTon.sprach = "";
+        ohneTon.sprachWeg = true;
+        return ohneTon;
+      }
       if (!n.bildImChat) return n;
       /* Ins Lager damit — und zwar jedes Mal, auch wenn es schon
          drinliegt: put() ueberschreibt, das kostet nichts. */
@@ -1865,7 +1877,9 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "text") {
-      if (!n.text && !n.bildImChat) return;
+      /* Eine Sprachnachricht hat weder Text noch Bild — ohne diese
+         Ausnahme wuerde sie hier stillschweigend weggeworfen. */
+      if (!n.text && !n.bildImChat && !n.sprach) return;
       nachrichtAnhaengen({
         id: n.id || String(Date.now()) + n.von,
         von: n.von, name: n.name || "Gast",
@@ -1878,7 +1892,11 @@ window.LiveChat = (function () {
         wen: n.wen || "",
         an: n.an || "",
         farbe: n.farbe || (zustand.leute[n.von] && zustand.leute[n.von].farbe) || "",
-        bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : ""
+        bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : "",
+        /* Die Sprachnachricht faehrt mit und wird beim Zeichnen SOFORT
+           abgespielt (app.js). Sie wird nirgends gesichert. */
+        sprach: typeof n.sprach === "string" ? n.sprach.slice(0, 200000) : "",
+        sprachSek: Number(n.sprachSek) || 0
       });
       melden();
       return;
@@ -2747,6 +2765,171 @@ window.LiveChat = (function () {
       };
       leser.readAsDataURL(datei);
     });
+  }
+
+  /* =========================================================
+     SPRACHNACHRICHTEN — der Unterricht, wenn die Leitung nicht steht
+     ---------------------------------------------------------
+     GEWUENSCHT, und es ist eine gute Idee:
+     „Sprachnachrichten, die einfach direkt abspielen wie die Sounds
+      von den Animationen — also in dem Moment, wenn man sie schickt,
+      werden sie hoerbar. Und wenn man sie sich spaeter noch mal
+      anklickt, hoert man das als Einzelner nur noch privat. So
+      koennen wir einen Pseudo-Livestream machen mit denen, die sich
+      nicht mit mir verbinden koennen. So aehnlich wie man frueher
+      diese Chats hatte, wo man die Hand gehoben hatte."
+
+     Das ist kein Ersatz fuer eine echte Leitung, aber es ist der
+     Unterschied zwischen „kann nicht mitmachen" und „kann
+     mitmachen". Wer hinter einem Netz sitzt, durch das kein Tonpaket
+     kommt, spricht eben zwoelf Sekunden auf Band — und die anderen
+     hoeren es SOFORT, ohne zu tippen.
+
+     DREI ENTSCHEIDUNGEN, und jede hat einen Grund:
+
+     1. SOFORT HOERBAR, DANACH AUF TIPPEN.
+        Beim Ankommen laeuft sie von selbst, wie ein Animationston.
+        Spaeter antippen spielt sie nur noch fuer einen selbst ab —
+        sonst platzt eine alte Nachricht mitten in den Unterricht.
+
+     2. FLUECHTIG, NICHT GESPEICHERT.
+        „Ob wir das temporaer machen oder ob uns das den Speicher
+         zumailt. Ich glaub, das ist eher ne temporaere Geschichte."
+        Genau so: die Aufnahme geht ueber den Kanal und liegt danach
+        nur im Arbeitsspeicher der Anwesenden. Nichts davon geht in
+        die Tabelle, nichts in den Zwischenspeicher des Geraets,
+        nichts in den durchgereichten Verlauf. Wer spaeter kommt,
+        sieht die Zeile — „🎤 Sprachnachricht (nicht mehr da)" — aber
+        hoert sie nicht mehr. Das ist ehrlicher, als so zu tun, als
+        waere sie noch da.
+
+     3. KURZ UND KLEIN.
+        Hoechstens 20 Sekunden und 120 KB. Ein Kanalpaket ist
+        begrenzt; eine Minute Geschwaetz kaeme gar nicht an, und
+        „nichts passiert" ist das Schlimmste von allem.
+     ========================================================= */
+  var SPRACH_SEKUNDEN = 20;
+  var SPRACH_BYTES = 120000;
+  var sprachRekorder = null;
+  var sprachSpur = null;
+  var sprachStuecke = [];
+  var sprachStart = 0;
+  var sprachEndeTakt = 0;
+
+  function sprachGehtDas() {
+    return typeof window !== "undefined" && typeof window.MediaRecorder === "function"
+      && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+  }
+  /* Welches Format nimmt dieser Browser? Safari kann kein Opus in
+     WebM — dort wird es mp4/AAC. Wer nicht fragt, bekommt eine leere
+     Datei und merkt es erst beim Abspielen. */
+  function sprachFormat() {
+    var kandidaten = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+    for (var i = 0; i < kandidaten.length; i++) {
+      try { if (MediaRecorder.isTypeSupported(kandidaten[i])) return kandidaten[i]; }
+      catch (e) {}
+    }
+    return "";
+  }
+  function sprachLaeuft() { return Boolean(sprachRekorder); }
+
+  function sprachAufnahmeStarten() {
+    if (sprachRekorder) return Promise.resolve(false);
+    if (!sprachGehtDas()) {
+      systemZeile("Dein Browser kann keine Sprachnachrichten aufnehmen — schreib es bitte.");
+      return Promise.resolve(false);
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (spur) {
+      sprachSpur = spur;
+      sprachStuecke = [];
+      var art = sprachFormat();
+      try {
+        sprachRekorder = art ? new MediaRecorder(spur, { mimeType: art, audioBitsPerSecond: 24000 })
+                             : new MediaRecorder(spur);
+      } catch (e) {
+        try { sprachRekorder = new MediaRecorder(spur); } catch (e2) { sprachRekorder = null; }
+      }
+      if (!sprachRekorder) { sprachAufraeumen(); return false; }
+      sprachRekorder.ondataavailable = function (e) {
+        if (e.data && e.data.size) sprachStuecke.push(e.data);
+      };
+      sprachRekorder.start();
+      sprachStart = Date.now();
+      /* Harte Grenze: nach 20 Sekunden ist Schluss, auch wenn niemand
+         loslaesst. Sonst entsteht eine Aufnahme, die nicht durch den
+         Kanal passt — und das merkt man erst hinterher. */
+      clearTimeout(sprachEndeTakt);
+      sprachEndeTakt = setTimeout(function () { sprachAufnahmeStoppen(); }, SPRACH_SEKUNDEN * 1000);
+      return true;
+    }).catch(function () {
+      systemZeile("Das Mikrofon ist nicht freigegeben — in den Browsereinstellungen erlauben, dann geht es.");
+      return false;
+    });
+  }
+
+  function sprachAufraeumen() {
+    clearTimeout(sprachEndeTakt);
+    if (sprachSpur) {
+      try { sprachSpur.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    }
+    sprachSpur = null;
+    sprachRekorder = null;
+  }
+
+  /* Gibt zurueck, ob wirklich etwas verschickt wurde. */
+  function sprachAufnahmeStoppen() {
+    if (!sprachRekorder) return Promise.resolve(false);
+    var r = sprachRekorder;
+    var sekunden = Math.max(1, Math.round((Date.now() - sprachStart) / 1000));
+    return new Promise(function (fertig) {
+      r.onstop = function () {
+        var stuecke = sprachStuecke.slice();
+        var art = r.mimeType || "audio/webm";
+        sprachAufraeumen();
+        if (!stuecke.length) { fertig(false); return; }
+        var klumpen = new Blob(stuecke, { type: art });
+        var leser = new FileReader();
+        leser.onload = function () {
+          var daten = String(leser.result || "");
+          if (daten.length > SPRACH_BYTES) {
+            systemZeile("Die Aufnahme ist zu lang geworden — nimm sie bitte kürzer auf (höchstens "
+              + SPRACH_SEKUNDEN + " Sekunden).");
+            fertig(false); return;
+          }
+          fertig(sprachSenden(daten, sekunden));
+        };
+        leser.onerror = function () { fertig(false); };
+        leser.readAsDataURL(klumpen);
+      };
+      try { r.stop(); } catch (e) { sprachAufraeumen(); fertig(false); }
+    });
+  }
+
+  function sprachAbbrechen() {
+    if (!sprachRekorder) return false;
+    var r = sprachRekorder;
+    r.onstop = function () {};
+    try { r.stop(); } catch (e) {}
+    sprachAufraeumen();
+    return true;
+  }
+
+  function sprachSenden(daten, sekunden) {
+    if (!daten) return false;
+    var n = {
+      id: neueNachrichtId(),
+      von: zustand.ichId, name: zustand.ichName,
+      text: "", art: "sprach",
+      sprach: daten, sprachSek: sekunden,
+      zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe
+    };
+    nachrichtAnhaengen(n);
+    /* AUSDRUECKLICH KEIN serverSichern: die Aufnahme ist fluechtig. */
+    senden({ art: "text", id: n.id, name: n.name, text: "", zeit: n.zeit,
+             bild: zustand.ichBild, farbe: zustand.farbe, chatArt: "sprach",
+             sprach: daten, sprachSek: sekunden });
+    melden();
+    return true;
   }
 
   function bildSenden(quelle, text) {
@@ -4499,6 +4682,15 @@ window.LiveChat = (function () {
     haeufigsteBefehle: haeufigsteBefehle,
     befehlZaehlerLeeren: befehlZaehlerLeeren,
     pruefEmpfangen: function (n) { return empfangen(n); },
+    /* Sprachnachrichten — nach aussen, damit die Oberflaeche sie
+       bedienen kann, und fuer die Pruefung. */
+    sprachGehtDas: sprachGehtDas,
+    sprachLaeuft: sprachLaeuft,
+    sprachAufnahmeStarten: sprachAufnahmeStarten,
+    sprachAufnahmeStoppen: sprachAufnahmeStoppen,
+    sprachAbbrechen: sprachAbbrechen,
+    pruefSprachSenden: function (daten, sek) { return sprachSenden(daten, sek); },
+    sprachHoechstdauer: function () { return SPRACH_SEKUNDEN; },
     raumSchluessel: raumSchluessel,
     gemerkterRaum: gemerkterRaum,
     raumAusAdresse: raumAusAdresse,
