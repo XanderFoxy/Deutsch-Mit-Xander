@@ -74,7 +74,43 @@ const GERAEUSCHE = [
   { name: "sternschnuppe", dauer: 2, text: "A soft magical whoosh of a shooting star passing, airy and sparkling, no music" },
   { name: "spinnen",   dauer: 3, text: "Creepy skittering of many small legs on a hard surface, eerie tension, horror, no music" },
   { name: "matrix",    dauer: 3, text: "Digital data stream: rapid electronic clicks and low synthetic hum, cyber, no melody" },
-  { name: "sintflut",  dauer: 4, text: "Torrential rain and rushing water flooding, heavy downpour, no music" }
+  { name: "sintflut",  dauer: 4, text: "Torrential rain and rushing water flooding, heavy downpour, no music" },
+  /* DRITTE RUNDE — „Mach bitte alle Sounds fuer jede Animation und
+     ausreichend Sound, passend zur Animation." Gemessen hatte ich
+     vorher: 40 Effekte hatten einen Ton, sechs gar keinen, und ein
+     halbes Dutzend teilte sich einen fremden. Das sind die
+     fehlenden. Jeder ist bewusst 4 Sekunden lang und so
+     geschnitten, dass er sich in Schleife legen laesst. */
+  { name: "pacman",    dauer: 4, text: "Retro arcade game: a repeating wakka-wakka chomping sound with electronic bleeps, 8-bit, no music" },
+  { name: "kassette",  dauer: 4, text: "A cassette tape rewinding in a tape deck, motor whirring and tape hiss, mechanical click at the end, no music" },
+  { name: "disko",     dauer: 4, text: "A 1980s disco club room tone: muffled four-on-the-floor beat and a shimmering mirror ball ambience, no vocals" },
+  { name: "vhs",       dauer: 4, text: "An old VHS video tape tracking error: electrical static hiss, warbling flutter and a mechanical whir, no music" },
+  { name: "noten",     dauer: 4, text: "A soft ascending sequence of glockenspiel notes, gentle and bright, no rhythm, no voices" },
+  { name: "wolken",    dauer: 4, text: "Very soft high-altitude wind, distant and airy, continuous, no gusts, no music, no voices" },
+  { name: "voegel",    dauer: 4, text: "A flock of migrating birds calling in the sky while flying past, wing beats, outdoors, no music" },
+  { name: "schmetterling", dauer: 4, text: "A quiet summer meadow: light breeze in grass, faint insect wings, distant birds, no music" },
+  { name: "augen",     dauer: 4, text: "An eerie suspense ambience with a soft heartbeat and a single low creak, someone watching, no music" },
+  { name: "keks",      dauer: 4, text: "Crunching and biting a crisp biscuit several times, close up, no music, no voices" },
+  { name: "ostern",    dauer: 4, text: "A spring meadow with cheerful birdsong and a soft breeze, light and happy, no music" },
+  { name: "bonbon",    dauer: 4, text: "Many small hard candies raining down onto a wooden table, continuous light clattering, no music" },
+  { name: "geld",      dauer: 4, text: "Many coins raining down and bouncing on a hard floor, continuous metallic clatter, no music" },
+  { name: "seifenblasen", dauer: 4, text: "Soap bubbles being blown and popping softly one after another, wet and light, no music" },
+  { name: "herbst",    dauer: 4, text: "Dry autumn leaves rustling and swirling in a gusty wind, outdoors, no music, no voices" },
+  { name: "pinguine",  dauer: 4, text: "A penguin colony on ice: several penguins braying and waddling, wind over snow, no music" },
+  { name: "aegypten",  dauer: 4, text: "A desert sandstorm: dry wind carrying sand grains against stone, continuous, no music, no voices" },
+  { name: "blut",      dauer: 4, text: "Thick liquid dripping and running down a surface, wet and slow, horror ambience, no music" },
+  { name: "schnee",    dauer: 4, text: "Very soft snowfall ambience, muffled and quiet, faint wind over snow, no music, no voices" },
+  /* VIERTE RUNDE — die letzten ohne Ton. Gemessen: 16 Effekte hatten
+     keinen; die Aufkleber (Herz, Lachen, Fluestern) behalten ihren
+     gebauten Ton, alles andere bekommt einen echten. */
+  { name: "strudel",   dauer: 4, text: "A powerful water whirlpool sucking down, deep gurgling and rushing water, continuous, no music" },
+  { name: "schwamm",   dauer: 4, text: "A wet sponge wiping across a blackboard in long strokes, squeaky and damp, no music" },
+  { name: "falten",    dauer: 3, text: "A large sheet of stiff paper being folded and creased twice, close up, no music" },
+  { name: "boxen",     dauer: 2, text: "Two boxing glove punches hitting a heavy bag, dull impacts, no music, no voices" },
+  { name: "umarmen",   dauer: 3, text: "A warm soft whoosh with a gentle low chime, comforting, no voices, no music" },
+  { name: "lecken",    dauer: 2, text: "A wet playful lick sound, short and silly, cartoon style, no music" },
+  { name: "schlitten", dauer: 4, text: "Sleigh bells jingling rhythmically while a sleigh glides over snow, festive, no music" },
+
 ];
 
 function schlafen(ms) { return new Promise((f) => setTimeout(f, ms)); }

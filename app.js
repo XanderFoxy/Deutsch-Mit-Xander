@@ -20557,6 +20557,110 @@
   let lcGeraeuschListe = null;
   let lcGeraeuschEndung = null;
   const lcGeraeuschAblage = {};
+  /* =================================================================
+     WIE LANGE EIN TON ZU EINER ANIMATION SPIELT
+     -----------------------------------------------------------------
+     GEMELDET: „Mach schoene passende Sounds, die in der Laenge der
+     Animation auch spielen. Nicht dass die kurz anspielen und dann
+     geht die Animation weiter und es wirkt einfach Fake. Vielleicht
+     kannst du bei einfachen Sachen wie Regen einen Loop machen."
+
+     Er hat recht, und die Zahlen sagen dasselbe: die Geraeusche sind
+     2 bis 4 Sekunden lang, die Animationen laufen 3,4 bis 24
+     Sekunden. Ein Vulkan, der nach drei Sekunden verstummt und noch
+     fuenf Sekunden weiterspuckt, ist genau das — Fake.
+
+     Hier steht deshalb je Effekt, WIE LANGE er zu hoeren ist und ob
+     sich sein Geraeusch dabei in Schleife legen laesst:
+
+       * SCHLEIFE bei allem, was ein Dauerzustand ist: Regen, Sturm,
+         Feuer, Aquarium, Matrixregen, Spinnen, Wolkenzug. Das
+         Geraeusch laeuft rund und wird am Ende ueber eine halbe
+         Sekunde leise gedreht — ein hart abgeschnittener Ton klingt
+         kaputt.
+       * EINMAL bei allem, was ein Ereignis ist: Glasbruch, Schuss,
+         das Aufgehen eines Geschenks, ein Donnerschlag. So etwas
+         wiederholt sich nicht, und eine Schleife wuerde laecherlich
+         klingen.
+
+     Die Zeiten sind NICHT geschaetzt: sie stehen in derselben Zeile,
+     in der die Animation sich selbst entfernt (setTimeout(...remove)).
+     Aendert jemand die Animation, muss die Zahl hier mit.
+     ================================================================= */
+  const LC_TON_PLAN = {
+    wolken:         { ton: "wolken", dauer: 24000, schleife: true },
+    schmetterling:  { ton: "schmetterling", dauer: 15000, schleife: true },
+    voegel:         { ton: "voegel", dauer: 15000, schleife: true },
+    enten:          { ton: "enten", dauer: 15000, schleife: true },
+    pirat:          { ton: "pirat", dauer: 15000, schleife: true },
+    spinnen:        { ton: "spinnen", dauer: 14000, schleife: true },
+    sternschnuppe:  { ton: "sternschnuppe", dauer: 13500 },
+    sintflut:       { ton: "sintflut", dauer: 13000, schleife: true },
+    aquarium:       { ton: "aquarium", dauer: 13000, schleife: true },
+    pinguine:       { ton: "pinguine", dauer: 13000, schleife: true },
+    lagerfeuer:     { ton: "lagerfeuer", dauer: 12000, schleife: true },
+    aegypten:       { ton: "aegypten", dauer: 12000, schleife: true },
+    herbst:         { ton: "herbst", dauer: 12000, schleife: true },
+    schloss:        { ton: "schloss", dauer: 12000 },
+    ballon:         { ton: "ballon", dauer: 11500, schleife: true },
+    gewitter:       { ton: "gewitter", dauer: 11000, schleife: true },
+    ostern:         { ton: "ostern", dauer: 11000, schleife: true },
+    seifenblasen:   { ton: "seifenblasen", dauer: 11000, schleife: true },
+    blut:           { ton: "blut", dauer: 11000, schleife: true },
+    paintball:      { ton: "paintball", dauer: 11000, schleife: true },
+    matrix:         { ton: "matrix", dauer: 10000, schleife: true },
+    route66:        { ton: "route66", dauer: 10000, schleife: true },
+    noten:          { ton: "noten", dauer: 10000, schleife: true },
+    feuerwerk:      { ton: "feuerwerk", dauer: 9500, schleife: true },
+    geld:           { ton: "geld", dauer: 9500, schleife: true },
+    bonbon:         { ton: "bonbon", dauer: 9000, schleife: true },
+    augen:          { ton: "augen", dauer: 9000, schleife: true },
+    katze:          { ton: "katze", dauer: 9000, schleife: true },
+    schuss:         { ton: "schuss", dauer: 9000 },
+    jalousie:       { ton: "jalousie", dauer: 9000 },
+    armageddon:     { ton: "armageddon", dauer: 8600, schleife: true },
+    vulkan:         { ton: "vulkan", dauer: 8200, schleife: true },
+    gg:             { ton: "jubel", dauer: 8200 },
+    keks:           { ton: "keks", dauer: 7200, schleife: true },
+    disko:          { ton: "disko", dauer: 7000, schleife: true },
+    glasbruch:      { ton: "glasbruch", dauer: 7000 },
+    kitt:           { ton: "kitt", dauer: 7000 },
+    handdurch:      { ton: "handdurch", dauer: 6500 },
+    finsternis:     { ton: "finsternis", dauer: 6400, schleife: true },
+    prunk:          { ton: "prunk", dauer: 6200 },
+    pacman:         { ton: "pacman", dauer: 6000, schleife: true },
+    tore:           { ton: "tore", dauer: 6000 },
+    kassette:       { ton: "kassette", dauer: 5400, schleife: true },
+    vhs:            { ton: "vhs", dauer: 5200, schleife: true },
+    fratze:         { ton: "fratze", dauer: 5200 },
+    geschenk:       { ton: "geschenk", dauer: 4600 },
+    /* Die letzten, die bisher ohne Ton waren. Die Aufkleber (Herz,
+       Lachen, Fluestern) behalten ihren gebauten Ton — sie sind kurz
+       und ein echtes Geraeusch waere dort zu viel. */
+    strudel:        { ton: "strudel", dauer: 11000, schleife: true },
+    schwamm:        { ton: "schwamm", dauer: 7000 },
+    falten:         { ton: "falten", dauer: 6000 },
+    boxen:          { ton: "boxen", dauer: 3400 },
+    umarmen:        { ton: "umarmen", dauer: 3400 },
+    lecken:         { ton: "lecken", dauer: 3400 },
+    schlitten:      { ton: "schlitten", dauer: 12000, schleife: true },
+    ggloewe:        { ton: "jubel", dauer: 8200 },
+    ggtrex:         { ton: "dino", dauer: 8200 },
+    ggelefant:      { ton: "jubel", dauer: 8200 },
+    ggadler:        { ton: "jubel", dauer: 8200 },
+    gghai:          { ton: "jubel", dauer: 8200 },
+    ggbaer:         { ton: "jubel", dauer: 8200 },
+    regen:          { ton: "regen", dauer: 12000, schleife: true },
+    schnee:         { ton: "schnee", dauer: 12000, schleife: true },
+    orkan:          { ton: "orkan", dauer: 11000, schleife: true },
+    erdbeben:       { ton: "erdbeben", dauer: 9000, schleife: true },
+    halloween:      { ton: "halloween", dauer: 11000 },
+    weihnachten:    { ton: "weihnachten", dauer: 12000 },
+    rennauto:       { ton: "rennauto", dauer: 9000 },
+    dino:           { ton: "dino", dauer: 9000 },
+    jubel:          { ton: "jubel", dauer: 4000 }
+  };
+
   function lcGeraeuschDa(name) {
     if (lcGeraeuschListe === null) {
       lcGeraeuschListe = new Set(String(window.DMA_GERAEUSCHE || "")
@@ -20576,7 +20680,10 @@
     lcGeraeuschEndung = kann;
     return kann;
   }
-  function lcGeraeusch(name) {
+  /* Spielt ein Geraeusch. „wirkung" ist der Name des EFFEKTS — daraus
+     kommt der Plan (Dauer und Schleife). Fehlt er, bleibt es beim
+     alten Verhalten: einmal abspielen und fertig. */
+  function lcGeraeusch(name, wirkung) {
     if (!lcToeneAn() || !lcGeraeuschDa(name)) return false;
     try {
       let a = lcGeraeuschAblage[name];
@@ -20585,17 +20692,48 @@
         a.preload = "auto";
         lcGeraeuschAblage[name] = a;
       }
+      /* Laeuft derselbe Ton noch aus einer frueheren Runde, erst
+         aufraeumen — sonst bleibt eine Schleife ewig stehen. */
+      if (a.__lcStop) { clearTimeout(a.__lcStop); a.__lcStop = 0; }
+      if (a.__lcBlende) { clearInterval(a.__lcBlende); a.__lcBlende = 0; }
       try { a.currentTime = 0; } catch (e) {}
       a.volume = 0.5;
+      const plan = LC_TON_PLAN[wirkung || name];
+      a.loop = Boolean(plan && plan.schleife);
       const v = a.play();
       if (v && v.catch) v.catch(() => {});
+      if (plan && plan.dauer) {
+        /* Am Ende ueber eine halbe Sekunde leise drehen. Ein hart
+           abgeschnittener Ton klingt kaputt — man hoert den Schnitt. */
+        const BLENDE = 500;
+        const bis = Math.max(600, plan.dauer);
+        a.__lcStop = setTimeout(() => {
+          const schritt = 40;
+          let rest = BLENDE;
+          a.__lcBlende = setInterval(() => {
+            rest -= schritt;
+            a.volume = Math.max(0, 0.5 * (rest / BLENDE));
+            if (rest <= 0) {
+              clearInterval(a.__lcBlende); a.__lcBlende = 0;
+              try { a.pause(); a.currentTime = 0; } catch (e) {}
+              a.loop = false;
+              a.volume = 0.5;
+            }
+          }, schritt);
+        }, Math.max(0, bis - BLENDE));
+      }
       return true;
     } catch (e) { return false; }
   }
 
   function lcTonZu(was) {
-    /* Erst das echte Geräusch — gibt es keines, der gebaute Ton. */
-    if (lcGeraeusch(was)) return;
+    /* Erst das echte Geräusch — gibt es keines, der gebaute Ton.
+       „was" ist der Name des Effekts; der Plan haengt daran. */
+    if (lcGeraeusch(was, was)) return;
+    /* Kein gleichnamiges Geraeusch? Dann sagt der Plan, welches
+       stellvertretend passt (die Pinguine leihen sich das Aquarium). */
+    const plan = LC_TON_PLAN[was];
+    if (plan && plan.ton && plan.ton !== was && lcGeraeusch(plan.ton, was)) return;
     const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
     if (f) f();
   }
@@ -52036,6 +52174,16 @@ An einem Morgen lief ein kleiner Fuchs los…
          nachsehen, welche Fragen dabei herauskommen. */
       meineQuelle: (wahl) => { wortQuelleWahl[TRAINER_QUELLE] = wahl || "alle"; return meineWoerterName(); },
       meineWoerter: () => [...meineWoerterMenge()],
+      /* Der Tonplan und die Effektnamen — fuer die Pruefung, ob jede
+         Animation einen Ton hat und ob er so lange laeuft wie sie. */
+      tonPlan: () => JSON.parse(JSON.stringify(LC_TON_PLAN)),
+      effektNamen: () => Object.keys(LC_EFFEKTE).map((k) => LC_EFFEKTE[k].wie || k)
+        .filter((x, i, a) => typeof x === "string" && a.indexOf(x) === i),
+      tonStarten: (wie) => { lcToeneSetzen(true); lcTonZu(wie); },
+      tonElement: (wie) => {
+        const p = LC_TON_PLAN[wie];
+        return lcGeraeuschAblage[(p && p.ton) || wie] || null;
+      },
       /* Eine Bilderwelt oeffnen und messen lassen, welches Ding einen
          Tipp wirklich bekommt. Das muss in der ECHTEN App passieren:
          die grossen Dinge sind nur fast durchsichtige Fangflaechen,
