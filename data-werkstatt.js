@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 73 — Der Verlauf wird sauber",
+  stand: "Runde 74 — Die Befehle erklären sich auch auf dem Telefon",
 
   inArbeit: [
-    { seit: "2026-09-18T22:58",
+    { seit: "2026-09-18T23:00",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T22:58",
+    { seit: "2026-09-18T23:00",
       text: "Sitzende Seitenansicht fürs Profil" },
-    { seit: "2026-09-18T22:58",
-      text: "Befehlsbeschreibungen auf dem Telefon sichtbar machen" },
+    { seit: "2026-09-18T23:00",
+      text: "Lieblingsbefehle im Befehlsfenster anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T22:58",
-      text: "Die alten „Du bist hier Häuptling“-Zeilen fliegen beim Laden aus dem Verlauf und werden gleich darauf gesichert — damit sind sie wirklich weg, nicht nur ausgeblendet" },
-    { seit: "2026-09-18T22:58",
-      text: "Angefasst wird nur, was das Programm selbst gesagt hat: kein Wort von einem Menschen, auch wenn dieselben Wörter darin stehen" },
+    { seit: "2026-09-18T23:00",
+      text: "Die Erklärung zu jedem Befehl war auf dem Handy ausgeblendet — jetzt stehen Name und Erklärung untereinander, einer je Zeile, und die Liste rollt in ihrem eigenen Rahmen" },
+    { seit: "2026-09-18T23:00",
+      text: "Auf dem breiten Schirm bleibt die Reihe nebeneinander; was dort gekürzt wird, steht beim Daraufzeigen im Hinweistext" },
   ],
 };

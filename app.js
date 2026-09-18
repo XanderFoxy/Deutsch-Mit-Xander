@@ -21678,6 +21678,10 @@
         const kl = document.createElement("small");
         kl.textContent = hinweis;
         b.appendChild(kl);
+        /* Auf dem breiten Schirm stehen die Vorschlaege nebeneinander,
+           und eine lange Erklaerung wird mit „…" gekuerzt. Dann muss
+           man sie wenigstens lesen koennen, wenn man daraufzeigt. */
+        if (!b.title) b.title = hinweis;
       }
       /* mousedown statt click: ein Klick würde erst nach dem
          Fokusverlust des Feldes kommen, und dann wäre die Liste

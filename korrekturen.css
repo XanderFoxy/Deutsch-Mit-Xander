@@ -3928,11 +3928,55 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 24ch;
+  /* Ein bisschen mehr Luft als frueher (24ch): die meisten
+     Erklaerungen passen damit ganz hinein, und was nicht passt,
+     steht beim Daraufzeigen im Hinweistext. */
+  max-width: 34ch;
 }
 .lc-tipp-name strong { color: #f2c14e; }
+/* =========================================================
+   AUF DEM TELEFON ZAEHLT NICHT NUR DER NAME
+   ---------------------------------------------------------
+   GEMELDET: „Die Beschreibungen der Befehle sehe ich auf dem Handy
+   gar nicht."
+   Hier stand „display: none" mit der Begruendung, auf dem Telefon
+   zaehle der Name. Das ist genau falsch herum: wer /rw noch nie
+   gesehen hat, braucht die Erklaerung — und wer sie kennt, liest
+   sie einfach nicht.
+   Der Grund fuer das Ausblenden war der Platz: die Vorschlaege
+   stehen nebeneinander, und Name samt Erklaerung passt nicht in eine
+   Zeile. Also stehen sie auf dem Telefon UNTEREINANDER, einer je
+   Zeile, mit der Erklaerung unter dem Namen. Die Liste hat ihre
+   eigene Hoehe und rollt; sie schwebt ueber dem Chat und schiebt
+   nichts weg.
+   ========================================================= */
 @media (max-width: 520px) {
-  .lc-tipp small { display: none; }   /* auf dem Telefon zaehlt der Name */
+  .lc-tipps {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    max-height: 42vh;
+  }
+  .lc-tipp {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: 6px 10px;
+  }
+  .lc-tipp small {
+    display: block;
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 0.78em;
+    opacity: 0.72;
+    line-height: 1.28;
+  }
+  /* Die Kategorien und die Favoriten bleiben nebeneinander — das
+     sind kurze Woerter, keine Erklaerungen. */
+  .lc-tipps .lc-tipp-kategorien,
+  .lc-tipps .lc-tipp-favoriten { flex-direction: row; flex-wrap: wrap; }
 }
 
 /* Ein Aufkleber, der auch klingt, bekommt ein kleines Zeichen — sonst
