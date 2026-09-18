@@ -49,22 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 77 — Der Verlauf wurde kurzgeschrieben, die Namen fehlten",
+  stand: "Runde 78 — Jede Nachricht behält ihre Kennung",
 
   inArbeit: [
-    { seit: "2026-09-18T23:25",
+    { seit: "2026-09-18T23:32",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:25",
+    { seit: "2026-09-18T23:32",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:25",
-      text: "GEFUNDEN: Beim Betreten stand erst der kurze Auszug da; kam in dieser Sekunde eine Zeile herein, hat dieser kurze Stand den vollständigen im Lager überschrieben — genau das „ältere Stand“-Problem. Jetzt wird erst geschrieben, wenn das Lager gelesen ist" },
-    { seit: "2026-09-18T23:25",
-      text: "GEFUNDEN: Namensvorschläge kamen NIRGENDS mehr — erkannt wurde „/w <name>“, und die spitzen Klammern hatte ich längst aus der Hilfe genommen. Jetzt schlägt /w, /note, /i wieder Namen vor: aus dem eigenen Raum, aus anderen Räumen, auch aus abgeschlossenen, und wer nur auf der Seite ist" },
-    { seit: "2026-09-18T23:25",
-      text: "Favoriten selbst anlegen: einen Befehl im Vorschlagsfeld lang drücken (oder rechte Maustaste) — er steht dann mit ⭐ ganz vorn; noch einmal lang drücken nimmt ihn heraus" },
+    { seit: "2026-09-18T23:32",
+      text: "Jede Zeile trägt ihre Absender-Kennung jetzt auch in die Tabelle: der Live-Zuruf und die gespeicherte Fassung sind damit nachweislich dieselbe Zeile — vorher wurde über Name, Text und Zeit geraten, und bei ungenauen Uhren stand dieselbe Nachricht zweimal da" },
+    { seit: "2026-09-18T23:32",
+      text: "Auch die Bilder finden ihre Zeile über dieselbe Kennung wieder" },
   ],
 };

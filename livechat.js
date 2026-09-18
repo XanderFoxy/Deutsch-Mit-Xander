@@ -874,7 +874,7 @@ window.LiveChat = (function () {
     var z = angemeldeterZugang();
     if (!z) return Promise.resolve([]);
     return z.from(TISCH)
-      .select("id,raum,autor,name,text,art,farbe,farbe_name,bild,erstellt")
+      .select("id,raum,autor,name,text,art,farbe,farbe_name,bild,quelle_id,erstellt")
       .eq("raum", raum)
       /* Eine gefluesterte Zeile gehoert nicht in den offenen Verlauf —
          sie kommt gleich getrennt, und nur bei den beiden, die sie
@@ -886,7 +886,8 @@ window.LiveChat = (function () {
         if (!a || a.error || !a.data) return [];
         var zeilen = a.data.slice().reverse().map(function (r) {
           return {
-            id: "s" + r.id,
+            /* Die Kennung vom Absender gewinnt — siehe serverSichern. */
+            id: r.quelle_id || ("s" + r.id),
             von: r.autor ? "k" + String(r.autor).replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase() : "",
             name: r.name || "Gast",
             text: r.text || "",
@@ -901,7 +902,10 @@ window.LiveChat = (function () {
         });
         /* Und jetzt die Bilder — nur die der juengsten Zeilen. */
         return z.from(TISCH)
-          .select("id,bild_im_chat")
+          /* quelle_id MUSS mitkommen: die Zeilen tragen jetzt die
+             Kennung des Absenders, nicht die Nummer der Tabelle — ohne
+             sie fände kein einziges Bild mehr seine Zeile. */
+          .select("id,quelle_id,bild_im_chat")
           .eq("raum", raum)
           .neq("bild_im_chat", "")
           .order("erstellt", { ascending: false })
@@ -909,7 +913,7 @@ window.LiveChat = (function () {
           .then(function (b) {
             if (b && !b.error && b.data) {
               var nach = {};
-              b.data.forEach(function (r) { nach["s" + r.id] = r.bild_im_chat || ""; });
+              b.data.forEach(function (r) { nach[r.quelle_id || ("s" + r.id)] = r.bild_im_chat || ""; });
               zeilen.forEach(function (n) { if (nach[n.id]) n.bildImChat = nach[n.id]; });
             }
             return zeilen;
@@ -1049,7 +1053,15 @@ window.LiveChat = (function () {
            wenigen Zeilen. Die Spalte heisst farbe_name — wie alle
            anderen auch. */
         farbe: n.farbe || zustand.farbe || "", farbe_name: n.farbeName || zustand.farbeName || "",
-        art: n.art || "text"
+        art: n.art || "text",
+        /* DIESELBE KENNUNG WIE UEBER DIE LEITUNG.
+           Ohne sie muss verschmelzen() raten, ob die Zeile aus der
+           Tabelle dieselbe ist wie die, die eben live hereinkam — und
+           es raet ueber Name, Text und Zeit. Gehen die Uhren zweier
+           Geraete ein paar Sekunden auseinander, steht dieselbe
+           Nachricht zweimal da. Mit der Kennung kann das nicht mehr
+           passieren. */
+        quelle_id: String(n.id || "")
       }).then(function (a) {
         /* EIN FEHLER, DEN NIEMAND SIEHT, IST KEIN FEHLER — ER IST EIN
            DATENVERLUST. Genau daran ist der gemeinsame Verlauf
@@ -6868,7 +6880,7 @@ window.LiveChat = (function () {
        Kennung, und es hat mit der Zustellung nichts zu tun. */
     if (zusatz && zusatz.wen) n.wen = zusatz.wen;
     if (zusatz && zusatz.an) n.an = zusatz.an;
-    serverSichern({ name: n.name, bild: n.bild, text: text, art: art });
+    serverSichern({ id: n.id, name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
                  bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName,
                  sprechbild: zustand.sprechbild, geschlecht: zustand.geschlecht || "" };
@@ -8530,6 +8542,11 @@ window.LiveChat = (function () {
        dieses Raums ist noch nicht gelesen. Genau dort wurde der
        Verlauf frueher kurzgeschrieben. */
     pruefLagerVergessen: function () { lagerGelesen = false; },
+    /* Den Verlauf vom Server holen und zwei Listen zusammenfuehren —
+       damit sich nachmessen laesst, dass dieselbe Zeile nicht zweimal
+       dasteht. */
+    pruefServerLaden: function (raum) { return serverLaden(raum); },
+    pruefVerschmelzen: function (a, b) { return verschmelzen(a, b); },
     pruefAufgabeStellen: aufgabeStellen,
     pruefAufgabeFrei: aufgabeFreiStellen,
     pruefAufgabeVersuch: aufgabeVersuch,
