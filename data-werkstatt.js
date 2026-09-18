@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 56 — Bilderwelten nachgemessen, diesmal richtig",
+  stand: "Runde 57 — B2 komplett",
 
   inArbeit: [
-    { seit: "2026-09-18T02:18",
-      text: "B2 laeuft (10303 von 10547)" },
-    { seit: "2026-09-18T02:18",
+    { seit: "2026-09-18T02:19",
+      text: "C1 angefangen, Kontingent reicht diesen Monat nur fuer einen Teil" },
+    { seit: "2026-09-18T02:19",
       text: "Sitzende Seitenansicht fuer die Figuren" },
-    { seit: "2026-09-18T02:18",
-      text: "teich/te_ufer ist nur an 3 % der Flaeche zu treffen — bleibt offen" },
+    { seit: "2026-09-18T02:19",
+      text: "teich/te_ufer nur an 3 % der Flaeche zu treffen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T02:18",
-      text: "Alle 2366 Dinge in 170 Bilderwelten sind antippbar (vorher: das Messer nicht)" },
-    { seit: "2026-09-18T02:18",
-      text: "Messung laeuft jetzt in der echten App, nicht im Nachbau" },
-    { seit: "2026-09-18T02:18",
-      text: "Vier Achtziger-Animationen" },
+    { seit: "2026-09-18T02:19",
+      text: "B2 komplett: 10547 Woerter, 0 Fehler" },
+    { seit: "2026-09-18T02:19",
+      text: "Zusammen 23534 Aufnahmen mit deiner Stimme (A1+A2+B1+B2), 80 MB" },
+    { seit: "2026-09-18T02:19",
+      text: "Alle 2366 Dinge in den Bilderwelten antippbar" },
   ],
 };
