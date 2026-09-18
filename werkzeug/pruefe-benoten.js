@@ -29,8 +29,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForTimeout(2300);
 
-  const lauf = async () => pg.evaluate(() => {
-    LiveChat.binLehrer = () => true;          // wir prüfen die Lehrersicht
+  const lauf = async (lehrer) => pg.evaluate((istLehrer) => {
+    LiveChat.binLehrer = () => istLehrer;
     document.querySelectorAll(".lc-chat").forEach((e) => e.remove());
     const chat = document.createElement("div");
     chat.className = "lc-chat";
@@ -44,7 +44,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       { id: "d", von: "emmy", name: "Emmy", text: "", art: "text", zeit: t, sprach: "data:audio/webm;base64,AA" }
     ]);
     return window.DMA_PRUEFUNG.notenKnoepfe();
-  });
+  }, lehrer);
 
   const erwartet = {
     "Der Hund läuft über die Wiese": false,   // gewoehnlicher Satz, keine Aufgabe offen
@@ -52,8 +52,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     "Sehr gut!": false                        // meine eigene Zeile
   };
   let fehler = 0;
-  const zeilen = await lauf();
-  console.log("");
+  const zeilen = await lauf(true);
+  console.log("\n  ALS LEHRER");
   zeilen.forEach((z) => {
     const name = z.text || "(Sprachnachricht)";
     const soll = erwartet[z.text];
@@ -61,6 +61,17 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     if (!gut) fehler++;
     console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ") + name);
   });
+  /* UND DIE GEGENPROBE, die der eigentliche Punkt ist:
+     GEMELDET: „Ich habe gesehen, dass Emmi in ihrem Screenshot diese
+     Benotung noch hat. Die soll fuer die anderen gar nicht da sein."
+     Also dasselbe noch einmal aus der Sicht von jemandem, der NICHT
+     Lehrer ist — dort darf kein einziger Knopf stehen. */
+  const alsGast = await lauf(false);
+  console.log("\n  ALS TEILNEHMER (nicht Lehrer)");
+  const knoepfe = alsGast.filter((z) => z.note).length;
+  if (knoepfe) fehler++;
+  console.log("  " + (knoepfe ? "FEHL " : "ok   ") + "Notenknöpfe insgesamt: " + knoepfe
+    + (knoepfe ? "" : "   (keiner — richtig)"));
   console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Alles wie gewuenscht.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);

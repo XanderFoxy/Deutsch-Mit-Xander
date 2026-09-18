@@ -2,11 +2,15 @@
    ---------------------------------------------------------------
    GEMELDET: „Die Beschreibungen der Befehle sehe ich auf dem Handy
    gar nicht."
-   Sie waren dort ausgeblendet (display:none), weil Name und Erklaerung
-   nicht nebeneinander passen. Jetzt stehen sie untereinander. Gemessen
-   wird auf einem schmalen und auf einem breiten Schirm: ist die
-   Erklaerung sichtbar, hat sie Hoehe, und bleibt die Liste in ihrem
-   Rahmen? */
+   Und gleich danach: „Mache die Liste der Befehle wieder
+   nebeneinander, so wie es vorher war … Was ich wollte, war nur, dass
+   du diese einzelnen Sachen leicht erklaeren kannst — und das galt nur
+   fuer die einzelnen Buchstaben, fuer W oder S oder I."
+
+   Also wird beides gemessen: die Vorschlaege stehen NEBENEINANDER
+   (mehrere teilen sich eine Zeile), und trotzdem traegt ein kurzer
+   Befehl wie /w seine Erklaerung — waehrend ein langer wie
+   /hintergrund auf dem Telefon nur seinen Namen zeigt. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = "/home/user/Deutsch-Mit-Xander";
@@ -38,18 +42,31 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       feld.value = "/";
       feld.dispatchEvent(new Event("input", { bubbles: true }));
       const kasten = huelle.querySelector("#lcTipps");
-      const chips = [...kasten.querySelectorAll(".lc-tipp")].filter((c) => c.querySelector("small"));
+      const chips = [...kasten.querySelectorAll(".lc-tipp")];
       if (!chips.length) return { chips: 0 };
-      const c = chips[0];
-      const kl = c.querySelector("small");
-      const r = kl.getBoundingClientRect();
+      const lesen = (c) => {
+        const kl = c.querySelector("small");
+        const r = kl ? kl.getBoundingClientRect() : null;
+        return {
+          name: (c.querySelector("strong") || {}).textContent || "",
+          kurz: c.classList.contains("lc-tipp-kurz"),
+          erklaerung: kl ? (kl.textContent || "").trim() : "",
+          sichtbar: Boolean(kl) && getComputedStyle(kl).display !== "none" && r.height > 0,
+          hinweistext: (c.title || "").trim()
+        };
+      };
+      /* Stehen sie nebeneinander? Dann teilen sich mehrere Vorschlaege
+         dieselbe Oberkante. */
+      const oben = chips.map((c) => Math.round(c.getBoundingClientRect().top));
+      const zeilen = [...new Set(oben)].length;
+      const proZeile = Math.max(...[...new Set(oben)]
+        .map((y) => oben.filter((o) => o === y).length));
       return {
         chips: chips.length,
-        erklaerung: (kl.textContent || "").trim(),
-        sichtbar: getComputedStyle(kl).display !== "none" && r.height > 0,
-        hoehe: Math.round(r.height),
-        abgeschnitten: kl.scrollWidth > kl.clientWidth + 1,
-        hinweistext: (c.title || "").trim(),
+        zeilen: zeilen,
+        proZeile: proZeile,
+        kurzer: chips.map(lesen).find((c) => c.kurz) || null,
+        langer: chips.map(lesen).find((c) => !c.kurz && c.erklaerung) || null,
         kastenHoehe: Math.round(kasten.getBoundingClientRect().height),
         schirm: window.innerHeight
       };
@@ -62,29 +79,37 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   for (const [was, b, h] of [["TELEFON (390 px)", 390, 780], ["SCHIRM (1100 px)", 1100, 800]]) {
     const e = await messen(b, h);
     console.log("\n  " + was);
-    if (!e.chips) { console.log("    FEHL keine Vorschläge mit Erklärung gefunden"); fehler++; continue; }
-    console.log("    Vorschläge mit Erklärung: " + e.chips);
-    console.log("    erste Erklärung: „" + e.erklaerung + "“");
-    if (!e.sichtbar) fehler++;
-    console.log("    " + (e.sichtbar ? "ok   " : "FEHL ") + "sichtbar, Höhe " + e.hoehe + " px");
-    /* Auf dem Telefon MUSS die Erklaerung ganz dastehen. Auf dem
-       breiten Schirm stehen die Vorschlaege nebeneinander; dort darf
-       sie gekuerzt sein, dann aber im Hinweistext stehen. */
-    if (b < 520) {
-      if (e.abgeschnitten) fehler++;
-      console.log("    " + (e.abgeschnitten ? "FEHL " : "ok   ")
-        + (e.abgeschnitten ? "Text ist abgeschnitten" : "nichts abgeschnitten"));
-    } else {
-      const gut = !e.abgeschnitten || e.hinweistext === e.erklaerung;
+    if (!e.chips) { console.log("    FEHL keine Vorschläge gefunden"); fehler++; continue; }
+    console.log("    " + e.chips + " Vorschläge auf " + e.zeilen + " Zeilen, bis zu "
+      + e.proZeile + " nebeneinander");
+    const nebeneinander = e.proZeile >= 2;
+    if (!nebeneinander) fehler++;
+    console.log("    " + (nebeneinander ? "ok   " : "FEHL ")
+      + (nebeneinander ? "sie stehen nebeneinander" : "sie stehen untereinander"));
+
+    if (!e.kurzer) { console.log("    FEHL kein kurzer Befehl (ein bis zwei Buchstaben) dabei"); fehler++; }
+    else {
+      const gut = e.kurzer.sichtbar;
       if (!gut) fehler++;
-      console.log("    " + (gut ? "ok   " : "FEHL ")
-        + (e.abgeschnitten ? "gekürzt, steht aber im Hinweistext" : "nichts abgeschnitten"));
+      console.log("    " + (gut ? "ok   " : "FEHL ") + "kurzer Befehl " + e.kurzer.name
+        + " erklärt sich: „" + e.kurzer.erklaerung + "“");
     }
-    const passt = e.kastenHoehe <= Math.round(e.schirm * 0.45);
+    if (e.langer) {
+      /* Auf dem Telefon traegt ein langer Befehl nur seinen Namen —
+         die Erklaerung steht im Hinweistext. */
+      const sollSichtbar = b >= 520;
+      const gut = e.langer.sichtbar === sollSichtbar
+        && (sollSichtbar || e.langer.hinweistext.length > 0);
+      if (!gut) fehler++;
+      console.log("    " + (gut ? "ok   " : "FEHL ") + "langer Befehl " + e.langer.name
+        + (sollSichtbar ? " erklärt sich in der Zeile" : " nur mit Namen, Erklärung im Hinweistext"));
+    }
+    const passt = e.kastenHoehe <= Math.round(e.schirm * 0.4);
     if (!passt) fehler++;
-    console.log("    " + (passt ? "ok   " : "FEHL ") + "Liste " + e.kastenHoehe + " px von " + e.schirm + " px Schirm");
+    console.log("    " + (passt ? "ok   " : "FEHL ") + "Liste " + e.kastenHoehe + " px von "
+      + e.schirm + " px Schirm");
   }
-  console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Die Erklärungen stehen überall.") + "\n");
+  console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Die Reihe steht — und die kurzen Befehle erklären sich.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })();

@@ -21794,6 +21794,11 @@
           const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, b.was, () =>
             einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
           k.dataset.gr = b.gr || "welt";
+          /* GEWUENSCHT: „Das galt nur fuer die einzelnen Buchstaben,
+             fuer W oder S oder I." Ein Befehl aus ein, zwei Buchstaben
+             sagt nichts ueber sich selbst — der bekommt sein Wort dazu
+             auch auf dem Telefon. /hintergrund erklaert sich selbst. */
+          if (String(b.w || "").length <= 2) k.classList.add("lc-tipp-kurz");
           teile.push(k);
         });
 

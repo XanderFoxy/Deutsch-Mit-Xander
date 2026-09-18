@@ -41,17 +41,25 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     LiveChat.pruefAufgabeFrei("");                     // alles beenden
     raus.push(["ohne offene Aufgabe", versuch("Der Hund läuft über die Wiese")]);
 
-    /* 2. Satzpuzzle */
+    /* 2. Satzpuzzle: Geplauder ist keine Antwort, ein Versuch schon */
     LiveChat.pruefAufgabeStellen("satz", "Der Hund läuft über die Wiese");
-    raus.push(["Satzpuzzle, falsche Antwort", versuch("Hund der läuft")]);
-    raus.push(["Satzpuzzle, richtige Antwort", versuch("der hund läuft über die wiese.")]);
+    raus.push(["Satzpuzzle, Geplauder", versuch("hallo, bin gleich zurück")]);
+    raus.push(["Satzpuzzle, Versuch aus denselben Wörtern", versuch("Der Hund über die Wiese läuft")]);
+    raus.push(["Satzpuzzle, richtig gelöst", versuch("der hund läuft über die wiese.")]);
 
-    /* 3. Aufgabe in eigenen Worten */
+    /* 3. Wortpuzzle */
+    LiveChat.pruefAufgabeStellen("wort", "Fahrrad");
+    raus.push(["Wortpuzzle, Geplauder", versuch("keine Ahnung ehrlich gesagt")]);
+    raus.push(["Wortpuzzle, Versuch aus denselben Buchstaben", versuch("Radfahr")]);
+    raus.push(["Wortpuzzle, richtig gelöst", versuch("fahrrad")]);
+
+    /* 4. Aufgabe in eigenen Worten: die ERSTE Zeile ist die Antwort */
     LiveChat.pruefAufgabeFrei("Schreib einen Satz mit „weil“");
-    const frei = versuch("Ich bleibe zu Hause, weil es regnet.");
-    raus.push(["eigene Aufgabe, irgendeine Antwort", frei]);
+    raus.push(["eigene Aufgabe, erste Zeile", versuch("Ich bleibe zu Hause, weil es regnet.")]);
+    raus.push(["eigene Aufgabe, danach weiterplaudern", versuch("und du so?")]);
 
-    /* 4. Das Aktualisieren der Seite */
+    /* 5. Das Aktualisieren der Seite */
+    LiveChat.pruefAufgabeFrei("Schreib einen Satz mit „weil“");
     LiveChat.pruefAufgabeMerken();
     LiveChat.pruefAufgabeVergessenImSpeicher();
     const nachVergessen = versuch("Ich bleibe zu Hause, weil es regnet.");
@@ -60,17 +68,22 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     raus.push(["nach Neuladen, ohne Zurueckholen", nachVergessen]);
     raus.push(["nach Neuladen, mit Zurueckholen", nachNeuladen]);
 
-    /* 5. beendet */
+    /* 6. beendet */
     LiveChat.pruefAufgabeFrei("");
-    raus.push(["Aufgabe beendet", versuch("Noch ein Satz")]);
+    raus.push(["Aufgabe beendet", versuch("Der Hund läuft über die Wiese")]);
     return raus;
   });
 
   const soll = {
     "ohne offene Aufgabe": null,
-    "Satzpuzzle, falsche Antwort": { versuch: true, richtig: false, frei: false },
-    "Satzpuzzle, richtige Antwort": { versuch: true, richtig: true, frei: false },
-    "eigene Aufgabe, irgendeine Antwort": { versuch: true, richtig: false, frei: true },
+    "Satzpuzzle, Geplauder": null,
+    "Satzpuzzle, Versuch aus denselben Wörtern": { versuch: true, richtig: false, frei: false },
+    "Satzpuzzle, richtig gelöst": { versuch: true, richtig: true, frei: false },
+    "Wortpuzzle, Geplauder": null,
+    "Wortpuzzle, Versuch aus denselben Buchstaben": { versuch: true, richtig: false, frei: false },
+    "Wortpuzzle, richtig gelöst": { versuch: true, richtig: true, frei: false },
+    "eigene Aufgabe, erste Zeile": { versuch: true, richtig: false, frei: true },
+    "eigene Aufgabe, danach weiterplaudern": null,
     "nach Neuladen, ohne Zurueckholen": null,
     "nach Neuladen, mit Zurueckholen": { versuch: true, richtig: false, frei: true },
     "Aufgabe beendet": null
@@ -83,7 +96,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     if (!gut) fehler++;
     const wort = ist ? (ist.frei ? "Antwort (ohne Musterlösung)" : ist.richtig ? "Antwort, richtig" : "Antwort, noch nicht richtig")
                      : "keine Antwort — kein Notenknopf";
-    console.log("  " + (gut ? "ok   " : "FEHL ") + was.padEnd(36) + wort);
+    console.log("  " + (gut ? "ok   " : "FEHL ") + was.padEnd(44) + wort);
   });
   console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Die Erkennung sitzt.") + "\n");
   await br.close(); srv.close();

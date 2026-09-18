@@ -3935,48 +3935,32 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 .lc-tipp-name strong { color: #f2c14e; }
 /* =========================================================
-   AUF DEM TELEFON ZAEHLT NICHT NUR DER NAME
+   KURZE BEFEHLE BRAUCHEN EIN WORT DAZU — MEHR NICHT
    ---------------------------------------------------------
    GEMELDET: „Die Beschreibungen der Befehle sehe ich auf dem Handy
-   gar nicht."
-   Hier stand „display: none" mit der Begruendung, auf dem Telefon
-   zaehle der Name. Das ist genau falsch herum: wer /rw noch nie
-   gesehen hat, braucht die Erklaerung — und wer sie kennt, liest
-   sie einfach nicht.
-   Der Grund fuer das Ausblenden war der Platz: die Vorschlaege
-   stehen nebeneinander, und Name samt Erklaerung passt nicht in eine
-   Zeile. Also stehen sie auf dem Telefon UNTEREINANDER, einer je
-   Zeile, mit der Erklaerung unter dem Namen. Die Liste hat ihre
-   eigene Hoehe und rollt; sie schwebt ueber dem Chat und schiebt
-   nichts weg.
+   gar nicht." Ich habe daraufhin die Vorschlaege untereinander
+   gestellt, damit die Erklaerung unter den Namen passt.
+
+   GEMELDET, direkt danach: „Mache die Liste der Befehle wieder
+   nebeneinander, so wie es vorher war. Es muessen keine ewig breiten
+   Panels sein, die untereinander stehen fuer einzelne Buchstaben. Was
+   ich wollte, war nur, dass du diese einzelnen Sachen leicht erklaeren
+   kannst — und das galt nur fuer die einzelnen Buchstaben, fuer W oder
+   S oder I."
+
+   Er hat recht, und der Unterschied ist genau der: /hintergrund
+   erklaert sich selbst, /w nicht. Also bleibt die Reihe, wie sie war
+   — nebeneinander, umbrechend —, und auf dem Telefon steht die
+   Erklaerung NUR an den kurzen Befehlen (ein oder zwei Buchstaben),
+   kurz gehalten. Alles andere traegt weiterhin nur seinen Namen; die
+   Erklaerung steht dort im Hinweistext.
    ========================================================= */
 @media (max-width: 520px) {
-  .lc-tipps {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    max-height: 42vh;
+  .lc-tipp small { display: none; }
+  .lc-tipp-kurz small {
+    display: inline;
+    max-width: 15ch;
   }
-  .lc-tipp {
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1px;
-    padding: 6px 10px;
-  }
-  .lc-tipp small {
-    display: block;
-    max-width: 100%;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    font-size: 0.78em;
-    opacity: 0.72;
-    line-height: 1.28;
-  }
-  /* Die Kategorien und die Favoriten bleiben nebeneinander — das
-     sind kurze Woerter, keine Erklaerungen. */
-  .lc-tipps .lc-tipp-kategorien,
-  .lc-tipps .lc-tipp-favoriten { flex-direction: row; flex-wrap: wrap; }
 }
 
 /* Ein Aufkleber, der auch klingt, bekommt ein kleines Zeichen — sonst

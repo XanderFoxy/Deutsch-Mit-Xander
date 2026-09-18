@@ -4999,17 +4999,78 @@ window.LiveChat = (function () {
      ihre Marke an: „versuch" (geantwortet) und „richtig".
      Gezaehlt wird als Versuch nur, wer noch nicht geloest hat — wer
      fertig ist, plaudert wieder ganz normal. */
+  /* SIEHT DAS UEBERHAUPT NACH EINER ANTWORT AUS?
+     -----------------------------------------------------------
+     GEWUENSCHT: „Die Benotung soll bei der relevanten Antwort zu der
+     geloesten Aufgabe stehen, die mit der Aufgabe verbunden ist —
+     nicht bei jeder Zeile."
+
+     Bisher galt: solange eine Aufgabe offen ist, ist JEDE Zeile eines
+     anderen eine Antwort. Damit bekam auch „hallo" oder „einen
+     Moment" den Notenknopf, und genau das war zu viel.
+
+     Eine Antwort auf ein Puzzle besteht aus denselben Teilen wie die
+     Loesung — nur in anderer Reihenfolge. Genau daran laesst es sich
+     erkennen, ohne zu raten:
+       * beim Satz: mindestens zwei Drittel der Woerter der Loesung
+         kommen vor, und die Zeile ist nicht viel kuerzer;
+       * beim Wort: es ist EIN Wort aus ungefaehr denselben
+         Buchstaben.
+     Wer die Loesung richtig hat, gilt ohnehin immer als Antwort. */
+  function wortMenge(text) {
+    return String(text || "").toLowerCase().replace(/[.!?,;:„“"'()]/g, " ")
+      .split(/\s+/).filter(function (w) { return w; });
+  }
+  function siehtNachVersuchAus(text, aufgabe) {
+    var loesung = String(aufgabe.loesung || "");
+    if (!loesung) return false;
+    if (aufgabe.typ === "wort") {
+      var geschrieben = wortMenge(text);
+      if (geschrieben.length !== 1) return false;
+      var a = geschrieben[0].split("").sort().join("");
+      var b = loesung.toLowerCase().replace(/\s+/g, "").split("").sort().join("");
+      if (Math.abs(a.length - b.length) > 2) return false;
+      /* Wie viele Buchstaben haben beide gemeinsam? */
+      var rest = b.split(""), gleich = 0;
+      a.split("").forEach(function (z) {
+        var i = rest.indexOf(z);
+        if (i >= 0) { rest.splice(i, 1); gleich += 1; }
+      });
+      return gleich >= Math.ceil(b.length * 0.7);
+    }
+    /* Satz */
+    var soll = wortMenge(loesung);
+    var ist = wortMenge(text);
+    if (!soll.length || !ist.length) return false;
+    if (ist.length < Math.ceil(soll.length * 0.6)) return false;
+    var uebrig = ist.slice(), treffer = 0;
+    soll.forEach(function (w) {
+      var i = uebrig.indexOf(w);
+      if (i >= 0) { uebrig.splice(i, 1); treffer += 1; }
+    });
+    return treffer >= Math.ceil(soll.length * 0.66);
+  }
+
   function aufgabeVersuch(von, text) {
     if (!offeneAufgabe || !von) return null;
     if (offeneAufgabe.wer[von]) return null;
-    /* Eine Aufgabe in eigenen Worten hat keine Musterloesung. Sie ist
-       trotzdem eine Antwort — sie wird nur nicht bewertet, sondern
-       benotet. */
+    /* Eine Aufgabe in eigenen Worten hat keine Musterloesung. Dort ist
+       die ERSTE Zeile nach der Aufgabe die Antwort — danach plaudert
+       die Person wieder ganz normal, und es steht nicht an jeder
+       weiteren Zeile ein Notenknopf. */
     if (offeneAufgabe.typ === "frei") {
+      offeneAufgabe.wer[von] = true;
+      aufgabeMerken();
       return { versuch: true, richtig: false, frei: true,
                frage: offeneAufgabe.frage || "" };
     }
-    return { versuch: true, richtig: aufgabeGleich(text, offeneAufgabe.loesung) };
+    if (aufgabeGleich(text, offeneAufgabe.loesung)) {
+      return { versuch: true, richtig: true, frage: offeneAufgabe.loesung };
+    }
+    /* Ein Satz, der mit der Aufgabe nichts zu tun hat, ist keine
+       Antwort — auch nicht, solange die Aufgabe offen steht. */
+    if (!siehtNachVersuchAus(text, offeneAufgabe)) return null;
+    return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
   }
 
   function aufgabeAntwort(von, name, text) {
@@ -5018,6 +5079,9 @@ window.LiveChat = (function () {
        faellt der Lehrer mit der Note. */
     if (offeneAufgabe.typ === "frei") return;
     if (offeneAufgabe.wer[von]) return;
+    /* Nur eine ECHTE Antwort wird vermeldet. Frueher rief das Programm
+       bei jeder Zeile „noch nicht richtig!" — auch bei „hallo". */
+    if (!aufgabeGleich(text, offeneAufgabe.loesung) && !siehtNachVersuchAus(text, offeneAufgabe)) return;
     if (!aufgabeGleich(text, offeneAufgabe.loesung)) {
       /* GEWUENSCHT: „Wenn derjenige ein Wort loest oder einen Satz
          und das noch nicht richtig ist, soll das als Loesung kommen

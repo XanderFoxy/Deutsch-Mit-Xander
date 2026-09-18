@@ -49,22 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 74 — Die Befehle erklären sich auch auf dem Telefon",
+  stand: "Runde 75 — Die Note gehört zur Antwort, nicht zur Zeile",
 
   inArbeit: [
-    { seit: "2026-09-18T23:00",
+    { seit: "2026-09-18T23:09",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:00",
+    { seit: "2026-09-18T23:09",
       text: "Sitzende Seitenansicht fürs Profil" },
-    { seit: "2026-09-18T23:00",
+    { seit: "2026-09-18T23:09",
       text: "Lieblingsbefehle im Befehlsfenster anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:00",
-      text: "Die Erklärung zu jedem Befehl war auf dem Handy ausgeblendet — jetzt stehen Name und Erklärung untereinander, einer je Zeile, und die Liste rollt in ihrem eigenen Rahmen" },
-    { seit: "2026-09-18T23:00",
-      text: "Auf dem breiten Schirm bleibt die Reihe nebeneinander; was dort gekürzt wird, steht beim Daraufzeigen im Hinweistext" },
+    { seit: "2026-09-18T23:09",
+      text: "Der Notenknopf steht nur noch an einer Zeile, die wirklich zur Aufgabe gehört: beim Satzpuzzle an einem Versuch aus denselben Wörtern, beim Wortpuzzle aus denselben Buchstaben — „hallo“ zwischendurch bekommt keinen mehr" },
+    { seit: "2026-09-18T23:09",
+      text: "Bei einer Aufgabe in eigenen Worten ist die erste Zeile der Person die Antwort; danach ist wieder normaler Chat" },
+    { seit: "2026-09-18T23:09",
+      text: "Auch die Meldung „noch nicht richtig“ kommt nur noch bei einem echten Versuch" },
+    { seit: "2026-09-18T23:09",
+      text: "Nachgemessen: wer nicht Lehrer ist, sieht nirgends einen Notenknopf — und den globalen Schalter gibt es im Code nicht mehr" },
+    { seit: "2026-09-18T23:09",
+      text: "Die Befehlsliste steht wieder nebeneinander; nur die kurzen Befehle (/w, /s, /i) tragen ihr Wort dazu" },
   ],
 };
