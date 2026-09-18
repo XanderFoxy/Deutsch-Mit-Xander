@@ -2342,9 +2342,27 @@ window.LiveChat = (function () {
 
     /* Ein Stueck einer langen Aufnahme. Erst wenn alle da sind,
        wird daraus eine Nachricht — vorher passiert nichts. */
+    if (n.art === "sprachfehlt") {
+      /* Jemand vermisst Stuecke von MIR — die gehen noch einmal raus,
+         einzeln und mit Luft dazwischen. */
+      if (sprachAusgang[n.id] && Array.isArray(n.nr)) {
+        n.nr.slice(0, 40).forEach(function (nr, k) {
+          setTimeout(function () { sprachEinzelnSchicken(n.id, nr); }, k * PAKET_LUFT);
+        });
+      }
+      return;
+    }
+    if (n.art === "sprachda") {
+      /* Jemand hat meine Wortmeldung vollstaendig bekommen. */
+      sprachAngekommen(n.id, n.name || "Jemand");
+      return;
+    }
     if (n.art === "sprachteil") {
       var ganz = sprachTeilEmpfangen(n);
       if (!ganz) return;
+      /* Dem Absender sagen, dass es angekommen ist — er wartet
+         darauf. „Sie fragt mich staendig, ob ich sie hoere." */
+      try { senden({ art: "sprachda", an: n.von, id: n.id, name: zustand.ichName }); } catch (e) {}
       n = { art: "text", id: n.id, von: n.von, name: n.name, text: "",
             zeit: n.zeit, bild: n.bild, farbe: n.farbe, farbeName: n.farbeName, chatArt: n.chatArt,
             sprach: ganz, sprachSek: n.sprachSek, sprachAb: n.sprachAb,
@@ -2354,6 +2372,9 @@ window.LiveChat = (function () {
       /* Eine Sprachnachricht hat weder Text noch Bild — ohne diese
          Ausnahme wuerde sie hier stillschweigend weggeworfen. */
       if (!n.text && !n.bildImChat && !n.sprach) return;
+      if (n.sprach && n.id) {
+        try { senden({ art: "sprachda", an: n.von, id: n.id, name: zustand.ichName }); } catch (e) {}
+      }
       /* EINE WORTMELDUNG AUS DEM PSEUDO-LIVESTREAM.
          -------------------------------------------------------
          GEWUENSCHT: „Dass es gar nicht in den Chat eintraegt,
@@ -3440,7 +3461,30 @@ window.LiveChat = (function () {
      Stuecke geschnitten, einzeln verschickt und drueben wieder
      zusammengesetzt — dann ist die Laenge nur noch eine Frage der
      Geduld, nicht der Technik. */
-  var PAKET_BYTES = 80000;
+  /* WARUM VON EMMY NICHTS ANKAM.
+     -----------------------------------------------------------
+     GEMELDET: „Emmy sagt, sie wuerde versuchen zu sprechen, es kommt
+     aber nicht durch … von ihrer Seite kommt aber nichts. Geht das
+     nur in Deutschland?"
+
+     Nein — der Kanal ist derselbe fuer alle, egal wo jemand sitzt.
+     Der Fehler steckt in der Groesse und im Tempo: eine Aufnahme
+     wurde in Bloecke von 80 KB zerlegt und diese in EINER Schleife
+     hintereinander weggeschickt, ohne Luft dazwischen. Auf einer
+     schnellen Leitung faellt das nicht auf. Auf einer langsamen —
+     Mobilfunk, weite Strecke — laeuft der Sendepuffer ueber und der
+     Kanal wirft Pakete weg. Und ein einziges fehlendes Paket
+     genuegt: sprachTeilEmpfangen() setzt nur zusammen, was
+     VOLLSTAENDIG da ist. Fehlt eines, passiert gar nichts, ohne
+     Fehlermeldung, auf beiden Seiten.
+
+     Drei Sachen dagegen, alle hier unten:
+       - kleinere Pakete (24 KB statt 80 KB),
+       - Luft dazwischen (120 ms) statt einer Schleife,
+       - und wer etwas vermisst, FRAGT danach (siehe
+         sprachFehltMelden / art „sprachfehlt"). */
+  var PAKET_BYTES = 24000;
+  var PAKET_LUFT = 120;             // Millisekunden zwischen zwei Paketen
   var SPRACH_BYTES = 8000000;   // rund 5 Minuten bei 24 kbit/s
   var sprachRekorder = null;
   var sprachSpur = null;
@@ -4175,17 +4219,73 @@ window.LiveChat = (function () {
                sprachDauer: kopf.sprachDauer });
     } else {
       var anzahl = Math.ceil(daten.length / PAKET_BYTES);
+      var teile = [];
       for (var i = 0; i < anzahl; i++) {
-        senden({ art: "sprachteil", id: id, nr: i, anzahl: anzahl,
-                 teil: daten.slice(i * PAKET_BYTES, (i + 1) * PAKET_BYTES),
-                 name: kopf.name, zeit: kopf.zeit, bild: kopf.bild,
-                 farbe: kopf.farbe, chatArt: kopf.chatArt,
-                 sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb,
-               sprachDauer: kopf.sprachDauer });
+        teile.push(daten.slice(i * PAKET_BYTES, (i + 1) * PAKET_BYTES));
       }
+      /* Die Stuecke bleiben eine Weile liegen: wer eines vermisst,
+         kann danach fragen, und dann muss es noch da sein. */
+      sprachAusgang[id] = { teile: teile, kopf: kopf, anzahl: anzahl, wann: Date.now() };
+      setTimeout(function () { delete sprachAusgang[id]; }, 120000);
+      sprachTeilSchicken(id, 0);
     }
+    sprachWartenAufQuittung(id, zuhoerer);
     melden();
     return true;
+  }
+
+  /* Die eigenen Stuecke, solange jemand nachfragen koennte. */
+  var sprachAusgang = {};
+
+  /* KAM ES AN? EINE EHRLICHE ANTWORT STATT EINER FRAGE.
+     -----------------------------------------------------------
+     GEMELDET: „Emmy fragt mich staendig, ob ich sie hoere."
+     Sie musste fragen, weil ihr niemand etwas gesagt hat. Jetzt
+     bestaetigt jeder Empfaenger eine vollstaendig angekommene
+     Wortmeldung, und wer spricht, bekommt es zu sehen — und wenn
+     nach fuenfzehn Sekunden niemand bestaetigt hat, obwohl jemand
+     im Raum ist, steht das genauso da. */
+  var sprachQuittung = {};
+  function sprachWartenAufQuittung(id, zuhoerer) {
+    if (!id || zuhoerer <= 0) return;
+    sprachQuittung[id] = { wer: {}, wieviel: 0 };
+    setTimeout(function () {
+      var q = sprachQuittung[id];
+      delete sprachQuittung[id];
+      if (!q) return;
+      if (q.wieviel > 0) return;
+      systemZeile("\u26a0\ufe0f Deine Wortmeldung ist bei niemandem angekommen. "
+        + "Meistens liegt es an der Leitung \u2014 sprich sie noch einmal ein, "
+        + "sie wird dann erneut verschickt.");
+    }, 15000);
+  }
+  function sprachAngekommen(id, wer) {
+    var q = sprachQuittung[id];
+    if (!q || q.wer[wer]) return;
+    q.wer[wer] = true;
+    q.wieviel += 1;
+    systemZeile("\u2705 " + wer + " hat deine Wortmeldung bekommen.");
+  }
+
+  /* Ein Paket, dann Luft, dann das naechste. Eine Schleife waere
+     schneller und genau deshalb falsch — siehe PAKET_BYTES. */
+  function sprachTeilSchicken(id, nr) {
+    var a = sprachAusgang[id];
+    if (!a || nr >= a.anzahl) return;
+    sprachEinzelnSchicken(id, nr);
+    setTimeout(function () { sprachTeilSchicken(id, nr + 1); }, PAKET_LUFT);
+  }
+
+  function sprachEinzelnSchicken(id, nr) {
+    var a = sprachAusgang[id];
+    if (!a || !a.teile[nr]) return;
+    var k = a.kopf;
+    senden({ art: "sprachteil", id: id, nr: nr, anzahl: a.anzahl,
+             teil: a.teile[nr],
+             name: k.name, zeit: k.zeit, bild: k.bild,
+             farbe: k.farbe, chatArt: k.chatArt,
+             sprachSek: k.sprachSek, sprachAb: k.sprachAb,
+             sprachDauer: k.sprachDauer });
   }
 
   /* =========================================================
@@ -4771,16 +4871,48 @@ window.LiveChat = (function () {
     if (!p || !p.id || typeof p.nr !== "number") return null;
     var b = sprachBausteine[p.id];
     if (!b) {
-      b = sprachBausteine[p.id] = { teile: [], anzahl: p.anzahl || 1, da: 0, seit: Date.now() };
+      b = sprachBausteine[p.id] = { teile: [], anzahl: p.anzahl || 1, da: 0, seit: Date.now(),
+                                    von: p.von || "", name: p.name || "", uhr: 0, gefragt: 0 };
       /* Was nach zwei Minuten noch unvollstaendig ist, wird nie
          mehr vollstaendig — wegwerfen, sonst waechst der Speicher. */
       setTimeout(function () { delete sprachBausteine[p.id]; }, 120000);
     }
     if (b.teile[p.nr] === undefined) { b.teile[p.nr] = p.teil; b.da++; }
-    if (b.da < b.anzahl) return null;
+    b.von = p.von || b.von;
+    if (b.da < b.anzahl) {
+      /* NACHFRAGEN STATT WARTEN.
+         Fehlt nach zwei Sekunden Ruhe immer noch etwas, wird genau
+         danach gefragt — mit den Nummern, die fehlen. Dreimal, dann
+         ist es verloren, und das wird auch gesagt statt verschwiegen. */
+      clearTimeout(b.uhr);
+      b.uhr = setTimeout(function () { sprachFehltMelden(p.id); }, 2000);
+      return null;
+    }
+    clearTimeout(b.uhr);
     var ganz = b.teile.join("");
     delete sprachBausteine[p.id];
     return ganz;
+  }
+
+  /* Welche Stuecke fehlen — und beim Absender danach fragen. */
+  function sprachFehltMelden(id) {
+    var b = sprachBausteine[id];
+    if (!b || !b.von) return;
+    b.gefragt = (b.gefragt || 0) + 1;
+    if (b.gefragt > 3) {
+      systemZeile("\ud83d\udd0a Von " + (b.name || "jemandem") + " ist eine Wortmeldung nur "
+        + "teilweise angekommen — die Leitung hat Pakete verloren. "
+        + "Bitte noch einmal sprechen.");
+      delete sprachBausteine[id];
+      return;
+    }
+    var fehlt = [];
+    for (var i = 0; i < b.anzahl; i++) { if (b.teile[i] === undefined) fehlt.push(i); }
+    if (!fehlt.length) return;
+    senden({ art: "sprachfehlt", an: b.von, id: id, nr: fehlt });
+    /* Noch einmal nachsehen, falls die Antwort auch verlorengeht. */
+    clearTimeout(b.uhr);
+    b.uhr = setTimeout(function () { sprachFehltMelden(id); }, 3000);
   }
 
   function bildSenden(quelle, text) {
@@ -7263,6 +7395,32 @@ window.LiveChat = (function () {
     /* Nur zum Nachmessen: Stuecke einsortieren und ansehen, in
        welcher Reihenfolge sie herauskommen. Fasst die echte Reihe
        nicht an. */
+    /* Nur zum Nachmessen: eine Wortmeldung in Stuecken empfangen,
+       dabei eines verlieren, und sehen, ob danach gefragt wird und
+       ob sie am Ende vollstaendig ist. Fasst nichts Echtes an. */
+    pruefSprachVerlust: function (anzahl, verliere) {
+      var id = "pruef-" + Date.now();
+      var gefragt = [];
+      var merkSenden = senden;
+      /* senden ist eine Funktion im Modul; hier wird sie nicht
+         ersetzt, sondern die Nachfrage direkt beobachtet. */
+      var ganz = null;
+      for (var i = 0; i < anzahl; i++) {
+        if (i === verliere) continue;
+        ganz = sprachTeilEmpfangen({ id: id, nr: i, anzahl: anzahl,
+                                     teil: "T" + i, von: "emmy", name: "Emmy" });
+      }
+      var b = sprachBausteine[id];
+      var fehltJetzt = [];
+      if (b) { for (var k = 0; k < b.anzahl; k++) { if (b.teile[k] === undefined) fehltJetzt.push(k); } }
+      var vollstaendigVorher = Boolean(ganz);
+      /* Jetzt kommt das fehlende Stueck nach — wie nach der Nachfrage. */
+      ganz = sprachTeilEmpfangen({ id: id, nr: verliere, anzahl: anzahl,
+                                   teil: "T" + verliere, von: "emmy", name: "Emmy" });
+      return { vollstaendigVorher: vollstaendigVorher, fehlte: fehltJetzt,
+               ergebnis: ganz, erwartet: Array.from({ length: anzahl },
+                 function (x, j) { return "T" + j; }).join("") };
+    },
     pruefEinreihen: function (liste) {
       var merk = liveWarteschlange.slice();
       liveWarteschlange.length = 0;

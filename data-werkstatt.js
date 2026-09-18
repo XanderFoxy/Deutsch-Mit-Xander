@@ -49,30 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19g — ein Verlauf fuer alle",
+  stand: "Runde 19h — warum von Emmy nichts durchkam",
 
   inArbeit: [
-    { seit: "2026-09-18T20:23",
+    { seit: "2026-09-18T20:29",
       text: "Rueckruf einer Sprachnachricht wieder rueckgaengig machen" },
-    { seit: "2026-09-18T20:23",
+    { seit: "2026-09-18T20:29",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:23",
+    { seit: "2026-09-18T20:29",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:23",
+    { seit: "2026-09-18T20:29",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:23",
-      text: "Der gemeinsame Chatverlauf aus der Datenbank wurde nie gelesen — serverLaden() stand fertig da und wurde von niemandem aufgerufen. Jetzt wird er beim Betreten geholt" },
-    { seit: "2026-09-18T20:23",
-      text: "Ein Ankoemmling kann deinen Stand nicht mehr ueberschreiben: verschmolzen wird, nie ersetzt" },
-    { seit: "2026-09-18T20:23",
-      text: "Sprachnachrichten fallen nicht mehr aus der Liste, wenn sie voll wird — sie stehen nur hier und waeren sonst endgueltig weg" },
-    { seit: "2026-09-18T20:23",
-      text: "Dieselbe Aufnahme kommt nicht mehr doppelt — erkannt an Absender, Laenge und Sprechzeit, nicht an der Kennung" },
-    { seit: "2026-09-18T20:23",
-      text: "Zuhoerer werden zuverlaessiger gezaehlt: man hoert sich nicht mehr selbst, nur weil die Sitzordnung noch nicht stand" },
+    { seit: "2026-09-18T20:29",
+      text: "Sprachpakete sind jetzt 24 KB statt 80 KB und werden einzeln mit 120 ms Luft verschickt statt in einer Schleife — auf langsamen Leitungen lief der Sendepuffer ueber" },
+    { seit: "2026-09-18T20:29",
+      text: "Wer ein Paket vermisst, fragt beim Absender danach; der schickt es einzeln nach. Dreimal, dann wird es gesagt statt verschwiegen" },
+    { seit: "2026-09-18T20:29",
+      text: "Jede angekommene Wortmeldung wird bestaetigt: „Xander hat deine Wortmeldung bekommen\" — und wenn niemand bestaetigt, steht das auch da" },
   ],
 };
