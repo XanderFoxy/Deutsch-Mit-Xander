@@ -3934,6 +3934,15 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   max-width: 34ch;
 }
 .lc-tipp-name strong { color: #f2c14e; }
+/* Ein selbst angehefteter Befehl — er soll sich von den blossen
+   „haeufigsten" unterscheiden, sonst weiss man nicht, was man selbst
+   ausgesucht hat. */
+.lc-tipp-meins {
+  border-color: rgba(242, 193, 78, 0.85);
+  background: rgba(242, 193, 78, 0.14);
+}
+.lc-tipp-meins strong::before { content: "\2b50\a0"; font-size: 0.85em; }
+.lc-tipp-favhinweis { opacity: 0.55; font-size: 0.7rem; }
 /* =========================================================
    KURZE BEFEHLE BRAUCHEN EIN WORT DAZU — MEHR NICHT
    ---------------------------------------------------------

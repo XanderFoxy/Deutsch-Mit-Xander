@@ -21643,6 +21643,70 @@
      steht ausserhalb, damit sie ein Neuzeichnen des Chats ueberlebt —
      sonst faellt einem die Auswahl beim naechsten Buchstaben weg. */
   let lcTippGruppe = "";
+  /* =================================================================
+     LIEBLINGSBEFEHLE ZUM ANHEFTEN
+     -----------------------------------------------------------------
+     GEMELDET, zum wiederholten Mal: „Meine Favoriten kann ich immer
+     noch nicht anlegen."
+     Was es gab, waren die HAEUFIGSTEN — vom Programm gezaehlt. Das ist
+     etwas anderes als eine Auswahl, die man selbst trifft. Also: einen
+     Befehl im Vorschlagsfeld LANG druecken, und er steht von da an
+     ganz vorn. Noch einmal lang druecken nimmt ihn wieder heraus.
+     Gemerkt wird das im Geraet; es ist eine Bedienvorliebe, kein
+     Gespraech. */
+  const LC_LIEBLINGE = "dma_lc_lieblinge";
+  /* Langes Druecken heftet an — auf dem Telefon der einzige Griff, der
+     noch frei ist, ohne dem Chip einen zweiten Knopf anzuhaengen.
+     Wichtig: das lange Druecken darf danach NICHT auch noch den Befehl
+     einsetzen, sonst schreibt man beim Anheften jedes Mal etwas ins
+     Feld. */
+  function lcAnheftenBinden(chip, befehl, danach) {
+    let uhr = 0, lang = false;
+    const los = () => {
+      lang = false;
+      clearTimeout(uhr);
+      uhr = setTimeout(() => {
+        lang = true;
+        const jetztDrin = lcLieblingUmschalten(befehl.w);
+        try { navigator.vibrate && navigator.vibrate(18); } catch (e) {}
+        showToast(jetztDrin
+          ? "\u2b50 /" + befehl.w + " ist jetzt einer deiner Favoriten — er steht ganz vorn."
+          : "/" + befehl.w + " ist kein Favorit mehr.");
+        if (typeof danach === "function") danach();
+      }, 600);
+    };
+    const halt = () => { clearTimeout(uhr); uhr = 0; };
+    chip.addEventListener("pointerdown", los);
+    chip.addEventListener("pointerup", halt);
+    chip.addEventListener("pointerleave", halt);
+    chip.addEventListener("pointercancel", halt);
+    /* Der Chip setzt den Befehl beim „mousedown" ein (siehe chip()).
+       Nach einem langen Druck soll er das nicht tun. */
+    chip.addEventListener("mousedown", (e) => { if (lang) { e.stopPropagation(); } }, true);
+    chip.addEventListener("click", (e) => { if (lang) { e.preventDefault(); e.stopPropagation(); lang = false; } }, true);
+    /* Auf dem Rechner geht auch die rechte Maustaste. */
+    chip.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      const jetztDrin = lcLieblingUmschalten(befehl.w);
+      showToast(jetztDrin ? "\u2b50 /" + befehl.w + " angeheftet." : "/" + befehl.w + " abgenommen.");
+      if (typeof danach === "function") danach();
+    });
+  }
+  function lcLieblinge() {
+    try {
+      const l = JSON.parse(localStorage.getItem(LC_LIEBLINGE) || "[]");
+      return Array.isArray(l) ? l.filter((x) => typeof x === "string" && x) : [];
+    } catch (e) { return []; }
+  }
+  function lcLieblingUmschalten(wort) {
+    const w = String(wort || "").replace(/^\//, "");
+    if (!w) return false;
+    let l = lcLieblinge();
+    const drin = l.indexOf(w) >= 0;
+    l = drin ? l.filter((x) => x !== w) : [w].concat(l).slice(0, 12);
+    try { localStorage.setItem(LC_LIEBLINGE, JSON.stringify(l)); } catch (e) {}
+    return !drin;
+  }
 
   function livechatTippsBinden(area) {
     lcStimmenBinden(area);
@@ -21772,20 +21836,35 @@
         /* Zeile 2: die Favoriten — nur solange man noch nicht filtert
            und noch nichts weiter getippt hat. Sonst stuenden sie im
            Weg. */
-        if (!lcTippGruppe && !suche && oft.length) {
+        const angeheftet = lcLieblinge()
+          .map((w) => alle.find((x) => x.w === w)).filter(Boolean);
+        const haeufig = oft.filter((b) => !angeheftet.some((a) => a.w === b.w));
+        if (!lcTippGruppe && !suche && (angeheftet.length || haeufig.length)) {
           const fav = document.createElement("div");
           fav.className = "lc-tipp-favoriten";
           const wort = document.createElement("span");
           wort.className = "lc-tipp-favwort";
-          wort.textContent = "\u2b50 Deine häufigsten";
+          wort.textContent = angeheftet.length ? "\u2b50 Deine Favoriten" : "\u2b50 Deine häufigsten";
           fav.appendChild(wort);
-          oft.forEach((b) => {
+          const favChip = (b, meins) => {
             const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, "", () =>
               einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
             k.dataset.gr = b.gr || "welt";
-            k.title = b.was;
+            k.title = (meins ? "Angeheftet — lang drücken nimmt ihn wieder heraus. " : "") + b.was;
+            if (meins) k.classList.add("lc-tipp-meins");
+            lcAnheftenBinden(k, b, auffrischen);
             fav.appendChild(k);
-          });
+          };
+          angeheftet.forEach((b) => favChip(b, true));
+          haeufig.forEach((b) => favChip(b, false));
+          /* Einmal sagen, wie man sie anlegt — solange noch keiner
+             angeheftet ist. Danach nie wieder. */
+          if (!angeheftet.length) {
+            const hinweis = document.createElement("span");
+            hinweis.className = "lc-tipp-favwort lc-tipp-favhinweis";
+            hinweis.textContent = "(einen Befehl lang drücken = anheften)";
+            fav.appendChild(hinweis);
+          }
           teile.push(fav);
         }
 
@@ -21794,6 +21873,7 @@
           const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, b.was, () =>
             einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
           k.dataset.gr = b.gr || "welt";
+          lcAnheftenBinden(k, b, auffrischen);
           /* GEWUENSCHT: „Das galt nur fuer die einzelnen Buchstaben,
              fuer W oder S oder I." Ein Befehl aus ein, zwei Buchstaben
              sagt nichts ueber sich selbst — der bekommt sein Wort dazu

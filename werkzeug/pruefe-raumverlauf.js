@@ -29,24 +29,49 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   const erg = await pg.evaluate(async () => {
     const warte = (ms) => new Promise((f) => setTimeout(f, ms));
     const zeit = Date.now();
-    /* In Raum A ein paar Zeilen — darunter eine gefluesterte, denn die
-       soll die Person ueberallhin begleiten. */
+    const zeilen = (wieviele, wo, ab) => {
+      const l = [];
+      for (let i = 0; i < wieviele; i++) {
+        l.push({ id: wo + (ab + i), von: "emmy", name: "Emmy", art: "text",
+                 text: wo + "-Zeile " + (ab + i), zeit: zeit + ab + i });
+      }
+      return l;
+    };
+
+    /* RAUM A: ein langer Verlauf, ordentlich abgelegt. */
     LiveChat.pruefRaum("probe-a");
-    LiveChat.pruefVerlaufSetzen([
-      { id: "a1", von: "emmy", name: "Emmy", art: "text", text: "Hallo in Raum A", zeit: zeit },
-      { id: "a2", von: "emmy", name: "Emmy", art: "text", text: "Zweite Zeile", zeit: zeit + 1 },
-      { id: "a3", von: "emmy", name: "Emmy", art: "fluester", text: "psst", zeit: zeit + 2 }
-    ]);
-    /* In Raum B etwas ganz anderes. */
+    await LiveChat.pruefVerlaufAusLager("probe-a");     // wie beim Betreten
+    LiveChat.pruefVerlaufSetzen(zeilen(10, "A", 0));
+    await warte(400);
+    const nachAblegen = (await LiveChat.pruefVerlaufAusLager("probe-a")).length;
+
+    /* UND JETZT DER GEMELDETE FEHLER: man betritt den Raum wieder, es
+       steht erst der kurze Auszug da, und noch bevor das Lager gelesen
+       ist, kommt eine Zeile herein. Frueher hat dieser Augenblick den
+       langen Verlauf durch den kurzen ersetzt. */
+    LiveChat.pruefLagerVergessen();
+    LiveChat.pruefVerlaufSetzen(zeilen(3, "A", 7));     // nur die letzten drei
+    await warte(400);
+    const nachKurzschluss = (await LiveChat.pruefVerlaufAusLager("probe-a")).length;
+
+    /* Ist das Lager gelesen, darf natuerlich wieder geschrieben werden. */
+    LiveChat.pruefVerlaufSetzen(zeilen(12, "A", 0));
+    await warte(400);
+    const nachRichtig = (await LiveChat.pruefVerlaufAusLager("probe-a")).length;
+
+    /* RAUM B: bleibt davon unberuehrt. */
     LiveChat.pruefRaum("probe-b");
+    await LiveChat.pruefVerlaufAusLager("probe-b");
     LiveChat.pruefVerlaufSetzen([
-      { id: "b1", von: "reza", name: "Reza", art: "text", text: "Hier ist Raum B", zeit: zeit + 3 }
+      { id: "b1", von: "reza", name: "Reza", art: "text", text: "Hier ist Raum B", zeit: zeit + 99 }
     ]);
-    await warte(500);          // das Lager schreibt nebenher
+    await warte(400);
     return {
-      aSpeicher: LiveChat.pruefVerlaufAusSpeicher("probe-a").map((n) => n.text),
+      nachAblegen: nachAblegen,
+      nachKurzschluss: nachKurzschluss,
+      nachRichtig: nachRichtig,
+      aSpeicher: LiveChat.pruefVerlaufAusSpeicher("probe-a").length,
       aLager: (await LiveChat.pruefVerlaufAusLager("probe-a")).map((n) => n.text),
-      bSpeicher: LiveChat.pruefVerlaufAusSpeicher("probe-b").map((n) => n.text),
       bLager: (await LiveChat.pruefVerlaufAusLager("probe-b")).map((n) => n.text)
     };
   });
@@ -56,18 +81,19 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     if (!bedingung) fehler++;
     console.log("  " + (bedingung ? "ok   " : "FEHL ") + was + (zusatz ? "   " + zusatz : ""));
   };
-  const a = ["Hallo in Raum A", "Zweite Zeile", "psst"];
-  console.log("\n  RAUM A — verlassen und wiedergekommen");
-  ok(JSON.stringify(erg.aSpeicher) === JSON.stringify(a), "aus dem Speicher vollständig zurück",
-     "„" + erg.aSpeicher.join("“ · „") + "“");
-  ok(JSON.stringify(erg.aLager) === JSON.stringify(a), "aus dem Lager vollständig zurück",
-     "„" + erg.aLager.join("“ · „") + "“");
-  console.log("\n  RAUM B — und nichts vermischt sich");
-  ok(JSON.stringify(erg.bSpeicher) === JSON.stringify(["Hier ist Raum B"]),
-     "nur die eigene Zeile", "„" + erg.bSpeicher.join("“ · „") + "“");
+  console.log("\n  DER VERLAUF EINES RAUMS");
+  ok(erg.nachAblegen === 10, "zehn Zeilen liegen im Lager", erg.nachAblegen + " Zeilen");
+  ok(erg.nachKurzschluss === 10,
+     "ein kurzer Auszug überschreibt sie NICHT, solange das Lager nicht gelesen ist",
+     erg.nachKurzschluss + " Zeilen");
+  ok(erg.nachRichtig === 12, "danach wird wieder ganz normal gesichert", erg.nachRichtig + " Zeilen");
+  ok(erg.aSpeicher === 12, "auch der kleine Speicher hat sie", erg.aSpeicher + " Zeilen");
+  console.log("\n  UND DIE RÄUME BLEIBEN GETRENNT");
   ok(JSON.stringify(erg.bLager) === JSON.stringify(["Hier ist Raum B"]),
-     "auch im Lager getrennt", "„" + erg.bLager.join("“ · „") + "“");
-  console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Jeder Raum behält seinen Verlauf.") + "\n");
+     "Raum B hat nur seine eigene Zeile", "„" + erg.bLager.join("“ · „") + "“");
+  ok(erg.aLager.length === 12 && erg.aLager[0] === "A-Zeile 0",
+     "Raum A fängt weiterhin bei seiner ersten Zeile an", "„" + erg.aLager[0] + "“");
+  console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Jeder Raum behält seinen ganzen Verlauf.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })();

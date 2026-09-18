@@ -1459,15 +1459,19 @@ window.LiveChat = (function () {
   /* Den vollstaendigen Verlauf aus dem Lager holen — dort liegt er
      ganz, waehrend im localStorage nur die letzten dreihundert
      Zeilen Platz haben. */
+  /* Steht der volle Verlauf schon im Arbeitsspeicher? Vorher darf
+     nichts ins Lager zurueckgeschrieben werden (siehe chatSichern). */
+  var lagerGelesen = false;
   function chatAusLager(raum) {
     return lagerHolen(["chat:" + raum]).then(function (gefunden) {
+      lagerGelesen = true;
       var roh = gefunden && gefunden["chat:" + raum];
       if (!roh) return [];
       try {
         var liste = JSON.parse(roh);
         return Array.isArray(liste) ? altenMuellFiltern(liste) : [];
       } catch (e) { return []; }
-    }, function () { return []; });
+    }, function () { lagerGelesen = true; return []; });
   }
 
   function chatSichern() {
@@ -1525,7 +1529,26 @@ window.LiveChat = (function () {
        behaelt nur die letzten dreihundert Zeilen, damit beim Oeffnen
        sofort etwas dasteht; alles Aeltere kommt einen Wimpernschlag
        spaeter aus dem Lager nach. */
-    try { lagerLegen("chat:" + raum, raum, JSON.stringify(schlank)); } catch (e) {}
+    /* HIER WURDE DER VERLAUF JUENGER GEMACHT, ALS ER WAR.
+       -------------------------------------------------------------
+       GEMELDET: „Der letzte Stand, den wir hatten, wurde schon wieder
+       mit einem aelteren Stand ueberschrieben."
+
+       Genau das ist hier passiert, und zwar zuverlaessig: beim
+       Betreten steht zuerst nur, was in den localStorage gepasst hat
+       (die letzten dreihundert Zeilen). Der VOLLSTAENDIGE Verlauf
+       kommt einen Wimpernschlag spaeter aus dem Lager. Kam in diesem
+       Wimpernschlag auch nur eine einzige Zeile herein, wurde
+       gesichert — und die kurze Liste hat die lange im Lager
+       ueberschrieben. Alles, was aelter war als diese dreihundert
+       Zeilen, war damit endgueltig weg.
+
+       Also: ins Lager wird erst geschrieben, wenn das Lager auch
+       gelesen wurde. Bis dahin bleibt der localStorage der
+       Zwischenspeicher — der ist klein, aber er zerstoert nichts. */
+    if (lagerGelesen) {
+      try { lagerLegen("chat:" + raum, raum, JSON.stringify(schlank)); } catch (e) {}
+    }
     var versuch = schlank.slice(-300);
     for (var runde = 0; runde < 8; runde++) {
       try {
@@ -3168,6 +3191,8 @@ window.LiveChat = (function () {
     /* Der Verlauf aus diesem Raum wird MITGEBRACHT, nicht
        weggeworfen — man soll nachlesen können, was geschrieben
        wurde, auch nach dem Neuladen und nach dem Wiederkommen. */
+    /* Neuer Raum: das Lager dieses Raums ist noch nicht gelesen. */
+    lagerGelesen = false;
     zustand.nachrichten = chatLaden(zustand.raum);
     /* =====================================================
        EIN VERLAUF FUER ALLE — UND ER WURDE NIE GELESEN
@@ -6552,9 +6577,27 @@ window.LiveChat = (function () {
       /* w ist das Wort selbst — die Tipphilfe braucht es, um den
          Befehl einsetzen zu koennen, und „nutzt" allein reicht dafuer
          nicht (dort steht auch noch der Platzhalter <name>). */
+      /* WORAN MAN SIEHT, DASS EIN BEFEHL EINEN NAMEN BRAUCHT.
+         -----------------------------------------------------------
+         Hier stand  /<name>/  — gesucht wurde also die Schreibweise
+         „/w <name> <text>". Genau die spitzen Klammern habe ich aber
+         irgendwann aus der Hilfe genommen (Emmy hatte sie mitgetippt,
+         weil sie wie Teil des Befehls aussahen). Seitdem traf dieser
+         Ausdruck NIRGENDS mehr zu — und damit schlug die Tipphilfe
+         keinen einzigen Namen mehr vor. Genau das war gemeldet:
+         „Wenn ich /w schreibe, sollen mir die Namen vorgeschlagen
+         werden."
+         Jetzt wird gelesen, was wirklich dasteht: „/w Name Text". */
+      var teile = String(b.nutzt || "").trim().split(/\s+/);
+      var hinterDemBefehl = teile.slice(1);
+      var willName = hinterDemBefehl.some(function (t) {
+        return /^(name|nickname)$/i.test(t);
+      }) || /<name>/.test(b.nutzt || "");
+      /* „/c name Farbe" meint die Namensfarbe, keinen Menschen. */
+      if (b.w === "cname") willName = false;
       return { w: b.w, gr: b.gr || "welt", nutzt: b.nutzt, was: b.was, kurz: b.kurz,
-               brauchtName: /<name>/.test(b.nutzt || ""),
-               brauchtText: /<(text|was|nummer|farbe)>/.test(b.nutzt || "") };
+               brauchtName: willName,
+               brauchtText: hinterDemBefehl.length > (willName ? 1 : 0) };
     });
   }
 
@@ -8483,6 +8526,10 @@ window.LiveChat = (function () {
     pruefVerlaufSetzen: function (liste) { zustand.nachrichten = (liste || []).slice(); chatSichern(); },
     pruefVerlaufAusSpeicher: function (raum) { return chatLaden(raum); },
     pruefVerlaufAusLager: function (raum) { return chatAusLager(raum); },
+    /* Stellt den Augenblick direkt nach dem Betreten nach: das Lager
+       dieses Raums ist noch nicht gelesen. Genau dort wurde der
+       Verlauf frueher kurzgeschrieben. */
+    pruefLagerVergessen: function () { lagerGelesen = false; },
     pruefAufgabeStellen: aufgabeStellen,
     pruefAufgabeFrei: aufgabeFreiStellen,
     pruefAufgabeVersuch: aufgabeVersuch,

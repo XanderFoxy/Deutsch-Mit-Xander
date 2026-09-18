@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 76 — Flüstern folgt der Person, nicht dem Raum",
+  stand: "Runde 77 — Der Verlauf wurde kurzgeschrieben, die Namen fehlten",
 
   inArbeit: [
-    { seit: "2026-09-18T23:20",
+    { seit: "2026-09-18T23:25",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:20",
+    { seit: "2026-09-18T23:25",
       text: "Sitzende Seitenansicht fürs Profil" },
-    { seit: "2026-09-18T23:20",
-      text: "Lieblingsbefehle im Befehlsfenster anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:20",
-      text: "Eine geflüsterte Zeile bekommt eine Anschrift in der Tabelle: wer gerade geht oder offline ist, sieht sie später trotzdem — in jedem Raum, chronologisch einsortiert" },
-    { seit: "2026-09-18T23:20",
-      text: "Lesen darf das nur, wen es angeht: die Datenbankregel gibt eine geflüsterte Zeile ausschließlich an Absender und Empfänger heraus (an drei Konten und einem Gast nachgemessen)" },
-    { seit: "2026-09-18T23:20",
-      text: "Dieselbe Zeile steht nie doppelt da — der Zuruf und die nachgereichte Fassung tragen dieselbe Kennung" },
-    { seit: "2026-09-18T23:20",
-      text: "Der Verlauf wird auch beim Hinausgehen gesichert, damit die letzte Zeile vor dem Verlassen nicht fehlt" },
+    { seit: "2026-09-18T23:25",
+      text: "GEFUNDEN: Beim Betreten stand erst der kurze Auszug da; kam in dieser Sekunde eine Zeile herein, hat dieser kurze Stand den vollständigen im Lager überschrieben — genau das „ältere Stand“-Problem. Jetzt wird erst geschrieben, wenn das Lager gelesen ist" },
+    { seit: "2026-09-18T23:25",
+      text: "GEFUNDEN: Namensvorschläge kamen NIRGENDS mehr — erkannt wurde „/w <name>“, und die spitzen Klammern hatte ich längst aus der Hilfe genommen. Jetzt schlägt /w, /note, /i wieder Namen vor: aus dem eigenen Raum, aus anderen Räumen, auch aus abgeschlossenen, und wer nur auf der Seite ist" },
+    { seit: "2026-09-18T23:25",
+      text: "Favoriten selbst anlegen: einen Befehl im Vorschlagsfeld lang drücken (oder rechte Maustaste) — er steht dann mit ⭐ ganz vorn; noch einmal lang drücken nimmt ihn heraus" },
   ],
 };
