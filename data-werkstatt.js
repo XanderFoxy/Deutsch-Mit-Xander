@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 72 — Die Flüsterzeile sieht wieder aus wie vorher",
+  stand: "Runde 73 — Der Verlauf wird sauber",
 
   inArbeit: [
-    { seit: "2026-09-18T22:52",
-      text: "Alte „Du bist hier Häuptling“-Zeilen nachträglich aus dem Verlauf nehmen" },
-    { seit: "2026-09-18T22:52",
+    { seit: "2026-09-18T22:58",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T22:52",
+    { seit: "2026-09-18T22:58",
       text: "Sitzende Seitenansicht fürs Profil" },
+    { seit: "2026-09-18T22:58",
+      text: "Befehlsbeschreibungen auf dem Telefon sichtbar machen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T22:52",
-      text: "Die Punkte unter dem Namen sind weg — die Zeile sieht genau so aus wie jede andere; ein Tipp legt weiterhin „/w Name “ ins Schreibfeld" },
+    { seit: "2026-09-18T22:58",
+      text: "Die alten „Du bist hier Häuptling“-Zeilen fliegen beim Laden aus dem Verlauf und werden gleich darauf gesichert — damit sind sie wirklich weg, nicht nur ausgeblendet" },
+    { seit: "2026-09-18T22:58",
+      text: "Angefasst wird nur, was das Programm selbst gesagt hat: kein Wort von einem Menschen, auch wenn dieselben Wörter darin stehen" },
   ],
 };

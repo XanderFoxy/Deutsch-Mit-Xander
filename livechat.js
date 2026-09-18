@@ -966,8 +966,40 @@ window.LiveChat = (function () {
      einmal aus der Tabelle (beim nächsten Betreten). Erkannt wird
      sie an Absender, Zeit und Text — die Kennungen sind verschieden,
      weil die Tabelle ihre eigene vergibt. */
+  /* =========================================================
+     ALTE BEDIENUNGSHINWEISE AUS DEM VERLAUF NEHMEN
+     ---------------------------------------------------------
+     GEWUENSCHT: „Alles, was ich im Chat gesammelt habe mit ,Du bist
+     hier Haeuptling', das koennte auch wieder raus."
+
+     Er hat recht: das ist ein Hinweis zur Bedienung, kein Gespraech.
+     Heute steht so etwas als kurze Einblendung da und landet gar
+     nicht mehr im Verlauf — aber die alten Zeilen liegen noch in den
+     Geraeten, und die nimmt man nur wieder los, wenn man sie beim
+     Laden herauswirft. Genau das passiert hier, und weil der
+     gesaeuberte Verlauf gleich darauf wieder gesichert wird, sind sie
+     danach endgueltig weg.
+
+     Es geht ausschliesslich um SYSTEMZEILEN, also um das, was das
+     Programm selbst gesagt hat — kein Wort von einem Menschen wird
+     angefasst. */
+  var ALTER_MUELL = [
+    /du bist (hier|jetzt) häuptling/i,
+    /der raum war leer\s*[—-]\s*du bist hier häuptling/i
+  ];
+  function muellZeile(n) {
+    if (!n) return false;
+    if (n.art !== "system" && n.art !== "kommen") return false;
+    if (n.von) return false;                       // von einem Menschen: nie
+    var t = String(n.text || "");
+    return ALTER_MUELL.some(function (r) { return r.test(t); });
+  }
+  function altenMuellFiltern(liste) {
+    return (liste || []).filter(function (n) { return !muellZeile(n); });
+  }
+
   function verschmelzen(a, b) {
-    var alles = (a || []).concat(b || []);
+    var alles = altenMuellFiltern((a || []).concat(b || []));
     var raus = [];
     alles.sort(function (x, y) { return (x.zeit || 0) - (y.zeit || 0); });
     /* HIER LAG EIN FEHLER, und er hat jede Bildnachricht verdoppelt.
@@ -1302,7 +1334,7 @@ window.LiveChat = (function () {
   function chatLaden(raum) {
     try {
       var l = JSON.parse(localStorage.getItem(chatSchluessel(raum)) || "[]");
-      return Array.isArray(l) ? l.slice(-CHAT_HALTEN) : [];
+      return Array.isArray(l) ? altenMuellFiltern(l).slice(-CHAT_HALTEN) : [];
     } catch (e) { return []; }
   }
   /* Gesichert wird ZWEIGLEISIG: der Text in den localStorage, die
@@ -1323,7 +1355,7 @@ window.LiveChat = (function () {
       if (!roh) return [];
       try {
         var liste = JSON.parse(roh);
-        return Array.isArray(liste) ? liste : [];
+        return Array.isArray(liste) ? altenMuellFiltern(liste) : [];
       } catch (e) { return []; }
     }, function () { return []; });
   }
@@ -3060,6 +3092,10 @@ window.LiveChat = (function () {
       if (!ausLager || !ausLager.length) return;
       ausLager.forEach(function (z) { z.eigen = z.von === zustand.ichId; });
       zustand.nachrichten = verschmelzen(ausLager, zustand.nachrichten);
+      /* Gleich wieder sichern: damit sind die alten Bedienungshinweise
+         (siehe altenMuellFiltern) nicht nur ausgeblendet, sondern
+         wirklich aus dem Geraet heraus. */
+      chatSichern();
       melden();
       bilderNachreichen(zustand.nachrichten).then(function (etwas) {
         if (etwas) melden();
@@ -8231,6 +8267,9 @@ window.LiveChat = (function () {
       return offeneAufgabe ? { typ: offeneAufgabe.typ, loesung: offeneAufgabe.loesung,
                                richtige: Object.keys(offeneAufgabe.wer).length } : null;
     },
+    /* Nur zum Nachpruefen: raeumt eine Liste so auf, wie es das
+       Laden des Verlaufs tut. */
+    pruefMuellFiltern: function (liste) { return altenMuellFiltern(liste); },
     pruefAufgabeStellen: aufgabeStellen,
     pruefAufgabeFrei: aufgabeFreiStellen,
     pruefAufgabeVersuch: aufgabeVersuch,
