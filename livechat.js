@@ -2353,6 +2353,15 @@ window.LiveChat = (function () {
       }
       return;
     }
+    if (n.art === "hoert") {
+      /* Jemand spielt gerade MEINE Wortmeldung ab — oder ist damit
+         fertig. Daraus wird der Balken oben gespeist. */
+      if (n.los) hoerenGerade[n.von] = { name: n.name || "Jemand", id: n.id, seit: Date.now() };
+      else delete hoerenGerade[n.von];
+      liveSagen();
+      melden();
+      return;
+    }
     if (n.art === "sprachda") {
       /* Jemand hat meine Wortmeldung vollstaendig bekommen. */
       sprachAngekommen(n.id, n.name || "Jemand");
@@ -2846,6 +2855,7 @@ window.LiveChat = (function () {
     zustand.gemeldet = {};
     verlaufBekommen = false;
     liveKennungGehabt = {};        // neuer Raum, neues Gedaechtnis
+    hoerenGerade = {};
     verlaufSchonGeschickt = {};
     /* Der Verlauf aus diesem Raum wird MITGEBRACHT, nicht
        weggeworfen — man soll nachlesen können, was geschrieben
@@ -4251,6 +4261,42 @@ window.LiveChat = (function () {
     sprachWartenAufQuittung(id, zuhoerer);
     melden();
     return true;
+  }
+
+  /* WER HOERT MIR GERADE ZU?
+     -----------------------------------------------------------
+     GEWUENSCHT: „Wenn sie danach noch mal gehoert wird, die
+     Nachricht nach dem Abschicken — so war das ja bisher —, soll
+     oben in der Chatleiste auch mein gruener Balken stehen. Das ist
+     fuer mich wichtig, damit ich abschaetzen kann, wann die andere
+     Seite die Nachricht zu Ende gehoert hat."
+
+     Dafuer muss die andere Seite es sagen, und genau das tut sie
+     jetzt: wer eine fremde Wortmeldung abspielt, meldet dem
+     Absender „ich hoere" und danach „fertig". Beim Absender laeuft
+     der Balken genau so lange weiter.
+     Der Eintrag traegt einen Zeitpunkt: bricht die Verbindung mitten
+     im Abspielen ab, raeumt sich das nach zwei Minuten von selbst
+     weg — ein Balken, der ewig steht, waere schlimmer als keiner. */
+  var hoerenGerade = {};
+  function hoerenAufraeumen() {
+    var jetzt = Date.now();
+    Object.keys(hoerenGerade).forEach(function (id) {
+      if (jetzt - (hoerenGerade[id].seit || 0) > 120000) delete hoerenGerade[id];
+    });
+  }
+  function hoertMirZu() {
+    hoerenAufraeumen();
+    var wer = Object.keys(hoerenGerade).map(function (id) { return hoerenGerade[id].name; });
+    return wer.length ? wer : null;
+  }
+  /* Ich spiele die Wortmeldung von jemandem ab — und sage es ihm. */
+  function hoereJetzt(vonId, id, los) {
+    if (!vonId || vonId === zustand.ichId) return;
+    try {
+      senden({ art: "hoert", an: vonId, id: String(id || ""),
+               los: Boolean(los), name: zustand.ichName });
+    } catch (e) {}
   }
 
   /* Die eigenen Stuecke, solange jemand nachfragen koennte. */
@@ -7641,6 +7687,8 @@ window.LiveChat = (function () {
     /* Nur zum Nachmessen: eine Wortmeldung in Stuecken empfangen,
        dabei eines verlieren, und sehen, ob danach gefragt wird und
        ob sie am Ende vollstaendig ist. Fasst nichts Echtes an. */
+    hoertMirZu: hoertMirZu,
+    hoereJetzt: hoereJetzt,
     sprachRuecknahmen: sprachRuecknahmen,
     sprachWiederherstellen: sprachWiederherstellen,
     pruefSprachVerlust: function (anzahl, verliere) {

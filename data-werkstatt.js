@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 19m — keine Warteschlange, keine Dopplung",
+  stand: "Runde 19n — der Balken bleibt, solange drueben gehoert wird",
 
   inArbeit: [
-    { seit: "2026-09-18T20:59",
+    { seit: "2026-09-18T21:02",
       text: "Buehnenansicht: wer oben ist, sieht nur die anderen oben" },
-    { seit: "2026-09-18T20:59",
+    { seit: "2026-09-18T21:02",
       text: "Befehlserklaerungen auf dem Telefon sichtbar machen" },
-    { seit: "2026-09-18T20:59",
+    { seit: "2026-09-18T21:02",
       text: "Favoriten im Befehlspanel selbst anheften" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T20:59",
-      text: "Es gibt keine Reihe mehr, auf die man warten muss: die zuletzt gesprochene Nachricht ist die aktuelle, danach darf jeder sprechen" },
-    { seit: "2026-09-18T20:59",
-      text: "Der Sprecherbalken ist zurueck — gruene Zeile mit rotem Punkt, „Xander Fox spricht gerade\", auch wenn du selbst sprichst (dann amber)" },
-    { seit: "2026-09-18T20:59",
-      text: "Eine Aufnahme erzeugt nur noch EINE Zeile: die Quittung „Abgeschickt · 3 Sekunden\" ist raus" },
-    { seit: "2026-09-18T20:59",
-      text: "Die Bestaetigung „hat deine Wortmeldung bekommen\" verschwindet nach sieben Sekunden von selbst" },
+    { seit: "2026-09-18T21:02",
+      text: "Solange jemand deine Wortmeldung abspielt, bleibt dein Balken oben stehen — und es steht dabei, WER gerade zuhoert" },
+    { seit: "2026-09-18T21:02",
+      text: "Die andere Seite meldet Anfang und Ende des Abspielens; bricht die Verbindung ab, raeumt sich der Balken nach zwei Minuten selbst weg" },
   ],
 };

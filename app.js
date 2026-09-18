@@ -22022,7 +22022,12 @@
        Die Regel selbst steht in livechat.js (darfSprechen) — hier
        wird nur angesagt, wer gerade spricht und wann er fertig ist. */
     if (LiveChat.liveLaeuft) LiveChat.liveLaeuft({ von: w.von, name: w.name });
+    /* GEWUENSCHT: „Damit ich abschaetzen kann, wann die andere Seite
+       die Nachricht zu Ende gehoert hat." Also sagen wir es ihr —
+       beim Anfangen und beim Aufhoeren. */
+    if (LiveChat.hoereJetzt) { try { LiveChat.hoereJetzt(w.von, w.id, true); } catch (e) {} }
     const fertig = () => {
+      if (LiveChat.hoereJetzt) { try { LiveChat.hoereJetzt(w.von, w.id, false); } catch (e) {} }
       if (LiveChat.liveLaeuft) LiveChat.liveLaeuft(null);
       platzMarkieren(false);
       lcLiveLaeuft = false;
@@ -22136,7 +22141,13 @@
        aktuelle, und nach der kann jeder sprechen."
        Also wird nicht mehr gezaehlt. Der Balken sagt nur noch, WER
        gerade spricht — und sonst gar nichts. */
-    if (!lcLiveJetzt && !lcIchSpreche) { leiste.hidden = true; leiste.innerHTML = ""; return; }
+    /* Und: solange drueben jemand MEINE Wortmeldung abspielt, bleibt
+       mein Balken stehen — genau dafuer meldet die andere Seite es. */
+    let lauscher = null;
+    try { lauscher = (LiveChat.hoertMirZu && LiveChat.hoertMirZu()) || null; } catch (e) {}
+    if (!lcLiveJetzt && !lcIchSpreche && !lauscher) {
+      leiste.hidden = true; leiste.innerHTML = ""; return;
+    }
     leiste.hidden = false;
     /* GEWUENSCHT: „Ich finde das schoen, dass du unten am Kopf der
        Chatzeile stehen hast, wer gerade spricht — das finde ich
@@ -22169,12 +22180,18 @@
        „Wenn ich spreche, moechte ich auch sehen, dass ich gerade
        spreche", und zwar „so wie das vorher war vom Design", also
        als Zeile mit Punkt und Namen. */
-    const wer = lcIchSpreche
+    const meins = Boolean(lcIchSpreche) || (!lcLiveJetzt && Boolean(lauscher));
+    const wer = meins
       ? (livechatName() || "Du")
       : (lcLiveJetzt && lcLiveJetzt.name) || "Jemand";
-    leiste.classList.toggle("lc-live-ich", Boolean(lcIchSpreche));
+    leiste.classList.toggle("lc-live-ich", meins);
+    /* Steht der Balken, weil drueben jemand zuhoert, soll auch
+       DASTEHEN, wer zuhoert — sonst raet man, worauf man wartet. */
+    const zusatz = (!lcIchSpreche && lauscher)
+      ? ` <em>· ${escapeHtml(lauscher.join(", "))} hört gerade zu</em>`
+      : (!meins && gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "");
     leiste.innerHTML = `<span class="lc-live-punkt"></span><strong>${escapeHtml(wer)}</strong> spricht gerade`
-      + (!lcIchSpreche && gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "");
+      + zusatz;
   }
 
   /* Der kleine Schalter im Kopf des Klassenzimmers. Er steht neben
@@ -54179,6 +54196,21 @@ An einem Morgen lief ein kleiner Fuchs los…
     window.__tippsBinden = (bereich) => livechatTippsBinden(bereich);
     /* Fuer werkzeug/pruefe-schreien.js. */
     window.__rufSetzen = (ziel, text, n) => lcRufSetzen(ziel, text, n);
+    /* Nur zum Nachmessen: den Sprecherbalken in einem bestimmten
+       Zustand zeichnen, ohne dass dafuer wirklich jemand sprechen
+       muss. Fasst nichts Echtes an ausser der Anzeige. */
+    window.__balken = (lage) => {
+      const merkIch = lcIchSpreche, merkJetzt = lcLiveJetzt;
+      const echt = window.LiveChat && LiveChat.hoertMirZu;
+      lcIchSpreche = Boolean(lage && lage.ich);
+      lcLiveJetzt = (lage && lage.jetzt) || null;
+      if (window.LiveChat) LiveChat.hoertMirZu = () => (lage && lage.lauscher) || null;
+      try { lcLiveBalkenZeichnen(); }
+      finally {
+        lcIchSpreche = merkIch; lcLiveJetzt = merkJetzt;
+        if (window.LiveChat) LiveChat.hoertMirZu = echt;
+      }
+    };
     window.__schallStoss = (t, g) => lcSchallStoss(t, g);
     window.__schreiStimme = (g) => lcSchreiStimme(g);
     window.__schreiKette = () => lcSchreiKette.slice();
