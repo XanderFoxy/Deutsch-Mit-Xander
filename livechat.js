@@ -261,6 +261,7 @@ window.LiveChat = (function () {
     raumHgRuf: null,    // die Oberflaeche horcht hier, wenn er sich aendert
     haeuptling: false,  // hat diesen Raum aufgemacht (Kilahu: Haeuptling)
     klassensprecher: false,  // vom Lehrer ernannt — fuehrt weiter, wenn er geht
+    fokus: true,             // Regel des RAUMS: zuhoeren statt durcheinanderreden
     betreiber: false,   // Alex selbst — dann immer Haeuptling
     abgeschlossen: false,
     eingeladen: {},     // Kennung -> true, fuer den abgeschlossenen Raum
@@ -2039,6 +2040,7 @@ window.LiveChat = (function () {
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                haeuptling: zustand.haeuptling, thema: zustand.thema,
+               fokus: zustand.fokus,
                seit: zustand.seit, buehne: zustand.buehne,
                raumHg: zustand.raumHg || "",
                abgeschlossen: zustand.abgeschlossen });
@@ -2067,6 +2069,8 @@ window.LiveChat = (function () {
       personMerken(n.von, n.name, n.bild);
       if (neuHier) kommtUndGeht(n.name || "Jemand", true);
       if (typeof n.haeuptling === "boolean") zustand.leute[n.von].haeuptling = n.haeuptling;
+      /* Die Regel des Raums kommt von dem, der ihn fuehrt. */
+      if (n.haeuptling && typeof n.fokus === "boolean") zustand.fokus = n.fokus;
       if (typeof n.thema === "string" && n.thema) zustand.thema = n.thema;
       /* Den Hintergrund des Raums übernehmen — aber nur, wenn man noch
          keinen hat. Sonst überschreiben sich zwei Leute, die
@@ -2223,6 +2227,28 @@ window.LiveChat = (function () {
        HIER LAG EIN FEHLER: erst stand das beim Postempfang, also
        dort, wo nur Nachrichten an EINE Person ankommen. Gemessen:
        drei Meldungen rein, null in der Liste. */
+    /* Die Regel des Raums — nur vom Haeuptling oder Lehrer. Wer
+       sie schickt, ohne sie schalten zu duerfen, wird ignoriert:
+       geglaubt wird nicht dem Paket, sondern dem Rang. */
+    /* Jemand ruft seine Sprachnachricht zurueck. Nur die EIGENE —
+       die Kennung traegt den Absender, ein fremdes Zurueckrufen
+       gibt es nicht. */
+    if (n.art === "zurueck") {
+      if (!n.id) return;
+      sprachZurueckrufen(String(n.id));
+      return;
+    }
+    if (n.art === "fokus") {
+      var chef = zustand.leute[n.von] && zustand.leute[n.von].haeuptling;
+      if (!chef) return;
+      if (zustand.fokus === Boolean(n.fokus)) return;
+      zustand.fokus = Boolean(n.fokus);
+      systemZeile(zustand.fokus
+        ? "🎧 Fokus-Modus an — solange jemand spricht, nimmt niemand sonst auf. Schreiben geht jederzeit."
+        : "🗣️ Fokus-Modus aus — jetzt darf durcheinandergeredet werden.");
+      melden();
+      return;
+    }
     if (n.art === "hand") { zustand.gemeldet[n.von] = n.zeit || Date.now(); melden(); return; }
     if (n.art === "handweg") { delete zustand.gemeldet[n.von]; melden(); return; }
 
@@ -4339,12 +4365,39 @@ window.LiveChat = (function () {
      Der Modus ist abschaltbar: „den Livestream-Modus nehmen
      wir nur zum freien Quatschen."
      ========================================================= */
-  var FOKUS_SCHLUESSEL = "dma_livechat_fokus";
+  /* WER DEN FOKUS SCHALTET, IST WICHTIG.
+     -----------------------------------------------------------
+     GEWUENSCHT: „Vielleicht einen Schalter fuer den Fokus-Modus,
+     falls man gerade im normalen Livestream ist … dass ICH das
+     administrativ umschalten kann. Niemand sonst — sonst
+     koennten die anderen ja die Credits runtermachen."
+
+     Er hat voellig recht, und es war ein echter Fehler: der
+     Fokus-Modus lag im GERAET (localStorage). Jeder haette ihn
+     fuer sich abschalten und drauflosreden koennen — die Regel
+     war damit gar keine. Und teuer ist sie auch: der
+     Fokus-Modus laeuft ueber Sprachnachrichten (Supabase, kostet
+     nichts), der freie Livestream ueber das Relais (Cloudflare,
+     zaehlt aufs Budget).
+
+     Deshalb gehoert er jetzt dem RAUM, nicht dem Geraet: der
+     Lehrer beziehungsweise Haeuptling schaltet, es geht als
+     Rundruf an alle, und wer neu hereinkommt, bekommt den Stand
+     mit der Begruessung. Lokal laesst sich nichts mehr
+     aushebeln. */
   function fokusAn() {
-    try { return localStorage.getItem(FOKUS_SCHLUESSEL) !== "aus"; } catch (e) { return true; }
+    /* Voreinstellung: an. Zuhoeren kostet nichts, Durcheinander
+       schon — und zwar in zweierlei Hinsicht. */
+    return zustand.fokus !== false;
+  }
+  function darfFokusSchalten() {
+    return Boolean(binLehrer() || zustand.haeuptling);
   }
   function fokusSetzen(an) {
-    try { localStorage.setItem(FOKUS_SCHLUESSEL, an ? "an" : "aus"); } catch (e) {}
+    if (!darfFokusSchalten()) return fokusAn();
+    zustand.fokus = Boolean(an);
+    senden({ art: "fokus", fokus: zustand.fokus });
+    melden();
     return fokusAn();
   }
   /* Laeuft gerade eine fremde Wortmeldung? Das weiss die
@@ -4361,6 +4414,22 @@ window.LiveChat = (function () {
     if (!liveLaeuftGerade) return { ja: true };
     if (liveLaeuftGerade.von === zustand.ichId) return { ja: true };
     return { ja: false, wer: liveLaeuftGerade.name || "Jemand" };
+  }
+
+  /* Eine Sprachnachricht wieder einsammeln: aus der Warteschlange
+     und aus dem Verlauf. Gibt zurueck, ob sie noch UNGEHOERT war —
+     nur dann ist wirklich nichts passiert. */
+  function sprachZurueckrufen(id) {
+    var wars = false;
+    for (var i = liveWarteschlange.length - 1; i >= 0; i--) {
+      var w = liveWarteschlange[i];
+      if (w && String(w.id).indexOf(id) === 0) { liveWarteschlange.splice(i, 1); wars = true; }
+    }
+    zustand.nachrichten = zustand.nachrichten.filter(function (n) {
+      return !(n && n.id && String(n.id).indexOf(id) === 0);
+    });
+    melden();
+    return wars;
   }
 
   function liveMelden(f) { liveMelder = typeof f === "function" ? f : null; }
@@ -4978,7 +5047,9 @@ window.LiveChat = (function () {
     { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
-    { gr: "schule", w: "mitschrieb", kurz: "sichtbar", nutzt: "/mitschrieb",   was: "Sprachnachrichten im Chat sichtbar machen — zum Nachhören und Herunterladen" },
+    { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
+    { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [Text]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
+    { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
     { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
     { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
@@ -5044,7 +5115,9 @@ window.LiveChat = (function () {
     schrift: "\ud83d\udd24", hintergrund: "\ud83d\uddbc\ufe0f", c: "\ud83c\udfa8",
     cname: "\ud83c\udff7\ufe0f", cschrift: "\u270f\ufe0f", rw: "\u21a9\ufe0f",
     satz: "\ud83e\udde9", wort: "\ud83d\udd20", note: "\ud83d\udccb",
-    klassensprecher: "\ud83c\udf93", mitschrieb: "\ud83d\udcdd", leave: "\ud83d\udc4b",
+    klassensprecher: "\ud83c\udf93", nachhoeren: "\ud83c\udfa7", weg: "\u21a9\ufe0f", unterricht: "\ud83d\udd14",
+    fokus: "\ud83c\udfa7",
+    leave: "\ud83d\udc4b",
     h: "\u2753"
   };
   BEFEHLE.forEach(function (b) {
@@ -6085,10 +6158,81 @@ window.LiveChat = (function () {
       return noteGeben(zz.id, zahl, wofuer).ok;
     }
 
+    /* ---- „Der Unterricht beginnt" ----
+       GEWUENSCHT: „Ich moechte den Leuten auch diese Rundmail
+       geben, dass der Unterricht jetzt beginnt, dass jeder das in
+       seinem Postfach hat … Es kann ja auch ein Chat-Befehl sein,
+       das dann oben im Newsticker steht."
+
+       Denselben Weg wie der Knopf in den Einstellungen, nur von
+       hier aus — damit man nicht aus dem Raum gehen muss, um zum
+       Unterricht zu rufen. Eine Rundmail geht an ALLE und laesst
+       sich nicht zurueckholen: deshalb nur der Betreiber, und
+       hoechstens alle 30 Minuten. */
+    if (art === "unterricht") {
+      if (!zustand.betreiber) {
+        return systemZeile("Zum Unterricht rufen darf nur der Betreiber.");
+      }
+      var B_ = window.Backend;
+      if (!B_ || !B_.sendBroadcastMessage) {
+        return systemZeile("Das Postfach steht hier gerade nicht zur Verfügung.");
+      }
+      var letzteR = 0;
+      try { letzteR = Number(localStorage.getItem("dma_unterricht_glocke") || 0); } catch (e) {}
+      if (letzteR && Date.now() - letzteR < 30 * 60 * 1000) {
+        var restM = Math.ceil((30 * 60 * 1000 - (Date.now() - letzteR)) / 60000);
+        return systemZeile("Eben erst gerufen — der nächste Ruf geht in " + restM + " Minuten wieder. "
+          + "(Eine Rundmail kommt bei allen an; zweimal kurz hintereinander wäre Belästigung.)");
+      }
+      var satzU = rest.trim()
+        || "Ich bin jetzt im Klassenzimmer und mache Unterricht — komm dazu, ich freue mich auf dich!";
+      systemZeile("Schicke die Einladung an alle …");
+      B_.sendBroadcastMessage(satzU + "\n\nHier geht es direkt hinein:\n"
+        + adresseMitRaum(zustand.raum)).then(function () {
+        try { localStorage.setItem("dma_unterricht_glocke", String(Date.now())); } catch (e) {}
+        raumEreignis("Der Unterricht beginnt — " + zustand.ichName + " ist im Klassenzimmer");
+        anAlle("system", "🔔 Der Unterricht beginnt. Die Einladung liegt in jedem Postfach.");
+      }).catch(function (e) {
+        systemZeile("Das ging nicht: " + ((e && e.message) || "unbekannter Fehler"));
+      });
+      return true;
+    }
+
+    /* ---- Die letzte Sprachnachricht zurueckrufen ----
+       GEWUENSCHT: „Vielleicht auch die Moeglichkeit, dass man die
+       Nachricht wieder zurueckrufen kann oder loeschen, falls man
+       Quatsch erzaehlt hat."
+
+       Ehrlich, was das kann und was nicht: hat jemand sie schon
+       GEHOERT, ist sie gehoert — zurueckholen kann man nichts, was
+       schon aus dem Lautsprecher kam. Was geht: sie aus der
+       Warteschlange nehmen, bevor sie dran war, und sie ueberall
+       aus dem Chat entfernen. Genau das steht auch in der Antwort,
+       damit sich niemand in Sicherheit wiegt. */
+    if (art === "weg") {
+      var meine = null;
+      for (var iw = zustand.nachrichten.length - 1; iw >= 0; iw--) {
+        var nw = zustand.nachrichten[iw];
+        if (nw && nw.eigen && (nw.sprach || nw.art === "quittung")) { meine = nw; break; }
+      }
+      if (!meine) return systemZeile("Du hast hier noch nichts gesprochen.");
+      var idW = String(meine.id).replace(/-quittung$/, "").replace(/-selbst$/, "");
+      var nochNichtGehoert = sprachZurueckrufen(idW);
+      senden({ art: "zurueck", id: idW });
+      return systemZeile(nochNichtGehoert
+        ? "↩️ Zurückgerufen — sie war noch nicht dran und ist jetzt weg."
+        : "↩️ Aus dem Chat entfernt. Wer sie schon gehört hat, hat sie gehört — "
+          + "das lässt sich nicht zurückholen.");
+    }
+
     /* ---- Fokus-Modus an oder aus ----
        „Der Fokus-Modus … den Livestream-Modus nehmen wir nur zum
        freien Quatschen." Also zwei Betriebsarten, ein Schalter. */
     if (art === "fokus") {
+      if (!darfFokusSchalten()) {
+        return systemZeile("Den Fokus-Modus schaltet der " + rangWort(true) + " — "
+          + "er gilt fuer den ganzen Raum, nicht nur fuer dich.");
+      }
       var willAn = fokusAn();
       if (/^(an|ein|ja)$/i.test(rest.trim())) willAn = true;
       else if (/^(aus|nein|weg|frei)$/i.test(rest.trim())) willAn = false;
@@ -6126,7 +6270,7 @@ window.LiveChat = (function () {
        nur zum Tippen. Der Schlüssel ist bewusst DERSELBE wie in
        app.js (dma_lc_mitschrieb) — zwei Gedächtnisse für einen
        Schalter laufen sonst auseinander. */
-    if (art === "mitschrieb") {
+    if (art === "nachhoeren" || art === "mitschrieb") {
       var anJetzt = !liveSichtbar;
       if (/^(an|ein|ja)$/i.test(rest.trim())) anJetzt = true;
       if (/^(aus|nein|weg)$/i.test(rest.trim())) anJetzt = false;
@@ -6647,6 +6791,7 @@ window.LiveChat = (function () {
     darfSprechen: darfSprechen,
     fokusAn: fokusAn,
     fokusSetzen: fokusSetzen,
+    darfFokusSchalten: darfFokusSchalten,
     liveMitschrieb: liveMitschrieb,
     einsatzPing: einsatzPing,
     freisprechenAn: freisprechenAn,

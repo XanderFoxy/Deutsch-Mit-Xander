@@ -350,6 +350,30 @@
   }));
   const initial = window.location.hash?.replace("#", "");
   if (initial && document.getElementById(initial)) activateTab(initial);
+  /* =================================================================
+     EIN EINLADUNGSLINK FUEHRT INS KLASSENZIMMER, NICHT AUF DIE
+     STARTSEITE
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Sobald sie in ihrem Postfach das liest, soll sie
+     sofort in den Chat an die Stelle springen koennen."
+
+     Das tat er nicht. Der Link traegt „#raum=…", und die Zeile
+     darueber sucht dazu eine Ansicht mit genau diesem Namen — die
+     gibt es natuerlich nicht. Also landete man auf „Ueber mich" und
+     durfte das Klassenzimmer selbst suchen; die Einladung fuehrte
+     ins Nichts.
+
+     Jetzt wird der Raum erkannt und der Weg gegangen: Wissen →
+     Klassenzimmer. Die Wartezeit ist kein Schmuck — der Unterreiter
+     entsteht erst, wenn die Ansicht steht. */
+  if (/(^|[?&#])raum=/.test(window.location.hash || "")
+      || /(^|[?&])raum=/.test(window.location.search || "")) {
+    activateTab("view-knowledge");
+    setTimeout(() => {
+      const pille = document.querySelector('.subnav-pill[data-sub="sub-livechat"]');
+      if (pille) pille.click();
+    }, 360);
+  }
 
   const impressumLink = document.getElementById("impressumLink");
   if (impressumLink) {
@@ -21247,12 +21271,52 @@
      stehen (/konfetti), ist der Befehl danach fertig — dann steht der
      Cursor am Ende und Enter genügt.
      ================================================================= */
+  /* =================================================================
+     EIN TIPP INS LEERE ZEIGT, WAS GESAGT WURDE
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Erst wenn ich intuitiv wie bei Apple in das Leere
+     klicke, sehe ich, was dahinter ist; wenn ich wieder in das Leere
+     klicke, schliesst sich das wieder."
+
+     Das „Leere" ist wichtig: ein Tipp auf eine Zeile, ein Bild, einen
+     Knopf tut weiterhin, was er immer tat. Nur ein Tipp DANEBEN —
+     dorthin, wo nichts ist — schaltet die Stimmen um. Sonst koennte
+     man keine Nachricht mehr anklicken, ohne dass sich der ganze
+     Chat umbaut.
+
+     Der Zustand steht am Verlauf und nicht im Geraet: er soll NICHT
+     ueberleben. Beim naechsten Betreten ist wieder Ruhe — genau das
+     war ja der Wunsch.
+     ================================================================= */
+  function lcStimmenUmschalten(verlauf) {
+    const an = verlauf.classList.toggle("lc-stimmen-offen");
+    const wieviel = verlauf.querySelectorAll(".lc-stimme").length;
+    showToast(an
+      ? (wieviel ? "🎧 " + wieviel + " Sprachnachricht" + (wieviel === 1 ? "" : "en")
+                   + " zum Nachhören und Herunterladen."
+                 : "🎧 Hier wurde noch nichts gesprochen.")
+      : "🎧 Wieder zugeklappt — gesprochen wird weiter gehört.");
+    return an;
+  }
+
+  function lcStimmenBinden(bereich) {
+    const verlauf = bereich.querySelector("#lcVerlauf");
+    if (!verlauf || verlauf.dataset.stimmen === "ja") return;
+    verlauf.dataset.stimmen = "ja";
+    verlauf.addEventListener("click", (e) => {
+      /* Nur das Leere. Alles, was ein eigenes Ziel hat, behaelt es. */
+      if (e.target !== verlauf) return;
+      lcStimmenUmschalten(verlauf);
+    });
+  }
+
   /* Welche Kategorie gerade gewaehlt ist. Leer heisst: alle. Sie
      steht ausserhalb, damit sie ein Neuzeichnen des Chats ueberlebt —
      sonst faellt einem die Auswahl beim naechsten Buchstaben weg. */
   let lcTippGruppe = "";
 
   function livechatTippsBinden(area) {
+    lcStimmenBinden(area);
     const feld = area.querySelector("#lcFeld");
     const kasten = area.querySelector("#lcTipps");
     if (!feld || !kasten) return;
@@ -21743,11 +21807,60 @@
     const gesperrt = lcLiveJetzt && LiveChat.fokusAn && LiveChat.fokusAn()
       && LiveChat.darfSprechen && !LiveChat.darfSprechen().ja;
     leiste.classList.toggle("lc-live-fokus", Boolean(gesperrt));
+    /* =============================================================
+       DER SCHALTER — ABER NUR FUER DEN, DER IHN HABEN DARF
+       -------------------------------------------------------------
+       GEWUENSCHT: „Vielleicht einen Schalter fuer den Fokus-Modus,
+       falls man gerade im normalen Livestream ist … dass ICH das
+       administrativ umschalten kann. Niemand sonst — sonst koennten
+       die anderen ja die Credits runtermachen."
+
+       Beides ist wahr: der Fokus-Modus haelt den Unterricht
+       zusammen, UND er ist der billige Weg (Sprachnachrichten ueber
+       Supabase kosten nichts, der freie Livestream laeuft ueber das
+       Relais und zaehlt aufs Budget). Deshalb sieht nur der Lehrer
+       beziehungsweise Haeuptling diesen Schalter — und die Regel
+       selbst liegt im Raum, nicht im Geraet, damit sie niemand fuer
+       sich aushebeln kann (siehe livechat.js). */
+    lcFokusSchalterZeichnen();
     leiste.innerHTML = lcLiveJetzt
       ? `<span class="lc-live-punkt"></span><strong>${escapeHtml(lcLiveJetzt.name || "Jemand")}</strong> spricht`
         + (offen ? ` <em>· noch ${offen} in der Reihe</em>` : "")
         + (gesperrt ? ` <em class="lc-live-warte">· 🎧 zuhören, dann bist du dran</em>` : "")
       : `<em>${offen} Wortmeldung${offen === 1 ? "" : "en"} in der Reihe …</em>`;
+  }
+
+  /* Der kleine Schalter im Kopf des Klassenzimmers. Er steht neben
+     dem Raumnamen, weil er zum RAUM gehoert und nicht zu einer
+     Person — und er ist nur da, wenn man ihn auch benutzen darf. */
+  function lcFokusSchalterZeichnen() {
+    const kopf = document.getElementById("lcKopf");
+    if (!kopf || !window.LiveChat || !LiveChat.darfFokusSchalten) return;
+    const darf = LiveChat.darfFokusSchalten();
+    let k = document.getElementById("lcFokusSchalter");
+    if (!darf) { if (k) k.remove(); return; }
+    if (!k) {
+      k = document.createElement("button");
+      k.type = "button";
+      k.id = "lcFokusSchalter";
+      k.className = "lc-fokus-schalter";
+      k.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const neu = !LiveChat.fokusAn();
+        LiveChat.fokusSetzen(neu);
+        lcFokusSchalterZeichnen();
+        showToast(neu
+          ? "🎧 Fokus-Modus an — einer spricht, alle hören zu."
+          : "🗣️ Fokus-Modus aus — freies Quatschen. Das läuft über das Relais und zählt aufs Budget.");
+      });
+      kopf.appendChild(k);
+    }
+    const an = LiveChat.fokusAn();
+    k.classList.toggle("ist-an", an);
+    k.textContent = an ? "🎧 Fokus" : "🗣️ frei";
+    k.title = an
+      ? "Fokus-Modus: solange jemand spricht, nimmt niemand sonst auf. Antippen für freies Reden."
+      : "Freies Reden — alle dürfen gleichzeitig. Antippen für den Fokus-Modus (kostet nichts).";
   }
 
   /* Jede Person bekommt ihre eigene Farbe — wie in den alten Chats.
@@ -23310,8 +23423,13 @@
             w.textContent = "🎤 Sprachnachricht — nicht mehr da";
             t.appendChild(w);
           } else {
-            const knopf = document.createElement("button");
-            knopf.type = "button";
+            /* Ein <span> mit Knopfrolle statt eines <button>: gleich
+               kommt der Herunterladen-Verweis HINEIN, und ein <a> in
+               einem <button> ist ungueltig — Browser zerlegen das
+               still und der Verweis funktioniert nicht mehr. */
+            const knopf = document.createElement("span");
+            knopf.setAttribute("role", "button");
+            knopf.tabIndex = 0;
             knopf.className = "lc-sprachblase";
             knopf.title = "Antippen — noch einmal hören (nur für dich)";
             const balken = document.createElement("i");
@@ -23332,6 +23450,17 @@
             const zeit = document.createElement("em");
             zeit.textContent = dauer ? dauer + "″" : "";
             knopf.appendChild(zeit);
+            /* GEWUENSCHT: „Vielleicht kannst du den Download-Knopf
+               innerhalb der Sprachnachricht anbringen, dass er nicht
+               Platz verschwendet, dass er nicht darunter ist — rechts
+               neben der Zeit der Sprachnachricht dieses
+               Download-Signal."
+
+               Genau dorthin. Er ist kein eigener Knopf mehr, sondern
+               sitzt IN der Blase; der Verweis wird gleich unten
+               gebaut und hier eingehaengt. Ein <a> in einem <button>
+               waere ungueltiges HTML — deshalb ist die Blase selbst
+               ein <span> mit Knopfrolle. */
             /* GEMELDET: „Sie sind nicht automatisch von alleine
                hoerbar … mach eine Programmroutine, die das wie bei den
                Animationen verarbeitet."
@@ -23361,6 +23490,9 @@
               a.onended = fertig;
             };
             knopf.addEventListener("click", hoeren);
+            knopf.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); hoeren(e); }
+            });
             t.appendChild(knopf);
             /* HERUNTERLADEN.
                „Ich moechte auch ganze Geschichten vorlesen koennen,
@@ -23384,7 +23516,8 @@
               + "-" + wann.toISOString().slice(0, 16).replace(/[:T]/g, "-") + "." + endung;
             holen.textContent = "⤓";
             holen.addEventListener("click", (e) => e.stopPropagation());
-            t.appendChild(holen);
+            /* IN die Blase, rechts neben die Zeit — nicht darunter. */
+            knopf.appendChild(holen);
             /* Von selbst abspielen — aber nur, wenn die Zeile gerade
                eben entstanden ist. „Alt" heisst hier dasselbe wie bei
                den Animationen: was vor dem Betreten geschrieben wurde,
@@ -23413,13 +23546,30 @@
                Herunterladen-Pfeil voll ausgeschrieben da. Jetzt ist sie
                zu — eine schmale Zeile, ein Tipp klappt sie auf. Dann
                erst kommen Abspielen und Herunterladen. */
-            if (art === "quittung" || art === "live") {
-              z.classList.add("lc-sprach-zu");
-              z.title = "Antippen — anhören oder herunterladen";
-              z.addEventListener("click", (e) => {
-                if (e.target.closest(".lc-sprachblase, .lc-sprach-holen, .lc-benoten, .lc-notenwahl")) return;
-                z.classList.toggle("lc-sprach-zu");
-              });
+            /* =========================================================
+               GESPROCHENES IST UNSICHTBAR — BIS MAN INS LEERE TIPPT
+               ---------------------------------------------------------
+               GEWUENSCHT: „Der Chat soll sich an der Stelle nicht
+               fuellen, wenn man etwas sagt … Es soll nur irgendwie so
+               ein globales Ding sein, wo ich das einblende, was gesagt
+               wurde von allen Personen. Und dass man, wenn man etwas
+               sagt, nicht immer die Sachen sieht — die sind generell
+               versteckt. Erst wenn ich intuitiv wie bei Apple in das
+               Leere klicke, sehe ich, was dahinter ist; wenn ich
+               wieder in das Leere klicke, schliesst sich das wieder."
+
+               Also nicht Zeile fuer Zeile aufklappen, sondern EIN
+               Griff fuer alles: ein Tipp in den leeren Teil des
+               Chats blendet ALLE gesprochenen Sachen ein, ein
+               zweiter blendet sie wieder aus. Die Zeilen tragen
+               dafuer nur eine Marke; das Ein- und Ausblenden macht
+               eine einzige Klasse am Verlauf (siehe
+               lcStimmenUmschalten weiter unten).
+
+               Waehrend man spricht, sieht man also gar nichts — oben
+               im Kopf steht ja, wer gerade dran ist, und das reicht. */
+            if (art === "quittung" || art === "live" || art === "sprach") {
+              z.classList.add("lc-stimme");
             }
             if (frisch && !lcSprachGehoert.has(n.id)) {
               lcSprachGehoert.add(n.id);
