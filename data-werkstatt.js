@@ -49,30 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 21 — der Notenknopf, jetzt wirklich, und die Klasse dazu (v312)",
+  stand: "Runde 22 — die Aufgabe gehört jetzt dem Raum (v313)",
 
   inArbeit: [
-    { seit: "2026-09-19T01:27",
-      text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus (kostet nichts)" },
-    { seit: "2026-09-19T01:27",
+    { seit: "2026-09-19T01:34",
+      text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus, kostet nichts" },
+    { seit: "2026-09-19T01:34",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T01:27",
+    { seit: "2026-09-19T01:34",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T01:27",
+    { seit: "2026-09-19T01:34",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T01:27",
-      text: "Notenknopf: die Zeit-Klasse ist raus — auch eine Stunde später beantwortet zählt" },
-    { seit: "2026-09-19T01:27",
-      text: "Wofür die Note? Satzbau, Grammatik, Wortschatz, Rechtschreibung, Aussprache, Verstehen" },
-    { seit: "2026-09-19T01:27",
-      text: "Satzpuzzle ist vorausgewählt auf Satzbau, Wortpuzzle auf Rechtschreibung" },
-    { seit: "2026-09-19T01:27",
-      text: "Eine Aufgabe bleibt drei Tage stehen statt zwölf Stunden" },
-    { seit: "2026-09-19T01:27",
-      text: "Antwort zum eigenen Medienserver: supabase/MEDIENSERVER-SELBST.md" },
+    { seit: "2026-09-19T01:34",
+      text: "Die Aufgabe reist zu allen Geräten — der Notenknopf war sonst nur auf dem Gerät da, das sie gestellt hat" },
+    { seit: "2026-09-19T01:34",
+      text: "Die Lösung reist NICHT mit: niemand kann spicken" },
+    { seit: "2026-09-19T01:34",
+      text: "Neue Zeile im Klassenzimmer: Aufgabe läuft …, mit Beenden-Knopf" },
+    { seit: "2026-09-19T01:34",
+      text: "Wer neu hereinkommt, bekommt die laufende Aufgabe nachgereicht" },
   ],
 };

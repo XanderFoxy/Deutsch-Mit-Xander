@@ -20349,6 +20349,17 @@
         <div class="lc-themazeile" id="lcThemaZeile">
           <p class="lc-thema" id="lcThema" style="display:none;"></p>
         </div>
+        <!-- GEMELDET, immer wieder: „Die Benotung wird immer noch nicht
+             angezeigt." Eine der Ursachen war, dass man gar nicht SIEHT,
+             ob überhaupt eine Aufgabe offen steht — und ohne offene
+             Aufgabe gibt es keinen Notenknopf. Diese Zeile sagt es,
+             solange eine läuft, und lässt sie mit einem Tipp beenden. -->
+        <div class="lc-aufgabe-laeuft" id="lcAufgabeLaeuft" hidden>
+          <span class="lc-aufgabe-wort">📝 Aufgabe läuft</span>
+          <span class="lc-aufgabe-text" id="lcAufgabeText"></span>
+          <button type="button" class="lc-aufgabe-schluss" id="lcAufgabeSchluss"
+                  title="Die Aufgabe beenden — danach steht an keiner Zeile mehr ein Notenknopf">beenden</button>
+        </div>
 
         <div class="lc-plaetze" id="lcPlaetze">${plaetze.join("")}</div>
 
@@ -20665,8 +20676,34 @@
   }
 
   /* --- Die acht Plätze auffrischen: nur Inhalte, keine Elemente --- */
+  /* Läuft gerade eine Aufgabe? Die Zeile steht nur dann da — und sie
+     ist der Grund, warum er nicht mehr raten muss, ob ein Notenknopf
+     kommen kann. Sie gilt für alle: die Mitlernenden sehen, dass eine
+     Aufgabe offen ist; beenden darf sie nur der Lehrer. */
+  function lcAufgabeZeichnen() {
+    const kasten = document.getElementById("lcAufgabeLaeuft");
+    if (!kasten) return;
+    let a = null;
+    try { a = LiveChat.offeneAufgabeInfo ? LiveChat.offeneAufgabeInfo() : null; } catch (e) { a = null; }
+    kasten.hidden = !a;
+    if (!a) return;
+    const txt = document.getElementById("lcAufgabeText");
+    if (txt) {
+      txt.textContent = a.frage
+        ? "„" + a.frage + "“"
+        : (a.typ === "satz" ? "Satzpuzzle" : a.typ === "wort" ? "Wortpuzzle" : "");
+      txt.title = a.klasse ? "Eine Note dafür zählt als " + a.klasse : "";
+    }
+    const schluss = document.getElementById("lcAufgabeSchluss");
+    if (schluss) {
+      const darf = Boolean(window.LiveChat && LiveChat.binLehrer && LiveChat.binLehrer());
+      schluss.style.display = darf ? "" : "none";
+    }
+  }
+
   function livechatPlaetzeAuffrischen(l) {
     lcAnsichtZeichnen(l);
+    lcAufgabeZeichnen();
     l.plaetze.forEach((p) => {
       const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
       if (!knopf) return;
@@ -25651,6 +25688,14 @@
         showToast(neu === "gegenueber"
           ? "👥 Gegenüber — du siehst nur noch, wer wirklich auf der Bühne sitzt, dafür gross."
           : "🪑 Klassenzimmer — alle acht Plätze, auch die freien.");
+      });
+      /* Die Aufgabe beenden — dasselbe wie  /aufgabe  ohne Text, nur
+         zum Antippen. Danach steht an keiner Zeile mehr ein
+         Notenknopf, und genau das soll sichtbar entschieden sein. */
+      area.querySelector("#lcAufgabeSchluss")?.addEventListener("click", () => {
+        LiveChat.schreiben("/aufgabe");
+        lcAufgabeZeichnen();
+        showToast("✔️ Die Aufgabe ist beendet.");
       });
       area.querySelector("#lcRaeume")?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");

@@ -9114,3 +9114,53 @@ body.lc-schreibt .tutor-reiter {
    Frage noch einmal beantwortet. Der Knopf sieht gleich aus, nur der
    Rand sagt leise, dass es später kam. */
 .lc-benoten-spaet { border-style: dashed; }
+
+/* =================================================================
+   „HIER LÄUFT EINE AUFGABE" — DAMIT ER NICHT MEHR RATEN MUSS
+   -----------------------------------------------------------------
+   GEMELDET, immer wieder: „Die Benotung wird immer noch nicht
+   angezeigt."
+
+   Eine der Ursachen war, dass man gar nicht SIEHT, ob überhaupt eine
+   Aufgabe offen steht. Ohne offene Aufgabe gibt es keinen Notenknopf
+   — von aussen sieht das genauso aus wie ein kaputter Knopf. Diese
+   Zeile ist da, solange eine Aufgabe läuft, und sonst gar nicht
+   (hidden, kein Platzhalter).
+   ================================================================= */
+.lc-aufgabe-laeuft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(224, 150, 74, 0.55);
+  background: rgba(224, 150, 74, 0.09);
+  font-size: 0.78rem;
+}
+.lc-aufgabe-laeuft[hidden] { display: none; }
+.lc-aufgabe-wort { flex: 0 0 auto; font-weight: 700; }
+/* Der Text darf lang sein — er bekommt den Rest der Zeile und wird
+   abgeschnitten statt sie zu sprengen. min-width: 0, sonst kann ein
+   Flex-Kind nicht schrumpfen; das hatten wir schon einmal. */
+.lc-aufgabe-text {
+  flex: 1 1 120px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+.lc-aufgabe-schluss {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+.lc-aufgabe-schluss:hover { background: rgba(224, 150, 74, 0.2); }

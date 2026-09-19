@@ -2496,6 +2496,10 @@ window.LiveChat = (function () {
                seit: zustand.seit, buehne: zustand.buehne,
                raumHg: zustand.raumHg || "",
                abgeschlossen: zustand.abgeschlossen });
+      /* Und die offene Aufgabe gleich hinterher — wer hereinkommt,
+         soll nicht erst warten, bis die naechste gestellt wird. Ohne
+         Loesung, siehe aufgabeVerkuenden(). */
+      aufgabeVerkuenden(n.von);
       /* DEN VERLAUF NACHREICHEN.
          ---------------------------------------------------------
          GEMELDET: „Immer wenn ich das ausprobiere, sehen die Leute
@@ -2566,6 +2570,29 @@ window.LiveChat = (function () {
       systemZeile((n.name || "Jemand") + (zustand.raumHg
         ? " hat den Hintergrund gewechselt."
         : " hat den Hintergrund auf den Standard zurückgesetzt."));
+      melden();
+      return;
+    }
+    /* Jemand hat eine Aufgabe gestellt — sie gilt ab jetzt auch hier.
+       Ohne Loesung (siehe aufgabeVerkuenden): der Notenknopf braucht
+       sie nicht, und niemand soll spicken koennen. */
+    if (n.art === "aufgabeAn") {
+      var neuerZeitpunkt = n.zeit || Date.now();
+      if (offeneAufgabe && (offeneAufgabe.zeit || 0) >= neuerZeitpunkt) return;
+      offeneAufgabe = {
+        typ: String(n.typ || "frei"),
+        loesung: "",
+        frage: String(n.frage || "").slice(0, 300),
+        teile: [], wer: {}, zeit: neuerZeitpunkt
+      };
+      aufgabeMerken();
+      melden();
+      return;
+    }
+    if (n.art === "aufgabeAus") {
+      if (!offeneAufgabe) return;
+      offeneAufgabe = null;
+      aufgabeMerken();
       melden();
       return;
     }
@@ -5218,6 +5245,7 @@ window.LiveChat = (function () {
     var gemischt = mischen(teile);
     offeneAufgabe = { typ: typ, loesung: text, frage: "", teile: teile, wer: {}, zeit: Date.now() };
     aufgabeMerken();
+    aufgabeVerkuenden();
     return anAlle("aufgabe", (typ === "satz"
         ? "🧩 Bring den Satz in Ordnung: "
         : "🔤 Bau das Wort richtig auf: ") + gemischt.join(" · "));
@@ -5250,6 +5278,7 @@ window.LiveChat = (function () {
         var war = offeneAufgabe.frage || offeneAufgabe.loesung || "";
         offeneAufgabe = null;
         aufgabeMerken();
+        senden({ art: "aufgabeAus" });
         return systemZeile("✔️ Die Aufgabe ist beendet"
           + (war ? " („" + String(war).slice(0, 40) + "“)" : "")
           + " — ab jetzt ist wieder alles ganz gewoehnlicher Chat.");
@@ -5260,7 +5289,48 @@ window.LiveChat = (function () {
     offeneAufgabe = { typ: "frei", loesung: "", frage: text.slice(0, 300),
                       teile: [], wer: {}, zeit: Date.now() };
     aufgabeMerken();
+    aufgabeVerkuenden();
     return anAlle("aufgabe", "📝 Aufgabe: " + text);
+  }
+
+  /* =================================================================
+     EINE AUFGABE GEHOERT DEM RAUM, NICHT DEM GERAET
+     -----------------------------------------------------------------
+     GEMELDET, immer wieder: „Die Benotung wird immer noch nicht
+     angezeigt." Hier ist die zweite Ursache, und sie ist so still wie
+     die erste:
+
+     Die offene Aufgabe lag NUR auf dem Geraet, das  /aufgabe
+     getippt hat. An alle anderen ging bloss eine Chatzeile — schoen
+     zu lesen, aber ohne jede Wirkung. Wer die Aufgabe auf dem Telefon
+     stellt und spaeter am Rechner die Antworten durchsieht, hat dort
+     GAR KEINE offene Aufgabe, und damit an keiner einzigen Zeile
+     einen Notenknopf. Von aussen sieht das genauso aus wie ein
+     kaputter Knopf.
+
+     Jetzt reist sie mit: Wer eine Aufgabe stellt, sagt es allen im
+     Raum; wer neu hereinkommt, bekommt sie nachgereicht.
+
+     EINS WIRD DABEI ABSICHTLICH NICHT MITGESCHICKT: die Loesung.
+     Bei einem Wort- oder Satzpuzzle stuende sie sonst auf jedem
+     Geraet im Raum, und wer nachsieht, hat die Aufgabe geloest, ohne
+     sie zu loesen. Auf den anderen Geraeten steht deshalb nur, DASS
+     eine Aufgabe laeuft und wie sie heisst. Der Notenknopf braucht
+     die Loesung nicht — er braucht nur zu wissen, dass eine Aufgabe
+     offen ist. Das automatische „richtig!" bleibt auf dem Geraet, das
+     die Aufgabe gestellt hat; das ist der ehrliche Preis dafuer, dass
+     niemand spicken kann.
+     ================================================================= */
+  function aufgabeVerkuenden(anId) {
+    if (!offeneAufgabe) return;
+    var paket = {
+      art: "aufgabeAn",
+      typ: offeneAufgabe.typ,
+      frage: offeneAufgabe.frage || "",
+      zeit: offeneAufgabe.zeit || Date.now()
+    };
+    if (anId) paket.an = anId;
+    senden(paket);
   }
 
   /* EINE AUFGABE UEBERLEBT DAS NEULADEN.
