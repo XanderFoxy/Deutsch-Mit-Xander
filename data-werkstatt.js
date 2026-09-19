@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 83 — Der Befund sagt, was wirklich los ist",
+  stand: "Runde 84 — Schreien geht überall, der Tutor erklärt das Klassenzimmer neu",
 
   inArbeit: [
-    { seit: "2026-09-19T00:14",
-      text: "Sitzende Seitenansicht fürs Profil (die Figuren haben acht Haltungen, aber keine im Profil)" },
-    { seit: "2026-09-19T00:14",
-      text: "Tutor-Figur, die in jedem Bereich hereinkommt und erklärt" },
+    { seit: "2026-09-19T00:23",
+      text: "21 Tutor-Stücke warten noch auf deine Stimme (sie laufen so lange nach Lesezeit)" },
+    { seit: "2026-09-19T00:23",
+      text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T00:14",
-      text: "/diagnose zeigt jetzt die Leitung (frei oder wer spricht und wie lange noch), wie viele Wortmeldungen in der Reihe stehen, ob Zeilen auf das Netz warten — und wie weit die Uhren der anderen auseinandergehen" },
-    { seit: "2026-09-19T00:14",
-      text: "Genau daran ist heute eine Unterhaltung gescheitert: wer eine Uhr hat, die zwei Minuten nachgeht, sieht das jetzt schwarz auf weiß statt es zu erraten" },
+    { seit: "2026-09-19T00:23",
+      text: "GEFUNDEN, warum du beim Schreien immer den alten Sound hörst: ohne DEUTSCHE Stimme wurde gar nicht gesprochen. Auf dem Telefon ist die Stimmenliste beim ersten Mal noch leer, und manche Geräte haben überhaupt keine deutsche Stimme — jetzt wird einmal auf die Liste gewartet und sonst mit der Standardstimme auf Deutsch geschrien, mit Echo" },
+    { seit: "2026-09-19T00:23",
+      text: "Der Tutor kann einen Unterbereich jetzt in mehreren Stücken erklären, nicht mehr nur in einem einzigen langen Text" },
+    { seit: "2026-09-19T00:23",
+      text: "Der Klassenzimmer-Text ist auf dem Stand von heute: Wortmeldungen hinter dem Tipp ins Leere, Flüstern das der Person folgt, /aufgabe mit Note an der Antwort, Bühnenansicht, hängende Leitung antippen" },
   ],
 };

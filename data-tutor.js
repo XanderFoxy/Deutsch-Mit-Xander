@@ -258,10 +258,28 @@ window.DMA_TUTOR_BEREICHE = {
     text: "Dasselbe Ding, sieben Namen. Hier siehst du, wie ein Wort in Bayern heißt, bei den Schwaben, in Sachsen, im Ruhrgebiet, in Berlin, in Österreich und in der Schweiz. Hochdeutsch lernst du im Kurs — verstanden wirst du erst, wenn du den Rest auch kennst.",
   },
   "sub-livechat": {
+    /* NACHGEFUEHRT im September. Der Raum kann inzwischen deutlich
+       mehr, als hier stand — und ein Text von siebzig Sekunden in
+       EINER Sprechblase liest niemand zu Ende. Deshalb vier Stuecke,
+       wie bei den grossen Bereichen auch. Was hier steht, ist
+       nachgemessen, nicht angekuendigt.
+       Der alte Ton (b-klassenzimmer) gehoert zum ersten Stueck; die
+       anderen drei laufen nach Lesezeit, bis sie aufgenommen sind. */
     ton: "b-klassenzimmer",
-    text: "Das Klassenzimmer ist echter Unterricht, nicht nur ein Livestream. Wer etwas sagen möchte, meldet sich — dann wird er gehört, sobald der vor ihm fertig gesprochen hat. Dadurch redet niemand in jemanden hinein, und man kann wirklich fokussiert lernen, ohne die Störungen, die man aus normalen Livestreams kennt. "
-      + "Du kannst außerdem Animationen schicken, Reaktions-Sticker, bewegte Bilder und Fotos. Der Chat versteht viele Befehle — wenn du sie kennenlernen willst, findest du sie alle unter „Befehle“. "
-      + "Und das Gesagte lässt sich speichern: damit übst du Shadowing an Texten, die wir gerade wirklich besprochen haben — ein echter Mensch liest sie dir vor, und du sprichst sie zu Hause in Ruhe nach, bis es sitzt.",
+    text: "Das Klassenzimmer ist echter Unterricht, nicht nur ein Livestream.",
+    stuecke: [
+      { ton: "b-klassenzimmer",
+        text: "Das Klassenzimmer ist echter Unterricht, nicht nur ein Livestream. Wer etwas sagen möchte, hält das Mikrofon gedrückt und spricht — gehört wird er, sobald der vor ihm fertig ist. So redet niemand in jemanden hinein." },
+      { ton: "",
+        text: "Die Wortmeldungen stehen nicht im Chat herum. Tipp einmal in den leeren Teil des Chats, dann siehst du sie alle — zum Nachhören, zum Herunterladen und zum Zurückrufen, solange sie noch niemand gehört hat.",
+        hilfe: "Bleibt der grüne Balken einmal stehen: tipp ihn an. Er sagt dir, ob die Leitung wirklich belegt ist — und gibt sie frei, wenn nur die Anzeige hängt." },
+      { ton: "",
+        text: "Willst du jemandem etwas nur für ihn sagen, schreibst du „/w“ und seinen Namen. Geflüstert wird der Person, nicht dem Raum: sie sieht es auch später noch und in jedem anderen Raum, in dem sie sitzt. Und wenn du eine geflüsterte Zeile antippst, steht die Antwort schon vorbereitet im Schreibfeld.",
+        hilfe: "Die Namen schlägt dir das Feld beim Tippen vor — auch von Leuten aus anderen Räumen." },
+      { ton: "",
+        text: "Aufgaben stellst du mit „/satz“, mit „/wort“ oder mit „/aufgabe“ in deinen eigenen Worten. An der Antwort darauf steht dann ein Knopf, mit dem du eine Note von eins bis sechs geben kannst — nur an der Antwort, nicht an jeder Zeile. Und oben rechts wechselst du zwischen dem Klassenzimmer mit allen acht Plätzen und dem Gegenüber, in dem nur zu sehen ist, wer wirklich auf der Bühne sitzt.",
+        hilfe: "Alle Befehle stehen unter „ⓘ Befehle“. Tipp im Vorschlagsfeld einen Befehl lang an, dann steht er künftig als Favorit ganz vorn." }
+    ],
   },
   "sub-music": {
     ton: "b-musik",

@@ -22935,7 +22935,11 @@
     if (!s) return;
     try {
       const a = new SpeechSynthesisUtterance(s.satz);
-      a.voice = s.stimme;
+      /* Ohne eigene Stimme bleibt „voice" leer — dann nimmt der
+         Browser seine Standardstimme, und wir sagen ihr nur, welche
+         Sprache sie sprechen soll. Ein „voice = null" ist dabei
+         erlaubt und heisst genau das. */
+      if (s.stimme) a.voice = s.stimme;
       a.lang = (s.stimme && s.stimme.lang) || "de-DE";
       a.pitch = s.hoehe;
       a.rate = s.tempo;
@@ -22953,24 +22957,49 @@
     } catch (e) { lcSchreiKette = []; }
   }
 
-  function lcSchreiSprechen(text, geschlecht) {
+  function lcSchreiSprechen(text, geschlecht, nochmal) {
     const satz = String(text || "").trim();
     if (!satz || satz.length > 220) return false;      // ein Schrei ist kurz
     if (!lcToeneAn()) return false;
     try {
       if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
       const stimme = lcSchreiStimme(geschlecht);
-      if (!stimme) {
-        /* Die Stimmenliste kommt bei manchen Browsern erst
-           nachtraeglich. Einmal darauf warten und es dann noch
-           einmal versuchen — aber nur einmal, sonst redet es
-           irgendwann von selbst los. */
-        if (lcStimmenGeladen === null && window.speechSynthesis) {
-          lcStimmenGeladen = false;
-          window.speechSynthesis.addEventListener("voiceschanged", () => {
-            lcStimmenGeladen = true;
-          }, { once: true });
-        }
+      /* =============================================================
+         OHNE DEUTSCHE STIMME WIRD TROTZDEM GESPROCHEN
+         -------------------------------------------------------------
+         GEMELDET: „Du hattest gesagt, dass du eine Echoueberlagerung
+         von den Stimmen erzeugen kannst … aber ich hoere immer noch
+         den alten Sound."
+
+         Hier lag es, und es war ein hartes „nein": fand sich keine
+         DEUTSCHE Stimme, wurde gar nicht gesprochen — es blieb beim
+         alten Hall. Auf dem Telefon passiert genau das staendig, aus
+         zwei Gruenden: die Stimmenliste ist beim ersten Aufruf noch
+         leer (sie kommt erst mit „voiceschanged" nach), und manche
+         Geraete haben ueberhaupt keine deutsche Stimme installiert.
+
+         Jetzt:
+           * Ist die Liste noch leer, wird EINMAL darauf gewartet und
+             der Schrei dann wirklich wiederholt — nicht nur ein
+             Merker gesetzt, wie es hier vorher stand.
+           * Gibt es auch dann keine deutsche Stimme, wird mit der
+             Standardstimme gesprochen und nur die Sprache auf
+             Deutsch gestellt. Eine fremde Stimme, die deutsche Worte
+             sagt, ist immer noch ein Schrei — ein Geraeusch ohne
+             Worte ist keiner.
+         ============================================================= */
+      if (!stimme && !nochmal && !lcDeutscheStimmen().length
+          && window.speechSynthesis && window.speechSynthesis.addEventListener
+          && lcStimmenGeladen === null) {
+        lcStimmenGeladen = false;
+        window.speechSynthesis.addEventListener("voiceschanged", () => {
+          lcStimmenGeladen = true;
+          /* Und jetzt wirklich schreien — mit dem Wort, um das es
+             ging. Der Hall ist inzwischen verklungen; besser ein
+             Schrei knapp danach als gar keiner. */
+          lcSchreiSprechen(satz, geschlecht, true);
+        }, { once: true });
+        try { window.speechSynthesis.getVoices(); } catch (e) {}
         return false;
       }
       /* Was noch laeuft, wird abgebrochen: zwei Schreie
@@ -22980,7 +23009,11 @@
          einen Mann — und genau das war NICHT gewuenscht. Sie wird
          deshalb nur so weit gesenkt, dass sie dunkel und ernst
          klingt und trotzdem eine Frau bleibt. */
-      const frau = LC_STIMME_FRAU.test(stimme.name || "");
+      /* Ohne Stimme entscheidet das Profil, wie hoch gesprochen wird —
+         der Name einer Stimme, die es nicht gibt, sagt ja nichts. */
+      const will = String(geschlecht || "").trim().toLowerCase();
+      const frau = stimme ? LC_STIMME_FRAU.test(stimme.name || "")
+                          : (will === "weiblich" || will === "w" || will === "\u2640");
       const hoehe = frau ? 0.70 : 0.35;
       const tempo = frau ? 0.82 : 0.78;
       const echos = satz.length <= 30 ? 2 : satz.length <= 70 ? 1 : 0;
@@ -55914,7 +55947,16 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Ein einzelnes Stueck ist nichts anderes als eine Runde mit
          genau einem Eintrag — dieselbe Maschinerie, kein zweiter Weg,
          der auseinanderlaufen koennte. */
-      tutorLauf = { bereich: sub, stuecke: [{ ton: st.ton, text: st.text, ziel: "", hilfe: st.hilfe || "" }], nr: 0 };
+      /* Ein Unterbereich darf inzwischen MEHRERE Stuecke haben — ein
+         Raum wie das Klassenzimmer laesst sich nicht in einem Atemzug
+         erklaeren, und ein Text von siebzig Sekunden in einer einzigen
+         Sprechblase liest niemand zu Ende. Steht dort nur ein Text,
+         bleibt es bei dem einen Stueck wie bisher. */
+      const teile = (Array.isArray(st.stuecke) && st.stuecke.length)
+        ? st.stuecke.map((x) => ({ ton: x.ton || "", text: x.text || "",
+                                   ziel: x.ziel || "", hilfe: x.hilfe || "" }))
+        : [{ ton: st.ton, text: st.text, ziel: "", hilfe: st.hilfe || "" }];
+      tutorLauf = { bereich: sub, stuecke: teile, nr: 0 };
       tutorStueckSpielen();
     });
   }
