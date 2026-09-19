@@ -62,6 +62,31 @@ const NAME = "__sondenball";
     return d.breite === 320 && d.hoehe === 568 && d.sekunden > 1;
   })(), fs.existsSync(daten) ? fs.readFileSync(daten, "utf8").replace(/\s+/g, " ").slice(0, 70) : "");
 
+  /* UND DIE ZWEITE SORTE: „szene".
+     Ein Szenenfilm wird gar nicht freigestellt — er behaelt sein
+     volles Bild und bekommt deshalb KEINE Maskendatei. Genau das
+     wird hier nachgesehen, damit die neue Sorte nicht still kaputt
+     geht, wenn jemand spaeter an der Kette schraubt. */
+  console.log("\nUND DIE ZWEITE SORTE: EINE SZENE\n");
+  const SZ = NAME + "szene";
+  try {
+    execFileSync("bash", [path.join(WURZEL, "werkzeug", "film-freistellen.sh"), quelle, SZ, "szene"],
+      { stdio: "pipe" });
+  } catch (e) { pruefe("die Szenen-Kette lief durch", false, String(e.message).slice(0, 120)); }
+  const szWebm = path.join(WURZEL, "filme", SZ + ".webm");
+  const szMaske = path.join(WURZEL, "filme", SZ + "-maske.mp4");
+  const szDaten = path.join(WURZEL, "filme", SZ + ".json");
+  pruefe("der Szenenfilm ist da", fs.existsSync(szWebm),
+    fs.existsSync(szWebm) ? Math.round(fs.statSync(szWebm).size / 1024) + " kB" : "");
+  pruefe("er hat KEINE Maskendatei (braucht er nicht)", !fs.existsSync(szMaske));
+  pruefe("in der Beschreibung steht art: szene", (() => {
+    if (!fs.existsSync(szDaten)) return false;
+    try { return JSON.parse(fs.readFileSync(szDaten, "utf8")).art === "szene"; } catch (e) { return false; }
+  })());
+  [szWebm, szDaten, path.join(WURZEL, "filme", SZ + ".jpg")].forEach((f) => {
+    try { fs.unlinkSync(f); } catch (e) {}
+  });
+
   console.log("\nUND JETZT DIE BILDPUNKTE, IM BROWSER GEMESSEN\n");
   const srv = http.createServer((q, a) => {
     if (q.url.startsWith("/__seite")) {

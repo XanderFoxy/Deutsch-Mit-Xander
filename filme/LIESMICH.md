@@ -17,7 +17,13 @@ Kamerafahrt. Wird gar nicht freigestellt, sondern als Kinobild über den
 Chat gelegt: dunkler Grund ringsum, weiche Kante, runde Ecken. Keine
 Maskendatei, kein WebGL, überall derselbe Weg.
 
-Fertige Prompts für beides stehen in `PROMPTS.md` — 27 Stück.
+Fertige Prompts für beides stehen in `PROMPTS.md` — 30 Stück.
+
+Nachgemessen am 19. September: ein Szenenfilm läuft im Browser mit
+400×712, dunklem Grund dahinter, 22 px runden Ecken, weicher Maske am
+Rand und nicht stummgeschaltet — ohne Maskendatei und ohne WebGL.
+`werkzeug/pruefe-film-freistellen.js` prüft die Sorte bei jedem Lauf
+mit.
 
 ## Der Ton pumpt nicht
 
