@@ -623,6 +623,13 @@ const Baukasten = (function () {
       await datei("figuren/" + f + "-teil2.js");
       await datei("figuren/" + f + "-teil3.js");
     }
+    /* Und die elfte Haltung dazu: seitliches Sitzen. Sie steht in
+       keiner der drei Dateien, weil sie nicht gezeichnet, sondern
+       aus „liegen" und „krabbeln" zusammengesetzt wird — erst hier,
+       wenn beide da sind. Die Datei ist fuer alle Figuren dieselbe
+       und wird nur einmal geholt. */
+    if (!window.DMA_SEITSITZ_BAUEN) await datei("figuren/seitsitz.js");
+    try { window.DMA_SEITSITZ_BAUEN && window.DMA_SEITSITZ_BAUEN(f); } catch (e) {}
   }
 
   /* ------------------------------------------------------------
@@ -830,6 +837,7 @@ const Baukasten = (function () {
     knien: "🧎 knien", knien_vor: "🧎 vorgebeugt knien",
     fersensitz: "🧎 Fersensitz", schneidersitz: "🧘 Schneidersitz",
     sitzen_boden: "🧑‍🦯 am Boden sitzen", krabbeln: "🍼 krabbeln",
+    sitzen_seit: "🪑 seitlich sitzen",
     gehen: "🚶 gehen", hocken: "🧎 hocken",
   };
   const BK_HAUT_NAME = {

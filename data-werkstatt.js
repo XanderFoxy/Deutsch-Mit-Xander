@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — Fokus-Regel bleibt, wo du sie hinstellst",
+  stand: "Runde 22 — die elfte Haltung: seitliches Sitzen",
 
   inArbeit: [
-    { seit: "2026-09-19T04:25",
-      text: "Seitliches Sitzen — Gerüst steht, wird gerade zusammengesetzt" },
-    { seit: "2026-09-19T04:25",
+    { seit: "2026-09-19T04:37",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
+    { seit: "2026-09-19T04:37", nurBetreiber: true,
+      text: "Livestream-Relais: Verbindung mit „🔍 Verbindung testen“ prüfen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T04:25",
-      text: "Fokus-Modus überlebt jetzt dein Neuladen (je Raum gemerkt)" },
-    { seit: "2026-09-19T04:25",
-      text: "/befund sagt jetzt, warum dich jemand nicht hört" },
-    { seit: "2026-09-19T04:25",
-      text: "Klassenzimmer, Kinderzimmer, Garten: niemand sitzt mehr in der Luft" },
+    { seit: "2026-09-19T04:37",
+      text: "Seitliches Sitzen für alle 12 Figuren — mit allen 47 Kleidungsstücken" },
+    { seit: "2026-09-19T04:37",
+      text: "Nicht neu gezeichnet: aus „liegen“ und „krabbeln“ zusammengesetzt" },
+    { seit: "2026-09-19T04:37",
+      text: "Kostet 5,4 kB statt 4,5 MB — zusammengesetzt wird im Browser" },
+    { seit: "2026-09-19T04:37",
+      text: "Fokus-Modus überlebt dein Neuladen" },
   ],
 };

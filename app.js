@@ -54283,6 +54283,15 @@ An einem Morgen lief ein kleiner Fuchs los…
     } else if (!((window.DMA_FIGUR[fig].haltungen || {})[platz.haltung])) {
       await brDatei("figuren/" + fig + "-teil2.js");
     }
+    /* Das seitliche Sitzen braucht ausser Teil 2 auch Teil 3
+       („krabbeln" liegt dort) und die Zusammensetzung. Geholt wird
+       das nur, wenn ein Platz es wirklich verlangt — sonst faehrt
+       fuer jedes Bilderraetsel unnoetig eine Datei mit. */
+    if (platz.haltung === "sitzen_seit") {
+      await brDatei("figuren/" + fig + "-teil3.js");
+      if (!window.DMA_SEITSITZ_BAUEN) await brDatei("figuren/seitsitz.js");
+      try { window.DMA_SEITSITZ_BAUEN && window.DMA_SEITSITZ_BAUEN(fig); } catch (e) {}
+    }
     const bau = (window.DMA_FIGUR || {})[fig];
     if (!bau || !(bau.haltungen || {})[platz.haltung]) return null;
     const [alter, geschlecht] = fig.split("-");
