@@ -49,28 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — niemand sitzt mehr in der Luft",
+  stand: "Runde 22 — Fokus-Regel bleibt, wo du sie hinstellst",
 
   inArbeit: [
-    { seit: "2026-09-19T03:18",
-      text: "Sitzende Seitenansicht fürs Profil — braucht den Figuren-Erzeuger" },
-    { seit: "2026-09-19T03:18",
+    { seit: "2026-09-19T04:25",
+      text: "Seitliches Sitzen — Gerüst steht, wird gerade zusammengesetzt" },
+    { seit: "2026-09-19T04:25",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
-    { seit: "2026-09-19T03:18", nurBetreiber: true,
-      text: "Cloudflare-API-Token für das Klassenzimmer-Relais fehlt noch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T03:18",
-      text: "Garten: auf der Bank statt daneben im Gras" },
-    { seit: "2026-09-19T03:18",
-      text: "Klassenzimmer: auf dem gezeichneten Stuhl an der Schulbank" },
-    { seit: "2026-09-19T03:18",
-      text: "Kinderzimmer: auf dem Stuhl am Schreibtisch statt in der Luft" },
-    { seit: "2026-09-19T03:18",
-      text: "Restaurant: am Tisch wird gestanden — dort gibt es keinen zweiten Stuhl" },
-    { seit: "2026-09-19T03:18",
-      text: "Neue Regel: unter dem Hintern muss ein Möbel sein, das bis zum Boden reicht" },
+    { seit: "2026-09-19T04:25",
+      text: "Fokus-Modus überlebt jetzt dein Neuladen (je Raum gemerkt)" },
+    { seit: "2026-09-19T04:25",
+      text: "/befund sagt jetzt, warum dich jemand nicht hört" },
+    { seit: "2026-09-19T04:25",
+      text: "Klassenzimmer, Kinderzimmer, Garten: niemand sitzt mehr in der Luft" },
   ],
 };

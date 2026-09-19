@@ -3391,6 +3391,10 @@ window.LiveChat = (function () {
     zustand.seit = Date.now();
     zustand.spricht = false;
     zustand.thema = gemerktesThema(zustand.raum);
+    /* Und die Fokus-Regel dazu — siehe gemerkterFokus(). Ein
+       Haeuptling, der neu laedt, bringt damit die Regel zurueck,
+       die er gesetzt hat, statt sie stillschweigend umzuwerfen. */
+    zustand.fokus = gemerkterFokus(zustand.raum);
     zustand.haeuptling = false;
     zustand.klassensprecher = false;
     zustand.abgeschlossen = false;
@@ -5966,6 +5970,7 @@ window.LiveChat = (function () {
   function fokusSetzen(an) {
     if (!darfFokusSchalten()) return fokusAn();
     zustand.fokus = Boolean(an);
+    fokusMerken(zustand.raum, zustand.fokus);
     senden({ art: "fokus", fokus: zustand.fokus });
     melden();
     return fokusAn();
@@ -7421,6 +7426,35 @@ window.LiveChat = (function () {
   }
   function gemerktesThema(raum) {
     try { return localStorage.getItem(THEMA_SCHLUESSEL + raum) || ""; } catch (e) { return ""; }
+  }
+
+  /* DIE FOKUS-REGEL UEBERLEBT JETZT DAS NEULADEN.
+     -----------------------------------------------------------
+     GEMELDET: „Ich hab es extra eingestellt, dass wir uns alle
+     gleichzeitig hoeren koennen, und trotzdem geht es nicht."
+
+     Die Regel gehoert dem Raum, und der Raum ist die Summe der
+     Anwesenden — das ist richtig so. Nur hatte das eine Luecke,
+     die genau den Haeuptling trifft: laedt ER die Seite neu,
+     kommt er mit der Voreinstellung „Fokus an" zurueck, und weil
+     die anderen die Regel VOM Haeuptling uebernehmen, schaltet
+     sein Neuladen sie allen wieder ein. Von aussen sieht es aus,
+     als haette das Umschalten nie gewirkt.
+
+     Deshalb merkt sich das Geraet, das schalten DARF, seine
+     Entscheidung — je Raum, wie beim Thema. Geschrieben wird der
+     Merker nur in fokusSetzen(), und das darf ohnehin nur der
+     Lehrer oder Haeuptling; auf einem anderen Geraet steht also
+     nie etwas drin, das es aufdraengen koennte. */
+  var FOKUS_SCHLUESSEL = "dma_livechat_fokus_";
+  function fokusMerken(raum, an) {
+    try { localStorage.setItem(FOKUS_SCHLUESSEL + raum, an ? "1" : "0"); } catch (e) {}
+  }
+  function gemerkterFokus(raum) {
+    try {
+      var v = localStorage.getItem(FOKUS_SCHLUESSEL + raum);
+      return v === null ? undefined : v === "1";
+    } catch (e) { return undefined; }
   }
 
   var NAME_AUF = "\u0001", NAME_ZU = "\u0002";
@@ -8952,6 +8986,37 @@ window.LiveChat = (function () {
     z.push("  5. Bewegung reduz.  : " + (ruhig
       ? "AN — dein Gerät bittet um wenig Bewegung. Die Effekte laufen dann ruhig statt zu fliegen."
       : "aus — Animationen laufen voll"));
+    /* =========================================================
+       WARUM HOERT MICH DIE ANDERE SEITE NICHT?
+       ---------------------------------------------------------
+       GEMELDET: „Ich habe mit Emmi gesprochen, sie konnte mich
+       niemals hoeren. Ich hab es extra eingestellt, dass wir uns
+       alle gleichzeitig hoeren koennen … war bei ihr vielleicht
+       noch die Fokus-Variante an, und sie muss das bei sich
+       selbst einstellen?"
+
+       Nein — und genau das soll hier stehen, damit niemand bei
+       sich sucht, wo nichts einzustellen ist. Der Fokus-Modus ist
+       eine Regel des RAUMS: der Lehrer beziehungsweise Haeuptling
+       schaltet, alle anderen bekommen sie zugeschickt. Und sie
+       verhindert nur das AUFNEHMEN, solange jemand spricht — nie
+       das Hoeren. Hoert jemand gar nichts, liegt es an der
+       Leitung, und dafuer gibt es /leitung. */
+    z.push("  ── Stimme ──");
+    var fok = false;
+    try { fok = fokusAn(); } catch (e) {}
+    z.push("  Fokus-Modus         : " + (fok
+      ? "AN — nacheinander sprechen, als Sprachnachricht"
+      : "aus — freies Durcheinander ueber die Leitung"));
+    z.push("     → Regel des RAUMS. Nur " + rangWort(true)
+      + " schaltet sie mit /fokus. Bei den anderen ist nichts einzustellen.");
+    z.push("     → Sie verhindert nur das AUFNEHMEN, nie das Hoeren.");
+    var gem;
+    try { gem = gemerkterFokus(zustand.raum); } catch (e) {}
+    z.push("  bleibt beim Neuladen: " + (typeof gem === "boolean"
+      ? "ja (" + (gem ? "an" : "aus") + ")"
+      : "noch nie geschaltet — es gilt die Voreinstellung"));
+    z.push("     → Hoert dich jemand gar nicht, ist es die Leitung: /leitung");
     z.push("  ────────────────");
     z.push("  dein Rang hier     : " + rangWort(true));
     z.push("  Raum               : " + zustand.raum + (zustand.raum === HAUPTRAUM ? " (Hauptraum)" : ""));
