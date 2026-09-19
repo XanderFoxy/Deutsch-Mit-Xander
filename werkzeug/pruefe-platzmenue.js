@@ -153,7 +153,11 @@ const PAARE = [
   console.log("\nUND SIEHT MAN ES AUCH?\n");
   for (const [w, sel, wie] of [["hammer", ".lc-zhammer-bild", "der Hammer"],
                                ["eimer", ".lc-eimer-bild", "der Eimer"],
-                               ["wecker", ".lc-wecker-bild", "der Wecker"],
+                               /* Der Wecker hat kein eigenes Bild mehr: seit
+                                  Fassung 347 IST das Profilbild der Wecker, und
+                                  die Schellen sitzen links und rechts oben wie
+                                  Ohren. Gemessen wird deshalb an einer Schelle. */
+                               ["wecker", ".lc-schelle-l", "die linke Schelle"],
                                ["regenwolke", ".lc-zwolke-bild", "die Wolke"],
                                ["tritt", ".lc-tritt-schuh", "der Schuh"]]) {
     const d = await pg.evaluate(async ({ w, s }) => {

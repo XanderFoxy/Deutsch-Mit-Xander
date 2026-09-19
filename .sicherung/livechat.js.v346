@@ -2862,36 +2862,7 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "verlauf") {
-      /* =====================================================
-         EINEN VERLAUF NIMMT NUR AN, WER GERADE HEREINKOMMT
-         -----------------------------------------------------
-         GEMELDET: „In dem Moment, wenn ein anderer reinkommt,
-         wird der Chat auf den Zustand gesetzt, den der andere aus
-         seinem persoenlichen Chat mit mir kennt. Mein Chat soll
-         sich gar nicht resetten dadurch, dass er reinkommt. Wenn
-         ich da unten zuletzt lese, dass ich mich selbst
-         geschlagen habe, und dann kommt der neue Gast, soll der
-         Chat nicht ploetzlich leer werden."
-
-         Genau so war es gebaut, und der Fehler sass eine Ebene
-         hoeher als er aussah. Wer hereinkommt, meldet sich mit
-         „da"; alle anderen schicken ihm ihren Verlauf. Nur gilt
-         das in BEIDE Richtungen: meldet sich jemand neu an —
-         auch nach einem Verbindungsabriss oder wenn das Telefon
-         aus der Tasche kommt —, schickt er seinerseits seinen
-         Verlauf an den, der schon da sitzt. Und der nahm ihn an,
-         solange er selbst noch keinen bekommen hatte (wer einen
-         leeren Raum betritt, bekommt nie einen). Damit legte sich
-         der alte Stand des Ankoemmlings ueber den laufenden Chat.
-
-         Einen fremden Verlauf anzunehmen ist nur EINMAL richtig:
-         wenn man selbst gerade hereingekommen ist und danach
-         gefragt hat. Genau das steht hier — verlaufAngefragt gilt
-         nur die ersten Sekunden nach dem Betreten eines Raumes.
-         Wer laenger drin sitzt, nimmt nichts mehr an; sein Chat
-         bleibt, wie er ist. Der Ankoemmling bekommt seinen
-         Verlauf weiterhin, nur eben er allein. */
-      if (verlaufBekommen || !verlaufAngefragt) return;
+      if (verlaufBekommen) return;          // einmal genügt
       verlaufBekommen = true;
       var dazu = (n.zeilen || []).map(function (z) {
         z.eigen = z.von === zustand.ichId;
@@ -3652,13 +3623,6 @@ window.LiveChat = (function () {
     zustand.stumm = {};
     zustand.gemeldet = {};
     verlaufBekommen = false;
-    /* Ab jetzt, und nur fuer kurze Zeit, darf ein fremder Verlauf
-       herein — siehe empfangen(). Das Fenster ist grosszuegig
-       bemessen (eine halbe Minute), damit auch ein langsames Netz
-       noch durchkommt, aber es schliesst sich. */
-    verlaufAngefragt = true;
-    if (verlaufFensterUhr) clearTimeout(verlaufFensterUhr);
-    verlaufFensterUhr = setTimeout(function () { verlaufAngefragt = false; }, 30000);
     liveKennungGehabt = {};        // neuer Raum, neues Gedaechtnis
     hoerenGerade = {};
     verlaufSchonGeschickt = {};
@@ -8322,8 +8286,6 @@ window.LiveChat = (function () {
     }
   }
   var verlaufBekommen = false;
-  var verlaufAngefragt = false;
-  var verlaufFensterUhr = null;
   var einladungen = {};        // Raum -> true (wohin man eingeladen wurde)
   var geknebeltVon = {};
 
@@ -10421,19 +10383,6 @@ window.LiveChat = (function () {
        Wiederkommen gehen. */
     pruefRaum: function (name) { if (name) zustand.raum = String(name); return zustand.raum; },
     pruefVerlaufSetzen: function (liste) { zustand.nachrichten = (liste || []).slice(); chatSichern(); },
-    /* Das Fenster, in dem ein fremder Verlauf angenommen wird, von
-       Hand auf und zu — damit sich beide Faelle nachstellen lassen,
-       ohne eine halbe Minute zu warten: der Ankoemmling und der, der
-       schon eine Weile dasitzt. Fasst sonst nichts an. */
-    pruefVerlaufFensterAuf: function () {
-      verlaufBekommen = false;
-      verlaufAngefragt = true;
-      if (verlaufFensterUhr) clearTimeout(verlaufFensterUhr);
-    },
-    pruefVerlaufFensterZu: function () {
-      verlaufAngefragt = false;
-      if (verlaufFensterUhr) clearTimeout(verlaufFensterUhr);
-    },
     pruefVerlaufAusSpeicher: function (raum) { return chatLaden(raum); },
     pruefVerlaufAusLager: function (raum) { return chatAusLager(raum); },
     /* Stellt den Augenblick direkt nach dem Betreten nach: das Lager

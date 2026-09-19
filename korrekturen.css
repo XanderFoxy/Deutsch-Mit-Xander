@@ -6278,6 +6278,34 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
 }
 .lc-box-l { left: -34%; top: 10%; animation: lcFaustL 1.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
 .lc-box-r { right: -34%; top: 26%; animation: lcFaustR 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.42s both; }
+/* DER GERICHTETE SCHLAG.
+   Der Handschuh startet dort, wo der Schlagende wirklich sitzt
+   (--hx/--hy, in app.js aus den beiden Sitzkaesten gerechnet),
+   faehrt auf dem Strich zwischen beiden ins Bild, trifft, und faellt
+   zurueck. --hdreh dreht die Faust so, dass sie nach vorn zeigt. Zwei
+   Schlaege, weil ein einzelner Stups nicht nach Boxen aussieht. */
+.lc-box-gerichtet .lc-box-z {
+  left: 13%;
+  top: 13%;
+  transform-origin: 50% 50%;
+  animation: lcFaustZielt 1.5s cubic-bezier(0.35, 0, 0.2, 1) both;
+}
+@keyframes lcFaustZielt {
+  0%   { opacity: 0;
+         transform: translate(var(--hx, 200%), var(--hy, 0%)) rotate(var(--hdreh, 0deg)) scale(0.45); }
+  18%  { opacity: 1; }
+  34%  { transform: translate(calc(var(--hx, 200%) * 0.06), calc(var(--hy, 0%) * 0.06))
+                    rotate(var(--hdreh, 0deg)) scale(1.2); }
+  46%  { transform: translate(calc(var(--hx, 200%) * 0.55), calc(var(--hy, 0%) * 0.55))
+                    rotate(var(--hdreh, 0deg)) scale(0.8); }
+  62%  { transform: translate(calc(var(--hx, 200%) * 0.04), calc(var(--hy, 0%) * 0.04))
+                    rotate(var(--hdreh, 0deg)) scale(1.16); }
+  78%  { opacity: 1;
+         transform: translate(calc(var(--hx, 200%) * 0.5), calc(var(--hy, 0%) * 0.5))
+                    rotate(var(--hdreh, 0deg)) scale(0.85); }
+  100% { opacity: 0;
+         transform: translate(var(--hx, 200%), var(--hy, 0%)) rotate(var(--hdreh, 0deg)) scale(0.5); }
+}
 /* Er kommt aus der TIEFE auf den Betrachter zu, deshalb wächst er. */
 @keyframes lcFaustL {
   0%   { opacity: 0; transform: translateX(-70%) scale(0.5); }
@@ -9759,18 +9787,24 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* --- Herzen auf das Profilbild ------------------------------------ */
+/* GEWUENSCHT: „Die Herzen koennen deutlicher sein, ein bisschen
+   groesser, unterschiedliche Staerken." Groesser ueber die
+   Schriftgroesse, verschieden kraeftig ueber --kraft: manche satt
+   und nah, manche blass und weit weg. */
 .lc-zherz-eins {
   position: absolute;
-  bottom: 18%;
-  font-size: 1em;
+  bottom: 14%;
+  font-size: 1.45em;
   font-style: normal;
   color: #ff6b8a;
-  animation: lcZherzAuf 1.6s ease-out both;
+  opacity: var(--kraft, 1);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+  animation: lcZherzAuf 2s ease-out both;
 }
 @keyframes lcZherzAuf {
   0%   { opacity: 0; transform: translate(0, 0) scale(.3); }
-  18%  { opacity: 1; transform: translate(0, -0.4em) scale(var(--gross, 1)); }
-  100% { opacity: 0; transform: translate(var(--seit, 0), -3.4em) scale(var(--gross, 1)); }
+  16%  { opacity: var(--kraft, 1); transform: translate(0, -0.4em) scale(var(--gross, 1)); }
+  100% { opacity: 0; transform: translate(var(--seit, 0), -4em) scale(var(--gross, 1)); }
 }
 
 /* --- Der Wassereimer ---------------------------------------------- */
@@ -9837,11 +9871,34 @@ body.lc-schreibt .tutor-reiter {
     rgba(120, 190, 235, .78), rgba(58, 130, 190, .86));
   animation: lcWasserSteigt 4.4s ease-in-out 0.5s both;
 }
+/* Bis ueber den Kopf: „denjenigen dann in Wasser tauchen." Das
+   Bild liegt in der Mitte der Animation ganz darunter, und weil
+   Wasser nicht farblos ist, liegt ein Blaustich darueber. */
+.lc-wasserstand {
+  animation-duration: 5.8s;
+  box-shadow: inset 0 0 0 999px rgba(40, 110, 170, 0.14);
+}
 @keyframes lcWasserSteigt {
   0%   { height: 0; }
-  30%  { height: 62%; }
-  66%  { height: 62%; }
+  26%  { height: 106%; }
+  70%  { height: 106%; }
   100% { height: 0; }
+}
+.lc-wasserblase {
+  position: absolute;
+  bottom: 8%;
+  width: 0.34em;
+  height: 0.34em;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .75);
+  background: rgba(255, 255, 255, .28);
+  transform: scale(var(--gross, 1));
+  animation: lcBlaseSteigt 1.6s ease-in-out both;
+}
+@keyframes lcBlaseSteigt {
+  0%   { opacity: 0; transform: translateY(0) scale(var(--gross, 1)); }
+  20%  { opacity: .9; }
+  100% { opacity: 0; transform: translateY(-3.2em) scale(calc(var(--gross, 1) * 1.3)); }
 }
 .lc-wasserwelle {
   position: absolute;
@@ -9890,57 +9947,59 @@ body.lc-schreibt .tutor-reiter {
   15%, 41%, 67%  { transform: translateX(-4%) rotate(-3deg); }
   18%, 44%, 70%  { transform: translateX(0) rotate(0); }
 }
-.lc-wecker-bild {
+/* =========================================================
+   DER WECKER IST DAS PROFILBILD
+   ---------------------------------------------------------
+   GEWUENSCHT: „Links oben und rechts oben so aehnlich wie bei
+   Micky-Maus-Ohren, aber keine Ohren, sondern diese Schellen
+   — als wenn das Profilbild der Wecker ist. Dann koennte man
+   ein schwaches Zifferblatt einblenden, was gerade auf zwoelf
+   Uhr schlaegt, so ein bisschen ueberlagert."
+
+   Die Schellen sitzen halb HINTER dem Bild (z-index -1 in der
+   Schicht), damit sie wie angesetzte Ohren wirken und nicht
+   wie aufgeklebte Knoepfe. Sie kippen nach aussen, jede in
+   ihre Richtung, im Takt des Geraeusches: drei Stoesse bei
+   0.00, 0.62 und 1.24 Sekunden.
+   ========================================================= */
+.lc-schelle {
   position: absolute;
-  left: 50%;
-  top: -44%;
-  width: 72%;
-  transform: translateX(-50%);
-  animation: lcWeckerAuf 3.4s ease-out both;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
+  width: 46%;
+  top: -16%;
+  z-index: -1;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
+  transform-origin: 50% 82%;
+  animation: lcSchelleL 1.86s linear both;
 }
-@keyframes lcWeckerAuf {
-  0%   { opacity: 0; transform: translateX(-50%) scale(.5); }
-  8%   { opacity: 1; transform: translateX(-50%) scale(1.06); }
-  92%  { opacity: 1; transform: translateX(-50%) scale(1); }
-  100% { opacity: 0; transform: translateX(-50%) scale(.9); }
-}
-/* DIE SCHELLEN UND DER KLOEPPEL.
-   Sie sitzen in eigenen <g>-Gruppen, weil eine CSS-Animation, die
-   „transform" setzt, das transform-ATTRIBUT desselben Elements
-   ersetzt — dieselbe Falle wie bei den klatschenden Haenden.
-   transform-box: fill-box heisst: der Drehpunkt liegt im eigenen
-   Kasten, nicht im Ursprung der ganzen Zeichnung.
-   Der Takt ist der des Geraeusches: drei Stoesse bei 0.00, 0.62 und
-   1.24 Sekunden, dazwischen Ruhe. */
-.lc-wecker-glocke {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: lcSchelle 1.86s linear both;
-}
-.lc-wecker-l { animation-name: lcSchelleL; }
-.lc-wecker-r { animation-name: lcSchelleR; }
+.lc-schelle svg { display: block; width: 100%; height: auto; }
+.lc-schelle-l { left: -13%; }
+.lc-schelle-r { right: -13%; animation-name: lcSchelleR; }
 @keyframes lcSchelleL {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(0deg) translateY(0); }
-  4%, 37%, 71%   { transform: rotate(-13deg) translateY(-1.5px); }
-  12%, 45%, 79%  { transform: rotate(6deg) translateY(0); }
+  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(-12deg) translateY(0); }
+  4%, 37%, 71%   { transform: rotate(-30deg) translateY(-4%); }
+  12%, 45%, 79%  { transform: rotate(-2deg) translateY(0); }
 }
 @keyframes lcSchelleR {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(0deg) translateY(0); }
-  4%, 37%, 71%   { transform: rotate(13deg) translateY(-1.5px); }
-  12%, 45%, 79%  { transform: rotate(-6deg) translateY(0); }
+  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(12deg) translateY(0); }
+  4%, 37%, 71%   { transform: rotate(30deg) translateY(-4%); }
+  12%, 45%, 79%  { transform: rotate(2deg) translateY(0); }
 }
-@keyframes lcSchelle { to { transform: rotate(0deg); } }
-.lc-wecker-kloeppel {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: lcKloeppel 1.86s linear both;
+/* Das Zifferblatt: schwach ueber das Bild gelegt, beide Zeiger auf
+   zwoelf. Es liegt in der runden Blende und endet am Bildrand. */
+.lc-wecker-blatt {
+  position: absolute;
+  inset: 6%;
+  width: 88%;
+  height: 88%;
+  color: rgba(255, 252, 235, 0.72);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .55));
+  animation: lcBlattAuf 3.4s ease-out both;
 }
-@keyframes lcKloeppel {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(0deg); }
-  4%, 37%, 71%   { transform: rotate(-20deg); }
-  10%, 43%, 77%  { transform: rotate(20deg); }
-  16%, 49%, 83%  { transform: rotate(-10deg); }
+@keyframes lcBlattAuf {
+  0%   { opacity: 0; transform: scale(1.15); }
+  10%  { opacity: 0.9; transform: scale(1); }
+  88%  { opacity: 0.9; }
+  100% { opacity: 0; }
 }
 .lc-wecker-welle {
   position: absolute;
@@ -9988,17 +10047,35 @@ body.lc-schreibt .tutor-reiter {
   18%  { opacity: 1; }
   100% { opacity: 0; transform: translateY(3.2em); }
 }
+/* Der Blitz: gezeichnet statt Emoji, von der Wolke bis auf das Bild,
+   mit hartem Aus und An — ein Blitz blendet nicht ein, er ist da oder
+   nicht. Drei Schlaege, jeder mit Nachzucken. */
 .lc-zdonner-blitz {
   position: absolute;
-  left: 50%;
-  top: 14%;
+  left: 46%;
+  top: -18%;
+  width: 34%;
+  height: 86%;
   transform: translateX(-50%);
-  font-size: 1.5em;
-  animation: lcZblitz 3.2s steps(1) both;
+  filter: drop-shadow(0 0 7px rgba(255, 240, 150, .95));
+  animation: lcZblitz 4s steps(1) both;
 }
 @keyframes lcZblitz {
-  0%, 24%, 30%, 52%, 58%, 100% { opacity: 0; }
-  26%, 54% { opacity: 1; }
+  0%, 17%, 21%, 23%, 30%, 45%, 49%, 62%, 66%, 68%, 74%, 100% { opacity: 0; }
+  18%, 22%, 46%, 63%, 67% { opacity: 1; }
+}
+/* Und der Schein darueber: ein Blitz leuchtet nicht nur, er erhellt
+   auch, was er trifft. Er liegt in der runden Blende. */
+.lc-zdonner-schein {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%,
+    rgba(255, 252, 220, .92), rgba(255, 250, 200, .35) 55%, rgba(255, 250, 200, 0) 78%);
+  animation: lcZschein 4s steps(1) both;
+}
+@keyframes lcZschein {
+  0%, 17%, 21%, 23%, 30%, 45%, 49%, 62%, 66%, 68%, 74%, 100% { opacity: 0; }
+  18%, 22%, 46%, 63%, 67% { opacity: 1; }
 }
 
 /* --- Geld und Bonbons über einer Person --------------------------- */
@@ -10031,33 +10108,42 @@ body.lc-schreibt .tutor-reiter {
    ========================================================= */
 .lc-geldstand {
   position: absolute;
-  left: -8%;
-  right: -8%;
+  left: 0;
+  right: 0;
   bottom: 0;
-  height: 0;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(255, 246, 200, .55) 0 12%, rgba(255, 246, 200, 0) 13%),
-    radial-gradient(circle at 62% 55%, rgba(255, 246, 200, .45) 0 10%, rgba(255, 246, 200, 0) 11%),
-    radial-gradient(circle at 84% 24%, rgba(255, 246, 200, .4) 0 9%, rgba(255, 246, 200, 0) 10%),
-    linear-gradient(to bottom, #f2c94c, #b8860b);
-  animation: lcGeldSteigt 3.6s ease-in-out 0.45s both;
+  height: 62%;
 }
-@keyframes lcGeldSteigt {
-  0%   { height: 0; }
-  36%  { height: 54%; }
-  70%  { height: 54%; }
-  100% { height: 0; }
-}
-/* Die krumme Oberkante: zwei flache Ellipsen nebeneinander. */
-.lc-geldkante {
+/* Eine liegende Muenze: von der Seite gesehen ist sie eine flache
+   Ellipse mit hellerer Oberkante — ein Kreis sieht aus wie ein Punkt,
+   nicht wie Geld. Dazwischen ein paar Scheine. */
+.lc-geldmuenze,
+.lc-geldschein {
   position: absolute;
-  left: -6%;
-  right: -6%;
-  top: -0.32em;
-  height: 0.64em;
+  transform: rotate(var(--kipp, 0deg));
+  animation: lcGeldFaellt 3.4s ease-out both;
+}
+.lc-geldmuenze {
+  width: 22%;
+  height: 9%;
   border-radius: 50%;
-  background: #f2c94c;
-  box-shadow: 1.2em 0.1em 0 -0.06em #edc23f, -1.2em 0.14em 0 -0.08em #e8bd3a;
+  background: linear-gradient(to bottom, #ffe38a 0 42%, #e0ae2c 43%, #a9781a);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .65);
+}
+.lc-geldschein {
+  width: 28%;
+  height: 11%;
+  border-radius: 2px;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,.4) 0 20%, rgba(255,255,255,0) 21%),
+    linear-gradient(115deg, #8fce9a, #5ba96c 60%, #3f8a51);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .3);
+}
+@keyframes lcGeldFaellt {
+  0%   { opacity: 0; transform: translateY(-2.6em) rotate(calc(var(--kipp, 0deg) - 40deg)); }
+  14%  { opacity: 1; }
+  22%  { transform: translateY(0) rotate(var(--kipp, 0deg)); }
+  82%  { opacity: 1; transform: translateY(0) rotate(var(--kipp, 0deg)); }
+  100% { opacity: 0; transform: translateY(0.6em) rotate(var(--kipp, 0deg)); }
 }
 .lc-geldglanz {
   position: absolute;
@@ -10472,14 +10558,21 @@ body.lc-schreibt .tutor-reiter {
    erreicht sie jeden Platz, egal wo er sitzt. Erst schnell hinaus
    (das ist das Chamäleon), dann kurz kleben, dann zurück.
    ===================================================================== */
+/* Die Zunge laeuft HINTER den Plaetzen durch: sie kommt unter dem
+   eigenen Bild hervor und endet am Rand des fremden. Vorher lag sie
+   mit z-index 7 ueber allem, was zwischen den beiden sass — gemeldet
+   als „manchmal ist die Zunge ueber die ganzen Plaetze". Die Plaetze
+   bekommen dafuer eine eigene Ebene (z-index 1), sonst entscheidet
+   allein die Reihenfolge im Dokument, und die Zunge kommt zuletzt. */
 .lc-zunge {
   position: absolute;
-  height: 10px;
-  margin-top: -5px;
+  height: 8px;
+  margin-top: -4px;
   transform-origin: 0 50%;
   pointer-events: none;
-  z-index: 7;
+  z-index: 0;
 }
+.lc-platz { z-index: 1; }
 .lc-zunge-band {
   position: absolute;
   left: 0;

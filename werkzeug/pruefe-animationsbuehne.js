@@ -102,7 +102,25 @@ const pruefe = (was, gut, zusatz) => {
       const b = document.getElementById("lcEffektBuehne");
       const karte = document.getElementById("livechatKarte");
       if (!karte) return { keineKarte: true };
-      const kr = karte.getBoundingClientRect();
+      /* GEMESSEN WIRD GEGEN DEN LAYOUT-KASTEN DER KARTE.
+         -----------------------------------------------------------
+         Hier stand getBoundingClientRect() — der GEMALTE Kasten. Der
+         rechnet jede laufende Animation mit: waehrend eine Karte
+         gerade kleiner wird oder wackelt, ist er ein paar Pixel
+         schmaler als die Karte wirklich ist, und die Buehne sah
+         dadurch zu gross aus (gemessen 11 bis 22 px, wachsend, je
+         weiter der Durchlauf kam).
+
+         Seit Fassung 347 setzt sich die Buehne ABSICHTLICH nach dem
+         Layout-Kasten und nicht nach dem gemalten: gewuenscht war
+         „dass sich das Bild nicht mehr verschiebt durch die Dinos
+         oder generell nie wieder durch irgendeine Einstellung". Eine
+         Buehne, die jedem Wackeln folgt, verschiebt genau das.
+         Verglichen wird deshalb mit demselben Mass, nach dem sie
+         gesetzt wird. Was sie dabei nicht darf — groesser sein als
+         die Karte —, prueft diese Sonde unveraendert weiter. */
+      const kk = window.DMA_PRUEF.kartenKasten();
+      const kr = kk ? kk.layout : karte.getBoundingClientRect();
       const br = b ? b.getBoundingClientRect() : null;
       return {
         kinder: b ? b.children.length : 0,

@@ -16355,13 +16355,54 @@
   })();
 
   let lcBuehneTakt = 0;
+
+  /* =================================================================
+     WO DIE KARTE LIEGT — OHNE DAS, WAS GERADE MIT IHR PASSIERT
+     -----------------------------------------------------------------
+     GEMELDET: „Achte darauf, dass sich das Bild nicht mehr verschiebt
+     durch die Dinos, oder dass sich generell das Bild nie wieder
+     verschiebt durch irgendeine Einstellung, die man macht."
+
+     Der Grund sass hier. Die Buehne wurde mit
+     getBoundingClientRect() gesetzt, und das liefert den GEMALTEN
+     Kasten — jede Animation ist darin schon eingerechnet. Waehrend
+     der Dinosaurier stampft, wackelt die Karte (ein transform), also
+     wackelte die Buehne mit, und mit ihr alles, was darauf liegt. Bei
+     jedem Bild aufs Neue. Dasselbe waere bei jeder kuenftigen
+     Animation passiert, die eine Karte bewegt.
+
+     Hier wird deshalb nicht mehr gemessen, wo die Karte gerade
+     GEZEICHNET wird, sondern wo sie LIEGT: ueber offsetLeft und
+     offsetTop, und die kennen kein transform. Damit steht die Buehne
+     still, ganz gleich, was mit der Karte gerade geschieht — und das
+     gilt fuer jede Animation, nicht nur fuer den Dinosaurier.
+
+     Die Scrollstaende der Vorfahren muessen abgezogen werden, weil
+     offsetTop vom Dokument aus zaehlt und die Buehne im Fenster
+     liegt. Das ist der uebliche Weg und rechnet dasselbe wie
+     getBoundingClientRect — nur eben ohne die Animation.
+     ================================================================= */
+  function lcLayoutKasten(el) {
+    let x = 0, y = 0, n = el;
+    while (n) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    let p = el.parentElement;
+    while (p && p !== document.documentElement) {
+      x -= p.scrollLeft; y -= p.scrollTop;
+      p = p.parentElement;
+    }
+    x -= window.scrollX || 0;
+    y -= window.scrollY || 0;
+    return { left: x, top: y, width: el.offsetWidth, height: el.offsetHeight,
+             right: x + el.offsetWidth, bottom: y + el.offsetHeight };
+  }
+
   function lcBuehneSetzen() {
     const b = document.getElementById("lcEffektBuehne");
     if (!b) return;
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
     if (!karte) { b.remove(); return; }
-    const r = karte.getBoundingClientRect();
+    const r = lcLayoutKasten(karte);
     /* Nur der SICHTBARE Teil der Karte — sonst liefe die Bühne oben
        und unten aus dem Bild heraus, und genau das war die Klage. */
     const schirm = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
@@ -25010,8 +25051,20 @@
     const ay = a.top + a.height * 0.42 - rr.top;
     const bx = b.left + b.width / 2 - rr.left;
     const by = b.top + b.height * 0.42 - rr.top;
-    const laenge = Math.hypot(bx - ax, by - ay);
-    if (!laenge) return false;
+    /* GEMELDET: „Manchmal ist die Zunge ueber die ganzen Plaetze. Die
+       soll nur das Profilbild ablecken."
+
+       Sie schiesst weiterhin vom eigenen Platz aus — das war
+       ausdruecklich so gewuenscht —, aber sie hoert jetzt AM RAND des
+       getroffenen Profilbildes auf statt in seiner Mitte. Vorher lief
+       sie bis zum Mittelpunkt und lag damit quer ueber dem Gesicht.
+       Abgezogen wird der halbe Kreis; bleibt zu wenig uebrig, weil die
+       beiden nebeneinander sitzen, bleibt ein kurzer Rest stehen. */
+    const kreisB = zuPlatz.querySelector(".lc-kreis");
+    const radius = kreisB ? kreisB.getBoundingClientRect().width / 2 : b.width / 2;
+    const roh = Math.hypot(bx - ax, by - ay);
+    const laenge = Math.max(18, roh - radius * 0.92);
+    if (!roh) return false;
     const winkel = (Math.atan2(by - ay, bx - ax) * 180) / Math.PI;
 
     reihe.querySelectorAll(".lc-zunge").forEach((x) => x.remove());
@@ -25275,14 +25328,21 @@
   /* --- HERZEN AUF DAS PROFILBILD ---------------------------------- */
   function lcHerzenAufPlatz(wen) {
     return lcAmPlatz(wen, "lc-zherz", (schicht) => {
-      for (let i = 0; i < 9; i++) {
+      for (let i = 0; i < 13; i++) {
         const h = document.createElement("i");
         h.className = "lc-zherz-eins";
         h.textContent = i % 3 === 0 ? "\u2764" : (i % 3 === 1 ? "\u2665" : "\ud83d\udc95");
-        h.style.left = (12 + Math.random() * 76).toFixed(0) + "%";
-        h.style.setProperty("--seit", (Math.random() * 26 - 13).toFixed(0) + "px");
-        h.style.setProperty("--gross", (0.6 + Math.random() * 0.7).toFixed(2));
-        h.style.animationDelay = (i * 0.11).toFixed(2) + "s";
+        /* GEWUENSCHT: „Die Herzen koennen ein bisschen deutlicher
+           sein, ein bisschen groesser, unterschiedliche Staerken."
+           Also nicht nur verschieden gross, sondern verschieden
+           KRAEFTIG: ein Teil steigt gross und satt, ein Teil klein
+           und blass — so wie es aussieht, wenn viele auf einmal
+           aufsteigen und manche naeher sind als andere. */
+        h.style.left = (10 + Math.random() * 80).toFixed(0) + "%";
+        h.style.setProperty("--seit", (Math.random() * 34 - 17).toFixed(0) + "px");
+        h.style.setProperty("--gross", (0.85 + Math.random() * 1.15).toFixed(2));
+        h.style.setProperty("--kraft", (0.45 + Math.random() * 0.55).toFixed(2));
+        h.style.animationDelay = (i * 0.13).toFixed(2) + "s";
         schicht.appendChild(h);
       }
     }, 3200, "herz");
@@ -25303,12 +25363,27 @@
      waehrend der Eimer darueber ruhig herausragen darf. */
   function lcWassereimer(wen) {
     return lcAmPlatz(wen, "lc-eimer", (schicht) => {
+      /* GEWUENSCHT: „Der Wassereimer soll ueber dem Profilbild sein, er
+         soll sich ueber dem Profilbild ausschuetten und denjenigen
+         dann in Wasser tauchen, und die Abklingzeit kannst du etwas
+         laenger machen."
+         Also steigt das Wasser nicht mehr bis auf zwei Drittel,
+         sondern ueber den Kopf: das ganze Bild liegt darunter, mit
+         Blaustich und Luftblasen, und laeuft danach langsam ab. */
       const blende = lcZpBlende(schicht);
       blende.innerHTML =
         '<span class="lc-wasserstand">'
         + '<i class="lc-wasserwelle"></i>'
         + '<i class="lc-wasserwelle lc-wasserwelle-2"></i>'
         + "</span>";
+      for (let i = 0; i < 9; i++) {
+        const bl = document.createElement("i");
+        bl.className = "lc-wasserblase";
+        bl.style.left = (12 + Math.random() * 74).toFixed(0) + "%";
+        bl.style.setProperty("--gross", (0.5 + Math.random() * 0.9).toFixed(2));
+        bl.style.animationDelay = (1.3 + Math.random() * 1.8).toFixed(2) + "s";
+        blende.appendChild(bl);
+      }
       schicht.insertAdjacentHTML("beforeend",
         '<svg class="lc-eimer-bild" viewBox="0 0 70 60">'
         + '<path d="M14 10 L56 10 L50 44 C49 50 45 52 35 52 C25 52 21 50 20 44 Z"'
@@ -25325,24 +25400,26 @@
         t.style.setProperty("--fall", (40 + Math.random() * 34).toFixed(0) + "px");
         schicht.appendChild(t);
       }
-    }, 4600, "eimer");
+    }, 6000, "eimer");
   }
 
-  /* --- DER WECKER -------------------------------------------------
-     GEWUENSCHT: „Bei dem Wecker, dass da wirklich dieses Bimmeln
-     links und rechts, diese Schellen links und rechts oben sind wie
-     bei einem traditionellen klassischen Wecker."
+  /* --- DER WECKER: DAS PROFILBILD IST DER WECKER -------------------
+     GEWUENSCHT: „Bei dem Wecker sollst du nicht ein Emoji oder ein
+     SVG danebenmachen, sondern links oben und rechts oben so aehnlich
+     wie bei Micky-Maus-Ohren, aber keine Ohren, sondern diese
+     Schellen — als wenn das Profilbild der Wecker ist. Dann koennte
+     man vielleicht ein schwaches Zifferblatt einblenden, was gerade
+     auf zwoelf Uhr schlaegt, so ein bisschen ueberlagert."
 
-     Also der Wecker, den jeder kennt: zwei Schellen oben, links und
-     rechts, ein Buegel dazwischen und der Kloeppel in der Mitte, der
-     zwischen ihnen hin und her schlaegt. Unten zwei Fuesse, damit er
-     steht. Die Schellen kippen nach aussen, der Kloeppel schlaegt —
-     alles im selben Takt wie das Geraeusch: drei Stoesse mit Pause,
-     0.00 / 0.62 / 1.24 Sekunden.
+     Also kein Wecker NEBEN dem Bild mehr, sondern das Bild SELBST:
+     zwei Schellen sitzen oben links und oben rechts halb dahinter,
+     wie Ohren, und kippen nach aussen. Darueber liegt, ganz schwach,
+     ein Zifferblatt — Ring, zwoelf Striche, beide Zeiger auf zwoelf.
+     Es liegt in der runden Blende und endet deshalb genau am
+     Bildrand, so wie ein Glas ueber dem Bild.
 
-     Und dazu scheppert das Profilbild selbst, wie beschrieben: „so
-     nach links und rechts, als wenn da gerade in so einem Impuls
-     drei oder vier Mal so ein Ring Ring Ring kommt." */
+     Der Takt ist der des Geraeusches: drei Stoesse bei 0.00, 0.62
+     und 1.24 Sekunden. Dazu scheppert das Bild selbst. */
   function lcWecker(wen) {
     return lcAmPlatz(wen, "lc-wecker", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
@@ -25352,41 +25429,41 @@
         kreis.classList.add("lc-scheppert");
         setTimeout(() => kreis.classList.remove("lc-scheppert"), 2600);
       }
-      schicht.innerHTML =
-        '<svg class="lc-wecker-bild" viewBox="0 0 72 76">'
-        /* Fuesse zuerst, sie liegen hinter dem Gehaeuse */
-        + '<path d="M18 62 L10 74 L22 70 Z" fill="#9c7b1e"/>'
-        + '<path d="M54 62 L62 74 L50 70 Z" fill="#9c7b1e"/>'
-        /* Buegel von Schelle zu Schelle */
-        + '<path d="M17 20 C24 8 48 8 55 20" fill="none" stroke="#9c7b1e" stroke-width="3.5"'
-        + ' stroke-linecap="round"/>'
-        /* Die beiden Schellen — jede in einer eigenen Gruppe, damit die
-           CSS-Animation ihren transform setzen kann, ohne den des
-           Bildes zu ueberschreiben. */
-        + '<g class="lc-wecker-glocke lc-wecker-l">'
-        + '<circle cx="15" cy="17" r="11" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
-        + '<path d="M7 12 C9 7 15 5 20 7" fill="none" stroke="#fff6cf" stroke-width="2.6"'
-        + ' stroke-linecap="round" opacity=".85"/>'
-        + "</g>"
-        + '<g class="lc-wecker-glocke lc-wecker-r">'
-        + '<circle cx="57" cy="17" r="11" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
-        + '<path d="M49 12 C51 7 57 5 62 7" fill="none" stroke="#fff6cf" stroke-width="2.6"'
-        + ' stroke-linecap="round" opacity=".85"/>'
-        + "</g>"
-        /* Der Kloeppel in der Mitte */
-        + '<g class="lc-wecker-kloeppel">'
-        + '<rect x="33.5" y="10" width="5" height="16" rx="2.5" fill="#6e5714"/>'
-        + '<circle cx="36" cy="9" r="5" fill="#b9c1cf" stroke="#6e5714" stroke-width="2"/>'
-        + "</g>"
-        /* Gehaeuse und Zifferblatt */
-        + '<circle cx="36" cy="46" r="23" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3.5"/>'
-        + '<circle cx="36" cy="46" r="17" fill="#fff8e1"/>'
-        + '<circle cx="36" cy="46" r="1.8" fill="#3a2f12"/>'
-        + '<path d="M36 34 V46" stroke="#3a2f12" stroke-width="3" stroke-linecap="round"/>'
-        + '<path d="M36 46 L45 51" stroke="#3a2f12" stroke-width="3" stroke-linecap="round"/>'
-        + '<path d="M36 32.5 V35 M49.5 46 H47 M36 59.5 V57 M22.5 46 H25"'
-        + ' stroke="#9c7b1e" stroke-width="2" stroke-linecap="round"/>'
+      /* Das Zifferblatt liegt INNEN — es gehoert auf das Bild. */
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML =
+        '<svg class="lc-wecker-blatt" viewBox="0 0 100 100">'
+        + '<circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>'
+        + Array.from({ length: 12 }, (_, i) => {
+            const w = (i * 30 * Math.PI) / 180;
+            const r1 = i % 3 === 0 ? 33 : 37, r2 = 43;
+            return '<line x1="' + (50 + Math.sin(w) * r1).toFixed(1)
+                 + '" y1="' + (50 - Math.cos(w) * r1).toFixed(1)
+                 + '" x2="' + (50 + Math.sin(w) * r2).toFixed(1)
+                 + '" y2="' + (50 - Math.cos(w) * r2).toFixed(1)
+                 + '" stroke="currentColor" stroke-width="' + (i % 3 === 0 ? 3.4 : 2) + '"'
+                 + ' stroke-linecap="round"/>';
+          }).join("")
+        /* Beide Zeiger auf zwoelf — es schlaegt gerade. */
+        + '<line x1="50" y1="50" x2="50" y2="22" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>'
+        + '<line x1="50" y1="50" x2="50" y2="14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'
+        + '<circle cx="50" cy="50" r="3.2" fill="currentColor"/>'
         + "</svg>";
+
+      /* Und die Schellen — halb hinter dem Bild, wie Ohren. */
+      ["l", "r"].forEach((seite) => {
+        const g = document.createElement("span");
+        g.className = "lc-schelle lc-schelle-" + seite;
+        g.innerHTML =
+          '<svg viewBox="0 0 40 40">'
+          + '<circle cx="20" cy="20" r="17" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
+          + '<path d="M8 13 C10 7 17 4 24 6" fill="none" stroke="#fff6cf" stroke-width="3.4"'
+          + ' stroke-linecap="round" opacity=".85"/>'
+          + '<circle cx="20" cy="20" r="5" fill="#9c7b1e" opacity=".5"/>'
+          + "</svg>";
+        schicht.appendChild(g);
+      });
+
       ["links", "rechts"].forEach((seite) => {
         for (let i = 0; i < 3; i++) {
           const w = document.createElement("i");
@@ -25415,10 +25492,21 @@
         schicht.appendChild(t);
       }
       if (mitBlitz) {
-        const b = document.createElement("span");
-        b.className = "lc-zdonner-blitz";
-        b.textContent = "\u26a1";
-        schicht.appendChild(b);
+        /* GEWUENSCHT: „Bei dem Gewitter koennten deutlichere Blitze da
+           sein." Statt eines Emojis ein gezeichneter Blitz, der von
+           der Wolke bis auf das Bild herunterfaehrt — und dazu ein
+           kurzer greller Schein ueber dem ganzen Bild, denn ein Blitz
+           leuchtet nicht nur, er erhellt auch. Drei Schlaege statt
+           zwei, jeder mit einem kurzen Nachzucken, wie es echte
+           Blitze tun. */
+        schicht.insertAdjacentHTML("beforeend",
+          '<svg class="lc-zdonner-blitz" viewBox="0 0 40 90">'
+          + '<path d="M24 2 L8 46 L19 46 L12 88 L34 38 L22 38 Z"'
+          + ' fill="#fff3a8" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>'
+          + "</svg>");
+        const schein = document.createElement("span");
+        schein.className = "lc-zdonner-schein";
+        lcZpBlende(schicht).appendChild(schein);
       }
     }, 4000, mitBlitz ? "donnerwolke" : "regenwolke");
   }
@@ -25435,12 +25523,32 @@
      Der Haufen liegt in der runden Blende und endet am Bildrand. */
   function lcReichtum(wen) {
     return lcAmPlatz(wen, "lc-zgeld", (schicht) => {
+      /* GEWUENSCHT: „Bei dem Geldregen sollte sich das unten mit
+         Muenzen fuellen und nicht einfach nur gelb steigen. Das
+         sollen liegende Muenzen sein und Geldscheine."
+         Der Haufen ist deshalb kein Farbverlauf mehr, sondern
+         besteht aus einzelnen Stuecken: flache Muenzen von der
+         Seite gesehen (darum liegende Ellipsen, nicht Kreise) und
+         dazwischen ein paar Scheine. Sie erscheinen von unten nach
+         oben, so wie sie fallen — wer zuerst faellt, liegt unten. */
       const blende = lcZpBlende(schicht);
-      blende.innerHTML =
-        '<span class="lc-geldstand">'
-        + '<i class="lc-geldkante"></i>'
-        + '<i class="lc-geldglanz"></i>'
-        + "</span>";
+      const haufen = document.createElement("span");
+      haufen.className = "lc-geldstand";
+      const REIHEN = 5, JE = 5;
+      for (let r = 0; r < REIHEN; r++) {
+        for (let k = 0; k < JE; k++) {
+          const st = document.createElement("i");
+          const schein = (r * JE + k) % 7 === 3;
+          st.className = schein ? "lc-geldschein" : "lc-geldmuenze";
+          st.style.left = ((k * 100) / JE + (r % 2 ? 9 : 0) - 4).toFixed(0) + "%";
+          st.style.bottom = (r * 15 + (k % 2 ? 3 : 0)) + "%";
+          st.style.setProperty("--kipp", ((k * 37 + r * 19) % 24 - 12) + "deg");
+          st.style.animationDelay = (0.5 + r * 0.42 + k * 0.06).toFixed(2) + "s";
+          haufen.appendChild(st);
+        }
+      }
+      haufen.appendChild(Object.assign(document.createElement("i"), { className: "lc-geldglanz" }));
+      blende.appendChild(haufen);
       for (let i = 0; i < 18; i++) {
         const m = document.createElement("i");
         m.className = "lc-zgeld-stueck";
@@ -25577,8 +25685,52 @@
         + '<path d="M50 34 C62 28 80 30 90 40" stroke="#f2837c" stroke-width="4"'
         + ' fill="none" stroke-linecap="round" opacity="0.6"/>'
         + "</svg>";
-      schicht.innerHTML = handschuh("l") + handschuh("r")
-        + '<span class="lc-box-treffer"></span>';
+      /* =========================================================
+         AUS DER RICHTUNG, AUS DER ER KOMMEN MUSS
+         ---------------------------------------------------------
+         GEWUENSCHT: „Die Boxhandschuhe waeren gut, wenn die von der
+         Seite kommen, von der sie logisch kommen sollten — zum
+         Beispiel wenn die Person rechts neben mir sitzt, dann kommen
+         die Boxhandschuhe von links; wenn sie links neben mir sitzt,
+         von rechts. Und wenn jemand direkt unter mir sitzt, kriegt
+         er sie frontal drauf."
+
+         Gerechnet wird mit den echten Kaesten: Mittelpunkt des
+         schlagenden Platzes, Mittelpunkt des getroffenen, daraus die
+         Richtung. Der Handschuh startet auf der Seite des
+         Schlagenden und faehrt auf dem Strich zwischen beiden ins
+         Bild — er kommt also immer von dort, wo der Schlagende
+         wirklich sitzt, nicht von einer festen Seite.
+
+         Sitzt der Schlagende genau darueber oder darunter (dieselbe
+         Spalte), ist die Richtung senkrecht: das ist der frontale
+         Schlag. Weiss niemand, wer geschlagen hat — etwa weil es
+         allen gilt —, bleibt es bei den zwei Handschuhen von links
+         und rechts wie bisher. */
+      const quelle = konter || (von ? null : karte && karte.querySelector(".lc-platz-ich"));
+      let gerichtet = null;
+      if (quelle && quelle !== platz) {
+        const qa = quelle.getBoundingClientRect();
+        const qb = platz.getBoundingClientRect();
+        const dx = (qa.left + qa.width / 2) - (qb.left + qb.width / 2);
+        const dy = (qa.top + qa.height / 2) - (qb.top + qb.height / 2);
+        const laenge = Math.hypot(dx, dy);
+        if (laenge > 4) gerichtet = { x: dx / laenge, y: dy / laenge };
+      }
+      if (gerichtet) {
+        /* 230 % vom Bild entfernt starten — weit genug, dass der
+           Handschuh wirklich von aussen hereinkommt. Der Winkel dreht
+           ihn so, dass die Faust nach vorn zeigt. */
+        schicht.style.setProperty("--hx", (gerichtet.x * 230).toFixed(0) + "%");
+        schicht.style.setProperty("--hy", (gerichtet.y * 230).toFixed(0) + "%");
+        schicht.style.setProperty("--hdreh",
+          (Math.atan2(-gerichtet.y, -gerichtet.x) * 180 / Math.PI).toFixed(1) + "deg");
+        schicht.innerHTML = handschuh("z") + '<span class="lc-box-treffer"></span>';
+        schicht.classList.add("lc-box-gerichtet");
+      } else {
+        schicht.innerHTML = handschuh("l") + handschuh("r")
+          + '<span class="lc-box-treffer"></span>';
+      }
       for (let t = 0; t < 6; t++) {
         const st = document.createElement("i");
         st.className = "lc-box-stern";
@@ -26341,6 +26493,17 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
+    /* Wo die Karte LIEGT (ohne Animation) und wo sie gerade GEZEICHNET
+       wird — damit sich nachmessen laesst, dass die Buehne dem
+       Wackeln nicht folgt. */
+    kartenKasten: function () {
+      const k = document.getElementById("livechatKarte")
+             || document.getElementById("livechatArea");
+      if (!k) return null;
+      const g = k.getBoundingClientRect();
+      return { layout: lcLayoutKasten(k),
+               gemalt: { left: g.left, top: g.top, width: g.width, height: g.height } };
+    },
     /* GEMELDET: „Einige Aufgaben gehen noch nicht, wie das
        Galgenmaennchen." Damit sich das Ergebnis nachspielen laesst
        und nicht behauptet werden muss: eine Lueckentext-Aufgabe
@@ -26349,6 +26512,17 @@
     galgenAufgabe: function () {
       Quiz.startSession(["lueckentext"], "leicht", null, "mix", null, "");
       renderQuestion();
+      /* Nicht jede Lueckentext-Aufgabe taugt dafuer: „zu", „-" oder
+         ein Wort mit Bindestrich bleiben beim Anklicken, und das ist
+         richtig so. Die Sonde soll trotzdem nicht am Zufall haengen —
+         hier wird deshalb so lange weitergeblaettert, bis eine
+         Aufgabe kommt, die Kaesten baut. */
+      let versuche = 0;
+      while (!document.querySelector(".galgen") && versuche < 40) {
+        versuche++;
+        if (!Quiz.advance()) break;
+        renderQuestion();
+      }
       const g = document.querySelector(".galgen");
       return g ? { wort: g.dataset.wort,
                    felder: g.querySelectorAll(".galgen-feld").length,
