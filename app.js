@@ -9150,6 +9150,71 @@
     e: "und", ma: "aber", o: "oder", anche: "auch", non: "nicht",
   };
 
+  /* =========================================================
+     DIE KAESTEN UND DIE BUCHSTABENREIHE BAUEN
+     ---------------------------------------------------------
+     Wann es ueberhaupt geht: nur beim Lueckentext, nur wenn die
+     richtige Antwort EIN Wort aus Buchstaben ist und lang genug,
+     dass Raten kein Spass mehr ist. Ein Bindestrich, ein
+     Apostroph, eine Zahl oder ein Strich („-" als Antwort gibt
+     es) faellt heraus — dort bleibt es beim Anklicken.
+
+     Welche Buchstaben schon dastehen: der erste immer, danach
+     jeder dritte. Das ist mit Absicht keine Zufallsauswahl —
+     sonst sieht dieselbe Aufgabe bei jedem Aufruf anders aus,
+     und wer sie wiederholt, lernt nicht das Wort, sondern das
+     Wuerfeln. Bei kurzen Woertern bleibt so genug zu tun, bei
+     langen wird es nicht zur Qual.
+
+     Die Buchstabenreihe: die fehlenden Buchstaben und dazu
+     einige falsche, alles gemischt. Ohne die falschen waere es
+     kein Raten, sondern Abtippen.
+     ========================================================= */
+  function galgenTauglich(q) {
+    if (q.categoryId !== "lueckentext") return false;
+    if (!q.prompt.includes("___")) return false;
+    if ((q.correct || []).length !== 1) return false;
+    const wort = String(q.options[q.correct[0]] || "");
+    return /^[a-zäöüß]{4,}$/i.test(wort);
+  }
+
+  function galgenHtml(q) {
+    const wort = String(q.options[q.correct[0]] || "");
+    const zeichen = wort.split("");
+    const fest = zeichen.map((_, i) => i === 0 || i % 3 === 0);
+    /* Sicherheitsnetz: es muss mindestens ein Kasten offen bleiben,
+       sonst waere die Aufgabe schon geloest. */
+    if (fest.every(Boolean)) fest[fest.length - 1] = false;
+
+    const felder = zeichen.map((b, i) => fest[i]
+      ? '<span class="galgen-feld galgen-fest" data-fest="1">' + escapeHtml(b) + "</span>"
+      : '<span class="galgen-feld" role="button" tabindex="0"></span>').join("");
+
+    const fehlen = zeichen.filter((_, i) => !fest[i]).map((b) => b.toLowerCase());
+    const ABC = "abcdefghijklmnopqrstuvwxyzäöü".split("");
+    const stoerer = [];
+    /* Vier bis sechs falsche Buchstaben, je nach Laenge des Wortes —
+       und keiner, der im Wort ohnehin vorkommt, sonst waere er gar
+       nicht falsch. */
+    const wieViele = Math.min(6, Math.max(4, Math.round(fehlen.length * 1.2)));
+    const drin = new Set(zeichen.map((b) => b.toLowerCase()));
+    for (let i = 0; i < ABC.length && stoerer.length < wieViele; i++) {
+      const b = ABC[(i * 7 + wort.length * 3) % ABC.length];
+      if (!drin.has(b) && stoerer.indexOf(b) < 0) stoerer.push(b);
+    }
+    const reihe = Core.shuffle(fehlen.concat(stoerer));
+    const tasten = reihe.map((b) =>
+      '<button type="button" class="galgen-taste" data-b="' + escapeHtml(b) + '">'
+      + escapeHtml(b) + "</button>").join("");
+
+    return '<div class="galgen" data-wort="' + escapeHtml(wort.toLowerCase()) + '">'
+      + '<p class="galgen-hinweis">Trag die fehlenden Buchstaben ein — antippen zum Setzen, '
+      + "Kasten antippen zum Wegnehmen.</p>"
+      + '<div class="galgen-wort">' + felder + "</div>"
+      + '<div class="galgen-reihe">' + tasten + "</div>"
+      + "</div>";
+  }
+
   function renderQuestion() {
     setupEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -9161,6 +9226,7 @@
     const p = Quiz.progress();
     const isMulti = q.correct.length > 1;
     const isBlank = q.prompt.includes("___");
+    const istGalgen = galgenTauglich(q);
     const cat = ExerciseData.activeGetCategory(q.categoryId);
 
     const promptHtml = isBlank
@@ -9190,9 +9256,9 @@
         <div class="question-meta"><span class="cat-tag">${cat.icon} ${cat.title}</span> · Frage ${p.index + 1} / ${p.total}${isMulti ? " · mehrere Antworten möglich" : ""}</div>
         <div class="question-prompt">${promptHtml}</div>
         ${uebersetzungHilfeHtml(q)}
-        <div class="option-list">
+        ${istGalgen ? galgenHtml(q) : `<div class="option-list">
           ${q.options.map((opt, i) => `<button type="button" class="option-btn" data-idx="${i}"><span>${displayOption(opt)}</span></button>`).join("")}
-        </div>
+        </div>`}
         ${uebersetzungsSchalterHtml()}
         <div class="question-explain" id="explainBox">${q.explain}</div>
         ${isMulti ? `<div class="quiz-actions"><button type="button" class="btn btn-coffee" id="checkBtn">Fertig ✓</button></div>` : ""}
@@ -9211,6 +9277,35 @@
     const optionBtns = playEl.querySelectorAll(".option-btn");
     const blankSlot = document.getElementById("blankSlot");
 
+    /* =========================================================
+       DAS GALGENMAENNCHEN — BUCHSTABE FUER BUCHSTABE
+       ---------------------------------------------------------
+       GEMELDET: „Einige Aufgaben gehen noch nicht, wie das
+       Galgenmaennchen. Da ist einfach ein ganzer Satz angezeigt
+       und den kann man nur einmal auswaehlen, aber die einzelnen
+       Buchstaben sind nicht auswaehlbar, einzutragen, auch keine
+       voreingestellten Buchstaben, die schon da sind, die man
+       ausfuellen kann."
+
+       Nachgesehen: bei den Lueckentext-Geschichten stand die
+       ganze Mini-Geschichte da, darunter ZWEI Woerter zur Wahl —
+       ein Klick, fertig. Es gab keine Buchstaben, weil es sie
+       nirgends gab: die Uebungen kannten bisher nur
+       Antwortknoepfe.
+
+       Jetzt kennt der Lueckentext einen zweiten Weg: das Wort
+       steht als Kaesten da, ein Teil der Buchstaben ist schon
+       eingetragen, der Rest wird aus einer Reihe von Buchstaben
+       geholt — die richtigen darunter und ein paar falsche. Wer
+       sich vertippt, tippt den Kasten an und nimmt ihn wieder
+       heraus. Die Tastatur geht auch.
+
+       Bewertet wird wie vorher: steht am Ende das richtige Wort,
+       zaehlt es als die richtige Antwort, sonst als die falsche.
+       Punkte, Toene und Erklaerung bleiben unveraendert — es ist
+       ein anderer WEG zur Antwort, keine andere Rechnung. */
+    const galgen = playEl.querySelector(".galgen");
+
     function revealAndAdvance(selection) {
       const record = Quiz.submitAnswer(selection);
       const correctSet = new Set(q.correct);
@@ -9224,7 +9319,12 @@
       });
       if (blankSlot) {
         const chosenIdx = selection[0];
-        blankSlot.textContent = q.options[chosenIdx];
+        /* Beim Galgenmaennchen steht in der Luecke, was WIRKLICH
+           getippt wurde — nicht die Antwortmoeglichkeit, auf die es
+           zur Bewertung abgebildet wird. Sonst laese jemand ein Wort
+           im Satz, das er nie geschrieben hat. */
+        const galgenWort = galgen ? String(galgen.dataset.getippt || "") : "";
+        blankSlot.textContent = galgenWort || q.options[chosenIdx];
         blankSlot.classList.add(record.base > 0 ? "blank-correct" : "blank-wrong");
         // Italienische Elision: endet das eingesetzte Wort auf einen Apostroph
         // (all', dell', un', l'), folgt KEIN Leerzeichen — sonst stünde nach dem
@@ -9252,6 +9352,61 @@
         if (hasMore) renderQuestion();
         else renderResults();
       }, AUTO_ADVANCE_DELAY);
+    }
+
+    if (galgen) {
+      const felder = Array.from(galgen.querySelectorAll(".galgen-feld"));
+      const tasten = Array.from(galgen.querySelectorAll(".galgen-taste"));
+      const luecken = () => felder.filter((f) => !f.dataset.fest && !f.textContent.trim());
+      let fertig = false;
+
+      const setzen = (buchstabe) => {
+        if (fertig) return;
+        const feld = luecken()[0];
+        if (!feld) return;
+        feld.textContent = buchstabe;
+        feld.classList.add("galgen-gesetzt");
+        if (!luecken().length) pruefen();
+      };
+      const wegnehmen = (feld) => {
+        if (fertig || feld.dataset.fest) return;
+        feld.textContent = "";
+        feld.classList.remove("galgen-gesetzt");
+      };
+      const pruefen = () => {
+        if (fertig) return;
+        fertig = true;
+        const getippt = felder.map((f) => f.textContent.trim()).join("").toLowerCase();
+        const soll = String(galgen.dataset.wort || "").toLowerCase();
+        const richtig = getippt === soll;
+        galgen.dataset.getippt = getippt;
+        felder.forEach((f) => f.classList.add(richtig ? "galgen-richtig" : "galgen-falsch"));
+        tasten.forEach((t) => (t.disabled = true));
+        document.removeEventListener("keydown", tastatur);
+        /* Auf die vorhandene Bewertung zurueckfuehren: richtig ist die
+           richtige Antwortmoeglichkeit, falsch die andere. So aendert
+           sich an Punkten, Toenen und Statistik nichts. */
+        const richtigIdx = q.correct[0];
+        const falschIdx = q.options.findIndex((_, i) => i !== richtigIdx);
+        revealAndAdvance([richtig ? richtigIdx : (falschIdx < 0 ? richtigIdx : falschIdx)]);
+      };
+      const tastatur = (e) => {
+        /* Wer die Aufgabe verlaesst, ohne sie zu Ende zu bringen, laesst
+           sonst einen Zuhoerer am Dokument zurueck — bei jeder Frage
+           einen mehr. Ist die Aufgabe nicht mehr im Dokument, nimmt er
+           sich selbst heraus. */
+        if (!galgen.isConnected) { document.removeEventListener("keydown", tastatur); return; }
+        if (fertig) return;
+        if (e.key === "Backspace") {
+          const gesetzt = felder.filter((f) => !f.dataset.fest && f.textContent.trim());
+          if (gesetzt.length) { wegnehmen(gesetzt[gesetzt.length - 1]); e.preventDefault(); }
+          return;
+        }
+        if (e.key.length === 1 && /[a-zäöüß]/i.test(e.key)) { setzen(e.key.toLowerCase()); e.preventDefault(); }
+      };
+      tasten.forEach((t) => t.addEventListener("click", () => setzen(t.dataset.b)));
+      felder.forEach((f) => f.addEventListener("click", () => wegnehmen(f)));
+      document.addEventListener("keydown", tastatur);
     }
 
     optionBtns.forEach((btn) => {
@@ -26186,6 +26341,20 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
+    /* GEMELDET: „Einige Aufgaben gehen noch nicht, wie das
+       Galgenmaennchen." Damit sich das Ergebnis nachspielen laesst
+       und nicht behauptet werden muss: eine Lueckentext-Aufgabe
+       aufbauen und danach im Dokument nachsehen, ob die Kaesten
+       wirklich da sind und ob das Eintragen bewertet wird. */
+    galgenAufgabe: function () {
+      Quiz.startSession(["lueckentext"], "leicht", null, "mix", null, "");
+      renderQuestion();
+      const g = document.querySelector(".galgen");
+      return g ? { wort: g.dataset.wort,
+                   felder: g.querySelectorAll(".galgen-feld").length,
+                   fest: g.querySelectorAll(".galgen-fest").length,
+                   tasten: g.querySelectorAll(".galgen-taste").length } : null;
+    },
     /* Die beiden Bildfaecher — damit sich nachsehen laesst, ob die
        GIPHY-Bibliothek wirklich gefuellt aufgeht und nachlaedt. */
     haeufigHtml: function () { return lcHaeufigHtml(); },
