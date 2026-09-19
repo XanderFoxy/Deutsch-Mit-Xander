@@ -32,7 +32,7 @@ spielt nur ab.
 
    War der Hintergrund schwarz statt grün, `schwarz` statt `gruen`.
 
-3. Heraus kommen vier Dateien:
+3. Heraus kommen vier Dateien (und `liste.json` wird mitgeschrieben):
 
    | Datei | wofür |
    |---|---|
@@ -40,6 +40,25 @@ spielt nur ab.
    | `loewe-maske.mp4` | Bild und Maske nebeneinander — **Safari, iPhone** |
    | `loewe.jpg` | Standbild für die Vorschau |
    | `loewe.json` | Masse und Dauer, damit die Seite nicht raten muss |
+   | `liste.json` | alle vorhandenen Filme — `/film` ohne Namen zeigt sie |
+
+## Wieviel Farbe darf abweichen: 0,16 — nicht 0,22
+
+`chromakey` vergleicht nur die **Farbigkeit**, nicht die Helligkeit.
+Alles Graue, Schwarze und Weisse liegt deshalb rechnerisch genau 0,227
+vom Grün entfernt. Mit dem alten Wert 0,22 (+ 0,08 weicher Rand) fiel
+das mit hinein — gemessen an der Dampflok blieben von ihr nur noch 1 %
+voll deckende Bildpunkte, 30 % waren halb durchsichtig; sie lief als
+Gespenst durchs Bild. Auch der weisse Adlerkopf und der Rauch waren
+betroffen. Mit 0,16 + 0,04 steht die Lok mit 38 % satt da, bei Löwe,
+T-Rex und Adler ändert sich nichts (0,1 Prozentpunkte), und grüne
+Reste bleiben bei allen fünf Filmen bei 0,00 %.
+
+Wer doch einmal andere Werte braucht:
+
+```
+AEHNLICH=0.20 WEICH=0.06 bash werkzeug/film-freistellen.sh ~/x.mp4 x gruen
+```
 
 ## Warum zwei Videodateien
 

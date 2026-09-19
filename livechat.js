@@ -612,6 +612,11 @@ window.LiveChat = (function () {
     ggadler:     " schenkt allen einen Adler  \ud83e\udd85",
     gghai:       " schenkt allen einen Hai  \ud83e\udd88",
     ggbaer:      " schenkt allen einen B\u00e4ren  \ud83d\udc3b",
+    /* Die Fahrzeuge. Gewuenscht: „baue das bitte mit ein in die
+       Tiere und Fahrzeuge." Die Lok kam als Film — sie ist das
+       erste Geschenk, das es nur als Film gibt. */
+    gglok:       " schickt allen eine Dampflok  \ud83d\ude82",
+    gglok2:      " schickt allen den Schnellzug  \ud83d\ude84",
     /* Die Achtziger. */
     kassette:    " spult die Kassette zur\u00fcck  \ud83d\udcfc",
     pacman:      " l\u00e4sst Pac-Man durch den Chat fressen  \ud83d\udc7e",
@@ -629,7 +634,9 @@ window.LiveChat = (function () {
     ggelefant: { satz: "einen Elefanten",     emoji: "\ud83d\udc18" },
     ggadler:   { satz: "einen Adler",         emoji: "\ud83e\udd85" },
     gghai:     { satz: "einen Hai",           emoji: "\ud83e\udd88" },
-    ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" }
+    ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" },
+    gglok:     { satz: "eine Dampflok",       emoji: "\ud83d\ude82" },
+    gglok2:    { satz: "den Schnellzug",      emoji: "\ud83d\ude84" }
   };
 
   var SCHRIFTEN = {
@@ -7068,6 +7075,8 @@ window.LiveChat = (function () {
     { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler <Name>",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
     { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai <Name>",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
     { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
+    { gr: "feier", w: "gglok",     kurz: "lok",    nutzt: "/lok <Name>",     was: "GROSSES GESCHENK: eine Dampflok fährt als Film durchs Bild, der Chat bebt" },
+    { gr: "feier", w: "gglok2",    kurz: "zug",    nutzt: "/zug <Name>",     was: "GROSSES GESCHENK: der Schnellzug donnert als Film heran" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
     { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
@@ -7154,7 +7163,8 @@ window.LiveChat = (function () {
     paintball: "\ud83c\udfaf", enten: "\ud83e\udd86", katze: "\ud83d\udc08",
     route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", ggloewe: "\ud83e\udd81",
     ggtrex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", ggadler: "\ud83e\udd85",
-    gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b", kassette: "\ud83d\udcfc",
+    gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b",
+    gglok: "\ud83d\ude82", gglok2: "\ud83d\ude84", kassette: "\ud83d\udcfc",
     pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
     strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
     wolken: "\u2601\ufe0f", glasbruch: "\ud83e\ude9e", spinnen: "\ud83d\udd77\ufe0f",
@@ -7277,6 +7287,10 @@ window.LiveChat = (function () {
                 elefant: "ggelefant", elefantt: "ggelefant", ruessel: "ggelefant",
                 adler: "ggadler", greif: "ggadler",
                 hai: "gghai", haifisch: "gghai", weisshai: "gghai",
+                baer: "ggbaer", baerchen: "ggbaer",
+                lok: "gglok", lokomotive: "gglok", dampflok: "gglok",
+                eisenbahn: "gglok", bahn: "gglok",
+                zug: "gglok2", schnellzug: "gglok2", lok2: "gglok2",
                 /* Die Achtziger. */
                 tape: "kassette", musikkassette: "kassette", spulen: "kassette",
                 walkman: "kassette", mixtape: "kassette",
@@ -8249,17 +8263,39 @@ window.LiveChat = (function () {
        ========================================================= */
     if (art === "film" || art === "kino") {
       var fname = String(rest || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      /* OHNE NAMEN: die vorhandenen Filme aufzaehlen. Raten, wie
+         einer heisst, ist keine Bedienung. Die Liste schreibt
+         werkzeug/film-freistellen.sh bei jedem Film neu mit. */
       if (!fname) {
-        return systemZeile("🎬 Welchen Film? Zum Beispiel  /film loewe  — die vorhandenen "
-          + "stehen im Ordner „filme“. Neue legt Alex dort ab.");
+        fetch("filme/liste.json", { cache: "no-cache" })
+          .then(function (a) { return a.ok ? a.json() : null; })
+          .then(function (l) {
+            var n = l && l.filme ? l.filme.map(function (f) { return f.name; }) : [];
+            systemZeile(n.length
+              ? "\uD83C\uDFAC Diese Filme liegen bereit:  /film " + n.join("   /film ")
+              : "\uD83C\uDFAC Es liegt noch kein Film in \u201efilme\u201c.");
+          })
+          .catch(function () {
+            systemZeile("\uD83C\uDFAC Welchen Film? Zum Beispiel  /film loewe");
+          });
+        return true;
       }
       /* Erst auf dem eigenen Schirm zeigen, damit man sofort sieht,
          ob es den Film ueberhaupt gibt — und dann erst allen. */
       var lief = false;
-      try { lief = Boolean(zustand.filmRuf && zustand.filmRuf(fname, zustand.ichName)); } catch (e) {}
+      try {
+        lief = Boolean(zustand.filmRuf && zustand.filmRuf(fname, function (grund) {
+          /* Der Abspieler meldet sich spaeter — dann steht der Grund
+             im Klartext im Chat, statt dass gar nichts passiert. */
+          systemZeile("🎬 „" + fname + "“ kam nicht: " + (grund || "unbekannter Grund")
+            + "\n(Fassung " + (window.DMA_VERSION || "?") + ")");
+        }));
+      } catch (e) {
+        return systemZeile("🎬 Der Filmspieler fehlt in dieser Fassung. Lade die Seite neu.");
+      }
       if (!lief) {
-        return systemZeile("🎬 Den Film „" + fname + "“ gibt es hier nicht. "
-          + "Er muss als filme/" + fname + ".webm vorliegen.");
+        return systemZeile("🎬 Der Filmspieler ist in dieser Fassung nicht angemeldet. "
+          + "Lade die Seite neu — deine Fassung ist " + (window.DMA_VERSION || "?") + ".");
       }
       return anAlle("aktion", zustand.ichName + " zeigt „" + fname + "“",
                     { film: fname });
@@ -9055,6 +9091,25 @@ window.LiveChat = (function () {
       ? "ja (" + (gem ? "an" : "aus") + ")"
       : "noch nie geschaltet — es gilt die Voreinstellung"));
     z.push("     → Hoert dich jemand gar nicht, ist es die Leitung: /leitung");
+    /* ── Filme ──
+       GEMELDET: „Es ging beides nicht … erzaehl mir sowas nicht."
+       Statt zu raten, steht hier ab jetzt schwarz auf weiss, was das
+       Geraet ueber die Filme weiss: welche es findet, welchen Weg es
+       nimmt (Chrome/Android oder die Safari-Fassung) und woran der
+       letzte Versuch gescheitert ist. */
+    z.push("  ── Filme ──");
+    z.push("  Fassung            : " + (window.DMA_VERSION || "?"));
+    var fspieler = window.DMA_FILM;
+    z.push("  Abspieler geladen  : " + (fspieler ? "ja" : "noch nicht (kommt beim ersten /film)"));
+    if (fspieler && fspieler.kannAlphaWebm) {
+      z.push("  Weg auf diesem Geraet: " + (fspieler.kannAlphaWebm()
+        ? "WebM mit Durchsichtigkeit (Chrome, Firefox, Android)"
+        : "Bild + Maske nebeneinander (Safari, iPhone)"));
+    }
+    var fgrund = "";
+    try { fgrund = (window.DMA_FILM_GRUND && window.DMA_FILM_GRUND()) || ""; } catch (e) {}
+    z.push("  letzter Versuch    : " + (fgrund ? fgrund : "ohne Beanstandung"));
+    z.push("     → Welche es gibt, zeigt  /film  ohne Namen.");
     z.push("  ────────────────");
     z.push("  dein Rang hier     : " + rangWort(true));
     z.push("  Raum               : " + zustand.raum + (zustand.raum === HAUPTRAUM ? " (Hauptraum)" : ""));
@@ -9372,6 +9427,14 @@ window.LiveChat = (function () {
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
+    /* NACHLESEN, WAS IM CHAT STEHT. Ohne das laesst sich eine
+       Systemzeile („diese Filme liegen bereit") nicht pruefen: sie
+       haengt an der Oberflaeche, und eine Sonde hat keine. Gibt nur
+       Text zurueck, aendert nichts. */
+    pruefZeilen: function (n) {
+      return (zustand.nachrichten || []).slice(-(n || 20))
+        .map(function (z) { return String(z.text || ""); });
+    },
     /* Mithoeren, WAS hinausgeht — der Weg, den ich beim letzten Mal
        nicht geprueft hatte. Genau dort lag der Fehler mit „/drueck". */
     /* Wird beim Druck auf „hinein" aufgerufen — also waehrend der

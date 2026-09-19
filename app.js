@@ -18919,18 +18919,54 @@
      er da.
      ========================================================= */
   let lcFilmspielerDa = null;
+  let lcFilmGrund = "";
+  /* WELCHE FILME GIBT ES? EINMAL FRAGEN, NICHT BEI JEDEM GESCHENK.
+     Seit jedes grosse Geschenk zuerst nach einem Film fragt, wuerde
+     ein Hai (zu dem es keinen gibt) bei jedem Mal eine vergebliche
+     Anfrage ausloesen. Die Liste schreibt werkzeug/film-freistellen.sh
+     mit; sie wird einmal geholt und danach nur noch nachgeschlagen.
+     Fehlt sie (aeltere Fassung im Netz), wird wie bisher einfach
+     probiert — lieber eine Anfrage zu viel als ein Film, der nicht
+     laeuft. */
+  let lcFilmListe = null;
+  function lcFilmListeHolen() {
+    if (!lcFilmListe) {
+      lcFilmListe = fetch("filme/liste.json", { cache: "no-cache" })
+        .then((a) => (a.ok ? a.json() : null))
+        .then((l) => (l && l.filme ? l.filme.map((f) => f.name) : null))
+        .catch(() => null);
+    }
+    return lcFilmListe;
+  }
   function lcFilmSpielen(name, opt) {
     if (!name) return Promise.resolve(false);
+    return lcFilmListeHolen().then((liste) => {
+      if (liste && liste.indexOf(String(name)) < 0) {
+        lcFilmGrund = "Zu „" + name + "“ liegt kein Film in filme/ — vorhanden: "
+          + (liste.length ? liste.join(", ") : "noch keiner");
+        return false;
+      }
+      return lcFilmSpielenJetzt(name, opt);
+    });
+  }
+  function lcFilmSpielenJetzt(name, opt) {
     if (!lcFilmspielerDa) {
       lcFilmspielerDa = window.DMA_FILM
         ? Promise.resolve(true)
         : brDatei("filmspieler.js").then(() => true).catch(() => false);
     }
     return lcFilmspielerDa.then((da) => {
-      if (!da || !window.DMA_FILM) return false;
-      return window.DMA_FILM.spielen(name, opt || {}).then(() => true).catch(() => false);
+      if (!da || !window.DMA_FILM) {
+        lcFilmGrund = "filmspieler.js liess sich nicht laden — bist du auf der neuesten Fassung?";
+        return false;
+      }
+      return window.DMA_FILM.spielen(name, opt || {}).then(() => { lcFilmGrund = ""; return true; })
+        .catch((e) => { lcFilmGrund = String((e && e.message) || e); return false; });
     });
   }
+  /* Damit /befund und der Chat sagen koennen, WARUM nichts kam. */
+  function lcFilmGrundText() { return lcFilmGrund; }
+  window.DMA_FILM_GRUND = lcFilmGrundText;
 
   let lcGgTiere = null;
   function lcGgLaden() {
@@ -18940,7 +18976,27 @@
       return lcGgTiere;
     }).catch(() => { lcGgTiere = {}; return lcGgTiere; });
   }
+  /* =========================================================
+     EIN GESCHENK ZEIGT DEN FILM, WENN ES IHN GIBT
+     ---------------------------------------------------------
+     GEWÜNSCHT: „Baue das bitte mit ein in die Tiere und
+     Fahrzeuge." — und: „Ich habe /trex versucht, aber das geht
+     nicht."
+
+     Genau daran lag es: /trex ist der GESCHENK-Befehl und zeigte
+     die gezeichnete Figur. Jetzt fragt er zuerst, ob zu diesem
+     Namen ein Film in filme/ liegt. Liegt einer da, läuft er —
+     mit Beben, Ausstrahlung und Staub. Liegt keiner da, bleibt
+     alles wie vorher. So wächst die Sammlung mit jedem Film, den
+     Alex ablegt, ohne dass hier eine Zeile geändert werden muss.
+     ========================================================= */
   function lcGrossGeschenk(art, wer) {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    lcFilmSpielen(String(art || "")).then(function (lief) {
+      if (!lief) lcGrossGeschenkGezeichnet(art, wer);
+    });
+  }
+  function lcGrossGeschenkGezeichnet(art, wer) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcGrossGeschenk")?.remove();
     const schicht = document.createElement("div");
@@ -19004,9 +19060,18 @@
 
     (document.getElementById("livechatKarte") || document.body).appendChild(schicht);
 
+    /* Wofuer es keine Zeichnung gibt (die Loks), steht wenigstens das
+       Zeichen da. Ein leerer Geschenkkasten sieht nach Fehler aus. */
+    const LC_GG_ZEICHEN = { lok: "\uD83D\uDE82", lok2: "\uD83D\uDE84" };
     lcGgLaden().then((tafel) => {
       const tier = tafel && tafel[art];
-      if (!tier || !document.body.contains(schicht)) return;
+      if (!document.body.contains(schicht)) return;
+      if (!tier) {
+        const z = LC_GG_ZEICHEN[art];
+        if (z) buehne.innerHTML = '<svg viewBox="0 0 100 100" width="100%" height="100%">'
+          + '<text x="50" y="72" font-size="62" text-anchor="middle">' + z + '</text></svg>';
+        return;
+      }
       /* preserveAspectRatio: das Tier soll NICHT verzerrt werden. Der
          gemessene Rahmen sitzt eng, also wird es so gross wie moeglich
          gezeigt, ohne die Form anzutasten. */
@@ -22670,8 +22735,13 @@
          nicht auf eine leere Zeile schauen. Der Rueckgabewert sagt
          dem Chat, ob es den Film ueberhaupt gibt. */
       if (LiveChat.beiFilm) {
-        LiveChat.beiFilm((name) => {
-          lcFilmSpielen(name);
+        LiveChat.beiFilm((name, melden) => {
+          lcFilmSpielen(name).then((lief) => {
+            /* Ging es nicht, sagt der Chat WARUM — in Klartext.
+               Ein Effekt, der stumm ausbleibt, kostet jede Runde
+               eine Vermutung. */
+            if (!lief && typeof melden === "function") melden(lcFilmGrundText());
+          });
           return true;
         });
       }
@@ -23630,6 +23700,12 @@
     ggadler:   { ganzeSeite: true, wie: "gg", tier: "adler" },
     gghai:     { ganzeSeite: true, wie: "gg", tier: "haifisch" },
     ggbaer:    { ganzeSeite: true, wie: "gg", tier: "baer" },
+    /* Die beiden Loks gibt es NUR als Film. Findet der Filmspieler
+       die Datei nicht, bleibt die Kiste mit Strahlen und Muenzen —
+       plus dem Zeichen unten, damit nicht nur ein leerer Kasten
+       dasteht. */
+    gglok:     { ganzeSeite: true, wie: "gg", tier: "lok" },
+    gglok2:    { ganzeSeite: true, wie: "gg", tier: "lok2" },
     /* Die Achtziger. */
     kassette: { ganzeSeite: true, wie: "kassette" },
     pacman:   { ganzeSeite: true, wie: "pacman" },

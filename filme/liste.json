@@ -1,0 +1,29 @@
+{
+ "filme": [
+  {
+   "name": "adler",
+   "sekunden": 7.33,
+   "bild": "filme/adler.jpg"
+  },
+  {
+   "name": "loewe",
+   "sekunden": 15.04,
+   "bild": "filme/loewe.jpg"
+  },
+  {
+   "name": "lok",
+   "sekunden": 15.04,
+   "bild": "filme/lok.jpg"
+  },
+  {
+   "name": "lok2",
+   "sekunden": 6.96,
+   "bild": "filme/lok2.jpg"
+  },
+  {
+   "name": "trex",
+   "sekunden": 15.04,
+   "bild": "filme/trex.jpg"
+  }
+ ]
+}

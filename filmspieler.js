@@ -44,11 +44,29 @@
     } catch (e) { return false; }
   }
 
+  /* WARUM HIER SO VIEL UEBER FEHLER STEHT
+     -----------------------------------------------------------
+     GEMELDET: „Es ging beides nicht … erzähl mir sowas nicht."
+     Er hat recht: ein Effekt, der stumm nicht kommt, kostet jede
+     Runde eine Vermutung. Also sagt der Spieler ab jetzt in
+     KLARTEXT, woran es lag — Datei nicht gefunden, Netz, Codec,
+     Bewegung abgeschaltet. Dann steht die Ursache beim naechsten
+     Versuch im Chat, statt dass wir beide raten. */
   function holen(name) {
     if (DA[name]) return Promise.resolve(DA[name]);
-    return fetch("filme/" + name + ".json", { cache: "force-cache" })
-      .then(function (a) { if (!a.ok) throw new Error("kein Film: " + name); return a.json(); })
-      .then(function (d) { DA[name] = d; return d; });
+    return fetch("filme/" + name + ".json", { cache: "no-cache" })
+      .then(function (a) {
+        if (!a.ok) {
+          var e = new Error("Die Datei filme/" + name + ".json ist nicht da (" + a.status + ").");
+          e.grund = "fehlt"; throw e;
+        }
+        return a.json();
+      })
+      .then(function (d) { DA[name] = d; return d; })
+      .catch(function (e) {
+        if (!e.grund) { e.grund = "netz"; e.message = "filme/" + name + ".json liess sich nicht laden: " + e.message; }
+        throw e;
+      });
   }
 
   function schicht() {
@@ -299,6 +317,15 @@
             + (4 + 14 * k).toFixed(1) + "px rgba(0,0,0,.45))";
         }
         if (staub) staub.zeichnen(k);
+        /* SANFT AUFHOEREN.
+           GEWÜNSCHT: „dass das nicht abrupt aufhört."
+           Die letzte Sekunde blendet aus — Bild und Schein
+           zugleich. Ein harter Schnitt reisst einen aus der
+           Stimmung, gerade wenn es vorher laut war. */
+        var rest = (d.sekunden || 0) - t;
+        if (rest > 0 && rest < 1.0) {
+          s.style.opacity = Math.max(0, rest / 1.0).toFixed(3);
+        }
         requestAnimationFrame(dramatik);
       }
       if (laeuftDramatik && !ruhig) requestAnimationFrame(dramatik);
@@ -335,8 +362,22 @@
     });
   }
 
+  /* Der letzte Fehler, damit ihn auch /befund zeigen kann. */
+  window.DMA_FILM_FEHLER = "";
+  var spielenRoh = spielen;
+  spielen = function (name, opt) {
+    return spielenRoh(name, opt).then(function (r) {
+      window.DMA_FILM_FEHLER = "";
+      return r;
+    }).catch(function (e) {
+      window.DMA_FILM_FEHLER = String((e && e.message) || e);
+      throw e;
+    });
+  };
+
   window.DMA_FILM = {
     spielen: spielen,
+    letzterFehler: function () { return window.DMA_FILM_FEHLER; },
     kannAlphaWebm: kannAlphaWebm,
     /* Für die Sonde: von aussen prüfbar, welcher Weg genommen würde. */
     pruefWeg: function (erzwinge) {

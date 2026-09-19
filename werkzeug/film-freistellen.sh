@@ -66,7 +66,18 @@ else
     rm -f "$ROH"
   fi
   [ -n "$FARBE" ] || FARBE="0x00B140"
-  SCHLUESSEL="chromakey=${FARBE}:0.22:0.08"
+  # WIE WEIT DARF DIE FARBE ABWEICHEN? 0,16 — NICHT 0,22.
+  # Gemessen an der Dampflok: bei 0,22 blieb von ihr nur ein Schatten
+  # uebrig (1 % voll deckend, 30 % halb durchsichtig), bei 0,16 stand
+  # sie satt da (38 % voll). Der Grund steckt in chromakey selbst: es
+  # vergleicht nur die FARBIGKEIT, nicht die Helligkeit. Alles Graue,
+  # Schwarze und Weisse liegt damit genau 0,227 vom Gruen entfernt —
+  # eine schwarze Lok, ein weisser Adlerkopf, eine Rauchwolke also
+  # knapp innerhalb von 0,22 + 0,08 und damit halb weggeschnitten.
+  # 0,16 + 0,04 bleibt sicher darunter. Bei Loewe, T-Rex und Adler
+  # aendert sich dadurch nichts (gemessen: 0,1 Prozentpunkte), und
+  # gruene Reste bleiben bei allen fuenf Filmen bei 0,00 %.
+  SCHLUESSEL="chromakey=${FARBE}:${AEHNLICH:-0.16}:${WEICH:-0.04}"
   ENTFAERBEN=",despill=type=green:mix=0.6:expand=0.3"
 fi
 # WIE GROSS? NICHT SO GROSS WIE DIE QUELLE.
@@ -80,8 +91,22 @@ VERKLEINERN=""
 if [ "$BREITE" != "0" ]; then
   VERKLEINERN="scale='min(${BREITE},iw)':-2:flags=lanczos,"
 fi
+# WENN DOCH BODEN IM BILD IST.
+# Die Regel im Prompt lautet „kein Boden" — die Bild-KI haelt sich
+# nicht immer daran. Beim Loewen kippt das Video nach etwa acht
+# Sekunden in eine echte Szene mit einem Felsen: gemessen sind die
+# untersten elf Prozent der Bildhoehe voll deckend, und das laege
+# als harter Balken ueber dem Chat. BODEN=0.14 laesst die Deckung
+# auf den untersten vierzehn Prozent sanft auf null auslaufen —
+# der Felsen loest sich auf, die Pfoten (bei 80 bis 85 Prozent)
+# bleiben unangetastet. Ohne BODEN aendert sich nichts.
+BODEN="${BODEN:-0}"
+AUSLAUF=""
+if [ "$BODEN" != "0" ]; then
+  AUSLAUF=",geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*min(1,(H-Y)/(H*${BODEN}))'"
+fi
 # Kanten weich machen: sonst treppt der Umriss.
-KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN},format=yuva420p"
+KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuva420p"
 
 echo "1/4  freistellen (${ART}) …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
@@ -116,6 +141,25 @@ cat > "$ZIEL/$NAME.json" <<EOF
   "webm": "filme/$NAME.webm", "maske": "filme/$NAME-maske.mp4",
   "bild": "filme/$NAME.jpg", "art": "$ART" }
 EOF
+
+# Alle vorhandenen Filme in EINE Liste schreiben. Auf GitHub Pages
+# kann die Seite keinen Ordner durchblaettern — ohne diese Liste
+# muesste man raten, wie ein Film heisst. „/film" ohne Namen zeigt sie.
+node - "$ZIEL" <<'JSNODE'
+const fs = require("fs"), pfad = process.argv[2];
+/* Namen mit zwei Unterstrichen vorn sind Sondenfilme (pruefe-film-
+   freistellen.js baut sich einen). Die gehoeren nicht in die Liste —
+   sonst steht im Chat ein Film, den es nach der Pruefung nicht mehr
+   gibt. Genau das ist einmal passiert. */
+const filme = fs.readdirSync(pfad)
+  .filter((f) => /\.json$/.test(f) && f !== "liste.json" && f.slice(0, 2) !== "__")
+  .map((f) => { try { return JSON.parse(fs.readFileSync(pfad + "/" + f, "utf8")); } catch (e) { return null; } })
+  .filter(Boolean)
+  .map((d) => ({ name: d.name, sekunden: d.sekunden, bild: d.bild }))
+  .sort((a, b) => a.name.localeCompare(b.name, "de"));
+fs.writeFileSync(pfad + "/liste.json", JSON.stringify({ filme: filme }, null, 1) + "\n");
+console.log("     Liste: " + filme.map((f) => f.name).join(", "));
+JSNODE
 
 # Die Tritte aus der Tonspur lesen — damit der Chat GENAU dann
 # bebt, wenn der Fuss aufkommt, und nicht im Takt danebenwackelt.
