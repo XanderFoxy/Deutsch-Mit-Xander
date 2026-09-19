@@ -41,7 +41,16 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
   const ruf = new Set(d.aufrufbar), bef = new Set(d.befehle);
   /* Nur die Ganzseitigen und die Gezielten muessen erreichbar sein;
      „fluester" ist kein Effekt zum Ausloesen. */
-  const egal = new Set(["fluester", "umarmen", "lachen"]);
+  const egal = new Set(["fluester", "umarmen", "lachen",
+    /* DIE ALTEN NAMEN DER FILME.
+       Die sieben Filme hiessen bis Fassung 337 „ggtrex", „gglok" und
+       so weiter. Sie heissen jetzt wie ihr Befehl (/trex, /lok …);
+       die alten Namen stehen in LC_EFFEKTE nur noch da, damit eine
+       Zeile von einem Geraet mit der alten Fassung nicht ins Leere
+       laeuft. Einen BEFEHL dazu darf es bewusst nicht mehr geben —
+       darum gehoeren sie hier hin und nicht in die Fehlerliste. */
+    "ggloewe", "ggtrex", "ggadler", "gglok", "gglok2",
+    "ggraumschiff", "gguboot"]);
   const ohneTuer = d.gezeichnet.filter((e) => !ruf.has(e) && !egal.has(e));
   const ohneBefehl = d.gezeichnet.filter((e) => !bef.has(e) && !egal.has(e)
     && !["lecken", "boxen", "handdurch"].includes(e));

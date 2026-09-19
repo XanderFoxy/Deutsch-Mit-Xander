@@ -312,6 +312,68 @@ window.LiveChat = (function () {
     });
     return relaisLaeuft;
   }
+  /* =================================================================
+     WARUM DIESES GERAET KEIN EIGENES RELAIS HAT — IM KLARTEXT
+     -----------------------------------------------------------------
+     GEFRAGT: „Bist du dir sicher, dass du die TURN-Sache jetzt
+     beruecksichtigt hast? Sie war kein Gast, sie war ganz normal
+     eingeloggt."
+
+     Er hatte recht, und meine Gastvermutung war falsch. Nachgemessen
+     in seinem eigenen Supabase, in den Protokollen der Edge-Function
+     vom 18. September:
+
+         200er : 278
+         429er : 134      ← hier lag es
+         503er :  28      (vor dem Eintragen der Schluessel)
+
+     Und in der Tabelle turn_nutzung stehen 14 Ausgaben. Die Funktion
+     rechnet je Ausgabe mit hoechstens 72 MB und hatte, solange
+     „turn_budget_gb" nicht gesetzt war, ein Monatsbudget von 1 GB:
+
+         14 × 72 MB = 1008 MB;  1008 + 72 = 1080 > 1024
+
+     Ab der 15. Ausgabe hat die Funktion also JEDEM 429
+     „budget-erschoepft" geantwortet — angemeldet oder nicht. Emmis
+     Geraet hat gefragt, eine Absage bekommen und still auf die
+     oeffentlichen Relais zurueckgeschaltet. Genau das, was sie
+     beschrieben hat.
+
+     Zwei Dinge daran waren falsch: die Bremse stand viel zu eng
+     (jetzt 100 GB, eingetragen in betreiber_geheimnisse), und die
+     Absage war STILL. Das Stille war das Schlimmere — deshalb steht
+     der Grund ab hier im Klartext im Chat, auf dem Geraet, das ihn
+     betrifft. */
+  var RELAIS_GRUENDE = {
+    "budget-erschoepft": "Das selbst gesetzte Monatsbudget fuers Relais ist aufgebraucht. "
+      + "Es steht in betreiber_geheimnisse unter „turn_budget_gb\u201c.",
+    "tagesgrenze": "Dieses Konto hat heute schon 60-mal Zugangsdaten geholt.",
+    "kein-relais": "In Supabase ist noch kein Cloudflare-Schluessel hinterlegt.",
+    "nicht-angemeldet": "Dieses Geraet hat keine gueltige Anmeldung — auch keine Gastsitzung.",
+    "schluessel-falsch": "Cloudflare weist den hinterlegten Schluessel zurueck.",
+    "nicht-erreichbar": "Die Funktion war nicht erreichbar (Netz oder Zeitueberschreitung).",
+    "keine-verbindung": "Diese Seite hat gar keine Verbindung zu Supabase.",
+    "kein-json": "Die Funktion hat etwas geantwortet, das kein JSON war.",
+    "cloudflare-nicht-erreichbar": "Cloudflare war von Supabase aus nicht erreichbar.",
+    "cloudflare-ohne-server": "Cloudflare hat geantwortet, aber keinen Server genannt.",
+    "leer": "Die Antwort enthielt keine Server."
+  };
+  function relaisGrundKlartext() {
+    if (relaisStand.quelle === "cloudflare") return "";
+    var g = relaisStand.grund || "";
+    return RELAIS_GRUENDE[g] || (g ? "Grund: " + g : "Grund unbekannt.");
+  }
+  /* Einmal je Betreten sagen, wenn es NICHT das eigene Relais ist.
+     Nur auf diesem Geraet — es ist ein Befund, keine Nachricht. */
+  function relaisMelden() {
+    if (relaisStand.quelle === "cloudflare") return;
+    if (window.DMA_TURN && window.DMA_TURN.length) return;
+    systemZeile("\u26a0\ufe0f Dieses Ger\u00e4t l\u00e4uft ohne eigenes Relais — "
+      + "\u00fcber Netze hinweg (Deutschland \u2194 \u00c4gypten) kann der Ton "
+      + "deshalb ausbleiben.\n   " + relaisGrundKlartext()
+      + "\n   /leitung zeigt den ganzen Befund.");
+  }
+
   function relaisLage() {
     return {
       quelle: relaisStand.quelle,
@@ -650,25 +712,39 @@ window.LiveChat = (function () {
     schuss:      " ballert L\u00f6cher in den Chat  \ud83d\udca5",
     route66:     " braust ueber die Route 66 heran  \ud83d\ude98",
     prunk:       " laesst ein grosses Geschenk aufgehen  \ud83c\udf81",
-    /* Die grossen Geschenke. Ohne Namen dahinter gilt es dem ganzen
-       Raum — „schenkt allen einen Loewen". Mit Namen setzt der Zweig
-       in befehlAusfuehren den Satz selbst zusammen. */
-    ggloewe:     " schenkt allen einen L\u00f6wen  \ud83e\udd81",
-    ggtrex:      " schenkt allen einen Tyrannosaurus  \ud83e\udd96",
+    /* Die drei gezeichneten Geschenke. Ohne Namen dahinter gilt es
+       dem ganzen Raum — „schenkt allen einen Elefanten". Mit Namen
+       setzt der Zweig in befehlAusfuehren den Satz selbst zusammen. */
     ggelefant:   " schenkt allen einen Elefanten  \ud83d\udc18",
-    ggadler:     " schenkt allen einen Adler  \ud83e\udd85",
     gghai:       " schenkt allen einen Hai  \ud83e\udd88",
     ggbaer:      " schenkt allen einen B\u00e4ren  \ud83d\udc3b",
+    /* =========================================================
+       DIE FILME SIND KEINE GESCHENKE
+       ---------------------------------------------------------
+       GEWUENSCHT: „Das soll nicht mehr ggtrex heissen. Das soll
+       nicht mir eine geschenkorientiert sein, diese neuen Sachen …
+       da soll nur der Befehl /trex sein und dann soll ein passender
+       Spruch kommen: Xander Fox laesst seinen T-Rex los. Bei den
+       anderen soll sich das auch nicht nach Geschenken anhoeren."
+
+       Also heissen sie jetzt so, wie man sie tippt (/trex, /loewe,
+       /lok, /zug …), und der Satz sagt, was passiert — niemand
+       bekommt etwas ueberreicht. Die alten Namen bleiben als
+       Abkuerzung bestehen (siehe KURZ), damit eine Zeile aus einer
+       aelteren Fassung nicht ins Leere laeuft.
+       ========================================================= */
+    trex:        " l\u00e4sst den T-Rex los  \ud83e\udd96",
+    loewe:       " l\u00e4sst den L\u00f6wen los  \ud83e\udd81",
+    adler:       " l\u00e4sst den Adler steigen  \ud83e\udd85",
     /* Die Fahrzeuge. Gewuenscht: „baue das bitte mit ein in die
-       Tiere und Fahrzeuge." Die Lok kam als Film — sie ist das
-       erste Geschenk, das es nur als Film gibt. */
-    gglok:       " schickt allen eine Dampflok  \ud83d\ude82",
-    gglok2:      " schickt allen den Schnellzug  \ud83d\ude84",
+       Tiere und Fahrzeuge." */
+    lok:         " l\u00e4sst die Dampflok anrollen  \ud83d\ude82",
+    zug:         " l\u00e4sst den Schnellzug durchdonnern  \ud83d\ude84",
     /* Weltraum und Tiefsee. Diese beiden gibt es nur als Film —
        und zwar als „dunkle" Sorte: wo das Bild schwarz ist, ist
        es durchsichtig, und der Chat scheint hindurch. */
-    ggraumschiff:" schickt allen ein Raumschiff  \ud83d\ude80",
-    gguboot:     " schickt allen ein U-Boot  \ud83d\udea2",
+    raumschiff:  " schickt das Raumschiff hinaus  \ud83d\ude80",
+    uboot:       " l\u00e4sst das U-Boot abtauchen  \ud83d\udea2",
     /* Die Achtziger. */
     kassette:    " spult die Kassette zur\u00fcck  \ud83d\udcfc",
     pacman:      " l\u00e4sst Pac-Man durch den Chat fressen  \ud83d\udc7e",
@@ -681,16 +757,9 @@ window.LiveChat = (function () {
      Satz an zwei Stellen stehen (hier und in WETTER), und eine von
      beiden waere frueher oder spaeter falsch. */
   var GROSSGESCHENK = {
-    ggloewe:   { satz: "einen L\u00f6wen",        emoji: "\ud83e\udd81" },
-    ggtrex:    { satz: "einen Tyrannosaurus", emoji: "\ud83e\udd96" },
     ggelefant: { satz: "einen Elefanten",     emoji: "\ud83d\udc18" },
-    ggadler:   { satz: "einen Adler",         emoji: "\ud83e\udd85" },
     gghai:     { satz: "einen Hai",           emoji: "\ud83e\udd88" },
-    ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" },
-    gglok:     { satz: "eine Dampflok",       emoji: "\ud83d\ude82" },
-    gglok2:    { satz: "den Schnellzug",      emoji: "\ud83d\ude84" },
-    ggraumschiff: { satz: "ein Raumschiff",  emoji: "\ud83d\ude80" },
-    gguboot:   { satz: "ein U-Boot",         emoji: "\ud83d\udea2" }
+    ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" }
   };
 
   var SCHRIFTEN = {
@@ -1891,6 +1960,7 @@ window.LiveChat = (function () {
     }
     if (relaisStand.quelle !== "cloudflare") {
       var g = gastBefund();
+      zeilen.push("   " + relaisGrundKlartext());
       zeilen.push(g
         ? "⚠ Kein eigenes Relais auf DIESEM Geraet. Die Gastsitzung kam nicht zustande: " + g
           + "\n   → In Supabase unter Authentication → Sign In/Providers „Anonymous sign-ins“ einschalten."
@@ -3645,6 +3715,10 @@ window.LiveChat = (function () {
             }, 1600);
             praesenzZuhoeren(kontoId || zustand.ichId);
             praesenzSetzen(true, zustand.ichName);
+            /* Und wenn das Relais gefehlt hat, steht es jetzt da —
+               statt dass es wieder jemand aus dem Tonausfall
+               erschliessen muss. */
+            relaisMelden();
             melden();
             /* GEWÜNSCHT: „Wichtig ist, dass in dem Moment, wo man
                reingeht, alles aktualisiert ist und synchronisiert mit
@@ -5492,6 +5566,91 @@ window.LiveChat = (function () {
      der Aufgabe mit sich — damit steht der Notenstift daneben,
      ohne dass hier irgendetwas Eigenes dafuer noetig waere.
      ========================================================= */
+  /* =================================================================
+     DAS GLUECKSRAD — EIN GESUCHTER SATZ
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Dann noch als Variante fuer einen gesuchten Satz wie
+     bei Glücksrad — dass ich einen Satz oder eine Redewendung
+     schreibe und ein paar Buchstaben schon in den Feldern stehen,
+     ohne den Chat irgendwie in seinem Designfluss zu beeintraechtigen.
+     Vielleicht auch eine Auswahl an fertigen Redewendungen."
+
+     Beides ist da: ein eigener Satz mit  /raten …  — oder ohne Text
+     eine aus dieser Liste. Es sind gaengige deutsche Redewendungen,
+     wie sie im Duden unter „Redewendung" stehen; nichts Erfundenes.
+     ================================================================= */
+  var REDEWENDUNGEN = [
+    "Alle guten Dinge sind drei",
+    "Aller Anfang ist schwer",
+    "Übung macht den Meister",
+    "Morgenstund hat Gold im Mund",
+    "Wer zuletzt lacht, lacht am besten",
+    "Der Apfel fällt nicht weit vom Stamm",
+    "Viele Köche verderben den Brei",
+    "Reden ist Silber, Schweigen ist Gold",
+    "Ende gut, alles gut",
+    "Wer A sagt, muss auch B sagen",
+    "Kleider machen Leute",
+    "Lügen haben kurze Beine",
+    "Wer nicht wagt, der nicht gewinnt",
+    "Ohne Fleiß kein Preis",
+    "Es ist noch kein Meister vom Himmel gefallen",
+    "Was du heute kannst besorgen, das verschiebe nicht auf morgen",
+    "In der Kürze liegt die Würze",
+    "Der frühe Vogel fängt den Wurm",
+    "Man soll den Tag nicht vor dem Abend loben",
+    "Einem geschenkten Gaul schaut man nicht ins Maul"
+  ];
+
+  function ratenStellen(roh) {
+    var text = String(roh || "").trim();
+    if (/^liste$/i.test(text)) {
+      return systemZeile("🎡 Fertige Redewendungen — such dir eine aus:\n"
+        + REDEWENDUNGEN.map(function (r, i) { return "  " + (i + 1) + ". " + r; }).join("\n")
+        + "\nMit der Nummer starten:  /raten 7    Oder ohne alles:  /raten");
+    }
+    /* Nur eine Zahl? Dann ist die Nummer aus der Liste gemeint. */
+    if (/^\d{1,2}$/.test(text)) {
+      var nr = parseInt(text, 10);
+      if (nr >= 1 && nr <= REDEWENDUNGEN.length) text = REDEWENDUNGEN[nr - 1];
+      else return systemZeile("Die Liste hat " + REDEWENDUNGEN.length
+        + " Redewendungen.  /raten liste  zeigt sie.");
+    }
+    if (!text) {
+      if (offeneAufgabe && offeneAufgabe.typ === "raten") {
+        var altLoesung = offeneAufgabe.loesung;
+        offeneAufgabe = null;
+        aufgabeMerken();
+        senden({ art: "aufgabeAus" });
+        return systemZeile("✔️ Das Glücksrad ist beendet. Gesucht war: „" + altLoesung + "\u201c");
+      }
+      /* Ohne Text: eine Redewendung aus der Liste, zufaellig. */
+      text = REDEWENDUNGEN[Math.floor(Math.random() * REDEWENDUNGEN.length)];
+    }
+    if (text.length > 90) return systemZeile("Das ist zu lang — höchstens 90 Zeichen, sonst passt das Rad nicht in die Zeile.");
+    var buchstaben = (text.match(/\p{L}/gu) || []).length;
+    if (buchstaben < 4) return systemZeile("Das sind zu wenige Buchstaben zum Raten.");
+
+    offeneAufgabe = { typ: "raten", loesung: text, frage: "Glücksrad", wer: {},
+                      zeit: Date.now(), zeileId: "" };
+    /* DIE LOESUNG FAEHRT HIER MIT — und das ist Absicht, kein
+       Versehen. Anders als bei der Betonung kann kein Geraet den
+       Satz nachschlagen: er ist frei erfunden. Wer einen Buchstaben
+       antippt, muss aber sehen, WO er steht — dafuer braucht das
+       Geraet den Satz. Er wird nur nie im Klartext gezeichnet.
+       Wer ins Geraet hineinsieht, findet ihn; fuer ein Ratespiel
+       im Unterricht ist das der richtige Preis. Im sichtbaren Text
+       der Zeile steht er nicht. */
+    var zeile = anAlle("aufgabe", "🎡 Glücksrad \u2014 welcher Satz ist das?", { raten: text });
+    if (zeile && zeile.id) {
+      offeneAufgabe.zeileId = zeile.id;
+      zeile.aufgabeId = zeile.id;
+    }
+    aufgabeMerken();
+    aufgabeVerkuenden();
+    return true;
+  }
+
   function betonungStellen(roh) {
     var text = String(roh || "").trim();
     if (!text) {
@@ -7147,38 +7306,38 @@ window.LiveChat = (function () {
   };
 
   var BEFEHLE = [
-    { gr: "reden", w: "me",      kurz: "",     nutzt: "/me <was du tust>",   was: "Aktion: „Emmy lacht laut“ — kursiv, ohne Doppelpunkt" },
+    { gr: "reden", w: "me",      kurz: "",     nutzt: "/me was du tust",     was: "Aktion: „Emmy lacht laut“" },
     { gr: "reden", w: "me/",     kurz: "",     nutzt: "… /me/ …",            was: "Mitten im Satz: wird durch deinen Namen ersetzt" },
-    { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s <Text>",           was: "Schreien — GROSS, mit Wucht" },
-    { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w <Name> <Text>",    was: "Flüstern — nur ihr beide seht es, auch über Räume hinweg" },
-    { gr: "raum", w: "j",       kurz: "join", nutzt: "/j <Raum>",           was: "Raum betreten — gibt es ihn nicht, machst du ihn auf" },
-    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i <Name>",         was: "Einladen — wer da ist, wird gerufen; wer nicht da ist, bekommt Post. Ohne Namen: deine Freunde" },
-    { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f <Name>",         was: "Folgen — dorthin, wo die Person GERADE ist" },
-    { gr: "raum", w: "n",       kurz: "names",nutzt: "/n",                  was: "Wer ist hier?" },
-    { gr: "raum", w: "l",       kurz: "list", nutzt: "/l",                  was: "Welche Räume sind gerade offen?" },
-    { gr: "raum", w: "t",       kurz: "topic",nutzt: "/t <Text>",           was: "Thema des Raums setzen" },
-    { gr: "raum", w: "lock",    kurz: "",     nutzt: "/lock",               was: "Raum abschließen — nur Eingeladene kommen herein" },
-    { gr: "raum", w: "unlock",  kurz: "",     nutzt: "/unlock",             was: "Raum wieder öffnen" },
-    { gr: "chef", w: "op",      kurz: "",     nutzt: "/op <Name>",          was: "Macht die Person zum Häuptling" },
-    { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop <Name>",        was: "Nimmt die Häuptlingsrechte wieder" },
-    { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k <Name>",           was: "Rausschmeißen (nur Häuptling)" },
-    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm <Name>",       was: "Stimme abschalten — schreiben geht weiter (nur Häuptling)" },
-    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm <Name>",    was: "Darf wieder sprechen (nur Häuptling)" },
-    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel <Name>",      was: "Auch das Schreiben abschalten (nur Häuptling)" },
-    { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel <Name>",   was: "Wieder sprechen lassen" },
+    { gr: "reden", w: "s",       kurz: "shout",nutzt: "/s Text",             was: "Schreien" },
+    { gr: "reden", w: "w",       kurz: "msg",  nutzt: "/w Name Text",        was: "Flüstern" },
+    { gr: "raum", w: "j",       kurz: "join", nutzt: "/j Raum",             was: "Raum" },
+    { gr: "raum", w: "i",       kurz: "invite", nutzt: "/i Name",           was: "Einladen" },
+    { gr: "raum", w: "f",       kurz: "follow", nutzt: "/f Name",           was: "Folgen" },
+    { gr: "raum", w: "n",       kurz: "names",nutzt: "/n",                  was: "Wer ist hier" },
+    { gr: "raum", w: "l",       kurz: "list", nutzt: "/l",                  was: "Liste der Räume" },
+    { gr: "raum", w: "t",       kurz: "topic",nutzt: "/t Text",             was: "Thema" },
+    { gr: "raum", w: "lock",    kurz: "",     nutzt: "/lock",               was: "Abschließen" },
+    { gr: "raum", w: "unlock",  kurz: "",     nutzt: "/unlock",             was: "Aufschließen" },
+    { gr: "chef", w: "op",      kurz: "admin",nutzt: "/op Name",            was: "Admin" },
+    { gr: "chef", w: "deop",    kurz: "",     nutzt: "/deop Name",          was: "Admin weg" },
+    { gr: "chef", w: "k",       kurz: "kick", nutzt: "/k Name",             was: "Kick" },
+    { gr: "chef", w: "stumm",   kurz: "",     nutzt: "/stumm Name",         was: "Stumm" },
+    { gr: "chef", w: "entstumm", kurz: "",    nutzt: "/entstumm Name",      was: "Stumm weg" },
+    { gr: "chef", w: "knebel",  kurz: "",     nutzt: "/knebel Name",        was: "Knebel" },
+    { gr: "chef", w: "entknebel", kurz: "",   nutzt: "/entknebel Name",     was: "Knebel weg" },
     { gr: "reden", w: "lach",    kurz: "lol",  nutzt: "/lach",               was: "Lachen — mit einem Gesicht aus Buchstaben" },
-    { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii <Was>",        was: "Ein Bild aus Buchstaben — /ascii ohne Wort zeigt alle" },
-    { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild <Was>",         was: "Ein buntes Bild aus Emojis — /bild ohne Wort zeigt alle" },
-    { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz <Name>",        was: "Ein Herz schicken (geht auch als &hearts; mitten im Text)" },
-    { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck <Name>",      was: "Jemanden drücken" },
-    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch <Name>",    was: "Mit jemandem den Platz tauschen — ohne Namen rutscht man auf den nächsten freien" },
-    { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",       was: "Warum hört man jemanden nicht? Zeigt den Weg und ob Tonpakete ankommen" },
-    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <Name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
-    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <Name>",       was: "Jemandem einen Boxhandschuh verpassen" },
-    { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation sofort auf deinem Schirm zeigen — nur für dich" },
+    { gr: "zeichen", w: "ascii",   kurz: "",     nutzt: "/ascii Was",        was: "Bild aus Buchstaben — /ascii zeigt alle" },
+    { gr: "zeichen", w: "bild",    kurz: "emoji",nutzt: "/bild Was",         was: "Bild aus Emojis — /bild zeigt alle" },
+    { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz Name",          was: "Ein Herz schicken" },
+    { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck Name",        was: "Drücken" },
+    { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch Name",     was: "Platz tauschen" },
+    { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",      was: "Warum hört man jemanden nicht?" },
+    { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck Name",        was: "Abschlecken" },
+    { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box Name",         was: "Boxhandschuh" },
+    { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
-    { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <Name>", was: "Luftballons steigen auf — zum Geburtstag" },
-    { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk <Name>",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
+    { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
+    { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk Name",    was: "Ein Geschenk überreichen" },
     { gr: "wetter", w: "schnee",  kurz: "",     nutzt: "/schnee",             was: "Es schneit im ganzen Raum" },
     { gr: "wetter", w: "regen",   kurz: "",     nutzt: "/regen",              was: "Es regnet im ganzen Raum" },
     { gr: "wetter", w: "feuerwerk", kurz: "",   nutzt: "/feuerwerk",          was: "Feuerwerk über dem ganzen Fenster" },
@@ -7187,8 +7346,8 @@ window.LiveChat = (function () {
     { gr: "welt", w: "vulkan",  kurz: "ausbruch", nutzt: "/vulkan",          was: "Ein Vulkan bricht aus — Lava, Funken und Asche" },
     { gr: "tiere", w: "schmetterling", kurz: "falter", nutzt: "/schmetterling", was: "Schmetterlinge flattern durch den Raum" },
     { gr: "tiere", w: "voegel",  kurz: "zugvoegel", nutzt: "/voegel",          was: "Ein Schwarm zieht in den Süden — in Keilformation" },
-    { gr: "feier", w: "schlitten", kurz: "santa", nutzt: "/schlitten",         was: "Der Weihnachtsmann rauscht mit dem Schlitten durchs Bild" },
-    { gr: "tiere", w: "rennauto", kurz: "auto", nutzt: "/rennauto",            was: "Ein Rennwagen fährt durchs Bild — zum Abschied" },
+    { gr: "fahrzeuge", w: "schlitten", kurz: "santa", nutzt: "/schlitten",     was: "Film: der Weihnachtsmann rauscht mit dem Schlitten durchs Bild" },
+    { gr: "fahrzeuge", w: "rennauto", kurz: "auto", nutzt: "/rennauto",        was: "Ein Rennwagen fährt durchs Bild" },
     { gr: "feier", w: "bonbon",  kurz: "lolli", nutzt: "/bonbon",              was: "Es regnet Bonbons und Lollis" },
     { gr: "wetter", w: "orkan",   kurz: "wind", nutzt: "/orkan",                was: "Ein Orkan pustet die Buchstaben durcheinander" },
     { gr: "wetter", w: "finsternis", kurz: "stromausfall", nutzt: "/finsternis", was: "Das Licht geht aus — nur noch Taschenlampen" },
@@ -7210,31 +7369,41 @@ window.LiveChat = (function () {
     { gr: "welt", w: "fratze",    kurz: "daemon", nutzt: "/fratze",    was: "Eine dämonische Fratze taucht aus dem Dunkel auf" },
     { gr: "welt", w: "blut",      kurz: "horror", nutzt: "/blut",      was: "Blut läuft von oben herunter" },
     { gr: "welt", w: "schloss",   kurz: "hollow", nutzt: "/schloss",   was: "Das Tor geht auf, dahinter ein Schloss — und ein eiskalter Wind" },
-    { gr: "welt", w: "kitt",      kurz: "rider",  nutzt: "/kitt",      was: "Der schwarze Wagen kommt frontal an, mit dem roten Lauflicht" },
-    { gr: "welt", w: "dino",      kurz: "rex",    nutzt: "/dino",      was: "Ein Tyrannosaurus kommt näher und brüllt — der Boden bebt" },
+    { gr: "fahrzeuge", w: "kitt",  kurz: "rider",  nutzt: "/kitt",      was: "Der schwarze Wagen mit dem roten Lauflicht" },
+    { gr: "tiere", w: "dino",     kurz: "rex",    nutzt: "/dino",      was: "Gezeichnet: ein Tyrannosaurus kommt näher und brüllt" },
     { gr: "welt", w: "jalousie",  kurz: "rollo",  nutzt: "/jalousie",  was: "Die Jalousie kippt auf — dahinter eine andere Welt" },
     { gr: "welt", w: "handdurch", kurz: "zombie", nutzt: "/handdurch", was: "Eine Hand reisst von unten durch den Chat und greift nach dir" },
     { gr: "welt", w: "tore",      kurz: "riegel", nutzt: "/tore",      was: "Zwei Tore knallen zu und das Schloss legt sich vor" },
     { gr: "welt", w: "paintball", kurz: "farbe",  nutzt: "/paintball", was: "Farbkugeln schlagen ein, spritzen und laufen herunter" },
     { gr: "tiere", w: "enten",     kurz: "ente",   nutzt: "/enten",     was: "Die Entenmama watschelt mit ihren Küken durchs Bild" },
-    { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Ein Katzenbaby läuft zur Scheibe und tappt mit den Pfoten dagegen" },
-    { gr: "welt", w: "route66",    kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu — Wüste, Kakteen, Staub" },
+    { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Film: das Katzenbaby tappt an die Scheibe" },
+    { gr: "fahrzeuge", w: "route66", kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu" },
     { gr: "feier", w: "prunk",     kurz: "gift",   nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
-    { gr: "feier", w: "ggloewe",   kurz: "loewe",  nutzt: "/loewe <Name>",   was: "GROSSES GESCHENK: die Kiste springt auf, ein Löwe steigt heraus und wird riesig" },
-    { gr: "feier", w: "ggtrex",    kurz: "trex",   nutzt: "/trex <Name>",    was: "GROSSES GESCHENK: ein Tyrannosaurus steigt aus der Kiste und brüllt" },
-    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant <Name>", was: "GROSSES GESCHENK: ein Elefant steigt aus der Kiste" },
-    { gr: "feier", w: "ggadler",   kurz: "adler",  nutzt: "/adler <Name>",   was: "GROSSES GESCHENK: ein Adler steigt aus der Kiste" },
-    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai <Name>",     was: "GROSSES GESCHENK: ein Hai steigt aus der Kiste" },
-    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
-    { gr: "feier", w: "gglok",     kurz: "lok",    nutzt: "/lok <Name>",     was: "GROSSES GESCHENK: eine Dampflok fährt als Film durchs Bild, der Chat bebt" },
-    { gr: "feier", w: "gglok2",    kurz: "zug",    nutzt: "/zug <Name>",     was: "GROSSES GESCHENK: der Schnellzug donnert als Film heran" },
-    { gr: "feier", w: "ggraumschiff", kurz: "rakete", nutzt: "/raumschiff <Name>", was: "GROSSES GESCHENK: ein Raumschiff zieht am Ringplaneten vorbei — der Chat scheint durch" },
-    { gr: "feier", w: "gguboot",   kurz: "kraken", nutzt: "/uboot <Name>",   was: "GROSSES GESCHENK: ein Krake zieht das U-Boot in die Tiefe" },
+    { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant Name", was: "Geschenk: ein Elefant steigt aus der Kiste" },
+    { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai Name",     was: "Geschenk: ein Hai steigt aus der Kiste" },
+    { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer Name",    was: "Geschenk: ein Bär steigt aus der Kiste" },
+    /* =========================================================
+       DIE FILME — TIERE UND FAHRZEUGE
+       ---------------------------------------------------------
+       GEMELDET: „Ich weiss nicht, ob die schon auftauchen, die
+       Sachen — in Tiere und Fahrzeuge finde ich das naemlich
+       nicht." Er hatte recht: sie standen alle unter „Feiern",
+       weil sie als Geschenke angefangen haben. Jetzt stehen die
+       Tiere bei den Tieren und die Fahrzeuge bei den Fahrzeugen,
+       und keiner von ihnen verschenkt mehr etwas.
+       ========================================================= */
+    { gr: "tiere", w: "trex",      kurz: "dinosaurier", nutzt: "/trex",   was: "Film: der T-Rex bricht heran — der Boden bebt" },
+    { gr: "tiere", w: "loewe",     kurz: "lion",   nutzt: "/loewe",       was: "Film: der Löwe kommt und brüllt" },
+    { gr: "tiere", w: "adler",     kurz: "greif",  nutzt: "/adler",       was: "Film: der Adler zieht über den Chat" },
+    { gr: "fahrzeuge", w: "lok",   kurz: "lokomotive", nutzt: "/lok",     was: "Film: die Dampflok rollt an, der Chat rattert" },
+    { gr: "fahrzeuge", w: "zug",   kurz: "lok2",   nutzt: "/zug",         was: "Film: der Schnellzug donnert durch" },
+    { gr: "fahrzeuge", w: "raumschiff", kurz: "ufo", nutzt: "/raumschiff", was: "Film: das Raumschiff zieht am Ringplaneten vorbei (auch /ufo)" },
+    { gr: "fahrzeuge", w: "uboot", kurz: "tiefsee", nutzt: "/uboot",      was: "Film: das U-Boot taucht ab, der Krake greift zu" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
     { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
     { gr: "feier", w: "disko",     kurz: "kugel",  nutzt: "/disko",     was: "Achtziger: die Spiegelkugel dreht sich und wirft Lichtflecken" },
-    { gr: "welt", w: "pirat",      kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff segelt über die Wellen, mit Totenkopfflagge" },
+    { gr: "fahrzeuge", w: "pirat",  kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff mit Totenkopfflagge" },
     { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen, die Schrift wird kleiner" },
     { gr: "welt", w: "schwamm",    kurz: "wischen", nutzt: "/schwamm",  was: "Ein Schwamm wischt den Chat wie eine Tafel" },
     { gr: "welt", w: "schuss",     kurz: "ballern", nutzt: "/schuss",   was: "Schusslöcher schlagen in den Chat, und es läuft herunter" },
@@ -7244,25 +7413,26 @@ window.LiveChat = (function () {
     { gr: "welt", w: "noten",     kurz: "melodie",nutzt: "/noten",     was: "Noten steigen auf und klingen dabei wirklich" },
     { gr: "feier", w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { gr: "feier", w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
-    { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift <Nummer>",    was: "Die Schrift im Chat: 1 klassisch, 2 Schreibmaschine, 3 rund, 4 gross" },
-    { gr: "aussehen", w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",       was: "Ein eigenes Bild hinter den Chat legen (/hintergrund weg nimmt es wieder)" },
-    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c <Farbe>",          was: "Farbe für Name und Schrift: rot, blau, gruen, gelb, lila, tuerkis, bunt" },
-    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name <Farbe>",  was: "Nur der Name bekommt diese Farbe — die Schrift behält ihre" },
-    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw <Text>",      was: "Schreibt deinen Satz rückwärts — zum Spass und zum Knobeln" },
-    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz <ganzer Satz>", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
-    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
+    { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift 1-4",     was: "Schrift im Chat" },
+    { gr: "aussehen", w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",    was: "Eigenes Bild hinter den Chat (/hintergrund weg nimmt es)" },
+    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c Farbe",            was: "Farbe für Name und Schrift" },
+    { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name Farbe", was: "Farbe nur für den Namen" },
+    { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw Text",      was: "Satz rückwärts" },
+    { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz Satz",    was: "Wörter durcheinander — die anderen ordnen sie" },
+    { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort Wort",    was: "Buchstaben durcheinander" },
     { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe <Text>", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
     { gr: "schule", w: "betonung", kurz: "beton", nutzt: "/betonung <Wort oder Satz>", was: "Betonungsübung: die anderen tippen an, welche Silbe betont wird — die Silben kommen aus dem Wörterbuch, die Antwort lässt sich benoten (/betonung ohne Text beendet sie)" },
-    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
-    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
+    { gr: "schule", w: "raten", kurz: "gluecksrad", nutzt: "/raten Satz",     was: "Glücksrad: ein Satz mit verdeckten Buchstaben (/raten allein nimmt eine Redewendung, /raten liste zeigt alle)" },
+    { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Zensur (nur Lehrer)" },
+    { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher Name", was: "Vertretung für den Lehrer" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
-    { gr: "spass",  w: "film",  kurz: "kino",       nutzt: "/film <Name>",   was: "Eine echte Film-Animation über den Chat legen — sie läuft bei allen im Raum" },
+    { gr: "spass",  w: "film",  kurz: "kino",       nutzt: "/film Name",     was: "Film über den Chat legen — /film zeigt alle" },
     { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [<Text>]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
-    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <Art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, funkeln, aus" },
-    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <Farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
+    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild Art", was: "Wie dein Platz beim Sprechen aussieht" },
+    { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift Farbe", was: "Farbe nur für die Schrift" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { gr: "hilfe", w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
   ];
@@ -7291,8 +7461,9 @@ window.LiveChat = (function () {
      ========================================================= */
   var GRUPPEN_ZEICHEN = { reden: "\ud83d\udcac", raum: "\ud83d\udeaa", chef: "\ud83d\udc51",
                           zeichen: "\u2328\ufe0f", feier: "\ud83c\udf89", wetter: "\u2614",
-                          tiere: "\ud83e\udd8b", welt: "\ud83c\udf0b", aussehen: "\ud83c\udfa8",
-                          hilfe: "\u2753", schule: "\ud83c\udf92" };
+                          tiere: "\ud83e\udd8b", fahrzeuge: "\ud83d\ude82",
+                          welt: "\ud83c\udf0b", aussehen: "\ud83c\udfa8",
+                          hilfe: "\u2753", schule: "\ud83c\udf92", spass: "\ud83c\udfac" };
   var BEFEHL_ZEICHEN = {
     me: "\ud83e\uddcd", s: "\ud83d\udce3", w: "\ud83e\udd2b", j: "\ud83d\udeaa", i: "\u2709\ufe0f",
     f: "\ud83d\udc63", n: "\ud83d\udc65", l: "\ud83d\uddfa\ufe0f", t: "\ud83d\udcdd",
@@ -7315,11 +7486,11 @@ window.LiveChat = (function () {
     schloss: "\ud83c\udff0", kitt: "\ud83d\ude97", dino: "\ud83e\udd96",
     jalousie: "\ud83e\ude9f", handdurch: "\ud83d\udd90\ufe0f", tore: "\u26bd",
     paintball: "\ud83c\udfaf", enten: "\ud83e\udd86", katze: "\ud83d\udc08",
-    route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", ggloewe: "\ud83e\udd81",
-    ggtrex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", ggadler: "\ud83e\udd85",
+    route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", loewe: "\ud83e\udd81",
+    trex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", adler: "\ud83e\udd85",
     gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b",
-    gglok: "\ud83d\ude82", gglok2: "\ud83d\ude84",
-    ggraumschiff: "\ud83d\ude80", gguboot: "\ud83d\udea2", kassette: "\ud83d\udcfc",
+    lok: "\ud83d\ude82", zug: "\ud83d\ude84",
+    raumschiff: "\ud83d\ude80", uboot: "\ud83d\udea2", kassette: "\ud83d\udcfc",
     pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
     strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
     wolken: "\u2601\ufe0f", glasbruch: "\ud83e\ude9e", spinnen: "\ud83d\udd77\ufe0f",
@@ -7327,6 +7498,7 @@ window.LiveChat = (function () {
     schrift: "\ud83d\udd24", hintergrund: "\ud83d\uddbc\ufe0f", c: "\ud83c\udfa8",
     cname: "\ud83c\udff7\ufe0f", cschrift: "\u270f\ufe0f", rw: "\u21a9\ufe0f",
     satz: "\ud83e\udde9", wort: "\ud83d\udd20", note: "\ud83d\udccb",
+    raten: "\ud83c\udfa1",
     klassensprecher: "\ud83c\udf93", nachhoeren: "\ud83c\udfa7", weg: "\u21a9\ufe0f", unterricht: "\ud83d\udd14",
     diagnose: "\ud83d\udd0c",
     fokus: "\ud83c\udfa7",
@@ -7415,7 +7587,7 @@ window.LiveChat = (function () {
                 horror: "blut", blutig: "blut",
                 hollow: "schloss", burg: "schloss", gruft: "schloss",
                 rider: "kitt", knightrider: "kitt", pontiac: "kitt", firebird: "kitt",
-                rex: "dino", trex: "dino", saurier: "dino", tyrannosaurus: "dino",
+                rex: "dino", saurier: "dino",
                 rollo: "jalousie", lamellen: "jalousie",
                 zombie: "handdurch", griff: "handdurch",
                 riegel: "tore", abschliessen: "tore", zusperren: "tore",
@@ -7434,22 +7606,25 @@ window.LiveChat = (function () {
                 muenzen: "prunk", gold: "prunk",
                 /* Die grossen Geschenke — man tippt das Tier, nicht
                    den inneren Namen. */
-                loewe: "ggloewe", loewin: "ggloewe", lion: "ggloewe",
+                loewin: "loewe", lion: "loewe", ggloewe: "loewe",
                 /* „dino" bleibt beim alten Dino-Effekt — einen
                    bestehenden Befehl wegzunehmen waere schlimmer als
                    eine Abkuerzung weniger. */
-                trex: "ggtrex", tyrannosaurus: "ggtrex",
+                tyrannosaurus: "trex", dinosaurier: "trex", ggtrex: "trex",
                 elefant: "ggelefant", elefantt: "ggelefant", ruessel: "ggelefant",
-                adler: "ggadler", greif: "ggadler",
+                greif: "adler", ggadler: "adler",
                 hai: "gghai", haifisch: "gghai", weisshai: "gghai",
                 baer: "ggbaer", baerchen: "ggbaer",
-                lok: "gglok", lokomotive: "gglok", dampflok: "gglok",
-                eisenbahn: "gglok", bahn: "gglok",
-                zug: "gglok2", schnellzug: "gglok2", lok2: "gglok2",
-                raumschiff: "ggraumschiff", rakete: "ggraumschiff",
-                weltraum: "ggraumschiff", enterprise: "ggraumschiff",
-                uboot: "gguboot", krake: "gguboot", kraken: "gguboot",
-                tiefsee: "gguboot", nemo: "gguboot",
+                lokomotive: "lok", dampflok: "lok",
+                eisenbahn: "lok", bahn: "lok", gglok: "lok",
+                schnellzug: "zug", lok2: "zug", gglok2: "zug",
+                /* GEWUENSCHT: „das Spaceship kannst du als UFO als
+                   Code gelten lassen." */
+                ufo: "raumschiff", spaceship: "raumschiff", rakete: "raumschiff",
+                weltraum: "raumschiff", enterprise: "raumschiff",
+                ggraumschiff: "raumschiff",
+                krake: "uboot", kraken: "uboot",
+                tiefsee: "uboot", nemo: "uboot", gguboot: "uboot",
                 /* Die Achtziger. */
                 tape: "kassette", musikkassette: "kassette", spulen: "kassette",
                 walkman: "kassette", mixtape: "kassette",
@@ -7846,6 +8021,8 @@ window.LiveChat = (function () {
     /* Der zu betonende TEXT reist mit — die Loesung nicht. Jedes
        Geraet schlaegt sie selbst nach. */
     if (zusatz && zusatz.betonung) n.betonung = zusatz.betonung;
+    /* Der gesuchte Satz fuers Glücksrad — siehe ratenStellen. */
+    if (zusatz && zusatz.raten) n.raten = zusatz.raten;
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
@@ -8693,6 +8870,7 @@ window.LiveChat = (function () {
     if (art === "wort") return aufgabeStellen("wort", rest);
     if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
     if (art === "betonung" || art === "beton") return betonungStellen(rest);
+    if (art === "raten") return ratenStellen(rest);
 
     /* ---- Zensuren ----
        „Dass man die Antworten der Leute bewerten kann — die es
@@ -9359,10 +9537,59 @@ window.LiveChat = (function () {
     return Object.keys(geknebeltVon).some(function (k) { return geknebeltVon[k]; });
   }
 
+  /* =========================================================
+     EIN BEFEHL, DEN ES NICHT GIBT, IST KEINE NACHRICHT
+     ---------------------------------------------------------
+     GEMELDET: „Ich moechte, dass es Befehle, die es nicht gibt,
+     nicht schickt — also zum Beispiel, wenn ich schreibe /hallo,
+     dass das nicht gesendet wird."
+
+     Vorher fiel jede Zeile mit Schraegstrich, die kein Befehl
+     war, einfach durch und stand als gewoehnlicher Text im Raum.
+     Ein Vertipper („/knofetti") ging damit an alle hinaus.
+
+     Jetzt haelt sie hier an. Und zwar nur sie: geprueft wird, ob
+     nach dem Schraegstrich SOFORT ein Buchstabe kommt — „/ 3 mal
+     4" oder „3/4" sind ganz gewoehnlicher Text und bleiben es.
+     Wer wirklich einen Schraegstrich voranstellen will, schreibt
+     zwei: „//hallo" geht als „/hallo" hinaus. Und „/me/" ist der
+     alte Namenstrick, kein Befehl — der muss durch.
+     ========================================================= */
+  /* Kennen wir das Wort ueberhaupt? Dieselben drei Quellen wie in
+     befehlAusfuehren: Langform, Kurzform, Aliastabelle. Es steht
+     hier getrennt, weil „bekannt" und „hat etwas getan" zwei
+     verschiedene Fragen sind — ein bekannter Befehl, der nichts
+     zurueckgibt, darf trotzdem nicht als Text hinausgehen. */
+  function befehlBekannt(wort) {
+    var w = String(wort || "").toLowerCase();
+    if (!w) return false;
+    var da = false;
+    BEFEHLE.forEach(function (b) { if (b.w === w || (b.kurz && b.kurz === w)) da = true; });
+    return da || Boolean(KURZ[w]);
+  }
+
+  function befehlFehlt(t) {
+    var wort = (/^\/([a-zäöüß0-9]+)/i.exec(t) || [])[1] || "";
+    var vor = befehlsVorschlaege(wort).slice(0, 4);
+    systemZeile("„/" + wort + "“ kenne ich nicht — die Zeile ist NICHT hinausgegangen."
+      + (vor.length
+          ? "\nMeintest du:  " + vor.map(function (b) { return "/" + b.w; }).join("   ")
+          : "")
+      + "\n/h zeigt alle Befehle. Soll der Schrägstrich wirklich mit, schreib ihn doppelt:  //"
+      + wort);
+  }
+
   function schreiben(text) {
     var t = String(text || "").trim().slice(0, CHAT_LAENGE);
     if (!t) return;
-    if (t.charAt(0) === "/" && befehlAusfuehren(t)) return;
+    if (t.slice(0, 2) === "//") {
+      t = t.slice(1);
+    } else if (/^\/[a-zäöüß0-9]/i.test(t) && !/^\/me\//i.test(t)) {
+      var wortT = (/^\/([a-zäöüß0-9]+)/i.exec(t) || [])[1] || "";
+      if (!befehlBekannt(wortT)) { befehlFehlt(t); return; }
+      befehlAusfuehren(t);
+      return;
+    }
     /* GEWUENSCHT: „#pinguin — einfach das Emoji auch moeglich machen,
        den Pinguin zu schicken." Also: ein Zeichen allein oder ein
        „#wort" ist derselbe Befehl wie der Schraegstrich. Es ist
@@ -9521,6 +9748,7 @@ window.LiveChat = (function () {
     /* Die Server, die gerade wirklich benutzt werden — fuer den
        Test in den Einstellungen. */
     eisServer: function () { return VERMITTLER; },
+    relaisGrundKlartext: relaisGrundKlartext,
     relaisHolen: relaisHolen,
     relaisRufen: relaisRufen,
     verlassen: verlassen,

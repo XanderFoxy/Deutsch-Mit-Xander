@@ -845,10 +845,51 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   /* GEMELDET: „Es soll langsamer sein, die Animation, und länger
      anhalten." Also doppelt so lang, und die Wörter kommen in
      grösseren Abständen — der Ruf baut sich auf, statt dazustehen. */
-  /* Weich hinein, weich wieder zurueck. Keine Feder, kein
-     Ueberschwingen — ein Schrei schwillt an und klingt ab. */
-  animation: lcRufAn 2600ms cubic-bezier(.33, 0, .2, 1) both;
+  /* =================================================================
+     ZWEI ANIMATIONEN AUF EINEM WORT
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Schau mal bitte beim Schreien — da hatten wir vorher
+     so eine Art wackelnde Animation mit dem Wort, bevor wir diesen
+     Schall gesendet haben. Schau bitte wirklich in den Verlauf, dazu
+     nicht irgendwas reininterpretieren. Ich bin der Meinung, dass die
+     Schrift vorher ohne den Schall-Effekt schon richtig cool animiert
+     war … genau das moechte ich wie frueher haben, mit der Addition
+     von dem Kreisel — also beide Effekte gleichzeitig."
+
+     NACHGESEHEN, nicht geraten. Der Verlauf sagt:
+       1cc2b7f  „der Schrei strahlt"      — lcRufAn kommt auf, das Wort
+                                            pumpt sich auf und federt
+       89c0c28  laenger und langsamer     — 3400ms, sechs Stufen
+       c587852  „faerbt Buchstaben,
+                 stoesst durch den Raum"  — HIER kam der Schall dazu;
+                                            das Wackeln lief noch
+       b2dcee4  „wird wirklich geschrien" — das Wackeln wurde durch
+                                            reines Licht ERSETZT
+     Das Wackeln, das er meint, ist also das lcRufAn von c587852 —
+     Stufe fuer Stufe, Zahl fuer Zahl steht es unten wieder da, jetzt
+     unter dem Namen lcRufWackeln.
+
+     Zwei Animationen koennen aber nicht BEIDE „transform" bewegen —
+     die zweite gewinnt und die erste ist wirkungslos. Deshalb sind
+     sie hier sauber getrennt: lcRufWackeln bewegt (scale,
+     letter-spacing, opacity), lcRufAn leuchtet (text-shadow, filter).
+     So laufen sie gleichzeitig, und der Kreisel (lcSchallStoss in
+     app.js) liegt unveraendert darueber. Drei Sachen, kein Streit.
+     ================================================================= */
+  animation:
+    lcRufWackeln 3400ms cubic-bezier(.2, .9, .25, 1.02) both,
+    lcRufAn 2600ms cubic-bezier(.33, 0, .2, 1) both;
   will-change: transform, text-shadow;
+}
+/* WORTWOERTLICH aus c587852 — die Fassung, die vor dem Schall lief. */
+@keyframes lcRufWackeln {
+  0%   { opacity: 0; transform: scale(.55); letter-spacing: -0.06em; }
+  22%  { opacity: 1; transform: scale(1.20); letter-spacing: 0.06em; }
+  40%  { transform: scale(0.98); letter-spacing: 0.02em; }
+  56%  { transform: scale(1.08); }
+  72%  { transform: scale(1.0); }
+  86%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); letter-spacing: 0.03em; }
 }
 /* =================================================================
    DER SCHREI, NEU GEZEICHNET
@@ -877,7 +918,6 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
      Hereinfliegen — der Text soll von der ersten Sekunde an lesbar
      sein, es schwillt nur an. */
   0% {
-    transform: scale(0.94);
     text-shadow: 0 0 0 rgba(255, 206, 85, 0);
     filter: brightness(0.9);
   }
@@ -885,7 +925,6 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
      aber nur um sechs Prozent: mehr und die Zeile beginnt zu
      wandern, und dann verdeckt sie ihre Nachbarn. */
   22% {
-    transform: scale(1.06);
     text-shadow:
       0 0 7px  color-mix(in srgb, currentColor 85%, transparent),
       0 0 22px color-mix(in srgb, currentColor 55%, transparent),
@@ -895,14 +934,12 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   /* Und es klingt ab — langsam, ueber den ganzen Rest. Das ist der
      Teil, der vorher fehlte: ein Schrei hoert nicht auf, er verhallt. */
   55% {
-    transform: scale(1.015);
     text-shadow:
       0 0 5px  color-mix(in srgb, currentColor 45%, transparent),
       0 0 16px color-mix(in srgb, currentColor 22%, transparent);
     filter: brightness(1.12);
   }
   100% {
-    transform: scale(1);
     text-shadow: 0 0 10px color-mix(in srgb, currentColor 30%, transparent);
     filter: brightness(1);
   }
@@ -911,20 +948,31 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    ohne diese Reserve stuenden die Woerter voellig ohne Glanz da. */
 @supports not (color: color-mix(in srgb, red 50%, transparent)) {
   @keyframes lcRufAn {
-    0%   { transform: scale(0.94); text-shadow: none; }
-    22%  { transform: scale(1.06); text-shadow: 0 0 20px currentColor; }
-    100% { transform: scale(1);    text-shadow: 0 0 8px currentColor; }
+    0%   { text-shadow: none; }
+    22%  { text-shadow: 0 0 20px currentColor; }
+    100% { text-shadow: 0 0 8px currentColor; }
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lc-ruf-wort { animation: none; text-shadow: 0 0 10px currentColor; }
+  .lc-ruf-wort {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    letter-spacing: 0.03em;
+    text-shadow: 0 0 10px currentColor;
+  }
 }
 /* Vergangenheit: was vor dem Betreten geschrieben wurde, steht einfach
    da. Es baut sich nicht noch einmal auf, es strahlt nicht, es wirft
    kein Konfetti. Ein Tipp darauf spielt es trotzdem ab — aber nur fuer
    den, der tippt. GEWUENSCHT: „Das ist dann schon Vergangenheit, er
    sieht sie nur, wenn er sie antippt." */
-.lc-alt .lc-ruf-wort { animation: none; opacity: 1; transform: none; }
+.lc-alt .lc-ruf-wort {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  letter-spacing: 0.03em;
+}
 /* (Die beiden Kopien gibt es nicht mehr — siehe „DER SCHREI, NEU
    GEZEICHNET" weiter oben. Die Regeln, die sie hier abgeschaltet
    haben, sind damit gegenstandslos und fallen weg.) */
@@ -9445,4 +9493,82 @@ body.lc-schreibt .tutor-reiter {
   font-size: 0.9em;
   opacity: 0.85;
   min-height: 1.2em;
+}
+
+/* =====================================================================
+   DAS GLÜCKSRAD
+   ---------------------------------------------------------------------
+   GEWÜNSCHT: „… ohne den Chat irgendwie in seinem Designfluss zu
+   beeinträchtigen."
+
+   Deshalb erbt die Tafel alles von der Betonungsübung (dieselbe
+   Kachel, derselbe Abstand) und setzt hier nur, was ein Rätselfeld
+   wirklich anders braucht. Die eine Regel, an der alles hängt, ist
+   „white-space: nowrap" am WORT: damit bricht die Zeile zwischen den
+   Wörtern um und nie mitten in einem — ein halbes Wort in der nächsten
+   Zeile wäre nicht zu lesen. Und weil nichts eine feste Breite hat,
+   schiebt sich auch nichts unter die Uhr.
+   ===================================================================== */
+.lc-raten-reihe { gap: 0.5rem 0.6rem; }
+.lc-raten-wort {
+  display: inline-flex;
+  white-space: nowrap;
+  gap: 2px;
+}
+.lc-raten-feld {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15em;
+  padding: 0.18em 0.1em;
+  border-radius: 5px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.22);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.lc-raten-feld.offen {
+  background: rgba(96, 200, 120, 0.22);
+  border-bottom-color: rgba(96, 200, 120, 0.7);
+}
+.lc-raten-zeichen {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18em 0.05em;
+  opacity: 0.75;
+}
+.lc-raten-tasten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 0.6rem;
+}
+.lc-raten-taste {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 700;
+  min-width: 1.9em;
+  padding: 0.2em 0.1em;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.lc-raten-taste:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
+.lc-raten-taste:disabled { cursor: default; }
+.lc-raten-taste.offen {
+  background: rgba(96, 200, 120, 0.3);
+  border-color: rgba(96, 200, 120, 0.5);
+}
+.lc-raten-taste.daneben {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+/* Auf dem Telefon ein bisschen enger — dreissig Tasten sollen in
+   drei Reihen passen und nicht in sechs. */
+@media (max-width: 420px) {
+  .lc-raten-taste { min-width: 1.7em; font-size: 0.84em; }
+  .lc-raten-feld { min-width: 1.05em; }
 }

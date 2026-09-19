@@ -42,13 +42,13 @@ const pruefe = (was, gut, zusatz) => {
    DMA_PRUEF.effekt("ggtrex"). Das ist der Weg, den es im Betrieb
    wirklich nimmt. */
 const PAARE = [
-  ["ggtrex",       "/trex",       "trex"],
-  ["ggloewe",      "/loewe",      "loewe"],
-  ["ggadler",      "/adler",      "adler"],
-  ["gglok",        "/lok",        "lok"],
-  ["gglok2",       "/zug",        "lok2"],
-  ["ggraumschiff", "/raumschiff", "raumschiff"],
-  ["gguboot",      "/uboot",      "uboot"],
+  ["trex",       "/trex",       "trex"],
+  ["loewe",      "/loewe",      "loewe"],
+  ["adler",      "/adler",      "adler"],
+  ["lok",        "/lok",        "lok"],
+  ["zug",        "/zug",        "lok2"],
+  ["raumschiff", "/raumschiff", "raumschiff"],
+  ["uboot",      "/uboot",      "uboot"],
   /* Diese beiden sind KEINE Geschenke, sondern seit jeher
      gezeichnete Animationen. Sie zeigen den Film jetzt trotzdem,
      weil eine Datei in filme/ genauso heisst wie der Effekt — und
@@ -123,6 +123,53 @@ const PAARE = [
         + (zeug.kasten ? ", Kiste statt Film!" : "") + (zeug.grund ? ", " + zeug.grund : ""));
     await pg.evaluate(() => document.querySelectorAll(".dma-film, #lcGrossGeschenk").forEach((e) => e.remove()));
   }
+
+  /* =========================================================
+     KLINGT ES NOCH NACH EINEM GESCHENK?
+     ---------------------------------------------------------
+     GEWUENSCHT: „Das soll nicht mir eine geschenkorientiert sein,
+     diese neuen Sachen … da soll nur der Befehl /trex sein und dann
+     soll ein passender Spruch kommen: Xander Fox laesst seinen
+     T-Rex los. Bei den anderen soll sich das auch nicht nach
+     Geschenken anhoeren."
+
+     Geprueft wird deshalb die ZEILE, die der Befehl schreibt —
+     nicht meine Absicht. „schenkt", „schickt allen" und „Geschenk"
+     duerfen darin nicht mehr vorkommen.
+     ========================================================= */
+  console.log("\nKLINGT ES NOCH NACH GESCHENK?\n");
+  for (const [, befehl] of PAARE) {
+    const zeile = await pg.evaluate((bf) => {
+      let raus = null;
+      window.LiveChat.pruefPost((pk) => { if (!raus) raus = pk; });
+      window.LiveChat.pruefBefehl(bf);
+      window.LiveChat.pruefPost(null);
+      return raus ? String(raus.text || "") : "";
+    }, befehl);
+    pruefe(befehl + " schreibt einen Satz", Boolean(zeile), zeile);
+    pruefe(befehl + " verschenkt nichts",
+      Boolean(zeile) && !/schenkt|schickt allen|Geschenk/i.test(zeile), zeile);
+  }
+  await pg.evaluate(() => document.querySelectorAll(".dma-film, #lcGrossGeschenk").forEach((e) => e.remove()));
+
+  console.log("\nSTEHEN SIE BEI DEN TIEREN UND FAHRZEUGEN?\n");
+  const einsortiert = await pg.evaluate(() => {
+    const liste = window.LiveChat.befehlsliste() || [];
+    const wo = {};
+    liste.forEach((b) => { wo[b.w] = b.gr; });
+    return wo;
+  });
+  [["trex", "tiere"], ["loewe", "tiere"], ["adler", "tiere"], ["katze", "tiere"],
+   ["lok", "fahrzeuge"], ["zug", "fahrzeuge"], ["uboot", "fahrzeuge"],
+   ["raumschiff", "fahrzeuge"], ["schlitten", "fahrzeuge"]].forEach(([w, gr]) => {
+    pruefe("/" + w + " steht unter „" + gr + "\u201c", einsortiert[w] === gr,
+      einsortiert[w] || "gar nicht in der Liste");
+  });
+  pruefe("„/ufo\u201c fuehrt zum Raumschiff",
+    await pg.evaluate(() => {
+      const l = window.LiveChat.befehlsliste() || [];
+      return l.some((b) => b.w === "raumschiff" && b.kurz === "ufo");
+    }));
 
   console.log("\nUND „/film\" OHNE NAMEN?\n");
   await pg.evaluate(() => { try { window.LiveChat.pruefBefehl("/film"); } catch (e) {} });

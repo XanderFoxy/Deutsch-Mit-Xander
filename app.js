@@ -20385,9 +20385,11 @@
     ["zeichen",  "⌨️ Bilder aus Zeichen"],
     ["feier",    "🎉 Feiern"],
     ["wetter",   "☔ Wetter und Himmel"],
-    ["tiere",    "🦋 Tiere und Fahrzeuge"],
+    ["tiere",    "🦋 Tiere"],
+    ["fahrzeuge","🚂 Fahrzeuge"],
     ["welt",     "🌋 Große Effekte"],
     ["schule",   "🎒 Unterricht"],
+    ["spass",    "🎬 Kino"],
     ["aussehen", "🎨 Aussehen"],
     ["hilfe",    "❓ Hilfe"],
   ];
@@ -21580,10 +21582,10 @@
     umarmen:        { ton: "umarmen", dauer: 3400 },
     lecken:         { ton: "lecken", dauer: 3400 },
     schlitten:      { ton: "schlitten", dauer: 12000, schleife: true },
-    ggloewe:        { ton: "jubel", dauer: 8200 },
-    ggtrex:         { ton: "dino", dauer: 8200 },
+    /* Die Filme bringen ihren EIGENEN Ton mit — deshalb steht
+       hier keiner mehr fuer sie. Nur die drei gezeichneten
+       Geschenke bekommen noch den Jubel. */
     ggelefant:      { ton: "jubel", dauer: 8200 },
-    ggadler:        { ton: "jubel", dauer: 8200 },
     gghai:          { ton: "jubel", dauer: 8200 },
     ggbaer:         { ton: "jubel", dauer: 8200 },
     regen:          { ton: "regen", dauer: 12000, schleife: true },
@@ -23776,16 +23778,34 @@
     /* Die grossen Geschenke. Sie tragen alle dieselbe Bauart „gg" und
        unterscheiden sich nur im Tier — so muss fuer ein siebtes Tier
        nur EINE Zeile dazu, nicht eine neue Animation. */
-    ggloewe:   { ganzeSeite: true, wie: "gg", tier: "loewe" },
-    ggtrex:    { ganzeSeite: true, wie: "gg", tier: "trex" },
     ggelefant: { ganzeSeite: true, wie: "gg", tier: "elefant" },
-    ggadler:   { ganzeSeite: true, wie: "gg", tier: "adler" },
     gghai:     { ganzeSeite: true, wie: "gg", tier: "haifisch" },
     ggbaer:    { ganzeSeite: true, wie: "gg", tier: "baer" },
-    /* Die beiden Loks gibt es NUR als Film. Findet der Filmspieler
-       die Datei nicht, bleibt die Kiste mit Strahlen und Muenzen —
-       plus dem Zeichen unten, damit nicht nur ein leerer Kasten
-       dasteht. */
+    /* =================================================================
+       DIE FILME
+       -----------------------------------------------------------------
+       Sie heissen jetzt wie ihr Befehl — /trex, /loewe, /lok, /zug —
+       und nicht mehr „ggtrex". GEWUENSCHT: „Das soll nicht mehr ggtrex
+       heissen … da soll nur der Befehl /trex sein."
+
+       Findet der Filmspieler die Datei nicht, bleibt die gezeichnete
+       Bauart „gg" als Rueckfall stehen: lieber eine Kiste als ein
+       leerer Kasten.
+       ================================================================= */
+    trex:      { ganzeSeite: true, wie: "gg", tier: "trex" },
+    loewe:     { ganzeSeite: true, wie: "gg", tier: "loewe" },
+    adler:     { ganzeSeite: true, wie: "gg", tier: "adler" },
+    lok:       { ganzeSeite: true, wie: "gg", tier: "lok" },
+    zug:       { ganzeSeite: true, wie: "gg", tier: "lok2" },
+    raumschiff:{ ganzeSeite: true, wie: "gg", tier: "raumschiff" },
+    uboot:     { ganzeSeite: true, wie: "gg", tier: "uboot" },
+    /* ALTE NAMEN, DAMIT NICHTS INS LEERE LAEUFT
+       Wer noch die Fassung von gestern offen hat, schickt „ggtrex"
+       ueber die Leitung. Ohne diese sechs Zeilen kaeme bei allen
+       anderen nichts an — und niemand wuesste, warum. */
+    ggloewe:   { ganzeSeite: true, wie: "gg", tier: "loewe" },
+    ggtrex:    { ganzeSeite: true, wie: "gg", tier: "trex" },
+    ggadler:   { ganzeSeite: true, wie: "gg", tier: "adler" },
     gglok:     { ganzeSeite: true, wie: "gg", tier: "lok" },
     gglok2:    { ganzeSeite: true, wie: "gg", tier: "lok2" },
     ggraumschiff: { ganzeSeite: true, wie: "gg", tier: "raumschiff" },
@@ -24247,6 +24267,159 @@
       return { kern, silben: teile, idx: z.idx };
     }
     return null;
+  }
+
+  /* =================================================================
+     DAS GLÜCKSRAD IM CHAT
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Dann noch als Variante für einen gesuchten Satz wie
+     bei Glücksrad — dass ich einen Satz oder eine Redewendung
+     schreibe und ein paar Buchstaben schon in den Feldern stehen,
+     ohne den Chat irgendwie in seinem Designfluss zu beeinträchtigen."
+
+     DER DESIGNFLUSS IST DIE EIGENTLICHE ARBEIT.
+     Ein Rätselfeld ist eine Reihe kleiner Kästchen — und Kästchen
+     brechen um. Bricht eine Zeile mitten im Wort, ist das Rätsel
+     unlesbar; steht der Kasten über die Breite hinaus, schiebt er
+     sich unter die Uhr, und genau das soll nicht passieren. Deshalb:
+       · jedes WORT ist ein eigener Kasten mit „white-space: nowrap",
+         die Wörter umbrechen dazwischen, nie mittendrin;
+       · die Tafel sitzt wie die Betonungsübung IN der Zeile, mit
+         derselben Kachel, demselben Abstand, derselben Schrift;
+       · sie hat keine feste Breite und keinen eigenen Rollbalken.
+
+     WELCHE BUCHSTABEN SCHON DASTEHEN.
+     Beim Glücksrad sind es die häufigen. Hier rechnet jedes Gerät
+     dasselbe aus dem Satz aus: die drei häufigsten Buchstaben stehen
+     von Anfang an da (bei kurzen Sätzen einer). Kein Zufall, keine
+     Absprache — alle sehen dasselbe Bild.
+
+     GERATEN WIRD MIT DEN TASTEN, GEANTWORTET WIE IMMER.
+     Ein Tipp auf einen Buchstaben deckt ihn überall auf; was nicht
+     drinsteht, wird durchgestrichen und zählt als Fehlversuch. Wer
+     die Lösung hat, schickt sie mit „Lösung sagen" — das geht den
+     gewöhnlichen Weg (LiveChat.schreiben) und trägt damit die
+     Kennung der Aufgabe: der Notenstift steht von selbst daneben.
+     ================================================================= */
+  const LC_RATEN_TASTEN = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜß".split("");
+
+  function lcRatenVorgabe(satz) {
+    /* Die häufigsten Buchstaben des Satzes — deterministisch, damit
+       auf jedem Gerät dasselbe offen liegt. */
+    const zaehler = new Map();
+    Array.from(String(satz).toUpperCase()).forEach((z) => {
+      if (!/\p{L}/u.test(z)) return;
+      zaehler.set(z, (zaehler.get(z) || 0) + 1);
+    });
+    const sortiert = [...zaehler.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+    const menge = (satz.match(/\p{L}/gu) || []).length;
+    const wieviele = menge >= 24 ? 3 : (menge >= 12 ? 2 : 1);
+    return new Set(sortiert.slice(0, wieviele).map(([z]) => z));
+  }
+
+  function lcRatenTafel(n, zeile) {
+    const satz = String(n.raten || "");
+    const kasten = document.createElement("div");
+    kasten.className = "lc-betonung lc-raten";
+
+    const kopf = document.createElement("p");
+    kopf.className = "lc-betonung-kopf";
+    kopf.textContent = "🎡 Glücksrad — welcher Satz ist das? Tippe Buchstaben an.";
+    kasten.appendChild(kopf);
+
+    const offen = lcRatenVorgabe(satz);
+    const felder = [];          // { zeichen, gross, knoten }
+
+    const reihe = document.createElement("div");
+    reihe.className = "lc-betonung-reihe lc-raten-reihe";
+    satz.split(/(\s+)/).forEach((stueck) => {
+      if (!stueck) return;
+      if (/^\s+$/.test(stueck)) return;         // der Abstand kommt aus dem Gitter
+      const wort = document.createElement("span");
+      wort.className = "lc-raten-wort";
+      Array.from(stueck).forEach((z) => {
+        const f = document.createElement("span");
+        if (/\p{L}/u.test(z)) {
+          f.className = "lc-raten-feld";
+          const gross = z.toUpperCase();
+          f.textContent = offen.has(gross) ? z : "";
+          if (offen.has(gross)) f.classList.add("offen");
+          felder.push({ zeichen: z, gross: gross, knoten: f });
+        } else {
+          /* Satzzeichen stehen offen da — sie zu erraten wäre keine
+             Sprachübung, sondern Rätselraten. */
+          f.className = "lc-raten-zeichen";
+          f.textContent = z;
+        }
+        wort.appendChild(f);
+      });
+      reihe.appendChild(wort);
+    });
+    kasten.appendChild(reihe);
+
+    const tasten = document.createElement("div");
+    tasten.className = "lc-raten-tasten";
+    const hinweis = document.createElement("p");
+    hinweis.className = "lc-betonung-hinweis";
+    let daneben = 0;
+
+    const nochZu = () => felder.filter((f) => !f.knoten.classList.contains("offen")).length;
+    const standSagen = () => {
+      const fehlt = nochZu();
+      hinweis.textContent = fehlt
+        ? "Noch " + fehlt + " Buchstabe" + (fehlt === 1 ? "" : "n")
+          + (daneben ? " · " + daneben + " daneben" : "")
+        : "Voll aufgedeckt" + (daneben ? " — mit " + daneben + " Fehlversuch"
+            + (daneben === 1 ? "" : "en") : " — ohne einen Fehlversuch") + ".";
+    };
+
+    LC_RATEN_TASTEN.forEach((b) => {
+      const k = document.createElement("button");
+      k.type = "button";
+      k.className = "lc-raten-taste";
+      k.textContent = b;
+      if (offen.has(b)) { k.disabled = true; k.classList.add("offen"); }
+      k.addEventListener("click", () => {
+        if (k.disabled) return;
+        k.disabled = true;
+        const treffer = felder.filter((f) => f.gross === b);
+        if (!treffer.length) {
+          k.classList.add("daneben");
+          daneben++;
+        } else {
+          k.classList.add("offen");
+          treffer.forEach((f) => { f.knoten.textContent = f.zeichen; f.knoten.classList.add("offen"); });
+        }
+        standSagen();
+      });
+      tasten.appendChild(k);
+    });
+    kasten.appendChild(tasten);
+
+    const sagen = document.createElement("button");
+    sagen.type = "button";
+    sagen.className = "btn btn-primary lc-betonung-fertig";
+    sagen.textContent = "Lösung sagen";
+    sagen.addEventListener("click", () => {
+      if (sagen.disabled) return;
+      const fehlt = nochZu();
+      if (fehlt) {
+        /* Noch nicht alles offen? Dann ist es ein Tipp ins Blaue —
+           erlaubt, aber es wird gesagt, was fehlt. Geschrieben wird
+           dann das, was man SIEHT; den Rest tippt man selbst dazu. */
+        hinweis.textContent = "Es fehlen noch " + fehlt + " Buchstaben. "
+          + "Schreib deine Lösung einfach unten in den Chat — sie zählt genauso.";
+        return;
+      }
+      sagen.disabled = true;
+      try {
+        LiveChat.schreiben("🎡 " + satz + (daneben ? "   (" + daneben + " daneben)" : "   (ohne Fehler)"));
+      } catch (e) {}
+    });
+    kasten.appendChild(sagen);
+    kasten.appendChild(hinweis);
+    standSagen();
+    zeile.appendChild(kasten);
   }
 
   function lcBetonungsTafel(n, zeile) {
@@ -25327,6 +25500,8 @@
             renderLiveChat();
           });
         }
+      } else if (art === "aufgabe" && n.raten) {
+        lcRatenTafel(n, z);
       } else if (art === "aufgabe" && n.betonung) {
         lcBetonungsTafel(n, z);
       } else if (art === "aufgabe") {
