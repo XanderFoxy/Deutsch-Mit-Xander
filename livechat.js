@@ -5696,6 +5696,18 @@ window.LiveChat = (function () {
     if ((n.zeit || 0) < (offeneAufgabe.zeit || 0) - 1000) return null;
     var art = n.art || "text";
     if (art !== "text" && art !== "aktion") return null;
+    /* EINE ANIMATION IST KEINE ANTWORT.
+       GEMELDET: „Bei UFO und Spaceship steht ploetzlich Benotung
+       dran, als ob ich mir selbst eine Note geben koennte. Das ist
+       aber kein Spiel, das sind einfach nur diese Videos, die ich
+       sende."
+       Er hat recht, und die Ursache sass hier: Geschenke und Effekte
+       reisen als „aktion" — genau wie eine Antwort in eigenen Worten,
+       die jemand als Aktion formuliert. Also galt „Alex schickt allen
+       ein U-Boot" als Loesungsversuch, sobald eine Aufgabe offen war.
+       Eine Zeile, die eine WIRKUNG oder einen FILM traegt, ist nie
+       eine Antwort — daran laesst es sich sicher unterscheiden. */
+    if (n.wirkung || n.film) return null;
     var text = String(n.text || "").trim();
     if (!text || text.charAt(0) === "/") return null;
 

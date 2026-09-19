@@ -118,7 +118,30 @@ else
   # 0,16 + 0,04 bleibt sicher darunter. Bei Loewe, T-Rex und Adler
   # aendert sich dadurch nichts (gemessen: 0,1 Prozentpunkte), und
   # gruene Reste bleiben bei allen fuenf Filmen bei 0,00 %.
-  SCHLUESSEL="chromakey=${FARBE}:${AEHNLICH:-0.16}:${WEICH:-0.04}"
+  # WIE WEIT DARF DIE FARBE ABWEICHEN? DAS HAENGT VOM GRUEN AB.
+  # GEMELDET: „Die Katze hat durch den Green Screen fast schon
+  # Loecher in ihrem Fell."
+  # Nachgerechnet stimmt das, und es ist wieder chromakey: es
+  # vergleicht nur die Farbigkeit. Alles Graue, Weisse und
+  # Schwarze liegt genau so weit vom Gruen entfernt, wie das Gruen
+  # selbst von Neutralgrau entfernt ist. Bei einem satten Gruen
+  # (6,196,7) sind das 0,281 — da ist 0,16 sicher. Das Gruen im
+  # Katzenvideo ist blasser (40,182,37), nur 0,213 — und weisses
+  # Fell lag damit schon im Schnitt. Deshalb wird der Abstand
+  # jetzt GERECHNET und die Schwelle auf 55 % davon gesetzt, mit
+  # 0,16 als Obergrenze.
+  if [ -z "${AEHNLICH:-}" ]; then
+    AEHNLICH=$(node -e '
+      const c = parseInt(process.argv[1].replace(/^0x/i, ""), 16);
+      const r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+      const u = 128 - 0.169 * r - 0.331 * g + 0.5 * b;
+      const v = 128 + 0.5 * r - 0.419 * g - 0.081 * b;
+      const d = Math.hypot(128 - u, 128 - v) / (255 * Math.SQRT2);
+      process.stdout.write(Math.min(0.16, Math.max(0.06, d * 0.55)).toFixed(3));
+    ' "$FARBE")
+    echo "     Abstand zu Neutralgrau gerechnet — Schwelle $AEHNLICH"
+  fi
+  SCHLUESSEL="chromakey=${FARBE}:${AEHNLICH}:${WEICH:-0.04}"
   # WIE STARK ENTGRUENEN? Beim Kaetzchen lag deutlich Gruen im
   # hellen Fell („mit dem Gruen, was auf dem Fell ist, koennte das
   # besser sein"). Flauschiges helles Fell schluckt besonders viel
@@ -166,9 +189,21 @@ fi
 # der Felsen loest sich auf, die Pfoten (bei 80 bis 85 Prozent)
 # bleiben unangetastet. Ohne BODEN aendert sich nichts.
 BODEN="${BODEN:-0}"
+# UND EIN WEICHER RAND RINGSUM.
+# GEWÜNSCHT: „Bei der Katze sollst du die Ränder auch entsprechend
+# abdunkeln." Beim Kätzchen blieb links unten ein Rest Studioboden
+# mitsamt Schatten stehen — er ist zu wenig grün, um im Schnitt zu
+# landen, und zu grau, um dazuzugehören. Ein Auslaufen an allen vier
+# Rändern nimmt ihn weg, ohne das Motiv anzufassen: es sitzt in der
+# Mitte, der Rest klebt am Rand. RAND=0.16 heisst: die äusseren
+# sechzehn Prozent laufen weich auf null aus.
+RAND="${RAND:-0}"
 AUSLAUF=""
-if [ "$BODEN" != "0" ]; then
-  AUSLAUF=",geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*min(1,(H-Y)/(H*${BODEN}))'"
+if [ "$BODEN" != "0" ] || [ "$RAND" != "0" ]; then
+  FAKTOR="1"
+  [ "$BODEN" != "0" ] && FAKTOR="${FAKTOR}*min(1,(H-Y)/(H*${BODEN}))"
+  [ "$RAND" != "0" ] && FAKTOR="${FAKTOR}*min(1,min(min(X,W-X)/(W*${RAND}),min(Y,H-Y)/(H*${RAND})))"
+  AUSLAUF=",geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*${FAKTOR}'"
 fi
 # Kanten weich machen: sonst treppt der Umriss.
 if [ "$ART" = "szene" ]; then
@@ -267,7 +302,15 @@ echo "4/5  Maße festhalten …"
 # mit). Beim ersten Lauf standen deshalb Nullen in der Datei, und die
 # Seite hätte die Größe raten müssen. ffmpeg selbst sagt es auch —
 # es steht in seiner Startmeldung.
-LESE=$("$FF" -hide_banner -i "$QUELLE" 2>&1 || true)
+# DIE MASSE DES ERGEBNISSES, NICHT DIE DER QUELLE.
+# GEMELDET: der Weihnachtsschlitten sah verzerrt aus. Ursache:
+# hier stand bisher "$QUELLE" — also 1280x720 statt der 400x712,
+# die nach Zuschnitt und Verkleinerung wirklich herauskommen. Die
+# Seite spannt ihre Leinwand nach diesen Zahlen auf und zog das
+# Bild damit auf ein falsches Seitenverhaeltnis. Bei den anderen
+# fiel es nicht auf, weil Quelle und Ergebnis dasselbe Verhaeltnis
+# hatten — beim geschnittenen eben nicht.
+LESE=$("$FF" -hide_banner -i "$ZIEL/$NAME.webm" 2>&1 || true)
 B=$(echo "$LESE" | grep -oE '[0-9]{2,5}x[0-9]{2,5}' | head -1 | cut -dx -f1)
 H=$(echo "$LESE" | grep -oE '[0-9]{2,5}x[0-9]{2,5}' | head -1 | cut -dx -f2)
 D=$(echo "$LESE" | grep -oE 'Duration: [0-9:.]+' | head -1 | sed 's/Duration: //' \

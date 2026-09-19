@@ -406,7 +406,11 @@
     erde:   { staub: 1.0, funken: 0,   streifen: 0,   dampf: 0,   schein: 0.9, farbe: "255,168,72",  rattern: 1.0, art: "stoss" },
     glanz:  { staub: 0,   funken: 0.8, streifen: 0,   dampf: 0,   schein: 1.0, farbe: "255,190,96",  rattern: 0,   art: "" },
     wind:   { staub: 0,   funken: 0,   streifen: 1.0, dampf: 0,   schein: 0.5, farbe: "190,214,255", rattern: 0,   art: "" },
-    dampf:  { staub: 0,   funken: 0,   streifen: 0,   dampf: 1.0, schein: 0.6, farbe: "255,206,150", rattern: 0.5, art: "gleis" },
+    /* GEMELDET: „Bei der Lokomotive brauchst du unten nicht so viel
+       Dampf zusaetzlich." Stimmt — die Lok bringt ihren eigenen
+       Dampf im Bild mit, der gezeichnete kam obendrauf. Von 1,0 auf
+       0,35 heruntergenommen: ein Hauch am Boden, mehr nicht. */
+    dampf:  { staub: 0,   funken: 0,   streifen: 0,   dampf: 0.35, schein: 0.6, farbe: "255,206,150", rattern: 0.5, art: "gleis" },
     keiner: { staub: 0,   funken: 0,   streifen: 0,   dampf: 0,   schein: 0,   farbe: "255,255,255", rattern: 0,   art: "" }
   };
 
