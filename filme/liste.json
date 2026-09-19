@@ -2,7 +2,7 @@
  "filme": [
   {
    "name": "adler",
-   "sekunden": 7.5,
+   "sekunden": 7.61,
    "bild": "filme/adler.jpg",
    "wirkung": "wind"
   },
@@ -32,7 +32,7 @@
   },
   {
    "name": "raumschiff",
-   "sekunden": 15.04,
+   "sekunden": 15.11,
    "bild": "filme/raumschiff.jpg",
    "wirkung": "wind"
   },

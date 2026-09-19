@@ -238,7 +238,20 @@ fi
 # im Chat konkurriert mit allem anderen auf dem Telefon; TikTok und
 # Instagram fahren ihre Filme auf etwa -14. Dahinter steht ein
 # Begrenzer, damit die zwei Stufen mehr nicht ins Zerren laufen.
-TONKETTE="loudnorm=I=-14:TP=-1.0:LRA=9"
+# GEGEN DEN DUENNEN KLANG.
+# GEMELDET, zweimal: „Der Ton ist noch immer sehr duenn."
+# Das liegt nicht an der Lautheit — die stimmt seit dem
+# zweistufigen loudnorm. Es liegt am Klang selbst: die Filme kommen
+# mit wenig Fundament herein, und ein Telefonlautsprecher nimmt
+# unten ohnehin weg, was da ist. Drei Griffe, alle massvoll:
+#   * ein tiefes Regal bei 110 Hz, +4 dB — das ist der Koerper.
+#   * eine Anhebung bei 2,6 kHz, +2,5 dB — dort sitzt die
+#     Verstaendlichkeit; sie laesst es „naeher" klingen.
+#   * ein sanfter Kompressor davor, damit die Anhebungen nicht
+#     an den lauten Stellen zerren.
+# Erst danach wird auf -14 LUFS gefahren und begrenzt.
+VOLLER="acompressor=threshold=-20dB:ratio=2.4:attack=12:release=220:makeup=1.4,bass=g=4:f=110:w=0.8,equalizer=f=2600:width_type=q:w=1.1:g=2.5"
+TONKETTE="${VOLLER},loudnorm=I=-14:TP=-1.0:LRA=9"
 MESS=$("$FF" -hide_banner -i "$QUELLE" -af "loudnorm=I=-14:TP=-1.0:LRA=9:print_format=json" \
   -f null - 2>&1 | sed -n '/^{/,/^}/p')
 if [ -n "$MESS" ]; then
@@ -258,7 +271,7 @@ if [ -n "$MESS" ]; then
       } catch (e) {}
     });')
   if [ -n "$W" ]; then
-    TONKETTE="loudnorm=I=-14:TP=-1.0:LRA=9:${W},alimiter=limit=0.94:level=disabled"
+    TONKETTE="${VOLLER},loudnorm=I=-14:TP=-1.0:LRA=9:${W},alimiter=limit=0.94:level=disabled"
     echo "     Ton gemessen und fest eingestellt (zweistufig)"
   fi
 fi
@@ -268,12 +281,12 @@ if [ "$ART" = "szene" ]; then
   "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
     -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuv420p \
     -b:v 0 -crf "${GUETE:-40}" -row-mt 1 -deadline good -cpu-used 2 \
-    -af "$TONKETTE" -c:a libopus -b:a 72k -ac 2 "$ZIEL/$NAME.webm"
+    -af "$TONKETTE" -c:a libopus -b:a 96k -ac 2 "$ZIEL/$NAME.webm"
 else
   "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
     -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 \
     -b:v 0 -crf "${GUETE:-46}" -row-mt 1 -deadline good -cpu-used 2 \
-    -af "$TONKETTE" -c:a libopus -b:a 72k -ac 2 "$ZIEL/$NAME.webm"
+    -af "$TONKETTE" -c:a libopus -b:a 96k -ac 2 "$ZIEL/$NAME.webm"
 fi
 
 # -map 0:a:0? ist kein Zierrat: sobald filter_complex im Spiel ist,
@@ -290,7 +303,7 @@ else
 [b]alphaextract,format=yuv420p[maske];\
 [bild][maske]hstack=inputs=2,format=yuv420p" \
   -map 0:a:0? -c:v libx264 -preset slow -crf "${GUETE_MASKE:-32}" -movflags +faststart \
-  -af "$TONKETTE" -c:a aac -b:a 80k -ac 2 "$ZIEL/$NAME-maske.mp4"
+  -af "$TONKETTE" -c:a aac -b:a 96k -ac 2 "$ZIEL/$NAME-maske.mp4"
 fi
 
 echo "3/4  Vorschaubild …"

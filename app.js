@@ -18968,12 +18968,27 @@
       if (n && (n.saveData || /^(slow-2g|2g)$/.test(n.effectiveType || ""))) return;
     } catch (e) {}
     lcFilmeVorgeladen = true;
-    brDatei("filmspieler.js").then(() => {
-      if (!window.DMA_FILM || !window.DMA_FILM.vorladen) return;
-      namen.reduce((kette, name) =>
-        kette.then(() => window.DMA_FILM.vorladen(name)).catch(() => null),
-        Promise.resolve());
-    }).catch(() => {});
+    /* UND ERST, WENN DIE LEITUNG FREI IST.
+       GEMELDET: „Ich moechte nicht, dass der Chat-Eingang
+       beeintraechtigt ist und irgendwie so lange laedt durch
+       sowas." Richtig — das Betreten des Raums hat Vorrang vor
+       jedem Film. Also wartet das Vorladen erst eine ruhige
+       Minute ab (requestIdleCallback, ersatzweise acht Sekunden)
+       und holt dann EINEN Film nach dem anderen, jeden wieder in
+       einer Ruhepause. So faellt es nicht auf. */
+    const spaeter = (f) => {
+      if (window.requestIdleCallback) window.requestIdleCallback(f, { timeout: 12000 });
+      else setTimeout(f, 8000);
+    };
+    spaeter(() => {
+      brDatei("filmspieler.js").then(() => {
+        if (!window.DMA_FILM || !window.DMA_FILM.vorladen) return;
+        namen.reduce((kette, name) =>
+          kette.then(() => new Promise((fertig) => spaeter(() =>
+            window.DMA_FILM.vorladen(name).then(fertig).catch(() => fertig())))),
+          Promise.resolve());
+      }).catch(() => {});
+    });
   }
 
   function lcFilmSpielen(name, opt) {

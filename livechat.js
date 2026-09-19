@@ -215,7 +215,51 @@ window.LiveChat = (function () {
     });
   }
 
-  /* Die Anmeldemarke der laufenden Sitzung. */
+  /* DIE ANMELDEMARKE — UND WARUM GAESTE EINE BRAUCHEN.
+     -----------------------------------------------------------
+     GEMELDET: „Ich konnte Emmi hoeren, nur durch den Fokus-Modus,
+     aber sie konnte mich nicht hoeren, wenn ich TURN aktiviert
+     hatte."
+
+     Hier lag es, und es ist eine stille Stelle: die Edge-Function,
+     die die Relais-Zugangsdaten herausgibt, verlangt eine gueltige
+     ANMELDUNG (sie ruft auth.getUser). Als Betreiber bist du
+     angemeldet — Emmi kam ueber den Einladungslink als Gast und
+     hatte gar keine Sitzung. Ihr Geraet bekam „nicht-angemeldet"
+     zurueck und fiel auf die oeffentlichen Gratis-Relais zurueck.
+     Die sind ueberlastet, und hinter dem symmetrischen NAT, das in
+     Aegypten die Regel ist, kommt darueber nichts an. Es sieht
+     dann genau so aus, wie sie es beschrieben hat.
+
+     Also bekommt ein Gast jetzt eine ANONYME Sitzung: ein Konto
+     ohne Namen, ohne E-Mail, nur damit die Leitung steht. Geht das
+     nicht (die Funktion muss in Supabase unter Authentication →
+     Sign In / Providers → „Anonymous sign-ins" eingeschaltet
+     sein), bleibt der Grund nachlesbar und steht in /leitung —
+     statt dass wieder jemand raten muss. */
+  var gastVersuch = null;
+  var gastGrund = "";
+  function gastAnmelden(k) {
+    if (gastVersuch) return gastVersuch;
+    if (!k || !k.auth || !k.auth.signInAnonymously) {
+      gastGrund = "diese Fassung der Supabase-Bibliothek kennt keine Gastsitzung";
+      return Promise.resolve("");
+    }
+    gastVersuch = k.auth.signInAnonymously().then(function (a) {
+      if (a && a.error) {
+        gastGrund = String(a.error.message || a.error);
+        return "";
+      }
+      gastGrund = "";
+      return (a && a.data && a.data.session && a.data.session.access_token) || "";
+    }).catch(function (e) {
+      gastGrund = String((e && e.message) || e);
+      return "";
+    });
+    return gastVersuch;
+  }
+  function gastBefund() { return gastGrund; }
+
   function marke() {
     try {
       var k = (konto() && Backend.zugang && Backend.zugang()) || null;
@@ -224,7 +268,10 @@ window.LiveChat = (function () {
       }
       if (!k) return Promise.resolve("");
       return k.auth.getSession().then(function (a) {
-        return (a && a.data && a.data.session && a.data.session.access_token) || "";
+        var t = (a && a.data && a.data.session && a.data.session.access_token) || "";
+        if (t) return t;
+        /* Keine Sitzung? Dann als Gast — sonst gibt es kein Relais. */
+        return gastAnmelden(k);
       }).catch(function () { return ""; });
     } catch (e) { return Promise.resolve(""); }
   }
@@ -1824,6 +1871,31 @@ window.LiveChat = (function () {
       : " (oeffentliche)";
     zeilen.push("Relais eingetragen: " + relais + woher
       + (relaisStand.grund ? " — Grund: " + relaisStand.grund : ""));
+    /* WER SITZT AUF WELCHEM RELAIS? Das ist die Frage, an der es
+       gehangen hat: einer hatte das eigene, die andere nur die
+       oeffentlichen — und ueber ein symmetrisches NAT kommt darueber
+       nichts an. Deshalb steht es jetzt fuer ALLE hier, nicht nur
+       fuer einen selbst. */
+    var fremd = Object.keys(praesenzDa).filter(function (id) {
+      var p = praesenzDa[id] || {};
+      return p.raum === zustand.raum;
+    }).map(function (id) {
+      var p = praesenzDa[id] || {};
+      return "  " + (p.name || "jemand") + ": "
+        + (p.relais === "cloudflare" ? "eigenes Relais ✔"
+           : p.relais ? "nur die oeffentlichen ⚠" : "sagt nichts (alte Fassung)");
+    });
+    if (fremd.length) {
+      zeilen.push("Wer sitzt auf welchem Relais:");
+      zeilen.push(fremd.join("\n"));
+    }
+    if (relaisStand.quelle !== "cloudflare") {
+      var g = gastBefund();
+      zeilen.push(g
+        ? "⚠ Kein eigenes Relais auf DIESEM Geraet. Die Gastsitzung kam nicht zustande: " + g
+          + "\n   → In Supabase unter Authentication → Sign In/Providers „Anonymous sign-ins“ einschalten."
+        : "⚠ Kein eigenes Relais auf diesem Geraet — es laufen nur die oeffentlichen.");
+    }
     return zeilen.join("\n");
   }
 
@@ -3230,7 +3302,8 @@ window.LiveChat = (function () {
       var eintraege = roh[schluessel] || [];
       var e = eintraege[eintraege.length - 1] || {};
       neu[schluessel] = { name: e.name || "", raum: e.raum || "",
-                          zu: Boolean(e.zu), seit: e.seit || 0 };
+                          zu: Boolean(e.zu), relais: e.relais || "",
+                          seit: e.seit || 0 };
     });
     praesenzDa = neu;
     praesenzMelden();
@@ -3265,6 +3338,11 @@ window.LiveChat = (function () {
       if (drin) praesenzKanal.track({ name: name || zustand.ichName || "",
                                       raum: zustand.raum || "",
                                       zu: Boolean(zustand.abgeschlossen),
+                                      /* Auf welchem Relais dieses Geraet sitzt.
+                                         Damit sieht man in /leitung, ob BEIDE
+                                         Seiten das eigene haben — daran hing
+                                         der Ausfall. */
+                                      relais: relaisStand.quelle || "",
                                       seit: Date.now() });
       else praesenzKanal.untrack();
     } catch (e) {}
