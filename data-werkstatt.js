@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — die elfte Haltung: seitliches Sitzen",
+  stand: "Runde 22 — der Tyrannosaurus bekommt sein Gebiss",
 
   inArbeit: [
-    { seit: "2026-09-19T04:37",
+    { seit: "2026-09-19T05:05",
+      text: "Echte Film-Animationen: brauche einen API-Schlüssel (Leonardo oder ElevenLabs aufladen)" },
+    { seit: "2026-09-19T05:05",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
-    { seit: "2026-09-19T04:37", nurBetreiber: true,
-      text: "Livestream-Relais: Verbindung mit „🔍 Verbindung testen“ prüfen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T04:37",
-      text: "Seitliches Sitzen für alle 12 Figuren — mit allen 47 Kleidungsstücken" },
-    { seit: "2026-09-19T04:37",
-      text: "Nicht neu gezeichnet: aus „liegen“ und „krabbeln“ zusammengesetzt" },
-    { seit: "2026-09-19T04:37",
-      text: "Kostet 5,4 kB statt 4,5 MB — zusammengesetzt wird im Browser" },
-    { seit: "2026-09-19T04:37",
-      text: "Fokus-Modus überlebt dein Neuladen" },
+    { seit: "2026-09-19T05:05",
+      text: "Zähne gerichtet: beide Reihen waren an der Wurzel gespiegelt" },
+    { seit: "2026-09-19T05:05",
+      text: "Brauenwulst, tiefliegendes Auge, Schläfengrube, Kaumuskel" },
+    { seit: "2026-09-19T05:05",
+      text: "Der Rex vom 14.09. ist zurück — mit Schuppen und grossem Kopf" },
+    { seit: "2026-09-19T05:05",
+      text: "Seitliches Sitzen für alle 12 Figuren" },
   ],
 };
