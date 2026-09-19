@@ -23752,10 +23752,37 @@
     let ziele = [];
     if (wen) {
       const suche = String(wen).trim().toLowerCase();
-      ziele = [...karte.querySelectorAll(".lc-platz")].filter((pl) => {
+      const plaetze = [...karte.querySelectorAll(".lc-platz")];
+      const namen = (pl) => {
         const nm = pl.querySelector(".lc-platz-name");
-        return nm && nm.textContent.trim().toLowerCase() === suche;
-      });
+        return nm ? nm.textContent.trim().toLowerCase() : "";
+      };
+      /* Erst genau — das ist der Normalfall. */
+      ziele = plaetze.filter((pl) => namen(pl) === suche);
+      /* Dann nachsichtig: „/box Emmi", während sie auf ihrem Platz
+         „Emmy" heisst, traf vorher NIEMANDEN und schlug auf alle
+         zurück. Ein Name, den man tippt, ist selten auf den Buchstaben
+         genau — deshalb zählt auch, wenn einer den anderen anfängt.
+         Nur bei GENAU EINEM Treffer; sind es mehrere, wäre es geraten. */
+      if (!ziele.length && suche.length >= 3) {
+        /* „Emmi" und „Emmy" fangen einander nicht an — trotzdem ist
+           klar, wer gemeint ist. Deshalb gilt als nah dran: die
+           Länge stimmt bis auf einen Buchstaben, und der Anfang ist
+           gleich (alles bis auf den letzten Buchstaben des kürzeren).
+           Das trifft Emmi/Emmy, Alex/Alexa, Reza/Rezan.
+           Nur bei GENAU EINEM Treffer; sind es mehrere, wäre es
+           geraten, und dann schlägt lieber niemand zu. */
+        const nahDran = (a, b) => {
+          if (Math.abs(a.length - b.length) > 1) return false;
+          const n = Math.min(a.length, b.length) - 1;
+          return n >= 2 && a.slice(0, n) === b.slice(0, n);
+        };
+        const fast = plaetze.filter((pl) => {
+          const n = namen(pl);
+          return n && n !== "frei" && (n.indexOf(suche) === 0 || suche.indexOf(n) === 0 || nahDran(n, suche));
+        });
+        if (fast.length === 1) ziele = fast;
+      }
     }
     if (!ziele.length) {
       ziele = [...karte.querySelectorAll(".lc-platz")]
@@ -23814,9 +23841,68 @@
      Platz wird weggeschlagen, kippt und kommt zurück. Und der
      Handschuh kommt aus der TIEFE auf den Betrachter zu, deshalb
      wächst er beim Zuschlagen. */
-  function lcBoxen(wen) {
+  /* =================================================================
+     DER RÜCKSCHLAG — EINE BOXRUNDE HAT ZWEI SEITEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Mach jetzt bitte mal die Box-Animation und die
+     Rückanimation fertig, dass sie auch kommt, wenn man schreibt, dass
+     ich jemand anderen boxe."
+
+     Bisher flog der Handschuh nur hin. Das sah aus, als hätte die
+     andere Seite gar nichts gemerkt — und eine Box-Animation, bei der
+     niemand zurückboxt, ist eine halbe Sache.
+
+     Jetzt kommt der Rückschlag: Kurz nachdem der Treffer sitzt, holt
+     die getroffene Person aus und der Schlagende wackelt. Das ist
+     absichtlich KLEINER und schneller als der Hinweg — ein Konter, kein
+     zweiter Angriff. Und es ist freundlich gemeint: ein Sternchen und
+     ein Wackeln, kein Schaden.
+     ================================================================= */
+  function lcRueckschlag(platz, verzug) {
+    setTimeout(() => {
+      if (!platz || !platz.isConnected) return;
+      platz.classList.remove("lc-boxt-zurueck");
+      void platz.offsetWidth;
+      platz.classList.add("lc-boxt-zurueck");
+      const schicht = document.createElement("div");
+      schicht.className = "lc-box lc-box-zurueck";
+      schicht.setAttribute("aria-hidden", "true");
+      schicht.innerHTML =
+        '<svg class="lc-box-handschuh lc-box-konter" viewBox="0 0 120 120">'
+        + '<defs><radialGradient id="bxk" cx="0.38" cy="0.32" r="0.75">'
+        + '<stop offset="0" stop-color="#6fa8dc"/><stop offset="1" stop-color="#2b5f8a"/>'
+        + "</radialGradient></defs>"
+        + '<path d="M28 62 C28 34 48 20 68 20 C90 20 102 36 102 58 '
+        + 'C102 80 88 94 66 94 C44 94 28 84 28 62 Z" fill="url(#bxk)"/>'
+        + '<path d="M30 70 C20 70 14 62 18 54 C22 46 32 46 34 54 Z" fill="#245071"/>'
+        + '<path d="M40 92 L96 92 L92 108 C90 114 46 114 44 108 Z" fill="#f0e2c8"/>'
+        + '<path d="M44 100 H92" stroke="#c9b48e" stroke-width="2.6"/>'
+        + "</svg>"
+        + '<span class="lc-box-treffer lc-box-treffer-klein"></span>';
+      platz.appendChild(schicht);
+      setTimeout(() => {
+        schicht.remove();
+        platz.classList.remove("lc-boxt-zurueck");
+      }, 1600);
+    }, verzug || 0);
+  }
+
+  function lcBoxen(wen, von) {
     const ziele = lcZielPlaetze(wen);
     if (!ziele.length) return false;
+    /* Wer hat geboxt? Nur wenn der Platz wirklich ein anderer ist als
+       das Ziel — sonst schlüge jemand sich selbst zurück. */
+    const karte = document.getElementById("livechatKarte");
+    let konter = null;
+    if (von && karte) {
+      const suche = String(von).trim().toLowerCase();
+      konter = [...karte.querySelectorAll(".lc-platz")].find((pl) => {
+        const nm = pl.querySelector(".lc-platz-name");
+        return nm && nm.textContent.trim().toLowerCase() === suche;
+      }) || null;
+      if (konter && ziele.indexOf(konter) >= 0) konter = null;
+    }
+    if (konter) lcRueckschlag(konter, 1250);
     ziele.forEach((platz, i) => setTimeout(() => {
       if (!platz.isConnected) return;
       platz.classList.remove("lc-wird-geboxt");
@@ -23895,7 +23981,18 @@
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
     if (art === "umarmen" && lcUmarmung(nachricht && (nachricht.wen || nachricht.an))) return;
     if (art === "lecken" && lcLecken(nachricht && (nachricht.wen || nachricht.an))) return;
-    if (art === "boxen" && lcBoxen(nachricht && (nachricht.wen || nachricht.an))) return;
+    /* Beim Boxen zählt auch, WER geboxt hat — er bekommt den
+       Rückschlag ab. Bei der eigenen Zeile steht der Name nicht dran
+       (man ist ja selbst gemeint), deshalb wird er dort aus der Lage
+       geholt. */
+    if (art === "boxen") {
+      const wenBox = nachricht && (nachricht.wen || nachricht.an);
+      let vonBox = (nachricht && nachricht.name) || "";
+      if (nachricht && nachricht.eigen) {
+        try { vonBox = (LiveChat.lage() || {}).ichName || vonBox; } catch (e) {}
+      }
+      if (lcBoxen(wenBox, vonBox)) return;
+    }
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
@@ -24337,7 +24434,7 @@
     auto: function () { return lcRennautoSvg(); },
     umarmung: function (wen) { return lcUmarmung(wen); },
     lecken: function (wen) { return lcLecken(wen); },
-    boxen: function (wen) { return lcBoxen(wen); },
+    boxen: function (wen, von) { return lcBoxen(wen, von); },
     ausspracheListe: function () { return buildDictionaryEntries().filter(wortZumUeben).filter(aussprUebbar); },
     ausspracheAlle: function () { return buildDictionaryEntries(); },
     geruest: function () { return livechatGeruestHtml(); },

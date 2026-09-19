@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 25 — die Regel sitzt im Abschicken, die Aufgabenzeile sitzt wieder (v316)",
+  stand: "Runde 26 — Boxen hin und zurück (v317)",
 
   inArbeit: [
-    { seit: "2026-09-19T02:04",
+    { seit: "2026-09-19T02:12",
       text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus, kostet nichts" },
-    { seit: "2026-09-19T02:04",
+    { seit: "2026-09-19T02:12",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T02:04",
+    { seit: "2026-09-19T02:12",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T02:04",
+    { seit: "2026-09-19T02:12",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:04",
-      text: "Darauf-antworten-Knopf ersatzlos weg — wer bei offener Aufgabe abschickt, antwortet damit" },
-    { seit: "2026-09-19T02:04",
-      text: "Die Aufgabenzeile stand im 80-Pixel-Namensfeld und brach um. Jetzt bekommt sie die ganze Breite" },
-    { seit: "2026-09-19T02:04",
-      text: "Beliebig viele können antworten, beliebig oft, auch Stunden später" },
+    { seit: "2026-09-19T02:12",
+      text: "Der Rückschlag: wer geboxt wird, boxt zurück — blauer Handschuh von unten, der Angreifer wackelt" },
+    { seit: "2026-09-19T02:12",
+      text: "Namenssuche nachsichtig: /box Emmi trifft Emmy, statt auf alle zurückzufallen" },
+    { seit: "2026-09-19T02:12",
+      text: "Umarmen und Ablecken treffen damit auch zuverlässiger" },
   ],
 };

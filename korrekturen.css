@@ -9266,3 +9266,57 @@ body.lc-schreibt .tutor-reiter {
    abschickt, antwortet damit auf sie. Kein Knopf, kein Band, keine
    zusätzliche Zeile — und die Aufgabe sieht wieder aus wie vorher.
    ================================================================= */
+
+/* =================================================================
+   DER RÜCKSCHLAG — EINE BOXRUNDE HAT ZWEI SEITEN
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „Mach jetzt bitte mal die Box-Animation und die
+   Rückanimation fertig, dass sie auch kommt, wenn man schreibt, dass
+   ich jemand anderen boxe."
+
+   Bisher flog der Handschuh nur hin. Das sah aus, als hätte die andere
+   Seite gar nichts gemerkt. Jetzt holt sie zurück: kurz nachdem der
+   Treffer sitzt (1,25 s), wackelt der Platz dessen, der geboxt hat,
+   und ein blauer Handschuh kommt ihm entgegen.
+
+   Absichtlich KLEINER und schneller als der Hinweg — ein Konter, kein
+   zweiter Angriff. Blau statt rot, damit man auf einen Blick sieht,
+   wer gerade wem eins gibt. Und es bleibt freundlich: ein Aufblitzen
+   und ein Wackeln, mehr nicht.
+   ================================================================= */
+.lc-box-zurueck { z-index: 6; }
+.lc-box-konter {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 56%;
+  height: 56%;
+  /* Er kommt VON UNTEN herauf — ein Konter kommt von unten, nicht
+     von der Seite; sonst sähe er aus wie derselbe Schlag noch einmal. */
+  animation: lcKonter 900ms cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+@keyframes lcKonter {
+  0%   { opacity: 0; transform: translate(-50%, 80%) rotate(18deg) scale(0.45); }
+  25%  { opacity: 1; }
+  52%  { transform: translate(-50%, -18%) rotate(-6deg) scale(1.05); }
+  70%  { transform: translate(-50%, -4%) rotate(0deg) scale(0.96); }
+  100% { opacity: 0; transform: translate(-50%, 46%) rotate(12deg) scale(0.6); }
+}
+.lc-box-treffer-klein {
+  width: 46%; height: 46%;
+  top: 34%;
+  animation: lcTreffer 900ms ease-out 0.34s both;
+}
+/* Wer zurückgeboxt bekommt, wackelt — kürzer und flacher als beim
+   ersten Schlag, sonst wirkt der Konter härter als der Angriff. */
+.lc-platz.lc-boxt-zurueck { animation: lcKonterWackeln 800ms cubic-bezier(0.3, 1.4, 0.5, 1) 0.34s both; }
+@keyframes lcKonterWackeln {
+  0%, 100% { transform: none; }
+  22% { transform: translateY(6px) rotate(-4deg) scale(0.97); }
+  46% { transform: translateY(-3px) rotate(2.5deg); }
+  70% { transform: translateY(2px) rotate(-1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-box-konter, .lc-platz.lc-boxt-zurueck { animation: none; }
+  .lc-box-zurueck { display: none; }
+}
