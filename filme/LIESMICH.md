@@ -6,6 +6,35 @@ grossen Geschenke macht — dort liegt eine Abspieldatei mit
 Durchsichtigkeit über der Seite, und das Telefon rechnet nichts, es
 spielt nur ab.
 
+## Zwei Sorten Film
+
+**Freigestellt** (`gruen`) — liegt durchsichtig über dem Chat, man liest
+weiter mit. Dafür muss der Hintergrund flächig grün sein; Umgebung geht
+nur, soweit sie am Motiv hängt (Staub, Funken, Tropfen).
+
+**Szene** (`szene`) — das volle Bild mit Welt, Boden, Horizont und
+Kamerafahrt. Wird gar nicht freigestellt, sondern als Kinobild über den
+Chat gelegt: dunkler Grund ringsum, weiche Kante, runde Ecken. Keine
+Maskendatei, kein WebGL, überall derselbe Weg.
+
+Fertige Prompts für beides stehen in `PROMPTS.md` — 27 Stück.
+
+## Der Ton pumpt nicht
+
+`loudnorm` läuft **zweistufig**: erst wird der ganze Film gemessen, dann
+liegt eine feste lineare Verstärkung an. Einstufig regelt es während des
+Abspielens nach — bei einem Brüllen hört man, wie es leiser dreht und
+danach wieder auf. Gemessen über die fünf Filme: Streuung der mittleren
+Lautheit **0,9 dB** (einstufig 1,7 dB, ungeregelt 5,5 dB).
+
+## Es sieht nicht nach Video aus
+
+Kein `controls`, `disablePictureInPicture`, `controlslist` ohne
+Vollbild und Herunterladen, `x-webkit-airplay="deny"`,
+`pointer-events: none` auf der ganzen Schicht und ein Stilblatt, das
+die eingebaute WebKit-Leiste ausblendet. Der YouTube-Rahmen im
+Musikspieler hat `fs=0` und kein `allowfullscreen` mehr.
+
 ## Wie ein Film hier hereinkommt
 
 1. **Video erzeugen** — in einer beliebigen App (Grok Imagine, Leonardo,

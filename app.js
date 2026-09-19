@@ -51770,7 +51770,16 @@ An einem Morgen lief ein kleiner Fuchs los…
       <div class="music-player-card">
         <button type="button" class="btn btn-ghost music-player-toggle" data-music-toggle="${idSuffix}">🎵 Musik abspielen</button>
         <div class="music-player-frame" id="musicFrame-${idSuffix}" style="display:none;">
-          <iframe width="100%" height="80" src="https://www.youtube.com/embed/${videoId}" title="Musik" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+          <!-- KEIN VOLLBILD-KNOPF. GEMELDET: „Da ist unten so ein Symbol
+               zum Grossermachen auf Vollbild. Ich moechte nicht, dass das
+               auftaucht und das Ganze unprofessionell macht."
+               fs=0 nimmt den Knopf weg, modestbranding=1 das Logo, rel=0
+               die fremden Videos am Ende, iv_load_policy=3 die
+               eingeblendeten Hinweise, playsinline=1 haelt es auf dem
+               iPhone im Kasten. Und ohne „allowfullscreen" darf der
+               Rahmen selbst dann nicht ins Vollbild, wenn YouTube es
+               doch einmal anbietet. -->
+          <iframe width="100%" height="80" src="https://www.youtube.com/embed/${videoId}?fs=0&amp;modestbranding=1&amp;rel=0&amp;iv_load_policy=3&amp;playsinline=1" title="Musik" frameborder="0" allow="autoplay; encrypted-media" loading="lazy"></iframe>
         </div>
       </div>`;
   }

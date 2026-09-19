@@ -88,6 +88,17 @@ const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: 
     const v = s.querySelector("video");
     window.__fp.stumm = v.muted;
     window.__fp.dauer = v.duration || 0;
+    /* JETZT nachsehen, nicht spaeter: nach acht Sekunden ist der Film
+       vorbei und die Schicht abgeraeumt. Der erste Entwurf hat genau
+       das gemacht und sechs Fehler gemeldet, wo keiner war. */
+    window.__fp.blende = {
+      controls: v.hasAttribute("controls"),
+      pip: v.disablePictureInPicture === true || v.hasAttribute("disablepictureinpicture"),
+      liste: v.getAttribute("controlslist") || "",
+      airplay: v.getAttribute("x-webkit-airplay") || "",
+      zeiger: getComputedStyle(s).pointerEvents,
+      stil: Boolean(document.getElementById("dmaFilmOhneLeiste"))
+    };
     v.addEventListener("waiting", () => { window.__fp.wartet++; });
     (function sieh() {
       const l = document.querySelector(".dma-film");
@@ -130,6 +141,25 @@ const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: 
   const eigen = new Set(versch).size;
   pruefe("der Chatverlauf rattert dabei mit (und nur er)", eigen > 5,
     versch.length + " von " + m.chat.length + " Messungen verschoben, " + eigen + " verschiedene Lagen");
+
+  /* GEMELDET: „Da ist unten so ein Symbol zum Grossermachen auf
+     Vollbild … ich moechte nicht, dass es aussieht, dass es ein Video
+     ist." Also nachsehen, dass kein einziger dieser Wege offen ist. */
+  console.log("\nSIEHT ES NACH VIDEO AUS?\n");
+  const bl = m.blende;
+  pruefe("das Video hat keine Bedienleiste", bl && !bl.controls);
+  pruefe("Bild-im-Bild ist abgeschaltet", bl && bl.pip);
+  pruefe("Vollbild und Herunterladen sind gesperrt",
+    bl && /nofullscreen/.test(bl.liste) && /nodownload/.test(bl.liste), bl ? bl.liste : "");
+  pruefe("AirPlay ist abgelehnt", bl && bl.airplay === "deny");
+  pruefe("kein Fingertipp erreicht das Video", bl && bl.zeiger === "none", bl ? bl.zeiger : "");
+  pruefe("die WebKit-Leiste ist per Stilblatt weg", bl && bl.stil);
+
+  const yt = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  const zeile = (yt.match(/<iframe[^>]*youtube\.com\/embed[^>]*>/) || [""])[0];
+  pruefe("der YouTube-Rahmen hat keinen Vollbildknopf",
+    /fs=0/.test(zeile) && !/allowfullscreen/.test(zeile),
+    zeile ? zeile.slice(0, 90) + "…" : "kein Rahmen gefunden");
 
   console.log("\nLAEUFT ER DURCH, UND MIT TON?\n");
   pruefe("kein einziger Aussetzer", m.wartet === 0, m.wartet + " Aussetzer");

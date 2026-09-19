@@ -19,7 +19,7 @@
 # sähen iPhone-Leute einen grünen Kasten — und das sind die meisten.
 #
 # AUFRUF
-#   bash werkzeug/film-freistellen.sh <video> <name> [gruen|schwarz] [farbe] [breite] [wirkung]
+#   bash werkzeug/film-freistellen.sh <video> <name> [gruen|schwarz|szene] [farbe] [breite] [wirkung]
 #   bash werkzeug/film-freistellen.sh ~/loewe.mp4 loewe gruen "" 480 glanz
 #
 # DER TON BLEIBT DRIN. Er wurde bis Fassung 330 weggeworfen (-an), und
@@ -64,7 +64,20 @@ mkdir -p "$ZIEL"
 # geworden. Deshalb wird die Farbe aus der linken oberen Ecke des
 # ersten Bildes GELESEN. Wer es anders will, gibt sie als vierten
 # Wert mit (z. B. 0x11EA0C).
-if [ "$ART" = "schwarz" ]; then
+# DRITTE ART: „szene" — GAR NICHT FREISTELLEN.
+# GEWÜNSCHT: „nicht unbedingt nur die Objekte oder Tiere, sondern
+# mit Umgebung … hohe Palmen, die wackeln, mit Kameraführung, mit
+# Effekt, in epischem Ausmass."
+# Das geht mit einem Greenscreen NICHT zusammen: was man wegschneidet,
+# ist genau die Umgebung. Deshalb gibt es diese zweite Sorte Film —
+# das volle Bild, ohne Maske, das die Seite als Kinobild über den
+# Chat legt (dunkler Grund, weiche Kante, runde Ecken). Freigestellt
+# bleibt, was ÜBER dem Chat laufen soll; als Szene kommt, was eine
+# WELT zeigen soll.
+if [ "$ART" = "szene" ]; then
+  SCHLUESSEL=""
+  ENTFAERBEN=""
+elif [ "$ART" = "schwarz" ]; then
   SCHLUESSEL="colorkey=0x000000:0.22:0.10"
   ENTFAERBEN=""
 else
@@ -124,7 +137,11 @@ if [ "$BODEN" != "0" ]; then
   AUSLAUF=",geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*min(1,(H-Y)/(H*${BODEN}))'"
 fi
 # Kanten weich machen: sonst treppt der Umriss.
-KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuva420p"
+if [ "$ART" = "szene" ]; then
+  KETTE="${VERKLEINERN}format=yuv420p"
+else
+  KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuva420p"
+fi
 
 # GLEICH LAUT — GEMELDET: „Der Ton ist immer ein bisschen
 # inkonsistent, am Anfang scheint er da zu sein, dann wird er
@@ -136,19 +153,61 @@ KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuv
 # loudnorm rechnet jeden Film auf dieselbe Lautheit (EBU R128,
 # -16 LUFS) und haelt auch INNERHALB eines Films die Schwankung
 # klein. Die Spitze bleibt unter -1,5 dB, damit nichts zerrt.
+# ZWEISTUFIG, NICHT EINSTUFIG — sonst pumpt es.
+# GEMELDET: „Der Sound kann noch ein bisschen verbessert werden, hier
+# sind glaube ich immer noch so Ausdehnungen drin."
+# Genau das macht loudnorm in einem Durchgang: es kennt den Film noch
+# nicht und regelt WÄHREND des Abspielens nach. Bei einem Brüllen hört
+# man, wie es leiser dreht und danach wieder auf — das ist die
+# „Ausdehnung". Zweistufig wird zuerst der ganze Film GEMESSEN, und im
+# zweiten Durchgang liegt eine feste, lineare Verstärkung an: kein
+# Nachregeln, keine Pumperei.
 TONKETTE="loudnorm=I=-16:TP=-1.5:LRA=11"
+MESS=$("$FF" -hide_banner -i "$QUELLE" -af "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json" \
+  -f null - 2>&1 | sed -n '/^{/,/^}/p')
+if [ -n "$MESS" ]; then
+  W=$(printf '%s' "$MESS" | node -e '
+    let t=""; process.stdin.on("data",(d)=>t+=d).on("end",()=>{
+      try {
+        const j = JSON.parse(t);
+        /* Misst ffmpeg „-inf" (ein Film ganz ohne Ton), dann lieber
+           gar nichts anwenden als eine unendliche Verstaerkung. */
+        const z = [j.input_i, j.input_tp, j.input_lra, j.input_thresh];
+        if (z.some((v) => !isFinite(Number(v)))) return;
+        process.stdout.write("measured_I=" + j.input_i
+          + ":measured_TP=" + j.input_tp
+          + ":measured_LRA=" + j.input_lra
+          + ":measured_thresh=" + j.input_thresh
+          + ":offset=" + (j.target_offset || 0) + ":linear=true:print_format=summary");
+      } catch (e) {}
+    });')
+  if [ -n "$W" ]; then
+    TONKETTE="loudnorm=I=-16:TP=-1.5:LRA=11:${W}"
+    echo "     Ton gemessen und fest eingestellt (zweistufig)"
+  fi
+fi
 
 echo "1/4  freistellen (${ART}) …"
-"$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
-  -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 \
-  -b:v 0 -crf "${GUETE:-46}" -row-mt 1 -deadline good -cpu-used 2 \
-  -af "$TONKETTE" -c:a libopus -b:a 72k -ac 2 "$ZIEL/$NAME.webm"
+if [ "$ART" = "szene" ]; then
+  "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
+    -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuv420p \
+    -b:v 0 -crf "${GUETE:-40}" -row-mt 1 -deadline good -cpu-used 2 \
+    -af "$TONKETTE" -c:a libopus -b:a 72k -ac 2 "$ZIEL/$NAME.webm"
+else
+  "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
+    -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 \
+    -b:v 0 -crf "${GUETE:-46}" -row-mt 1 -deadline good -cpu-used 2 \
+    -af "$TONKETTE" -c:a libopus -b:a 72k -ac 2 "$ZIEL/$NAME.webm"
+fi
 
 # -map 0:a:0? ist kein Zierrat: sobald filter_complex im Spiel ist,
 # sucht ffmpeg sich KEINE Tonspur mehr von selbst — sie faellt
 # stillschweigend weg. Genau so waere der Ton auf dem iPhone wieder
 # verschwunden, waehrend er auf Android da ist.
 echo "2/4  Safari-Fassung (Bild und Maske nebeneinander) …"
+if [ "$ART" = "szene" ]; then
+  echo "     entfaellt — ein Szenenfilm hat nichts freizustellen."
+else
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
   -filter_complex "[0:v]${KETTE},split=2[a][b];\
 [a]format=yuv420p[bild];\
@@ -156,6 +215,7 @@ echo "2/4  Safari-Fassung (Bild und Maske nebeneinander) …"
 [bild][maske]hstack=inputs=2,format=yuv420p" \
   -map 0:a:0? -c:v libx264 -preset slow -crf 32 -movflags +faststart \
   -af "$TONKETTE" -c:a aac -b:a 80k -ac 2 "$ZIEL/$NAME-maske.mp4"
+fi
 
 echo "3/4  Vorschaubild …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \

@@ -182,13 +182,60 @@
     };
   }
 
+  /* ES SOLL NICHT NACH VIDEO AUSSEHEN.
+     GEMELDET: „Unten taucht so ein Symbol zum Grossermachen auf
+     Vollbild auf … ich moechte nicht, dass es aussieht, dass es
+     ein Video ist."
+     Ein <video> ohne „controls" hat eigentlich keine Leiste — aber
+     iOS blendet bei manchen Fassungen trotzdem Vollbild und
+     AirPlay ein, und Chrome bietet Bild-im-Bild an. Das hier
+     schaltet jeden dieser Wege einzeln ab; zusaetzlich liegt die
+     ganze Schicht auf „pointer-events: none", also trifft ein
+     Fingertipp gar nicht erst das Video, sondern den Chat
+     darunter. */
+  function alsBildAufsetzen(v) {
+    v.playsInline = true; v.preload = "auto"; v.controls = false;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("webkit-playsinline", "");
+    v.setAttribute("disablepictureinpicture", "");
+    v.disablePictureInPicture = true;
+    v.setAttribute("controlslist", "nodownload noplaybackrate nofullscreen noremoteplayback");
+    v.setAttribute("x-webkit-airplay", "deny");
+    try { v.disableRemotePlayback = true; } catch (e) {}
+    v.style.pointerEvents = "none";
+    /* Und die eingebaute Leiste von WebKit ganz wegnehmen. Ein
+       Stilblatt kann das, ein Attribut nicht. */
+    if (!document.getElementById("dmaFilmOhneLeiste")) {
+      var st = document.createElement("style");
+      st.id = "dmaFilmOhneLeiste";
+      st.textContent = ".dma-film video::-webkit-media-controls,"
+        + ".dma-film video::-webkit-media-controls-enclosure,"
+        + ".dma-film video::-webkit-media-controls-panel,"
+        + ".dma-film video::-webkit-media-controls-start-playback-button{"
+        + "display:none !important;-webkit-appearance:none !important;}";
+      document.head.appendChild(st);
+    }
+    return v;
+  }
+
   /* ---- Weg 1: das Video kann Durchsichtigkeit selbst ---- */
   function direkt(quelle, d, s) {
-    var v = document.createElement("video");
+    var v = alsBildAufsetzen(document.createElement("video"));
     v.src = quelle;
-    v.playsInline = true; v.preload = "auto";
-    v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
-    v.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;";
+    /* SZENE ODER FREIGESTELLT?
+       Ein freigestellter Film liegt einfach ueber dem Chat. Ein
+       Film MIT Umgebung (art „szene") kann das nicht — er hat ja
+       keinen durchsichtigen Hintergrund. Der bekommt deshalb einen
+       weichen Rand, damit er sich in die Seite einfuegt statt wie
+       ein aufgeklebtes Rechteck darauf zu liegen. */
+    if (d.art === "szene") {
+      v.style.cssText += "width:min(100%,92vw);max-height:78vh;object-fit:cover;"
+        + "border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.55);"
+        + "-webkit-mask-image:radial-gradient(closest-side,#000 74%,transparent 99%);"
+        + "mask-image:radial-gradient(closest-side,#000 74%,transparent 99%);";
+    } else {
+      v.style.cssText += "max-width:100%;max-height:100%;object-fit:contain;";
+    }
     s.appendChild(v);
     return v;
   }
@@ -212,11 +259,9 @@
   }
 
   function zusammensetzen(quelle, d, s) {
-    var v = document.createElement("video");
-    v.src = quelle;
-    v.playsInline = true; v.loop = false; v.preload = "auto";
-    v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
-    v.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;";
+    var v = alsBildAufsetzen(document.createElement("video"));
+    v.src = quelle; v.loop = false;
+    v.style.cssText += "position:absolute;left:-9999px;width:1px;height:1px;";
     s.appendChild(v);
 
     var c = document.createElement("canvas");
@@ -497,7 +542,9 @@
       }
 
       /* ERST HOLEN. Solange dreht sich ein Ring. */
-      var alphaWeg = kannAlphaWebm();
+      /* Ein Szenenfilm hat gar keine Maske — er wird ueberall
+         gleich abgespielt, ganz ohne Grafikkarte. */
+      var alphaWeg = d.art === "szene" ? true : kannAlphaWebm();
       var url = alphaWeg ? d.webm : d.maske;
       var balken = warten(s);
       return datei(url, balken.stand).then(function (quelle) {
@@ -505,6 +552,14 @@
         if (!document.body.contains(s)) return { art: "abgebrochen" };
 
         var profil = PROFILE[d.wirkung] || PROFILE.keiner;
+        if (d.art === "szene") {
+          /* Ein Kinobild braucht Dunkelheit ringsum, sonst kaempft
+             es mit dem Chat um die Aufmerksamkeit. */
+          var grund = document.createElement("s");
+          grund.style.cssText = "position:absolute;inset:0;background:rgba(6,8,14,.72);"
+            + "backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);";
+          s.insertBefore(grund, s.firstChild);
+        }
         var schein = profil.schein ? scheinSchicht(s, profil) : null;
         var v = alphaWeg ? direkt(quelle, d, s) : zusammensetzen(quelle, d, s);
 
