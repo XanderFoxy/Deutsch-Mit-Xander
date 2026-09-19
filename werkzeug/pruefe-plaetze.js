@@ -168,6 +168,39 @@ const IM_BROWSER = async (pid) => {
       klagen.push("die Sitzhöhe " + z.sitzY + " liegt nicht an „" + z.teil
         + "“ (" + Math.round(z.tb.o) + " bis " + Math.round(z.tb.u) + ")");
     }
+    /* UNTER DEM HINTERN MUSS ETWAS SEIN.
+       Am Tisch sitzt man auf einem Stuhl — nur muss der auch gemalt
+       sein. Im Kinderzimmer sass die Frau am Schreibtisch in der
+       Luft, im Restaurant die Frau am Tisch daneben ebenso: beide
+       Szenen haben an dieser Stelle gar kein Sitzmöbel. Die alte
+       Prüfung konnte das nicht sehen, weil sie nur das EINE Teil
+       ansah, das der Platz nennt — und ein Tisch ist nun mal da.
+       Gefragt wird deshalb: liegt der Sitzpunkt (x | sitzY) in
+       irgendeinem gezeichneten Stück dieser Szene? Der Boden zählt
+       nicht mit; er ist Kulisse und kein Teil. */
+    if (z.haltung === "sitzen" && typeof z.sitzY === "number") {
+      /* Am Tisch sitzt man NICHT auf dem Tisch. Steht im Platz
+         „am“ oder „an“, darf das genannte Teil selbst also nicht
+         als Sitzgelegenheit durchgehen — sonst zaehlte die
+         Tischplatte als Stuhl, und genau das hat den Fall im
+         Kinderzimmer verdeckt. Bei „auf“ und „im“ zaehlt es mit:
+         auf der Bank sitzt man auf der Bank. */
+      const daneben = /^(an|am) /.test(z.wo || "");
+      const kandidaten = daneben ? z.andere : [z.tb].concat(z.andere);
+      /* Und es muss bis zum Boden reichen. Sonst galt im
+         Kinderzimmer das BUCH auf dem Schreibtisch als Sitzgelegen-
+         heit: es liegt genau dort, wo der Hintern hin soll. Ein
+         Stuhl, eine Bank, ein Sofa, ein Bett haben Beine bis
+         hinunter; ein Buch und eine Tischplatte enden in der Luft.
+         Gemessen an den Fuessen der Figur, nicht an einer geratenen
+         Bodenlinie. */
+      const traegt = kandidaten.some((b) =>
+        b && z.x >= b.l - 3 && z.x <= b.r + 3
+          && z.sitzY >= b.o - 3 && z.sitzY <= b.u + 3
+          && b.u >= z.fb.u - 20);
+      if (!traegt) klagen.push("sitzt auf nichts — bei (" + z.x + " | "
+        + z.sitzY + ") ist in dieser Szene kein Sitzmöbel gezeichnet");
+    }
     if (z.haltung === "stehen" || z.haltung === "gehen") {
       /* Der Mast einer Ampel ist bis in den Vordergrund gezeichnet,
          die Person steht aber weiter hinten auf dem Gehweg — ein

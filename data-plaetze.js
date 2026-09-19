@@ -289,7 +289,7 @@ window.DMA_PLAETZE = [
   "id": "kinderzimmer-schreibtisch",
   "szene": "kinderzimmer",
   "teil": "schreibtisch",
-  "x": 190,
+  "x": 158,
   "y": 126,
   "wo": "am Schreibtisch",
   "wort": "der Schreibtisch",
@@ -297,7 +297,8 @@ window.DMA_PLAETZE = [
   "tut": "malt",
   "an": true,
   "hoehe": 50,
-  "sitzY": 137
+  "sitzY": 135,
+  "verdeckt": ["maedchen"]
  },
  {
   "id": "klassenzimmer-tafel",
@@ -319,7 +320,7 @@ window.DMA_PLAETZE = [
   "id": "klassenzimmer-schulbank",
   "szene": "klassenzimmer",
   "teil": "schulbank",
-  "x": 108,
+  "x": 76,
   "y": 138,
   "wo": "an der Schulbank",
   "wort": "die Schulbank",
@@ -327,21 +328,21 @@ window.DMA_PLAETZE = [
   "tut": "lernt",
   "an": true,
   "hoehe": 50,
-  "sitzY": 150
+  "sitzY": 145,
+  "verdeckt": ["schuelerin"]
  },
  {
   "id": "restaurant-tisch",
   "szene": "restaurant",
   "teil": "tisch",
-  "x": 57,
-  "y": 142,
+  "x": 76,
+  "y": 190,
   "wo": "am Tisch",
   "wort": "der Tisch",
-  "haltung": "sitzen",
+  "haltung": "stehen",
   "tut": "isst",
   "an": true,
-  "hoehe": 58,
-  "sitzY": 152
+  "hoehe": 74
  },
  {
   "id": "restaurant-stuhl",

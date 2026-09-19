@@ -49,26 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — Garten: auf der Bank statt daneben",
+  stand: "Runde 22 — niemand sitzt mehr in der Luft",
 
   inArbeit: [
-    { seit: "2026-09-19T03:06",
+    { seit: "2026-09-19T03:18",
       text: "Sitzende Seitenansicht fürs Profil — braucht den Figuren-Erzeuger" },
-    { seit: "2026-09-19T03:06",
+    { seit: "2026-09-19T03:18",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
-    { seit: "2026-09-19T03:06", nurBetreiber: true,
+    { seit: "2026-09-19T03:18", nurBetreiber: true,
       text: "Cloudflare-API-Token für das Klassenzimmer-Relais fehlt noch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T03:06",
-      text: "Im Garten sitzt die Person jetzt wirklich auf der Bank" },
-    { seit: "2026-09-19T03:06",
-      text: "Sitzhöhe an der Bank nachgemessen statt geschätzt (172)" },
-    { seit: "2026-09-19T03:06",
-      text: "Prüfung unterscheidet jetzt „auf der Bank“ von „am Tisch“" },
-    { seit: "2026-09-19T03:06",
-      text: "Sammel-Durchlauf für alle 55 Sonden" },
+    { seit: "2026-09-19T03:18",
+      text: "Garten: auf der Bank statt daneben im Gras" },
+    { seit: "2026-09-19T03:18",
+      text: "Klassenzimmer: auf dem gezeichneten Stuhl an der Schulbank" },
+    { seit: "2026-09-19T03:18",
+      text: "Kinderzimmer: auf dem Stuhl am Schreibtisch statt in der Luft" },
+    { seit: "2026-09-19T03:18",
+      text: "Restaurant: am Tisch wird gestanden — dort gibt es keinen zweiten Stuhl" },
+    { seit: "2026-09-19T03:18",
+      text: "Neue Regel: unter dem Hintern muss ein Möbel sein, das bis zum Boden reicht" },
   ],
 };
