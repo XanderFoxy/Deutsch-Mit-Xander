@@ -49,30 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 340 — Profilbild, Sprechbilder, Haende, GIPHY",
+  stand: "Fassung 341 — Waehler gehen wieder zu",
 
   inArbeit: [
-    { seit: "2026-09-19T19:03",
+    { seit: "2026-09-19T19:09",
       text: "T-Rex in besserer Guete — dazu brauche ich die Originaldatei noch einmal" },
-    { seit: "2026-09-19T19:03",
+    { seit: "2026-09-19T19:09",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T19:03",
-      text: "Elf Sprechbilder: der Regenbogen ist ein echter Farbkreis, dazu Magie, Noten, Herzen, Feuer, Strom, Blasen" },
-    { seit: "2026-09-19T19:03",
-      text: "Winkende und klatschende Hand neu gezeichnet — ein Umriss statt Flaeche plus aufgestellter Finger" },
-    { seit: "2026-09-19T19:03",
-      text: "Toene: Paintball, Wecker-Augen, Katze und Ballon laufen nicht mehr in Schleife weiter" },
-    { seit: "2026-09-19T19:03",
-      text: "Die Chamaeleonzunge schiesst vom eigenen Platz quer hinueber, und es wird richtig nass" },
-    { seit: "2026-09-19T19:03",
-      text: "Wagenheber und Lasso: /heb Name 3 setzt jemanden um, auf den eigenen Platz geht es nicht" },
-    { seit: "2026-09-19T19:03",
-      text: "GIPHY: Favoriten und eigene Suchen liegen im Profil — zweimal genommen heftet von selbst an" },
-    { seit: "2026-09-19T19:03",
-      text: "Das Platzmenue hat jetzt dreizehn Sachen, darunter Woanders-hinsetzen" },
+    { seit: "2026-09-19T19:09",
+      text: "Bildwaehler und Sendewaehler schliessen jetzt beim Tippen daneben und mit Escape" },
   ],
 };

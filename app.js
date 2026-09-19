@@ -16162,6 +16162,43 @@
     return e;
   }
 
+  /* =================================================================
+     JEDER WAEHLER GEHT ZU, WENN MAN DANEBEN TIPPT
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Wenn ich auf mein eigenes Profilbild klicke, um das
+     Menü aufzurufen, wo ich ein anderes Profilbild einstellen kann,
+     möchte ich, dass es wieder schliesst, wenn ich in den Lernbereich
+     klicke. Also intuitiv wie bei Apple. Bei dir gibt es nur, wenn man
+     nach unten scrollt — es gibt gar kein Schliessen."
+
+     Es GAB eins: ein Klick auf den dunklen Grund. Nur reicht „click"
+     auf dem Telefon nicht — wer mit dem Finger ein Stück wischt,
+     bekommt kein click-Ereignis, und der Kasten blieb stehen. Deshalb
+     hoert es hier auf „pointerdown", und zwar EINMAL fuer alle Waehler
+     zugleich (es gibt sechs davon) statt sechsmal einzeln. Dazu die
+     Escape-Taste fuer den Rechner.
+
+     Nur der Kasten selbst zaehlt als „daneben": ein Tipp INNEN
+     schliesst nichts, sonst koennte man nichts mehr auswaehlen.
+     ================================================================= */
+  (function lcWaehlerSchliessen() {
+    const zu = (grund) => {
+      const offen = [...document.querySelectorAll(".lc-waehler-hinter")];
+      if (!offen.length) return false;
+      offen.forEach((k) => k.remove());
+      void grund;
+      return true;
+    };
+    document.addEventListener("pointerdown", (e) => {
+      const kasten = e.target && e.target.classList
+        && e.target.classList.contains("lc-waehler-hinter") ? e.target : null;
+      if (kasten) kasten.remove();
+    }, true);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") zu("escape");
+    });
+  })();
+
   let lcBuehneTakt = 0;
   function lcBuehneSetzen() {
     const b = document.getElementById("lcEffektBuehne");
