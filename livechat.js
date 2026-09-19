@@ -3151,6 +3151,14 @@ window.LiveChat = (function () {
     /* Zuerst die Uhr geradeziehen — sonst sortiert sich die Zeile
        gleich an der falschen Stelle ein (siehe zeitAufMeineUhr). */
     try { zeitAufMeineUhr(n); } catch (e) {}
+    /* WANN IST SIE BEI MIR ANGEKOMMEN? Das ist meine eigene Uhr, und
+       die kann keine fremde Einstellung verschieben. Die Oberfläche
+       entscheidet daran, ob eine Zeile „gerade eben" ist und ihre
+       Animation spielen darf — nicht mehr an der Uhrzeit des
+       Absenders. Genau daran ist es gescheitert: Ging seine Uhr nach,
+       sah jede seiner Nachrichten aus wie Vergangenheit, und
+       Vergangenheit bleibt still. */
+    if (!n.angekommen) n.angekommen = Date.now();
     /* Dieselbe Nachricht kann zweimal ankommen (Neuladen, Puls).
        Sie hat eine Kennung — damit lässt sich das ausschliessen. */
     if (n.id && zustand.nachrichten.some(function (a) { return a.id === n.id; })) return;
@@ -8909,7 +8917,18 @@ window.LiveChat = (function () {
     z.push("  2. Aufgabe offen    : " + (offeneAufgabe
       ? ("ja (" + offeneAufgabe.typ + ") „"
          + String(offeneAufgabe.frage || offeneAufgabe.loesung || "").slice(0, 34) + "“")
-      : "NEIN — dann zählt keine Zeile als Antwort"));
+      : "NEIN"));
+    if (!offeneAufgabe) {
+      /* Das ist kein Fehler, sondern die Regel, um die er selbst
+         gebeten hat: „Ich moechte diese Benotung nicht global haben,
+         nur an den Antworten von den Aufgaben." Ohne Aufgabe gibt es
+         also bewusst keinen Notenknopf. Nur: das steht nirgends, und
+         dann sieht es aus wie ein Fehler. Jetzt steht es hier. */
+      z.push("     → Ohne offene Aufgabe gibt es KEINEN Notenknopf — so war es gewünscht.");
+      z.push("     → Stell eine:  /aufgabe Schreib drei Sätze über dein Wochenende");
+      z.push("       oder  /satz Der Hund läuft über die Wiese  oder  /wort Fahrrad");
+      z.push("       Danach zählt jede Antwort dazu, von allen, beliebig oft.");
+    }
     /* Was liegt an den letzten fremden Zeilen wirklich an? */
     var fremde = (zustand.nachrichten || []).filter(function (n) {
       return n && n.von && !n.eigen && (n.art === "text" || n.art === "aktion");

@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 28 — eine nachgehende Uhr verschiebt den Verlauf nicht mehr (v319)",
+  stand: "Runde 29 — GEFUNDEN: Emmis nachgehende Uhr hat alle Animationen stummgeschaltet (v320)",
 
   inArbeit: [
-    { seit: "2026-09-19T02:25",
-      text: "Befund aus v318 abwarten: die fünf neuen Zeilen fehlten in deiner Ausgabe, du warst noch auf der alten Fassung" },
-    { seit: "2026-09-19T02:25",
+    { seit: "2026-09-19T02:29",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T02:25",
+    { seit: "2026-09-19T02:29",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T02:25",
+    { seit: "2026-09-19T02:29",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:25",
-      text: "Ankommende Zeilen werden auf DEINE Uhr umgerechnet — die Antwort steht nicht mehr vor der Frage" },
-    { seit: "2026-09-19T02:25",
-      text: "Die Originalzeit bleibt als zeitGesendet erhalten, nichts geht verloren" },
-    { seit: "2026-09-19T02:25",
-      text: "Unter einer Sekunde wird nichts angefasst — das ist Messrauschen" },
+    { seit: "2026-09-19T02:29",
+      text: "Ob eine Zeile gerade eben ist, zählt jetzt nach der ANKUNFT — nicht nach der Uhr des Absenders" },
+    { seit: "2026-09-19T02:29",
+      text: "Damit kommen Boxen, Umarmen und Lecken von Emmi wieder an" },
+    { seit: "2026-09-19T02:29",
+      text: "Der Befund sagt jetzt auch, wie man eine Aufgabe stellt, wenn keine offen ist" },
   ],
 };

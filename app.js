@@ -25408,7 +25408,35 @@
 
       /* Welcher Effekt gehört zu dieser Zeile? */
       /* Vergangenheit? Dann still — siehe oben. */
-      const alt = (n.zeit || 0) < livechatEffekteAb - 1500;
+      /* =============================================================
+         WANN EINE ZEILE „GERADE EBEN" IST — UND WARUM SEINE
+         ANIMATIONEN NIE KAMEN
+         -------------------------------------------------------------
+         SEIN BEFUND, und der hat es entschieden:
+           „Die Uhr von Emmy geht 5 Sekunden nach."
+           „Emmi boxt alle … Knopf nein" — und keine Animation, weder
+           beim Boxen noch beim Umarmen noch beim Lecken.
+
+         Hier stand  n.zeit  — die Uhrzeit DES ABSENDERS. Verglichen
+         wurde sie mit dem Augenblick, in dem ich den Raum betreten
+         habe. Geht ihre Uhr fünf Sekunden nach, sieht JEDE ihrer
+         Nachrichten aus, als wäre sie fünf Sekunden VOR meinem
+         Betreten geschrieben worden. Damit galt sie als
+         Vergangenheit — und Vergangenheit bleibt absichtlich still,
+         damit einen Neuankömmling nicht das halbe Archiv anspringt.
+
+         Das Ergebnis: Bei ihm kam von ihr NIE eine Animation. Nicht
+         weil eine kaputt war — alle waren in Ordnung, deshalb lief im
+         Prüfstand auch alles grün —, sondern weil ihre Uhr nachging.
+         Sechs Runden lang habe ich an den Animationen gesucht.
+
+         Jetzt zählt, wann die Zeile ANGEKOMMEN ist, nicht wann sie
+         geschrieben wurde. Das ist meine eigene Uhr, und die kann
+         keine fremde Einstellung verschieben. Nur wo es keine
+         Ankunftszeit gibt (alte Zeilen aus dem Gerät, aus der
+         Tabelle), zählt weiterhin die geschriebene Zeit — und das ist
+         dort auch richtig, denn die sind wirklich Vergangenheit. */
+      const alt = (n.angekommen || n.zeit || 0) < livechatEffekteAb - 1500;
       if (alt) z.classList.add("lc-alt");
 
       const eff = n.wirkung || (art === "fluester" ? "fluester" : "");
@@ -55771,6 +55799,16 @@ An einem Morgen lief ein kleiner Fuchs los…
         art: (z.className.match(/lc-zeile-(\w+)/) || [])[1] || "",
         note: Boolean(z.querySelector(".lc-benoten"))
       })),
+      /* Wie chatStand, aber mit einem AUSDRÜCKLICHEN „ab wann ist
+         etwas gerade eben" — sonst lässt sich der Fall mit der
+         nachgehenden Uhr gar nicht nachstellen. */
+      chatStandAb: (zeilen, effekteAb, schrift) => {
+        livechatGezeigt = new Map();
+        livechatEffektGespielt.clear();
+        livechatEffekteAb = effekteAb || Date.now();
+        livechatChatAuffrischen({ nachrichten: zeilen || [], leute: {}, ichId: "ich", schrift: schrift || "1" });
+        return true;
+      },
       chatStand: (zeilen, schrift) => {
         livechatGezeigt = new Map();
         livechatEffekteAb = 0;
