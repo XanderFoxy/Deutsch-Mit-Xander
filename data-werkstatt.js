@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — die Aufgabe gehört jetzt dem Raum (v313)",
+  stand: "Runde 23 — der Notenknopf kann nicht mehr fehlen (v314)",
 
   inArbeit: [
-    { seit: "2026-09-19T01:34",
+    { seit: "2026-09-19T01:39",
       text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus, kostet nichts" },
-    { seit: "2026-09-19T01:34",
+    { seit: "2026-09-19T01:39",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T01:34",
+    { seit: "2026-09-19T01:39",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T01:34",
+    { seit: "2026-09-19T01:39",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T01:34",
-      text: "Die Aufgabe reist zu allen Geräten — der Notenknopf war sonst nur auf dem Gerät da, das sie gestellt hat" },
-    { seit: "2026-09-19T01:34",
-      text: "Die Lösung reist NICHT mit: niemand kann spicken" },
-    { seit: "2026-09-19T01:34",
-      text: "Neue Zeile im Klassenzimmer: Aufgabe läuft …, mit Beenden-Knopf" },
-    { seit: "2026-09-19T01:34",
-      text: "Wer neu hereinkommt, bekommt die laufende Aufgabe nachgereicht" },
+    { seit: "2026-09-19T01:39",
+      text: "Der Notenknopf steht für dich an JEDER fremden Zeile — kräftig bei einer Aufgabe, sonst blass" },
+    { seit: "2026-09-19T01:39",
+      text: "Die Note geht IMMER an die Person raus, auch bei einer 5 und 6, wo es keine Punkte gibt" },
+    { seit: "2026-09-19T01:39",
+      text: "Sie sieht die Note gross in der Mitte, und im Chat steht sie dauerhaft" },
+    { seit: "2026-09-19T01:39",
+      text: "Auch eine Sprachnachricht lässt sich benoten — für Aussprache" },
   ],
 };

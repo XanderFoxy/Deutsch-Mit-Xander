@@ -5120,6 +5120,35 @@ window.LiveChat = (function () {
       postSenden(id, { art: "punkte", wieviel: gut, raum: zustand.raum,
                        grund: "Zensur " + zahl + (wofuer ? " in " + wofuer : "") + " im Klassenzimmer" });
     }
+    /* =========================================================
+       SIE MUSS ES WIRKLICH MITBEKOMMEN
+       ---------------------------------------------------------
+       GEWUENSCHT: „… und dass sie auf der anderen Seite diese Note
+       auch wirklich kriegt, mit einer Meldung, dass sie die Note
+       kriegt."
+
+       Bisher hing das an den PUNKTEN: nur wer eine 1 bis 4 bekam,
+       bekam ueberhaupt ein Paket geschickt — NOTE_PUNKTE ist bei
+       einer 5 und einer 6 null, und dann ging gar nichts hinaus.
+       Wer eine 5 bekam, erfuhr es also nur, wenn er zufaellig
+       gerade in den Chat sah. Das ist genau verkehrt herum: eine
+       schlechte Note muss man erst recht mitbekommen.
+
+       Deshalb geht jetzt IMMER ein eigenes Paket an die Person —
+       unabhaengig von Punkten, unabhaengig von der Zahl. Auf ihrer
+       Seite wird daraus eine Meldung, die man nicht uebersieht
+       (siehe „note-fuer-dich" in empfangen()).
+
+       Und weil ein Zuruf verlorengehen kann, wenn die Gegenseite
+       gerade neu laedt, steht die Note ZUSAETZLICH als Zeile im
+       gemeinsamen Verlauf (anAlle unten) — die wird gespeichert und
+       ist auch morgen noch da. */
+    if (id !== zustand.ichId) {
+      postSenden(id, { art: "note-fuer-dich", zahl: zahl, wofuer: wofuer || "",
+                       wort: NOTE_WORT[zahl] || "", punkte: gut || 0,
+                       raum: zustand.raum, raumName: raumKlartext(zustand.raum),
+                       vonName: zustand.ichName });
+    }
     /* „Dann steht oben im Newsticker, dass derjenige gerade eine Eins
        in Grammatik bekommen hat." */
     raumEreignis(name + " hat gerade eine " + zahl
@@ -7516,7 +7545,12 @@ window.LiveChat = (function () {
     postKanal.on("broadcast", { event: "post" }, function (m) { postEmpfangen(m && m.payload); });
     postKanal.subscribe(function () {});
   }
+  /* Zum Nachmessen: die Pakete an EINE Person abfangen. Im Betrieb
+     ist der Haken immer null. Ohne ihn liesse sich nicht pruefen, ob
+     eine Note wirklich hinausgeht — und genau daran hing es. */
+  var pruefPostHaken = null;
   function postSenden(anId, nutzlast) {
+    if (pruefPostHaken) { try { pruefPostHaken(anId, nutzlast); } catch (e) {} }
     var k = klient();
     if (!k || !anId) return;
     nutzlast.von = zustand.ichId;
@@ -7548,6 +7582,29 @@ window.LiveChat = (function () {
        Ein Deckel gehoert dazu: hoechstens 60 Punkte je Stunde aus
        dem Klassenzimmer. Sonst koennte jemand mit einem eigenen
        Raum den ganzen Tag „Aufgaben" an sich selbst stellen. */
+    /* Eine Note fuer MICH. Sie kommt immer, auch bei einer 5 und
+       einer 6 — siehe noteGeben(). */
+    if (n.art === "note-fuer-dich") {
+      var zahl = Math.round(Number(n.zahl) || 0);
+      if (!(zahl >= 1 && zahl <= 6)) return;
+      var wofuer = String(n.wofuer || "").slice(0, 40);
+      var satz = "📋 Du hast eine " + zahl
+        + (n.wort ? " (" + n.wort + ")" : "")
+        + (wofuer ? " in " + wofuer : "")
+        + " von " + (n.vonName || "deiner Lehrkraft") + " bekommen"
+        + (n.punkte ? " — und " + n.punkte + " Punkte dazu." : ".");
+      systemZeile(satz);
+      /* Und einmal als Blase, die von selbst wieder verschwindet —
+         damit sie es auch sieht, wenn sie gerade nicht in den Chat
+         schaut. */
+      if (typeof hinweisRuf === "function") { try { hinweisRuf(satz); } catch (e) {} }
+      if (typeof zustand.notenRuf === "function") {
+        try { zustand.notenRuf({ zahl: zahl, wofuer: wofuer, wort: n.wort || "",
+                                 punkte: n.punkte || 0, von: n.vonName || "" }); } catch (e) {}
+      }
+      melden();
+      return;
+    }
     if (n.art === "punkte") {
       var wieviel = Math.max(0, Math.min(10, Math.round(Number(n.wieviel) || 0)));
       if (!wieviel) return;
@@ -8962,6 +9019,8 @@ window.LiveChat = (function () {
     haeufigsteBefehle: haeufigsteBefehle,
     befehlZaehlerLeeren: befehlZaehlerLeeren,
     pruefEmpfangen: function (n) { return empfangen(n); },
+    pruefEmpfangenPost: function (n) { return postEmpfangen(n); },
+    pruefPostAbfangen: function (f) { pruefPostHaken = typeof f === "function" ? f : null; },
     pruefPostEmpfangen: function (n) { return postEmpfangen(n); },
     /* Sprachnachrichten — nach aussen, damit die Oberflaeche sie
        bedienen kann, und fuer die Pruefung. */
@@ -9175,6 +9234,8 @@ window.LiveChat = (function () {
     noteGeben: noteGeben,
     platzTauschenMit: platzTauschenMit,
     beiPunkten: function (f) { zustand.punkteRuf = f; },
+    /* Die Oberflaeche will es gross zeigen, wenn eine Note ankommt. */
+    beiNote: function (f) { zustand.notenRuf = f; },
     beiEreignis: function (f) { zustand.ereignisRuf = f; },
     /* Nur fuer die Pruefung: die offene Aufgabe von aussen sehen. */
     pruefAufgabe: function () {
@@ -9192,6 +9253,11 @@ window.LiveChat = (function () {
        das Nachfassen gar nicht erst an — es soll ja nur im Raum
        arbeiten. */
     pruefLageSetzen: function (wie) { zustand.lage = String(wie || "drin"); return zustand.lage; },
+    /* Nur zum Nachmessen: Betreiber sein. LiveChat.binLehrer von
+       aussen zu ueberschreiben reicht NICHT — innerhalb des Moduls
+       wird die eigene Funktion aufgerufen, nicht die exportierte.
+       Genau daran ist eine Messung schon einmal vorbeigelaufen. */
+    pruefBetreiber: function (ja) { zustand.betreiber = ja !== false; return zustand.betreiber; },
     /* Nur zum Nachmessen: jemanden in den Raum setzen, damit /w und
        das Bild-Fluestern ein Ziel finden. */
     pruefPersonSetzen: function (id, name, konto) {

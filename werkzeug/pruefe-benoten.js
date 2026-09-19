@@ -51,18 +51,29 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     return window.DMA_PRUEFUNG.notenKnoepfe();
   }, [lehrer, mitAufgabe]);
 
+  /* GEÄNDERT in v314, und zwar mit Absicht:
+     GEMELDET, zum fünften Mal: „Die Benotung zeigt es immer noch nicht
+     an, das Mädchen ist schon am Verzweifeln."
+     Dreimal habe ich an der ERKENNUNG gebaut, dreimal lag noch eine
+     Bedingung dahinter. Also hängt der Knopf nicht mehr daran: Der
+     Lehrer sieht ihn an JEDER fremden Zeile — an den Zeilen zu einer
+     Aufgabe kräftig, sonst blass. Was hier früher „kein Knopf" hiess,
+     heisst deshalb jetzt „Knopf, aber blass".
+     Auch eine Sprachnachricht bekommt einen: eine gesprochene Antwort
+     ist eine Antwort, und für Aussprache gibt es eine eigene Klasse. */
   const erwartet = {
-    "Der Hund läuft über die Wiese": false,   // gewoehnlicher Satz, keine Aufgabe offen
-    "Der Hund läuft": true,                   // als Antwort erkannt
-    "Sehr gut!": false                        // meine eigene Zeile
+    "Der Hund läuft über die Wiese": true,    // fremde Zeile → Knopf (blass)
+    "Der Hund läuft": true,
+    "Sehr gut!": false                        // meine eigene Zeile — nie
   };
   let fehler = 0;
   const zeilen = await lauf(true, false);
   console.log("\n  ALS LEHRER, OHNE OFFENE AUFGABE");
   zeilen.forEach((z) => {
     const name = z.text || "(Sprachnachricht)";
-    const soll = erwartet[z.text];
-    const gut = soll === undefined ? !z.note : z.note === soll;
+    /* Alles Fremde bekommt einen Knopf, die eigene Zeile nie. */
+    const soll = erwartet[z.text] !== undefined ? erwartet[z.text] : true;
+    const gut = z.note === soll;
     if (!gut) fehler++;
     console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ") + name);
   });
@@ -76,7 +87,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   const nachNeuladen = await lauf(true, true);
   console.log("\n  ALS LEHRER, AUFGABE LÄUFT (Zeilen ohne Marke, wie nach dem Neuladen)");
   nachNeuladen.forEach((z) => {
-    const soll = z.text === "Der Hund läuft über die Wiese" || z.text === "Der Hund läuft";
+    const soll = z.text !== "Sehr gut!";     // alles ausser meiner eigenen Zeile
     const gut = z.note === soll;
     if (!gut) fehler++;
     console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ")

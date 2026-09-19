@@ -20680,6 +20680,40 @@
      ist der Grund, warum er nicht mehr raten muss, ob ein Notenknopf
      kommen kann. Sie gilt für alle: die Mitlernenden sehen, dass eine
      Aufgabe offen ist; beenden darf sie nur der Lehrer. */
+  /* =================================================================
+     DIE NOTE KOMMT AN — UND ZWAR SICHTBAR
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „… und dass sie auf der anderen Seite diese Note auch
+     wirklich kriegt, mit einer Meldung, dass sie die Note kriegt."
+
+     Eine Zeile im Chat reicht dafür nicht: wer gerade oben im Verlauf
+     liest oder auf die Plätze schaut, sieht sie nicht. Deshalb steht
+     die Note gross in der Mitte und geht nach dreieinhalb Sekunden von
+     selbst wieder weg. Sie nimmt keine Klicks an — man soll
+     weiterarbeiten können, während sie da ist.
+     ================================================================= */
+  function lcNoteAngekommen(n) {
+    if (!n || !(n.zahl >= 1 && n.zahl <= 6)) return;
+    document.getElementById("lcNotenmeldung")?.remove();
+    const kasten = document.createElement("div");
+    kasten.id = "lcNotenmeldung";
+    kasten.className = "lc-notenmeldung lc-note-" + n.zahl;
+    kasten.setAttribute("role", "status");
+    const zahl = document.createElement("strong");
+    zahl.className = "lc-notenmeldung-zahl";
+    zahl.textContent = String(n.zahl);
+    const text = document.createElement("span");
+    text.className = "lc-notenmeldung-text";
+    text.textContent = "Du hast eine " + n.zahl + (n.wort ? " (" + n.wort + ")" : "")
+      + (n.wofuer ? " in " + n.wofuer : "") + " bekommen"
+      + (n.punkte ? " — und " + n.punkte + " Punkte dazu." : ".");
+    kasten.appendChild(zahl);
+    kasten.appendChild(text);
+    document.body.appendChild(kasten);
+    setTimeout(() => kasten.remove(), 3800);
+    try { lcTonZu("note"); } catch (e) {}
+  }
+
   function lcAufgabeZeichnen() {
     const kasten = document.getElementById("lcAufgabeLaeuft");
     if (!kasten) return;
@@ -22600,6 +22634,12 @@
       if (LiveChat.beiEreignis) {
         LiveChat.beiEreignis((text) => { try { kzEreignisSetzen(text); } catch (e) {} });
       }
+      /* Eine Note, die ankommt, gehört HIERHER und nicht ins Binden des
+         Klassenzimmers: Sie soll auch dann gross erscheinen, wenn die
+         Seite gerade gar nicht auf dem Klassenzimmer steht. Sonst
+         bekäme sie die Meldung ausgerechnet dann nicht, wenn sie
+         woanders übt — und das ist der Normalfall. */
+      if (LiveChat.beiNote) LiveChat.beiNote((n) => lcNoteAngekommen(n));
       if (LiveChat.beiPunkten) {
         LiveChat.beiPunkten((wieviel, grund) => {
           if (!Backend.currentUser()) return;
@@ -24533,7 +24573,36 @@
       if (!n.versuch && n.von && !n.eigen) {
         try { bezug = LiveChat.aufgabeBezug ? LiveChat.aufgabeBezug(n) : null; } catch (e) { bezug = null; }
       }
-      const istAntwort = Boolean(n.versuch || (bezug && bezug.versuch));
+      /* =============================================================
+         DER KNOPF IST FÜR DEN LEHRER IMMER DA — PUNKT
+         -------------------------------------------------------------
+         GEMELDET, zum fünften Mal: „Die Benotung zeigt es immer noch
+         nicht an, das Mädchen versucht es die ganze Zeit und ist schon
+         am Verzweifeln. Mache es möglich, dass ich sie anklicken kann
+         als Betreiber."
+
+         Ich habe jetzt dreimal an der ERKENNUNG gebaut — erst die
+         freie Aufgabe, dann die „erste Zeile", dann das Gerät. Jedes
+         Mal war es richtig und jedes Mal hat es bei ihm trotzdem nicht
+         gereicht, weil noch eine Bedingung dahinterlag. Solange der
+         Knopf davon abhängt, ob die Seite eine Antwort ERKENNT, kann
+         genau das wieder passieren.
+
+         Also hängt er nicht mehr davon ab. Der Lehrer sieht ihn an
+         JEDER fremden Chatzeile. Ob eine Zeile zu einer Aufgabe
+         gehört, entscheidet nur noch, WIE er aussieht:
+           * gehört sie dazu → kräftig, und im Titel steht die Frage
+           * gehört sie nicht dazu → blass, bis man mit der Maus
+             darüber geht
+
+         Sein früherer Einwand („ich möchte diese Benotung nicht global
+         haben") bleibt gewahrt: Es sieht ihn weiterhin AUSSCHLIESSLICH
+         der Lehrer, an eigenen Zeilen steht er nicht, und was zur
+         Aufgabe gehört, ist auf einen Blick zu unterscheiden. Was
+         wegfällt, ist nur die Möglichkeit, dass er gar nicht da ist.
+         ============================================================= */
+      const gehoertZurAufgabe = Boolean(n.versuch || (bezug && bezug.versuch));
+      const istAntwort = gehoertZurAufgabe;
       const antwortRichtig = Boolean(n.richtig || (bezug && bezug.richtig));
       const antwortFrage = n.aufgabeFrage || (bezug && bezug.frage) || "";
       /* Wofür wird hier benotet? Die Regel steht in livechat.js
@@ -24544,20 +24613,25 @@
         || (() => { try { const a = LiveChat.offeneAufgabeInfo && LiveChat.offeneAufgabeInfo();
                           return (a && a.klasse) || ""; } catch (e) { return ""; } })();
       const antwortSpaet = Boolean(bezug && bezug.spaet);
-      if (istAntwort && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
+      const darfBenoten = Boolean(n.von && !n.eigen && art !== "system" && art !== "kommen"
+        && art !== "note" && LiveChat.binLehrer && LiveChat.binLehrer());
+      if (darfBenoten) {
         const stift = document.createElement("button");
         stift.type = "button";
-        stift.className = "lc-benoten";
+        stift.className = "lc-benoten" + (gehoertZurAufgabe ? "" : " lc-benoten-blass");
         /* GEMELDET: „Ich habe so einen kleinen Notizblock, ich weiss
            nicht, was du damit meinst — soll das ein Zeugnis
            darstellen? Ist das ueberhaupt die Mitschrift?"
            Nein, und das war mein Fehler: ein Klemmbrett sieht aus wie
            ein Notizblock, und niemand raet, dass dahinter die Zensur
            steckt. Jetzt steht es einfach da. */
-        stift.title = "Note geben (1 bis 6) für die Antwort auf die Aufgabe"
-          + (antwortFrage ? " „" + antwortFrage + "“" : "")
-          + (antwortSpaet ? " (nachgereicht — sie hat hochgescrollt und noch einmal geantwortet)" : "")
-          + " — nur du als Lehrer siehst diesen Knopf";
+        stift.title = gehoertZurAufgabe
+          ? ("Note geben (1 bis 6) für die Antwort auf die Aufgabe"
+             + (antwortFrage ? " „" + antwortFrage + "“" : "")
+             + (antwortSpaet ? " (nachgereicht — sie hat hochgescrollt und noch einmal geantwortet)" : "")
+             + " — nur du als Lehrer siehst diesen Knopf")
+          : "Note geben (1 bis 6) — gerade läuft keine Aufgabe, "
+            + "du kannst trotzdem benoten. Nur du als Lehrer siehst diesen Knopf.";
         if (antwortSpaet) stift.classList.add("lc-benoten-spaet");
         stift.setAttribute("aria-label", "Note geben");
         stift.textContent = "Note";

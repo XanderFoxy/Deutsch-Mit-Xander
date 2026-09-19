@@ -9164,3 +9164,64 @@ body.lc-schreibt .tutor-reiter {
   cursor: pointer;
 }
 .lc-aufgabe-schluss:hover { background: rgba(224, 150, 74, 0.2); }
+
+/* =================================================================
+   DER NOTENKNOPF IST IMMER DA — ABER NICHT IMMER GLEICH LAUT
+   -----------------------------------------------------------------
+   GEMELDET, zum fünften Mal: „Die Benotung zeigt es immer noch nicht
+   an, das Mädchen ist schon am Verzweifeln."
+
+   Dreimal habe ich an der Erkennung gebaut, dreimal lag noch eine
+   Bedingung dahinter. Also hängt der Knopf nicht mehr davon ab: Der
+   Lehrer sieht ihn an jeder fremden Zeile. Ob die Zeile zu einer
+   Aufgabe gehört, entscheidet nur noch, wie kräftig er aussieht —
+   kräftig, wenn sie dazugehört, blass, wenn gerade keine Aufgabe
+   läuft. Beim Darüberfahren wird auch der blasse voll sichtbar,
+   damit man ihn nicht suchen muss.
+   ================================================================= */
+.lc-benoten-blass {
+  opacity: 0.32;
+  transition: opacity 140ms ease;
+}
+.lc-benoten-blass:hover,
+.lc-benoten-blass:focus-visible { opacity: 1; }
+/* Auf dem Telefon gibt es kein Darüberfahren — dort darf er nicht so
+   blass sein, dass man ihn übersieht. */
+@media (hover: none) {
+  .lc-benoten-blass { opacity: 0.55; }
+}
+
+/* Die Note, die ankommt: sie soll nicht im Verlauf untergehen. */
+.lc-notenmeldung {
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translate(-50%, -8px);
+  z-index: 9200;
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: rgba(40, 30, 24, 0.97);
+  border: 1px solid rgba(224, 150, 74, 0.6);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  color: #f6ece0;
+  text-align: center;
+  animation: lcNotenmeldung 3600ms ease-out both;
+  pointer-events: none;
+  max-width: min(92vw, 380px);
+}
+.lc-notenmeldung-zahl {
+  display: block;
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.lc-notenmeldung-text { display: block; font-size: 0.86rem; margin-top: 4px; }
+@keyframes lcNotenmeldung {
+  0%   { opacity: 0; transform: translate(-50%, 8px) scale(0.92); }
+  10%  { opacity: 1; transform: translate(-50%, -8px) scale(1); }
+  80%  { opacity: 1; transform: translate(-50%, -8px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -18px) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-notenmeldung { animation: none; }
+}
