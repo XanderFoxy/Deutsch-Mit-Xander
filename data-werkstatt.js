@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 343 — vier gerechnete Geraeusche",
+  stand: "Fassung 344 — jeder Befehl in der Liste tut auch etwas",
 
   inArbeit: [
-    { seit: "2026-09-19T19:39",
+    { seit: "2026-09-19T20:38",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T19:39",
-      text: "Der Wecker klingelt jetzt wirklich: zwei Glocken, drei Stoesse, im Takt der Animation" },
-    { seit: "2026-09-19T19:39",
-      text: "Hammer, Tritt und Wassereimer haben eigene Geraeusche statt geliehener" },
-    { seit: "2026-09-19T19:39",
-      text: "data-geraeusche.js entsteht jetzt aus dem Ordner ton/ selbst — kein Geraeusch faellt mehr durch" },
+    { seit: "2026-09-19T20:38",
+      text: "Fuenf Befehle taten gar nichts: /route66, /lok2, /gglok2, /meteor2 und /schuss2 — Ziffern fehlten im Muster" },
+    { seit: "2026-09-19T20:38",
+      text: "/gift gibt wieder das kleine Geschenk und /farbe wieder die Schriftfarbe, wie die Hilfe es verspricht" },
+    { seit: "2026-09-19T20:38",
+      text: "Sechs Abkuerzungen, die ins Leere zeigten, sind raus — /wueste, /wasser, /stumm, /diagnose und zwei Doppelungen" },
+    { seit: "2026-09-19T20:38",
+      text: "Neue Sonde: alle 524 Schreibweisen werden einmal getippt, jede muss etwas tun" },
   ],
 };

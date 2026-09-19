@@ -7434,11 +7434,11 @@ window.LiveChat = (function () {
     { gr: "welt", w: "jalousie",  kurz: "rollo",  nutzt: "/jalousie",  was: "Die Jalousie kippt auf — dahinter eine andere Welt" },
     { gr: "welt", w: "handdurch", kurz: "zombie", nutzt: "/handdurch", was: "Eine Hand reisst von unten durch den Chat und greift nach dir" },
     { gr: "welt", w: "tore",      kurz: "riegel", nutzt: "/tore",      was: "Zwei Tore knallen zu und das Schloss legt sich vor" },
-    { gr: "welt", w: "paintball", kurz: "klecks", nutzt: "/paintball", was: "Farbkugeln schlagen ein, spritzen und laufen herunter" },
+    { gr: "welt", w: "paintball", kurz: "farbe",  nutzt: "/paintball", was: "Farbkugeln schlagen ein, spritzen und laufen herunter" },
     { gr: "tiere", w: "enten",     kurz: "ente",   nutzt: "/enten",     was: "Die Entenmama watschelt mit ihren Küken durchs Bild" },
     { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Film: das Katzenbaby tappt an die Scheibe" },
     { gr: "fahrzeuge", w: "route66", kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu" },
-    { gr: "feier", w: "prunk",     kurz: "tiktok", nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
+    { gr: "feier", w: "prunk",     kurz: "gift",   nutzt: "/prunk",     was: "Ein grosses Geschenk geht auf — Strahlen, Funken und Münzregen" },
     { gr: "feier", w: "ggelefant", kurz: "elefant",nutzt: "/elefant Name", was: "Geschenk: ein Elefant steigt aus der Kiste" },
     { gr: "feier", w: "gghai",     kurz: "hai",    nutzt: "/hai Name",     was: "Geschenk: ein Hai steigt aus der Kiste" },
     { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer Name",    was: "Geschenk: ein Bär steigt aus der Kiste" },
@@ -7475,7 +7475,7 @@ window.LiveChat = (function () {
     { gr: "feier", w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift 1-4",     was: "Schrift im Chat" },
     { gr: "aussehen", w: "hintergrund", kurz: "bg", nutzt: "/hintergrund",    was: "Eigenes Bild hinter den Chat (/hintergrund weg nimmt es)" },
-    { gr: "reden", w: "c",       kurz: "farbe",nutzt: "/c Farbe",            was: "Farbe für Name und Schrift" },
+    { gr: "reden", w: "c",       kurz: "color",nutzt: "/c Farbe",            was: "Farbe für Name und Schrift" },
     { gr: "reden", w: "cname",   kurz: "colorname", nutzt: "/c name Farbe", was: "Farbe nur für den Namen" },
     { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw Text",      was: "Satz rückwärts" },
     { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz Satz",    was: "Wörter durcheinander — die anderen ordnen sie" },
@@ -7642,7 +7642,7 @@ window.LiveChat = (function () {
                 blasen: "seifenblasen", seife: "seifenblasen",
                 bubbles: "seifenblasen", blubber: "seifenblasen",
                 laub: "herbst", blaetter: "herbst", herbstlaub: "herbst",
-                fische: "aquarium", fisch: "aquarium",
+                fische: "aquarium", fisch: "aquarium", wasser: "aquarium",
                 meer: "aquarium", unterwasser: "aquarium",
                 pinguin: "pinguine", antarktis: "pinguine",
                 daemon: "fratze", teufel: "fratze", gruselig: "fratze",
@@ -7655,6 +7655,7 @@ window.LiveChat = (function () {
                 riegel: "tore", abschliessen: "tore", zusperren: "tore",
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
                 ton: "verbindung", audio: "verbindung", leitung: "verbindung",
+                stumm: "verbindung", diagnose: "verbindung",
                 platz: "tausch", platzwechsel: "tausch",
                 umsetzen: "heb", lasso: "heb", wagenheber: "heb", heben: "heb",
                 ziehen: "heb", hieven: "heb",
@@ -7667,9 +7668,9 @@ window.LiveChat = (function () {
                 bonk: "hammer", klopfen: "hammer",
                 ente: "enten", entchen: "enten", kueken: "enten", entenmama: "enten",
                 kaetzchen: "katze", katzenbaby: "katze", kitten: "katze", miau: "katze",
-                highway: "route66", route: "route66",
+                highway: "route66", route: "route66", wueste: "route66",
                 strasse: "route66", trans: "route66", muscle: "route66",
-                prunkgeschenk: "prunk",
+                gift: "prunk", tiktok: "prunk", prunkgeschenk: "prunk",
                 muenzen: "prunk", gold: "prunk",
                 /* Die grossen Geschenke — man tippt das Tier, nicht
                    den inneren Namen. */
@@ -8340,26 +8341,7 @@ window.LiveChat = (function () {
        folgt. Genau daran ist es bisher gescheitert — „/me/ denkt …"
        wurde als Aktion gelesen statt als ganz normale Zeile. */
     if (/^\/me\//i.test(roh.trim())) return false;
-    /* ZIFFERN GEHOEREN ZUM BEFEHLSWORT.
-       -----------------------------------------------------------
-       GEMESSEN, nicht vermutet: alle 526 Schreibweisen (124 Befehle,
-       ihre Kurzformen und 299 Aliase) einmal getippt und nachgesehen,
-       was dabei herauskommt. Fuenf taten GAR NICHTS — /route66,
-       /lok2, /gglok2, /meteor2 und /schuss2. Alle fuenf haben eine
-       Ziffer im Wort, und genau die fehlte hier im Muster.
-
-       Der Fehler war besonders still: befehlBekannt() kennt Ziffern
-       ([a-zäöüß0-9]) und sagte „den gibt es" — die Sperre gegen
-       erfundene Befehle liess die Zeile also durch. Hier fiel sie
-       dann durchs Muster, befehlAusfuehren gab false zurueck, und
-       niemand bekam etwas zu sehen: kein Effekt, keine Zeile, keine
-       Fehlermeldung. Dass /highway, /route und /strasse gingen und
-       nur /route66 nicht, hat es vollends verdeckt.
-
-       Die beiden Muster kennen jetzt dieselben Zeichen. Gegenprobe
-       in werkzeug/pruefe-jeder-befehl.js: jede der 526 Schreibweisen
-       muss etwas tun. */
-    var m = /^\/([a-zäöüß0-9?]+)\s+([\s\S]*)$|^\/([a-zäöüß0-9?]+)\s*$/i.exec(roh.trim());
+    var m = /^\/([a-zäöüß?]+)\s+([\s\S]*)$|^\/([a-zäöüß?]+)\s*$/i.exec(roh.trim());
     if (!m) return false;
     var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
 
