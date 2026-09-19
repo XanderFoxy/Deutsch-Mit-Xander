@@ -3148,6 +3148,9 @@ window.LiveChat = (function () {
   }
 
   function nachrichtAnhaengen(n) {
+    /* Zuerst die Uhr geradeziehen — sonst sortiert sich die Zeile
+       gleich an der falschen Stelle ein (siehe zeitAufMeineUhr). */
+    try { zeitAufMeineUhr(n); } catch (e) {}
     /* Dieselbe Nachricht kann zweimal ankommen (Neuladen, Puls).
        Sie hat eine Kennung — damit lässt sich das ausschliessen. */
     if (n.id && zustand.nachrichten.some(function (a) { return a.id === n.id; })) return;
@@ -6065,6 +6068,52 @@ window.LiveChat = (function () {
     var alt = uhrVersatz[n.von];
     uhrVersatz[n.von] = (typeof alt === "number") ? Math.round(alt * 0.5 + neu * 0.5) : neu;
   }
+  /* =================================================================
+     EINE FREMDE UHR DARF DEN VERLAUF NICHT DURCHEINANDERBRINGEN
+     -----------------------------------------------------------------
+     GEMELDET: „Die Uhr von Emmy geht 5 Sekunden nach. Das stört das
+     Hören nicht mehr. Die Reihenfolge im Verlauf kann es aber
+     verschieben."
+
+     Genau so ist es, und es ist ein echter Fehler, kein Schönheitsfleck:
+     Jede Zeile trägt die Uhrzeit DES ABSENDERS, und sortiert wird nach
+     dieser Zahl. Geht ihre Uhr fünf Sekunden nach, rutscht ihre Antwort
+     im Verlauf hinter meine Frage von vor drei Sekunden — die Antwort
+     steht dann VOR der Frage. Bei zwei Minuten Unterschied (das gab es
+     hier schon) wird daraus ein Durcheinander, in dem man nichts mehr
+     nachvollziehen kann.
+
+     Den Versatz kennt die Seite längst: uhrVergleichen() misst bei
+     JEDEM Paket, wie weit die Uhr der Gegenseite von der eigenen
+     abweicht, und glättet ihn über die Zeit. Benutzt wurde er bisher
+     nur für die Anzeige im Befund.
+
+     Jetzt wird er angewandt: Eine ankommende Zeile bekommt ihre Zeit
+     auf MEINE Uhr umgerechnet. Damit stimmt die Reihenfolge, und auch
+     die angezeigte Uhrzeit ist die, die ich auf meiner eigenen Uhr
+     gesehen hätte — genau das erwartet man beim Nachlesen.
+
+     Drei Vorsichtsmassnahmen:
+       * Die Originalzeit bleibt als „zeitGesendet" erhalten. Nichts
+         geht verloren, und man kann es später nachrechnen.
+       * Korrigiert wird erst ab einer Sekunde. Darunter ist es
+         Messrauschen, und daran herumzurechnen macht es nur unruhig.
+       * Ueber zwoelf Stunden gilt der Versatz als Unsinn und bleibt
+         unangetastet — das ist dann keine ungenaue Uhr mehr, sondern
+         ein falsches Datum.
+     ================================================================= */
+  function zeitAufMeineUhr(n) {
+    if (!n || n.eigen || !n.von || typeof n.zeit !== "number" || !n.zeit) return n;
+    var versatz = uhrVersatz[n.von];
+    if (typeof versatz !== "number") return n;
+    if (Math.abs(versatz) < 1000) return n;
+    if (Math.abs(versatz) > 12 * 3600 * 1000) return n;
+    if (!n.zeitGesendet) n.zeitGesendet = n.zeit;
+    n.zeit = n.zeit - versatz;
+    n.uhrVersatz = versatz;
+    return n;
+  }
+
   function uhrenStand() {
     return Object.keys(uhrVersatz).map(function (id) {
       var p = zustand.leute[id];
@@ -9279,6 +9328,9 @@ window.LiveChat = (function () {
     /* Der gemessene Uhrenunterschied — fuer den Befund und fuer die
        Pruefung. */
     uhrenStand: uhrenStand,
+    pruefUhrSetzen: function (id, ms) { uhrVersatz[id] = ms; return uhrVersatz[id]; },
+    pruefZeitAufMeineUhr: function (n) { return zeitAufMeineUhr(n); },
+    pruefAnhaengen: function (n) { nachrichtAnhaengen(n); return zustand.nachrichten.length; },
     pruefReiheAltern: function (ms) {
       liveWarteschlange.forEach(function (w) { w.hier = (w.hier || Date.now()) - (Number(ms) || 0); });
       return liveWarteschlange.length;

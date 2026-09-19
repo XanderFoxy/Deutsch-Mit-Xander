@@ -49,30 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 27 — zwei Ursachen gefunden, und ein Befund der die Wahrheit sagt (v318)",
+  stand: "Runde 28 — eine nachgehende Uhr verschiebt den Verlauf nicht mehr (v319)",
 
   inArbeit: [
-    { seit: "2026-09-19T02:21",
-      text: "Rückmeldung zum Befund abwarten" },
-    { seit: "2026-09-19T02:21",
+    { seit: "2026-09-19T02:25",
+      text: "Befund aus v318 abwarten: die fünf neuen Zeilen fehlten in deiner Ausgabe, du warst noch auf der alten Fassung" },
+    { seit: "2026-09-19T02:25",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T02:21",
+    { seit: "2026-09-19T02:25",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T02:21",
+    { seit: "2026-09-19T02:25",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:21",
-      text: "Bewegung reduzieren versteckte Boxen und Ablecken KOMPLETT — jetzt laufen sie ruhig statt gar nicht" },
-    { seit: "2026-09-19T02:21",
-      text: "Ob du Lehrer bist, steht jetzt in der Marke der Zeile — sonst blieb sie ohne Notenknopf stehen" },
-    { seit: "2026-09-19T02:21",
-      text: "Einmal Lehrer, immer Lehrer in dieser Sitzung — das Profil lädt oft erst nach" },
-    { seit: "2026-09-19T02:21",
-      text: "Neu: /befund zeigt die fünf Dinge, an denen der Notenknopf hängt" },
-    { seit: "2026-09-19T02:21",
-      text: "Neu: /probe boxen zeigt eine Animation sofort, nur für dich" },
+    { seit: "2026-09-19T02:25",
+      text: "Ankommende Zeilen werden auf DEINE Uhr umgerechnet — die Antwort steht nicht mehr vor der Frage" },
+    { seit: "2026-09-19T02:25",
+      text: "Die Originalzeit bleibt als zeitGesendet erhalten, nichts geht verloren" },
+    { seit: "2026-09-19T02:25",
+      text: "Unter einer Sekunde wird nichts angefasst — das ist Messrauschen" },
   ],
 };
