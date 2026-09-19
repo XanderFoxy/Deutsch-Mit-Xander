@@ -15922,6 +15922,157 @@
      ================================================================= */
   const LC_KONFETTI_FARBEN = ["#e0964a", "#c9455a", "#4a86c9", "#5aa86b",
                               "#e3c34a", "#9a5ac9", "#e07aa8", "#4ac9bd"];
+  /* =================================================================
+     DIE BÜHNE: ALLE ANIMATIONEN BLEIBEN IM CHAT
+     -----------------------------------------------------------------
+     GEMELDET: „Die Grenze für die Animation ist immer der Chat-Boden,
+     so wie es bisher war. Aber wenn ich nach oben scrolle, sollen die
+     Animationen nicht die Links verdecken oder irgendwas anderes. Die
+     Animationen sollen im Bereich des Chats bleiben, so wo sie waren."
+
+     Bis hierher hing jede Animation direkt am <body> und war
+     „position: fixed; inset: 0" — also so gross wie das FENSTER. Beim
+     Betrachten des Klassenzimmers fiel das nicht auf, weil das Fenster
+     dann fast nur aus Klassenzimmer besteht. Scrollt man weg, liegt
+     der Schnee plötzlich über der Seitennavigation.
+
+     Statt sechsunddreissig Animationen einzeln umzubauen, bekommen sie
+     alle EIN Zuhause: eine Bühne, die genau über der Klassenzimmer-
+     Karte liegt und abschneidet, was darüber hinausragt. Der Trick
+     dabei ist eine Regel aus dem Stilblatt: ein Element mit
+     „transform" wird zum Bezugsrahmen für alles, was darin
+     „position: fixed" ist. Genau diese Regel hat vor zwei Runden den
+     Filmspieler springen lassen — hier ist sie das Werkzeug.
+
+     Die Bühne wird beim Rollen und beim Drehen nachgeführt; ist keine
+     Karte da (ausserhalb des Klassenzimmers), fällt alles auf den
+     alten Weg zurück und nichts geht verloren.
+     ================================================================= */
+  /* =================================================================
+     EINSTELLUNGEN, DIE AM PROFIL HAENGEN — NICHT AM GERAET
+     -----------------------------------------------------------------
+     GEWUENSCHT, gleich zweimal: „Das soll mit meinem Profil auch
+     abspeichern, dass ich die Sachen automatisch senden kann" und
+     „Die Favoriten, die man bei GIPHY macht, sollen sich immer im
+     Profil mitspeichern, sodass man das auf einem anderen Gerät auch
+     wiederfindet, auf dem Computer oder auf einem anderen Telefon."
+
+     Beides ist dieselbe Frage: wo liegt eine Einstellung? localStorage
+     liegt im GERAET und wandert nie mit. Deshalb gibt es hier EINEN
+     Ort für alle Klassenzimmer-Einstellungen, und der schreibt an
+     beide Stellen:
+       · localStorage — damit es sofort da ist, auch offline und auch
+         für den, der gar nicht angemeldet ist;
+       · extra_profile_data.klassenzimmer im Profil — damit es auf
+         jedem Gerät wieder auftaucht.
+     Beim Lesen gewinnt das Profil, sobald es geladen ist.
+
+     Wer eine neue Einstellung braucht, schreibt sie hier hinein und
+     nicht noch einmal in einen eigenen localStorage-Schluessel —
+     sonst haben wir in drei Runden wieder fünf Orte.
+     ================================================================= */
+  const KZ_EINST_SCHLUESSEL = "dma_kz_einstellungen";
+  let kzEinstCache = null;
+  function kzEinstellungen() {
+    if (!kzEinstCache) {
+      kzEinstCache = {};
+      try { kzEinstCache = JSON.parse(localStorage.getItem(KZ_EINST_SCHLUESSEL) || "{}") || {}; }
+      catch (e) { kzEinstCache = {}; }
+    }
+    /* Das Profil gewinnt — aber nur, wenn es wirklich schon da ist.
+       Sonst wuerde ein noch leeres Profil die Einstellung des Geraets
+       ueberschreiben, kaum dass man sie gemacht hat. */
+    try {
+      const x = Backend.currentProfile && Backend.currentProfile();
+      const ausProfil = x && x.extraProfileData && x.extraProfileData.klassenzimmer;
+      if (ausProfil && typeof ausProfil === "object") {
+        kzEinstCache = Object.assign({}, kzEinstCache, ausProfil);
+      }
+    } catch (e) {}
+    return kzEinstCache;
+  }
+  function kzEinstellung(name, ersatz) {
+    const e = kzEinstellungen();
+    return Object.prototype.hasOwnProperty.call(e, name) ? e[name] : ersatz;
+  }
+  function kzEinstellungSetzen(name, wert) {
+    const e = kzEinstellungen();
+    e[name] = wert;
+    try { localStorage.setItem(KZ_EINST_SCHLUESSEL, JSON.stringify(e)); } catch (x) {}
+    try {
+      if (window.Backend && Backend.updateExtraProfileField) {
+        Backend.updateExtraProfileField("klassenzimmer", e);
+      }
+    } catch (x) {}
+    return e;
+  }
+
+  let lcBuehneTakt = 0;
+  function lcBuehneSetzen() {
+    const b = document.getElementById("lcEffektBuehne");
+    if (!b) return;
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    if (!karte) { b.remove(); return; }
+    const r = karte.getBoundingClientRect();
+    /* Nur der SICHTBARE Teil der Karte — sonst liefe die Bühne oben
+       und unten aus dem Bild heraus, und genau das war die Klage. */
+    const schirm = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const oben = Math.max(0, r.top);
+    const unten = Math.min(schirm, r.bottom);
+    /* Aufrunden, wo es anfaengt, abrunden, wo es aufhoert: so ist die
+       Buehne im Zweifel einen Pixel KLEINER als die Karte und nie
+       groesser. Andersherum stuende sie nach aussen — und ein paar
+       Pixel reichen, damit ein Link daneben nicht mehr anklickbar
+       ist. */
+    const links = Math.ceil(r.left);
+    const rechts = Math.floor(r.right);
+    b.style.top = Math.ceil(oben) + "px";
+    b.style.left = links + "px";
+    b.style.width = Math.max(0, rechts - links) + "px";
+    b.style.height = Math.max(0, Math.floor(unten) - Math.ceil(oben)) + "px";
+  }
+
+  /* SOLANGE ETWAS LAEUFT, WIRD JEDES BILD NACHGEFUEHRT.
+     -----------------------------------------------------------------
+     Der erste Entwurf hing an den Ereignissen „scroll" und „resize".
+     Nachgemessen war die Buehne damit bis zu 380 Pixel neben der
+     Karte: eine Animation laesst den Chat an seinen Platz springen
+     (livechatAnSeinenPlatz), und waehrend dieser weichen Fahrt kommen
+     die Ereignisse zu spaet oder gar nicht. Ein Takt je Bild kostet
+     eine Messung und stimmt immer — und er laeuft nur, solange
+     ueberhaupt eine Animation auf der Buehne liegt. */
+  function lcBuehneTakten() {
+    const b = document.getElementById("lcEffektBuehne");
+    if (!b) { lcBuehneTakt = 0; return; }
+    lcBuehneSetzen();
+    if (!b.children.length) {
+      /* Nichts mehr da: Takt aus, Buehne weg. Ein leerer Kasten muss
+         nicht jeden Bildschirmaufbau mitlaufen. */
+      lcBuehneTakt = 0;
+      b.remove();
+      return;
+    }
+    lcBuehneTakt = requestAnimationFrame(lcBuehneTakten);
+  }
+
+  function lcEffektHeim() {
+    const karte = document.getElementById("livechatKarte")
+               || document.getElementById("livechatArea");
+    if (!karte) return document.body;
+    let b = document.getElementById("lcEffektBuehne");
+    if (!b) {
+      b = document.createElement("div");
+      b.id = "lcEffektBuehne";
+      b.className = "lc-effektbuehne";
+      b.setAttribute("aria-hidden", "true");
+      document.body.appendChild(b);
+    }
+    lcBuehneSetzen();
+    if (!lcBuehneTakt) lcBuehneTakt = requestAnimationFrame(lcBuehneTakten);
+    return b;
+  }
+
   function lcKonfetti() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcKonfetti")?.remove();
@@ -15943,7 +16094,7 @@
       if (Math.random() < 0.35) f.style.borderRadius = "50%";
       schicht.appendChild(f);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 6400);
   }
 
@@ -15976,7 +16127,7 @@
       b.style.animationDuration = (5.5 + Math.random() * 3.5).toFixed(2) + "s";
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 11500);
   }
 
@@ -16076,7 +16227,7 @@
         schicht.appendChild(u);
       }
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), art === "schnee" ? 13000 : 10000);
 
     /* GEWUENSCHT: „Da kann auch Blitz mit dabei sein." Beim reinen
@@ -16098,7 +16249,7 @@
       b.style.animationDelay = (1.8 + i * 3.6 + Math.random() * 1.4).toFixed(2) + "s";
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 10000);
   }
 
@@ -16174,7 +16325,7 @@
       knall.appendChild(kern);
       schicht.appendChild(knall);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 9500);
   }
 
@@ -16203,7 +16354,7 @@
       b.style.animationDelay = wann.toFixed(2) + "s";
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 11000);
 
     /* GEMELDET: „Das Gewitter kann ein bisschen schoener aussehen."
@@ -16394,7 +16545,7 @@
       m.style.setProperty("--lc-g-seit", ((Math.random() - 0.5) * 90).toFixed(0) + "px");
       schicht.appendChild(m);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 9500);
   }
 
@@ -16484,7 +16635,7 @@
       k.style.animationDuration = (1.1 + Math.random() * 0.9).toFixed(2) + "s";
       schicht.appendChild(k);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 7200);
   }
 
@@ -16521,7 +16672,7 @@
       w.style.setProperty("--lc-wz-versatz", (Math.random() * 400).toFixed(0) + "px");
       schicht.appendChild(w);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 24000);
   }
 
@@ -16611,7 +16762,7 @@
     schlag.style.top = my + "%";
     schicht.appendChild(schlag);
 
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 7000);
     /* Ein Ruck dazu — ein Display springt nicht lautlos und still. */
     lcErdbeben();
@@ -16712,7 +16863,7 @@
       s2.style.animationDelay = (Math.random() * 3).toFixed(2) + "s";
       schicht.appendChild(s2);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 14000);
   }
 
@@ -16802,7 +16953,7 @@
         o.start(t); o.stop(t + 0.6);
       }), wann * 1000);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 10000);
   }
 
@@ -16870,7 +17021,7 @@
     }
     schicht.appendChild(risse);
 
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 8600);
     /* Und der Raum bebt dazu — ein Einschlag ohne Beben wäre still. */
     setTimeout(() => lcErdbeben(), 1500);
@@ -16931,7 +17082,7 @@
       wasser.appendChild(t);
     }
     schicht.appendChild(wasser);
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 13000);
     /* Der Regen und die Blitze kommen aus den vorhandenen Mitteln —
        eine Sintflut ist ja Regen, nur mehr davon. */
@@ -17110,7 +17261,7 @@
       sc.style.opacity = (0.16 + Math.random() * 0.3).toFixed(2);
       schicht.appendChild(sc);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 12000);
   }
 
@@ -17185,7 +17336,7 @@
     hase.textContent = "🐇";
     schicht.appendChild(hase);
 
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 11000);
   }
 
@@ -17265,7 +17416,7 @@
       a.style.setProperty("--lc-au-takt", (2.6 + Math.random() * 1.8).toFixed(2) + "s");
       schicht.appendChild(a);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 9000);
   }
 
@@ -17444,7 +17595,7 @@
       b.style.setProperty("--lc-w-dreh", (400 + Math.random() * 700).toFixed(0) + "deg");
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => {
       lcOrkanLaeuft = false;
       schicht.remove();
@@ -17504,7 +17655,7 @@
     wort.className = "lc-dunkel-wort";
     wort.textContent = "… und dann war es dunkel.";
     schicht.appendChild(wort);
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 6400);
   }
 
@@ -17614,7 +17765,7 @@
         + (Math.random() * 2).toFixed(2) + "s";
       schicht.appendChild(g);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 12000);
   }
 
@@ -17769,7 +17920,7 @@
       r.className = "lc-fratze-rauch";
       schicht.insertBefore(r, schicht.firstChild);
     });
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("fratze");
     setTimeout(() => schicht.remove(), 5200);
   }
@@ -17802,7 +17953,7 @@
       t.style.animationDelay = (1.2 + Math.random() * 4).toFixed(2) + "s";
       schicht.appendChild(t);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 11000);
   }
 
@@ -17845,7 +17996,7 @@
       + '<div class="lc-schloss-tor lc-schloss-tor-l"></div>'
       + '<div class="lc-schloss-tor lc-schloss-tor-r"></div>'
       + '<div class="lc-schloss-wind">' + schwaden + "</div>";
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("wind");
     setTimeout(() => schicht.remove(), 12000);
   }
@@ -17886,7 +18037,7 @@
       + '<rect x="56" y="18" width="30" height="13" rx="4" fill="#fdf3c8"/>'
       + '<rect x="-20" y="40" width="40" height="12" rx="3" fill="#2a2f35"/>'
       + "</svg></div>";
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("kitt");
     setTimeout(() => schicht.remove(), 7000);
   }
@@ -17925,7 +18076,7 @@
       + '<circle cx="-40" cy="-32" r="4.4" fill="#f4d23c"/>'
       + '<circle cx="-41" cy="-32" r="2.1" fill="#160f05"/>'
       + "</g></svg></div>";
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     document.documentElement.classList.add("lc-dino-beben");
     lcTonZu("dino");
     setTimeout(() => {
@@ -17953,7 +18104,7 @@
         + (i * 0.07).toFixed(2) + 's"></span>';
     }
     schicht.innerHTML = html;
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     /* GEWÜNSCHT: „Bei der Jalousie reisst es nicht den Chat auf."
        Jetzt klappt die Chatkarte selbst in der Mitte auseinander wie
        zwei Lamellen — man sieht wirklich hindurch, statt nur ein Bild
@@ -18002,7 +18153,7 @@
       + '<path d="M-2 -80 q4 -6 6 0 q-3 4 -6 0 Z" fill="#c8b8a0"/>'
       + '<path d="M20 -74 q4 -6 6 0 q-3 4 -6 0 Z" fill="#c8b8a0"/>'
       + "</svg></div>";
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     /* GEWÜNSCHT: „Bei der Hand, die durchgreift — wenn das gehen würde,
        wäre es geil, wenn es den Chat aufreisst."
 
@@ -18052,7 +18203,7 @@
       + '<circle cx="0" cy="10" r="6" fill="#4a3624"/>'
       + '<rect x="-3" y="10" width="6" height="14" rx="2" fill="#4a3624"/>'
       + "</svg>";
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("tore");
     setTimeout(() => schicht.remove(), 6000);
   }
@@ -18121,7 +18272,7 @@
       treffer.appendChild(nase);
       schicht.appendChild(treffer);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("paintball");
     setTimeout(() => schicht.remove(), 11000);
   }
@@ -18148,7 +18299,7 @@
       b.style.animationDelay = (Math.random() * 3.2).toFixed(2) + "s";
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 11000);
   }
 
@@ -18189,7 +18340,7 @@
       b.style.animationDelay = (Math.random() * 3.5).toFixed(2) + "s";
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 12000);
   }
 
@@ -18286,7 +18437,7 @@
       b.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
       schicht.appendChild(b);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 13000);
   }
 
@@ -18333,7 +18484,7 @@
       f.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
       schicht.appendChild(f);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 13000);
   }
 
@@ -18398,7 +18549,7 @@
       e.style.bottom = (5 + (i === 0 ? 0 : 1)) + "%";
       schicht.appendChild(e);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 15000);
   }
 
@@ -18447,7 +18598,7 @@
       s.style.animationDelay = (2.4 + i * 0.12).toFixed(2) + "s";
       schicht.appendChild(s);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 9000);
   }
 
@@ -18490,7 +18641,7 @@
     const schiff = document.createElement("i");
     schiff.innerHTML = lcPiratSvg();
     schicht.appendChild(schiff);
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 15000);
   }
 
@@ -18511,7 +18662,7 @@
       r.style.setProperty("--ring", String(i));
       schicht.appendChild(r);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     /* Und der Chat selbst wird hineingezogen: er dreht sich, wird
        kleiner und kommt wieder hoch. Der Text schrumpft mit — genau
        das war gewünscht. */
@@ -18558,7 +18709,7 @@
     } else {
       schicht.style.inset = "0";
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     return schicht;
   }
 
@@ -18745,7 +18896,7 @@
     /* Die Schliere, die er hinterlässt. */
     const schliere = document.createElement("u");
     schicht.appendChild(schliere);
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     verlauf?.classList.add("lc-gewischt");
     setTimeout(() => { schicht.remove(); verlauf?.classList.remove("lc-gewischt"); }, 4200);
   }
@@ -18789,7 +18940,7 @@
       loch.appendChild(tropfen);
       schicht.appendChild(loch);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     if (verlauf) {
       verlauf.classList.add("lc-getroffen");
       setTimeout(() => verlauf.classList.remove("lc-getroffen"), 900);
@@ -18874,7 +19025,7 @@
     /* Der Staub hinter dem Wagen. */
     const staub = document.createElement("em");
     schicht.appendChild(staub);
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("route66");
     setTimeout(() => schicht.remove(), 10000);
   }
@@ -19223,7 +19374,7 @@
       zeile.textContent = wer;
       schicht.appendChild(zeile);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     lcTonZu("geschenk");
     setTimeout(() => schicht.remove(), 6200);
   }
@@ -19300,7 +19451,7 @@
       s2.style.animationDuration = (1 + Math.random() * 0.5).toFixed(2) + "s";
       schicht.appendChild(s2);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 13500);
   }
 
@@ -19360,7 +19511,7 @@
       }
       schicht.appendChild(sp);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 10000);
   }
 
@@ -19426,7 +19577,7 @@
     wagen.className = "lc-wagen";
     wagen.appendChild(bauen());
     schicht.appendChild(wagen);
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), dauer);
     return schicht;
   }
@@ -19939,7 +20090,7 @@
       st.style.setProperty("--lc-z-schwung", (2.2 + Math.random() * 2).toFixed(2) + "s");
       schicht.appendChild(st);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 9000);
   }
 
@@ -20077,7 +20228,7 @@
         tier.style.setProperty("--lc-f-schlag", (0.16 + Math.random() * 0.12).toFixed(3) + "s");
         schicht.appendChild(tier);
       }
-      document.body.appendChild(schicht);
+      lcEffektHeim().appendChild(schicht);
       setTimeout(() => schicht.remove(), 15000);
       return;
     }
@@ -20111,7 +20262,7 @@
       schicht.appendChild(keil);
       keil.appendChild(tier);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 14000);
   }
 
@@ -20197,7 +20348,7 @@
       schicht.appendChild(a);
     }
 
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 8200);
     /* Ein Ausbruch ist auch ein Beben — aber ein kurzes, damit es die
        Brocken nicht überdeckt. */
@@ -20251,7 +20402,7 @@
       t.style.opacity = (0.55 + Math.random() * 0.45).toFixed(2);
       schicht.appendChild(t);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), e.dauer);
   }
 
@@ -20294,7 +20445,7 @@
       t.style.animationDelay = (1.55 + Math.random() * 0.25).toFixed(2) + "s";
       schicht.appendChild(t);
     }
-    document.body.appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 4600);
   }
 
@@ -20450,7 +20601,7 @@
           <span class="lc-kreis">
             <span class="lc-nummer">${i}</span>
             <video data-lc-video="${i}" autoplay playsinline muted style="display:none;"></video>
-            <img class="lc-avatar" data-lc-avatar="${i}" alt="" style="display:none;">
+            <img class="lc-avatar" data-lc-avatar="${i}" alt="" draggable="false" style="display:none;">
             <span class="lc-initial" data-lc-initial="${i}">·</span>
             <span class="lc-stumm" data-lc-stumm="${i}" style="display:none;" aria-hidden="true">🔇</span>
           </span>
@@ -20588,6 +20739,19 @@
                         data-sprechbild="${escapeHtml(k)}"
                         aria-pressed="${(window.LiveChat && LiveChat.sprechbild && LiveChat.sprechbild()) === k}"
                         title="${escapeHtml(was)}">${escapeHtml(k)}</button>`).join("")}
+            </div>
+            <!-- GEWUENSCHT: „Dann möchte ich einen automatischen
+                 Senden-Knopf haben bei den voreingestellten Befehlen …
+                 dass ich direkt mit der Anwahl eines Effekts sende und
+                 nicht erst auf den Senden-Knopf drücken muss." Der
+                 Schalter steht dort, wo die Befehle stehen, und liegt
+                 im Profil — also auch auf dem Rechner. -->
+            <div class="lc-schriftwahl" id="lcSofortWahl">
+              <span class="lc-schriftwahl-wort">⚡ Antippen sendet</span>
+              <button type="button" class="lc-schriftknopf" id="lcSofortKnopf"
+                      aria-pressed="${String(Boolean(kzEinstellung("sofortSenden", false)))}"
+                      title="Ein Befehl ohne Namen dahinter geht sofort hinaus, statt erst im Feld zu landen">
+                ${kzEinstellung("sofortSenden", false) ? "an" : "aus"}</button>
             </div>
             <div class="lc-schriftwahl" id="lcSchriftWahl">
               <span class="lc-schriftwahl-wort">🔤 Schrift</span>
@@ -21211,7 +21375,16 @@
        aber nicht bequem zu treffen, und auf manchen Telefonen halb
        unter der Systemleiste. */
     const luft = 28;
-    const schirm = window.innerHeight;
+    /* GEMELDET: „Immer wenn ich in das Schreibfenster gehe, zieht sich
+       die Tastatur unten am Bildschirmrand auf … und wenn ich dann auf
+       Senden gehe, bleibt der Chat verrückt und springt nicht wieder
+       in die Position, wo er sein sollte."
+
+       Hier lag der halbe Grund: window.innerHeight schrumpft NICHT,
+       wenn die Tastatur aufgeht — das tut nur visualViewport. Mit der
+       falschen Höhe gerechnet, landet der Chat zwangsläufig daneben,
+       solange die Tastatur oben ist. */
+    const schirm = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
     const frei = schirm - kleb - luft * 2;
     const kr = karte.getBoundingClientRect();
     const obenAbs = kr.top + window.scrollY;
@@ -22098,7 +22271,14 @@
     chip.addEventListener("contextmenu", (e) => { e.preventDefault(); umschalten(); });
   }
 
+  /* Die angehefteten Befehle liegen im Profil — genau wie die
+     GIPHY-Favoriten. „Sodass man das auf einem anderen Gerät auch
+     wiederfindet, auf dem Computer oder auf einem anderen Telefon."
+     Der alte localStorage-Schluessel wird beim ersten Mal noch
+     gelesen, damit niemand seine Liste verliert. */
   function lcLieblinge() {
+    const ausProfil = kzEinstellung("lieblingsbefehle", null);
+    if (Array.isArray(ausProfil)) return ausProfil.filter((x) => typeof x === "string" && x);
     try {
       const l = JSON.parse(localStorage.getItem(LC_LIEBLINGE) || "[]");
       return Array.isArray(l) ? l.filter((x) => typeof x === "string" && x) : [];
@@ -22110,6 +22290,7 @@
     let l = lcLieblinge();
     const drin = l.indexOf(w) >= 0;
     l = drin ? l.filter((x) => x !== w) : [w].concat(l).slice(0, 12);
+    kzEinstellungSetzen("lieblingsbefehle", l);
     try { localStorage.setItem(LC_LIEBLINGE, JSON.stringify(l)); } catch (e) {}
     return !drin;
   }
@@ -22125,7 +22306,38 @@
       kasten.innerHTML = "";
       lcTippGruppe = "";        // beim naechsten Mal wieder alles zeigen
     };
-    const einsetzen = (neuerText, ansEnde) => {
+    /* =================================================================
+       „DIREKT MIT DER ANWAHL SENDEN"
+       -----------------------------------------------------------------
+       GEWUENSCHT: „Dann möchte ich einen automatischen Senden-Knopf
+       haben bei den voreingestellten Befehlen. Wenn ich einen Befehl
+       auswähle, den ich dann schicke, möchte ich das immer so
+       automatisch — dass ich direkt mit der Anwahl eines Effekts
+       sende und nicht erst auf den Senden-Knopf drücken muss. Und das
+       soll mit meinem Profil abspeichern."
+
+       Es gilt nur für Befehle, die ALLEIN vollständig sind: /konfetti,
+       /trex, /schnee. Wo noch ein Name oder ein Text dahintergehört
+       (/w, /i, /note), wäre Sofortsenden ein Fehler — da fehlt ja noch
+       die Hälfte. Der Befehl landet dann wie bisher im Feld, mit dem
+       Trennzeichen dahinter.
+
+       Der Schalter steht im Befehlskasten und liegt im Profil
+       (kzEinstellung „sofortSenden"), gilt also auf jedem Gerät.
+       ================================================================= */
+    const einsetzen = (neuerText, ansEnde, vollstaendig) => {
+      if (vollstaendig && kzEinstellung("sofortSenden", false)) {
+        const t = String(neuerText).trim();
+        feld.value = "";
+        const k = document.getElementById("lcSenden");
+        if (k) k.disabled = true;
+        zu();
+        try { LiveChat.schreiben(t); } catch (e) {}
+        /* Und danach sofort an den Platz zurück — der ganze Sinn der
+           Sache ist ja, die Animation zu sehen. */
+        lcNachDemSenden(t);
+        return;
+      }
       feld.value = neuerText;
       feld.focus();
       const p = ansEnde ? neuerText.length : neuerText.length;
@@ -22254,7 +22466,8 @@
           fav.appendChild(wort);
           const favChip = (b, meins) => {
             const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, "", () =>
-              einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
+              einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true,
+                        !b.brauchtName && !b.brauchtText));
             k.dataset.gr = b.gr || "welt";
             k.title = (meins ? "Angeheftet — lang drücken nimmt ihn wieder heraus. " : "") + b.was;
             if (meins) k.classList.add("lc-tipp-meins");
@@ -22277,7 +22490,8 @@
         /* Zeile 3: die Treffer. */
         gefiltert.slice(0, 18).forEach((b) => {
           const k = chip((b.sym ? b.sym + " " : "") + "/" + b.w, b.was, () =>
-            einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true));
+            einsetzen("/" + b.w + (b.brauchtName || b.brauchtText ? " " : ""), true,
+                      !b.brauchtName && !b.brauchtText));
           k.dataset.gr = b.gr || "welt";
           lcAnheftenBinden(k, b, auffrischen);
           /* GEWUENSCHT: „Das galt nur fuer die einzelnen Buchstaben,
@@ -22454,6 +22668,194 @@
      ================================================================= */
   let lcSprungLaeuft = 0;
   let lcSprungTimer = 0;
+  /* =================================================================
+     NACH DEM ABSCHICKEN SPRINGT DER CHAT ZURUECK
+     -----------------------------------------------------------------
+     GEMELDET: „Nach dem Absenden der Eingabe möchte ich, dass der
+     Chat wieder in seine Position springt, damit man die Animation
+     schön anschauen kann an ihrer Stelle, wo sie ist. Immer wenn ich
+     in das Schreibfenster gehe, zieht sich die Tastatur unten am
+     Bildschirmrand auf … und wenn ich dann auf Senden gehe, bleibt
+     der Chat verrückt."
+
+     Zwei Sachen dagegen, und sie hängen zusammen:
+     1. Bei einem BEFEHL (oder einem Zeichen, das einer ist) geht die
+        Tastatur zu — feld.blur(). Nur so gibt das Telefon den Platz
+        wieder her, den die Tastatur belegt; ohne das kann kein noch
+        so guter Sprung den Chat dorthin bringen, wo er hingehört.
+     2. Bei einem gewöhnlichen Satz bleibt die Tastatur offen — wer
+        drei Sätze hintereinander schreibt, will nicht dreimal neu
+        hineintippen. Der Chat rückt trotzdem zurecht, jetzt mit der
+        richtigen Höhe (siehe lcPlatzZiel).
+
+     Der Sprung kommt zweimal: sofort und noch einmal nach 320 ms.
+     Das Schliessen der Tastatur dauert auf dem Telefon rund eine
+     drittel Sekunde, und erst danach steht fest, wie hoch das Bild
+     wirklich ist.
+     ================================================================= */
+  /* =================================================================
+     DAS MENÜ AM PROFILBILD
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Wenn man auf dem Profilbild drückt — entweder auf sein
+     eigenes, wo man dann ein anderes Profilbild auswählen kann …
+     Vielleicht kann man ja auch gleichzeitig sich selber boxen in
+     seinem Auswahlmenü. Aber wenn man jemand anderen gedrückt hält,
+     dann sollen nur diese Befehle sein — man kann ja logischerweise
+     kein Profilbild für jemand anderen einstellen."
+
+     Genau so: auf dem eigenen Platz steht das Bild ganz oben, danach
+     dasselbe Spielzeug wie bei den anderen. Auf einem fremden Platz
+     steht nur das Spielzeug. Auf einem leeren Platz gibt es kein Menü
+     — da ist niemand, den man ärgern könnte.
+
+     UND ES GEHT WIEDER ZU, WENN MAN DANEBEN TIPPT.
+     „Intuitiv wie bei Apple" — also: ein Tipp irgendwo anders, die
+     Escape-Taste oder das Rollen des Chats schliessen es. Kein Knopf
+     nötig, aber einer da, für den, der ihn sucht.
+     ================================================================= */
+  const LC_PLATZ_SPIELZEUG = [
+    ["\ud83e\udd17", "Drücken",   "drueck"],
+    ["\ud83e\udd4a", "Boxen",     "box"],
+    ["\ud83d\udc45", "Ablecken",  "leck"],
+    ["\u26bd",        "Tritt",     "tritt"],
+    ["\u2764\ufe0f", "Herzen",    "herz"],
+    ["\ud83e\udea3", "Wassereimer", "wasser"],
+    ["\u23f0",        "Wecker",    "wecker"],
+    ["\ud83c\udf27\ufe0f", "Regenwolke", "regen"],
+    ["\u26c8\ufe0f", "Gewitter",  "gewitter"],
+    ["\ud83d\udcb8", "Geldregen", "geld"],
+    ["\ud83c\udf6c", "Bonbons",   "bonbon"],
+    ["\ud83d\udd28", "Hammer",    "hammer"]
+  ];
+
+  function lcPlatzMenueZu() {
+    const m = document.getElementById("lcPlatzMenue");
+    if (m) m.remove();
+  }
+
+  function lcPlatzMenue(platz) {
+    lcPlatzMenueZu();
+    const eigen = platz.classList.contains("lc-platz-ich");
+    const leer = platz.classList.contains("lc-platz-frei");
+    const nameKnoten = platz.querySelector(".lc-platz-name");
+    const name = nameKnoten ? nameKnoten.textContent.trim() : "";
+    if (leer && !eigen) return false;
+    if (!eigen && (!name || name === "frei")) return false;
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue";
+    kasten.setAttribute("role", "menu");
+
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = eigen ? "Du selbst" : name;
+    kasten.appendChild(kopf);
+
+    const knopf = (zeichen, wort, tun) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-platzmenue-knopf";
+      b.setAttribute("role", "menuitem");
+      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + zeichen + "</span>"
+                  + '<span class="lc-platzmenue-wort"></span>';
+      b.querySelector(".lc-platzmenue-wort").textContent = wort;
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        lcPlatzMenueZu();
+        tun();
+      });
+      kasten.appendChild(b);
+    };
+
+    if (eigen) {
+      knopf("\ud83d\uddbc\ufe0f", "Anderes Profilbild", () => livechatBildWaehler());
+    }
+    LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl]) => {
+      knopf(zeichen, wort, () => {
+        const zeile = "/" + befehl + (name ? " " + name : "");
+        try { LiveChat.schreiben(zeile); } catch (e) {}
+        lcNachDemSenden(zeile);
+      });
+    });
+
+    document.body.appendChild(kasten);
+
+    /* Wo hin? Neben den Platz, aber immer noch im Bild. Ein Menü, das
+       halb unter dem Bildschirmrand klebt, ist keins. */
+    const r = platz.getBoundingClientRect();
+    const schirm = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    const mb = kasten.getBoundingClientRect();
+    let links = r.left + r.width / 2 - mb.width / 2;
+    links = Math.max(8, Math.min(links, window.innerWidth - mb.width - 8));
+    let oben = r.bottom + 8;
+    if (oben + mb.height > schirm - 8) oben = Math.max(8, r.top - mb.height - 8);
+    kasten.style.left = Math.round(links) + "px";
+    kasten.style.top = Math.round(oben) + "px";
+
+    /* Zumachen: daneben tippen, Escape, oder wenn sich die Seite
+       bewegt. Der Zuhörer haengt am Dokument und nimmt sich selbst
+       wieder heraus — sonst sammeln sich mit jedem Menü neue an. */
+    const weg = (e) => {
+      if (e && e.type === "pointerdown" && kasten.contains(e.target)) return;
+      lcPlatzMenueZu();
+      document.removeEventListener("pointerdown", weg, true);
+      document.removeEventListener("keydown", taste, true);
+      window.removeEventListener("scroll", weg, true);
+    };
+    const taste = (e) => { if (e.key === "Escape") weg(); };
+    setTimeout(() => {
+      document.addEventListener("pointerdown", weg, true);
+      document.addEventListener("keydown", taste, true);
+      window.addEventListener("scroll", weg, true);
+    }, 0);
+    return true;
+  }
+
+  function lcPlatzMenueBinden(area) {
+    const raster = area.querySelector("#lcPlaetze");
+    if (!raster) return;
+    let uhr = null;
+    let lang = false;
+    const los = (e) => {
+      const platz = e.target.closest ? e.target.closest(".lc-platz") : null;
+      if (!platz) return;
+      lang = false;
+      clearTimeout(uhr);
+      uhr = setTimeout(() => { lang = lcPlatzMenue(platz) !== false; }, 480);
+    };
+    const stopp = () => { clearTimeout(uhr); uhr = null; };
+    raster.addEventListener("pointerdown", los);
+    ["pointerup", "pointerleave", "pointercancel", "pointermove"].forEach((e) =>
+      raster.addEventListener(e, stopp));
+    /* Ein langer Druck darf nicht ZUSAETZLICH den gewoehnlichen Tipp
+       ausloesen — sonst ginge man beim Aufrufen des Menues gleich auf
+       die Buehne. */
+    raster.addEventListener("click", (e) => {
+      if (lang) { e.preventDefault(); e.stopImmediatePropagation(); lang = false; }
+    }, true);
+    raster.addEventListener("contextmenu", (e) => {
+      const platz = e.target.closest ? e.target.closest(".lc-platz") : null;
+      if (!platz) return;
+      e.preventDefault();
+      lcPlatzMenue(platz);
+    });
+  }
+
+  function lcNachDemSenden(text) {
+    let befehl = false;
+    try { befehl = Boolean(window.LiveChat && LiveChat.istBefehlszeile && LiveChat.istBefehlszeile(text)); }
+    catch (e) {}
+    const feld = document.getElementById("lcFeld");
+    if (befehl) { try { feld && feld.blur(); } catch (e) {} }
+    else { try { feld && feld.focus(); } catch (e) {} }
+    livechatAnSeinenPlatz(true);
+    clearTimeout(lcNachSendenUhr);
+    lcNachSendenUhr = setTimeout(() => livechatAnSeinenPlatz(true), 320);
+  }
+  let lcNachSendenUhr = 0;
+
   function livechatAnSeinenPlatz(sanft) {
     const jetzt = Date.now();
     /* Der Verlauf gehört ans ENDE — das ist das zweite, was gemeldet
@@ -23816,6 +24218,21 @@
     vhs:      { ganzeSeite: true, wie: "vhs" },
     disko:    { ganzeSeite: true, wie: "disko" },
     lecken:  { zeichen: ["\ud83d\udc45"], wie: 6, klasse: "umarmen" },
+    /* WAS MAN MIT EINEM PROFILBILD ANSTELLEN KANN.
+       Sie alle treffen einen PLATZ (siehe lcAmPlatz). Die Zeichen
+       hier sind der Rueckfall fuer den Fall, dass die gemeinte
+       Person gerade nicht mehr im Raum sitzt — dann steigt
+       wenigstens das Symbol an der Zeile auf, statt dass gar
+       nichts passiert. */
+    tritt:      { zeichen: ["\u26bd"], wie: 5, klasse: "umarmen" },
+    zherz:      { zeichen: ["\u2665"], wie: 7, klasse: "herz", schlaegt: true },
+    eimer:      { zeichen: ["\ud83d\udca7"], wie: 6, klasse: "umarmen" },
+    wecker:     { zeichen: ["\u23f0"], wie: 5, klasse: "umarmen" },
+    regenwolke: { zeichen: ["\ud83c\udf27\ufe0f"], wie: 6, klasse: "umarmen" },
+    donnerwolke:{ zeichen: ["\u26c8\ufe0f"], wie: 5, klasse: "umarmen" },
+    reichtum:   { zeichen: ["\ud83d\udcb8"], wie: 6, klasse: "umarmen" },
+    zucker:     { zeichen: ["\ud83c\udf6c"], wie: 6, klasse: "umarmen" },
+    hammer:     { zeichen: ["\ud83d\udd28"], wie: 5, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
@@ -24109,6 +24526,251 @@
         platz.classList.remove("lc-boxt-zurueck");
       }, 1600);
     }, verzug || 0);
+  }
+
+  /* =================================================================
+     WAS MAN MIT EINEM PROFILBILD ANSTELLEN KANN
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Wenn man jemand anderen gedrückt hält, dann sollen
+     nur diese Befehle sein … es könnte noch ein Kick sein als Befehl,
+     wo man gegen das Profilbild von dem anderen tritt und das dann wie
+     so ein Fußball wegfliegt, sich dann aber wieder einsortiert an
+     seinen Platz … Man kann auch die Herzen direkt an die Person
+     schicken, dass die auf das Profilbild angewendet werden, oder dass
+     man Wassereimer drüber kippt, oder zum Aufwecken so einen Wecker,
+     wo das Profilbild scheppert … oder eine Wolke über denjenigen, wo
+     man es regnen lässt oder Gewitter erzeugt, oder dass man Geld über
+     ihn regnen lassen kann. Aber das sind dann nur ganz kleine
+     Symbole, die halt passend in der Größe vom Profilbild sind."
+
+     DAS IST DIE REGEL FÜR ALLES HIER: es passiert AM PLATZ, in seiner
+     Größe. Kein Effekt legt sich über den halben Chat, keiner braucht
+     eine eigene Bühne. Jede dieser Animationen hängt sich an den
+     Platz der gemeinten Person und ist nach zwei, drei Sekunden
+     wieder weg.
+
+     Der gemeinsame Unterbau steht in lcAmPlatz(): Ziel suchen, alte
+     Schicht wegräumen, neue anhängen, nach der Zeit aufräumen. Jeder
+     einzelne Effekt besteht dann nur noch aus seiner Zeichnung.
+     ================================================================= */
+  function lcAmPlatz(wen, klasse, bauen, dauer, ton) {
+    const ziele = lcZielPlaetze(wen);
+    if (!ziele.length) return false;
+    ziele.forEach((platz, i) => setTimeout(() => {
+      if (!platz.isConnected) return;
+      platz.querySelectorAll("." + klasse).forEach((x) => x.remove());
+      const schicht = document.createElement("div");
+      schicht.className = "lc-zp " + klasse;
+      schicht.setAttribute("aria-hidden", "true");
+      bauen(schicht, platz);
+      /* AN DEN KREIS, NICHT AN DEN PLATZ.
+         Der Kreis IST das Profilbild — und er ist das einzige
+         Element hier, das „position: relative" traegt. Gemessen: an
+         den Platz gehaengt, war die Schicht 334 Pixel breiter als
+         das Bild, weil ein absolut gesetzter Kasten sich den
+         naechsten positionierten Vorfahren sucht, und das war der
+         halbe Chat. „In der Groesse vom Profilbild" heisst also
+         woertlich: im Kreis. */
+      (platz.querySelector(".lc-kreis") || platz).appendChild(schicht);
+      setTimeout(() => schicht.remove(), dauer);
+    }, i * 80));
+    if (ton) lcTonZu(ton);
+    return true;
+  }
+
+  /* --- DER TRITT: das Profilbild fliegt wie ein Ball ---------------
+     „Das reagiert auch von der Physik wie im Fußball, dass sich das so
+     ein bisschen dreht beim Wegfliegen." Also nicht nur wegschieben:
+     der Kreis dreht sich beim Flug, wird kleiner (er ist ja weiter
+     weg), kommt in einem Bogen zurück und wackelt beim Landen aus.
+     Der Schuh kommt von links und trifft genau dann, wenn der Ball
+     losgeht — 0,18 Sekunden, das ist der Anstoss. */
+  function lcTritt(wen) {
+    return lcAmPlatz(wen, "lc-tritt", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-ball");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-ball");
+        setTimeout(() => kreis.classList.remove("lc-ball"), 1900);
+      }
+      schicht.innerHTML =
+        '<svg class="lc-tritt-schuh" viewBox="0 0 100 60">'
+        + '<path d="M6 44 C6 32 14 26 26 26 L48 26 C58 26 66 20 74 20'
+        + ' C86 20 94 28 94 38 C94 46 88 50 78 50 L18 50 C10 50 6 48 6 44 Z"'
+        + ' fill="#2f3b52"/>'
+        + '<path d="M6 44 L94 40 L94 48 C94 52 90 54 84 54 L16 54 C9 54 6 50 6 44 Z"'
+        + ' fill="#8d99ad"/>'
+        + '<path d="M30 30 L44 30 M36 36 L50 36" stroke="#f2f4f8" stroke-width="3"'
+        + ' stroke-linecap="round" opacity=".7"/>'
+        + "</svg>"
+        + '<span class="lc-tritt-wumms">WUMM</span>';
+      for (let t = 0; t < 5; t++) {
+        const st = document.createElement("i");
+        st.className = "lc-tritt-staub";
+        st.style.setProperty("--wo", (t * 72 - 20) + "deg");
+        st.style.animationDelay = (0.16 + t * 0.03).toFixed(2) + "s";
+        schicht.appendChild(st);
+      }
+    }, 2200, "boxen");
+  }
+
+  /* --- HERZEN AUF DAS PROFILBILD ---------------------------------- */
+  function lcHerzenAufPlatz(wen) {
+    return lcAmPlatz(wen, "lc-zherz", (schicht) => {
+      for (let i = 0; i < 9; i++) {
+        const h = document.createElement("i");
+        h.className = "lc-zherz-eins";
+        h.textContent = i % 3 === 0 ? "\u2764" : (i % 3 === 1 ? "\u2665" : "\ud83d\udc95");
+        h.style.left = (12 + Math.random() * 76).toFixed(0) + "%";
+        h.style.setProperty("--seit", (Math.random() * 26 - 13).toFixed(0) + "px");
+        h.style.setProperty("--gross", (0.6 + Math.random() * 0.7).toFixed(2));
+        h.style.animationDelay = (i * 0.11).toFixed(2) + "s";
+        schicht.appendChild(h);
+      }
+    }, 2600, "herz");
+  }
+
+  /* --- DER WASSEREIMER -------------------------------------------- */
+  function lcWassereimer(wen) {
+    return lcAmPlatz(wen, "lc-eimer", (schicht) => {
+      schicht.innerHTML =
+        '<svg class="lc-eimer-bild" viewBox="0 0 70 60">'
+        + '<path d="M14 10 L56 10 L50 44 C49 50 45 52 35 52 C25 52 21 50 20 44 Z"'
+        + ' fill="#7fb3d5" stroke="#3d6e92" stroke-width="2.5"/>'
+        + '<ellipse cx="35" cy="10" rx="21" ry="6" fill="#a9cfe8" stroke="#3d6e92" stroke-width="2.5"/>'
+        + '<path d="M16 12 C22 -2 48 -2 54 12" fill="none" stroke="#3d6e92" stroke-width="2.5"/>'
+        + "</svg>"
+        + '<span class="lc-eimer-guss"></span>';
+      for (let i = 0; i < 16; i++) {
+        const t = document.createElement("i");
+        t.className = "lc-eimer-tropfen";
+        t.style.left = (18 + Math.random() * 64).toFixed(0) + "%";
+        t.style.animationDelay = (0.45 + Math.random() * 0.7).toFixed(2) + "s";
+        t.style.setProperty("--fall", (34 + Math.random() * 26).toFixed(0) + "px");
+        schicht.appendChild(t);
+      }
+    }, 3000, "regen");
+  }
+
+  /* --- DER WECKER -------------------------------------------------
+     „So wie das Rattern vom alten klassischen Wecker, dass das
+     Profilbild so scheppert, so nach links und rechts, als wenn da
+     gerade in so einem Impuls drei oder vier Mal so ein Ring Ring
+     Ring kommt." Also KEIN gleichmaessiges Zittern: drei Stösse mit
+     Pause dazwischen, und die Glocken kippen im selben Takt. */
+  function lcWecker(wen) {
+    return lcAmPlatz(wen, "lc-wecker", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-scheppert");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-scheppert");
+        setTimeout(() => kreis.classList.remove("lc-scheppert"), 2600);
+      }
+      schicht.innerHTML =
+        '<svg class="lc-wecker-bild" viewBox="0 0 64 64">'
+        + '<circle cx="32" cy="36" r="20" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
+        + '<circle cx="32" cy="36" r="14" fill="#fff8e1"/>'
+        + '<path d="M32 26 V36 L39 41" stroke="#3a2f12" stroke-width="3"'
+        + ' stroke-linecap="round" fill="none"/>'
+        + '<path d="M14 18 C14 10 20 6 26 8" stroke="#9c7b1e" stroke-width="3" fill="none"/>'
+        + '<path d="M50 18 C50 10 44 6 38 8" stroke="#9c7b1e" stroke-width="3" fill="none"/>'
+        + '<ellipse class="lc-wecker-glocke lc-wecker-l" cx="15" cy="16" rx="8" ry="7" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2.5"/>'
+        + '<ellipse class="lc-wecker-glocke lc-wecker-r" cx="49" cy="16" rx="8" ry="7" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2.5"/>'
+        + "</svg>";
+      ["links", "rechts"].forEach((seite) => {
+        for (let i = 0; i < 3; i++) {
+          const w = document.createElement("i");
+          w.className = "lc-wecker-welle lc-wecker-" + seite;
+          w.style.animationDelay = (i * 0.62).toFixed(2) + "s";
+          schicht.appendChild(w);
+        }
+      });
+    }, 2800, "noten");
+  }
+
+  /* --- WOLKE, REGEN UND GEWITTER ÜBER EINER PERSON ---------------- */
+  function lcWolkeUeber(wen, mitBlitz) {
+    return lcAmPlatz(wen, mitBlitz ? "lc-zdonner" : "lc-zwolke", (schicht) => {
+      schicht.innerHTML =
+        '<svg class="lc-zwolke-bild" viewBox="0 0 90 44">'
+        + '<path d="M22 38 C10 38 4 32 4 25 C4 18 10 13 17 14 C19 6 27 2 35 4'
+        + ' C42 -1 54 1 58 9 C68 7 78 13 79 22 C86 24 88 31 84 36'
+        + ' C81 39 76 38 72 38 Z" fill="' + (mitBlitz ? "#5b6070" : "#93a4bd") + '"/>'
+        + "</svg>";
+      for (let i = 0; i < 12; i++) {
+        const t = document.createElement("i");
+        t.className = "lc-zwolke-tropfen";
+        t.style.left = (16 + Math.random() * 68).toFixed(0) + "%";
+        t.style.animationDelay = (0.3 + Math.random() * 1.1).toFixed(2) + "s";
+        schicht.appendChild(t);
+      }
+      if (mitBlitz) {
+        const b = document.createElement("span");
+        b.className = "lc-zdonner-blitz";
+        b.textContent = "\u26a1";
+        schicht.appendChild(b);
+      }
+    }, 3200, mitBlitz ? "gewitter" : "regen");
+  }
+
+  /* --- REICHTUM: KLEINE MÜNZEN UND SCHEINE ------------------------ */
+  function lcReichtum(wen) {
+    return lcAmPlatz(wen, "lc-zgeld", (schicht) => {
+      for (let i = 0; i < 12; i++) {
+        const m = document.createElement("i");
+        m.className = "lc-zgeld-stueck";
+        m.textContent = i % 3 === 0 ? "\ud83d\udcb5" : "\ud83e\ude99";
+        m.style.left = (10 + Math.random() * 80).toFixed(0) + "%";
+        m.style.setProperty("--dreh", (Math.random() * 720 - 360).toFixed(0) + "deg");
+        m.style.animationDelay = (i * 0.09).toFixed(2) + "s";
+        schicht.appendChild(m);
+      }
+    }, 2800, "geld");
+  }
+
+  /* --- ZUCKER: BONBONS ÜBER EINER PERSON -------------------------- */
+  function lcZuckerregen(wen) {
+    return lcAmPlatz(wen, "lc-zzucker", (schicht) => {
+      for (let i = 0; i < 11; i++) {
+        const b = document.createElement("i");
+        b.className = "lc-zzucker-stueck";
+        b.textContent = i % 3 === 0 ? "\ud83c\udf6c" : (i % 3 === 1 ? "\ud83c\udf6d" : "\ud83c\udf6b");
+        b.style.left = (10 + Math.random() * 80).toFixed(0) + "%";
+        b.style.setProperty("--dreh", (Math.random() * 540 - 270).toFixed(0) + "deg");
+        b.style.animationDelay = (i * 0.1).toFixed(2) + "s";
+        schicht.appendChild(b);
+      }
+    }, 2800, "bonbon");
+  }
+
+  /* --- DER HAMMER ------------------------------------------------- */
+  function lcHammer(wen) {
+    return lcAmPlatz(wen, "lc-zhammer", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gestaucht");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gestaucht");
+        setTimeout(() => kreis.classList.remove("lc-gestaucht"), 1500);
+      }
+      schicht.innerHTML =
+        '<svg class="lc-zhammer-bild" viewBox="0 0 70 70">'
+        + '<rect x="30" y="26" width="9" height="40" rx="4" fill="#a9702f"/>'
+        + '<rect x="12" y="10" width="46" height="20" rx="5" fill="#8b93a3"/>'
+        + '<rect x="12" y="10" width="46" height="8" rx="4" fill="#b9c1cf"/>'
+        + "</svg>"
+        + '<span class="lc-zhammer-knall">BONK</span>';
+      for (let t = 0; t < 5; t++) {
+        const st = document.createElement("i");
+        st.className = "lc-zhammer-stern";
+        st.style.setProperty("--wo", (t * 72) + "deg");
+        st.style.animationDelay = (0.38 + t * 0.04).toFixed(2) + "s";
+        st.textContent = t % 2 ? "\u2726" : "\u2727";
+        schicht.appendChild(st);
+      }
+    }, 2200, "boxen");
   }
 
   function lcBoxen(wen, von) {
@@ -24423,25 +25085,55 @@
   }
 
   function lcBetonungsTafel(n, zeile) {
+    /* =================================================================
+       DREI MELDUNGEN, DREI AENDERUNGEN — RUNDE 339
+       -----------------------------------------------------------------
+       1. „Die Silben sollen da, wo sie richtig betont werden, nicht
+           schon gross vorgeschrieben stehen, weil damit weiss man ja
+           schon, was man anklicken muss."
+
+          Er hat den Fehler gesehen, den ich eingebaut hatte: im
+          Woerterbuch steht die betonte Silbe in GROSSBUCHSTABEN
+          („WÄ-sche-klam-mer"), und genau so stand sie auf den
+          Knoepfen. Die Aufgabe hat sich selbst verraten. Jetzt wird
+          jede Silbe aus dem WORT selbst geschnitten — „Wä | sche |
+          klam | mer" — und sieht damit aus wie das Wort, aus dem sie
+          kommt. Die Loesung steckt nur noch im Kopf des Programms.
+
+       2. „Man soll einfach nur draufklicken und das Ergebnis soll
+           senden." Also kein „Fertig" mehr: ein Tipp auf die Silbe
+          IST die Antwort und geht sofort hinaus.
+
+       3. „Da soll nicht eins von eins stehen in der Punktzahl. Da soll
+           die Notenbewertung daneben stehen."
+
+          Die Selbstbewertung faellt damit ganz weg — kein „1 von 1",
+          kein Gruen, kein Rot. Die Antwort geht als gewoehnliche
+          Zeile hinaus, traegt die Kennung der Aufgabe und bekommt
+          damit den Notenstift des Lehrers daneben. Bewertet wird von
+          ihm, nicht von der Tafel.
+       ================================================================= */
     const kasten = document.createElement("div");
     kasten.className = "lc-betonung";
 
     const kopf = document.createElement("p");
     kopf.className = "lc-betonung-kopf";
-    kopf.textContent = "🔠 Wo liegt die Betonung? Tippe in jedem Wort die betonte Silbe an.";
+    kopf.textContent = "🔠 Wo liegt die Betonung? Tippe die betonte Silbe an — sie geht sofort hinaus.";
     kasten.appendChild(kopf);
 
     const woerter = String(n.betonung || "").split(/\s+/).filter(Boolean);
     const reihe = document.createElement("div");
     reihe.className = "lc-betonung-reihe";
-    const spiel = [];
+    let zumTippen = 0;
+
+    const hinweis = document.createElement("p");
+    hinweis.className = "lc-betonung-hinweis";
 
     woerter.forEach((wort) => {
       const gruppe = document.createElement("span");
       gruppe.className = "lc-betonung-wort";
       const info = lcSilbenFuer(wort);
       if (!info || info.silben.length < 2) {
-        /* Einsilbig oder unbekannt: nichts zum Auswählen. */
         const nur = document.createElement("span");
         nur.className = "lc-betonung-fest";
         nur.textContent = wort;
@@ -24451,26 +25143,39 @@
         reihe.appendChild(gruppe);
         return;
       }
-      const eintrag = { wort: info.kern, silben: info.silben, richtig: info.idx, gewaehlt: -1, knoepfe: [] };
-      info.silben.forEach((silbe, i) => {
-        const k = document.createElement("button");
-        k.type = "button";
-        k.className = "lc-betonung-silbe";
-        k.textContent = silbe;
-        k.addEventListener("click", () => {
-          if (kasten.dataset.fertig === "ja") return;
-          eintrag.gewaehlt = i;
-          eintrag.knoepfe.forEach((b, j) => b.classList.toggle("gewaehlt", j === i));
+      /* DIE SILBEN AUS DEM WORT SCHNEIDEN, NICHT AUS DEM EINTRAG.
+         Nur so steht „Wä" da und nicht „WÄ". Die Laengen stimmen —
+         lcSilbenFuer prueft, dass die Silben zusammen wirklich das
+         Wort ergeben. */
+      const stuecke = [];
+      let k = 0;
+      info.silben.forEach((sb) => { stuecke.push(info.kern.slice(k, k + sb.length)); k += sb.length; });
+      const knoepfe = [];
+      stuecke.forEach((silbe, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-betonung-silbe";
+        b.textContent = silbe;
+        b.addEventListener("click", () => {
+          if (gruppe.dataset.ab === "ja") return;
+          gruppe.dataset.ab = "ja";
+          knoepfe.forEach((x, j) => { x.disabled = true; x.classList.toggle("gewaehlt", j === i); });
+          /* Die eigene Wahl in Grossbuchstaben — so wird die Betonung
+             im ganzen Haus geschrieben. Ob sie stimmt, sagt hier
+             niemand; das ist die Sache des Lehrers. */
+          const antwort = stuecke.map((sb, j) => (j === i ? sb.toUpperCase() : sb.toLowerCase())).join("-");
+          hinweis.textContent = "Abgeschickt: " + antwort;
+          try { LiveChat.schreiben("🔠 " + antwort); } catch (e) {}
         });
-        eintrag.knoepfe.push(k);
-        gruppe.appendChild(k);
+        knoepfe.push(b);
+        gruppe.appendChild(b);
       });
-      spiel.push(eintrag);
+      zumTippen++;
       reihe.appendChild(gruppe);
     });
     kasten.appendChild(reihe);
 
-    if (!spiel.length) {
+    if (!zumTippen) {
       const leer = document.createElement("p");
       leer.className = "lc-betonung-hinweis";
       leer.textContent = "Zu diesen Wörtern steht im Wörterbuch noch keine Silbentrennung — "
@@ -24479,44 +25184,6 @@
       zeile.appendChild(kasten);
       return;
     }
-
-    const fertig = document.createElement("button");
-    fertig.type = "button";
-    fertig.className = "btn btn-primary lc-betonung-fertig";
-    fertig.textContent = "Fertig";
-    fertig.addEventListener("click", () => {
-      if (kasten.dataset.fertig === "ja") return;
-      const offen = spiel.filter((e) => e.gewaehlt < 0);
-      if (offen.length) {
-        hinweis.textContent = offen.length === 1
-          ? "Bei „" + offen[0].wort + "“ fehlt noch eine Silbe."
-          : "Es fehlen noch " + offen.length + " Wörter.";
-        return;
-      }
-      kasten.dataset.fertig = "ja";
-      let richtig = 0;
-      const stuecke = spiel.map((e) => {
-        const gut = e.gewaehlt === e.richtig;
-        if (gut) richtig++;
-        e.knoepfe.forEach((b, j) => {
-          b.disabled = true;
-          if (j === e.richtig) b.classList.add("loesung");
-          if (j === e.gewaehlt && !gut) b.classList.add("daneben");
-        });
-        /* Die eigene Wahl in Grossbuchstaben — so, wie die Betonung
-           im ganzen Haus geschrieben wird. */
-        return e.silben.map((sb, j) => (j === e.gewaehlt ? sb.toUpperCase() : sb.toLowerCase())).join("-");
-      });
-      hinweis.textContent = richtig + " von " + spiel.length + " richtig.";
-      fertig.disabled = true;
-      try {
-        LiveChat.schreiben("🔠 " + stuecke.join("  ") + "   (" + richtig + "/" + spiel.length + ")");
-      } catch (e) {}
-    });
-
-    const hinweis = document.createElement("p");
-    hinweis.className = "lc-betonung-hinweis";
-    kasten.appendChild(fertig);
     kasten.appendChild(hinweis);
     zeile.appendChild(kasten);
   }
@@ -24595,6 +25262,22 @@
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
     if (art === "umarmen" && lcUmarmung(nachricht && (nachricht.wen || nachricht.an))) return;
     if (art === "lecken" && lcLecken(nachricht && (nachricht.wen || nachricht.an))) return;
+    /* Die Animationen, die einem PLATZ gelten — alle nach demselben
+       Muster: Name aus der Zeile, Zeichnung an den Platz. Trifft der
+       Name niemanden (die Person ist gegangen), geben sie false
+       zurueck und es faellt auf die gewoehnliche Wirkung durch. */
+    {
+      const wenZ = nachricht && (nachricht.wen || nachricht.an);
+      if (art === "tritt" && lcTritt(wenZ)) return;
+      if (art === "zherz" && lcHerzenAufPlatz(wenZ)) return;
+      if (art === "eimer" && lcWassereimer(wenZ)) return;
+      if (art === "wecker" && lcWecker(wenZ)) return;
+      if (art === "regenwolke" && lcWolkeUeber(wenZ, false)) return;
+      if (art === "donnerwolke" && lcWolkeUeber(wenZ, true)) return;
+      if (art === "reichtum" && lcReichtum(wenZ)) return;
+      if (art === "zucker" && lcZuckerregen(wenZ)) return;
+      if (art === "hammer" && lcHammer(wenZ)) return;
+    }
     /* Beim Boxen zählt auch, WER geboxt hat — er bekommt den
        Rückschlag ab. Bei der eigenen Zeile steht der Name nicht dran
        (man ist ja selbst gemeint), deshalb wird er dort aus der Lage
@@ -26513,28 +27196,12 @@
             ?.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 120);
       });
-      /* LANGES DRÜCKEN auf den eigenen Platz öffnet die Bildauswahl —
-         „im Prinzip hält man mit dem Finger auf seinem eigenen
-         Profilbild gedrückt und kann dann so ein animiertes Bild
-         auswählen", wie bei Clubhouse. Der Bilderknopf in der Leiste
-         macht dasselbe, für alle, die lieber tippen. */
-      const eigenerPlatz = area.querySelector('[data-lc-platz="1"]');
-      if (eigenerPlatz) {
-        let halteUhr = null;
-        let langGedrueckt = false;
-        const los = () => {
-          langGedrueckt = false;
-          halteUhr = setTimeout(() => { langGedrueckt = true; livechatBildWaehler(); }, 500);
-        };
-        const stopp = () => { if (halteUhr) { clearTimeout(halteUhr); halteUhr = null; } };
-        eigenerPlatz.addEventListener("pointerdown", los);
-        ["pointerup", "pointerleave", "pointercancel"].forEach((e) =>
-          eigenerPlatz.addEventListener(e, stopp));
-        eigenerPlatz.addEventListener("click", (e) => {
-          if (langGedrueckt) { e.preventDefault(); e.stopImmediatePropagation(); langGedrueckt = false; }
-        }, true);
-        eigenerPlatz.addEventListener("contextmenu", (e) => { e.preventDefault(); livechatBildWaehler(); });
-      }
+      /* LANGES DRÜCKEN auf einen Platz öffnet jetzt das Platzmenü —
+         auf dem eigenen mit der Bildauswahl obenan, auf einem fremden
+         nur mit dem, was man mit dem Profilbild anstellen kann. Der
+         alte Sonderweg „nur Platz 1, nur Bildauswahl" ist damit
+         überholt; das Menü kann beides. */
+      lcPlatzMenueBinden(area);
       area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
       /* Der Schalter fuer die Buehnenansicht — klassisch oder
          Gegenueber (siehe lcAnsicht weiter oben). */
@@ -26586,6 +27253,15 @@
          Wähler mit Suche, Sammelfüchsen und der Liste „zuletzt
          benutzt". */
 
+      area.querySelector("#lcSofortKnopf")?.addEventListener("click", (e) => {
+        const an = !kzEinstellung("sofortSenden", false);
+        kzEinstellungSetzen("sofortSenden", an);
+        e.currentTarget.setAttribute("aria-pressed", String(an));
+        e.currentTarget.textContent = an ? "an" : "aus";
+        showToast(an
+          ? "⚡ Ein Befehl aus der Liste geht jetzt sofort hinaus."
+          : "Befehle landen wieder erst im Schreibfeld.");
+      });
       area.querySelector("#lcBefehle")?.addEventListener("click", () => {
         const k = document.getElementById("lcBefehleKasten");
         if (k) k.open = !k.open;
@@ -26941,7 +27617,7 @@
         LiveChat.schreiben(t);
         feld.value = "";
         senden.disabled = true;
-        feld.focus();
+        lcNachDemSenden(t);
       });
       area.querySelector("#lcLinkKopieren")?.addEventListener("click", async (e) => {
         const link = LiveChat.lage().link;
@@ -56293,6 +56969,10 @@ An einem Morgen lief ein kleiner Fuchs los…
     };
 
     window.DMA_PRUEFUNG = {
+      /* Das Platzmenue und die Wirkung an einem Platz — ohne echten
+         Raum und ohne echten langen Druck nachstellbar. */
+      platzMenue: (platz) => lcPlatzMenue(platz),
+      wirkung: (art, wen) => lcWirkung(art, null, { wen: wen, name: "Alex" }),
       /* Die Betreiber-Karte fuers Relais — damit sich pruefen laesst,
          dass sie sich ueberhaupt zeichnen laesst, ohne dass man sich
          dafuer als Betreiber anmelden muss. */

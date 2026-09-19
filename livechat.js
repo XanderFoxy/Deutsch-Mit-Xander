@@ -762,6 +762,22 @@ window.LiveChat = (function () {
     ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" }
   };
 
+  /* Die vier neuen Befehle, die es nur am Platz gibt. */
+  var AM_PLATZ = {
+    tritt:  { wirkung: "tritt",   satz: "tritt gegen das Profilbild von", emoji: "\u26bd" },
+    wasser: { wirkung: "eimer",   satz: "kippt einen Eimer Wasser \u00fcber", emoji: "\ud83e\udea3" },
+    wecker: { wirkung: "wecker",  satz: "stellt den Wecker neben", emoji: "\u23f0" },
+    hammer: { wirkung: "hammer",  satz: "haut mit dem Hammer auf", emoji: "\ud83d\udd28" }
+  };
+  /* Und die vier, die es fuer den ganzen Raum schon gibt — mit Namen
+     dahinter werden sie klein und gelten nur dieser Person. */
+  var AUCH_AM_PLATZ = {
+    regen:    { wirkung: "regenwolke",  satz: "l\u00e4sst eine Regenwolke ziehen \u00fcber", emoji: "\ud83c\udf27\ufe0f" },
+    gewitter: { wirkung: "donnerwolke", satz: "l\u00e4sst ein Gewitter los \u00fcber", emoji: "\u26c8\ufe0f" },
+    geld:     { wirkung: "reichtum",    satz: "l\u00e4sst Geld regnen auf", emoji: "\ud83d\udcb8" },
+    bonbon:   { wirkung: "zucker",      satz: "l\u00e4sst Bonbons regnen auf", emoji: "\ud83c\udf6c" }
+  };
+
   var SCHRIFTEN = {
     "1": { was: "klassisch" },
     "2": { was: "Schreibmaschine" },
@@ -7334,6 +7350,10 @@ window.LiveChat = (function () {
     { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",      was: "Warum hört man jemanden nicht?" },
     { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck Name",        was: "Abschlecken" },
     { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box Name",         was: "Boxhandschuh" },
+    { gr: "reden", w: "tritt",   kurz: "fussball", nutzt: "/tritt Name",     was: "Tritt gegen das Profilbild — es fliegt wie ein Ball und kommt zurück" },
+    { gr: "reden", w: "wasser",  kurz: "eimer",  nutzt: "/wasser Name",      was: "Einen Eimer Wasser darüber kippen" },
+    { gr: "reden", w: "wecker",  kurz: "wecken", nutzt: "/wecker Name",      was: "Wecker — das Profilbild scheppert" },
+    { gr: "reden", w: "hammer",  kurz: "bonk",   nutzt: "/hammer Name",      was: "Hammer auf den Kopf" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -7473,6 +7493,7 @@ window.LiveChat = (function () {
     ascii: "\ud83d\udd24", bild: "\ud83d\uddbc\ufe0f", herz: "\u2764\ufe0f",
     drueck: "\ud83e\udd17", tausch: "\ud83d\udd04", verbindung: "\ud83d\udd0c",
     leck: "\ud83d\ude1c", box: "\ud83e\udd4a", konfetti: "\ud83c\udf8a", ballon: "\ud83c\udf88",
+    tritt: "\u26bd", wasser: "\ud83e\udea3", wecker: "\u23f0", hammer: "\ud83d\udd28",
     geschenk: "\ud83c\udf81", schnee: "\u2744\ufe0f", regen: "\ud83c\udf27\ufe0f",
     feuerwerk: "\ud83c\udf86", gewitter: "\u26c8\ufe0f", erdbeben: "\ud83c\udf0d",
     vulkan: "\ud83c\udf0b", schmetterling: "\ud83e\udd8b", voegel: "\ud83d\udc26",
@@ -7598,6 +7619,10 @@ window.LiveChat = (function () {
                 sitzen: "tausch", setz: "tausch",
                 lecken: "leck", schlecken: "leck", ablecken: "leck",
                 boxen: "box", schlag: "box", faust: "box",
+                fussball: "tritt", ball: "tritt", kicken: "tritt", schuss2: "tritt",
+                eimer: "wasser", wassereimer: "wasser", uebergiessen: "wasser",
+                wecken: "wecker", aufwecken: "wecker", klingeln: "wecker",
+                bonk: "hammer", klopfen: "hammer",
                 ente: "enten", entchen: "enten", kueken: "enten", entenmama: "enten",
                 kaetzchen: "katze", katzenbaby: "katze", kitten: "katze", miau: "katze",
                 highway: "route66", route: "route66", wueste: "route66",
@@ -8689,9 +8714,17 @@ window.LiveChat = (function () {
     }
     if (art === "herz") {
       var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
-      return anAlle("aktion", zustand.ichName + " schickt "
-        + (wem ? wem.name : "allen") + " ein \u2665", { wirkung: "herz" });
+      /* GEWUENSCHT: „Man kann auch die Herzen direkt an die Person
+         schicken, dass die Herzen auf das Profilbild von dem anderen
+         angewendet werden." Mit Namen also AUF den Platz, ohne Namen
+         wie bisher ueber die Zeile. */
+      if (wem) {
+        return anAlle("aktion", zustand.ichName + " schickt " + wem.name + " ein \u2665",
+                      { wirkung: "zherz", wen: wem.name });
+      }
+      return anAlle("aktion", zustand.ichName + " schickt allen ein \u2665", { wirkung: "herz" });
     }
+
     /* GEWÜNSCHT: „Einen Befehl für Konfetti, sodass da wirklich Konfetti
        durch den ganzen Raum fliegt. Zum Beispiel: Xander Fox schmeißt
        Konfetti. Aber der muss halt funktionieren, dass das so eine
@@ -8763,6 +8796,38 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " schenkt " + wemG.name + " " + g.satz + "  " + g.emoji,
                     { wirkung: art, wen: wemG.name });
     }
+    /* =========================================================
+       WAS MAN MIT EINEM PROFILBILD ANSTELLEN KANN
+       ---------------------------------------------------------
+       GEWUENSCHT: „Alles, was man mit dem Profilbild anstellen
+       kann, was lustig im Kontext ist" — ein Tritt wie beim
+       Fussball, ein Wassereimer, ein Wecker, eine Regenwolke, ein
+       Gewitter, Geldregen, Bonbons, ein Hammer.
+
+       ZWEI WEGE, EIN ERGEBNIS:
+       · Vier Befehle sind neu: /tritt /wasser /wecker /hammer.
+       · Vier gab es schon fuer den ganzen Raum und bekommen mit
+         einem NAMEN dahinter eine kleine Fassung, die nur dieser
+         einen Person gilt: /regen Emmi, /gewitter Emmi,
+         /geld Emmi, /bonbon Emmi. Ohne Namen bleibt alles, wie
+         es war — niemand verliert einen Befehl.
+       ========================================================= */
+    if (AM_PLATZ[art]) {
+      var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname");
+      var satzP = AM_PLATZ[art];
+      return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + wemP.name + "  " + satzP.emoji,
+                    { wirkung: satzP.wirkung, wen: wemP.name });
+    }
+    /* Und die vier, die es fuer den Raum schon gibt: nur MIT Namen
+       wird daraus die kleine Fassung am Platz. */
+    if (AUCH_AM_PLATZ[art] && rest) {
+      var wemQ = personNachName(rest) || praesenzNachName(rest) || { name: rest };
+      var satzQ = AUCH_AM_PLATZ[art];
+      return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + wemQ.name + "  " + satzQ.emoji,
+                    { wirkung: satzQ.wirkung, wen: wemQ.name });
+    }
+
     if (WETTER[art]) {
       return anAlle("aktion", zustand.ichName + WETTER[art], { wirkung: art });
     }
@@ -9748,6 +9813,23 @@ window.LiveChat = (function () {
     /* Die Server, die gerade wirklich benutzt werden — fuer den
        Test in den Einstellungen. */
     eisServer: function () { return VERMITTLER; },
+    /* IST DAS EINE ZEILE, DIE ETWAS AUSLOEST?
+       Die Oberflaeche muss das wissen, BEVOR sie abschickt: nach einem
+       Befehl soll die Tastatur zugehen und der Chat an seinen Platz
+       springen, damit man die Animation sieht. Nach einem gewoehnlichen
+       Satz soll die Tastatur offen bleiben — sonst muesste man fuer
+       jeden zweiten Satz neu hineintippen. */
+    istBefehlszeile: function (text) {
+      var t = String(text || "").trim();
+      if (!t) return false;
+      if (t.slice(0, 2) === "//") return false;
+      if (/^\/me\//i.test(t)) return false;
+      if (/^\/[a-zäöüß0-9]/i.test(t)) {
+        var w = (/^\/([a-zäöüß0-9]+)/i.exec(t) || [])[1] || "";
+        return befehlBekannt(w);
+      }
+      return Boolean(befehlAusZeichen(t));
+    },
     relaisGrundKlartext: relaisGrundKlartext,
     relaisHolen: relaisHolen,
     relaisRufen: relaisRufen,
@@ -9797,8 +9879,16 @@ window.LiveChat = (function () {
       /* Genannt ist hier die WIRKUNG, nicht das Befehlswort: „/leck"
          loest die Wirkung „lecken" aus, „/drueck" die Wirkung
          „umarmen". Verglichen wird ja mit den Wirkungen in app.js. */
-      return Object.keys(WETTER).concat(["konfetti", "ballon", "geschenk",
-                                         "lecken", "boxen", "herz", "umarmen"]);
+      var w = Object.keys(WETTER).concat(["konfetti", "ballon", "geschenk",
+                                          "lecken", "boxen", "herz", "umarmen"]);
+      /* Die Animationen, die einem PLATZ gelten. Ihr Befehlswort ist
+         oft ein anderes als ihre Wirkung („/wasser" loest „eimer"
+         aus, „/herz Name" loest „zherz" aus) — erreichbar sind sie
+         trotzdem, und genau das prueft effektetuer.js. */
+      Object.keys(AM_PLATZ).forEach(function (k) { w.push(AM_PLATZ[k].wirkung); });
+      Object.keys(AUCH_AM_PLATZ).forEach(function (k) { w.push(AUCH_AM_PLATZ[k].wirkung); });
+      w.push("zherz");
+      return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und
        einen Tausch ausloesen, ohne dass ein echter Raum noetig ist. */

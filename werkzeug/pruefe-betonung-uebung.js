@@ -132,31 +132,61 @@ const pruefe = (was, gut, zusatz) => {
     const quark = t.woerter[2];
     pruefe("ein erfundenes Wort wird NICHT geraten",
       quark && quark.fest && !quark.silben.length, quark ? quark.festText : "-");
-    pruefe("es gibt einen „Fertig“-Knopf", t.knopf);
+
+    /* =========================================================
+       DIE LOESUNG DARF NICHT AUF DEM KNOPF STEHEN
+       ---------------------------------------------------------
+       GEMELDET: „Die Silben sollen da, wo sie richtig betont
+       werden, nicht schon gross vorgeschrieben stehen, weil
+       damit weiss man ja schon, was man anklicken muss."
+
+       Im Woerterbuch steht die betonte Silbe in Grossbuchstaben
+       („FAHR-rad"). Stuende sie so auf dem Knopf, verriete die
+       Aufgabe sich selbst. Geprueft wird deshalb: KEINE Silbe
+       steht ganz in Grossbuchstaben — ausser sie ist die erste
+       eines Hauptwortes und einen Buchstaben lang.
+       ========================================================= */
+    const verraten = [];
+    [fahrrad, gemuese].forEach((w) => {
+      if (!w) return;
+      w.silben.forEach((sb, i) => {
+        const nurGross = sb.length > 1 && sb === sb.toUpperCase() && sb !== sb.toLowerCase();
+        if (nurGross) verraten.push(sb + " (Silbe " + (i + 1) + ")");
+      });
+    });
+    pruefe("keine Silbe verraet sich durch Grossschreibung", verraten.length === 0,
+      verraten.length ? verraten.join(", ") : "geprueft: " + t.woerter.slice(0, 2)
+        .map((w) => w.silben.join("-")).join("  "));
+    pruefe("es gibt KEINEN „Fertig“-Knopf mehr (ein Tipp genuegt)", !t.knopf);
   }
 
-  console.log("\nUND DIE ANTWORT — IST SIE BENOTBAR?\n");
+  console.log("\nEIN TIPP IST DIE ANTWORT\n");
   const antwort = await pg.evaluate(() => {
     const k = document.querySelector(".lc-betonung");
     if (!k) return null;
-    /* In jedem Wort die erste Silbe antippen und abschicken. */
-    k.querySelectorAll(".lc-betonung-wort").forEach((g) => {
-      const b = g.querySelector(".lc-betonung-silbe");
-      if (b) b.click();
-    });
-    const knopf = k.querySelector(".lc-betonung-fertig");
-    if (!knopf) return { paket: null, hinweis: "kein Fertig-Knopf" };
+    const gruppe = k.querySelector(".lc-betonung-wort");
+    const b = gruppe && gruppe.querySelectorAll(".lc-betonung-silbe")[0];
+    if (!b) return { paket: null, hinweis: "keine Silbe zum Tippen" };
     let raus = null;
     window.LiveChat.pruefPost((p) => { if (!raus) raus = p; });
-    knopf.click();
+    b.click();
     return { paket: raus, hinweis: (k.querySelector(".lc-betonung-hinweis") || {}).textContent || "" };
   });
-  pruefe("die Antwort geht als gewoehnliche Zeile hinaus", Boolean(antwort && antwort.paket));
+  pruefe("ein Tipp schickt die Antwort sofort hinaus", Boolean(antwort && antwort.paket),
+    antwort && antwort.paket ? String(antwort.paket.text || "") : "-");
   pruefe("sie traegt die Kennung der Aufgabe (darum der Notenstift)",
     Boolean(antwort && antwort.paket && antwort.paket.aufgabeId),
     antwort && antwort.paket ? "aufgabeId=" + (antwort.paket.aufgabeId || "FEHLT") : "-");
-  pruefe("die Auswertung steht darunter", /von .* richtig/.test((antwort && antwort.hinweis) || ""),
-    (antwort && antwort.hinweis) || "-");
+  pruefe("die getippte Silbe steht gross in der Antwort",
+    /FAHR-rad/.test((antwort && antwort.paket && antwort.paket.text) || ""),
+    (antwort && antwort.paket && antwort.paket.text) || "-");
+  /* GEMELDET: „Da soll nicht eins von eins stehen in der Punktzahl.
+     Da soll die Notenbewertung daneben stehen." */
+  pruefe("KEINE Punktzahl in der Antwort",
+    !/\d\s*(von|\/)\s*\d/.test((antwort && antwort.paket && antwort.paket.text) || ""),
+    (antwort && antwort.paket && antwort.paket.text) || "-");
+  pruefe("und auch keine Selbstbewertung darunter",
+    !/richtig/.test((antwort && antwort.hinweis) || ""), (antwort && antwort.hinweis) || "-");
 
   if (aufSeite.length) {
     console.log("\n  Fehler auf der Seite:");
