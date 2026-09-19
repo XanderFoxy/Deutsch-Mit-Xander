@@ -154,7 +154,10 @@ function tabellen() {
      „zug", /meteor2 gehoert zu „armageddon". Nachgesehen, nicht
      geraten — und genau so aufgeschrieben, damit ein spaeterer Umbau
      hier auffaellt. */
-  for (const [wort, soll] of [["route66", "route66"], ["lok2", "zug"], ["gglok2", "zug"],
+  /* /lok2 und /gglok2 hiessen frueher „zug" — seit Fassung 349 gibt
+     es nur noch EINE Lok (die bunte, traditionelle), und alle alten
+     Namen zeigen auf sie. Die schwarze ist heraus, das spart 1,84 MB. */
+  for (const [wort, soll] of [["route66", "route66"], ["lok2", "lok"], ["gglok2", "lok"],
                               ["meteor2", "armageddon"], ["schuss2", "tritt"]]) {
     const r = await pg.evaluate((w) => {
       let raus = null;

@@ -22,13 +22,6 @@
    "bytes": 1479462
   },
   {
-   "name": "lok",
-   "sekunden": 15.04,
-   "bild": "filme/lok.jpg",
-   "wirkung": "dampf",
-   "bytes": 1146637
-  },
-  {
    "name": "lok2",
    "sekunden": 7.04,
    "bild": "filme/lok2.jpg",

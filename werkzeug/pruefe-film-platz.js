@@ -37,7 +37,11 @@ const pruefe = (was, gut, zusatz) => {
 };
 
 /* Welcher Film soll welche Wirkung haben? Staub NUR beim T-Rex. */
-const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: "dampf" };
+/* Die schwarze Lok („lok") ist seit Fassung 349 heraus — gewuenscht:
+   „Nimm mal die schwarze Lokomotive raus, dann sparen wir Speicher."
+   Geblieben ist die bunte, traditionelle: im Ordner „lok2", im Chat
+   der Befehl /lok. */
+const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok2: "dampf" };
 
 (async () => {
   console.log("\nWAS STEHT IN DEN FILMEN?\n");

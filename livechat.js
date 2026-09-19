@@ -738,8 +738,8 @@ window.LiveChat = (function () {
     adler:       " l\u00e4sst den Adler steigen  \ud83e\udd85",
     /* Die Fahrzeuge. Gewuenscht: „baue das bitte mit ein in die
        Tiere und Fahrzeuge." */
-    lok:         " l\u00e4sst die Dampflok anrollen  \ud83d\ude82",
-    zug:         " l\u00e4sst den Schnellzug durchdonnern  \ud83d\ude84",
+    lok:         " l\u00e4sst die Dampflok heranrollen  \ud83d\ude82",
+    zug:         " l\u00e4sst die Dampflok heranrollen  \ud83d\ude82",
     /* Weltraum und Tiefsee. Diese beiden gibt es nur als Film —
        und zwar als „dunkle" Sorte: wo das Bild schwarz ist, ist
        es durchsichtig, und der Chat scheint hindurch. */
@@ -7491,8 +7491,7 @@ window.LiveChat = (function () {
     { gr: "tiere", w: "trex",      kurz: "dinosaurier", nutzt: "/trex",   was: "Film: der T-Rex bricht heran — der Boden bebt" },
     { gr: "tiere", w: "loewe",     kurz: "lion",   nutzt: "/loewe",       was: "Film: der Löwe kommt und brüllt" },
     { gr: "tiere", w: "adler",     kurz: "greif",  nutzt: "/adler",       was: "Film: der Adler zieht über den Chat" },
-    { gr: "fahrzeuge", w: "lok",   kurz: "lokomotive", nutzt: "/lok",     was: "Film: die Dampflok rollt an, der Chat rattert" },
-    { gr: "fahrzeuge", w: "zug",   kurz: "lok2",   nutzt: "/zug",         was: "Film: der Schnellzug donnert durch" },
+    { gr: "fahrzeuge", w: "lok",   kurz: "dampflok", nutzt: "/lok",       was: "Film: die Dampflok kommt heran, der Chat rattert" },
     { gr: "fahrzeuge", w: "raumschiff", kurz: "ufo", nutzt: "/raumschiff", was: "Film: das Raumschiff zieht am Ringplaneten vorbei (auch /ufo)" },
     { gr: "fahrzeuge", w: "uboot", kurz: "tiefsee", nutzt: "/uboot",      was: "Film: das U-Boot taucht ab, der Krake greift zu" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
@@ -7522,7 +7521,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Zensur (nur Lehrer)" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher Name", was: "Vertretung für den Lehrer" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
-    { gr: "spass",  w: "film",  kurz: "kino",       nutzt: "/film Name",     was: "Film über den Chat legen — /film zeigt alle" },
+    { gr: "spass",  w: "film",  kurz: "",           nutzt: "/film Name",     was: "Film über den Chat legen — /film zeigt alle" },
     { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [<Text>]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
@@ -7587,7 +7586,7 @@ window.LiveChat = (function () {
     route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", loewe: "\ud83e\udd81",
     trex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", adler: "\ud83e\udd85",
     gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b",
-    lok: "\ud83d\ude82", zug: "\ud83d\ude84",
+    lok: "\ud83d\ude82",
     raumschiff: "\ud83d\ude80", uboot: "\ud83d\udea2", kassette: "\ud83d\udcfc",
     pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
     strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
@@ -7718,9 +7717,13 @@ window.LiveChat = (function () {
                 greif: "adler", ggadler: "adler",
                 hai: "gghai", haifisch: "gghai", weisshai: "gghai",
                 baer: "ggbaer", baerchen: "ggbaer",
-                lokomotive: "lok", dampflok: "lok",
+                lokomotive: "lok",
                 eisenbahn: "lok", bahn: "lok", gglok: "lok",
-                schnellzug: "zug", lok2: "zug", gglok2: "zug",
+                /* Es gibt nur noch EINE Lok (die bunte). Die alten
+                   Namen zeigen alle auf sie, damit keine Zeile von
+                   gestern ins Leere faellt. */
+                zug: "lok", schnellzug: "lok", lok2: "lok", gglok2: "lok",
+                dampfzug: "lok",
                 /* GEWUENSCHT: „das Spaceship kannst du als UFO als
                    Code gelten lassen." */
                 ufo: "raumschiff", spaceship: "raumschiff", rakete: "raumschiff",
@@ -8749,7 +8752,7 @@ window.LiveChat = (function () {
        durch den Chat zu schicken waere das Gegenteil: teuer,
        langsam, und bei jedem noch einmal.
        ========================================================= */
-    if (art === "film" || art === "kino") {
+    if (art === "film") {
       var fname = String(rest || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
       /* OHNE NAMEN: die vorhandenen Filme aufzaehlen. Raten, wie
          einer heisst, ist keine Bedienung. Die Liste schreibt
@@ -10085,6 +10088,18 @@ window.LiveChat = (function () {
     beiPraesenz: beiPraesenz,
     chatLesen: function (raum) { return chatLaden(raum || zustand.raum || HAUPTRAUM); },
     lage: lage,
+    /* Redet gerade jemand? Die Oberflaeche braucht das, um den Ton
+       der Animationen leiser zu drehen, solange gesprochen wird —
+       gewuenscht: „dann muss es ein Ducking geben von den Leuten, die
+       sprechen, damit dieser Ton nicht dominiert." */
+    redetJemand: function () {
+      if (zustand.spricht) return true;
+      var ja = false;
+      Object.keys(zustand.leute || {}).forEach(function (id) {
+        if (zustand.leute[id] && zustand.leute[id].spricht) ja = true;
+      });
+      return ja;
+    },
     beiAenderung: beiAenderung,
     moeglich: moeglich,
     neuerRaumName: neuerRaumName,

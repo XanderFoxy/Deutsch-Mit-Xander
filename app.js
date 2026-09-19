@@ -22256,28 +22256,51 @@
      in der die Animation sich selbst entfernt (setTimeout(...remove)).
      Aendert jemand die Animation, muss die Zahl hier mit.
      ================================================================= */
+  /* =================================================================
+     WIE LAUT EIN EFFEKT IST
+     -----------------------------------------------------------------
+     GEMELDET: „Schau mal, ob die Sounds nicht so laut sind, wenn ich
+     eine Regenwolke schicke — die muessen alle gleichbleibende
+     Lautstaerke haben. Der Hammer koennte lauter sein, der Regen
+     leiser. Dass sie alle so Durchschnitt haben, der gut
+     funktioniert, dass er auch das Sprechen nicht so sehr
+     beeinflusst, aber trotzdem Effekt hat."
+
+     Vorher hatte JEDES Geraeusch dieselben 0.5 — und das ist genau
+     der Grund, warum sie verschieden laut klangen: eine Regenschleife
+     traegt ueber Sekunden Energie, ein Hammerschlag ist ein einziger
+     Knall. Gleiche Zahl heisst also nicht gleiche Lautheit.
+
+     Deshalb steht die Lautstaerke jetzt im Plan, je nach Art:
+       · Dauerhafte Flaechen (Regen, Gewitter, Wolken, Aquarium)
+         leiser — sie liegen lange unter allem.
+       · Einzelne Schlaege (Hammer, Tritt, Bonk, Schuss) lauter —
+         sie sind kurz und sollen sitzen.
+       · Alles andere bleibt beim Durchschnitt 0.5.
+     Wo nichts steht, gilt weiterhin 0.5 (siehe lcGeraeusch).
+     ================================================================= */
   const LC_TON_PLAN = {
-    wolken:         { ton: "wolken", dauer: 24000, schleife: true },
+    wolken:         { ton: "wolken", dauer: 24000, schleife: true , laut: 0.3 },
     schmetterling:  { ton: "schmetterling", dauer: 15000, schleife: true },
     voegel:         { ton: "voegel", dauer: 15000, schleife: true },
     enten:          { ton: "enten", dauer: 15000, schleife: true },
     pirat:          { ton: "pirat", dauer: 15000, schleife: true },
     spinnen:        { ton: "spinnen", dauer: 14000, schleife: true },
     sternschnuppe:  { ton: "sternschnuppe", dauer: 13500 },
-    sintflut:       { ton: "sintflut", dauer: 13000, schleife: true },
-    aquarium:       { ton: "aquarium", dauer: 13000, schleife: true },
+    sintflut:       { ton: "sintflut", dauer: 13000, schleife: true , laut: 0.34 },
+    aquarium:       { ton: "aquarium", dauer: 13000, schleife: true , laut: 0.32 },
     pinguine:       { ton: "pinguine", dauer: 13000, schleife: true },
-    lagerfeuer:     { ton: "lagerfeuer", dauer: 12000, schleife: true },
-    aegypten:       { ton: "aegypten", dauer: 12000, schleife: true },
-    herbst:         { ton: "herbst", dauer: 12000, schleife: true },
+    lagerfeuer:     { ton: "lagerfeuer", dauer: 12000, schleife: true , laut: 0.34 },
+    aegypten:       { ton: "aegypten", dauer: 12000, schleife: true , laut: 0.34 },
+    herbst:         { ton: "herbst", dauer: 12000, schleife: true , laut: 0.32 },
     schloss:        { ton: "schloss", dauer: 12000 },
     /* Luftballons steigen still. Das Geraeusch (2 Sekunden) gehoert
        an den Anfang, wo sie losgelassen werden — 5,8-mal wiederholt
        klang es wie eine Ballonfabrik. */
     ballon:         { ton: "ballon", dauer: 11500 },
-    gewitter:       { ton: "gewitter", dauer: 11000, schleife: true },
+    gewitter:       { ton: "gewitter", dauer: 11000, schleife: true , laut: 0.34 },
     ostern:         { ton: "ostern", dauer: 11000, schleife: true },
-    seifenblasen:   { ton: "seifenblasen", dauer: 11000, schleife: true },
+    seifenblasen:   { ton: "seifenblasen", dauer: 11000, schleife: true , laut: 0.34 },
     blut:           { ton: "blut", dauer: 11000, schleife: true },
     /* GEMELDET: „Beim Paintball ist der Sound so lange — am Anfang
        wird nur kurz geschossen, und du hast das geloopt. Bei manchen
@@ -22290,12 +22313,12 @@
        Kugeln nur einmal einschlagen und danach nur noch Farbe
        herunterlaeuft. Herunterlaufende Farbe macht kein Geraeusch.
        Jetzt einmal, und die Animation laeuft still zu Ende. */
-    paintball:      { ton: "paintball", dauer: 11000 },
-    matrix:         { ton: "matrix", dauer: 10000, schleife: true },
-    route66:        { ton: "route66", dauer: 10000, schleife: true },
+    paintball:      { ton: "paintball", dauer: 11000 , laut: 0.62 },
+    matrix:         { ton: "matrix", dauer: 10000, schleife: true , laut: 0.34 },
+    route66:        { ton: "route66", dauer: 10000, schleife: true , laut: 0.36 },
     noten:          { ton: "noten", dauer: 10000, schleife: true },
-    feuerwerk:      { ton: "feuerwerk", dauer: 9500, schleife: true },
-    geld:           { ton: "geld", dauer: 9500, schleife: true },
+    feuerwerk:      { ton: "feuerwerk", dauer: 9500, schleife: true , laut: 0.46 },
+    geld:           { ton: "geld", dauer: 9500, schleife: true , laut: 0.5 },
     bonbon:         { ton: "bonbon", dauer: 9000, schleife: true },
     /* Dasselbe: Augen, die auftauchen, sind ein Ereignis. Das
        Geraeusch lief 2,2-mal. */
@@ -22327,7 +22350,7 @@
     strudel:        { ton: "strudel", dauer: 11000, schleife: true },
     schwamm:        { ton: "schwamm", dauer: 7000 },
     falten:         { ton: "falten", dauer: 6000 },
-    boxen:          { ton: "boxen", dauer: 3400 },
+    boxen:          { ton: "boxen", dauer: 3400 , laut: 0.66 },
     umarmen:        { ton: "umarmen", dauer: 3400 },
     lecken:         { ton: "lecken", dauer: 3400 },
     schlitten:      { ton: "schlitten", dauer: 12000, schleife: true },
@@ -22359,16 +22382,16 @@
        Animationen ueberein: der Wecker scheppert 2,4 Sekunden und
        klingelt genau dreimal, der Rest ist ein einzelner Schlag.
        ================================================================= */
-    wecker:         { ton: "wecker", dauer: 2600 },
-    hammer:         { ton: "bonk", dauer: 2000 },
-    tritt:          { ton: "tritt", dauer: 1400 },
-    eimer:          { ton: "platsch", dauer: 2600 },
+    wecker:         { ton: "wecker", dauer: 2600 , laut: 0.6 },
+    hammer:         { ton: "bonk", dauer: 2000 , laut: 0.72 },
+    tritt:          { ton: "tritt", dauer: 1400 , laut: 0.66 },
+    eimer:          { ton: "platsch", dauer: 2600 , laut: 0.58 },
     /* Die uebrigen Profilbild-Animationen leihen sich, was passt:
        Regen und Gewitter haben eigene Geraeusche, Geld und Bonbons
        auch. Nur die Herzen bleiben still — ein Herz macht kein
        Geraeusch, und ein erfundenes waere kitschig. */
-    regenwolke:     { ton: "regen", dauer: 3200 },
-    donnerwolke:    { ton: "gewitter", dauer: 3200 },
+    regenwolke:     { ton: "regen", dauer: 3200 , laut: 0.3 },
+    donnerwolke:    { ton: "gewitter", dauer: 3200 , laut: 0.38 },
     reichtum:       { ton: "geld", dauer: 2800 },
     zucker:         { ton: "bonbon", dauer: 2800 },
     heber:          { ton: "tore", dauer: 2000 },
@@ -22417,29 +22440,32 @@
          Stimme, er uebertoent sie nicht. Deshalb darf der Aufrufer
          eine eigene Lautstaerke nennen. */
       /* =========================================================
-         LAUTER, SOLANGE DAS MIKROFON AN IST
+         DUCKING — DER EFFEKT WIRD LEISE, WENN JEMAND SPRICHT
          ---------------------------------------------------------
-         GEMELDET: „Mit dem Sound ist es noch ein bisschen komisch —
-         manchmal, wenn man den Dinosaurier hat und man spricht,
-         dann duennt es den Sound aus."
+         GEWUENSCHT: „Wenn der Sound in den Animationen ist und
+         jemand spricht gerade, dann muss es ein Ducking geben von
+         den Leuten, die sprechen, damit dieser Ton nicht dominiert."
 
-         Das ist nichts, was hier abgeschaltet wird: sobald ein
-         Mikrofon offen ist, schaltet das Telefon seine Tonausgabe in
-         den Gespraechsbetrieb um und macht alles andere leiser,
-         damit die Stimme durchkommt. Das macht das Geraet, nicht die
-         Seite — im Code gibt es keine Stelle, die einen Effektton
-         leiser dreht, wenn jemand spricht (nachgesehen: kein
-         einziges pause() und kein volume= haengt am Sprechen).
+         Genau so herum, und nicht andersherum: solange im Raum
+         jemand redet — man selbst oder ein anderer —, laeuft das
+         Geraeusch auf einem Drittel. Redet niemand, hat es seine
+         volle Lautstaerke. (In der Fassung davor hatte ich es
+         umgekehrt gemacht und bei offenem Mikrofon LAUTER gestellt;
+         das war das Gegenteil von dem, was gebraucht wird.)
 
-         Was hier geht, ist dagegenzuhalten: solange ein Mikrofon
-         offen ist, laufen die Geraeusche lauter. Dann bleibt vom
-         gedaempften Ton noch genug uebrig. Ist das Mikrofon aus,
-         bleibt alles wie bisher — sonst waere es zu laut. */
-      const roh = (typeof laut === "number" && laut >= 0 && laut <= 1) ? laut : 0.5;
-      let mikroAn = false;
-      try { mikroAn = Boolean(window.LiveChat && LiveChat.lage && LiveChat.lage().tonAn); }
-      catch (e) { mikroAn = false; }
-      const SPITZE = mikroAn ? Math.min(1, roh * 1.7) : roh;
+         Wie laut ein Effekt ueberhaupt ist, steht im Tonplan:
+         gemeldet war „der Regen koennte bisschen leiser, der Hammer
+         bisschen lauter sein — dass sie alle so Durchschnitt haben".
+         Deshalb traegt jeder Eintrag sein eigenes „laut", und wo
+         keins steht, gilt der Durchschnitt 0.5.
+         ========================================================= */
+      const plan0 = LC_TON_PLAN[wirkung || name];
+      const ausPlan = (plan0 && typeof plan0.laut === "number") ? plan0.laut : 0.5;
+      const roh = (typeof laut === "number" && laut >= 0 && laut <= 1) ? laut : ausPlan;
+      let redet = false;
+      try { redet = Boolean(window.LiveChat && LiveChat.redetJemand && LiveChat.redetJemand()); }
+      catch (e) { redet = false; }
+      const SPITZE = redet ? roh * 0.34 : roh;
       a.volume = SPITZE;
       const plan = LC_TON_PLAN[wirkung || name];
       a.loop = Boolean(plan && plan.schleife);
@@ -24842,7 +24868,15 @@
     trex:      { ganzeSeite: true, wie: "gg", tier: "trex" },
     loewe:     { ganzeSeite: true, wie: "gg", tier: "loewe" },
     adler:     { ganzeSeite: true, wie: "gg", tier: "adler" },
-    lok:       { ganzeSeite: true, wie: "gg", tier: "lok" },
+    /* GEWUENSCHT: „Nimm mal die schwarze Lokomotive raus, also dann
+       sparen wir Speicher — und diese bunte, diese schoene
+       traditionelle, das ist auch kein Schnellzug, das ist die
+       eigentliche Dampflok, die kannst du drin lassen."
+       Also gibt es nur noch EINE Lok, und es ist die bunte (im
+       Ordner heisst die Datei weiterhin lok2). Beide Befehle zeigen
+       jetzt auf sie: /lok ist der Name, /zug bleibt, damit eine alte
+       Zeile nicht ins Leere faellt. Gespart: 1,9 MB. */
+    lok:       { ganzeSeite: true, wie: "gg", tier: "lok2" },
     zug:       { ganzeSeite: true, wie: "gg", tier: "lok2" },
     raumschiff:{ ganzeSeite: true, wie: "gg", tier: "raumschiff" },
     uboot:     { ganzeSeite: true, wie: "gg", tier: "uboot" },
@@ -24853,7 +24887,7 @@
     ggloewe:   { ganzeSeite: true, wie: "gg", tier: "loewe" },
     ggtrex:    { ganzeSeite: true, wie: "gg", tier: "trex" },
     ggadler:   { ganzeSeite: true, wie: "gg", tier: "adler" },
-    gglok:     { ganzeSeite: true, wie: "gg", tier: "lok" },
+    gglok:     { ganzeSeite: true, wie: "gg", tier: "lok2" },
     gglok2:    { ganzeSeite: true, wie: "gg", tier: "lok2" },
     ggraumschiff: { ganzeSeite: true, wie: "gg", tier: "raumschiff" },
     gguboot:   { ganzeSeite: true, wie: "gg", tier: "uboot" },
@@ -25176,7 +25210,17 @@
       if (!quelle) quelle = karte.querySelector(".lc-platz-ich");
       if (quelle && ziele.indexOf(quelle) >= 0) quelle = null;
     }
-    if (quelle) lcZungeSchiessen(quelle, ziele[0]);
+    /* GEMELDET: „Beim Lecken sind zwei Zungen, das ist totaler Quatsch.
+       Da soll nur diese eine Zunge sein, die denjenigen ableckt, als
+       diese lange Chamaeleon-Zunge."
+
+       Es waren wirklich zwei: die Chamaeleon-Zunge, die vom eigenen
+       Platz herueberschiesst, UND eine zweite, die am getroffenen
+       Platz aus dem Nichts hochkam — die alte Fassung, die beim Umbau
+       stehen geblieben ist. Die zweite faellt weg, sobald die erste
+       fliegt. Ohne Absender (wenn es allen gilt) bleibt sie als
+       Rueckfall, sonst saehe man gar keine Zunge. */
+    const zungeFliegt = Boolean(quelle) && lcZungeSchiessen(quelle, ziele[0]);
 
     ziele.forEach((platz, i) => setTimeout(() => {
       if (!platz.isConnected) return;
@@ -25186,7 +25230,8 @@
       const schicht = document.createElement("div");
       schicht.className = "lc-leck";
       schicht.setAttribute("aria-hidden", "true");
-      schicht.innerHTML =
+      /* Die zweite Zunge nur dann, wenn keine herueberfliegt. */
+      const zungeSvg = zungeFliegt ? "" : (
         '<svg class="lc-leck-zunge" viewBox="0 0 120 120">'
         + '<defs><linearGradient id="lz' + i + '" x1="0" y1="1" x2="0" y2="0">'
         + '<stop offset="0" stop-color="#c94f6d"/><stop offset="1" stop-color="#f08ba6"/>'
@@ -25197,7 +25242,8 @@
         + '<path d="M64 112 C60 86 62 54 64 34" stroke="#a83c56" stroke-width="2.6"'
         + ' fill="none" opacity="0.55" stroke-linecap="round"/>'
         + '<path d="M52 34 C58 22 70 22 76 34 C70 28 58 28 52 34 Z" fill="#f7b2c4"/>'
-        + "</svg>"
+        + "</svg>");
+      schicht.innerHTML = zungeSvg
         + '<span class="lc-leck-spur"></span>'
         /* „Das muss richtig schön nass werden": ein Glanzfilm über
            dem ganzen Bild, der aufzieht und langsam abtrocknet. */
@@ -25663,11 +25709,16 @@
         + '<rect x="12" y="10" width="46" height="8" rx="4" fill="#b9c1cf"/>'
         + "</svg>"
         + '<span class="lc-zhammer-knall">BONK</span>';
+      /* GEMELDET: „Der Hammer scheint mehrmals auf den Kopf zu schlagen,
+         man hoert aber nur einen Klang. Es reicht, wenn er einmal
+         schlaegt, dass er synchron mit dem Klang ist."
+         Also ein Schlag — und die Sterne fliegen genau dann, wenn er
+         auftrifft (0.30 s, siehe lcHammerSchlag in korrekturen.css). */
       for (let t = 0; t < 8; t++) {
         const st = document.createElement("i");
         st.className = "lc-zhammer-stern";
         st.style.setProperty("--wo", (t * 45) + "deg");
-        st.style.animationDelay = (0.46 + t * 0.05).toFixed(2) + "s";
+        st.style.animationDelay = (0.30 + t * 0.04).toFixed(2) + "s";
         st.textContent = t % 2 ? "\u2726" : "\u2727";
         schicht.appendChild(st);
       }
@@ -25777,7 +25828,16 @@
          Schlag. Weiss niemand, wer geschlagen hat — etwa weil es
          allen gilt —, bleibt es bei den zwei Handschuhen von links
          und rechts wie bisher. */
-      const quelle = konter || (von ? null : karte && karte.querySelector(".lc-platz-ich"));
+      /* GEMELDET: „Die Boxhandschuhe gehen immer noch nicht. Sie muessen,
+         wenn ich links neben der Person bin, nach rechts boxen."
+
+         Die Rechnung stimmte — nur wurde sie fast nie erreicht: stand
+         ein Absender im Paket, dessen Platz sich aber nicht finden
+         liess (anderer Name, gerade nicht auf der Buehne), fiel alles
+         auf die zwei festen Handschuhe von links und rechts zurueck.
+         Der eigene Platz ist der richtige Rueckfall: wer den Befehl
+         tippt, schlaegt auch. */
+      const quelle = konter || (karte && karte.querySelector(".lc-platz-ich"));
       let gerichtet = null;
       if (quelle && quelle !== platz) {
         const qa = quelle.getBoundingClientRect();

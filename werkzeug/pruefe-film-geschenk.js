@@ -45,7 +45,11 @@ const PAARE = [
   ["trex",       "/trex",       "trex"],
   ["loewe",      "/loewe",      "loewe"],
   ["adler",      "/adler",      "adler"],
-  ["lok",        "/lok",        "lok"],
+  /* Seit Fassung 349 gibt es nur noch EINE Lok: die bunte,
+     traditionelle. Im Ordner heisst ihre Datei weiterhin „lok2" —
+     der Befehl /lok zeigt auf sie. Die schwarze ist heraus, das
+     spart 1,84 MB. */
+  ["lok",        "/lok",        "lok2"],
   ["zug",        "/zug",        "lok2"],
   ["raumschiff", "/raumschiff", "raumschiff"],
   ["uboot",      "/uboot",      "uboot"],
@@ -160,7 +164,7 @@ const PAARE = [
     return wo;
   });
   [["trex", "tiere"], ["loewe", "tiere"], ["adler", "tiere"], ["katze", "tiere"],
-   ["lok", "fahrzeuge"], ["zug", "fahrzeuge"], ["uboot", "fahrzeuge"],
+   ["lok", "fahrzeuge"], ["uboot", "fahrzeuge"],
    ["raumschiff", "fahrzeuge"], ["schlitten", "fahrzeuge"]].forEach(([w, gr]) => {
     pruefe("/" + w + " steht unter „" + gr + "\u201c", einsortiert[w] === gr,
       einsortiert[w] || "gar nicht in der Liste");
