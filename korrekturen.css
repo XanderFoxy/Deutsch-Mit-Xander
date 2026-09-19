@@ -9358,3 +9358,91 @@ body.lc-schreibt .tutor-reiter {
   .lc-box-konter, .lc-platz.lc-boxt-zurueck { animation: none; }
   .lc-box-zurueck { display: none; }
 }
+
+/* =================================================================
+   DIE BETONUNGSÜBUNG
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „Dass die Leute die anklicken können, die betont werden
+   in dem Wort oder in dem Satz."
+
+   Die Silben stehen als einzelne Knöpfe nebeneinander, ohne Lücke
+   dazwischen — sonst liest man „Fahr rad" statt „Fahrrad". Getrennt
+   werden sie durch einen dünnen Strich, wie im Wörterbuch. Die
+   gewählte Silbe wird GROSS und warm hinterlegt: dieselbe Bildsprache
+   wie überall sonst im Haus, wo Betonung vorkommt.
+   ================================================================= */
+.lc-betonung {
+  display: block;
+  margin: 0.5rem 0 0.2rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.lc-betonung-kopf {
+  margin: 0 0 0.5rem;
+  font-size: 0.92em;
+  opacity: 0.85;
+}
+.lc-betonung-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.7rem;
+  align-items: center;
+}
+.lc-betonung-wort {
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.18);
+}
+.lc-betonung-silbe {
+  appearance: none;
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.02em;
+  padding: 0.34rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.lc-betonung-wort .lc-betonung-silbe:last-child { border-right: 0; }
+.lc-betonung-silbe:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.lc-betonung-silbe.gewaehlt {
+  background: rgba(255, 199, 92, 0.32);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+/* Nach dem Auflösen: die richtige Silbe grün, ein Fehlgriff rot —
+   beides bleibt stehen, damit man den Unterschied sieht. */
+.lc-betonung-silbe.loesung {
+  background: rgba(96, 200, 120, 0.34);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.lc-betonung-silbe.daneben {
+  background: rgba(230, 96, 96, 0.34);
+  text-decoration: line-through;
+}
+.lc-betonung-silbe:disabled { cursor: default; }
+.lc-betonung-fest {
+  display: inline-block;
+  padding: 0.34rem 0.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0.55;
+}
+.lc-betonung-fertig {
+  margin-top: 0.6rem;
+  padding: 0.35rem 1.1rem;
+  font-size: 0.95em;
+}
+.lc-betonung-hinweis {
+  margin: 0.4rem 0 0;
+  font-size: 0.9em;
+  opacity: 0.85;
+  min-height: 1.2em;
+}

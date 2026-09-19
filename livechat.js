@@ -2890,6 +2890,7 @@ window.LiveChat = (function () {
         art: n.chatArt || "text",
         wirkung: n.wirkung || "",
         film: n.film || "",
+        betonung: n.betonung || "",
         /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
            beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
         wen: n.wen || "",
@@ -2955,7 +2956,7 @@ window.LiveChat = (function () {
         return { id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
                  bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
                  wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "",
-                 film: n.film || "", zeit: n.zeit };
+                 film: n.film || "", betonung: n.betonung || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -5390,6 +5391,58 @@ window.LiveChat = (function () {
     return true;
   }
 
+  /* =========================================================
+     DIE BETONUNGSUEBUNG
+     ---------------------------------------------------------
+     GEWUENSCHT: „Bau gleich noch eine Betonungsuebung ein: wenn
+     ich ein Wort oder einen Satz schreibe, wird im Woerterbuch
+     danach gescannt, ob es diese Woerter gibt, und wir koennen
+     unsere Betonungsregel fuer die Woerter als Spiel benutzen —
+     dass die Leute die anklicken koennen, die betont werden, und
+     dass ich das auch benoten kann ganz normal."
+
+     WAS HIER *NICHT* MITREIST: DIE LOESUNG.
+     Verschickt wird nur der TEXT. Die Silben und die betonte
+     Silbe schlaegt jedes Geraet in SEINEM Woerterbuch nach — es
+     ist ueberall dasselbe, also kommt ueberall dasselbe heraus.
+     Waere die Loesung im Paket, koennte man sie mit etwas
+     Neugier einfach mitlesen. So steht sie nirgends in der
+     Leitung.
+
+     Benotet wird wie bei jeder anderen Aufgabe: die Antwort geht
+     als ganz gewoehnliche Zeile hinaus und traegt die Kennung
+     der Aufgabe mit sich — damit steht der Notenstift daneben,
+     ohne dass hier irgendetwas Eigenes dafuer noetig waere.
+     ========================================================= */
+  function betonungStellen(roh) {
+    var text = String(roh || "").trim();
+    if (!text) {
+      if (offeneAufgabe && offeneAufgabe.typ === "betonung") {
+        offeneAufgabe = null;
+        aufgabeMerken();
+        senden({ art: "aufgabeAus" });
+        return systemZeile("✔️ Die Betonungsübung ist beendet.");
+      }
+      return systemZeile("So geht es:  /betonung Fahrrad"
+        + "\noder ein ganzer Satz:  /betonung Der Hund läuft über die Wiese"
+        + "\nDie anderen tippen dann die betonte Silbe an. /betonung ohne Text beendet sie.");
+    }
+    if (text.length > 160) return systemZeile("Das ist zu lang — höchstens 160 Zeichen.");
+    var woerter = text.split(/\s+/).filter(Boolean);
+    if (woerter.length > 12) return systemZeile("Das sind zu viele Wörter — höchstens zwölf.");
+
+    offeneAufgabe = { typ: "betonung", loesung: text, frage: text, teile: woerter,
+                      wer: {}, zeit: Date.now(), zeileId: "" };
+    var zeile = anAlle("aufgabe", "🔠 Wo liegt die Betonung?  " + text, { betonung: text });
+    if (zeile && zeile.id) {
+      offeneAufgabe.zeileId = zeile.id;
+      zeile.aufgabeId = zeile.id;
+    }
+    aufgabeMerken();
+    aufgabeVerkuenden();
+    return true;
+  }
+
   /* =================================================================
      EINE AUFGABE GEHOERT DEM RAUM, NICHT DEM GERAET
      -----------------------------------------------------------------
@@ -5496,7 +5549,8 @@ window.LiveChat = (function () {
      der Aufgabe — und nur daran, damit es nachvollziehbar
      bleibt. Bei einer Aufgabe in eigenen Worten schlaegt sie
      nichts vor: dort weiss nur der Lehrer, worum es ging. */
-  var KLASSE_JE_AUFGABE = { satz: "Satzbau", wort: "Rechtschreibung", frei: "" };
+  var KLASSE_JE_AUFGABE = { satz: "Satzbau", wort: "Rechtschreibung",
+                            betonung: "Aussprache", frei: "" };
   function aufgabeKlasse(typ) {
     return KLASSE_JE_AUFGABE[String(typ || "")] || "";
   }
@@ -7120,6 +7174,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz <ganzer Satz>", was: "Wirbelt die Wörter durcheinander — die anderen bringen sie in Ordnung" },
     { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort <Wort>",    was: "Wirbelt die Buchstaben durcheinander — die anderen schreiben das Wort richtig" },
     { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe <Text>", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
+    { gr: "schule", w: "betonung", kurz: "beton", nutzt: "/betonung <Wort oder Satz>", was: "Betonungsübung: die anderen tippen an, welche Silbe betont wird — die Silben kommen aus dem Wörterbuch, die Antwort lässt sich benoten (/betonung ohne Text beendet sie)" },
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
@@ -7710,6 +7765,9 @@ window.LiveChat = (function () {
        Datei holt sich jedes Geraet selbst. Faehrt er hier nicht mit,
        sehen die anderen nur die Zeile und nie den Film. */
     if (zusatz && zusatz.film) n.film = zusatz.film;
+    /* Der zu betonende TEXT reist mit — die Loesung nicht. Jedes
+       Geraet schlaegt sie selbst nach. */
+    if (zusatz && zusatz.betonung) n.betonung = zusatz.betonung;
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
@@ -8556,6 +8614,7 @@ window.LiveChat = (function () {
     if (art === "satz") return aufgabeStellen("satz", rest);
     if (art === "wort") return aufgabeStellen("wort", rest);
     if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
+    if (art === "betonung" || art === "beton") return betonungStellen(rest);
 
     /* ---- Zensuren ----
        „Dass man die Antworten der Leute bewerten kann — die es

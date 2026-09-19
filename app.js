@@ -24163,6 +24163,176 @@
     }, verzug || 0);
   }
 
+  /* =================================================================
+     DIE BETONUNGSÜBUNG — SILBEN ZUM ANTIPPEN
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Bau gleich noch eine Betonungsübung ein: wenn ich ein
+     Wort oder einen Satz schreibe, wird im Wörterbuch danach gescannt,
+     ob es diese Wörter gibt, und wir können unsere Betonungsregel für
+     die Wörter als Spiel benutzen — dass die Leute die anklicken
+     können, die betont werden, und dass ich das auch benoten kann ganz
+     normal."
+
+     DREI ENTSCHEIDUNGEN STECKEN DARIN:
+
+     1. DIE SILBEN KOMMEN AUS DEM WÖRTERBUCH, NICHT AUS EINER REGEL.
+        Jeder Eintrag trägt seine Silben schon mit sich („WÄ-sche-klam-
+        mer"), und die betonte steht in Grossbuchstaben. Das ist
+        geprüft; eine ausgedachte Silbentrennung wäre bei jedem dritten
+        Wort falsch und würde Leuten etwas Falsches beibringen.
+
+     2. WAS NICHT IM WÖRTERBUCH STEHT, WIRD NICHT GERATEN.
+        Es steht grau da, lässt sich nicht antippen und zählt nicht mit.
+        Lieber ein Wort weniger im Spiel als eine erfundene Betonung.
+        Gebeugte Formen werden über die Grundform gefunden — aber nur,
+        wenn die Buchstaben bis zum Ende der betonten Silbe wirklich
+        übereinstimmen (dieselbe Regel wie im Lesemodus).
+
+     3. DIE LÖSUNG REIST NICHT MIT.
+        Verschickt wird nur der Text. Jedes Gerät schlägt in SEINEM
+        Wörterbuch nach — es ist überall dasselbe. Stünde die Lösung im
+        Paket, könnte man sie mitlesen.
+
+     Benotet wird wie bei jeder anderen Aufgabe: die Antwort geht als
+     ganz gewöhnliche Zeile hinaus (LiveChat.schreiben) und trägt damit
+     die Kennung der Aufgabe — der Notenstift steht von selbst daneben.
+     ================================================================= */
+  function lcSilbenFuer(wort) {
+    const kern = String(wort || "").replace(/^[^\p{L}]+|[^\p{L}]+$/gu, "");
+    if (!kern) return null;
+    const zerlegen = (syl) => {
+      const roh = String(syl).split("-");
+      const idx = Core.betonteSilbenIndex(roh);
+      if (idx < 0) return null;
+      return { silben: roh.map((x) => x.replace(/^\*/, "")), idx: idx };
+    };
+    const direkt = betonungNachschlagen(kern);
+    if (direkt) {
+      const z = zerlegen(direkt);
+      /* Nur brauchbar, wenn die Silben zusammen wirklich das Wort
+         ergeben — bei Fremdwörtern steht in „syl" eine Lautschrift. */
+      if (z && z.silben.join("").toLowerCase() === kern.toLowerCase()) return { kern, ...z };
+    }
+    /* Gebeugt? Dann über die Grundform, mit demselben Nachweis wie im
+       Lesemodus: die Buchstaben bis zum Ende der betonten Silbe müssen
+       übereinstimmen. Der Rest hängt als eine Silbe hinten dran. */
+    const kandidaten = (typeof grundformKandidaten === "function" ? grundformKandidaten(kern) : []) || [];
+    for (const kand of kandidaten) {
+      const syl = betonungNachschlagen(kand);
+      if (!syl) continue;
+      const z = zerlegen(syl);
+      if (!z) continue;
+      const bisEnde = z.silben.slice(0, z.idx + 1).join("").length;
+      if (kern.length < bisEnde) continue;
+      if (kern.slice(0, bisEnde).toLowerCase() !== z.silben.slice(0, z.idx + 1).join("").toLowerCase()) continue;
+      const teile = [];
+      let k = 0;
+      for (let i = 0; i <= z.idx; i++) { teile.push(kern.slice(k, k + z.silben[i].length)); k += z.silben[i].length; }
+      if (k < kern.length) teile.push(kern.slice(k));
+      return { kern, silben: teile, idx: z.idx };
+    }
+    return null;
+  }
+
+  function lcBetonungsTafel(n, zeile) {
+    const kasten = document.createElement("div");
+    kasten.className = "lc-betonung";
+
+    const kopf = document.createElement("p");
+    kopf.className = "lc-betonung-kopf";
+    kopf.textContent = "🔠 Wo liegt die Betonung? Tippe in jedem Wort die betonte Silbe an.";
+    kasten.appendChild(kopf);
+
+    const woerter = String(n.betonung || "").split(/\s+/).filter(Boolean);
+    const reihe = document.createElement("div");
+    reihe.className = "lc-betonung-reihe";
+    const spiel = [];
+
+    woerter.forEach((wort) => {
+      const gruppe = document.createElement("span");
+      gruppe.className = "lc-betonung-wort";
+      const info = lcSilbenFuer(wort);
+      if (!info || info.silben.length < 2) {
+        /* Einsilbig oder unbekannt: nichts zum Auswählen. */
+        const nur = document.createElement("span");
+        nur.className = "lc-betonung-fest";
+        nur.textContent = wort;
+        nur.title = info ? "Ein einsilbiges Wort — da gibt es nichts zu wählen."
+                         : "Steht nicht im Wörterbuch — wird nicht mitgezählt.";
+        gruppe.appendChild(nur);
+        reihe.appendChild(gruppe);
+        return;
+      }
+      const eintrag = { wort: info.kern, silben: info.silben, richtig: info.idx, gewaehlt: -1, knoepfe: [] };
+      info.silben.forEach((silbe, i) => {
+        const k = document.createElement("button");
+        k.type = "button";
+        k.className = "lc-betonung-silbe";
+        k.textContent = silbe;
+        k.addEventListener("click", () => {
+          if (kasten.dataset.fertig === "ja") return;
+          eintrag.gewaehlt = i;
+          eintrag.knoepfe.forEach((b, j) => b.classList.toggle("gewaehlt", j === i));
+        });
+        eintrag.knoepfe.push(k);
+        gruppe.appendChild(k);
+      });
+      spiel.push(eintrag);
+      reihe.appendChild(gruppe);
+    });
+    kasten.appendChild(reihe);
+
+    if (!spiel.length) {
+      const leer = document.createElement("p");
+      leer.className = "lc-betonung-hinweis";
+      leer.textContent = "Zu diesen Wörtern steht im Wörterbuch noch keine Silbentrennung — "
+        + "darum gibt es hier nichts anzutippen.";
+      kasten.appendChild(leer);
+      zeile.appendChild(kasten);
+      return;
+    }
+
+    const fertig = document.createElement("button");
+    fertig.type = "button";
+    fertig.className = "btn btn-primary lc-betonung-fertig";
+    fertig.textContent = "Fertig";
+    fertig.addEventListener("click", () => {
+      if (kasten.dataset.fertig === "ja") return;
+      const offen = spiel.filter((e) => e.gewaehlt < 0);
+      if (offen.length) {
+        hinweis.textContent = offen.length === 1
+          ? "Bei „" + offen[0].wort + "“ fehlt noch eine Silbe."
+          : "Es fehlen noch " + offen.length + " Wörter.";
+        return;
+      }
+      kasten.dataset.fertig = "ja";
+      let richtig = 0;
+      const stuecke = spiel.map((e) => {
+        const gut = e.gewaehlt === e.richtig;
+        if (gut) richtig++;
+        e.knoepfe.forEach((b, j) => {
+          b.disabled = true;
+          if (j === e.richtig) b.classList.add("loesung");
+          if (j === e.gewaehlt && !gut) b.classList.add("daneben");
+        });
+        /* Die eigene Wahl in Grossbuchstaben — so, wie die Betonung
+           im ganzen Haus geschrieben wird. */
+        return e.silben.map((sb, j) => (j === e.gewaehlt ? sb.toUpperCase() : sb.toLowerCase())).join("-");
+      });
+      hinweis.textContent = richtig + " von " + spiel.length + " richtig.";
+      fertig.disabled = true;
+      try {
+        LiveChat.schreiben("🔠 " + stuecke.join("  ") + "   (" + richtig + "/" + spiel.length + ")");
+      } catch (e) {}
+    });
+
+    const hinweis = document.createElement("p");
+    hinweis.className = "lc-betonung-hinweis";
+    kasten.appendChild(fertig);
+    kasten.appendChild(hinweis);
+    zeile.appendChild(kasten);
+  }
+
   /* DIE GEZEICHNETE FASSUNG EINER GANZSEITIGEN ANIMATION.
      Herausgeloest, damit sie an zwei Stellen aufgerufen werden
      kann: normal — und als Rueckfall, wenn zu dieser Animation
@@ -25142,6 +25312,8 @@
             renderLiveChat();
           });
         }
+      } else if (art === "aufgabe" && n.betonung) {
+        lcBetonungsTafel(n, z);
       } else if (art === "aufgabe") {
         /* =========================================================
            DIE AUFGABE IM CHAT
