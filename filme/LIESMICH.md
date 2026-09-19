@@ -6,16 +6,24 @@ grossen Geschenke macht — dort liegt eine Abspieldatei mit
 Durchsichtigkeit über der Seite, und das Telefon rechnet nichts, es
 spielt nur ab.
 
-## Zwei Sorten Film
+## Drei Sorten Film
 
 **Freigestellt** (`gruen`) — liegt durchsichtig über dem Chat, man liest
 weiter mit. Dafür muss der Hintergrund flächig grün sein; Umgebung geht
 nur, soweit sie am Motiv hängt (Staub, Funken, Tropfen).
 
+**Dunkel** (`dunkel`) — für Nacht, Weltraum und Tiefsee. Die Deckung
+kommt aus der **Helligkeit**: wo das Bild schwarz ist, ist es
+durchsichtig und der Chat scheint hindurch; wo es leuchtet — Sterne,
+Triebwerk, Bullaugen, Mond — steht es voll da. Kein Greenscreen nötig,
+und es verschmilzt von selbst mit der Seite, weil Dunkelheit nichts
+verdeckt. Gemessen am U-Boot: 79 % durchsichtig, 16 % halbdurchsichtig,
+5 % voll.
+
 **Szene** (`szene`) — das volle Bild mit Welt, Boden, Horizont und
 Kamerafahrt. Wird gar nicht freigestellt, sondern als Kinobild über den
-Chat gelegt: dunkler Grund ringsum, weiche Kante, runde Ecken. Keine
-Maskendatei, kein WebGL, überall derselbe Weg.
+Chat gelegt: dunkler Grund ringsum, wolkiger Rand. Keine Maskendatei,
+kein WebGL, überall derselbe Weg.
 
 Fertige Prompts für beides stehen in `PROMPTS.md` — 30 Stück.
 
@@ -33,13 +41,41 @@ Abspielens nach — bei einem Brüllen hört man, wie es leiser dreht und
 danach wieder auf. Gemessen über die fünf Filme: Streuung der mittleren
 Lautheit **0,9 dB** (einstufig 1,7 dB, ungeregelt 5,5 dB).
 
+## Der wolkige Rand
+
+`dunkel`- und `szene`-Filme laufen am Rand nicht als Ellipse aus,
+sondern mit einer gerechneten Maske (`werkzeug/bau-wolkenrand.js` →
+`filme/rand-wolke.png`): ein weicher Verlauf, dessen Radius von
+fraktalem Rauschen verschoben wird. Gemessen schwankt die Kante um
+**8,5 %** im Radius — eine Ellipse hätte 0 %, und genau die erkennt
+man sofort als Ellipse.
+
+## Aus 16:9 ein 9:16 machen
+
+`SCHNITT=1` schneidet die Mitte heraus. Beim Weihnachtsschlitten
+geprüft, Kontaktbogen alle 2,5 Sekunden: der Schlitten bleibt über die
+ganzen 15 Sekunden mittig, der Schluss mit dem Mond sitzt ohnehin
+zentriert. Aus 1280×720 werden 405×720 — immer noch breiter als die
+400 Punkte, auf die verkleinert wird.
+
 ## Es sieht nicht nach Video aus
 
-Kein `controls`, `disablePictureInPicture`, `controlslist` ohne
-Vollbild und Herunterladen, `x-webkit-airplay="deny"`,
-`pointer-events: none` auf der ganzen Schicht und ein Stilblatt, das
-die eingebaute WebKit-Leiste ausblendet. Der YouTube-Rahmen im
-Musikspieler hat `fs=0` und kein `allowfullscreen` mehr.
+**Es wird gar kein Video mehr gezeigt.** Das Format ist nicht der
+Punkt — der Vollbildknopf gehört zum `<video>`-Element, nicht zur
+Datei; ein WebM oder GIF ändert daran nichts. Also hängt das Video
+unsichtbar bei `left: -9999px` und liefert nur Bilder und Ton, und zu
+sehen ist ein `<canvas>`. Ein Canvas hat keine Bedienleiste, kein
+Vollbild, kein Bild-im-Bild, kein „Video speichern unter" — für den
+Browser ist es ein Bild, das sich bewegt. Der Alphakanal überlebt das:
+`drawImage` überträgt ihn aus einem VP9-WebM mit `yuva420p` mit.
+
+Zusätzlich, doppelt genäht: kein `controls`,
+`disablePictureInPicture`, `controlslist` ohne Vollbild und
+Herunterladen, `x-webkit-airplay="deny"`, `pointer-events: none` auf
+der ganzen Schicht und ein Stilblatt gegen die WebKit-Leiste. Der
+YouTube-Rahmen im Musikspieler hat `fs=0` und kein `allowfullscreen`
+mehr — mehr geht dort nicht, es ist YouTubes eigener Spieler in einem
+fremden Rahmen.
 
 ## Wie ein Film hier hereinkommt
 

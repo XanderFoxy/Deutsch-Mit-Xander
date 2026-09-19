@@ -7,6 +7,12 @@
    "wirkung": "wind"
   },
   {
+   "name": "katze",
+   "sekunden": 10.04,
+   "bild": "filme/katze.jpg",
+   "wirkung": "glanz"
+  },
+  {
    "name": "loewe",
    "sekunden": 15.04,
    "bild": "filme/loewe.jpg",
@@ -25,10 +31,28 @@
    "wirkung": "dampf"
   },
   {
+   "name": "raumschiff",
+   "sekunden": 15.04,
+   "bild": "filme/raumschiff.jpg",
+   "wirkung": "wind"
+  },
+  {
+   "name": "schlitten",
+   "sekunden": 15.04,
+   "bild": "filme/schlitten.jpg",
+   "wirkung": "glanz"
+  },
+  {
    "name": "trex",
    "sekunden": 15.04,
    "bild": "filme/trex.jpg",
    "wirkung": "erde"
+  },
+  {
+   "name": "uboot",
+   "sekunden": 15.04,
+   "bild": "filme/uboot.jpg",
+   "wirkung": "dampf"
   }
  ]
 }

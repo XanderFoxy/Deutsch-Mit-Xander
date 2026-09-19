@@ -74,7 +74,21 @@ mkdir -p "$ZIEL"
 # Chat legt (dunkler Grund, weiche Kante, runde Ecken). Freigestellt
 # bleibt, was ÜBER dem Chat laufen soll; als Szene kommt, was eine
 # WELT zeigen soll.
-if [ "$ART" = "szene" ]; then
+# VIERTE ART: „dunkel" — DER CHAT SCHEINT DURCH.
+# GEWÜNSCHT: „Bei dem Raumschiff ist viel Schwarz dabei. Vielleicht
+# kann man an der Stelle, wo es am Planeten mit den Ringen vorbei
+# fliegt, ein bisschen den Chat durchscheinen lassen, dass man das
+# mehr verbindet, mehr eins sein lässt."
+# Genau das geht bei einer nächtlichen Szene: die Deckung wird aus
+# der HELLIGKEIT genommen. Wo das Bild schwarz ist, ist es
+# durchsichtig; wo es leuchtet — Sterne, Triebwerk, Planetenringe,
+# Bullaugen — steht es voll da. Kein Greenscreen nötig, und es
+# verschmilzt von selbst mit dem Chat, weil Dunkelheit eben nichts
+# verdeckt. Fuer Weltraum und Unterwasser ist das die richtige Art.
+if [ "$ART" = "dunkel" ]; then
+  SCHLUESSEL="lumakey=threshold=${SCHWELLE:-0.055}:tolerance=${TOLERANZ:-0.20}:softness=${WEICHE:-0.35}"
+  ENTFAERBEN=""
+elif [ "$ART" = "szene" ]; then
   SCHLUESSEL=""
   ENTFAERBEN=""
 elif [ "$ART" = "schwarz" ]; then
@@ -105,7 +119,13 @@ else
   # aendert sich dadurch nichts (gemessen: 0,1 Prozentpunkte), und
   # gruene Reste bleiben bei allen fuenf Filmen bei 0,00 %.
   SCHLUESSEL="chromakey=${FARBE}:${AEHNLICH:-0.16}:${WEICH:-0.04}"
-  ENTFAERBEN=",despill=type=green:mix=0.6:expand=0.3"
+  # WIE STARK ENTGRUENEN? Beim Kaetzchen lag deutlich Gruen im
+  # hellen Fell („mit dem Gruen, was auf dem Fell ist, koennte das
+  # besser sein"). Flauschiges helles Fell schluckt besonders viel
+  # Streulicht vom Hintergrund. Deshalb einstellbar: ENTGRUEN
+  # (wieviel herausgerechnet wird) und AUSDEHNEN (wie weit ueber
+  # den Umriss hinaus).
+  ENTFAERBEN=",despill=type=green:mix=${ENTGRUEN:-0.6}:expand=${AUSDEHNEN:-0.3}"
 fi
 # WIE GROSS? NICHT SO GROSS WIE DIE QUELLE.
 # Der erste echte Film kam mit 720x1280 herein und ergab 11,6 MB.
@@ -116,6 +136,20 @@ fi
 # schwersten der fuenf: 540 Punkte/crf 38 = 5,7 MB, 480/crf 40 =
 # 4,1 MB, 400/crf 46 = rund 2,0 MB. Andere Breite als fuenfter
 # Wert, andere Guete ueber GUETE=…
+# AUS 16:9 EIN 9:16 MACHEN.
+# GEWÜNSCHT: „Versuch mal bei dem Weihnachtsvideo das Seitenverhältnis
+# auf 9:16 zu machen, das müsste technisch gehen, weil der Schlitten
+# sehr klein angeflogen kommt und immer mittig bleibt."
+# Stimmt — nachgesehen mit einem Kontaktbogen alle 2,5 Sekunden: der
+# Schlitten bleibt über die ganzen 15 Sekunden in der Mitte, und der
+# Schluss mit dem Mond sitzt ohnehin zentriert. Also wird die Mitte
+# herausgeschnitten: aus 1280x720 werden 405x720, und das ist immer
+# noch breiter als die 400 Punkte, auf die wir sowieso verkleinern.
+# Mit SCHNITT=1 einschalten.
+ZUSCHNITT=""
+if [ "${SCHNITT:-0}" != "0" ]; then
+  ZUSCHNITT="crop=ih*9/16:ih:(iw-ih*9/16)/2:0,"
+fi
 BREITE="${5:-400}"
 WIRKUNG="${6:-keiner}"
 VERKLEINERN=""
@@ -138,9 +172,9 @@ if [ "$BODEN" != "0" ]; then
 fi
 # Kanten weich machen: sonst treppt der Umriss.
 if [ "$ART" = "szene" ]; then
-  KETTE="${VERKLEINERN}format=yuv420p"
+  KETTE="${ZUSCHNITT}${VERKLEINERN}format=yuv420p"
 else
-  KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuva420p"
+  KETTE="${ZUSCHNITT}${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuva420p"
 fi
 
 # GLEICH LAUT — GEMELDET: „Der Ton ist immer ein bisschen
@@ -162,8 +196,15 @@ fi
 # „Ausdehnung". Zweistufig wird zuerst der ganze Film GEMESSEN, und im
 # zweiten Durchgang liegt eine feste, lineare Verstärkung an: kein
 # Nachregeln, keine Pumperei.
-TONKETTE="loudnorm=I=-16:TP=-1.5:LRA=11"
-MESS=$("$FF" -hide_banner -i "$QUELLE" -af "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json" \
+# WIE LAUT? -14 LUFS, NICHT -16.
+# GEMELDET: „Achte darauf, dass der Ton überall gut zu hören ist, weil
+# das bis jetzt immer noch nicht der Fall ist."
+# -16 ist der Wert für Podcasts, die man ungestört hört. Ein Geschenk
+# im Chat konkurriert mit allem anderen auf dem Telefon; TikTok und
+# Instagram fahren ihre Filme auf etwa -14. Dahinter steht ein
+# Begrenzer, damit die zwei Stufen mehr nicht ins Zerren laufen.
+TONKETTE="loudnorm=I=-14:TP=-1.0:LRA=9"
+MESS=$("$FF" -hide_banner -i "$QUELLE" -af "loudnorm=I=-14:TP=-1.0:LRA=9:print_format=json" \
   -f null - 2>&1 | sed -n '/^{/,/^}/p')
 if [ -n "$MESS" ]; then
   W=$(printf '%s' "$MESS" | node -e '
@@ -182,7 +223,7 @@ if [ -n "$MESS" ]; then
       } catch (e) {}
     });')
   if [ -n "$W" ]; then
-    TONKETTE="loudnorm=I=-16:TP=-1.5:LRA=11:${W}"
+    TONKETTE="loudnorm=I=-14:TP=-1.0:LRA=9:${W},alimiter=limit=0.94:level=disabled"
     echo "     Ton gemessen und fest eingestellt (zweistufig)"
   fi
 fi
@@ -213,7 +254,7 @@ else
 [a]format=yuv420p[bild];\
 [b]alphaextract,format=yuv420p[maske];\
 [bild][maske]hstack=inputs=2,format=yuv420p" \
-  -map 0:a:0? -c:v libx264 -preset slow -crf 32 -movflags +faststart \
+  -map 0:a:0? -c:v libx264 -preset slow -crf "${GUETE_MASKE:-32}" -movflags +faststart \
   -af "$TONKETTE" -c:a aac -b:a 80k -ac 2 "$ZIEL/$NAME-maske.mp4"
 fi
 

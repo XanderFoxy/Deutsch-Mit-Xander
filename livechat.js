@@ -617,6 +617,11 @@ window.LiveChat = (function () {
        erste Geschenk, das es nur als Film gibt. */
     gglok:       " schickt allen eine Dampflok  \ud83d\ude82",
     gglok2:      " schickt allen den Schnellzug  \ud83d\ude84",
+    /* Weltraum und Tiefsee. Diese beiden gibt es nur als Film —
+       und zwar als „dunkle" Sorte: wo das Bild schwarz ist, ist
+       es durchsichtig, und der Chat scheint hindurch. */
+    ggraumschiff:" schickt allen ein Raumschiff  \ud83d\ude80",
+    gguboot:     " schickt allen ein U-Boot  \ud83d\udea2",
     /* Die Achtziger. */
     kassette:    " spult die Kassette zur\u00fcck  \ud83d\udcfc",
     pacman:      " l\u00e4sst Pac-Man durch den Chat fressen  \ud83d\udc7e",
@@ -636,7 +641,9 @@ window.LiveChat = (function () {
     gghai:     { satz: "einen Hai",           emoji: "\ud83e\udd88" },
     ggbaer:    { satz: "einen B\u00e4ren",        emoji: "\ud83d\udc3b" },
     gglok:     { satz: "eine Dampflok",       emoji: "\ud83d\ude82" },
-    gglok2:    { satz: "den Schnellzug",      emoji: "\ud83d\ude84" }
+    gglok2:    { satz: "den Schnellzug",      emoji: "\ud83d\ude84" },
+    ggraumschiff: { satz: "ein Raumschiff",  emoji: "\ud83d\ude80" },
+    gguboot:   { satz: "ein U-Boot",         emoji: "\ud83d\udea2" }
   };
 
   var SCHRIFTEN = {
@@ -7077,6 +7084,8 @@ window.LiveChat = (function () {
     { gr: "feier", w: "ggbaer",    kurz: "baer",   nutzt: "/baer <Name>",    was: "GROSSES GESCHENK: ein Bär steigt aus der Kiste" },
     { gr: "feier", w: "gglok",     kurz: "lok",    nutzt: "/lok <Name>",     was: "GROSSES GESCHENK: eine Dampflok fährt als Film durchs Bild, der Chat bebt" },
     { gr: "feier", w: "gglok2",    kurz: "zug",    nutzt: "/zug <Name>",     was: "GROSSES GESCHENK: der Schnellzug donnert als Film heran" },
+    { gr: "feier", w: "ggraumschiff", kurz: "rakete", nutzt: "/raumschiff <Name>", was: "GROSSES GESCHENK: ein Raumschiff zieht am Ringplaneten vorbei — der Chat scheint durch" },
+    { gr: "feier", w: "gguboot",   kurz: "kraken", nutzt: "/uboot <Name>",   was: "GROSSES GESCHENK: ein Krake zieht das U-Boot in die Tiefe" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
     { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
@@ -7164,7 +7173,8 @@ window.LiveChat = (function () {
     route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", ggloewe: "\ud83e\udd81",
     ggtrex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", ggadler: "\ud83e\udd85",
     gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b",
-    gglok: "\ud83d\ude82", gglok2: "\ud83d\ude84", kassette: "\ud83d\udcfc",
+    gglok: "\ud83d\ude82", gglok2: "\ud83d\ude84",
+    ggraumschiff: "\ud83d\ude80", gguboot: "\ud83d\udea2", kassette: "\ud83d\udcfc",
     pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
     strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
     wolken: "\u2601\ufe0f", glasbruch: "\ud83e\ude9e", spinnen: "\ud83d\udd77\ufe0f",
@@ -7291,6 +7301,10 @@ window.LiveChat = (function () {
                 lok: "gglok", lokomotive: "gglok", dampflok: "gglok",
                 eisenbahn: "gglok", bahn: "gglok",
                 zug: "gglok2", schnellzug: "gglok2", lok2: "gglok2",
+                raumschiff: "ggraumschiff", rakete: "ggraumschiff",
+                weltraum: "ggraumschiff", enterprise: "ggraumschiff",
+                uboot: "gguboot", krake: "gguboot", kraken: "gguboot",
+                tiefsee: "gguboot", nemo: "gguboot",
                 /* Die Achtziger. */
                 tape: "kassette", musikkassette: "kassette", spulen: "kassette",
                 walkman: "kassette", mixtape: "kassette",

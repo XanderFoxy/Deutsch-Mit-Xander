@@ -195,9 +195,6 @@
      darunter. */
   function alsBildAufsetzen(v) {
     v.playsInline = true; v.preload = "auto"; v.controls = false;
-    /* Das Video wird ohnehin nie gezeigt (siehe direkt()), aber ein
-       unsichtbares Element kann trotzdem in die Medienauswahl des
-       Systems geraten. Also bleibt jeder Weg zu, doppelt genaeht. */
     v.setAttribute("playsinline", "");
     v.setAttribute("webkit-playsinline", "");
     v.setAttribute("disablepictureinpicture", "");
@@ -221,69 +218,25 @@
     return v;
   }
 
-  /* WIE EIN SZENENFILM AM RAND AUSLÄUFT.
-     GEWÜNSCHT: „Spiel mal mit den transparenten Rändern, so dass
-     der Chat durchguckt … wie eine Vignette, aber wolkenartig,
-     natürlich abgerundet, ohne linear oder auffällig zu sein."
-     Eine CSS-Vignette ist immer eine Ellipse, und die erkennt man
-     sofort. Die Maske wird deshalb gerechnet — siehe
-     werkzeug/bau-wolkenrand.js — und liegt als Bild bereit. Ihre
-     Kante schwankt um 8,5 % im Radius; eine Ellipse hätte 0 %. */
-  var WOLKENRAND = "filme/rand-wolke.png";
-  function wolkigMaskieren(el) {
-    var m = "url(" + WOLKENRAND + ")";
-    el.style.webkitMaskImage = m; el.style.maskImage = m;
-    el.style.webkitMaskSize = "100% 100%"; el.style.maskSize = "100% 100%";
-    el.style.webkitMaskRepeat = "no-repeat"; el.style.maskRepeat = "no-repeat";
-  }
-
-  /* ---- Weg 1: Bild auf eine LEINWAND, Video nur als Zulieferer ----
-     GEMELDET, mehrfach: „Dieses Vollbildsymbol ist immer noch nicht
-     weg … das müsste wahrscheinlich in ein Format umgewandelt
-     werden, wo das nicht mehr antastbar ist."
-     Das Format ist nicht der Punkt — der Knopf gehört zum
-     <video>-Element, nicht zur Datei. Also wird gar kein Video mehr
-     GEZEIGT: es hängt unsichtbar in der Ecke und liefert nur Bilder
-     und Ton, und zu sehen ist eine Leinwand. Eine Leinwand hat
-     keine Bedienleiste, kein Vollbild, kein Bild-im-Bild, kein
-     „Video speichern unter" — sie ist für den Browser ein Bild, das
-     sich bewegt. Genau das, was gewünscht war.
-     Der Alphakanal bleibt dabei erhalten: drawImage überträgt ihn
-     aus einem VP9-WebM mit yuva420p mit. */
+  /* ---- Weg 1: das Video kann Durchsichtigkeit selbst ---- */
   function direkt(quelle, d, s) {
     var v = alsBildAufsetzen(document.createElement("video"));
     v.src = quelle;
-    v.style.cssText += "position:absolute;left:-9999px;top:0;width:2px;height:2px;opacity:0;";
-    s.appendChild(v);
-
-    var c = document.createElement("canvas");
-    c.className = "dma-film-bild";
-    c.width = d.breite || 400; c.height = d.hoehe || 712;
-    if (d.art === "szene" || d.art === "dunkel") {
-      /* Ein Kinobild fuellt die Breite und laeuft am Rand wolkig
-         aus, damit es mit der Seite verschmilzt statt darauf zu
-         liegen. */
-      c.style.cssText = "width:min(100%,96vw);max-height:84vh;object-fit:contain;";
-      wolkigMaskieren(c);
+    /* SZENE ODER FREIGESTELLT?
+       Ein freigestellter Film liegt einfach ueber dem Chat. Ein
+       Film MIT Umgebung (art „szene") kann das nicht — er hat ja
+       keinen durchsichtigen Hintergrund. Der bekommt deshalb einen
+       weichen Rand, damit er sich in die Seite einfuegt statt wie
+       ein aufgeklebtes Rechteck darauf zu liegen. */
+    if (d.art === "szene") {
+      v.style.cssText += "width:min(100%,92vw);max-height:78vh;object-fit:cover;"
+        + "border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.55);"
+        + "-webkit-mask-image:radial-gradient(closest-side,#000 74%,transparent 99%);"
+        + "mask-image:radial-gradient(closest-side,#000 74%,transparent 99%);";
     } else {
-      c.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;";
+      v.style.cssText += "max-width:100%;max-height:100%;object-fit:contain;";
     }
-    s.appendChild(c);
-
-    var x = c.getContext("2d");
-    var laeuft = true;
-    function malen() {
-      if (!laeuft || !document.body.contains(c)) return;
-      if (v.readyState >= 2) {
-        try {
-          x.clearRect(0, 0, c.width, c.height);
-          x.drawImage(v, 0, 0, c.width, c.height);
-        } catch (e) {}
-      }
-      requestAnimationFrame(malen);
-    }
-    requestAnimationFrame(malen);
-    v.addEventListener("ended", function () { laeuft = false; });
+    s.appendChild(v);
     return v;
   }
 
@@ -314,12 +267,7 @@
     var c = document.createElement("canvas");
     c.className = "dma-film-bild";
     c.width = d.breite || 480; c.height = d.hoehe || 854;
-    if (d.art === "dunkel") {
-      c.style.cssText = "width:min(100%,96vw);max-height:84vh;object-fit:contain;";
-      wolkigMaskieren(c);
-    } else {
-      c.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;";
-    }
+    c.style.cssText = "max-width:100%;max-height:100%;object-fit:contain;";
     s.appendChild(c);
 
     var gl = c.getContext("webgl", { premultipliedAlpha: true, alpha: true })
@@ -596,9 +544,6 @@
       /* ERST HOLEN. Solange dreht sich ein Ring. */
       /* Ein Szenenfilm hat gar keine Maske — er wird ueberall
          gleich abgespielt, ganz ohne Grafikkarte. */
-      /* Ein Szenenfilm hat gar keine Maske — er wird ueberall gleich
-         abgespielt. Ein „dunkel"-Film hat eine und geht denselben
-         Weg wie ein freigestellter. */
       var alphaWeg = d.art === "szene" ? true : kannAlphaWebm();
       var url = alphaWeg ? d.webm : d.maske;
       var balken = warten(s);
@@ -609,10 +554,7 @@
         var profil = PROFILE[d.wirkung] || PROFILE.keiner;
         if (d.art === "szene") {
           /* Ein Kinobild braucht Dunkelheit ringsum, sonst kaempft
-             es mit dem Chat um die Aufmerksamkeit. Ein „dunkel"-Film
-             braucht sie NICHT: er ist an seinen dunklen Stellen
-             ohnehin durchsichtig, und genau dort soll der Chat
-             durchscheinen. */
+             es mit dem Chat um die Aufmerksamkeit. */
           var grund = document.createElement("s");
           grund.style.cssText = "position:absolute;inset:0;background:rgba(6,8,14,.72);"
             + "backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);";

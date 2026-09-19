@@ -19105,7 +19105,8 @@
 
     /* Wofuer es keine Zeichnung gibt (die Loks), steht wenigstens das
        Zeichen da. Ein leerer Geschenkkasten sieht nach Fehler aus. */
-    const LC_GG_ZEICHEN = { lok: "\uD83D\uDE82", lok2: "\uD83D\uDE84" };
+    const LC_GG_ZEICHEN = { lok: "\uD83D\uDE82", lok2: "\uD83D\uDE84",
+      raumschiff: "\uD83D\uDE80", uboot: "\uD83D\uDEA2" };
     lcGgLaden().then((tafel) => {
       const tier = tafel && tafel[art];
       if (!document.body.contains(schicht)) return;
@@ -23772,6 +23773,8 @@
        dasteht. */
     gglok:     { ganzeSeite: true, wie: "gg", tier: "lok" },
     gglok2:    { ganzeSeite: true, wie: "gg", tier: "lok2" },
+    ggraumschiff: { ganzeSeite: true, wie: "gg", tier: "raumschiff" },
+    gguboot:   { ganzeSeite: true, wie: "gg", tier: "uboot" },
     /* Die Achtziger. */
     kassette: { ganzeSeite: true, wie: "kassette" },
     pacman:   { ganzeSeite: true, wie: "pacman" },
@@ -24160,6 +24163,73 @@
     }, verzug || 0);
   }
 
+  /* DIE GEZEICHNETE FASSUNG EINER GANZSEITIGEN ANIMATION.
+     Herausgeloest, damit sie an zwei Stellen aufgerufen werden
+     kann: normal — und als Rueckfall, wenn zu dieser Animation
+     zwar ein Film gehoert, er sich aber nicht abspielen liess.
+     Ohne diesen Rueckfall saehe man in dem Fall gar nichts,
+     und das waere schlimmer als die Zeichnung. */
+  function lcWirkungGezeichnet(e, nachricht) {
+    if (e.wie === "ballon") lcBallons();
+    else if (e.wie === "schnee" || e.wie === "regen") lcWetter(e.wie);
+    else if (e.wie === "feuerwerk") lcFeuerwerk();
+    else if (e.wie === "gewitter") lcGewitter();
+    else if (e.wie === "erdbeben") lcErdbeben();
+    else if (e.wie === "vulkan") lcVulkan();
+    else if (e.wie === "schmetterling") lcFlieger("schmetterling");
+    else if (e.wie === "voegel") lcFlieger("voegel");
+    else if (e.wie === "schlitten") lcSchlitten();
+    else if (e.wie === "rennauto") lcRennauto();
+    else if (e.wie === "bonbon") lcBonbonregen();
+    else if (e.wie === "orkan") lcOrkan();
+    else if (e.wie === "finsternis") lcFinsternis();
+    else if (e.wie === "lagerfeuer") lcLagerfeuer();
+    else if (e.wie === "sternschnuppe") lcSternschnuppen();
+    else if (e.wie === "matrix") lcMatrix();
+    else if (e.wie === "falten") lcFalten();
+    else if (e.wie === "armageddon") lcArmageddon();
+    else if (e.wie === "sintflut") lcSintflut();
+    else if (e.wie === "aegypten") lcAegypten();
+    else if (e.wie === "ostern") lcOstern();
+    else if (e.wie === "augen") lcAugen();
+    else if (e.wie === "route66") lcRoute66();
+    else if (e.wie === "prunk") lcGeschenkGross(nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
+    else if (e.wie === "kassette") lcKassette();
+    else if (e.wie === "pacman") lcPacman();
+    else if (e.wie === "vhs") lcVhs();
+    else if (e.wie === "disko") lcDisko();
+    else if (e.wie === "gg") lcGrossGeschenk(e.tier, nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
+    else if (e.wie === "enten") lcEnten();
+    else if (e.wie === "katze") lcKatze();
+    else if (e.wie === "pirat") lcPirat();
+    else if (e.wie === "strudel") lcStrudel();
+    else if (e.wie === "schwamm") lcSchwamm();
+    else if (e.wie === "schuss") lcSchuesse();
+    else if (e.wie === "geld") lcGeldregen();
+    else if (e.wie === "keks") lcKeks();
+    else if (e.wie === "wolken") lcWolkenzug();
+    else if (e.wie === "glasbruch") lcGlasbruch();
+    else if (e.wie === "spinnen") lcSpinnen();
+    else if (e.wie === "noten") lcNoten();
+    else if (e.wie === "geschenk") lcGeschenk();
+    else if (e.wie === "seifenblasen") lcSeifenblasen();
+    else if (e.wie === "herbst") lcHerbst();
+    else if (e.wie === "aquarium") lcAquarium();
+    else if (e.wie === "pinguine") lcPinguine();
+    else if (e.wie === "fratze") lcFratze();
+    else if (e.wie === "blut") lcBlut();
+    else if (e.wie === "schloss") lcTorSchloss();
+    else if (e.wie === "kitt") lcKitt();
+    else if (e.wie === "dino") lcDino();
+    else if (e.wie === "jalousie") lcJalousie();
+    else if (e.wie === "handdurch") lcHand();
+    else if (e.wie === "tore") lcTore();
+    else if (e.wie === "paintball") lcPaintball();
+    else if (e.wie === "halloween") lcJahreszeit("halloween");
+    else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
+    else lcKonfetti();
+  }
+
   function lcWirkung(art, anZeile, nachricht) {
     const e = LC_EFFEKTE[art];
     if (!e) return;
@@ -24190,6 +24260,22 @@
          Das ist dieselbe Rechnung wie beim Klick auf den Reiter,
          also genau EINE Stelle, und sie rechnet absolut. */
       try { livechatAnSeinenPlatz(true); } catch (err) {}
+      /* LIEGT ZU DIESER ANIMATION EIN FILM BEREIT? DANN DER FILM.
+         Bisher galt das nur für die grossen Geschenke. Es gilt
+         jetzt für JEDE ganzseitige Animation: heisst eine Datei in
+         filme/ genauso wie der Effekt, läuft sie statt der
+         Zeichnung. So bekommt „/schlitten" den echten
+         Weihnachtsschlitten und „/katze" das echte Kätzchen, ohne
+         dass es dafür zwei Befehle gäbe — und ohne dass eine
+         gezeichnete Animation wegfällt: fehlt der Film, wird
+         gezeichnet wie immer. */
+      const filmName = lcFilmDa(art) ? art : (lcFilmDa(e.tier) ? e.tier : "");
+      if (filmName) {
+        lcFilmSpielen(filmName).then((lief) => {
+          if (!lief) { lcTonZu(e.wie || art); lcWirkungGezeichnet(e, nachricht); }
+        });
+        return;
+      }
       /* Ein kurzer Ton dazu, wo er passt — nicht länger als eine
          knappe Sekunde, die Animation läuft weiter.
 
@@ -24200,64 +24286,7 @@
          einen FILM mit, hat der seine eigene Tonspur, und zwei
          Tonspuren uebereinander sind einfach Krach. */
       if (!(e.wie === "gg" && lcFilmDa(e.tier))) lcTonZu(e.wie || art);
-      if (e.wie === "ballon") lcBallons();
-      else if (e.wie === "schnee" || e.wie === "regen") lcWetter(e.wie);
-      else if (e.wie === "feuerwerk") lcFeuerwerk();
-      else if (e.wie === "gewitter") lcGewitter();
-      else if (e.wie === "erdbeben") lcErdbeben();
-      else if (e.wie === "vulkan") lcVulkan();
-      else if (e.wie === "schmetterling") lcFlieger("schmetterling");
-      else if (e.wie === "voegel") lcFlieger("voegel");
-      else if (e.wie === "schlitten") lcSchlitten();
-      else if (e.wie === "rennauto") lcRennauto();
-      else if (e.wie === "bonbon") lcBonbonregen();
-      else if (e.wie === "orkan") lcOrkan();
-      else if (e.wie === "finsternis") lcFinsternis();
-      else if (e.wie === "lagerfeuer") lcLagerfeuer();
-      else if (e.wie === "sternschnuppe") lcSternschnuppen();
-      else if (e.wie === "matrix") lcMatrix();
-      else if (e.wie === "falten") lcFalten();
-      else if (e.wie === "armageddon") lcArmageddon();
-      else if (e.wie === "sintflut") lcSintflut();
-      else if (e.wie === "aegypten") lcAegypten();
-      else if (e.wie === "ostern") lcOstern();
-      else if (e.wie === "augen") lcAugen();
-      else if (e.wie === "route66") lcRoute66();
-      else if (e.wie === "prunk") lcGeschenkGross(nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
-      else if (e.wie === "kassette") lcKassette();
-      else if (e.wie === "pacman") lcPacman();
-      else if (e.wie === "vhs") lcVhs();
-      else if (e.wie === "disko") lcDisko();
-      else if (e.wie === "gg") lcGrossGeschenk(e.tier, nachricht && (nachricht.wen || nachricht.an) ? (nachricht.wen || nachricht.an) : "");
-      else if (e.wie === "enten") lcEnten();
-      else if (e.wie === "katze") lcKatze();
-      else if (e.wie === "pirat") lcPirat();
-      else if (e.wie === "strudel") lcStrudel();
-      else if (e.wie === "schwamm") lcSchwamm();
-      else if (e.wie === "schuss") lcSchuesse();
-      else if (e.wie === "geld") lcGeldregen();
-      else if (e.wie === "keks") lcKeks();
-      else if (e.wie === "wolken") lcWolkenzug();
-      else if (e.wie === "glasbruch") lcGlasbruch();
-      else if (e.wie === "spinnen") lcSpinnen();
-      else if (e.wie === "noten") lcNoten();
-      else if (e.wie === "geschenk") lcGeschenk();
-      else if (e.wie === "seifenblasen") lcSeifenblasen();
-      else if (e.wie === "herbst") lcHerbst();
-      else if (e.wie === "aquarium") lcAquarium();
-      else if (e.wie === "pinguine") lcPinguine();
-      else if (e.wie === "fratze") lcFratze();
-      else if (e.wie === "blut") lcBlut();
-      else if (e.wie === "schloss") lcTorSchloss();
-      else if (e.wie === "kitt") lcKitt();
-      else if (e.wie === "dino") lcDino();
-      else if (e.wie === "jalousie") lcJalousie();
-      else if (e.wie === "handdurch") lcHand();
-      else if (e.wie === "tore") lcTore();
-      else if (e.wie === "paintball") lcPaintball();
-      else if (e.wie === "halloween") lcJahreszeit("halloween");
-      else if (e.wie === "weihnachten") lcJahreszeit("weihnachten");
-      else lcKonfetti();
+      lcWirkungGezeichnet(e, nachricht);
       return;
     }
     const v = document.getElementById("lcVerlauf");

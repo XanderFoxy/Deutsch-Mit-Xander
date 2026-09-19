@@ -42,11 +42,19 @@ const pruefe = (was, gut, zusatz) => {
    DMA_PRUEF.effekt("ggtrex"). Das ist der Weg, den es im Betrieb
    wirklich nimmt. */
 const PAARE = [
-  ["ggtrex",  "/trex",  "trex"],
-  ["ggloewe", "/loewe", "loewe"],
-  ["ggadler", "/adler", "adler"],
-  ["gglok",   "/lok",   "lok"],
-  ["gglok2",  "/zug",   "lok2"]
+  ["ggtrex",       "/trex",       "trex"],
+  ["ggloewe",      "/loewe",      "loewe"],
+  ["ggadler",      "/adler",      "adler"],
+  ["gglok",        "/lok",        "lok"],
+  ["gglok2",       "/zug",        "lok2"],
+  ["ggraumschiff", "/raumschiff", "raumschiff"],
+  ["gguboot",      "/uboot",      "uboot"],
+  /* Diese beiden sind KEINE Geschenke, sondern seit jeher
+     gezeichnete Animationen. Sie zeigen den Film jetzt trotzdem,
+     weil eine Datei in filme/ genauso heisst wie der Effekt — und
+     fallen auf die Zeichnung zurueck, wenn er fehlt. */
+  ["schlitten",    "/schlitten",  "schlitten"],
+  ["katze",        "/katze",      "katze"]
 ];
 
 (async () => {

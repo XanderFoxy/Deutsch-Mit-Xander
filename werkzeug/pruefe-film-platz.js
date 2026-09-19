@@ -104,7 +104,9 @@ const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: 
       const l = document.querySelector(".dma-film");
       if (!l) return;
       const r = l.getBoundingClientRect();
-      const b = l.querySelector("video, canvas.dma-film-bild");
+      /* Zuerst die Leinwand: das Video haengt seit Fassung 334
+         unsichtbar in der Ecke und wird nie gezeigt. */
+      const b = l.querySelector("canvas.dma-film-bild") || l.querySelector("video");
       const rb = b ? b.getBoundingClientRect() : r;
       window.__fp.stellen.push([Math.round(r.top), Math.round(r.left),
                                 Math.round(rb.top), Math.round(rb.left)]);
