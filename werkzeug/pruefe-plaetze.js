@@ -82,7 +82,7 @@ const IM_BROWSER = async (pid) => {
     if (b) andere.push(Object.assign({ id: q.id }, b));
   }
   return { id: pid, szene: platz.szene, teil: platz.teil, haltung: platz.haltung,
-           wo: platz.wo, x: platz.x, y: platz.y, fb, tb, andere };
+           wo: platz.wo, x: platz.x, y: platz.y, sitzY: platz.sitzY, fb, tb, andere };
 };
 
 (async () => {
@@ -140,10 +140,34 @@ const IM_BROWSER = async (pid) => {
     const mitte = (z.fb.l + z.fb.r) / 2;
     const ab = Math.max(0, Math.max(z.tb.l - mitte, mitte - z.tb.r));
     /* Wer SITZT, sitzt neben dem Tisch auf einem Stuhl und nicht
-       mitten auf der Tischplatte — da ist ein Stuhlabstand normal. */
-    const erlaubt = z.haltung === "sitzen" ? 30 : 12;
+       mitten auf der Tischplatte — da ist ein Stuhlabstand normal.
+
+       ABER: „auf der Bank" ist etwas anderes als „am Tisch". Das
+       Wörtchen sagt es selbst, und das Sagen hat der Platz, nicht
+       ich — deshalb wird es aus „wo" gelesen und nicht geraten.
+       An einem Tisch sitzt man DANEBEN, auf einer Bank DARAUF.
+       Die grosszuegigen 30 Einheiten Stuhlabstand gelten deshalb
+       nur fuers Danebensitzen.
+
+       GEFUNDEN DAMIT: im Garten sass die Frau 12 Einheiten neben
+       dem rechten Ende der Bank im Gras. Die alte Regel liess das
+       durch — die Kaesten beruehrten sich zu einem Fuenftel, und
+       30 war ja erlaubt. Das Auge sah trotzdem sofort, dass da
+       niemand auf der Bank sitzt. */
+    const draufSitzen = z.haltung === "sitzen" && /^auf /.test(z.wo || "");
+    const erlaubt = draufSitzen ? 0 : (z.haltung === "sitzen" ? 30 : 12);
     if (ab > erlaubt) klagen.push("ihre Mitte steht " + Math.round(ab)
-      + " neben „" + z.teil + "“");
+      + " neben „" + z.teil + "“"
+      + (draufSitzen ? " — man sitzt DARAUF, nicht daneben" : ""));
+    /* Und die Sitzhoehe muss am Moebel liegen. Sie steht als „sitzY"
+       im Platz und wird nirgends nachgerechnet: eine Zahl, die ueber
+       oder unter dem gezeichneten Stueck liegt, laesst die Figur in
+       der Luft schweben oder im Boden versinken. */
+    if (draufSitzen && typeof z.sitzY === "number"
+        && (z.sitzY < z.tb.o - 2 || z.sitzY > z.tb.u + 2)) {
+      klagen.push("die Sitzhöhe " + z.sitzY + " liegt nicht an „" + z.teil
+        + "“ (" + Math.round(z.tb.o) + " bis " + Math.round(z.tb.u) + ")");
+    }
     if (z.haltung === "stehen" || z.haltung === "gehen") {
       /* Der Mast einer Ampel ist bis in den Vordergrund gezeichnet,
          die Person steht aber weiter hinten auf dem Gehweg — ein

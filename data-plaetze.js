@@ -390,7 +390,7 @@ window.DMA_PLAETZE = [
   "id": "garten-bank",
   "szene": "garten",
   "teil": "bank",
-  "x": 288,
+  "x": 250,
   "y": 162,
   "wo": "auf der Bank",
   "wort": "die Bank",
@@ -398,7 +398,7 @@ window.DMA_PLAETZE = [
   "tut": null,
   "an": true,
   "hoehe": 56,
-  "sitzY": 166
+  "sitzY": 172
  },
  {
   "id": "garten-teich",

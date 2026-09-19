@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — alle Sonden auf einmal",
+  stand: "Runde 22 — Garten: auf der Bank statt daneben",
 
   inArbeit: [
-    { seit: "2026-09-19T02:56",
-      text: "Sitzende Seitenansicht fürs Profil" },
-    { seit: "2026-09-19T02:56",
+    { seit: "2026-09-19T03:06",
+      text: "Sitzende Seitenansicht fürs Profil — braucht den Figuren-Erzeuger" },
+    { seit: "2026-09-19T03:06",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
-    { seit: "2026-09-19T02:56", nurBetreiber: true,
+    { seit: "2026-09-19T03:06", nurBetreiber: true,
       text: "Cloudflare-API-Token für das Klassenzimmer-Relais fehlt noch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:56",
-      text: "Sammel-Durchlauf für alle 55 Sonden (werkzeug/alle-pruefen.sh)" },
-    { seit: "2026-09-19T02:56",
-      text: "Fehlalarm behoben: „FEHL“ steckte auch in „BEFEHL“" },
-    { seit: "2026-09-19T02:56",
-      text: "Rückgabewert wird jetzt wirklich von der Sonde gelesen, nicht von grep" },
-    { seit: "2026-09-19T02:56",
-      text: "Alle 55 Sonden laufen zusammen durch: 55 grün, 0 rot" },
+    { seit: "2026-09-19T03:06",
+      text: "Im Garten sitzt die Person jetzt wirklich auf der Bank" },
+    { seit: "2026-09-19T03:06",
+      text: "Sitzhöhe an der Bank nachgemessen statt geschätzt (172)" },
+    { seit: "2026-09-19T03:06",
+      text: "Prüfung unterscheidet jetzt „auf der Bank“ von „am Tisch“" },
+    { seit: "2026-09-19T03:06",
+      text: "Sammel-Durchlauf für alle 55 Sonden" },
   ],
 };
