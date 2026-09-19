@@ -9106,6 +9106,9 @@ window.LiveChat = (function () {
         ? "WebM mit Durchsichtigkeit (Chrome, Firefox, Android)"
         : "Bild + Maske nebeneinander (Safari, iPhone)"));
     }
+    if (fspieler && fspieler.letzterTon) {
+      z.push("  Ton beim letzten Mal: " + (fspieler.letzterTon() || "noch keiner gelaufen"));
+    }
     var fgrund = "";
     try { fgrund = (window.DMA_FILM_GRUND && window.DMA_FILM_GRUND()) || ""; } catch (e) {}
     z.push("  letzter Versuch    : " + (fgrund ? fgrund : "ohne Beanstandung"));

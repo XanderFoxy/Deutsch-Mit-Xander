@@ -18929,14 +18929,23 @@
      probiert — lieber eine Anfrage zu viel als ein Film, der nicht
      laeuft. */
   let lcFilmListe = null;
+  let lcFilmNamen = null;          // dasselbe, aber sofort abfragbar
   function lcFilmListeHolen() {
     if (!lcFilmListe) {
       lcFilmListe = fetch("filme/liste.json", { cache: "no-cache" })
         .then((a) => (a.ok ? a.json() : null))
         .then((l) => (l && l.filme ? l.filme.map((f) => f.name) : null))
+        .then((n) => { lcFilmNamen = n; return n; })
         .catch(() => null);
     }
     return lcFilmListe;
+  }
+  /* Gibt es zu diesem Geschenk einen Film? Muss OHNE Warten zu
+     beantworten sein: der Geraeuschplan entscheidet in derselben
+     Zeile, ob der Jubel losgeht. Deshalb wird die Liste beim
+     Betreten des Klassenzimmers einmal geholt. */
+  function lcFilmDa(name) {
+    return Boolean(lcFilmNamen && name && lcFilmNamen.indexOf(String(name)) >= 0);
   }
   function lcFilmSpielen(name, opt) {
     if (!name) return Promise.resolve(false);
@@ -18960,6 +18969,10 @@
         lcFilmGrund = "filmspieler.js liess sich nicht laden — bist du auf der neuesten Fassung?";
         return false;
       }
+      /* Faengt ein Film an, schweigt alles andere. Das faengt auch
+         den Fall ab, in dem der Jubel schon lief, bevor die Liste
+         da war (allererstes Geschenk nach dem Laden). */
+      lcGeraeuscheStoppen();
       return window.DMA_FILM.spielen(name, opt || {}).then(() => { lcFilmGrund = ""; return true; })
         .catch((e) => { lcFilmGrund = String((e && e.message) || e); return false; });
     });
@@ -21609,6 +21622,23 @@
     } catch (e) { return false; }
   }
 
+  /* ALLES VERSTUMMEN LASSEN.
+     Gebraucht, sobald ein Film anfaengt: er bringt seine eigene
+     Tonspur mit, und der Geschenk-Jubel darunter war genau das,
+     was gemeldet wurde. Angefasst wird nur, was auch laeuft. */
+  function lcGeraeuscheStoppen() {
+    try {
+      Object.keys(lcGeraeuschAblage).forEach((k) => {
+        const a = lcGeraeuschAblage[k];
+        if (!a || a.paused) return;
+        if (a.__lcStop) { clearTimeout(a.__lcStop); a.__lcStop = 0; }
+        if (a.__lcBlende) { clearInterval(a.__lcBlende); a.__lcBlende = 0; }
+        a.loop = false;
+        try { a.pause(); a.currentTime = 0; } catch (e) {}
+      });
+    } catch (e) {}
+  }
+
   function lcTonZu(was) {
     /* Erst das echte Geräusch — gibt es keines, der gebaute Ton.
        „was" ist der Name des Effekts; der Plan haengt daran. */
@@ -22734,6 +22764,12 @@
          er sofort merkt, wenn es ihn gar nicht gibt, und die anderen
          nicht auf eine leere Zeile schauen. Der Rueckgabewert sagt
          dem Chat, ob es den Film ueberhaupt gibt. */
+      /* Die Filmliste gleich beim Betreten holen. Sie ist ein paar
+         hundert Zeichen gross und entscheidet zwei Dinge SOFORT:
+         ob ein Geschenk seinen Jubel spielen darf und ob es sich
+         lohnt, den Abspieler nachzuladen. Wer sie erst dann holt,
+         wenn das erste Geschenk kommt, hoert einmal beides. */
+      lcFilmListeHolen();
       if (LiveChat.beiFilm) {
         LiveChat.beiFilm((name, melden) => {
           lcFilmSpielen(name).then((lief) => {
@@ -24117,8 +24153,15 @@
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
       /* Ein kurzer Ton dazu, wo er passt — nicht länger als eine
-         knappe Sekunde, die Animation läuft weiter. */
-      lcTonZu(e.wie || art);
+         knappe Sekunde, die Animation läuft weiter.
+
+         AUSNAHME, GEMELDET: „Man hoert diesen Geschenk-Jubel im
+         Hintergrund von dem, was da vorher drin lag, und man
+         hoert nicht den Sound von den Videos." Richtig — der
+         Jubel gehoert zur gezeichneten Kiste. Bringt das Geschenk
+         einen FILM mit, hat der seine eigene Tonspur, und zwei
+         Tonspuren uebereinander sind einfach Krach. */
+      if (!(e.wie === "gg" && lcFilmDa(e.tier))) lcTonZu(e.wie || art);
       if (e.wie === "ballon") lcBallons();
       else if (e.wie === "schnee" || e.wie === "regen") lcWetter(e.wie);
       else if (e.wie === "feuerwerk") lcFeuerwerk();

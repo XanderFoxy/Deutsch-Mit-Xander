@@ -2,28 +2,33 @@
  "filme": [
   {
    "name": "adler",
-   "sekunden": 7.33,
-   "bild": "filme/adler.jpg"
+   "sekunden": 7.5,
+   "bild": "filme/adler.jpg",
+   "wirkung": "wind"
   },
   {
    "name": "loewe",
    "sekunden": 15.04,
-   "bild": "filme/loewe.jpg"
+   "bild": "filme/loewe.jpg",
+   "wirkung": "glanz"
   },
   {
    "name": "lok",
    "sekunden": 15.04,
-   "bild": "filme/lok.jpg"
+   "bild": "filme/lok.jpg",
+   "wirkung": "dampf"
   },
   {
    "name": "lok2",
-   "sekunden": 6.96,
-   "bild": "filme/lok2.jpg"
+   "sekunden": 7.04,
+   "bild": "filme/lok2.jpg",
+   "wirkung": "dampf"
   },
   {
    "name": "trex",
    "sekunden": 15.04,
-   "bild": "filme/trex.jpg"
+   "bild": "filme/trex.jpg",
+   "wirkung": "erde"
   }
  ]
 }

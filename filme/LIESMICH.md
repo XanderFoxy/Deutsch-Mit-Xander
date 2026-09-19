@@ -60,6 +60,35 @@ Wer doch einmal andere Werte braucht:
 AEHNLICH=0.20 WEICH=0.06 bash werkzeug/film-freistellen.sh ~/x.mp4 x gruen
 ```
 
+## Der Ton bleibt drin
+
+Bis Fassung 330 warf die Kette die Tonspur weg (`-an`), und im Chat lief
+statt dessen der Geschenk-Jubel. Jetzt wandert der Originalton mit —
+Opus im WebM, AAC im MP4 —, der Spieler spielt ihn, und der Jubel des
+gezeichneten Geschenks schweigt, sobald ein Film läuft. Erlaubt ein
+Telefon Ton erst nach einer Berührung, läuft der Film stumm weiter
+statt gar nicht; `/befund` sagt dann, dass es so war.
+
+## Welcher Effekt zu welchem Film
+
+Der sechste Wert beim Aufruf sagt, was die Seite dazuzeichnet. Staub
+gehört unter schwere Füsse und sonst nirgends:
+
+| Wirkung | wofür | was man sieht |
+|---|---|---|
+| `erde` | schwere Schritte (T-Rex) | Staub am Boden, warmer Schein |
+| `glanz` | Raubtier im Satz (Löwe) | warmer Schein, wenige Funken |
+| `wind` | Flug (Adler) | feine Luftstreifen |
+| `dampf` | Dampfmaschine (Lok) | aufsteigende Dampfwolken |
+| `keiner` | alles andere | nur der Film |
+
+**Gewackelt wird nirgends.** Das Beben lag als `transform` auf `<body>` —
+und sobald ein Vorfahr eine `transform` hat, gilt `position: fixed`
+nicht mehr gegenüber dem Bildschirm, sondern gegenüber diesem Vorfahren.
+Die Filmschicht sprang dadurch beim ersten Stoss nach oben und beim
+Nachlassen zurück. Gemessen wird das jetzt in
+`werkzeug/pruefe-film-platz.js`: 457 Messungen, Spanne 0 Punkte.
+
 ## Warum zwei Videodateien
 
 Safari kann kein WebM mit Alphakanal. Ohne die zweite Fassung sähen

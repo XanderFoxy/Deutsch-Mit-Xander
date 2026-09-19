@@ -19,22 +19,8 @@
 # sähen iPhone-Leute einen grünen Kasten — und das sind die meisten.
 #
 # AUFRUF
-#   bash werkzeug/film-freistellen.sh <video> <name> [gruen|schwarz] [farbe] [breite] [wirkung]
-#   bash werkzeug/film-freistellen.sh ~/loewe.mp4 loewe gruen "" 480 glanz
-#
-# DER TON BLEIBT DRIN. Er wurde bis Fassung 330 weggeworfen (-an), und
-# gemeldet wurde genau das: „man hoert nicht den Sound von den Videos,
-# man hoert diesen Geschenk-Jubel von vorher." Jetzt wandert die
-# Tonspur mit: Opus im WebM, AAC im MP4.
-#
-# WIRKUNG — was die Seite zu diesem Film dazuzeichnet. Nicht mehr bei
-# jedem Film dasselbe: „mach gemessen an dem, was es darstellen soll,
-# einen passenden Effekt zur Szene."
-#   erde   Beben und Staub        (schwere Schritte: T-Rex)
-#   glanz  warmer Schein, Funken  (Raubtier im Sprung: Loewe)
-#   wind   Luftstreifen, Federn   (Flug: Adler)
-#   dampf  Dampfwolken, Rattern   (Lokomotive)
-#   keiner nur der Film
+#   bash werkzeug/film-freistellen.sh <video> <name> [gruen|schwarz]
+#   bash werkzeug/film-freistellen.sh ~/loewe.mp4 loewe gruen
 #
 # Heraus kommen in filme/:
 #   <name>.webm       durchsichtig (Chrome, Firefox, Android)
@@ -100,8 +86,7 @@ fi
 # ueber einem Chat wird das Bild ohnehin auf Bildschirmbreite
 # gezogen. 540 Punkte Breite sehen dort genauso aus und wiegen
 # einen Bruchteil. Andere Breite als fuenfter Wert.
-BREITE="${5:-480}"
-WIRKUNG="${6:-keiner}"
+BREITE="${5:-540}"
 VERKLEINERN=""
 if [ "$BREITE" != "0" ]; then
   VERKLEINERN="scale='min(${BREITE},iw)':-2:flags=lanczos,"
@@ -126,21 +111,15 @@ KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuv
 echo "1/4  freistellen (${ART}) …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
   -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 \
-  -b:v 0 -crf "${GUETE:-40}" -row-mt 1 -deadline good -cpu-used 2 \
-  -c:a libopus -b:a 96k -ac 2 "$ZIEL/$NAME.webm"
+  -b:v 0 -crf 38 -row-mt 1 -deadline good -cpu-used 2 -an "$ZIEL/$NAME.webm"
 
-# -map 0:a:0? ist kein Zierrat: sobald filter_complex im Spiel ist,
-# sucht ffmpeg sich KEINE Tonspur mehr von selbst — sie faellt
-# stillschweigend weg. Genau so waere der Ton auf dem iPhone wieder
-# verschwunden, waehrend er auf Android da ist.
 echo "2/4  Safari-Fassung (Bild und Maske nebeneinander) …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
   -filter_complex "[0:v]${KETTE},split=2[a][b];\
 [a]format=yuv420p[bild];\
 [b]alphaextract,format=yuv420p[maske];\
 [bild][maske]hstack=inputs=2,format=yuv420p" \
-  -map 0:a:0? -c:v libx264 -preset slow -crf 30 -movflags +faststart \
-  -c:a aac -b:a 96k -ac 2 "$ZIEL/$NAME-maske.mp4"
+  -c:v libx264 -preset slow -crf 28 -movflags +faststart -an "$ZIEL/$NAME-maske.mp4"
 
 echo "3/4  Vorschaubild …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
@@ -160,7 +139,7 @@ D=$(echo "$LESE" | grep -oE 'Duration: [0-9:.]+' | head -1 | sed 's/Duration: //
 cat > "$ZIEL/$NAME.json" <<EOF
 { "name": "$NAME", "breite": ${B:-0}, "hoehe": ${H:-0}, "sekunden": ${D:-0},
   "webm": "filme/$NAME.webm", "maske": "filme/$NAME-maske.mp4",
-  "bild": "filme/$NAME.jpg", "art": "$ART", "wirkung": "$WIRKUNG", "ton": true }
+  "bild": "filme/$NAME.jpg", "art": "$ART" }
 EOF
 
 # Alle vorhandenen Filme in EINE Liste schreiben. Auf GitHub Pages
@@ -176,7 +155,7 @@ const filme = fs.readdirSync(pfad)
   .filter((f) => /\.json$/.test(f) && f !== "liste.json" && f.slice(0, 2) !== "__")
   .map((f) => { try { return JSON.parse(fs.readFileSync(pfad + "/" + f, "utf8")); } catch (e) { return null; } })
   .filter(Boolean)
-  .map((d) => ({ name: d.name, sekunden: d.sekunden, bild: d.bild, wirkung: d.wirkung || "keiner" }))
+  .map((d) => ({ name: d.name, sekunden: d.sekunden, bild: d.bild }))
   .sort((a, b) => a.name.localeCompare(b.name, "de"));
 fs.writeFileSync(pfad + "/liste.json", JSON.stringify({ filme: filme }, null, 1) + "\n");
 console.log("     Liste: " + filme.map((f) => f.name).join(", "));
