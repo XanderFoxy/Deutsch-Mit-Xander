@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 81 — Vorschläge beim Tippen, und die Note bleibt an der Antwort",
+  stand: "Runde 82 — Emmy hört wieder, die Bühne lässt sich wechseln, der Regenbogen leuchtet",
 
   inArbeit: [
-    { seit: "2026-09-18T23:59",
-      text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:59",
+    { seit: "2026-09-19T00:08",
       text: "Sitzende Seitenansicht fürs Profil" },
+    { seit: "2026-09-19T00:08",
+      text: "Tutor-Figur, die in jedem Bereich hereinkommt und erklärt" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:59",
-      text: "/sprechbild schlägt jetzt die verfügbaren Sprechbilder vor — anklicken statt raten, und jedes sagt, wie es aussieht" },
-    { seit: "2026-09-18T23:59",
-      text: "Namensvorschläge: ist gerade niemand da, wird schon ab dem ersten Buchstaben in allen Mitgliedern gesucht, statt eine leere Liste zu zeigen" },
-    { seit: "2026-09-18T23:59",
-      text: "GEFUNDEN: Der Notenknopf wurde nur im Augenblick des Eintreffens vergeben und an die Nachricht geheftet — nach jedem Neuladen kamen die Zeilen ohne diese Marke zurück, und der Knopf war weg. Jetzt wird beim Zeichnen gefragt, ob die Zeile zur offenen Aufgabe gehört" },
+    { seit: "2026-09-19T00:08",
+      text: "GEFUNDEN, warum Emmy nichts mehr hörte: das Alter einer Wortmeldung wurde aus SEINER und IHRER Uhr gerechnet. Geht ein Telefon anderthalb Minuten nach, galt jede seiner Aufnahmen bei ihr als „zu alt“ und verschwand — stillschweigend. Jetzt zählt nur noch die eigene Uhr" },
+    { seit: "2026-09-19T00:08",
+      text: "Bühnenansicht zum Wechseln: „🪑 Klassenzimmer“ (alle acht Plätze) oder „👥 Gegenüber“ (nur wer wirklich sitzt, dafür gross — gemessen 84 px → 178 px, allein 240 px)" },
+    { seit: "2026-09-19T00:08",
+      text: "Der Regenbogen beim Sprechen ist deutlicher: kräftigerer Rand und ein zweiter, mitwandernder Farbring" },
+    { seit: "2026-09-19T00:08",
+      text: "Neu: „funkeln“ als eigenes Sprechbild — zwei Lichterkränze wandern gegenläufig um den Kreis, er glimmt warm dazu" },
   ],
 };

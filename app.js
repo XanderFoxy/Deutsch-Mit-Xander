@@ -20219,6 +20219,15 @@
               <span class="lc-kopf-unter" id="lcKopfUnter">verbindet …</span>
             </span>
           </div>
+          <!-- GEWUENSCHT: „Die Buehnenansicht, die man wechseln kann
+               zwischen der klassischen und zwischen den beiden
+               Personen, die nur sich selbst sehen, wenn sie nur zwei
+               auf der Buehne sind."
+               Also ein Schalter: das gewohnte Raster aus acht
+               Plaetzen — oder das Gegenueber, in dem nur die zu sehen
+               sind, die wirklich auf der Buehne sitzen, dafuer gross. -->
+          <button type="button" class="lc-ansichtknopf" id="lcAnsicht"
+                  title="Zwischen dem Klassenzimmer und dem Gegenüber wechseln">👥 Ansicht</button>
         </div>
 
         <!-- GEMELDET: „Der Titel ist in meiner Optik mit dem Fokus sehr
@@ -20557,6 +20566,7 @@
 
   /* --- Die acht Plätze auffrischen: nur Inhalte, keine Elemente --- */
   function livechatPlaetzeAuffrischen(l) {
+    lcAnsichtZeichnen(l);
     l.plaetze.forEach((p) => {
       const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
       if (!knopf) return;
@@ -21654,6 +21664,47 @@
      ganz vorn. Noch einmal lang druecken nimmt ihn wieder heraus.
      Gemerkt wird das im Geraet; es ist eine Bedienvorliebe, kein
      Gespraech. */
+  /* =================================================================
+     DIE BUEHNENANSICHT
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Mach die Buehnenansicht fertig, die man wechseln kann
+     zwischen der klassischen und zwischen den beiden Personen, die nur
+     sich selbst sehen, wenn sie nur zwei auf der Buehne sind."
+
+     Zwei Ansichten, ein Schalter:
+       klassisch   — die acht Plaetze wie bisher, auch die freien
+       gegenueber  — nur, wer wirklich sitzt, dafuer gross; bei zweien
+                     stehen sie sich gegenueber
+     Die Wahl bleibt im Geraet gemerkt; sie ist eine Sehgewohnheit und
+     geht niemanden sonst etwas an. */
+  const LC_ANSICHT = "dma_lc_ansicht";
+  function lcAnsicht() {
+    try { return localStorage.getItem(LC_ANSICHT) === "gegenueber" ? "gegenueber" : "klassisch"; }
+    catch (e) { return "klassisch"; }
+  }
+  function lcAnsichtSetzen(wie) {
+    try { localStorage.setItem(LC_ANSICHT, wie === "gegenueber" ? "gegenueber" : "klassisch"); } catch (e) {}
+  }
+  /* Die Ansicht am Raster anbringen — und dazu, wie viele wirklich
+     sitzen: davon haengt ab, ob zwei sich gegenueberstehen oder ob
+     drei und mehr nebeneinander sitzen. */
+  function lcAnsichtZeichnen(l) {
+    const raster = document.getElementById("lcPlaetze");
+    const knopf = document.getElementById("lcAnsicht");
+    if (!raster) return;
+    const wie = lcAnsicht();
+    const besetzt = ((l && l.plaetze) || []).filter((p) => !p.leer).length;
+    raster.classList.toggle("lc-buehne-gegenueber", wie === "gegenueber");
+    raster.dataset.besetzt = String(besetzt);
+    if (knopf) {
+      knopf.textContent = wie === "gegenueber" ? "👥 Gegenüber" : "🪑 Klassenzimmer";
+      knopf.title = wie === "gegenueber"
+        ? "Gegenüber: nur wer auf der Bühne sitzt, dafür gross — antippen für das Klassenzimmer"
+        : "Klassenzimmer: alle acht Plätze — antippen für das Gegenüber";
+      knopf.setAttribute("aria-pressed", wie === "gegenueber" ? "true" : "false");
+    }
+  }
+
   const LC_LIEBLINGE = "dma_lc_lieblinge";
   /* Langes Druecken heftet an — auf dem Telefon der einzige Griff, der
      noch frei ist, ohne dem Chip einen zweiten Knopf anzuhaengen.
@@ -25296,6 +25347,18 @@
         eigenerPlatz.addEventListener("contextmenu", (e) => { e.preventDefault(); livechatBildWaehler(); });
       }
       area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
+      /* Der Schalter fuer die Buehnenansicht — klassisch oder
+         Gegenueber (siehe lcAnsicht weiter oben). */
+      area.querySelector("#lcAnsicht")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const neu = lcAnsicht() === "gegenueber" ? "klassisch" : "gegenueber";
+        lcAnsichtSetzen(neu);
+        const l = LiveChat.lage();
+        lcAnsichtZeichnen(l);
+        showToast(neu === "gegenueber"
+          ? "👥 Gegenüber — du siehst nur noch, wer wirklich auf der Bühne sitzt, dafür gross."
+          : "🪑 Klassenzimmer — alle acht Plätze, auch die freien.");
+      });
       area.querySelector("#lcRaeume")?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");
       /* Der Anhang oeffnet jetzt den WAEHLER, nicht mehr direkt den

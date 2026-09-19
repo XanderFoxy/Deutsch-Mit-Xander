@@ -1529,6 +1529,64 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   .lc-platz { max-width: 84px; }
   .lc-platz-name { font-size: 0.7rem; }
 }
+/* =========================================================
+   DIE BUEHNENANSICHT: KLASSENZIMMER ODER GEGENUEBER
+   ---------------------------------------------------------
+   GEWUENSCHT: „Die Buehnenansicht, die man wechseln kann zwischen
+   der klassischen und zwischen den beiden Personen, die nur sich
+   selbst sehen, wenn sie nur zwei auf der Buehne sind."
+
+   Im Gegenueber verschwinden die freien Plaetze — und wer uebrig
+   bleibt, wird gross. Bei ZWEIEN steht man sich gegenueber (zwei
+   Spalten, volle Breite); bei dreien und mehr sitzen sie zu dritt
+   nebeneinander, damit niemand aus dem Bild faellt. Das Raster
+   selbst bleibt dasselbe — es wird nur anders gezaehlt.
+   ========================================================= */
+.lc-ansichtknopf {
+  margin-left: auto;
+  align-self: center;
+  border: 1px solid rgba(224, 150, 74, 0.4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-ansichtknopf:hover { background: rgba(224, 150, 74, 0.18); }
+.lc-plaetze.lc-buehne-gegenueber .lc-platz-frei { display: none; }
+.lc-plaetze.lc-buehne-gegenueber {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 420px;
+  gap: 16px 18px;
+}
+.lc-plaetze.lc-buehne-gegenueber .lc-platz { max-width: 100%; }
+.lc-plaetze.lc-buehne-gegenueber .lc-platz-name { font-size: 0.92rem; font-weight: 700; }
+/* Einer allein: er hat die Buehne fuer sich. */
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="1"] {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 240px;
+}
+/* Drei und mehr: nebeneinander, damit niemand hinausfaellt. */
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="3"],
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="4"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 520px;
+}
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="5"],
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="6"],
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="7"],
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="8"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 580px;
+}
+/* Und wenn niemand sitzt, waere die Buehne leer — dann lieber das
+   gewohnte Raster, sonst steht man vor dem Nichts. */
+.lc-plaetze.lc-buehne-gegenueber[data-besetzt="0"] .lc-platz-frei { display: flex; }
+
 /* Die Chatüberschrift darf auf schmalen Geräten nicht zu einer
    einspaltigen Buchstabensäule zerfallen. */
 .lc-chat-kopf { flex-wrap: wrap; row-gap: 4px; }
@@ -8409,6 +8467,79 @@ body.lc-schreibt .tutor-reiter {
   60%  { border-color: #6fe3d6 !important; box-shadow: 0 0 0 4px rgba(111,227,214,.3); }
   80%  { border-color: #6fb3ff !important; box-shadow: 0 0 0 4px rgba(111,179,255,.3); }
   100% { border-color: #ff6b6b !important; box-shadow: 0 0 0 4px rgba(255,107,107,.3); }
+}
+
+/* DER REGENBOGEN DARF MAN SEHEN.
+   GEWUENSCHT: „Bei dem Sprechen die Effekte — der Regenbogen
+   deutlicher und das magische Funkeln als eigener Effekt."
+   Der Rand wandert jetzt nicht nur durch die Farben, er traegt
+   ausserdem einen zweiten, weichen Schein nach aussen (18 statt 4
+   Bildpunkte) und einen mitlaufenden Farbring. Aus einem Hauch wird
+   ein Regenbogen. */
+.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis {
+  animation: lcSprichtBogen 2.2s linear infinite;
+  /* Ein Bildpunkt mehr als der gewoehnliche Ring — gemessen 3 gegen
+     4: so sieht man auf den ersten Blick, dass hier etwas anderes
+     laeuft. */
+  border-width: 4px !important;
+}
+.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: .55;
+  pointer-events: none;
+  animation: lcSprichtBogenRing 2.2s linear infinite;
+}
+@keyframes lcSprichtBogenRing {
+  0%   { border-color: #ffd166; transform: scale(1);    opacity: .55; }
+  50%  { border-color: #6fe3d6; transform: scale(1.09); opacity: .28; }
+  100% { border-color: #ff6b6b; transform: scale(1);    opacity: .55; }
+}
+
+/* „funkeln": magisches Funkeln — vier Lichter wandern um den Kreis,
+   und er selbst glimmt warm auf. Ein eigener Effekt, kein Aufguss
+   des Regenbogens: dort wandert eine Farbe, hier wandert ein LICHT.
+   Gebaut aus zwei Schatten-Sternen, damit es keine zusaetzlichen
+   Elemente braucht (der Platz hat nur Kreis, ::before und ::after). */
+.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis {
+  animation: lcFunkelGlimmen 1.8s ease-in-out infinite;
+  border-color: #ffe9a8 !important;
+}
+.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%,   rgba(255,255,255,.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 100% 50%, rgba(255,240,180,.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 100%, rgba(255,255,255,.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 0% 50%,   rgba(255,240,180,.85) 0 2px, transparent 3px);
+  animation: lcFunkelDreh 3.4s linear infinite;
+}
+.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  border-radius: 50%;
+  border: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 78% 14%, rgba(255,255,255,.9) 0 1.6px, transparent 2.6px),
+    radial-gradient(circle at 20% 82%, rgba(255,236,160,.9) 0 1.6px, transparent 2.6px),
+    radial-gradient(circle at 12% 26%, rgba(255,255,255,.7) 0 1.4px, transparent 2.4px);
+  animation: lcFunkelDreh 5.2s linear infinite reverse;
+  opacity: .9;
+}
+@keyframes lcFunkelDreh { to { transform: rotate(360deg); } }
+@keyframes lcFunkelGlimmen {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(255,233,168,.45), 0 0 10px 2px rgba(255,214,102,.35); }
+  50%      { box-shadow: 0 0 0 4px rgba(255,233,168,.30), 0 0 20px 6px rgba(255,214,102,.55); }
 }
 
 /* „aus": wer nicht auffallen will, fällt nicht auf. Das Sprechen

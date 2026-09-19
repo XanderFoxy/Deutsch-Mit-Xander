@@ -681,7 +681,8 @@ window.LiveChat = (function () {
     ring:       "Grüner Ring — ruhig und deutlich",
     welle:      "Schallwellen — zwei Ringe laufen nach außen",
     puls:       "Herzschlag — der Kreis pocht",
-    regenbogen: "Regenbogen — der Rand wandert durch die Farben",
+    regenbogen: "Regenbogen — der Rand wandert durch alle Farben",
+    funkeln:    "Funkeln — Lichter wandern um den Kreis, er glimmt warm",
     aus:        "Nichts — kein Zeichen beim Sprechen"
   };
   var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";
@@ -5839,11 +5840,25 @@ window.LiveChat = (function () {
 
   function liveEinreihen(w) {
     if (w && w.sprach && liveDoppelt(w)) return;
-    /* Vergangenheit bleibt Vergangenheit. */
-    if (w && w.zeit && Date.now() - w.zeit > LIVE_ALTER_MS) {
-      liveUebersprungenMelden(1);
-      return;
-    }
+    /* FREMDE UHREN GEHEN FALSCH — UND DAS DARF NIEMANDEN STUMM
+       SCHALTEN.
+       -----------------------------------------------------------
+       GEMELDET: „Emmy kann mich auf ihrer Seite nicht mehr hoeren."
+
+       Hier stand:
+           if (w.zeit && Date.now() - w.zeit > LIVE_ALTER_MS) return;
+       Das Alter wurde also aus SEINER Uhr und IHRER Uhr gerechnet.
+       Geht ein Telefon anderthalb Minuten vor oder nach — und das
+       kommt vor, besonders wenn eines davon lange im Flugmodus war —,
+       dann galt JEDE seiner Wortmeldungen bei ihr als „zu alt" und
+       wurde weggeworfen. Stillschweigend, denn der Hinweis darauf ist
+       auf seinen Wunsch abgeschaltet.
+
+       Gemessen wird deshalb nur noch mit der EIGENEN Uhr: wann ist
+       das Stueck HIER angekommen. Was gerade hereinkommt, ist nie zu
+       alt. Alt werden kann es nur in der eigenen Reihe — und das
+       faengt liveNaechste() ab. */
+    if (w) w.hier = Date.now();
     var i = liveWarteschlange.length;
     while (i > 0) {
       var v = liveWarteschlange[i - 1];
@@ -5877,7 +5892,21 @@ window.LiveChat = (function () {
     }, 1200);
   }
 
-  function liveNaechste() { return liveWarteschlange.shift() || null; }
+  function liveNaechste() {
+    /* Was zu lange in der eigenen Reihe lag, ist Vergangenheit — das
+       ist die einzige ehrliche Altersmessung, weil sie nur die eigene
+       Uhr braucht. */
+    while (liveWarteschlange.length) {
+      var w = liveWarteschlange.shift();
+      if (!w) continue;
+      if (Date.now() - (w.hier || Date.now()) > LIVE_ALTER_MS) {
+        liveUebersprungenMelden(1);
+        continue;
+      }
+      return w;
+    }
+    return null;
+  }
   function liveOffen() { return liveWarteschlange.length; }
   function liveMitschrieb(an) {
     if (an === undefined) return liveSichtbar;
@@ -6520,7 +6549,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [<Text>]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
     { gr: "schule", w: "fokus", kurz: "fokusmodus", nutzt: "/fokus",           was: "Zuhören statt durcheinanderreden: solange jemand spricht, nimmt niemand auf" },
-    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <Art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, aus" },
+    { gr: "aussehen", w: "sprechbild", kurz: "sprechen", nutzt: "/sprechbild <Art>", was: "Wie dein Platz aussieht, wenn du sprichst: ring, welle, puls, regenbogen, funkeln, aus" },
     { gr: "reden", w: "cschrift",kurz: "colorfont", nutzt: "/c schrift <Farbe>", was: "Nur die Schrift bekommt diese Farbe — der Name behält seine" },
     { gr: "raum", w: "leave",   kurz: "part", nutzt: "/leave",              was: "Zurück ins Klassenzimmer" },
     { gr: "hilfe", w: "h",       kurz: "help", nutzt: "/h",                  was: "Diese Liste" }
@@ -8529,6 +8558,17 @@ window.LiveChat = (function () {
       return { vollstaendigVorher: vollstaendigVorher, fehlte: fehltJetzt,
                ergebnis: ganz, erwartet: Array.from({ length: anzahl },
                  function (x, j) { return "T" + j; }).join("") };
+    },
+    /* Nur zum Nachpruefen: eine Wortmeldung einreihen, die Reihe
+       leeren und sie kuenstlich altern lassen — damit sich messen
+       laesst, dass eine falsch gehende fremde Uhr niemanden mehr
+       stummschaltet. */
+    pruefLiveRein: function (w) { liveEinreihen(w); return liveWarteschlange.length; },
+    pruefWarteschlangeLeeren: function () { liveWarteschlange.length = 0; },
+    pruefNaechste: function () { return liveNaechste(); },
+    pruefReiheAltern: function (ms) {
+      liveWarteschlange.forEach(function (w) { w.hier = (w.hier || Date.now()) - (Number(ms) || 0); });
+      return liveWarteschlange.length;
     },
     pruefEinreihen: function (liste) {
       var merk = liveWarteschlange.slice();
