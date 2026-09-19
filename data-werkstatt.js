@@ -49,26 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 26 — Boxen hin und zurück (v317)",
+  stand: "Runde 27 — zwei Ursachen gefunden, und ein Befund der die Wahrheit sagt (v318)",
 
   inArbeit: [
-    { seit: "2026-09-19T02:12",
-      text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus, kostet nichts" },
-    { seit: "2026-09-19T02:12",
+    { seit: "2026-09-19T02:21",
+      text: "Rückmeldung zum Befund abwarten" },
+    { seit: "2026-09-19T02:21",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T02:12",
+    { seit: "2026-09-19T02:21",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T02:12",
+    { seit: "2026-09-19T02:21",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:12",
-      text: "Der Rückschlag: wer geboxt wird, boxt zurück — blauer Handschuh von unten, der Angreifer wackelt" },
-    { seit: "2026-09-19T02:12",
-      text: "Namenssuche nachsichtig: /box Emmi trifft Emmy, statt auf alle zurückzufallen" },
-    { seit: "2026-09-19T02:12",
-      text: "Umarmen und Ablecken treffen damit auch zuverlässiger" },
+    { seit: "2026-09-19T02:21",
+      text: "Bewegung reduzieren versteckte Boxen und Ablecken KOMPLETT — jetzt laufen sie ruhig statt gar nicht" },
+    { seit: "2026-09-19T02:21",
+      text: "Ob du Lehrer bist, steht jetzt in der Marke der Zeile — sonst blieb sie ohne Notenknopf stehen" },
+    { seit: "2026-09-19T02:21",
+      text: "Einmal Lehrer, immer Lehrer in dieser Sitzung — das Profil lädt oft erst nach" },
+    { seit: "2026-09-19T02:21",
+      text: "Neu: /befund zeigt die fünf Dinge, an denen der Notenknopf hängt" },
+    { seit: "2026-09-19T02:21",
+      text: "Neu: /probe boxen zeigt eine Animation sofort, nur für dich" },
   ],
 };

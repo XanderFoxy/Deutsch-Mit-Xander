@@ -22640,6 +22640,18 @@
          bekäme sie die Meldung ausgerechnet dann nicht, wenn sie
          woanders übt — und das ist der Normalfall. */
       if (LiveChat.beiNote) LiveChat.beiNote((n) => lcNoteAngekommen(n));
+      /* /probe spielt eine Animation SOFORT auf dem eigenen Schirm —
+         ohne Nachricht, ohne Netz. Damit lässt sich in einer Sekunde
+         unterscheiden, ob das Zeichnen hakt oder der Weg dorthin. */
+      if (LiveChat.beiEffekt) {
+        LiveChat.beiEffekt((was, ichName) => {
+          const name = String(was || "").toLowerCase();
+          if (name === "boxen" || name === "box") return lcBoxen(ichName, "");
+          if (name === "umarmen" || name === "drueck" || name === "drücken") return lcUmarmung(ichName);
+          if (name === "lecken" || name === "leck") return lcLecken(ichName);
+          try { lcWirkung(name, null, { wen: ichName }); return true; } catch (e) { return false; }
+        });
+      }
       if (LiveChat.beiPunkten) {
         LiveChat.beiPunkten((wieviel, grund) => {
           if (!Backend.currentUser()) return;
@@ -24608,6 +24620,17 @@
                         Marke — sonst bekaeme eine Zeile, die erst spaeter
                         als Antwort erkannt wird, nie ihren Knopf. */
                      n.versuch ? "A" : "",
+                     /* OB ICH LEHRER BIN, GEHÖRT MIT IN DIE MARKE.
+                        Das Profil steht beim Betreten oft noch nicht —
+                        Backend lädt es nach. Wurde eine Zeile in genau
+                        diesem Augenblick gezeichnet, fehlte ihr der
+                        Notenknopf, und sie wurde NIE WIEDER angefasst:
+                        eine Zeile wird nur neu gebaut, wenn sich ihre
+                        Marke ändert. Genau das kann erklären, warum der
+                        Knopf bei ihm ausblieb, obwohl im Prüfstand
+                        alles stimmte. */
+                     (() => { try { return LiveChat.binLehrer && LiveChat.binLehrer() ? "L" : ""; }
+                              catch (e) { return ""; } })(),
                      /* Auch der nachtraeglich erkannte Bezug gehoert in
                         die Marke — sonst behielte eine Zeile ihr altes
                         Aussehen, obwohl gerade eine Aufgabe laeuft. */

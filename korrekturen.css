@@ -6265,10 +6265,48 @@ html.lc-dino-beben body { animation: lcDinoSchritt 0.62s ease-in-out 12; }
   52% { transform: translateX(4px) rotate(2.5deg); }
   70% { transform: translateX(-2px) rotate(-1deg); }
 }
+/* =================================================================
+   „BEWEGUNG REDUZIEREN" HEISST RUHIGER — NICHT UNSICHTBAR
+   -----------------------------------------------------------------
+   GEMELDET: „Die Animationen werden noch nicht gezeigt."
+
+   Hier stand  display: none  — wer im Telefon „Bewegung reduzieren"
+   eingeschaltet hat (auf dem iPhone ist das schnell passiert und bei
+   vielen an), sah von Boxen, Ablecken und den anderen GAR NICHTS.
+   Nicht weniger Bewegung: nichts. Von aussen ist das nicht von einem
+   kaputten Effekt zu unterscheiden, und es ist ein sehr guter
+   Kandidat dafür, warum bei ihm nie etwas kam.
+
+   Die Einstellung wird weiter geachtet — aber richtig verstanden: Sie
+   bittet um weniger BEWEGUNG, nicht um weniger Inhalt. Deshalb steht
+   der Handschuh jetzt kurz da und geht wieder, ohne zu fliegen. Man
+   sieht, dass etwas passiert ist, und niemandem wird schlecht.
+   ================================================================= */
 @media (prefers-reduced-motion: reduce) {
   .lc-fratze, .lc-blut, .lc-schloss, .lc-kitt, .lc-dino,
-  .lc-jalousie, .lc-hand, .lc-tore, .lc-leck, .lc-box { display: none; }
+  .lc-jalousie, .lc-hand, .lc-tore { display: none; }
   html.lc-dino-beben body { animation: none; }
+  /* Boxen und Ablecken bleiben SICHTBAR, nur ohne Flug: ein kurzes
+     Auftauchen an Ort und Stelle. */
+  .lc-leck, .lc-box { display: block; }
+  .lc-box-handschuh, .lc-box-konter, .lc-leck-zunge {
+    animation: lcRuhigZeigen 1200ms ease-out both !important;
+    transform: none !important;
+  }
+  .lc-box-l { left: 6%; top: 18%; }
+  .lc-box-r { right: 6%; top: 18%; }
+  .lc-box-treffer, .lc-box-stern {
+    animation: lcRuhigZeigen 1000ms ease-out 200ms both !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  .lc-platz.lc-wird-geboxt, .lc-platz.lc-boxt-zurueck,
+  .lc-platz.lc-wird-gedrueckt { animation: none; }
+}
+@keyframes lcRuhigZeigen {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  74%  { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* =========================================================

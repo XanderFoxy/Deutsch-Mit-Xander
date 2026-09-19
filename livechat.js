@@ -5059,13 +5059,30 @@ window.LiveChat = (function () {
      Jetzt wird im Augenblick der Frage nachgesehen, beim Konto
      selbst. Die Marke bleibt als Reserve stehen, falls das Konto
      gerade nicht antwortet. */
+  /* EINMAL LEHRER, IMMER LEHRER — jedenfalls in dieser Sitzung.
+     -----------------------------------------------------------
+     Das Profil steht beim Betreten oft noch nicht: Backend lädt es
+     nach. Wer in dem Augenblick hereinkommt, ist für einen Moment
+     KEIN Betreiber — und wenn in genau diesem Moment eine Zeile
+     gezeichnet wird, fehlt an ihr der Notenknopf, und sie wird nie
+     wieder angefasst (die Zeilen merken sich, wie sie aussahen).
+     Das ist ein sehr guter Kandidat dafuer, warum der Knopf bei ihm
+     immer wieder ausblieb, obwohl im Pruefstand alles stimmte.
+
+     Deshalb wird ein einmal erkannter Betreiber gemerkt. Nach unten
+     faellt niemand: das Gegenteil — jemanden versehentlich zum
+     Lehrer zu machen — kann daraus nicht entstehen, denn gemerkt
+     wird nur, was vorher wirklich „ja" war. */
+  var betreiberGewesen = false;
   function binBetreiber() {
+    if (betreiberGewesen) return true;
     var B = konto();
     try {
-      if (B && B.isOwner && B.isOwner()) return true;
-      if (B && B.canModerate && B.canModerate()) return true;
+      if (B && B.isOwner && B.isOwner()) { betreiberGewesen = true; return true; }
+      if (B && B.canModerate && B.canModerate()) { betreiberGewesen = true; return true; }
     } catch (e) {}
-    return Boolean(zustand.betreiber);
+    if (zustand.betreiber) { betreiberGewesen = true; return true; }
+    return false;
   }
   /* DIE ZWEITE URSACHE, und sie war ebenso meine:
      GEMELDET: „Ich werde nicht mehr als Lehrer erkannt in meinem
@@ -6936,6 +6953,7 @@ window.LiveChat = (function () {
     { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",       was: "Warum hört man jemanden nicht? Zeigt den Weg und ob Tonpakete ankommen" },
     { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck <Name>",      was: "Jemanden abschlecken — mit Zunge, Spur und Schütteln" },
     { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box <Name>",       was: "Jemandem einen Boxhandschuh verpassen" },
+    { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation sofort auf deinem Schirm zeigen — nur für dich" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon <Name>", was: "Luftballons steigen auf — zum Geburtstag" },
     { gr: "feier", w: "geschenk", kurz: "gift", nutzt: "/geschenk <Name>",     was: "Ein Geschenk überreichen — mit Schleife und Funkeln" },
@@ -8090,6 +8108,33 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " leckt " + (wen3 ? wen3.name : "alle") + " ab",
                     { wirkung: "lecken", wen: wen3 ? wen3.name : "" });
     }
+    /* =========================================================
+       /probe — ZEIGT DIE ANIMATIONEN SOFORT, NUR FUER MICH
+       ---------------------------------------------------------
+       GEMELDET: „Die Animationen werden noch nicht gezeigt."
+
+       Ich kann sein Geraet nicht sehen, und im Pruefstand laufen sie.
+       Deshalb dieser Befehl: Er spielt die Animation SOFORT und ohne
+       Umweg ueber den Chat — keine Nachricht, kein Netz, kein Raum.
+
+       Damit ist die Frage in einer Sekunde entschieden:
+         * Es kommt etwas  → das Zeichnen ist in Ordnung, es hakt am
+                             Weg dorthin (Nachricht, Name, Zeitpunkt).
+         * Es kommt nichts → das Zeichnen selbst geht auf dem Geraet
+                             nicht (Animationen abgeschaltet, alte
+                             Fassung, Systemeinstellung „weniger
+                             Bewegung").
+       ========================================================= */
+    if (art === "probe" || art === "test") {
+      var was = (rest || "boxen").trim().toLowerCase();
+      var ging = false;
+      try { ging = Boolean(zustand.effektRuf && zustand.effektRuf(was, zustand.ichName)); } catch (e) {}
+      return systemZeile(ging
+        ? "🧪 „" + was + "“ läuft gerade auf DEINEM Schirm — nur für dich, niemand sonst sieht es. "
+          + "Siehst du nichts, liegt es am Gerät (weniger Bewegung, alte Fassung), nicht am Chat."
+        : "🧪 „" + was + "“ kenne ich nicht oder es gibt gerade keine Plätze. "
+          + "Probier  /probe boxen  ,  /probe umarmen  oder  /probe lecken  — im Raum stehend.");
+    }
     if (art === "box") {
       var wen4 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " boxt " + (wen4 ? wen4.name : "alle"),
@@ -8792,6 +8837,54 @@ window.LiveChat = (function () {
       try { ow = Boolean(B.isOwner && B.isOwner()); } catch (e) {}
       z.push("  Betreiber          : " + (ow ? "ja" : "nein"));
     }
+    /* =========================================================
+       DIE FÜNF ZAHLEN, AN DENEN DER NOTENKNOPF HÄNGT
+       ---------------------------------------------------------
+       GEMELDET, zum sechsten Mal: „Die Benotung ist immer noch nicht
+       da. Was ist denn da so schwer?"
+
+       Ich habe sechsmal eine Ursache gefunden und behoben, und jedes
+       Mal blieb es bei ihm trotzdem aus. Meine Messungen laufen alle
+       im Prüfstand — dort stimmt jede einzelne. Was ich NICHT sehen
+       kann, ist sein Gerät: ob er dort als Lehrer erkannt wird, ob
+       eine Aufgabe offen steht, ob ihre Nachricht die Kennung
+       mitbringt. Genau diese fünf Dinge stehen jetzt hier, damit wir
+       es in EINER Runde wissen statt in sieben.
+
+       Der Notenknopf erscheint genau dann, wenn alle fünf stimmen.
+       Steht hier ein NEIN, ist es genau das eine. */
+    var istLehrer = false;
+    try { istLehrer = binLehrer(); } catch (e) {}
+    z.push("  ── Notenknopf ──");
+    z.push("  1. du bist Lehrer   : " + (istLehrer ? "ja" : "NEIN — dann kommt nie ein Notenknopf"));
+    z.push("  2. Aufgabe offen    : " + (offeneAufgabe
+      ? ("ja (" + offeneAufgabe.typ + ") „"
+         + String(offeneAufgabe.frage || offeneAufgabe.loesung || "").slice(0, 34) + "“")
+      : "NEIN — dann zählt keine Zeile als Antwort"));
+    /* Was liegt an den letzten fremden Zeilen wirklich an? */
+    var fremde = (zustand.nachrichten || []).filter(function (n) {
+      return n && n.von && !n.eigen && (n.art === "text" || n.art === "aktion");
+    }).slice(-3);
+    z.push("  3. letzte Antworten : " + (fremde.length ? "" : "keine fremden Zeilen da"));
+    fremde.forEach(function (n) {
+      var b = null;
+      try { b = aufgabeBezug(n); } catch (e) {}
+      z.push("     " + String(n.name || "?").slice(0, 10) + ": „"
+        + String(n.text || "").slice(0, 22) + "“ → "
+        + (n.aufgabeId ? "Kennung da" : "OHNE Kennung")
+        + (b ? " · Knopf JA" : " · Knopf nein"));
+    });
+    z.push("  4. deine Fassung    : " + (window.DMA_VERSION || "?"));
+    /* Und der Kandidat, der ALLE Animationen auf einmal erklärt. */
+    var ruhig = false;
+    try {
+      ruhig = Boolean(window.matchMedia
+        && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (e) {}
+    z.push("  5. Bewegung reduz.  : " + (ruhig
+      ? "AN — dein Gerät bittet um wenig Bewegung. Die Effekte laufen dann ruhig statt zu fliegen."
+      : "aus — Animationen laufen voll"));
+    z.push("  ────────────────");
     z.push("  dein Rang hier     : " + rangWort(true));
     z.push("  Raum               : " + zustand.raum + (zustand.raum === HAUPTRAUM ? " (Hauptraum)" : ""));
     z.push("  Leute im Raum      : " + Object.keys(zustand.leute).length);
@@ -9345,6 +9438,9 @@ window.LiveChat = (function () {
     beiPunkten: function (f) { zustand.punkteRuf = f; },
     /* Die Oberflaeche will es gross zeigen, wenn eine Note ankommt. */
     beiNote: function (f) { zustand.notenRuf = f; },
+    /* Damit /probe die Animation direkt auslösen kann — die Bilder
+       liegen in app.js, die Befehle hier. */
+    beiEffekt: function (f) { zustand.effektRuf = f; },
     beiEreignis: function (f) { zustand.ereignisRuf = f; },
     /* Nur fuer die Pruefung: die offene Aufgabe von aussen sehen. */
     pruefAufgabe: function () {
