@@ -2411,6 +2411,7 @@ window.LiveChat = (function () {
        sitzt — das Zeichen aus dem Profil reist mit. */
     geschlechtMerken(n.von, n.geschlecht);
     kontoMerken(n.von, n.konto);
+    uhrVergleichen(n);
 
     if (n.art === "puls") {
       /* Die Sitzordnung der anderen uebernehmen, aber nur, was man
@@ -5589,6 +5590,37 @@ window.LiveChat = (function () {
      fuer ein Fluestern, das der Tabelle anvertraut wird. Ohne Konto
      (Gast) geht das nicht — dann bleibt es beim Zuruf von Geraet zu
      Geraet, wie bisher. */
+  /* =========================================================
+     WIE WEIT GEHEN DIE UHREN AUSEINANDER?
+     ---------------------------------------------------------
+     Daran ist heute eine ganze Unterhaltung gescheitert: Emmy hat
+     nichts mehr gehoert, weil das Alter einer Wortmeldung aus zwei
+     verschiedenen Uhren gerechnet wurde. Das ist behoben — aber ein
+     grosser Unterschied bleibt eine Auskunft wert, weil er auch die
+     Reihenfolge im Verlauf durcheinanderbringt.
+
+     Gemessen wird nebenbei: jedes Paket bringt die Uhrzeit seines
+     Absenders mit. Der Unterschied zur eigenen Uhr wird geglaettet
+     (zur Haelfte alt, zur Haelfte neu), damit ein langsames Netz
+     nicht als falsche Uhr durchgeht. Die Laufzeit selbst ist dabei
+     immer ein paar hundert Millisekunden — alles unter fuenf
+     Sekunden gilt deshalb als „gleich". */
+  var uhrVersatz = {};        // Kennung -> Millisekunden, die seine Uhr vorgeht
+  function uhrVergleichen(n) {
+    if (!n || !n.von || typeof n.zeit !== "number" || !n.zeit) return;
+    var jetzt = Date.now();
+    if (Math.abs(jetzt - n.zeit) > 12 * 3600 * 1000) return;   // Unsinn: verwerfen
+    var neu = n.zeit - jetzt;
+    var alt = uhrVersatz[n.von];
+    uhrVersatz[n.von] = (typeof alt === "number") ? Math.round(alt * 0.5 + neu * 0.5) : neu;
+  }
+  function uhrenStand() {
+    return Object.keys(uhrVersatz).map(function (id) {
+      var p = zustand.leute[id];
+      return { id: id, name: (p && p.name) || "jemand", versatz: uhrVersatz[id] };
+    });
+  }
+
   var kontenJe = {};
   function kontoMerken(id, k) {
     if (!id || typeof k !== "string" || !k) return;
@@ -8246,6 +8278,30 @@ window.LiveChat = (function () {
     z.push("  Raum               : " + zustand.raum + (zustand.raum === HAUPTRAUM ? " (Hauptraum)" : ""));
     z.push("  Leute im Raum      : " + Object.keys(zustand.leute).length);
     z.push("  sonst gerade da    : " + Object.keys(praesenzDa).length);
+    /* Die Leitung — genau das, wonach gefragt wurde: „Gibt es eine
+       Moeglichkeit zu ueberpruefen, ob die Leitung frei ist?" */
+    z.push("  Leitung            : " + (liveLaeuftGerade
+      ? (liveLaeuftGerade.name || "jemand") + " spricht, noch " + liveRest() + " s"
+      : "frei"));
+    z.push("  in der Reihe       : " + liveWarteschlange.length);
+    if (wartendePakete.length) {
+      z.push("  wartet auf Netz    : " + wartendePakete.length + " Zeile(n)");
+    }
+    /* Und die Uhren. Ein grosser Unterschied erklaert mehr, als man
+       denkt — er stand heute hinter „ich hoere dich nicht mehr". */
+    var uhren = uhrenStand().filter(function (u) { return Math.abs(u.versatz) > 5000; });
+    if (uhren.length) {
+      uhren.forEach(function (u) {
+        var sek = Math.round(Math.abs(u.versatz) / 1000);
+        var wie = sek >= 120 ? Math.round(sek / 60) + " Minuten" : sek + " Sekunden";
+        z.push("  Uhr von " + (u.name + "            ").slice(0, 11) + ": geht "
+          + wie + (u.versatz > 0 ? " VOR" : " NACH"));
+      });
+      z.push("  (Das stoert das Hoeren nicht mehr — die Reihenfolge im");
+      z.push("   Verlauf kann es aber verschieben.)");
+    } else if (Object.keys(uhrVersatz).length) {
+      z.push("  Uhren im Raum      : gehen gleich");
+    }
     return systemZeile(z.join("\n"));
   }
 
@@ -8566,6 +8622,9 @@ window.LiveChat = (function () {
     pruefLiveRein: function (w) { liveEinreihen(w); return liveWarteschlange.length; },
     pruefWarteschlangeLeeren: function () { liveWarteschlange.length = 0; },
     pruefNaechste: function () { return liveNaechste(); },
+    /* Der gemessene Uhrenunterschied — fuer den Befund und fuer die
+       Pruefung. */
+    uhrenStand: uhrenStand,
     pruefReiheAltern: function (ms) {
       liveWarteschlange.forEach(function (w) { w.hier = (w.hier || Date.now()) - (Number(ms) || 0); });
       return liveWarteschlange.length;

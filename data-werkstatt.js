@@ -49,24 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 82 — Emmy hört wieder, die Bühne lässt sich wechseln, der Regenbogen leuchtet",
+  stand: "Runde 83 — Der Befund sagt, was wirklich los ist",
 
   inArbeit: [
-    { seit: "2026-09-19T00:08",
-      text: "Sitzende Seitenansicht fürs Profil" },
-    { seit: "2026-09-19T00:08",
+    { seit: "2026-09-19T00:14",
+      text: "Sitzende Seitenansicht fürs Profil (die Figuren haben acht Haltungen, aber keine im Profil)" },
+    { seit: "2026-09-19T00:14",
       text: "Tutor-Figur, die in jedem Bereich hereinkommt und erklärt" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T00:08",
-      text: "GEFUNDEN, warum Emmy nichts mehr hörte: das Alter einer Wortmeldung wurde aus SEINER und IHRER Uhr gerechnet. Geht ein Telefon anderthalb Minuten nach, galt jede seiner Aufnahmen bei ihr als „zu alt“ und verschwand — stillschweigend. Jetzt zählt nur noch die eigene Uhr" },
-    { seit: "2026-09-19T00:08",
-      text: "Bühnenansicht zum Wechseln: „🪑 Klassenzimmer“ (alle acht Plätze) oder „👥 Gegenüber“ (nur wer wirklich sitzt, dafür gross — gemessen 84 px → 178 px, allein 240 px)" },
-    { seit: "2026-09-19T00:08",
-      text: "Der Regenbogen beim Sprechen ist deutlicher: kräftigerer Rand und ein zweiter, mitwandernder Farbring" },
-    { seit: "2026-09-19T00:08",
-      text: "Neu: „funkeln“ als eigenes Sprechbild — zwei Lichterkränze wandern gegenläufig um den Kreis, er glimmt warm dazu" },
+    { seit: "2026-09-19T00:14",
+      text: "/diagnose zeigt jetzt die Leitung (frei oder wer spricht und wie lange noch), wie viele Wortmeldungen in der Reihe stehen, ob Zeilen auf das Netz warten — und wie weit die Uhren der anderen auseinandergehen" },
+    { seit: "2026-09-19T00:14",
+      text: "Genau daran ist heute eine Unterhaltung gescheitert: wer eine Uhr hat, die zwei Minuten nachgeht, sieht das jetzt schwarz auf weiß statt es zu erraten" },
   ],
 };
