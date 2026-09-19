@@ -19273,11 +19273,19 @@
      laeuft. */
   let lcFilmListe = null;
   let lcFilmNamen = null;          // dasselbe, aber sofort abfragbar
+  let lcFilmGroessen = null;
   function lcFilmListeHolen() {
     if (!lcFilmListe) {
       lcFilmListe = fetch("filme/liste.json", { cache: "no-cache" })
         .then((a) => (a.ok ? a.json() : null))
-        .then((l) => (l && l.filme ? l.filme.map((f) => f.name) : null))
+        .then((l) => {
+          if (!l || !l.filme) return null;
+          /* Die Groesse jedes Films merken — danach entscheidet das
+             Vorladen, was es sich auf dieser Leitung leisten kann. */
+          lcFilmGroessen = {};
+          l.filme.forEach((f) => { lcFilmGroessen[f.name] = f.bytes || 0; });
+          return l.filme.map((f) => f.name);
+        })
         .then((n) => { lcFilmNamen = n; return n; })
         .catch(() => null);
     }
@@ -19311,6 +19319,33 @@
       if (n && (n.saveData || /^(slow-2g|2g)$/.test(n.effectiveType || ""))) return;
     } catch (e) {}
     lcFilmeVorgeladen = true;
+    /* =================================================================
+       WAS DARF DIE LEITUNG TRAGEN?
+       -----------------------------------------------------------------
+       GEWUENSCHT: „Ich moechte nicht, dass der Chat-Eingang
+       beeintraechtigt ist" — und gleichzeitig: „Vielleicht braucht man
+       bei dem Dino keine Komprimierung weiter."
+
+       Beides geht, aber nicht mit derselben Regel fuer alle. Der T-Rex
+       liegt jetzt in voller Aufloesung da und wiegt 8 MB; die anderen
+       acht zusammen wiegen 9. Auf einem Telefon im Mobilfunk waere es
+       unverschaemt, acht Megabyte vorsorglich zu holen, nur weil
+       vielleicht jemand /trex tippt.
+
+       Also: die LEICHTEN zuerst (nach Groesse sortiert), und was
+       ueber vier Megabyte wiegt, wird im Mobilfunk gar nicht
+       vorgeladen — es kommt dann, wenn es wirklich gerufen wird. Am
+       Rechner und im WLAN bleibt alles beim Alten. */
+    let grenze = Infinity;
+    try {
+      const n = navigator.connection;
+      if (n && (n.type === "cellular" || /^(3g)$/.test(n.effectiveType || ""))) grenze = 4 * 1024 * 1024;
+    } catch (e) {}
+    const wiegt = (name) => (lcFilmGroessen && lcFilmGroessen[name]) || 0;
+    namen = namen.slice()
+      .filter((name) => wiegt(name) <= grenze)
+      .sort((a, b) => wiegt(a) - wiegt(b));
+    if (!namen.length) return;
     /* UND ERST, WENN DIE LEITUNG FREI IST.
        GEMELDET: „Ich moechte nicht, dass der Chat-Eingang
        beeintraechtigt ist und irgendwie so lange laedt durch

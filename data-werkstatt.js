@@ -49,18 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 341 — Waehler gehen wieder zu",
+  stand: "Fassung 342 — T-Rex in voller Aufloesung",
 
   inArbeit: [
-    { seit: "2026-09-19T19:09",
-      text: "T-Rex in besserer Guete — dazu brauche ich die Originaldatei noch einmal" },
-    { seit: "2026-09-19T19:09",
+    { seit: "2026-09-19T19:28",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
+    { seit: "2026-09-19T19:28",
+      text: "Ein echter Weckerton (bisher steht ein Platzhalter daneben)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T19:09",
-      text: "Bildwaehler und Sendewaehler schliessen jetzt beim Tippen daneben und mit Escape" },
+    { seit: "2026-09-19T19:28",
+      text: "Der T-Rex ist neu gebaut: 720x1280 statt 400x712, aus der Originaldatei" },
+    { seit: "2026-09-19T19:28",
+      text: "Der Ton wird jetzt an EINER Stelle entzerrt statt an zweien — dadurch klingt er noch klarer" },
+    { seit: "2026-09-19T19:28",
+      text: "Der Schlitten hatte eine helle Ecke ueber dem Chat: Rand ausgeblendet, neu gebaut" },
+    { seit: "2026-09-19T19:28",
+      text: "Vorladen nach Gewicht: im Mobilfunk bleiben Filme ueber 4 MB liegen, bis man sie ruft" },
+    { seit: "2026-09-19T19:28",
+      text: "Neue Sonde misst an echten Bildpunkten, dass jeder Film wirklich freigestellt ist" },
   ],
 };

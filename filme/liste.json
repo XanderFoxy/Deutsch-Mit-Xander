@@ -4,55 +4,64 @@
    "name": "adler",
    "sekunden": 7.61,
    "bild": "filme/adler.jpg",
-   "wirkung": "wind"
+   "wirkung": "wind",
+   "bytes": 391877
   },
   {
    "name": "katze",
    "sekunden": 10.11,
    "bild": "filme/katze.jpg",
-   "wirkung": "glanz"
+   "wirkung": "glanz",
+   "bytes": 573423
   },
   {
    "name": "loewe",
    "sekunden": 15.04,
    "bild": "filme/loewe.jpg",
-   "wirkung": "glanz"
+   "wirkung": "glanz",
+   "bytes": 1479462
   },
   {
    "name": "lok",
    "sekunden": 15.04,
    "bild": "filme/lok.jpg",
-   "wirkung": "dampf"
+   "wirkung": "dampf",
+   "bytes": 1146637
   },
   {
    "name": "lok2",
    "sekunden": 7.04,
    "bild": "filme/lok2.jpg",
-   "wirkung": "dampf"
+   "wirkung": "dampf",
+   "bytes": 681710
   },
   {
    "name": "raumschiff",
    "sekunden": 15.11,
    "bild": "filme/raumschiff.jpg",
-   "wirkung": "wind"
+   "wirkung": "wind",
+   "bytes": 1976476
   },
   {
    "name": "schlitten",
    "sekunden": 15.04,
    "bild": "filme/schlitten.jpg",
-   "wirkung": "glanz"
+   "wirkung": "glanz",
+   "bytes": 2494582
   },
   {
    "name": "trex",
    "sekunden": 15.04,
    "bild": "filme/trex.jpg",
-   "wirkung": "erde"
+   "wirkung": "erde",
+   "bytes": 8655121
   },
   {
    "name": "uboot",
    "sekunden": 15.04,
    "bild": "filme/uboot.jpg",
-   "wirkung": "dampf"
+   "wirkung": "dampf",
+   "bytes": 1453966
   }
  ]
 }

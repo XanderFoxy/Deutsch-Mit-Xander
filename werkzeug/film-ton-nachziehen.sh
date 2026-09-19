@@ -89,6 +89,22 @@ nachziehen () {
 
   mv "$TMP/$NAME.webm" "$DATEI"
   echo "     fertig: $(du -h "$DATEI" | cut -f1)"
+
+  # DIE SAFARI-FASSUNG BEKOMMT DENSELBEN TON.
+  # Sie liegt daneben als „<name>-maske.mp4" und wird auf dem iPhone
+  # gespielt, wenn der Browser kein Alpha-WebM kann. Bliebe ihr Ton
+  # unbearbeitet, klaenge derselbe Film auf zwei Geraeten verschieden
+  # — und genau das faellt auf, wenn zwei nebeneinandersitzen.
+  local MASKE
+  MASKE="$(dirname "$DATEI")/$NAME-maske.mp4"
+  if [ -f "$MASKE" ]; then
+    "$FF" -v error -y -i "$MASKE" -filter_complex \
+      "${KETTE};[aus]${NORM},alimiter=limit=0.94[end]" \
+      -map 0:v:0 -map '[end]' -c:v copy -c:a aac -b:a 96k \
+      "$TMP/$NAME-maske.mp4" 2>/dev/null \
+      && mv "$TMP/$NAME-maske.mp4" "$MASKE" \
+      && echo "     Safari-Fassung mit: $(du -h "$MASKE" | cut -f1)"
+  fi
 }
 
 if [ $# -gt 0 ]; then

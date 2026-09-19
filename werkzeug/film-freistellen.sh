@@ -250,7 +250,21 @@ fi
 #   * ein sanfter Kompressor davor, damit die Anhebungen nicht
 #     an den lauten Stellen zerren.
 # Erst danach wird auf -14 LUFS gefahren und begrenzt.
-VOLLER="acompressor=threshold=-20dB:ratio=2.4:attack=12:release=220:makeup=1.4,bass=g=4:f=110:w=0.8,equalizer=f=2600:width_type=q:w=1.1:g=2.5"
+# NACHGEMESSEN — UND DAS GEGENTEIL VON DEM, WAS ICH DACHTE.
+# Hier stand einmal „bass=g=4:f=110": eine Anhebung bei 110 Hz, weil
+# der Ton „duenn" klang. Gemessen war er aber nicht zu wenig Bass,
+# sondern FAST NUR Bass — beim T-Rex lagen 87 Prozent der Energie
+# unter 120 Hz. Ein Telefonlautsprecher gibt davon nichts wieder; die
+# Anhebung hat den Berg noch erhoeht und loudnorm hat danach alles
+# andere leiser gemacht. Der Griff war falsch herum.
+#
+# Die Entzerrung sitzt deshalb nicht mehr hier, sondern in
+# werkzeug/film-ton-nachziehen.sh: sie braucht Abzweigungen (zwei
+# Oberton-Erzeuger), und die kann „-af" gar nicht — dafuer braucht es
+# filter_complex. Dieses Werkzeug legt den Ton also nur noch sauber
+# und unveraendert hinein; die Kette laeuft im vierten Schritt
+# hinterher. Ein einziger Ort fuer den Klang, nicht zwei.
+VOLLER="anull"
 TONKETTE="${VOLLER},loudnorm=I=-14:TP=-1.0:LRA=9"
 MESS=$("$FF" -hide_banner -i "$QUELLE" -af "loudnorm=I=-14:TP=-1.0:LRA=9:print_format=json" \
   -f null - 2>&1 | sed -n '/^{/,/^}/p')
@@ -335,6 +349,22 @@ cat > "$ZIEL/$NAME.json" <<EOF
   "bild": "filme/$NAME.jpg", "art": "$ART", "wirkung": "$WIRKUNG", "ton": true }
 EOF
 
+# DER KLANG — AN EINER EINZIGEN STELLE.
+# Hier laeuft die Entzerrung, die frueher (und falsch herum) mitten
+# in diesem Werkzeug stand: Tiefenschnitt, gesenkter Basskeil und
+# zwei Oberton-Erzeuger, damit der Ton auch aus einem
+# Telefonlautsprecher kommt. Sie braucht Abzweigungen und deshalb
+# filter_complex — und deshalb ein eigenes Werkzeug. Das Bild wird
+# dabei nicht angefasst (-c:v copy), der Film verliert also nichts.
+if [ "${TON_NACHZIEHEN:-1}" != "0" ] && [ -f "$WURZEL/werkzeug/film-ton-nachziehen.sh" ]; then
+  echo "4b/5 Ton entzerren (Telefonlautsprecher) …"
+  bash "$WURZEL/werkzeug/film-ton-nachziehen.sh" "$ZIEL/$NAME.webm" || true
+fi
+
+# Und ERST JETZT die Liste schreiben: der Ton oben hat die Datei neu
+# geschrieben, sie ist also ein paar Kilobyte anders gross. Stuende
+# die Liste davor, truege sie die Groesse von vorher — gemessen waren
+# es 2625 Bytes Unterschied, und die Sonde hat es gemerkt.
 # Alle vorhandenen Filme in EINE Liste schreiben. Auf GitHub Pages
 # kann die Seite keinen Ordner durchblaettern — ohne diese Liste
 # muesste man raten, wie ein Film heisst. „/film" ohne Namen zeigt sie.
@@ -348,7 +378,17 @@ const filme = fs.readdirSync(pfad)
   .filter((f) => /\.json$/.test(f) && f !== "liste.json" && f.slice(0, 2) !== "__")
   .map((f) => { try { return JSON.parse(fs.readFileSync(pfad + "/" + f, "utf8")); } catch (e) { return null; } })
   .filter(Boolean)
-  .map((d) => ({ name: d.name, sekunden: d.sekunden, bild: d.bild, wirkung: d.wirkung || "keiner" }))
+  /* DIE GROESSE GEHOERT IN DIE LISTE.
+     Ohne sie kann die Seite nicht entscheiden, welche Filme sie beim
+     Betreten schon holen darf: auf dem Telefon im Mobilfunk sollen
+     die kleinen vorgeladen werden und die schweren erst, wenn man
+     sie wirklich ruft. Die Zahl wird hier GEMESSEN, nicht gepflegt. */
+  .map((d) => {
+    let bytes = 0;
+    try { bytes = fs.statSync(pfad + "/" + d.name + ".webm").size; } catch (e) {}
+    return { name: d.name, sekunden: d.sekunden, bild: d.bild,
+             wirkung: d.wirkung || "keiner", bytes: bytes };
+  })
   .sort((a, b) => a.name.localeCompare(b.name, "de"));
 fs.writeFileSync(pfad + "/liste.json", JSON.stringify({ filme: filme }, null, 1) + "\n");
 console.log("     Liste: " + filme.map((f) => f.name).join(", "));
