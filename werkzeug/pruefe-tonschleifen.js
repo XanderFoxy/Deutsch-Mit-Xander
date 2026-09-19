@@ -39,8 +39,19 @@ const EREIGNISSE = [
   "gg", "ggelefant", "gghai", "ggbaer", "boxen", "umarmen", "lecken",
   "handdurch", "tore", "jalousie", "kitt", "fratze", "schloss",
   "sternschnuppe", "rennauto", "dino", "augen", "katze", "ballon",
-  "falten", "schwamm", "halloween", "weihnachten"
+  "falten", "schwamm", "halloween", "weihnachten",
+  /* Die Profilbild-Animationen sind alle Ereignisse: ein Schlag, ein
+     Tritt, ein Guss, ein Klingeln. Keines davon wiederholt sich. */
+  "wecker", "hammer", "tritt", "eimer", "reichtum", "zucker",
+  "heber", "lasso"
 ];
+
+/* Und: hat jede dieser Animationen ueberhaupt ein Geraeusch, das
+   auch WIRKLICH als Datei daliegt? Ein Plan, der auf eine Datei
+   zeigt, die es nicht gibt, ist schlimmer als kein Plan — er sieht
+   richtig aus und bleibt stumm. */
+const BRAUCHT_TON = ["wecker", "hammer", "tritt", "eimer",
+                     "regenwolke", "donnerwolke", "reichtum", "zucker"];
 
 const quelle = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
 const ab = quelle.indexOf("const LC_TON_PLAN = {");
@@ -77,6 +88,31 @@ EREIGNISSE.forEach((e) => {
 pruefe("kein Ereignis wiederholt sich", schlingen.length === 0,
   schlingen.length ? schlingen.join(", ") : EREIGNISSE.length + " geprueft");
 
+console.log("\nHAT JEDE PROFILBILD-ANIMATION IHREN TON?\n");
+const ohne = [];
+BRAUCHT_TON.forEach((e) => {
+  const z = plan.find((x) => x.eff === e);
+  if (!z) { ohne.push(e + " (steht nicht im Plan)"); return; }
+  const datei = path.join(WURZEL, "ton", z.ton + ".opus");
+  const safari = path.join(WURZEL, "ton", z.ton + ".m4a");
+  if (!fs.existsSync(datei)) ohne.push(e + " \u2192 " + z.ton + ".opus fehlt");
+  else if (!fs.existsSync(safari)) ohne.push(e + " \u2192 " + z.ton + ".m4a fehlt (iPhone stumm)");
+});
+pruefe("jede hat ein Geraeusch, das wirklich daliegt", ohne.length === 0,
+  ohne.length ? ohne.join(", ") : BRAUCHT_TON.length + " geprueft");
+/* Und steht es auch in der Liste, die die Seite liest? Liegt die
+   Datei da, ohne dort zu stehen, sucht die Seite gar nicht erst. */
+const listeText = fs.readFileSync(path.join(WURZEL, "data-geraeusche.js"), "utf8");
+const fehltInListe = BRAUCHT_TON
+  .map((e) => (plan.find((x) => x.eff === e) || {}).ton)
+  .filter(Boolean)
+  .filter((t, i, a) => a.indexOf(t) === i)
+  .filter((t) => listeText.indexOf("|" + t + "|") < 0
+               && listeText.indexOf("\"" + t + "|") < 0
+               && listeText.indexOf("|" + t + "\"") < 0);
+pruefe("und steht in data-geraeusche.js", fehltInListe.length === 0,
+  fehltInListe.length ? fehltInListe.join(", ") : "alle eingetragen");
+
 console.log("\nUND WIE OFT LAEUFT EINE SCHLEIFE WIRKLICH?\n");
 const zuOft = [];
 let gemessen = 0;
@@ -94,15 +130,30 @@ pruefe("keine Schleife wiederholt sich mehr als sechsmal", zuOft.length === 0,
   zuOft.length ? zuOft.join(", ") : gemessen + " Schleifen gemessen");
 
 console.log("\nUND KEIN TON LAEUFT LAENGER ALS SEINE ANIMATION\n");
+/* ACHTUNG, ERSTER ENTWURF WAR FALSCH: er hat die DATEILAENGE mit der
+   Animation verglichen und fuenf Fehler gemeldet, die keine sind. Der
+   Abspieler dreht jeden Ton nach „dauer" ueber eine halbe Sekunde
+   leise und haelt ihn an (siehe lcGeraeusch in app.js) — eine Datei
+   darf also laenger sein als ihre Animation, sie wird ja abgeschnitten.
+   Falsch waere das Umgekehrte: ein „dauer", das LAENGER ist als die
+   Animation. Dann spielt der Ton weiter, waehrend nichts mehr zu
+   sehen ist, und genau das war die Klage. */
+const animationen = {};
+const reA = /\},\s*(\d+),\s*"(\w+)"\);/g;
+let a2;
+while ((a2 = reA.exec(quelle))) animationen[a2[2]] = +a2[1];
 const zuLang = [];
-plan.forEach((z) => {
-  if (z.loop) return;
-  const l = laenge(z.ton);
-  if (!l) return;
-  if (l * 1000 > z.dauer + 400) zuLang.push(z.eff + " (" + l + " s > " + (z.dauer / 1000) + " s)");
+Object.keys(animationen).forEach((eff) => {
+  const z = plan.find((x) => x.eff === eff);
+  if (!z) return;
+  if (z.dauer > animationen[eff] + 200) {
+    zuLang.push(eff + " (Ton " + (z.dauer / 1000) + " s, Animation "
+      + (animationen[eff] / 1000) + " s)");
+  }
 });
-pruefe("kein Ereignisgeraeusch ueberlebt seine Animation", zuLang.length === 0,
-  zuLang.length ? zuLang.join(", ") : "alle kuerzer als ihre Animation");
+pruefe("kein Ton spielt laenger als seine Animation", zuLang.length === 0,
+  zuLang.length ? zuLang.join(", ")
+    : Object.keys(animationen).length + " Animationen mit Ton geprueft");
 
 console.log("\n" + (fehler ? fehler + " Abweichung(en)" : "Die Toene passen zu ihren Animationen.") + "\n");
 process.exit(fehler ? 1 : 0);

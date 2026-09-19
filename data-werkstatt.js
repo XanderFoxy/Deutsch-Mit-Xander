@@ -49,26 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 342 — T-Rex in voller Aufloesung",
+  stand: "Fassung 343 — vier gerechnete Geraeusche",
 
   inArbeit: [
-    { seit: "2026-09-19T19:28",
+    { seit: "2026-09-19T19:39",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
-    { seit: "2026-09-19T19:28",
-      text: "Ein echter Weckerton (bisher steht ein Platzhalter daneben)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T19:28",
-      text: "Der T-Rex ist neu gebaut: 720x1280 statt 400x712, aus der Originaldatei" },
-    { seit: "2026-09-19T19:28",
-      text: "Der Ton wird jetzt an EINER Stelle entzerrt statt an zweien — dadurch klingt er noch klarer" },
-    { seit: "2026-09-19T19:28",
-      text: "Der Schlitten hatte eine helle Ecke ueber dem Chat: Rand ausgeblendet, neu gebaut" },
-    { seit: "2026-09-19T19:28",
-      text: "Vorladen nach Gewicht: im Mobilfunk bleiben Filme ueber 4 MB liegen, bis man sie ruft" },
-    { seit: "2026-09-19T19:28",
-      text: "Neue Sonde misst an echten Bildpunkten, dass jeder Film wirklich freigestellt ist" },
+    { seit: "2026-09-19T19:39",
+      text: "Der Wecker klingelt jetzt wirklich: zwei Glocken, drei Stoesse, im Takt der Animation" },
+    { seit: "2026-09-19T19:39",
+      text: "Hammer, Tritt und Wassereimer haben eigene Geraeusche statt geliehener" },
+    { seit: "2026-09-19T19:39",
+      text: "data-geraeusche.js entsteht jetzt aus dem Ordner ton/ selbst — kein Geraeusch faellt mehr durch" },
   ],
 };

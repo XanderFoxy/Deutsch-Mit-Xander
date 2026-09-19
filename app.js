@@ -22089,7 +22089,34 @@
     weihnachten:    { ton: "weihnachten", dauer: 12000 },
     rennauto:       { ton: "rennauto", dauer: 9000 },
     dino:           { ton: "dino", dauer: 9000 },
-    jubel:          { ton: "jubel", dauer: 4000 }
+    jubel:          { ton: "jubel", dauer: 4000 },
+    /* =================================================================
+       DIE VIER GERECHNETEN — FUER DIE PROFILBILD-ANIMATIONEN
+       -----------------------------------------------------------------
+       GEWUENSCHT: „Da brauch ich dann noch einen Sound. Vielleicht hast
+       du ja schon einen in deiner Soundkiste."
+
+       In der Kiste lag keiner, der passt: der Wecker klang bis eben
+       nach Musiknoten, der Hammer nach einem Boxhandschuh. Die vier
+       sind jetzt gerechnet (werkzeug/geraeusche-bauen.sh), so wie der
+       Schrei auch. Die Zeiten stehen hier und stimmen mit den
+       Animationen ueberein: der Wecker scheppert 2,4 Sekunden und
+       klingelt genau dreimal, der Rest ist ein einzelner Schlag.
+       ================================================================= */
+    wecker:         { ton: "wecker", dauer: 2600 },
+    hammer:         { ton: "bonk", dauer: 2000 },
+    tritt:          { ton: "tritt", dauer: 1400 },
+    eimer:          { ton: "platsch", dauer: 2600 },
+    /* Die uebrigen Profilbild-Animationen leihen sich, was passt:
+       Regen und Gewitter haben eigene Geraeusche, Geld und Bonbons
+       auch. Nur die Herzen bleiben still — ein Herz macht kein
+       Geraeusch, und ein erfundenes waere kitschig. */
+    regenwolke:     { ton: "regen", dauer: 3200 },
+    donnerwolke:    { ton: "gewitter", dauer: 3200 },
+    reichtum:       { ton: "geld", dauer: 2800 },
+    zucker:         { ton: "bonbon", dauer: 2800 },
+    heber:          { ton: "tore", dauer: 2000 },
+    lasso:          { ton: "tritt", dauer: 2000 }
   };
 
   function lcGeraeuschDa(name) {
@@ -25039,7 +25066,7 @@
         st.style.animationDelay = (0.16 + t * 0.03).toFixed(2) + "s";
         schicht.appendChild(st);
       }
-    }, 2200, "boxen");
+    }, 2200, "tritt");
   }
 
   /* --- HERZEN AUF DAS PROFILBILD ---------------------------------- */
@@ -25077,7 +25104,7 @@
         t.style.setProperty("--fall", (34 + Math.random() * 26).toFixed(0) + "px");
         schicht.appendChild(t);
       }
-    }, 3000, "regen");
+    }, 3000, "eimer");
   }
 
   /* --- DER WECKER -------------------------------------------------
@@ -25114,7 +25141,7 @@
           schicht.appendChild(w);
         }
       });
-    }, 2800, "noten");
+    }, 2800, "wecker");
   }
 
   /* --- WOLKE, REGEN UND GEWITTER ÜBER EINER PERSON ---------------- */
@@ -25139,7 +25166,7 @@
         b.textContent = "\u26a1";
         schicht.appendChild(b);
       }
-    }, 3200, mitBlitz ? "gewitter" : "regen");
+    }, 3200, mitBlitz ? "donnerwolke" : "regenwolke");
   }
 
   /* --- REICHTUM: KLEINE MÜNZEN UND SCHEINE ------------------------ */
@@ -25154,7 +25181,7 @@
         m.style.animationDelay = (i * 0.09).toFixed(2) + "s";
         schicht.appendChild(m);
       }
-    }, 2800, "geld");
+    }, 2800, "reichtum");
   }
 
   /* --- ZUCKER: BONBONS ÜBER EINER PERSON -------------------------- */
@@ -25169,7 +25196,7 @@
         b.style.animationDelay = (i * 0.1).toFixed(2) + "s";
         schicht.appendChild(b);
       }
-    }, 2800, "bonbon");
+    }, 2800, "zucker");
   }
 
   /* --- DER HAMMER ------------------------------------------------- */
@@ -25197,7 +25224,7 @@
         st.textContent = t % 2 ? "\u2726" : "\u2727";
         schicht.appendChild(st);
       }
-    }, 2200, "boxen");
+    }, 2200, "hammer");
   }
 
   /* --- DER WAGENHEBER ---------------------------------------------
@@ -25221,7 +25248,7 @@
         + ' stroke-linejoin="round"/>'
         + '<rect x="20" y="20" width="20" height="7" rx="3" fill="#8b93a3"/>'
         + "</svg>";
-    }, 2000, "tore");
+    }, 2000, "heber");
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -25240,7 +25267,7 @@
       schicht.innerHTML =
         '<span class="lc-lasso-schlinge"></span>'
         + '<span class="lc-lasso-seil"></span>';
-    }, 2000, "boxen");
+    }, 2000, "lasso");
   }
 
   function lcBoxen(wen, von) {
