@@ -21537,23 +21537,34 @@
      seinen eigenen Takt. Gleich große Punkte im gleichen Takt sähen
      nach Maschine aus, nicht nach Magie.
      ================================================================= */
+  /* GEWUENSCHT: „Bei Magie, dass diese magischen Sterne aussen herum
+     den Rahmen beschreiben", „die Noten koennen auch deutlicher ueber
+     das Profilbild steigen", „die Blasen koennen deutlicher sein,
+     unterschiedliche Groessen haben" — und, als Regel fuer alle:
+     „alles soll sich eher am Rahmen orientieren. Mit den Herzen
+     kannst du es mittig lassen." Genau so ist es hier eingetragen:
+     „rand: true" heisst, die Teilchen liegen auf der Kreisbahn um
+     das Bild; bei den Herzen steht es nicht da. */
   const LC_TEILCHENBILDER = {
-    magie:  { menge: 18, klasse: "lc-tmagie",
+    magie:  { menge: 26, klasse: "lc-tmagie", rand: true,
               zeichen: ["\u2726", "\u2727", "\u00b7", "\u2734", "\u2735"] },
-    noten:  { menge: 9,  klasse: "lc-tnoten",
+    noten:  { menge: 14, klasse: "lc-tnoten", rand: true,
               zeichen: ["\u266a", "\u266b", "\u266c", "\u2669"] },
     herzen: { menge: 10, klasse: "lc-therzen",
               zeichen: ["\u2665", "\u2764", "\ud83d\udc96"] },
-    feuer:  { menge: 12, klasse: "lc-tfeuer", zeichen: [""] },
-    strom:  { menge: 8,  klasse: "lc-tstrom", zeichen: [""] },
-    blasen: { menge: 11, klasse: "lc-tblasen", zeichen: [""] }
+    feuer:  { menge: 12, klasse: "lc-tfeuer", rand: true, zeichen: [""] },
+    strom:  { menge: 10, klasse: "lc-tstrom", rand: true, zeichen: [""] },
+    blasen: { menge: 16, klasse: "lc-tblasen", zeichen: [""] }
   };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
     if (!kreis) return;
     const bau = LC_TEILCHENBILDER[art];
-    const alt = kreis.querySelector(".lc-sprechfeld");
+    /* Gesucht wird dort, wo es auch gebaut wird: am PLATZ. Stand hier
+       noch der Kreis, fand die Suche nie etwas — und dann wuchs bei
+       jedem Auffrischen des Raums ein weiteres Feld dazu. */
+    const alt = knopf.querySelector(".lc-sprechfeld");
     /* Nichts neu bauen, was schon steht — sonst fangen die Teilchen
        bei jedem Auffrischen des Raums von vorn an, und das sieht aus
        wie Stottern. */
@@ -21572,14 +21583,27 @@
       if (z) t.textContent = z;
       t.style.setProperty("--wo", (i * (360 / bau.menge) + Math.random() * 18 - 9).toFixed(1) + "deg");
       t.style.setProperty("--weit", (48 + Math.random() * 16).toFixed(0) + "%");
-      t.style.setProperty("--gross", (0.5 + Math.random() * 0.9).toFixed(2));
-      t.style.setProperty("--hell", (0.45 + Math.random() * 0.55).toFixed(2));
+      /* Deutlicher als vorher: groesser und heller. Die Blasen bekommen
+         die groesste Spanne — „unterschiedliche Groessen" war
+         ausdruecklich gewuenscht, und eine Seifenblase, die so gross
+         ist wie die naechste, sieht nach Muster aus, nicht nach
+         Blasen. */
+      const spanne = art === "blasen" ? 1.7 : 1.1;
+      t.style.setProperty("--gross", (0.7 + Math.random() * spanne).toFixed(2));
+      t.style.setProperty("--hell", (0.62 + Math.random() * 0.38).toFixed(2));
       t.style.setProperty("--links", (10 + Math.random() * 80).toFixed(0) + "%");
       t.style.animationDuration = (1.5 + Math.random() * 2.2).toFixed(2) + "s";
       t.style.animationDelay = (-Math.random() * 3).toFixed(2) + "s";
       feld.appendChild(t);
     }
-    kreis.appendChild(feld);
+    /* AN DEN PLATZ, NICHT IN DEN KREIS.
+       Der Kreis traegt „overflow: hidden" — alles, was ueber das
+       Profilbild hinausragt, wurde bisher abgeschnitten. Genau
+       deshalb sah man von den Sternen, die „aussen herum den Rahmen
+       beschreiben" sollen, immer nur die Haelfte. Am Platz darf das
+       Feld ueber den Rand hinaus; es deckt dasselbe Quadrat ab wie
+       die Effektschicht (siehe .lc-sprechfeld). */
+    knopf.appendChild(feld);
   }
 
   function lcSprechFeldWeg(knopf) {

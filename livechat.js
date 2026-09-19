@@ -857,6 +857,14 @@ window.LiveChat = (function () {
     feuer:      "Feuer — Flammen züngeln am Rand",
     strom:      "Strom — Blitze zucken um den Kreis",
     blasen:     "Blasen — Seifenblasen steigen auf",
+    /* GEWUENSCHT: „Vielleicht kannst du noch was mit Eis machen, dass
+       das Bild gefriert, wenn ich spreche" und „als Sprech-Effekt
+       waere noch so Blumenblaetter, als wenn der Profilrahmen eine
+       Blume waere und die blueht dann immer, wenn man spricht."
+       Beide setzen an dem an, was er sich fuer ALLE wuenscht: „alles
+       soll sich eher am Rahmen orientieren." */
+    eis:        "Eis — der Rand friert zu, Kristalle wachsen herein",
+    bluete:     "Blüte — der Rahmen geht auf wie eine Blume",
     aus:        "Nichts — kein Zeichen beim Sprechen"
   };
   var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";

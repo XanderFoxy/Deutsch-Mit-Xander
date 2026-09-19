@@ -98,9 +98,24 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
      echter Farbkreis; die Namen heissen deshalb anders, und das ist
      kein Fehler, sondern der Umbau. Wie bunt er wirklich ist, misst
      pruefe-sprechbilder.js an den gerechneten Farben. */
-  ok(erg.regenbogen.animation === "lcBogenGlimmen", "Regenbogen läuft", erg.regenbogen.animation);
-  ok(erg.regenbogen.vorAnimation === "lcBogenDreht",
-     "und der Farbkreis dreht sich", erg.regenbogen.vorAnimation);
+  /* UMGEBAUT IN FASSUNG 350, und wieder auf Ansage: „Der
+     Regenbogeneffekt soll sich aussen konzentrieren. Da soll nicht
+     das ganze Bild zumachen, sondern der Kreis soll ein einziger
+     Regenbogen sein — die Farben sollen nach aussen wandern."
+
+     Vorher lag der Farbkreis auf dem Bild (lcBogenGlimmen /
+     lcBogenDreht). Jetzt liegt er als RING darum: ein
+     conic-gradient, dem eine Maske die Mitte ausschneidet
+     (lcBogenRing), und darueber ein Ring, der nach aussen laeuft und
+     vergeht (lcRandWelle). Die Namen heissen deshalb anders — das ist
+     der Umbau, kein Fehler. Wie bunt er ist, misst weiterhin
+     pruefe-sprechbilder.js an den gerechneten Farben. */
+  ok(erg.regenbogen.vorAnimation === "lcRandWelle", "ein Ring laeuft nach aussen",
+     erg.regenbogen.vorAnimation);
+  ok(erg.regenbogen.nachAnimation === "lcBogenRing",
+     "und der Farbkreis dreht sich am Rand", erg.regenbogen.nachAnimation);
+  ok(erg.regenbogen.animation === "none",
+     "das Bild selbst bleibt frei", erg.regenbogen.animation);
   ok(erg.funkeln.animation === "lcFunkelGlimmen", "Funkeln glimmt", erg.funkeln.animation);
   ok(erg.funkeln.nachAnimation === "lcFunkelDreh" && erg.funkeln.vorAnimation === "lcFunkelDreh",
      "und zwei Lichterkränze wandern gegenläufig");
