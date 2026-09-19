@@ -9032,6 +9032,10 @@ window.LiveChat = (function () {
        anstossen und ansehen, was dabei herauskommt. */
     pruefFluesternLaden: function () { return fluesternLaden(); },
     pruefVerlaufFrisch: function (erster) { return verlaufFrischHolen(Boolean(erster)); },
+    /* Nur zum Nachmessen: so tun, als sei man drin. Ohne das laeuft
+       das Nachfassen gar nicht erst an — es soll ja nur im Raum
+       arbeiten. */
+    pruefLageSetzen: function (wie) { zustand.lage = String(wie || "drin"); return zustand.lage; },
     /* Nur zum Nachmessen: jemanden in den Raum setzen, damit /w und
        das Bild-Fluestern ein Ziel finden. */
     pruefPersonSetzen: function (id, name, konto) {

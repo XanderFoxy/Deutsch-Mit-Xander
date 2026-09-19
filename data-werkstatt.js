@@ -49,30 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 20 — Notenknopf, Raumwechsel, Bilder flüstern (v311)",
+  stand: "Runde 21 — nachgemessen und schriftlich beantwortet (v312)",
 
   inArbeit: [
-    { seit: "2026-09-19T01:02",
-      text: "TikTok-Livestream: Cloudflare-SFU, Antwort und Bau stehen an" },
-    { seit: "2026-09-19T01:02",
+    { seit: "2026-09-19T01:22",
+      text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus (kostet nichts, eine Runde Arbeit)" },
+    { seit: "2026-09-19T01:22",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T01:02",
+    { seit: "2026-09-19T01:22",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T01:02",
+    { seit: "2026-09-19T01:22",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T01:02",
-      text: "Notenknopf steht jetzt an JEDER Antwort auf eine Aufgabe — auch nach dem Neuladen" },
-    { seit: "2026-09-19T01:02",
-      text: "Raumwechsel über die Raumliste sagt jetzt, in welchen Raum jemand gegangen ist" },
-    { seit: "2026-09-19T01:02",
-      text: "Bilder flüstern: Aufkleber, Foto, GIF — an eine einzige Person" },
-    { seit: "2026-09-19T01:02",
-      text: "Der Verlauf wird nachgefasst, wenn die Anmeldung beim Betreten noch nicht stand" },
-    { seit: "2026-09-19T01:02",
-      text: "Eine veraltete Seite merkt es jetzt selbst und bietet das Neuladen an" },
+    { seit: "2026-09-19T01:22",
+      text: "Das Nachfassen des Chatverlaufs ist jetzt nachgemessen (3 Termine, 2 Anläufe, danach Ruhe)" },
+    { seit: "2026-09-19T01:22",
+      text: "Antwort zum Medienserver liegt im Repo: supabase/MEDIENSERVER-SELBST.md" },
   ],
 };
